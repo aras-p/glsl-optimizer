@@ -323,11 +323,11 @@ static void *evergreen_create_sampler_state(struct pipe_context *ctx,
 			S_03C000_BORDER_COLOR_TYPE(uc.ui ? V_03C000_SQ_TEX_BORDER_COLOR_REGISTER : 0), 0xFFFFFFFF, NULL);
 	/* FIXME LOD it depends on texture base level ... */
 	r600_pipe_state_add_reg(rstate, R_03C004_SQ_TEX_SAMPLER_WORD1_0,
-			S_03C004_MIN_LOD(S_FIXED(CLAMP(state->min_lod, 0, 15), 6)) |
-			S_03C004_MAX_LOD(S_FIXED(CLAMP(state->max_lod, 0, 15), 6)),
+			S_03C004_MIN_LOD(S_FIXED(CLAMP(state->min_lod, 0, 15), 8)) |
+			S_03C004_MAX_LOD(S_FIXED(CLAMP(state->max_lod, 0, 15), 8)),
 			0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_03C008_SQ_TEX_SAMPLER_WORD2_0,
-				S_03C008_LOD_BIAS(S_FIXED(CLAMP(state->lod_bias, -16, 16), 6)) |
+				S_03C008_LOD_BIAS(S_FIXED(CLAMP(state->lod_bias, -16, 16), 8)) |
 				S_03C008_TYPE(1),
 				0xFFFFFFFF, NULL);
 
@@ -431,7 +431,7 @@ static void evergreen_set_vs_sampler_view(struct pipe_context *ctx, unsigned cou
 
 	for (int i = 0; i < count; i++) {
 		if (resource[i]) {
-			evergreen_context_pipe_state_set_vs_resource(&rctx->ctx, &resource[i]->state, i + PIPE_MAX_ATTRIBS);
+			evergreen_context_pipe_state_set_vs_resource(&rctx->ctx, &resource[i]->state, i);
 		}
 	}
 }
@@ -501,16 +501,16 @@ static void evergreen_set_clip_state(struct pipe_context *ctx,
 	rstate->id = R600_PIPE_STATE_CLIP;
 	for (int i = 0; i < state->nr; i++) {
 		r600_pipe_state_add_reg(rstate,
-					R_0285BC_PA_CL_UCP0_X + i * 4,
+					R_0285BC_PA_CL_UCP0_X + i * 16,
 					fui(state->ucp[i][0]), 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate,
-					R_0285C0_PA_CL_UCP0_Y + i * 4,
+					R_0285C0_PA_CL_UCP0_Y + i * 16,
 					fui(state->ucp[i][1]) , 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate,
-					R_0285C4_PA_CL_UCP0_Z + i * 4,
+					R_0285C4_PA_CL_UCP0_Z + i * 16,
 					fui(state->ucp[i][2]), 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate,
-					R_0285C8_PA_CL_UCP0_W + i * 4,
+					R_0285C8_PA_CL_UCP0_W + i * 16,
 					fui(state->ucp[i][3]), 0xFFFFFFFF, NULL);
 	}
 	r600_pipe_state_add_reg(rstate, R_028810_PA_CL_CLIP_CNTL,
@@ -660,7 +660,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 		S_028C70_COMP_SWAP(swap) |
 		S_028C70_BLEND_CLAMP(1) |
 		S_028C70_NUMBER_TYPE(ntype);
-	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS) 
+	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
 		color_info |= S_028C70_SOURCE_FORMAT(1);
 
 	/* FIXME handle enabling of CB beyond BASE8 which has different offset */
@@ -1276,7 +1276,10 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 		word2 = format | S_030008_STRIDE(vertex_buffer->stride);
 
-		word3 = r600_translate_vertex_data_swizzle(rctx->vertex_elements->hw_format[i]);
+		word3 = S_03000C_DST_SEL_X(V_03000C_SQ_SEL_X) |
+			S_03000C_DST_SEL_Y(V_03000C_SQ_SEL_Y) |
+			S_03000C_DST_SEL_Z(V_03000C_SQ_SEL_Z) |
+			S_03000C_DST_SEL_W(V_03000C_SQ_SEL_W);
 
 		r600_pipe_state_add_reg(rstate, R_030000_RESOURCE0_WORD0, offset, 0xFFFFFFFF, rbuffer->bo);
 		r600_pipe_state_add_reg(rstate, R_030004_RESOURCE0_WORD1, rbuffer->size - offset - 1, 0xFFFFFFFF, NULL);
@@ -1286,7 +1289,7 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		r600_pipe_state_add_reg(rstate, R_030014_RESOURCE0_WORD5, 0x00000000, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_030018_RESOURCE0_WORD6, 0x00000000, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_03001C_RESOURCE0_WORD7, 0xC0000000, 0xFFFFFFFF, NULL);
-		evergreen_vs_resource_set(&rctx->ctx, rstate, i);
+		evergreen_fs_resource_set(&rctx->ctx, rstate, i);
 	}
 
 	mask = 0;
@@ -1464,8 +1467,8 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 				  S_0286E0_PERSP_CENTROID_ENA(have_centroid);
 	if (have_linear)
 		spi_baryc_cntl |= S_0286E0_LINEAR_CENTER_ENA(1) |
-			          S_0286E0_LINEAR_CENTROID_ENA(have_centroid);
-				
+				  S_0286E0_LINEAR_CENTROID_ENA(have_centroid);
+
 	r600_pipe_state_add_reg(rstate, R_0286CC_SPI_PS_IN_CONTROL_0,
 				spi_ps_in_control_0, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_0286D0_SPI_PS_IN_CONTROL_1,
@@ -1551,7 +1554,7 @@ void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader 
 			(r600_bo_offset(shader->bo)) >> 8, 0xFFFFFFFF, shader->bo);
 	r600_pipe_state_add_reg(rstate,
 			R_0288A4_SQ_PGM_START_FS,
-			(r600_bo_offset(shader->bo)) >> 8, 0xFFFFFFFF, shader->bo);
+			(r600_bo_offset(shader->bo)) >> 8, 0xFFFFFFFF, shader->bo_fetch);
 
 	r600_pipe_state_add_reg(rstate,
 				R_03A200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF,

@@ -899,10 +899,20 @@ const int i915_chip_ids[] = {
    0x29b2, /* PCI_CHIP_Q35_G */
    0x29c2, /* PCI_CHIP_G33_G */
    0x29d2, /* PCI_CHIP_Q33_G */
+   0xa001, /* PCI_CHIP_IGD_G */
    0xa011, /* Pineview */
 };
 
 const int i965_chip_ids[] = {
+   0x0042, /* PCI_CHIP_ILD_G */
+   0x0046, /* PCI_CHIP_ILM_G */
+   0x0102, /* PCI_CHIP_SANDYBRIDGE_GT1 */
+   0x0106, /* PCI_CHIP_SANDYBRIDGE_M_GT1 */
+   0x010a, /* PCI_CHIP_SANDYBRIDGE_S */
+   0x0112, /* PCI_CHIP_SANDYBRIDGE_GT2 */
+   0x0116, /* PCI_CHIP_SANDYBRIDGE_M_GT2 */
+   0x0122, /* PCI_CHIP_SANDYBRIDGE_GT2_PLUS */
+   0x0126, /* PCI_CHIP_SANDYBRIDGE_M_GT2_PLUS */
    0x29a2, /* PCI_CHIP_I965_G */
    0x2992, /* PCI_CHIP_I965_Q */
    0x2982, /* PCI_CHIP_I965_G_1 */
@@ -914,6 +924,8 @@ const int i965_chip_ids[] = {
    0x2e12, /* PCI_CHIP_Q45_G */
    0x2e22, /* PCI_CHIP_G45_G */
    0x2e32, /* PCI_CHIP_G41_G */
+   0x2e42, /* PCI_CHIP_B43_G */
+   0x2e92, /* PCI_CHIP_B43_G1 */
 };
 
 const int r100_chip_ids[] = {

@@ -123,6 +123,7 @@ public:
    /** Pointer to the ir source this tree came from for debugging */
    ir_instruction *ir;
    GLboolean cond_update;
+   bool saturate;
    int sampler; /**< sampler index */
    int tex_target; /**< One of TEXTURE_*_INDEX */
    GLboolean tex_shadow;
@@ -282,8 +283,17 @@ public:
 				   ir_to_mesa_src_reg src0,
 				   ir_to_mesa_src_reg src1);
 
+   void emit_scs(ir_instruction *ir, enum prog_opcode op,
+		 ir_to_mesa_dst_reg dst,
+		 const ir_to_mesa_src_reg &src);
+
    GLboolean try_emit_mad(ir_expression *ir,
 			  int mul_operand);
+   GLboolean try_emit_sat(ir_expression *ir);
+
+   void emit_swz(ir_expression *ir);
+
+   bool process_move_condition(ir_rvalue *ir);
 
    void *mem_ctx;
 };
@@ -473,6 +483,10 @@ ir_to_mesa_visitor::ir_to_mesa_emit_scalar_op2(ir_instruction *ir,
       GLuint src0_swiz = GET_SWZ(src0.swizzle, i);
       GLuint src1_swiz = GET_SWZ(src1.swizzle, i);
       for (j = i + 1; j < 4; j++) {
+	 /* If there is another enabled component in the destination that is
+	  * derived from the same inputs, generate its value on this pass as
+	  * well.
+	  */
 	 if (!(done_mask & (1 << j)) &&
 	     GET_SWZ(src0.swizzle, j) == src0_swiz &&
 	     GET_SWZ(src1.swizzle, j) == src1_swiz) {
@@ -504,6 +518,102 @@ ir_to_mesa_visitor::ir_to_mesa_emit_scalar_op1(ir_instruction *ir,
    undef.swizzle = SWIZZLE_XXXX;
 
    ir_to_mesa_emit_scalar_op2(ir, op, dst, src0, undef);
+}
+
+/**
+ * Emit an OPCODE_SCS instruction
+ *
+ * The \c SCS opcode functions a bit differently than the other Mesa (or
+ * ARB_fragment_program) opcodes.  Instead of splatting its result across all
+ * four components of the destination, it writes one value to the \c x
+ * component and another value to the \c y component.
+ *
+ * \param ir        IR instruction being processed
+ * \param op        Either \c OPCODE_SIN or \c OPCODE_COS depending on which
+ *                  value is desired.
+ * \param dst       Destination register
+ * \param src       Source register
+ */
+void
+ir_to_mesa_visitor::emit_scs(ir_instruction *ir, enum prog_opcode op,
+			     ir_to_mesa_dst_reg dst,
+			     const ir_to_mesa_src_reg &src)
+{
+   /* Vertex programs cannot use the SCS opcode.
+    */
+   if (this->prog->Target == GL_VERTEX_PROGRAM_ARB) {
+      ir_to_mesa_emit_scalar_op1(ir, op, dst, src);
+      return;
+   }
+
+   const unsigned component = (op == OPCODE_SIN) ? 0 : 1;
+   const unsigned scs_mask = (1U << component);
+   int done_mask = ~dst.writemask;
+   ir_to_mesa_src_reg tmp;
+
+   assert(op == OPCODE_SIN || op == OPCODE_COS);
+
+   /* If there are compnents in the destination that differ from the component
+    * that will be written by the SCS instrution, we'll need a temporary.
+    */
+   if (scs_mask != unsigned(dst.writemask)) {
+      tmp = get_temp(glsl_type::vec4_type);
+   }
+
+   for (unsigned i = 0; i < 4; i++) {
+      unsigned this_mask = (1U << i);
+      ir_to_mesa_src_reg src0 = src;
+
+      if ((done_mask & this_mask) != 0)
+	 continue;
+
+      /* The source swizzle specified which component of the source generates
+       * sine / cosine for the current component in the destination.  The SCS
+       * instruction requires that this value be swizzle to the X component.
+       * Replace the current swizzle with a swizzle that puts the source in
+       * the X component.
+       */
+      unsigned src0_swiz = GET_SWZ(src.swizzle, i);
+
+      src0.swizzle = MAKE_SWIZZLE4(src0_swiz, src0_swiz,
+				   src0_swiz, src0_swiz);
+      for (unsigned j = i + 1; j < 4; j++) {
+	 /* If there is another enabled component in the destination that is
+	  * derived from the same inputs, generate its value on this pass as
+	  * well.
+	  */
+	 if (!(done_mask & (1 << j)) &&
+	     GET_SWZ(src0.swizzle, j) == src0_swiz) {
+	    this_mask |= (1 << j);
+	 }
+      }
+
+      if (this_mask != scs_mask) {
+	 ir_to_mesa_instruction *inst;
+	 ir_to_mesa_dst_reg tmp_dst = ir_to_mesa_dst_reg_from_src(tmp);
+
+	 /* Emit the SCS instruction.
+	  */
+	 inst = ir_to_mesa_emit_op1(ir, OPCODE_SCS, tmp_dst, src0);
+	 inst->dst_reg.writemask = scs_mask;
+
+	 /* Move the result of the SCS instruction to the desired location in
+	  * the destination.
+	  */
+	 tmp.swizzle = MAKE_SWIZZLE4(component, component,
+				     component, component);
+	 inst = ir_to_mesa_emit_op1(ir, OPCODE_SCS, dst, tmp);
+	 inst->dst_reg.writemask = this_mask;
+      } else {
+	 /* Emit the SCS instruction to write directly to the destination.
+	  */
+	 ir_to_mesa_instruction *inst =
+	    ir_to_mesa_emit_op1(ir, OPCODE_SCS, dst, src0);
+	 inst->dst_reg.writemask = scs_mask;
+      }
+
+      done_mask |= this_mask;
+   }
 }
 
 struct ir_to_mesa_src_reg
@@ -831,6 +941,32 @@ ir_to_mesa_visitor::try_emit_mad(ir_expression *ir, int mul_operand)
    return true;
 }
 
+GLboolean
+ir_to_mesa_visitor::try_emit_sat(ir_expression *ir)
+{
+   /* Saturates were only introduced to vertex programs in
+    * NV_vertex_program3, so don't give them to drivers in the VP.
+    */
+   if (this->prog->Target == GL_VERTEX_PROGRAM_ARB)
+      return false;
+
+   ir_rvalue *sat_src = ir->as_rvalue_to_saturate();
+   if (!sat_src)
+      return false;
+
+   sat_src->accept(this);
+   ir_to_mesa_src_reg src = this->result;
+
+   this->result = get_temp(ir->type);
+   ir_to_mesa_instruction *inst;
+   inst = ir_to_mesa_emit_op1(ir, OPCODE_MOV,
+			      ir_to_mesa_dst_reg_from_src(this->result),
+			      src);
+   inst->saturate = true;
+
+   return true;
+}
+
 void
 ir_to_mesa_visitor::reladdr_to_temp(ir_instruction *ir,
 				    ir_to_mesa_src_reg *reg, int *num_reladdr)
@@ -852,10 +988,127 @@ ir_to_mesa_visitor::reladdr_to_temp(ir_instruction *ir,
 }
 
 void
+ir_to_mesa_visitor::emit_swz(ir_expression *ir)
+{
+   /* Assume that the vector operator is in a form compatible with OPCODE_SWZ.
+    * This means that each of the operands is either an immediate value of -1,
+    * 0, or 1, or is a component from one source register (possibly with
+    * negation).
+    */
+   uint8_t components[4] = { 0 };
+   bool negate[4] = { false };
+   ir_variable *var = NULL;
+
+   for (unsigned i = 0; i < ir->type->vector_elements; i++) {
+      ir_rvalue *op = ir->operands[i];
+
+      assert(op->type->is_scalar());
+
+      while (op != NULL) {
+	 switch (op->ir_type) {
+	 case ir_type_constant: {
+
+	    assert(op->type->is_scalar());
+
+	    const ir_constant *const c = op->as_constant();
+	    if (c->is_one()) {
+	       components[i] = SWIZZLE_ONE;
+	    } else if (c->is_zero()) {
+	       components[i] = SWIZZLE_ZERO;
+	    } else if (c->is_negative_one()) {
+	       components[i] = SWIZZLE_ONE;
+	       negate[i] = true;
+	    } else {
+	       assert(!"SWZ constant must be 0.0 or 1.0.");
+	    }
+
+	    op = NULL;
+	    break;
+	 }
+
+	 case ir_type_dereference_variable: {
+	    ir_dereference_variable *const deref =
+	       (ir_dereference_variable *) op;
+
+	    assert((var == NULL) || (deref->var == var));
+	    components[i] = SWIZZLE_X;
+	    var = deref->var;
+	    op = NULL;
+	    break;
+	 }
+
+	 case ir_type_expression: {
+	    ir_expression *const expr = (ir_expression *) op;
+
+	    assert(expr->operation == ir_unop_neg);
+	    negate[i] = true;
+
+	    op = expr->operands[0];
+	    break;
+	 }
+
+	 case ir_type_swizzle: {
+	    ir_swizzle *const swiz = (ir_swizzle *) op;
+
+	    components[i] = swiz->mask.x;
+	    op = swiz->val;
+	    break;
+	 }
+
+	 default:
+	    assert(!"Should not get here.");
+	    return;
+	 }
+      }
+   }
+
+   assert(var != NULL);
+
+   ir_dereference_variable *const deref =
+      new(mem_ctx) ir_dereference_variable(var);
+
+   this->result.file = PROGRAM_UNDEFINED;
+   deref->accept(this);
+   if (this->result.file == PROGRAM_UNDEFINED) {
+      ir_print_visitor v;
+      printf("Failed to get tree for expression operand:\n");
+      deref->accept(&v);
+      exit(1);
+   }
+
+   ir_to_mesa_src_reg src;
+
+   src = this->result;
+   src.swizzle = MAKE_SWIZZLE4(components[0],
+			       components[1],
+			       components[2],
+			       components[3]);
+   src.negate = ((unsigned(negate[0]) << 0)
+		 | (unsigned(negate[1]) << 1)
+		 | (unsigned(negate[2]) << 2)
+		 | (unsigned(negate[3]) << 3));
+
+   /* Storage for our result.  Ideally for an assignment we'd be using the
+    * actual storage for the result here, instead.
+    */
+   const ir_to_mesa_src_reg result_src = get_temp(ir->type);
+   ir_to_mesa_dst_reg result_dst = ir_to_mesa_dst_reg_from_src(result_src);
+
+   /* Limit writes to the channels that will be used by result_src later.
+    * This does limit this temp's use as a temporary for multi-instruction
+    * sequences.
+    */
+   result_dst.writemask = (1 << ir->type->vector_elements) - 1;
+
+   ir_to_mesa_emit_op1(ir, OPCODE_SWZ, result_dst, src);
+   this->result = result_src;
+}
+
+void
 ir_to_mesa_visitor::visit(ir_expression *ir)
 {
    unsigned int operand;
-   struct ir_to_mesa_src_reg op[2];
+   struct ir_to_mesa_src_reg op[Elements(ir->operands)];
    struct ir_to_mesa_src_reg result_src;
    struct ir_to_mesa_dst_reg result_dst;
 
@@ -866,6 +1119,13 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 	 return;
       if (try_emit_mad(ir, 0))
 	 return;
+   }
+   if (try_emit_sat(ir))
+      return;
+
+   if (ir->operation == ir_quadop_vector) {
+      this->emit_swz(ir);
+      return;
    }
 
    for (operand = 0; operand < ir->get_num_operands(); operand++) {
@@ -939,6 +1199,12 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       break;
    case ir_unop_cos:
       ir_to_mesa_emit_scalar_op1(ir, OPCODE_COS, result_dst, op[0]);
+      break;
+   case ir_unop_sin_reduced:
+      emit_scs(ir, OPCODE_SIN, result_dst, op[0]);
+      break;
+   case ir_unop_cos_reduced:
+      emit_scs(ir, OPCODE_COS, result_dst, op[0]);
       break;
 
    case ir_unop_dFdx:
@@ -1058,10 +1324,6 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 			 ir->operands[0]->type->vector_elements);
       break;
 
-   case ir_binop_cross:
-      ir_to_mesa_emit_op2(ir, OPCODE_XPD, result_dst, op[0], op[1]);
-      break;
-
    case ir_unop_sqrt:
       /* sqrt(x) = x * rsq(x). */
       ir_to_mesa_emit_scalar_op1(ir, OPCODE_RSQ, result_dst, op[0]);
@@ -1122,6 +1384,12 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
    case ir_binop_bit_or:
    case ir_unop_round_even:
       assert(!"GLSL 1.30 features unsupported");
+      break;
+
+   case ir_quadop_vector:
+      /* This operation should have already been handled.
+       */
+      assert(!"Should not get here.");
       break;
    }
 
@@ -1330,6 +1598,93 @@ get_assignment_lhs(ir_dereference *ir, ir_to_mesa_visitor *v)
    return ir_to_mesa_dst_reg_from_src(v->result);
 }
 
+/**
+ * Process the condition of a conditional assignment
+ *
+ * Examines the condition of a conditional assignment to generate the optimal
+ * first operand of a \c CMP instruction.  If the condition is a relational
+ * operator with 0 (e.g., \c ir_binop_less), the value being compared will be
+ * used as the source for the \c CMP instruction.  Otherwise the comparison
+ * is processed to a boolean result, and the boolean result is used as the
+ * operand to the CMP instruction.
+ */
+bool
+ir_to_mesa_visitor::process_move_condition(ir_rvalue *ir)
+{
+   ir_rvalue *src_ir = ir;
+   bool negate = true;
+   bool switch_order = false;
+
+   ir_expression *const expr = ir->as_expression();
+   if ((expr != NULL) && (expr->get_num_operands() == 2)) {
+      bool zero_on_left = false;
+
+      if (expr->operands[0]->is_zero()) {
+	 src_ir = expr->operands[1];
+	 zero_on_left = true;
+      } else if (expr->operands[1]->is_zero()) {
+	 src_ir = expr->operands[0];
+	 zero_on_left = false;
+      }
+
+      /*      a is -  0  +            -  0  +
+       * (a <  0)  T  F  F  ( a < 0)  T  F  F
+       * (0 <  a)  F  F  T  (-a < 0)  F  F  T
+       * (a <= 0)  T  T  F  (-a < 0)  F  F  T  (swap order of other operands)
+       * (0 <= a)  F  T  T  ( a < 0)  T  F  F  (swap order of other operands)
+       * (a >  0)  F  F  T  (-a < 0)  F  F  T
+       * (0 >  a)  T  F  F  ( a < 0)  T  F  F
+       * (a >= 0)  F  T  T  ( a < 0)  T  F  F  (swap order of other operands)
+       * (0 >= a)  T  T  F  (-a < 0)  F  F  T  (swap order of other operands)
+       *
+       * Note that exchanging the order of 0 and 'a' in the comparison simply
+       * means that the value of 'a' should be negated.
+       */
+      if (src_ir != ir) {
+	 switch (expr->operation) {
+	 case ir_binop_less:
+	    switch_order = false;
+	    negate = zero_on_left;
+	    break;
+
+	 case ir_binop_greater:
+	    switch_order = false;
+	    negate = !zero_on_left;
+	    break;
+
+	 case ir_binop_lequal:
+	    switch_order = true;
+	    negate = !zero_on_left;
+	    break;
+
+	 case ir_binop_gequal:
+	    switch_order = true;
+	    negate = zero_on_left;
+	    break;
+
+	 default:
+	    /* This isn't the right kind of comparison afterall, so make sure
+	     * the whole condition is visited.
+	     */
+	    src_ir = ir;
+	    break;
+	 }
+      }
+   }
+
+   src_ir->accept(this);
+
+   /* We use the OPCODE_CMP (a < 0 ? b : c) for conditional moves, and the
+    * condition we produced is 0.0 or 1.0.  By flipping the sign, we can
+    * choose which value OPCODE_CMP produces without an extra instruction
+    * computing the condition.
+    */
+   if (negate)
+      this->result.negate = ~this->result.negate;
+
+   return switch_order;
+}
+
 void
 ir_to_mesa_visitor::visit(ir_assignment *ir)
 {
@@ -1389,20 +1744,18 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
    assert(r.file != PROGRAM_UNDEFINED);
 
    if (ir->condition) {
-      ir_to_mesa_src_reg condition;
+      const bool switch_order = this->process_move_condition(ir->condition);
+      ir_to_mesa_src_reg condition = this->result;
 
-      ir->condition->accept(this);
-      condition = this->result;
-
-      /* We use the OPCODE_CMP (a < 0 ? b : c) for conditional moves,
-       * and the condition we produced is 0.0 or 1.0.  By flipping the
-       * sign, we can choose which value OPCODE_CMP produces without
-       * an extra computing the condition.
-       */
-      condition.negate = ~condition.negate;
       for (i = 0; i < type_size(ir->lhs->type); i++) {
-	 ir_to_mesa_emit_op3(ir, OPCODE_CMP, l,
-			     condition, r, ir_to_mesa_src_reg_from_dst(l));
+	 if (switch_order) {
+	    ir_to_mesa_emit_op3(ir, OPCODE_CMP, l,
+				condition, ir_to_mesa_src_reg_from_dst(l), r);
+	 } else {
+	    ir_to_mesa_emit_op3(ir, OPCODE_CMP, l,
+				condition, r, ir_to_mesa_src_reg_from_dst(l));
+	 }
+
 	 l.index++;
 	 r.index++;
       }
@@ -2355,6 +2708,8 @@ get_mesa_program(struct gl_context *ctx, struct gl_shader_program *shader_progra
 
       mesa_inst->Opcode = inst->op;
       mesa_inst->CondUpdate = inst->cond_update;
+      if (inst->saturate)
+	 mesa_inst->SaturateMode = SATURATE_ZERO_ONE;
       mesa_inst->DstReg.File = inst->dst_reg.file;
       mesa_inst->DstReg.Index = inst->dst_reg.index;
       mesa_inst->DstReg.CondMask = inst->dst_reg.cond_mask;
@@ -2475,13 +2830,14 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 
 	 /* Lowering */
 	 do_mat_op_to_vec(ir);
-	 do_mod_to_fract(ir);
-	 do_div_to_mul_rcp(ir);
-	 do_explog_to_explog2(ir);
+	 lower_instructions(ir, MOD_TO_FRACT | DIV_TO_MUL_RCP | EXP_TO_EXP2
+			      | LOG_TO_LOG2);
 
 	 progress = do_lower_jumps(ir, true, true, options->EmitNoMainReturn, options->EmitNoCont, options->EmitNoLoops) || progress;
 
 	 progress = do_common_optimization(ir, true, options->MaxUnrollIterations) || progress;
+
+	 progress = lower_quadop_vector(ir, true) || progress;
 
 	 if (options->EmitNoIfs)
 	    progress = do_if_to_cond_assign(ir) || progress;

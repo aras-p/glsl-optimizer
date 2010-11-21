@@ -26,7 +26,7 @@
 
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
-#include "nouveau_class.h"
+#include "nv10_3d.xml.h"
 #include "nv10_driver.h"
 
 #define NUM_VERTEX_ATTRS 8
@@ -39,37 +39,37 @@ nv10_emit_material(struct gl_context *ctx, struct nouveau_array *a,
 static struct nouveau_attr_info nv10_vertex_attrs[VERT_ATTRIB_MAX] = {
 	[VERT_ATTRIB_POS] = {
 		.vbo_index = 0,
-		.imm_method = NV10TCL_VERTEX_POS_4F_X,
+		.imm_method = NV10_3D_VERTEX_POS_4F_X,
 		.imm_fields = 4,
 	},
 	[VERT_ATTRIB_COLOR0] = {
 		.vbo_index = 1,
-		.imm_method = NV10TCL_VERTEX_COL_4F_R,
+		.imm_method = NV10_3D_VERTEX_COL_4F_R,
 		.imm_fields = 4,
 	},
 	[VERT_ATTRIB_COLOR1] = {
 		.vbo_index = 2,
-		.imm_method = NV10TCL_VERTEX_COL2_3F_R,
+		.imm_method = NV10_3D_VERTEX_COL2_3F_R,
 		.imm_fields = 3,
 	},
 	[VERT_ATTRIB_TEX0] = {
 		.vbo_index = 3,
-		.imm_method = NV10TCL_VERTEX_TX0_4F_S,
+		.imm_method = NV10_3D_VERTEX_TX0_4F_S,
 		.imm_fields = 4,
 	},
 	[VERT_ATTRIB_TEX1] = {
 		.vbo_index = 4,
-		.imm_method = NV10TCL_VERTEX_TX1_4F_S,
+		.imm_method = NV10_3D_VERTEX_TX1_4F_S,
 		.imm_fields = 4,
 	},
 	[VERT_ATTRIB_NORMAL] = {
 		.vbo_index = 5,
-		.imm_method = NV10TCL_VERTEX_NOR_3F_X,
+		.imm_method = NV10_3D_VERTEX_NOR_3F_X,
 		.imm_fields = 3,
 	},
 	[VERT_ATTRIB_FOG] = {
 		.vbo_index = 7,
-		.imm_method = NV10TCL_VERTEX_FOG_1F,
+		.imm_method = NV10_3D_VERTEX_FOG_1F,
 		.imm_fields = 1,
 	},
 	[VERT_ATTRIB_GENERIC0] = {
@@ -94,12 +94,12 @@ get_hw_format(int type)
 {
 	switch (type) {
 	case GL_FLOAT:
-		return NV10TCL_VTXFMT_TYPE_FLOAT;
+		return NV10_3D_VTXBUF_FMT_TYPE_V32_FLOAT;
 	case GL_SHORT:
 	case GL_UNSIGNED_SHORT:
-		return NV10TCL_VTXFMT_TYPE_SHORT;
+		return NV10_3D_VTXBUF_FMT_TYPE_V16_SNORM;
 	case GL_UNSIGNED_BYTE:
-		return NV10TCL_VTXFMT_TYPE_BYTE_RGBA;
+		return NV10_3D_VTXBUF_FMT_TYPE_B8G8R8A8_UNORM;
 	default:
 		assert(0);
 	}
@@ -122,13 +122,13 @@ nv10_render_set_format(struct gl_context *ctx)
 				get_hw_format(a->type);
 
 			if (attr == VERT_ATTRIB_POS && a->fields == 4)
-				hw_format |= NV10TCL_VTXFMT_POS_HOMOGENEOUS;
+				hw_format |= NV10_3D_VTXBUF_FMT_HOMOGENEOUS;
 		} else {
 			/* Unused attribute. */
-			hw_format = NV10TCL_VTXFMT_TYPE_FLOAT;
+			hw_format = NV10_3D_VTXBUF_FMT_TYPE_V32_FLOAT;
 		}
 
-		BEGIN_RING(chan, celsius, NV10TCL_VTXFMT(i), 1);
+		BEGIN_RING(chan, celsius, NV10_3D_VTXBUF_FMT(i), 1);
 		OUT_RING(chan, hw_format);
 	}
 }
@@ -145,7 +145,7 @@ nv10_render_bind_vertices(struct gl_context *ctx)
 		struct nouveau_array *a = &render->attrs[attr];
 
 		nouveau_bo_markl(bctx, celsius,
-				 NV10TCL_VTXBUF_ADDRESS(i),
+				 NV10_3D_VTXBUF_OFFSET(i),
 				 a->bo, a->offset,
 				 NOUVEAU_BO_GART | NOUVEAU_BO_RD);
 	}
@@ -156,33 +156,33 @@ nv10_render_bind_vertices(struct gl_context *ctx)
 	struct nouveau_grobj *celsius = context_eng3d(ctx)
 
 #define BATCH_VALIDATE()						\
-	BEGIN_RING(chan, celsius, NV10TCL_VERTEX_ARRAY_VALIDATE, 1);	\
+	BEGIN_RING(chan, celsius, NV10_3D_VTXBUF_VALIDATE, 1);	\
 	OUT_RING(chan, 0)
 
 #define BATCH_BEGIN(prim)						\
-	BEGIN_RING(chan, celsius, NV10TCL_VERTEX_BUFFER_BEGIN_END, 1);	\
+	BEGIN_RING(chan, celsius, NV10_3D_VTXBUF_BEGIN_END, 1);	\
 	OUT_RING(chan, prim)
 #define BATCH_END()							\
-	BEGIN_RING(chan, celsius, NV10TCL_VERTEX_BUFFER_BEGIN_END, 1);	\
+	BEGIN_RING(chan, celsius, NV10_3D_VTXBUF_BEGIN_END, 1);	\
 	OUT_RING(chan, 0)
 
 #define MAX_PACKET 0x400
 
 #define MAX_OUT_L 0x100
 #define BATCH_PACKET_L(n)						\
-	BEGIN_RING_NI(chan, celsius, NV10TCL_VERTEX_BUFFER_DRAW_ARRAYS, n)
+	BEGIN_RING_NI(chan, celsius, NV10_3D_VTXBUF_BATCH, n)
 #define BATCH_OUT_L(i, n)			\
 	OUT_RING(chan, ((n) - 1) << 24 | (i))
 
 #define MAX_OUT_I16 0x2
 #define BATCH_PACKET_I16(n)						\
-	BEGIN_RING_NI(chan, celsius, NV10TCL_VB_ELEMENT_U16, n)
+	BEGIN_RING_NI(chan, celsius, NV10_3D_VTXBUF_ELEMENT_U16, n)
 #define BATCH_OUT_I16(i0, i1)			\
 	OUT_RING(chan, (i1) << 16 | (i0))
 
 #define MAX_OUT_I32 0x1
 #define BATCH_PACKET_I32(n)						\
-	BEGIN_RING_NI(chan, celsius, NV10TCL_VB_ELEMENT_U32, n)
+	BEGIN_RING_NI(chan, celsius, NV10_3D_VTXBUF_ELEMENT_U32, n)
 #define BATCH_OUT_I32(i)			\
 	OUT_RING(chan, i)
 

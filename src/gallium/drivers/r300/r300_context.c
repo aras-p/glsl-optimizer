@@ -79,6 +79,9 @@ static void r300_release_referenced_objects(struct r300_context *r300)
                 NULL);
     }
 
+    /* The dummy VBO. */
+    pipe_resource_reference(&r300->dummy_vb, NULL);
+
     /* The SWTCL VBO. */
     pipe_resource_reference(&r300->vbo, NULL);
 
@@ -488,6 +491,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
         rtempl.target = PIPE_TEXTURE_2D;
         rtempl.format = PIPE_FORMAT_I8_UNORM;
         rtempl.bind = PIPE_BIND_SAMPLER_VIEW;
+        rtempl.usage = PIPE_USAGE_IMMUTABLE;
         rtempl.width0 = 1;
         rtempl.height0 = 1;
         rtempl.depth0 = 1;
@@ -499,6 +503,19 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
             r300->context.create_sampler_view(&r300->context, tex, &vtempl);
 
         pipe_resource_reference(&tex, NULL);
+    }
+
+    {
+        struct pipe_resource vb = {};
+        vb.target = PIPE_BUFFER;
+        vb.format = PIPE_FORMAT_R8_UNORM;
+        vb.bind = PIPE_BIND_VERTEX_BUFFER;
+        vb.usage = PIPE_USAGE_IMMUTABLE;
+        vb.width0 = sizeof(float) * 16;
+        vb.height0 = 1;
+        vb.depth0 = 1;
+
+        r300->dummy_vb = screen->resource_create(screen, &vb);
     }
 
     return &r300->context;

@@ -27,12 +27,13 @@
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
 #include "nouveau_util.h"
-#include "nouveau_class.h"
+#include "nv_object.xml.h"
+#include "nv04_3d.xml.h"
 #include "nv04_driver.h"
 
 #define COMBINER_SHIFT(in)						\
-	(NV04_MULTITEX_TRIANGLE_COMBINE_COLOR_ARGUMENT##in##_SHIFT	\
-	 - NV04_MULTITEX_TRIANGLE_COMBINE_COLOR_ARGUMENT0_SHIFT)
+	(NV04_MULTITEX_TRIANGLE_COMBINE_COLOR_ARGUMENT##in##__SHIFT	\
+	 - NV04_MULTITEX_TRIANGLE_COMBINE_COLOR_ARGUMENT0__SHIFT)
 #define COMBINER_SOURCE(reg)					\
 	NV04_MULTITEX_TRIANGLE_COMBINE_COLOR_ARGUMENT0_##reg
 #define COMBINER_INVERT					\

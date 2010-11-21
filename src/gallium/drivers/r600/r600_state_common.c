@@ -202,10 +202,10 @@ void *r600_create_vertex_elements(struct pipe_context *ctx,
 		format = &v->hw_format[i];
 
 		switch (*format) {
-                    FORMAT_REPLACE(R64_FLOAT,           R32_FLOAT);
-                    FORMAT_REPLACE(R64G64_FLOAT,        R32G32_FLOAT);
-                    FORMAT_REPLACE(R64G64B64_FLOAT,     R32G32B32_FLOAT);
-                    FORMAT_REPLACE(R64G64B64A64_FLOAT,  R32G32B32A32_FLOAT);
+		FORMAT_REPLACE(R64_FLOAT,           R32_FLOAT);
+		FORMAT_REPLACE(R64G64_FLOAT,        R32G32_FLOAT);
+		FORMAT_REPLACE(R64G64B64_FLOAT,     R32G32B32_FLOAT);
+		FORMAT_REPLACE(R64G64B64A64_FLOAT,  R32G32B32A32_FLOAT);
 		default:;
 		}
 		v->incompatible_layout =
@@ -213,8 +213,7 @@ void *r600_create_vertex_elements(struct pipe_context *ctx,
 			v->elements[i].src_format != v->hw_format[i] ||
 			v->elements[i].src_offset % 4 != 0;
 
-                v->hw_format_size[i] =
-			align(util_format_get_blocksize(v->hw_format[i]), 4);
+		v->hw_format_size[i] = align(util_format_get_blocksize(v->hw_format[i]), 4);
 	}
 
 	return v;

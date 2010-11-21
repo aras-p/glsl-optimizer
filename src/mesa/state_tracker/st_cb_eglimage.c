@@ -106,6 +106,7 @@ st_bind_surface(struct gl_context *ctx, GLenum target,
    struct st_texture_object *stObj;
    struct st_texture_image *stImage;
    GLenum internalFormat;
+   gl_format texFormat;
 
    /* map pipe format to base format */
    if (util_format_get_component_bits(ps->format, UTIL_FORMAT_COLORSPACE_RGB, 3) > 0)
@@ -122,10 +123,11 @@ st_bind_surface(struct gl_context *ctx, GLenum target,
       stObj->surface_based = GL_TRUE;
    }
 
+   texFormat = st_pipe_format_to_mesa_format(ps->format);
+
    _mesa_init_teximage_fields(ctx, target, texImage,
-                              ps->width, ps->height, 1, 0, internalFormat);
-   texImage->TexFormat = st_pipe_format_to_mesa_format(ps->format);
-   _mesa_set_fetch_functions(texImage, 2);
+                              ps->width, ps->height, 1, 0, internalFormat,
+                              texFormat);
 
    /* FIXME create a non-default sampler view from the pipe_surface? */
    pipe_resource_reference(&stObj->pt, ps->texture);

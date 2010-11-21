@@ -577,6 +577,12 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 		if (r)
 			goto out_err;
 	}
+	/* FS RESOURCE */
+	for (int j = 0, offset = 0x7C00; j < 16; j++, offset += 0x20) {
+		r = evergreen_state_resource_init(ctx, offset);
+		if (r)
+			goto out_err;
+	}
 
 	/* PS loop const */
 	evergreen_loop_const_init(ctx, 0);
@@ -682,6 +688,13 @@ void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, stru
 void evergreen_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
 {
 	unsigned offset = R_030000_SQ_TEX_RESOURCE_WORD0_0 + 0x1600 + 0x20 * rid;
+
+	evergreen_context_pipe_state_set_resource(ctx, state, offset);
+}
+
+void evergreen_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
+{
+	unsigned offset = R_030000_SQ_TEX_RESOURCE_WORD0_0 + 0x7C00 + 0x20 * rid;
 
 	evergreen_context_pipe_state_set_resource(ctx, state, offset);
 }
@@ -914,6 +927,13 @@ void evergreen_ps_resource_set(struct r600_context *ctx, struct r600_pipe_state 
 void evergreen_vs_resource_set(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
 {
 	unsigned offset = R_030000_RESOURCE0_WORD0 + 0x1600 + 0x20 * rid;
+
+	evergreen_resource_set(ctx, state, offset);
+}
+
+void evergreen_fs_resource_set(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
+{
+	unsigned offset = R_030000_RESOURCE0_WORD0 + 0x7C00 + 0x20 * rid;
 
 	evergreen_resource_set(ctx, state, offset);
 }

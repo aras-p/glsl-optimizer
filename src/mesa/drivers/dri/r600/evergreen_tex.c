@@ -33,7 +33,6 @@
 #include "main/teximage.h"
 #include "main/mipmap.h"
 #include "main/simple_list.h"
-#include "main/texstore.h"
 #include "main/texobj.h"
 
 #include "texmem.h"
@@ -1024,15 +1023,15 @@ static GLboolean evergreen_setup_hardware_state(struct gl_context * ctx, struct 
 	SETfield(t->SQ_TEX_RESOURCE5, t->maxLod - t->minLod, LAST_LEVEL_shift, LAST_LEVEL_mask);
     
 	SETfield(t->SQ_TEX_SAMPLER1,
-		     EG_S_FIXED(CLAMP(t->base.MinLod - t->minLod, 0, 15), 6),
+		     EG_S_FIXED(CLAMP(t->base.MinLod - t->minLod, 0, 15), 8),
 		     EG_SQ_TEX_SAMPLER_WORD1_0__MIN_LOD_shift, 
              EG_SQ_TEX_SAMPLER_WORD1_0__MIN_LOD_mask);
 	SETfield(t->SQ_TEX_SAMPLER1,
-		     EG_S_FIXED(CLAMP(t->base.MaxLod - t->minLod, 0, 15), 6),
+		     EG_S_FIXED(CLAMP(t->base.MaxLod - t->minLod, 0, 15), 8),
 		     EG_SQ_TEX_SAMPLER_WORD1_0__MAX_LOD_shift, 
              EG_SQ_TEX_SAMPLER_WORD1_0__MAX_LOD_mask);
 	SETfield(t->SQ_TEX_SAMPLER2,
-		     EG_S_FIXED(CLAMP(ctx->Texture.Unit[unit].LodBias + t->base.LodBias, -16, 16), 6),
+		     EG_S_FIXED(CLAMP(ctx->Texture.Unit[unit].LodBias + t->base.LodBias, -16, 16), 8),
 		     EG_SQ_TEX_SAMPLER_WORD2_0__LOD_BIAS_shift, 
              EG_SQ_TEX_SAMPLER_WORD2_0__LOD_BIAS_mask);
 
@@ -1152,6 +1151,7 @@ void evergreenSetTexBuffer(__DRIcontext *pDRICtx, GLint target, GLint glx_textur
 	radeonTexObjPtr t;
 	uint32_t pitch_val;
 	uint32_t internalFormat, type, format;
+	gl_format texFormat;
 
 	type = GL_BGRA;
 	format = GL_UNSIGNED_BYTE;
@@ -1191,10 +1191,6 @@ void evergreenSetTexBuffer(__DRIcontext *pDRICtx, GLint target, GLint glx_textur
 	radeon_miptree_unreference(&t->mt);
 	radeon_miptree_unreference(&rImage->mt);
 
-	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
-				   rb->base.Width, rb->base.Height, 1, 0, rb->cpp);
-	texImage->RowStride = rb->pitch / rb->cpp;
-
 	rImage->bo = rb->bo;
 	radeon_bo_ref(rImage->bo);
 	t->bo = rb->bo;
@@ -1205,6 +1201,7 @@ void evergreenSetTexBuffer(__DRIcontext *pDRICtx, GLint target, GLint glx_textur
 	switch (rb->cpp) {
 	case 4:
 		if (glx_texture_format == __DRI_TEXTURE_FORMAT_RGB) {
+			texFormat = MESA_FORMAT_RGB888;
 			SETfield(t->SQ_TEX_RESOURCE7, FMT_8_8_8_8,
 				     EG_SQ_TEX_RESOURCE_WORD7_0__DATA_FORMAT_shift, 
                      EG_SQ_TEX_RESOURCE_WORD7_0__DATA_FORMAT_mask);
@@ -1218,6 +1215,7 @@ void evergreenSetTexBuffer(__DRIcontext *pDRICtx, GLint target, GLint glx_textur
 			SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_1,
 				 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);
 		} else {
+			texFormat = MESA_FORMAT_ARGB8888;
 			SETfield(t->SQ_TEX_RESOURCE7, FMT_8_8_8_8,
 				     EG_SQ_TEX_RESOURCE_WORD7_0__DATA_FORMAT_shift, 
                      EG_SQ_TEX_RESOURCE_WORD7_0__DATA_FORMAT_mask);
@@ -1236,6 +1234,7 @@ void evergreenSetTexBuffer(__DRIcontext *pDRICtx, GLint target, GLint glx_textur
 	case 3:
 	default:
 		// FMT_8_8_8 ???
+		texFormat = MESA_FORMAT_RGB888;
 		SETfield(t->SQ_TEX_RESOURCE7, FMT_8_8_8_8,
 			     EG_SQ_TEX_RESOURCE_WORD7_0__DATA_FORMAT_shift, 
                  EG_SQ_TEX_RESOURCE_WORD7_0__DATA_FORMAT_mask);
@@ -1251,6 +1250,7 @@ void evergreenSetTexBuffer(__DRIcontext *pDRICtx, GLint target, GLint glx_textur
 		pitch_val /= 4;
 		break;
 	case 2:
+		texFormat = MESA_FORMAT_RGB565;
 		SETfield(t->SQ_TEX_RESOURCE7, FMT_5_6_5,
 			     EG_SQ_TEX_RESOURCE_WORD7_0__DATA_FORMAT_shift, 
                  EG_SQ_TEX_RESOURCE_WORD7_0__DATA_FORMAT_mask);
@@ -1266,6 +1266,11 @@ void evergreenSetTexBuffer(__DRIcontext *pDRICtx, GLint target, GLint glx_textur
 		pitch_val /= 2;
 		break;
 	}
+
+	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
+				   rb->base.Width, rb->base.Height, 1, 0,
+				   rb->cpp, texFormat);
+	texImage->RowStride = rb->pitch / rb->cpp;
 
 	pitch_val = (pitch_val + R700_TEXEL_PITCH_ALIGNMENT_MASK)
 		& ~R700_TEXEL_PITCH_ALIGNMENT_MASK;

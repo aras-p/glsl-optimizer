@@ -685,13 +685,13 @@ _mesa_LoadProgramNV(GLenum target, GLuint id, GLsizei len,
  */
 void GLAPIENTRY
 _mesa_ProgramParameters4dvNV(GLenum target, GLuint index,
-                             GLuint num, const GLdouble *params)
+                             GLsizei num, const GLdouble *params)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (target == GL_VERTEX_PROGRAM_NV && ctx->Extensions.NV_vertex_program) {
-      GLuint i;
+      GLint i;
       if (index + num > MAX_NV_VERTEX_PROGRAM_PARAMS) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramParameters4dvNV");
          return;
@@ -717,13 +717,13 @@ _mesa_ProgramParameters4dvNV(GLenum target, GLuint index,
  */
 void GLAPIENTRY
 _mesa_ProgramParameters4fvNV(GLenum target, GLuint index,
-                             GLuint num, const GLfloat *params)
+                             GLsizei num, const GLfloat *params)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (target == GL_VERTEX_PROGRAM_NV && ctx->Extensions.NV_vertex_program) {
-      GLuint i;
+      GLint i;
       if (index + num > MAX_NV_VERTEX_PROGRAM_PARAMS) {
          _mesa_error(ctx, GL_INVALID_VALUE, "glProgramParameters4fvNV");
          return;

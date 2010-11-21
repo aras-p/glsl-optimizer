@@ -24,9 +24,7 @@ struct i915_drm_winsys
 
    size_t max_batch_size;
 
-   struct {
-      drm_intel_bufmgr *gem;
-   } pools;
+   drm_intel_bufmgr *gem_manager;
 };
 
 static INLINE struct i915_drm_winsys *
@@ -54,7 +52,6 @@ struct i915_drm_buffer {
 
    void *ptr;
    unsigned map_count;
-   boolean map_gtt;
 
    boolean flinked;
    unsigned flink;

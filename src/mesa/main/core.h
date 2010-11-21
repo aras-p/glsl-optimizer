@@ -46,8 +46,6 @@
 #include "main/imports.h"
 #include "main/macros.h"
 
-#include "main/version.h" /* for MESA_VERSION_STRING */
-#include "main/context.h" /* for _mesa_share_state */
 #include "main/mtypes.h"
 
 #ifdef __cplusplus

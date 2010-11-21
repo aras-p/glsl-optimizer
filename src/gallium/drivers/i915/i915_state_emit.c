@@ -224,10 +224,6 @@ i915_emit_hardware_state(struct i915_context *i915 )
          struct i915_texture *tex = i915_texture(cbuf_surface->texture);
          assert(tex);
 
-         if (tex && tex->sw_tiled) {
-            ctile = BUF_3D_TILED_SURFACE;
-         }
-
          OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
 
          OUT_BATCH(BUF_3D_ID_COLOR_BACK |
@@ -245,10 +241,6 @@ i915_emit_hardware_state(struct i915_context *i915 )
          unsigned ztile = BUF_3D_USE_FENCE;
          struct i915_texture *tex = i915_texture(depth_surface->texture);
          assert(tex);
-
-         if (tex && tex->sw_tiled) {
-            ztile = BUF_3D_TILED_SURFACE;
-         }
 
          OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
 

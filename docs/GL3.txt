@@ -20,7 +20,7 @@ Float textures, renderbuffers                         some infrastructure done
 Framebuffer objects (GL_EXT_framebuffer_object)       DONE
 Half-float                                            some infrastructure done
 Multisample blit                                      DONE
-Non-normalized Integer texture/framebuffer formats    not started
+Non-normalized Integer texture/framebuffer formats    ~50% done
 1D/2D Texture arrays                                  core Mesa, swrast done
 Packed depth/stencil formats                          DONE
 Per-buffer blend and masks (GL_EXT_draw_buffers2)     DONE
@@ -31,10 +31,11 @@ Transform feedback (GL_EXT_transform_feedback)        ~50% done
    glBindBufferRange, glBindBufferBase commands
 Vertex array objects (GL_APPLE_vertex_array_object)   DONE
 sRGB framebuffer format (GL_EXT_framebuffer_sRGB)     not started
-glClearBuffer commands                                DONE, except for dispatch
-glGetStringi command                                  DONE, except for dispatch
-glTexParameterI, glGetTexParameterI commands          DONE, except for dispatch
-glVertexAttribI commands                              not started
+glClearBuffer commands                                DONE
+glGetStringi command                                  DONE
+glTexParameterI, glGetTexParameterI commands          DONE
+glVertexAttribI commands                              DONE (but converts int
+                                                            values to floats)
 
 
 GL 3.1:

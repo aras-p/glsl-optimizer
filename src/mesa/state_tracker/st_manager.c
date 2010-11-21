@@ -40,7 +40,6 @@
 #include "main/texobj.h"
 #include "main/teximage.h"
 #include "main/texstate.h"
-#include "main/texfetch.h"
 #include "main/framebuffer.h"
 #include "main/fbobject.h"
 #include "main/renderbuffer.h"
@@ -556,6 +555,8 @@ st_context_teximage(struct st_context_iface *stctxi, enum st_texture_type target
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
    stImage = st_texture_image(texImage);
    if (tex) {
+      gl_format texFormat;
+
       /*
        * XXX When internal_format and tex->format differ, st_finalize_texture
        * needs to allocate a new texture with internal_format and copy the
@@ -573,11 +574,13 @@ st_context_teximage(struct st_context_iface *stctxi, enum st_texture_type target
          internalFormat = GL_RGBA;
       else
          internalFormat = GL_RGB;
+
+      texFormat = st_ChooseTextureFormat(ctx, internalFormat,
+                                         GL_RGBA, GL_UNSIGNED_BYTE);
+
       _mesa_init_teximage_fields(ctx, target, texImage,
-            tex->width0, tex->height0, 1, 0, internalFormat);
-      texImage->TexFormat = st_ChooseTextureFormat(ctx, internalFormat,
-            GL_RGBA, GL_UNSIGNED_BYTE);
-      _mesa_set_fetch_functions(texImage, 2);
+                                 tex->width0, tex->height0, 1, 0,
+                                 internalFormat, texFormat);
 
       width = tex->width0;
       height = tex->height0;
@@ -608,6 +611,26 @@ st_context_teximage(struct st_context_iface *stctxi, enum st_texture_type target
    _mesa_unlock_texture(ctx, texObj);
    
    return TRUE;
+}
+
+static void
+st_context_copy(struct st_context_iface *stctxi,
+                struct st_context_iface *stsrci, unsigned mask)
+{
+   struct st_context *st = (struct st_context *) stctxi;
+   struct st_context *src = (struct st_context *) stsrci;
+
+   _mesa_copy_context(src->ctx, st->ctx, mask);
+}
+
+static boolean
+st_context_share(struct st_context_iface *stctxi,
+                 struct st_context_iface *stsrci)
+{
+   struct st_context *st = (struct st_context *) stctxi;
+   struct st_context *src = (struct st_context *) stsrci;
+
+   return _mesa_share_state(st->ctx, src->ctx);
 }
 
 static void
@@ -677,7 +700,8 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
       st_context_notify_invalid_framebuffer;
    st->iface.flush = st_context_flush;
    st->iface.teximage = st_context_teximage;
-   st->iface.copy = NULL;
+   st->iface.copy = st_context_copy;
+   st->iface.share = st_context_share;
    st->iface.st_context_private = (void *) smapi;
 
    return &st->iface;
@@ -865,6 +889,7 @@ st_manager_add_color_renderbuffer(struct st_context *st, struct gl_framebuffer *
 }
 
 static const struct st_api st_gl_api = {
+   "Mesa " MESA_VERSION_STRING,
    ST_API_OPENGL,
 #if FEATURE_GL
    ST_PROFILE_DEFAULT_MASK |

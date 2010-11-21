@@ -18,16 +18,15 @@ env.Append(LIBS = [
     talloc,
 ])
 
-sources = []
+sources = ['libgl_gdi.c']
 drivers = []
 
 if True:
-    sources = ['gdi_softpipe_winsys.c']
-    drivers = [softpipe]
+    drivers += [softpipe]
 
 if env['llvm']:
-    sources = ['gdi_llvmpipe_winsys.c']
-    drivers = [llvmpipe]
+    env.Append(CPPDEFINES = 'HAVE_LLVMPIPE')
+    drivers += [llvmpipe]
 
 if env['gcc']:
     sources += ['#src/gallium/state_trackers/wgl/opengl32.mingw.def']

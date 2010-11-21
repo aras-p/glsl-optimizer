@@ -2593,7 +2593,6 @@ copy_tex_image(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
 {
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
-   GLsizei postConvWidth = width, postConvHeight = height;
    GLenum format, type;
    GLint bpp;
    void *buf;
@@ -2601,6 +2600,7 @@ copy_tex_image(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
    texObj = _mesa_get_current_tex_object(ctx, target);
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
 
+   /* Choose format/type for temporary image buffer */
    format = _mesa_base_tex_format(ctx, internalFormat);
    type = get_temp_image_type(ctx, format);
    bpp = _mesa_bytes_per_pixel(format, type);
@@ -2632,12 +2632,8 @@ copy_tex_image(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
       ctx->Driver.FreeTexImageData(ctx, texImage);
    }
 
-   _mesa_init_teximage_fields(ctx, target, texImage,
-                              postConvWidth, postConvHeight, 1,
-                              border, internalFormat);
-
-   _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
-                               internalFormat, GL_NONE, GL_NONE);
+   /* The texture's format was already chosen in _mesa_CopyTexImage() */
+   ASSERT(texImage->TexFormat != MESA_FORMAT_NONE);
 
    /*
     * Store texture data (with pixel transfer ops)
@@ -2690,7 +2686,8 @@ _mesa_meta_CopyTexImage2D(struct gl_context *ctx, GLenum target, GLint level,
  * Have to be careful with locking and meta state for pixel transfer.
  */
 static void
-copy_tex_sub_image(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
+copy_tex_sub_image(struct gl_context *ctx,
+                   GLuint dims, GLenum target, GLint level,
                    GLint xoffset, GLint yoffset, GLint zoffset,
                    GLint x, GLint y,
                    GLsizei width, GLsizei height)
@@ -2704,6 +2701,7 @@ copy_tex_sub_image(struct gl_context *ctx, GLuint dims, GLenum target, GLint lev
    texObj = _mesa_get_current_tex_object(ctx, target);
    texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 
+   /* Choose format/type for temporary image buffer */
    format = _mesa_get_format_base_format(texImage->TexFormat);
    type = get_temp_image_type(ctx, format);
    bpp = _mesa_bytes_per_pixel(format, type);

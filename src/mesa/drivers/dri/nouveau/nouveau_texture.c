@@ -603,11 +603,12 @@ nouveau_set_texbuffer(__DRIcontext *dri_ctx,
 	nouveau_update_renderbuffers(dri_ctx, draw);
 	nouveau_surface_ref(&to_nouveau_renderbuffer(rb)->surface, s);
 
+        s->format = get_texbuffer_format(rb, format);
+
 	/* Update the image fields. */
 	_mesa_init_teximage_fields(ctx, target, ti, s->width, s->height,
-				   1, 0, s->cpp);
+				   1, 0, s->cpp, s->format);
 	ti->RowStride = s->pitch / s->cpp;
-	ti->TexFormat = s->format = get_texbuffer_format(rb, format);
 
 	/* Try to validate it. */
 	if (!validate_teximage(ctx, t, 0, 0, 0, 0, s->width, s->height, 1))

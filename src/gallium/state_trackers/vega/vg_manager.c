@@ -535,6 +535,7 @@ vg_api_destroy(struct st_api *stapi)
 }
 
 static const struct st_api vg_api = {
+   "Vega " VEGA_VERSION_STRING,
    ST_API_OPENVG,
    ST_PROFILE_DEFAULT_MASK,
    vg_api_destroy,

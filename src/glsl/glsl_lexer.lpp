@@ -36,36 +36,44 @@
 
 #define YY_USER_INIT yylineno = 0; yycolumn = 0;
 
-#define TOKEN_OR_IDENTIFIER(version, token)			 \
-   do {								 \
-      if (yyextra->language_version >= version) {		 \
-	 return token;						 \
-      } else {							 \
-	 yylval->identifier = strdup(yytext);			 \
-	 return IDENTIFIER;					 \
-      }								 \
-   } while (0)
+#define IS_UINT (yytext[yyleng - 1] == 'u' || yytext[yyleng - 1] == 'U')
 
-/* Handle reserved words in GLSL ES (version 100) */
-#define TOKEN_OR_IDENTIFIER_ES(version, token)			\
-   do {								\
-      if (yyextra->es_shader) {					\
-	return token;						\
-      } else {							\
-	TOKEN_OR_IDENTIFIER(version, token);			\
-      }								\
-   } while (0)
-
-#define RESERVED_WORD(version, token)					\
+/* A macro for handling reserved words and keywords across language versions.
+ *
+ * Certain words start out as identifiers, become reserved words in
+ * later language revisions, and finally become language keywords.
+ *
+ * For example, consider the following lexer rule:
+ * samplerBuffer       KEYWORD(130, 140, SAMPLERBUFFER)
+ *
+ * This means that "samplerBuffer" will be treated as:
+ * - a keyword (SAMPLERBUFFER token)         ...in GLSL >= 1.40
+ * - a reserved word - error                 ...in GLSL >= 1.30
+ * - an identifier                           ...in GLSL <  1.30
+ */
+#define KEYWORD(reserved_version, allowed_version, token)		\
    do {									\
-      if (yyextra->language_version >= version) {			\
+      if (yyextra->language_version >= allowed_version) {		\
 	 return token;							\
-      } else {								\
+      } else if (yyextra->language_version >= reserved_version) {	\
 	 _mesa_glsl_error(yylloc, yyextra,				\
 			  "Illegal use of reserved word `%s'", yytext);	\
 	 return ERROR_TOK;						\
+      } else {								\
+	 yylval->identifier = strdup(yytext);				\
+	 return IDENTIFIER;						\
       }									\
    } while (0)
+
+/* The ES macro can be used in KEYWORD checks:
+ *
+ *    word      KEYWORD(110 || ES, 400, TOKEN)
+ * ...means the word is reserved in GLSL ES 1.00, while
+ *
+ *    word      KEYWORD(110, 130 || ES, TOKEN)
+ * ...means the word is a legal keyword in GLSL ES 1.00.
+ */
+#define ES yyextra->es_shader
 %}
 
 %option bison-bridge bison-locations reentrant noyywrap
@@ -161,7 +169,7 @@ const		return CONST_TOK;
 bool		return BOOL_TOK;
 float		return FLOAT_TOK;
 int		return INT_TOK;
-uint		TOKEN_OR_IDENTIFIER(130, UINT_TOK);
+uint		KEYWORD(130, 130, UINT_TOK);
 
 break		return BREAK;
 continue	return CONTINUE;
@@ -179,43 +187,60 @@ bvec4		return BVEC4;
 ivec2		return IVEC2;
 ivec3		return IVEC3;
 ivec4		return IVEC4;
-uvec2		TOKEN_OR_IDENTIFIER(130, UVEC2);
-uvec3		TOKEN_OR_IDENTIFIER(130, UVEC3);
-uvec4		TOKEN_OR_IDENTIFIER(130, UVEC4);
+uvec2		KEYWORD(130, 130, UVEC2);
+uvec3		KEYWORD(130, 130, UVEC3);
+uvec4		KEYWORD(130, 130, UVEC4);
 vec2		return VEC2;
 vec3		return VEC3;
 vec4		return VEC4;
 mat2		return MAT2X2;
 mat3		return MAT3X3;
 mat4		return MAT4X4;
-mat2x2		TOKEN_OR_IDENTIFIER(120, MAT2X2);
-mat2x3		TOKEN_OR_IDENTIFIER(120, MAT2X3);
-mat2x4		TOKEN_OR_IDENTIFIER(120, MAT2X4);
-mat3x2		TOKEN_OR_IDENTIFIER(120, MAT3X2);
-mat3x3		TOKEN_OR_IDENTIFIER(120, MAT3X3);
-mat3x4		TOKEN_OR_IDENTIFIER(120, MAT3X4);
-mat4x2		TOKEN_OR_IDENTIFIER(120, MAT4X2);
-mat4x3		TOKEN_OR_IDENTIFIER(120, MAT4X3);
-mat4x4		TOKEN_OR_IDENTIFIER(120, MAT4X4);
+mat2x2		KEYWORD(120, 120, MAT2X2);
+mat2x3		KEYWORD(120, 120, MAT2X3);
+mat2x4		KEYWORD(120, 120, MAT2X4);
+mat3x2		KEYWORD(120, 120, MAT3X2);
+mat3x3		KEYWORD(120, 120, MAT3X3);
+mat3x4		KEYWORD(120, 120, MAT3X4);
+mat4x2		KEYWORD(120, 120, MAT4X2);
+mat4x3		KEYWORD(120, 120, MAT4X3);
+mat4x4		KEYWORD(120, 120, MAT4X4);
 
 in		return IN_TOK;
 out		return OUT_TOK;
 inout		return INOUT_TOK;
 uniform		return UNIFORM;
 varying		return VARYING;
-centroid	TOKEN_OR_IDENTIFIER(120, CENTROID);
-invariant	TOKEN_OR_IDENTIFIER_ES(120, INVARIANT);
-
-flat		TOKEN_OR_IDENTIFIER_ES(130, FLAT);
-smooth		TOKEN_OR_IDENTIFIER(130, SMOOTH);
-noperspective	TOKEN_OR_IDENTIFIER(130, NOPERSPECTIVE);
+centroid	KEYWORD(120, 120, CENTROID);
+invariant	KEYWORD(120 || ES, 120 || ES, INVARIANT);
+flat		KEYWORD(130 || ES, 130, FLAT);
+smooth		KEYWORD(130, 130, SMOOTH);
+noperspective	KEYWORD(130, 130, NOPERSPECTIVE);
 
 sampler1D	return SAMPLER1D;
 sampler2D	return SAMPLER2D;
 sampler3D	return SAMPLER3D;
 samplerCube	return SAMPLERCUBE;
+sampler1DArray	KEYWORD(130, 130, SAMPLER1DARRAY);
+sampler2DArray	KEYWORD(130, 130, SAMPLER2DARRAY);
 sampler1DShadow	return SAMPLER1DSHADOW;
 sampler2DShadow	return SAMPLER2DSHADOW;
+samplerCubeShadow	KEYWORD(130, 130, SAMPLERCUBESHADOW);
+sampler1DArrayShadow	KEYWORD(130, 130, SAMPLER1DARRAYSHADOW);
+sampler2DArrayShadow	KEYWORD(130, 130, SAMPLER2DARRAYSHADOW);
+isampler1D		KEYWORD(130, 130, ISAMPLER1D);
+isampler2D		KEYWORD(130, 130, ISAMPLER2D);
+isampler3D		KEYWORD(130, 130, ISAMPLER3D);
+isamplerCube		KEYWORD(130, 130, ISAMPLERCUBE);
+isampler1DArray		KEYWORD(130, 130, ISAMPLER1DARRAY);
+isampler2DArray		KEYWORD(130, 130, ISAMPLER2DARRAY);
+usampler1D		KEYWORD(130, 130, USAMPLER1D);
+usampler2D		KEYWORD(130, 130, USAMPLER2D);
+usampler3D		KEYWORD(130, 130, USAMPLER3D);
+usamplerCube		KEYWORD(130, 130, USAMPLERCUBE);
+usampler1DArray		KEYWORD(130, 130, USAMPLER1DARRAY);
+usampler2DArray		KEYWORD(130, 130, USAMPLER2DARRAY);
+
 
 struct		return STRUCT;
 void		return VOID_TOK;
@@ -254,17 +279,17 @@ layout		{
 \|=		return OR_ASSIGN;
 -=		return SUB_ASSIGN;
 
-[1-9][0-9]*		{
+[1-9][0-9]*[uU]?	{
 			    yylval->n = strtol(yytext, NULL, 10);
-			    return INTCONSTANT;
+			    return IS_UINT ? UINTCONSTANT : INTCONSTANT;
 			}
-0[xX][0-9a-fA-F]+	{
+0[xX][0-9a-fA-F]+[uU]?	{
 			    yylval->n = strtol(yytext + 2, NULL, 16);
-			    return INTCONSTANT;
+			    return IS_UINT ? UINTCONSTANT : INTCONSTANT;
 			}
-0[0-7]*			{
+0[0-7]*[uU]?		{
 			    yylval->n = strtol(yytext, NULL, 8);
-			    return INTCONSTANT;
+			    return IS_UINT ? UINTCONSTANT : INTCONSTANT;
 			}
 
 [0-9]+\.[0-9]+([eE][+-]?[0-9]+)?[fF]?	{
@@ -299,87 +324,90 @@ false			{
 
 
     /* Reserved words in GLSL 1.10. */
-asm		RESERVED_WORD(999, ASM);
-class		RESERVED_WORD(999, CLASS);
-union		RESERVED_WORD(999, UNION);
-enum		RESERVED_WORD(999, ENUM);
-typedef		RESERVED_WORD(999, TYPEDEF);
-template	RESERVED_WORD(999, TEMPLATE);
-this		RESERVED_WORD(999, THIS);
-packed		RESERVED_WORD(999, PACKED_TOK);
-goto		RESERVED_WORD(999, GOTO);
-switch		RESERVED_WORD(130, SWITCH);
-default		RESERVED_WORD(130, DEFAULT);
-inline		RESERVED_WORD(999, INLINE_TOK);
-noinline	RESERVED_WORD(999, NOINLINE);
-volatile	RESERVED_WORD(999, VOLATILE);
-public		RESERVED_WORD(999, PUBLIC_TOK);
-static		RESERVED_WORD(999, STATIC);
-extern		RESERVED_WORD(999, EXTERN);
-external	RESERVED_WORD(999, EXTERNAL);
-interface	RESERVED_WORD(999, INTERFACE);
-long		RESERVED_WORD(999, LONG_TOK);
-short		RESERVED_WORD(999, SHORT_TOK);
-double		RESERVED_WORD(999, DOUBLE_TOK);
-half		RESERVED_WORD(999, HALF);
-fixed		RESERVED_WORD(999, FIXED_TOK);
-unsigned	RESERVED_WORD(999, UNSIGNED);
-input		RESERVED_WORD(999, INPUT_TOK);
-output		RESERVED_WORD(999, OUTPUT);
-hvec2		RESERVED_WORD(999, HVEC2);
-hvec3		RESERVED_WORD(999, HVEC3);
-hvec4		RESERVED_WORD(999, HVEC4);
-dvec2		RESERVED_WORD(999, DVEC2);
-dvec3		RESERVED_WORD(999, DVEC3);
-dvec4		RESERVED_WORD(999, DVEC4);
-fvec2		RESERVED_WORD(999, FVEC2);
-fvec3		RESERVED_WORD(999, FVEC3);
-fvec4		RESERVED_WORD(999, FVEC4);
+asm		KEYWORD(110 || ES, 999, ASM);
+class		KEYWORD(110 || ES, 999, CLASS);
+union		KEYWORD(110 || ES, 999, UNION);
+enum		KEYWORD(110 || ES, 999, ENUM);
+typedef		KEYWORD(110 || ES, 999, TYPEDEF);
+template	KEYWORD(110 || ES, 999, TEMPLATE);
+this		KEYWORD(110 || ES, 999, THIS);
+packed		KEYWORD(110 || ES, 999, PACKED_TOK);
+goto		KEYWORD(110 || ES, 999, GOTO);
+switch		KEYWORD(110 || ES, 130, SWITCH);
+default		KEYWORD(110 || ES, 130, DEFAULT);
+inline		KEYWORD(110 || ES, 999, INLINE_TOK);
+noinline	KEYWORD(110 || ES, 999, NOINLINE);
+volatile	KEYWORD(110 || ES, 999, VOLATILE);
+public		KEYWORD(110 || ES, 999, PUBLIC_TOK);
+static		KEYWORD(110 || ES, 999, STATIC);
+extern		KEYWORD(110 || ES, 999, EXTERN);
+external	KEYWORD(110 || ES, 999, EXTERNAL);
+interface	KEYWORD(110 || ES, 999, INTERFACE);
+long		KEYWORD(110 || ES, 999, LONG_TOK);
+short		KEYWORD(110 || ES, 999, SHORT_TOK);
+double		KEYWORD(110 || ES, 400, DOUBLE_TOK);
+half		KEYWORD(110 || ES, 999, HALF);
+fixed		KEYWORD(110 || ES, 999, FIXED_TOK);
+unsigned	KEYWORD(110 || ES, 999, UNSIGNED);
+input		KEYWORD(110 || ES, 999, INPUT_TOK);
+output		KEYWORD(110 || ES, 999, OUTPUT);
+hvec2		KEYWORD(110 || ES, 999, HVEC2);
+hvec3		KEYWORD(110 || ES, 999, HVEC3);
+hvec4		KEYWORD(110 || ES, 999, HVEC4);
+dvec2		KEYWORD(110 || ES, 400, DVEC2);
+dvec3		KEYWORD(110 || ES, 400, DVEC3);
+dvec4		KEYWORD(110 || ES, 400, DVEC4);
+fvec2		KEYWORD(110 || ES, 999, FVEC2);
+fvec3		KEYWORD(110 || ES, 999, FVEC3);
+fvec4		KEYWORD(110 || ES, 999, FVEC4);
 sampler2DRect		return SAMPLER2DRECT;
-sampler3DRect		RESERVED_WORD(999, SAMPLER3DRECT);
+sampler3DRect		KEYWORD(110 || ES, 999, SAMPLER3DRECT);
 sampler2DRectShadow	return SAMPLER2DRECTSHADOW;
-sizeof		RESERVED_WORD(999, SIZEOF);
-cast		RESERVED_WORD(999, CAST);
-namespace	RESERVED_WORD(999, NAMESPACE);
-using		RESERVED_WORD(999, USING);
+sizeof		KEYWORD(110 || ES, 999, SIZEOF);
+cast		KEYWORD(110 || ES, 999, CAST);
+namespace	KEYWORD(110 || ES, 999, NAMESPACE);
+using		KEYWORD(110 || ES, 999, USING);
 
     /* Additional reserved words in GLSL 1.20. */
-lowp		TOKEN_OR_IDENTIFIER_ES(120, LOWP);
-mediump		TOKEN_OR_IDENTIFIER_ES(120, MEDIUMP);
-highp		TOKEN_OR_IDENTIFIER_ES(120, HIGHP);
-precision	TOKEN_OR_IDENTIFIER_ES(120, PRECISION);
+lowp		KEYWORD(120, 130 || ES, LOWP);
+mediump		KEYWORD(120, 130 || ES, MEDIUMP);
+highp		KEYWORD(120, 130 || ES, HIGHP);
+precision	KEYWORD(120, 130 || ES, PRECISION);
 
     /* Additional reserved words in GLSL 1.30. */
-common		TOKEN_OR_IDENTIFIER(130, COMMON);
-partition	TOKEN_OR_IDENTIFIER(130, PARTITION);
-active		TOKEN_OR_IDENTIFIER(130, ACTIVE);
-superp		TOKEN_OR_IDENTIFIER_ES(130, SUPERP);
-samplerBuffer	TOKEN_OR_IDENTIFIER(130, SAMPLERBUFFER);
-filter		TOKEN_OR_IDENTIFIER(130, FILTER);
-image1D		TOKEN_OR_IDENTIFIER(130, IMAGE1D);
-image2D		TOKEN_OR_IDENTIFIER(130, IMAGE2D);
-image3D		TOKEN_OR_IDENTIFIER(130, IMAGE3D);
-imageCube	TOKEN_OR_IDENTIFIER(130, IMAGECUBE);
-iimage1D	TOKEN_OR_IDENTIFIER(130, IIMAGE1D);
-iimage2D	TOKEN_OR_IDENTIFIER(130, IIMAGE2D);
-iimage3D	TOKEN_OR_IDENTIFIER(130, IIMAGE3D);
-iimageCube	TOKEN_OR_IDENTIFIER(130, IIMAGECUBE);
-uimage1D	TOKEN_OR_IDENTIFIER(130, UIMAGE1D);
-uimage2D	TOKEN_OR_IDENTIFIER(130, UIMAGE2D);
-uimage3D	TOKEN_OR_IDENTIFIER(130, UIMAGE3D);
-uimageCube	TOKEN_OR_IDENTIFIER(130, UIMAGECUBE);
-image1DArray	TOKEN_OR_IDENTIFIER(130, IMAGE1DARRAY);
-image2DArray	TOKEN_OR_IDENTIFIER(130, IMAGE2DARRAY);
-iimage1DArray	TOKEN_OR_IDENTIFIER(130, IIMAGE1DARRAY);
-iimage2DArray	TOKEN_OR_IDENTIFIER(130, IIMAGE2DARRAY);
-uimage1DArray	TOKEN_OR_IDENTIFIER(130, UIMAGE1DARRAY);
-uimage2DArray	TOKEN_OR_IDENTIFIER(130, UIMAGE2DARRAY);
-image1DShadow	TOKEN_OR_IDENTIFIER(130, IMAGE1DSHADOW);
-image2DShadow	TOKEN_OR_IDENTIFIER(130, IMAGE2DSHADOW);
-imageBuffer	TOKEN_OR_IDENTIFIER(130, IMAGEBUFFER);
-iimageBuffer	TOKEN_OR_IDENTIFIER(130, IIMAGEBUFFER);
-uimageBuffer	TOKEN_OR_IDENTIFIER(130, UIMAGEBUFFER);
-row_major	TOKEN_OR_IDENTIFIER(130, ROW_MAJOR);
+case		KEYWORD(130, 130, CASE);
+common		KEYWORD(130, 999, COMMON);
+partition	KEYWORD(130, 999, PARTITION);
+active		KEYWORD(130, 999, ACTIVE);
+superp		KEYWORD(130 || ES, 999, SUPERP);
+samplerBuffer	KEYWORD(130, 140, SAMPLERBUFFER);
+filter		KEYWORD(130, 999, FILTER);
+image1D		KEYWORD(130, 999, IMAGE1D);
+image2D		KEYWORD(130, 999, IMAGE2D);
+image3D		KEYWORD(130, 999, IMAGE3D);
+imageCube	KEYWORD(130, 999, IMAGECUBE);
+iimage1D	KEYWORD(130, 999, IIMAGE1D);
+iimage2D	KEYWORD(130, 999, IIMAGE2D);
+iimage3D	KEYWORD(130, 999, IIMAGE3D);
+iimageCube	KEYWORD(130, 999, IIMAGECUBE);
+uimage1D	KEYWORD(130, 999, UIMAGE1D);
+uimage2D	KEYWORD(130, 999, UIMAGE2D);
+uimage3D	KEYWORD(130, 999, UIMAGE3D);
+uimageCube	KEYWORD(130, 999, UIMAGECUBE);
+image1DArray	KEYWORD(130, 999, IMAGE1DARRAY);
+image2DArray	KEYWORD(130, 999, IMAGE2DARRAY);
+iimage1DArray	KEYWORD(130, 999, IIMAGE1DARRAY);
+iimage2DArray	KEYWORD(130, 999, IIMAGE2DARRAY);
+uimage1DArray	KEYWORD(130, 999, UIMAGE1DARRAY);
+uimage2DArray	KEYWORD(130, 999, UIMAGE2DARRAY);
+image1DShadow	KEYWORD(130, 999, IMAGE1DSHADOW);
+image2DShadow	KEYWORD(130, 999, IMAGE2DSHADOW);
+image1DArrayShadow KEYWORD(130, 999, IMAGE1DARRAYSHADOW);
+image2DArrayShadow KEYWORD(130, 999, IMAGE2DARRAYSHADOW);
+imageBuffer	KEYWORD(130, 999, IMAGEBUFFER);
+iimageBuffer	KEYWORD(130, 999, IIMAGEBUFFER);
+uimageBuffer	KEYWORD(130, 999, UIMAGEBUFFER);
+row_major	KEYWORD(130, 999, ROW_MAJOR);
 
 [_a-zA-Z][_a-zA-Z0-9]*	{
 			    struct _mesa_glsl_parse_state *state = yyextra;

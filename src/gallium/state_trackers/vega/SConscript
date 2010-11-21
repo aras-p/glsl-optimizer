@@ -8,6 +8,9 @@ env = env.Clone()
 env.Append(CPPPATH = [
     '#/src/mapi',
 ])
+env.Append(CPPDEFINES = [
+    'VEGA_VERSION_STRING=',
+])
 
 vega_sources = [
     'api.c',

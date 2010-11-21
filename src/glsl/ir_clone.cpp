@@ -22,6 +22,7 @@
  */
 
 #include <string.h>
+#include "main/compiler.h"
 #include "ir.h"
 #include "glsl_types.h"
 extern "C" {
@@ -160,14 +161,15 @@ ir_call::clone(void *mem_ctx, struct hash_table *ht) const
 ir_expression *
 ir_expression::clone(void *mem_ctx, struct hash_table *ht) const
 {
-   ir_rvalue *op[2] = {NULL, NULL};
+   ir_rvalue *op[Elements(this->operands)] = { NULL, };
    unsigned int i;
 
    for (i = 0; i < get_num_operands(); i++) {
       op[i] = this->operands[i]->clone(mem_ctx, ht);
    }
 
-   return new(mem_ctx) ir_expression(this->operation, this->type, op[0], op[1]);
+   return new(mem_ctx) ir_expression(this->operation, this->type,
+				     op[0], op[1], op[2], op[3]);
 }
 
 ir_dereference_variable *

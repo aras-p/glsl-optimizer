@@ -143,7 +143,6 @@ C_SOURCES = \
 	util/u_transfer.c \
 	util/u_resource.c \
 	util/u_upload_mgr.c \
-	target-helpers/wrap_screen.c \
 	vl/vl_bitstream_parser.c \
 	vl/vl_mpeg12_mc_renderer.c \
 	vl/vl_compositor.c \
@@ -222,3 +221,4 @@ util/u_format_table.c: util/u_format_table.py util/u_format_pack.py util/u_forma
 
 util/u_half.c: util/u_half.py
 	$(PYTHON2) util/u_half.py > $@
+# DO NOT DELETE

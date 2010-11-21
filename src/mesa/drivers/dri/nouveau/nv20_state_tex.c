@@ -28,13 +28,9 @@
 #include "nouveau_context.h"
 #include "nouveau_gldefs.h"
 #include "nouveau_texture.h"
-#include "nouveau_class.h"
+#include "nv20_3d.xml.h"
 #include "nouveau_util.h"
 #include "nv20_driver.h"
-
-#define TX_GEN_MODE(i, j) (NV20TCL_TX_GEN_MODE_S(i) + 4 * (j))
-#define TX_GEN_COEFF(i, j) (NV20TCL_TX_GEN_COEFF_S_A(i) + 16 * (j))
-#define TX_MATRIX(i) (NV20TCL_TX0_MATRIX(0) + 64 * (i))
 
 void
 nv20_emit_tex_gen(struct gl_context *ctx, int emit)
@@ -52,15 +48,16 @@ nv20_emit_tex_gen(struct gl_context *ctx, int emit)
 			float *k = get_texgen_coeff(coord);
 
 			if (k) {
-				BEGIN_RING(chan, kelvin, TX_GEN_COEFF(i, j), 4);
+				BEGIN_RING(chan, kelvin,
+					   NV20_3D_TEX_GEN_COEFF(i, j), 4);
 				OUT_RINGp(chan, k, 4);
 			}
 
-			BEGIN_RING(chan, kelvin, TX_GEN_MODE(i, j), 1);
+			BEGIN_RING(chan, kelvin, NV20_3D_TEX_GEN_MODE(i, j), 1);
 			OUT_RING(chan, nvgl_texgen_mode(coord->Mode));
 
 		} else {
-			BEGIN_RING(chan, kelvin, TX_GEN_MODE(i, j), 1);
+			BEGIN_RING(chan, kelvin, NV20_3D_TEX_GEN_MODE(i, j), 1);
 			OUT_RING(chan, 0);
 		}
 	}
@@ -76,14 +73,14 @@ nv20_emit_tex_mat(struct gl_context *ctx, int emit)
 
 	if (nctx->fallback == HWTNL &&
 	    (ctx->Texture._TexMatEnabled & 1 << i)) {
-		BEGIN_RING(chan, kelvin, NV20TCL_TX_MATRIX_ENABLE(i), 1);
+		BEGIN_RING(chan, kelvin, NV20_3D_TEX_MATRIX_ENABLE(i), 1);
 		OUT_RING(chan, 1);
 
-		BEGIN_RING(chan, kelvin, TX_MATRIX(i), 16);
+		BEGIN_RING(chan, kelvin, NV20_3D_TEX_MATRIX(i,0), 16);
 		OUT_RINGm(chan, ctx->TextureMatrixStack[i].Top->m);
 
 	} else {
-		BEGIN_RING(chan, kelvin, NV20TCL_TX_MATRIX_ENABLE(i), 1);
+		BEGIN_RING(chan, kelvin, NV20_3D_TEX_MATRIX_ENABLE(i), 1);
 		OUT_RING(chan, 0);
 	}
 }
@@ -93,29 +90,29 @@ get_tex_format_pot(struct gl_texture_image *ti)
 {
 	switch (ti->TexFormat) {
 	case MESA_FORMAT_ARGB8888:
-		return NV20TCL_TX_FORMAT_FORMAT_A8R8G8B8;
+		return NV20_3D_TEX_FORMAT_FORMAT_A8R8G8B8;
 
 	case MESA_FORMAT_ARGB1555:
-		return NV20TCL_TX_FORMAT_FORMAT_A1R5G5B5;
+		return NV20_3D_TEX_FORMAT_FORMAT_A1R5G5B5;
 
 	case MESA_FORMAT_ARGB4444:
-		return NV20TCL_TX_FORMAT_FORMAT_A4R4G4B4;
+		return NV20_3D_TEX_FORMAT_FORMAT_A4R4G4B4;
 
 	case MESA_FORMAT_XRGB8888:
-		return NV20TCL_TX_FORMAT_FORMAT_X8R8G8B8;
+		return NV20_3D_TEX_FORMAT_FORMAT_X8R8G8B8;
 
 	case MESA_FORMAT_RGB565:
-		return NV20TCL_TX_FORMAT_FORMAT_R5G6B5;
+		return NV20_3D_TEX_FORMAT_FORMAT_R5G6B5;
 
 	case MESA_FORMAT_A8:
 	case MESA_FORMAT_I8:
-		return NV20TCL_TX_FORMAT_FORMAT_A8;
+		return NV20_3D_TEX_FORMAT_FORMAT_I8;
 
 	case MESA_FORMAT_L8:
-		return NV20TCL_TX_FORMAT_FORMAT_L8;
+		return NV20_3D_TEX_FORMAT_FORMAT_L8;
 
 	case MESA_FORMAT_CI8:
-		return NV20TCL_TX_FORMAT_FORMAT_INDEX8;
+		return NV20_3D_TEX_FORMAT_FORMAT_INDEX8;
 
 	default:
 		assert(0);
@@ -127,26 +124,26 @@ get_tex_format_rect(struct gl_texture_image *ti)
 {
 	switch (ti->TexFormat) {
 	case MESA_FORMAT_ARGB8888:
-		return NV20TCL_TX_FORMAT_FORMAT_A8R8G8B8_RECT;
+		return NV20_3D_TEX_FORMAT_FORMAT_A8R8G8B8_RECT;
 
 	case MESA_FORMAT_ARGB1555:
-		return NV20TCL_TX_FORMAT_FORMAT_A1R5G5B5_RECT;
+		return NV20_3D_TEX_FORMAT_FORMAT_A1R5G5B5_RECT;
 
 	case MESA_FORMAT_ARGB4444:
-		return NV20TCL_TX_FORMAT_FORMAT_A4R4G4B4_RECT;
+		return NV20_3D_TEX_FORMAT_FORMAT_A4R4G4B4_RECT;
 
 	case MESA_FORMAT_XRGB8888:
-		return NV20TCL_TX_FORMAT_FORMAT_R8G8B8_RECT;
+		return NV20_3D_TEX_FORMAT_FORMAT_R8G8B8_RECT;
 
 	case MESA_FORMAT_RGB565:
-		return NV20TCL_TX_FORMAT_FORMAT_R5G6B5_RECT;
+		return NV20_3D_TEX_FORMAT_FORMAT_R5G6B5_RECT;
 
 	case MESA_FORMAT_L8:
-		return NV20TCL_TX_FORMAT_FORMAT_L8_RECT;
+		return NV20_3D_TEX_FORMAT_FORMAT_L8_RECT;
 
 	case MESA_FORMAT_A8:
 	case MESA_FORMAT_I8:
-		return NV20TCL_TX_FORMAT_FORMAT_A8_RECT;
+		return NV20_3D_TEX_FORMAT_FORMAT_I8_RECT;
 
 	default:
 		assert(0);
@@ -167,7 +164,7 @@ nv20_emit_tex_obj(struct gl_context *ctx, int emit)
 	uint32_t tx_format, tx_filter, tx_wrap, tx_enable;
 
 	if (!ctx->Texture.Unit[i]._ReallyEnabled) {
-		BEGIN_RING(chan, kelvin, NV20TCL_TX_ENABLE(i), 1);
+		BEGIN_RING(chan, kelvin, NV20_3D_TEX_ENABLE(i), 1);
 		OUT_RING(chan, 0);
 
 		context_dirty(ctx, TEX_SHADER);
@@ -185,8 +182,8 @@ nv20_emit_tex_obj(struct gl_context *ctx, int emit)
 	tx_format = ti->DepthLog2 << 28
 		| ti->HeightLog2 << 24
 		| ti->WidthLog2 << 20
-		| NV20TCL_TX_FORMAT_DIMS_2D
-		| NV20TCL_TX_FORMAT_NO_BORDER
+		| NV20_3D_TEX_FORMAT_DIMS_2D
+		| NV20_3D_TEX_FORMAT_NO_BORDER
 		| 1 << 16;
 
 	tx_wrap = nvgl_wrap_mode(t->WrapR) << 16
@@ -197,13 +194,13 @@ nv20_emit_tex_obj(struct gl_context *ctx, int emit)
 		| nvgl_filter_mode(t->MinFilter) << 16
 		| 2 << 12;
 
-	tx_enable = NV20TCL_TX_ENABLE_ENABLE
+	tx_enable = NV20_3D_TEX_ENABLE_ENABLE
 		| log2i(t->MaxAnisotropy) << 4;
 
 	if (t->Target == GL_TEXTURE_RECTANGLE) {
-		BEGIN_RING(chan, kelvin, NV20TCL_TX_NPOT_PITCH(i), 1);
+		BEGIN_RING(chan, kelvin, NV20_3D_TEX_NPOT_PITCH(i), 1);
 		OUT_RING(chan, s->pitch << 16);
-		BEGIN_RING(chan, kelvin, NV20TCL_TX_NPOT_SIZE(i), 1);
+		BEGIN_RING(chan, kelvin, NV20_3D_TEX_NPOT_SIZE(i), 1);
 		OUT_RING(chan, s->width << 16 | s->height);
 
 		tx_format |= get_tex_format_rect(ti);
@@ -222,29 +219,29 @@ nv20_emit_tex_obj(struct gl_context *ctx, int emit)
 		lod_min = CLAMP(lod_min, 0, 15);
 		lod_bias = CLAMP(lod_bias, 0, 15);
 
-		tx_format |= NV20TCL_TX_FORMAT_MIPMAP;
+		tx_format |= NV20_3D_TEX_FORMAT_MIPMAP;
 		tx_filter |= lod_bias << 8;
 		tx_enable |= lod_min << 26
 			| lod_max << 14;
 	}
 
 	/* Write it to the hardware. */
-	nouveau_bo_mark(bctx, kelvin, NV20TCL_TX_FORMAT(i),
+	nouveau_bo_mark(bctx, kelvin, NV20_3D_TEX_FORMAT(i),
 			s->bo, tx_format, 0,
-			NV20TCL_TX_FORMAT_DMA0,
-			NV20TCL_TX_FORMAT_DMA1,
+			NV20_3D_TEX_FORMAT_DMA0,
+			NV20_3D_TEX_FORMAT_DMA1,
 			bo_flags | NOUVEAU_BO_OR);
 
-	nouveau_bo_markl(bctx, kelvin, NV20TCL_TX_OFFSET(i),
+	nouveau_bo_markl(bctx, kelvin, NV20_3D_TEX_OFFSET(i),
 			 s->bo, s->offset, bo_flags);
 
-	BEGIN_RING(chan, kelvin, NV20TCL_TX_WRAP(i), 1);
+	BEGIN_RING(chan, kelvin, NV20_3D_TEX_WRAP(i), 1);
 	OUT_RING(chan, tx_wrap);
 
-	BEGIN_RING(chan, kelvin, NV20TCL_TX_FILTER(i), 1);
+	BEGIN_RING(chan, kelvin, NV20_3D_TEX_FILTER(i), 1);
 	OUT_RING(chan, tx_filter);
 
-	BEGIN_RING(chan, kelvin, NV20TCL_TX_ENABLE(i), 1);
+	BEGIN_RING(chan, kelvin, NV20_3D_TEX_ENABLE(i), 1);
 	OUT_RING(chan, tx_enable);
 
 	context_dirty(ctx, TEX_SHADER);
@@ -262,9 +259,9 @@ nv20_emit_tex_shader(struct gl_context *ctx, int emit)
 		if (!ctx->Texture.Unit[i]._ReallyEnabled)
 			continue;
 
-		tx_shader_op |= NV20TCL_TX_SHADER_OP_TX0_TEXTURE_2D << 5 * i;
+		tx_shader_op |= NV20_3D_TEX_SHADER_OP_TX0_TEXTURE_2D << 5 * i;
 	}
 
-	BEGIN_RING(chan, kelvin, NV20TCL_TX_SHADER_OP, 1);
+	BEGIN_RING(chan, kelvin, NV20_3D_TEX_SHADER_OP, 1);
 	OUT_RING(chan, tx_shader_op);
 }

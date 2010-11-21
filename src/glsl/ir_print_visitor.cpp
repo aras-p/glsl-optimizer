@@ -182,11 +182,10 @@ void ir_print_visitor::visit(ir_expression *ir)
 
    printf(" %s ", ir->operator_string());
 
-   if (ir->operands[0])
-      ir->operands[0]->accept(this);
+   for (unsigned i = 0; i < ir->get_num_operands(); i++) {
+      ir->operands[i]->accept(this);
+   }
 
-   if (ir->operands[1])
-      ir->operands[1]->accept(this);
    printf(") ");
 }
 

@@ -246,16 +246,9 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 	        DRI_CONF_TEXTURE_DEPTH_32 : DRI_CONF_TEXTURE_DEPTH_16;
 
 	if (IS_R600_CLASS(radeon->radeonScreen)) {
-		int chip_family = radeon->radeonScreen->chip_family;
-		if (chip_family >= CHIP_FAMILY_CEDAR) {
-			radeon->texture_row_align = 512;
-			radeon->texture_rect_row_align = 512;
-			radeon->texture_compressed_row_align = 512;
-		} else {
-			radeon->texture_row_align = radeon->radeonScreen->group_bytes;
-			radeon->texture_rect_row_align = radeon->radeonScreen->group_bytes;
-			radeon->texture_compressed_row_align = radeon->radeonScreen->group_bytes;
-		}
+		radeon->texture_row_align = radeon->radeonScreen->group_bytes;
+		radeon->texture_rect_row_align = radeon->radeonScreen->group_bytes;
+		radeon->texture_compressed_row_align = radeon->radeonScreen->group_bytes;
 	} else if (IS_R200_CLASS(radeon->radeonScreen) ||
 		   IS_R100_CLASS(radeon->radeonScreen)) {
 		radeon->texture_row_align = 32;
@@ -741,10 +734,9 @@ radeon_update_renderbuffers(__DRIcontext *context, __DRIdrawable *drawable,
 						buffers[i].flags);
 
 			if (bo == NULL) {
-
 				fprintf(stderr, "failed to attach %s %d\n",
 					regname, buffers[i].name);
-
+				continue;
 			}
 
 			ret = radeon_bo_get_tiling(bo, &tiling_flags, &pitch);

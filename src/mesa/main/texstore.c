@@ -4080,14 +4080,14 @@ _mesa_validate_pbo_teximage(struct gl_context *ctx, GLuint dimensions,
    }
    if (!_mesa_validate_pbo_access(dimensions, unpack, width, height, depth,
                                   format, type, pixels)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, funcName, "(invalid PBO access");
+      _mesa_error(ctx, GL_INVALID_OPERATION, funcName, "(invalid PBO access)");
       return NULL;
    }
 
    buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
                                           GL_READ_ONLY_ARB, unpack->BufferObj);
    if (!buf) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, funcName, "(PBO is mapped");
+      _mesa_error(ctx, GL_INVALID_OPERATION, funcName, "(PBO is mapped)");
       return NULL;
    }
 
@@ -4117,7 +4117,7 @@ _mesa_validate_pbo_compressed_teximage(struct gl_context *ctx,
    if ((const GLubyte *) pixels + imageSize >
        ((const GLubyte *) 0) + packing->BufferObj->Size) {
       /* out of bounds read! */
-      _mesa_error(ctx, GL_INVALID_OPERATION, funcName, "(invalid PBO access");
+      _mesa_error(ctx, GL_INVALID_OPERATION, funcName, "(invalid PBO access)");
       return NULL;
    }
 
@@ -4448,7 +4448,8 @@ _mesa_store_texsubimage3d(struct gl_context *ctx, GLenum target, GLint level,
  * Fallback for Driver.CompressedTexImage1D()
  */
 void
-_mesa_store_compressed_teximage1d(struct gl_context *ctx, GLenum target, GLint level,
+_mesa_store_compressed_teximage1d(struct gl_context *ctx,
+                                  GLenum target, GLint level,
                                   GLint internalFormat,
                                   GLint width, GLint border,
                                   GLsizei imageSize, const GLvoid *data,
@@ -4471,7 +4472,8 @@ _mesa_store_compressed_teximage1d(struct gl_context *ctx, GLenum target, GLint l
  * Fallback for Driver.CompressedTexImage2D()
  */
 void
-_mesa_store_compressed_teximage2d(struct gl_context *ctx, GLenum target, GLint level,
+_mesa_store_compressed_teximage2d(struct gl_context *ctx,
+                                  GLenum target, GLint level,
                                   GLint internalFormat,
                                   GLint width, GLint height, GLint border,
                                   GLsizei imageSize, const GLvoid *data,
@@ -4515,7 +4517,8 @@ _mesa_store_compressed_teximage2d(struct gl_context *ctx, GLenum target, GLint l
  * Fallback for Driver.CompressedTexImage3D()
  */
 void
-_mesa_store_compressed_teximage3d(struct gl_context *ctx, GLenum target, GLint level,
+_mesa_store_compressed_teximage3d(struct gl_context *ctx,
+                                  GLenum target, GLint level,
                                   GLint internalFormat,
                                   GLint width, GLint height, GLint depth,
                                   GLint border,

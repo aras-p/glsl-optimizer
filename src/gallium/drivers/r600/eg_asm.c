@@ -74,6 +74,8 @@ int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END:
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE:
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK:
+	case EG_V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS:
+	case EG_V_SQ_CF_WORD1_SQ_CF_INST_RETURN:
 		bc->bytecode[id++] = S_SQ_CF_WORD0_ADDR(cf->cf_addr >> 1);
 		bc->bytecode[id++] = S_SQ_CF_WORD1_CF_INST(cf->inst) |
 					S_SQ_CF_WORD1_BARRIER(1) |

@@ -145,12 +145,12 @@ struct r600_bc_cf {
 	struct r600_bc_alu		*curr_bs_head;
 };
 
-#define FC_NONE 0
-#define FC_IF 1
-#define FC_LOOP 2
-#define FC_REP 3
-#define FC_PUSH_VPM 4
-#define FC_PUSH_WQM 5
+#define FC_NONE				0
+#define FC_IF				1
+#define FC_LOOP				2
+#define FC_REP				3
+#define FC_PUSH_VPM			4
+#define FC_PUSH_WQM			5
 
 struct r600_cf_stack_entry {
 	int				type;
@@ -166,10 +166,11 @@ struct r600_cf_callstack {
 	int				current;
 	int				max;
 };
-	
+
 struct r600_bc {
 	enum radeon_family		family;
 	int				chiprev; /* 0 - r600, 1 - r700, 2 - evergreen */
+	int				type;
 	struct list_head		cf;
 	struct r600_bc_cf		*cf_last;
 	unsigned			ndw;

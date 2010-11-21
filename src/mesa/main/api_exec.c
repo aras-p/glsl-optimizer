@@ -699,6 +699,15 @@ _mesa_create_exec_table(void)
    SET_GetVertexAttribIuivEXT(exec, _mesa_GetVertexAttribIuiv);
    SET_VertexAttribIPointerEXT(exec, _mesa_VertexAttribIPointer);
 
+   /* GL 3.0 (functions not covered by other extensions) */
+   SET_ClearBufferiv(exec, _mesa_ClearBufferiv);
+   SET_ClearBufferuiv(exec, _mesa_ClearBufferuiv);
+   SET_ClearBufferfv(exec, _mesa_ClearBufferfv);
+   SET_ClearBufferfi(exec, _mesa_ClearBufferfi);
+   SET_GetStringi(exec, _mesa_GetStringi);
+   SET_ClampColor(exec, _mesa_ClampColorARB);
+
+
    return exec;
 }
 

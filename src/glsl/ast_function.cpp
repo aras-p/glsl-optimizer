@@ -577,18 +577,17 @@ emit_inline_vector_constructor(const glsl_type *type,
 
 	 const ir_constant *const c = param->as_constant();
 	 if (c == NULL) {
-	    /* Generate a swizzle in case rhs_components != rhs->type->vector_elements. */
-	    unsigned swiz[4] = { 0, 0, 0, 0 };
-	    for (unsigned i = 0; i < rhs_components; i++)
-	       swiz[i] = i;
-
 	    /* Mask of fields to be written in the assignment.
 	     */
 	    const unsigned write_mask = ((1U << rhs_components) - 1)
 	       << base_component;
 
 	    ir_dereference *lhs = new(ctx) ir_dereference_variable(var);
-	    ir_rvalue *rhs = new(ctx) ir_swizzle(param, swiz, rhs_components);
+
+	    /* Generate a swizzle so that LHS and RHS sizes match.
+	     */
+	    ir_rvalue *rhs =
+	       new(ctx) ir_swizzle(param, 0, 1, 2, 3, rhs_components);
 
 	    ir_instruction *inst =
 	       new(ctx) ir_assignment(lhs, rhs, NULL, write_mask);
@@ -628,21 +627,21 @@ assign_to_matrix_column(ir_variable *var, unsigned column, unsigned row_base,
    assert(column_ref->type->components() >= (row_base + count));
    assert(src->type->components() >= (src_base + count));
 
-   /* Generate a swizzle that puts the first element of the source at the
-    * location of the first element of the destination.
+   /* Generate a swizzle that extracts the number of components from the source
+    * that are to be assigned to the column of the matrix.
     */
-   unsigned swiz[4] = { src_base, src_base, src_base, src_base };
-   for (unsigned i = 0; i < count; i++)
-      swiz[i + row_base] = i;
-
-   ir_rvalue *const rhs =
-      new(mem_ctx) ir_swizzle(src, swiz, count);
+   if (count < src->type->vector_elements) {
+      src = new(mem_ctx) ir_swizzle(src,
+				    src_base + 0, src_base + 1,
+				    src_base + 2, src_base + 3,
+				    count);
+   }
 
    /* Mask of fields to be written in the assignment.
     */
    const unsigned write_mask = ((1U << count) - 1) << row_base;
 
-   return new(mem_ctx) ir_assignment(column_ref, rhs, NULL, write_mask);
+   return new(mem_ctx) ir_assignment(column_ref, src, NULL, write_mask);
 }
 
 

@@ -124,7 +124,7 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 			if ((transfer->box.x >= rbuffer->ranges[i].start) &&
 			    (transfer->box.x < rbuffer->ranges[i].end))
 				flush = TRUE;
-			
+
 			if (flush) {
 				r600_bo_reference((struct radeon*)pipe->winsys, &rbuffer->r.bo, NULL);
 				rbuffer->num_ranges = 0;
@@ -180,7 +180,7 @@ static void r600_buffer_transfer_flush_region(struct pipe_context *pipe,
 			return;
 		}
 	}
-	
+
 	rbuffer->ranges[rbuffer->num_ranges].start = offset;
 	rbuffer->ranges[rbuffer->num_ranges].end = offset+length;
 	rbuffer->num_ranges++;

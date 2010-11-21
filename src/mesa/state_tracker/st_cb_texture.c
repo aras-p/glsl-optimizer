@@ -549,14 +549,18 @@ st_TexImage(struct gl_context * ctx,
 
    /* switch to "normal" */
    if (stObj->surface_based) {
+      gl_format texFormat;
+
       _mesa_clear_texture_object(ctx, texObj);
       pipe_resource_reference(&stObj->pt, NULL);
 
       /* oops, need to init this image again */
+      texFormat = _mesa_choose_texture_format(ctx, texObj, target, level,
+                                              internalFormat, format, type);
+
       _mesa_init_teximage_fields(ctx, target, texImage,
-            width, height, depth, border, internalFormat);
-      _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
-            internalFormat, format, type);
+                                 width, height, depth, border,
+                                 internalFormat, texFormat);
 
       stObj->surface_based = GL_FALSE;
    }
@@ -1950,7 +1954,7 @@ st_get_default_texture(struct st_context *st)
 
       _mesa_init_teximage_fields(st->ctx, target, texImg,
                                  16, 16, 1, 0,  /* w, h, d, border */
-                                 GL_RGBA);
+                                 GL_RGBA, MESA_FORMAT_RGBA8888);
 
       st_TexImage(st->ctx, 2, target,
                   0, GL_RGBA,    /* level, intformat */

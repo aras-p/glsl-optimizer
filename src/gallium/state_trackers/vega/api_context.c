@@ -73,7 +73,8 @@ void vegaFinish(void)
    pipe = ctx->pipe;
 
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, &fence);
-
-   pipe->screen->fence_finish(pipe->screen, fence, 0);
-   pipe->screen->fence_reference(pipe->screen, &fence, NULL);
+   if (fence) {
+      pipe->screen->fence_finish(pipe->screen, fence, 0);
+      pipe->screen->fence_reference(pipe->screen, &fence, NULL);
+   }
 }

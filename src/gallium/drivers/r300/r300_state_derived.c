@@ -25,6 +25,7 @@
 
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_pack_color.h"
 
 #include "r300_context.h"
 #include "r300_fs.h"
@@ -433,6 +434,8 @@ static void r300_update_rs_block(struct r300_context *r300)
         fp_offset++;
         col_count++;
         DBG(r300, DBG_RS, "r300: Rasterized FACE written to FS.\n");
+    } else if (fs_inputs->face != ATTR_UNUSED) {
+        fprintf(stderr, "r300: ERROR: FS input FACE unassigned.\n");
     }
 
     /* Rasterize texture coordinates. */
@@ -484,12 +487,10 @@ static void r300_update_rs_block(struct r300_context *r300)
         }
     }
 
-    if (DBG_ON(r300, DBG_RS)) {
-        for (; i < ATTR_GENERIC_COUNT; i++) {
-            if (fs_inputs->generic[i] != ATTR_UNUSED) {
-                DBG(r300, DBG_RS,
-                    "r300: FS input generic %i unassigned.\n", i);
-            }
+    for (; i < ATTR_GENERIC_COUNT; i++) {
+        if (fs_inputs->generic[i] != ATTR_UNUSED) {
+            fprintf(stderr, "r300: ERROR: FS input generic %i unassigned, "
+                    "not enough hardware slots.\n", i);
         }
     }
 
@@ -520,7 +521,12 @@ static void r300_update_rs_block(struct r300_context *r300)
         if (fs_inputs->fog != ATTR_UNUSED) {
             fp_offset++;
 
-            DBG(r300, DBG_RS, "r300: FS input fog unassigned.\n");
+            if (tex_count < 8) {
+                DBG(r300, DBG_RS, "r300: FS input fog unassigned.\n");
+            } else {
+                fprintf(stderr, "r300: ERROR: FS input fog unassigned, "
+                        "not enough hardware slots.\n");
+            }
         }
     }
 
@@ -543,6 +549,11 @@ static void r300_update_rs_block(struct r300_context *r300)
         fp_offset++;
         tex_count++;
         tex_ptr += 4;
+    } else {
+        if (fs_inputs->wpos != ATTR_UNUSED && tex_count >= 8) {
+            fprintf(stderr, "r300: ERROR: FS input WPOS unassigned, "
+                    "not enough hardware slots.\n");
+        }
     }
 
     /* Invalidate the rest of the no-TCL (GA) stream locations. */
@@ -584,59 +595,56 @@ static uint32_t r300_get_border_color(enum pipe_format format,
                                       const float border[4])
 {
     const struct util_format_description *desc;
-    float border_swizzled[4] = {
-        border[2],
-        border[1],
-        border[0],
-        border[3]
-    };
-    uint32_t r;
+    float border_swizzled[4] = {0};
+    unsigned i;
+    union util_color uc = {0};
 
     desc = util_format_description(format);
 
-    /* We don't use util_pack_format because it does not handle the formats
-     * we want, e.g. R4G4B4A4 is non-existent in Gallium. */
+    /* Apply inverse swizzle of the format. */
+    for (i = 0; i < 4; i++) {
+        switch (desc->swizzle[i]) {
+        case UTIL_FORMAT_SWIZZLE_X:
+            border_swizzled[2] = border[i];
+            break;
+        case UTIL_FORMAT_SWIZZLE_Y:
+            border_swizzled[1] = border[i];
+            break;
+        case UTIL_FORMAT_SWIZZLE_Z:
+            border_swizzled[0] = border[i];
+            break;
+        case UTIL_FORMAT_SWIZZLE_W:
+            border_swizzled[3] = border[i];
+            break;
+        }
+    }
+
     switch (desc->channel[0].size) {
         case 4:
-            r = ((float_to_ubyte(border_swizzled[0]) & 0xf0) >> 4) |
-                ((float_to_ubyte(border_swizzled[1]) & 0xf0) << 0) |
-                ((float_to_ubyte(border_swizzled[2]) & 0xf0) << 4) |
-                ((float_to_ubyte(border_swizzled[3]) & 0xf0) << 8);
+            util_pack_color(border_swizzled, PIPE_FORMAT_B4G4R4A4_UNORM, &uc);
             break;
 
         case 5:
             if (desc->channel[1].size == 5) {
-                r = ((float_to_ubyte(border_swizzled[0]) & 0xf8) >> 3) |
-                    ((float_to_ubyte(border_swizzled[1]) & 0xf8) << 2) |
-                    ((float_to_ubyte(border_swizzled[2]) & 0xf8) << 7) |
-                    ((float_to_ubyte(border_swizzled[3]) & 0x80) << 8);
+                util_pack_color(border_swizzled, PIPE_FORMAT_B5G5R5A1_UNORM, &uc);
             } else if (desc->channel[1].size == 6) {
-                r = ((float_to_ubyte(border_swizzled[0]) & 0xf8) >> 3) |
-                    ((float_to_ubyte(border_swizzled[1]) & 0xfc) << 3) |
-                    ((float_to_ubyte(border_swizzled[2]) & 0xf8) << 8);
+                util_pack_color(border_swizzled, PIPE_FORMAT_B5G6R5_UNORM, &uc);
             } else {
                 assert(0);
-                r = 0;
             }
             break;
 
-        case 16:
-            r = ((float_to_ubyte(border_swizzled[2]) & 0xff) << 0) |
-                ((float_to_ubyte(border_swizzled[1]) & 0xff) << 8) |
-                ((float_to_ubyte(border_swizzled[0]) & 0xff) << 16) |
-                ((float_to_ubyte(border_swizzled[3]) & 0xff) << 24);
+        default:
+        case 8:
+            util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
             break;
 
-        case 8:
-        default:
-            r = ((float_to_ubyte(border_swizzled[0]) & 0xff) << 0) |
-                ((float_to_ubyte(border_swizzled[1]) & 0xff) << 8) |
-                ((float_to_ubyte(border_swizzled[2]) & 0xff) << 16) |
-                ((float_to_ubyte(border_swizzled[3]) & 0xff) << 24);
+        case 10:
+            util_pack_color(border_swizzled, PIPE_FORMAT_B10G10R10A2_UNORM, &uc);
             break;
     }
 
-    return r;
+    return uc.ui;
 }
 
 static void r300_merge_textures_and_samplers(struct r300_context* r300)

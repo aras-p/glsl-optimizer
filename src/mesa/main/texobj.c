@@ -181,11 +181,10 @@ finish_texture_init(struct gl_context *ctx, GLenum target,
  * \param texObj the texture object to delete.
  */
 void
-_mesa_delete_texture_object( struct gl_context *ctx, struct gl_texture_object *texObj )
+_mesa_delete_texture_object(struct gl_context *ctx,
+                            struct gl_texture_object *texObj)
 {
    GLuint i, face;
-
-   (void) ctx;
 
    /* Set Target to an invalid value.  With some assertions elsewhere
     * we can try to detect possible use of deleted textures.
@@ -197,9 +196,9 @@ _mesa_delete_texture_object( struct gl_context *ctx, struct gl_texture_object *t
    /* free the texture images */
    for (face = 0; face < 6; face++) {
       for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
-	 if (texObj->Image[face][i]) {
-	    _mesa_delete_texture_image( ctx, texObj->Image[face][i] );
-	 }
+         if (texObj->Image[face][i]) {
+            _mesa_delete_texture_image( ctx, texObj->Image[face][i] );
+         }
       }
    }
 
@@ -209,7 +208,6 @@ _mesa_delete_texture_object( struct gl_context *ctx, struct gl_texture_object *t
    /* free this object */
    free(texObj);
 }
-
 
 
 
@@ -257,7 +255,7 @@ _mesa_copy_texture_object( struct gl_texture_object *dest,
 
 
 /**
- * Clear all texture images of the given texture object.
+ * Free all texture images of the given texture object.
  *
  * \param ctx GL context.
  * \param t texture object.
@@ -265,7 +263,8 @@ _mesa_copy_texture_object( struct gl_texture_object *dest,
  * \sa _mesa_clear_texture_image().
  */
 void
-_mesa_clear_texture_object(struct gl_context *ctx, struct gl_texture_object *texObj)
+_mesa_clear_texture_object(struct gl_context *ctx,
+                           struct gl_texture_object *texObj)
 {
    GLuint i, j;
 
@@ -449,7 +448,7 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
       maxLevels = ctx->Const.MaxTextureLevels;
    }
    else if ((t->Target == GL_TEXTURE_2D) ||
-	    (t->Target == GL_TEXTURE_2D_ARRAY_EXT)) {
+            (t->Target == GL_TEXTURE_2D_ARRAY_EXT)) {
       maxLog2 = MAX2(t->Image[0][baseLevel]->WidthLog2,
                      t->Image[0][baseLevel]->HeightLog2);
       maxLevels = ctx->Const.MaxTextureLevels;
@@ -489,13 +488,13 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
       const GLuint h = t->Image[0][baseLevel]->Height2;
       GLuint face;
       for (face = 1; face < 6; face++) {
-	 if (t->Image[face][baseLevel] == NULL ||
-	     t->Image[face][baseLevel]->Width2 != w ||
-	     t->Image[face][baseLevel]->Height2 != h) {
-	    t->_Complete = GL_FALSE;
-	    incomplete(t, "Cube face missing or mismatched size");
-	    return;
-	 }
+         if (t->Image[face][baseLevel] == NULL ||
+             t->Image[face][baseLevel]->Width2 != w ||
+             t->Image[face][baseLevel]->Height2 != h) {
+            t->_Complete = GL_FALSE;
+            incomplete(t, "Cube face missing or mismatched size");
+            return;
+         }
       }
    }
 
@@ -595,7 +594,7 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
          GLuint width = t->Image[0][baseLevel]->Width2;
          GLuint height = t->Image[0][baseLevel]->Height2;
          GLuint depth = t->Image[0][baseLevel]->Depth2;
-	 for (i = baseLevel + 1; i < maxLevels; i++) {
+         for (i = baseLevel + 1; i < maxLevels; i++) {
             if (width > 1) {
                width /= 2;
             }
@@ -641,7 +640,7 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
          /* make sure 6 cube faces are consistant */
          GLuint width = t->Image[0][baseLevel]->Width2;
          GLuint height = t->Image[0][baseLevel]->Height2;
-	 for (i = baseLevel + 1; i < maxLevels; i++) {
+         for (i = baseLevel + 1; i < maxLevels; i++) {
             if (width > 1) {
                width /= 2;
             }
@@ -664,8 +663,8 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
 		     return;
 		  }
 		  /* check that all six images have same size */
-		  if (t->Image[face][i]->Width2!=width || 
-		      t->Image[face][i]->Height2!=height) {
+                  if (t->Image[face][i]->Width2 != width || 
+                      t->Image[face][i]->Height2 != height) {
 		     t->_Complete = GL_FALSE;
 		     incomplete(t, "CubeMap Image[n][i] bad size");
 		     return;
@@ -720,6 +719,7 @@ _mesa_get_fallback_texture(struct gl_context *ctx)
       static GLubyte texels[8 * 8][4];
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImage;
+      gl_format texFormat;
       GLuint i;
 
       for (i = 0; i < 8 * 8; i++) {
@@ -738,12 +738,13 @@ _mesa_get_fallback_texture(struct gl_context *ctx)
       /* create level[0] texture image */
       texImage = _mesa_get_tex_image(ctx, texObj, GL_TEXTURE_2D, 0);
 
+      texFormat = ctx->Driver.ChooseTextureFormat(ctx, GL_RGBA, GL_RGBA,
+                                                  GL_UNSIGNED_BYTE);
+
       /* init the image fields */
       _mesa_init_teximage_fields(ctx, GL_TEXTURE_2D, texImage,
-                                    8, 8, 1, 0, GL_RGBA); 
+                                 8, 8, 1, 0, GL_RGBA, texFormat); 
 
-      texImage->TexFormat =
-         ctx->Driver.ChooseTextureFormat(ctx, GL_RGBA, GL_RGBA, GL_UNSIGNED_BYTE);
       ASSERT(texImage->TexFormat != MESA_FORMAT_NONE);
 
       /* set image data */
@@ -831,7 +832,8 @@ _mesa_GenTextures( GLsizei n, GLuint *textures )
  * read framebuffer.  If so, Unbind it.
  */
 static void
-unbind_texobj_from_fbo(struct gl_context *ctx, struct gl_texture_object *texObj)
+unbind_texobj_from_fbo(struct gl_context *ctx,
+                       struct gl_texture_object *texObj)
 {
    const GLuint n = (ctx->DrawBuffer == ctx->ReadBuffer) ? 1 : 2;
    GLuint i;
@@ -856,7 +858,8 @@ unbind_texobj_from_fbo(struct gl_context *ctx, struct gl_texture_object *texObj)
  * unbind it if so (revert to default textures).
  */
 static void
-unbind_texobj_from_texunits(struct gl_context *ctx, struct gl_texture_object *texObj)
+unbind_texobj_from_texunits(struct gl_context *ctx,
+                            struct gl_texture_object *texObj)
 {
    GLuint u, tex;
 
@@ -904,7 +907,7 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *textures)
             = _mesa_lookup_texture(ctx, textures[i]);
 
          if (delObj) {
-	    _mesa_lock_texture(ctx, delObj);
+            _mesa_lock_texture(ctx, delObj);
 
             /* Check if texture is bound to any framebuffer objects.
              * If so, unbind.
@@ -917,7 +920,7 @@ _mesa_DeleteTextures( GLsizei n, const GLuint *textures)
              */
             unbind_texobj_from_texunits(ctx, delObj);
 
-	    _mesa_unlock_texture(ctx, delObj);
+            _mesa_unlock_texture(ctx, delObj);
 
             ctx->NewState |= _NEW_TEXTURE;
 
@@ -1029,7 +1032,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
       }
       else {
          /* if this is a new texture id, allocate a texture object now */
-	 newTexObj = (*ctx->Driver.NewTextureObject)(ctx, texName, target);
+         newTexObj = (*ctx->Driver.NewTextureObject)(ctx, texName, target);
          if (!newTexObj) {
             _mesa_error(ctx, GL_OUT_OF_MEMORY, "glBindTexture");
             return;
@@ -1112,6 +1115,8 @@ _mesa_PrioritizeTextures( GLsizei n, const GLuint *texName,
    ctx->NewState |= _NEW_TEXTURE;
 }
 
+
+
 /**
  * See if textures are loaded in texture memory.
  * 
@@ -1157,22 +1162,23 @@ _mesa_AreTexturesResident(GLsizei n, const GLuint *texName,
       if (!ctx->Driver.IsTextureResident ||
           ctx->Driver.IsTextureResident(ctx, t)) {
          /* The texture is resident */
-	 if (!allResident)
-	    residences[i] = GL_TRUE;
+         if (!allResident)
+            residences[i] = GL_TRUE;
       }
       else {
          /* The texture is not resident */
          if (allResident) {
-	    allResident = GL_FALSE;
-	    for (j = 0; j < i; j++)
-	       residences[j] = GL_TRUE;
-	 }
-	 residences[i] = GL_FALSE;
+            allResident = GL_FALSE;
+            for (j = 0; j < i; j++)
+               residences[j] = GL_TRUE;
+         }
+         residences[i] = GL_FALSE;
       }
    }
    
    return allResident;
 }
+
 
 /**
  * See if a name corresponds to a texture.
@@ -1234,5 +1240,3 @@ _mesa_unlock_context_textures( struct gl_context *ctx )
 }
 
 /*@}*/
-
-

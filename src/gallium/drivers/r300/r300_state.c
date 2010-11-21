@@ -1448,6 +1448,15 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
     struct pipe_vertex_buffer *vbo;
     unsigned i, max_index = (1 << 24) - 1;
     boolean any_user_buffer = FALSE;
+    struct pipe_vertex_buffer dummy_vb = {0};
+
+    /* There must be at least one vertex buffer set, otherwise it locks up. */
+    if (!count) {
+        dummy_vb.buffer = r300->dummy_vb;
+        dummy_vb.max_index = r300->dummy_vb->width0 / 4;
+        buffers = &dummy_vb;
+        count = 1;
+    }
 
     if (count == r300->vertex_buffer_count &&
         memcmp(r300->vertex_buffer, buffers,
@@ -1601,6 +1610,14 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
     struct r300_vertex_element_state *velems;
     unsigned i;
     enum pipe_format *format;
+    struct pipe_vertex_element dummy_attrib = {0};
+
+    /* R300 Programmable Stream Control (PSC) doesn't support 0 vertex elements. */
+    if (!count) {
+        dummy_attrib.src_format = PIPE_FORMAT_R8G8B8A8_UNORM;
+        attribs = &dummy_attrib;
+        count = 1;
+    }
 
     assert(count <= PIPE_MAX_ATTRIBS);
     velems = CALLOC_STRUCT(r300_vertex_element_state);
@@ -1667,7 +1684,8 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
              * swizzles are already set up.
              * Also compute the vertex size. */
             for (i = 0; i < count; i++) {
-                /* This is OK because we check for aligned strides too. */
+                /* This is OK because we check for aligned strides too
+                 * elsewhere. */
                 velems->hw_format_size[i] =
                     align(util_format_get_blocksize(velems->hw_format[i]), 4);
                 velems->vertex_size_dwords += velems->hw_format_size[i] / 4;

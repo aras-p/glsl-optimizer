@@ -30,7 +30,6 @@
 #include "main/image.h"
 #include "main/teximage.h"
 #include "main/texstate.h"
-#include "main/mipmap.h"
 
 #include "drivers/common/meta.h"
 

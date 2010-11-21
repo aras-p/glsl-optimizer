@@ -57,7 +57,7 @@ ir_expression::constant_expression_value()
    if (this->type->is_error())
       return NULL;
 
-   ir_constant *op[2] = { NULL, NULL };
+   ir_constant *op[Elements(this->operands)] = { NULL, };
    ir_constant_data data;
 
    memset(&data, 0, sizeof(data));
@@ -127,31 +127,31 @@ ir_expression::constant_expression_value()
    case ir_unop_f2i:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 data.i[c] = op[0]->value.f[c];
+	 data.i[c] = (int) op[0]->value.f[c];
       }
       break;
    case ir_unop_i2f:
       assert(op[0]->type->base_type == GLSL_TYPE_INT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 data.f[c] = op[0]->value.i[c];
+	 data.f[c] = (float) op[0]->value.i[c];
       }
       break;
    case ir_unop_u2f:
       assert(op[0]->type->base_type == GLSL_TYPE_UINT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 data.f[c] = op[0]->value.u[c];
+	 data.f[c] = (float) op[0]->value.u[c];
       }
       break;
    case ir_unop_b2f:
       assert(op[0]->type->base_type == GLSL_TYPE_BOOL);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 data.f[c] = op[0]->value.b[c] ? 1.0 : 0.0;
+	 data.f[c] = op[0]->value.b[c] ? 1.0F : 0.0F;
       }
       break;
    case ir_unop_f2b:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 data.b[c] = bool(op[0]->value.f[c]);
+	 data.b[c] = op[0]->value.f[c] != 0.0F ? true : false;
       }
       break;
    case ir_unop_b2i:
@@ -163,7 +163,7 @@ ir_expression::constant_expression_value()
    case ir_unop_i2b:
       assert(op[0]->type->is_integer());
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 data.b[c] = bool(op[0]->value.u[c]);
+	 data.b[c] = op[0]->value.u[c] ? true : false;
       }
       break;
 
@@ -216,6 +216,7 @@ ir_expression::constant_expression_value()
       break;
 
    case ir_unop_sin:
+   case ir_unop_sin_reduced:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.f[c] = sinf(op[0]->value.f[c]);
@@ -223,6 +224,7 @@ ir_expression::constant_expression_value()
       break;
 
    case ir_unop_cos:
+   case ir_unop_cos_reduced:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 data.f[c] = cosf(op[0]->value.f[c]);
@@ -233,7 +235,7 @@ ir_expression::constant_expression_value()
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 switch (this->type->base_type) {
 	 case GLSL_TYPE_UINT:
-	    data.u[c] = -op[0]->value.u[c];
+	    data.u[c] = -((int) op[0]->value.u[c]);
 	    break;
 	 case GLSL_TYPE_INT:
 	    data.i[c] = -op[0]->value.i[c];
@@ -299,7 +301,7 @@ ir_expression::constant_expression_value()
 	    break;
 	 case GLSL_TYPE_FLOAT:
 	    if (op[0]->value.f[c] != 0.0)
-	       data.f[c] = 1.0 / op[0]->value.f[c];
+	       data.f[c] = 1.0F / op[0]->value.f[c];
 	    break;
 	 default:
 	    assert(0);
@@ -310,7 +312,7 @@ ir_expression::constant_expression_value()
    case ir_unop_rsq:
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 data.f[c] = 1.0 / sqrtf(op[0]->value.f[c]);
+	 data.f[c] = 1.0F / sqrtf(op[0]->value.f[c]);
       }
       break;
 
@@ -410,17 +412,6 @@ ir_expression::constant_expression_value()
 	    assert(0);
 	 }
       }
-      break;
-
-   case ir_binop_cross:
-      assert(op[0]->type == glsl_type::vec3_type);
-      assert(op[1]->type == glsl_type::vec3_type);
-      data.f[0] = (op[0]->value.f[1] * op[1]->value.f[2] -
-		   op[1]->value.f[1] * op[0]->value.f[2]);
-      data.f[1] = (op[0]->value.f[2] * op[1]->value.f[0] -
-		   op[1]->value.f[2] * op[0]->value.f[0]);
-      data.f[2] = (op[0]->value.f[0] * op[1]->value.f[1] -
-		   op[1]->value.f[0] * op[0]->value.f[1]);
       break;
 
    case ir_binop_add:
@@ -581,63 +572,75 @@ ir_expression::constant_expression_value()
       break;
 
    case ir_binop_less:
-      switch (op[0]->type->base_type) {
-      case GLSL_TYPE_UINT:
-	 data.b[0] = op[0]->value.u[0] < op[1]->value.u[0];
-	 break;
-      case GLSL_TYPE_INT:
-	 data.b[0] = op[0]->value.i[0] < op[1]->value.i[0];
-	 break;
-      case GLSL_TYPE_FLOAT:
-	 data.b[0] = op[0]->value.f[0] < op[1]->value.f[0];
-	 break;
-      default:
-	 assert(0);
+      assert(op[0]->type == op[1]->type);
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
+	 switch (op[0]->type->base_type) {
+	 case GLSL_TYPE_UINT:
+	    data.b[0] = op[0]->value.u[0] < op[1]->value.u[0];
+	    break;
+	 case GLSL_TYPE_INT:
+	    data.b[0] = op[0]->value.i[0] < op[1]->value.i[0];
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    data.b[0] = op[0]->value.f[0] < op[1]->value.f[0];
+	    break;
+	 default:
+	    assert(0);
+	 }
       }
       break;
    case ir_binop_greater:
-      switch (op[0]->type->base_type) {
-      case GLSL_TYPE_UINT:
-	 data.b[0] = op[0]->value.u[0] > op[1]->value.u[0];
-	 break;
-      case GLSL_TYPE_INT:
-	 data.b[0] = op[0]->value.i[0] > op[1]->value.i[0];
-	 break;
-      case GLSL_TYPE_FLOAT:
-	 data.b[0] = op[0]->value.f[0] > op[1]->value.f[0];
-	 break;
-      default:
-	 assert(0);
+      assert(op[0]->type == op[1]->type);
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
+	 switch (op[0]->type->base_type) {
+	 case GLSL_TYPE_UINT:
+	    data.b[c] = op[0]->value.u[c] > op[1]->value.u[c];
+	    break;
+	 case GLSL_TYPE_INT:
+	    data.b[c] = op[0]->value.i[c] > op[1]->value.i[c];
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    data.b[c] = op[0]->value.f[c] > op[1]->value.f[c];
+	    break;
+	 default:
+	    assert(0);
+	 }
       }
       break;
    case ir_binop_lequal:
-      switch (op[0]->type->base_type) {
-      case GLSL_TYPE_UINT:
-	 data.b[0] = op[0]->value.u[0] <= op[1]->value.u[0];
-	 break;
-      case GLSL_TYPE_INT:
-	 data.b[0] = op[0]->value.i[0] <= op[1]->value.i[0];
-	 break;
-      case GLSL_TYPE_FLOAT:
-	 data.b[0] = op[0]->value.f[0] <= op[1]->value.f[0];
-	 break;
-      default:
-	 assert(0);
+      assert(op[0]->type == op[1]->type);
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
+	 switch (op[0]->type->base_type) {
+	 case GLSL_TYPE_UINT:
+	    data.b[0] = op[0]->value.u[0] <= op[1]->value.u[0];
+	    break;
+	 case GLSL_TYPE_INT:
+	    data.b[0] = op[0]->value.i[0] <= op[1]->value.i[0];
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    data.b[0] = op[0]->value.f[0] <= op[1]->value.f[0];
+	    break;
+	 default:
+	    assert(0);
+	 }
       }
       break;
    case ir_binop_gequal:
-      switch (op[0]->type->base_type) {
-      case GLSL_TYPE_UINT:
-	 data.b[0] = op[0]->value.u[0] >= op[1]->value.u[0];
-	 break;
-      case GLSL_TYPE_INT:
-	 data.b[0] = op[0]->value.i[0] >= op[1]->value.i[0];
-	 break;
-      case GLSL_TYPE_FLOAT:
-	 data.b[0] = op[0]->value.f[0] >= op[1]->value.f[0];
-	 break;
-      default:
-	 assert(0);
+      assert(op[0]->type == op[1]->type);
+      for (unsigned c = 0; c < op[0]->type->components(); c++) {
+	 switch (op[0]->type->base_type) {
+	 case GLSL_TYPE_UINT:
+	    data.b[0] = op[0]->value.u[0] >= op[1]->value.u[0];
+	    break;
+	 case GLSL_TYPE_INT:
+	    data.b[0] = op[0]->value.i[0] >= op[1]->value.i[0];
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    data.b[0] = op[0]->value.f[0] >= op[1]->value.f[0];
+	    break;
+	 default:
+	    assert(0);
+	 }
       }
       break;
    case ir_binop_equal:
@@ -782,6 +785,24 @@ ir_expression::constant_expression_value()
           default:
               assert(0);
           }
+      }
+      break;
+
+   case ir_quadop_vector:
+      for (unsigned c = 0; c < this->type->vector_elements; c++) {
+	 switch (this->type->base_type) {
+	 case GLSL_TYPE_INT:
+	    data.i[c] = op[c]->value.i[0];
+	    break;
+	 case GLSL_TYPE_UINT:
+	    data.u[c] = op[c]->value.u[0];
+	    break;
+	 case GLSL_TYPE_FLOAT:
+	    data.f[c] = op[c]->value.f[0];
+	    break;
+	 default:
+	    assert(0);
+	 }
       }
       break;
 
@@ -990,10 +1011,18 @@ ir_call::constant_expression_value()
       assert(op[0]->type->is_float());
       for (unsigned c = 0; c < op[0]->type->components(); c++)
 	 data.f[c] = acosf(op[0]->value.f[c]);
+   } else if (strcmp(callee, "acosh") == 0) {
+      assert(op[0]->type->is_float());
+      for (unsigned c = 0; c < op[0]->type->components(); c++)
+	 data.f[c] = acoshf(op[0]->value.f[c]);
    } else if (strcmp(callee, "asin") == 0) {
       assert(op[0]->type->is_float());
       for (unsigned c = 0; c < op[0]->type->components(); c++)
 	 data.f[c] = asinf(op[0]->value.f[c]);
+   } else if (strcmp(callee, "asinh") == 0) {
+      assert(op[0]->type->is_float());
+      for (unsigned c = 0; c < op[0]->type->components(); c++)
+	 data.f[c] = asinhf(op[0]->value.f[c]);
    } else if (strcmp(callee, "atan") == 0) {
       assert(op[0]->type->is_float());
       if (num_parameters == 2) {
@@ -1004,6 +1033,10 @@ ir_call::constant_expression_value()
 	 for (unsigned c = 0; c < op[0]->type->components(); c++)
 	    data.f[c] = atanf(op[0]->value.f[c]);
       }
+   } else if (strcmp(callee, "atanh") == 0) {
+      assert(op[0]->type->is_float());
+      for (unsigned c = 0; c < op[0]->type->components(); c++)
+	 data.f[c] = atanhf(op[0]->value.f[c]);
    } else if (strcmp(callee, "dFdx") == 0 || strcmp(callee, "dFdy") == 0) {
       return ir_constant::zero(mem_ctx, this->type);
    } else if (strcmp(callee, "ceil") == 0) {
@@ -1040,11 +1073,18 @@ ir_call::constant_expression_value()
       for (unsigned c = 0; c < op[0]->type->components(); c++)
 	 data.f[c] = coshf(op[0]->value.f[c]);
    } else if (strcmp(callee, "cross") == 0) {
-      expr = new(mem_ctx) ir_expression(ir_binop_cross, type, op[0], op[1]);
+      assert(op[0]->type == glsl_type::vec3_type);
+      assert(op[1]->type == glsl_type::vec3_type);
+      data.f[0] = (op[0]->value.f[1] * op[1]->value.f[2] -
+		   op[1]->value.f[1] * op[0]->value.f[2]);
+      data.f[1] = (op[0]->value.f[2] * op[1]->value.f[0] -
+		   op[1]->value.f[2] * op[0]->value.f[0]);
+      data.f[2] = (op[0]->value.f[0] * op[1]->value.f[1] -
+		   op[1]->value.f[0] * op[0]->value.f[1]);
    } else if (strcmp(callee, "degrees") == 0) {
       assert(op[0]->type->is_float());
       for (unsigned c = 0; c < op[0]->type->components(); c++)
-	 data.f[c] = 180.0/M_PI * op[0]->value.f[c];
+	 data.f[c] = 180.0F / M_PI * op[0]->value.f[c];
    } else if (strcmp(callee, "distance") == 0) {
       assert(op[0]->type->is_float() && op[1]->type->is_float());
       float length_squared = 0.0;
@@ -1235,7 +1275,7 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "radians") == 0) {
       assert(op[0]->type->is_float());
       for (unsigned c = 0; c < op[0]->type->components(); c++)
-	 data.f[c] = M_PI/180.0 * op[0]->value.f[c];
+	 data.f[c] = M_PI / 180.0F * op[0]->value.f[c];
    } else if (strcmp(callee, "reflect") == 0) {
       assert(op[0]->type->is_float());
       float dot_NI = dot(op[1], op[0]);
@@ -1244,7 +1284,7 @@ ir_call::constant_expression_value()
    } else if (strcmp(callee, "refract") == 0) {
       const float eta = op[2]->value.f[0];
       const float dot_NI = dot(op[1], op[0]);
-      const float k = 1.0 - eta * eta * (1.0 - dot_NI * dot_NI);
+      const float k = 1.0F - eta * eta * (1.0F - dot_NI * dot_NI);
       if (k < 0.0) {
 	 return ir_constant::zero(mem_ctx, this->type);
       } else {
@@ -1284,7 +1324,7 @@ ir_call::constant_expression_value()
       /* op[0] (edge) may be either a scalar or a vector */
       const unsigned c0_inc = op[0]->type->is_scalar() ? 0 : 1;
       for (unsigned c = 0, c0 = 0; c < type->components(); c0 += c0_inc, c++)
-	 data.f[c] = (op[1]->value.f[c] < op[0]->value.f[c0]) ? 0.0 : 1.0;
+	 data.f[c] = (op[1]->value.f[c] < op[0]->value.f[c0]) ? 0.0F : 1.0F;
    } else if (strcmp(callee, "tan") == 0) {
       assert(op[0]->type->is_float());
       for (unsigned c = 0; c < op[0]->type->components(); c++)

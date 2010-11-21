@@ -41,7 +41,7 @@ i915_drm_batchbuffer_reset(struct i915_drm_batchbuffer *batch)
 
    if (batch->bo)
       drm_intel_bo_unreference(batch->bo);
-   batch->bo = drm_intel_bo_alloc(idws->pools.gem,
+   batch->bo = drm_intel_bo_alloc(idws->gem_manager,
                                   "gallium3d_batchbuffer",
                                   batch->actual_size,
                                   4096);

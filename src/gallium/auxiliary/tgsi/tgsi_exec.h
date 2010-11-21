@@ -383,6 +383,11 @@ tgsi_exec_get_shader_param(enum pipe_shader_cap param)
       return TGSI_EXEC_NUM_PREDS;
    case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
       return 1;
+   case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
+   case PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR:
+   case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
+   case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
+      return 1;
    default:
       return 0;
    }

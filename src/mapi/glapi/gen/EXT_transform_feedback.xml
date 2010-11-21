@@ -75,51 +75,6 @@
 </category>
 
 
-<!-- Note: these 3.0 entrypoints might get moved to a new file -->
-
-<category name="3.0">
-
-  <function name="BindBufferRange" alias="BindBufferRangeEXT">
-    <param name="target" type="GLenum"/>
-    <param name="index" type="GLuint"/>
-    <param name="buffer" type="GLuint"/>
-    <param name="offset" type="GLintptr"/>
-    <param name="size" type="GLsizeiptr"/>
-  </function>
-
-  <function name="BindBufferBase" alias="BindBufferBaseEXT">
-    <param name="target" type="GLenum"/>
-    <param name="index" type="GLuint"/>
-    <param name="buffer" type="GLuint"/>
-  </function>
-
-  <function name="BeginTransformFeedback" alias="BeginTransformFeedbackEXT">
-    <param name="mode" type="GLenum"/>
-  </function>
-
-  <function name="EndTransformFeedback" alias="EndTransformFeedbackEXT">
-  </function>
-
-  <function name="TransformFeedbackVaryings" alias="TransformFeedbackVaryingsEXT">
-    <param name="program" type="GLuint"/>
-    <param name="count" type="GLsizei"/>
-    <param name="varyings" type="const char **"/>
-    <param name="bufferMode" type="GLenum"/>
-  </function>
-
-  <function name="GetTransformFeedbackVarying" alias="GetTransformFeedbackVaryingEXT">
-    <param name="program" type="GLuint"/>
-    <param name="index" type="GLuint"/>
-    <param name="bufSize" type="GLsizei"/>
-    <param name="length" type="GLsizei *"/>
-    <param name="size" type="GLsizei *"/>
-    <param name="type" type="GLenum *"/>
-    <param name="name" type="GLchar *"/>
-  </function>
-
-</category>
-
-
 <category name="GL_ARB_transform_feedback2" number="93">
 
   <enum name="TRANSFORM_FEEDBACK"                  value="0x8E22"/>

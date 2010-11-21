@@ -32,6 +32,8 @@
 #include "r300_winsys.h"
 #include "r300_public.h"
 
+#include "draw/draw_context.h"
+
 /* Return the identifier behind whom the brave coders responsible for this
  * amalgamation of code, sweat, and duct tape, routinely obscure their names.
  *
@@ -207,9 +209,18 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
             return is_r500 ? 1 : 0;
         case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
             return 1;
+        case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
+        case PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR:
+        case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
+        case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
+            return 0;
         }
         break;
     case PIPE_SHADER_VERTEX:
+        if (!r300screen->caps.has_tcl) {
+            return draw_get_shader_param(shader, param);
+        }
+
         switch (param)
         {
         case PIPE_SHADER_CAP_MAX_INSTRUCTIONS:
@@ -233,6 +244,12 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
         case PIPE_SHADER_CAP_MAX_PREDS:
             return is_r500 ? 4 : 0; /* XXX guessed. */
         case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
+            return 1;
+        case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
+        case PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR:
+        case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
+            return 0;
+        case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
             return 1;
         default:
             break;
@@ -266,6 +283,13 @@ static float r300_get_paramf(struct pipe_screen* pscreen, enum pipe_cap param)
             return 16.0f;
         case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
             return 16.0f;
+        case PIPE_CAP_GUARD_BAND_LEFT:
+        case PIPE_CAP_GUARD_BAND_TOP:
+        case PIPE_CAP_GUARD_BAND_RIGHT:
+        case PIPE_CAP_GUARD_BAND_BOTTOM:
+            /* XXX I don't know what these should be but the least we can do is
+             * silence the potential error message */
+            return 0.0f;
         default:
             debug_printf("r300: Warning: Unknown CAP %d in get_paramf.\n",
                          param);

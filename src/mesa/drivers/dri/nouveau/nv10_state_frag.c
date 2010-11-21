@@ -27,7 +27,7 @@
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
 #include "nouveau_gldefs.h"
-#include "nouveau_class.h"
+#include "nv10_3d.xml.h"
 #include "nouveau_util.h"
 #include "nv10_driver.h"
 #include "nv20_driver.h"
@@ -41,24 +41,24 @@
 #define RC_IN_SHIFT_G	40
 
 #define RC_IN_SOURCE(source)				\
-	((uint64_t)NV10TCL_RC_IN_RGB_D_INPUT_##source)
+	((uint64_t)NV10_3D_RC_IN_RGB_D_INPUT_##source)
 #define RC_IN_USAGE(usage)					\
-	((uint64_t)NV10TCL_RC_IN_RGB_D_COMPONENT_USAGE_##usage)
+	((uint64_t)NV10_3D_RC_IN_RGB_D_COMPONENT_USAGE_##usage)
 #define RC_IN_MAPPING(mapping)					\
-	((uint64_t)NV10TCL_RC_IN_RGB_D_MAPPING_##mapping)
+	((uint64_t)NV10_3D_RC_IN_RGB_D_MAPPING_##mapping)
 
-#define RC_OUT_BIAS	NV10TCL_RC_OUT_RGB_BIAS_BIAS_BY_NEGATIVE_ONE_HALF
-#define RC_OUT_SCALE_1	NV10TCL_RC_OUT_RGB_SCALE_NONE
-#define RC_OUT_SCALE_2	NV10TCL_RC_OUT_RGB_SCALE_SCALE_BY_TWO
-#define RC_OUT_SCALE_4	NV10TCL_RC_OUT_RGB_SCALE_SCALE_BY_FOUR
+#define RC_OUT_BIAS	NV10_3D_RC_OUT_RGB_BIAS_BIAS_BY_NEGATIVE_ONE_HALF
+#define RC_OUT_SCALE_1	NV10_3D_RC_OUT_RGB_SCALE_NONE
+#define RC_OUT_SCALE_2	NV10_3D_RC_OUT_RGB_SCALE_SCALE_BY_TWO
+#define RC_OUT_SCALE_4	NV10_3D_RC_OUT_RGB_SCALE_SCALE_BY_FOUR
 
 /* Make the combiner do: spare0_i = A_i * B_i */
-#define RC_OUT_AB	NV10TCL_RC_OUT_RGB_AB_OUTPUT_SPARE0
+#define RC_OUT_AB	NV10_3D_RC_OUT_RGB_AB_OUTPUT_SPARE0
 /* spare0_i = dot3(A, B) */
-#define RC_OUT_DOT_AB	(NV10TCL_RC_OUT_RGB_AB_OUTPUT_SPARE0 |	\
-			 NV10TCL_RC_OUT_RGB_AB_DOT_PRODUCT)
+#define RC_OUT_DOT_AB	(NV10_3D_RC_OUT_RGB_AB_OUTPUT_SPARE0 |	\
+			 NV10_3D_RC_OUT_RGB_AB_DOT_PRODUCT)
 /* spare0_i = A_i * B_i + C_i * D_i */
-#define RC_OUT_SUM	NV10TCL_RC_OUT_RGB_SUM_OUTPUT_SPARE0
+#define RC_OUT_SUM	NV10_3D_RC_OUT_RGB_SUM_OUTPUT_SPARE0
 
 struct combiner_state {
 	struct gl_context *ctx;
@@ -383,15 +383,15 @@ nv10_emit_tex_env(struct gl_context *ctx, int emit)
 			c_out |= 0x3 << 27;
 	}
 
-	BEGIN_RING(chan, celsius, NV10TCL_RC_IN_ALPHA(i), 1);
+	BEGIN_RING(chan, celsius, NV10_3D_RC_IN_ALPHA(i), 1);
 	OUT_RING(chan, a_in);
-	BEGIN_RING(chan, celsius, NV10TCL_RC_IN_RGB(i), 1);
+	BEGIN_RING(chan, celsius, NV10_3D_RC_IN_RGB(i), 1);
 	OUT_RING(chan, c_in);
-	BEGIN_RING(chan, celsius, NV10TCL_RC_COLOR(i), 1);
+	BEGIN_RING(chan, celsius, NV10_3D_RC_COLOR(i), 1);
 	OUT_RING(chan, k);
-	BEGIN_RING(chan, celsius, NV10TCL_RC_OUT_ALPHA(i), 1);
+	BEGIN_RING(chan, celsius, NV10_3D_RC_OUT_ALPHA(i), 1);
 	OUT_RING(chan, a_out);
-	BEGIN_RING(chan, celsius, NV10TCL_RC_OUT_RGB(i), 1);
+	BEGIN_RING(chan, celsius, NV10_3D_RC_OUT_RGB(i), 1);
 	OUT_RING(chan, c_out);
 
 	context_dirty(ctx, FRAG);
@@ -407,7 +407,7 @@ nv10_emit_frag(struct gl_context *ctx, int emit)
 
 	nv10_get_final_combiner(ctx, &in, &n);
 
-	BEGIN_RING(chan, celsius, NV10TCL_RC_FINAL0, 2);
+	BEGIN_RING(chan, celsius, NV10_3D_RC_FINAL0, 2);
 	OUT_RING(chan, in);
 	OUT_RING(chan, in >> 32);
 }

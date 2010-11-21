@@ -7,9 +7,6 @@ env = env.Clone()
 
 env.Prepend(LIBS = [
     ws_xlib,
-    trace,
-    rbug,
-    identity,
     gallium,
 ])
 
@@ -20,14 +17,16 @@ env.Append(CPPPATH = [
     '#src/gallium/include/state_tracker',
 ])
 
+env.Append(CPPDEFINES = ['GALLIUM_RBUG', 'GALLIUM_TRACE', 'GALLIUM_GALAHAD'])
+
 sources = [
     'graw_xlib.c',
     graw_util
 ]
 
 if True:
-    env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
-    env.Prepend(LIBS = [softpipe])
+    env.Append(CPPDEFINES = ['GALLIUM_TRACE', 'GALLIUM_RBUG', 'GALLIUM_GALAHAD', 'GALLIUM_SOFTPIPE'])
+    env.Prepend(LIBS = [trace, rbug, galahad, softpipe])
 
 if env['llvm']:
     env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')

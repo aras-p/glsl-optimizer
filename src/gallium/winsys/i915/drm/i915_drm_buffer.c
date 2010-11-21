@@ -12,7 +12,6 @@ i915_drm_buffer_create(struct i915_winsys *iws,
 {
    struct i915_drm_buffer *buf = CALLOC_STRUCT(i915_drm_buffer);
    struct i915_drm_winsys *idws = i915_drm_winsys(iws);
-   drm_intel_bufmgr *pool;
    char *name;
 
    if (!buf)
@@ -21,26 +20,19 @@ i915_drm_buffer_create(struct i915_winsys *iws,
    buf->magic = 0xDEAD1337;
    buf->flinked = FALSE;
    buf->flink = 0;
-   buf->map_gtt = FALSE;
 
    if (type == I915_NEW_TEXTURE) {
       name = "gallium3d_texture";
-      pool = idws->pools.gem;
    } else if (type == I915_NEW_VERTEX) {
       name = "gallium3d_vertex";
-      pool = idws->pools.gem;
-      buf->map_gtt = TRUE;
    } else if (type == I915_NEW_SCANOUT) {
       name = "gallium3d_scanout";
-      pool = idws->pools.gem;
-      buf->map_gtt = TRUE;
    } else {
       assert(0);
       name = "gallium3d_unknown";
-      pool = idws->pools.gem;
    }
 
-   buf->bo = drm_intel_bo_alloc(pool, name, size, alignment);
+   buf->bo = drm_intel_bo_alloc(idws->gem_manager, name, size, alignment);
 
    if (!buf->bo)
       goto err;
@@ -66,7 +58,7 @@ i915_drm_buffer_from_handle(struct i915_winsys *iws,
       return NULL;
 
    buf->magic = 0xDEAD1337;
-   buf->bo = drm_intel_bo_gem_create_from_name(idws->pools.gem, "gallium3d_from_handle", whandle->handle);
+   buf->bo = drm_intel_bo_gem_create_from_name(idws->gem_manager, "gallium3d_from_handle", whandle->handle);
    buf->flinked = TRUE;
    buf->flink = whandle->handle;
 
@@ -74,8 +66,6 @@ i915_drm_buffer_from_handle(struct i915_winsys *iws,
       goto err;
 
    drm_intel_bo_get_tiling(buf->bo, &tile, &swizzle);
-   if (tile != I915_TILE_NONE)
-      buf->map_gtt = TRUE;
 
    *stride = whandle->stride;
 
@@ -126,7 +116,6 @@ i915_drm_buffer_set_fence_reg(struct i915_winsys *iws,
 
    if (tile != I915_TILE_NONE) {
       assert(buf->map_count == 0);
-      buf->map_gtt = TRUE;
    }
 
    return drm_intel_bo_set_tiling(buf->bo, &tile, stride);
@@ -146,10 +135,7 @@ i915_drm_buffer_map(struct i915_winsys *iws,
    if (buf->map_count)
       goto out;
 
-   if (buf->map_gtt)
-      ret = drm_intel_gem_bo_map_gtt(bo);
-   else
-      ret = drm_intel_bo_map(bo, write);
+   ret = drm_intel_gem_bo_map_gtt(bo);
 
    buf->ptr = bo->virtual;
 
@@ -171,10 +157,7 @@ i915_drm_buffer_unmap(struct i915_winsys *iws,
    if (--buf->map_count)
       return;
 
-   if (buf->map_gtt)
-      drm_intel_gem_bo_unmap_gtt(intel_bo(buffer));
-   else
-      drm_intel_bo_unmap(intel_bo(buffer));
+   drm_intel_gem_bo_unmap_gtt(intel_bo(buffer));
 }
 
 static int

@@ -682,6 +682,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
    int level = 0, internalFormat;
+   gl_format texFormat;
 
    texObj = _mesa_get_current_tex_object(ctx, target);
    intelObj = intel_texture_object(texObj);
@@ -700,10 +701,14 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    if (rb->region == NULL)
       return;
 
-   if (texture_format == __DRI_TEXTURE_FORMAT_RGB)
+   if (texture_format == __DRI_TEXTURE_FORMAT_RGB) {
       internalFormat = GL_RGB;
-   else
+      texFormat = MESA_FORMAT_XRGB8888;
+   }
+   else {
       internalFormat = GL_RGBA;
+      texFormat = MESA_FORMAT_ARGB8888;
+   }
 
    mt = intel_miptree_create_for_region(intel, target,
 					internalFormat,
@@ -724,16 +729,13 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
       intel_miptree_release(intel, &intelObj->mt);
 
    intelObj->mt = mt;
+
    _mesa_init_teximage_fields(&intel->ctx, target, texImage,
 			      rb->region->width, rb->region->height, 1,
-			      0, internalFormat);
+			      0, internalFormat, texFormat);
 
    intelImage->face = target_to_face(target);
    intelImage->level = level;
-   if (texture_format == __DRI_TEXTURE_FORMAT_RGB)
-      texImage->TexFormat = MESA_FORMAT_XRGB8888;
-   else
-      texImage->TexFormat = MESA_FORMAT_ARGB8888;
    texImage->RowStride = rb->region->pitch;
    intel_miptree_reference(&intelImage->mt, intelObj->mt);
 
@@ -789,11 +791,10 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
    intelObj->mt = mt;
    _mesa_init_teximage_fields(&intel->ctx, target, texImage,
 			      image->region->width, image->region->height, 1,
-			      0, image->internal_format);
+			      0, image->internal_format, image->format);
 
    intelImage->face = target_to_face(target);
    intelImage->level = 0;
-   texImage->TexFormat = image->format;
    texImage->RowStride = image->region->pitch;
    intel_miptree_reference(&intelImage->mt, intelObj->mt);
 

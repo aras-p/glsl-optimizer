@@ -175,6 +175,15 @@ void st_init_limits(struct st_context *st)
 
       options->EmitNoCont = !screen->get_shader_param(screen, i, PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED);
 
+      options->EmitNoIndirectInput = !screen->get_shader_param(screen, i,
+                                        PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR);
+      options->EmitNoIndirectOutput = !screen->get_shader_param(screen, i,
+                                        PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR);
+      options->EmitNoIndirectTemp = !screen->get_shader_param(screen, i,
+                                        PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR);
+      options->EmitNoIndirectUniform = !screen->get_shader_param(screen, i,
+                                        PIPE_SHADER_CAP_INDIRECT_CONST_ADDR);
+
       if(options->EmitNoLoops)
          options->MaxUnrollIterations = MIN2(screen->get_shader_param(screen, i, PIPE_SHADER_CAP_MAX_INSTRUCTIONS), 65536);
    }

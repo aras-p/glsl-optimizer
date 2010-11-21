@@ -29,11 +29,9 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_context.h"
+#include "pipe/p_state.h"
+#include "util/u_memory.h"
 #include "state_tracker/st_api.h"
-
-/* for _mesa_share_state */
-#include "state_tracker/st_context.h"
-#include "main/core.h"
 
 #include "stw_icd.h"
 #include "stw_device.h"
@@ -102,13 +100,8 @@ DrvShareLists(
    ctx1 = stw_lookup_context_locked( dhglrc1 );
    ctx2 = stw_lookup_context_locked( dhglrc2 );
 
-   if (ctx1 && ctx2) {
-      struct st_context *st1, *st2;
-
-      st1 = (struct st_context *) ctx1->st;
-      st2 = (struct st_context *) ctx2->st;
-      ret = _mesa_share_state(st2->ctx, st1->ctx);
-   }
+   if (ctx1 && ctx2 && ctx2->st->share)
+      ret = ctx2->st->share(ctx2->st, ctx1->st);
 
    pipe_mutex_unlock( stw_dev->ctx_mutex );
    

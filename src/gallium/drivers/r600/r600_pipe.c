@@ -187,7 +187,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		FREE(rctx);
 		return NULL;
 	}
-	
+
 	rctx->vs_resource = CALLOC(R600_RESOURCE_ARRAY_SIZE, sizeof(struct r600_pipe_state));
 	if (!rctx->vs_resource) {
 		FREE(rctx);
@@ -371,6 +371,11 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 		return 0; /* FIXME */
 	case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
 		return 1;
+	case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
+	case PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR:
+	case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
+	case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
+		return 1;
 	default:
 		return 0;
 	}
@@ -402,7 +407,7 @@ static boolean r600_is_format_supported(struct pipe_screen* screen,
                   PIPE_BIND_DISPLAY_TARGET |
                   PIPE_BIND_SCANOUT |
                   PIPE_BIND_SHARED)) &&
-	    r600_is_colorbuffer_format_supported(format)) {
+			r600_is_colorbuffer_format_supported(format)) {
 		retval |= usage &
 			(PIPE_BIND_RENDER_TARGET |
 			 PIPE_BIND_DISPLAY_TARGET |

@@ -29,12 +29,12 @@ def stringify(s):
     # rather than actual string literals.
     if len(s) >= 65535:
         #t = "/* Warning: length " + repr(len(s)) + " too large */\n"
-	t = ""
+        t = ""
         for c in re.sub('\s\s+', ' ', s):
             if c == '\n':
-	        t += '\n'
+                t += '\n'
             else:
-	        t += "'" + c + "',"
+                t += "'" + c + "',"
         return '{' + t[:-1] + '}'
 
     t = s.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n"\n   "')

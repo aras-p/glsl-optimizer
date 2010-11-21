@@ -363,10 +363,7 @@ void r300_tgsi_to_rc(struct tgsi_to_rc * ttr,
                 break;
             case TGSI_TOKEN_TYPE_INSTRUCTION:
                 inst = &parser.FullToken.FullInstruction;
-                /* This hack with the RET opcode woudn't work with
-                 * conditionals. */
-                if (inst->Instruction.Opcode == TGSI_OPCODE_END ||
-                    inst->Instruction.Opcode == TGSI_OPCODE_RET) {
+                if (inst->Instruction.Opcode == TGSI_OPCODE_END) {
                     break;
                 }
 

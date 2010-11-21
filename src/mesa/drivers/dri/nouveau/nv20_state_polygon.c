@@ -27,7 +27,7 @@
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
 #include "nouveau_gldefs.h"
-#include "nouveau_class.h"
+#include "nv20_3d.xml.h"
 #include "nv20_driver.h"
 
 void
@@ -36,7 +36,7 @@ nv20_emit_point_mode(struct gl_context *ctx, int emit)
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *kelvin = context_eng3d(ctx);
 
-	BEGIN_RING(chan, kelvin, NV20TCL_POINT_SIZE, 1);
+	BEGIN_RING(chan, kelvin, NV20_3D_POINT_SIZE, 1);
 	if (context_chipset(ctx) >= 0x25)
 		OUT_RINGf(chan, ctx->Point.Size);
 	else

@@ -32,8 +32,9 @@
 #define POLYGON_H
 
 
-#include "mtypes.h"
+#include "glheader.h"
 
+struct gl_context;
 
 extern void
 _mesa_polygon_stipple(struct gl_context *ctx, const GLubyte *pattern);
