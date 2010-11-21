@@ -127,6 +127,7 @@ struct vg_context * vg_create_context(struct pipe_context *pipe,
 
    ctx->mask.sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    ctx->mask.sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   ctx->mask.sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    ctx->mask.sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
    ctx->mask.sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
    ctx->mask.sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
@@ -134,6 +135,7 @@ struct vg_context * vg_create_context(struct pipe_context *pipe,
 
    ctx->blend_sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    ctx->blend_sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   ctx->blend_sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    ctx->blend_sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
    ctx->blend_sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
    ctx->blend_sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
