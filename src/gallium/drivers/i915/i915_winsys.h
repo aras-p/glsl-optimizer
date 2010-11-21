@@ -134,6 +134,20 @@ struct i915_winsys {
                        enum i915_winsys_buffer_type type);
 
    /**
+    * Create a tiled buffer.
+    *
+    * *stride, height are in bytes. The winsys tries to allocate the buffer with
+    * the tiling mode provide in *tiling. If tiling is no possible, *tiling will
+    * be set to I915_TILE_NONE. The calculated stride (incorporateing hw/kernel
+    * requirements) is always returned in *stride.
+    */
+   struct i915_winsys_buffer *
+      (*buffer_create_tiled)(struct i915_winsys *iws,
+                             unsigned *stride, unsigned height,
+                             enum i915_winsys_buffer_tile *tiling,
+                             enum i915_winsys_buffer_type type);
+
+   /**
     * Creates a buffer from a handle.
     * Used to implement pipe_screen::resource_from_handle.
     * Also provides the stride information needed for the

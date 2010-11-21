@@ -27,6 +27,34 @@ err:
    return NULL;
 }
 
+static struct i915_winsys_buffer *
+i915_sw_buffer_create_tiled(struct i915_winsys *iws,
+                      unsigned *stride, unsigned height, 
+                      enum i915_winsys_buffer_tile *tiling,
+                      enum i915_winsys_buffer_type type)
+{
+   struct i915_sw_buffer *buf = CALLOC_STRUCT(i915_sw_buffer);
+
+   if (!buf)
+      return NULL;
+
+   buf->magic = 0xDEAD1337;
+   buf->type = type;
+   buf->ptr = CALLOC(*stride * height, 1);
+   buf->tiling = *tiling;
+   buf->stride = *stride;
+
+   if (!buf->ptr)
+      goto err;
+
+   return (struct i915_winsys_buffer *)buf;
+
+err:
+   assert(0);
+   FREE(buf);
+   return NULL;
+}
+
 static int
 i915_sw_buffer_set_fence_reg(struct i915_winsys *iws,
                                struct i915_winsys_buffer *buffer,
@@ -39,7 +67,7 @@ i915_sw_buffer_set_fence_reg(struct i915_winsys *iws,
       assert(buf->map_count == 0);
    }
 
-   buf->tile = tile;
+   buf->tiling = tile;
 
    return 0;
 }
@@ -95,6 +123,7 @@ void
 i915_sw_winsys_init_buffer_functions(struct i915_sw_winsys *isws)
 {
    isws->base.buffer_create = i915_sw_buffer_create;
+   isws->base.buffer_create_tiled = i915_sw_buffer_create_tiled;
    isws->base.buffer_set_fence_reg = i915_sw_buffer_set_fence_reg;
    isws->base.buffer_map = i915_sw_buffer_map;
    isws->base.buffer_unmap = i915_sw_buffer_unmap;

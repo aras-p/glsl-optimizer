@@ -43,7 +43,8 @@ struct i915_sw_buffer {
    void *ptr;
    unsigned map_count;
    enum i915_winsys_buffer_type type;
-   enum i915_winsys_buffer_tile tile;
+   enum i915_winsys_buffer_tile tiling;
+   unsigned stride;
 };
 
 static INLINE struct i915_sw_buffer *

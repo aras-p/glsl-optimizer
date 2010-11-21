@@ -5,21 +5,9 @@
 
 #include "i915_drm.h"
 
-static struct i915_winsys_buffer *
-i915_drm_buffer_create(struct i915_winsys *iws,
-                        unsigned size,
-                        enum i915_winsys_buffer_type type)
+static char *i915_drm_type_to_name(enum i915_winsys_buffer_type type)
 {
-   struct i915_drm_buffer *buf = CALLOC_STRUCT(i915_drm_buffer);
-   struct i915_drm_winsys *idws = i915_drm_winsys(iws);
    char *name;
-
-   if (!buf)
-      return NULL;
-
-   buf->magic = 0xDEAD1337;
-   buf->flinked = FALSE;
-   buf->flink = 0;
 
    if (type == I915_NEW_TEXTURE) {
       name = "gallium3d_texture";
@@ -32,11 +20,66 @@ i915_drm_buffer_create(struct i915_winsys *iws,
       name = "gallium3d_unknown";
    }
 
-   buf->bo = drm_intel_bo_alloc(idws->gem_manager, name, size, 0);
+   return name;
+}
+
+static struct i915_winsys_buffer *
+i915_drm_buffer_create(struct i915_winsys *iws,
+                        unsigned size,
+                        enum i915_winsys_buffer_type type)
+{
+   struct i915_drm_buffer *buf = CALLOC_STRUCT(i915_drm_buffer);
+   struct i915_drm_winsys *idws = i915_drm_winsys(iws);
+
+   if (!buf)
+      return NULL;
+
+   buf->magic = 0xDEAD1337;
+   buf->flinked = FALSE;
+   buf->flink = 0;
+
+   buf->bo = drm_intel_bo_alloc(idws->gem_manager,
+                                i915_drm_type_to_name(type), size, 0);
 
    if (!buf->bo)
       goto err;
 
+   return (struct i915_winsys_buffer *)buf;
+
+err:
+   assert(0);
+   FREE(buf);
+   return NULL;
+}
+
+static struct i915_winsys_buffer *
+i915_drm_buffer_create_tiled(struct i915_winsys *iws,
+                             unsigned *stride, unsigned height, 
+                             enum i915_winsys_buffer_tile *tiling,
+                             enum i915_winsys_buffer_type type)
+{
+   struct i915_drm_buffer *buf = CALLOC_STRUCT(i915_drm_buffer);
+   struct i915_drm_winsys *idws = i915_drm_winsys(iws);
+   unsigned long pitch = 0;
+   uint32_t tiling_mode = *tiling;
+
+   if (!buf)
+      return NULL;
+
+   buf->magic = 0xDEAD1337;
+   buf->flinked = FALSE;
+   buf->flink = 0;
+
+   buf->bo = drm_intel_bo_alloc_tiled(idws->gem_manager,
+                                      i915_drm_type_to_name(type),
+		   		      *stride, height, 1,
+                                      &tiling_mode, &pitch, 0);
+
+   if (!buf->bo)
+      goto err;
+
+   *stride = pitch;
+   *tiling = tiling_mode;
    return (struct i915_winsys_buffer *)buf;
 
 err:
@@ -190,6 +233,7 @@ void
 i915_drm_winsys_init_buffer_functions(struct i915_drm_winsys *idws)
 {
    idws->base.buffer_create = i915_drm_buffer_create;
+   idws->base.buffer_create_tiled = i915_drm_buffer_create_tiled;
    idws->base.buffer_from_handle = i915_drm_buffer_from_handle;
    idws->base.buffer_get_handle = i915_drm_buffer_get_handle;
    idws->base.buffer_set_fence_reg = i915_drm_buffer_set_fence_reg;
