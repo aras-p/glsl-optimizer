@@ -19,6 +19,10 @@ if env['platform'] == 'windows':
         'WIN32_THREADS', # use Win32 thread API
     ])
     env.Prepend(CPPPATH = ['#src/talloc'])
+else:
+    env.Append(CPPDEFINES = [
+        'IN_DRI_DRIVER', # enable the remap table (for DRI drivers)
+    ])
 
 #
 # Source files
