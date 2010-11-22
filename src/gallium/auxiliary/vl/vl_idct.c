@@ -338,21 +338,21 @@ xfer_buffers_unmap(struct vl_idct *idct)
 static bool
 init_shaders(struct vl_idct *idct)
 {
-   assert(idct);
-
    assert(idct->vs = create_vert_shader(idct));
    assert(idct->transpose_fs = create_transpose_frag_shader(idct));
    assert(idct->matrix_fs = create_matrix_frag_shader(idct));
    assert(idct->eb_fs = create_empty_block_frag_shader(idct));
 
-   return true;
+   return 
+      idct->vs != NULL &&
+      idct->transpose_fs != NULL &&
+      idct->matrix_fs != NULL &&
+      idct->eb_fs != NULL;
 }
 
 static void
 cleanup_shaders(struct vl_idct *idct)
 {
-   assert(idct);
-
    idct->pipe->delete_vs_state(idct->pipe, idct->vs);
    idct->pipe->delete_fs_state(idct->pipe, idct->transpose_fs);
    idct->pipe->delete_fs_state(idct->pipe, idct->matrix_fs);
@@ -365,13 +365,12 @@ init_buffers(struct vl_idct *idct)
    struct pipe_resource template;
    struct pipe_sampler_view sampler_view;
    struct pipe_vertex_element vertex_elems[2];
+   unsigned i;
 
    idct->max_blocks =
       align(idct->destination->width0, BLOCK_WIDTH) / BLOCK_WIDTH *
       align(idct->destination->height0, BLOCK_HEIGHT) / BLOCK_HEIGHT *
       idct->destination->depth0;
-
-   unsigned i;
 
    memset(&template, 0, sizeof(struct pipe_resource));
    template.target = PIPE_TEXTURE_2D;
@@ -398,6 +397,9 @@ init_buffers(struct vl_idct *idct)
    idct->textures.individual.intermediate = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
 
    for (i = 0; i < 4; ++i) {
+      if(idct->textures.all[i] == NULL)
+         return false; /* a texture failed to allocate */
+
       u_sampler_view_default_template(&sampler_view, idct->textures.all[i], idct->textures.all[i]->format);
       idct->sampler_views.all[i] = idct->pipe->create_sampler_view(idct->pipe, idct->textures.all[i], &sampler_view);
    }
@@ -412,6 +414,9 @@ init_buffers(struct vl_idct *idct)
       sizeof(struct vertex2f) * 4 * idct->max_blocks
    );
 
+   if(idct->vertex_bufs.individual.quad.buffer == NULL)
+      return false;
+
    idct->vertex_bufs.individual.pos.stride = sizeof(struct vertex2f);
    idct->vertex_bufs.individual.pos.max_index = 4 * idct->max_blocks - 1;
    idct->vertex_bufs.individual.pos.buffer_offset = 0;
@@ -421,6 +426,9 @@ init_buffers(struct vl_idct *idct)
       PIPE_BIND_VERTEX_BUFFER,
       sizeof(struct vertex2f) * 4 * idct->max_blocks
    );
+
+   if(idct->vertex_bufs.individual.pos.buffer == NULL)
+      return false;
 
    /* Rect element */
    vertex_elems[0].src_offset = 0;
@@ -442,6 +450,9 @@ init_buffers(struct vl_idct *idct)
       PIPE_BIND_CONSTANT_BUFFER,
       sizeof(struct vertex_shader_consts)
    );
+
+   if(idct->vs_const_buf == NULL)
+      return false;
 
    return true;
 }

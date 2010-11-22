@@ -786,7 +786,7 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    return true;
 }
 
-static bool
+static void
 init_const_buffers(struct vl_mpeg12_mc_renderer *r)
 {
    struct pipe_transfer *buf_transfer;
@@ -805,8 +805,6 @@ init_const_buffers(struct vl_mpeg12_mc_renderer *r)
      memcpy(rect + i * 4, &const_quad, sizeof(const_quad));
 
    pipe_buffer_unmap(r->pipe, r->vertex_bufs.individual.rect.buffer, buf_transfer);
-   
-   return true;
 }
 
 static void
@@ -1308,40 +1306,51 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
    if (!renderer->texview_map)
       return false;
 
-   if (!init_pipe_state(renderer)) {
-      util_delete_keymap(renderer->texview_map, renderer->pipe);
-      return false;
-   }
-   if (!init_shaders(renderer)) {
-      util_delete_keymap(renderer->texview_map, renderer->pipe);
-      cleanup_pipe_state(renderer);
-      return false;
-   }
-   if (!init_buffers(renderer)) {
-      util_delete_keymap(renderer->texview_map, renderer->pipe);
-      cleanup_shaders(renderer);
-      cleanup_pipe_state(renderer);
-      return false;
-   }
+   if (!init_pipe_state(renderer))
+      goto error_pipe_state;
 
-   if (!init_const_buffers(renderer)) {
-      util_delete_keymap(renderer->texview_map, renderer->pipe);
-      cleanup_pipe_state(renderer);
-      cleanup_shaders(renderer);
-      cleanup_buffers(renderer);
-      return false;
-   }
+   if (!init_shaders(renderer))
+      goto error_shaders;
+
+   if (!init_buffers(renderer))
+      goto error_buffers;
+
+   init_const_buffers(renderer);
 
    renderer->surface = NULL;
    renderer->past = NULL;
    renderer->future = NULL;
    renderer->num_macroblocks = 0;
 
-   vl_idct_init(&renderer->idct_y, pipe, renderer->textures.individual.y);
-   vl_idct_init(&renderer->idct_cr, pipe, renderer->textures.individual.cr);
-   vl_idct_init(&renderer->idct_cb, pipe, renderer->textures.individual.cb);
+   if(!vl_idct_init(&renderer->idct_y, pipe, renderer->textures.individual.y))
+      goto error_idct_y;
+
+   if(!vl_idct_init(&renderer->idct_cr, pipe, renderer->textures.individual.cr))
+      goto error_idct_cr;
+
+   if(!vl_idct_init(&renderer->idct_cb, pipe, renderer->textures.individual.cb))
+      goto error_idct_cb;
 
    return true;
+
+error_idct_cb:
+   vl_idct_cleanup(&renderer->idct_cr);
+
+error_idct_cr:
+   vl_idct_cleanup(&renderer->idct_y);
+
+error_idct_y:
+   cleanup_buffers(renderer);
+
+error_buffers:
+   cleanup_shaders(renderer);
+
+error_shaders:
+   cleanup_pipe_state(renderer);
+
+error_pipe_state:
+   util_delete_keymap(renderer->texview_map, renderer->pipe);
+   return false;
 }
 
 void
