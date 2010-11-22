@@ -65,7 +65,7 @@ static int swizzle_for_size(int size);
 typedef struct ir_to_mesa_src_reg {
    ir_to_mesa_src_reg(int file, int index, const glsl_type *type)
    {
-      this->file = file;
+      this->file = (gl_register_file) file;
       this->index = index;
       if (type && (type->is_scalar() || type->is_vector() || type->is_matrix()))
 	 this->swizzle = swizzle_for_size(type->vector_elements);
@@ -84,7 +84,7 @@ typedef struct ir_to_mesa_src_reg {
       this->reladdr = NULL;
    }
 
-   int file; /**< PROGRAM_* from Mesa */
+   gl_register_file file; /**< PROGRAM_* from Mesa */
    int index; /**< temporary index, VERT_ATTRIB_*, FRAG_ATTRIB_*, etc. */
    GLuint swizzle; /**< SWIZZLE_XYZWONEZERO swizzles from Mesa. */
    int negate; /**< NEGATE_XYZW mask from mesa */
@@ -133,13 +133,13 @@ public:
 
 class variable_storage : public exec_node {
 public:
-   variable_storage(ir_variable *var, int file, int index)
+   variable_storage(ir_variable *var, gl_register_file file, int index)
       : file(file), index(index), var(var)
    {
       /* empty */
    }
 
-   int file;
+   gl_register_file file;
    int index;
    ir_variable *var; /* variable that maps to this, if any */
 };
