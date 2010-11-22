@@ -441,6 +441,10 @@ struct pci_id radeon_pci_id[] = {
 	{0x1002, 0x9713, CHIP_RS880},
 	{0x1002, 0x9714, CHIP_RS880},
 	{0x1002, 0x9715, CHIP_RS880},
+	{0x1002, 0x9802, CHIP_PALM},
+	{0x1002, 0x9803, CHIP_PALM},
+	{0x1002, 0x9804, CHIP_PALM},
+	{0x1002, 0x9805, CHIP_PALM},
 	{0, 0},
 };
 
@@ -477,6 +481,7 @@ int radeon_is_family_compatible(unsigned family1, unsigned family2)
 	case CHIP_JUNIPER:
 	case CHIP_CYPRESS:
 	case CHIP_HEMLOCK:
+	case CHIP_PALM:
 		switch (family2) {
 		case CHIP_R600:
 		case CHIP_RV610:
@@ -495,6 +500,7 @@ int radeon_is_family_compatible(unsigned family1, unsigned family2)
 		case CHIP_JUNIPER:
 		case CHIP_CYPRESS:
 		case CHIP_HEMLOCK:
+		case CHIP_PALM:
 			return 1;
 		default:
 			return 0;

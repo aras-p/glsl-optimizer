@@ -150,6 +150,7 @@ struct radeon *radeon_new(int fd, unsigned device)
 	case CHIP_JUNIPER:
 	case CHIP_CYPRESS:
 	case CHIP_HEMLOCK:
+	case CHIP_PALM:
 		break;
 	case CHIP_R100:
 	case CHIP_RV100:
@@ -211,6 +212,7 @@ struct radeon *radeon_new(int fd, unsigned device)
 	case CHIP_JUNIPER:
 	case CHIP_CYPRESS:
 	case CHIP_HEMLOCK:
+	case CHIP_PALM:
 		radeon->chip_class = EVERGREEN;
 		/* set default group bytes, overridden by tiling info ioctl */
 		radeon->tiling_info.group_bytes = 512;
