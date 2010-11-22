@@ -2239,7 +2239,7 @@ mesa_src_reg_from_ir_src_reg(ir_to_mesa_src_reg reg)
    struct prog_src_register mesa_reg;
 
    mesa_reg.File = reg.file;
-   assert(reg.index < (1 << INST_INDEX_BITS) - 1);
+   assert(reg.index < (1 << INST_INDEX_BITS));
    mesa_reg.Index = reg.index;
    mesa_reg.Swizzle = reg.swizzle;
    mesa_reg.RelAddr = reg.reladdr != NULL;
