@@ -104,9 +104,18 @@ struct llvmpipe_context {
    /** Vertex format */
    struct vertex_info vertex_info;
    
+   /** Which vertex shader output slot contains color */
+   int color_slot[2];
+
+   /** Which vertex shader output slot contains bcolor */
+   int bcolor_slot[2];
+
    /** Which vertex shader output slot contains point size */
    int psize_slot;
 
+   /**< minimum resolvable depth value, for polygon offset */   
+   double mrd;
+   
    /** The tiling engine */
    struct lp_setup_context *setup;
    struct lp_setup_variant setup_variant;
