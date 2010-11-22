@@ -83,15 +83,19 @@ void r300_emit_dsa_state(struct r300_context* r300, unsigned size, void* state)
     }
 }
 
-static const float * get_rc_constant_state(
+static void get_rc_constant_state(
+    float vec[4],
     struct r300_context * r300,
     struct rc_constant * constant)
 {
     struct r300_textures_state* texstate = r300->textures_state.state;
-    static float vec[4] = { 0.0, 0.0, 0.0, 1.0 };
     struct r300_texture *tex;
 
     assert(constant->Type == RC_CONSTANT_STATE);
+
+    /* vec should either be (0, 0, 0, 1), which should be a relatively safe
+     * RGBA or STRQ value, or it could be one of the RC_CONSTANT_STATE
+     * state factors. */
 
     switch (constant->u.State[0]) {
         /* Factor for converting rectangle coords to
@@ -100,6 +104,8 @@ static const float * get_rc_constant_state(
             tex = r300_texture(texstate->sampler_views[constant->u.State[1]]->base.texture);
             vec[0] = 1.0 / tex->desc.width0;
             vec[1] = 1.0 / tex->desc.height0;
+            vec[2] = 0;
+            vec[3] = 1;
             break;
 
         case RC_STATE_R300_TEXSCALE_FACTOR:
@@ -108,29 +114,31 @@ static const float * get_rc_constant_state(
             vec[0] = tex->desc.b.b.width0  / (tex->desc.width0  + 0.001f);
             vec[1] = tex->desc.b.b.height0 / (tex->desc.height0 + 0.001f);
             vec[2] = tex->desc.b.b.depth0  / (tex->desc.depth0  + 0.001f);
+            vec[3] = 1;
             break;
 
         case RC_STATE_R300_VIEWPORT_SCALE:
             vec[0] = r300->viewport.scale[0];
             vec[1] = r300->viewport.scale[1];
             vec[2] = r300->viewport.scale[2];
+            vec[3] = 1;
             break;
 
         case RC_STATE_R300_VIEWPORT_OFFSET:
             vec[0] = r300->viewport.translate[0];
             vec[1] = r300->viewport.translate[1];
             vec[2] = r300->viewport.translate[2];
+            vec[3] = 1;
             break;
 
         default:
             fprintf(stderr, "r300: Implementation error: "
                 "Unknown RC_CONSTANT type %d\n", constant->u.State[0]);
+            vec[0] = 0;
+            vec[1] = 0;
+            vec[2] = 0;
+            vec[3] = 1;
     }
-
-    /* This should either be (0, 0, 0, 1), which should be a relatively safe
-     * RGBA or STRQ value, or it could be one of the RC_CONSTANT_STATE
-     * state factors. */
-    return vec;
 }
 
 /* Convert a normal single-precision float into the 7.16 format
@@ -220,8 +228,9 @@ void r300_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, vo
     BEGIN_CS(size);
     for(i = first; i < end; ++i) {
         if (constants->Constants[i].Type == RC_CONSTANT_STATE) {
-            const float *data =
-                    get_rc_constant_state(r300, &constants->Constants[i]);
+            float data[4];
+
+            get_rc_constant_state(data, r300, &constants->Constants[i]);
 
             OUT_CS_REG_SEQ(R300_PFS_PARAM_0_X + i * 16, 4);
             for (j = 0; j < 4; j++)
@@ -279,8 +288,9 @@ void r500_emit_fs_rc_constant_state(struct r300_context* r300, unsigned size, vo
     BEGIN_CS(size);
     for(i = first; i < end; ++i) {
         if (constants->Constants[i].Type == RC_CONSTANT_STATE) {
-            const float *data =
-                    get_rc_constant_state(r300, &constants->Constants[i]);
+            float data[4];
+
+            get_rc_constant_state(data, r300, &constants->Constants[i]);
 
             OUT_CS_REG(R500_GA_US_VECTOR_INDEX,
                        R500_GA_US_VECTOR_INDEX_TYPE_CONST |
