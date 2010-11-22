@@ -472,6 +472,11 @@ int radeon_is_family_compatible(unsigned family1, unsigned family2)
 	case CHIP_RV730:
 	case CHIP_RV710:
 	case CHIP_RV740:
+	case CHIP_CEDAR:
+	case CHIP_REDWOOD:
+	case CHIP_JUNIPER:
+	case CHIP_CYPRESS:
+	case CHIP_HEMLOCK:
 		switch (family2) {
 		case CHIP_R600:
 		case CHIP_RV610:
@@ -485,6 +490,11 @@ int radeon_is_family_compatible(unsigned family1, unsigned family2)
 		case CHIP_RV730:
 		case CHIP_RV710:
 		case CHIP_RV740:
+		case CHIP_CEDAR:
+		case CHIP_REDWOOD:
+		case CHIP_JUNIPER:
+		case CHIP_CYPRESS:
+		case CHIP_HEMLOCK:
 			return 1;
 		default:
 			return 0;
@@ -517,11 +527,6 @@ int radeon_is_family_compatible(unsigned family1, unsigned family2)
 	case CHIP_RV560:
 	case CHIP_RV570:
 	case CHIP_R580:
-	case CHIP_CEDAR:
-	case CHIP_REDWOOD:
-	case CHIP_JUNIPER:
-	case CHIP_CYPRESS:
-	case CHIP_HEMLOCK:
 	default:
 		return 0;
 	}

@@ -93,6 +93,11 @@ struct radeon *r600_new(int fd, unsigned device)
 	case CHIP_RV730:
 	case CHIP_RV710:
 	case CHIP_RV740:
+	case CHIP_CEDAR:
+	case CHIP_REDWOOD:
+	case CHIP_JUNIPER:
+	case CHIP_CYPRESS:
+	case CHIP_HEMLOCK:
 		break;
 	case CHIP_R100:
 	case CHIP_RV100:
@@ -121,11 +126,6 @@ struct radeon *r600_new(int fd, unsigned device)
 	case CHIP_RV560:
 	case CHIP_RV570:
 	case CHIP_R580:
-	case CHIP_CEDAR:
-	case CHIP_REDWOOD:
-	case CHIP_JUNIPER:
-	case CHIP_CYPRESS:
-	case CHIP_HEMLOCK:
 	default:
 		R600_ERR("unknown or unsupported chipset 0x%04X\n", r600->device);
 		break;
