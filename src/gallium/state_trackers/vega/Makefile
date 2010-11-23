@@ -38,6 +38,7 @@ C_SOURCES = \
            renderer.c \
            stroker.c \
            mask.c \
+           text.c \
            shader.c \
            shaders_cache.c
 

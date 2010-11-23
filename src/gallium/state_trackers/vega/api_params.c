@@ -30,6 +30,7 @@
 #include "paint.h"
 #include "path.h"
 #include "image.h"
+#include "text.h"
 #include "matrix.h"
 #include "api_consts.h"
 #include "api.h"
@@ -1500,7 +1501,8 @@ VGint vegaGetParameteri(VGHandle object,
 
 #ifdef OPENVG_VERSION_1_1
    case VG_FONT_NUM_GLYPHS: {
-      return 1;
+      struct vg_font *font = (struct vg_font*)object;
+      return font_num_glyphs(font);
    }
       break;
 #endif
