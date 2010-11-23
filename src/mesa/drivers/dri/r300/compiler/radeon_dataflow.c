@@ -347,6 +347,7 @@ static void remap_normal_instruction(struct rc_instruction * fullinst,
 {
 	struct rc_sub_instruction * inst = &fullinst->U.I;
 	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->Opcode);
+	unsigned int remapped_presub = 0;
 
 	if (opcode->HasDstReg) {
 		rc_register_file file = inst->DstReg.File;
@@ -366,6 +367,12 @@ static void remap_normal_instruction(struct rc_instruction * fullinst,
 			unsigned int i;
 			unsigned int srcp_srcs = rc_presubtract_src_reg_count(
 						inst->PreSub.Opcode);
+			/* Make sure we only remap presubtract sources once in
+			 * case more than one source register reads the
+			 * presubtract result. */
+			if (remapped_presub)
+				continue;
+
 			for(i = 0; i < srcp_srcs; i++) {
 				file = inst->PreSub.SrcReg[i].File;
 				index = inst->PreSub.SrcReg[i].Index;
@@ -373,7 +380,7 @@ static void remap_normal_instruction(struct rc_instruction * fullinst,
 				inst->PreSub.SrcReg[i].File = file;
 				inst->PreSub.SrcReg[i].Index = index;
 			}
-
+			remapped_presub = 1;
 		}
 		else {
 			cb(userdata, fullinst, &file, &index);
