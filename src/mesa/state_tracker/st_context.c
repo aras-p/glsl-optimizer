@@ -170,6 +170,11 @@ struct st_context *st_create_context(gl_api api, struct pipe_context *pipe,
    struct gl_context *shareCtx = share ? share->ctx : NULL;
    struct dd_function_table funcs;
 
+   /* Sanity checks */
+   assert(MESA_SHADER_VERTEX == PIPE_SHADER_VERTEX);
+   assert(MESA_SHADER_FRAGMENT == PIPE_SHADER_FRAGMENT);
+   assert(MESA_SHADER_GEOMETRY == PIPE_SHADER_GEOMETRY);
+
    memset(&funcs, 0, sizeof(funcs));
    st_init_driver_functions(&funcs);
 

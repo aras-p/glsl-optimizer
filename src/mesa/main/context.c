@@ -1829,7 +1829,7 @@ _mesa_valid_to_render(struct gl_context *ctx, const char *where)
 #ifdef DEBUG
    if (ctx->Shader.Flags & GLSL_LOG) {
       struct gl_shader_program *shProg[MESA_SHADER_TYPES];
-      unsigned i;
+      gl_shader_type i;
 
       shProg[MESA_SHADER_VERTEX] = ctx->Shader.CurrentVertexProgram;
       shProg[MESA_SHADER_GEOMETRY] = ctx->Shader.CurrentGeometryProgram;

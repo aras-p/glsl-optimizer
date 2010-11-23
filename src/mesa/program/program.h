@@ -168,7 +168,7 @@ _mesa_find_free_register(const GLboolean used[],
 
 extern GLboolean
 _mesa_valid_register_index(const struct gl_context *ctx,
-                           GLuint shaderType,
+                           gl_shader_type shaderType,
                            gl_register_file file, GLint index);
 
 extern void
