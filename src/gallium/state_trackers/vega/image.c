@@ -272,6 +272,13 @@ struct vg_image * image_create(VGImageFormat format,
    debug_assert(newtex);
 
    u_sampler_view_default_template(&view_templ, newtex, newtex->format);
+   /* R, G, and B are treated as 1.0 for alpha-only formats in OpenVG */
+   if (newtex->format == PIPE_FORMAT_A8_UNORM) {
+      view_templ.swizzle_r = PIPE_SWIZZLE_ONE;
+      view_templ.swizzle_g = PIPE_SWIZZLE_ONE;
+      view_templ.swizzle_b = PIPE_SWIZZLE_ONE;
+   }
+
    view = pipe->create_sampler_view(pipe, newtex, &view_templ);
    /* want the texture to go away if the view is freed */
    pipe_resource_reference(&newtex, NULL);
