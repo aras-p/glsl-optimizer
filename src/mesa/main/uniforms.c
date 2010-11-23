@@ -217,6 +217,10 @@ static struct gl_builtin_uniform_element gl_MESABumpRotMatrix1_elements[] = {
    {NULL, {STATE_INTERNAL, STATE_ROT_MATRIX_1}, SWIZZLE_XYZW},
 };
 
+static struct gl_builtin_uniform_element gl_MESAFogParamsOptimized_elements[] = {
+   {NULL, {STATE_INTERNAL, STATE_FOG_PARAMS_OPTIMIZED}, SWIZZLE_XYZW},
+};
+
 #define MATRIX(name, statevar, modifier)				\
    static struct gl_builtin_uniform_element name ## _elements[] = {	\
       { NULL, { statevar, 0, 0, 0, modifier}, SWIZZLE_XYZW },		\
@@ -322,6 +326,7 @@ const struct gl_builtin_uniform_desc _mesa_builtin_uniform_desc[] = {
 
    STATEVAR(gl_MESABumpRotMatrix0),
    STATEVAR(gl_MESABumpRotMatrix1),
+   STATEVAR(gl_MESAFogParamsOptimized),
 
    {NULL, NULL, 0}
 };

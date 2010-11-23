@@ -105,5 +105,6 @@ static const builtin_variable builtin_110_deprecated_uniforms[] = {
    /* Mesa-internal ATI_envmap_bumpmap state. */
    { ir_var_uniform, -1, "vec2", "gl_MESABumpRotMatrix0"},
    { ir_var_uniform, -1, "vec2", "gl_MESABumpRotMatrix1"},
+   { ir_var_uniform, -1, "vec4", "gl_MESAFogParamsOptimized"},
 };
 
