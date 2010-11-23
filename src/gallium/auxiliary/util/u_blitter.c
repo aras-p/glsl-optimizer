@@ -522,10 +522,13 @@ static void blitter_set_dst_dimensions(struct blitter_context_priv *ctx,
 static void blitter_draw_quad(struct blitter_context_priv *ctx)
 {
    struct pipe_context *pipe = ctx->base.pipe;
+   struct pipe_box box;
 
    /* write vertices and draw them */
-   pipe_buffer_write(pipe, ctx->vbuf,
-                     0, sizeof(ctx->vertices), ctx->vertices);
+   u_box_1d(0, sizeof(ctx->vertices), &box);
+   pipe->transfer_inline_write(pipe, ctx->vbuf, u_subresource(0,0),
+                               PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+                               &box, ctx->vertices, sizeof(ctx->vertices), 0);
 
    util_draw_vertex_buffer(pipe, ctx->vbuf, 0, PIPE_PRIM_TRIANGLE_FAN,
                            4,  /* verts */
