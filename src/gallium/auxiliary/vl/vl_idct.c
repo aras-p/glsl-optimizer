@@ -338,10 +338,10 @@ xfer_buffers_unmap(struct vl_idct *idct)
 static bool
 init_shaders(struct vl_idct *idct)
 {
-   assert(idct->vs = create_vert_shader(idct));
-   assert(idct->transpose_fs = create_transpose_frag_shader(idct));
-   assert(idct->matrix_fs = create_matrix_frag_shader(idct));
-   assert(idct->eb_fs = create_empty_block_frag_shader(idct));
+   idct->vs = create_vert_shader(idct);
+   idct->transpose_fs = create_transpose_frag_shader(idct);
+   idct->matrix_fs = create_matrix_frag_shader(idct);
+   idct->eb_fs = create_empty_block_frag_shader(idct);
 
    return 
       idct->vs != NULL &&

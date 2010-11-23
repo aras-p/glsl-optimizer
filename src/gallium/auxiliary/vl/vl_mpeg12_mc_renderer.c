@@ -599,20 +599,30 @@ init_shaders(struct vl_mpeg12_mc_renderer *r)
 {
    assert(r);
 
-   assert(r->i_vs = create_vert_shader(r, 0, 0));
-   assert(r->i_fs = create_intra_frag_shader(r));
+   r->i_vs = create_vert_shader(r, 0, 0);
+   r->i_fs = create_intra_frag_shader(r);
    
-   assert(r->p_vs[0] = create_vert_shader(r, 1, 1));
-   assert(r->p_vs[1] = create_vert_shader(r, 1, 2));
-   assert(r->p_fs[0] = create_frame_pred_frag_shader(r));
-   assert(r->p_fs[1] = create_field_pred_frag_shader(r));
+   r->p_vs[0] = create_vert_shader(r, 1, 1);
+   r->p_vs[1] = create_vert_shader(r, 1, 2);
+   r->p_fs[0] = create_frame_pred_frag_shader(r);
+   r->p_fs[1] = create_field_pred_frag_shader(r);
 
-   assert(r->b_vs[0] = create_vert_shader(r, 2, 1));
-   assert(r->b_vs[1] = create_vert_shader(r, 2, 2));
-   assert(r->b_fs[0] = create_frame_bi_pred_frag_shader(r));
-   assert(r->b_fs[1] = create_field_bi_pred_frag_shader(r));
+   r->b_vs[0] = create_vert_shader(r, 2, 1);
+   r->b_vs[1] = create_vert_shader(r, 2, 2);
+   r->b_fs[0] = create_frame_bi_pred_frag_shader(r);
+   r->b_fs[1] = create_field_bi_pred_frag_shader(r);
 
-   return true;
+   return
+      r->i_vs != NULL &&
+      r->i_fs != NULL &&
+      r->p_vs[0] != NULL &&
+      r->p_vs[1] != NULL &&
+      r->p_fs[0] != NULL &&
+      r->p_fs[1] != NULL &&
+      r->b_vs[0] != NULL &&
+      r->b_vs[1] != NULL &&
+      r->b_fs[0] != NULL &&
+      r->b_fs[1] != NULL;
 }
 
 static void
