@@ -165,6 +165,12 @@ extern GLint
 _mesa_find_free_register(const GLboolean used[],
                          GLuint maxRegs, GLuint firstReg);
 
+
+extern GLboolean
+_mesa_valid_register_index(const struct gl_context *ctx,
+                           GLuint shaderType,
+                           gl_register_file file, GLint index);
+
 extern void
 _mesa_postprocess_program(struct gl_context *ctx, struct gl_program *prog);
 

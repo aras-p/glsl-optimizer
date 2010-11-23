@@ -917,6 +917,103 @@ _mesa_find_free_register(const GLboolean used[],
 }
 
 
+
+/**
+ * Check if the given register index is valid (doesn't exceed implementation-
+ * dependent limits).
+ * \return GL_TRUE if OK, GL_FALSE if bad index
+ */
+GLboolean
+_mesa_valid_register_index(const struct gl_context *ctx,
+                           GLuint shaderType,
+                           gl_register_file file, GLint index)
+{
+   const struct gl_program_constants *c;
+
+   switch (shaderType) {
+   case MESA_SHADER_VERTEX:
+      c = &ctx->Const.VertexProgram;
+      break;
+   case MESA_SHADER_FRAGMENT:
+      c = &ctx->Const.FragmentProgram;
+      break;
+   case MESA_SHADER_GEOMETRY:
+      c = &ctx->Const.GeometryProgram;
+      break;
+   default:
+      _mesa_problem(ctx,
+                    "unexpected shader type in _mesa_valid_register_index()");
+      return GL_FALSE;
+   }
+
+   switch (file) {
+   case PROGRAM_UNDEFINED:
+      return GL_TRUE;  /* XXX or maybe false? */
+
+   case PROGRAM_TEMPORARY:
+      return index >= 0 && index < c->MaxTemps;
+
+   case PROGRAM_ENV_PARAM:
+      return index >= 0 && index < c->MaxEnvParams;
+
+   case PROGRAM_LOCAL_PARAM:
+      return index >= 0 && index < c->MaxLocalParams;
+
+   case PROGRAM_NAMED_PARAM:
+      return index >= 0 && index < c->MaxParameters;
+
+   case PROGRAM_UNIFORM:
+   case PROGRAM_STATE_VAR:
+      /* aka constant buffer */
+      return index >= 0 && index < c->MaxUniformComponents / 4;
+
+   case PROGRAM_CONSTANT:
+      /* constant buffer w/ possible relative negative addressing */
+      return (index > (int) c->MaxUniformComponents / -4 &&
+              index < c->MaxUniformComponents / 4);
+
+   case PROGRAM_INPUT:
+      if (index < 0)
+         return GL_FALSE;
+
+      switch (shaderType) {
+      case MESA_SHADER_VERTEX:
+         return index < VERT_ATTRIB_GENERIC0 + c->MaxAttribs;
+      case MESA_SHADER_FRAGMENT:
+         return index < FRAG_ATTRIB_VAR0 + ctx->Const.MaxVarying;
+      case MESA_SHADER_GEOMETRY:
+         return index < GEOM_ATTRIB_VAR0 + ctx->Const.MaxVarying;
+      default:
+         return GL_FALSE;
+      }
+
+   case PROGRAM_OUTPUT:
+      if (index < 0)
+         return GL_FALSE;
+
+      switch (shaderType) {
+      case MESA_SHADER_VERTEX:
+         return index < VERT_RESULT_VAR0 + ctx->Const.MaxVarying;
+      case MESA_SHADER_FRAGMENT:
+         return index < FRAG_RESULT_DATA0 + ctx->Const.MaxDrawBuffers;
+      case MESA_SHADER_GEOMETRY:
+         return index < GEOM_RESULT_VAR0 + ctx->Const.MaxVarying;
+      default:
+         return GL_FALSE;
+      }
+
+   case PROGRAM_ADDRESS:
+      return index >= 0 && index < c->MaxAddressRegs;
+
+   default:
+      _mesa_problem(ctx,
+                    "unexpected register file in _mesa_valid_register_index()");
+      return GL_FALSE;
+   }
+}
+
+
+
 /**
  * "Post-process" a GPU program.  This is intended to be used for debugging.
  * Example actions include no-op'ing instructions or changing instruction
