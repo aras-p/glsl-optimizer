@@ -43,8 +43,6 @@
 #include "lp_flush.h"
 #include "lp_screen.h"
 #include "lp_context.h"
-#include "lp_setup_context.h"
-#include "lp_rast.h"
 #include "lp_state.h"
 #include "lp_state_fs.h"
 #include "lp_state_setup.h"
