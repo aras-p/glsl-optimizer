@@ -1399,6 +1399,8 @@ _mesa_make_current( struct gl_context *newCtx,
                     struct gl_framebuffer *drawBuffer,
                     struct gl_framebuffer *readBuffer )
 {
+   GET_CURRENT_CONTEXT(curCtx);
+
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(newCtx, "_mesa_make_current()\n");
 
@@ -1418,6 +1420,11 @@ _mesa_make_current( struct gl_context *newCtx,
          return GL_FALSE;
       }
    }
+
+   if (curCtx && 
+      (curCtx->WinSysDrawBuffer || curCtx->WinSysReadBuffer) && /* make sure this context is valid for flushing */
+      curCtx != newCtx)
+      _mesa_flush(curCtx);
 
    /* We used to call _glapi_check_multithread() here.  Now do it in drivers */
    _glapi_set_context((void *) newCtx);
