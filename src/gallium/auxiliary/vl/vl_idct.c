@@ -374,7 +374,7 @@ init_buffers(struct vl_idct *idct)
 
    memset(&template, 0, sizeof(struct pipe_resource));
    template.target = PIPE_TEXTURE_2D;
-   template.format = PIPE_FORMAT_R16_SNORM;
+   template.format = PIPE_FORMAT_R32_FLOAT;
    template.last_level = 0;
    template.width0 = 8;
    template.height0 = 8;
@@ -482,7 +482,7 @@ init_constants(struct vl_idct *idct)
    struct pipe_transfer *buf_transfer;
    struct vertex_shader_consts *vs_consts;
    struct vertex2f *v;
-   short *s;
+   float *f;
 
    struct pipe_box rect =
    {
@@ -516,10 +516,10 @@ init_constants(struct vl_idct *idct)
    );
    pitch = buf_transfer->stride / util_format_get_blocksize(buf_transfer->resource->format);
 
-   s = idct->pipe->transfer_map(idct->pipe, buf_transfer);
+   f = idct->pipe->transfer_map(idct->pipe, buf_transfer);
    for(i = 0; i < BLOCK_HEIGHT; ++i)
       for(j = 0; j < BLOCK_WIDTH; ++j)
-         s[i * pitch + j] = const_matrix[j][i] * (1 << 15); // transpose
+         f[i * pitch + j] = const_matrix[j][i]; // transpose
 
    idct->pipe->transfer_unmap(idct->pipe, buf_transfer);
    idct->pipe->transfer_destroy(idct->pipe, buf_transfer);
@@ -534,10 +534,10 @@ init_constants(struct vl_idct *idct)
    );
    pitch = buf_transfer->stride / util_format_get_blocksize(buf_transfer->resource->format);
 
-   s = idct->pipe->transfer_map(idct->pipe, buf_transfer);
+   f = idct->pipe->transfer_map(idct->pipe, buf_transfer);
    for(i = 0; i < BLOCK_HEIGHT; ++i)
       for(j = 0; j < BLOCK_WIDTH; ++j)
-         s[i * pitch + j] = const_matrix[i][j] * (1 << 15);
+         f[i * pitch + j] = const_matrix[i][j];
 
    idct->pipe->transfer_unmap(idct->pipe, buf_transfer);
    idct->pipe->transfer_destroy(idct->pipe, buf_transfer);
