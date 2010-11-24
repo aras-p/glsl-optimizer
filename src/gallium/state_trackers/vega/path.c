@@ -312,7 +312,15 @@ static void polygon_array_calculate_bounds( struct polygon_array *polyarray )
    unsigned i;
 
    assert(polys);
-   assert(polys->num_elements);
+
+   if (!polys->num_elements) {
+      polyarray->min_x = 0.0f;
+      polyarray->min_y = 0.0f;
+      polyarray->max_x = 0.0f;
+      polyarray->max_y = 0.0f;
+      return;
+   }
+
    polygon_bounding_rect((((struct polygon**)polys->data)[0]), bounds);
    min_x = bounds[0];
    min_y = bounds[1];
@@ -362,7 +370,8 @@ static struct polygon_array * path_get_fill_polygons(struct path *p, struct matr
 
    sx = sy = px = py = ox = oy = 0.f;
 
-   current = polygon_create(32);
+   if (p->num_segments)
+      current = polygon_create(32);
 
    for (i = 0; i < p->num_segments; ++i) {
       VGubyte segment = ((VGubyte*)(p->segments->data))[i];
