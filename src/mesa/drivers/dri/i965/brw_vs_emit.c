@@ -281,7 +281,6 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 	 else if (i == VERT_RESULT_PSIZ) {
 	    c->regs[PROGRAM_OUTPUT][i] = brw_vec8_grf(reg, 0);
 	    reg++;
-	    mrf++;		/* just a placeholder?  XXX fix later stages & remove this */
 	 }
 	 else {
 	    /* Two restrictions on our compute-to-MRF here.  The
@@ -1602,6 +1601,8 @@ static void emit_vertex_write( struct brw_vs_compile *c)
       if (c->first_overflow_output > 0 && i >= c->first_overflow_output)
 	 break;
       if (!(c->prog_data.outputs_written & BITFIELD64_BIT(i)))
+	 continue;
+      if (i == VERT_RESULT_PSIZ)
 	 continue;
 
       if (i >= VERT_RESULT_TEX0 &&
