@@ -1057,11 +1057,12 @@ _mesa_format_image_size(gl_format format, GLsizei width,
    const struct gl_format_info *info = _mesa_get_format_info(format);
    /* Strictly speaking, a conditional isn't needed here */
    if (info->BlockWidth > 1 || info->BlockHeight > 1) {
-      /* compressed format */
+      /* compressed format (2D only for now) */
       const GLuint bw = info->BlockWidth, bh = info->BlockHeight;
       const GLuint wblocks = (width + bw - 1) / bw;
       const GLuint hblocks = (height + bh - 1) / bh;
       const GLuint sz = wblocks * hblocks * info->BytesPerBlock;
+      assert(depth == 1);
       return sz;
    }
    else {
