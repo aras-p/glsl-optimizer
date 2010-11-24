@@ -54,7 +54,7 @@ nvfx_framebuffer_prepare(struct nvfx_context *nvfx)
 	int all_swizzled = 1;
 
 	if(!nvfx->is_nv4x)
-		assert(fb->nr_cbufs <= 2);
+		assert(fb->nr_cbufs <= 1);
 	else
 		assert(fb->nr_cbufs <= 4);
 
