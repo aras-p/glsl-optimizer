@@ -424,6 +424,7 @@ static void mask_layer_render_to(struct vg_mask_layer *layer,
    struct vg_context *ctx = vg_current_context();
    const VGfloat fill_color[4] = {1.f, 1.f, 1.f, 1.f};
    struct pipe_screen *screen = ctx->pipe->screen;
+   struct matrix *mat = &ctx->state.vg.path_user_to_surface_matrix;
    struct pipe_surface *surface;
 
    surface = screen->get_tex_surface(screen, layer->sampler_view->texture,  0, 0, 0,
@@ -437,12 +438,11 @@ static void mask_layer_render_to(struct vg_mask_layer *layer,
    setup_mask_framebuffer(surface, layer->width, layer->height);
 
    if (paint_modes & VG_FILL_PATH) {
-      struct matrix *mat = &ctx->state.vg.path_user_to_surface_matrix;
       path_fill(path, mat);
    }
 
    if (paint_modes & VG_STROKE_PATH){
-      path_stroke(path);
+      path_stroke(path, mat);
    }
 
 

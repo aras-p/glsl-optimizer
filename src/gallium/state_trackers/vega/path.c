@@ -1528,10 +1528,10 @@ struct path * path_create_stroke(struct path *p,
    return stroker.base.path;
 }
 
-void path_render(struct path *p, VGbitfield paintModes)
+void path_render(struct path *p, VGbitfield paintModes,
+                 struct matrix *mat)
 {
    struct vg_context *ctx = vg_current_context();
-   struct matrix *mat = &ctx->state.vg.path_user_to_surface_matrix;
 
    vg_validate_state(ctx);
 
@@ -1557,7 +1557,7 @@ void path_render(struct path *p, VGbitfield paintModes)
          return;
       shader_set_paint(ctx->shader, ctx->state.vg.stroke_paint);
       shader_bind(ctx->shader);
-      path_stroke(p);
+      path_stroke(p, mat);
    }
 }
 
@@ -1575,10 +1575,9 @@ void path_fill(struct path *p, struct matrix *mat)
    }
 }
 
-void path_stroke(struct path *p)
+void path_stroke(struct path *p, struct matrix *mat)
 {
    struct vg_context *ctx = vg_current_context();
-   struct matrix *mat = &ctx->state.vg.path_user_to_surface_matrix;
    VGFillRule old_fill = ctx->state.vg.fill_rule;
    struct matrix identity;
    struct path *stroke;
