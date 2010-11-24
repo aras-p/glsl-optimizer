@@ -708,8 +708,6 @@ vl_idct_flush(struct vl_idct *idct)
 
       util_draw_arrays(idct->pipe, PIPE_PRIM_QUADS, 0, idct->num_blocks * 4);
 
-      idct->pipe->flush(idct->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
-
       /* second stage */
       idct->fb_state.cbufs[0] = idct->surfaces.destination;
       idct->pipe->set_framebuffer_state(idct->pipe, &idct->fb_state);
@@ -743,8 +741,6 @@ vl_idct_flush(struct vl_idct *idct)
          (idct->max_blocks - idct->num_empty_blocks) * 4,
          idct->num_empty_blocks * 4);
    }
-
-   idct->pipe->flush(idct->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    idct->num_blocks = 0;
    idct->num_empty_blocks = 0;
