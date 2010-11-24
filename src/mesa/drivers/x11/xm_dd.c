@@ -948,43 +948,6 @@ xmesa_update_state( struct gl_context *ctx, GLbitfield new_state )
 
 
 /**
- * Called via ctx->Driver.TestProxyTeximage().  Normally, we'd just use
- * the _mesa_test_proxy_teximage() fallback function, but we're going to
- * special-case the 3D texture case to allow textures up to 512x512x32
- * texels.
- */
-static GLboolean
-test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
-                    GLint internalFormat, GLenum format, GLenum type,
-                    GLint width, GLint height, GLint depth, GLint border)
-{
-   if (target == GL_PROXY_TEXTURE_3D) {
-      /* special case for 3D textures */
-      if (width * height * depth > 512 * 512 * 64 ||
-          width  < 2 * border ||
-          (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           _mesa_bitcount(width  - 2 * border) != 1) ||
-          height < 2 * border ||
-          (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           _mesa_bitcount(height - 2 * border) != 1) ||
-          depth  < 2 * border ||
-          (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           _mesa_bitcount(depth  - 2 * border) != 1)) {
-         /* Bad size, or too many texels */
-         return GL_FALSE;
-      }
-      return GL_TRUE;
-   }
-   else {
-      /* use the fallback routine for 1D, 2D, cube and rect targets */
-      return _mesa_test_proxy_teximage(ctx, target, level, internalFormat,
-                                       format, type, width, height, depth,
-                                       border);
-   }
-}
-
-
-/**
  * In SW, we don't really compress GL_COMPRESSED_RGB[A] textures!
  */
 static gl_format
@@ -1136,7 +1099,7 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
       }
 #endif
    }
-   driver->TestProxyTexImage = test_proxy_teximage;
+
 #if ENABLE_EXT_texure_compression_s3tc
    driver->ChooseTextureFormat = choose_tex_format;
 #else
