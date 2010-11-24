@@ -531,6 +531,9 @@ static boolean permit_hardware_blit(struct pipe_screen *screen,
                                          PIPE_BIND_SAMPLER_VIEW, 0))
                 return FALSE;
 
+	if (res->format == PIPE_FORMAT_R16_SNORM)
+                return FALSE;
+
         return TRUE;
 }
 
@@ -571,8 +574,8 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
                        PIPE_TRANSFER_UNSYNCHRONIZED)))
                 use_staging_texture = TRUE;
 
-        /*if (!permit_hardware_blit(ctx->screen, texture) ||
-            (texture->flags & R600_RESOURCE_FLAG_TRANSFER))*/
+        if (!permit_hardware_blit(ctx->screen, texture) ||
+            (texture->flags & R600_RESOURCE_FLAG_TRANSFER))
                 use_staging_texture = FALSE;
 
 	trans = CALLOC_STRUCT(r600_transfer);
