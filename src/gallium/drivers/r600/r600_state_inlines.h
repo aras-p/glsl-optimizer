@@ -359,7 +359,7 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 		//		return FMT_16_16_16_16_FLOAT;
 
 		/* 128-bit buffers. */
-	case PIPE_FORMAT_R32G32B32A32_FLOAT:
+	//case PIPE_FORMAT_R32G32B32A32_FLOAT:
 		//		return FMT_32_32_32_32_FLOAT;
 		return 0;
 	default:
@@ -465,10 +465,10 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 		return V_0280A0_COLOR_32_32;
 
 		/* 128-bit buffers. */
-	case PIPE_FORMAT_R32G32B32_FLOAT:
-	  	return V_0280A0_COLOR_32_32_32_FLOAT;
-	case PIPE_FORMAT_R32G32B32A32_FLOAT:
-		return V_0280A0_COLOR_32_32_32_32_FLOAT;
+	//case PIPE_FORMAT_R32G32B32_FLOAT:
+	//  	return V_0280A0_COLOR_32_32_32_FLOAT;
+	//case PIPE_FORMAT_R32G32B32A32_FLOAT:
+	//	return V_0280A0_COLOR_32_32_32_32_FLOAT;
 
 		/* YUV buffers. */
 	case PIPE_FORMAT_UYVY:
