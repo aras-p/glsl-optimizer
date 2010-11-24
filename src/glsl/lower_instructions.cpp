@@ -70,7 +70,7 @@
  * opportunity to do things like constant fold the (1.0 / op1) easily.
  */
 
-#include "main/core.h" /* for M_E */
+#include "main/core.h" /* for M_LOG2E */
 #include "glsl_types.h"
 #include "ir.h"
 #include "ir_optimization.h"
@@ -172,7 +172,7 @@ lower_instructions_visitor::div_to_mul_rcp(ir_expression *ir)
 void
 lower_instructions_visitor::exp_to_exp2(ir_expression *ir)
 {
-   ir_constant *log2_e = new(ir) ir_constant(log2f(M_E));
+   ir_constant *log2_e = new(ir) ir_constant(float(M_LOG2E));
 
    ir->operation = ir_unop_exp2;
    ir->operands[0] = new(ir) ir_expression(ir_binop_mul, ir->operands[0]->type,
@@ -186,7 +186,7 @@ lower_instructions_visitor::log_to_log2(ir_expression *ir)
    ir->operation = ir_binop_mul;
    ir->operands[0] = new(ir) ir_expression(ir_unop_log2, ir->operands[0]->type,
 					   ir->operands[0], NULL);
-   ir->operands[1] = new(ir) ir_constant(1.0f / log2f(M_E));
+   ir->operands[1] = new(ir) ir_constant(float(1.0 / M_LOG2E));
    this->progress = true;
 }
 
