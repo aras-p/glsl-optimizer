@@ -303,7 +303,8 @@ void vegaDrawImage(VGImage image)
    }
 
    vg_validate_state(ctx);
-   image_draw((struct vg_image*)image);
+   image_draw((struct vg_image*)image,
+         &ctx->state.vg.image_user_to_surface_matrix);
 }
 
 void vegaSetPixels(VGint dx, VGint dy,

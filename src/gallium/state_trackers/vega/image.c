@@ -520,14 +520,13 @@ void image_copy(struct vg_image *dst, VGint dx, VGint dy,
                    src->sampler_view, src->x + sx, src->y + sy, width, height);
 }
 
-void image_draw(struct vg_image *img)
+void image_draw(struct vg_image *img, struct matrix *matrix)
 {
    struct vg_context *ctx = vg_current_context();
    VGfloat x1, y1;
    VGfloat x2, y2;
    VGfloat x3, y3;
    VGfloat x4, y4;
-   struct matrix *matrix;
 
    x1 = 0;
    y1 = 0;
@@ -537,8 +536,6 @@ void image_draw(struct vg_image *img)
    y3 = img->height;
    x4 = 0;
    y4 = img->height;
-
-   matrix = &ctx->state.vg.image_user_to_surface_matrix;
 
    matrix_map_point(matrix, x1, y1, &x1, &y1);
    matrix_map_point(matrix, x2, y2, &x2, &y2);
