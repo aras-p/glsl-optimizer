@@ -700,12 +700,9 @@ static const struct value_desc values[] = {
 #if FEATURE_ES2
    /* Enums unique to OpenGL ES 2.0 */
    { 0, 0, TYPE_API_MASK, API_OPENGLES2_BIT, NO_EXTRA },
-   { GL_MAX_FRAGMENT_UNIFORM_VECTORS, LOC_CUSTOM, TYPE_INT,
-     offsetof(struct gl_context, Const.FragmentProgram.MaxUniformComponents), NO_EXTRA },
-   { GL_MAX_VARYING_VECTORS, LOC_CUSTOM, TYPE_INT,
-     offsetof(struct gl_context, Const.MaxVarying), NO_EXTRA },
-   { GL_MAX_VERTEX_UNIFORM_VECTORS, LOC_CUSTOM, TYPE_INT,
-     offsetof(struct gl_context, Const.VertexProgram.MaxUniformComponents), NO_EXTRA },
+   { GL_MAX_FRAGMENT_UNIFORM_VECTORS, LOC_CUSTOM, TYPE_INT, 0, NO_EXTRA },
+   { GL_MAX_VARYING_VECTORS, CONTEXT_INT(Const.MaxVarying), NO_EXTRA },
+   { GL_MAX_VERTEX_UNIFORM_VECTORS, LOC_CUSTOM, TYPE_INT, 0, NO_EXTRA },
    { GL_SHADER_COMPILER, CONST(1), NO_EXTRA },
    /* OES_get_program_binary */
    { GL_NUM_SHADER_BINARY_FORMATS, CONST(0), NO_EXTRA },
@@ -1603,6 +1600,14 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
       break;
    case GL_POINT_SIZE_ARRAY_BUFFER_BINDING_OES:
       v->value_int = ctx->Array.ArrayObj->PointSize.BufferObj->Name;
+      break;
+
+   case GL_MAX_VERTEX_UNIFORM_VECTORS:
+      v->value_int = ctx->Const.VertexProgram.MaxUniformComponents / 4;
+      break;
+
+   case GL_MAX_FRAGMENT_UNIFORM_VECTORS:
+      v->value_int = ctx->Const.FragmentProgram.MaxUniformComponents / 4;
       break;
    }   
 }
