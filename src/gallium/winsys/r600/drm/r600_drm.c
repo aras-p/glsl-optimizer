@@ -230,7 +230,7 @@ struct radeon *radeon_new(int fd, unsigned device)
 	radeon->kman = radeon_bo_pbmgr_create(radeon);
 	if (!radeon->kman)
 		return NULL;
-	radeon->cman = pb_cache_manager_create(radeon->kman, 100000);
+	radeon->cman = pb_cache_manager_create(radeon->kman, 1000000);
 	if (!radeon->cman)
 		return NULL;
 	return radeon;

@@ -278,7 +278,7 @@ boolean radeon_setup_winsys(int fd, struct radeon_libdrm_winsys* ws)
     if (!ws->kman)
 	goto fail;
 
-    ws->cman = pb_cache_manager_create(ws->kman, 100000);
+    ws->cman = pb_cache_manager_create(ws->kman, 1000000);
     if (!ws->cman)
 	goto fail;
 
