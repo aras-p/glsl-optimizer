@@ -41,6 +41,9 @@
 
 #define SCALE_FACTOR_16_TO_9 (32768.0f / 256.0f)
 
+#define STAGE1_SCALE 4.0f
+#define STAGE2_SCALE (SCALE_FACTOR_16_TO_9 / STAGE1_SCALE)
+
 struct vertex_shader_consts
 {
    struct vertex4f norm;
@@ -144,7 +147,7 @@ static void
 matrix_mul(struct ureg_program *shader, struct ureg_dst dst,
            struct ureg_src tc[2], struct ureg_src sampler[2],
            struct ureg_src start[2], struct ureg_src step[2],
-           float scale[2])
+           float scale)
 {
    struct ureg_dst t_tc[2], m[2][2], tmp[2];
    unsigned i, j;
@@ -179,17 +182,12 @@ matrix_mul(struct ureg_program *shader, struct ureg_dst dst,
          ureg_ADD(shader, ureg_writemask(t_tc[0], TGSI_WRITEMASK_X), ureg_src(t_tc[0]), step[0]);
          ureg_ADD(shader, ureg_writemask(t_tc[1], TGSI_WRITEMASK_Y), ureg_src(t_tc[1]), step[1]);
       }
-
-      if(scale[0] != 1.0f)
-         ureg_MUL(shader, m[i][0], ureg_src(m[i][0]), ureg_scalar(ureg_imm1f(shader, scale[0]), TGSI_SWIZZLE_X));
-
-      if(scale[1] != 1.0f)
-         ureg_MUL(shader, m[i][1], ureg_src(m[i][1]), ureg_scalar(ureg_imm1f(shader, scale[1]), TGSI_SWIZZLE_X));
    }
 
    ureg_DP4(shader, ureg_writemask(tmp[0], TGSI_WRITEMASK_X), ureg_src(m[0][0]), ureg_src(m[0][1]));
    ureg_DP4(shader, ureg_writemask(tmp[1], TGSI_WRITEMASK_X), ureg_src(m[1][0]), ureg_src(m[1][1]));
-   ureg_ADD(shader, ureg_writemask(dst, TGSI_WRITEMASK_X), ureg_src(tmp[0]), ureg_src(tmp[1]));
+   ureg_ADD(shader, ureg_writemask(tmp[0], TGSI_WRITEMASK_X), ureg_src(tmp[0]), ureg_src(tmp[1]));
+   ureg_MUL(shader, dst, ureg_src(tmp[0]), ureg_imm1f(shader, scale));
 
    for(i = 0; i < 2; ++i) {
       ureg_release_temporary(shader, t_tc[i]);
@@ -206,7 +204,6 @@ create_transpose_frag_shader(struct vl_idct *idct)
    struct ureg_src tc[2], sampler[2];
    struct ureg_src start[2], step[2];
    struct ureg_dst fragment;
-   float scale[2];
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
@@ -224,12 +221,9 @@ create_transpose_frag_shader(struct vl_idct *idct)
    sampler[0] = ureg_DECL_sampler(shader, 0);
    sampler[1] = ureg_DECL_sampler(shader, 2);
 
-   scale[0] = 1.0f;
-   scale[1] = SCALE_FACTOR_16_TO_9;
-
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
-   matrix_mul(shader, fragment, tc, sampler, start, step, scale);
+   matrix_mul(shader, fragment, tc, sampler, start, step, STAGE1_SCALE);
 
    ureg_END(shader);
 
@@ -243,7 +237,6 @@ create_matrix_frag_shader(struct vl_idct *idct)
    struct ureg_src tc[2], sampler[2];
    struct ureg_src start[2], step[2];
    struct ureg_dst fragment;
-   float scale[2];
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
@@ -261,12 +254,9 @@ create_matrix_frag_shader(struct vl_idct *idct)
    sampler[0] = ureg_DECL_sampler(shader, 3);
    sampler[1] = ureg_DECL_sampler(shader, 1);
 
-   scale[0] = 1.0f;
-   scale[1] = 1.0f;
-
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
-   matrix_mul(shader, fragment, tc, sampler, start, step, scale);
+   matrix_mul(shader, fragment, tc, sampler, start, step, STAGE2_SCALE);
 
    ureg_END(shader);
 
