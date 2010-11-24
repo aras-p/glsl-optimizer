@@ -113,7 +113,9 @@ nvfx_framebuffer_validate(struct nvfx_context *nvfx, unsigned prepare_result)
 		nvfx->state.render_temps |= nvfx_surface_get_render_target(fb->cbufs[i], prepare_result, &nvfx->hw_rt[i]) << i;
 
 	for(; i < 4; ++i)
-		nvfx->hw_rt[i].bo = 0;
+		nvfx->hw_rt[i].bo = NULL;
+
+	nvfx->hw_zeta.bo = NULL;
 
 	if (fb->zsbuf) {
 		nvfx->state.render_temps |= nvfx_surface_get_render_target(fb->zsbuf, prepare_result, &nvfx->hw_zeta) << 7;
