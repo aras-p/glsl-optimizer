@@ -219,7 +219,7 @@ create_transpose_frag_shader(struct vl_idct *idct)
    step[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_STEP, TGSI_INTERPOLATE_CONSTANT);
 
    sampler[0] = ureg_DECL_sampler(shader, 0);
-   sampler[1] = ureg_DECL_sampler(shader, 2);
+   sampler[1] = ureg_DECL_sampler(shader, 1);
 
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
@@ -251,8 +251,8 @@ create_matrix_frag_shader(struct vl_idct *idct)
    step[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_STEP, TGSI_INTERPOLATE_CONSTANT);
    step[1] = ureg_imm1f(shader, 1.0f / BLOCK_WIDTH);
 
-   sampler[0] = ureg_DECL_sampler(shader, 3);
-   sampler[1] = ureg_DECL_sampler(shader, 1);
+   sampler[0] = ureg_DECL_sampler(shader, 1);
+   sampler[1] = ureg_DECL_sampler(shader, 0);
 
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
@@ -295,11 +295,7 @@ xfer_buffers_map(struct vl_idct *idct)
 
    idct->tex_transfer = idct->pipe->get_transfer
    (
-#if 1
       idct->pipe, idct->textures.individual.source,
-#else
-      idct->pipe, idct->destination,
-#endif
       u_subresource(0, 0),
       PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
       &rect
@@ -701,8 +697,8 @@ vl_idct_flush(struct vl_idct *idct)
 
       idct->pipe->set_vertex_buffers(idct->pipe, 2, idct->vertex_bufs.all);
       idct->pipe->bind_vertex_elements_state(idct->pipe, idct->vertex_elems_state);
-      idct->pipe->set_fragment_sampler_views(idct->pipe, 4, idct->sampler_views.all);
-      idct->pipe->bind_fragment_sampler_states(idct->pipe, 4, idct->samplers.all);
+      idct->pipe->set_fragment_sampler_views(idct->pipe, 2, idct->sampler_views.stage[0]);
+      idct->pipe->bind_fragment_sampler_states(idct->pipe, 2, idct->samplers.stage[0]);
       idct->pipe->bind_vs_state(idct->pipe, idct->vs);
       idct->pipe->bind_fs_state(idct->pipe, idct->transpose_fs);
 
@@ -715,8 +711,8 @@ vl_idct_flush(struct vl_idct *idct)
 
       idct->pipe->set_vertex_buffers(idct->pipe, 2, idct->vertex_bufs.all);
       idct->pipe->bind_vertex_elements_state(idct->pipe, idct->vertex_elems_state);
-      idct->pipe->set_fragment_sampler_views(idct->pipe, 4, idct->sampler_views.all);
-      idct->pipe->bind_fragment_sampler_states(idct->pipe, 4, idct->samplers.all);
+      idct->pipe->set_fragment_sampler_views(idct->pipe, 2, idct->sampler_views.stage[1]);
+      idct->pipe->bind_fragment_sampler_states(idct->pipe, 2, idct->samplers.stage[1]);
       idct->pipe->bind_vs_state(idct->pipe, idct->vs);
       idct->pipe->bind_fs_state(idct->pipe, idct->matrix_fs);
 

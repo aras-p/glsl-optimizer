@@ -47,18 +47,20 @@ struct vl_idct
    union
    {
       void *all[4];
+      void *stage[2][2];
       struct {
-         void *transpose, *matrix;
-         void *source, *intermediate;
+         void *transpose, *source;
+         void *matrix, *intermediate;
       } individual;
    } samplers;
 
    union
    {
       struct pipe_sampler_view *all[4];
+      struct pipe_sampler_view *stage[2][2];
       struct {
-         struct pipe_sampler_view *transpose, *matrix;
-         struct pipe_sampler_view *source, *intermediate;
+         struct pipe_sampler_view *transpose, *source;
+         struct pipe_sampler_view *matrix, *intermediate;
       } individual;
    } sampler_views;
 
@@ -68,9 +70,10 @@ struct vl_idct
    union
    {
       struct pipe_resource *all[4];
+      struct pipe_resource *stage[2][2];
       struct {
-         struct pipe_resource *transpose, *matrix;
-         struct pipe_resource *source, *intermediate;
+         struct pipe_resource *transpose, *source;
+         struct pipe_resource *matrix, *intermediate;
       } individual;
    } textures;
 
