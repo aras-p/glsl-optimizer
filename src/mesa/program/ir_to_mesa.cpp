@@ -2634,6 +2634,10 @@ get_mesa_program(struct gl_context *ctx,
       target = GL_FRAGMENT_PROGRAM_ARB;
       target_string = "fragment";
       break;
+   case GL_GEOMETRY_SHADER:
+      target = GL_GEOMETRY_PROGRAM_NV;
+      target_string = "geometry";
+      break;
    default:
       assert(!"should not be reached");
       return NULL;
@@ -2898,6 +2902,12 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
             ok = ctx->Driver.ProgramStringNotify(ctx, GL_FRAGMENT_PROGRAM_ARB,
                                                  linked_prog);
             break;
+         case GL_GEOMETRY_SHADER:
+            _mesa_reference_geomprog(ctx, &prog->GeometryProgram,
+                                     (struct gl_geometry_program *)linked_prog);
+            ok = ctx->Driver.ProgramStringNotify(ctx, GL_GEOMETRY_PROGRAM_NV,
+                                                 linked_prog);
+            break;
          }
          if (!ok) {
             return GL_FALSE;
@@ -3021,6 +3031,7 @@ _mesa_glsl_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
    prog->Varying = _mesa_new_parameter_list();
    _mesa_reference_vertprog(ctx, &prog->VertexProgram, NULL);
    _mesa_reference_fragprog(ctx, &prog->FragmentProgram, NULL);
+   _mesa_reference_geomprog(ctx, &prog->GeometryProgram, NULL);
 
    if (prog->LinkStatus) {
       link_shaders(ctx, prog);
