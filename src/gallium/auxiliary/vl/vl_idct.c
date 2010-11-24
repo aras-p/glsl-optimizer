@@ -147,10 +147,10 @@ static void
 matrix_mul(struct ureg_program *shader, struct ureg_dst dst,
            struct ureg_src tc[2], struct ureg_src sampler[2],
            struct ureg_src start[2], struct ureg_src step[2],
-           float scale)
+           bool fetch4[2], float scale)
 {
    struct ureg_dst t_tc[2], m[2][2], tmp[2];
-   unsigned i, j;
+   unsigned side, i, j;
 
    for(i = 0; i < 2; ++i) {
       t_tc[i] = ureg_DECL_temporary(shader);
@@ -170,17 +170,19 @@ matrix_mul(struct ureg_program *shader, struct ureg_dst dst,
    ureg_MOV(shader, ureg_writemask(t_tc[1], TGSI_WRITEMASK_X), tc[1]);
    ureg_MOV(shader, ureg_writemask(t_tc[1], TGSI_WRITEMASK_Y), start[1]);
 
-   for(i = 0; i < 2; ++i) {
-      for(j = 0; j < 4; ++j) {
-         /* Nouveau and r600g can't writemask tex dst regs (yet?), do in two steps */
-         ureg_TEX(shader, tmp[0], TGSI_TEXTURE_2D, ureg_src(t_tc[0]), sampler[0]);
-         ureg_MOV(shader, ureg_writemask(m[i][0], TGSI_WRITEMASK_X << j), ureg_scalar(ureg_src(tmp[0]), TGSI_SWIZZLE_X));
+   for(side = 0; side < 2; ++side) {
+      for(i = 0; i < 2; ++i) {
+         if(fetch4[side]) {
+            ureg_TEX(shader, m[i][side], TGSI_TEXTURE_2D, ureg_src(t_tc[side]), sampler[side]);
+            ureg_ADD(shader, ureg_writemask(t_tc[side], TGSI_WRITEMASK_X), ureg_src(t_tc[side]), step[side]);
 
-         ureg_TEX(shader, tmp[1], TGSI_TEXTURE_2D, ureg_src(t_tc[1]), sampler[1]);
-         ureg_MOV(shader, ureg_writemask(m[i][1], TGSI_WRITEMASK_X << j), ureg_scalar(ureg_src(tmp[1]), TGSI_SWIZZLE_X));
+         } else for(j = 0; j < 4; ++j) {
+            /* Nouveau and r600g can't writemask tex dst regs (yet?), do in two steps */
+            ureg_TEX(shader, tmp[side], TGSI_TEXTURE_2D, ureg_src(t_tc[side]), sampler[side]);
+            ureg_MOV(shader, ureg_writemask(m[i][side], TGSI_WRITEMASK_X << j), ureg_scalar(ureg_src(tmp[side]), TGSI_SWIZZLE_X));
 
-         ureg_ADD(shader, ureg_writemask(t_tc[0], TGSI_WRITEMASK_X), ureg_src(t_tc[0]), step[0]);
-         ureg_ADD(shader, ureg_writemask(t_tc[1], TGSI_WRITEMASK_Y), ureg_src(t_tc[1]), step[1]);
+            ureg_ADD(shader, ureg_writemask(t_tc[side], TGSI_WRITEMASK_X << side), ureg_src(t_tc[side]), step[side]);
+         }
       }
    }
 
@@ -204,6 +206,7 @@ create_transpose_frag_shader(struct vl_idct *idct)
    struct ureg_src tc[2], sampler[2];
    struct ureg_src start[2], step[2];
    struct ureg_dst fragment;
+   bool fetch4[2];
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
@@ -215,15 +218,18 @@ create_transpose_frag_shader(struct vl_idct *idct)
    start[0] = ureg_imm1f(shader, 0.0f);
    start[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_START, TGSI_INTERPOLATE_CONSTANT);
 
-   step[0] = ureg_imm1f(shader, 1.0f / BLOCK_HEIGHT);
+   step[0] = ureg_imm1f(shader, 4.0f / BLOCK_HEIGHT);
    step[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_STEP, TGSI_INTERPOLATE_CONSTANT);
 
    sampler[0] = ureg_DECL_sampler(shader, 0);
    sampler[1] = ureg_DECL_sampler(shader, 1);
 
+   fetch4[0] = true;
+   fetch4[1] = false;
+
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
-   matrix_mul(shader, fragment, tc, sampler, start, step, STAGE1_SCALE);
+   matrix_mul(shader, fragment, tc, sampler, start, step, fetch4, STAGE1_SCALE);
 
    ureg_END(shader);
 
@@ -237,6 +243,7 @@ create_matrix_frag_shader(struct vl_idct *idct)
    struct ureg_src tc[2], sampler[2];
    struct ureg_src start[2], step[2];
    struct ureg_dst fragment;
+   bool fetch4[2];
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
@@ -254,9 +261,12 @@ create_matrix_frag_shader(struct vl_idct *idct)
    sampler[0] = ureg_DECL_sampler(shader, 1);
    sampler[1] = ureg_DECL_sampler(shader, 0);
 
+   fetch4[0] = false;
+   fetch4[1] = false;
+
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
-   matrix_mul(shader, fragment, tc, sampler, start, step, STAGE2_SCALE);
+   matrix_mul(shader, fragment, tc, sampler, start, step, fetch4, STAGE2_SCALE);
 
    ureg_END(shader);
 
@@ -360,17 +370,19 @@ init_buffers(struct vl_idct *idct)
 
    memset(&template, 0, sizeof(struct pipe_resource));
    template.target = PIPE_TEXTURE_2D;
-   template.format = PIPE_FORMAT_R32_FLOAT;
+   template.format = PIPE_FORMAT_R32G32B32A32_FLOAT;
    template.last_level = 0;
-   template.width0 = 8;
+   template.width0 = 2;
    template.height0 = 8;
    template.depth0 = 1;
    template.usage = PIPE_USAGE_IMMUTABLE;
    template.bind = PIPE_BIND_SAMPLER_VIEW;
    template.flags = 0;
 
-   idct->textures.individual.matrix = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
    idct->textures.individual.transpose = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
+
+   template.width0 = 8;
+   idct->textures.individual.matrix = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
 
    template.format = idct->destination->format;
    template.width0 = idct->destination->width0;
@@ -505,7 +517,7 @@ init_constants(struct vl_idct *idct)
    f = idct->pipe->transfer_map(idct->pipe, buf_transfer);
    for(i = 0; i < BLOCK_HEIGHT; ++i)
       for(j = 0; j < BLOCK_WIDTH; ++j)
-         f[i * pitch + j] = const_matrix[j][i]; // transpose
+         f[i * pitch * 4 + j] = const_matrix[j][i]; // transpose
 
    idct->pipe->transfer_unmap(idct->pipe, buf_transfer);
    idct->pipe->transfer_destroy(idct->pipe, buf_transfer);
@@ -523,7 +535,7 @@ init_constants(struct vl_idct *idct)
    f = idct->pipe->transfer_map(idct->pipe, buf_transfer);
    for(i = 0; i < BLOCK_HEIGHT; ++i)
       for(j = 0; j < BLOCK_WIDTH; ++j)
-         f[i * pitch + j] = const_matrix[i][j];
+         f[i * pitch * 4 + j * 4] = const_matrix[i][j];
 
    idct->pipe->transfer_unmap(idct->pipe, buf_transfer);
    idct->pipe->transfer_destroy(idct->pipe, buf_transfer);
