@@ -54,6 +54,8 @@ static void rc_rewrite_depth_out(struct radeon_compiler *cc, void *user)
 
 	for (rci = c->Base.Program.Instructions.Next; rci != &c->Base.Program.Instructions; rci = rci->Next) {
 		struct rc_sub_instruction * inst = &rci->U.I;
+		unsigned i;
+		const struct rc_opcode_info *info = rc_get_opcode_info(inst->Opcode);
 
 		if (inst->DstReg.File != RC_FILE_OUTPUT || inst->DstReg.Index != c->OutputDepth)
 			continue;
@@ -65,27 +67,12 @@ static void rc_rewrite_depth_out(struct radeon_compiler *cc, void *user)
 			continue;
 		}
 
-		switch (inst->Opcode) {
-			case RC_OPCODE_FRC:
-			case RC_OPCODE_MOV:
-				inst->SrcReg[0] = lmul_swizzle(RC_SWIZZLE_ZZZZ, inst->SrcReg[0]);
-				break;
-			case RC_OPCODE_ADD:
-			case RC_OPCODE_MAX:
-			case RC_OPCODE_MIN:
-			case RC_OPCODE_MUL:
-				inst->SrcReg[0] = lmul_swizzle(RC_SWIZZLE_ZZZZ, inst->SrcReg[0]);
-				inst->SrcReg[1] = lmul_swizzle(RC_SWIZZLE_ZZZZ, inst->SrcReg[1]);
-				break;
-			case RC_OPCODE_CMP:
-			case RC_OPCODE_MAD:
-				inst->SrcReg[0] = lmul_swizzle(RC_SWIZZLE_ZZZZ, inst->SrcReg[0]);
-				inst->SrcReg[1] = lmul_swizzle(RC_SWIZZLE_ZZZZ, inst->SrcReg[1]);
-				inst->SrcReg[2] = lmul_swizzle(RC_SWIZZLE_ZZZZ, inst->SrcReg[2]);
-				break;
-			default:
-				// Scalar instructions needn't be reswizzled
-				break;
+		if (!info->IsComponentwise) {
+			continue;
+		}
+
+		for (i = 0; i < info->NumSrcRegs; i++) {
+			inst->SrcReg[i] = lmul_swizzle(RC_SWIZZLE_ZZZZ, inst->SrcReg[i]);
 		}
 	}
 }
