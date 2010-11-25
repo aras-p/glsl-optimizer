@@ -70,6 +70,7 @@ CXX_SOURCES = \
 	opt_dead_code.cpp \
 	opt_dead_code_local.cpp \
 	opt_dead_functions.cpp \
+	opt_discard_simplification.cpp \
 	opt_function_inlining.cpp \
 	opt_if_simplification.cpp \
 	opt_noop_swizzle.cpp \
