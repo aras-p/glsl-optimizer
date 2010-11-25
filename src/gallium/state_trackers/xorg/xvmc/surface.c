@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include <assert.h>
+#include <stdio.h>
 #include <X11/Xlibint.h>
 #include <vl_winsys.h>
 #include <pipe/p_video_context.h>
@@ -373,6 +374,8 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
                       short destx, short desty, unsigned short destw, unsigned short desth,
                       int flags)
 {
+   static int dump_window = -1;
+
    struct pipe_video_context *vpipe;
    XvMCSurfacePrivate *surface_priv;
    XvMCContextPrivate *context_priv;
@@ -450,6 +453,17 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    );
 
    pipe_surface_reference(&drawable_surface, NULL);
+
+   if(dump_window == -1) {
+      dump_window = debug_get_num_option("XVMC_DUMP", 0);
+   }
+
+   if(dump_window) {
+      static unsigned int framenum = 0;
+      char cmd[256];
+      sprintf(cmd, "xwd -id %d -out xvmc_frame_%08d.xwd", (int)drawable, ++framenum);
+      system(cmd);
+   }
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Pushed surface %p to front buffer.\n", surface);
 
