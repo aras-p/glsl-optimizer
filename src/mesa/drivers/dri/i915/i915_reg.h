@@ -361,13 +361,6 @@
 /* p222 */
 
 
-#define I915_MAX_TEX_INDIRECT 4
-#define I915_MAX_TEX_INSN     32
-#define I915_MAX_ALU_INSN     64
-#define I915_MAX_DECL_INSN    27
-#define I915_MAX_TEMPORARY    16
-
-
 /* Each instruction is 3 dwords long, though most don't require all
  * this space.  Maximum of 123 instructions.  Smaller maxes per insn
  * type.

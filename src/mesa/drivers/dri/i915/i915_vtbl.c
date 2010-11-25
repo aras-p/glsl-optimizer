@@ -678,6 +678,9 @@ i915_new_batch(struct intel_context *intel)
    i915->state.emitted = 0;
    i915->last_draw_offset = 0;
    i915->last_sampler = 0;
+
+   i915->current_vb_bo = NULL;
+   i915->current_vertex_size = 0;
 }
 
 static void 

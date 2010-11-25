@@ -1422,6 +1422,10 @@ i915ValidateFragmentProgram(struct i915_context *i915)
                                               intel->vertex_attr_count,
                                               intel->ViewportMatrix.m, 0);
 
+      assert(intel->prim.current_offset == intel->prim.start_offset);
+      intel->prim.start_offset = (intel->prim.current_offset + intel->vertex_size-1) / intel->vertex_size * intel->vertex_size;
+      intel->prim.current_offset = intel->prim.start_offset;
+
       intel->vertex_size >>= 2;
 
       i915->state.Ctx[I915_CTXREG_LIS2] = s2;

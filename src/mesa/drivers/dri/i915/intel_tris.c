@@ -54,6 +54,7 @@
 #include "intel_span.h"
 #include "i830_context.h"
 #include "i830_reg.h"
+#include "i915_context.h"
 
 static void intelRenderPrimitive(struct gl_context * ctx, GLenum prim);
 static void intelRasterPrimitive(struct gl_context * ctx, GLenum rprim,
@@ -215,7 +216,7 @@ void intel_flush_prim(struct intel_context *intel)
    offset = intel->prim.start_offset;
    intel->prim.start_offset = intel->prim.current_offset;
    if (intel->gen < 3)
-      intel->prim.start_offset = ALIGN(intel->prim.start_offset, 128);
+      intel->prim.current_offset = intel->prim.start_offset = ALIGN(intel->prim.start_offset, 128);
    intel->prim.flush = NULL;
 
    intel->vtbl.emit_state(intel);
@@ -240,20 +241,39 @@ void intel_flush_prim(struct intel_context *intel)
 #endif
 
    if (intel->gen >= 3) {
-      BEGIN_BATCH(5);
-      OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
-		I1_LOAD_S(0) | I1_LOAD_S(1) | 1);
-      assert((offset & ~S0_VB_OFFSET_MASK) == 0);
-      OUT_RELOC(vb_bo, I915_GEM_DOMAIN_VERTEX, 0, offset);
-      OUT_BATCH((intel->vertex_size << S1_VERTEX_WIDTH_SHIFT) |
-		(intel->vertex_size << S1_VERTEX_PITCH_SHIFT));
+      struct i915_context *i915 = i915_context(&intel->ctx);
+      unsigned int cmd = 0, len = 0;
 
+      if (vb_bo != i915->current_vb_bo) {
+	 cmd |= I1_LOAD_S(0);
+	 len++;
+      }
+
+      if (intel->vertex_size != i915->current_vertex_size) {
+	 cmd |= I1_LOAD_S(1);
+	 len++;
+      }
+      if (len)
+	 len++;
+
+      BEGIN_BATCH(2+len);
+      if (cmd)
+	 OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 | cmd | (len - 2));
+      if (vb_bo != i915->current_vb_bo) {
+	 OUT_RELOC(vb_bo, I915_GEM_DOMAIN_VERTEX, 0, 0);
+	 i915->current_vb_bo = vb_bo;
+      }
+      if (intel->vertex_size != i915->current_vertex_size) {
+	 OUT_BATCH((intel->vertex_size << S1_VERTEX_WIDTH_SHIFT) |
+		   (intel->vertex_size << S1_VERTEX_PITCH_SHIFT));
+	 i915->current_vertex_size = intel->vertex_size;
+      }
       OUT_BATCH(_3DPRIMITIVE |
 		PRIM_INDIRECT |
 		PRIM_INDIRECT_SEQUENTIAL |
 		intel->prim.primitive |
 		count);
-      OUT_BATCH(0); /* Beginning vertex index */
+      OUT_BATCH(offset / (intel->vertex_size * 4));
       ADVANCE_BATCH();
    } else {
       struct i830_context *i830 = i830_context(&intel->ctx);

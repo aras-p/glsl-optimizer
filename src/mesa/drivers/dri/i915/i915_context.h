@@ -29,7 +29,6 @@
 #define I915CONTEXT_INC
 
 #include "intel_context.h"
-#include "i915_reg.h"
 
 #define I915_FALLBACK_TEXTURE		 0x1000
 #define I915_FALLBACK_COLORMASK		 0x2000
@@ -125,6 +124,12 @@ enum {
 
 #define I915_MAX_CONSTANT      32
 #define I915_CONSTANT_SIZE     (2+(4*I915_MAX_CONSTANT))
+
+#define I915_MAX_TEX_INDIRECT 4
+#define I915_MAX_TEX_INSN     32
+#define I915_MAX_ALU_INSN     64
+#define I915_MAX_DECL_INSN    27
+#define I915_MAX_TEMPORARY    16
 
 #define I915_MAX_INSN          (I915_MAX_DECL_INSN + \
 				I915_MAX_TEX_INSN + \
@@ -263,6 +268,9 @@ struct i915_context
 
 
    struct i915_fragment_program *current_program;
+
+   drm_intel_bo *current_vb_bo;
+   unsigned int current_vertex_size;
 
    struct i915_hw_state state;
    uint32_t last_draw_offset;
