@@ -167,14 +167,19 @@ matrix_mul(struct ureg_program *shader, struct ureg_dst dst,
    ureg_MOV(shader, ureg_writemask(t_tc[0], TGSI_WRITEMASK_X), start[0]);
    ureg_MOV(shader, ureg_writemask(t_tc[0], TGSI_WRITEMASK_Y), tc[0]);
 
-   ureg_MOV(shader, ureg_writemask(t_tc[1], TGSI_WRITEMASK_X), tc[1]);
-   ureg_MOV(shader, ureg_writemask(t_tc[1], TGSI_WRITEMASK_Y), start[1]);
+   if(fetch4[1]) {
+      ureg_MOV(shader, ureg_writemask(t_tc[1], TGSI_WRITEMASK_X), ureg_scalar(start[1], TGSI_SWIZZLE_Y));
+      ureg_MOV(shader, ureg_writemask(t_tc[1], TGSI_WRITEMASK_Y), ureg_scalar(tc[1], TGSI_SWIZZLE_X));
+   } else {
+      ureg_MOV(shader, ureg_writemask(t_tc[1], TGSI_WRITEMASK_X), tc[1]);
+      ureg_MOV(shader, ureg_writemask(t_tc[1], TGSI_WRITEMASK_Y), start[1]);
+   }
 
    for(side = 0; side < 2; ++side) {
       for(i = 0; i < 2; ++i) {
          if(fetch4[side]) {
             ureg_TEX(shader, m[i][side], TGSI_TEXTURE_2D, ureg_src(t_tc[side]), sampler[side]);
-            ureg_ADD(shader, ureg_writemask(t_tc[side], TGSI_WRITEMASK_X), ureg_src(t_tc[side]), step[side]);
+            ureg_MOV(shader, ureg_writemask(t_tc[side], TGSI_WRITEMASK_X), step[side]);
 
          } else for(j = 0; j < 4; ++j) {
             /* Nouveau and r600g can't writemask tex dst regs (yet?), do in two steps */
@@ -256,13 +261,13 @@ create_matrix_frag_shader(struct vl_idct *idct)
    start[1] = ureg_imm1f(shader, 0.0f);
 
    step[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_STEP, TGSI_INTERPOLATE_CONSTANT);
-   step[1] = ureg_imm1f(shader, 1.0f / BLOCK_WIDTH);
+   step[1] = ureg_imm1f(shader, 4.0f / BLOCK_WIDTH);
 
    sampler[0] = ureg_DECL_sampler(shader, 1);
    sampler[1] = ureg_DECL_sampler(shader, 0);
 
    fetch4[0] = false;
-   fetch4[1] = false;
+   fetch4[1] = true;
 
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
@@ -380,8 +385,6 @@ init_buffers(struct vl_idct *idct)
    template.flags = 0;
 
    idct->textures.individual.transpose = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
-
-   template.width0 = 8;
    idct->textures.individual.matrix = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
 
    template.format = idct->destination->format;
@@ -535,7 +538,7 @@ init_constants(struct vl_idct *idct)
    f = idct->pipe->transfer_map(idct->pipe, buf_transfer);
    for(i = 0; i < BLOCK_HEIGHT; ++i)
       for(j = 0; j < BLOCK_WIDTH; ++j)
-         f[i * pitch * 4 + j * 4] = const_matrix[i][j];
+         f[i * pitch * 4 + j] = const_matrix[j][i]; // transpose
 
    idct->pipe->transfer_unmap(idct->pipe, buf_transfer);
    idct->pipe->transfer_destroy(idct->pipe, buf_transfer);
