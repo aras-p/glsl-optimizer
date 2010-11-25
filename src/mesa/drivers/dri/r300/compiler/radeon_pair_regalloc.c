@@ -218,8 +218,8 @@ static void compute_live_intervals(struct radeon_compiler *c,
 		 * the BGNLOOP instruction is used as the beginning. */
 		if (inst->U.I.Opcode == RC_OPCODE_BGNLOOP && s->EndLoop < 0) {
 			int loops = 1;
-			s->BeginLoop = inst->IP;
 			struct rc_instruction * tmp;
+			s->BeginLoop = inst->IP;
 			for(tmp = inst->Next;
 					tmp != &s->C->Program.Instructions;
 					tmp = tmp->Next) {
