@@ -662,6 +662,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_save_rasterizer(ctx->cso);
    cso_save_samplers(ctx->cso);
    cso_save_fragment_sampler_views(ctx->cso);
+   cso_save_viewport(ctx->cso);
    cso_save_framebuffer(ctx->cso);
    cso_save_fragment_shader(ctx->cso);
    cso_save_vertex_shader(ctx->cso);
@@ -729,6 +730,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_restore_rasterizer(ctx->cso);
    cso_restore_samplers(ctx->cso);
    cso_restore_fragment_sampler_views(ctx->cso);
+   cso_restore_viewport(ctx->cso);
    cso_restore_framebuffer(ctx->cso);
    cso_restore_fragment_shader(ctx->cso);
    cso_restore_vertex_shader(ctx->cso);
