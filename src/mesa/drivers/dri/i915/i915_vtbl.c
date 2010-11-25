@@ -426,6 +426,7 @@ i915_emit_state(struct intel_context *intel)
     */
    if (dirty & I915_UPLOAD_TEX_ALL) {
       int nr = 0;
+      GLuint unwind;
 
       for (i = 0; i < I915_TEX_UNITS; i++)
          if (dirty & I915_UPLOAD_TEX(i))
@@ -445,6 +446,7 @@ i915_emit_state(struct intel_context *intel)
          }
       ADVANCE_BATCH();
 
+      unwind = intel->batch.used;
       BEGIN_BATCH(2 + nr * 3);
       OUT_BATCH(_3DSTATE_SAMPLER_STATE | (3 * nr));
       OUT_BATCH((dirty & I915_UPLOAD_TEX_ALL) >> I915_UPLOAD_TEX_0_SHIFT);
@@ -455,6 +457,13 @@ i915_emit_state(struct intel_context *intel)
             OUT_BATCH(state->Tex[i][I915_TEXREG_SS4]);
          }
       ADVANCE_BATCH();
+      if (i915->last_sampler &&
+	  memcmp(intel->batch.map + i915->last_sampler,
+		 intel->batch.map + unwind,
+		 (2 + nr*3)*sizeof(int)) == 0)
+	  intel->batch.used = unwind;
+      else
+	  i915->last_sampler = unwind;
    }
 
    if (dirty & I915_UPLOAD_CONSTANTS) {
@@ -658,6 +667,7 @@ i915_new_batch(struct intel_context *intel)
     */
    i915->state.emitted = 0;
    i915->last_draw_offset = 0;
+   i915->last_sampler = 0;
 }
 
 static void 
