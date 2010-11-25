@@ -54,12 +54,7 @@ static struct rc_src_register chain_srcregs(struct rc_src_register outer, struct
 		combine.Negate = outer.Negate;
 	} else {
 		combine.Abs = inner.Abs;
-		combine.Negate = 0;
-		for(unsigned int chan = 0; chan < 4; ++chan) {
-			unsigned int swz = GET_SWZ(outer.Swizzle, chan);
-			if (swz < 4)
-				combine.Negate |= GET_BIT(inner.Negate, swz) << chan;
-		}
+		combine.Negate = swizzle_mask(outer.Swizzle, inner.Negate);
 		combine.Negate ^= outer.Negate;
 	}
 	combine.Swizzle = combine_swizzles(inner.Swizzle, outer.Swizzle);

@@ -204,6 +204,20 @@ static inline rc_swizzle rc_mask_to_swizzle(unsigned int mask)
 	}
 	return RC_SWIZZLE_UNUSED;
 }
+
+/* Reorder mask bits according to swizzle. */
+static inline unsigned swizzle_mask(unsigned swizzle, unsigned mask)
+{
+	unsigned ret = 0;
+	for (unsigned chan = 0; chan < 4; ++chan) {
+		unsigned swz = GET_SWZ(swizzle, chan);
+		if (swz < 4)
+			ret |= GET_BIT(mask, swz) << chan;
+	}
+	return ret;
+}
+
+
 struct rc_src_register lmul_swizzle(unsigned int swizzle, struct rc_src_register srcreg);
 
 static inline void reset_srcreg(struct rc_src_register* reg)
