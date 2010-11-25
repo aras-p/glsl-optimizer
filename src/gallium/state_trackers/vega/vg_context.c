@@ -489,11 +489,10 @@ void vg_prepare_blend_surface(struct vg_context *ctx)
                                                 stfb->blend_texture_view->texture,
                                                 0, 0, 0,
                                                 PIPE_BIND_RENDER_TARGET);
-   /* flip it, because we want to use it as a sampler */
    util_blit_pixels_tex(ctx->blit,
                         view,
-                        0, strb->height,
-                        strb->width, 0,
+                        0, 0,
+                        strb->width, strb->height,
                         dest_surface,
                         0, 0,
                         strb->width, strb->height,
