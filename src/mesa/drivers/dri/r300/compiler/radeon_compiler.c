@@ -29,6 +29,7 @@
 #include "radeon_dataflow.h"
 #include "radeon_program.h"
 #include "radeon_program_pair.h"
+#include "radeon_compiler_util.h"
 
 
 void rc_init(struct radeon_compiler * c)

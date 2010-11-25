@@ -71,27 +71,6 @@ void rc_local_transform(
 	}
 }
 
-/**
- * Left multiplication of a register with a swizzle
- */
-struct rc_src_register lmul_swizzle(unsigned int swizzle, struct rc_src_register srcreg)
-{
-	struct rc_src_register tmp = srcreg;
-	int i;
-	tmp.Swizzle = 0;
-	tmp.Negate = 0;
-	for(i = 0; i < 4; ++i) {
-		rc_swizzle swz = GET_SWZ(swizzle, i);
-		if (swz < 4) {
-			tmp.Swizzle |= GET_SWZ(srcreg.Swizzle, swz) << (i*3);
-			tmp.Negate |= GET_BIT(srcreg.Negate, swz) << i;
-		} else {
-			tmp.Swizzle |= swz << (i*3);
-		}
-	}
-	return tmp;
-}
-
 struct get_used_temporaries_data {
 	unsigned char * Used;
 	unsigned int UsedLength;

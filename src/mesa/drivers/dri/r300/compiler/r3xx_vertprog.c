@@ -26,6 +26,7 @@
 
 #include "../r300_reg.h"
 
+#include "radeon_compiler_util.h"
 #include "radeon_dataflow.h"
 #include "radeon_program_alu.h"
 #include "radeon_swizzle.h"

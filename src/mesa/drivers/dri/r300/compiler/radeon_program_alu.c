@@ -36,6 +36,7 @@
 #include "radeon_program_alu.h"
 
 #include "radeon_compiler.h"
+#include "radeon_compiler_util.h"
 
 
 static struct rc_instruction *emit1(

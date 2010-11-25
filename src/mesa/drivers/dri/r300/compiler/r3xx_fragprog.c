@@ -24,6 +24,7 @@
 
 #include <stdio.h>
 
+#include "radeon_compiler_util.h"
 #include "radeon_dataflow.h"
 #include "radeon_emulate_branches.h"
 #include "radeon_emulate_loops.h"

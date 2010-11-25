@@ -48,6 +48,91 @@ unsigned int rc_swizzle_to_writemask(unsigned int swz)
 	return mask;
 }
 
+rc_swizzle get_swz(unsigned int swz, rc_swizzle idx)
+{
+	if (idx & 0x4)
+		return idx;
+	return GET_SWZ(swz, idx);
+}
+
+unsigned int combine_swizzles4(unsigned int src,
+		rc_swizzle swz_x, rc_swizzle swz_y, rc_swizzle swz_z, rc_swizzle swz_w)
+{
+	unsigned int ret = 0;
+
+	ret |= get_swz(src, swz_x);
+	ret |= get_swz(src, swz_y) << 3;
+	ret |= get_swz(src, swz_z) << 6;
+	ret |= get_swz(src, swz_w) << 9;
+
+	return ret;
+}
+
+unsigned int combine_swizzles(unsigned int src, unsigned int swz)
+{
+	unsigned int ret = 0;
+
+	ret |= get_swz(src, GET_SWZ(swz, RC_SWIZZLE_X));
+	ret |= get_swz(src, GET_SWZ(swz, RC_SWIZZLE_Y)) << 3;
+	ret |= get_swz(src, GET_SWZ(swz, RC_SWIZZLE_Z)) << 6;
+	ret |= get_swz(src, GET_SWZ(swz, RC_SWIZZLE_W)) << 9;
+
+	return ret;
+}
+
+/**
+ * @param mask Must be either RC_MASK_X, RC_MASK_Y, RC_MASK_Z, or RC_MASK_W
+ */
+rc_swizzle rc_mask_to_swizzle(unsigned int mask)
+{
+	switch (mask) {
+	case RC_MASK_X: return RC_SWIZZLE_X;
+	case RC_MASK_Y: return RC_SWIZZLE_Y;
+	case RC_MASK_Z: return RC_SWIZZLE_Z;
+	case RC_MASK_W: return RC_SWIZZLE_W;
+	}
+	return RC_SWIZZLE_UNUSED;
+}
+
+/* Reorder mask bits according to swizzle. */
+unsigned swizzle_mask(unsigned swizzle, unsigned mask)
+{
+	unsigned ret = 0;
+	for (unsigned chan = 0; chan < 4; ++chan) {
+		unsigned swz = GET_SWZ(swizzle, chan);
+		if (swz < 4)
+			ret |= GET_BIT(mask, swz) << chan;
+	}
+	return ret;
+}
+
+/**
+ * Left multiplication of a register with a swizzle
+ */
+struct rc_src_register lmul_swizzle(unsigned int swizzle, struct rc_src_register srcreg)
+{
+	struct rc_src_register tmp = srcreg;
+	int i;
+	tmp.Swizzle = 0;
+	tmp.Negate = 0;
+	for(i = 0; i < 4; ++i) {
+		rc_swizzle swz = GET_SWZ(swizzle, i);
+		if (swz < 4) {
+			tmp.Swizzle |= GET_SWZ(srcreg.Swizzle, swz) << (i*3);
+			tmp.Negate |= GET_BIT(srcreg.Negate, swz) << i;
+		} else {
+			tmp.Swizzle |= swz << (i*3);
+		}
+	}
+	return tmp;
+}
+
+void reset_srcreg(struct rc_src_register* reg)
+{
+	memset(reg, 0, sizeof(struct rc_src_register));
+	reg->Swizzle = RC_SWIZZLE_XYZW;
+}
+
 unsigned int rc_src_reads_dst_mask(
 		rc_register_file src_file,
 		unsigned int src_idx,
