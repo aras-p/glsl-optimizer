@@ -2166,9 +2166,14 @@ ir_to_mesa_visitor::visit(ir_discard *ir)
 {
    struct gl_fragment_program *fp = (struct gl_fragment_program *)this->prog;
 
-   assert(ir->condition == NULL); /* FINISHME */
+   if (ir->condition) {
+      ir->condition->accept(this);
+      this->result.negate = ~this->result.negate;
+      ir_to_mesa_emit_op1(ir, OPCODE_KIL, ir_to_mesa_undef_dst, this->result);
+   } else {
+      ir_to_mesa_emit_op0(ir, OPCODE_KIL_NV);
+   }
 
-   ir_to_mesa_emit_op0(ir, OPCODE_KIL_NV);
    fp->UsesKill = GL_TRUE;
 }
 
