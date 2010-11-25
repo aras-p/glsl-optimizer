@@ -2858,8 +2858,10 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 
 	 progress = lower_quadop_vector(ir, true) || progress;
 
-	 if (options->EmitNoIfs)
+	 if (options->EmitNoIfs) {
+	    progress = lower_discard(ir) || progress;
 	    progress = do_if_to_cond_assign(ir) || progress;
+	 }
 
 	 if (options->EmitNoNoise)
 	    progress = lower_noise(ir) || progress;

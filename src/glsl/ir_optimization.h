@@ -62,6 +62,7 @@ bool do_swizzle_swizzle(exec_list *instructions);
 bool do_tree_grafting(exec_list *instructions);
 bool do_vec_index_to_cond_assign(exec_list *instructions);
 bool do_vec_index_to_swizzle(exec_list *instructions);
+bool lower_discard(exec_list *instructions);
 bool lower_instructions(exec_list *instructions, unsigned what_to_lower);
 bool lower_noise(exec_list *instructions);
 bool lower_variable_index_to_cond_assign(exec_list *instructions,
