@@ -2197,6 +2197,7 @@ struct gl_shader_compiler_options
    GLboolean EmitNoCont;                  /**< Emit CONT opcode? */
    GLboolean EmitNoMainReturn;            /**< Emit CONT/RET opcodes? */
    GLboolean EmitNoNoise;                 /**< Emit NOISE opcodes? */
+   GLboolean EmitNoPow;                   /**< Emit POW opcodes? */
 
    /**
     * \name Forms of indirect addressing the driver cannot do.

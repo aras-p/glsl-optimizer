@@ -32,8 +32,9 @@
 #define SUB_TO_ADD_NEG 0x01
 #define DIV_TO_MUL_RCP 0x02
 #define EXP_TO_EXP2    0x04
-#define LOG_TO_LOG2    0x08
-#define MOD_TO_FRACT   0x10
+#define POW_TO_EXP2    0x08
+#define LOG_TO_LOG2    0x10
+#define MOD_TO_FRACT   0x20
 
 bool do_common_optimization(exec_list *ir, bool linked, unsigned max_unroll_iterations);
 
