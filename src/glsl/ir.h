@@ -122,6 +122,7 @@ public:
    virtual class ir_if *                as_if()               { return NULL; }
    virtual class ir_swizzle *           as_swizzle()          { return NULL; }
    virtual class ir_constant *          as_constant()         { return NULL; }
+   virtual class ir_discard *           as_discard()          { return NULL; }
    /*@}*/
 
 protected:
@@ -1121,6 +1122,11 @@ public:
    }
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
+   virtual ir_discard *as_discard()
+   {
+      return this;
+   }
 
    ir_rvalue *condition;
 };
