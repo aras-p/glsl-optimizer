@@ -235,7 +235,7 @@ image_stencil( struct ureg_program *ureg,
    ureg_SUB(ureg, temp[3],                                              \
             ureg_scalar(constant[1], TGSI_SWIZZLE_Y),                   \
             ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));            \
-   ureg_SUB(ureg, temp[3],                                              \
+   ureg_SUB(ureg, temp[4],                                              \
             ureg_scalar(constant[1], TGSI_SWIZZLE_Y),                   \
             ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W));            \
    ureg_MUL(ureg, temp[3], ureg_src(temp[0]), ureg_src(temp[3]));       \
