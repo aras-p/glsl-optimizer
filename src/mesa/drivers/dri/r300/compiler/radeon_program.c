@@ -244,14 +244,3 @@ unsigned int rc_recompute_ips(struct radeon_compiler * c)
 
 	return ip;
 }
-
-rc_swizzle rc_mask_to_swizzle(unsigned int mask)
-{
-	switch(mask) {
-		case RC_MASK_X: return RC_SWIZZLE_X;
-		case RC_MASK_Y: return RC_SWIZZLE_Y;
-		case RC_MASK_Z: return RC_SWIZZLE_Z;
-		case RC_MASK_W: return RC_SWIZZLE_W;
-		default: return RC_SWIZZLE_UNUSED;
-	}
-}

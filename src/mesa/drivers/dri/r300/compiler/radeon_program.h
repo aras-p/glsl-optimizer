@@ -194,14 +194,13 @@ static inline unsigned int combine_swizzles(unsigned int src, unsigned int swz)
 /**
  * @param mask Must be either RC_MASK_X, RC_MASK_Y, RC_MASK_Z, or RC_MASK_W
  */
-static inline rc_swizzle rc_mask_to_swz(unsigned int mask)
+static inline rc_swizzle rc_mask_to_swizzle(unsigned int mask)
 {
 	switch (mask) {
 	case RC_MASK_X: return RC_SWIZZLE_X;
 	case RC_MASK_Y: return RC_SWIZZLE_Y;
 	case RC_MASK_Z: return RC_SWIZZLE_Z;
 	case RC_MASK_W: return RC_SWIZZLE_W;
-	default: assert(0);
 	}
 	return RC_SWIZZLE_UNUSED;
 }

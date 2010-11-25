@@ -701,7 +701,7 @@ static int convert_rgb_to_alpha(
 				get_reg_valuep(s,
 					RC_FILE_TEMPORARY,
 					pair_inst->RGB.DestIndex,
-					rc_mask_to_swz(old_mask));
+					rc_mask_to_swizzle(old_mask));
 			new_index = i;
 			*new_regvalp = *old_regvalp;
 			*old_regvalp = NULL;
