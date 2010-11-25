@@ -176,6 +176,7 @@ i915CreateContext(int api,
    ctx->ShaderCompilerOptions[MESA_SHADER_VERTEX].EmitCondCodes = GL_TRUE;
    ctx->ShaderCompilerOptions[MESA_SHADER_FRAGMENT].EmitNoIfs = GL_TRUE;
    ctx->ShaderCompilerOptions[MESA_SHADER_FRAGMENT].EmitNoNoise = GL_TRUE;
+   ctx->ShaderCompilerOptions[MESA_SHADER_FRAGMENT].EmitNoPow = GL_TRUE;
 
    ctx->Const.MaxDrawBuffers = 1;
 
