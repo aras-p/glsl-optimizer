@@ -97,7 +97,9 @@ struct vl_idct
    } surfaces;
 };
 
-bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, struct pipe_resource *dst);
+struct pipe_resource *vl_idct_upload_matrix(struct pipe_context *pipe);
+
+bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, struct pipe_resource *dst, struct pipe_resource *matrix);
 
 void vl_idct_cleanup(struct vl_idct *idct);
 

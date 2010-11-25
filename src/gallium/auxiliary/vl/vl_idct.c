@@ -384,9 +384,6 @@ init_buffers(struct vl_idct *idct)
    template.bind = PIPE_BIND_SAMPLER_VIEW;
    template.flags = 0;
 
-   idct->textures.individual.transpose = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
-   idct->textures.individual.matrix = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
-
    template.format = idct->destination->format;
    template.width0 = idct->destination->width0;
    template.height0 = idct->destination->height0;
@@ -483,17 +480,8 @@ init_constants(struct vl_idct *idct)
    struct pipe_transfer *buf_transfer;
    struct vertex_shader_consts *vs_consts;
    struct vertex2f *v;
-   float *f;
 
-   struct pipe_box rect =
-   {
-      0, 0, 0,
-      BLOCK_WIDTH,
-      BLOCK_HEIGHT,
-      1
-   };
-
-   unsigned i, j, pitch;
+   unsigned i;
 
    /* quad vectors */
    v = pipe_buffer_map
@@ -506,42 +494,6 @@ init_constants(struct vl_idct *idct)
    for ( i = 0; i < idct->max_blocks; ++i)
      memcpy(v + i * 4, &const_quad, sizeof(const_quad));
    pipe_buffer_unmap(idct->pipe, idct->vertex_bufs.individual.quad.buffer, buf_transfer);
-
-   /* transposed matrix */
-   buf_transfer = idct->pipe->get_transfer
-   (
-      idct->pipe, idct->textures.individual.transpose,
-      u_subresource(0, 0),
-      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-      &rect
-   );
-   pitch = buf_transfer->stride / util_format_get_blocksize(buf_transfer->resource->format);
-
-   f = idct->pipe->transfer_map(idct->pipe, buf_transfer);
-   for(i = 0; i < BLOCK_HEIGHT; ++i)
-      for(j = 0; j < BLOCK_WIDTH; ++j)
-         f[i * pitch * 4 + j] = const_matrix[j][i]; // transpose
-
-   idct->pipe->transfer_unmap(idct->pipe, buf_transfer);
-   idct->pipe->transfer_destroy(idct->pipe, buf_transfer);
-
-   /* matrix */
-   buf_transfer = idct->pipe->get_transfer
-   (
-      idct->pipe, idct->textures.individual.matrix,
-      u_subresource(0, 0),
-      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-      &rect
-   );
-   pitch = buf_transfer->stride / util_format_get_blocksize(buf_transfer->resource->format);
-
-   f = idct->pipe->transfer_map(idct->pipe, buf_transfer);
-   for(i = 0; i < BLOCK_HEIGHT; ++i)
-      for(j = 0; j < BLOCK_WIDTH; ++j)
-         f[i * pitch * 4 + j] = const_matrix[j][i]; // transpose
-
-   idct->pipe->transfer_unmap(idct->pipe, buf_transfer);
-   idct->pipe->transfer_destroy(idct->pipe, buf_transfer);
 
    /* normalisation constants */
    vs_consts = pipe_buffer_map
@@ -610,12 +562,64 @@ cleanup_state(struct vl_idct *idct)
       idct->pipe->delete_sampler_state(idct->pipe, idct->samplers.all[i]);
 }
 
+struct pipe_resource *
+vl_idct_upload_matrix(struct pipe_context *pipe)
+{
+   struct pipe_resource template, *matrix;
+   struct pipe_transfer *buf_transfer;
+   unsigned i, j, pitch;
+   float *f;
+
+   struct pipe_box rect =
+   {
+      0, 0, 0,
+      BLOCK_WIDTH,
+      BLOCK_HEIGHT,
+      1
+   };
+
+   memset(&template, 0, sizeof(struct pipe_resource));
+   template.target = PIPE_TEXTURE_2D;
+   template.format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+   template.last_level = 0;
+   template.width0 = 2;
+   template.height0 = 8;
+   template.depth0 = 1;
+   template.usage = PIPE_USAGE_IMMUTABLE;
+   template.bind = PIPE_BIND_SAMPLER_VIEW;
+   template.flags = 0;
+
+   matrix = pipe->screen->resource_create(pipe->screen, &template);
+
+   /* matrix */
+   buf_transfer = pipe->get_transfer
+   (
+      pipe, matrix,
+      u_subresource(0, 0),
+      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+      &rect
+   );
+   pitch = buf_transfer->stride / util_format_get_blocksize(buf_transfer->resource->format);
+
+   f = pipe->transfer_map(pipe, buf_transfer);
+   for(i = 0; i < BLOCK_HEIGHT; ++i)
+      for(j = 0; j < BLOCK_WIDTH; ++j)
+         f[i * pitch * 4 + j] = const_matrix[j][i]; // transpose
+
+   pipe->transfer_unmap(pipe, buf_transfer);
+   pipe->transfer_destroy(pipe, buf_transfer);
+
+   return matrix;
+}
+
 bool
-vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, struct pipe_resource *dst)
+vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, struct pipe_resource *dst, struct pipe_resource *matrix)
 {
    assert(idct && pipe && dst);
 
    idct->pipe = pipe;
+   pipe_resource_reference(&idct->textures.individual.matrix, matrix);
+   pipe_resource_reference(&idct->textures.individual.transpose, matrix);
    pipe_resource_reference(&idct->destination, dst);
 
    init_state(idct);

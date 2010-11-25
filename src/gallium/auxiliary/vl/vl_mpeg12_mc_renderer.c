@@ -1295,8 +1295,11 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
                            enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode,
                            bool pot_buffers)
 {
+   struct pipe_resource *idct_matrix;
+
    assert(renderer);
    assert(pipe);
+
    /* TODO: Implement other policies */
    assert(bufmode == VL_MPEG12_MC_RENDERER_BUFFER_PICTURE);
    /* TODO: Non-pot buffers untested, probably doesn't work without changes to texcoord generation, vert shader, etc */
@@ -1332,13 +1335,16 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
    renderer->future = NULL;
    renderer->num_macroblocks = 0;
 
-   if(!vl_idct_init(&renderer->idct_y, pipe, renderer->textures.individual.y))
+   if(!(idct_matrix = vl_idct_upload_matrix(pipe)))
+      goto error_idct_matrix;
+
+   if(!vl_idct_init(&renderer->idct_y, pipe, renderer->textures.individual.y, idct_matrix))
       goto error_idct_y;
 
-   if(!vl_idct_init(&renderer->idct_cr, pipe, renderer->textures.individual.cr))
+   if(!vl_idct_init(&renderer->idct_cr, pipe, renderer->textures.individual.cr, idct_matrix))
       goto error_idct_cr;
 
-   if(!vl_idct_init(&renderer->idct_cb, pipe, renderer->textures.individual.cb))
+   if(!vl_idct_init(&renderer->idct_cb, pipe, renderer->textures.individual.cb, idct_matrix))
       goto error_idct_cb;
 
    return true;
@@ -1350,6 +1356,7 @@ error_idct_cr:
    vl_idct_cleanup(&renderer->idct_y);
 
 error_idct_y:
+error_idct_matrix:
    cleanup_buffers(renderer);
 
 error_buffers:
