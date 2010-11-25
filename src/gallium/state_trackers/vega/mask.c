@@ -339,12 +339,6 @@ static void setup_mask_fill(const VGfloat color[4])
                                                      VEGA_SOLID_FILL_SHADER));
 }
 
-static void setup_mask_viewport()
-{
-   struct vg_context *ctx = vg_current_context();
-   vg_set_viewport(ctx, VEGA_Y0_TOP);
-}
-
 static void setup_mask_blend()
 {
    struct vg_context *ctx = vg_current_context();
@@ -382,12 +376,10 @@ static void surface_fill(struct pipe_surface *surf,
    cso_save_framebuffer(ctx->cso_context);
    cso_save_blend(ctx->cso_context);
    cso_save_fragment_shader(ctx->cso_context);
-   cso_save_viewport(ctx->cso_context);
 
    setup_mask_blend();
    setup_mask_fill(color);
    setup_mask_framebuffer(surf, surf_width, surf_height);
-   setup_mask_viewport();
 
    renderer_draw_quad(ctx->renderer, x, y,
                       x + width, y + height, 0.0f/*depth should be disabled*/);
@@ -405,7 +397,6 @@ static void surface_fill(struct pipe_surface *surf,
    cso_restore_blend(ctx->cso_context);
    cso_restore_framebuffer(ctx->cso_context);
    cso_restore_fragment_shader(ctx->cso_context);
-   cso_restore_viewport(ctx->cso_context);
 }
 
 
@@ -442,13 +433,11 @@ static void mask_using_texture(struct pipe_sampler_view *sampler_view,
    cso_save_framebuffer(ctx->cso_context);
    cso_save_blend(ctx->cso_context);
    cso_save_fragment_shader(ctx->cso_context);
-   cso_save_viewport(ctx->cso_context);
 
    setup_mask_samplers(sampler_view);
    setup_mask_blend();
    setup_mask_operation(operation);
    setup_mask_framebuffer(surface, surface->width, surface->height);
-   setup_mask_viewport();
 
    /* render the quad to propagate the rendering from stencil */
    renderer_draw_texture(ctx->renderer, texture,
@@ -463,7 +452,6 @@ static void mask_using_texture(struct pipe_sampler_view *sampler_view,
    cso_restore_fragment_shader(ctx->cso_context);
    cso_restore_samplers(ctx->cso_context);
    cso_restore_fragment_sampler_views(ctx->cso_context);
-   cso_restore_viewport(ctx->cso_context);
 
    pipe_surface_reference(&surface, NULL);
 }
@@ -577,12 +565,10 @@ static void mask_layer_render_to(struct vg_mask_layer *layer,
 
    cso_save_framebuffer(ctx->cso_context);
    cso_save_fragment_shader(ctx->cso_context);
-   cso_save_viewport(ctx->cso_context);
 
    setup_mask_blend();
    setup_mask_fill(fill_color);
    setup_mask_framebuffer(surface, layer->width, layer->height);
-   setup_mask_viewport();
 
    if (paint_modes & VG_FILL_PATH) {
       struct matrix *mat = &ctx->state.vg.path_user_to_surface_matrix;
@@ -599,7 +585,6 @@ static void mask_layer_render_to(struct vg_mask_layer *layer,
 
    cso_restore_framebuffer(ctx->cso_context);
    cso_restore_fragment_shader(ctx->cso_context);
-   cso_restore_viewport(ctx->cso_context);
    ctx->state.dirty |= BLEND_DIRTY;
 
    screen->tex_surface_release(ctx->pipe->screen, &surface);
