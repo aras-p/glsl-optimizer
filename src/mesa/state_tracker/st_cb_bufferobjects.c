@@ -211,6 +211,13 @@ st_bufferobj_data(struct gl_context *ctx,
 
 
 /**
+ * Dummy data whose's pointer is used for zero size buffers or ranges.
+ */
+static long st_bufferobj_zero_length = 0;
+
+
+
+/**
  * Called via glMapBufferARB().
  */
 static void *
@@ -233,10 +240,16 @@ st_bufferobj_map(struct gl_context *ctx, GLenum target, GLenum access,
       break;      
    }
 
-   obj->Pointer = pipe_buffer_map(st_context(ctx)->pipe,
-                                  st_obj->buffer,
-                                  flags,
-                                  &st_obj->transfer);
+   /* Handle zero-size buffers here rather than in drivers */
+   if (obj->Size == 0) {
+      obj->Pointer = &st_bufferobj_zero_length;
+   }
+   else {
+      obj->Pointer = pipe_buffer_map(st_context(ctx)->pipe,
+                                     st_obj->buffer,
+                                     flags,
+                                     &st_obj->transfer);
+   }
 
    if (obj->Pointer) {
       obj->Offset = 0;
@@ -244,13 +257,6 @@ st_bufferobj_map(struct gl_context *ctx, GLenum target, GLenum access,
    }
    return obj->Pointer;
 }
-
-
-/**
- * Dummy data whose's pointer is used for zero length ranges.
- */
-static long
-st_bufferobj_zero_length_range = 0;
 
 
 /**
@@ -293,7 +299,7 @@ st_bufferobj_map_range(struct gl_context *ctx, GLenum target,
     * length range from the pipe driver.
     */
    if (!length) {
-      obj->Pointer = &st_bufferobj_zero_length_range;
+      obj->Pointer = &st_bufferobj_zero_length;
    }
    else {
       obj->Pointer = pipe_buffer_map_range(pipe, 
