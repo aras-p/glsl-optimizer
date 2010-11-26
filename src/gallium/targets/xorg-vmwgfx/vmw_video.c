@@ -450,7 +450,16 @@ vmw_video_init_adaptor(ScrnInfoPtr pScrn, struct vmw_customizer *vmw)
     vmw->video_priv = video;
 
     adaptor->type = XvInputMask | XvImageMask | XvWindowMask;
-    adaptor->flags = VIDEO_OVERLAID_IMAGES | VIDEO_CLIP_TO_VIEWPORT;
+
+    /**
+     * Note: CLIP_TO_VIEWPORT was removed from the flags, since with the
+     * crtc/output based modesetting, the viewport is not updated on
+     * RandR modeswitches. Hence the video may incorrectly be clipped away.
+     * The correct approach, (if needed) would be to clip against the
+     * scanout area union of all active crtcs. Revisit if needed.
+     */
+
+    adaptor->flags = VIDEO_OVERLAID_IMAGES;
     adaptor->name = "VMware Video Engine";
     adaptor->nEncodings = VMWARE_VID_NUM_ENCODINGS;
     adaptor->pEncodings = vmwareVideoEncodings;
