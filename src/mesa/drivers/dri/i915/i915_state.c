@@ -56,8 +56,7 @@ i915_update_stencil(struct gl_context * ctx)
    GLenum front_func, front_fail, front_pass_z_fail, front_pass_z_pass;
    GLuint back_ref, back_writemask, back_mask;
    GLenum back_func, back_fail, back_pass_z_fail, back_pass_z_pass;
-
-   I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+   GLuint dirty = 0;
 
    /* The 915 considers CW to be "front" for two-sided stencil, so choose
     * appropriately.
@@ -94,56 +93,67 @@ i915_update_stencil(struct gl_context * ctx)
       back_pass_z_fail = ctx->Stencil.ZFailFunc[0];
       back_pass_z_pass = ctx->Stencil.ZPassFunc[0];
    }
+#define set_ctx_bits(reg, mask, set) do{ \
+   GLuint dw = i915->state.Ctx[reg]; \
+   dw &= ~(mask); \
+   dw |= (set); \
+   dirty |= dw != i915->state.Ctx[reg]; \
+} while(0)
 
    /* Set front state. */
-   i915->state.Ctx[I915_CTXREG_STATE4] &= ~(MODE4_ENABLE_STENCIL_TEST_MASK |
-					    MODE4_ENABLE_STENCIL_WRITE_MASK);
-   i915->state.Ctx[I915_CTXREG_STATE4] |= (ENABLE_STENCIL_TEST_MASK |
-					   ENABLE_STENCIL_WRITE_MASK |
-					   STENCIL_TEST_MASK(front_mask) |
-					   STENCIL_WRITE_MASK(front_writemask));
+   set_ctx_bits(I915_CTXREG_STATE4,
+                MODE4_ENABLE_STENCIL_TEST_MASK |
+                MODE4_ENABLE_STENCIL_WRITE_MASK,
+                ENABLE_STENCIL_TEST_MASK |
+                ENABLE_STENCIL_WRITE_MASK |
+                STENCIL_TEST_MASK(front_mask) |
+                STENCIL_WRITE_MASK(front_writemask));
 
-   i915->state.Ctx[I915_CTXREG_LIS5] &= ~(S5_STENCIL_REF_MASK |
-					  S5_STENCIL_TEST_FUNC_MASK |
-					  S5_STENCIL_FAIL_MASK |
-					  S5_STENCIL_PASS_Z_FAIL_MASK |
-					  S5_STENCIL_PASS_Z_PASS_MASK);
-
-   i915->state.Ctx[I915_CTXREG_LIS5] |=
-      (front_ref << S5_STENCIL_REF_SHIFT) |
-      (intel_translate_compare_func(front_func) << S5_STENCIL_TEST_FUNC_SHIFT) |
-      (intel_translate_stencil_op(front_fail) << S5_STENCIL_FAIL_SHIFT) |
-      (intel_translate_stencil_op(front_pass_z_fail) <<
-       S5_STENCIL_PASS_Z_FAIL_SHIFT) |
-      (intel_translate_stencil_op(front_pass_z_pass) <<
-       S5_STENCIL_PASS_Z_PASS_SHIFT);
+   set_ctx_bits(I915_CTXREG_LIS5,
+                S5_STENCIL_REF_MASK |
+                S5_STENCIL_TEST_FUNC_MASK |
+                S5_STENCIL_FAIL_MASK |
+                S5_STENCIL_PASS_Z_FAIL_MASK |
+                S5_STENCIL_PASS_Z_PASS_MASK,
+                (front_ref << S5_STENCIL_REF_SHIFT) |
+                (intel_translate_compare_func(front_func) << S5_STENCIL_TEST_FUNC_SHIFT) |
+                (intel_translate_stencil_op(front_fail) << S5_STENCIL_FAIL_SHIFT) |
+                (intel_translate_stencil_op(front_pass_z_fail) <<
+                 S5_STENCIL_PASS_Z_FAIL_SHIFT) |
+                (intel_translate_stencil_op(front_pass_z_pass) <<
+                 S5_STENCIL_PASS_Z_PASS_SHIFT));
 
    /* Set back state if different from front. */
    if (ctx->Stencil._TestTwoSide) {
-      i915->state.Ctx[I915_CTXREG_BF_STENCIL_OPS] &=
-	 ~(BFO_STENCIL_REF_MASK |
-	   BFO_STENCIL_TEST_MASK |
-	   BFO_STENCIL_FAIL_MASK |
-	   BFO_STENCIL_PASS_Z_FAIL_MASK |
-	   BFO_STENCIL_PASS_Z_PASS_MASK);
-      i915->state.Ctx[I915_CTXREG_BF_STENCIL_OPS] |= BFO_STENCIL_TWO_SIDE |
-	 (back_ref << BFO_STENCIL_REF_SHIFT) |
-	 (intel_translate_compare_func(back_func) << BFO_STENCIL_TEST_SHIFT) |
-	 (intel_translate_stencil_op(back_fail) << BFO_STENCIL_FAIL_SHIFT) |
-	 (intel_translate_stencil_op(back_pass_z_fail) <<
-	  BFO_STENCIL_PASS_Z_FAIL_SHIFT) |
-	 (intel_translate_stencil_op(back_pass_z_pass) <<
-	  BFO_STENCIL_PASS_Z_PASS_SHIFT);
+      set_ctx_bits(I915_CTXREG_BF_STENCIL_OPS,
+                   BFO_STENCIL_REF_MASK |
+                   BFO_STENCIL_TEST_MASK |
+                   BFO_STENCIL_FAIL_MASK |
+                   BFO_STENCIL_PASS_Z_FAIL_MASK |
+                   BFO_STENCIL_PASS_Z_PASS_MASK,
+                   BFO_STENCIL_TWO_SIDE |
+                   (back_ref << BFO_STENCIL_REF_SHIFT) |
+                   (intel_translate_compare_func(back_func) << BFO_STENCIL_TEST_SHIFT) |
+                   (intel_translate_stencil_op(back_fail) << BFO_STENCIL_FAIL_SHIFT) |
+                   (intel_translate_stencil_op(back_pass_z_fail) <<
+                    BFO_STENCIL_PASS_Z_FAIL_SHIFT) |
+                   (intel_translate_stencil_op(back_pass_z_pass) <<
+                    BFO_STENCIL_PASS_Z_PASS_SHIFT));
 
-      i915->state.Ctx[I915_CTXREG_BF_STENCIL_MASKS] &=
-	 ~(BFM_STENCIL_TEST_MASK_MASK |
-	   BFM_STENCIL_WRITE_MASK_MASK);
-      i915->state.Ctx[I915_CTXREG_BF_STENCIL_MASKS] |=
-	 BFM_STENCIL_TEST_MASK(back_mask) |
-	 BFM_STENCIL_WRITE_MASK(back_writemask);
+      set_ctx_bits(I915_CTXREG_BF_STENCIL_MASKS,
+                   BFM_STENCIL_TEST_MASK_MASK |
+                   BFM_STENCIL_WRITE_MASK_MASK,
+                   BFM_STENCIL_TEST_MASK(back_mask) |
+                   BFM_STENCIL_WRITE_MASK(back_writemask));
    } else {
-      i915->state.Ctx[I915_CTXREG_BF_STENCIL_OPS] &= ~BFO_STENCIL_TWO_SIDE;
+      set_ctx_bits(I915_CTXREG_BF_STENCIL_OPS,
+                   BFO_STENCIL_TWO_SIDE, 0);
    }
+
+#undef set_ctx_bits
+
+   if (dirty)
+      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
 }
 
 static void
