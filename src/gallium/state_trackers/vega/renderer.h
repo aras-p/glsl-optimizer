@@ -68,6 +68,14 @@ void renderer_scissor(struct renderer *renderer,
 
 void renderer_scissor_end(struct renderer *renderer);
 
+VGboolean renderer_clear_begin(struct renderer *renderer);
+
+void renderer_clear(struct renderer *renderer,
+                    VGint x, VGint y, VGint width, VGint height,
+                    const VGfloat color[4]);
+
+void renderer_clear_end(struct renderer *renderer);
+
 void renderer_draw_quad(struct renderer *,
                         VGfloat x1, VGfloat y1,
                         VGfloat x2, VGfloat y2,

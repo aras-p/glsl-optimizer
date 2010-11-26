@@ -48,6 +48,7 @@ typedef enum {
    RENDERER_STATE_COPY,
    RENDERER_STATE_DRAWTEX,
    RENDERER_STATE_SCISSOR,
+   RENDERER_STATE_CLEAR,
    NUM_RENDERER_STATES
 } RendererState;
 
@@ -619,6 +620,60 @@ void renderer_scissor_end(struct renderer *renderer)
       cso_restore_depth_stencil_alpha(renderer->cso);
    cso_restore_blend(renderer->cso);
    cso_restore_fragment_shader(renderer->cso);
+
+   renderer->state = RENDERER_STATE_INIT;
+}
+
+/**
+ * Prepare the renderer for clearing.
+ */
+VGboolean renderer_clear_begin(struct renderer *renderer)
+{
+   assert(renderer->state == RENDERER_STATE_INIT);
+
+   cso_save_blend(renderer->cso);
+   cso_save_fragment_shader(renderer->cso);
+   cso_save_vertex_shader(renderer->cso);
+
+   renderer_set_blend(renderer, ~0);
+   renderer_set_fs(renderer, RENDERER_FS_COLOR);
+   renderer_set_vs(renderer, RENDERER_VS_COLOR);
+
+   renderer->state = RENDERER_STATE_CLEAR;
+
+   return VG_TRUE;
+}
+
+/**
+ * Clear the framebuffer with the specified region and color.
+ *
+ * The coordinates are in surface coordinates.
+ */
+void renderer_clear(struct renderer *renderer,
+                    VGint x, VGint y, VGint width, VGint height,
+                    const VGfloat color[4])
+{
+   VGuint i;
+
+   assert(renderer->state == RENDERER_STATE_CLEAR);
+
+   renderer_quad_pos(renderer, x, y, x + width, y + height, VG_TRUE);
+   for (i = 0; i < 4; i++)
+      memcpy(renderer->vertices[i][1], color, sizeof(VGfloat) * 4);
+
+   renderer_quad_draw(renderer);
+}
+
+/**
+ * End clearing and retore the states.
+ */
+void renderer_clear_end(struct renderer *renderer)
+{
+   assert(renderer->state == RENDERER_STATE_CLEAR);
+
+   cso_restore_blend(renderer->cso);
+   cso_restore_fragment_shader(renderer->cso);
+   cso_restore_vertex_shader(renderer->cso);
 
    renderer->state = RENDERER_STATE_INIT;
 }

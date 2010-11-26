@@ -28,6 +28,7 @@
 
 #include "mask.h"
 #include "api.h"
+#include "renderer.h"
 
 #include "vg_context.h"
 #include "pipe/p_context.h"
@@ -37,117 +38,6 @@
 #include "util/u_draw_quad.h"
 
 #define DISABLE_1_1_MASKING 1
-
-/**
- * Draw a screen-aligned quadrilateral.
- * Coords are window coords with y=0=bottom.  These coords will be transformed
- * by the vertex shader and viewport transform.
- */
-static void
-draw_clear_quad(struct vg_context *st,
-                float x0, float y0, float x1, float y1, float z,
-                const VGfloat color[4])
-{
-   struct pipe_context *pipe = st->pipe;
-   struct pipe_resource *buf;
-   VGuint i;
-
-   /* positions */
-   st->clear.vertices[0][0][0] = x0;
-   st->clear.vertices[0][0][1] = y0;
-
-   st->clear.vertices[1][0][0] = x1;
-   st->clear.vertices[1][0][1] = y0;
-
-   st->clear.vertices[2][0][0] = x1;
-   st->clear.vertices[2][0][1] = y1;
-
-   st->clear.vertices[3][0][0] = x0;
-   st->clear.vertices[3][0][1] = y1;
-
-   /* same for all verts: */
-   for (i = 0; i < 4; i++) {
-      st->clear.vertices[i][0][2] = z;
-      st->clear.vertices[i][0][3] = 1.0;
-      st->clear.vertices[i][1][0] = color[0];
-      st->clear.vertices[i][1][1] = color[1];
-      st->clear.vertices[i][1][2] = color[2];
-      st->clear.vertices[i][1][3] = color[3];
-   }
-
-
-   /* put vertex data into vbuf */
-   buf =  pipe_user_buffer_create(pipe->screen,
-                                  st->clear.vertices,
-                                  sizeof(st->clear.vertices),
-				  PIPE_BIND_VERTEX_BUFFER);
-
-
-   /* draw */
-   if (buf) {
-      cso_set_vertex_elements(st->cso_context, 2, st->velems);
-
-      util_draw_vertex_buffer(pipe, buf, 0,
-                              PIPE_PRIM_TRIANGLE_FAN,
-                              4,  /* verts */
-                              2); /* attribs/vert */
-
-      pipe_resource_reference(&buf, NULL);
-   }
-}
-
-/**
- * Do vgClear by drawing a quadrilateral.
- */
-static void
-clear_with_quad(struct vg_context *st, float x0, float y0,
-                float width, float height, const VGfloat clear_color[4])
-{
-   VGfloat x1, y1;
-
-   vg_validate_state(st);
-
-   x1 = x0 + width;
-   y1 = y0 + height;
-
-   /*
-     printf("%s %f,%f %f,%f\n", __FUNCTION__,
-     x0, y0,
-     x1, y1);
-   */
-
-   cso_save_blend(st->cso_context);
-   cso_save_rasterizer(st->cso_context);
-   cso_save_fragment_shader(st->cso_context);
-   cso_save_vertex_shader(st->cso_context);
-
-   /* blend state: RGBA masking */
-   {
-      struct pipe_blend_state blend;
-      memset(&blend, 0, sizeof(blend));
-      blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-      blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-      blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
-      blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-      blend.rt[0].colormask = PIPE_MASK_RGBA;
-      cso_set_blend(st->cso_context, &blend);
-   }
-
-   cso_set_rasterizer(st->cso_context, &st->clear.raster);
-
-   cso_set_fragment_shader_handle(st->cso_context, st->clear.fs);
-   cso_set_vertex_shader_handle(st->cso_context, vg_clear_vs(st));
-
-   /* draw quad matching scissor rect (XXX verify coord round-off) */
-   draw_clear_quad(st, x0, y0, x1, y1, 0, clear_color);
-
-   /* Restore pipe state */
-   cso_restore_blend(st->cso_context);
-   cso_restore_rasterizer(st->cso_context);
-   cso_restore_fragment_shader(st->cso_context);
-   cso_restore_vertex_shader(st->cso_context);
-}
-
 
 void vegaMask(VGHandle mask, VGMaskOperation operation,
               VGint x, VGint y,
@@ -214,8 +104,10 @@ void vegaClear(VGint x, VGint y,
        (x == 0 && y == 0 && width == fb->width && height == fb->height)) {
       ctx->pipe->clear(ctx->pipe, PIPE_CLEAR_COLOR | PIPE_CLEAR_DEPTHSTENCIL,
                        ctx->state.vg.clear_color, 1., 0);
-   } else {
-      clear_with_quad(ctx, x, y, width, height, ctx->state.vg.clear_color);
+   } else if (renderer_clear_begin(ctx->renderer)) {
+      /* XXX verify coord round-off */
+      renderer_clear(ctx->renderer, x, y, width, height, ctx->state.vg.clear_color);
+      renderer_clear_end(ctx->renderer);
    }
 }
 
