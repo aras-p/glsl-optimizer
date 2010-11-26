@@ -34,6 +34,7 @@ struct renderer;
 
 struct vg_context;
 struct pipe_resource;
+struct pipe_sampler_state;
 struct pipe_sampler_view;
 struct pipe_surface;
 
@@ -75,6 +76,23 @@ void renderer_clear(struct renderer *renderer,
                     const VGfloat color[4]);
 
 void renderer_clear_end(struct renderer *renderer);
+
+VGboolean renderer_filter_begin(struct renderer *renderer,
+                                struct pipe_resource *dst,
+                                VGboolean y0_top,
+                                VGbitfield channel_mask,
+                                const struct pipe_sampler_state **samplers,
+                                struct pipe_sampler_view **views,
+                                VGint num_samplers,
+                                void *fs,
+                                const void *const_buffer,
+                                VGint const_buffer_len);
+
+void renderer_filter(struct renderer *renderer,
+                     VGint x, VGint y, VGint w, VGint h,
+                     VGint sx, VGint sy, VGint sw, VGint sh);
+
+void renderer_filter_end(struct renderer *renderer);
 
 void renderer_draw_quad(struct renderer *,
                         VGfloat x1, VGfloat y1,

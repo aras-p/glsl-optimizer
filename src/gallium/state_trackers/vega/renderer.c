@@ -28,6 +28,7 @@
 #include "renderer.h"
 
 #include "vg_context.h"
+#include "image.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
@@ -49,6 +50,7 @@ typedef enum {
    RENDERER_STATE_DRAWTEX,
    RENDERER_STATE_SCISSOR,
    RENDERER_STATE_CLEAR,
+   RENDERER_STATE_FILTER,
    NUM_RENDERER_STATES
 } RendererState;
 
@@ -96,6 +98,11 @@ struct renderer {
       struct {
          VGboolean restore_dsa;
       } scissor;
+
+      struct {
+         VGboolean use_sampler;
+         VGint tex_width, tex_height;
+      } filter;
    } u;
 };
 
@@ -318,6 +325,45 @@ static void renderer_set_samplers(struct renderer *r,
 
    /* set views */
    cso_set_fragment_sampler_views(r->cso, num_views, views);
+}
+
+/**
+ * Set custom renderer fragment shader, and optionally set samplers and views
+ * and upload the fragment constant buffer.
+ *
+ * This function modifies fragment_shader, samplers and fragment_sampler_views
+ * states.
+ */
+static void renderer_set_custom_fs(struct renderer *renderer,
+                                   void *fs,
+                                   const struct pipe_sampler_state **samplers,
+                                   struct pipe_sampler_view **views,
+                                   VGint num_samplers,
+                                   const void *const_buffer,
+                                   VGint const_buffer_len)
+{
+   cso_set_fragment_shader_handle(renderer->cso, fs);
+
+   /* set samplers and views */
+   if (num_samplers) {
+      cso_set_samplers(renderer->cso, num_samplers, samplers);
+      cso_set_fragment_sampler_views(renderer->cso, num_samplers, views);
+   }
+
+   /* upload fs constant buffer */
+   if (const_buffer_len) {
+      struct pipe_resource *cbuf;
+
+      cbuf = pipe_buffer_create(renderer->pipe->screen,
+            PIPE_BIND_CONSTANT_BUFFER, const_buffer_len);
+      pipe_buffer_write(renderer->pipe, cbuf, 0,
+            const_buffer_len, const_buffer);
+      renderer->pipe->set_constant_buffer(renderer->pipe,
+            PIPE_SHADER_FRAGMENT, 0, cbuf);
+
+      /* destroy cbuf automatically */
+      pipe_resource_reference(&cbuf, NULL);
+   }
 }
 
 /**
@@ -674,6 +720,119 @@ void renderer_clear_end(struct renderer *renderer)
    cso_restore_blend(renderer->cso);
    cso_restore_fragment_shader(renderer->cso);
    cso_restore_vertex_shader(renderer->cso);
+
+   renderer->state = RENDERER_STATE_INIT;
+}
+
+/**
+ * Prepare the renderer for image filtering.
+ */
+VGboolean renderer_filter_begin(struct renderer *renderer,
+                                struct pipe_resource *dst,
+                                VGboolean y0_top,
+                                VGbitfield channel_mask,
+                                const struct pipe_sampler_state **samplers,
+                                struct pipe_sampler_view **views,
+                                VGint num_samplers,
+                                void *fs,
+                                const void *const_buffer,
+                                VGint const_buffer_len)
+{
+   struct pipe_surface *surf;
+
+   assert(renderer->state == RENDERER_STATE_INIT);
+
+   if (!fs)
+      return VG_FALSE;
+   if (!renderer_can_support(renderer, dst, PIPE_BIND_RENDER_TARGET))
+      return VG_FALSE;
+
+   surf = renderer->pipe->screen->get_tex_surface(renderer->pipe->screen,
+         dst, 0, 0, 0, PIPE_BIND_RENDER_TARGET);
+   if (!surf)
+      return VG_FALSE;
+
+   cso_save_framebuffer(renderer->cso);
+   cso_save_viewport(renderer->cso);
+   cso_save_blend(renderer->cso);
+
+   /* set the image as the target */
+   renderer_set_target(renderer, surf, NULL, y0_top);
+   pipe_surface_reference(&surf, NULL);
+
+   renderer_set_blend(renderer, channel_mask);
+
+   if (num_samplers) {
+      struct pipe_resource *tex;
+
+      cso_save_samplers(renderer->cso);
+      cso_save_fragment_sampler_views(renderer->cso);
+      cso_save_fragment_shader(renderer->cso);
+      cso_save_vertex_shader(renderer->cso);
+
+      renderer_set_custom_fs(renderer, fs,
+                             samplers, views, num_samplers,
+                             const_buffer, const_buffer_len);
+      renderer_set_vs(renderer, RENDERER_VS_TEXTURE);
+
+      tex = views[0]->texture;
+      renderer->u.filter.tex_width = tex->width0;
+      renderer->u.filter.tex_height = tex->height0;
+      renderer->u.filter.use_sampler = VG_TRUE;
+   }
+   else {
+      cso_save_fragment_shader(renderer->cso);
+
+      renderer_set_custom_fs(renderer, fs, NULL, NULL, 0,
+                             const_buffer, const_buffer_len);
+
+      renderer->u.filter.use_sampler = VG_FALSE;
+   }
+
+   renderer->state = RENDERER_STATE_FILTER;
+
+   return VG_TRUE;
+}
+
+/**
+ * Draw into a rectangle of the destination with the specified region of the
+ * texture(s).
+ *
+ * The coordinates are in surface coordinates.
+ */
+void renderer_filter(struct renderer *renderer,
+                    VGint x, VGint y, VGint w, VGint h,
+                    VGint sx, VGint sy, VGint sw, VGint sh)
+{
+   assert(renderer->state == RENDERER_STATE_FILTER);
+
+   renderer_quad_pos(renderer, x, y, x + w, y + h, VG_FALSE);
+   if (renderer->u.filter.use_sampler) {
+      renderer_quad_texcoord(renderer, sx, sy, sx + sw, sy + sh,
+            renderer->u.filter.tex_width,
+            renderer->u.filter.tex_height);
+   }
+
+   renderer_quad_draw(renderer);
+}
+
+/**
+ * End image filtering and restore the states.
+ */
+void renderer_filter_end(struct renderer *renderer)
+{
+   assert(renderer->state == RENDERER_STATE_FILTER);
+
+   if (renderer->u.filter.use_sampler) {
+      cso_restore_samplers(renderer->cso);
+      cso_restore_fragment_sampler_views(renderer->cso);
+      cso_restore_vertex_shader(renderer->cso);
+   }
+
+   cso_restore_framebuffer(renderer->cso);
+   cso_restore_viewport(renderer->cso);
+   cso_restore_blend(renderer->cso);
+   cso_restore_fragment_shader(renderer->cso);
 
    renderer->state = RENDERER_STATE_INIT;
 }
