@@ -62,8 +62,7 @@ enum VS_OUTPUT
    VS_O_VPOS,
    VS_O_BLOCK,
    VS_O_TEX,
-   VS_O_START,
-   VS_O_STEP
+   VS_O_START
 };
 
 static const float const_matrix[8][8] = {
@@ -86,19 +85,19 @@ static void *
 create_vert_shader(struct vl_idct *idct)
 {
    struct ureg_program *shader;
-   struct ureg_src norm, bs;
+   struct ureg_src scale;
    struct ureg_src vrect, vpos;
-   struct ureg_dst scale, t_vpos;
-   struct ureg_dst o_vpos, o_block, o_tex, o_start, o_step;
+   struct ureg_dst t_vpos;
+   struct ureg_dst o_vpos, o_block, o_tex, o_start;
 
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
    if (!shader)
       return NULL;
 
-   norm = ureg_DECL_constant(shader, 0);
-   bs = ureg_imm2f(shader, BLOCK_WIDTH, BLOCK_HEIGHT);
+   scale = ureg_imm2f(shader,
+      (float)BLOCK_WIDTH / idct->destination->width0, 
+      (float)BLOCK_HEIGHT / idct->destination->height0);
 
-   scale = ureg_DECL_temporary(shader);
    t_vpos = ureg_DECL_temporary(shader);
 
    vrect = ureg_DECL_vs_input(shader, VS_I_RECT);
@@ -108,11 +107,8 @@ create_vert_shader(struct vl_idct *idct)
    o_block = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_BLOCK);
    o_tex = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX);
    o_start = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_START);
-   o_step = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_STEP);
 
    /*
-    * scale = norm * mbs;
-    *
     * t_vpos = vpos + vrect
     * o_vpos.xy = t_vpos * scale
     * o_vpos.zw = vpos
@@ -120,23 +116,18 @@ create_vert_shader(struct vl_idct *idct)
     * o_block = vrect
     * o_tex = t_pos
     * o_start = vpos * scale
-    * o_step = norm
     *
     */
-   ureg_MUL(shader, ureg_writemask(scale, TGSI_WRITEMASK_XY), norm, bs);
-
    ureg_ADD(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_XY), vpos, vrect);
-   ureg_MUL(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos), ureg_src(scale));
+   ureg_MUL(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos), scale);
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos));
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), vpos);
 
-   ureg_MOV(shader, ureg_writemask(o_tex, TGSI_WRITEMASK_XY), ureg_src(t_vpos));
    ureg_MOV(shader, ureg_writemask(o_block, TGSI_WRITEMASK_XY), vrect);
-   ureg_MUL(shader, ureg_writemask(o_start, TGSI_WRITEMASK_XY), vpos, ureg_src(scale));
-   ureg_MOV(shader, ureg_writemask(o_step, TGSI_WRITEMASK_XY), norm);
+   ureg_MOV(shader, ureg_writemask(o_tex, TGSI_WRITEMASK_XY), ureg_src(t_vpos));
+   ureg_MUL(shader, ureg_writemask(o_start, TGSI_WRITEMASK_XY), vpos, scale);
 
    ureg_release_temporary(shader, t_vpos);
-   ureg_release_temporary(shader, scale);
 
    ureg_END(shader);
 
@@ -164,15 +155,15 @@ matrix_mul(struct ureg_program *shader, struct ureg_dst dst,
     * tmp[0..1] = dot4(m[0..1][0], m[0..1][1])
     * fragment = tmp[0] + tmp[1]
     */
-   ureg_MOV(shader, ureg_writemask(t_tc[0], TGSI_WRITEMASK_X), start[0]);
-   ureg_MOV(shader, ureg_writemask(t_tc[0], TGSI_WRITEMASK_Y), tc[0]);
+   ureg_MOV(shader, ureg_writemask(t_tc[0], TGSI_WRITEMASK_X), ureg_scalar(start[0], TGSI_SWIZZLE_X));
+   ureg_MOV(shader, ureg_writemask(t_tc[0], TGSI_WRITEMASK_Y), ureg_scalar(tc[0], TGSI_SWIZZLE_Y));
 
    if(fetch4[1]) {
       ureg_MOV(shader, ureg_writemask(t_tc[1], TGSI_WRITEMASK_X), ureg_scalar(start[1], TGSI_SWIZZLE_Y));
       ureg_MOV(shader, ureg_writemask(t_tc[1], TGSI_WRITEMASK_Y), ureg_scalar(tc[1], TGSI_SWIZZLE_X));
    } else {
-      ureg_MOV(shader, ureg_writemask(t_tc[1], TGSI_WRITEMASK_X), tc[1]);
-      ureg_MOV(shader, ureg_writemask(t_tc[1], TGSI_WRITEMASK_Y), start[1]);
+      ureg_MOV(shader, ureg_writemask(t_tc[1], TGSI_WRITEMASK_X), ureg_scalar(tc[1], TGSI_SWIZZLE_X));
+      ureg_MOV(shader, ureg_writemask(t_tc[1], TGSI_WRITEMASK_Y), ureg_scalar(start[1], TGSI_SWIZZLE_Y));
    }
 
    for(side = 0; side < 2; ++side) {
@@ -224,7 +215,7 @@ create_transpose_frag_shader(struct vl_idct *idct)
    start[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_START, TGSI_INTERPOLATE_CONSTANT);
 
    step[0] = ureg_imm1f(shader, 4.0f / BLOCK_HEIGHT);
-   step[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_STEP, TGSI_INTERPOLATE_CONSTANT);
+   step[1] = ureg_imm1f(shader, 1.0f / idct->destination->height0);
 
    sampler[0] = ureg_DECL_sampler(shader, 0);
    sampler[1] = ureg_DECL_sampler(shader, 1);
@@ -260,7 +251,7 @@ create_matrix_frag_shader(struct vl_idct *idct)
    start[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_START, TGSI_INTERPOLATE_CONSTANT);
    start[1] = ureg_imm1f(shader, 0.0f);
 
-   step[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_STEP, TGSI_INTERPOLATE_CONSTANT);
+   step[0] = ureg_imm1f(shader, 1.0f / idct->destination->width0);
    step[1] = ureg_imm1f(shader, 4.0f / BLOCK_WIDTH);
 
    sampler[0] = ureg_DECL_sampler(shader, 1);
@@ -442,16 +433,6 @@ init_buffers(struct vl_idct *idct)
 
    idct->vertex_elems_state = idct->pipe->create_vertex_elements_state(idct->pipe, 2, vertex_elems);
 
-   idct->vs_const_buf = pipe_buffer_create
-   (
-      idct->pipe->screen,
-      PIPE_BIND_CONSTANT_BUFFER,
-      sizeof(struct vertex_shader_consts)
-   );
-
-   if(idct->vs_const_buf == NULL)
-      return false;
-
    return true;
 }
 
@@ -461,8 +442,6 @@ cleanup_buffers(struct vl_idct *idct)
    unsigned i;
 
    assert(idct);
-
-   pipe_resource_reference(&idct->vs_const_buf, NULL);
 
    for (i = 0; i < 4; ++i) {
       pipe_sampler_view_reference(&idct->sampler_views.all[i], NULL);
@@ -478,7 +457,6 @@ static void
 init_constants(struct vl_idct *idct)
 {
    struct pipe_transfer *buf_transfer;
-   struct vertex_shader_consts *vs_consts;
    struct vertex2f *v;
 
    unsigned i;
@@ -494,19 +472,6 @@ init_constants(struct vl_idct *idct)
    for ( i = 0; i < idct->max_blocks; ++i)
      memcpy(v + i * 4, &const_quad, sizeof(const_quad));
    pipe_buffer_unmap(idct->pipe, idct->vertex_bufs.individual.quad.buffer, buf_transfer);
-
-   /* normalisation constants */
-   vs_consts = pipe_buffer_map
-   (
-      idct->pipe, idct->vs_const_buf,
-      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-      &buf_transfer
-   );
-
-   vs_consts->norm.x = 1.0f / idct->destination->width0;
-   vs_consts->norm.y = 1.0f / idct->destination->height0;
-
-   pipe_buffer_unmap(idct->pipe, idct->vs_const_buf, buf_transfer);
 }
 
 static void
@@ -704,8 +669,6 @@ void
 vl_idct_flush(struct vl_idct *idct)
 {
    xfer_buffers_unmap(idct);
-
-   idct->pipe->set_constant_buffer(idct->pipe, PIPE_SHADER_VERTEX, 0, idct->vs_const_buf);
 
    if(idct->num_blocks > 0) {
 

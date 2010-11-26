@@ -1086,7 +1086,6 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    gen_macroblock_stream(r, num_macroblocks);
 
-   r->pipe->set_constant_buffer(r->pipe, PIPE_SHADER_VERTEX, 0, r->vs_const_buf);
    r->pipe->set_framebuffer_state(r->pipe, &r->fb_state);
    r->pipe->set_viewport_state(r->pipe, &r->viewport);
 
@@ -1221,6 +1220,8 @@ update_render_target(struct vl_mpeg12_mc_renderer *r)
    pipe_buffer_unmap(r->pipe, r->vs_const_buf, buf_transfer);
 
    r->fb_state.cbufs[0] = r->surface;
+
+   r->pipe->set_constant_buffer(r->pipe, PIPE_SHADER_VERTEX, 0, r->vs_const_buf);
 }
 
 static void

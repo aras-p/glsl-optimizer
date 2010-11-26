@@ -37,7 +37,6 @@ struct vl_idct
    unsigned max_blocks;
 
    struct pipe_viewport_state viewport;
-   struct pipe_resource *vs_const_buf;
    struct pipe_framebuffer_state fb_state;
 
    struct pipe_resource *destination;
