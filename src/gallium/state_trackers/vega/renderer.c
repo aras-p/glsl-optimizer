@@ -47,6 +47,7 @@ typedef enum {
    RENDERER_STATE_INIT,
    RENDERER_STATE_COPY,
    RENDERER_STATE_DRAWTEX,
+   RENDERER_STATE_SCISSOR,
    NUM_RENDERER_STATES
 } RendererState;
 
@@ -60,6 +61,7 @@ typedef enum {
 typedef enum {
    RENDERER_FS_COLOR,
    RENDERER_FS_TEXTURE,
+   RENDERER_FS_SCISSOR,
    NUM_RENDERER_FS
 } RendererFs;
 
@@ -89,6 +91,10 @@ struct renderer {
          VGint tex_width;
          VGint tex_height;
       } drawtex;
+
+      struct {
+         VGboolean restore_dsa;
+      } scissor;
    } u;
 };
 
@@ -175,6 +181,25 @@ static void renderer_set_vs(struct renderer *r, RendererVs id)
 }
 
 /**
+ * Create a simple fragment shader that sets the depth to 0.0f.
+ */
+static void *create_scissor_fs(struct pipe_context *pipe)
+{
+   struct ureg_program *ureg;
+   struct ureg_dst out;
+   struct ureg_src imm;
+
+   ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   out = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 0);
+   imm = ureg_imm4f(ureg, 0.0f, 0.0f, 0.0f, 0.0f);
+
+   ureg_MOV(ureg, ureg_writemask(out, TGSI_WRITEMASK_Z), imm);
+   ureg_END(ureg);
+
+   return ureg_create_shader_and_destroy(ureg, pipe);
+}
+
+/**
  * Set renderer fragment shader.
  *
  * This function modifies fragment_shader state.
@@ -192,6 +217,9 @@ static void renderer_set_fs(struct renderer *r, RendererFs id)
       case RENDERER_FS_TEXTURE:
          fs = util_make_fragment_tex_shader(r->pipe,
                TGSI_TEXTURE_2D, TGSI_INTERPOLATE_LINEAR);
+         break;
+      case RENDERER_FS_SCISSOR:
+         fs = create_scissor_fs(r->pipe);
          break;
       default:
          assert(!"Unknown renderer fs id");
@@ -526,6 +554,71 @@ void renderer_drawtex_end(struct renderer *renderer)
    cso_restore_fragment_sampler_views(renderer->cso);
    cso_restore_fragment_shader(renderer->cso);
    cso_restore_vertex_shader(renderer->cso);
+
+   renderer->state = RENDERER_STATE_INIT;
+}
+
+/**
+ * Prepare the renderer for scissor update.  This will reset the depth buffer
+ * to 1.0f.
+ */
+VGboolean renderer_scissor_begin(struct renderer *renderer,
+                                 VGboolean restore_dsa)
+{
+   struct pipe_depth_stencil_alpha_state dsa;
+
+   assert(renderer->state == RENDERER_STATE_INIT);
+
+   if (restore_dsa)
+      cso_save_depth_stencil_alpha(renderer->cso);
+   cso_save_blend(renderer->cso);
+   cso_save_fragment_shader(renderer->cso);
+
+   /* enable depth writes */
+   memset(&dsa, 0, sizeof(dsa));
+   dsa.depth.enabled = 1;
+   dsa.depth.writemask = 1;
+   dsa.depth.func = PIPE_FUNC_ALWAYS;
+   cso_set_depth_stencil_alpha(renderer->cso, &dsa);
+
+   /* disable color writes */
+   renderer_set_blend(renderer, 0);
+   renderer_set_fs(renderer, RENDERER_FS_SCISSOR);
+
+   renderer->u.scissor.restore_dsa = restore_dsa;
+   renderer->state = RENDERER_STATE_SCISSOR;
+
+   /* clear the depth buffer to 1.0f */
+   renderer->pipe->clear(renderer->pipe,
+         PIPE_CLEAR_DEPTHSTENCIL, NULL, 1.0f, 0);
+
+   return VG_TRUE;
+}
+
+/**
+ * Add a scissor rectangle.  Depth values inside the rectangle will be set to
+ * 0.0f.
+ */
+void renderer_scissor(struct renderer *renderer,
+                      VGint x, VGint y, VGint width, VGint height)
+{
+   assert(renderer->state == RENDERER_STATE_SCISSOR);
+
+   renderer_quad_pos(renderer, x, y, x + width, y + height, VG_FALSE);
+   renderer_quad_draw(renderer);
+}
+
+/**
+ * End scissor update and restore the states.
+ */
+void renderer_scissor_end(struct renderer *renderer)
+{
+   assert(renderer->state == RENDERER_STATE_SCISSOR);
+
+   if (renderer->u.scissor.restore_dsa)
+      cso_restore_depth_stencil_alpha(renderer->cso);
+   cso_restore_blend(renderer->cso);
+   cso_restore_fragment_shader(renderer->cso);
 
    renderer->state = RENDERER_STATE_INIT;
 }

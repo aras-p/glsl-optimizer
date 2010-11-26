@@ -44,6 +44,7 @@
 #include "util/u_memory.h"
 #include "util/u_blit.h"
 #include "util/u_sampler.h"
+#include "util/u_math.h"
 
 struct vg_context *_vg_context = 0;
 
@@ -276,65 +277,40 @@ static void update_clip_state(struct vg_context *ctx)
    memset(dsa, 0, sizeof(struct pipe_depth_stencil_alpha_state));
 
    if (state->scissoring) {
-      struct pipe_blend_state *blend = &ctx->state.g3d.blend;
       struct pipe_framebuffer_state *fb = &ctx->state.g3d.fb;
       int i;
 
-      dsa->depth.writemask = 1;/*glDepthMask(TRUE);*/
-      dsa->depth.func = PIPE_FUNC_ALWAYS;
-      dsa->depth.enabled = 1;
+      renderer_scissor_begin(ctx->renderer, VG_FALSE);
 
-      cso_save_blend(ctx->cso_context);
-      cso_save_fragment_shader(ctx->cso_context);
-      /* set a passthrough shader */
-      if (!ctx->pass_through_depth_fs)
-         ctx->pass_through_depth_fs = shader_create_from_text(ctx->pipe,
-                                                              pass_through_depth_asm,
-                                                              40,
-                                                              PIPE_SHADER_FRAGMENT);
-      cso_set_fragment_shader_handle(ctx->cso_context,
-                                     ctx->pass_through_depth_fs->driver);
-      cso_set_depth_stencil_alpha(ctx->cso_context, dsa);
-
-      ctx->pipe->clear(ctx->pipe, PIPE_CLEAR_DEPTHSTENCIL, NULL, 1.0, 0);
-
-      /* disable color writes */
-      blend->rt[0].colormask = 0; /*disable colorwrites*/
-      cso_set_blend(ctx->cso_context, blend);
-
-      /* enable scissoring */
       for (i = 0; i < state->scissor_rects_num; ++i) {
          const float x      = state->scissor_rects[i * 4 + 0].f;
          const float y      = state->scissor_rects[i * 4 + 1].f;
          const float width  = state->scissor_rects[i * 4 + 2].f;
          const float height = state->scissor_rects[i * 4 + 3].f;
-         VGfloat minx, miny, maxx, maxy;
+         VGint x0, y0, x1, y1, iw, ih;
 
-         minx = 0;
-         miny = 0;
-         maxx = fb->width;
-         maxy = fb->height;
+         x0 = (VGint) x;
+         y0 = (VGint) y;
+         if (x0 < 0)
+            x0 = 0;
+         if (y0 < 0)
+            y0 = 0;
 
-         if (x > minx)
-            minx = x;
-         if (y > miny)
-            miny = y;
+         /* note that x1 and y1 are exclusive */
+         x1 = (VGint) ceilf(x + width);
+         y1 = (VGint) ceilf(y + height);
+         if (x1 > fb->width)
+            x1 = fb->width;
+         if (y1 > fb->height)
+            y1 = fb->height;
 
-         if (x + width < maxx)
-            maxx = x + width;
-         if (y + height < maxy)
-            maxy = y + height;
-
-         /* check for null space */
-         if (minx >= maxx || miny >= maxy)
-            minx = miny = maxx = maxy = 0;
-
-         /*glClear(GL_DEPTH_BUFFER_BIT);*/
-         renderer_draw_quad(ctx->renderer, minx, miny, maxx, maxy, 0.0f);
+         iw = x1 - x0;
+         ih = y1 - y0;
+         if (iw > 0 && ih> 0 )
+            renderer_scissor(ctx->renderer, x0, y0, iw, ih);
       }
 
-      cso_restore_blend(ctx->cso_context);
-      cso_restore_fragment_shader(ctx->cso_context);
+      renderer_scissor_end(ctx->renderer);
 
       dsa->depth.enabled = 1; /* glEnable(GL_DEPTH_TEST); */
       dsa->depth.writemask = 0;/*glDepthMask(FALSE);*/
