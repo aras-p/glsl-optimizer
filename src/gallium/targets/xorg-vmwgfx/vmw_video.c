@@ -556,10 +556,10 @@ vmw_video_port_init(ScrnInfoPtr pScrn, struct vmw_video_port *port,
 
     REGION_COPY(pScrn->pScreen, &port->clipBoxes, clipBoxes);
 
-    if (port->isAutoPaintColorkey) {
+    if (port->isAutoPaintColorkey)
 	xf86XVFillKeyHelper(pScrn->pScreen, port->colorKey, clipBoxes);
-	xorg_flush(pScrn->pScreen);
-    }
+
+    xorg_flush(pScrn->pScreen);
 
     return port->play(pScrn, port, src_x, src_y, drw_x, drw_y, src_w, src_h,
                       drw_w, drw_h, format, buf, width, height, clipBoxes);
@@ -646,11 +646,11 @@ vmw_video_port_play(ScrnInfoPtr pScrn, struct vmw_video_port *port,
      */
     if (!REGION_EQUAL(pScrn->pScreen, &port->clipBoxes, clipBoxes)) {
         REGION_COPY(pScrn->pScreen, &port->clipBoxes, clipBoxes);
-        if (port->isAutoPaintColorkey) {
+        if (port->isAutoPaintColorkey)
             xf86XVFillKeyHelper(pScrn->pScreen, port->colorKey, clipBoxes);
-	    xorg_flush(pScrn->pScreen);
-        }
     }
+
+    xorg_flush(pScrn->pScreen);
 
     ret = drmCommandWrite(vmw->fd, DRM_VMW_CONTROL_STREAM, &arg, sizeof(arg));
     if (ret) {
