@@ -251,6 +251,9 @@ get_state_size(struct i915_hw_state *state)
    if (dirty & I915_UPLOAD_CTX)
       sz += sizeof(state->Ctx);
 
+   if (dirty & I915_UPLOAD_BLEND)
+      sz += sizeof(state->Blend);
+
    if (dirty & I915_UPLOAD_BUFFERS)
       sz += sizeof(state->Buffer);
 
@@ -364,6 +367,13 @@ i915_emit_state(struct intel_context *intel)
          fprintf(stderr, "I915_UPLOAD_CTX:\n");
 
       emit(intel, state->Ctx, sizeof(state->Ctx));
+   }
+
+   if (dirty & I915_UPLOAD_BLEND) {
+      if (INTEL_DEBUG & DEBUG_STATE)
+         fprintf(stderr, "I915_UPLOAD_BLEND:\n");
+
+      emit(intel, state->Blend, sizeof(state->Blend));
    }
 
    if (dirty & I915_UPLOAD_BUFFERS) {

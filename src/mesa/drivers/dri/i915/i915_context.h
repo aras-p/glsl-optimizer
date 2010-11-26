@@ -51,6 +51,7 @@
 #define I915_UPLOAD_INVARIENT        0x40
 #define I915_UPLOAD_DEFAULTS         0x80
 #define I915_UPLOAD_RASTER_RULES     0x100
+#define I915_UPLOAD_BLEND            0x200
 #define I915_UPLOAD_TEX(i)           (0x00010000<<(i))
 #define I915_UPLOAD_TEX_ALL          (0x00ff0000)
 #define I915_UPLOAD_TEX_0_SHIFT      16
@@ -77,17 +78,19 @@
 #define I915_DEST_SETUP_SIZE 18
 
 #define I915_CTXREG_STATE4		0
-#define I915_CTXREG_LI	        	1
-#define I915_CTXREG_LIS2		        2
-#define I915_CTXREG_LIS4	        	3
-#define I915_CTXREG_LIS5	        	4
-#define I915_CTXREG_LIS6	         	5
-#define I915_CTXREG_IAB   	 	6
-#define I915_CTXREG_BLENDCOLOR0		7
-#define I915_CTXREG_BLENDCOLOR1		8
-#define I915_CTXREG_BF_STENCIL_OPS	9
-#define I915_CTXREG_BF_STENCIL_MASKS	10
-#define I915_CTX_SETUP_SIZE		11
+#define I915_CTXREG_LI			1
+#define I915_CTXREG_LIS2		2
+#define I915_CTXREG_LIS4		3
+#define I915_CTXREG_LIS5		4
+#define I915_CTXREG_LIS6		5
+#define I915_CTXREG_BF_STENCIL_OPS	6
+#define I915_CTXREG_BF_STENCIL_MASKS	7
+#define I915_CTX_SETUP_SIZE		8
+
+#define I915_BLENDREG_IAB		0
+#define I915_BLENDREG_BLENDCOLOR0	1
+#define I915_BLENDREG_BLENDCOLOR1	2
+#define I915_BLEND_SETUP_SIZE		3
 
 #define I915_FOGREG_COLOR		0
 #define I915_FOGREG_MODE0		1
@@ -216,6 +219,7 @@ struct i915_fragment_program
 struct i915_hw_state
 {
    GLuint Ctx[I915_CTX_SETUP_SIZE];
+   GLuint Blend[I915_BLEND_SETUP_SIZE];
    GLuint Buffer[I915_DEST_SETUP_SIZE];
    GLuint Stipple[I915_STP_SETUP_SIZE];
    GLuint Fog[I915_FOG_SETUP_SIZE];

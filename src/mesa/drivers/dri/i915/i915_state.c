@@ -236,9 +236,9 @@ i915BlendColor(struct gl_context * ctx, const GLfloat color[4])
    UNCLAMPED_FLOAT_TO_UBYTE(a, color[ACOMP]);
 
    dw = (a << 24) | (r << 16) | (g << 8) | b;
-   if (dw != i915->state.Ctx[I915_CTXREG_BLENDCOLOR1]) {
-      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
-      i915->state.Ctx[I915_CTXREG_BLENDCOLOR1] = dw
+   if (dw != i915->state.Blend[I915_BLENDREG_BLENDCOLOR1]) {
+      i915->state.Blend[I915_BLENDREG_BLENDCOLOR1] = dw;
+      I915_STATECHANGE(i915, I915_UPLOAD_BLEND);
    }
 }
 
@@ -273,7 +273,7 @@ static void
 i915UpdateBlendState(struct gl_context * ctx)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
-   GLuint iab = (i915->state.Ctx[I915_CTXREG_IAB] &
+   GLuint iab = (i915->state.Blend[I915_BLENDREG_IAB] &
                  ~(IAB_SRC_FACTOR_MASK |
                    IAB_DST_FACTOR_MASK |
                    (BLENDFUNC_MASK << IAB_FUNC_SHIFT) | IAB_ENABLE));
@@ -308,11 +308,13 @@ i915UpdateBlendState(struct gl_context * ctx)
    if (srcA != srcRGB || dstA != dstRGB || eqA != eqRGB)
       iab |= IAB_ENABLE;
 
-   if (iab != i915->state.Ctx[I915_CTXREG_IAB] ||
-       lis6 != i915->state.Ctx[I915_CTXREG_LIS6]) {
-      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
-      i915->state.Ctx[I915_CTXREG_IAB] = iab;
+   if (iab != i915->state.Blend[I915_BLENDREG_IAB]) {
+      i915->state.Blend[I915_BLENDREG_IAB] = iab;
+      I915_STATECHANGE(i915, I915_UPLOAD_BLEND);
+   }
+   if (lis6 != i915->state.Ctx[I915_CTXREG_LIS6]) {
       i915->state.Ctx[I915_CTXREG_LIS6] = lis6;
+      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
    }
 
    /* This will catch a logicop blend equation */
@@ -1040,6 +1042,7 @@ i915_init_packets(struct i915_context *i915)
 
    {
       I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+      I915_STATECHANGE(i915, I915_UPLOAD_BLEND);
       /* Probably don't want to upload all this stuff every time one 
        * piece changes.
        */
@@ -1066,13 +1069,13 @@ i915_init_packets(struct i915_context *i915)
                                              ENABLE_STENCIL_WRITE_MASK |
                                              STENCIL_WRITE_MASK(0xff));
 
-      i915->state.Ctx[I915_CTXREG_IAB] =
+      i915->state.Blend[I915_BLENDREG_IAB] =
          (_3DSTATE_INDEPENDENT_ALPHA_BLEND_CMD | IAB_MODIFY_ENABLE |
           IAB_MODIFY_FUNC | IAB_MODIFY_SRC_FACTOR | IAB_MODIFY_DST_FACTOR);
 
-      i915->state.Ctx[I915_CTXREG_BLENDCOLOR0] =
+      i915->state.Blend[I915_BLENDREG_BLENDCOLOR0] =
          _3DSTATE_CONST_BLEND_COLOR_CMD;
-      i915->state.Ctx[I915_CTXREG_BLENDCOLOR1] = 0;
+      i915->state.Blend[I915_BLENDREG_BLENDCOLOR1] = 0;
 
       i915->state.Ctx[I915_CTXREG_BF_STENCIL_MASKS] =
 	 _3DSTATE_BACKFACE_STENCIL_MASKS |
@@ -1143,6 +1146,7 @@ i915_init_packets(struct i915_context *i915)
    i915->state.active = (I915_UPLOAD_PROGRAM |
                          I915_UPLOAD_STIPPLE |
                          I915_UPLOAD_CTX |
+                         I915_UPLOAD_BLEND |
                          I915_UPLOAD_BUFFERS |
 			 I915_UPLOAD_INVARIENT |
 			 I915_UPLOAD_RASTER_RULES);
