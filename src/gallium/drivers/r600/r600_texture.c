@@ -575,7 +575,8 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
                 use_staging_texture = TRUE;
 
         if (!permit_hardware_blit(ctx->screen, texture) ||
-            (texture->flags & R600_RESOURCE_FLAG_TRANSFER))
+            (texture->flags & R600_RESOURCE_FLAG_TRANSFER) ||
+            (texture->usage == PIPE_USAGE_STREAM))
                 use_staging_texture = FALSE;
 
 	trans = CALLOC_STRUCT(r600_transfer);
