@@ -1,6 +1,7 @@
 /**************************************************************************
  *
  * Copyright 2009 VMware, Inc.  All Rights Reserved.
+ * Copyright 2010 LunarG, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -38,6 +39,17 @@ struct pipe_surface;
 
 struct renderer *renderer_create(struct vg_context *owner);
 void renderer_destroy(struct renderer *);
+
+VGboolean renderer_copy_begin(struct renderer *renderer,
+                              struct pipe_surface *dst,
+                              VGboolean y0_top,
+                              struct pipe_sampler_view *src);
+
+void renderer_copy(struct renderer *renderer,
+                   VGint x, VGint y, VGint w, VGint h,
+                   VGint sx, VGint sy, VGint sw, VGint sh);
+
+void renderer_copy_end(struct renderer *renderer);
 
 void renderer_draw_quad(struct renderer *,
                         VGfloat x1, VGfloat y1,

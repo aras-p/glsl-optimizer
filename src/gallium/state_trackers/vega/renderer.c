@@ -1,6 +1,7 @@
 /**************************************************************************
  *
  * Copyright 2009 VMware, Inc.  All Rights Reserved.
+ * Copyright 2010 LunarG, Inc.  All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
@@ -40,6 +41,26 @@
 #include "util/u_sampler.h"
 
 #include "cso_cache/cso_context.h"
+#include "tgsi/tgsi_ureg.h"
+
+typedef enum {
+   RENDERER_STATE_INIT,
+   RENDERER_STATE_COPY,
+   NUM_RENDERER_STATES
+} RendererState;
+
+typedef enum {
+   RENDERER_VS_PLAIN,
+   RENDERER_VS_COLOR,
+   RENDERER_VS_TEXTURE,
+   NUM_RENDERER_VS
+} RendererVs;
+
+typedef enum {
+   RENDERER_FS_COLOR,
+   RENDERER_FS_TEXTURE,
+   NUM_RENDERER_FS
+} RendererFs;
 
 struct renderer {
    struct pipe_context *pipe;
@@ -50,7 +71,389 @@ struct renderer {
    void *fs;
 
    VGfloat vertices[4][2][4];
+
+   void *cached_vs[NUM_RENDERER_VS];
+   void *cached_fs[NUM_RENDERER_FS];
+
+   RendererState state;
+
+   /* state data */
+   union {
+      struct {
+         VGint tex_width;
+         VGint tex_height;
+      } copy;
+   } u;
 };
+
+/**
+ * Return VG_TRUE if the renderer can use the resource as the asked bindings.
+ */
+static VGboolean renderer_can_support(struct renderer *renderer,
+                                      struct pipe_resource *res,
+                                      unsigned bindings)
+{
+   struct pipe_screen *screen = renderer->pipe->screen;
+
+   return screen->is_format_supported(screen,
+         res->format, res->target, 0, bindings, 0);
+}
+
+/**
+ * Create a simple vertex shader that passes through position and the given
+ * attribute.
+ */
+static void *create_passthrough_vs(struct pipe_context *pipe, int semantic_name)
+{
+   struct ureg_program *ureg;
+   struct ureg_src src[2], constants[2];
+   struct ureg_dst dst[2], tmp;
+   int i;
+
+   ureg = ureg_create(TGSI_PROCESSOR_VERTEX);
+   if (!ureg)
+      return NULL;
+
+   /* position in surface coordinates */
+   src[0] = ureg_DECL_vs_input(ureg, 0);
+   dst[0] = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 0);
+   tmp = ureg_DECL_temporary(ureg);
+   for (i = 0; i < 2; i++)
+      constants[i] = ureg_DECL_constant(ureg, i);
+
+   /* transform to clipped coordinates */
+   ureg_MUL(ureg, tmp, src[0], constants[0]);
+   ureg_ADD(ureg, tmp, ureg_src(tmp), constants[1]);
+   ureg_MOV(ureg, dst[0], ureg_src(tmp));
+
+   if (semantic_name >= 0) {
+      src[1] = ureg_DECL_vs_input(ureg, 1);
+      dst[1] = ureg_DECL_output(ureg, semantic_name, 0);
+      ureg_MOV(ureg, dst[1], src[1]);
+   }
+
+   ureg_END(ureg);
+
+   return ureg_create_shader_and_destroy(ureg, pipe);
+}
+
+/**
+ * Set renderer vertex shader.
+ *
+ * This function modifies vertex_shader state.
+ */
+static void renderer_set_vs(struct renderer *r, RendererVs id)
+{
+   /* create as needed */
+   if (!r->cached_vs[id]) {
+      int semantic_name = -1;
+
+      switch (id) {
+      case RENDERER_VS_PLAIN:
+         break;
+      case RENDERER_VS_COLOR:
+         semantic_name = TGSI_SEMANTIC_COLOR;
+         break;
+      case RENDERER_VS_TEXTURE:
+         semantic_name = TGSI_SEMANTIC_GENERIC;
+         break;
+      default:
+         assert(!"Unknown renderer vs id");
+         break;
+      }
+
+      r->cached_vs[id] = create_passthrough_vs(r->pipe, semantic_name);
+   }
+
+   cso_set_vertex_shader_handle(r->cso, r->cached_vs[id]);
+}
+
+/**
+ * Set renderer fragment shader.
+ *
+ * This function modifies fragment_shader state.
+ */
+static void renderer_set_fs(struct renderer *r, RendererFs id)
+{
+   /* create as needed */
+   if (!r->cached_fs[id]) {
+      void *fs = NULL;
+
+      switch (id) {
+      case RENDERER_FS_COLOR:
+         fs = util_make_fragment_passthrough_shader(r->pipe);
+         break;
+      case RENDERER_FS_TEXTURE:
+         fs = util_make_fragment_tex_shader(r->pipe,
+               TGSI_TEXTURE_2D, TGSI_INTERPOLATE_LINEAR);
+         break;
+      default:
+         assert(!"Unknown renderer fs id");
+         break;
+      }
+
+      r->cached_fs[id] = fs;
+   }
+
+   cso_set_fragment_shader_handle(r->cso, r->cached_fs[id]);
+}
+
+/**
+ * Set renderer target.
+ *
+ * This function modifies framebuffer and viewport states.
+ */
+static void renderer_set_target(struct renderer *r,
+                                struct pipe_surface *cbuf,
+                                struct pipe_surface *zsbuf,
+                                VGboolean y0_top)
+{
+   struct pipe_framebuffer_state fb;
+
+   memset(&fb, 0, sizeof(fb));
+   fb.width = cbuf->width;
+   fb.height = cbuf->height;
+   fb.cbufs[0] = cbuf;
+   fb.nr_cbufs = 1;
+   fb.zsbuf = zsbuf;
+   cso_set_framebuffer(r->cso, &fb);
+
+   vg_set_viewport(r->owner, (y0_top) ? VEGA_Y0_TOP : VEGA_Y0_BOTTOM);
+}
+
+/**
+ * Set renderer blend state.  Blending is disabled.
+ *
+ * This function modifies blend state.
+ */
+static void renderer_set_blend(struct renderer *r,
+                               VGbitfield channel_mask)
+{
+   struct pipe_blend_state blend;
+
+   memset(&blend, 0, sizeof(blend));
+
+   blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
+   blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+
+   if (channel_mask & VG_RED)
+      blend.rt[0].colormask |= PIPE_MASK_R;
+   if (channel_mask & VG_GREEN)
+      blend.rt[0].colormask |= PIPE_MASK_G;
+   if (channel_mask & VG_BLUE)
+      blend.rt[0].colormask |= PIPE_MASK_B;
+   if (channel_mask & VG_ALPHA)
+      blend.rt[0].colormask |= PIPE_MASK_A;
+
+   cso_set_blend(r->cso, &blend);
+}
+
+/**
+ * Set renderer sampler and view states.
+ *
+ * This function modifies samplers and fragment_sampler_views states.
+ */
+static void renderer_set_samplers(struct renderer *r,
+                                  uint num_views,
+                                  struct pipe_sampler_view **views)
+{
+   struct pipe_sampler_state sampler;
+   unsigned tex_filter = PIPE_TEX_FILTER_NEAREST;
+   unsigned tex_wrap = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   uint i;
+
+   memset(&sampler, 0, sizeof(sampler));
+
+   sampler.min_img_filter = tex_filter;
+   sampler.mag_img_filter = tex_filter;
+   sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
+
+   sampler.wrap_s = tex_wrap;
+   sampler.wrap_t = tex_wrap;
+   sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+
+   sampler.normalized_coords = 1;
+
+   /* set samplers */
+   for (i = 0; i < num_views; i++)
+      cso_single_sampler(r->cso, i, &sampler);
+   cso_single_sampler_done(r->cso);
+
+   /* set views */
+   cso_set_fragment_sampler_views(r->cso, num_views, views);
+}
+
+/**
+ * Setup renderer quad position.
+ */
+static void renderer_quad_pos(struct renderer *r,
+                              VGfloat x0, VGfloat y0,
+                              VGfloat x1, VGfloat y1,
+                              VGboolean scissor)
+{
+   VGfloat z;
+
+   /* the depth test is used for scissoring */
+   z = (scissor) ? 0.0f : 1.0f;
+
+   /* positions */
+   r->vertices[0][0][0] = x0;
+   r->vertices[0][0][1] = y0;
+   r->vertices[0][0][2] = z;
+
+   r->vertices[1][0][0] = x1;
+   r->vertices[1][0][1] = y0;
+   r->vertices[1][0][2] = z;
+
+   r->vertices[2][0][0] = x1;
+   r->vertices[2][0][1] = y1;
+   r->vertices[2][0][2] = z;
+
+   r->vertices[3][0][0] = x0;
+   r->vertices[3][0][1] = y1;
+   r->vertices[3][0][2] = z;
+}
+
+/**
+ * Setup renderer quad texture coordinates.
+ */
+static void renderer_quad_texcoord(struct renderer *r,
+                                   VGfloat x0, VGfloat y0,
+                                   VGfloat x1, VGfloat y1,
+                                   VGint tex_width, VGint tex_height)
+{
+   VGfloat s0, t0, s1, t1, r0, q0;
+   VGint i;
+
+   s0 = x0 / tex_width;
+   s1 = x1 / tex_width;
+   t0 = y0 / tex_height;
+   t1 = y1 / tex_height;
+   r0 = 0.0f;
+   q0 = 1.0f;
+
+   /* texcoords */
+   r->vertices[0][1][0] = s0;
+   r->vertices[0][1][1] = t0;
+
+   r->vertices[1][1][0] = s1;
+   r->vertices[1][1][1] = t0;
+
+   r->vertices[2][1][0] = s1;
+   r->vertices[2][1][1] = t1;
+
+   r->vertices[3][1][0] = s0;
+   r->vertices[3][1][1] = t1;
+
+   for (i = 0; i < 4; i++) {
+      r->vertices[i][1][2] = r0;
+      r->vertices[i][1][3] = q0;
+   }
+}
+
+/**
+ * Draw renderer quad.
+ */
+static void renderer_quad_draw(struct renderer *r)
+{
+   struct pipe_resource *buf;
+
+   buf = pipe_user_buffer_create(r->pipe->screen,
+                                 r->vertices,
+                                 sizeof(r->vertices),
+                                 PIPE_BIND_VERTEX_BUFFER);
+   if (buf) {
+      cso_set_vertex_elements(r->cso, 2, r->owner->velems);
+      util_draw_vertex_buffer(r->pipe, buf, 0,
+                              PIPE_PRIM_TRIANGLE_FAN,
+                              Elements(r->vertices),     /* verts */
+                              Elements(r->vertices[0])); /* attribs/vert */
+
+      pipe_resource_reference(&buf, NULL);
+   }
+}
+
+/**
+ * Prepare the renderer for copying.
+ */
+VGboolean renderer_copy_begin(struct renderer *renderer,
+                              struct pipe_surface *dst,
+                              VGboolean y0_top,
+                              struct pipe_sampler_view *src)
+{
+   assert(renderer->state == RENDERER_STATE_INIT);
+
+   /* sanity check */
+   if (!renderer_can_support(renderer,
+            dst->texture, PIPE_BIND_RENDER_TARGET) ||
+       !renderer_can_support(renderer,
+          src->texture, PIPE_BIND_SAMPLER_VIEW))
+      return VG_FALSE;
+
+   cso_save_framebuffer(renderer->cso);
+   cso_save_viewport(renderer->cso);
+   cso_save_blend(renderer->cso);
+   cso_save_samplers(renderer->cso);
+   cso_save_fragment_sampler_views(renderer->cso);
+   cso_save_fragment_shader(renderer->cso);
+   cso_save_vertex_shader(renderer->cso);
+
+   renderer_set_target(renderer, dst, NULL, y0_top);
+
+   renderer_set_blend(renderer, ~0);
+   renderer_set_samplers(renderer, 1, &src);
+
+   renderer_set_fs(renderer, RENDERER_FS_TEXTURE);
+   renderer_set_vs(renderer, RENDERER_VS_TEXTURE);
+
+   /* remember the texture size */
+   renderer->u.copy.tex_width = src->texture->width0;
+   renderer->u.copy.tex_height = src->texture->height0;
+   renderer->state = RENDERER_STATE_COPY;
+
+   return VG_TRUE;
+}
+
+/**
+ * Draw into the destination rectangle given by (x, y, w, h).  The texture is
+ * sampled from within the rectangle given by (sx, sy, sw, sh).
+ *
+ * The coordinates are in surface coordinates.
+ */
+void renderer_copy(struct renderer *renderer,
+                   VGint x, VGint y, VGint w, VGint h,
+                   VGint sx, VGint sy, VGint sw, VGint sh)
+{
+   assert(renderer->state == RENDERER_STATE_COPY);
+
+   /* there is no depth buffer for scissoring anyway */
+   renderer_quad_pos(renderer, x, y, x + w, y + h, VG_FALSE);
+   renderer_quad_texcoord(renderer, sx, sy, sx + sw, sy + sh,
+         renderer->u.copy.tex_width,
+         renderer->u.copy.tex_height);
+
+   renderer_quad_draw(renderer);
+}
+
+/**
+ * End copying and restore the states.
+ */
+void renderer_copy_end(struct renderer *renderer)
+{
+   assert(renderer->state == RENDERER_STATE_COPY);
+
+   cso_restore_framebuffer(renderer->cso);
+   cso_restore_viewport(renderer->cso);
+   cso_restore_blend(renderer->cso);
+   cso_restore_samplers(renderer->cso);
+   cso_restore_fragment_sampler_views(renderer->cso);
+   cso_restore_fragment_shader(renderer->cso);
+   cso_restore_vertex_shader(renderer->cso);
+
+   renderer->state = RENDERER_STATE_INIT;
+}
 
 static void setup_shaders(struct renderer *ctx)
 {
@@ -94,80 +497,6 @@ setup_vertex_data(struct renderer *ctx,
 				   PIPE_BIND_VERTEX_BUFFER);
 }
 
-static struct pipe_resource *
-setup_vertex_data_tex(struct renderer *ctx,
-                      float x0, float y0, float x1, float y1,
-                      float s0, float t0, float s1, float t1,
-                      float z)
-{
-   ctx->vertices[0][0][0] = x0;
-   ctx->vertices[0][0][1] = y0;
-   ctx->vertices[0][0][2] = z;
-   ctx->vertices[0][1][0] = s0; /*s*/
-   ctx->vertices[0][1][1] = t0; /*t*/
-
-   ctx->vertices[1][0][0] = x1;
-   ctx->vertices[1][0][1] = y0;
-   ctx->vertices[1][0][2] = z;
-   ctx->vertices[1][1][0] = s1; /*s*/
-   ctx->vertices[1][1][1] = t0; /*t*/
-
-   ctx->vertices[2][0][0] = x1;
-   ctx->vertices[2][0][1] = y1;
-   ctx->vertices[2][0][2] = z;
-   ctx->vertices[2][1][0] = s1;
-   ctx->vertices[2][1][1] = t1;
-
-   ctx->vertices[3][0][0] = x0;
-   ctx->vertices[3][0][1] = y1;
-   ctx->vertices[3][0][2] = z;
-   ctx->vertices[3][1][0] = s0;
-   ctx->vertices[3][1][1] = t1;
-
-   return pipe_user_buffer_create( ctx->pipe->screen,
-                                   ctx->vertices,
-                                   sizeof(ctx->vertices),
-				   PIPE_BIND_VERTEX_BUFFER);
-}
-
-
-static struct pipe_resource *
-setup_vertex_data_qtex(struct renderer *ctx,
-                       float x0, float y0, float x1, float y1,
-                       float x2, float y2, float x3, float y3,
-                       float s0, float t0, float s1, float t1,
-                       float z)
-{
-   ctx->vertices[0][0][0] = x0;
-   ctx->vertices[0][0][1] = y0;
-   ctx->vertices[0][0][2] = z;
-   ctx->vertices[0][1][0] = s0; /*s*/
-   ctx->vertices[0][1][1] = t0; /*t*/
-
-   ctx->vertices[1][0][0] = x1;
-   ctx->vertices[1][0][1] = y1;
-   ctx->vertices[1][0][2] = z;
-   ctx->vertices[1][1][0] = s1; /*s*/
-   ctx->vertices[1][1][1] = t0; /*t*/
-
-   ctx->vertices[2][0][0] = x2;
-   ctx->vertices[2][0][1] = y2;
-   ctx->vertices[2][0][2] = z;
-   ctx->vertices[2][1][0] = s1;
-   ctx->vertices[2][1][1] = t1;
-
-   ctx->vertices[3][0][0] = x3;
-   ctx->vertices[3][0][1] = y3;
-   ctx->vertices[3][0][2] = z;
-   ctx->vertices[3][1][0] = s0;
-   ctx->vertices[3][1][1] = t1;
-
-   return pipe_user_buffer_create( ctx->pipe->screen,
-                                   ctx->vertices,
-                                   sizeof(ctx->vertices),
-				   PIPE_BIND_VERTEX_BUFFER);
-}
-
 struct renderer * renderer_create(struct vg_context *owner)
 {
    VGint i;
@@ -183,17 +512,27 @@ struct renderer * renderer_create(struct vg_context *owner)
    setup_shaders(renderer);
 
    /* init vertex data that doesn't change */
-   for (i = 0; i < 4; i++) {
+   for (i = 0; i < 4; i++)
       renderer->vertices[i][0][3] = 1.0f; /* w */
-      renderer->vertices[i][1][2] = 0.0f; /* r */
-      renderer->vertices[i][1][3] = 1.0f; /* q */
-   }
+
+   renderer->state = RENDERER_STATE_INIT;
 
    return renderer;
 }
 
 void renderer_destroy(struct renderer *ctx)
 {
+   int i;
+
+   for (i = 0; i < NUM_RENDERER_VS; i++) {
+      if (ctx->cached_vs[i])
+         cso_delete_vertex_shader(ctx->cso, ctx->cached_vs[i]);
+   }
+   for (i = 0; i < NUM_RENDERER_FS; i++) {
+      if (ctx->cached_fs[i])
+         cso_delete_fragment_shader(ctx->cso, ctx->cached_fs[i]);
+   }
+
 #if 0
    if (ctx->fs) {
       cso_delete_fragment_shader(ctx->cso, ctx->fs);
@@ -208,20 +547,11 @@ void renderer_draw_quad(struct renderer *r,
                         VGfloat x2, VGfloat y2,
                         VGfloat depth)
 {
-   struct pipe_resource *buf;
+   assert(r->state == RENDERER_STATE_INIT);
+   assert(floatsEqual(depth, 0.0f));
 
-   buf = setup_vertex_data(r, x1, y1, x2, y2, depth);
-
-   if (buf) {
-      cso_set_vertex_elements(r->cso, 2, r->owner->velems);
-      util_draw_vertex_buffer(r->pipe, buf, 0,
-                              PIPE_PRIM_TRIANGLE_FAN,
-                              4,  /* verts */
-                              2); /* attribs/vert */
-
-      pipe_resource_reference( &buf,
-                             NULL );
-   }
+   renderer_quad_pos(r, x1, y1, x2, y2, VG_TRUE);
+   renderer_quad_draw(r);
 }
 
 void renderer_draw_texture(struct renderer *r,
@@ -231,36 +561,18 @@ void renderer_draw_texture(struct renderer *r,
                            VGfloat x1, VGfloat y1,
                            VGfloat x2, VGfloat y2)
 {
-   struct pipe_context *pipe = r->pipe;
-   struct pipe_resource *buf;
-   VGfloat s0, t0, s1, t1;
-
+   assert(r->state == RENDERER_STATE_INIT);
    assert(tex->width0 != 0);
    assert(tex->height0 != 0);
 
-   s0 = x1offset / tex->width0;
-   s1 = x2offset / tex->width0;
-   t0 = y1offset / tex->height0;
-   t1 = y2offset / tex->height0;
-
    cso_save_vertex_shader(r->cso);
-   /* shaders */
-   cso_set_vertex_shader_handle(r->cso, vg_texture_vs(r->owner));
 
-   /* draw quad */
-   buf = setup_vertex_data_tex(r, x1, y1, x2, y2,
-                               s0, t0, s1, t1, 0.0f);
+   renderer_set_vs(r, RENDERER_VS_TEXTURE);
 
-   if (buf) {
-      cso_set_vertex_elements(r->cso, 2, r->owner->velems);
-      util_draw_vertex_buffer(pipe, buf, 0,
-                           PIPE_PRIM_TRIANGLE_FAN,
-                           4,  /* verts */
-                           2); /* attribs/vert */
-
-      pipe_resource_reference( &buf,
-                             NULL );
-   }
+   renderer_quad_pos(r, x1, y1, x2, y2, VG_TRUE);
+   renderer_quad_texcoord(r, x1offset, y1offset,
+         x2offset, y2offset, tex->width0, tex->height0);
+   renderer_quad_draw(r);
 
    cso_restore_vertex_shader(r->cso);
 }
@@ -273,129 +585,45 @@ void renderer_copy_texture(struct renderer *ctx,
                            VGfloat dx1, VGfloat dy1,
                            VGfloat dx2, VGfloat dy2)
 {
-   struct pipe_context *pipe = ctx->pipe;
-   struct pipe_screen *screen = pipe->screen;
-   struct pipe_resource *tex = src->texture;
-   struct pipe_resource *buf;
-   struct pipe_surface *dst_surf = screen->get_tex_surface(
-      screen, dst, 0, 0, 0,
-      PIPE_BIND_RENDER_TARGET);
-   struct pipe_framebuffer_state fb;
-   float s0, t0, s1, t1;
+   struct pipe_surface *surf;
+   VGint x, y, w, h, sx, sy, sw, sh;
 
-   assert(tex->width0 != 0);
-   assert(tex->height0 != 0);
+   /* get the destination surface */
+   surf = ctx->pipe->screen->get_tex_surface(ctx->pipe->screen,
+         dst, 0, 0, 0, PIPE_BIND_RENDER_TARGET);
+   if (!surf)
+      return;
+
+   assert(ctx->state == RENDERER_STATE_INIT);
+   assert(src->texture->width0 != 0);
+   assert(src->texture->height0 != 0);
    assert(dst->width0 != 0);
    assert(dst->height0 != 0);
 
-#if 0
-   debug_printf("copy texture [%f, %f, %f, %f], [%f, %f, %f, %f]\n",
-                sx1, sy1, sx2, sy2, dx1, dy1, dx2, dy2);
-#endif
+   x = (VGint) dx1;
+   y = (VGint) dy1;
+   w = (VGint) (dx2 - dx1);
+   h = (VGint) (dy2 - dy1);
+   assert(floatsEqual(x, dx1) &&
+          floatsEqual(y, dy1) &&
+          floatsEqual(w, (dx2 - dx1)) &&
+          floatsEqual(h, (dy2 - dy1)));
 
-#if 1
-   s0 = sx1 / tex->width0;
-   s1 = sx2 / tex->width0;
-   t0 = sy1 / tex->height0;
-   t1 = sy2 / tex->height0;
-#else
-   s0 = 0;
-   s1 = 1;
-   t0 = 0;
-   t1 = 1;
-#endif
+   sx = (VGint) sx1;
+   sy = (VGint) sy1;
+   sw = (VGint) (sx2 - sx1);
+   sh = (VGint) (sy2 - sy1);
+   assert(floatsEqual(sx, sx1) &&
+          floatsEqual(sy, sy1) &&
+          floatsEqual(sw, (sx2 - sx1)) &&
+          floatsEqual(sh, (sy2 - sy1)));
 
-   assert(screen->is_format_supported(screen, dst_surf->format, PIPE_TEXTURE_2D,
-                                      0, PIPE_BIND_RENDER_TARGET, 0));
-
-   /* save state (restored below) */
-   cso_save_blend(ctx->cso);
-   cso_save_samplers(ctx->cso);
-   cso_save_fragment_sampler_views(ctx->cso);
-   cso_save_framebuffer(ctx->cso);
-   cso_save_fragment_shader(ctx->cso);
-   cso_save_vertex_shader(ctx->cso);
-
-   cso_save_viewport(ctx->cso);
-
-
-   /* set misc state we care about */
-   {
-      struct pipe_blend_state blend;
-      memset(&blend, 0, sizeof(blend));
-      blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-      blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-      blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
-      blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-      blend.rt[0].colormask = PIPE_MASK_RGBA;
-      cso_set_blend(ctx->cso, &blend);
+   if (renderer_copy_begin(ctx, surf, VG_TRUE, src)) {
+      renderer_copy(ctx, x, y, w, h, sx, sy, sw, sh);
+      renderer_copy_end(ctx);
    }
 
-   /* sampler */
-   {
-      struct pipe_sampler_state sampler;
-      memset(&sampler, 0, sizeof(sampler));
-      sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-      sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-      sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-      sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
-      sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
-      sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
-      sampler.normalized_coords = 1;
-      cso_single_sampler(ctx->cso, 0, &sampler);
-      cso_single_sampler_done(ctx->cso);
-   }
-
-   vg_set_viewport(ctx->owner, VEGA_Y0_TOP);
-
-   /* texture */
-   cso_set_fragment_sampler_views(ctx->cso, 1, &src);
-
-   /* shaders */
-   cso_set_vertex_shader_handle(ctx->cso, vg_texture_vs(ctx->owner));
-   cso_set_fragment_shader_handle(ctx->cso, ctx->fs);
-
-   /* drawing dest */
-   memset(&fb, 0, sizeof(fb));
-   fb.width = dst_surf->width;
-   fb.height = dst_surf->height;
-   fb.nr_cbufs = 1;
-   fb.cbufs[0] = dst_surf;
-   {
-      VGint i;
-      for (i = 1; i < PIPE_MAX_COLOR_BUFS; ++i)
-         fb.cbufs[i] = 0;
-   }
-   cso_set_framebuffer(ctx->cso, &fb);
-
-   /* draw quad */
-   buf = setup_vertex_data_tex(ctx,
-                         dx1, dy1,
-                         dx2, dy2,
-                         s0, t0, s1, t1,
-                         0.0f);
-
-   if (buf) {
-      cso_set_vertex_elements(ctx->cso, 2, ctx->owner->velems);
-      util_draw_vertex_buffer(ctx->pipe, buf, 0,
-                              PIPE_PRIM_TRIANGLE_FAN,
-                              4,  /* verts */
-                              2); /* attribs/vert */
-
-      pipe_resource_reference( &buf,
-                             NULL );
-   }
-
-   /* restore state we changed */
-   cso_restore_blend(ctx->cso);
-   cso_restore_samplers(ctx->cso);
-   cso_restore_fragment_sampler_views(ctx->cso);
-   cso_restore_framebuffer(ctx->cso);
-   cso_restore_vertex_shader(ctx->cso);
-   cso_restore_fragment_shader(ctx->cso);
-   cso_restore_viewport(ctx->cso);
-
-   pipe_surface_reference(&dst_surf, NULL);
+   pipe_surface_reference(&surf, NULL);
 }
 
 void renderer_copy_surface(struct renderer *ctx,
@@ -575,36 +803,38 @@ void renderer_texture_quad(struct renderer *r,
                            VGfloat x3, VGfloat y3,
                            VGfloat x4, VGfloat y4)
 {
-   struct pipe_context *pipe = r->pipe;
-   struct pipe_resource *buf;
-   VGfloat s0, t0, s1, t1;
+   const VGfloat z = 0.0f;
 
+   assert(r->state == RENDERER_STATE_INIT);
    assert(tex->width0 != 0);
    assert(tex->height0 != 0);
 
-   s0 = x1offset / tex->width0;
-   s1 = x2offset / tex->width0;
-   t0 = y1offset / tex->height0;
-   t1 = y2offset / tex->height0;
-
    cso_save_vertex_shader(r->cso);
-   /* shaders */
-   cso_set_vertex_shader_handle(r->cso, vg_texture_vs(r->owner));
 
-   /* draw quad */
-   buf = setup_vertex_data_qtex(r, x1, y1, x2, y2, x3, y3, x4, y4,
-                          s0, t0, s1, t1, 0.0f);
+   renderer_set_vs(r, RENDERER_VS_TEXTURE);
 
-   if (buf) {
-      cso_set_vertex_elements(r->cso, 2, r->owner->velems);
-      util_draw_vertex_buffer(pipe, buf, 0,
-                              PIPE_PRIM_TRIANGLE_FAN,
-                              4,  /* verts */
-                              2); /* attribs/vert */
+   /* manually set up positions */
+   r->vertices[0][0][0] = x1;
+   r->vertices[0][0][1] = y1;
+   r->vertices[0][0][2] = z;
 
-      pipe_resource_reference(&buf,
-                            NULL);
-   }
+   r->vertices[1][0][0] = x2;
+   r->vertices[1][0][1] = y2;
+   r->vertices[1][0][2] = z;
+
+   r->vertices[2][0][0] = x3;
+   r->vertices[2][0][1] = y3;
+   r->vertices[2][0][2] = z;
+
+   r->vertices[3][0][0] = x4;
+   r->vertices[3][0][1] = y4;
+   r->vertices[3][0][2] = z;
+
+   /* texcoords */
+   renderer_quad_texcoord(r, x1offset, y1offset,
+         x2offset, y2offset, tex->width0, tex->height0);
+
+   renderer_quad_draw(r);
 
    cso_restore_vertex_shader(r->cso);
 }
