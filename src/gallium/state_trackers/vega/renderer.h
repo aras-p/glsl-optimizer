@@ -51,6 +51,15 @@ void renderer_copy(struct renderer *renderer,
 
 void renderer_copy_end(struct renderer *renderer);
 
+VGboolean renderer_drawtex_begin(struct renderer *renderer,
+                                 struct pipe_sampler_view *src);
+
+void renderer_drawtex(struct renderer *renderer,
+                      VGint x, VGint y, VGint w, VGint h,
+                      VGint sx, VGint sy, VGint sw, VGint sh);
+
+void renderer_drawtex_end(struct renderer *renderer);
+
 void renderer_draw_quad(struct renderer *,
                         VGfloat x1, VGfloat y1,
                         VGfloat x2, VGfloat y2,

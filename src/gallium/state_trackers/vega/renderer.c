@@ -46,6 +46,7 @@
 typedef enum {
    RENDERER_STATE_INIT,
    RENDERER_STATE_COPY,
+   RENDERER_STATE_DRAWTEX,
    NUM_RENDERER_STATES
 } RendererState;
 
@@ -83,6 +84,11 @@ struct renderer {
          VGint tex_width;
          VGint tex_height;
       } copy;
+
+      struct {
+         VGint tex_width;
+         VGint tex_height;
+      } drawtex;
    } u;
 };
 
@@ -455,46 +461,81 @@ void renderer_copy_end(struct renderer *renderer)
    renderer->state = RENDERER_STATE_INIT;
 }
 
+/**
+ * Prepare the renderer for textured drawing.
+ */
+VGboolean renderer_drawtex_begin(struct renderer *renderer,
+                                 struct pipe_sampler_view *src)
+{
+   assert(renderer->state == RENDERER_STATE_INIT);
+
+   if (!renderer_can_support(renderer, src->texture, PIPE_BIND_SAMPLER_VIEW))
+      return VG_FALSE;
+
+   cso_save_blend(renderer->cso);
+   cso_save_samplers(renderer->cso);
+   cso_save_fragment_sampler_views(renderer->cso);
+   cso_save_fragment_shader(renderer->cso);
+   cso_save_vertex_shader(renderer->cso);
+
+   renderer_set_blend(renderer, ~0);
+
+   renderer_set_samplers(renderer, 1, &src);
+
+   renderer_set_fs(renderer, RENDERER_FS_TEXTURE);
+   renderer_set_vs(renderer, RENDERER_VS_TEXTURE);
+
+   /* remember the texture size */
+   renderer->u.drawtex.tex_width = src->texture->width0;
+   renderer->u.drawtex.tex_height = src->texture->height0;
+   renderer->state = RENDERER_STATE_DRAWTEX;
+
+   return VG_TRUE;
+}
+
+/**
+ * Draw into the destination rectangle given by (x, y, w, h).  The texture is
+ * sampled from within the rectangle given by (sx, sy, sw, sh).
+ *
+ * The coordinates are in surface coordinates.
+ */
+void renderer_drawtex(struct renderer *renderer,
+                      VGint x, VGint y, VGint w, VGint h,
+                      VGint sx, VGint sy, VGint sw, VGint sh)
+{
+   assert(renderer->state == RENDERER_STATE_DRAWTEX);
+
+   /* with scissoring */
+   renderer_quad_pos(renderer, x, y, x + w, y + h, VG_TRUE);
+   renderer_quad_texcoord(renderer, sx, sy, sx + sw, sy + sh,
+         renderer->u.drawtex.tex_width,
+         renderer->u.drawtex.tex_height);
+
+   renderer_quad_draw(renderer);
+}
+
+/**
+ * End textured drawing and restore the states.
+ */
+void renderer_drawtex_end(struct renderer *renderer)
+{
+   assert(renderer->state == RENDERER_STATE_DRAWTEX);
+
+   cso_restore_blend(renderer->cso);
+   cso_restore_samplers(renderer->cso);
+   cso_restore_fragment_sampler_views(renderer->cso);
+   cso_restore_fragment_shader(renderer->cso);
+   cso_restore_vertex_shader(renderer->cso);
+
+   renderer->state = RENDERER_STATE_INIT;
+}
+
 static void setup_shaders(struct renderer *ctx)
 {
    struct pipe_context *pipe = ctx->pipe;
    /* fragment shader */
    ctx->fs = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D,
                                            TGSI_INTERPOLATE_LINEAR);
-}
-
-static struct pipe_resource *
-setup_vertex_data(struct renderer *ctx,
-                  float x0, float y0, float x1, float y1, float z)
-{
-   ctx->vertices[0][0][0] = x0;
-   ctx->vertices[0][0][1] = y0;
-   ctx->vertices[0][0][2] = z;
-   ctx->vertices[0][1][0] = 0.0f; /*s*/
-   ctx->vertices[0][1][1] = 0.0f; /*t*/
-
-   ctx->vertices[1][0][0] = x1;
-   ctx->vertices[1][0][1] = y0;
-   ctx->vertices[1][0][2] = z;
-   ctx->vertices[1][1][0] = 1.0f; /*s*/
-   ctx->vertices[1][1][1] = 0.0f; /*t*/
-
-   ctx->vertices[2][0][0] = x1;
-   ctx->vertices[2][0][1] = y1;
-   ctx->vertices[2][0][2] = z;
-   ctx->vertices[2][1][0] = 1.0f;
-   ctx->vertices[2][1][1] = 1.0f;
-
-   ctx->vertices[3][0][0] = x0;
-   ctx->vertices[3][0][1] = y1;
-   ctx->vertices[3][0][2] = z;
-   ctx->vertices[3][1][0] = 0.0f;
-   ctx->vertices[3][1][1] = 1.0f;
-
-   return pipe_user_buffer_create( ctx->pipe->screen,
-                                   ctx->vertices,
-                                   sizeof(ctx->vertices),
-				   PIPE_BIND_VERTEX_BUFFER);
 }
 
 struct renderer * renderer_create(struct vg_context *owner)
@@ -637,12 +678,10 @@ void renderer_copy_surface(struct renderer *ctx,
 {
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
-   struct pipe_resource *buf;
    struct pipe_sampler_view view_templ;
    struct pipe_sampler_view *view;
    struct pipe_resource texTemp, *tex;
    struct pipe_subresource subsrc, subdst;
-   struct pipe_framebuffer_state fb;
    struct st_framebuffer *stfb = ctx->owner->draw_buffer;
    const int srcW = abs(srcX1 - srcX0);
    const int srcH = abs(srcY1 - srcY0);
@@ -708,90 +747,29 @@ void renderer_copy_surface(struct renderer *ctx,
                               src->texture, subsrc, srcLeft, srcTop, src->zslice, /* src */
                               srcW, srcH);     /* size */
 
-   /* save state (restored below) */
-   cso_save_blend(ctx->cso);
-   cso_save_samplers(ctx->cso);
-   cso_save_fragment_sampler_views(ctx->cso);
-   cso_save_framebuffer(ctx->cso);
-   cso_save_fragment_shader(ctx->cso);
-   cso_save_vertex_shader(ctx->cso);
-   cso_save_viewport(ctx->cso);
+   assert(floatsEqual(z, 0.0f));
 
-   /* set misc state we care about */
-   {
-      struct pipe_blend_state blend;
-      memset(&blend, 0, sizeof(blend));
-      blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-      blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-      blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
-      blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-      blend.rt[0].colormask = PIPE_MASK_RGBA;
-      cso_set_blend(ctx->cso, &blend);
+   /* draw */
+   if (stfb->strb->surface == dst) {
+      /* transform back to surface coordinates */
+      dstY0 = dst->height - dstY0;
+      dstY1 = dst->height - dstY1;
+
+      if (renderer_drawtex_begin(ctx, view)) {
+         renderer_drawtex(ctx,
+               dstX0, dstY0, dstX1 - dstX0, dstY1 - dstY0,
+               0, 0, view->texture->width0, view->texture->height0);
+         renderer_drawtex_end(ctx);
+      }
    }
-
-   vg_set_viewport(ctx->owner, VEGA_Y0_TOP);
-
-   /* sampler */
-   {
-      struct pipe_sampler_state sampler;
-      memset(&sampler, 0, sizeof(sampler));
-      sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-      sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-      sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-      sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
-      sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
-      sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
-      sampler.normalized_coords = 1;
-      cso_single_sampler(ctx->cso, 0, &sampler);
-      cso_single_sampler_done(ctx->cso);
+   else {
+      if (renderer_copy_begin(ctx, dst, VG_TRUE, view)) {
+         renderer_copy(ctx,
+               dstX0, dstY0, dstX1 - dstX0, dstY1 - dstY0,
+               0, 0, view->texture->width0, view->texture->height0);
+         renderer_copy_end(ctx);
+      }
    }
-
-   /* texture */
-   cso_set_fragment_sampler_views(ctx->cso, 1, &view);
-
-   /* shaders */
-   cso_set_fragment_shader_handle(ctx->cso, ctx->fs);
-   cso_set_vertex_shader_handle(ctx->cso, vg_texture_vs(ctx->owner));
-
-   /* drawing dest */
-   if (stfb->strb->surface != dst) {
-      memset(&fb, 0, sizeof(fb));
-      fb.width = dst->width;
-      fb.height = dst->height;
-      fb.nr_cbufs = 1;
-      fb.cbufs[0] = dst;
-      fb.zsbuf = stfb->dsrb->surface;
-      cso_set_framebuffer(ctx->cso, &fb);
-   }
-
-   /* draw quad */
-   buf = setup_vertex_data(ctx,
-                           (float) dstX0, (float) dstY0,
-                           (float) dstX1, (float) dstY1, z);
-
-   if (buf) {
-      cso_set_vertex_elements(ctx->cso, 2, ctx->owner->velems);
-      util_draw_vertex_buffer(ctx->pipe, buf, 0,
-                              PIPE_PRIM_TRIANGLE_FAN,
-                              4,  /* verts */
-                              2); /* attribs/vert */
-
-      pipe_resource_reference( &buf,
-                             NULL );
-   }
-
-
-   /* restore state we changed */
-   cso_restore_blend(ctx->cso);
-   cso_restore_samplers(ctx->cso);
-   cso_restore_fragment_sampler_views(ctx->cso);
-   cso_restore_framebuffer(ctx->cso);
-   cso_restore_fragment_shader(ctx->cso);
-   cso_restore_vertex_shader(ctx->cso);
-   cso_restore_viewport(ctx->cso);
-
-   pipe_resource_reference(&tex, NULL);
-   pipe_sampler_view_reference(&view, NULL);
 }
 
 void renderer_texture_quad(struct renderer *r,
