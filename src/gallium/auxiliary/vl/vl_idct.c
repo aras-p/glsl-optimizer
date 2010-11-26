@@ -263,7 +263,7 @@ create_transpose_frag_shader(struct vl_idct *idct)
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
    tmp = matrix_mul(shader, m);
-   ureg_MUL(shader, fragment, ureg_src(tmp), ureg_imm1f(shader, STAGE1_SCALE));
+   ureg_MUL(shader, fragment, ureg_src(tmp), ureg_imm1f(shader, STAGE2_SCALE));
 
    ureg_release_temporary(shader, tmp);
    ureg_release_temporary(shader, m[0][0]);
@@ -300,13 +300,13 @@ create_matrix_frag_shader(struct vl_idct *idct)
    start[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_START, TGSI_INTERPOLATE_CONSTANT);
    start[1] = ureg_imm1f(shader, 0.0f);
 
-   fetch_one(shader, m[0], tc[0], sampler[0], start[0], false, idct->destination->width0);
+   fetch_four(shader, m[0], tc[0], sampler[0], start[0], false, idct->destination->width0);
    fetch_four(shader, m[1], tc[1], sampler[1], start[1], true, BLOCK_HEIGHT);
 
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
    tmp = matrix_mul(shader, m);
-   ureg_MUL(shader, fragment, ureg_src(tmp), ureg_imm1f(shader, STAGE2_SCALE));
+   ureg_MUL(shader, fragment, ureg_src(tmp), ureg_imm1f(shader, STAGE1_SCALE));
 
    ureg_release_temporary(shader, tmp);
    ureg_release_temporary(shader, m[0][0]);
@@ -425,13 +425,14 @@ init_buffers(struct vl_idct *idct)
    template.bind = PIPE_BIND_SAMPLER_VIEW;
    template.flags = 0;
 
-   template.format = idct->destination->format;
+   template.format = PIPE_FORMAT_R16G16B16A16_SNORM;
    template.width0 = idct->destination->width0;
    template.height0 = idct->destination->height0;
    template.depth0 = idct->destination->depth0;
-   template.usage = PIPE_USAGE_DYNAMIC;
+   template.usage = PIPE_USAGE_STREAM;
    idct->textures.individual.source = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
 
+   template.format = idct->destination->format;
    template.usage = PIPE_USAGE_STATIC;
    idct->textures.individual.intermediate = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
 
@@ -689,10 +690,10 @@ vl_idct_add_block(struct vl_idct *idct, unsigned x, unsigned y, short *block)
 
    if(block) {
       tex_pitch = idct->tex_transfer->stride / util_format_get_blocksize(idct->tex_transfer->resource->format);
-      texels = idct->texels + y * tex_pitch * BLOCK_HEIGHT + x * BLOCK_WIDTH;
+      texels = idct->texels + (y * tex_pitch * BLOCK_HEIGHT + x * BLOCK_WIDTH) * 4;
 
       for (i = 0; i < BLOCK_HEIGHT; ++i)
-         memcpy(texels + i * tex_pitch, block + i * BLOCK_WIDTH, BLOCK_WIDTH * 2);
+         memcpy(texels + i * tex_pitch * 4, block + i * BLOCK_WIDTH, BLOCK_WIDTH * 2);
 
       /* non empty blocks fills the vector buffer from left to right */
       v_dst = idct->vectors + idct->num_blocks * 4;
@@ -732,7 +733,7 @@ vl_idct_flush(struct vl_idct *idct)
       idct->pipe->set_fragment_sampler_views(idct->pipe, 2, idct->sampler_views.stage[0]);
       idct->pipe->bind_fragment_sampler_states(idct->pipe, 2, idct->samplers.stage[0]);
       idct->pipe->bind_vs_state(idct->pipe, idct->vs);
-      idct->pipe->bind_fs_state(idct->pipe, idct->transpose_fs);
+      idct->pipe->bind_fs_state(idct->pipe, idct->matrix_fs);
 
       util_draw_arrays(idct->pipe, PIPE_PRIM_QUADS, 0, idct->num_blocks * 4);
 
@@ -746,7 +747,7 @@ vl_idct_flush(struct vl_idct *idct)
       idct->pipe->set_fragment_sampler_views(idct->pipe, 2, idct->sampler_views.stage[1]);
       idct->pipe->bind_fragment_sampler_states(idct->pipe, 2, idct->samplers.stage[1]);
       idct->pipe->bind_vs_state(idct->pipe, idct->vs);
-      idct->pipe->bind_fs_state(idct->pipe, idct->matrix_fs);
+      idct->pipe->bind_fs_state(idct->pipe, idct->transpose_fs);
 
       util_draw_arrays(idct->pipe, PIPE_PRIM_QUADS, 0, idct->num_blocks * 4);
    }
