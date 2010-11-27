@@ -63,8 +63,8 @@ struct vl_idct
       } individual;
    } sampler_views;
 
-   void *vs;
-   void *transpose_fs, *matrix_fs, *eb_fs;
+   void *matrix_vs, *transpose_vs, *eb_vs;
+   void *matrix_fs, *transpose_fs, *eb_fs;
 
    union
    {

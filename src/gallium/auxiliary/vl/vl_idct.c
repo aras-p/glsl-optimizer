@@ -82,7 +82,7 @@ static const struct vertex2f const_quad[4] = {
 };
 
 static void *
-create_vert_shader(struct vl_idct *idct)
+create_vert_shader(struct vl_idct *idct, bool calc_src_cords, struct pipe_resource *dst)
 {
    struct ureg_program *shader;
    struct ureg_src scale;
@@ -94,21 +94,16 @@ create_vert_shader(struct vl_idct *idct)
    if (!shader)
       return NULL;
 
-   scale = ureg_imm2f(shader,
-      (float)BLOCK_WIDTH / idct->destination->width0, 
-      (float)BLOCK_HEIGHT / idct->destination->height0);
-
    t_vpos = ureg_DECL_temporary(shader);
 
    vrect = ureg_DECL_vs_input(shader, VS_I_RECT);
    vpos = ureg_DECL_vs_input(shader, VS_I_VPOS);
 
    o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, VS_O_VPOS);
-   o_block = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_BLOCK);
-   o_tex = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX);
-   o_start = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_START);
 
    /*
+    * scale = (BLOCK_WIDTH, BLOCK_HEIGHT) / (dst.width, dst.height)
+    *
     * t_vpos = vpos + vrect
     * o_vpos.xy = t_vpos * scale
     * o_vpos.zw = vpos
@@ -118,14 +113,24 @@ create_vert_shader(struct vl_idct *idct)
     * o_start = vpos * scale
     *
     */
+   scale = ureg_imm2f(shader,
+      (float)BLOCK_WIDTH / dst->width0, 
+      (float)BLOCK_HEIGHT / dst->height0);
+
    ureg_ADD(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_XY), vpos, vrect);
    ureg_MUL(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos), scale);
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos));
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), vpos);
 
-   ureg_MOV(shader, ureg_writemask(o_block, TGSI_WRITEMASK_XY), vrect);
-   ureg_MOV(shader, ureg_writemask(o_tex, TGSI_WRITEMASK_XY), ureg_src(t_vpos));
-   ureg_MUL(shader, ureg_writemask(o_start, TGSI_WRITEMASK_XY), vpos, scale);
+   if(calc_src_cords) {
+      o_block = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_BLOCK);
+      o_tex = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX);
+      o_start = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_START);
+
+      ureg_MOV(shader, ureg_writemask(o_block, TGSI_WRITEMASK_XY), vrect);
+      ureg_MOV(shader, ureg_writemask(o_tex, TGSI_WRITEMASK_XY), ureg_src(t_vpos));
+      ureg_MUL(shader, ureg_writemask(o_start, TGSI_WRITEMASK_XY), vpos, scale);
+   }
 
    ureg_release_temporary(shader, t_vpos);
 
@@ -179,7 +184,7 @@ fetch_one(struct ureg_program *shader, struct ureg_dst m[2],
 static void
 fetch_four(struct ureg_program *shader, struct ureg_dst m[2],
            struct ureg_src tc, struct ureg_src sampler,
-           struct ureg_src start, bool right_side, float size)
+           struct ureg_src start, bool right_side, float width)
 {
    struct ureg_dst t_tc;
 
@@ -201,19 +206,18 @@ fetch_four(struct ureg_program *shader, struct ureg_dst m[2],
    }
 
    ureg_TEX(shader, m[0], TGSI_TEXTURE_2D, ureg_src(t_tc), sampler);
-   ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_X), ureg_imm1f(shader, 4.0f / size));
+   ureg_ADD(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_X), ureg_src(t_tc), ureg_imm1f(shader, 1.0f / width));
    ureg_TEX(shader, m[1], TGSI_TEXTURE_2D, ureg_src(t_tc), sampler);
 
    ureg_release_temporary(shader, t_tc);
 }
 
-static struct ureg_dst
-matrix_mul(struct ureg_program *shader, struct ureg_dst m[2][2])
+static void
+matrix_mul(struct ureg_program *shader, struct ureg_dst dst, struct ureg_dst l[2], struct ureg_dst r[2])
 {
-   struct ureg_dst dst, tmp[2];
+   struct ureg_dst tmp[2];
    unsigned i;
 
-   dst = ureg_DECL_temporary(shader);
    for(i = 0; i < 2; ++i) {
       tmp[i] = ureg_DECL_temporary(shader);
    }
@@ -222,20 +226,21 @@ matrix_mul(struct ureg_program *shader, struct ureg_dst m[2][2])
     * tmp[0..1] = dot4(m[0][0..1], m[1][0..1])
     * dst = tmp[0] + tmp[1]
     */
-   ureg_DP4(shader, ureg_writemask(tmp[0], TGSI_WRITEMASK_X), ureg_src(m[0][0]), ureg_src(m[1][0]));
-   ureg_DP4(shader, ureg_writemask(tmp[1], TGSI_WRITEMASK_X), ureg_src(m[0][1]), ureg_src(m[1][1]));
-   ureg_ADD(shader, ureg_writemask(dst, TGSI_WRITEMASK_X), ureg_src(tmp[0]), ureg_src(tmp[1]));
+   ureg_DP4(shader, ureg_writemask(tmp[0], TGSI_WRITEMASK_X), ureg_src(l[0]), ureg_src(r[0]));
+   ureg_DP4(shader, ureg_writemask(tmp[1], TGSI_WRITEMASK_X), ureg_src(l[1]), ureg_src(r[1]));
+   ureg_ADD(shader, dst, ureg_src(tmp[0]), ureg_src(tmp[1]));
 
    for(i = 0; i < 2; ++i) {
       ureg_release_temporary(shader, tmp[i]);
    }
-
-   return dst;
 }
 
 static void *
 create_transpose_frag_shader(struct vl_idct *idct)
 {
+   struct pipe_resource *transpose = idct->textures.individual.transpose;
+   struct pipe_resource *intermediate = idct->textures.individual.intermediate;
+
    struct ureg_program *shader;
 
    struct ureg_src tc[2], sampler[2];
@@ -257,12 +262,13 @@ create_transpose_frag_shader(struct vl_idct *idct)
    start[0] = ureg_imm1f(shader, 0.0f);
    start[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_START, TGSI_INTERPOLATE_CONSTANT);
 
-   fetch_four(shader, m[0], tc[0], sampler[0], start[0], false, BLOCK_WIDTH);
-   fetch_one(shader, m[1], tc[1], sampler[1], start[1], true, idct->destination->height0);
+   fetch_four(shader, m[0], tc[0], sampler[0], start[0], false, transpose->width0);
+   fetch_one(shader, m[1], tc[1], sampler[1], start[1], true, intermediate->height0);
 
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
-   tmp = matrix_mul(shader, m);
+   tmp = ureg_DECL_temporary(shader);
+   matrix_mul(shader, ureg_writemask(tmp, TGSI_WRITEMASK_X), m[0], m[1]);
    ureg_MUL(shader, fragment, ureg_src(tmp), ureg_imm1f(shader, STAGE2_SCALE));
 
    ureg_release_temporary(shader, tmp);
@@ -279,17 +285,25 @@ create_transpose_frag_shader(struct vl_idct *idct)
 static void *
 create_matrix_frag_shader(struct vl_idct *idct)
 {
+   struct pipe_resource *matrix = idct->textures.individual.matrix;
+   struct pipe_resource *source = idct->textures.individual.source;
+
    struct ureg_program *shader;
 
    struct ureg_src tc[2], sampler[2];
    struct ureg_src start[2];
 
-   struct ureg_dst m[2][2];
-   struct ureg_dst tmp, fragment;
+   struct ureg_dst l[2], r[2];
+   struct ureg_dst t_tc, tmp, fragment;
+
+   //unsigned i;
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
       return NULL;
+
+   t_tc = ureg_DECL_temporary(shader);
+   tmp = ureg_DECL_temporary(shader);
 
    tc[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX, TGSI_INTERPOLATE_LINEAR);
    tc[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_BLOCK, TGSI_INTERPOLATE_LINEAR);
@@ -300,19 +314,29 @@ create_matrix_frag_shader(struct vl_idct *idct)
    start[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_START, TGSI_INTERPOLATE_CONSTANT);
    start[1] = ureg_imm1f(shader, 0.0f);
 
-   fetch_four(shader, m[0], tc[0], sampler[0], start[0], false, idct->destination->width0);
-   fetch_four(shader, m[1], tc[1], sampler[1], start[1], true, BLOCK_HEIGHT);
-
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
-   tmp = matrix_mul(shader, m);
-   ureg_MUL(shader, fragment, ureg_src(tmp), ureg_imm1f(shader, STAGE1_SCALE));
+   fetch_four(shader, r, tc[1], sampler[1], start[1], true, matrix->width0);
 
+   ureg_MOV(shader, t_tc, tc[0]);
+   //for (i = 0; i < 4; ++i) {
+
+      fetch_four(shader, l, ureg_src(t_tc), sampler[0], start[0], false, source->width0);
+      matrix_mul(shader, ureg_writemask(tmp, TGSI_WRITEMASK_X /* << i */), l, r);
+      ureg_release_temporary(shader, l[0]);
+      ureg_release_temporary(shader, l[1]);
+
+   //   if (i != 3)
+   //      ureg_ADD(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Y),
+   //         ureg_src(t_tc), ureg_imm1f(shader, 1.0f / source->height0));
+   //}
+
+   ureg_MUL(shader, fragment, ureg_src(tmp), ureg_scalar(ureg_imm1f(shader, STAGE1_SCALE), TGSI_SWIZZLE_X));
+
+   ureg_release_temporary(shader, t_tc);
    ureg_release_temporary(shader, tmp);
-   ureg_release_temporary(shader, m[0][0]);
-   ureg_release_temporary(shader, m[0][1]);
-   ureg_release_temporary(shader, m[1][0]);
-   ureg_release_temporary(shader, m[1][1]);
+   ureg_release_temporary(shader, r[0]);
+   ureg_release_temporary(shader, r[1]);
 
    ureg_END(shader);
 
@@ -344,8 +368,8 @@ xfer_buffers_map(struct vl_idct *idct)
    struct pipe_box rect =
    {
       0, 0, 0,
-      idct->destination->width0,
-      idct->destination->height0,
+      idct->textures.individual.source->width0,
+      idct->textures.individual.source->height0,
       1
    };
 
@@ -380,24 +404,31 @@ xfer_buffers_unmap(struct vl_idct *idct)
 static bool
 init_shaders(struct vl_idct *idct)
 {
-   idct->vs = create_vert_shader(idct);
-   idct->transpose_fs = create_transpose_frag_shader(idct);
+   idct->matrix_vs = create_vert_shader(idct, true, idct->textures.individual.intermediate);
    idct->matrix_fs = create_matrix_frag_shader(idct);
+
+   idct->transpose_vs = create_vert_shader(idct, true, idct->destination);
+   idct->transpose_fs = create_transpose_frag_shader(idct);
+
+   idct->eb_vs = create_vert_shader(idct, false, idct->destination);
    idct->eb_fs = create_empty_block_frag_shader(idct);
 
    return 
-      idct->vs != NULL &&
-      idct->transpose_fs != NULL &&
-      idct->matrix_fs != NULL &&
-      idct->eb_fs != NULL;
+      idct->transpose_vs != NULL && idct->transpose_fs != NULL &&
+      idct->matrix_vs != NULL && idct->matrix_fs != NULL &&
+      idct->eb_vs != NULL && idct->eb_fs != NULL;
 }
 
 static void
 cleanup_shaders(struct vl_idct *idct)
 {
-   idct->pipe->delete_vs_state(idct->pipe, idct->vs);
+   idct->pipe->delete_vs_state(idct->pipe, idct->transpose_vs);
    idct->pipe->delete_fs_state(idct->pipe, idct->transpose_fs);
+
+   idct->pipe->delete_vs_state(idct->pipe, idct->matrix_vs);
    idct->pipe->delete_fs_state(idct->pipe, idct->matrix_fs);
+
+   idct->pipe->delete_vs_state(idct->pipe, idct->eb_vs);
    idct->pipe->delete_fs_state(idct->pipe, idct->eb_fs);
 }
 
@@ -416,22 +447,20 @@ init_buffers(struct vl_idct *idct)
 
    memset(&template, 0, sizeof(struct pipe_resource));
    template.target = PIPE_TEXTURE_2D;
-   template.format = PIPE_FORMAT_R32G32B32A32_FLOAT;
    template.last_level = 0;
-   template.width0 = 2;
-   template.height0 = 8;
    template.depth0 = 1;
-   template.usage = PIPE_USAGE_IMMUTABLE;
    template.bind = PIPE_BIND_SAMPLER_VIEW;
    template.flags = 0;
+   template.depth0 = 1;
 
    template.format = PIPE_FORMAT_R16G16B16A16_SNORM;
-   template.width0 = idct->destination->width0;
+   template.width0 = idct->destination->width0 / 4;
    template.height0 = idct->destination->height0;
-   template.depth0 = idct->destination->depth0;
    template.usage = PIPE_USAGE_STREAM;
    idct->textures.individual.source = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
 
+   template.format = PIPE_FORMAT_R16_SNORM;
+   template.width0 = idct->destination->width0;
    template.usage = PIPE_USAGE_STATIC;
    idct->textures.individual.intermediate = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
 
@@ -533,14 +562,19 @@ init_state(struct vl_idct *idct)
    idct->num_blocks = 0;
    idct->num_empty_blocks = 0;
 
-   idct->viewport[0].scale[0] = idct->destination->width0;
-   idct->viewport[1].scale[0] = idct->destination->width0;
+   idct->viewport[0].scale[0] = idct->textures.individual.intermediate->width0;
+   idct->viewport[0].scale[1] = idct->textures.individual.intermediate->height0;
 
-   idct->fb_state[0].width = idct->destination->width0;
+   idct->viewport[1].scale[0] = idct->destination->width0;
+   idct->viewport[1].scale[1] = idct->destination->height0;
+
+   idct->fb_state[0].width = idct->textures.individual.intermediate->width0;
+   idct->fb_state[0].height = idct->textures.individual.intermediate->height0;
+
    idct->fb_state[1].width = idct->destination->width0;
+   idct->fb_state[1].height = idct->destination->height0;
 
    for(i = 0; i < 2; ++i) {
-      idct->viewport[i].scale[1] = idct->destination->height0;
       idct->viewport[i].scale[2] = 1;
       idct->viewport[i].scale[3] = 1;
       idct->viewport[i].translate[0] = 0;
@@ -548,7 +582,6 @@ init_state(struct vl_idct *idct)
       idct->viewport[i].translate[2] = 0;
       idct->viewport[i].translate[3] = 0;
 
-      idct->fb_state[i].height = idct->destination->height0;
       idct->fb_state[i].nr_cbufs = 1;
       idct->fb_state[i].zsbuf = NULL;
    }
@@ -643,15 +676,15 @@ vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, struct pipe_resour
    pipe_resource_reference(&idct->textures.individual.transpose, matrix);
    pipe_resource_reference(&idct->destination, dst);
 
-   init_state(idct);
-
-   if(!init_shaders(idct))
+   if(!init_buffers(idct))
       return false;
 
-   if(!init_buffers(idct)) {
-      cleanup_shaders(idct);
+   if(!init_shaders(idct)) {
+      cleanup_buffers(idct);
       return false;
    }
+
+   init_state(idct);
 
    idct->surfaces.intermediate = idct->pipe->screen->get_tex_surface(
       idct->pipe->screen, idct->textures.individual.intermediate, 0, 0, 0,
@@ -689,6 +722,7 @@ vl_idct_add_block(struct vl_idct *idct, unsigned x, unsigned y, short *block)
    struct vertex2f v, *v_dst;
 
    unsigned tex_pitch;
+   unsigned nr_components;
    short *texels;
 
    unsigned i;
@@ -696,11 +730,13 @@ vl_idct_add_block(struct vl_idct *idct, unsigned x, unsigned y, short *block)
    assert(idct);
 
    if(block) {
-      tex_pitch = idct->tex_transfer->stride / util_format_get_blocksize(idct->tex_transfer->resource->format);
-      texels = idct->texels + (y * tex_pitch * BLOCK_HEIGHT + x * BLOCK_WIDTH) * 4;
+      nr_components = util_format_get_nr_components(idct->tex_transfer->resource->format);
+      
+      tex_pitch = idct->tex_transfer->stride / sizeof(short);
+      texels = idct->texels + y * tex_pitch * BLOCK_HEIGHT + x * BLOCK_WIDTH;
 
       for (i = 0; i < BLOCK_HEIGHT; ++i)
-         memcpy(texels + i * tex_pitch * 4, block + i * BLOCK_WIDTH, BLOCK_WIDTH * 2);
+         memcpy(texels + i * tex_pitch, block + i * BLOCK_WIDTH, BLOCK_WIDTH * sizeof(short));
 
       /* non empty blocks fills the vector buffer from left to right */
       v_dst = idct->vectors + idct->num_blocks * 4;
@@ -738,7 +774,7 @@ vl_idct_flush(struct vl_idct *idct)
       idct->pipe->bind_vertex_elements_state(idct->pipe, idct->vertex_elems_state);
       idct->pipe->set_fragment_sampler_views(idct->pipe, 2, idct->sampler_views.stage[0]);
       idct->pipe->bind_fragment_sampler_states(idct->pipe, 2, idct->samplers.stage[0]);
-      idct->pipe->bind_vs_state(idct->pipe, idct->vs);
+      idct->pipe->bind_vs_state(idct->pipe, idct->matrix_vs);
       idct->pipe->bind_fs_state(idct->pipe, idct->matrix_fs);
 
       util_draw_arrays(idct->pipe, PIPE_PRIM_QUADS, 0, idct->num_blocks * 4);
@@ -751,7 +787,7 @@ vl_idct_flush(struct vl_idct *idct)
       idct->pipe->bind_vertex_elements_state(idct->pipe, idct->vertex_elems_state);
       idct->pipe->set_fragment_sampler_views(idct->pipe, 2, idct->sampler_views.stage[1]);
       idct->pipe->bind_fragment_sampler_states(idct->pipe, 2, idct->samplers.stage[1]);
-      idct->pipe->bind_vs_state(idct->pipe, idct->vs);
+      idct->pipe->bind_vs_state(idct->pipe, idct->transpose_vs);
       idct->pipe->bind_fs_state(idct->pipe, idct->transpose_fs);
 
       util_draw_arrays(idct->pipe, PIPE_PRIM_QUADS, 0, idct->num_blocks * 4);
@@ -767,7 +803,7 @@ vl_idct_flush(struct vl_idct *idct)
       idct->pipe->bind_vertex_elements_state(idct->pipe, idct->vertex_elems_state);
       idct->pipe->set_fragment_sampler_views(idct->pipe, 4, idct->sampler_views.all);
       idct->pipe->bind_fragment_sampler_states(idct->pipe, 4, idct->samplers.all);
-      idct->pipe->bind_vs_state(idct->pipe, idct->vs);
+      idct->pipe->bind_vs_state(idct->pipe, idct->eb_vs);
       idct->pipe->bind_fs_state(idct->pipe, idct->eb_fs);
 
       util_draw_arrays(idct->pipe, PIPE_PRIM_QUADS,
