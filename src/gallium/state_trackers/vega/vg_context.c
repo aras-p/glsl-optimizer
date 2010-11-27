@@ -575,16 +575,16 @@ void * vg_texture_vs(struct vg_context *ctx)
 
 void vg_set_viewport(struct vg_context *ctx, VegaOrientation orientation)
 {
+   struct st_framebuffer *stfb = ctx->draw_buffer;
    struct pipe_viewport_state viewport;
-   struct pipe_framebuffer_state *fb = &ctx->state.g3d.fb;
    VGfloat y_scale = (orientation == VEGA_Y0_BOTTOM) ? -2.f : 2.f;
 
-   viewport.scale[0] =  fb->width / 2.f;
-   viewport.scale[1] =  fb->height / y_scale;
+   viewport.scale[0] =  stfb->width / 2.f;
+   viewport.scale[1] =  stfb->height / y_scale;
    viewport.scale[2] =  1.0;
    viewport.scale[3] =  1.0;
-   viewport.translate[0] = fb->width / 2.f;
-   viewport.translate[1] = fb->height / 2.f;
+   viewport.translate[0] = stfb->width / 2.f;
+   viewport.translate[1] = stfb->height / 2.f;
    viewport.translate[2] = 0.0;
    viewport.translate[3] = 0.0;
 

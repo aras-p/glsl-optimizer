@@ -81,7 +81,7 @@ void vegaClear(VGint x, VGint y,
                VGint width, VGint height)
 {
    struct vg_context *ctx = vg_current_context();
-   struct pipe_framebuffer_state *fb;
+   struct st_framebuffer *stfb = ctx->draw_buffer;
 
    if (width <= 0 || height <= 0) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
@@ -98,10 +98,9 @@ void vegaClear(VGint x, VGint y,
                 ctx->state.vg.clear_color[3]);
 #endif
 
-   fb = &ctx->state.g3d.fb;
    /* check for a whole surface clear */
    if (!ctx->state.vg.scissoring &&
-       (x == 0 && y == 0 && width == fb->width && height == fb->height)) {
+       (x == 0 && y == 0 && width == stfb->width && height == stfb->height)) {
       ctx->pipe->clear(ctx->pipe, PIPE_CLEAR_COLOR | PIPE_CLEAR_DEPTHSTENCIL,
                        ctx->state.vg.clear_color, 1., 0);
    } else if (renderer_clear_begin(ctx->renderer)) {

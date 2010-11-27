@@ -114,11 +114,10 @@ static void read_alpha_mask(void * data, VGint dataStride,
 
    struct st_framebuffer *stfb = ctx->draw_buffer;
    struct st_renderbuffer *strb = stfb->alpha_mask;
-   struct pipe_framebuffer_state *fb = &ctx->state.g3d.fb;
 
    VGfloat temp[VEGA_MAX_IMAGE_WIDTH][4];
    VGfloat *df = (VGfloat*)temp;
-   VGint y = (fb->height - sy) - 1, yStep = -1;
+   VGint y = (stfb->height - sy) - 1, yStep = -1;
    VGint i;
    VGubyte *dst = (VGubyte *)data;
    VGint xoffset = 0, yoffset = 0;
@@ -135,7 +134,7 @@ static void read_alpha_mask(void * data, VGint dataStride,
       yoffset = -sy;
       height += sy;
       sy = 0;
-      y = (fb->height - sy) - 1;
+      y = (stfb->height - sy) - 1;
       yoffset *= dataStride;
    }
 
@@ -164,23 +163,23 @@ static void read_alpha_mask(void * data, VGint dataStride,
 void save_alpha_to_file(const char *filename)
 {
    struct vg_context *ctx = vg_current_context();
-   struct pipe_framebuffer_state *fb = &ctx->state.g3d.fb;
+   struct st_framebuffer *stfb = ctx->draw_buffer;
    VGint *data;
    int i, j;
 
-   data = malloc(sizeof(int) * fb->width * fb->height);
-   read_alpha_mask(data, fb->width * sizeof(int),
+   data = malloc(sizeof(int) * stfb->width * stfb->height);
+   read_alpha_mask(data, stfb->width * sizeof(int),
                    VG_sRGBA_8888,
-                   0, 0, fb->width, fb->height);
+                   0, 0, stfb->width, stfb->height);
    fprintf(stderr, "/*---------- start */\n");
    fprintf(stderr, "const int image_width = %d;\n",
-           fb->width);
+           stfb->width);
    fprintf(stderr, "const int image_height = %d;\n",
-           fb->height);
+           stfb->height);
    fprintf(stderr, "const int image_data = {\n");
-   for (i = 0; i < fb->height; ++i) {
-      for (j = 0; j < fb->width; ++j) {
-         int rgba = data[i * fb->height + j];
+   for (i = 0; i < stfb->height; ++i) {
+      for (j = 0; j < stfb->width; ++j) {
+         int rgba = data[i * stfb->height + j];
          int argb = 0;
          argb = (rgba >> 8);
          argb |= ((rgba & 0xff) << 24);
