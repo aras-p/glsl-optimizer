@@ -387,27 +387,45 @@ void vg_validate_state(struct vg_context *ctx)
       raster->gl_rasterization_rules = 1;
       cso_set_rasterizer(ctx->cso_context, &ctx->state.g3d.rasterizer);
    }
-   if ((ctx->state.dirty & VIEWPORT_DIRTY)) {
+   if ((ctx->state.dirty & FRAMEBUFFER_DIRTY)) {
       struct pipe_framebuffer_state *fb = &ctx->state.g3d.fb;
-      const VGint param_bytes = 8 * sizeof(VGfloat);
-      VGfloat vs_consts[8] = {
-         2.f/fb->width, 2.f/fb->height, 1, 1,
-         -1, -1, 0, 0
-      };
       struct pipe_resource **cbuf = &ctx->vs_const_buffer;
+      VGfloat vs_consts[8];
 
+      memset(fb, 0, sizeof(struct pipe_framebuffer_state));
+      fb->width  = ctx->draw_buffer->width;
+      fb->height = ctx->draw_buffer->height;
+      fb->nr_cbufs = 1;
+      fb->cbufs[0] = ctx->draw_buffer->strb->surface;
+      fb->zsbuf = ctx->draw_buffer->dsrb->surface;
+
+      cso_set_framebuffer(ctx->cso_context, fb);
       vg_set_viewport(ctx, VEGA_Y0_BOTTOM);
+
+      /* surface coordinates to clipped coordinates */
+      vs_consts[0] = 2.0f / fb->width;
+      vs_consts[1] = 2.0f / fb->height;
+      vs_consts[2] = 1.0f;
+      vs_consts[3] = 1.0f;
+      vs_consts[4] = -1.0f;
+      vs_consts[5] = -1.0f;
+      vs_consts[6] = 0.0f;
+      vs_consts[7] = 0.0f;
 
       pipe_resource_reference(cbuf, NULL);
       *cbuf = pipe_buffer_create(ctx->pipe->screen, 
 				 PIPE_BIND_CONSTANT_BUFFER,
-				 param_bytes);
+				 sizeof(vs_consts));
 
       if (*cbuf) {
          st_no_flush_pipe_buffer_write(ctx, *cbuf,
-                                       0, param_bytes, vs_consts);
+                                       0, sizeof(vs_consts), vs_consts);
       }
       ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_VERTEX, 0, *cbuf);
+
+      /* we also got a new depth buffer */
+      if ((ctx->state.dirty & DEPTH_STENCIL_DIRTY))
+         ctx->pipe->clear(ctx->pipe, PIPE_CLEAR_DEPTHSTENCIL, NULL, 0.0, 0);
    }
    if ((ctx->state.dirty & VS_DIRTY)) {
       cso_set_vertex_shader_handle(ctx->cso_context,

@@ -97,10 +97,17 @@ create_tex_and_view(struct pipe_context *pipe, enum pipe_format format,
 }
 
 static void
-setup_new_alpha_mask(struct vg_context *ctx, struct st_framebuffer *stfb)
+vg_context_update_alpha_mask_view(struct vg_context *ctx,
+                                  uint width, uint height)
 {
-   struct pipe_context *pipe = ctx->pipe;
+   struct st_framebuffer *stfb = ctx->draw_buffer;
    struct pipe_sampler_view *old_sampler_view = stfb->alpha_mask_view;
+   struct pipe_context *pipe = ctx->pipe;
+
+   if (old_sampler_view &&
+       old_sampler_view->texture->width0 == width &&
+       old_sampler_view->texture->height0 == height)
+      return;
 
    /*
      we use PIPE_FORMAT_B8G8R8A8_UNORM because we want to render to
@@ -108,7 +115,7 @@ setup_new_alpha_mask(struct vg_context *ctx, struct st_framebuffer *stfb)
      space it makes both of those a lot simpler
    */
    stfb->alpha_mask_view = create_tex_and_view(pipe,
-         PIPE_FORMAT_B8G8R8A8_UNORM, stfb->width, stfb->height);
+         PIPE_FORMAT_B8G8R8A8_UNORM, width, height);
 
    if (!stfb->alpha_mask_view) {
       if (old_sampler_view)
@@ -120,7 +127,7 @@ setup_new_alpha_mask(struct vg_context *ctx, struct st_framebuffer *stfb)
    vg_validate_state(ctx);
 
    /* alpha mask starts with 1.f alpha */
-   mask_fill(0, 0, stfb->width, stfb->height, 1.f);
+   mask_fill(0, 0, width, height, 1.f);
 
    /* if we had an old surface copy it over */
    if (old_sampler_view) {
@@ -146,6 +153,25 @@ setup_new_alpha_mask(struct vg_context *ctx, struct st_framebuffer *stfb)
     */
    if (old_sampler_view)
       pipe_sampler_view_reference(&old_sampler_view, NULL);
+}
+
+static void
+vg_context_update_blend_texture_view(struct vg_context *ctx,
+                                     uint width, uint height)
+{
+   struct pipe_context *pipe = ctx->pipe;
+   struct st_framebuffer *stfb = ctx->draw_buffer;
+   struct pipe_sampler_view *old = stfb->blend_texture_view;
+
+   if (old &&
+       old->texture->width0 == width &&
+       old->texture->height0 == height)
+      return;
+
+   stfb->blend_texture_view = create_tex_and_view(pipe,
+         PIPE_FORMAT_B8G8R8A8_UNORM, width, height);
+
+   pipe_sampler_view_reference(&old, NULL);
 }
 
 static boolean
@@ -220,49 +246,6 @@ vg_context_update_color_rb(struct vg_context *ctx, struct pipe_resource *pt)
    return TRUE;
 }
 
-static void
-vg_context_update_draw_buffer(struct vg_context *ctx, struct pipe_resource *pt)
-{
-   struct st_framebuffer *stfb = ctx->draw_buffer;
-   boolean new_cbuf, new_zsbuf, new_size;
-
-   new_cbuf = vg_context_update_color_rb(ctx, pt);
-   new_zsbuf =
-      vg_context_update_depth_stencil_rb(ctx, pt->width0, pt->height0);
-
-   new_size = (stfb->width != pt->width0 || stfb->height != pt->height0);
-   stfb->width = pt->width0;
-   stfb->height = pt->height0;
-
-   if (new_cbuf || new_zsbuf || new_size) {
-      struct pipe_framebuffer_state *state = &ctx->state.g3d.fb;
-
-      memset(state, 0, sizeof(struct pipe_framebuffer_state));
-      state->width  = stfb->width;
-      state->height = stfb->height;
-      state->nr_cbufs = 1;
-      state->cbufs[0] = stfb->strb->surface;
-      state->zsbuf = stfb->dsrb->surface;
-
-      cso_set_framebuffer(ctx->cso_context, state);
-   }
-
-   if (new_zsbuf || new_size) {
-      ctx->state.dirty |= VIEWPORT_DIRTY;
-      ctx->state.dirty |= DEPTH_STENCIL_DIRTY;/*to reset the scissors*/
-
-      ctx->pipe->clear(ctx->pipe, PIPE_CLEAR_DEPTHSTENCIL, NULL, 0.0, 0);
-
-      /* we need all the other state already set */
-
-      setup_new_alpha_mask(ctx, stfb);
-
-      pipe_sampler_view_reference( &stfb->blend_texture_view, NULL);
-      stfb->blend_texture_view = create_tex_and_view(ctx->pipe,
-            PIPE_FORMAT_B8G8R8A8_UNORM, stfb->width, stfb->height);
-   }
-}
-
 /**
  * Flush the front buffer if the current context renders to the front buffer.
  */
@@ -304,15 +287,23 @@ vg_manager_validate_framebuffer(struct vg_context *ctx)
    if (!stfb->iface->validate(stfb->iface, &stfb->strb_att, 1, &pt) || !pt)
       return;
 
-   /*
-    * unset draw_buffer_invalid first because vg_context_update_draw_buffer
-    * will cause the framebuffer to be validated again because of a call to
-    * vg_validate_state
-    */
    p_atomic_set(&ctx->draw_buffer_invalid, FALSE);
-   vg_context_update_draw_buffer(ctx, pt);
-}
 
+   if (vg_context_update_color_rb(ctx, pt) ||
+       stfb->width != pt->width0 ||
+       stfb->height != pt->height0)
+      ctx->state.dirty |= FRAMEBUFFER_DIRTY;
+
+   if (vg_context_update_depth_stencil_rb(ctx, pt->width0, pt->height0))
+      ctx->state.dirty |= DEPTH_STENCIL_DIRTY;
+
+   stfb->width = pt->width0;
+   stfb->height = pt->height0;
+
+   /* TODO create as needed */
+   vg_context_update_alpha_mask_view(ctx, stfb->width, stfb->height);
+   vg_context_update_blend_texture_view(ctx, stfb->width, stfb->height);
+}
 
 static void
 vg_context_notify_invalid_framebuffer(struct st_context_iface *stctxi,
