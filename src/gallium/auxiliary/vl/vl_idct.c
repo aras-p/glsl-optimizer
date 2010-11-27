@@ -653,12 +653,12 @@ vl_idct_upload_matrix(struct pipe_context *pipe)
       PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
       &rect
    );
-   pitch = buf_transfer->stride / util_format_get_blocksize(buf_transfer->resource->format);
+   pitch = buf_transfer->stride / sizeof(float);
 
    f = pipe->transfer_map(pipe, buf_transfer);
    for(i = 0; i < BLOCK_HEIGHT; ++i)
       for(j = 0; j < BLOCK_WIDTH; ++j)
-         f[i * pitch * 4 + j] = const_matrix[j][i]; // transpose
+         f[i * pitch + j] = const_matrix[j][i]; // transpose
 
    pipe->transfer_unmap(pipe, buf_transfer);
    pipe->transfer_destroy(pipe, buf_transfer);
@@ -801,8 +801,6 @@ vl_idct_flush(struct vl_idct *idct)
 
       idct->pipe->set_vertex_buffers(idct->pipe, 2, idct->vertex_bufs.all);
       idct->pipe->bind_vertex_elements_state(idct->pipe, idct->vertex_elems_state);
-      idct->pipe->set_fragment_sampler_views(idct->pipe, 4, idct->sampler_views.all);
-      idct->pipe->bind_fragment_sampler_states(idct->pipe, 4, idct->samplers.all);
       idct->pipe->bind_vs_state(idct->pipe, idct->eb_vs);
       idct->pipe->bind_fs_state(idct->pipe, idct->eb_fs);
 
