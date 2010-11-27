@@ -312,6 +312,7 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 		return V_028C70_SWAP_STD;
 
 	case PIPE_FORMAT_L8A8_UNORM:
+		return V_028C70_SWAP_ALT;
 	case PIPE_FORMAT_R8G8_UNORM:
 		return V_028C70_SWAP_STD;
 
