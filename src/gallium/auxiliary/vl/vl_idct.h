@@ -90,10 +90,6 @@ struct vl_idct
 
    struct pipe_transfer *vec_transfer;
    struct vertex2f *vectors;
-
-   struct {
-      struct pipe_surface *intermediate, *destination;
-   } surfaces;
 };
 
 struct pipe_resource *vl_idct_upload_matrix(struct pipe_context *pipe);
