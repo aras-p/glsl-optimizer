@@ -73,16 +73,10 @@ typedef enum {
 
 struct renderer {
    struct pipe_context *pipe;
-   struct vg_context *owner;
-
    struct cso_context *cso;
 
-   void *fs;
-
    struct {
-      struct pipe_blend_state blend;
       struct pipe_rasterizer_state rasterizer;
-      struct pipe_shader_state vs_state;
       struct pipe_depth_stencil_alpha_state dsa;
       struct pipe_framebuffer_state fb;
    } g3d;
@@ -265,23 +259,23 @@ typedef enum {
    VEGA_Y0_BOTTOM
 } VegaOrientation;
 
-static void vg_set_viewport(struct vg_context *ctx,
+static void vg_set_viewport(struct renderer *r,
                             VegaOrientation orientation)
 {
-   struct st_framebuffer *stfb = ctx->draw_buffer;
+   const struct pipe_framebuffer_state *fb = &r->g3d.fb;
    struct pipe_viewport_state viewport;
    VGfloat y_scale = (orientation == VEGA_Y0_BOTTOM) ? -2.f : 2.f;
 
-   viewport.scale[0] =  stfb->width / 2.f;
-   viewport.scale[1] =  stfb->height / y_scale;
+   viewport.scale[0] =  fb->width / 2.f;
+   viewport.scale[1] =  fb->height / y_scale;
    viewport.scale[2] =  1.0;
    viewport.scale[3] =  1.0;
-   viewport.translate[0] = stfb->width / 2.f;
-   viewport.translate[1] = stfb->height / 2.f;
+   viewport.translate[0] = fb->width / 2.f;
+   viewport.translate[1] = fb->height / 2.f;
    viewport.translate[2] = 0.0;
    viewport.translate[3] = 0.0;
 
-   cso_set_viewport(ctx->cso_context, &viewport);
+   cso_set_viewport(r->cso, &viewport);
 }
 
 /**
@@ -304,7 +298,7 @@ static void renderer_set_target(struct renderer *r,
    fb.zsbuf = zsbuf;
    cso_set_framebuffer(r->cso, &fb);
 
-   vg_set_viewport(r->owner, (y0_top) ? VEGA_Y0_TOP : VEGA_Y0_BOTTOM);
+   vg_set_viewport(r, (y0_top) ? VEGA_Y0_TOP : VEGA_Y0_BOTTOM);
 }
 
 /**
@@ -1066,14 +1060,6 @@ void renderer_polygon_fill_end(struct renderer *renderer)
    renderer->state = RENDERER_STATE_INIT;
 }
 
-static void setup_shaders(struct renderer *ctx)
-{
-   struct pipe_context *pipe = ctx->pipe;
-   /* fragment shader */
-   ctx->fs = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D,
-                                           TGSI_INTERPOLATE_LINEAR);
-}
-
 struct renderer * renderer_create(struct vg_context *owner)
 {
    VGint i;
@@ -1082,11 +1068,8 @@ struct renderer * renderer_create(struct vg_context *owner)
    if (!renderer)
       return NULL;
 
-   renderer->owner = owner;
    renderer->pipe = owner->pipe;
    renderer->cso = owner->cso_context;
-
-   setup_shaders(renderer);
 
    /* init vertex data that doesn't change */
    for (i = 0; i < 4; i++)
@@ -1189,63 +1172,63 @@ void renderer_validate(struct renderer *renderer,
    assert(renderer->state == RENDERER_STATE_INIT);
 
    if (dirty & BLEND_DIRTY) {
-      struct pipe_blend_state *blend = &renderer->g3d.blend;
-      memset(blend, 0, sizeof(struct pipe_blend_state));
-      blend->rt[0].blend_enable = 1;
-      blend->rt[0].colormask = PIPE_MASK_RGBA;
+      struct pipe_blend_state blend;
+      memset(&blend, 0, sizeof(blend));
+      blend.rt[0].blend_enable = 1;
+      blend.rt[0].colormask = PIPE_MASK_RGBA;
 
       switch (state->blend_mode) {
       case VG_BLEND_SRC:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].blend_enable = 0;
+         blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
+         blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+         blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
+         blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+         blend.rt[0].blend_enable = 0;
          break;
       case VG_BLEND_SRC_OVER:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_SRC_ALPHA;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
+         blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_SRC_ALPHA;
+         blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+         blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
+         blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
          break;
       case VG_BLEND_DST_OVER:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_INV_DST_ALPHA;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_INV_DST_ALPHA;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_DST_ALPHA;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_DST_ALPHA;
+         blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_INV_DST_ALPHA;
+         blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_INV_DST_ALPHA;
+         blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_DST_ALPHA;
+         blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_DST_ALPHA;
          break;
       case VG_BLEND_SRC_IN:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_DST_ALPHA;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_DST_ALPHA;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+         blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_DST_ALPHA;
+         blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_DST_ALPHA;
+         blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
+         blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
          break;
       case VG_BLEND_DST_IN:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_SRC_ALPHA;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_SRC_ALPHA;
+         blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ZERO;
+         blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ZERO;
+         blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_SRC_ALPHA;
+         blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_SRC_ALPHA;
          break;
       case VG_BLEND_MULTIPLY:
       case VG_BLEND_SCREEN:
       case VG_BLEND_DARKEN:
       case VG_BLEND_LIGHTEN:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].blend_enable = 0;
+         blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
+         blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+         blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
+         blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+         blend.rt[0].blend_enable = 0;
          break;
       case VG_BLEND_ADDITIVE:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
+         blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
+         blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+         blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ONE;
+         blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
          break;
       default:
          assert(!"not implemented blend mode");
       }
-      cso_set_blend(renderer->cso, blend);
+      cso_set_blend(renderer->cso, &blend);
    }
 
    if (dirty & RASTERIZER_DIRTY) {
@@ -1268,7 +1251,7 @@ void renderer_validate(struct renderer *renderer,
       fb->zsbuf = stfb->dsrb->surface;
 
       cso_set_framebuffer(renderer->cso, fb);
-      vg_set_viewport(renderer->owner, VEGA_Y0_BOTTOM);
+      vg_set_viewport(renderer, VEGA_Y0_BOTTOM);
 
       /* surface coordinates to clipped coordinates */
       vs_consts[0] = 2.0f / fb->width;
@@ -1323,41 +1306,6 @@ void renderer_validate_for_shader(struct renderer *renderer,
    renderer_set_custom_fs(renderer, fs,
                           samplers, views, num_samplers,
                           const_buffer, const_buffer_len);
-}
-
-void renderer_draw_quad(struct renderer *r,
-                        VGfloat x1, VGfloat y1,
-                        VGfloat x2, VGfloat y2,
-                        VGfloat depth)
-{
-   assert(r->state == RENDERER_STATE_INIT);
-   assert(floatsEqual(depth, 0.0f));
-
-   renderer_quad_pos(r, x1, y1, x2, y2, VG_TRUE);
-   renderer_quad_draw(r);
-}
-
-void renderer_draw_texture(struct renderer *r,
-                           struct pipe_resource *tex,
-                           VGfloat x1offset, VGfloat y1offset,
-                           VGfloat x2offset, VGfloat y2offset,
-                           VGfloat x1, VGfloat y1,
-                           VGfloat x2, VGfloat y2)
-{
-   assert(r->state == RENDERER_STATE_INIT);
-   assert(tex->width0 != 0);
-   assert(tex->height0 != 0);
-
-   cso_save_vertex_shader(r->cso);
-
-   renderer_set_vs(r, RENDERER_VS_TEXTURE);
-
-   renderer_quad_pos(r, x1, y1, x2, y2, VG_TRUE);
-   renderer_quad_texcoord(r, x1offset, y1offset,
-         x2offset, y2offset, tex->width0, tex->height0);
-   renderer_quad_draw(r);
-
-   cso_restore_vertex_shader(r->cso);
 }
 
 void renderer_copy_texture(struct renderer *ctx,
@@ -1424,7 +1372,7 @@ void renderer_copy_surface(struct renderer *ctx,
    struct pipe_sampler_view *view;
    struct pipe_resource texTemp, *tex;
    struct pipe_subresource subsrc, subdst;
-   struct st_framebuffer *stfb = ctx->owner->draw_buffer;
+   const struct pipe_framebuffer_state *fb = &ctx->g3d.fb;
    const int srcW = abs(srcX1 - srcX0);
    const int srcH = abs(srcY1 - srcY0);
    const int srcLeft = MIN2(srcX0, srcX1);
@@ -1492,7 +1440,7 @@ void renderer_copy_surface(struct renderer *ctx,
    assert(floatsEqual(z, 0.0f));
 
    /* draw */
-   if (stfb->strb->surface == dst) {
+   if (fb->cbufs[0] == dst) {
       /* transform back to surface coordinates */
       dstY0 = dst->height - dstY0;
       dstY1 = dst->height - dstY1;

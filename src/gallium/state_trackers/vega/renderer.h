@@ -131,16 +131,6 @@ void renderer_polygon_fill(struct renderer *renderer,
 
 void renderer_polygon_fill_end(struct renderer *renderer);
 
-void renderer_draw_quad(struct renderer *,
-                        VGfloat x1, VGfloat y1,
-                        VGfloat x2, VGfloat y2,
-                        VGfloat depth);
-void renderer_draw_texture(struct renderer *,
-                           struct pipe_resource *texture,
-                           VGfloat x1offset, VGfloat y1offset,
-                           VGfloat x2offset, VGfloat y2offset,
-                           VGfloat x1, VGfloat y1,
-                           VGfloat x2, VGfloat y2);
 void renderer_texture_quad(struct renderer *,
                            struct pipe_resource *texture,
                            VGfloat x1offset, VGfloat y1offset,
