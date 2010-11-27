@@ -432,7 +432,6 @@ init_buffers(struct vl_idct *idct)
    template.usage = PIPE_USAGE_STREAM;
    idct->textures.individual.source = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
 
-   template.format = idct->destination->format;
    template.usage = PIPE_USAGE_STATIC;
    idct->textures.individual.intermediate = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
 
@@ -534,19 +533,25 @@ init_state(struct vl_idct *idct)
    idct->num_blocks = 0;
    idct->num_empty_blocks = 0;
 
-   idct->viewport.scale[0] = idct->destination->width0;
-   idct->viewport.scale[1] = idct->destination->height0;
-   idct->viewport.scale[2] = 1;
-   idct->viewport.scale[3] = 1;
-   idct->viewport.translate[0] = 0;
-   idct->viewport.translate[1] = 0;
-   idct->viewport.translate[2] = 0;
-   idct->viewport.translate[3] = 0;
+   idct->viewport[0].scale[0] = idct->destination->width0;
+   idct->viewport[1].scale[0] = idct->destination->width0;
 
-   idct->fb_state.width = idct->destination->width0;
-   idct->fb_state.height = idct->destination->height0;
-   idct->fb_state.nr_cbufs = 1;
-   idct->fb_state.zsbuf = NULL;
+   idct->fb_state[0].width = idct->destination->width0;
+   idct->fb_state[1].width = idct->destination->width0;
+
+   for(i = 0; i < 2; ++i) {
+      idct->viewport[i].scale[1] = idct->destination->height0;
+      idct->viewport[i].scale[2] = 1;
+      idct->viewport[i].scale[3] = 1;
+      idct->viewport[i].translate[0] = 0;
+      idct->viewport[i].translate[1] = 0;
+      idct->viewport[i].translate[2] = 0;
+      idct->viewport[i].translate[3] = 0;
+
+      idct->fb_state[i].height = idct->destination->height0;
+      idct->fb_state[i].nr_cbufs = 1;
+      idct->fb_state[i].zsbuf = NULL;
+   }
 
    for (i = 0; i < 4; ++i) {
       memset(&sampler, 0, sizeof(sampler));
@@ -651,10 +656,12 @@ vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, struct pipe_resour
    idct->surfaces.intermediate = idct->pipe->screen->get_tex_surface(
       idct->pipe->screen, idct->textures.individual.intermediate, 0, 0, 0,
       PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET);
+   idct->fb_state[0].cbufs[0] = idct->surfaces.intermediate;
 
    idct->surfaces.destination = idct->pipe->screen->get_tex_surface(
       idct->pipe->screen, idct->destination, 0, 0, 0,
       PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET);
+   idct->fb_state[1].cbufs[0] = idct->surfaces.destination;
 
    init_constants(idct);
    xfer_buffers_map(idct);
@@ -724,9 +731,8 @@ vl_idct_flush(struct vl_idct *idct)
    if(idct->num_blocks > 0) {
 
       /* first stage */
-      idct->fb_state.cbufs[0] = idct->surfaces.intermediate;
-      idct->pipe->set_framebuffer_state(idct->pipe, &idct->fb_state);
-      idct->pipe->set_viewport_state(idct->pipe, &idct->viewport);
+      idct->pipe->set_framebuffer_state(idct->pipe, &idct->fb_state[0]);
+      idct->pipe->set_viewport_state(idct->pipe, &idct->viewport[0]);
 
       idct->pipe->set_vertex_buffers(idct->pipe, 2, idct->vertex_bufs.all);
       idct->pipe->bind_vertex_elements_state(idct->pipe, idct->vertex_elems_state);
@@ -738,9 +744,8 @@ vl_idct_flush(struct vl_idct *idct)
       util_draw_arrays(idct->pipe, PIPE_PRIM_QUADS, 0, idct->num_blocks * 4);
 
       /* second stage */
-      idct->fb_state.cbufs[0] = idct->surfaces.destination;
-      idct->pipe->set_framebuffer_state(idct->pipe, &idct->fb_state);
-      idct->pipe->set_viewport_state(idct->pipe, &idct->viewport);
+      idct->pipe->set_framebuffer_state(idct->pipe, &idct->fb_state[1]);
+      idct->pipe->set_viewport_state(idct->pipe, &idct->viewport[1]);
 
       idct->pipe->set_vertex_buffers(idct->pipe, 2, idct->vertex_bufs.all);
       idct->pipe->bind_vertex_elements_state(idct->pipe, idct->vertex_elems_state);
@@ -755,9 +760,8 @@ vl_idct_flush(struct vl_idct *idct)
    if(idct->num_empty_blocks > 0) {
 
       /* empty block handling */
-      idct->fb_state.cbufs[0] = idct->surfaces.destination;
-      idct->pipe->set_framebuffer_state(idct->pipe, &idct->fb_state);
-      idct->pipe->set_viewport_state(idct->pipe, &idct->viewport);
+      idct->pipe->set_framebuffer_state(idct->pipe, &idct->fb_state[1]);
+      idct->pipe->set_viewport_state(idct->pipe, &idct->viewport[1]);
 
       idct->pipe->set_vertex_buffers(idct->pipe, 2, idct->vertex_bufs.all);
       idct->pipe->bind_vertex_elements_state(idct->pipe, idct->vertex_elems_state);
