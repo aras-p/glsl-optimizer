@@ -44,7 +44,6 @@
 #include "util/u_memory.h"
 #include "util/u_blit.h"
 #include "util/u_sampler.h"
-#include "util/u_math.h"
 
 struct vg_context *_vg_context = 0;
 
@@ -269,179 +268,17 @@ void vg_context_remove_object(struct vg_context *ctx,
    }
 }
 
-static void update_clip_state(struct vg_context *ctx)
-{
-   struct pipe_depth_stencil_alpha_state *dsa = &ctx->state.g3d.dsa;
-   struct vg_state *state =  &ctx->state.vg;
-
-   memset(dsa, 0, sizeof(struct pipe_depth_stencil_alpha_state));
-
-   if (state->scissoring) {
-      struct pipe_framebuffer_state *fb = &ctx->state.g3d.fb;
-      int i;
-
-      renderer_scissor_begin(ctx->renderer, VG_FALSE);
-
-      for (i = 0; i < state->scissor_rects_num; ++i) {
-         const float x      = state->scissor_rects[i * 4 + 0].f;
-         const float y      = state->scissor_rects[i * 4 + 1].f;
-         const float width  = state->scissor_rects[i * 4 + 2].f;
-         const float height = state->scissor_rects[i * 4 + 3].f;
-         VGint x0, y0, x1, y1, iw, ih;
-
-         x0 = (VGint) x;
-         y0 = (VGint) y;
-         if (x0 < 0)
-            x0 = 0;
-         if (y0 < 0)
-            y0 = 0;
-
-         /* note that x1 and y1 are exclusive */
-         x1 = (VGint) ceilf(x + width);
-         y1 = (VGint) ceilf(y + height);
-         if (x1 > fb->width)
-            x1 = fb->width;
-         if (y1 > fb->height)
-            y1 = fb->height;
-
-         iw = x1 - x0;
-         ih = y1 - y0;
-         if (iw > 0 && ih> 0 )
-            renderer_scissor(ctx->renderer, x0, y0, iw, ih);
-      }
-
-      renderer_scissor_end(ctx->renderer);
-
-      dsa->depth.enabled = 1; /* glEnable(GL_DEPTH_TEST); */
-      dsa->depth.writemask = 0;/*glDepthMask(FALSE);*/
-      dsa->depth.func = PIPE_FUNC_GEQUAL;
-   }
-}
-
 void vg_validate_state(struct vg_context *ctx)
 {
    vg_manager_validate_framebuffer(ctx);
 
-   if ((ctx->state.dirty & BLEND_DIRTY)) {
-      struct pipe_blend_state *blend = &ctx->state.g3d.blend;
-      memset(blend, 0, sizeof(struct pipe_blend_state));
-      blend->rt[0].blend_enable = 1;
-      blend->rt[0].colormask = PIPE_MASK_RGBA;
+   renderer_validate(ctx->renderer, ctx->state.dirty,
+         ctx->draw_buffer, &ctx->state.vg);
 
-      switch (ctx->state.vg.blend_mode) {
-      case VG_BLEND_SRC:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].blend_enable = 0;
-         break;
-      case VG_BLEND_SRC_OVER:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_SRC_ALPHA;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
-         break;
-      case VG_BLEND_DST_OVER:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_INV_DST_ALPHA;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_INV_DST_ALPHA;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_DST_ALPHA;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_DST_ALPHA;
-         break;
-      case VG_BLEND_SRC_IN:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_DST_ALPHA;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_DST_ALPHA;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-         break;
-      case VG_BLEND_DST_IN:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_SRC_ALPHA;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_SRC_ALPHA;
-         break;
-      case VG_BLEND_MULTIPLY:
-      case VG_BLEND_SCREEN:
-      case VG_BLEND_DARKEN:
-      case VG_BLEND_LIGHTEN:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].blend_enable = 0;
-         break;
-      case VG_BLEND_ADDITIVE:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
-         break;
-      default:
-         assert(!"not implemented blend mode");
-      }
-      cso_set_blend(ctx->cso_context, &ctx->state.g3d.blend);
-   }
-   if ((ctx->state.dirty & RASTERIZER_DIRTY)) {
-      struct pipe_rasterizer_state *raster = &ctx->state.g3d.rasterizer;
-      memset(raster, 0, sizeof(struct pipe_rasterizer_state));
-      raster->gl_rasterization_rules = 1;
-      cso_set_rasterizer(ctx->cso_context, &ctx->state.g3d.rasterizer);
-   }
-   if ((ctx->state.dirty & FRAMEBUFFER_DIRTY)) {
-      struct pipe_framebuffer_state *fb = &ctx->state.g3d.fb;
-      struct pipe_resource **cbuf = &ctx->vs_const_buffer;
-      VGfloat vs_consts[8];
-
-      memset(fb, 0, sizeof(struct pipe_framebuffer_state));
-      fb->width  = ctx->draw_buffer->width;
-      fb->height = ctx->draw_buffer->height;
-      fb->nr_cbufs = 1;
-      fb->cbufs[0] = ctx->draw_buffer->strb->surface;
-      fb->zsbuf = ctx->draw_buffer->dsrb->surface;
-
-      cso_set_framebuffer(ctx->cso_context, fb);
-      vg_set_viewport(ctx, VEGA_Y0_BOTTOM);
-
-      /* surface coordinates to clipped coordinates */
-      vs_consts[0] = 2.0f / fb->width;
-      vs_consts[1] = 2.0f / fb->height;
-      vs_consts[2] = 1.0f;
-      vs_consts[3] = 1.0f;
-      vs_consts[4] = -1.0f;
-      vs_consts[5] = -1.0f;
-      vs_consts[6] = 0.0f;
-      vs_consts[7] = 0.0f;
-
-      pipe_resource_reference(cbuf, NULL);
-      *cbuf = pipe_buffer_create(ctx->pipe->screen, 
-				 PIPE_BIND_CONSTANT_BUFFER,
-				 sizeof(vs_consts));
-
-      if (*cbuf) {
-         st_no_flush_pipe_buffer_write(ctx, *cbuf,
-                                       0, sizeof(vs_consts), vs_consts);
-      }
-      ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_VERTEX, 0, *cbuf);
-
-      /* we also got a new depth buffer */
-      if ((ctx->state.dirty & DEPTH_STENCIL_DIRTY))
-         ctx->pipe->clear(ctx->pipe, PIPE_CLEAR_DEPTHSTENCIL, NULL, 0.0, 0);
-   }
-   if ((ctx->state.dirty & VS_DIRTY)) {
-      cso_set_vertex_shader_handle(ctx->cso_context,
-                                   vg_plain_vs(ctx));
-   }
-
-   /* must be last because it renders to the depth buffer*/
-   if ((ctx->state.dirty & DEPTH_STENCIL_DIRTY)) {
-      update_clip_state(ctx);
-      cso_set_depth_stencil_alpha(ctx->cso_context, &ctx->state.g3d.dsa);
-   }
+   ctx->state.dirty = NONE_DIRTY;
 
    shader_set_masking(ctx->shader, ctx->state.vg.masking);
    shader_set_image_mode(ctx->shader, ctx->state.vg.image_mode);
-
-   ctx->state.dirty = NONE_DIRTY;
 }
 
 VGboolean vg_object_is_valid(void *ptr, enum vg_object_type type)
@@ -571,22 +408,4 @@ void * vg_texture_vs(struct vg_context *ctx)
    }
 
    return ctx->texture_vs->driver;
-}
-
-void vg_set_viewport(struct vg_context *ctx, VegaOrientation orientation)
-{
-   struct st_framebuffer *stfb = ctx->draw_buffer;
-   struct pipe_viewport_state viewport;
-   VGfloat y_scale = (orientation == VEGA_Y0_BOTTOM) ? -2.f : 2.f;
-
-   viewport.scale[0] =  stfb->width / 2.f;
-   viewport.scale[1] =  stfb->height / y_scale;
-   viewport.scale[2] =  1.0;
-   viewport.scale[3] =  1.0;
-   viewport.translate[0] = stfb->width / 2.f;
-   viewport.translate[1] = stfb->height / 2.f;
-   viewport.translate[2] = 0.0;
-   viewport.translate[3] = 0.0;
-
-   cso_set_viewport(ctx->cso_context, &viewport);
 }

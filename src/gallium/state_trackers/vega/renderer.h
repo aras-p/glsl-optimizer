@@ -33,6 +33,8 @@
 struct renderer;
 
 struct vg_context;
+struct vg_state;
+struct st_framebuffer;
 struct pipe_resource;
 struct pipe_sampler_state;
 struct pipe_sampler_view;
@@ -42,6 +44,11 @@ struct pipe_vertex_buffer;
 
 struct renderer *renderer_create(struct vg_context *owner);
 void renderer_destroy(struct renderer *);
+
+void renderer_validate(struct renderer *renderer,
+                       VGbitfield dirty,
+                       const struct st_framebuffer *stfb,
+                       const struct vg_state *state);
 
 VGboolean renderer_copy_begin(struct renderer *renderer,
                               struct pipe_surface *dst,

@@ -40,6 +40,7 @@
 #include "util/u_simple_shaders.h"
 #include "util/u_memory.h"
 #include "util/u_sampler.h"
+#include "util/u_math.h"
 
 #include "cso_cache/cso_context.h"
 #include "tgsi/tgsi_ureg.h"
@@ -77,6 +78,16 @@ struct renderer {
    struct cso_context *cso;
 
    void *fs;
+
+   struct {
+      struct pipe_blend_state blend;
+      struct pipe_rasterizer_state rasterizer;
+      struct pipe_shader_state vs_state;
+      struct pipe_depth_stencil_alpha_state dsa;
+      struct pipe_framebuffer_state fb;
+   } g3d;
+
+   struct pipe_resource *vs_const_buffer;
 
    VGfloat vertices[4][2][4];
 
@@ -246,6 +257,30 @@ static void renderer_set_fs(struct renderer *r, RendererFs id)
    }
 
    cso_set_fragment_shader_handle(r->cso, r->cached_fs[id]);
+}
+
+typedef enum {
+   VEGA_Y0_TOP,
+   VEGA_Y0_BOTTOM
+} VegaOrientation;
+
+static void vg_set_viewport(struct vg_context *ctx,
+                            VegaOrientation orientation)
+{
+   struct st_framebuffer *stfb = ctx->draw_buffer;
+   struct pipe_viewport_state viewport;
+   VGfloat y_scale = (orientation == VEGA_Y0_BOTTOM) ? -2.f : 2.f;
+
+   viewport.scale[0] =  stfb->width / 2.f;
+   viewport.scale[1] =  stfb->height / y_scale;
+   viewport.scale[2] =  1.0;
+   viewport.scale[3] =  1.0;
+   viewport.translate[0] = stfb->width / 2.f;
+   viewport.translate[1] = stfb->height / 2.f;
+   viewport.translate[2] = 0.0;
+   viewport.translate[3] = 0.0;
+
+   cso_set_viewport(ctx->cso_context, &viewport);
 }
 
 /**
@@ -930,8 +965,7 @@ void renderer_polygon_stencil(struct renderer *renderer,
       struct pipe_rasterizer_state raster;
       struct pipe_depth_stencil_alpha_state dsa;
 
-      /* TODO do not access owner state */
-      raster = renderer->owner->state.g3d.rasterizer;
+      raster = renderer->g3d.rasterizer;
       dsa = renderer->u.polygon_stencil.dsa;
 
       /* front */
@@ -998,8 +1032,7 @@ VGboolean renderer_polygon_fill_begin(struct renderer *renderer,
    dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_REPLACE;
    dsa.stencil[0].valuemask = ~0;
    dsa.stencil[0].writemask = ~0;
-   /* TODO do not access owner state */
-   dsa.depth = renderer->owner->state.g3d.dsa.depth;
+   dsa.depth = renderer->g3d.dsa.depth;
    cso_set_depth_stencil_alpha(renderer->cso, &dsa);
 
    renderer->state = RENDERER_STATE_POLYGON_FILL;
@@ -1076,6 +1109,8 @@ void renderer_destroy(struct renderer *ctx)
          cso_delete_fragment_shader(ctx->cso, ctx->cached_fs[i]);
    }
 
+   pipe_resource_reference(&ctx->vs_const_buffer, NULL);
+
 #if 0
    if (ctx->fs) {
       cso_delete_fragment_shader(ctx->cso, ctx->fs);
@@ -1083,6 +1118,187 @@ void renderer_destroy(struct renderer *ctx)
    }
 #endif
    FREE(ctx);
+}
+
+static void update_clip_state(struct renderer *renderer,
+                              const struct vg_state *state)
+{
+   struct pipe_depth_stencil_alpha_state *dsa = &renderer->g3d.dsa;
+
+   memset(dsa, 0, sizeof(struct pipe_depth_stencil_alpha_state));
+
+   if (state->scissoring) {
+      struct pipe_framebuffer_state *fb = &renderer->g3d.fb;
+      int i;
+
+      renderer_scissor_begin(renderer, VG_FALSE);
+
+      for (i = 0; i < state->scissor_rects_num; ++i) {
+         const float x      = state->scissor_rects[i * 4 + 0].f;
+         const float y      = state->scissor_rects[i * 4 + 1].f;
+         const float width  = state->scissor_rects[i * 4 + 2].f;
+         const float height = state->scissor_rects[i * 4 + 3].f;
+         VGint x0, y0, x1, y1, iw, ih;
+
+         x0 = (VGint) x;
+         y0 = (VGint) y;
+         if (x0 < 0)
+            x0 = 0;
+         if (y0 < 0)
+            y0 = 0;
+
+         /* note that x1 and y1 are exclusive */
+         x1 = (VGint) ceilf(x + width);
+         y1 = (VGint) ceilf(y + height);
+         if (x1 > fb->width)
+            x1 = fb->width;
+         if (y1 > fb->height)
+            y1 = fb->height;
+
+         iw = x1 - x0;
+         ih = y1 - y0;
+         if (iw > 0 && ih> 0 )
+            renderer_scissor(renderer, x0, y0, iw, ih);
+      }
+
+      renderer_scissor_end(renderer);
+
+      dsa->depth.enabled = 1; /* glEnable(GL_DEPTH_TEST); */
+      dsa->depth.writemask = 0;/*glDepthMask(FALSE);*/
+      dsa->depth.func = PIPE_FUNC_GEQUAL;
+   }
+}
+
+/**
+ * Propogate OpenVG state changes to the renderer.  Only framebuffer, blending
+ * and scissoring states are relevant here.
+ */
+void renderer_validate(struct renderer *renderer,
+                       VGbitfield dirty,
+                       const struct st_framebuffer *stfb,
+                       const struct vg_state *state)
+{
+   assert(renderer->state == RENDERER_STATE_INIT);
+
+   if (dirty & BLEND_DIRTY) {
+      struct pipe_blend_state *blend = &renderer->g3d.blend;
+      memset(blend, 0, sizeof(struct pipe_blend_state));
+      blend->rt[0].blend_enable = 1;
+      blend->rt[0].colormask = PIPE_MASK_RGBA;
+
+      switch (state->blend_mode) {
+      case VG_BLEND_SRC:
+         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
+         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+         blend->rt[0].blend_enable = 0;
+         break;
+      case VG_BLEND_SRC_OVER:
+         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_SRC_ALPHA;
+         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
+         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
+         break;
+      case VG_BLEND_DST_OVER:
+         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_INV_DST_ALPHA;
+         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_INV_DST_ALPHA;
+         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_DST_ALPHA;
+         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_DST_ALPHA;
+         break;
+      case VG_BLEND_SRC_IN:
+         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_DST_ALPHA;
+         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_DST_ALPHA;
+         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
+         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+         break;
+      case VG_BLEND_DST_IN:
+         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ZERO;
+         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ZERO;
+         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_SRC_ALPHA;
+         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_SRC_ALPHA;
+         break;
+      case VG_BLEND_MULTIPLY:
+      case VG_BLEND_SCREEN:
+      case VG_BLEND_DARKEN:
+      case VG_BLEND_LIGHTEN:
+         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
+         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+         blend->rt[0].blend_enable = 0;
+         break;
+      case VG_BLEND_ADDITIVE:
+         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ONE;
+         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
+         break;
+      default:
+         assert(!"not implemented blend mode");
+      }
+      cso_set_blend(renderer->cso, blend);
+   }
+
+   if (dirty & RASTERIZER_DIRTY) {
+      struct pipe_rasterizer_state *raster = &renderer->g3d.rasterizer;
+      memset(raster, 0, sizeof(struct pipe_rasterizer_state));
+      raster->gl_rasterization_rules = 1;
+      cso_set_rasterizer(renderer->cso, raster);
+   }
+
+   if (dirty & FRAMEBUFFER_DIRTY) {
+      struct pipe_framebuffer_state *fb = &renderer->g3d.fb;
+      struct pipe_resource **cbuf = &renderer->vs_const_buffer;
+      VGfloat vs_consts[8];
+
+      memset(fb, 0, sizeof(struct pipe_framebuffer_state));
+      fb->width  = stfb->width;
+      fb->height = stfb->height;
+      fb->nr_cbufs = 1;
+      fb->cbufs[0] = stfb->strb->surface;
+      fb->zsbuf = stfb->dsrb->surface;
+
+      cso_set_framebuffer(renderer->cso, fb);
+      vg_set_viewport(renderer->owner, VEGA_Y0_BOTTOM);
+
+      /* surface coordinates to clipped coordinates */
+      vs_consts[0] = 2.0f / fb->width;
+      vs_consts[1] = 2.0f / fb->height;
+      vs_consts[2] = 1.0f;
+      vs_consts[3] = 1.0f;
+      vs_consts[4] = -1.0f;
+      vs_consts[5] = -1.0f;
+      vs_consts[6] = 0.0f;
+      vs_consts[7] = 0.0f;
+
+      pipe_resource_reference(cbuf, NULL);
+      *cbuf = pipe_buffer_create(renderer->pipe->screen, 
+				 PIPE_BIND_CONSTANT_BUFFER,
+				 sizeof(vs_consts));
+
+      if (*cbuf) {
+         pipe_buffer_write(renderer->pipe,
+               *cbuf, 0, sizeof(vs_consts), vs_consts);
+      }
+      renderer->pipe->set_constant_buffer(renderer->pipe,
+            PIPE_SHADER_VERTEX, 0, *cbuf);
+
+      /* we also got a new depth buffer */
+      if (dirty & DEPTH_STENCIL_DIRTY) {
+         renderer->pipe->clear(renderer->pipe,
+               PIPE_CLEAR_DEPTHSTENCIL, NULL, 0.0, 0);
+      }
+   }
+
+   if (dirty & VS_DIRTY)
+      renderer_set_vs(renderer, RENDERER_VS_PLAIN);
+
+   /* must be last because it renders to the depth buffer*/
+   if (dirty & DEPTH_STENCIL_DIRTY) {
+      update_clip_state(renderer, state);
+      cso_set_depth_stencil_alpha(renderer->cso, &renderer->g3d.dsa);
+   }
 }
 
 void renderer_draw_quad(struct renderer *r,

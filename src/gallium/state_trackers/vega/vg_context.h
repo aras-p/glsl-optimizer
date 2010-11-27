@@ -98,13 +98,6 @@ struct vg_context
 
    struct {
       struct vg_state vg;
-      struct {
-         struct pipe_blend_state blend;
-         struct pipe_rasterizer_state rasterizer;
-         struct pipe_shader_state vs_state;
-         struct pipe_depth_stencil_alpha_state dsa;
-         struct pipe_framebuffer_state fb;
-      } g3d;
       VGbitfield dirty;
    } state;
 
@@ -295,10 +288,5 @@ static INLINE void vg_bound_rect(VGfloat coords[4],
 void *vg_plain_vs(struct vg_context *ctx);
 void *vg_clear_vs(struct vg_context *ctx);
 void *vg_texture_vs(struct vg_context *ctx);
-typedef enum {
-   VEGA_Y0_TOP,
-   VEGA_Y0_BOTTOM
-} VegaOrientation;
-void vg_set_viewport(struct vg_context *ctx, VegaOrientation orientation);
 
 #endif
