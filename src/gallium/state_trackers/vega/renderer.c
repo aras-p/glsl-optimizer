@@ -51,6 +51,8 @@ typedef enum {
    RENDERER_STATE_SCISSOR,
    RENDERER_STATE_CLEAR,
    RENDERER_STATE_FILTER,
+   RENDERER_STATE_POLYGON_STENCIL,
+   RENDERER_STATE_POLYGON_FILL,
    NUM_RENDERER_STATES
 } RendererState;
 
@@ -103,6 +105,12 @@ struct renderer {
          VGboolean use_sampler;
          VGint tex_width, tex_height;
       } filter;
+
+      struct {
+         struct pipe_depth_stencil_alpha_state dsa;
+         VGboolean manual_two_sides;
+         VGboolean restore_dsa;
+      } polygon_stencil;
    } u;
 };
 
@@ -833,6 +841,193 @@ void renderer_filter_end(struct renderer *renderer)
    cso_restore_viewport(renderer->cso);
    cso_restore_blend(renderer->cso);
    cso_restore_fragment_shader(renderer->cso);
+
+   renderer->state = RENDERER_STATE_INIT;
+}
+
+/**
+ * Prepare the renderer for polygon silhouette rendering.
+ */
+VGboolean renderer_polygon_stencil_begin(struct renderer *renderer,
+                                         struct pipe_vertex_element *velem,
+                                         VGFillRule rule,
+                                         VGboolean restore_dsa)
+{
+   struct pipe_depth_stencil_alpha_state *dsa;
+   VGboolean manual_two_sides;
+
+   assert(renderer->state == RENDERER_STATE_INIT);
+
+   cso_save_blend(renderer->cso);
+   cso_save_depth_stencil_alpha(renderer->cso);
+
+   cso_set_vertex_elements(renderer->cso, 1, velem);
+
+   /* disable color writes */
+   renderer_set_blend(renderer, 0);
+
+   manual_two_sides = VG_FALSE;
+   dsa = &renderer->u.polygon_stencil.dsa;
+   memset(dsa, 0, sizeof(*dsa));
+   if (rule == VG_EVEN_ODD) {
+      dsa->stencil[0].enabled = 1;
+      dsa->stencil[0].writemask = 1;
+      dsa->stencil[0].fail_op = PIPE_STENCIL_OP_KEEP;
+      dsa->stencil[0].zfail_op = PIPE_STENCIL_OP_KEEP;
+      dsa->stencil[0].zpass_op = PIPE_STENCIL_OP_INVERT;
+      dsa->stencil[0].func = PIPE_FUNC_ALWAYS;
+      dsa->stencil[0].valuemask = ~0;
+   }
+   else {
+      assert(rule == VG_NON_ZERO);
+
+      /* front face */
+      dsa->stencil[0].enabled = 1;
+      dsa->stencil[0].writemask = ~0;
+      dsa->stencil[0].fail_op = PIPE_STENCIL_OP_KEEP;
+      dsa->stencil[0].zfail_op = PIPE_STENCIL_OP_KEEP;
+      dsa->stencil[0].zpass_op = PIPE_STENCIL_OP_INCR_WRAP;
+      dsa->stencil[0].func = PIPE_FUNC_ALWAYS;
+      dsa->stencil[0].valuemask = ~0;
+
+      if (renderer->pipe->screen->get_param(renderer->pipe->screen,
+                                            PIPE_CAP_TWO_SIDED_STENCIL)) {
+         /* back face */
+         dsa->stencil[1] = dsa->stencil[0];
+         dsa->stencil[1].zpass_op = PIPE_STENCIL_OP_DECR_WRAP;
+      }
+      else {
+         manual_two_sides = VG_TRUE;
+      }
+   }
+   cso_set_depth_stencil_alpha(renderer->cso, dsa);
+
+   if (manual_two_sides)
+      cso_save_rasterizer(renderer->cso);
+
+   renderer->u.polygon_stencil.manual_two_sides = manual_two_sides;
+   renderer->u.polygon_stencil.restore_dsa = restore_dsa;
+   renderer->state = RENDERER_STATE_POLYGON_STENCIL;
+
+   return VG_TRUE;
+}
+
+/**
+ * Render a polygon silhouette to stencil buffer.
+ */
+void renderer_polygon_stencil(struct renderer *renderer,
+                              struct pipe_vertex_buffer *vbuf,
+                              VGuint mode, VGuint start, VGuint count)
+{
+   assert(renderer->state == RENDERER_STATE_POLYGON_STENCIL);
+
+   renderer->pipe->set_vertex_buffers(renderer->pipe, 1, vbuf);
+
+   if (!renderer->u.polygon_stencil.manual_two_sides) {
+      util_draw_arrays(renderer->pipe, mode, start, count);
+   }
+   else {
+      struct pipe_rasterizer_state raster;
+      struct pipe_depth_stencil_alpha_state dsa;
+
+      /* TODO do not access owner state */
+      raster = renderer->owner->state.g3d.rasterizer;
+      dsa = renderer->u.polygon_stencil.dsa;
+
+      /* front */
+      raster.cull_face = PIPE_FACE_BACK;
+      dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_INCR_WRAP;
+
+      cso_set_rasterizer(renderer->cso, &raster);
+      cso_set_depth_stencil_alpha(renderer->cso, &dsa);
+      util_draw_arrays(renderer->pipe, mode, start, count);
+
+      /* back */
+      raster.cull_face = PIPE_FACE_FRONT;
+      dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_DECR_WRAP;
+
+      cso_set_rasterizer(renderer->cso, &raster);
+      cso_set_depth_stencil_alpha(renderer->cso, &dsa);
+      util_draw_arrays(renderer->pipe, mode, start, count);
+   }
+}
+
+/**
+ * End polygon silhouette rendering.
+ */
+void renderer_polygon_stencil_end(struct renderer *renderer)
+{
+   assert(renderer->state == RENDERER_STATE_POLYGON_STENCIL);
+
+   if (renderer->u.polygon_stencil.manual_two_sides)
+      cso_restore_rasterizer(renderer->cso);
+
+   /* restore color writes */
+   cso_restore_blend(renderer->cso);
+
+   if (renderer->u.polygon_stencil.restore_dsa)
+      cso_restore_depth_stencil_alpha(renderer->cso);
+
+   renderer->state = RENDERER_STATE_INIT;
+}
+
+/**
+ * Prepare the renderer for polygon filling.
+ */
+VGboolean renderer_polygon_fill_begin(struct renderer *renderer,
+                                      VGboolean save_dsa)
+{
+   struct pipe_depth_stencil_alpha_state dsa;
+   struct pipe_stencil_ref sr;
+
+   assert(renderer->state == RENDERER_STATE_INIT);
+
+   if (save_dsa)
+      cso_save_depth_stencil_alpha(renderer->cso);
+
+   /* only need a fixed 0. Rely on default or move it out at least? */
+   memset(&sr, 0, sizeof(sr));
+   cso_set_stencil_ref(renderer->cso, &sr);
+
+   /* setup stencil ops */
+   memset(&dsa, 0, sizeof(dsa));
+   dsa.stencil[0].enabled = 1;
+   dsa.stencil[0].func = PIPE_FUNC_NOTEQUAL;
+   dsa.stencil[0].fail_op = PIPE_STENCIL_OP_REPLACE;
+   dsa.stencil[0].zfail_op = PIPE_STENCIL_OP_REPLACE;
+   dsa.stencil[0].zpass_op = PIPE_STENCIL_OP_REPLACE;
+   dsa.stencil[0].valuemask = ~0;
+   dsa.stencil[0].writemask = ~0;
+   /* TODO do not access owner state */
+   dsa.depth = renderer->owner->state.g3d.dsa.depth;
+   cso_set_depth_stencil_alpha(renderer->cso, &dsa);
+
+   renderer->state = RENDERER_STATE_POLYGON_FILL;
+
+   return VG_TRUE;
+}
+
+/**
+ * Fill a polygon.
+ */
+void renderer_polygon_fill(struct renderer *renderer,
+                           VGfloat min_x, VGfloat min_y,
+                           VGfloat max_x, VGfloat max_y)
+{
+   assert(renderer->state == RENDERER_STATE_POLYGON_FILL);
+
+   renderer_quad_pos(renderer, min_x, min_y, max_x, max_y, VG_TRUE);
+   renderer_quad_draw(renderer);
+}
+
+/**
+ * End polygon filling.
+ */
+void renderer_polygon_fill_end(struct renderer *renderer)
+{
+   assert(renderer->state == RENDERER_STATE_POLYGON_FILL);
+
+   cso_restore_depth_stencil_alpha(renderer->cso);
 
    renderer->state = RENDERER_STATE_INIT;
 }

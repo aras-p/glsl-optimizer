@@ -37,6 +37,8 @@ struct pipe_resource;
 struct pipe_sampler_state;
 struct pipe_sampler_view;
 struct pipe_surface;
+struct pipe_vertex_element;
+struct pipe_vertex_buffer;
 
 struct renderer *renderer_create(struct vg_context *owner);
 void renderer_destroy(struct renderer *);
@@ -93,6 +95,26 @@ void renderer_filter(struct renderer *renderer,
                      VGint sx, VGint sy, VGint sw, VGint sh);
 
 void renderer_filter_end(struct renderer *renderer);
+
+VGboolean renderer_polygon_stencil_begin(struct renderer *renderer,
+                                         struct pipe_vertex_element *velem,
+                                         VGFillRule rule,
+                                         VGboolean restore_dsa);
+
+void renderer_polygon_stencil(struct renderer *renderer,
+                              struct pipe_vertex_buffer *vbuf,
+                              VGuint mode, VGuint start, VGuint count);
+
+void renderer_polygon_stencil_end(struct renderer *renderer);
+
+VGboolean renderer_polygon_fill_begin(struct renderer *renderer,
+                                      VGboolean save_dsa);
+
+void renderer_polygon_fill(struct renderer *renderer,
+                           VGfloat min_x, VGfloat min_y,
+                           VGfloat max_x, VGfloat max_y);
+
+void renderer_polygon_fill_end(struct renderer *renderer);
 
 void renderer_draw_quad(struct renderer *,
                         VGfloat x1, VGfloat y1,
