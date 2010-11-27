@@ -54,19 +54,6 @@ struct vg_context * vg_current_context(void)
    return _vg_context;
 }
 
-static void init_clear(struct vg_context *st)
-{
-   struct pipe_context *pipe = st->pipe;
-
-   /* rasterizer state: bypass clipping */
-   memset(&st->clear.raster, 0, sizeof(st->clear.raster));
-   st->clear.raster.gl_rasterization_rules = 1;
-
-   /* fragment shader state: color pass-through program */
-   st->clear.fs =
-      util_make_fragment_passthrough_shader(pipe);
-}
-
 /**
  * A depth/stencil rb will be needed regardless of what the visual says.
  */
@@ -103,7 +90,6 @@ struct vg_context * vg_create_context(struct pipe_context *pipe,
                                       struct vg_context *share)
 {
    struct vg_context *ctx;
-   unsigned i;
 
    ctx = CALLOC_STRUCT(vg_context);
 
@@ -119,8 +105,6 @@ struct vg_context * vg_create_context(struct pipe_context *pipe,
    ctx->state.dirty = ALL_DIRTY;
 
    ctx->cso_context = cso_create_context(pipe);
-
-   init_clear(ctx);
 
    ctx->default_paint = paint_create(ctx);
    ctx->state.vg.stroke_paint = ctx->default_paint;
@@ -143,13 +127,6 @@ struct vg_context * vg_create_context(struct pipe_context *pipe,
    ctx->blend_sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
    ctx->blend_sampler.normalized_coords = 0;
 
-   for (i = 0; i < 2; i++) {
-      ctx->velems[i].src_offset = i * 4 * sizeof(float);
-      ctx->velems[i].instance_divisor = 0;
-      ctx->velems[i].vertex_buffer_index = 0;
-      ctx->velems[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-   }
-
    vg_set_error(ctx, VG_NO_ERROR);
 
    ctx->owned_objects[VG_OBJECT_PAINT] = cso_hash_create();
@@ -170,7 +147,6 @@ struct vg_context * vg_create_context(struct pipe_context *pipe,
 void vg_destroy_context(struct vg_context *ctx)
 {
    struct pipe_resource **cbuf = &ctx->mask.cbuf;
-   struct pipe_resource **vsbuf = &ctx->vs_const_buffer;
 
    util_destroy_blit(ctx->blit);
    renderer_destroy(ctx->renderer);
@@ -181,29 +157,6 @@ void vg_destroy_context(struct vg_context *ctx)
    if (*cbuf)
       pipe_resource_reference(cbuf, NULL);
 
-   if (*vsbuf)
-      pipe_resource_reference(vsbuf, NULL);
-
-   if (ctx->clear.fs) {
-      cso_delete_fragment_shader(ctx->cso_context, ctx->clear.fs);
-      ctx->clear.fs = NULL;
-   }
-
-   if (ctx->plain_vs) {
-      vg_shader_destroy(ctx, ctx->plain_vs);
-      ctx->plain_vs = NULL;
-   }
-   if (ctx->clear_vs) {
-      vg_shader_destroy(ctx, ctx->clear_vs);
-      ctx->clear_vs = NULL;
-   }
-   if (ctx->texture_vs) {
-      vg_shader_destroy(ctx, ctx->texture_vs);
-      ctx->texture_vs = NULL;
-   }
-
-   if (ctx->pass_through_depth_fs)
-      vg_shader_destroy(ctx, ctx->pass_through_depth_fs);
    if (ctx->mask.union_fs)
       vg_shader_destroy(ctx, ctx->mask.union_fs);
    if (ctx->mask.intersect_fs)
@@ -555,41 +508,4 @@ void vg_prepare_blend_surface_from_mask(struct vg_context *ctx)
 
    if (dest_surface)
       pipe_surface_reference(&dest_surface, NULL);
-}
-
-void * vg_plain_vs(struct vg_context *ctx)
-{
-   if (!ctx->plain_vs) {
-      ctx->plain_vs = shader_create_from_text(ctx->pipe,
-                                              vs_plain_asm,
-                                              200,
-                                              PIPE_SHADER_VERTEX);
-   }
-
-   return ctx->plain_vs->driver;
-}
-
-
-void * vg_clear_vs(struct vg_context *ctx)
-{
-   if (!ctx->clear_vs) {
-      ctx->clear_vs = shader_create_from_text(ctx->pipe,
-                                              vs_clear_asm,
-                                              200,
-                                              PIPE_SHADER_VERTEX);
-   }
-
-   return ctx->clear_vs->driver;
-}
-
-void * vg_texture_vs(struct vg_context *ctx)
-{
-   if (!ctx->texture_vs) {
-      ctx->texture_vs = shader_create_from_text(ctx->pipe,
-                                                vs_texture_asm,
-                                                200,
-                                                PIPE_SHADER_VERTEX);
-   }
-
-   return ctx->texture_vs->driver;
 }

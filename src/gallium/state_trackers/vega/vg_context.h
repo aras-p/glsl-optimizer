@@ -109,14 +109,6 @@ struct vg_context
    struct cso_hash *owned_objects[VG_OBJECT_LAST];
 
    struct {
-      struct pipe_shader_state vert_shader;
-      struct pipe_shader_state frag_shader;
-      struct pipe_rasterizer_state raster;
-      void *fs;
-      float vertices[4][2][4];  /**< vertex pos + color */
-   } clear;
-
-   struct {
       struct pipe_resource *cbuf;
       struct pipe_sampler_state sampler;
 
@@ -126,31 +118,16 @@ struct vg_context
       struct vg_shader *set_fs;
    } mask;
 
-   struct vg_shader *pass_through_depth_fs;
-
    struct cso_context *cso_context;
-
-   struct pipe_resource *stencil_quad;
-   VGfloat stencil_vertices[4][2][4];
 
    struct renderer *renderer;
    struct shaders_cache *sc;
    struct shader *shader;
 
    struct pipe_sampler_state blend_sampler;
-   struct {
-      struct pipe_resource *buffer;
-      void *color_matrix_fs;
-   } filter;
    struct vg_paint *default_paint;
 
    struct blit_state *blit;
-
-   struct vg_shader *plain_vs;
-   struct vg_shader *clear_vs;
-   struct vg_shader *texture_vs;
-   struct pipe_resource *vs_const_buffer;
-   struct pipe_vertex_element velems[2];
 };
 
 struct vg_object {
@@ -284,9 +261,5 @@ static INLINE void vg_bound_rect(VGfloat coords[4],
       return;
    }
 }
-
-void *vg_plain_vs(struct vg_context *ctx);
-void *vg_clear_vs(struct vg_context *ctx);
-void *vg_texture_vs(struct vg_context *ctx);
 
 #endif

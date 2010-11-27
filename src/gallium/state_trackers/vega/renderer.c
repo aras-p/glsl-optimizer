@@ -89,6 +89,7 @@ struct renderer {
 
    struct pipe_resource *vs_const_buffer;
 
+   struct pipe_vertex_element velems[2];
    VGfloat vertices[4][2][4];
 
    void *cached_vs[NUM_RENDERER_VS];
@@ -489,7 +490,7 @@ static void renderer_quad_draw(struct renderer *r)
                                  sizeof(r->vertices),
                                  PIPE_BIND_VERTEX_BUFFER);
    if (buf) {
-      cso_set_vertex_elements(r->cso, 2, r->owner->velems);
+      cso_set_vertex_elements(r->cso, 2, r->velems);
       util_draw_vertex_buffer(r->pipe, buf, 0,
                               PIPE_PRIM_TRIANGLE_FAN,
                               Elements(r->vertices),     /* verts */
@@ -1090,6 +1091,13 @@ struct renderer * renderer_create(struct vg_context *owner)
    /* init vertex data that doesn't change */
    for (i = 0; i < 4; i++)
       renderer->vertices[i][0][3] = 1.0f; /* w */
+
+   for (i = 0; i < 2; i++) {
+      renderer->velems[i].src_offset = i * 4 * sizeof(float);
+      renderer->velems[i].instance_divisor = 0;
+      renderer->velems[i].vertex_buffer_index = 0;
+      renderer->velems[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+   }
 
    renderer->state = RENDERER_STATE_INIT;
 
