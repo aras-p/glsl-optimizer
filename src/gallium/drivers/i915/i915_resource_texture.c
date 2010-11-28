@@ -167,10 +167,6 @@ i915_texture_tiling(struct pipe_resource *pt)
       /* XXX X-tiling might make sense */
       return I915_TILE_NONE;
 
-   if ((pt->bind & PIPE_BIND_RENDER_TARGET))
-      /* XXX We can't render properly into mipmap'ed textures */
-      return I915_TILE_NONE;
-
    return I915_TILE_X;
 }
 
