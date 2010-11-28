@@ -29,6 +29,7 @@
 #define vl_idct_h
 
 #include <pipe/p_state.h>
+#include "vl_vertex_buffers.h"
 
 struct vl_idct
 {
@@ -82,20 +83,11 @@ struct vl_idct
       struct { struct pipe_vertex_buffer quad, pos; } individual;
    } vertex_bufs;
 
-   unsigned num_blocks;
-
-   struct
-   {
-      unsigned l_x, l_y, r_x, r_y;
-   } next_empty_block;
-
-   unsigned num_empty_blocks;
+   struct vl_vertex_buffer blocks;
+   struct vl_vertex_buffer empty_blocks;
 
    struct pipe_transfer *tex_transfer;
    short *texels;
-
-   struct pipe_transfer *vec_transfer;
-   struct vertex2f *vectors;
 };
 
 struct pipe_resource *vl_idct_upload_matrix(struct pipe_context *pipe);

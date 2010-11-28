@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "vl_idct.h"
+#include "vl_vertex_buffers.h"
 #include "util/u_draw.h"
 #include <assert.h>
 #include <pipe/p_context.h>
@@ -76,11 +77,6 @@ static const float const_matrix[8][8] = {
    {  0.2777850f, -0.4903930f,  0.0975452f,  0.4157350f, -0.4157350f, -0.0975451f,  0.490393f, -0.2777850f },
    {  0.1913420f, -0.4619400f,  0.4619400f, -0.1913420f, -0.1913410f,  0.4619400f, -0.461940f,  0.1913420f },
    {  0.0975451f, -0.2777850f,  0.4157350f, -0.4903930f,  0.4903930f, -0.4157350f,  0.277786f, -0.0975458f }
-};
-
-/* vertices for a quad covering a block */
-static const struct vertex2f const_quad[4] = {
-   {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}
 };
 
 static void *
@@ -409,11 +405,6 @@ init_buffers(struct vl_idct *idct)
    struct pipe_vertex_element vertex_elems[2];
    unsigned i;
 
-   idct->max_blocks =
-      align(idct->destination->width0, BLOCK_WIDTH) / BLOCK_WIDTH *
-      align(idct->destination->height0, BLOCK_HEIGHT) / BLOCK_HEIGHT *
-      idct->destination->depth0;
-
    memset(&template, 0, sizeof(struct pipe_resource));
    template.last_level = 0;
    template.depth0 = 1;
@@ -443,15 +434,7 @@ init_buffers(struct vl_idct *idct)
       idct->sampler_views.all[i] = idct->pipe->create_sampler_view(idct->pipe, idct->textures.all[i], &sampler_view);
    }
 
-   idct->vertex_bufs.individual.quad.stride = sizeof(struct vertex2f);
-   idct->vertex_bufs.individual.quad.max_index = 4 * idct->max_blocks - 1;
-   idct->vertex_bufs.individual.quad.buffer_offset = 0;
-   idct->vertex_bufs.individual.quad.buffer = pipe_buffer_create
-   (
-      idct->pipe->screen,
-      PIPE_BIND_VERTEX_BUFFER,
-      sizeof(struct vertex2f) * 4 * idct->max_blocks
-   );
+   idct->vertex_bufs.individual.quad = vl_vb_upload_quads(idct->pipe, idct->max_blocks);
 
    if(idct->vertex_bufs.individual.quad.buffer == NULL)
       return false;
@@ -504,34 +487,10 @@ cleanup_buffers(struct vl_idct *idct)
 }
 
 static void
-init_constants(struct vl_idct *idct)
-{
-   struct pipe_transfer *buf_transfer;
-   struct vertex2f *v;
-
-   unsigned i;
-
-   /* quad vectors */
-   v = pipe_buffer_map
-   (
-      idct->pipe,
-      idct->vertex_bufs.individual.quad.buffer,
-      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-      &buf_transfer
-   );
-   for ( i = 0; i < idct->max_blocks; ++i)
-     memcpy(v + i * 4, &const_quad, sizeof(const_quad));
-   pipe_buffer_unmap(idct->pipe, idct->vertex_bufs.individual.quad.buffer, buf_transfer);
-}
-
-static void
 init_state(struct vl_idct *idct)
 {
    struct pipe_sampler_state sampler;
    unsigned i;
-
-   idct->num_blocks = 0;
-   idct->num_empty_blocks = 0;
 
    idct->viewport[0].scale[0] = idct->textures.individual.intermediate->width0;
    idct->viewport[0].scale[1] = idct->textures.individual.intermediate->height0;
@@ -674,26 +633,11 @@ xfer_buffers_map(struct vl_idct *idct)
    );
 
    idct->texels = idct->pipe->transfer_map(idct->pipe, idct->tex_transfer);
-
-   idct->vectors = pipe_buffer_map
-   (
-      idct->pipe,
-      idct->vertex_bufs.individual.pos.buffer,
-      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-      &idct->vec_transfer
-   );
-
-   idct->next_empty_block.l_x = ~1;
-   idct->next_empty_block.l_y = ~1;
-   idct->next_empty_block.r_x = ~1;
-   idct->next_empty_block.r_y = ~1;
 }
 
 static void
 xfer_buffers_unmap(struct vl_idct *idct)
 {
-   pipe_buffer_unmap(idct->pipe, idct->vertex_bufs.individual.pos.buffer, idct->vec_transfer);
-
    idct->pipe->transfer_unmap(idct->pipe, idct->tex_transfer);
    idct->pipe->transfer_destroy(idct->pipe, idct->tex_transfer);
 }
@@ -708,6 +652,11 @@ vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, struct pipe_resour
    pipe_resource_reference(&idct->textures.individual.transpose, matrix);
    pipe_resource_reference(&idct->destination, dst);
 
+   idct->max_blocks =
+      align(idct->destination->width0, BLOCK_WIDTH) / BLOCK_WIDTH *
+      align(idct->destination->height0, BLOCK_HEIGHT) / BLOCK_HEIGHT *
+      idct->destination->depth0;
+
    if(!init_buffers(idct))
       return false;
 
@@ -716,9 +665,21 @@ vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, struct pipe_resour
       return false;
    }
 
+   if(!vl_vb_init(&idct->blocks, idct->max_blocks)) {
+      cleanup_shaders(idct);
+      cleanup_buffers(idct);
+      return false;
+   }
+
+   if(!vl_vb_init(&idct->empty_blocks, idct->max_blocks)) {
+      vl_vb_cleanup(&idct->blocks);
+      cleanup_shaders(idct);
+      cleanup_buffers(idct);
+      return false;
+   }
+
    init_state(idct);
 
-   init_constants(idct);
    xfer_buffers_map(idct);
 
    return true;
@@ -727,6 +688,8 @@ vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, struct pipe_resour
 void
 vl_idct_cleanup(struct vl_idct *idct)
 {
+   vl_vb_cleanup(&idct->blocks);
+   vl_vb_cleanup(&idct->empty_blocks);
    cleanup_shaders(idct);
    cleanup_buffers(idct);
 
@@ -735,43 +698,9 @@ vl_idct_cleanup(struct vl_idct *idct)
    pipe_resource_reference(&idct->destination, NULL);
 }
 
-static void
-flush_empty_block(struct vl_idct *idct, unsigned new_x, unsigned new_y)
-{
-   if (idct->next_empty_block.l_x == ~1 ||
-       idct->next_empty_block.l_y == ~1) {
-   
-      idct->next_empty_block.l_x = new_x;
-      idct->next_empty_block.l_y = new_y;
-
-   } else if (idct->next_empty_block.r_x != (new_x - 1) ||
-              idct->next_empty_block.r_y != new_y) {
-
-      struct vertex2f l, r, *v_dst;
-
-      v_dst = idct->vectors + (idct->max_blocks - idct->num_empty_blocks) * 4 - 4;
-
-      l.x = idct->next_empty_block.l_x;
-      l.y = idct->next_empty_block.l_y;
-      r.x = idct->next_empty_block.r_x;
-      r.y = idct->next_empty_block.r_y;
-      v_dst[0] = v_dst[3] = l;
-      v_dst[1] = v_dst[2] = r;
-
-      idct->next_empty_block.l_x = new_x;
-      idct->next_empty_block.l_y = new_y;
-      idct->num_empty_blocks++;
-   }
-
-   idct->next_empty_block.r_x = new_x;
-   idct->next_empty_block.r_y = new_y;
-}
-
 void
 vl_idct_add_block(struct vl_idct *idct, unsigned x, unsigned y, short *block)
 {
-   struct vertex2f v, *v_dst;
-
    unsigned tex_pitch;
    short *texels;
 
@@ -786,32 +715,38 @@ vl_idct_add_block(struct vl_idct *idct, unsigned x, unsigned y, short *block)
       for (i = 0; i < BLOCK_HEIGHT; ++i)
          memcpy(texels + i * tex_pitch, block + i * BLOCK_WIDTH, BLOCK_WIDTH * sizeof(short));
 
-      /* non empty blocks fills the vector buffer from left to right */
-      v_dst = idct->vectors + idct->num_blocks * 4;
-
-      idct->num_blocks++;
-
-      v.x = x;
-      v.y = y;
-
-      for (i = 0; i < 4; ++i) {
-         v_dst[i] = v;
-      }
-
+      vl_vb_add_block(&idct->blocks, false, x, y);
    } else {
 
-      /* while empty blocks fills the vector buffer from right to left */
-      flush_empty_block(idct, x, y);
+      vl_vb_add_block(&idct->empty_blocks, true, x, y);
    }
 }
 
 void
 vl_idct_flush(struct vl_idct *idct)
 {
-   flush_empty_block(idct, ~1, ~1);
+   struct pipe_transfer *vec_transfer;
+   struct quadf *vectors;
+   unsigned num_blocks, num_empty_blocks;
+
+   assert(idct);
+
+   vectors = pipe_buffer_map
+   (
+      idct->pipe,
+      idct->vertex_bufs.individual.pos.buffer,
+      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+      &vec_transfer
+   );
+
+   num_blocks = vl_vb_upload(&idct->blocks, vectors);
+   num_empty_blocks = vl_vb_upload(&idct->empty_blocks, vectors + num_blocks);
+
+   pipe_buffer_unmap(idct->pipe, idct->vertex_bufs.individual.pos.buffer, vec_transfer);
+
    xfer_buffers_unmap(idct);
 
-   if(idct->num_blocks > 0) {
+   if(num_blocks > 0) {
 
       /* first stage */
       idct->pipe->set_framebuffer_state(idct->pipe, &idct->fb_state[0]);
@@ -824,7 +759,7 @@ vl_idct_flush(struct vl_idct *idct)
       idct->pipe->bind_vs_state(idct->pipe, idct->matrix_vs);
       idct->pipe->bind_fs_state(idct->pipe, idct->matrix_fs);
 
-      util_draw_arrays(idct->pipe, PIPE_PRIM_QUADS, 0, idct->num_blocks * 4);
+      util_draw_arrays(idct->pipe, PIPE_PRIM_QUADS, 0, num_blocks * 4);
 
       /* second stage */
       idct->pipe->set_framebuffer_state(idct->pipe, &idct->fb_state[1]);
@@ -837,10 +772,10 @@ vl_idct_flush(struct vl_idct *idct)
       idct->pipe->bind_vs_state(idct->pipe, idct->transpose_vs);
       idct->pipe->bind_fs_state(idct->pipe, idct->transpose_fs);
 
-      util_draw_arrays(idct->pipe, PIPE_PRIM_QUADS, 0, idct->num_blocks * 4);
+      util_draw_arrays(idct->pipe, PIPE_PRIM_QUADS, 0, num_blocks * 4);
    }
 
-   if(idct->num_empty_blocks > 0) {
+   if(num_empty_blocks > 0) {
 
       /* empty block handling */
       idct->pipe->set_framebuffer_state(idct->pipe, &idct->fb_state[1]);
@@ -851,12 +786,8 @@ vl_idct_flush(struct vl_idct *idct)
       idct->pipe->bind_vs_state(idct->pipe, idct->eb_vs);
       idct->pipe->bind_fs_state(idct->pipe, idct->eb_fs);
 
-      util_draw_arrays(idct->pipe, PIPE_PRIM_QUADS,
-         (idct->max_blocks - idct->num_empty_blocks) * 4,
-         idct->num_empty_blocks * 4);
+      util_draw_arrays(idct->pipe, PIPE_PRIM_QUADS, num_blocks * 4, num_empty_blocks * 4);
    }
 
-   idct->num_blocks = 0;
-   idct->num_empty_blocks = 0;
    xfer_buffers_map(idct);
 }

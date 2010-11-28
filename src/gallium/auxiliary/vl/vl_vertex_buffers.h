@@ -1,6 +1,6 @@
 /**************************************************************************
  *
- * Copyright 2009 Younes Manton.
+ * Copyright 2010 Christian König
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -24,23 +24,52 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
+#ifndef vl_vertex_buffers_h
+#define vl_vertex_buffers_h
 
-#ifndef vl_types_h
-#define vl_types_h
+#include <assert.h>
+#include <pipe/p_state.h>
+#include "vl_types.h"
 
-struct vertex2f
+struct vl_vertex_buffer
 {
-   float x, y;
+   unsigned num_blocks;
+   struct quadf *blocks;
 };
 
-struct vertex4f
-{
-   float x, y, z, w;
-};
+struct pipe_vertex_buffer vl_vb_upload_quads(struct pipe_context *pipe, unsigned max_blocks);
 
-struct quadf
-{
-   struct vertex2f bl, tl, tr, br;
-};
+bool vl_vb_init(struct vl_vertex_buffer *buffer, unsigned max_blocks);
 
-#endif /* vl_types_h */
+static inline bool
+vl_vb_add_block(struct vl_vertex_buffer *buffer, bool allow_merge, signed x, signed y)
+{
+   struct quadf *quad;
+
+   assert(buffer);
+
+   allow_merge &= buffer->num_blocks > 0;
+   if (allow_merge) {
+
+      quad = buffer->blocks + buffer->num_blocks - 1;
+      if(quad->tr.x == (x - 1) && quad->br.x == (x - 1) && 
+         quad->tr.y == y && quad->br.y == y) {
+
+         quad->tr.x = quad->br.x = x;
+         quad->tr.y = quad->br.y = y;
+         return true;
+      } 
+   }
+
+   quad = buffer->blocks + buffer->num_blocks;
+   quad->bl.x = quad->tl.x = quad->tr.x = quad->br.x = x;
+   quad->bl.y = quad->tl.y = quad->tr.y = quad->br.y = y;
+   buffer->num_blocks++;
+   return false;
+}
+
+unsigned vl_vb_upload(struct vl_vertex_buffer *buffer, struct quadf *dst);
+
+void vl_vb_cleanup(struct vl_vertex_buffer *buffer);
+
+#endif
