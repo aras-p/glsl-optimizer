@@ -77,33 +77,23 @@ static INLINE void vg_sync_size(VGfloat *src_loc, VGfloat *dst_loc)
    dst_loc[3] = src_loc[3];
 }
 
-
-static void vg_copy_texture(struct vg_context *ctx,
-                            struct pipe_resource *dst, VGint dx, VGint dy,
-                            struct pipe_sampler_view *src, VGint sx, VGint sy,
-                            VGint width, VGint height)
+static void vg_get_copy_coords(VGfloat *src_loc,
+                               VGfloat src_width, VGfloat src_height,
+                               VGfloat *dst_loc,
+                               VGfloat dst_width, VGfloat dst_height)
 {
-   VGfloat dst_loc[4], src_loc[4];
    VGfloat dst_bounds[4], src_bounds[4];
    VGfloat src_shift[4], dst_shift[4], shift[4];
 
-   dst_loc[0] = dx;
-   dst_loc[1] = dy;
-   dst_loc[2] = width;
-   dst_loc[3] = height;
    dst_bounds[0] = 0.f;
    dst_bounds[1] = 0.f;
-   dst_bounds[2] = dst->width0;
-   dst_bounds[3] = dst->height0;
+   dst_bounds[2] = dst_width;
+   dst_bounds[3] = dst_height;
 
-   src_loc[0] = sx;
-   src_loc[1] = sy;
-   src_loc[2] = width;
-   src_loc[3] = height;
    src_bounds[0] = 0.f;
    src_bounds[1] = 0.f;
-   src_bounds[2] = src->texture->width0;
-   src_bounds[3] = src->texture->height0;
+   src_bounds[2] = src_width;
+   src_bounds[3] = src_height;
 
    vg_bound_rect(src_loc, src_bounds, src_shift);
    vg_bound_rect(dst_loc, dst_bounds, dst_shift);
@@ -121,6 +111,27 @@ static void vg_copy_texture(struct vg_context *ctx,
       vg_shift_recty(dst_loc, dst_bounds, shift[1]);
 
    vg_sync_size(src_loc, dst_loc);
+}
+
+static void vg_copy_texture(struct vg_context *ctx,
+                            struct pipe_resource *dst, VGint dx, VGint dy,
+                            struct pipe_sampler_view *src, VGint sx, VGint sy,
+                            VGint width, VGint height)
+{
+   VGfloat dst_loc[4], src_loc[4];
+
+   dst_loc[0] = dx;
+   dst_loc[1] = dy;
+   dst_loc[2] = width;
+   dst_loc[3] = height;
+
+   src_loc[0] = sx;
+   src_loc[1] = sy;
+   src_loc[2] = width;
+   src_loc[3] = height;
+
+   vg_get_copy_coords(src_loc, src->texture->width0, src->texture->height0,
+                      dst_loc, dst->width0, dst->height0);
 
    if (src_loc[2] >= 0 && src_loc[3] >= 0 &&
        dst_loc[2] >= 0 && dst_loc[3] >= 0) {
@@ -145,43 +156,19 @@ void vg_copy_surface(struct vg_context *ctx,
                      VGint width, VGint height)
 {
    VGfloat dst_loc[4], src_loc[4];
-   VGfloat dst_bounds[4], src_bounds[4];
-   VGfloat src_shift[4], dst_shift[4], shift[4];
 
    dst_loc[0] = dx;
    dst_loc[1] = dy;
    dst_loc[2] = width;
    dst_loc[3] = height;
-   dst_bounds[0] = 0.f;
-   dst_bounds[1] = 0.f;
-   dst_bounds[2] = dst->width;
-   dst_bounds[3] = dst->height;
 
    src_loc[0] = sx;
    src_loc[1] = sy;
    src_loc[2] = width;
    src_loc[3] = height;
-   src_bounds[0] = 0.f;
-   src_bounds[1] = 0.f;
-   src_bounds[2] = src->width;
-   src_bounds[3] = src->height;
 
-   vg_bound_rect(src_loc, src_bounds, src_shift);
-   vg_bound_rect(dst_loc, dst_bounds, dst_shift);
-   shift[0] = src_shift[0] - dst_shift[0];
-   shift[1] = src_shift[1] - dst_shift[1];
-
-   if (shift[0] < 0)
-      vg_shift_rectx(src_loc, src_bounds, -shift[0]);
-   else
-      vg_shift_rectx(dst_loc, dst_bounds, shift[0]);
-
-   if (shift[1] < 0)
-      vg_shift_recty(src_loc, src_bounds, -shift[1]);
-   else
-      vg_shift_recty(dst_loc, dst_bounds, shift[1]);
-
-   vg_sync_size(src_loc, dst_loc);
+   vg_get_copy_coords(src_loc, src->width, src->height,
+                      dst_loc, dst->width, dst->height);
 
    if (src_loc[2] > 0 && src_loc[3] > 0 &&
        dst_loc[2] > 0 && dst_loc[3] > 0) {
