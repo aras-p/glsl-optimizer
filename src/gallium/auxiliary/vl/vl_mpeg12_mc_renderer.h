@@ -60,6 +60,7 @@ enum VL_MACROBLOCK_TYPE
 
 struct vl_mc_mbtype_handler
 {
+   void *vertex_elems_state;
    void *vs, *fs;
 };
 
@@ -78,12 +79,6 @@ struct vl_mpeg12_mc_renderer
    struct pipe_framebuffer_state fb_state;
 
    struct vl_idct idct_y, idct_cb, idct_cr;
-
-   union
-   {
-      void *all[3];
-      struct { void *i, *p, *b; } individual;
-   } vertex_elems_state;
 
    union
    {

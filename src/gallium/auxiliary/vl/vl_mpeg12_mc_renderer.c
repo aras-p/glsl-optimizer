@@ -373,7 +373,8 @@ create_frag_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
 }
 
 static bool
-init_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE type)
+init_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE type,
+                    struct pipe_vertex_element vertex_elems[NUM_VS_INPUTS])
 {
    unsigned ref_frames, mv_per_frame;
    struct vl_mc_mbtype_handler *handler;
@@ -388,16 +389,26 @@ init_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE typ
    handler->vs = create_vert_shader(r, ref_frames, mv_per_frame);
    handler->fs = create_frag_shader(r, ref_frames, mv_per_frame);
 
-   return handler->vs != NULL && handler->fs != NULL;
+   handler->vertex_elems_state = r->pipe->create_vertex_elements_state(
+      r->pipe, 3 + ref_frames * mv_per_frame, vertex_elems);
+
+   return handler->vs != NULL &&
+          handler->fs != NULL &&
+          handler->vertex_elems_state != NULL;
 }
 
 static void
 cleanup_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE type)
 {
+   struct vl_mc_mbtype_handler *handler;
+
    assert(r);
 
-   r->pipe->delete_vs_state(r->pipe, r->mbtype_handlers[type].vs);
-   r->pipe->delete_fs_state(r->pipe, r->mbtype_handlers[type].fs);
+   handler = &r->mbtype_handlers[type];
+
+   r->pipe->delete_vs_state(r->pipe, handler->vs);
+   r->pipe->delete_fs_state(r->pipe, handler->fs);
+   r->pipe->delete_vertex_elements_state(r->pipe, handler->vertex_elems_state);
 }
 
 
@@ -620,9 +631,8 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    vertex_elems[VS_I_MV3].vertex_buffer_index = 3;
    vertex_elems[VS_I_MV3].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
-   r->vertex_elems_state.individual.i = r->pipe->create_vertex_elements_state(r->pipe, 3, vertex_elems);
-   r->vertex_elems_state.individual.p = r->pipe->create_vertex_elements_state(r->pipe, 5, vertex_elems);
-   r->vertex_elems_state.individual.b = r->pipe->create_vertex_elements_state(r->pipe, 7, vertex_elems);
+   for(i = 0; i < VL_NUM_MACROBLOCK_TYPES; ++i)
+      init_mbtype_handler(r, i, vertex_elems);
 
    r->vs_const_buf = pipe_buffer_create
    (
@@ -666,10 +676,12 @@ cleanup_buffers(struct vl_mpeg12_mc_renderer *r)
 
    for (i = 0; i < 3; ++i) {
       pipe_sampler_view_reference(&r->sampler_views.all[i], NULL);
-      r->pipe->delete_vertex_elements_state(r->pipe, r->vertex_elems_state.all[i]);
       pipe_resource_reference(&r->vertex_bufs.all[i].buffer, NULL);
       pipe_resource_reference(&r->textures.all[i], NULL);
    }
+
+   for(i = 0; i<VL_NUM_MACROBLOCK_TYPES; ++i)
+      cleanup_mbtype_handler(r, i);
 
    FREE(r->macroblock_buf);
 }
@@ -909,11 +921,58 @@ static struct pipe_sampler_view
    return sampler_view;
 }
 
+static unsigned
+flush_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE type,
+                     unsigned vb_start, unsigned num_macroblocks)
+{
+   unsigned ref_frames, mv_per_frame;
+   struct vl_mc_mbtype_handler *handler;
+
+   assert(r);
+
+   ref_frames = const_mbtype_config[type][0];
+   mv_per_frame = const_mbtype_config[type][1];
+
+   handler = &r->mbtype_handlers[type];
+
+   r->pipe->set_vertex_buffers(r->pipe, 2 + ref_frames, r->vertex_bufs.all);
+   r->pipe->bind_vertex_elements_state(r->pipe, handler->vertex_elems_state);
+
+   if(ref_frames == 2) {
+
+      r->textures.individual.ref[0] = r->past->texture;
+      r->textures.individual.ref[1] = r->future->texture;
+      r->sampler_views.individual.ref[0] = find_or_create_sampler_view(r, r->past);
+      r->sampler_views.individual.ref[1] = find_or_create_sampler_view(r, r->future);
+
+   } else if(ref_frames == 1) {
+
+      struct pipe_surface *ref;
+
+      if(type == VL_MACROBLOCK_TYPE_BKWD_FRAME_PRED ||
+         type == VL_MACROBLOCK_TYPE_BKWD_FIELD_PRED)
+         ref = r->future;
+      else
+         ref = r->past;
+
+      r->textures.individual.ref[0] = ref->texture;
+      r->sampler_views.individual.ref[0] = find_or_create_sampler_view(r, ref);
+   }
+
+   r->pipe->set_fragment_sampler_views(r->pipe, 3 + ref_frames, r->sampler_views.all);
+   r->pipe->bind_fragment_sampler_states(r->pipe, 3 + ref_frames, r->samplers.all);
+   r->pipe->bind_vs_state(r->pipe, handler->vs);
+   r->pipe->bind_fs_state(r->pipe, handler->fs);
+
+   util_draw_arrays(r->pipe, PIPE_PRIM_QUADS, vb_start, num_macroblocks * 4);
+   return num_macroblocks * 4;
+}
+
 static void
 flush(struct vl_mpeg12_mc_renderer *r)
 {
    unsigned num_macroblocks[VL_NUM_MACROBLOCK_TYPES] = { 0 };
-   unsigned vb_start = 0;
+   unsigned vb_start = 0, i;
 
    assert(r);
    assert(r->num_macroblocks == r->macroblocks_per_batch);
@@ -927,111 +986,9 @@ flush(struct vl_mpeg12_mc_renderer *r)
    r->pipe->set_framebuffer_state(r->pipe, &r->fb_state);
    r->pipe->set_viewport_state(r->pipe, &r->viewport);
 
-   if (num_macroblocks[VL_MACROBLOCK_TYPE_INTRA] > 0) {
-      r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
-      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.i);
-      r->pipe->set_fragment_sampler_views(r->pipe, 3, r->sampler_views.all);
-      r->pipe->bind_fragment_sampler_states(r->pipe, 3, r->samplers.all);
-      r->pipe->bind_vs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_INTRA].vs);
-      r->pipe->bind_fs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_INTRA].fs);
-
-      util_draw_arrays(r->pipe, PIPE_PRIM_QUADS, vb_start,
-                       num_macroblocks[VL_MACROBLOCK_TYPE_INTRA] * 4);
-      vb_start += num_macroblocks[VL_MACROBLOCK_TYPE_INTRA] * 4;
-   }
-
-   if (num_macroblocks[VL_MACROBLOCK_TYPE_FWD_FRAME_PRED] > 0) {
-      r->pipe->set_vertex_buffers(r->pipe, 3, r->vertex_bufs.all);
-      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.p);
-      r->textures.individual.ref[0] = r->past->texture;
-      r->sampler_views.individual.ref[0] = find_or_create_sampler_view(r, r->past);
-      r->pipe->set_fragment_sampler_views(r->pipe, 4, r->sampler_views.all);
-      r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
-      r->pipe->bind_vs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_FWD_FRAME_PRED].vs);
-      r->pipe->bind_fs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_FWD_FRAME_PRED].fs);
-
-      util_draw_arrays(r->pipe, PIPE_PRIM_QUADS, vb_start,
-                       num_macroblocks[VL_MACROBLOCK_TYPE_FWD_FRAME_PRED] * 4);
-      vb_start += num_macroblocks[VL_MACROBLOCK_TYPE_FWD_FRAME_PRED] * 4;
-   }
-
-   if (num_macroblocks[VL_MACROBLOCK_TYPE_FWD_FIELD_PRED] > 0) {
-      r->pipe->set_vertex_buffers(r->pipe, 3, r->vertex_bufs.all);
-      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.p);
-      r->textures.individual.ref[0] = r->past->texture;
-      r->sampler_views.individual.ref[0] = find_or_create_sampler_view(r, r->past);
-      r->pipe->set_fragment_sampler_views(r->pipe, 4, r->sampler_views.all);
-      r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
-      r->pipe->bind_vs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_FWD_FIELD_PRED].vs);
-      r->pipe->bind_fs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_FWD_FIELD_PRED].fs);
-
-      util_draw_arrays(r->pipe, PIPE_PRIM_QUADS, vb_start,
-                       num_macroblocks[VL_MACROBLOCK_TYPE_FWD_FIELD_PRED] * 4);
-      vb_start += num_macroblocks[VL_MACROBLOCK_TYPE_FWD_FIELD_PRED] * 4;
-   }
-
-   if (num_macroblocks[VL_MACROBLOCK_TYPE_BKWD_FRAME_PRED] > 0) {
-      r->pipe->set_vertex_buffers(r->pipe, 3, r->vertex_bufs.all);
-      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.p);
-      r->textures.individual.ref[0] = r->future->texture;
-      r->sampler_views.individual.ref[0] = find_or_create_sampler_view(r, r->future);
-      r->pipe->set_fragment_sampler_views(r->pipe, 4, r->sampler_views.all);
-      r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
-      r->pipe->bind_vs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_BKWD_FRAME_PRED].vs);
-      r->pipe->bind_fs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_BKWD_FRAME_PRED].fs);
-
-      util_draw_arrays(r->pipe, PIPE_PRIM_QUADS, vb_start,
-                       num_macroblocks[VL_MACROBLOCK_TYPE_BKWD_FRAME_PRED] * 4);
-      vb_start += num_macroblocks[VL_MACROBLOCK_TYPE_BKWD_FRAME_PRED] * 4;
-   }
-
-   if (num_macroblocks[VL_MACROBLOCK_TYPE_BKWD_FIELD_PRED] > 0) {
-      r->pipe->set_vertex_buffers(r->pipe, 3, r->vertex_bufs.all);
-      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.p);
-      r->textures.individual.ref[0] = r->future->texture;
-      r->sampler_views.individual.ref[0] = find_or_create_sampler_view(r, r->future);
-      r->pipe->set_fragment_sampler_views(r->pipe, 4, r->sampler_views.all);
-      r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
-      r->pipe->bind_vs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_BKWD_FIELD_PRED].vs);
-      r->pipe->bind_fs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_BKWD_FIELD_PRED].fs);
-
-      util_draw_arrays(r->pipe, PIPE_PRIM_QUADS, vb_start,
-                       num_macroblocks[VL_MACROBLOCK_TYPE_BKWD_FIELD_PRED] * 4);
-      vb_start += num_macroblocks[VL_MACROBLOCK_TYPE_BKWD_FIELD_PRED] * 4;
-   }
-
-   if (num_macroblocks[VL_MACROBLOCK_TYPE_BI_FRAME_PRED] > 0) {
-      r->pipe->set_vertex_buffers(r->pipe, 4, r->vertex_bufs.all);
-      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.b);
-      r->textures.individual.ref[0] = r->past->texture;
-      r->textures.individual.ref[1] = r->future->texture;
-      r->sampler_views.individual.ref[0] = find_or_create_sampler_view(r, r->past);
-      r->sampler_views.individual.ref[1] = find_or_create_sampler_view(r, r->future);
-      r->pipe->set_fragment_sampler_views(r->pipe, 5, r->sampler_views.all);
-      r->pipe->bind_fragment_sampler_states(r->pipe, 5, r->samplers.all);
-      r->pipe->bind_vs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_BI_FRAME_PRED].vs);
-      r->pipe->bind_fs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_BI_FRAME_PRED].fs);
-
-      util_draw_arrays(r->pipe, PIPE_PRIM_QUADS, vb_start,
-                       num_macroblocks[VL_MACROBLOCK_TYPE_BI_FRAME_PRED] * 4);
-      vb_start += num_macroblocks[VL_MACROBLOCK_TYPE_BI_FRAME_PRED] * 4;
-   }
-
-   if (num_macroblocks[VL_MACROBLOCK_TYPE_BI_FIELD_PRED] > 0) {
-      r->pipe->set_vertex_buffers(r->pipe, 4, r->vertex_bufs.all);
-      r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.b);
-      r->textures.individual.ref[0] = r->past->texture;
-      r->textures.individual.ref[1] = r->future->texture;
-      r->sampler_views.individual.ref[0] = find_or_create_sampler_view(r, r->past);
-      r->sampler_views.individual.ref[1] = find_or_create_sampler_view(r, r->future);
-      r->pipe->set_fragment_sampler_views(r->pipe, 5, r->sampler_views.all);
-      r->pipe->bind_fragment_sampler_states(r->pipe, 5, r->samplers.all);
-      r->pipe->bind_vs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_BI_FIELD_PRED].vs);
-      r->pipe->bind_fs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_BI_FIELD_PRED].fs);
-
-      util_draw_arrays(r->pipe, PIPE_PRIM_QUADS, vb_start,
-                       num_macroblocks[VL_MACROBLOCK_TYPE_BI_FIELD_PRED] * 4);
-      vb_start += num_macroblocks[VL_MACROBLOCK_TYPE_BI_FIELD_PRED] * 4;
+   for (i = 0; i < VL_NUM_MACROBLOCK_TYPES; ++i) {
+      if (num_macroblocks[i] > 0)
+         vb_start += flush_mbtype_handler(r, i, vb_start, num_macroblocks[i]);
    }
 
    r->pipe->flush(r->pipe, PIPE_FLUSH_RENDER_CACHE, r->fence);
@@ -1135,7 +1092,6 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
                            bool pot_buffers)
 {
    struct pipe_resource *idct_matrix;
-   unsigned i;
 
    assert(renderer);
    assert(pipe);
@@ -1161,10 +1117,6 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
 
    if (!init_pipe_state(renderer))
       goto error_pipe_state;
-
-   for(i = 0; i<VL_NUM_MACROBLOCK_TYPES; ++i)
-      if (!init_mbtype_handler(renderer, i))
-         goto error_mbtypes;
 
    if (!init_buffers(renderer))
       goto error_buffers;
@@ -1201,10 +1153,6 @@ error_idct_matrix:
    cleanup_buffers(renderer);
 
 error_buffers:
-   for(i = 0; i<VL_NUM_MACROBLOCK_TYPES; ++i)
-      cleanup_mbtype_handler(renderer, i);
-
-error_mbtypes:
    cleanup_pipe_state(renderer);
 
 error_pipe_state:
@@ -1215,8 +1163,6 @@ error_pipe_state:
 void
 vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer)
 {
-   unsigned i;
-
    assert(renderer);
 
    vl_idct_cleanup(&renderer->idct_y);
@@ -1225,8 +1171,6 @@ vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer)
 
    util_delete_keymap(renderer->texview_map, renderer->pipe);
    cleanup_pipe_state(renderer);
-   for(i = 0; i<VL_NUM_MACROBLOCK_TYPES; ++i)
-      cleanup_mbtype_handler(renderer, i);
    cleanup_buffers(renderer);
 
    pipe_surface_reference(&renderer->surface, NULL);
