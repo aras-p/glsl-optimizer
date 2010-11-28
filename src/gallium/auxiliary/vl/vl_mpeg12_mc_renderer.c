@@ -361,6 +361,7 @@ init_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE typ
 {
    unsigned ref_frames, mv_per_frame;
    struct vl_mc_mbtype_handler *handler;
+   unsigned i;
 
    assert(r);
 
@@ -372,26 +373,54 @@ init_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE typ
    handler->vs = create_vert_shader(r, ref_frames, mv_per_frame);
    handler->fs = create_frag_shader(r, ref_frames, mv_per_frame);
 
+   if (handler->vs == NULL || handler->fs == NULL)
+      return false;
+
    handler->vertex_elems_state = r->pipe->create_vertex_elements_state(
       r->pipe, 3 + ref_frames * mv_per_frame, vertex_elems);
 
-   return handler->vs != NULL &&
-          handler->fs != NULL &&
-          handler->vertex_elems_state != NULL;
+   if (handler->vertex_elems_state == NULL)
+      return false;
+
+   if (!vl_vb_init(&handler->pos, r->macroblocks_per_batch))
+      return false;
+
+   handler->interlaced = MALLOC(sizeof(float) * r->macroblocks_per_batch * 4);
+   if (handler->interlaced == NULL)
+      return false;
+
+   for (i = 0; i < 4 /*TODO: ref_frames * mv_per_frame */; ++i) {
+      handler->mv[i] = MALLOC(sizeof(struct vertex2f) * r->macroblocks_per_batch * 4);
+      if (handler->mv[i] == NULL)
+         return false;
+   }
+
+   return true;
 }
 
 static void
 cleanup_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE type)
 {
+   unsigned ref_frames, mv_per_frame;
    struct vl_mc_mbtype_handler *handler;
+   unsigned i;
 
    assert(r);
+
+   ref_frames = const_mbtype_config[type][0];
+   mv_per_frame = const_mbtype_config[type][1];
 
    handler = &r->mbtype_handlers[type];
 
    r->pipe->delete_vs_state(r->pipe, handler->vs);
    r->pipe->delete_fs_state(r->pipe, handler->fs);
    r->pipe->delete_vertex_elements_state(r->pipe, handler->vertex_elems_state);
+
+   handler->interlaced = MALLOC(sizeof(float) * r->macroblocks_per_batch * 4);
+   FREE(handler->interlaced);
+
+   for (i = 0; i < 4 /*TODO: ref_frames * mv_per_frame */; ++i)
+      FREE(handler->mv[i]);
 }
 
 
@@ -493,7 +522,6 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    r->macroblocks_per_batch =
       mbw * (r->bufmode == VL_MPEG12_MC_RENDERER_BUFFER_PICTURE ? mbh : 1);
    r->num_macroblocks = 0;
-   r->macroblock_buf = MALLOC(r->macroblocks_per_batch * sizeof(struct pipe_mpeg12_macroblock));
 
    memset(&template, 0, sizeof(struct pipe_resource));
    template.target = PIPE_TEXTURE_2D;
@@ -647,8 +675,6 @@ cleanup_buffers(struct vl_mpeg12_mc_renderer *r)
 
    for(i = 0; i<VL_NUM_MACROBLOCK_TYPES; ++i)
       cleanup_mbtype_handler(r, i);
-
-   FREE(r->macroblock_buf);
 }
 
 static enum VL_MACROBLOCK_TYPE
@@ -676,156 +702,22 @@ get_macroblock_type(struct pipe_mpeg12_macroblock *mb)
    return -1;
 }
 
-void
-gen_macroblock_verts(struct vl_mpeg12_mc_renderer *r, 
-                     struct pipe_mpeg12_macroblock *mb, unsigned pos,
-                     struct vertex2f *ycbcr_vb, float *interlaced_vb, struct vertex2f **mv_vb)
-{
-   struct vertex2f mo_vec[2];
-
-   unsigned i;
-
-   assert(r);
-   assert(mb);
-   assert(ycbcr_vb);
-
-   mo_vec[1].x = 0;
-   mo_vec[1].y = 0;
-
-   switch (mb->mb_type) {
-      case PIPE_MPEG12_MACROBLOCK_TYPE_BI:
-      {
-         struct vertex2f *vb[2];
-
-         assert(mv_vb && mv_vb[2] && mv_vb[3]);
-
-         vb[0] = mv_vb[2] + pos;
-         vb[1] = mv_vb[3] + pos;
-
-         mo_vec[0].x = mb->pmv[0][1][0];
-         mo_vec[0].y = mb->pmv[0][1][1];
-
-         if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
-            for (i = 0; i < 4; ++i) {
-               vb[0][i].x = mo_vec[0].x;
-               vb[0][i].y = mo_vec[0].y;
-            }
-         }
-         else {
-            mo_vec[0].y = mb->pmv[0][1][1] - (mb->pmv[0][1][1] % 4);
-
-            mo_vec[1].x = mb->pmv[1][1][0];
-            mo_vec[1].y = mb->pmv[1][1][1] - (mb->pmv[1][1][1] % 4);
-
-            if(mb->mvfs[0][1]) mo_vec[0].y += 2;
-            if(!mb->mvfs[1][1]) mo_vec[1].y -= 2;
-
-            for (i = 0; i < 4; ++i) {
-               vb[0][i].x = mo_vec[0].x;
-               vb[0][i].y = mo_vec[0].y;
-               vb[1][i].x = mo_vec[1].x;
-               vb[1][i].y = mo_vec[1].y;
-            }
-         }
-
-         /* fall-through */
-      }
-      case PIPE_MPEG12_MACROBLOCK_TYPE_FWD:
-      case PIPE_MPEG12_MACROBLOCK_TYPE_BKWD:
-      {
-         struct vertex2f *vb[2];
-
-         assert(mv_vb && mv_vb[0] && mv_vb[1]);
-
-         vb[0] = mv_vb[0] + pos;
-         vb[1] = mv_vb[1] + pos;
-
-         if (mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BKWD) {
-            mo_vec[0].x = mb->pmv[0][1][0];
-            mo_vec[0].y = mb->pmv[0][1][1];
-
-            if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FIELD) {
-               mo_vec[0].y = mb->pmv[0][1][1] - (mb->pmv[0][1][1] % 4);
-
-               mo_vec[1].x = mb->pmv[1][1][0];
-               mo_vec[1].y = mb->pmv[1][1][1] - (mb->pmv[1][1][1] % 4);
-
-               if(mb->mvfs[0][1]) mo_vec[0].y += 2;
-               if(!mb->mvfs[1][1]) mo_vec[1].y -= 2;
-            }
-         }
-         else {
-            mo_vec[0].x = mb->pmv[0][0][0];
-            mo_vec[0].y = mb->pmv[0][0][1];
-
-            if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FIELD) {
-               mo_vec[0].y = mb->pmv[0][0][1] - (mb->pmv[0][0][1] % 4);
-
-               mo_vec[1].x = mb->pmv[1][0][0];
-               mo_vec[1].y = mb->pmv[1][0][1] - (mb->pmv[1][0][1] % 4);
-
-               if(mb->mvfs[0][0]) mo_vec[0].y += 2;
-               if(!mb->mvfs[1][0]) mo_vec[1].y -= 2;
-            }
-         }
-
-         if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
-            for (i = 0; i < 4; ++i) {
-               vb[0][i].x = mo_vec[0].x;
-               vb[0][i].y = mo_vec[0].y;
-            }
-         }
-         else {
-            for (i = 0; i < 4; ++i) {
-               vb[0][i].x = mo_vec[0].x;
-               vb[0][i].y = mo_vec[0].y;
-               vb[1][i].x = mo_vec[1].x;
-               vb[1][i].y = mo_vec[1].y;
-            }
-         }
-
-         /* fall-through */
-      }
-      case PIPE_MPEG12_MACROBLOCK_TYPE_INTRA:
-      {
-         for ( i = 0; i < 4; ++i ) {
-            ycbcr_vb[i + pos].x = mb->mbx;
-            ycbcr_vb[i + pos].y = mb->mby;
-            interlaced_vb[i + pos] = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD ? 1.0f : 0.0f;
-         }
-
-         break;
-      }
-      default:
-         assert(0);
-   }
-}
-
 static void
-gen_macroblock_stream(struct vl_mpeg12_mc_renderer *r,
-                      unsigned *num_macroblocks)
+upload_vertex_stream(struct vl_mpeg12_mc_renderer *r,
+                      unsigned num_macroblocks[VL_NUM_MACROBLOCK_TYPES])
 {
-   unsigned offset[VL_NUM_MACROBLOCK_TYPES];
-   struct vertex2f *ycbcr_vb;
-   float *interlaced_vb;
-   struct vertex2f *mv_vb[4];
+   struct quadf *pos;
+   struct vertex2f *mv[4];
+   float *interlaced;
+
    struct pipe_transfer *buf_transfer[7];
-   unsigned i;
+
+   unsigned i, j;
 
    assert(r);
    assert(num_macroblocks);
 
-   for (i = 0; i < r->num_macroblocks; ++i) {
-      enum VL_MACROBLOCK_TYPE mb_type = get_macroblock_type(&r->macroblock_buf[i]);
-      ++num_macroblocks[mb_type];
-   }
-
-   offset[0] = 0;
-
-   for (i = 1; i < VL_NUM_MACROBLOCK_TYPES; ++i)
-      offset[i] = offset[i - 1] + num_macroblocks[i - 1];
-
-   ycbcr_vb = (struct vertex2f *)pipe_buffer_map
+   pos = (struct quadf *)pipe_buffer_map
    (
       r->pipe,
       r->vertex_bufs.individual.ycbcr.buffer,
@@ -833,7 +725,7 @@ gen_macroblock_stream(struct vl_mpeg12_mc_renderer *r,
       &buf_transfer[0]
    );
 
-   interlaced_vb = (float *)pipe_buffer_map
+   interlaced = (float *)pipe_buffer_map
    (
       r->pipe,
       r->vertex_bufs.individual.interlaced.buffer,
@@ -842,7 +734,7 @@ gen_macroblock_stream(struct vl_mpeg12_mc_renderer *r,
    );
 
    for (i = 0; i < 4; ++i)
-      mv_vb[i] = (struct vertex2f *)pipe_buffer_map
+      mv[i] = (struct vertex2f *)pipe_buffer_map
       (
          r->pipe,
          r->vertex_bufs.individual.mv[i].buffer,
@@ -850,13 +742,21 @@ gen_macroblock_stream(struct vl_mpeg12_mc_renderer *r,
          &buf_transfer[i + 2]
       );
 
-   for (i = 0; i < r->num_macroblocks; ++i) {
-      enum VL_MACROBLOCK_TYPE mb_type = get_macroblock_type(&r->macroblock_buf[i]);
+   for (i = 0; i < VL_NUM_MACROBLOCK_TYPES; ++i) {
+      struct vl_mc_mbtype_handler *handler = &r->mbtype_handlers[i];
+      unsigned count = vl_vb_upload(&handler->pos, pos);
+      if (count > 0) {
+         pos += count;
 
-      gen_macroblock_verts(r, &r->macroblock_buf[i], offset[mb_type] * 4,
-                           ycbcr_vb, interlaced_vb, mv_vb);
+         memcpy(interlaced, handler->interlaced, sizeof(float) * count * 4);
+         interlaced += count * 4;
 
-      ++offset[mb_type];
+         for (j = 0; j < 4 /* TODO */; ++j) {
+            memcpy(mv[j], handler->mv[j], sizeof(struct vertex2f) * count * 4);
+            mv[j] += count * 4;
+         }
+      }
+      num_macroblocks[i] = count;
    }
 
    pipe_buffer_unmap(r->pipe, r->vertex_bufs.individual.ycbcr.buffer, buf_transfer[0]);
@@ -952,7 +852,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
    vl_idct_flush(&r->idct_cr);
    vl_idct_flush(&r->idct_cb);
 
-   gen_macroblock_stream(r, num_macroblocks);
+   upload_vertex_stream(r, num_macroblocks);
 
    r->pipe->set_framebuffer_state(r->pipe, &r->fb_state);
    r->pipe->set_viewport_state(r->pipe, &r->viewport);
@@ -988,6 +888,104 @@ update_render_target(struct vl_mpeg12_mc_renderer *r)
    r->fb_state.cbufs[0] = r->surface;
 
    r->pipe->set_constant_buffer(r->pipe, PIPE_SHADER_VERTEX, 0, r->vs_const_buf);
+}
+
+static void
+get_motion_vectors(struct pipe_mpeg12_macroblock *mb, struct vertex2f mv[4])
+{
+   switch (mb->mb_type) {
+      case PIPE_MPEG12_MACROBLOCK_TYPE_BI:
+      {
+         if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
+
+            mv[2].x = mb->pmv[0][1][0];
+            mv[2].y = mb->pmv[0][1][1];
+
+         } else {
+            mv[2].x = mb->pmv[0][1][0];
+            mv[2].y = mb->pmv[0][1][1] - (mb->pmv[0][1][1] % 4);
+
+            mv[3].x = mb->pmv[1][1][0];
+            mv[3].y = mb->pmv[1][1][1] - (mb->pmv[1][1][1] % 4);
+
+            if(mb->mvfs[0][1]) mv[2].y += 2;
+            if(!mb->mvfs[1][1]) mv[3].y -= 2;
+         }
+
+         /* fall-through */
+      }
+      case PIPE_MPEG12_MACROBLOCK_TYPE_FWD:
+      case PIPE_MPEG12_MACROBLOCK_TYPE_BKWD:
+      {
+         if (mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BKWD) {
+
+            if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
+               mv[0].x = mb->pmv[0][1][0];
+               mv[0].y = mb->pmv[0][1][1];
+
+            } else {
+               mv[0].x = mb->pmv[0][1][0];
+               mv[0].y = mb->pmv[0][1][1] - (mb->pmv[0][1][1] % 4);
+
+               mv[1].x = mb->pmv[1][1][0];
+               mv[1].y = mb->pmv[1][1][1] - (mb->pmv[1][1][1] % 4);
+
+               if(mb->mvfs[0][1]) mv[0].y += 2;
+               if(!mb->mvfs[1][1]) mv[1].y -= 2;
+            }
+
+         } else {
+
+            if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
+               mv[0].x = mb->pmv[0][0][0];
+               mv[0].y = mb->pmv[0][0][1];
+
+            } else {
+               mv[0].x = mb->pmv[0][0][0];
+               mv[0].y = mb->pmv[0][0][1] - (mb->pmv[0][0][1] % 4);
+
+               mv[1].x = mb->pmv[1][0][0];
+               mv[1].y = mb->pmv[1][0][1] - (mb->pmv[1][0][1] % 4);
+
+               if(mb->mvfs[0][0]) mv[0].y += 2;
+               if(!mb->mvfs[1][0]) mv[1].y -= 2;
+            }
+         }
+      }
+      default:
+         break;
+   }
+}
+
+static void
+grab_vectors(struct vl_mpeg12_mc_renderer *r,
+             struct pipe_mpeg12_macroblock *mb)
+{
+   enum VL_MACROBLOCK_TYPE type;
+   struct vl_mc_mbtype_handler *handler;
+   struct vertex2f mv[4];
+   unsigned ref_frames, mv_per_frame;
+   unsigned i, j, pos;
+
+   assert(r);
+   assert(mb);
+
+   type = get_macroblock_type(mb);
+
+   ref_frames = const_mbtype_config[type][0];
+   mv_per_frame = const_mbtype_config[type][1];
+
+   handler = &r->mbtype_handlers[type];
+
+   pos = handler->pos.num_blocks * 4;
+   vl_vb_add_block(&handler->pos, false, mb->mbx, mb->mby);
+
+   get_motion_vectors(mb, mv);
+   for ( i = 0; i < 4; ++i ) {
+      handler->interlaced[i + pos] = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD ? 1.0f : 0.0f;
+      for ( j = 0; j < 4 /*TODO: ref_frames * mv_per_frame */; ++j )
+         handler->mv[j][i + pos] = mv[j];
+   }
 }
 
 static void
@@ -1030,9 +1028,7 @@ grab_macroblock(struct vl_mpeg12_mc_renderer *r,
    assert(mb->blocks);
    assert(r->num_macroblocks < r->macroblocks_per_batch);
 
-   memcpy(&r->macroblock_buf[r->num_macroblocks], mb,
-          sizeof(struct pipe_mpeg12_macroblock));
-
+   grab_vectors(r, mb);
    grab_blocks(r, mb->mbx, mb->mby, mb->dct_type, mb->cbp, mb->blocks);
 
    ++r->num_macroblocks;

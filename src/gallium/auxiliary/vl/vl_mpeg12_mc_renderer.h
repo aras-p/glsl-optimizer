@@ -33,6 +33,7 @@
 #include <pipe/p_video_state.h>
 #include "vl_types.h"
 #include "vl_idct.h"
+#include "vl_vertex_buffers.h"
 
 struct pipe_context;
 struct pipe_macroblock;
@@ -60,8 +61,12 @@ enum VL_MACROBLOCK_TYPE
 
 struct vl_mc_mbtype_handler
 {
-   void *vertex_elems_state;
    void *vs, *fs;
+   void *vertex_elems_state;
+
+   struct vl_vertex_buffer pos;
+   float *interlaced;
+   struct vertex2f *mv[4];
 };
 
 struct vl_mpeg12_mc_renderer
@@ -111,7 +116,6 @@ struct vl_mpeg12_mc_renderer
    struct pipe_surface *surface, *past, *future;
    struct pipe_fence_handle **fence;
    unsigned num_macroblocks;
-   struct pipe_mpeg12_macroblock *macroblock_buf;
 
    struct keymap *texview_map;
 };
