@@ -139,13 +139,7 @@ void renderer_texture_quad(struct renderer *,
                            VGfloat x2, VGfloat y2,
                            VGfloat x3, VGfloat y3,
                            VGfloat x4, VGfloat y4);
-void renderer_copy_texture(struct renderer *r,
-                           struct pipe_sampler_view *src,
-                           VGfloat sx1, VGfloat sy1,
-                           VGfloat sx2, VGfloat sy2,
-                           struct pipe_resource *dst,
-                           VGfloat dx1, VGfloat dy1,
-                           VGfloat dx2, VGfloat dy2);
+
 void renderer_copy_surface(struct renderer *r,
                            struct pipe_surface *src,
                            int sx1, int sy1,

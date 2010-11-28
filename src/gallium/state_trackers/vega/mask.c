@@ -399,16 +399,21 @@ void mask_copy(struct vg_mask_layer *layer,
                VGint dx, VGint dy,
                VGint width, VGint height)
 {
-    struct vg_context *ctx = vg_current_context();
-    struct st_framebuffer *fb_buffers = ctx->draw_buffer;
+   struct vg_context *ctx = vg_current_context();
+   struct pipe_sampler_view *src = ctx->draw_buffer->alpha_mask_view;
+   struct pipe_surface *surf;
 
-    renderer_copy_texture(ctx->renderer,
-                          layer->sampler_view,
-                          sx, sy,
-                          sx + width, sy + height,
-                          fb_buffers->alpha_mask_view->texture,
-                          dx, dy,
-                          dx + width, dy + height);
+   /* get the destination surface */
+   surf = ctx->pipe->screen->get_tex_surface(ctx->pipe->screen,
+         layer->sampler_view->texture, 0, 0, 0, PIPE_BIND_RENDER_TARGET);
+   if (surf && renderer_copy_begin(ctx->renderer, surf, VG_FALSE, src)) {
+      renderer_copy(ctx->renderer,
+            dx, dy, width, height,
+            sx, sy, width, height);
+      renderer_copy_end(ctx->renderer);
+   }
+
+   pipe_surface_reference(&surf, NULL);
 }
 
 static void mask_layer_render_to(struct vg_mask_layer *layer,

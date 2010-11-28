@@ -135,19 +135,20 @@ static void vg_copy_texture(struct vg_context *ctx,
 
    if (src_loc[2] >= 0 && src_loc[3] >= 0 &&
        dst_loc[2] >= 0 && dst_loc[3] >= 0) {
-      renderer_copy_texture(ctx->renderer,
-                            src,
-                            src_loc[0],
-                            src_loc[1] + src_loc[3],
-                            src_loc[0] + src_loc[2],
-                            src_loc[1],
-                            dst,
-                            dst_loc[0],
-                            dst_loc[1] + dst_loc[3],
-                            dst_loc[0] + dst_loc[2],
-                            dst_loc[1]);
-   }
+      struct pipe_surface *surf;
 
+      /* get the destination surface */
+      surf = ctx->pipe->screen->get_tex_surface(ctx->pipe->screen,
+            dst, 0, 0, 0, PIPE_BIND_RENDER_TARGET);
+      if (surf && renderer_copy_begin(ctx->renderer, surf, VG_TRUE, src)) {
+         renderer_copy(ctx->renderer,
+               dst_loc[0], dst_loc[1], dst_loc[2], dst_loc[3],
+               src_loc[0], src_loc[1], src_loc[2], src_loc[3]);
+         renderer_copy_end(ctx->renderer);
+      }
+
+      pipe_surface_reference(&surf, NULL);
+   }
 }
 
 void vg_copy_surface(struct vg_context *ctx,

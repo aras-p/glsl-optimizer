@@ -1308,55 +1308,6 @@ void renderer_validate_for_shader(struct renderer *renderer,
                           const_buffer, const_buffer_len);
 }
 
-void renderer_copy_texture(struct renderer *ctx,
-                           struct pipe_sampler_view *src,
-                           VGfloat sx1, VGfloat sy1,
-                           VGfloat sx2, VGfloat sy2,
-                           struct pipe_resource *dst,
-                           VGfloat dx1, VGfloat dy1,
-                           VGfloat dx2, VGfloat dy2)
-{
-   struct pipe_surface *surf;
-   VGint x, y, w, h, sx, sy, sw, sh;
-
-   /* get the destination surface */
-   surf = ctx->pipe->screen->get_tex_surface(ctx->pipe->screen,
-         dst, 0, 0, 0, PIPE_BIND_RENDER_TARGET);
-   if (!surf)
-      return;
-
-   assert(ctx->state == RENDERER_STATE_INIT);
-   assert(src->texture->width0 != 0);
-   assert(src->texture->height0 != 0);
-   assert(dst->width0 != 0);
-   assert(dst->height0 != 0);
-
-   x = (VGint) dx1;
-   y = (VGint) dy1;
-   w = (VGint) (dx2 - dx1);
-   h = (VGint) (dy2 - dy1);
-   assert(floatsEqual(x, dx1) &&
-          floatsEqual(y, dy1) &&
-          floatsEqual(w, (dx2 - dx1)) &&
-          floatsEqual(h, (dy2 - dy1)));
-
-   sx = (VGint) sx1;
-   sy = (VGint) sy1;
-   sw = (VGint) (sx2 - sx1);
-   sh = (VGint) (sy2 - sy1);
-   assert(floatsEqual(sx, sx1) &&
-          floatsEqual(sy, sy1) &&
-          floatsEqual(sw, (sx2 - sx1)) &&
-          floatsEqual(sh, (sy2 - sy1)));
-
-   if (renderer_copy_begin(ctx, surf, VG_TRUE, src)) {
-      renderer_copy(ctx, x, y, w, h, sx, sy, sw, sh);
-      renderer_copy_end(ctx);
-   }
-
-   pipe_surface_reference(&surf, NULL);
-}
-
 void renderer_copy_surface(struct renderer *ctx,
                            struct pipe_surface *src,
                            int srcX0, int srcY0,
