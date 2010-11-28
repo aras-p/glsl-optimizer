@@ -37,8 +37,6 @@
 #include "util/u_pack_color.h"
 #include "util/u_draw_quad.h"
 
-#define DISABLE_1_1_MASKING 1
-
 void vegaMask(VGHandle mask, VGMaskOperation operation,
               VGint x, VGint y,
               VGint width, VGint height)
@@ -66,12 +64,8 @@ void vegaMask(VGHandle mask, VGMaskOperation operation,
       struct vg_image *image = (struct vg_image *)mask;
       mask_using_image(image, operation, x, y, width, height);
    } else if (vg_object_is_valid((void*)mask, VG_OBJECT_MASK)) {
-#if DISABLE_1_1_MASKING
-      return;
-#else
       struct vg_mask_layer *layer = (struct vg_mask_layer *)mask;
       mask_using_layer(layer, operation, x, y, width, height);
-#endif
    } else {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
    }
@@ -137,10 +131,6 @@ void vegaRenderToMask(VGPath path,
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
-
-#if DISABLE_1_1_MASKING
-   return;
-#endif
 
    vg_validate_state(ctx);
 
@@ -219,9 +209,8 @@ void vegaFillMaskLayer(VGMaskLayer maskLayer,
       return;
    }
 
-#if DISABLE_1_1_MASKING
-   return;
-#endif
+   vg_validate_state(ctx);
+
    mask_layer_fill(mask, x, y, width, height, value);
 }
 
@@ -246,9 +235,7 @@ void vegaCopyMask(VGMaskLayer maskLayer,
       return;
    }
 
-#if DISABLE_1_1_MASKING
-   return;
-#endif
+   vg_validate_state(ctx);
 
    mask = (struct vg_mask_layer*)maskLayer;
    mask_copy(mask, sx, sy, dx, dy, width, height);

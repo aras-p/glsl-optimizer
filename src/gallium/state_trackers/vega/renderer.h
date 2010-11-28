@@ -58,6 +58,9 @@ void renderer_validate_for_shader(struct renderer *renderer,
                                   const void *const_buffer,
                                   VGint const_buffer_len);
 
+void renderer_validate_for_mask_rendering(struct renderer *renderer,
+                                          struct pipe_surface *dst);
+
 VGboolean renderer_copy_begin(struct renderer *renderer,
                               struct pipe_surface *dst,
                               VGboolean y0_top,

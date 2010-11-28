@@ -493,11 +493,10 @@ void vg_prepare_blend_surface_from_mask(struct vg_context *ctx)
                                                 0, 0, 0,
                                                 PIPE_BIND_RENDER_TARGET);
 
-   /* flip it, because we want to use it as a sampler */
    util_blit_pixels_tex(ctx->blit,
                         stfb->alpha_mask_view,
-                        0, strb->height,
-                        strb->width, 0,
+                        0, 0,
+                        strb->width, strb->height,
                         dest_surface,
                         0, 0,
                         strb->width, strb->height,

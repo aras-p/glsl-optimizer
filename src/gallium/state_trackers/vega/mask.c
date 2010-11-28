@@ -280,6 +280,7 @@ static void mask_resource_fill(struct pipe_resource *dst,
 
 
 static void mask_using_texture(struct pipe_sampler_view *sampler_view,
+                               VGboolean is_layer,
                                VGMaskOperation operation,
                                VGint x, VGint y,
                                VGint width, VGint height)
@@ -320,6 +321,11 @@ static void mask_using_texture(struct pipe_sampler_view *sampler_view,
 
    if (renderer_filter_begin(ctx->renderer, dst, VG_FALSE,
             ~0, samplers, views, 2, fs, (const void *) ones, sizeof(ones))) {
+      /* layer should be flipped when used as a texture */
+      if (is_layer) {
+         offsets[1] += offsets[3];
+         offsets[3] = -offsets[3];
+      }
       renderer_filter(ctx->renderer,
             loc[0], loc[1], loc[2], loc[3],
             offsets[0], offsets[1], offsets[2], offsets[3]);
@@ -407,6 +413,10 @@ void mask_copy(struct vg_mask_layer *layer,
    surf = ctx->pipe->screen->get_tex_surface(ctx->pipe->screen,
          layer->sampler_view->texture, 0, 0, 0, PIPE_BIND_RENDER_TARGET);
    if (surf && renderer_copy_begin(ctx->renderer, surf, VG_FALSE, src)) {
+      /* layer should be flipped when used as a texture */
+      sy += height;
+      height = -height;
+
       renderer_copy(ctx->renderer,
             dx, dy, width, height,
             sx, sy, width, height);
@@ -420,22 +430,13 @@ static void mask_layer_render_to(struct vg_mask_layer *layer,
                                  struct path *path,
                                  VGbitfield paint_modes)
 {
-#if 0
    struct vg_context *ctx = vg_current_context();
-   const VGfloat fill_color[4] = {1.f, 1.f, 1.f, 1.f};
-   struct pipe_screen *screen = ctx->pipe->screen;
    struct matrix *mat = &ctx->state.vg.path_user_to_surface_matrix;
-   struct pipe_surface *surface;
+   struct pipe_surface *surf;
 
-   surface = screen->get_tex_surface(screen, layer->sampler_view->texture,  0, 0, 0,
-                                     PIPE_BIND_RENDER_TARGET);
+   surf = alpha_mask_surface(ctx, PIPE_BIND_RENDER_TARGET);
 
-   cso_save_framebuffer(ctx->cso_context);
-   cso_save_fragment_shader(ctx->cso_context);
-
-   setup_mask_blend();
-   setup_mask_fill(fill_color);
-   setup_mask_framebuffer(surface, layer->width, layer->height);
+   renderer_validate_for_mask_rendering(ctx->renderer, surf);
 
    if (paint_modes & VG_FILL_PATH) {
       path_fill(path, mat);
@@ -444,17 +445,6 @@ static void mask_layer_render_to(struct vg_mask_layer *layer,
    if (paint_modes & VG_STROKE_PATH){
       path_stroke(path, mat);
    }
-
-
-   /* make sure rendering has completed */
-   ctx->pipe->flush(ctx->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
-
-   cso_restore_framebuffer(ctx->cso_context);
-   cso_restore_fragment_shader(ctx->cso_context);
-   ctx->state.dirty |= BLEND_DIRTY;
-
-   pipe_surface_reference(&surface, NULL);
-#endif
 }
 
 void mask_render_to(struct path *path,
@@ -467,14 +457,14 @@ void mask_render_to(struct path *path,
    VGint width, height;
 
    width = fb_buffers->alpha_mask_view->texture->width0;
-   height = fb_buffers->alpha_mask_view->texture->width0;
+   height = fb_buffers->alpha_mask_view->texture->height0;
 
    temp_layer = mask_layer_create(width, height);
+   mask_layer_fill(temp_layer, 0, 0, width, height, 0.0f);
 
    mask_layer_render_to(temp_layer, path, paint_modes);
 
-   mask_using_layer(temp_layer, 0, 0, width, height,
-                    operation);
+   mask_using_layer(temp_layer, operation, 0, 0, width, height);
 
    mask_layer_destroy(temp_layer);
 }
@@ -484,7 +474,7 @@ void mask_using_layer(struct vg_mask_layer *layer,
                       VGint x, VGint y,
                       VGint width, VGint height)
 {
-   mask_using_texture(layer->sampler_view, operation,
+   mask_using_texture(layer->sampler_view, VG_TRUE, operation,
                       x, y, width, height);
 }
 
@@ -506,7 +496,7 @@ void mask_using_image(struct vg_image *image,
                       VGint x, VGint y,
                       VGint width, VGint height)
 {
-   mask_using_texture(image->sampler_view, operation,
+   mask_using_texture(image->sampler_view, VG_FALSE, operation,
                       x, y, width, height);
 }
 

@@ -68,6 +68,7 @@ typedef enum {
    RENDERER_FS_COLOR,
    RENDERER_FS_TEXTURE,
    RENDERER_FS_SCISSOR,
+   RENDERER_FS_WHITE,
    NUM_RENDERER_FS
 } RendererFs;
 
@@ -75,6 +76,7 @@ struct renderer {
    struct pipe_context *pipe;
    struct cso_context *cso;
 
+   VGbitfield dirty;
    struct {
       struct pipe_rasterizer_state rasterizer;
       struct pipe_depth_stencil_alpha_state dsa;
@@ -222,6 +224,25 @@ static void *create_scissor_fs(struct pipe_context *pipe)
 }
 
 /**
+ * Create a simple fragment shader that sets the color to white.
+ */
+static void *create_white_fs(struct pipe_context *pipe)
+{
+   struct ureg_program *ureg;
+   struct ureg_dst out;
+   struct ureg_src imm;
+
+   ureg = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   out = ureg_DECL_output(ureg, TGSI_SEMANTIC_COLOR, 0);
+   imm = ureg_imm4f(ureg, 1.0f, 1.0f, 1.0f, 1.0f);
+
+   ureg_MOV(ureg, out, imm);
+   ureg_END(ureg);
+
+   return ureg_create_shader_and_destroy(ureg, pipe);
+}
+
+/**
  * Set renderer fragment shader.
  *
  * This function modifies fragment_shader state.
@@ -242,6 +263,9 @@ static void renderer_set_fs(struct renderer *r, RendererFs id)
          break;
       case RENDERER_FS_SCISSOR:
          fs = create_scissor_fs(r->pipe);
+         break;
+      case RENDERER_FS_WHITE:
+         fs = create_white_fs(r->pipe);
          break;
       default:
          assert(!"Unknown renderer fs id");
@@ -1171,6 +1195,9 @@ void renderer_validate(struct renderer *renderer,
 {
    assert(renderer->state == RENDERER_STATE_INIT);
 
+   dirty |= renderer->dirty;
+   renderer->dirty = 0;
+
    if (dirty & BLEND_DIRTY) {
       struct pipe_blend_state blend;
       memset(&blend, 0, sizeof(blend));
@@ -1306,6 +1333,17 @@ void renderer_validate_for_shader(struct renderer *renderer,
    renderer_set_custom_fs(renderer, fs,
                           samplers, views, num_samplers,
                           const_buffer, const_buffer_len);
+}
+
+void renderer_validate_for_mask_rendering(struct renderer *renderer,
+                                          struct pipe_surface *dst)
+{
+   renderer_set_target(renderer, dst, renderer->g3d.fb.zsbuf, VG_FALSE);
+   renderer_set_blend(renderer, ~0);
+   renderer_set_fs(renderer, RENDERER_FS_WHITE);
+
+   /* set internal dirty flags (hacky!) */
+   renderer->dirty = FRAMEBUFFER_DIRTY | BLEND_DIRTY;
 }
 
 void renderer_copy_surface(struct renderer *ctx,
