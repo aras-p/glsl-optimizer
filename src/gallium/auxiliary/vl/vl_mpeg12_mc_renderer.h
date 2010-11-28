@@ -45,6 +45,24 @@ enum VL_MPEG12_MC_RENDERER_BUFFER_MODE
    VL_MPEG12_MC_RENDERER_BUFFER_PICTURE /* Larger batches, more memory */
 };
 
+enum VL_MACROBLOCK_TYPE
+{
+   VL_MACROBLOCK_TYPE_INTRA,
+   VL_MACROBLOCK_TYPE_FWD_FRAME_PRED,
+   VL_MACROBLOCK_TYPE_FWD_FIELD_PRED,
+   VL_MACROBLOCK_TYPE_BKWD_FRAME_PRED,
+   VL_MACROBLOCK_TYPE_BKWD_FIELD_PRED,
+   VL_MACROBLOCK_TYPE_BI_FRAME_PRED,
+   VL_MACROBLOCK_TYPE_BI_FIELD_PRED,
+
+   VL_NUM_MACROBLOCK_TYPES
+};
+
+struct vl_mc_mbtype_handler
+{
+   void *vs, *fs;
+};
+
 struct vl_mpeg12_mc_renderer
 {
    struct pipe_context *pipe;
@@ -79,8 +97,7 @@ struct vl_mpeg12_mc_renderer
       struct { struct pipe_sampler_view *y, *cb, *cr, *ref[2]; } individual;
    } sampler_views;
 
-   void *i_vs, *p_vs[2], *b_vs[2];
-   void *i_fs, *p_fs[2], *b_fs[2];
+   struct vl_mc_mbtype_handler mbtype_handlers[VL_NUM_MACROBLOCK_TYPES];
 
    union
    {

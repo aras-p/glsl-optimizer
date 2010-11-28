@@ -87,22 +87,19 @@ enum VS_OUTPUT
    VS_O_MV3
 };
 
-enum MACROBLOCK_TYPE
-{
-   MACROBLOCK_TYPE_INTRA,
-   MACROBLOCK_TYPE_FWD_FRAME_PRED,
-   MACROBLOCK_TYPE_FWD_FIELD_PRED,
-   MACROBLOCK_TYPE_BKWD_FRAME_PRED,
-   MACROBLOCK_TYPE_BKWD_FIELD_PRED,
-   MACROBLOCK_TYPE_BI_FRAME_PRED,
-   MACROBLOCK_TYPE_BI_FIELD_PRED,
-
-   NUM_MACROBLOCK_TYPES
-};
-
 /* vertices for a quad covering a macroblock */
 static const struct vertex2f const_quad[4] = {
    {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}
+};
+
+static const unsigned const_mbtype_config[VL_NUM_MACROBLOCK_TYPES][2] = {
+   [VL_MACROBLOCK_TYPE_INTRA]           = { 0, 0 },
+   [VL_MACROBLOCK_TYPE_FWD_FRAME_PRED]  = { 1, 1 },
+   [VL_MACROBLOCK_TYPE_FWD_FIELD_PRED]  = { 1, 2 },
+   [VL_MACROBLOCK_TYPE_BKWD_FRAME_PRED] = { 1, 1 },
+   [VL_MACROBLOCK_TYPE_BKWD_FIELD_PRED] = { 1, 2 },
+   [VL_MACROBLOCK_TYPE_BI_FRAME_PRED]   = { 2, 1 },
+   [VL_MACROBLOCK_TYPE_BI_FIELD_PRED]   = { 2, 2 }
 };
 
 static void *
@@ -299,77 +296,11 @@ fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct
 }
 
 static void *
-create_intra_frag_shader(struct vl_mpeg12_mc_renderer *r)
+create_frag_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigned mv_per_frame)
 {
    struct ureg_program *shader;
-   struct ureg_dst field, texel;
-   struct ureg_dst fragment;
-
-   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
-   if (!shader)
-      return NULL;
-
-   fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
-
-   /*
-    * texel = fetch_ycbcr()
-    * fragment = texel * scale + 0.5
-    */
-   field = calc_field(shader);
-   texel = fetch_ycbcr(r, shader, field);
-   ureg_ADD(shader, fragment, ureg_src(texel), ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X));
-
-   ureg_release_temporary(shader, field);
-   ureg_release_temporary(shader, texel);
-   ureg_END(shader);
-
-   return ureg_create_shader_and_destroy(shader, r->pipe);
-}
-
-static void *
-create_frame_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
-{
-   struct ureg_program *shader;
-   struct ureg_src tc;
-   struct ureg_src sampler;
-   struct ureg_dst field, texel, ref;
-   struct ureg_dst fragment;
-
-   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
-   if (!shader)
-      return NULL;
-
-   tc = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV0, TGSI_INTERPOLATE_LINEAR);
-   sampler = ureg_DECL_sampler(shader, 3);
-
-   ref = ureg_DECL_temporary(shader);
-   fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
-
-   /*
-    * texel = fetch_ycbcr()
-    * ref = tex(tc, sampler)
-    * fragment = texel * scale + ref
-    */
-   field = calc_field(shader);
-   texel = fetch_ycbcr(r, shader, field);
-   ureg_TEX(shader, ref, TGSI_TEXTURE_2D, tc, sampler);
-   ureg_ADD(shader, fragment, ureg_src(texel), ureg_src(ref));
-
-   ureg_release_temporary(shader, field);
-   ureg_release_temporary(shader, texel);
-   ureg_release_temporary(shader, ref);
-   ureg_END(shader);
-
-   return ureg_create_shader_and_destroy(shader, r->pipe);
-}
-
-static void *
-create_field_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
-{
-   struct ureg_program *shader;
-   struct ureg_src tc[2];
-   struct ureg_src sampler;
-   struct ureg_dst texel, ref, field;
+   struct ureg_src tc[ref_frames * mv_per_frame], sampler[ref_frames], result;
+   struct ureg_dst field, texel, ref[ref_frames];
    struct ureg_dst fragment;
    unsigned i, label;
 
@@ -377,143 +308,98 @@ create_field_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
    if (!shader)
       return NULL;
 
-   for (i = 0; i < 2; ++i)
-      tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV0 + i, TGSI_INTERPOLATE_LINEAR);
-   sampler = ureg_DECL_sampler(shader, 3);
-
-   ref = ureg_DECL_temporary(shader);
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
-   /*
-    * texel = fetch_ycbcr()
-    * field = calc_field();
-    * if(field == 1)
-    *    ref = tex(tc[1], sampler)
-    * else
-    *    ref = tex(tc[0], sampler)
-    * fragment = texel * scale + ref
-    */
-   field = calc_field(shader);
-   texel = fetch_ycbcr(r, shader, field);
-
-   ureg_IF(shader, ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y), &label);
-      ureg_TEX(shader, ref, TGSI_TEXTURE_2D, tc[1], sampler);
-   ureg_ELSE(shader, &label);
-      ureg_TEX(shader, ref, TGSI_TEXTURE_2D, tc[0], sampler);
-   ureg_ENDIF(shader);
-
-   ureg_ADD(shader, fragment, ureg_src(texel), ureg_src(ref));
-
-   ureg_release_temporary(shader, field);
-   ureg_release_temporary(shader, texel);
-   ureg_release_temporary(shader, ref);
-   ureg_END(shader);
-
-   return ureg_create_shader_and_destroy(shader, r->pipe);
-}
-
-static void *
-create_frame_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
-{
-   struct ureg_program *shader;
-   struct ureg_src tc[2];
-   struct ureg_src sampler[2];
-   struct ureg_dst field, texel, ref[2];
-   struct ureg_dst fragment;
-   unsigned i;
-
-   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
-   if (!shader)
-      return NULL;
-
-   for (i = 0; i < 2; ++i)  {
+   for (i = 0; i < ref_frames * mv_per_frame; ++i)
       tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV0 + i, TGSI_INTERPOLATE_LINEAR);
+
+   for (i = 0; i < ref_frames; ++i) {
       sampler[i] = ureg_DECL_sampler(shader, i + 3);
+      ref[i] = ureg_DECL_temporary(shader);
    }
 
-   ref[0] = ureg_DECL_temporary(shader);
-   ref[1] = ureg_DECL_temporary(shader);
-   fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
-
-   /*
-    * texel = fetch_ycbcr()
-    * ref[0..1 = tex(tc[3..4], sampler[3..4])
-    * ref[0] = lerp(ref[0], ref[1], 0.5)
-    * fragment = texel * scale + ref[0]
-    */
    field = calc_field(shader);
    texel = fetch_ycbcr(r, shader, field);
-   ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[0], sampler[0]);
-   ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, tc[1], sampler[1]);
-   ureg_LRP(shader, ref[0], ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X), ureg_src(ref[0]), ureg_src(ref[1]));
 
-   ureg_ADD(shader, fragment, ureg_src(texel), ureg_src(ref[0]));
+   switch(ref_frames) {
+   case 0:
+      result = ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X);
+      break;
+
+   case 1:
+      if(mv_per_frame == 1)
+         ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[0], sampler[0]);
+      else {
+         ureg_IF(shader, ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y), &label);
+            ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[1], sampler[0]);
+         ureg_ELSE(shader, &label);
+            ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[0], sampler[0]);
+         ureg_ENDIF(shader);
+      }
+      result = ureg_src(ref[0]);
+      break;
+
+   case 2:
+      if(mv_per_frame == 1) {
+         ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[0], sampler[0]);
+         ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, tc[1], sampler[1]);
+      } else {
+         ureg_IF(shader, ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y), &label);
+            ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[1], sampler[0]);
+            ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, tc[3], sampler[1]);
+         ureg_ELSE(shader, &label);
+            ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[0], sampler[0]);
+            ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, tc[2], sampler[1]);
+         ureg_ENDIF(shader);
+      }
+
+      ureg_LRP(shader, ref[0], ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X), ureg_src(ref[0]), ureg_src(ref[1]));
+      result = ureg_src(ref[0]);
+      break;
+
+   default:
+      assert(0);
+   }
+   ureg_ADD(shader, fragment, ureg_src(texel), result);
+
+   for (i = 0; i < ref_frames; ++i)
+      ureg_release_temporary(shader, ref[i]);
 
    ureg_release_temporary(shader, field);
    ureg_release_temporary(shader, texel);
-   ureg_release_temporary(shader, ref[0]);
-   ureg_release_temporary(shader, ref[1]);
    ureg_END(shader);
 
    return ureg_create_shader_and_destroy(shader, r->pipe);
 }
 
-static void *
-create_field_bi_pred_frag_shader(struct vl_mpeg12_mc_renderer *r)
+static bool
+init_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE type)
 {
-   struct ureg_program *shader;
-   struct ureg_src tc[4];
-   struct ureg_src sampler[2];
-   struct ureg_dst texel, ref[2], field;
-   struct ureg_dst fragment;
-   unsigned i, label;
+   unsigned ref_frames, mv_per_frame;
+   struct vl_mc_mbtype_handler *handler;
 
-   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
-   if (!shader)
-      return NULL;
+   assert(r);
 
-   for (i = 0; i < 4; ++i)
-      tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV0 + i, TGSI_INTERPOLATE_LINEAR);
-   for (i = 0; i < 2; ++i)
-      sampler[i] = ureg_DECL_sampler(shader, i + 3);
+   ref_frames = const_mbtype_config[type][0];
+   mv_per_frame = const_mbtype_config[type][1];
 
-   texel = ureg_DECL_temporary(shader);
-   ref[0] = ureg_DECL_temporary(shader);
-   ref[1] = ureg_DECL_temporary(shader);
-   fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
+   handler = &r->mbtype_handlers[type];
 
-   /*
-    * texel = fetch_ycbcr()
-    * if(field == 1)
-    *    ref[0..1] = tex(tc[1|3], sampler[0..1])
-    * else
-    *    ref[0..1] = tex(tc[0|2], sampler[0..1])
-    * ref[0] = lerp(ref[0], ref[1], 0.5)
-    * fragment = texel * scale + ref[0]
-    */
-   field = calc_field(shader);
-   texel = fetch_ycbcr(r, shader, field);
+   handler->vs = create_vert_shader(r, ref_frames, mv_per_frame);
+   handler->fs = create_frag_shader(r, ref_frames, mv_per_frame);
 
-   ureg_IF(shader, ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y), &label);
-      ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[1], sampler[0]);
-      ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, tc[3], sampler[1]);
-   ureg_ELSE(shader, &label);
-      ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[0], sampler[0]);
-      ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, tc[2], sampler[1]);
-   ureg_ENDIF(shader);
-
-   ureg_LRP(shader, ref[0], ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X), ureg_src(ref[0]), ureg_src(ref[1]));
-
-   ureg_ADD(shader, fragment, ureg_src(texel), ureg_src(ref[0]));
-
-   ureg_release_temporary(shader, field);
-   ureg_release_temporary(shader, texel);
-   ureg_release_temporary(shader, ref[0]);
-   ureg_release_temporary(shader, ref[1]);
-   ureg_END(shader);
-
-   return ureg_create_shader_and_destroy(shader, r->pipe);
+   return handler->vs != NULL && handler->fs != NULL;
 }
+
+static void
+cleanup_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE type)
+{
+   assert(r);
+
+   r->pipe->delete_vs_state(r->pipe, r->mbtype_handlers[type].vs);
+   r->pipe->delete_fs_state(r->pipe, r->mbtype_handlers[type].fs);
+}
+
 
 static bool
 init_pipe_state(struct vl_mpeg12_mc_renderer *r)
@@ -592,54 +478,6 @@ cleanup_pipe_state(struct vl_mpeg12_mc_renderer *r)
 
    for (i = 0; i < 5; ++i)
       r->pipe->delete_sampler_state(r->pipe, r->samplers.all[i]);
-}
-
-static bool
-init_shaders(struct vl_mpeg12_mc_renderer *r)
-{
-   assert(r);
-
-   r->i_vs = create_vert_shader(r, 0, 0);
-   r->i_fs = create_intra_frag_shader(r);
-   
-   r->p_vs[0] = create_vert_shader(r, 1, 1);
-   r->p_vs[1] = create_vert_shader(r, 1, 2);
-   r->p_fs[0] = create_frame_pred_frag_shader(r);
-   r->p_fs[1] = create_field_pred_frag_shader(r);
-
-   r->b_vs[0] = create_vert_shader(r, 2, 1);
-   r->b_vs[1] = create_vert_shader(r, 2, 2);
-   r->b_fs[0] = create_frame_bi_pred_frag_shader(r);
-   r->b_fs[1] = create_field_bi_pred_frag_shader(r);
-
-   return
-      r->i_vs != NULL &&
-      r->i_fs != NULL &&
-      r->p_vs[0] != NULL &&
-      r->p_vs[1] != NULL &&
-      r->p_fs[0] != NULL &&
-      r->p_fs[1] != NULL &&
-      r->b_vs[0] != NULL &&
-      r->b_vs[1] != NULL &&
-      r->b_fs[0] != NULL &&
-      r->b_fs[1] != NULL;
-}
-
-static void
-cleanup_shaders(struct vl_mpeg12_mc_renderer *r)
-{
-   assert(r);
-
-   r->pipe->delete_vs_state(r->pipe, r->i_vs);
-   r->pipe->delete_fs_state(r->pipe, r->i_fs);
-   r->pipe->delete_vs_state(r->pipe, r->p_vs[0]);
-   r->pipe->delete_vs_state(r->pipe, r->p_vs[1]);
-   r->pipe->delete_fs_state(r->pipe, r->p_fs[0]);
-   r->pipe->delete_fs_state(r->pipe, r->p_fs[1]);
-   r->pipe->delete_vs_state(r->pipe, r->b_vs[0]);
-   r->pipe->delete_vs_state(r->pipe, r->b_vs[1]);
-   r->pipe->delete_fs_state(r->pipe, r->b_fs[0]);
-   r->pipe->delete_fs_state(r->pipe, r->b_fs[1]);
 }
 
 static bool
@@ -836,23 +674,23 @@ cleanup_buffers(struct vl_mpeg12_mc_renderer *r)
    FREE(r->macroblock_buf);
 }
 
-static enum MACROBLOCK_TYPE
+static enum VL_MACROBLOCK_TYPE
 get_macroblock_type(struct pipe_mpeg12_macroblock *mb)
 {
    assert(mb);
 
    switch (mb->mb_type) {
       case PIPE_MPEG12_MACROBLOCK_TYPE_INTRA:
-         return MACROBLOCK_TYPE_INTRA;
+         return VL_MACROBLOCK_TYPE_INTRA;
       case PIPE_MPEG12_MACROBLOCK_TYPE_FWD:
          return mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME ?
-            MACROBLOCK_TYPE_FWD_FRAME_PRED : MACROBLOCK_TYPE_FWD_FIELD_PRED;
+            VL_MACROBLOCK_TYPE_FWD_FRAME_PRED : VL_MACROBLOCK_TYPE_FWD_FIELD_PRED;
       case PIPE_MPEG12_MACROBLOCK_TYPE_BKWD:
          return mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME ?
-            MACROBLOCK_TYPE_BKWD_FRAME_PRED : MACROBLOCK_TYPE_BKWD_FIELD_PRED;
+            VL_MACROBLOCK_TYPE_BKWD_FRAME_PRED : VL_MACROBLOCK_TYPE_BKWD_FIELD_PRED;
       case PIPE_MPEG12_MACROBLOCK_TYPE_BI:
          return mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME ?
-            MACROBLOCK_TYPE_BI_FRAME_PRED : MACROBLOCK_TYPE_BI_FIELD_PRED;
+            VL_MACROBLOCK_TYPE_BI_FRAME_PRED : VL_MACROBLOCK_TYPE_BI_FIELD_PRED;
       default:
          assert(0);
    }
@@ -994,7 +832,7 @@ static void
 gen_macroblock_stream(struct vl_mpeg12_mc_renderer *r,
                       unsigned *num_macroblocks)
 {
-   unsigned offset[NUM_MACROBLOCK_TYPES];
+   unsigned offset[VL_NUM_MACROBLOCK_TYPES];
    struct vert_stream_0 *ycbcr_vb;
    struct vertex2f *ref_vb[2];
    struct pipe_transfer *buf_transfer[3];
@@ -1004,13 +842,13 @@ gen_macroblock_stream(struct vl_mpeg12_mc_renderer *r,
    assert(num_macroblocks);
 
    for (i = 0; i < r->num_macroblocks; ++i) {
-      enum MACROBLOCK_TYPE mb_type = get_macroblock_type(&r->macroblock_buf[i]);
+      enum VL_MACROBLOCK_TYPE mb_type = get_macroblock_type(&r->macroblock_buf[i]);
       ++num_macroblocks[mb_type];
    }
 
    offset[0] = 0;
 
-   for (i = 1; i < NUM_MACROBLOCK_TYPES; ++i)
+   for (i = 1; i < VL_NUM_MACROBLOCK_TYPES; ++i)
       offset[i] = offset[i - 1] + num_macroblocks[i - 1];
 
    ycbcr_vb = (struct vert_stream_0 *)pipe_buffer_map
@@ -1031,7 +869,7 @@ gen_macroblock_stream(struct vl_mpeg12_mc_renderer *r,
       );
 
    for (i = 0; i < r->num_macroblocks; ++i) {
-      enum MACROBLOCK_TYPE mb_type = get_macroblock_type(&r->macroblock_buf[i]);
+      enum VL_MACROBLOCK_TYPE mb_type = get_macroblock_type(&r->macroblock_buf[i]);
 
       gen_macroblock_verts(r, &r->macroblock_buf[i], offset[mb_type],
                            ycbcr_vb, ref_vb);
@@ -1074,7 +912,7 @@ static struct pipe_sampler_view
 static void
 flush(struct vl_mpeg12_mc_renderer *r)
 {
-   unsigned num_macroblocks[NUM_MACROBLOCK_TYPES] = { 0 };
+   unsigned num_macroblocks[VL_NUM_MACROBLOCK_TYPES] = { 0 };
    unsigned vb_start = 0;
 
    assert(r);
@@ -1089,80 +927,80 @@ flush(struct vl_mpeg12_mc_renderer *r)
    r->pipe->set_framebuffer_state(r->pipe, &r->fb_state);
    r->pipe->set_viewport_state(r->pipe, &r->viewport);
 
-   if (num_macroblocks[MACROBLOCK_TYPE_INTRA] > 0) {
+   if (num_macroblocks[VL_MACROBLOCK_TYPE_INTRA] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 2, r->vertex_bufs.all);
       r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.i);
       r->pipe->set_fragment_sampler_views(r->pipe, 3, r->sampler_views.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 3, r->samplers.all);
-      r->pipe->bind_vs_state(r->pipe, r->i_vs);
-      r->pipe->bind_fs_state(r->pipe, r->i_fs);
+      r->pipe->bind_vs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_INTRA].vs);
+      r->pipe->bind_fs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_INTRA].fs);
 
       util_draw_arrays(r->pipe, PIPE_PRIM_QUADS, vb_start,
-                       num_macroblocks[MACROBLOCK_TYPE_INTRA] * 4);
-      vb_start += num_macroblocks[MACROBLOCK_TYPE_INTRA] * 4;
+                       num_macroblocks[VL_MACROBLOCK_TYPE_INTRA] * 4);
+      vb_start += num_macroblocks[VL_MACROBLOCK_TYPE_INTRA] * 4;
    }
 
-   if (num_macroblocks[MACROBLOCK_TYPE_FWD_FRAME_PRED] > 0) {
+   if (num_macroblocks[VL_MACROBLOCK_TYPE_FWD_FRAME_PRED] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 3, r->vertex_bufs.all);
       r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.p);
       r->textures.individual.ref[0] = r->past->texture;
       r->sampler_views.individual.ref[0] = find_or_create_sampler_view(r, r->past);
       r->pipe->set_fragment_sampler_views(r->pipe, 4, r->sampler_views.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
-      r->pipe->bind_vs_state(r->pipe, r->p_vs[0]);
-      r->pipe->bind_fs_state(r->pipe, r->p_fs[0]);
+      r->pipe->bind_vs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_FWD_FRAME_PRED].vs);
+      r->pipe->bind_fs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_FWD_FRAME_PRED].fs);
 
       util_draw_arrays(r->pipe, PIPE_PRIM_QUADS, vb_start,
-                       num_macroblocks[MACROBLOCK_TYPE_FWD_FRAME_PRED] * 4);
-      vb_start += num_macroblocks[MACROBLOCK_TYPE_FWD_FRAME_PRED] * 4;
+                       num_macroblocks[VL_MACROBLOCK_TYPE_FWD_FRAME_PRED] * 4);
+      vb_start += num_macroblocks[VL_MACROBLOCK_TYPE_FWD_FRAME_PRED] * 4;
    }
 
-   if (num_macroblocks[MACROBLOCK_TYPE_FWD_FIELD_PRED] > 0) {
+   if (num_macroblocks[VL_MACROBLOCK_TYPE_FWD_FIELD_PRED] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 3, r->vertex_bufs.all);
       r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.p);
       r->textures.individual.ref[0] = r->past->texture;
       r->sampler_views.individual.ref[0] = find_or_create_sampler_view(r, r->past);
       r->pipe->set_fragment_sampler_views(r->pipe, 4, r->sampler_views.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
-      r->pipe->bind_vs_state(r->pipe, r->p_vs[1]);
-      r->pipe->bind_fs_state(r->pipe, r->p_fs[1]);
+      r->pipe->bind_vs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_FWD_FIELD_PRED].vs);
+      r->pipe->bind_fs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_FWD_FIELD_PRED].fs);
 
       util_draw_arrays(r->pipe, PIPE_PRIM_QUADS, vb_start,
-                       num_macroblocks[MACROBLOCK_TYPE_FWD_FIELD_PRED] * 4);
-      vb_start += num_macroblocks[MACROBLOCK_TYPE_FWD_FIELD_PRED] * 4;
+                       num_macroblocks[VL_MACROBLOCK_TYPE_FWD_FIELD_PRED] * 4);
+      vb_start += num_macroblocks[VL_MACROBLOCK_TYPE_FWD_FIELD_PRED] * 4;
    }
 
-   if (num_macroblocks[MACROBLOCK_TYPE_BKWD_FRAME_PRED] > 0) {
+   if (num_macroblocks[VL_MACROBLOCK_TYPE_BKWD_FRAME_PRED] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 3, r->vertex_bufs.all);
       r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.p);
       r->textures.individual.ref[0] = r->future->texture;
       r->sampler_views.individual.ref[0] = find_or_create_sampler_view(r, r->future);
       r->pipe->set_fragment_sampler_views(r->pipe, 4, r->sampler_views.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
-      r->pipe->bind_vs_state(r->pipe, r->p_vs[0]);
-      r->pipe->bind_fs_state(r->pipe, r->p_fs[0]);
+      r->pipe->bind_vs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_BKWD_FRAME_PRED].vs);
+      r->pipe->bind_fs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_BKWD_FRAME_PRED].fs);
 
       util_draw_arrays(r->pipe, PIPE_PRIM_QUADS, vb_start,
-                       num_macroblocks[MACROBLOCK_TYPE_BKWD_FRAME_PRED] * 4);
-      vb_start += num_macroblocks[MACROBLOCK_TYPE_BKWD_FRAME_PRED] * 4;
+                       num_macroblocks[VL_MACROBLOCK_TYPE_BKWD_FRAME_PRED] * 4);
+      vb_start += num_macroblocks[VL_MACROBLOCK_TYPE_BKWD_FRAME_PRED] * 4;
    }
 
-   if (num_macroblocks[MACROBLOCK_TYPE_BKWD_FIELD_PRED] > 0) {
+   if (num_macroblocks[VL_MACROBLOCK_TYPE_BKWD_FIELD_PRED] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 3, r->vertex_bufs.all);
       r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.p);
       r->textures.individual.ref[0] = r->future->texture;
       r->sampler_views.individual.ref[0] = find_or_create_sampler_view(r, r->future);
       r->pipe->set_fragment_sampler_views(r->pipe, 4, r->sampler_views.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 4, r->samplers.all);
-      r->pipe->bind_vs_state(r->pipe, r->p_vs[1]);
-      r->pipe->bind_fs_state(r->pipe, r->p_fs[1]);
+      r->pipe->bind_vs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_BKWD_FIELD_PRED].vs);
+      r->pipe->bind_fs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_BKWD_FIELD_PRED].fs);
 
       util_draw_arrays(r->pipe, PIPE_PRIM_QUADS, vb_start,
-                       num_macroblocks[MACROBLOCK_TYPE_BKWD_FIELD_PRED] * 4);
-      vb_start += num_macroblocks[MACROBLOCK_TYPE_BKWD_FIELD_PRED] * 4;
+                       num_macroblocks[VL_MACROBLOCK_TYPE_BKWD_FIELD_PRED] * 4);
+      vb_start += num_macroblocks[VL_MACROBLOCK_TYPE_BKWD_FIELD_PRED] * 4;
    }
 
-   if (num_macroblocks[MACROBLOCK_TYPE_BI_FRAME_PRED] > 0) {
+   if (num_macroblocks[VL_MACROBLOCK_TYPE_BI_FRAME_PRED] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 4, r->vertex_bufs.all);
       r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.b);
       r->textures.individual.ref[0] = r->past->texture;
@@ -1171,15 +1009,15 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->sampler_views.individual.ref[1] = find_or_create_sampler_view(r, r->future);
       r->pipe->set_fragment_sampler_views(r->pipe, 5, r->sampler_views.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 5, r->samplers.all);
-      r->pipe->bind_vs_state(r->pipe, r->b_vs[0]);
-      r->pipe->bind_fs_state(r->pipe, r->b_fs[0]);
+      r->pipe->bind_vs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_BI_FRAME_PRED].vs);
+      r->pipe->bind_fs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_BI_FRAME_PRED].fs);
 
       util_draw_arrays(r->pipe, PIPE_PRIM_QUADS, vb_start,
-                       num_macroblocks[MACROBLOCK_TYPE_BI_FRAME_PRED] * 4);
-      vb_start += num_macroblocks[MACROBLOCK_TYPE_BI_FRAME_PRED] * 4;
+                       num_macroblocks[VL_MACROBLOCK_TYPE_BI_FRAME_PRED] * 4);
+      vb_start += num_macroblocks[VL_MACROBLOCK_TYPE_BI_FRAME_PRED] * 4;
    }
 
-   if (num_macroblocks[MACROBLOCK_TYPE_BI_FIELD_PRED] > 0) {
+   if (num_macroblocks[VL_MACROBLOCK_TYPE_BI_FIELD_PRED] > 0) {
       r->pipe->set_vertex_buffers(r->pipe, 4, r->vertex_bufs.all);
       r->pipe->bind_vertex_elements_state(r->pipe, r->vertex_elems_state.individual.b);
       r->textures.individual.ref[0] = r->past->texture;
@@ -1188,12 +1026,12 @@ flush(struct vl_mpeg12_mc_renderer *r)
       r->sampler_views.individual.ref[1] = find_or_create_sampler_view(r, r->future);
       r->pipe->set_fragment_sampler_views(r->pipe, 5, r->sampler_views.all);
       r->pipe->bind_fragment_sampler_states(r->pipe, 5, r->samplers.all);
-      r->pipe->bind_vs_state(r->pipe, r->b_vs[1]);
-      r->pipe->bind_fs_state(r->pipe, r->b_fs[1]);
+      r->pipe->bind_vs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_BI_FIELD_PRED].vs);
+      r->pipe->bind_fs_state(r->pipe, r->mbtype_handlers[VL_MACROBLOCK_TYPE_BI_FIELD_PRED].fs);
 
       util_draw_arrays(r->pipe, PIPE_PRIM_QUADS, vb_start,
-                       num_macroblocks[MACROBLOCK_TYPE_BI_FIELD_PRED] * 4);
-      vb_start += num_macroblocks[MACROBLOCK_TYPE_BI_FIELD_PRED] * 4;
+                       num_macroblocks[VL_MACROBLOCK_TYPE_BI_FIELD_PRED] * 4);
+      vb_start += num_macroblocks[VL_MACROBLOCK_TYPE_BI_FIELD_PRED] * 4;
    }
 
    r->pipe->flush(r->pipe, PIPE_FLUSH_RENDER_CACHE, r->fence);
@@ -1297,6 +1135,7 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
                            bool pot_buffers)
 {
    struct pipe_resource *idct_matrix;
+   unsigned i;
 
    assert(renderer);
    assert(pipe);
@@ -1323,8 +1162,9 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
    if (!init_pipe_state(renderer))
       goto error_pipe_state;
 
-   if (!init_shaders(renderer))
-      goto error_shaders;
+   for(i = 0; i<VL_NUM_MACROBLOCK_TYPES; ++i)
+      if (!init_mbtype_handler(renderer, i))
+         goto error_mbtypes;
 
    if (!init_buffers(renderer))
       goto error_buffers;
@@ -1361,9 +1201,10 @@ error_idct_matrix:
    cleanup_buffers(renderer);
 
 error_buffers:
-   cleanup_shaders(renderer);
+   for(i = 0; i<VL_NUM_MACROBLOCK_TYPES; ++i)
+      cleanup_mbtype_handler(renderer, i);
 
-error_shaders:
+error_mbtypes:
    cleanup_pipe_state(renderer);
 
 error_pipe_state:
@@ -1374,6 +1215,8 @@ error_pipe_state:
 void
 vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer)
 {
+   unsigned i;
+
    assert(renderer);
 
    vl_idct_cleanup(&renderer->idct_y);
@@ -1382,7 +1225,8 @@ vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer)
 
    util_delete_keymap(renderer->texview_map, renderer->pipe);
    cleanup_pipe_state(renderer);
-   cleanup_shaders(renderer);
+   for(i = 0; i<VL_NUM_MACROBLOCK_TYPES; ++i)
+      cleanup_mbtype_handler(renderer, i);
    cleanup_buffers(renderer);
 
    pipe_surface_reference(&renderer->surface, NULL);
