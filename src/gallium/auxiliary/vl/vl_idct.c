@@ -44,6 +44,8 @@
 #define STAGE1_SCALE 4.0f
 #define STAGE2_SCALE (SCALE_FACTOR_16_TO_9 / STAGE1_SCALE)
 
+#define NR_RENDER_TARGETS 1
+
 struct vertex_shader_consts
 {
    struct vertex4f norm;
@@ -160,7 +162,12 @@ fetch_one(struct ureg_program *shader, struct ureg_dst m[2],
     */
    ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_X), ureg_scalar(tc, TGSI_SWIZZLE_X));
    ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Y), ureg_scalar(start, TGSI_SWIZZLE_Y));
+
+#if NR_RENDER_TARGETS == 8
    ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Z), ureg_scalar(block, TGSI_SWIZZLE_X));
+#else
+   ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Z), ureg_imm1f(shader, 0.0f));
+#endif
 
    for(i = 0; i < 2; ++i) {
       for(j = 0; j < 4; ++j) {
@@ -291,7 +298,7 @@ create_matrix_frag_shader(struct vl_idct *idct)
    struct ureg_src start[2];
 
    struct ureg_dst l[2], r[2];
-   struct ureg_dst t_tc, tmp, fragment[BLOCK_WIDTH];
+   struct ureg_dst t_tc, tmp, fragment[NR_RENDER_TARGETS];
 
    unsigned i;
 
@@ -311,16 +318,24 @@ create_matrix_frag_shader(struct vl_idct *idct)
    start[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_START, TGSI_INTERPOLATE_CONSTANT);
    start[1] = ureg_imm1f(shader, 0.0f);
 
-   for (i = 0; i < BLOCK_WIDTH; ++i)
+   for (i = 0; i < NR_RENDER_TARGETS; ++i)
        fragment[i] = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, i);
 
    fetch_four(shader, l, tc[0], sampler[0], start[0], false, source->width0);
    ureg_MUL(shader, l[0], ureg_src(l[0]), ureg_scalar(ureg_imm1f(shader, STAGE1_SCALE), TGSI_SWIZZLE_X));
    ureg_MUL(shader, l[1], ureg_src(l[1]), ureg_scalar(ureg_imm1f(shader, STAGE1_SCALE), TGSI_SWIZZLE_X));
    
-   for (i = 0; i < BLOCK_WIDTH; ++i) {
+   for (i = 0; i < NR_RENDER_TARGETS; ++i) {
+
+#if NR_RENDER_TARGETS == 8
       ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_X), ureg_imm1f(shader, 1.0f / BLOCK_WIDTH * i));
       fetch_four(shader, r, ureg_src(t_tc), sampler[1], start[1], true, matrix->width0);
+#elif NR_RENDER_TARGETS == 1
+      fetch_four(shader, r, tc[1], sampler[1], start[1], true, matrix->width0);
+#else
+#error invalid number of render targets
+#endif
+
       matrix_mul(shader, fragment[i], l, r);
       ureg_release_temporary(shader, r[0]);
       ureg_release_temporary(shader, r[1]);
@@ -415,8 +430,8 @@ init_buffers(struct vl_idct *idct)
 
    template.target = PIPE_TEXTURE_3D;
    template.format = PIPE_FORMAT_R16_SNORM;
-   template.width0 = idct->destination->width0 / 8;
-   template.depth0 = 8;
+   template.width0 = idct->destination->width0 / NR_RENDER_TARGETS;
+   template.depth0 = NR_RENDER_TARGETS;
    template.usage = PIPE_USAGE_STATIC;
    idct->textures.individual.intermediate = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
 
@@ -527,8 +542,8 @@ init_state(struct vl_idct *idct)
    idct->fb_state[0].width = idct->textures.individual.intermediate->width0;
    idct->fb_state[0].height = idct->textures.individual.intermediate->height0;
 
-   idct->fb_state[0].nr_cbufs = 8;
-   for(i = 0; i < 8; ++i) {
+   idct->fb_state[0].nr_cbufs = NR_RENDER_TARGETS;
+   for(i = 0; i < NR_RENDER_TARGETS; ++i) {
       idct->fb_state[0].cbufs[i] = idct->pipe->screen->get_tex_surface(
          idct->pipe->screen, idct->textures.individual.intermediate, 0, 0, i,
          PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET);
@@ -579,7 +594,7 @@ cleanup_state(struct vl_idct *idct)
 {
    unsigned i;
 
-   for(i = 0; i < 8; ++i) {
+   for(i = 0; i < NR_RENDER_TARGETS; ++i) {
       idct->pipe->screen->tex_surface_destroy(idct->fb_state[0].cbufs[i]);
    }
 
