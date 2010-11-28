@@ -87,11 +87,6 @@ enum VS_OUTPUT
    VS_O_MV3
 };
 
-/* vertices for a quad covering a macroblock */
-static const struct vertex2f const_quad[4] = {
-   {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}
-};
-
 static const unsigned const_mbtype_config[VL_NUM_MACROBLOCK_TYPES][2] = {
    [VL_MACROBLOCK_TYPE_INTRA]           = { 0, 0 },
    [VL_MACROBLOCK_TYPE_FWD_FRAME_PRED]  = { 1, 1 },
@@ -553,15 +548,7 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
       r->sampler_views.all[i] = r->pipe->create_sampler_view(r->pipe, r->textures.all[i], &sampler_view);
    }
 
-   r->vertex_bufs.individual.rect.stride = sizeof(struct vertex2f);
-   r->vertex_bufs.individual.rect.max_index = 4 * r->macroblocks_per_batch - 1;
-   r->vertex_bufs.individual.rect.buffer_offset = 0;
-   r->vertex_bufs.individual.rect.buffer = pipe_buffer_create
-   (
-      r->pipe->screen,
-      PIPE_BIND_VERTEX_BUFFER,
-      sizeof(struct vertex2f) * 4 * r->macroblocks_per_batch
-   );
+   r->vertex_bufs.individual.quad = vl_vb_upload_quads(r->pipe, r->macroblocks_per_batch);
 
    r->vertex_bufs.individual.ycbcr.stride = sizeof(struct vert_stream_0);
    r->vertex_bufs.individual.ycbcr.max_index = 4 * r->macroblocks_per_batch - 1;
@@ -642,27 +629,6 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    );
 
    return true;
-}
-
-static void
-init_const_buffers(struct vl_mpeg12_mc_renderer *r)
-{
-   struct pipe_transfer *buf_transfer;
-   struct vertex2f *rect;
-   unsigned i;
-
-   rect = pipe_buffer_map
-   (
-      r->pipe,
-      r->vertex_bufs.individual.rect.buffer,
-      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-      &buf_transfer
-   );
-
-   for ( i = 0; i < r->macroblocks_per_batch; ++i)
-     memcpy(rect + i * 4, &const_quad, sizeof(const_quad));
-
-   pipe_buffer_unmap(r->pipe, r->vertex_bufs.individual.rect.buffer, buf_transfer);
 }
 
 static void
@@ -1120,8 +1086,6 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
 
    if (!init_buffers(renderer))
       goto error_buffers;
-
-   init_const_buffers(renderer);
 
    renderer->surface = NULL;
    renderer->past = NULL;
