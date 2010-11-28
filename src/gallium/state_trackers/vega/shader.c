@@ -31,6 +31,7 @@
 #include "paint.h"
 #include "mask.h"
 #include "image.h"
+#include "renderer.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
@@ -91,31 +92,14 @@ struct vg_paint * shader_paint(struct shader *shader)
    return shader->paint;
 }
 
-
-static void setup_constant_buffer(struct shader *shader)
+static VGint setup_constant_buffer(struct shader *shader)
 {
-   struct vg_context *ctx = shader->context;
-   struct pipe_context *pipe = shader->context->pipe;
-   struct pipe_resource **cbuf = &shader->cbuf;
    VGint param_bytes = paint_constant_buffer_size(shader->paint);
-   float temp_buf[MAX_CONSTANTS];
 
-   assert(param_bytes <= sizeof(temp_buf));
-   paint_fill_constant_buffer(shader->paint, temp_buf);
+   assert(param_bytes <= sizeof(shader->constants));
+   paint_fill_constant_buffer(shader->paint, shader->constants);
 
-   if (*cbuf == NULL ||
-       memcmp(temp_buf, shader->constants, param_bytes) != 0)
-   {
-      pipe_resource_reference(cbuf, NULL);
-
-      memcpy(shader->constants, temp_buf, param_bytes);
-      *cbuf = pipe_user_buffer_create(pipe->screen,
-                                      &shader->constants,
-                                      sizeof(shader->constants),
-				      PIPE_BIND_VERTEX_BUFFER);
-   }
-
-   ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_FRAGMENT, 0, *cbuf);
+   return param_bytes;
 }
 
 static VGint blend_bind_samplers(struct vg_context *ctx,
@@ -149,10 +133,10 @@ static VGint blend_bind_samplers(struct vg_context *ctx,
    return 0;
 }
 
-static void setup_samplers(struct shader *shader)
+static VGint setup_samplers(struct shader *shader,
+                            struct pipe_sampler_state **samplers,
+                            struct pipe_sampler_view **sampler_views)
 {
-   struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS];
-   struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
    struct vg_context *ctx = shader->context;
    /* a little wonky: we use the num as a boolean that just says
     * whether any sampler/textures have been set. the actual numbering
@@ -179,10 +163,7 @@ static void setup_samplers(struct shader *shader)
    if (shader->drawing_image && shader->image)
       num += image_bind_samplers(shader->image, samplers, sampler_views);
 
-   if (num) {
-      cso_set_samplers(ctx->cso_context, 4, (const struct pipe_sampler_state **)samplers);
-      cso_set_fragment_sampler_views(ctx->cso_context, 4, sampler_views);
-   }
+   return (num) ? 4 : 0;
 }
 
 static INLINE VGboolean is_format_bw(struct shader *shader)
@@ -271,18 +252,27 @@ static void setup_shader_program(struct shader *shader)
       shader_id |= VEGA_BW_SHADER;
 
    shader->fs = shaders_cache_fill(ctx->sc, shader_id);
-   cso_set_fragment_shader_handle(ctx->cso_context, shader->fs);
 }
 
 
 void shader_bind(struct shader *shader)
 {
+   struct vg_context *ctx = shader->context;
+   struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
+   VGint num_samplers, param_bytes;
+
    /* first resolve the real paint type */
    paint_resolve_type(shader->paint);
 
-   setup_constant_buffer(shader);
-   setup_samplers(shader);
+   num_samplers = setup_samplers(shader, samplers, sampler_views);
+   param_bytes = setup_constant_buffer(shader);
    setup_shader_program(shader);
+
+   renderer_validate_for_shader(ctx->renderer,
+         (const struct pipe_sampler_state **) samplers,
+         sampler_views, num_samplers,
+         shader->fs, (const void *) shader->constants, param_bytes);
 }
 
 void shader_set_image_mode(struct shader *shader, VGImageMode image_mode)

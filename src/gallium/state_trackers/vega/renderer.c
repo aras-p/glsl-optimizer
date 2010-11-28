@@ -1301,6 +1301,22 @@ void renderer_validate(struct renderer *renderer,
    }
 }
 
+/**
+ * Prepare the renderer for OpenVG pipeline.
+ */
+void renderer_validate_for_shader(struct renderer *renderer,
+                                  const struct pipe_sampler_state **samplers,
+                                  struct pipe_sampler_view **views,
+                                  VGint num_samplers,
+                                  void *fs,
+                                  const void *const_buffer,
+                                  VGint const_buffer_len)
+{
+   renderer_set_custom_fs(renderer, fs,
+                          samplers, views, num_samplers,
+                          const_buffer, const_buffer_len);
+}
+
 void renderer_draw_quad(struct renderer *r,
                         VGfloat x1, VGfloat y1,
                         VGfloat x2, VGfloat y2,

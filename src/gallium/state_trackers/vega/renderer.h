@@ -50,6 +50,14 @@ void renderer_validate(struct renderer *renderer,
                        const struct st_framebuffer *stfb,
                        const struct vg_state *state);
 
+void renderer_validate_for_shader(struct renderer *renderer,
+                                  const struct pipe_sampler_state **samplers,
+                                  struct pipe_sampler_view **views,
+                                  VGint num_samplers,
+                                  void *fs,
+                                  const void *const_buffer,
+                                  VGint const_buffer_len);
+
 VGboolean renderer_copy_begin(struct renderer *renderer,
                               struct pipe_surface *dst,
                               VGboolean y0_top,
