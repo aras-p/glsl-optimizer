@@ -355,45 +355,6 @@ create_empty_block_frag_shader(struct vl_idct *idct)
    return ureg_create_shader_and_destroy(shader, idct->pipe);
 }
 
-static void
-xfer_buffers_map(struct vl_idct *idct)
-{
-   struct pipe_box rect =
-   {
-      0, 0, 0,
-      idct->textures.individual.source->width0,
-      idct->textures.individual.source->height0,
-      1
-   };
-
-   idct->tex_transfer = idct->pipe->get_transfer
-   (
-      idct->pipe, idct->textures.individual.source,
-      u_subresource(0, 0),
-      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-      &rect
-   );
-
-   idct->texels = idct->pipe->transfer_map(idct->pipe, idct->tex_transfer);
-
-   idct->vectors = pipe_buffer_map
-   (
-      idct->pipe,
-      idct->vertex_bufs.individual.pos.buffer,
-      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-      &idct->vec_transfer
-   );
-}
-
-static void
-xfer_buffers_unmap(struct vl_idct *idct)
-{
-   pipe_buffer_unmap(idct->pipe, idct->vertex_bufs.individual.pos.buffer, idct->vec_transfer);
-
-   idct->pipe->transfer_unmap(idct->pipe, idct->tex_transfer);
-   idct->pipe->transfer_destroy(idct->pipe, idct->tex_transfer);
-}
-
 static bool
 init_shaders(struct vl_idct *idct)
 {
@@ -678,6 +639,50 @@ vl_idct_upload_matrix(struct pipe_context *pipe)
    return matrix;
 }
 
+static void
+xfer_buffers_map(struct vl_idct *idct)
+{
+   struct pipe_box rect =
+   {
+      0, 0, 0,
+      idct->textures.individual.source->width0,
+      idct->textures.individual.source->height0,
+      1
+   };
+
+   idct->tex_transfer = idct->pipe->get_transfer
+   (
+      idct->pipe, idct->textures.individual.source,
+      u_subresource(0, 0),
+      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+      &rect
+   );
+
+   idct->texels = idct->pipe->transfer_map(idct->pipe, idct->tex_transfer);
+
+   idct->vectors = pipe_buffer_map
+   (
+      idct->pipe,
+      idct->vertex_bufs.individual.pos.buffer,
+      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+      &idct->vec_transfer
+   );
+
+   idct->next_empty_block.l_x = ~1;
+   idct->next_empty_block.l_y = ~1;
+   idct->next_empty_block.r_x = ~1;
+   idct->next_empty_block.r_y = ~1;
+}
+
+static void
+xfer_buffers_unmap(struct vl_idct *idct)
+{
+   pipe_buffer_unmap(idct->pipe, idct->vertex_bufs.individual.pos.buffer, idct->vec_transfer);
+
+   idct->pipe->transfer_unmap(idct->pipe, idct->tex_transfer);
+   idct->pipe->transfer_destroy(idct->pipe, idct->tex_transfer);
+}
+
 bool
 vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, struct pipe_resource *dst, struct pipe_resource *matrix)
 {
@@ -715,13 +720,44 @@ vl_idct_cleanup(struct vl_idct *idct)
    pipe_resource_reference(&idct->destination, NULL);
 }
 
+static void
+flush_empty_block(struct vl_idct *idct, unsigned new_x, unsigned new_y)
+{
+   if (idct->next_empty_block.l_x == ~1 ||
+       idct->next_empty_block.l_y == ~1) {
+   
+      idct->next_empty_block.l_x = new_x;
+      idct->next_empty_block.l_y = new_y;
+
+   } else if (idct->next_empty_block.r_x != (new_x - 1) ||
+              idct->next_empty_block.r_y != new_y) {
+
+      struct vertex2f l, r, *v_dst;
+
+      v_dst = idct->vectors + (idct->max_blocks - idct->num_empty_blocks) * 4 - 4;
+
+      l.x = idct->next_empty_block.l_x;
+      l.y = idct->next_empty_block.l_y;
+      r.x = idct->next_empty_block.r_x;
+      r.y = idct->next_empty_block.r_y;
+      v_dst[0] = v_dst[3] = l;
+      v_dst[1] = v_dst[2] = r;
+
+      idct->next_empty_block.l_x = new_x;
+      idct->next_empty_block.l_y = new_y;
+      idct->num_empty_blocks++;
+   }
+
+   idct->next_empty_block.r_x = new_x;
+   idct->next_empty_block.r_y = new_y;
+}
+
 void
 vl_idct_add_block(struct vl_idct *idct, unsigned x, unsigned y, short *block)
 {
    struct vertex2f v, *v_dst;
 
    unsigned tex_pitch;
-   unsigned nr_components;
    short *texels;
 
    unsigned i;
@@ -729,8 +765,6 @@ vl_idct_add_block(struct vl_idct *idct, unsigned x, unsigned y, short *block)
    assert(idct);
 
    if(block) {
-      nr_components = util_format_get_nr_components(idct->tex_transfer->resource->format);
-      
       tex_pitch = idct->tex_transfer->stride / sizeof(short);
       texels = idct->texels + y * tex_pitch * BLOCK_HEIGHT + x * BLOCK_WIDTH;
 
@@ -742,25 +776,24 @@ vl_idct_add_block(struct vl_idct *idct, unsigned x, unsigned y, short *block)
 
       idct->num_blocks++;
 
+      v.x = x;
+      v.y = y;
+
+      for (i = 0; i < 4; ++i) {
+         v_dst[i] = v;
+      }
+
    } else {
 
       /* while empty blocks fills the vector buffer from right to left */
-      v_dst = idct->vectors + (idct->max_blocks - idct->num_empty_blocks) * 4 - 4;
-
-      idct->num_empty_blocks++;
-   }
-
-   v.x = x;
-   v.y = y;
-
-   for (i = 0; i < 4; ++i) {
-      v_dst[i] = v;
+      flush_empty_block(idct, x, y);
    }
 }
 
 void
 vl_idct_flush(struct vl_idct *idct)
 {
+   flush_empty_block(idct, ~1, ~1);
    xfer_buffers_unmap(idct);
 
    if(idct->num_blocks > 0) {

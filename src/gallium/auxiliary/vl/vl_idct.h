@@ -83,6 +83,12 @@ struct vl_idct
    } vertex_bufs;
 
    unsigned num_blocks;
+
+   struct
+   {
+      unsigned l_x, l_y, r_x, r_y;
+   } next_empty_block;
+
    unsigned num_empty_blocks;
 
    struct pipe_transfer *tex_transfer;
