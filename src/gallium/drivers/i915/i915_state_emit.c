@@ -256,6 +256,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
       if (depth_surface) {
          struct i915_texture *tex = i915_texture(depth_surface->texture);
          assert(tex);
+         assert(depth_surface->offset == 0);
 
          OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
 
@@ -266,7 +267,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 
          OUT_RELOC(tex->buffer,
                    I915_USAGE_RENDER,
-                   depth_surface->offset);
+                   0);
       }
 
       {
