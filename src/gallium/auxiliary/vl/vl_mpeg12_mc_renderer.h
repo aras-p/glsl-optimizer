@@ -102,8 +102,10 @@ struct vl_mpeg12_mc_renderer
 
    union
    {
-      struct pipe_vertex_buffer all[4];
-      struct { struct pipe_vertex_buffer rect, ycbcr, ref[2]; } individual;
+      struct pipe_vertex_buffer all[7];
+      struct {
+         struct pipe_vertex_buffer quad, ycbcr, interlaced, mv[4];
+      } individual;
    } vertex_bufs;
 
    struct pipe_surface *surface, *past, *future;
