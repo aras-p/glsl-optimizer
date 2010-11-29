@@ -49,6 +49,7 @@
 #include "lp_tile_image.h"
 #include "lp_texture.h"
 #include "lp_setup.h"
+#include "lp_state.h"
 
 #include "state_tracker/sw_winsys.h"
 
@@ -566,6 +567,7 @@ llvmpipe_get_transfer(struct pipe_context *pipe,
 		      unsigned usage,
 		      const struct pipe_box *box)
 {
+   struct llvmpipe_context *llvmpipe = llvmpipe_context(pipe);
    struct llvmpipe_resource *lprex = llvmpipe_resource(resource);
    struct llvmpipe_transfer *lpr;
 
@@ -593,6 +595,9 @@ llvmpipe_get_transfer(struct pipe_context *pipe,
          return NULL;
       }
    }
+
+   if (resource == llvmpipe->constants[PIPE_SHADER_FRAGMENT][0])
+      llvmpipe->dirty |= LP_NEW_CONSTANTS;
 
    lpr = CALLOC_STRUCT(llvmpipe_transfer);
    if (lpr) {
