@@ -88,7 +88,8 @@ _mesa_align_malloc(size_t bytes, unsigned long alignment)
 #if defined(HAVE_POSIX_MEMALIGN)
    void *mem;
    int err = posix_memalign(& mem, alignment, bytes);
-   (void) err;
+   if (err)
+      return NULL;
    return mem;
 #elif defined(_WIN32) && defined(_MSC_VER)
    return _aligned_malloc(bytes, alignment);
