@@ -197,14 +197,7 @@ void r600_translate_index_buffer(struct r600_pipe_context *r600,
 		*index_size = 2;
 		*start = 0;
 		break;
-
 	case 2:
-		if (*start % 2 != 0) {
-			util_rebuild_ushort_elts(&r600->context, index_buffer, 0, *start, count);
-			*start = 0;
-		}
-		break;
-
 	case 4:
 		break;
 	}
