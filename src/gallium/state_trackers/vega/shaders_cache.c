@@ -52,12 +52,13 @@
  * of the pipeline. The stages are:
  * 1) Paint generation (color/gradient/pattern)
  * 2) Image composition (normal/multiply/stencil)
- * 3) Mask
- * 4) Extended blend (multiply/screen/darken/lighten)
- * 5) Premultiply/Unpremultiply
- * 6) Color transform (to black and white)
+ * 3) Color transform
+ * 4) Mask
+ * 5) Extended blend (multiply/screen/darken/lighten)
+ * 6) Premultiply/Unpremultiply
+ * 7) Color transform (to black and white)
  */
-#define SHADER_STAGES 6
+#define SHADER_STAGES 7
 
 struct cached_shader {
    void *driver_shader;
@@ -286,6 +287,19 @@ create_shader(struct pipe_context *pipe,
    assert(idx == ((!sh || sh == VEGA_IMAGE_NORMAL_SHADER) ? 1 : 2));
 
    /* third stage */
+   sh = SHADERS_GET_COLOR_TRANSFORM_SHADER(id);
+   switch (sh) {
+   case VEGA_COLOR_TRANSFORM_SHADER:
+      shaders[idx] = &shaders_color_transform_asm[
+         (sh >> SHADERS_COLOR_TRANSFORM_SHIFT) - 1];
+      assert(shaders[idx]->id == sh);
+      idx++;
+      break;
+   default:
+      break;
+   }
+
+   /* fourth stage */
    sh = SHADERS_GET_MASK_SHADER(id);
    switch (sh) {
    case VEGA_MASK_SHADER:
@@ -297,7 +311,7 @@ create_shader(struct pipe_context *pipe,
       break;
    }
 
-   /* fourth stage */
+   /* fifth stage */
    sh = SHADERS_GET_BLEND_SHADER(id);
    switch (sh) {
    case VEGA_BLEND_MULTIPLY_SHADER:
@@ -312,7 +326,7 @@ create_shader(struct pipe_context *pipe,
       break;
    }
 
-   /* fifth stage */
+   /* sixth stage */
    sh = SHADERS_GET_PREMULTIPLY_SHADER(id);
    switch (sh) {
    case VEGA_PREMULTIPLY_SHADER:
@@ -326,7 +340,7 @@ create_shader(struct pipe_context *pipe,
       break;
    }
 
-   /* sixth stage */
+   /* seventh stage */
    sh = SHADERS_GET_BW_SHADER(id);
    switch (sh) {
    case VEGA_BW_SHADER:

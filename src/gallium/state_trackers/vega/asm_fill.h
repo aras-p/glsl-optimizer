@@ -44,7 +44,7 @@ solid_fill( struct ureg_program *ureg,
             struct ureg_dst *temp,
             struct ureg_src *constant)
 {
-   ureg_MOV(ureg, *out, constant[0]);
+   ureg_MOV(ureg, *out, constant[2]);
 }
 
 static INLINE void
@@ -61,24 +61,24 @@ linear_grad( struct ureg_program *ureg,
             in[0]);
    ureg_MOV(ureg,
             ureg_writemask(temp[0], TGSI_WRITEMASK_Z),
-            ureg_scalar(constant[1], TGSI_SWIZZLE_Y));
-   ureg_DP3(ureg, temp[1], constant[2], ureg_src(temp[0]));
-   ureg_DP3(ureg, temp[2], constant[3], ureg_src(temp[0]));
-   ureg_DP3(ureg, temp[3], constant[4], ureg_src(temp[0]));
+            ureg_scalar(constant[3], TGSI_SWIZZLE_Y));
+   ureg_DP3(ureg, temp[1], constant[4], ureg_src(temp[0]));
+   ureg_DP3(ureg, temp[2], constant[5], ureg_src(temp[0]));
+   ureg_DP3(ureg, temp[3], constant[6], ureg_src(temp[0]));
    ureg_RCP(ureg, temp[3], ureg_src(temp[3]));
    ureg_MUL(ureg, temp[1], ureg_src(temp[1]), ureg_src(temp[3]));
    ureg_MUL(ureg, temp[2], ureg_src(temp[2]), ureg_src(temp[3]));
    ureg_MOV(ureg, ureg_writemask(temp[4], TGSI_WRITEMASK_X), ureg_src(temp[1]));
    ureg_MOV(ureg, ureg_writemask(temp[4], TGSI_WRITEMASK_Y), ureg_src(temp[2]));
    ureg_MUL(ureg, temp[0],
-            ureg_scalar(constant[0], TGSI_SWIZZLE_Y),
+            ureg_scalar(constant[2], TGSI_SWIZZLE_Y),
             ureg_scalar(ureg_src(temp[4]), TGSI_SWIZZLE_Y));
    ureg_MAD(ureg, temp[1],
-            ureg_scalar(constant[0], TGSI_SWIZZLE_X),
+            ureg_scalar(constant[2], TGSI_SWIZZLE_X),
             ureg_scalar(ureg_src(temp[4]), TGSI_SWIZZLE_X),
             ureg_src(temp[0]));
    ureg_MUL(ureg, temp[2], ureg_src(temp[1]),
-            ureg_scalar(constant[0], TGSI_SWIZZLE_Z));
+            ureg_scalar(constant[2], TGSI_SWIZZLE_Z));
    ureg_TEX(ureg, *out, TGSI_TEXTURE_1D, ureg_src(temp[2]), sampler[0]);
 }
 
@@ -94,19 +94,19 @@ radial_grad( struct ureg_program *ureg,
    ureg_MOV(ureg, ureg_writemask(temp[0], TGSI_WRITEMASK_XY), in[0]);
    ureg_MOV(ureg,
             ureg_writemask(temp[0], TGSI_WRITEMASK_Z),
-            ureg_scalar(constant[1], TGSI_SWIZZLE_Y));
-   ureg_DP3(ureg, temp[1], constant[2], ureg_src(temp[0]));
-   ureg_DP3(ureg, temp[2], constant[3], ureg_src(temp[0]));
-   ureg_DP3(ureg, temp[3], constant[4], ureg_src(temp[0]));
+            ureg_scalar(constant[3], TGSI_SWIZZLE_Y));
+   ureg_DP3(ureg, temp[1], constant[4], ureg_src(temp[0]));
+   ureg_DP3(ureg, temp[2], constant[5], ureg_src(temp[0]));
+   ureg_DP3(ureg, temp[3], constant[6], ureg_src(temp[0]));
    ureg_RCP(ureg, temp[3], ureg_src(temp[3]));
    ureg_MUL(ureg, temp[1], ureg_src(temp[1]), ureg_src(temp[3]));
    ureg_MUL(ureg, temp[2], ureg_src(temp[2]), ureg_src(temp[3]));
    ureg_MOV(ureg, ureg_writemask(temp[5], TGSI_WRITEMASK_X), ureg_src(temp[1]));
    ureg_MOV(ureg, ureg_writemask(temp[5], TGSI_WRITEMASK_Y), ureg_src(temp[2]));
-   ureg_MUL(ureg, temp[0], ureg_scalar(constant[0], TGSI_SWIZZLE_Y),
+   ureg_MUL(ureg, temp[0], ureg_scalar(constant[2], TGSI_SWIZZLE_Y),
             ureg_scalar(ureg_src(temp[5]), TGSI_SWIZZLE_Y));
    ureg_MAD(ureg, temp[1],
-            ureg_scalar(constant[0], TGSI_SWIZZLE_X),
+            ureg_scalar(constant[2], TGSI_SWIZZLE_X),
             ureg_scalar(ureg_src(temp[5]), TGSI_SWIZZLE_X), ureg_src(temp[0]));
    ureg_ADD(ureg, temp[1], ureg_src(temp[1]), ureg_src(temp[1]));
    ureg_MUL(ureg, temp[3],
@@ -118,10 +118,10 @@ radial_grad( struct ureg_program *ureg,
             ureg_src(temp[3]));
    ureg_MOV(ureg, temp[4], ureg_negate(ureg_src(temp[4])));
    ureg_MUL(ureg, temp[2],
-            ureg_scalar(constant[0], TGSI_SWIZZLE_Z),
+            ureg_scalar(constant[2], TGSI_SWIZZLE_Z),
             ureg_src(temp[4]));
    ureg_MUL(ureg, temp[0],
-            ureg_scalar(constant[1], TGSI_SWIZZLE_W),
+            ureg_scalar(constant[3], TGSI_SWIZZLE_W),
             ureg_src(temp[2]));
    ureg_MUL(ureg, temp[3], ureg_src(temp[1]), ureg_src(temp[1]));
 
@@ -130,8 +130,8 @@ radial_grad( struct ureg_program *ureg,
    ureg_RCP(ureg, temp[2], ureg_src(temp[2]));
    ureg_SUB(ureg, temp[1], ureg_src(temp[2]), ureg_src(temp[1]));
    ureg_ADD(ureg, temp[0],
-            ureg_scalar(constant[0], TGSI_SWIZZLE_Z),
-            ureg_scalar(constant[0], TGSI_SWIZZLE_Z));
+            ureg_scalar(constant[2], TGSI_SWIZZLE_Z),
+            ureg_scalar(constant[2], TGSI_SWIZZLE_Z));
    ureg_RCP(ureg, temp[0], ureg_src(temp[0]));
    ureg_MUL(ureg, temp[2], ureg_src(temp[1]), ureg_src(temp[0]));
    ureg_TEX(ureg, *out, TGSI_TEXTURE_1D, ureg_src(temp[2]), sampler[0]);
@@ -152,17 +152,17 @@ pattern( struct ureg_program *ureg,
             in[0]);
    ureg_MOV(ureg,
             ureg_writemask(temp[0], TGSI_WRITEMASK_Z),
-            ureg_scalar(constant[1], TGSI_SWIZZLE_Y));
-   ureg_DP3(ureg, temp[1], constant[2], ureg_src(temp[0]));
-   ureg_DP3(ureg, temp[2], constant[3], ureg_src(temp[0]));
-   ureg_DP3(ureg, temp[3], constant[4], ureg_src(temp[0]));
+            ureg_scalar(constant[3], TGSI_SWIZZLE_Y));
+   ureg_DP3(ureg, temp[1], constant[4], ureg_src(temp[0]));
+   ureg_DP3(ureg, temp[2], constant[5], ureg_src(temp[0]));
+   ureg_DP3(ureg, temp[3], constant[6], ureg_src(temp[0]));
    ureg_RCP(ureg, temp[3], ureg_src(temp[3]));
    ureg_MUL(ureg, temp[1], ureg_src(temp[1]), ureg_src(temp[3]));
    ureg_MUL(ureg, temp[2], ureg_src(temp[2]), ureg_src(temp[3]));
    ureg_MOV(ureg, ureg_writemask(temp[4], TGSI_WRITEMASK_X), ureg_src(temp[1]));
    ureg_MOV(ureg, ureg_writemask(temp[4], TGSI_WRITEMASK_Y), ureg_src(temp[2]));
    ureg_RCP(ureg, temp[0],
-            ureg_swizzle(constant[1],
+            ureg_swizzle(constant[3],
                          TGSI_SWIZZLE_Z,
                          TGSI_SWIZZLE_W,
                          TGSI_SWIZZLE_Z,
@@ -177,6 +177,23 @@ pattern( struct ureg_program *ureg,
             ureg_src(temp[1]),
             ureg_src(temp[0]));
    ureg_TEX(ureg, *out, TGSI_TEXTURE_2D, ureg_src(temp[1]), sampler[0]);
+}
+
+static INLINE void
+color_transform( struct ureg_program *ureg,
+                 struct ureg_dst *out,
+                 struct ureg_src *in,
+                 struct ureg_src *sampler,
+                 struct ureg_dst *temp,
+                 struct ureg_src *constant)
+{
+   ureg_MUL(ureg, temp[1], ureg_src(temp[0]), constant[0]);
+   ureg_ADD(ureg, temp[1], ureg_src(temp[1]), constant[1]);
+   ureg_CLAMP(ureg, temp[1],
+              ureg_src(temp[1]),
+              ureg_scalar(constant[3], TGSI_SWIZZLE_X),
+              ureg_scalar(constant[3], TGSI_SWIZZLE_Y));
+   ureg_MOV(ureg, *out, ureg_src(temp[1]));
 }
 
 static INLINE void
@@ -233,10 +250,10 @@ image_stencil( struct ureg_program *ureg,
 
 #define EXTENDED_BLENDER_OVER_FUNC                                      \
    ureg_SUB(ureg, temp[3],                                              \
-            ureg_scalar(constant[1], TGSI_SWIZZLE_Y),                   \
+            ureg_scalar(constant[3], TGSI_SWIZZLE_Y),                   \
             ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));            \
    ureg_SUB(ureg, temp[4],                                              \
-            ureg_scalar(constant[1], TGSI_SWIZZLE_Y),                   \
+            ureg_scalar(constant[3], TGSI_SWIZZLE_Y),                   \
             ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W));            \
    ureg_MUL(ureg, temp[3], ureg_src(temp[0]), ureg_src(temp[3]));       \
    ureg_MUL(ureg, temp[4], ureg_src(temp[1]), ureg_src(temp[4]));       \
@@ -369,11 +386,11 @@ color_bw( struct ureg_program *ureg,
                 struct ureg_src *constant)
 {
    ureg_ADD(ureg, temp[1],
-            ureg_scalar(constant[1], TGSI_SWIZZLE_Y),
-            ureg_scalar(constant[1], TGSI_SWIZZLE_Y));
+            ureg_scalar(constant[3], TGSI_SWIZZLE_Y),
+            ureg_scalar(constant[3], TGSI_SWIZZLE_Y));
    ureg_RCP(ureg, temp[2], ureg_src(temp[1]));
    ureg_ADD(ureg, temp[1],
-            ureg_scalar(constant[1], TGSI_SWIZZLE_Y),
+            ureg_scalar(constant[3], TGSI_SWIZZLE_Y),
             ureg_src(temp[2]));
    ureg_ADD(ureg, ureg_writemask(temp[2], TGSI_WRITEMASK_X),
             ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_X),
@@ -413,13 +430,13 @@ struct shader_asm_info {
 /* paint types */
 static const struct shader_asm_info shaders_paint_asm[] = {
    {VEGA_SOLID_FILL_SHADER, solid_fill,
-    VG_FALSE, 0, 1, 0, 0, 0, 0},
+    VG_FALSE, 2, 1, 0, 0, 0, 0},
    {VEGA_LINEAR_GRADIENT_SHADER, linear_grad,
-    VG_TRUE,  0, 5, 0, 1, 0, 5},
+    VG_TRUE,  2, 5, 0, 1, 0, 5},
    {VEGA_RADIAL_GRADIENT_SHADER, radial_grad,
-    VG_TRUE,  0, 5, 0, 1, 0, 6},
+    VG_TRUE,  2, 5, 0, 1, 0, 6},
    {VEGA_PATTERN_SHADER, pattern,
-    VG_TRUE,  1, 4, 0, 1, 0, 5}
+    VG_TRUE,  3, 4, 0, 1, 0, 5}
 };
 
 /* image draw modes */
@@ -432,6 +449,11 @@ static const struct shader_asm_info shaders_image_asm[] = {
     VG_TRUE,  0, 0, 3, 1, 0, 2}
 };
 
+static const struct shader_asm_info shaders_color_transform_asm[] = {
+   {VEGA_COLOR_TRANSFORM_SHADER, color_transform,
+    VG_FALSE, 0, 4, 0, 0, 0, 2}
+};
+
 static const struct shader_asm_info shaders_mask_asm[] = {
    {VEGA_MASK_SHADER, mask,
     VG_TRUE,  0, 0, 1, 1, 0, 2}
@@ -440,13 +462,13 @@ static const struct shader_asm_info shaders_mask_asm[] = {
 /* extra blend modes */
 static const struct shader_asm_info shaders_blend_asm[] = {
    {VEGA_BLEND_MULTIPLY_SHADER, blend_multiply,
-    VG_TRUE,  1, 1, 2, 1, 0, 5},
+    VG_TRUE,  3, 1, 2, 1, 0, 5},
    {VEGA_BLEND_SCREEN_SHADER, blend_screen,
     VG_TRUE,  0, 0, 2, 1, 0, 4},
    {VEGA_BLEND_DARKEN_SHADER, blend_darken,
-    VG_TRUE,  1, 1, 2, 1, 0, 6},
+    VG_TRUE,  3, 1, 2, 1, 0, 6},
    {VEGA_BLEND_LIGHTEN_SHADER, blend_lighten,
-    VG_TRUE,  1, 1, 2, 1, 0, 6},
+    VG_TRUE,  3, 1, 2, 1, 0, 6},
 };
 
 /* premultiply */
@@ -460,7 +482,7 @@ static const struct shader_asm_info shaders_premultiply_asm[] = {
 /* color transform to black and white */
 static const struct shader_asm_info shaders_bw_asm[] = {
    {VEGA_BW_SHADER, color_bw,
-    VG_FALSE,  1, 1, 0, 0, 0, 3},
+    VG_FALSE,  3, 1, 0, 0, 0, 3},
 };
 
 #endif

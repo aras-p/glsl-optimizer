@@ -253,7 +253,11 @@ static void mask_resource_fill(struct pipe_resource *dst,
                                VGfloat coverage)
 {
    struct vg_context *ctx = vg_current_context();
-   VGfloat color[4] = { 0.0f, 0.0f, 0.0f, coverage };
+   VGfloat fs_consts[12] = {
+      0.0f, 0.0f, 0.0f, 0.0f, /* not used */
+      0.0f, 0.0f, 0.0f, 0.0f, /* not used */
+      0.0f, 0.0f, 0.0f, coverage /* color */
+   };
    void *fs;
 
    if (x < 0) {
@@ -267,8 +271,8 @@ static void mask_resource_fill(struct pipe_resource *dst,
 
    fs = shaders_cache_fill(ctx->sc, VEGA_SOLID_FILL_SHADER);
 
-   if (renderer_filter_begin(ctx->renderer, dst, VG_FALSE,
-            ~0, NULL, NULL, 0, fs, (const void *) color, sizeof(color))) {
+   if (renderer_filter_begin(ctx->renderer, dst, VG_FALSE, ~0,
+            NULL, NULL, 0, fs, (const void *) fs_consts, sizeof(fs_consts))) {
       renderer_filter(ctx->renderer, x, y, width, height, 0, 0, 0, 0);
       renderer_filter_end(ctx->renderer);
    }

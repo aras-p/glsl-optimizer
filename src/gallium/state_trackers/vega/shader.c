@@ -38,12 +38,14 @@
 #include "pipe/p_state.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
+#include "util/u_math.h"
 
-#define MAX_CONSTANTS 20
+#define MAX_CONSTANTS 28
 
 struct shader {
    struct vg_context *context;
 
+   VGboolean color_transform;
    VGboolean masking;
    struct vg_paint *paint;
    struct vg_image *image;
@@ -72,6 +74,11 @@ void shader_destroy(struct shader *shader)
    FREE(shader);
 }
 
+void shader_set_color_transform(struct shader *shader, VGboolean set)
+{
+   shader->color_transform = set;
+}
+
 void shader_set_masking(struct shader *shader, VGboolean set)
 {
    shader->masking = set;
@@ -94,10 +101,25 @@ struct vg_paint * shader_paint(struct shader *shader)
 
 static VGint setup_constant_buffer(struct shader *shader)
 {
+   const struct vg_state *state = &shader->context->state.vg;
    VGint param_bytes = paint_constant_buffer_size(shader->paint);
+   VGint i;
 
+   param_bytes += sizeof(VGfloat) * 8;
    assert(param_bytes <= sizeof(shader->constants));
-   paint_fill_constant_buffer(shader->paint, shader->constants);
+
+   if (state->color_transform) {
+      for (i = 0; i < 8; i++) {
+         VGfloat val = (i < 4) ? 127.0f : 1.0f;
+         shader->constants[i] =
+            CLAMP(state->color_transform_values[i], -val, val);
+      }
+   }
+   else {
+      memset(shader->constants, 0, sizeof(VGfloat) * 8);
+   }
+
+   paint_fill_constant_buffer(shader->paint, shader->constants + 8);
 
    return param_bytes;
 }
@@ -226,6 +248,9 @@ static void setup_shader_program(struct shader *shader)
          debug_printf("Unknown image mode!");
       }
    }
+
+   if (shader->color_transform)
+      shader_id |= VEGA_COLOR_TRANSFORM_SHADER;
 
    if (shader->masking)
       shader_id |= VEGA_MASK_SHADER;

@@ -37,6 +37,8 @@ struct vg_image;
 struct shader *shader_create(struct vg_context *context);
 void shader_destroy(struct shader *shader);
 
+void shader_set_color_transform(struct shader *shader, VGboolean set);
+
 void shader_set_masking(struct shader *shader, VGboolean set);
 VGboolean shader_is_masking(struct shader *shader);
 

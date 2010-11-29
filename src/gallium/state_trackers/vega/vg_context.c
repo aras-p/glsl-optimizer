@@ -416,6 +416,7 @@ void vg_validate_state(struct vg_context *ctx)
 
    shader_set_masking(ctx->shader, ctx->state.vg.masking);
    shader_set_image_mode(ctx->shader, ctx->state.vg.image_mode);
+   shader_set_color_transform(ctx->shader, ctx->state.vg.color_transform);
 }
 
 VGboolean vg_object_is_valid(void *ptr, enum vg_object_type type)
