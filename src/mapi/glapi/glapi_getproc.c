@@ -42,7 +42,7 @@
  */
 
 
-#if !defined(DISPATCH_FUNCTION_SIZE) && !defined(XFree86Server)
+#if !defined(DISPATCH_FUNCTION_SIZE) 
 # define NEED_FUNCTION_POINTER
 #endif
 #include "glapi/glprocs.h"
@@ -88,7 +88,6 @@ get_static_proc_offset(const char *funcName)
 }
 
 
-#if !defined(XFree86Server)
 
 /**
  * Return dispatch function address for the named static (built-in) function.
@@ -113,16 +112,6 @@ get_static_proc_address(const char *funcName)
 #endif
 }
 
-#else
-
-static _glapi_proc
-get_static_proc_address(const char *funcName)
-{
-   (void) funcName;
-   return NULL;
-}
-
-#endif /* !defined(XFree86Server) */
 
 
 /**

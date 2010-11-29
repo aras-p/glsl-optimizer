@@ -35,9 +35,7 @@
 #define VIA_DRIDDX_VERSION_MINOR  0
 #define VIA_DRIDDX_VERSION_PATCH  0
 
-#ifndef XFree86Server
 typedef int Bool;
-#endif
 
 typedef struct {
     drm_handle_t handle;

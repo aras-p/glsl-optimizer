@@ -140,16 +140,8 @@ static void FXgetImage( XMesaBuffer b )
    GLuint x, y;
    GLuint width, height;
 
-#ifdef XFree86Server
-   x = b->frontxrb->pixmap->x;
-   y = b->frontxrb->pixmap->y;
-   width = b->frontxrb->pixmap->width;
-   height = b->frontxrb->pixmap->height;
-   depth = b->frontxrb->pixmap->depth;
-#else
    xmesa_get_window_size(b->display, b, &width, &height);
    x = y = 0;
-#endif
    if (b->mesa_buffer.Width != width || b->mesa_buffer.Height != height) {
       b->mesa_buffer.Width = MIN2((int)width, b->FXctx->width);
       b->mesa_buffer.Height = MIN2((int)height, b->FXctx->height);

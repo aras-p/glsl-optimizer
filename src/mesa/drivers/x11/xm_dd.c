@@ -93,16 +93,12 @@ const int xmesa_kernel1[16] = {
 static void
 finish_or_flush( struct gl_context *ctx )
 {
-#ifdef XFree86Server
-      /* NOT_NEEDED */
-#else
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    if (xmesa) {
       _glthread_LOCK_MUTEX(_xmesa_lock);
       XSync( xmesa->display, False );
       _glthread_UNLOCK_MUTEX(_xmesa_lock);
    }
-#endif
 }
 
 
@@ -388,7 +384,6 @@ clear_buffers(struct gl_context *ctx, GLbitfield buffers)
 }
 
 
-#ifndef XFree86Server
 /* XXX these functions haven't been tested in the Xserver environment */
 
 
@@ -731,7 +726,6 @@ xmesa_CopyPixels( struct gl_context *ctx,
    }
 }
 
-#endif /* XFree86Server */
 
 
 
@@ -745,17 +739,9 @@ get_string( struct gl_context *ctx, GLenum name )
    (void) ctx;
    switch (name) {
       case GL_RENDERER:
-#ifdef XFree86Server
-         return (const GLubyte *) "Mesa GLX Indirect";
-#else
          return (const GLubyte *) "Mesa X11";
-#endif
       case GL_VENDOR:
-#ifdef XFree86Server
-         return (const GLubyte *) "Mesa project: www.mesa3d.org";
-#else
          return NULL;
-#endif
       default:
          return NULL;
    }
@@ -1087,7 +1073,6 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    }
    else {
       driver->Clear = clear_buffers;
-#ifndef XFree86Server
       driver->CopyPixels = xmesa_CopyPixels;
       if (xmvisual->undithered_pf == PF_8R8G8B &&
           xmvisual->dithered_pf == PF_8R8G8B &&
@@ -1097,7 +1082,6 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
       else if (xmvisual->undithered_pf == PF_5R6G5B) {
          driver->DrawPixels = xmesa_DrawPixels_5R6G5B;
       }
-#endif
    }
 
 #if ENABLE_EXT_texure_compression_s3tc

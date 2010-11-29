@@ -41,11 +41,7 @@
 
 #include <sys/time.h>
 #include "dri_util.h"
-#ifdef XFree86Server
-#include "GL/xf86glx.h"
-#else
 #include "main/glheader.h"
-#endif
 #if defined(__linux__)
 #include <signal.h>
 #endif

@@ -537,7 +537,6 @@ void xmesa_choose_point( struct gl_context *ctx )
 
 
 
-#ifndef XFree86Server
 /**
  * Draw fast, XOR line with XDrawLine in front color buffer.
  * WARNING: this isn't fully OpenGL conformant because different pixels
@@ -567,7 +566,6 @@ xor_line(struct gl_context *ctx, const SWvertex *vert0, const SWvertex *vert1)
    XDrawLine(dpy, xrb->pixmap, gc, x0, y0, x1, y1);
    XMesaSetFunction(dpy, gc, GXcopy);  /* this gc is used elsewhere */
 }
-#endif /* XFree86Server */
 
 
 #endif /* CHAN_BITS == 8 */
@@ -660,7 +658,6 @@ get_line_func(struct gl_context *ctx)
       }
    }
 
-#ifndef XFree86Server
    if (ctx->DrawBuffer->_NumColorDrawBuffers == 1
        && ctx->DrawBuffer->_ColorDrawBufferIndexes[0] == BUFFER_FRONT_LEFT
        && swrast->_RasterMask == LOGIC_OP_BIT
@@ -669,7 +666,6 @@ get_line_func(struct gl_context *ctx)
        && !ctx->Line.SmoothFlag) {
       return xor_line;
    }
-#endif /* XFree86Server */
 
 #endif /* CHAN_BITS == 8 */
    return (swrast_line_func) NULL;
