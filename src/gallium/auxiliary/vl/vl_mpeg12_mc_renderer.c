@@ -121,13 +121,10 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    for (i = 0; i < ref_frames; ++i) {
       for (j = 0; j < 2; ++j) {        
         if(j < mv_per_frame) {
-           vmv[count] = ureg_DECL_vs_input(shader, VS_I_MV0 + i * 2 + j);
+           vmv[count] = ureg_DECL_vs_input(shader, VS_I_MV0 + count);
            o_vmv[count] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV0 + count);
            count++;
         }
-        /* workaround for r600g */
-        else if(ref_frames == 2)
-           ureg_DECL_vs_input(shader, VS_I_MV0 + i * 2 + j);
       }
    }
 
@@ -389,7 +386,7 @@ init_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE typ
    if (handler->interlaced == NULL)
       return false;
 
-   for (i = 0; i < 4 /*TODO: ref_frames * mv_per_frame */; ++i) {
+   for (i = 0; i < ref_frames * mv_per_frame; ++i) {
       handler->mv[i] = MALLOC(sizeof(struct vertex2f) * r->macroblocks_per_batch * 4);
       if (handler->mv[i] == NULL)
          return false;
@@ -419,7 +416,7 @@ cleanup_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE 
    handler->interlaced = MALLOC(sizeof(float) * r->macroblocks_per_batch * 4);
    FREE(handler->interlaced);
 
-   for (i = 0; i < 4 /*TODO: ref_frames * mv_per_frame */; ++i)
+   for (i = 0; i < ref_frames * mv_per_frame; ++i)
       FREE(handler->mv[i]);
 }
 
@@ -746,15 +743,21 @@ upload_vertex_stream(struct vl_mpeg12_mc_renderer *r,
       struct vl_mc_mbtype_handler *handler = &r->mbtype_handlers[i];
       unsigned count = vl_vb_upload(&handler->pos, pos);
       if (count > 0) {
+         unsigned ref_frames, mv_per_frame;
+
+         ref_frames = const_mbtype_config[i][0];
+         mv_per_frame = const_mbtype_config[i][1];
+
          pos += count;
 
          memcpy(interlaced, handler->interlaced, sizeof(float) * count * 4);
          interlaced += count * 4;
 
-         for (j = 0; j < 4 /* TODO */; ++j) {
+         for (j = 0; j < ref_frames * mv_per_frame; ++j)
             memcpy(mv[j], handler->mv[j], sizeof(struct vertex2f) * count * 4);
+
+         for (j = 0; j < 4; ++j)
             mv[j] += count * 4;
-         }
       }
       num_macroblocks[i] = count;
    }
@@ -898,8 +901,8 @@ get_motion_vectors(struct pipe_mpeg12_macroblock *mb, struct vertex2f mv[4])
       {
          if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
 
-            mv[2].x = mb->pmv[0][1][0];
-            mv[2].y = mb->pmv[0][1][1];
+            mv[1].x = mb->pmv[0][1][0];
+            mv[1].y = mb->pmv[0][1][1];
 
          } else {
             mv[2].x = mb->pmv[0][1][0];
@@ -983,7 +986,7 @@ grab_vectors(struct vl_mpeg12_mc_renderer *r,
    get_motion_vectors(mb, mv);
    for ( i = 0; i < 4; ++i ) {
       handler->interlaced[i + pos] = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD ? 1.0f : 0.0f;
-      for ( j = 0; j < 4 /*TODO: ref_frames * mv_per_frame */; ++j )
+      for ( j = 0; j < ref_frames * mv_per_frame; ++j )
          handler->mv[j][i + pos] = mv[j];
    }
 }
