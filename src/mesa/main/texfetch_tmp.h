@@ -135,7 +135,7 @@ static void store_texel_rgba_f32(struct gl_texture_image *texImage,
                                  GLint i, GLint j, GLint k, const void *texel)
 {
    const GLfloat *depth = (const GLfloat *) texel;
-   GLfloat *dst = TEXEL_ADDR(GLfloat, texImage, i, j, k, 1);
+   GLfloat *dst = TEXEL_ADDR(GLfloat, texImage, i, j, k, 4);
    dst[0] = depth[RCOMP];
    dst[1] = depth[GCOMP];
    dst[2] = depth[BCOMP];
@@ -163,9 +163,12 @@ static void FETCH(f_rgba_f16)( const struct gl_texture_image *texImage,
 static void store_texel_rgba_f16(struct gl_texture_image *texImage,
                                  GLint i, GLint j, GLint k, const void *texel)
 {
-   const GLfloat *depth = (const GLfloat *) texel;
-   GLhalfARB *dst = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 1);
-   dst[0] = _mesa_float_to_half(*depth);
+   const GLfloat *src = (const GLfloat *) texel;
+   GLhalfARB *dst = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 4);
+   dst[0] = _mesa_float_to_half(src[RCOMP]);
+   dst[1] = _mesa_float_to_half(src[GCOMP]);
+   dst[2] = _mesa_float_to_half(src[BCOMP]);
+   dst[3] = _mesa_float_to_half(src[ACOMP]);
 }
 #endif
 
@@ -188,9 +191,11 @@ static void FETCH(f_rgb_f32)( const struct gl_texture_image *texImage,
 static void store_texel_rgb_f32(struct gl_texture_image *texImage,
                                  GLint i, GLint j, GLint k, const void *texel)
 {
-   const GLfloat *depth = (const GLfloat *) texel;
-   GLfloat *dst = TEXEL_ADDR(GLfloat, texImage, i, j, k, 1);
-   dst[0] = *depth;
+   const GLfloat *src = (const GLfloat *) texel;
+   GLfloat *dst = TEXEL_ADDR(GLfloat, texImage, i, j, k, 3);
+   dst[0] = src[RCOMP];
+   dst[1] = src[GCOMP];
+   dst[2] = src[BCOMP];
 }
 #endif
 
@@ -214,9 +219,11 @@ static void FETCH(f_rgb_f16)( const struct gl_texture_image *texImage,
 static void store_texel_rgb_f16(struct gl_texture_image *texImage,
                                 GLint i, GLint j, GLint k, const void *texel)
 {
-   const GLfloat *depth = (const GLfloat *) texel;
-   GLhalfARB *dst = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 1);
-   dst[0] = _mesa_float_to_half(*depth);
+   const GLfloat *src = (const GLfloat *) texel;
+   GLhalfARB *dst = TEXEL_ADDR(GLhalfARB, texImage, i, j, k, 3);
+   dst[0] = _mesa_float_to_half(src[RCOMP]);
+   dst[1] = _mesa_float_to_half(src[GCOMP]);
+   dst[2] = _mesa_float_to_half(src[BCOMP]);
 }
 #endif
 
