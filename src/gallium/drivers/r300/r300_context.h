@@ -599,7 +599,7 @@ struct r300_context {
     struct u_upload_mgr *upload_vb;
     struct u_upload_mgr *upload_ib;
 
-    struct util_mempool pool_transfers;
+    struct util_slab_mempool pool_transfers;
 
     /* Stat counter. */
     uint64_t flush_counter;

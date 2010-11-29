@@ -44,14 +44,14 @@ static void r300_update_num_contexts(struct r300_screen *r300screen,
         p_atomic_inc(&r300screen->num_contexts);
 
         if (r300screen->num_contexts > 1)
-            util_mempool_set_thread_safety(&r300screen->pool_buffers,
-                                           UTIL_MEMPOOL_MULTITHREADED);
+            util_slab_set_thread_safety(&r300screen->pool_buffers,
+                                        UTIL_SLAB_MULTITHREADED);
     } else {
         p_atomic_dec(&r300screen->num_contexts);
 
         if (r300screen->num_contexts <= 1)
-            util_mempool_set_thread_safety(&r300screen->pool_buffers,
-                                           UTIL_MEMPOOL_SINGLETHREADED);
+            util_slab_set_thread_safety(&r300screen->pool_buffers,
+                                        UTIL_SLAB_SINGLETHREADED);
     }
 }
 
@@ -135,7 +135,7 @@ static void r300_destroy_context(struct pipe_context* context)
         r300->rws->cs_destroy(r300->cs);
 
     /* XXX: No way to tell if this was initialized or not? */
-    util_mempool_destroy(&r300->pool_transfers);
+    util_slab_destroy(&r300->pool_transfers);
 
     r300_update_num_contexts(r300->screen, -1);
 
@@ -421,9 +421,9 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     make_empty_list(&r300->query_list);
 
-    util_mempool_create(&r300->pool_transfers,
-                        sizeof(struct pipe_transfer), 64,
-                        UTIL_MEMPOOL_SINGLETHREADED);
+    util_slab_create(&r300->pool_transfers,
+                     sizeof(struct pipe_transfer), 64,
+                     UTIL_SLAB_SINGLETHREADED);
 
     r300->cs = rws->cs_create(rws);
     if (r300->cs == NULL)

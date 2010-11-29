@@ -20,7 +20,7 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
-#include "util/u_mempool.h"
+#include "util/u_slab.h"
 
 #include "util/u_math.h"
 #include "util/u_memory.h"
@@ -28,13 +28,13 @@
 
 #include <stdio.h>
 
-#define UTIL_MEMPOOL_MAGIC 0xcafe4321
+#define UTIL_SLAB_MAGIC 0xcafe4321
 
 /* The block is either allocated memory or free space. */
-struct util_mempool_block {
+struct util_slab_block {
    /* The header. */
    /* The first next free block. */
-   struct util_mempool_block *next_free;
+   struct util_slab_block *next_free;
 
    intptr_t magic;
 
@@ -42,19 +42,19 @@ struct util_mempool_block {
     * The allocated size is always larger than this structure. */
 };
 
-static struct util_mempool_block *
-util_mempool_get_block(struct util_mempool *pool,
-                       struct util_mempool_page *page, unsigned index)
+static struct util_slab_block *
+util_slab_get_block(struct util_slab_mempool *pool,
+                    struct util_slab_page *page, unsigned index)
 {
-   return (struct util_mempool_block*)
-          ((uint8_t*)page + sizeof(struct util_mempool_page) +
+   return (struct util_slab_block*)
+          ((uint8_t*)page + sizeof(struct util_slab_page) +
            (pool->block_size * index));
 }
 
-static void util_mempool_add_new_page(struct util_mempool *pool)
+static void util_slab_add_new_page(struct util_slab_mempool *pool)
 {
-   struct util_mempool_page *page;
-   struct util_mempool_block *block;
+   struct util_slab_page *page;
+   struct util_slab_block *block;
    int i;
 
    page = MALLOC(pool->page_size);
@@ -62,15 +62,15 @@ static void util_mempool_add_new_page(struct util_mempool *pool)
 
    /* Mark all blocks as free. */
    for (i = 0; i < pool->num_blocks-1; i++) {
-      block = util_mempool_get_block(pool, page, i);
-      block->next_free = util_mempool_get_block(pool, page, i+1);
-      block->magic = UTIL_MEMPOOL_MAGIC;
+      block = util_slab_get_block(pool, page, i);
+      block->next_free = util_slab_get_block(pool, page, i+1);
+      block->magic = UTIL_SLAB_MAGIC;
    }
 
-   block = util_mempool_get_block(pool, page, pool->num_blocks-1);
+   block = util_slab_get_block(pool, page, pool->num_blocks-1);
    block->next_free = pool->first_free;
-   block->magic = UTIL_MEMPOOL_MAGIC;
-   pool->first_free = util_mempool_get_block(pool, page, 0);
+   block->magic = UTIL_SLAB_MAGIC;
+   pool->first_free = util_slab_get_block(pool, page, 0);
    pool->num_pages++;
 
 #if 0
@@ -78,74 +78,74 @@ static void util_mempool_add_new_page(struct util_mempool *pool)
 #endif
 }
 
-static void *util_mempool_malloc_st(struct util_mempool *pool)
+static void *util_slab_alloc_st(struct util_slab_mempool *pool)
 {
-   struct util_mempool_block *block;
+   struct util_slab_block *block;
 
    if (!pool->first_free)
-      util_mempool_add_new_page(pool);
+      util_slab_add_new_page(pool);
 
    block = pool->first_free;
-   assert(block->magic == UTIL_MEMPOOL_MAGIC);
+   assert(block->magic == UTIL_SLAB_MAGIC);
    pool->first_free = block->next_free;
 
-   return (uint8_t*)block + sizeof(struct util_mempool_block);
+   return (uint8_t*)block + sizeof(struct util_slab_block);
 }
 
-static void util_mempool_free_st(struct util_mempool *pool, void *ptr)
+static void util_slab_free_st(struct util_slab_mempool *pool, void *ptr)
 {
-   struct util_mempool_block *block =
-         (struct util_mempool_block*)
-         ((uint8_t*)ptr - sizeof(struct util_mempool_block));
+   struct util_slab_block *block =
+         (struct util_slab_block*)
+         ((uint8_t*)ptr - sizeof(struct util_slab_block));
 
-   assert(block->magic == UTIL_MEMPOOL_MAGIC);
+   assert(block->magic == UTIL_SLAB_MAGIC);
    block->next_free = pool->first_free;
    pool->first_free = block;
 }
 
-static void *util_mempool_malloc_mt(struct util_mempool *pool)
+static void *util_slab_alloc_mt(struct util_slab_mempool *pool)
 {
    void *mem;
 
    pipe_mutex_lock(pool->mutex);
-   mem = util_mempool_malloc_st(pool);
+   mem = util_slab_alloc_st(pool);
    pipe_mutex_unlock(pool->mutex);
    return mem;
 }
 
-static void util_mempool_free_mt(struct util_mempool *pool, void *ptr)
+static void util_slab_free_mt(struct util_slab_mempool *pool, void *ptr)
 {
    pipe_mutex_lock(pool->mutex);
-   util_mempool_free_st(pool, ptr);
+   util_slab_free_st(pool, ptr);
    pipe_mutex_unlock(pool->mutex);
 }
 
-void util_mempool_set_thread_safety(struct util_mempool *pool,
-                                    enum util_mempool_threading threading)
+void util_slab_set_thread_safety(struct util_slab_mempool *pool,
+                                    enum util_slab_threading threading)
 {
    pool->threading = threading;
 
    if (threading) {
-      pool->malloc = util_mempool_malloc_mt;
-      pool->free = util_mempool_free_mt;
+      pool->alloc = util_slab_alloc_mt;
+      pool->free = util_slab_free_mt;
    } else {
-      pool->malloc = util_mempool_malloc_st;
-      pool->free = util_mempool_free_st;
+      pool->alloc = util_slab_alloc_st;
+      pool->free = util_slab_free_st;
    }
 }
 
-void util_mempool_create(struct util_mempool *pool,
-                         unsigned item_size,
-                         unsigned num_blocks,
-                         enum util_mempool_threading threading)
+void util_slab_create(struct util_slab_mempool *pool,
+                      unsigned item_size,
+                      unsigned num_blocks,
+                      enum util_slab_threading threading)
 {
    item_size = align(item_size, sizeof(intptr_t));
 
    pool->num_pages = 0;
    pool->num_blocks = num_blocks;
-   pool->block_size = sizeof(struct util_mempool_block) + item_size;
+   pool->block_size = sizeof(struct util_slab_block) + item_size;
    pool->block_size = align(pool->block_size, sizeof(intptr_t));
-   pool->page_size = sizeof(struct util_mempool_page) +
+   pool->page_size = sizeof(struct util_slab_page) +
                      num_blocks * pool->block_size;
    pool->first_free = NULL;
 
@@ -153,12 +153,12 @@ void util_mempool_create(struct util_mempool *pool,
 
    pipe_mutex_init(pool->mutex);
 
-   util_mempool_set_thread_safety(pool, threading);
+   util_slab_set_thread_safety(pool, threading);
 }
 
-void util_mempool_destroy(struct util_mempool *pool)
+void util_slab_destroy(struct util_slab_mempool *pool)
 {
-   struct util_mempool_page *page, *temp;
+   struct util_slab_page *page, *temp;
 
    foreach_s(page, temp, &pool->list) {
       remove_from_list(page);

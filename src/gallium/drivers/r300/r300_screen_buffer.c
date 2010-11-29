@@ -136,7 +136,7 @@ static void r300_buffer_destroy(struct pipe_screen *screen,
     if (rbuf->buf)
         rws->buffer_reference(rws, &rbuf->buf, NULL);
 
-    util_mempool_free(&r300screen->pool_buffers, rbuf);
+    util_slab_free(&r300screen->pool_buffers, rbuf);
 }
 
 static struct pipe_transfer*
@@ -148,7 +148,7 @@ r300_default_get_transfer(struct pipe_context *context,
 {
    struct r300_context *r300 = r300_context(context);
    struct pipe_transfer *transfer =
-         util_mempool_malloc(&r300->pool_transfers);
+         util_slab_alloc(&r300->pool_transfers);
 
    transfer->resource = resource;
    transfer->sr = sr;
@@ -168,7 +168,7 @@ static void r300_default_transfer_destroy(struct pipe_context *pipe,
                                           struct pipe_transfer *transfer)
 {
    struct r300_context *r300 = r300_context(pipe);
-   util_mempool_free(&r300->pool_transfers, transfer);
+   util_slab_free(&r300->pool_transfers, transfer);
 }
 
 static void *
@@ -285,7 +285,7 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     struct r300_buffer *rbuf;
     unsigned alignment = 16;
 
-    rbuf = util_mempool_malloc(&r300screen->pool_buffers);
+    rbuf = util_slab_alloc(&r300screen->pool_buffers);
 
     rbuf->magic = R300_BUFFER_MAGIC;
 
@@ -312,7 +312,7 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
                                        rbuf->domain);
 
     if (!rbuf->buf) {
-        util_mempool_free(&r300screen->pool_buffers, rbuf);
+        util_slab_free(&r300screen->pool_buffers, rbuf);
         return NULL;
     }
 
@@ -327,7 +327,7 @@ struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
     struct r300_screen *r300screen = r300_screen(screen);
     struct r300_buffer *rbuf;
 
-    rbuf = util_mempool_malloc(&r300screen->pool_buffers);
+    rbuf = util_slab_alloc(&r300screen->pool_buffers);
 
     rbuf->magic = R300_BUFFER_MAGIC;
 

@@ -399,7 +399,7 @@ static void r300_destroy_screen(struct pipe_screen* pscreen)
     struct r300_screen* r300screen = r300_screen(pscreen);
     struct r300_winsys_screen *rws = r300_winsys_screen(pscreen);
 
-    util_mempool_destroy(&r300screen->pool_buffers);
+    util_slab_destroy(&r300screen->pool_buffers);
 
     if (rws)
       rws->destroy(rws);
@@ -456,9 +456,9 @@ struct pipe_screen* r300_screen_create(struct r300_winsys_screen *rws)
     r300_init_debug(r300screen);
     r300_parse_chipset(&r300screen->caps);
 
-    util_mempool_create(&r300screen->pool_buffers,
-                        sizeof(struct r300_buffer), 64,
-                        UTIL_MEMPOOL_SINGLETHREADED);
+    util_slab_create(&r300screen->pool_buffers,
+                     sizeof(struct r300_buffer), 64,
+                     UTIL_SLAB_SINGLETHREADED);
 
     r300screen->rws = rws;
     r300screen->screen.winsys = (struct pipe_winsys*)rws;

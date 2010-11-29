@@ -22,66 +22,66 @@
 
 /**
  * @file
- * Simple memory pool for equally sized memory allocations.
- * util_mempool_malloc and util_mempool_free are in O(1).
+ * Simple slab allocator for equally sized memory allocations.
+ * util_slab_alloc and util_slab_free have time complexity in O(1).
  *
  * Good for allocations which have very low lifetime and are allocated
- * and freed very often. Use a profiler first!
+ * and freed very often. Use a profiler first to know if it's worth using it!
  *
  * Candidates: get_transfer, user_buffer_create
  *
  * @author Marek Olšák
  */
 
-#ifndef U_MEMPOOL_H
-#define U_MEMPOOL_H
+#ifndef U_SLAB_H
+#define U_SLAB_H
 
 #include "os/os_thread.h"
 
-enum util_mempool_threading {
-   UTIL_MEMPOOL_SINGLETHREADED = FALSE,
-   UTIL_MEMPOOL_MULTITHREADED = TRUE
+enum util_slab_threading {
+   UTIL_SLAB_SINGLETHREADED = FALSE,
+   UTIL_SLAB_MULTITHREADED = TRUE
 };
 
 /* The page is an array of blocks (allocations). */
-struct util_mempool_page {
+struct util_slab_page {
    /* The header (linked-list pointers). */
-   struct util_mempool_page *prev, *next;
+   struct util_slab_page *prev, *next;
 
    /* Memory after the last member is dedicated to the page itself.
     * The allocated size is always larger than this structure. */
 };
 
-struct util_mempool {
+struct util_slab_mempool {
    /* Public members. */
-   void *(*malloc)(struct util_mempool *pool);
-   void (*free)(struct util_mempool *pool, void *ptr);
+   void *(*alloc)(struct util_slab_mempool *pool);
+   void (*free)(struct util_slab_mempool *pool, void *ptr);
 
    /* Private members. */
-   struct util_mempool_block *first_free;
+   struct util_slab_block *first_free;
 
-   struct util_mempool_page list;
+   struct util_slab_page list;
 
    unsigned block_size;
    unsigned page_size;
    unsigned num_blocks;
    unsigned num_pages;
-   enum util_mempool_threading threading;
+   enum util_slab_threading threading;
 
    pipe_mutex mutex;
 };
 
-void util_mempool_create(struct util_mempool *pool,
-                         unsigned item_size,
-                         unsigned num_blocks,
-                         enum util_mempool_threading threading);
+void util_slab_create(struct util_slab_mempool *pool,
+                      unsigned item_size,
+                      unsigned num_blocks,
+                      enum util_slab_threading threading);
 
-void util_mempool_destroy(struct util_mempool *pool);
+void util_slab_destroy(struct util_slab_mempool *pool);
 
-void util_mempool_set_thread_safety(struct util_mempool *pool,
-                                    enum util_mempool_threading threading);
+void util_slab_set_thread_safety(struct util_slab_mempool *pool,
+                                 enum util_slab_threading threading);
 
-#define util_mempool_malloc(pool)    (pool)->malloc(pool)
-#define util_mempool_free(pool, ptr) (pool)->free(pool, ptr)
+#define util_slab_alloc(pool)     (pool)->alloc(pool)
+#define util_slab_free(pool, ptr) (pool)->free(pool, ptr)
 
 #endif
