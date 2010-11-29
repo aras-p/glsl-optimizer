@@ -18,10 +18,6 @@ Random list of problems with i915g:
   Texture sampling from Y-tiled buffers seems to work, though (save above
   problems).
 
-- Review buffer usage/cache domain handling in the winsys. Related: vbo cache
-  coherency is bunk: openarena tends to have a bunch of flatshaded triangles
-  popping up all over the screen.
-
 - Need to validate buffers before usage. Currently do_exec on the batchbuffer
   can fail with -ENOSPC.
 
