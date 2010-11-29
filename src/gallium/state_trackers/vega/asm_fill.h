@@ -410,8 +410,8 @@ struct shader_asm_info {
 };
 
 
-static const struct shader_asm_info shaders_asm[] = {
-   /* fills */
+/* paint types */
+static const struct shader_asm_info shaders_paint_asm[] = {
    {VEGA_SOLID_FILL_SHADER, solid_fill,
     VG_FALSE, 0, 1, 0, 0, 0, 0},
    {VEGA_LINEAR_GRADIENT_SHADER, linear_grad,
@@ -419,20 +419,26 @@ static const struct shader_asm_info shaders_asm[] = {
    {VEGA_RADIAL_GRADIENT_SHADER, radial_grad,
     VG_TRUE,  0, 5, 0, 1, 0, 6},
    {VEGA_PATTERN_SHADER, pattern,
-    VG_TRUE,  1, 4, 0, 1, 0, 5},
+    VG_TRUE,  1, 4, 0, 1, 0, 5}
+};
 
-   /* image draw modes */
+/* image draw modes */
+static const struct shader_asm_info shaders_image_asm[] = {
    {VEGA_IMAGE_NORMAL_SHADER, image_normal,
     VG_TRUE,  0, 0, 3, 1, 0, 0},
    {VEGA_IMAGE_MULTIPLY_SHADER, image_multiply,
     VG_TRUE,  0, 0, 3, 1, 0, 2},
    {VEGA_IMAGE_STENCIL_SHADER, image_stencil,
-    VG_TRUE,  0, 0, 3, 1, 0, 2},
+    VG_TRUE,  0, 0, 3, 1, 0, 2}
+};
 
+static const struct shader_asm_info shaders_mask_asm[] = {
    {VEGA_MASK_SHADER, mask,
-    VG_TRUE,  0, 0, 1, 1, 0, 2},
+    VG_TRUE,  0, 0, 1, 1, 0, 2}
+};
 
-   /* extra blend modes */
+/* extra blend modes */
+static const struct shader_asm_info shaders_blend_asm[] = {
    {VEGA_BLEND_MULTIPLY_SHADER, blend_multiply,
     VG_TRUE,  1, 1, 2, 1, 0, 5},
    {VEGA_BLEND_SCREEN_SHADER, blend_screen,
@@ -441,15 +447,20 @@ static const struct shader_asm_info shaders_asm[] = {
     VG_TRUE,  1, 1, 2, 1, 0, 6},
    {VEGA_BLEND_LIGHTEN_SHADER, blend_lighten,
     VG_TRUE,  1, 1, 2, 1, 0, 6},
+};
 
-   /* premultiply */
+/* premultiply */
+static const struct shader_asm_info shaders_premultiply_asm[] = {
    {VEGA_PREMULTIPLY_SHADER, premultiply,
     VG_FALSE,  0, 0, 0, 0, 0, 1},
    {VEGA_UNPREMULTIPLY_SHADER, unpremultiply,
     VG_FALSE,  0, 0, 0, 0, 0, 1},
+};
 
-   /* color transform to black and white */
+/* color transform to black and white */
+static const struct shader_asm_info shaders_bw_asm[] = {
    {VEGA_BW_SHADER, color_bw,
     VG_FALSE,  1, 1, 0, 0, 0, 3},
 };
+
 #endif
