@@ -96,6 +96,10 @@ stw_init(const struct stw_winsys *stw_winsys)
    stw_dev->smapi->get_param = stw_get_param;
    stw_dev->screen = screen;
 
+   stw_dev->max_2d_levels =
+         screen->get_param(screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS);
+   stw_dev->max_2d_length = 1 << (stw_dev->max_2d_levels - 1);
+
    pipe_mutex_init( stw_dev->ctx_mutex );
    pipe_mutex_init( stw_dev->fb_mutex );
 
