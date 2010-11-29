@@ -23,6 +23,37 @@
 
 /**
  * \file lower_jumps.cpp
+ *
+ * This pass lowers jumps (break, continue, and return) to if/else structures.
+ *
+ * It can be asked to:
+ * 1. Pull jumps out of ifs where possible
+ * 2. Remove all "continue"s, replacing them with an "execute flag"
+ * 3. Replace all "break" with a single conditional one at the end of the loop
+ * 4. Replace all "return"s with a single return at the end of the function,
+ *    for the main function and/or other functions
+ *
+ * Applying this pass gives several benefits:
+ * 1. All functions can be inlined.
+ * 2. nv40 and other pre-DX10 chips without "continue" can be supported
+ * 3. nv30 and other pre-DX10 chips with no control flow at all are better
+ *    supported
+ *
+ * Continues are lowered by adding a per-loop "execute flag", initialized to
+ * true, that when cleared inhibits all execution until the end of the loop.
+ *
+ * Breaks are lowered to continues, plus setting a "break flag" that is checked
+ * at the end of the loop, and trigger the unique "break".
+ *
+ * Returns are lowered to breaks/continues, plus adding a "return flag" that
+ * causes loops to break again out of their enclosing loops until all the
+ * loops are exited: then the "execute flag" logic will ignore everything
+ * until the end of the function.
+ *
+ * Note that "continue" and "return" can also be implemented by adding
+ * a dummy loop and using break.
+ * However, this is bad for hardware with limited nesting depth, and
+ * prevents further optimization, and thus is not currently performed.
  */
 
 #include "glsl_types.h"
