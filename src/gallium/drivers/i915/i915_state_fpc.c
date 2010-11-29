@@ -40,7 +40,7 @@ static void update_hw_constants(struct i915_context *i915)
 struct i915_tracked_state i915_hw_constants = {
    "hw_constants",
    update_hw_constants,
-   I915_NEW_CONSTANTS | I915_NEW_FS
+   I915_NEW_FS_CONSTANTS | I915_NEW_FS
 };
 
 

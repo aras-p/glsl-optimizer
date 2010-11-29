@@ -527,6 +527,10 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
    struct i915_context *i915 = i915_context(pipe);
    draw_flush(i915->draw);
 
+   /* XXX don't support geom shaders now */
+   if (shader == PIPE_SHADER_GEOMETRY)
+      return;
+
    /* Make a copy of shader constants.
     * During fragment program translation we may add additional
     * constants to the array.
@@ -538,6 +542,10 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
     */
    if (buf) {
       struct i915_buffer *ir = i915_buffer(buf);
+
+      if (!memcmp(i915->current.constants[shader], ir->data, ir->b.b.width0))
+         return;
+
       memcpy(i915->current.constants[shader], ir->data, ir->b.b.width0);
       i915->current.num_user_constants[shader] = (ir->b.b.width0 /
 						  4 * sizeof(float));
@@ -546,8 +554,7 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
       i915->current.num_user_constants[shader] = 0;
    }
 
-
-   i915->dirty |= I915_NEW_CONSTANTS;
+   i915->dirty |= shader == PIPE_SHADER_VERTEX ? I915_NEW_VS_CONSTANTS : I915_NEW_FS_CONSTANTS;
 }
 
 

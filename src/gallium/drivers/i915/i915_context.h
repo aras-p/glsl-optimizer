@@ -257,9 +257,11 @@ struct i915_context {
 #define I915_NEW_DEPTH_STENCIL 0x200
 #define I915_NEW_SAMPLER       0x400
 #define I915_NEW_SAMPLER_VIEW  0x800
-#define I915_NEW_CONSTANTS     0x1000
-#define I915_NEW_VBO           0x2000
-#define I915_NEW_VS            0x4000
+#define I915_NEW_VS_CONSTANTS  0x1000
+#define I915_NEW_FS_CONSTANTS  0x2000
+#define I915_NEW_GS_CONSTANTS  0x4000
+#define I915_NEW_VBO           0x8000
+#define I915_NEW_VS            0x10000
 
 
 /* Driver's internally generated state flags:
