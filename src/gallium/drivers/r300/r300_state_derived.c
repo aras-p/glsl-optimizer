@@ -764,11 +764,16 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                 if (sampler->state.compare_mode == PIPE_TEX_COMPARE_NONE) {
                     texstate->format.format1 |=
                         r300_get_swizzle_combined(depth_swizzle,
-                                                  view->swizzle);
+                                                  view->swizzle, FALSE);
                 } else {
                     texstate->format.format1 |=
-                        r300_get_swizzle_combined(depth_swizzle, 0);
+                        r300_get_swizzle_combined(depth_swizzle, 0, FALSE);
                 }
+            }
+
+            if (r300->screen->caps.dxtc_swizzle &&
+                util_format_is_compressed(tex->desc.b.b.format)) {
+                texstate->filter1 |= R400_DXTC_SWIZZLE_ENABLE;
             }
 
             /* to emulate 1D textures through 2D ones correctly */

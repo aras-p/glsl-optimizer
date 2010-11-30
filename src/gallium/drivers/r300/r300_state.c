@@ -1347,6 +1347,7 @@ r300_create_sampler_view(struct pipe_context *pipe,
     struct r300_sampler_view *view = CALLOC_STRUCT(r300_sampler_view);
     struct r300_texture *tex = r300_texture(texture);
     boolean is_r500 = r300_screen(pipe->screen)->caps.is_r500;
+    boolean dxtc_swizzle = r300_screen(pipe->screen)->caps.dxtc_swizzle;
 
     if (view) {
         view->base = *templ;
@@ -1363,7 +1364,8 @@ r300_create_sampler_view(struct pipe_context *pipe,
         view->format = tex->tx_format;
         view->format.format1 |= r300_translate_texformat(templ->format,
                                                          view->swizzle,
-                                                         is_r500);
+                                                         is_r500,
+                                                         dxtc_swizzle);
         if (is_r500) {
             view->format.format2 |= r500_tx_format_msb_bit(templ->format);
         }

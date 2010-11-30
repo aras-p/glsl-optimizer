@@ -40,7 +40,8 @@
 #include "pipe/p_screen.h"
 
 unsigned r300_get_swizzle_combined(const unsigned char *swizzle_format,
-                                   const unsigned char *swizzle_view)
+                                   const unsigned char *swizzle_view,
+                                   boolean dxtc_swizzle)
 {
     unsigned i;
     unsigned char swizzle[4];
@@ -51,10 +52,10 @@ unsigned r300_get_swizzle_combined(const unsigned char *swizzle_format,
         R300_TX_FORMAT_B_SHIFT,
         R300_TX_FORMAT_A_SHIFT
     };
-    const uint32_t swizzle_bit[4] = {
-        R300_TX_FORMAT_X,
+    uint32_t swizzle_bit[4] = {
+        dxtc_swizzle ? R300_TX_FORMAT_Z : R300_TX_FORMAT_X,
         R300_TX_FORMAT_Y,
-        R300_TX_FORMAT_Z,
+        dxtc_swizzle ? R300_TX_FORMAT_X : R300_TX_FORMAT_Z,
         R300_TX_FORMAT_W
     };
 
@@ -107,7 +108,8 @@ unsigned r300_get_swizzle_combined(const unsigned char *swizzle_format,
  * makes available X, Y, Z, W, ZERO, and ONE for swizzling. */
 uint32_t r300_translate_texformat(enum pipe_format format,
                                   const unsigned char *swizzle_view,
-                                  boolean is_r500)
+                                  boolean is_r500,
+                                  boolean dxtc_swizzle)
 {
     uint32_t result = 0;
     const struct util_format_description *desc;
@@ -169,7 +171,8 @@ uint32_t r300_translate_texformat(enum pipe_format format,
             }
     }
 
-    result |= r300_get_swizzle_combined(desc->swizzle, swizzle_view);
+    result |= r300_get_swizzle_combined(desc->swizzle, swizzle_view,
+                    util_format_is_compressed(format) && dxtc_swizzle);
 
     /* S3TC formats. */
     if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
@@ -571,7 +574,7 @@ boolean r300_is_zs_format_supported(enum pipe_format format)
 
 boolean r300_is_sampler_format_supported(enum pipe_format format)
 {
-    return r300_translate_texformat(format, 0, TRUE) != ~0;
+    return r300_translate_texformat(format, 0, TRUE, FALSE) != ~0;
 }
 
 void r300_texture_setup_format_state(struct r300_screen *screen,

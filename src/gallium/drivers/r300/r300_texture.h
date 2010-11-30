@@ -35,11 +35,13 @@ struct r300_texture;
 struct r300_screen;
 
 unsigned r300_get_swizzle_combined(const unsigned char *swizzle_format,
-                                   const unsigned char *swizzle_view);
+                                   const unsigned char *swizzle_view,
+                                   boolean dxtc_swizzle);
 
 uint32_t r300_translate_texformat(enum pipe_format format,
                                   const unsigned char *swizzle_view,
-                                  boolean is_r500);
+                                  boolean is_r500,
+                                  boolean dxtc_swizzle);
 
 uint32_t r500_tx_format_msb_bit(enum pipe_format format);
 

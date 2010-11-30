@@ -424,4 +424,5 @@ void r300_parse_chipset(struct r300_capabilities* caps)
     }
 
     caps->is_rv350 = caps->family >= CHIP_FAMILY_RV350;
+    caps->dxtc_swizzle = caps->is_r400 || caps->is_r500;
 }

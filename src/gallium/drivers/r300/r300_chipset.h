@@ -79,6 +79,8 @@ struct r300_capabilities {
     boolean is_r500;
     /* Whether or not the second pixel pipe is accessed with the high bit */
     boolean high_second_pipe;
+    /* DXTC texture swizzling. */
+    boolean dxtc_swizzle;
 };
 
 /* Enumerations for legibility and telling which card we're running on. */
