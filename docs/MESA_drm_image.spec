@@ -83,7 +83,7 @@ Additions to the EGL 1.4 Specification:
         EGLImageKHR eglCreateDRMImageMESA(EGLDisplay dpy,
                                           const EGLint *attrib_list);
 
-    In the attribute list, pass EGL_WIDTH, EGL_EIGHT and format and
+    In the attribute list, pass EGL_WIDTH, EGL_HEIGHT and format and
     use in the attrib list using EGL_DRM_BUFFER_FORMAT_MESA and
     EGL_DRM_BUFFER_USE_MESA.  The only format specified by this
     extension is EGL_DRM_BUFFER_FORMAT_ARGB32_MESA, where each pixel
