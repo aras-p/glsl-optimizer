@@ -68,7 +68,6 @@ enum VS_OUTPUT
    VS_O_TEX0,
    VS_O_TEX1,
    VS_O_TEX2,
-   VS_O_INTERLACED,
    VS_O_MV0,
    VS_O_MV1,
    VS_O_MV2,
@@ -92,7 +91,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    struct ureg_src norm, mbs;
    struct ureg_src vrect, vpos, interlaced, vmv[4];
    struct ureg_dst scale, t_vpos, t_vtex;
-   struct ureg_dst o_vpos, o_line, o_vtex[3], o_interlaced, o_vmv[4];
+   struct ureg_dst o_vpos, o_line, o_vtex[3], o_vmv[4];
    unsigned i, j, count, label;
 
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
@@ -115,7 +114,6 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    o_vtex[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX0);
    o_vtex[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX1);
    o_vtex[2] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX2);
-   o_interlaced = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_INTERLACED);
    
    count=0;
    for (i = 0; i < ref_frames; ++i) {
@@ -153,7 +151,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
     *
     * if(count > 0) { // Apply motion vectors
     *    scale = norm * 0.5;
-    *    o_vmv[0..count] = t_vpos + vmv[0..4] * scale
+    *    o_vmv[0..count] = t_vpos + vmv[0..count] * scale
     * }
     *
     */
@@ -184,8 +182,6 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    ureg_ENDIF(shader);
    ureg_MOV(shader, ureg_writemask(o_vtex[2], TGSI_WRITEMASK_XY), ureg_src(t_vpos));
 
-   ureg_MOV(shader, o_interlaced, interlaced);
-
    if(count > 0) {
       ureg_MUL(shader, ureg_writemask(scale, TGSI_WRITEMASK_XY), norm, ureg_imm1f(shader, 0.5f));
       for (i = 0; i < count; ++i)
@@ -213,8 +209,8 @@ calc_field(struct ureg_program *shader)
    /*
     * line going from 0 to 8 in steps of 0.5
     *
-    * tmp.z = fraction(line.y)
-    * tmp.z = tmp.z >= 0.5 ? 1 : 0
+    * tmp.y = fraction(line.y)
+    * tmp.y = tmp.y >= 0.5 ? 1 : 0
     */
    ureg_FRC(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y), line);
    ureg_SGE(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y), ureg_src(tmp), ureg_imm1f(shader, 0.5f));
@@ -225,10 +221,10 @@ calc_field(struct ureg_program *shader)
 static struct ureg_dst
 fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct ureg_dst field)
 {
-   struct ureg_src tc[3], interlaced;
+   struct ureg_src tc[3];
    struct ureg_src sampler[3];
    struct ureg_dst texel, t_tc, tmp;
-   unsigned i, label;
+   unsigned i;
 
    texel = ureg_DECL_temporary(shader);
    t_tc = ureg_DECL_temporary(shader);
@@ -238,27 +234,21 @@ fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct
    tc[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX1, TGSI_INTERPOLATE_LINEAR);
    tc[2] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX2, TGSI_INTERPOLATE_LINEAR);
 
-   interlaced = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_INTERLACED, TGSI_INTERPOLATE_CONSTANT);
-
    for (i = 0; i < 3; ++i)  {
       sampler[i] = ureg_DECL_sampler(shader, i);
    }
 
    /*
-    * texel.y  = tex(field ? tc[1] : tc[0], sampler[0])
+    * texel.y  = tex(field.y ? tc[1] : tc[0], sampler[0])
     * texel.cb = tex(tc[2], sampler[1])
     * texel.cr = tex(tc[2], sampler[2])
     */
-   ureg_MUL(shader, tmp, interlaced, ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y));
-
    for (i = 0; i < 3; ++i) {
       if(i==0 || r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444) {
 
-         ureg_IF(shader, ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_X), &label);
-            ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_XY), tc[1]);
-         ureg_ELSE(shader, &label);
-            ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_XY), tc[0]);
-         ureg_ENDIF(shader);
+         ureg_CMP(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_XY),
+            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
+            tc[1], tc[0]);
 
       } else {
          ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_XY), tc[2]);
