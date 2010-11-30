@@ -263,7 +263,6 @@ execute_clears( struct lp_setup_context *setup )
 
 const char *states[] = {
    "FLUSHED",
-   "EMPTY  ",
    "CLEARED",
    "ACTIVE "
 };
