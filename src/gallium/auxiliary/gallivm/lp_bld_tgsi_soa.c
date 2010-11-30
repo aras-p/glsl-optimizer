@@ -984,7 +984,7 @@ emit_store(
 
    case TGSI_FILE_ADDRESS:
       lp_exec_mask_store(&bld->exec_mask, pred, value,
-                         bld->addr[reg->Indirect.Index][chan_index]);
+                         bld->addr[reg->Register.Index][chan_index]);
       break;
 
    case TGSI_FILE_PREDICATE:
