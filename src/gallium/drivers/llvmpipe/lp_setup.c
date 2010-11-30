@@ -927,7 +927,7 @@ lp_setup_update_state( struct lp_setup_context *setup,
 		    setup->setup.variant->key.size) == 0);
    }
 
-   if (update_scene) {
+   if (update_scene && setup->state != SETUP_ACTIVE) {
       if (!set_scene_state( setup, SETUP_ACTIVE, __FUNCTION__ ))
          return FALSE;
    }
