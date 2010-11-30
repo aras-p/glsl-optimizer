@@ -114,7 +114,7 @@ first_point( struct lp_setup_context *setup,
    setup->point( setup, v0 );
 }
 
-static void lp_setup_reset( struct lp_setup_context *setup )
+void lp_setup_reset( struct lp_setup_context *setup )
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
@@ -911,6 +911,12 @@ lp_setup_update_state( struct lp_setup_context *setup,
       if (lp->dirty) {
          llvmpipe_update_derived(lp);
       }
+
+      if (lp->setup->dirty) {
+         llvmpipe_update_setup(lp);
+      }
+
+      assert(setup->setup.variant);
 
       /* Will probably need to move this somewhere else, just need  
        * to know about vertex shader point size attribute.

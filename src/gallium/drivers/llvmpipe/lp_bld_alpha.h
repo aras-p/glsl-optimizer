@@ -43,7 +43,7 @@ struct lp_build_mask_context;
 
 
 void
-lp_build_alpha_test(LLVMBuilderRef builder,
+lp_build_alpha_test(struct gallivm_state *gallivm,
                     unsigned func,
                     struct lp_type type,
                     struct lp_build_mask_context *mask,

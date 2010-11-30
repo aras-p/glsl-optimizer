@@ -45,13 +45,16 @@
  */
 #ifdef DEBUG
 
+struct lp_rasterizer_task;
 extern int jit_line;
 extern const struct lp_rast_state *jit_state;
+extern const struct lp_rasterizer_task *jit_task;
 
-#define BEGIN_JIT_CALL(state) \
+#define BEGIN_JIT_CALL(state, task)                  \
    do { \
       jit_line = __LINE__; \
       jit_state = state; \
+      jit_task = task; \
    } while (0)
 
 #define END_JIT_CALL() \
@@ -62,7 +65,7 @@ extern const struct lp_rast_state *jit_state;
 
 #else
 
-#define BEGIN_JIT_CALL(X)
+#define BEGIN_JIT_CALL(X, Y)
 #define END_JIT_CALL()
 
 #endif
@@ -258,7 +261,7 @@ lp_rast_shade_quads_all( struct lp_rasterizer_task *task,
    depth = lp_rast_get_depth_block_pointer(task, x, y);
 
    /* run shader on 4x4 block */
-   BEGIN_JIT_CALL(state);
+   BEGIN_JIT_CALL(state, task);
    variant->jit_function[RAST_WHOLE]( &state->jit_context,
                                       x, y,
                                       inputs->frontfacing,

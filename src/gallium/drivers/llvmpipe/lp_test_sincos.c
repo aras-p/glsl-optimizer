@@ -29,15 +29,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 
+#include "util/u_pointer.h"
+
 #include "gallivm/lp_bld.h"
 #include "gallivm/lp_bld_init.h"
 #include "gallivm/lp_bld_arit.h"
-#include "util/u_pointer.h"
-
-#include <llvm-c/Analysis.h>
-#include <llvm-c/ExecutionEngine.h>
-#include <llvm-c/Target.h>
-#include <llvm-c/Transforms/Scalar.h>
 
 #include "lp_test.h"
 
@@ -61,25 +57,25 @@ write_tsv_header(FILE *fp)
 typedef __m128 (*test_sincos_t)(__m128);
 
 static LLVMValueRef
-add_sincos_test(LLVMModuleRef module, boolean sin)
+add_sincos_test(struct gallivm_state *gallivm, LLVMModuleRef module,
+                LLVMContextRef context, boolean sin)
 {
-   LLVMTypeRef v4sf = LLVMVectorType(LLVMFloatType(), 4);
+   LLVMTypeRef v4sf = LLVMVectorType(LLVMFloatTypeInContext(context), 4);
    LLVMTypeRef args[1] = { v4sf };
    LLVMValueRef func = LLVMAddFunction(module, "sincos", LLVMFunctionType(v4sf, args, 1, 0));
    LLVMValueRef arg1 = LLVMGetParam(func, 0);
-   LLVMBuilderRef builder = LLVMCreateBuilder();
-   LLVMBasicBlockRef block = LLVMAppendBasicBlock(func, "entry");
+   LLVMBuilderRef builder = gallivm->builder;
+   LLVMBasicBlockRef block = LLVMAppendBasicBlockInContext(context, func, "entry");
    LLVMValueRef ret;
    struct lp_build_context bld;
 
-   lp_build_context_init(&bld, builder, lp_float32_vec4_type());
+   lp_build_context_init(&bld, gallivm, lp_float32_vec4_type());
 
    LLVMSetFunctionCallConv(func, LLVMCCallConv);
 
    LLVMPositionBuilderAtEnd(builder, block);
    ret = sin ? lp_build_sin(&bld, arg1) : lp_build_cos(&bld, arg1);
    LLVMBuildRet(builder, ret);
-   LLVMDisposeBuilder(builder);
    return func;
 }
 
@@ -95,22 +91,20 @@ printv(char* string, v4sf value)
 
 PIPE_ALIGN_STACK
 static boolean
-test_sincos(unsigned verbose, FILE *fp)
+test_sincos(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
 {
-   LLVMModuleRef module = NULL;
+   LLVMModuleRef module = gallivm->module;
    LLVMValueRef test_sin = NULL, test_cos = NULL;
-   LLVMExecutionEngineRef engine = lp_build_engine;
-   LLVMPassManagerRef pass = NULL;
+   LLVMExecutionEngineRef engine = gallivm->engine;
+   LLVMContextRef context = gallivm->context;
    char *error = NULL;
    test_sincos_t sin_func;
    test_sincos_t cos_func;
    float unpacked[4];
    boolean success = TRUE;
 
-   module = LLVMModuleCreateWithName("test");
-
-   test_sin = add_sincos_test(module, TRUE);
-   test_cos = add_sincos_test(module, FALSE);
+   test_sin = add_sincos_test(gallivm, module, context, TRUE);
+   test_cos = add_sincos_test(gallivm, module, context,FALSE);
 
    if(LLVMVerifyModule(module, LLVMPrintMessageAction, &error)) {
       printf("LLVMVerifyModule: %s\n", error);
@@ -118,21 +112,6 @@ test_sincos(unsigned verbose, FILE *fp)
       abort();
    }
    LLVMDisposeMessage(error);
-
-#if 0
-   pass = LLVMCreatePassManager();
-   LLVMAddTargetData(LLVMGetExecutionEngineTargetData(engine), pass);
-   /* These are the passes currently listed in llvm-c/Transforms/Scalar.h,
-    * but there are more on SVN. */
-   LLVMAddConstantPropagationPass(pass);
-   LLVMAddInstructionCombiningPass(pass);
-   LLVMAddPromoteMemoryToRegisterPass(pass);
-   LLVMAddGVNPass(pass);
-   LLVMAddCFGSimplificationPass(pass);
-   LLVMRunPassManager(pass, module);
-#else
-   (void)pass;
-#endif
 
    sin_func = (test_sincos_t) pointer_to_func(LLVMGetPointerToGlobal(engine, test_sin));
    cos_func = (test_sincos_t) pointer_to_func(LLVMGetPointerToGlobal(engine, test_cos));
@@ -152,9 +131,6 @@ test_sincos(unsigned verbose, FILE *fp)
    LLVMFreeMachineCodeForFunction(engine, test_sin);
    LLVMFreeMachineCodeForFunction(engine, test_cos);
 
-   if(pass)
-      LLVMDisposePassManager(pass);
-
    return success;
 }
 
@@ -170,24 +146,25 @@ test_sincos(unsigned verbose, FILE *fp)
 
 
 boolean
-test_all(unsigned verbose, FILE *fp)
+test_all(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
 {
    boolean success = TRUE;
 
-   test_sincos(verbose, fp);
+   test_sincos(gallivm, verbose, fp);
 
    return success;
 }
 
 
 boolean
-test_some(unsigned verbose, FILE *fp, unsigned long n)
+test_some(struct gallivm_state *gallivm, unsigned verbose, FILE *fp,
+          unsigned long n)
 {
-   return test_all(verbose, fp);
+   return test_all(gallivm, verbose, fp);
 }
 
 boolean
-test_single(unsigned verbose, FILE *fp)
+test_single(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
 {
    printf("no test_single()");
    return TRUE;

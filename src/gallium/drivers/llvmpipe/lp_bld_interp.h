@@ -102,6 +102,7 @@ struct lp_build_interp_soa_context
 
 void
 lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
+                         struct gallivm_state *gallivm,
                          unsigned num_inputs,
                          const struct lp_shader_input *inputs,
                          LLVMBuilderRef builder,
@@ -114,11 +115,13 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
 
 void
 lp_build_interp_soa_update_inputs(struct lp_build_interp_soa_context *bld,
-                           int quad_index);
+                                  struct gallivm_state *gallivm,
+                                  int quad_index);
 
 void
 lp_build_interp_soa_update_pos(struct lp_build_interp_soa_context *bld,
-                           int quad_index);
+                               struct gallivm_state *gallivm,
+                               int quad_index);
 
 
 #endif /* LP_BLD_INTERP_H */

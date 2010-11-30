@@ -56,6 +56,13 @@ llvmpipe_flush( struct pipe_context *pipe,
    /* ask the setup module to flush */
    lp_setup_flush(llvmpipe->setup, flags, fence, reason);
 
+
+   if (llvmpipe_variant_count > 1000) {
+      /* time to do a garbage collection */
+      gallivm_garbage_collect(llvmpipe->gallivm);
+      llvmpipe_variant_count = 0;
+   }
+
    /* Enable to dump BMPs of the color/depth buffers each frame */
    if (0) {
       if (flags & PIPE_FLUSH_FRAME) {

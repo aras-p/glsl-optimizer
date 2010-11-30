@@ -37,12 +37,13 @@
 
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
+#include "lp_bld_init.h"
 #include "lp_bld_logic.h"
 #include "lp_bld_swizzle.h"
 
 
 LLVMValueRef
-lp_build_broadcast(LLVMBuilderRef builder,
+lp_build_broadcast(struct gallivm_state *gallivm,
                    LLVMTypeRef vec_type,
                    LLVMValueRef scalar)
 {
@@ -52,8 +53,8 @@ lp_build_broadcast(LLVMBuilderRef builder,
 
    res = LLVMGetUndef(vec_type);
    for(i = 0; i < n; ++i) {
-      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
-      res = LLVMBuildInsertElement(builder, res, scalar, index, "");
+      LLVMValueRef index = lp_build_const_int32(gallivm, i);
+      res = LLVMBuildInsertElement(gallivm->builder, res, scalar, index, "");
    }
 
    return res;
@@ -83,15 +84,15 @@ lp_build_broadcast_scalar(struct lp_build_context *bld,
       i32_vec_type.length = type.length;
 
       res = LLVMBuildInsertElement(bld->builder, bld->undef, scalar,
-                                   LLVMConstInt(LLVMInt32Type(), 0, 0), "");
+                                   lp_build_const_int32(bld->gallivm, 0), "");
       res = LLVMBuildShuffleVector(bld->builder, res, bld->undef,
-                                   lp_build_const_int_vec(i32_vec_type, 0), "");
+                                   lp_build_const_int_vec(bld->gallivm, i32_vec_type, 0), "");
 #else
       /* XXX: The above path provokes a bug in LLVM 2.6 */
       unsigned i;
       res = bld->undef;
       for(i = 0; i < type.length; ++i) {
-         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
+         LLVMValueRef index = lp_build_const_int32(bld->gallivm, i);
          res = LLVMBuildInsertElement(bld->builder, res, scalar, index, "");
       }
 #endif
@@ -104,13 +105,13 @@ lp_build_broadcast_scalar(struct lp_build_context *bld,
  * Combined extract and broadcast (or a mere shuffle when the two types match)
  */
 LLVMValueRef
-lp_build_extract_broadcast(LLVMBuilderRef builder,
+lp_build_extract_broadcast(struct gallivm_state *gallivm,
                            struct lp_type src_type,
                            struct lp_type dst_type,
                            LLVMValueRef vector,
                            LLVMValueRef index)
 {
-   LLVMTypeRef i32t = LLVMInt32Type();
+   LLVMTypeRef i32t = LLVMInt32TypeInContext(gallivm->context);
    LLVMValueRef res;
 
    assert(src_type.floating == dst_type.floating);
@@ -132,8 +133,8 @@ lp_build_extract_broadcast(LLVMBuilderRef builder,
           * Broadcast scalar -> vector.
           */
 
-         res = lp_build_broadcast(builder,
-                                  lp_build_vec_type(dst_type),
+         res = lp_build_broadcast(gallivm,
+                                  lp_build_vec_type(gallivm, dst_type),
                                   vector);
       }
    }
@@ -144,16 +145,16 @@ lp_build_extract_broadcast(LLVMBuilderRef builder,
           */
 
          LLVMValueRef shuffle;
-         shuffle = lp_build_broadcast(builder,
+         shuffle = lp_build_broadcast(gallivm,
                                       LLVMVectorType(i32t, dst_type.length),
                                       index);
-         res = LLVMBuildShuffleVector(builder, vector,
-                                      LLVMGetUndef(lp_build_vec_type(dst_type)),
+         res = LLVMBuildShuffleVector(gallivm->builder, vector,
+                                      LLVMGetUndef(lp_build_vec_type(gallivm, dst_type)),
                                       shuffle, "");
       }
       else {
          LLVMValueRef scalar;
-         scalar = LLVMBuildExtractElement(builder, vector, index, "");
+         scalar = LLVMBuildExtractElement(gallivm->builder, vector, index, "");
          if (dst_type.length == 1) {
             /*
              * Trivial extract scalar from vector.
@@ -166,8 +167,8 @@ lp_build_extract_broadcast(LLVMBuilderRef builder,
              * General case of different sized vectors.
              */
 
-            res = lp_build_broadcast(builder,
-                                     lp_build_vec_type(dst_type),
+            res = lp_build_broadcast(gallivm,
+                                     lp_build_vec_type(gallivm, dst_type),
                                      vector);
          }
       }
@@ -199,7 +200,7 @@ lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
       /*
        * Shuffle.
        */
-      LLVMTypeRef elem_type = LLVMInt32Type();
+      LLVMTypeRef elem_type = LLVMInt32TypeInContext(bld->gallivm->context);
       LLVMValueRef shuffles[LP_MAX_VECTOR_LENGTH];
 
       for(j = 0; j < n; j += 4)
@@ -227,7 +228,8 @@ lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
       unsigned i;
 
       a = LLVMBuildAnd(bld->builder, a,
-                       lp_build_const_mask_aos(type, 1 << channel), "");
+                       lp_build_const_mask_aos(bld->gallivm,
+                                               type, 1 << channel), "");
 
       /*
        * Build a type where each element is an integer that cover the four
@@ -239,7 +241,7 @@ lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
       type4.width *= 4;
       type4.length /= 4;
 
-      a = LLVMBuildBitCast(bld->builder, a, lp_build_vec_type(type4), "");
+      a = LLVMBuildBitCast(bld->builder, a, lp_build_vec_type(bld->gallivm, type4), "");
 
       for(i = 0; i < 2; ++i) {
          LLVMValueRef tmp = NULL;
@@ -250,16 +252,16 @@ lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
 #endif
 
          if(shift > 0)
-            tmp = LLVMBuildLShr(bld->builder, a, lp_build_const_int_vec(type4, shift*type.width), "");
+            tmp = LLVMBuildLShr(bld->builder, a, lp_build_const_int_vec(bld->gallivm, type4, shift*type.width), "");
          if(shift < 0)
-            tmp = LLVMBuildShl(bld->builder, a, lp_build_const_int_vec(type4, -shift*type.width), "");
+            tmp = LLVMBuildShl(bld->builder, a, lp_build_const_int_vec(bld->gallivm, type4, -shift*type.width), "");
 
          assert(tmp);
          if(tmp)
             a = LLVMBuildOr(bld->builder, a, tmp, "");
       }
 
-      return LLVMBuildBitCast(bld->builder, a, lp_build_vec_type(type), "");
+      return LLVMBuildBitCast(bld->builder, a, lp_build_vec_type(bld->gallivm, type), "");
    }
 }
 
@@ -303,8 +305,8 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
       /*
        * Shuffle.
        */
-      LLVMValueRef undef = LLVMGetUndef(lp_build_elem_type(type));
-      LLVMTypeRef i32t = LLVMInt32Type();
+      LLVMValueRef undef = LLVMGetUndef(lp_build_elem_type(bld->gallivm, type));
+      LLVMTypeRef i32t = LLVMInt32TypeInContext(bld->gallivm->context);
       LLVMValueRef shuffles[LP_MAX_VECTOR_LENGTH];
       LLVMValueRef aux[LP_MAX_VECTOR_LENGTH];
 
@@ -326,13 +328,13 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
             case PIPE_SWIZZLE_ZERO:
                shuffle = type.length + 0;
                if (!aux[0]) {
-                  aux[0] = lp_build_const_elem(type, 0.0);
+                  aux[0] = lp_build_const_elem(bld->gallivm, type, 0.0);
                }
                break;
             case PIPE_SWIZZLE_ONE:
                shuffle = type.length + 1;
                if (!aux[1]) {
-                  aux[1] = lp_build_const_elem(type, 1.0);
+                  aux[1] = lp_build_const_elem(bld->gallivm, type, 1.0);
                }
                break;
             }
@@ -387,8 +389,8 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
       type4.width *= 4;
       type4.length /= 4;
 
-      a = LLVMBuildBitCast(bld->builder, a, lp_build_vec_type(type4), "");
-      res = LLVMBuildBitCast(bld->builder, res, lp_build_vec_type(type4), "");
+      a = LLVMBuildBitCast(bld->builder, a, lp_build_vec_type(bld->gallivm, type4), "");
+      res = LLVMBuildBitCast(bld->builder, res, lp_build_vec_type(bld->gallivm, type4), "");
 
       /*
        * Mask and shift the channels, trying to group as many channels in the
@@ -415,13 +417,13 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
                debug_printf("shift = %i, mask = 0x%08llx\n", shift, mask);
 
             masked = LLVMBuildAnd(bld->builder, a,
-                                  lp_build_const_int_vec(type4, mask), "");
+                                  lp_build_const_int_vec(bld->gallivm, type4, mask), "");
             if (shift > 0) {
                shifted = LLVMBuildShl(bld->builder, masked,
-                                      lp_build_const_int_vec(type4, shift*type.width), "");
+                                      lp_build_const_int_vec(bld->gallivm, type4, shift*type.width), "");
             } else if (shift < 0) {
                shifted = LLVMBuildLShr(bld->builder, masked,
-                                       lp_build_const_int_vec(type4, -shift*type.width), "");
+                                       lp_build_const_int_vec(bld->gallivm, type4, -shift*type.width), "");
             } else {
                shifted = masked;
             }
@@ -430,7 +432,8 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
          }
       }
 
-      return LLVMBuildBitCast(bld->builder, res, lp_build_vec_type(type), "");
+      return LLVMBuildBitCast(bld->builder, res,
+                              lp_build_vec_type(bld->gallivm, type), "");
    }
 }
 

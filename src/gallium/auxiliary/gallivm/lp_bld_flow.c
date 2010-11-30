@@ -34,6 +34,7 @@
 #include "util/u_debug.h"
 #include "util/u_memory.h"
 
+#include "lp_bld_init.h"
 #include "lp_bld_type.h"
 #include "lp_bld_flow.h"
 
@@ -51,25 +52,25 @@
  * be used elsewhere.
  */
 LLVMBasicBlockRef
-lp_build_insert_new_block(LLVMBuilderRef builder, const char *name)
+lp_build_insert_new_block(struct gallivm_state *gallivm, const char *name)
 {
    LLVMBasicBlockRef current_block;
    LLVMBasicBlockRef next_block;
    LLVMBasicBlockRef new_block;
 
    /* get current basic block */
-   current_block = LLVMGetInsertBlock(builder);
+   current_block = LLVMGetInsertBlock(gallivm->builder);
 
    /* check if there's another block after this one */
    next_block = LLVMGetNextBasicBlock(current_block);
    if (next_block) {
       /* insert the new block before the next block */
-      new_block = LLVMInsertBasicBlock(next_block, name);
+      new_block = LLVMInsertBasicBlockInContext(gallivm->context, next_block, name);
    }
    else {
       /* append new block after current block */
       LLVMValueRef function = LLVMGetBasicBlockParent(current_block);
-      new_block = LLVMAppendBasicBlock(function, name);
+      new_block = LLVMAppendBasicBlockInContext(gallivm->context, function, name);
    }
 
    return new_block;
@@ -82,12 +83,11 @@ lp_build_insert_new_block(LLVMBuilderRef builder, const char *name)
  */
 void
 lp_build_flow_skip_begin(struct lp_build_skip_context *skip,
-                         LLVMBuilderRef builder)
+                         struct gallivm_state *gallivm)
 {
-   skip->builder = builder;
-
+   skip->gallivm = gallivm;
    /* create new basic block */
-   skip->block = lp_build_insert_new_block(skip->builder, "skip");
+   skip->block = lp_build_insert_new_block(gallivm, "skip");
 }
 
 
@@ -101,12 +101,12 @@ lp_build_flow_skip_cond_break(struct lp_build_skip_context *skip,
 {
    LLVMBasicBlockRef new_block;
 
-   new_block = lp_build_insert_new_block(skip->builder, "");
+   new_block = lp_build_insert_new_block(skip->gallivm, "");
 
    /* if cond is true, goto skip->block, else goto new_block */
-   LLVMBuildCondBr(skip->builder, cond, skip->block, new_block);
+   LLVMBuildCondBr(skip->gallivm->builder, cond, skip->block, new_block);
 
-   LLVMPositionBuilderAtEnd(skip->builder, new_block);
+   LLVMPositionBuilderAtEnd(skip->gallivm->builder, new_block);
 }
 
 
@@ -114,8 +114,8 @@ void
 lp_build_flow_skip_end(struct lp_build_skip_context *skip)
 {
    /* goto block */
-   LLVMBuildBr(skip->builder, skip->block);
-   LLVMPositionBuilderAtEnd(skip->builder, skip->block);
+   LLVMBuildBr(skip->gallivm->builder, skip->block);
+   LLVMPositionBuilderAtEnd(skip->gallivm->builder, skip->block);
 }
 
 
@@ -125,7 +125,7 @@ lp_build_flow_skip_end(struct lp_build_skip_context *skip)
 void
 lp_build_mask_check(struct lp_build_mask_context *mask)
 {
-   LLVMBuilderRef builder = mask->skip.builder;
+   LLVMBuilderRef builder = mask->skip.gallivm->builder;
    LLVMValueRef value;
    LLVMValueRef cond;
 
@@ -152,27 +152,27 @@ lp_build_mask_check(struct lp_build_mask_context *mask)
  */
 void
 lp_build_mask_begin(struct lp_build_mask_context *mask,
-                    LLVMBuilderRef builder,
+                    struct gallivm_state *gallivm,
                     struct lp_type type,
                     LLVMValueRef value)
 {
    memset(mask, 0, sizeof *mask);
 
-   mask->reg_type = LLVMIntType(type.width * type.length);
-   mask->var = lp_build_alloca(builder,
-                               lp_build_int_vec_type(type),
+   mask->reg_type = LLVMIntTypeInContext(gallivm->context, type.width * type.length);
+   mask->var = lp_build_alloca(gallivm,
+                               lp_build_int_vec_type(gallivm, type),
                                "execution_mask");
 
-   LLVMBuildStore(builder, value, mask->var);
+   LLVMBuildStore(gallivm->builder, value, mask->var);
 
-   lp_build_flow_skip_begin(&mask->skip, builder);
+   lp_build_flow_skip_begin(&mask->skip, gallivm);
 }
 
 
 LLVMValueRef
 lp_build_mask_value(struct lp_build_mask_context *mask)
 {
-   return LLVMBuildLoad(mask->skip.builder, mask->var, "");
+   return LLVMBuildLoad(mask->skip.gallivm->builder, mask->var, "");
 }
 
 
@@ -185,10 +185,10 @@ void
 lp_build_mask_update(struct lp_build_mask_context *mask,
                      LLVMValueRef value)
 {
-   value = LLVMBuildAnd(mask->skip.builder,
+   value = LLVMBuildAnd(mask->skip.gallivm->builder,
                         lp_build_mask_value(mask),
                         value, "");
-   LLVMBuildStore(mask->skip.builder, value, mask->var);
+   LLVMBuildStore(mask->skip.gallivm->builder, value, mask->var);
 }
 
 
@@ -205,13 +205,17 @@ lp_build_mask_end(struct lp_build_mask_context *mask)
 
 
 void
-lp_build_loop_begin(LLVMBuilderRef builder,
-                    LLVMValueRef start,
-                    struct lp_build_loop_state *state)
+lp_build_loop_begin(struct lp_build_loop_state *state,
+                    struct gallivm_state *gallivm,
+                    LLVMValueRef start)
+                    
 {
-   state->block = lp_build_insert_new_block(builder, "loop_begin");
+   LLVMBuilderRef builder = gallivm->builder;
 
-   state->counter_var = lp_build_alloca(builder, LLVMTypeOf(start), "loop_counter");
+   state->block = lp_build_insert_new_block(gallivm, "loop_begin");
+
+   state->counter_var = lp_build_alloca(gallivm, LLVMTypeOf(start), "loop_counter");
+   state->gallivm = gallivm;
 
    LLVMBuildStore(builder, start, state->counter_var);
 
@@ -224,12 +228,12 @@ lp_build_loop_begin(LLVMBuilderRef builder,
 
 
 void
-lp_build_loop_end_cond(LLVMBuilderRef builder,
+lp_build_loop_end_cond(struct lp_build_loop_state *state,
                        LLVMValueRef end,
                        LLVMValueRef step,
-                       LLVMIntPredicate llvm_cond,
-                       struct lp_build_loop_state *state)
+                       LLVMIntPredicate llvm_cond)
 {
+   LLVMBuilderRef builder = state->gallivm->builder;
    LLVMValueRef next;
    LLVMValueRef cond;
    LLVMBasicBlockRef after_block;
@@ -243,7 +247,7 @@ lp_build_loop_end_cond(LLVMBuilderRef builder,
 
    cond = LLVMBuildICmp(builder, llvm_cond, next, end, "");
 
-   after_block = lp_build_insert_new_block(builder, "loop_end");
+   after_block = lp_build_insert_new_block(state->gallivm, "loop_end");
 
    LLVMBuildCondBr(builder, cond, after_block, state->block);
 
@@ -254,12 +258,11 @@ lp_build_loop_end_cond(LLVMBuilderRef builder,
 
 
 void
-lp_build_loop_end(LLVMBuilderRef builder,
+lp_build_loop_end(struct lp_build_loop_state *state,
                   LLVMValueRef end,
-                  LLVMValueRef step,
-                  struct lp_build_loop_state *state)
+                  LLVMValueRef step)
 {
-   lp_build_loop_end_cond(builder, end, step, LLVMIntNE, state);
+   lp_build_loop_end_cond(state, end, step, LLVMIntNE);
 }
 
 
@@ -296,24 +299,27 @@ lp_build_loop_end(LLVMBuilderRef builder,
  */
 void
 lp_build_if(struct lp_build_if_state *ifthen,
-            LLVMBuilderRef builder,
+            struct gallivm_state *gallivm,
             LLVMValueRef condition)
 {
-   LLVMBasicBlockRef block = LLVMGetInsertBlock(builder);
+   LLVMBasicBlockRef block = LLVMGetInsertBlock(gallivm->builder);
 
    memset(ifthen, 0, sizeof *ifthen);
-   ifthen->builder = builder;
+   ifthen->gallivm = gallivm;
    ifthen->condition = condition;
    ifthen->entry_block = block;
 
    /* create endif/merge basic block for the phi functions */
-   ifthen->merge_block = lp_build_insert_new_block(builder, "endif-block");
+   ifthen->merge_block = lp_build_insert_new_block(gallivm, "endif-block");
 
    /* create/insert true_block before merge_block */
-   ifthen->true_block = LLVMInsertBasicBlock(ifthen->merge_block, "if-true-block");
+   ifthen->true_block =
+      LLVMInsertBasicBlockInContext(gallivm->context,
+                                    ifthen->merge_block,
+                                    "if-true-block");
 
    /* successive code goes into the true block */
-   LLVMPositionBuilderAtEnd(builder, ifthen->true_block);
+   LLVMPositionBuilderAtEnd(gallivm->builder, ifthen->true_block);
 }
 
 
@@ -323,14 +329,19 @@ lp_build_if(struct lp_build_if_state *ifthen,
 void
 lp_build_else(struct lp_build_if_state *ifthen)
 {
+   LLVMBuilderRef builder = ifthen->gallivm->builder;
+
    /* Append an unconditional Br(anch) instruction on the true_block */
-   LLVMBuildBr(ifthen->builder, ifthen->merge_block);
+   LLVMBuildBr(builder, ifthen->merge_block);
 
    /* create/insert false_block before the merge block */
-   ifthen->false_block = LLVMInsertBasicBlock(ifthen->merge_block, "if-false-block");
+   ifthen->false_block =
+      LLVMInsertBasicBlockInContext(ifthen->gallivm->context,
+                                    ifthen->merge_block,
+                                    "if-false-block");
 
    /* successive code goes into the else block */
-   LLVMPositionBuilderAtEnd(ifthen->builder, ifthen->false_block);
+   LLVMPositionBuilderAtEnd(builder, ifthen->false_block);
 }
 
 
@@ -340,28 +351,30 @@ lp_build_else(struct lp_build_if_state *ifthen)
 void
 lp_build_endif(struct lp_build_if_state *ifthen)
 {
+   LLVMBuilderRef builder = ifthen->gallivm->builder;
+
    /* Insert branch to the merge block from current block */
-   LLVMBuildBr(ifthen->builder, ifthen->merge_block);
+   LLVMBuildBr(builder, ifthen->merge_block);
 
    /*
     * Now patch in the various branch instructions.
     */
 
    /* Insert the conditional branch instruction at the end of entry_block */
-   LLVMPositionBuilderAtEnd(ifthen->builder, ifthen->entry_block);
+   LLVMPositionBuilderAtEnd(builder, ifthen->entry_block);
    if (ifthen->false_block) {
       /* we have an else clause */
-      LLVMBuildCondBr(ifthen->builder, ifthen->condition,
+      LLVMBuildCondBr(builder, ifthen->condition,
                       ifthen->true_block, ifthen->false_block);
    }
    else {
       /* no else clause */
-      LLVMBuildCondBr(ifthen->builder, ifthen->condition,
+      LLVMBuildCondBr(builder, ifthen->condition,
                       ifthen->true_block, ifthen->merge_block);
    }
 
    /* Resume building code at end of the ifthen->merge_block */
-   LLVMPositionBuilderAtEnd(ifthen->builder, ifthen->merge_block);
+   LLVMPositionBuilderAtEnd(builder, ifthen->merge_block);
 }
 
 
@@ -381,15 +394,16 @@ lp_build_endif(struct lp_build_if_state *ifthen)
  * - http://www.llvm.org/docs/tutorial/OCamlLangImpl7.html#memory
  */
 LLVMValueRef
-lp_build_alloca(LLVMBuilderRef builder,
+lp_build_alloca(struct gallivm_state *gallivm,
                 LLVMTypeRef type,
                 const char *name)
 {
+   LLVMBuilderRef builder = gallivm->builder;
    LLVMBasicBlockRef current_block = LLVMGetInsertBlock(builder);
    LLVMValueRef function = LLVMGetBasicBlockParent(current_block);
    LLVMBasicBlockRef first_block = LLVMGetEntryBasicBlock(function);
    LLVMValueRef first_instr = LLVMGetFirstInstruction(first_block);
-   LLVMBuilderRef first_builder = LLVMCreateBuilder();
+   LLVMBuilderRef first_builder = LLVMCreateBuilderInContext(gallivm->context);
    LLVMValueRef res;
 
    if (first_instr) {
@@ -422,16 +436,17 @@ lp_build_alloca(LLVMBuilderRef builder,
  * - http://www.llvm.org/docs/tutorial/OCamlLangImpl7.html#memory
  */
 LLVMValueRef
-lp_build_array_alloca(LLVMBuilderRef builder,
+lp_build_array_alloca(struct gallivm_state *gallivm,
                       LLVMTypeRef type,
                       LLVMValueRef count,
                       const char *name)
 {
+   LLVMBuilderRef builder = gallivm->builder;
    LLVMBasicBlockRef current_block = LLVMGetInsertBlock(builder);
    LLVMValueRef function = LLVMGetBasicBlockParent(current_block);
    LLVMBasicBlockRef first_block = LLVMGetEntryBasicBlock(function);
    LLVMValueRef first_instr = LLVMGetFirstInstruction(first_block);
-   LLVMBuilderRef first_builder = LLVMCreateBuilder();
+   LLVMBuilderRef first_builder = LLVMCreateBuilderInContext(gallivm->context);
    LLVMValueRef res;
 
    if (first_instr) {

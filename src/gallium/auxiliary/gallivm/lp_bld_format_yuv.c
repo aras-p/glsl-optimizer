@@ -43,6 +43,7 @@
 #include "lp_bld_conv.h"
 #include "lp_bld_gather.h"
 #include "lp_bld_format.h"
+#include "lp_bld_init.h"
 #include "lp_bld_logic.h"
 
 /**
@@ -51,7 +52,7 @@
  * @param i  is a <n x i32> vector with the x pixel coordinate (0 or 1)
  */
 static void
-uyvy_to_yuv_soa(LLVMBuilderRef builder,
+uyvy_to_yuv_soa(struct gallivm_state *gallivm,
                 unsigned n,
                 LLVMValueRef packed,
                 LLVMValueRef i,
@@ -59,6 +60,7 @@ uyvy_to_yuv_soa(LLVMBuilderRef builder,
                 LLVMValueRef *u,
                 LLVMValueRef *v)
 {
+   LLVMBuilderRef builder = gallivm->builder;
    struct lp_type type;
    LLVMValueRef mask;
 
@@ -86,25 +88,25 @@ uyvy_to_yuv_soa(LLVMBuilderRef builder,
       LLVMValueRef sel, tmp, tmp2;
       struct lp_build_context bld32;
 
-      lp_build_context_init(&bld32, builder, type);
+      lp_build_context_init(&bld32, gallivm, type);
 
-      tmp = LLVMBuildLShr(builder, packed, lp_build_const_int_vec(type, 8), "");
-      tmp2 = LLVMBuildLShr(builder, tmp, lp_build_const_int_vec(type, 16), "");
-      sel = lp_build_compare(builder, type, PIPE_FUNC_EQUAL, i, lp_build_const_int_vec(type, 0));
+      tmp = LLVMBuildLShr(builder, packed, lp_build_const_int_vec(gallivm, type, 8), "");
+      tmp2 = LLVMBuildLShr(builder, tmp, lp_build_const_int_vec(gallivm, type, 16), "");
+      sel = lp_build_compare(gallivm, type, PIPE_FUNC_EQUAL, i, lp_build_const_int_vec(gallivm, type, 0));
       *y = lp_build_select(&bld32, sel, tmp, tmp2);
    } else
 #endif
    {
       LLVMValueRef shift;
-      shift = LLVMBuildMul(builder, i, lp_build_const_int_vec(type, 16), "");
-      shift = LLVMBuildAdd(builder, shift, lp_build_const_int_vec(type, 8), "");
+      shift = LLVMBuildMul(builder, i, lp_build_const_int_vec(gallivm, type, 16), "");
+      shift = LLVMBuildAdd(builder, shift, lp_build_const_int_vec(gallivm, type, 8), "");
       *y = LLVMBuildLShr(builder, packed, shift, "");
    }
 
    *u = packed;
-   *v = LLVMBuildLShr(builder, packed, lp_build_const_int_vec(type, 16), "");
+   *v = LLVMBuildLShr(builder, packed, lp_build_const_int_vec(gallivm, type, 16), "");
 
-   mask = lp_build_const_int_vec(type, 0xff);
+   mask = lp_build_const_int_vec(gallivm, type, 0xff);
 
    *y = LLVMBuildAnd(builder, *y, mask, "y");
    *u = LLVMBuildAnd(builder, *u, mask, "u");
@@ -118,7 +120,7 @@ uyvy_to_yuv_soa(LLVMBuilderRef builder,
  * @param i  is a <n x i32> vector with the x pixel coordinate (0 or 1)
  */
 static void
-yuyv_to_yuv_soa(LLVMBuilderRef builder,
+yuyv_to_yuv_soa(struct gallivm_state *gallivm,
                 unsigned n,
                 LLVMValueRef packed,
                 LLVMValueRef i,
@@ -126,6 +128,7 @@ yuyv_to_yuv_soa(LLVMBuilderRef builder,
                 LLVMValueRef *u,
                 LLVMValueRef *v)
 {
+   LLVMBuilderRef builder = gallivm->builder;
    struct lp_type type;
    LLVMValueRef mask;
 
@@ -153,23 +156,23 @@ yuyv_to_yuv_soa(LLVMBuilderRef builder,
       LLVMValueRef sel, tmp;
       struct lp_build_context bld32;
 
-      lp_build_context_init(&bld32, builder, type);
+      lp_build_context_init(&bld32, gallivm, type);
 
-      tmp = LLVMBuildLShr(builder, packed, lp_build_const_int_vec(type, 16), "");
-      sel = lp_build_compare(builder, type, PIPE_FUNC_EQUAL, i, lp_build_const_int_vec(type, 0));
+      tmp = LLVMBuildLShr(builder, packed, lp_build_const_int_vec(gallivm, type, 16), "");
+      sel = lp_build_compare(gallivm, type, PIPE_FUNC_EQUAL, i, lp_build_const_int_vec(gallivm, type, 0));
        *y = lp_build_select(&bld32, sel, packed, tmp);
    } else
 #endif
    {
       LLVMValueRef shift;
-      shift = LLVMBuildMul(builder, i, lp_build_const_int_vec(type, 16), "");
+      shift = LLVMBuildMul(builder, i, lp_build_const_int_vec(gallivm, type, 16), "");
       *y = LLVMBuildLShr(builder, packed, shift, "");
    }
 
-   *u = LLVMBuildLShr(builder, packed, lp_build_const_int_vec(type, 8), "");
-   *v = LLVMBuildLShr(builder, packed, lp_build_const_int_vec(type, 24), "");
+   *u = LLVMBuildLShr(builder, packed, lp_build_const_int_vec(gallivm, type, 8), "");
+   *v = LLVMBuildLShr(builder, packed, lp_build_const_int_vec(gallivm, type, 24), "");
 
-   mask = lp_build_const_int_vec(type, 0xff);
+   mask = lp_build_const_int_vec(gallivm, type, 0xff);
 
    *y = LLVMBuildAnd(builder, *y, mask, "y");
    *u = LLVMBuildAnd(builder, *u, mask, "u");
@@ -178,11 +181,12 @@ yuyv_to_yuv_soa(LLVMBuilderRef builder,
 
 
 static INLINE void
-yuv_to_rgb_soa(LLVMBuilderRef builder,
+yuv_to_rgb_soa(struct gallivm_state *gallivm,
                unsigned n,
                LLVMValueRef y, LLVMValueRef u, LLVMValueRef v,
                LLVMValueRef *r, LLVMValueRef *g, LLVMValueRef *b)
 {
+   LLVMBuilderRef builder = gallivm->builder;
    struct lp_type type;
    struct lp_build_context bld;
 
@@ -203,7 +207,7 @@ yuv_to_rgb_soa(LLVMBuilderRef builder,
    type.width = 32;
    type.length = n;
 
-   lp_build_context_init(&bld, builder, type);
+   lp_build_context_init(&bld, gallivm, type);
 
    assert(lp_check_value(type, y));
    assert(lp_check_value(type, u));
@@ -213,17 +217,17 @@ yuv_to_rgb_soa(LLVMBuilderRef builder,
     * Constants
     */
 
-   c0   = lp_build_const_int_vec(type,   0);
-   c8   = lp_build_const_int_vec(type,   8);
-   c16  = lp_build_const_int_vec(type,  16);
-   c128 = lp_build_const_int_vec(type, 128);
-   c255 = lp_build_const_int_vec(type, 255);
+   c0   = lp_build_const_int_vec(gallivm, type,   0);
+   c8   = lp_build_const_int_vec(gallivm, type,   8);
+   c16  = lp_build_const_int_vec(gallivm, type,  16);
+   c128 = lp_build_const_int_vec(gallivm, type, 128);
+   c255 = lp_build_const_int_vec(gallivm, type, 255);
 
-   cy  = lp_build_const_int_vec(type,  298);
-   cug = lp_build_const_int_vec(type, -100);
-   cub = lp_build_const_int_vec(type,  516);
-   cvr = lp_build_const_int_vec(type,  409);
-   cvg = lp_build_const_int_vec(type, -208);
+   cy  = lp_build_const_int_vec(gallivm, type,  298);
+   cug = lp_build_const_int_vec(gallivm, type, -100);
+   cub = lp_build_const_int_vec(gallivm, type,  516);
+   cvr = lp_build_const_int_vec(gallivm, type,  409);
+   cvg = lp_build_const_int_vec(gallivm, type, -208);
 
    /*
     *  y -= 16;
@@ -276,10 +280,11 @@ yuv_to_rgb_soa(LLVMBuilderRef builder,
 
 
 static LLVMValueRef
-rgb_to_rgba_aos(LLVMBuilderRef builder,
+rgb_to_rgba_aos(struct gallivm_state *gallivm,
                 unsigned n,
                 LLVMValueRef r, LLVMValueRef g, LLVMValueRef b)
 {
+   LLVMBuilderRef builder = gallivm->builder;
    struct lp_type type;
    LLVMValueRef a;
    LLVMValueRef rgba;
@@ -298,9 +303,9 @@ rgb_to_rgba_aos(LLVMBuilderRef builder,
     */
 
    r = r;
-   g = LLVMBuildShl(builder, g, lp_build_const_int_vec(type, 8), "");
-   b = LLVMBuildShl(builder, b, lp_build_const_int_vec(type, 16), "");
-   a = lp_build_const_int_vec(type, 0xff000000);
+   g = LLVMBuildShl(builder, g, lp_build_const_int_vec(gallivm, type, 8), "");
+   b = LLVMBuildShl(builder, b, lp_build_const_int_vec(gallivm, type, 16), "");
+   a = lp_build_const_int_vec(gallivm, type, 0xff000000);
 
    rgba = r;
    rgba = LLVMBuildOr(builder, rgba, g, "");
@@ -308,7 +313,7 @@ rgb_to_rgba_aos(LLVMBuilderRef builder,
    rgba = LLVMBuildOr(builder, rgba, a, "");
 
    rgba = LLVMBuildBitCast(builder, rgba,
-                           LLVMVectorType(LLVMInt8Type(), 4*n), "");
+                           LLVMVectorType(LLVMInt8TypeInContext(gallivm->context), 4*n), "");
 
    return rgba;
 }
@@ -318,7 +323,7 @@ rgb_to_rgba_aos(LLVMBuilderRef builder,
  * Convert from <n x i32> packed UYVY to <4n x i8> RGBA AoS
  */
 static LLVMValueRef
-uyvy_to_rgba_aos(LLVMBuilderRef builder,
+uyvy_to_rgba_aos(struct gallivm_state *gallivm,
                  unsigned n,
                  LLVMValueRef packed,
                  LLVMValueRef i)
@@ -327,9 +332,9 @@ uyvy_to_rgba_aos(LLVMBuilderRef builder,
    LLVMValueRef r, g, b;
    LLVMValueRef rgba;
 
-   uyvy_to_yuv_soa(builder, n, packed, i, &y, &u, &v);
-   yuv_to_rgb_soa(builder, n, y, u, v, &r, &g, &b);
-   rgba = rgb_to_rgba_aos(builder, n, r, g, b);
+   uyvy_to_yuv_soa(gallivm, n, packed, i, &y, &u, &v);
+   yuv_to_rgb_soa(gallivm, n, y, u, v, &r, &g, &b);
+   rgba = rgb_to_rgba_aos(gallivm, n, r, g, b);
 
    return rgba;
 }
@@ -339,7 +344,7 @@ uyvy_to_rgba_aos(LLVMBuilderRef builder,
  * Convert from <n x i32> packed YUYV to <4n x i8> RGBA AoS
  */
 static LLVMValueRef
-yuyv_to_rgba_aos(LLVMBuilderRef builder,
+yuyv_to_rgba_aos(struct gallivm_state *gallivm,
                  unsigned n,
                  LLVMValueRef packed,
                  LLVMValueRef i)
@@ -348,9 +353,9 @@ yuyv_to_rgba_aos(LLVMBuilderRef builder,
    LLVMValueRef r, g, b;
    LLVMValueRef rgba;
 
-   yuyv_to_yuv_soa(builder, n, packed, i, &y, &u, &v);
-   yuv_to_rgb_soa(builder, n, y, u, v, &r, &g, &b);
-   rgba = rgb_to_rgba_aos(builder, n, r, g, b);
+   yuyv_to_yuv_soa(gallivm, n, packed, i, &y, &u, &v);
+   yuv_to_rgb_soa(gallivm, n, y, u, v, &r, &g, &b);
+   rgba = rgb_to_rgba_aos(gallivm, n, r, g, b);
 
    return rgba;
 }
@@ -360,7 +365,7 @@ yuyv_to_rgba_aos(LLVMBuilderRef builder,
  * Convert from <n x i32> packed RG_BG to <4n x i8> RGBA AoS
  */
 static LLVMValueRef
-rgbg_to_rgba_aos(LLVMBuilderRef builder,
+rgbg_to_rgba_aos(struct gallivm_state *gallivm,
                  unsigned n,
                  LLVMValueRef packed,
                  LLVMValueRef i)
@@ -368,8 +373,8 @@ rgbg_to_rgba_aos(LLVMBuilderRef builder,
    LLVMValueRef r, g, b;
    LLVMValueRef rgba;
 
-   uyvy_to_yuv_soa(builder, n, packed, i, &g, &r, &b);
-   rgba = rgb_to_rgba_aos(builder, n, r, g, b);
+   uyvy_to_yuv_soa(gallivm, n, packed, i, &g, &r, &b);
+   rgba = rgb_to_rgba_aos(gallivm, n, r, g, b);
 
    return rgba;
 }
@@ -379,7 +384,7 @@ rgbg_to_rgba_aos(LLVMBuilderRef builder,
  * Convert from <n x i32> packed GR_GB to <4n x i8> RGBA AoS
  */
 static LLVMValueRef
-grgb_to_rgba_aos(LLVMBuilderRef builder,
+grgb_to_rgba_aos(struct gallivm_state *gallivm,
                  unsigned n,
                  LLVMValueRef packed,
                  LLVMValueRef i)
@@ -387,8 +392,8 @@ grgb_to_rgba_aos(LLVMBuilderRef builder,
    LLVMValueRef r, g, b;
    LLVMValueRef rgba;
 
-   yuyv_to_yuv_soa(builder, n, packed, i, &g, &r, &b);
-   rgba = rgb_to_rgba_aos(builder, n, r, g, b);
+   yuyv_to_yuv_soa(gallivm, n, packed, i, &g, &r, &b);
+   rgba = rgb_to_rgba_aos(gallivm, n, r, g, b);
 
    return rgba;
 }
@@ -401,7 +406,7 @@ grgb_to_rgba_aos(LLVMBuilderRef builder,
  * @return  a <4*n x i8> vector with the pixel RGBA values in AoS
  */
 LLVMValueRef
-lp_build_fetch_subsampled_rgba_aos(LLVMBuilderRef builder,
+lp_build_fetch_subsampled_rgba_aos(struct gallivm_state *gallivm,
                                    const struct util_format_description *format_desc,
                                    unsigned n,
                                    LLVMValueRef base_ptr,
@@ -417,26 +422,26 @@ lp_build_fetch_subsampled_rgba_aos(LLVMBuilderRef builder,
    assert(format_desc->block.width == 2);
    assert(format_desc->block.height == 1);
 
-   packed = lp_build_gather(builder, n, 32, 32, base_ptr, offset);
+   packed = lp_build_gather(gallivm, n, 32, 32, base_ptr, offset);
 
    (void)j;
 
    switch (format_desc->format) {
    case PIPE_FORMAT_UYVY:
-      rgba = uyvy_to_rgba_aos(builder, n, packed, i);
+      rgba = uyvy_to_rgba_aos(gallivm, n, packed, i);
       break;
    case PIPE_FORMAT_YUYV:
-      rgba = yuyv_to_rgba_aos(builder, n, packed, i);
+      rgba = yuyv_to_rgba_aos(gallivm, n, packed, i);
       break;
    case PIPE_FORMAT_R8G8_B8G8_UNORM:
-      rgba = rgbg_to_rgba_aos(builder, n, packed, i);
+      rgba = rgbg_to_rgba_aos(gallivm, n, packed, i);
       break;
    case PIPE_FORMAT_G8R8_G8B8_UNORM:
-      rgba = grgb_to_rgba_aos(builder, n, packed, i);
+      rgba = grgb_to_rgba_aos(gallivm, n, packed, i);
       break;
    default:
       assert(0);
-      rgba =  LLVMGetUndef(LLVMVectorType(LLVMInt8Type(), 4*n));
+      rgba =  LLVMGetUndef(LLVMVectorType(LLVMInt8TypeInContext(gallivm->context), 4*n));
       break;
    }
 

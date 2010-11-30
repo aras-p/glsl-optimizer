@@ -103,41 +103,41 @@ struct draw_jit_context
 };
 
 
-#define draw_jit_context_vs_constants(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 0, "vs_constants")
+#define draw_jit_context_vs_constants(_gallivm, _ptr) \
+   lp_build_struct_get(_gallivm, _ptr, 0, "vs_constants")
 
-#define draw_jit_context_gs_constants(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 1, "gs_constants")
+#define draw_jit_context_gs_constants(_gallivm, _ptr) \
+   lp_build_struct_get(_gallivm, _ptr, 1, "gs_constants")
 
-#define draw_jit_context_planes(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 2, "planes")
+#define draw_jit_context_planes(_gallivm, _ptr) \
+   lp_build_struct_get(_gallivm, _ptr, 2, "planes")
 
-#define draw_jit_context_viewport(_builder, _ptr) \
-   lp_build_struct_get(_builder, _ptr, 3, "viewport")
+#define draw_jit_context_viewport(_gallivm, _ptr) \
+   lp_build_struct_get(_gallivm, _ptr, 3, "viewport")
 
 #define DRAW_JIT_CTX_TEXTURES 4
 
-#define draw_jit_context_textures(_builder, _ptr) \
-   lp_build_struct_get_ptr(_builder, _ptr, DRAW_JIT_CTX_TEXTURES, "textures")
+#define draw_jit_context_textures(_gallivm, _ptr) \
+   lp_build_struct_get_ptr(_gallivm, _ptr, DRAW_JIT_CTX_TEXTURES, "textures")
 
-#define draw_jit_header_id(_builder, _ptr)              \
-   lp_build_struct_get_ptr(_builder, _ptr, 0, "id")
+#define draw_jit_header_id(_gallivm, _ptr)              \
+   lp_build_struct_get_ptr(_gallivm, _ptr, 0, "id")
 
-#define draw_jit_header_clip(_builder, _ptr) \
-   lp_build_struct_get_ptr(_builder, _ptr, 1, "clip")
+#define draw_jit_header_clip(_gallivm, _ptr) \
+   lp_build_struct_get_ptr(_gallivm, _ptr, 1, "clip")
 
-#define draw_jit_header_data(_builder, _ptr)            \
-   lp_build_struct_get_ptr(_builder, _ptr, 2, "data")
+#define draw_jit_header_data(_gallivm, _ptr)            \
+   lp_build_struct_get_ptr(_gallivm, _ptr, 2, "data")
 
 
-#define draw_jit_vbuffer_stride(_builder, _ptr)         \
-   lp_build_struct_get(_builder, _ptr, 0, "stride")
+#define draw_jit_vbuffer_stride(_gallivm, _ptr)         \
+   lp_build_struct_get(_gallivm, _ptr, 0, "stride")
 
-#define draw_jit_vbuffer_max_index(_builder, _ptr)      \
-   lp_build_struct_get(_builder, _ptr, 1, "max_index")
+#define draw_jit_vbuffer_max_index(_gallivm, _ptr)      \
+   lp_build_struct_get(_gallivm, _ptr, 1, "max_index")
 
-#define draw_jit_vbuffer_offset(_builder, _ptr)         \
-   lp_build_struct_get(_builder, _ptr, 2, "buffer_offset")
+#define draw_jit_vbuffer_offset(_gallivm, _ptr)         \
+   lp_build_struct_get(_gallivm, _ptr, 2, "buffer_offset")
 
 
 typedef int
@@ -246,20 +246,18 @@ struct draw_llvm {
 
    struct draw_jit_context jit_context;
 
+   struct gallivm_state *gallivm;
+
    struct draw_llvm_variant_list_item vs_variants_list;
    int nr_variants;
 
-   LLVMModuleRef module;
-   LLVMExecutionEngineRef engine;
-   LLVMModuleProviderRef provider;
-   LLVMTargetDataRef target;
-   LLVMPassManagerRef pass;
-
+   /* LLVM JIT builder types */
    LLVMTypeRef context_ptr_type;
-   LLVMTypeRef vertex_header_ptr_type;
    LLVMTypeRef buffer_ptr_type;
    LLVMTypeRef vb_ptr_type;
+   LLVMTypeRef vertex_header_ptr_type;
 };
+
 
 static INLINE struct llvm_vertex_shader *
 llvm_vertex_shader(struct draw_vertex_shader *vs)
@@ -269,7 +267,7 @@ llvm_vertex_shader(struct draw_vertex_shader *vs)
 
 
 struct draw_llvm *
-draw_llvm_create(struct draw_context *draw);
+draw_llvm_create(struct draw_context *draw, struct gallivm_state *gallivm);
 
 void
 draw_llvm_destroy(struct draw_llvm *llvm);
@@ -286,7 +284,7 @@ struct draw_llvm_variant_key *
 draw_llvm_make_variant_key(struct draw_llvm *llvm, char *store);
 
 LLVMValueRef
-draw_llvm_translate_from(LLVMBuilderRef builder,
+draw_llvm_translate_from(struct gallivm_state *gallivm,
                          LLVMValueRef vbuffer,
                          enum pipe_format from_format);
 

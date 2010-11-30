@@ -51,7 +51,7 @@ lp_depth_type(const struct util_format_description *format_desc,
 
 
 void
-lp_build_depth_stencil_test(LLVMBuilderRef builder,
+lp_build_depth_stencil_test(struct gallivm_state *gallivm,
                             const struct pipe_depth_state *depth,
                             const struct pipe_stencil_state stencil[2],
                             struct lp_type type,
@@ -71,7 +71,7 @@ lp_build_depth_write(LLVMBuilderRef builder,
                      LLVMValueRef zs_value);
 
 void
-lp_build_deferred_depth_write(LLVMBuilderRef builder,
+lp_build_deferred_depth_write(struct gallivm_state *gallivm,
                               struct lp_type z_src_type,
                               const struct util_format_description *format_desc,
                               struct lp_build_mask_context *mask,
@@ -79,7 +79,7 @@ lp_build_deferred_depth_write(LLVMBuilderRef builder,
                               LLVMValueRef zs_value);
 
 void
-lp_build_occlusion_count(LLVMBuilderRef builder,
+lp_build_occlusion_count(struct gallivm_state *gallivm,
                          struct lp_type type,
                          LLVMValueRef maskvalue,
                          LLVMValueRef counter);

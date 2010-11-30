@@ -72,6 +72,7 @@
 
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
+#include "lp_bld_init.h"
 #include "lp_bld_intr.h"
 #include "lp_bld_arit.h"
 #include "lp_bld_pack.h"
@@ -81,7 +82,8 @@
  * Build shuffle vectors that match PUNPCKLxx and PUNPCKHxx instructions.
  */
 static LLVMValueRef
-lp_build_const_unpack_shuffle(unsigned n, unsigned lo_hi)
+lp_build_const_unpack_shuffle(struct gallivm_state *gallivm,
+                              unsigned n, unsigned lo_hi)
 {
    LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
    unsigned i, j;
@@ -92,8 +94,8 @@ lp_build_const_unpack_shuffle(unsigned n, unsigned lo_hi)
    /* TODO: cache results in a static table */
 
    for(i = 0, j = lo_hi*n/2; i < n; i += 2, ++j) {
-      elems[i + 0] = LLVMConstInt(LLVMInt32Type(), 0 + j, 0);
-      elems[i + 1] = LLVMConstInt(LLVMInt32Type(), n + j, 0);
+      elems[i + 0] = lp_build_const_int32(gallivm, 0 + j);
+      elems[i + 1] = lp_build_const_int32(gallivm, n + j);
    }
 
    return LLVMConstVector(elems, n);
@@ -104,7 +106,7 @@ lp_build_const_unpack_shuffle(unsigned n, unsigned lo_hi)
  * Build shuffle vectors that match PACKxx instructions.
  */
 static LLVMValueRef
-lp_build_const_pack_shuffle(unsigned n)
+lp_build_const_pack_shuffle(struct gallivm_state *gallivm, unsigned n)
 {
    LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
    unsigned i;
@@ -112,7 +114,7 @@ lp_build_const_pack_shuffle(unsigned n)
    assert(n <= LP_MAX_VECTOR_LENGTH);
 
    for(i = 0; i < n; ++i)
-      elems[i] = LLVMConstInt(LLVMInt32Type(), 2*i, 0);
+      elems[i] = lp_build_const_int32(gallivm, 2*i);
 
    return LLVMConstVector(elems, n);
 }
@@ -124,7 +126,7 @@ lp_build_const_pack_shuffle(unsigned n)
  * Matches the PUNPCKLxx and PUNPCKHxx SSE instructions.
  */
 LLVMValueRef
-lp_build_interleave2(LLVMBuilderRef builder,
+lp_build_interleave2(struct gallivm_state *gallivm,
                      struct lp_type type,
                      LLVMValueRef a,
                      LLVMValueRef b,
@@ -132,9 +134,9 @@ lp_build_interleave2(LLVMBuilderRef builder,
 {
    LLVMValueRef shuffle;
 
-   shuffle = lp_build_const_unpack_shuffle(type.length, lo_hi);
+   shuffle = lp_build_const_unpack_shuffle(gallivm, type.length, lo_hi);
 
-   return LLVMBuildShuffleVector(builder, a, b, shuffle, "");
+   return LLVMBuildShuffleVector(gallivm->builder, a, b, shuffle, "");
 }
 
 
@@ -145,13 +147,14 @@ lp_build_interleave2(LLVMBuilderRef builder,
  * values themselves.
  */
 void
-lp_build_unpack2(LLVMBuilderRef builder,
+lp_build_unpack2(struct gallivm_state *gallivm,
                  struct lp_type src_type,
                  struct lp_type dst_type,
                  LLVMValueRef src,
                  LLVMValueRef *dst_lo,
                  LLVMValueRef *dst_hi)
 {
+   LLVMBuilderRef builder = gallivm->builder;
    LLVMValueRef msb;
    LLVMTypeRef dst_vec_type;
 
@@ -162,24 +165,24 @@ lp_build_unpack2(LLVMBuilderRef builder,
 
    if(dst_type.sign && src_type.sign) {
       /* Replicate the sign bit in the most significant bits */
-      msb = LLVMBuildAShr(builder, src, lp_build_const_int_vec(src_type, src_type.width - 1), "");
+      msb = LLVMBuildAShr(builder, src, lp_build_const_int_vec(gallivm, src_type, src_type.width - 1), "");
    }
    else
       /* Most significant bits always zero */
-      msb = lp_build_zero(src_type);
+      msb = lp_build_zero(gallivm, src_type);
 
    /* Interleave bits */
 #ifdef PIPE_ARCH_LITTLE_ENDIAN
-      *dst_lo = lp_build_interleave2(builder, src_type, src, msb, 0);
-      *dst_hi = lp_build_interleave2(builder, src_type, src, msb, 1);
+   *dst_lo = lp_build_interleave2(gallivm, src_type, src, msb, 0);
+   *dst_hi = lp_build_interleave2(gallivm, src_type, src, msb, 1);
 #else
-      *dst_lo = lp_build_interleave2(builder, src_type, msb, src, 0);
-      *dst_hi = lp_build_interleave2(builder, src_type, msb, src, 1);
+   *dst_lo = lp_build_interleave2(gallivm, src_type, msb, src, 0);
+   *dst_hi = lp_build_interleave2(gallivm, src_type, msb, src, 1);
 #endif
 
    /* Cast the result into the new type (twice as wide) */
 
-   dst_vec_type = lp_build_vec_type(dst_type);
+   dst_vec_type = lp_build_vec_type(gallivm, dst_type);
 
    *dst_lo = LLVMBuildBitCast(builder, *dst_lo, dst_vec_type, "");
    *dst_hi = LLVMBuildBitCast(builder, *dst_hi, dst_vec_type, "");
@@ -193,7 +196,7 @@ lp_build_unpack2(LLVMBuilderRef builder,
  * values themselves.
  */
 void
-lp_build_unpack(LLVMBuilderRef builder,
+lp_build_unpack(struct gallivm_state *gallivm,
                 struct lp_type src_type,
                 struct lp_type dst_type,
                 LLVMValueRef src,
@@ -218,7 +221,7 @@ lp_build_unpack(LLVMBuilderRef builder,
       tmp_type.length /= 2;
 
       for(i = num_tmps; i--; ) {
-         lp_build_unpack2(builder, src_type, tmp_type, dst[i], &dst[2*i + 0], &dst[2*i + 1]);
+         lp_build_unpack2(gallivm, src_type, tmp_type, dst[i], &dst[2*i + 0], &dst[2*i + 1]);
       }
 
       src_type = tmp_type;
@@ -247,16 +250,17 @@ lp_build_unpack(LLVMBuilderRef builder,
  * lp_build_packs2 instead.
  */
 LLVMValueRef
-lp_build_pack2(LLVMBuilderRef builder,
+lp_build_pack2(struct gallivm_state *gallivm,
                struct lp_type src_type,
                struct lp_type dst_type,
                LLVMValueRef lo,
                LLVMValueRef hi)
 {
+   LLVMBuilderRef builder = gallivm->builder;
 #if HAVE_LLVM < 0x0207
-   LLVMTypeRef src_vec_type = lp_build_vec_type(src_type);
+   LLVMTypeRef src_vec_type = lp_build_vec_type(gallivm, src_type);
 #endif
-   LLVMTypeRef dst_vec_type = lp_build_vec_type(dst_type);
+   LLVMTypeRef dst_vec_type = lp_build_vec_type(gallivm, dst_type);
    LLVMValueRef shuffle;
    LLVMValueRef res = NULL;
 
@@ -318,7 +322,7 @@ lp_build_pack2(LLVMBuilderRef builder,
    lo = LLVMBuildBitCast(builder, lo, dst_vec_type, "");
    hi = LLVMBuildBitCast(builder, hi, dst_vec_type, "");
 
-   shuffle = lp_build_const_pack_shuffle(dst_type.length);
+   shuffle = lp_build_const_pack_shuffle(gallivm, dst_type.length);
 
    res = LLVMBuildShuffleVector(builder, lo, hi, shuffle, "");
 
@@ -334,7 +338,7 @@ lp_build_pack2(LLVMBuilderRef builder,
  * destination type.
  */
 LLVMValueRef
-lp_build_packs2(LLVMBuilderRef builder,
+lp_build_packs2(struct gallivm_state *gallivm,
                 struct lp_type src_type,
                 struct lp_type dst_type,
                 LLVMValueRef lo,
@@ -360,14 +364,14 @@ lp_build_packs2(LLVMBuilderRef builder,
    if(clamp) {
       struct lp_build_context bld;
       unsigned dst_bits = dst_type.sign ? dst_type.width - 1 : dst_type.width;
-      LLVMValueRef dst_max = lp_build_const_int_vec(src_type, ((unsigned long long)1 << dst_bits) - 1);
-      lp_build_context_init(&bld, builder, src_type);
+      LLVMValueRef dst_max = lp_build_const_int_vec(gallivm, src_type, ((unsigned long long)1 << dst_bits) - 1);
+      lp_build_context_init(&bld, gallivm, src_type);
       lo = lp_build_min(&bld, lo, dst_max);
       hi = lp_build_min(&bld, hi, dst_max);
       /* FIXME: What about lower bound? */
    }
 
-   return lp_build_pack2(builder, src_type, dst_type, lo, hi);
+   return lp_build_pack2(gallivm, src_type, dst_type, lo, hi);
 }
 
 
@@ -377,13 +381,13 @@ lp_build_packs2(LLVMBuilderRef builder,
  * TODO: Handle saturation consistently.
  */
 LLVMValueRef
-lp_build_pack(LLVMBuilderRef builder,
+lp_build_pack(struct gallivm_state *gallivm,
               struct lp_type src_type,
               struct lp_type dst_type,
               boolean clamped,
               const LLVMValueRef *src, unsigned num_srcs)
 {
-   LLVMValueRef (*pack2)(LLVMBuilderRef builder,
+   LLVMValueRef (*pack2)(struct gallivm_state *gallivm,
                          struct lp_type src_type,
                          struct lp_type dst_type,
                          LLVMValueRef lo,
@@ -419,7 +423,8 @@ lp_build_pack(LLVMBuilderRef builder,
       num_srcs /= 2;
 
       for(i = 0; i < num_srcs; ++i)
-         tmp[i] = pack2(builder, src_type, tmp_type, tmp[2*i + 0], tmp[2*i + 1]);
+         tmp[i] = pack2(gallivm, src_type, tmp_type,
+                        tmp[2*i + 0], tmp[2*i + 1]);
 
       src_type = tmp_type;
    }
@@ -437,12 +442,13 @@ lp_build_pack(LLVMBuilderRef builder,
  * intrinsics that do saturation.
  */
 void
-lp_build_resize(LLVMBuilderRef builder,
+lp_build_resize(struct gallivm_state *gallivm,
                 struct lp_type src_type,
                 struct lp_type dst_type,
                 const LLVMValueRef *src, unsigned num_srcs,
                 LLVMValueRef *dst, unsigned num_dsts)
 {
+   LLVMBuilderRef builder = gallivm->builder;
    LLVMValueRef tmp[LP_MAX_VECTOR_LENGTH];
    unsigned i;
 
@@ -482,7 +488,7 @@ lp_build_resize(LLVMBuilderRef builder,
          * Register width remains constant -- use vector packing intrinsics
          */
 
-         tmp[0] = lp_build_pack(builder, src_type, dst_type, TRUE, src, num_srcs);
+         tmp[0] = lp_build_pack(gallivm, src_type, dst_type, TRUE, src, num_srcs);
       }
       else {
          /*
@@ -490,11 +496,11 @@ lp_build_resize(LLVMBuilderRef builder,
           */
 
          assert(src_type.length == dst_type.length);
-         tmp[0] = lp_build_undef(dst_type);
+         tmp[0] = lp_build_undef(gallivm, dst_type);
          for (i = 0; i < dst_type.length; ++i) {
-            LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
+            LLVMValueRef index = lp_build_const_int32(gallivm, i);
             LLVMValueRef val = LLVMBuildExtractElement(builder, src[0], index, "");
-            val = LLVMBuildTrunc(builder, val, lp_build_elem_type(dst_type), "");
+            val = LLVMBuildTrunc(builder, val, lp_build_elem_type(gallivm, dst_type), "");
             tmp[0] = LLVMBuildInsertElement(builder, tmp[0], val, index, "");
          }
       }
@@ -510,7 +516,7 @@ lp_build_resize(LLVMBuilderRef builder,
          /*
           * Register width remains constant -- use vector unpack intrinsics
           */
-         lp_build_unpack(builder, src_type, dst_type, src[0], tmp, num_dsts);
+         lp_build_unpack(gallivm, src_type, dst_type, src[0], tmp, num_dsts);
       }
       else {
          /*
@@ -518,15 +524,15 @@ lp_build_resize(LLVMBuilderRef builder,
           */
 
          assert(src_type.length == dst_type.length);
-         tmp[0] = lp_build_undef(dst_type);
+         tmp[0] = lp_build_undef(gallivm, dst_type);
          for (i = 0; i < dst_type.length; ++i) {
-            LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
+            LLVMValueRef index = lp_build_const_int32(gallivm, i);
             LLVMValueRef val = LLVMBuildExtractElement(builder, src[0], index, "");
 
             if (src_type.sign && dst_type.sign) {
-               val = LLVMBuildSExt(builder, val, lp_build_elem_type(dst_type), "");
+               val = LLVMBuildSExt(builder, val, lp_build_elem_type(gallivm, dst_type), "");
             } else {
-               val = LLVMBuildZExt(builder, val, lp_build_elem_type(dst_type), "");
+               val = LLVMBuildZExt(builder, val, lp_build_elem_type(gallivm, dst_type), "");
             }
             tmp[0] = LLVMBuildInsertElement(builder, tmp[0], val, index, "");
          }

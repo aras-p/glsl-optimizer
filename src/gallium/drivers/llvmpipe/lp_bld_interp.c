@@ -128,12 +128,13 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
 {
    struct lp_build_context *coeff_bld = &bld->coeff_bld;
    LLVMBuilderRef builder = coeff_bld->builder;
+   struct gallivm_state *gallivm = coeff_bld->gallivm;
    LLVMValueRef zero = LLVMConstNull(coeff_bld->elem_type);
    LLVMValueRef one = LLVMConstReal(coeff_bld->elem_type, 1.0);
-   LLVMValueRef i0 = LLVMConstInt(LLVMInt32Type(), 0, 0);
-   LLVMValueRef i1 = LLVMConstInt(LLVMInt32Type(), 1, 0);
-   LLVMValueRef i2 = LLVMConstInt(LLVMInt32Type(), 2, 0);
-   LLVMValueRef i3 = LLVMConstInt(LLVMInt32Type(), 3, 0);
+   LLVMValueRef i0 = lp_build_const_int32(gallivm, 0);
+   LLVMValueRef i1 = lp_build_const_int32(gallivm, 1);
+   LLVMValueRef i2 = lp_build_const_int32(gallivm, 2);
+   LLVMValueRef i3 = lp_build_const_int32(gallivm, 3);
    unsigned attrib;
    unsigned chan;
 
@@ -144,7 +145,8 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
       const unsigned interp = bld->interp[attrib];
       for (chan = 0; chan < NUM_CHANNELS; ++chan) {
          if (mask & (1 << chan)) {
-            LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), attrib*NUM_CHANNELS + chan, 0);
+            LLVMValueRef index = lp_build_const_int32(gallivm,
+                                      attrib * NUM_CHANNELS + chan);
             LLVMValueRef a0 = zero;
             LLVMValueRef dadx = zero;
             LLVMValueRef dady = zero;
@@ -231,7 +233,7 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
              * a = {a, a, a, a}
              */
 
-            a = lp_build_broadcast(builder, coeff_bld->vec_type, a);
+            a = lp_build_broadcast(gallivm, coeff_bld->vec_type, a);
 
             /*
              * Compute the attrib values on the upper-left corner of each quad.
@@ -273,12 +275,13 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
  */
 static void
 attribs_update(struct lp_build_interp_soa_context *bld,
+               struct gallivm_state *gallivm,
                int quad_index,
                int start,
                int end)
 {
    struct lp_build_context *coeff_bld = &bld->coeff_bld;
-   LLVMValueRef shuffle = lp_build_const_int_vec(coeff_bld->type, quad_index);
+   LLVMValueRef shuffle = lp_build_const_int_vec(gallivm, coeff_bld->type, quad_index);
    LLVMValueRef oow = NULL;
    unsigned attrib;
    unsigned chan;
@@ -392,6 +395,7 @@ pos_init(struct lp_build_interp_soa_context *bld,
  */
 void
 lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
+                         struct gallivm_state *gallivm,
                          unsigned num_inputs,
                          const struct lp_shader_input *inputs,
                          LLVMBuilderRef builder,
@@ -417,7 +421,7 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
    /* XXX: we don't support interpolating into any other types */
    assert(memcmp(&coeff_type, &type, sizeof coeff_type) == 0);
 
-   lp_build_context_init(&bld->coeff_bld, builder, coeff_type);
+   lp_build_context_init(&bld->coeff_bld, gallivm, coeff_type);
 
    /* For convenience */
    bld->pos = bld->attribs[0];
@@ -453,19 +457,21 @@ lp_build_interp_soa_init(struct lp_build_interp_soa_context *bld,
  */
 void
 lp_build_interp_soa_update_inputs(struct lp_build_interp_soa_context *bld,
+                                  struct gallivm_state *gallivm,
                                   int quad_index)
 {
    assert(quad_index < 4);
 
-   attribs_update(bld, quad_index, 1, bld->num_attribs);
+   attribs_update(bld, gallivm, quad_index, 1, bld->num_attribs);
 }
 
 void
 lp_build_interp_soa_update_pos(struct lp_build_interp_soa_context *bld,
+                                  struct gallivm_state *gallivm,
                                   int quad_index)
 {
    assert(quad_index < 4);
 
-   attribs_update(bld, quad_index, 0, 1);
+   attribs_update(bld, gallivm, quad_index, 0, 1);
 }
 

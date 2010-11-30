@@ -169,7 +169,7 @@ lp_build_shr(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
 LLVMValueRef
 lp_build_shl_imm(struct lp_build_context *bld, LLVMValueRef a, unsigned imm)
 {
-   LLVMValueRef b = lp_build_const_int_vec(bld->type, imm);
+   LLVMValueRef b = lp_build_const_int_vec(bld->gallivm, bld->type, imm);
    assert(imm <= bld->type.width);
    return lp_build_shl(bld, a, b);
 }
@@ -181,7 +181,7 @@ lp_build_shl_imm(struct lp_build_context *bld, LLVMValueRef a, unsigned imm)
 LLVMValueRef
 lp_build_shr_imm(struct lp_build_context *bld, LLVMValueRef a, unsigned imm)
 {
-   LLVMValueRef b = lp_build_const_int_vec(bld->type, imm);
+   LLVMValueRef b = lp_build_const_int_vec(bld->gallivm, bld->type, imm);
    assert(imm <= bld->type.width);
    return lp_build_shr(bld, a, b);
 }
