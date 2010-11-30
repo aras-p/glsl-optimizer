@@ -265,20 +265,12 @@ fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct
    return texel;
 }
 
-static void *
-create_frag_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigned mv_per_frame)
+static struct ureg_dst
+fetch_ref(struct ureg_program *shader, struct ureg_dst field, unsigned ref_frames, unsigned mv_per_frame)
 {
-   struct ureg_program *shader;
-   struct ureg_src tc[ref_frames * mv_per_frame], sampler[ref_frames], result;
-   struct ureg_dst field, texel, ref[ref_frames];
-   struct ureg_dst fragment;
+   struct ureg_src tc[ref_frames * mv_per_frame], sampler[ref_frames];
+   struct ureg_dst ref[ref_frames], t_tc, result;
    unsigned i, label;
-
-   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
-   if (!shader)
-      return NULL;
-
-   fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
    for (i = 0; i < ref_frames * mv_per_frame; ++i)
       tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV0 + i, TGSI_INTERPOLATE_LINEAR);
@@ -288,52 +280,88 @@ create_frag_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
       ref[i] = ureg_DECL_temporary(shader);
    }
 
-   field = calc_field(shader);
-   texel = fetch_ycbcr(r, shader, field);
+   result = ureg_DECL_temporary(shader);
 
-   switch(ref_frames) {
-   case 0:
-      result = ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X);
-      break;
-
-   case 1:
+   if (ref_frames == 1) {
       if(mv_per_frame == 1)
-         ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[0], sampler[0]);
+         /*
+          * result = tex(tc[0], sampler[0])
+          */
+         ureg_TEX(shader, result, TGSI_TEXTURE_2D, tc[0], sampler[0]);
       else {
-         ureg_IF(shader, ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y), &label);
-            ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[1], sampler[0]);
-         ureg_ELSE(shader, &label);
-            ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[0], sampler[0]);
-         ureg_ENDIF(shader);
-      }
-      result = ureg_src(ref[0]);
-      break;
+         t_tc = ureg_DECL_temporary(shader);
+         /*
+          * result = tex(field.y ? tc[1] : tc[0], sampler[0])
+          */
+         ureg_CMP(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_XY),
+            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
+            tc[1], tc[0]);
+         ureg_TEX(shader, result, TGSI_TEXTURE_2D, ureg_src(t_tc), sampler[0]);
 
-   case 2:
+         ureg_release_temporary(shader, t_tc);
+      }
+
+   } else if (ref_frames == 2) {
       if(mv_per_frame == 1) {
+         /*
+          * ref[0..1] = tex(tc[0..1], sampler[0..1])
+          */
          ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[0], sampler[0]);
          ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, tc[1], sampler[1]);
       } else {
-         ureg_IF(shader, ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y), &label);
-            ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[1], sampler[0]);
-            ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, tc[3], sampler[1]);
-         ureg_ELSE(shader, &label);
-            ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, tc[0], sampler[0]);
-            ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, tc[2], sampler[1]);
-         ureg_ENDIF(shader);
+         t_tc = ureg_DECL_temporary(shader);
+
+         /*
+          * if (field.y)
+          *    ref[0..1] = tex(tc[0..1], sampler[0..1])
+          * else
+          *    ref[0..1] = tex(tc[2..3], sampler[0..1])
+          */
+         ureg_CMP(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_XY),
+            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
+            tc[1], tc[0]);
+         ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, ureg_src(t_tc), sampler[0]);
+
+         ureg_CMP(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_XY),
+            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
+            tc[3], tc[2]);
+         ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, ureg_src(t_tc), sampler[1]);
+
+         ureg_release_temporary(shader, t_tc);
       }
 
-      ureg_LRP(shader, ref[0], ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X), ureg_src(ref[0]), ureg_src(ref[1]));
-      result = ureg_src(ref[0]);
-      break;
-
-   default:
-      assert(0);
+      ureg_LRP(shader, result, ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X), ureg_src(ref[0]), ureg_src(ref[1]));
    }
-   ureg_ADD(shader, fragment, ureg_src(texel), result);
 
    for (i = 0; i < ref_frames; ++i)
       ureg_release_temporary(shader, ref[i]);
+
+   return result;
+}
+
+static void *
+create_frag_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigned mv_per_frame)
+{
+   struct ureg_program *shader;
+   struct ureg_src result;
+   struct ureg_dst field, texel;
+   struct ureg_dst fragment;
+
+   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   if (!shader)
+      return NULL;
+
+   fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
+
+   field = calc_field(shader);
+   texel = fetch_ycbcr(r, shader, field);
+
+   if (ref_frames == 0)
+      result = ureg_imm1f(shader, 0.5f);
+   else
+      result = ureg_src(fetch_ref(shader, field, ref_frames, mv_per_frame));
+
+   ureg_ADD(shader, fragment, ureg_src(texel), result);
 
    ureg_release_temporary(shader, field);
    ureg_release_temporary(shader, texel);
