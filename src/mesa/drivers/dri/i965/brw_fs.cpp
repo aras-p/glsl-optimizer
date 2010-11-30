@@ -2010,8 +2010,10 @@ fs_visitor::emit_fb_writes()
    fs_reg color = reg_undef;
    if (this->frag_color)
       color = *(variable_storage(this->frag_color));
-   else if (this->frag_data)
+   else if (this->frag_data) {
       color = *(variable_storage(this->frag_data));
+      color.type = BRW_REGISTER_TYPE_F;
+   }
 
    for (int target = 0; target < c->key.nr_color_regions; target++) {
       this->current_annotation = talloc_asprintf(this->mem_ctx,
