@@ -509,3 +509,28 @@ void vg_prepare_blend_surface_from_mask(struct vg_context *ctx)
    if (dest_surface)
       pipe_surface_reference(&dest_surface, NULL);
 }
+
+/**
+ * A transformation from window coordinates to paint coordinates.
+ */
+VGboolean vg_get_paint_matrix(struct vg_context *ctx,
+                              const struct matrix *paint_to_user,
+                              const struct matrix *user_to_surface,
+                              struct matrix *mat)
+{
+   struct matrix tmp;
+
+   /* get user-to-paint matrix */
+   memcpy(mat, paint_to_user, sizeof(*paint_to_user));
+   if (!matrix_invert(mat))
+      return VG_FALSE;
+
+   /* get surface-to-user matrix */
+   memcpy(&tmp, user_to_surface, sizeof(*user_to_surface));
+   if (!matrix_invert(&tmp))
+      return VG_FALSE;
+
+   matrix_mult(mat, &tmp);
+
+   return VG_TRUE;
+}

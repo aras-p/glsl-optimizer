@@ -162,6 +162,10 @@ void vg_set_error(struct vg_context *ctx,
 void vg_prepare_blend_surface(struct vg_context *ctx);
 void vg_prepare_blend_surface_from_mask(struct vg_context *ctx);
 
+VGboolean vg_get_paint_matrix(struct vg_context *ctx,
+                              const struct matrix *paint_to_user,
+                              const struct matrix *user_to_surface,
+                              struct matrix *mat);
 
 static INLINE VGboolean is_aligned_to(const void *ptr, VGbyte alignment)
 {

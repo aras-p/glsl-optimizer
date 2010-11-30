@@ -111,7 +111,9 @@ VGint paint_bind_samplers(struct vg_paint *paint, struct pipe_sampler_state **sa
                           struct pipe_sampler_view **sampler_views);
 
 VGint paint_constant_buffer_size(struct vg_paint *paint);
+
 void paint_fill_constant_buffer(struct vg_paint *paint,
+                                const struct matrix *mat,
                                 void *buffer);
 
 

@@ -261,9 +261,10 @@ static INLINE void paint_color_buffer(struct vg_paint *paint, void *buffer)
    map[7] = 4.f;
 }
 
-static INLINE void paint_linear_gradient_buffer(struct vg_paint *paint, void *buffer)
+static INLINE void paint_linear_gradient_buffer(struct vg_paint *paint,
+                                                const struct matrix *inv,
+                                                void *buffer)
 {
-   struct vg_context *ctx = paint->base.ctx;
    VGfloat *map = (VGfloat*)buffer;
 
    map[0] = paint->gradient.linear.coords[2] - paint->gradient.linear.coords[0];
@@ -277,15 +278,10 @@ static INLINE void paint_linear_gradient_buffer(struct vg_paint *paint, void *bu
    map[7] = 4.f;
    {
       struct matrix mat;
-      struct matrix inv;
       matrix_load_identity(&mat);
+      /* VEGA_LINEAR_GRADIENT_SHADER expects the first point to be at (0, 0) */
       matrix_translate(&mat, -paint->gradient.linear.coords[0], -paint->gradient.linear.coords[1]);
-      memcpy(&inv, &ctx->state.vg.fill_paint_to_user_matrix,
-             sizeof(struct matrix));
-      matrix_invert(&inv);
-      matrix_mult(&inv, &mat);
-      memcpy(&mat, &inv,
-             sizeof(struct matrix));
+      matrix_mult(&mat, inv);
 
       map[8]  = mat.m[0]; map[9]  = mat.m[3]; map[10] = mat.m[6]; map[11] = 0.f;
       map[12] = mat.m[1]; map[13] = mat.m[4]; map[14] = mat.m[7]; map[15] = 0.f;
@@ -298,10 +294,11 @@ static INLINE void paint_linear_gradient_buffer(struct vg_paint *paint, void *bu
 }
 
 
-static INLINE void paint_radial_gradient_buffer(struct vg_paint *paint, void *buffer)
+static INLINE void paint_radial_gradient_buffer(struct vg_paint *paint,
+                                                const struct matrix *inv,
+                                                void *buffer)
 {
    VGfloat *radialCoords = paint->gradient.radial.vals;
-   struct vg_context *ctx = paint->base.ctx;
 
    VGfloat *map = (VGfloat*)buffer;
 
@@ -318,15 +315,9 @@ static INLINE void paint_radial_gradient_buffer(struct vg_paint *paint, void *bu
 
    {
       struct matrix mat;
-      struct matrix inv;
       matrix_load_identity(&mat);
       matrix_translate(&mat, -radialCoords[2], -radialCoords[3]);
-      memcpy(&inv, &ctx->state.vg.fill_paint_to_user_matrix,
-             sizeof(struct matrix));
-      matrix_invert(&inv);
-      matrix_mult(&inv, &mat);
-      memcpy(&mat, &inv,
-             sizeof(struct matrix));
+      matrix_mult(&mat, inv);
 
       map[8]  = mat.m[0]; map[9]  = mat.m[3]; map[10] = mat.m[6]; map[11] = 0.f;
       map[12] = mat.m[1]; map[13] = mat.m[4]; map[14] = mat.m[7]; map[15] = 0.f;
@@ -340,10 +331,10 @@ static INLINE void paint_radial_gradient_buffer(struct vg_paint *paint, void *bu
 }
 
 
-static INLINE void  paint_pattern_buffer(struct vg_paint *paint, void *buffer)
+static INLINE void  paint_pattern_buffer(struct vg_paint *paint,
+                                         const struct matrix *inv,
+                                         void *buffer)
 {
-   struct vg_context *ctx = paint->base.ctx;
-
    VGfloat *map = (VGfloat *)buffer;
    memcpy(map, paint->solid.color, 4 * sizeof(VGfloat));
 
@@ -353,17 +344,8 @@ static INLINE void  paint_pattern_buffer(struct vg_paint *paint, void *buffer)
    map[7] = paint->pattern.sampler_view->texture->height0;
    {
       struct matrix mat;
-      memcpy(&mat, &ctx->state.vg.fill_paint_to_user_matrix,
-             sizeof(struct matrix));
-      matrix_invert(&mat);
-      {
-         struct matrix pm;
-         memcpy(&pm, &ctx->state.vg.path_user_to_surface_matrix,
-                sizeof(struct matrix));
-         matrix_invert(&pm);
-         matrix_mult(&pm, &mat);
-         memcpy(&mat, &pm, sizeof(struct matrix));
-      }
+
+      memcpy(&mat, inv, sizeof(*inv));
 
       map[8]  = mat.m[0]; map[9]  = mat.m[3]; map[10] = mat.m[6]; map[11] = 0.f;
       map[12] = mat.m[1]; map[13] = mat.m[4]; map[14] = mat.m[7]; map[15] = 0.f;
@@ -695,6 +677,7 @@ VGint paint_constant_buffer_size(struct vg_paint *paint)
 }
 
 void paint_fill_constant_buffer(struct vg_paint *paint,
+                                const struct matrix *mat,
                                 void *buffer)
 {
    switch(paint->type) {
@@ -702,13 +685,13 @@ void paint_fill_constant_buffer(struct vg_paint *paint,
       paint_color_buffer(paint, buffer);
       break;
    case VG_PAINT_TYPE_LINEAR_GRADIENT:
-      paint_linear_gradient_buffer(paint, buffer);
+      paint_linear_gradient_buffer(paint, mat, buffer);
       break;
    case VG_PAINT_TYPE_RADIAL_GRADIENT:
-      paint_radial_gradient_buffer(paint, buffer);
+      paint_radial_gradient_buffer(paint, mat, buffer);
       break;
    case VG_PAINT_TYPE_PATTERN:
-      paint_pattern_buffer(paint, buffer);
+      paint_pattern_buffer(paint, mat, buffer);
       break;
 
    default:

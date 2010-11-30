@@ -50,6 +50,8 @@ struct shader {
    struct vg_paint *paint;
    struct vg_image *image;
 
+   struct matrix paint_matrix;
+
    VGboolean drawing_image;
    VGImageMode image_mode;
 
@@ -119,7 +121,8 @@ static VGint setup_constant_buffer(struct shader *shader)
       memset(shader->constants, 0, sizeof(VGfloat) * 8);
    }
 
-   paint_fill_constant_buffer(shader->paint, shader->constants + 8);
+   paint_fill_constant_buffer(shader->paint,
+         &shader->paint_matrix, shader->constants + 8);
 
    return param_bytes;
 }
@@ -323,4 +326,20 @@ VGboolean shader_drawing_image(struct shader *shader)
 void shader_set_image(struct shader *shader, struct vg_image *img)
 {
    shader->image = img;
+}
+
+/**
+ * Set the transformation to map a pixel to the paint coordinates.
+ */
+void shader_set_paint_matrix(struct shader *shader, const struct matrix *mat)
+{
+   const struct st_framebuffer *stfb = shader->context->draw_buffer;
+   const VGfloat px_center_offset = 0.5f;
+
+   memcpy(&shader->paint_matrix, mat, sizeof(*mat));
+
+   /* make it window-to-paint for the shaders */
+   matrix_translate(&shader->paint_matrix, px_center_offset,
+         stfb->height - 1.0f + px_center_offset);
+   matrix_scale(&shader->paint_matrix, 1.0f, -1.0f);
 }

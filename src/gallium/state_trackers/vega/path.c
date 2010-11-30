@@ -1532,6 +1532,7 @@ void path_render(struct path *p, VGbitfield paintModes,
                  struct matrix *mat)
 {
    struct vg_context *ctx = vg_current_context();
+   struct matrix paint_matrix;
 
    vg_validate_state(ctx);
 
@@ -1543,19 +1544,29 @@ void path_render(struct path *p, VGbitfield paintModes,
            mat->m[3], mat->m[4], mat->m[5],
            mat->m[6], mat->m[7], mat->m[8]);
 #endif
-   if (paintModes & VG_FILL_PATH) {
+   if ((paintModes & VG_FILL_PATH) &&
+       vg_get_paint_matrix(ctx,
+                           &ctx->state.vg.fill_paint_to_user_matrix,
+                           mat,
+                           &paint_matrix)) {
       /* First the fill */
       shader_set_paint(ctx->shader, ctx->state.vg.fill_paint);
+      shader_set_paint_matrix(ctx->shader, &paint_matrix);
       shader_bind(ctx->shader);
       path_fill(p, mat);
    }
 
-   if (paintModes & VG_STROKE_PATH){
+   if ((paintModes & VG_STROKE_PATH) &&
+       vg_get_paint_matrix(ctx,
+                           &ctx->state.vg.stroke_paint_to_user_matrix,
+                           mat,
+                           &paint_matrix)) {
       /* 8.7.5: "line width less than or equal to 0 prevents stroking from
        *  taking place."*/
       if (ctx->state.vg.stroke.line_width.f <= 0)
          return;
       shader_set_paint(ctx->shader, ctx->state.vg.stroke_paint);
+      shader_set_paint_matrix(ctx->shader, &paint_matrix);
       shader_bind(ctx->shader);
       path_stroke(p, mat);
    }
