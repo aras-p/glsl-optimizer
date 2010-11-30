@@ -813,6 +813,8 @@ do_comparison(void *mem_ctx, int operation, ir_rvalue *op0, ir_rvalue *op1)
        */
       return new(mem_ctx) ir_constant(true);
    }
+
+   return NULL;
 }
 
 ir_rvalue *
