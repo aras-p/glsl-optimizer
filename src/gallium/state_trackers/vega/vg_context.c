@@ -406,7 +406,6 @@ void vg_validate_state(struct vg_context *ctx)
 
    /* TODO create as needed */
    vg_context_update_alpha_mask_view(ctx, stfb->width, stfb->height);
-   vg_context_update_blend_texture_view(ctx, stfb->width, stfb->height);
 
    renderer_validate(ctx->renderer, ctx->state.dirty,
          ctx->draw_buffer, &ctx->state.vg);
@@ -438,75 +437,56 @@ void vg_set_error(struct vg_context *ctx,
       ctx->_error = code;
 }
 
-void vg_prepare_blend_surface(struct vg_context *ctx)
+static void vg_prepare_blend_texture(struct vg_context *ctx,
+                                     struct pipe_sampler_view *src)
 {
-   struct pipe_surface *dest_surface = NULL;
+   struct st_framebuffer *stfb = ctx->draw_buffer;
+   struct pipe_surface *surf;
+
+   vg_context_update_blend_texture_view(ctx, stfb->width, stfb->height);
+
+   surf = ctx->pipe->screen->get_tex_surface(ctx->pipe->screen,
+         stfb->blend_texture_view->texture, 0, 0, 0, PIPE_BIND_RENDER_TARGET);
+   if (surf) {
+      util_blit_pixels_tex(ctx->blit,
+                           src, 0, 0, stfb->width, stfb->height,
+                           surf, 0, 0, stfb->width, stfb->height,
+                           0.0, PIPE_TEX_MIPFILTER_NEAREST);
+
+      pipe_surface_reference(&surf, NULL);
+   }
+}
+
+struct pipe_sampler_view *vg_prepare_blend_surface(struct vg_context *ctx)
+{
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_sampler_view *view;
    struct pipe_sampler_view view_templ;
    struct st_framebuffer *stfb = ctx->draw_buffer;
    struct st_renderbuffer *strb = stfb->strb;
 
-   /* first finish all pending rendering */
-   vgFinish();
+   vg_validate_state(ctx);
 
    u_sampler_view_default_template(&view_templ, strb->texture, strb->texture->format);
    view = pipe->create_sampler_view(pipe, strb->texture, &view_templ);
 
-   dest_surface = pipe->screen->get_tex_surface(pipe->screen,
-                                                stfb->blend_texture_view->texture,
-                                                0, 0, 0,
-                                                PIPE_BIND_RENDER_TARGET);
-   util_blit_pixels_tex(ctx->blit,
-                        view,
-                        0, 0,
-                        strb->width, strb->height,
-                        dest_surface,
-                        0, 0,
-                        strb->width, strb->height,
-                        0.0, PIPE_TEX_MIPFILTER_NEAREST);
-
-   if (dest_surface)
-      pipe_surface_reference(&dest_surface, NULL);
-
-   /* make sure it's complete */
-   vgFinish();
+   vg_prepare_blend_texture(ctx, view);
 
    pipe_sampler_view_reference(&view, NULL);
+
+   return stfb->blend_texture_view;
 }
 
 
-void vg_prepare_blend_surface_from_mask(struct vg_context *ctx)
+struct pipe_sampler_view *vg_prepare_blend_surface_from_mask(struct vg_context *ctx)
 {
-   struct pipe_surface *dest_surface = NULL;
-   struct pipe_context *pipe = ctx->pipe;
    struct st_framebuffer *stfb = ctx->draw_buffer;
-   struct st_renderbuffer *strb = stfb->strb;
 
    vg_validate_state(ctx);
 
-   /* first finish all pending rendering */
-   vgFinish();
+   vg_prepare_blend_texture(ctx, stfb->alpha_mask_view);
 
-   dest_surface = pipe->screen->get_tex_surface(pipe->screen,
-                                                stfb->blend_texture_view->texture,
-                                                0, 0, 0,
-                                                PIPE_BIND_RENDER_TARGET);
-
-   util_blit_pixels_tex(ctx->blit,
-                        stfb->alpha_mask_view,
-                        0, 0,
-                        strb->width, strb->height,
-                        dest_surface,
-                        0, 0,
-                        strb->width, strb->height,
-                        0.0, PIPE_TEX_MIPFILTER_NEAREST);
-
-   /* make sure it's complete */
-   vgFinish();
-
-   if (dest_surface)
-      pipe_surface_reference(&dest_surface, NULL);
+   return stfb->blend_texture_view;
 }
 
 /**

@@ -137,12 +137,8 @@ static VGint blend_bind_samplers(struct vg_context *ctx,
        bmode == VG_BLEND_SCREEN ||
        bmode == VG_BLEND_DARKEN ||
        bmode == VG_BLEND_LIGHTEN) {
-      struct st_framebuffer *stfb = ctx->draw_buffer;
-
-      vg_prepare_blend_surface(ctx);
-
       samplers[2] = &ctx->blend_sampler;
-      sampler_views[2] = stfb->blend_texture_view;
+      sampler_views[2] = vg_prepare_blend_surface(ctx);
 
       if (!samplers[0] || !sampler_views[0]) {
          samplers[0] = samplers[2];

@@ -316,9 +316,8 @@ static void mask_using_texture(struct pipe_sampler_view *sampler_view,
    views[0] = sampler_view;
 
    /* prepare our blend surface */
-   vg_prepare_blend_surface_from_mask(ctx);
    samplers[1] = &ctx->mask.sampler;
-   views[1] = ctx->draw_buffer->blend_texture_view;
+   views[1] = vg_prepare_blend_surface_from_mask(ctx);
 
    fs = setup_mask_operation(operation);
 

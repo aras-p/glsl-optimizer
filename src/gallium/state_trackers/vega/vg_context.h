@@ -159,8 +159,8 @@ void vg_validate_state(struct vg_context *ctx);
 void vg_set_error(struct vg_context *ctx,
                   VGErrorCode code);
 
-void vg_prepare_blend_surface(struct vg_context *ctx);
-void vg_prepare_blend_surface_from_mask(struct vg_context *ctx);
+struct pipe_sampler_view *vg_prepare_blend_surface(struct vg_context *ctx);
+struct pipe_sampler_view *vg_prepare_blend_surface_from_mask(struct vg_context *ctx);
 
 VGboolean vg_get_paint_matrix(struct vg_context *ctx,
                               const struct matrix *paint_to_user,
