@@ -512,7 +512,11 @@ lower_continue:
       if(this->loop.may_set_return_flag) {
          assert(this->function.return_flag);
          ir_if* return_if = new(ir) ir_if(new(ir) ir_dereference_variable(this->function.return_flag));
-         return_if->then_instructions.push_tail(new(ir) ir_loop_jump(saved_loop.loop ? ir_loop_jump::jump_break : ir_loop_jump::jump_continue));
+         saved_loop.may_set_return_flag = true;
+         if(saved_loop.loop)
+            return_if->then_instructions.push_tail(new(ir) ir_loop_jump(ir_loop_jump::jump_break));
+         else
+            move_outer_block_inside(ir, &return_if->else_instructions);
          ir->insert_after(return_if);
       }
 
