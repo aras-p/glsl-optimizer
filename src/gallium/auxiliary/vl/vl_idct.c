@@ -285,9 +285,9 @@ create_matrix_frag_shader(struct vl_idct *idct)
        fragment[i] = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, i);
 
    /* pixel center is at 0.5 not 0.0 !!! */
-   ureg_ADD(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Y), 
-      tex, ureg_imm1f(shader, -2.0f / source->height0));
-
+   //ureg_ADD(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Y), 
+   //   tex, ureg_imm1f(shader, -2.0f / source->height0));
+   ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Y), tex);
    for (i = 0; i < 4; ++i) {
       fetch_four(shader, l[i], ureg_src(t_tc), sampler[0], start[0], block, false, false, source->width0);
       ureg_MUL(shader, l[i][0], ureg_src(l[i][0]), ureg_imm1f(shader, STAGE1_SCALE));
@@ -472,6 +472,7 @@ static void
 init_state(struct vl_idct *idct)
 {
    struct pipe_sampler_state sampler;
+   struct pipe_rasterizer_state rs_state;
    unsigned i;
 
    idct->viewport[0].scale[0] = idct->textures.individual.intermediate->width0;
@@ -528,6 +529,14 @@ init_state(struct vl_idct *idct)
       /*sampler.max_anisotropy = ; */
       idct->samplers.all[i] = idct->pipe->create_sampler_state(idct->pipe, &sampler);
    }
+
+   memset(&rs_state, 0, sizeof(rs_state));
+   /*rs_state.sprite_coord_enable */
+   rs_state.sprite_coord_mode = PIPE_SPRITE_COORD_UPPER_LEFT;
+   rs_state.point_quad_rasterization = true;
+   rs_state.point_size = BLOCK_WIDTH;
+   rs_state.gl_rasterization_rules = false;
+   idct->rs_state = idct->pipe->create_rasterizer_state(idct->pipe, &rs_state);
 }
 
 static void
@@ -543,6 +552,8 @@ cleanup_state(struct vl_idct *idct)
 
    for (i = 0; i < 4; ++i)
       idct->pipe->delete_sampler_state(idct->pipe, idct->samplers.all[i]);
+
+   idct->pipe->delete_rasterizer_state(idct->pipe, idct->rs_state);
 }
 
 struct pipe_resource *
@@ -729,6 +740,8 @@ vl_idct_flush(struct vl_idct *idct)
    xfer_buffers_unmap(idct);
 
    if(num_blocks > 0) {
+
+      idct->pipe->bind_rasterizer_state(idct->pipe, idct->rs_state);
 
       /* first stage */
       idct->pipe->set_framebuffer_state(idct->pipe, &idct->fb_state[0]);

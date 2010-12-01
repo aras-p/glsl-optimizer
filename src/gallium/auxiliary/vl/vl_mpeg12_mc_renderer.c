@@ -270,7 +270,7 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field, unsigned ref_frame
 {
    struct ureg_src tc[ref_frames * mv_per_frame], sampler[ref_frames];
    struct ureg_dst ref[ref_frames], t_tc, result;
-   unsigned i, label;
+   unsigned i;
 
    for (i = 0; i < ref_frames * mv_per_frame; ++i)
       tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV0 + i, TGSI_INTERPOLATE_LINEAR);
@@ -443,6 +443,7 @@ static bool
 init_pipe_state(struct vl_mpeg12_mc_renderer *r)
 {
    struct pipe_sampler_state sampler;
+   struct pipe_rasterizer_state rs_state;
    unsigned filters[5];
    unsigned i;
 
@@ -469,7 +470,7 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
    /* Luma filter */
    filters[0] = PIPE_TEX_FILTER_NEAREST;
    /* Chroma filters */
-   if (r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444 || true) { //TODO
+   if (r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444) {
       filters[1] = PIPE_TEX_FILTER_NEAREST;
       filters[2] = PIPE_TEX_FILTER_NEAREST;
    }
@@ -504,6 +505,14 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
       r->samplers.all[i] = r->pipe->create_sampler_state(r->pipe, &sampler);
    }
 
+   memset(&rs_state, 0, sizeof(rs_state));
+   /*rs_state.sprite_coord_enable */
+   rs_state.sprite_coord_mode = PIPE_SPRITE_COORD_UPPER_LEFT;
+   rs_state.point_quad_rasterization = true;
+   rs_state.point_size = BLOCK_WIDTH;
+   rs_state.gl_rasterization_rules = true;
+   r->rs_state = r->pipe->create_rasterizer_state(r->pipe, &rs_state);
+
    return true;
 }
 
@@ -516,6 +525,8 @@ cleanup_pipe_state(struct vl_mpeg12_mc_renderer *r)
 
    for (i = 0; i < 5; ++i)
       r->pipe->delete_sampler_state(r->pipe, r->samplers.all[i]);
+
+   r->pipe->delete_rasterizer_state(r->pipe, r->rs_state);
 }
 
 static bool
@@ -875,6 +886,7 @@ flush(struct vl_mpeg12_mc_renderer *r)
 
    upload_vertex_stream(r, num_macroblocks);
 
+   r->pipe->bind_rasterizer_state(r->pipe, r->rs_state);
    r->pipe->set_framebuffer_state(r->pipe, &r->fb_state);
    r->pipe->set_viewport_state(r->pipe, &r->viewport);
 

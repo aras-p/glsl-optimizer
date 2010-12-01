@@ -85,6 +85,8 @@ struct vl_mpeg12_mc_renderer
 
    struct vl_idct idct_y, idct_cb, idct_cr;
 
+   void *rs_state;
+
    union
    {
       void *all[5];

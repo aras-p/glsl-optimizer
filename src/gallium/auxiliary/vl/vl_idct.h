@@ -42,6 +42,8 @@ struct vl_idct
 
    struct pipe_resource *destination;
 
+   void *rs_state;
+
    void *vertex_elems_state;
 
    union
