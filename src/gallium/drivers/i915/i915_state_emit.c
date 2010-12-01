@@ -367,7 +367,8 @@ i915_emit_hardware_state(struct i915_context *i915 )
             const uint *c;
             if (i915->fs->constant_flags[i] == I915_CONSTFLAG_USER) {
                /* grab user-defined constant */
-               c = (uint *) i915->current.constants[PIPE_SHADER_FRAGMENT][i];
+               c = (uint *) i915_buffer(i915->constants[PIPE_SHADER_FRAGMENT])->data;
+               c += 4 * i;
             }
             else {
                /* emit program constant */

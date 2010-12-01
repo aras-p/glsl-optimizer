@@ -136,7 +136,6 @@ struct i915_state
    unsigned immediate[I915_MAX_IMMEDIATE];
    unsigned dynamic[I915_MAX_DYNAMIC];
 
-   float constants[PIPE_SHADER_TYPES][I915_MAX_CONSTANT][4];
    /** number of constants passed in through a constant buffer */
    uint num_user_constants[PIPE_SHADER_TYPES];
 
@@ -214,7 +213,6 @@ struct i915_context {
    struct pipe_blend_color blend_color;
    struct pipe_stencil_ref stencil_ref;
    struct pipe_clip_state clip;
-   /* XXX unneded */
    struct pipe_resource *constants[PIPE_SHADER_TYPES];
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;

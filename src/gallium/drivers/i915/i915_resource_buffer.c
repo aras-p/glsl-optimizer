@@ -147,8 +147,7 @@ i915_buffer_create(struct pipe_screen *screen,
    buf->b.vtbl = &i915_buffer_vtbl;
    pipe_reference_init(&buf->b.b.reference, 1);
    buf->b.b.screen = screen;
-
-   buf->data = MALLOC(template->width0);
+   buf->data = align_malloc(template->width0, 16);
    buf->free_on_destroy = TRUE;
 
    if (!buf->data)
