@@ -83,7 +83,12 @@ struct renderer {
       struct pipe_framebuffer_state fb;
    } g3d;
 
-   struct pipe_resource *vs_const_buffer;
+   struct pipe_resource *vs_cbuf;;
+   VGfloat vs_cbuf_data[8];
+
+   struct pipe_resource *fs_cbuf;
+   VGfloat fs_cbuf_data[32];
+   VGint fs_cbuf_len;
 
    struct pipe_vertex_element velems[2];
    VGfloat vertices[4][2][4];
@@ -414,17 +419,28 @@ static void renderer_set_custom_fs(struct renderer *renderer,
 
    /* upload fs constant buffer */
    if (const_buffer_len) {
-      struct pipe_resource *cbuf;
+      struct pipe_resource *cbuf = renderer->fs_cbuf;
 
-      cbuf = pipe_buffer_create(renderer->pipe->screen,
-            PIPE_BIND_CONSTANT_BUFFER, const_buffer_len);
-      pipe_buffer_write(renderer->pipe, cbuf, 0,
-            const_buffer_len, const_buffer);
-      renderer->pipe->set_constant_buffer(renderer->pipe,
-            PIPE_SHADER_FRAGMENT, 0, cbuf);
+      if (!cbuf || renderer->fs_cbuf_len != const_buffer_len ||
+          memcmp(renderer->fs_cbuf_data, const_buffer, const_buffer_len)) {
+         pipe_resource_reference(&cbuf, NULL);
 
-      /* destroy cbuf automatically */
-      pipe_resource_reference(&cbuf, NULL);
+         cbuf = pipe_buffer_create(renderer->pipe->screen,
+               PIPE_BIND_CONSTANT_BUFFER, const_buffer_len);
+         pipe_buffer_write(renderer->pipe, cbuf, 0,
+               const_buffer_len, const_buffer);
+         renderer->pipe->set_constant_buffer(renderer->pipe,
+               PIPE_SHADER_FRAGMENT, 0, cbuf);
+
+         renderer->fs_cbuf = cbuf;
+         if (const_buffer_len <= sizeof(renderer->fs_cbuf_data)) {
+            memcpy(renderer->fs_cbuf_data, const_buffer, const_buffer_len);
+            renderer->fs_cbuf_len = const_buffer_len;
+         }
+         else {
+            renderer->fs_cbuf_len = 0;
+         }
+      }
    }
 }
 
@@ -1137,14 +1153,9 @@ void renderer_destroy(struct renderer *ctx)
          cso_delete_fragment_shader(ctx->cso, ctx->cached_fs[i]);
    }
 
-   pipe_resource_reference(&ctx->vs_const_buffer, NULL);
+   pipe_resource_reference(&ctx->vs_cbuf, NULL);
+   pipe_resource_reference(&ctx->fs_cbuf, NULL);
 
-#if 0
-   if (ctx->fs) {
-      cso_delete_fragment_shader(ctx->cso, ctx->fs);
-      ctx->fs = NULL;
-   }
-#endif
    FREE(ctx);
 }
 
@@ -1273,7 +1284,7 @@ void renderer_validate(struct renderer *renderer,
 
    if (dirty & FRAMEBUFFER_DIRTY) {
       struct pipe_framebuffer_state *fb = &renderer->g3d.fb;
-      struct pipe_resource **cbuf = &renderer->vs_const_buffer;
+      struct pipe_resource *cbuf;
       VGfloat vs_consts[8];
 
       memset(fb, 0, sizeof(struct pipe_framebuffer_state));
@@ -1296,17 +1307,24 @@ void renderer_validate(struct renderer *renderer,
       vs_consts[6] = 0.0f;
       vs_consts[7] = 0.0f;
 
-      pipe_resource_reference(cbuf, NULL);
-      *cbuf = pipe_buffer_create(renderer->pipe->screen, 
-				 PIPE_BIND_CONSTANT_BUFFER,
-				 sizeof(vs_consts));
+      /* upload if needed */
+      cbuf = renderer->vs_cbuf;
+      if (!cbuf ||
+          memcmp(renderer->vs_cbuf_data, vs_consts, sizeof(vs_consts)) != 0) {
+         pipe_resource_reference(&cbuf, NULL);
+         cbuf = pipe_buffer_create(renderer->pipe->screen,
+                                   PIPE_BIND_CONSTANT_BUFFER,
+                                   sizeof(vs_consts));
+         if (cbuf) {
+            pipe_buffer_write(renderer->pipe, cbuf, 0,
+                  sizeof(vs_consts), vs_consts);
+         }
+         renderer->pipe->set_constant_buffer(renderer->pipe,
+               PIPE_SHADER_VERTEX, 0, cbuf);
 
-      if (*cbuf) {
-         pipe_buffer_write(renderer->pipe,
-               *cbuf, 0, sizeof(vs_consts), vs_consts);
+         renderer->vs_cbuf = cbuf;
+         memcpy(renderer->vs_cbuf_data, vs_consts, sizeof(vs_consts));
       }
-      renderer->pipe->set_constant_buffer(renderer->pipe,
-            PIPE_SHADER_VERTEX, 0, *cbuf);
 
       /* we also got a new depth buffer */
       if (dirty & DEPTH_STENCIL_DIRTY) {
