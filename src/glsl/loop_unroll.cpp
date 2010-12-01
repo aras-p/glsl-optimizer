@@ -104,7 +104,7 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
 	 if (is_break(last)) {
 	    continue_from_then_branch = false;
 	 } else {
-	    last = (ir_instruction *) last_if->then_instructions.get_tail();
+	    last = (ir_instruction *) last_if->else_instructions.get_tail();
 
 	    if (is_break(last))
 	       continue_from_then_branch = true;
