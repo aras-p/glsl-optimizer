@@ -1058,10 +1058,26 @@ struct brw_instruction *brw_CONT(struct brw_compile *p, int pop_count)
 }
 
 /* DO/WHILE loop:
+ *
+ * The DO/WHILE is just an unterminated loop -- break or continue are
+ * used for control within the loop.  We have a few ways they can be
+ * done.
+ *
+ * For uniform control flow, the WHILE is just a jump, so ADD ip, ip,
+ * jip and no DO instruction.
+ *
+ * For non-uniform control flow pre-gen6, there's a DO instruction to
+ * push the mask, and a WHILE to jump back, and BREAK to get out and
+ * pop the mask.
+ *
+ * For gen6, there's no more mask stack, so no need for DO.  WHILE
+ * just points back to the first instruction of the loop.
  */
 struct brw_instruction *brw_DO(struct brw_compile *p, GLuint execute_size)
 {
-   if (p->single_program_flow) {
+   struct intel_context *intel = &p->brw->intel;
+
+   if (intel->gen >= 6 || p->single_program_flow) {
       return &p->store[p->nr_insn];
    } else {
       struct brw_instruction *insn = next_insn(p, BRW_OPCODE_DO);
@@ -1094,34 +1110,42 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
    if (intel->gen >= 5)
       br = 2;
 
-   if (p->single_program_flow)
-      insn = next_insn(p, BRW_OPCODE_ADD);
-   else
+   if (intel->gen >= 6) {
       insn = next_insn(p, BRW_OPCODE_WHILE);
 
-   brw_set_dest(insn, brw_ip_reg());
-   brw_set_src0(insn, brw_ip_reg());
-   brw_set_src1(insn, brw_imm_d(0x0));
+      brw_set_dest(insn, brw_imm_w(0));
+      insn->bits1.branch_gen6.jump_count = br * (do_insn - insn);
+      brw_set_src0(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+      brw_set_src1(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
 
-   insn->header.compression_control = BRW_COMPRESSION_NONE;
-
-   if (p->single_program_flow) {
-      insn->header.execution_size = BRW_EXECUTE_1;
-
-      insn->bits3.d = (do_insn - insn) * 16;
-   } else {
       insn->header.execution_size = do_insn->header.execution_size;
+      assert(insn->header.execution_size == BRW_EXECUTE_8);
+   } else {
+      if (p->single_program_flow) {
+	 insn = next_insn(p, BRW_OPCODE_ADD);
 
-      assert(do_insn->header.opcode == BRW_OPCODE_DO);
-      insn->bits3.if_else.jump_count = br * (do_insn - insn + 1);
-      insn->bits3.if_else.pop_count = 0;
-      insn->bits3.if_else.pad0 = 0;
+	 brw_set_dest(insn, brw_ip_reg());
+	 brw_set_src0(insn, brw_ip_reg());
+	 brw_set_src1(insn, brw_imm_d((do_insn - insn) * 16));
+	 insn->header.execution_size = BRW_EXECUTE_1;
+      } else {
+	 insn = next_insn(p, BRW_OPCODE_WHILE);
+
+	 assert(do_insn->header.opcode == BRW_OPCODE_DO);
+
+	 brw_set_dest(insn, brw_ip_reg());
+	 brw_set_src0(insn, brw_ip_reg());
+	 brw_set_src1(insn, brw_imm_d(0));
+
+	 insn->header.execution_size = do_insn->header.execution_size;
+	 insn->bits3.if_else.jump_count = br * (do_insn - insn + 1);
+	 insn->bits3.if_else.pop_count = 0;
+	 insn->bits3.if_else.pad0 = 0;
+      }
    }
+   insn->header.compression_control = BRW_COMPRESSION_NONE;
+   p->current->header.predicate_control = BRW_PREDICATE_NONE;
 
-/*    insn->header.mask_control = BRW_MASK_ENABLE; */
-
-   /* insn->header.mask_control = BRW_MASK_DISABLE; */
-   p->current->header.predicate_control = BRW_PREDICATE_NONE;   
    return insn;
 }
 
