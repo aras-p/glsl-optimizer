@@ -1539,6 +1539,21 @@ struct brw_instruction
 	 GLuint  pad0:12;
       } if_else;
 
+      struct
+      {
+	 /* Signed jump distance to the ip to jump to if all channels
+	  * are disabled after the break or continue.  It should point
+	  * to the end of the innermost control flow block, as that's
+	  * where some channel could get re-enabled.
+	  */
+	 int jip:16;
+
+	 /* Signed jump distance to the location to resume execution
+	  * of this channel if it's enabled for the break or continue.
+	  */
+	 int uip:16;
+      } break_cont;
+
       struct {
 	 GLuint function:4;
 	 GLuint int_type:1;

@@ -933,6 +933,10 @@ fs_visitor::visit(ir_expression *ir)
       assert(!"not reached: should be handled by lower_noise");
       break;
 
+   case ir_quadop_vector:
+      assert(!"not reached: should be handled by lower_quadop_vector");
+      break;
+
    case ir_unop_sqrt:
       emit_math(FS_OPCODE_SQRT, this->result, op[0]);
       break;
@@ -3375,10 +3379,6 @@ fs_visitor::generate_code()
 	 break;
 
       case BRW_OPCODE_DO:
-	 /* FINISHME: We need to write the loop instruction support still. */
-	 if (intel->gen >= 6)
-	    this->fail = true;
-
 	 loop_stack[loop_stack_depth++] = brw_DO(p, BRW_EXECUTE_8);
 	 if_depth_in_loop[loop_stack_depth] = 0;
 	 break;
@@ -3388,6 +3388,10 @@ fs_visitor::generate_code()
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 	 break;
       case BRW_OPCODE_CONTINUE:
+	 /* FINISHME: We need to write the loop instruction support still. */
+	 if (intel->gen >= 6)
+	    this->fail = true;
+
 	 brw_CONT(p, if_depth_in_loop[loop_stack_depth]);
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 	 break;
@@ -3490,6 +3494,8 @@ fs_visitor::generate_code()
 
       last_native_inst = p->nr_insn;
    }
+
+   brw_set_uip_jip(p);
 
    /* OK, while the INTEL_DEBUG=wm above is very nice for debugging FS
     * emit issues, it doesn't get the jump distances into the output,
