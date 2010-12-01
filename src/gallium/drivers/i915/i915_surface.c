@@ -193,6 +193,9 @@ i915_get_tex_surface(struct pipe_screen *screen,
       ps->height = u_minify(pt->height0, level);
       ps->offset = offset;
       ps->usage = flags;
+      ps->zslice = zslice;
+      ps->level = level;
+      ps->face = face;
    }
    return ps;
 }

@@ -851,6 +851,7 @@
 #define MI_FLUSH                   ((0<<29)|(4<<23))
 #define FLUSH_MAP_CACHE            (1<<0)
 #define INHIBIT_FLUSH_RENDER_CACHE (1<<2)
+#define MI_NOOP                    0
 
 
 #define CMD_3D (0x3<<29)

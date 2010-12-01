@@ -248,7 +248,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
 
          OUT_RELOC(tex->buffer,
                    I915_USAGE_RENDER,
-                   cbuf_surface->offset);
+                   0);
       }
 
       /* What happens if no zbuf??
@@ -405,18 +405,34 @@ i915_emit_hardware_state(struct i915_context *i915 )
 #if 01
    /* drawing surface size */
    /* 6 dwords, 0 relocs */
+   if (i915->hardware_dirty & I915_HW_STATIC)
    {
       uint w, h;
-      boolean k = framebuffer_size(&i915->framebuffer, &w, &h);
-      (void)k;
-      assert(k);
+      struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
+      struct i915_texture *tex = i915_texture(cbuf_surface->texture);
+      unsigned x, y;
+      int face;
+      uint32_t draw_offset;
+      boolean ret;
 
+      ret = framebuffer_size(&i915->framebuffer, &w, &h);
+      assert(ret);
+
+      face = tex->b.b.target == PIPE_TEXTURE_CUBE ?
+               cbuf_surface->face : cbuf_surface->zslice;
+
+      x = tex->image_offset[cbuf_surface->level][face].nblocksx;
+      y = tex->image_offset[cbuf_surface->level][face].nblocksy;
+
+      draw_offset = x | (y << 16);
+
+      /* XXX flush only required when the draw_offset changes! */
+      OUT_BATCH(MI_FLUSH | INHIBIT_FLUSH_RENDER_CACHE);
       OUT_BATCH(_3DSTATE_DRAW_RECT_CMD);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(((w - 1) & 0xffff) | ((h - 1) << 16));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
+      OUT_BATCH(DRAW_RECT_DIS_DEPTH_OFS);
+      OUT_BATCH(draw_offset);
+      OUT_BATCH((w - 1 + x) | ((h - 1 + y) << 16));
+      OUT_BATCH(draw_offset);
    }
 #endif
 
