@@ -233,6 +233,9 @@ static void setup_shader_program(struct shader *shader)
       default:
          abort();
       }
+
+      if (paint_is_degenerate(shader->paint))
+         shader_id = VEGA_PAINT_DEGENERATE_SHADER;
    }
 
    /* second stage image */

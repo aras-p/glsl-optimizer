@@ -180,6 +180,18 @@ pattern( struct ureg_program *ureg,
 }
 
 static INLINE void
+paint_degenerate( struct ureg_program *ureg,
+                  struct ureg_dst *out,
+                  struct ureg_src *in,
+                  struct ureg_src *sampler,
+                  struct ureg_dst *temp,
+                  struct ureg_src *constant)
+{
+   ureg_MOV(ureg, temp[1], ureg_scalar(constant[3], TGSI_SWIZZLE_Y));
+   ureg_TEX(ureg, *out, TGSI_TEXTURE_1D, ureg_src(temp[1]), sampler[0]);
+}
+
+static INLINE void
 color_transform( struct ureg_program *ureg,
                  struct ureg_dst *out,
                  struct ureg_src *in,
@@ -436,7 +448,9 @@ static const struct shader_asm_info shaders_paint_asm[] = {
    {VEGA_RADIAL_GRADIENT_SHADER, radial_grad,
     VG_TRUE,  2, 5, 0, 1, 0, 6},
    {VEGA_PATTERN_SHADER, pattern,
-    VG_TRUE,  3, 4, 0, 1, 0, 5}
+    VG_TRUE,  3, 4, 0, 1, 0, 5},
+   {VEGA_PAINT_DEGENERATE_SHADER, paint_degenerate,
+    VG_FALSE,  3, 1, 0, 1, 0, 2}
 };
 
 /* image draw modes */

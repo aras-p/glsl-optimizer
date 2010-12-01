@@ -261,6 +261,7 @@ create_shader(struct pipe_context *pipe,
    case VEGA_LINEAR_GRADIENT_SHADER:
    case VEGA_RADIAL_GRADIENT_SHADER:
    case VEGA_PATTERN_SHADER:
+   case VEGA_PAINT_DEGENERATE_SHADER:
       shaders[idx] = &shaders_paint_asm[(sh >> SHADERS_PAINT_SHIFT) - 1];
       assert(shaders[idx]->id == sh);
       idx++;
