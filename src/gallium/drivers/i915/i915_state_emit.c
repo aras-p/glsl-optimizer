@@ -308,12 +308,11 @@ i915_emit_hardware_state(struct i915_context *i915 )
                if (enabled & (1 << unit)) {
                   struct i915_texture *texture = i915_texture(i915->fragment_sampler_views[unit]->texture);
                   struct i915_winsys_buffer *buf = texture->buffer;
-                  uint offset = 0;
                   assert(buf);
 
                   count++;
 
-                  OUT_RELOC_FENCED(buf, I915_USAGE_SAMPLER, offset);
+                  OUT_RELOC(buf, I915_USAGE_SAMPLER, 0);
                   OUT_BATCH(i915->current.texbuffer[unit][0]); /* MS3 */
                   OUT_BATCH(i915->current.texbuffer[unit][1]); /* MS4 */
                }

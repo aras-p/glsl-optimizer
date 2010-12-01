@@ -243,6 +243,23 @@ static uint translate_texture_format(enum pipe_format pipeFormat)
    }
 }
 
+static inline uint32_t
+ms3_tiling_bits(enum i915_winsys_buffer_tile tiling)
+{
+         uint32_t tiling_bits = 0;
+
+         switch (tiling) {
+         case I915_TILE_Y:
+            tiling_bits |= MS3_TILE_WALK_Y;
+         case I915_TILE_X:
+            tiling_bits |= MS3_TILED_SURFACE;
+         case I915_TILE_NONE:
+            break;
+         }
+
+         return tiling_bits;
+}
+
 static void update_map(struct i915_context *i915,
                        uint unit,
                        const struct i915_texture *tex,
@@ -254,7 +271,6 @@ static void update_map(struct i915_context *i915,
    const uint width = pt->width0, height = pt->height0, depth = pt->depth0;
    const uint num_levels = pt->last_level;
    unsigned max_lod = num_levels * 4;
-   unsigned tiled = MS3_USE_FENCE_REGS;
 
    assert(tex);
    assert(width);
@@ -272,7 +288,7 @@ static void update_map(struct i915_context *i915,
       (((height - 1) << MS3_HEIGHT_SHIFT)
        | ((width - 1) << MS3_WIDTH_SHIFT)
        | format
-       | tiled);
+       | ms3_tiling_bits(tex->tiling));
 
    /*
     * XXX When min_filter != mag_filter and there's just one mipmap level,
