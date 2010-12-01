@@ -745,6 +745,16 @@ ast_node::hir(exec_list *instructions,
    return NULL;
 }
 
+static void
+mark_whole_array_access(ir_rvalue *access)
+{
+   ir_dereference_variable *deref = access->as_dereference_variable();
+
+   if (deref) {
+      deref->var->max_array_access = deref->type->length - 1;
+   }
+}
+
 static ir_rvalue *
 do_comparison(void *mem_ctx, int operation, ir_rvalue *op0, ir_rvalue *op1)
 {
@@ -780,6 +790,10 @@ do_comparison(void *mem_ctx, int operation, ir_rvalue *op0, ir_rvalue *op1)
 	    last = result;
 	 }
       }
+
+      mark_whole_array_access(op0);
+      mark_whole_array_access(op1);
+
       return last;
    }
 
