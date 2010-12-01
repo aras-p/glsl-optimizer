@@ -31,7 +31,6 @@
 #include "api.h"
 #include "renderer.h"
 #include "shaders_cache.h"
-#include "st_inlines.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"

@@ -28,7 +28,6 @@
 
 #include "matrix.h"
 #include "image.h"
-#include "st_inlines.h"
 
 #include "pipe/p_compiler.h"
 #include "util/u_inlines.h"
@@ -161,7 +160,7 @@ static INLINE struct pipe_resource *create_gradient_texture(struct vg_paint *p)
 
    { /* upload color_data */
       struct pipe_transfer *transfer =
-         st_no_flush_get_transfer(p->base.ctx, tex, 0, 0, 0,
+         pipe_get_transfer(p->base.ctx->pipe, tex, 0, 0, 0,
                                       PIPE_TRANSFER_WRITE, 0, 0, 1024, 1);
       void *map = pipe->transfer_map(pipe, transfer);
       memcpy(map, p->gradient.color_data, sizeof(VGint)*1024);

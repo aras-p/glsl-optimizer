@@ -31,7 +31,6 @@
 #include "shaders_cache.h"
 #include "renderer.h"
 #include "asm_util.h"
-#include "st_inlines.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
