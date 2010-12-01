@@ -217,6 +217,22 @@ static void transform_CEIL(struct radeon_compiler* c,
 	rc_remove_instruction(inst);
 }
 
+static void transform_CLAMP(struct radeon_compiler *c,
+	struct rc_instruction *inst)
+{
+	/* CLAMP dst, src, min, max
+	 *    into:
+	 * MIN tmp, src, max
+	 * MAX dst, tmp, min
+	 */
+	int tempreg = rc_find_free_temporary(c);
+	emit2(c, inst->Prev, RC_OPCODE_MIN, 0, dstreg(RC_FILE_TEMPORARY, tempreg),
+		inst->U.I.SrcReg[0], inst->U.I.SrcReg[2]);
+	emit2(c, inst->Prev, RC_OPCODE_MAX, inst->U.I.SaturateMode, inst->U.I.DstReg,
+		srcreg(RC_FILE_TEMPORARY, tempreg), inst->U.I.SrcReg[1]);
+	rc_remove_instruction(inst);
+}
+
 static void transform_DP2(struct radeon_compiler* c,
 	struct rc_instruction* inst)
 {
@@ -554,6 +570,7 @@ int radeonTransformALU(
 	switch(inst->U.I.Opcode) {
 	case RC_OPCODE_ABS: transform_ABS(c, inst); return 1;
 	case RC_OPCODE_CEIL: transform_CEIL(c, inst); return 1;
+	case RC_OPCODE_CLAMP: transform_CLAMP(c, inst); return 1;
 	case RC_OPCODE_DP2: transform_DP2(c, inst); return 1;
 	case RC_OPCODE_DPH: transform_DPH(c, inst); return 1;
 	case RC_OPCODE_DST: transform_DST(c, inst); return 1;
@@ -782,6 +799,7 @@ int r300_transform_vertex_alu(
 	switch(inst->U.I.Opcode) {
 	case RC_OPCODE_ABS: transform_r300_vertex_ABS(c, inst); return 1;
 	case RC_OPCODE_CEIL: transform_CEIL(c, inst); return 1;
+	case RC_OPCODE_CLAMP: transform_CLAMP(c, inst); return 1;
 	case RC_OPCODE_CMP: transform_r300_vertex_CMP(c, inst); return 1;
 	case RC_OPCODE_DP2: transform_r300_vertex_DP2(c, inst); return 1;
 	case RC_OPCODE_DP3: transform_r300_vertex_DP3(c, inst); return 1;
