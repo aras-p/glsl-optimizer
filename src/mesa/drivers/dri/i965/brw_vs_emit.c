@@ -697,7 +697,7 @@ emit_math1(struct brw_vs_compile *c,
       emit_math1_gen4(c, function, dst, arg0, precision);
 }
 
-static void emit_math2( struct brw_vs_compile *c, 
+static void emit_math2_gen4( struct brw_vs_compile *c, 
 			GLuint function,
 			struct brw_reg dst,
 			struct brw_reg arg0,
@@ -705,14 +705,11 @@ static void emit_math2( struct brw_vs_compile *c,
 			GLuint precision)
 {
    struct brw_compile *p = &c->func;
-   struct intel_context *intel = &p->brw->intel;
    struct brw_reg tmp = dst;
    GLboolean need_tmp = GL_FALSE;
 
-   if (dst.file != BRW_GENERAL_REGISTER_FILE)
-      need_tmp = GL_TRUE;
-
-   if (intel->gen < 6 && dst.dw1.bits.writemask != 0xf)
+   if (dst.file != BRW_GENERAL_REGISTER_FILE ||
+       dst.dw1.bits.writemask != 0xf)
       need_tmp = GL_TRUE;
 
    if (need_tmp) 
@@ -735,6 +732,53 @@ static void emit_math2( struct brw_vs_compile *c,
    }
 }
 
+static void emit_math2_gen6( struct brw_vs_compile *c, 
+			GLuint function,
+			struct brw_reg dst,
+			struct brw_reg arg0,
+			struct brw_reg arg1,
+			GLuint precision)
+{
+   struct brw_compile *p = &c->func;
+   struct brw_reg tmp_src0, tmp_src1, tmp_dst;
+
+   tmp_src0 = get_tmp(c);
+   tmp_src1 = get_tmp(c);
+   tmp_dst = get_tmp(c);
+
+   brw_MOV(p, tmp_src0, arg0);
+   brw_MOV(p, tmp_src1, arg1);
+   
+   brw_set_access_mode(p, BRW_ALIGN_1);
+   brw_math2(p,
+	    tmp_dst,
+	    function,
+	    tmp_src0,
+	    tmp_src1);
+   brw_set_access_mode(p, BRW_ALIGN_16);
+
+   brw_MOV(p, dst, tmp_dst);
+
+   release_tmp(c, tmp_src0);
+   release_tmp(c, tmp_src1);
+   release_tmp(c, tmp_dst);
+}
+
+static void emit_math2( struct brw_vs_compile *c, 
+			GLuint function,
+			struct brw_reg dst,
+			struct brw_reg arg0,
+			struct brw_reg arg1,
+			GLuint precision)
+{
+   struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
+
+   if (intel->gen >= 6)
+      emit_math2_gen6(c, function, dst, arg0, arg1, precision);
+   else
+      emit_math2_gen4(c, function, dst, arg0, arg1, precision);
+}
 
 static void emit_exp_noalias( struct brw_vs_compile *c,
 			      struct brw_reg dst,
