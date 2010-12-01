@@ -43,6 +43,14 @@ public:
 };
 
 
+static bool
+is_break(ir_instruction *ir)
+{
+   return ir != NULL && ir->ir_type == ir_type_loop_jump
+		     && ((ir_loop_jump *) ir)->is_break();
+}
+
+
 ir_visitor_status
 loop_unroll_visitor::visit_leave(ir_loop *ir)
 {
@@ -93,14 +101,12 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
 	 ir_instruction *last =
 	    (ir_instruction *) last_if->then_instructions.get_tail();
 
-	 if (last && last->ir_type == ir_type_loop_jump
-	     && ((ir_loop_jump*) last)->is_break()) {
+	 if (is_break(last)) {
 	    continue_from_then_branch = false;
 	 } else {
 	    last = (ir_instruction *) last_if->then_instructions.get_tail();
 
-	    if (last && last->ir_type == ir_type_loop_jump
-		&& ((ir_loop_jump*) last)->is_break())
+	    if (is_break(last))
 	       continue_from_then_branch = true;
 	    else
 	       /* Bail out if neither if-statement branch ends with a break.
@@ -141,8 +147,7 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
 
          this->progress = true;
          return visit_continue;
-      } else if (last_ir->ir_type == ir_type_loop_jump
-		 && ((ir_loop_jump *)last_ir)->is_break()) {
+      } else if (is_break(last_ir)) {
 	 /* If the only loop-jump is a break at the end of the loop, the loop
 	  * will execute exactly once.  Remove the break, set the iteration
 	  * count, and fall through to the normal unroller.
