@@ -56,7 +56,7 @@ struct st_framebuffer {
    struct st_renderbuffer *strb;
    struct st_renderbuffer *dsrb;
 
-   struct pipe_sampler_view *alpha_mask_view;
+   struct pipe_sampler_view *surface_mask_view;
 
    struct pipe_sampler_view *blend_texture_view;
 
@@ -161,6 +161,8 @@ void vg_set_error(struct vg_context *ctx,
 
 struct pipe_sampler_view *vg_prepare_blend_surface(struct vg_context *ctx);
 struct pipe_sampler_view *vg_prepare_blend_surface_from_mask(struct vg_context *ctx);
+
+struct pipe_sampler_view *vg_get_surface_mask(struct vg_context *ctx);
 
 VGboolean vg_get_paint_matrix(struct vg_context *ctx,
                               const struct matrix *paint_to_user,

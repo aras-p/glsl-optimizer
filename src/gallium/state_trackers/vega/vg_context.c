@@ -276,11 +276,11 @@ create_tex_and_view(struct pipe_context *pipe, enum pipe_format format,
 }
 
 static void
-vg_context_update_alpha_mask_view(struct vg_context *ctx,
-                                  uint width, uint height)
+vg_context_update_surface_mask_view(struct vg_context *ctx,
+                                    uint width, uint height)
 {
    struct st_framebuffer *stfb = ctx->draw_buffer;
-   struct pipe_sampler_view *old_sampler_view = stfb->alpha_mask_view;
+   struct pipe_sampler_view *old_sampler_view = stfb->surface_mask_view;
    struct pipe_context *pipe = ctx->pipe;
 
    if (old_sampler_view &&
@@ -293,10 +293,10 @@ vg_context_update_alpha_mask_view(struct vg_context *ctx,
      this texture and use it as a sampler, so while this wastes some
      space it makes both of those a lot simpler
    */
-   stfb->alpha_mask_view = create_tex_and_view(pipe,
+   stfb->surface_mask_view = create_tex_and_view(pipe,
          PIPE_FORMAT_B8G8R8A8_UNORM, width, height);
 
-   if (!stfb->alpha_mask_view) {
+   if (!stfb->surface_mask_view) {
       if (old_sampler_view)
          pipe_sampler_view_reference(&old_sampler_view, NULL);
       return;
@@ -316,16 +316,16 @@ vg_context_update_alpha_mask_view(struct vg_context *ctx,
       subold_surf.face = 0;
       subold_surf.level = 0;
       pipe->resource_copy_region(pipe,
-                                 stfb->alpha_mask_view->texture,
+                                 stfb->surface_mask_view->texture,
                                  subsurf,
                                  0, 0, 0,
                                  old_sampler_view->texture,
                                  subold_surf,
                                  0, 0, 0,
                                  MIN2(old_sampler_view->texture->width0,
-                                      stfb->alpha_mask_view->texture->width0),
+                                      stfb->surface_mask_view->texture->width0),
                                  MIN2(old_sampler_view->texture->height0,
-                                      stfb->alpha_mask_view->texture->height0));
+                                      stfb->surface_mask_view->texture->height0));
    }
 
    /* Free the old texture
@@ -404,9 +404,6 @@ void vg_validate_state(struct vg_context *ctx)
    if (vg_context_update_depth_stencil_rb(ctx, stfb->width, stfb->height))
       ctx->state.dirty |= DEPTH_STENCIL_DIRTY;
 
-   /* TODO create as needed */
-   vg_context_update_alpha_mask_view(ctx, stfb->width, stfb->height);
-
    renderer_validate(ctx->renderer, ctx->state.dirty,
          ctx->draw_buffer, &ctx->state.vg);
 
@@ -484,9 +481,19 @@ struct pipe_sampler_view *vg_prepare_blend_surface_from_mask(struct vg_context *
 
    vg_validate_state(ctx);
 
-   vg_prepare_blend_texture(ctx, stfb->alpha_mask_view);
+   vg_context_update_surface_mask_view(ctx, stfb->width, stfb->height);
+   vg_prepare_blend_texture(ctx, stfb->surface_mask_view);
 
    return stfb->blend_texture_view;
+}
+
+struct pipe_sampler_view *vg_get_surface_mask(struct vg_context *ctx)
+{
+   struct st_framebuffer *stfb = ctx->draw_buffer;
+
+   vg_context_update_surface_mask_view(ctx, stfb->width, stfb->height);
+
+   return stfb->surface_mask_view;
 }
 
 /**

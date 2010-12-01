@@ -48,17 +48,6 @@ struct vg_mask_layer {
    struct pipe_sampler_view *sampler_view;
 };
 
-static INLINE struct pipe_surface *
-alpha_mask_surface(struct vg_context *ctx, int usage)
-{
-   struct pipe_screen *screen = ctx->pipe->screen;
-   struct st_framebuffer *stfb = ctx->draw_buffer;
-   return screen->get_tex_surface(screen,
-                                  stfb->alpha_mask_view->texture,
-                                  0, 0, 0,
-                                  usage);
-}
-
 static INLINE VGboolean
 intersect_rectangles(VGint dwidth, VGint dheight,
                      VGint swidth, VGint sheight,
@@ -289,7 +278,8 @@ static void mask_using_texture(struct pipe_sampler_view *sampler_view,
                                VGint width, VGint height)
 {
    struct vg_context *ctx = vg_current_context();
-   struct pipe_resource *dst = ctx->draw_buffer->alpha_mask_view->texture;
+   struct pipe_sampler_view *dst_view = vg_get_surface_mask(ctx);
+   struct pipe_resource *dst = dst_view->texture;
    struct pipe_resource *texture = sampler_view->texture;
    const struct pipe_sampler_state *samplers[2];
    struct pipe_sampler_view *views[2];
@@ -309,6 +299,7 @@ static void mask_using_texture(struct pipe_sampler_view *sampler_view,
    debug_printf("Locati = [%d, %d, %d, %d]\n", loc[0],
                 loc[1], loc[2], loc[3]);
 #endif
+
 
    sampler = ctx->mask.sampler;
    sampler.normalized_coords = 1;
@@ -408,7 +399,7 @@ void mask_copy(struct vg_mask_layer *layer,
                VGint width, VGint height)
 {
    struct vg_context *ctx = vg_current_context();
-   struct pipe_sampler_view *src = ctx->draw_buffer->alpha_mask_view;
+   struct pipe_sampler_view *src = vg_get_surface_mask(ctx);
    struct pipe_surface *surf;
 
    /* get the destination surface */
@@ -433,10 +424,13 @@ static void mask_layer_render_to(struct vg_mask_layer *layer,
                                  VGbitfield paint_modes)
 {
    struct vg_context *ctx = vg_current_context();
+   struct pipe_screen *screen = ctx->pipe->screen;
+   struct pipe_sampler_view *view = vg_get_surface_mask(ctx);
    struct matrix *mat = &ctx->state.vg.path_user_to_surface_matrix;
    struct pipe_surface *surf;
 
-   surf = alpha_mask_surface(ctx, PIPE_BIND_RENDER_TARGET);
+   surf = screen->get_tex_surface(screen, view->texture,
+                                  0, 0, 0, PIPE_BIND_RENDER_TARGET);
 
    renderer_validate_for_mask_rendering(ctx->renderer, surf);
 
@@ -447,6 +441,8 @@ static void mask_layer_render_to(struct vg_mask_layer *layer,
    if (paint_modes & VG_STROKE_PATH){
       path_stroke(path, mat);
    }
+
+   pipe_surface_reference(&surf, NULL);
 }
 
 void mask_render_to(struct path *path,
@@ -454,12 +450,12 @@ void mask_render_to(struct path *path,
                     VGMaskOperation operation)
 {
    struct vg_context *ctx = vg_current_context();
-   struct st_framebuffer *fb_buffers = ctx->draw_buffer;
+   struct st_framebuffer *stfb = ctx->draw_buffer;
    struct vg_mask_layer *temp_layer;
    VGint width, height;
 
-   width = fb_buffers->alpha_mask_view->texture->width0;
-   height = fb_buffers->alpha_mask_view->texture->height0;
+   width = stfb->width;
+   height = stfb->height;
 
    temp_layer = mask_layer_create(width, height);
    mask_layer_fill(temp_layer, 0, 0, width, height, 0.0f);
@@ -506,6 +502,7 @@ void mask_fill(VGint x, VGint y, VGint width, VGint height,
                VGfloat value)
 {
    struct vg_context *ctx = vg_current_context();
+   struct pipe_sampler_view *view = vg_get_surface_mask(ctx);
 
 #if DEBUG_MASKS
    debug_printf("mask_fill(%d, %d, %d, %d) with  rgba(%f, %f, %f, %f)\n",
@@ -513,8 +510,7 @@ void mask_fill(VGint x, VGint y, VGint width, VGint height,
                 0.0f, 0.0f, 0.0f, value);
 #endif
 
-   mask_resource_fill(ctx->draw_buffer->alpha_mask_view->texture,
-                      x, y, width, height, value);
+   mask_resource_fill(view->texture, x, y, width, height, value);
 }
 
 VGint mask_bind_samplers(struct pipe_sampler_state **samplers,
@@ -523,10 +519,8 @@ VGint mask_bind_samplers(struct pipe_sampler_state **samplers,
    struct vg_context *ctx = vg_current_context();
 
    if (ctx->state.vg.masking) {
-      struct st_framebuffer *fb_buffers = ctx->draw_buffer;
-
       samplers[1] = &ctx->mask.sampler;
-      sampler_views[1] = fb_buffers->alpha_mask_view;
+      sampler_views[1] = vg_get_surface_mask(ctx);
       return 1;
    } else
       return 0;
