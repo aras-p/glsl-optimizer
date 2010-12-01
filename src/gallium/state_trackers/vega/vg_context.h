@@ -78,14 +78,13 @@ enum vg_object_type {
    VG_OBJECT_LAST
 };
 enum dirty_state {
-   NONE_DIRTY          = 0<<0,
-   BLEND_DIRTY         = 1<<1,
-   RASTERIZER_DIRTY    = 1<<2,
-   FRAMEBUFFER_DIRTY   = 1<<3,
-   VS_DIRTY            = 1<<4,
-   DEPTH_STENCIL_DIRTY = 1<<5,
-   ALL_DIRTY           = BLEND_DIRTY | RASTERIZER_DIRTY |
-   FRAMEBUFFER_DIRTY | VS_DIRTY | DEPTH_STENCIL_DIRTY
+   BLEND_DIRTY         = 1 << 0,
+   FRAMEBUFFER_DIRTY   = 1 << 1,
+   DEPTH_STENCIL_DIRTY = 1 << 2,
+
+   ALL_DIRTY           = BLEND_DIRTY |
+                         FRAMEBUFFER_DIRTY |
+                         DEPTH_STENCIL_DIRTY
 };
 
 struct vg_context

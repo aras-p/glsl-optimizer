@@ -407,7 +407,7 @@ void vg_validate_state(struct vg_context *ctx)
    renderer_validate(ctx->renderer, ctx->state.dirty,
          ctx->draw_buffer, &ctx->state.vg);
 
-   ctx->state.dirty = NONE_DIRTY;
+   ctx->state.dirty = 0;
 
    shader_set_masking(ctx->shader, ctx->state.vg.masking);
    shader_set_image_mode(ctx->shader, ctx->state.vg.image_mode);

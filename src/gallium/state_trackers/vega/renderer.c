@@ -508,7 +508,6 @@ static void renderer_quad_draw(struct renderer *r)
                                  sizeof(r->vertices),
                                  PIPE_BIND_VERTEX_BUFFER);
    if (buf) {
-      cso_set_vertex_elements(r->cso, 2, r->velems);
       util_draw_vertex_buffer(r->pipe, buf, 0,
                               PIPE_PRIM_TRIANGLE_FAN,
                               Elements(r->vertices),     /* verts */
@@ -912,6 +911,7 @@ VGboolean renderer_polygon_stencil_begin(struct renderer *renderer,
 
    assert(renderer->state == RENDERER_STATE_INIT);
 
+   cso_save_vertex_elements(renderer->cso);
    cso_save_blend(renderer->cso);
    cso_save_depth_stencil_alpha(renderer->cso);
 
@@ -1015,6 +1015,8 @@ void renderer_polygon_stencil_end(struct renderer *renderer)
    if (renderer->u.polygon_stencil.manual_two_sides)
       cso_restore_rasterizer(renderer->cso);
 
+   cso_restore_vertex_elements(renderer->cso);
+
    /* restore color writes */
    cso_restore_blend(renderer->cso);
 
@@ -1031,16 +1033,11 @@ VGboolean renderer_polygon_fill_begin(struct renderer *renderer,
                                       VGboolean save_dsa)
 {
    struct pipe_depth_stencil_alpha_state dsa;
-   struct pipe_stencil_ref sr;
 
    assert(renderer->state == RENDERER_STATE_INIT);
 
    if (save_dsa)
       cso_save_depth_stencil_alpha(renderer->cso);
-
-   /* only need a fixed 0. Rely on default or move it out at least? */
-   memset(&sr, 0, sizeof(sr));
-   cso_set_stencil_ref(renderer->cso, &sr);
 
    /* setup stencil ops */
    memset(&dsa, 0, sizeof(dsa));
@@ -1086,9 +1083,12 @@ void renderer_polygon_fill_end(struct renderer *renderer)
 
 struct renderer * renderer_create(struct vg_context *owner)
 {
+   struct renderer *renderer;
+   struct pipe_rasterizer_state *raster;
+   struct pipe_stencil_ref sr;
    VGint i;
-   struct renderer *renderer = CALLOC_STRUCT(renderer);
 
+   renderer = CALLOC_STRUCT(renderer);
    if (!renderer)
       return NULL;
 
@@ -1105,6 +1105,19 @@ struct renderer * renderer_create(struct vg_context *owner)
       renderer->velems[i].vertex_buffer_index = 0;
       renderer->velems[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
    }
+   cso_set_vertex_elements(renderer->cso, 2, renderer->velems);
+
+   /* GL rasterization rules */
+   raster = &renderer->g3d.rasterizer;
+   memset(raster, 0, sizeof(*raster));
+   raster->gl_rasterization_rules = 1;
+   cso_set_rasterizer(renderer->cso, raster);
+
+   /* fixed at 0 */
+   memset(&sr, 0, sizeof(sr));
+   cso_set_stencil_ref(renderer->cso, &sr);
+
+   renderer_set_vs(renderer, RENDERER_VS_PLAIN);
 
    renderer->state = RENDERER_STATE_INIT;
 
@@ -1258,13 +1271,6 @@ void renderer_validate(struct renderer *renderer,
       cso_set_blend(renderer->cso, &blend);
    }
 
-   if (dirty & RASTERIZER_DIRTY) {
-      struct pipe_rasterizer_state *raster = &renderer->g3d.rasterizer;
-      memset(raster, 0, sizeof(struct pipe_rasterizer_state));
-      raster->gl_rasterization_rules = 1;
-      cso_set_rasterizer(renderer->cso, raster);
-   }
-
    if (dirty & FRAMEBUFFER_DIRTY) {
       struct pipe_framebuffer_state *fb = &renderer->g3d.fb;
       struct pipe_resource **cbuf = &renderer->vs_const_buffer;
@@ -1308,9 +1314,6 @@ void renderer_validate(struct renderer *renderer,
                PIPE_CLEAR_DEPTHSTENCIL, NULL, 0.0, 0);
       }
    }
-
-   if (dirty & VS_DIRTY)
-      renderer_set_vs(renderer, RENDERER_VS_PLAIN);
 
    /* must be last because it renders to the depth buffer*/
    if (dirty & DEPTH_STENCIL_DIRTY) {
