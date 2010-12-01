@@ -99,6 +99,48 @@ upload_sf_state(struct brw_context *brw)
    if (ctx->Polygon.OffsetFill)
        dw2 |= GEN6_SF_GLOBAL_DEPTH_OFFSET_SOLID;
 
+   if (ctx->Polygon.OffsetLine)
+       dw2 |= GEN6_SF_GLOBAL_DEPTH_OFFSET_WIREFRAME;
+
+   if (ctx->Polygon.OffsetPoint)
+       dw2 |= GEN6_SF_GLOBAL_DEPTH_OFFSET_POINT;
+
+   switch (ctx->Polygon.FrontMode) {
+   case GL_FILL:
+       dw2 |= GEN6_SF_FRONT_SOLID;
+       break;
+
+   case GL_LINE:
+       dw2 |= GEN6_SF_FRONT_WIREFRAME;
+       break;
+
+   case GL_POINT:
+       dw2 |= GEN6_SF_FRONT_POINT;
+       break;
+
+   default:
+       assert(0);
+       break;
+   }
+
+   switch (ctx->Polygon.BackMode) {
+   case GL_FILL:
+       dw2 |= GEN6_SF_BACK_SOLID;
+       break;
+
+   case GL_LINE:
+       dw2 |= GEN6_SF_BACK_WIREFRAME;
+       break;
+
+   case GL_POINT:
+       dw2 |= GEN6_SF_BACK_POINT;
+       break;
+
+   default:
+       assert(0);
+       break;
+   }
+
    /* _NEW_SCISSOR */
    if (ctx->Scissor.Enabled)
       dw3 |= GEN6_SF_SCISSOR_ENABLE;
