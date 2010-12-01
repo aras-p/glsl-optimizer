@@ -83,7 +83,7 @@ struct renderer {
       struct pipe_framebuffer_state fb;
    } g3d;
 
-   struct pipe_resource *vs_cbuf;;
+   struct pipe_resource *vs_cbuf;
    VGfloat vs_cbuf_data[8];
 
    struct pipe_resource *fs_cbuf;
