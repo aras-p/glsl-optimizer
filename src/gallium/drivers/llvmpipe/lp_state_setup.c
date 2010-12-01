@@ -562,11 +562,12 @@ finalize_function(struct gallivm_state *gallivm,
 /* XXX: Generic code:
  */
 static void
-lp_emit_emms(LLVMBuilderRef builder)
+lp_emit_emms(struct gallivm_state *gallivm)
 {
 #ifdef PIPE_ARCH_X86
    /* Avoid corrupting the FPU stack on 32bit OSes. */
-   lp_build_intrinsic(builder, "llvm.x86.mmx.emms", LLVMVoidType(), NULL, 0);
+   lp_build_intrinsic(gallivm->builder, "llvm.x86.mmx.emms",
+         LLVMVoidTypeInContext(gallivm->context), NULL, 0);
 #endif
 }
 
@@ -720,7 +721,7 @@ generate_setup_variant(struct gallivm_state *gallivm,
    init_args(gallivm, &args, variant);
    emit_tri_coef(gallivm, &variant->key, &args);
 
-   lp_emit_emms(builder);
+   lp_emit_emms(gallivm);
    LLVMBuildRetVoid(builder);
 
    variant->jit_function = finalize_function(gallivm, builder,

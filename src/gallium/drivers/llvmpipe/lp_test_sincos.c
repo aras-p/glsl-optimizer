@@ -137,7 +137,7 @@ test_sincos(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
 #else /* !PIPE_ARCH_SSE */
 
 static boolean
-test_sincos(unsigned verbose, FILE *fp)
+test_sincos(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
 {
    return TRUE;
 }
