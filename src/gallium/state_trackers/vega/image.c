@@ -529,10 +529,10 @@ void image_draw(struct vg_image *img, struct matrix *matrix)
    VGfloat x3, y3;
    VGfloat x4, y4;
 
-   if (vg_get_paint_matrix(ctx,
-                           &ctx->state.vg.fill_paint_to_user_matrix,
-                           matrix,
-                           &paint_matrix))
+   if (!vg_get_paint_matrix(ctx,
+                            &ctx->state.vg.fill_paint_to_user_matrix,
+                            matrix,
+                            &paint_matrix))
       return;
 
    x1 = 0;
