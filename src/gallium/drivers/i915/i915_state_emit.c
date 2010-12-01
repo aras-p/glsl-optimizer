@@ -86,6 +86,22 @@ framebuffer_size(const struct pipe_framebuffer_state *fb,
    }
 }
 
+static inline uint32_t
+buf_3d_tiling_bits(enum i915_winsys_buffer_tile tiling)
+{
+         uint32_t tiling_bits = 0;
+
+         switch (tiling) {
+         case I915_TILE_Y:
+            tiling_bits |= BUF_3D_TILE_WALK_Y;
+         case I915_TILE_X:
+            tiling_bits |= BUF_3D_TILED_SURFACE;
+         case I915_TILE_NONE:
+            break;
+         }
+
+         return tiling_bits;
+}
 
 /* Push the state into the sarea and/or texture memory.
  */
@@ -220,17 +236,17 @@ i915_emit_hardware_state(struct i915_context *i915 )
       struct pipe_surface *depth_surface = i915->framebuffer.zsbuf;
 
       if (cbuf_surface) {
-         unsigned ctile = BUF_3D_USE_FENCE;
          struct i915_texture *tex = i915_texture(cbuf_surface->texture);
+         uint32_t tiling_bits = 0;
          assert(tex);
 
          OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
 
          OUT_BATCH(BUF_3D_ID_COLOR_BACK |
                    BUF_3D_PITCH(tex->stride) |  /* pitch in bytes */
-                   ctile);
+                   buf_3d_tiling_bits(tex->tiling));
 
-         OUT_RELOC_FENCED(tex->buffer,
+         OUT_RELOC(tex->buffer,
                    I915_USAGE_RENDER,
                    cbuf_surface->offset);
       }
@@ -238,7 +254,6 @@ i915_emit_hardware_state(struct i915_context *i915 )
       /* What happens if no zbuf??
        */
       if (depth_surface) {
-         unsigned ztile = BUF_3D_USE_FENCE;
          struct i915_texture *tex = i915_texture(depth_surface->texture);
          assert(tex);
 
@@ -247,9 +262,9 @@ i915_emit_hardware_state(struct i915_context *i915 )
          assert(tex);
          OUT_BATCH(BUF_3D_ID_DEPTH |
                    BUF_3D_PITCH(tex->stride) |  /* pitch in bytes */
-                   ztile);
+                   buf_3d_tiling_bits(tex->tiling));
 
-         OUT_RELOC_FENCED(tex->buffer,
+         OUT_RELOC(tex->buffer,
                    I915_USAGE_RENDER,
                    depth_surface->offset);
       }
