@@ -1050,6 +1050,26 @@ struct brw_instruction *brw_BREAK(struct brw_compile *p, int pop_count)
    return insn;
 }
 
+struct brw_instruction *brw_CONT_gen6(struct brw_compile *p,
+				      struct brw_instruction *do_insn)
+{
+   struct brw_instruction *insn;
+   int br = 2;
+
+   insn = next_insn(p, BRW_OPCODE_CONTINUE);
+   brw_set_dest(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+   brw_set_src0(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+   brw_set_dest(insn, brw_ip_reg());
+   brw_set_src0(insn, brw_ip_reg());
+   brw_set_src1(insn, brw_imm_d(0x0));
+
+   insn->bits3.break_cont.uip = br * (do_insn - insn);
+
+   insn->header.compression_control = BRW_COMPRESSION_NONE;
+   insn->header.execution_size = BRW_EXECUTE_8;
+   return insn;
+}
+
 struct brw_instruction *brw_CONT(struct brw_compile *p, int pop_count)
 {
    struct brw_instruction *insn;
@@ -2087,7 +2107,9 @@ brw_set_uip_jip(struct brw_compile *p)
 	 /* JIP is set at CONTINUE emit time, since that's when we
 	  * know where the start of the loop is.
 	  */
-	 insn->bits3.break_cont.uip = br * (brw_find_next_block_end(p, ip) - ip);
+	 insn->bits3.break_cont.jip = br * (brw_find_next_block_end(p, ip) - ip);
+	 assert(insn->bits3.break_cont.uip != 0);
+	 assert(insn->bits3.break_cont.jip != 0);
 	 break;
       }
    }
