@@ -37,6 +37,9 @@
 #include "stub.h"
 #include "table.h"
 
+/* XXX: Hack to avoid vgCreateFont being generated as vgCreateFontA */
+#undef CreateFont
+
 #define MAPI_TABLE_FIRST_DYNAMIC \
    (offsetof(struct mapi_table, dynamic0) / sizeof(mapi_func))
 #define MAPI_TABLE_NUM_DYNAMIC \
