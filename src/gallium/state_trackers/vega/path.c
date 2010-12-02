@@ -207,13 +207,29 @@ struct path * path_create(VGPathDatatype dt, VGfloat scale, VGfloat bias,
    return path;
 }
 
+static void polygon_array_cleanup(struct polygon_array *polyarray)
+{
+   if (polyarray->array) {
+      VGint i;
+
+      for (i = 0; i < polyarray->array->num_elements; i++) {
+         struct polygon *p = ((struct polygon **) polyarray->array->data)[i];
+         polygon_destroy(p);
+      }
+
+      array_destroy(polyarray->array);
+      polyarray->array = NULL;
+   }
+}
+
 void path_destroy(struct path *p)
 {
    vg_context_remove_object(vg_current_context(), VG_OBJECT_PATH, p);
 
    array_destroy(p->segments);
    array_destroy(p->control_points);
-   array_destroy(p->fill_polys.polygon_array.array);
+
+   polygon_array_cleanup(&p->fill_polys.polygon_array);
 
    if (p->stroked.path)
       path_destroy(p->stroked.path);
@@ -302,7 +318,6 @@ static void convert_path(struct path *p,
    }
 }
 
-
 static void polygon_array_calculate_bounds( struct polygon_array *polyarray )
 {
    struct array *polys = polyarray->array;
@@ -361,12 +376,12 @@ static struct polygon_array * path_get_fill_polygons(struct path *p, struct matr
          return &p->fill_polys.polygon_array;
       }
       else {
-         array_destroy( p->fill_polys.polygon_array.array );
-         p->fill_polys.polygon_array.array = NULL;
+         polygon_array_cleanup(&p->fill_polys.polygon_array);
       }
    }
 
-   array = array_create(sizeof(struct array*));
+   /* an array of pointers to polygons */
+   array = array_create(sizeof(struct polygon *));
 
    sx = sy = px = py = ox = oy = 0.f;
 
