@@ -649,8 +649,8 @@ void r300_init_resource_functions(struct r300_context* r300);
 /* r300_blit.c */
 void r300_flush_depth_stencil(struct pipe_context *pipe,
                               struct pipe_resource *dst,
-                              struct pipe_subresource subdst,
-                              unsigned zslice);
+                              unsigned level,
+                              unsigned layer);
 
 /* r300_query.c */
 void r300_resume_query(struct r300_context *r300,

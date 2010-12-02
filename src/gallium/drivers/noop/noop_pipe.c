@@ -83,7 +83,7 @@ struct noop_resource {
 
 static unsigned noop_is_resource_referenced(struct pipe_context *pipe,
 						struct pipe_resource *resource,
-						unsigned face, unsigned level)
+						unsigned level, int layer)
 {
 	return PIPE_UNREFERENCED;
 }
@@ -193,7 +193,7 @@ static struct pipe_resource *noop_user_buffer_create(struct pipe_screen *screen,
  */
 static struct pipe_transfer *noop_get_transfer(struct pipe_context *context,
 						struct pipe_resource *resource,
-						struct pipe_subresource sr,
+						unsigned level,
 						enum pipe_transfer_usage usage,
 						const struct pipe_box *box)
 {
@@ -203,11 +203,11 @@ static struct pipe_transfer *noop_get_transfer(struct pipe_context *context,
 	if (transfer == NULL)
 		return NULL;
 	pipe_resource_reference(&transfer->resource, resource);
-	transfer->sr = sr;
+	transfer->level = level;
 	transfer->usage = usage;
 	transfer->box = *box;
 	transfer->stride = 1;
-	transfer->slice_stride = 1;
+	transfer->layer_stride = 1;
 	return transfer;
 }
 
@@ -239,12 +239,12 @@ static void noop_transfer_destroy(struct pipe_context *pipe,
 
 static void noop_transfer_inline_write(struct pipe_context *pipe,
 					struct pipe_resource *resource,
-					struct pipe_subresource sr,
+					unsigned level,
 					unsigned usage,
 					const struct pipe_box *box,
 					const void *data,
 					unsigned stride,
-					unsigned slice_stride)
+					unsigned layer_stride)
 {
 }
 
@@ -277,12 +277,11 @@ static void noop_clear_depth_stencil(struct pipe_context *ctx,
 
 static void noop_resource_copy_region(struct pipe_context *ctx,
 				      struct pipe_resource *dst,
-				      struct pipe_subresource subdst,
+				      unsigned dst_level,
 				      unsigned dstx, unsigned dsty, unsigned dstz,
 				      struct pipe_resource *src,
-				      struct pipe_subresource subsrc,
-				      unsigned srcx, unsigned srcy, unsigned srcz,
-				      unsigned width, unsigned height)
+				      unsigned src_level,
+				      const struct pipe_box *src_box)
 {
 }
 
@@ -332,46 +331,14 @@ static struct pipe_context *noop_create_context(struct pipe_screen *screen, void
 	return ctx;
 }
 
-/*
- * texture
- */
-static struct pipe_surface *noop_get_tex_surface(struct pipe_screen *screen,
-						struct pipe_resource *texture,
-						unsigned face, unsigned level,
-						unsigned zslice, unsigned flags)
-{
-	struct pipe_surface *surface = CALLOC_STRUCT(pipe_surface);
-
-	if (surface == NULL)
-		return NULL;
-	pipe_reference_init(&surface->reference, 1);
-	pipe_resource_reference(&surface->texture, texture);
-	surface->format = texture->format;
-	surface->width = texture->width0;
-	surface->height = texture->height0;
-	surface->offset = 0;
-	surface->usage = flags;
-	surface->zslice = zslice;
-	surface->texture = texture;
-	surface->face = face;
-	surface->level = level;
-
-	return surface;
-}
-
-static void noop_tex_surface_destroy(struct pipe_surface *surface)
-{
-	pipe_resource_reference(&surface->texture, NULL);
-	FREE(surface);
-}
-
 
 /*
  * pipe_screen
  */
 static void noop_flush_frontbuffer(struct pipe_screen *_screen,
-					struct pipe_surface *surface,
-					void *context_private)
+				   struct pipe_resource *resource,
+				   unsigned level, unsigned layer,
+				   void *context_private)
 {
 }
 
@@ -537,8 +504,6 @@ struct pipe_screen *noop_screen_create(struct sw_winsys *winsys)
 	screen->get_paramf = noop_get_paramf;
 	screen->is_format_supported = noop_is_format_supported;
 	screen->context_create = noop_create_context;
-	screen->get_tex_surface = noop_get_tex_surface;
-	screen->tex_surface_destroy = noop_tex_surface_destroy;
 	screen->resource_create = noop_resource_create;
 	screen->resource_from_handle = noop_resource_from_handle;
 	screen->resource_get_handle = noop_resource_get_handle;

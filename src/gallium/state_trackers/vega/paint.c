@@ -154,14 +154,15 @@ static INLINE struct pipe_resource *create_gradient_texture(struct vg_paint *p)
    templ.width0 = 1024;
    templ.height0 = 1;
    templ.depth0 = 1;
+   templ.array_size = 1;
    templ.bind = PIPE_BIND_SAMPLER_VIEW;
 
    tex = screen->resource_create(screen, &templ);
 
    { /* upload color_data */
       struct pipe_transfer *transfer =
-         pipe_get_transfer(p->base.ctx->pipe, tex, 0, 0, 0,
-                                      PIPE_TRANSFER_WRITE, 0, 0, 1024, 1);
+         pipe_get_transfer(p->base.ctx->pipe, tex, 0, 0,
+                           PIPE_TRANSFER_WRITE, 0, 0, 1024, 1);
       void *map = pipe->transfer_map(pipe, transfer);
       memcpy(map, p->gradient.color_data, sizeof(VGint)*1024);
       pipe->transfer_unmap(pipe, transfer);

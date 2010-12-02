@@ -42,11 +42,11 @@ struct util_surfaces
    } u;
 };
 
-struct pipe_surface *util_surfaces_do_get(struct util_surfaces *us, unsigned surface_struct_size, struct pipe_screen *pscreen, struct pipe_resource *pt, unsigned face, unsigned level, unsigned zslice, unsigned flags);
+struct pipe_surface *util_surfaces_do_get(struct util_surfaces *us, unsigned surface_struct_size, struct pipe_screen *pscreen, struct pipe_resource *pt, unsigned level, unsigned layer, unsigned flags);
 
 /* fast inline path for the very common case */
 static INLINE struct pipe_surface *
-util_surfaces_get(struct util_surfaces *us, unsigned surface_struct_size, struct pipe_screen *pscreen, struct pipe_resource *pt, unsigned face, unsigned level, unsigned zslice, unsigned flags)
+util_surfaces_get(struct util_surfaces *us, unsigned surface_struct_size, struct pipe_screen *pscreen, struct pipe_resource *pt, unsigned level, unsigned layer, unsigned flags)
 {
    if(likely((pt->target == PIPE_TEXTURE_2D || pt->target == PIPE_TEXTURE_RECT) && us->u.array))
    {
@@ -58,17 +58,17 @@ util_surfaces_get(struct util_surfaces *us, unsigned surface_struct_size, struct
       }
    }
 
-   return util_surfaces_do_get(us, surface_struct_size, pscreen, pt, face, level, zslice, flags);
+   return util_surfaces_do_get(us, surface_struct_size, pscreen, pt, level, layer, flags);
 }
 
 static INLINE struct pipe_surface *
-util_surfaces_peek(struct util_surfaces *us, struct pipe_resource *pt, unsigned face, unsigned level, unsigned zslice)
+util_surfaces_peek(struct util_surfaces *us, struct pipe_resource *pt, unsigned level, unsigned layer)
 {
    if(!us->u.pv)
       return 0;
 
    if(unlikely(pt->target == PIPE_TEXTURE_3D || pt->target == PIPE_TEXTURE_CUBE))
-      return cso_hash_iter_data(cso_hash_find(us->u.hash, ((zslice + face) << 8) | level));
+      return cso_hash_iter_data(cso_hash_find(us->u.hash, (layer << 8) | level));
    else
       return us->u.array[level];
 }
@@ -80,7 +80,7 @@ util_surfaces_detach(struct util_surfaces *us, struct pipe_surface *ps)
 {
    if(likely(ps->texture->target == PIPE_TEXTURE_2D || ps->texture->target == PIPE_TEXTURE_RECT))
    {
-      us->u.array[ps->level] = 0;
+      us->u.array[ps->u.tex.level] = 0;
       return;
    }
 

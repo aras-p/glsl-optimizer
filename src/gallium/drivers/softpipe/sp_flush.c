@@ -120,8 +120,8 @@ softpipe_flush( struct pipe_context *pipe,
 boolean
 softpipe_flush_resource(struct pipe_context *pipe,
                         struct pipe_resource *texture,
-                        unsigned face,
                         unsigned level,
+                        int layer,
                         unsigned flush_flags,
                         boolean read_only,
                         boolean cpu_access,
@@ -129,7 +129,7 @@ softpipe_flush_resource(struct pipe_context *pipe,
 {
    unsigned referenced;
 
-   referenced = pipe->is_resource_referenced(pipe, texture, face, level);
+   referenced = pipe->is_resource_referenced(pipe, texture, level, layer);
 
    if ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
        ((referenced & PIPE_REFERENCED_FOR_READ) && !read_only)) {

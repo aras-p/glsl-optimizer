@@ -37,6 +37,7 @@
 #include "util/u_inlines.h"
 #include "util/u_format.h"
 #include "util/u_memory.h"
+#include "util/u_surface.h"
 #include "util/u_sampler.h"
 
 struct vg_mask_layer {
@@ -99,7 +100,6 @@ static void read_alpha_mask(void * data, VGint dataStride,
 {
    struct vg_context *ctx = vg_current_context();
    struct pipe_context *pipe = ctx->pipe;
-   struct pipe_screen *screen = pipe->screen;
 
    struct st_framebuffer *stfb = ctx->draw_buffer;
    struct st_renderbuffer *strb = stfb->alpha_mask;
@@ -130,8 +130,8 @@ static void read_alpha_mask(void * data, VGint dataStride,
    {
       struct pipe_surface *surf;
 
-      surf = screen->get_tex_surface(screen, strb->texture,  0, 0, 0,
-                                     PIPE_BIND_TRANSFER_READ);
+      surf = pipe->create_surface(pipe, strb->texture,  0, 0, 0,
+                                  PIPE_BIND_TRANSFER_READ);
 
       /* Do a row at a time to flip image data vertically */
       for (i = 0; i < height; i++) {
@@ -400,11 +400,13 @@ void mask_copy(struct vg_mask_layer *layer,
 {
    struct vg_context *ctx = vg_current_context();
    struct pipe_sampler_view *src = vg_get_surface_mask(ctx);
-   struct pipe_surface *surf;
+   struct pipe_surface *surf, surf_tmpl;
 
    /* get the destination surface */
-   surf = ctx->pipe->screen->get_tex_surface(ctx->pipe->screen,
-         layer->sampler_view->texture, 0, 0, 0, PIPE_BIND_RENDER_TARGET);
+   u_surface_default_template(&surf_tmpl, layer->sampler_view->texture,
+                              PIPE_BIND_RENDER_TARGET);
+   surf = ctx->pipe->create_surface(ctx->pipe, layer->sampler_view->texture,
+                                    &surf_tmpl);
    if (surf && renderer_copy_begin(ctx->renderer, surf, VG_FALSE, src)) {
       /* layer should be flipped when used as a texture */
       sy += height;
@@ -424,13 +426,13 @@ static void mask_layer_render_to(struct vg_mask_layer *layer,
                                  VGbitfield paint_modes)
 {
    struct vg_context *ctx = vg_current_context();
-   struct pipe_screen *screen = ctx->pipe->screen;
+   struct pipe_context *pipe = ctx->pipe;
    struct pipe_sampler_view *view = vg_get_surface_mask(ctx);
    struct matrix *mat = &ctx->state.vg.path_user_to_surface_matrix;
-   struct pipe_surface *surf;
-
-   surf = screen->get_tex_surface(screen, view->texture,
-                                  0, 0, 0, PIPE_BIND_RENDER_TARGET);
+   struct pipe_surface *surf, surf_tmpl;
+   u_surface_default_template(&surf_tmpl, view->texture,
+                              PIPE_BIND_RENDER_TARGET);
+   surf = pipe->create_surface(pipe, view->texture, &surf_tmpl);
 
    renderer_validate_for_mask_rendering(ctx->renderer, surf);
 

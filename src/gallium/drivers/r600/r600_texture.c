@@ -45,14 +45,10 @@ static void r600_copy_to_staging_texture(struct pipe_context *ctx, struct r600_t
 {
 	struct pipe_transfer *transfer = (struct pipe_transfer*)rtransfer;
 	struct pipe_resource *texture = transfer->resource;
-	struct pipe_subresource subdst;
 
-	subdst.face = 0;
-	subdst.level = 0;
 	ctx->resource_copy_region(ctx, rtransfer->staging_texture,
-				subdst, 0, 0, 0, texture, transfer->sr,
-				transfer->box.x, transfer->box.y, transfer->box.z,
-				transfer->box.width, transfer->box.height);
+				0, 0, 0, 0, texture, transfer->level,
+				&transfer->box);
 }
 
 
@@ -61,34 +57,32 @@ static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600
 {
 	struct pipe_transfer *transfer = (struct pipe_transfer*)rtransfer;
 	struct pipe_resource *texture = transfer->resource;
-	struct pipe_subresource subsrc;
+	struct pipe_box sbox;
 
-	subsrc.face = 0;
-	subsrc.level = 0;
-	ctx->resource_copy_region(ctx, texture, transfer->sr,
+	sbox.x = sbox.y = sbox.z = 0;
+	sbox.width = transfer->box.width;
+	sbox.height = transfer->box.height;
+	/* XXX that might be wrong */
+	sbox.depth = 1;
+	ctx->resource_copy_region(ctx, texture, transfer->level,
 				  transfer->box.x, transfer->box.y, transfer->box.z,
-				  rtransfer->staging_texture, subsrc,
-				  0, 0, 0,
-				  transfer->box.width, transfer->box.height);
+				  rtransfer->staging_texture,
+				  0, &sbox);
 
 	ctx->flush(ctx, 0, NULL);
 }
 
-static unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
-					unsigned level, unsigned zslice,
-					unsigned face)
+unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
+					unsigned level, unsigned layer)
 {
 	unsigned offset = rtex->offset[level];
 
 	switch (rtex->resource.base.b.target) {
 	case PIPE_TEXTURE_3D:
-		assert(face == 0);
-		return offset + zslice * rtex->layer_size[level];
 	case PIPE_TEXTURE_CUBE:
-		assert(zslice == 0);
-		return offset + face * rtex->layer_size[level];
+		return offset + layer * rtex->layer_size[level];
 	default:
-		assert(zslice == 0 && face == 0);
+		assert(layer == 0);
 		return offset;
 	}
 }
@@ -175,7 +169,6 @@ static unsigned r600_texture_get_stride(struct pipe_screen *screen,
 					struct r600_resource_texture *rtex,
 					unsigned level)
 {
-	struct r600_screen* rscreen = (struct r600_screen *)screen;
 	struct pipe_resource *ptex = &rtex->resource.base.b;
 	struct radeon *radeon = (struct radeon *)screen->winsys;
 	enum chip_class chipc = r600_get_family_class(radeon);
@@ -382,36 +375,39 @@ static boolean r600_texture_get_handle(struct pipe_screen* screen,
 			rtex->pitch_in_bytes[0], whandle);
 }
 
-static struct pipe_surface *r600_get_tex_surface(struct pipe_screen *screen,
+static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
 						struct pipe_resource *texture,
-						unsigned face, unsigned level,
-						unsigned zslice, unsigned flags)
+						const struct pipe_surface *surf_tmpl)
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
 	struct r600_surface *surface = CALLOC_STRUCT(r600_surface);
-	unsigned offset, tile_height;
+	unsigned tile_height;
+	unsigned level = surf_tmpl->u.tex.level;
 
+	assert(surf_tmpl->u.tex.first_layer == surf_tmpl->u.tex.last_layer);
 	if (surface == NULL)
 		return NULL;
-	offset = r600_texture_get_offset(rtex, level, zslice, face);
+        /* XXX no offset */
+/*	offset = r600_texture_get_offset(rtex, level, surf_tmpl->u.tex.first_layer);*/
 	pipe_reference_init(&surface->base.reference, 1);
 	pipe_resource_reference(&surface->base.texture, texture);
-	surface->base.format = texture->format;
+	surface->base.context = pipe;
+	surface->base.format = surf_tmpl->format;
 	surface->base.width = mip_minify(texture->width0, level);
 	surface->base.height = mip_minify(texture->height0, level);
-	surface->base.offset = offset;
-	surface->base.usage = flags;
-	surface->base.zslice = zslice;
+	surface->base.usage = surf_tmpl->usage;
 	surface->base.texture = texture;
-	surface->base.face = face;
-	surface->base.level = level;
+	surface->base.u.tex.first_layer = surf_tmpl->u.tex.first_layer;
+	surface->base.u.tex.last_layer = surf_tmpl->u.tex.last_layer;
+	surface->base.u.tex.level = level;
 
-	tile_height = r600_get_height_alignment(screen, rtex->array_mode[level]);
+	tile_height = r600_get_height_alignment(pipe->screen, rtex->array_mode[level]);
 	surface->aligned_height = align(surface->base.height, tile_height);
 	return &surface->base;
 }
 
-static void r600_tex_surface_destroy(struct pipe_surface *surface)
+static void r600_surface_destroy(struct pipe_context *pipe,
+				 struct pipe_surface *surface)
 {
 	pipe_resource_reference(&surface->texture, NULL);
 	FREE(surface);
@@ -444,7 +440,7 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 
 static unsigned int r600_texture_is_referenced(struct pipe_context *context,
 						struct pipe_resource *texture,
-						unsigned face, unsigned level)
+						unsigned level, int layer)
 {
 	/* FIXME */
 	return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
@@ -536,7 +532,7 @@ static boolean permit_hardware_blit(struct pipe_screen *screen,
 
 struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 						struct pipe_resource *texture,
-						struct pipe_subresource sr,
+						unsigned level,
 						unsigned usage,
 						const struct pipe_box *box)
 {
@@ -579,7 +575,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	if (trans == NULL)
 		return NULL;
 	pipe_resource_reference(&trans->transfer.resource, texture);
-	trans->transfer.sr = sr;
+	trans->transfer.level = level;
 	trans->transfer.usage = usage;
 	trans->transfer.box = *box;
 	if (rtex->depth) {
@@ -600,6 +596,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		resource.width0 = box->width;
 		resource.height0 = box->height;
 		resource.depth0 = 1;
+		resource.array_size = 1;
 		resource.last_level = 0;
 		resource.nr_samples = 0;
 		resource.usage = PIPE_USAGE_STAGING;
@@ -633,8 +630,8 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		}
 		return &trans->transfer;
 	}
-	trans->transfer.stride = rtex->pitch_in_bytes[sr.level];
-	trans->offset = r600_texture_get_offset(rtex, sr.level, box->z, sr.face);
+	trans->transfer.stride = rtex->pitch_in_bytes[level];
+	trans->offset = r600_texture_get_offset(rtex, level, box->z);
 	return &trans->transfer;
 }
 
@@ -747,10 +744,10 @@ struct u_resource_vtbl r600_texture_vtbl =
 	u_default_transfer_inline_write	/* transfer_inline_write */
 };
 
-void r600_init_screen_texture_functions(struct pipe_screen *screen)
+void r600_init_surface_functions(struct r600_pipe_context *r600)
 {
-	screen->get_tex_surface = r600_get_tex_surface;
-	screen->tex_surface_destroy = r600_tex_surface_destroy;
+	r600->context.create_surface = r600_create_surface;
+	r600->context.surface_destroy = r600_surface_destroy;
 }
 
 static unsigned r600_get_swizzle_combined(const unsigned char *swizzle_format,

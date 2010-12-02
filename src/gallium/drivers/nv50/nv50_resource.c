@@ -15,7 +15,7 @@
 static unsigned int
 nv50_resource_is_referenced(struct pipe_context *pipe,
 			    struct pipe_resource *resource,
-			    unsigned face, unsigned level)
+			    unsigned level, int layer)
 {
 	return nouveau_reference_flags(nv50_resource(resource)->bo);
 }
@@ -51,6 +51,9 @@ nv50_init_resource_functions(struct pipe_context *pcontext)
 	pcontext->transfer_destroy = u_transfer_destroy_vtbl;
 	pcontext->transfer_inline_write = u_transfer_inline_write_vtbl;
 	pcontext->is_resource_referenced = nv50_resource_is_referenced;
+
+	pcontext->create_surface = nv50_miptree_surface_new;
+	pcontext->surface_destroy = nv50_miptree_surface_del;
 }
 
 void
@@ -61,7 +64,4 @@ nv50_screen_init_resource_functions(struct pipe_screen *pscreen)
 	pscreen->resource_get_handle = u_resource_get_handle_vtbl;
 	pscreen->resource_destroy = u_resource_destroy_vtbl;
 	pscreen->user_buffer_create = nv50_user_buffer_create;
-   
-	pscreen->get_tex_surface = nv50_miptree_surface_new;
-	pscreen->tex_surface_destroy = nv50_miptree_surface_del;
 }

@@ -50,8 +50,8 @@
 
 static unsigned int
 svga_texture_is_referenced( struct pipe_context *pipe,
-			    struct pipe_resource *texture,
-			    unsigned face, unsigned level)
+                            struct pipe_resource *texture,
+                            unsigned level, int layer)
 {
    struct svga_texture *tex = svga_texture(texture);
    struct svga_screen *ss = svga_screen(pipe->screen);
@@ -171,20 +171,7 @@ svga_transfer_dma_band(struct svga_context *svga,
    struct svga_texture *texture = svga_texture(st->base.resource); 
    SVGA3dCopyBox box;
    enum pipe_error ret;
-   
-   SVGA_DBG(DEBUG_DMA, "dma %s sid %p, face %u, (%u, %u, %u) - (%u, %u, %u), %ubpp\n",
-                transfer == SVGA3D_WRITE_HOST_VRAM ? "to" : "from", 
-                texture->handle,
-                st->base.sr.face,
-                st->base.box.x,
-                y,
-                st->base.box.z,
-                st->base.box.x + st->base.box.width,
-                y + h,
-                st->base.box.z + 1,
-                util_format_get_blocksize(texture->b.b.format) * 8 /
-                (util_format_get_blockwidth(texture->b.b.format)*util_format_get_blockheight(texture->b.b.format)));
-   
+ 
    box.x = st->base.box.x;
    box.y = y;
    box.z = st->base.box.z;
@@ -194,6 +181,26 @@ svga_transfer_dma_band(struct svga_context *svga,
    box.srcx = 0;
    box.srcy = srcy;
    box.srcz = 0;
+
+   if (st->base.resource->target == PIPE_TEXTURE_CUBE) {
+      st->face = st->base.box.z;
+      box.z = 0;
+   }
+   else
+      st->face = 0;
+
+   SVGA_DBG(DEBUG_DMA, "dma %s sid %p, face %u, (%u, %u, %u) - (%u, %u, %u), %ubpp\n",
+                transfer == SVGA3D_WRITE_HOST_VRAM ? "to" : "from", 
+                texture->handle,
+                st->face,
+                st->base.box.x,
+                y,
+                box.z,
+                st->base.box.x + st->base.box.width,
+                y + h,
+                box.z + 1,
+                util_format_get_blocksize(texture->b.b.format) * 8 /
+                (util_format_get_blockwidth(texture->b.b.format)*util_format_get_blockheight(texture->b.b.format)));
 
    ret = SVGA3D_SurfaceDMA(svga->swc, st, transfer, &box, 1);
    if(ret != PIPE_OK) {
@@ -213,7 +220,7 @@ svga_transfer_dma(struct svga_context *svga,
    struct svga_screen *screen = svga_screen(texture->b.b.screen);
    struct svga_winsys_screen *sws = screen->sws;
    struct pipe_fence_handle *fence = NULL;
-   
+
    if (transfer == SVGA3D_READ_HOST_VRAM) {
       SVGA_DBG(DEBUG_PERF, "%s: readback transfer\n", __FUNCTION__);
    }
@@ -221,7 +228,7 @@ svga_transfer_dma(struct svga_context *svga,
 
    if(!st->swbuf) {
       /* Do the DMA transfer in a single go */
-      
+
       svga_transfer_dma_band(svga, st, transfer, st->base.box.y, st->base.box.height, 0);
 
       if(transfer == SVGA3D_READ_HOST_VRAM) {
@@ -245,12 +252,12 @@ svga_transfer_dma(struct svga_context *svga,
          /* Transfer band must be aligned to pixel block boundaries */
          assert(y % blockheight == 0);
          assert(h % blockheight == 0);
-         
+
          offset = y * st->base.stride / blockheight;
          length = h * st->base.stride / blockheight;
 
          sw = (uint8_t *)st->swbuf + offset;
-         
+
          if(transfer == SVGA3D_WRITE_HOST_VRAM) {
             /* Wait for the previous DMAs to complete */
             /* TODO: keep one DMA (at half the size) in the background */
@@ -267,9 +274,9 @@ svga_transfer_dma(struct svga_context *svga,
                sws->buffer_unmap(sws, st->hwbuf);
             }
          }
-         
+
          svga_transfer_dma_band(svga, st, transfer, y, h, srcy);
-         
+
          if(transfer == SVGA3D_READ_HOST_VRAM) {
             svga_context_flush(svga, &fence);
             sws->fence_finish(sws, fence, 0);
@@ -336,10 +343,10 @@ svga_texture_destroy(struct pipe_screen *screen,
  */
 static struct pipe_transfer *
 svga_texture_get_transfer(struct pipe_context *pipe,
-			  struct pipe_resource *texture,
-			  struct pipe_subresource sr,
-			  unsigned usage,
-			  const struct pipe_box *box)
+                          struct pipe_resource *texture,
+                          unsigned level,
+                          unsigned usage,
+                          const struct pipe_box *box)
 {
    struct svga_context *svga = svga_context(pipe);
    struct svga_screen *ss = svga_screen(pipe->screen);
@@ -352,19 +359,20 @@ svga_texture_get_transfer(struct pipe_context *pipe,
    if (usage & PIPE_TRANSFER_MAP_DIRECTLY)
       return NULL;
 
+   assert(box->depth == 1);
    st = CALLOC_STRUCT(svga_transfer);
    if (!st)
       return NULL;
-   
+
    pipe_resource_reference(&st->base.resource, texture);
-   st->base.sr = sr;
+   st->base.level = level;
    st->base.usage = usage;
    st->base.box = *box;
    st->base.stride = nblocksx*util_format_get_blocksize(texture->format);
-   st->base.slice_stride = 0;
+   st->base.layer_stride = 0;
 
    st->hw_nblocksy = nblocksy;
-   
+
    st->hwbuf = svga_winsys_buffer_create(svga,
                                          1, 
                                          0,
@@ -391,7 +399,7 @@ svga_texture_get_transfer(struct pipe_context *pipe,
       if(!st->swbuf)
          goto no_swbuf;
    }
-   
+
    if (usage & PIPE_TRANSFER_READ)
       svga_transfer_dma(svga, st, SVGA3D_READ_HOST_VRAM);
 
@@ -454,8 +462,11 @@ svga_texture_transfer_destroy(struct pipe_context *pipe,
    if (st->base.usage & PIPE_TRANSFER_WRITE) {
       svga_transfer_dma(svga, st, SVGA3D_WRITE_HOST_VRAM);
       ss->texture_timestamp++;
-      tex->view_age[transfer->sr.level] = ++(tex->age);
-      tex->defined[transfer->sr.face][transfer->sr.level] = TRUE;
+      tex->view_age[transfer->level] = ++(tex->age);
+      if (transfer->resource->target == PIPE_TEXTURE_CUBE)
+         tex->defined[transfer->box.z][transfer->level] = TRUE;
+      else
+         tex->defined[0][transfer->level] = TRUE;
    }
 
    pipe_resource_reference(&st->base.resource, NULL);
@@ -490,7 +501,7 @@ svga_texture_create(struct pipe_screen *screen,
 {
    struct svga_screen *svgascreen = svga_screen(screen);
    struct svga_texture *tex = CALLOC_STRUCT(svga_texture);
-   
+
    if (!tex)
       goto error1;
 
@@ -507,7 +518,7 @@ svga_texture_create(struct pipe_screen *screen,
    tex->key.size.width = template->width0;
    tex->key.size.height = template->height0;
    tex->key.size.depth = template->depth0;
-   
+
    if(template->target == PIPE_TEXTURE_CUBE) {
       tex->key.flags |= SVGA3D_SURFACE_CUBEMAP;
       tex->key.numFaces = 6;

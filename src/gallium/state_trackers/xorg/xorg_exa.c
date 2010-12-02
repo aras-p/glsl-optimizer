@@ -46,6 +46,8 @@
 #include "util/u_math.h"
 #include "util/u_debug.h"
 #include "util/u_format.h"
+#include "util/u_box.h"
+#include "util/u_surface.h"
 
 #define DEBUG_PRINT 0
 #define ROUND_UP_TEXTURES 1
@@ -188,8 +190,8 @@ ExaDownloadFromScreen(PixmapPtr pPix, int x,  int y, int w,  int h, char *dst,
     if (!priv || !priv->tex)
 	return FALSE;
 
-    transfer = pipe_get_transfer(exa->pipe, priv->tex, 0, 0, 0,
-					   PIPE_TRANSFER_READ, x, y, w, h);
+    transfer = pipe_get_transfer(exa->pipe, priv->tex, 0, 0,
+                                 PIPE_TRANSFER_READ, x, y, w, h);
     if (!transfer)
 	return FALSE;
 
@@ -222,8 +224,8 @@ ExaUploadToScreen(PixmapPtr pPix, int x, int y, int w, int h, char *src,
     if (!priv || !priv->tex)
 	return FALSE;
 
-    transfer = pipe_get_transfer(exa->pipe, priv->tex, 0, 0, 0,
-					   PIPE_TRANSFER_WRITE, x, y, w, h);
+    transfer = pipe_get_transfer(exa->pipe, priv->tex, 0, 0,
+                                 PIPE_TRANSFER_WRITE, x, y, w, h);
     if (!transfer)
 	return FALSE;
 
@@ -265,7 +267,7 @@ ExaPrepareAccess(PixmapPtr pPix, int index)
         assert(pPix->drawable.height <= priv->tex->height0);
 
 	priv->map_transfer =
-	   pipe_get_transfer(exa->pipe, priv->tex, 0, 0, 0,
+	   pipe_get_transfer(exa->pipe, priv->tex, 0, 0,
 #ifdef EXA_MIXED_PIXMAPS
 					PIPE_TRANSFER_MAP_DIRECTLY |
 #endif
@@ -449,6 +451,7 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
        exa->copy.use_surface_copy = TRUE;
     }
     else {
+       struct pipe_surface surf_tmpl;
        exa->copy.use_surface_copy = FALSE;
 
        if (exa->copy.dst == exa->copy.src)
@@ -458,11 +461,13 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
           pipe_resource_reference(&exa->copy.src_texture,
                                  exa->copy.src->tex);
 
+       memset(&surf_tmpl, 0, sizeof(surf_tmpl));
+       u_surface_default_template(&surf_tmpl, exa->copy.dst->tex,
+                                  PIPE_BIND_RENDER_TARGET);
        exa->copy.dst_surface =
-          exa->scrn->get_tex_surface(exa->scrn,
-                                     exa->copy.dst->tex,
-                                     0, 0, 0,
-                                     PIPE_BIND_RENDER_TARGET);
+          exa->pipe->create_surface(exa->pipe,
+                                    exa->copy.dst->tex,
+                                    &surf_tmpl);
 
 
        renderer_copy_prepare(exa->renderer, 
@@ -492,19 +497,14 @@ ExaCopy(PixmapPtr pDstPixmap, int srcX, int srcY, int dstX, int dstY,
    (void) priv;
 
    if (exa->copy.use_surface_copy) {
-      struct pipe_subresource subdst, subsrc;
-      subdst.face = 0;
-      subdst.level = 0;
-      subsrc.face = 0;
-      subsrc.level = 0;
+      struct pipe_box src_box;
+      u_box_2d(srcX, srcY, width, height, &src_box);
       exa->pipe->resource_copy_region( exa->pipe,
                                        exa->copy.dst->tex,
-                                       subdst,
+                                       0,
                                        dstX, dstY, 0,
                                        exa->copy.src->tex,
-                                       subsrc,
-                                       srcX, srcY, 0,
-                                       width, height );
+                                       0, &src_box);
    }
    else {
       renderer_copy_pixmap(exa->renderer, 
@@ -874,24 +874,21 @@ ExaModifyPixmapHeader(PixmapPtr pPixmap, int width, int height,
         }
 
 	template.depth0 = 1;
+	template.array_size = 1;
 	template.last_level = 0;
 	template.bind = PIPE_BIND_RENDER_TARGET | priv->flags;
 	priv->tex_flags = priv->flags;
 	texture = exa->scrn->resource_create(exa->scrn, &template);
 
 	if (priv->tex) {
-	    struct pipe_subresource subdst, subsrc;
-
-	    subdst.face = 0;
-	    subdst.level = 0;
-	    subsrc.face = 0;
-	    subsrc.level = 0;
+            struct pipe_box src_box;
+            u_box_origin_2d(min(width, texture->width0),
+                            min(height, texture->height0),
+                            &src_box);
             exa->pipe->resource_copy_region(exa->pipe, texture,
-                                            subdst, 0, 0, 0,
+                                            0, 0, 0, 0,
                                             priv->tex,
-                                            subsrc, 0, 0, 0,
-                                            min(width, texture->width0),
-                                            min(height, texture->height0));
+                                            0, &src_box);
 	}
 
 	pipe_resource_reference(&priv->tex, texture);
@@ -947,6 +944,7 @@ xorg_exa_create_root_texture(ScrnInfoPtr pScrn,
     template.width0 = width;
     template.height0 = height;
     template.depth0 = 1;
+    template.array_size = 1;
     template.last_level = 0;
     template.bind |= PIPE_BIND_RENDER_TARGET;
     template.bind |= PIPE_BIND_SCANOUT;
@@ -1063,10 +1061,14 @@ out_err:
 }
 
 struct pipe_surface *
-xorg_gpu_surface(struct pipe_screen *scrn, struct exa_pixmap_priv *priv)
+xorg_gpu_surface(struct pipe_context *pipe, struct exa_pixmap_priv *priv)
 {
-   return scrn->get_tex_surface(scrn, priv->tex, 0, 0, 0,
-                                PIPE_BIND_RENDER_TARGET);
+   struct pipe_surface surf_tmpl;
+   memset(&surf_tmpl, 0, sizeof(surf_tmpl));
+   u_surface_default_template(&surf_tmpl, priv->tex,
+                              PIPE_BIND_RENDER_TARGET);
+
+   return pipe->create_surface(pipe, priv->tex, &surf_tmpl);
 
 }
 

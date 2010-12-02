@@ -145,15 +145,15 @@ softpipe_destroy( struct pipe_context *pipe )
  */
 static unsigned int
 softpipe_is_resource_referenced( struct pipe_context *pipe,
-				struct pipe_resource *texture,
-				unsigned face, unsigned level)
+                                 struct pipe_resource *texture,
+                                 unsigned level, int layer)
 {
    struct softpipe_context *softpipe = softpipe_context( pipe );
    unsigned i;
 
    if (texture->target == PIPE_BUFFER)
       return PIPE_UNREFERENCED;
-   
+
    /* check if any of the bound drawing surfaces are this texture */
    if (softpipe->dirty_render_cache) {
       for (i = 0; i < softpipe->framebuffer.nr_cbufs; i++) {

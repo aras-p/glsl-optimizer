@@ -109,6 +109,7 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen,
    svga_init_vertex_functions(svga);
    svga_init_constbuffer_functions(svga);
    svga_init_query_functions(svga);
+   svga_init_surface_functions(svga);
 
 
    /* debug */

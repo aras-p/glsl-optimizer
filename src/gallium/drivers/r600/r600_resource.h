@@ -112,7 +112,7 @@ extern int (*r600_blit_uncompress_depth_ptr)(struct pipe_context *ctx, struct r6
 /* r600_texture.c texture transfer functions. */
 struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 						struct pipe_resource *texture,
-						struct pipe_subresource sr,
+						unsigned level,
 						unsigned usage,
 						const struct pipe_box *box);
 void r600_texture_transfer_destroy(struct pipe_context *ctx,

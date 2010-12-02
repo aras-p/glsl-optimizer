@@ -40,7 +40,6 @@ struct resource_surface {
    uint bind;
 
    struct pipe_resource *resources[NUM_NATIVE_ATTACHMENTS];
-   struct pipe_surface *present_surfaces[NUM_NATIVE_ATTACHMENTS];
    uint resource_mask;
    uint width, height;
 };
@@ -67,8 +66,6 @@ resource_surface_free_resources(struct resource_surface *rsurf)
       int i;
 
       for (i = 0; i < NUM_NATIVE_ATTACHMENTS; i++) {
-         if (rsurf->present_surfaces[i])
-            pipe_surface_reference(&rsurf->present_surfaces[i], NULL);
          if (rsurf->resources[i])
             pipe_resource_reference(&rsurf->resources[i], NULL);
       }
@@ -130,6 +127,7 @@ resource_surface_add_resources(struct resource_surface *rsurf,
    templ.width0 = rsurf->width;
    templ.height0 = rsurf->height;
    templ.depth0 = 1;
+   templ.array_size = 1;
 
    for (i = 0; i < NUM_NATIVE_ATTACHMENTS; i++) {
       if (resource_mask & (1 <<i)) {
@@ -193,8 +191,6 @@ resource_surface_swap_buffers(struct resource_surface *rsurf,
 
    pointer_swap((const void **) &rsurf->resources[buf1],
                 (const void **) &rsurf->resources[buf2]);
-   pointer_swap((const void **) &rsurf->present_surfaces[buf1],
-                (const void **) &rsurf->present_surfaces[buf2]);
 
    /* swap mask bits */
    mask = rsurf->resource_mask & ~(buf1_bit | buf2_bit);
@@ -212,24 +208,12 @@ resource_surface_present(struct resource_surface *rsurf,
                          void *winsys_drawable_handle)
 {
    struct pipe_resource *pres = rsurf->resources[which];
-   struct pipe_surface *psurf = rsurf->present_surfaces[which];
 
    if (!pres)
       return TRUE;
 
-   if (!psurf) {
-      psurf = rsurf->screen->get_tex_surface(rsurf->screen,
-            pres, 0, 0, 0, PIPE_BIND_DISPLAY_TARGET);
-      if (!psurf)
-         return FALSE;
-
-      rsurf->present_surfaces[which] = psurf;
-   }
-
-   assert(psurf->texture == pres);
-
    rsurf->screen->flush_frontbuffer(rsurf->screen,
-         psurf, winsys_drawable_handle);
+         pres, 0, 0, winsys_drawable_handle);
 
    return TRUE;
 }

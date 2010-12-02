@@ -27,6 +27,7 @@
 #include "pipe/p_format.h"
 
 struct pipe_screen;
+struct pipe_context;
 struct pipe_resource;
 struct winsys_handle;
 struct r300_texture_format_state;
@@ -70,13 +71,10 @@ r300_texture_create(struct pipe_screen* screen,
 		    const struct pipe_resource* templ);
 
 
-struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
-					  struct pipe_resource* texture,
-					  unsigned face,
-					  unsigned level,
-					  unsigned zslice,
-					  unsigned flags);
+struct pipe_surface* r300_create_surface(struct pipe_context *ctx,
+                                         struct pipe_resource* texture,
+                                         const struct pipe_surface *surf_tmpl);
 
-void r300_tex_surface_destroy(struct pipe_surface* s);
+void r300_surface_destroy(struct pipe_context *ctx, struct pipe_surface* s);
 
 #endif /* R300_TEXTURE_H */

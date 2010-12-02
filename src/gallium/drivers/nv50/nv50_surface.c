@@ -97,23 +97,23 @@ nv50_surface_set(struct nv50_screen *screen, struct pipe_surface *ps, int dst)
  		OUT_RING  (chan, format);
  		OUT_RING  (chan, 1);
  		BEGIN_RING(chan, eng2d, mthd + 0x14, 5);
-		OUT_RING  (chan, mt->level[ps->level].pitch);
+		OUT_RING  (chan, mt->level[ps->u.tex.level].pitch);
  		OUT_RING  (chan, ps->width);
  		OUT_RING  (chan, ps->height);
- 		OUT_RELOCh(chan, bo, ps->offset, flags);
- 		OUT_RELOCl(chan, bo, ps->offset, flags);
+ 		OUT_RELOCh(chan, bo, ((struct nv50_surface *)ps)->offset, flags);
+ 		OUT_RELOCl(chan, bo, ((struct nv50_surface *)ps)->offset, flags);
  	} else {
  		BEGIN_RING(chan, eng2d, mthd, 5);
  		OUT_RING  (chan, format);
  		OUT_RING  (chan, 0);
-		OUT_RING  (chan, mt->level[ps->level].tile_mode << 4);
+		OUT_RING  (chan, mt->level[ps->u.tex.level].tile_mode << 4);
  		OUT_RING  (chan, 1);
  		OUT_RING  (chan, 0);
  		BEGIN_RING(chan, eng2d, mthd + 0x18, 4);
  		OUT_RING  (chan, ps->width);
  		OUT_RING  (chan, ps->height);
- 		OUT_RELOCh(chan, bo, ps->offset, flags);
- 		OUT_RELOCl(chan, bo, ps->offset, flags);
+ 		OUT_RELOCh(chan, bo, ((struct nv50_surface *)ps)->offset, flags);
+ 		OUT_RELOCl(chan, bo, ((struct nv50_surface *)ps)->offset, flags);
  	}
  
 #if 0
@@ -173,30 +173,41 @@ nv50_surface_do_copy(struct nv50_screen *screen, struct pipe_surface *dst,
 
 static void
 nv50_surface_copy(struct pipe_context *pipe,
-		  struct pipe_resource *dest, struct pipe_subresource subdst,
+		  struct pipe_resource *dest, unsigned dst_level,
 		  unsigned destx, unsigned desty, unsigned destz,
-		  struct pipe_resource *src, struct pipe_subresource subsrc,
-		  unsigned srcx, unsigned srcy, unsigned srcz,
-		  unsigned width, unsigned height)
+		  struct pipe_resource *src, unsigned src_level,
+		  const struct pipe_box *src_box)
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 	struct nv50_screen *screen = nv50->screen;
-	struct pipe_surface *ps_dst, *ps_src;
+	struct pipe_surface *ps_dst, *ps_src, surf_tmpl;
+
 
 	assert((src->format == dest->format) ||
 	       (nv50_2d_format_faithful(src->format) &&
 		nv50_2d_format_faithful(dest->format)));
+	assert(src_box->depth == 1);
 
-	ps_src = nv50_miptree_surface_new(pipe->screen, src, subsrc.face,
-					  subsrc.level, srcz, 0 /* bind flags */);
-	ps_dst = nv50_miptree_surface_new(pipe->screen, dest, subdst.face,
-					  subdst.level, destz, 0 /* bindflags */);
+	memset(&surf_tmpl, 0, sizeof(surf_tmpl));
+	surf_tmpl.format = src->format;
+	surf_tmpl.usage = 0; /* no bind flag - not a surface */
+	surf_tmpl.u.tex.level = src_level;
+	surf_tmpl.u.tex.first_layer = src_box->z;
+	surf_tmpl.u.tex.last_layer = src_box->z;
+	/* XXX really need surfaces here? */
+	ps_src = nv50_miptree_surface_new(pipe, src, &surf_tmpl);
+	surf_tmpl.format = dest->format;
+	surf_tmpl.usage = 0; /* no bind flag - not a surface */
+	surf_tmpl.u.tex.level = dst_level;
+	surf_tmpl.u.tex.first_layer = destz;
+	surf_tmpl.u.tex.last_layer = destz;
+	ps_dst = nv50_miptree_surface_new(pipe, dest, &surf_tmpl);
 
-	nv50_surface_do_copy(screen, ps_dst, destx, desty, ps_src, srcx,
-			     srcy, width, height);
+	nv50_surface_do_copy(screen, ps_dst, destx, desty, ps_src, src_box->x,
+			     src_box->y, src_box->width, src_box->height);
 
-	nv50_miptree_surface_del(ps_src);
-	nv50_miptree_surface_del(ps_dst);
+	nv50_miptree_surface_del(pipe, ps_src);
+	nv50_miptree_surface_del(pipe, ps_dst);
 }
 
 static void
@@ -225,10 +236,10 @@ nv50_clear_render_target(struct pipe_context *pipe,
 	BEGIN_RING(chan, tesla, NV50TCL_RT_CONTROL, 1);
 	OUT_RING  (chan, 1);
 	BEGIN_RING(chan, tesla, NV50TCL_RT_ADDRESS_HIGH(0), 5);
-	OUT_RELOCh(chan, bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	OUT_RELOCl(chan, bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCh(chan, bo, ((struct nv50_surface *)dst)->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCl(chan, bo, ((struct nv50_surface *)dst)->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	OUT_RING  (chan, nv50_format_table[dst->format].rt);
-	OUT_RING  (chan, mt->level[dst->level].tile_mode << 4);
+	OUT_RING  (chan, mt->level[dst->u.tex.level].tile_mode << 4);
 	OUT_RING  (chan, 0);
 	BEGIN_RING(chan, tesla, NV50TCL_RT_HORIZ(0), 2);
 	OUT_RING  (chan, dst->width);
@@ -281,10 +292,10 @@ nv50_clear_depth_stencil(struct pipe_context *pipe,
 		return;
 
 	BEGIN_RING(chan, tesla, NV50TCL_ZETA_ADDRESS_HIGH, 5);
-	OUT_RELOCh(chan, bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	OUT_RELOCl(chan, bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCh(chan, bo, ((struct nv50_surface *)dst)->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCl(chan, bo, ((struct nv50_surface *)dst)->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	OUT_RING  (chan, nv50_format_table[dst->format].rt);
-	OUT_RING  (chan, mt->level[dst->level].tile_mode << 4);
+	OUT_RING  (chan, mt->level[dst->u.tex.level].tile_mode << 4);
 	OUT_RING  (chan, 0);
 	BEGIN_RING(chan, tesla, NV50TCL_ZETA_ENABLE, 1);
 	OUT_RING  (chan, 1);

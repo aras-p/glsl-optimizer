@@ -251,14 +251,6 @@ class Screen(Object):
     def texture_release(self, surface):
         pass
 
-    def get_tex_surface(self, texture, face, level, zslice, usage):
-        if texture is None:
-            return None
-        return texture.get_surface(face, level, zslice)
-    
-    def tex_surface_destroy(self, surface):
-        self.interpreter.unregister_object(surface)
-
     def tex_surface_release(self, surface):
         pass
 
@@ -282,7 +274,7 @@ class Screen(Object):
     def fence_reference(self, dst, src):
         pass
     
-    def flush_frontbuffer(self, surface):
+    def flush_frontbuffer(self, resource):
         pass
 
 
@@ -627,7 +619,13 @@ class Context(Object):
         if self.zsbuf:
             if self.interpreter.options.all:
                 self.interpreter.present(self.real, self.zsbuf, "zsbuf")
-    
+    def create_surface(self, texture, level, layer, usage):
+        if texture is None:
+            return None
+        return texture.get_surface(level, layer)
+
+    def surface_destroy(self, surface):
+        self.interpreter.unregister_object(surface)
 
 class Interpreter(parser.TraceDumper):
     

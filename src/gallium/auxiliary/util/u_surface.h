@@ -32,9 +32,13 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
 
+extern void
+u_surface_default_template(struct pipe_surface *view,
+                           const struct pipe_resource *texture,
+                           unsigned bind);
 
 extern boolean
-util_create_rgba_surface(struct pipe_screen *screen,
+util_create_rgba_surface(struct pipe_context *ctx,
                          uint width, uint height, uint bind,
                          struct pipe_resource **textureOut,
                          struct pipe_surface **surfaceOut);
@@ -49,12 +53,11 @@ util_destroy_rgba_surface(struct pipe_resource *texture,
 extern void
 util_resource_copy_region(struct pipe_context *pipe,
                           struct pipe_resource *dst,
-                          struct pipe_subresource subdst,
+                          unsigned dst_level,
                           unsigned dst_x, unsigned dst_y, unsigned dst_z,
                           struct pipe_resource *src,
-                          struct pipe_subresource subsrc,
-                          unsigned src_x, unsigned src_y, unsigned src_z,
-                          unsigned w, unsigned h);
+                          unsigned src_level,
+                          const struct pipe_box *src_box);
 
 extern void
 util_clear_render_target(struct pipe_context *pipe,

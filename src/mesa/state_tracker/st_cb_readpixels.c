@@ -80,7 +80,7 @@ st_read_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
    /* Create a read transfer from the renderbuffer's texture */
 
    pt = pipe_get_transfer(pipe, strb->texture,
-                          0, 0, 0,  /* face, level, zslice */
+                          0, 0,
                           PIPE_TRANSFER_READ,
                           x, y, width, height);
 
@@ -236,7 +236,7 @@ st_fast_readpixels(struct gl_context *ctx, struct st_renderbuffer *strb,
       }
 
       trans = pipe_get_transfer(pipe, strb->texture,
-                                0, 0, 0,  /* face, level, zslice */
+                                0, 0,
                                 PIPE_TRANSFER_READ,
                                 x, y, width, height);
       if (!trans) {
@@ -400,7 +400,7 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
 
    /* Create a read transfer from the renderbuffer's texture */
    trans = pipe_get_transfer(pipe, strb->texture,
-                             0, 0, 0,  /* face, level, zslice */
+                             0, 0,
                              PIPE_TRANSFER_READ,
                              x, y, width, height);
 

@@ -170,11 +170,11 @@ sp_tile_cache_set_surface(struct softpipe_tile_cache *tc,
    tc->surface = ps;
 
    if (ps) {
-      tc->transfer = pipe_get_transfer(pipe, ps->texture, ps->face,
-					   ps->level, ps->zslice,
-					   PIPE_TRANSFER_READ_WRITE |
-					   PIPE_TRANSFER_UNSYNCHRONIZED,
-					   0, 0, ps->width, ps->height);
+      tc->transfer = pipe_get_transfer(pipe, ps->texture,
+                                       ps->u.tex.level, ps->u.tex.first_layer,
+                                       PIPE_TRANSFER_READ_WRITE |
+                                       PIPE_TRANSFER_UNSYNCHRONIZED,
+                                       0, 0, ps->width, ps->height);
 
       tc->depth_stencil = (ps->format == PIPE_FORMAT_Z24_UNORM_S8_USCALED ||
                            ps->format == PIPE_FORMAT_Z24X8_UNORM ||

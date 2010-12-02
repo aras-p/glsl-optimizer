@@ -447,9 +447,9 @@ void vegaReadPixels(void * data, VGint dataStride,
       VGint y = (stfb->height - sy) - 1, yStep = -1;
       struct pipe_transfer *transfer;
 
-      transfer = pipe_get_transfer(pipe, strb->texture,  0, 0, 0,
-				   PIPE_TRANSFER_READ,
-				   0, 0, sx + width, stfb->height - sy);
+      transfer = pipe_get_transfer(pipe, strb->texture,  0, 0,
+                                   PIPE_TRANSFER_READ,
+                                   0, 0, sx + width, stfb->height - sy);
 
       /* Do a row at a time to flip image data vertically */
       for (i = 0; i < height; i++) {

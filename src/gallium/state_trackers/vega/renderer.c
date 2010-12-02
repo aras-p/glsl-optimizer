@@ -40,6 +40,7 @@
 #include "util/u_simple_shaders.h"
 #include "util/u_memory.h"
 #include "util/u_sampler.h"
+#include "util/u_surface.h"
 #include "util/u_math.h"
 
 #include "cso_cache/cso_context.h"
@@ -815,7 +816,7 @@ VGboolean renderer_filter_begin(struct renderer *renderer,
                                 const void *const_buffer,
                                 VGint const_buffer_len)
 {
-   struct pipe_surface *surf;
+   struct pipe_surface *surf, surf_tmpl;
 
    assert(renderer->state == RENDERER_STATE_INIT);
 
@@ -824,8 +825,9 @@ VGboolean renderer_filter_begin(struct renderer *renderer,
    if (!renderer_can_support(renderer, dst, PIPE_BIND_RENDER_TARGET))
       return VG_FALSE;
 
-   surf = renderer->pipe->screen->get_tex_surface(renderer->pipe->screen,
-         dst, 0, 0, 0, PIPE_BIND_RENDER_TARGET);
+   u_surface_default_template(&surf_tmpl, dst,
+                              PIPE_BIND_RENDER_TARGET);
+   surf = renderer->pipe->create_surface(renderer->pipe, dst, &surf_tmpl);
    if (!surf)
       return VG_FALSE;
 
@@ -1380,8 +1382,8 @@ void renderer_copy_surface(struct renderer *ctx,
    struct pipe_screen *screen = pipe->screen;
    struct pipe_sampler_view view_templ;
    struct pipe_sampler_view *view;
+   struct pipe_box src_box;
    struct pipe_resource texTemp, *tex;
-   struct pipe_subresource subsrc, subdst;
    const struct pipe_framebuffer_state *fb = &ctx->g3d.fb;
    const int srcW = abs(srcX1 - srcX0);
    const int srcH = abs(srcY1 - srcY0);
@@ -1425,6 +1427,7 @@ void renderer_copy_surface(struct renderer *ctx,
    texTemp.width0 = srcW;
    texTemp.height0 = srcH;
    texTemp.depth0 = 1;
+   texTemp.array_size = 1;
    texTemp.bind = PIPE_BIND_SAMPLER_VIEW;
 
    tex = screen->resource_create(screen, &texTemp);
@@ -1437,15 +1440,11 @@ void renderer_copy_surface(struct renderer *ctx,
    if (!view)
       return;
 
-   subdst.face = 0;
-   subdst.level = 0;
-   subsrc.face = src->face;
-   subsrc.level = src->level;
+   u_box_2d_zslice(srcLeft, srcTop, src->u.tex.first_layer, srcW, srcH, &src_box);
 
    pipe->resource_copy_region(pipe,
-                              tex, subdst, 0, 0, 0,  /* dest */
-                              src->texture, subsrc, srcLeft, srcTop, src->zslice, /* src */
-                              srcW, srcH);     /* size */
+                              tex, 0, 0, 0, 0,  /* dest */
+                              src->texture, 0, &src_box);
 
    assert(floatsEqual(z, 0.0f));
 

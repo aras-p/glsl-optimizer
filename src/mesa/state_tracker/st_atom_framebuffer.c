@@ -51,7 +51,7 @@ static void
 update_renderbuffer_surface(struct st_context *st,
                             struct st_renderbuffer *strb)
 {
-   struct pipe_screen *screen = st->pipe->screen;
+   struct pipe_context *pipe = st->pipe;
    struct pipe_resource *resource = strb->rtt->pt;
    int rtt_width = strb->Base.Width;
    int rtt_height = strb->Base.Height;
@@ -65,15 +65,19 @@ update_renderbuffer_surface(struct st_context *st,
       for (level = 0; level <= resource->last_level; level++) {
          if (u_minify(resource->width0, level) == rtt_width &&
              u_minify(resource->height0, level) == rtt_height) {
+            struct pipe_surface surf_tmpl;
+            memset(&surf_tmpl, 0, sizeof(surf_tmpl));
+            surf_tmpl.format = resource->format;
+            surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
+            surf_tmpl.u.tex.level = level;
+            surf_tmpl.u.tex.first_layer = strb->rtt_face + strb->rtt_slice;
+            surf_tmpl.u.tex.last_layer = strb->rtt_face + strb->rtt_slice;
 
             pipe_surface_reference(&strb->surface, NULL);
 
-            strb->surface = screen->get_tex_surface(screen,
-						    resource,
-						    strb->rtt_face,
-						    level,
-						    strb->rtt_slice,
-						    PIPE_BIND_RENDER_TARGET);
+            strb->surface = pipe->create_surface(pipe,
+                                                 resource,
+                                                 &surf_tmpl);
 #if 0
             printf("-- alloc new surface %d x %d into tex %p\n",
                    strb->surface->width, strb->surface->height,

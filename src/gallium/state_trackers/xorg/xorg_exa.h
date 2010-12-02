@@ -72,7 +72,7 @@ do {                                                          \
 } while(0)
 
 struct pipe_surface *
-xorg_gpu_surface(struct pipe_screen *scrn, struct exa_pixmap_priv *priv);
+xorg_gpu_surface(struct pipe_context *pipe, struct exa_pixmap_priv *priv);
 
 void xorg_exa_flush(struct exa_context *exa, uint pipeFlushFlags,
                     struct pipe_fence_handle **fence);

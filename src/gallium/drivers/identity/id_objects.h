@@ -147,11 +147,13 @@ void
 identity_resource_destroy(struct identity_resource *id_resource);
 
 struct pipe_surface *
-identity_surface_create(struct identity_resource *id_resource,
+identity_surface_create(struct identity_context *id_context,
+                        struct identity_resource *id_resource,
                         struct pipe_surface *surface);
 
 void
-identity_surface_destroy(struct identity_surface *id_surface);
+identity_surface_destroy(struct identity_context *id_context,
+                         struct identity_surface *id_surface);
 
 struct pipe_sampler_view *
 identity_sampler_view_create(struct identity_context *id_context,

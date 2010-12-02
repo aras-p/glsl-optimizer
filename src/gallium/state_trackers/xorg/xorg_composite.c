@@ -473,7 +473,7 @@ boolean xorg_composite_bind_state(struct exa_context *exa,
                                   struct exa_pixmap_priv *pMask,
                                   struct exa_pixmap_priv *pDst)
 {
-   struct pipe_surface *dst_surf = xorg_gpu_surface(exa->scrn, pDst);
+   struct pipe_surface *dst_surf = xorg_gpu_surface(exa->pipe, pDst);
 
    renderer_bind_destination(exa->renderer, dst_surf,
                              pDst->width,
@@ -529,7 +529,7 @@ boolean xorg_solid_bind_state(struct exa_context *exa,
                               struct exa_pixmap_priv *pixmap,
                               Pixel fg)
 {
-   struct pipe_surface *dst_surf = xorg_gpu_surface(exa->scrn, pixmap);
+   struct pipe_surface *dst_surf = xorg_gpu_surface(exa->pipe, pixmap);
    unsigned vs_traits, fs_traits;
    struct xorg_shader shader;
 

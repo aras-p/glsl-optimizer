@@ -1153,22 +1153,30 @@ done:
 
 static void r300_resource_resolve(struct pipe_context* pipe,
                                   struct pipe_resource* dest,
-                                  struct pipe_subresource subdest,
+                                  unsigned dst_layer,
                                   struct pipe_resource* src,
-                                  struct pipe_subresource subsrc)
+                                  unsigned src_layer)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct pipe_surface* srcsurf, surf_tmpl;
     struct r300_aa_state *aa = (struct r300_aa_state*)r300->aa_state.state;
-    struct pipe_surface* srcsurf = src->screen->get_tex_surface(src->screen,
-            src, subsrc.face, subsrc.level, 0, 0);
     float color[] = {0, 0, 0, 0};
+
+    memset(&surf_tmpl, 0, sizeof(surf_tmpl));
+    surf_tmpl.format = src->format;
+    surf_tmpl.usage = 0; /* not really a surface hence no bind flags */
+    surf_tmpl.u.tex.level = 0; /* msaa resources cannot have mipmaps */
+    surf_tmpl.u.tex.first_layer = src_layer;
+    surf_tmpl.u.tex.last_layer = src_layer;
+    srcsurf = pipe->create_surface(pipe, src, &surf_tmpl);
+    surf_tmpl.format = dest->format;
+    surf_tmpl.u.tex.first_layer = dst_layer;
+    surf_tmpl.u.tex.last_layer = dst_layer;
 
     DBG(r300, DBG_DRAW, "r300: Resolving resource...\n");
 
     /* Enable AA resolve. */
-    aa->dest = r300_surface(
-            dest->screen->get_tex_surface(dest->screen, dest, subdest.face,
-                                          subdest.level, 0, 0));
+    aa->dest = r300_surface(pipe->create_surface(pipe, dest, &surf_tmpl));
 
     aa->aaresolve_ctl =
         R300_RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE |

@@ -44,7 +44,7 @@ struct stw_st_framebuffer {
    unsigned texture_width, texture_height;
    unsigned texture_mask;
 
-   struct pipe_surface *front_surface, *back_surface;
+   struct pipe_resource *front_res, *back_res;
 };
 
 static INLINE struct stw_st_framebuffer *
@@ -66,8 +66,8 @@ stw_st_framebuffer_validate_locked(struct st_framebuffer_iface *stfb,
    unsigned i;
 
    /* remove outdated surface */
-   pipe_surface_reference(&stwfb->front_surface, NULL);
-   pipe_surface_reference(&stwfb->back_surface, NULL);
+   pipe_resource_reference(&stwfb->front_res, NULL);
+   pipe_resource_reference(&stwfb->back_res, NULL);
 
    /* remove outdated textures */
    if (stwfb->texture_width != width || stwfb->texture_height != height) {
@@ -80,6 +80,7 @@ stw_st_framebuffer_validate_locked(struct st_framebuffer_iface *stfb,
    templ.width0 = width;
    templ.height0 = height;
    templ.depth0 = 1;
+   templ.array_size = 1;
    templ.last_level = 0;
 
    for (i = 0; i < ST_ATTACHMENT_COUNT; i++) {
@@ -155,19 +156,22 @@ stw_st_framebuffer_validate(struct st_framebuffer_iface *stfb,
    return TRUE;
 }
 
-static struct pipe_surface *
+static struct pipe_resource *
 get_present_surface_locked(struct st_framebuffer_iface *stfb,
                            enum st_attachment_type statt)
 {
    struct stw_st_framebuffer *stwfb = stw_st_framebuffer(stfb);
+#if 0
+   /* since we don't really have to get a surface for this we
+      no longer need a cache? */
    struct pipe_resource *ptex;
-   struct pipe_surface *psurf, **cache;
-   
+   struct pipe_resource *pres, **cache;
+
    ptex = stwfb->textures[statt];
    if (!ptex)
       return NULL;
 
-   psurf = NULL;
+   pres = NULL;
 
    switch (statt) {
    case ST_ATTACHMENT_FRONT_LEFT:
@@ -177,21 +181,21 @@ get_present_surface_locked(struct st_framebuffer_iface *stfb,
       cache = &stwfb->back_surface;
       break;
    default:
-      cache = &psurf;
+      cache = &pres;
       break;
    }
 
    if (!*cache) {
-      *cache = stw_dev->screen->get_tex_surface(stw_dev->screen,
-            ptex, 0, 0, 0,
-            PIPE_BIND_DISPLAY_TARGET |
-            PIPE_BIND_RENDER_TARGET);
+      *cache = ptex;
    }
 
-   if (psurf != *cache)
-      pipe_surface_reference(&psurf, *cache);
+   if (pres != *cache)
+      pipe_resource_reference(&pres, *cache);
 
-   return psurf;
+   return pres;
+#else
+   return stwfb->textures[statt];
+#endif
 }
 
 /**
@@ -202,12 +206,12 @@ stw_st_framebuffer_present_locked(struct st_framebuffer_iface *stfb,
                                   enum st_attachment_type statt)
 {
    struct stw_st_framebuffer *stwfb = stw_st_framebuffer(stfb);
-   struct pipe_surface *psurf;
-   
-   psurf = get_present_surface_locked(&stwfb->base, statt);
-   if (psurf) {
-      stw_framebuffer_present_locked(stwfb->fb->hDC, stwfb->fb, psurf);
-      pipe_surface_reference(&psurf, NULL);
+   struct pipe_resource *pres;
+
+   pres = get_present_surface_locked(&stwfb->base, statt);
+   if (pres) {
+      stw_framebuffer_present_locked(stwfb->fb->hDC, stwfb->fb, pres);
+      pipe_resource_reference(&pres, NULL);
    }
 
    return TRUE;
@@ -255,8 +259,8 @@ stw_st_destroy_framebuffer_locked(struct st_framebuffer_iface *stfb)
    struct stw_st_framebuffer *stwfb = stw_st_framebuffer(stfb);
    int i;
 
-   pipe_surface_reference(&stwfb->front_surface, NULL);
-   pipe_surface_reference(&stwfb->back_surface, NULL);
+   pipe_resource_reference(&stwfb->front_res, NULL);
+   pipe_resource_reference(&stwfb->back_res, NULL);
 
    for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
       pipe_resource_reference(&stwfb->textures[i], NULL);
@@ -273,7 +277,7 @@ stw_st_swap_framebuffer_locked(struct st_framebuffer_iface *stfb)
    struct stw_st_framebuffer *stwfb = stw_st_framebuffer(stfb);
    unsigned front = ST_ATTACHMENT_FRONT_LEFT, back = ST_ATTACHMENT_BACK_LEFT;
    struct pipe_resource *ptex;
-   struct pipe_surface *psurf;
+   struct pipe_resource *pres;
    unsigned mask;
 
    /* swap the textures */
@@ -282,9 +286,9 @@ stw_st_swap_framebuffer_locked(struct st_framebuffer_iface *stfb)
    stwfb->textures[back] = ptex;
 
    /* swap the surfaces */
-   psurf = stwfb->front_surface;
-   stwfb->front_surface = stwfb->back_surface;
-   stwfb->back_surface = psurf;
+   pres = stwfb->front_res;
+   stwfb->front_res = stwfb->back_res;
+   stwfb->back_res = pres;
 
    /* convert to mask */
    front = 1 << front;

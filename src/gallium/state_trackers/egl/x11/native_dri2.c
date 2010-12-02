@@ -136,6 +136,7 @@ dri2_surface_process_drawable_buffers(struct native_surface *nsurf,
    templ.width0 = dri2surf->width;
    templ.height0 = dri2surf->height;
    templ.depth0 = 1;
+   templ.array_size = 1;
    templ.format = dri2surf->color_format;
    templ.bind = PIPE_BIND_RENDER_TARGET;
 

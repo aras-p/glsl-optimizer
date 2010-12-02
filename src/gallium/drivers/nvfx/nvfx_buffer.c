@@ -64,6 +64,7 @@ nvfx_user_buffer_create(struct pipe_screen *pscreen,
 	buffer->base.base.width0 = bytes;
 	buffer->base.base.height0 = 1;
 	buffer->base.base.depth0 = 1;
+	buffer->base.base.array_size = 1;
 	buffer->data = ptr;
 	buffer->size = bytes;
 	buffer->bytes_to_draw_until_static = bytes * screen->static_reuse_threshold;

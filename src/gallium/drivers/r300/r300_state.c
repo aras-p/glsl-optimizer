@@ -647,12 +647,12 @@ static void r300_fb_set_tiling_flags(struct r300_context *r300,
     for (i = 0; i < state->nr_cbufs; i++) {
         r300_tex_set_tiling_flags(r300,
                                   r300_texture(state->cbufs[i]->texture),
-                                  state->cbufs[i]->level);
+                                  state->cbufs[i]->u.tex.level);
     }
     if (state->zsbuf) {
         r300_tex_set_tiling_flags(r300,
                                   r300_texture(state->zsbuf->texture),
-                                  state->zsbuf->level);
+                                  state->zsbuf->u.tex.level);
     }
 }
 
@@ -663,14 +663,14 @@ static void r300_print_fb_surf_info(struct pipe_surface *surf, unsigned index,
     struct r300_texture *rtex = r300_texture(tex);
 
     fprintf(stderr,
-            "r300:   %s[%i] Dim: %ix%i, Offset: %i, ZSlice: %i, "
-            "Face: %i, Level: %i, Format: %s\n"
+            "r300:   %s[%i] Dim: %ix%i, Firstlayer: %i, "
+            "Lastlayer: %i, Level: %i, Format: %s\n"
 
             "r300:     TEX: Macro: %s, Micro: %s, Pitch: %i, "
             "Dim: %ix%ix%i, LastLevel: %i, Format: %s\n",
 
-            binding, index, surf->width, surf->height, surf->offset,
-            surf->zslice, surf->face, surf->level,
+            binding, index, surf->width, surf->height,
+            surf->u.tex.first_layer, surf->u.tex.last_layer, surf->u.tex.level,
             util_format_short_name(surf->format),
 
             rtex->desc.macrotile[0] ? "YES" : " NO",
@@ -768,7 +768,7 @@ static void
             struct r300_surface *zs_surf = r300_surface(state->zsbuf);
             struct r300_texture *tex;
             int compress = r300->screen->caps.is_rv350 ? RV350_Z_COMPRESS_88 : R300_Z_COMPRESS_44;
-            int level = zs_surf->base.level;
+            int level = zs_surf->base.u.tex.level;
 
             tex = r300_texture(zs_surf->base.texture);
 

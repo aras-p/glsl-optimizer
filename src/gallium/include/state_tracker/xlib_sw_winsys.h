@@ -6,7 +6,7 @@
 
 
 struct pipe_screen;
-struct pipe_surface;
+struct pipe_resource;
 
 /* This is what the xlib software winsys expects to find in the
  * "private" field of flush_frontbuffers().

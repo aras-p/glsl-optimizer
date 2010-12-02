@@ -42,9 +42,8 @@
 %ignore pipe_resource::screen;
 
 %immutable st_surface::texture;
-%immutable st_surface::face;
 %immutable st_surface::level;
-%immutable st_surface::zslice;
+%immutable st_surface::layer;
 
 %newobject pipe_resource::get_surface;
 
@@ -73,25 +72,23 @@
 
    /** Get a surface which is a "view" into a texture */
    struct st_surface *
-   get_surface(unsigned face=0, unsigned level=0, unsigned zslice=0)
+   get_surface(unsigned level=0, unsigned layer=0)
    {
       struct st_surface *surface;
 
-      if(face >= ($self->target == PIPE_TEXTURE_CUBE ? 6U : 1U))
-         SWIG_exception(SWIG_ValueError, "face out of bounds");
       if(level > $self->last_level)
          SWIG_exception(SWIG_ValueError, "level out of bounds");
-      if(zslice >= u_minify($self->depth0, level))
-         SWIG_exception(SWIG_ValueError, "zslice out of bounds");
+      if(layer >= ($self->target == PIPE_TEXTURE_3D ?
+                         u_minify($self->depth0, level) : $self->depth0))
+         SWIG_exception(SWIG_ValueError, "layer out of bounds");
 
       surface = CALLOC_STRUCT(st_surface);
       if(!surface)
          return NULL;
 
       pipe_resource_reference(&surface->texture, $self);
-      surface->face = face;
       surface->level = level;
-      surface->zslice = zslice;
+      surface->layer = layer;
 
       return surface;
 
@@ -113,9 +110,8 @@ struct st_surface
    %immutable;
 
    struct pipe_resource *texture;
-   unsigned face;
    unsigned level;
-   unsigned zslice;
+   unsigned layer;
 
 };
 

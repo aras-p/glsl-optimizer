@@ -30,6 +30,7 @@
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
+#include "util/u_box.h"
 
 #include "egl_g3d.h"
 #include "egl_g3d_api.h"
@@ -665,15 +666,11 @@ egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
    ptex = get_pipe_resource(gdpy->native, nsurf, NATIVE_ATTACHMENT_FRONT_LEFT);
    if (ptex) {
       struct pipe_resource *psrc = gsurf->render_texture;
-      struct pipe_subresource subsrc, subdst;
-      subsrc.face = 0;
-      subsrc.level = 0;
-      subdst.face = 0;
-      subdst.level = 0;
-
+      struct pipe_box src_box;
+      u_box_origin_2d(ptex->width0, ptex->height0, &src_box);
       if (psrc) {
-         gdpy->pipe->resource_copy_region(gdpy->pipe, ptex, subdst, 0, 0, 0,
-               gsurf->render_texture, subsrc, 0, 0, 0, ptex->width0, ptex->height0);
+         gdpy->pipe->resource_copy_region(gdpy->pipe, ptex, 0, 0, 0, 0,
+               gsurf->render_texture, 0, &src_box);
          nsurf->present(nsurf, NATIVE_ATTACHMENT_FRONT_LEFT, FALSE, 0);
       }
 

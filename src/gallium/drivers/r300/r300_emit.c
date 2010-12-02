@@ -424,7 +424,7 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
         if (can_hyperz) {
             uint32_t surf_pitch;
             struct r300_texture *tex;
-            int level = surf->base.level;
+            int level = surf->base.u.tex.level;
             tex = r300_texture(surf->base.texture);
 
             surf_pitch = surf->pitch & R300_DEPTHPITCH_MASK;
@@ -1073,8 +1073,8 @@ void r300_emit_hiz_clear(struct r300_context *r300, unsigned size, void *state)
 
     tex = r300_texture(fb->zsbuf->texture);
 
-    offset = tex->hiz_mem[fb->zsbuf->level]->ofs;
-    stride = tex->desc.stride_in_pixels[fb->zsbuf->level];
+    offset = tex->hiz_mem[fb->zsbuf->u.tex.level]->ofs;
+    stride = tex->desc.stride_in_pixels[fb->zsbuf->u.tex.level];
 
     /* convert from pixels to 4x4 blocks */
     stride = ALIGN_DIVUP(stride, 4);
@@ -1096,7 +1096,7 @@ void r300_emit_hiz_clear(struct r300_context *r300, unsigned size, void *state)
     z->current_func = -1;
 
     /* Mark the current zbuffer's hiz ram as in use. */
-    tex->hiz_in_use[fb->zsbuf->level] = TRUE;
+    tex->hiz_in_use[fb->zsbuf->u.tex.level] = TRUE;
 }
 
 void r300_emit_zmask_clear(struct r300_context *r300, unsigned size, void *state)
@@ -1110,9 +1110,9 @@ void r300_emit_zmask_clear(struct r300_context *r300, unsigned size, void *state
     int mult, offset_shift;
 
     tex = r300_texture(fb->zsbuf->texture);
-    stride = tex->desc.stride_in_pixels[fb->zsbuf->level];
+    stride = tex->desc.stride_in_pixels[fb->zsbuf->u.tex.level];
 
-    offset = tex->zmask_mem[fb->zsbuf->level]->ofs;
+    offset = tex->zmask_mem[fb->zsbuf->u.tex.level]->ofs;
 
     if (r300->z_compression == RV350_Z_COMPRESS_88)
         mult = 8;
@@ -1138,7 +1138,7 @@ void r300_emit_zmask_clear(struct r300_context *r300, unsigned size, void *state
     }
 
     /* Mark the current zbuffer's zmask as in use. */
-    tex->zmask_in_use[fb->zsbuf->level] = TRUE;
+    tex->zmask_in_use[fb->zsbuf->u.tex.level] = TRUE;
 }
 
 void r300_emit_ztop_state(struct r300_context* r300,

@@ -266,9 +266,9 @@ rbug_texture_read(struct rbug_rbug *tr_rbug, struct rbug_header *header, uint32_
 
    tex = tr_tex->resource;
    t = pipe_get_transfer(context, tex,
-				 gptr->face, gptr->level, gptr->zslice,
-				 PIPE_TRANSFER_READ,
-				 gptr->x, gptr->y, gptr->w, gptr->h);
+                         gptr->level, gptr->face + gptr->zslice,
+                         PIPE_TRANSFER_READ,
+                         gptr->x, gptr->y, gptr->w, gptr->h);
 
    map = context->transfer_map(context, t);
 
@@ -279,7 +279,7 @@ rbug_texture_read(struct rbug_rbug *tr_rbug, struct rbug_header *header, uint32_
                                 util_format_get_blocksize(t->resource->format),
                                 (uint8_t*)map,
                                 t->stride * util_format_get_nblocksy(t->resource->format,
-								     t->box.height),
+                                                                     t->box.height),
                                 t->stride,
                                 NULL);
 

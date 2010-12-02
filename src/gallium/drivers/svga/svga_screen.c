@@ -499,7 +499,6 @@ svga_screen_create(struct svga_winsys_screen *sws)
    screen->fence_finish = svga_fence_finish;
    svgascreen->sws = sws;
 
-   svga_screen_init_surface_functions(screen);
    svga_init_screen_resource_functions(svgascreen);
 
    svgascreen->use_ps30 =

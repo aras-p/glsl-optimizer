@@ -120,8 +120,8 @@ lp_rast_tile_begin(struct lp_rasterizer_task *task,
           * and update the tile's layout info.
           */
          (void) llvmpipe_get_texture_tile(lpt,
-                                          zsbuf->face + zsbuf->zslice,
-                                          zsbuf->level,
+                                          zsbuf->u.tex.first_layer,
+                                          zsbuf->u.tex.level,
                                           usage,
                                           task->x,
                                           task->y);
@@ -289,7 +289,6 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
 
 
 
-
 /**
  * Convert the color tile from tiled to linear layout.
  * This is generally only done when we're flushing the scene just prior to
@@ -307,15 +306,15 @@ lp_rast_store_linear_color( struct lp_rasterizer_task *task )
 
    for (buf = 0; buf < scene->fb.nr_cbufs; buf++) {
       struct pipe_surface *cbuf = scene->fb.cbufs[buf];
-      const unsigned face_slice = cbuf->face + cbuf->zslice;
-      const unsigned level = cbuf->level;
+      const unsigned layer = cbuf->u.tex.first_layer;
+      const unsigned level = cbuf->u.tex.level;
       struct llvmpipe_resource *lpt = llvmpipe_resource(cbuf->texture);
 
       if (!task->color_tiles[buf])
          continue;
 
       llvmpipe_unswizzle_cbuf_tile(lpt,
-                                   face_slice,
+                                   layer,
                                    level,
                                    task->x, task->y,
                                    task->color_tiles[buf]);

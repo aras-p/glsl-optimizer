@@ -120,6 +120,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	r600_init_blit_functions(rctx);
 	r600_init_query_functions(rctx);
 	r600_init_context_resource_functions(rctx);
+	r600_init_surface_functions(rctx);
 
 	switch (r600_get_family(rctx->radeon)) {
 	case CHIP_R600:
@@ -467,7 +468,6 @@ struct pipe_screen *r600_screen_create(struct radeon *radeon)
 	rscreen->screen.get_paramf = r600_get_paramf;
 	rscreen->screen.is_format_supported = r600_is_format_supported;
 	rscreen->screen.context_create = r600_create_context;
-	r600_init_screen_texture_functions(&rscreen->screen);
 	r600_init_screen_resource_functions(&rscreen->screen);
 
 	rscreen->tiling_info = r600_get_tiling_info(radeon);

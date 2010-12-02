@@ -126,20 +126,23 @@ nv50_transfer_rect_m2mf(struct pipe_screen *pscreen,
 struct pipe_transfer *
 nv50_miptree_transfer_new(struct pipe_context *pcontext,
 			  struct pipe_resource *pt,
-			  struct pipe_subresource sr,
+			  unsigned level,
 			  unsigned usage,
 			  const struct pipe_box *box)
 {
         struct pipe_screen *pscreen = pcontext->screen;
 	struct nouveau_device *dev = nouveau_screen(pscreen)->device;
 	struct nv50_miptree *mt = nv50_miptree(pt);
-	struct nv50_miptree_level *lvl = &mt->level[sr.level];
+	struct nv50_miptree_level *lvl = &mt->level[level];
 	struct nv50_transfer *tx;
-	unsigned nx, ny, image = 0;
+	unsigned nx, ny, image = 0, boxz = 0;
 	int ret;
 
+	/* XXX can't unify these here? */
 	if (pt->target == PIPE_TEXTURE_CUBE)
-		image = sr.face;
+		image = box->z;
+	else if (pt->target == PIPE_TEXTURE_3D)
+		boxz = box->z;
 
 	tx = CALLOC_STRUCT(nv50_transfer);
 	if (!tx)
@@ -151,21 +154,21 @@ nv50_miptree_transfer_new(struct pipe_context *pcontext,
 
 
 	pipe_resource_reference(&tx->base.resource, pt);
-	tx->base.sr = sr;
+	tx->base.level = level;
 	tx->base.usage = usage;
 	tx->base.box = *box;
-	tx->nblocksx = util_format_get_nblocksx(pt->format, u_minify(pt->width0, sr.level));
-	tx->nblocksy = util_format_get_nblocksy(pt->format, u_minify(pt->height0, sr.level));
+	tx->nblocksx = util_format_get_nblocksx(pt->format, u_minify(pt->width0, level));
+	tx->nblocksy = util_format_get_nblocksy(pt->format, u_minify(pt->height0, level));
 	tx->base.stride = tx->nblocksx * util_format_get_blocksize(pt->format);
 	tx->base.usage = usage;
 
 	tx->level_pitch = lvl->pitch;
-	tx->level_width = u_minify(mt->base.base.width0, sr.level);
-	tx->level_height = u_minify(mt->base.base.height0, sr.level);
-	tx->level_depth = u_minify(mt->base.base.depth0, sr.level);
+	tx->level_width = u_minify(mt->base.base.width0, level);
+	tx->level_height = u_minify(mt->base.base.height0, level);
+	tx->level_depth = u_minify(mt->base.base.depth0, level);
 	tx->level_offset = lvl->image_offset[image];
 	tx->level_tiling = lvl->tile_mode;
-	tx->level_z = box->z;
+	tx->level_z = boxz;
 	tx->level_x = util_format_get_nblocksx(pt->format, box->x);
 	tx->level_y = util_format_get_nblocksy(pt->format, box->y);
 	ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0,
@@ -181,7 +184,7 @@ nv50_miptree_transfer_new(struct pipe_context *pcontext,
 
 		nv50_transfer_rect_m2mf(pscreen, mt->base.bo, tx->level_offset,
 					tx->level_pitch, tx->level_tiling,
-					box->x, box->y, box->z,
+					box->x, box->y, boxz,
 					tx->nblocksx, tx->nblocksy,
 					tx->level_depth,
 					tx->bo, 0,

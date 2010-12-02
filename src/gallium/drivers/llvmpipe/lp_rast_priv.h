@@ -194,8 +194,8 @@ lp_rast_get_color_tile_pointer(struct lp_rasterizer_task *task,
 
       if (usage != LP_TEX_USAGE_WRITE_ALL) {
          llvmpipe_swizzle_cbuf_tile(lpt,
-                                    cbuf->face + cbuf->zslice,
-                                    cbuf->level,
+                                    cbuf->u.tex.first_layer,
+                                    cbuf->u.tex.level,
                                     task->x, task->y,
                                     task->color_tiles[buf]);
       }

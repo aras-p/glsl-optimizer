@@ -393,8 +393,8 @@ pstip_update_texture(struct pstip_stage *pstip)
     */
    pipe->flush( pipe, PIPE_FLUSH_TEXTURE_CACHE, NULL );
 
-   transfer = pipe_get_transfer(pipe, pstip->texture, 0, 0, 0,
-				    PIPE_TRANSFER_WRITE, 0, 0, 32, 32);
+   transfer = pipe_get_transfer(pipe, pstip->texture, 0, 0,
+                                PIPE_TRANSFER_WRITE, 0, 0, 32, 32);
    data = pipe->transfer_map(pipe, transfer);
 
    /*
@@ -440,6 +440,7 @@ pstip_create_texture(struct pstip_stage *pstip)
    texTemp.width0 = 32;
    texTemp.height0 = 32;
    texTemp.depth0 = 1;
+   texTemp.array_size = 1;
    texTemp.bind = PIPE_BIND_SAMPLER_VIEW;
 
    pstip->texture = screen->resource_create(screen, &texTemp);

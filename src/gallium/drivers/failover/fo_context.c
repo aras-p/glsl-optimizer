@@ -89,14 +89,14 @@ static void failover_draw_vbo( struct pipe_context *pipe,
 
 static unsigned int
 failover_is_resource_referenced( struct pipe_context *_pipe,
-				 struct pipe_resource *resource,
-				 unsigned face, unsigned level)
+                                 struct pipe_resource *resource,
+                                 unsigned level, int layer)
 {
    struct failover_context *failover = failover_context( _pipe );
    struct pipe_context *pipe = (failover->mode == FO_HW) ?
       failover->hw : failover->sw;
 
-   return pipe->is_resource_referenced(pipe, resource, face, level);
+   return pipe->is_resource_referenced(pipe, resource, level, layer);
 }
 
 struct pipe_context *failover_create( struct pipe_context *hw,
@@ -137,10 +137,10 @@ struct pipe_context *failover_create( struct pipe_context *hw,
    failover->pipe.resource_copy_region = hw->resource_copy_region;
 
 #if 0
-   failover->pipe.texture_create = hw->texture_create;
-   failover->pipe.texture_destroy = hw->texture_destroy;
-   failover->pipe.get_tex_surface = hw->get_tex_surface;
-   failover->pipe.texture_update = hw->texture_update;
+   failover->pipe.resource_create = hw->resource_create;
+   failover->pipe.resource_destroy = hw->resource_destroy;
+   failover->pipe.create_surface = hw->create_surface;
+   failover->pipe.surface_destroy = hw->surface_destroy;
 #endif
 
    failover->pipe.flush = hw->flush;

@@ -164,9 +164,8 @@ struct st_egl_image
    /* this is owned by the caller */
    struct pipe_resource *texture;
 
-   unsigned face;
    unsigned level;
-   unsigned zslice;
+   unsigned layer;
 };
 
 /**

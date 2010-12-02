@@ -42,6 +42,7 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "util/u_sampler.h"
+#include "util/u_surface.h"
 
 static enum pipe_format vg_format_to_pipe(VGImageFormat format)
 {
@@ -135,11 +136,11 @@ static void vg_copy_texture(struct vg_context *ctx,
 
    if (src_loc[2] >= 0 && src_loc[3] >= 0 &&
        dst_loc[2] >= 0 && dst_loc[3] >= 0) {
-      struct pipe_surface *surf;
+      struct pipe_surface *surf, surf_tmpl;
 
       /* get the destination surface */
-      surf = ctx->pipe->screen->get_tex_surface(ctx->pipe->screen,
-            dst, 0, 0, 0, PIPE_BIND_RENDER_TARGET);
+      u_surface_default_template(&surf_tmpl, dst, PIPE_BIND_RENDER_TARGET);
+      surf = ctx->pipe->create_surface(ctx->pipe, dst, &surf_tmpl);
       if (surf && renderer_copy_begin(ctx->renderer, surf, VG_TRUE, src)) {
          renderer_copy(ctx->renderer,
                dst_loc[0], dst_loc[1], dst_loc[2], dst_loc[3],
@@ -265,6 +266,7 @@ struct vg_image * image_create(VGImageFormat format,
    pt.width0 = width;
    pt.height0 = height;
    pt.depth0 = 1;
+   pt.array_size = 1;
    pt.bind = PIPE_BIND_SAMPLER_VIEW;
 
    newtex = screen->resource_create(screen, &pt);
@@ -415,7 +417,7 @@ void image_sub_data(struct vg_image *image,
 
    { /* upload color_data */
       struct pipe_transfer *transfer = pipe_get_transfer(
-         pipe, texture, 0, 0, 0,
+         pipe, texture, 0, 0,
          PIPE_TRANSFER_WRITE, 0, 0, texture->width0, texture->height0);
       src += (dataStride * yoffset);
       for (i = 0; i < height; i++) {
@@ -446,11 +448,11 @@ void image_get_sub_data(struct vg_image * image,
    {
       struct pipe_transfer *transfer =
          pipe_get_transfer(pipe,
-                                  image->sampler_view->texture,  0, 0, 0,
-                                  PIPE_TRANSFER_READ,
-                                  0, 0,
-                                  image->x + image->width,
-                                  image->y + image->height);
+                           image->sampler_view->texture,  0, 0,
+                           PIPE_TRANSFER_READ,
+                           0, 0,
+                           image->x + image->width,
+                           image->y + image->height);
       /* Do a row at a time to flip image data vertically */
       for (i = 0; i < height; i++) {
 #if 0
@@ -566,20 +568,21 @@ void image_set_pixels(VGint dx, VGint dy,
 {
    struct vg_context *ctx = vg_current_context();
    struct pipe_context *pipe = ctx->pipe;
-   struct pipe_screen *screen = pipe->screen;
-   struct pipe_surface *surf;
+   struct pipe_surface *surf, surf_tmpl;
    struct st_renderbuffer *strb = ctx->draw_buffer->strb;
 
    /* make sure rendering has completed */
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
-   surf = screen->get_tex_surface(screen, image_texture(src),  0, 0, 0,
-                                  0 /* no bind flags as surf isn't actually used??? */);
+   memset(&surf_tmpl, 0, sizeof(surf_tmpl));
+   u_surface_default_template(&surf_tmpl, image_texture(src),
+                              0 /* no bind flag - not a surface*/);
+   surf = pipe->create_surface(pipe, image_texture(src), &surf_tmpl);
 
    vg_copy_surface(ctx, strb->surface, dx, dy,
                    surf, sx+src->x, sy+src->y, width, height);
 
-   screen->tex_surface_destroy(surf);
+   pipe->surface_destroy(pipe, surf);
 }
 
 void image_get_pixels(struct vg_image *dst, VGint dx, VGint dy,
@@ -588,8 +591,7 @@ void image_get_pixels(struct vg_image *dst, VGint dx, VGint dy,
 {
    struct vg_context *ctx = vg_current_context();
    struct pipe_context *pipe = ctx->pipe;
-   struct pipe_screen *screen = pipe->screen;
-   struct pipe_surface *surf;
+   struct pipe_surface *surf, surf_tmpl;
    struct st_renderbuffer *strb = ctx->draw_buffer->strb;
 
    /* flip the y coordinates */
@@ -598,8 +600,10 @@ void image_get_pixels(struct vg_image *dst, VGint dx, VGint dy,
    /* make sure rendering has completed */
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
-   surf = screen->get_tex_surface(screen, image_texture(dst),  0, 0, 0,
-                                  0 /* no bind flags as surf isn't actually used??? */);
+   memset(&surf_tmpl, 0, sizeof(surf_tmpl));
+   u_surface_default_template(&surf_tmpl, image_texture(dst),
+                              PIPE_BIND_RENDER_TARGET);
+   surf = pipe->create_surface(pipe, image_texture(dst), &surf_tmpl);
 
    vg_copy_surface(ctx, surf, dst->x + dx, dst->y + dy,
                    strb->surface, sx, sy, width, height);

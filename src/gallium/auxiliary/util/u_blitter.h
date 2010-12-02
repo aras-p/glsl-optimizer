@@ -164,12 +164,11 @@ void util_blitter_clear(struct blitter_context *blitter,
  */
 void util_blitter_copy_region(struct blitter_context *blitter,
                               struct pipe_resource *dst,
-                              struct pipe_subresource subdst,
+                              unsigned dstlevel,
                               unsigned dstx, unsigned dsty, unsigned dstz,
                               struct pipe_resource *src,
-                              struct pipe_subresource subsrc,
-                              unsigned srcx, unsigned srcy, unsigned srcz,
-                              unsigned width, unsigned height,
+                              unsigned srclevel,
+                              const struct pipe_box *srcbox,
                               boolean ignore_stencil);
 
 /**

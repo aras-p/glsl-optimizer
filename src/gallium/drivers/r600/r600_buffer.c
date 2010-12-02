@@ -89,6 +89,7 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 	rbuffer->r.base.b.width0 = bytes;
 	rbuffer->r.base.b.height0 = 1;
 	rbuffer->r.base.b.depth0 = 1;
+	rbuffer->r.base.b.array_size = 1;
 	rbuffer->r.base.b.flags = 0;
 	rbuffer->num_ranges = 0;
 	rbuffer->r.bo = NULL;
@@ -188,7 +189,7 @@ static void r600_buffer_transfer_flush_region(struct pipe_context *pipe,
 
 unsigned r600_buffer_is_referenced_by_cs(struct pipe_context *context,
 					 struct pipe_resource *buf,
-					 unsigned face, unsigned level)
+					 unsigned level, int layer)
 {
 	/* FIXME */
 	return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;

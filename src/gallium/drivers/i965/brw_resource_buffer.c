@@ -92,9 +92,9 @@ brw_buffer_transfer_unmap( struct pipe_context *pipe,
 
 
 static unsigned brw_buffer_is_referenced( struct pipe_context *pipe,
-					 struct pipe_resource *resource,
-					 unsigned face,
-					 unsigned level)
+                                          struct pipe_resource *resource,
+                                          unsigned level,
+                                          int layer)
 {
    struct brw_context *brw = brw_context(pipe);
    struct brw_winsys_buffer *batch_bo = brw->batch->buf;
@@ -194,6 +194,7 @@ brw_user_buffer_create(struct pipe_screen *screen,
    buf->b.b.width0 = bytes;
    buf->b.b.height0 = 1;
    buf->b.b.depth0 = 1;
+   buf->b.b.array_size = 1;
 
    buf->user_buffer = ptr;
    

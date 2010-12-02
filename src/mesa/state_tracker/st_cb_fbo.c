@@ -52,6 +52,7 @@
 
 #include "util/u_format.h"
 #include "util/u_inlines.h"
+#include "util/u_surface.h"
 
 
 /**
@@ -65,9 +66,11 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *r
                               GLuint width, GLuint height)
 {
    struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
    struct pipe_screen *screen = st->pipe->screen;
    struct st_renderbuffer *strb = st_renderbuffer(rb);
    enum pipe_format format;
+   struct pipe_surface surf_tmpl;
 
    if (strb->format != PIPE_FORMAT_NONE)
       format = strb->format;
@@ -113,6 +116,7 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *r
       template.width0 = width;
       template.height0 = height;
       template.depth0 = 1;
+      template.array_size = 1;
       template.last_level = 0;
       template.nr_samples = rb->NumSamples;
       if (util_format_is_depth_or_stencil(format)) {
@@ -120,7 +124,7 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *r
       }
       else {
          template.bind = (PIPE_BIND_DISPLAY_TARGET |
-			  PIPE_BIND_RENDER_TARGET);
+                          PIPE_BIND_RENDER_TARGET);
       }
 
       strb->texture = screen->resource_create(screen, &template);
@@ -128,10 +132,11 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *r
       if (!strb->texture) 
          return FALSE;
 
-      strb->surface = screen->get_tex_surface(screen,
-                                              strb->texture,
-                                              0, 0, 0,
-                                              template.bind);
+      memset(&surf_tmpl, 0, sizeof(surf_tmpl));
+      u_surface_default_template(&surf_tmpl, strb->texture, template.bind);
+      strb->surface = pipe->create_surface(pipe,
+                                           strb->texture,
+                                           &surf_tmpl);
       if (strb->surface) {
          assert(strb->surface->texture);
          assert(strb->surface->format);
@@ -327,12 +332,12 @@ st_render_texture(struct gl_context *ctx,
 {
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
-   struct pipe_screen *screen = pipe->screen;
    struct st_renderbuffer *strb;
    struct gl_renderbuffer *rb;
    struct pipe_resource *pt = st_get_texobj_resource(att->Texture);
    struct st_texture_object *stObj;
    const struct gl_texture_image *texImage;
+   struct pipe_surface surf_tmpl;
 
    /* When would this fail?  Perhaps assert? */
    if (!pt) 
@@ -381,12 +386,15 @@ st_render_texture(struct gl_context *ctx,
    assert(strb->rtt_level <= strb->texture->last_level);
 
    /* new surface for rendering into the texture */
-   strb->surface = screen->get_tex_surface(screen,
-                                           strb->texture,
-                                           strb->rtt_face,
-                                           strb->rtt_level,
-                                           strb->rtt_slice,
-                                           PIPE_BIND_RENDER_TARGET);
+   memset(&surf_tmpl, 0, sizeof(surf_tmpl));
+   surf_tmpl.format = strb->texture->format;
+   surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
+   surf_tmpl.u.tex.level = strb->rtt_level;
+   surf_tmpl.u.tex.first_layer = strb->rtt_face + strb->rtt_slice;
+   surf_tmpl.u.tex.last_layer = strb->rtt_face + strb->rtt_slice;
+   strb->surface = pipe->create_surface(pipe,
+                                        strb->texture,
+                                        &surf_tmpl);
 
    strb->format = pt->format;
 

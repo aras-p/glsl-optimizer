@@ -100,7 +100,7 @@ no_winsys:
 
 static void
 gdi_present(struct pipe_screen *screen,
-            struct pipe_surface *surface,
+            struct pipe_resource *res,
             HDC hDC)
 {
    /* This will fail if any interposing layer (trace, debug, etc) has
@@ -119,14 +119,14 @@ gdi_present(struct pipe_screen *screen,
 #ifdef HAVE_LLVMPIPE
    if (use_llvmpipe) {
       winsys = llvmpipe_screen(screen)->winsys;
-      dt = llvmpipe_resource(surface->texture)->dt;
+      dt = llvmpipe_resource(res)->dt;
       gdi_sw_display(winsys, dt, hDC);
       return;
    }
 #endif
 
    winsys = softpipe_screen(screen)->winsys,
-   dt = softpipe_resource(surface->texture)->dt,
+   dt = softpipe_resource(res)->dt,
    gdi_sw_display(winsys, dt, hDC);
 }
 

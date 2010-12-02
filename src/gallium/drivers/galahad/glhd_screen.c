@@ -223,39 +223,6 @@ galahad_screen_resource_destroy(struct pipe_screen *screen,
    galahad_resource_destroy(galahad_resource(_resource));
 }
 
-static struct pipe_surface *
-galahad_screen_get_tex_surface(struct pipe_screen *_screen,
-                                struct pipe_resource *_resource,
-                                unsigned face,
-                                unsigned level,
-                                unsigned zslice,
-                                unsigned usage)
-{
-   struct galahad_screen *glhd_screen = galahad_screen(_screen);
-   struct galahad_resource *glhd_resource = galahad_resource(_resource);
-   struct pipe_screen *screen = glhd_screen->screen;
-   struct pipe_resource *resource = glhd_resource->resource;
-   struct pipe_surface *result;
-
-   result = screen->get_tex_surface(screen,
-                                    resource,
-                                    face,
-                                    level,
-                                    zslice,
-                                    usage);
-
-   if (result)
-      return galahad_surface_create(glhd_resource, result);
-   return NULL;
-}
-
-static void
-galahad_screen_tex_surface_destroy(struct pipe_surface *_surface)
-{
-   galahad_surface_destroy(galahad_surface(_surface));
-}
-
-
 
 static struct pipe_resource *
 galahad_screen_user_buffer_create(struct pipe_screen *_screen,
@@ -281,16 +248,18 @@ galahad_screen_user_buffer_create(struct pipe_screen *_screen,
 
 static void
 galahad_screen_flush_frontbuffer(struct pipe_screen *_screen,
-                                  struct pipe_surface *_surface,
+                                  struct pipe_resource *_resource,
+                                  unsigned level, unsigned layer,
                                   void *context_private)
 {
    struct galahad_screen *glhd_screen = galahad_screen(_screen);
-   struct galahad_surface *glhd_surface = galahad_surface(_surface);
+   struct galahad_resource *glhd_resource = galahad_resource(_resource);
    struct pipe_screen *screen = glhd_screen->screen;
-   struct pipe_surface *surface = glhd_surface->surface;
+   struct pipe_resource *resource = glhd_resource->resource;
 
    screen->flush_frontbuffer(screen,
-                             surface,
+                             resource,
+                             level, layer,
                              context_private);
 }
 
@@ -360,8 +329,6 @@ galahad_screen_create(struct pipe_screen *screen)
    glhd_screen->base.resource_from_handle = galahad_screen_resource_from_handle;
    glhd_screen->base.resource_get_handle = galahad_screen_resource_get_handle;
    glhd_screen->base.resource_destroy = galahad_screen_resource_destroy;
-   glhd_screen->base.get_tex_surface = galahad_screen_get_tex_surface;
-   glhd_screen->base.tex_surface_destroy = galahad_screen_tex_surface_destroy;
    glhd_screen->base.user_buffer_create = galahad_screen_user_buffer_create;
    glhd_screen->base.flush_frontbuffer = galahad_screen_flush_frontbuffer;
    glhd_screen->base.fence_reference = galahad_screen_fence_reference;

@@ -427,9 +427,9 @@ make_texture(struct st_context *st,
       /* we'll do pixel transfer in a fragment shader */
       ctx->_ImageTransferState = 0x0;
 
-      transfer = pipe_get_transfer(st->pipe, pt, 0, 0, 0,
-					      PIPE_TRANSFER_WRITE, 0, 0,
-					      width, height);
+      transfer = pipe_get_transfer(st->pipe, pt, 0, 0,
+                                   PIPE_TRANSFER_WRITE, 0, 0,
+                                   width, height);
 
       /* map texture transfer */
       dest = pipe_transfer_map(pipe, transfer);
@@ -763,9 +763,9 @@ draw_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
    else
       usage = PIPE_TRANSFER_WRITE;
 
-   pt = pipe_get_transfer(st_context(ctx)->pipe, strb->texture, 0, 0, 0,
-				       usage, x, y,
-				       width, height);
+   pt = pipe_get_transfer(st_context(ctx)->pipe, strb->texture, 0, 0,
+                                     usage, x, y,
+                                     width, height);
 
    stmap = pipe_transfer_map(pipe, pt);
 
@@ -1025,15 +1025,15 @@ copy_stencil_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       usage = PIPE_TRANSFER_READ_WRITE;
    else
       usage = PIPE_TRANSFER_WRITE;
-   
+
    if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP) {
       dsty = rbDraw->Base.Height - dsty - height;
    }
 
    ptDraw = pipe_get_transfer(st_context(ctx)->pipe,
-					   rbDraw->texture, 0, 0, 0,
-					   usage, dstx, dsty,
-					   width, height);
+                              rbDraw->texture, 0, 0,
+                              usage, dstx, dsty,
+                              width, height);
 
    assert(util_format_get_blockwidth(ptDraw->resource->format) == 1);
    assert(util_format_get_blockheight(ptDraw->resource->format) == 1);
@@ -1209,27 +1209,24 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
    /* Make temporary texture which is a copy of the src region.
     */
    if (srcFormat == texFormat) {
-      struct pipe_subresource srcsub, dstsub;
-      srcsub.face = 0;
-      srcsub.level = 0;
-      dstsub.face = 0;
-      dstsub.level = 0;
-      /* copy source framebuffer surface into mipmap/texture */
+      struct pipe_box src_box;
+      u_box_2d(readX, readY, readW, readH, &src_box);
+    /* copy source framebuffer surface into mipmap/texture */
       pipe->resource_copy_region(pipe,
                                  pt,                                /* dest tex */
-                                 dstsub,
+                                 0,
                                  pack.SkipPixels, pack.SkipRows, 0, /* dest pos */
                                  rbRead->texture,                   /* src tex */
-                                 srcsub,
-                                 readX, readY, 0, readW, readH);    /* src region */
+                                 0,
+                                 &src_box);
 
    }
    else {
       /* CPU-based fallback/conversion */
       struct pipe_transfer *ptRead =
-         pipe_get_transfer(st->pipe, rbRead->texture, 0, 0, 0,
-                                        PIPE_TRANSFER_READ,
-                                        readX, readY, readW, readH);
+         pipe_get_transfer(st->pipe, rbRead->texture, 0, 0,
+                           PIPE_TRANSFER_READ,
+                           readX, readY, readW, readH);
       struct pipe_transfer *ptTex;
       enum pipe_transfer_usage transfer_usage;
 
@@ -1241,8 +1238,8 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       else
          transfer_usage = PIPE_TRANSFER_WRITE;
 
-      ptTex = pipe_get_transfer(st->pipe, pt, 0, 0, 0, transfer_usage,
-                                             0, 0, width, height);
+      ptTex = pipe_get_transfer(st->pipe, pt, 0, 0, transfer_usage,
+                                0, 0, width, height);
 
       /* copy image from ptRead surface to ptTex surface */
       if (type == GL_COLOR) {

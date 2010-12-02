@@ -44,6 +44,7 @@ struct softpipe_tex_tile_cache;
 
 /* If we need to support > 4096, just expand this to be a 64 bit
  * union, or consider tiling in Z as well.
+ * XXX or unify z/face?
  */
 union tex_tile_address {
    struct {
@@ -126,10 +127,10 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
 
 static INLINE union tex_tile_address
 tex_tile_address( unsigned x,
-		  unsigned y,
-		  unsigned z,
-		  unsigned face,
-		  unsigned level )
+                  unsigned y,
+                  unsigned z,
+                  unsigned face,
+                  unsigned level )
 {
    union tex_tile_address addr;
 
@@ -139,7 +140,7 @@ tex_tile_address( unsigned x,
    addr.bits.z = z;
    addr.bits.face = face;
    addr.bits.level = level;
-      
+
    return addr;
 }
 

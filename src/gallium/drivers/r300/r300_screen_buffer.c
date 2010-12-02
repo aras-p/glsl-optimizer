@@ -51,7 +51,7 @@ unsigned r300_buffer_is_referenced(struct pipe_context *context,
 
 static unsigned r300_buffer_is_referenced_by_cs(struct pipe_context *context,
                                                 struct pipe_resource *buf,
-                                                unsigned face, unsigned level)
+                                                unsigned level, int layer)
 {
     return r300_buffer_is_referenced(context, buf, R300_REF_CS);
 }
@@ -142,7 +142,7 @@ static void r300_buffer_destroy(struct pipe_screen *screen,
 static struct pipe_transfer*
 r300_default_get_transfer(struct pipe_context *context,
                           struct pipe_resource *resource,
-                          struct pipe_subresource sr,
+                          unsigned level,
                           unsigned usage,
                           const struct pipe_box *box)
 {
@@ -151,11 +151,11 @@ r300_default_get_transfer(struct pipe_context *context,
          util_slab_alloc(&r300->pool_transfers);
 
    transfer->resource = resource;
-   transfer->sr = sr;
+   transfer->level = level;
    transfer->usage = usage;
    transfer->box = *box;
    transfer->stride = 0;
-   transfer->slice_stride = 0;
+   transfer->layer_stride = 0;
    transfer->data = NULL;
 
    /* Note strides are zero, this is ok for buffers, but not for
@@ -341,6 +341,7 @@ struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
     rbuf->b.b.width0 = bytes;
     rbuf->b.b.height0 = 1;
     rbuf->b.b.depth0 = 1;
+    rbuf->b.b.array_size = 1;
     rbuf->b.b.flags = 0;
     rbuf->domain = R300_DOMAIN_GTT;
     rbuf->num_ranges = 0;

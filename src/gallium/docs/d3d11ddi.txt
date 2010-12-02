@@ -162,8 +162,8 @@ CreateDepthStencilState -> create_depth_stencil_alpha_state
 	+ Gallium has per-face writemask/valuemasks, D3D11 uses the same value for back and front
 	+ Gallium supports the alpha test, which D3D11 lacks
 
-CreateDepthStencilView -> get_tex_surface
-CreateRenderTargetView -> get_tex_surface
+CreateDepthStencilView -> create_surface
+CreateRenderTargetView -> create_surface
 	! Gallium merges depthstencil and rendertarget views into pipe_surface, which also doubles as a 2D surface abstraction
 	- lack of texture array support
 	- lack of render-to-buffer support
@@ -221,7 +221,6 @@ CreateResource -> texture_create or buffer_create
 	! D3D11 specifies mapping flags (i.e. read/write/discard);:it's unclear what they are used for here
 	- D3D11 supports odd things in the D3D10_DDI_RESOURCE_MISC_FLAG enum (D3D10_DDI_RESOURCE_MISC_DISCARD_ON_PRESENT, D3D11_DDI_RESOURCE_MISC_BUFFER_ALLOW_RAW_VIEWS, D3D11_DDI_RESOURCE_MISC_BUFFER_STRUCTURED)
 	- Gallium does not support indirect draw call parameter buffers
-	- Gallium lacks array textures
 	! D3D11 supports specifying hardware modes and other stuff here for scanout resources
 	+ Gallium allows specifying minimum buffer alignment
 	! D3D11 implements cube maps as 2D array textures

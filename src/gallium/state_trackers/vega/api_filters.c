@@ -41,7 +41,6 @@
 #include "util/u_sampler.h"
 #include "util/u_string.h"
 
-
 #include "asm_filters.h"
 
 
@@ -72,6 +71,7 @@ static INLINE struct pipe_resource *create_texture_1d(struct vg_context *ctx,
    templ.width0 = color_data_len;
    templ.height0 = 1;
    templ.depth0 = 1;
+   templ.array_size = 1;
    templ.bind = PIPE_BIND_SAMPLER_VIEW;
 
    tex = screen->resource_create(screen, &templ);
@@ -79,9 +79,9 @@ static INLINE struct pipe_resource *create_texture_1d(struct vg_context *ctx,
    { /* upload color_data */
       struct pipe_transfer *transfer =
          pipe_get_transfer(pipe, tex,
-				0, 0, 0,
-				PIPE_TRANSFER_READ_WRITE ,
-				0, 0, tex->width0, tex->height0);
+                           0, 0,
+                           PIPE_TRANSFER_READ_WRITE ,
+                           0, 0, tex->width0, tex->height0);
       void *map = pipe->transfer_map(pipe, transfer);
       memcpy(map, color_data, sizeof(VGint)*color_data_len);
       pipe->transfer_unmap(pipe, transfer);

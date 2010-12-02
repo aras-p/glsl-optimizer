@@ -34,6 +34,8 @@
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
 #include "util/u_sampler.h"
+#include "util/u_box.h"
+#include "util/u_surface.h"
 
 #include "vg_api.h"
 #include "vg_manager.h"
@@ -45,7 +47,8 @@ static boolean
 vg_context_update_color_rb(struct vg_context *ctx, struct pipe_resource *pt)
 {
    struct st_renderbuffer *strb = ctx->draw_buffer->strb;
-   struct pipe_screen *screen = ctx->pipe->screen;
+   struct pipe_context *pipe = ctx->pipe;
+   struct pipe_surface surf_tmpl;
 
    if (strb->texture == pt) {
       pipe_resource_reference(&pt, NULL);
@@ -58,8 +61,12 @@ vg_context_update_color_rb(struct vg_context *ctx, struct pipe_resource *pt)
    strb->width = strb->height = 0;
 
    strb->texture = pt;
-   strb->surface = screen->get_tex_surface(screen, strb->texture, 0, 0, 0,
-                                           PIPE_BIND_RENDER_TARGET);
+
+   memset(&surf_tmpl, 0, sizeof(surf_tmpl));
+   u_surface_default_template(&surf_tmpl, strb->texture,
+                              PIPE_BIND_RENDER_TARGET);
+   strb->surface = pipe->create_surface(pipe, strb->texture, &surf_tmpl);
+
    if (!strb->surface) {
       pipe_resource_reference(&strb->texture, NULL);
       return TRUE;

@@ -188,40 +188,6 @@ rbug_screen_resource_destroy(struct pipe_screen *screen,
    rbug_resource_destroy(rbug_resource(_resource));
 }
 
-static struct pipe_surface *
-rbug_screen_get_tex_surface(struct pipe_screen *_screen,
-                            struct pipe_resource *_resource,
-                            unsigned face,
-                            unsigned level,
-                            unsigned zslice,
-                            unsigned usage)
-{
-   struct rbug_screen *rb_screen = rbug_screen(_screen);
-   struct rbug_resource *rb_resource = rbug_resource(_resource);
-   struct pipe_screen *screen = rb_screen->screen;
-   struct pipe_resource *resource = rb_resource->resource;
-   struct pipe_surface *result;
-
-   result = screen->get_tex_surface(screen,
-                                    resource,
-                                    face,
-                                    level,
-                                    zslice,
-                                    usage);
-
-   if (result)
-      return rbug_surface_create(rb_resource, result);
-   return NULL;
-}
-
-static void
-rbug_screen_tex_surface_destroy(struct pipe_surface *_surface)
-{
-   rbug_surface_destroy(rbug_surface(_surface));
-}
-
-
-
 static struct pipe_resource *
 rbug_screen_user_buffer_create(struct pipe_screen *_screen,
                                void *ptr,
@@ -246,16 +212,18 @@ rbug_screen_user_buffer_create(struct pipe_screen *_screen,
 
 static void
 rbug_screen_flush_frontbuffer(struct pipe_screen *_screen,
-                              struct pipe_surface *_surface,
+                              struct pipe_resource *_resource,
+                              unsigned level, unsigned layer,
                               void *context_private)
 {
    struct rbug_screen *rb_screen = rbug_screen(_screen);
-   struct rbug_surface *rb_surface = rbug_surface(_surface);
+   struct rbug_resource *rb_resource = rbug_resource(_resource);
    struct pipe_screen *screen = rb_screen->screen;
-   struct pipe_surface *surface = rb_surface->surface;
+   struct pipe_resource *resource = rb_resource->resource;
 
    screen->flush_frontbuffer(screen,
-                             surface,
+                             resource,
+                             level, layer,
                              context_private);
 }
 
@@ -336,8 +304,6 @@ rbug_screen_create(struct pipe_screen *screen)
    rb_screen->base.resource_from_handle = rbug_screen_resource_from_handle;
    rb_screen->base.resource_get_handle = rbug_screen_resource_get_handle;
    rb_screen->base.resource_destroy = rbug_screen_resource_destroy;
-   rb_screen->base.get_tex_surface = rbug_screen_get_tex_surface;
-   rb_screen->base.tex_surface_destroy = rbug_screen_tex_surface_destroy;
    rb_screen->base.user_buffer_create = rbug_screen_user_buffer_create;
    rb_screen->base.flush_frontbuffer = rbug_screen_flush_frontbuffer;
    rb_screen->base.fence_reference = rbug_screen_fence_reference;

@@ -885,6 +885,60 @@ trace_sampler_view_destroy(struct pipe_context *_pipe,
    FREE(_view);
 }
 
+/********************************************************************
+ * surface
+ */
+
+
+static struct pipe_surface *
+trace_create_surface(struct pipe_context *_pipe,
+                     struct pipe_resource *_texture,
+                     const struct pipe_surface *surf_tmpl)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct trace_resource *tr_tex = trace_resource(_texture);
+   struct pipe_context *pipe = tr_ctx->pipe;
+   struct pipe_resource *texture = tr_tex->resource;
+   struct pipe_surface *result = NULL;
+
+   trace_dump_call_begin("pipe_context", "create_surface");
+
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(ptr, texture);
+   /* hmm some values unitialized there */
+   trace_dump_arg(surface, surf_tmpl);
+
+   result = pipe->create_surface(pipe, texture, surf_tmpl);
+
+   trace_dump_ret(ptr, result);
+
+   trace_dump_call_end();
+
+   result = trace_surf_create(tr_tex, result);
+
+   return result;
+}
+
+
+static void
+trace_surface_destroy(struct pipe_context *_pipe,
+                      struct pipe_surface *_surface)
+{
+   struct trace_context *tr_ctx = trace_context(_pipe);
+   struct pipe_context *pipe = tr_ctx->pipe;
+   struct trace_surface *tr_surf = trace_surface(_surface);
+   struct pipe_surface *surface = tr_surf->surface;
+
+   trace_dump_call_begin("pipe_context", "surface_destroy");
+
+   trace_dump_arg(ptr, pipe);
+   trace_dump_arg(ptr, surface);
+
+   trace_dump_call_end();
+
+   trace_surf_destroy(tr_surf);
+}
+
 
 static INLINE void
 trace_context_set_fragment_sampler_views(struct pipe_context *_pipe,
@@ -1004,12 +1058,11 @@ trace_context_set_index_buffer(struct pipe_context *_pipe,
 static INLINE void
 trace_context_resource_copy_region(struct pipe_context *_pipe,
                                    struct pipe_resource *dst,
-                                   struct pipe_subresource subdst,
+                                   unsigned dst_level,
                                    unsigned dstx, unsigned dsty, unsigned dstz,
                                    struct pipe_resource *src,
-                                   struct pipe_subresource subsrc,
-                                   unsigned srcx, unsigned srcy, unsigned srcz,
-                                   unsigned width, unsigned height)
+                                   unsigned src_level,
+                                   const struct pipe_box *src_box)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
@@ -1021,21 +1074,17 @@ trace_context_resource_copy_region(struct pipe_context *_pipe,
 
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(ptr, dst);
-   trace_dump_arg_struct(subresource, subdst);
+   trace_dump_arg(uint, dst_level);
    trace_dump_arg(uint, dstx);
    trace_dump_arg(uint, dsty);
    trace_dump_arg(uint, dstz);
    trace_dump_arg(ptr, src);
-   trace_dump_arg_struct(subresource, subsrc);
-   trace_dump_arg(uint, srcx);
-   trace_dump_arg(uint, srcy);
-   trace_dump_arg(uint, srcz);
-   trace_dump_arg(uint, width);
-   trace_dump_arg(uint, height);
+   trace_dump_arg(uint, src_level);
+   trace_dump_arg(box, src_box);
 
    pipe->resource_copy_region(pipe,
-                              dst, subdst, dstx, dsty, dstz,
-                              src, subsrc, srcx, srcy, srcz, width, height);
+                              dst, dst_level, dstx, dsty, dstz,
+                              src, src_level, src_box);
 
    trace_dump_call_end();
 }
@@ -1166,8 +1215,8 @@ trace_context_destroy(struct pipe_context *_pipe)
 
 static unsigned int
 trace_is_resource_referenced( struct pipe_context *_pipe,
-			      struct pipe_resource *_resource,
-			      unsigned face, unsigned level)
+                              struct pipe_resource *_resource,
+                              unsigned level, int layer)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct trace_resource *tr_tex = trace_resource(_resource);
@@ -1178,10 +1227,10 @@ trace_is_resource_referenced( struct pipe_context *_pipe,
    trace_dump_call_begin("pipe_context", "is_resource_referenced");
    trace_dump_arg(ptr, pipe);
    trace_dump_arg(ptr, texture);
-   trace_dump_arg(uint, face);
    trace_dump_arg(uint, level);
+   trace_dump_arg(int, layer);
 
-   referenced = pipe->is_resource_referenced(pipe, texture, face, level);
+   referenced = pipe->is_resource_referenced(pipe, texture, level, layer);
 
    trace_dump_ret(uint, referenced);
    trace_dump_call_end();
@@ -1197,10 +1246,10 @@ trace_is_resource_referenced( struct pipe_context *_pipe,
 
 static struct pipe_transfer *
 trace_context_get_transfer(struct pipe_context *_context,
-			   struct pipe_resource *_resource,
-			   struct pipe_subresource sr,
-			   unsigned usage,
-			   const struct pipe_box *box)
+                           struct pipe_resource *_resource,
+                           unsigned level,
+                           unsigned usage,
+                           const struct pipe_box *box)
 {
    struct trace_context *tr_context = trace_context(_context);
    struct trace_resource *tr_tex = trace_resource(_resource);
@@ -1215,7 +1264,7 @@ trace_context_get_transfer(struct pipe_context *_context,
     * to transfer_inline_write and ignore read transfers.
     */
 
-   result = context->get_transfer(context, texture, sr, usage, box);
+   result = context->get_transfer(context, texture, level, usage, box);
 
    if (result)
       result = trace_transfer_create(tr_context, tr_tex, result);
@@ -1226,7 +1275,7 @@ trace_context_get_transfer(struct pipe_context *_context,
 
 static void
 trace_context_transfer_destroy(struct pipe_context *_context,
-                                   struct pipe_transfer *_transfer)
+                               struct pipe_transfer *_transfer)
 {
    struct trace_context *tr_context = trace_context(_context);
    struct trace_transfer *tr_trans = trace_transfer(_transfer);
@@ -1274,7 +1323,7 @@ trace_context_transfer_flush_region( struct pipe_context *_context,
 
 static void
 trace_context_transfer_unmap(struct pipe_context *_context,
-			     struct pipe_transfer *_transfer)
+                             struct pipe_transfer *_transfer)
 {
    struct trace_context *tr_ctx = trace_context(_context);
    struct trace_transfer *tr_trans = trace_transfer(_transfer);
@@ -1287,17 +1336,17 @@ trace_context_transfer_unmap(struct pipe_context *_context,
        */
 
       struct pipe_resource *resource = transfer->resource;
-      struct pipe_subresource sr = transfer->sr;
+      unsigned level = transfer->level;
       unsigned usage = transfer->usage;
       const struct pipe_box *box = &transfer->box;
       unsigned stride = transfer->stride;
-      unsigned slice_stride = transfer->slice_stride;
+      unsigned layer_stride = transfer->layer_stride;
 
       trace_dump_call_begin("pipe_context", "transfer_inline_write");
 
       trace_dump_arg(ptr, context);
       trace_dump_arg(ptr, resource);
-      trace_dump_arg_struct(subresource, sr);
+      trace_dump_arg(uint, level);
       trace_dump_arg(uint, usage);
       trace_dump_arg(box, box);
 
@@ -1306,11 +1355,11 @@ trace_context_transfer_unmap(struct pipe_context *_context,
                            resource->format,
                            box,
                            stride,
-                           slice_stride);
+                           layer_stride);
       trace_dump_arg_end();
 
       trace_dump_arg(uint, stride);
-      trace_dump_arg(uint, slice_stride);
+      trace_dump_arg(uint, layer_stride);
 
       trace_dump_call_end();
 
@@ -1323,13 +1372,13 @@ trace_context_transfer_unmap(struct pipe_context *_context,
 
 static void
 trace_context_transfer_inline_write(struct pipe_context *_context,
-				    struct pipe_resource *_resource,
-				    struct pipe_subresource sr,
-				    unsigned usage,
-				    const struct pipe_box *box,
-				    const void *data,
-				    unsigned stride,
-				    unsigned slice_stride)
+                                    struct pipe_resource *_resource,
+                                    unsigned level,
+                                    unsigned usage,
+                                    const struct pipe_box *box,
+                                    const void *data,
+                                    unsigned stride,
+                                    unsigned layer_stride)
 {
    struct trace_context *tr_context = trace_context(_context);
    struct trace_resource *tr_tex = trace_resource(_resource);
@@ -1342,7 +1391,7 @@ trace_context_transfer_inline_write(struct pipe_context *_context,
 
    trace_dump_arg(ptr, context);
    trace_dump_arg(ptr, resource);
-   trace_dump_arg_struct(subresource, sr);
+   trace_dump_arg(uint, level);
    trace_dump_arg(uint, usage);
    trace_dump_arg(box, box);
 
@@ -1351,16 +1400,16 @@ trace_context_transfer_inline_write(struct pipe_context *_context,
                         resource->format,
                         box,
                         stride,
-                        slice_stride);
+                        layer_stride);
    trace_dump_arg_end();
 
    trace_dump_arg(uint, stride);
-   trace_dump_arg(uint, slice_stride);
+   trace_dump_arg(uint, layer_stride);
 
    trace_dump_call_end();
 
    context->transfer_inline_write(context, resource,
-				  sr, usage, box, data, stride, slice_stride);
+                                  level, usage, box, data, stride, layer_stride);
 }
 
 
@@ -1434,6 +1483,8 @@ trace_context_create(struct trace_screen *tr_scr,
    tr_ctx->base.set_vertex_sampler_views = trace_context_set_vertex_sampler_views;
    tr_ctx->base.create_sampler_view = trace_create_sampler_view;
    tr_ctx->base.sampler_view_destroy = trace_sampler_view_destroy;
+   tr_ctx->base.create_surface = trace_create_surface;
+   tr_ctx->base.surface_destroy = trace_surface_destroy;
    tr_ctx->base.set_vertex_buffers = trace_context_set_vertex_buffers;
    tr_ctx->base.set_index_buffer = trace_context_set_index_buffer;
    tr_ctx->base.resource_copy_region = trace_context_resource_copy_region;

@@ -603,9 +603,9 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 				word4 | S_038010_NUM_FORMAT_ALL(V_038010_SQ_NUM_FORMAT_NORM) |
 				S_038010_SRF_MODE_ALL(V_038010_SFR_MODE_NO_ZERO) |
 				S_038010_REQUEST_SIZE(1) |
-				S_038010_BASE_LEVEL(state->first_level), 0xFFFFFFFF, NULL);
+				S_038010_BASE_LEVEL(state->u.tex.first_level), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038014_RESOURCE0_WORD5,
-				S_038014_LAST_LEVEL(state->last_level) |
+				S_038014_LAST_LEVEL(state->u.tex.last_level) |
 				S_038014_BASE_ARRAY(0) |
 				S_038014_LAST_ARRAY(0), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038018_RESOURCE0_WORD6,
@@ -824,10 +824,11 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	struct r600_resource_texture *rtex;
 	struct r600_resource *rbuffer;
 	struct r600_surface *surf;
-	unsigned level = state->cbufs[cb]->level;
+	unsigned level = state->cbufs[cb]->u.tex.level;
 	unsigned pitch, slice;
 	unsigned color_info;
 	unsigned format, swap, ntype;
+	unsigned offset;
 	const struct util_format_description *desc;
 	struct r600_bo *bo[3];
 
@@ -838,6 +839,9 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	bo[1] = rbuffer->bo;
 	bo[2] = rbuffer->bo;
 
+	/* XXX quite sure for dx10+ hw don't need any offset hacks */
+	offset = r600_texture_get_offset((struct r600_resource_texture *)state->cbufs[cb]->texture,
+					 level, state->cbufs[cb]->u.tex.first_layer);
 	pitch = rtex->pitch_in_pixels[level] / 8 - 1;
 	slice = rtex->pitch_in_pixels[level] * surf->aligned_height / 64 - 1;
 	ntype = 0;
@@ -857,7 +861,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 
 	r600_pipe_state_add_reg(rstate,
 				R_028040_CB_COLOR0_BASE + cb * 4,
-				(state->cbufs[cb]->offset + r600_bo_offset(bo[0])) >> 8, 0xFFFFFFFF, bo[0]);
+				(offset + r600_bo_offset(bo[0])) >> 8, 0xFFFFFFFF, bo[0]);
 	r600_pipe_state_add_reg(rstate,
 				R_0280A0_CB_COLOR0_INFO + cb * 4,
 				color_info, 0xFFFFFFFF, bo[0]);
@@ -888,11 +892,12 @@ static void r600_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	struct r600_surface *surf;
 	unsigned level;
 	unsigned pitch, slice, format;
+	unsigned offset;
 
 	if (state->zsbuf == NULL)
 		return;
 
-	level = state->zsbuf->level;
+	level = state->zsbuf->u.tex.level;
 
 	surf = (struct r600_surface *)state->zsbuf;
 	rtex = (struct r600_resource_texture*)state->zsbuf->texture;
@@ -902,12 +907,15 @@ static void r600_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	rtex->depth = 1;
 	rbuffer = &rtex->resource;
 
+	/* XXX quite sure for dx10+ hw don't need any offset hacks */
+	offset = r600_texture_get_offset((struct r600_resource_texture *)state->zsbuf->texture,
+					 level, state->zsbuf->u.tex.first_layer);
 	pitch = rtex->pitch_in_pixels[level] / 8 - 1;
 	slice = rtex->pitch_in_pixels[level] * surf->aligned_height / 64 - 1;
 	format = r600_translate_dbformat(state->zsbuf->texture->format);
 
 	r600_pipe_state_add_reg(rstate, R_02800C_DB_DEPTH_BASE,
-				(state->zsbuf->offset + r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
+				(offset + r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
 	r600_pipe_state_add_reg(rstate, R_028000_DB_DEPTH_SIZE,
 				S_028000_PITCH_TILE_MAX(pitch) | S_028000_SLICE_TILE_MAX(slice),
 				0xFFFFFFFF, NULL);

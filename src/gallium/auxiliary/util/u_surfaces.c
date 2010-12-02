@@ -30,7 +30,9 @@
 #include "util/u_memory.h"
 
 struct pipe_surface *
-util_surfaces_do_get(struct util_surfaces *us, unsigned surface_struct_size, struct pipe_screen *pscreen, struct pipe_resource *pt, unsigned face, unsigned level, unsigned zslice, unsigned flags)
+util_surfaces_do_get(struct util_surfaces *us, unsigned surface_struct_size,
+                     struct pipe_screen *pscreen, struct pipe_resource *pt,
+                     unsigned level, unsigned layer, unsigned flags)
 {
    struct pipe_surface *ps;
 
@@ -39,7 +41,7 @@ util_surfaces_do_get(struct util_surfaces *us, unsigned surface_struct_size, str
       if(!us->u.hash)
          us->u.hash = cso_hash_create();
 
-      ps = cso_hash_iter_data(cso_hash_find(us->u.hash, ((zslice + face) << 8) | level));
+      ps = cso_hash_iter_data(cso_hash_find(us->u.hash, (layer << 8) | level));
    }
    else
    {
@@ -58,11 +60,10 @@ util_surfaces_do_get(struct util_surfaces *us, unsigned surface_struct_size, str
    if(!ps)
       return NULL;
 
-   pipe_surface_init(ps, pt, face, level, zslice, flags);
-   ps->offset = ~0;
+   pipe_surface_init(ps, pt, level, layer, flags);
 
    if(pt->target == PIPE_TEXTURE_3D || pt->target == PIPE_TEXTURE_CUBE)
-      cso_hash_insert(us->u.hash, ((zslice + face) << 8) | level, ps);
+      cso_hash_insert(us->u.hash, (layer << 8) | level, ps);
    else
       us->u.array[level] = ps;
 
@@ -75,10 +76,10 @@ util_surfaces_do_detach(struct util_surfaces *us, struct pipe_surface *ps)
    struct pipe_resource *pt = ps->texture;
    if(pt->target == PIPE_TEXTURE_3D || pt->target == PIPE_TEXTURE_CUBE)
    {    /* or 2D array */
-      cso_hash_erase(us->u.hash, cso_hash_find(us->u.hash, ((ps->zslice + ps->face) << 8) | ps->level));
+      cso_hash_erase(us->u.hash, cso_hash_find(us->u.hash, (ps->u.tex.first_layer << 8) | ps->u.tex.level));
    }
    else
-      us->u.array[ps->level] = 0;
+      us->u.array[ps->u.tex.level] = 0;
 }
 
 void

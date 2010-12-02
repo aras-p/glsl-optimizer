@@ -136,6 +136,7 @@ nv50_user_buffer_create(struct pipe_screen *pscreen,
 	buffer->base.width0 = bytes;
 	buffer->base.height0 = 1;
 	buffer->base.depth0 = 1;
+	buffer->base.array_size = 1;
 
 	buffer->bo = nouveau_screen_bo_user(pscreen, ptr, bytes);
 	if (!buffer->bo)

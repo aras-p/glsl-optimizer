@@ -32,7 +32,6 @@ struct i915_context;
 struct i915_screen;
 
 void i915_init_surface_functions( struct i915_context *i915 );
-void i915_init_screen_surface_functions( struct i915_screen *is );
 
 
 #endif /* I915_SCREEN_H */

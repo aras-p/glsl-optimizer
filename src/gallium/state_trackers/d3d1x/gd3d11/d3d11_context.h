@@ -1416,23 +1416,33 @@ changed:
 			*out_predicate_value = render_predicate_value;
 	}
 
-	static pipe_subresource d3d11_to_pipe_subresource(struct pipe_resource* resource, unsigned subresource)
+	static unsigned d3d11_subresource_to_level(struct pipe_resource* resource, unsigned subresource)
 	{
-		pipe_subresource sr;
 		if(subresource <= resource->last_level)
 		{
-			sr.level = subresource;
-			sr.face = 0;
+			return subresource;
 		}
 		else
 		{
 			unsigned levels = resource->last_level + 1;
-			sr.level = subresource % levels;
-			sr.face = subresource / levels;
+			return subresource % levels;
 		}
-		return sr;
 	}
 
+	static unsigned d3d11_subresource_to_face(struct pipe_resource* resource, unsigned subresource)
+	{
+		if(subresource <= resource->last_level)
+		{
+			return 0;
+		}
+		else
+		{
+			unsigned levels = resource->last_level + 1;
+			return subresource / levels;
+		}
+	}
+		
+	
 	/* TODO: deferred contexts will need a different implementation of this,
 	 * because we can't put the transfer info into the resource itself.
 	 * Also, there are very different restrictions, for obvious reasons.
@@ -1448,8 +1458,10 @@ changed:
 		GalliumD3D11Resource<>* resource = (GalliumD3D11Resource<>*)iresource;
 		if(resource->transfers.count(subresource))
 			return E_FAIL;
-		pipe_subresource sr = d3d11_to_pipe_subresource(resource->resource, subresource);
-		pipe_box box = d3d11_to_pipe_box(resource->resource, sr.level, 0);
+		unsigned level = d3d11_subresource_to_level(resource->resource, subresource);
+		unsigned face = d3d11_subresource_to_face(resource->resource, subresource);
+		pipe_box box = d3d11_to_pipe_box(resource->resource, level, 0);
+		/* XXX the translation from subresource to level/face(zslice/array layer) isn't quite right */
 		unsigned usage = 0;
 		if(map_type == D3D11_MAP_READ)
 			usage = PIPE_TRANSFER_READ;
@@ -1465,7 +1477,7 @@ changed:
 			return E_INVALIDARG;
 		if(map_type & D3D10_MAP_FLAG_DO_NOT_WAIT)
 			usage |= PIPE_TRANSFER_DONTBLOCK;
-		struct pipe_transfer* transfer = pipe->get_transfer(pipe, resource->resource, sr, usage, &box);
+		struct pipe_transfer* transfer = pipe->get_transfer(pipe, resource->resource, level, usage, &box);
 		if(!transfer) {
 			if(map_type & D3D10_MAP_FLAG_DO_NOT_WAIT)
 				return DXGI_ERROR_WAS_STILL_DRAWING;
@@ -1475,7 +1487,7 @@ changed:
 		resource->transfers[subresource] = transfer;
 		mapped_resource->pData = pipe->transfer_map(pipe, transfer);
 		mapped_resource->RowPitch = transfer->stride;
-		mapped_resource->DepthPitch = transfer->slice_stride;
+		mapped_resource->DepthPitch = transfer->layer_stride;
 		return S_OK;
 	}
 
@@ -1507,15 +1519,16 @@ changed:
 		SYNCHRONIZED;
 		GalliumD3D11Resource<>* dst = (GalliumD3D11Resource<>*)dst_resource;
 		GalliumD3D11Resource<>* src = (GalliumD3D11Resource<>*)src_resource;
-		pipe_subresource subdst = d3d11_to_pipe_subresource(dst->resource, dst_subresource);
-		pipe_subresource subsrc = d3d11_to_pipe_subresource(src->resource, src_subresource);
-		pipe_box box = d3d11_to_pipe_box(src->resource, subsrc.level, src_box);
-		for(unsigned i = 0; i < box.depth; ++i)
+		unsigned dst_level = d3d11_subresource_to_level(dst->resource, dst_subresource);
+		unsigned dst_face = d3d11_subresource_to_face(dst->resource, dst_subresource);
+		unsigned src_level = d3d11_subresource_to_level(src->resource, src_subresource);
+		unsigned src_face = d3d11_subresource_to_face(src->resource, src_subresource);
+		/* XXX the translation from subresource to level/face(zslice/array layer) isn't quite right */
+		pipe_box box = d3d11_to_pipe_box(src->resource, src_level, src_box);
 		{
 			pipe->resource_copy_region(pipe,
-				dst->resource, subdst, dst_x, dst_y, dst_z + i,
-				src->resource, subsrc, box.x, box.y, box.z + i,
-				box.width, box.height);
+				dst->resource, dst_level, dst_x, dst_y, dst_z,
+				src->resource, src_level, &box);
 		}
 	}
 
@@ -1526,24 +1539,23 @@ changed:
 		SYNCHRONIZED;
 		GalliumD3D11Resource<>* dst = (GalliumD3D11Resource<>*)dst_resource;
 		GalliumD3D11Resource<>* src = (GalliumD3D11Resource<>*)src_resource;
-		pipe_subresource sr;
-		unsigned faces = dst->resource->target == PIPE_TEXTURE_CUBE ? 6 : 1;
-
-		for(sr.face = 0; sr.face < faces; ++sr.face)
+		unsigned level;
+		for(level = 0; level <= dst->resource->last_level; ++level)
 		{
-			for(sr.level = 0; sr.level <= dst->resource->last_level; ++sr.level)
-			{
-				unsigned w = u_minify(dst->resource->width0, sr.level);
-				unsigned h = u_minify(dst->resource->height0, sr.level);
-				unsigned d = u_minify(dst->resource->depth0, sr.level);
-				for(unsigned i = 0; i < d; ++i)
-				{
-					pipe->resource_copy_region(pipe,
-							dst->resource, sr, 0, 0, i,
-							src->resource, sr, 0, 0, i,
-							w, h);
-				}
-			}
+		        unsigned layers = 1;
+			pipe_box box;
+			if (dst->resource->target == PIPE_TEXTURE_CUBE)
+				layers = 6;
+			else if (dst->resource->target == PIPE_TEXTURE_3D)
+				layers = u_minify(dst->resource->depth0, level);
+			/* else layers = dst->resource->array_size; */
+			box.x = box.y = box.z = 0;
+			box.width = u_minify(dst->resource->width0, level);
+			box.height = u_minify(dst->resource->height0, level);
+			box.depth = layers;
+			pipe->resource_copy_region(pipe,
+						   dst->resource, level, 0, 0, 0,
+						   src->resource, level, &box);
 		}
 	}
 
@@ -1557,9 +1569,10 @@ changed:
 	{
 		SYNCHRONIZED;
 		GalliumD3D11Resource<>* dst = (GalliumD3D11Resource<>*)dst_resource;
-		pipe_subresource subdst = d3d11_to_pipe_subresource(dst->resource, dst_subresource);
-		pipe_box box = d3d11_to_pipe_box(dst->resource, subdst.level, pDstBox);
-		pipe->transfer_inline_write(pipe, dst->resource, subdst, PIPE_TRANSFER_WRITE, &box, pSrcData, src_row_pitch, src_depth_pitch);
+		unsigned dst_level = d3d11_subresource_to_level(dst->resource, dst_subresource);
+		/* XXX the translation from subresource to level/face(zslice/array layer) isn't quite right */
+		pipe_box box = d3d11_to_pipe_box(dst->resource, dst_level, pDstBox);
+		pipe->transfer_inline_write(pipe, dst->resource, dst_level, PIPE_TRANSFER_WRITE, &box, pSrcData, src_row_pitch, src_depth_pitch);
 	}
 
 #if API >= 11
@@ -1714,9 +1727,9 @@ changed:
 		SYNCHRONIZED;
 		GalliumD3D11Resource<>* dst = (GalliumD3D11Resource<>*)dst_resource;
 		GalliumD3D11Resource<>* src = (GalliumD3D11Resource<>*)src_resource;
-		pipe_subresource subdst = d3d11_to_pipe_subresource(dst->resource, dst_subresource);
-		pipe_subresource subsrc = d3d11_to_pipe_subresource(src->resource, src_subresource);
-		pipe->resource_resolve(pipe, dst->resource, subdst, src->resource, subsrc);
+		unsigned dst_layer = d3d11_subresource_to_face(dst->resource, dst_subresource);
+		unsigned src_layer = d3d11_subresource_to_face(src->resource, src_subresource);
+		pipe->resource_resolve(pipe, dst->resource, dst_layer, src->resource, src_layer);
 	}
 
 #if API >= 11

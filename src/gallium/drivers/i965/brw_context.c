@@ -131,6 +131,7 @@ struct pipe_context *brw_create_context(struct pipe_screen *screen,
    brw_pipe_shader_init( brw );
    brw_pipe_vertex_init( brw );
    brw_pipe_clear_init( brw );
+   brw_pipe_surface_init( brw );
 
    brw_hw_cc_init( brw );
 

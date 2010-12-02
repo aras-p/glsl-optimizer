@@ -194,7 +194,7 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 					      unsigned bind);
 unsigned r600_buffer_is_referenced_by_cs(struct pipe_context *context,
 					 struct pipe_resource *buf,
-					 unsigned face, unsigned level);
+					 unsigned level, int layer);
 struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,
 					      struct winsys_handle *whandle);
 int r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *draw);
@@ -223,9 +223,12 @@ int r600_conv_pipe_prim(unsigned pprim, unsigned *prim);
 
 /* r600_texture.c */
 void r600_init_screen_texture_functions(struct pipe_screen *screen);
+void r600_init_surface_functions(struct r600_pipe_context *r600);
 uint32_t r600_translate_texformat(enum pipe_format format,
 				  const unsigned char *swizzle_view, 
 				  uint32_t *word4_p, uint32_t *yuv_format_p);
+unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
+					unsigned level, unsigned layer);
 
 /* r600_translate.c */
 void r600_begin_vertex_translate(struct r600_pipe_context *rctx);

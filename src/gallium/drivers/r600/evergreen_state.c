@@ -410,9 +410,9 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	r600_pipe_state_add_reg(rstate, R_030010_RESOURCE0_WORD4,
 				word4 | S_030010_NUM_FORMAT_ALL(V_030010_SQ_NUM_FORMAT_NORM) |
 				S_030010_SRF_MODE_ALL(V_030010_SFR_MODE_NO_ZERO) |
-				S_030010_BASE_LEVEL(state->first_level), 0xFFFFFFFF, NULL);
+				S_030010_BASE_LEVEL(state->u.tex.first_level), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_030014_RESOURCE0_WORD5,
-				S_030014_LAST_LEVEL(state->last_level) |
+				S_030014_LAST_LEVEL(state->u.tex.last_level) |
 				S_030014_BASE_ARRAY(0) |
 				S_030014_LAST_ARRAY(0), 0xffffffff, NULL);
 	r600_pipe_state_add_reg(rstate, R_030018_RESOURCE0_WORD6, 0x0, 0xFFFFFFFF, NULL);
@@ -633,10 +633,11 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	struct r600_resource_texture *rtex;
 	struct r600_resource *rbuffer;
 	struct r600_surface *surf;
-	unsigned level = state->cbufs[cb]->level;
+	unsigned level = state->cbufs[cb]->u.tex.level;
 	unsigned pitch, slice;
 	unsigned color_info;
 	unsigned format, swap, ntype;
+	unsigned offset;
 	const struct util_format_description *desc;
 	struct r600_bo *bo[3];
 
@@ -647,6 +648,9 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	bo[1] = rbuffer->bo;
 	bo[2] = rbuffer->bo;
 
+	/* XXX quite sure for dx10+ hw don't need any offset hacks */
+	offset = r600_texture_get_offset((struct r600_resource_texture *)state->cbufs[cb]->texture,
+					 level, state->cbufs[cb]->u.tex.first_layer);
 	pitch = rtex->pitch_in_pixels[level] / 8 - 1;
 	slice = rtex->pitch_in_pixels[level] * surf->aligned_height / 64 - 1;
 	ntype = 0;
@@ -666,7 +670,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	/* FIXME handle enabling of CB beyond BASE8 which has different offset */
 	r600_pipe_state_add_reg(rstate,
 				R_028C60_CB_COLOR0_BASE + cb * 0x3C,
-				(state->cbufs[cb]->offset +  r600_bo_offset(bo[0])) >> 8, 0xFFFFFFFF, bo[0]);
+				(offset +  r600_bo_offset(bo[0])) >> 8, 0xFFFFFFFF, bo[0]);
 	r600_pipe_state_add_reg(rstate,
 				R_028C78_CB_COLOR0_DIM + cb * 0x3C,
 				0x0, 0xFFFFFFFF, NULL);
@@ -698,11 +702,12 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	struct r600_surface *surf;
 	unsigned level;
 	unsigned pitch, slice, format, stencil_format;
+	unsigned offset;
 
 	if (state->zsbuf == NULL)
 		return;
 
-	level = state->zsbuf->level;
+	level = state->zsbuf->u.tex.level;
 
 	surf = (struct r600_surface *)state->zsbuf;
 	rtex = (struct r600_resource_texture*)state->zsbuf->texture;
@@ -712,24 +717,27 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	rtex->depth = 1;
 	rbuffer = &rtex->resource;
 
+	/* XXX quite sure for dx10+ hw don't need any offset hacks */
+	offset = r600_texture_get_offset((struct r600_resource_texture *)state->zsbuf->texture,
+					 level, state->zsbuf->u.tex.first_layer);
 	pitch = rtex->pitch_in_pixels[level] / 8 - 1;
 	slice = rtex->pitch_in_pixels[level] * surf->aligned_height / 64 - 1;
 	format = r600_translate_dbformat(state->zsbuf->texture->format);
 	stencil_format = r600_translate_stencilformat(state->zsbuf->texture->format);
 
 	r600_pipe_state_add_reg(rstate, R_028048_DB_Z_READ_BASE,
-				(state->zsbuf->offset + r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
+				(offset + r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
 	r600_pipe_state_add_reg(rstate, R_028050_DB_Z_WRITE_BASE,
-				(state->zsbuf->offset  + r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
+				(offset  + r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
 
 	if (stencil_format) {
 		uint32_t stencil_offset;
 
 		stencil_offset = ((surf->aligned_height * rtex->pitch_in_bytes[level]) + 255) & ~255;
 		r600_pipe_state_add_reg(rstate, R_02804C_DB_STENCIL_READ_BASE,
-					(state->zsbuf->offset + stencil_offset + r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
+					(offset + stencil_offset + r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
 		r600_pipe_state_add_reg(rstate, R_028054_DB_STENCIL_WRITE_BASE,
-					(state->zsbuf->offset + stencil_offset + r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
+					(offset + stencil_offset + r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
 	}
 
 	r600_pipe_state_add_reg(rstate, R_028008_DB_DEPTH_VIEW, 0x00000000, 0xFFFFFFFF, NULL);

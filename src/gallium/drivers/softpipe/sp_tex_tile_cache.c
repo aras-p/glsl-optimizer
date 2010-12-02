@@ -260,15 +260,14 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
          }
 
          tc->tex_trans = 
-            pipe_get_transfer(tc->pipe, tc->texture, 
-			      addr.bits.face, 
-			      addr.bits.level, 
-			      addr.bits.z, 
-			      PIPE_TRANSFER_READ | PIPE_TRANSFER_UNSYNCHRONIZED,
-			      0, 0,
-			      u_minify(tc->texture->width0, addr.bits.level),
-			      u_minify(tc->texture->height0, addr.bits.level));
-         
+            pipe_get_transfer(tc->pipe, tc->texture,
+                              addr.bits.level,
+                              addr.bits.face + addr.bits.z,
+                              PIPE_TRANSFER_READ | PIPE_TRANSFER_UNSYNCHRONIZED,
+                              0, 0,
+                              u_minify(tc->texture->width0, addr.bits.level),
+                              u_minify(tc->texture->height0, addr.bits.level));
+
          tc->tex_trans_map = tc->pipe->transfer_map(tc->pipe, tc->tex_trans);
 
          tc->tex_face = addr.bits.face;

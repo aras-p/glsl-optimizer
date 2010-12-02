@@ -237,7 +237,6 @@ i915_emit_hardware_state(struct i915_context *i915 )
 
       if (cbuf_surface) {
          struct i915_texture *tex = i915_texture(cbuf_surface->texture);
-         uint32_t tiling_bits = 0;
          assert(tex);
 
          OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
@@ -255,8 +254,10 @@ i915_emit_hardware_state(struct i915_context *i915 )
        */
       if (depth_surface) {
          struct i915_texture *tex = i915_texture(depth_surface->texture);
+         unsigned offset = i915_texture_offset(tex, depth_surface->u.tex.level,
+                                               depth_surface->u.tex.first_layer);
          assert(tex);
-         assert(depth_surface->offset == 0);
+         assert(offset == 0);
 
          OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
 
@@ -412,18 +413,17 @@ i915_emit_hardware_state(struct i915_context *i915 )
       struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
       struct i915_texture *tex = i915_texture(cbuf_surface->texture);
       unsigned x, y;
-      int face;
+      int layer;
       uint32_t draw_offset;
       boolean ret;
 
       ret = framebuffer_size(&i915->framebuffer, &w, &h);
       assert(ret);
 
-      face = tex->b.b.target == PIPE_TEXTURE_CUBE ?
-               cbuf_surface->face : cbuf_surface->zslice;
+      layer = cbuf_surface->u.tex.first_layer;
 
-      x = tex->image_offset[cbuf_surface->level][face].nblocksx;
-      y = tex->image_offset[cbuf_surface->level][face].nblocksy;
+      x = tex->image_offset[cbuf_surface->u.tex.level][layer].nblocksx;
+      y = tex->image_offset[cbuf_surface->u.tex.level][layer].nblocksy;
 
       draw_offset = x | (y << 16);
 
