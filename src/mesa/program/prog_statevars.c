@@ -572,6 +572,24 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
          value[3] = 0.0F;
          return;
 
+      case STATE_FB_WPOS_Y_TRANSFORM:
+         /* A driver may negate this conditional by using ZW swizzle
+          * instead of XY (based on e.g. some other state). */
+         if (ctx->DrawBuffer->Name != 0) {
+            /* Identity (XY) followed by flipping Y upside down (ZW). */
+            value[0] = 1.0F;
+            value[1] = 0.0F;
+            value[2] = -1.0F;
+            value[3] = (GLfloat) (ctx->DrawBuffer->Height - 1);
+         } else {
+            /* Flipping Y upside down (XY) followed by identity (ZW). */
+            value[0] = -1.0F;
+            value[1] = (GLfloat) (ctx->DrawBuffer->Height - 1);
+            value[2] = 1.0F;
+            value[3] = 0.0F;
+         }
+         return;
+
       case STATE_ROT_MATRIX_0:
          {
             const int unit = (int) state[2];
@@ -695,6 +713,7 @@ _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH])
          return _NEW_PIXEL;
 
       case STATE_FB_SIZE:
+      case STATE_FB_WPOS_Y_TRANSFORM:
          return _NEW_BUFFERS;
 
       default:
@@ -899,6 +918,9 @@ append_token(char *dst, gl_state_index k)
       break;
    case STATE_FB_SIZE:
       append(dst, "FbSize");
+      break;
+   case STATE_FB_WPOS_Y_TRANSFORM:
+      append(dst, "FbWposYTransform");
       break;
    case STATE_ROT_MATRIX_0:
       append(dst, "rotMatrixRow0");
