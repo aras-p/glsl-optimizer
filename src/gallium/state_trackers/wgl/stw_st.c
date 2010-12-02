@@ -43,8 +43,6 @@ struct stw_st_framebuffer {
    struct pipe_resource *textures[ST_ATTACHMENT_COUNT];
    unsigned texture_width, texture_height;
    unsigned texture_mask;
-
-   struct pipe_resource *front_res, *back_res;
 };
 
 static INLINE struct stw_st_framebuffer *
@@ -64,10 +62,6 @@ stw_st_framebuffer_validate_locked(struct st_framebuffer_iface *stfb,
    struct stw_st_framebuffer *stwfb = stw_st_framebuffer(stfb);
    struct pipe_resource templ;
    unsigned i;
-
-   /* remove outdated surface */
-   pipe_resource_reference(&stwfb->front_res, NULL);
-   pipe_resource_reference(&stwfb->back_res, NULL);
 
    /* remove outdated textures */
    if (stwfb->texture_width != width || stwfb->texture_height != height) {
@@ -156,48 +150,6 @@ stw_st_framebuffer_validate(struct st_framebuffer_iface *stfb,
    return TRUE;
 }
 
-static struct pipe_resource *
-get_present_surface_locked(struct st_framebuffer_iface *stfb,
-                           enum st_attachment_type statt)
-{
-   struct stw_st_framebuffer *stwfb = stw_st_framebuffer(stfb);
-#if 0
-   /* since we don't really have to get a surface for this we
-      no longer need a cache? */
-   struct pipe_resource *ptex;
-   struct pipe_resource *pres, **cache;
-
-   ptex = stwfb->textures[statt];
-   if (!ptex)
-      return NULL;
-
-   pres = NULL;
-
-   switch (statt) {
-   case ST_ATTACHMENT_FRONT_LEFT:
-      cache = &stwfb->front_surface;
-      break;
-   case ST_ATTACHMENT_BACK_LEFT:
-      cache = &stwfb->back_surface;
-      break;
-   default:
-      cache = &pres;
-      break;
-   }
-
-   if (!*cache) {
-      *cache = ptex;
-   }
-
-   if (pres != *cache)
-      pipe_resource_reference(&pres, *cache);
-
-   return pres;
-#else
-   return stwfb->textures[statt];
-#endif
-}
-
 /**
  * Present an attachment of the framebuffer.
  */
@@ -206,12 +158,11 @@ stw_st_framebuffer_present_locked(struct st_framebuffer_iface *stfb,
                                   enum st_attachment_type statt)
 {
    struct stw_st_framebuffer *stwfb = stw_st_framebuffer(stfb);
-   struct pipe_resource *pres;
+   struct pipe_resource *resource;
 
-   pres = get_present_surface_locked(&stwfb->base, statt);
-   if (pres) {
-      stw_framebuffer_present_locked(stwfb->fb->hDC, stwfb->fb, pres);
-      pipe_resource_reference(&pres, NULL);
+   resource = stwfb->textures[statt];
+   if (resource) {
+      stw_framebuffer_present_locked(stwfb->fb->hDC, stwfb->fb, resource);
    }
 
    return TRUE;
@@ -259,9 +210,6 @@ stw_st_destroy_framebuffer_locked(struct st_framebuffer_iface *stfb)
    struct stw_st_framebuffer *stwfb = stw_st_framebuffer(stfb);
    int i;
 
-   pipe_resource_reference(&stwfb->front_res, NULL);
-   pipe_resource_reference(&stwfb->back_res, NULL);
-
    for (i = 0; i < ST_ATTACHMENT_COUNT; i++)
       pipe_resource_reference(&stwfb->textures[i], NULL);
 
@@ -277,18 +225,12 @@ stw_st_swap_framebuffer_locked(struct st_framebuffer_iface *stfb)
    struct stw_st_framebuffer *stwfb = stw_st_framebuffer(stfb);
    unsigned front = ST_ATTACHMENT_FRONT_LEFT, back = ST_ATTACHMENT_BACK_LEFT;
    struct pipe_resource *ptex;
-   struct pipe_resource *pres;
    unsigned mask;
 
    /* swap the textures */
    ptex = stwfb->textures[front];
    stwfb->textures[front] = stwfb->textures[back];
    stwfb->textures[back] = ptex;
-
-   /* swap the surfaces */
-   pres = stwfb->front_res;
-   stwfb->front_res = stwfb->back_res;
-   stwfb->back_res = pres;
 
    /* convert to mask */
    front = 1 << front;
