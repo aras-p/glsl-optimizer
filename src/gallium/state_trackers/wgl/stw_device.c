@@ -41,9 +41,7 @@
 #include "stw_framebuffer.h"
 #include "stw_st.h"
 
-#ifdef WIN32_THREADS
 extern _glthread_Mutex OneTimeLock;
-#endif
 
 
 struct stw_device *stw_dev = NULL;
@@ -76,9 +74,7 @@ stw_init(const struct stw_winsys *stw_winsys)
    
    stw_dev->stw_winsys = stw_winsys;
 
-#ifdef WIN32_THREADS
    _glthread_INIT_MUTEX(OneTimeLock);
-#endif
 
    stw_dev->stapi = stw_st_create_api();
    stw_dev->smapi = CALLOC_STRUCT(st_manager);
@@ -172,11 +168,9 @@ stw_cleanup(void)
 
    stw_dev->screen->destroy(stw_dev->screen);
 
-#ifdef WIN32_THREADS
    _glthread_DESTROY_MUTEX(OneTimeLock);
 
    _glapi_destroy_multithread();
-#endif
 
 #ifdef DEBUG
    debug_memory_end(stw_dev->memdbg_no);

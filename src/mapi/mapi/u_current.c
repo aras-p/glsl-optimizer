@@ -128,7 +128,7 @@ static int ThreadSafe;
 void
 u_current_destroy(void)
 {
-#if defined(THREADS) && defined(WIN32_THREADS)
+#if defined(THREADS) && defined(WIN32)
    u_tsd_destroy(&u_current_table_tsd);
    u_tsd_destroy(&u_current_user_tsd);
 #endif
@@ -147,7 +147,7 @@ u_current_init_tsd(void)
 /**
  * Mutex for multithread check.
  */
-#ifdef WIN32_THREADS
+#ifdef WIN32
 /* _glthread_DECLARE_STATIC_MUTEX is broken on windows.  There will be race! */
 #define CHECK_MULTITHREAD_LOCK()
 #define CHECK_MULTITHREAD_UNLOCK()
