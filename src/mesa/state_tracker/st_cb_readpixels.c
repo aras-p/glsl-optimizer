@@ -328,7 +328,7 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
 {
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
-   GLfloat temp[MAX_WIDTH][4];
+   GLfloat (*temp)[4];
    const GLbitfield transferOps = ctx->_ImageTransferState;
    GLsizei i, j;
    GLint yStep, dfStride;
@@ -378,6 +378,13 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
                           format, type, pack, dest)) {
       /* success! */
       _mesa_unmap_pbo_dest(ctx, &clippedPacking);
+      return;
+   }
+
+   /* allocate temp pixel row buffer */
+   temp = (GLfloat (*)[4]) malloc(4 * width * sizeof(GLfloat));
+   if (!temp) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
       return;
    }
 
@@ -532,6 +539,8 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
          }
       }
    }
+
+   free(temp);
 
    pipe->transfer_destroy(pipe, trans);
 
