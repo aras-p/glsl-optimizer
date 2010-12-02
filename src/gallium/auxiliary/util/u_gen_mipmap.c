@@ -1427,9 +1427,11 @@ util_destroy_gen_mipmap(struct gen_mipmap_state *ctx)
 {
    struct pipe_context *pipe = ctx->pipe;
 
-   pipe->delete_vs_state(pipe, ctx->vs);
-   pipe->delete_fs_state(pipe, ctx->fs2d);
    pipe->delete_fs_state(pipe, ctx->fsCube);
+   pipe->delete_fs_state(pipe, ctx->fs3d);
+   pipe->delete_fs_state(pipe, ctx->fs2d);
+   pipe->delete_fs_state(pipe, ctx->fs1d);
+   pipe->delete_vs_state(pipe, ctx->vs);
 
    pipe_resource_reference(&ctx->vbuf, NULL);
 
