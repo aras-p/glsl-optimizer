@@ -92,6 +92,10 @@ sp_create_tile_cache( struct pipe_context *pipe )
    maxTexSize = 1 << (maxLevels - 1);
    assert(MAX_WIDTH >= maxTexSize);
 
+   assert(sizeof(union tile_address) == 4);
+
+   assert((TILE_SIZE << TILE_ADDR_BITS) >= MAX_WIDTH);
+
    tc = CALLOC_STRUCT( softpipe_tile_cache );
    if (tc) {
       tc->pipe = pipe;
