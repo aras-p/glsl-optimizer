@@ -328,7 +328,7 @@ static void r300_init_states(struct pipe_context *pipe)
     pipe->set_scissor_state(pipe, &ss);
 
     /* Initialize the clip state. */
-    if (r300_context(pipe)->screen->caps.has_tcl) {
+    if (r300->screen->caps.has_tcl) {
         pipe->set_clip_state(pipe, &cs);
     } else {
         BEGIN_CB(clip->cb, 2);
