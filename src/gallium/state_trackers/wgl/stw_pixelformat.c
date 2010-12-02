@@ -185,7 +185,7 @@ stw_pixelformat_add(
     */
    pfi->stvis.buffer_mask = ST_ATTACHMENT_FRONT_LEFT_MASK;
    if (doublebuffer)
-      pfi->stvis.buffer_mask = ST_ATTACHMENT_BACK_LEFT_MASK;
+      pfi->stvis.buffer_mask |= ST_ATTACHMENT_BACK_LEFT_MASK;
 
    pfi->stvis.color_format = color->format;
    pfi->stvis.depth_stencil_format = depth->format;
