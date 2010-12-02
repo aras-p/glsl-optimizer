@@ -24,5 +24,9 @@
 #define U_NEW_VERTEX_BUFFER         0x10000
 #define U_NEW_QUERY                 0x20000
 #define U_NEW_DEPTH_STENCIL         0x40000
+#define U_NEW_GS                    0x80000
+#define U_NEW_GS_CONSTANTS          0x100000
+#define U_NEW_GS_SAMPLER_VIEW       0x200000
+#define U_NEW_GS_SAMPLER_STATES     0x400000
 
 #endif
