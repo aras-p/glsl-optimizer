@@ -819,7 +819,16 @@ static void
 blend_general(struct gl_context *ctx, GLuint n, const GLubyte mask[],
               void *src, const void *dst, GLenum chanType)
 {
-   GLfloat rgbaF[MAX_WIDTH][4], destF[MAX_WIDTH][4];
+   GLfloat (*rgbaF)[4], (*destF)[4];
+
+   rgbaF = (GLfloat (*)[4]) malloc(4 * n * sizeof(GLfloat));
+   destF = (GLfloat (*)[4]) malloc(4 * n * sizeof(GLfloat));
+   if (!rgbaF || !destF) {
+      free(rgbaF);
+      free(destF);
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "blending");
+      return;
+   }
 
    if (chanType == GL_UNSIGNED_BYTE) {
       GLubyte (*rgba)[4] = (GLubyte (*)[4]) src;
@@ -883,6 +892,9 @@ blend_general(struct gl_context *ctx, GLuint n, const GLubyte mask[],
       blend_general_float(ctx, n, mask, (GLfloat (*)[4]) src,
                           (GLfloat (*)[4]) dst, chanType);
    }
+
+   free(rgbaF);
+   free(destF);
 }
 
 
