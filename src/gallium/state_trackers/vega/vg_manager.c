@@ -152,7 +152,10 @@ static void
 vg_context_destroy(struct st_context_iface *stctxi)
 {
    struct vg_context *ctx = (struct vg_context *) stctxi;
+   struct pipe_context *pipe = ctx->pipe;
+
    vg_destroy_context(ctx);
+   pipe->destroy(pipe);
 }
 
 static struct st_context_iface *
