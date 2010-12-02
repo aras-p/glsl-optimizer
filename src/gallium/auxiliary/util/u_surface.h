@@ -32,6 +32,12 @@
 #include "pipe/p_compiler.h"
 #include "pipe/p_state.h"
 
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 extern void
 u_surface_default_template(struct pipe_surface *view,
                            const struct pipe_resource *texture,
@@ -74,6 +80,11 @@ util_clear_depth_stencil(struct pipe_context *pipe,
                          unsigned stencil,
                          unsigned dstx, unsigned dsty,
                          unsigned width, unsigned height);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* U_SURFACE_H */
