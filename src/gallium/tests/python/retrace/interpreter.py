@@ -573,7 +573,7 @@ class Context(Object):
         if transfer and usage & gallium.PIPE_TRANSFER_READ:
             if self.interpreter.options.all:
                 surface = texture.get_surface(sr.face, sr.level, box.z)
-                self.interpreter.present(self.real, transfer.surface, 'transf_read', box.x, box.y, box.w, box.h)
+                self.interpreter.present(self.real, transfer.surface, 'transf_read', box.x, box.y, box.width, box.height)
         return transfer
     
     def tex_transfer_destroy(self, transfer):
@@ -581,6 +581,10 @@ class Context(Object):
 
     def transfer_inline_write(self, resource, sr, usage, box, stride, slice_stride, data):
         self.real.transfer_inline_write(resource, sr, usage, box, data, stride, slice_stride)
+        if self.interpreter.options.all:
+            for z in range(box.z, box.z + box.depth):
+                surface = resource.get_surface(sr.face, sr.level, box.z)
+                self.interpreter.present(self.real, surface, 'transf_inline_write%u' % z, box.x, box.y, box.width, box.height)
 
     def _set_dirty(self):
         if self.interpreter.options.step:
