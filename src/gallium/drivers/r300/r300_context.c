@@ -284,7 +284,7 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     R300_ALLOC_ATOM(fs_constants, r300_constant_buffer);
     R300_ALLOC_ATOM(vs_constants, r300_constant_buffer);
     if (!r300->screen->caps.has_tcl) {
-        R300_ALLOC_ATOM(r300->vertex_stream_state, r300_vertex_stream_state);
+        R300_ALLOC_ATOM(vertex_stream_state, r300_vertex_stream_state);
     }
 
     /* Some non-CSO atoms don't use the state pointer. */
