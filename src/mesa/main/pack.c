@@ -3462,7 +3462,12 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
    {
       GLint dstComponents;
       GLint rDst, gDst, bDst, aDst, lDst, iDst;
-      GLfloat rgba[MAX_WIDTH][4];
+      GLfloat (*rgba)[4] = (GLfloat (*)[4]) malloc(4 * n * sizeof(GLfloat));
+
+      if (!rgba) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
+         return;
+      }
 
       dstComponents = _mesa_components_in_format( dstFormat );
       /* source & dest image formats should have been error checked by now */
@@ -3484,6 +3489,7 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
             for (i = 0; i < n; i++) {
                dest[i] = (GLchan) (indexes[i] & 0xff);
             }
+            free(rgba);
             return;
          }
          else {
@@ -3575,6 +3581,8 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
             dst += dstComponents;
          }
       }
+
+      free(rgba);
    }
 }
 
@@ -3652,7 +3660,12 @@ _mesa_unpack_color_span_float( struct gl_context *ctx,
    {
       GLint dstComponents;
       GLint rDst, gDst, bDst, aDst, lDst, iDst;
-      GLfloat rgba[MAX_WIDTH][4];
+      GLfloat (*rgba)[4] = (GLfloat (*)[4]) malloc(4 * n * sizeof(GLfloat));
+
+      if (!rgba) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
+         return;
+      }
 
       dstComponents = _mesa_components_in_format( dstFormat );
       /* source & dest image formats should have been error checked by now */
@@ -3674,6 +3687,7 @@ _mesa_unpack_color_span_float( struct gl_context *ctx,
             for (i = 0; i < n; i++) {
                dest[i] = (GLchan) (indexes[i] & 0xff);
             }
+            free(rgba);
             return;
          }
          else {
@@ -3688,6 +3702,8 @@ _mesa_unpack_color_span_float( struct gl_context *ctx,
           * with color indexes.
           */
          transferOps &= ~(IMAGE_SCALE_BIAS_BIT | IMAGE_MAP_COLOR_BIT);
+
+         free(rgba);
       }
       else {
          /* non-color index data */
@@ -3776,7 +3792,12 @@ _mesa_unpack_color_span_uint(struct gl_context *ctx,
                              const GLvoid *source,
                              const struct gl_pixelstore_attrib *srcPacking)
 {
-   GLuint rgba[MAX_WIDTH][4];
+   GLuint (*rgba)[4] = (GLuint (*)[4]) malloc(n * 4 * sizeof(GLfloat));
+
+   if (!rgba) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
+      return;
+   }
 
    ASSERT(n <= MAX_WIDTH);
 
@@ -3912,6 +3933,8 @@ _mesa_unpack_color_span_uint(struct gl_context *ctx,
          }
       }
    }
+
+   free(rgba);
 }
 
 
@@ -3943,9 +3966,14 @@ _mesa_unpack_dudv_span_byte( struct gl_context *ctx,
    /* general solution */
    {
       GLint dstComponents;
-      GLfloat rgba[MAX_WIDTH][4];
       GLbyte *dst = dest;
       GLuint i;
+      GLfloat (*rgba)[4] = (GLfloat (*)[4]) malloc(4 * n * sizeof(GLfloat));
+
+      if (!rgba) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
+         return;
+      }
 
       dstComponents = _mesa_components_in_format( dstFormat );
       /* source & dest image formats should have been error checked by now */
@@ -3970,6 +3998,8 @@ _mesa_unpack_dudv_span_byte( struct gl_context *ctx,
          dst[1] = FLOAT_TO_BYTE(rgba[i][GCOMP]);
          dst += dstComponents;
       }
+
+      free(rgba);
    }
 }
 
