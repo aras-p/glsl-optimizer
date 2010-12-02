@@ -83,9 +83,10 @@ struct renderer {
       struct pipe_depth_stencil_alpha_state dsa;
       struct pipe_framebuffer_state fb;
    } g3d;
+   struct matrix projection;
 
+   struct matrix mvp;
    struct pipe_resource *vs_cbuf;
-   VGfloat vs_cbuf_data[8];
 
    struct pipe_resource *fs_cbuf;
    VGfloat fs_cbuf_data[32];
@@ -142,13 +143,56 @@ static VGboolean renderer_can_support(struct renderer *renderer,
 }
 
 /**
+ * Set the model-view-projection matrix used by vertex shaders.
+ */
+static void renderer_set_mvp(struct renderer *renderer,
+                             const struct matrix *mvp)
+{
+   struct matrix *cur = &renderer->mvp;
+   struct pipe_resource *cbuf;
+   VGfloat consts[3][4];
+   VGint i;
+
+   /* projection only */
+   if (!mvp)
+      mvp = &renderer->projection;
+
+   /* re-upload only if necessary */
+   if (memcmp(cur, mvp, sizeof(*mvp)) == 0)
+      return;
+
+   /* 3x3 matrix to 3 constant vectors (no Z) */
+   for (i = 0; i < 3; i++) {
+      consts[i][0] = mvp->m[i + 0];
+      consts[i][1] = mvp->m[i + 3];
+      consts[i][2] = 0.0f;
+      consts[i][3] = mvp->m[i + 6];
+   }
+
+   cbuf = renderer->vs_cbuf;
+   pipe_resource_reference(&cbuf, NULL);
+   cbuf = pipe_buffer_create(renderer->pipe->screen,
+                             PIPE_BIND_CONSTANT_BUFFER,
+                             sizeof(consts));
+   if (cbuf) {
+      pipe_buffer_write(renderer->pipe, cbuf,
+            0, sizeof(consts), consts);
+   }
+   renderer->pipe->set_constant_buffer(renderer->pipe,
+         PIPE_SHADER_VERTEX, 0, cbuf);
+
+   memcpy(cur, mvp, sizeof(*mvp));
+   renderer->vs_cbuf = cbuf;
+}
+
+/**
  * Create a simple vertex shader that passes through position and the given
  * attribute.
  */
 static void *create_passthrough_vs(struct pipe_context *pipe, int semantic_name)
 {
    struct ureg_program *ureg;
-   struct ureg_src src[2], constants[2];
+   struct ureg_src src[2], constants[3];
    struct ureg_dst dst[2], tmp;
    int i;
 
@@ -156,16 +200,18 @@ static void *create_passthrough_vs(struct pipe_context *pipe, int semantic_name)
    if (!ureg)
       return NULL;
 
-   /* position in surface coordinates */
+   /* position is in user coordinates */
    src[0] = ureg_DECL_vs_input(ureg, 0);
    dst[0] = ureg_DECL_output(ureg, TGSI_SEMANTIC_POSITION, 0);
    tmp = ureg_DECL_temporary(ureg);
-   for (i = 0; i < 2; i++)
+   for (i = 0; i < Elements(constants); i++)
       constants[i] = ureg_DECL_constant(ureg, i);
 
    /* transform to clipped coordinates */
-   ureg_MUL(ureg, tmp, src[0], constants[0]);
-   ureg_ADD(ureg, tmp, ureg_src(tmp), constants[1]);
+   ureg_DP4(ureg, ureg_writemask(tmp, TGSI_WRITEMASK_X), src[0], constants[0]);
+   ureg_DP4(ureg, ureg_writemask(tmp, TGSI_WRITEMASK_Y), src[0], constants[1]);
+   ureg_MOV(ureg, ureg_writemask(tmp, TGSI_WRITEMASK_Z), src[0]);
+   ureg_DP4(ureg, ureg_writemask(tmp, TGSI_WRITEMASK_W), src[0], constants[2]);
    ureg_MOV(ureg, dst[0], ureg_src(tmp));
 
    if (semantic_name >= 0) {
@@ -567,6 +613,8 @@ VGboolean renderer_copy_begin(struct renderer *renderer,
    renderer_set_fs(renderer, RENDERER_FS_TEXTURE);
    renderer_set_vs(renderer, RENDERER_VS_TEXTURE);
 
+   renderer_set_mvp(renderer, NULL);
+
    /* remember the texture size */
    renderer->u.copy.tex_width = src->texture->width0;
    renderer->u.copy.tex_height = src->texture->height0;
@@ -637,6 +685,8 @@ VGboolean renderer_drawtex_begin(struct renderer *renderer,
 
    renderer_set_fs(renderer, RENDERER_FS_TEXTURE);
    renderer_set_vs(renderer, RENDERER_VS_TEXTURE);
+
+   renderer_set_mvp(renderer, NULL);
 
    /* remember the texture size */
    renderer->u.drawtex.tex_width = src->texture->width0;
@@ -710,6 +760,8 @@ VGboolean renderer_scissor_begin(struct renderer *renderer,
    renderer_set_blend(renderer, 0);
    renderer_set_fs(renderer, RENDERER_FS_SCISSOR);
 
+   renderer_set_mvp(renderer, NULL);
+
    renderer->u.scissor.restore_dsa = restore_dsa;
    renderer->state = RENDERER_STATE_SCISSOR;
 
@@ -762,6 +814,8 @@ VGboolean renderer_clear_begin(struct renderer *renderer)
    renderer_set_blend(renderer, ~0);
    renderer_set_fs(renderer, RENDERER_FS_COLOR);
    renderer_set_vs(renderer, RENDERER_VS_COLOR);
+
+   renderer_set_mvp(renderer, NULL);
 
    renderer->state = RENDERER_STATE_CLEAR;
 
@@ -867,6 +921,8 @@ VGboolean renderer_filter_begin(struct renderer *renderer,
 
       renderer->u.filter.use_sampler = VG_FALSE;
    }
+
+   renderer_set_mvp(renderer, NULL);
 
    renderer->state = RENDERER_STATE_FILTER;
 
@@ -1286,8 +1342,7 @@ void renderer_validate(struct renderer *renderer,
 
    if (dirty & FRAMEBUFFER_DIRTY) {
       struct pipe_framebuffer_state *fb = &renderer->g3d.fb;
-      struct pipe_resource *cbuf;
-      VGfloat vs_consts[8];
+      struct matrix *proj = &renderer->projection;
 
       memset(fb, 0, sizeof(struct pipe_framebuffer_state));
       fb->width  = stfb->width;
@@ -1299,34 +1354,9 @@ void renderer_validate(struct renderer *renderer,
       cso_set_framebuffer(renderer->cso, fb);
       vg_set_viewport(renderer, VEGA_Y0_BOTTOM);
 
-      /* surface coordinates to clipped coordinates */
-      vs_consts[0] = 2.0f / fb->width;
-      vs_consts[1] = 2.0f / fb->height;
-      vs_consts[2] = 1.0f;
-      vs_consts[3] = 1.0f;
-      vs_consts[4] = -1.0f;
-      vs_consts[5] = -1.0f;
-      vs_consts[6] = 0.0f;
-      vs_consts[7] = 0.0f;
-
-      /* upload if needed */
-      cbuf = renderer->vs_cbuf;
-      if (!cbuf ||
-          memcmp(renderer->vs_cbuf_data, vs_consts, sizeof(vs_consts)) != 0) {
-         pipe_resource_reference(&cbuf, NULL);
-         cbuf = pipe_buffer_create(renderer->pipe->screen,
-                                   PIPE_BIND_CONSTANT_BUFFER,
-                                   sizeof(vs_consts));
-         if (cbuf) {
-            pipe_buffer_write(renderer->pipe, cbuf, 0,
-                  sizeof(vs_consts), vs_consts);
-         }
-         renderer->pipe->set_constant_buffer(renderer->pipe,
-               PIPE_SHADER_VERTEX, 0, cbuf);
-
-         renderer->vs_cbuf = cbuf;
-         memcpy(renderer->vs_cbuf_data, vs_consts, sizeof(vs_consts));
-      }
+      matrix_load_identity(proj);
+      matrix_translate(proj, -1.0f, -1.0f);
+      matrix_scale(proj, 2.0f / fb->width, 2.0f / fb->height);
 
       /* we also got a new depth buffer */
       if (dirty & DEPTH_STENCIL_DIRTY) {
@@ -1349,18 +1379,32 @@ void renderer_validate_for_shader(struct renderer *renderer,
                                   const struct pipe_sampler_state **samplers,
                                   struct pipe_sampler_view **views,
                                   VGint num_samplers,
+                                  const struct matrix *modelview,
                                   void *fs,
                                   const void *const_buffer,
                                   VGint const_buffer_len)
 {
+   struct matrix mvp = renderer->projection;
+
+   /* will be used in POLYGON_STENCIL and POLYGON_FILL */
+   matrix_mult(&mvp, modelview);
+   renderer_set_mvp(renderer, &mvp);
+
    renderer_set_custom_fs(renderer, fs,
                           samplers, views, num_samplers,
                           const_buffer, const_buffer_len);
 }
 
 void renderer_validate_for_mask_rendering(struct renderer *renderer,
-                                          struct pipe_surface *dst)
+                                          struct pipe_surface *dst,
+                                          const struct matrix *modelview)
 {
+   struct matrix mvp = renderer->projection;
+
+   /* will be used in POLYGON_STENCIL and POLYGON_FILL */
+   matrix_mult(&mvp, modelview);
+   renderer_set_mvp(renderer, &mvp);
+
    renderer_set_target(renderer, dst, renderer->g3d.fb.zsbuf, VG_FALSE);
    renderer_set_blend(renderer, ~0);
    renderer_set_fs(renderer, RENDERER_FS_WHITE);

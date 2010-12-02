@@ -546,11 +546,7 @@ void image_draw(struct vg_image *img, struct matrix *matrix)
    x4 = 0;
    y4 = img->height;
 
-   matrix_map_point(matrix, x1, y1, &x1, &y1);
-   matrix_map_point(matrix, x2, y2, &x2, &y2);
-   matrix_map_point(matrix, x3, y3, &x3, &y3);
-   matrix_map_point(matrix, x4, y4, &x4, &y4);
-
+   shader_set_surface_matrix(ctx->shader, matrix);
    shader_set_drawing_image(ctx->shader, VG_TRUE);
    shader_set_paint(ctx->shader, ctx->state.vg.fill_paint);
    shader_set_paint_matrix(ctx->shader, &paint_matrix);

@@ -50,6 +50,7 @@ struct shader {
    struct vg_paint *paint;
    struct vg_image *image;
 
+   struct matrix modelview;
    struct matrix paint_matrix;
 
    VGboolean drawing_image;
@@ -299,6 +300,7 @@ void shader_bind(struct shader *shader)
    renderer_validate_for_shader(ctx->renderer,
          (const struct pipe_sampler_state **) samplers,
          sampler_views, num_samplers,
+         &shader->modelview,
          shader->fs, (const void *) shader->constants, param_bytes);
 }
 
@@ -325,6 +327,15 @@ VGboolean shader_drawing_image(struct shader *shader)
 void shader_set_image(struct shader *shader, struct vg_image *img)
 {
    shader->image = img;
+}
+
+/**
+ * Set the transformation to map a vertex to the surface coordinates.
+ */
+void shader_set_surface_matrix(struct shader *shader,
+                               const struct matrix *mat)
+{
+   shader->modelview = *mat;
 }
 
 /**

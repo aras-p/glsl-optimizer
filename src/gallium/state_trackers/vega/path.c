@@ -1565,10 +1565,11 @@ void path_render(struct path *p, VGbitfield paintModes,
                            mat,
                            &paint_matrix)) {
       /* First the fill */
+      shader_set_surface_matrix(ctx->shader, mat);
       shader_set_paint(ctx->shader, ctx->state.vg.fill_paint);
       shader_set_paint_matrix(ctx->shader, &paint_matrix);
       shader_bind(ctx->shader);
-      path_fill(p, mat);
+      path_fill(p);
    }
 
    if ((paintModes & VG_STROKE_PATH) &&
@@ -1580,18 +1581,23 @@ void path_render(struct path *p, VGbitfield paintModes,
        *  taking place."*/
       if (ctx->state.vg.stroke.line_width.f <= 0)
          return;
+      shader_set_surface_matrix(ctx->shader, mat);
       shader_set_paint(ctx->shader, ctx->state.vg.stroke_paint);
       shader_set_paint_matrix(ctx->shader, &paint_matrix);
       shader_bind(ctx->shader);
-      path_stroke(p, mat);
+      path_stroke(p);
    }
 }
 
-void path_fill(struct path *p, struct matrix *mat)
+void path_fill(struct path *p)
 {
    struct vg_context *ctx = vg_current_context();
+   struct matrix identity;
+
+   matrix_load_identity(&identity);
+
    {
-      struct polygon_array *polygon_array = path_get_fill_polygons(p, mat);
+      struct polygon_array *polygon_array = path_get_fill_polygons(p, &identity);
       struct array *polys = polygon_array->array;
 
       if (!polygon_array || !polys || !polys->num_elements) {
@@ -1601,7 +1607,7 @@ void path_fill(struct path *p, struct matrix *mat)
    }
 }
 
-void path_stroke(struct path *p, struct matrix *mat)
+void path_stroke(struct path *p)
 {
    struct vg_context *ctx = vg_current_context();
    VGFillRule old_fill = ctx->state.vg.fill_rule;
@@ -1613,7 +1619,7 @@ void path_stroke(struct path *p, struct matrix *mat)
    if (stroke && !path_is_empty(stroke)) {
       ctx->state.vg.fill_rule = VG_NON_ZERO;
 
-      path_fill(stroke, mat);
+      path_fill(stroke);
 
       ctx->state.vg.fill_rule = old_fill;
    }

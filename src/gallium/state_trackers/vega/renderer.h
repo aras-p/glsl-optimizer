@@ -41,6 +41,7 @@ struct pipe_sampler_view;
 struct pipe_surface;
 struct pipe_vertex_element;
 struct pipe_vertex_buffer;
+struct matrix;
 
 struct renderer *renderer_create(struct vg_context *owner);
 void renderer_destroy(struct renderer *);
@@ -54,12 +55,14 @@ void renderer_validate_for_shader(struct renderer *renderer,
                                   const struct pipe_sampler_state **samplers,
                                   struct pipe_sampler_view **views,
                                   VGint num_samplers,
+                                  const struct matrix *modelview,
                                   void *fs,
                                   const void *const_buffer,
                                   VGint const_buffer_len);
 
 void renderer_validate_for_mask_rendering(struct renderer *renderer,
-                                          struct pipe_surface *dst);
+                                          struct pipe_surface *dst,
+                                          const struct matrix *modelview);
 
 VGboolean renderer_copy_begin(struct renderer *renderer,
                               struct pipe_surface *dst,

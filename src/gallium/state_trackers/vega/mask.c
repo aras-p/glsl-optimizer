@@ -435,14 +435,14 @@ static void mask_layer_render_to(struct vg_mask_layer *layer,
                               PIPE_BIND_RENDER_TARGET);
    surf = pipe->create_surface(pipe, view->texture, &surf_tmpl);
 
-   renderer_validate_for_mask_rendering(ctx->renderer, surf);
+   renderer_validate_for_mask_rendering(ctx->renderer, surf, mat);
 
    if (paint_modes & VG_FILL_PATH) {
-      path_fill(path, mat);
+      path_fill(path);
    }
 
    if (paint_modes & VG_STROKE_PATH){
-      path_stroke(path, mat);
+      path_stroke(path);
    }
 
    pipe_surface_reference(&surf, NULL);
