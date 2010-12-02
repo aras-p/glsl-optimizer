@@ -759,6 +759,7 @@ static ir_rvalue *
 do_comparison(void *mem_ctx, int operation, ir_rvalue *op0, ir_rvalue *op1)
 {
    int join_op;
+   ir_rvalue *cmp = NULL;
 
    if (operation == ir_binop_all_equal)
       join_op = ir_binop_logic_and;
@@ -773,8 +774,6 @@ do_comparison(void *mem_ctx, int operation, ir_rvalue *op0, ir_rvalue *op1)
       return new(mem_ctx) ir_expression(operation, op0, op1);
 
    case GLSL_TYPE_ARRAY: {
-      ir_rvalue *last = NULL;
-
       for (unsigned int i = 0; i < op0->type->length; i++) {
 	 ir_rvalue *e0, *e1, *result;
 
@@ -784,22 +783,19 @@ do_comparison(void *mem_ctx, int operation, ir_rvalue *op0, ir_rvalue *op1)
 						new(mem_ctx) ir_constant(i));
 	 result = do_comparison(mem_ctx, operation, e0, e1);
 
-	 if (last) {
-	    last = new(mem_ctx) ir_expression(join_op, last, result);
+	 if (cmp) {
+	    cmp = new(mem_ctx) ir_expression(join_op, cmp, result);
 	 } else {
-	    last = result;
+	    cmp = result;
 	 }
       }
 
       mark_whole_array_access(op0);
       mark_whole_array_access(op1);
-
-      return last;
+      break;
    }
 
    case GLSL_TYPE_STRUCT: {
-      ir_rvalue *last = NULL;
-
       for (unsigned int i = 0; i < op0->type->length; i++) {
 	 ir_rvalue *e0, *e1, *result;
 	 const char *field_name = op0->type->fields.structure[i].name;
@@ -810,13 +806,13 @@ do_comparison(void *mem_ctx, int operation, ir_rvalue *op0, ir_rvalue *op1)
 						 field_name);
 	 result = do_comparison(mem_ctx, operation, e0, e1);
 
-	 if (last) {
-	    last = new(mem_ctx) ir_expression(join_op, last, result);
+	 if (cmp) {
+	    cmp = new(mem_ctx) ir_expression(join_op, cmp, result);
 	 } else {
-	    last = result;
+	    cmp = result;
 	 }
       }
-      return last;
+      break;
    }
 
    case GLSL_TYPE_ERROR:
@@ -825,10 +821,17 @@ do_comparison(void *mem_ctx, int operation, ir_rvalue *op0, ir_rvalue *op1)
       /* I assume a comparison of a struct containing a sampler just
        * ignores the sampler present in the type.
        */
-      return new(mem_ctx) ir_constant(true);
+      break;
+
+   default:
+      assert(!"Should not get here.");
+      break;
    }
 
-   return NULL;
+   if (cmp == NULL)
+      cmp = new(mem_ctx) ir_constant(true);
+
+   return cmp;
 }
 
 ir_rvalue *
@@ -1029,7 +1032,7 @@ ast_expression::hir(exec_list *instructions,
       result = do_comparison(ctx, operations[this->oper], op[0], op[1]);
       type = glsl_type::bool_type;
 
-      assert(result->type == glsl_type::bool_type);
+      assert(error_emitted || (result->type == glsl_type::bool_type));
       break;
 
    case ast_bit_and:
