@@ -778,7 +778,7 @@ ir_constant::has_value(const ir_constant *c) const
 
    if (this->type->is_array()) {
       for (unsigned i = 0; i < this->type->length; i++) {
-	 if (this->array_elements[i]->has_value(c->array_elements[i]))
+	 if (!this->array_elements[i]->has_value(c->array_elements[i]))
 	    return false;
       }
       return true;
