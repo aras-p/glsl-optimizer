@@ -255,6 +255,9 @@ static const char* r600_get_name(struct pipe_screen* pscreen)
 
 static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 {
+	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
+	enum radeon_family family = r600_get_family(rscreen->radeon);
+
 	switch (param) {
 	/* Supported features (boolean caps). */
 	case PIPE_CAP_NPOT_TEXTURES:
@@ -287,7 +290,10 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
 	case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
 	case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
-		return 14;
+		if (family >= CHIP_CEDAR)
+			return 15;
+		else
+			return 14;
 	case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
 		/* FIXME allow this once infrastructure is there */
 		return 16;
@@ -316,12 +322,18 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 
 static float r600_get_paramf(struct pipe_screen* pscreen, enum pipe_cap param)
 {
+	struct r600_screen *rscreen = (struct r600_screen *)pscreen;
+	enum radeon_family family = r600_get_family(rscreen->radeon);
+
 	switch (param) {
 	case PIPE_CAP_MAX_LINE_WIDTH:
 	case PIPE_CAP_MAX_LINE_WIDTH_AA:
 	case PIPE_CAP_MAX_POINT_WIDTH:
 	case PIPE_CAP_MAX_POINT_WIDTH_AA:
-		return 8192.0f;
+		if (family >= CHIP_CEDAR)
+			return 16384.0f;
+		else
+			return 8192.0f;
 	case PIPE_CAP_MAX_TEXTURE_ANISOTROPY:
 		return 16.0f;
 	case PIPE_CAP_MAX_TEXTURE_LOD_BIAS:
