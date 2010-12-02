@@ -150,6 +150,23 @@
 #   define MAX_HEIGHT 16384
 #endif
 
+/* XXX: hack to prevent stack overflow on windows until all temporary arrays
+ * [MAX_WIDTH] are allocated from the heap */
+#ifdef WIN32
+#undef MAX_TEXTURE_LEVELS
+#undef MAX_3D_TEXTURE_LEVELS
+#undef MAX_CUBE_TEXTURE_LEVELS
+#undef MAX_TEXTURE_RECT_SIZE
+#undef MAX_WIDTH
+#undef MAX_HEIGHT
+#define MAX_TEXTURE_LEVELS 13
+#define MAX_3D_TEXTURE_LEVELS 9
+#define MAX_CUBE_TEXTURE_LEVELS 13
+#define MAX_TEXTURE_RECT_SIZE 4096
+#define MAX_WIDTH 4096
+#define MAX_HEIGHT 4096
+#endif
+
 /** Maxmimum size for CVA.  May be overridden by the drivers.  */
 #define MAX_ARRAY_LOCK_SIZE 3000
 
