@@ -314,6 +314,7 @@ EXTRA_EXT2(ARB_vertex_program, NV_vertex_program);
 EXTRA_EXT2(ARB_vertex_program, ARB_fragment_program);
 EXTRA_EXT(ARB_vertex_buffer_object);
 EXTRA_EXT(ARB_geometry_shader4);
+EXTRA_EXT(ARB_copy_buffer);
 
 static const int
 extra_ARB_vertex_program_ARB_fragment_program_NV_vertex_program[] = {
@@ -468,6 +469,10 @@ static const struct value_desc values[] = {
    /* GL_WEIGHT_ARRAY_BUFFER_BINDING_ARB - not supported */
    { GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB, LOC_CUSTOM, TYPE_INT, 0,
      extra_ARB_vertex_buffer_object },
+
+   /* GL_ARB_copy_buffer */
+   { GL_COPY_READ_BUFFER, LOC_CUSTOM, TYPE_INT, 0, extra_ARB_copy_buffer },
+   { GL_COPY_WRITE_BUFFER, LOC_CUSTOM, TYPE_INT, 0, extra_ARB_copy_buffer },
 
    /* GL_OES_read_format */
    { GL_IMPLEMENTATION_COLOR_READ_TYPE_OES, LOC_CUSTOM, TYPE_INT, 0,
@@ -1567,6 +1572,14 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
       break;
    case GL_ELEMENT_ARRAY_BUFFER_BINDING_ARB:
       v->value_int = ctx->Array.ElementArrayBufferObj->Name;
+      break;
+
+   /* ARB_copy_buffer */
+   case GL_COPY_READ_BUFFER:
+      v->value_int = ctx->CopyReadBuffer->Name;
+      break;
+   case GL_COPY_WRITE_BUFFER:
+      v->value_int = ctx->CopyWriteBuffer->Name;
       break;
 
    case GL_FRAGMENT_PROGRAM_BINDING_NV:
