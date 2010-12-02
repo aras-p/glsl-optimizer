@@ -180,7 +180,14 @@ void r300_flush_cb(void *data)
     insert_at_tail(&r300->atom_list, &r300->atomname); \
  } while (0)
 
-static void r300_setup_atoms(struct r300_context* r300)
+#define R300_ALLOC_ATOM(atomname, statetype) \
+do { \
+    r300->atomname.state = CALLOC_STRUCT(statetype); \
+    if (r300->atomname.state == NULL) \
+        return FALSE; \
+} while (0)
+
+static boolean r300_setup_atoms(struct r300_context* r300)
 {
     boolean is_rv350 = r300->screen->caps.is_rv350;
     boolean is_r500 = r300->screen->caps.is_r500;
@@ -261,23 +268,23 @@ static void r300_setup_atoms(struct r300_context* r300)
     }
 
     /* Some non-CSO atoms need explicit space to store the state locally. */
-    r300->aa_state.state = CALLOC_STRUCT(r300_aa_state);
-    r300->blend_color_state.state = CALLOC_STRUCT(r300_blend_color_state);
-    r300->clip_state.state = CALLOC_STRUCT(r300_clip_state);
-    r300->fb_state.state = CALLOC_STRUCT(pipe_framebuffer_state);
-    r300->gpu_flush.state = CALLOC_STRUCT(pipe_framebuffer_state);
-    r300->hyperz_state.state = CALLOC_STRUCT(r300_hyperz_state);
-    r300->invariant_state.state = CALLOC_STRUCT(r300_invariant_state);
-    r300->rs_block_state.state = CALLOC_STRUCT(r300_rs_block);
-    r300->scissor_state.state = CALLOC_STRUCT(pipe_scissor_state);
-    r300->textures_state.state = CALLOC_STRUCT(r300_textures_state);
-    r300->vap_invariant_state.state = CALLOC_STRUCT(r300_vap_invariant_state);
-    r300->viewport_state.state = CALLOC_STRUCT(r300_viewport_state);
-    r300->ztop_state.state = CALLOC_STRUCT(r300_ztop_state);
-    r300->fs_constants.state = CALLOC_STRUCT(r300_constant_buffer);
-    r300->vs_constants.state = CALLOC_STRUCT(r300_constant_buffer);
+    R300_ALLOC_ATOM(aa_state, r300_aa_state);
+    R300_ALLOC_ATOM(blend_color_state, r300_blend_color_state);
+    R300_ALLOC_ATOM(clip_state, r300_clip_state);
+    R300_ALLOC_ATOM(hyperz_state, r300_hyperz_state);
+    R300_ALLOC_ATOM(invariant_state, r300_invariant_state);
+    R300_ALLOC_ATOM(textures_state, r300_textures_state);
+    R300_ALLOC_ATOM(vap_invariant_state, r300_vap_invariant_state);
+    R300_ALLOC_ATOM(viewport_state, r300_viewport_state);
+    R300_ALLOC_ATOM(ztop_state, r300_ztop_state);
+    R300_ALLOC_ATOM(fb_state, pipe_framebuffer_state);
+    R300_ALLOC_ATOM(gpu_flush, pipe_framebuffer_state);
+    R300_ALLOC_ATOM(scissor_state, pipe_scissor_state);
+    R300_ALLOC_ATOM(rs_block_state, r300_rs_block);
+    R300_ALLOC_ATOM(fs_constants, r300_constant_buffer);
+    R300_ALLOC_ATOM(vs_constants, r300_constant_buffer);
     if (!r300->screen->caps.has_tcl) {
-        r300->vertex_stream_state.state = CALLOC_STRUCT(r300_vertex_stream_state);
+        R300_ALLOC_ATOM(r300->vertex_stream_state, r300_vertex_stream_state);
     }
 
     /* Some non-CSO atoms don't use the state pointer. */
@@ -294,6 +301,8 @@ static void r300_setup_atoms(struct r300_context* r300)
     r300->vap_invariant_state.dirty = TRUE;
     r300->texture_cache_inval.dirty = TRUE;
     r300->textures_state.dirty = TRUE;
+
+    return TRUE;
 }
 
 /* Not every state tracker calls every driver function before the first draw
@@ -439,7 +448,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
         draw_wide_point_threshold(r300->draw, 10000000.f);
     }
 
-    r300_setup_atoms(r300);
+    if (!r300_setup_atoms(r300))
+        goto fail;
 
     r300_init_blit_functions(r300);
     r300_init_flush_functions(r300);
