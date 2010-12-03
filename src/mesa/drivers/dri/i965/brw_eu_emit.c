@@ -1952,7 +1952,7 @@ void brw_SAMPLE(struct brw_compile *p,
 	    brw_push_insn_state(p);
 	    brw_set_mask_control( p, BRW_MASK_DISABLE );
 	    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-	    brw_MOV(p, brw_message_reg(msg_reg_nr), src0);
+	    brw_MOV(p, retype(brw_message_reg(msg_reg_nr), src0.type), src0);
 	    brw_pop_insn_state(p);
 	 }
 	 src0 = brw_message_reg(msg_reg_nr);
