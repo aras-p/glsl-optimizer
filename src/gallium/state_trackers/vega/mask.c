@@ -354,6 +354,7 @@ struct vg_mask_layer * mask_layer_create(VGint width, VGint height)
       pt.width0 = width;
       pt.height0 = height;
       pt.depth0 = 1;
+      pt.array_size = 1;
       pt.bind = PIPE_BIND_SAMPLER_VIEW;
 
       texture = screen->resource_create(screen, &pt);
