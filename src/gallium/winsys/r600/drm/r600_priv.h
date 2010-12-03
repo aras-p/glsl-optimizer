@@ -78,16 +78,13 @@ struct r600_bo {
 	struct pb_buffer		*pb;
 	unsigned			size;
 	unsigned			tiling_flags;
-	unsigned                        kernel_pitch;
+	unsigned			kernel_pitch;
 	unsigned			domains;
 };
 
 
 /* radeon_pciid.c */
 unsigned radeon_family_from_device(unsigned device);
-
-/* r600_drm.c */
-struct radeon *radeon_decref(struct radeon *radeon);
 
 /* radeon_bo.c */
 struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,

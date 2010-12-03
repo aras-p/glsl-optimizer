@@ -170,8 +170,6 @@ static unsigned r600_texture_get_stride(struct pipe_screen *screen,
 					unsigned level)
 {
 	struct pipe_resource *ptex = &rtex->resource.base.b;
-	struct radeon *radeon = (struct radeon *)screen->winsys;
-	enum chip_class chipc = r600_get_family_class(radeon);
 	unsigned width, stride, tile_width;
 
 	if (rtex->pitch_override)

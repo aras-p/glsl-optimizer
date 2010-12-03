@@ -40,6 +40,9 @@
 #ifndef RADEON_INFO_TILING_CONFIG
 #define RADEON_INFO_TILING_CONFIG 0x6
 #endif
+
+static struct radeon *radeon_new(int fd, unsigned device);
+
 static int radeon_get_device(struct radeon *radeon)
 {
 	struct drm_radeon_info info;
@@ -108,7 +111,7 @@ static int radeon_drm_get_tiling(struct radeon *radeon)
 	return 0;
 }
 
-struct radeon *radeon_new(int fd, unsigned device)
+static struct radeon *radeon_new(int fd, unsigned device)
 {
 	struct radeon *radeon;
 	int r;
@@ -249,14 +252,14 @@ struct radeon *radeon_decref(struct radeon *radeon)
 		return NULL;
 	}
 
-        if (radeon->cman)
-           radeon->cman->destroy(radeon->cman);
+	if (radeon->cman)
+		radeon->cman->destroy(radeon->cman);
 
-        if (radeon->kman)
-           radeon->kman->destroy(radeon->kman);
+	if (radeon->kman)
+		radeon->kman->destroy(radeon->kman);
 
-        if (radeon->fd >= 0)
-           drmClose(radeon->fd);
+	if (radeon->fd >= 0)
+		drmClose(radeon->fd);
 
 	free(radeon);
 	return NULL;
