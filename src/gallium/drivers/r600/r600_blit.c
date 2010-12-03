@@ -159,12 +159,12 @@ static void r600_clear_depth_stencil(struct pipe_context *ctx,
 
 /* Copy a block of pixels from one surface to another using HW. */
 static void r600_hw_copy_region(struct pipe_context *ctx,
-                                struct pipe_resource *dst,
-                                unsigned dst_level,
-                                unsigned dstx, unsigned dsty, unsigned dstz,
-                                struct pipe_resource *src,
-                                unsigned src_level,
-                                const struct pipe_box *src_box)
+				struct pipe_resource *dst,
+				unsigned dst_level,
+				unsigned dstx, unsigned dsty, unsigned dstz,
+				struct pipe_resource *src,
+				unsigned src_level,
+				const struct pipe_box *src_box)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 

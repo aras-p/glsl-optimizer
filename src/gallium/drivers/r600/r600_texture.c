@@ -205,11 +205,10 @@ static unsigned r600_texture_get_nblocksy(struct pipe_screen *screen,
 }
 
 /* Get a width in pixels from a stride in bytes. */
-static unsigned pitch_to_width(enum pipe_format format,
-                                unsigned pitch_in_bytes)
+static unsigned pitch_to_width(enum pipe_format format, unsigned pitch_in_bytes)
 {
-    return (pitch_in_bytes / util_format_get_blocksize(format)) *
-            util_format_get_blockwidth(format);
+	return (pitch_in_bytes / util_format_get_blocksize(format)) *
+		util_format_get_blockwidth(format);
 }
 
 static void r600_texture_set_array_mode(struct pipe_screen *screen,
@@ -328,12 +327,12 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 						const struct pipe_resource *templ)
 {
 	unsigned array_mode = 0;
-        static int force_tiling = -1;
+	static int force_tiling = -1;
 
-        /* Would like some magic "get_bool_option_once" routine.
+	/* Would like some magic "get_bool_option_once" routine.
 	 */
 	if (force_tiling == -1)
-                force_tiling = debug_get_bool_option("R600_FORCE_TILING", FALSE);
+		force_tiling = debug_get_bool_option("R600_FORCE_TILING", FALSE);
 
 	if (force_tiling) {
 		if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
@@ -364,8 +363,8 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 }
 
 static boolean r600_texture_get_handle(struct pipe_screen* screen,
-                                       struct pipe_resource *ptex,
-                                       struct winsys_handle *whandle)
+					struct pipe_resource *ptex,
+					struct winsys_handle *whandle)
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)ptex;
 	struct r600_resource *resource = &rtex->resource;
@@ -387,7 +386,7 @@ static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
 	assert(surf_tmpl->u.tex.first_layer == surf_tmpl->u.tex.last_layer);
 	if (surface == NULL)
 		return NULL;
-        /* XXX no offset */
+	/* XXX no offset */
 /*	offset = r600_texture_get_offset(rtex, level, surf_tmpl->u.tex.first_layer);*/
 	pipe_reference_init(&surface->base.reference, 1);
 	pipe_resource_reference(&surface->base.texture, texture);
@@ -487,7 +486,7 @@ out:
  */
 static INLINE unsigned u_box_volume( const struct pipe_box *box )
 {
-        return box->width * box->depth * box->height;
+	return box->width * box->depth * box->height;
 };
 
 
@@ -495,39 +494,39 @@ static INLINE unsigned u_box_volume( const struct pipe_box *box )
  * If so, don't use a staging resource.
  */
 static boolean permit_hardware_blit(struct pipe_screen *screen,
-                                    struct pipe_resource *res)
+					struct pipe_resource *res)
 {
-        unsigned bind;
+	unsigned bind;
 
-        if (util_format_is_depth_or_stencil(res->format))
-                bind = PIPE_BIND_DEPTH_STENCIL;
-        else
-                bind = PIPE_BIND_RENDER_TARGET;
+	if (util_format_is_depth_or_stencil(res->format))
+		bind = PIPE_BIND_DEPTH_STENCIL;
+	else
+		bind = PIPE_BIND_RENDER_TARGET;
 
 	/* See r600_resource_copy_region: there is something wrong
-         * with depth resource copies at the moment so avoid them for
-         * now.
-         */
+	 * with depth resource copies at the moment so avoid them for
+	 * now.
+	 */
 	if (util_format_get_component_bits(res->format,
-                                           UTIL_FORMAT_COLORSPACE_ZS,
-                                           0) != 0)
-                return FALSE;
+				UTIL_FORMAT_COLORSPACE_ZS,
+				0) != 0)
+		return FALSE;
 
-        if (!screen->is_format_supported(screen,
-                                         res->format,
-                                         res->target,
-                                         res->nr_samples,
-                                         bind, 0))
-                return FALSE;
+	if (!screen->is_format_supported(screen,
+				res->format,
+				res->target,
+				res->nr_samples,
+				bind, 0))
+		return FALSE;
 
-        if (!screen->is_format_supported(screen,
-                                         res->format,
-                                         res->target,
-                                         res->nr_samples,
-                                         PIPE_BIND_SAMPLER_VIEW, 0))
-                return FALSE;
+	if (!screen->is_format_supported(screen,
+				res->format,
+				res->target,
+				res->nr_samples,
+				PIPE_BIND_SAMPLER_VIEW, 0))
+		return FALSE;
 
-        return TRUE;
+	return TRUE;
 }
 
 struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
@@ -552,24 +551,23 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	if (rtex->tiled)
 		use_staging_texture = TRUE;
 
-	if ((usage & PIPE_TRANSFER_READ) &&
-            u_box_volume(box) > 1024)
-                use_staging_texture = TRUE;
+	if ((usage & PIPE_TRANSFER_READ) && u_box_volume(box) > 1024)
+		use_staging_texture = TRUE;
 
-        /* XXX: Use a staging texture for uploads if the underlying BO
-         * is busy.  No interface for checking that currently? so do
-         * it eagerly whenever the transfer doesn't require a readback
-         * and might block.
-         */
-        if ((usage & PIPE_TRANSFER_WRITE) &&
-            !(usage & (PIPE_TRANSFER_READ |
-                       PIPE_TRANSFER_DONTBLOCK |
-                       PIPE_TRANSFER_UNSYNCHRONIZED)))
-                use_staging_texture = TRUE;
+	/* XXX: Use a staging texture for uploads if the underlying BO
+	 * is busy.  No interface for checking that currently? so do
+	 * it eagerly whenever the transfer doesn't require a readback
+	 * and might block.
+	 */
+	if ((usage & PIPE_TRANSFER_WRITE) &&
+			!(usage & (PIPE_TRANSFER_READ |
+					PIPE_TRANSFER_DONTBLOCK |
+					PIPE_TRANSFER_UNSYNCHRONIZED)))
+		use_staging_texture = TRUE;
 
-        if (!permit_hardware_blit(ctx->screen, texture) ||
-            (texture->flags & R600_RESOURCE_FLAG_TRANSFER))
-                use_staging_texture = FALSE;
+	if (!permit_hardware_blit(ctx->screen, texture) ||
+		(texture->flags & R600_RESOURCE_FLAG_TRANSFER))
+		use_staging_texture = FALSE;
 
 	trans = CALLOC_STRUCT(r600_transfer);
 	if (trans == NULL)
@@ -579,10 +577,10 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	trans->transfer.usage = usage;
 	trans->transfer.box = *box;
 	if (rtex->depth) {
-                /* XXX: only readback the rectangle which is being mapped?
-                 */
-                /* XXX: when discard is true, no need to read back from depth texture
-                 */
+		/* XXX: only readback the rectangle which is being mapped?
+		*/
+		/* XXX: when discard is true, no need to read back from depth texture
+		*/
 		r = r600_texture_depth_flush(ctx, texture);
 		if (r < 0) {
 			R600_ERR("failed to create temporary texture to hold untiled copy\n");
@@ -622,7 +620,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		}
 
 		trans->transfer.stride =
-                        ((struct r600_resource_texture *)trans->staging_texture)->pitch_in_bytes[0];
+			((struct r600_resource_texture *)trans->staging_texture)->pitch_in_bytes[0];
 		if (usage & PIPE_TRANSFER_READ) {
 			r600_copy_to_staging_texture(ctx, trans);
 			/* Always referenced in the blit. */
@@ -848,8 +846,8 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 	case UTIL_FORMAT_COLORSPACE_YUV:
 		yuv_format |= (1 << 30);
 		switch (format) {
-                case PIPE_FORMAT_UYVY:
-                case PIPE_FORMAT_YUYV:
+		case PIPE_FORMAT_UYVY:
+		case PIPE_FORMAT_YUYV:
 		default:
 			break;
 		}
@@ -867,29 +865,29 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 
 	/* S3TC formats. TODO */
 	if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
-                static int r600_enable_s3tc = -1;
+		static int r600_enable_s3tc = -1;
 
-                if (r600_enable_s3tc == -1)
-                        r600_enable_s3tc = 
-                                debug_get_bool_option("R600_ENABLE_S3TC", FALSE);
+		if (r600_enable_s3tc == -1)
+			r600_enable_s3tc = 
+				debug_get_bool_option("R600_ENABLE_S3TC", FALSE);
 
-                if (!r600_enable_s3tc)
-                        goto out_unknown;
+		if (!r600_enable_s3tc)
+			goto out_unknown;
 
 		switch (format) {
 		case PIPE_FORMAT_DXT1_RGB:
 		case PIPE_FORMAT_DXT1_RGBA:
-                        result = FMT_BC1;
-                        goto out_word4;
+			result = FMT_BC1;
+			goto out_word4;
 		case PIPE_FORMAT_DXT3_RGBA:
-                        result = FMT_BC2;
-                        goto out_word4;
+			result = FMT_BC2;
+			goto out_word4;
 		case PIPE_FORMAT_DXT5_RGBA:
-                        result = FMT_BC3;
-                        goto out_word4;
-                default:
-                        goto out_unknown;
-                }
+			result = FMT_BC3;
+			goto out_word4;
+		default:
+			goto out_unknown;
+		}
 	}
 
 

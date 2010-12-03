@@ -103,19 +103,20 @@ struct r600_pipe_shader {
 
 struct r600_textures_info {
 	struct r600_pipe_sampler_view   *views[NUM_TEX_UNITS];
-	unsigned                        n_views;
+	unsigned			n_views;
 	void				*samplers[NUM_TEX_UNITS];
-	unsigned                        n_samplers;
+	unsigned			n_samplers;
 };
 
 struct r600_translate_context {
 	/* Translate cache for incompatible vertex offset/stride/format fallback. */
-	struct translate_cache *translate_cache;
+	struct translate_cache		*translate_cache;
 
 	/* The vertex buffer slot containing the translated buffer. */
-	unsigned vb_slot;
+	unsigned			vb_slot;
 	/* Saved and new vertex element state. */
-	void *saved_velems, *new_velems;
+	void				*saved_velems;
+	void				*new_velems;
 };
 
 #define R600_CONSTANT_ARRAY_SIZE 256
@@ -155,11 +156,9 @@ struct r600_pipe_context {
 	struct u_upload_mgr		*upload_vb;
 	struct u_upload_mgr		*upload_ib;
 	unsigned			any_user_vbs;
-	struct r600_textures_info       ps_samplers;
-
-	unsigned vb_max_index;
-	struct r600_translate_context tran;
-
+	struct r600_textures_info	ps_samplers;
+	unsigned			vb_max_index;
+	struct r600_translate_context	tran;
 };
 
 struct r600_drawl {

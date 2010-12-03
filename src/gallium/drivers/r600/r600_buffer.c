@@ -130,9 +130,9 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 				r600_bo_reference((struct radeon*)pipe->winsys, &rbuffer->r.bo, NULL);
 				rbuffer->num_ranges = 0;
 				rbuffer->r.bo = r600_bo((struct radeon*)pipe->winsys,
-                                                        rbuffer->r.base.b.width0, 0,
-                                                        rbuffer->r.base.b.bind,
-                                                        rbuffer->r.base.b.usage);
+							rbuffer->r.base.b.width0, 0,
+							rbuffer->r.base.b.bind,
+							rbuffer->r.base.b.usage);
 				break;
 			}
 		}

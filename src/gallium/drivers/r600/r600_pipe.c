@@ -420,9 +420,9 @@ static boolean r600_is_format_supported(struct pipe_screen* screen,
 	}
 
 	if ((usage & (PIPE_BIND_RENDER_TARGET |
-                  PIPE_BIND_DISPLAY_TARGET |
-                  PIPE_BIND_SCANOUT |
-                  PIPE_BIND_SHARED)) &&
+			PIPE_BIND_DISPLAY_TARGET |
+			PIPE_BIND_SCANOUT |
+			PIPE_BIND_SHARED)) &&
 			r600_is_colorbuffer_format_supported(format)) {
 		retval |= usage &
 			(PIPE_BIND_RENDER_TARGET |

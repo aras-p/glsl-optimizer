@@ -1206,8 +1206,7 @@ void evergreen_init_config(struct r600_pipe_context *rctx)
 	r600_pipe_state_add_reg(rstate, R_0283F8_SQ_VTX_SEMANTIC_30, 0x0, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_0283FC_SQ_VTX_SEMANTIC_31, 0x0, 0xFFFFFFFF, NULL);
 
-r600_pipe_state_add_reg(rstate, R_028810_PA_CL_CLIP_CNTL,
-			0x0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028810_PA_CL_CLIP_CNTL, 0x0, 0xFFFFFFFF, NULL);
 
 	r600_context_pipe_state_set(&rctx->ctx, rstate);
 }
