@@ -477,54 +477,63 @@ static uint32_t get_gem_domain(enum r300_buffer_domain domain)
 }
 
 void radeon_drm_bufmgr_add_buffer(struct r300_winsys_cs *rcs,
-                                  struct r300_winsys_buffer *_buf,
+                                  struct r300_winsys_cs_buffer *_buf,
                                   enum r300_buffer_domain rd,
                                   enum r300_buffer_domain wd)
 {
     struct radeon_libdrm_cs *cs = radeon_libdrm_cs(rcs);
-    struct radeon_drm_buffer *buf = get_drm_buffer(radeon_pb_buffer(_buf));
+    struct radeon_bo *bo = (struct radeon_bo*)_buf;
     uint32_t gem_rd = get_gem_domain(rd);
     uint32_t gem_wd = get_gem_domain(wd);
 
-    radeon_cs_space_add_persistent_bo(cs->cs, buf->bo, gem_rd, gem_wd);
+    radeon_cs_space_add_persistent_bo(cs->cs, bo, gem_rd, gem_wd);
 }
 
 void radeon_drm_bufmgr_write_reloc(struct r300_winsys_cs *rcs,
-                                   struct r300_winsys_buffer *_buf,
+                                   struct r300_winsys_cs_buffer *_buf,
 				   enum r300_buffer_domain rd,
                                    enum r300_buffer_domain wd)
 {
     struct radeon_libdrm_cs *cs = radeon_libdrm_cs(rcs);
-    struct radeon_drm_buffer *buf = get_drm_buffer(radeon_pb_buffer(_buf));
+    struct radeon_bo *bo = (struct radeon_bo*)_buf;
     int retval;
     uint32_t gem_rd = get_gem_domain(rd);
     uint32_t gem_wd = get_gem_domain(wd);
 
     cs->cs->cdw = cs->base.cdw;
-    retval = radeon_cs_write_reloc(cs->cs, buf->bo, gem_rd, gem_wd, 0);
+    retval = radeon_cs_write_reloc(cs->cs, bo, gem_rd, gem_wd, 0);
     cs->base.cdw = cs->cs->cdw;
     if (retval) {
         fprintf(stderr, "radeon: Relocation of %p (%d, %d, %d) failed!\n",
-                buf, gem_rd, gem_wd, 0);
+                bo, gem_rd, gem_wd, 0);
     }
 }
 
+struct r300_winsys_cs_buffer *radeon_drm_get_cs_handle(
+        struct r300_winsys_screen *rws,
+        struct r300_winsys_buffer *_buf)
+{
+    /* return pure radeon_bo. */
+    return (struct r300_winsys_cs_buffer*)
+            get_drm_buffer(radeon_pb_buffer(_buf))->bo;
+}
+
 boolean radeon_drm_bufmgr_is_buffer_referenced(struct r300_winsys_cs *rcs,
-                                               struct r300_winsys_buffer *_buf,
+                                               struct r300_winsys_cs_buffer *_buf,
                                                enum r300_reference_domain domain)
 {
     struct radeon_libdrm_cs *cs = radeon_libdrm_cs(rcs);
-    struct radeon_drm_buffer *buf = get_drm_buffer(radeon_pb_buffer(_buf));
+    struct radeon_bo *bo = (struct radeon_bo*)_buf;
     uint32_t tmp;
 
     if (domain & R300_REF_CS) {
-        if (radeon_bo_is_referenced_by_cs(buf->bo, cs->cs)) {
+        if (radeon_bo_is_referenced_by_cs(bo, cs->cs)) {
             return TRUE;
         }
     }
 
     if (domain & R300_REF_HW) {
-        if (radeon_bo_is_busy(buf->bo, &tmp)) {
+        if (radeon_bo_is_busy(bo, &tmp)) {
             return TRUE;
         }
     }

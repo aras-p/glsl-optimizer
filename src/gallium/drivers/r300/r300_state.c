@@ -626,7 +626,7 @@ static void r300_tex_set_tiling_flags(struct r300_context *r300,
         /* Tiling determines how DRM treats the buffer data.
          * We must flush CS when changing it if the buffer is referenced. */
         if (r300->rws->cs_is_buffer_referenced(r300->cs,
-                                               tex->buffer, R300_REF_CS))
+                                               tex->cs_buffer, R300_REF_CS))
             r300->context.flush(&r300->context, 0, NULL);
 
         r300->rws->buffer_set_tiling(r300->rws, tex->buffer,

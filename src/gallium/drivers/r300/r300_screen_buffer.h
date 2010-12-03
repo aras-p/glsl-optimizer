@@ -51,6 +51,7 @@ struct r300_buffer
     uint32_t magic;
 
     struct r300_winsys_buffer *buf;
+    struct r300_winsys_cs_buffer *cs_buf;
 
     enum r300_buffer_domain domain;
 
@@ -86,11 +87,7 @@ unsigned r300_buffer_is_referenced(struct pipe_context *context,
 
 static INLINE struct r300_buffer *r300_buffer(struct pipe_resource *buffer)
 {
-    if (buffer) {
-	assert(((struct r300_buffer *)buffer)->magic == R300_BUFFER_MAGIC);
-	return (struct r300_buffer *)buffer;
-    }
-    return NULL;
+    return (struct r300_buffer *)buffer;
 }
 
 static INLINE boolean r300_buffer_is_user_buffer(struct pipe_resource *buffer)

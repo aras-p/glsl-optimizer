@@ -115,17 +115,17 @@
 
 #define OUT_CS_BUF_RELOC(bo, offset, rd, wd) do { \
     assert(bo); \
-    OUT_CS_RELOC(r300_buffer(bo)->buf, offset, rd, wd); \
+    OUT_CS_RELOC(r300_buffer(bo)->cs_buf, offset, rd, wd); \
 } while (0)
 
 #define OUT_CS_TEX_RELOC(tex, offset, rd, wd) do { \
     assert(tex); \
-    OUT_CS_RELOC(tex->buffer, offset, rd, wd); \
+    OUT_CS_RELOC(tex->cs_buffer, offset, rd, wd); \
 } while (0)
 
 #define OUT_CS_BUF_RELOC_NO_OFFSET(bo, rd, wd) do { \
     assert(bo); \
-    cs_winsys->cs_write_reloc(cs_copy, r300_buffer(bo)->buf, rd, wd); \
+    cs_winsys->cs_write_reloc(cs_copy, r300_buffer(bo)->cs_buf, rd, wd); \
     CS_DEBUG(cs_count -= 2;) \
 } while (0)
 

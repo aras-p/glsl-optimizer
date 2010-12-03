@@ -675,7 +675,7 @@ static unsigned r300_texture_is_referenced(struct pipe_context *context,
     struct r300_texture *rtex = (struct r300_texture *)texture;
 
     if (r300->rws->cs_is_buffer_referenced(r300->cs,
-                                           rtex->buffer, R300_REF_CS))
+                                           rtex->cs_buffer, R300_REF_CS))
         return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 
     return PIPE_UNREFERENCED;
@@ -777,6 +777,8 @@ r300_texture_create_object(struct r300_screen *rscreen,
         }
     }
 
+    tex->cs_buffer = rws->buffer_get_cs_handle(rws, tex->buffer);
+
     rws->buffer_set_tiling(rws, tex->buffer,
             tex->desc.microtile, tex->desc.macrotile[0],
             tex->desc.stride_in_bytes[0]);
@@ -876,6 +878,7 @@ struct pipe_surface* r300_create_surface(struct pipe_context * ctx,
         surface->base.u.tex.last_layer = surf_tmpl->u.tex.last_layer;
 
         surface->buffer = tex->buffer;
+        surface->cs_buffer = tex->cs_buffer;
 
         /* Prefer VRAM if there are multiple domains to choose from. */
         surface->domain = tex->domain;

@@ -90,13 +90,13 @@ r300_texture_get_transfer(struct pipe_context *ctx,
 
     referenced_cs =
         r300->rws->cs_is_buffer_referenced(r300->cs,
-                                           tex->buffer, R300_REF_CS);
+                                           tex->cs_buffer, R300_REF_CS);
     if (referenced_cs) {
         referenced_hw = TRUE;
     } else {
         referenced_hw =
             r300->rws->cs_is_buffer_referenced(r300->cs,
-                                               tex->buffer, R300_REF_HW);
+                                               tex->cs_buffer, R300_REF_HW);
     }
 
     blittable = ctx->screen->is_format_supported(

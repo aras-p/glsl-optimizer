@@ -286,6 +286,7 @@ boolean radeon_setup_winsys(int fd, struct radeon_libdrm_winsys* ws)
     ws->base.get_value = radeon_get_value;
 
     ws->base.buffer_create = radeon_r300_winsys_buffer_create;
+    ws->base.buffer_get_cs_handle = radeon_drm_get_cs_handle;
     ws->base.buffer_set_tiling = radeon_drm_bufmgr_set_tiling;
     ws->base.buffer_get_tiling = radeon_drm_bufmgr_get_tiling;
     ws->base.buffer_map = radeon_drm_buffer_map;

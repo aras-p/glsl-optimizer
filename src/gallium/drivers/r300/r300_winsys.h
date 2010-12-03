@@ -36,7 +36,8 @@
 struct winsys_handle;
 struct r300_winsys_screen;
 
-struct r300_winsys_buffer;
+struct r300_winsys_buffer;      /* for map/unmap etc. */
+struct r300_winsys_cs_buffer;   /* for write_reloc etc. */
 
 struct r300_winsys_cs {
     uint32_t *ptr;      /* Pointer to the beginning of the CS. */
@@ -101,6 +102,10 @@ struct r300_winsys_screen {
                                                 unsigned bind,
                                                 unsigned usage,
                                                 enum r300_buffer_domain domain);
+
+    struct r300_winsys_cs_buffer *(*buffer_get_cs_handle)(
+            struct r300_winsys_screen *ws,
+            struct r300_winsys_buffer *buf);
 
     /**
      * Reference a buffer object (assign with reference counting).
@@ -242,7 +247,7 @@ struct r300_winsys_screen {
      *                  of the R300_DOMAIN_* flags.
      */
     void (*cs_add_buffer)(struct r300_winsys_cs *cs,
-                          struct r300_winsys_buffer *buf,
+                          struct r300_winsys_cs_buffer *buf,
                           enum r300_buffer_domain rd,
                           enum r300_buffer_domain wd);
 
@@ -263,7 +268,7 @@ struct r300_winsys_screen {
      * \param wd        A write domain containing a bitmask of the R300_DOMAIN_* flags.
      */
     void (*cs_write_reloc)(struct r300_winsys_cs *cs,
-                           struct r300_winsys_buffer *buf,
+                           struct r300_winsys_cs_buffer *buf,
                            enum r300_buffer_domain rd,
                            enum r300_buffer_domain wd);
 
@@ -303,7 +308,7 @@ struct r300_winsys_screen {
      * \param domain    A bitmask of the R300_REF_* enums.
      */
     boolean (*cs_is_buffer_referenced)(struct r300_winsys_cs *cs,
-                                       struct r300_winsys_buffer *buf,
+                                       struct r300_winsys_cs_buffer *buf,
                                        enum r300_reference_domain domain);
 };
 

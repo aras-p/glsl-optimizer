@@ -353,10 +353,10 @@ void r300_emit_aa_state(struct r300_context *r300, unsigned size, void *state)
 
     if (aa->dest) {
         OUT_CS_REG_SEQ(R300_RB3D_AARESOLVE_OFFSET, 1);
-        OUT_CS_RELOC(aa->dest->buffer, aa->dest->offset, 0, aa->dest->domain);
+        OUT_CS_RELOC(aa->dest->cs_buffer, aa->dest->offset, 0, aa->dest->domain);
 
         OUT_CS_REG_SEQ(R300_RB3D_AARESOLVE_PITCH, 1);
-        OUT_CS_RELOC(aa->dest->buffer, aa->dest->pitch, 0, aa->dest->domain);
+        OUT_CS_RELOC(aa->dest->cs_buffer, aa->dest->pitch, 0, aa->dest->domain);
     }
 
     OUT_CS_REG(R300_RB3D_AARESOLVE_CTL, aa->aaresolve_ctl);
@@ -387,10 +387,10 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
         surf = r300_surface(fb->cbufs[i]);
 
         OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
-        OUT_CS_RELOC(surf->buffer, surf->offset, 0, surf->domain);
+        OUT_CS_RELOC(surf->cs_buffer, surf->offset, 0, surf->domain);
 
         OUT_CS_REG_SEQ(R300_RB3D_COLORPITCH0 + (4 * i), 1);
-        OUT_CS_RELOC(surf->buffer, surf->pitch, 0, surf->domain);
+        OUT_CS_RELOC(surf->cs_buffer, surf->pitch, 0, surf->domain);
     }
 
     /* Set up the ZB part of the CBZB clear. */
@@ -400,10 +400,10 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
         OUT_CS_REG(R300_ZB_FORMAT, surf->cbzb_format);
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
-        OUT_CS_RELOC(surf->buffer, surf->cbzb_midpoint_offset, 0, surf->domain);
+        OUT_CS_RELOC(surf->cs_buffer, surf->cbzb_midpoint_offset, 0, surf->domain);
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHPITCH, 1);
-        OUT_CS_RELOC(surf->buffer, surf->cbzb_pitch, 0, surf->domain);
+        OUT_CS_RELOC(surf->cs_buffer, surf->cbzb_pitch, 0, surf->domain);
 
         DBG(r300, DBG_CBZB,
             "CBZB clearing cbuf %08x %08x\n", surf->cbzb_format,
@@ -416,10 +416,10 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
         OUT_CS_REG(R300_ZB_FORMAT, surf->format);
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
-        OUT_CS_RELOC(surf->buffer, surf->offset, 0, surf->domain);
+        OUT_CS_RELOC(surf->cs_buffer, surf->offset, 0, surf->domain);
 
         OUT_CS_REG_SEQ(R300_ZB_DEPTHPITCH, 1);
-        OUT_CS_RELOC(surf->buffer, surf->pitch, 0, surf->domain);
+        OUT_CS_RELOC(surf->cs_buffer, surf->pitch, 0, surf->domain);
 
         if (can_hyperz) {
             uint32_t surf_pitch;
@@ -559,7 +559,7 @@ static void r300_emit_query_end_frag_pipes(struct r300_context *r300,
                                            struct r300_query *query)
 {
     struct r300_capabilities* caps = &r300->screen->caps;
-    struct r300_winsys_buffer *buf = r300->query_current->buffer;
+    struct r300_winsys_cs_buffer *buf = r300->query_current->cs_buffer;
     CS_LOCALS(r300);
 
     assert(caps->num_frag_pipes);
@@ -615,7 +615,7 @@ static void r300_emit_query_end_frag_pipes(struct r300_context *r300,
 static void rv530_emit_query_end_single_z(struct r300_context *r300,
                                           struct r300_query *query)
 {
-    struct r300_winsys_buffer *buf = r300->query_current->buffer;
+    struct r300_winsys_cs_buffer *buf = r300->query_current->cs_buffer;
     CS_LOCALS(r300);
 
     BEGIN_CS(8);
@@ -629,7 +629,7 @@ static void rv530_emit_query_end_single_z(struct r300_context *r300,
 static void rv530_emit_query_end_double_z(struct r300_context *r300,
                                           struct r300_query *query)
 {
-    struct r300_winsys_buffer *buf = r300->query_current->buffer;
+    struct r300_winsys_cs_buffer *buf = r300->query_current->cs_buffer;
     CS_LOCALS(r300);
 
     BEGIN_CS(14);
@@ -1188,14 +1188,14 @@ boolean r300_emit_buffer_validate(struct r300_context *r300,
     for (i = 0; i < fb->nr_cbufs; i++) {
         tex = r300_texture(fb->cbufs[i]->texture);
         assert(tex && tex->buffer && "cbuf is marked, but NULL!");
-        r300->rws->cs_add_buffer(r300->cs, tex->buffer, 0,
+        r300->rws->cs_add_buffer(r300->cs, tex->cs_buffer, 0,
                                  r300_surface(fb->cbufs[i])->domain);
     }
     /* ...depth buffer... */
     if (fb->zsbuf) {
         tex = r300_texture(fb->zsbuf->texture);
         assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
-        r300->rws->cs_add_buffer(r300->cs, tex->buffer, 0,
+        r300->rws->cs_add_buffer(r300->cs, tex->cs_buffer, 0,
                                  r300_surface(fb->zsbuf)->domain);
     }
     /* ...textures... */
@@ -1205,28 +1205,28 @@ boolean r300_emit_buffer_validate(struct r300_context *r300,
         }
 
         tex = r300_texture(texstate->sampler_views[i]->base.texture);
-        r300->rws->cs_add_buffer(r300->cs, tex->buffer, tex->domain, 0);
+        r300->rws->cs_add_buffer(r300->cs, tex->cs_buffer, tex->domain, 0);
     }
     /* ...occlusion query buffer... */
     if (r300->query_current)
-        r300->rws->cs_add_buffer(r300->cs, r300->query_current->buffer,
+        r300->rws->cs_add_buffer(r300->cs, r300->query_current->cs_buffer,
                                  0, r300->query_current->domain);
     /* ...vertex buffer for SWTCL path... */
     if (r300->vbo)
-        r300->rws->cs_add_buffer(r300->cs, r300_buffer(r300->vbo)->buf,
+        r300->rws->cs_add_buffer(r300->cs, r300_buffer(r300->vbo)->cs_buf,
                                  r300_buffer(r300->vbo)->domain, 0);
     /* ...vertex buffers for HWTCL path... */
     if (do_validate_vertex_buffers) {
         for (i = 0; i < r300->velems->count; i++) {
             pbuf = vbuf[velem[i].vertex_buffer_index].buffer;
 
-            r300->rws->cs_add_buffer(r300->cs, r300_buffer(pbuf)->buf,
+            r300->rws->cs_add_buffer(r300->cs, r300_buffer(pbuf)->cs_buf,
                                      r300_buffer(pbuf)->domain, 0);
         }
     }
     /* ...and index buffer for HWTCL path. */
     if (index_buffer)
-        r300->rws->cs_add_buffer(r300->cs, r300_buffer(index_buffer)->buf,
+        r300->rws->cs_add_buffer(r300->cs, r300_buffer(index_buffer)->cs_buf,
                                  r300_buffer(index_buffer)->domain, 0);
 
     if (!r300->rws->cs_validate(r300->cs)) {

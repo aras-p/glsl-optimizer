@@ -282,6 +282,7 @@ struct r300_query {
 
     /* The buffer where query results are stored. */
     struct r300_winsys_buffer *buffer;
+    struct r300_winsys_cs_buffer *cs_buffer;
     /* The size of the buffer. */
     unsigned buffer_size;
     /* The domain of the buffer. */
@@ -313,6 +314,7 @@ struct r300_surface {
 
     /* Winsys buffer backing the texture. */
     struct r300_winsys_buffer *buffer;
+    struct r300_winsys_cs_buffer *cs_buffer;
 
     enum r300_buffer_domain domain;
 
@@ -396,6 +398,7 @@ struct r300_texture {
 
     /* Pipe buffer backing this texture. */
     struct r300_winsys_buffer *buffer;
+    struct r300_winsys_cs_buffer *cs_buffer;
 
     /* Registers carrying texture format data. */
     /* Only format-independent bits should be filled in. */

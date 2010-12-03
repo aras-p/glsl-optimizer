@@ -43,7 +43,7 @@ unsigned r300_buffer_is_referenced(struct pipe_context *context,
     if (r300_buffer_is_user_buffer(buf))
  	return PIPE_UNREFERENCED;
 
-    if (r300->rws->cs_is_buffer_referenced(r300->cs, rbuf->buf, domain))
+    if (r300->rws->cs_is_buffer_referenced(r300->cs, rbuf->cs_buf, domain))
         return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 
     return PIPE_UNREFERENCED;
@@ -206,6 +206,9 @@ r300_buffer_transfer_map( struct pipe_context *pipe,
                                                    rbuf->b.b.bind,
                                                    rbuf->b.b.usage,
                                                    rbuf->domain);
+                rbuf->cs_buf =
+                    r300screen->rws->buffer_get_cs_handle(r300screen->rws,
+                                                          rbuf->buf);
 		break;
 	    }
 	}
@@ -310,6 +313,8 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
                                        rbuf->b.b.width0, alignment,
                                        rbuf->b.b.bind, rbuf->b.b.usage,
                                        rbuf->domain);
+    rbuf->cs_buf =
+        r300screen->rws->buffer_get_cs_handle(r300screen->rws, rbuf->buf);
 
     if (!rbuf->buf) {
         util_slab_free(&r300screen->pool_buffers, rbuf);

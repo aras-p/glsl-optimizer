@@ -63,12 +63,12 @@ struct pb_manager *
 radeon_drm_bufmgr_create(struct radeon_libdrm_winsys *rws);
 
 void radeon_drm_bufmgr_add_buffer(struct r300_winsys_cs *cs,
-                                  struct r300_winsys_buffer *buf,
+                                  struct r300_winsys_cs_buffer *buf,
                                   enum r300_buffer_domain rd,
                                   enum r300_buffer_domain wd);
 
 void radeon_drm_bufmgr_write_reloc(struct r300_winsys_cs *cs,
-                                   struct r300_winsys_buffer *buf,
+                                   struct r300_winsys_cs_buffer *buf,
 				   enum r300_buffer_domain rd,
                                    enum r300_buffer_domain wd);
 
@@ -92,7 +92,7 @@ boolean radeon_drm_bufmgr_get_handle(struct pb_buffer *_buf,
 				     struct winsys_handle *whandle);
 
 boolean radeon_drm_bufmgr_is_buffer_referenced(struct r300_winsys_cs *cs,
-                                               struct r300_winsys_buffer *buf,
+                                               struct r300_winsys_cs_buffer *buf,
                                                enum r300_reference_domain domain);
 
 void radeon_drm_bufmgr_wait(struct r300_winsys_screen *ws,
@@ -105,5 +105,9 @@ void *radeon_drm_buffer_map(struct r300_winsys_screen *ws,
 
 void radeon_drm_buffer_unmap(struct r300_winsys_screen *ws,
                              struct r300_winsys_buffer *buf);
+
+struct r300_winsys_cs_buffer *radeon_drm_get_cs_handle(
+        struct r300_winsys_screen *rws,
+        struct r300_winsys_buffer *_buf);
 
 #endif
