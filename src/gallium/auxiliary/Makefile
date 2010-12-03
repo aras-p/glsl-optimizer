@@ -203,9 +203,6 @@ CPP_SOURCES += \
 endif
 
 
-LIBRARY_DEFINES += -D__STDC_CONSTANT_MACROS
-
-
 include ../Makefile.template
 
 

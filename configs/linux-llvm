@@ -12,10 +12,11 @@ GALLIUM_DRIVERS_DIRS += llvmpipe
 OPT_FLAGS = -O3 -ansi -pedantic
 ARCH_FLAGS = -mmmx -msse -msse2 -mstackrealign
 
-DEFINES += -DNDEBUG -DGALLIUM_LLVMPIPE -DHAVE_UDIS86
+DEFINES += -DNDEBUG -DGALLIUM_LLVMPIPE -DHAVE_UDIS86 \
+	-D__STDC_CONSTANT_MACROS -D__STDC_LIMIT_MACROS
 
 # override -std=c99
-CFLAGS += -std=gnu99 -D__STDC_CONSTANT_MACROS
+CFLAGS += -std=gnu99
 
 LLVM_VERSION := $(shell llvm-config --version)
 
