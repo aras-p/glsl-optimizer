@@ -2014,7 +2014,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
 
    switch (pname) {
    case GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT:
-      *params = att->Type;
+      *params = buffer->Name == 0 ? GL_FRAMEBUFFER_DEFAULT : att->Type;
       return;
    case GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT:
       if (att->Type == GL_RENDERBUFFER_EXT) {
