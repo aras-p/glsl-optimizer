@@ -673,7 +673,6 @@ void r300_plug_in_stencil_ref_fallback(struct r300_context *r300);
 
 /* r300_render.c */
 void r300_draw_flush_vbuf(struct r300_context *r300);
-boolean r500_index_bias_supported(struct r300_context *r300);
 void r500_emit_index_bias(struct r300_context *r300, int index_bias);
 
 /* r300_state.c */

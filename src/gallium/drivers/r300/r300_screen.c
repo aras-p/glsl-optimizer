@@ -457,6 +457,10 @@ struct pipe_screen* r300_screen_create(struct r300_winsys_screen *rws)
     r300_init_debug(r300screen);
     r300_parse_chipset(&r300screen->caps);
 
+    r300screen->caps.index_bias_supported =
+            r300screen->caps.is_r500 &&
+            rws->get_value(rws, R300_VID_DRM_2_3_0);
+
     util_slab_create(&r300screen->pool_buffers,
                      sizeof(struct r300_buffer), 64,
                      UTIL_SLAB_SINGLETHREADED);

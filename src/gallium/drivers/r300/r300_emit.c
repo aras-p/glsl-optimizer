@@ -1260,7 +1260,7 @@ unsigned r300_get_num_cs_end_dwords(struct r300_context *r300)
     /* Emitted in flush. */
     dwords += 26; /* emit_query_end */
     dwords += r300->hyperz_state.size + 2; /* emit_hyperz_end + zcache flush */
-    if (r500_index_bias_supported(r300))
+    if (r300->screen->caps.index_bias_supported)
         dwords += 2;
 
     return dwords;
