@@ -232,7 +232,6 @@ static boolean r300_emit_states(struct r300_context *r300,
     boolean emit_aos       = flags & PREP_EMIT_AOS;
     boolean emit_aos_swtcl = flags & PREP_EMIT_AOS_SWTCL;
     boolean indexed        = flags & PREP_INDEXED;
-    boolean hw_index_bias  = r500_index_bias_supported(r300);
 
     /* Validate buffers and emit dirty state if needed. */
     if (first_draw) {
@@ -244,7 +243,7 @@ static boolean r300_emit_states(struct r300_context *r300,
         }
 
         r300_emit_dirty_state(r300);
-        if (hw_index_bias) {
+        if (r300->screen->caps.index_bias_supported) {
             if (r300->screen->caps.has_tcl)
                 r500_emit_index_bias(r300, index_bias);
             else
