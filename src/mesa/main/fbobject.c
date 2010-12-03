@@ -2024,8 +2024,8 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
 	 *params = att->Texture->Name;
       }
       else {
-	 _mesa_error(ctx, GL_INVALID_ENUM,
-		     "glGetFramebufferAttachmentParameterivEXT(pname)");
+         assert(att->Type == GL_NONE);
+         *params = 0;
       }
       return;
    case GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL_EXT:
