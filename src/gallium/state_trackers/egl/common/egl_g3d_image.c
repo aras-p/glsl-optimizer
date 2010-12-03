@@ -173,6 +173,7 @@ egl_g3d_reference_drm_buffer(_EGLDisplay *dpy, EGLint name,
    templ.width0 = attrs.Width;
    templ.height0 = attrs.Height;
    templ.depth0 = 1;
+   templ.array_size = 1;
 
    memset(&wsh, 0, sizeof(wsh));
    wsh.handle = (unsigned) name;
