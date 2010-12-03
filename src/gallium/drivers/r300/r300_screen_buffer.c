@@ -140,11 +140,11 @@ static void r300_buffer_destroy(struct pipe_screen *screen,
 }
 
 static struct pipe_transfer*
-r300_default_get_transfer(struct pipe_context *context,
-                          struct pipe_resource *resource,
-                          unsigned level,
-                          unsigned usage,
-                          const struct pipe_box *box)
+r300_buffer_get_transfer(struct pipe_context *context,
+                         struct pipe_resource *resource,
+                         unsigned level,
+                         unsigned usage,
+                         const struct pipe_box *box)
 {
    struct r300_context *r300 = r300_context(context);
    struct pipe_transfer *transfer =
@@ -164,8 +164,8 @@ r300_default_get_transfer(struct pipe_context *context,
    return transfer;
 }
 
-static void r300_default_transfer_destroy(struct pipe_context *pipe,
-                                          struct pipe_transfer *transfer)
+static void r300_buffer_transfer_destroy(struct pipe_context *pipe,
+                                         struct pipe_transfer *transfer)
 {
    struct r300_context *r300 = r300_context(pipe);
    util_slab_free(&r300->pool_transfers, transfer);
@@ -268,17 +268,45 @@ static void r300_buffer_transfer_unmap( struct pipe_context *pipe,
     }
 }
 
+static void r300_buffer_transfer_inline_write(struct pipe_context *pipe,
+                                              struct pipe_resource *resource,
+                                              unsigned level,
+                                              unsigned usage,
+                                              const struct pipe_box *box,
+                                              const void *data,
+                                              unsigned stride,
+                                              unsigned layer_stride)
+{
+    struct r300_buffer *rbuf = r300_buffer(resource);
+    struct pipe_transfer *transfer = NULL;
+    uint8_t *map = NULL;
+
+    if (rbuf->constant_buffer) {
+        memcpy(rbuf->constant_buffer + box->x, data, box->width);
+        return;
+    }
+
+    transfer = r300_buffer_get_transfer(pipe, resource, 0,
+                        PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD, box);
+    map = r300_buffer_transfer_map(pipe, transfer);
+
+    memcpy(map, data, box->width);
+
+    r300_buffer_transfer_unmap(pipe, transfer);
+    r300_buffer_transfer_destroy(pipe, transfer);
+}
+
 struct u_resource_vtbl r300_buffer_vtbl = 
 {
    u_default_resource_get_handle,      /* get_handle */
    r300_buffer_destroy,                /* resource_destroy */
    r300_buffer_is_referenced_by_cs,    /* is_buffer_referenced */
-   r300_default_get_transfer,          /* get_transfer */
-   r300_default_transfer_destroy,      /* transfer_destroy */
+   r300_buffer_get_transfer,           /* get_transfer */
+   r300_buffer_transfer_destroy,       /* transfer_destroy */
    r300_buffer_transfer_map,           /* transfer_map */
    r300_buffer_transfer_flush_region,  /* transfer_flush_region */
    r300_buffer_transfer_unmap,         /* transfer_unmap */
-   u_default_transfer_inline_write     /* transfer_inline_write */
+   r300_buffer_transfer_inline_write   /* transfer_inline_write */
 };
 
 struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
