@@ -127,8 +127,8 @@ coeffs_init(struct lp_build_interp_soa_context *bld,
             LLVMValueRef dady_ptr)
 {
    struct lp_build_context *coeff_bld = &bld->coeff_bld;
-   LLVMBuilderRef builder = coeff_bld->builder;
    struct gallivm_state *gallivm = coeff_bld->gallivm;
+   LLVMBuilderRef builder = gallivm->builder;
    LLVMValueRef zero = LLVMConstNull(coeff_bld->elem_type);
    LLVMValueRef one = LLVMConstReal(coeff_bld->elem_type, 1.0);
    LLVMValueRef i0 = lp_build_const_int32(gallivm, 0);
@@ -280,6 +280,7 @@ attribs_update(struct lp_build_interp_soa_context *bld,
                int start,
                int end)
 {
+   LLVMBuilderRef builder = gallivm->builder;
    struct lp_build_context *coeff_bld = &bld->coeff_bld;
    LLVMValueRef shuffle = lp_build_const_int_vec(gallivm, coeff_bld->type, quad_index);
    LLVMValueRef oow = NULL;
@@ -311,7 +312,7 @@ attribs_update(struct lp_build_interp_soa_context *bld,
                 * Broadcast the attribute value for this quad into all elements
                 */
 
-               a = LLVMBuildShuffleVector(coeff_bld->builder,
+               a = LLVMBuildShuffleVector(builder,
                                           a, coeff_bld->undef, shuffle, "");
 
                /*
@@ -383,10 +384,11 @@ pos_init(struct lp_build_interp_soa_context *bld,
          LLVMValueRef x0,
          LLVMValueRef y0)
 {
+   LLVMBuilderRef builder = bld->coeff_bld.gallivm->builder;
    struct lp_build_context *coeff_bld = &bld->coeff_bld;
 
-   bld->x = LLVMBuildSIToFP(coeff_bld->builder, x0, coeff_bld->elem_type, "");
-   bld->y = LLVMBuildSIToFP(coeff_bld->builder, y0, coeff_bld->elem_type, "");
+   bld->x = LLVMBuildSIToFP(builder, x0, coeff_bld->elem_type, "");
+   bld->y = LLVMBuildSIToFP(builder, y0, coeff_bld->elem_type, "");
 }
 
 

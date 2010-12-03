@@ -367,7 +367,6 @@ lp_build_conv(struct gallivm_state *gallivm,
          {
             struct lp_build_context bld;
 
-            bld.builder = builder;
             bld.gallivm = gallivm;
             bld.type = src_type;
             bld.vec_type = src_vec_type;

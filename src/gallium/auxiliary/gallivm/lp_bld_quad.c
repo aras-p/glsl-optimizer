@@ -82,14 +82,15 @@ LLVMValueRef
 lp_build_scalar_ddx(struct lp_build_context *bld,
                     LLVMValueRef a)
 {
+   LLVMBuilderRef builder = bld->gallivm->builder;
    LLVMValueRef idx_left  = lp_build_const_int32(bld->gallivm, LP_BLD_QUAD_TOP_LEFT);
    LLVMValueRef idx_right = lp_build_const_int32(bld->gallivm, LP_BLD_QUAD_TOP_RIGHT);
-   LLVMValueRef a_left  = LLVMBuildExtractElement(bld->builder, a, idx_left, "left");
-   LLVMValueRef a_right = LLVMBuildExtractElement(bld->builder, a, idx_right, "right");
+   LLVMValueRef a_left  = LLVMBuildExtractElement(builder, a, idx_left, "left");
+   LLVMValueRef a_right = LLVMBuildExtractElement(builder, a, idx_right, "right");
    if (bld->type.floating)
-      return LLVMBuildFSub(bld->builder, a_right, a_left, "ddx");
+      return LLVMBuildFSub(builder, a_right, a_left, "ddx");
    else
-      return LLVMBuildSub(bld->builder, a_right, a_left, "ddx");
+      return LLVMBuildSub(builder, a_right, a_left, "ddx");
 }
 
 
@@ -97,12 +98,13 @@ LLVMValueRef
 lp_build_scalar_ddy(struct lp_build_context *bld,
                     LLVMValueRef a)
 {
+   LLVMBuilderRef builder = bld->gallivm->builder;
    LLVMValueRef idx_top    = lp_build_const_int32(bld->gallivm, LP_BLD_QUAD_TOP_LEFT);
    LLVMValueRef idx_bottom = lp_build_const_int32(bld->gallivm, LP_BLD_QUAD_BOTTOM_LEFT);
-   LLVMValueRef a_top    = LLVMBuildExtractElement(bld->builder, a, idx_top, "top");
-   LLVMValueRef a_bottom = LLVMBuildExtractElement(bld->builder, a, idx_bottom, "bottom");
+   LLVMValueRef a_top    = LLVMBuildExtractElement(builder, a, idx_top, "top");
+   LLVMValueRef a_bottom = LLVMBuildExtractElement(builder, a, idx_bottom, "bottom");
    if (bld->type.floating)
-      return LLVMBuildFSub(bld->builder, a_bottom, a_top, "ddy");
+      return LLVMBuildFSub(builder, a_bottom, a_top, "ddy");
    else
-      return LLVMBuildSub(bld->builder, a_bottom, a_top, "ddy");
+      return LLVMBuildSub(builder, a_bottom, a_top, "ddy");
 }

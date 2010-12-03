@@ -388,7 +388,6 @@ lp_build_context_init(struct lp_build_context *bld,
                       struct lp_type type)
 {
    bld->gallivm = gallivm;
-   bld->builder = gallivm->builder;
    bld->type = type;
 
    bld->int_elem_type = lp_build_int_elem_type(gallivm, type);

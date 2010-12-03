@@ -97,6 +97,7 @@ lp_build_stencil_test_single(struct lp_build_context *bld,
                              LLVMValueRef stencilRef,
                              LLVMValueRef stencilVals)
 {
+   LLVMBuilderRef builder = bld->gallivm->builder;
    const unsigned stencilMax = 255; /* XXX fix */
    struct lp_type type = bld->type;
    LLVMValueRef res;
@@ -108,9 +109,9 @@ lp_build_stencil_test_single(struct lp_build_context *bld,
    if (stencil->valuemask != stencilMax) {
       /* compute stencilRef = stencilRef & valuemask */
       LLVMValueRef valuemask = lp_build_const_int_vec(bld->gallivm, type, stencil->valuemask);
-      stencilRef = LLVMBuildAnd(bld->builder, stencilRef, valuemask, "");
+      stencilRef = LLVMBuildAnd(builder, stencilRef, valuemask, "");
       /* compute stencilVals = stencilVals & valuemask */
-      stencilVals = LLVMBuildAnd(bld->builder, stencilVals, valuemask, "");
+      stencilVals = LLVMBuildAnd(builder, stencilVals, valuemask, "");
    }
 
    res = lp_build_cmp(bld, stencil->func, stencilRef, stencilVals);
@@ -167,6 +168,7 @@ lp_build_stencil_op_single(struct lp_build_context *bld,
                            LLVMValueRef stencilVals)
 
 {
+   LLVMBuilderRef builder = bld->gallivm->builder;
    struct lp_type type = bld->type;
    LLVMValueRef res;
    LLVMValueRef max = lp_build_const_int_vec(bld->gallivm, type, 0xff);
@@ -210,15 +212,15 @@ lp_build_stencil_op_single(struct lp_build_context *bld,
       break;
    case PIPE_STENCIL_OP_INCR_WRAP:
       res = lp_build_add(bld, stencilVals, bld->one);
-      res = LLVMBuildAnd(bld->builder, res, max, "");
+      res = LLVMBuildAnd(builder, res, max, "");
       break;
    case PIPE_STENCIL_OP_DECR_WRAP:
       res = lp_build_sub(bld, stencilVals, bld->one);
-      res = LLVMBuildAnd(bld->builder, res, max, "");
+      res = LLVMBuildAnd(builder, res, max, "");
       break;
    case PIPE_STENCIL_OP_INVERT:
-      res = LLVMBuildNot(bld->builder, stencilVals, "");
-      res = LLVMBuildAnd(bld->builder, res, max, "");
+      res = LLVMBuildNot(builder, stencilVals, "");
+      res = LLVMBuildAnd(builder, res, max, "");
       break;
    default:
       assert(0 && "bad stencil op mode");
@@ -242,6 +244,7 @@ lp_build_stencil_op(struct lp_build_context *bld,
                     LLVMValueRef front_facing)
 
 {
+   LLVMBuilderRef builder = bld->gallivm->builder;
    LLVMValueRef res;
 
    assert(stencil[0].enabled);
@@ -264,7 +267,7 @@ lp_build_stencil_op(struct lp_build_context *bld,
       /* mask &= stencil->writemask */
       LLVMValueRef writemask = lp_build_const_int_vec(bld->gallivm, bld->type,
                                                       stencil->writemask);
-      mask = LLVMBuildAnd(bld->builder, mask, writemask, "");
+      mask = LLVMBuildAnd(builder, mask, writemask, "");
       /* res = (res & mask) | (stencilVals & ~mask) */
       res = lp_build_select_bitwise(bld, writemask, res, stencilVals);
    }
@@ -715,7 +718,7 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
                                             z_fail_mask, front_facing);
 
          /* apply Z-pass operator */
-         z_pass_mask = LLVMBuildAnd(z_bld.builder, orig_mask, z_pass, "");
+         z_pass_mask = LLVMBuildAnd(builder, orig_mask, z_pass, "");
          stencil_vals = lp_build_stencil_op(&s_bld, stencil, Z_PASS_OP,
                                             stencil_refs, stencil_vals,
                                             z_pass_mask, front_facing);
@@ -725,7 +728,7 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
       /* No depth test: apply Z-pass operator to stencil buffer values which
        * passed the stencil test.
        */
-      s_pass_mask = LLVMBuildAnd(s_bld.builder, orig_mask, s_pass_mask, "");
+      s_pass_mask = LLVMBuildAnd(builder, orig_mask, s_pass_mask, "");
       stencil_vals = lp_build_stencil_op(&s_bld, stencil, Z_PASS_OP,
                                          stencil_refs, stencil_vals,
                                          s_pass_mask, front_facing);
@@ -737,7 +740,7 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
       z_dst = LLVMBuildShl(builder, z_dst, shift, "");
    }
    if (stencil_vals && stencil_shift)
-      stencil_vals = LLVMBuildShl(s_bld.builder, stencil_vals,
+      stencil_vals = LLVMBuildShl(builder, stencil_vals,
                                   stencil_shift, "");
 
    /* Finally, merge/store the z/stencil values */
@@ -745,7 +748,7 @@ lp_build_depth_stencil_test(struct gallivm_state *gallivm,
        (stencil[0].enabled && stencil[0].writemask)) {
 
       if (z_dst && stencil_vals)
-         zs_dst = LLVMBuildOr(z_bld.builder, z_dst, stencil_vals, "");
+         zs_dst = LLVMBuildOr(builder, z_dst, stencil_vals, "");
       else if (z_dst)
          zs_dst = z_dst;
       else

@@ -394,6 +394,7 @@ lp_build_select_bitwise(struct lp_build_context *bld,
                         LLVMValueRef a,
                         LLVMValueRef b)
 {
+   LLVMBuilderRef builder = bld->gallivm->builder;
    struct lp_type type = bld->type;
    LLVMValueRef res;
 
@@ -406,24 +407,24 @@ lp_build_select_bitwise(struct lp_build_context *bld,
 
    if(type.floating) {
       LLVMTypeRef int_vec_type = lp_build_int_vec_type(bld->gallivm, type);
-      a = LLVMBuildBitCast(bld->builder, a, int_vec_type, "");
-      b = LLVMBuildBitCast(bld->builder, b, int_vec_type, "");
+      a = LLVMBuildBitCast(builder, a, int_vec_type, "");
+      b = LLVMBuildBitCast(builder, b, int_vec_type, "");
    }
 
-   a = LLVMBuildAnd(bld->builder, a, mask, "");
+   a = LLVMBuildAnd(builder, a, mask, "");
 
    /* This often gets translated to PANDN, but sometimes the NOT is
     * pre-computed and stored in another constant. The best strategy depends
     * on available registers, so it is not a big deal -- hopefully LLVM does
     * the right decision attending the rest of the program.
     */
-   b = LLVMBuildAnd(bld->builder, b, LLVMBuildNot(bld->builder, mask, ""), "");
+   b = LLVMBuildAnd(builder, b, LLVMBuildNot(builder, mask, ""), "");
 
-   res = LLVMBuildOr(bld->builder, a, b, "");
+   res = LLVMBuildOr(builder, a, b, "");
 
    if(type.floating) {
       LLVMTypeRef vec_type = lp_build_vec_type(bld->gallivm, type);
-      res = LLVMBuildBitCast(bld->builder, res, vec_type, "");
+      res = LLVMBuildBitCast(builder, res, vec_type, "");
    }
 
    return res;
@@ -442,6 +443,7 @@ lp_build_select(struct lp_build_context *bld,
                 LLVMValueRef a,
                 LLVMValueRef b)
 {
+   LLVMBuilderRef builder = bld->gallivm->builder;
    LLVMContextRef lc = bld->gallivm->context;
    struct lp_type type = bld->type;
    LLVMValueRef res;
@@ -453,8 +455,8 @@ lp_build_select(struct lp_build_context *bld,
       return a;
 
    if (type.length == 1) {
-      mask = LLVMBuildTrunc(bld->builder, mask, LLVMInt1TypeInContext(lc), "");
-      res = LLVMBuildSelect(bld->builder, mask, a, b, "");
+      mask = LLVMBuildTrunc(builder, mask, LLVMInt1TypeInContext(lc), "");
+      res = LLVMBuildSelect(builder, mask, a, b, "");
    }
    else if (util_cpu_caps.has_sse4_1 &&
             type.width * type.length == 128 &&
@@ -479,23 +481,23 @@ lp_build_select(struct lp_build_context *bld,
       }
 
       if (arg_type != bld->int_vec_type) {
-         mask = LLVMBuildBitCast(bld->builder, mask, arg_type, "");
+         mask = LLVMBuildBitCast(builder, mask, arg_type, "");
       }
 
       if (arg_type != bld->vec_type) {
-         a = LLVMBuildBitCast(bld->builder, a, arg_type, "");
-         b = LLVMBuildBitCast(bld->builder, b, arg_type, "");
+         a = LLVMBuildBitCast(builder, a, arg_type, "");
+         b = LLVMBuildBitCast(builder, b, arg_type, "");
       }
 
       args[0] = b;
       args[1] = a;
       args[2] = mask;
 
-      res = lp_build_intrinsic(bld->builder, intrinsic,
+      res = lp_build_intrinsic(builder, intrinsic,
                                arg_type, args, Elements(args));
 
       if (arg_type != bld->vec_type) {
-         res = LLVMBuildBitCast(bld->builder, res, bld->vec_type, "");
+         res = LLVMBuildBitCast(builder, res, bld->vec_type, "");
       }
    }
    else {
@@ -517,6 +519,7 @@ lp_build_select_aos(struct lp_build_context *bld,
                     LLVMValueRef a,
                     LLVMValueRef b)
 {
+   LLVMBuilderRef builder = bld->gallivm->builder;
    const struct lp_type type = bld->type;
    const unsigned n = type.length;
    unsigned i, j;
@@ -556,7 +559,7 @@ lp_build_select_aos(struct lp_build_context *bld,
                                            (mask & (1 << i) ? 0 : n) + j + i,
                                            0);
 
-      return LLVMBuildShuffleVector(bld->builder, a, b, LLVMConstVector(shuffles, n), "");
+      return LLVMBuildShuffleVector(builder, a, b, LLVMConstVector(shuffles, n), "");
    }
    else {
 #if 0
@@ -570,7 +573,7 @@ lp_build_select_aos(struct lp_build_context *bld,
             cond_vec[j + i] = LLVMConstInt(elem_type,
                                            mask & (1 << i) ? 1 : 0, 0);
 
-      return LLVMBuildSelect(bld->builder, LLVMConstVector(cond_vec, n), a, b, "");
+      return LLVMBuildSelect(builder, LLVMConstVector(cond_vec, n), a, b, "");
 #else
       LLVMValueRef mask_vec = lp_build_const_mask_aos(bld->gallivm, type, mask);
       return lp_build_select(bld, mask_vec, a, b);

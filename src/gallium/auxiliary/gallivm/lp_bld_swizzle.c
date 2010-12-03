@@ -68,6 +68,7 @@ LLVMValueRef
 lp_build_broadcast_scalar(struct lp_build_context *bld,
                           LLVMValueRef scalar)
 {
+   LLVMBuilderRef builder = bld->gallivm->builder;
    const struct lp_type type = bld->type;
 
    assert(lp_check_elem_type(type, LLVMTypeOf(scalar)));
@@ -83,9 +84,9 @@ lp_build_broadcast_scalar(struct lp_build_context *bld,
       struct lp_type i32_vec_type = lp_type_int_vec(32);
       i32_vec_type.length = type.length;
 
-      res = LLVMBuildInsertElement(bld->builder, bld->undef, scalar,
+      res = LLVMBuildInsertElement(builder, bld->undef, scalar,
                                    lp_build_const_int32(bld->gallivm, 0), "");
-      res = LLVMBuildShuffleVector(bld->builder, res, bld->undef,
+      res = LLVMBuildShuffleVector(builder, res, bld->undef,
                                    lp_build_const_int_vec(bld->gallivm, i32_vec_type, 0), "");
 #else
       /* XXX: The above path provokes a bug in LLVM 2.6 */
@@ -93,7 +94,7 @@ lp_build_broadcast_scalar(struct lp_build_context *bld,
       res = bld->undef;
       for(i = 0; i < type.length; ++i) {
          LLVMValueRef index = lp_build_const_int32(bld->gallivm, i);
-         res = LLVMBuildInsertElement(bld->builder, res, scalar, index, "");
+         res = LLVMBuildInsertElement(builder, res, scalar, index, "");
       }
 #endif
       return res;
@@ -186,6 +187,7 @@ lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
                             LLVMValueRef a,
                             unsigned channel)
 {
+   LLVMBuilderRef builder = bld->gallivm->builder;
    const struct lp_type type = bld->type;
    const unsigned n = type.length;
    unsigned i, j;
@@ -207,7 +209,7 @@ lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
          for(i = 0; i < 4; ++i)
             shuffles[j + i] = LLVMConstInt(elem_type, j + channel, 0);
 
-      return LLVMBuildShuffleVector(bld->builder, a, bld->undef, LLVMConstVector(shuffles, n), "");
+      return LLVMBuildShuffleVector(builder, a, bld->undef, LLVMConstVector(shuffles, n), "");
    }
    else {
       /*
@@ -227,7 +229,7 @@ lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
       };
       unsigned i;
 
-      a = LLVMBuildAnd(bld->builder, a,
+      a = LLVMBuildAnd(builder, a,
                        lp_build_const_mask_aos(bld->gallivm,
                                                type, 1 << channel), "");
 
@@ -241,7 +243,7 @@ lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
       type4.width *= 4;
       type4.length /= 4;
 
-      a = LLVMBuildBitCast(bld->builder, a, lp_build_vec_type(bld->gallivm, type4), "");
+      a = LLVMBuildBitCast(builder, a, lp_build_vec_type(bld->gallivm, type4), "");
 
       for(i = 0; i < 2; ++i) {
          LLVMValueRef tmp = NULL;
@@ -252,16 +254,16 @@ lp_build_swizzle_scalar_aos(struct lp_build_context *bld,
 #endif
 
          if(shift > 0)
-            tmp = LLVMBuildLShr(bld->builder, a, lp_build_const_int_vec(bld->gallivm, type4, shift*type.width), "");
+            tmp = LLVMBuildLShr(builder, a, lp_build_const_int_vec(bld->gallivm, type4, shift*type.width), "");
          if(shift < 0)
-            tmp = LLVMBuildShl(bld->builder, a, lp_build_const_int_vec(bld->gallivm, type4, -shift*type.width), "");
+            tmp = LLVMBuildShl(builder, a, lp_build_const_int_vec(bld->gallivm, type4, -shift*type.width), "");
 
          assert(tmp);
          if(tmp)
-            a = LLVMBuildOr(bld->builder, a, tmp, "");
+            a = LLVMBuildOr(builder, a, tmp, "");
       }
 
-      return LLVMBuildBitCast(bld->builder, a, lp_build_vec_type(bld->gallivm, type), "");
+      return LLVMBuildBitCast(builder, a, lp_build_vec_type(bld->gallivm, type), "");
    }
 }
 
@@ -271,6 +273,7 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
                      LLVMValueRef a,
                      const unsigned char swizzles[4])
 {
+   LLVMBuilderRef builder = bld->gallivm->builder;
    const struct lp_type type = bld->type;
    const unsigned n = type.length;
    unsigned i, j;
@@ -348,7 +351,7 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
          }
       }
 
-      return LLVMBuildShuffleVector(bld->builder, a,
+      return LLVMBuildShuffleVector(builder, a,
                                     LLVMConstVector(aux, n),
                                     LLVMConstVector(shuffles, n), "");
    } else {
@@ -389,8 +392,8 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
       type4.width *= 4;
       type4.length /= 4;
 
-      a = LLVMBuildBitCast(bld->builder, a, lp_build_vec_type(bld->gallivm, type4), "");
-      res = LLVMBuildBitCast(bld->builder, res, lp_build_vec_type(bld->gallivm, type4), "");
+      a = LLVMBuildBitCast(builder, a, lp_build_vec_type(bld->gallivm, type4), "");
+      res = LLVMBuildBitCast(builder, res, lp_build_vec_type(bld->gallivm, type4), "");
 
       /*
        * Mask and shift the channels, trying to group as many channels in the
@@ -416,23 +419,23 @@ lp_build_swizzle_aos(struct lp_build_context *bld,
             if (0)
                debug_printf("shift = %i, mask = 0x%08llx\n", shift, mask);
 
-            masked = LLVMBuildAnd(bld->builder, a,
+            masked = LLVMBuildAnd(builder, a,
                                   lp_build_const_int_vec(bld->gallivm, type4, mask), "");
             if (shift > 0) {
-               shifted = LLVMBuildShl(bld->builder, masked,
+               shifted = LLVMBuildShl(builder, masked,
                                       lp_build_const_int_vec(bld->gallivm, type4, shift*type.width), "");
             } else if (shift < 0) {
-               shifted = LLVMBuildLShr(bld->builder, masked,
+               shifted = LLVMBuildLShr(builder, masked,
                                        lp_build_const_int_vec(bld->gallivm, type4, -shift*type.width), "");
             } else {
                shifted = masked;
             }
 
-            res = LLVMBuildOr(bld->builder, res, shifted, "");
+            res = LLVMBuildOr(builder, res, shifted, "");
          }
       }
 
-      return LLVMBuildBitCast(bld->builder, res,
+      return LLVMBuildBitCast(builder, res,
                               lp_build_vec_type(bld->gallivm, type), "");
    }
 }

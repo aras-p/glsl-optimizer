@@ -120,8 +120,6 @@ struct lp_type {
  */
 struct lp_build_context
 {
-   LLVMBuilderRef builder;
-
    struct gallivm_state *gallivm;
 
    /**

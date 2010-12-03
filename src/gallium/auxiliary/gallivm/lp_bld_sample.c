@@ -661,6 +661,7 @@ lp_build_minify(struct lp_build_context *bld,
                 LLVMValueRef base_size,
                 LLVMValueRef level)
 {
+   LLVMBuilderRef builder = bld->gallivm->builder;
    assert(lp_check_value(bld->type, base_size));
    assert(lp_check_value(bld->type, level));
 
@@ -670,7 +671,7 @@ lp_build_minify(struct lp_build_context *bld,
    }
    else {
       LLVMValueRef size =
-         LLVMBuildLShr(bld->builder, base_size, level, "minify");
+         LLVMBuildLShr(builder, base_size, level, "minify");
       assert(bld->type.sign);
       size = lp_build_max(bld, size, bld->one);
       return size;
@@ -1019,6 +1020,7 @@ lp_build_sample_partial_offset(struct lp_build_context *bld,
                                LLVMValueRef *out_offset,
                                LLVMValueRef *out_subcoord)
 {
+   LLVMBuilderRef builder = bld->gallivm->builder;
    LLVMValueRef offset;
    LLVMValueRef subcoord;
 
@@ -1036,14 +1038,14 @@ lp_build_sample_partial_offset(struct lp_build_context *bld,
        */
 #if 0
       LLVMValueRef block_width = lp_build_const_int_vec(bld->type, block_length);
-      subcoord = LLVMBuildURem(bld->builder, coord, block_width, "");
-      coord    = LLVMBuildUDiv(bld->builder, coord, block_width, "");
+      subcoord = LLVMBuildURem(builder, coord, block_width, "");
+      coord    = LLVMBuildUDiv(builder, coord, block_width, "");
 #else
       unsigned logbase2 = util_unsigned_logbase2(block_length);
       LLVMValueRef block_shift = lp_build_const_int_vec(bld->gallivm, bld->type, logbase2);
       LLVMValueRef block_mask = lp_build_const_int_vec(bld->gallivm, bld->type, block_length - 1);
-      subcoord = LLVMBuildAnd(bld->builder, coord, block_mask, "");
-      coord = LLVMBuildLShr(bld->builder, coord, block_shift, "");
+      subcoord = LLVMBuildAnd(builder, coord, block_mask, "");
+      coord = LLVMBuildLShr(builder, coord, block_shift, "");
 #endif
    }
 

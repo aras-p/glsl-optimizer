@@ -151,6 +151,7 @@ emit_fetch(
    const struct tgsi_full_instruction *inst,
    unsigned src_op)
 {
+   LLVMBuilderRef builder = bld->base.gallivm->builder;
    struct lp_type type = bld->base.type;
    const struct tgsi_full_src_register *reg = &inst->Src[src_op];
    LLVMValueRef res;
@@ -177,10 +178,10 @@ emit_fetch(
 
          index = lp_build_const_int32(bld->base.gallivm, reg->Register.Index * 4 + chan);
 
-         scalar_ptr = LLVMBuildGEP(bld->base.builder, bld->consts_ptr,
+         scalar_ptr = LLVMBuildGEP(builder, bld->consts_ptr,
                                    &index, 1, "");
 
-         scalar = LLVMBuildLoad(bld->base.builder, scalar_ptr, "");
+         scalar = LLVMBuildLoad(builder, scalar_ptr, "");
 
          lp_build_name(scalar, "const[%u].%c", reg->Register.Index, "xyzw"[chan]);
 
@@ -190,7 +191,7 @@ emit_fetch(
 
          swizzle = lp_build_const_int32(bld->base.gallivm, chan);
 
-         res = LLVMBuildInsertElement(bld->base.builder, res, scalar, swizzle, "");
+         res = LLVMBuildInsertElement(builder, res, scalar, swizzle, "");
       }
 
       /*
@@ -211,7 +212,7 @@ emit_fetch(
             shuffles[i] = shuffles[i % 4];
          }
 
-         res = LLVMBuildShuffleVector(bld->base.builder,
+         res = LLVMBuildShuffleVector(builder,
                                       res, bld->base.undef,
                                       LLVMConstVector(shuffles, type.length),
                                       "");
@@ -232,7 +233,7 @@ emit_fetch(
       {
          LLVMValueRef temp_ptr;
          temp_ptr = bld->temps[reg->Register.Index];
-         res = LLVMBuildLoad(bld->base.builder, temp_ptr, "");
+         res = LLVMBuildLoad(builder, temp_ptr, "");
          if (!res)
             return bld->base.undef;
       }
@@ -279,6 +280,7 @@ emit_store(
    unsigned index,
    LLVMValueRef value)
 {
+   LLVMBuilderRef builder = bld->base.gallivm->builder;
    const struct tgsi_full_dst_register *reg = &inst->Dst[index];
    LLVMValueRef mask = NULL;
    LLVMValueRef ptr;
@@ -342,7 +344,7 @@ emit_store(
 
       assert(inst->Predicate.Index < LP_MAX_TGSI_PREDS);
 
-      pred = LLVMBuildLoad(bld->base.builder,
+      pred = LLVMBuildLoad(builder,
                            bld->preds[inst->Predicate.Index], "");
 
       /*
@@ -355,7 +357,7 @@ emit_store(
                                bld->base.zero);
 
       if (inst->Predicate.Negate) {
-         pred = LLVMBuildNot(bld->base.builder, pred, "");
+         pred = LLVMBuildNot(builder, pred, "");
       }
 
       pred = swizzle_aos(bld, pred,
@@ -365,7 +367,7 @@ emit_store(
                          inst->Predicate.SwizzleW);
 
       if (mask) {
-         mask = LLVMBuildAnd(bld->base.builder, mask, pred, "");
+         mask = LLVMBuildAnd(builder, mask, pred, "");
       } else {
          mask = pred;
       }
@@ -382,7 +384,7 @@ emit_store(
                                           reg->Register.WriteMask);
 
       if (mask) {
-         mask = LLVMBuildAnd(bld->base.builder, mask, writemask, "");
+         mask = LLVMBuildAnd(builder, mask, writemask, "");
       } else {
          mask = writemask;
       }
@@ -391,12 +393,12 @@ emit_store(
    if (mask) {
       LLVMValueRef orig_value;
 
-      orig_value = LLVMBuildLoad(bld->base.builder, ptr, "");
+      orig_value = LLVMBuildLoad(builder, ptr, "");
       value = lp_build_select(&bld->base,
                               mask, value, orig_value);
    }
 
-   LLVMBuildStore(bld->base.builder, value, ptr);
+   LLVMBuildStore(builder, value, ptr);
 }
 
 
@@ -1162,7 +1164,7 @@ lp_build_tgsi_aos(struct gallivm_state *gallivm,
 
    if (0) {
       LLVMModuleRef module = LLVMGetGlobalParent(
-         LLVMGetBasicBlockParent(LLVMGetInsertBlock(bld.base.builder)));
+         LLVMGetBasicBlockParent(LLVMGetInsertBlock(gallivm->builder)));
       LLVMDumpModule(module);
    }
 
