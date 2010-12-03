@@ -535,7 +535,7 @@ emit_mask_scatter(struct lp_build_tgsi_soa_context *bld,
                   LLVMValueRef pred)
 {
    struct gallivm_state *gallivm = bld->base.gallivm;
-   LLVMBuilderRef builder = builder;
+   LLVMBuilderRef builder = gallivm->builder;
    unsigned i;
 
    /* Mix the predicate and execution mask */
@@ -895,6 +895,7 @@ emit_store(
    LLVMValueRef value)
 {
    struct gallivm_state *gallivm = bld->base.gallivm;
+   LLVMBuilderRef builder = gallivm->builder;
    const struct tgsi_full_dst_register *reg = &inst->Dst[index];
    struct lp_build_context *uint_bld = &bld->uint_bld;
    LLVMValueRef indirect_index = NULL;
@@ -929,7 +930,6 @@ emit_store(
    switch( reg->Register.File ) {
    case TGSI_FILE_OUTPUT:
       if (reg->Register.Indirect) {
-         LLVMBuilderRef builder = builder;
          LLVMValueRef chan_vec =
             lp_build_const_int_vec(gallivm, uint_bld->type, chan_index);
          LLVMValueRef length_vec =
@@ -972,7 +972,6 @@ emit_store(
 
    case TGSI_FILE_TEMPORARY:
       if (reg->Register.Indirect) {
-         LLVMBuilderRef builder = builder;
          LLVMValueRef chan_vec =
             lp_build_const_int_vec(gallivm, uint_bld->type, chan_index);
          LLVMValueRef length_vec =
