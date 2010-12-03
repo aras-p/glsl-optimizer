@@ -52,6 +52,10 @@ enum VS_INPUT
 {
    VS_I_RECT,
    VS_I_VPOS,
+   VS_I_EB_0_0,
+   VS_I_EB_0_1,
+   VS_I_EB_1_0,
+   VS_I_EB_1_1,
    VS_I_INTERLACED,
    VS_I_MV0,
    VS_I_MV1,
@@ -68,6 +72,11 @@ enum VS_OUTPUT
    VS_O_TEX0,
    VS_O_TEX1,
    VS_O_TEX2,
+   VS_O_EB_0_0,
+   VS_O_EB_0_1,
+   VS_O_EB_1_0,
+   VS_O_EB_1_1,
+   VS_O_INTERLACED,
    VS_O_MV0,
    VS_O_MV1,
    VS_O_MV2,
@@ -89,9 +98,9 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
 {
    struct ureg_program *shader;
    struct ureg_src norm, mbs;
-   struct ureg_src vrect, vpos, interlaced, vmv[4];
+   struct ureg_src vrect, vpos, eb[2][2], interlaced, vmv[4];
    struct ureg_dst scale, t_vpos, t_vtex;
-   struct ureg_dst o_vpos, o_line, o_vtex[3], o_vmv[4];
+   struct ureg_dst o_vpos, o_line, o_vtex[3], o_eb[2][2], o_interlaced, o_vmv[4];
    unsigned i, j, count, label;
 
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
@@ -107,13 +116,22 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
 
    vrect = ureg_DECL_vs_input(shader, VS_I_RECT);
    vpos = ureg_DECL_vs_input(shader, VS_I_VPOS);
+   eb[0][0] = ureg_DECL_vs_input(shader, VS_I_EB_0_0);
+   eb[1][0] = ureg_DECL_vs_input(shader, VS_I_EB_1_0);
+   eb[0][1] = ureg_DECL_vs_input(shader, VS_I_EB_0_1);
+   eb[1][1] = ureg_DECL_vs_input(shader, VS_I_EB_1_1);
    interlaced = ureg_DECL_vs_input(shader, VS_I_INTERLACED);
 
    o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, VS_O_VPOS);
-   o_line = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_LINE);
+   o_line = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_LINE);   
    o_vtex[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX0);
    o_vtex[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX1);
-   o_vtex[2] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX2);
+   o_vtex[2] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX2);   
+   o_eb[0][0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB_0_0);
+   o_eb[0][1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB_0_1);
+   o_eb[1][0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB_1_0);
+   o_eb[1][1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB_1_1);
+   o_interlaced = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_INTERLACED);
    
    count=0;
    for (i = 0; i < ref_frames; ++i) {
@@ -148,6 +166,8 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
     *    o_vtex[0..1].xy = t_vpos
     * }
     * o_vtex[2].xy = t_vpos
+    * o_eb[0..1][0..1] = eb[0..1][0..1]
+    * o_interlaced = interlaced
     *
     * if(count > 0) { // Apply motion vectors
     *    scale = norm * 0.5;
@@ -182,6 +202,13 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    ureg_ENDIF(shader);
    ureg_MOV(shader, ureg_writemask(o_vtex[2], TGSI_WRITEMASK_XY), ureg_src(t_vpos));
 
+   ureg_MOV(shader, o_eb[0][0], eb[0][0]);
+   ureg_MOV(shader, o_eb[0][1], eb[0][1]);
+   ureg_MOV(shader, o_eb[1][0], eb[1][0]);
+   ureg_MOV(shader, o_eb[1][1], eb[1][1]);
+
+   ureg_MOV(shader, o_interlaced, interlaced);
+
    if(count > 0) {
       ureg_MUL(shader, ureg_writemask(scale, TGSI_WRITEMASK_XY), norm, ureg_imm1f(shader, 0.5f));
       for (i = 0; i < count; ++i)
@@ -209,11 +236,13 @@ calc_field(struct ureg_program *shader)
    /*
     * line going from 0 to 8 in steps of 0.5
     *
-    * tmp.y = fraction(line.y)
-    * tmp.y = tmp.y >= 0.5 ? 1 : 0
+    * tmp.z = fraction(line.y)
+    * tmp.z = tmp.z >= 0.5 ? 1 : 0
+    * tmp.xy = line >= 4 ? 1 : 0
     */
-   ureg_FRC(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y), line);
-   ureg_SGE(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y), ureg_src(tmp), ureg_imm1f(shader, 0.5f));
+   ureg_FRC(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Z), ureg_scalar(line, TGSI_SWIZZLE_Y));
+   ureg_SGE(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Z), ureg_src(tmp), ureg_imm1f(shader, 0.5f));
+   ureg_SGE(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY), line, ureg_imm2f(shader, BLOCK_WIDTH / 2, BLOCK_HEIGHT / 2));
 
    return tmp;
 }
@@ -221,18 +250,25 @@ calc_field(struct ureg_program *shader)
 static struct ureg_dst
 fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct ureg_dst field)
 {
-   struct ureg_src tc[3];
-   struct ureg_src sampler[3];
-   struct ureg_dst texel, t_tc, tmp;
-   unsigned i;
+   struct ureg_src tc[3], sampler[3], eb[2][2], interlaced;
+   struct ureg_dst texel, t_tc, t_eb_info, tmp;
+   unsigned i, label, l_x, l_y;
 
    texel = ureg_DECL_temporary(shader);
    t_tc = ureg_DECL_temporary(shader);
+   t_eb_info = ureg_DECL_temporary(shader);
    tmp = ureg_DECL_temporary(shader);
 
    tc[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX0, TGSI_INTERPOLATE_LINEAR);
    tc[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX1, TGSI_INTERPOLATE_LINEAR);
    tc[2] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX2, TGSI_INTERPOLATE_LINEAR);
+
+   eb[0][0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB_0_0, TGSI_INTERPOLATE_CONSTANT);
+   eb[0][1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB_0_1, TGSI_INTERPOLATE_CONSTANT);
+   eb[1][0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB_1_0, TGSI_INTERPOLATE_CONSTANT);
+   eb[1][1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB_1_1, TGSI_INTERPOLATE_CONSTANT);
+
+   interlaced = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_INTERLACED, TGSI_INTERPOLATE_CONSTANT);
 
    for (i = 0; i < 3; ++i)  {
       sampler[i] = ureg_DECL_sampler(shader, i);
@@ -243,23 +279,52 @@ fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct
     * texel.cb = tex(tc[2], sampler[1])
     * texel.cr = tex(tc[2], sampler[2])
     */
-   for (i = 0; i < 3; ++i) {
-      if(i==0 || r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444) {
 
-         ureg_CMP(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_XY),
+   ureg_IF(shader, interlaced, &label);
+      ureg_MOV(shader, ureg_writemask(field, TGSI_WRITEMASK_Y), ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Z));
+   ureg_ENDIF(shader);
+
+   ureg_CMP(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_XY),
             ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
             tc[1], tc[0]);
 
-      } else {
-         ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_XY), tc[2]);
-      }
+   ureg_IF(shader, ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y), &l_y);
 
-      /* Nouveau and r600g can't writemask tex dst regs (yet?), do in two steps */
-      ureg_TEX(shader, tmp, TGSI_TEXTURE_3D, ureg_src(t_tc), sampler[i]);
-      ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_X));
+      ureg_IF(shader, ureg_scalar(ureg_src(field), TGSI_SWIZZLE_X), &l_x);
+         ureg_MOV(shader, t_eb_info, eb[1][1]);
+      ureg_ELSE(shader, &l_x);
+         ureg_MOV(shader, t_eb_info, eb[1][0]);
+      ureg_ENDIF(shader);
+
+   ureg_ELSE(shader, &l_y);
+
+      ureg_IF(shader, ureg_scalar(ureg_src(field), TGSI_SWIZZLE_X), &l_x);
+         ureg_MOV(shader, t_eb_info, eb[0][1]);
+      ureg_ELSE(shader, &l_x);
+         ureg_MOV(shader, t_eb_info, eb[0][0]);
+      ureg_ENDIF(shader);
+
+   ureg_ENDIF(shader);
+
+   for (i = 0; i < 3; ++i) {
+      ureg_IF(shader, ureg_scalar(ureg_src(t_eb_info), TGSI_SWIZZLE_X + i), &label);
+         ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), ureg_imm1f(shader, 0.0f));
+      ureg_ELSE(shader, &label);
+
+         /* Nouveau and r600g can't writemask tex dst regs (yet?), do in two steps */
+         if(i==0 || r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444) {
+            ureg_TEX(shader, tmp, TGSI_TEXTURE_3D, ureg_src(t_tc), sampler[i]);
+         } else {
+            ureg_TEX(shader, tmp, TGSI_TEXTURE_3D, tc[2], sampler[i]);
+         }
+
+         ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_X));
+
+      ureg_ENDIF(shader);
    }
 
    ureg_release_temporary(shader, t_tc);
+   ureg_release_temporary(shader, t_eb_info);
    ureg_release_temporary(shader, tmp);
 
    return texel;
@@ -294,7 +359,7 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field, unsigned ref_frame
           * result = tex(field.y ? tc[1] : tc[0], sampler[0])
           */
          ureg_CMP(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_XY),
-            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
+            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Z)),
             tc[1], tc[0]);
          ureg_TEX(shader, result, TGSI_TEXTURE_2D, ureg_src(t_tc), sampler[0]);
 
@@ -318,12 +383,12 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field, unsigned ref_frame
           *    ref[0..1] = tex(tc[2..3], sampler[0..1])
           */
          ureg_CMP(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_XY),
-            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
+            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Z)),
             tc[1], tc[0]);
          ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, ureg_src(t_tc), sampler[0]);
 
          ureg_CMP(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_XY),
-            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
+            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Z)),
             tc[3], tc[2]);
          ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, ureg_src(t_tc), sampler[1]);
 
@@ -392,7 +457,7 @@ init_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE typ
       return false;
 
    handler->vertex_elems_state = r->pipe->create_vertex_elements_state(
-      r->pipe, 3 + ref_frames * mv_per_frame, vertex_elems);
+      r->pipe, 7 + ref_frames * mv_per_frame, vertex_elems);
 
    if (handler->vertex_elems_state == NULL)
       return false;
@@ -400,8 +465,8 @@ init_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE typ
    if (!vl_vb_init(&handler->pos, r->macroblocks_per_batch))
       return false;
 
-   handler->interlaced = MALLOC(sizeof(float) * r->macroblocks_per_batch * 4);
-   if (handler->interlaced == NULL)
+   handler->info = MALLOC(sizeof(struct vertex_stream_0) * r->macroblocks_per_batch * 4);
+   if (handler->info == NULL)
       return false;
 
    for (i = 0; i < ref_frames * mv_per_frame; ++i) {
@@ -431,8 +496,7 @@ cleanup_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE 
    r->pipe->delete_fs_state(r->pipe, handler->fs);
    r->pipe->delete_vertex_elements_state(r->pipe, handler->vertex_elems_state);
 
-   handler->interlaced = MALLOC(sizeof(float) * r->macroblocks_per_batch * 4);
-   FREE(handler->interlaced);
+   FREE(handler->info);
 
    for (i = 0; i < ref_frames * mv_per_frame; ++i)
       FREE(handler->mv[i]);
@@ -470,7 +534,7 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
    /* Luma filter */
    filters[0] = PIPE_TEX_FILTER_NEAREST;
    /* Chroma filters */
-   if (r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444) {
+   if (r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444 || true) { //TODO
       filters[1] = PIPE_TEX_FILTER_NEAREST;
       filters[2] = PIPE_TEX_FILTER_NEAREST;
    }
@@ -603,15 +667,15 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
       sizeof(struct vertex2f) * 4 * r->macroblocks_per_batch
    );
 
-   r->vertex_bufs.individual.interlaced.stride = sizeof(float);
-   r->vertex_bufs.individual.interlaced.max_index = 4 * r->macroblocks_per_batch - 1;
-   r->vertex_bufs.individual.interlaced.buffer_offset = 0;
+   r->vertex_bufs.individual.info.stride = sizeof(struct vertex_stream_0);
+   r->vertex_bufs.individual.info.max_index = 4 * r->macroblocks_per_batch - 1;
+   r->vertex_bufs.individual.info.buffer_offset = 0;
    /* XXX: Create with usage DYNAMIC or STREAM */
-   r->vertex_bufs.individual.interlaced.buffer = pipe_buffer_create
+   r->vertex_bufs.individual.info.buffer = pipe_buffer_create
    (
       r->pipe->screen,
       PIPE_BIND_VERTEX_BUFFER,
-      sizeof(float) * 4 * r->macroblocks_per_batch
+      sizeof(struct vertex_stream_0) * 4 * r->macroblocks_per_batch
    );
 
    for (i = 0; i < 4; ++i) {
@@ -641,8 +705,32 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    vertex_elems[VS_I_VPOS].vertex_buffer_index = 1;
    vertex_elems[VS_I_VPOS].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
-   /* progressive=1.0f interlaced=0.0f */
-   vertex_elems[VS_I_INTERLACED].src_offset = 0;
+   /* y, cr, cb empty block element top left block */
+   vertex_elems[VS_I_EB_0_0].src_offset = 0;
+   vertex_elems[VS_I_EB_0_0].instance_divisor = 0;
+   vertex_elems[VS_I_EB_0_0].vertex_buffer_index = 2;
+   vertex_elems[VS_I_EB_0_0].src_format = PIPE_FORMAT_R32G32B32_FLOAT;
+
+   /* y, cr, cb empty block element top right block */
+   vertex_elems[VS_I_EB_0_1].src_offset = sizeof(float) * 3;
+   vertex_elems[VS_I_EB_0_1].instance_divisor = 0;
+   vertex_elems[VS_I_EB_0_1].vertex_buffer_index = 2;
+   vertex_elems[VS_I_EB_0_1].src_format = PIPE_FORMAT_R32G32B32_FLOAT;
+
+   /* y, cr, cb empty block element bottom left block */
+   vertex_elems[VS_I_EB_1_0].src_offset = sizeof(float) * 6;
+   vertex_elems[VS_I_EB_1_0].instance_divisor = 0;
+   vertex_elems[VS_I_EB_1_0].vertex_buffer_index = 2;
+   vertex_elems[VS_I_EB_1_0].src_format = PIPE_FORMAT_R32G32B32_FLOAT;
+
+   /* y, cr, cb empty block element bottom right block */
+   vertex_elems[VS_I_EB_1_1].src_offset = sizeof(float) * 9;
+   vertex_elems[VS_I_EB_1_1].instance_divisor = 0;
+   vertex_elems[VS_I_EB_1_1].vertex_buffer_index = 2;
+   vertex_elems[VS_I_EB_1_1].src_format = PIPE_FORMAT_R32G32B32_FLOAT;
+
+   /* progressive=0.0f interlaced=1.0f */
+   vertex_elems[VS_I_INTERLACED].src_offset = sizeof(float) * 12;
    vertex_elems[VS_I_INTERLACED].instance_divisor = 0;
    vertex_elems[VS_I_INTERLACED].vertex_buffer_index = 2;
    vertex_elems[VS_I_INTERLACED].src_format = PIPE_FORMAT_R32_FLOAT;
@@ -733,8 +821,8 @@ upload_vertex_stream(struct vl_mpeg12_mc_renderer *r,
                       unsigned num_macroblocks[VL_NUM_MACROBLOCK_TYPES])
 {
    struct quadf *pos;
+   struct vertex_stream_0 *info;
    struct vertex2f *mv[4];
-   float *interlaced;
 
    struct pipe_transfer *buf_transfer[7];
 
@@ -751,10 +839,10 @@ upload_vertex_stream(struct vl_mpeg12_mc_renderer *r,
       &buf_transfer[0]
    );
 
-   interlaced = (float *)pipe_buffer_map
+   info = (struct vertex_stream_0 *)pipe_buffer_map
    (
       r->pipe,
-      r->vertex_bufs.individual.interlaced.buffer,
+      r->vertex_bufs.individual.info.buffer,
       PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
       &buf_transfer[1]
    );
@@ -779,8 +867,8 @@ upload_vertex_stream(struct vl_mpeg12_mc_renderer *r,
 
          pos += count;
 
-         memcpy(interlaced, handler->interlaced, sizeof(float) * count * 4);
-         interlaced += count * 4;
+         memcpy(info, handler->info, sizeof(struct vertex_stream_0) * count * 4);
+         info += count * 4;
 
          for (j = 0; j < ref_frames * mv_per_frame; ++j)
             memcpy(mv[j], handler->mv[j], sizeof(struct vertex2f) * count * 4);
@@ -792,7 +880,7 @@ upload_vertex_stream(struct vl_mpeg12_mc_renderer *r,
    }
 
    pipe_buffer_unmap(r->pipe, r->vertex_bufs.individual.ycbcr.buffer, buf_transfer[0]);
-   pipe_buffer_unmap(r->pipe, r->vertex_bufs.individual.interlaced.buffer, buf_transfer[1]);
+   pipe_buffer_unmap(r->pipe, r->vertex_bufs.individual.info.buffer, buf_transfer[1]);
    for (i = 0; i < 4; ++i)
       pipe_buffer_unmap(r->pipe, r->vertex_bufs.individual.mv[i].buffer, buf_transfer[i + 2]);
 }
@@ -990,6 +1078,20 @@ get_motion_vectors(struct pipe_mpeg12_macroblock *mb, struct vertex2f mv[4])
    }
 }
 
+static bool
+empty_block(enum pipe_video_chroma_format chroma_format,
+            unsigned cbp, unsigned component,
+            unsigned x, unsigned y)
+{
+   /* TODO: Implement 422, 444 */
+   assert(chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
+
+   if(component == 0) /*luma*/
+      return !(cbp  & (1 << (5 - (x + y * 2))));
+   else /*cr cb*/
+      return !(cbp & (1 << (2 - component)));
+}
+
 static void
 grab_vectors(struct vl_mpeg12_mc_renderer *r,
              struct pipe_mpeg12_macroblock *mb)
@@ -997,6 +1099,8 @@ grab_vectors(struct vl_mpeg12_mc_renderer *r,
    enum VL_MACROBLOCK_TYPE type;
    struct vl_mc_mbtype_handler *handler;
    struct vertex2f mv[4];
+   struct vertex_stream_0 info;
+
    unsigned ref_frames, mv_per_frame;
    unsigned i, j, pos;
 
@@ -1011,11 +1115,20 @@ grab_vectors(struct vl_mpeg12_mc_renderer *r,
    handler = &r->mbtype_handlers[type];
 
    pos = handler->pos.num_blocks * 4;
-   vl_vb_add_block(&handler->pos, false, mb->mbx, mb->mby);
+   vl_vb_add_block(&handler->pos, mb->mbx, mb->mby);
+
+   for ( i = 0; i < 2; ++i) {
+      for ( j = 0; j < 2; ++j) {
+         info.eb[i][j].y = empty_block(r->chroma_format, mb->cbp, 0, j, i);
+         info.eb[i][j].cr = empty_block(r->chroma_format, mb->cbp, 1, j, i);
+         info.eb[i][j].cb = empty_block(r->chroma_format, mb->cbp, 2, j, i);         
+      }
+   }
+   info.interlaced = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD ? 1.0f : 0.0f;
 
    get_motion_vectors(mb, mv);
    for ( i = 0; i < 4; ++i ) {
-      handler->interlaced[i + pos] = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD ? 1.0f : 0.0f;
+      handler->info[i + pos] = info;
       for ( j = 0; j < ref_frames * mv_per_frame; ++j )
          handler->mv[j][i + pos] = mv[j];
    }
@@ -1033,22 +1146,24 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r, unsigned mbx, unsigned mby,
 
    for (y = 0; y < 2; ++y) {
       for (x = 0; x < 2; ++x, ++tb) {
-         bool eb = !(cbp  & (1 << (5 - tb)));
-         vl_idct_add_block(&r->idct_y, mbx * 2 + x, mby * 2 + y, eb ? NULL : blocks);
-         blocks += eb ? 0 : BLOCK_WIDTH * BLOCK_HEIGHT;
+         if (!empty_block(r->chroma_format, cbp, 0, x, y)) {
+            vl_idct_add_block(&r->idct_y, mbx * 2 + x, mby * 2 + y, blocks);
+            blocks += BLOCK_WIDTH * BLOCK_HEIGHT;
+         }
       }
    }
 
    /* TODO: Implement 422, 444 */
    assert(r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
 
-   for (tb = 0; tb < 2; ++tb) {
-      bool eb = !(cbp & (1 << (1 - tb)));
-      if(tb == 0)
-         vl_idct_add_block(&r->idct_cb, mbx, mby, eb ? NULL : blocks);
-      else
-         vl_idct_add_block(&r->idct_cr, mbx, mby, eb ? NULL : blocks);
-      blocks += eb ? 0 : BLOCK_WIDTH * BLOCK_HEIGHT;
+   for (tb = 1; tb < 3; ++tb) {
+      if (!empty_block(r->chroma_format, cbp, tb, 0, 0)) {
+         if(tb == 1)
+            vl_idct_add_block(&r->idct_cb, mbx, mby, blocks);
+         else
+            vl_idct_add_block(&r->idct_cr, mbx, mby, blocks);
+         blocks += BLOCK_WIDTH * BLOCK_HEIGHT;
+      }
    }
 }
 

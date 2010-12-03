@@ -86,7 +86,6 @@ struct vl_idct
    } vertex_bufs;
 
    struct vl_vertex_buffer blocks;
-   struct vl_vertex_buffer empty_blocks;
 
    struct pipe_transfer *tex_transfer;
    short *texels;

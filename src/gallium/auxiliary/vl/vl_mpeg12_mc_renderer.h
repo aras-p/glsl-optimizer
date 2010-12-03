@@ -59,13 +59,23 @@ enum VL_MACROBLOCK_TYPE
    VL_NUM_MACROBLOCK_TYPES
 };
 
+struct vertex_stream_0
+{
+   struct {
+      float y;
+      float cr;
+      float cb;
+   } eb[2][2];
+   float interlaced;
+};
+
 struct vl_mc_mbtype_handler
 {
    void *vs, *fs;
    void *vertex_elems_state;
 
    struct vl_vertex_buffer pos;
-   float *interlaced;
+   struct vertex_stream_0 *info;
    struct vertex2f *mv[4];
 };
 
@@ -111,7 +121,7 @@ struct vl_mpeg12_mc_renderer
    {
       struct pipe_vertex_buffer all[7];
       struct {
-         struct pipe_vertex_buffer quad, ycbcr, interlaced, mv[4];
+         struct pipe_vertex_buffer quad, ycbcr, info, mv[4];
       } individual;
    } vertex_bufs;
 
