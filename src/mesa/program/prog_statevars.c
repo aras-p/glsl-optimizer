@@ -1068,7 +1068,9 @@ _mesa_program_state_string(const gl_state_index state[STATE_LENGTH])
  * Loop over all the parameters in a parameter list.  If the parameter
  * is a GL state reference, look up the current value of that state
  * variable and put it into the parameter's Value[4] array.
- * This would be called at glBegin time when using a fragment program.
+ * Other parameter types never change or are explicitly set by the user
+ * with glUniform() or glProgramParameter(), etc.
+ * This would be called at glBegin time.
  */
 void
 _mesa_load_state_parameters(struct gl_context *ctx,
@@ -1078,8 +1080,6 @@ _mesa_load_state_parameters(struct gl_context *ctx,
 
    if (!paramList)
       return;
-
-   /*assert(ctx->Driver.NeedFlush == 0);*/
 
    for (i = 0; i < paramList->NumParameters; i++) {
       if (paramList->Parameters[i].Type == PROGRAM_STATE_VAR) {
