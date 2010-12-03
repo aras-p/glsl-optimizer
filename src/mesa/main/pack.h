@@ -90,7 +90,7 @@ _mesa_unpack_dudv_span_byte(struct gl_context *ctx,
                             GLbitfield transferOps);
 
 extern void
-_mesa_unpack_index_span(const struct gl_context *ctx, GLuint n,
+_mesa_unpack_index_span(struct gl_context *ctx, GLuint n,
                         GLenum dstType, GLvoid *dest,
                         GLenum srcType, const GLvoid *source,
                         const struct gl_pixelstore_attrib *srcPacking,
@@ -98,39 +98,39 @@ _mesa_unpack_index_span(const struct gl_context *ctx, GLuint n,
 
 
 extern void
-_mesa_pack_index_span(const struct gl_context *ctx, GLuint n,
+_mesa_pack_index_span(struct gl_context *ctx, GLuint n,
                       GLenum dstType, GLvoid *dest, const GLuint *source,
                       const struct gl_pixelstore_attrib *dstPacking,
                       GLbitfield transferOps);
 
 
 extern void
-_mesa_unpack_stencil_span(const struct gl_context *ctx, GLuint n,
+_mesa_unpack_stencil_span(struct gl_context *ctx, GLuint n,
                           GLenum dstType, GLvoid *dest,
                           GLenum srcType, const GLvoid *source,
                           const struct gl_pixelstore_attrib *srcPacking,
                           GLbitfield transferOps);
 
 extern void
-_mesa_pack_stencil_span(const struct gl_context *ctx, GLuint n,
+_mesa_pack_stencil_span(struct gl_context *ctx, GLuint n,
                         GLenum dstType, GLvoid *dest, const GLstencil *source,
                         const struct gl_pixelstore_attrib *dstPacking);
 
 
 extern void
-_mesa_unpack_depth_span(const struct gl_context *ctx, GLuint n,
+_mesa_unpack_depth_span(struct gl_context *ctx, GLuint n,
                         GLenum dstType, GLvoid *dest, GLuint depthMax,
                         GLenum srcType, const GLvoid *source,
                         const struct gl_pixelstore_attrib *srcPacking);
 
 extern void
-_mesa_pack_depth_span(const struct gl_context *ctx, GLuint n, GLvoid *dest,
+_mesa_pack_depth_span(struct gl_context *ctx, GLuint n, GLvoid *dest,
                       GLenum dstType, const GLfloat *depthSpan,
                       const struct gl_pixelstore_attrib *dstPacking);
 
 
 extern void
-_mesa_pack_depth_stencil_span(const struct gl_context *ctx,
+_mesa_pack_depth_stencil_span(struct gl_context *ctx,
                               GLuint n, GLuint *dest,
                               const GLfloat *depthVals,
                               const GLstencil *stencilVals,
