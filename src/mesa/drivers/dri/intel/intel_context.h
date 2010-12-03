@@ -207,7 +207,6 @@ struct intel_context
    GLboolean hw_stipple;
    GLboolean depth_buffer_is_float;
    GLboolean no_rast;
-   GLboolean no_hw;
    GLboolean always_flush_batch;
    GLboolean always_flush_cache;
 

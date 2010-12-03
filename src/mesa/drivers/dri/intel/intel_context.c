@@ -838,11 +838,6 @@ intelInitContext(struct intel_context *intel,
       intel->always_flush_cache = 1;
    }
 
-   /* Disable all hardware rendering (skip emitting batches and fences/waits
-    * to the kernel)
-    */
-   intel->no_hw = getenv("INTEL_NO_HW") != NULL;
-
    return GL_TRUE;
 }
 
