@@ -727,6 +727,9 @@ _swrast_DrawPixels( struct gl_context *ctx,
        return;
     }
 
+   /*
+    * By time we get here, all error checking should have been done.
+    */
    switch (format) {
    case GL_STENCIL_INDEX:
       draw_stencil_pixels( ctx, x, y, width, height, type, unpack, pixels );
@@ -734,27 +737,12 @@ _swrast_DrawPixels( struct gl_context *ctx,
    case GL_DEPTH_COMPONENT:
       draw_depth_pixels( ctx, x, y, width, height, type, unpack, pixels );
       break;
-   case GL_COLOR_INDEX:
-   case GL_RED:
-   case GL_GREEN:
-   case GL_BLUE:
-   case GL_ALPHA:
-   case GL_LUMINANCE:
-   case GL_LUMINANCE_ALPHA:
-   case GL_RGB:
-   case GL_BGR:
-   case GL_RGBA:
-   case GL_BGRA:
-   case GL_ABGR_EXT:
-      draw_rgba_pixels(ctx, x, y, width, height, format, type, unpack, pixels);
-      break;
    case GL_DEPTH_STENCIL_EXT:
-      draw_depth_stencil_pixels(ctx, x, y, width, height,
-                                type, unpack, pixels);
+      draw_depth_stencil_pixels(ctx, x, y, width, height, type, unpack, pixels);
       break;
    default:
-      _mesa_problem(ctx, "unexpected format 0x%x in _swrast_DrawPixels", format);
-      /* don't return yet, clean-up */
+      /* all other formats should be color formats */
+      draw_rgba_pixels(ctx, x, y, width, height, format, type, unpack, pixels);
    }
 
    swrast_render_finish(ctx);
