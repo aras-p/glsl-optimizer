@@ -242,17 +242,90 @@ image_stencil( struct ureg_program *ureg,
    ureg_MUL(ureg, *out, ureg_src(temp[0]), ureg_src(temp[1]));
 }
 
-#define EXTENDED_BLENDER_OVER_FUNC                                      \
-   ureg_SUB(ureg, temp[3],                                              \
-            ureg_scalar(constant[3], TGSI_SWIZZLE_Y),                   \
-            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));            \
-   ureg_SUB(ureg, temp[4],                                              \
-            ureg_scalar(constant[3], TGSI_SWIZZLE_Y),                   \
-            ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W));            \
-   ureg_MUL(ureg, temp[3], ureg_src(temp[0]), ureg_src(temp[3]));       \
-   ureg_MUL(ureg, temp[4], ureg_src(temp[1]), ureg_src(temp[4]));       \
-   ureg_ADD(ureg, temp[3], ureg_src(temp[3]), ureg_src(temp[4]));
-
+/**
+ * Emit instructions for the specified blend mode.  Colors should be
+ * premultiplied.  Two temporary registers are required.
+ *
+ * XXX callers do not pass premultiplied colors!
+ */
+static INLINE void
+blend_generic(struct ureg_program *ureg,
+              VGBlendMode mode,
+              struct ureg_dst out,
+              struct ureg_src src,
+              struct ureg_src dst,
+              struct ureg_src src_channel_alpha,
+              struct ureg_src one,
+              struct ureg_dst temp[2])
+{
+   switch (mode) {
+   case VG_BLEND_SRC:
+      ureg_MOV(ureg, out, src);
+      break;
+   case VG_BLEND_SRC_OVER:
+      /* RGBA_out = RGBA_src + (1 - A_src) * RGBA_dst */
+      ureg_SUB(ureg, temp[0], one, src_channel_alpha);
+      ureg_MAD(ureg, out, ureg_src(temp[0]), dst, src);
+      break;
+   case VG_BLEND_DST_OVER:
+      /* RGBA_out = RGBA_dst + (1 - A_dst) * RGBA_src */
+      ureg_SUB(ureg, temp[0], one, ureg_scalar(dst, TGSI_SWIZZLE_W));
+      ureg_MAD(ureg, out, ureg_src(temp[0]), src, dst);
+      break;
+   case VG_BLEND_SRC_IN:
+      ureg_MUL(ureg, out, src, ureg_scalar(dst, TGSI_SWIZZLE_W));
+      break;
+   case VG_BLEND_DST_IN:
+      ureg_MUL(ureg, out, dst, src_channel_alpha);
+      break;
+   case VG_BLEND_MULTIPLY:
+      /*
+       * RGB_out = (1 - A_dst) * RGB_src + (1 - A_src) * RGB_dst +
+       *           RGB_src * RGB_dst
+       */
+      ureg_MAD(ureg, temp[0],
+            ureg_scalar(dst, TGSI_SWIZZLE_W), ureg_negate(src), src);
+      ureg_MAD(ureg, temp[1],
+            src_channel_alpha, ureg_negate(dst), dst);
+      ureg_MAD(ureg, temp[1], src, dst, ureg_src(temp[1]));
+      ureg_ADD(ureg, out, ureg_src(temp[0]), ureg_src(temp[1]));
+      /* alpha is src over */
+      ureg_ADD(ureg, ureg_writemask(out, TGSI_WRITEMASK_W),
+            src, ureg_src(temp[1]));
+      break;
+   case VG_BLEND_SCREEN:
+      /* RGBA_out = RGBA_src + (1 - RGBA_src) * RGBA_dst */
+      ureg_SUB(ureg, temp[0], one, src);
+      ureg_MAD(ureg, out, ureg_src(temp[0]), dst, src);
+      break;
+   case VG_BLEND_DARKEN:
+   case VG_BLEND_LIGHTEN:
+      /* src over */
+      ureg_SUB(ureg, temp[0], one, src_channel_alpha);
+      ureg_MAD(ureg, temp[0], ureg_src(temp[0]), dst, src);
+      /* dst over */
+      ureg_SUB(ureg, temp[1], one, ureg_scalar(dst, TGSI_SWIZZLE_W));
+      ureg_MAD(ureg, temp[1], ureg_src(temp[1]), src, dst);
+      /* take min/max for colors */
+      if (mode == VG_BLEND_DARKEN) {
+         ureg_MIN(ureg, ureg_writemask(out, TGSI_WRITEMASK_XYZ),
+               ureg_src(temp[0]), ureg_src(temp[1]));
+      }
+      else {
+         ureg_MAX(ureg, ureg_writemask(out, TGSI_WRITEMASK_XYZ),
+               ureg_src(temp[0]), ureg_src(temp[1]));
+      }
+      break;
+   case VG_BLEND_ADDITIVE:
+      /* RGBA_out = RGBA_src + RGBA_dst */
+      ureg_ADD(ureg, temp[0], src, dst);
+      ureg_MIN(ureg, out, ureg_src(temp[0]), one);
+      break;
+   default:
+      assert(0);
+      break;
+   }
+}
 
 static INLINE void
 blend_multiply( struct ureg_program *ureg,
@@ -263,18 +336,12 @@ blend_multiply( struct ureg_program *ureg,
                 struct ureg_src *constant)
 {
    ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[0], sampler[2]);
-   EXTENDED_BLENDER_OVER_FUNC
-   ureg_MUL(ureg, temp[4], ureg_src(temp[0]), ureg_src(temp[1]));
-   ureg_ADD(ureg, temp[1], ureg_src(temp[4]), ureg_src(temp[3]));
-
-   ureg_MUL(ureg, temp[2], ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
-            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));
-   ureg_ADD(ureg, temp[3], ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
-            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));
-   ureg_SUB(ureg, ureg_writemask(temp[1], TGSI_WRITEMASK_W),
-            ureg_src(temp[3]), ureg_src(temp[2]));
-
-   ureg_MOV(ureg, *out, ureg_src(temp[1]));
+   blend_generic(ureg, VG_BLEND_MULTIPLY, *out,
+                 ureg_src(temp[0]),
+                 ureg_src(temp[1]),
+                 ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
+                 ureg_scalar(constant[3], TGSI_SWIZZLE_Y),
+                 temp + 2);
 }
 
 static INLINE void
@@ -286,9 +353,12 @@ blend_screen( struct ureg_program *ureg,
               struct ureg_src     *constant)
 {
    ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[0], sampler[2]);
-   ureg_ADD(ureg, temp[3], ureg_src(temp[0]), ureg_src(temp[1]));
-   ureg_MUL(ureg, temp[2], ureg_src(temp[0]), ureg_src(temp[1]));
-   ureg_SUB(ureg, *out, ureg_src(temp[3]), ureg_src(temp[2]));
+   blend_generic(ureg, VG_BLEND_SCREEN, *out,
+                 ureg_src(temp[0]),
+                 ureg_src(temp[1]),
+                 ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
+                 ureg_scalar(constant[3], TGSI_SWIZZLE_Y),
+                 temp + 2);
 }
 
 static INLINE void
@@ -300,22 +370,12 @@ blend_darken( struct ureg_program *ureg,
               struct ureg_src     *constant)
 {
    ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[0], sampler[2]);
-   EXTENDED_BLENDER_OVER_FUNC
-   ureg_MUL(ureg, temp[4], ureg_src(temp[0]),
-            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));
-   ureg_MUL(ureg, temp[5], ureg_src(temp[1]),
-            ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W));
-   ureg_MIN(ureg, temp[4], ureg_src(temp[4]), ureg_src(temp[5]));
-   ureg_ADD(ureg, temp[1], ureg_src(temp[3]), ureg_src(temp[4]));
-
-   ureg_MUL(ureg, temp[2], ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
-            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));
-   ureg_ADD(ureg, temp[3], ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
-            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));
-   ureg_SUB(ureg, ureg_writemask(temp[1], TGSI_WRITEMASK_W),
-            ureg_src(temp[3]), ureg_src(temp[2]));
-
-   ureg_MOV(ureg, *out, ureg_src(temp[1]));
+   blend_generic(ureg, VG_BLEND_DARKEN, *out,
+                 ureg_src(temp[0]),
+                 ureg_src(temp[1]),
+                 ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
+                 ureg_scalar(constant[3], TGSI_SWIZZLE_Y),
+                 temp + 2);
 }
 
 static INLINE void
@@ -327,22 +387,12 @@ blend_lighten( struct ureg_program *ureg,
                struct ureg_src     *constant)
 {
    ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[0], sampler[2]);
-   EXTENDED_BLENDER_OVER_FUNC
-   ureg_MUL(ureg, temp[4], ureg_src(temp[0]),
-            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));
-   ureg_MUL(ureg, temp[5], ureg_src(temp[1]),
-            ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W));
-   ureg_MAX(ureg, temp[4], ureg_src(temp[4]), ureg_src(temp[5]));
-   ureg_ADD(ureg, temp[1], ureg_src(temp[3]), ureg_src(temp[4]));
-
-   ureg_MUL(ureg, temp[2], ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
-            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));
-   ureg_ADD(ureg, temp[3], ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
-            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));
-   ureg_SUB(ureg, ureg_writemask(temp[1], TGSI_WRITEMASK_W),
-            ureg_src(temp[3]), ureg_src(temp[2]));
-
-   ureg_MOV(ureg, *out, ureg_src(temp[1]));
+   blend_generic(ureg, VG_BLEND_LIGHTEN, *out,
+                 ureg_src(temp[0]),
+                 ureg_src(temp[1]),
+                 ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
+                 ureg_scalar(constant[3], TGSI_SWIZZLE_Y),
+                 temp + 2);
 }
 
 static INLINE void
@@ -458,13 +508,13 @@ static const struct shader_asm_info shaders_mask_asm[] = {
 /* extra blend modes */
 static const struct shader_asm_info shaders_blend_asm[] = {
    {VEGA_BLEND_MULTIPLY_SHADER, blend_multiply,
-    VG_TRUE,  3, 1, 2, 1, 0, 5},
+    VG_TRUE,  3, 1, 2, 1, 0, 4},
    {VEGA_BLEND_SCREEN_SHADER, blend_screen,
-    VG_TRUE,  0, 0, 2, 1, 0, 4},
+    VG_TRUE,  3, 1, 2, 1, 0, 4},
    {VEGA_BLEND_DARKEN_SHADER, blend_darken,
-    VG_TRUE,  3, 1, 2, 1, 0, 6},
+    VG_TRUE,  3, 1, 2, 1, 0, 4},
    {VEGA_BLEND_LIGHTEN_SHADER, blend_lighten,
-    VG_TRUE,  3, 1, 2, 1, 0, 6},
+    VG_TRUE,  3, 1, 2, 1, 0, 4},
 };
 
 /* premultiply */
