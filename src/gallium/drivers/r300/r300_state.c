@@ -1765,15 +1765,13 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
         r300->vs_state.dirty = TRUE;
         r300->vs_state.size =
                 vs->code.length + 9 +
-                (vs->immediates_count ? vs->immediates_count * 4 + 3 : 0) +
         (vs->code.num_fc_ops ? vs->code.num_fc_ops * fc_op_dwords + 4 : 0);
 
-        if (vs->externals_count) {
-            r300->vs_constants.dirty = TRUE;
-            r300->vs_constants.size = vs->externals_count * 4 + 3;
-        } else {
-            r300->vs_constants.size = 0;
-        }
+        r300->vs_constants.dirty = TRUE;
+        r300->vs_constants.size =
+                2 +
+                (vs->externals_count ? vs->externals_count * 4 + 3 : 0) +
+                (vs->immediates_count ? vs->immediates_count * 4 + 3 : 0);
 
         ((struct r300_constant_buffer*)r300->vs_constants.state)->remap_table =
                 vs->code.constants_remap_table;
@@ -1835,10 +1833,22 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
 
     if (shader == PIPE_SHADER_VERTEX) {
         if (r300->screen->caps.has_tcl) {
-            if (r300->vs_constants.size) {
-                r300->vs_constants.dirty = TRUE;
+            struct r300_vertex_shader *vs =
+                    (struct r300_vertex_shader*)r300->vs_state.state;
+
+            if (!vs) {
+                cbuf->buffer_base = 0;
+                return;
             }
-            r300->pvs_flush.dirty = TRUE;
+
+            cbuf->buffer_base = r300->vs_const_base;
+            r300->vs_const_base += vs->code.constants.Count;
+            if (r300->vs_const_base > R500_MAX_PVS_CONST_VECS) {
+                r300->vs_const_base = vs->code.constants.Count;
+                cbuf->buffer_base = 0;
+                r300->pvs_flush.dirty = TRUE;
+            }
+            r300->vs_constants.dirty = TRUE;
         } else if (r300->draw) {
             draw_set_mapped_constant_buffer(r300->draw, PIPE_SHADER_VERTEX,
                 0, mapped, buf->width0);

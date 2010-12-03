@@ -258,6 +258,8 @@ struct r300_constant_buffer {
     uint32_t *ptr;
     /* Remapping table. */
     unsigned *remap_table;
+    /* const buffer base */
+    uint32_t buffer_base;
 };
 
 /* Query object.
@@ -606,6 +608,9 @@ struct r300_context {
 
     /* Stat counter. */
     uint64_t flush_counter;
+
+    /* const tracking for VS */
+    int vs_const_base;
 };
 
 /* Convenience cast wrappers. */

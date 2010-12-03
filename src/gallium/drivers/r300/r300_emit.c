@@ -924,7 +924,6 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
     struct r300_vertex_program_code* code = &vs->code;
     struct r300_screen* r300screen = r300->screen;
     unsigned instruction_count = code->length / 4;
-    unsigned i;
 
     unsigned vtx_mem_size = r300screen->caps.is_r500 ? 128 : 72;
     unsigned input_count = MAX2(util_bitcount(code->InputsRead), 1);
@@ -935,10 +934,6 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
                                   vtx_mem_size / output_count, 10);
     unsigned pvs_num_controllers = MIN2(vtx_mem_size / temp_count, 5);
 
-    unsigned imm_first = vs->externals_count;
-    unsigned imm_end = vs->code.constants.Count;
-    unsigned imm_count = vs->immediates_count;
-
     CS_LOCALS(r300);
 
     BEGIN_CS(size);
@@ -947,12 +942,10 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
      * R300_VAP_PVS_CONST_CNTL
      * R300_VAP_PVS_CODE_CNTL_1
      * See the r5xx docs for instructions on how to use these. */
-    OUT_CS_REG_SEQ(R300_VAP_PVS_CODE_CNTL_0, 3);
-    OUT_CS(R300_PVS_FIRST_INST(0) |
-            R300_PVS_XYZW_VALID_INST(instruction_count - 1) |
-            R300_PVS_LAST_INST(instruction_count - 1));
-    OUT_CS(R300_PVS_MAX_CONST_ADDR(code->constants.Count - 1));
-    OUT_CS(instruction_count - 1);
+    OUT_CS_REG(R300_VAP_PVS_CODE_CNTL_0, R300_PVS_FIRST_INST(0) |
+	       R300_PVS_XYZW_VALID_INST(instruction_count - 1) |
+	       R300_PVS_LAST_INST(instruction_count - 1));
+    OUT_CS_REG(R300_VAP_PVS_CODE_CNTL_1, instruction_count - 1);
 
     OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG, 0);
     OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, code->length);
@@ -963,19 +956,6 @@ void r300_emit_vs_state(struct r300_context* r300, unsigned size, void* state)
             R300_PVS_NUM_FPUS(r300screen->caps.num_vert_fpus) |
             R300_PVS_VF_MAX_VTX_NUM(12) |
             (r300screen->caps.is_r500 ? R500_TCL_STATE_OPTIMIZATION : 0));
-
-    /* Emit immediates. */
-    if (imm_count) {
-        OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG,
-                   (r300->screen->caps.is_r500 ?
-                   R500_PVS_CONST_START : R300_PVS_CONST_START) +
-                   imm_first);
-        OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, imm_count * 4);
-        for (i = imm_first; i < imm_end; i++) {
-            const float *data = vs->code.constants.Constants[i].u.Immediate;
-            OUT_CS_TABLE(data, 4);
-        }
-    }
 
     /* Emit flow control instructions. */
     if (code->num_fc_ops) {
@@ -1001,24 +981,43 @@ void r300_emit_vs_constants(struct r300_context* r300,
     unsigned count =
         ((struct r300_vertex_shader*)r300->vs_state.state)->externals_count;
     struct r300_constant_buffer *buf = (struct r300_constant_buffer*)state;
+    struct r300_vertex_shader *vs = (struct r300_vertex_shader*)r300->vs_state.state;
     unsigned i;
+    int imm_first = vs->externals_count;
+    int imm_end = vs->code.constants.Count;
+    int imm_count = vs->immediates_count;
     CS_LOCALS(r300);
 
-    if (!count)
-        return;
-
     BEGIN_CS(size);
-    OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG,
-               (r300->screen->caps.is_r500 ?
-               R500_PVS_CONST_START : R300_PVS_CONST_START));
-    OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, count * 4);
-    if (buf->remap_table){
-        for (i = 0; i < count; i++) {
-            uint32_t *data = &buf->ptr[buf->remap_table[i]*4];
+    OUT_CS_REG(R300_VAP_PVS_CONST_CNTL,
+               R300_PVS_CONST_BASE_OFFSET(buf->buffer_base) |
+               R300_PVS_MAX_CONST_ADDR(MAX2(imm_end - 1, 0)));
+    if (vs->externals_count) {
+        OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG,
+                   (r300->screen->caps.is_r500 ?
+                   R500_PVS_CONST_START : R300_PVS_CONST_START) + buf->buffer_base);
+        OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, count * 4);
+        if (buf->remap_table){
+            for (i = 0; i < count; i++) {
+                uint32_t *data = &buf->ptr[buf->remap_table[i]*4];
+                OUT_CS_TABLE(data, 4);
+            }
+        } else {
+            OUT_CS_TABLE(buf->ptr, count * 4);
+        }
+    }
+
+    /* Emit immediates. */
+    if (imm_count) {
+        OUT_CS_REG(R300_VAP_PVS_VECTOR_INDX_REG,
+                   (r300->screen->caps.is_r500 ?
+                   R500_PVS_CONST_START : R300_PVS_CONST_START) +
+                   buf->buffer_base + imm_first);
+        OUT_CS_ONE_REG(R300_VAP_PVS_UPLOAD_DATA, imm_count * 4);
+        for (i = imm_first; i < imm_end; i++) {
+            const float *data = vs->code.constants.Constants[i].u.Immediate;
             OUT_CS_TABLE(data, 4);
         }
-    } else {
-        OUT_CS_TABLE(buf->ptr, count * 4);
     }
     END_CS;
 }
