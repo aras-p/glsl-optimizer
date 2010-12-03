@@ -476,36 +476,33 @@ _swrast_ReadPixels( struct gl_context *ctx,
       _swrast_validate_derived( ctx );
 
    /* Do all needed clipping here, so that we can forget about it later */
-   if (!_mesa_clip_readpixels(ctx, &x, &y, &width, &height, &clippedPacking)) {
-      /* The ReadPixels region is totally outside the window bounds */
-      swrast_render_finish(ctx);
-      return;
-   }
+   if (_mesa_clip_readpixels(ctx, &x, &y, &width, &height, &clippedPacking)) {
 
-   pixels = _mesa_map_pbo_dest(ctx, &clippedPacking, pixels);
-   if (!pixels)
-      return;
-  
-   switch (format) {
-      case GL_STENCIL_INDEX:
-	 read_stencil_pixels(ctx, x, y, width, height, type, pixels,
+      pixels = _mesa_map_pbo_dest(ctx, &clippedPacking, pixels);
+
+      if (pixels) {
+         switch (format) {
+         case GL_STENCIL_INDEX:
+            read_stencil_pixels(ctx, x, y, width, height, type, pixels,
+                                &clippedPacking);
+            break;
+         case GL_DEPTH_COMPONENT:
+            read_depth_pixels(ctx, x, y, width, height, type, pixels,
+                              &clippedPacking);
+            break;
+         case GL_DEPTH_STENCIL_EXT:
+            read_depth_stencil_pixels(ctx, x, y, width, height, type, pixels,
+                                      &clippedPacking);
+            break;
+         default:
+            /* all other formats should be color formats */
+            read_rgba_pixels(ctx, x, y, width, height, format, type, pixels,
                              &clippedPacking);
-         break;
-      case GL_DEPTH_COMPONENT:
-	 read_depth_pixels(ctx, x, y, width, height, type, pixels,
-                           &clippedPacking);
-	 break;
-      case GL_DEPTH_STENCIL_EXT:
-         read_depth_stencil_pixels(ctx, x, y, width, height,
-                                   type, pixels, &clippedPacking);
-         break;
-      default:
-         /* all other formats should be color formats */
-         read_rgba_pixels(ctx, x, y, width, height,
-                          format, type, pixels, &clippedPacking);
+         }
+
+         _mesa_unmap_pbo_dest(ctx, &clippedPacking);
+      }
    }
 
    swrast_render_finish(ctx);
-
-   _mesa_unmap_pbo_dest(ctx, &clippedPacking);
 }
