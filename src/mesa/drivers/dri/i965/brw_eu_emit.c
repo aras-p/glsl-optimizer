@@ -41,19 +41,20 @@
  * Internal helper for constructing instructions
  */
 
-static void guess_execution_size( struct brw_instruction *insn,
-				  struct brw_reg reg )
+static void guess_execution_size(struct brw_compile *p,
+				 struct brw_instruction *insn,
+				 struct brw_reg reg)
 {
-   if (reg.width == BRW_WIDTH_8 && 
-       insn->header.compression_control == BRW_COMPRESSION_COMPRESSED) 
+   if (reg.width == BRW_WIDTH_8 && p->compressed)
       insn->header.execution_size = BRW_EXECUTE_16;
    else
       insn->header.execution_size = reg.width;	/* note - definitions are compatible */
 }
 
 
-static void brw_set_dest( struct brw_instruction *insn,
-			  struct brw_reg dest )
+static void brw_set_dest(struct brw_compile *p,
+			 struct brw_instruction *insn,
+			 struct brw_reg dest)
 {
    if (dest.file != BRW_ARCHITECTURE_REGISTER_FILE &&
        dest.file != BRW_MESSAGE_REGISTER_FILE)
@@ -100,7 +101,7 @@ static void brw_set_dest( struct brw_instruction *insn,
    /* NEW: Set the execution size based on dest.width and
     * insn->compression_control:
     */
-   guess_execution_size(insn, dest);
+   guess_execution_size(p, insn, dest);
 }
 
 extern int reg_type_size[];
@@ -629,7 +630,7 @@ static struct brw_instruction *brw_alu1( struct brw_compile *p,
 					 struct brw_reg src )
 {
    struct brw_instruction *insn = next_insn(p, opcode);
-   brw_set_dest(insn, dest);
+   brw_set_dest(p, insn, dest);
    brw_set_src0(insn, src);   
    return insn;
 }
@@ -641,7 +642,7 @@ static struct brw_instruction *brw_alu2(struct brw_compile *p,
 					struct brw_reg src1 )
 {
    struct brw_instruction *insn = next_insn(p, opcode);   
-   brw_set_dest(insn, dest);
+   brw_set_dest(p, insn, dest);
    brw_set_src0(insn, src0);
    brw_set_src1(insn, src1);
    return insn;
@@ -680,7 +681,7 @@ void brw_##OP(struct brw_compile *p,					      \
 {									      \
    struct brw_instruction *rnd, *add;					      \
    rnd = next_insn(p, BRW_OPCODE_##OP);					      \
-   brw_set_dest(rnd, dest);						      \
+   brw_set_dest(p, rnd, dest);						      \
    brw_set_src0(rnd, src);						      \
    rnd->header.destreg__conditionalmod = 0x7; /* turn on round-increments */  \
 									      \
@@ -779,7 +780,7 @@ struct brw_instruction *brw_MUL(struct brw_compile *p,
 void brw_NOP(struct brw_compile *p)
 {
    struct brw_instruction *insn = next_insn(p, BRW_OPCODE_NOP);   
-   brw_set_dest(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
+   brw_set_dest(p, insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
    brw_set_src0(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
    brw_set_src1(insn, brw_imm_ud(0x0));
 }
@@ -840,11 +841,11 @@ struct brw_instruction *brw_IF(struct brw_compile *p, GLuint execute_size)
    /* Override the defaults for this instruction:
     */
    if (intel->gen < 6) {
-      brw_set_dest(insn, brw_ip_reg());
+      brw_set_dest(p, insn, brw_ip_reg());
       brw_set_src0(insn, brw_ip_reg());
       brw_set_src1(insn, brw_imm_d(0x0));
    } else {
-      brw_set_dest(insn, brw_imm_w(0));
+      brw_set_dest(p, insn, brw_imm_w(0));
       insn->bits1.branch_gen6.jump_count = 0;
       brw_set_src0(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       brw_set_src1(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
@@ -870,7 +871,7 @@ brw_IF_gen6(struct brw_compile *p, uint32_t conditional,
 
    insn = next_insn(p, BRW_OPCODE_IF);
 
-   brw_set_dest(insn, brw_imm_w(0));
+   brw_set_dest(p, insn, brw_imm_w(0));
    insn->header.execution_size = BRW_EXECUTE_8;
    insn->bits1.branch_gen6.jump_count = 0;
    brw_set_src0(insn, src0);
@@ -905,11 +906,11 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
    }
 
    if (intel->gen < 6) {
-      brw_set_dest(insn, brw_ip_reg());
+      brw_set_dest(p, insn, brw_ip_reg());
       brw_set_src0(insn, brw_ip_reg());
       brw_set_src1(insn, brw_imm_d(0x0));
    } else {
-      brw_set_dest(insn, brw_imm_w(0));
+      brw_set_dest(p, insn, brw_imm_w(0));
       insn->bits1.branch_gen6.jump_count = 0;
       brw_set_src0(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       brw_set_src1(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
@@ -965,11 +966,11 @@ void brw_ENDIF(struct brw_compile *p,
       struct brw_instruction *insn = next_insn(p, BRW_OPCODE_ENDIF);
 
       if (intel->gen < 6) {
-	 brw_set_dest(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
+	 brw_set_dest(p, insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
 	 brw_set_src0(insn, retype(brw_vec4_grf(0,0), BRW_REGISTER_TYPE_UD));
 	 brw_set_src1(insn, brw_imm_d(0x0));
       } else {
-	 brw_set_dest(insn, brw_imm_w(0));
+	 brw_set_dest(p, insn, brw_imm_w(0));
 	 brw_set_src0(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
 	 brw_set_src1(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       }
@@ -1034,11 +1035,11 @@ struct brw_instruction *brw_BREAK(struct brw_compile *p, int pop_count)
 
    insn = next_insn(p, BRW_OPCODE_BREAK);
    if (intel->gen >= 6) {
-      brw_set_dest(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+      brw_set_dest(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       brw_set_src0(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       brw_set_src1(insn, brw_imm_d(0x0));
    } else {
-      brw_set_dest(insn, brw_ip_reg());
+      brw_set_dest(p, insn, brw_ip_reg());
       brw_set_src0(insn, brw_ip_reg());
       brw_set_src1(insn, brw_imm_d(0x0));
       insn->bits3.if_else.pad0 = 0;
@@ -1057,9 +1058,9 @@ struct brw_instruction *brw_CONT_gen6(struct brw_compile *p,
    int br = 2;
 
    insn = next_insn(p, BRW_OPCODE_CONTINUE);
-   brw_set_dest(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
+   brw_set_dest(p, insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
    brw_set_src0(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
-   brw_set_dest(insn, brw_ip_reg());
+   brw_set_dest(p, insn, brw_ip_reg());
    brw_set_src0(insn, brw_ip_reg());
    brw_set_src1(insn, brw_imm_d(0x0));
 
@@ -1074,7 +1075,7 @@ struct brw_instruction *brw_CONT(struct brw_compile *p, int pop_count)
 {
    struct brw_instruction *insn;
    insn = next_insn(p, BRW_OPCODE_CONTINUE);
-   brw_set_dest(insn, brw_ip_reg());
+   brw_set_dest(p, insn, brw_ip_reg());
    brw_set_src0(insn, brw_ip_reg());
    brw_set_src1(insn, brw_imm_d(0x0));
    insn->header.compression_control = BRW_COMPRESSION_NONE;
@@ -1112,7 +1113,7 @@ struct brw_instruction *brw_DO(struct brw_compile *p, GLuint execute_size)
 
       /* Override the defaults for this instruction:
        */
-      brw_set_dest(insn, brw_null_reg());
+      brw_set_dest(p, insn, brw_null_reg());
       brw_set_src0(insn, brw_null_reg());
       brw_set_src1(insn, brw_null_reg());
 
@@ -1141,7 +1142,7 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
    if (intel->gen >= 6) {
       insn = next_insn(p, BRW_OPCODE_WHILE);
 
-      brw_set_dest(insn, brw_imm_w(0));
+      brw_set_dest(p, insn, brw_imm_w(0));
       insn->bits1.branch_gen6.jump_count = br * (do_insn - insn);
       brw_set_src0(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
       brw_set_src1(insn, retype(brw_null_reg(), BRW_REGISTER_TYPE_D));
@@ -1152,7 +1153,7 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
       if (p->single_program_flow) {
 	 insn = next_insn(p, BRW_OPCODE_ADD);
 
-	 brw_set_dest(insn, brw_ip_reg());
+	 brw_set_dest(p, insn, brw_ip_reg());
 	 brw_set_src0(insn, brw_ip_reg());
 	 brw_set_src1(insn, brw_imm_d((do_insn - insn) * 16));
 	 insn->header.execution_size = BRW_EXECUTE_1;
@@ -1161,7 +1162,7 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
 
 	 assert(do_insn->header.opcode == BRW_OPCODE_DO);
 
-	 brw_set_dest(insn, brw_ip_reg());
+	 brw_set_dest(p, insn, brw_ip_reg());
 	 brw_set_src0(insn, brw_ip_reg());
 	 brw_set_src1(insn, brw_imm_d(0));
 
@@ -1211,7 +1212,7 @@ void brw_CMP(struct brw_compile *p,
    struct brw_instruction *insn = next_insn(p, BRW_OPCODE_CMP);
 
    insn->header.destreg__conditionalmod = conditional;
-   brw_set_dest(insn, dest);
+   brw_set_dest(p, insn, dest);
    brw_set_src0(insn, src0);
    brw_set_src1(insn, src1);
 
@@ -1236,7 +1237,7 @@ void brw_WAIT (struct brw_compile *p)
    struct brw_instruction *insn = next_insn(p, BRW_OPCODE_WAIT);
    struct brw_reg src = brw_notification_1_reg();
 
-   brw_set_dest(insn, src);
+   brw_set_dest(p, insn, src);
    brw_set_src0(insn, src);
    brw_set_src1(insn, brw_null_reg());
    insn->header.execution_size = 0; /* must */
@@ -1281,7 +1282,7 @@ void brw_math( struct brw_compile *p,
        */
       insn->header.destreg__conditionalmod = function;
 
-      brw_set_dest(insn, dest);
+      brw_set_dest(p, insn, dest);
       brw_set_src0(insn, src);
       brw_set_src1(insn, brw_null_reg());
    } else {
@@ -1294,7 +1295,7 @@ void brw_math( struct brw_compile *p,
       insn->header.predicate_control = 0;
       insn->header.destreg__conditionalmod = msg_reg_nr;
 
-      brw_set_dest(insn, dest);
+      brw_set_dest(p, insn, dest);
       brw_set_src0(insn, src);
       brw_set_math_message(p->brw,
 			   insn,
@@ -1341,7 +1342,7 @@ void brw_math2(struct brw_compile *p,
     */
    insn->header.destreg__conditionalmod = function;
 
-   brw_set_dest(insn, dest);
+   brw_set_dest(p, insn, dest);
    brw_set_src0(insn, src0);
    brw_set_src1(insn, src1);
 }
@@ -1371,7 +1372,7 @@ void brw_math_16( struct brw_compile *p,
        */
       insn->header.destreg__conditionalmod = function;
 
-      brw_set_dest(insn, dest);
+      brw_set_dest(p, insn, dest);
       brw_set_src0(insn, src);
       brw_set_src1(insn, brw_null_reg());
       return;
@@ -1386,7 +1387,7 @@ void brw_math_16( struct brw_compile *p,
    insn = next_insn(p, BRW_OPCODE_SEND);
    insn->header.destreg__conditionalmod = msg_reg_nr;
 
-   brw_set_dest(insn, dest);
+   brw_set_dest(p, insn, dest);
    brw_set_src0(insn, src);
    brw_set_math_message(p->brw,
 			insn, 
@@ -1403,7 +1404,7 @@ void brw_math_16( struct brw_compile *p,
    insn->header.compression_control = BRW_COMPRESSION_2NDHALF;
    insn->header.destreg__conditionalmod = msg_reg_nr+1;
 
-   brw_set_dest(insn, offset(dest,1));
+   brw_set_dest(p, insn, offset(dest,1));
    brw_set_src0(insn, src);
    brw_set_math_message(p->brw, 
 			insn, 
@@ -1498,7 +1499,7 @@ void brw_oword_block_write_scratch(struct brw_compile *p,
 	 send_commit_msg = 1;
       }
 
-      brw_set_dest(insn, dest);
+      brw_set_dest(p, insn, dest);
       brw_set_src0(insn, brw_null_reg());
 
       brw_set_dp_write_message(p->brw,
@@ -1568,7 +1569,7 @@ brw_oword_block_read_scratch(struct brw_compile *p,
       insn->header.compression_control = BRW_COMPRESSION_NONE;
       insn->header.destreg__conditionalmod = mrf.nr;
 
-      brw_set_dest(insn, dest);	/* UW? */
+      brw_set_dest(p, insn, dest);	/* UW? */
       brw_set_src0(insn, brw_null_reg());
 
       brw_set_dp_read_message(p->brw,
@@ -1621,7 +1622,7 @@ void brw_oword_block_read(struct brw_compile *p,
    /* cast dest to a uword[8] vector */
    dest = retype(vec8(dest), BRW_REGISTER_TYPE_UW);
 
-   brw_set_dest(insn, dest);
+   brw_set_dest(p, insn, dest);
    if (intel->gen >= 6) {
       brw_set_src0(insn, mrf);
    } else {
@@ -1666,7 +1667,7 @@ void brw_dword_scattered_read(struct brw_compile *p,
    /* cast dest to a uword[8] vector */
    dest = retype(vec8(dest), BRW_REGISTER_TYPE_UW);
 
-   brw_set_dest(insn, dest);
+   brw_set_dest(p, insn, dest);
    brw_set_src0(insn, brw_null_reg());
 
    brw_set_dp_read_message(p->brw,
@@ -1723,7 +1724,7 @@ void brw_dp_READ_4_vs(struct brw_compile *p,
    insn->header.destreg__conditionalmod = msg_reg_nr;
    insn->header.mask_control = BRW_MASK_DISABLE;
 
-   brw_set_dest(insn, dest);
+   brw_set_dest(p, insn, dest);
    brw_set_src0(insn, brw_null_reg());
 
    brw_set_dp_read_message(p->brw,
@@ -1769,7 +1770,7 @@ void brw_dp_READ_4_vs_relative(struct brw_compile *p,
    insn->header.destreg__conditionalmod = 0;
    insn->header.mask_control = BRW_MASK_DISABLE;
 
-   brw_set_dest(insn, dest);
+   brw_set_dest(p, insn, dest);
    brw_set_src0(insn, brw_vec8_grf(0, 0));
 
    if (intel->gen == 6)
@@ -1834,7 +1835,7 @@ void brw_fb_WRITE(struct brw_compile *p,
    else
       msg_control = BRW_DATAPORT_RENDER_TARGET_WRITE_SIMD8_SINGLE_SOURCE_SUBSPAN01;
 
-   brw_set_dest(insn, dest);
+   brw_set_dest(p, insn, dest);
    brw_set_src0(insn, src0);
    brw_set_dp_write_message(p->brw,
 			    insn,
@@ -1912,7 +1913,7 @@ void brw_SAMPLE(struct brw_compile *p,
 
 	 struct brw_reg m1 = brw_message_reg(msg_reg_nr);
 
-	 guess_execution_size(p->current, dest);
+	 guess_execution_size(p, p->current, dest);
 	 if (p->current->header.execution_size == BRW_EXECUTE_16)
 	    dispatch_16 = GL_TRUE;
 
@@ -1964,7 +1965,7 @@ void brw_SAMPLE(struct brw_compile *p,
       if (intel->gen < 6)
 	  insn->header.destreg__conditionalmod = msg_reg_nr;
 
-      brw_set_dest(insn, dest);
+      brw_set_dest(p, insn, dest);
       brw_set_src0(insn, src0);
       brw_set_sampler_message(p->brw, insn,
 			      binding_table_index,
@@ -2025,7 +2026,7 @@ void brw_urb_WRITE(struct brw_compile *p,
 
    assert(msg_length < BRW_MAX_MRF);
 
-   brw_set_dest(insn, dest);
+   brw_set_dest(p, insn, dest);
    brw_set_src0(insn, src0);
    brw_set_src1(insn, brw_imm_d(0));
 
@@ -2142,7 +2143,7 @@ void brw_ff_sync(struct brw_compile *p,
    }
 
    insn = next_insn(p, BRW_OPCODE_SEND);
-   brw_set_dest(insn, dest);
+   brw_set_dest(p, insn, dest);
    brw_set_src0(insn, src0);
    brw_set_src1(insn, brw_imm_d(0));
 

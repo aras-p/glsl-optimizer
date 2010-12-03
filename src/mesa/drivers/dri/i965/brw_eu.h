@@ -33,6 +33,7 @@
 #ifndef BRW_EU_H
 #define BRW_EU_H
 
+#include <stdbool.h>
 #include "brw_structs.h"
 #include "brw_defines.h"
 #include "program/prog_instruction.h"
@@ -106,10 +107,12 @@ struct brw_compile {
    /* Allow clients to push/pop instruction state:
     */
    struct brw_instruction stack[BRW_EU_MAX_INSN_STACK];
+   bool compressed_stack[BRW_EU_MAX_INSN_STACK];
    struct brw_instruction *current;
 
    GLuint flag_value;
    GLboolean single_program_flow;
+   bool compressed;
    struct brw_context *brw;
 
    struct brw_glsl_label *first_label;  /**< linked list of labels */
