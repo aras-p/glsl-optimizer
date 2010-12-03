@@ -947,3 +947,28 @@ void r600_bc_clear(struct r600_bc *bc)
 
 	LIST_INITHEAD(&cf->list);
 }
+
+void r600_bc_dump(struct r600_bc *bc)
+{
+	unsigned i;
+	char chip = '6';
+
+	switch (bc->chiprev) {
+	case 1:
+		chip = '7';
+		break;
+	case 2:
+		chip = 'E';
+		break;
+	case 0:
+	default:
+		chip = '6';
+		break;
+	}
+	fprintf(stderr, "bytecode %d dw -----------------------\n", bc->ndw);
+	fprintf(stderr, "     %c\n", chip);
+	for (i = 0; i < bc->ndw; i++) {
+		fprintf(stderr, "0x%08X\n", bc->bytecode[i]);
+	}
+	fprintf(stderr, "--------------------------------------\n");
+}

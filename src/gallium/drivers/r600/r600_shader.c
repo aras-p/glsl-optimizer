@@ -351,6 +351,7 @@ int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *s
 			return r;
 		}
 	}
+//r600_bc_dump(&shader->shader.bc);
 //fprintf(stderr, "______________________________________________________________\n");
 	return 0;
 }

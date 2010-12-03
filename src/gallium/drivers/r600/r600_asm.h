@@ -200,6 +200,7 @@ int r600_bc_add_output(struct r600_bc *bc, const struct r600_bc_output *output);
 int r600_bc_build(struct r600_bc *bc);
 int r600_bc_add_cfinst(struct r600_bc *bc, int inst);
 int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int type);
+void r600_bc_dump(struct r600_bc *bc);
 
 /* r700_asm.c */
 int r700_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id);
