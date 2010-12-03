@@ -495,27 +495,14 @@ _swrast_ReadPixels( struct gl_context *ctx,
 	 read_depth_pixels(ctx, x, y, width, height, type, pixels,
                            &clippedPacking);
 	 break;
-      case GL_RED:
-      case GL_GREEN:
-      case GL_BLUE:
-      case GL_ALPHA:
-      case GL_RGB:
-      case GL_LUMINANCE:
-      case GL_LUMINANCE_ALPHA:
-      case GL_RGBA:
-      case GL_BGR:
-      case GL_BGRA:
-      case GL_ABGR_EXT:
-         read_rgba_pixels(ctx, x, y, width, height,
-                          format, type, pixels, &clippedPacking);
-	 break;
       case GL_DEPTH_STENCIL_EXT:
          read_depth_stencil_pixels(ctx, x, y, width, height,
                                    type, pixels, &clippedPacking);
          break;
       default:
-	 _mesa_problem(ctx, "unexpected format 0x%x in _swrast_ReadPixels", format);
-         /* don't return yet, clean-up */
+         /* all other formats should be color formats */
+         read_rgba_pixels(ctx, x, y, width, height,
+                          format, type, pixels, &clippedPacking);
    }
 
    swrast_render_finish(ctx);
