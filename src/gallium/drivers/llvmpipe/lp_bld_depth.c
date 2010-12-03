@@ -269,7 +269,7 @@ lp_build_stencil_op(struct lp_build_context *bld,
                                                       stencil->writemask);
       mask = LLVMBuildAnd(builder, mask, writemask, "");
       /* res = (res & mask) | (stencilVals & ~mask) */
-      res = lp_build_select_bitwise(bld, writemask, res, stencilVals);
+      res = lp_build_select_bitwise(bld, mask, res, stencilVals);
    }
    else {
       /* res = mask ? res : stencilVals */
