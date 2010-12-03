@@ -1824,7 +1824,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
     }
 
     if (buf == NULL || buf->width0 == 0 ||
-        (mapped = r300_buffer(buf)->constant_buffer) == NULL) {
+        (mapped = (uint32_t*)r300_buffer(buf)->constant_buffer) == NULL) {
         return;
     }
 
