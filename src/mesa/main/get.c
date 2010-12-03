@@ -1759,16 +1759,18 @@ find_value(const char *func, GLenum pname, void **p, union value *v)
    hash = (pname * prime_factor);
    while (1) {
       d = &values[table[hash & mask]];
-      if (likely(d->pname == pname))
-	 break;
 
       /* If the enum isn't valid, the hash walk ends with index 0,
        * which is the API mask entry at the beginning of values[]. */
-      if (d->type == TYPE_API_MASK) {
+      if (unlikely(d->type == TYPE_API_MASK)) {
 	 _mesa_error(ctx, GL_INVALID_ENUM, "%s(pname=%s)", func,
                      _mesa_lookup_enum_by_nr(pname));
 	 return &error_value;
       }
+
+      if (likely(d->pname == pname))
+	 break;
+
       hash += prime_step;
    }
 
