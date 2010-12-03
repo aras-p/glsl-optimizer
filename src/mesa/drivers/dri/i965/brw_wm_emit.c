@@ -1416,7 +1416,6 @@ void emit_fb_write(struct brw_wm_compile *c,
    struct intel_context *intel = &brw->intel;
    GLuint nr = 2;
    GLuint channel;
-   int base_reg; /* For gen6 fb write with no header, starting from color payload directly!. */
 
    /* Reserve a space for AA - may not be needed:
     */
@@ -1427,11 +1426,6 @@ void emit_fb_write(struct brw_wm_compile *c,
     * (ie RGBARGBA) in the result:  [Do the saturation here]
     */
    brw_push_insn_state(p);
-
-   if (intel->gen >= 6)
-	base_reg = nr;
-   else
-	base_reg = 0;
 
    for (channel = 0; channel < 4; channel++) {
       if (intel->gen >= 6) {
@@ -1524,15 +1518,20 @@ void emit_fb_write(struct brw_wm_compile *c,
    }
 
    if (intel->gen >= 6) {
-      /* Subtract off the message header, since we send headerless. */
-      nr -= 2;
+      /* Load the message header.  There's no implied move from src0
+       * to the base mrf on gen6.
+       */
+      brw_push_insn_state(p);
+      brw_set_mask_control(p, BRW_MASK_DISABLE);
+      brw_MOV(p, brw_message_reg(0), brw_vec8_grf(0, 0));
+      brw_pop_insn_state(p);
    }
 
    if (!c->runtime_check_aads_emit) {
       if (c->aa_dest_stencil_reg)
 	 emit_aa(c, arg1, 2);
 
-      fire_fb_write(c, base_reg, nr, target, eot);
+      fire_fb_write(c, 0, nr, target, eot);
    }
    else {
       struct brw_reg v1_null_ud = vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_UD));
