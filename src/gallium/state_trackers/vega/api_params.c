@@ -175,6 +175,7 @@ void vegaSeti (VGParamType type, VGint value)
          error = VG_ILLEGAL_ARGUMENT_ERROR;
       else
          state->image_mode = value;
+      break;
 #ifdef OPENVG_VERSION_1_1
    case VG_COLOR_TRANSFORM:
       state->color_transform = value;
