@@ -1947,13 +1947,15 @@ void brw_SAMPLE(struct brw_compile *p,
        * and the first message register index comes from src0.
        */
       if (intel->gen >= 6) {
-	  brw_push_insn_state(p);
-	  brw_set_mask_control( p, BRW_MASK_DISABLE );
-	  brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-	  /* m1 contains header? */
-	  brw_MOV(p, brw_message_reg(msg_reg_nr), src0);
-	  brw_pop_insn_state(p);
-	  src0 = brw_message_reg(msg_reg_nr);
+	 if (src0.file != BRW_ARCHITECTURE_REGISTER_FILE ||
+	     src0.nr != BRW_ARF_NULL) {
+	    brw_push_insn_state(p);
+	    brw_set_mask_control( p, BRW_MASK_DISABLE );
+	    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+	    brw_MOV(p, brw_message_reg(msg_reg_nr), src0);
+	    brw_pop_insn_state(p);
+	 }
+	 src0 = brw_message_reg(msg_reg_nr);
       }
 
       insn = next_insn(p, BRW_OPCODE_SEND);
