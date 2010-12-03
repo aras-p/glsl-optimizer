@@ -140,6 +140,10 @@ i915_create_context(struct pipe_screen *screen, void *priv)
 
    i915->base.draw_vbo = i915_draw_vbo;
 
+   /* init this before draw */
+   util_slab_create(&i915->transfer_pool, sizeof(struct pipe_transfer),
+                    16, UTIL_SLAB_SINGLETHREADED);
+
    /*
     * Create drawing context and plug our rendering stage into it.
     */

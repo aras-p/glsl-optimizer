@@ -716,14 +716,16 @@ i915_texture_destroy(struct pipe_screen *screen,
 }
 
 static struct pipe_transfer * 
-i915_texture_get_transfer(struct pipe_context *context,
+i915_texture_get_transfer(struct pipe_context *pipe,
                           struct pipe_resource *resource,
                           unsigned level,
                           unsigned usage,
                           const struct pipe_box *box)
 {
+   struct i915_context *i915 = i915_context(pipe);
    struct i915_texture *tex = i915_texture(resource);
-   struct pipe_transfer *transfer = CALLOC_STRUCT(pipe_transfer);
+   struct pipe_transfer *transfer = util_slab_alloc(&i915->transfer_pool);
+
    if (transfer == NULL)
       return NULL;
 
@@ -735,6 +737,14 @@ i915_texture_get_transfer(struct pipe_context *context,
    /* FIXME: layer_stride */
 
    return transfer;
+}
+
+static void
+i915_transfer_destroy(struct pipe_context *pipe,
+                      struct pipe_transfer *transfer)
+{
+   struct i915_context *i915 = i915_context(pipe);
+   util_slab_free(&i915->transfer_pool, transfer);
 }
 
 static void *
@@ -781,7 +791,7 @@ struct u_resource_vtbl i915_texture_vtbl =
    i915_texture_destroy,	      /* resource_destroy */
    NULL,			      /* is_resource_referenced */
    i915_texture_get_transfer,	      /* get_transfer */
-   u_default_transfer_destroy,	      /* transfer_destroy */
+   i915_transfer_destroy,	      /* transfer_destroy */
    i915_texture_transfer_map,	      /* transfer_map */
    u_default_transfer_flush_region,   /* transfer_flush_region */
    i915_texture_transfer_unmap,	      /* transfer_unmap */

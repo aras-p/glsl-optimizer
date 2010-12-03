@@ -37,6 +37,8 @@
 
 #include "tgsi/tgsi_scan.h"
 
+#include "util/u_slab.h"
+
 
 struct i915_winsys;
 struct i915_winsys_buffer;
@@ -237,6 +239,8 @@ struct i915_context {
 
    struct i915_state current;
    unsigned hardware_dirty;
+
+   struct util_slab_mempool transfer_pool;
 };
 
 /* A flag for each state_tracker state object:
