@@ -2805,6 +2805,7 @@ static int pops(struct r600_shader_ctx *ctx, int pops)
 {
 	r600_bc_add_cfinst(ctx->bc, CTX_INST(V_SQ_CF_WORD1_SQ_CF_INST_POP));
 	ctx->bc->cf_last->pop_count = pops;
+	ctx->bc->cf_last->cf_addr = ctx->bc->cf_last->id + 2;
 	return 0;
 }
 
