@@ -47,6 +47,10 @@ solid_fill( struct ureg_program *ureg,
    ureg_MOV(ureg, *out, constant[2]);
 }
 
+/**
+ * Perform frag-coord-to-paint-coord transform.  The transformation is in
+ * CONST[4..6].
+ */
 #define PAINT_TRANSFORM                                                 \
    ureg_MOV(ureg, ureg_writemask(temp[0], TGSI_WRITEMASK_XY), in[0]);   \
    ureg_MOV(ureg,                                                       \
@@ -75,6 +79,7 @@ linear_grad( struct ureg_program *ureg,
 {
    PAINT_TRANSFORM
 
+   /* grad = DP2((x, y), CONST[2].xy) * CONST[2].z */
    ureg_MUL(ureg, temp[0],
             ureg_scalar(constant[2], TGSI_SWIZZLE_Y),
             ureg_scalar(ureg_src(temp[4]), TGSI_SWIZZLE_Y));
@@ -84,6 +89,7 @@ linear_grad( struct ureg_program *ureg,
             ureg_src(temp[0]));
    ureg_MUL(ureg, temp[2], ureg_src(temp[1]),
             ureg_scalar(constant[2], TGSI_SWIZZLE_Z));
+
    ureg_TEX(ureg, *out, TGSI_TEXTURE_1D, ureg_src(temp[2]), sampler[0]);
 }
 
@@ -134,6 +140,7 @@ pattern( struct ureg_program *ureg,
 {
    PAINT_TRANSFORM
 
+   /* (s, t) = (x / tex_width, y / tex_height) */
    ureg_RCP(ureg, temp[0],
             ureg_swizzle(constant[3],
                          TGSI_SWIZZLE_Z,
@@ -149,6 +156,7 @@ pattern( struct ureg_program *ureg,
             ureg_writemask(temp[1], TGSI_WRITEMASK_Y),
             ureg_src(temp[1]),
             ureg_src(temp[0]));
+
    ureg_TEX(ureg, *out, TGSI_TEXTURE_2D, ureg_src(temp[1]), sampler[0]);
 }
 
@@ -160,6 +168,7 @@ paint_degenerate( struct ureg_program *ureg,
                   struct ureg_dst *temp,
                   struct ureg_src *constant)
 {
+   /* CONST[3].y is 1.0f */
    ureg_MOV(ureg, temp[1], ureg_scalar(constant[3], TGSI_SWIZZLE_Y));
    ureg_TEX(ureg, *out, TGSI_TEXTURE_1D, ureg_src(temp[1]), sampler[0]);
 }
@@ -172,8 +181,8 @@ color_transform( struct ureg_program *ureg,
                  struct ureg_dst *temp,
                  struct ureg_src *constant)
 {
-   ureg_MUL(ureg, temp[1], ureg_src(temp[0]), constant[0]);
-   ureg_ADD(ureg, temp[1], ureg_src(temp[1]), constant[1]);
+   ureg_MAD(ureg, temp[1], ureg_src(temp[0]), constant[0], constant[1]);
+   /* clamp to [0.0f, 1.0f] */
    ureg_CLAMP(ureg, temp[1],
               ureg_src(temp[1]),
               ureg_scalar(constant[3], TGSI_SWIZZLE_X),
