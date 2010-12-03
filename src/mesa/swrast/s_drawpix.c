@@ -720,12 +720,12 @@ _swrast_DrawPixels( struct gl_context *ctx,
    if (swrast->NewState)
       _swrast_validate_derived( ctx );
 
-    pixels = _mesa_map_pbo_source(ctx, unpack, pixels);
-    if (!pixels) {
-       swrast_render_finish(ctx);
-       _mesa_set_vp_override(ctx, save_vp_override);
-       return;
-    }
+   pixels = _mesa_map_pbo_source(ctx, unpack, pixels);
+   if (!pixels) {
+      swrast_render_finish(ctx);
+      _mesa_set_vp_override(ctx, save_vp_override);
+      return;
+   }
 
    /*
     * By time we get here, all error checking should have been done.
