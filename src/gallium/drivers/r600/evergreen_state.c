@@ -833,6 +833,10 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	free(rctx->states[R600_PIPE_STATE_FRAMEBUFFER]);
 	rctx->states[R600_PIPE_STATE_FRAMEBUFFER] = rstate;
 	r600_context_pipe_state_set(&rctx->ctx, rstate);
+
+	if (state->zsbuf) {
+		evergreen_polygon_offset_update(rctx);
+	}
 }
 
 static void evergreen_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
@@ -1208,6 +1212,54 @@ r600_pipe_state_add_reg(rstate, R_028810_PA_CL_CLIP_CNTL,
 	r600_context_pipe_state_set(&rctx->ctx, rstate);
 }
 
+void evergreen_polygon_offset_update(struct r600_pipe_context *rctx)
+{
+	struct r600_pipe_state state;
+
+	state.id = R600_PIPE_STATE_POLYGON_OFFSET;
+	state.nregs = 0;
+	if (rctx->rasterizer && rctx->framebuffer.zsbuf) {
+		float offset_units = rctx->rasterizer->offset_units;
+		unsigned offset_db_fmt_cntl = 0, depth;
+
+		switch (rctx->framebuffer.zsbuf->texture->format) {
+		case PIPE_FORMAT_Z24X8_UNORM:
+		case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+			depth = -24;
+			offset_units *= 2.0f;
+			break;
+		case PIPE_FORMAT_Z32_FLOAT:
+			depth = -23;
+			offset_units *= 1.0f;
+			offset_db_fmt_cntl |= S_028B78_POLY_OFFSET_DB_IS_FLOAT_FMT(1);
+			break;
+		case PIPE_FORMAT_Z16_UNORM:
+			depth = -16;
+			offset_units *= 4.0f;
+			break;
+		default:
+			return;
+		}
+		offset_db_fmt_cntl |= S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS(depth);
+		r600_pipe_state_add_reg(&state,
+				R_028B80_PA_SU_POLY_OFFSET_FRONT_SCALE,
+				fui(rctx->rasterizer->offset_scale), 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(&state,
+				R_028B84_PA_SU_POLY_OFFSET_FRONT_OFFSET,
+				fui(offset_units), 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(&state,
+				R_028B88_PA_SU_POLY_OFFSET_BACK_SCALE,
+				fui(rctx->rasterizer->offset_scale), 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(&state,
+				R_028B8C_PA_SU_POLY_OFFSET_BACK_OFFSET,
+				fui(offset_units), 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(&state,
+				R_028B78_PA_SU_POLY_OFFSET_DB_FMT_CNTL,
+				offset_db_fmt_cntl, 0xFFFFFFFF, NULL);
+		r600_context_pipe_state_set(&rctx->ctx, &state);
+	}
+}
+
 int r600_conv_pipe_prim(unsigned pprim, unsigned *prim);
 void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
@@ -1336,46 +1388,6 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	r600_pipe_state_add_reg(&vgt, R_028404_VGT_MIN_VTX_INDX, draw.min_index, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(&vgt, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(&vgt, R_03CFF4_SQ_VTX_START_INST_LOC, 0, 0xFFFFFFFF, NULL);
-
-	if (rctx->rasterizer && rctx->framebuffer.zsbuf) {
-		float offset_units = rctx->rasterizer->offset_units;
-		unsigned offset_db_fmt_cntl = 0, depth;
-
-		switch (rctx->framebuffer.zsbuf->texture->format) {
-		case PIPE_FORMAT_Z24X8_UNORM:
-		case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
-			depth = -24;
-			offset_units *= 2.0f;
-			break;
-		case PIPE_FORMAT_Z32_FLOAT:
-			depth = -23;
-			offset_units *= 1.0f;
-			offset_db_fmt_cntl |= S_028B78_POLY_OFFSET_DB_IS_FLOAT_FMT(1);
-			break;
-		case PIPE_FORMAT_Z16_UNORM:
-			depth = -16;
-			offset_units *= 4.0f;
-			break;
-		default:
-			return;
-		}
-		offset_db_fmt_cntl |= S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS(depth);
-		r600_pipe_state_add_reg(&vgt,
-				R_028B80_PA_SU_POLY_OFFSET_FRONT_SCALE,
-				fui(rctx->rasterizer->offset_scale), 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(&vgt,
-				R_028B84_PA_SU_POLY_OFFSET_FRONT_OFFSET,
-				fui(offset_units), 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(&vgt,
-				R_028B88_PA_SU_POLY_OFFSET_BACK_SCALE,
-				fui(rctx->rasterizer->offset_scale), 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(&vgt,
-				R_028B8C_PA_SU_POLY_OFFSET_BACK_OFFSET,
-				fui(offset_units), 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(&vgt,
-				R_028B78_PA_SU_POLY_OFFSET_DB_FMT_CNTL,
-				offset_db_fmt_cntl, 0xFFFFFFFF, NULL);
-	}
 	r600_context_pipe_state_set(&rctx->ctx, &vgt);
 
 	rdraw.vgt_num_indices = draw.count;

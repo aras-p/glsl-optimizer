@@ -46,6 +46,54 @@
 #include "r600_pipe.h"
 #include "r600_state_inlines.h"
 
+void r600_polygon_offset_update(struct r600_pipe_context *rctx)
+{
+	struct r600_pipe_state state;
+
+	state.id = R600_PIPE_STATE_POLYGON_OFFSET;
+	state.nregs = 0;
+	if (rctx->rasterizer && rctx->framebuffer.zsbuf) {
+		float offset_units = rctx->rasterizer->offset_units;
+		unsigned offset_db_fmt_cntl = 0, depth;
+
+		switch (rctx->framebuffer.zsbuf->texture->format) {
+		case PIPE_FORMAT_Z24X8_UNORM:
+		case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+			depth = -24;
+			offset_units *= 2.0f;
+			break;
+		case PIPE_FORMAT_Z32_FLOAT:
+			depth = -23;
+			offset_units *= 1.0f;
+			offset_db_fmt_cntl |= S_028DF8_POLY_OFFSET_DB_IS_FLOAT_FMT(1);
+			break;
+		case PIPE_FORMAT_Z16_UNORM:
+			depth = -16;
+			offset_units *= 4.0f;
+			break;
+		default:
+			return;
+		}
+		offset_db_fmt_cntl |= S_028DF8_POLY_OFFSET_NEG_NUM_DB_BITS(depth);
+		r600_pipe_state_add_reg(&state,
+				R_028E00_PA_SU_POLY_OFFSET_FRONT_SCALE,
+				fui(rctx->rasterizer->offset_scale), 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(&state,
+				R_028E04_PA_SU_POLY_OFFSET_FRONT_OFFSET,
+				fui(offset_units), 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(&state,
+				R_028E08_PA_SU_POLY_OFFSET_BACK_SCALE,
+				fui(rctx->rasterizer->offset_scale), 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(&state,
+				R_028E0C_PA_SU_POLY_OFFSET_BACK_OFFSET,
+				fui(offset_units), 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(&state,
+				R_028DF8_PA_SU_POLY_OFFSET_DB_FMT_CNTL,
+				offset_db_fmt_cntl, 0xFFFFFFFF, NULL);
+		r600_context_pipe_state_set(&rctx->ctx, &state);
+	}
+}
+
 static void r600_draw_common(struct r600_drawl *draw)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)draw->ctx;
@@ -126,46 +174,6 @@ static void r600_draw_common(struct r600_drawl *draw)
 	r600_pipe_state_add_reg(&vgt, R_028238_CB_TARGET_MASK, rctx->cb_target_mask & mask, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(&vgt, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(&vgt, R_03CFF4_SQ_VTX_START_INST_LOC, 0, 0xFFFFFFFF, NULL);
-	/* build late state */
-	if (rctx->rasterizer && rctx->framebuffer.zsbuf) {
-		float offset_units = rctx->rasterizer->offset_units;
-		unsigned offset_db_fmt_cntl = 0, depth;
-
-		switch (rctx->framebuffer.zsbuf->texture->format) {
-		case PIPE_FORMAT_Z24X8_UNORM:
-		case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
-			depth = -24;
-			offset_units *= 2.0f;
-			break;
-		case PIPE_FORMAT_Z32_FLOAT:
-			depth = -23;
-			offset_units *= 1.0f;
-			offset_db_fmt_cntl |= S_028DF8_POLY_OFFSET_DB_IS_FLOAT_FMT(1);
-			break;
-		case PIPE_FORMAT_Z16_UNORM:
-			depth = -16;
-			offset_units *= 4.0f;
-			break;
-		default:
-			return;
-		}
-		offset_db_fmt_cntl |= S_028DF8_POLY_OFFSET_NEG_NUM_DB_BITS(depth);
-		r600_pipe_state_add_reg(&vgt,
-				R_028E00_PA_SU_POLY_OFFSET_FRONT_SCALE,
-				fui(rctx->rasterizer->offset_scale), 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(&vgt,
-				R_028E04_PA_SU_POLY_OFFSET_FRONT_OFFSET,
-				fui(offset_units), 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(&vgt,
-				R_028E08_PA_SU_POLY_OFFSET_BACK_SCALE,
-				fui(rctx->rasterizer->offset_scale), 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(&vgt,
-				R_028E0C_PA_SU_POLY_OFFSET_BACK_OFFSET,
-				fui(offset_units), 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(&vgt,
-				R_028DF8_PA_SU_POLY_OFFSET_DB_FMT_CNTL,
-				offset_db_fmt_cntl, 0xFFFFFFFF, NULL);
-	}
 	r600_context_pipe_state_set(&rctx->ctx, &vgt);
 
 	rdraw.vgt_num_indices = draw->count;
@@ -1023,6 +1031,10 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	free(rctx->states[R600_PIPE_STATE_FRAMEBUFFER]);
 	rctx->states[R600_PIPE_STATE_FRAMEBUFFER] = rstate;
 	r600_context_pipe_state_set(&rctx->ctx, rstate);
+
+	if (state->zsbuf) {
+		r600_polygon_offset_update(rctx);
+	}
 }
 
 static void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,

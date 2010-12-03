@@ -53,6 +53,7 @@ enum r600_pipe_state_id {
 	R600_PIPE_STATE_CONSTANT,
 	R600_PIPE_STATE_SAMPLER,
 	R600_PIPE_STATE_RESOURCE,
+	R600_PIPE_STATE_POLYGON_OFFSET,
 	R600_PIPE_NSTATES
 };
 
@@ -181,6 +182,7 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx);
+void evergreen_polygon_offset_update(struct r600_pipe_context *rctx);
 
 /* r600_blit.c */
 void r600_init_blit_functions(struct r600_pipe_context *rctx);
@@ -218,6 +220,8 @@ void r600_init_state_functions(struct r600_pipe_context *rctx);
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
 void r600_init_config(struct r600_pipe_context *rctx);
 void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx);
+void r600_polygon_offset_update(struct r600_pipe_context *rctx);
+
 /* r600_helper.h */
 int r600_conv_pipe_prim(unsigned pprim, unsigned *prim);
 

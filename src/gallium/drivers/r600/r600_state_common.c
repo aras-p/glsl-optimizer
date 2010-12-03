@@ -58,6 +58,12 @@ void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 
 	rctx->states[rs->rstate.id] = &rs->rstate;
 	r600_context_pipe_state_set(&rctx->ctx, &rs->rstate);
+
+	if (rctx->family >= CHIP_CEDAR) {
+		evergreen_polygon_offset_update(rctx);
+	} else {
+		r600_polygon_offset_update(rctx);
+	}
 }
 
 void r600_delete_rs_state(struct pipe_context *ctx, void *state)
