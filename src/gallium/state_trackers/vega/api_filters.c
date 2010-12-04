@@ -207,6 +207,7 @@ static void execute_filter(struct vg_context *ctx,
       break;
    default:
       debug_assert(!"Unknown tiling mode");
+      tex_wrap = 0;
       break;
    }
 
