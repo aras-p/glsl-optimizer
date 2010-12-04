@@ -105,7 +105,8 @@ upload_wm_state(struct brw_context *brw)
 		(5 - 2));
       OUT_RELOC(brw->wm.push_const_bo,
 		I915_GEM_DOMAIN_RENDER, 0, /* XXX: bad domain */
-		ALIGN(brw->wm.prog_data->nr_params, 8) / 8 - 1);
+		ALIGN(brw->wm.prog_data->nr_params,
+		      brw->wm.prog_data->dispatch_width) / 8 - 1);
       OUT_BATCH(0);
       OUT_BATCH(0);
       OUT_BATCH(0);
