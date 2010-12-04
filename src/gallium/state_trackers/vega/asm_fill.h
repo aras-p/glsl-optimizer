@@ -367,7 +367,7 @@ blend_generic(struct ureg_program *ureg,
             ureg_scalar(dst, TGSI_SWIZZLE_W), ureg_negate(src), src);
       ureg_MAD(ureg, temp[1],
             src_channel_alpha, ureg_negate(dst), dst);
-      ureg_MAD(ureg, temp[1], src, dst, ureg_src(temp[1]));
+      ureg_MAD(ureg, temp[0], src, dst, ureg_src(temp[0]));
       ureg_ADD(ureg, out, ureg_src(temp[0]), ureg_src(temp[1]));
       /* alpha is src over */
       ureg_ADD(ureg, ureg_writemask(out, TGSI_WRITEMASK_W),
