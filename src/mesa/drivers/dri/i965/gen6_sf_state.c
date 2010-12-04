@@ -67,6 +67,7 @@ upload_sf_state(struct brw_context *brw)
    struct gl_context *ctx = &intel->ctx;
    /* CACHE_NEW_VS_PROG */
    uint32_t num_inputs = brw_count_bits(brw->vs.prog_data->outputs_written);
+   /* BRW_NEW_FRAGMENT_PROGRAM */
    uint32_t num_outputs = brw_count_bits(brw->fragment_program->Base.InputsRead);
    uint32_t dw1, dw2, dw3, dw4, dw16;
    int i;
@@ -247,7 +248,8 @@ const struct brw_tracked_state gen6_sf_state = {
 		_NEW_BUFFERS |
 		_NEW_POINT |
 		_NEW_TRANSFORM),
-      .brw   = BRW_NEW_CONTEXT,
+      .brw   = (BRW_NEW_CONTEXT |
+		BRW_NEW_FRAGMENT_PROGRAM),
       .cache = CACHE_NEW_VS_PROG
    },
    .emit = upload_sf_state,
