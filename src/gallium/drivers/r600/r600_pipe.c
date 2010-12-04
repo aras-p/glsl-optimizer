@@ -90,6 +90,8 @@ static void r600_destroy_context(struct pipe_context *context)
 	u_upload_destroy(rctx->upload_vb);
 	u_upload_destroy(rctx->upload_ib);
 
+	r600_end_vertex_translate(rctx);
+
 	if (rctx->tran.translate_cache)
 		translate_cache_destroy(rctx->tran.translate_cache);
 

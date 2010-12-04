@@ -267,10 +267,11 @@ int r600_upload_user_buffers(struct r600_pipe_context *rctx)
 	int i, nr;
 
 	nr = rctx->vertex_elements->count;
+	nr = rctx->nvertex_buffer;
 
 	for (i = 0; i < nr; i++) {
-		struct pipe_vertex_buffer *vb =
-			&rctx->vertex_buffer[rctx->vertex_elements->elements[i].vertex_buffer_index];
+//		struct pipe_vertex_buffer *vb = &rctx->vertex_buffer[rctx->vertex_elements->elements[i].vertex_buffer_index];
+		struct pipe_vertex_buffer *vb = &rctx->vertex_buffer[i];
 
 		if (r600_buffer_is_user_buffer(vb->buffer)) {
 			struct pipe_resource *upload_buffer = NULL;

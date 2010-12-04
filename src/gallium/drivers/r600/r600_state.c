@@ -94,6 +94,84 @@ void r600_polygon_offset_update(struct r600_pipe_context *rctx)
 	}
 }
 
+void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
+{
+	struct r600_pipe_state *rstate;
+	struct r600_resource *rbuffer;
+	struct pipe_vertex_buffer *vertex_buffer;
+	unsigned i, offset;
+
+	/* we don't update until we know vertex elements */
+	if (rctx->vertex_elements == NULL || !rctx->nvertex_buffer)
+		return;
+
+	/* delete previous translated vertex elements */
+	if (rctx->tran.new_velems) {
+		r600_end_vertex_translate(rctx);
+	}
+
+	if (rctx->vertex_elements->incompatible_layout) {
+		/* translate rebind new vertex elements so
+		 * return once translated
+		 */
+		r600_begin_vertex_translate(rctx);
+		return;
+	}
+
+	if (rctx->any_user_vbs) {
+		r600_upload_user_buffers(rctx);
+		rctx->any_user_vbs = FALSE;
+	}
+
+	if (rctx->vertex_elements->vbuffer_need_offset) {
+		/* one resource per vertex elements */
+		rctx->nvs_resource = rctx->vertex_elements->count;
+	} else {
+		/* bind vertex buffer once */
+		rctx->nvs_resource = rctx->nvertex_buffer;
+	}
+
+	for (i = 0 ; i < rctx->nvs_resource; i++) {
+		rstate = &rctx->vs_resource[i];
+		rstate->id = R600_PIPE_STATE_RESOURCE;
+		rstate->nregs = 0;
+
+		if (rctx->vertex_elements->vbuffer_need_offset) {
+			/* one resource per vertex elements */
+			unsigned vbuffer_index;
+			vbuffer_index = rctx->vertex_elements->elements[i].vertex_buffer_index;
+			vertex_buffer = &rctx->vertex_buffer[vbuffer_index];
+			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
+			offset = rctx->vertex_elements->vbuffer_offset[i] +
+				vertex_buffer->buffer_offset +
+				r600_bo_offset(rbuffer->bo);
+		} else {
+			/* bind vertex buffer once */
+			vertex_buffer = &rctx->vertex_buffer[i];
+			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
+			offset = vertex_buffer->buffer_offset +
+				r600_bo_offset(rbuffer->bo);
+		}
+
+		r600_pipe_state_add_reg(rstate, R_038000_RESOURCE0_WORD0,
+					offset, 0xFFFFFFFF, rbuffer->bo);
+		r600_pipe_state_add_reg(rstate, R_038004_RESOURCE0_WORD1,
+					rbuffer->size - offset - 1, 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, R_038008_RESOURCE0_WORD2,
+					S_038008_STRIDE(vertex_buffer->stride),
+					0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, R_03800C_RESOURCE0_WORD3,
+					0x00000000, 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, R_038010_RESOURCE0_WORD4,
+					0x00000000, 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, R_038014_RESOURCE0_WORD5,
+					0x00000000, 0xFFFFFFFF, NULL);
+		r600_pipe_state_add_reg(rstate, R_038018_RESOURCE0_WORD6,
+					0xC0000000, 0xFFFFFFFF, NULL);
+		r600_context_pipe_state_set_fs_resource(&rctx->ctx, rstate, i);
+	}
+}
+
 static void r600_draw_common(struct r600_drawl *draw)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)draw->ctx;
@@ -132,6 +210,7 @@ static void r600_draw_common(struct r600_drawl *draw)
 	if (r600_pipe_shader_update(&rctx->context, rctx->ps_shader))
 		return;
 
+#if 0
 	for (i = 0 ; i < rctx->vertex_elements->count; i++) {
 		uint32_t word2, format;
 
@@ -159,6 +238,7 @@ static void r600_draw_common(struct r600_drawl *draw)
 		r600_pipe_state_add_reg(rstate, R_038018_RESOURCE0_WORD6, 0xC0000000, 0xFFFFFFFF, NULL);
 		r600_context_pipe_state_set_fs_resource(&rctx->ctx, rstate, i);
 	}
+#endif
 
 	mask = 0;
 	for (int i = 0; i < rctx->framebuffer.nr_cbufs; i++) {
@@ -195,6 +275,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	struct r600_drawl draw;
 	boolean translate = FALSE;
 
+#if 0
 	if (rctx->vertex_elements->incompatible_layout) {
 		r600_begin_vertex_translate(rctx);
 		translate = TRUE;
@@ -204,6 +285,8 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		r600_upload_user_buffers(rctx);
 		rctx->any_user_vbs = FALSE;
 	}
+#endif
+
 	memset(&draw, 0, sizeof(struct r600_drawl));
 	draw.ctx = ctx;
 	draw.mode = info->mode;

@@ -67,21 +67,23 @@ static void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shade
 			S_028868_STACK_SIZE(rshader->bc.nstack),
 			0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
-			R_0288A4_SQ_PGM_RESOURCES_FS,
+			R_0288D0_SQ_PGM_CF_OFFSET_VS,
 			0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
-			R_0288D0_SQ_PGM_CF_OFFSET_VS,
+			R_028858_SQ_PGM_START_VS,
+			r600_bo_offset(shader->bo) >> 8, 0xFFFFFFFF, shader->bo);
+
+#if 0
+	r600_pipe_state_add_reg(rstate,
+			R_0288A4_SQ_PGM_RESOURCES_FS,
 			0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
 			R_0288DC_SQ_PGM_CF_OFFSET_FS,
 			0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
-			R_028858_SQ_PGM_START_VS,
-			r600_bo_offset(shader->bo) >> 8, 0xFFFFFFFF, shader->bo);
-	r600_pipe_state_add_reg(rstate,
 			R_028894_SQ_PGM_START_FS,
 			r600_bo_offset(shader->bo_fetch) >> 8, 0xFFFFFFFF, shader->bo_fetch);
-
+#endif
 	r600_pipe_state_add_reg(rstate,
 				R_03E200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF,
 				0xFFFFFFFF, NULL);
@@ -261,6 +263,7 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *s
 
 static int r600_shader_update(struct pipe_context *ctx, struct r600_pipe_shader *rshader)
 {
+#if 0
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_shader *shader = &rshader->shader;
 	const struct util_format_description *desc;
@@ -304,6 +307,9 @@ static int r600_shader_update(struct pipe_context *ctx, struct r600_pipe_shader 
 		}
 	}
 	return r600_bc_build(&shader->bc_fetch);
+#else
+	return 0;
+#endif
 }
 
 int r600_pipe_shader_update(struct pipe_context *ctx, struct r600_pipe_shader *shader)
