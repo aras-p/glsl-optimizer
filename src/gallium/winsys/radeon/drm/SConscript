@@ -4,7 +4,7 @@ env = env.Clone()
 
 radeon_sources = [
     'radeon_drm_buffer.c',
-    'radeon_drm.c',
+    'radeon_drm_common.c',
     'radeon_r300.c',
 ]
 

@@ -34,7 +34,7 @@
 
 /* see get_drm_screen_name */
 #include <radeon_drm.h>
-#include "radeon/drm/radeon_drm.h"
+#include "radeon/drm/radeon_drm_public.h"
 
 static boolean
 drm_display_is_format_supported(struct native_display *ndpy,

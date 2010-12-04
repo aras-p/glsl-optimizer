@@ -205,7 +205,7 @@ static boolean r300_reserve_cs_dwords(struct r300_context *r300,
     cs_dwords += r300_get_num_cs_end_dwords(r300);
 
     /* Reserve requested CS space. */
-    if (cs_dwords > (r300->cs->ndw - r300->cs->cdw)) {
+    if (cs_dwords > (R300_MAX_CMDBUF_DWORDS - r300->cs->cdw)) {
         r300->context.flush(&r300->context, 0, NULL);
         flushed = TRUE;
     }
@@ -959,7 +959,7 @@ static void r300_render_draw_elements(struct vbuf_render* render,
     end_cs_dwords = r300_get_num_cs_end_dwords(r300);
 
     while (count) {
-        free_dwords = r300->cs->ndw - r300->cs->cdw;
+        free_dwords = R300_MAX_CMDBUF_DWORDS - r300->cs->cdw;
 
         short_count = MIN2(count, (free_dwords - end_cs_dwords - 6) * 2);
 

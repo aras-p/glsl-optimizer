@@ -6,7 +6,7 @@ LIBNAME = radeonwinsys
 
 C_SOURCES = \
 	radeon_drm_buffer.c \
-	radeon_drm.c \
+	radeon_drm_common.c \
 	radeon_r300.c
 
 LIBRARY_INCLUDES = -I$(TOP)/src/gallium/drivers/r300 \

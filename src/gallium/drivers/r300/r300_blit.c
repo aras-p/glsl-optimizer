@@ -230,7 +230,7 @@ static void r300_clear(struct pipe_context* pipe,
                  r300_get_num_cs_end_dwords(r300);
 
         /* Reserve CS space. */
-        if (dwords > (r300->cs->ndw - r300->cs->cdw)) {
+        if (dwords > (R300_MAX_CMDBUF_DWORDS - r300->cs->cdw)) {
             r300->context.flush(&r300->context, 0, NULL);
         }
 

@@ -33,6 +33,8 @@
 
 #include "r300_defines.h"
 
+#define R300_MAX_CMDBUF_DWORDS (16 * 1024)
+
 struct winsys_handle;
 struct r300_winsys_screen;
 
@@ -40,9 +42,8 @@ struct r300_winsys_buffer;      /* for map/unmap etc. */
 struct r300_winsys_cs_buffer;   /* for write_reloc etc. */
 
 struct r300_winsys_cs {
-    uint32_t *ptr;      /* Pointer to the beginning of the CS. */
     unsigned cdw;       /* Number of used dwords. */
-    unsigned ndw;       /* Size of the CS in dwords. */
+    uint32_t *buf;      /* The command buffer. */
 };
 
 enum r300_value_id {
