@@ -1068,8 +1068,7 @@ reduce_3d(enum pipe_format pformat,
       /* second source image pointer */
       const ubyte *imgSrcB = imgSrcA + srcImageOffset;
       /* address of the dest image */
-      ubyte *imgDst = dstPtr
-         + img * dstImageStride;
+      ubyte *imgDst = dstPtr + img * dstImageStride;
 
       /* setup the four source row pointers and the dest row pointer */
       const ubyte *srcImgARowA = imgSrcA;
@@ -1555,7 +1554,8 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
 
       if (pt->target == PIPE_TEXTURE_3D)
          nr_layers = u_minify(pt->depth0, dstLevel);
-      else nr_layers = 1;
+      else
+         nr_layers = 1;
 
       for (i = 0; i < nr_layers; i++) {
          struct pipe_surface *surf, surf_templ;
