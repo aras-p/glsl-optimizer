@@ -181,7 +181,9 @@ image_normal( struct ureg_program *ureg,
               struct ureg_dst *temp,
               struct ureg_src *constant)
 {
-   ureg_TEX(ureg, *out, TGSI_TEXTURE_2D, in[1], sampler[3]);
+   /* store and pass image color in TEMP[1] */
+   ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[1], sampler[3]);
+   ureg_MOV(ureg, *out, ureg_src(temp[1]));
 }
 
 
@@ -193,6 +195,7 @@ image_multiply( struct ureg_program *ureg,
                 struct ureg_dst *temp,
                 struct ureg_src *constant)
 {
+   /* store and pass image color in TEMP[1] */
    ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[1], sampler[3]);
    ureg_MUL(ureg, *out, ureg_src(temp[0]), ureg_src(temp[1]));
 }
@@ -206,8 +209,9 @@ image_stencil( struct ureg_program *ureg,
                struct ureg_dst *temp,
                struct ureg_src *constant)
 {
+   /* store and pass image color in TEMP[1] */
    ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[1], sampler[3]);
-   ureg_MUL(ureg, *out, ureg_src(temp[0]), ureg_src(temp[1]));
+   ureg_MOV(ureg, *out, ureg_src(temp[0]));
 }
 
 static INLINE void
@@ -218,13 +222,54 @@ color_transform( struct ureg_program *ureg,
                  struct ureg_dst *temp,
                  struct ureg_src *constant)
 {
-   ureg_MAD(ureg, temp[1], ureg_src(temp[0]), constant[0], constant[1]);
+   /* note that TEMP[1] may already be used for image color */
+
+   ureg_MAD(ureg, temp[2], ureg_src(temp[0]), constant[0], constant[1]);
    /* clamp to [0.0f, 1.0f] */
-   ureg_CLAMP(ureg, temp[1],
-              ureg_src(temp[1]),
+   ureg_CLAMP(ureg, temp[2],
+              ureg_src(temp[2]),
               ureg_scalar(constant[3], TGSI_SWIZZLE_X),
               ureg_scalar(constant[3], TGSI_SWIZZLE_Y));
-   ureg_MOV(ureg, *out, ureg_src(temp[1]));
+   ureg_MOV(ureg, *out, ureg_src(temp[2]));
+}
+
+static INLINE void
+alpha_normal( struct ureg_program *ureg,
+              struct ureg_dst *out,
+              struct ureg_src *in,
+              struct ureg_src *sampler,
+              struct ureg_dst *temp,
+              struct ureg_src *constant)
+{
+   /* save per-channel alpha in TEMP[1] */
+   ureg_MOV(ureg, temp[1], ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W));
+
+   ureg_MOV(ureg, *out, ureg_src(temp[0]));
+}
+
+static INLINE void
+alpha_per_channel( struct ureg_program *ureg,
+                   struct ureg_dst *out,
+                   struct ureg_src *in,
+                   struct ureg_src *sampler,
+                   struct ureg_dst *temp,
+                   struct ureg_src *constant)
+{
+   /* save per-channel alpha in TEMP[1] */
+   ureg_MUL(ureg,
+            ureg_writemask(temp[1], TGSI_WRITEMASK_W),
+            ureg_src(temp[0]),
+            ureg_src(temp[1]));
+   ureg_MUL(ureg,
+            ureg_writemask(temp[1], TGSI_WRITEMASK_XYZ),
+            ureg_src(temp[1]),
+            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));
+
+   /* update alpha */
+   ureg_MOV(ureg,
+            ureg_writemask(temp[0], TGSI_WRITEMASK_W),
+            ureg_src(temp[1]));
+   ureg_MOV(ureg, *out, ureg_src(temp[0]));
 }
 
 /**
@@ -238,8 +283,8 @@ blend_generic(struct ureg_program *ureg,
               VGBlendMode mode,
               struct ureg_dst out,
               struct ureg_src src,
-              struct ureg_src dst,
               struct ureg_src src_channel_alpha,
+              struct ureg_src dst,
               struct ureg_src one,
               struct ureg_dst temp[2])
 {
@@ -320,13 +365,13 @@ blend_multiply( struct ureg_program *ureg,
                 struct ureg_dst *temp,
                 struct ureg_src *constant)
 {
-   ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[0], sampler[2]);
+   ureg_TEX(ureg, temp[2], TGSI_TEXTURE_2D, in[0], sampler[2]);
    blend_generic(ureg, VG_BLEND_MULTIPLY, *out,
                  ureg_src(temp[0]),
                  ureg_src(temp[1]),
-                 ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
+                 ureg_src(temp[2]),
                  ureg_scalar(constant[3], TGSI_SWIZZLE_Y),
-                 temp + 2);
+                 temp + 3);
 }
 
 static INLINE void
@@ -337,13 +382,13 @@ blend_screen( struct ureg_program *ureg,
               struct ureg_dst     *temp,
               struct ureg_src     *constant)
 {
-   ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[0], sampler[2]);
+   ureg_TEX(ureg, temp[2], TGSI_TEXTURE_2D, in[0], sampler[2]);
    blend_generic(ureg, VG_BLEND_SCREEN, *out,
                  ureg_src(temp[0]),
                  ureg_src(temp[1]),
-                 ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
+                 ureg_src(temp[2]),
                  ureg_scalar(constant[3], TGSI_SWIZZLE_Y),
-                 temp + 2);
+                 temp + 3);
 }
 
 static INLINE void
@@ -354,13 +399,13 @@ blend_darken( struct ureg_program *ureg,
               struct ureg_dst     *temp,
               struct ureg_src     *constant)
 {
-   ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[0], sampler[2]);
+   ureg_TEX(ureg, temp[2], TGSI_TEXTURE_2D, in[0], sampler[2]);
    blend_generic(ureg, VG_BLEND_DARKEN, *out,
                  ureg_src(temp[0]),
                  ureg_src(temp[1]),
-                 ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
+                 ureg_src(temp[2]),
                  ureg_scalar(constant[3], TGSI_SWIZZLE_Y),
-                 temp + 2);
+                 temp + 3);
 }
 
 static INLINE void
@@ -371,13 +416,13 @@ blend_lighten( struct ureg_program *ureg,
                struct ureg_dst *temp,
                struct ureg_src     *constant)
 {
-   ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[0], sampler[2]);
+   ureg_TEX(ureg, temp[2], TGSI_TEXTURE_2D, in[0], sampler[2]);
    blend_generic(ureg, VG_BLEND_LIGHTEN, *out,
                  ureg_src(temp[0]),
                  ureg_src(temp[1]),
-                 ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
+                 ureg_src(temp[2]),
                  ureg_scalar(constant[3], TGSI_SWIZZLE_Y),
-                 temp + 2);
+                 temp + 3);
 }
 
 static INLINE void
@@ -488,7 +533,7 @@ static const struct shader_asm_info shaders_paint_asm[] = {
 /* image draw modes */
 static const struct shader_asm_info shaders_image_asm[] = {
    {VEGA_IMAGE_NORMAL_SHADER, image_normal,
-    VG_TRUE,  0, 0, 3, 1, 0, 0},
+    VG_TRUE,  0, 0, 3, 1, 0, 2},
    {VEGA_IMAGE_MULTIPLY_SHADER, image_multiply,
     VG_TRUE,  0, 0, 3, 1, 0, 2},
    {VEGA_IMAGE_STENCIL_SHADER, image_stencil,
@@ -497,19 +542,26 @@ static const struct shader_asm_info shaders_image_asm[] = {
 
 static const struct shader_asm_info shaders_color_transform_asm[] = {
    {VEGA_COLOR_TRANSFORM_SHADER, color_transform,
-    VG_FALSE, 0, 4, 0, 0, 0, 2}
+    VG_FALSE, 0, 4, 0, 0, 0, 3}
+};
+
+static const struct shader_asm_info shaders_alpha_asm[] = {
+   {VEGA_ALPHA_NORMAL_SHADER, alpha_normal,
+    VG_FALSE, 0, 0, 0, 0, 0, 2},
+   {VEGA_ALPHA_PER_CHANNEL_SHADER, alpha_per_channel,
+    VG_FALSE, 0, 0, 0, 0, 0, 2}
 };
 
 /* extra blend modes */
 static const struct shader_asm_info shaders_blend_asm[] = {
    {VEGA_BLEND_MULTIPLY_SHADER, blend_multiply,
-    VG_TRUE,  3, 1, 2, 1, 0, 4},
+    VG_TRUE,  3, 1, 2, 1, 0, 5},
    {VEGA_BLEND_SCREEN_SHADER, blend_screen,
-    VG_TRUE,  3, 1, 2, 1, 0, 4},
+    VG_TRUE,  3, 1, 2, 1, 0, 5},
    {VEGA_BLEND_DARKEN_SHADER, blend_darken,
-    VG_TRUE,  3, 1, 2, 1, 0, 4},
+    VG_TRUE,  3, 1, 2, 1, 0, 5},
    {VEGA_BLEND_LIGHTEN_SHADER, blend_lighten,
-    VG_TRUE,  3, 1, 2, 1, 0, 4},
+    VG_TRUE,  3, 1, 2, 1, 0, 5},
 };
 
 static const struct shader_asm_info shaders_mask_asm[] = {

@@ -209,6 +209,7 @@ static void setup_shader_program(struct shader *shader)
    VGint shader_id = 0;
    VGBlendMode blend_mode = ctx->state.vg.blend_mode;
    VGboolean black_white = is_format_bw(shader);
+   VGboolean advanced_blend;
 
    /* 1st stage: fill */
    if (!shader->drawing_image ||
@@ -257,20 +258,45 @@ static void setup_shader_program(struct shader *shader)
 
    switch(blend_mode) {
    case VG_BLEND_MULTIPLY:
-      shader_id |= VEGA_BLEND_MULTIPLY_SHADER;
-      break;
    case VG_BLEND_SCREEN:
-      shader_id |= VEGA_BLEND_SCREEN_SHADER;
-      break;
    case VG_BLEND_DARKEN:
-      shader_id |= VEGA_BLEND_DARKEN_SHADER;
-      break;
    case VG_BLEND_LIGHTEN:
-      shader_id |= VEGA_BLEND_LIGHTEN_SHADER;
+      advanced_blend = VG_TRUE;
       break;
    default:
       /* handled by pipe_blend_state */
+      advanced_blend = VG_FALSE;
       break;
+   }
+
+   if (advanced_blend) {
+      if (shader->drawing_image && shader->image_mode == VG_DRAW_IMAGE_STENCIL)
+         shader_id |= VEGA_ALPHA_PER_CHANNEL_SHADER;
+      else
+         shader_id |= VEGA_ALPHA_NORMAL_SHADER;
+
+      switch(blend_mode) {
+      case VG_BLEND_MULTIPLY:
+         shader_id |= VEGA_BLEND_MULTIPLY_SHADER;
+         break;
+      case VG_BLEND_SCREEN:
+         shader_id |= VEGA_BLEND_SCREEN_SHADER;
+         break;
+      case VG_BLEND_DARKEN:
+         shader_id |= VEGA_BLEND_DARKEN_SHADER;
+         break;
+      case VG_BLEND_LIGHTEN:
+         shader_id |= VEGA_BLEND_LIGHTEN_SHADER;
+         break;
+      default:
+         assert(0);
+         break;
+      }
+   }
+   else {
+      /* update alpha of the source */
+      if (shader->drawing_image && shader->image_mode == VG_DRAW_IMAGE_STENCIL)
+         shader_id |= VEGA_ALPHA_PER_CHANNEL_SHADER;
    }
 
    if (shader->masking)
