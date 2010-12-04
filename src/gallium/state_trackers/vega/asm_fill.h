@@ -174,38 +174,6 @@ paint_degenerate( struct ureg_program *ureg,
 }
 
 static INLINE void
-color_transform( struct ureg_program *ureg,
-                 struct ureg_dst *out,
-                 struct ureg_src *in,
-                 struct ureg_src *sampler,
-                 struct ureg_dst *temp,
-                 struct ureg_src *constant)
-{
-   ureg_MAD(ureg, temp[1], ureg_src(temp[0]), constant[0], constant[1]);
-   /* clamp to [0.0f, 1.0f] */
-   ureg_CLAMP(ureg, temp[1],
-              ureg_src(temp[1]),
-              ureg_scalar(constant[3], TGSI_SWIZZLE_X),
-              ureg_scalar(constant[3], TGSI_SWIZZLE_Y));
-   ureg_MOV(ureg, *out, ureg_src(temp[1]));
-}
-
-static INLINE void
-mask( struct ureg_program *ureg,
-      struct ureg_dst *out,
-      struct ureg_src *in,
-      struct ureg_src *sampler,
-      struct ureg_dst *temp,
-      struct ureg_src *constant)
-{
-   ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[0], sampler[1]);
-   ureg_MUL(ureg, ureg_writemask(temp[0], TGSI_WRITEMASK_W),
-            ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
-            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));
-   ureg_MOV(ureg, *out, ureg_src(temp[0]));
-}
-
-static INLINE void
 image_normal( struct ureg_program *ureg,
               struct ureg_dst *out,
               struct ureg_src *in,
@@ -240,6 +208,23 @@ image_stencil( struct ureg_program *ureg,
 {
    ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[1], sampler[3]);
    ureg_MUL(ureg, *out, ureg_src(temp[0]), ureg_src(temp[1]));
+}
+
+static INLINE void
+color_transform( struct ureg_program *ureg,
+                 struct ureg_dst *out,
+                 struct ureg_src *in,
+                 struct ureg_src *sampler,
+                 struct ureg_dst *temp,
+                 struct ureg_src *constant)
+{
+   ureg_MAD(ureg, temp[1], ureg_src(temp[0]), constant[0], constant[1]);
+   /* clamp to [0.0f, 1.0f] */
+   ureg_CLAMP(ureg, temp[1],
+              ureg_src(temp[1]),
+              ureg_scalar(constant[3], TGSI_SWIZZLE_X),
+              ureg_scalar(constant[3], TGSI_SWIZZLE_Y));
+   ureg_MOV(ureg, *out, ureg_src(temp[1]));
 }
 
 /**
@@ -396,6 +381,21 @@ blend_lighten( struct ureg_program *ureg,
 }
 
 static INLINE void
+mask( struct ureg_program *ureg,
+      struct ureg_dst *out,
+      struct ureg_src *in,
+      struct ureg_src *sampler,
+      struct ureg_dst *temp,
+      struct ureg_src *constant)
+{
+   ureg_TEX(ureg, temp[1], TGSI_TEXTURE_2D, in[0], sampler[1]);
+   ureg_MUL(ureg, ureg_writemask(temp[0], TGSI_WRITEMASK_W),
+            ureg_scalar(ureg_src(temp[0]), TGSI_SWIZZLE_W),
+            ureg_scalar(ureg_src(temp[1]), TGSI_SWIZZLE_W));
+   ureg_MOV(ureg, *out, ureg_src(temp[0]));
+}
+
+static INLINE void
 premultiply( struct ureg_program *ureg,
                 struct ureg_dst *out,
                 struct ureg_src *in,
@@ -500,11 +500,6 @@ static const struct shader_asm_info shaders_color_transform_asm[] = {
     VG_FALSE, 0, 4, 0, 0, 0, 2}
 };
 
-static const struct shader_asm_info shaders_mask_asm[] = {
-   {VEGA_MASK_SHADER, mask,
-    VG_TRUE,  0, 0, 1, 1, 0, 2}
-};
-
 /* extra blend modes */
 static const struct shader_asm_info shaders_blend_asm[] = {
    {VEGA_BLEND_MULTIPLY_SHADER, blend_multiply,
@@ -515,6 +510,11 @@ static const struct shader_asm_info shaders_blend_asm[] = {
     VG_TRUE,  3, 1, 2, 1, 0, 4},
    {VEGA_BLEND_LIGHTEN_SHADER, blend_lighten,
     VG_TRUE,  3, 1, 2, 1, 0, 4},
+};
+
+static const struct shader_asm_info shaders_mask_asm[] = {
+   {VEGA_MASK_SHADER, mask,
+    VG_TRUE,  0, 0, 1, 1, 0, 2}
 };
 
 /* premultiply */

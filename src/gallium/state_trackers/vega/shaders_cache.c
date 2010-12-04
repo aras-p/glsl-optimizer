@@ -53,8 +53,8 @@
  * 1) Paint generation (color/gradient/pattern)
  * 2) Image composition (normal/multiply/stencil)
  * 3) Color transform
- * 4) Mask
- * 5) Extended blend (multiply/screen/darken/lighten)
+ * 4) Extended blend (multiply/screen/darken/lighten)
+ * 5) Mask
  * 6) Premultiply/Unpremultiply
  * 7) Color transform (to black and white)
  */
@@ -301,10 +301,13 @@ create_shader(struct pipe_context *pipe,
    }
 
    /* fourth stage */
-   sh = SHADERS_GET_MASK_SHADER(id);
+   sh = SHADERS_GET_BLEND_SHADER(id);
    switch (sh) {
-   case VEGA_MASK_SHADER:
-      shaders[idx] = &shaders_mask_asm[(sh >> SHADERS_MASK_SHIFT) - 1];
+   case VEGA_BLEND_MULTIPLY_SHADER:
+   case VEGA_BLEND_SCREEN_SHADER:
+   case VEGA_BLEND_DARKEN_SHADER:
+   case VEGA_BLEND_LIGHTEN_SHADER:
+      shaders[idx] = &shaders_blend_asm[(sh >> SHADERS_BLEND_SHIFT) - 1];
       assert(shaders[idx]->id == sh);
       idx++;
       break;
@@ -313,13 +316,10 @@ create_shader(struct pipe_context *pipe,
    }
 
    /* fifth stage */
-   sh = SHADERS_GET_BLEND_SHADER(id);
+   sh = SHADERS_GET_MASK_SHADER(id);
    switch (sh) {
-   case VEGA_BLEND_MULTIPLY_SHADER:
-   case VEGA_BLEND_SCREEN_SHADER:
-   case VEGA_BLEND_DARKEN_SHADER:
-   case VEGA_BLEND_LIGHTEN_SHADER:
-      shaders[idx] = &shaders_blend_asm[(sh >> SHADERS_BLEND_SHIFT) - 1];
+   case VEGA_MASK_SHADER:
+      shaders[idx] = &shaders_mask_asm[(sh >> SHADERS_MASK_SHIFT) - 1];
       assert(shaders[idx]->id == sh);
       idx++;
       break;

@@ -255,9 +255,6 @@ static void setup_shader_program(struct shader *shader)
    if (shader->color_transform)
       shader_id |= VEGA_COLOR_TRANSFORM_SHADER;
 
-   if (shader->masking)
-      shader_id |= VEGA_MASK_SHADER;
-
    switch(blend_mode) {
    case VG_BLEND_MULTIPLY:
       shader_id |= VEGA_BLEND_MULTIPLY_SHADER;
@@ -275,6 +272,9 @@ static void setup_shader_program(struct shader *shader)
       /* handled by pipe_blend_state */
       break;
    }
+
+   if (shader->masking)
+      shader_id |= VEGA_MASK_SHADER;
 
    if (black_white)
       shader_id |= VEGA_BW_SHADER;
