@@ -52,7 +52,7 @@
 #define UPDATE_STATE(cso, atom) \
     if (cso != atom.state) { \
         atom.state = cso;    \
-        atom.dirty = TRUE;   \
+        r300_mark_atom_dirty(r300, &(atom));   \
     }
 
 static boolean blend_discard_if_src_alpha_0(unsigned srcRGB, unsigned srcA,
@@ -417,7 +417,7 @@ static void r300_set_blend_color(struct pipe_context* pipe,
         END_CB;
     }
 
-    r300->blend_color_state.dirty = TRUE;
+    r300_mark_atom_dirty(r300, &r300->blend_color_state);
 }
 
 static void r300_set_clip_state(struct pipe_context* pipe,
@@ -446,7 +446,7 @@ static void r300_set_clip_state(struct pipe_context* pipe,
                 (state->depth_clamp ? R300_CLIP_DISABLE : 0));
         END_CB;
 
-        r300->clip_state.dirty = TRUE;
+        r300_mark_atom_dirty(r300, &r300->clip_state);
     } else {
         draw_set_clip_state(r300->draw, state);
     }
@@ -594,7 +594,7 @@ static void r300_bind_dsa_state(struct pipe_context* pipe,
 
     UPDATE_STATE(state, r300->dsa_state);
 
-    r300->hyperz_state.dirty = TRUE; /* Will be updated before the emission. */
+    r300_mark_atom_dirty(r300, &r300->hyperz_state); /* Will be updated before the emission. */
     r300_dsa_inject_stencilref(r300);
 }
 
@@ -613,7 +613,7 @@ static void r300_set_stencil_ref(struct pipe_context* pipe,
     r300->stencil_ref = *sr;
 
     r300_dsa_inject_stencilref(r300);
-    r300->dsa_state.dirty = TRUE;
+    r300_mark_atom_dirty(r300, &r300->dsa_state);
 }
 
 static void r300_tex_set_tiling_flags(struct r300_context *r300,
@@ -687,13 +687,13 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
     boolean can_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
 
     /* What is marked as dirty depends on the enum r300_fb_state_change. */
-    r300->gpu_flush.dirty = TRUE;
-    r300->fb_state.dirty = TRUE;
-    r300->hyperz_state.dirty = TRUE;
+    r300_mark_atom_dirty(r300, &r300->gpu_flush);
+    r300_mark_atom_dirty(r300, &r300->fb_state);
+    r300_mark_atom_dirty(r300, &r300->hyperz_state);
 
     if (change == R300_CHANGED_FB_STATE) {
-        r300->aa_state.dirty = TRUE;
-        r300->fb_state_pipelined.dirty = TRUE;
+        r300_mark_atom_dirty(r300, &r300->aa_state);
+        r300_mark_atom_dirty(r300, &r300->fb_state_pipelined);
     }
 
     /* Now compute the fb_state atom size. */
@@ -738,11 +738,11 @@ static void
 
     /* If nr_cbufs is changed from zero to non-zero or vice versa... */
     if (!!old_state->nr_cbufs != !!state->nr_cbufs) {
-        r300->blend_state.dirty = TRUE;
+        r300_mark_atom_dirty(r300, &r300->blend_state);
     }
     /* If zsbuf is set from NULL to non-NULL or vice versa.. */
     if (!!old_state->zsbuf != !!state->zsbuf) {
-        r300->dsa_state.dirty = TRUE;
+        r300_mark_atom_dirty(r300, &r300->dsa_state);
     }
 
     /* The tiling flags are dependent on the surface miplevel, unfortunately. */
@@ -795,7 +795,7 @@ static void
             r300->zbuffer_bpp = zbuffer_bpp;
 
             if (r300->polygon_offset_enabled)
-                r300->rs_state.dirty = TRUE;
+                r300_mark_atom_dirty(r300, &r300->rs_state);
         }
     }
 
@@ -853,9 +853,9 @@ void r300_mark_fs_code_dirty(struct r300_context *r300)
 {
     struct r300_fragment_shader* fs = r300_fs(r300);
 
-    r300->fs.dirty = TRUE;
-    r300->fs_rc_constant_state.dirty = TRUE;
-    r300->fs_constants.dirty = TRUE;
+    r300_mark_atom_dirty(r300, &r300->fs);
+    r300_mark_atom_dirty(r300, &r300->fs_rc_constant_state);
+    r300_mark_atom_dirty(r300, &r300->fs_constants);
     r300->fs.size = fs->shader->cb_code_size;
 
     if (r300->screen->caps.is_r500) {
@@ -885,7 +885,7 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
     r300_pick_fragment_shader(r300);
     r300_mark_fs_code_dirty(r300);
 
-    r300->rs_block_state.dirty = TRUE; /* Will be updated before the emission. */
+    r300_mark_atom_dirty(r300, &r300->rs_block_state); /* Will be updated before the emission. */
 }
 
 /* Delete fragment shader state. */
@@ -1137,7 +1137,7 @@ static void r300_bind_rs_state(struct pipe_context* pipe, void* state)
 
     if (last_sprite_coord_enable != r300->sprite_coord_enable ||
         last_two_sided_color != r300->two_sided_color) {
-        r300->rs_block_state.dirty = TRUE;
+        r300_mark_atom_dirty(r300, &r300->rs_block_state);
     }
 }
 
@@ -1235,7 +1235,7 @@ static void r300_bind_sampler_states(struct pipe_context* pipe,
     memcpy(state->sampler_states, states, sizeof(void*) * count);
     state->sampler_state_count = count;
 
-    r300->textures_state.dirty = TRUE;
+    r300_mark_atom_dirty(r300, &r300->textures_state);
 }
 
 static void r300_lacks_vertex_textures(struct pipe_context* pipe,
@@ -1313,7 +1313,7 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
              * Needed for RECT and NPOT fallback. */
             texture = r300_texture(views[i]->texture);
             if (texture->desc.is_npot) {
-                r300->fs_rc_constant_state.dirty = TRUE;
+                r300_mark_atom_dirty(r300, &r300->fs_rc_constant_state);
             }
 
             state->sampler_views[i]->texcache_region =
@@ -1332,10 +1332,10 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
 
     state->sampler_view_count = count;
 
-    r300->textures_state.dirty = TRUE;
+    r300_mark_atom_dirty(r300, &r300->textures_state);
 
     if (dirty_tex) {
-        r300->texture_cache_inval.dirty = TRUE;
+        r300_mark_atom_dirty(r300, &r300->texture_cache_inval);
     }
 }
 
@@ -1390,7 +1390,7 @@ static void r300_set_scissor_state(struct pipe_context* pipe,
     memcpy(r300->scissor_state.state, state,
         sizeof(struct pipe_scissor_state));
 
-    r300->scissor_state.dirty = TRUE;
+    r300_mark_atom_dirty(r300, &r300->scissor_state);
 }
 
 static void r300_set_viewport_state(struct pipe_context* pipe,
@@ -1436,9 +1436,9 @@ static void r300_set_viewport_state(struct pipe_context* pipe,
         viewport->vte_control |= R300_VPORT_Z_OFFSET_ENA;
     }
 
-    r300->viewport_state.dirty = TRUE;
+    r300_mark_atom_dirty(r300, &r300->viewport_state);
     if (r300->fs.state && r300_fs(r300)->shader->inputs.wpos != ATTR_UNUSED) {
-        r300->fs_rc_constant_state.dirty = TRUE;
+        r300_mark_atom_dirty(r300, &r300->fs_rc_constant_state);
     }
 }
 
@@ -1758,16 +1758,16 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
     r300->vs_state.state = vs;
 
     /* The majority of the RS block bits is dependent on the vertex shader. */
-    r300->rs_block_state.dirty = TRUE; /* Will be updated before the emission. */
+    r300_mark_atom_dirty(r300, &r300->rs_block_state); /* Will be updated before the emission. */
 
     if (r300->screen->caps.has_tcl) {
         unsigned fc_op_dwords = r300->screen->caps.is_r500 ? 3 : 2;
-        r300->vs_state.dirty = TRUE;
+        r300_mark_atom_dirty(r300, &r300->vs_state);
         r300->vs_state.size =
                 vs->code.length + 9 +
         (vs->code.num_fc_ops ? vs->code.num_fc_ops * fc_op_dwords + 4 : 0);
 
-        r300->vs_constants.dirty = TRUE;
+        r300_mark_atom_dirty(r300, &r300->vs_constants);
         r300->vs_constants.size =
                 2 +
                 (vs->externals_count ? vs->externals_count * 4 + 3 : 0) +
@@ -1776,7 +1776,7 @@ static void r300_bind_vs_state(struct pipe_context* pipe, void* shader)
         ((struct r300_constant_buffer*)r300->vs_constants.state)->remap_table =
                 vs->code.constants_remap_table;
 
-        r300->pvs_flush.dirty = TRUE;
+        r300_mark_atom_dirty(r300, &r300->pvs_flush);
     } else {
         draw_bind_vertex_shader(r300->draw,
                 (struct draw_vertex_shader*)vs->draw_vs);
@@ -1846,15 +1846,15 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
             if (r300->vs_const_base > R500_MAX_PVS_CONST_VECS) {
                 r300->vs_const_base = vs->code.constants.Count;
                 cbuf->buffer_base = 0;
-                r300->pvs_flush.dirty = TRUE;
+                r300_mark_atom_dirty(r300, &r300->pvs_flush);
             }
-            r300->vs_constants.dirty = TRUE;
+            r300_mark_atom_dirty(r300, &r300->vs_constants);
         } else if (r300->draw) {
             draw_set_mapped_constant_buffer(r300->draw, PIPE_SHADER_VERTEX,
                 0, mapped, buf->width0);
         }
     } else if (shader == PIPE_SHADER_FRAGMENT) {
-        r300->fs_constants.dirty = TRUE;
+        r300_mark_atom_dirty(r300, &r300->fs_constants);
     }
 }
 

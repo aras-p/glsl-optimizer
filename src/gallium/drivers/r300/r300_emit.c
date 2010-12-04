@@ -1240,7 +1240,7 @@ unsigned r300_get_num_dirty_dwords(struct r300_context *r300)
     struct r300_atom* atom;
     unsigned dwords = 0;
 
-    foreach(atom, &r300->atom_list) {
+    foreach_dirty_atom(r300, atom) {
         if (atom->dirty) {
             dwords += atom->size;
         }
@@ -1268,17 +1268,16 @@ unsigned r300_get_num_cs_end_dwords(struct r300_context *r300)
 /* Emit all dirty state. */
 void r300_emit_dirty_state(struct r300_context* r300)
 {
-    struct r300_atom* atom;
+    struct r300_atom *atom;
 
-    foreach(atom, &r300->atom_list) {
+    foreach_dirty_atom(r300, atom) {
         if (atom->dirty) {
             atom->emit(r300, atom->size, atom->state);
-            if (SCREEN_DBG_ON(r300->screen, DBG_STATS)) {
-                atom->counter++;
-            }
             atom->dirty = FALSE;
         }
     }
 
+    r300->first_dirty = NULL;
+    r300->last_dirty = NULL;
     r300->dirty_hw++;
 }

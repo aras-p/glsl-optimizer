@@ -100,22 +100,11 @@ static void r300_release_referenced_objects(struct r300_context *r300)
 static void r300_destroy_context(struct pipe_context* context)
 {
     struct r300_context* r300 = r300_context(context);
-    struct r300_atom *atom;
 
     if (r300->blitter)
         util_blitter_destroy(r300->blitter);
     if (r300->draw)
         draw_destroy(r300->draw);
-
-    /* Print stats, if enabled. */
-    if (SCREEN_DBG_ON(r300->screen, DBG_STATS)) {
-        fprintf(stderr, "r300: Stats for context %p:\n", r300);
-        fprintf(stderr, "    : Flushes: %" PRIu64 "\n", r300->flush_counter);
-        foreach(atom, &r300->atom_list) {
-            fprintf(stderr, "    : %s: %" PRIu64 " emits\n",
-                atom->name, atom->counter);
-        }
-    }
 
     if (r300->upload_vb)
         u_upload_destroy(r300->upload_vb);
@@ -177,7 +166,6 @@ void r300_flush_cb(void *data)
     r300->atomname.size = atomsize; \
     r300->atomname.emit = r300_emit_##atomname; \
     r300->atomname.dirty = FALSE; \
-    insert_at_tail(&r300->atom_list, &r300->atomname); \
  } while (0)
 
 #define R300_ALLOC_ATOM(atomname, statetype) \
@@ -199,9 +187,6 @@ static boolean r300_setup_atoms(struct r300_context* r300)
 
     /* Create the actual atom list.
      *
-     * Each atom is examined and emitted in the order it appears here, which
-     * can affect performance and conformance if not handled with care.
-     *
      * Some atoms never change size, others change every emit - those have
      * the size of 0 here.
      *
@@ -213,7 +198,6 @@ static boolean r300_setup_atoms(struct r300_context* r300)
      * - fb_state_pipelined (pipelined regs)
      * The motivation behind this is to be able to emit a strict
      * subset of the regs, and to have reasonable register ordering. */
-    make_empty_list(&r300->atom_list);
     /* SC, GB (unpipelined), RB3D (unpipelined), ZB (unpipelined). */
     R300_INIT_ATOM(gpu_flush, 9);
     R300_INIT_ATOM(aa_state, 4);
@@ -296,11 +280,11 @@ static boolean r300_setup_atoms(struct r300_context* r300)
 
     /* Some states must be marked as dirty here to properly set up
      * hardware in the first command stream. */
-    r300->invariant_state.dirty = TRUE;
-    r300->pvs_flush.dirty = TRUE;
-    r300->vap_invariant_state.dirty = TRUE;
-    r300->texture_cache_inval.dirty = TRUE;
-    r300->textures_state.dirty = TRUE;
+    r300_mark_atom_dirty(r300, &r300->invariant_state);
+    r300_mark_atom_dirty(r300, &r300->pvs_flush);
+    r300_mark_atom_dirty(r300, &r300->vap_invariant_state);
+    r300_mark_atom_dirty(r300, &r300->texture_cache_inval);
+    r300_mark_atom_dirty(r300, &r300->textures_state);
 
     return TRUE;
 }

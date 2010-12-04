@@ -282,7 +282,7 @@ static void r300_update_ztop(struct r300_context* r300)
         ztop_state->z_buffer_top = R300_ZTOP_ENABLE;
     }
     if (ztop_state->z_buffer_top != old_ztop)
-        r300->ztop_state.dirty = TRUE;
+        r300_mark_atom_dirty(r300, &r300->ztop_state);
 }
 
 #define ALIGN_DIVUP(x, y) (((x) + (y) - 1) / (y))

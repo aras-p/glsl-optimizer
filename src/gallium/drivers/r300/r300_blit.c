@@ -187,11 +187,11 @@ static void r300_clear(struct pipe_context* pipe,
 
         r300_mark_fb_state_dirty(r300, R300_CHANGED_ZCLEAR_FLAG);
         if (zstex->zmask_mem[fb->zsbuf->u.tex.level]) {
-            r300->zmask_clear.dirty = TRUE;
+            r300_mark_atom_dirty(r300, &r300->zmask_clear);
             buffers &= ~PIPE_CLEAR_DEPTHSTENCIL;
         }
         if (zstex->hiz_mem[fb->zsbuf->u.tex.level])
-            r300->hiz_clear.dirty = TRUE;
+            r300_mark_atom_dirty(r300, &r300->hiz_clear);
     }
 
     /* Enable CBZB clear. */
@@ -261,7 +261,7 @@ static void r300_clear(struct pipe_context* pipe,
     if (zstex &&
         (zstex->zmask_in_use[fb->zsbuf->u.tex.level] ||
          zstex->hiz_in_use[fb->zsbuf->u.tex.level])) {
-        r300->hyperz_state.dirty = TRUE;
+        r300_mark_atom_dirty(r300, &r300->hyperz_state);
     }
 }
 

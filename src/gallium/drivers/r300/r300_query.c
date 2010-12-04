@@ -80,7 +80,7 @@ void r300_resume_query(struct r300_context *r300,
                        struct r300_query *query)
 {
     r300->query_current = query;
-    r300->query_start.dirty = TRUE;
+    r300_mark_atom_dirty(r300, &r300->query_start);
 }
 
 static void r300_begin_query(struct pipe_context* pipe,

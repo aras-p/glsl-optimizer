@@ -1136,9 +1136,9 @@ static void r300_blitter_draw_rectangle(struct blitter_context *blitter,
 
 done:
     /* Restore the state. */
-    r300->clip_state.dirty = TRUE;
-    r300->rs_state.dirty = TRUE;
-    r300->viewport_state.dirty = TRUE;
+    r300_mark_atom_dirty(r300, &r300->clip_state);
+    r300_mark_atom_dirty(r300, &r300->rs_state);
+    r300_mark_atom_dirty(r300, &r300->viewport_state);
 
     r300->sprite_coord_enable = last_sprite_coord_enable;
 }
@@ -1174,7 +1174,7 @@ static void r300_resource_resolve(struct pipe_context* pipe,
         R300_RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE |
         R300_RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_AVERAGE;
     r300->aa_state.size = 12;
-    r300->aa_state.dirty = TRUE;
+    r300_mark_atom_dirty(r300, &r300->aa_state);
 
     /* Resolve the surface. */
     r300->context.clear_render_target(pipe,
@@ -1183,7 +1183,7 @@ static void r300_resource_resolve(struct pipe_context* pipe,
     /* Disable AA resolve. */
     aa->aaresolve_ctl = 0;
     r300->aa_state.size = 4;
-    r300->aa_state.dirty = TRUE;
+    r300_mark_atom_dirty(r300, &r300->aa_state);
 
     pipe_surface_reference((struct pipe_surface**)&srcsurf, NULL);
     pipe_surface_reference((struct pipe_surface**)&aa->dest, NULL);

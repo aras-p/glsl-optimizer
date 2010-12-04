@@ -101,7 +101,6 @@ r300_winsys_screen(struct pipe_screen *screen) {
 #define DBG_NO_OPT      (1 << 20)
 #define DBG_NO_CBZB     (1 << 21)
 /* Statistics. */
-#define DBG_STATS       (1 << 24)
 #define DBG_P_STAT      (1 << 25)
 /*@}*/
 

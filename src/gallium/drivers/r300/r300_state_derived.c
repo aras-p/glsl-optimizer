@@ -193,7 +193,7 @@ static void r300_swtcl_vertex_psc(struct r300_context *r300)
         (R300_LAST_VEC << (i & 1 ? 16 : 0));
 
     vstream->count = (i >> 1) + 1;
-    r300->vertex_stream_state.dirty = TRUE;
+    r300_mark_atom_dirty(r300, &r300->vertex_stream_state);
     r300->vertex_stream_state.size = (1 + vstream->count) * 2;
 }
 
