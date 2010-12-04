@@ -39,6 +39,7 @@
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 #include "util/u_math.h"
+#include "util/u_format.h"
 
 #define MAX_CONSTANTS 28
 
@@ -133,10 +134,16 @@ static VGboolean blend_use_shader(struct vg_context *ctx)
    VGboolean advanced_blending;
 
    switch (ctx->state.vg.blend_mode) {
+   case VG_BLEND_SRC_OVER:
+      advanced_blending =
+         util_format_has_alpha(ctx->draw_buffer->strb->format);
+      break;
+   case VG_BLEND_DST_OVER:
    case VG_BLEND_MULTIPLY:
    case VG_BLEND_SCREEN:
    case VG_BLEND_DARKEN:
    case VG_BLEND_LIGHTEN:
+   case VG_BLEND_ADDITIVE:
       advanced_blending = VG_TRUE;
       break;
    default:

@@ -400,6 +400,10 @@ void vg_validate_state(struct vg_context *ctx)
    if (vg_context_update_depth_stencil_rb(ctx, stfb->width, stfb->height))
       ctx->state.dirty |= DEPTH_STENCIL_DIRTY;
 
+   /* blend state depends on fb format */
+   if (ctx->state.dirty & FRAMEBUFFER_DIRTY)
+      ctx->state.dirty |= BLEND_DIRTY;
+
    renderer_validate(ctx->renderer, ctx->state.dirty,
          ctx->draw_buffer, &ctx->state.vg);
 

@@ -42,6 +42,7 @@
 #include "util/u_sampler.h"
 #include "util/u_surface.h"
 #include "util/u_math.h"
+#include "util/u_format.h"
 
 #include "cso_cache/cso_context.h"
 #include "tgsi/tgsi_ureg.h"
@@ -1266,6 +1267,67 @@ static void update_clip_state(struct renderer *renderer,
    }
 }
 
+static void renderer_validate_blend(struct renderer *renderer,
+                                     const struct vg_state *state,
+                                     enum pipe_format fb_format)
+{
+   struct pipe_blend_state blend;
+
+   memset(&blend, 0, sizeof(blend));
+   blend.rt[0].colormask = PIPE_MASK_RGBA;
+   blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
+   blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+
+   /* TODO alpha masking happens after blending? */
+
+   switch (state->blend_mode) {
+   case VG_BLEND_SRC:
+      blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
+      blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+      blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
+      blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+      break;
+   case VG_BLEND_SRC_OVER:
+      if (!util_format_has_alpha(fb_format)) {
+         blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_SRC_ALPHA;
+         blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+         blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
+         blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
+         blend.rt[0].blend_enable = 1;
+      }
+      break;
+   case VG_BLEND_SRC_IN:
+      blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
+      blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_DST_ALPHA;
+      blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
+      blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
+      blend.rt[0].blend_enable = 1;
+      break;
+   case VG_BLEND_DST_IN:
+      blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ZERO;
+      blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ZERO;
+      blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ONE;
+      blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_SRC_ALPHA;
+      blend.rt[0].blend_enable = 1;
+      break;
+   case VG_BLEND_DST_OVER:
+   case VG_BLEND_MULTIPLY:
+   case VG_BLEND_SCREEN:
+   case VG_BLEND_DARKEN:
+   case VG_BLEND_LIGHTEN:
+   case VG_BLEND_ADDITIVE:
+      /* need a shader */
+      break;
+   default:
+      assert(!"not implemented blend mode");
+      break;
+   }
+
+   cso_set_blend(renderer->cso, &blend);
+}
+
 /**
  * Propogate OpenVG state changes to the renderer.  Only framebuffer, blending
  * and scissoring states are relevant here.
@@ -1279,66 +1341,6 @@ void renderer_validate(struct renderer *renderer,
 
    dirty |= renderer->dirty;
    renderer->dirty = 0;
-
-   if (dirty & BLEND_DIRTY) {
-      struct pipe_blend_state blend;
-      memset(&blend, 0, sizeof(blend));
-      blend.rt[0].blend_enable = 1;
-      blend.rt[0].colormask = PIPE_MASK_RGBA;
-
-      switch (state->blend_mode) {
-      case VG_BLEND_SRC:
-         blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
-         blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
-         blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-         blend.rt[0].blend_enable = 0;
-         break;
-      case VG_BLEND_SRC_OVER:
-         blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_SRC_ALPHA;
-         blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
-         blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
-         break;
-      case VG_BLEND_DST_OVER:
-         blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_INV_DST_ALPHA;
-         blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_INV_DST_ALPHA;
-         blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_DST_ALPHA;
-         blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_DST_ALPHA;
-         break;
-      case VG_BLEND_SRC_IN:
-         blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_DST_ALPHA;
-         blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_DST_ALPHA;
-         blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
-         blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-         break;
-      case VG_BLEND_DST_IN:
-         blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ZERO;
-         blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ZERO;
-         blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_SRC_ALPHA;
-         blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_SRC_ALPHA;
-         break;
-      case VG_BLEND_MULTIPLY:
-      case VG_BLEND_SCREEN:
-      case VG_BLEND_DARKEN:
-      case VG_BLEND_LIGHTEN:
-         blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
-         blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
-         blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-         blend.rt[0].blend_enable = 0;
-         break;
-      case VG_BLEND_ADDITIVE:
-         blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
-         blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ONE;
-         blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
-         break;
-      default:
-         assert(!"not implemented blend mode");
-      }
-      cso_set_blend(renderer->cso, &blend);
-   }
 
    if (dirty & FRAMEBUFFER_DIRTY) {
       struct pipe_framebuffer_state *fb = &renderer->g3d.fb;
@@ -1370,6 +1372,9 @@ void renderer_validate(struct renderer *renderer,
       update_clip_state(renderer, state);
       cso_set_depth_stencil_alpha(renderer->cso, &renderer->g3d.dsa);
    }
+
+   if (dirty & BLEND_DIRTY)
+      renderer_validate_blend(renderer, state, stfb->strb->format);
 }
 
 /**
