@@ -88,6 +88,7 @@ upload_wm_state(struct brw_context *brw)
       brw_fragment_program_const(brw->fragment_program);
    uint32_t dw2, dw4, dw5, dw6;
 
+   /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->nr_params == 0) {
       /* Disable the push constant buffers. */
       BEGIN_BATCH(5);
@@ -182,7 +183,8 @@ const struct brw_tracked_state gen6_wm_state = {
                 BRW_NEW_NR_WM_SURFACES |
 		BRW_NEW_URB_FENCE |
 		BRW_NEW_BATCH),
-      .cache = CACHE_NEW_SAMPLER
+      .cache = (CACHE_NEW_SAMPLER |
+		CACHE_NEW_WM_PROG)
    },
    .emit = upload_wm_state,
 };
