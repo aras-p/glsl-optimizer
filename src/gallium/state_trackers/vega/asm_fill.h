@@ -273,21 +273,71 @@ alpha_per_channel( struct ureg_program *ureg,
 }
 
 /**
- * Emit instructions for the specified blend mode.  Colors should be
- * premultiplied.  Two temporary registers are required.
+ * Premultiply src and dst.
+ */
+static INLINE void
+blend_premultiply( struct ureg_program *ureg,
+                   struct ureg_src src,
+                   struct ureg_src src_channel_alpha,
+                   struct ureg_src dst)
+{
+   /* premultiply src */
+   ureg_MUL(ureg,
+            ureg_writemask(ureg_dst(src), TGSI_WRITEMASK_XYZ),
+            src,
+            src_channel_alpha);
+   /* premultiply dst */
+   ureg_MUL(ureg,
+            ureg_writemask(ureg_dst(dst), TGSI_WRITEMASK_XYZ),
+            dst,
+            ureg_scalar(dst, TGSI_SWIZZLE_W));
+}
+
+/**
+ * Unpremultiply src.
+ */
+static INLINE void
+blend_unpremultiply( struct ureg_program *ureg,
+                     struct ureg_src src,
+                     struct ureg_src one,
+                     struct ureg_dst temp[1])
+{
+   /* replace 0.0f by 1.0f before calculating reciprocal */
+   ureg_CMP(ureg,
+            temp[0],
+            ureg_negate(ureg_scalar(src, TGSI_SWIZZLE_W)),
+            ureg_scalar(src, TGSI_SWIZZLE_W),
+            one);
+   ureg_RCP(ureg, temp[0], ureg_src(temp[0]));
+
+   ureg_MUL(ureg,
+            ureg_writemask(ureg_dst(src), TGSI_WRITEMASK_XYZ),
+            src,
+            ureg_src(temp[0]));
+}
+
+/**
+ * Emit instructions for the specified blend mode.  Colors will be
+ * unpremultiplied.  Two temporary registers are required.
  *
- * XXX callers do not pass premultiplied colors!
+ * The output is written back to src.
  */
 static INLINE void
 blend_generic(struct ureg_program *ureg,
               VGBlendMode mode,
-              struct ureg_dst out,
               struct ureg_src src,
               struct ureg_src src_channel_alpha,
               struct ureg_src dst,
               struct ureg_src one,
               struct ureg_dst temp[2])
 {
+   struct ureg_dst out;
+
+   blend_premultiply(ureg, src, src_channel_alpha, dst);
+
+   /* blend in-place */
+   out = ureg_dst(src);
+
    switch (mode) {
    case VG_BLEND_SRC:
       ureg_MOV(ureg, out, src);
@@ -355,6 +405,8 @@ blend_generic(struct ureg_program *ureg,
       assert(0);
       break;
    }
+
+   blend_unpremultiply(ureg, src, one, temp);
 }
 
 static INLINE void
@@ -366,12 +418,15 @@ blend_multiply( struct ureg_program *ureg,
                 struct ureg_src *constant)
 {
    ureg_TEX(ureg, temp[2], TGSI_TEXTURE_2D, in[0], sampler[2]);
-   blend_generic(ureg, VG_BLEND_MULTIPLY, *out,
+
+   blend_generic(ureg, VG_BLEND_MULTIPLY,
                  ureg_src(temp[0]),
                  ureg_src(temp[1]),
                  ureg_src(temp[2]),
                  ureg_scalar(constant[3], TGSI_SWIZZLE_Y),
                  temp + 3);
+
+   ureg_MOV(ureg, *out, ureg_src(temp[0]));
 }
 
 static INLINE void
@@ -383,12 +438,15 @@ blend_screen( struct ureg_program *ureg,
               struct ureg_src     *constant)
 {
    ureg_TEX(ureg, temp[2], TGSI_TEXTURE_2D, in[0], sampler[2]);
-   blend_generic(ureg, VG_BLEND_SCREEN, *out,
+
+   blend_generic(ureg, VG_BLEND_SCREEN,
                  ureg_src(temp[0]),
                  ureg_src(temp[1]),
                  ureg_src(temp[2]),
                  ureg_scalar(constant[3], TGSI_SWIZZLE_Y),
                  temp + 3);
+
+   ureg_MOV(ureg, *out, ureg_src(temp[0]));
 }
 
 static INLINE void
@@ -400,12 +458,15 @@ blend_darken( struct ureg_program *ureg,
               struct ureg_src     *constant)
 {
    ureg_TEX(ureg, temp[2], TGSI_TEXTURE_2D, in[0], sampler[2]);
-   blend_generic(ureg, VG_BLEND_DARKEN, *out,
+
+   blend_generic(ureg, VG_BLEND_DARKEN,
                  ureg_src(temp[0]),
                  ureg_src(temp[1]),
                  ureg_src(temp[2]),
                  ureg_scalar(constant[3], TGSI_SWIZZLE_Y),
                  temp + 3);
+
+   ureg_MOV(ureg, *out, ureg_src(temp[0]));
 }
 
 static INLINE void
@@ -417,12 +478,15 @@ blend_lighten( struct ureg_program *ureg,
                struct ureg_src     *constant)
 {
    ureg_TEX(ureg, temp[2], TGSI_TEXTURE_2D, in[0], sampler[2]);
-   blend_generic(ureg, VG_BLEND_LIGHTEN, *out,
+
+   blend_generic(ureg, VG_BLEND_LIGHTEN,
                  ureg_src(temp[0]),
                  ureg_src(temp[1]),
                  ureg_src(temp[2]),
                  ureg_scalar(constant[3], TGSI_SWIZZLE_Y),
                  temp + 3);
+
+   ureg_MOV(ureg, *out, ureg_src(temp[0]));
 }
 
 static INLINE void
