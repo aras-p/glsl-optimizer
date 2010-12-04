@@ -318,10 +318,16 @@ create_shader(struct pipe_context *pipe,
    /* fifth stage */
    sh = SHADERS_GET_BLEND_SHADER(id);
    switch (sh) {
+   case VEGA_BLEND_SRC_SHADER:
+   case VEGA_BLEND_SRC_OVER_SHADER:
+   case VEGA_BLEND_DST_OVER_SHADER:
+   case VEGA_BLEND_SRC_IN_SHADER:
+   case VEGA_BLEND_DST_IN_SHADER:
    case VEGA_BLEND_MULTIPLY_SHADER:
    case VEGA_BLEND_SCREEN_SHADER:
    case VEGA_BLEND_DARKEN_SHADER:
    case VEGA_BLEND_LIGHTEN_SHADER:
+   case VEGA_BLEND_ADDITIVE_SHADER:
       shaders[idx] = &shaders_blend_asm[(sh >> SHADERS_BLEND_SHIFT) - 1];
       assert(shaders[idx]->id == sh);
       idx++;

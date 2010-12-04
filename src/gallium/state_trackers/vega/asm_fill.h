@@ -409,6 +409,70 @@ blend_generic(struct ureg_program *ureg,
    blend_unpremultiply(ureg, src, one, temp);
 }
 
+#define BLEND_GENERIC(mode) \
+   do { \
+      ureg_TEX(ureg, temp[2], TGSI_TEXTURE_2D, in[0], sampler[2]);         \
+      blend_generic(ureg, (mode), ureg_src(temp[0]), ureg_src(temp[1]),    \
+                    ureg_src(temp[2]),                                     \
+                    ureg_scalar(constant[3], TGSI_SWIZZLE_Y), temp + 3);   \
+      ureg_MOV(ureg, *out, ureg_src(temp[0]));                             \
+   } while (0)
+
+static INLINE void
+blend_src( struct ureg_program *ureg,
+           struct ureg_dst *out,
+           struct ureg_src *in,
+           struct ureg_src *sampler,
+           struct ureg_dst *temp,
+           struct ureg_src *constant)
+{
+   BLEND_GENERIC(VG_BLEND_SRC);
+}
+
+static INLINE void
+blend_src_over( struct ureg_program *ureg,
+                struct ureg_dst *out,
+                struct ureg_src *in,
+                struct ureg_src *sampler,
+                struct ureg_dst *temp,
+                struct ureg_src *constant)
+{
+   BLEND_GENERIC(VG_BLEND_SRC_OVER);
+}
+
+static INLINE void
+blend_dst_over( struct ureg_program *ureg,
+                struct ureg_dst *out,
+                struct ureg_src *in,
+                struct ureg_src *sampler,
+                struct ureg_dst *temp,
+                struct ureg_src *constant)
+{
+   BLEND_GENERIC(VG_BLEND_DST_OVER);
+}
+
+static INLINE void
+blend_src_in( struct ureg_program *ureg,
+              struct ureg_dst *out,
+              struct ureg_src *in,
+              struct ureg_src *sampler,
+              struct ureg_dst *temp,
+              struct ureg_src *constant)
+{
+   BLEND_GENERIC(VG_BLEND_SRC_IN);
+}
+
+static INLINE void
+blend_dst_in( struct ureg_program *ureg,
+              struct ureg_dst *out,
+              struct ureg_src *in,
+              struct ureg_src *sampler,
+              struct ureg_dst *temp,
+              struct ureg_src *constant)
+{
+   BLEND_GENERIC(VG_BLEND_DST_IN);
+}
+
 static INLINE void
 blend_multiply( struct ureg_program *ureg,
                 struct ureg_dst *out,
@@ -417,16 +481,7 @@ blend_multiply( struct ureg_program *ureg,
                 struct ureg_dst *temp,
                 struct ureg_src *constant)
 {
-   ureg_TEX(ureg, temp[2], TGSI_TEXTURE_2D, in[0], sampler[2]);
-
-   blend_generic(ureg, VG_BLEND_MULTIPLY,
-                 ureg_src(temp[0]),
-                 ureg_src(temp[1]),
-                 ureg_src(temp[2]),
-                 ureg_scalar(constant[3], TGSI_SWIZZLE_Y),
-                 temp + 3);
-
-   ureg_MOV(ureg, *out, ureg_src(temp[0]));
+   BLEND_GENERIC(VG_BLEND_MULTIPLY);
 }
 
 static INLINE void
@@ -437,16 +492,7 @@ blend_screen( struct ureg_program *ureg,
               struct ureg_dst     *temp,
               struct ureg_src     *constant)
 {
-   ureg_TEX(ureg, temp[2], TGSI_TEXTURE_2D, in[0], sampler[2]);
-
-   blend_generic(ureg, VG_BLEND_SCREEN,
-                 ureg_src(temp[0]),
-                 ureg_src(temp[1]),
-                 ureg_src(temp[2]),
-                 ureg_scalar(constant[3], TGSI_SWIZZLE_Y),
-                 temp + 3);
-
-   ureg_MOV(ureg, *out, ureg_src(temp[0]));
+   BLEND_GENERIC(VG_BLEND_SCREEN);
 }
 
 static INLINE void
@@ -457,16 +503,7 @@ blend_darken( struct ureg_program *ureg,
               struct ureg_dst     *temp,
               struct ureg_src     *constant)
 {
-   ureg_TEX(ureg, temp[2], TGSI_TEXTURE_2D, in[0], sampler[2]);
-
-   blend_generic(ureg, VG_BLEND_DARKEN,
-                 ureg_src(temp[0]),
-                 ureg_src(temp[1]),
-                 ureg_src(temp[2]),
-                 ureg_scalar(constant[3], TGSI_SWIZZLE_Y),
-                 temp + 3);
-
-   ureg_MOV(ureg, *out, ureg_src(temp[0]));
+   BLEND_GENERIC(VG_BLEND_DARKEN);
 }
 
 static INLINE void
@@ -477,16 +514,18 @@ blend_lighten( struct ureg_program *ureg,
                struct ureg_dst *temp,
                struct ureg_src     *constant)
 {
-   ureg_TEX(ureg, temp[2], TGSI_TEXTURE_2D, in[0], sampler[2]);
+   BLEND_GENERIC(VG_BLEND_LIGHTEN);
+}
 
-   blend_generic(ureg, VG_BLEND_LIGHTEN,
-                 ureg_src(temp[0]),
-                 ureg_src(temp[1]),
-                 ureg_src(temp[2]),
-                 ureg_scalar(constant[3], TGSI_SWIZZLE_Y),
-                 temp + 3);
-
-   ureg_MOV(ureg, *out, ureg_src(temp[0]));
+static INLINE void
+blend_additive( struct ureg_program *ureg,
+                struct ureg_dst *out,
+                struct ureg_src *in,
+                struct ureg_src *sampler,
+                struct ureg_dst *temp,
+                struct ureg_src *constant)
+{
+   BLEND_GENERIC(VG_BLEND_ADDITIVE);
 }
 
 static INLINE void
@@ -618,14 +657,18 @@ static const struct shader_asm_info shaders_alpha_asm[] = {
 
 /* extra blend modes */
 static const struct shader_asm_info shaders_blend_asm[] = {
-   {VEGA_BLEND_MULTIPLY_SHADER, blend_multiply,
-    VG_TRUE,  3, 1, 2, 1, 0, 5},
-   {VEGA_BLEND_SCREEN_SHADER, blend_screen,
-    VG_TRUE,  3, 1, 2, 1, 0, 5},
-   {VEGA_BLEND_DARKEN_SHADER, blend_darken,
-    VG_TRUE,  3, 1, 2, 1, 0, 5},
-   {VEGA_BLEND_LIGHTEN_SHADER, blend_lighten,
-    VG_TRUE,  3, 1, 2, 1, 0, 5},
+#define BLEND_ASM_INFO(id, func) { (id), (func), VG_TRUE, 3, 1, 2, 1, 0, 5 }
+   BLEND_ASM_INFO(VEGA_BLEND_SRC_SHADER, blend_src),
+   BLEND_ASM_INFO(VEGA_BLEND_SRC_OVER_SHADER, blend_src_over),
+   BLEND_ASM_INFO(VEGA_BLEND_DST_OVER_SHADER, blend_dst_over),
+   BLEND_ASM_INFO(VEGA_BLEND_SRC_IN_SHADER, blend_src_in),
+   BLEND_ASM_INFO(VEGA_BLEND_DST_IN_SHADER, blend_dst_in),
+   BLEND_ASM_INFO(VEGA_BLEND_MULTIPLY_SHADER, blend_multiply),
+   BLEND_ASM_INFO(VEGA_BLEND_SCREEN_SHADER, blend_screen),
+   BLEND_ASM_INFO(VEGA_BLEND_DARKEN_SHADER, blend_darken),
+   BLEND_ASM_INFO(VEGA_BLEND_LIGHTEN_SHADER, blend_lighten),
+   BLEND_ASM_INFO(VEGA_BLEND_ADDITIVE_SHADER, blend_additive)
+#undef BLEND_ASM_INFO
 };
 
 static const struct shader_asm_info shaders_mask_asm[] = {
