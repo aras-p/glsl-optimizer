@@ -55,30 +55,7 @@ struct radeon_drm_winsys {
     boolean drm_2_8_0;
     /* Hyper-Z user */
     boolean hyperz;
-
-    /* Radeon CS manager. */
-    struct radeon_cs_manager *csm;
 };
-
-struct radeon_drm_cs {
-    struct r300_winsys_cs base;
-
-    /* The winsys. */
-    struct radeon_drm_winsys *ws;
-
-    /* The libdrm command stream. */
-    struct radeon_cs *cs;
-
-    /* Flush CS. */
-    void (*flush_cs)(void *);
-    void *flush_data;
-};
-
-static INLINE struct radeon_drm_cs *
-radeon_drm_cs(struct r300_winsys_cs *base)
-{
-    return (struct radeon_drm_cs*)base;
-}
 
 static INLINE struct radeon_drm_winsys *
 radeon_drm_winsys(struct r300_winsys_screen *base)

@@ -537,8 +537,7 @@ static void r300_emit_draw_elements(struct r300_context *r300,
     OUT_CS(R300_INDX_BUFFER_ONE_REG_WR | (R300_VAP_PORT_IDX0 >> 2) |
            (0 << R300_INDX_BUFFER_SKIP_SHIFT));
     OUT_CS(offset_dwords << 2);
-    OUT_CS_BUF_RELOC(indexBuffer, count_dwords,
-                     r300_buffer(indexBuffer)->domain, 0);
+    OUT_CS_BUF_RELOC(indexBuffer, count_dwords);
 
     END_CS;
 }

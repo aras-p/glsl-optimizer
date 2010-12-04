@@ -42,8 +42,8 @@ struct r300_winsys_buffer;      /* for map/unmap etc. */
 struct r300_winsys_cs_buffer;   /* for write_reloc etc. */
 
 struct r300_winsys_cs {
-    unsigned cdw;       /* Number of used dwords. */
-    uint32_t *buf;      /* The command buffer. */
+    unsigned cdw;                           /* Number of used dwords. */
+    uint32_t buf[R300_MAX_CMDBUF_DWORDS];   /* The command buffer. */
 };
 
 enum r300_value_id {
@@ -239,23 +239,22 @@ struct r300_winsys_screen {
     void (*cs_destroy)(struct r300_winsys_cs *cs);
 
     /**
-     * Add a buffer object to the list of buffers to validate.
+     * Add a new buffer relocation. Every relocation must first be added
+     * before it can be written.
      *
-     * \param cs        A command stream to add buffer for validation against.
-     * \param buf       A winsys buffer to validate.
-     * \param rd        A read domain containing a bitmask
-     *                  of the R300_DOMAIN_* flags.
-     * \param wd        A write domain containing a bitmask
-     *                  of the R300_DOMAIN_* flags.
+     * \param cs  A command stream to add buffer for validation against.
+     * \param buf A winsys buffer to validate.
+     * \param rd  A read domain containing a bitmask of the R300_DOMAIN_* flags.
+     * \param wd  A write domain containing a bitmask of the R300_DOMAIN_* flags.
      */
-    void (*cs_add_buffer)(struct r300_winsys_cs *cs,
-                          struct r300_winsys_cs_buffer *buf,
-                          enum r300_buffer_domain rd,
-                          enum r300_buffer_domain wd);
+    void (*cs_add_reloc)(struct r300_winsys_cs *cs,
+                         struct r300_winsys_cs_buffer *buf,
+                         enum r300_buffer_domain rd,
+                         enum r300_buffer_domain wd);
 
     /**
-     * Revalidate all currently set up winsys buffers.
-     * Returns TRUE if a flush is required.
+     * Return TRUE if there is enough memory in VRAM and GTT for the relocs
+     * added so far.
      *
      * \param cs        A command stream to validate.
      */
@@ -270,9 +269,7 @@ struct r300_winsys_screen {
      * \param wd        A write domain containing a bitmask of the R300_DOMAIN_* flags.
      */
     void (*cs_write_reloc)(struct r300_winsys_cs *cs,
-                           struct r300_winsys_cs_buffer *buf,
-                           enum r300_buffer_domain rd,
-                           enum r300_buffer_domain wd);
+                           struct r300_winsys_cs_buffer *buf);
 
     /**
      * Flush a command stream.
@@ -292,14 +289,6 @@ struct r300_winsys_screen {
     void (*cs_set_flush)(struct r300_winsys_cs *cs,
                          void (*flush)(void *),
                          void *user);
-
-    /**
-     * Reset the list of buffer objects to validate, usually called
-     * prior to adding buffer objects for validation.
-     *
-     * \param cs        A command stream to reset buffers for.
-     */
-    void (*cs_reset_buffers)(struct r300_winsys_cs *cs);
 
     /**
      * Return TRUE if a buffer is referenced by a command stream or by hardware

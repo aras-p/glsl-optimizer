@@ -31,6 +31,7 @@
 
 #include "radeon_winsys.h"
 #include "radeon_drm_buffer.h"
+#include "radeon_drm_cs.h"
 #include "radeon_drm_public.h"
 
 #include "pipebuffer/pb_bufmgr.h"
@@ -185,7 +186,6 @@ static void radeon_winsys_destroy(struct r300_winsys_screen *rws)
     ws->kman->destroy(ws->kman);
 
     radeon_bo_manager_gem_dtor(ws->bom);
-    radeon_cs_manager_gem_dtor(ws->csm);
     FREE(rws);
 }
 
@@ -207,9 +207,6 @@ struct r300_winsys_screen *r300_drm_winsys_screen_create(int fd)
     ws->bom = radeon_bo_manager_gem_ctor(fd);
     if (!ws->bom)
 	goto fail;
-    ws->csm = radeon_cs_manager_gem_ctor(fd);
-    if (!ws->csm)
-	goto fail;
     ws->kman = radeon_drm_bufmgr_create(ws);
     if (!ws->kman)
 	goto fail;
@@ -221,6 +218,7 @@ struct r300_winsys_screen *r300_drm_winsys_screen_create(int fd)
     ws->base.destroy = radeon_winsys_destroy;
 
     radeon_drm_bufmgr_init_functions(ws);
+    radeon_drm_cs_init_functions(ws);
     radeon_winsys_init_functions(ws);
 
     return &ws->base;
@@ -228,8 +226,6 @@ struct r300_winsys_screen *r300_drm_winsys_screen_create(int fd)
 fail:
     if (ws->bom)
 	radeon_bo_manager_gem_dtor(ws->bom);
-    if (ws->csm)
-	radeon_cs_manager_gem_dtor(ws->csm);
 
     if (ws->cman)
 	ws->cman->destroy(ws->cman);
