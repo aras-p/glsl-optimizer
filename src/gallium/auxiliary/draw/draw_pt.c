@@ -420,7 +420,6 @@ void
 draw_vbo(struct draw_context *draw,
          const struct pipe_draw_info *info)
 {
-   unsigned reduced_prim = u_reduced_prim(info->mode);
    unsigned instance;
    unsigned index_limit;
 
@@ -434,11 +433,6 @@ draw_vbo(struct draw_context *draw,
    draw->pt.user.eltBias = info->index_bias;
    draw->pt.user.min_index = info->min_index;
    draw->pt.user.max_index = info->max_index;
-
-   if (reduced_prim != draw->reduced_prim) {
-      draw_do_flush(draw, DRAW_FLUSH_STATE_CHANGE);
-      draw->reduced_prim = reduced_prim;
-   }
 
    if (0)
       debug_printf("draw_vbo(mode=%u start=%u count=%u):\n",

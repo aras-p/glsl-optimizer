@@ -290,8 +290,6 @@ struct draw_context
       uint slot[10];
    } extra_shader_outputs;
 
-   unsigned reduced_prim;
-
    unsigned instance_id;
 
 #ifdef HAVE_LLVM

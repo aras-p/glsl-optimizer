@@ -155,8 +155,6 @@ boolean draw_init(struct draw_context *draw)
    draw->clip_z = TRUE;
 
    draw->pt.user.planes = (float (*) [DRAW_TOTAL_CLIP_PLANES][4]) &(draw->plane[0]);
-   draw->reduced_prim = ~0; /* != any of PIPE_PRIM_x */
-
 
    if (!draw_pipeline_init( draw ))
       return FALSE;
@@ -656,8 +654,6 @@ void draw_do_flush( struct draw_context *draw, unsigned flags )
 
       draw_pipeline_flush( draw, flags );
 
-      draw->reduced_prim = ~0; /* is reduced_prim needed any more? */
-      
       draw->flushing = FALSE;
    }
 }
