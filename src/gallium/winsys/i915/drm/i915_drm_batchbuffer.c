@@ -43,18 +43,6 @@ i915_drm_batchbuffer_reset(struct i915_drm_batchbuffer *batch)
                                   batch->actual_size,
                                   4096);
 
-#ifdef INTEL_MAP_BATCHBUFFER
-#ifdef INTEL_MAP_GTT
-   ret = drm_intel_gem_bo_map_gtt(batch->bo);
-#else
-   ret = drm_intel_bo_map(batch->bo, TRUE);
-#endif
-   assert(ret == 0);
-   batch->base.map = batch->bo->virtual;
-#else
-   (void)ret;
-#endif
-
    memset(batch->base.map, 0, batch->actual_size);
    batch->base.ptr = batch->base.map;
    batch->base.size = batch->actual_size - BATCH_RESERVED;
