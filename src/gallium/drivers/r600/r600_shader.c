@@ -361,6 +361,11 @@ r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader *shad
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 
+	if (shader->shader.processor_type == TGSI_PROCESSOR_VERTEX) {
+		r600_bo_reference(rctx->radeon, &shader->bo_fetch, NULL);
+		r600_bc_clear(&shader->shader.bc_fetch);
+	}
+
 	r600_bo_reference(rctx->radeon, &shader->bo, NULL);
 
 	r600_bc_clear(&shader->shader.bc);
