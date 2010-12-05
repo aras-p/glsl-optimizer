@@ -618,6 +618,9 @@ void r600_context_fini(struct r600_context *ctx)
 					range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
 					range->blocks[CTX_BLOCK_ID(ctx, offset)] = NULL;
 				}
+				for (int k = 1; k <= block->nbo; k++) {
+					r600_bo_reference(ctx->radeon, &block->reloc[k].bo, NULL);
+				}
 				free(block);
 			}
 		}
