@@ -950,6 +950,10 @@ flush(struct vl_mpeg12_mc_renderer *r)
    assert(r);
    assert(r->num_macroblocks == r->macroblocks_per_batch);
 
+   vl_idct_unmap_buffers(&r->idct_y);
+   vl_idct_unmap_buffers(&r->idct_cr);
+   vl_idct_unmap_buffers(&r->idct_cb);
+
    vl_idct_flush(&r->idct_y);
    vl_idct_flush(&r->idct_cr);
    vl_idct_flush(&r->idct_cb);
@@ -965,7 +969,12 @@ flush(struct vl_mpeg12_mc_renderer *r)
          vb_start += flush_mbtype_handler(r, i, vb_start, num_verts[i]);
    }
 
+
    r->pipe->flush(r->pipe, PIPE_FLUSH_RENDER_CACHE, r->fence);
+
+   vl_idct_map_buffers(&r->idct_y);
+   vl_idct_map_buffers(&r->idct_cr);
+   vl_idct_map_buffers(&r->idct_cb);
 
    r->num_macroblocks = 0;
 }

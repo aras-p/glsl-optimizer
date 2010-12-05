@@ -97,7 +97,11 @@ bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, struct pipe_r
 
 void vl_idct_cleanup(struct vl_idct *idct);
 
+void vl_idct_map_buffers(struct vl_idct *idct);
+
 void vl_idct_add_block(struct vl_idct *idct, unsigned x, unsigned y, short *block);
+
+void vl_idct_unmap_buffers(struct vl_idct *idct);
 
 void vl_idct_flush(struct vl_idct *idct);
 

@@ -566,35 +566,6 @@ vl_idct_upload_matrix(struct pipe_context *pipe)
    return matrix;
 }
 
-static void
-xfer_buffers_map(struct vl_idct *idct)
-{
-   struct pipe_box rect =
-   {
-      0, 0, 0,
-      idct->textures.individual.source->width0,
-      idct->textures.individual.source->height0,
-      1
-   };
-
-   idct->tex_transfer = idct->pipe->get_transfer
-   (
-      idct->pipe, idct->textures.individual.source,
-      u_subresource(0, 0),
-      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-      &rect
-   );
-
-   idct->texels = idct->pipe->transfer_map(idct->pipe, idct->tex_transfer);
-}
-
-static void
-xfer_buffers_unmap(struct vl_idct *idct)
-{
-   idct->pipe->transfer_unmap(idct->pipe, idct->tex_transfer);
-   idct->pipe->transfer_destroy(idct->pipe, idct->tex_transfer);
-}
-
 bool
 vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, struct pipe_resource *dst, struct pipe_resource *matrix)
 {
@@ -626,7 +597,7 @@ vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, struct pipe_resour
 
    init_state(idct);
 
-   xfer_buffers_map(idct);
+   vl_idct_map_buffers(idct);
 
    return true;
 }
@@ -634,6 +605,8 @@ vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, struct pipe_resour
 void
 vl_idct_cleanup(struct vl_idct *idct)
 {
+   vl_idct_unmap_buffers(idct);
+
    vl_vb_cleanup(&idct->blocks);
    cleanup_shaders(idct);
    cleanup_buffers(idct);
@@ -641,6 +614,30 @@ vl_idct_cleanup(struct vl_idct *idct)
    cleanup_state(idct);
 
    pipe_resource_reference(&idct->destination, NULL);
+}
+
+void
+vl_idct_map_buffers(struct vl_idct *idct)
+{
+   assert(idct);
+
+   struct pipe_box rect =
+   {
+      0, 0, 0,
+      idct->textures.individual.source->width0,
+      idct->textures.individual.source->height0,
+      1
+   };
+
+   idct->tex_transfer = idct->pipe->get_transfer
+   (
+      idct->pipe, idct->textures.individual.source,
+      u_subresource(0, 0),
+      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+      &rect
+   );
+
+   idct->texels = idct->pipe->transfer_map(idct->pipe, idct->tex_transfer);
 }
 
 void
@@ -666,6 +663,15 @@ vl_idct_add_block(struct vl_idct *idct, unsigned x, unsigned y, short *block)
 }
 
 void
+vl_idct_unmap_buffers(struct vl_idct *idct)
+{
+   assert(idct);
+
+   idct->pipe->transfer_unmap(idct->pipe, idct->tex_transfer);
+   idct->pipe->transfer_destroy(idct->pipe, idct->tex_transfer);
+}
+
+void
 vl_idct_flush(struct vl_idct *idct)
 {
    struct pipe_transfer *vec_transfer;
@@ -685,8 +691,6 @@ vl_idct_flush(struct vl_idct *idct)
    num_verts = vl_vb_upload(&idct->blocks, vectors);
 
    pipe_buffer_unmap(idct->pipe, idct->vertex_bufs.individual.pos.buffer, vec_transfer);
-
-   xfer_buffers_unmap(idct);
 
    if(num_verts > 0) {
 
@@ -711,6 +715,4 @@ vl_idct_flush(struct vl_idct *idct)
       idct->pipe->bind_fs_state(idct->pipe, idct->transpose_fs);
       util_draw_arrays(idct->pipe, PIPE_PRIM_QUADS, 0, num_verts);
    }
-
-   xfer_buffers_map(idct);
 }
