@@ -1819,7 +1819,6 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
             cbuf = (struct r300_constant_buffer*)r300->fs_constants.state;
             break;
         default:
-            assert(0);
             return;
     }
 
@@ -1831,7 +1830,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
     if (shader == PIPE_SHADER_FRAGMENT ||
         (shader == PIPE_SHADER_VERTEX && r300->screen->caps.has_tcl)) {
         assert((buf->width0 % (4 * sizeof(float))) == 0);
-        cbuf->ptr = mapped + index*4;
+        cbuf->ptr = mapped;
     }
 
     if (shader == PIPE_SHADER_VERTEX) {
