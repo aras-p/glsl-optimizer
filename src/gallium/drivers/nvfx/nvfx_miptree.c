@@ -198,14 +198,13 @@ nvfx_miptree_surface_new(struct pipe_context *pipe, struct pipe_resource *pt,
 	struct nvfx_surface *ns = NULL;
 
 	assert(surf_tmpl->u.tex.first_layer == surf_tmpl->u.tex.last_layer);
-	if(util_surfaces_get(&mt->surfaces, sizeof(struct nvfx_surface), NULL,
+	if(util_surfaces_get(&mt->surfaces, sizeof(struct nvfx_surface), pipe,
                              pt, level, surf_tmpl->u.tex.first_layer,
                              surf_tmpl->usage, (struct pipe_surface **)&ns)) {
                 util_dirty_surface_init(&ns->base);
                 ns->pitch = nvfx_subresource_pitch(pt, level);
                 ns->offset = nvfx_subresource_offset(pt, surf_tmpl->u.tex.first_layer, level, surf_tmpl->u.tex.first_layer);
 	}
-        ns->base.base.context = pipe;
 
 	return &ns->base.base;
 }
