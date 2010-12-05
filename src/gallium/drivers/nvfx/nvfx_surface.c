@@ -389,7 +389,7 @@ nvfx_surface_copy_temp(struct pipe_context* pipe, struct pipe_surface* surf, int
 	base_vertex = nvfx->base_vertex;
 
 	box.x = box.y = 0;
-	assert(surf->u.tex.first_layer = surf->u.tex.last_layer);
+	assert(surf->u.tex.first_layer == surf->u.tex.last_layer);
 	box.width = surf->width;
 	box.height = surf->height;
 	box.depth = 1;

@@ -29,10 +29,11 @@
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 
-struct pipe_surface *
+boolean
 util_surfaces_do_get(struct util_surfaces *us, unsigned surface_struct_size,
                      struct pipe_screen *pscreen, struct pipe_resource *pt,
-                     unsigned level, unsigned layer, unsigned flags)
+                     unsigned level, unsigned layer, unsigned flags,
+                     struct pipe_surface **res)
 {
    struct pipe_surface *ps;
 
@@ -53,12 +54,16 @@ util_surfaces_do_get(struct util_surfaces *us, unsigned surface_struct_size,
    if(ps)
    {
       p_atomic_inc(&ps->reference.count);
-      return ps;
+      *res = ps;
+      return FALSE;
    }
 
    ps = (struct pipe_surface *)CALLOC(1, surface_struct_size);
    if(!ps)
-      return NULL;
+   {
+      *res = NULL;
+      return FALSE;
+   }
 
    pipe_surface_init(ps, pt, level, layer, flags);
 
@@ -67,7 +72,8 @@ util_surfaces_do_get(struct util_surfaces *us, unsigned surface_struct_size,
    else
       us->u.array[level] = ps;
 
-   return ps;
+   *res = ps;
+   return TRUE;
 }
 
 void

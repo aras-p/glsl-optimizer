@@ -42,11 +42,19 @@ struct util_surfaces
    } u;
 };
 
-struct pipe_surface *util_surfaces_do_get(struct util_surfaces *us, unsigned surface_struct_size, struct pipe_screen *pscreen, struct pipe_resource *pt, unsigned level, unsigned layer, unsigned flags);
+/* Return value indicates if the pipe surface result is new */
+boolean
+util_surfaces_do_get(struct util_surfaces *us, unsigned surface_struct_size,
+                     struct pipe_screen *pscreen, struct pipe_resource *pt,
+                     unsigned level, unsigned layer, unsigned flags,
+                     struct pipe_surface **res);
 
 /* fast inline path for the very common case */
-static INLINE struct pipe_surface *
-util_surfaces_get(struct util_surfaces *us, unsigned surface_struct_size, struct pipe_screen *pscreen, struct pipe_resource *pt, unsigned level, unsigned layer, unsigned flags)
+static INLINE boolean
+util_surfaces_get(struct util_surfaces *us, unsigned surface_struct_size,
+                  struct pipe_screen *pscreen, struct pipe_resource *pt,
+                  unsigned level, unsigned layer, unsigned flags,
+                  struct pipe_surface **res)
 {
    if(likely((pt->target == PIPE_TEXTURE_2D || pt->target == PIPE_TEXTURE_RECT) && us->u.array))
    {
@@ -54,11 +62,12 @@ util_surfaces_get(struct util_surfaces *us, unsigned surface_struct_size, struct
       if(ps)
       {
 	 p_atomic_inc(&ps->reference.count);
-	 return ps;
+	 *res = ps;
+	 return FALSE;
       }
    }
 
-   return util_surfaces_do_get(us, surface_struct_size, pscreen, pt, level, layer, flags);
+   return util_surfaces_do_get(us, surface_struct_size, pscreen, pt, level, layer, flags, res);
 }
 
 static INLINE struct pipe_surface *
