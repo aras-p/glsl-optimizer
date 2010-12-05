@@ -314,6 +314,9 @@ trace_context_bind_vertex_sampler_states(struct pipe_context *_pipe,
    struct trace_context *tr_ctx = trace_context(_pipe);
    struct pipe_context *pipe = tr_ctx->pipe;
 
+   if (!pipe->bind_vertex_sampler_states)
+      return;
+
    trace_dump_call_begin("pipe_context", "bind_vertex_sampler_states");
 
    trace_dump_arg(ptr, pipe);
@@ -979,6 +982,9 @@ trace_context_set_vertex_sampler_views(struct pipe_context *_pipe,
    struct pipe_context *pipe = tr_ctx->pipe;
    struct pipe_sampler_view *unwrapped_views[PIPE_MAX_VERTEX_SAMPLERS];
    unsigned i;
+
+   if (!pipe->set_vertex_sampler_views)
+      return;
 
    for(i = 0; i < num; ++i) {
       tr_view = trace_sampler_view(views[i]);
