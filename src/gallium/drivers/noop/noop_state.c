@@ -243,6 +243,8 @@ static void *noop_create_shader_state(struct pipe_context *ctx,
 	return nstate;
 }
 
+void noop_init_state_functions(struct pipe_context *ctx);
+
 void noop_init_state_functions(struct pipe_context *ctx)
 {
 	ctx->create_blend_state = noop_create_blend_state;
