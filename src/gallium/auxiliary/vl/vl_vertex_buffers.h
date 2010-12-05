@@ -33,28 +33,31 @@
 
 struct vl_vertex_buffer
 {
-   unsigned num_blocks;
-   struct quadf *blocks;
+   unsigned num_verts;
+   unsigned num_elements;
+   float *buffer;
 };
 
 struct pipe_vertex_buffer vl_vb_upload_quads(struct pipe_context *pipe, unsigned max_blocks);
 
-bool vl_vb_init(struct vl_vertex_buffer *buffer, unsigned max_blocks);
+bool vl_vb_init(struct vl_vertex_buffer *buffer, unsigned max_blocks, unsigned num_elements);
 
 static inline void
-vl_vb_add_block(struct vl_vertex_buffer *buffer, signed x, signed y)
+vl_vb_add_block(struct vl_vertex_buffer *buffer, float *elements)
 {
-   struct quadf *quad;
+   float *pos;
+   unsigned i;
 
    assert(buffer);
 
-   quad = buffer->blocks + buffer->num_blocks;
-   quad->bl.x = quad->tl.x = quad->tr.x = quad->br.x = x;
-   quad->bl.y = quad->tl.y = quad->tr.y = quad->br.y = y;
-   buffer->num_blocks++;
+   for(i = 0; i < 4; ++i) {
+      pos = buffer->buffer + buffer->num_verts * buffer->num_elements;
+      memcpy(pos, elements, sizeof(float) * buffer->num_elements);
+      buffer->num_verts++;
+   }
 }
 
-unsigned vl_vb_upload(struct vl_vertex_buffer *buffer, struct quadf *dst);
+unsigned vl_vb_upload(struct vl_vertex_buffer *buffer, void *dst);
 
 void vl_vb_cleanup(struct vl_vertex_buffer *buffer);
 

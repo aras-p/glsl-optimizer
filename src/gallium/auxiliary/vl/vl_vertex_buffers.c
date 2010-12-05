@@ -82,27 +82,28 @@ vl_vb_upload_quads(struct pipe_context *pipe, unsigned max_blocks)
 }
 
 bool
-vl_vb_init(struct vl_vertex_buffer *buffer, unsigned max_blocks)
+vl_vb_init(struct vl_vertex_buffer *buffer, unsigned max_blocks, unsigned num_elements)
 {
    assert(buffer);
 
-   buffer->num_blocks = 0;
-   buffer->blocks = MALLOC(max_blocks * sizeof(struct quadf));
-   return buffer->blocks != NULL;
+   buffer->num_verts = 0;
+   buffer->num_elements = num_elements;
+   buffer->buffer = MALLOC(max_blocks * num_elements * sizeof(float) * 4);
+   return buffer->buffer != NULL;
 }
 
 unsigned
-vl_vb_upload(struct vl_vertex_buffer *buffer, struct quadf *dst)
+vl_vb_upload(struct vl_vertex_buffer *buffer, void *dst)
 {
    unsigned todo;
 
    assert(buffer);
 
-   todo = buffer->num_blocks;
-   buffer->num_blocks = 0;
+   todo = buffer->num_verts;
+   buffer->num_verts = 0;
 
    if(todo)
-      memcpy(dst, buffer->blocks, sizeof(struct quadf) * todo);
+      memcpy(dst, buffer->buffer, sizeof(float) * buffer->num_elements * todo);
 
    return todo;
 }
@@ -112,5 +113,5 @@ vl_vb_cleanup(struct vl_vertex_buffer *buffer)
 {
    assert(buffer);
 
-   FREE(buffer->blocks);
+   FREE(buffer->buffer);
 }
