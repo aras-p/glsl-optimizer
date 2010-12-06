@@ -169,6 +169,9 @@ void r600_end_vertex_translate(struct r600_pipe_context *rctx)
 {
 	struct pipe_context *pipe = &rctx->context;
 
+	if (rctx->tran.new_velems == NULL) {
+		return;
+	}
 	/* Restore vertex elements. */
 	if (rctx->vertex_elements == rctx->tran.new_velems) {
 		pipe->bind_vertex_elements_state(pipe, NULL);

@@ -38,7 +38,6 @@ struct r600_shader_io {
 struct r600_shader {
 	unsigned		processor_type;
 	struct r600_bc		bc;
-	boolean			flat_shade;
 	unsigned		ninput;
 	unsigned		noutput;
 	unsigned		nlds;

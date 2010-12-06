@@ -1239,6 +1239,7 @@ void evergreen_polygon_offset_update(struct r600_pipe_context *rctx)
 		default:
 			return;
 		}
+		/* FIXME some of those reg can be computed with cso */
 		offset_db_fmt_cntl |= S_028B78_POLY_OFFSET_NEG_NUM_DB_BITS(depth);
 		r600_pipe_state_add_reg(&state,
 				R_028B80_PA_SU_POLY_OFFSET_FRONT_SCALE,
@@ -1257,6 +1258,30 @@ void evergreen_polygon_offset_update(struct r600_pipe_context *rctx)
 				offset_db_fmt_cntl, 0xFFFFFFFF, NULL);
 		r600_context_pipe_state_set(&rctx->ctx, &state);
 	}
+}
+
+static void evergreen_spi_update(struct r600_pipe_context *rctx)
+{
+	struct r600_pipe_shader *shader = rctx->ps_shader;
+	struct r600_pipe_state rstate;
+	struct r600_shader *rshader = &shader->shader;
+	unsigned i, tmp;
+
+	rstate.nregs = 0;
+	for (i = 0; i < rshader->ninput; i++) {
+		tmp = S_028644_SEMANTIC(r600_find_vs_semantic_index(&rctx->vs_shader->shader, rshader, i));
+		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
+				rshader->input[i].name == TGSI_SEMANTIC_BCOLOR ||
+				rshader->input[i].name == TGSI_SEMANTIC_POSITION) {
+			tmp |= S_028644_FLAT_SHADE(rctx->flatshade);
+		}
+		if (rshader->input[i].name == TGSI_SEMANTIC_GENERIC &&
+			rctx->sprite_coord_enable & (1 << rshader->input[i].sid)) {
+			tmp |= S_028644_PT_SPRITE_TEX(1);
+		}
+		r600_pipe_state_add_reg(&rstate, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4, tmp, 0xFFFFFFFF, NULL);
+	}
+	r600_context_pipe_state_set(&rctx->ctx, &rstate);
 }
 
 void evergreen_vertex_buffer_update(struct r600_pipe_context *rctx)
@@ -1417,12 +1442,30 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	}
 	if (r600_conv_pipe_prim(draw.mode, &prim))
 		return;
+	if (unlikely(rctx->ps_shader == NULL)) {
+		R600_ERR("missing vertex shader\n");
+		return;
+	}
+	if (unlikely(rctx->vs_shader == NULL)) {
+		R600_ERR("missing vertex shader\n");
+		return;
+	}
+	/* there should be enough input */
+	if (rctx->vertex_elements->count < rctx->vs_shader->shader.bc.nresource) {
+		R600_ERR("%d resources provided, expecting %d\n",
+			rctx->vertex_elements->count, rctx->vs_shader->shader.bc.nresource);
+		return;
+	}
 
+#if 0
 	/* rebuild vertex shader if input format changed */
 	if (r600_pipe_shader_update(&rctx->context, rctx->vs_shader))
 		return;
 	if (r600_pipe_shader_update(&rctx->context, rctx->ps_shader))
 		return;
+#endif
+
+	evergreen_spi_update(rctx);
 
 #if 0
 	for (i = 0 ; i < rctx->vertex_elements->count; i++) {
@@ -1506,11 +1549,9 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 	boolean have_linear = FALSE, have_centroid = FALSE, have_perspective = FALSE;
 	unsigned spi_baryc_cntl;
 
-	/* clear previous register */
 	rstate->nregs = 0;
 
 	for (i = 0; i < rshader->ninput; i++) {
-		tmp = S_028644_SEMANTIC(r600_find_vs_semantic_index(&rctx->vs_shader->shader, rshader, i));
 		/* evergreen NUM_INTERP only contains values interpolated into the LDS,
 		   POSITION goes via GPRs from the SC so isn't counted */
 		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
@@ -1528,16 +1569,6 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 			if (rshader->input[i].centroid)
 				have_centroid = TRUE;
 		}
-		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
-		    rshader->input[i].name == TGSI_SEMANTIC_BCOLOR ||
-		    rshader->input[i].name == TGSI_SEMANTIC_POSITION) {
-			tmp |= S_028644_FLAT_SHADE(rshader->flat_shade);
-		}
-		if (rshader->input[i].name == TGSI_SEMANTIC_GENERIC &&
-			rctx->sprite_coord_enable & (1 << rshader->input[i].sid)) {
-			tmp |= S_028644_PT_SPRITE_TEX(1);
-		}
-		r600_pipe_state_add_reg(rstate, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4, tmp, 0xFFFFFFFF, NULL);
 	}
 	for (i = 0; i < rshader->noutput; i++) {
 		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)

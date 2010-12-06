@@ -79,6 +79,8 @@ static void r600_destroy_context(struct pipe_context *context)
 
 	rctx->context.delete_depth_stencil_alpha_state(&rctx->context, rctx->custom_dsa_flush);
 
+	r600_end_vertex_translate(rctx);
+
 	r600_context_fini(&rctx->ctx);
 
 	util_blitter_destroy(rctx->blitter);
@@ -89,8 +91,6 @@ static void r600_destroy_context(struct pipe_context *context)
 
 	u_upload_destroy(rctx->upload_vb);
 	u_upload_destroy(rctx->upload_ib);
-
-	r600_end_vertex_translate(rctx);
 
 	if (rctx->tran.translate_cache)
 		translate_cache_destroy(rctx->tran.translate_cache);
