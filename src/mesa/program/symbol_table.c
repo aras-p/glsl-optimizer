@@ -336,12 +336,12 @@ _mesa_symbol_table_add_symbol(struct _mesa_symbol_table *table,
     check_symbol_table(table);
 
     if (hdr == NULL) {
-        hdr = calloc(1, sizeof(*hdr));
-        hdr->name = strdup(name);
+       hdr = calloc(1, sizeof(*hdr));
+       hdr->name = strdup(name);
 
-        hash_table_insert(table->ht, hdr, hdr->name);
-	hdr->next = table->hdr;
-	table->hdr = hdr;
+       hash_table_insert(table->ht, hdr, hdr->name);
+       hdr->next = table->hdr;
+       table->hdr = hdr;
     }
 
     check_symbol_table(table);
@@ -374,6 +374,81 @@ _mesa_symbol_table_add_symbol(struct _mesa_symbol_table *table,
     check_symbol_table(table);
     return 0;
 }
+
+
+int
+_mesa_symbol_table_add_global_symbol(struct _mesa_symbol_table *table,
+				     int name_space, const char *name,
+				     void *declaration)
+{
+    struct symbol_header *hdr;
+    struct symbol *sym;
+    struct symbol *curr;
+    struct scope_level *top_scope;
+
+    check_symbol_table(table);
+
+    hdr = find_symbol(table, name);
+
+    check_symbol_table(table);
+
+    if (hdr == NULL) {
+        hdr = calloc(1, sizeof(*hdr));
+        hdr->name = strdup(name);
+
+        hash_table_insert(table->ht, hdr, hdr->name);
+        hdr->next = table->hdr;
+        table->hdr = hdr;
+    }
+
+    check_symbol_table(table);
+
+    /* If the symbol already exists in this namespace at this scope, it cannot
+     * be added to the table.
+     */
+    for (sym = hdr->symbols
+	 ; (sym != NULL) && (sym->name_space != name_space)
+	 ; sym = sym->next_with_same_name) {
+       /* empty */
+    }
+
+    if (sym && sym->depth == 0)
+       return -1;
+
+    /* Find the top-level scope */
+    for (top_scope = table->current_scope
+	 ; top_scope->next != NULL
+	 ; top_scope = top_scope->next) {
+       /* empty */
+    }
+
+    sym = calloc(1, sizeof(*sym));
+    sym->next_with_same_scope = top_scope->symbols;
+    sym->hdr = hdr;
+    sym->name_space = name_space;
+    sym->data = declaration;
+
+    assert(sym->hdr == hdr);
+
+    /* Since next_with_same_name is ordered by scope, we need to append the
+     * new symbol to the _end_ of the list.
+     */
+    if (hdr->symbols == NULL) {
+       hdr->symbols = sym;
+    } else {
+       for (curr = hdr->symbols
+	    ; curr->next_with_same_name != NULL
+	    ; curr = curr->next_with_same_name) {
+	  /* empty */
+       }
+       curr->next_with_same_name = sym;
+    }
+    top_scope->symbols = sym;
+
+    check_symbol_table(table);
+    return 0;
+}
+
 
 
 struct _mesa_symbol_table *
