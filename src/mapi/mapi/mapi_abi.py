@@ -368,8 +368,11 @@ class ABIPrinter(object):
 
     def _c_function(self, ent, prefix, mangle=False, stringify=False):
         """Return the function name of an entry."""
-        formats = { True: '"%s%s"', False: '%s%s' }
-        fmt = formats[stringify]
+        formats = {
+                True: { True: '%s_STR(%s)', False: '%s(%s)' },
+                False: { True: '"%s%s"', False: '%s%s' },
+        }
+        fmt = formats[prefix.isupper()][stringify]
         name = ent.name
         if mangle and ent.hidden:
             name = '_dispatch_stub_' + str(ent.slot)
@@ -379,7 +382,8 @@ class ABIPrinter(object):
         """Return the function name used for calling."""
         if ent.handcode:
             # _c_function does not handle this case
-            fmt = '%s%s'
+            formats = { True: '%s(%s)', False: '%s%s' }
+            fmt = formats[prefix.isupper()]
             name = fmt % (prefix, ent.handcode)
         elif self.need_entry_point(ent):
             name = self._c_function(ent, prefix, True)
