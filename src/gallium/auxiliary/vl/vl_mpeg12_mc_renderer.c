@@ -519,10 +519,8 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
 
    assert(r);
 
-   r->viewport.scale[0] = r->pot_buffers ?
-      util_next_power_of_two(r->picture_width) : r->picture_width;
-   r->viewport.scale[1] = r->pot_buffers ?
-      util_next_power_of_two(r->picture_height) : r->picture_height;
+   r->viewport.scale[0] = r->buffer_width;
+   r->viewport.scale[1] = r->buffer_height;
    r->viewport.scale[2] = 1;
    r->viewport.scale[3] = 1;
    r->viewport.translate[0] = 0;
@@ -530,10 +528,8 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
    r->viewport.translate[2] = 0;
    r->viewport.translate[3] = 0;
 
-   r->fb_state.width = r->pot_buffers ?
-      util_next_power_of_two(r->picture_width) : r->picture_width;
-   r->fb_state.height = r->pot_buffers ?
-      util_next_power_of_two(r->picture_height) : r->picture_height;
+   r->fb_state.width = r->buffer_width;
+   r->fb_state.height = r->buffer_height;
    r->fb_state.nr_cbufs = 1;
    r->fb_state.zsbuf = NULL;
 
@@ -607,9 +603,9 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    struct pipe_sampler_view sampler_view;
 
    const unsigned mbw =
-      align(r->picture_width, MACROBLOCK_WIDTH) / MACROBLOCK_WIDTH;
+      align(r->buffer_width, MACROBLOCK_WIDTH) / MACROBLOCK_WIDTH;
    const unsigned mbh =
-      align(r->picture_height, MACROBLOCK_HEIGHT) / MACROBLOCK_HEIGHT;
+      align(r->buffer_height, MACROBLOCK_HEIGHT) / MACROBLOCK_HEIGHT;
 
    unsigned i;
 
@@ -624,10 +620,8 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    /* TODO: Accomodate HW that can't do this and also for cases when this isn't precise enough */
    template.format = PIPE_FORMAT_R16_SNORM;
    template.last_level = 0;
-   template.width0 = r->pot_buffers ?
-      util_next_power_of_two(r->picture_width) : r->picture_width;
-   template.height0 = r->pot_buffers ?
-      util_next_power_of_two(r->picture_height) : r->picture_height;
+   template.width0 = r->buffer_width;
+   template.height0 = r->buffer_height;
    template.depth0 = 1;
    template.usage = PIPE_USAGE_DYNAMIC;
    template.bind = PIPE_BIND_SAMPLER_VIEW;
@@ -636,17 +630,11 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    r->textures.individual.y = r->pipe->screen->resource_create(r->pipe->screen, &template);
 
    if (r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
-      template.width0 = r->pot_buffers ?
-         util_next_power_of_two(r->picture_width / 2) :
-         r->picture_width / 2;
-      template.height0 = r->pot_buffers ?
-         util_next_power_of_two(r->picture_height / 2) :
-         r->picture_height / 2;
+      template.width0 = r->buffer_width / 2;
+      template.height0 = r->buffer_height / 2;
    }
    else if (r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_422)
-      template.height0 = r->pot_buffers ?
-         util_next_power_of_two(r->picture_height / 2) :
-         r->picture_height / 2;
+      template.height0 = r->buffer_height / 2;
 
    r->textures.individual.cb =
       r->pipe->screen->resource_create(r->pipe->screen, &template);
@@ -942,44 +930,6 @@ flush_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE ty
 }
 
 static void
-flush(struct vl_mpeg12_mc_renderer *r)
-{
-   unsigned num_verts[VL_NUM_MACROBLOCK_TYPES] = { 0 };
-   unsigned vb_start = 0, i;
-
-   assert(r);
-   assert(r->num_macroblocks == r->macroblocks_per_batch);
-
-   vl_idct_unmap_buffers(&r->idct_y);
-   vl_idct_unmap_buffers(&r->idct_cr);
-   vl_idct_unmap_buffers(&r->idct_cb);
-
-   vl_idct_flush(&r->idct_y);
-   vl_idct_flush(&r->idct_cr);
-   vl_idct_flush(&r->idct_cb);
-
-   upload_vertex_stream(r, num_verts);
-
-   r->pipe->bind_rasterizer_state(r->pipe, r->rs_state);
-   r->pipe->set_framebuffer_state(r->pipe, &r->fb_state);
-   r->pipe->set_viewport_state(r->pipe, &r->viewport);
-
-   for (i = 0; i < VL_NUM_MACROBLOCK_TYPES; ++i) {
-      if (num_verts[i] > 0)
-         vb_start += flush_mbtype_handler(r, i, vb_start, num_verts[i]);
-   }
-
-
-   r->pipe->flush(r->pipe, PIPE_FLUSH_RENDER_CACHE, r->fence);
-
-   vl_idct_map_buffers(&r->idct_y);
-   vl_idct_map_buffers(&r->idct_cr);
-   vl_idct_map_buffers(&r->idct_cb);
-
-   r->num_macroblocks = 0;
-}
-
-static void
 update_render_target(struct vl_mpeg12_mc_renderer *r)
 {
    struct pipe_transfer *buf_transfer;
@@ -1190,11 +1140,10 @@ texview_map_delete(const struct keymap *map,
 bool
 vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
                            struct pipe_context *pipe,
-                           unsigned picture_width,
-                           unsigned picture_height,
+                           unsigned buffer_width,
+                           unsigned buffer_height,
                            enum pipe_video_chroma_format chroma_format,
-                           enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode,
-                           bool pot_buffers)
+                           enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode)
 {
    struct pipe_resource *idct_matrix;
 
@@ -1203,17 +1152,14 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
 
    /* TODO: Implement other policies */
    assert(bufmode == VL_MPEG12_MC_RENDERER_BUFFER_PICTURE);
-   /* TODO: Non-pot buffers untested, probably doesn't work without changes to texcoord generation, vert shader, etc */
-   assert(pot_buffers);
 
    memset(renderer, 0, sizeof(struct vl_mpeg12_mc_renderer));
 
    renderer->pipe = pipe;
-   renderer->picture_width = picture_width;
-   renderer->picture_height = picture_height;
+   renderer->buffer_width = buffer_width;
+   renderer->buffer_height = buffer_height;
    renderer->chroma_format = chroma_format;
    renderer->bufmode = bufmode;
-   renderer->pot_buffers = pot_buffers;
 
    renderer->texview_map = util_new_keymap(sizeof(struct pipe_surface*), -1,
                                            texview_map_delete);
@@ -1301,16 +1247,13 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer
 
    if (renderer->surface) {
       if (surface != renderer->surface) {
-         if (renderer->num_macroblocks > 0) {
-            flush(renderer);
-         }
-
          new_surface = true;
-      }
+      } else {
 
-      /* If the surface we're rendering hasn't changed the ref frames shouldn't change. */
-      assert(surface != renderer->surface || renderer->past == past);
-      assert(surface != renderer->surface || renderer->future == future);
+         /* If the surface we're rendering hasn't changed the ref frames shouldn't change. */
+         assert(renderer->past == past);
+         assert(renderer->future == future);
+      }
    }
    else
       new_surface = true;
@@ -1336,11 +1279,52 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer
       num_macroblocks -= num_to_submit;
 
       if (renderer->num_macroblocks == renderer->macroblocks_per_batch) {
-         flush(renderer);
+         vl_mpeg12_mc_renderer_flush(renderer);
+
          /* Next time we get this surface it may have new ref frames */
          pipe_surface_reference(&renderer->surface, NULL);
          pipe_surface_reference(&renderer->past, NULL);
          pipe_surface_reference(&renderer->future, NULL);
       }
    }
+}
+
+void
+vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer)
+{
+   unsigned num_verts[VL_NUM_MACROBLOCK_TYPES] = { 0 };
+   unsigned vb_start = 0, i;
+
+   assert(renderer);
+   assert(renderer->num_macroblocks <= renderer->macroblocks_per_batch);
+
+   if (renderer->num_macroblocks == 0)
+      return;
+
+   vl_idct_unmap_buffers(&renderer->idct_y);
+   vl_idct_unmap_buffers(&renderer->idct_cr);
+   vl_idct_unmap_buffers(&renderer->idct_cb);
+
+   vl_idct_flush(&renderer->idct_y);
+   vl_idct_flush(&renderer->idct_cr);
+   vl_idct_flush(&renderer->idct_cb);
+
+   upload_vertex_stream(renderer, num_verts);
+
+   renderer->pipe->bind_rasterizer_state(renderer->pipe, renderer->rs_state);
+   renderer->pipe->set_framebuffer_state(renderer->pipe, &renderer->fb_state);
+   renderer->pipe->set_viewport_state(renderer->pipe, &renderer->viewport);
+
+   for (i = 0; i < VL_NUM_MACROBLOCK_TYPES; ++i) {
+      if (num_verts[i] > 0)
+         vb_start += flush_mbtype_handler(renderer, i, vb_start, num_verts[i]);
+   }
+
+   renderer->pipe->flush(renderer->pipe, PIPE_FLUSH_RENDER_CACHE, renderer->fence);
+
+   vl_idct_map_buffers(&renderer->idct_y);
+   vl_idct_map_buffers(&renderer->idct_cr);
+   vl_idct_map_buffers(&renderer->idct_cb);
+
+   renderer->num_macroblocks = 0;
 }

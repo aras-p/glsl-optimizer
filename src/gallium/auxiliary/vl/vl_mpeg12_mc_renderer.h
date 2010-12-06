@@ -71,11 +71,10 @@ struct vl_mc_mbtype_handler
 struct vl_mpeg12_mc_renderer
 {
    struct pipe_context *pipe;
-   unsigned picture_width;
-   unsigned picture_height;
+   unsigned buffer_width;
+   unsigned buffer_height;
    enum pipe_video_chroma_format chroma_format;
    enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode;
-   bool pot_buffers;
    unsigned macroblocks_per_batch;
 
    struct pipe_viewport_state viewport;
@@ -126,8 +125,7 @@ bool vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
                                 unsigned picture_width,
                                 unsigned picture_height,
                                 enum pipe_video_chroma_format chroma_format,
-                                enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode,
-                                bool pot_buffers);
+                                enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode);
 
 void vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer);
 
@@ -138,5 +136,7 @@ void vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer *rend
                                               unsigned num_macroblocks,
                                               struct pipe_mpeg12_macroblock *mpeg12_macroblocks,
                                               struct pipe_fence_handle **fence);
+
+void vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer);
 
 #endif /* vl_mpeg12_mc_renderer_h */

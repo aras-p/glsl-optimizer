@@ -282,6 +282,8 @@ sp_mpeg12_render_picture(struct pipe_video_context     *vpipe,
    assert(dst_surface);
    assert(dst_area);
 
+   vl_mpeg12_mc_renderer_flush(&ctx->mc_renderer);
+
    vl_compositor_render(&ctx->compositor, src_surface,
                         picture_type, src_area, dst_surface, dst_area, fence);
 }
@@ -325,7 +327,10 @@ sp_mpeg12_set_decode_target(struct pipe_video_context *vpipe,
    assert(vpipe);
    assert(dt);
 
-   pipe_surface_reference(&ctx->decode_target, dt);
+   if (ctx->decode_target != dt) {
+      vl_mpeg12_mc_renderer_flush(&ctx->mc_renderer);
+      pipe_surface_reference(&ctx->decode_target, dt);
+   }
 }
 
 static void
@@ -426,6 +431,7 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
                  bool pot_buffers,
                  enum pipe_format decode_format)
 {
+   unsigned buffer_width, buffer_height;
    struct sp_mpeg12_context *ctx;
 
    assert(u_reduce_video_profile(profile) == PIPE_VIDEO_CODEC_MPEG12);
@@ -434,6 +440,12 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
 
    if (!ctx)
       return NULL;
+
+   /* TODO: Non-pot buffers untested, probably doesn't work without changes to texcoord generation, vert shader, etc */
+   assert(pot_buffers);
+
+   buffer_width = pot_buffers ? util_next_power_of_two(width) : width; 
+   buffer_height = pot_buffers ? util_next_power_of_two(height) : height; 
 
    ctx->base.profile = profile;
    ctx->base.chroma_format = chroma_format;
@@ -464,8 +476,8 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
    ctx->decode_format = decode_format;
 
    if (!vl_mpeg12_mc_renderer_init(&ctx->mc_renderer, ctx->pipe,
-                                   width, height, chroma_format,
-                                   bufmode, pot_buffers)) {
+                                   buffer_width, buffer_height, chroma_format,
+                                   bufmode)) {
       ctx->pipe->destroy(ctx->pipe);
       FREE(ctx);
       return NULL;
