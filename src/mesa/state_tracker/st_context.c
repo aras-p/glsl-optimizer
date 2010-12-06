@@ -244,8 +244,8 @@ void st_destroy_context( struct st_context *st )
    pipe->set_index_buffer(pipe, NULL);
 
    for (i = 0; i < PIPE_SHADER_TYPES; i++) {
-      pipe->set_constant_buffer(pipe, PIPE_SHADER_VERTEX, 0, NULL);
-      pipe_resource_reference(&st->state.constants[PIPE_SHADER_VERTEX], NULL);
+      pipe->set_constant_buffer(pipe, i, 0, NULL);
+      pipe_resource_reference(&st->state.constants[i], NULL);
    }
 
    _mesa_delete_program_cache(st->ctx, st->pixel_xfer.cache);
