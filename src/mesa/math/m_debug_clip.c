@@ -208,6 +208,24 @@ ALIGN16(static GLfloat, d[TEST_COUNT][4]);
 ALIGN16(static GLfloat, r[TEST_COUNT][4]);
 
 
+/**
+ * Check if X, Y or Z component of the coordinate is close to W, in terms
+ * of the clip test.
+ */
+static GLboolean
+xyz_close_to_w(const GLfloat c[4])
+{
+   float k = 0.0001;
+   return (fabs(c[0] - c[3]) < k ||
+           fabs(c[1] - c[3]) < k ||
+           fabs(c[2] - c[3]) < k ||
+           fabs(-c[0] - c[3]) < k ||
+           fabs(-c[1] - c[3]) < k ||
+           fabs(-c[2] - c[3]) < k);
+}
+
+
+
 static int test_cliptest_function( clip_func func, int np,
 				   int psize, long *cycles )
 {
@@ -281,9 +299,18 @@ static int test_cliptest_function( clip_func func, int np,
    }
    for ( i = 0 ; i < TEST_COUNT ; i++ ) {
       if ( dm[i] != rm[i] ) {
+         GLfloat *c = source->start;
+         STRIDE_F(c, source->stride * i);
+         if (psize == 4 && xyz_close_to_w(c)) {
+            /* The coordinate is very close to the clip plane.  The clipmask
+             * may vary depending on code path, but that's OK.
+             */
+            continue;
+         }
 	 printf( "\n-----------------------------\n" );
-	 printf( "(i = %i)\n", i );
-	 printf( "dm = 0x%02x   rm = 0x%02x\n", dm[i], rm[i] );
+	 printf( "mask[%d] = 0x%02x   ref mask[%d] = 0x%02x\n", i, dm[i], i,rm[i] );
+         printf(" coord = %f, %f, %f, %f\n",
+                c[0], c[1], c[2], c[3]);
 	 return 0;
       }
    }
