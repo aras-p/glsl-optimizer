@@ -99,23 +99,29 @@ match_function_by_name(exec_list *instructions, const char *name,
 {
    void *ctx = state;
    ir_function *f = state->symbols->get_function(name);
-   ir_function_signature *sig = NULL;
+   ir_function_signature *sig;
+
+   sig = f ? f->matching_signature(actual_parameters) : NULL;
 
    /* FINISHME: This doesn't handle the case where shader X contains a
     * FINISHME: matching signature but shader X + N contains an _exact_
     * FINISHME: matching signature.
     */
-   if (f != NULL) {
-      sig = f->matching_signature(actual_parameters);
-   } else if (state->symbols->get_type(name) == NULL && (state->language_version == 110 || state->symbols->get_variable(name) == NULL)) {
+   if (sig == NULL && (f == NULL || state->es_shader || !f->has_user_signature()) && state->symbols->get_type(name) == NULL && (state->language_version == 110 || state->symbols->get_variable(name) == NULL)) {
       /* The current shader doesn't contain a matching function or signature.
        * Before giving up, look for the prototype in the built-in functions.
        */
       for (unsigned i = 0; i < state->num_builtins_to_link; i++) {
-	 f = state->builtins_to_link[i]->symbols->get_function(name);
-	 sig = f ? f->matching_signature(actual_parameters) : NULL;
+	 ir_function *builtin;
+	 builtin = state->builtins_to_link[i]->symbols->get_function(name);
+	 sig = builtin ? builtin->matching_signature(actual_parameters) : NULL;
 	 if (sig != NULL) {
-	    f = new(ctx) ir_function(name);
+	    if (f == NULL) {
+	       f = new(ctx) ir_function(name);
+	       state->symbols->add_global_function(f);
+	       emit_function(state, instructions, f);
+	    }
+
 	    f->add_signature(sig->clone_prototype(f, NULL));
 	    break;
 	 }

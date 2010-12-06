@@ -103,6 +103,11 @@ public:
    /*@}*/
 
    /**
+    * Add an function at global scope without checking for scoping conflicts.
+    */
+   void add_global_function(ir_function *f);
+
+   /**
     * \name Methods to get symbols from the table
     */
    /*@{*/
