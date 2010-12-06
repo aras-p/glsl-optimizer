@@ -33,10 +33,7 @@
 #include "VG/vgext.h"
 #include "vg_manager.h"
 
-/* declare the prototypes */
-#define MAPI_ABI_ENTRY(ret, name, params) \
-   ret VG_API_ENTRY vega ## name params;
-#include "vgapi/vgapi_tmp.h"
+#include "api_tmp.h"
 
 struct mapi_table;
 

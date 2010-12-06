@@ -28,22 +28,9 @@
 
 #include "mapi/mapi.h"
 
+/* define vega_spec and vega_procs for use with mapi */
+#define API_TMP_DEFINE_SPEC
 #include "api.h"
-
-static const char vega_spec[] =
-   "1"
-#define MAPI_ABI_ENTRY(ret, name, params) \
-   "\0" #name "\0"
-#define MAPI_ALIAS_ENTRY(alias, ret, name, params) \
-   #name "\0"
-#include "vgapi/vgapi_tmp.h"
-   "\0";
-
-static const mapi_proc vega_procs[] = {
-#define MAPI_ABI_ENTRY(ret, name, params) \
-   (mapi_proc) vega ## name,
-#include "vgapi/vgapi_tmp.h"
-};
 
 static void api_init(void)
 {
