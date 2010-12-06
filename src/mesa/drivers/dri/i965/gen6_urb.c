@@ -72,7 +72,7 @@ const struct brw_tracked_state gen6_urb = {
    .dirty = {
       .mesa = 0,
       .brw = BRW_NEW_CONTEXT,
-      .cache = CACHE_NEW_VS_PROG,
+      .cache = (CACHE_NEW_VS_PROG | CACHE_NEW_GS_PROG),
    },
    .prepare = prepare_urb,
    .emit = upload_urb,
