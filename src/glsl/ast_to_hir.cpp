@@ -2477,6 +2477,27 @@ ast_parameter_declarator::parameters_to_hir(exec_list *ast_parameters,
 }
 
 
+void
+emit_function(_mesa_glsl_parse_state *state, exec_list *instructions,
+	      ir_function *f)
+{
+   /* Emit the new function header */
+   if (state->current_function == NULL) {
+      instructions->push_tail(f);
+   } else {
+      /* IR invariants disallow function declarations or definitions nested
+       * within other function definitions.  Insert the new ir_function
+       * block in the instruction sequence before the ir_function block
+       * containing the current ir_function_signature.
+       */
+      ir_function *const curr =
+	 const_cast<ir_function *>(state->current_function->function());
+
+      curr->insert_before(f);
+   }
+}
+
+
 ir_rvalue *
 ast_function::hir(exec_list *instructions,
 		  struct _mesa_glsl_parse_state *state)
@@ -2588,24 +2609,7 @@ ast_function::hir(exec_list *instructions,
 	 return NULL;
       }
 
-      /* Emit the new function header */
-      if (state->current_function == NULL)
-	 instructions->push_tail(f);
-      else {
-	 /* IR invariants disallow function declarations or definitions nested
-	  * within other function definitions.  Insert the new ir_function
-	  * block in the instruction sequence before the ir_function block
-	  * containing the current ir_function_signature.
-	  *
-	  * This can only happen in a GLSL 1.10 shader.  In all other GLSL
-	  * versions this nesting is disallowed.  There is a check for this at
-	  * the top of this function.
-	  */
-	 ir_function *const curr =
-	    const_cast<ir_function *>(state->current_function->function());
-
-	 curr->insert_before(f);
-      }
+      emit_function(state, instructions, f);
    }
 
    /* Verify the return type of main() */
