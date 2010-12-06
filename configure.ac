@@ -808,13 +808,19 @@ if test "$mesa_driver" = xlib; then
 fi
 
 dnl
-dnl More DRI setup
+dnl TLS detection
 dnl
+
 AC_ARG_ENABLE([glx-tls],
     [AS_HELP_STRING([--enable-glx-tls],
         [enable TLS support in GLX @<:@default=disabled@:>@])],
     [GLX_USE_TLS="$enableval"],
     [GLX_USE_TLS=no])
+AC_SUBST(GLX_TLS, ${GLX_USE_TLS})
+
+dnl
+dnl More DRI setup
+dnl
 dnl Directory for DRI drivers
 AC_ARG_WITH([dri-driverdir],
     [AS_HELP_STRING([--with-dri-driverdir=DIR],
