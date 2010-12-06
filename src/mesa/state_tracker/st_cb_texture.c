@@ -1855,8 +1855,9 @@ st_finalize_texture(struct gl_context *ctx,
     * will match.
     */
    if (firstImage->pt &&
+       stObj->pt &&
        firstImage->pt != stObj->pt &&
-       firstImage->pt->last_level >= stObj->lastLevel) {
+       firstImage->pt->last_level >= stObj->pt->last_level) {
       pipe_resource_reference(&stObj->pt, firstImage->pt);
       pipe_sampler_view_reference(&stObj->sampler_view, NULL);
    }

@@ -370,6 +370,12 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
 
       pt = stObj->pt;
    }
+   else {
+      /* Make sure that the base texture image data is present in the
+       * texture buffer.
+       */
+      st_finalize_texture(ctx, st->pipe, texObj);
+   }
 
    assert(pt->last_level >= lastLevel);
 
