@@ -35,7 +35,6 @@ struct radeon_bo_pb {
 	struct radeon_bo *bo;
 
 	struct radeon_bo_pbmgr *mgr;
-	struct list_head maplist;
 };
 
 extern const struct pb_vtbl radeon_bo_pb_vtbl;
@@ -50,7 +49,6 @@ static INLINE struct radeon_bo_pb *radeon_bo_pb(struct pb_buffer *buf)
 struct radeon_bo_pbmgr {
 	struct pb_manager b;
 	struct radeon *radeon;
-	struct list_head buffer_map_list;
 };
 
 static INLINE struct radeon_bo_pbmgr *radeon_bo_pbmgr(struct pb_manager *mgr)
@@ -66,10 +64,7 @@ static void radeon_bo_pb_destroy(struct pb_buffer *_buf)
 	/* If this buffer is on the list of buffers to unmap,
 	 * do the unmapping now.
 	 */
-	if (!LIST_IS_EMPTY(&buf->maplist))
-		radeon_bo_unmap(buf->mgr->radeon, buf->bo);
-
-	LIST_DEL(&buf->maplist);
+	radeon_bo_unmap(buf->mgr->radeon, buf->bo);
 	radeon_bo_reference(buf->mgr->radeon, &buf->bo, NULL);
 	FREE(buf);
 }
@@ -85,7 +80,6 @@ radeon_bo_pb_map_internal(struct pb_buffer *_buf,
 		if (radeon_bo_map(buf->mgr->radeon, buf->bo)) {
 			return NULL;
 		}
-		LIST_DELINIT(&buf->maplist);
 		return buf->bo->data;
 	}
 
@@ -116,14 +110,11 @@ radeon_bo_pb_map_internal(struct pb_buffer *_buf,
 		return NULL;
 	}
 out:
-	LIST_DELINIT(&buf->maplist);
 	return buf->bo->data;
 }
 
 static void radeon_bo_pb_unmap_internal(struct pb_buffer *_buf)
 {
-	struct radeon_bo_pb *buf = radeon_bo_pb(_buf);
-	LIST_ADDTAIL(&buf->maplist, &buf->mgr->buffer_map_list);
 }
 
 static void
@@ -178,7 +169,6 @@ radeon_bo_pb_create_buffer_from_handle(struct pb_manager *_mgr,
 		return NULL;
 	}
 
-	LIST_INITHEAD(&bo->maplist);
 	pipe_reference_init(&bo->b.base.reference, 1);
 	bo->b.base.alignment = 0;
 	bo->b.base.usage = PB_USAGE_GPU_WRITE | PB_USAGE_GPU_READ;
@@ -210,8 +200,6 @@ radeon_bo_pb_create_buffer(struct pb_manager *_mgr,
 	bo->b.base.size = size;
 	bo->b.vtbl = &radeon_bo_pb_vtbl;
 	bo->mgr = mgr;
-
-	LIST_INITHEAD(&bo->maplist);
 
 	bo->bo = radeon_bo(radeon, 0, size, desc->alignment);
 	if (bo->bo == NULL)
@@ -250,22 +238,7 @@ struct pb_manager *radeon_bo_pbmgr_create(struct radeon *radeon)
 	mgr->b.flush = radeon_bo_pbmgr_flush;
 
 	mgr->radeon = radeon;
-	LIST_INITHEAD(&mgr->buffer_map_list);
 	return &mgr->b;
-}
-
-void radeon_bo_pbmgr_flush_maps(struct pb_manager *_mgr)
-{
-	struct radeon_bo_pbmgr *mgr = radeon_bo_pbmgr(_mgr);
-	struct radeon_bo_pb *rpb = NULL;
-	struct radeon_bo_pb *t_rpb;
-
-	LIST_FOR_EACH_ENTRY_SAFE(rpb, t_rpb, &mgr->buffer_map_list, maplist) {
-		radeon_bo_unmap(mgr->radeon, rpb->bo);
-		LIST_DELINIT(&rpb->maplist);
-	}
-
-	LIST_INITHEAD(&mgr->buffer_map_list);
 }
 
 struct radeon_bo *radeon_bo_pb_get_bo(struct pb_buffer *_buf)
