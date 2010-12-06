@@ -69,7 +69,7 @@ upload_sf_state(struct brw_context *brw)
    uint32_t num_inputs = brw_count_bits(brw->vs.prog_data->outputs_written);
    /* BRW_NEW_FRAGMENT_PROGRAM */
    uint32_t num_outputs = brw_count_bits(brw->fragment_program->Base.InputsRead);
-   uint32_t dw1, dw2, dw3, dw4, dw16;
+   uint32_t dw1, dw2, dw3, dw4, dw16, dw17;
    int i;
    /* _NEW_BUFFER */
    GLboolean render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
@@ -92,6 +92,7 @@ upload_sf_state(struct brw_context *brw)
    dw3 = 0;
    dw4 = 0;
    dw16 = 0;
+   dw17 = 0;
 
    /* _NEW_POLYGON */
    if ((ctx->Polygon.FrontFace == GL_CCW) ^ render_to_fbo)
@@ -203,6 +204,12 @@ upload_sf_state(struct brw_context *brw)
        }
    }
 
+   /* flat shading */
+   if (ctx->Light.ShadeModel == GL_FLAT) {
+       dw17 |= ((brw->fragment_program->Base.InputsRead & (FRAG_BIT_COL0 | FRAG_BIT_COL1)) >>
+                ((brw->fragment_program->Base.InputsRead & FRAG_BIT_WPOS) ? 0 : 1));
+   }
+
    BEGIN_BATCH(20);
    OUT_BATCH(CMD_3D_SF_STATE << 16 | (20 - 2));
    OUT_BATCH(dw1);
@@ -233,7 +240,7 @@ upload_sf_state(struct brw_context *brw)
       OUT_BATCH(attr_overrides);
    }
    OUT_BATCH(dw16); /* point sprite texcoord bitmask */
-   OUT_BATCH(0); /* constant interp bitmask */
+   OUT_BATCH(dw17); /* constant interp bitmask */
    OUT_BATCH(0); /* wrapshortest enables 0-7 */
    OUT_BATCH(0); /* wrapshortest enables 8-15 */
    ADVANCE_BATCH();
