@@ -2146,6 +2146,7 @@ _mesa_GenerateMipmapEXT(GLenum target)
       /* OK, legal value */
       break;
    default:
+      /* XXX need to implement GL_TEXTURE_1D_ARRAY and GL_TEXTURE_2D_ARRAY */
       _mesa_error(ctx, GL_INVALID_ENUM, "glGenerateMipmapEXT(target)");
       return;
    }
@@ -2154,6 +2155,13 @@ _mesa_GenerateMipmapEXT(GLenum target)
 
    if (texObj->BaseLevel >= texObj->MaxLevel) {
       /* nothing to do */
+      return;
+   }
+
+   if (texObj->Target == GL_TEXTURE_CUBE_MAP &&
+       !_mesa_cube_complete(texObj)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glGenerateMipmap(incomplete cube map)");
       return;
    }
 

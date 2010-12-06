@@ -688,6 +688,44 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
 
 
 /**
+ * Check if the given cube map texture is "cube complete" as defined in
+ * the OpenGL specification.
+ */
+GLboolean
+_mesa_cube_complete(const struct gl_texture_object *texObj)
+{
+   const GLint baseLevel = texObj->BaseLevel;
+   const struct gl_texture_image *img0, *img;
+   GLuint face;
+
+   if (texObj->Target != GL_TEXTURE_CUBE_MAP)
+      return GL_FALSE;
+
+   if ((baseLevel < 0) || (baseLevel >= MAX_TEXTURE_LEVELS))
+      return GL_FALSE;
+
+   /* check first face */
+   img0 = texObj->Image[0][baseLevel];
+   if (!img0 ||
+       img0->Width < 1 ||
+       img0->Width != img0->Height)
+      return GL_FALSE;
+
+   /* check remaining faces vs. first face */
+   for (face = 1; face < 6; face++) {
+      img = texObj->Image[face][baseLevel];
+      if (!img ||
+          img->Width != img0->Width ||
+          img->Height != img0->Height ||
+          img->TexFormat != img0->TexFormat)
+         return GL_FALSE;
+   }
+
+   return GL_TRUE;
+}
+
+
+/**
  * Mark a texture object dirty.  It forces the object to be incomplete
  * and optionally forces the context to re-validate its state.
  *
