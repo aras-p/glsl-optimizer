@@ -372,15 +372,12 @@ _mesa_reference_texobj(struct gl_texture_object **ptr,
 
 
 /**
- * Report why a texture object is incomplete.  
- *
- * \param t texture object.
- * \param why string describing why it's incomplete.
- *
- * \note For debug purposes only.
+ * Mark a texture object as incomplete.
+ * \param t  texture object
+ * \param fmt...  string describing why it's incomplete (for debugging).
  */
 static void
-incomplete(const struct gl_texture_object *t, const char *fmt, ...)
+incomplete(struct gl_texture_object *t, const char *fmt, ...)
 {
 #if 0
    va_list args;
@@ -392,6 +389,7 @@ incomplete(const struct gl_texture_object *t, const char *fmt, ...)
 
    printf("Texture Obj %d incomplete because: %s\n", t->Name, s);
 #endif
+   t->_Complete = GL_FALSE;
 }
 
 
@@ -421,14 +419,12 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
     */
    if ((baseLevel < 0) || (baseLevel >= MAX_TEXTURE_LEVELS)) {
       incomplete(t, "base level = %d is invalid", baseLevel);
-      t->_Complete = GL_FALSE;
       return;
    }
 
    /* Always need the base level image */
    if (!t->Image[0][baseLevel]) {
       incomplete(t, "Image[baseLevel=%d] == NULL", baseLevel);
-      t->_Complete = GL_FALSE;
       return;
    }
 
@@ -437,7 +433,6 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
        t->Image[0][baseLevel]->Height == 0 ||
        t->Image[0][baseLevel]->Depth == 0) {
       incomplete(t, "texture width = 0");
-      t->_Complete = GL_FALSE;
       return;
    }
 
@@ -491,7 +486,6 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
          if (t->Image[face][baseLevel] == NULL ||
              t->Image[face][baseLevel]->Width2 != w ||
              t->Image[face][baseLevel]->Height2 != h) {
-            t->_Complete = GL_FALSE;
             incomplete(t, "Cube face missing or mismatched size");
             return;
          }
@@ -508,7 +502,6 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
       GLint maxLevel = t->_MaxLevel;
 
       if (minLevel > maxLevel) {
-         t->_Complete = GL_FALSE;
          incomplete(t, "minLevel > maxLevel");
          return;
       }
@@ -517,12 +510,10 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
       for (i = minLevel; i <= maxLevel; i++) {
          if (t->Image[0][i]) {
             if (t->Image[0][i]->TexFormat != t->Image[0][baseLevel]->TexFormat) {
-               t->_Complete = GL_FALSE;
                incomplete(t, "Format[i] != Format[baseLevel]");
                return;
             }
             if (t->Image[0][i]->Border != t->Image[0][baseLevel]->Border) {
-               t->_Complete = GL_FALSE;
                incomplete(t, "Border[i] != Border[baseLevel]");
                return;
             }
@@ -540,12 +531,10 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
             }
             if (i >= minLevel && i <= maxLevel) {
                if (!t->Image[0][i]) {
-                  t->_Complete = GL_FALSE;
                   incomplete(t, "1D Image[0][i] == NULL");
                   return;
                }
                if (t->Image[0][i]->Width2 != width ) {
-                  t->_Complete = GL_FALSE;
                   incomplete(t, "1D Image[0][i] bad width");
                   return;
                }
@@ -569,17 +558,14 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
             }
             if (i >= minLevel && i <= maxLevel) {
                if (!t->Image[0][i]) {
-                  t->_Complete = GL_FALSE;
                   incomplete(t, "2D Image[0][i] == NULL");
                   return;
                }
                if (t->Image[0][i]->Width2 != width) {
-                  t->_Complete = GL_FALSE;
                   incomplete(t, "2D Image[0][i] bad width");
                   return;
                }
                if (t->Image[0][i]->Height2 != height) {
-                  t->_Complete = GL_FALSE;
                   incomplete(t, "2D Image[0][i] bad height");
                   return;
                }
@@ -607,26 +593,21 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
             if (i >= minLevel && i <= maxLevel) {
                if (!t->Image[0][i]) {
                   incomplete(t, "3D Image[0][i] == NULL");
-                  t->_Complete = GL_FALSE;
                   return;
                }
                if (t->Image[0][i]->_BaseFormat == GL_DEPTH_COMPONENT) {
-                  t->_Complete = GL_FALSE;
                   incomplete(t, "GL_DEPTH_COMPONENT only works with 1/2D tex");
                   return;
                }
                if (t->Image[0][i]->Width2 != width) {
-                  t->_Complete = GL_FALSE;
                   incomplete(t, "3D Image[0][i] bad width");
                   return;
                }
                if (t->Image[0][i]->Height2 != height) {
-                  t->_Complete = GL_FALSE;
                   incomplete(t, "3D Image[0][i] bad height");
                   return;
                }
                if (t->Image[0][i]->Depth2 != depth) {
-                  t->_Complete = GL_FALSE;
                   incomplete(t, "3D Image[0][i] bad depth");
                   return;
                }
@@ -652,20 +633,17 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
 	       for (face = 0; face < 6; face++) {
 		  /* check that we have images defined */
 		  if (!t->Image[face][i]) {
-		     t->_Complete = GL_FALSE;
 		     incomplete(t, "CubeMap Image[n][i] == NULL");
 		     return;
 		  }
 		  /* Don't support GL_DEPTH_COMPONENT for cube maps */
 		  if (t->Image[face][i]->_BaseFormat == GL_DEPTH_COMPONENT) {
-		     t->_Complete = GL_FALSE;
 		     incomplete(t, "GL_DEPTH_COMPONENT only works with 1/2D tex");
 		     return;
 		  }
 		  /* check that all six images have same size */
                   if (t->Image[face][i]->Width2 != width || 
                       t->Image[face][i]->Height2 != height) {
-		     t->_Complete = GL_FALSE;
 		     incomplete(t, "CubeMap Image[n][i] bad size");
 		     return;
 		  }
