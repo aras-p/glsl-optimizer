@@ -247,7 +247,7 @@ typedef enum prog_opcode {
  * Number of bits for the src/dst register Index field.
  * This limits the size of temp/uniform register files.
  */
-#define INST_INDEX_BITS 10
+#define INST_INDEX_BITS 11
 
 
 /**
