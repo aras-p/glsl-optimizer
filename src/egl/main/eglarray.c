@@ -118,38 +118,39 @@ _eglFindArray(_EGLArray *array, void *elem)
 
 
 /**
- * Filter an array and return the filtered data.  The returned data pointer
- * should be freed.
+ * Filter an array and return the number of filtered elements.
  */
-void **
-_eglFilterArray(_EGLArray *array, EGLint *size,
+EGLint
+_eglFilterArray(_EGLArray *array, void **data, EGLint size,
                 _EGLArrayForEach filter, void *filter_data)
 {
-   void **data;
    EGLint count = 0, i;
 
-   if (!array) {
-      *size = 0;
-      return malloc(0);
-   }
-
-   data = malloc(array->Size * sizeof(array->Elements[0]));
-   if (!data)
-      return NULL;
+   if (!array)
+      return 0;
 
    if (filter) {
       for (i = 0; i < array->Size; i++) {
-         if (filter(array->Elements[i], filter_data))
-            data[count++] = array->Elements[i];
+         if (filter(array->Elements[i], filter_data)) {
+            if (data && count < size)
+               data[count] = array->Elements[i];
+            count++;
+         }
+         if (data && count >= size)
+            break;
       }
    }
    else {
-      memcpy(data, array->Elements, array->Size * sizeof(array->Elements[0]));
+      if (data) {
+         count = (size < array->Size) ? size : array->Size;
+         memcpy(data, array->Elements, count * sizeof(array->Elements[0]));
+      }
+      else {
+         count = array->Size;
+      }
    }
 
-   *size = count;
-
-   return data;
+   return count;
 }
 
 

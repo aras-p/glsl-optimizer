@@ -141,10 +141,21 @@ egl_g3d_choose_config(_EGLDriver *drv, _EGLDisplay *dpy, const EGLint *attribs,
    if (!_eglParseConfigAttribList(&criteria, dpy, attribs))
       return _eglError(EGL_BAD_ATTRIBUTE, "eglChooseConfig");
 
-   tmp_configs = (_EGLConfig **) _eglFilterArray(dpy->Configs, &tmp_size,
+   /* get the number of matched configs */
+   tmp_size = _eglFilterArray(dpy->Configs, NULL, 0,
          (_EGLArrayForEach) egl_g3d_match_config, (void *) &criteria);
+   if (!tmp_size) {
+      *num_configs = tmp_size;
+      return EGL_TRUE;
+   }
+
+   tmp_configs = MALLOC(sizeof(tmp_configs[0]) * tmp_size);
    if (!tmp_configs)
       return _eglError(EGL_BAD_ALLOC, "eglChooseConfig(out of memory)");
+
+   /* get the matched configs */
+   _eglFilterArray(dpy->Configs, (void **) tmp_configs, tmp_size,
+         (_EGLArrayForEach) egl_g3d_match_config, (void *) &criteria);
 
    /* perform sorting of configs */
    if (tmp_configs && tmp_size) {
@@ -155,7 +166,7 @@ egl_g3d_choose_config(_EGLDriver *drv, _EGLDisplay *dpy, const EGLint *attribs,
          configs[i] = _eglGetConfigHandle(tmp_configs[i]);
    }
 
-   free(tmp_configs);
+   FREE(tmp_configs);
 
    *num_configs = size;
 

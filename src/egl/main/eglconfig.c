@@ -697,10 +697,21 @@ _eglChooseConfig(_EGLDriver *drv, _EGLDisplay *disp, const EGLint *attrib_list,
    if (!_eglParseConfigAttribList(&criteria, disp, attrib_list))
       return _eglError(EGL_BAD_ATTRIBUTE, "eglChooseConfig");
 
-   configList = (_EGLConfig **) _eglFilterArray(disp->Configs, &count,
+   /* get the number of matched configs */
+   count = _eglFilterArray(disp->Configs, NULL, 0,
          (_EGLArrayForEach) _eglMatchConfig, (void *) &criteria);
+   if (!count) {
+      *num_configs = count;
+      return EGL_TRUE;
+   }
+
+   configList = malloc(sizeof(*configList) * count);
    if (!configList)
       return _eglError(EGL_BAD_ALLOC, "eglChooseConfig(out of memory)");
+
+   /* get the matched configs */
+   _eglFilterArray(disp->Configs, (void **) configList, count,
+         (_EGLArrayForEach) _eglMatchConfig, (void *) &criteria);
 
    /* perform sorting of configs */
    if (configs && count) {
