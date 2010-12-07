@@ -64,7 +64,9 @@ upload_clip_state(struct brw_context *brw)
 	     userclip << GEN6_USER_CLIP_CLIP_DISTANCES_SHIFT |
 	     depth_clamp |
 	     provoking);
-   OUT_BATCH(GEN6_CLIP_FORCE_ZERO_RTAINDEX);
+   OUT_BATCH(U_FIXED(0.125, 3) << GEN6_CLIP_MIN_POINT_WIDTH_SHIFT |
+             U_FIXED(225.875, 3) << GEN6_CLIP_MAX_POINT_WIDTH_SHIFT |
+             GEN6_CLIP_FORCE_ZERO_RTAINDEX);
    ADVANCE_BATCH();
 }
 
