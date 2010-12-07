@@ -1219,12 +1219,6 @@ boolean r300_emit_buffer_validate(struct r300_context *r300,
     struct pipe_resource *pbuf;
     unsigned i;
 
-    /* upload buffers first */
-    if (r300->screen->caps.has_tcl && r300->any_user_vbs) {
-        r300_upload_user_buffers(r300);
-        r300->any_user_vbs = false;
-    }
-
     /* Clean out BOs. */
     r300->rws->cs_reset_buffers(r300->cs);
 
@@ -1263,6 +1257,8 @@ boolean r300_emit_buffer_validate(struct r300_context *r300,
     if (do_validate_vertex_buffers) {
         for (i = 0; i < r300->velems->count; i++) {
             pbuf = vbuf[velem[i].vertex_buffer_index].buffer;
+            if (!pbuf)
+                continue;
 
             r300->rws->cs_add_buffer(r300->cs, r300_buffer(pbuf)->cs_buf,
                                      r300_buffer(pbuf)->domain, 0);

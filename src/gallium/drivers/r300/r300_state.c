@@ -751,6 +751,7 @@ static void
     util_copy_framebuffer_state(r300->fb_state.state, state);
 
     r300_mark_fb_state_dirty(r300, R300_CHANGED_FB_STATE);
+    r300->validate_buffers = TRUE;
 
     r300->z_compression = false;
     
@@ -1333,6 +1334,7 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
     state->sampler_view_count = count;
 
     r300_mark_atom_dirty(r300, &r300->textures_state);
+    r300->validate_buffers = TRUE;
 
     if (dirty_tex) {
         r300_mark_atom_dirty(r300, &r300->texture_cache_inval);
@@ -1510,6 +1512,7 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
         r300->any_user_vbs = any_user_buffer;
         r300->vertex_buffer_max_index = max_index;
         r300->aos_dirty = TRUE;
+        r300->validate_buffers = TRUE;
     } else {
         /* SW TCL. */
         draw_set_vertex_buffers(r300->draw, count, buffers);
@@ -1545,10 +1548,10 @@ static void r300_set_index_buffer(struct pipe_context* pipe,
     }
 
     if (r300->screen->caps.has_tcl) {
-       /* TODO make this more like a state */
+        r300->validate_buffers = TRUE;
     }
     else {
-       draw_set_index_buffer(r300->draw, ib);
+        draw_set_index_buffer(r300->draw, ib);
     }
 }
 

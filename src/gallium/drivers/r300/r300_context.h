@@ -614,6 +614,10 @@ struct r300_context {
     /* AOS (PACKET3_3D_LOAD_VBPNTR) command buffer for the case offset=0. */
     uint32_t aos_cb[(16 * 3 + 1) / 2];
     boolean aos_dirty;
+
+    /* Whether any buffer (FB, textures, VBOs) has been set, but buffers
+     * haven't been validated yet. */
+    boolean validate_buffers;
 };
 
 #define foreach_atom(r300, atom) \

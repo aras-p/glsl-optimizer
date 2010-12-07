@@ -232,14 +232,28 @@ static boolean r300_emit_states(struct r300_context *r300,
     boolean emit_aos       = flags & PREP_EMIT_AOS;
     boolean emit_aos_swtcl = flags & PREP_EMIT_AOS_SWTCL;
     boolean indexed        = flags & PREP_INDEXED;
+    boolean validate_vbos  = flags & PREP_VALIDATE_VBOS;
 
     /* Validate buffers and emit dirty state if needed. */
     if (first_draw) {
-        if (!r300_emit_buffer_validate(r300, flags & PREP_VALIDATE_VBOS,
-                                       index_buffer)) {
-            fprintf(stderr, "r300: CS space validation failed. "
-                    "(not enough memory?) Skipping rendering.\n");
-            return FALSE;
+        /* upload buffers first */
+        if (r300->screen->caps.has_tcl && r300->any_user_vbs) {
+            r300_upload_user_buffers(r300);
+            r300->any_user_vbs = false;
+        }
+
+        if (r300->validate_buffers) {
+            if (!r300_emit_buffer_validate(r300, validate_vbos,
+                                           index_buffer)) {
+                fprintf(stderr, "r300: CS space validation failed. "
+                        "(not enough memory?) Skipping rendering.\n");
+                return FALSE;
+            }
+
+            /* Consider the validation done only if everything was validated. */
+            if (validate_vbos) {
+                r300->validate_buffers = FALSE;
+            }
         }
 
         r300_emit_dirty_state(r300);
@@ -1079,6 +1093,8 @@ static void r300_blitter_draw_rectangle(struct blitter_context *blitter,
                       (type == UTIL_BLITTER_ATTRIB_TEXCOORD ? 7 : 0);
     const float zeros[4] = {0, 0, 0, 0};
     CS_LOCALS(r300);
+
+    r300->context.set_vertex_buffers(&r300->context, 0, NULL);
 
     if (type == UTIL_BLITTER_ATTRIB_TEXCOORD)
         r300->sprite_coord_enable = 1;

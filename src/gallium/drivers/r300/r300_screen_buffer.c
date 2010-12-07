@@ -118,6 +118,7 @@ int r300_upload_user_buffers(struct r300_context *r300)
             pipe_resource_reference(&vb->buffer, NULL);
             vb->buffer = upload_buffer;
             vb->buffer_offset = upload_offset;
+            r300->validate_buffers = TRUE;
         }
     }
     return ret;

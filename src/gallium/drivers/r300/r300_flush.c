@@ -68,6 +68,8 @@ static void r300_flush(struct pipe_context* pipe,
             r300->vs_state.dirty = FALSE;
             r300->vs_constants.dirty = FALSE;
         }
+
+        r300->validate_buffers = TRUE;
     }
 
     /* reset flushed query */
