@@ -178,7 +178,7 @@ upload_wm_state(struct brw_context *brw)
 const struct brw_tracked_state gen6_wm_state = {
    .dirty = {
       .mesa  = (_NEW_LINE | _NEW_POLYGONSTIPPLE | _NEW_COLOR | _NEW_BUFFERS |
-		_NEW_PROGRAM_CONSTANTS),
+		_NEW_PROGRAM_CONSTANTS | _NEW_POLYGON),
       .brw   = (BRW_NEW_CURBE_OFFSETS |
 		BRW_NEW_FRAGMENT_PROGRAM |
                 BRW_NEW_NR_WM_SURFACES |
