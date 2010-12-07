@@ -126,6 +126,61 @@ class ABIEntry(object):
 
         return res
 
+def abi_parse_xml(xml):
+    """Parse a GLAPI XML file for ABI entries."""
+    import os
+    GLAPI = "./%s/../glapi/gen" % (os.path.dirname(sys.argv[0]))
+    sys.path.append(GLAPI)
+    import gl_XML, glX_XML
+
+    api = gl_XML.parse_GL_API(xml, glX_XML.glx_item_factory())
+
+    entry_dict = {}
+    for func in api.functionIterateByOffset():
+        # make sure func.name appear first
+        entry_points = func.entry_points[:]
+        entry_points.remove(func.name)
+        entry_points.insert(0, func.name)
+
+        for name in entry_points:
+            attrs = {
+                    'slot': func.offset,
+                    'hidden': not func.is_static_entry_point(name),
+                    'alias': None if name == func.name else func.name,
+                    'handcode': bool(func.has_different_protocol(name)),
+            }
+
+            # post-process attrs
+            if attrs['alias']:
+                try:
+                    alias = entry_dict[attrs['alias']]
+                except KeyError:
+                    raise Exception('failed to alias %s' % attrs['alias'])
+                if alias.alias:
+                    raise Exception('recursive alias %s' % ent.name)
+                attrs['alias'] = alias
+            if attrs['handcode']:
+                attrs['handcode'] = func.static_glx_name(name)
+            else:
+                attrs['handcode'] = None
+
+            if entry_dict.has_key(name):
+                raise Exception('%s is duplicated' % (name))
+
+            cols = []
+            cols.append(func.return_type)
+            cols.append(name)
+            params = func.get_parameter_string(name)
+            cols.extend([p.strip() for p in params.split(',')])
+
+            ent = ABIEntry(cols, attrs)
+            entry_dict[ent.name] = ent
+
+    entries = entry_dict.values()
+    entries.sort()
+
+    return entries
+
 def abi_parse_line(line):
     cols = [col.strip() for col in line.split(',')]
 
@@ -194,9 +249,16 @@ def abi_parse(filename):
     entries = entry_dict.values()
     entries.sort()
 
-    # sanity check
+    return entries
+
+def abi_sanity_check(entries):
+    if not entries:
+        return
+
+    all_names = []
+    last_slot = entries[-1].slot
     i = 0
-    for slot in xrange(next_slot):
+    for slot in xrange(last_slot + 1):
         if entries[i].slot != slot:
             raise Exception('entries are not ordered by slots')
         if entries[i].alias:
@@ -210,11 +272,15 @@ def abi_parse(filename):
             elif ent.handcode != handcode:
                 raise Exception('two aliases with handcode %s != %s',
                         ent.handcode, handcode)
+
+            if ent.name in all_names:
+                raise Exception('%s is duplicated' % (ent.name))
+            if ent.alias and ent.alias.name not in all_names:
+                raise Exception('failed to alias %s' % (ent.alias.name))
+            all_names.append(ent.name)
             i += 1
     if i < len(entries):
         raise Exception('there are %d invalid entries' % (len(entries) - 1))
-
-    return entries
 
 class ABIPrinter(object):
     """MAPI Printer"""
@@ -651,7 +717,12 @@ def main():
 
     filename, options = parse_args()
 
-    entries = abi_parse(filename)
+    if filename.endswith('.xml'):
+        entries = abi_parse_xml(filename)
+    else:
+        entries = abi_parse(filename)
+    abi_sanity_check(entries)
+
     printer = printers[options.printer](entries)
     if options.mode == 'lib':
         printer.output_for_lib()
