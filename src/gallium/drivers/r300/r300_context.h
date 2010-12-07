@@ -610,6 +610,10 @@ struct r300_context {
 
     /* const tracking for VS */
     int vs_const_base;
+
+    /* AOS (PACKET3_3D_LOAD_VBPNTR) command buffer for the case offset=0. */
+    uint32_t aos_cb[(16 * 3 + 1) / 2];
+    boolean aos_dirty;
 };
 
 #define foreach_atom(r300, atom) \
