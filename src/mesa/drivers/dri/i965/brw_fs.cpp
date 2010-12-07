@@ -1427,28 +1427,70 @@ fs_visitor::visit(ir_discard *ir)
 void
 fs_visitor::visit(ir_constant *ir)
 {
-   fs_reg reg(this, ir->type);
-   this->result = reg;
+   /* Set this->result to reg at the bottom of the function because some code
+    * paths will cause this visitor to be applied to other fields.  This will
+    * cause the value stored in this->result to be modified.
+    *
+    * Make reg constant so that it doesn't get accidentally modified along the
+    * way.  Yes, I actually had this problem. :(
+    */
+   const fs_reg reg(this, ir->type);
+   fs_reg dst_reg = reg;
 
-   for (unsigned int i = 0; i < ir->type->vector_elements; i++) {
-      switch (ir->type->base_type) {
-      case GLSL_TYPE_FLOAT:
-	 emit(fs_inst(BRW_OPCODE_MOV, reg, fs_reg(ir->value.f[i])));
-	 break;
-      case GLSL_TYPE_UINT:
-	 emit(fs_inst(BRW_OPCODE_MOV, reg, fs_reg(ir->value.u[i])));
-	 break;
-      case GLSL_TYPE_INT:
-	 emit(fs_inst(BRW_OPCODE_MOV, reg, fs_reg(ir->value.i[i])));
-	 break;
-      case GLSL_TYPE_BOOL:
-	 emit(fs_inst(BRW_OPCODE_MOV, reg, fs_reg((int)ir->value.b[i])));
-	 break;
-      default:
-	 assert(!"Non-float/uint/int/bool constant");
+   if (ir->type->is_array()) {
+      const unsigned size = type_size(ir->type->fields.array);
+
+      for (unsigned i = 0; i < ir->type->length; i++) {
+	 ir->array_elements[i]->accept(this);
+	 fs_reg src_reg = this->result;
+
+	 dst_reg.type = src_reg.type;
+	 for (unsigned j = 0; j < size; j++) {
+	    emit(fs_inst(BRW_OPCODE_MOV, dst_reg, src_reg));
+	    src_reg.reg_offset++;
+	    dst_reg.reg_offset++;
+	 }
       }
-      reg.reg_offset++;
+   } else if (ir->type->is_record()) {
+      foreach_list(node, &ir->components) {
+	 ir_instruction *const field = (ir_instruction *) node;
+	 const unsigned size = type_size(field->type);
+
+	 field->accept(this);
+	 fs_reg src_reg = this->result;
+
+	 dst_reg.type = src_reg.type;
+	 for (unsigned j = 0; j < size; j++) {
+	    emit(fs_inst(BRW_OPCODE_MOV, dst_reg, src_reg));
+	    src_reg.reg_offset++;
+	    dst_reg.reg_offset++;
+	 }
+      }
+   } else {
+      const unsigned size = type_size(ir->type);
+
+      for (unsigned i = 0; i < size; i++) {
+	 switch (ir->type->base_type) {
+	 case GLSL_TYPE_FLOAT:
+	    emit(fs_inst(BRW_OPCODE_MOV, dst_reg, fs_reg(ir->value.f[i])));
+	    break;
+	 case GLSL_TYPE_UINT:
+	    emit(fs_inst(BRW_OPCODE_MOV, dst_reg, fs_reg(ir->value.u[i])));
+	    break;
+	 case GLSL_TYPE_INT:
+	    emit(fs_inst(BRW_OPCODE_MOV, dst_reg, fs_reg(ir->value.i[i])));
+	    break;
+	 case GLSL_TYPE_BOOL:
+	    emit(fs_inst(BRW_OPCODE_MOV, dst_reg, fs_reg((int)ir->value.b[i])));
+	    break;
+	 default:
+	    assert(!"Non-float/uint/int/bool constant");
+	 }
+	 dst_reg.reg_offset++;
+      }
    }
+
+   this->result = reg;
 }
 
 void
