@@ -369,8 +369,6 @@ static void vbo_exec_fixup_vertex( struct gl_context *ctx,
 }
 
 
-#if FEATURE_beginend
-
 /* 
  */
 #define ATTR( A, N, V0, V1, V2, V3 )				\
@@ -411,7 +409,7 @@ do {								\
 #include "vbo_attrib_tmp.h"
 
 
-
+#if FEATURE_beginend
 
 
 #if FEATURE_evaluators
@@ -705,30 +703,6 @@ static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
 
 #else /* FEATURE_beginend */
 
-
-#define ATTR( A, N, V0, V1, V2, V3 )				\
-do {								\
-   struct vbo_exec_context *exec = &vbo_context(ctx)->exec;	\
-								\
-   /* FLUSH_UPDATE_CURRENT needs to be set manually */		\
-   exec->ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;		\
-								\
-   if (exec->vtx.active_sz[A] != N)				\
-      vbo_exec_fixup_vertex(ctx, A, N);				\
-								\
-   {								\
-      GLfloat *dest = exec->vtx.attrptr[A];			\
-      if (N>0) dest[0] = V0;					\
-      if (N>1) dest[1] = V1;					\
-      if (N>2) dest[2] = V2;					\
-      if (N>3) dest[3] = V3;					\
-   }								\
-} while (0)
-
-#define ERROR() _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ )
-#define TAG(x) vbo_##x
-
-#include "vbo_attrib_tmp.h"
 
 static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
 {
