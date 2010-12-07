@@ -76,17 +76,6 @@ static void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shade
 			R_028858_SQ_PGM_START_VS,
 			r600_bo_offset(shader->bo) >> 8, 0xFFFFFFFF, shader->bo);
 
-#if 0
-	r600_pipe_state_add_reg(rstate,
-			R_0288A4_SQ_PGM_RESOURCES_FS,
-			0x00000000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate,
-			R_0288DC_SQ_PGM_CF_OFFSET_FS,
-			0x00000000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate,
-			R_028894_SQ_PGM_START_FS,
-			r600_bo_offset(shader->bo_fetch) >> 8, 0xFFFFFFFF, shader->bo_fetch);
-#endif
 	r600_pipe_state_add_reg(rstate,
 				R_03E200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF,
 				0xFFFFFFFF, NULL);
@@ -109,10 +98,9 @@ int r600_find_vs_semantic_index(struct r600_shader *vs,
 
 static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
-	unsigned i, tmp, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1;
+	unsigned i, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1;
 	int pos_index = -1, face_index = -1;
 
 	rstate->nregs = 0;
@@ -199,22 +187,13 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 				0xFFFFFFFF, NULL);
 }
 
-static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_shader *rshader = &shader->shader;
 	void *ptr;
 
 	/* copy new shader */
-	if (rshader->processor_type == TGSI_PROCESSOR_VERTEX && shader->bo_fetch == NULL) {
-		shader->bo_fetch = r600_bo(rctx->radeon, rshader->bc_fetch.ndw * 4, 4096, 0, 0);
-		if (shader->bo_fetch == NULL) {
-			return -ENOMEM;
-		}
-		ptr = r600_bo_map(rctx->radeon, shader->bo_fetch, 0, NULL);
-		memcpy(ptr, rshader->bc_fetch.bytecode, rshader->bc_fetch.ndw * 4);
-		r600_bo_unmap(rctx->radeon, shader->bo_fetch);
-	}
 	if (shader->bo == NULL) {
 		shader->bo = r600_bo(rctx->radeon, rshader->bc.ndw * 4, 4096, 0, 0);
 		if (shader->bo == NULL) {
@@ -246,65 +225,6 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *s
 	return 0;
 }
 
-static int r600_shader_update(struct pipe_context *ctx, struct r600_pipe_shader *rshader)
-{
-#if 0
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_shader *shader = &rshader->shader;
-	const struct util_format_description *desc;
-	enum pipe_format resource_format[160];
-	unsigned i, nresources = 0;
-	struct r600_bc *bc = &shader->bc_fetch;
-	struct r600_bc_cf *cf;
-	struct r600_bc_vtx *vtx;
-
-	if (shader->processor_type != TGSI_PROCESSOR_VERTEX)
-		return 0;
-	/* doing a full memcmp fell over the refcount */
-	if ((rshader->vertex_elements.count == rctx->vertex_elements->count) &&
-		(!memcmp(&rshader->vertex_elements.elements, &rctx->vertex_elements->elements,
-		rctx->vertex_elements->count * sizeof(struct pipe_vertex_element)))) {
-		return 0;
-	}
-	rshader->vertex_elements = *rctx->vertex_elements;
-	for (i = 0; i < rctx->vertex_elements->count; i++) {
-		resource_format[nresources++] = rctx->vertex_elements->hw_format[i];
-	}
-	r600_bo_reference(rctx->radeon, &rshader->bo_fetch, NULL);
-	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
-		switch (cf->inst) {
-		case V_SQ_CF_WORD1_SQ_CF_INST_VTX:
-		case V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC:
-			LIST_FOR_EACH_ENTRY(vtx, &cf->vtx, list) {
-				desc = util_format_description(resource_format[vtx->buffer_id]);
-				if (desc == NULL) {
-					R600_ERR("unknown format %d\n", resource_format[vtx->buffer_id]);
-					return -EINVAL;
-				}
-				vtx->dst_sel_x = desc->swizzle[0];
-				vtx->dst_sel_y = desc->swizzle[1];
-				vtx->dst_sel_z = desc->swizzle[2];
-				vtx->dst_sel_w = desc->swizzle[3];
-			}
-			break;
-		default:
-			break;
-		}
-	}
-	return r600_bc_build(&shader->bc_fetch);
-#else
-	return 0;
-#endif
-}
-
-int r600_pipe_shader_update(struct pipe_context *ctx, struct r600_pipe_shader *shader)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	int r;
-
-	return r600_pipe_shader(ctx, shader);
-}
-
 int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *shader);
 int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens)
 {
@@ -324,33 +244,17 @@ int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *s
 		R600_ERR("building bytecode failed !\n");
 		return r;
 	}
-	if (shader->shader.processor_type == TGSI_PROCESSOR_VERTEX) {
-		r = r600_bc_build(&shader->shader.bc_fetch);
-		if (r) {
-			R600_ERR("building bytecode failed !\n");
-			return r;
-		}
-	}
 //r600_bc_dump(&shader->shader.bc);
 //fprintf(stderr, "______________________________________________________________\n");
 	return r600_pipe_shader(ctx, shader);
 }
 
-void
-r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+void r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 
-	if (shader->shader.processor_type == TGSI_PROCESSOR_VERTEX) {
-		r600_bo_reference(rctx->radeon, &shader->bo_fetch, NULL);
-		r600_bc_clear(&shader->shader.bc_fetch);
-	}
-
 	r600_bo_reference(rctx->radeon, &shader->bo, NULL);
-
 	r600_bc_clear(&shader->shader.bc);
-
-	/* FIXME: is there more stuff to free? */
 }
 
 /*
@@ -367,7 +271,6 @@ struct r600_shader_ctx {
 	unsigned				temp_reg;
 	struct r600_shader_tgsi_instruction	*inst_info;
 	struct r600_bc				*bc;
-	struct r600_bc				*bc_fetch;
 	struct r600_shader			*shader;
 	u32					value[4];
 	u32					*literals;
@@ -487,9 +390,7 @@ static int evergreen_interp_alu(struct r600_shader_ctx *ctx, int input)
 static int tgsi_declaration(struct r600_shader_ctx *ctx)
 {
 	struct tgsi_full_declaration *d = &ctx->parse.FullToken.FullDeclaration;
-	struct r600_bc_vtx vtx;
 	unsigned i;
-	int r;
 
 	switch (d->Declaration.File) {
 	case TGSI_FILE_INPUT:
@@ -499,26 +400,6 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 		ctx->shader->input[i].interpolate = d->Declaration.Interpolate;
 		ctx->shader->input[i].centroid = d->Declaration.Centroid;
 		ctx->shader->input[i].gpr = ctx->file_offset[TGSI_FILE_INPUT] + i;
-		if (ctx->type == TGSI_PROCESSOR_VERTEX) {
-			/* turn input into fetch */
-			memset(&vtx, 0, sizeof(struct r600_bc_vtx));
-			vtx.inst = 0;
-			vtx.fetch_type = 0;
-			vtx.buffer_id = i;
-			/* register containing the index into the buffer */
-			vtx.src_gpr = 0;
-			vtx.src_sel_x = 0;
-			vtx.mega_fetch_count = 0x1F;
-			vtx.dst_gpr = ctx->shader->input[i].gpr;
-			vtx.dst_sel_x = 0;
-			vtx.dst_sel_y = 1;
-			vtx.dst_sel_z = 2;
-			vtx.dst_sel_w = 3;
-			vtx.use_const_fields = 1;
-			r = r600_bc_add_vtx(ctx->bc_fetch, &vtx);
-			if (r)
-				return r;
-		}
 		if (ctx->type == TGSI_PROCESSOR_FRAGMENT && ctx->bc->chiprev == CHIPREV_EVERGREEN) {
 			/* turn input into interpolate on EG */
 			if (ctx->shader->input[i].name != TGSI_SEMANTIC_POSITION) {
@@ -610,7 +491,6 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 	int i, r = 0, pos0;
 
 	ctx.bc = &shader->bc;
-	ctx.bc_fetch = &shader->bc_fetch;
 	ctx.shader = shader;
 	r = r600_bc_init(ctx.bc, shader->family);
 	if (r)
@@ -620,12 +500,6 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 	tgsi_parse_init(&ctx.parse, tokens);
 	ctx.type = ctx.parse.FullHeader.Processor.Processor;
 	shader->processor_type = ctx.type;
-	if (shader->processor_type == TGSI_PROCESSOR_VERTEX) {
-		r = r600_bc_init(ctx.bc_fetch, shader->family);
-		if (r)
-			return r;
-		ctx.bc_fetch->type = -1;
-	}
 	ctx.bc->type = shader->processor_type;
 
 	/* register allocations */
@@ -824,14 +698,6 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 		if (!(output_done & (1 << output[i].type))) {
 			output_done |= (1 << output[i].type);
 			output[i].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE);
-		}
-	}
-	/* add return to fetch shader */
-	if (ctx.type == TGSI_PROCESSOR_VERTEX) {
-		if (ctx.bc->chiprev == CHIPREV_EVERGREEN) {
-			r600_bc_add_cfinst(ctx.bc_fetch, EG_V_SQ_CF_WORD1_SQ_CF_INST_RETURN);
-		} else {
-			r600_bc_add_cfinst(ctx.bc_fetch, V_SQ_CF_WORD1_SQ_CF_INST_RETURN);
 		}
 	}
 	/* add output to bytecode */

@@ -1184,7 +1184,7 @@ out_unknown:
 	R600_ERR("unsupported vertex format %s\n", util_format_name(pformat));
 }
 
-void r600_bc(unsigned ndw, unsigned chiprev, u32 *bytecode)
+static void r600_bc(unsigned ndw, unsigned chiprev, u32 *bytecode)
 {
 	unsigned i;
 	char chip = '6';

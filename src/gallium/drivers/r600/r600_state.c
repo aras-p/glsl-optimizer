@@ -206,11 +206,9 @@ void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 static void r600_draw_common(struct r600_drawl *draw)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)draw->ctx;
-	struct r600_pipe_state *rstate;
 	struct r600_resource *rbuffer;
-	unsigned i, j, offset, prim;
+	unsigned prim;
 	u32 vgt_dma_index_type, vgt_draw_initiator, mask;
-	struct pipe_vertex_buffer *vertex_buffer;
 	struct r600_draw rdraw;
 	struct r600_pipe_state vgt;
 
@@ -248,45 +246,7 @@ static void r600_draw_common(struct r600_drawl *draw)
 		return;
 	}
 
-#if 0
-	/* rebuild vertex shader if input format changed */
-	if (r600_pipe_shader_update(&rctx->context, rctx->vs_shader))
-		return;
-	if (r600_pipe_shader_update(&rctx->context, rctx->ps_shader))
-		return;
-#endif
-
 	r600_spi_update(rctx);
-
-#if 0
-	for (i = 0 ; i < rctx->vertex_elements->count; i++) {
-		uint32_t word2, format;
-
-		rstate = &rctx->vs_resource[i];
-		rstate->id = R600_PIPE_STATE_RESOURCE;
-		rstate->nregs = 0;
-
-		j = rctx->vertex_elements->elements[i].vertex_buffer_index;
-		vertex_buffer = &rctx->vertex_buffer[j];
-		rbuffer = (struct r600_resource*)vertex_buffer->buffer;
-		offset = rctx->vertex_elements->elements[i].src_offset +
-			vertex_buffer->buffer_offset +
-			r600_bo_offset(rbuffer->bo);
-
-		format = r600_translate_vertex_data_type(rctx->vertex_elements->hw_format[i]);
-
-		word2 = format | S_038008_STRIDE(vertex_buffer->stride);
-
-		r600_pipe_state_add_reg(rstate, R_038000_RESOURCE0_WORD0, offset, 0xFFFFFFFF, rbuffer->bo);
-		r600_pipe_state_add_reg(rstate, R_038004_RESOURCE0_WORD1, rbuffer->size - offset - 1, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_038008_RESOURCE0_WORD2, word2, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_03800C_RESOURCE0_WORD3, 0x00000000, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_038010_RESOURCE0_WORD4, 0x00000000, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_038014_RESOURCE0_WORD5, 0x00000000, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_038018_RESOURCE0_WORD6, 0xC0000000, 0xFFFFFFFF, NULL);
-		r600_context_pipe_state_set_fs_resource(&rctx->ctx, rstate, i);
-	}
-#endif
 
 	mask = 0;
 	for (int i = 0; i < rctx->framebuffer.nr_cbufs; i++) {
@@ -322,18 +282,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_drawl draw;
 	boolean translate = FALSE;
-
-#if 0
-	if (rctx->vertex_elements->incompatible_layout) {
-		r600_begin_vertex_translate(rctx);
-		translate = TRUE;
-	}
-
-	if (rctx->any_user_vbs) {
-		r600_upload_user_buffers(rctx);
-		rctx->any_user_vbs = FALSE;
-	}
-#endif
 
 	memset(&draw, 0, sizeof(struct r600_drawl));
 	draw.ctx = ctx;

@@ -1372,27 +1372,12 @@ int r600_conv_pipe_prim(unsigned pprim, unsigned *prim);
 void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_pipe_state *rstate;
 	struct r600_resource *rbuffer;
-	unsigned i, j, offset, prim;
 	u32 vgt_dma_index_type, vgt_draw_initiator, mask;
-	struct pipe_vertex_buffer *vertex_buffer;
 	struct r600_draw rdraw;
 	struct r600_pipe_state vgt;
 	struct r600_drawl draw;
-	boolean translate = FALSE;
-
-#if 0
-	if (rctx->vertex_elements->incompatible_layout) {
-		r600_begin_vertex_translate(rctx);
-		translate = TRUE;
-	}
-
-	if (rctx->any_user_vbs) {
-		r600_upload_user_buffers(rctx);
-		rctx->any_user_vbs = FALSE;
-	}
-#endif
+	unsigned prim;
 
 	memset(&draw, 0, sizeof(struct r600_drawl));
 	draw.ctx = ctx;
@@ -1457,52 +1442,7 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		return;
 	}
 
-#if 0
-	/* rebuild vertex shader if input format changed */
-	if (r600_pipe_shader_update(&rctx->context, rctx->vs_shader))
-		return;
-	if (r600_pipe_shader_update(&rctx->context, rctx->ps_shader))
-		return;
-#endif
-
 	evergreen_spi_update(rctx);
-
-#if 0
-	for (i = 0 ; i < rctx->vertex_elements->count; i++) {
-		uint32_t word3, word2;
-		uint32_t format;
-		rstate = &rctx->vs_resource[i];
-
-		rstate->id = R600_PIPE_STATE_RESOURCE;
-		rstate->nregs = 0;
-
-		j = rctx->vertex_elements->elements[i].vertex_buffer_index;
-		vertex_buffer = &rctx->vertex_buffer[j];
-		rbuffer = (struct r600_resource*)vertex_buffer->buffer;
-		offset = rctx->vertex_elements->elements[i].src_offset +
-			vertex_buffer->buffer_offset +
-			r600_bo_offset(rbuffer->bo);
-
-		format = r600_translate_vertex_data_type(rctx->vertex_elements->hw_format[i]);
-
-		word2 = format | S_030008_STRIDE(vertex_buffer->stride);
-
-		word3 = S_03000C_DST_SEL_X(V_03000C_SQ_SEL_X) |
-			S_03000C_DST_SEL_Y(V_03000C_SQ_SEL_Y) |
-			S_03000C_DST_SEL_Z(V_03000C_SQ_SEL_Z) |
-			S_03000C_DST_SEL_W(V_03000C_SQ_SEL_W);
-
-		r600_pipe_state_add_reg(rstate, R_030000_RESOURCE0_WORD0, offset, 0xFFFFFFFF, rbuffer->bo);
-		r600_pipe_state_add_reg(rstate, R_030004_RESOURCE0_WORD1, rbuffer->size - offset - 1, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_030008_RESOURCE0_WORD2, word2, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_03000C_RESOURCE0_WORD3, word3, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_030010_RESOURCE0_WORD4, 0x00000000, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_030014_RESOURCE0_WORD5, 0x00000000, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_030018_RESOURCE0_WORD6, 0x00000000, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_03001C_RESOURCE0_WORD7, 0xC0000000, 0xFFFFFFFF, NULL);
-		evergreen_fs_resource_set(&rctx->ctx, rstate, i);
-	}
-#endif
 
 	mask = 0;
 	for (int i = 0; i < rctx->framebuffer.nr_cbufs; i++) {
@@ -1532,18 +1472,14 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	}
 	evergreen_context_draw(&rctx->ctx, &rdraw);
 
-	if (translate)
-		r600_end_vertex_translate(rctx);
-
 	pipe_resource_reference(&draw.index_buffer, NULL);
 }
 
 void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
-	unsigned i, tmp, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1;
+	unsigned i, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1;
 	int pos_index = -1, face_index = -1;
 	int ninterp = 0;
 	boolean have_linear = FALSE, have_centroid = FALSE, have_perspective = FALSE;
@@ -1709,15 +1645,6 @@ void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader 
 	r600_pipe_state_add_reg(rstate,
 			R_02885C_SQ_PGM_START_VS,
 			(r600_bo_offset(shader->bo)) >> 8, 0xFFFFFFFF, shader->bo);
-
-#if 0
-	r600_pipe_state_add_reg(rstate,
-			R_0288A8_SQ_PGM_RESOURCES_FS,
-			0x00000000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate,
-			R_0288A4_SQ_PGM_START_FS,
-			(r600_bo_offset(shader->bo)) >> 8, 0xFFFFFFFF, shader->bo_fetch);
-#endif
 
 	r600_pipe_state_add_reg(rstate,
 				R_03A200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF,
