@@ -1112,6 +1112,8 @@ void r600_context_flush(struct r600_context *ctx)
 	r600_context_queries_suspend(ctx);
 
 	/* emit fence */
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4);
 	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
