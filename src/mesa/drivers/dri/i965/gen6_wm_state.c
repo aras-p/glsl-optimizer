@@ -66,6 +66,21 @@ prepare_wm_constants(struct brw_context *brw)
 	 constants[i] = convert_param(brw->wm.prog_data->param_convert[i],
 				      *brw->wm.prog_data->param[i]);
       }
+
+      if (0) {
+	 printf("WM constants:\n");
+	 for (i = 0; i < brw->wm.prog_data->nr_params; i++) {
+	    if ((i & 7) == 0)
+	       printf("g%d: ", brw->wm.prog_data->first_curbe_grf + i / 8);
+	    printf("%8f ", constants[i]);
+	    if ((i & 7) == 7)
+	       printf("\n");
+	 }
+	 if ((i & 7) != 0)
+	    printf("\n");
+	 printf("\n");
+      }
+
       drm_intel_gem_bo_unmap_gtt(brw->wm.push_const_bo);
    }
 }
