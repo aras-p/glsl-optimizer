@@ -138,9 +138,10 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		{NULL, 0, 0, NULL, NULL}
 	};
 
+	c->Base.type = RC_FRAGMENT_PROGRAM;
 	c->Base.SwizzleCaps = c->Base.is_r500 ? &r500_swizzle_caps : &r300_swizzle_caps;
 
-	rc_run_compiler(&c->Base, fs_list, "Fragment Program");
+	rc_run_compiler(&c->Base, fs_list);
 
 	rc_constants_copy(&c->code->constants, &c->Base.Program.Constants);
 }

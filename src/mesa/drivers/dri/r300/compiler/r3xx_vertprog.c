@@ -1066,9 +1066,10 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler *c)
 		{NULL, 0, 0, NULL, NULL}
 	};
 
+	c->Base.type = RC_VERTEX_PROGRAM;
 	c->Base.SwizzleCaps = &r300_vertprog_swizzle_caps;
 
-	rc_run_compiler(&c->Base, vs_list, "Vertex Program");
+	rc_run_compiler(&c->Base, vs_list);
 
 	c->code->InputsRead = c->Base.Program.InputsRead;
 	c->code->OutputsWritten = c->Base.Program.OutputsWritten;
