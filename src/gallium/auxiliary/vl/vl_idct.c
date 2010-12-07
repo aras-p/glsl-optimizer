@@ -376,35 +376,18 @@ init_buffers(struct vl_idct *idct)
       idct->sampler_views.all[i] = idct->pipe->create_sampler_view(idct->pipe, idct->textures.all[i], &sampler_view);
    }
 
-   idct->vertex_bufs.individual.quad = vl_vb_upload_quads(idct->pipe, idct->max_blocks);
+   idct->vertex_bufs.individual.quad = vl_vb_upload_quads(idct->pipe, idct->max_blocks, &vertex_elems[VS_I_RECT]);
 
    if(idct->vertex_bufs.individual.quad.buffer == NULL)
       return false;
 
-   idct->vertex_bufs.individual.pos.stride = sizeof(struct vertex2f);
-   idct->vertex_bufs.individual.pos.max_index = 4 * idct->max_blocks - 1;
-   idct->vertex_bufs.individual.pos.buffer_offset = 0;
-   idct->vertex_bufs.individual.pos.buffer = pipe_buffer_create
-   (
-      idct->pipe->screen,
-      PIPE_BIND_VERTEX_BUFFER,
-      sizeof(struct vertex2f) * 4 * idct->max_blocks
-   );
+   /* Pos element */
+   vertex_elems[VS_I_VPOS].src_format = PIPE_FORMAT_R32G32_FLOAT;
+
+   idct->vertex_bufs.individual.pos = vl_vb_create_buffer(idct->pipe, idct->max_blocks, &vertex_elems[VS_I_VPOS], 1, 1);
 
    if(idct->vertex_bufs.individual.pos.buffer == NULL)
       return false;
-
-   /* Rect element */
-   vertex_elems[0].src_offset = 0;
-   vertex_elems[0].instance_divisor = 0;
-   vertex_elems[0].vertex_buffer_index = 0;
-   vertex_elems[0].src_format = PIPE_FORMAT_R32G32_FLOAT;
-
-   /* Pos element */
-   vertex_elems[1].src_offset = 0;
-   vertex_elems[1].instance_divisor = 0;
-   vertex_elems[1].vertex_buffer_index = 1;
-   vertex_elems[1].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    idct->vertex_elems_state = idct->pipe->create_vertex_elements_state(idct->pipe, 2, vertex_elems);
 

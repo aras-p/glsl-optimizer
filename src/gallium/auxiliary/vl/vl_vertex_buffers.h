@@ -38,7 +38,12 @@ struct vl_vertex_buffer
    float *buffer;
 };
 
-struct pipe_vertex_buffer vl_vb_upload_quads(struct pipe_context *pipe, unsigned max_blocks);
+struct pipe_vertex_buffer vl_vb_upload_quads(struct pipe_context *pipe, unsigned max_blocks,
+                                             struct pipe_vertex_element* element);
+
+struct pipe_vertex_buffer vl_vb_create_buffer(struct pipe_context *pipe, unsigned max_blocks,
+                                              struct pipe_vertex_element* elements, unsigned num_elements,
+                                              unsigned vertex_buffer_index);
 
 bool vl_vb_init(struct vl_vertex_buffer *buffer, unsigned max_blocks, unsigned num_elements);
 

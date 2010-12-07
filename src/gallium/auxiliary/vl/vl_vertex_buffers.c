@@ -30,6 +30,7 @@
 #include <pipe/p_screen.h>
 #include <util/u_memory.h>
 #include <util/u_inlines.h>
+#include <util/u_format.h>
 #include "vl_vertex_buffers.h"
 #include "vl_types.h"
 
@@ -39,7 +40,7 @@ static const struct quadf const_quad = {
 };
 
 struct pipe_vertex_buffer
-vl_vb_upload_quads(struct pipe_context *pipe, unsigned max_blocks)
+vl_vb_upload_quads(struct pipe_context *pipe, unsigned max_blocks, struct pipe_vertex_element* element)
 {
    struct pipe_vertex_buffer quad;
    struct pipe_transfer *buf_transfer;
@@ -49,6 +50,13 @@ vl_vb_upload_quads(struct pipe_context *pipe, unsigned max_blocks)
 
    assert(pipe);
    assert(max_blocks);
+   assert(element);
+
+   /* setup rectangle element */
+   element->src_offset = 0;
+   element->instance_divisor = 0;
+   element->vertex_buffer_index = 0;
+   element->src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* create buffer */
    quad.stride = sizeof(struct vertex2f);
@@ -79,6 +87,34 @@ vl_vb_upload_quads(struct pipe_context *pipe, unsigned max_blocks)
    pipe_buffer_unmap(pipe, quad.buffer, buf_transfer);
 
    return quad;
+}
+
+struct pipe_vertex_buffer
+vl_vb_create_buffer(struct pipe_context *pipe, unsigned max_blocks,
+                    struct pipe_vertex_element *elements, unsigned num_elements,
+                    unsigned vertex_buffer_index)
+{
+   struct pipe_vertex_buffer buf;
+   unsigned i, size = 0;
+
+   for ( i = 0; i < num_elements; ++i ) {
+      elements[i].src_offset = size;
+      elements[i].instance_divisor = 0;
+      elements[i].vertex_buffer_index = vertex_buffer_index;
+      size += util_format_get_blocksize(elements[i].src_format);
+   }
+
+   buf.stride = size;
+   buf.max_index = 4 * max_blocks - 1;
+   buf.buffer_offset = 0;
+   buf.buffer = pipe_buffer_create
+   (
+      pipe->screen,
+      PIPE_BIND_VERTEX_BUFFER,
+      size * 4 * max_blocks
+   );
+
+   return buf;
 }
 
 bool

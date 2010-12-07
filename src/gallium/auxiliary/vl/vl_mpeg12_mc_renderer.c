@@ -648,99 +648,39 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
       r->sampler_views.all[i] = r->pipe->create_sampler_view(r->pipe, r->textures.all[i], &sampler_view);
    }
 
-   r->vertex_bufs.individual.quad = vl_vb_upload_quads(r->pipe, r->macroblocks_per_batch);
-
-   r->vertex_bufs.individual.pos.stride = sizeof(struct vertex_stream_0);
-   r->vertex_bufs.individual.pos.max_index = 4 * r->macroblocks_per_batch - 1;
-   r->vertex_bufs.individual.pos.buffer_offset = 0;
-   /* XXX: Create with usage DYNAMIC or STREAM */
-   r->vertex_bufs.individual.pos.buffer = pipe_buffer_create
-   (
-      r->pipe->screen,
-      PIPE_BIND_VERTEX_BUFFER,
-      sizeof(struct vertex_stream_0) * 4 * r->macroblocks_per_batch
-   );
-
-   for (i = 0; i < 4; ++i) {
-      r->vertex_bufs.individual.mv[i].stride = sizeof(struct vertex2f);
-      r->vertex_bufs.individual.mv[i].max_index = 4 * r->macroblocks_per_batch - 1;
-      r->vertex_bufs.individual.mv[i].buffer_offset = 0;
-      /* XXX: Create with usage DYNAMIC or STREAM */
-      r->vertex_bufs.individual.mv[i].buffer = pipe_buffer_create
-      (
-         r->pipe->screen,
-         PIPE_BIND_VERTEX_BUFFER,
-         sizeof(struct vertex2f) * 4 * r->macroblocks_per_batch
-      );
-   }
-
    memset(&vertex_elems, 0, sizeof(vertex_elems));
 
-   /* Rectangle element */
-   vertex_elems[VS_I_RECT].src_offset = 0;
-   vertex_elems[VS_I_RECT].instance_divisor = 0;
-   vertex_elems[VS_I_RECT].vertex_buffer_index = 0;
-   vertex_elems[VS_I_RECT].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   r->vertex_bufs.individual.quad = vl_vb_upload_quads(r->pipe, r->macroblocks_per_batch, &vertex_elems[VS_I_RECT]);
 
    /* Position element */
-   vertex_elems[VS_I_VPOS].src_offset = 0;
-   vertex_elems[VS_I_VPOS].instance_divisor = 0;
-   vertex_elems[VS_I_VPOS].vertex_buffer_index = 1;
    vertex_elems[VS_I_VPOS].src_format = PIPE_FORMAT_R32G32_FLOAT;
 
    /* y, cr, cb empty block element top left block */
-   vertex_elems[VS_I_EB_0_0].src_offset = sizeof(float) * 2;
-   vertex_elems[VS_I_EB_0_0].instance_divisor = 0;
-   vertex_elems[VS_I_EB_0_0].vertex_buffer_index = 1;
    vertex_elems[VS_I_EB_0_0].src_format = PIPE_FORMAT_R32G32B32_FLOAT;
 
    /* y, cr, cb empty block element top right block */
-   vertex_elems[VS_I_EB_0_1].src_offset = sizeof(float) * 5;
-   vertex_elems[VS_I_EB_0_1].instance_divisor = 0;
-   vertex_elems[VS_I_EB_0_1].vertex_buffer_index = 1;
    vertex_elems[VS_I_EB_0_1].src_format = PIPE_FORMAT_R32G32B32_FLOAT;
 
    /* y, cr, cb empty block element bottom left block */
-   vertex_elems[VS_I_EB_1_0].src_offset = sizeof(float) * 8;
-   vertex_elems[VS_I_EB_1_0].instance_divisor = 0;
-   vertex_elems[VS_I_EB_1_0].vertex_buffer_index = 1;
    vertex_elems[VS_I_EB_1_0].src_format = PIPE_FORMAT_R32G32B32_FLOAT;
 
    /* y, cr, cb empty block element bottom right block */
-   vertex_elems[VS_I_EB_1_1].src_offset = sizeof(float) * 11;
-   vertex_elems[VS_I_EB_1_1].instance_divisor = 0;
-   vertex_elems[VS_I_EB_1_1].vertex_buffer_index = 1;
    vertex_elems[VS_I_EB_1_1].src_format = PIPE_FORMAT_R32G32B32_FLOAT;
 
    /* progressive=0.0f interlaced=1.0f */
-   vertex_elems[VS_I_INTERLACED].src_offset = sizeof(float) * 14;
-   vertex_elems[VS_I_INTERLACED].instance_divisor = 0;
-   vertex_elems[VS_I_INTERLACED].vertex_buffer_index = 1;
    vertex_elems[VS_I_INTERLACED].src_format = PIPE_FORMAT_R32_FLOAT;
 
-   /* First ref surface top field texcoord element */
-   vertex_elems[VS_I_MV0].src_offset = 0;
-   vertex_elems[VS_I_MV0].instance_divisor = 0;
-   vertex_elems[VS_I_MV0].vertex_buffer_index = 2;
-   vertex_elems[VS_I_MV0].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   r->vertex_bufs.individual.pos = vl_vb_create_buffer(
+      r->pipe, r->macroblocks_per_batch,
+      &vertex_elems[VS_I_VPOS], 6, 1);
 
-   /* First ref surface bottom field texcoord element */
-   vertex_elems[VS_I_MV1].src_offset = 0;
-   vertex_elems[VS_I_MV1].instance_divisor = 0;
-   vertex_elems[VS_I_MV1].vertex_buffer_index = 3;
-   vertex_elems[VS_I_MV1].src_format = PIPE_FORMAT_R32G32_FLOAT;
-
-   /* Second ref surface top field texcoord element */
-   vertex_elems[VS_I_MV2].src_offset = 0;
-   vertex_elems[VS_I_MV2].instance_divisor = 0;
-   vertex_elems[VS_I_MV2].vertex_buffer_index = 4;
-   vertex_elems[VS_I_MV2].src_format = PIPE_FORMAT_R32G32_FLOAT;
-
-   /* Second ref surface bottom field texcoord element */
-   vertex_elems[VS_I_MV3].src_offset = 0;
-   vertex_elems[VS_I_MV3].instance_divisor = 0;
-   vertex_elems[VS_I_MV3].vertex_buffer_index = 5;
-   vertex_elems[VS_I_MV3].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   for (i = 0; i < 4; ++i) {
+      /* motion vector 0..4 element */
+      vertex_elems[VS_I_MV0 + i].src_format = PIPE_FORMAT_R32G32_FLOAT;
+      r->vertex_bufs.individual.mv[i] = vl_vb_create_buffer(
+         r->pipe, r->macroblocks_per_batch,
+         &vertex_elems[VS_I_MV0 + i], 1, i + 2);
+   }
 
    for(i = 0; i < VL_NUM_MACROBLOCK_TYPES; ++i)
       init_mbtype_handler(r, i, vertex_elems);
