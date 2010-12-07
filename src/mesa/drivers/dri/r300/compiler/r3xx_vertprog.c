@@ -791,19 +791,14 @@ static void allocate_temporary_registers(struct radeon_compiler *c, void *user)
 						if (!hwtemps[j])
 							break;
 					}
-					if (j >= c->max_temp_regs) {
-						rc_error(c, "Too many temporaries\n");
-						return;
+					ta[orig].Allocated = 1;
+					if (last_inst_src_reladdr &&
+					    last_inst_src_reladdr->IP > inst->IP) {
+						ta[orig].HwTemp = orig;
 					} else {
-						ta[orig].Allocated = 1;
-						if (last_inst_src_reladdr &&
-						    last_inst_src_reladdr->IP > inst->IP) {
-							ta[orig].HwTemp = orig;
-						} else {
-							ta[orig].HwTemp = j;
-						}
-						hwtemps[ta[orig].HwTemp] = 1;
+						ta[orig].HwTemp = j;
 					}
+					hwtemps[ta[orig].HwTemp] = 1;
 				}
 
 				inst->U.I.DstReg.Index = ta[orig].HwTemp;
