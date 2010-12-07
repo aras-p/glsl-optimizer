@@ -996,6 +996,8 @@ lp_setup_destroy( struct lp_setup_context *setup )
       lp_scene_destroy(scene);
    }
 
+   lp_fence_reference(&setup->last_fence, NULL);
+
    FREE( setup );
 }
 
