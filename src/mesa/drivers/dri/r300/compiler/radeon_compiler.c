@@ -357,44 +357,54 @@ void rc_transform_fragment_face(struct radeon_compiler *c, unsigned face)
 static void reg_count_callback(void * userdata, struct rc_instruction * inst,
 		rc_register_file file, unsigned int index, unsigned int mask)
 {
-	unsigned int * max_reg = userdata;
+	int *max_reg = userdata;
 	if (file == RC_FILE_TEMPORARY)
-		index > *max_reg ? *max_reg = index : 0;
+		(int)index > *max_reg ? *max_reg = index : 0;
 }
 
-static void print_stats(struct radeon_compiler * c)
+void rc_get_stats(struct radeon_compiler *c, struct rc_program_stats *s)
 {
+	int max_reg = -1;
 	struct rc_instruction * tmp;
-	unsigned max_reg, insts, fc, tex, alpha, rgb, presub;
-	max_reg = insts = fc = tex = alpha = rgb = presub = 0;
+	memset(s, 0, sizeof(*s));
+
 	for(tmp = c->Program.Instructions.Next; tmp != &c->Program.Instructions;
 							tmp = tmp->Next){
 		const struct rc_opcode_info * info;
 		rc_for_all_reads_mask(tmp, reg_count_callback, &max_reg);
 		if (tmp->Type == RC_INSTRUCTION_NORMAL) {
 			if (tmp->U.I.PreSub.Opcode != RC_PRESUB_NONE)
-				presub++;
+				s->num_presub_ops++;
 			info = rc_get_opcode_info(tmp->U.I.Opcode);
 		} else {
 			if (tmp->U.P.RGB.Src[RC_PAIR_PRESUB_SRC].Used)
-				presub++;
+				s->num_presub_ops++;
 			if (tmp->U.P.Alpha.Src[RC_PAIR_PRESUB_SRC].Used)
-				presub++;
+				s->num_presub_ops++;
 			/* Assuming alpha will never be a flow control or
 			 * a tex instruction. */
 			if (tmp->U.P.Alpha.Opcode != RC_OPCODE_NOP)
-				alpha++;
+				s->num_alpha_insts++;
 			if (tmp->U.P.RGB.Opcode != RC_OPCODE_NOP)
-				rgb++;
+				s->num_rgb_insts++;
 			info = rc_get_opcode_info(tmp->U.P.RGB.Opcode);
 		}
 		if (info->IsFlowControl)
-			fc++;
+			s->num_fc_insts++;
 		if (info->HasTexture)
-			tex++;
-		insts++;
+			s->num_tex_insts++;
+		s->num_insts++;
 	}
-	if (insts < 4)
+	s->num_temp_regs = max_reg + 1;
+}
+
+static void print_stats(struct radeon_compiler * c)
+{
+	struct rc_program_stats s;
+
+	rc_get_stats(c, &s);
+
+	if (s.num_insts < 4)
 		return;
 	fprintf(stderr,"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
 		       "~%4u Instructions\n"
@@ -405,7 +415,9 @@ static void print_stats(struct radeon_compiler * c)
 		       "~%4u Presub Operations\n"
 		       "~%4u Temporary Registers\n"
 		       "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
-		       insts, rgb, alpha, fc, tex, presub, max_reg + 1);
+		       s.num_insts, s.num_rgb_insts, s.num_alpha_insts,
+		       s.num_fc_insts, s.num_tex_insts, s.num_presub_ops,
+		       s.num_temp_regs);
 }
 
 /* Executes a list of compiler passes given in the parameter 'list'. */
