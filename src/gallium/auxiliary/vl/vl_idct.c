@@ -110,8 +110,8 @@ create_vert_shader(struct vl_idct *idct)
     *
     */
    scale = ureg_imm2f(shader,
-      (float)BLOCK_WIDTH / idct->destination->width0, 
-      (float)BLOCK_HEIGHT / idct->destination->height0);
+      (float)BLOCK_WIDTH / idct->buffer_width,
+      (float)BLOCK_HEIGHT / idct->buffer_height);
 
    ureg_ADD(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_XY), vpos, vrect);
    ureg_MUL(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos), scale);
@@ -555,6 +555,9 @@ vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, struct pipe_resour
    assert(idct && pipe && dst);
 
    idct->pipe = pipe;
+   idct->buffer_width = dst->width0;
+   idct->buffer_height = dst->height0;
+
    pipe_resource_reference(&idct->textures.individual.matrix, matrix);
    pipe_resource_reference(&idct->textures.individual.transpose, matrix);
    pipe_resource_reference(&idct->destination, dst);

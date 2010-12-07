@@ -43,11 +43,6 @@
 #define BLOCK_WIDTH 8
 #define BLOCK_HEIGHT 8
 
-struct vertex_shader_consts
-{
-   struct vertex4f norm;
-};
-
 struct vertex_stream_0
 {
    struct vertex2f pos;
@@ -108,9 +103,9 @@ static void *
 create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigned mv_per_frame)
 {
    struct ureg_program *shader;
-   struct ureg_src norm, mbs;
+   struct ureg_src scale;
    struct ureg_src vrect, vpos, eb[2][2], interlaced, vmv[4];
-   struct ureg_dst scale, t_vpos, t_vtex;
+   struct ureg_dst t_vpos, t_vtex;
    struct ureg_dst o_vpos, o_line, o_vtex[3], o_eb[2][2], o_interlaced, o_vmv[4];
    unsigned i, j, count, label;
 
@@ -118,10 +113,6 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    if (!shader)
       return NULL;
 
-   norm = ureg_DECL_constant(shader, 0);
-   mbs = ureg_imm2f(shader, MACROBLOCK_WIDTH, MACROBLOCK_HEIGHT);
-
-   scale = ureg_DECL_temporary(shader);
    t_vpos = ureg_DECL_temporary(shader);
    t_vtex = ureg_DECL_temporary(shader);
 
@@ -156,7 +147,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    }
 
    /*
-    * scale = norm * mbs;
+    * scale = (MACROBLOCK_WIDTH, MACROBLOCK_HEIGHT) / (dst.width, dst.height)
     *
     * t_vpos = (vpos + vrect) * scale
     * o_vpos.xy = t_vpos
@@ -181,15 +172,17 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
     * o_interlaced = interlaced
     *
     * if(count > 0) { // Apply motion vectors
-    *    scale = norm * 0.5;
+    *    scale = 0.5 / (dst.width, dst.height);
     *    o_vmv[0..count] = t_vpos + vmv[0..count] * scale
     * }
     *
     */
-   ureg_MUL(shader, ureg_writemask(scale, TGSI_WRITEMASK_XY), norm, mbs);
+   scale = ureg_imm2f(shader,
+      (float)MACROBLOCK_WIDTH / r->buffer_width,
+      (float)MACROBLOCK_HEIGHT / r->buffer_height);
 
    ureg_ADD(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_XY), vpos, vrect);
-   ureg_MUL(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos), ureg_src(scale));
+   ureg_MUL(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos), scale);
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos));
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), vpos);
 
@@ -201,9 +194,9 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
       ureg_MOV(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_X), vrect);
       ureg_MUL(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_Y), vrect, ureg_imm1f(shader, 0.5f));
       ureg_ADD(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_XY), vpos, ureg_src(t_vtex));
-      ureg_MUL(shader, ureg_writemask(o_vtex[0], TGSI_WRITEMASK_XY), ureg_src(t_vtex), ureg_src(scale));
+      ureg_MUL(shader, ureg_writemask(o_vtex[0], TGSI_WRITEMASK_XY), ureg_src(t_vtex), scale);
       ureg_ADD(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_Y), ureg_src(t_vtex), ureg_imm1f(shader, 0.5f));
-      ureg_MUL(shader, ureg_writemask(o_vtex[1], TGSI_WRITEMASK_XY), ureg_src(t_vtex), ureg_src(scale));
+      ureg_MUL(shader, ureg_writemask(o_vtex[1], TGSI_WRITEMASK_XY), ureg_src(t_vtex), scale);
 
    ureg_ELSE(shader, &label);
 
@@ -221,14 +214,16 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    ureg_MOV(shader, o_interlaced, interlaced);
 
    if(count > 0) {
-      ureg_MUL(shader, ureg_writemask(scale, TGSI_WRITEMASK_XY), norm, ureg_imm1f(shader, 0.5f));
+      scale = ureg_imm2f(shader,
+         0.5f / r->buffer_width,
+         0.5f / r->buffer_height);
+
       for (i = 0; i < count; ++i)
-         ureg_MAD(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_XY), ureg_src(scale), vmv[i], ureg_src(t_vpos));
+         ureg_MAD(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_XY), scale, vmv[i], ureg_src(t_vpos));
    }
 
    ureg_release_temporary(shader, t_vtex);
    ureg_release_temporary(shader, t_vpos);
-   ureg_release_temporary(shader, scale);
 
    ureg_END(shader);
 
@@ -685,13 +680,6 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    for(i = 0; i < VL_NUM_MACROBLOCK_TYPES; ++i)
       init_mbtype_handler(r, i, vertex_elems);
 
-   r->vs_const_buf = pipe_buffer_create
-   (
-      r->pipe->screen,
-      PIPE_BIND_CONSTANT_BUFFER,
-      sizeof(struct vertex_shader_consts)
-   );
-
    return true;
 }
 
@@ -701,8 +689,6 @@ cleanup_buffers(struct vl_mpeg12_mc_renderer *r)
    unsigned i;
 
    assert(r);
-
-   pipe_resource_reference(&r->vs_const_buf, NULL);
 
    for (i = 0; i < 3; ++i) {
       pipe_sampler_view_reference(&r->sampler_views.all[i], NULL);
@@ -867,29 +853,6 @@ flush_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE ty
 
    util_draw_arrays(r->pipe, PIPE_PRIM_QUADS, vb_start, num_macroblocks);
    return num_macroblocks;
-}
-
-static void
-update_render_target(struct vl_mpeg12_mc_renderer *r)
-{
-   struct pipe_transfer *buf_transfer;
-   struct vertex_shader_consts *vs_consts;
-
-   vs_consts = pipe_buffer_map
-   (
-      r->pipe, r->vs_const_buf,
-      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-      &buf_transfer
-   );
-
-   vs_consts->norm.x = 1.0f / r->surface->width;
-   vs_consts->norm.y = 1.0f / r->surface->height;
-
-   pipe_buffer_unmap(r->pipe, r->vs_const_buf, buf_transfer);
-
-   r->fb_state.cbufs[0] = r->surface;
-
-   r->pipe->set_constant_buffer(r->pipe, PIPE_SHADER_VERTEX, 0, r->vs_const_buf);
 }
 
 static void
@@ -1203,7 +1166,6 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer
       pipe_surface_reference(&renderer->past, past);
       pipe_surface_reference(&renderer->future, future);
       renderer->fence = fence;
-      update_render_target(renderer);
    }
 
    while (num_macroblocks) {
@@ -1251,6 +1213,7 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer)
 
    upload_vertex_stream(renderer, num_verts);
 
+   renderer->fb_state.cbufs[0] = renderer->surface;
    renderer->pipe->bind_rasterizer_state(renderer->pipe, renderer->rs_state);
    renderer->pipe->set_framebuffer_state(renderer->pipe, &renderer->fb_state);
    renderer->pipe->set_viewport_state(renderer->pipe, &renderer->viewport);

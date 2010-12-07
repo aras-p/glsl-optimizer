@@ -31,9 +31,16 @@
 #include <pipe/p_state.h>
 #include "vl_vertex_buffers.h"
 
+struct vl_idct_buffer
+{
+};
+
 struct vl_idct
 {
    struct pipe_context *pipe;
+
+   unsigned buffer_width;
+   unsigned buffer_height;
 
    unsigned max_blocks;
 

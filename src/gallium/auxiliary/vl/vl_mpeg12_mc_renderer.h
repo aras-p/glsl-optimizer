@@ -78,7 +78,6 @@ struct vl_mpeg12_mc_renderer
    unsigned macroblocks_per_batch;
 
    struct pipe_viewport_state viewport;
-   struct pipe_resource *vs_const_buf;
    struct pipe_framebuffer_state fb_state;
 
    struct vl_idct idct_y, idct_cb, idct_cr;
