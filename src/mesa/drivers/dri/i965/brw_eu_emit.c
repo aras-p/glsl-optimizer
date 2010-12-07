@@ -1281,6 +1281,7 @@ void brw_math( struct brw_compile *p,
        * becomes FC[3:0] and ThreadCtrl becomes FC[5:4].
        */
       insn->header.destreg__conditionalmod = function;
+      insn->header.saturate = saturate;
 
       brw_set_dest(p, insn, dest);
       brw_set_src0(insn, src);
@@ -1371,6 +1372,7 @@ void brw_math_16( struct brw_compile *p,
        * becomes FC[3:0] and ThreadCtrl becomes FC[5:4].
        */
       insn->header.destreg__conditionalmod = function;
+      insn->header.saturate = saturate;
 
       brw_set_dest(p, insn, dest);
       brw_set_src0(insn, src);
