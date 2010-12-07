@@ -1567,6 +1567,20 @@ ast_expression::hir(exec_list *instructions,
 	 }
       }
 
+      /* From section 4.1.7 of the GLSL 1.30 spec:
+       *    "Samplers aggregated into arrays within a shader (using square
+       *    brackets [ ]) can only be indexed with integral constant
+       *    expressions [...]."
+       */
+      if (array->type->is_array() &&
+          array->type->element_type()->is_sampler() &&
+          const_index == NULL) {
+
+         _mesa_glsl_error(&loc, state, "sampler arrays can only be indexed "
+                          "with constant expressions");
+         error_emitted = true;
+      }
+
       if (error_emitted)
 	 result->type = glsl_type::error_type;
 
