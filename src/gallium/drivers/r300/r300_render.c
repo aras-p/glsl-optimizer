@@ -816,6 +816,7 @@ static boolean r300_render_allocate_vertices(struct vbuf_render* render,
 				       R300_MAX_DRAW_VBO_SIZE);
         r300->draw_vbo_offset = 0;
         r300->draw_vbo_size = R300_MAX_DRAW_VBO_SIZE;
+        r300->validate_buffers = TRUE;
     }
 
     r300render->vertex_size = vertex_size;
