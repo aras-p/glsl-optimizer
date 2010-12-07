@@ -45,6 +45,7 @@ class ABIEntry(object):
         self.slot = attrs['slot']
         self.hidden = attrs['hidden']
         self.alias = attrs['alias']
+        self.handcode = attrs['handcode']
 
     def c_prototype(self):
         return '%s %s(%s)' % (self.c_return(), self.name, self.c_params())
@@ -132,6 +133,7 @@ def abi_parse_line(line):
             'slot': -1,
             'hidden': False,
             'alias': None,
+            'handcode': None,
     }
 
     # extract attributes from the first column
@@ -144,6 +146,8 @@ def abi_parse_line(line):
             attrs['hidden'] = True
         elif val.startswith('alias='):
             attrs['alias'] = val[6:]
+        elif val.startswith('handcode='):
+            attrs['handcode'] = val[9:]
         elif not val:
             pass
         else:
@@ -198,7 +202,14 @@ def abi_parse(filename):
         if entries[i].alias:
             raise Exception('first entry of slot %d aliases %s'
                     % (slot, entries[i].alias.name))
+        handcode = None
         while i < len(entries) and entries[i].slot == slot:
+            ent = entries[i]
+            if not handcode and ent.handcode:
+                handcode = ent.handcode
+            elif ent.handcode != handcode:
+                raise Exception('two aliases with handcode %s != %s',
+                        ent.handcode, handcode)
             i += 1
     if i < len(entries):
         raise Exception('there are %d invalid entries' % (len(entries) - 1))
@@ -320,6 +331,10 @@ class ABIPrinter(object):
             stmt3 += '%s((%s) func)(%s);' % (ret, cast, ent.c_args())
 
             disp = '%s\n{\n%s\n%s\n%s\n}' % (proto, stmt1, stmt2, stmt3)
+
+            if ent.handcode:
+                disp = '#if 0\n' + disp + '\n#endif'
+
             dispatches.append(disp)
 
         return '\n\n'.join(dispatches)
@@ -393,6 +408,9 @@ class ABIPrinter(object):
         for ent in self.entries:
             name = self._c_function(ent, prefix, True)
 
+            if ent.handcode:
+                asm.append('#if 0')
+
             if ent.hidden:
                 asm.append('".hidden "%s"\\n"' % (name))
 
@@ -403,6 +421,10 @@ class ABIPrinter(object):
             else:
                 asm.append('STUB_ASM_ENTRY(%s)"\\n"' % (name))
                 asm.append('"\\t"STUB_ASM_CODE("%d")"\\n"' % (ent.slot))
+
+            if ent.handcode:
+                asm.append('#endif')
+            asm.append('')
         asm.append(');')
 
         return "\n".join(asm)
