@@ -200,6 +200,7 @@ void r200EmitArrays( struct gl_context *ctx, GLubyte *vimap_rev )
 	    }
 	 default:
 	    assert(0);
+	    emitsize = 0;
 	 }
 	 if (!rmesa->radeon.tcl.aos[nr].bo) {
 	   rcommon_emit_vector( ctx,
