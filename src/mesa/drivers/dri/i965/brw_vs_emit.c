@@ -1958,7 +1958,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 emit_math1(c, BRW_MATH_FUNCTION_INV, dst, args[0], BRW_MATH_PRECISION_FULL);
 	 break;
       case OPCODE_RSQ:
-	 emit_math1(c, BRW_MATH_FUNCTION_RSQ, dst, args[0], BRW_MATH_PRECISION_FULL);
+	 emit_math1(c, BRW_MATH_FUNCTION_RSQ, dst, brw_abs(args[0]), BRW_MATH_PRECISION_FULL);
 	 break;
 
       case OPCODE_SEQ:

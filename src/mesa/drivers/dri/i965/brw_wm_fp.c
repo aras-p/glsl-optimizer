@@ -1131,6 +1131,11 @@ void brw_wm_pass_fp( struct brw_wm_compile *c )
 	 precalc_lit(c, inst);
 	 break;
 
+      case OPCODE_RSQ:
+	 out = emit_scalar_insn(c, inst);
+	 out->SrcReg[0].Abs = GL_TRUE;
+	 break;
+
       case OPCODE_TEX:
 	 precalc_tex(c, inst);
 	 break;
