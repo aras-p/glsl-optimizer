@@ -1319,6 +1319,62 @@ target_can_be_compressed(struct gl_context *ctx, GLenum target)
 
 
 /**
+ * Check if the given texture target value is legal for a
+ * glTexImage1/2/3D call.
+ */
+static GLboolean
+legal_teximage_target(struct gl_context *ctx, GLuint dims, GLenum target)
+{
+   switch (dims) {
+   case 1:
+      switch (target) {
+      case GL_TEXTURE_1D:
+      case GL_PROXY_TEXTURE_1D:
+         return GL_TRUE;
+      default:
+         return GL_FALSE;
+      }
+   case 2:
+      switch (target) {
+      case GL_TEXTURE_2D:
+      case GL_PROXY_TEXTURE_2D:
+         return GL_TRUE;
+      case GL_PROXY_TEXTURE_CUBE_MAP:
+      case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
+      case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
+      case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
+      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
+         return ctx->Extensions.ARB_texture_cube_map;
+      case GL_TEXTURE_RECTANGLE_NV:
+      case GL_PROXY_TEXTURE_RECTANGLE_NV:
+         return ctx->Extensions.NV_texture_rectangle;
+      case GL_TEXTURE_1D_ARRAY_EXT:
+      case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
+         return ctx->Extensions.MESA_texture_array;
+      default:
+         return GL_FALSE;
+      }
+   case 3:
+      switch (target) {
+      case GL_TEXTURE_3D:
+      case GL_PROXY_TEXTURE_3D:
+         return GL_TRUE;
+      case GL_TEXTURE_2D_ARRAY_EXT:
+      case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
+         return ctx->Extensions.MESA_texture_array;
+      default:
+         return GL_FALSE;
+      }
+   default:
+      _mesa_problem(ctx, "invalid dims=%u in legal_teximage_target()", dims);
+      return GL_FALSE;
+   }
+}
+
+
+/**
  * Test the glTexImage[123]D() parameters for errors.
  * 
  * \param ctx GL context.
@@ -1384,15 +1440,9 @@ texture_error_check( struct gl_context *ctx,
     * level, width, height and depth.
     */
    if (dimensions == 1) {
-      if (target == GL_PROXY_TEXTURE_1D || target == GL_TEXTURE_1D) {
-         proxy_target = GL_PROXY_TEXTURE_1D;
-         height = 1;
-         depth = 1;
-      }
-      else {
-         _mesa_error( ctx, GL_INVALID_ENUM, "glTexImage1D(target)" );
-         return GL_TRUE;
-      }
+      proxy_target = GL_PROXY_TEXTURE_1D;
+      height = 1;
+      depth = 1;
    }
    else if (dimensions == 2) {
       depth = 1;
@@ -1402,19 +1452,11 @@ texture_error_check( struct gl_context *ctx,
       else if (target == GL_PROXY_TEXTURE_CUBE_MAP_ARB ||
                (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
                 target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB)) {
-         if (!ctx->Extensions.ARB_texture_cube_map) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glTexImage2D(target)");
-            return GL_TRUE;
-         }
          proxy_target = GL_PROXY_TEXTURE_CUBE_MAP_ARB;
          sizeOK = (width == height);
       }
       else if (target == GL_PROXY_TEXTURE_RECTANGLE_NV ||
                target == GL_TEXTURE_RECTANGLE_NV) {
-         if (!ctx->Extensions.NV_texture_rectangle) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glTexImage2D(target)");
-            return GL_TRUE;
-         }
          proxy_target = GL_PROXY_TEXTURE_RECTANGLE_NV;
       }
       else if (target == GL_PROXY_TEXTURE_1D_ARRAY_EXT ||
@@ -1422,11 +1464,13 @@ texture_error_check( struct gl_context *ctx,
          proxy_target = GL_PROXY_TEXTURE_1D_ARRAY_EXT;
       }
       else {
-         _mesa_error(ctx, GL_INVALID_ENUM, "glTexImage2D(target)");
+         _mesa_problem(ctx, "unexpected target in texture_error_check()");
          return GL_TRUE;
       }
    }
-   else if (dimensions == 3) {
+   else {
+      assert(dimensions == 3);
+
       if (target == GL_PROXY_TEXTURE_3D || target == GL_TEXTURE_3D) {
          proxy_target = GL_PROXY_TEXTURE_3D;
       }
@@ -1435,13 +1479,9 @@ texture_error_check( struct gl_context *ctx,
          proxy_target = GL_PROXY_TEXTURE_2D_ARRAY_EXT;
       }
       else {
-         _mesa_error( ctx, GL_INVALID_ENUM, "glTexImage3D(target)" );
+         _mesa_problem(ctx, "unexpected target in texture_error_check()");
          return GL_TRUE;
       }
-   }
-   else {
-      _mesa_problem( ctx, "bad dims in texture_error_check" );
-      return GL_TRUE;
    }
 
    sizeOK = sizeOK && ctx->Driver.TestProxyTexImage(ctx, proxy_target, level,
@@ -2355,219 +2395,48 @@ _mesa_choose_texture_format(struct gl_context *ctx,
 }
 
 
-
-/*
- * Called from the API.  Note that width includes the border.
+/**
+ * Common code to implement all the glTexImage1D/2D/3D functions.
  */
-void GLAPIENTRY
-_mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
-                  GLsizei width, GLint border, GLenum format,
-                  GLenum type, const GLvoid *pixels )
+static void
+teximage(struct gl_context *ctx, GLuint dims,
+         GLenum target, GLint level, GLint internalFormat,
+         GLsizei width, GLsizei height, GLsizei depth,
+         GLint border, GLenum format, GLenum type,
+         const GLvoid *pixels)
 {
-   GET_CURRENT_CONTEXT(ctx);
+   GLboolean error;
+
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
-      _mesa_debug(ctx, "glTexImage1D %s %d %s %d %d %s %s %p\n",
+      _mesa_debug(ctx, "glTexImage%uD %s %d %s %d %d %d %d %s %s %p\n",
+                  dims,
                   _mesa_lookup_enum_by_nr(target), level,
-                  _mesa_lookup_enum_by_nr(internalFormat), width, border,
+                  _mesa_lookup_enum_by_nr(internalFormat),
+                  width, height, depth, border,
                   _mesa_lookup_enum_by_nr(format),
-                  _mesa_lookup_enum_by_nr(type), pixels);
-
-   internalFormat = override_internal_format(internalFormat, width, 1);
-
-   if (target == GL_TEXTURE_1D) {
-      /* non-proxy target */
-      struct gl_texture_object *texObj;
-      struct gl_texture_image *texImage;
-      const GLuint face = _mesa_tex_target_to_face(target);
-
-      if (texture_error_check(ctx, 1, target, level, internalFormat,
-                              format, type, width, 1, 1, border)) {
-         return;   /* error was recorded */
-      }
-
-      if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
-	 _mesa_update_state(ctx);
-
-      texObj = _mesa_get_current_tex_object(ctx, target);
-      _mesa_lock_texture(ctx, texObj);
-      {
-	 texImage = _mesa_get_tex_image(ctx, texObj, target, level);
-	 if (!texImage) {
-	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
-	 }
-         else {
-            gl_format texFormat;
-
-            if (texImage->Data) {
-               ctx->Driver.FreeTexImageData( ctx, texImage );
-            }
-
-            ASSERT(texImage->Data == NULL);
-
-            texFormat = _mesa_choose_texture_format(ctx, texObj, target, level,
-                                                    internalFormat, format,
-                                                    type);
-
-            if (legal_texture_size(ctx, texFormat, width, 1, 1)) {
-               _mesa_init_teximage_fields(ctx, target, texImage,
-                                          width, 1, 1,
-                                          border, internalFormat,
-                                          texFormat);
-
-               /* Give the texture to the driver.  <pixels> may be null. */
-               ASSERT(ctx->Driver.TexImage1D);
-               ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
-                                      width, border, format, type, pixels,
-                                      &ctx->Unpack, texObj, texImage);
-
-               check_gen_mipmap(ctx, target, texObj, level);
-
-               update_fbo_texture(ctx, texObj, face, level);
-
-               /* state update */
-               texObj->_Complete = GL_FALSE;
-               ctx->NewState |= _NEW_TEXTURE;
-            }
-            else {
-               _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage1D");
-            }
-         }
-      }
-      _mesa_unlock_texture(ctx, texObj);
-   }
-   else if (target == GL_PROXY_TEXTURE_1D) {
-      /* Proxy texture: check for errors and update proxy state */
-      struct gl_texture_image *texImage;
-      texImage = _mesa_get_proxy_tex_image(ctx, target, level);
-      if (texture_error_check(ctx, 1, target, level, internalFormat,
-                              format, type, width, 1, 1, border)) {
-         /* when error, clear all proxy texture image parameters */
-         if (texImage)
-            clear_teximage_fields(texImage);
-      }
-      else {
-         /* no error, set the tex image parameters */
-         struct gl_texture_object *texObj =
-            _mesa_get_current_tex_object(ctx, target);
-         gl_format texFormat = _mesa_choose_texture_format(ctx, texObj, target,
-                                                           level,
-                                                           internalFormat,
-                                                           format, type);
-         if (legal_texture_size(ctx, texFormat, width, 1, 1)) {
-            _mesa_init_teximage_fields(ctx, target, texImage, width, 1, 1,
-                                       border, internalFormat, texFormat);
-         }
-         else if (texImage) {
-            clear_teximage_fields(texImage);
-         }
-      }
-   }
-   else {
-      _mesa_error( ctx, GL_INVALID_ENUM, "glTexImage1D(target)" );
-      return;
-   }
-}
-
-
-void GLAPIENTRY
-_mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
-                  GLsizei width, GLsizei height, GLint border,
-                  GLenum format, GLenum type,
-                  const GLvoid *pixels )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-
-   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
-      _mesa_debug(ctx, "glTexImage2D %s %d %s %d %d %d %s %s %p\n",
-                  _mesa_lookup_enum_by_nr(target), level,
-                  _mesa_lookup_enum_by_nr(internalFormat), width, height,
-                  border, _mesa_lookup_enum_by_nr(format),
                   _mesa_lookup_enum_by_nr(type), pixels);
 
    internalFormat = override_internal_format(internalFormat, width, height);
 
-   if (target == GL_TEXTURE_2D ||
-       (ctx->Extensions.ARB_texture_cube_map &&
-        target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
-        target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB) ||
-       (ctx->Extensions.NV_texture_rectangle &&
-        target == GL_TEXTURE_RECTANGLE_NV) ||
-       (ctx->Extensions.MESA_texture_array &&
-        target == GL_TEXTURE_1D_ARRAY_EXT)) {
-      /* non-proxy target */
-      struct gl_texture_object *texObj;
-      struct gl_texture_image *texImage;
-      const GLuint face = _mesa_tex_target_to_face(target);
-
-      if (texture_error_check(ctx, 2, target, level, internalFormat,
-                              format, type, width, height, 1, border)) {
-         return;   /* error was recorded */
-      }
-
-      if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
-	 _mesa_update_state(ctx);
-
-      texObj = _mesa_get_current_tex_object(ctx, target);
-      _mesa_lock_texture(ctx, texObj);
-      {
-	 texImage = _mesa_get_tex_image(ctx, texObj, target, level);
-	 if (!texImage) {
-	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
-	 }
-         else {
-            gl_format texFormat;
-
-            if (texImage->Data) {
-               ctx->Driver.FreeTexImageData( ctx, texImage );
-            }
-
-            ASSERT(texImage->Data == NULL);
-
-            texFormat = _mesa_choose_texture_format(ctx, texObj, target, level,
-                                                    internalFormat, format,
-                                                    type);
-
-            if (legal_texture_size(ctx, texFormat, width, height, 1)) {
-               _mesa_init_teximage_fields(ctx, target, texImage, width,
-                                          height, 1, border, internalFormat,
-                                          texFormat);
-
-               /* Give the texture to the driver.  <pixels> may be null. */
-               ASSERT(ctx->Driver.TexImage2D);
-               ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
-                                      width, height, border, format, type,
-                                      pixels, &ctx->Unpack, texObj, texImage);
-
-               check_gen_mipmap(ctx, target, texObj, level);
-
-               update_fbo_texture(ctx, texObj, face, level);
-
-               /* state update */
-               texObj->_Complete = GL_FALSE;
-               ctx->NewState |= _NEW_TEXTURE;
-            }
-            else {
-               _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage2D");
-            }
-         }
-      }
-      _mesa_unlock_texture(ctx, texObj);
+   /* target error checking */
+   if (!legal_teximage_target(ctx, dims, target)) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glTexImage%uD(target=%s)",
+                  dims, _mesa_lookup_enum_by_nr(target));
+      return;
    }
-   else if (target == GL_PROXY_TEXTURE_2D ||
-            (target == GL_PROXY_TEXTURE_CUBE_MAP_ARB &&
-             ctx->Extensions.ARB_texture_cube_map) ||
-            (target == GL_PROXY_TEXTURE_RECTANGLE_NV &&
-             ctx->Extensions.NV_texture_rectangle) ||
-            (ctx->Extensions.MESA_texture_array &&
-             target == GL_PROXY_TEXTURE_1D_ARRAY_EXT)) {
-      /* Proxy texture: check for errors and update proxy state */
-      struct gl_texture_image *texImage;
-      texImage = _mesa_get_proxy_tex_image(ctx, target, level);
-      if (texture_error_check(ctx, 2, target, level, internalFormat,
-                              format, type, width, height, 1, border)) {
+
+   /* general error checking */
+   error = texture_error_check(ctx, dims, target, level, internalFormat,
+                               format, type, width, height, depth, border);
+
+   if (_mesa_is_proxy_texture(target)) {
+      /* Proxy texture: just clear or set state depending on error checking */
+      struct gl_texture_image *texImage =
+         _mesa_get_proxy_tex_image(ctx, target, level);
+
+      if (error) {
          /* when error, clear all proxy texture image parameters */
          if (texImage)
             clear_teximage_fields(texImage);
@@ -2580,9 +2449,11 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
                                                            target, level,
                                                            internalFormat,
                                                            format, type);
-         if (legal_texture_size(ctx, texFormat, width, 1, 1)) {
-            _mesa_init_teximage_fields(ctx, target, texImage, width, height, 1,
-                                       border, internalFormat, texFormat);
+
+         if (legal_texture_size(ctx, texFormat, width, height, depth)) {
+            _mesa_init_teximage_fields(ctx, target, texImage, width, height,
+                                       depth, border, internalFormat,
+                                       texFormat);
          }
          else if (texImage) {
             clear_teximage_fields(texImage);
@@ -2590,44 +2461,12 @@ _mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
       }
    }
    else {
-      _mesa_error( ctx, GL_INVALID_ENUM, "glTexImage2D(target)" );
-      return;
-   }
-}
-
-
-/*
- * Called by the API or display list executor.
- * Note that width and height include the border.
- */
-void GLAPIENTRY
-_mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
-                  GLsizei width, GLsizei height, GLsizei depth,
-                  GLint border, GLenum format, GLenum type,
-                  const GLvoid *pixels )
-{
-   GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-
-   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
-      _mesa_debug(ctx, "glTexImage3D %s %d %s %d %d %d %d %s %s %p\n",
-                  _mesa_lookup_enum_by_nr(target), level,
-                  _mesa_lookup_enum_by_nr(internalFormat), width, height,
-                  depth, border, _mesa_lookup_enum_by_nr(format),
-                  _mesa_lookup_enum_by_nr(type), pixels);
-
-   internalFormat = override_internal_format(internalFormat, width, height);
-
-   if (target == GL_TEXTURE_3D ||
-       (ctx->Extensions.MESA_texture_array &&
-        target == GL_TEXTURE_2D_ARRAY_EXT)) {
       /* non-proxy target */
+      const GLuint face = _mesa_tex_target_to_face(target);
       struct gl_texture_object *texObj;
       struct gl_texture_image *texImage;
-      const GLuint face = _mesa_tex_target_to_face(target);
 
-      if (texture_error_check(ctx, 3, target, level, (GLint) internalFormat,
-                              format, type, width, height, depth, border)) {
+      if (error) {
          return;   /* error was recorded */
       }
 
@@ -2635,11 +2474,13 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
 	 _mesa_update_state(ctx);
 
       texObj = _mesa_get_current_tex_object(ctx, target);
+
       _mesa_lock_texture(ctx, texObj);
       {
 	 texImage = _mesa_get_tex_image(ctx, texObj, target, level);
+
 	 if (!texImage) {
-	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage3D");
+	    _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage%uD", dims);
 	 }
          else {
             gl_format texFormat;
@@ -2660,10 +2501,28 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
 
                /* Give the texture to the driver.  <pixels> may be null. */
                ASSERT(ctx->Driver.TexImage3D);
-               ctx->Driver.TexImage3D(ctx, target, level, internalFormat,
-                                      width, height, depth, border, format,
-                                      type, pixels, &ctx->Unpack, texObj,
-                                      texImage);
+               switch (dims) {
+               case 1:
+                  ctx->Driver.TexImage1D(ctx, target, level, internalFormat,
+                                         width, border, format,
+                                         type, pixels, &ctx->Unpack, texObj,
+                                         texImage);
+                  break;
+               case 2:
+                  ctx->Driver.TexImage2D(ctx, target, level, internalFormat,
+                                         width, height, border, format,
+                                         type, pixels, &ctx->Unpack, texObj,
+                                         texImage);
+                  break;
+               case 3:
+                  ctx->Driver.TexImage3D(ctx, target, level, internalFormat,
+                                         width, height, depth, border, format,
+                                         type, pixels, &ctx->Unpack, texObj,
+                                         texImage);
+                  break;
+               default:
+                  _mesa_problem(ctx, "invalid dims=%u in teximage()", dims);
+               }
 
                check_gen_mipmap(ctx, target, texObj, level);
 
@@ -2674,46 +2533,54 @@ _mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
                ctx->NewState |= _NEW_TEXTURE;
             }
             else {
-               _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage3D");
+               _mesa_error(ctx, GL_OUT_OF_MEMORY, "glTexImage%uD", dims);
             }
          }
       }
       _mesa_unlock_texture(ctx, texObj);
    }
-   else if (target == GL_PROXY_TEXTURE_3D ||
-       (ctx->Extensions.MESA_texture_array &&
-        target == GL_PROXY_TEXTURE_2D_ARRAY_EXT)) {
-      /* Proxy texture: check for errors and update proxy state */
-      struct gl_texture_image *texImage;
-      texImage = _mesa_get_proxy_tex_image(ctx, target, level);
-      if (texture_error_check(ctx, 3, target, level, internalFormat,
-                              format, type, width, height, depth, border)) {
-         /* when error, clear all proxy texture image parameters */
-         if (texImage)
-            clear_teximage_fields(texImage);
-      }
-      else {
-         /* no error, set the tex image parameters */
-         struct gl_texture_object *texObj =
-            _mesa_get_current_tex_object(ctx, target);
-         gl_format texFormat = _mesa_choose_texture_format(ctx, texObj,
-                                                           target, level,
-                                                           internalFormat,
-                                                           format, type);
-         if (legal_texture_size(ctx, texFormat, width, height, depth)) {
-            _mesa_init_teximage_fields(ctx, target, texImage, width, height,
-                                       depth, border, internalFormat,
-                                       texFormat);
-         }
-         else if (texImage) {
-            clear_teximage_fields(texImage);
-         }
-      }
-   }
-   else {
-      _mesa_error( ctx, GL_INVALID_ENUM, "glTexImage3D(target)" );
-      return;
-   }
+}
+
+
+/*
+ * Called from the API.  Note that width includes the border.
+ */
+void GLAPIENTRY
+_mesa_TexImage1D( GLenum target, GLint level, GLint internalFormat,
+                  GLsizei width, GLint border, GLenum format,
+                  GLenum type, const GLvoid *pixels )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   teximage(ctx, 1, target, level, internalFormat, width, 1, 1,
+            border, format, type, pixels);
+}
+
+
+void GLAPIENTRY
+_mesa_TexImage2D( GLenum target, GLint level, GLint internalFormat,
+                  GLsizei width, GLsizei height, GLint border,
+                  GLenum format, GLenum type,
+                  const GLvoid *pixels )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   teximage(ctx, 2, target, level, internalFormat, width, height, 1,
+            border, format, type, pixels);
+}
+
+
+/*
+ * Called by the API or display list executor.
+ * Note that width and height include the border.
+ */
+void GLAPIENTRY
+_mesa_TexImage3D( GLenum target, GLint level, GLint internalFormat,
+                  GLsizei width, GLsizei height, GLsizei depth,
+                  GLint border, GLenum format, GLenum type,
+                  const GLvoid *pixels )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   teximage(ctx, 3, target, level, internalFormat, width, height, depth,
+            border, format, type, pixels);
 }
 
 
