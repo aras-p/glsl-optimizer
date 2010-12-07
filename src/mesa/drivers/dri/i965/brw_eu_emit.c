@@ -1272,6 +1272,10 @@ void brw_math( struct brw_compile *p,
       assert(dest.hstride == BRW_HORIZONTAL_STRIDE_1);
       assert(src.hstride == BRW_HORIZONTAL_STRIDE_1);
 
+      /* Source modifiers are ignored for extended math instructions. */
+      assert(!src.negate);
+      assert(!src.abs);
+
       if (function != BRW_MATH_FUNCTION_INT_DIV_QUOTIENT &&
 	  function != BRW_MATH_FUNCTION_INT_DIV_QUOTIENT_AND_REMAINDER) {
 	 assert(src.type == BRW_REGISTER_TYPE_F);
@@ -1338,6 +1342,12 @@ void brw_math2(struct brw_compile *p,
       assert(src1.type == BRW_REGISTER_TYPE_F);
    }
 
+   /* Source modifiers are ignored for extended math instructions. */
+   assert(!src0.negate);
+   assert(!src0.abs);
+   assert(!src1.negate);
+   assert(!src1.abs);
+
    /* Math is the same ISA format as other opcodes, except that CondModifier
     * becomes FC[3:0] and ThreadCtrl becomes FC[5:4].
     */
@@ -1373,6 +1383,10 @@ void brw_math_16( struct brw_compile *p,
        */
       insn->header.destreg__conditionalmod = function;
       insn->header.saturate = saturate;
+
+      /* Source modifiers are ignored for extended math instructions. */
+      assert(!src.negate);
+      assert(!src.abs);
 
       brw_set_dest(p, insn, dest);
       brw_set_src0(insn, src);

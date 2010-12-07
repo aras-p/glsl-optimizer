@@ -896,10 +896,14 @@ void emit_math1(struct brw_wm_compile *c,
 		      BRW_MATH_SATURATE_NONE);
    struct brw_reg src;
 
-   if (intel->gen >= 6 && (arg0[0].hstride == BRW_HORIZONTAL_STRIDE_0 ||
-			   arg0[0].file != BRW_GENERAL_REGISTER_FILE)) {
+   if (intel->gen >= 6 && ((arg0[0].hstride == BRW_HORIZONTAL_STRIDE_0 ||
+			    arg0[0].file != BRW_GENERAL_REGISTER_FILE) ||
+			   arg0[0].negate || arg0[0].abs)) {
       /* Gen6 math requires that source and dst horizontal stride be 1,
        * and that the argument be in the GRF.
+       *
+       * The hardware ignores source modifiers (negate and abs) on math
+       * instructions, so we also move to a temp to set those up.
        */
       src = dst[dst_chan];
       brw_MOV(p, src, arg0[0]);

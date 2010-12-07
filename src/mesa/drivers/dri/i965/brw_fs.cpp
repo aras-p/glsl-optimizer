@@ -600,8 +600,13 @@ fs_visitor::emit_math(fs_opcodes opcode, fs_reg dst, fs_reg src)
     * might be able to do better by doing execsize = 1 math and then
     * expanding that result out, but we would need to be careful with
     * masking.
+    *
+    * The hardware ignores source modifiers (negate and abs) on math
+    * instructions, so we also move to a temp to set those up.
     */
-   if (intel->gen >= 6 && src.file == UNIFORM) {
+   if (intel->gen >= 6 && (src.file == UNIFORM ||
+			   src.abs ||
+			   src.negate)) {
       fs_reg expanded = fs_reg(this, glsl_type::float_type);
       emit(fs_inst(BRW_OPCODE_MOV, expanded, src));
       src = expanded;
