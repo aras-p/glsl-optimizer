@@ -282,7 +282,9 @@ sp_mpeg12_render_picture(struct pipe_video_context     *vpipe,
    assert(dst_surface);
    assert(dst_area);
 
+   vl_mpeg12_mc_unmap_buffer(&ctx->mc_renderer);
    vl_mpeg12_mc_renderer_flush(&ctx->mc_renderer);
+   vl_mpeg12_mc_map_buffer(&ctx->mc_renderer);
 
    vl_compositor_render(&ctx->compositor, src_surface,
                         picture_type, src_area, dst_surface, dst_area, fence);
@@ -328,7 +330,9 @@ sp_mpeg12_set_decode_target(struct pipe_video_context *vpipe,
    assert(dt);
 
    if (ctx->decode_target != dt) {
+      vl_mpeg12_mc_unmap_buffer(&ctx->mc_renderer);
       vl_mpeg12_mc_renderer_flush(&ctx->mc_renderer);
+      vl_mpeg12_mc_map_buffer(&ctx->mc_renderer);
       pipe_surface_reference(&ctx->decode_target, dt);
    }
 }

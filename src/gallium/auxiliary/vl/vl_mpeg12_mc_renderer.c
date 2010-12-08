@@ -989,8 +989,23 @@ vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer)
 }
 
 void
-vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer
-                                         *renderer,
+vl_mpeg12_mc_map_buffer(struct vl_mpeg12_mc_renderer *renderer)
+{
+   unsigned i;
+
+   assert(renderer);
+
+   vl_idct_map_buffers(&renderer->idct_luma, &renderer->idct_y);
+   vl_idct_map_buffers(&renderer->idct_chroma, &renderer->idct_cr);
+   vl_idct_map_buffers(&renderer->idct_chroma, &renderer->idct_cb);
+
+   vl_vb_map(&renderer->pos, renderer->pipe);
+   for(i = 0; i < 4; ++i)
+      vl_vb_map(&renderer->mv[i], renderer->pipe);
+}
+
+void
+vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer *renderer,
                                          struct pipe_surface *surface,
                                          struct pipe_surface *past,
                                          struct pipe_surface *future,
@@ -1024,14 +1039,27 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer
       num_macroblocks -= num_to_submit;
 
       if (renderer->num_macroblocks == renderer->macroblocks_per_batch) {
+         vl_mpeg12_mc_unmap_buffer(renderer);
          vl_mpeg12_mc_renderer_flush(renderer);
-
-         /* Next time we get this surface it may have new ref frames */
-         pipe_surface_reference(&renderer->surface, NULL);
-         pipe_surface_reference(&renderer->past, NULL);
-         pipe_surface_reference(&renderer->future, NULL);
+         vl_mpeg12_mc_map_buffer(renderer);
       }
    }
+}
+
+void
+vl_mpeg12_mc_unmap_buffer(struct vl_mpeg12_mc_renderer *renderer)
+{
+   unsigned i;
+
+   assert(renderer);
+
+   vl_idct_unmap_buffers(&renderer->idct_luma, &renderer->idct_y);
+   vl_idct_unmap_buffers(&renderer->idct_chroma, &renderer->idct_cr);
+   vl_idct_unmap_buffers(&renderer->idct_chroma, &renderer->idct_cb);
+
+   vl_vb_unmap(&renderer->pos, renderer->pipe);
+   for(i = 0; i < 4; ++i)
+      vl_vb_unmap(&renderer->mv[i], renderer->pipe);
 }
 
 void
@@ -1045,20 +1073,13 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer)
    if (renderer->num_macroblocks == 0)
       return;
 
-   vl_idct_unmap_buffers(&renderer->idct_luma, &renderer->idct_y);
-   vl_idct_unmap_buffers(&renderer->idct_chroma, &renderer->idct_cr);
-   vl_idct_unmap_buffers(&renderer->idct_chroma, &renderer->idct_cb);
-
    vl_idct_flush(&renderer->idct_luma, &renderer->idct_y);
    vl_idct_flush(&renderer->idct_chroma, &renderer->idct_cr);
    vl_idct_flush(&renderer->idct_chroma, &renderer->idct_cb);
 
-   vl_vb_unmap(&renderer->pos, renderer->pipe);
    vl_vb_restart(&renderer->pos);
-   for(i = 0; i < 4; ++i) {
-      vl_vb_unmap(&renderer->mv[i], renderer->pipe);
+   for(i = 0; i < 4; ++i)
       vl_vb_restart(&renderer->mv[i]);
-   }
 
    renderer->fb_state.cbufs[0] = renderer->surface;
    renderer->pipe->bind_rasterizer_state(renderer->pipe, renderer->rs_state);
@@ -1084,14 +1105,6 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer)
    util_draw_arrays(renderer->pipe, PIPE_PRIM_QUADS, 0, renderer->num_macroblocks * 4);
 
    renderer->pipe->flush(renderer->pipe, PIPE_FLUSH_RENDER_CACHE, renderer->fence);
-
-   vl_idct_map_buffers(&renderer->idct_luma, &renderer->idct_y);
-   vl_idct_map_buffers(&renderer->idct_chroma, &renderer->idct_cr);
-   vl_idct_map_buffers(&renderer->idct_chroma, &renderer->idct_cb);
-
-   vl_vb_map(&renderer->pos, renderer->pipe);
-   for(i = 0; i < 4; ++i)
-      vl_vb_map(&renderer->mv[i], renderer->pipe);
 
    renderer->num_macroblocks = 0;
 }

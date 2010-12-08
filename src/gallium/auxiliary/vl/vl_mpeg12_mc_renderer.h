@@ -112,6 +112,8 @@ bool vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
 
 void vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer);
 
+void vl_mpeg12_mc_map_buffer(struct vl_mpeg12_mc_renderer *renderer);
+
 void vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer *renderer,
                                               struct pipe_surface *surface,
                                               struct pipe_surface *past,
@@ -119,6 +121,8 @@ void vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer *rend
                                               unsigned num_macroblocks,
                                               struct pipe_mpeg12_macroblock *mpeg12_macroblocks,
                                               struct pipe_fence_handle **fence);
+
+void vl_mpeg12_mc_unmap_buffer(struct vl_mpeg12_mc_renderer *renderer);
 
 void vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer);
 
