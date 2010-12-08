@@ -636,6 +636,47 @@ _mesa_is_proxy_texture(GLenum target)
 
 
 /**
+ * Return the proxy target which corresponds to the given texture target
+ */
+static GLenum
+get_proxy_target(GLenum target)
+{
+   switch (target) {
+   case GL_TEXTURE_1D:
+   case GL_PROXY_TEXTURE_1D:
+      return GL_PROXY_TEXTURE_1D;
+   case GL_TEXTURE_2D:
+   case GL_PROXY_TEXTURE_2D:
+      return GL_PROXY_TEXTURE_2D;
+   case GL_TEXTURE_3D:
+   case GL_PROXY_TEXTURE_3D:
+      return GL_PROXY_TEXTURE_3D;
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_X_ARB:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Y_ARB:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y_ARB:
+   case GL_TEXTURE_CUBE_MAP_POSITIVE_Z_ARB:
+   case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB:
+   case GL_TEXTURE_CUBE_MAP_ARB:
+   case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
+      return GL_PROXY_TEXTURE_CUBE_MAP_ARB;
+   case GL_TEXTURE_RECTANGLE_NV:
+   case GL_PROXY_TEXTURE_RECTANGLE_NV:
+      return GL_PROXY_TEXTURE_RECTANGLE_NV;
+   case GL_TEXTURE_1D_ARRAY_EXT:
+   case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
+      return GL_PROXY_TEXTURE_1D_ARRAY_EXT;
+   case GL_TEXTURE_2D_ARRAY_EXT:
+   case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
+      return GL_PROXY_TEXTURE_2D_ARRAY_EXT;
+   default:
+      _mesa_problem(NULL, "unexpected target in get_proxy_target()");
+      return 0;
+   }
+}
+
+
+/**
  * Get the texture object that corresponds to the target of the given
  * texture unit.
  *
@@ -1403,10 +1444,10 @@ texture_error_check( struct gl_context *ctx,
                      GLint width, GLint height,
                      GLint depth, GLint border )
 {
-   const GLboolean isProxy = _mesa_is_proxy_texture(target);
+   const GLenum proxyTarget = get_proxy_target(target);
+   const GLboolean isProxy = target == proxyTarget;
    GLboolean sizeOK = GL_TRUE;
    GLboolean colorFormat, indexFormat;
-   GLenum proxy_target;
 
    /* Basic level check (more checking in ctx->Driver.TestProxyTexImage) */
    if (level < 0 || level >= MAX_TEXTURE_LEVELS) {
@@ -1436,55 +1477,16 @@ texture_error_check( struct gl_context *ctx,
       return GL_TRUE;
    }
 
-   /* Check target and call ctx->Driver.TestProxyTexImage() to check the
-    * level, width, height and depth.
+   /* Do this simple check before calling the TestProxyTexImage() function */
+   if (proxyTarget == GL_PROXY_TEXTURE_CUBE_MAP_ARB) {
+      sizeOK = (width == height);
+   }
+
+   /*
+    * Use the proxy texture driver hook to see if the size/level/etc are
+    * legal.
     */
-   if (dimensions == 1) {
-      proxy_target = GL_PROXY_TEXTURE_1D;
-      height = 1;
-      depth = 1;
-   }
-   else if (dimensions == 2) {
-      depth = 1;
-      if (target == GL_PROXY_TEXTURE_2D || target == GL_TEXTURE_2D) {
-         proxy_target = GL_PROXY_TEXTURE_2D;
-      }
-      else if (target == GL_PROXY_TEXTURE_CUBE_MAP_ARB ||
-               (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
-                target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB)) {
-         proxy_target = GL_PROXY_TEXTURE_CUBE_MAP_ARB;
-         sizeOK = (width == height);
-      }
-      else if (target == GL_PROXY_TEXTURE_RECTANGLE_NV ||
-               target == GL_TEXTURE_RECTANGLE_NV) {
-         proxy_target = GL_PROXY_TEXTURE_RECTANGLE_NV;
-      }
-      else if (target == GL_PROXY_TEXTURE_1D_ARRAY_EXT ||
-               target == GL_TEXTURE_1D_ARRAY_EXT) {
-         proxy_target = GL_PROXY_TEXTURE_1D_ARRAY_EXT;
-      }
-      else {
-         _mesa_problem(ctx, "unexpected target in texture_error_check()");
-         return GL_TRUE;
-      }
-   }
-   else {
-      assert(dimensions == 3);
-
-      if (target == GL_PROXY_TEXTURE_3D || target == GL_TEXTURE_3D) {
-         proxy_target = GL_PROXY_TEXTURE_3D;
-      }
-      else if (target == GL_PROXY_TEXTURE_2D_ARRAY_EXT ||
-               target == GL_TEXTURE_2D_ARRAY_EXT) {
-         proxy_target = GL_PROXY_TEXTURE_2D_ARRAY_EXT;
-      }
-      else {
-         _mesa_problem(ctx, "unexpected target in texture_error_check()");
-         return GL_TRUE;
-      }
-   }
-
-   sizeOK = sizeOK && ctx->Driver.TestProxyTexImage(ctx, proxy_target, level,
+   sizeOK = sizeOK && ctx->Driver.TestProxyTexImage(ctx, proxyTarget, level,
                                                     internalFormat, format,
                                                     type, width, height,
                                                     depth, border);
