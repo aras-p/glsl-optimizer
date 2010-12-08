@@ -1651,61 +1651,13 @@ subtexture_error_check( struct gl_context *ctx, GLuint dimensions,
                         GLint width, GLint height, GLint depth,
                         GLenum format, GLenum type )
 {
-   /* Check target */
-   if (dimensions == 1) {
-      if (target != GL_TEXTURE_1D) {
-         _mesa_error( ctx, GL_INVALID_ENUM, "glTexSubImage1D(target)" );
-         return GL_TRUE;
-      }
-   }
-   else if (dimensions == 2) {
-      if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
-          target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB) {
-         if (!ctx->Extensions.ARB_texture_cube_map) {
-            _mesa_error( ctx, GL_INVALID_ENUM, "glTexSubImage2D(target)" );
-            return GL_TRUE;
-         }
-      }
-      else if (target == GL_TEXTURE_RECTANGLE_NV) {
-         if (!ctx->Extensions.NV_texture_rectangle) {
-            _mesa_error( ctx, GL_INVALID_ENUM, "glTexSubImage2D(target)" );
-            return GL_TRUE;
-         }
-      }
-      else if (target == GL_TEXTURE_1D_ARRAY_EXT) {
-        if (!ctx->Extensions.MESA_texture_array) {
-           _mesa_error( ctx, GL_INVALID_ENUM, "glTexSubImage2D(target)" );
-           return GL_TRUE;
-        }
-      }
-      else if (target != GL_TEXTURE_2D) {
-         _mesa_error( ctx, GL_INVALID_ENUM, "glTexSubImage2D(target)" );
-         return GL_TRUE;
-      }
-   }
-   else if (dimensions == 3) {
-      if (target == GL_TEXTURE_2D_ARRAY_EXT) {
-         if (!ctx->Extensions.MESA_texture_array) {
-            _mesa_error( ctx, GL_INVALID_ENUM, "glTexSubImage3D(target)" );
-            return GL_TRUE;
-         }
-      }
-      else if (target != GL_TEXTURE_3D) {
-         _mesa_error( ctx, GL_INVALID_ENUM, "glTexSubImage3D(target)" );
-         return GL_TRUE;
-      }
-   }
-   else {
-      _mesa_problem( ctx, "invalid dims in texture_error_check" );
-      return GL_TRUE;
-   }
-
    /* Basic level check */
    if (level < 0 || level >= MAX_TEXTURE_LEVELS) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glTexSubImage2D(level=%d)", level);
       return GL_TRUE;
    }
 
+   /* Check for negative sizes */
    if (width < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE,
                   "glTexSubImage%dD(width=%d)", dimensions, width);
@@ -2645,51 +2597,93 @@ _mesa_EGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
 #endif
 
 
-void GLAPIENTRY
-_mesa_TexSubImage1D( GLenum target, GLint level,
-                     GLint xoffset, GLsizei width,
-                     GLenum format, GLenum type,
-                     const GLvoid *pixels )
+
+/**
+ * Implement all the glTexSubImage1/2/3D() functions.
+ */
+static void
+texsubimage(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
+            GLint xoffset, GLint yoffset, GLint zoffset,
+            GLsizei width, GLsizei height, GLsizei depth,
+            GLenum format, GLenum type, const GLvoid *pixels )
 {
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
-   GET_CURRENT_CONTEXT(ctx);
+
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
-      _mesa_debug(ctx, "glTexSubImage1D %s %d %d %d %s %s %p\n",
+      _mesa_debug(ctx, "glTexSubImage%uD %s %d %d %d %d %d %d %d %s %s %p\n",
+                  dims,
                   _mesa_lookup_enum_by_nr(target), level,
-                  xoffset, width, _mesa_lookup_enum_by_nr(format),
+                  xoffset, yoffset, zoffset, width, height, depth,
+                  _mesa_lookup_enum_by_nr(format),
                   _mesa_lookup_enum_by_nr(type), pixels);
+
+   /* check target (proxies not allowed) */
+   if (!legal_teximage_target(ctx, dims, target) ||
+       _mesa_is_proxy_texture(target)) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glTexSubImage%uD(target=%s)",
+                  dims, _mesa_lookup_enum_by_nr(target));
+      return;
+   }       
 
    if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
       _mesa_update_state(ctx);
 
-   if (subtexture_error_check(ctx, 1, target, level, xoffset, 0, 0,
-			       width, 1, 1, format, type)) {
+   if (subtexture_error_check(ctx, dims, target, level, xoffset, yoffset, zoffset,
+                              width, height, depth, format, type)) {
       return;   /* error was detected */
    }
 
-
    texObj = _mesa_get_current_tex_object(ctx, target);
-   assert(texObj);
 
    _mesa_lock_texture(ctx, texObj);
    {
       texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 
-      if (subtexture_error_check2(ctx, 1, target, level, xoffset, 0, 0,
-				  width, 1, 1, format, type, texImage)) {
+      if (subtexture_error_check2(ctx, dims, target, level,
+                                  xoffset, yoffset, zoffset,
+				  width, height, depth,
+                                  format, type, texImage)) {
          /* error was recorded */
       }
-      else if (width > 0) {
-         /* If we have a border, xoffset=-1 is legal.  Bias by border width */
-         xoffset += texImage->Border;
+      else if (width > 0 && height > 0 && height > 0) {
+         /* If we have a border, offset=-1 is legal.  Bias by border width. */
+         switch (dims) {
+         case 3:
+            zoffset += texImage->Border;
+            /* fall-through */
+         case 2:
+            yoffset += texImage->Border;
+            /* fall-through */
+         case 1:
+            xoffset += texImage->Border;
+         }
 
-         ASSERT(ctx->Driver.TexSubImage1D);
-         ctx->Driver.TexSubImage1D(ctx, target, level, xoffset, width,
-                                   format, type, pixels, &ctx->Unpack,
-                                   texObj, texImage);
+         switch (dims) {
+         case 1:
+            ctx->Driver.TexSubImage1D(ctx, target, level,
+                                      xoffset, width,
+                                      format, type, pixels,
+                                      &ctx->Unpack, texObj, texImage );
+            break;
+         case 2:
+            ctx->Driver.TexSubImage2D(ctx, target, level,
+                                      xoffset, yoffset, width, height,
+                                      format, type, pixels,
+                                      &ctx->Unpack, texObj, texImage );
+            break;
+         case 3:
+            ctx->Driver.TexSubImage3D(ctx, target, level,
+                                      xoffset, yoffset, zoffset,
+                                      width, height, depth,
+                                      format, type, pixels,
+                                      &ctx->Unpack, texObj, texImage );
+            break;
+         default:
+            _mesa_problem(ctx, "unexpected dims in subteximage()");
+         }
 
          check_gen_mipmap(ctx, target, texObj, level);
 
@@ -2701,58 +2695,31 @@ _mesa_TexSubImage1D( GLenum target, GLint level,
 
 
 void GLAPIENTRY
+_mesa_TexSubImage1D( GLenum target, GLint level,
+                     GLint xoffset, GLsizei width,
+                     GLenum format, GLenum type,
+                     const GLvoid *pixels )
+{
+   GET_CURRENT_CONTEXT(ctx);
+   texsubimage(ctx, 1, target, level,
+               xoffset, 0, 0,
+               width, 1, 1,
+               format, type, pixels);
+}
+
+
+void GLAPIENTRY
 _mesa_TexSubImage2D( GLenum target, GLint level,
                      GLint xoffset, GLint yoffset,
                      GLsizei width, GLsizei height,
                      GLenum format, GLenum type,
                      const GLvoid *pixels )
 {
-   struct gl_texture_object *texObj;
-   struct gl_texture_image *texImage;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-
-   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
-      _mesa_debug(ctx, "glTexSubImage2D %s %d %d %d %d %d %s %s %p\n",
-                  _mesa_lookup_enum_by_nr(target), level,
-                  xoffset, yoffset, width, height,
-                  _mesa_lookup_enum_by_nr(format),
-                  _mesa_lookup_enum_by_nr(type), pixels);
-
-   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
-      _mesa_update_state(ctx);
-
-   if (subtexture_error_check(ctx, 2, target, level, xoffset, yoffset, 0,
-			      width, height, 1, format, type)) {
-      return;   /* error was detected */
-   }
-
-   texObj = _mesa_get_current_tex_object(ctx, target);
-
-   _mesa_lock_texture(ctx, texObj);
-   {
-      texImage = _mesa_select_tex_image(ctx, texObj, target, level);
-
-      if (subtexture_error_check2(ctx, 2, target, level, xoffset, yoffset, 0,
-				  width, height, 1, format, type, texImage)) {
-	 /* error was recorded */
-      }
-      else if (width > 0 && height >= 0) {
-         /* If we have a border, xoffset=-1 is legal.  Bias by border width */
-         xoffset += texImage->Border;
-         yoffset += texImage->Border;
-
-         ASSERT(ctx->Driver.TexSubImage2D);
-         ctx->Driver.TexSubImage2D(ctx, target, level, xoffset, yoffset,
-                                   width, height, format, type, pixels,
-                                   &ctx->Unpack, texObj, texImage);
-
-         check_gen_mipmap(ctx, target, texObj, level);
-
-         ctx->NewState |= _NEW_TEXTURE;
-      }
-   }
-   _mesa_unlock_texture(ctx, texObj);
+   texsubimage(ctx, 2, target, level,
+               xoffset, yoffset, 0,
+               width, height, 1,
+               format, type, pixels);
 }
 
 
@@ -2764,57 +2731,11 @@ _mesa_TexSubImage3D( GLenum target, GLint level,
                      GLenum format, GLenum type,
                      const GLvoid *pixels )
 {
-   struct gl_texture_object *texObj;
-   struct gl_texture_image *texImage;
    GET_CURRENT_CONTEXT(ctx);
-   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-
-   if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
-      _mesa_debug(ctx, "glTexSubImage3D %s %d %d %d %d %d %d %d %s %s %p\n",
-                  _mesa_lookup_enum_by_nr(target), level,
-                  xoffset, yoffset, zoffset, width, height, depth,
-                  _mesa_lookup_enum_by_nr(format),
-                  _mesa_lookup_enum_by_nr(type), pixels);
-
-   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
-      _mesa_update_state(ctx);
-
-   if (subtexture_error_check(ctx, 3, target, level, xoffset, yoffset, zoffset,
-                              width, height, depth, format, type)) {
-      return;   /* error was detected */
-   }
-
-   texObj = _mesa_get_current_tex_object(ctx, target);
-
-   _mesa_lock_texture(ctx, texObj);
-   {
-      texImage = _mesa_select_tex_image(ctx, texObj, target, level);
-
-      if (subtexture_error_check2(ctx, 3, target, level,
-                                  xoffset, yoffset, zoffset,
-				  width, height, depth,
-                                  format, type, texImage)) {
-         /* error was recorded */
-      }
-      else if (width > 0 && height > 0 && height > 0) {
-         /* If we have a border, xoffset=-1 is legal.  Bias by border width */
-         xoffset += texImage->Border;
-         yoffset += texImage->Border;
-         zoffset += texImage->Border;
-
-         ASSERT(ctx->Driver.TexSubImage3D);
-         ctx->Driver.TexSubImage3D(ctx, target, level,
-                                   xoffset, yoffset, zoffset,
-                                   width, height, depth,
-                                   format, type, pixels,
-                                   &ctx->Unpack, texObj, texImage );
-
-         check_gen_mipmap(ctx, target, texObj, level);
-
-         ctx->NewState |= _NEW_TEXTURE;
-      }
-   }
-   _mesa_unlock_texture(ctx, texObj);
+   texsubimage(ctx, 3, target, level,
+               xoffset, yoffset, zoffset,
+               width, height, depth,
+               format, type, pixels);
 }
 
 
