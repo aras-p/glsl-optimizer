@@ -172,7 +172,7 @@ const struct brw_tracked_state gen6_blend_state = {
 };
 
 struct gen6_color_calc_state_key {
-   GLubyte blend_constant_color[4];
+   float blend_constant_color[4];
    GLclampf alpha_ref;
    GLubyte stencil_ref[2];
 };
