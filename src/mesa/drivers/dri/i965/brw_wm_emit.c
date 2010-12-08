@@ -1305,8 +1305,14 @@ static void emit_kil( struct brw_wm_compile *c,
 		      struct brw_reg *arg0)
 {
    struct brw_compile *p = &c->func;
-   struct brw_reg r0uw = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
+   struct intel_context *intel = &p->brw->intel;
+   struct brw_reg pixelmask;
    GLuint i, j;
+
+   if (intel->gen >= 6)
+      pixelmask = retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW);
+   else
+      pixelmask = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
 
    for (i = 0; i < 4; i++) {
       /* Check if we've already done the comparison for this reg
@@ -1323,7 +1329,7 @@ static void emit_kil( struct brw_wm_compile *c,
       brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_GE, arg0[i], brw_imm_f(0));   
       brw_set_predicate_control_flag_value(p, 0xff);
       brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-      brw_AND(p, r0uw, brw_flag_reg(), r0uw);
+      brw_AND(p, pixelmask, brw_flag_reg(), pixelmask);
       brw_pop_insn_state(p);
    }
 }
