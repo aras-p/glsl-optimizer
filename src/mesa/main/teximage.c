@@ -1219,94 +1219,110 @@ _mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
    switch (target) {
    case GL_PROXY_TEXTURE_1D:
       maxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
-      if (width < 2 * border || width > 2 + maxSize ||
-          (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           width >0 && !_mesa_is_pow_two(width - 2 * border)) ||
-          level >= ctx->Const.MaxTextureLevels) {
-         /* bad width or level */
+      if (width < 2 * border || width > 2 + maxSize)
          return GL_FALSE;
+      if (level >= ctx->Const.MaxTextureLevels)
+         return GL_FALSE;
+      if (!ctx->Extensions.ARB_texture_non_power_of_two) {
+         if (width > 0 && !_mesa_is_pow_two(width - 2 * border))
+            return GL_FALSE;
       }
       return GL_TRUE;
+
    case GL_PROXY_TEXTURE_2D:
       maxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
-      if (width < 2 * border || width > 2 + maxSize ||
-          (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           width > 0 && !_mesa_is_pow_two(width - 2 * border)) ||
-          height < 2 * border || height > 2 + maxSize ||
-          (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           height > 0 && !_mesa_is_pow_two(height - 2 * border)) ||
-          level >= ctx->Const.MaxTextureLevels) {
-         /* bad width or height or level */
+      if (width < 2 * border || width > 2 + maxSize)
          return GL_FALSE;
+      if (height < 2 * border || height > 2 + maxSize)
+         return GL_FALSE;
+      if (level >= ctx->Const.MaxTextureLevels)
+         return GL_FALSE;
+      if (!ctx->Extensions.ARB_texture_non_power_of_two) {
+         if (width > 0 && !_mesa_is_pow_two(width - 2 * border))
+            return GL_FALSE;
+         if (height > 0 && !_mesa_is_pow_two(height - 2 * border))
+            return GL_FALSE;
       }
       return GL_TRUE;
+
    case GL_PROXY_TEXTURE_3D:
       maxSize = 1 << (ctx->Const.Max3DTextureLevels - 1);
-      if (width < 2 * border || width > 2 + maxSize ||
-          (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           width > 0 && !_mesa_is_pow_two(width - 2 * border)) ||
-          height < 2 * border || height > 2 + maxSize ||
-          (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           height > 0 && !_mesa_is_pow_two(height - 2 * border)) ||
-          depth < 2 * border || depth > 2 + maxSize ||
-          (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           depth > 0 && !_mesa_is_pow_two(depth - 2 * border)) ||
-          level >= ctx->Const.Max3DTextureLevels) {
-         /* bad width or height or depth or level */
+      if (width < 2 * border || width > 2 + maxSize)
          return GL_FALSE;
+      if (height < 2 * border || height > 2 + maxSize)
+         return GL_FALSE;
+      if (depth < 2 * border || depth > 2 + maxSize)
+         return GL_FALSE;
+      if (level >= ctx->Const.Max3DTextureLevels)
+         return GL_FALSE;
+      if (!ctx->Extensions.ARB_texture_non_power_of_two) {
+         if (width > 0 && !_mesa_is_pow_two(width - 2 * border))
+            return GL_FALSE;
+         if (height > 0 && !_mesa_is_pow_two(height - 2 * border))
+            return GL_FALSE;
+         if (depth > 0 && !_mesa_is_pow_two(depth - 2 * border))
+            return GL_FALSE;
       }
       return GL_TRUE;
+
    case GL_PROXY_TEXTURE_RECTANGLE_NV:
-      if (width < 0 || width > ctx->Const.MaxTextureRectSize ||
-          height < 0 || height > ctx->Const.MaxTextureRectSize ||
-          level != 0) {
-         /* bad width or height or level */
+      maxSize = ctx->Const.MaxTextureRectSize;
+      if (width < 0 || width > maxSize)
          return GL_FALSE;
-      }
+      if (height < 0 || height > maxSize)
+         return GL_FALSE;
+      if (level != 0)
+         return GL_FALSE;
       return GL_TRUE;
+
    case GL_PROXY_TEXTURE_CUBE_MAP_ARB:
       maxSize = 1 << (ctx->Const.MaxCubeTextureLevels - 1);
-      if (width < 2 * border || width > 2 + maxSize ||
-          (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           width > 0 && !_mesa_is_pow_two(width - 2 * border)) ||
-          height < 2 * border || height > 2 + maxSize ||
-          (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           height > 0 && !_mesa_is_pow_two(height - 2 * border)) ||
-          level >= ctx->Const.MaxCubeTextureLevels) {
-         /* bad width or height */
+      if (width < 2 * border || width > 2 + maxSize)
          return GL_FALSE;
+      if (height < 2 * border || height > 2 + maxSize)
+         return GL_FALSE;
+      if (level >= ctx->Const.MaxCubeTextureLevels)
+         return GL_FALSE;
+      if (!ctx->Extensions.ARB_texture_non_power_of_two) {
+         if (width > 0 && !_mesa_is_pow_two(width - 2 * border))
+            return GL_FALSE;
+         if (height > 0 && !_mesa_is_pow_two(height - 2 * border))
+            return GL_FALSE;
       }
       return GL_TRUE;
+
    case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
       maxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
-      if (width < 2 * border || width > 2 + maxSize ||
-          (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           width > 0 && !_mesa_is_pow_two(width - 2 * border)) ||
-          level >= ctx->Const.MaxTextureLevels) {
-         /* bad width or level */
+      if (width < 2 * border || width > 2 + maxSize)
          return GL_FALSE;
-      }
-
-      if (height < 1 || height > ctx->Const.MaxArrayTextureLayers) {
+      if (height < 1 || height > ctx->Const.MaxArrayTextureLayers)
          return GL_FALSE;
+      if (level >= ctx->Const.MaxTextureLevels)
+         return GL_FALSE;
+      if (!ctx->Extensions.ARB_texture_non_power_of_two) {
+         if (width > 0 && !_mesa_is_pow_two(width - 2 * border))
+            return GL_FALSE;
       }
       return GL_TRUE;
+
    case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
       maxSize = 1 << (ctx->Const.MaxTextureLevels - 1);
-      if (width < 2 * border || width > 2 + maxSize ||
-          (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           width > 0 && !_mesa_is_pow_two(width - 2 * border)) ||
-          height < 2 * border || height > 2 + maxSize ||
-          (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           height > 0 && !_mesa_is_pow_two(height - 2 * border)) ||
-          level >= ctx->Const.MaxTextureLevels) {
-         /* bad width or height or level */
+      if (width < 2 * border || width > 2 + maxSize)
          return GL_FALSE;
-      }
-      if (depth < 1 || depth > ctx->Const.MaxArrayTextureLayers) {
+      if (height < 2 * border || height > 2 + maxSize)
          return GL_FALSE;
+      if (depth < 1 || depth > ctx->Const.MaxArrayTextureLayers)
+         return GL_FALSE;
+      if (level >= ctx->Const.MaxTextureLevels)
+         return GL_FALSE;
+      if (!ctx->Extensions.ARB_texture_non_power_of_two) {
+         if (width > 0 && !_mesa_is_pow_two(width - 2 * border))
+            return GL_FALSE;
+         if (height > 0 && !_mesa_is_pow_two(height - 2 * border))
+            return GL_FALSE;
       }
       return GL_TRUE;
+
    default:
       _mesa_problem(ctx, "Invalid target in _mesa_test_proxy_teximage");
       return GL_FALSE;
