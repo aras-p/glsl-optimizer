@@ -280,7 +280,6 @@ void brw_wm_pass1( struct brw_wm_compile *c )
 
       case OPCODE_DST:
       case WM_FRONTFACING:
-      case OPCODE_KIL_NV:
       default:
 	 break;
       }

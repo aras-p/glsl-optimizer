@@ -1334,21 +1334,6 @@ static void emit_kil( struct brw_wm_compile *c,
    }
 }
 
-/* KIL_NV kills the pixels that are currently executing, not based on a test
- * of the arguments.
- */
-void emit_kil_nv( struct brw_wm_compile *c )
-{
-   struct brw_compile *p = &c->func;
-   struct brw_reg r0uw = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
-
-   brw_push_insn_state(p);
-   brw_set_mask_control(p, BRW_MASK_DISABLE);
-   brw_NOT(p, c->emit_mask_reg, brw_mask_reg(1)); /* IMASK */
-   brw_AND(p, r0uw, c->emit_mask_reg, r0uw);
-   brw_pop_insn_state(p);
-}
-
 static void fire_fb_write( struct brw_wm_compile *c,
 			   GLuint base_reg,
 			   GLuint nr,
@@ -1911,10 +1896,6 @@ void brw_wm_emit( struct brw_wm_compile *c )
 
       case OPCODE_KIL:
 	 emit_kil(c, args[0]);
-	 break;
-
-      case OPCODE_KIL_NV:
-	 emit_kil_nv(c);
 	 break;
 
       default:

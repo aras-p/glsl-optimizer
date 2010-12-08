@@ -380,7 +380,6 @@ void emit_fb_write(struct brw_wm_compile *c,
 void emit_frontfacing(struct brw_compile *p,
 		      const struct brw_reg *dst,
 		      GLuint mask);
-void emit_kil_nv(struct brw_wm_compile *c);
 void emit_linterp(struct brw_compile *p,
 		  const struct brw_reg *dst,
 		  GLuint mask,
