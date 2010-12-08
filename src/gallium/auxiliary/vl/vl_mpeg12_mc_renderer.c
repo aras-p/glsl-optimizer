@@ -465,61 +465,6 @@ create_frag_shader(struct vl_mpeg12_mc_renderer *r)
 }
 
 static bool
-init_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE type)
-{
-   unsigned ref_frames, mv_per_frame;
-   struct vl_mc_mbtype_handler *handler;
-   unsigned i;
-
-   assert(r);
-
-   ref_frames = const_mbtype_config[type][0];
-   mv_per_frame = const_mbtype_config[type][1];
-
-   handler = &r->mbtype_handlers[type];
-
-   handler->vs = create_vert_shader(r);
-   handler->fs = create_frag_shader(r);
-
-   if (handler->vs == NULL || handler->fs == NULL)
-      return false;
-
-   if (!vl_vb_init(&handler->pos, r->macroblocks_per_batch, sizeof(struct vertex_stream_0) / sizeof(float)))
-      return false;
-
-   for (i = 0; i < ref_frames * mv_per_frame; ++i) {
-      if (!vl_vb_init(&handler->mv[i], r->macroblocks_per_batch, sizeof(struct vertex2f) / sizeof(float)))
-         return false;
-   }
-
-   return true;
-}
-
-static void
-cleanup_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE type)
-{
-   unsigned ref_frames, mv_per_frame;
-   struct vl_mc_mbtype_handler *handler;
-   unsigned i;
-
-   assert(r);
-
-   ref_frames = const_mbtype_config[type][0];
-   mv_per_frame = const_mbtype_config[type][1];
-
-   handler = &r->mbtype_handlers[type];
-
-   r->pipe->delete_vs_state(r->pipe, handler->vs);
-   r->pipe->delete_fs_state(r->pipe, handler->fs);
-
-   vl_vb_cleanup(&handler->pos);
-
-   for (i = 0; i < ref_frames * mv_per_frame; ++i)
-      vl_vb_cleanup(&handler->mv[i]);
-}
-
-
-static bool
 init_pipe_state(struct vl_mpeg12_mc_renderer *r)
 {
    struct pipe_sampler_state sampler;
@@ -734,8 +679,19 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    if (r->vertex_elems_state == NULL)
       return false;
 
-   for(i = 0; i < VL_NUM_MACROBLOCK_TYPES; ++i)
-      init_mbtype_handler(r, i);
+   r->vs = create_vert_shader(r);
+   r->fs = create_frag_shader(r);
+
+   if (r->vs == NULL || r->fs == NULL)
+      return false;
+
+   if (!vl_vb_init(&r->pos, r->macroblocks_per_batch, sizeof(struct vertex_stream_0) / sizeof(float)))
+      return false;
+
+   for (i = 0; i < 4; ++i) {
+      if (!vl_vb_init(&r->mv[i], r->macroblocks_per_batch, sizeof(struct vertex2f) / sizeof(float)))
+         return false;
+   }
 
    return true;
 }
@@ -753,8 +709,13 @@ cleanup_buffers(struct vl_mpeg12_mc_renderer *r)
       pipe_resource_reference(&r->textures.all[i], NULL);
    }
 
-   for(i = 0; i<VL_NUM_MACROBLOCK_TYPES; ++i)
-      cleanup_mbtype_handler(r, i);
+   r->pipe->delete_vs_state(r->pipe, r->vs);
+   r->pipe->delete_fs_state(r->pipe, r->fs);
+
+   vl_vb_cleanup(&r->pos);
+
+   for (i = 0; i < 4; ++i)
+      vl_vb_cleanup(&r->mv[i]);
 
    vl_idct_unmap_buffers(&r->idct_luma, &r->idct_y);
    vl_idct_unmap_buffers(&r->idct_chroma, &r->idct_cb);
@@ -770,34 +731,8 @@ cleanup_buffers(struct vl_mpeg12_mc_renderer *r)
    r->pipe->delete_vertex_elements_state(r->pipe, r->vertex_elems_state);
 }
 
-static enum VL_MACROBLOCK_TYPE
-get_macroblock_type(struct pipe_mpeg12_macroblock *mb)
-{
-   assert(mb);
-
-   switch (mb->mb_type) {
-      case PIPE_MPEG12_MACROBLOCK_TYPE_INTRA:
-         return VL_MACROBLOCK_TYPE_INTRA;
-      case PIPE_MPEG12_MACROBLOCK_TYPE_FWD:
-         return mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME ?
-            VL_MACROBLOCK_TYPE_FWD_FRAME_PRED : VL_MACROBLOCK_TYPE_FWD_FIELD_PRED;
-      case PIPE_MPEG12_MACROBLOCK_TYPE_BKWD:
-         return mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME ?
-            VL_MACROBLOCK_TYPE_BKWD_FRAME_PRED : VL_MACROBLOCK_TYPE_BKWD_FIELD_PRED;
-      case PIPE_MPEG12_MACROBLOCK_TYPE_BI:
-         return mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME ?
-            VL_MACROBLOCK_TYPE_BI_FRAME_PRED : VL_MACROBLOCK_TYPE_BI_FIELD_PRED;
-      default:
-         assert(0);
-   }
-
-   /* Unreachable */
-   return -1;
-}
-
 static void
-upload_vertex_stream(struct vl_mpeg12_mc_renderer *r,
-                      unsigned num_macroblocks[VL_NUM_MACROBLOCK_TYPES])
+upload_vertex_stream(struct vl_mpeg12_mc_renderer *r)
 {
    struct vertex_stream_0 *pos;
    struct vertex2f *mv[4];
@@ -807,7 +742,6 @@ upload_vertex_stream(struct vl_mpeg12_mc_renderer *r,
    unsigned i, j;
 
    assert(r);
-   assert(num_macroblocks);
 
    pos = (struct vertex_stream_0 *)pipe_buffer_map
    (
@@ -826,25 +760,9 @@ upload_vertex_stream(struct vl_mpeg12_mc_renderer *r,
          &buf_transfer[i + 1]
       );
 
-   for (i = 0; i < VL_NUM_MACROBLOCK_TYPES; ++i) {
-      struct vl_mc_mbtype_handler *handler = &r->mbtype_handlers[i];
-      unsigned count = vl_vb_upload(&handler->pos, pos);
-      if (count > 0) {
-         pos += count;
-
-         unsigned ref_frames, mv_per_frame;
-
-         ref_frames = const_mbtype_config[i][0];
-         mv_per_frame = const_mbtype_config[i][1];
-
-         for (j = 0; j < ref_frames * mv_per_frame; ++j)
-            vl_vb_upload(&handler->mv[j], mv[j]);
-
-         for (j = 0; j < 4; ++j)
-            mv[j] += count;
-      }
-      num_macroblocks[i] = count;
-   }
+   vl_vb_upload(&r->pos, pos);
+   for (j = 0; j < 4; ++j)
+      vl_vb_upload(&r->mv[j], mv[j]);
 
    pipe_buffer_unmap(r->pipe, r->vertex_bufs.individual.pos.buffer, buf_transfer[0]);
    for (i = 0; i < 4; ++i)
@@ -876,27 +794,6 @@ static struct pipe_sampler_view
    }
 
    return sampler_view;
-}
-
-static unsigned
-flush_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE type,
-                     unsigned vb_start, unsigned num_macroblocks)
-{
-   unsigned ref_frames, mv_per_frame;
-   struct vl_mc_mbtype_handler *handler;
-
-   assert(r);
-
-   ref_frames = const_mbtype_config[type][0];
-   mv_per_frame = const_mbtype_config[type][1];
-
-   handler = &r->mbtype_handlers[type];
-
-   r->pipe->bind_vs_state(r->pipe, handler->vs);
-   r->pipe->bind_fs_state(r->pipe, handler->fs);
-
-   util_draw_arrays(r->pipe, PIPE_PRIM_QUADS, vb_start, num_macroblocks);
-   return num_macroblocks;
 }
 
 static void
@@ -984,25 +881,13 @@ static void
 grab_vectors(struct vl_mpeg12_mc_renderer *r,
              struct pipe_mpeg12_macroblock *mb)
 {
-   enum VL_MACROBLOCK_TYPE type;
-   struct vl_mc_mbtype_handler *handler;
    struct vertex2f mv[4];
    struct vertex_stream_0 info;
 
-   unsigned ref_frames, mv_per_frame;
-   unsigned i, j, pos;
+   unsigned i, j;
 
    assert(r);
    assert(mb);
-
-   type = get_macroblock_type(mb);
-
-   ref_frames = const_mbtype_config[type][0];
-   mv_per_frame = const_mbtype_config[type][1];
-
-   handler = &r->mbtype_handlers[type];
-
-   pos = handler->pos.num_verts;
 
    info.pos.x = mb->mbx;
    info.pos.y = mb->mby;
@@ -1034,11 +919,11 @@ grab_vectors(struct vl_mpeg12_mc_renderer *r,
          assert(0);
    }
 
-   vl_vb_add_block(&handler->pos, (float*)&info);
+   vl_vb_add_block(&r->pos, (float*)&info);
 
    get_motion_vectors(mb, mv);
-   for ( j = 0; j < ref_frames * mv_per_frame; ++j )
-      vl_vb_add_block(&handler->mv[j], (float*)&mv[j]);
+   for ( j = 0; j < 4; ++j )
+      vl_vb_add_block(&r->mv[j], (float*)&mv[j]);
 }
 
 static void
@@ -1215,9 +1100,6 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer
 void
 vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer)
 {
-   unsigned num_verts[VL_NUM_MACROBLOCK_TYPES] = { 0 };
-   unsigned vb_start = 0, i;
-
    assert(renderer);
    assert(renderer->num_macroblocks <= renderer->macroblocks_per_batch);
 
@@ -1232,7 +1114,7 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer)
    vl_idct_flush(&renderer->idct_chroma, &renderer->idct_cr);
    vl_idct_flush(&renderer->idct_chroma, &renderer->idct_cb);
 
-   upload_vertex_stream(renderer, num_verts);
+   upload_vertex_stream(renderer);
 
    renderer->fb_state.cbufs[0] = renderer->surface;
    renderer->pipe->bind_rasterizer_state(renderer->pipe, renderer->rs_state);
@@ -1250,14 +1132,12 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer)
       renderer->textures.individual.ref[1] = renderer->future->texture;
       renderer->sampler_views.individual.ref[1] = find_or_create_sampler_view(renderer, renderer->future);
    }
-
    renderer->pipe->set_fragment_sampler_views(renderer->pipe, 5, renderer->sampler_views.all);
    renderer->pipe->bind_fragment_sampler_states(renderer->pipe, 5, renderer->samplers.all);
 
-   for (i = 0; i < VL_NUM_MACROBLOCK_TYPES; ++i) {
-      if (num_verts[i] > 0)
-         vb_start += flush_mbtype_handler(renderer, i, vb_start, num_verts[i]);
-   }
+   renderer->pipe->bind_vs_state(renderer->pipe, renderer->vs);
+   renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs);
+   util_draw_arrays(renderer->pipe, PIPE_PRIM_QUADS, 0, renderer->num_macroblocks * 4);
 
    renderer->pipe->flush(renderer->pipe, PIPE_FLUSH_RENDER_CACHE, renderer->fence);
 

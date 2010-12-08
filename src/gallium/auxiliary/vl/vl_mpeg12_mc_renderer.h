@@ -59,14 +59,6 @@ enum VL_MACROBLOCK_TYPE
    VL_NUM_MACROBLOCK_TYPES
 };
 
-struct vl_mc_mbtype_handler
-{
-   void *vs, *fs;
-
-   struct vl_vertex_buffer pos;
-   struct vl_vertex_buffer mv[4];
-};
-
 struct vl_mpeg12_mc_renderer
 {
    struct pipe_context *pipe;
@@ -83,8 +75,13 @@ struct vl_mpeg12_mc_renderer
    struct vl_idct_buffer idct_y, idct_cb, idct_cr;
 
    void *vertex_elems_state;
-
    void *rs_state;
+
+   void *vs, *fs;
+
+   struct vl_vertex_buffer pos;
+   struct vl_vertex_buffer mv[4];
+
 
    union
    {
@@ -97,8 +94,6 @@ struct vl_mpeg12_mc_renderer
       struct pipe_sampler_view *all[5];
       struct { struct pipe_sampler_view *y, *cb, *cr, *ref[2]; } individual;
    } sampler_views;
-
-   struct vl_mc_mbtype_handler mbtype_handlers[VL_NUM_MACROBLOCK_TYPES];
 
    union
    {
