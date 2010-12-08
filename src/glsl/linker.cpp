@@ -360,8 +360,12 @@ cross_validate_globals(struct gl_shader_program *prog,
 		   && (var->type->fields.array == existing->type->fields.array)
 		   && ((var->type->length == 0)
 		       || (existing->type->length == 0))) {
-		  if (existing->type->length == 0)
+		  if (existing->type->length == 0) {
 		     existing->type = var->type;
+		     existing->max_array_access =
+			MAX2(existing->max_array_access,
+			     var->max_array_access);
+		  }
 	       } else {
 		  linker_error_printf(prog, "%s `%s' declared as type "
 				      "`%s' and type `%s'\n",
@@ -862,6 +866,28 @@ link_intrastage_shaders(void *mem_ctx,
    }
 
    free(linking_shaders);
+
+   /* Make a pass over all global variables to ensure that arrays with
+    * unspecified sizes have a size specified.  The size is inferred from the
+    * max_array_access field.
+    */
+   foreach_list(node, linked->ir) {
+      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+      if (var == NULL)
+	 continue;
+
+      if (!var->type->is_array() || (var->type->length != 0))
+	 continue;
+
+      const glsl_type *type =
+	 glsl_type::get_array_instance(var->type->fields.array,
+				       var->max_array_access);
+
+      assert(type != NULL);
+      var->type = type;
+   }
+
 
    return linked;
 }
