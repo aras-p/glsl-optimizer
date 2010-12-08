@@ -35,19 +35,24 @@ struct vl_vertex_buffer
 {
    unsigned num_verts;
    unsigned num_elements;
-   float *buffer;
+   struct pipe_resource *resource;
+   struct pipe_transfer *transfer;
+   float *vectors;
 };
 
 struct pipe_vertex_buffer vl_vb_upload_quads(struct pipe_context *pipe, unsigned max_blocks);
 
 struct pipe_vertex_element vl_vb_get_quad_vertex_element();
 
-struct pipe_vertex_buffer vl_vb_create_buffer(struct pipe_context *pipe, unsigned max_blocks, unsigned stride);
-
 unsigned vl_vb_element_helper(struct pipe_vertex_element* elements, unsigned num_elements,
                               unsigned vertex_buffer_index);
 
-bool vl_vb_init(struct vl_vertex_buffer *buffer, unsigned max_blocks, unsigned num_elements);
+struct pipe_vertex_buffer vl_vb_init(struct vl_vertex_buffer *buffer,
+                                     struct pipe_context *pipe,
+                                     unsigned max_blocks, unsigned num_elements,
+                                     unsigned stride);
+
+void vl_vb_map(struct vl_vertex_buffer *buffer, struct pipe_context *pipe);
 
 static inline void
 vl_vb_add_block(struct vl_vertex_buffer *buffer, float *elements)
@@ -58,13 +63,15 @@ vl_vb_add_block(struct vl_vertex_buffer *buffer, float *elements)
    assert(buffer);
 
    for(i = 0; i < 4; ++i) {
-      pos = buffer->buffer + buffer->num_verts * buffer->num_elements;
+      pos = buffer->vectors + buffer->num_verts * buffer->num_elements;
       memcpy(pos, elements, sizeof(float) * buffer->num_elements);
       buffer->num_verts++;
    }
 }
 
-unsigned vl_vb_upload(struct vl_vertex_buffer *buffer, void *dst);
+void vl_vb_unmap(struct vl_vertex_buffer *buffer, struct pipe_context *pipe);
+
+unsigned vl_vb_restart(struct vl_vertex_buffer *buffer);
 
 void vl_vb_cleanup(struct vl_vertex_buffer *buffer);
 

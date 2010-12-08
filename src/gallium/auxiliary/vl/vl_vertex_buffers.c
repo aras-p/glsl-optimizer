@@ -96,24 +96,6 @@ vl_vb_get_quad_vertex_element()
    return element;
 }
 
-struct pipe_vertex_buffer
-vl_vb_create_buffer(struct pipe_context *pipe, unsigned max_blocks, unsigned stride)
-{
-   struct pipe_vertex_buffer buf;
-
-   buf.stride = stride;
-   buf.max_index = 4 * max_blocks - 1;
-   buf.buffer_offset = 0;
-   buf.buffer = pipe_buffer_create
-   (
-      pipe->screen,
-      PIPE_BIND_VERTEX_BUFFER,
-      stride * 4 * max_blocks
-   );
-
-   return buf;
-}
-
 unsigned
 vl_vb_element_helper(struct pipe_vertex_element* elements, unsigned num_elements,
                               unsigned vertex_buffer_index)
@@ -132,30 +114,63 @@ vl_vb_element_helper(struct pipe_vertex_element* elements, unsigned num_elements
    return offset;
 }
 
-bool
-vl_vb_init(struct vl_vertex_buffer *buffer, unsigned max_blocks, unsigned num_elements)
+struct pipe_vertex_buffer
+vl_vb_init(struct vl_vertex_buffer *buffer, struct pipe_context *pipe,
+           unsigned max_blocks, unsigned num_elements, unsigned stride)
 {
+   struct pipe_vertex_buffer buf;
+
    assert(buffer);
 
    buffer->num_verts = 0;
    buffer->num_elements = num_elements;
-   buffer->buffer = MALLOC(max_blocks * num_elements * sizeof(float) * 4);
-   return buffer->buffer != NULL;
+
+   buf.stride = stride;
+   buf.max_index = 4 * max_blocks - 1;
+   buf.buffer_offset = 0;
+   buf.buffer = pipe_buffer_create
+   (
+      pipe->screen,
+      PIPE_BIND_VERTEX_BUFFER,
+      stride * 4 * max_blocks
+   );
+
+   pipe_resource_reference(&buffer->resource, buf.buffer);
+
+   vl_vb_map(buffer, pipe);
+
+   return buf;
+}
+
+void
+vl_vb_map(struct vl_vertex_buffer *buffer, struct pipe_context *pipe)
+{
+   assert(buffer && pipe);
+
+   buffer->vectors = pipe_buffer_map
+   (
+      pipe,
+      buffer->resource,
+      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+      &buffer->transfer
+   );
+}
+
+void
+vl_vb_unmap(struct vl_vertex_buffer *buffer, struct pipe_context *pipe)
+{
+   assert(buffer && pipe);
+
+   pipe_buffer_unmap(pipe, buffer->resource, buffer->transfer);
 }
 
 unsigned
-vl_vb_upload(struct vl_vertex_buffer *buffer, void *dst)
+vl_vb_restart(struct vl_vertex_buffer *buffer)
 {
-   unsigned todo;
-
    assert(buffer);
 
-   todo = buffer->num_verts;
+   unsigned todo = buffer->num_verts;
    buffer->num_verts = 0;
-
-   if(todo)
-      memcpy(dst, buffer->buffer, sizeof(float) * buffer->num_elements * todo);
-
    return todo;
 }
 
@@ -164,5 +179,5 @@ vl_vb_cleanup(struct vl_vertex_buffer *buffer)
 {
    assert(buffer);
 
-   FREE(buffer->buffer);
+   pipe_resource_reference(&buffer->resource, NULL);
 }

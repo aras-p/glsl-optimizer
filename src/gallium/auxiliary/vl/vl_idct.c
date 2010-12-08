@@ -464,12 +464,11 @@ init_vertex_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    buffer->vertex_bufs.individual.quad.buffer_offset = idct->quad.buffer_offset;
    pipe_resource_reference(&buffer->vertex_bufs.individual.quad.buffer, idct->quad.buffer);
 
-   buffer->vertex_bufs.individual.pos = vl_vb_create_buffer(idct->pipe, idct->max_blocks, idct->vertex_buffer_stride);
+   buffer->vertex_bufs.individual.pos = vl_vb_init(
+      &buffer->blocks, idct->pipe, idct->max_blocks, 2,
+      idct->vertex_buffer_stride);
 
    if(buffer->vertex_bufs.individual.pos.buffer == NULL)
-      return false;
-
-   if (!vl_vb_init(&buffer->blocks, idct->max_blocks, 2))
       return false;
 
    return true;
@@ -668,6 +667,8 @@ vl_idct_map_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    );
 
    buffer->texels = idct->pipe->transfer_map(idct->pipe, buffer->tex_transfer);
+
+   vl_vb_map(&buffer->blocks, idct->pipe);
 }
 
 void
@@ -699,28 +700,17 @@ vl_idct_unmap_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 
    idct->pipe->transfer_unmap(idct->pipe, buffer->tex_transfer);
    idct->pipe->transfer_destroy(idct->pipe, buffer->tex_transfer);
+   vl_vb_unmap(&buffer->blocks, idct->pipe);
 }
 
 void
 vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 {
-   struct pipe_transfer *vec_transfer;
-   void *vectors;
    unsigned num_verts;
 
    assert(idct);
 
-   vectors = pipe_buffer_map
-   (
-      idct->pipe,
-      buffer->vertex_bufs.individual.pos.buffer,
-      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-      &vec_transfer
-   );
-
-   num_verts = vl_vb_upload(&buffer->blocks, vectors);
-
-   pipe_buffer_unmap(idct->pipe, buffer->vertex_bufs.individual.pos.buffer, vec_transfer);
+   num_verts = vl_vb_restart(&buffer->blocks);
 
    if(num_verts > 0) {
 
