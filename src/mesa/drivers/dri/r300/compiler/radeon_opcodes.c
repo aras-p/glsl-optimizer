@@ -460,11 +460,16 @@ void rc_compute_sources_for_writemask(
 			srcmasks[1] |= RC_MASK_XY;
 			break;
 		case RC_OPCODE_DP3:
+		case RC_OPCODE_XPD:
 			srcmasks[0] |= RC_MASK_XYZ;
 			srcmasks[1] |= RC_MASK_XYZ;
 			break;
 		case RC_OPCODE_DP4:
 			srcmasks[0] |= RC_MASK_XYZW;
+			srcmasks[1] |= RC_MASK_XYZW;
+			break;
+		case RC_OPCODE_DPH:
+			srcmasks[0] |= RC_MASK_XYZ;
 			srcmasks[1] |= RC_MASK_XYZW;
 			break;
 		case RC_OPCODE_TXB:
