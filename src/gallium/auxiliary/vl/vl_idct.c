@@ -197,9 +197,6 @@ matrix_mul(struct ureg_program *shader, struct ureg_dst dst, struct ureg_dst l[2
 static void *
 create_transpose_frag_shader(struct vl_idct *idct)
 {
-   struct pipe_resource *transpose = idct->textures.individual.transpose;
-   struct pipe_resource *intermediate = idct->textures.individual.intermediate;
-
    struct ureg_program *shader;
 
    struct ureg_src block, tex, sampler[2];
@@ -221,8 +218,8 @@ create_transpose_frag_shader(struct vl_idct *idct)
    start[0] = ureg_imm1f(shader, 0.0f);
    start[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_START, TGSI_INTERPOLATE_CONSTANT);
 
-   fetch_four(shader, l, block, sampler[0], start[0], block, false, false, transpose->width0);
-   fetch_four(shader, r, tex, sampler[1], start[1], block, true, false, intermediate->height0);
+   fetch_four(shader, l, block, sampler[0], start[0], block, false, false, BLOCK_WIDTH / 4);
+   fetch_four(shader, r, tex, sampler[1], start[1], block, true, false, idct->buffer_height / 4);
 
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
@@ -244,9 +241,6 @@ create_transpose_frag_shader(struct vl_idct *idct)
 static void *
 create_matrix_frag_shader(struct vl_idct *idct)
 {
-   struct pipe_resource *matrix = idct->textures.individual.matrix;
-   struct pipe_resource *source = idct->textures.individual.source;
-
    struct ureg_program *shader;
 
    struct ureg_src tex, block, sampler[2];
@@ -278,21 +272,21 @@ create_matrix_frag_shader(struct vl_idct *idct)
 
    ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Y), tex);
    for (i = 0; i < 4; ++i) {
-      fetch_four(shader, l[i], ureg_src(t_tc), sampler[0], start[0], block, false, false, source->width0);
+      fetch_four(shader, l[i], ureg_src(t_tc), sampler[0], start[0], block, false, false, idct->buffer_width / 4);
       ureg_MUL(shader, l[i][0], ureg_src(l[i][0]), ureg_imm1f(shader, STAGE1_SCALE));
       ureg_MUL(shader, l[i][1], ureg_src(l[i][1]), ureg_imm1f(shader, STAGE1_SCALE));
       if(i != 3)
          ureg_ADD(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Y), 
-            ureg_src(t_tc), ureg_imm1f(shader, 1.0f / source->height0));
+            ureg_src(t_tc), ureg_imm1f(shader, 1.0f / idct->buffer_height));
    }
    
    for (i = 0; i < NR_RENDER_TARGETS; ++i) {
 
 #if NR_RENDER_TARGETS == 8
       ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_X), ureg_imm1f(shader, 1.0f / BLOCK_WIDTH * i));
-      fetch_four(shader, r, ureg_src(t_tc), sampler[1], start[1], block, true, true, matrix->width0);
+      fetch_four(shader, r, ureg_src(t_tc), sampler[1], start[1], block, true, true, BLOCK_WIDTH / 4);
 #elif NR_RENDER_TARGETS == 1
-      fetch_four(shader, r, block, sampler[1], start[1], block, true, true, matrix->width0);
+      fetch_four(shader, r, block, sampler[1], start[1], block, true, true, BLOCK_WIDTH / 4);
 #else
 #error invalid number of render targets
 #endif
@@ -339,119 +333,19 @@ cleanup_shaders(struct vl_idct *idct)
 }
 
 static bool
-init_buffers(struct vl_idct *idct)
-{
-   struct pipe_resource template;
-   struct pipe_sampler_view sampler_view;
-   struct pipe_vertex_element vertex_elems[2];
-   unsigned i;
-
-   memset(&template, 0, sizeof(struct pipe_resource));
-   template.last_level = 0;
-   template.depth0 = 1;
-   template.bind = PIPE_BIND_SAMPLER_VIEW;
-   template.flags = 0;
-
-   template.target = PIPE_TEXTURE_2D;
-   template.format = PIPE_FORMAT_R16G16B16A16_SNORM;
-   template.width0 = idct->destination->width0 / 4;
-   template.height0 = idct->destination->height0;
-   template.depth0 = 1;
-   template.usage = PIPE_USAGE_STREAM;
-   idct->textures.individual.source = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
-
-   template.target = PIPE_TEXTURE_3D;
-   template.format = PIPE_FORMAT_R16G16B16A16_SNORM;
-   template.width0 = idct->destination->width0 / NR_RENDER_TARGETS;
-   template.height0 = idct->destination->height0 / 4;
-   template.depth0 = NR_RENDER_TARGETS;
-   template.usage = PIPE_USAGE_STATIC;
-   idct->textures.individual.intermediate = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
-
-   for (i = 0; i < 4; ++i) {
-      if(idct->textures.all[i] == NULL)
-         return false; /* a texture failed to allocate */
-
-      u_sampler_view_default_template(&sampler_view, idct->textures.all[i], idct->textures.all[i]->format);
-      idct->sampler_views.all[i] = idct->pipe->create_sampler_view(idct->pipe, idct->textures.all[i], &sampler_view);
-   }
-
-   idct->vertex_bufs.individual.quad = vl_vb_upload_quads(idct->pipe, idct->max_blocks, &vertex_elems[VS_I_RECT]);
-
-   if(idct->vertex_bufs.individual.quad.buffer == NULL)
-      return false;
-
-   /* Pos element */
-   vertex_elems[VS_I_VPOS].src_format = PIPE_FORMAT_R32G32_FLOAT;
-
-   idct->vertex_bufs.individual.pos = vl_vb_create_buffer(idct->pipe, idct->max_blocks, &vertex_elems[VS_I_VPOS], 1, 1);
-
-   if(idct->vertex_bufs.individual.pos.buffer == NULL)
-      return false;
-
-   idct->vertex_elems_state = idct->pipe->create_vertex_elements_state(idct->pipe, 2, vertex_elems);
-
-   return true;
-}
-
-static void
-cleanup_buffers(struct vl_idct *idct)
-{
-   unsigned i;
-
-   assert(idct);
-
-   for (i = 0; i < 4; ++i) {
-      pipe_sampler_view_reference(&idct->sampler_views.all[i], NULL);
-      pipe_resource_reference(&idct->textures.all[i], NULL);
-   }
-
-   idct->pipe->delete_vertex_elements_state(idct->pipe, idct->vertex_elems_state);
-   pipe_resource_reference(&idct->vertex_bufs.individual.quad.buffer, NULL);
-   pipe_resource_reference(&idct->vertex_bufs.individual.pos.buffer, NULL);
-}
-
-static void
 init_state(struct vl_idct *idct)
 {
+   struct pipe_vertex_element vertex_elems[NUM_VS_INPUTS];
    struct pipe_sampler_state sampler;
    struct pipe_rasterizer_state rs_state;
    unsigned i;
 
-   idct->viewport[0].scale[0] = idct->textures.individual.intermediate->width0;
-   idct->viewport[0].scale[1] = idct->textures.individual.intermediate->height0;
+   assert(idct);
 
-   idct->viewport[1].scale[0] = idct->destination->width0;
-   idct->viewport[1].scale[1] = idct->destination->height0;
+   idct->quad = vl_vb_upload_quads(idct->pipe, idct->max_blocks);
 
-   idct->fb_state[0].width = idct->textures.individual.intermediate->width0;
-   idct->fb_state[0].height = idct->textures.individual.intermediate->height0;
-
-   idct->fb_state[0].nr_cbufs = NR_RENDER_TARGETS;
-   for(i = 0; i < NR_RENDER_TARGETS; ++i) {
-      idct->fb_state[0].cbufs[i] = idct->pipe->screen->get_tex_surface(
-         idct->pipe->screen, idct->textures.individual.intermediate, 0, 0, i,
-         PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET);
-   }
-
-   idct->fb_state[1].width = idct->destination->width0;
-   idct->fb_state[1].height = idct->destination->height0;
-
-   idct->fb_state[1].nr_cbufs = 1;
-   idct->fb_state[1].cbufs[0] = idct->pipe->screen->get_tex_surface(
-      idct->pipe->screen, idct->destination, 0, 0, 0,
-      PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET);
-
-   for(i = 0; i < 2; ++i) {
-      idct->viewport[i].scale[2] = 1;
-      idct->viewport[i].scale[3] = 1;
-      idct->viewport[i].translate[0] = 0;
-      idct->viewport[i].translate[1] = 0;
-      idct->viewport[i].translate[2] = 0;
-      idct->viewport[i].translate[3] = 0;
-
-      idct->fb_state[i].zsbuf = NULL;
-   }
+   if(idct->quad.buffer == NULL)
+      return false;
 
    for (i = 0; i < 4; ++i) {
       memset(&sampler, 0, sizeof(sampler));
@@ -480,6 +374,16 @@ init_state(struct vl_idct *idct)
    rs_state.point_size = BLOCK_WIDTH;
    rs_state.gl_rasterization_rules = false;
    idct->rs_state = idct->pipe->create_rasterizer_state(idct->pipe, &rs_state);
+
+   vertex_elems[VS_I_RECT] = vl_vb_get_quad_vertex_element();
+
+   /* Pos element */
+   vertex_elems[VS_I_VPOS].src_format = PIPE_FORMAT_R32G32_FLOAT;
+
+   idct->vertex_buffer_stride = vl_vb_element_helper(&vertex_elems[VS_I_VPOS], 1, 1);
+   idct->vertex_elems_state = idct->pipe->create_vertex_elements_state(idct->pipe, 2, vertex_elems);
+
+   return true;
 }
 
 static void
@@ -487,16 +391,99 @@ cleanup_state(struct vl_idct *idct)
 {
    unsigned i;
 
-   for(i = 0; i < NR_RENDER_TARGETS; ++i) {
-      idct->pipe->screen->tex_surface_destroy(idct->fb_state[0].cbufs[i]);
-   }
-
-   idct->pipe->screen->tex_surface_destroy(idct->fb_state[1].cbufs[0]);
-
    for (i = 0; i < 4; ++i)
       idct->pipe->delete_sampler_state(idct->pipe, idct->samplers.all[i]);
 
    idct->pipe->delete_rasterizer_state(idct->pipe, idct->rs_state);
+   idct->pipe->delete_vertex_elements_state(idct->pipe, idct->vertex_elems_state);
+}
+
+static bool
+init_textures(struct vl_idct *idct, struct vl_idct_buffer *buffer)
+{
+   struct pipe_resource template;
+   struct pipe_sampler_view sampler_view;
+   unsigned i;
+
+   assert(idct && buffer);
+
+   /* create textures */
+   memset(&template, 0, sizeof(struct pipe_resource));
+   template.last_level = 0;
+   template.depth0 = 1;
+   template.bind = PIPE_BIND_SAMPLER_VIEW;
+   template.flags = 0;
+
+   template.target = PIPE_TEXTURE_2D;
+   template.format = PIPE_FORMAT_R16G16B16A16_SNORM;
+   template.width0 = idct->buffer_width / 4;
+   template.height0 = idct->buffer_height;
+   template.depth0 = 1;
+   template.usage = PIPE_USAGE_STREAM;
+   buffer->textures.individual.source = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
+
+   template.target = PIPE_TEXTURE_3D;
+   template.format = PIPE_FORMAT_R16G16B16A16_SNORM;
+   template.width0 = idct->buffer_width / NR_RENDER_TARGETS;
+   template.height0 = idct->buffer_height / 4;
+   template.depth0 = NR_RENDER_TARGETS;
+   template.usage = PIPE_USAGE_STATIC;
+   buffer->textures.individual.intermediate = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
+
+   for (i = 0; i < 4; ++i) {
+      if(buffer->textures.all[i] == NULL)
+         return false; /* a texture failed to allocate */
+
+      u_sampler_view_default_template(&sampler_view, buffer->textures.all[i], buffer->textures.all[i]->format);
+      buffer->sampler_views.all[i] = idct->pipe->create_sampler_view(idct->pipe, buffer->textures.all[i], &sampler_view);
+   }
+
+   return true;
+}
+
+static void
+cleanup_textures(struct vl_idct *idct, struct vl_idct_buffer *buffer)
+{
+   unsigned i;
+
+   assert(idct && buffer);
+
+   for (i = 0; i < 4; ++i) {
+      pipe_sampler_view_reference(&buffer->sampler_views.all[i], NULL);
+      pipe_resource_reference(&buffer->textures.all[i], NULL);
+   }
+}
+
+static bool
+init_vertex_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer)
+{
+   assert(idct && buffer);
+
+   buffer->vertex_bufs.individual.quad.stride = idct->quad.stride;
+   buffer->vertex_bufs.individual.quad.max_index = idct->quad.max_index;
+   buffer->vertex_bufs.individual.quad.buffer_offset = idct->quad.buffer_offset;
+   pipe_resource_reference(&buffer->vertex_bufs.individual.quad.buffer, idct->quad.buffer);
+
+   buffer->vertex_bufs.individual.pos = vl_vb_create_buffer(idct->pipe, idct->max_blocks, idct->vertex_buffer_stride);
+
+   if(buffer->vertex_bufs.individual.pos.buffer == NULL)
+      return false;
+
+   if (!vl_vb_init(&buffer->blocks, idct->max_blocks, 2))
+      return false;
+
+   return true;
+}
+
+static void
+cleanup_vertex_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer)
+{
+   assert(idct && buffer);
+
+   pipe_resource_reference(&buffer->vertex_bufs.individual.quad.buffer, NULL);
+   pipe_resource_reference(&buffer->vertex_bufs.individual.pos.buffer, NULL);
+
+   vl_vb_cleanup(&buffer->blocks);
 }
 
 struct pipe_resource *
@@ -549,41 +536,28 @@ vl_idct_upload_matrix(struct pipe_context *pipe)
    return matrix;
 }
 
-bool
-vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, struct pipe_resource *dst, struct pipe_resource *matrix)
+bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, 
+                  unsigned buffer_width, unsigned buffer_height,
+                  struct pipe_resource *matrix)
 {
-   assert(idct && pipe && dst);
+   assert(idct && pipe && matrix);
 
    idct->pipe = pipe;
-   idct->buffer_width = dst->width0;
-   idct->buffer_height = dst->height0;
-
-   pipe_resource_reference(&idct->textures.individual.matrix, matrix);
-   pipe_resource_reference(&idct->textures.individual.transpose, matrix);
-   pipe_resource_reference(&idct->destination, dst);
+   idct->buffer_width = buffer_width;
+   idct->buffer_height = buffer_height;
+   pipe_resource_reference(&idct->matrix, matrix);
 
    idct->max_blocks =
-      align(idct->destination->width0, BLOCK_WIDTH) / BLOCK_WIDTH *
-      align(idct->destination->height0, BLOCK_HEIGHT) / BLOCK_HEIGHT *
-      idct->destination->depth0;
+      align(buffer_width, BLOCK_WIDTH) / BLOCK_WIDTH *
+      align(buffer_height, BLOCK_HEIGHT) / BLOCK_HEIGHT;
 
-   if(!init_buffers(idct))
+   if(!init_shaders(idct))
       return false;
 
-   if(!init_shaders(idct)) {
-      cleanup_buffers(idct);
-      return false;
-   }
-
-   if(!vl_vb_init(&idct->blocks, idct->max_blocks, 2)) {
+   if(!init_state(idct)) {
       cleanup_shaders(idct);
-      cleanup_buffers(idct);
       return false;
    }
-
-   init_state(idct);
-
-   vl_idct_map_buffers(idct);
 
    return true;
 }
@@ -591,43 +565,113 @@ vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, struct pipe_resour
 void
 vl_idct_cleanup(struct vl_idct *idct)
 {
-   vl_idct_unmap_buffers(idct);
-
-   vl_vb_cleanup(&idct->blocks);
    cleanup_shaders(idct);
-   cleanup_buffers(idct);
-
    cleanup_state(idct);
 
-   pipe_resource_reference(&idct->destination, NULL);
+   pipe_resource_reference(&idct->matrix, NULL);
+}
+
+bool
+vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer, struct pipe_resource *dst)
+{
+   unsigned i;
+
+   assert(buffer);
+   assert(idct);
+   assert(dst);
+
+   pipe_resource_reference(&buffer->textures.individual.matrix, idct->matrix);
+   pipe_resource_reference(&buffer->textures.individual.transpose, idct->matrix);
+   pipe_resource_reference(&buffer->destination, dst);
+
+   if (!init_textures(idct, buffer))
+      return false;
+
+   if (!init_vertex_buffers(idct, buffer))
+      return false;
+
+   /* init state */
+   buffer->viewport[0].scale[0] = buffer->textures.individual.intermediate->width0;
+   buffer->viewport[0].scale[1] = buffer->textures.individual.intermediate->height0;
+
+   buffer->viewport[1].scale[0] = buffer->destination->width0;
+   buffer->viewport[1].scale[1] = buffer->destination->height0;
+
+   buffer->fb_state[0].width = buffer->textures.individual.intermediate->width0;
+   buffer->fb_state[0].height = buffer->textures.individual.intermediate->height0;
+
+   buffer->fb_state[0].nr_cbufs = NR_RENDER_TARGETS;
+   for(i = 0; i < NR_RENDER_TARGETS; ++i) {
+      buffer->fb_state[0].cbufs[i] = idct->pipe->screen->get_tex_surface(
+         idct->pipe->screen, buffer->textures.individual.intermediate, 0, 0, i,
+         PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET);
+   }
+
+   buffer->fb_state[1].width = buffer->destination->width0;
+   buffer->fb_state[1].height = buffer->destination->height0;
+
+   buffer->fb_state[1].nr_cbufs = 1;
+   buffer->fb_state[1].cbufs[0] = idct->pipe->screen->get_tex_surface(
+      idct->pipe->screen, buffer->destination, 0, 0, 0,
+      PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET);
+
+   for(i = 0; i < 2; ++i) {
+      buffer->viewport[i].scale[2] = 1;
+      buffer->viewport[i].scale[3] = 1;
+      buffer->viewport[i].translate[0] = 0;
+      buffer->viewport[i].translate[1] = 0;
+      buffer->viewport[i].translate[2] = 0;
+      buffer->viewport[i].translate[3] = 0;
+
+      buffer->fb_state[i].zsbuf = NULL;
+   }
+
+   return true;
 }
 
 void
-vl_idct_map_buffers(struct vl_idct *idct)
+vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer)
+{
+   unsigned i;
+
+   assert(buffer);
+
+   for(i = 0; i < NR_RENDER_TARGETS; ++i) {
+      idct->pipe->screen->tex_surface_destroy(buffer->fb_state[0].cbufs[i]);
+   }
+
+   idct->pipe->screen->tex_surface_destroy(buffer->fb_state[1].cbufs[0]);
+
+   cleanup_textures(idct, buffer);
+   cleanup_vertex_buffers(idct, buffer);
+}
+
+void
+vl_idct_map_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 {
    assert(idct);
 
    struct pipe_box rect =
    {
       0, 0, 0,
-      idct->textures.individual.source->width0,
-      idct->textures.individual.source->height0,
+      buffer->textures.individual.source->width0,
+      buffer->textures.individual.source->height0,
       1
    };
 
-   idct->tex_transfer = idct->pipe->get_transfer
+   buffer->tex_transfer = idct->pipe->get_transfer
    (
-      idct->pipe, idct->textures.individual.source,
+      idct->pipe, buffer->textures.individual.source,
       u_subresource(0, 0),
       PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
       &rect
    );
 
-   idct->texels = idct->pipe->transfer_map(idct->pipe, idct->tex_transfer);
+   buffer->texels = idct->pipe->transfer_map(idct->pipe, buffer->tex_transfer);
 }
 
 void
-vl_idct_add_block(struct vl_idct *idct, unsigned x, unsigned y, short *block)
+vl_idct_add_block(struct vl_idct_buffer *buffer, unsigned x, unsigned y, short *block)
 {
    struct vertex2f v;
    unsigned tex_pitch;
@@ -635,30 +679,30 @@ vl_idct_add_block(struct vl_idct *idct, unsigned x, unsigned y, short *block)
 
    unsigned i;
 
-   assert(idct);
+   assert(buffer);
 
-   tex_pitch = idct->tex_transfer->stride / sizeof(short);
-   texels = idct->texels + y * tex_pitch * BLOCK_HEIGHT + x * BLOCK_WIDTH;
+   tex_pitch = buffer->tex_transfer->stride / sizeof(short);
+   texels = buffer->texels + y * tex_pitch * BLOCK_HEIGHT + x * BLOCK_WIDTH;
 
    for (i = 0; i < BLOCK_HEIGHT; ++i)
       memcpy(texels + i * tex_pitch, block + i * BLOCK_WIDTH, BLOCK_WIDTH * sizeof(short));
 
    v.x = x;
    v.y = y;
-   vl_vb_add_block(&idct->blocks, (float*)&v);
+   vl_vb_add_block(&buffer->blocks, (float*)&v);
 }
 
 void
-vl_idct_unmap_buffers(struct vl_idct *idct)
+vl_idct_unmap_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 {
-   assert(idct);
+   assert(idct && buffer);
 
-   idct->pipe->transfer_unmap(idct->pipe, idct->tex_transfer);
-   idct->pipe->transfer_destroy(idct->pipe, idct->tex_transfer);
+   idct->pipe->transfer_unmap(idct->pipe, buffer->tex_transfer);
+   idct->pipe->transfer_destroy(idct->pipe, buffer->tex_transfer);
 }
 
 void
-vl_idct_flush(struct vl_idct *idct)
+vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 {
    struct pipe_transfer *vec_transfer;
    void *vectors;
@@ -669,34 +713,34 @@ vl_idct_flush(struct vl_idct *idct)
    vectors = pipe_buffer_map
    (
       idct->pipe,
-      idct->vertex_bufs.individual.pos.buffer,
+      buffer->vertex_bufs.individual.pos.buffer,
       PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
       &vec_transfer
    );
 
-   num_verts = vl_vb_upload(&idct->blocks, vectors);
+   num_verts = vl_vb_upload(&buffer->blocks, vectors);
 
-   pipe_buffer_unmap(idct->pipe, idct->vertex_bufs.individual.pos.buffer, vec_transfer);
+   pipe_buffer_unmap(idct->pipe, buffer->vertex_bufs.individual.pos.buffer, vec_transfer);
 
    if(num_verts > 0) {
 
       idct->pipe->bind_rasterizer_state(idct->pipe, idct->rs_state);
-      idct->pipe->set_vertex_buffers(idct->pipe, 2, idct->vertex_bufs.all);
+      idct->pipe->set_vertex_buffers(idct->pipe, 2, buffer->vertex_bufs.all);
       idct->pipe->bind_vertex_elements_state(idct->pipe, idct->vertex_elems_state);
       idct->pipe->bind_vs_state(idct->pipe, idct->vs);
 
       /* first stage */
-      idct->pipe->set_framebuffer_state(idct->pipe, &idct->fb_state[0]);
-      idct->pipe->set_viewport_state(idct->pipe, &idct->viewport[0]);
-      idct->pipe->set_fragment_sampler_views(idct->pipe, 2, idct->sampler_views.stage[0]);
+      idct->pipe->set_framebuffer_state(idct->pipe, &buffer->fb_state[0]);
+      idct->pipe->set_viewport_state(idct->pipe, &buffer->viewport[0]);
+      idct->pipe->set_fragment_sampler_views(idct->pipe, 2, buffer->sampler_views.stage[0]);
       idct->pipe->bind_fragment_sampler_states(idct->pipe, 2, idct->samplers.stage[0]);
       idct->pipe->bind_fs_state(idct->pipe, idct->matrix_fs);
       util_draw_arrays(idct->pipe, PIPE_PRIM_QUADS, 0, num_verts);
 
       /* second stage */
-      idct->pipe->set_framebuffer_state(idct->pipe, &idct->fb_state[1]);
-      idct->pipe->set_viewport_state(idct->pipe, &idct->viewport[1]);
-      idct->pipe->set_fragment_sampler_views(idct->pipe, 2, idct->sampler_views.stage[1]);
+      idct->pipe->set_framebuffer_state(idct->pipe, &buffer->fb_state[1]);
+      idct->pipe->set_viewport_state(idct->pipe, &buffer->viewport[1]);
+      idct->pipe->set_fragment_sampler_views(idct->pipe, 2, buffer->sampler_views.stage[1]);
       idct->pipe->bind_fragment_sampler_states(idct->pipe, 2, idct->samplers.stage[1]);
       idct->pipe->bind_fs_state(idct->pipe, idct->transpose_fs);
       util_draw_arrays(idct->pipe, PIPE_PRIM_QUADS, 0, num_verts);

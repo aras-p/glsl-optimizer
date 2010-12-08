@@ -31,10 +31,6 @@
 #include <pipe/p_state.h>
 #include "vl_vertex_buffers.h"
 
-struct vl_idct_buffer
-{
-};
-
 struct vl_idct
 {
    struct pipe_context *pipe;
@@ -44,13 +40,7 @@ struct vl_idct
 
    unsigned max_blocks;
 
-   struct pipe_viewport_state viewport[2];
-   struct pipe_framebuffer_state fb_state[2];
-
-   struct pipe_resource *destination;
-
    void *rs_state;
-
    void *vertex_elems_state;
 
    union
@@ -63,6 +53,22 @@ struct vl_idct
       } individual;
    } samplers;
 
+   void *vs;
+   void *matrix_fs, *transpose_fs;
+
+   struct pipe_resource *matrix;
+   struct pipe_vertex_buffer quad;
+
+   unsigned vertex_buffer_stride;
+};
+
+struct vl_idct_buffer
+{
+   struct pipe_viewport_state viewport[2];
+   struct pipe_framebuffer_state fb_state[2];
+
+   struct pipe_resource *destination;
+
    union
    {
       struct pipe_sampler_view *all[4];
@@ -72,9 +78,6 @@ struct vl_idct
          struct pipe_sampler_view *transpose, *intermediate;
       } individual;
    } sampler_views;
-
-   void *vs;
-   void *matrix_fs, *transpose_fs;
 
    union
    {
@@ -100,16 +103,22 @@ struct vl_idct
 
 struct pipe_resource *vl_idct_upload_matrix(struct pipe_context *pipe);
 
-bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, struct pipe_resource *dst, struct pipe_resource *matrix);
+bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, 
+                  unsigned buffer_width, unsigned buffer_height, 
+                  struct pipe_resource *matrix);
 
 void vl_idct_cleanup(struct vl_idct *idct);
 
-void vl_idct_map_buffers(struct vl_idct *idct);
+bool vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer, struct pipe_resource *dst);
 
-void vl_idct_add_block(struct vl_idct *idct, unsigned x, unsigned y, short *block);
+void vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer);
 
-void vl_idct_unmap_buffers(struct vl_idct *idct);
+void vl_idct_map_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer);
 
-void vl_idct_flush(struct vl_idct *idct);
+void vl_idct_add_block(struct vl_idct_buffer *buffer, unsigned x, unsigned y, short *block);
+
+void vl_idct_unmap_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer);
+
+void vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer);
 
 #endif

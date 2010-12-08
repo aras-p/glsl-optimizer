@@ -80,7 +80,8 @@ struct vl_mpeg12_mc_renderer
    struct pipe_viewport_state viewport;
    struct pipe_framebuffer_state fb_state;
 
-   struct vl_idct idct_y, idct_cb, idct_cr;
+   struct vl_idct idct_luma, idct_chroma;
+   struct vl_idct_buffer idct_y, idct_cb, idct_cr;
 
    void *rs_state;
 
