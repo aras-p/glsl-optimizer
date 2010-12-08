@@ -341,14 +341,14 @@ fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct
 static struct ureg_dst
 fetch_ref(struct ureg_program *shader, struct ureg_dst field, unsigned ref_frames)
 {
-   struct ureg_src frame_pred; //, ref_frames, bkwd_pred;
+   struct ureg_src frame_pred, bkwd_pred; //, ref_frames, ;
    struct ureg_src tc[4], sampler[ref_frames];
    struct ureg_dst ref[ref_frames], t_tc, result;
    unsigned i, label;
 
    frame_pred = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_FRAME_PRED, TGSI_INTERPOLATE_CONSTANT);
    //ref_frames = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_REF_FRAMES, TGSI_INTERPOLATE_CONSTANT);
-   //bkwd_pred = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_BKWD_PRED, TGSI_INTERPOLATE_CONSTANT);
+   bkwd_pred = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_BKWD_PRED, TGSI_INTERPOLATE_CONSTANT);
 
    for (i = 0; i < 4; ++i)
       tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV0 + i, TGSI_INTERPOLATE_LINEAR);
@@ -363,23 +363,32 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field, unsigned ref_frame
    if (ref_frames == 0)
       ureg_MOV(shader, result, ureg_imm1f(shader, 0.5f));
    else if (ref_frames == 1) {
+      t_tc = ureg_DECL_temporary(shader);
       ureg_IF(shader, frame_pred, &label);
+
          /*
           * result = tex(tc[0], sampler[0])
           */
-         ureg_TEX(shader, result, TGSI_TEXTURE_2D, tc[0], sampler[0]);
+         ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_XY), tc[0]);
+
       ureg_ELSE(shader, &label);
-         t_tc = ureg_DECL_temporary(shader);
+
          /*
           * result = tex(field.y ? tc[1] : tc[0], sampler[0])
           */
          ureg_CMP(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_XY),
             ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Z)),
             tc[1], tc[0]);
-         ureg_TEX(shader, result, TGSI_TEXTURE_2D, ureg_src(t_tc), sampler[0]);
 
-         ureg_release_temporary(shader, t_tc);
       ureg_ENDIF(shader);
+
+      ureg_IF(shader, bkwd_pred, &label);
+         ureg_TEX(shader, result, TGSI_TEXTURE_2D, ureg_src(t_tc), sampler[1]);
+      ureg_ELSE(shader, &label);
+         ureg_TEX(shader, result, TGSI_TEXTURE_2D, ureg_src(t_tc), sampler[0]);
+      ureg_ENDIF(shader);
+
+      ureg_release_temporary(shader, t_tc);
 
    } else if (ref_frames == 2) {
       ureg_IF(shader, frame_pred, &label);
@@ -876,29 +885,6 @@ flush_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE ty
 
    handler = &r->mbtype_handlers[type];
 
-   if(ref_frames == 2) {
-
-      r->textures.individual.ref[0] = r->past->texture;
-      r->textures.individual.ref[1] = r->future->texture;
-      r->sampler_views.individual.ref[0] = find_or_create_sampler_view(r, r->past);
-      r->sampler_views.individual.ref[1] = find_or_create_sampler_view(r, r->future);
-
-   } else if(ref_frames == 1) {
-
-      struct pipe_surface *ref;
-
-      if(type == VL_MACROBLOCK_TYPE_BKWD_FRAME_PRED ||
-         type == VL_MACROBLOCK_TYPE_BKWD_FIELD_PRED)
-         ref = r->future;
-      else
-         ref = r->past;
-
-      r->textures.individual.ref[0] = ref->texture;
-      r->sampler_views.individual.ref[0] = find_or_create_sampler_view(r, ref);
-   }
-
-   r->pipe->set_fragment_sampler_views(r->pipe, 3 + ref_frames, r->sampler_views.all);
-   r->pipe->bind_fragment_sampler_states(r->pipe, 3 + ref_frames, r->samplers.all);
    r->pipe->bind_vs_state(r->pipe, handler->vs);
    r->pipe->bind_fs_state(r->pipe, handler->fs);
 
@@ -1022,6 +1008,8 @@ grab_vectors(struct vl_mpeg12_mc_renderer *r,
    }
    info.interlaced = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD ? 1.0f : 0.0f;
    info.frame_pred = mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME ? 1.0f : 0.0f;
+   info.bkwd_pred = mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BKWD ? 1.0f : 0.0f;
+
    vl_vb_add_block(&handler->pos, (float*)&info);
 
    get_motion_vectors(mb, mv);
@@ -1228,6 +1216,19 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer)
    renderer->pipe->set_viewport_state(renderer->pipe, &renderer->viewport);
    renderer->pipe->set_vertex_buffers(renderer->pipe, 6, renderer->vertex_bufs.all);
    renderer->pipe->bind_vertex_elements_state(renderer->pipe, renderer->vertex_elems_state);
+
+   if (renderer->past) {
+      renderer->textures.individual.ref[0] = renderer->past->texture;
+      renderer->sampler_views.individual.ref[0] = find_or_create_sampler_view(renderer, renderer->past);
+   }
+
+   if (renderer->future) {
+      renderer->textures.individual.ref[1] = renderer->future->texture;
+      renderer->sampler_views.individual.ref[1] = find_or_create_sampler_view(renderer, renderer->future);
+   }
+
+   renderer->pipe->set_fragment_sampler_views(renderer->pipe, 5, renderer->sampler_views.all);
+   renderer->pipe->bind_fragment_sampler_states(renderer->pipe, 5, renderer->samplers.all);
 
    for (i = 0; i < VL_NUM_MACROBLOCK_TYPES; ++i) {
       if (num_verts[i] > 0)
