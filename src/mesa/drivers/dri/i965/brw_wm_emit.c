@@ -1529,6 +1529,13 @@ void emit_fb_write(struct brw_wm_compile *c,
       brw_set_mask_control(p, BRW_MASK_DISABLE);
       brw_MOV(p, brw_message_reg(0), brw_vec8_grf(0, 0));
       brw_pop_insn_state(p);
+
+      if (target != 0) {
+	 brw_MOV(p, retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE,
+					0,
+					2), BRW_REGISTER_TYPE_UD),
+		 brw_imm_ud(target));
+      }
    }
 
    if (!c->runtime_check_aads_emit) {
