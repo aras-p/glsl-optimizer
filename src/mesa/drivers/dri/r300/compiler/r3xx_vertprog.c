@@ -1014,7 +1014,6 @@ static struct rc_swizzle_caps r300_vertprog_swizzle_caps = {
 void r3xx_compile_vertex_program(struct r300_vertex_program_compiler *c)
 {
 	int is_r500 = c->Base.is_r500;
-	int kill_consts = c->Base.remove_unused_constants;
 	int opt = !c->Base.disable_optimizations;
 
 	/* Lists of instruction transformations. */
@@ -1059,7 +1058,7 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler *c)
 		/* This pass must be done after optimizations. */
 		{"source conflict resolve",	1, 1,		rc_local_transform,		resolve_src_conflicts},
 		{"register allocation",		1, opt,		allocate_temporary_registers,	NULL},
-		{"dead constants",		1, kill_consts, rc_remove_unused_constants,	&c->code->constants_remap_table},
+		{"dead constants",		1, 1,		rc_remove_unused_constants,	&c->code->constants_remap_table},
 		{"final code validation",	0, 1,		rc_validate_final_shader,	NULL},
 		{"machine code generation",	0, 1,		translate_vertex_program,	NULL},
 		{"dump machine code",		0, c->Base.Debug & RC_DBG_LOG, r300_vertex_program_dump,	NULL},
