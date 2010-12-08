@@ -55,26 +55,36 @@ struct vl_mpeg12_mc_renderer
    enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode;
    unsigned macroblocks_per_batch;
 
+   unsigned pos_stride;
+   unsigned mv_stride[4];
+
    struct pipe_viewport_state viewport;
    struct pipe_framebuffer_state fb_state;
 
    struct vl_idct idct_luma, idct_chroma;
-   struct vl_idct_buffer idct_y, idct_cb, idct_cr;
 
    void *vertex_elems_state;
    void *rs_state;
 
    void *vs, *fs;
 
-   struct vl_vertex_buffer pos;
-   struct vl_vertex_buffer mv[4];
-
+   struct pipe_vertex_buffer quad;
 
    union
    {
       void *all[5];
       struct { void *y, *cb, *cr, *ref[2]; } individual;
    } samplers;
+
+   struct keymap *texview_map;
+};
+
+struct vl_mpeg12_mc_buffer
+{
+   struct vl_idct_buffer idct_y, idct_cb, idct_cr;
+
+   struct vl_vertex_buffer pos;
+   struct vl_vertex_buffer mv[4];
 
    union
    {
@@ -99,8 +109,6 @@ struct vl_mpeg12_mc_renderer
    struct pipe_surface *surface, *past, *future;
    struct pipe_fence_handle **fence;
    unsigned num_macroblocks;
-
-   struct keymap *texview_map;
 };
 
 bool vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
@@ -112,9 +120,14 @@ bool vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
 
 void vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer);
 
-void vl_mpeg12_mc_map_buffer(struct vl_mpeg12_mc_renderer *renderer);
+bool vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer);
+
+void vl_mpeg12_mc_cleanup_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer);
+
+void vl_mpeg12_mc_map_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer);
 
 void vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer *renderer,
+                                              struct vl_mpeg12_mc_buffer *buffer,
                                               struct pipe_surface *surface,
                                               struct pipe_surface *past,
                                               struct pipe_surface *future,
@@ -122,8 +135,8 @@ void vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer *rend
                                               struct pipe_mpeg12_macroblock *mpeg12_macroblocks,
                                               struct pipe_fence_handle **fence);
 
-void vl_mpeg12_mc_unmap_buffer(struct vl_mpeg12_mc_renderer *renderer);
+void vl_mpeg12_mc_unmap_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer);
 
-void vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer);
+void vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer);
 
 #endif /* vl_mpeg12_mc_renderer_h */

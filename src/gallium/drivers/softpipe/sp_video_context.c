@@ -54,6 +54,8 @@ sp_mpeg12_destroy(struct pipe_video_context *vpipe)
 
    pipe_surface_reference(&ctx->decode_target, NULL);
    vl_compositor_cleanup(&ctx->compositor);
+   vl_mpeg12_mc_unmap_buffer(&ctx->mc_renderer, &ctx->mc_buffer);
+   vl_mpeg12_mc_cleanup_buffer(&ctx->mc_renderer, &ctx->mc_buffer);
    vl_mpeg12_mc_renderer_cleanup(&ctx->mc_renderer);
    ctx->pipe->destroy(ctx->pipe);
 
@@ -120,6 +122,7 @@ sp_mpeg12_decode_macroblocks(struct pipe_video_context *vpipe,
    assert(ctx->decode_target);
 
    vl_mpeg12_mc_renderer_render_macroblocks(&ctx->mc_renderer,
+                                            &ctx->mc_buffer,
                                             ctx->decode_target,
                                             past, future, num_macroblocks,
                                             mpeg12_macroblocks, fence);
@@ -282,9 +285,9 @@ sp_mpeg12_render_picture(struct pipe_video_context     *vpipe,
    assert(dst_surface);
    assert(dst_area);
 
-   vl_mpeg12_mc_unmap_buffer(&ctx->mc_renderer);
-   vl_mpeg12_mc_renderer_flush(&ctx->mc_renderer);
-   vl_mpeg12_mc_map_buffer(&ctx->mc_renderer);
+   vl_mpeg12_mc_unmap_buffer(&ctx->mc_renderer, &ctx->mc_buffer);
+   vl_mpeg12_mc_renderer_flush(&ctx->mc_renderer, &ctx->mc_buffer);
+   vl_mpeg12_mc_map_buffer(&ctx->mc_renderer, &ctx->mc_buffer);
 
    vl_compositor_render(&ctx->compositor, src_surface,
                         picture_type, src_area, dst_surface, dst_area, fence);
@@ -330,9 +333,9 @@ sp_mpeg12_set_decode_target(struct pipe_video_context *vpipe,
    assert(dt);
 
    if (ctx->decode_target != dt) {
-      vl_mpeg12_mc_unmap_buffer(&ctx->mc_renderer);
-      vl_mpeg12_mc_renderer_flush(&ctx->mc_renderer);
-      vl_mpeg12_mc_map_buffer(&ctx->mc_renderer);
+      vl_mpeg12_mc_unmap_buffer(&ctx->mc_renderer, &ctx->mc_buffer);
+      vl_mpeg12_mc_renderer_flush(&ctx->mc_renderer, &ctx->mc_buffer);
+      vl_mpeg12_mc_map_buffer(&ctx->mc_renderer, &ctx->mc_buffer);
       pipe_surface_reference(&ctx->decode_target, dt);
    }
 }
@@ -487,7 +490,17 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
       return NULL;
    }
 
+   if (!vl_mpeg12_mc_init_buffer(&ctx->mc_renderer, &ctx->mc_buffer)) {
+      vl_mpeg12_mc_renderer_cleanup(&ctx->mc_renderer);
+      ctx->pipe->destroy(ctx->pipe);
+      FREE(ctx);
+      return NULL;
+   }
+
+   vl_mpeg12_mc_map_buffer(&ctx->mc_renderer, &ctx->mc_buffer);
+
    if (!vl_compositor_init(&ctx->compositor, ctx->pipe)) {
+      vl_mpeg12_mc_cleanup_buffer(&ctx->mc_renderer, &ctx->mc_buffer);
       vl_mpeg12_mc_renderer_cleanup(&ctx->mc_renderer);
       ctx->pipe->destroy(ctx->pipe);
       FREE(ctx);
@@ -496,6 +509,7 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
 
    if (!init_pipe_state(ctx)) {
       vl_compositor_cleanup(&ctx->compositor);
+      vl_mpeg12_mc_cleanup_buffer(&ctx->mc_renderer, &ctx->mc_buffer);
       vl_mpeg12_mc_renderer_cleanup(&ctx->mc_renderer);
       ctx->pipe->destroy(ctx->pipe);
       FREE(ctx);
