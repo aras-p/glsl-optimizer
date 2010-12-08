@@ -2228,6 +2228,24 @@ ast_declarator_list::hir(exec_list *instructions,
 	    if (this->type->qualifier.flags.q.constant)
 	       var->read_only = false;
 
+	    /* If the declared variable is an unsized array, it must inherrit
+	     * its full type from the initializer.  A declaration such as
+	     *
+	     *     uniform float a[] = float[](1.0, 2.0, 3.0, 3.0);
+	     *
+	     * becomes
+	     *
+	     *     uniform float a[4] = float[](1.0, 2.0, 3.0, 3.0);
+	     *
+	     * The assignment generated in the if-statement (below) will also
+	     * automatically handle this case for non-uniforms.
+	     *
+	     * If the declared variable is not an array, the types must
+	     * already match exactly.  As a result, the type assignment
+	     * here can be done unconditionally.
+	     */
+	    var->type = rhs->type;
+
 	    /* Never emit code to initialize a uniform.
 	     */
 	    if (!this->type->qualifier.flags.q.uniform)
