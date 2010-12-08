@@ -29,7 +29,6 @@
 #include <util/u_math.h>
 #include <util/u_inlines.h>
 #include <util/u_memory.h>
-#include <util/u_upload_mgr.h>
 #include "state_tracker/drm_driver.h"
 #include <xf86drm.h>
 #include "radeon_drm.h"
@@ -53,12 +52,13 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 
 	rbuffer->magic = R600_BUFFER_MAGIC;
 	rbuffer->user_buffer = NULL;
-	rbuffer->num_ranges = 0;
 	rbuffer->r.base.b = *templ;
 	pipe_reference_init(&rbuffer->r.base.b.reference, 1);
 	rbuffer->r.base.b.screen = screen;
 	rbuffer->r.base.vtbl = &r600_buffer_vtbl;
 	rbuffer->r.size = rbuffer->r.base.b.width0;
+	rbuffer->r.bo_size = rbuffer->r.size;
+	rbuffer->uploaded = FALSE;
 	bo = r600_bo((struct radeon*)screen->winsys, rbuffer->r.base.b.width0, alignment, rbuffer->r.base.b.bind, rbuffer->r.base.b.usage);
 	if (bo == NULL) {
 		FREE(rbuffer);
@@ -91,9 +91,10 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 	rbuffer->r.base.b.depth0 = 1;
 	rbuffer->r.base.b.array_size = 1;
 	rbuffer->r.base.b.flags = 0;
-	rbuffer->num_ranges = 0;
 	rbuffer->r.bo = NULL;
+	rbuffer->r.bo_size = 0;
 	rbuffer->user_buffer = ptr;
+	rbuffer->uploaded = FALSE;
 	return &rbuffer->r.base.b;
 }
 
@@ -102,9 +103,10 @@ static void r600_buffer_destroy(struct pipe_screen *screen,
 {
 	struct r600_resource_buffer *rbuffer = r600_buffer(buf);
 
-	if (rbuffer->r.bo) {
+	if (!rbuffer->uploaded && rbuffer->r.bo) {
 		r600_bo_reference((struct radeon*)screen->winsys, &rbuffer->r.bo, NULL);
 	}
+	rbuffer->r.bo = NULL;
 	FREE(rbuffer);
 }
 
@@ -114,29 +116,10 @@ static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 	struct r600_resource_buffer *rbuffer = r600_buffer(transfer->resource);
 	int write = 0;
 	uint8_t *data;
-	int i;
-	boolean flush = FALSE;
 
 	if (rbuffer->user_buffer)
 		return (uint8_t*)rbuffer->user_buffer + transfer->box.x;
 
-	if (transfer->usage & PIPE_TRANSFER_DISCARD) {
-		for (i = 0; i < rbuffer->num_ranges; i++) {
-			if ((transfer->box.x >= rbuffer->ranges[i].start) &&
-			    (transfer->box.x < rbuffer->ranges[i].end))
-				flush = TRUE;
-
-			if (flush) {
-				r600_bo_reference((struct radeon*)pipe->winsys, &rbuffer->r.bo, NULL);
-				rbuffer->num_ranges = 0;
-				rbuffer->r.bo = r600_bo((struct radeon*)pipe->winsys,
-							rbuffer->r.base.b.width0, 0,
-							rbuffer->r.base.b.bind,
-							rbuffer->r.base.b.usage);
-				break;
-			}
-		}
-	}
 	if (transfer->usage & PIPE_TRANSFER_DONTBLOCK) {
 		/* FIXME */
 	}
@@ -155,36 +138,17 @@ static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
 {
 	struct r600_resource_buffer *rbuffer = r600_buffer(transfer->resource);
 
+	if (rbuffer->user_buffer)
+		return;
+
 	if (rbuffer->r.bo)
 		r600_bo_unmap((struct radeon*)pipe->winsys, rbuffer->r.bo);
 }
 
 static void r600_buffer_transfer_flush_region(struct pipe_context *pipe,
-					      struct pipe_transfer *transfer,
-					      const struct pipe_box *box)
+						struct pipe_transfer *transfer,
+						const struct pipe_box *box)
 {
-	struct r600_resource_buffer *rbuffer = r600_buffer(transfer->resource);
-	unsigned i;
-	unsigned offset = transfer->box.x + box->x;
-	unsigned length = box->width;
-
-	assert(box->x + box->width <= transfer->box.width);
-
-	if (rbuffer->user_buffer)
-		return;
-
-	/* mark the range as used */
-	for(i = 0; i < rbuffer->num_ranges; ++i) {
-		if(offset <= rbuffer->ranges[i].end && rbuffer->ranges[i].start <= (offset+box->width)) {
-			rbuffer->ranges[i].start = MIN2(rbuffer->ranges[i].start, offset);
-			rbuffer->ranges[i].end   = MAX2(rbuffer->ranges[i].end, (offset+length));
-			return;
-		}
-	}
-
-	rbuffer->ranges[rbuffer->num_ranges].start = offset;
-	rbuffer->ranges[rbuffer->num_ranges].end = offset+length;
-	rbuffer->num_ranges++;
 }
 
 unsigned r600_buffer_is_referenced_by_cs(struct pipe_context *context,
@@ -236,29 +200,25 @@ struct u_resource_vtbl r600_buffer_vtbl =
 
 int r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *draw)
 {
-	struct pipe_resource *upload_buffer = NULL;
-	unsigned index_offset = draw->index_buffer_offset;
-	int ret = 0;
-
 	if (r600_buffer_is_user_buffer(draw->index_buffer)) {
-		ret = u_upload_buffer(rctx->upload_ib,
-				      index_offset,
-				      draw->count * draw->index_size,
-				      draw->index_buffer,
-				      &index_offset,
-				      &upload_buffer);
-		if (ret) {
-			goto done;
-		}
-		draw->index_buffer_offset = index_offset;
+		struct r600_resource_buffer *rbuffer = r600_buffer(draw->index_buffer);
+		unsigned upload_offset;
+		int ret = 0;
 
-		/* Transfer ownership. */
-		pipe_resource_reference(&draw->index_buffer, upload_buffer);
-		pipe_resource_reference(&upload_buffer, NULL);
+		ret = r600_upload_buffer(rctx->rupload_vb,
+					draw->index_buffer_offset,
+					draw->count * draw->index_size,
+					rbuffer,
+					&upload_offset,
+					&rbuffer->r.bo_size,
+					&rbuffer->r.bo);
+		if (ret)
+			return ret;
+		rbuffer->uploaded = TRUE;
+		draw->index_buffer_offset = upload_offset;
 	}
 
-done:
-	return ret;
+	return 0;
 }
 
 int r600_upload_user_buffers(struct r600_pipe_context *rctx)
@@ -270,23 +230,21 @@ int r600_upload_user_buffers(struct r600_pipe_context *rctx)
 	nr = rctx->nvertex_buffer;
 
 	for (i = 0; i < nr; i++) {
-//		struct pipe_vertex_buffer *vb = &rctx->vertex_buffer[rctx->vertex_elements->elements[i].vertex_buffer_index];
 		struct pipe_vertex_buffer *vb = &rctx->vertex_buffer[i];
 
 		if (r600_buffer_is_user_buffer(vb->buffer)) {
-			struct pipe_resource *upload_buffer = NULL;
-			unsigned offset = 0; /*vb->buffer_offset * 4;*/
-			unsigned size = vb->buffer->width0;
+			struct r600_resource_buffer *rbuffer = r600_buffer(vb->buffer);
 			unsigned upload_offset;
-			ret = u_upload_buffer(rctx->upload_vb,
-					      offset, size,
-					      vb->buffer,
-					      &upload_offset, &upload_buffer);
+
+			ret = r600_upload_buffer(rctx->rupload_vb,
+						0, vb->buffer->width0,
+						rbuffer,
+						&upload_offset,
+						&rbuffer->r.bo_size,
+						&rbuffer->r.bo);
 			if (ret)
 				return ret;
-
-			pipe_resource_reference(&vb->buffer, NULL);
-			vb->buffer = upload_buffer;
+			rbuffer->uploaded = TRUE;
 			vb->buffer_offset = upload_offset;
 		}
 	}

@@ -131,6 +131,8 @@ struct r600_translate_context {
 #define R600_CONSTANT_ARRAY_SIZE 256
 #define R600_RESOURCE_ARRAY_SIZE 160
 
+struct r600_upload;
+
 struct r600_pipe_context {
 	struct pipe_context		context;
 	struct blitter_context		*blitter;
@@ -163,8 +165,7 @@ struct r600_pipe_context {
 	/* shader information */
 	unsigned			sprite_coord_enable;
 	bool				flatshade;
-	struct u_upload_mgr		*upload_vb;
-	struct u_upload_mgr		*upload_ib;
+	struct r600_upload		*rupload_vb;
 	unsigned			any_user_vbs;
 	struct r600_textures_info	ps_samplers;
 	unsigned			vb_max_index;

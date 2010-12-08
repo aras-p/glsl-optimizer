@@ -1346,7 +1346,7 @@ void evergreen_vertex_buffer_update(struct r600_pipe_context *rctx)
 		r600_pipe_state_add_reg(rstate, R_030000_RESOURCE0_WORD0,
 					offset, 0xFFFFFFFF, rbuffer->bo);
 		r600_pipe_state_add_reg(rstate, R_030004_RESOURCE0_WORD1,
-					rbuffer->size - offset - 1, 0xFFFFFFFF, NULL);
+					rbuffer->bo_size - offset - 1, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_030008_RESOURCE0_WORD2,
 					S_030008_STRIDE(vertex_buffer->stride),
 					0xFFFFFFFF, NULL);

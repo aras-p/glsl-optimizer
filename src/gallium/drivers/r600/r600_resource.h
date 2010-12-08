@@ -46,6 +46,7 @@ struct r600_resource {
 	struct u_resource		base;
 	struct r600_bo			*bo;
 	u32				size;
+	unsigned			bo_size;
 };
 
 struct r600_resource_texture {
@@ -74,19 +75,12 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 						struct winsys_handle *whandle);
 
 #define R600_BUFFER_MAGIC 0xabcd1600
-#define R600_BUFFER_MAX_RANGES 32
-
-struct r600_buffer_range {
-	uint32_t start;
-	uint32_t end;
-};
 
 struct r600_resource_buffer {
 	struct r600_resource r;
 	uint32_t magic;
 	void *user_buffer;
-	struct r600_buffer_range ranges[R600_BUFFER_MAX_RANGES];
-	unsigned num_ranges;
+	bool uploaded;
 };
 
 /* r600_buffer */
@@ -101,7 +95,9 @@ static INLINE struct r600_resource_buffer *r600_buffer(struct pipe_resource *buf
 
 static INLINE boolean r600_buffer_is_user_buffer(struct pipe_resource *buffer)
 {
-    return r600_buffer(buffer)->user_buffer ? TRUE : FALSE;
+	if (r600_buffer(buffer)->uploaded)
+		return FALSE;
+	return r600_buffer(buffer)->user_buffer ? TRUE : FALSE;
 }
 
 int r600_texture_depth_flush(struct pipe_context *ctx,
@@ -126,5 +122,16 @@ struct r600_surface {
 	struct pipe_surface base;
 	unsigned aligned_height;
 };
+
+struct r600_pipe_context;
+struct r600_upload *r600_upload_create(struct r600_pipe_context *rctx,
+					unsigned default_size,
+					unsigned alignment);
+void r600_upload_flush(struct r600_upload *upload);
+void r600_upload_destroy(struct r600_upload *upload);
+int r600_upload_buffer(struct r600_upload *upload, unsigned offset,
+			unsigned size, struct r600_resource_buffer *in_buffer,
+			unsigned *out_offset, unsigned *out_size,
+			struct r600_bo **out_buffer);
 
 #endif

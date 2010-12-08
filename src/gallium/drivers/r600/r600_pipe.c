@@ -35,7 +35,6 @@
 #include <util/u_pack_color.h>
 #include <util/u_memory.h>
 #include <util/u_inlines.h>
-#include <util/u_upload_mgr.h>
 #include <pipebuffer/pb_buffer.h>
 #include "r600.h"
 #include "r600d.h"
@@ -59,9 +58,6 @@ static void r600_flush(struct pipe_context *ctx, unsigned flags,
 	if (!rctx->ctx.pm4_cdwords)
 		return;
 
-	u_upload_flush(rctx->upload_vb);
-	u_upload_flush(rctx->upload_ib);
-
 #if 0
 	sprintf(dname, "gallium-%08d.bof", dc);
 	if (dc < 20) {
@@ -71,6 +67,8 @@ static void r600_flush(struct pipe_context *ctx, unsigned flags,
 	dc++;
 #endif
 	r600_context_flush(&rctx->ctx);
+
+	r600_upload_flush(rctx->rupload_vb);
 }
 
 static void r600_destroy_context(struct pipe_context *context)
@@ -89,8 +87,7 @@ static void r600_destroy_context(struct pipe_context *context)
 		free(rctx->states[i]);
 	}
 
-	u_upload_destroy(rctx->upload_vb);
-	u_upload_destroy(rctx->upload_ib);
+	r600_upload_destroy(rctx->rupload_vb);
 
 	if (rctx->tran.translate_cache)
 		translate_cache_destroy(rctx->tran.translate_cache);
@@ -165,16 +162,8 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		return NULL;
 	}
 
-	rctx->upload_ib = u_upload_create(&rctx->context, 32 * 1024, 16,
-					  PIPE_BIND_INDEX_BUFFER);
-	if (rctx->upload_ib == NULL) {
-		r600_destroy_context(&rctx->context);
-		return NULL;
-	}
-
-	rctx->upload_vb = u_upload_create(&rctx->context, 128 * 1024, 16,
-					  PIPE_BIND_VERTEX_BUFFER);
-	if (rctx->upload_vb == NULL) {
+	rctx->rupload_vb = r600_upload_create(rctx, 128 * 1024, 16);
+	if (rctx->rupload_vb == NULL) {
 		r600_destroy_context(&rctx->context);
 		return NULL;
 	}

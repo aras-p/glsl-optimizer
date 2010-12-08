@@ -36,7 +36,6 @@
 #include <util/u_pack_color.h>
 #include <util/u_memory.h>
 #include <util/u_inlines.h>
-#include <util/u_upload_mgr.h>
 #include <util/u_framebuffer.h>
 #include <pipebuffer/pb_buffer.h>
 #include "r600.h"
@@ -187,7 +186,7 @@ void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 		r600_pipe_state_add_reg(rstate, R_038000_RESOURCE0_WORD0,
 					offset, 0xFFFFFFFF, rbuffer->bo);
 		r600_pipe_state_add_reg(rstate, R_038004_RESOURCE0_WORD1,
-					rbuffer->size - offset - 1, 0xFFFFFFFF, NULL);
+					rbuffer->bo_size - offset - 1, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_038008_RESOURCE0_WORD2,
 					S_038008_STRIDE(vertex_buffer->stride),
 					0xFFFFFFFF, NULL);
