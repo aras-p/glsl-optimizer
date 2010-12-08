@@ -339,15 +339,15 @@ fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct
 }
 
 static struct ureg_dst
-fetch_ref(struct ureg_program *shader, struct ureg_dst field, unsigned ref_frames)
+fetch_ref(struct ureg_program *shader, struct ureg_dst field)
 {
-   struct ureg_src frame_pred, bkwd_pred; //, ref_frames, ;
-   struct ureg_src tc[4], sampler[ref_frames];
-   struct ureg_dst ref[ref_frames], t_tc, result;
-   unsigned i, label;
+   struct ureg_src ref_frames, frame_pred, bkwd_pred;
+   struct ureg_src tc[4], sampler[2];
+   struct ureg_dst ref[2], t_tc, result;
+   unsigned i, intra_label, bi_label, label;
 
+   ref_frames = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_REF_FRAMES, TGSI_INTERPOLATE_CONSTANT);
    frame_pred = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_FRAME_PRED, TGSI_INTERPOLATE_CONSTANT);
-   //ref_frames = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_REF_FRAMES, TGSI_INTERPOLATE_CONSTANT);
    bkwd_pred = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_BKWD_PRED, TGSI_INTERPOLATE_CONSTANT);
 
    for (i = 0; i < 4; ++i)
@@ -360,9 +360,13 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field, unsigned ref_frame
 
    result = ureg_DECL_temporary(shader);
 
-   if (ref_frames == 0)
+   ureg_SEQ(shader, ureg_writemask(result, TGSI_WRITEMASK_X), ref_frames, ureg_imm1f(shader, -1.0f));
+   ureg_IF(shader, ureg_scalar(ureg_src(result), TGSI_SWIZZLE_X), &intra_label);
       ureg_MOV(shader, result, ureg_imm1f(shader, 0.5f));
-   else if (ref_frames == 1) {
+
+   ureg_ELSE(shader, &intra_label);
+   ureg_IF(shader, ureg_scalar(ref_frames, TGSI_SWIZZLE_X), &bi_label);
+
       t_tc = ureg_DECL_temporary(shader);
       ureg_IF(shader, frame_pred, &label);
 
@@ -390,7 +394,8 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field, unsigned ref_frame
 
       ureg_release_temporary(shader, t_tc);
 
-   } else if (ref_frames == 2) {
+   ureg_ELSE(shader, &bi_label);
+
       ureg_IF(shader, frame_pred, &label);
          /*
           * ref[0..1] = tex(tc[0..1], sampler[0..1])
@@ -420,16 +425,18 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field, unsigned ref_frame
       ureg_ENDIF(shader);
 
       ureg_LRP(shader, result, ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X), ureg_src(ref[0]), ureg_src(ref[1]));
-   }
 
-   for (i = 0; i < ref_frames; ++i)
+   ureg_ENDIF(shader);
+   ureg_ENDIF(shader);
+
+   for (i = 0; i < 2; ++i)
       ureg_release_temporary(shader, ref[i]);
 
    return result;
 }
 
 static void *
-create_frag_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames)
+create_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
    struct ureg_program *shader;
    struct ureg_dst result;
@@ -445,7 +452,7 @@ create_frag_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames)
    field = calc_field(shader);
    texel = fetch_ycbcr(r, shader, field);
 
-   result = fetch_ref(shader, field, ref_frames);
+   result = fetch_ref(shader, field);
 
    ureg_ADD(shader, fragment, ureg_src(texel), ureg_src(result));
 
@@ -472,7 +479,7 @@ init_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE typ
    handler = &r->mbtype_handlers[type];
 
    handler->vs = create_vert_shader(r);
-   handler->fs = create_frag_shader(r, ref_frames);
+   handler->fs = create_frag_shader(r);
 
    if (handler->vs == NULL || handler->fs == NULL)
       return false;
@@ -702,7 +709,7 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    /* frame=0.0f field=1.0f */
    vertex_elems[VS_I_FRAME_PRED].src_format = PIPE_FORMAT_R32_FLOAT;
 
-   /* intra=0.0f forward/backward=1.0f bi=-1.0f */
+   /* intra=-1.0f forward/backward=1.0f bi=0.0f */
    vertex_elems[VS_I_REF_FRAMES].src_format = PIPE_FORMAT_R32_FLOAT;
 
    /* forward=0.0f backward=1.0f */
@@ -1009,6 +1016,23 @@ grab_vectors(struct vl_mpeg12_mc_renderer *r,
    info.interlaced = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD ? 1.0f : 0.0f;
    info.frame_pred = mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME ? 1.0f : 0.0f;
    info.bkwd_pred = mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BKWD ? 1.0f : 0.0f;
+   switch (mb->mb_type) {
+      case PIPE_MPEG12_MACROBLOCK_TYPE_INTRA:
+         info.ref_frames = -1.0f;
+         break;
+
+      case PIPE_MPEG12_MACROBLOCK_TYPE_FWD:
+      case PIPE_MPEG12_MACROBLOCK_TYPE_BKWD:
+         info.ref_frames = 1.0f;
+         break;
+        
+      case PIPE_MPEG12_MACROBLOCK_TYPE_BI:
+         info.ref_frames = 0.0f;
+         break;
+
+      default:
+         assert(0);
+   }
 
    vl_vb_add_block(&handler->pos, (float*)&info);
 
