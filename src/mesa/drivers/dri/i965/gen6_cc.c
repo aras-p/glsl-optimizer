@@ -35,6 +35,7 @@
 struct gen6_blend_state_key {
    GLboolean color_blend, alpha_enabled;
    GLboolean dither;
+   GLboolean color_mask[4];
 
    GLenum logic_op;
 
@@ -52,6 +53,9 @@ blend_state_populate_key(struct brw_context *brw,
    struct gl_context *ctx = &brw->intel.ctx;
 
    memset(key, 0, sizeof(*key));
+
+   /* _NEW_COLOR */
+   memcpy(key->color_mask, ctx->Color.ColorMask[0], sizeof(key->color_mask));
 
    /* _NEW_COLOR */
    if (ctx->Color._LogicOpEnabled)
@@ -136,6 +140,11 @@ blend_state_create_from_key(struct brw_context *brw,
       blend.blend1.y_dither_offset = 0;
       blend.blend1.x_dither_offset = 0;
    }
+
+   blend.blend1.write_disable_r = !key->color_mask[0];
+   blend.blend1.write_disable_g = !key->color_mask[1];
+   blend.blend1.write_disable_b = !key->color_mask[2];
+   blend.blend1.write_disable_a = !key->color_mask[3];
 
    bo = brw_upload_cache(&brw->cache, BRW_BLEND_STATE,
 			 key, sizeof(*key),
