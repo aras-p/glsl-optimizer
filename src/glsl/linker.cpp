@@ -871,23 +871,27 @@ link_intrastage_shaders(void *mem_ctx,
     * unspecified sizes have a size specified.  The size is inferred from the
     * max_array_access field.
     */
-   foreach_list(node, linked->ir) {
-      ir_variable *const var = ((ir_instruction *) node)->as_variable();
+   if (linked != NULL) {
+      foreach_list(node, linked->ir) {
+	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
 
-      if (var == NULL)
-	 continue;
+	 if (var == NULL)
+	    continue;
 
-      if (!var->type->is_array() || (var->type->length != 0))
-	 continue;
+	 if ((var->mode != ir_var_auto) && (var->mode != ir_var_temporary))
+	    continue;
 
-      const glsl_type *type =
-	 glsl_type::get_array_instance(var->type->fields.array,
-				       var->max_array_access);
+	 if (!var->type->is_array() || (var->type->length != 0))
+	    continue;
 
-      assert(type != NULL);
-      var->type = type;
+	 const glsl_type *type =
+	    glsl_type::get_array_instance(var->type->fields.array,
+					  var->max_array_access);
+
+	 assert(type != NULL);
+	 var->type = type;
+      }
    }
-
 
    return linked;
 }
