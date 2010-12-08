@@ -873,8 +873,12 @@ make_extension_string_es2(const struct gl_context *ctx, GLubyte *str)
    if (ctx->Extensions.ARB_vertex_buffer_object)
       len += append_extension(&str, "GL_OES_mapbuffer");
 
+#if 0
+   /* disabled because of missing GLSL support */
    if (ctx->Extensions.EXT_texture3D)
       len += append_extension(&str, "GL_OES_texture_3D");
+#endif
+
    if (ctx->Extensions.ARB_texture_non_power_of_two)
       len += append_extension(&str, "GL_OES_texture_npot");
    if (ctx->Extensions.EXT_texture_filter_anisotropic)
