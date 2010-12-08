@@ -1625,7 +1625,7 @@ fs_visitor::emit_if_gen6(ir_if *ir)
 
       switch (expr->operation) {
       case ir_unop_logic_not:
-	 inst = emit(fs_inst(BRW_OPCODE_IF, temp, op[0], fs_reg(1)));
+	 inst = emit(fs_inst(BRW_OPCODE_IF, temp, op[0], fs_reg(0)));
 	 inst->conditional_mod = BRW_CONDITIONAL_Z;
 	 return;
 
