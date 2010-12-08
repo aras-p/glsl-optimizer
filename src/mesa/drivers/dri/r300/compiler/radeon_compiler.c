@@ -398,7 +398,7 @@ void rc_get_stats(struct radeon_compiler *c, struct rc_program_stats *s)
 	s->num_temp_regs = max_reg + 1;
 }
 
-static void print_stats(struct radeon_compiler * c, const char *shader)
+static void print_stats(struct radeon_compiler * c)
 {
 	struct rc_program_stats s;
 
@@ -406,20 +406,34 @@ static void print_stats(struct radeon_compiler * c, const char *shader)
 
 	if (s.num_insts < 4)
 		return;
-	fprintf(stderr,"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n"
-		       "~ %s:\n"
-		       "~%4u Instructions\n"
-		       "~%4u Vector Instructions (RGB)\n"
-		       "~%4u Scalar Instructions (Alpha)\n"
-		       "~%4u Flow Control Instructions\n"
-		       "~%4u Texture Instructions\n"
-		       "~%4u Presub Operations\n"
-		       "~%4u Temporary Registers\n"
-		       "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\n",
-		       shader,
-		       s.num_insts, s.num_rgb_insts, s.num_alpha_insts,
-		       s.num_fc_insts, s.num_tex_insts, s.num_presub_ops,
-		       s.num_temp_regs);
+
+	switch (c->type) {
+	case RC_VERTEX_PROGRAM:
+		fprintf(stderr,"~~~~~~~~~ VERTEX PROGRAM ~~~~~~~~\n"
+			       "~%4u Instructions\n"
+			       "~%4u Flow Control Instructions\n"
+			       "~%4u Temporary Registers\n"
+			       "~~~~~~~~~~~~~~ END ~~~~~~~~~~~~~~\n",
+			       s.num_insts, s.num_fc_insts, s.num_temp_regs);
+		break;
+
+	case RC_FRAGMENT_PROGRAM:
+		fprintf(stderr,"~~~~~~~~ FRAGMENT PROGRAM ~~~~~~~\n"
+			       "~%4u Instructions\n"
+			       "~%4u Vector Instructions (RGB)\n"
+			       "~%4u Scalar Instructions (Alpha)\n"
+			       "~%4u Flow Control Instructions\n"
+			       "~%4u Texture Instructions\n"
+			       "~%4u Presub Operations\n"
+			       "~%4u Temporary Registers\n"
+			       "~~~~~~~~~~~~~~ END ~~~~~~~~~~~~~~\n",
+			       s.num_insts, s.num_rgb_insts, s.num_alpha_insts,
+			       s.num_fc_insts, s.num_tex_insts, s.num_presub_ops,
+			       s.num_temp_regs);
+		break;
+	default:
+		assert(0);
+	}
 }
 
 static const char *shader_name[RC_NUM_PROGRAM_TYPES] = {
@@ -455,7 +469,7 @@ void rc_run_compiler(struct radeon_compiler *c, struct radeon_compiler_pass *lis
 	rc_run_compiler_passes(c, list);
 
 	if (c->Debug & RC_DBG_STATS)
-		print_stats(c, shader_name[c->type]);
+		print_stats(c);
 }
 
 void rc_validate_final_shader(struct radeon_compiler *c, void *user)
