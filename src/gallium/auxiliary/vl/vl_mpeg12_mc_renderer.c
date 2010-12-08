@@ -97,14 +97,14 @@ static const unsigned const_mbtype_config[VL_NUM_MACROBLOCK_TYPES][2] = {
 };
 
 static void *
-create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigned mv_per_frame)
+create_vert_shader(struct vl_mpeg12_mc_renderer *r)
 {
    struct ureg_program *shader;
    struct ureg_src scale;
    struct ureg_src vrect, vpos, eb[2][2], interlaced, vmv[4];
    struct ureg_dst t_vpos, t_vtex;
    struct ureg_dst o_vpos, o_line, o_vtex[3], o_eb[2], o_vmv[4];
-   unsigned i, j, count, label;
+   unsigned i, label;
 
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
    if (!shader)
@@ -129,15 +129,9 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
    o_eb[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB_0);
    o_eb[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB_1);
    
-   count=0;
-   for (i = 0; i < ref_frames; ++i) {
-      for (j = 0; j < 2; ++j) {        
-        if(j < mv_per_frame) {
-           vmv[count] = ureg_DECL_vs_input(shader, VS_I_MV0 + count);
-           o_vmv[count] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV0 + count);
-           count++;
-        }
-      }
+   for (i = 0; i < 4; ++i) {
+     vmv[i] = ureg_DECL_vs_input(shader, VS_I_MV0 + i);
+     o_vmv[i] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV0 + i);
    }
 
    /*
@@ -166,10 +160,9 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
     *
     * o_eb[0..1] = vrect.x ? eb[0..1][1] : eb[0..1][0]
     *
-    * if(count > 0) { // Apply motion vectors
-    *    scale = 0.5 / (dst.width, dst.height);
-    *    o_vmv[0..count] = t_vpos + vmv[0..count] * scale
-    * }
+    * // Apply motion vectors
+    * scale = 0.5 / (dst.width, dst.height);
+    * o_vmv[0..count] = t_vpos + vmv[0..count] * scale
     *
     */
    scale = ureg_imm2f(shader,
@@ -210,14 +203,12 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
             ureg_negate(ureg_scalar(vrect, TGSI_SWIZZLE_X)),
             eb[1][1], eb[1][0]);
 
-   if(count > 0) {
-      scale = ureg_imm2f(shader,
-         0.5f / r->buffer_width,
-         0.5f / r->buffer_height);
+   scale = ureg_imm2f(shader,
+      0.5f / r->buffer_width,
+      0.5f / r->buffer_height);
 
-      for (i = 0; i < count; ++i)
-         ureg_MAD(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_XY), scale, vmv[i], ureg_src(t_vpos));
-   }
+   for (i = 0; i < 4; ++i)
+      ureg_MAD(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_XY), scale, vmv[i], ureg_src(t_vpos));
 
    ureg_release_temporary(shader, t_vtex);
    ureg_release_temporary(shader, t_vpos);
@@ -426,8 +417,7 @@ create_frag_shader(struct vl_mpeg12_mc_renderer *r, unsigned ref_frames, unsigne
 }
 
 static bool
-init_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE type,
-                    struct pipe_vertex_element vertex_elems[NUM_VS_INPUTS])
+init_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE type)
 {
    unsigned ref_frames, mv_per_frame;
    struct vl_mc_mbtype_handler *handler;
@@ -440,16 +430,10 @@ init_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE typ
 
    handler = &r->mbtype_handlers[type];
 
-   handler->vs = create_vert_shader(r, ref_frames, mv_per_frame);
+   handler->vs = create_vert_shader(r);
    handler->fs = create_frag_shader(r, ref_frames, mv_per_frame);
 
    if (handler->vs == NULL || handler->fs == NULL)
-      return false;
-
-   handler->vertex_elems_state = r->pipe->create_vertex_elements_state(
-      r->pipe, 7 + ref_frames * mv_per_frame, vertex_elems);
-
-   if (handler->vertex_elems_state == NULL)
       return false;
 
    if (!vl_vb_init(&handler->pos, r->macroblocks_per_batch, sizeof(struct vertex_stream_0) / sizeof(float)))
@@ -479,7 +463,6 @@ cleanup_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE 
 
    r->pipe->delete_vs_state(r->pipe, handler->vs);
    r->pipe->delete_fs_state(r->pipe, handler->fs);
-   r->pipe->delete_vertex_elements_state(r->pipe, handler->vertex_elems_state);
 
    vl_vb_cleanup(&handler->pos);
 
@@ -688,8 +671,14 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
          r->pipe, r->macroblocks_per_batch, stride);
    }
 
+   r->vertex_elems_state = r->pipe->create_vertex_elements_state(
+      r->pipe, 11, vertex_elems);
+
+   if (r->vertex_elems_state == NULL)
+      return false;
+
    for(i = 0; i < VL_NUM_MACROBLOCK_TYPES; ++i)
-      init_mbtype_handler(r, i, vertex_elems);
+      init_mbtype_handler(r, i);
 
    return true;
 }
@@ -720,6 +709,8 @@ cleanup_buffers(struct vl_mpeg12_mc_renderer *r)
 
    vl_idct_cleanup(&r->idct_luma);
    vl_idct_cleanup(&r->idct_chroma);
+
+   r->pipe->delete_vertex_elements_state(r->pipe, r->vertex_elems_state);
 }
 
 static enum VL_MACROBLOCK_TYPE
@@ -843,9 +834,6 @@ flush_mbtype_handler(struct vl_mpeg12_mc_renderer *r, enum VL_MACROBLOCK_TYPE ty
    mv_per_frame = const_mbtype_config[type][1];
 
    handler = &r->mbtype_handlers[type];
-
-   r->pipe->set_vertex_buffers(r->pipe, 2 + ref_frames * mv_per_frame, r->vertex_bufs.all);
-   r->pipe->bind_vertex_elements_state(r->pipe, handler->vertex_elems_state);
 
    if(ref_frames == 2) {
 
@@ -1196,6 +1184,8 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer)
    renderer->pipe->bind_rasterizer_state(renderer->pipe, renderer->rs_state);
    renderer->pipe->set_framebuffer_state(renderer->pipe, &renderer->fb_state);
    renderer->pipe->set_viewport_state(renderer->pipe, &renderer->viewport);
+   renderer->pipe->set_vertex_buffers(renderer->pipe, 6, renderer->vertex_bufs.all);
+   renderer->pipe->bind_vertex_elements_state(renderer->pipe, renderer->vertex_elems_state);
 
    for (i = 0; i < VL_NUM_MACROBLOCK_TYPES; ++i) {
       if (num_verts[i] > 0)
