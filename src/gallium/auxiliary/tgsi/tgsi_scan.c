@@ -143,13 +143,30 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                info->file_count[file]++;
                info->file_max[file] = MAX2(info->file_max[file], (int)reg);
 
-               if (file == TGSI_FILE_INPUT || file == TGSI_FILE_SYSTEM_VALUE) {
+               if (file == TGSI_FILE_INPUT) {
                   info->input_semantic_name[reg] = (ubyte)fulldecl->Semantic.Name;
                   info->input_semantic_index[reg] = (ubyte)fulldecl->Semantic.Index;
                   info->input_interpolate[reg] = (ubyte)fulldecl->Declaration.Interpolate;
                   info->input_centroid[reg] = (ubyte)fulldecl->Declaration.Centroid;
                   info->input_cylindrical_wrap[reg] = (ubyte)fulldecl->Declaration.CylindricalWrap;
                   info->num_inputs++;
+               }
+               else if (file == TGSI_FILE_SYSTEM_VALUE) {
+                  unsigned index = fulldecl->Range.First;
+                  unsigned semName = fulldecl->Semantic.Name;
+
+                  info->system_value_semantic_name[index] = semName;
+                  info->num_system_values = MAX2(info->num_system_values,
+                                                 index + 1);
+
+                  /*
+                  info->system_value_semantic_name[info->num_system_values++] = 
+                     fulldecl->Semantic.Name;
+                  */
+
+                  if (fulldecl->Semantic.Name == TGSI_SEMANTIC_INSTANCEID) {
+                     info->uses_instanceid = TRUE;
+                  }
                }
                else if (file == TGSI_FILE_OUTPUT) {
                   info->output_semantic_name[reg] = (ubyte)fulldecl->Semantic.Name;
