@@ -41,7 +41,8 @@ struct sp_mpeg12_context
    struct pipe_context *pipe;
    struct pipe_surface *decode_target;
    struct vl_mpeg12_mc_renderer mc_renderer;
-   struct vl_mpeg12_mc_buffer mc_buffer;
+   struct keymap *buffer_map;
+   struct vl_mpeg12_mc_buffer *mc_buffer;
    struct vl_compositor compositor;
 
    void *rast;
