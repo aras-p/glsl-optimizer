@@ -154,6 +154,8 @@ _mesa_sizeof_type( GLenum type )
 	 return sizeof(GLdouble);
       case GL_HALF_FLOAT_ARB:
 	 return sizeof(GLhalfARB);
+      case GL_FIXED:
+	 return sizeof(GLfixed);
       default:
          return -1;
    }
