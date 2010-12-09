@@ -1054,6 +1054,10 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer *renderer,
       pipe_surface_reference(&buffer->past, past);
       pipe_surface_reference(&buffer->future, future);
       buffer->fence = fence;
+   } else {
+      /* If the surface we're rendering hasn't changed the ref frames shouldn't change. */
+      assert(buffer->past == past);
+      assert(buffer->future == future);
    }
 
    while (num_macroblocks) {
@@ -1071,6 +1075,9 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer *renderer,
       if (buffer->num_macroblocks == renderer->macroblocks_per_batch) {
          vl_mpeg12_mc_unmap_buffer(renderer, buffer);
          vl_mpeg12_mc_renderer_flush(renderer, buffer);
+         pipe_surface_reference(&buffer->surface, surface);
+         pipe_surface_reference(&buffer->past, past);
+         pipe_surface_reference(&buffer->future, future);
          vl_mpeg12_mc_map_buffer(renderer, buffer);
       }
    }
@@ -1121,12 +1128,19 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mp
    if (buffer->past) {
       buffer->textures.individual.ref[0] = buffer->past->texture;
       buffer->sampler_views.individual.ref[0] = find_or_create_sampler_view(renderer, buffer->past);
+   } else {
+      buffer->textures.individual.ref[0] = buffer->surface->texture;
+      buffer->sampler_views.individual.ref[0] = find_or_create_sampler_view(renderer, buffer->surface);
    }
 
    if (buffer->future) {
       buffer->textures.individual.ref[1] = buffer->future->texture;
       buffer->sampler_views.individual.ref[1] = find_or_create_sampler_view(renderer, buffer->future);
+   } else {
+      buffer->textures.individual.ref[1] = buffer->surface->texture;
+      buffer->sampler_views.individual.ref[1] = find_or_create_sampler_view(renderer, buffer->surface);
    }
+
    renderer->pipe->set_fragment_sampler_views(renderer->pipe, 5, buffer->sampler_views.all);
    renderer->pipe->bind_fragment_sampler_states(renderer->pipe, 5, renderer->samplers.all);
 
@@ -1135,6 +1149,11 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mp
    util_draw_arrays(renderer->pipe, PIPE_PRIM_QUADS, 0, buffer->num_macroblocks * 4);
 
    renderer->pipe->flush(renderer->pipe, PIPE_FLUSH_RENDER_CACHE, buffer->fence);
+
+   /* Next time we get this surface it may have new ref frames */
+   pipe_surface_reference(&buffer->surface, NULL);
+   pipe_surface_reference(&buffer->past, NULL);
+   pipe_surface_reference(&buffer->future, NULL);
 
    buffer->num_macroblocks = 0;
 }
