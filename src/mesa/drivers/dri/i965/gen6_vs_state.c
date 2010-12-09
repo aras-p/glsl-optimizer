@@ -54,7 +54,7 @@ upload_vs_state(struct brw_context *brw)
       OUT_BATCH(0);
       ADVANCE_BATCH();
    } else {
-      int params_uploaded = 0;
+      int params_uploaded = 0, param_regs;
       float *param;
 
       if (brw->vertex_program->IsNVProgram)
@@ -88,20 +88,11 @@ upload_vs_state(struct brw_context *brw)
 	 params_uploaded++;
       }
 
-      if (vp->use_const_buffer) {
-	 for (i = 0; i < vp->program.Base.Parameters->NumParameters; i++) {
-	    if (brw->vs.constant_map[i] != -1) {
-	       memcpy(param + brw->vs.constant_map[i] * 4,
-		      vp->program.Base.Parameters->ParameterValues[i],
-		      4 * sizeof(float));
-	       params_uploaded++;
-	    }
-	 }
-      } else {
-	 for (i = 0; i < nr_params; i++) {
-	    memcpy(param, vp->program.Base.Parameters->ParameterValues[i],
+      for (i = 0; i < vp->program.Base.Parameters->NumParameters; i++) {
+	 if (brw->vs.constant_map[i] != -1) {
+	    memcpy(param + brw->vs.constant_map[i] * 4,
+		   vp->program.Base.Parameters->ParameterValues[i],
 		   4 * sizeof(float));
-	    param += 4;
 	    params_uploaded++;
 	 }
       }
@@ -117,13 +108,16 @@ upload_vs_state(struct brw_context *brw)
 
       drm_intel_gem_bo_unmap_gtt(constant_bo);
 
+      param_regs = (params_uploaded + 1) / 2;
+      assert(param_regs <= 32);
+
       BEGIN_BATCH(5);
       OUT_BATCH(CMD_3D_CONSTANT_VS_STATE << 16 |
 		GEN6_CONSTANT_BUFFER_0_ENABLE |
 		(5 - 2));
       OUT_RELOC(constant_bo,
 		I915_GEM_DOMAIN_RENDER, 0, /* XXX: bad domain */
-		ALIGN(params_uploaded, 2) / 2 - 1);
+		param_regs - 1);
       OUT_BATCH(0);
       OUT_BATCH(0);
       OUT_BATCH(0);

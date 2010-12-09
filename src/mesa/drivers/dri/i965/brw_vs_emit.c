@@ -143,6 +143,8 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    GLuint i, reg = 0, mrf;
    int attributes_in_vue;
    int first_reladdr_output;
+   int max_constant;
+   int constant = 0;
 
    /* Determine whether to use a real constant buffer or use a block
     * of GRF registers for constants.  The later is faster but only
@@ -181,62 +183,81 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    }
 
-   /* Vertex program parameters from curbe:
+   /* Assign some (probably all) of the vertex program constants to
+    * the push constant buffer/CURBE.
+    *
+    * There's an obvious limit to the numer of push constants equal to
+    * the number of register available, and that number is smaller
+    * than the minimum maximum number of vertex program parameters, so
+    * support for pull constants is required if we overflow.
+    * Additionally, on gen6 the number of push constants is even
+    * lower.
+    *
+    * When there's relative addressing, we don't know what range of
+    * Mesa IR registers can be accessed.  And generally, when relative
+    * addressing is used we also have too many constants to load them
+    * all as push constants.  So, we'll just support relative
+    * addressing out of the pull constant buffers, and try to load as
+    * many statically-accessed constants into the push constant buffer
+    * as we can.
     */
-   if (c->vp->use_const_buffer) {
-      int max_constant = BRW_MAX_GRF - 20 - c->vp->program.Base.NumTemporaries;
-      int constant = 0;
+   if (intel->gen >= 6) {
+      /* We can only load 32 regs of push constants. */
+      max_constant = 32 * 2 - c->key.nr_userclip;
+   } else {
+      max_constant = BRW_MAX_GRF - 20 - c->vp->program.Base.NumTemporaries;
+   }
 
-      /* We've got more constants than we can load with the push
-       * mechanism.  This is often correlated with reladdr loads where
-       * we should probably be using a pull mechanism anyway to avoid
-       * excessive reading.  However, the pull mechanism is slow in
-       * general.  So, we try to allocate as many non-reladdr-loaded
-       * constants through the push buffer as we can before giving up.
-       */
-      memset(c->constant_map, -1, c->vp->program.Base.Parameters->NumParameters);
-      for (i = 0;
-	   i < c->vp->program.Base.NumInstructions && constant < max_constant;
-	   i++) {
-	 struct prog_instruction *inst = &c->vp->program.Base.Instructions[i];
-	 int arg;
+   /* constant_map maps from ParameterValues[] index to index in the
+    * push constant buffer, or -1 if it's only in the pull constant
+    * buffer.
+    */
+   memset(c->constant_map, -1, c->vp->program.Base.Parameters->NumParameters);
+   for (i = 0;
+	i < c->vp->program.Base.NumInstructions && constant < max_constant;
+	i++) {
+      struct prog_instruction *inst = &c->vp->program.Base.Instructions[i];
+      int arg;
 
-	 for (arg = 0; arg < 3 && constant < max_constant; arg++) {
-	    if ((inst->SrcReg[arg].File != PROGRAM_STATE_VAR &&
-		 inst->SrcReg[arg].File != PROGRAM_CONSTANT &&
-		 inst->SrcReg[arg].File != PROGRAM_UNIFORM &&
-		 inst->SrcReg[arg].File != PROGRAM_ENV_PARAM &&
-		 inst->SrcReg[arg].File != PROGRAM_LOCAL_PARAM) ||
-		inst->SrcReg[arg].RelAddr)
-	       continue;
+      for (arg = 0; arg < 3 && constant < max_constant; arg++) {
+	 if (inst->SrcReg[arg].File != PROGRAM_STATE_VAR &&
+	     inst->SrcReg[arg].File != PROGRAM_CONSTANT &&
+	     inst->SrcReg[arg].File != PROGRAM_UNIFORM &&
+	     inst->SrcReg[arg].File != PROGRAM_ENV_PARAM &&
+	     inst->SrcReg[arg].File != PROGRAM_LOCAL_PARAM) {
+	    continue;
+	 }
 
-	    if (c->constant_map[inst->SrcReg[arg].Index] == -1) {
-	       c->constant_map[inst->SrcReg[arg].Index] = constant++;
-	    }
+	 if (inst->SrcReg[arg].RelAddr) {
+	    c->vp->use_const_buffer = GL_TRUE;
+	    continue;
+	 }
+
+	 if (c->constant_map[inst->SrcReg[arg].Index] == -1) {
+	    c->constant_map[inst->SrcReg[arg].Index] = constant++;
 	 }
       }
-
-      for (i = 0; i < constant; i++) {
-         c->regs[PROGRAM_STATE_VAR][i] = stride( brw_vec4_grf(reg+i/2,
-							      (i%2) * 4),
-						 0, 4, 1);
-      }
-      reg += (constant + 1) / 2;
-      c->prog_data.curb_read_length = reg - 1;
-      /* XXX 0 causes a bug elsewhere... */
-      c->prog_data.nr_params = MAX2(constant * 4, 4);
    }
-   else {
-      /* use a section of the GRF for constants */
-      GLuint nr_params = c->vp->program.Base.Parameters->NumParameters;
-      for (i = 0; i < nr_params; i++) {
-         c->regs[PROGRAM_STATE_VAR][i] = stride( brw_vec4_grf(reg+i/2, (i%2) * 4), 0, 4, 1);
-      }
-      reg += (nr_params + 1) / 2;
-      c->prog_data.curb_read_length = reg - 1;
 
-      c->prog_data.nr_params = nr_params * 4;
+   /* If we ran out of push constant space, then we'll also upload all
+    * constants through the pull constant buffer so that they can be
+    * accessed no matter what.  For relative addressing (the common
+    * case) we need them all in place anyway.
+    */
+   if (constant == max_constant)
+      c->vp->use_const_buffer = GL_TRUE;
+
+   for (i = 0; i < constant; i++) {
+      c->regs[PROGRAM_STATE_VAR][i] = stride(brw_vec4_grf(reg + i / 2,
+							  (i % 2) * 4),
+					     0, 4, 1);
    }
+   reg += (constant + 1) / 2;
+   c->prog_data.curb_read_length = reg - 1;
+   c->prog_data.nr_params = constant;
+   /* XXX 0 causes a bug elsewhere... */
+   if (intel->gen < 6 && c->prog_data.nr_params == 0)
+      c->prog_data.nr_params = 4;
 
    /* Allocate input regs:  
     */
@@ -1302,21 +1323,17 @@ get_src_reg( struct brw_vs_compile *c,
    case PROGRAM_UNIFORM:
    case PROGRAM_ENV_PARAM:
    case PROGRAM_LOCAL_PARAM:
-      if (c->vp->use_const_buffer) {
-	 if (!relAddr && c->constant_map[index] != -1) {
-	    assert(c->regs[PROGRAM_STATE_VAR][c->constant_map[index]].nr != 0);
-	    return c->regs[PROGRAM_STATE_VAR][c->constant_map[index]];
-	 } else if (relAddr)
+      if (!relAddr && c->constant_map[index] != -1) {
+	 /* Take from the push constant buffer if possible. */
+	 assert(c->regs[PROGRAM_STATE_VAR][c->constant_map[index]].nr != 0);
+	 return c->regs[PROGRAM_STATE_VAR][c->constant_map[index]];
+      } else {
+	 /* Must be in the pull constant buffer then .*/
+	 assert(c->vp->use_const_buffer);
+	 if (relAddr)
 	    return get_reladdr_constant(c, inst, argIndex);
 	 else
 	    return get_constant(c, inst, argIndex);
-      }
-      else if (relAddr) {
-         return deref(c, c->regs[PROGRAM_STATE_VAR][0], index, 16);
-      }
-      else {
-         assert(c->regs[PROGRAM_STATE_VAR][index].nr != 0);
-         return c->regs[PROGRAM_STATE_VAR][index];
       }
    case PROGRAM_ADDRESS:
       assert(index == 0);

@@ -242,21 +242,13 @@ static void prepare_constant_buffer(struct brw_context *brw)
       GLuint offset = brw->curbe.vs_start * 16;
       GLuint nr = brw->vs.prog_data->nr_params / 4;
 
-      if (vp->use_const_buffer) {
-	 /* Load the subset of push constants that will get used when
-	  * we also have a pull constant buffer.
-	  */
-	 for (i = 0; i < vp->program.Base.Parameters->NumParameters; i++) {
-	    if (brw->vs.constant_map[i] != -1) {
-	       assert(brw->vs.constant_map[i] <= nr);
-	       memcpy(buf + offset + brw->vs.constant_map[i] * 4,
-		      vp->program.Base.Parameters->ParameterValues[i],
-		      4 * sizeof(float));
-	    }
-	 }
-      } else {
-	 for (i = 0; i < nr; i++) {
-	    memcpy(buf + offset + i * 4,
+      /* Load the subset of push constants that will get used when
+       * we also have a pull constant buffer.
+       */
+      for (i = 0; i < vp->program.Base.Parameters->NumParameters; i++) {
+	 if (brw->vs.constant_map[i] != -1) {
+	    assert(brw->vs.constant_map[i] <= nr);
+	    memcpy(buf + offset + brw->vs.constant_map[i] * 4,
 		   vp->program.Base.Parameters->ParameterValues[i],
 		   4 * sizeof(float));
 	 }

@@ -99,8 +99,8 @@ static void do_vs_prog( struct brw_context *brw,
    (void) ctx;
 
    aux_size = sizeof(c.prog_data);
-   if (c.vp->use_const_buffer)
-      aux_size += c.vp->program.Base.Parameters->NumParameters;
+   /* constant_map */
+   aux_size += c.vp->program.Base.Parameters->NumParameters;
 
    drm_intel_bo_unreference(brw->vs.prog_bo);
    brw->vs.prog_bo = brw_upload_cache_with_auxdata(&brw->cache, BRW_VS_PROG,
