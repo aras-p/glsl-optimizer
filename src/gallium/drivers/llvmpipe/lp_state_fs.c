@@ -334,7 +334,8 @@ generate_fs(struct lp_fragment_shader *shader,
    
    /* Build the actual shader */
    lp_build_tgsi_soa(builder, tokens, type, &mask,
-                     consts_ptr, interp->pos, interp->inputs,
+                     consts_ptr, NULL, /* sys values array */
+                     interp->pos, interp->inputs,
                      outputs, sampler, &shader->info.base);
 
 

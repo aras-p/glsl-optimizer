@@ -156,6 +156,8 @@ struct lp_build_tgsi_soa_context
     */
    LLVMValueRef inputs_array;
 
+   LLVMValueRef system_values_array;
+
    const struct tgsi_shader_info *info;
    /** bitmask indicating which register files are accessed indirectly */
    unsigned indirect_files;
@@ -729,6 +731,22 @@ emit_fetch(
          res = LLVMBuildLoad(bld->base.builder, temp_ptr, "");
          if (!res)
             return bld->base.undef;
+      }
+      break;
+
+   case TGSI_FILE_SYSTEM_VALUE:
+      assert(!reg->Register.Indirect);
+      {
+         LLVMValueRef index;  /* index into the system value array */
+         LLVMValueRef scalar, scalar_ptr;
+
+         index = lp_build_const_int32(reg->Register.Index * 4 + swizzle);
+
+         scalar_ptr = LLVMBuildGEP(bld->base.builder, bld->system_values_array,
+                                   &index, 1, "");
+         scalar = LLVMBuildLoad(bld->base.builder, scalar_ptr, "");
+
+         res = lp_build_broadcast_scalar(&bld->base, scalar);
       }
       break;
 
@@ -2289,6 +2307,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
                   struct lp_type type,
                   struct lp_build_mask_context *mask,
                   LLVMValueRef consts_ptr,
+                  LLVMValueRef system_values_array,
                   const LLVMValueRef *pos,
                   const LLVMValueRef (*inputs)[NUM_CHANNELS],
                   LLVMValueRef (*outputs)[NUM_CHANNELS],
@@ -2374,6 +2393,8 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
          }
       }
    }
+
+   bld.system_values_array = system_values_array;
 
    tgsi_parse_init( &parse, tokens );
 
@@ -2476,3 +2497,53 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
    FREE( bld.instructions );
 }
 
+
+/**
+ * Build up the system values array out of individual values such as
+ * the instance ID, front-face, primitive ID, etc.  The shader info is
+ * used to determine which system values are needed and where to put
+ * them in the system values array.
+ *
+ * XXX only instance ID is implemented at this time.
+ *
+ * The system values register file is similar to the constants buffer.
+ * Example declaration:
+ *    DCL SV[0], INSTANCEID
+ * Example instruction:
+ *    MOVE foo, SV[0].xxxx;
+ *
+ * \return  LLVM float array (interpreted as float [][4])
+ */
+LLVMValueRef
+lp_build_system_values_array(LLVMBuilderRef builder,
+                             const struct tgsi_shader_info *info,
+                             LLVMValueRef instance_id,
+                             LLVMValueRef facing)
+{
+   LLVMValueRef size = lp_build_const_int32(4 * info->num_system_values);
+   LLVMValueRef array = lp_build_array_alloca(builder, LLVMFloatType(),
+                                              size, "sysvals_array");
+   unsigned i;
+
+   for (i = 0; i < info->num_system_values; i++) {
+      LLVMValueRef index = lp_build_const_int32(i * 4);
+      LLVMValueRef ptr, value;
+
+      switch (info->system_value_semantic_name[i]) {
+      case TGSI_SEMANTIC_INSTANCEID:
+         /* convert instance ID from int to float */
+         value = LLVMBuildSIToFP(builder, instance_id, LLVMFloatType(),
+                                 "sysval_instanceid");
+         break;
+      case TGSI_SEMANTIC_FACE:
+         /* fall-through */
+      default:
+         assert(0 && "unexpected semantic in build_system_values_array()");
+      }
+
+      ptr = LLVMBuildGEP(builder, array, &index, 1, "");
+      LLVMBuildStore(builder, value, ptr);
+   }
+      
+   return array;
+}

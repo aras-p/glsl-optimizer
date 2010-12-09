@@ -179,6 +179,7 @@ lp_build_tgsi_soa(LLVMBuilderRef builder,
                   struct lp_type type,
                   struct lp_build_mask_context *mask,
                   LLVMValueRef consts_ptr,
+                  LLVMValueRef system_values_array,
                   const LLVMValueRef *pos,
                   const LLVMValueRef (*inputs)[4],
                   LLVMValueRef (*outputs)[4],
@@ -196,6 +197,13 @@ lp_build_tgsi_aos(LLVMBuilderRef builder,
                   LLVMValueRef *outputs,
                   struct lp_build_sampler_aos *sampler,
                   const struct tgsi_shader_info *info);
+
+
+LLVMValueRef
+lp_build_system_values_array(LLVMBuilderRef builder,
+                             const struct tgsi_shader_info *info,
+                             LLVMValueRef instance_id,
+                             LLVMValueRef facing);
 
 
 #endif /* LP_BLD_TGSI_H */
