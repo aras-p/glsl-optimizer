@@ -131,7 +131,7 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
       ve = &vertex->element[i];
       vb = &nvc0->vtxbuf[ve->pipe.vertex_buffer_index];
 
-      if (!nvc0_resource_mapped_by_gpu(vb->buffer) || 1)
+      if (!nvc0_resource_mapped_by_gpu(vb->buffer))
          nvc0->vbo_fifo |= 1 << i;
 
       if (1 || likely(vb->stride)) {
@@ -380,45 +380,79 @@ nvc0_draw_elements_inline_u32(struct nouveau_channel *chan, uint32_t *map,
 static void
 nvc0_draw_elements(struct nvc0_context *nvc0,
                    unsigned mode, unsigned start, unsigned count,
-                   unsigned instance_count,
-                   unsigned index_size, int index_bias)
+                   unsigned instance_count, int32_t index_bias)
 {
    struct nouveau_channel *chan = nvc0->screen->base.channel;
    void *data;
    struct pipe_transfer *transfer;
    unsigned prim;
+   unsigned index_size = nvc0->idxbuf.index_size;
 
    chan->flush_notify = nvc0_draw_vbo_flush_notify;
    chan->user_private = nvc0;
 
    prim = nvc0_prim_gl(mode);
 
-   data = pipe_buffer_map(&nvc0->pipe,
-                          nvc0->idxbuf.buffer, PIPE_TRANSFER_READ, &transfer);
-   if (!data)
-      return;
+   if (index_bias != nvc0->state.index_bias) {
+      BEGIN_RING(chan, RING_3D(VB_ELEMENT_BASE), 1);
+      OUT_RING  (chan, index_bias);
+      nvc0->state.index_bias = index_bias;
+   }
 
-   while (instance_count--) {
-      BEGIN_RING(chan, RING_3D(VERTEX_BEGIN_GL), 1);
-      OUT_RING  (chan, prim);
-      switch (index_size) {
-      case 1:
-         nvc0_draw_elements_inline_u08(chan, data, start, count);
-         break;
-      case 2:
-         nvc0_draw_elements_inline_u16(chan, data, start, count);
-         break;
-      case 4:
-         nvc0_draw_elements_inline_u32(chan, data, start, count);
-         break;
-      default:
-         assert(0);
-         return;
+   if (nvc0_resource_mapped_by_gpu(nvc0->idxbuf.buffer)) {
+      struct nouveau_bo *bo = nvc0_resource(nvc0->idxbuf.buffer)->bo;
+      unsigned offset = nvc0->idxbuf.offset;
+      unsigned limit = nvc0->idxbuf.buffer->width0 - 1;
+
+      if (index_size == 4)
+         index_size = 2;
+      else
+      if (index_size == 2)
+         index_size = 1;
+
+      while (instance_count--) {
+         MARK_RING (chan, 11, 4);
+         BEGIN_RING(chan, RING_3D(VERTEX_BEGIN_GL), 1);
+         OUT_RING  (chan, mode);
+         BEGIN_RING(chan, RING_3D(INDEX_ARRAY_START_HIGH), 7);
+         OUT_RELOCh(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART);
+         OUT_RELOCl(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART);
+         OUT_RELOCh(chan, bo, limit, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART);
+         OUT_RELOCl(chan, bo, limit, NOUVEAU_BO_VRAM | NOUVEAU_BO_GART);
+         OUT_RING  (chan, index_size);
+         OUT_RING  (chan, start);
+         OUT_RING  (chan, count);
+         INLIN_RING(chan, RING_3D(VERTEX_END_GL), 0);
+
+         mode |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
       }
-      BEGIN_RING(chan, RING_3D(VERTEX_END_GL), 1);
-      OUT_RING  (chan, 0);
+   } else {
+      data = pipe_buffer_map(&nvc0->pipe, nvc0->idxbuf.buffer,
+                             PIPE_TRANSFER_READ, &transfer);
+      if (!data)
+         return;
 
-      prim |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
+      while (instance_count--) {
+         BEGIN_RING(chan, RING_3D(VERTEX_BEGIN_GL), 1);
+         OUT_RING  (chan, prim);
+         switch (index_size) {
+         case 1:
+            nvc0_draw_elements_inline_u08(chan, data, start, count);
+            break;
+         case 2:
+            nvc0_draw_elements_inline_u16(chan, data, start, count);
+            break;
+         case 4:
+            nvc0_draw_elements_inline_u32(chan, data, start, count);
+            break;
+         default:
+            assert(0);
+            return;
+         }
+         INLIN_RING(chan, RING_3D(VERTEX_END_GL), 0);
+
+         prim |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
+      }
    }
 
    chan->flush_notify = NULL;
@@ -473,7 +507,6 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 
       nvc0_draw_elements(nvc0,
                          info->mode, info->start, info->count,
-                         info->instance_count,
-                         nvc0->idxbuf.index_size, info->index_bias);
+                         info->instance_count, info->index_bias);
    }
 }

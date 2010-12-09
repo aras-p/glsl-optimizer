@@ -8,13 +8,13 @@ http://0x04.net/cgit/index.cgi/rules-ng-ng
 git clone git://0x04.net/rules-ng-ng
 
 The rules-ng-ng source files this header was generated from are:
-- nvc0_3d.xml    (  26726 bytes, from 2010-10-22 00:29:01)
-- copyright.xml  (   6498 bytes, from 2010-09-30 18:32:24)
-- nv_defs.xml    (   4437 bytes, from 2010-07-24 13:13:40)
-- nv_3ddefs.xml  (  16394 bytes, from 2010-10-11 14:37:46)
-- nv_object.xml  (  11357 bytes, from 2010-10-19 20:33:50)
-- nvchipsets.xml (   2907 bytes, from 2010-10-12 17:28:45)
-- nv50_defs.xml  (   4482 bytes, from 2010-10-03 10:27:25)
+- nvc0_3d.xml    (  28058 bytes, from 2010-11-26 18:05:20)
+- copyright.xml  (   6452 bytes, from 2010-11-25 23:28:20)
+- nv_defs.xml    (   4437 bytes, from 2010-07-06 07:43:58)
+- nv_3ddefs.xml  (  16394 bytes, from 2010-10-09 08:27:14)
+- nv_object.xml  (  11547 bytes, from 2010-11-26 16:41:56)
+- nvchipsets.xml (   3074 bytes, from 2010-11-07 00:36:28)
+- nv50_defs.xml  (   4482 bytes, from 2010-10-03 13:18:37)
 
 Copyright (C) 2006-2010 by the following authors:
 - Artur Huillet <arthur.huillet@free.fr> (ahuillet)
@@ -27,7 +27,7 @@ Copyright (C) 2006-2010 by the following authors:
 - Dmitry Eremin-Solenikov <lumag@users.sf.net> (lumag)
 - EdB <edb_@users.sf.net> (edb_)
 - Erik Waling <erikwailing@users.sf.net> (erikwaling)
-- Francisco Jerez <currojerez@riseup.net> (curro, curro_, currojerez)
+- Francisco Jerez <currojerez@riseup.net> (curro)
 - imirkin <imirkin@users.sf.net> (imirkin)
 - jb17bsome <jb17bsome@bellsouth.net> (jb17bsome)
 - Jeremy Kolb <kjeremy@users.sf.net> (kjeremy)
@@ -337,6 +337,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NVC0_3D_SCREEN_SCISSOR_VERT_H__SHIFT			16
 #define NVC0_3D_SCREEN_SCISSOR_VERT_Y__MASK			0x0000ffff
 #define NVC0_3D_SCREEN_SCISSOR_VERT_Y__SHIFT			0
+
+#define NVC0_3D_VERTEX_ID					0x00001118
 
 #define NVC0_3D_VTX_ATTR_DEFINE					0x0000114c
 #define NVC0_3D_VTX_ATTR_DEFINE_ATTR__MASK			0x000000ff
@@ -716,6 +718,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NVC0_3D_POLYGON_OFFSET_UNITS				0x000015bc
 
 #define NVC0_3D_GP_BUILTIN_RESULT_EN				0x000015cc
+#define NVC0_3D_GP_BUILTIN_RESULT_EN_LAYER			0x00010000
 
 #define NVC0_3D_MULTISAMPLE_MODE				0x000015d0
 #define NVC0_3D_MULTISAMPLE_MODE_1X				0x00000000
@@ -765,6 +768,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NVC0_3D_VERTEX_BASE_LOW					0x000015f8
 
 #define NVC0_3D_POINT_COORD_REPLACE				0x00001604
+#define NVC0_3D_POINT_COORD_REPLACE_BITS__MASK			0x00001fff
+#define NVC0_3D_POINT_COORD_REPLACE_BITS__SHIFT			0
 
 #define NVC0_3D_CODE_ADDRESS_HIGH				0x00001608
 
@@ -836,6 +841,20 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NVC0_3D_UNK17BC_ADDRESS_LOW				0x000017c0
 
 #define NVC0_3D_UNK17BC_LIMIT					0x000017c4
+
+#define NVC0_3D_INDEX_ARRAY_START_HIGH				0x000017c8
+
+#define NVC0_3D_INDEX_ARRAY_START_LOW				0x000017cc
+
+#define NVC0_3D_INDEX_ARRAY_LIMIT_HIGH				0x000017d0
+
+#define NVC0_3D_INDEX_ARRAY_LIMIT_LOW				0x000017d4
+
+#define NVC0_3D_INDEX_LOG2_SIZE					0x000017d8
+
+#define NVC0_3D_INDEX_BATCH_FIRST				0x000017dc
+
+#define NVC0_3D_INDEX_BATCH_COUNT				0x000017e0
 
 #define NVC0_3D_VERTEX_ARRAY_PER_INSTANCE(i0)		       (0x00001880 + 0x4*(i0))
 #define NVC0_3D_VERTEX_ARRAY_PER_INSTANCE__ESIZE		0x00000004
@@ -1019,17 +1038,30 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NVC0_3D_CB_DATA__ESIZE					0x00000004
 #define NVC0_3D_CB_DATA__LEN					0x00000010
 
-#define NVC0_3D_BIND_TIC(i0)				       (0x00002404 + 0x20*(i0))
-#define NVC0_3D_BIND_TIC__ESIZE					0x00000020
-#define NVC0_3D_BIND_TIC__LEN					0x00000005
-
 #define NVC0_3D_BIND_TSC(i0)				       (0x00002400 + 0x20*(i0))
 #define NVC0_3D_BIND_TSC__ESIZE					0x00000020
 #define NVC0_3D_BIND_TSC__LEN					0x00000005
+#define NVC0_3D_BIND_TSC_ACTIVE					0x00000001
+#define NVC0_3D_BIND_TSC_SAMPLER__MASK				0x00000ff0
+#define NVC0_3D_BIND_TSC_SAMPLER__SHIFT				4
+#define NVC0_3D_BIND_TSC_TSC__MASK				0x01fff000
+#define NVC0_3D_BIND_TSC_TSC__SHIFT				12
+
+#define NVC0_3D_BIND_TIC(i0)				       (0x00002404 + 0x20*(i0))
+#define NVC0_3D_BIND_TIC__ESIZE					0x00000020
+#define NVC0_3D_BIND_TIC__LEN					0x00000005
+#define NVC0_3D_BIND_TIC_ACTIVE					0x00000001
+#define NVC0_3D_BIND_TIC_TEXTURE__MASK				0x000001fe
+#define NVC0_3D_BIND_TIC_TEXTURE__SHIFT				1
+#define NVC0_3D_BIND_TIC_TIC__MASK				0x7ffffe00
+#define NVC0_3D_BIND_TIC_TIC__SHIFT				9
 
 #define NVC0_3D_CB_BIND(i0)				       (0x00002410 + 0x20*(i0))
 #define NVC0_3D_CB_BIND__ESIZE					0x00000020
 #define NVC0_3D_CB_BIND__LEN					0x00000005
+#define NVC0_3D_CB_BIND_VALID					0x00000001
+#define NVC0_3D_CB_BIND_INDEX__MASK				0x000000f0
+#define NVC0_3D_CB_BIND_INDEX__SHIFT				4
 
 #define NVC0_3D_TFB_VARYING_LOCS(i0)			       (0x00002800 + 0x4*(i0))
 #define NVC0_3D_TFB_VARYING_LOCS__ESIZE				0x00000004
