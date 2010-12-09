@@ -99,6 +99,12 @@ vs_exec_run_linear( struct draw_vertex_shader *shader,
    tgsi_exec_set_constant_buffers(machine, PIPE_MAX_CONSTANT_BUFFERS,
                                   constants, const_size);
 
+   if (shader->info.uses_instanceid) {
+      unsigned i = machine->SysSemanticToIndex[TGSI_SEMANTIC_INSTANCEID];
+      assert(i < Elements(machine->SystemValue));
+      machine->SystemValue[i][0] = shader->draw->instance_id;
+   }
+
    for (i = 0; i < count; i += MAX_TGSI_VERTICES) {
       unsigned int max_vertices = MIN2(MAX_TGSI_VERTICES, count - i);
 
