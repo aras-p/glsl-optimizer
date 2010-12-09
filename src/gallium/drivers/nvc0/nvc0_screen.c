@@ -206,6 +206,10 @@ nvc0_screen_destroy(struct pipe_screen *pscreen)
    if (screen->tic.entries)
       FREE(screen->tic.entries);
 
+   nouveau_grobj_free(&screen->fermi);
+   nouveau_grobj_free(&screen->eng2d);
+   nouveau_grobj_free(&screen->m2mf);
+
    nouveau_screen_fini(&screen->base);
 
    FREE(screen);
@@ -327,6 +331,13 @@ nvc0_magic_3d_init(struct nouveau_channel *chan)
    OUT_RING  (chan, 0);
 }
 
+#define FAIL_SCREEN_INIT(str, err)                    \
+   do {                                               \
+      NOUVEAU_ERR(str, err);                          \
+      nvc0_screen_destroy(pscreen);                   \
+      return NULL;                                    \
+   } while(0)
+
 struct pipe_screen *
 nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 {
@@ -383,15 +394,23 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
       OUT_RING  (chan, 0x0000);
    }
 
+   ret = nouveau_grobj_alloc(chan, 0xbeef9039, NVC0_M2MF, &screen->m2mf);
+   if (ret)
+      FAIL_SCREEN_INIT("Error allocating PGRAPH context for M2MF: %d\n", ret);
+
    BEGIN_RING(chan, RING_MF_(0x0000), 1);
-   OUT_RING  (chan, 0x9039);
+   OUT_RING  (chan, screen->m2mf->grclass);
    BEGIN_RING(chan, RING_MF(NOTIFY_ADDRESS_HIGH), 3);
    OUT_RELOCh(chan, screen->fence.bo, 16, NOUVEAU_BO_GART | NOUVEAU_BO_RDWR);
    OUT_RELOCl(chan, screen->fence.bo, 16, NOUVEAU_BO_GART | NOUVEAU_BO_RDWR);
    OUT_RING  (chan, 0);
 
+   ret = nouveau_grobj_alloc(chan, 0xbeef902d, NVC0_2D, &screen->eng2d);
+   if (ret)
+      FAIL_SCREEN_INIT("Error allocating PGRAPH context for 2D: %d\n", ret);
+
    BEGIN_RING(chan, RING_2D_(0x0000), 1);
-   OUT_RING  (chan, 0x902d);
+   OUT_RING  (chan, screen->eng2d->grclass);
    BEGIN_RING(chan, RING_2D(OPERATION), 1);
    OUT_RING  (chan, NVC0_2D_OPERATION_SRCCOPY);
    BEGIN_RING(chan, RING_2D(CLIP_ENABLE), 1);
@@ -403,8 +422,12 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    BEGIN_RING(chan, RING_2D_(0x0888), 1);
    OUT_RING  (chan, 1);
 
+   ret = nouveau_grobj_alloc(chan, 0xbeef9097, NVC0_3D, &screen->fermi);
+   if (ret)
+      FAIL_SCREEN_INIT("Error allocating PGRAPH context for 3D: %d\n", ret);
+
    BEGIN_RING(chan, RING_3D_(0x0000), 1);
-   OUT_RING  (chan, 0x9097);
+   OUT_RING  (chan, screen->fermi->grclass);
    BEGIN_RING(chan, RING_3D(NOTIFY_ADDRESS_HIGH), 3);
    OUT_RELOCh(chan, screen->fence.bo, 32, NOUVEAU_BO_GART | NOUVEAU_BO_RDWR);
    OUT_RELOCl(chan, screen->fence.bo, 32, NOUVEAU_BO_GART | NOUVEAU_BO_RDWR);

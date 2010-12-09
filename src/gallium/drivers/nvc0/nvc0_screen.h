@@ -65,6 +65,10 @@ struct nvc0_screen {
    struct nvc0_mman *mm_GART;
    struct nvc0_mman *mm_VRAM;
    struct nvc0_mman *mm_VRAM_fe0;
+
+   struct nouveau_grobj *fermi;
+   struct nouveau_grobj *eng2d;
+   struct nouveau_grobj *m2mf;
 };
 
 static INLINE struct nvc0_screen *
