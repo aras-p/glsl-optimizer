@@ -143,40 +143,40 @@ nvc0_miptree_create(struct pipe_screen *pscreen,
 
    switch (pt->format) {
    case PIPE_FORMAT_Z16_UNORM:
-      tile_flags = 0x070; /* COMPRESSED */
-      tile_flags = 0x020; /* NORMAL ? */
-      tile_flags = 0x010; /* NORMAL ? */
+      tile_flags = 0x0700; /* COMPRESSED */
+      tile_flags = 0x0200; /* NORMAL ? */
+      tile_flags = 0x0100; /* NORMAL ? */
       break;
    case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
-      tile_flags = 0x530; /* MSAA 4, COMPRESSED */
-      tile_flags = 0x460; /* NORMAL */
+      tile_flags = 0x5300; /* MSAA 4, COMPRESSED */
+      tile_flags = 0x4600; /* NORMAL */
       break;
    case PIPE_FORMAT_Z24X8_UNORM:
    case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
-      tile_flags = 0x110; /* NORMAL */
+      tile_flags = 0x1100; /* NORMAL */
       if (w * h >= 128 * 128 && 0)
-         tile_flags = 0x170; /* COMPRESSED, requires magic */
+         tile_flags = 0x1700; /* COMPRESSED, requires magic */
       break;
    case PIPE_FORMAT_R32G32B32A32_FLOAT:
-      tile_flags = 0xf50; /* COMPRESSED */
-      tile_flags = 0xf70; /* MSAA 2 */
-      tile_flags = 0xf90; /* MSAA 4 */
-      tile_flags = 0xfe0; /* NORMAL */
+      tile_flags = 0xf500; /* COMPRESSED */
+      tile_flags = 0xf700; /* MSAA 2 */
+      tile_flags = 0xf900; /* MSAA 4 */
+      tile_flags = 0xfe00; /* NORMAL */
       break;
    case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
-      tile_flags = 0xce0; /* COMPRESSED */
-      tile_flags = 0xcf0; /* MSAA 2, COMPRESSED */
-      tile_flags = 0xd00; /* MSAA 4, COMPRESSED */
-      tile_flags = 0xc30; /* NORMAL */
+      tile_flags = 0xce00; /* COMPRESSED */
+      tile_flags = 0xcf00; /* MSAA 2, COMPRESSED */
+      tile_flags = 0xd000; /* MSAA 4, COMPRESSED */
+      tile_flags = 0xc300; /* NORMAL */
       break;
    case PIPE_FORMAT_R16G16B16A16_UNORM:
-      tile_flags = 0xe90; /* COMPRESSED */
+      tile_flags = 0xe900; /* COMPRESSED */
       break;
    default:
-      tile_flags = 0xe00; /* MSAA 4, COMPRESSED 32 BIT */
-      tile_flags = 0xfe0; /* NORMAL 32 BIT */
+      tile_flags = 0xe000; /* MSAA 4, COMPRESSED 32 BIT */
+      tile_flags = 0xfe00; /* NORMAL 32 BIT */
       if (w * h >= 128 * 128 && 0)
-         tile_flags = 0xdb0; /* COMPRESSED 32 BIT, requires magic */
+         tile_flags = 0xdb00; /* COMPRESSED 32 BIT, requires magic */
       break;
    }
 
@@ -224,7 +224,7 @@ nvc0_miptree_create(struct pipe_screen *pscreen,
    }
 
    alloc_size = mt->total_size;
-   if (tile_flags == 0x170)
+   if (tile_flags == 0x1700)
       alloc_size *= 3; /* HiZ, XXX: correct size */
 
    ret = nouveau_bo_new_tile(dev, NOUVEAU_BO_VRAM, 256, alloc_size,

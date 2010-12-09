@@ -30,7 +30,7 @@ nvc0_m2mf_transfer_rect(struct pipe_screen *pscreen,
 
    assert(dst->cpp == src->cpp);
 
-   if (src->bo->tile_flags) {      
+   if (nouveau_bo_tile_layout(src->bo)) {
       BEGIN_RING(chan, RING_MF(TILING_MODE_IN), 5);
       OUT_RING  (chan, src->tile_mode);
       OUT_RING  (chan, src->width * cpp);
@@ -46,7 +46,7 @@ nvc0_m2mf_transfer_rect(struct pipe_screen *pscreen,
       exec |= NVC0_M2MF_EXEC_LINEAR_IN;
    }
 
-   if (dst->bo->tile_flags) {
+   if (nouveau_bo_tile_layout(dst->bo)) {
       BEGIN_RING(chan, RING_MF(TILING_MODE_OUT), 5);
       OUT_RING  (chan, dst->tile_mode);
       OUT_RING  (chan, dst->width * cpp);
@@ -185,7 +185,7 @@ nvc0_m2mf_push_rect(struct pipe_screen *pscreen,
    const int line_len = nblocksx * cpp;
    int dy = dst->y;
 
-   assert(dst->bo->tile_flags);
+   assert(nouveau_bo_tile_layout(dst->bo));
 
    BEGIN_RING(chan, RING_MF(TILING_MODE_OUT), 5);
    OUT_RING  (chan, dst->tile_mode);

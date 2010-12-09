@@ -40,6 +40,12 @@ extern uint64_t nouveau_bo_gpu_address(struct nouveau_bo *);
 
 int nouveau_pushbuf_flush(struct nouveau_channel *, unsigned min);
 
+static inline uint32_t
+nouveau_bo_tile_layout(struct nouveau_bo *bo)
+{
+   return bo->tile_flags & NOUVEAU_BO_TILE_LAYOUT_MASK;
+}
+
 static INLINE void
 WAIT_RING(struct nouveau_channel *chan, unsigned size)
 {
