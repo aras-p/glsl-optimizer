@@ -297,7 +297,8 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
                       const GLvoid *ptr)
 {
    GLbitfield legalTypes = (SHORT_BIT | INT_BIT |
-                            HALF_BIT | FLOAT_BIT | DOUBLE_BIT);
+                            HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
+                            FIXED_BIT);
    GET_CURRENT_CONTEXT(ctx);
    const GLuint unit = ctx->Array.ActiveTexture;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
