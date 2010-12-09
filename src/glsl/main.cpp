@@ -78,6 +78,7 @@ initialize_context(struct gl_context *ctx, gl_api api)
    ctx->API = api;
 
    ctx->Extensions.ARB_draw_buffers = GL_TRUE;
+   ctx->Extensions.ARB_draw_instanced = GL_TRUE;
    ctx->Extensions.ARB_fragment_coord_conventions = GL_TRUE;
    ctx->Extensions.EXT_texture_array = GL_TRUE;
    ctx->Extensions.NV_texture_rectangle = GL_TRUE;
