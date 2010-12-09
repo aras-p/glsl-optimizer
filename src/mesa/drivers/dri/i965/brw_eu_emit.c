@@ -1710,27 +1710,15 @@ void brw_dp_READ_4_vs(struct brw_compile *p,
 {
    struct brw_instruction *insn;
    GLuint msg_reg_nr = 1;
-   struct brw_reg b;
-
-   /*
-   printf("vs const read msg, location %u, msg_reg_nr %d\n",
-          location, msg_reg_nr);
-   */
 
    /* Setup MRF[1] with location/offset into const buffer */
    brw_push_insn_state(p);
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_mask_control(p, BRW_MASK_DISABLE);
    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
-
-   /* XXX I think we're setting all the dwords of MRF[1] to 'location'.
-    * when the docs say only dword[2] should be set.  Hmmm.  But it works.
-    */
-   b = brw_message_reg(msg_reg_nr);
-   b = retype(b, BRW_REGISTER_TYPE_UD);
-   /*b = get_element_ud(b, 2);*/
-   brw_MOV(p, b, brw_imm_ud(location));
-
+   brw_MOV(p, retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE, msg_reg_nr, 2),
+		     BRW_REGISTER_TYPE_UD),
+	   brw_imm_ud(location));
    brw_pop_insn_state(p);
 
    insn = next_insn(p, BRW_OPCODE_SEND);
