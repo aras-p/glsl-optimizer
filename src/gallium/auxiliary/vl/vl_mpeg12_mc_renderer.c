@@ -86,7 +86,6 @@ enum VS_OUTPUT
    VS_O_TEX2,
    VS_O_EB_0,
    VS_O_EB_1,
-   VS_O_FRAME_PRED,
    VS_O_REF_FRAMES,
    VS_O_BKWD_PRED,
    VS_O_MV0,
@@ -104,7 +103,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
    struct ureg_src interlaced, frame_pred, ref_frames, bkwd_pred;
    struct ureg_dst t_vpos, t_vtex, t_vmv;
    struct ureg_dst o_vpos, o_line, o_vtex[3], o_eb[2], o_vmv[4];
-   struct ureg_dst o_frame_pred, o_ref_frames, o_bkwd_pred;
+   struct ureg_dst o_ref_frames, o_bkwd_pred;
    unsigned i, label;
 
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
@@ -133,7 +132,6 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
    o_vtex[2] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX2);   
    o_eb[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB_0);
    o_eb[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB_1);
-   o_frame_pred = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_FRAME_PRED);
    o_ref_frames = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_REF_FRAMES);
    o_bkwd_pred = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_BKWD_PRED);
    
@@ -212,7 +210,6 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
             ureg_negate(ureg_scalar(vrect, TGSI_SWIZZLE_X)),
             eb[1][1], eb[1][0]);
 
-   ureg_MOV(shader, ureg_writemask(o_frame_pred, TGSI_WRITEMASK_X), frame_pred);
    ureg_MOV(shader, ureg_writemask(o_ref_frames, TGSI_WRITEMASK_X), ref_frames);
    ureg_MOV(shader, ureg_writemask(o_bkwd_pred, TGSI_WRITEMASK_X), bkwd_pred);
 
@@ -220,8 +217,18 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
       0.5f / r->buffer_width,
       0.5f / r->buffer_height);
 
-   for (i = 0; i < 4; i++)
-      ureg_MAD(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_XY), scale, vmv[i], ureg_src(t_vpos));
+   ureg_MAD(shader, ureg_writemask(o_vmv[0], TGSI_WRITEMASK_XY), scale, vmv[0], ureg_src(t_vpos));
+   ureg_MAD(shader, ureg_writemask(o_vmv[2], TGSI_WRITEMASK_XY), scale, vmv[2], ureg_src(t_vpos));
+
+   ureg_CMP(shader, ureg_writemask(t_vmv, TGSI_WRITEMASK_XY),
+            ureg_negate(ureg_scalar(frame_pred, TGSI_SWIZZLE_X)),
+            vmv[0], vmv[1]);
+   ureg_MAD(shader, ureg_writemask(o_vmv[1], TGSI_WRITEMASK_XY), scale, ureg_src(t_vmv), ureg_src(t_vpos));
+
+   ureg_CMP(shader, ureg_writemask(t_vmv, TGSI_WRITEMASK_XY),
+            ureg_negate(ureg_scalar(frame_pred, TGSI_SWIZZLE_X)),
+            vmv[2], vmv[3]);
+   ureg_MAD(shader, ureg_writemask(o_vmv[3], TGSI_WRITEMASK_XY), scale, ureg_src(t_vmv), ureg_src(t_vpos));
 
    ureg_release_temporary(shader, t_vtex);
    ureg_release_temporary(shader, t_vpos);
@@ -236,12 +243,11 @@ static struct ureg_dst
 calc_field(struct ureg_program *shader)
 {
    struct ureg_dst tmp;
-   struct ureg_src line, frame_pred;
+   struct ureg_src line;
 
    tmp = ureg_DECL_temporary(shader);
 
    line = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_LINE, TGSI_INTERPOLATE_LINEAR);
-   frame_pred = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_FRAME_PRED, TGSI_INTERPOLATE_CONSTANT);
 
    /*
     * line.xy going from 0 to 8 in steps of 0.5
@@ -261,11 +267,6 @@ calc_field(struct ureg_program *shader)
             ureg_negate(ureg_scalar(line, TGSI_SWIZZLE_Z)),
             ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_Z),
             ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_Y));
-
-   ureg_CMP(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Z),
-            ureg_negate(ureg_scalar(frame_pred, TGSI_SWIZZLE_X)),
-            ureg_imm1f(shader, 0.0f),
-            ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_Z));
 
    return tmp;
 }
