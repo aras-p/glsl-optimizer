@@ -127,8 +127,8 @@ update_array(struct gl_context *ctx,
    GLsizei elementSize;
    GLenum format = GL_RGBA;
 
-   if (ctx->API != API_OPENGLES) {
-      /* fixed point arrays / data is only allowed with OpenGL ES 1.x */
+   if (ctx->API != API_OPENGLES && ctx->API != API_OPENGLES2) {
+      /* fixed point arrays / data is only allowed with OpenGL ES 1.x/2.0 */
       legalTypesMask &= ~FIXED_BIT;
    }
 
