@@ -22,6 +22,8 @@
 
 #include <unistd.h>
 
+#define NOUVEAU_DEBUG 1
+
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
@@ -194,7 +196,7 @@ static INLINE void
 bld_warn_uninitialized(struct bld_context *bld, int kind,
                        struct bld_register *reg, struct nv_basic_block *b)
 {
-#ifdef NOUVEAU_DEBUG_BITS
+#ifdef NOUVEAU_DEBUG
    long i = (reg - &bld->tvs[0][0]) / 4;
    long c = (reg - &bld->tvs[0][0]) & 3;
 
@@ -1359,7 +1361,7 @@ bld_instruction(struct bld_context *bld,
    uint opcode = translate_opcode(insn->Instruction.Opcode);
    uint8_t mask = insn->Dst[0].Register.WriteMask;
 
-#ifdef NOUVEAU_DEBUG_BITS
+#ifdef NOUVEAU_DEBUG
    debug_printf("bld_instruction:"); tgsi_dump_instruction(insn, 1);
 #endif
 	

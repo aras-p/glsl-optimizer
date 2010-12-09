@@ -49,6 +49,8 @@ nvc0_flush(struct pipe_context *pipe, unsigned flags,
 
    if (flags & (PIPE_FLUSH_SWAPBUFFERS | PIPE_FLUSH_FRAME)) {
       FIRE_RING(chan);
+
+      nvc0_screen_fence_next(nvc0->screen);
    }
 }
 

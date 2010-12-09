@@ -76,10 +76,10 @@ nvc0_vertprog_validate(struct nvc0_context *nvc0)
    BEGIN_RING(chan, RING_3D(SP_GPR_ALLOC(1)), 1);
    OUT_RING  (chan, vp->max_gpr);
 
-   BEGIN_RING(chan, RING_3D_(0x163c), 1);
-   OUT_RING  (chan, 0);
-   BEGIN_RING(chan, RING_3D_(0x2600), 1);
-   OUT_RING  (chan, 1);
+   // BEGIN_RING(chan, RING_3D_(0x163c), 1);
+   // OUT_RING  (chan, 0);
+   // BEGIN_RING(chan, RING_3D_(0x2600), 1);
+   // OUT_RING  (chan, 1);
 }
 
 void

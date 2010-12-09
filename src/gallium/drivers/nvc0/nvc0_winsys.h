@@ -12,6 +12,8 @@
 #include "nouveau/nouveau_resource.h"
 #include "nouveau/nouveau_reloc.h"
 
+#include "nvc0_resource.h" /* OUT_RESRC */
+
 #ifndef NV04_PFIFO_MAX_PACKET_LEN
 #define NV04_PFIFO_MAX_PACKET_LEN 2047
 #endif
@@ -141,6 +143,20 @@ OUT_RELOCh(struct nouveau_channel *chan, struct nouveau_bo *bo,
            unsigned delta, unsigned flags)
 {
    return OUT_RELOC(chan, bo, delta, flags | NOUVEAU_BO_HIGH, 0, 0);
+}
+
+static INLINE int
+OUT_RESRCh(struct nouveau_channel *chan, struct nvc0_resource *res,
+           unsigned delta, unsigned flags)
+{
+   return OUT_RELOCh(chan, res->bo, res->offset + delta, res->domain | flags);
+}
+
+static INLINE int
+OUT_RESRCl(struct nouveau_channel *chan, struct nvc0_resource *res,
+           unsigned delta, unsigned flags)
+{
+   return OUT_RELOCl(chan, res->bo, res->offset + delta, res->domain | flags);
 }
 
 static INLINE void

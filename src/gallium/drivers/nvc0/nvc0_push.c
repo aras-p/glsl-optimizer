@@ -215,9 +215,7 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
       struct pipe_vertex_buffer *vb = &nvc0->vtxbuf[i];
       struct nvc0_resource *res = nvc0_resource(vb->buffer);
 
-      if (nouveau_bo_map(res->bo, NOUVEAU_BO_RD))
-         return;
-      data = (uint8_t *)res->bo->map + vb->buffer_offset;
+      data = nvc0_resource_map_offset(res, vb->buffer_offset, NOUVEAU_BO_RD);
       if (info->indexed)
          data += info->index_bias * vb->stride;
 

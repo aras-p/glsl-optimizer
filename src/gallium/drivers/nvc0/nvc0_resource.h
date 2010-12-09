@@ -29,9 +29,42 @@ struct nvc0_resource {
 
    uint8_t status;
    uint8_t domain;
+
+   int16_t score; /* low if mapped very often, if high can move to VRAM */
+
    struct nvc0_fence *fence;
-   struct list_head list;
+   struct nvc0_fence *fence_wr;
+
+   struct nvc0_mm_allocation *mm;
 };
+
+/* XXX: wait for fence (atm only using this for vertex push) */
+static INLINE void *
+nvc0_resource_map_offset(struct nvc0_resource *res, uint32_t offset,
+                         uint32_t flags)
+{
+   void *map;
+
+   if (res->domain == 0)
+      return res->data + offset;
+
+   if (nouveau_bo_map_range(res->bo, res->offset + offset,
+                            res->base.width0, flags | NOUVEAU_BO_NOSYNC))
+      return NULL;
+
+   /* With suballocation, the same bo can be mapped several times, so unmap
+    * immediately. Maps are guaranteed to persist. */
+   map = res->bo->map;
+   nouveau_bo_unmap(res->bo);
+   return map;
+}
+
+static INLINE void
+nvc0_resource_unmap(struct nvc0_resource *res)
+{
+   if (res->domain != 0 && 0)
+      nouveau_bo_unmap(res->bo);
+}
 
 #define NVC0_TILE_H(m) (8 << ((m >> 4) & 0xf))
 #define NVC0_TILE_D(m) (1 << (m >> 8))
@@ -67,7 +100,7 @@ nvc0_resource(struct pipe_resource *resource)
 static INLINE boolean
 nvc0_resource_mapped_by_gpu(struct pipe_resource *resource)
 {
-   return nvc0_resource(resource)->bo->offset != 0ULL;
+   return nvc0_resource(resource)->domain != 0;
 }
 
 void
@@ -105,5 +138,14 @@ nvc0_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_resource *pt,
 
 void
 nvc0_miptree_surface_del(struct pipe_surface *ps);
+
+struct nvc0_context;
+
+boolean
+nvc0_buffer_migrate(struct nvc0_context *,
+                    struct nvc0_resource *, unsigned domain);
+
+boolean
+nvc0_migrate_vertices(struct nvc0_resource *buf, unsigned base, unsigned size);
 
 #endif

@@ -118,6 +118,7 @@ struct nvc0_context {
    unsigned sample_mask;
 
    boolean vbo_dirty;
+   boolean vbo_push_hint;
 
    struct draw_context *draw;
 };
@@ -150,6 +151,7 @@ static INLINE void
 nvc0_make_buffer_resident(struct nvc0_context *nvc0,
                           struct nvc0_resource *res, unsigned flags)
 {
+   nvc0_resource_validate(res, flags);
    nvc0_make_bo_resident(nvc0, res->bo, flags);
 }
 

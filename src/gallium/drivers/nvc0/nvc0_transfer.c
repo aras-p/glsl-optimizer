@@ -111,6 +111,8 @@ nvc0_m2mf_push_linear(struct nvc0_context *nvc0,
    uint32_t *src = (uint32_t *)data;
    unsigned count = (size + 3) / 4;
 
+   MARK_RING (chan, 8, 2);
+
    BEGIN_RING(chan, RING_MF(OFFSET_OUT_HIGH), 2);
    OUT_RELOCh(chan, dst, offset, domain | NOUVEAU_BO_WR);
    OUT_RELOCl(chan, dst, offset, domain | NOUVEAU_BO_WR);
@@ -125,6 +127,7 @@ nvc0_m2mf_push_linear(struct nvc0_context *nvc0,
 
       if (nr < 9) {
          FIRE_RING(chan);
+         nvc0_make_bo_resident(nvc0, dst, NOUVEAU_BO_WR);
          continue;
       }
       nr = MIN2(count, nr - 1);
@@ -138,53 +141,90 @@ nvc0_m2mf_push_linear(struct nvc0_context *nvc0,
    }
 }
 
+void
+nvc0_m2mf_copy_linear(struct nvc0_context *nvc0,
+                      struct nouveau_bo *dst, unsigned dstoff, unsigned dstdom,
+                      struct nouveau_bo *src, unsigned srcoff, unsigned srcdom,
+                      unsigned size)
+{
+   struct nouveau_channel *chan = nvc0->screen->base.channel;
+
+   while (size) {
+      unsigned bytes = MIN2(size, 1 << 17);
+
+      MARK_RING (chan, 11, 4);
+
+      BEGIN_RING(chan, RING_MF(OFFSET_OUT_HIGH), 2);
+      OUT_RELOCh(chan, dst, dstoff, dstdom | NOUVEAU_BO_WR);
+      OUT_RELOCl(chan, dst, dstoff, dstdom | NOUVEAU_BO_WR);
+      BEGIN_RING(chan, RING_MF(OFFSET_IN_HIGH), 2);
+      OUT_RELOCh(chan, src, srcoff, srcdom | NOUVEAU_BO_RD);
+      OUT_RELOCl(chan, src, srcoff, srcdom | NOUVEAU_BO_RD);
+      BEGIN_RING(chan, RING_MF(LINE_LENGTH_IN), 2);
+      OUT_RING  (chan, bytes);
+      OUT_RING  (chan, 1);
+      BEGIN_RING(chan, RING_MF(EXEC), 1);
+      OUT_RING  (chan, (1 << NVC0_M2MF_EXEC_INC__SHIFT) |
+                 NVC0_M2MF_EXEC_LINEAR_IN | NVC0_M2MF_EXEC_LINEAR_OUT);
+
+      srcoff += bytes;
+      dstoff += bytes;
+      size -= bytes;
+   }
+}
+
 static void
-nvc0_sifc_push_rect(struct pipe_screen *pscreen,
-                    const struct nvc0_m2mf_rect *dst, unsigned dst_format,
-                    unsigned src_format, unsigned src_pitch, void *src,
+nvc0_m2mf_push_rect(struct pipe_screen *pscreen,
+                    const struct nvc0_m2mf_rect *dst,
+                    const void *data,
                     unsigned nblocksx, unsigned nblocksy)
 {
    struct nouveau_channel *chan;
+   const uint8_t *src = (const uint8_t *)data;
+   const int cpp = dst->cpp;
+   const int line_len = nblocksx * cpp;
+   int dy = dst->y;
 
-   if (dst->bo->tile_flags) {
-      BEGIN_RING(chan, RING_2D(DST_FORMAT), 5);
-      OUT_RING  (chan, dst_format);
-      OUT_RING  (chan, 0);
-      OUT_RING  (chan, dst->tile_mode);
-      OUT_RING  (chan, 1);
-      OUT_RING  (chan, 0);
-   } else {
-      BEGIN_RING(chan, RING_2D(DST_FORMAT), 2);
-      OUT_RING  (chan, NV50_SURFACE_FORMAT_A8R8G8B8_UNORM);
-      OUT_RING  (chan, 1);
-      BEGIN_RING(chan, RING_2D(DST_PITCH), 1);
-      OUT_RING  (chan, dst->pitch);
-   }
+   assert(dst->bo->tile_flags);
 
-   BEGIN_RING(chan, RING_2D(DST_WIDTH), 4);
-   OUT_RING  (chan, dst->width);
+   BEGIN_RING(chan, RING_MF(TILING_MODE_OUT), 5);
+   OUT_RING  (chan, dst->tile_mode);
+   OUT_RING  (chan, dst->width * cpp);
    OUT_RING  (chan, dst->height);
-   OUT_RELOCh(chan, dst->bo, dst->base, dst->domain | NOUVEAU_BO_WR);
-   OUT_RELOCl(chan, dst->bo, dst->base, dst->domain | NOUVEAU_BO_WR);
-
-   BEGIN_RING(chan, RING_2D(SIFC_BITMAP_ENABLE), 2);
-   OUT_RING  (chan, 0);
-   OUT_RING  (chan, src_format);
-   BEGIN_RING(chan, RING_2D(SIFC_WIDTH), 10);
-   OUT_RING  (chan, nblocksx);
-   OUT_RING  (chan, nblocksy);
-   OUT_RING  (chan, 0);
-   OUT_RING  (chan, 1);
-   OUT_RING  (chan, 0);
-   OUT_RING  (chan, 1);
-   OUT_RING  (chan, 0);
-   OUT_RING  (chan, dst->x);
-   OUT_RING  (chan, 0);
-   OUT_RING  (chan, dst->y);
+   OUT_RING  (chan, dst->depth);
+   OUT_RING  (chan, dst->z);
 
    while (nblocksy) {
+      int line_count, words;
+      int size = MIN2(AVAIL_RING(chan), NV04_PFIFO_MAX_PACKET_LEN);
 
-      src = (uint8_t *)src + src_pitch;
+      if (size < (12 + words)) {
+         FIRE_RING(chan);
+         continue;
+      }
+      line_count = (size * 4) / line_len;
+      words = (line_count * line_len + 3) / 4;
+
+      BEGIN_RING(chan, RING_MF(OFFSET_OUT_HIGH), 2);
+      OUT_RELOCh(chan, dst->bo, dst->base, dst->domain | NOUVEAU_BO_WR);
+      OUT_RELOCl(chan, dst->bo, dst->base, dst->domain | NOUVEAU_BO_WR);
+
+      BEGIN_RING(chan, RING_MF(TILING_POSITION_OUT_X), 2);
+      OUT_RING  (chan, dst->x * cpp);
+      OUT_RING  (chan, dy);
+      BEGIN_RING(chan, RING_MF(LINE_LENGTH_IN), 2);
+      OUT_RING  (chan, line_len);
+      OUT_RING  (chan, line_count);
+      BEGIN_RING(chan, RING_MF(EXEC), 1);
+      OUT_RING  (chan, (1 << NVC0_M2MF_EXEC_INC__SHIFT) |
+                 NVC0_M2MF_EXEC_PUSH | NVC0_M2MF_EXEC_LINEAR_IN);
+
+      BEGIN_RING(chan, RING_MF(DATA), words);
+      OUT_RINGp (chan, src, words);
+
+      dy += line_count;
+      src += line_len * line_count;
+      nblocksy -= line_count;
    }
 }
 
@@ -241,6 +281,11 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
    tx->rect[0].depth = res->depth0;
    tx->rect[0].pitch = lvl->pitch;
    tx->rect[0].domain = NOUVEAU_BO_VRAM;
+
+   if (!(usage & PIPE_TRANSFER_READ) &&
+       (res->depth0 == 1) && (tx->nblocksy * tx->base.stride < 512 * 4)) {
+      /* don't allocate scratch buffer, upload through FIFO */
+   }
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0,
                         tx->nblocksy * tx->base.stride, &tx->rect[1].bo);

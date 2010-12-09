@@ -10,8 +10,12 @@
 #define NVC0_TIC_MAX_ENTRIES 2048
 #define NVC0_TSC_MAX_ENTRIES 2048
 
+struct nvc0_mman;
 struct nvc0_context;
 struct nvc0_fence;
+
+#define NVC0_SCRATCH_SIZE (2 << 20)
+#define NVC0_SCRATCH_NR_BUFFERS 2
 
 struct nvc0_screen {
    struct nouveau_screen base;
@@ -28,6 +32,13 @@ struct nvc0_screen {
    uint64_t tls_size;
 
    struct nouveau_resource *text_heap;
+
+   struct {
+      struct nouveau_bo *bo[NVC0_SCRATCH_NR_BUFFERS];
+      uint8_t *buf;
+      int index;
+      uint32_t offset;
+   } scratch;
 
    struct {
       void **entries;
@@ -50,6 +61,10 @@ struct nvc0_screen {
       uint32_t sequence_ack;
       struct nouveau_bo *bo;
    } fence;
+
+   struct nvc0_mman *mm_GART;
+   struct nvc0_mman *mm_VRAM;
+   struct nvc0_mman *mm_VRAM_fe0;
 };
 
 static INLINE struct nvc0_screen *
@@ -58,13 +73,59 @@ nvc0_screen(struct pipe_screen *screen)
    return (struct nvc0_screen *)screen;
 }
 
+/* Since a resource can be migrated, we need to decouple allocations from
+ * them. This struct is linked with fences for delayed freeing of allocs.
+ */
+struct nvc0_mm_allocation {
+   struct nvc0_mm_allocation *next;
+   void *priv;
+   uint32_t offset;
+};
+
+extern struct nvc0_mman *
+nvc0_mm_create(struct nouveau_device *, uint32_t domain, uint32_t storage_type);
+
+extern struct nvc0_mm_allocation *
+nvc0_mm_allocate(struct nvc0_mman *,
+                 uint32_t size, struct nouveau_bo **, uint32_t *offset);
+extern void
+nvc0_mm_free(struct nvc0_mm_allocation *);
+
 void nvc0_screen_make_buffers_resident(struct nvc0_screen *);
 
 int nvc0_screen_tic_alloc(struct nvc0_screen *, void *);
 int nvc0_screen_tsc_alloc(struct nvc0_screen *, void *);
 
+static INLINE void
+nvc0_resource_validate(struct nvc0_resource *res, uint32_t flags)
+{
+   struct nvc0_screen *screen = nvc0_screen(res->base.screen);
+
+   assert(res->mm);
+
+   nvc0_fence_reference(&res->fence, screen->fence.current);
+
+   if (flags & NOUVEAU_BO_WR)
+      nvc0_fence_reference(&res->fence_wr, screen->fence.current);
+
+   nouveau_reloc_emit(screen->base.channel,
+                      NULL, 0, NULL, res->bo, 0, 0, NOUVEAU_BO_RDWR, 0, 0);
+}
+
+
 boolean
 nvc0_screen_fence_new(struct nvc0_screen *, struct nvc0_fence **, boolean emit);
+
+void
+nvc0_screen_fence_next(struct nvc0_screen *);
+
+static INLINE boolean
+nvc0_screen_fence_emit(struct nvc0_screen *screen)
+{
+   nvc0_fence_emit(screen->fence.current);
+
+   return nvc0_screen_fence_new(screen, &screen->fence.current, FALSE);
+}
 
 struct nvc0_format {
    uint32_t rt;

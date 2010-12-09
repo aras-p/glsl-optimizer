@@ -63,7 +63,7 @@ static const uint32_t nvc0_9097_vertex_array_select[] =
 
 static const uint32_t nvc0_9097_color_mask_brdc[] =
 {
-   0x05a00021, /* maddr [0x1680] */
+   0x05a00021, /* maddr [0x1a00, increment = 4] */
    0x00000841, /* send $r1 */
    0x00000841, /* send $r1 */
    0x00000841, /* send $r1 */
