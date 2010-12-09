@@ -153,10 +153,15 @@ set_immd_u32(struct nv_pc *pc, uint32_t u32)
 {
    if ((pc->emit[0] & 0xf) == 0x2) {
       set_immd_u32_l(pc, u32);
+   } else
+   if ((pc->emit[0] & 0xf) == 0x3) {
+      assert(!(pc->emit[1] & 0xc000));
+      pc->emit[1] |= 0xc000;
+      assert(!(u32 & 0xfff00000));
+      set_immd_u32_l(pc, u32);
    } else {
       assert(!(pc->emit[1] & 0xc000));
       pc->emit[1] |= 0xc000;
-
       assert(!(u32 & 0xfff));
       set_immd_u32_l(pc, u32 >> 12);
    }
