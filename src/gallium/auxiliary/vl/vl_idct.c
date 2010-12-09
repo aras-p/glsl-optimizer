@@ -496,7 +496,7 @@ vl_idct_upload_matrix(struct pipe_context *pipe)
    struct pipe_box rect =
    {
       0, 0, 0,
-      BLOCK_WIDTH,
+      BLOCK_WIDTH / 4,
       BLOCK_HEIGHT,
       1
    };
