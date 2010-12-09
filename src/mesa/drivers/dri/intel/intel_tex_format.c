@@ -204,11 +204,13 @@ intelChooseTextureFormat(struct gl_context * ctx, GLint internalFormat,
     * { R, G, 1.0, 1.0 } from a red-green texture would be useful.
     */
    case GL_RED:
+   case GL_COMPRESSED_RED:
    case GL_R8:
       return MESA_FORMAT_R8;
    case GL_R16:
       return MESA_FORMAT_R16;
    case GL_RG:
+   case GL_COMPRESSED_RG:
    case GL_RG8:
       return MESA_FORMAT_RG88;
    case GL_RG16:
