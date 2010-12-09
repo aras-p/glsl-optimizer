@@ -102,7 +102,7 @@ int r600_upload_buffer(struct r600_upload *upload, unsigned offset,
 	}
 
 	in_ptr = in_buffer->user_buffer;
-	memcpy(upload->ptr + upload->offset, in_ptr + offset, size);
+	memcpy(upload->ptr + upload->offset, (uint8_t *) in_ptr + offset, size);
 	*out_offset = upload->offset;
 	*out_size = upload->size;
 	*out_buffer = upload->buffer;

@@ -113,7 +113,7 @@ void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, voi
 
 	if (usage & PB_USAGE_UNSYNCHRONIZED) {
 		radeon_bo_map(radeon, bo->bo);
-		return bo->bo->data + bo->offset;
+		return (uint8_t *) bo->bo->data + bo->offset;
 	}
 
 	if (p_atomic_read(&bo->bo->reference.count) > 1) {
@@ -143,7 +143,7 @@ void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, voi
 	}
 
 out:
-	return bo->bo->data + bo->offset;
+	return (uint8_t *) bo->bo->data + bo->offset;
 }
 
 void r600_bo_unmap(struct radeon *radeon, struct r600_bo *bo)
