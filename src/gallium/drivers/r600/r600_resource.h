@@ -62,7 +62,21 @@ struct r600_resource_texture {
 	unsigned			tile_type;
 	unsigned			depth;
 	unsigned			dirty;
-	struct r600_resource_texture    *flushed_depth_texture;
+	struct r600_resource_texture	*flushed_depth_texture;
+};
+
+#define R600_BUFFER_MAGIC 0xabcd1600
+
+struct r600_resource_buffer {
+	struct r600_resource		r;
+	uint32_t			magic;
+	void				*user_buffer;
+	bool				uploaded;
+};
+
+struct r600_surface {
+	struct pipe_surface		base;
+	unsigned			aligned_height;
 };
 
 void r600_init_screen_resource_functions(struct pipe_screen *screen);
@@ -74,23 +88,14 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 						const struct pipe_resource *base,
 						struct winsys_handle *whandle);
 
-#define R600_BUFFER_MAGIC 0xabcd1600
-
-struct r600_resource_buffer {
-	struct r600_resource r;
-	uint32_t magic;
-	void *user_buffer;
-	bool uploaded;
-};
-
 /* r600_buffer */
 static INLINE struct r600_resource_buffer *r600_buffer(struct pipe_resource *buffer)
 {
 	if (buffer) {
 		assert(((struct r600_resource_buffer *)buffer)->magic == R600_BUFFER_MAGIC);
 		return (struct r600_resource_buffer *)buffer;
-    }
-    return NULL;
+	}
+	return NULL;
 }
 
 static INLINE boolean r600_buffer_is_user_buffer(struct pipe_resource *buffer)
@@ -100,10 +105,8 @@ static INLINE boolean r600_buffer_is_user_buffer(struct pipe_resource *buffer)
 	return r600_buffer(buffer)->user_buffer ? TRUE : FALSE;
 }
 
-int r600_texture_depth_flush(struct pipe_context *ctx,
-			     struct pipe_resource *texture);
-
-extern int (*r600_blit_uncompress_depth_ptr)(struct pipe_context *ctx, struct r600_resource_texture *texture);
+int r600_texture_depth_flush(struct pipe_context *ctx, struct pipe_resource *texture);
+int (*r600_blit_uncompress_depth_ptr)(struct pipe_context *ctx, struct r600_resource_texture *texture);
 
 /* r600_texture.c texture transfer functions. */
 struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
@@ -117,11 +120,6 @@ void* r600_texture_transfer_map(struct pipe_context *ctx,
 				struct pipe_transfer* transfer);
 void r600_texture_transfer_unmap(struct pipe_context *ctx,
 				 struct pipe_transfer* transfer);
-
-struct r600_surface {
-	struct pipe_surface base;
-	unsigned aligned_height;
-};
 
 struct r600_pipe_context;
 struct r600_upload *r600_upload_create(struct r600_pipe_context *rctx,

@@ -111,7 +111,7 @@ struct r600_pipe_shader {
 #define NUM_TEX_UNITS 16
 
 struct r600_textures_info {
-	struct r600_pipe_sampler_view   *views[NUM_TEX_UNITS];
+	struct r600_pipe_sampler_view	*views[NUM_TEX_UNITS];
 	unsigned			n_views;
 	void				*samplers[NUM_TEX_UNITS];
 	unsigned			n_samplers;
@@ -271,13 +271,13 @@ void r600_sampler_view_destroy(struct pipe_context *ctx,
 void r600_bind_state(struct pipe_context *ctx, void *state);
 void r600_delete_state(struct pipe_context *ctx, void *state);
 void r600_bind_vertex_elements(struct pipe_context *ctx, void *state);
-
 void *r600_create_shader_state(struct pipe_context *ctx,
 			       const struct pipe_shader_state *state);
 void r600_bind_ps_shader(struct pipe_context *ctx, void *state);
 void r600_bind_vs_shader(struct pipe_context *ctx, void *state);
 void r600_delete_ps_shader(struct pipe_context *ctx, void *state);
 void r600_delete_vs_shader(struct pipe_context *ctx, void *state);
+
 /*
  * common helpers
  */
