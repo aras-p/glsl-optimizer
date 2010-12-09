@@ -229,7 +229,6 @@ struct draw_llvm_variant
 
    /* key is variable-sized, must be last */
    struct draw_llvm_variant_key key;
-   /* key is variable-sized, must be last */
 };
 
 struct llvm_vertex_shader {
