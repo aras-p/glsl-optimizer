@@ -30,7 +30,6 @@
 #include <sys/ioctl.h>
 #include "util/u_inlines.h"
 #include "util/u_debug.h"
-#include <pipebuffer/pb_bufmgr.h>
 #include "r600.h"
 #include "r600_priv.h"
 #include "r600_drm_public.h"
@@ -230,12 +229,10 @@ static struct radeon *radeon_new(int fd, unsigned device)
 		if (radeon_drm_get_tiling(radeon))
 			return NULL;
 	}
-	radeon->kman = radeon_bo_pbmgr_create(radeon);
-	if (!radeon->kman)
+	radeon->bomgr = r600_bomgr_create(radeon, 1000000);
+	if (radeon->bomgr == NULL) {
 		return NULL;
-	radeon->cman = pb_cache_manager_create(radeon->kman, 1000000);
-	if (!radeon->cman)
-		return NULL;
+	}
 	return radeon;
 }
 
@@ -252,11 +249,8 @@ struct radeon *radeon_decref(struct radeon *radeon)
 		return NULL;
 	}
 
-	if (radeon->cman)
-		radeon->cman->destroy(radeon->cman);
-
-	if (radeon->kman)
-		radeon->kman->destroy(radeon->kman);
+	if (radeon->bomgr)
+		r600_bomgr_destroy(radeon->bomgr);
 
 	if (radeon->fd >= 0)
 		drmClose(radeon->fd);

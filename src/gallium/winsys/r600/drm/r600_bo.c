@@ -36,142 +36,153 @@ struct r600_bo *r600_bo(struct radeon *radeon,
 			unsigned size, unsigned alignment,
 			unsigned binding, unsigned usage)
 {
-	struct r600_bo *ws_bo = calloc(1, sizeof(struct r600_bo));
-	struct pb_desc desc;
-	struct pb_manager *man;
+	struct r600_bo *bo;
+	struct radeon_bo *rbo;
 
-	desc.alignment = alignment;
-	desc.usage = (PB_USAGE_CPU_READ_WRITE | PB_USAGE_GPU_READ_WRITE);
-	ws_bo->size = size;
+	if (binding & (PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER)) {
+		bo = r600_bomgr_bo_create(radeon->bomgr, size, alignment, *radeon->cfence);
+		if (bo) {
+			return bo;
+		}
+	}
 
-	if (binding & (PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER))
-		man = radeon->cman;
-	else
-		man = radeon->kman;
+	rbo = radeon_bo(radeon, 0, size, alignment);
+	if (rbo == NULL) {
+		return NULL;
+	}
+
+	bo = calloc(1, sizeof(struct r600_bo));
+	bo->size = size;
+	bo->alignment = alignment;
+	bo->bo = rbo;
+	if (binding & (PIPE_BIND_CONSTANT_BUFFER | PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER)) {
+		r600_bomgr_bo_init(radeon->bomgr, bo);
+	}
 
 	/* Staging resources particpate in transfers and blits only
 	 * and are used for uploads and downloads from regular
 	 * resources.  We generate them internally for some transfers.
 	 */
 	if (usage == PIPE_USAGE_STAGING)
-                ws_bo->domains = RADEON_GEM_DOMAIN_CPU | RADEON_GEM_DOMAIN_GTT;
-        else
-                ws_bo->domains = (RADEON_GEM_DOMAIN_CPU |
-                                  RADEON_GEM_DOMAIN_GTT |
-                                  RADEON_GEM_DOMAIN_VRAM);
+		bo->domains = RADEON_GEM_DOMAIN_CPU | RADEON_GEM_DOMAIN_GTT;
+	else
+		bo->domains = (RADEON_GEM_DOMAIN_CPU |
+				RADEON_GEM_DOMAIN_GTT |
+				RADEON_GEM_DOMAIN_VRAM);
 
-
-	ws_bo->pb = man->create_buffer(man, size, &desc);
-	if (ws_bo->pb == NULL) {
-		free(ws_bo);
-		return NULL;
-	}
-
-	pipe_reference_init(&ws_bo->reference, 1);
-	return ws_bo;
+	pipe_reference_init(&bo->reference, 1);
+	return bo;
 }
 
 struct r600_bo *r600_bo_handle(struct radeon *radeon,
 			       unsigned handle, unsigned *array_mode)
 {
-	struct r600_bo *ws_bo = calloc(1, sizeof(struct r600_bo));
-	struct radeon_bo *bo;
+	struct r600_bo *bo = calloc(1, sizeof(struct r600_bo));
+	struct radeon_bo *rbo;
 
-	ws_bo->pb = radeon_bo_pb_create_buffer_from_handle(radeon->kman, handle);
-	if (!ws_bo->pb) {
-		free(ws_bo);
+	rbo = bo->bo = radeon_bo(radeon, handle, 0, 0);
+	if (rbo == NULL) {
+		free(bo);
 		return NULL;
 	}
-	bo = radeon_bo_pb_get_bo(ws_bo->pb);
-	ws_bo->size = bo->size;
-	ws_bo->domains = (RADEON_GEM_DOMAIN_CPU |
-			  RADEON_GEM_DOMAIN_GTT |
-			  RADEON_GEM_DOMAIN_VRAM);
+	bo->size = bo->size;
+	bo->domains = (RADEON_GEM_DOMAIN_CPU |
+			RADEON_GEM_DOMAIN_GTT |
+			RADEON_GEM_DOMAIN_VRAM);
 
-	pipe_reference_init(&ws_bo->reference, 1);
+	pipe_reference_init(&bo->reference, 1);
 
-	radeon_bo_get_tiling_flags(radeon, bo, &ws_bo->tiling_flags,
-				   &ws_bo->kernel_pitch);
+	radeon_bo_get_tiling_flags(radeon, rbo, &bo->tiling_flags, &bo->kernel_pitch);
 	if (array_mode) {
-		if (ws_bo->tiling_flags) {
-			if (ws_bo->tiling_flags & RADEON_TILING_MICRO)
+		if (bo->tiling_flags) {
+			if (bo->tiling_flags & RADEON_TILING_MICRO)
 				*array_mode = V_0280A0_ARRAY_1D_TILED_THIN1;
-			if ((ws_bo->tiling_flags & (RADEON_TILING_MICRO | RADEON_TILING_MACRO)) ==
+			if ((bo->tiling_flags & (RADEON_TILING_MICRO | RADEON_TILING_MACRO)) ==
 			    (RADEON_TILING_MICRO | RADEON_TILING_MACRO))
 				*array_mode = V_0280A0_ARRAY_2D_TILED_THIN1;
 		} else {
 			*array_mode = 0;
 		}
 	}
-	return ws_bo;
+	return bo;
 }
 
 void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, void *ctx)
 {
-	return pb_map(bo->pb, usage, ctx);
+	struct pipe_context *pctx = ctx;
+
+	if (usage & PB_USAGE_UNSYNCHRONIZED) {
+		radeon_bo_map(radeon, bo->bo);
+		return bo->bo->data + bo->offset;
+	}
+
+	if (p_atomic_read(&bo->bo->reference.count) > 1) {
+		if (usage & PB_USAGE_DONTBLOCK) {
+			return NULL;
+		}
+		if (ctx) {
+			pctx->flush(pctx, 0, NULL);
+		}
+	}
+
+	if (usage & PB_USAGE_DONTBLOCK) {
+		uint32_t domain;
+
+		if (radeon_bo_busy(radeon, bo->bo, &domain))
+			return NULL;
+		if (radeon_bo_map(radeon, bo->bo)) {
+			return NULL;
+		}
+		goto out;
+	}
+
+	radeon_bo_map(radeon, bo->bo);
+	if (radeon_bo_wait(radeon, bo->bo)) {
+		radeon_bo_unmap(radeon, bo->bo);
+		return NULL;
+	}
+
+out:
+	return bo->bo->data + bo->offset;
 }
 
 void r600_bo_unmap(struct radeon *radeon, struct r600_bo *bo)
 {
-	pb_unmap(bo->pb);
+	radeon_bo_unmap(radeon, bo->bo);
 }
 
-static void r600_bo_destroy(struct radeon *radeon, struct r600_bo *bo)
+void r600_bo_destroy(struct radeon *radeon, struct r600_bo *bo)
 {
-	if (bo->pb)
-		pb_reference(&bo->pb, NULL);
+	if (bo->manager_id) {
+		if (!r600_bomgr_bo_destroy(radeon->bomgr, bo)) {
+			/* destroy is delayed by buffer manager */
+			return;
+		}
+	}
+	radeon_bo_reference(radeon, &bo->bo, NULL);
 	free(bo);
 }
 
-void r600_bo_reference(struct radeon *radeon, struct r600_bo **dst,
-			    struct r600_bo *src)
+void r600_bo_reference(struct radeon *radeon, struct r600_bo **dst, struct r600_bo *src)
 {
 	struct r600_bo *old = *dst;
- 		
+
 	if (pipe_reference(&(*dst)->reference, &src->reference)) {
 		r600_bo_destroy(radeon, old);
 	}
 	*dst = src;
 }
 
-unsigned r600_bo_get_handle(struct r600_bo *pb_bo)
-{
-	struct radeon_bo *bo;
-
-	bo = radeon_bo_pb_get_bo(pb_bo->pb);
-	if (!bo)
-		return 0;
-
-	return bo->handle;
-}
-
-unsigned r600_bo_get_size(struct r600_bo *pb_bo)
-{
-	struct radeon_bo *bo;
-
-	bo = radeon_bo_pb_get_bo(pb_bo->pb);
-	if (!bo)
-		return 0;
-
-	return bo->size;
-}
-
-boolean r600_bo_get_winsys_handle(struct radeon *radeon, struct r600_bo *pb_bo,
+boolean r600_bo_get_winsys_handle(struct radeon *radeon, struct r600_bo *bo,
 				unsigned stride, struct winsys_handle *whandle)
 {
-	struct radeon_bo *bo;
-
-	bo = radeon_bo_pb_get_bo(pb_bo->pb);
-	if (!bo)
-		return FALSE;
-
 	whandle->stride = stride;
 	switch(whandle->type) {
 	case DRM_API_HANDLE_TYPE_KMS:
-		whandle->handle = r600_bo_get_handle(pb_bo);
+		whandle->handle = r600_bo_get_handle(bo);
 		break;
 	case DRM_API_HANDLE_TYPE_SHARED:
-		if (radeon_bo_get_name(radeon, bo, &whandle->handle))
+		if (radeon_bo_get_name(radeon, bo->bo, &whandle->handle))
 			return FALSE;
 		break;
 	default:

@@ -27,7 +27,6 @@
 #include "radeon_drm.h"
 #include "pipe/p_compiler.h"
 #include "util/u_inlines.h"
-#include <pipebuffer/pb_bufmgr.h>
 #include "r600_priv.h"
 
 enum radeon_family r600_get_family(struct radeon *r600)

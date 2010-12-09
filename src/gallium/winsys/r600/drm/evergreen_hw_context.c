@@ -36,7 +36,6 @@
 #include "pipe/p_compiler.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
-#include <pipebuffer/pb_bufmgr.h>
 #include "r600_priv.h"
 
 #define GROUP_FORCE_NEW_BLOCK	0
