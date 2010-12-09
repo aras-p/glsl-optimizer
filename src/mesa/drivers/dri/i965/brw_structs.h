@@ -1179,6 +1179,11 @@ struct brw_surface_state
       GLuint cube_pos_x:1; 
       GLuint cube_neg_x:1; 
       GLuint pad:4;
+      /* Required on gen6 for surfaces accessed through render cache messages.
+       */
+      GLuint render_cache_read_write:1;
+      /* Ironlake and newer: instead of replicating one of the texels */
+      GLuint cube_corner_average:1;
       GLuint mipmap_layout_mode:1; 
       GLuint vert_line_stride_ofs:1; 
       GLuint vert_line_stride:1; 

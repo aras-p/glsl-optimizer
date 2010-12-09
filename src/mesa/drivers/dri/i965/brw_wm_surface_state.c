@@ -274,6 +274,7 @@ brw_create_constant_surface(struct brw_context *brw,
 			    drm_intel_bo **out_bo,
 			    uint32_t *out_offset)
 {
+   struct intel_context *intel = &brw->intel;
    const GLint w = width - 1;
    struct brw_surface_state surf;
    void *map;
@@ -283,6 +284,9 @@ brw_create_constant_surface(struct brw_context *brw,
    surf.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
    surf.ss0.surface_type = BRW_SURFACE_BUFFER;
    surf.ss0.surface_format = BRW_SURFACEFORMAT_R32G32B32A32_FLOAT;
+
+   if (intel->gen >= 6)
+      surf.ss0.render_cache_read_write = 1;
 
    assert(bo);
    surf.ss1.base_addr = bo->offset; /* reloc */
