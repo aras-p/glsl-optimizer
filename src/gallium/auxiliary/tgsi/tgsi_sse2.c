@@ -163,6 +163,14 @@ get_immediate_base( void )
       reg_DX );
 }
 
+static struct x86_reg
+get_system_value_base( void )
+{
+   return x86_make_disp(
+      get_machine_base(),
+      Offset(struct tgsi_exec_machine, SystemValue) );
+}
+
 
 /**
  * Data access helpers.
@@ -226,6 +234,16 @@ get_temp(
    return x86_make_disp(
       get_temp_base(),
       (vec * 4 + chan) * 16 );
+}
+
+static struct x86_reg
+get_system_value(
+   unsigned vec,
+   unsigned chan )
+{
+   return x86_make_disp(
+      get_system_value_base(), /* base */
+      (vec * 4 + chan) * 4 );  /* byte offset from base */
 }
 
 static struct x86_reg
@@ -420,6 +438,30 @@ emit_tempf(
       func,
       make_xmm( xmm ),
       get_temp( vec, chan ) );
+}
+
+/**
+ * Copy a system value to xmm register
+ * \param xmm  the destination xmm register
+ * \param vec  the source system value register
+ * \param chan  src channel to fetch (X, Y, Z or W)
+ */
+static void
+emit_system_value(
+   struct x86_function *func,
+   unsigned xmm,
+   unsigned vec,
+   unsigned chan )
+{
+   sse_movss(
+      func,
+      make_xmm( xmm ),
+      get_system_value( vec, chan ) );
+   sse_shufps(
+      func,
+      make_xmm( xmm ),
+      make_xmm( xmm ),
+      SHUF( 0, 0, 0, 0 ) );
 }
 
 /**
@@ -1281,8 +1323,15 @@ emit_fetch(
             swizzle );
          break;
 
-      case TGSI_FILE_INPUT:
       case TGSI_FILE_SYSTEM_VALUE:
+         emit_system_value(
+            func,
+            xmm,
+            reg->Register.Index,
+            swizzle );
+         break;
+
+      case TGSI_FILE_INPUT:
          emit_inputf(
             func,
             xmm,
@@ -2636,8 +2685,7 @@ emit_declaration(
    struct x86_function *func,
    struct tgsi_full_declaration *decl )
 {
-   if( decl->Declaration.File == TGSI_FILE_INPUT ||
-       decl->Declaration.File == TGSI_FILE_SYSTEM_VALUE ) {
+   if( decl->Declaration.File == TGSI_FILE_INPUT ) {
       unsigned first, last, mask;
       unsigned i, j;
 
