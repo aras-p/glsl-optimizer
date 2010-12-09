@@ -1349,15 +1349,19 @@ legal_texture_size(struct gl_context *ctx, gl_format format,
 
 
 /**
- * Helper function to determine whether a target supports compressed textures
+ * Helper function to determine whether a target and specific compression
+ * format are supported.
  */
 static GLboolean
-target_can_be_compressed(struct gl_context *ctx, GLenum target)
+target_can_be_compressed(const struct gl_context *ctx, GLenum target,
+                         GLenum intFormat)
 {
+   (void) intFormat;  /* not used yet */
+
    switch (target) {
    case GL_TEXTURE_2D:
    case GL_PROXY_TEXTURE_2D:
-      return GL_TRUE;
+      return GL_TRUE; /* true for any compressed format so far */
    case GL_PROXY_TEXTURE_CUBE_MAP:
    case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
    case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
@@ -1464,51 +1468,6 @@ legal_copyteximage_target(struct gl_context *ctx, GLuint dims, GLenum target)
       return GL_FALSE;
    }
 }
-
-
-/**
- * Check if the given texture target value is legal for a
- * glCompressedTexImage1/2/3D call.
- */
-static GLboolean
-legal_compressed_teximage_target(struct gl_context *ctx, GLuint dims,
-                                 GLenum target)
-{
-   switch (dims) {
-   case 1:
-      return GL_FALSE;  /* No 1D compresssed textures yet */
-   case 2:
-      switch (target) {
-      case GL_TEXTURE_2D:
-      case GL_PROXY_TEXTURE_2D:
-         return GL_TRUE;
-      case GL_PROXY_TEXTURE_CUBE_MAP:
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_X:
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_X:
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_Y:
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Y:
-      case GL_TEXTURE_CUBE_MAP_POSITIVE_Z:
-      case GL_TEXTURE_CUBE_MAP_NEGATIVE_Z:
-         return ctx->Extensions.ARB_texture_cube_map;
-      case GL_TEXTURE_RECTANGLE_NV:
-      case GL_PROXY_TEXTURE_RECTANGLE_NV:
-         return GL_FALSE; /* not supported yet */
-      case GL_TEXTURE_1D_ARRAY_EXT:
-      case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
-         return GL_FALSE; /* not supported yet */
-      default:
-         return GL_FALSE;
-      }
-   case 3:
-      return GL_FALSE;  /* No 3D compressed textures yet */
-   default:
-      _mesa_problem(ctx,
-                    "invalid dims=%u in legal_compressed_teximage_target()",
-                    dims);
-      return GL_FALSE;
-   }
-}
-
 
 
 /**
@@ -1687,9 +1646,10 @@ texture_error_check( struct gl_context *ctx,
 
    /* additional checks for compressed textures */
    if (_mesa_is_compressed_format(ctx, internalFormat)) {
-      if (!target_can_be_compressed(ctx, target) && !isProxy) {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glTexImage%dD(target)", dimensions);
+      if (!target_can_be_compressed(ctx, target, internalFormat)) {
+         if (!isProxy)
+            _mesa_error(ctx, GL_INVALID_ENUM,
+                        "glTexImage%dD(target)", dimensions);
          return GL_TRUE;
       }
       if (border != 0) {
@@ -1840,13 +1800,6 @@ subtexture_error_check2( struct gl_context *ctx, GLuint dimensions,
    if (_mesa_is_format_compressed(destTex->TexFormat)) {
       GLuint bw, bh;
 
-      if (!target_can_be_compressed(ctx, target)) {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glTexSubImage%dD(target=%s)", dimensions,
-                     _mesa_lookup_enum_by_nr(target));
-         return GL_TRUE;
-      }
-
       /* do tests which depend on compression block size */
       _mesa_get_format_block_size(destTex->TexFormat, &bw, &bh);
 
@@ -1969,7 +1922,7 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
    }
 
    if (_mesa_is_compressed_format(ctx, internalFormat)) {
-      if (!target_can_be_compressed(ctx, target)) {
+      if (!target_can_be_compressed(ctx, target, internalFormat)) {
          _mesa_error(ctx, GL_INVALID_ENUM,
                      "glCopyTexImage%dD(target)", dimensions);
          return GL_TRUE;
@@ -2122,11 +2075,6 @@ copytexsubimage_error_check2( struct gl_context *ctx, GLuint dimensions,
    }
 
    if (_mesa_is_format_compressed(teximage->TexFormat)) {
-      if (!target_can_be_compressed(ctx, target)) {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glCopyTexSubImage%dD(target)", dimensions);
-         return GL_TRUE;
-      }
       /* offset must be multiple of 4 */
       if ((xoffset & 3) || (yoffset & 3)) {
          _mesa_error(ctx, GL_INVALID_VALUE,
@@ -3015,6 +2963,10 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
    if (level < 0 || level >= maxLevels)
       return GL_INVALID_VALUE;
 
+   if (!target_can_be_compressed(ctx, target, internalFormat)) {
+      return GL_INVALID_ENUM;
+   }
+
    /* This will detect any invalid internalFormat value */
    if (!_mesa_is_compressed_format(ctx, internalFormat))
       return GL_INVALID_ENUM;
@@ -3032,17 +2984,42 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
        target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB && width != height)
       return GL_INVALID_VALUE;
 
+   /* check image size against compression block size */
+   {
+      gl_format texFormat =
+         ctx->Driver.ChooseTextureFormat(ctx, internalFormat,
+                                         GL_NONE, GL_NONE);
+      GLuint bw, bh;
+
+      _mesa_get_format_block_size(texFormat, &bw, &bh);
+      if ((width > bw && width % bw > 0) ||
+          (height > bh && height % bh > 0)) {
+         /*
+          * Per GL_ARB_texture_compression:  GL_INVALID_OPERATION is
+          * generated [...] if any parameter combinations are not
+          * supported by the specific compressed internal format. 
+          */
+         return GL_INVALID_OPERATION;
+      }
+   }
+
    /* check image sizes */
    if (!ctx->Driver.TestProxyTexImage(ctx, proxyTarget, level,
                                       internalFormat, GL_NONE, GL_NONE,
                                       width, height, depth, border)) {
-      return GL_INVALID_VALUE;
+      /* See error comment above */
+      return GL_INVALID_OPERATION;
    }
 
    /* check image size in bytes */
    expectedSize = compressed_tex_size(width, height, depth, internalFormat);
-   if (expectedSize != imageSize)
+   if (expectedSize != imageSize) {
+      /* Per GL_ARB_texture_compression:  GL_INVALID_VALUE is generated [...]
+       * if <imageSize> is not consistent with the format, dimensions, and
+       * contents of the specified image.
+       */
       return GL_INVALID_VALUE;
+   }
 
    return GL_NO_ERROR;
 }
@@ -3207,7 +3184,7 @@ compressedteximage(struct gl_context *ctx, GLuint dims,
                   width, height, depth, border, imageSize, data);
 
    /* check target */
-   if (!legal_compressed_teximage_target(ctx, dims, target)) {
+   if (!legal_teximage_target(ctx, dims, target)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glCompressedTexImage%uD(target=%s)",
                   dims, _mesa_lookup_enum_by_nr(target));
       return;
