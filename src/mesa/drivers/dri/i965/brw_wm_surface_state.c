@@ -139,6 +139,8 @@ static GLuint translate_tex_format( gl_format mesa_format,
 	  return BRW_SURFACEFORMAT_I16_UNORM;
       else if (depth_mode == GL_ALPHA)
 	  return BRW_SURFACEFORMAT_A16_UNORM;
+      else if (depth_mode == GL_RED)
+	  return BRW_SURFACEFORMAT_R16_UNORM;
       else
 	  return BRW_SURFACEFORMAT_L16_UNORM;
 
@@ -174,6 +176,8 @@ static GLuint translate_tex_format( gl_format mesa_format,
          return BRW_SURFACEFORMAT_I24X8_UNORM;
       else if (depth_mode == GL_ALPHA)
          return BRW_SURFACEFORMAT_A24X8_UNORM;
+      else if (depth_mode == GL_RED)
+         return BRW_SURFACEFORMAT_R24_UNORM_X8_TYPELESS;
       else
          return BRW_SURFACEFORMAT_L24X8_UNORM;
 

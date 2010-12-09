@@ -378,6 +378,10 @@ static void brw_wm_populate_key( struct brw_context *brw,
 	       swizzles[2] = SWIZZLE_ZERO;
 	    } else if (t->DepthMode == GL_LUMINANCE) {
 	       swizzles[3] = SWIZZLE_ONE;
+	    } else if (t->DepthMode == GL_RED) {
+	       swizzles[1] = SWIZZLE_ZERO;
+	       swizzles[2] = SWIZZLE_ZERO;
+	       swizzles[3] = SWIZZLE_ZERO;
 	    }
 	 }
 
