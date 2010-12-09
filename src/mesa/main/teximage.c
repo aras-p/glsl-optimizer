@@ -1437,10 +1437,12 @@ legal_teximage_target(struct gl_context *ctx, GLuint dims, GLenum target)
 
 /**
  * Check if the given texture target value is legal for a
- * glCopyTexImage1/2D call.
+ * glTexSubImage, glCopyTexSubImage or glCopyTexImage call.
+ * The difference compared to legal_teximage_target() above is that
+ * proxy targets are not supported.
  */
 static GLboolean
-legal_copyteximage_target(struct gl_context *ctx, GLuint dims, GLenum target)
+legal_texsubimage_target(struct gl_context *ctx, GLuint dims, GLenum target)
 {
    switch (dims) {
    case 1:
@@ -1463,8 +1465,18 @@ legal_copyteximage_target(struct gl_context *ctx, GLuint dims, GLenum target)
       default:
          return GL_FALSE;
       }
+   case 3:
+      switch (target) {
+      case GL_TEXTURE_3D:
+         return GL_TRUE;
+      case GL_TEXTURE_2D_ARRAY_EXT:
+         return ctx->Extensions.MESA_texture_array;
+      default:
+         return GL_FALSE;
+      }
    default:
-      _mesa_problem(ctx, "invalid dims=%u in legal_copyteximage_target()", dims);
+      _mesa_problem(ctx, "invalid dims=%u in legal_texsubimage_target()",
+                    dims);
       return GL_FALSE;
    }
 }
@@ -1856,7 +1868,7 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
    GLint format;
 
    /* check target */
-   if (!legal_copyteximage_target(ctx, dimensions, target)) {
+   if (!legal_texsubimage_target(ctx, dimensions, target)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glCopyTexImage%uD(target=%s)",
                   dimensions, _mesa_lookup_enum_by_nr(target));
       return GL_TRUE;
@@ -1982,8 +1994,7 @@ copytexsubimage_error_check1( struct gl_context *ctx, GLuint dimensions,
    }
 
    /* check target (proxies not allowed) */
-   if (!legal_teximage_target(ctx, dimensions, target) ||
-       _mesa_is_proxy_texture(target)) {
+   if (!legal_texsubimage_target(ctx, dimensions, target)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glCopyTexSubImage%uD(target=%s)",
                   dimensions, _mesa_lookup_enum_by_nr(target));
       return GL_TRUE;
@@ -2579,8 +2590,7 @@ texsubimage(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
                   _mesa_lookup_enum_by_nr(type), pixels);
 
    /* check target (proxies not allowed) */
-   if (!legal_teximage_target(ctx, dims, target) ||
-       _mesa_is_proxy_texture(target)) {
+   if (!legal_texsubimage_target(ctx, dims, target)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "glTexSubImage%uD(target=%s)",
                   dims, _mesa_lookup_enum_by_nr(target));
       return;
