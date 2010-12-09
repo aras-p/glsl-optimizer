@@ -231,10 +231,13 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
 
    for (s = 0; s < 5; ++s) {
       struct nvc0_resource *res;
-      int i, j;
+      int i;
 
       while (nvc0->constbuf_dirty[s]) {
-         unsigned offset = 0;
+         unsigned base = 0;
+         unsigned offset = 0, words = 0;
+         boolean rebind = TRUE;
+
          i = ffs(nvc0->constbuf_dirty[s]) - 1;
          nvc0->constbuf_dirty[s] &= ~(1 << i);
 
@@ -242,33 +245,70 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
          if (!res) {
             BEGIN_RING(chan, RING_3D(CB_BIND(s)), 1);
             OUT_RING  (chan, (i << 4) | 0);
+            if (i == 0)
+               nvc0->state.uniform_buffer_bound &= ~(1 << s);
             continue;
          }
 
-         if (i == 0 && !nvc0_resource_mapped_by_gpu(&res->base)) {
-            offset = s << 16;
-            bo = nvc0->screen->uniforms;
+         if (!nvc0_resource_mapped_by_gpu(&res->base)) {
+            if (i == 0) {
+               base = s << 16;
+               bo = nvc0->screen->uniforms;
+
+               if (nvc0->state.uniform_buffer_bound & (1 << s))
+                  rebind = FALSE;
+               else
+                  nvc0->state.uniform_buffer_bound |= (1 << s);
+            } else {
+               bo = res->bo;
+            }
+#if 1
+            nvc0_m2mf_push_linear(nvc0, bo, NOUVEAU_BO_VRAM,
+                                  base, res->base.width0, res->data);
+            BEGIN_RING(chan, RING_3D_(0x021c), 1);
+            OUT_RING  (chan, 0x1111);
+#else
+            words = res->base.width0 / 4;
+#endif
          } else {
             bo = res->bo;
-            nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_CONSTANT, res,
-                                     NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+            if (i == 0)
+               nvc0->state.uniform_buffer_bound &= ~(1 << s);
          }
 
-         BEGIN_RING(chan, RING_3D(CB_SIZE), 3);
-         OUT_RING  (chan, align(res->base.width0, 0x100));
-         OUT_RELOCh(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-         OUT_RELOCl(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-         BEGIN_RING(chan, RING_3D(CB_BIND(s)), 1);
-         OUT_RING  (chan, (i << 4) | 1);
+         if (bo != nvc0->screen->uniforms)
+            nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_CONSTANT, res,
+                                     NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 
-         BEGIN_RING(chan, RING_3D(CB_SIZE), 4);
-         OUT_RING  (chan, align(res->base.width0, 0x100));
-         OUT_RELOCh(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-         OUT_RELOCl(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-         OUT_RING  (chan, 0);
-	 BEGIN_RING_NI(chan, RING_3D(CB_DATA(0)), res->base.width0 / 4);
-         for (j = 0; j < res->base.width0 / 4; ++j)
-            OUT_RING(chan, ((uint32_t *)res->data)[j]);
+         if (rebind) {
+            BEGIN_RING(chan, RING_3D(CB_SIZE), 3);
+            OUT_RING  (chan, align(res->base.width0, 0x100));
+            OUT_RELOCh(chan, bo, base, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+            OUT_RELOCl(chan, bo, base, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+            BEGIN_RING(chan, RING_3D(CB_BIND(s)), 1);
+            OUT_RING  (chan, (i << 4) | 1);
+         }
+
+         while (words) {
+            unsigned nr = AVAIL_RING(chan);
+
+            if (nr < 16) {
+               FIRE_RING(chan);
+               continue;
+            }
+            nr = MIN2(MIN2(nr - 6, words), NV04_PFIFO_MAX_PACKET_LEN - 1);
+
+            BEGIN_RING(chan, RING_3D(CB_SIZE), 3);
+            OUT_RING  (chan, align(res->base.width0, 0x100));
+            OUT_RELOCh(chan, bo, base, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+            OUT_RELOCl(chan, bo, base, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+            BEGIN_RING_1I(chan, RING_3D(CB_POS), nr + 1);
+            OUT_RING  (chan, offset);
+            OUT_RINGp (chan, &res->data[offset], nr);
+
+            offset += nr * 4;
+            words -= nr;
+         }
       }
    }
 }
@@ -293,10 +333,10 @@ static struct state_validate {
     { nvc0_tevlprog_validate,      NVC0_NEW_TEVLPROG },
     { nvc0_gmtyprog_validate,      NVC0_NEW_GMTYPROG },
     { nvc0_fragprog_validate,      NVC0_NEW_FRAGPROG },
-    { nvc0_vertex_arrays_validate, NVC0_NEW_VERTEX | NVC0_NEW_ARRAYS },
+    { nvc0_constbufs_validate,     NVC0_NEW_CONSTBUF },
     { nvc0_validate_textures,      NVC0_NEW_TEXTURES },
     { nvc0_validate_samplers,      NVC0_NEW_SAMPLERS },
-    { nvc0_constbufs_validate,     NVC0_NEW_CONSTBUF }
+    { nvc0_vertex_arrays_validate, NVC0_NEW_VERTEX | NVC0_NEW_ARRAYS }
 };
 #define validate_list_len (sizeof(validate_list) / sizeof(validate_list[0]))
 
@@ -311,8 +351,6 @@ nvc0_state_validate(struct nvc0_context *nvc0)
    nvc0->screen->cur_ctx = nvc0;
 
    if (nvc0->dirty) {
-      FIRE_RING(nvc0->screen->base.channel);
-
       for (i = 0; i < validate_list_len; ++i) {
          struct state_validate *validate = &validate_list[i];
 

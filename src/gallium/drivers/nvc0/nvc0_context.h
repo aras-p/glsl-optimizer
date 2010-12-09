@@ -79,6 +79,7 @@ struct nvc0_context {
       uint8_t num_textures[5];
       uint8_t num_samplers[5];
       uint16_t scissor;
+      uint8_t uniform_buffer_bound; /* workaround */
    } state;
 
    struct nvc0_blend_stateobj *blend;
@@ -196,9 +197,15 @@ nvc0_create_sampler_view(struct pipe_context *,
                          const struct pipe_sampler_view *);
 
 /* nvc0_transfer.c */
-void nvc0_m2mf_push_linear(struct nvc0_context *nvc0,
-                           struct nouveau_bo *dst, unsigned domain, int offset,
-                           unsigned size, void *data);
+void
+nvc0_m2mf_push_linear(struct nvc0_context *nvc0,
+		      struct nouveau_bo *dst, unsigned domain, int offset,
+		      unsigned size, void *data);
+void
+nvc0_m2mf_copy_linear(struct nvc0_context *nvc0,
+		      struct nouveau_bo *dst, unsigned dstoff, unsigned dstdom,
+		      struct nouveau_bo *src, unsigned srcoff, unsigned srcdom,
+		      unsigned size);
 
 /* nvc0_vbo.c */
 void nvc0_draw_vbo(struct pipe_context *, const struct pipe_draw_info *);
