@@ -3280,6 +3280,7 @@ static struct brw_reg brw_reg_from_fs_reg(fs_reg *reg)
 	 break;
       default:
 	 assert(!"not reached");
+	 brw_reg = brw_null_reg();
 	 break;
       }
       break;
@@ -3291,6 +3292,10 @@ static struct brw_reg brw_reg_from_fs_reg(fs_reg *reg)
       brw_reg = brw_null_reg();
       break;
    case UNIFORM:
+      assert(!"not reached");
+      brw_reg = brw_null_reg();
+      break;
+   default:
       assert(!"not reached");
       brw_reg = brw_null_reg();
       break;
