@@ -14,16 +14,49 @@ struct push_context {
    struct nouveau_channel *chan;
 
    void *idxbuf;
-   int32_t idxbias;
 
    float edgeflag;
-   int edgeflat_attr;
+   int edgeflag_attr;
 
-   uint32_t vertex_size;
+   uint32_t vertex_words;
    uint32_t packet_vertex_limit;
 
    struct translate *translate;
+
+   boolean primitive_restart;
+   uint32_t prim;
+   uint32_t restart_index;
 };
+
+static INLINE unsigned
+prim_restart_search_i08(uint8_t *elts, unsigned push, uint8_t index)
+{
+   unsigned i;
+   for (i = 0; i < push; ++i)
+      if (elts[i] == index)
+         break;
+   return i;
+}
+
+static INLINE unsigned
+prim_restart_search_i16(uint16_t *elts, unsigned push, uint16_t index)
+{
+   unsigned i;
+   for (i = 0; i < push; ++i)
+      if (elts[i] == index)
+         break;
+   return i;
+}
+
+static INLINE unsigned
+prim_restart_search_i32(uint32_t *elts, unsigned push, uint32_t index)
+{
+   unsigned i;
+   for (i = 0; i < push; ++i)
+      if (elts[i] == index)
+         break;
+   return i;
+}
 
 static void
 emit_vertices_i08(struct push_context *ctx, unsigned start, unsigned count)
@@ -32,14 +65,27 @@ emit_vertices_i08(struct push_context *ctx, unsigned start, unsigned count)
 
    while (count) {
       unsigned push = MIN2(count, ctx->packet_vertex_limit);
-      unsigned size = ctx->vertex_size * push;
+      unsigned size, nr;
+
+      nr = push;
+      if (ctx->primitive_restart)
+         nr = prim_restart_search_i08(elts, push, ctx->restart_index);
+
+      size = ctx->vertex_words * nr;
 
       BEGIN_RING_NI(ctx->chan, RING_3D(VERTEX_DATA), size);
 
       ctx->translate->run_elts8(ctx->translate, elts, push, 0, ctx->chan->cur);
+
       ctx->chan->cur += size;
       count -= push;
       elts += push;
+
+      if (nr != push) {
+         BEGIN_RING(ctx->chan, RING_3D(VERTEX_END_GL), 2);
+         OUT_RING  (ctx->chan, 0);
+         OUT_RING  (ctx->chan, ctx->prim);
+      }
    }
 }
 
@@ -50,14 +96,27 @@ emit_vertices_i16(struct push_context *ctx, unsigned start, unsigned count)
 
    while (count) {
       unsigned push = MIN2(count, ctx->packet_vertex_limit);
-      unsigned size = ctx->vertex_size * push;
+      unsigned size, nr;
+
+      nr = push;
+      if (ctx->primitive_restart)
+         nr = prim_restart_search_i16(elts, push, ctx->restart_index);
+
+      size = ctx->vertex_words * nr;
 
       BEGIN_RING_NI(ctx->chan, RING_3D(VERTEX_DATA), size);
 
       ctx->translate->run_elts16(ctx->translate, elts, push, 0, ctx->chan->cur);
+
       ctx->chan->cur += size;
       count -= push;
       elts += push;
+
+      if (nr != push) {
+         BEGIN_RING(ctx->chan, RING_3D(VERTEX_END_GL), 2);
+         OUT_RING  (ctx->chan, 0);
+         OUT_RING  (ctx->chan, ctx->prim);
+      }
    }
 }
 
@@ -68,14 +127,27 @@ emit_vertices_i32(struct push_context *ctx, unsigned start, unsigned count)
 
    while (count) {
       unsigned push = MIN2(count, ctx->packet_vertex_limit);
-      unsigned size = ctx->vertex_size * push;
+      unsigned size, nr;
+
+      nr = push;
+      if (ctx->primitive_restart)
+         nr = prim_restart_search_i32(elts, push, ctx->restart_index);
+
+      size = ctx->vertex_words * nr;
 
       BEGIN_RING_NI(ctx->chan, RING_3D(VERTEX_DATA), size);
 
       ctx->translate->run_elts(ctx->translate, elts, push, 0, ctx->chan->cur);
+
       ctx->chan->cur += size;
       count -= push;
       elts += push;
+
+      if (nr != push) {
+         BEGIN_RING(ctx->chan, RING_3D(VERTEX_END_GL), 2);
+         OUT_RING  (ctx->chan, 0);
+         OUT_RING  (ctx->chan, ctx->prim);
+      }
    }
 }
 
@@ -84,7 +156,7 @@ emit_vertices_seq(struct push_context *ctx, unsigned start, unsigned count)
 {
    while (count) {
       unsigned push = MIN2(count, ctx->packet_vertex_limit);
-      unsigned size = ctx->vertex_size * push;
+      unsigned size = ctx->vertex_words * push;
 
       BEGIN_RING_NI(ctx->chan, RING_3D(VERTEX_DATA), size);
 
@@ -131,13 +203,12 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
    struct push_context ctx;
    struct pipe_transfer *transfer = NULL;
    unsigned i, index_size;
-   unsigned prim = nvc0_prim_gl(info->mode);
    unsigned inst = info->instance_count;
 
    ctx.chan = nvc0->screen->base.channel;
    ctx.translate = nvc0->vertex->translate;
    ctx.packet_vertex_limit = nvc0->vertex->vtx_per_packet_max;
-   ctx.vertex_size = nvc0->vertex->vtx_size;
+   ctx.vertex_words = nvc0->vertex->vtx_size;
 
    for (i = 0; i < nvc0->num_vtxbufs; ++i) {
       uint8_t *data;
@@ -159,14 +230,20 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
       if (!ctx.idxbuf)
          return;
       index_size = nvc0->idxbuf.index_size;
+      ctx.primitive_restart = info->primitive_restart;
+      ctx.restart_index = info->restart_index;
    } else {
       ctx.idxbuf = NULL;
       index_size = 0;
+      ctx.primitive_restart = FALSE;
+      ctx.restart_index = 0;
    }
+
+   ctx.prim = nvc0_prim_gl(info->mode);
 
    while (inst--) {
       BEGIN_RING(ctx.chan, RING_3D(VERTEX_BEGIN_GL), 1);
-      OUT_RING  (ctx.chan, prim);
+      OUT_RING  (ctx.chan, ctx.prim);
       switch (index_size) {
       case 0:
          emit_vertices_seq(&ctx, info->start, info->count);
@@ -186,7 +263,7 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
       }
       INLIN_RING(ctx.chan, RING_3D(VERTEX_END_GL), 0);
 
-      prim |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
+      ctx.prim |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
    }
 
    if (info->indexed)

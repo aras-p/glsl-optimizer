@@ -287,7 +287,7 @@ nvc0_tfb_setup(struct nvc0_context *nvc0)
 static void
 nvc0_draw_arrays(struct nvc0_context *nvc0,
                  unsigned mode, unsigned start, unsigned count,
-                 unsigned start_instance, unsigned instance_count)
+                 unsigned instance_count)
 {
    struct nouveau_channel *chan = nvc0->screen->base.channel;
    unsigned prim;
@@ -296,12 +296,6 @@ nvc0_draw_arrays(struct nvc0_context *nvc0,
    chan->user_private = nvc0;
 
    prim = nvc0_prim_gl(mode);
-
-   if (nvc0->state.instance_base != start_instance) {
-      nvc0->state.instance_base = start_instance;
-      BEGIN_RING(chan, RING_3D(VB_INSTANCE_BASE), 1);
-      OUT_RING  (chan, start_instance);
-   }
 
    while (instance_count--) {
       BEGIN_RING(chan, RING_3D(VERTEX_BEGIN_GL), 1);
@@ -386,7 +380,7 @@ nvc0_draw_elements_inline_u32(struct nouveau_channel *chan, uint32_t *map,
 static void
 nvc0_draw_elements(struct nvc0_context *nvc0,
                    unsigned mode, unsigned start, unsigned count,
-                   unsigned start_instance, unsigned instance_count,
+                   unsigned instance_count,
                    unsigned index_size, int index_bias)
 {
    struct nouveau_channel *chan = nvc0->screen->base.channel;
@@ -423,6 +417,8 @@ nvc0_draw_elements(struct nvc0_context *nvc0,
       }
       BEGIN_RING(chan, RING_3D(VERTEX_END_GL), 1);
       OUT_RING  (chan, 0);
+
+      prim |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
    }
 
    chan->flush_notify = NULL;
@@ -432,8 +428,15 @@ void
 nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 {
    struct nvc0_context *nvc0 = nvc0_context(pipe);
+   struct nouveau_channel *chan = nvc0->screen->base.channel;
 
    nvc0_state_validate(nvc0);
+
+   if (nvc0->state.instance_base != info->start_instance) {
+      nvc0->state.instance_base = info->start_instance;
+      BEGIN_RING(chan, RING_3D(VB_INSTANCE_BASE), 1);
+      OUT_RING  (chan, info->start_instance);
+   }
 
    if (nvc0->vbo_fifo) {
       nvc0_push_vbo(nvc0, info);
@@ -441,22 +444,36 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    }
 
    if (nvc0->vbo_dirty) {
-      BEGIN_RING(nvc0->screen->base.channel, RING_3D_(0x142c), 1);
-      OUT_RING  (nvc0->screen->base.channel, 0);
+      BEGIN_RING(chan, RING_3D_(0x142c), 1);
+      OUT_RING  (chan, 0);
       nvc0->vbo_dirty = FALSE;
    }
 
    if (!info->indexed) {
       nvc0_draw_arrays(nvc0,
                        info->mode, info->start, info->count,
-                       info->start_instance, info->instance_count);
-   } else
-   if (nvc0->idxbuf.buffer) {
+                       info->instance_count);
+   } else {
+      assert(nvc0->idxbuf.buffer);
+
+      if (info->primitive_restart != nvc0->state.prim_restart) {
+         if (info->primitive_restart) {
+            BEGIN_RING(chan, RING_3D(PRIM_RESTART_ENABLE), 2);
+            OUT_RING  (chan, 1);
+            OUT_RING  (chan, info->restart_index);
+         } else {
+            INLIN_RING(chan, RING_3D(PRIM_RESTART_ENABLE), 0);
+         }
+         nvc0->state.prim_restart = info->primitive_restart;
+      } else
+      if (info->primitive_restart) {
+         BEGIN_RING(chan, RING_3D(PRIM_RESTART_INDEX), 1);
+         OUT_RING  (chan, info->restart_index);
+      }
+
       nvc0_draw_elements(nvc0,
                          info->mode, info->start, info->count,
-                         info->start_instance, info->instance_count,
+                         info->instance_count,
                          nvc0->idxbuf.index_size, info->index_bias);
-   } else {
-      NOUVEAU_ERR("draw_indexed: no index buffer\n");
    }
 }
