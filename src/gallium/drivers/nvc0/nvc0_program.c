@@ -30,8 +30,6 @@
 #include "nvc0_context.h"
 #include "nvc0_pc.h"
 
-#define NOUVEAU_DEBUG_BITS 1
-
 static unsigned
 nvc0_tgsi_src_mask(const struct tgsi_full_instruction *inst, int c)
 {
@@ -385,13 +383,10 @@ prog_subroutine_inst(struct nvc0_subroutine *subr,
 }
 
 static int
-nvc0_vp_gen_header(struct nvc0_program *vp, struct nvc0_translation_info *ti)
+nvc0_vp_gp_gen_header(struct nvc0_program *vp, struct nvc0_translation_info *ti)
 {
    int i, c;
    unsigned a;
-   
-   vp->hdr[0] = 0x20461;
-   vp->hdr[4] = 0xff000;
 
    for (a = 0x80/4, i = 0; i <= ti->scan.file_max[TGSI_FILE_INPUT]; ++i) {
       for (c = 0; c < 4; ++c, ++a)
@@ -409,6 +404,60 @@ nvc0_vp_gen_header(struct nvc0_program *vp, struct nvc0_translation_info *ti)
    }
 
    return 0;
+}
+
+static int
+nvc0_vp_gen_header(struct nvc0_program *vp, struct nvc0_translation_info *ti)
+{
+   vp->hdr[0] = 0x20461;
+   vp->hdr[4] = 0xff000;
+
+   return nvc0_vp_gp_gen_header(vp, ti);
+}
+
+static int
+nvc0_gp_gen_header(struct nvc0_program *gp, struct nvc0_translation_info *ti)
+{
+   unsigned max_output_verts, output_prim;
+   unsigned i;
+
+   gp->hdr[0] = 0x00021061;
+   gp->hdr[2] = 0x01000000;
+
+   for (i = 0; i < ti->scan.num_properties; ++i) {
+      switch (ti->scan.properties[i].name) {
+      case TGSI_PROPERTY_GS_OUTPUT_PRIM:
+         output_prim = ti->scan.properties[i].data[0];
+         break;
+      case TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES:
+         max_output_verts = ti->scan.properties[i].data[0];
+         break;
+      default:
+         break;
+      }
+   }
+
+   switch (output_prim) {
+   case PIPE_PRIM_POINTS:
+      gp->hdr[3] = 0x01000000;
+      gp->hdr[0] |= 0xf0000000;
+      break;
+   case PIPE_PRIM_LINE_STRIP:
+      gp->hdr[3] = 0x06000000;
+      gp->hdr[0] |= 0x10000000;
+      break;
+   case PIPE_PRIM_TRIANGLE_STRIP:
+      gp->hdr[3] = 0x07000000;
+      gp->hdr[0] |= 0x10000000;
+      break;
+   default:
+      assert(0);
+      break;
+   }
+
+   gp->hdr[4] = max_output_verts & 0x1ff;
+
+   return nvc0_vp_gp_gen_header(gp, ti);
 }
 
 static int
@@ -460,7 +509,7 @@ nvc0_prog_scan(struct nvc0_translation_info *ti)
    int ret;
    unsigned i;
 
-#ifdef NOUVEAU_DEBUG_BITS
+#ifdef NOUVEAU_DEBUG
    tgsi_dump(prog->pipe.tokens, 0);
 #endif
 
