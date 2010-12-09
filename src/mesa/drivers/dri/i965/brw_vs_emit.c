@@ -1072,8 +1072,6 @@ get_constant(struct brw_vs_compile *c,
 
    assert(argIndex < 3);
 
-   assert(c->func.brw->intel.gen < 6); /* FINISHME */
-
    if (c->current_const[argIndex].index != src->Index) {
       /* Keep track of the last constant loaded in this slot, for reuse. */
       c->current_const[argIndex].index = src->Index;

@@ -1708,8 +1708,12 @@ void brw_dp_READ_4_vs(struct brw_compile *p,
                       GLuint location,
                       GLuint bind_table_index)
 {
+   struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *insn;
    GLuint msg_reg_nr = 1;
+
+   if (intel->gen >= 6)
+      location /= 16;
 
    /* Setup MRF[1] with location/offset into const buffer */
    brw_push_insn_state(p);
@@ -1729,7 +1733,11 @@ void brw_dp_READ_4_vs(struct brw_compile *p,
    insn->header.mask_control = BRW_MASK_DISABLE;
 
    brw_set_dest(p, insn, dest);
-   brw_set_src0(insn, brw_null_reg());
+   if (intel->gen >= 6) {
+      brw_set_src0(insn, brw_message_reg(msg_reg_nr));
+   } else {
+      brw_set_src0(insn, brw_null_reg());
+   }
 
    brw_set_dp_read_message(p->brw,
 			   insn,
