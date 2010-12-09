@@ -1178,7 +1178,7 @@ struct brw_surface_state
       GLuint cube_neg_y:1; 
       GLuint cube_pos_x:1; 
       GLuint cube_neg_x:1; 
-      GLuint pad:4;
+      GLuint pad:2;
       /* Required on gen6 for surfaces accessed through render cache messages.
        */
       GLuint render_cache_read_write:1;
