@@ -1771,7 +1771,7 @@ void brw_dp_READ_4_vs_relative(struct brw_compile *p,
    /* M1.0 is block offset 0, M1.4 is block offset 1, all other
     * fields ignored.
     */
-   brw_ADD(p, retype(brw_message_reg(1), BRW_REGISTER_TYPE_UD),
+   brw_ADD(p, retype(brw_message_reg(1), BRW_REGISTER_TYPE_D),
 	   addr_reg, brw_imm_d(offset));
    brw_pop_insn_state(p);
 

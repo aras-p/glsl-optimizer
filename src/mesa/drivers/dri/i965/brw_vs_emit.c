@@ -1102,13 +1102,13 @@ get_reladdr_constant(struct brw_vs_compile *c,
 {
    const struct prog_src_register *src = &inst->SrcReg[argIndex];
    struct brw_compile *p = &c->func;
+   struct brw_context *brw = p->brw;
+   struct intel_context *intel = &brw->intel;
    struct brw_reg const_reg = c->current_const[argIndex].reg;
-   struct brw_reg addrReg = c->regs[PROGRAM_ADDRESS][0];
-   struct brw_reg byte_addr_reg = retype(get_tmp(c), BRW_REGISTER_TYPE_D);
+   struct brw_reg addr_reg = c->regs[PROGRAM_ADDRESS][0];
+   uint32_t offset;
 
    assert(argIndex < 3);
-
-   assert(c->func.brw->intel.gen < 6); /* FINISHME */
 
    /* Can't reuse a reladdr constant load. */
    c->current_const[argIndex].index = -1;
@@ -1118,15 +1118,21 @@ get_reladdr_constant(struct brw_vs_compile *c,
 	  src->Index, argIndex, c->current_const[argIndex].reg.nr);
 #endif
 
-   brw_MUL(p, byte_addr_reg, addrReg, brw_imm_ud(16));
+   if (intel->gen >= 6) {
+      offset = src->Index;
+   } else {
+      struct brw_reg byte_addr_reg = retype(get_tmp(c), BRW_REGISTER_TYPE_D);
+      brw_MUL(p, byte_addr_reg, addr_reg, brw_imm_d(16));
+      addr_reg = byte_addr_reg;
+      offset = 16 * src->Index;
+   }
 
    /* fetch the first vec4 */
    brw_dp_READ_4_vs_relative(p,
-			     const_reg,                     /* writeback dest */
-			     byte_addr_reg,                 /* address register */
-			     16 * src->Index,               /* byte offset */
-			     SURF_INDEX_VERT_CONST_BUFFER   /* binding table index */
-			     );
+			     const_reg,
+			     addr_reg,
+			     offset,
+			     SURF_INDEX_VERT_CONST_BUFFER);
 
    return const_reg;
 }
