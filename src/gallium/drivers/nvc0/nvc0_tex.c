@@ -88,8 +88,8 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
       (swz[2] << NV50_TIC_0_MAPB__SHIFT) |
       (swz[3] << NV50_TIC_0_MAPA__SHIFT);
 
-   tic[1] = nouveau_bo_gpu_address(mt->base.bo);
-   tic[2] = nouveau_bo_gpu_address(mt->base.bo) >> 32;
+   /* tic[1] = mt->base.bo->offset; */
+   tic[2] = /* mt->base.bo->offset >> 32 */ 0;
 
    tic[2] |= 0x10001000 | /* NV50_TIC_2_NO_BORDER */ 0x40000000;
 
@@ -148,6 +148,7 @@ static boolean
 nvc0_validate_tic(struct nvc0_context *nvc0, int s)
 {
    struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_bo *txc = nvc0->screen->txc;
    unsigned i;
    boolean need_flush = FALSE;
 
@@ -165,8 +166,22 @@ nvc0_validate_tic(struct nvc0_context *nvc0, int s)
       if (tic->id < 0) {
          tic->id = nvc0_screen_tic_alloc(nvc0->screen, tic);
 
-         nvc0_m2mf_push_linear(nvc0, nvc0->screen->txc, NOUVEAU_BO_VRAM,
-                               tic->id * 32, 32, tic->tic);
+         MARK_RING (chan, 9 + 8, 4);
+         BEGIN_RING(chan, RING_MF(OFFSET_OUT_HIGH), 2);
+         OUT_RELOCh(chan, txc, tic->id * 32, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+         OUT_RELOCl(chan, txc, tic->id * 32, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+         BEGIN_RING(chan, RING_MF(LINE_LENGTH_IN), 2);
+         OUT_RING  (chan, 32);
+         OUT_RING  (chan, 1);
+         BEGIN_RING(chan, RING_MF(EXEC), 1);
+         OUT_RING  (chan, 0x100111);
+         BEGIN_RING(chan, RING_MF(DATA), 8);
+         OUT_RING  (chan, tic->tic[0]);
+         OUT_RELOCl(chan, res->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+         OUT_RELOC (chan, res->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
+                    NOUVEAU_BO_HIGH | NOUVEAU_BO_OR, tic->tic[2], tic->tic[2]);
+         OUT_RINGp (chan, &tic->tic[3], 5);
+
          need_flush = TRUE;
       }
       nvc0->screen->tic.lock[tic->id / 32] |= 1 << (tic->id % 32);
