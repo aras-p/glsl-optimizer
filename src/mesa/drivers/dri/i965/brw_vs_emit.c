@@ -254,7 +254,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
    }
    reg += (constant + 1) / 2;
    c->prog_data.curb_read_length = reg - 1;
-   c->prog_data.nr_params = constant;
+   c->prog_data.nr_params = constant * 4;
    /* XXX 0 causes a bug elsewhere... */
    if (intel->gen < 6 && c->prog_data.nr_params == 0)
       c->prog_data.nr_params = 4;
