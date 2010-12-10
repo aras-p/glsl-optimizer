@@ -266,13 +266,14 @@ struct gen_mipmap_state
    GLuint FBO;
 };
 
-
+#define MAX_META_OPS_DEPTH      2
 /**
  * All per-context meta state.
  */
 struct gl_meta_state
 {
-   struct save_state Save;    /**< state saved during meta-ops */
+   struct save_state Save[MAX_META_OPS_DEPTH];    /**< state saved during meta-ops */
+   int current_save_state; 
 
    struct temp_texture TempTex;
 
@@ -324,8 +325,13 @@ _mesa_meta_free(struct gl_context *ctx)
 static void
 _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
 {
-   struct save_state *save = &ctx->Meta->Save;
+   struct save_state *save;
 
+   /* hope MAX_META_OPS_DEPTH is large enough */
+   assert(current_save_state < MAX_META_OPS_DEPTH);
+
+   save = &ctx->Meta->Save[ctx->Meta->current_save_state++];
+   memset(save, 0, sizeof(*save));
    save->SavedState = state;
 
    if (state & META_ALPHA_TEST) {
@@ -575,7 +581,7 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
 static void
 _mesa_meta_end(struct gl_context *ctx)
 {
-   struct save_state *save = &ctx->Meta->Save;
+   struct save_state *save = &ctx->Meta->Save[--ctx->Meta->current_save_state];
    const GLbitfield state = save->SavedState;
 
    if (state & META_ALPHA_TEST) {
