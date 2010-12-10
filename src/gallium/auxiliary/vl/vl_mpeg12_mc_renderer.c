@@ -184,13 +184,14 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos));
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), vpos);
 
-   ureg_MUL(shader, ureg_writemask(o_line, TGSI_WRITEMASK_XY), vrect, 
-      ureg_imm2f(shader, MACROBLOCK_WIDTH / 2, MACROBLOCK_HEIGHT / 2));
-   ureg_MOV(shader, ureg_writemask(o_line, TGSI_WRITEMASK_Z), 
-      ureg_scalar(interlaced, TGSI_SWIZZLE_X));
-
    ureg_MOV(shader, ureg_writemask(o_vtex[0], TGSI_WRITEMASK_XY), ureg_src(t_vpos));
    ureg_MOV(shader, ureg_writemask(o_vtex[1], TGSI_WRITEMASK_XY), ureg_src(t_vpos));
+   ureg_MOV(shader, ureg_writemask(o_vtex[2], TGSI_WRITEMASK_XY), ureg_src(t_vpos));
+
+   ureg_MOV(shader, ureg_writemask(o_line, TGSI_WRITEMASK_X), ureg_scalar(vrect, TGSI_SWIZZLE_Y));
+   ureg_MUL(shader, ureg_writemask(o_line, TGSI_WRITEMASK_Y), 
+      vrect, ureg_imm1f(shader, MACROBLOCK_HEIGHT / 2));
+
    ureg_IF(shader, ureg_scalar(interlaced, TGSI_SWIZZLE_X), &label);
 
       ureg_MOV(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_X), vrect);
@@ -200,8 +201,11 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
       ureg_ADD(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_Y), ureg_src(t_vtex), ureg_imm1f(shader, 0.5f));
       ureg_MUL(shader, ureg_writemask(o_vtex[1], TGSI_WRITEMASK_XY), ureg_src(t_vtex), scale);
 
+      ureg_MUL(shader, ureg_writemask(o_line, TGSI_WRITEMASK_X),
+         ureg_scalar(vrect, TGSI_SWIZZLE_Y),
+         ureg_imm1f(shader, MACROBLOCK_HEIGHT / 2));
+
    ureg_ENDIF(shader);
-   ureg_MOV(shader, ureg_writemask(o_vtex[2], TGSI_WRITEMASK_XY), ureg_src(t_vpos));
 
    ureg_CMP(shader, ureg_writemask(o_eb[0], TGSI_WRITEMASK_XYZ),
             ureg_negate(ureg_scalar(vrect, TGSI_SWIZZLE_X)),
@@ -250,23 +254,15 @@ calc_field(struct ureg_program *shader)
    line = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_LINE, TGSI_INTERPOLATE_LINEAR);
 
    /*
-    * line.xy going from 0 to 8 in steps of 0.5
-    * line.z flag that controls interlacing
+    * line.x going from 0 to 1 in steps of if not interlaced
+    * line.x going from 0 to 8 in steps of 0.5 if interlaced
+    * line.y going from 0 to 8 in steps of 0.5
     *
-    * tmp.z = fraction(line.y)
-    * tmp.z = tmp.z >= 0.5 ? 1 : 0
-    * tmp.xy = line >= 4 ? 1 : 0
-    * tmp.w = line.z ? tmp.z : tmp.y
-    * tmp.z = frame_pred ? 0.0f : tmp.z
+    * tmp.xy = fraction(line)
+    * tmp.xy = tmp.xy >= 0.5 ? 1 : 0
     */
-   ureg_FRC(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Z), ureg_scalar(line, TGSI_SWIZZLE_Y));
-   ureg_SGE(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Z), ureg_src(tmp), ureg_imm1f(shader, 0.5f));
-   ureg_SGE(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY), line, ureg_imm2f(shader, BLOCK_WIDTH / 2, BLOCK_HEIGHT / 2));
-
-   ureg_CMP(shader, ureg_writemask(tmp, TGSI_WRITEMASK_W),
-            ureg_negate(ureg_scalar(line, TGSI_SWIZZLE_Z)),
-            ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_Z),
-            ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_Y));
+   ureg_FRC(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY), line);
+   ureg_SGE(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY), ureg_src(tmp), ureg_imm1f(shader, 0.5f));
 
    return tmp;
 }
@@ -301,11 +297,11 @@ fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct
     */
 
    ureg_CMP(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_XY),
-            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_W)),
+            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_X)),
             tc[1], tc[0]);
 
    ureg_CMP(shader, ureg_writemask(t_eb_info, TGSI_WRITEMASK_XYZ),
-            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_W)),
+            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_X)),
             eb[1], eb[0]);
 
    /* r600g is ignoring TGSI_INTERPOLATE_CONSTANT, just workaround this */
@@ -361,7 +357,7 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
    ureg_SGE(shader, ureg_writemask(tmp, TGSI_WRITEMASK_X), ref_frames, ureg_imm1f(shader, 0.0f));
    ureg_IF(shader, ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_X), &intra_label);
       ureg_CMP(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY),
-               ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Z)),
+               ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
                tc[1], tc[0]);
 
       ureg_IF(shader, ureg_scalar(ref_frames, TGSI_SWIZZLE_X), &bi_label);
@@ -386,7 +382,7 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
          ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, ureg_src(tmp), sampler[0]);
 
          ureg_CMP(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY),
-            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Z)),
+            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
             tc[3], tc[2]);
          ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, ureg_src(tmp), sampler[1]);
 
