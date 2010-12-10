@@ -43,7 +43,7 @@
 #define SCALE_FACTOR_16_TO_9 (32768.0f / 256.0f)
 
 #define STAGE1_SCALE 4.0f
-#define STAGE2_SCALE (SCALE_FACTOR_16_TO_9 / STAGE1_SCALE)
+#define STAGE2_SCALE (SCALE_FACTOR_16_TO_9 / STAGE1_SCALE / STAGE1_SCALE)
 
 #define NR_RENDER_TARGETS 4
 
@@ -273,14 +273,14 @@ create_matrix_frag_shader(struct vl_idct *idct)
    for (i = 0; i < NR_RENDER_TARGETS; ++i)
        fragment[i] = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, i);
 
-   ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Y), tex);
    for (i = 0; i < 4; ++i) {
-      fetch_four(shader, l[i], ureg_src(t_tc), sampler[0], start[0], block, false, false, idct->buffer_width / 4);
-      ureg_MUL(shader, l[i][0], ureg_src(l[i][0]), ureg_imm1f(shader, STAGE1_SCALE));
-      ureg_MUL(shader, l[i][1], ureg_src(l[i][1]), ureg_imm1f(shader, STAGE1_SCALE));
-      if(i != 3)
+      if(i == 0)
+         ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Y), tex);
+      else
          ureg_ADD(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Y), 
             ureg_src(t_tc), ureg_imm1f(shader, 1.0f / idct->buffer_height));
+
+      fetch_four(shader, l[i], ureg_src(t_tc), sampler[0], start[0], block, false, false, idct->buffer_width / 4);
    }
    
    for (i = 0; i < NR_RENDER_TARGETS; ++i) {
@@ -530,7 +530,8 @@ vl_idct_upload_matrix(struct pipe_context *pipe)
    f = pipe->transfer_map(pipe, buf_transfer);
    for(i = 0; i < BLOCK_HEIGHT; ++i)
       for(j = 0; j < BLOCK_WIDTH; ++j)
-         f[i * pitch + j] = const_matrix[j][i]; // transpose
+         // transpose and scale
+         f[i * pitch + j] = const_matrix[j][i] * STAGE1_SCALE;
 
    pipe->transfer_unmap(pipe, buf_transfer);
    pipe->transfer_destroy(pipe, buf_transfer);
