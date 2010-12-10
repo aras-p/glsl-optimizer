@@ -311,7 +311,7 @@ run_vp( struct gl_context *ctx, struct tnl_pipeline_stage *stage )
    struct vp_stage_data *store = VP_STAGE_DATA(stage);
    struct vertex_buffer *VB = &tnl->vb;
    struct gl_vertex_program *program = ctx->VertexProgram._Current;
-   struct gl_program_machine machine;
+   struct gl_program_machine machine = { 0 };
    GLuint outputs[VERT_RESULT_MAX], numOutputs;
    GLuint i, j;
 
