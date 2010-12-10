@@ -899,7 +899,7 @@ struct pipe_surface* r300_create_surface(struct pipe_context * ctx,
                                                tex->desc.b.b.nr_samples,
                                                tex->desc.microtile,
                                                tex->desc.macrotile[level],
-                                               DIM_HEIGHT);
+                                               DIM_HEIGHT, 0);
 
         surface->cbzb_height = align((surface->base.height + 1) / 2,
                                      tile_height);
