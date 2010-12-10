@@ -159,6 +159,10 @@ get_src_register_pointer(const struct prog_src_register *source,
          return ZeroVec;
       return prog->Parameters->ParameterValues[reg];
 
+   case PROGRAM_SYSTEM_VALUE:
+      assert(reg < Elements(machine->SystemValues));
+      return machine->SystemValues[reg];
+
    default:
       _mesa_problem(NULL,
          "Invalid src register file %d in get_src_register_pointer()",
