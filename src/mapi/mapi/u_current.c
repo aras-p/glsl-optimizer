@@ -51,7 +51,7 @@
 #include "u_current.h"
 #include "u_thread.h"
 
-#ifndef MAPI_GLAPI_CURRENT
+#ifndef MAPI_MODE_UTIL
 
 #include "table.h"
 #include "stub.h"

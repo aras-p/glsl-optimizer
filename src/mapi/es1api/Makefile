@@ -44,10 +44,10 @@ GLAPI_ASM_OBJECTS := $(GLAPI_ASM_SOURCES:.S=.o)
 GLAPI_ASM_SOURCES := $(addprefix $(GEN)/, $(GLAPI_ASM_SOURCES))
 
 include $(MAPI)/sources.mak
-MAPI_GLAPI_OBJECTS := $(MAPI_GLAPI_SOURCES:.c=.o)
-MAPI_GLAPI_SOURCES := $(addprefix $(MAPI)/, $(MAPI_GLAPI_SOURCES))
+MAPI_UTIL_OBJECTS := $(MAPI_UTIL_SOURCES:.c=.o)
+MAPI_UTIL_SOURCES := $(addprefix $(MAPI)/, $(MAPI_UTIL_SOURCES))
 
-ESAPI_OBJECTS = $(GLAPI_OBJECTS) $(GLAPI_ASM_OBJECTS) $(MAPI_GLAPI_OBJECTS)
+ESAPI_OBJECTS = $(GLAPI_OBJECTS) $(GLAPI_ASM_OBJECTS) $(MAPI_UTIL_OBJECTS)
 
 INCLUDE_DIRS = \
 	-I$(TOP)/include \
@@ -72,13 +72,13 @@ lib$(ESAPI).a: $(ESAPI_OBJECTS)
 	@$(MKLIB) -o $(ESAPI) -static $(ESAPI_OBJECTS)
 
 $(GLAPI_OBJECTS): %.o: $(GLAPI)/%.c
-	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) -DMAPI_GLAPI_CURRENT $< -o $@
+	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) -DMAPI_MODE_UTIL $< -o $@
 
 $(GLAPI_ASM_OBJECTS): %.o: $(GEN)/%.S
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
 
-$(MAPI_GLAPI_OBJECTS): %.o: $(MAPI)/%.c
-	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) -DMAPI_GLAPI_CURRENT $< -o $@
+$(MAPI_UTIL_OBJECTS): %.o: $(MAPI)/%.c
+	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) -DMAPI_MODE_UTIL $< -o $@
 
 $(GLAPI_SOURCES) $(GLAPI_ASM_SOURCES): | glapi-stamp
 
@@ -135,10 +135,10 @@ install: default install-headers install-pc
 	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(GLES_LIB_GLOB) \
 		$(DESTDIR)$(INSTALL_LIB_DIR)
 
-depend: $(GLAPI_SOURCES) $(MAPI_GLAPI_SOURCES)
+depend: $(GLAPI_SOURCES) $(MAPI_UTIL_SOURCES)
 	@echo "running $(MKDEP)"
 	@touch depend
 	@$(MKDEP) $(MKDEP_OPTIONS) -f- $(DEFINES) $(INCLUDE_DIRS) \
-		-DMAPI_GLAPI_CURRENT $(GLAPI_SOURCES) $(MAPI_GLAPI_SOURCES) \
+		-DMAPI_MODE_UTIL $(GLAPI_SOURCES) $(MAPI_UTIL_SOURCES) \
 		2>/dev/null | sed -e 's,^$(GLAPI)/,,' -e 's,^$(MAPI)/,,' \
 		> depend
