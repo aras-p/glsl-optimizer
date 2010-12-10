@@ -247,8 +247,9 @@ class ABIPrinter(object):
 
     def c_mapi_table_initializer(self, prefix):
         """Return the array initializer for mapi_table_fill."""
-        entries = [ent.name for ent in self.entries if not ent.alias]
-        pre = self.indent + '(mapi_proc) ' + prefix
+        entries = [self._c_function(ent, prefix)
+                for ent in self.entries if not ent.alias]
+        pre = self.indent + '(mapi_proc) '
         return pre + (',\n' + pre).join(entries)
 
     def c_mapi_table_spec(self):
@@ -266,11 +267,19 @@ class ABIPrinter(object):
 
         return self.indent + self.indent.join(specv1)
 
-    def _c_decl(self, ent, prefix, need_attr=True):
+    def _c_function(self, ent, prefix, stringify=False):
+        """Return the function name of an entry."""
+        formats = { True: '"%s%s"', False: '%s%s' }
+        fmt = formats[stringify]
+        return fmt % (prefix, ent.name)
+
+    def _c_decl(self, ent, prefix, export=''):
         """Return the C declaration for the entry."""
-        decl = '%s %s %s%s(%s)' % (ent.c_return(), self.api_entry,
-                prefix, ent.name, ent.c_params())
-        if need_attr and self.api_attrs:
+        decl = '%s %s %s(%s)' % (ent.c_return(), self.api_entry,
+                self._c_function(ent, prefix), ent.c_params())
+        if export:
+            decl = export + ' ' + decl
+        if self.api_attrs:
             decl += ' ' + self.api_attrs
 
         return decl
@@ -284,10 +293,10 @@ class ABIPrinter(object):
 
     def c_private_declarations(self, prefix):
         """Return the declarations of private functions."""
-        decls = [self._c_decl(ent, prefix)
+        decls = [self._c_decl(ent, prefix) + ';'
                 for ent in self.entries if not ent.alias]
 
-        return ";\n".join(decls) + ";"
+        return "\n".join(decls)
 
     def c_public_dispatches(self, prefix):
         """Return the public dispatch functions."""
@@ -296,7 +305,7 @@ class ABIPrinter(object):
             if ent.hidden:
                 continue
 
-            proto = self.api_call + ' ' + self._c_decl(ent, prefix)
+            proto = self._c_decl(ent, prefix, self.api_call)
             cast = self._c_cast(ent)
 
             ret = ''
@@ -337,8 +346,9 @@ class ABIPrinter(object):
         """Return the initializer for struct mapi_stub array."""
         stubs = []
         for ent in self.entries_sorted_by_names:
-            stubs.append('%s{ (mapi_func) %s%s, %d, (void *) %d }' % (
-                self.indent, prefix, ent.name, ent.slot, pool_offsets[ent]))
+            stubs.append('%s{ (mapi_func) %s, %d, (void *) %d }' % (
+                self.indent, self._c_function(ent, prefix),
+                ent.slot, pool_offsets[ent]))
 
         return ',\n'.join(stubs)
 
@@ -349,10 +359,10 @@ class ABIPrinter(object):
             if ent.alias:
                 continue
 
-            proto = 'static ' + self._c_decl(ent, prefix)
+            proto = self._c_decl(ent, prefix, 'static')
 
-            stmt1 = self.indent + '%s("%s%s");' % (
-                    self.noop_warn, warn_prefix, ent.name)
+            stmt1 = self.indent + '%s(%s);' % (self.noop_warn,
+                    self._c_function(ent, warn_prefix, True))
 
             if ent.ret:
                 stmt2 = self.indent + 'return (%s) 0;' % (ent.ret)
@@ -366,7 +376,8 @@ class ABIPrinter(object):
 
     def c_noop_initializer(self, prefix, use_generic):
         """Return an initializer for the noop dispatch table."""
-        entries = [prefix + ent.name for ent in self.entries if not ent.alias]
+        entries = [self._c_function(ent, prefix)
+                for ent in self.entries if not ent.alias]
         if use_generic:
             entries = [self.noop_generic] * len(entries)
 
@@ -380,17 +391,17 @@ class ABIPrinter(object):
 
         asm.append('__asm__(')
         for ent in self.entries:
-            name = prefix + ent.name
+            name = self._c_function(ent, prefix, True)
 
             if ent.hidden:
-                asm.append('".hidden %s\\n"' % (name))
+                asm.append('".hidden "%s"\\n"' % (name))
 
             if ent.alias:
-                asm.append('".globl %s\\n"' % (name))
-                asm.append('".set %s, %s\\n"' % (name,
-                    prefix + ent.alias.name))
+                asm.append('".globl "%s"\\n"' % (name))
+                asm.append('".set "%s", "%s"\\n"' % (name,
+                    self._c_function(ent.alias, prefix, True)))
             else:
-                asm.append('STUB_ASM_ENTRY("%s")"\\n"' % (name))
+                asm.append('STUB_ASM_ENTRY(%s)"\\n"' % (name))
                 asm.append('"\\t"STUB_ASM_CODE("%d")"\\n"' % (ent.slot))
         asm.append(');')
 
