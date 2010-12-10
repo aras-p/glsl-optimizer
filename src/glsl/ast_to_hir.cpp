@@ -598,17 +598,15 @@ ir_rvalue *
 validate_assignment(struct _mesa_glsl_parse_state *state,
 		    const glsl_type *lhs_type, ir_rvalue *rhs)
 {
-   const glsl_type *rhs_type = rhs->type;
-
    /* If there is already some error in the RHS, just return it.  Anything
     * else will lead to an avalanche of error message back to the user.
     */
-   if (rhs_type->is_error())
+   if (rhs->type->is_error())
       return rhs;
 
    /* If the types are identical, the assignment can trivially proceed.
     */
-   if (rhs_type == lhs_type)
+   if (rhs->type == lhs_type)
       return rhs;
 
    /* If the array element types are the same and the size of the LHS is zero,
@@ -625,8 +623,7 @@ validate_assignment(struct _mesa_glsl_parse_state *state,
 
    /* Check for implicit conversion in GLSL 1.20 */
    if (apply_implicit_conversion(lhs_type, rhs, state)) {
-      rhs_type = rhs->type;
-      if (rhs_type == lhs_type)
+      if (rhs->type == lhs_type)
 	 return rhs;
    }
 
