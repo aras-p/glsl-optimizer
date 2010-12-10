@@ -85,7 +85,7 @@ struct r600_bo *r600_bo_handle(struct radeon *radeon,
 		free(bo);
 		return NULL;
 	}
-	bo->size = bo->size;
+	bo->size = rbo->size;
 	bo->domains = (RADEON_GEM_DOMAIN_CPU |
 			RADEON_GEM_DOMAIN_GTT |
 			RADEON_GEM_DOMAIN_VRAM);
