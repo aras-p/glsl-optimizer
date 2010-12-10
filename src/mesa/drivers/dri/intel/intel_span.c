@@ -25,6 +25,7 @@
  * 
  **************************************************************************/
 
+#include <stdbool.h>
 #include "main/glheader.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
@@ -359,6 +360,32 @@ intel_unmap_vertex_shader_textures(struct gl_context *ctx)
    }
 }
 
+typedef void (*span_init_func)(struct gl_renderbuffer *rb);
+
+static span_init_func intel_span_init_funcs[MESA_FORMAT_COUNT] =
+{
+   [MESA_FORMAT_A8] = intel_InitPointers_A8,
+   [MESA_FORMAT_RGB565] = intel_InitPointers_RGB565,
+   [MESA_FORMAT_ARGB4444] = intel_InitPointers_ARGB4444,
+   [MESA_FORMAT_ARGB1555] = intel_InitPointers_ARGB1555,
+   [MESA_FORMAT_XRGB8888] = intel_InitPointers_xRGB8888,
+   [MESA_FORMAT_ARGB8888] = intel_InitPointers_ARGB8888,
+   [MESA_FORMAT_SARGB8] = intel_InitPointers_ARGB8888,
+   [MESA_FORMAT_Z16] = intel_InitDepthPointers_z16,
+   [MESA_FORMAT_X8_Z24] = intel_InitDepthPointers_z24_s8,
+   [MESA_FORMAT_S8_Z24] = intel_InitDepthPointers_z24_s8,
+   [MESA_FORMAT_R8] = intel_InitPointers_R8,
+   [MESA_FORMAT_RG88] = intel_InitPointers_RG88,
+   [MESA_FORMAT_R16] = intel_InitPointers_R16,
+   [MESA_FORMAT_RG1616] = intel_InitPointers_RG1616,
+};
+
+bool
+intel_span_supports_format(gl_format format)
+{
+   return intel_span_init_funcs[format] != NULL;
+}
+
 /**
  * Plug in appropriate span read/write functions for the given renderbuffer.
  * These are used for the software fallbacks.
@@ -369,49 +396,6 @@ intel_set_span_functions(struct intel_context *intel,
 {
    struct intel_renderbuffer *irb = (struct intel_renderbuffer *) rb;
 
-   switch (irb->Base.Format) {
-   case MESA_FORMAT_A8:
-      intel_InitPointers_A8(rb);
-      break;
-   case MESA_FORMAT_RGB565:
-      intel_InitPointers_RGB565(rb);
-      break;
-   case MESA_FORMAT_ARGB4444:
-      intel_InitPointers_ARGB4444(rb);
-      break;
-   case MESA_FORMAT_ARGB1555:
-      intel_InitPointers_ARGB1555(rb);
-      break;
-   case MESA_FORMAT_XRGB8888:
-      intel_InitPointers_xRGB8888(rb);
-      break;
-   case MESA_FORMAT_ARGB8888:
-   case MESA_FORMAT_SARGB8:
-      intel_InitPointers_ARGB8888(rb);
-      break;
-   case MESA_FORMAT_Z16:
-      intel_InitDepthPointers_z16(rb);
-      break;
-   case MESA_FORMAT_X8_Z24:
-   case MESA_FORMAT_S8_Z24:
-      intel_InitDepthPointers_z24_s8(rb);
-      break;
-   case MESA_FORMAT_R8:
-      intel_InitPointers_R8(rb);
-      break;
-   case MESA_FORMAT_RG88:
-      intel_InitPointers_RG88(rb);
-      break;
-   case MESA_FORMAT_R16:
-      intel_InitPointers_R16(rb);
-      break;
-   case MESA_FORMAT_RG1616:
-      intel_InitPointers_RG1616(rb);
-      break;
-   default:
-      _mesa_problem(NULL,
-		    "Unexpected MesaFormat %d in intelSetSpanFunctions",
-		    irb->Base.Format);
-      break;
-   }
+   assert(intel_span_init_funcs[irb->Base.Format]);
+   intel_span_init_funcs[irb->Base.Format](rb);
 }
