@@ -130,6 +130,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
    key.nr_userclip = brw_count_bits(ctx->Transform.ClipPlanesEnabled);
    key.copy_edgeflag = (ctx->Polygon.FrontMode != GL_FILL ||
 			ctx->Polygon.BackMode != GL_FILL);
+   key.two_side_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
 
    /* _NEW_POINT */
    if (ctx->Point.PointSprite) {
@@ -157,7 +158,7 @@ static void brw_upload_vs_prog(struct brw_context *brw)
  */
 const struct brw_tracked_state brw_vs_prog = {
    .dirty = {
-      .mesa  = _NEW_TRANSFORM | _NEW_POLYGON | _NEW_POINT,
+      .mesa  = _NEW_TRANSFORM | _NEW_POLYGON | _NEW_POINT | _NEW_LIGHT,
       .brw   = BRW_NEW_VERTEX_PROGRAM,
       .cache = 0
    },

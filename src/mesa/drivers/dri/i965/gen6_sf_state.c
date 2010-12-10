@@ -33,9 +33,10 @@
 #include "intel_batchbuffer.h"
 
 static uint32_t
-get_attr_override(struct brw_context *brw, int fs_attr)
+get_attr_override(struct brw_context *brw, int fs_attr, int two_side_color)
 {
    int attr_index = 0, i, vs_attr;
+   int bfc = 0;
 
    if (fs_attr <= FRAG_ATTRIB_TEX7)
       vs_attr = fs_attr;
@@ -57,6 +58,30 @@ get_attr_override(struct brw_context *brw, int fs_attr)
 	 attr_index++;
    }
 
+   assert(attr_index < 32);
+
+   if (two_side_color) {
+       if ((brw->vs.prog_data->outputs_written & BITFIELD64_BIT(VERT_RESULT_COL1)) &&
+           (brw->vs.prog_data->outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC1))) {
+           assert(brw->vs.prog_data->outputs_written & BITFIELD64_BIT(VERT_RESULT_COL0));
+           assert(brw->vs.prog_data->outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC0));
+           bfc = 2;
+       } else if ((brw->vs.prog_data->outputs_written & BITFIELD64_BIT(VERT_RESULT_COL0)) &&
+                (brw->vs.prog_data->outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC0)))
+           bfc = 1;
+   }
+
+   if (bfc && (fs_attr <= FRAG_ATTRIB_TEX7 && fs_attr > FRAG_ATTRIB_WPOS)) {
+       if (fs_attr == FRAG_ATTRIB_COL0)
+           attr_index |= (ATTRIBUTE_SWIZZLE_INPUTATTR_FACING << ATTRIBUTE_SWIZZLE_SHIFT);
+       else if (fs_attr == FRAG_ATTRIB_COL1 && bfc == 2) {
+           attr_index++;
+           attr_index |= (ATTRIBUTE_SWIZZLE_INPUTATTR_FACING << ATTRIBUTE_SWIZZLE_SHIFT);
+       } else {
+           attr_index += bfc;
+       }
+   }
+
    return attr_index;
 }
 
@@ -75,6 +100,7 @@ upload_sf_state(struct brw_context *brw)
    GLboolean render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
    int attr = 0;
    int urb_start;
+   int two_side_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
 
    /* _NEW_TRANSFORM */
    if (ctx->Transform.ClipPlanesEnabled)
@@ -224,7 +250,7 @@ upload_sf_state(struct brw_context *brw)
 
       for (; attr < 64; attr++) {
 	 if (brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)) {
-	    attr_overrides |= get_attr_override(brw, attr);
+	    attr_overrides |= get_attr_override(brw, attr, two_side_color);
 	    attr++;
 	    break;
 	 }
@@ -232,7 +258,7 @@ upload_sf_state(struct brw_context *brw)
 
       for (; attr < 64; attr++) {
 	 if (brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(attr)) {
-	    attr_overrides |= get_attr_override(brw, attr) << 16;
+	    attr_overrides |= get_attr_override(brw, attr, two_side_color) << 16;
 	    attr++;
 	    break;
 	 }

@@ -140,11 +140,13 @@ clear_current_const(struct brw_vs_compile *c)
 static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 {
    struct intel_context *intel = &c->func.brw->intel;
-   GLuint i, reg = 0, mrf;
+   GLuint i, reg = 0, mrf, j;
    int attributes_in_vue;
    int first_reladdr_output;
    int max_constant;
    int constant = 0;
+   int vert_result_reoder[VERT_RESULT_MAX];
+   int bfc = 0;
 
    /* Determine whether to use a real constant buffer or use a block
     * of GRF registers for constants.  The later is faster but only
@@ -291,7 +293,36 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
       mrf = 4;
 
    first_reladdr_output = get_first_reladdr_output(&c->vp->program);
-   for (i = 0; i < VERT_RESULT_MAX; i++) {
+
+   for (i = 0; i < VERT_RESULT_MAX; i++)
+       vert_result_reoder[i] = i;
+
+   /* adjust attribute order in VUE for BFC0/BFC1 on Gen6+ */
+   if (intel->gen >= 6 && c->key.two_side_color) {
+       if ((c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_COL1)) &&
+           (c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC1))) {
+           assert(c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_COL0));
+           assert(c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC0));
+           bfc = 2;
+       } else if ((c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_COL0)) &&
+           (c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC0)))
+           bfc = 1;
+
+       if (bfc) {
+           for (i = 0; i < bfc; i++) {
+               vert_result_reoder[VERT_RESULT_COL0 + i * 2 + 0] = VERT_RESULT_COL0 + i;
+               vert_result_reoder[VERT_RESULT_COL0 + i * 2 + 1] = VERT_RESULT_BFC0 + i;
+           }
+
+           for (i = VERT_RESULT_COL0 + bfc * 2; i < VERT_RESULT_BFC0 + bfc; i++) {
+               vert_result_reoder[i] = i - bfc;
+           }
+       }
+   }
+
+   for (j = 0; j < VERT_RESULT_MAX; j++) {
+      i = vert_result_reoder[j];
+
       if (c->prog_data.outputs_written & BITFIELD64_BIT(i)) {
 	 c->nr_outputs++;
          assert(i < Elements(c->regs[PROGRAM_OUTPUT]));
