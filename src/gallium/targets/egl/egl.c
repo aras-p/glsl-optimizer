@@ -100,9 +100,14 @@ load_st_module(struct st_module *stmod,
 {
    struct st_api *(*create_api)(void);
 
-   _eglLog(_EGL_DEBUG, "searching for st module %s", name);
+   if (name) {
+      _eglLog(_EGL_DEBUG, "searching for st module %s", name);
+      stmod->name = loader_strdup(name);
+   }
+   else {
+      stmod->name = NULL;
+   }
 
-   stmod->name = loader_strdup(name);
    if (stmod->name)
       _eglSearchPathForEach(dlopen_st_module_cb, (void *) stmod);
    else
