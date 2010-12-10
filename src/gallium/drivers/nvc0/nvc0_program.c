@@ -23,6 +23,8 @@
 #include "pipe/p_shader_tokens.h"
 #include "pipe/p_defines.h"
 
+#define NOUVEAU_DEBUG
+
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi/tgsi_dump.h"
@@ -147,6 +149,8 @@ nvc0_system_value_location(unsigned sn, unsigned si)
       */
    case TGSI_SEMANTIC_INSTANCEID:
       return 0x2f8;
+   case TGSI_SEMANTIC_FACE:
+      return 0x3fc;
    default:
       assert(0);
       return 0x000;
@@ -178,6 +182,8 @@ nvc0_varying_location(unsigned sn, unsigned si)
       return 0x360;
    case TGSI_SEMANTIC_PRIMID:
       return 0x40;
+   case TGSI_SEMANTIC_FACE:
+      return 0x3fc;
       /*
    case TGSI_SEMANTIC_CLIP_DISTANCE:
       return 0x2c0 + (si * 4);

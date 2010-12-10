@@ -963,8 +963,10 @@ bld_interp(struct bld_context *bld, unsigned mode, struct nv_value *val)
    if (val->reg.address == 0x3fc) {
       /* gl_FrontFacing: 0/~0 to -1.0/+1.0 */
       val = bld_insn_1(bld, NV_OP_LINTERP, val);
+      val->insn->flat = 1;
       val = bld_insn_2(bld, NV_OP_SHL, val, bld_imm_u32(bld, 31));
       val = bld_insn_2(bld, NV_OP_XOR, val, bld_imm_f32(bld, -1.0f));
+      return val;
    } else
    if (mode == NVC0_INTERP_PERSPECTIVE) {
       val = bld_insn_2(bld, NV_OP_PINTERP, val, bld->frag_coord[3]);

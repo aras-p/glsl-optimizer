@@ -210,25 +210,21 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
     SB_DATA    (so, nvgl_polygon_mode(cso->fill_back));
     SB_OUT_3D  (so, POLYGON_SMOOTH_ENABLE, cso->poly_smooth);
 
-    if (cso->cull_face != PIPE_FACE_NONE) {
-        SB_BEGIN_3D(so, CULL_FACE_ENABLE, 3);
-        SB_DATA    (so, 1);
-        SB_DATA    (so, cso->front_ccw ? NVC0_3D_FRONT_FACE_CCW :
-                                         NVC0_3D_FRONT_FACE_CW);
-        switch (cso->cull_face) {
-        case PIPE_FACE_FRONT_AND_BACK:
-            SB_DATA(so, NVC0_3D_CULL_FACE_FRONT_AND_BACK);
-            break;
-        case PIPE_FACE_FRONT:
-            SB_DATA(so, NVC0_3D_CULL_FACE_FRONT);
-            break;
-        case PIPE_FACE_BACK:
-        default:
-            SB_DATA(so, NVC0_3D_CULL_FACE_BACK);
-            break;
-        }
-    } else {
-       SB_OUT_3D(so, CULL_FACE_ENABLE, 0);
+    SB_BEGIN_3D(so, CULL_FACE_ENABLE, 3);
+    SB_DATA    (so, cso->cull_face != PIPE_FACE_NONE);
+    SB_DATA    (so, cso->front_ccw ? NVC0_3D_FRONT_FACE_CCW :
+                                     NVC0_3D_FRONT_FACE_CW);
+    switch (cso->cull_face) {
+    case PIPE_FACE_FRONT_AND_BACK:
+       SB_DATA(so, NVC0_3D_CULL_FACE_FRONT_AND_BACK);
+       break;
+    case PIPE_FACE_FRONT:
+       SB_DATA(so, NVC0_3D_CULL_FACE_FRONT);
+       break;
+    case PIPE_FACE_BACK:
+    default:
+       SB_DATA(so, NVC0_3D_CULL_FACE_BACK);
+       break;
     }
 
     SB_OUT_3D  (so, POLYGON_STIPPLE_ENABLE, cso->poly_stipple_enable);
