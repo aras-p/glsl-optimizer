@@ -29,6 +29,7 @@ if env['platform'] != 'winddk':
         'glapi_getproc.c',
         'glapi_nop.c',
         'glthread.c',
+        'glapi.c',
     ]
     
     mapi_sources = [

@@ -72,7 +72,7 @@ lib$(ESAPI).a: $(ESAPI_OBJECTS)
 	@$(MKLIB) -o $(ESAPI) -static $(ESAPI_OBJECTS)
 
 $(GLAPI_OBJECTS): %.o: $(GLAPI)/%.c
-	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) -DMAPI_GLAPI_CURRENT $< -o $@
 
 $(GLAPI_ASM_OBJECTS): %.o: $(GEN)/%.S
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@

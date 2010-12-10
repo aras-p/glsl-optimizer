@@ -28,7 +28,7 @@ lib$(TARGET).a: $(TARGET_OBJECTS)
 	@$(MKLIB) -o $(TARGET) -static $(TARGET_OBJECTS)
 
 $(GLAPI_OBJECTS): %.o: %.c
-	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) -DMAPI_GLAPI_CURRENT $< -o $@
 
 $(GLAPI_ASM_OBJECTS): %.o: %.S
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
