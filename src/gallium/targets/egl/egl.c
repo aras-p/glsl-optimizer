@@ -237,6 +237,21 @@ get_st_api_full(enum st_api_type api, enum st_profile_type profile)
          break;
    }
 
+   /* try again with libGL.so loaded */
+   if (!stmod->stapi && api == ST_API_OPENGL) {
+      struct util_dl_library *glapi = util_dl_open("libGL" UTIL_DL_EXT);
+
+      if (glapi) {
+         _eglLog(_EGL_DEBUG, "retry with libGL" UTIL_DL_EXT " loaded");
+         /* skip the last name (which is NULL) */
+         for (i = 0; i < count - 1; i++) {
+            if (load_st_module(stmod, names[i], symbol))
+               break;
+         }
+         util_dl_close(glapi);
+      }
+   }
+
    if (!stmod->stapi) {
       EGLint level = (egl_g3d_loader.profile_masks[api]) ?
          _EGL_WARNING : _EGL_DEBUG;
