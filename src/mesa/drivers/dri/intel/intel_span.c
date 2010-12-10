@@ -113,6 +113,26 @@ intel_set_span_functions(struct intel_context *intel,
 #define TAG2(x,y) intel_##x##y##_A8
 #include "spantmp2.h"
 
+#define SPANTMP_MESA_FMT MESA_FORMAT_R8
+#define TAG(x) intel_##x##_R8
+#define TAG2(x,y) intel_##x##y##_R8
+#include "spantmp2.h"
+
+#define SPANTMP_MESA_FMT MESA_FORMAT_RG88
+#define TAG(x) intel_##x##_RG88
+#define TAG2(x,y) intel_##x##y##_RG88
+#include "spantmp2.h"
+
+#define SPANTMP_MESA_FMT MESA_FORMAT_R16
+#define TAG(x) intel_##x##_R16
+#define TAG2(x,y) intel_##x##y##_R16
+#include "spantmp2.h"
+
+#define SPANTMP_MESA_FMT MESA_FORMAT_RG1616
+#define TAG(x) intel_##x##_RG1616
+#define TAG2(x,y) intel_##x##y##_RG1616
+#include "spantmp2.h"
+
 #define LOCAL_DEPTH_VARS						\
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
    const GLint yScale = rb->Name ? 1 : -1;				\
@@ -375,6 +395,18 @@ intel_set_span_functions(struct intel_context *intel,
    case MESA_FORMAT_X8_Z24:
    case MESA_FORMAT_S8_Z24:
       intel_InitDepthPointers_z24_s8(rb);
+      break;
+   case MESA_FORMAT_R8:
+      intel_InitPointers_R8(rb);
+      break;
+   case MESA_FORMAT_RG88:
+      intel_InitPointers_RG88(rb);
+      break;
+   case MESA_FORMAT_R16:
+      intel_InitPointers_R16(rb);
+      break;
+   case MESA_FORMAT_RG1616:
+      intel_InitPointers_RG1616(rb);
       break;
    default:
       _mesa_problem(NULL,
