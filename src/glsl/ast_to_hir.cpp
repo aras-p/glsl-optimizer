@@ -2239,6 +2239,17 @@ ast_declarator_list::hir(exec_list *instructions,
 	    if (this->type->qualifier.flags.q.constant)
 	       var->read_only = false;
 
+	    /* Never emit code to initialize a uniform.
+	     */
+	    const glsl_type *initializer_type;
+	    if (!this->type->qualifier.flags.q.uniform) {
+	       result = do_assignment(&initializer_instructions, state,
+				      lhs, rhs,
+				      this->get_location());
+	       initializer_type = result->type;
+	    } else
+	       initializer_type = rhs->type;
+
 	    /* If the declared variable is an unsized array, it must inherrit
 	     * its full type from the initializer.  A declaration such as
 	     *
@@ -2253,16 +2264,14 @@ ast_declarator_list::hir(exec_list *instructions,
 	     *
 	     * If the declared variable is not an array, the types must
 	     * already match exactly.  As a result, the type assignment
-	     * here can be done unconditionally.
+	     * here can be done unconditionally.  For non-uniforms the call
+	     * to do_assignment can change the type of the initializer (via
+	     * the implicit conversion rules).  For uniforms the initializer
+	     * must be a constant expression, and the type of that expression
+	     * was validated above.
 	     */
-	    var->type = rhs->type;
+	    var->type = initializer_type;
 
-	    /* Never emit code to initialize a uniform.
-	     */
-	    if (!this->type->qualifier.flags.q.uniform)
-	       result = do_assignment(&initializer_instructions, state,
-				      lhs, rhs,
-				      this->get_location());
 	    var->read_only = temp;
 	 }
       }
