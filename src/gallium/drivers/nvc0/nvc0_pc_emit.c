@@ -73,7 +73,7 @@ create_fixup(struct nv_pc *pc, uint8_t ty,
 
    f = (struct nvc0_fixup *)pc->reloc_entries;
 
-   f[n].ofst = (pc->emit_pos + w) * 4;
+   f[n].ofst = pc->emit_pos + w * 4;
    f[n].type = ty;
    f[n].data = data;
    f[n].mask = m;
@@ -217,19 +217,26 @@ const_space_index(struct nv_instruction *i, int s)
 static void
 emit_flow(struct nv_pc *pc, struct nv_instruction *i, uint8_t op)
 {
-   pc->emit[0] = 0x000001e7;
+   pc->emit[0] = 0x00000007;
    pc->emit[1] = op << 24;
 
-   set_pred(pc, i);
+   if (op == 0x40 || (op >= 0x80 && op <= 0x98)) {
+      /* bra, exit, ret or kil */
+      pc->emit[0] |= 0x1e0;
+      set_pred(pc, i);
+   }
 
    if (i->target) {
-      uint32_t pos = i->target->emit_pos;
+      int32_t pcrel = i->target->emit_pos - (pc->emit_pos + 8);
 
+      /* we will need relocations only for global functions */
+      /*
       create_fixup(pc, NVC0_FIXUP_CODE_RELOC, 0, pos, 26, 0xfc000000);
       create_fixup(pc, NVC0_FIXUP_CODE_RELOC, 1, pos, -6, 0x0001ffff);
+      */
 
-      pc->emit[0] |= (pos & 0x3f) << 26;
-      pc->emit[1] |= (pos >> 6) & 0x1ffff;
+      pc->emit[0] |= (pcrel & 0x3f) << 26;
+      pc->emit[1] |= (pcrel >> 6) & 0x1ffff;
    }
 }
 
@@ -893,6 +900,11 @@ nvc0_emit_instruction(struct nv_pc *pc, struct nv_instruction *i)
       emit_mul_f32(pc, i);
       break;
    case NV_OP_SET_F32:
+   case NV_OP_SET_F32_AND:
+   case NV_OP_SET_F32_OR:
+   case NV_OP_SET_F32_XOR:
+   case NV_OP_SET_S32:
+   case NV_OP_SET_U32:
    case NV_OP_FSET_F32:
       emit_set(pc, i);
       break;
@@ -926,8 +938,8 @@ nvc0_emit_instruction(struct nv_pc *pc, struct nv_instruction *i)
       break;
    case NV_OP_JOIN:
    case NV_OP_NOP:
-      pc->emit[0] = 0x00003c00;
-      pc->emit[1] = 0x00000000;
+      pc->emit[0] = 0x00003de4;
+      pc->emit[1] = 0x40000000;
       break;
    case NV_OP_SELP:
       emit_selp(pc, i);

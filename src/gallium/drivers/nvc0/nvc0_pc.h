@@ -425,7 +425,7 @@ struct nv_basic_block {
    uint priv; /* reset to 0 after you're done */
    uint pass_seq;
 
-   uint32_t emit_pos; /* position, size in emitted code */
+   uint32_t emit_pos; /* position, size in emitted code (in bytes) */
    uint32_t emit_size;
 
    uint32_t live_set[NV_PC_MAX_VALUES / 32];
@@ -457,8 +457,8 @@ struct nv_pc {
    unsigned immd_count;
 
    uint32_t *emit;
-   unsigned emit_size;
-   unsigned emit_pos;
+   uint32_t emit_size;
+   uint32_t emit_pos;
 
    void *reloc_entries;
    unsigned num_relocs;

@@ -1494,7 +1494,7 @@ bld_instruction(struct bld_context *bld,
       bld->join_bb[bld->cond_lvl] = bld->pc->current_block;
       bld->cond_bb[bld->cond_lvl] = bld->pc->current_block;
 
-      src1 = bld_setp(bld, NV_OP_SET_U32, NV_CC_NE,
+      src1 = bld_setp(bld, NV_OP_SET_U32, NV_CC_EQ,
                       emit_fetch(bld, insn, 0, 0), bld->zero);
 
       bld_flow(bld, NV_OP_BRA, src1, NULL, (bld->cond_lvl == 0));

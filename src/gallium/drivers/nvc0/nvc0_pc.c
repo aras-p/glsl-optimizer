@@ -328,6 +328,7 @@ nvc0_emit_program(struct nv_pc *pc)
 
    NOUVEAU_DBG("emitting program: size = %u\n", pc->emit_size);
 
+   pc->emit_pos = 0;
    for (n = 0; n < pc->num_blocks; ++n) {
       struct nv_instruction *i;
       struct nv_basic_block *b = pc->bb_list[n];
@@ -335,7 +336,7 @@ nvc0_emit_program(struct nv_pc *pc)
       for (i = b->entry; i; i = i->next) {
          nvc0_emit_instruction(pc, i);
          pc->emit += 2;
-         pc->emit_pos += 2;
+         pc->emit_pos += 8;
       }
    }
    assert(pc->emit == &code[pc->emit_size / 4]);
