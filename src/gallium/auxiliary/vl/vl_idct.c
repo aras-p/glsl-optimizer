@@ -45,7 +45,7 @@
 #define STAGE1_SCALE 4.0f
 #define STAGE2_SCALE (SCALE_FACTOR_16_TO_9 / STAGE1_SCALE)
 
-#define NR_RENDER_TARGETS 1
+#define NR_RENDER_TARGETS 4
 
 enum VS_INPUT
 {
@@ -156,10 +156,13 @@ fetch_four(struct ureg_program *shader, struct ureg_dst m[2],
       ureg_MOV(shader, ureg_writemask(t_tc, wm_tc), ureg_scalar(tc, TGSI_SWIZZLE_X));
    }
 
-#if NR_RENDER_TARGETS == 8
-   ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Z), ureg_scalar(block, TGSI_SWIZZLE_X));
-#else
+#if NR_RENDER_TARGETS == 1
    ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Z), ureg_imm1f(shader, 0.0f));
+#else
+   ureg_MUL(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Z), 
+      ureg_scalar(block, TGSI_SWIZZLE_X),
+      ureg_imm1f(shader, 8.0f / NR_RENDER_TARGETS));
+   ureg_FRC(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Z), ureg_src(t_tc));
 #endif
 
    ureg_TEX(shader, m[0], TGSI_TEXTURE_3D, ureg_src(t_tc), sampler);
@@ -282,13 +285,13 @@ create_matrix_frag_shader(struct vl_idct *idct)
    
    for (i = 0; i < NR_RENDER_TARGETS; ++i) {
 
-#if NR_RENDER_TARGETS == 8
-      ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_X), ureg_imm1f(shader, 1.0f / BLOCK_WIDTH * i));
-      fetch_four(shader, r, ureg_src(t_tc), sampler[1], start[1], block, true, true, BLOCK_WIDTH / 4);
-#elif NR_RENDER_TARGETS == 1
+#if NR_RENDER_TARGETS == 1
       fetch_four(shader, r, block, sampler[1], start[1], block, true, true, BLOCK_WIDTH / 4);
 #else
-#error invalid number of render targets
+      ureg_ADD(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_X), 
+         ureg_imm1f(shader, 1.0f / BLOCK_WIDTH * i),
+         block);
+      fetch_four(shader, r, ureg_src(t_tc), sampler[1], start[1], block, true, true, BLOCK_WIDTH / 4);
 #endif
 
       for (j = 0; j < 4; ++j) {
