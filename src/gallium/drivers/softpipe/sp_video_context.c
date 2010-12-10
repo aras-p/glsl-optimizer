@@ -38,7 +38,7 @@
 #include "sp_public.h"
 #include "sp_texture.h"
 
-#define NUM_BUFFERS 8
+#define NUM_BUFFERS 2
 
 static void
 flush_buffer(struct sp_mpeg12_context *ctx)
