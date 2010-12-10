@@ -109,66 +109,23 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
    ASSERT(rb->Name != 0);
 
    switch (internalFormat) {
-   case GL_RED:
-   case GL_R8:
-      rb->Format = MESA_FORMAT_R8;
-      break;
-   case GL_R16:
-      rb->Format = MESA_FORMAT_R16;
-      break;
-   case GL_RG:
-   case GL_RG8:
-      rb->Format = MESA_FORMAT_RG88;
-      break;
-   case GL_RG16:
-      rb->Format = MESA_FORMAT_RG1616;
-      break;
-   case GL_R3_G3_B2:
-   case GL_RGB4:
-   case GL_RGB5:
-      rb->Format = MESA_FORMAT_RGB565;
-      break;
-   case GL_RGB:
-   case GL_RGB8:
-   case GL_RGB10:
-   case GL_RGB12:
-   case GL_RGB16:
-      rb->Format = MESA_FORMAT_XRGB8888;
-      break;
-   case GL_RGBA:
-   case GL_RGBA2:
-   case GL_RGBA4:
-   case GL_RGB5_A1:
-   case GL_RGBA8:
-   case GL_RGB10_A2:
-   case GL_RGBA12:
-   case GL_RGBA16:
-      rb->Format = MESA_FORMAT_ARGB8888;
-      break;
-   case GL_ALPHA:
-   case GL_ALPHA8:
-      rb->Format = MESA_FORMAT_A8;
-      break;
-   case GL_DEPTH_COMPONENT16:
-      rb->Format = MESA_FORMAT_Z16;
+   default:
+      /* Use the same format-choice logic as for textures.
+       * Renderbuffers aren't any different from textures for us,
+       * except they're less useful because you can't texture with
+       * them.
+       */
+      rb->Format = intelChooseTextureFormat(ctx, internalFormat,
+					    GL_NONE, GL_NONE);
       break;
    case GL_STENCIL_INDEX:
    case GL_STENCIL_INDEX1_EXT:
    case GL_STENCIL_INDEX4_EXT:
    case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
-   case GL_DEPTH_COMPONENT:
-   case GL_DEPTH_COMPONENT24:
-   case GL_DEPTH_COMPONENT32:
-   case GL_DEPTH_STENCIL_EXT:
-   case GL_DEPTH24_STENCIL8_EXT:
-      /* alloc a depth+stencil buffer */
+      /* These aren't actual texture formats, so force them here. */
       rb->Format = MESA_FORMAT_S8_Z24;
       break;
-   default:
-      _mesa_problem(ctx,
-                    "Unexpected format in intel_alloc_renderbuffer_storage");
-      return GL_FALSE;
    }
 
    rb->_BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
