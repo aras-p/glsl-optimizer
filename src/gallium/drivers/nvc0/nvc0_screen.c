@@ -457,10 +457,20 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 
    nouveau_resource_init(&screen->text_heap, 0, 1 << 20);
 
-   ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 12, 5 << 16,
+   ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 12, 6 << 16,
                         &screen->uniforms);
    if (ret)
       goto fail;
+
+   /* auxiliary constants (6 user clip planes, base instance id) */
+   BEGIN_RING(chan, RING_3D(CB_SIZE), 3);
+   OUT_RING  (chan, 256);
+   OUT_RELOCh(chan, screen->uniforms, 5 << 16, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+   OUT_RELOCl(chan, screen->uniforms, 5 << 16, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+   for (i = 0; i < 5; ++i) {
+      BEGIN_RING(chan, RING_3D(CB_BIND(i)), 1);
+      OUT_RING  (chan, (15 << 4) | 1);
+   }
 
    screen->tls_size = 4 * 4 * 32 * 128 * 4;
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 17,

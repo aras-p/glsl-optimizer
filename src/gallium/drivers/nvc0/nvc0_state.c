@@ -699,8 +699,13 @@ nvc0_set_clip_state(struct pipe_context *pipe,
                     const struct pipe_clip_state *clip)
 {
     struct nvc0_context *nvc0 = nvc0_context(pipe);
+    const unsigned size = clip->nr * sizeof(clip->ucp[0]);
+
+    memcpy(&nvc0->clip.ucp[0][0], &clip->ucp[0][0], size);
+    nvc0->clip.nr = clip->nr;
 
     nvc0->clip.depth_clamp = clip->depth_clamp;
+
     nvc0->dirty |= NVC0_NEW_CLIP;
 }
 

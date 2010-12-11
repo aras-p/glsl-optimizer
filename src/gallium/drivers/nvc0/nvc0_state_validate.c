@@ -193,6 +193,23 @@ nvc0_validate_clip(struct nvc0_context *nvc0)
 
    BEGIN_RING(chan, RING_3D(VIEW_VOLUME_CLIP_CTRL), 1);
    OUT_RING  (chan, clip);
+
+   if (nvc0->clip.nr) {
+      struct nouveau_bo *bo = nvc0->screen->uniforms;
+
+      BEGIN_RING(chan, RING_3D(CB_SIZE), 3);
+      OUT_RING  (chan, 256);
+      OUT_RELOCh(chan, bo, 5 << 16, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+      OUT_RELOCl(chan, bo, 5 << 16, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+      BEGIN_RING_1I(chan, RING_3D(CB_POS), nvc0->clip.nr * 4 + 1);
+      OUT_RING  (chan, 0);
+      OUT_RINGp (chan, &nvc0->clip.ucp[0][0], nvc0->clip.nr * 4);
+
+      BEGIN_RING(chan, RING_3D(VP_CLIP_DISTANCE_ENABLE), 1);
+      OUT_RING  (chan, (1 << nvc0->clip.nr) - 1);
+   } else {
+      INLIN_RING(chan, RING_3D(VP_CLIP_DISTANCE_ENABLE), 0);
+   }
 }
 
 static void

@@ -67,6 +67,14 @@ nvc0_vertprog_validate(struct nvc0_context *nvc0)
    struct nouveau_channel *chan = nvc0->screen->base.channel;
    struct nvc0_program *vp = nvc0->vertprog;
 
+   if (nvc0->clip.nr > vp->vp.num_ucps) {
+      assert(nvc0->clip.nr <= 6);
+      vp->vp.num_ucps = 6;
+
+      if (vp->translated)
+         nvc0_program_destroy(nvc0, vp);
+   }
+
    if (!nvc0_program_validate(nvc0, vp))
          return;
 

@@ -418,6 +418,8 @@ nvc0_vp_gen_header(struct nvc0_program *vp, struct nvc0_translation_info *ti)
    vp->hdr[0] = 0x20461;
    vp->hdr[4] = 0xff000;
 
+   vp->hdr[18] = (1 << vp->vp.num_ucps) - 1;
+
    return nvc0_vp_gp_gen_header(vp, ti);
 }
 
@@ -605,6 +607,9 @@ nvc0_program_translate(struct nvc0_program *prog)
 
    ti->edgeflag_out = PIPE_MAX_SHADER_OUTPUTS;
 
+   if (prog->type == PIPE_SHADER_VERTEX && prog->vp.num_ucps)
+      ti->append_ucp = TRUE;
+
    ret = nvc0_prog_scan(ti);
    if (ret) {
       NOUVEAU_ERR("unsupported shader program\n");
@@ -645,6 +650,8 @@ nvc0_program_destroy(struct nvc0_context *nvc0, struct nvc0_program *prog)
       FREE(prog->code);
    if (prog->relocs)
       FREE(prog->relocs);
+
+   memset(prog->hdr, 0, sizeof(prog->hdr));
 
    prog->translated = FALSE;
 }

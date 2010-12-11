@@ -111,6 +111,7 @@ struct bld_context {
    struct bld_register ovs[BLD_MAX_OUTPS][4]; /* TGSI_FILE_OUTPUT, FP only */
 
    uint32_t outputs_written[(PIPE_MAX_SHADER_OUTPUTS + 7) / 8];
+   int hpos_index;
 
    struct nv_value *zero;
    struct nv_value *frag_coord[4];
@@ -901,6 +902,38 @@ bld_is_output_written(struct bld_context *bld, int i, int c)
    if (c < 0)
       return bld->outputs_written[i / 8] & (0xf << ((i * 4) % 32));
    return bld->outputs_written[i / 8] & (1 << ((i * 4 + c) % 32));
+}
+
+static void
+bld_append_vp_ucp(struct bld_context *bld)
+{
+   struct nv_value *res[6];
+   struct nv_value *ucp, *vtx, *out;
+   struct nv_instruction *insn;
+   int i, c;
+
+   assert(bld->ti->prog->vp.num_ucps <= 6);
+
+   for (c = 0; c < 4; ++c) {
+      vtx = bld_fetch_global(bld, &bld->ovs[bld->hpos_index][c]);
+
+      for (i = 0; i < bld->ti->prog->vp.num_ucps; ++i) {
+         ucp = new_value(bld->pc, NV_FILE_MEM_C(15), 4);
+         ucp->reg.address = i * 16 + c * 4;
+
+         if (c == 0)
+            res[i] = bld_insn_2(bld, NV_OP_MUL_F32, vtx, ucp);
+         else
+            res[i] = bld_insn_3(bld, NV_OP_MAD_F32, vtx, ucp, res[i]);
+      }
+   }
+
+   for (i = 0; i < bld->ti->prog->vp.num_ucps; ++i) {
+      (out = new_value(bld->pc, NV_FILE_MEM_V, 4))->reg.address = 0x2c0 + i * 4;
+      (insn = new_instruction(bld->pc, NV_OP_EXPORT))->fixed = 1;
+      nv_reference(bld->pc, insn, 0, out);
+      nv_reference(bld->pc, insn, 1, res[i]);
+   }
 }
 
 static void
@@ -1755,17 +1788,28 @@ bld_instruction(struct bld_context *bld,
       /* VP outputs are exported in-place as scalars, optimization later */
       if (bld->pc->is_fragprog)
          bld_export_fp_outputs(bld);
-      break;
+      if (bld->ti->append_ucp)
+         bld_append_vp_ucp(bld);
+      return;
    default:
       NOUVEAU_ERR("unhandled opcode %u\n", insn->Instruction.Opcode);
       abort();
-      break;
+      return;
    }
 
    if (insn->Dst[0].Register.File == TGSI_FILE_OUTPUT &&
        !bld->pc->is_fragprog) {
       struct nv_instruction *mi = NULL;
       uint size;
+
+      if (bld->ti->append_ucp) {
+         if (bld->ti->output_loc[insn->Dst[0].Register.Index][0] == 0x70) {
+            bld->hpos_index = insn->Dst[0].Register.Index;
+            for (c = 0; c < 4; ++c)
+               if (mask & (1 << c))
+                  STORE_OUTP(insn->Dst[0].Register.Index, c, dst0[c]);
+         }
+      }
 
       for (c = 0; c < 4; ++c)
          if ((mask & (1 << c)) &&

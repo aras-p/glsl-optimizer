@@ -27,6 +27,7 @@ struct nvc0_program {
 
    struct {
       uint8_t edgeflag;
+      uint8_t num_ucps;
    } vp;
 
    void *relocs;
@@ -71,6 +72,7 @@ struct nvc0_translation_info {
    ubyte edgeflag_out;
    struct nvc0_subroutine *subr;
    unsigned num_subrs;
+   boolean append_ucp;
    struct tgsi_shader_info scan;
 };
 
