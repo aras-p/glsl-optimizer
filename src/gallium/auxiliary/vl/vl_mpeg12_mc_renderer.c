@@ -255,7 +255,7 @@ calc_field(struct ureg_program *shader)
    line = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_LINE, TGSI_INTERPOLATE_LINEAR);
 
    /*
-    * line.x going from 0 to 1 in steps of if not interlaced
+    * line.x going from 0 to 1 if not interlaced
     * line.x going from 0 to 8 in steps of 0.5 if interlaced
     * line.y going from 0 to 8 in steps of 0.5
     *
@@ -312,14 +312,12 @@ fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct
    for (i = 0; i < 3; ++i) {
       ureg_IF(shader, ureg_scalar(ureg_src(t_eb_info), TGSI_SWIZZLE_X + i), &label);
 
-         /* Nouveau and r600g can't writemask tex dst regs (yet?), do in two steps */
+         /* Nouveau can't writemask tex dst regs (yet?), so this won't work anymore on nvidia hardware */
          if(i==0 || r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444) {
-            ureg_TEX(shader, tmp, TGSI_TEXTURE_3D, ureg_src(t_tc), sampler[i]);
+            ureg_TEX(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), TGSI_TEXTURE_3D, ureg_src(t_tc), sampler[i]);
          } else {
-            ureg_TEX(shader, tmp, TGSI_TEXTURE_3D, tc[2], sampler[i]);
+            ureg_TEX(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), TGSI_TEXTURE_3D, tc[2], sampler[i]);
          }
-
-         ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_X));
 
       ureg_ENDIF(shader);
    }
@@ -947,6 +945,10 @@ vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg1
       u_sampler_view_default_template(&sampler_view,
                                       buffer->textures.all[i],
                                       buffer->textures.all[i]->format);
+      sampler_view.swizzle_r = i == 0 ? PIPE_SWIZZLE_RED : PIPE_SWIZZLE_ZERO;
+      sampler_view.swizzle_g = i == 1 ? PIPE_SWIZZLE_RED : PIPE_SWIZZLE_ZERO;
+      sampler_view.swizzle_b = i == 2 ? PIPE_SWIZZLE_RED : PIPE_SWIZZLE_ZERO;
+      sampler_view.swizzle_a = PIPE_SWIZZLE_ONE;
       buffer->sampler_views.all[i] = renderer->pipe->create_sampler_view(
          renderer->pipe, buffer->textures.all[i], &sampler_view);
    }
