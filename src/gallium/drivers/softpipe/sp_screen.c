@@ -267,12 +267,13 @@ softpipe_destroy_screen( struct pipe_screen *screen )
  */
 static void
 softpipe_flush_frontbuffer(struct pipe_screen *_screen,
-                           struct pipe_surface *surface,
+                           struct pipe_resource *resource,
+                           unsigned level, unsigned layer,
                            void *context_private)
 {
    struct softpipe_screen *screen = softpipe_screen(_screen);
    struct sw_winsys *winsys = screen->winsys;
-   struct softpipe_resource *texture = softpipe_resource(surface->texture);
+   struct softpipe_resource *texture = softpipe_resource(resource);
 
    assert(texture->dt);
    if (texture->dt)

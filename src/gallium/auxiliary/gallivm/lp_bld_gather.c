@@ -31,6 +31,7 @@
 #include "lp_bld_const.h"
 #include "lp_bld_format.h"
 #include "lp_bld_gather.h"
+#include "lp_bld_init.h"
 
 
 /**
@@ -39,7 +40,7 @@
  * @sa lp_build_gather()
  */
 LLVMValueRef
-lp_build_gather_elem_ptr(LLVMBuilderRef builder,
+lp_build_gather_elem_ptr(struct gallivm_state *gallivm,
                          unsigned length,
                          LLVMValueRef base_ptr,
                          LLVMValueRef offsets,
@@ -48,17 +49,17 @@ lp_build_gather_elem_ptr(LLVMBuilderRef builder,
    LLVMValueRef offset;
    LLVMValueRef ptr;
 
-   assert(LLVMTypeOf(base_ptr) == LLVMPointerType(LLVMInt8Type(), 0));
+   assert(LLVMTypeOf(base_ptr) == LLVMPointerType(LLVMInt8TypeInContext(gallivm->context), 0));
 
    if (length == 1) {
       assert(i == 0);
       offset = offsets;
    } else {
-      LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
-      offset = LLVMBuildExtractElement(builder, offsets, index, "");
+      LLVMValueRef index = lp_build_const_int32(gallivm, i);
+      offset = LLVMBuildExtractElement(gallivm->builder, offsets, index, "");
    }
 
-   ptr = LLVMBuildGEP(builder, base_ptr, &offset, 1, "");
+   ptr = LLVMBuildGEP(gallivm->builder, base_ptr, &offset, 1, "");
 
    return ptr;
 }
@@ -70,7 +71,7 @@ lp_build_gather_elem_ptr(LLVMBuilderRef builder,
  * @sa lp_build_gather()
  */
 LLVMValueRef
-lp_build_gather_elem(LLVMBuilderRef builder,
+lp_build_gather_elem(struct gallivm_state *gallivm,
                      unsigned length,
                      unsigned src_width,
                      unsigned dst_width,
@@ -78,23 +79,23 @@ lp_build_gather_elem(LLVMBuilderRef builder,
                      LLVMValueRef offsets,
                      unsigned i)
 {
-   LLVMTypeRef src_type = LLVMIntType(src_width);
+   LLVMTypeRef src_type = LLVMIntTypeInContext(gallivm->context, src_width);
    LLVMTypeRef src_ptr_type = LLVMPointerType(src_type, 0);
-   LLVMTypeRef dst_elem_type = LLVMIntType(dst_width);
+   LLVMTypeRef dst_elem_type = LLVMIntTypeInContext(gallivm->context, dst_width);
    LLVMValueRef ptr;
    LLVMValueRef res;
 
-   assert(LLVMTypeOf(base_ptr) == LLVMPointerType(LLVMInt8Type(), 0));
+   assert(LLVMTypeOf(base_ptr) == LLVMPointerType(LLVMInt8TypeInContext(gallivm->context), 0));
 
-   ptr = lp_build_gather_elem_ptr(builder, length, base_ptr, offsets, i);
-   ptr = LLVMBuildBitCast(builder, ptr, src_ptr_type, "");
-   res = LLVMBuildLoad(builder, ptr, "");
+   ptr = lp_build_gather_elem_ptr(gallivm, length, base_ptr, offsets, i);
+   ptr = LLVMBuildBitCast(gallivm->builder, ptr, src_ptr_type, "");
+   res = LLVMBuildLoad(gallivm->builder, ptr, "");
 
    assert(src_width <= dst_width);
    if (src_width > dst_width)
-      res = LLVMBuildTrunc(builder, res, dst_elem_type, "");
+      res = LLVMBuildTrunc(gallivm->builder, res, dst_elem_type, "");
    if (src_width < dst_width)
-      res = LLVMBuildZExt(builder, res, dst_elem_type, "");
+      res = LLVMBuildZExt(gallivm->builder, res, dst_elem_type, "");
 
    return res;
 }
@@ -112,7 +113,7 @@ lp_build_gather_elem(LLVMBuilderRef builder,
  * @param offsets vector with offsets
  */
 LLVMValueRef
-lp_build_gather(LLVMBuilderRef builder,
+lp_build_gather(struct gallivm_state *gallivm,
                 unsigned length,
                 unsigned src_width,
                 unsigned dst_width,
@@ -123,24 +124,24 @@ lp_build_gather(LLVMBuilderRef builder,
 
    if (length == 1) {
       /* Scalar */
-      return lp_build_gather_elem(builder, length,
+      return lp_build_gather_elem(gallivm, length,
                                   src_width, dst_width,
                                   base_ptr, offsets, 0);
    } else {
       /* Vector */
 
-      LLVMTypeRef dst_elem_type = LLVMIntType(dst_width);
+      LLVMTypeRef dst_elem_type = LLVMIntTypeInContext(gallivm->context, dst_width);
       LLVMTypeRef dst_vec_type = LLVMVectorType(dst_elem_type, length);
       unsigned i;
 
       res = LLVMGetUndef(dst_vec_type);
       for (i = 0; i < length; ++i) {
-         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), i, 0);
+         LLVMValueRef index = lp_build_const_int32(gallivm, i);
          LLVMValueRef elem;
-         elem = lp_build_gather_elem(builder, length,
+         elem = lp_build_gather_elem(gallivm, length,
                                      src_width, dst_width,
                                      base_ptr, offsets, i);
-         res = LLVMBuildInsertElement(builder, res, elem, index, "");
+         res = LLVMBuildInsertElement(gallivm->builder, res, elem, index, "");
       }
    }
 

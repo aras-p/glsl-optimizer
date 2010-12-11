@@ -129,6 +129,7 @@ dri2_do_create_buffer(DrawablePtr pDraw, DRI2BufferPtr buffer, unsigned int form
 	    template.width0 = pDraw->width;
 	    template.height0 = pDraw->height;
 	    template.depth0 = 1;
+	    template.array_size = 1;
 	    template.last_level = 0;
 	    template.bind = PIPE_BIND_DEPTH_STENCIL |
 		PIPE_BIND_SHARED;

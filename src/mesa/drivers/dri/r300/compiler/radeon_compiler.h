@@ -35,9 +35,16 @@
 
 struct rc_swizzle_caps;
 
+enum rc_program_type {
+	RC_VERTEX_PROGRAM,
+	RC_FRAGMENT_PROGRAM,
+	RC_NUM_PROGRAM_TYPES
+};
+
 struct radeon_compiler {
 	struct memory_pool Pool;
 	struct rc_program Program;
+	enum rc_program_type type;
 	unsigned Debug:2;
 	unsigned Error:1;
 	char * ErrorMsg;
@@ -140,9 +147,21 @@ struct radeon_compiler_pass {
 	void *user;		/* Optional parameter which is passed to the run function. */
 };
 
+struct rc_program_stats {
+	unsigned num_insts;
+	unsigned num_fc_insts;
+	unsigned num_tex_insts;
+	unsigned num_rgb_insts;
+	unsigned num_alpha_insts;
+	unsigned num_presub_ops;
+	unsigned num_temp_regs;
+};
+
+void rc_get_stats(struct radeon_compiler *c, struct rc_program_stats *s);
+
 /* Executes a list of compiler passes given in the parameter 'list'. */
-void rc_run_compiler(struct radeon_compiler *c, struct radeon_compiler_pass *list,
-		     const char *shader_name);
+void rc_run_compiler_passes(struct radeon_compiler *c, struct radeon_compiler_pass *list);
+void rc_run_compiler(struct radeon_compiler *c, struct radeon_compiler_pass *list);
 void rc_validate_final_shader(struct radeon_compiler *c, void *user);
 
 #endif /* RADEON_COMPILER_H */

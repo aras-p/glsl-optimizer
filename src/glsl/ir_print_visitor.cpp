@@ -153,17 +153,10 @@ void ir_print_visitor::visit(ir_function_signature *ir)
 
 void ir_print_visitor::visit(ir_function *ir)
 {
-   if (!ir->has_user_signature())
-      return;
-
    printf("(function %s\n", ir->name);
    indentation++;
    foreach_iter(exec_list_iterator, iter, *ir) {
       ir_function_signature *const sig = (ir_function_signature *) iter.get();
-
-      if (sig->is_builtin)
-	 continue;
-
       indent();
       sig->accept(this);
       printf("\n");
@@ -325,6 +318,15 @@ void ir_print_visitor::visit(ir_constant *ir)
    if (ir->type->is_array()) {
       for (unsigned i = 0; i < ir->type->length; i++)
 	 ir->get_array_element(i)->accept(this);
+   } else if (ir->type->is_record()) {
+      ir_constant *value = (ir_constant *) ir->components.get_head();
+      for (unsigned i = 0; i < ir->type->length; i++) {
+	 printf("(%s ", ir->type->fields.structure->name);
+	 value->accept(this);
+	 printf(")");
+
+	 value = (ir_constant *) value->next;
+      }
    } else {
       for (unsigned i = 0; i < ir->type->components(); i++) {
 	 if (i != 0)

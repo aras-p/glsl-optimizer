@@ -49,7 +49,7 @@ struct _radeon_mipmap_level {
 };
 
 /* store the max possible in the miptree */
-#define RADEON_MIPTREE_MAX_TEXTURE_LEVELS 13
+#define RADEON_MIPTREE_MAX_TEXTURE_LEVELS 15
 
 /**
  * A mipmap tree contains texture images in the layout that the hardware

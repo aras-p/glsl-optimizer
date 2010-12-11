@@ -472,7 +472,6 @@ conditional_token:
 conditional_tokens:
 	/* Exactly the same as pp_tokens, but using conditional_token */
 	conditional_token {
-		parser->space_tokens = 1;
 		$$ = _token_list_create (parser);
 		_token_list_append ($$, $1);
 		talloc_unlink (parser, $1);

@@ -210,23 +210,26 @@ trace_screen_context_create(struct pipe_screen *_screen, void *priv)
 
 static void
 trace_screen_flush_frontbuffer(struct pipe_screen *_screen,
-                               struct pipe_surface *_surface,
+                               struct pipe_resource *_resource,
+                               unsigned level, unsigned layer,
                                void *context_private)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
-   struct trace_surface *tr_surf = trace_surface(_surface);
+   struct trace_resource *tr_res = trace_resource(_resource);
    struct pipe_screen *screen = tr_scr->screen;
-   struct pipe_surface *surface = tr_surf->surface;
+   struct pipe_resource *resource = tr_res->resource;
 
    trace_dump_call_begin("pipe_screen", "flush_frontbuffer");
 
    trace_dump_arg(ptr, screen);
-   trace_dump_arg(ptr, surface);
+   trace_dump_arg(ptr, resource);
+   trace_dump_arg(uint, level);
+   trace_dump_arg(uint, layer);
    /* XXX: hide, as there is nothing we can do with this
    trace_dump_arg(ptr, context_private);
    */
 
-   screen->flush_frontbuffer(screen, surface, context_private);
+   screen->flush_frontbuffer(screen, resource, level, layer, context_private);
 
    trace_dump_call_end();
 }
@@ -316,68 +319,6 @@ trace_screen_resource_destroy(struct pipe_screen *_screen,
 
    trace_resource_destroy(tr_scr, tr_tex);
 }
-
-
-/********************************************************************
- * surface
- */
-
-
-static struct pipe_surface *
-trace_screen_get_tex_surface(struct pipe_screen *_screen,
-                             struct pipe_resource *_texture,
-                             unsigned face, unsigned level,
-                             unsigned zslice,
-                             unsigned usage)
-{
-   struct trace_screen *tr_scr = trace_screen(_screen);
-   struct trace_resource *tr_tex = trace_resource(_texture);
-   struct pipe_screen *screen = tr_scr->screen;
-   struct pipe_resource *texture = tr_tex->resource;
-   struct pipe_surface *result = NULL;
-
-   assert(texture->screen == screen);
-
-   trace_dump_call_begin("pipe_screen", "get_tex_surface");
-
-   trace_dump_arg(ptr, screen);
-   trace_dump_arg(ptr, texture);
-   trace_dump_arg(uint, face);
-   trace_dump_arg(uint, level);
-   trace_dump_arg(uint, zslice);
-   trace_dump_arg(uint, usage);
-
-   result = screen->get_tex_surface(screen, texture, face, level, zslice, usage);
-
-   trace_dump_ret(ptr, result);
-
-   trace_dump_call_end();
-
-   result = trace_surface_create(tr_tex, result);
-
-   return result;
-}
-
-
-static void
-trace_screen_tex_surface_destroy(struct pipe_surface *_surface)
-{
-   struct trace_screen *tr_scr = trace_screen(_surface->texture->screen);
-   struct trace_surface *tr_surf = trace_surface(_surface);
-   struct pipe_screen *screen = tr_scr->screen;
-   struct pipe_surface *surface = tr_surf->surface;
-
-   trace_dump_call_begin("pipe_screen", "tex_surface_destroy");
-
-   trace_dump_arg(ptr, screen);
-   trace_dump_arg(ptr, surface);
-
-   trace_dump_call_end();
-
-   trace_surface_destroy(tr_surf);
-}
-
-
 
 
 
@@ -580,8 +521,6 @@ trace_screen_create(struct pipe_screen *screen)
    tr_scr->base.resource_from_handle = trace_screen_resource_from_handle;
    tr_scr->base.resource_get_handle = trace_screen_resource_get_handle;
    tr_scr->base.resource_destroy = trace_screen_resource_destroy;
-   tr_scr->base.get_tex_surface = trace_screen_get_tex_surface;
-   tr_scr->base.tex_surface_destroy = trace_screen_tex_surface_destroy;
    tr_scr->base.user_buffer_create = trace_screen_user_buffer_create;
    tr_scr->base.fence_reference = trace_screen_fence_reference;
    tr_scr->base.fence_signalled = trace_screen_fence_signalled;

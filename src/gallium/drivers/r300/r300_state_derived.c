@@ -193,7 +193,7 @@ static void r300_swtcl_vertex_psc(struct r300_context *r300)
         (R300_LAST_VEC << (i & 1 ? 16 : 0));
 
     vstream->count = (i >> 1) + 1;
-    r300->vertex_stream_state.dirty = TRUE;
+    r300_mark_atom_dirty(r300, &r300->vertex_stream_state);
     r300->vertex_stream_state.size = (1 + vstream->count) * 2;
 }
 
@@ -592,7 +592,8 @@ static void r300_update_rs_block(struct r300_context *r300)
 }
 
 static uint32_t r300_get_border_color(enum pipe_format format,
-                                      const float border[4])
+                                      const float border[4],
+                                      boolean is_r500)
 {
     const struct util_format_description *desc;
     float border_swizzled[4] = {0};
@@ -600,6 +601,24 @@ static uint32_t r300_get_border_color(enum pipe_format format,
     union util_color uc = {0};
 
     desc = util_format_description(format);
+
+    /* Do depth formats first. */
+    if (util_format_is_depth_or_stencil(format)) {
+        switch (format) {
+        case PIPE_FORMAT_Z16_UNORM:
+            return util_pack_z(PIPE_FORMAT_Z16_UNORM, border[0]);
+        case PIPE_FORMAT_X8Z24_UNORM:
+        case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
+            if (is_r500) {
+                return util_pack_z(PIPE_FORMAT_X8Z24_UNORM, border[0]);
+            } else {
+                return util_pack_z(PIPE_FORMAT_Z16_UNORM, border[0]) << 16;
+            }
+        default:
+            assert(0);
+            return 0;
+        }
+    }
 
     /* Apply inverse swizzle of the format. */
     for (i = 0; i < 4; i++) {
@@ -617,6 +636,12 @@ static uint32_t r300_get_border_color(enum pipe_format format,
             border_swizzled[3] = border[i];
             break;
         }
+    }
+
+    /* Compressed formats. */
+    if (util_format_is_compressed(format)) {
+        util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_UNORM, &uc);
+        return uc.ui;
     }
 
     switch (desc->channel[0].size) {
@@ -641,6 +666,15 @@ static uint32_t r300_get_border_color(enum pipe_format format,
 
         case 10:
             util_pack_color(border_swizzled, PIPE_FORMAT_B10G10R10A2_UNORM, &uc);
+            break;
+
+        case 16:
+            if (desc->nr_channels <= 2) {
+                border_swizzled[0] = border_swizzled[2];
+                util_pack_color(border_swizzled, PIPE_FORMAT_R16G16_UNORM, &uc);
+            } else {
+                util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
+            }
             break;
     }
 
@@ -683,12 +717,13 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             /* Set the border color. */
             texstate->border_color =
                 r300_get_border_color(view->base.format,
-                                      sampler->state.border_color);
+                                      sampler->state.border_color,
+                                      r300->screen->caps.is_r500);
 
             /* determine min/max levels */
-            max_level = MIN3(sampler->max_lod + view->base.first_level,
-                             tex->desc.b.b.last_level, view->base.last_level);
-            min_level = MIN2(sampler->min_lod + view->base.first_level,
+            max_level = MIN3(sampler->max_lod + view->base.u.tex.first_level,
+                             tex->desc.b.b.last_level, view->base.u.tex.last_level);
+            min_level = MIN2(sampler->min_lod + view->base.u.tex.first_level,
                              max_level);
 
             if (tex->desc.is_npot && min_level > 0) {
@@ -729,11 +764,16 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                 if (sampler->state.compare_mode == PIPE_TEX_COMPARE_NONE) {
                     texstate->format.format1 |=
                         r300_get_swizzle_combined(depth_swizzle,
-                                                  view->swizzle);
+                                                  view->swizzle, FALSE);
                 } else {
                     texstate->format.format1 |=
-                        r300_get_swizzle_combined(depth_swizzle, 0);
+                        r300_get_swizzle_combined(depth_swizzle, 0, FALSE);
                 }
+            }
+
+            if (r300->screen->caps.dxtc_swizzle &&
+                util_format_is_compressed(tex->desc.b.b.format)) {
+                texstate->filter1 |= R400_DXTC_SWIZZLE_ENABLE;
             }
 
             /* to emulate 1D textures through 2D ones correctly */
@@ -847,9 +887,8 @@ static void r300_flush_depth_textures(struct r300_context *r300)
             for (level = 0; level <= tex->last_level; level++)
                 if (r300_texture(tex)->zmask_in_use[level]) {
                     /* We don't handle 3D textures and cubemaps yet. */
-                    r300_flush_depth_stencil(&r300->context, tex,
-                                             u_subresource(0, level), 0);
-                }
+                    r300_flush_depth_stencil(&r300->context, tex, level, 0);
+                 }
         }
 }
 

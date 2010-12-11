@@ -171,6 +171,7 @@ create_component_texture(struct pipe_context *pipe,
    templ.width0 = width;
    templ.height0 = height;
    templ.depth0 = 1;
+   templ.array_size = 1;
    templ.bind = PIPE_BIND_SAMPLER_VIEW;
 
    tex = screen->resource_create(screen, &templ);
@@ -312,17 +313,17 @@ copy_packed_data(ScrnInfoPtr pScrn,
    int y_array_size = w * h;
 
    ytrans = pipe_get_transfer(pipe, dst[0],
-                                   0, 0, 0,
-                                   PIPE_TRANSFER_WRITE,
-                                   left, top, w, h);
+                              0, 0,
+                              PIPE_TRANSFER_WRITE,
+                              left, top, w, h);
    utrans = pipe_get_transfer(pipe, dst[1],
-                                   0, 0, 0,
-                                   PIPE_TRANSFER_WRITE,
-                                   left, top, w, h);
+                              0, 0,
+                              PIPE_TRANSFER_WRITE,
+                              left, top, w, h);
    vtrans = pipe_get_transfer(pipe, dst[2],
-                                   0, 0, 0,
-                                   PIPE_TRANSFER_WRITE,
-                                   left, top, w, h);
+                              0, 0,
+                              PIPE_TRANSFER_WRITE,
+                              left, top, w, h);
 
    ymap = (char*)pipe->transfer_map(pipe, ytrans);
    umap = (char*)pipe->transfer_map(pipe, utrans);
@@ -533,7 +534,7 @@ display_video(ScrnInfoPtr pScrn, struct xorg_xv_port_priv *pPriv, int id,
    if (!dst || !dst->tex)
       XORG_FALLBACK("Xv destination %s", !dst ? "!dst" : "!dst->tex");
 
-   dst_surf = xorg_gpu_surface(pPriv->r->pipe->screen, dst);
+   dst_surf = xorg_gpu_surface(pPriv->r->pipe, dst);
    hdtv = ((src_w >= RES_720P_X) && (src_h >= RES_720P_Y));
 
 #ifdef COMPOSITE

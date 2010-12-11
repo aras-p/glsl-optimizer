@@ -46,7 +46,7 @@ struct lp_type;
 
 
 LLVMValueRef
-lp_build_interleave2(LLVMBuilderRef builder,
+lp_build_interleave2(struct gallivm_state *gallivm,
                      struct lp_type type,
                      LLVMValueRef a,
                      LLVMValueRef b,
@@ -54,7 +54,7 @@ lp_build_interleave2(LLVMBuilderRef builder,
 
 
 void
-lp_build_unpack2(LLVMBuilderRef builder,
+lp_build_unpack2(struct gallivm_state *gallivm,
                  struct lp_type src_type,
                  struct lp_type dst_type,
                  LLVMValueRef src,
@@ -63,7 +63,7 @@ lp_build_unpack2(LLVMBuilderRef builder,
 
 
 void
-lp_build_unpack(LLVMBuilderRef builder,
+lp_build_unpack(struct gallivm_state *gallivm,
                 struct lp_type src_type,
                 struct lp_type dst_type,
                 LLVMValueRef src,
@@ -71,7 +71,7 @@ lp_build_unpack(LLVMBuilderRef builder,
 
 
 LLVMValueRef
-lp_build_packs2(LLVMBuilderRef builder,
+lp_build_packs2(struct gallivm_state *gallivm,
                 struct lp_type src_type,
                 struct lp_type dst_type,
                 LLVMValueRef lo,
@@ -79,7 +79,7 @@ lp_build_packs2(LLVMBuilderRef builder,
 
 
 LLVMValueRef
-lp_build_pack2(LLVMBuilderRef builder,
+lp_build_pack2(struct gallivm_state *gallivm,
                struct lp_type src_type,
                struct lp_type dst_type,
                LLVMValueRef lo,
@@ -87,7 +87,7 @@ lp_build_pack2(LLVMBuilderRef builder,
 
 
 LLVMValueRef
-lp_build_pack(LLVMBuilderRef builder,
+lp_build_pack(struct gallivm_state *gallivm,
               struct lp_type src_type,
               struct lp_type dst_type,
               boolean clamped,
@@ -95,7 +95,7 @@ lp_build_pack(LLVMBuilderRef builder,
 
 
 void
-lp_build_resize(LLVMBuilderRef builder,
+lp_build_resize(struct gallivm_state *gallivm,
                 struct lp_type src_type,
                 struct lp_type dst_type,
                 const LLVMValueRef *src, unsigned num_srcs,

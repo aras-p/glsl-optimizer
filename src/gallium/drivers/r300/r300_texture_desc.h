@@ -52,7 +52,6 @@ boolean r300_texture_desc_init(struct r300_screen *rscreen,
                                unsigned max_buffer_size);
 
 unsigned r300_texture_get_offset(struct r300_texture_desc *desc,
-                                 unsigned level, unsigned zslice,
-                                 unsigned face);
+                                 unsigned level, unsigned layer);
 
 #endif

@@ -523,8 +523,7 @@ vl_idct_upload_matrix(struct pipe_context *pipe)
    buf_transfer = pipe->get_transfer
    (
       pipe, matrix,
-      u_subresource(0, 0),
-      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+      0, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
       &rect
    );
    pitch = buf_transfer->stride / sizeof(float);
@@ -579,6 +578,8 @@ vl_idct_cleanup(struct vl_idct *idct)
 bool
 vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer, struct pipe_resource *dst)
 {
+   struct pipe_surface template;
+
    unsigned i;
 
    assert(buffer);
@@ -607,18 +608,26 @@ vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer, struct 
 
    buffer->fb_state[0].nr_cbufs = NR_RENDER_TARGETS;
    for(i = 0; i < NR_RENDER_TARGETS; ++i) {
-      buffer->fb_state[0].cbufs[i] = idct->pipe->screen->get_tex_surface(
-         idct->pipe->screen, buffer->textures.individual.intermediate, 0, 0, i,
-         PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET);
+      memset(&template, 0, sizeof(template));
+      template.format = buffer->textures.individual.intermediate->format;
+      template.u.tex.first_layer = i;
+      template.u.tex.last_layer = i;
+      template.usage = PIPE_BIND_RENDER_TARGET;
+      buffer->fb_state[0].cbufs[i] = idct->pipe->create_surface(
+         idct->pipe, buffer->textures.individual.intermediate,
+         &template);
    }
 
    buffer->fb_state[1].width = buffer->destination->width0;
    buffer->fb_state[1].height = buffer->destination->height0;
 
    buffer->fb_state[1].nr_cbufs = 1;
-   buffer->fb_state[1].cbufs[0] = idct->pipe->screen->get_tex_surface(
-      idct->pipe->screen, buffer->destination, 0, 0, 0,
-      PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET);
+
+   memset(&template, 0, sizeof(template));
+   template.format = buffer->destination->format;
+   template.usage = PIPE_BIND_RENDER_TARGET;
+   buffer->fb_state[1].cbufs[0] = idct->pipe->create_surface(
+      idct->pipe, buffer->destination, &template);
 
    for(i = 0; i < 2; ++i) {
       buffer->viewport[i].scale[2] = 1;
@@ -642,10 +651,10 @@ vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    assert(buffer);
 
    for(i = 0; i < NR_RENDER_TARGETS; ++i) {
-      idct->pipe->screen->tex_surface_destroy(buffer->fb_state[0].cbufs[i]);
+      idct->pipe->surface_destroy(idct->pipe, buffer->fb_state[0].cbufs[i]);
    }
 
-   idct->pipe->screen->tex_surface_destroy(buffer->fb_state[1].cbufs[0]);
+   idct->pipe->surface_destroy(idct->pipe, buffer->fb_state[1].cbufs[0]);
 
    cleanup_textures(idct, buffer);
    cleanup_vertex_buffers(idct, buffer);
@@ -667,8 +676,7 @@ vl_idct_map_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    buffer->tex_transfer = idct->pipe->get_transfer
    (
       idct->pipe, buffer->textures.individual.source,
-      u_subresource(0, 0),
-      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+      0, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
       &rect
    );
 

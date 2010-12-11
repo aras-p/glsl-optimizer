@@ -66,7 +66,7 @@ public:
 };
 
 static void
-mark(struct gl_program *prog, ir_variable *var, int index)
+mark(struct gl_program *prog, ir_variable *var, int offset, int len)
 {
    /* As of GLSL 1.20, varyings can only be floats, floating-point
     * vectors or matrices, or arrays of them.  For Mesa programs using
@@ -75,25 +75,12 @@ mark(struct gl_program *prog, ir_variable *var, int index)
     * something doing a more clever packing would use something other
     * than InputsRead/OutputsWritten.
     */
-   const glsl_type *element_type;
-   int element_size;
 
-   if (var->type->is_array())
-      element_type = var->type->fields.array;
-   else
-      element_type = var->type;
-
-   if (element_type->is_matrix())
-      element_size = element_type->matrix_columns;
-   else
-      element_size = 1;
-
-   index *= element_size;
-   for (int i = 0; i < element_size; i++) {
+   for (int i = 0; i < len; i++) {
       if (var->mode == ir_var_in)
-	 prog->InputsRead |= BITFIELD64_BIT(var->location + index + i);
+	 prog->InputsRead |= BITFIELD64_BIT(var->location + offset + i);
       else
-	 prog->OutputsWritten |= BITFIELD64_BIT(var->location + index + i);
+	 prog->OutputsWritten |= BITFIELD64_BIT(var->location + offset + i);
    }
 }
 
@@ -106,10 +93,11 @@ ir_set_program_inouts_visitor::visit(ir_dereference_variable *ir)
 
    if (ir->type->is_array()) {
       for (unsigned int i = 0; i < ir->type->length; i++) {
-	 mark(this->prog, ir->var, i);
+	 mark(this->prog, ir->var, i,
+	      ir->type->length * ir->type->fields.array->matrix_columns);
       }
    } else {
-      mark(this->prog, ir->var, 0);
+      mark(this->prog, ir->var, 0, ir->type->matrix_columns);
    }
 
    return visit_continue;
@@ -128,7 +116,14 @@ ir_set_program_inouts_visitor::visit_enter(ir_dereference_array *ir)
       var = (ir_variable *)hash_table_find(this->ht, deref_var->var);
 
    if (index && var) {
-      mark(this->prog, var, index->value.i[0]);
+      int width = 1;
+
+      if (deref_var->type->is_array() &&
+	  deref_var->type->fields.array->is_matrix()) {
+	 width = deref_var->type->fields.array->matrix_columns;
+      }
+
+      mark(this->prog, var, index->value.i[0] * width, width);
       return visit_continue_with_parent;
    }
 

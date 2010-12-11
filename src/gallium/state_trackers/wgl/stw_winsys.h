@@ -34,7 +34,7 @@
 
 struct pipe_screen;
 struct pipe_context;
-struct pipe_surface;
+struct pipe_resource;
 
 struct stw_shared_surface;
 
@@ -43,12 +43,13 @@ struct stw_winsys
    struct pipe_screen *
    (*create_screen)( void );
 
+   /* XXX is it actually possible to have non-zero level/layer ??? */
    /**
     * Present the color buffer to the window associated with the device context.
     */
    void
    (*present)( struct pipe_screen *screen,
-               struct pipe_surface *surf,
+               struct pipe_resource *res,
                HDC hDC );
 
    /**
@@ -85,7 +86,7 @@ struct stw_winsys
     */
    void
    (*compose)( struct pipe_screen *screen,
-               struct pipe_surface *src,
+               struct pipe_resource *res,
                struct stw_shared_surface *dest,
                LPCRECT pRect,
                ULONGLONG PresentHistoryToken );

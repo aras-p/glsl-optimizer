@@ -60,6 +60,7 @@ static struct pipe_query *r300_create_query(struct pipe_context *pipe,
     q->buffer = r300->rws->buffer_create(r300->rws, q->buffer_size, 4096,
                                          PIPE_BIND_CUSTOM, PIPE_USAGE_STREAM,
                                          q->domain);
+    q->cs_buffer = r300->rws->buffer_get_cs_handle(r300->rws, q->buffer);
 
     return (struct pipe_query*)q;
 }
@@ -79,7 +80,7 @@ void r300_resume_query(struct r300_context *r300,
                        struct r300_query *query)
 {
     r300->query_current = query;
-    r300->query_start.dirty = TRUE;
+    r300_mark_atom_dirty(r300, &r300->query_start);
 }
 
 static void r300_begin_query(struct pipe_context* pipe,

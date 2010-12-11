@@ -896,10 +896,14 @@ void emit_math1(struct brw_wm_compile *c,
 		      BRW_MATH_SATURATE_NONE);
    struct brw_reg src;
 
-   if (intel->gen >= 6 && (arg0[0].hstride == BRW_HORIZONTAL_STRIDE_0 ||
-			   arg0[0].file != BRW_GENERAL_REGISTER_FILE)) {
+   if (intel->gen >= 6 && ((arg0[0].hstride == BRW_HORIZONTAL_STRIDE_0 ||
+			    arg0[0].file != BRW_GENERAL_REGISTER_FILE) ||
+			   arg0[0].negate || arg0[0].abs)) {
       /* Gen6 math requires that source and dst horizontal stride be 1,
        * and that the argument be in the GRF.
+       *
+       * The hardware ignores source modifiers (negate and abs) on math
+       * instructions, so we also move to a temp to set those up.
        */
       src = dst[dst_chan];
       brw_MOV(p, src, arg0[0]);
@@ -1301,8 +1305,14 @@ static void emit_kil( struct brw_wm_compile *c,
 		      struct brw_reg *arg0)
 {
    struct brw_compile *p = &c->func;
-   struct brw_reg r0uw = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
+   struct intel_context *intel = &p->brw->intel;
+   struct brw_reg pixelmask;
    GLuint i, j;
+
+   if (intel->gen >= 6)
+      pixelmask = retype(brw_vec1_grf(1, 7), BRW_REGISTER_TYPE_UW);
+   else
+      pixelmask = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
 
    for (i = 0; i < 4; i++) {
       /* Check if we've already done the comparison for this reg
@@ -1319,24 +1329,9 @@ static void emit_kil( struct brw_wm_compile *c,
       brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_GE, arg0[i], brw_imm_f(0));   
       brw_set_predicate_control_flag_value(p, 0xff);
       brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-      brw_AND(p, r0uw, brw_flag_reg(), r0uw);
+      brw_AND(p, pixelmask, brw_flag_reg(), pixelmask);
       brw_pop_insn_state(p);
    }
-}
-
-/* KIL_NV kills the pixels that are currently executing, not based on a test
- * of the arguments.
- */
-void emit_kil_nv( struct brw_wm_compile *c )
-{
-   struct brw_compile *p = &c->func;
-   struct brw_reg r0uw = retype(brw_vec1_grf(0, 0), BRW_REGISTER_TYPE_UW);
-
-   brw_push_insn_state(p);
-   brw_set_mask_control(p, BRW_MASK_DISABLE);
-   brw_NOT(p, c->emit_mask_reg, brw_mask_reg(1)); /* IMASK */
-   brw_AND(p, r0uw, c->emit_mask_reg, r0uw);
-   brw_pop_insn_state(p);
 }
 
 static void fire_fb_write( struct brw_wm_compile *c,
@@ -1387,8 +1382,8 @@ static void emit_aa( struct brw_wm_compile *c,
 		     GLuint reg )
 {
    struct brw_compile *p = &c->func;
-   GLuint comp = c->key.aa_dest_stencil_reg / 2;
-   GLuint off = c->key.aa_dest_stencil_reg % 2;
+   GLuint comp = c->aa_dest_stencil_reg / 2;
+   GLuint off = c->aa_dest_stencil_reg % 2;
    struct brw_reg aa = offset(arg1[comp], off);
 
    brw_push_insn_state(p);
@@ -1416,22 +1411,16 @@ void emit_fb_write(struct brw_wm_compile *c,
    struct intel_context *intel = &brw->intel;
    GLuint nr = 2;
    GLuint channel;
-   int base_reg; /* For gen6 fb write with no header, starting from color payload directly!. */
 
    /* Reserve a space for AA - may not be needed:
     */
-   if (c->key.aa_dest_stencil_reg)
+   if (c->aa_dest_stencil_reg)
       nr += 1;
 
    /* I don't really understand how this achieves the color interleave
     * (ie RGBARGBA) in the result:  [Do the saturation here]
     */
    brw_push_insn_state(p);
-
-   if (intel->gen >= 6)
-	base_reg = nr;
-   else
-	base_reg = 0;
 
    for (channel = 0; channel < 4; channel++) {
       if (intel->gen >= 6) {
@@ -1493,9 +1482,9 @@ void emit_fb_write(struct brw_wm_compile *c,
 
    brw_pop_insn_state(p);
 
-   if (c->key.source_depth_to_render_target)
+   if (c->source_depth_to_render_target)
    {
-      if (c->key.computes_depth) 
+      if (c->computes_depth)
 	 brw_MOV(p, brw_message_reg(nr), arg2[2]);
       else 
 	 brw_MOV(p, brw_message_reg(nr), arg1[1]); /* ? */
@@ -1503,10 +1492,10 @@ void emit_fb_write(struct brw_wm_compile *c,
       nr += 2;
    }
 
-   if (c->key.dest_depth_reg)
+   if (c->dest_depth_reg)
    {
-      GLuint comp = c->key.dest_depth_reg / 2;
-      GLuint off = c->key.dest_depth_reg % 2;
+      GLuint comp = c->dest_depth_reg / 2;
+      GLuint off = c->dest_depth_reg % 2;
 
       if (off != 0) {
          brw_push_insn_state(p);
@@ -1524,15 +1513,27 @@ void emit_fb_write(struct brw_wm_compile *c,
    }
 
    if (intel->gen >= 6) {
-      /* Subtract off the message header, since we send headerless. */
-      nr -= 2;
+      /* Load the message header.  There's no implied move from src0
+       * to the base mrf on gen6.
+       */
+      brw_push_insn_state(p);
+      brw_set_mask_control(p, BRW_MASK_DISABLE);
+      brw_MOV(p, brw_message_reg(0), brw_vec8_grf(0, 0));
+      brw_pop_insn_state(p);
+
+      if (target != 0) {
+	 brw_MOV(p, retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE,
+					0,
+					2), BRW_REGISTER_TYPE_UD),
+		 brw_imm_ud(target));
+      }
    }
 
-   if (!c->key.runtime_check_aads_emit) {
-      if (c->key.aa_dest_stencil_reg)
+   if (!c->runtime_check_aads_emit) {
+      if (c->aa_dest_stencil_reg)
 	 emit_aa(c, arg1, 2);
 
-      fire_fb_write(c, base_reg, nr, target, eot);
+      fire_fb_write(c, 0, nr, target, eot);
    }
    else {
       struct brw_reg v1_null_ud = vec1(retype(brw_null_reg(), BRW_REGISTER_TYPE_UD));
@@ -1895,10 +1896,6 @@ void brw_wm_emit( struct brw_wm_compile *c )
 
       case OPCODE_KIL:
 	 emit_kil(c, args[0]);
-	 break;
-
-      case OPCODE_KIL_NV:
-	 emit_kil_nv(c);
 	 break;
 
       default:

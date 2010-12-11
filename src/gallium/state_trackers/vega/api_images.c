@@ -303,7 +303,8 @@ void vegaDrawImage(VGImage image)
    }
 
    vg_validate_state(ctx);
-   image_draw((struct vg_image*)image);
+   image_draw((struct vg_image*)image,
+         &ctx->state.vg.image_user_to_surface_matrix);
 }
 
 void vegaSetPixels(VGint dx, VGint dy,
@@ -399,7 +400,6 @@ void vegaReadPixels(void * data, VGint dataStride,
 
    struct st_framebuffer *stfb = ctx->draw_buffer;
    struct st_renderbuffer *strb = stfb->strb;
-   struct pipe_framebuffer_state *fb = &ctx->state.g3d.fb;
 
    VGfloat temp[VEGA_MAX_IMAGE_WIDTH][4];
    VGfloat *df = (VGfloat*)temp;
@@ -435,21 +435,21 @@ void vegaReadPixels(void * data, VGint dataStride,
       sy = 0;
    }
 
-   if (sx + width > fb->width || sy + height > fb->height) {
-      width = fb->width - sx;
-      height = fb->height - sy;
+   if (sx + width > stfb->width || sy + height > stfb->height) {
+      width = stfb->width - sx;
+      height = stfb->height - sy;
       /* nothing to read */
       if (width <= 0 || height <= 0)
          return;
    }
 
    {
-      VGint y = (fb->height - sy) - 1, yStep = -1;
+      VGint y = (stfb->height - sy) - 1, yStep = -1;
       struct pipe_transfer *transfer;
 
-      transfer = pipe_get_transfer(pipe, strb->texture,  0, 0, 0,
-				   PIPE_TRANSFER_READ,
-				   0, 0, sx + width, fb->height - sy);
+      transfer = pipe_get_transfer(pipe, strb->texture,  0, 0,
+                                   PIPE_TRANSFER_READ,
+                                   0, 0, sx + width, stfb->height - sy);
 
       /* Do a row at a time to flip image data vertically */
       for (i = 0; i < height; i++) {
@@ -472,8 +472,8 @@ void vegaCopyPixels(VGint dx, VGint dy,
                     VGint width, VGint height)
 {
    struct vg_context *ctx = vg_current_context();
-   struct pipe_framebuffer_state *fb = &ctx->state.g3d.fb;
-   struct st_renderbuffer *strb = ctx->draw_buffer->strb;
+   struct st_framebuffer *stfb = ctx->draw_buffer;
+   struct st_renderbuffer *strb = stfb->strb;
 
    if (width <= 0 || height <= 0) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
@@ -481,8 +481,8 @@ void vegaCopyPixels(VGint dx, VGint dy,
    }
 
    /* do nothing if we copy from outside the fb */
-   if (dx >= (VGint)fb->width || dy >= (VGint)fb->height ||
-       sx >= (VGint)fb->width || sy >= (VGint)fb->height)
+   if (dx >= (VGint)stfb->width || dy >= (VGint)stfb->height ||
+       sx >= (VGint)stfb->width || sy >= (VGint)stfb->height)
       return;
 
    vg_validate_state(ctx);

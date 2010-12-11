@@ -25,8 +25,11 @@
 #ifndef TEXCOMPRESS_H
 #define TEXCOMPRESS_H
 
-#include "mtypes.h"
 #include "formats.h"
+#include "glheader.h"
+#include "mfeatures.h"
+
+struct gl_context;
 
 #if _HAVE_FULL_GL
 

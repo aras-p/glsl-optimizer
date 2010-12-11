@@ -66,10 +66,13 @@ struct regalloc_state {
 	struct hardware_register * HwTemporary;
 	unsigned int NumHwTemporaries;
 	/**
-	 * If an instruction is inside of a loop, end_loop will be the
-	 * IP of the ENDLOOP instruction, otherwise end_loop will be 0
+	 * If an instruction is inside of a loop, EndLoop will be the
+	 * IP of the ENDLOOP instruction, and BeginLoop will be the IP
+	 * of the BGNLOOP instruction.  Otherwise, EndLoop and BeginLoop
+	 * will be -1.
 	 */
-	int end_loop;
+	int EndLoop;
+	int BeginLoop;
 };
 
 static void print_live_intervals(struct live_intervals * src)
@@ -180,11 +183,13 @@ static void scan_callback(void * data, struct rc_instruction * inst,
 		reg->Used = 1;
 		if (file == RC_FILE_INPUT)
 			reg->Live.Start = -1;
+		else if (s->BeginLoop >= 0)
+			reg->Live.Start = s->BeginLoop;
 		else
 			reg->Live.Start = inst->IP;
 		reg->Live.End = inst->IP;
-	} else if (s->end_loop)
-		reg->Live.End = s->end_loop;
+	} else if (s->EndLoop >= 0)
+		reg->Live.End = s->EndLoop;
 	else if (inst->IP > reg->Live.End)
 		reg->Live.End = inst->IP;
 }
@@ -195,6 +200,8 @@ static void compute_live_intervals(struct radeon_compiler *c,
 	memset(s, 0, sizeof(*s));
 	s->C = c;
 	s->NumHwTemporaries = c->max_temp_regs;
+	s->BeginLoop = -1;
+	s->EndLoop = -1;
 	s->HwTemporary =
 		memory_pool_malloc(&c->Pool,
 				   s->NumHwTemporaries * sizeof(struct hardware_register));
@@ -207,10 +214,12 @@ static void compute_live_intervals(struct radeon_compiler *c,
 	    inst = inst->Next) {
 
 		/* For all instructions inside of a loop, the ENDLOOP
-		 * instruction is used as the end of the live interval. */
-		if (inst->U.I.Opcode == RC_OPCODE_BGNLOOP && !s->end_loop) {
+		 * instruction is used as the end of the live interval and
+		 * the BGNLOOP instruction is used as the beginning. */
+		if (inst->U.I.Opcode == RC_OPCODE_BGNLOOP && s->EndLoop < 0) {
 			int loops = 1;
 			struct rc_instruction * tmp;
+			s->BeginLoop = inst->IP;
 			for(tmp = inst->Next;
 					tmp != &s->C->Program.Instructions;
 					tmp = tmp->Next) {
@@ -219,15 +228,17 @@ static void compute_live_intervals(struct radeon_compiler *c,
 				} else if (tmp->U.I.Opcode
 							== RC_OPCODE_ENDLOOP) {
 					if(!--loops) {
-						s->end_loop = tmp->IP;
+						s->EndLoop = tmp->IP;
 						break;
 					}
 				}
 			}
 		}
 
-		if (inst->IP == s->end_loop)
-			s->end_loop = 0;
+		if (inst->IP == s->EndLoop) {
+			s->EndLoop = -1;
+			s->BeginLoop = -1;
+		}
 
 		rc_for_all_reads_mask(inst, scan_callback, s);
 		rc_for_all_writes_mask(inst, scan_callback, s);

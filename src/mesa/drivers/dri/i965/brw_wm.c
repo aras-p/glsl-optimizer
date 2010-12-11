@@ -119,6 +119,62 @@ brw_wm_non_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
    brw_wm_emit(c);
 }
 
+static void
+brw_wm_payload_setup(struct brw_context *brw,
+		     struct brw_wm_compile *c)
+{
+   struct intel_context *intel = &brw->intel;
+   bool uses_depth = (c->fp->program.Base.InputsRead &
+		      (1 << FRAG_ATTRIB_WPOS)) != 0;
+
+   if (intel->gen >= 6) {
+      /* R0-1: masks, pixel X/Y coordinates. */
+      c->nr_payload_regs = 2;
+      /* R2: only for 32-pixel dispatch.*/
+      /* R3-4: perspective pixel location barycentric */
+      c->nr_payload_regs += 2;
+      /* R5-6: perspective pixel location bary for dispatch width != 8 */
+      if (c->dispatch_width == 16) {
+	 c->nr_payload_regs += 2;
+      }
+      /* R7-10: perspective centroid barycentric */
+      /* R11-14: perspective sample barycentric */
+      /* R15-18: linear pixel location barycentric */
+      /* R19-22: linear centroid barycentric */
+      /* R23-26: linear sample barycentric */
+
+      /* R27: interpolated depth if uses source depth */
+      if (uses_depth) {
+	 c->source_depth_reg = c->nr_payload_regs;
+	 c->nr_payload_regs++;
+	 if (c->dispatch_width == 16) {
+	    /* R28: interpolated depth if not 8-wide. */
+	    c->nr_payload_regs++;
+	 }
+      }
+      /* R29: interpolated W set if GEN6_WM_USES_SOURCE_W.
+       */
+      if (uses_depth) {
+	 c->source_w_reg = c->nr_payload_regs;
+	 c->nr_payload_regs++;
+	 if (c->dispatch_width == 16) {
+	    /* R30: interpolated W if not 8-wide. */
+	    c->nr_payload_regs++;
+	 }
+      }
+      /* R31: MSAA position offsets. */
+      /* R32-: bary for 32-pixel. */
+      /* R58-59: interp W for 32-pixel. */
+
+      if (c->fp->program.Base.OutputsWritten &
+	  BITFIELD64_BIT(FRAG_RESULT_DEPTH)) {
+	 c->source_depth_to_render_target = GL_TRUE;
+	 c->computes_depth = GL_TRUE;
+      }
+   } else {
+      brw_wm_lookup_iz(intel, c);
+   }
+}
 
 /**
  * All Mesa program -> GPU code generation goes through this function.
@@ -167,23 +223,18 @@ static void do_wm_prog( struct brw_context *brw,
 
    brw_init_compile(brw, &c->func);
 
-   /* temporary sanity check assertion */
-   ASSERT(fp->isGLSL == brw_wm_is_glsl(&c->fp->program));
+   brw_wm_payload_setup(brw, c);
 
    if (!brw_wm_fs_emit(brw, c)) {
       /*
        * Shader which use GLSL features such as flow control are handled
        * differently from "simple" shaders.
        */
-      if (fp->isGLSL) {
-	 c->dispatch_width = 8;
-	 brw_wm_glsl_emit(brw, c);
-      }
-      else {
-	 c->dispatch_width = 16;
-	 brw_wm_non_glsl_emit(brw, c);
-      }
+      c->dispatch_width = 16;
+      brw_wm_payload_setup(brw, c);
+      brw_wm_non_glsl_emit(brw, c);
    }
+   c->prog_data.dispatch_width = c->dispatch_width;
 
    /* Scratch space is used for register spilling */
    if (c->last_scratch) {
@@ -220,12 +271,10 @@ static void do_wm_prog( struct brw_context *brw,
 static void brw_wm_populate_key( struct brw_context *brw,
 				 struct brw_wm_prog_key *key )
 {
-   struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &brw->intel.ctx;
    /* BRW_NEW_FRAGMENT_PROGRAM */
    const struct brw_fragment_program *fp = 
       (struct brw_fragment_program *)brw->fragment_program;
-   GLboolean uses_depth = (fp->program.Base.InputsRead & (1 << FRAG_ATTRIB_WPOS)) != 0;
    GLuint lookup = 0;
    GLuint line_aa;
    GLuint i;
@@ -285,57 +334,9 @@ static void brw_wm_populate_key( struct brw_context *brw,
       }
    }
 
-   if (intel->gen >= 6) {
-      /* R0-1: masks, pixel X/Y coordinates. */
-      key->nr_payload_regs = 2;
-      /* R2: only for 32-pixel dispatch.*/
-      /* R3-4: perspective pixel location barycentric */
-      key->nr_payload_regs += 2;
-      /* R5-6: perspective pixel location bary for dispatch width != 8 */
-      if (!fp->isGLSL) { /* dispatch_width != 8 */
-	 key->nr_payload_regs += 2;
-      }
-      /* R7-10: perspective centroid barycentric */
-      /* R11-14: perspective sample barycentric */
-      /* R15-18: linear pixel location barycentric */
-      /* R19-22: linear centroid barycentric */
-      /* R23-26: linear sample barycentric */
-
-      /* R27: interpolated depth if uses source depth */
-      if (uses_depth) {
-	 key->source_depth_reg = key->nr_payload_regs;
-	 key->nr_payload_regs++;
-	 if (!fp->isGLSL) { /* dispatch_width != 8 */
-	    /* R28: interpolated depth if not 8-wide. */
-	    key->nr_payload_regs++;
-	 }
-      }
-      /* R29: interpolated W set if GEN6_WM_USES_SOURCE_W.
-       */
-      if (uses_depth) {
-	 key->source_w_reg = key->nr_payload_regs;
-	 key->nr_payload_regs++;
-	 if (!fp->isGLSL) { /* dispatch_width != 8 */
-	    /* R30: interpolated W if not 8-wide. */
-	    key->nr_payload_regs++;
-	 }
-      }
-      /* R31: MSAA position offsets. */
-      /* R32-: bary for 32-pixel. */
-      /* R58-59: interp W for 32-pixel. */
-
-      if (fp->program.Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH)) {
-	 key->source_depth_to_render_target = GL_TRUE;
-	 key->computes_depth = GL_TRUE;
-      }
-
-   } else {
-      brw_wm_lookup_iz(intel,
-	      	       line_aa,
-		       lookup,
-		       uses_depth,
-		       key);
-   }
+   key->iz_lookup = lookup;
+   key->line_aa = line_aa;
+   key->stats_wm = brw->intel.stats_wm;
 
    /* BRW_NEW_WM_INPUT_DIMENSIONS */
    key->proj_attrib_mask = brw->wm.input_size_masks[4-1];
@@ -377,6 +378,10 @@ static void brw_wm_populate_key( struct brw_context *brw,
 	       swizzles[2] = SWIZZLE_ZERO;
 	    } else if (t->DepthMode == GL_LUMINANCE) {
 	       swizzles[3] = SWIZZLE_ONE;
+	    } else if (t->DepthMode == GL_RED) {
+	       swizzles[1] = SWIZZLE_ZERO;
+	       swizzles[2] = SWIZZLE_ZERO;
+	       swizzles[3] = SWIZZLE_ZERO;
 	    }
 	 }
 

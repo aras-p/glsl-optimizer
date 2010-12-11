@@ -50,7 +50,7 @@ struct vl_dri_context
 };
 
 static struct pipe_surface*
-vl_dri2_get_front(struct vl_dri_screen *vl_dri_scrn, Drawable drawable)
+vl_dri2_get_front(struct vl_context *vctx, Drawable drawable)
 {
    int w, h;
    unsigned int attachments[1] = {DRI_BUFFER_FRONT_LEFT};
@@ -59,6 +59,9 @@ vl_dri2_get_front(struct vl_dri_screen *vl_dri_scrn, Drawable drawable)
    struct pipe_resource *front_tex;
    struct pipe_surface *front_surf = NULL;
 
+   assert(vctx);
+
+   struct vl_dri_screen *vl_dri_scrn = (struct vl_dri_screen*)vctx->vscreen;
    assert(vl_dri_scrn);
 
    dri2_front = DRI2GetBuffers(vl_dri_scrn->dri_screen->display,
@@ -74,6 +77,7 @@ vl_dri2_get_front(struct vl_dri_screen *vl_dri_scrn, Drawable drawable)
          .stride = dri2_front->pitch
       };
       struct pipe_resource template;
+      struct pipe_surface surf_template;
 
       memset(&template, 0, sizeof(struct pipe_resource));
       template.target = PIPE_TEXTURE_2D;
@@ -87,10 +91,12 @@ vl_dri2_get_front(struct vl_dri_screen *vl_dri_scrn, Drawable drawable)
       template.flags = 0;
 
       front_tex = vl_dri_scrn->base.pscreen->resource_from_handle(vl_dri_scrn->base.pscreen, &template, &dri2_front_handle);
-      if (front_tex)
-         front_surf = vl_dri_scrn->base.pscreen->get_tex_surface(vl_dri_scrn->base.pscreen,
-                                                                 front_tex, 0, 0, 0,
-                                                                 PIPE_BIND_RENDER_TARGET);
+      if (front_tex) {
+         memset(&surf_template, 0, sizeof(surf_template));
+         surf_template.format = front_tex->format;
+         surf_template.usage = PIPE_BIND_RENDER_TARGET;
+         front_surf = vctx->vpipe->create_surface(vctx->vpipe, front_tex, &surf_template);
+      }
       pipe_resource_reference(&front_tex, NULL);
       Xfree(dri2_front);
    }
@@ -100,13 +106,15 @@ vl_dri2_get_front(struct vl_dri_screen *vl_dri_scrn, Drawable drawable)
 
 static void
 vl_dri2_flush_frontbuffer(struct pipe_screen *screen,
-                          struct pipe_surface *surf, void *context_private)
+                          struct pipe_resource *resource,
+                          unsigned level, unsigned layer,
+                          void *context_private)
 {
    struct vl_dri_context *vl_dri_ctx = (struct vl_dri_context*)context_private;
    struct vl_dri_screen *vl_dri_scrn = (struct vl_dri_screen*)vl_dri_ctx->base.vscreen;
 
    assert(screen);
-   assert(surf);
+   assert(resource);
    assert(context_private);
 
    dri2CopyDrawable(vl_dri_scrn->dri_screen, vl_dri_scrn->last_seen_drawable,
@@ -114,11 +122,12 @@ vl_dri2_flush_frontbuffer(struct pipe_screen *screen,
 }
 
 struct pipe_surface*
-vl_drawable_surface_get(struct vl_screen *vscreen, Drawable drawable)
+vl_drawable_surface_get(struct vl_context *vctx, Drawable drawable)
 {
-   struct vl_dri_screen *vl_dri_scrn = (struct vl_dri_screen*)vscreen;
+   assert(vctx);
 
-   assert(vscreen);
+   struct vl_dri_screen *vl_dri_scrn = (struct vl_dri_screen*)vctx->vscreen;
+   assert(vl_dri_scrn);
 
    if (vl_dri_scrn->last_seen_drawable != drawable) {
       /* Hash table business depends on this equality */
@@ -131,7 +140,7 @@ vl_drawable_surface_get(struct vl_screen *vscreen, Drawable drawable)
       vl_dri_scrn->last_seen_drawable = drawable;
    }
 
-   return vl_dri2_get_front(vl_dri_scrn, drawable);
+   return vl_dri2_get_front(vctx, drawable);
 }
 
 void*

@@ -71,7 +71,8 @@ identity_resource_destroy(struct identity_resource *id_resource)
 
 
 struct pipe_surface *
-identity_surface_create(struct identity_resource *id_resource,
+identity_surface_create(struct identity_context *id_context,
+                        struct identity_resource *id_resource,
                         struct pipe_surface *surface)
 {
    struct identity_surface *id_surface;
@@ -100,10 +101,12 @@ error:
 }
 
 void
-identity_surface_destroy(struct identity_surface *id_surface)
+identity_surface_destroy(struct identity_context *id_context,
+                         struct identity_surface *id_surface)
 {
    pipe_resource_reference(&id_surface->base.texture, NULL);
-   pipe_surface_reference(&id_surface->surface, NULL);
+   id_context->pipe->surface_destroy(id_context->pipe,
+                                     id_surface->surface);
    FREE(id_surface);
 }
 

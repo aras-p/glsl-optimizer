@@ -258,25 +258,33 @@ resource_create
 Create a new resource from a template.
 The following fields of the pipe_resource must be specified in the template:
 
-target
+**target** one of the pipe_texture_target enums.
+Note that PIPE_BUFFER and PIPE_TEXTURE_X are not really fundamentally different.
+Modern APIs allow using buffers as shader resources.
 
-format
+**format** one of the pipe_format enums.
 
-width0
+**width0** the width of the base mip level of the texture or size of the buffer.
 
-height0
+**height0** the height of the base mip level of the texture
+(1 for 1D or 1D array textures).
 
-depth0
+**depth0** the depth of the base mip level of the texture
+(1 for everything else).
 
-last_level
+**array_size the array size for 1D and 2D array textures.
+For cube maps this must be 6, for other textures 1.
 
-nr_samples
+**last_level** the last mip map level present.
 
-usage
+**nr_samples** the nr of msaa samples. 0 (or 1) specifies a resource
+which isn't multisampled.
 
-bind
+**usage** one of the PIPE_USAGE flags.
 
-flags
+**bind** bitmask of the PIPE_BIND flags.
+
+**flags** bitmask of PIPE_RESOURCE_FLAG flags.
 
 
 

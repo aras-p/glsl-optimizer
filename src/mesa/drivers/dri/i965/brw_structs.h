@@ -1064,6 +1064,15 @@ struct brw_sampler_default_color {
    GLfloat color[4];
 };
 
+struct gen5_sampler_default_color {
+   uint8_t ub[4];
+   float f[4];
+   uint16_t hf[4];
+   uint16_t us[4];
+   int16_t s[4];
+   uint8_t b[4];
+};
+
 struct brw_sampler_state
 {
    
@@ -1169,7 +1178,12 @@ struct brw_surface_state
       GLuint cube_neg_y:1; 
       GLuint cube_pos_x:1; 
       GLuint cube_neg_x:1; 
-      GLuint pad:4;
+      GLuint pad:2;
+      /* Required on gen6 for surfaces accessed through render cache messages.
+       */
+      GLuint render_cache_read_write:1;
+      /* Ironlake and newer: instead of replicating one of the texels */
+      GLuint cube_corner_average:1;
       GLuint mipmap_layout_mode:1; 
       GLuint vert_line_stride_ofs:1; 
       GLuint vert_line_stride:1; 
@@ -1538,6 +1552,21 @@ struct brw_instruction
 	 GLuint  pop_count:4;
 	 GLuint  pad0:12;
       } if_else;
+
+      struct
+      {
+	 /* Signed jump distance to the ip to jump to if all channels
+	  * are disabled after the break or continue.  It should point
+	  * to the end of the innermost control flow block, as that's
+	  * where some channel could get re-enabled.
+	  */
+	 int jip:16;
+
+	 /* Signed jump distance to the location to resume execution
+	  * of this channel if it's enabled for the break or continue.
+	  */
+	 int uip:16;
+      } break_cont;
 
       struct {
 	 GLuint function:4;

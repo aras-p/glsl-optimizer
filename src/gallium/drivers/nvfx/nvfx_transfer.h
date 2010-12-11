@@ -9,7 +9,7 @@
 struct pipe_transfer *
 nvfx_transfer_new(struct pipe_context *pcontext,
 			  struct pipe_resource *pt,
-			  struct pipe_subresource sr,
+			  unsigned level,
 			  unsigned usage,
 			  const struct pipe_box *box);
 

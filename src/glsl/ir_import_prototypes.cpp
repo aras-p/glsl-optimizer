@@ -64,7 +64,7 @@ public:
 
 	 /* Add the new function to the symbol table.
 	  */
-	 this->symbols->add_function(this->function->name, this->function);
+	 this->symbols->add_function(this->function);
       }
       return visit_continue;
    }
@@ -82,22 +82,7 @@ public:
    {
       assert(this->function != NULL);
 
-      ir_function_signature *copy =
-	 new(mem_ctx) ir_function_signature(ir->return_type);
-
-      copy->is_defined = false;
-      copy->is_builtin = ir->is_builtin;
-
-      /* Clone the parameter list, but NOT the body.
-       */
-      foreach_list_const(node, &ir->parameters) {
-	 const ir_variable *const param = (const ir_variable *) node;
-
-	 assert(const_cast<ir_variable *>(param)->as_variable() != NULL);
-
-	 ir_variable *const param_copy = param->clone(mem_ctx, NULL);
-	 copy->parameters.push_tail(param_copy);
-      }
+      ir_function_signature *copy = ir->clone_prototype(mem_ctx, NULL);
 
       this->function->add_signature(copy);
 

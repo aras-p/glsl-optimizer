@@ -30,6 +30,7 @@
 #include "paint.h"
 #include "path.h"
 #include "image.h"
+#include "text.h"
 #include "matrix.h"
 #include "api_consts.h"
 #include "api.h"
@@ -174,6 +175,7 @@ void vegaSeti (VGParamType type, VGint value)
          error = VG_ILLEGAL_ARGUMENT_ERROR;
       else
          state->image_mode = value;
+      break;
 #ifdef OPENVG_VERSION_1_1
    case VG_COLOR_TRANSFORM:
       state->color_transform = value;
@@ -1500,7 +1502,8 @@ VGint vegaGetParameteri(VGHandle object,
 
 #ifdef OPENVG_VERSION_1_1
    case VG_FONT_NUM_GLYPHS: {
-      return 1;
+      struct vg_font *font = (struct vg_font*)object;
+      return font_num_glyphs(font);
    }
       break;
 #endif

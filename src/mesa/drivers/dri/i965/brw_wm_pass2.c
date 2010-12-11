@@ -69,6 +69,8 @@ static void prealloc_reg(struct brw_wm_compile *c,
  */
 static void init_registers( struct brw_wm_compile *c )
 {
+   struct brw_context *brw = c->func.brw;
+   struct intel_context *intel = &brw->intel;
    GLuint nr_interp_regs = 0;
    GLuint i = 0;
    GLuint j;
@@ -76,32 +78,41 @@ static void init_registers( struct brw_wm_compile *c )
    for (j = 0; j < c->grf_limit; j++) 
       c->pass2_grf[j].nextuse = BRW_WM_MAX_INSN;
 
-   for (j = 0; j < (c->key.nr_payload_regs + 1) / 2; j++)
+   for (j = 0; j < (c->nr_payload_regs + 1) / 2; j++)
       prealloc_reg(c, &c->payload.depth[j], i++);
 
    for (j = 0; j < c->nr_creg; j++) 
       prealloc_reg(c, &c->creg[j], i++);
 
-   for (j = 0; j < VERT_RESULT_MAX; j++) {
-      if (c->key.vp_outputs_written & BITFIELD64_BIT(j)) {
-	 int fp_index;
-
-	 if (j >= VERT_RESULT_VAR0)
-	    fp_index = j - (VERT_RESULT_VAR0 - FRAG_ATTRIB_VAR0);
-	 else if (j <= VERT_RESULT_TEX7)
-	    fp_index = j;
-	 else
-	    fp_index = -1;
-
-	 nr_interp_regs++;
-	 if (fp_index >= 0)
-	    prealloc_reg(c, &c->payload.input_interp[fp_index], i++);
+   if (intel->gen >= 6) {
+      for (unsigned int j = 0; j < FRAG_ATTRIB_MAX; j++) {
+	 if (brw->fragment_program->Base.InputsRead & BITFIELD64_BIT(j)) {
+	    nr_interp_regs++;
+	    prealloc_reg(c, &c->payload.input_interp[j], i++);
+	 }
       }
+   } else {
+      for (j = 0; j < VERT_RESULT_MAX; j++) {
+	 if (c->key.vp_outputs_written & BITFIELD64_BIT(j)) {
+	    int fp_index;
+
+	    if (j >= VERT_RESULT_VAR0)
+	       fp_index = j - (VERT_RESULT_VAR0 - FRAG_ATTRIB_VAR0);
+	    else if (j <= VERT_RESULT_TEX7)
+	       fp_index = j;
+	    else
+	       fp_index = -1;
+
+	    nr_interp_regs++;
+	    if (fp_index >= 0)
+	       prealloc_reg(c, &c->payload.input_interp[fp_index], i++);
+	 }
+      }
+      assert(nr_interp_regs >= 1);
    }
 
-   assert(nr_interp_regs >= 1);
 
-   c->prog_data.first_curbe_grf = ALIGN(c->key.nr_payload_regs, 2);
+   c->prog_data.first_curbe_grf = ALIGN(c->nr_payload_regs, 2);
    c->prog_data.urb_read_length = nr_interp_regs * 2;
    c->prog_data.curb_read_length = c->nr_creg * 2;
 

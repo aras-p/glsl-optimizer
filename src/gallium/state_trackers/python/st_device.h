@@ -41,9 +41,8 @@ struct st_winsys;
 struct st_surface
 {
    struct pipe_resource *texture;
-   unsigned face;
    unsigned level;
-   unsigned zslice;
+   unsigned layer;
 };
 
 
@@ -83,11 +82,17 @@ struct st_device
 
 
 static INLINE struct pipe_surface *
-st_pipe_surface(struct st_surface *surface, unsigned usage) 
+st_pipe_surface(struct pipe_context *pipe, struct st_surface *surface, unsigned usage) 
 {
    struct pipe_resource *texture = surface->texture;
-   struct pipe_screen *screen = texture->screen;
-   return screen->get_tex_surface(screen, texture, surface->face, surface->level, surface->zslice, usage);
+   struct pipe_surface surf_tmpl;
+   memset(&surf_tmpl, 0, sizeof(surf_tmpl));
+   surf_tmpl.format = texture->format;
+   surf_tmpl.usage = usage;
+   surf_tmpl.u.tex.level = surface->level;
+   surf_tmpl.u.tex.first_layer = surface->layer;
+   surf_tmpl.u.tex.last_layer = surface->layer;
+   return pipe->create_surface(pipe, texture, &surf_tmpl);
 }
 
 struct st_context *

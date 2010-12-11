@@ -38,7 +38,14 @@ C_SOURCES = \
            renderer.c \
            stroker.c \
            mask.c \
+           text.c \
            shader.c \
            shaders_cache.c
 
+GENERATED_SOURCES := api_tmp.h
+
 include ../../Makefile.template
+
+MAPI := $(TOP)/src/mapi
+api_tmp.h: $(MAPI)/mapi/mapi_abi.py $(MAPI)/vgapi/vgapi.csv
+	$(PYTHON2) $< --printer vgapi --mode app $(MAPI)/vgapi/vgapi.csv > $@

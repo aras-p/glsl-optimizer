@@ -1,0 +1,25 @@
+Random list of problems with i915g:
+
+- Dies with BadDrawable on GLXFBconfig changes/destruction. Makes piglit totally
+  unusable :( Upgrading xserver helped here, it doesn't crash anymore. Still
+  broken, it doesn't update the viewport/get new buffers.
+
+- Tends to hang the chip after a few minutes of openarena. Looks tiling related,
+  at the last frame rendered has tiling corruption over the complete frame.
+
+- Kills the chip in 3D_PRIMITIVE LINELIST with mesa-demos/fbotexture in
+  wireframe mode.
+
+- Tiling is funny: If unlucky, it renders/samples all black. No clue yet what's
+  going on. Seems to depend on tiny details like whethever the sampler
+  relocation is fenced/unfenced (broken _with_ fenced reloc using tiling bits!).
+
+- Y-tiling is even more fun. i915c doesn't use it, maybe there's a reason?
+  Texture sampling from Y-tiled buffers seems to work, though (save above
+  problems).
+
+- Need to validate buffers before usage. Currently do_exec on the batchbuffer
+  can fail with -ENOSPC.
+
+Other bugs can be found here:
+https://bugs.freedesktop.org/buglist.cgi?bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&component=Drivers/Gallium/i915g

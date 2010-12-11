@@ -97,17 +97,20 @@
 /** Max texture palette / color table size */
 #define MAX_COLOR_TABLE_SIZE 256
 
+/** Max memory to allow for a single texture image (in megabytes) */
+#define MAX_TEXTURE_MBYTES 1024
+
 /** Number of 1D/2D texture mipmap levels */
-#define MAX_TEXTURE_LEVELS 13
+#define MAX_TEXTURE_LEVELS 15
 
 /** Number of 3D texture mipmap levels */
-#define MAX_3D_TEXTURE_LEVELS 9
+#define MAX_3D_TEXTURE_LEVELS 15
 
 /** Number of cube texture mipmap levels - GL_ARB_texture_cube_map */
-#define MAX_CUBE_TEXTURE_LEVELS 13
+#define MAX_CUBE_TEXTURE_LEVELS 15
 
 /** Maximum rectangular texture size - GL_NV_texture_rectangle */
-#define MAX_TEXTURE_RECT_SIZE 4096
+#define MAX_TEXTURE_RECT_SIZE 16384
 
 /** Maximum number of layers in a 1D or 2D array texture - GL_MESA_texture_array */
 #define MAX_ARRAY_TEXTURE_LAYERS 64
@@ -140,11 +143,28 @@
  */
 
 #ifndef MAX_WIDTH
-#   define MAX_WIDTH 4096
+#   define MAX_WIDTH 16384
 #endif
 /** Maximum viewport/image height */
 #ifndef MAX_HEIGHT
-#   define MAX_HEIGHT 4096
+#   define MAX_HEIGHT 16384
+#endif
+
+/* XXX: hack to prevent stack overflow on windows until all temporary arrays
+ * [MAX_WIDTH] are allocated from the heap */
+#ifdef WIN32
+#undef MAX_TEXTURE_LEVELS
+#undef MAX_3D_TEXTURE_LEVELS
+#undef MAX_CUBE_TEXTURE_LEVELS
+#undef MAX_TEXTURE_RECT_SIZE
+#undef MAX_WIDTH
+#undef MAX_HEIGHT
+#define MAX_TEXTURE_LEVELS 13
+#define MAX_3D_TEXTURE_LEVELS 9
+#define MAX_CUBE_TEXTURE_LEVELS 13
+#define MAX_TEXTURE_RECT_SIZE 4096
+#define MAX_WIDTH 4096
+#define MAX_HEIGHT 4096
 #endif
 
 /** Maxmimum size for CVA.  May be overridden by the drivers.  */
@@ -168,7 +188,7 @@
 #define MAX_TEXTURE_MAX_ANISOTROPY 16.0
 
 /** For GL_EXT_texture_lod_bias (typically MAX_TEXTURE_LEVELS - 1) */
-#define MAX_TEXTURE_LOD_BIAS 12.0
+#define MAX_TEXTURE_LOD_BIAS 14.0
 
 /** For any program target/extension */
 /*@{*/

@@ -36,8 +36,7 @@
 #include "table.h"
 
 /* dynamic stubs will run out before this array */
-#define MAPI_MAX_STUBS (sizeof(struct mapi_table) / sizeof(mapi_func))
-static const struct mapi_stub *mapi_stub_map[MAPI_MAX_STUBS];
+static const struct mapi_stub *mapi_stub_map[MAPI_TABLE_NUM_SLOTS];
 static int mapi_num_stubs;
 
 static const struct mapi_stub *
@@ -145,9 +144,9 @@ mapi_table_create(void)
    const struct mapi_table *noop = table_get_noop();
    struct mapi_table *tbl;
 
-   tbl = malloc(sizeof(*tbl));
+   tbl = malloc(MAPI_TABLE_SIZE);
    if (tbl)
-      memcpy(tbl, noop, sizeof(*tbl));
+      memcpy(tbl, noop, MAPI_TABLE_SIZE);
 
    return tbl;
 }

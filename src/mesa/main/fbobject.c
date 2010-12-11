@@ -2014,7 +2014,7 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
 
    switch (pname) {
    case GL_FRAMEBUFFER_ATTACHMENT_OBJECT_TYPE_EXT:
-      *params = att->Type;
+      *params = buffer->Name == 0 ? GL_FRAMEBUFFER_DEFAULT : att->Type;
       return;
    case GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME_EXT:
       if (att->Type == GL_RENDERBUFFER_EXT) {
@@ -2024,8 +2024,8 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
 	 *params = att->Texture->Name;
       }
       else {
-	 _mesa_error(ctx, GL_INVALID_ENUM,
-		     "glGetFramebufferAttachmentParameterivEXT(pname)");
+         assert(att->Type == GL_NONE);
+         *params = 0;
       }
       return;
    case GL_FRAMEBUFFER_ATTACHMENT_TEXTURE_LEVEL_EXT:
@@ -2146,6 +2146,7 @@ _mesa_GenerateMipmapEXT(GLenum target)
       /* OK, legal value */
       break;
    default:
+      /* XXX need to implement GL_TEXTURE_1D_ARRAY and GL_TEXTURE_2D_ARRAY */
       _mesa_error(ctx, GL_INVALID_ENUM, "glGenerateMipmapEXT(target)");
       return;
    }
@@ -2154,6 +2155,13 @@ _mesa_GenerateMipmapEXT(GLenum target)
 
    if (texObj->BaseLevel >= texObj->MaxLevel) {
       /* nothing to do */
+      return;
+   }
+
+   if (texObj->Target == GL_TEXTURE_CUBE_MAP &&
+       !_mesa_cube_complete(texObj)) {
+      _mesa_error(ctx, GL_INVALID_OPERATION,
+                  "glGenerateMipmap(incomplete cube map)");
       return;
    }
 

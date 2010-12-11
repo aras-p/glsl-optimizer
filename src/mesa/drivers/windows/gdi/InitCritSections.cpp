@@ -1,7 +1,8 @@
 #include "glapi.h"
 #include "glThread.h"
 
-#ifdef WIN32_THREADS
+#ifdef WIN32
+
 extern "C" _glthread_Mutex OneTimeLock;
 extern "C" _glthread_Mutex GenTexturesLock;
 
@@ -29,4 +30,4 @@ public:
 _CriticalSectionInit _CriticalSectionInit::m_inst;
 
 
-#endif
+#endif /* WIN32 */

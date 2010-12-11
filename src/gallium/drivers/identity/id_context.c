@@ -577,17 +577,13 @@ identity_set_index_buffer(struct pipe_context *_pipe,
 static void
 identity_resource_copy_region(struct pipe_context *_pipe,
                               struct pipe_resource *_dst,
-                              struct pipe_subresource subdst,
+                              unsigned dst_level,
                               unsigned dstx,
                               unsigned dsty,
                               unsigned dstz,
                               struct pipe_resource *_src,
-                              struct pipe_subresource subsrc,
-                              unsigned srcx,
-                              unsigned srcy,
-                              unsigned srcz,
-                              unsigned width,
-                              unsigned height)
+                              unsigned src_level,
+                              const struct pipe_box *src_box)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct identity_resource *id_resource_dst = identity_resource(_dst);
@@ -598,17 +594,13 @@ identity_resource_copy_region(struct pipe_context *_pipe,
 
    pipe->resource_copy_region(pipe,
                               dst,
-                              subdst,
+                              dst_level,
                               dstx,
                               dsty,
                               dstz,
                               src,
-                              subsrc,
-                              srcx,
-                              srcy,
-                              srcz,
-                              width,
-                              height);
+                              src_level,
+                              src_box);
 }
 
 static void
@@ -690,8 +682,8 @@ identity_flush(struct pipe_context *_pipe,
 static unsigned int
 identity_is_resource_referenced(struct pipe_context *_pipe,
                                 struct pipe_resource *_resource,
-                                unsigned face,
-                                unsigned level)
+                                unsigned level,
+                                int layer)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct identity_resource *id_resource = identity_resource(_resource);
@@ -700,8 +692,8 @@ identity_is_resource_referenced(struct pipe_context *_pipe,
 
    return pipe->is_resource_referenced(pipe,
                                        resource,
-                                       face,
-                                       level);
+                                       level,
+                                       layer);
 }
 
 static struct pipe_sampler_view *
@@ -732,10 +724,38 @@ identity_context_sampler_view_destroy(struct pipe_context *_pipe,
                                  identity_sampler_view(_view));
 }
 
+static struct pipe_surface *
+identity_context_create_surface(struct pipe_context *_pipe,
+                                struct pipe_resource *_resource,
+                                const struct pipe_surface *templ)
+{
+   struct identity_context *id_context = identity_context(_pipe);
+   struct identity_resource *id_resource = identity_resource(_resource);
+   struct pipe_context *pipe = id_context->pipe;
+   struct pipe_resource *resource = id_resource->resource;
+   struct pipe_surface *result;
+
+   result = pipe->create_surface(pipe,
+                                 resource,
+                                 templ);
+
+   if (result)
+      return identity_surface_create(id_context, id_resource, result);
+   return NULL;
+}
+
+static void
+identity_context_surface_destroy(struct pipe_context *_pipe,
+                                 struct pipe_surface *_surf)
+{
+   identity_surface_destroy(identity_context(_pipe),
+                            identity_surface(_surf));
+}
+
 static struct pipe_transfer *
 identity_context_get_transfer(struct pipe_context *_context,
                               struct pipe_resource *_resource,
-                              struct pipe_subresource sr,
+                              unsigned level,
                               unsigned usage,
                               const struct pipe_box *box)
 {
@@ -747,7 +767,7 @@ identity_context_get_transfer(struct pipe_context *_context,
 
    result = context->get_transfer(context,
                                   resource,
-                                  sr,
+                                  level,
                                   usage,
                                   box);
 
@@ -812,12 +832,12 @@ identity_context_transfer_unmap(struct pipe_context *_context,
 static void 
 identity_context_transfer_inline_write(struct pipe_context *_context,
                                        struct pipe_resource *_resource,
-                                       struct pipe_subresource sr,
+                                       unsigned level,
                                        unsigned usage,
                                        const struct pipe_box *box,
                                        const void *data,
                                        unsigned stride,
-                                       unsigned slice_stride)
+                                       unsigned layer_stride)
 {
    struct identity_context *id_context = identity_context(_context);
    struct identity_resource *id_resource = identity_resource(_resource);
@@ -826,12 +846,12 @@ identity_context_transfer_inline_write(struct pipe_context *_context,
 
    context->transfer_inline_write(context,
                                   resource,
-                                  sr,
+                                  level,
                                   usage,
                                   box,
                                   data,
                                   stride,
-                                  slice_stride);
+                                  layer_stride);
 }
 
 
@@ -899,6 +919,8 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.clear_depth_stencil = identity_clear_depth_stencil;
    id_pipe->base.flush = identity_flush;
    id_pipe->base.is_resource_referenced = identity_is_resource_referenced;
+   id_pipe->base.create_surface = identity_context_create_surface;
+   id_pipe->base.surface_destroy = identity_context_surface_destroy;
    id_pipe->base.create_sampler_view = identity_context_create_sampler_view;
    id_pipe->base.sampler_view_destroy = identity_context_sampler_view_destroy;
    id_pipe->base.get_transfer = identity_context_get_transfer;

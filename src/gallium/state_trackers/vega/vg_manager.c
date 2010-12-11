@@ -33,168 +33,22 @@
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
-#include "util/u_format.h"
 #include "util/u_sampler.h"
+#include "util/u_box.h"
+#include "util/u_surface.h"
 
 #include "vg_api.h"
 #include "vg_manager.h"
 #include "vg_context.h"
 #include "image.h"
-#include "mask.h"
 #include "api.h"
-
-static struct pipe_resource *
-create_texture(struct pipe_context *pipe, enum pipe_format format,
-                    VGint width, VGint height)
-{
-   struct pipe_resource templ;
-
-   memset(&templ, 0, sizeof(templ));
-
-   if (format != PIPE_FORMAT_NONE) {
-      templ.format = format;
-   }
-   else {
-      templ.format = PIPE_FORMAT_B8G8R8A8_UNORM;
-   }
-
-   templ.target = PIPE_TEXTURE_2D;
-   templ.width0 = width;
-   templ.height0 = height;
-   templ.depth0 = 1;
-   templ.last_level = 0;
-
-   if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 1)) {
-      templ.bind = PIPE_BIND_DEPTH_STENCIL;
-   } else {
-      templ.bind = (PIPE_BIND_DISPLAY_TARGET |
-                    PIPE_BIND_RENDER_TARGET |
-                    PIPE_BIND_SAMPLER_VIEW);
-   }
-
-   return pipe->screen->resource_create(pipe->screen, &templ);
-}
-
-static struct pipe_sampler_view *
-create_tex_and_view(struct pipe_context *pipe, enum pipe_format format,
-                    VGint width, VGint height)
-{
-   struct pipe_resource *texture;
-   struct pipe_sampler_view view_templ;
-   struct pipe_sampler_view *view;
-
-   texture = create_texture(pipe, format, width, height);
-
-   if (!texture)
-      return NULL;
-
-   u_sampler_view_default_template(&view_templ, texture, texture->format);
-   view = pipe->create_sampler_view(pipe, texture, &view_templ);
-   /* want the texture to go away if the view is freed */
-   pipe_resource_reference(&texture, NULL);
-
-   return view;
-}
-
-static void
-setup_new_alpha_mask(struct vg_context *ctx, struct st_framebuffer *stfb)
-{
-   struct pipe_context *pipe = ctx->pipe;
-   struct pipe_sampler_view *old_sampler_view = stfb->alpha_mask_view;
-
-   /*
-     we use PIPE_FORMAT_B8G8R8A8_UNORM because we want to render to
-     this texture and use it as a sampler, so while this wastes some
-     space it makes both of those a lot simpler
-   */
-   stfb->alpha_mask_view = create_tex_and_view(pipe,
-         PIPE_FORMAT_B8G8R8A8_UNORM, stfb->width, stfb->height);
-
-   if (!stfb->alpha_mask_view) {
-      if (old_sampler_view)
-         pipe_sampler_view_reference(&old_sampler_view, NULL);
-      return;
-   }
-
-   /* XXX could this call be avoided? */
-   vg_validate_state(ctx);
-
-   /* alpha mask starts with 1.f alpha */
-   mask_fill(0, 0, stfb->width, stfb->height, 1.f);
-
-   /* if we had an old surface copy it over */
-   if (old_sampler_view) {
-      struct pipe_subresource subsurf, subold_surf;
-      subsurf.face = 0;
-      subsurf.level = 0;
-      subold_surf.face = 0;
-      subold_surf.level = 0;
-      pipe->resource_copy_region(pipe,
-                                 stfb->alpha_mask_view->texture,
-                                 subsurf,
-                                 0, 0, 0,
-                                 old_sampler_view->texture,
-                                 subold_surf,
-                                 0, 0, 0,
-                                 MIN2(old_sampler_view->texture->width0,
-                                      stfb->alpha_mask_view->texture->width0),
-                                 MIN2(old_sampler_view->texture->height0,
-                                      stfb->alpha_mask_view->texture->height0));
-   }
-
-   /* Free the old texture
-    */
-   if (old_sampler_view)
-      pipe_sampler_view_reference(&old_sampler_view, NULL);
-}
-
-static boolean
-vg_context_update_depth_stencil_rb(struct vg_context * ctx,
-                                   uint width, uint height)
-{
-   struct st_renderbuffer *dsrb = ctx->draw_buffer->dsrb;
-   struct pipe_context *pipe = ctx->pipe;
-   unsigned surface_usage;
-
-   if ((dsrb->width == width && dsrb->height == height) && dsrb->texture)
-      return FALSE;
-
-   /* unreference existing ones */
-   pipe_surface_reference(&dsrb->surface, NULL);
-   pipe_resource_reference(&dsrb->texture, NULL);
-   dsrb->width = dsrb->height = 0;
-
-   /* Probably need dedicated flags for surface usage too:
-    */
-   surface_usage = PIPE_BIND_DEPTH_STENCIL; /* XXX: was: RENDER_TARGET */
-
-   dsrb->texture = create_texture(pipe, dsrb->format, width, height);
-   if (!dsrb->texture)
-      return TRUE;
-
-   dsrb->surface = pipe->screen->get_tex_surface(pipe->screen,
-                                                 dsrb->texture,
-                                                 0, 0, 0,
-                                                 surface_usage);
-   if (!dsrb->surface) {
-      pipe_resource_reference(&dsrb->texture, NULL);
-      return TRUE;
-   }
-
-   dsrb->width = width;
-   dsrb->height = height;
-
-   assert(dsrb->surface->width == width);
-   assert(dsrb->surface->height == height);
-
-   return TRUE;
-}
 
 static boolean
 vg_context_update_color_rb(struct vg_context *ctx, struct pipe_resource *pt)
 {
    struct st_renderbuffer *strb = ctx->draw_buffer->strb;
-   struct pipe_screen *screen = ctx->pipe->screen;
+   struct pipe_context *pipe = ctx->pipe;
+   struct pipe_surface surf_tmpl;
 
    if (strb->texture == pt) {
       pipe_resource_reference(&pt, NULL);
@@ -207,8 +61,12 @@ vg_context_update_color_rb(struct vg_context *ctx, struct pipe_resource *pt)
    strb->width = strb->height = 0;
 
    strb->texture = pt;
-   strb->surface = screen->get_tex_surface(screen, strb->texture, 0, 0, 0,
-                                           PIPE_BIND_RENDER_TARGET);
+
+   memset(&surf_tmpl, 0, sizeof(surf_tmpl));
+   u_surface_default_template(&surf_tmpl, strb->texture,
+                              PIPE_BIND_RENDER_TARGET);
+   strb->surface = pipe->create_surface(pipe, strb->texture, &surf_tmpl);
+
    if (!strb->surface) {
       pipe_resource_reference(&strb->texture, NULL);
       return TRUE;
@@ -218,49 +76,6 @@ vg_context_update_color_rb(struct vg_context *ctx, struct pipe_resource *pt)
    strb->height = pt->height0;
 
    return TRUE;
-}
-
-static void
-vg_context_update_draw_buffer(struct vg_context *ctx, struct pipe_resource *pt)
-{
-   struct st_framebuffer *stfb = ctx->draw_buffer;
-   boolean new_cbuf, new_zsbuf, new_size;
-
-   new_cbuf = vg_context_update_color_rb(ctx, pt);
-   new_zsbuf =
-      vg_context_update_depth_stencil_rb(ctx, pt->width0, pt->height0);
-
-   new_size = (stfb->width != pt->width0 || stfb->height != pt->height0);
-   stfb->width = pt->width0;
-   stfb->height = pt->height0;
-
-   if (new_cbuf || new_zsbuf || new_size) {
-      struct pipe_framebuffer_state *state = &ctx->state.g3d.fb;
-
-      memset(state, 0, sizeof(struct pipe_framebuffer_state));
-      state->width  = stfb->width;
-      state->height = stfb->height;
-      state->nr_cbufs = 1;
-      state->cbufs[0] = stfb->strb->surface;
-      state->zsbuf = stfb->dsrb->surface;
-
-      cso_set_framebuffer(ctx->cso_context, state);
-   }
-
-   if (new_zsbuf || new_size) {
-      ctx->state.dirty |= VIEWPORT_DIRTY;
-      ctx->state.dirty |= DEPTH_STENCIL_DIRTY;/*to reset the scissors*/
-
-      ctx->pipe->clear(ctx->pipe, PIPE_CLEAR_DEPTHSTENCIL, NULL, 0.0, 0);
-
-      /* we need all the other state already set */
-
-      setup_new_alpha_mask(ctx, stfb);
-
-      pipe_sampler_view_reference( &stfb->blend_texture_view, NULL);
-      stfb->blend_texture_view = create_tex_and_view(ctx->pipe,
-            PIPE_FORMAT_B8G8R8A8_UNORM, stfb->width, stfb->height);
-   }
 }
 
 /**
@@ -304,15 +119,16 @@ vg_manager_validate_framebuffer(struct vg_context *ctx)
    if (!stfb->iface->validate(stfb->iface, &stfb->strb_att, 1, &pt) || !pt)
       return;
 
-   /*
-    * unset draw_buffer_invalid first because vg_context_update_draw_buffer
-    * will cause the framebuffer to be validated again because of a call to
-    * vg_validate_state
-    */
    p_atomic_set(&ctx->draw_buffer_invalid, FALSE);
-   vg_context_update_draw_buffer(ctx, pt);
-}
 
+   if (vg_context_update_color_rb(ctx, pt) ||
+       stfb->width != pt->width0 ||
+       stfb->height != pt->height0)
+      ctx->state.dirty |= FRAMEBUFFER_DIRTY;
+
+   stfb->width = pt->width0;
+   stfb->height = pt->height0;
+}
 
 static void
 vg_context_notify_invalid_framebuffer(struct st_context_iface *stctxi,
@@ -336,7 +152,10 @@ static void
 vg_context_destroy(struct st_context_iface *stctxi)
 {
    struct vg_context *ctx = (struct vg_context *) stctxi;
+   struct pipe_context *pipe = ctx->pipe;
+
    vg_destroy_context(ctx);
+   pipe->destroy(pipe);
 }
 
 static struct st_context_iface *

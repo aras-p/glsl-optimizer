@@ -30,9 +30,12 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <pipebuffer/pb_bufmgr.h>
-#include "util/u_double_list.h"
+#include <util/u_double_list.h>
+#include <util/u_inlines.h>
+#include <os/os_thread.h>
 #include "r600.h"
+
+struct r600_bomgr;
 
 struct radeon {
 	int				fd;
@@ -40,13 +43,10 @@ struct radeon {
 	unsigned			device;
 	unsigned			family;
 	enum chip_class			chip_class;
-	struct pb_manager *kman; /* kernel bo manager */
-	struct pb_manager *cman; /* cached bo manager */
-	struct r600_tiling_info tiling_info;
+	struct r600_tiling_info		tiling_info;
+	struct r600_bomgr		*bomgr;
+	unsigned			*cfence;
 };
-
-struct radeon *r600_new(int fd, unsigned device);
-void r600_delete(struct radeon *r600);
 
 struct r600_reg {
 	unsigned			opcode;
@@ -75,28 +75,49 @@ struct radeon_bo {
 
 struct r600_bo {
 	struct pipe_reference		reference;
-	struct pb_buffer		*pb;
 	unsigned			size;
 	unsigned			tiling_flags;
-	unsigned                        kernel_pitch;
+	unsigned			kernel_pitch;
 	unsigned			domains;
+	struct radeon_bo		*bo;
+	unsigned			fence;
+	/* manager data */
+	struct list_head		list;
+	unsigned			manager_id;
+	unsigned			alignment;
+	unsigned			offset;
+	int64_t				start;
+	int64_t				end;
 };
 
+struct r600_bomgr {
+	struct radeon			*radeon;
+	unsigned			usecs;
+	pipe_mutex			mutex;
+	struct list_head		delayed;
+	unsigned			num_delayed;
+};
 
-/* radeon_pciid.c */
+/*
+ * r600_drm.c
+ */
+struct radeon *r600_new(int fd, unsigned device);
+void r600_delete(struct radeon *r600);
+
+/*
+ * radeon_pciid.c
+ */
 unsigned radeon_family_from_device(unsigned device);
 
-/* r600_drm.c */
-struct radeon *radeon_decref(struct radeon *radeon);
-
-/* radeon_bo.c */
+/*
+ * radeon_bo.c
+ */
 struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 			    unsigned size, unsigned alignment);
 void radeon_bo_reference(struct radeon *radeon, struct radeon_bo **dst,
 			 struct radeon_bo *src);
 int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo);
 int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain);
-void radeon_bo_pbmgr_flush_maps(struct pb_manager *_mgr);
 int radeon_bo_fencelist(struct radeon *radeon, struct radeon_bo **bolist, uint32_t num_bo);
 int radeon_bo_get_tiling_flags(struct radeon *radeon,
 			       struct radeon_bo *bo,
@@ -106,13 +127,9 @@ int radeon_bo_get_name(struct radeon *radeon,
 		       struct radeon_bo *bo,
 		       uint32_t *name);
 
-/* radeon_bo_pb.c */
-struct radeon_bo *radeon_bo_pb_get_bo(struct pb_buffer *_buf);
-struct pb_manager *radeon_bo_pbmgr_create(struct radeon *radeon);
-struct pb_buffer *radeon_bo_pb_create_buffer_from_handle(struct pb_manager *_mgr,
-							 uint32_t handle);
-
-/* r600_hw_context.c */
+/*
+ * r600_hw_context.c
+ */
 int r600_context_init_fence(struct r600_context *ctx);
 void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct r600_bo *rbo);
 void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
@@ -120,14 +137,27 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 struct r600_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned offset);
 int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg);
 
-/* r600_bo.c */
-unsigned r600_bo_get_handle(struct r600_bo *bo);
-unsigned r600_bo_get_size(struct r600_bo *bo);
-static INLINE struct radeon_bo *r600_bo_get_bo(struct r600_bo *bo)
-{
-	return radeon_bo_pb_get_bo(bo->pb);
-}
+/*
+ * r600_bo.c
+ */
+void r600_bo_destroy(struct radeon *radeon, struct r600_bo *bo);
 
+/*
+ * r600_bomgr.c
+ */
+struct r600_bomgr *r600_bomgr_create(struct radeon *radeon, unsigned usecs);
+void r600_bomgr_destroy(struct r600_bomgr *mgr);
+bool r600_bomgr_bo_destroy(struct r600_bomgr *mgr, struct r600_bo *bo);
+void r600_bomgr_bo_init(struct r600_bomgr *mgr, struct r600_bo *bo);
+struct r600_bo *r600_bomgr_bo_create(struct r600_bomgr *mgr,
+					unsigned size,
+					unsigned alignment,
+					unsigned cfence);
+
+
+/*
+ * helpers
+ */
 #define CTX_RANGE_ID(ctx, offset) (((offset) >> (ctx)->hash_shift) & 255)
 #define CTX_BLOCK_ID(ctx, offset) ((offset) & ((1 << (ctx)->hash_shift) - 1))
 
@@ -175,6 +205,9 @@ static inline void r600_context_block_emit_dirty(struct r600_context *ctx, struc
 	LIST_DELINIT(&block->list);
 }
 
+/*
+ * radeon_bo.c
+ */
 static inline int radeon_bo_map(struct radeon *radeon, struct radeon_bo *bo)
 {
 	bo->map_count++;
@@ -185,6 +218,37 @@ static inline void radeon_bo_unmap(struct radeon *radeon, struct radeon_bo *bo)
 {
 	bo->map_count--;
 	assert(bo->map_count >= 0);
+}
+
+/*
+ * r600_bo
+ */
+static inline struct radeon_bo *r600_bo_get_bo(struct r600_bo *bo)
+{
+	return bo->bo;
+}
+
+static unsigned inline r600_bo_get_handle(struct r600_bo *bo)
+{
+	return bo->bo->handle;
+}
+
+static unsigned inline r600_bo_get_size(struct r600_bo *bo)
+{
+	return bo->size;
+}
+
+/*
+ * fence
+ */
+static inline bool fence_is_after(unsigned fence, unsigned ofence)
+{
+	/* handle wrap around */
+	if (fence < 0x80000000 && ofence > 0x80000000)
+		return TRUE;
+	if (fence > ofence)
+		return TRUE;
+	return FALSE;
 }
 
 #endif

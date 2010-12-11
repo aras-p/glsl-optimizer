@@ -172,17 +172,15 @@ llvmpipe_resource_stride(struct pipe_resource *resource,
 
 void *
 llvmpipe_resource_map(struct pipe_resource *resource,
-		      unsigned face_slice,
-		      unsigned level,
-		      unsigned zslice,
+                      unsigned level,
+                      unsigned layer,
                       enum lp_texture_usage tex_usage,
                       enum lp_texture_layout layout);
 
 void
 llvmpipe_resource_unmap(struct pipe_resource *resource,
-                       unsigned face_slice,
                        unsigned level,
-                       unsigned zslice);
+                       unsigned layer);
 
 
 void *

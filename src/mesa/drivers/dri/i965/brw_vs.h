@@ -44,6 +44,7 @@ struct brw_vs_prog_key {
    GLuint nr_userclip:4;
    GLuint copy_edgeflag:1;
    GLuint point_coord_replace:8;
+   GLuint two_side_color: 1;
 };
 
 

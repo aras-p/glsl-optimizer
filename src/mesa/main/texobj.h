@@ -32,8 +32,9 @@
 #define TEXTOBJ_H
 
 
-#include "mtypes.h"
+#include "glheader.h"
 
+struct gl_context;
 
 /**
  * \name Internal functions
@@ -67,6 +68,9 @@ _mesa_reference_texobj(struct gl_texture_object **ptr,
 extern void
 _mesa_test_texobj_completeness( const struct gl_context *ctx,
                                 struct gl_texture_object *obj );
+
+extern GLboolean
+_mesa_cube_complete(const struct gl_texture_object *texObj);
 
 extern void
 _mesa_dirty_texobj(struct gl_context *ctx, struct gl_texture_object *texObj,

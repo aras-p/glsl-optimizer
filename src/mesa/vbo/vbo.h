@@ -40,7 +40,8 @@ struct _mesa_prim {
    GLuint begin:1;
    GLuint end:1;
    GLuint weak:1;
-   GLuint pad:20;
+   GLuint no_current_update:1;
+   GLuint pad:19;
 
    GLuint start;
    GLuint count;
@@ -128,42 +129,42 @@ void vbo_set_draw_func(struct gl_context *ctx, vbo_draw_func func);
 
 
 void GLAPIENTRY
-_vbo_Color4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
+_es_Color4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a);
 
 void GLAPIENTRY
-_vbo_Normal3f(GLfloat x, GLfloat y, GLfloat z);
+_es_Normal3f(GLfloat x, GLfloat y, GLfloat z);
 
 void GLAPIENTRY
-_vbo_MultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q);
+_es_MultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q);
 
 void GLAPIENTRY
-_vbo_Materialfv(GLenum face, GLenum pname, const GLfloat *params);
+_es_Materialfv(GLenum face, GLenum pname, const GLfloat *params);
 
 void GLAPIENTRY
-_vbo_Materialf(GLenum face, GLenum pname, GLfloat param);
+_es_Materialf(GLenum face, GLenum pname, GLfloat param);
 
 void GLAPIENTRY
-_vbo_VertexAttrib4f(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
+_es_VertexAttrib4f(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 
 void GLAPIENTRY
-_vbo_VertexAttrib1f(GLuint indx, GLfloat x);
+_es_VertexAttrib1f(GLuint indx, GLfloat x);
 
 void GLAPIENTRY
-_vbo_VertexAttrib1fv(GLuint indx, const GLfloat* values);
+_es_VertexAttrib1fv(GLuint indx, const GLfloat* values);
 
 void GLAPIENTRY
-_vbo_VertexAttrib2f(GLuint indx, GLfloat x, GLfloat y);
+_es_VertexAttrib2f(GLuint indx, GLfloat x, GLfloat y);
 
 void GLAPIENTRY
-_vbo_VertexAttrib2fv(GLuint indx, const GLfloat* values);
+_es_VertexAttrib2fv(GLuint indx, const GLfloat* values);
 
 void GLAPIENTRY
-_vbo_VertexAttrib3f(GLuint indx, GLfloat x, GLfloat y, GLfloat z);
+_es_VertexAttrib3f(GLuint indx, GLfloat x, GLfloat y, GLfloat z);
 
 void GLAPIENTRY
-_vbo_VertexAttrib3fv(GLuint indx, const GLfloat* values);
+_es_VertexAttrib3fv(GLuint indx, const GLfloat* values);
 
 void GLAPIENTRY
-_vbo_VertexAttrib4fv(GLuint indx, const GLfloat* values);
+_es_VertexAttrib4fv(GLuint indx, const GLfloat* values);
 
 #endif

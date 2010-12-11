@@ -66,7 +66,7 @@ static void r300_stencilref_begin(struct r300_context *r300)
     /* We *cull* pixels, therefore no need to mask out the bits. */
     rs->cb_main[rs->cull_mode_index] |= R300_CULL_BACK;
 
-    r300->rs_state.dirty = TRUE;
+    r300_mark_atom_dirty(r300, &r300->rs_state);
 }
 
 /* Set drawing for back faces. */
@@ -80,8 +80,8 @@ static void r300_stencilref_switch_side(struct r300_context *r300)
     dsa->stencil_ref_mask = dsa->stencil_ref_bf;
     r300->stencil_ref.ref_value[0] = r300->stencil_ref.ref_value[1];
 
-    r300->rs_state.dirty = TRUE;
-    r300->dsa_state.dirty = TRUE;
+    r300_mark_atom_dirty(r300, &r300->rs_state);
+    r300_mark_atom_dirty(r300, &r300->dsa_state);
 }
 
 /* Restore the original state. */
@@ -96,8 +96,8 @@ static void r300_stencilref_end(struct r300_context *r300)
     dsa->stencil_ref_mask = sr->zb_stencilrefmask;
     r300->stencil_ref.ref_value[0] = sr->ref_value_front;
 
-    r300->rs_state.dirty = TRUE;
-    r300->dsa_state.dirty = TRUE;
+    r300_mark_atom_dirty(r300, &r300->rs_state);
+    r300_mark_atom_dirty(r300, &r300->dsa_state);
 }
 
 static void r300_stencilref_draw_vbo(struct pipe_context *pipe,

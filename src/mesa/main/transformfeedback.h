@@ -25,8 +25,13 @@
 #ifndef TRANSFORM_FEEDBACK_H
 #define TRANSFORM_FEEDBACK_H
 
-#include "main/mtypes.h"
+#include "compiler.h"
+#include "glheader.h"
+#include "mfeatures.h"
 
+struct _glapi_table;
+struct dd_function_table;
+struct gl_context;
 
 extern void
 _mesa_init_transform_feedback(struct gl_context *ctx);

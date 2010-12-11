@@ -31,9 +31,13 @@
 #ifndef SYNCOBJ_H
 #define SYNCOBJ_H
 
-#include "main/mtypes.h"
+#include "glheader.h"
+#include "mfeatures.h"
 
+struct _glapi_table;
 struct dd_function_table;
+struct gl_context;
+struct gl_sync_object;
 
 #if FEATURE_ARB_sync
 

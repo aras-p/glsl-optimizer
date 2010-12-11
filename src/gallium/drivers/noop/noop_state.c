@@ -101,6 +101,28 @@ static struct pipe_sampler_view *noop_create_sampler_view(struct pipe_context *c
 	return sampler_view;
 }
 
+static struct pipe_surface *noop_create_surface(struct pipe_context *ctx,
+						struct pipe_resource *texture,
+						const struct pipe_surface *surf_tmpl)
+{
+	struct pipe_surface *surface = CALLOC_STRUCT(pipe_surface);
+
+	if (surface == NULL)
+		return NULL;
+	pipe_reference_init(&surface->reference, 1);
+	pipe_resource_reference(&surface->texture, texture);
+	surface->context = ctx;
+	surface->format = surf_tmpl->format;
+	surface->width = texture->width0;
+	surface->height = texture->height0;
+	surface->usage = surf_tmpl->usage;
+	surface->texture = texture;
+	surface->u.tex.first_layer = surf_tmpl->u.tex.first_layer;
+	surface->u.tex.last_layer = surf_tmpl->u.tex.last_layer;
+	surface->u.tex.level = surf_tmpl->u.tex.level;
+
+	return surface;
+}
 static void noop_set_vs_sampler_view(struct pipe_context *ctx, unsigned count,
 					struct pipe_sampler_view **views)
 {
@@ -163,6 +185,14 @@ static void noop_sampler_view_destroy(struct pipe_context *ctx,
 	FREE(state);
 }
 
+
+static void noop_surface_destroy(struct pipe_context *ctx,
+				 struct pipe_surface *surface)
+{
+	pipe_resource_reference(&surface->texture, NULL);
+	FREE(surface);
+}
+
 static void noop_bind_state(struct pipe_context *ctx, void *state)
 {
 }
@@ -213,6 +243,8 @@ static void *noop_create_shader_state(struct pipe_context *ctx,
 	return nstate;
 }
 
+void noop_init_state_functions(struct pipe_context *ctx);
+
 void noop_init_state_functions(struct pipe_context *ctx)
 {
 	ctx->create_blend_state = noop_create_blend_state;
@@ -221,6 +253,7 @@ void noop_init_state_functions(struct pipe_context *ctx)
 	ctx->create_rasterizer_state = noop_create_rs_state;
 	ctx->create_sampler_state = noop_create_sampler_state;
 	ctx->create_sampler_view = noop_create_sampler_view;
+	ctx->create_surface = noop_create_surface;
 	ctx->create_vertex_elements_state = noop_create_vertex_elements;
 	ctx->create_vs_state = noop_create_shader_state;
 	ctx->bind_blend_state = noop_bind_state;
@@ -252,5 +285,6 @@ void noop_init_state_functions(struct pipe_context *ctx)
 	ctx->set_vertex_sampler_views = noop_set_vs_sampler_view;
 	ctx->set_viewport_state = noop_set_viewport_state;
 	ctx->sampler_view_destroy = noop_sampler_view_destroy;
+	ctx->surface_destroy = noop_surface_destroy;
 	ctx->draw_vbo = noop_draw_vbo;
 }

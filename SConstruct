@@ -32,7 +32,6 @@ import common
 
 opts = Variables('config.py')
 common.AddOptions(opts)
-opts.Add(EnumVariable('MSVS_VERSION', 'MS Visual C++ version', None, allowed_values=('7.1', '8.0', '9.0')))
 
 env = Environment(
 	options = opts,

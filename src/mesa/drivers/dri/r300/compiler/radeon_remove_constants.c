@@ -87,8 +87,9 @@ void rc_remove_unused_constants(struct radeon_compiler *c, void *user)
 		rc_for_all_reads_src(inst, mark_used, &d);
 	}
 
-	/* Pass 2: If there is relative addressing, mark all externals as used. */
-	if (has_rel_addr) {
+	/* Pass 2: If there is relative addressing or dead constant elimination
+	 * is disabled, mark all externals as used. */
+	if (has_rel_addr || !c->remove_unused_constants) {
 		for (unsigned i = 0; i < c->Program.Constants.Count; i++)
 			if (constants[i].Type == RC_CONSTANT_EXTERNAL)
 				const_used[i] = 1;
@@ -119,7 +120,7 @@ void rc_remove_unused_constants(struct radeon_compiler *c, void *user)
 	/*  is_identity ==> new_count == old_count
 	 * !is_identity ==> new_count <  old_count */
 	assert( is_identity || new_count <  c->Program.Constants.Count);
-	assert(!(has_rel_addr && are_externals_remapped));
+	assert(!((has_rel_addr || !c->remove_unused_constants) && are_externals_remapped));
 
 	/* Pass 4: Redirect reads of all constants to their new locations. */
 	if (!is_identity) {
@@ -127,7 +128,6 @@ void rc_remove_unused_constants(struct radeon_compiler *c, void *user)
 		     inst != &c->Program.Instructions; inst = inst->Next) {
 			rc_remap_registers(inst, remap_regs, inv_remap_table);
 		}
-
 	}
 
 	/* Set the new constant count. Note that new_count may be less than

@@ -287,12 +287,13 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
 
 static void
 llvmpipe_flush_frontbuffer(struct pipe_screen *_screen,
-                           struct pipe_surface *surface,
+                           struct pipe_resource *resource,
+                           unsigned level, unsigned layer,
                            void *context_private)
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
    struct sw_winsys *winsys = screen->winsys;
-   struct llvmpipe_resource *texture = llvmpipe_resource(surface->texture);
+   struct llvmpipe_resource *texture = llvmpipe_resource(resource);
 
    assert(texture->dt);
    if (texture->dt)

@@ -173,6 +173,7 @@ egl_g3d_reference_drm_buffer(_EGLDisplay *dpy, EGLint name,
    templ.width0 = attrs.Width;
    templ.height0 = attrs.Height;
    templ.depth0 = 1;
+   templ.array_size = 1;
 
    memset(&wsh, 0, sizeof(wsh));
    wsh.handle = (unsigned) name;
@@ -191,7 +192,7 @@ egl_g3d_create_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx,
 {
    struct pipe_resource *ptex;
    struct egl_g3d_image *gimg;
-   unsigned face = 0, level = 0, zslice = 0;
+   unsigned level = 0, layer = 0;
 
    gimg = CALLOC_STRUCT(egl_g3d_image);
    if (!gimg) {
@@ -231,7 +232,7 @@ egl_g3d_create_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx,
       FREE(gimg);
       return NULL;
    }
-   if (zslice > ptex->depth0) {
+   if (layer >= (u_minify(ptex->depth0, level) + ptex->array_size - 1)) {
       _eglError(EGL_BAD_PARAMETER, "eglCreateEGLImageKHR");
       pipe_resource_reference(&gimg->texture, NULL);
       FREE(gimg);
@@ -240,9 +241,8 @@ egl_g3d_create_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx,
 
    /* transfer the ownership to the image */
    gimg->texture = ptex;
-   gimg->face = face;
    gimg->level = level;
-   gimg->zslice = zslice;
+   gimg->layer = layer;
 
    return &gimg->base;
 }
@@ -288,9 +288,8 @@ egl_g3d_create_drm_image(_EGLDriver *drv, _EGLDisplay *dpy,
 
    /* transfer the ownership to the image */
    gimg->texture = ptex;
-   gimg->face = 0;
    gimg->level = 0;
-   gimg->zslice = 0;
+   gimg->layer = 0;
 
    return &gimg->base;
 }

@@ -33,6 +33,7 @@
  * - SUB_TO_ADD_NEG
  * - DIV_TO_MUL_RCP
  * - EXP_TO_EXP2
+ * - POW_TO_EXP2
  * - LOG_TO_LOG2
  * - MOD_TO_FRACT
  *
@@ -61,6 +62,11 @@
  * do have base 2 versions, so this pass converts exp and log to exp2
  * and log2 operations.
  *
+ * POW_TO_EXP2:
+ * -----------
+ * Many older GPUs don't have an x**y instruction.  For these GPUs, convert
+ * x**y to 2**(y * log2(x)).
+ *
  * MOD_TO_FRACT:
  * -------------
  * Breaks an ir_unop_mod expression down to (op1 * fract(op0 / op1))
@@ -70,7 +76,7 @@
  * opportunity to do things like constant fold the (1.0 / op1) easily.
  */
 
-#include "main/core.h" /* for M_E */
+#include "main/core.h" /* for M_LOG2E */
 #include "glsl_types.h"
 #include "ir.h"
 #include "ir_optimization.h"
@@ -91,6 +97,7 @@ private:
    void div_to_mul_rcp(ir_expression *);
    void mod_to_fract(ir_expression *);
    void exp_to_exp2(ir_expression *);
+   void pow_to_exp2(ir_expression *);
    void log_to_log2(ir_expression *);
 };
 
@@ -172,11 +179,25 @@ lower_instructions_visitor::div_to_mul_rcp(ir_expression *ir)
 void
 lower_instructions_visitor::exp_to_exp2(ir_expression *ir)
 {
-   ir_constant *log2_e = new(ir) ir_constant(log2f(M_E));
+   ir_constant *log2_e = new(ir) ir_constant(float(M_LOG2E));
 
    ir->operation = ir_unop_exp2;
    ir->operands[0] = new(ir) ir_expression(ir_binop_mul, ir->operands[0]->type,
 					   ir->operands[0], log2_e);
+   this->progress = true;
+}
+
+void
+lower_instructions_visitor::pow_to_exp2(ir_expression *ir)
+{
+   ir_expression *const log2_x =
+      new(ir) ir_expression(ir_unop_log2, ir->operands[0]->type,
+			    ir->operands[0]);
+
+   ir->operation = ir_unop_exp2;
+   ir->operands[0] = new(ir) ir_expression(ir_binop_mul, ir->operands[1]->type,
+					   ir->operands[1], log2_x);
+   ir->operands[1] = NULL;
    this->progress = true;
 }
 
@@ -186,7 +207,7 @@ lower_instructions_visitor::log_to_log2(ir_expression *ir)
    ir->operation = ir_binop_mul;
    ir->operands[0] = new(ir) ir_expression(ir_unop_log2, ir->operands[0]->type,
 					   ir->operands[0], NULL);
-   ir->operands[1] = new(ir) ir_constant(1.0f / log2f(M_E));
+   ir->operands[1] = new(ir) ir_constant(float(1.0 / M_LOG2E));
    this->progress = true;
 }
 
@@ -252,6 +273,11 @@ lower_instructions_visitor::visit_leave(ir_expression *ir)
    case ir_binop_mod:
       if (lowering(MOD_TO_FRACT))
 	 mod_to_fract(ir);
+      break;
+
+   case ir_binop_pow:
+      if (lowering(POW_TO_EXP2))
+	 pow_to_exp2(ir);
       break;
 
    default:

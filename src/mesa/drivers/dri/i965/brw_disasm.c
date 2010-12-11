@@ -899,7 +899,8 @@ int brw_disasm (FILE *file, struct brw_instruction *inst, int gen)
 	err |= dest (file, inst);
     } else if (gen >= 6 && (inst->header.opcode == BRW_OPCODE_IF ||
 			    inst->header.opcode == BRW_OPCODE_ELSE ||
-			    inst->header.opcode == BRW_OPCODE_ENDIF)) {
+			    inst->header.opcode == BRW_OPCODE_ENDIF ||
+			    inst->header.opcode == BRW_OPCODE_WHILE)) {
        format (file, " %d", inst->bits1.branch_gen6.jump_count);
     }
 

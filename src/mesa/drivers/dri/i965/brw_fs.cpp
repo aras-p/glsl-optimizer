@@ -600,8 +600,13 @@ fs_visitor::emit_math(fs_opcodes opcode, fs_reg dst, fs_reg src)
     * might be able to do better by doing execsize = 1 math and then
     * expanding that result out, but we would need to be careful with
     * masking.
+    *
+    * The hardware ignores source modifiers (negate and abs) on math
+    * instructions, so we also move to a temp to set those up.
     */
-   if (intel->gen >= 6 && src.file == UNIFORM) {
+   if (intel->gen >= 6 && (src.file == UNIFORM ||
+			   src.abs ||
+			   src.negate)) {
       fs_reg expanded = fs_reg(this, glsl_type::float_type);
       emit(fs_inst(BRW_OPCODE_MOV, expanded, src));
       src = expanded;
@@ -931,6 +936,10 @@ fs_visitor::visit(ir_expression *ir)
 
    case ir_unop_noise:
       assert(!"not reached: should be handled by lower_noise");
+      break;
+
+   case ir_quadop_vector:
+      assert(!"not reached: should be handled by lower_quadop_vector");
       break;
 
    case ir_unop_sqrt:
@@ -1423,28 +1432,70 @@ fs_visitor::visit(ir_discard *ir)
 void
 fs_visitor::visit(ir_constant *ir)
 {
-   fs_reg reg(this, ir->type);
-   this->result = reg;
+   /* Set this->result to reg at the bottom of the function because some code
+    * paths will cause this visitor to be applied to other fields.  This will
+    * cause the value stored in this->result to be modified.
+    *
+    * Make reg constant so that it doesn't get accidentally modified along the
+    * way.  Yes, I actually had this problem. :(
+    */
+   const fs_reg reg(this, ir->type);
+   fs_reg dst_reg = reg;
 
-   for (unsigned int i = 0; i < ir->type->vector_elements; i++) {
-      switch (ir->type->base_type) {
-      case GLSL_TYPE_FLOAT:
-	 emit(fs_inst(BRW_OPCODE_MOV, reg, fs_reg(ir->value.f[i])));
-	 break;
-      case GLSL_TYPE_UINT:
-	 emit(fs_inst(BRW_OPCODE_MOV, reg, fs_reg(ir->value.u[i])));
-	 break;
-      case GLSL_TYPE_INT:
-	 emit(fs_inst(BRW_OPCODE_MOV, reg, fs_reg(ir->value.i[i])));
-	 break;
-      case GLSL_TYPE_BOOL:
-	 emit(fs_inst(BRW_OPCODE_MOV, reg, fs_reg((int)ir->value.b[i])));
-	 break;
-      default:
-	 assert(!"Non-float/uint/int/bool constant");
+   if (ir->type->is_array()) {
+      const unsigned size = type_size(ir->type->fields.array);
+
+      for (unsigned i = 0; i < ir->type->length; i++) {
+	 ir->array_elements[i]->accept(this);
+	 fs_reg src_reg = this->result;
+
+	 dst_reg.type = src_reg.type;
+	 for (unsigned j = 0; j < size; j++) {
+	    emit(fs_inst(BRW_OPCODE_MOV, dst_reg, src_reg));
+	    src_reg.reg_offset++;
+	    dst_reg.reg_offset++;
+	 }
       }
-      reg.reg_offset++;
+   } else if (ir->type->is_record()) {
+      foreach_list(node, &ir->components) {
+	 ir_instruction *const field = (ir_instruction *) node;
+	 const unsigned size = type_size(field->type);
+
+	 field->accept(this);
+	 fs_reg src_reg = this->result;
+
+	 dst_reg.type = src_reg.type;
+	 for (unsigned j = 0; j < size; j++) {
+	    emit(fs_inst(BRW_OPCODE_MOV, dst_reg, src_reg));
+	    src_reg.reg_offset++;
+	    dst_reg.reg_offset++;
+	 }
+      }
+   } else {
+      const unsigned size = type_size(ir->type);
+
+      for (unsigned i = 0; i < size; i++) {
+	 switch (ir->type->base_type) {
+	 case GLSL_TYPE_FLOAT:
+	    emit(fs_inst(BRW_OPCODE_MOV, dst_reg, fs_reg(ir->value.f[i])));
+	    break;
+	 case GLSL_TYPE_UINT:
+	    emit(fs_inst(BRW_OPCODE_MOV, dst_reg, fs_reg(ir->value.u[i])));
+	    break;
+	 case GLSL_TYPE_INT:
+	    emit(fs_inst(BRW_OPCODE_MOV, dst_reg, fs_reg(ir->value.i[i])));
+	    break;
+	 case GLSL_TYPE_BOOL:
+	    emit(fs_inst(BRW_OPCODE_MOV, dst_reg, fs_reg((int)ir->value.b[i])));
+	    break;
+	 default:
+	    assert(!"Non-float/uint/int/bool constant");
+	 }
+	 dst_reg.reg_offset++;
+      }
    }
+
+   this->result = reg;
 }
 
 void
@@ -1574,7 +1625,7 @@ fs_visitor::emit_if_gen6(ir_if *ir)
 
       switch (expr->operation) {
       case ir_unop_logic_not:
-	 inst = emit(fs_inst(BRW_OPCODE_IF, temp, op[0], fs_reg(1)));
+	 inst = emit(fs_inst(BRW_OPCODE_IF, temp, op[0], fs_reg(0)));
 	 inst->conditional_mod = BRW_CONDITIONAL_Z;
 	 return;
 
@@ -1951,7 +2002,7 @@ fs_visitor::emit_interpolation_setup_gen6()
    emit(fs_inst(BRW_OPCODE_MOV, this->pixel_y, int_pixel_y));
 
    this->current_annotation = "compute 1/pos.w";
-   this->wpos_w = fs_reg(brw_vec8_grf(c->key.source_w_reg, 0));
+   this->wpos_w = fs_reg(brw_vec8_grf(c->source_w_reg, 0));
    this->pixel_w = fs_reg(this, glsl_type::float_type);
    emit_math(FS_OPCODE_RCP, this->pixel_w, wpos_w);
 
@@ -1979,17 +2030,17 @@ fs_visitor::emit_fb_writes()
       nr += 2;
    }
 
-   if (c->key.aa_dest_stencil_reg) {
+   if (c->aa_dest_stencil_reg) {
       emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, nr++),
-		   fs_reg(brw_vec8_grf(c->key.aa_dest_stencil_reg, 0))));
+		   fs_reg(brw_vec8_grf(c->aa_dest_stencil_reg, 0))));
    }
 
    /* Reserve space for color. It'll be filled in per MRT below. */
    int color_mrf = nr;
    nr += 4;
 
-   if (c->key.source_depth_to_render_target) {
-      if (c->key.computes_depth) {
+   if (c->source_depth_to_render_target) {
+      if (c->computes_depth) {
 	 /* Hand over gl_FragDepth. */
 	 assert(this->frag_depth);
 	 fs_reg depth = *(variable_storage(this->frag_depth));
@@ -1998,20 +2049,22 @@ fs_visitor::emit_fb_writes()
       } else {
 	 /* Pass through the payload depth. */
 	 emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, nr++),
-		      fs_reg(brw_vec8_grf(c->key.source_depth_reg, 0))));
+		      fs_reg(brw_vec8_grf(c->source_depth_reg, 0))));
       }
    }
 
-   if (c->key.dest_depth_reg) {
+   if (c->dest_depth_reg) {
       emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, nr++),
-		   fs_reg(brw_vec8_grf(c->key.dest_depth_reg, 0))));
+		   fs_reg(brw_vec8_grf(c->dest_depth_reg, 0))));
    }
 
    fs_reg color = reg_undef;
    if (this->frag_color)
       color = *(variable_storage(this->frag_color));
-   else if (this->frag_data)
+   else if (this->frag_data) {
       color = *(variable_storage(this->frag_data));
+      color.type = BRW_REGISTER_TYPE_F;
+   }
 
    for (int target = 0; target < c->key.nr_color_regions; target++) {
       this->current_annotation = talloc_asprintf(this->mem_ctx,
@@ -2452,7 +2505,7 @@ fs_visitor::generate_pull_constant_load(fs_inst *inst, struct brw_reg dst)
 void
 fs_visitor::assign_curb_setup()
 {
-   c->prog_data.first_curbe_grf = c->key.nr_payload_regs;
+   c->prog_data.first_curbe_grf = c->nr_payload_regs;
    c->prog_data.curb_read_length = ALIGN(c->prog_data.nr_params, 8) / 8;
 
    /* Map the offsets in the UNIFORM file to fixed HW regs. */
@@ -3227,6 +3280,7 @@ static struct brw_reg brw_reg_from_fs_reg(fs_reg *reg)
 	 break;
       default:
 	 assert(!"not reached");
+	 brw_reg = brw_null_reg();
 	 break;
       }
       break;
@@ -3238,6 +3292,10 @@ static struct brw_reg brw_reg_from_fs_reg(fs_reg *reg)
       brw_reg = brw_null_reg();
       break;
    case UNIFORM:
+      assert(!"not reached");
+      brw_reg = brw_null_reg();
+      break;
+   default:
       assert(!"not reached");
       brw_reg = brw_null_reg();
       break;
@@ -3373,10 +3431,6 @@ fs_visitor::generate_code()
 	 break;
 
       case BRW_OPCODE_DO:
-	 /* FINISHME: We need to write the loop instruction support still. */
-	 if (intel->gen >= 6)
-	    this->fail = true;
-
 	 loop_stack[loop_stack_depth++] = brw_DO(p, BRW_EXECUTE_8);
 	 if_depth_in_loop[loop_stack_depth] = 0;
 	 break;
@@ -3386,7 +3440,11 @@ fs_visitor::generate_code()
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 	 break;
       case BRW_OPCODE_CONTINUE:
-	 brw_CONT(p, if_depth_in_loop[loop_stack_depth]);
+	 /* FINISHME: We need to write the loop instruction support still. */
+	 if (intel->gen >= 6)
+	    brw_CONT_gen6(p, loop_stack[loop_stack_depth - 1]);
+	 else
+	    brw_CONT(p, if_depth_in_loop[loop_stack_depth]);
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 	 break;
 
@@ -3400,16 +3458,18 @@ fs_visitor::generate_code()
 	 assert(loop_stack_depth > 0);
 	 loop_stack_depth--;
 	 inst0 = inst1 = brw_WHILE(p, loop_stack[loop_stack_depth]);
-	 /* patch all the BREAK/CONT instructions from last BGNLOOP */
-	 while (inst0 > loop_stack[loop_stack_depth]) {
-	    inst0--;
-	    if (inst0->header.opcode == BRW_OPCODE_BREAK &&
-		inst0->bits3.if_else.jump_count == 0) {
-	       inst0->bits3.if_else.jump_count = br * (inst1 - inst0 + 1);
+	 if (intel->gen < 6) {
+	    /* patch all the BREAK/CONT instructions from last BGNLOOP */
+	    while (inst0 > loop_stack[loop_stack_depth]) {
+	       inst0--;
+	       if (inst0->header.opcode == BRW_OPCODE_BREAK &&
+		   inst0->bits3.if_else.jump_count == 0) {
+		  inst0->bits3.if_else.jump_count = br * (inst1 - inst0 + 1);
 	    }
-	    else if (inst0->header.opcode == BRW_OPCODE_CONTINUE &&
-		     inst0->bits3.if_else.jump_count == 0) {
-	       inst0->bits3.if_else.jump_count = br * (inst1 - inst0);
+	       else if (inst0->header.opcode == BRW_OPCODE_CONTINUE &&
+			inst0->bits3.if_else.jump_count == 0) {
+		  inst0->bits3.if_else.jump_count = br * (inst1 - inst0);
+	       }
 	    }
 	 }
       }
@@ -3485,6 +3545,26 @@ fs_visitor::generate_code()
       }
 
       last_native_inst = p->nr_insn;
+   }
+
+   brw_set_uip_jip(p);
+
+   /* OK, while the INTEL_DEBUG=wm above is very nice for debugging FS
+    * emit issues, it doesn't get the jump distances into the output,
+    * which is often something we want to debug.  So this is here in
+    * case you're doing that.
+    */
+   if (0) {
+      if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
+	 for (unsigned int i = 0; i < p->nr_insn; i++) {
+	    printf("0x%08x 0x%08x 0x%08x 0x%08x ",
+		   ((uint32_t *)&p->store[i])[3],
+		   ((uint32_t *)&p->store[i])[2],
+		   ((uint32_t *)&p->store[i])[1],
+		   ((uint32_t *)&p->store[i])[0]);
+	    brw_disasm(stdout, &p->store[i], intel->gen);
+	 }
+      }
    }
 }
 

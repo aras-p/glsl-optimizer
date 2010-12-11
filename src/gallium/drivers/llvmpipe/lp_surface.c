@@ -52,19 +52,23 @@ adjust_to_tile_bounds(unsigned x, unsigned y, unsigned width, unsigned height,
 
 static void
 lp_resource_copy(struct pipe_context *pipe,
-                 struct pipe_resource *dst, struct pipe_subresource subdst,
+                 struct pipe_resource *dst, unsigned dst_level,
                  unsigned dstx, unsigned dsty, unsigned dstz,
-                 struct pipe_resource *src, struct pipe_subresource subsrc,
-                 unsigned srcx, unsigned srcy, unsigned srcz,
-                 unsigned width, unsigned height)
+                 struct pipe_resource *src, unsigned src_level,
+                 const struct pipe_box *src_box)
 {
-   /* XXX what about the dstz/srcz parameters - zslice wasn't used... */
+   /* XXX this used to ignore srcz/dstz
+    * assume it works the same for cube and 3d
+    */
    struct llvmpipe_resource *src_tex = llvmpipe_resource(src);
    struct llvmpipe_resource *dst_tex = llvmpipe_resource(dst);
    const enum pipe_format format = src_tex->base.format;
+   unsigned width = src_box->width;
+   unsigned height = src_box->height;
+   assert(src_box->depth == 1);
 
    llvmpipe_flush_resource(pipe,
-                           dst, subdst.face, subdst.level,
+                           dst, dst_level, dstz,
                            0, /* flush_flags */
                            FALSE, /* read_only */
                            TRUE, /* cpu_access */
@@ -72,7 +76,7 @@ lp_resource_copy(struct pipe_context *pipe,
                            "blit dest");
 
    llvmpipe_flush_resource(pipe,
-                           src, subsrc.face, subsrc.level,
+                           src, src_level, src_box->z,
                            0, /* flush_flags */
                            TRUE, /* read_only */
                            TRUE, /* cpu_access */
@@ -80,9 +84,10 @@ lp_resource_copy(struct pipe_context *pipe,
                            "blit src");
 
    /*
-   printf("surface copy from %u to %u: %u,%u to %u,%u %u x %u\n",
-          src_tex->id, dst_tex->id,
-          srcx, srcy, dstx, dsty, width, height);
+   printf("surface copy from %u lvl %u to %u lvl %u: %u,%u,%u to %u,%u,%u %u x %u x %u\n",
+          src_tex->id, src_level, dst_tex->id, dst_level, 
+          src_box->x, src_box->y, src_box->z, dstx, dsty, dstz,
+          src_box->width, src_box->height, src_box->depth);
    */
 
    /* set src tiles to linear layout */
@@ -90,12 +95,13 @@ lp_resource_copy(struct pipe_context *pipe,
       unsigned tx, ty, tw, th;
       unsigned x, y;
 
-      adjust_to_tile_bounds(srcx, srcy, width, height, &tx, &ty, &tw, &th);
+      adjust_to_tile_bounds(src_box->x, src_box->y, width, height,
+                            &tx, &ty, &tw, &th);
 
       for (y = 0; y < th; y += TILE_SIZE) {
          for (x = 0; x < tw; x += TILE_SIZE) {
             (void) llvmpipe_get_texture_tile_linear(src_tex,
-                                                    subsrc.face, subsrc.level,
+                                                    src_box->z, src_level,
                                                     LP_TEX_USAGE_READ,
                                                     tx + x, ty + y);
          }
@@ -130,7 +136,7 @@ lp_resource_copy(struct pipe_context *pipe,
                usage = LP_TEX_USAGE_READ_WRITE;
 
             (void) llvmpipe_get_texture_tile_linear(dst_tex,
-                                                    subdst.face, subdst.level,
+                                                    dstz, dst_level,
                                                     usage,
                                                     tx + x, ty + y);
          }
@@ -140,22 +146,22 @@ lp_resource_copy(struct pipe_context *pipe,
    /* copy */
    {
       const ubyte *src_linear_ptr
-         = llvmpipe_get_texture_image_address(src_tex, subsrc.face,
-                                              subsrc.level,
+         = llvmpipe_get_texture_image_address(src_tex, src_box->z,
+                                              src_level,
                                               LP_TEX_LAYOUT_LINEAR);
       ubyte *dst_linear_ptr
-         = llvmpipe_get_texture_image_address(dst_tex, subdst.face,
-                                              subdst.level,
+         = llvmpipe_get_texture_image_address(dst_tex, dstz,
+                                              dst_level,
                                               LP_TEX_LAYOUT_LINEAR);
 
       if (dst_linear_ptr && src_linear_ptr) {
          util_copy_rect(dst_linear_ptr, format,
-                        llvmpipe_resource_stride(&dst_tex->base, subdst.level),
+                        llvmpipe_resource_stride(&dst_tex->base, dst_level),
                         dstx, dsty,
                         width, height,
                         src_linear_ptr,
-                        llvmpipe_resource_stride(&src_tex->base, subsrc.level),
-                        srcx, srcy);
+                        llvmpipe_resource_stride(&src_tex->base, src_level),
+                        src_box->x, src_box->y);
       }
    }
 }

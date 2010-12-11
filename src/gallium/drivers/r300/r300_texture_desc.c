@@ -474,22 +474,17 @@ boolean r300_texture_desc_init(struct r300_screen *rscreen,
 }
 
 unsigned r300_texture_get_offset(struct r300_texture_desc *desc,
-                                 unsigned level, unsigned zslice,
-                                 unsigned face)
+                                 unsigned level, unsigned layer)
 {
     unsigned offset = desc->offset_in_bytes[level];
 
     switch (desc->b.b.target) {
         case PIPE_TEXTURE_3D:
-            assert(face == 0);
-            return offset + zslice * desc->layer_size_in_bytes[level];
-
         case PIPE_TEXTURE_CUBE:
-            assert(zslice == 0);
-            return offset + face * desc->layer_size_in_bytes[level];
+            return offset + layer * desc->layer_size_in_bytes[level];
 
         default:
-            assert(zslice == 0 && face == 0);
+            assert(layer == 0);
             return offset;
     }
 }

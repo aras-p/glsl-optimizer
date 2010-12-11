@@ -67,6 +67,13 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 		.IsComponentwise = 1
 	},
 	{
+		.Opcode = RC_OPCODE_CLAMP,
+		.Name = "CLAMP",
+		.NumSrcRegs = 3,
+		.HasDstReg = 1,
+		.IsComponentwise = 1
+	},
+	{
 		.Opcode = RC_OPCODE_CMP,
 		.Name = "CMP",
 		.NumSrcRegs = 3,
@@ -453,11 +460,16 @@ void rc_compute_sources_for_writemask(
 			srcmasks[1] |= RC_MASK_XY;
 			break;
 		case RC_OPCODE_DP3:
+		case RC_OPCODE_XPD:
 			srcmasks[0] |= RC_MASK_XYZ;
 			srcmasks[1] |= RC_MASK_XYZ;
 			break;
 		case RC_OPCODE_DP4:
 			srcmasks[0] |= RC_MASK_XYZW;
+			srcmasks[1] |= RC_MASK_XYZW;
+			break;
+		case RC_OPCODE_DPH:
+			srcmasks[0] |= RC_MASK_XYZ;
 			srcmasks[1] |= RC_MASK_XYZW;
 			break;
 		case RC_OPCODE_TXB:

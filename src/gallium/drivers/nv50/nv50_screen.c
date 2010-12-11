@@ -127,6 +127,10 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		return 0;
 	case PIPE_CAP_DEPTH_CLAMP:
 		return 1;
+	case PIPE_CAP_SHADER_STENCIL_EXPORT:
+		return 0;
+	case PIPE_CAP_PRIMITIVE_RESTART:
+		return 0;
 	default:
 		NOUVEAU_ERR("Unknown PIPE_CAP %d\n", param);
 		return 0;
@@ -176,6 +180,8 @@ nv50_screen_get_shader_param(struct pipe_screen *pscreen, unsigned shader,
 	case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
 	case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
 		return 1;
+	case PIPE_SHADER_CAP_SUBROUTINES:
+		return 0;
 	default:
 		return 0;
 	}

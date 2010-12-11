@@ -69,7 +69,7 @@ debug_describe_surface(char* buf, const struct pipe_surface *ptr)
 {
    char res[128];
    debug_describe_resource(res, ptr->texture);
-   util_sprintf(buf, "pipe_surface<%s,%u,%u,%u>", res, ptr->face, ptr->level, ptr->zslice);
+   util_sprintf(buf, "pipe_surface<%s,%u,%u,%u>", res, ptr->u.tex.level, ptr->u.tex.first_layer, ptr->u.tex.last_layer);
 }
 
 void

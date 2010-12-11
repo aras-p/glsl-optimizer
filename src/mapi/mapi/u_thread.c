@@ -111,7 +111,7 @@ u_tsd_set(struct u_tsd *tsd, void *ptr)
  * Be sure that you compile using the Multithreaded runtime, otherwise
  * bad things will happen.
  */
-#ifdef WIN32_THREADS
+#ifdef WIN32
 
 static void InsteadOf_exit(int nCode)
 {
@@ -172,7 +172,7 @@ u_tsd_set(struct u_tsd *tsd, void *ptr)
    }
 }
 
-#endif /* WIN32_THREADS */
+#endif /* WIN32 */
 
 /*
  * BeOS threads

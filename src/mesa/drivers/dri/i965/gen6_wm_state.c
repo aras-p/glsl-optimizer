@@ -66,6 +66,21 @@ prepare_wm_constants(struct brw_context *brw)
 	 constants[i] = convert_param(brw->wm.prog_data->param_convert[i],
 				      *brw->wm.prog_data->param[i]);
       }
+
+      if (0) {
+	 printf("WM constants:\n");
+	 for (i = 0; i < brw->wm.prog_data->nr_params; i++) {
+	    if ((i & 7) == 0)
+	       printf("g%d: ", brw->wm.prog_data->first_curbe_grf + i / 8);
+	    printf("%8f ", constants[i]);
+	    if ((i & 7) == 7)
+	       printf("\n");
+	 }
+	 if ((i & 7) != 0)
+	    printf("\n");
+	 printf("\n");
+      }
+
       drm_intel_gem_bo_unmap_gtt(brw->wm.push_const_bo);
    }
 }
@@ -88,6 +103,7 @@ upload_wm_state(struct brw_context *brw)
       brw_fragment_program_const(brw->fragment_program);
    uint32_t dw2, dw4, dw5, dw6;
 
+   /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->nr_params == 0) {
       /* Disable the push constant buffers. */
       BEGIN_BATCH(5);
@@ -104,7 +120,8 @@ upload_wm_state(struct brw_context *brw)
 		(5 - 2));
       OUT_RELOC(brw->wm.push_const_bo,
 		I915_GEM_DOMAIN_RENDER, 0, /* XXX: bad domain */
-		ALIGN(brw->wm.prog_data->nr_params, 8) / 8 - 1);
+		ALIGN(brw->wm.prog_data->nr_params,
+		      brw->wm.prog_data->dispatch_width) / 8 - 1);
       OUT_BATCH(0);
       OUT_BATCH(0);
       OUT_BATCH(0);
@@ -126,8 +143,8 @@ upload_wm_state(struct brw_context *brw)
 
    dw5 |= (40 - 1) << GEN6_WM_MAX_THREADS_SHIFT;
 
-   /* BRW_NEW_FRAGMENT_PROGRAM */
-   if (fp->isGLSL)
+   /* CACHE_NEW_WM_PROG */
+   if (brw->wm.prog_data->dispatch_width == 8)
       dw5 |= GEN6_WM_8_DISPATCH_ENABLE;
    else
       dw5 |= GEN6_WM_16_DISPATCH_ENABLE;
@@ -176,13 +193,14 @@ upload_wm_state(struct brw_context *brw)
 const struct brw_tracked_state gen6_wm_state = {
    .dirty = {
       .mesa  = (_NEW_LINE | _NEW_POLYGONSTIPPLE | _NEW_COLOR | _NEW_BUFFERS |
-		_NEW_PROGRAM_CONSTANTS),
+		_NEW_PROGRAM_CONSTANTS | _NEW_POLYGON),
       .brw   = (BRW_NEW_CURBE_OFFSETS |
 		BRW_NEW_FRAGMENT_PROGRAM |
                 BRW_NEW_NR_WM_SURFACES |
 		BRW_NEW_URB_FENCE |
 		BRW_NEW_BATCH),
-      .cache = CACHE_NEW_SAMPLER
+      .cache = (CACHE_NEW_SAMPLER |
+		CACHE_NEW_WM_PROG)
    },
    .emit = upload_wm_state,
 };

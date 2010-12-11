@@ -35,6 +35,7 @@
 struct gen6_blend_state_key {
    GLboolean color_blend, alpha_enabled;
    GLboolean dither;
+   GLboolean color_mask[BRW_MAX_DRAW_BUFFERS][4];
 
    GLenum logic_op;
 
@@ -52,6 +53,9 @@ blend_state_populate_key(struct brw_context *brw,
    struct gl_context *ctx = &brw->intel.ctx;
 
    memset(key, 0, sizeof(*key));
+
+   /* _NEW_COLOR */
+   memcpy(key->color_mask, ctx->Color.ColorMask, sizeof(key->color_mask));
 
    /* _NEW_COLOR */
    if (ctx->Color._LogicOpEnabled)
@@ -87,54 +91,62 @@ static drm_intel_bo *
 blend_state_create_from_key(struct brw_context *brw,
 			    struct gen6_blend_state_key *key)
 {
-   struct gen6_blend_state blend;
+   struct gen6_blend_state blend[BRW_MAX_DRAW_BUFFERS];
    drm_intel_bo *bo;
+   int b;
 
    memset(&blend, 0, sizeof(blend));
 
-   if (key->logic_op != GL_COPY) {
-      blend.blend1.logic_op_enable = 1;
-      blend.blend1.logic_op_func = intel_translate_logic_op(key->logic_op);
-   } else if (key->color_blend) {
-      GLenum eqRGB = key->blend_eq_rgb;
-      GLenum eqA = key->blend_eq_a;
-      GLenum srcRGB = key->blend_src_rgb;
-      GLenum dstRGB = key->blend_dst_rgb;
-      GLenum srcA = key->blend_src_a;
-      GLenum dstA = key->blend_dst_a;
+   for (b = 0; b < BRW_MAX_DRAW_BUFFERS; b++) {
+      if (key->logic_op != GL_COPY) {
+	 blend[b].blend1.logic_op_enable = 1;
+	 blend[b].blend1.logic_op_func = intel_translate_logic_op(key->logic_op);
+      } else if (key->color_blend & (1 << b)) {
+	 GLenum eqRGB = key->blend_eq_rgb;
+	 GLenum eqA = key->blend_eq_a;
+	 GLenum srcRGB = key->blend_src_rgb;
+	 GLenum dstRGB = key->blend_dst_rgb;
+	 GLenum srcA = key->blend_src_a;
+	 GLenum dstA = key->blend_dst_a;
 
-      if (eqRGB == GL_MIN || eqRGB == GL_MAX) {
-	 srcRGB = dstRGB = GL_ONE;
+	 if (eqRGB == GL_MIN || eqRGB == GL_MAX) {
+	    srcRGB = dstRGB = GL_ONE;
+	 }
+
+	 if (eqA == GL_MIN || eqA == GL_MAX) {
+	    srcA = dstA = GL_ONE;
+	 }
+
+	 blend[b].blend0.dest_blend_factor = brw_translate_blend_factor(dstRGB);
+	 blend[b].blend0.source_blend_factor = brw_translate_blend_factor(srcRGB);
+	 blend[b].blend0.blend_func = brw_translate_blend_equation(eqRGB);
+
+	 blend[b].blend0.ia_dest_blend_factor = brw_translate_blend_factor(dstA);
+	 blend[b].blend0.ia_source_blend_factor = brw_translate_blend_factor(srcA);
+	 blend[b].blend0.ia_blend_func = brw_translate_blend_equation(eqA);
+
+	 blend[b].blend0.blend_enable = 1;
+	 blend[b].blend0.ia_blend_enable = (srcA != srcRGB ||
+					 dstA != dstRGB ||
+					 eqA != eqRGB);
       }
 
-      if (eqA == GL_MIN || eqA == GL_MAX) {
-	 srcA = dstA = GL_ONE;
+      if (key->alpha_enabled) {
+	 blend[b].blend1.alpha_test_enable = 1;
+	 blend[b].blend1.alpha_test_func = intel_translate_compare_func(key->alpha_func);
+
       }
 
-      blend.blend0.dest_blend_factor = brw_translate_blend_factor(dstRGB);
-      blend.blend0.source_blend_factor = brw_translate_blend_factor(srcRGB);
-      blend.blend0.blend_func = brw_translate_blend_equation(eqRGB);
+      if (key->dither) {
+	 blend[b].blend1.dither_enable = 1;
+	 blend[b].blend1.y_dither_offset = 0;
+	 blend[b].blend1.x_dither_offset = 0;
+      }
 
-      blend.blend0.ia_dest_blend_factor = brw_translate_blend_factor(dstA);
-      blend.blend0.ia_source_blend_factor = brw_translate_blend_factor(srcA);
-      blend.blend0.ia_blend_func = brw_translate_blend_equation(eqA);
-
-      blend.blend0.blend_enable = 1;
-      blend.blend0.ia_blend_enable = (srcA != srcRGB ||
-				      dstA != dstRGB ||
-				      eqA != eqRGB);
-   }
-
-   if (key->alpha_enabled) {
-      blend.blend1.alpha_test_enable = 1;
-      blend.blend1.alpha_test_func = intel_translate_compare_func(key->alpha_func);
-
-   }
-
-   if (key->dither) {
-      blend.blend1.dither_enable = 1;
-      blend.blend1.y_dither_offset = 0;
-      blend.blend1.x_dither_offset = 0;
+      blend[b].blend1.write_disable_r = !key->color_mask[b][0];
+      blend[b].blend1.write_disable_g = !key->color_mask[b][1];
+      blend[b].blend1.write_disable_b = !key->color_mask[b][2];
+      blend[b].blend1.write_disable_a = !key->color_mask[b][3];
    }
 
    bo = brw_upload_cache(&brw->cache, BRW_BLEND_STATE,
@@ -172,7 +184,7 @@ const struct brw_tracked_state gen6_blend_state = {
 };
 
 struct gen6_color_calc_state_key {
-   GLubyte blend_constant_color[4];
+   float blend_constant_color[4];
    GLclampf alpha_ref;
    GLubyte stencil_ref[2];
 };

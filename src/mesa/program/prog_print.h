@@ -47,6 +47,9 @@ typedef enum {
 } gl_prog_print_mode;
 
 
+extern const char *
+_mesa_register_file_name(gl_register_file f);
+
 extern void
 _mesa_print_vp_inputs(GLbitfield inputs);
 

@@ -47,7 +47,7 @@ struct lp_type;
  */
 struct lp_build_skip_context
 {
-   LLVMBuilderRef builder;
+   struct gallivm_state *gallivm;
 
    /** Block to skip to */
    LLVMBasicBlockRef block;
@@ -55,7 +55,7 @@ struct lp_build_skip_context
 
 void
 lp_build_flow_skip_begin(struct lp_build_skip_context *ctx,
-                         LLVMBuilderRef builder);
+                         struct gallivm_state *gallivm);
 
 void
 lp_build_flow_skip_cond_break(struct lp_build_skip_context *ctx,
@@ -77,7 +77,7 @@ struct lp_build_mask_context
 
 void
 lp_build_mask_begin(struct lp_build_mask_context *mask,
-                    LLVMBuilderRef builder,
+                    struct gallivm_state *gallivm,
                     struct lp_type type,
                     LLVMValueRef value);
 
@@ -107,31 +107,28 @@ lp_build_mask_end(struct lp_build_mask_context *mask);
  */
 struct lp_build_loop_state
 {
-  LLVMBasicBlockRef block;
-  LLVMValueRef counter_var;
-  LLVMValueRef counter;
+   LLVMBasicBlockRef block;
+   LLVMValueRef counter_var;
+   LLVMValueRef counter;
+   struct gallivm_state *gallivm;
 };
 
 
 void
-lp_build_loop_begin(LLVMBuilderRef builder,
-                    LLVMValueRef start,
-                    struct lp_build_loop_state *state);
-
+lp_build_loop_begin(struct lp_build_loop_state *state,
+                    struct gallivm_state *gallivm,
+                    LLVMValueRef start);
 
 void
-lp_build_loop_end(LLVMBuilderRef builder,
+lp_build_loop_end(struct lp_build_loop_state *state,
                   LLVMValueRef end,
-                  LLVMValueRef step,
-                  struct lp_build_loop_state *state);
+                  LLVMValueRef step);
 
 void
-lp_build_loop_end_cond(LLVMBuilderRef builder,
+lp_build_loop_end_cond(struct lp_build_loop_state *state,
                        LLVMValueRef end,
                        LLVMValueRef step,
-                       LLVMIntPredicate cond,
-                       struct lp_build_loop_state *state);
-
+                       LLVMIntPredicate cond);
 
 
 
@@ -140,7 +137,7 @@ lp_build_loop_end_cond(LLVMBuilderRef builder,
  */
 struct lp_build_if_state
 {
-   LLVMBuilderRef builder;
+   struct gallivm_state *gallivm;
    LLVMValueRef condition;
    LLVMBasicBlockRef entry_block;
    LLVMBasicBlockRef true_block;
@@ -151,7 +148,7 @@ struct lp_build_if_state
 
 void
 lp_build_if(struct lp_build_if_state *ctx,
-            LLVMBuilderRef builder,
+            struct gallivm_state *gallivm,
             LLVMValueRef condition);
 
 void
@@ -161,15 +158,15 @@ void
 lp_build_endif(struct lp_build_if_state *ctx);
 
 LLVMBasicBlockRef
-lp_build_insert_new_block(LLVMBuilderRef builder, const char *name);
+lp_build_insert_new_block(struct gallivm_state *gallivm, const char *name);
 
 LLVMValueRef
-lp_build_alloca(LLVMBuilderRef builder,
+lp_build_alloca(struct gallivm_state *gallivm,
                 LLVMTypeRef type,
                 const char *name);
 
 LLVMValueRef
-lp_build_array_alloca(LLVMBuilderRef builder,
+lp_build_array_alloca(struct gallivm_state *gallivm,
                       LLVMTypeRef type,
                       LLVMValueRef count,
                       const char *name);

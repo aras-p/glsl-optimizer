@@ -30,6 +30,7 @@
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
+#include "util/u_box.h"
 
 #include "egl_g3d.h"
 #include "egl_g3d_api.h"
@@ -140,10 +141,21 @@ egl_g3d_choose_config(_EGLDriver *drv, _EGLDisplay *dpy, const EGLint *attribs,
    if (!_eglParseConfigAttribList(&criteria, dpy, attribs))
       return _eglError(EGL_BAD_ATTRIBUTE, "eglChooseConfig");
 
-   tmp_configs = (_EGLConfig **) _eglFilterArray(dpy->Configs, &tmp_size,
+   /* get the number of matched configs */
+   tmp_size = _eglFilterArray(dpy->Configs, NULL, 0,
          (_EGLArrayForEach) egl_g3d_match_config, (void *) &criteria);
+   if (!tmp_size) {
+      *num_configs = tmp_size;
+      return EGL_TRUE;
+   }
+
+   tmp_configs = MALLOC(sizeof(tmp_configs[0]) * tmp_size);
    if (!tmp_configs)
       return _eglError(EGL_BAD_ALLOC, "eglChooseConfig(out of memory)");
+
+   /* get the matched configs */
+   _eglFilterArray(dpy->Configs, (void **) tmp_configs, tmp_size,
+         (_EGLArrayForEach) egl_g3d_match_config, (void *) &criteria);
 
    /* perform sorting of configs */
    if (tmp_configs && tmp_size) {
@@ -154,7 +166,7 @@ egl_g3d_choose_config(_EGLDriver *drv, _EGLDisplay *dpy, const EGLint *attribs,
          configs[i] = _eglGetConfigHandle(tmp_configs[i]);
    }
 
-   free(tmp_configs);
+   FREE(tmp_configs);
 
    *num_configs = size;
 
@@ -665,15 +677,11 @@ egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
    ptex = get_pipe_resource(gdpy->native, nsurf, NATIVE_ATTACHMENT_FRONT_LEFT);
    if (ptex) {
       struct pipe_resource *psrc = gsurf->render_texture;
-      struct pipe_subresource subsrc, subdst;
-      subsrc.face = 0;
-      subsrc.level = 0;
-      subdst.face = 0;
-      subdst.level = 0;
-
+      struct pipe_box src_box;
+      u_box_origin_2d(ptex->width0, ptex->height0, &src_box);
       if (psrc) {
-         gdpy->pipe->resource_copy_region(gdpy->pipe, ptex, subdst, 0, 0, 0,
-               gsurf->render_texture, subsrc, 0, 0, 0, ptex->width0, ptex->height0);
+         gdpy->pipe->resource_copy_region(gdpy->pipe, ptex, 0, 0, 0, 0,
+               gsurf->render_texture, 0, &src_box);
          nsurf->present(nsurf, NATIVE_ATTACHMENT_FRONT_LEFT, FALSE, 0);
       }
 

@@ -74,6 +74,7 @@ struct nvfx_miptree {
 struct nvfx_surface {
 	struct util_dirty_surface base;
 	unsigned pitch;
+	unsigned offset;
 
 	struct nvfx_miptree* temp;
 };
@@ -116,12 +117,11 @@ nvfx_miptree_from_handle(struct pipe_screen *pscreen,
 			 struct winsys_handle *whandle);
 
 void
-nvfx_miptree_surface_del(struct pipe_surface *ps);
+nvfx_miptree_surface_del(struct pipe_context *pipe, struct pipe_surface *ps);
 
 struct pipe_surface *
-nvfx_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_resource *pt,
-			 unsigned face, unsigned level, unsigned zslice,
-			 unsigned flags);
+nvfx_miptree_surface_new(struct pipe_context *pipe, struct pipe_resource *pt,
+			 const struct pipe_surface *surf_tmpl);
 
 /* only for miptrees, don't use for buffers */
 

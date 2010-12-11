@@ -138,10 +138,10 @@ accum_accum(struct st_context *st, GLfloat value,
       debug_printf("%s: fallback processing\n", __FUNCTION__);
 
    color_trans = pipe_get_transfer(st->pipe,
-						color_strb->texture,
-						0, 0, 0,
-						PIPE_TRANSFER_READ, xpos, ypos,
-						width, height);
+                                   color_strb->texture,
+                                   0, 0,
+                                   PIPE_TRANSFER_READ, xpos, ypos,
+                                   width, height);
 
    buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
@@ -187,9 +187,9 @@ accum_load(struct st_context *st, GLfloat value,
       debug_printf("%s: fallback processing\n", __FUNCTION__);
 
    color_trans = pipe_get_transfer(st->pipe, color_strb->texture,
-						0, 0, 0,
-						PIPE_TRANSFER_READ, xpos, ypos,
-						width, height);
+                                   0, 0,
+                                   PIPE_TRANSFER_READ, xpos, ypos,
+                                   width, height);
 
    buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
 
@@ -241,12 +241,12 @@ accum_return(struct gl_context *ctx, GLfloat value,
       usage = PIPE_TRANSFER_READ_WRITE;
    else
       usage = PIPE_TRANSFER_WRITE;
-   
+
    color_trans = pipe_get_transfer(st_context(ctx)->pipe,
-						color_strb->texture, 0, 0, 0,
-						usage,
-						xpos, ypos,
-						width, height);
+                                   color_strb->texture, 0, 0,
+                                   usage,
+                                   xpos, ypos,
+                                   width, height);
 
    if (usage & PIPE_TRANSFER_READ)
       pipe_get_tile_rgba(pipe, color_trans, 0, 0, width, height, buf);

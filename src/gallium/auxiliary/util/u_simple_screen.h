@@ -57,7 +57,8 @@ struct pipe_winsys
     * displayed, eg copy fake frontbuffer.
     */
    void (*flush_frontbuffer)( struct pipe_winsys *ws,
-                              struct pipe_surface *surf,
+                              struct pipe_resource *resource,
+                              unsigned level, unsigned layer,
                               void *context_private );
 
 

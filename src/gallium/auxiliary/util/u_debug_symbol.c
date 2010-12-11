@@ -40,7 +40,7 @@
 #include "u_debug_symbol.h"
 #include "u_hash_table.h"
 
-#if defined(PIPE_SUBSYSTEM_WINDOWS_USER) && defined(PIPE_ARCH_X86)
+#if defined(PIPE_CC_MSVC) && defined(PIPE_ARCH_X86)
    
 #include <windows.h>
 #include <stddef.h>
@@ -165,7 +165,7 @@ debug_symbol_name_glibc(const void *addr, char* buf, unsigned size)
 void
 debug_symbol_name(const void *addr, char* buf, unsigned size)
 {
-#if defined(PIPE_SUBSYSTEM_WINDOWS_USER) && defined(PIPE_ARCH_X86)
+#if defined(PIPE_CC_MSVC) && defined(PIPE_ARCH_X86)
    debug_symbol_name_imagehlp(addr, buf, size);
    if(buf[0])
       return;

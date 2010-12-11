@@ -821,6 +821,7 @@ void brw_pipe_sampler_cleanup( struct brw_context *brw );
 void brw_pipe_shader_cleanup( struct brw_context *brw );
 void brw_pipe_vertex_cleanup( struct brw_context *brw );
 void brw_pipe_clear_cleanup( struct brw_context *brw );
+void brw_pipe_surface_init( struct brw_context *brw );
 
 void brw_hw_cc_init( struct brw_context *brw );
 void brw_hw_cc_cleanup( struct brw_context *brw );

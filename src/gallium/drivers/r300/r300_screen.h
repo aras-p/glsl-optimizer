@@ -28,7 +28,7 @@
 
 #include "r300_chipset.h"
 
-#include "util/u_mempool.h"
+#include "util/u_slab.h"
 
 #include <stdio.h>
 
@@ -44,7 +44,7 @@ struct r300_screen {
     struct r300_capabilities caps;
 
     /* Memory pools. */
-    struct util_mempool pool_buffers;
+    struct util_slab_mempool pool_buffers;
 
     /** Combination of DBG_xxx flags */
     unsigned debug;
@@ -101,7 +101,6 @@ r300_winsys_screen(struct pipe_screen *screen) {
 #define DBG_NO_OPT      (1 << 20)
 #define DBG_NO_CBZB     (1 << 21)
 /* Statistics. */
-#define DBG_STATS       (1 << 24)
 #define DBG_P_STAT      (1 << 25)
 /*@}*/
 

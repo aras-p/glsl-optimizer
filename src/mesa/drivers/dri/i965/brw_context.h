@@ -171,7 +171,6 @@ struct brw_vertex_program {
 struct brw_fragment_program {
    struct gl_fragment_program program;
    GLuint id;  /**< serial no. to identify frag progs, never re-used */
-   GLboolean isGLSL;  /**< really, any IF/LOOP/CONT/BREAK instructions */
 
    /** for debugging, which texture units are referenced */
    GLbitfield tex_units_used;
@@ -211,6 +210,7 @@ struct brw_wm_prog_data {
    GLuint nr_params;       /**< number of float params/constants */
    GLuint nr_pull_params;
    GLboolean error;
+   int dispatch_width;
 
    /* Pointer to tracked values (only valid once
     * _mesa_load_state_parameters has been called at runtime).

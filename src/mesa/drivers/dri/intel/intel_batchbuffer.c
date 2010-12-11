@@ -92,7 +92,7 @@ do_flush_locked(struct intel_batchbuffer *batch, GLuint used)
 
    batch->ptr = NULL;
 
-   if (!intel->no_hw) {
+   if (!intel->intelScreen->no_hw) {
       drm_intel_bo_exec(batch->buf, used, NULL, 0,
 			(x_off & 0xffff) | (y_off << 16));
    }

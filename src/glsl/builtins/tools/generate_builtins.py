@@ -214,7 +214,6 @@ _mesa_read_profile(struct _mesa_glsl_parse_state *state,
       builtin_profiles[profile_index] = sh;
    }
 
-   import_prototypes(sh->ir, instructions, state->symbols, state);
    state->builtins_to_link[state->num_builtins_to_link] = sh;
    state->num_builtins_to_link++;
 }

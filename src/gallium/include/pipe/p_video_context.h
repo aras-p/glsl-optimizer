@@ -74,6 +74,10 @@ struct pipe_video_context
 
    void (*destroy)(struct pipe_video_context *vpipe);
 
+   struct pipe_surface *(*create_surface)(struct pipe_video_context *vpipe,
+                                          struct pipe_resource *resource,
+                                          const struct pipe_surface *templat);
+
    /**
     * Picture decoding and displaying
     */
@@ -116,7 +120,7 @@ struct pipe_video_context
 
    struct pipe_transfer *(*get_transfer)(struct pipe_video_context *vpipe,
                                          struct pipe_resource *resource,
-                                         struct pipe_subresource subresource,
+                                         unsigned level,
                                          unsigned usage,  /* a combination of PIPE_TRANSFER_x */
                                          const struct pipe_box *box);
 
@@ -135,7 +139,7 @@ struct pipe_video_context
 
    void (*transfer_inline_write)(struct pipe_video_context *vpipe,
                                  struct pipe_resource *resource,
-                                 struct pipe_subresource subresource,
+                                 unsigned level,
                                  unsigned usage, /* a combination of PIPE_TRANSFER_x */
                                  const struct pipe_box *box,
                                  const void *data,

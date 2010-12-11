@@ -45,6 +45,9 @@ struct lp_jit_context;
 struct llvmpipe_query;
 struct pipe_fence_handle;
 struct lp_setup_variant;
+struct lp_setup_context;
+
+void lp_setup_reset( struct lp_setup_context *setup );
 
 struct lp_setup_context *
 lp_setup_create( struct pipe_context *pipe,

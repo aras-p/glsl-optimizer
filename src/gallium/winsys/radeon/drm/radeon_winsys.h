@@ -32,63 +32,37 @@
 
 #include "r300_winsys.h"
 
-struct radeon_libdrm_winsys {
-    /* Parent class. */
+struct radeon_drm_winsys {
     struct r300_winsys_screen base;
 
-    struct pb_manager *kman;
+    int fd; /* DRM file descriptor */
 
+    struct radeon_bo_manager *bom; /* Radeon BO manager. */
+    struct pb_manager *kman;
     struct pb_manager *cman;
 
-    /* PCI ID */
-    uint32_t pci_id;
-
-    /* GB pipe count */
-    uint32_t gb_pipes;
-
-    /* Z pipe count (rv530 only) */
-    uint32_t z_pipes;
-
-    /* GART size. */
-    uint32_t gart_size;
-
-    /* VRAM size. */
-    uint32_t vram_size;
-
-    /* Square tiling support. */
-    boolean squaretiling;
-
-    /* DRM 2.3.0
-     *   - R500 VAP regs
-     *   - MSPOS regs
-     *   - Fixed texture 3D size calculation
-     */
+    uint32_t pci_id;        /* PCI ID */
+    uint32_t gb_pipes;      /* GB pipe count */
+    uint32_t z_pipes;       /* Z pipe count (rv530 only) */
+    uint32_t gart_size;     /* GART size. */
+    uint32_t vram_size;     /* VRAM size. */
+    boolean squaretiling;   /* Square tiling support. */
+    /* DRM 2.3.0 (R500 VAP regs, MSPOS regs, fixed tex3D size checking) */
     boolean drm_2_3_0;
-
-    /* DRM 2.6.0
-     *   - Hyper-Z
-     *   - GB_Z_PEQ_CONFIG allowed on rv350->r4xx, we should initialize it
-     */
+    /* DRM 2.6.0 (Hyper-Z, GB_Z_PEQ_CONFIG allowed on rv350->r4xx) */
     boolean drm_2_6_0;
-
-    /* hyperz user */
+    /* Hyper-Z user */
     boolean hyperz;
-
-    /* DRM FD */
-    int fd;
-
-    /* Radeon BO manager. */
-    struct radeon_bo_manager *bom;
 
     /* Radeon CS manager. */
     struct radeon_cs_manager *csm;
 };
 
-struct radeon_libdrm_cs {
+struct radeon_drm_cs {
     struct r300_winsys_cs base;
 
     /* The winsys. */
-    struct radeon_libdrm_winsys *ws;
+    struct radeon_drm_winsys *ws;
 
     /* The libdrm command stream. */
     struct radeon_cs *cs;
@@ -98,16 +72,18 @@ struct radeon_libdrm_cs {
     void *flush_data;
 };
 
-static INLINE struct radeon_libdrm_cs *
-radeon_libdrm_cs(struct r300_winsys_cs *base)
+static INLINE struct radeon_drm_cs *
+radeon_drm_cs(struct r300_winsys_cs *base)
 {
-    return (struct radeon_libdrm_cs*)base;
+    return (struct radeon_drm_cs*)base;
 }
 
-static INLINE struct radeon_libdrm_winsys *
-radeon_libdrm_winsys(struct r300_winsys_screen *base)
+static INLINE struct radeon_drm_winsys *
+radeon_drm_winsys(struct r300_winsys_screen *base)
 {
-    return (struct radeon_libdrm_winsys*)base;
+    return (struct radeon_drm_winsys*)base;
 }
+
+void radeon_winsys_init_functions(struct radeon_drm_winsys *ws);
 
 #endif

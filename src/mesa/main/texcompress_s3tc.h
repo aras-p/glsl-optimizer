@@ -25,9 +25,13 @@
 #ifndef TEXCOMPRESS_S3TC_H
 #define TEXCOMPRESS_S3TC_H
 
-#include "main/mtypes.h"
+#include "compiler.h"
+#include "glheader.h"
+#include "mfeatures.h"
 #include "texstore.h"
 
+struct gl_context;
+struct gl_texture_image;
 
 #if FEATURE_texture_s3tc
 

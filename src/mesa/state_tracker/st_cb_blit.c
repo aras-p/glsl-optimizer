@@ -115,17 +115,14 @@ st_BlitFramebuffer(struct gl_context *ctx,
             st_texture_object(srcAtt->Texture);
          struct st_renderbuffer *dstRb =
             st_renderbuffer(drawFB->_ColorDrawBuffers[0]);
-         struct pipe_subresource srcSub;
          struct pipe_surface *dstSurf = dstRb->surface;
 
          if (!srcObj->pt)
             return;
 
-         srcSub.face = srcAtt->CubeMapFace;
-         srcSub.level = srcAtt->TextureLevel;
-
-         util_blit_pixels(st->blit, srcObj->pt, srcSub,
-                          srcX0, srcY0, srcX1, srcY1, srcAtt->Zoffset,
+         util_blit_pixels(st->blit, srcObj->pt, srcAtt->TextureLevel,
+                          srcX0, srcY0, srcX1, srcY1,
+                          srcAtt->Zoffset + srcAtt->CubeMapFace,
                           dstSurf, dstX0, dstY0, dstX1, dstY1,
                           0.0, pFilter);
       }
@@ -136,14 +133,11 @@ st_BlitFramebuffer(struct gl_context *ctx,
             st_renderbuffer(drawFB->_ColorDrawBuffers[0]);
          struct pipe_surface *srcSurf = srcRb->surface;
          struct pipe_surface *dstSurf = dstRb->surface;
-         struct pipe_subresource srcSub;
-
-         srcSub.face = srcSurf->face;
-         srcSub.level = srcSurf->level;
 
          util_blit_pixels(st->blit,
-                          srcRb->texture, srcSub, srcX0, srcY0, srcX1, srcY1,
-                          srcSurf->zslice,
+                          srcRb->texture, srcSurf->u.tex.level,
+                          srcX0, srcY0, srcX1, srcY1,
+                          srcSurf->u.tex.first_layer,
                           dstSurf, dstX0, dstY0, dstX1, dstY1,
                           0.0, pFilter);
       }
@@ -176,11 +170,11 @@ st_BlitFramebuffer(struct gl_context *ctx,
          /* Blitting depth and stencil values between combined
           * depth/stencil buffers.  This is the ideal case for such buffers.
           */
-         util_blit_pixels(st->blit, srcDepthRb->texture,
-                          u_subresource(srcDepthRb->surface->face,
-                                        srcDepthRb->surface->level),
+         util_blit_pixels(st->blit,
+                          srcDepthRb->texture,
+                          srcDepthRb->surface->u.tex.level,
                           srcX0, srcY0, srcX1, srcY1,
-                          srcDepthRb->surface->zslice,
+                          srcDepthRb->surface->u.tex.first_layer,
                           dstDepthSurf, dstX0, dstY0, dstX1, dstY1,
                           0.0, pFilter);
       }
@@ -189,10 +183,9 @@ st_BlitFramebuffer(struct gl_context *ctx,
 
          if (mask & GL_DEPTH_BUFFER_BIT) {
             util_blit_pixels(st->blit, srcDepthRb->texture,
-                             u_subresource(srcDepthRb->surface->face,
-                                           srcDepthRb->surface->level),
+                             srcDepthRb->surface->u.tex.level,
                              srcX0, srcY0, srcX1, srcY1,
-                             srcDepthRb->surface->zslice,
+                             srcDepthRb->surface->u.tex.first_layer,
                              dstDepthSurf, dstX0, dstY0, dstX1, dstY1,
                              0.0, pFilter);
          }

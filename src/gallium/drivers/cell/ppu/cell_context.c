@@ -100,8 +100,8 @@ static const struct debug_named_value cell_debug_flags[] = {
 
 static unsigned int
 cell_is_resource_referenced( struct pipe_context *pipe,
-			    struct pipe_resource *texture,
-			    unsigned face, unsigned level)
+                             struct pipe_resource *texture,
+                             unsigned level, int layer)
 {
    /**
     * FIXME: Optimize.

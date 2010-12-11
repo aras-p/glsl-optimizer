@@ -42,6 +42,7 @@
 
 #include "i965/brw_winsys.h"
 #include "i965/brw_screen.h"
+#include "i965/brw_resource.h"
 #include "i965/brw_reg.h"
 #include "i965/brw_structs_dump.h"
 
@@ -421,25 +422,28 @@ xlib_create_brw_winsys_screen( void )
 
 static void
 xlib_i965_display_surface(struct xmesa_buffer *xm_buffer,
-                          struct pipe_surface *surf)
+                          struct pipe_resource *resource,
+                          unsigned level, unsigned layer)
 {
-   struct brw_surface *surface = brw_surface(surf);
-   struct xlib_brw_buffer *bo = xlib_brw_buffer(surface->bo);
-
+   struct brw_texture *tex = brw_texture(resource);
+   struct xlib_brw_buffer *bo = xlib_brw_buffer(tex->bo);
+   /* not sure if the resource is really useful here but
+      since it was never implemented anyway... */
    if (BRW_DEBUG & DEBUG_WINSYS)
-      debug_printf("%s offset %x+%x sz %dx%d\n", __FUNCTION__, 
+      debug_printf("%s level %u layer %u offset %x base sz %dx%d\n", __FUNCTION__,
+                   level, layer,
                    bo->offset,
-                   surface->draw_offset,
-                   surf->width,
-                   surf->height);
+                   resource->width0,
+                   resource->height0);
 }
 
 static void
 xlib_i965_flush_frontbuffer(struct pipe_screen *screen,
-			    struct pipe_surface *surf,
-			    void *context_private)
+                            struct pipe_resource *resource,
+                            unsigned level, unsigned layer,
+                            void *context_private)
 {
-   xlib_i965_display_surface(NULL, surf);
+   xlib_i965_display_surface(NULL, resource, level, layer);
 }
 
 

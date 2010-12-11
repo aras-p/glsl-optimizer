@@ -33,6 +33,7 @@ C_SOURCES = \
 	brw_pipe_flush.c \
 	brw_pipe_misc.c \
 	brw_pipe_sampler.c \
+        brw_pipe_surface.c \
 	brw_pipe_vertex.c \
 	brw_pipe_clear.c \
 	brw_pipe_rast.c \
@@ -66,7 +67,6 @@ C_SOURCES = \
 	brw_resource_buffer.c \
 	brw_resource_texture.c \
 	brw_resource_texture_layout.c \
-	brw_screen_surface.c \
 	brw_batchbuffer.c \
 	brw_winsys_debug.c \
 	intel_decode.c

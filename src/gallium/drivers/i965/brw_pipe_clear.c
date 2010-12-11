@@ -64,7 +64,7 @@ try_clear( struct brw_context *brw,
    debug_printf("%s dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
                 __FUNCTION__,
                 (void *)surface->bo, pitch * cpp,
-                surface->base.offset,
+                surface->offset,
                 x1, y1, x2 - x1, y2 - y1);
 
    BR13 = 0xf0 << 16;
@@ -99,7 +99,7 @@ try_clear( struct brw_context *brw,
    OUT_BATCH((y2 << 16) | x2);
    OUT_RELOC(surface->bo,
              BRW_USAGE_BLIT_DEST,
-             surface->base.offset);
+             surface->offset);
    OUT_BATCH(value);
    ADVANCE_BATCH();
 

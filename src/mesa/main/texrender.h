@@ -1,7 +1,9 @@
 #ifndef TEXRENDER_H
 #define TEXRENDER_H
 
-#include "mtypes.h"
+struct gl_context;
+struct gl_framebuffer;
+struct gl_renderbuffer_attachment;
 
 extern void
 _mesa_render_texture(struct gl_context *ctx,

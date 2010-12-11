@@ -462,6 +462,13 @@
 #define BRW_COMPRESSION_2NDHALF       1
 #define BRW_COMPRESSION_COMPRESSED    2
 
+#define GEN6_COMPRESSION_1Q		0
+#define GEN6_COMPRESSION_2Q		1
+#define GEN6_COMPRESSION_3Q		2
+#define GEN6_COMPRESSION_4Q		3
+#define GEN6_COMPRESSION_1H		0
+#define GEN6_COMPRESSION_2H		2
+
 #define BRW_CONDITIONAL_NONE  0
 #define BRW_CONDITIONAL_Z     1
 #define BRW_CONDITIONAL_NZ    2
@@ -1022,6 +1029,13 @@
 # define ATTRIBUTE_0_CONST_SOURCE_SHIFT			9
 # define ATTRIBUTE_0_SWIZZLE_SHIFT			6
 # define ATTRIBUTE_0_SOURCE_SHIFT			0
+
+# define ATTRIBUTE_SWIZZLE_INPUTATTR                    0
+# define ATTRIBUTE_SWIZZLE_INPUTATTR_FACING             1
+# define ATTRIBUTE_SWIZZLE_INPUTATTR_W                  2
+# define ATTRIBUTE_SWIZZLE_INPUTATTR_FACING_W           3
+# define ATTRIBUTE_SWIZZLE_SHIFT                        6
+
 /* DW16: Point sprite texture coordinate enables */
 /* DW17: Constant interpolation enables */
 /* DW18: attr 0-7 wrap shortest enables */

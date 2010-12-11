@@ -753,7 +753,7 @@
 #define    MT_COMPRESS_DXT1_RGB		   (4<<3)
 #define MS3_USE_FENCE_REGS              (1<<2)
 #define MS3_TILED_SURFACE             (1<<1)
-#define MS3_TILE_WALK                 (1<<0)
+#define MS3_TILE_WALK_Y                (1<<0)
 
 #define MS4_PITCH_SHIFT                 21
 #define MS4_CUBE_FACE_ENA_NEGX          (1<<20)
@@ -851,6 +851,7 @@
 #define MI_FLUSH                   ((0<<29)|(4<<23))
 #define FLUSH_MAP_CACHE            (1<<0)
 #define INHIBIT_FLUSH_RENDER_CACHE (1<<2)
+#define MI_NOOP                    0
 
 
 #define CMD_3D (0x3<<29)

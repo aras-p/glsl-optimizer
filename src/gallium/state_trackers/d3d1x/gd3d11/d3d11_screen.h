@@ -718,15 +718,13 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			{
 				for(unsigned level = 0; level <= templat.last_level; ++level)
 				{
-					struct pipe_subresource sr;
-					sr.level = level;
-					sr.face = slice;
 					struct pipe_box box;
-					box.x = box.y = box.z = 0;
+					box.x = box.y = 0;
+					box.z = slice;
 					box.width = u_minify(width, level);
 					box.height = u_minify(height, level);
-					box.depth = u_minify(depth, level);
-					immediate_pipe->transfer_inline_write(immediate_pipe, resource, sr, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD | PIPE_TRANSFER_UNSYNCHRONIZED, &box, initial_data->pSysMem, initial_data->SysMemPitch, initial_data->SysMemSlicePitch);
+					box.depth = 1;
+					immediate_pipe->transfer_inline_write(immediate_pipe, resource, level, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD | PIPE_TRANSFER_UNSYNCHRONIZED, &box, initial_data->pSysMem, initial_data->SysMemPitch, initial_data->SysMemSlicePitch);
 					++initial_data;
 				}
 			}
@@ -978,8 +976,8 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		case D3D11_SRV_DIMENSION_TEXTURE1DARRAY:
 		case D3D11_SRV_DIMENSION_TEXTURE2DARRAY:
 			/* yes, this works for all of these types (but TODO: texture arrays) */
-			templat.first_level = desc->Texture1D.MostDetailedMip;
-			templat.last_level = templat.first_level + desc->Texture1D.MipLevels - 1;
+			templat.u.tex.first_level = desc->Texture1D.MostDetailedMip;
+			templat.u.tex.last_level = templat.u.tex.first_level + desc->Texture1D.MipLevels - 1;
 			break;
 		case D3D11_SRV_DIMENSION_BUFFER:
 		case D3D11_SRV_DIMENSION_TEXTURE2DMS:
@@ -1054,30 +1052,34 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			desc = &def_desc;
 		}
 
-		unsigned zslice = 0;
-		unsigned face = 0;
-		unsigned level;
-		enum pipe_format format;
+		struct pipe_surface templat;
+		memset(&templat, 0, sizeof(templat));
 		if(invalid(desc->format >= DXGI_FORMAT_COUNT))
 			return E_INVALIDARG;
-		format = dxgi_to_pipe_format[desc->Format];
-		if(!format)
+		templat.format = dxgi_to_pipe_format[desc->Format];
+		if(!templat.format)
 			return E_NOTIMPL;
+		templat.usage = PIPE_BIND_RENDER_TARGET;
+		templat.texture = ((GalliumD3D11Resource<>*)iresource)->resource;
 
 		switch(desc->ViewDimension)
 		{
 		case D3D11_RTV_DIMENSION_TEXTURE1D:
 		case D3D11_RTV_DIMENSION_TEXTURE2D:
-			level = desc->Texture1D.MipSlice;
+			templat.u.tex.level = desc->Texture1D.MipSlice;
 			break;
 		case D3D11_RTV_DIMENSION_TEXTURE3D:
-			level = desc->Texture3D.MipSlice;
-			zslice = desc->Texture3D.FirstWSlice;
+			templat.u.tex.level = desc->Texture3D.MipSlice;
+			templat.u.tex.first_layer = desc->Texture3D.FirstWSlice;
+			/* XXX FIXME */
+			templat.u.tex.last_layer = desc->Texture3D.FirstWSlice;
 			break;
 		case D3D11_RTV_DIMENSION_TEXTURE1DARRAY:
 		case D3D11_RTV_DIMENSION_TEXTURE2DARRAY:
-			level = desc->Texture1DArray.MipSlice;
-			face = desc->Texture1DArray.FirstArraySlice;
+			templat.u.tex.level = desc->Texture1DArray.MipSlice;
+			templat.u.tex.first_layer = desc->Texture1DArray.FirstArraySlice;
+			/* XXX FIXME */
+			templat.u.tex.last_layer = desc->Texture1DArray.FirstArraySlice;
 			break;
 		case D3D11_RTV_DIMENSION_BUFFER:
 		case D3D11_RTV_DIMENSION_TEXTURE2DMS:
@@ -1090,13 +1092,9 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		if(!out_rtv)
 			return S_FALSE;
 
-		struct pipe_surface* surface = screen->get_tex_surface(screen,
-				((GalliumD3D11Resource<>*)iresource)->resource,
-				face, level, zslice, PIPE_BIND_RENDER_TARGET);
+		struct pipe_surface* surface = immediate_pipe->create_surface(immediate_pipe, templat.texture, &templat);
 		if(!surface)
 			return E_FAIL;
-		/* muhahahahaha, let's hope this actually works */
-		surface->format = format;
 		*out_rtv = new GalliumD3D11RenderTargetView(this, (GalliumD3D11Resource<>*)iresource, surface, *desc);
 		return S_OK;
 	}
@@ -1134,26 +1132,28 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 			desc = &def_desc;
 		}
 
-		unsigned zslice = 0;
-		unsigned face = 0;
-		unsigned level;
-		enum pipe_format format;
+		struct pipe_surface templat;
+		memset(&templat, 0, sizeof(templat));
 		if(invalid(desc->format >= DXGI_FORMAT_COUNT))
 			return E_INVALIDARG;
-		format = dxgi_to_pipe_format[desc->Format];
-		if(!format)
+		templat.format = dxgi_to_pipe_format[desc->Format];
+		if(!templat.format)
 			return E_NOTIMPL;
+		templat.usage = PIPE_BIND_DEPTH_STENCIL;
+		templat.texture = ((GalliumD3D11Resource<>*)iresource)->resource;
 
 		switch(desc->ViewDimension)
 		{
 		case D3D11_DSV_DIMENSION_TEXTURE1D:
 		case D3D11_DSV_DIMENSION_TEXTURE2D:
-			level = desc->Texture1D.MipSlice;
+			templat.u.tex.level = desc->Texture1D.MipSlice;
 			break;
 		case D3D11_DSV_DIMENSION_TEXTURE1DARRAY:
 		case D3D11_DSV_DIMENSION_TEXTURE2DARRAY:
-			level = desc->Texture1DArray.MipSlice;
-			face = desc->Texture1DArray.FirstArraySlice;
+			templat.u.tex.level = desc->Texture1DArray.MipSlice;
+			templat.u.tex.first_layer = desc->Texture1DArray.FirstArraySlice;
+			/* XXX FIXME */
+			templat.u.tex.last_layer = desc->Texture1DArray.FirstArraySlice;
 			break;
 		case D3D11_DSV_DIMENSION_TEXTURE2DMS:
 		case D3D11_DSV_DIMENSION_TEXTURE2DMSARRAY:
@@ -1165,13 +1165,9 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 		if(!out_depth_stencil_view)
 			return S_FALSE;
 
-		struct pipe_surface* surface = screen->get_tex_surface(screen,
-				((GalliumD3D11Resource<>*)iresource)->resource,
-				face, level, zslice, PIPE_BIND_DEPTH_STENCIL);
+		struct pipe_surface* surface = immediate_pipe->create_surface(immediate_pipe, templat.texture, &templat);
 		if(!surface)
 			return E_FAIL;
-		/* muhahahahaha, let's hope this actually works */
-		surface->format = format;
 		*out_depth_stencil_view = new GalliumD3D11DepthStencilView(this, (GalliumD3D11Resource<>*)iresource, surface, *desc);
 		return S_OK;
 	}

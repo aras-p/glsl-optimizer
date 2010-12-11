@@ -53,6 +53,8 @@ enum r600_pipe_state_id {
 	R600_PIPE_STATE_CONSTANT,
 	R600_PIPE_STATE_SAMPLER,
 	R600_PIPE_STATE_RESOURCE,
+	R600_PIPE_STATE_POLYGON_OFFSET,
+	R600_PIPE_STATE_FETCH_SHADER,
 	R600_PIPE_NSTATES
 };
 
@@ -86,7 +88,15 @@ struct r600_vertex_element
 	struct pipe_vertex_element	elements[PIPE_MAX_ATTRIBS];
 	enum pipe_format		hw_format[PIPE_MAX_ATTRIBS];
 	unsigned			hw_format_size[PIPE_MAX_ATTRIBS];
-	boolean incompatible_layout;
+	boolean				incompatible_layout;
+	struct r600_bo			*fetch_shader;
+	unsigned			fs_size;
+	struct r600_pipe_state		rstate;
+	/* if offset is to big for fetch instructio we need to alterate
+	 * offset of vertex buffer, record here the offset need to add
+	 */
+	unsigned			vbuffer_need_offset;
+	unsigned			vbuffer_offset[PIPE_MAX_ATTRIBS];
 };
 
 struct r600_pipe_shader {
@@ -101,24 +111,27 @@ struct r600_pipe_shader {
 #define NUM_TEX_UNITS 16
 
 struct r600_textures_info {
-	struct r600_pipe_sampler_view   *views[NUM_TEX_UNITS];
-	unsigned                        n_views;
+	struct r600_pipe_sampler_view	*views[NUM_TEX_UNITS];
+	unsigned			n_views;
 	void				*samplers[NUM_TEX_UNITS];
-	unsigned                        n_samplers;
+	unsigned			n_samplers;
 };
 
+/* vertex buffer translation context, used to translate vertex input that
+ * hw doesn't natively support, so far only FLOAT64 is unsupported.
+ */
 struct r600_translate_context {
 	/* Translate cache for incompatible vertex offset/stride/format fallback. */
-	struct translate_cache *translate_cache;
-
+	struct translate_cache		*translate_cache;
 	/* The vertex buffer slot containing the translated buffer. */
-	unsigned vb_slot;
-	/* Saved and new vertex element state. */
-	void *saved_velems, *new_velems;
+	unsigned			vb_slot;
+	void				*new_velems;
 };
 
 #define R600_CONSTANT_ARRAY_SIZE 256
 #define R600_RESOURCE_ARRAY_SIZE 160
+
+struct r600_upload;
 
 struct r600_pipe_context {
 	struct pipe_context		context;
@@ -140,6 +153,7 @@ struct r600_pipe_context {
 	struct pipe_stencil_ref		stencil_ref;
 	struct pipe_viewport_state	viewport;
 	struct pipe_clip_state		clip;
+	unsigned			nvs_resource;
 	struct r600_pipe_state		*vs_resource;
 	struct r600_pipe_state		*ps_resource;
 	struct r600_pipe_state		config;
@@ -151,14 +165,11 @@ struct r600_pipe_context {
 	/* shader information */
 	unsigned			sprite_coord_enable;
 	bool				flatshade;
-	struct u_upload_mgr		*upload_vb;
-	struct u_upload_mgr		*upload_ib;
+	struct r600_upload		*rupload_vb;
 	unsigned			any_user_vbs;
-	struct r600_textures_info       ps_samplers;
-
-	unsigned vb_max_index;
-	struct r600_translate_context tran;
-
+	struct r600_textures_info	ps_samplers;
+	unsigned			vb_max_index;
+	struct r600_translate_context	tran;
 };
 
 struct r600_drawl {
@@ -181,6 +192,8 @@ void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info)
 void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx);
+void evergreen_polygon_offset_update(struct r600_pipe_context *rctx);
+void evergreen_vertex_buffer_update(struct r600_pipe_context *rctx);
 
 /* r600_blit.c */
 void r600_init_blit_functions(struct r600_pipe_context *rctx);
@@ -194,7 +207,7 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 					      unsigned bind);
 unsigned r600_buffer_is_referenced_by_cs(struct pipe_context *context,
 					 struct pipe_resource *buf,
-					 unsigned face, unsigned level);
+					 unsigned level, int layer);
 struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,
 					      struct winsys_handle *whandle);
 int r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *draw);
@@ -207,7 +220,7 @@ void r600_init_query_functions(struct r600_pipe_context *rctx);
 void r600_init_context_resource_functions(struct r600_pipe_context *r600);
 
 /* r600_shader.c */
-int r600_pipe_shader_update(struct pipe_context *ctx, struct r600_pipe_shader *shader);
+int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens);
 void r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 int r600_find_vs_semantic_index(struct r600_shader *vs,
@@ -218,14 +231,20 @@ void r600_init_state_functions(struct r600_pipe_context *rctx);
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
 void r600_init_config(struct r600_pipe_context *rctx);
 void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx);
+void r600_polygon_offset_update(struct r600_pipe_context *rctx);
+void r600_vertex_buffer_update(struct r600_pipe_context *rctx);
+
 /* r600_helper.h */
 int r600_conv_pipe_prim(unsigned pprim, unsigned *prim);
 
 /* r600_texture.c */
 void r600_init_screen_texture_functions(struct pipe_screen *screen);
+void r600_init_surface_functions(struct r600_pipe_context *r600);
 uint32_t r600_translate_texformat(enum pipe_format format,
 				  const unsigned char *swizzle_view, 
 				  uint32_t *word4_p, uint32_t *yuv_format_p);
+unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
+					unsigned level, unsigned layer);
 
 /* r600_translate.c */
 void r600_begin_vertex_translate(struct r600_pipe_context *rctx);
@@ -252,13 +271,13 @@ void r600_sampler_view_destroy(struct pipe_context *ctx,
 void r600_bind_state(struct pipe_context *ctx, void *state);
 void r600_delete_state(struct pipe_context *ctx, void *state);
 void r600_bind_vertex_elements(struct pipe_context *ctx, void *state);
-
 void *r600_create_shader_state(struct pipe_context *ctx,
 			       const struct pipe_shader_state *state);
 void r600_bind_ps_shader(struct pipe_context *ctx, void *state);
 void r600_bind_vs_shader(struct pipe_context *ctx, void *state);
 void r600_delete_ps_shader(struct pipe_context *ctx, void *state);
 void r600_delete_vs_shader(struct pipe_context *ctx, void *state);
+
 /*
  * common helpers
  */

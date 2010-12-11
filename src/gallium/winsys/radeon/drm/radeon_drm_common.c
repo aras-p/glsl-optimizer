@@ -29,30 +29,21 @@
  *      Joakim Sindholt <opensource@zhasha.com>
  */
 
-#include "radeon_drm.h"
-#include "radeon_r300.h"
-#include "radeon_buffer.h"
+#include "radeon_winsys.h"
+#include "radeon_drm_buffer.h"
 #include "radeon_drm_public.h"
 
-#include "r300_winsys.h"
-
+#include "pipebuffer/pb_bufmgr.h"
 #include "util/u_memory.h"
 
-#include "xf86drm.h"
+#include "state_tracker/drm_driver.h"
 
-static struct radeon_libdrm_winsys *
-radeon_winsys_create(int fd)
-{
-    struct radeon_libdrm_winsys *rws;
+#include <radeon_drm.h>
+#include <radeon_bo_gem.h>
+#include <radeon_cs_gem.h>
+#include <xf86drm.h>
+#include <stdio.h>
 
-    rws = CALLOC_STRUCT(radeon_libdrm_winsys);
-    if (rws == NULL) {
-        return NULL;
-    }
-
-    rws->fd = fd;
-    return rws;
-}
 
 /* Enable/disable Hyper-Z access. Return TRUE on success. */
 static boolean radeon_set_hyperz_access(int fd, boolean enable)
@@ -80,7 +71,7 @@ static boolean radeon_set_hyperz_access(int fd, boolean enable)
 }
 
 /* Helper function to do the ioctls needed for setup and init. */
-static void do_ioctls(int fd, struct radeon_libdrm_winsys* winsys)
+static void do_ioctls(struct radeon_drm_winsys *winsys)
 {
     struct drm_radeon_gem_info gem_info = {0};
     struct drm_radeon_info info = {0};
@@ -107,7 +98,7 @@ static void do_ioctls(int fd, struct radeon_libdrm_winsys* winsys)
      * (see radeon_gem_info_ioctl in radeon_gem.c) but that's alright because
      * we don't actually use the info for anything yet. */
 
-    version = drmGetVersion(fd);
+    version = drmGetVersion(winsys->fd);
     if (version->version_major != 2) {
         fprintf(stderr, "%s: DRM version is %d.%d.%d but this driver is "
                 "only compatible with 2.x.x\n", __FUNCTION__,
@@ -132,7 +123,7 @@ static void do_ioctls(int fd, struct radeon_libdrm_winsys* winsys)
                          version->version_minor >= 6);
 
     info.request = RADEON_INFO_DEVICE_ID;
-    retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
+    retval = drmCommandWriteRead(winsys->fd, DRM_RADEON_INFO, &info, sizeof(info));
     if (retval) {
         fprintf(stderr, "%s: Failed to get PCI ID, "
                 "error number %d\n", __FUNCTION__, retval);
@@ -141,7 +132,7 @@ static void do_ioctls(int fd, struct radeon_libdrm_winsys* winsys)
     winsys->pci_id = target;
 
     info.request = RADEON_INFO_NUM_GB_PIPES;
-    retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
+    retval = drmCommandWriteRead(winsys->fd, DRM_RADEON_INFO, &info, sizeof(info));
     if (retval) {
         fprintf(stderr, "%s: Failed to get GB pipe count, "
                 "error number %d\n", __FUNCTION__, retval);
@@ -150,7 +141,7 @@ static void do_ioctls(int fd, struct radeon_libdrm_winsys* winsys)
     winsys->gb_pipes = target;
 
     info.request = RADEON_INFO_NUM_Z_PIPES;
-    retval = drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info));
+    retval = drmCommandWriteRead(winsys->fd, DRM_RADEON_INFO, &info, sizeof(info));
     if (retval) {
         fprintf(stderr, "%s: Failed to get Z pipe count, "
                 "error number %d\n", __FUNCTION__, retval);
@@ -158,9 +149,9 @@ static void do_ioctls(int fd, struct radeon_libdrm_winsys* winsys)
     }
     winsys->z_pipes = target;
 
-    winsys->hyperz = radeon_set_hyperz_access(fd, TRUE);
+    winsys->hyperz = radeon_set_hyperz_access(winsys->fd, TRUE);
 
-    retval = drmCommandWriteRead(fd, DRM_RADEON_GEM_INFO,
+    retval = drmCommandWriteRead(winsys->fd, DRM_RADEON_GEM_INFO,
             &gem_info, sizeof(gem_info));
     if (retval) {
         fprintf(stderr, "%s: Failed to get MM info, error number %d\n",
@@ -184,29 +175,65 @@ static void do_ioctls(int fd, struct radeon_libdrm_winsys* winsys)
     drmFreeVersion(version);
 }
 
-/* Create a pipe_screen. */
-struct r300_winsys_screen* r300_drm_winsys_screen_create(int drmFB)
+static void radeon_winsys_destroy(struct r300_winsys_screen *rws)
 {
-    struct radeon_libdrm_winsys* rws; 
-    boolean ret;
+    struct radeon_drm_winsys *ws = (struct radeon_drm_winsys*)rws;
 
-    rws = radeon_winsys_create(drmFB);
-    if (!rws)
-	return NULL;
+    ws->cman->destroy(ws->cman);
+    ws->kman->destroy(ws->kman);
 
-    do_ioctls(drmFB, rws);
+    radeon_bo_manager_gem_dtor(ws->bom);
+    radeon_cs_manager_gem_dtor(ws->csm);
+    FREE(rws);
+}
 
-    /* The state tracker can organize a softpipe fallback if no hw
-     * driver is found.
-     */
-    if (is_r3xx(rws->pci_id)) {
-        ret = radeon_setup_winsys(drmFB, rws);
-	if (ret == FALSE)
-	    goto fail;
-        return &rws->base;
+struct r300_winsys_screen *r300_drm_winsys_screen_create(int fd)
+{
+    struct radeon_drm_winsys *ws = CALLOC_STRUCT(radeon_drm_winsys);
+    if (!ws) {
+        return NULL;
     }
 
+    ws->fd = fd;
+    do_ioctls(ws);
+
+    if (!is_r3xx(ws->pci_id)) {
+        goto fail;
+    }
+
+    /* Create managers. */
+    ws->bom = radeon_bo_manager_gem_ctor(fd);
+    if (!ws->bom)
+	goto fail;
+    ws->csm = radeon_cs_manager_gem_ctor(fd);
+    if (!ws->csm)
+	goto fail;
+    ws->kman = radeon_drm_bufmgr_create(ws);
+    if (!ws->kman)
+	goto fail;
+    ws->cman = pb_cache_manager_create(ws->kman, 1000000);
+    if (!ws->cman)
+	goto fail;
+
+    /* Set functions. */
+    ws->base.destroy = radeon_winsys_destroy;
+
+    radeon_drm_bufmgr_init_functions(ws);
+    radeon_winsys_init_functions(ws);
+
+    return &ws->base;
+
 fail:
-    FREE(rws);
+    if (ws->bom)
+	radeon_bo_manager_gem_dtor(ws->bom);
+    if (ws->csm)
+	radeon_cs_manager_gem_dtor(ws->csm);
+
+    if (ws->cman)
+	ws->cman->destroy(ws->cman);
+    if (ws->kman)
+	ws->kman->destroy(ws->kman);
+
+    FREE(ws);
     return NULL;
 }

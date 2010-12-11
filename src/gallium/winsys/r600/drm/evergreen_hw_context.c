@@ -36,7 +36,6 @@
 #include "pipe/p_compiler.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
-#include <pipebuffer/pb_bufmgr.h>
 #include "r600_priv.h"
 
 #define GROUP_FORCE_NEW_BLOCK	0
@@ -855,7 +854,7 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_draw_initiator;
 	}
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT;
+	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
 
 	/* flush color buffer */
 	for (int i = 0; i < 12; i++) {

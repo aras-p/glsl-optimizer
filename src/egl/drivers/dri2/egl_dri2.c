@@ -1648,7 +1648,11 @@ dri2_make_current(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
       dri2_destroy_surface(drv, disp, old_dsurf);
       dri2_destroy_surface(drv, disp, old_rsurf);
       if (old_ctx) {
-	 dri2_dpy->core->unbindContext(dri2_egl_context(old_ctx)->dri_context);
+         /* unbind the old context only when there is no new context bound */
+         if (!ctx) {
+            __DRIcontext *old_cctx = dri2_egl_context(old_ctx)->dri_context;
+            dri2_dpy->core->unbindContext(old_cctx);
+         }
          /* no destroy? */
          _eglPutContext(old_ctx);
       }

@@ -65,19 +65,7 @@ static void
 vs_llvm_delete( struct draw_vertex_shader *dvs )
 {
    struct llvm_vertex_shader *shader = llvm_vertex_shader(dvs);
-   struct pipe_fence_handle *fence = NULL;
    struct draw_llvm_variant_list_item *li;
-   struct pipe_context *pipe = dvs->draw->pipe;
-
-   /*
-    * XXX: This might be not neccessary at all.
-    */
-   pipe->flush(pipe, 0, &fence);
-   if (fence) {
-      pipe->screen->fence_finish(pipe->screen, fence, 0);
-      pipe->screen->fence_reference(pipe->screen, &fence, NULL);
-   }
-
 
    li = first_elem(&shader->variants);
    while(!at_end(&shader->variants, li)) {

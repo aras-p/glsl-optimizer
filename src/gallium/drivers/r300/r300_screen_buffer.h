@@ -51,11 +51,12 @@ struct r300_buffer
     uint32_t magic;
 
     struct r300_winsys_buffer *buf;
+    struct r300_winsys_cs_buffer *cs_buf;
 
     enum r300_buffer_domain domain;
 
-    void *user_buffer;
-    void *constant_buffer;
+    uint8_t *user_buffer;
+    uint8_t *constant_buffer;
     struct r300_buffer_range ranges[R300_BUFFER_MAX_RANGES];
     unsigned num_ranges;
 };
@@ -86,11 +87,7 @@ unsigned r300_buffer_is_referenced(struct pipe_context *context,
 
 static INLINE struct r300_buffer *r300_buffer(struct pipe_resource *buffer)
 {
-    if (buffer) {
-	assert(((struct r300_buffer *)buffer)->magic == R300_BUFFER_MAGIC);
-	return (struct r300_buffer *)buffer;
-    }
-    return NULL;
+    return (struct r300_buffer *)buffer;
 }
 
 static INLINE boolean r300_buffer_is_user_buffer(struct pipe_resource *buffer)

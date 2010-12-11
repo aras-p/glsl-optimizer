@@ -3536,7 +3536,7 @@
 <api name="mesa" implementation="true">
 	<category name="MESA"/>
 
-	<function name="Color4f"  default_prefix="_vbo_" template="Color" gltype="GLfloat" vector_size="4" expand_vector="true"/>
+	<function name="Color4f"  default_prefix="_es_" template="Color" gltype="GLfloat" vector_size="4" expand_vector="true"/>
 	<function name="ClipPlane" template="ClipPlane" gltype="GLdouble"/>
 	<function name="CullFace" template="CullFace"/>
 
@@ -3554,8 +3554,8 @@
 
 	<function name="LineWidth" template="LineWidth" gltype="GLfloat"/>
 
-	<function name="Materialf" default_prefix="_vbo_" template="Material" gltype="GLfloat" expand_vector="true"/>
-	<function name="Materialfv" default_prefix="_vbo_" template="Material" gltype="GLfloat"/>
+	<function name="Materialf" default_prefix="_es_" template="Material" gltype="GLfloat" expand_vector="true"/>
+	<function name="Materialfv" default_prefix="_es_" template="Material" gltype="GLfloat"/>
 
 	<function name="PointSize" template="PointSize" gltype="GLfloat"/>
 	<function name="PointSizePointer" template="PointSizePointer"/>
@@ -3650,7 +3650,7 @@
 	<function name="EnableClientState" template="EnableClientState"/>
 
 	<function name="GetPointerv" template="GetPointer"/>
-	<function name="Normal3f" default_prefix="_vbo_" template="Normal" gltype="GLfloat" expand_vector="true"/>
+	<function name="Normal3f" default_prefix="_es_" template="Normal" gltype="GLfloat" expand_vector="true"/>
 	<function name="NormalPointer" template="NormalPointer"/>
 	<function name="TexCoordPointer" template="TexCoordPointer"/>
 	<function name="VertexPointer" template="VertexPointer"/>
@@ -3679,7 +3679,7 @@
 	<function name="ActiveTextureARB" template="ActiveTexture"/>
 	<function name="ClientActiveTextureARB" template="ClientActiveTexture"/>
 
-	<function name="MultiTexCoord4f" default_prefix="_vbo_" template="MultiTexCoord" gltype="GLfloat" vector_size="4" expand_vector="true"/>
+	<function name="MultiTexCoord4f" default_prefix="_es_" template="MultiTexCoord" gltype="GLfloat" vector_size="4" expand_vector="true"/>
 
 	<function name="SampleCoverageARB" template="SampleCoverage" gltype="GLclampf"/>
 
@@ -3691,14 +3691,14 @@
 	<function name="PointParameterf" template="PointParameter" gltype="GLfloat" expand_vector="true"/>
 	<function name="PointParameterfv" template="PointParameter" gltype="GLfloat"/>
 
-	<function name="VertexAttrib1f" default_prefix="_vbo_" template="VertexAttrib" gltype="GLfloat" vector_size="1" expand_vector="true"/>
-	<function name="VertexAttrib2f" default_prefix="_vbo_" template="VertexAttrib" gltype="GLfloat" vector_size="2" expand_vector="true"/>
-	<function name="VertexAttrib3f" default_prefix="_vbo_" template="VertexAttrib" gltype="GLfloat" vector_size="3" expand_vector="true"/>
-	<function name="VertexAttrib4f" default_prefix="_vbo_" template="VertexAttrib" gltype="GLfloat" vector_size="4" expand_vector="true"/>
-	<function name="VertexAttrib1fv" default_prefix="_vbo_" template="VertexAttrib" gltype="GLfloat" vector_size="1"/>
-	<function name="VertexAttrib2fv" default_prefix="_vbo_" template="VertexAttrib" gltype="GLfloat" vector_size="2"/>
-	<function name="VertexAttrib3fv" default_prefix="_vbo_" template="VertexAttrib" gltype="GLfloat" vector_size="3"/>
-	<function name="VertexAttrib4fv" default_prefix="_vbo_" template="VertexAttrib" gltype="GLfloat" vector_size="4"/>
+	<function name="VertexAttrib1f" default_prefix="_es_" template="VertexAttrib" gltype="GLfloat" vector_size="1" expand_vector="true"/>
+	<function name="VertexAttrib2f" default_prefix="_es_" template="VertexAttrib" gltype="GLfloat" vector_size="2" expand_vector="true"/>
+	<function name="VertexAttrib3f" default_prefix="_es_" template="VertexAttrib" gltype="GLfloat" vector_size="3" expand_vector="true"/>
+	<function name="VertexAttrib4f" default_prefix="_es_" template="VertexAttrib" gltype="GLfloat" vector_size="4" expand_vector="true"/>
+	<function name="VertexAttrib1fv" default_prefix="_es_" template="VertexAttrib" gltype="GLfloat" vector_size="1"/>
+	<function name="VertexAttrib2fv" default_prefix="_es_" template="VertexAttrib" gltype="GLfloat" vector_size="2"/>
+	<function name="VertexAttrib3fv" default_prefix="_es_" template="VertexAttrib" gltype="GLfloat" vector_size="3"/>
+	<function name="VertexAttrib4fv" default_prefix="_es_" template="VertexAttrib" gltype="GLfloat" vector_size="4"/>
 
 	<function name="VertexAttribPointerARB" template="VertexAttribPointer"/>
 	<function name="EnableVertexAttribArrayARB" template="EnableVertexAttribArray"/>
@@ -3850,7 +3850,7 @@
 
 	<category name="OES_matrix_palette"/>
 
-	<function name="Color4f" template="Color" gltype="GLfloat" vector_size="4" expand_vector="true"/>
+	<function name="Color4f" external="true" template="Color" gltype="GLfloat" vector_size="4" expand_vector="true"/>
 	<function name="Color4ub" template="Color" gltype="GLubyte" vector_size="4" expand_vector="true"/>
 	<function name="Color4x" template="Color" gltype="GLfixed" vector_size="4" expand_vector="true"/>
 
@@ -3880,8 +3880,8 @@
 	<function name="LineWidth" template="LineWidth" gltype="GLfloat"/>
 	<function name="LineWidthx" template="LineWidth" gltype="GLfixed"/>
 
-	<function name="Materialf" template="Material" gltype="GLfloat" expand_vector="true"/>
-	<function name="Materialfv" template="Material" gltype="GLfloat"/>
+	<function name="Materialf" external="true" template="Material" gltype="GLfloat" expand_vector="true"/>
+	<function name="Materialfv" external="true" template="Material" gltype="GLfloat"/>
 	<function name="Materialx" template="Material" gltype="GLfixed" expand_vector="true"/>
 	<function name="Materialxv" template="Material" gltype="GLfixed"/>
 
@@ -4012,7 +4012,7 @@
 
 	<function name="GetPointerv" template="GetPointer"/>
 
-	<function name="Normal3f" template="Normal" gltype="GLfloat" expand_vector="true"/>
+	<function name="Normal3f" external="true" template="Normal" gltype="GLfloat" expand_vector="true"/>
 	<function name="Normal3x" template="Normal" gltype="GLfixed" expand_vector="true"/>
 	<function name="NormalPointer" template="NormalPointer"/>
 	<function name="TexCoordPointer" template="TexCoordPointer"/>
@@ -4039,7 +4039,7 @@
 	<function name="ActiveTexture" template="ActiveTexture"/>
 	<function name="ClientActiveTexture" template="ClientActiveTexture"/>
 
-	<function name="MultiTexCoord4f" template="MultiTexCoord" gltype="GLfloat" vector_size="4" expand_vector="true"/>
+	<function name="MultiTexCoord4f" external="true" template="MultiTexCoord" gltype="GLfloat" vector_size="4" expand_vector="true"/>
 
 	<function name="SampleCoverage" template="SampleCoverage" gltype="GLclampf"/>
 	<function name="SampleCoveragex" template="SampleCoverage" gltype="GLclampx"/>
@@ -4227,14 +4227,14 @@
 
 	<function name="BlendFuncSeparate" template="BlendFuncSeparate"/>
 
-	<function name="VertexAttrib1f" template="VertexAttrib" gltype="GLfloat" vector_size="1" expand_vector="true"/>
-	<function name="VertexAttrib2f" template="VertexAttrib" gltype="GLfloat" vector_size="2" expand_vector="true"/>
-	<function name="VertexAttrib3f" template="VertexAttrib" gltype="GLfloat" vector_size="3" expand_vector="true"/>
-	<function name="VertexAttrib4f" template="VertexAttrib" gltype="GLfloat" vector_size="4" expand_vector="true"/>
-	<function name="VertexAttrib1fv" template="VertexAttrib" gltype="GLfloat" vector_size="1"/>
-	<function name="VertexAttrib2fv" template="VertexAttrib" gltype="GLfloat" vector_size="2"/>
-	<function name="VertexAttrib3fv" template="VertexAttrib" gltype="GLfloat" vector_size="3"/>
-	<function name="VertexAttrib4fv" template="VertexAttrib" gltype="GLfloat" vector_size="4"/>
+	<function name="VertexAttrib1f" external="true" template="VertexAttrib" gltype="GLfloat" vector_size="1" expand_vector="true"/>
+	<function name="VertexAttrib2f" external="true" template="VertexAttrib" gltype="GLfloat" vector_size="2" expand_vector="true"/>
+	<function name="VertexAttrib3f" external="true" template="VertexAttrib" gltype="GLfloat" vector_size="3" expand_vector="true"/>
+	<function name="VertexAttrib4f" external="true" template="VertexAttrib" gltype="GLfloat" vector_size="4" expand_vector="true"/>
+	<function name="VertexAttrib1fv" external="true" template="VertexAttrib" gltype="GLfloat" vector_size="1"/>
+	<function name="VertexAttrib2fv" external="true" template="VertexAttrib" gltype="GLfloat" vector_size="2"/>
+	<function name="VertexAttrib3fv" external="true" template="VertexAttrib" gltype="GLfloat" vector_size="3"/>
+	<function name="VertexAttrib4fv" external="true" template="VertexAttrib" gltype="GLfloat" vector_size="4"/>
 
 	<function name="VertexAttribPointer" template="VertexAttribPointer"/>
 

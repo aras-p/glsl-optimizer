@@ -71,7 +71,8 @@ galahad_resource_destroy(struct galahad_resource *glhd_resource)
 
 
 struct pipe_surface *
-galahad_surface_create(struct galahad_resource *glhd_resource,
+galahad_surface_create(struct galahad_context *glhd_context,
+                        struct galahad_resource *glhd_resource,
                         struct pipe_surface *surface)
 {
    struct galahad_surface *glhd_surface;
@@ -100,10 +101,11 @@ error:
 }
 
 void
-galahad_surface_destroy(struct galahad_surface *glhd_surface)
+galahad_surface_destroy(struct galahad_context *glhd_context,
+                         struct galahad_surface *glhd_surface)
 {
    pipe_resource_reference(&glhd_surface->base.texture, NULL);
-   pipe_surface_reference(&glhd_surface->surface, NULL);
+   glhd_context->pipe->surface_destroy(glhd_context->pipe, glhd_surface->surface);
    FREE(glhd_surface);
 }
 

@@ -81,12 +81,12 @@ bool glsl_symbol_table::name_declared_this_scope(const char *name)
    return _mesa_symbol_table_symbol_scope(table, -1, name) == 0;
 }
 
-bool glsl_symbol_table::add_variable(const char *name, ir_variable *v)
+bool glsl_symbol_table::add_variable(ir_variable *v)
 {
    if (this->language_version == 110) {
       /* In 1.10, functions and variables have separate namespaces. */
-      symbol_table_entry *existing = get_entry(name);
-      if (name_declared_this_scope(name)) {
+      symbol_table_entry *existing = get_entry(v->name);
+      if (name_declared_this_scope(v->name)) {
 	 /* If there's already an existing function (not a constructor!) in
 	  * the current scope, just update the existing entry to include 'v'.
 	  */
@@ -102,7 +102,7 @@ bool glsl_symbol_table::add_variable(const char *name, ir_variable *v)
 	 symbol_table_entry *entry = new(mem_ctx) symbol_table_entry(v);
 	 if (existing != NULL)
 	    entry->f = existing->f;
-	 int added = _mesa_symbol_table_add_symbol(table, -1, name, entry);
+	 int added = _mesa_symbol_table_add_symbol(table, -1, v->name, entry);
 	 assert(added == 0);
 	 (void)added;
 	 return true;
@@ -112,7 +112,7 @@ bool glsl_symbol_table::add_variable(const char *name, ir_variable *v)
 
    /* 1.20+ rules: */
    symbol_table_entry *entry = new(mem_ctx) symbol_table_entry(v);
-   return _mesa_symbol_table_add_symbol(table, -1, name, entry) == 0;
+   return _mesa_symbol_table_add_symbol(table, -1, v->name, entry) == 0;
 }
 
 bool glsl_symbol_table::add_type(const char *name, const glsl_type *t)
@@ -121,18 +121,25 @@ bool glsl_symbol_table::add_type(const char *name, const glsl_type *t)
    return _mesa_symbol_table_add_symbol(table, -1, name, entry) == 0;
 }
 
-bool glsl_symbol_table::add_function(const char *name, ir_function *f)
+bool glsl_symbol_table::add_function(ir_function *f)
 {
-   if (this->language_version == 110 && name_declared_this_scope(name)) {
+   if (this->language_version == 110 && name_declared_this_scope(f->name)) {
       /* In 1.10, functions and variables have separate namespaces. */
-      symbol_table_entry *existing = get_entry(name);
+      symbol_table_entry *existing = get_entry(f->name);
       if ((existing->f == NULL) && (existing->t == NULL)) {
 	 existing->f = f;
 	 return true;
       }
    }
    symbol_table_entry *entry = new(mem_ctx) symbol_table_entry(f);
-   return _mesa_symbol_table_add_symbol(table, -1, name, entry) == 0;
+   return _mesa_symbol_table_add_symbol(table, -1, f->name, entry) == 0;
+}
+
+void glsl_symbol_table::add_global_function(ir_function *f)
+{
+   symbol_table_entry *entry = new(mem_ctx) symbol_table_entry(f);
+   int added = _mesa_symbol_table_add_global_symbol(table, -1, f->name, entry);
+   assert(added == 0);
 }
 
 ir_variable *glsl_symbol_table::get_variable(const char *name)

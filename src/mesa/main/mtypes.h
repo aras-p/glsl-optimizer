@@ -41,14 +41,6 @@
 #include "math/m_matrix.h"	/* GLmatrix */
 #include "main/simple_list.h"	/* struct simple_node */
 
-/* Shader stages. Note that these will become 5 with tessellation.
- * These MUST have the same values as PIPE_SHADER_*
- */
-#define MESA_SHADER_VERTEX   0
-#define MESA_SHADER_FRAGMENT 1
-#define MESA_SHADER_GEOMETRY 2
-#define MESA_SHADER_TYPES    3
-
 
 /**
  * Color channel data type.
@@ -126,6 +118,20 @@ struct gl_texture_object;
 struct gl_context;
 struct st_context;
 /*@}*/
+
+
+
+/**
+ * Shader stages. Note that these will become 5 with tessellation.
+ * These MUST have the same values as gallium's PIPE_SHADER_*
+ */
+typedef enum
+{
+   MESA_SHADER_VERTEX = 0,
+   MESA_SHADER_FRAGMENT = 1,
+   MESA_SHADER_GEOMETRY = 2,
+   MESA_SHADER_TYPES = 3
+} gl_shader_type;
 
 
 
@@ -2191,6 +2197,7 @@ struct gl_shader_compiler_options
    GLboolean EmitNoCont;                  /**< Emit CONT opcode? */
    GLboolean EmitNoMainReturn;            /**< Emit CONT/RET opcodes? */
    GLboolean EmitNoNoise;                 /**< Emit NOISE opcodes? */
+   GLboolean EmitNoPow;                   /**< Emit POW opcodes? */
 
    /**
     * \name Forms of indirect addressing the driver cannot do.
@@ -2560,6 +2567,7 @@ struct gl_program_constants
  */
 struct gl_constants
 {
+   GLint MaxTextureMbytes;      /**< Max memory per image, in MB */
    GLint MaxTextureLevels;      /**< Max mipmap levels. */ 
    GLint Max3DTextureLevels;    /**< Max mipmap levels for 3D textures */
    GLint MaxCubeTextureLevels;  /**< Max mipmap levels for cube textures */

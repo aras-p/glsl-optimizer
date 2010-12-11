@@ -156,6 +156,7 @@ CustomizerPtr xorg_customizer(ScrnInfoPtr pScrn);
 
 Bool xorg_has_gallium(ScrnInfoPtr pScrn);
 
+void xorg_flush(ScreenPtr pScreen);
 /***********************************************************************
  * xorg_exa.c
  */

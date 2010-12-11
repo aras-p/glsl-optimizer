@@ -74,8 +74,8 @@ trace_resource_destroy(struct trace_screen *tr_scr,
 
 
 struct pipe_surface *
-trace_surface_create(struct trace_resource *tr_tex,
-                     struct pipe_surface *surface)
+trace_surf_create(struct trace_resource *tr_tex,
+                  struct pipe_surface *surface)
 {
    struct trace_surface *tr_surf;
 
@@ -104,7 +104,7 @@ error:
 
 
 void
-trace_surface_destroy(struct trace_surface *tr_surf)
+trace_surf_destroy(struct trace_surface *tr_surf)
 {
    pipe_resource_reference(&tr_surf->base.texture, NULL);
    pipe_surface_reference(&tr_surf->surface, NULL);

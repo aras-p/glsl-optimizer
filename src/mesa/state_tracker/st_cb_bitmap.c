@@ -283,9 +283,9 @@ make_bitmap_texture(struct gl_context *ctx, GLsizei width, GLsizei height,
       return NULL;
    }
 
-   transfer = pipe_get_transfer(st->pipe, pt, 0, 0, 0,
-					   PIPE_TRANSFER_WRITE,
-					   0, 0, width, height);
+   transfer = pipe_get_transfer(st->pipe, pt, 0, 0,
+                                PIPE_TRANSFER_WRITE,
+                                0, 0, width, height);
 
    dest = pipe_transfer_map(pipe, transfer);
 
@@ -585,10 +585,10 @@ create_cache_trans(struct st_context *st)
    /* Map the texture transfer.
     * Subsequent glBitmap calls will write into the texture image.
     */
-   cache->trans = pipe_get_transfer(st->pipe, cache->texture, 0, 0, 0,
-					       PIPE_TRANSFER_WRITE, 0, 0,
-					       BITMAP_CACHE_WIDTH,
-					       BITMAP_CACHE_HEIGHT);
+   cache->trans = pipe_get_transfer(st->pipe, cache->texture, 0, 0,
+                                    PIPE_TRANSFER_WRITE, 0, 0,
+                                    BITMAP_CACHE_WIDTH,
+                                    BITMAP_CACHE_HEIGHT);
    cache->buffer = pipe_transfer_map(pipe, cache->trans);
 
    /* init image to all 0xff */

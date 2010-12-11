@@ -3334,7 +3334,14 @@ GLboolean assemble_CMP(r700_AssemblerBase *pAsm)
         return GL_FALSE;
     }
 
-    pAsm->D.dst.opcode = SQ_OP3_INST_CNDGE;
+    if(8 == pAsm->unAsic)
+    {
+	pAsm->D.dst.opcode = EG_OP3_INST_CNDGE;
+    }
+    else
+    {
+	pAsm->D.dst.opcode = SQ_OP3_INST_CNDGE;
+    }
     pAsm->D.dst.op3     = 1;  
 
     tmp = (-1);
@@ -3416,8 +3423,14 @@ GLboolean assemble_TRIG(r700_AssemblerBase *pAsm, BITS opcode)
     checkop1(pAsm);
 
     tmp = gethelpr(pAsm);
-
-    pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+    if(8 == pAsm->unAsic)
+    {
+        pAsm->D.dst.opcode = EG_OP3_INST_MULADD;
+    }
+    else
+    {
+        pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+    }
     pAsm->D.dst.op3    = 1;
 
     setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
@@ -3457,7 +3470,14 @@ GLboolean assemble_TRIG(r700_AssemblerBase *pAsm, BITS opcode)
     {
         return GL_FALSE;
     }
-    pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+    if(8 == pAsm->unAsic)
+    {
+        pAsm->D.dst.opcode = EG_OP3_INST_MULADD;
+    }
+    else
+    {
+        pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+    }
     pAsm->D.dst.op3    = 1;
 
     setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
@@ -4742,7 +4762,14 @@ GLboolean assemble_SCS(r700_AssemblerBase *pAsm)
 
     tmp = gethelpr(pAsm);
 
-    pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+    if(8 == pAsm->unAsic)
+    {
+        pAsm->D.dst.opcode = EG_OP3_INST_MULADD;
+    }
+    else
+    {
+        pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+    }
     pAsm->D.dst.op3    = 1;
 
     setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
@@ -4782,7 +4809,14 @@ GLboolean assemble_SCS(r700_AssemblerBase *pAsm)
     {
         return GL_FALSE;
     }
-    pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+    if(8 == pAsm->unAsic)
+    {
+        pAsm->D.dst.opcode = EG_OP3_INST_MULADD;
+    }
+    else
+    {
+        pAsm->D.dst.opcode = SQ_OP3_INST_MULADD;
+    }
     pAsm->D.dst.op3    = 1;
 
     setaddrmode_PVSDST(&(pAsm->D.dst), ADDR_ABSOLUTE);
@@ -5010,7 +5044,14 @@ GLboolean assemble_SSG(r700_AssemblerBase *pAsm)
     
     GLuint tmp = gethelpr(pAsm);
     /* tmp = (src > 0 ? 1 : src) */
-    pAsm->D.dst.opcode = SQ_OP3_INST_CNDGT;
+    if(8 == pAsm->unAsic)
+    {
+        pAsm->D.dst.opcode = EG_OP3_INST_CNDGT;
+    }
+    else
+    {
+        pAsm->D.dst.opcode = SQ_OP3_INST_CNDGT;
+    }
     pAsm->D.dst.op3    = 1;
     pAsm->D.dst.rtype = DST_REG_TEMPORARY;
     pAsm->D.dst.reg   = tmp;
@@ -5033,7 +5074,14 @@ GLboolean assemble_SSG(r700_AssemblerBase *pAsm)
     }
 
     /* dst = (-tmp > 0 ? -1 : tmp) */
-    pAsm->D.dst.opcode = SQ_OP3_INST_CNDGT;
+    if(8 == pAsm->unAsic)
+    {
+        pAsm->D.dst.opcode = EG_OP3_INST_CNDGT;
+    }
+    else
+    {
+        pAsm->D.dst.opcode = SQ_OP3_INST_CNDGT;
+    }
     pAsm->D.dst.op3    = 1;
 
     if( GL_FALSE == assemble_dst(pAsm) )

@@ -745,6 +745,94 @@ ast_node::hir(exec_list *instructions,
    return NULL;
 }
 
+static void
+mark_whole_array_access(ir_rvalue *access)
+{
+   ir_dereference_variable *deref = access->as_dereference_variable();
+
+   if (deref) {
+      deref->var->max_array_access = deref->type->length - 1;
+   }
+}
+
+static ir_rvalue *
+do_comparison(void *mem_ctx, int operation, ir_rvalue *op0, ir_rvalue *op1)
+{
+   int join_op;
+   ir_rvalue *cmp = NULL;
+
+   if (operation == ir_binop_all_equal)
+      join_op = ir_binop_logic_and;
+   else
+      join_op = ir_binop_logic_or;
+
+   switch (op0->type->base_type) {
+   case GLSL_TYPE_FLOAT:
+   case GLSL_TYPE_UINT:
+   case GLSL_TYPE_INT:
+   case GLSL_TYPE_BOOL:
+      return new(mem_ctx) ir_expression(operation, op0, op1);
+
+   case GLSL_TYPE_ARRAY: {
+      for (unsigned int i = 0; i < op0->type->length; i++) {
+	 ir_rvalue *e0, *e1, *result;
+
+	 e0 = new(mem_ctx) ir_dereference_array(op0->clone(mem_ctx, NULL),
+						new(mem_ctx) ir_constant(i));
+	 e1 = new(mem_ctx) ir_dereference_array(op1->clone(mem_ctx, NULL),
+						new(mem_ctx) ir_constant(i));
+	 result = do_comparison(mem_ctx, operation, e0, e1);
+
+	 if (cmp) {
+	    cmp = new(mem_ctx) ir_expression(join_op, cmp, result);
+	 } else {
+	    cmp = result;
+	 }
+      }
+
+      mark_whole_array_access(op0);
+      mark_whole_array_access(op1);
+      break;
+   }
+
+   case GLSL_TYPE_STRUCT: {
+      for (unsigned int i = 0; i < op0->type->length; i++) {
+	 ir_rvalue *e0, *e1, *result;
+	 const char *field_name = op0->type->fields.structure[i].name;
+
+	 e0 = new(mem_ctx) ir_dereference_record(op0->clone(mem_ctx, NULL),
+						 field_name);
+	 e1 = new(mem_ctx) ir_dereference_record(op1->clone(mem_ctx, NULL),
+						 field_name);
+	 result = do_comparison(mem_ctx, operation, e0, e1);
+
+	 if (cmp) {
+	    cmp = new(mem_ctx) ir_expression(join_op, cmp, result);
+	 } else {
+	    cmp = result;
+	 }
+      }
+      break;
+   }
+
+   case GLSL_TYPE_ERROR:
+   case GLSL_TYPE_VOID:
+   case GLSL_TYPE_SAMPLER:
+      /* I assume a comparison of a struct containing a sampler just
+       * ignores the sampler present in the type.
+       */
+      break;
+
+   default:
+      assert(!"Should not get here.");
+      break;
+   }
+
+   if (cmp == NULL)
+      cmp = new(mem_ctx) ir_constant(true);
+
+   return cmp;
+}
 
 ir_rvalue *
 ast_expression::hir(exec_list *instructions,
@@ -941,11 +1029,10 @@ ast_expression::hir(exec_list *instructions,
 	 error_emitted = true;
       }
 
-      result = new(ctx) ir_expression(operations[this->oper], glsl_type::bool_type,
-				      op[0], op[1]);
+      result = do_comparison(ctx, operations[this->oper], op[0], op[1]);
       type = glsl_type::bool_type;
 
-      assert(result->type == glsl_type::bool_type);
+      assert(error_emitted || (result->type == glsl_type::bool_type));
       break;
 
    case ast_bit_and:
@@ -1478,6 +1565,20 @@ ast_expression::hir(exec_list *instructions,
 	    if (v != NULL)
 	       v->max_array_access = array->type->array_size();
 	 }
+      }
+
+      /* From section 4.1.7 of the GLSL 1.30 spec:
+       *    "Samplers aggregated into arrays within a shader (using square
+       *    brackets [ ]) can only be indexed with integral constant
+       *    expressions [...]."
+       */
+      if (array->type->is_array() &&
+          array->type->element_type()->is_sampler() &&
+          const_index == NULL) {
+
+         _mesa_glsl_error(&loc, state, "sampler arrays can only be indexed "
+                          "with constant expressions");
+         error_emitted = true;
       }
 
       if (error_emitted)
@@ -2141,6 +2242,24 @@ ast_declarator_list::hir(exec_list *instructions,
 	    if (this->type->qualifier.flags.q.constant)
 	       var->read_only = false;
 
+	    /* If the declared variable is an unsized array, it must inherrit
+	     * its full type from the initializer.  A declaration such as
+	     *
+	     *     uniform float a[] = float[](1.0, 2.0, 3.0, 3.0);
+	     *
+	     * becomes
+	     *
+	     *     uniform float a[4] = float[](1.0, 2.0, 3.0, 3.0);
+	     *
+	     * The assignment generated in the if-statement (below) will also
+	     * automatically handle this case for non-uniforms.
+	     *
+	     * If the declared variable is not an array, the types must
+	     * already match exactly.  As a result, the type assignment
+	     * here can be done unconditionally.
+	     */
+	    var->type = rhs->type;
+
 	    /* Never emit code to initialize a uniform.
 	     */
 	    if (!this->type->qualifier.flags.q.uniform)
@@ -2253,7 +2372,7 @@ ast_declarator_list::hir(exec_list *instructions,
        *     after the initializer if present or immediately after the name
        *     being declared if not."
        */
-      if (!state->symbols->add_variable(var->name, var)) {
+      if (!state->symbols->add_variable(var)) {
 	 YYLTYPE loc = this->get_location();
 	 _mesa_glsl_error(&loc, state, "name `%s' already taken in the "
 			  "current scope", decl->identifier);
@@ -2393,6 +2512,27 @@ ast_parameter_declarator::parameters_to_hir(exec_list *ast_parameters,
 }
 
 
+void
+emit_function(_mesa_glsl_parse_state *state, exec_list *instructions,
+	      ir_function *f)
+{
+   /* Emit the new function header */
+   if (state->current_function == NULL) {
+      instructions->push_tail(f);
+   } else {
+      /* IR invariants disallow function declarations or definitions nested
+       * within other function definitions.  Insert the new ir_function
+       * block in the instruction sequence before the ir_function block
+       * containing the current ir_function_signature.
+       */
+      ir_function *const curr =
+	 const_cast<ir_function *>(state->current_function->function());
+
+      curr->insert_before(f);
+   }
+}
+
+
 ir_rvalue *
 ast_function::hir(exec_list *instructions,
 		  struct _mesa_glsl_parse_state *state)
@@ -2495,7 +2635,7 @@ ast_function::hir(exec_list *instructions,
       }
    } else {
       f = new(ctx) ir_function(name);
-      if (!state->symbols->add_function(f->name, f)) {
+      if (!state->symbols->add_function(f)) {
 	 /* This function name shadows a non-function use of the same name. */
 	 YYLTYPE loc = this->get_location();
 
@@ -2504,24 +2644,7 @@ ast_function::hir(exec_list *instructions,
 	 return NULL;
       }
 
-      /* Emit the new function header */
-      if (state->current_function == NULL)
-	 instructions->push_tail(f);
-      else {
-	 /* IR invariants disallow function declarations or definitions nested
-	  * within other function definitions.  Insert the new ir_function
-	  * block in the instruction sequence before the ir_function block
-	  * containing the current ir_function_signature.
-	  *
-	  * This can only happen in a GLSL 1.10 shader.  In all other GLSL
-	  * versions this nesting is disallowed.  There is a check for this at
-	  * the top of this function.
-	  */
-	 ir_function *const curr =
-	    const_cast<ir_function *>(state->current_function->function());
-
-	 curr->insert_before(f);
-      }
+      emit_function(state, instructions, f);
    }
 
    /* Verify the return type of main() */
@@ -2587,7 +2710,7 @@ ast_function_definition::hir(exec_list *instructions,
 
 	 _mesa_glsl_error(& loc, state, "parameter `%s' redeclared", var->name);
       } else {
-	 state->symbols->add_variable(var->name, var);
+	 state->symbols->add_variable(var);
       }
    }
 

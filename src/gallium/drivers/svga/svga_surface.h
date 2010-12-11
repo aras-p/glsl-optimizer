@@ -90,7 +90,4 @@ svga_surface(struct pipe_surface *surface)
    return (struct svga_surface *)surface;
 }
 
-void
-svga_screen_init_surface_functions(struct pipe_screen *screen);
-
 #endif

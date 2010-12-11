@@ -121,6 +121,18 @@ static void
 xlate_border_color(const GLfloat *colorIn, GLenum baseFormat, GLfloat *colorOut)
 {
    switch (baseFormat) {
+   case GL_RED:
+      colorOut[0] = colorIn[0];
+      colorOut[1] = 0.0F;
+      colorOut[2] = 0.0F;
+      colorOut[3] = 1.0F;
+      break;
+   case GL_RG:
+      colorOut[0] = colorIn[0];
+      colorOut[1] = colorIn[1];
+      colorOut[2] = 0.0F;
+      colorOut[3] = 1.0F;
+      break;
    case GL_RGB:
       colorOut[0] = colorIn[0];
       colorOut[1] = colorIn[1];

@@ -28,7 +28,11 @@
 #define VARRAY_H
 
 
-#include "mtypes.h"
+#include "glheader.h"
+#include "mfeatures.h"
+
+struct gl_client_array;
+struct gl_context;
 
 #if _HAVE_FULL_GL
 

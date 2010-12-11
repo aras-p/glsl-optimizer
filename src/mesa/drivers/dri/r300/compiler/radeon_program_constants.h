@@ -181,4 +181,9 @@ static inline int rc_presubtract_src_reg_count(rc_presubtract_op op){
 		return 0;
 	}
 }
+
+#define RC_SOURCE_NONE  0x0
+#define RC_SOURCE_RGB   0x1
+#define RC_SOURCE_ALPHA 0x2
+
 #endif /* RADEON_PROGRAM_CONSTANTS_H */

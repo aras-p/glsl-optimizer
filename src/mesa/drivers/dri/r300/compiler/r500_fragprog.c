@@ -29,6 +29,7 @@
 
 #include <stdio.h>
 
+#include "radeon_compiler_util.h"
 #include "../r300_reg.h"
 
 /**

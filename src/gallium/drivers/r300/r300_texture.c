@@ -40,7 +40,8 @@
 #include "pipe/p_screen.h"
 
 unsigned r300_get_swizzle_combined(const unsigned char *swizzle_format,
-                                   const unsigned char *swizzle_view)
+                                   const unsigned char *swizzle_view,
+                                   boolean dxtc_swizzle)
 {
     unsigned i;
     unsigned char swizzle[4];
@@ -51,10 +52,10 @@ unsigned r300_get_swizzle_combined(const unsigned char *swizzle_format,
         R300_TX_FORMAT_B_SHIFT,
         R300_TX_FORMAT_A_SHIFT
     };
-    const uint32_t swizzle_bit[4] = {
-        R300_TX_FORMAT_X,
+    uint32_t swizzle_bit[4] = {
+        dxtc_swizzle ? R300_TX_FORMAT_Z : R300_TX_FORMAT_X,
         R300_TX_FORMAT_Y,
-        R300_TX_FORMAT_Z,
+        dxtc_swizzle ? R300_TX_FORMAT_X : R300_TX_FORMAT_Z,
         R300_TX_FORMAT_W
     };
 
@@ -107,7 +108,8 @@ unsigned r300_get_swizzle_combined(const unsigned char *swizzle_format,
  * makes available X, Y, Z, W, ZERO, and ONE for swizzling. */
 uint32_t r300_translate_texformat(enum pipe_format format,
                                   const unsigned char *swizzle_view,
-                                  boolean is_r500)
+                                  boolean is_r500,
+                                  boolean dxtc_swizzle)
 {
     uint32_t result = 0;
     const struct util_format_description *desc;
@@ -169,7 +171,8 @@ uint32_t r300_translate_texformat(enum pipe_format format,
             }
     }
 
-    result |= r300_get_swizzle_combined(desc->swizzle, swizzle_view);
+    result |= r300_get_swizzle_combined(desc->swizzle, swizzle_view,
+                    util_format_is_compressed(format) && dxtc_swizzle);
 
     /* S3TC formats. */
     if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
@@ -571,7 +574,7 @@ boolean r300_is_zs_format_supported(enum pipe_format format)
 
 boolean r300_is_sampler_format_supported(enum pipe_format format)
 {
-    return r300_translate_texformat(format, 0, TRUE) != ~0;
+    return r300_translate_texformat(format, 0, TRUE, FALSE) != ~0;
 }
 
 void r300_texture_setup_format_state(struct r300_screen *screen,
@@ -665,21 +668,21 @@ void r300_texture_reinterpret_format(struct pipe_screen *screen,
 }
 
 static unsigned r300_texture_is_referenced(struct pipe_context *context,
-					 struct pipe_resource *texture,
-					 unsigned face, unsigned level)
+                                           struct pipe_resource *texture,
+                                           unsigned level, int layer)
 {
     struct r300_context *r300 = r300_context(context);
     struct r300_texture *rtex = (struct r300_texture *)texture;
 
     if (r300->rws->cs_is_buffer_referenced(r300->cs,
-                                           rtex->buffer, R300_REF_CS))
+                                           rtex->cs_buffer, R300_REF_CS))
         return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 
     return PIPE_UNREFERENCED;
 }
 
 static void r300_texture_destroy(struct pipe_screen *screen,
-				 struct pipe_resource* texture)
+                                 struct pipe_resource* texture)
 {
     struct r300_texture* tex = (struct r300_texture*)texture;
     struct r300_winsys_screen *rws = (struct r300_winsys_screen *)texture->screen->winsys;
@@ -774,6 +777,8 @@ r300_texture_create_object(struct r300_screen *rscreen,
         }
     }
 
+    tex->cs_buffer = rws->buffer_get_cs_handle(rws, tex->buffer);
+
     rws->buffer_set_tiling(rws, tex->buffer,
             tex->desc.microtile, tex->desc.macrotile[0],
             tex->desc.stride_in_bytes[0]);
@@ -848,38 +853,40 @@ struct pipe_resource *r300_texture_from_handle(struct pipe_screen *screen,
 
 /* Not required to implement u_resource_vtbl, consider moving to another file:
  */
-struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
-                                          struct pipe_resource* texture,
-					  unsigned face,
-					  unsigned level,
-					  unsigned zslice,
-					  unsigned flags)
+struct pipe_surface* r300_create_surface(struct pipe_context * ctx,
+                                         struct pipe_resource* texture,
+                                         const struct pipe_surface *surf_tmpl)
 {
     struct r300_texture* tex = r300_texture(texture);
     struct r300_surface* surface = CALLOC_STRUCT(r300_surface);
+    unsigned level = surf_tmpl->u.tex.level;
+
+    assert(surf_tmpl->u.tex.first_layer == surf_tmpl->u.tex.last_layer);
 
     if (surface) {
         uint32_t offset, tile_height;
 
         pipe_reference_init(&surface->base.reference, 1);
         pipe_resource_reference(&surface->base.texture, texture);
-        surface->base.format = texture->format;
+        surface->base.context = ctx;
+        surface->base.format = surf_tmpl->format;
         surface->base.width = u_minify(texture->width0, level);
         surface->base.height = u_minify(texture->height0, level);
-        surface->base.usage = flags;
-        surface->base.zslice = zslice;
-        surface->base.face = face;
-        surface->base.level = level;
+        surface->base.usage = surf_tmpl->usage;
+        surface->base.u.tex.level = level;
+        surface->base.u.tex.first_layer = surf_tmpl->u.tex.first_layer;
+        surface->base.u.tex.last_layer = surf_tmpl->u.tex.last_layer;
 
         surface->buffer = tex->buffer;
+        surface->cs_buffer = tex->cs_buffer;
 
         /* Prefer VRAM if there are multiple domains to choose from. */
         surface->domain = tex->domain;
         if (surface->domain & R300_DOMAIN_VRAM)
             surface->domain &= ~R300_DOMAIN_GTT;
 
-        surface->offset = r300_texture_get_offset(&tex->desc,
-                                                  level, zslice, face);
+        surface->offset = r300_texture_get_offset(&tex->desc, level,
+                                                  surf_tmpl->u.tex.first_layer);
         surface->pitch = tex->fb_state.pitch[level];
         surface->format = tex->fb_state.format;
 
@@ -910,13 +917,13 @@ struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
         else
             surface->cbzb_format = R300_DEPTHFORMAT_16BIT_INT_Z;
 
-        SCREEN_DBG(r300_screen(screen), DBG_CBZB,
-                   "CBZB Allowed: %s, Dim: %ix%i, Misalignment: %i, Micro: %s, Macro: %s\n",
-                   surface->cbzb_allowed ? "YES" : " NO",
-                   surface->cbzb_width, surface->cbzb_height,
-                   offset & 2047,
-                   tex->desc.microtile ? "YES" : " NO",
-                   tex->desc.macrotile[level] ? "YES" : " NO");
+        DBG(r300_context(ctx), DBG_CBZB,
+            "CBZB Allowed: %s, Dim: %ix%i, Misalignment: %i, Micro: %s, Macro: %s\n",
+            surface->cbzb_allowed ? "YES" : " NO",
+            surface->cbzb_width, surface->cbzb_height,
+            offset & 2047,
+            tex->desc.microtile ? "YES" : " NO",
+            tex->desc.macrotile[level] ? "YES" : " NO");
     }
 
     return &surface->base;
@@ -924,7 +931,7 @@ struct pipe_surface* r300_get_tex_surface(struct pipe_screen* screen,
 
 /* Not required to implement u_resource_vtbl, consider moving to another file:
  */
-void r300_tex_surface_destroy(struct pipe_surface* s)
+void r300_surface_destroy(struct pipe_context *ctx, struct pipe_surface* s)
 {
     pipe_resource_reference(&s->texture, NULL);
     FREE(s);

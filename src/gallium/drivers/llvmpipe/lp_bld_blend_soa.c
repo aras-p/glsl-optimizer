@@ -73,6 +73,7 @@
 
 #include "gallivm/lp_bld_type.h"
 #include "gallivm/lp_bld_arit.h"
+#include "gallivm/lp_bld_init.h"
 #include "lp_bld_blend.h"
 
 
@@ -211,7 +212,7 @@ lp_build_blend_factor_complementary(unsigned src_factor, unsigned dst_factor)
  * \param res  the result/output
  */
 void
-lp_build_blend_soa(LLVMBuilderRef builder,
+lp_build_blend_soa(struct gallivm_state *gallivm,
                    const struct pipe_blend_state *blend,
                    struct lp_type type,
                    unsigned rt,
@@ -220,6 +221,7 @@ lp_build_blend_soa(LLVMBuilderRef builder,
                    LLVMValueRef con[4],
                    LLVMValueRef res[4])
 {
+   LLVMBuilderRef builder = gallivm->builder;
    struct lp_build_blend_soa_context bld;
    unsigned i, j, k;
 
@@ -227,7 +229,7 @@ lp_build_blend_soa(LLVMBuilderRef builder,
 
    /* Setup build context */
    memset(&bld, 0, sizeof bld);
-   lp_build_context_init(&bld.base, builder, type);
+   lp_build_context_init(&bld.base, gallivm, type);
    for (i = 0; i < 4; ++i) {
       bld.src[i] = src[i];
       bld.dst[i] = dst[i];

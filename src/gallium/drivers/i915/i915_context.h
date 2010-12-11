@@ -193,8 +193,7 @@ struct i915_velems_state {
 };
 
 
-struct i915_context
-{
+struct i915_context {
    struct pipe_context base;
 
    struct i915_winsys *iws;

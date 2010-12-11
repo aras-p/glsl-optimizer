@@ -287,11 +287,12 @@ static int emit_depthbuffer(struct brw_context *brw)
       OUT_BATCH(((pitch * cpp) - 1) |
 		(format << 18) |
 		(BRW_TILEWALK_YMAJOR << 26) |
-		((surface->layout != PIPE_SURFACE_LAYOUT_LINEAR) << 27) |
+                /* always linear ?
+		((surface->layout != PIPE_SURFACE_LAYOUT_LINEAR) << 27) |*/
 		(BRW_SURFACE_2D << 29));
       OUT_RELOC(bo,
 		BRW_USAGE_DEPTH_BUFFER,
-		surface->offset);
+		brw_surface(surface)->offset);
       OUT_BATCH((BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1) |
 		((pitch - 1) << 6) |
 		((surface->height - 1) << 19));

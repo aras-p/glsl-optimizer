@@ -142,7 +142,6 @@ static GLboolean brwProgramStringNotify( struct gl_context *ctx,
       if (newFP == curFP)
 	 brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
       newFP->id = brw->program_id++;      
-      newFP->isGLSL = brw_wm_is_glsl(fprog);
 
       /* Don't reject fragment shaders for their Mesa IR state when we're
        * using the new FS backend.

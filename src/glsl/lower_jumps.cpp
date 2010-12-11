@@ -23,6 +23,37 @@
 
 /**
  * \file lower_jumps.cpp
+ *
+ * This pass lowers jumps (break, continue, and return) to if/else structures.
+ *
+ * It can be asked to:
+ * 1. Pull jumps out of ifs where possible
+ * 2. Remove all "continue"s, replacing them with an "execute flag"
+ * 3. Replace all "break" with a single conditional one at the end of the loop
+ * 4. Replace all "return"s with a single return at the end of the function,
+ *    for the main function and/or other functions
+ *
+ * Applying this pass gives several benefits:
+ * 1. All functions can be inlined.
+ * 2. nv40 and other pre-DX10 chips without "continue" can be supported
+ * 3. nv30 and other pre-DX10 chips with no control flow at all are better
+ *    supported
+ *
+ * Continues are lowered by adding a per-loop "execute flag", initialized to
+ * true, that when cleared inhibits all execution until the end of the loop.
+ *
+ * Breaks are lowered to continues, plus setting a "break flag" that is checked
+ * at the end of the loop, and trigger the unique "break".
+ *
+ * Returns are lowered to breaks/continues, plus adding a "return flag" that
+ * causes loops to break again out of their enclosing loops until all the
+ * loops are exited: then the "execute flag" logic will ignore everything
+ * until the end of the function.
+ *
+ * Note that "continue" and "return" can also be implemented by adding
+ * a dummy loop and using break.
+ * However, this is bad for hardware with limited nesting depth, and
+ * prevents further optimization, and thus is not currently performed.
  */
 
 #include "glsl_types.h"
@@ -36,7 +67,6 @@ enum jump_strength
    strength_continue,
    strength_break,
    strength_return,
-   strength_discard
 };
 
 struct block_record
@@ -202,8 +232,6 @@ struct ir_lower_jumps_visitor : public ir_control_flow_visitor {
 
    virtual void visit(class ir_discard * ir)
    {
-      truncate_after_instruction(ir);
-      this->block.min_strength = strength_discard;
    }
 
    enum jump_strength get_jump_strength(ir_instruction* ir)
@@ -217,8 +245,6 @@ struct ir_lower_jumps_visitor : public ir_control_flow_visitor {
             return strength_continue;
       } else if(ir->ir_type == ir_type_return)
          return strength_return;
-      else if(ir->ir_type == ir_type_discard)
-         return strength_discard;
       else
          return strength_none;
    }
@@ -252,9 +278,6 @@ struct ir_lower_jumps_visitor : public ir_control_flow_visitor {
             lower = lower_main_return;
          else
             lower = lower_sub_return;
-         break;
-      case strength_discard:
-         lower = false; /* probably nothing needs this lowered */
          break;
       }
       return lower;
@@ -313,9 +336,8 @@ retry: /* we get here if we put code after the if inside a branch */
             /* FINISHME: unify returns with identical expressions */
             else if(jump_strengths[0] == strength_return && this->function.signature->return_type->is_void())
                ir->insert_after(new(ir) ir_return(NULL));
-            /* FINISHME: unify discards */
-            else
-               unify = false;
+	    else
+	       unify = false;
 
             if(unify) {
                jumps[0]->remove();
@@ -490,7 +512,11 @@ lower_continue:
       if(this->loop.may_set_return_flag) {
          assert(this->function.return_flag);
          ir_if* return_if = new(ir) ir_if(new(ir) ir_dereference_variable(this->function.return_flag));
-         return_if->then_instructions.push_tail(new(ir) ir_loop_jump(saved_loop.loop ? ir_loop_jump::jump_break : ir_loop_jump::jump_continue));
+         saved_loop.may_set_return_flag = true;
+         if(saved_loop.loop)
+            return_if->then_instructions.push_tail(new(ir) ir_loop_jump(ir_loop_jump::jump_break));
+         else
+            move_outer_block_inside(ir, &return_if->else_instructions);
          ir->insert_after(return_if);
       }
 

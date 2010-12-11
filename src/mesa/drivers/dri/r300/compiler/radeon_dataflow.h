@@ -36,6 +36,7 @@ struct rc_instruction;
 struct rc_swizzle_caps;
 struct rc_src_register;
 struct rc_pair_instruction_arg;
+struct rc_pair_instruction_source;
 struct rc_compiler;
 
 
@@ -59,7 +60,8 @@ void rc_for_all_reads_src(struct rc_instruction * inst, rc_read_src_fn cb,
 			void * userdata);
 
 typedef void (*rc_pair_read_arg_fn)(void * userdata,
-	struct rc_instruction * inst, struct rc_pair_instruction_arg * arg);
+	struct rc_instruction * inst, struct rc_pair_instruction_arg * arg,
+	struct rc_pair_instruction_source * src);
 void rc_pair_for_all_reads_arg(struct rc_instruction * inst,
 					rc_pair_read_arg_fn cb, void * userdata);
 
@@ -71,7 +73,10 @@ void rc_remap_registers(struct rc_instruction * inst, rc_remap_register_fn cb, v
 struct rc_reader {
 	struct rc_instruction * Inst;
 	unsigned int WriteMask;
-	struct rc_src_register * Src;
+	union {
+		struct rc_src_register * Src;
+		struct rc_pair_instruction_arg * Arg;
+	} U;
 };
 
 struct rc_reader_data {
@@ -87,14 +92,13 @@ struct rc_reader_data {
 	void * CbData;
 };
 
-void rc_get_readers_normal(
+void rc_get_readers(
 	struct radeon_compiler * c,
-	struct rc_instruction * inst,
+	struct rc_instruction * writer,
 	struct rc_reader_data * data,
-	/*XXX: These should be their own function types. */
-	rc_read_src_fn read_cb,
+	rc_read_src_fn read_normal_cb,
+	rc_pair_read_arg_fn read_pair_cb,
 	rc_read_write_mask_fn write_cb);
-
 /**
  * Compiler passes based on dataflow analysis.
  */

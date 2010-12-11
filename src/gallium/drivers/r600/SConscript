@@ -28,6 +28,7 @@ r600 = env.ConvenienceLibrary(
         'r600_state_common.c',
         'r600_texture.c',
         'r600_translate.c',
+        'r600_upload.c',
         'r700_asm.c',
         'evergreen_state.c',
         'eg_asm.c',

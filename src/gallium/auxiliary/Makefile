@@ -128,12 +128,12 @@ C_SOURCES = \
 	util/u_linkage.c \
 	util/u_network.c \
 	util/u_math.c \
-	util/u_mempool.c \
 	util/u_mm.c \
 	util/u_rect.c \
 	util/u_ringbuffer.c \
 	util/u_sampler.c \
 	util/u_simple_shaders.c \
+	util/u_slab.c \
 	util/u_snprintf.c \
 	util/u_staging.c \
 	util/u_surface.c \
@@ -184,7 +184,7 @@ GALLIVM_SOURCES = \
         draw/draw_pt_fetch_shade_pipeline_llvm.c
 
 GALLIVM_CPP_SOURCES = \
-    gallivm/lp_bld_misc.cpp
+	gallivm/lp_bld_misc.cpp
 
 GENERATED_SOURCES = \
 	indices/u_indices_gen.c \
@@ -200,9 +200,6 @@ C_SOURCES += \
 CPP_SOURCES += \
 	$(GALLIVM_CPP_SOURCES)
 endif
-
-
-LIBRARY_DEFINES += -D__STDC_CONSTANT_MACROS
 
 
 include ../Makefile.template

@@ -301,7 +301,7 @@ lp_build_blend_func(struct lp_build_context *bld,
 
 
 LLVMValueRef
-lp_build_blend_aos(LLVMBuilderRef builder,
+lp_build_blend_aos(struct gallivm_state *gallivm,
                    const struct pipe_blend_state *blend,
                    struct lp_type type,
                    unsigned rt,
@@ -322,7 +322,7 @@ lp_build_blend_aos(LLVMBuilderRef builder,
 
    /* Setup build context */
    memset(&bld, 0, sizeof bld);
-   lp_build_context_init(&bld.base, builder, type);
+   lp_build_context_init(&bld.base, gallivm, type);
    bld.src = src;
    bld.dst = dst;
    bld.const_ = const_;

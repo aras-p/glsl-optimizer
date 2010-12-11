@@ -1565,7 +1565,7 @@ AC_ARG_ENABLE([gallium-llvm],
 if test "x$enable_gallium_llvm" = xyes; then
     if test "x$LLVM_CONFIG" != xno; then
 	LLVM_VERSION=`$LLVM_CONFIG --version`
-	LLVM_CFLAGS=`$LLVM_CONFIG --cflags`
+	LLVM_CFLAGS=`$LLVM_CONFIG --cppflags`
 	LLVM_LIBS="`$LLVM_CONFIG --libs jit interpreter nativecodegen bitwriter` -lstdc++"
 
 	if test "x$HAS_UDIS86" != xno; then

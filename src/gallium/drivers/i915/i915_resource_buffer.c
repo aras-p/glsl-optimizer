@@ -62,7 +62,7 @@ i915_buffer_destroy(struct pipe_screen *screen,
 
 static void *
 i915_buffer_transfer_map( struct pipe_context *pipe,
-			  struct pipe_transfer *transfer )
+                          struct pipe_transfer *transfer )
 {
    struct i915_buffer *buffer = i915_buffer(transfer->resource);
    return buffer->data + transfer->box.x;
@@ -71,19 +71,19 @@ i915_buffer_transfer_map( struct pipe_context *pipe,
 
 static void
 i915_buffer_transfer_inline_write( struct pipe_context *rm_ctx,
-				   struct pipe_resource *resource,
-				   struct pipe_subresource sr,
-				   unsigned usage,
-				   const struct pipe_box *box,
-				   const void *data,
-				   unsigned stride,
-				   unsigned slice_stride)
+                                   struct pipe_resource *resource,
+                                   unsigned level,
+                                   unsigned usage,
+                                   const struct pipe_box *box,
+                                   const void *data,
+                                   unsigned stride,
+                                   unsigned layer_stride)
 {
    struct i915_buffer *buffer = i915_buffer(resource);
 
    memcpy(buffer->data + box->x,
-	  data,
-	  box->width);
+          data,
+          box->width);
 }
 
 
@@ -115,7 +115,7 @@ i915_buffer_create(struct pipe_screen *screen,
    buf->b.vtbl = &i915_buffer_vtbl;
    pipe_reference_init(&buf->b.b.reference, 1);
    buf->b.b.screen = screen;
-   
+
    buf->data = MALLOC(template->width0);
    buf->free_on_destroy = TRUE;
 
@@ -135,7 +135,7 @@ struct pipe_resource *
 i915_user_buffer_create(struct pipe_screen *screen,
                         void *ptr,
                         unsigned bytes,
-			unsigned bind)
+                        unsigned bind)
 {
    struct i915_buffer *buf = CALLOC_STRUCT(i915_buffer);
 
@@ -152,6 +152,7 @@ i915_user_buffer_create(struct pipe_screen *screen,
    buf->b.b.width0 = bytes;
    buf->b.b.height0 = 1;
    buf->b.b.depth0 = 1;
+   buf->b.b.array_size = 1;
 
    buf->data = ptr;
    buf->free_on_destroy = FALSE;

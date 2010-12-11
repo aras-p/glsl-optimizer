@@ -452,7 +452,7 @@ intelCreateContext(gl_api api,
       return brwCreateContext(api, mesaVis,
 			      driContextPriv, sharedContextPrivate);
 #endif
-   fprintf(stderr, "Unrecognized deviceID %x\n", intelScreen->deviceID);
+   fprintf(stderr, "Unrecognized deviceID 0x%x\n", intelScreen->deviceID);
    return GL_FALSE;
 }
 
@@ -462,7 +462,8 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
    __DRIscreen *spriv = intelScreen->driScrnPriv;
    int num_fences = 0;
 
-   intelScreen->no_hw = getenv("INTEL_NO_HW") != NULL;
+   intelScreen->no_hw = (getenv("INTEL_NO_HW") != NULL ||
+			 getenv("INTEL_DEVID_OVERRIDE") != NULL);
 
    intelScreen->bufmgr = intel_bufmgr_gem_init(spriv->fd, BATCH_SZ);
    if (intelScreen->bufmgr == NULL) {
@@ -497,6 +498,7 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    GLenum fb_format[3];
    GLenum fb_type[3];
    unsigned int api_mask;
+   char *devid_override;
 
    static const GLenum back_buffer_modes[] = {
        GLX_NONE, GLX_SWAP_UNDEFINED_OML, GLX_SWAP_COPY_OML
@@ -522,6 +524,16 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    if (!intel_get_param(psp, I915_PARAM_CHIPSET_ID,
 			&intelScreen->deviceID))
       return GL_FALSE;
+
+   /* Allow an override of the device ID for the purpose of making the
+    * driver produce dumps for debugging of new chipset enablement.
+    * This implies INTEL_NO_HW, to avoid programming your actual GPU
+    * incorrectly.
+    */
+   devid_override = getenv("INTEL_DEVID_OVERRIDE");
+   if (devid_override) {
+      intelScreen->deviceID = strtod(devid_override, NULL);
+   }
 
    api_mask = (1 << __DRI_API_OPENGL);
 #if FEATURE_ES1

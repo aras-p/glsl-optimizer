@@ -569,10 +569,14 @@ upload_program(struct i915_fragment_program *p)
 	 if (inst->DstReg.CondMask == COND_TR) {
 	    tmp = i915_get_utemp(p);
 
+	    /* The KIL instruction discards the fragment if any component of
+	     * the source is < 0.  Emit an immediate operand of {-1}.xywz.
+	     */
 	    i915_emit_texld(p, get_live_regs(p, inst),
 			    tmp, A0_DEST_CHANNEL_ALL,
 			    0, /* use a dummy dest reg */
-			    swizzle(tmp, ONE, ONE, ONE, ONE), /* always */
+			    negate(swizzle(tmp, ONE, ONE, ONE, ONE),
+				   1, 1, 1, 1),
 			    T0_TEXKILL);
 	 } else {
 	    p->error = 1;

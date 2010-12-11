@@ -120,10 +120,15 @@ get_tex_depth(struct gl_context *ctx, GLuint dimensions,
    const GLint height = texImage->Height;
    const GLint depth = texImage->Depth;
    GLint img, row, col;
+   GLfloat *depthRow = (GLfloat *) malloc(width * sizeof(GLfloat));
+
+   if (!depthRow) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage");
+      return;
+   }
 
    for (img = 0; img < depth; img++) {
       for (row = 0; row < height; row++) {
-         GLfloat depthRow[MAX_WIDTH];
          void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
                                           width, height, format, type,
                                           img, row, 0);
@@ -135,6 +140,8 @@ get_tex_depth(struct gl_context *ctx, GLuint dimensions,
          _mesa_pack_depth_span(ctx, width, dest, type, depthRow, &ctx->Pack);
       }
    }
+
+   free(depthRow);
 }
 
 
@@ -244,6 +251,12 @@ get_tex_srgb(struct gl_context *ctx, GLuint dimensions,
    const GLint depth = texImage->Depth;
    const GLbitfield transferOps = 0x0;
    GLint img, row;
+   GLfloat (*rgba)[4] = (GLfloat (*)[4]) malloc(4 * width * sizeof(GLfloat));
+
+   if (!rgba) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage");
+      return;
+   }
 
    for (img = 0; img < depth; img++) {
       for (row = 0; row < height; row++) {
@@ -251,7 +264,6 @@ get_tex_srgb(struct gl_context *ctx, GLuint dimensions,
                                           width, height, format, type,
                                           img, row, 0);
 
-         GLfloat rgba[MAX_WIDTH][4];
          GLint col;
 
          /* convert row to RGBA format */
@@ -279,6 +291,8 @@ get_tex_srgb(struct gl_context *ctx, GLuint dimensions,
                                     &ctx->Pack, transferOps);
       }
    }
+
+   free(rgba);
 }
 
 
@@ -314,13 +328,18 @@ get_tex_rgba(struct gl_context *ctx, GLuint dimensions,
     */
    GLbitfield transferOps = 0x0;
    GLint img, row;
+   GLfloat (*rgba)[4] = (GLfloat (*)[4]) malloc(4 * width * sizeof(GLfloat));
+
+   if (!rgba) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glGetTexImage");
+      return;
+   }
 
    for (img = 0; img < depth; img++) {
       for (row = 0; row < height; row++) {
          void *dest = _mesa_image_address(dimensions, &ctx->Pack, pixels,
                                           width, height, format, type,
                                           img, row, 0);
-         GLfloat rgba[MAX_WIDTH][4];
          GLint col;
          GLenum dataType = _mesa_get_format_datatype(texImage->TexFormat);
 
@@ -364,6 +383,8 @@ get_tex_rgba(struct gl_context *ctx, GLuint dimensions,
                                     &ctx->Pack, transferOps);
       }
    }
+
+   free(rgba);
 }
 
 

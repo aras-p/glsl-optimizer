@@ -271,25 +271,33 @@ struct pipe_sampler_state
 
 
 /**
- * 2D surface.  This is basically a view into a memory buffer.
- * May be a renderbuffer, texture mipmap level, etc.
+ * A view into a texture that can be bound to a color render target /
+ * depth stencil attachment point.
  */
 struct pipe_surface
 {
    struct pipe_reference reference;
    struct pipe_resource *texture; /**< resource into which this is a view  */
+   struct pipe_context *context; /**< context this view belongs to */
    enum pipe_format format;
 
+   /* XXX width/height should be removed */
    unsigned width;               /**< logical width in pixels */
    unsigned height;              /**< logical height in pixels */
 
-   unsigned layout;              /**< PIPE_SURFACE_LAYOUT_x */
-   unsigned offset;              /**< offset from start of buffer, in bytes */
    unsigned usage;               /**< bitmask of PIPE_BIND_x */
 
-   unsigned zslice;
-   unsigned face;
-   unsigned level;
+   union {
+      struct {
+         unsigned level;
+         unsigned first_layer:16;
+         unsigned last_layer:16;
+      } tex;
+      struct {
+         unsigned first_element;
+         unsigned last_element;
+      } buf;
+   } u;
 };
 
 
@@ -302,8 +310,18 @@ struct pipe_sampler_view
    enum pipe_format format;      /**< typed PIPE_FORMAT_x */
    struct pipe_resource *texture; /**< texture into which this is a view  */
    struct pipe_context *context; /**< context this view belongs to */
-   unsigned first_level:8;       /**< first mipmap level */
-   unsigned last_level:8;        /**< last mipmap level */
+   union {
+      struct {
+         unsigned first_layer:16;     /**< first layer to use for array textures */
+         unsigned last_layer:16;      /**< last layer to use for array textures */
+         unsigned first_level:8;      /**< first mipmap level to use */
+         unsigned last_level:8;       /**< last mipmap level to use */
+      } tex;
+      struct {
+         unsigned first_element;
+         unsigned last_element;
+      } buf;
+   } u;
    unsigned swizzle_r:3;         /**< PIPE_SWIZZLE_x for red component */
    unsigned swizzle_g:3;         /**< PIPE_SWIZZLE_x for green component */
    unsigned swizzle_b:3;         /**< PIPE_SWIZZLE_x for blue component */
@@ -338,13 +356,14 @@ struct pipe_resource
    unsigned width0;
    unsigned height0;
    unsigned depth0;
+   unsigned array_size;
 
    unsigned last_level:8;    /**< Index of last mipmap level present/defined */
    unsigned nr_samples:8;    /**< for multisampled surfaces, nr of samples */
    unsigned usage:8;         /**< PIPE_USAGE_x (not a bitmask) */
 
-   unsigned bind;	     /**< bitmask of PIPE_BIND_x */
-   unsigned flags;	     /**< bitmask of PIPE_RESOURCE_FLAG_x */
+   unsigned bind;            /**< bitmask of PIPE_BIND_x */
+   unsigned flags;           /**< bitmask of PIPE_RESOURCE_FLAG_x */
 };
 
 struct pipe_stream_output_state
@@ -363,15 +382,6 @@ struct pipe_stream_output_state
    unsigned stride;
 };
 
-/**
- * Extra indexing info for (cube) texture resources.
- */
-struct pipe_subresource
-{
-   unsigned face:16;
-   unsigned level:16;
-};
-
 
 /**
  * Transfer object.  For data transfer to/from a resource.
@@ -379,11 +389,11 @@ struct pipe_subresource
 struct pipe_transfer
 {
    struct pipe_resource *resource; /**< resource to transfer to/from  */
-   struct pipe_subresource sr;
+   unsigned level;
    enum pipe_transfer_usage usage;
    struct pipe_box box;
    unsigned stride;
-   unsigned slice_stride;
+   unsigned layer_stride;
    void *data;
 };
 

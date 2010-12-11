@@ -94,6 +94,7 @@ static const struct swizzle_data* lookup_native_swizzle(unsigned int swizzle)
  */
 static int r300_swizzle_is_native(rc_opcode opcode, struct rc_src_register reg)
 {
+	const struct swizzle_data* sd;
 	unsigned int relevant;
 	int j;
 
@@ -127,7 +128,8 @@ static int r300_swizzle_is_native(rc_opcode opcode, struct rc_src_register reg)
 	if ((reg.Negate & relevant) && ((reg.Negate & relevant) != relevant))
 		return 0;
 
-	if (!lookup_native_swizzle(reg.Swizzle))
+	sd = lookup_native_swizzle(reg.Swizzle);
+	if (!sd || (reg.File == RC_FILE_PRESUB && sd->srcp_stride == 0))
 		return 0;
 
 	return 1;
@@ -201,7 +203,7 @@ unsigned int r300FPTranslateRGBSwizzle(unsigned int src, unsigned int swizzle)
 {
 	const struct swizzle_data* sd = lookup_native_swizzle(swizzle);
 
-	if (!sd) {
+	if (!sd || (src == RC_PAIR_PRESUB_SRC && sd->srcp_stride == 0)) {
 		fprintf(stderr, "Not a native swizzle: %08x\n", swizzle);
 		return 0;
 	}

@@ -122,6 +122,7 @@ public:
    virtual class ir_if *                as_if()               { return NULL; }
    virtual class ir_swizzle *           as_swizzle()          { return NULL; }
    virtual class ir_constant *          as_constant()         { return NULL; }
+   virtual class ir_discard *           as_discard()          { return NULL; }
    /*@}*/
 
 protected:
@@ -375,6 +376,8 @@ public:
 
    virtual ir_function_signature *clone(void *mem_ctx,
 					struct hash_table *ht) const;
+   ir_function_signature *clone_prototype(void *mem_ctx,
+					  struct hash_table *ht) const;
 
    virtual void accept(ir_visitor *v)
    {
@@ -841,12 +844,14 @@ public:
     * Constructor for unary operation expressions
     */
    ir_expression(int op, const struct glsl_type *type, ir_rvalue *);
+   ir_expression(int op, ir_rvalue *);
 
    /**
     * Constructor for binary operation expressions
     */
    ir_expression(int op, const struct glsl_type *type,
 		 ir_rvalue *, ir_rvalue *);
+   ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1);
 
    /**
     * Constructor for quad operator expressions
@@ -1121,6 +1126,11 @@ public:
    }
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
+   virtual ir_discard *as_discard()
+   {
+      return this;
+   }
 
    ir_rvalue *condition;
 };

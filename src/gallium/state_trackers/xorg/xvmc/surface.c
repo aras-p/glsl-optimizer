@@ -203,6 +203,7 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    XvMCSurfacePrivate *surface_priv;
    struct pipe_resource template;
    struct pipe_resource *vsfc_tex;
+   struct pipe_surface surf_template;
    struct pipe_surface *vsfc;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Creating surface %p.\n", surface);
@@ -248,8 +249,10 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
       return BadAlloc;
    }
 
-   vsfc = vpipe->screen->get_tex_surface(vpipe->screen, vsfc_tex, 0, 0, 0,
-                                         PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET);
+   memset(&surf_template, 0, sizeof(surf_template));
+   surf_template.format = vsfc_tex->format;
+   surf_template.usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
+   vsfc = vpipe->create_surface(vpipe, vsfc_tex, &surf_template);
    pipe_resource_reference(&vsfc_tex, NULL);
    if (!vsfc) {
       FREE(surface_priv);
@@ -396,7 +399,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    context = surface_priv->context;
    context_priv = context->privData;
 
-   drawable_surface = vl_drawable_surface_get(context_priv->vctx->vscreen, drawable);
+   drawable_surface = vl_drawable_surface_get(context_priv->vctx, drawable);
    if (!drawable_surface)
       return BadDrawable;
 
@@ -448,7 +451,8 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    vpipe->screen->flush_frontbuffer
    (
       vpipe->screen,
-      drawable_surface,
+      drawable_surface->texture,
+      0, 0,
       vl_contextprivate_get(context_priv->vctx, drawable_surface)
    );
 

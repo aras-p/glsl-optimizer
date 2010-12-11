@@ -30,22 +30,51 @@
 #define LP_BLD_INIT_H
 
 
+#include "pipe/p_compiler.h"
 #include "lp_bld.h"
 #include <llvm-c/ExecutionEngine.h>
 
 
-extern LLVMModuleRef lp_build_module;
-extern LLVMExecutionEngineRef lp_build_engine;
-extern LLVMModuleProviderRef lp_build_provider;
-extern LLVMTargetDataRef lp_build_target;
-extern LLVMPassManagerRef lp_build_pass;
+struct gallivm_state
+{
+   LLVMModuleRef module;
+   LLVMExecutionEngineRef engine;
+   LLVMModuleProviderRef provider;
+   LLVMTargetDataRef target;
+   LLVMPassManagerRef passmgr;
+   LLVMContextRef context;
+   LLVMBuilderRef builder;
+};
 
 
 void
 lp_build_init(void);
 
+
 extern void
 lp_func_delete_body(LLVMValueRef func);
+
+
+void
+gallivm_garbage_collect(struct gallivm_state *gallivm);
+
+
+typedef void (*garbage_collect_callback_func)(void *cb_data);
+
+void
+gallivm_register_garbage_collector_callback(garbage_collect_callback_func func,
+                                            void *cb_data);
+
+void
+gallivm_remove_garbage_collector_callback(garbage_collect_callback_func func,
+                                          void *cb_data);
+
+
+struct gallivm_state *
+gallivm_create(void);
+
+void
+gallivm_destroy(struct gallivm_state *gallivm);
 
 
 extern LLVMValueRef

@@ -27,7 +27,6 @@
 #include "radeon_drm.h"
 #include "pipe/p_compiler.h"
 #include "util/u_inlines.h"
-#include <pipebuffer/pb_bufmgr.h>
 #include "r600_priv.h"
 
 enum radeon_family r600_get_family(struct radeon *r600)
@@ -93,6 +92,12 @@ struct radeon *r600_new(int fd, unsigned device)
 	case CHIP_RV730:
 	case CHIP_RV710:
 	case CHIP_RV740:
+	case CHIP_CEDAR:
+	case CHIP_REDWOOD:
+	case CHIP_JUNIPER:
+	case CHIP_CYPRESS:
+	case CHIP_HEMLOCK:
+	case CHIP_PALM:
 		break;
 	case CHIP_R100:
 	case CHIP_RV100:
@@ -121,11 +126,6 @@ struct radeon *r600_new(int fd, unsigned device)
 	case CHIP_RV560:
 	case CHIP_RV570:
 	case CHIP_R580:
-	case CHIP_CEDAR:
-	case CHIP_REDWOOD:
-	case CHIP_JUNIPER:
-	case CHIP_CYPRESS:
-	case CHIP_HEMLOCK:
 	default:
 		R600_ERR("unknown or unsupported chipset 0x%04X\n", r600->device);
 		break;
@@ -154,6 +154,7 @@ struct radeon *r600_new(int fd, unsigned device)
 	case CHIP_JUNIPER:
 	case CHIP_CYPRESS:
 	case CHIP_HEMLOCK:
+	case CHIP_PALM:
 		r600->chip_class = EVERGREEN;
 		break;
 	default:

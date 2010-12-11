@@ -99,17 +99,17 @@ nvfx_region_init_for_surface(struct nv04_region* rgn, struct nvfx_surface* surf,
 			util_dirty_surface_set_dirty(nvfx_surface_get_dirty_surfaces(&surf->base.base), &surf->base);
 	} else {
 		rgn->bo = ((struct nvfx_resource*)surf->base.base.texture)->bo;
-		rgn->offset = surf->base.base.offset;
+		rgn->offset = surf->offset;
 
 		if(surf->base.base.texture->flags & NVFX_RESOURCE_FLAG_LINEAR)
 			rgn->pitch = surf->pitch;
 	        else
 	        {
 		        rgn->pitch = 0;
-		        rgn->z = surf->base.base.zslice;
+		        rgn->z = surf->base.base.u.tex.first_layer;
 		        rgn->w = surf->base.base.width;
 		        rgn->h = surf->base.base.height;
-		        rgn->d = u_minify(surf->base.base.texture->depth0, surf->base.base.level);
+		        rgn->d = u_minify(surf->base.base.texture->depth0, surf->base.base.u.tex.level);
 	        }
 	}
 
@@ -119,11 +119,11 @@ nvfx_region_init_for_surface(struct nv04_region* rgn, struct nvfx_surface* surf,
 }
 
 static INLINE void
-nvfx_region_init_for_subresource(struct nv04_region* rgn, struct pipe_resource* pt, struct pipe_subresource sub, unsigned x, unsigned y, unsigned z, bool for_write)
+nvfx_region_init_for_subresource(struct nv04_region* rgn, struct pipe_resource* pt, unsigned level, unsigned x, unsigned y, unsigned z, bool for_write)
 {
 	if(pt->target != PIPE_BUFFER)
 	{
-		struct nvfx_surface* ns = (struct nvfx_surface*)util_surfaces_peek(&((struct nvfx_miptree*)pt)->surfaces, pt, sub.face, sub.level, z);
+		struct nvfx_surface* ns = (struct nvfx_surface*)util_surfaces_peek(&((struct nvfx_miptree*)pt)->surfaces, pt, level, z);
 		if(ns && util_dirty_surface_is_dirty(&ns->base))
 		{
 			nvfx_region_init_for_surface(rgn, ns, x, y, for_write);
@@ -132,22 +132,22 @@ nvfx_region_init_for_subresource(struct nv04_region* rgn, struct pipe_resource* 
 	}
 
 	rgn->bo = ((struct nvfx_resource*)pt)->bo;
-	rgn->offset = nvfx_subresource_offset(pt, sub.face, sub.level, z);
+	rgn->offset = nvfx_subresource_offset(pt, z, level, z);
 	rgn->x = x;
 	rgn->y = y;
 
 	if(pt->flags & NVFX_RESOURCE_FLAG_LINEAR)
 	{
-		rgn->pitch = nvfx_subresource_pitch(pt, sub.level);
+		rgn->pitch = nvfx_subresource_pitch(pt, level);
 		rgn->z = 0;
 	}
 	else
 	{
 		rgn->pitch = 0;
 		rgn->z = z;
-		rgn->w = u_minify(pt->width0, sub.level);
-		rgn->h = u_minify(pt->height0, sub.level);
-		rgn->d = u_minify(pt->depth0, sub.level);
+		rgn->w = u_minify(pt->width0, level);
+		rgn->h = u_minify(pt->height0, level);
+		rgn->d = u_minify(pt->depth0, level);
 	}
 
 	nvfx_region_set_format(rgn, pt->format);
@@ -234,11 +234,10 @@ nvfx_region_clone(struct nv04_2d_context* ctx, struct nv04_region* rgn, unsigned
 
 static void
 nvfx_resource_copy_region(struct pipe_context *pipe,
-		  struct pipe_resource *dstr, struct pipe_subresource subdst,
-		  unsigned dstx, unsigned dsty, unsigned dstz,
-		  struct pipe_resource *srcr, struct pipe_subresource subsrc,
-		  unsigned srcx, unsigned srcy, unsigned srcz,
-		  unsigned w, unsigned h)
+			  struct pipe_resource *dstr, unsigned dst_level,
+			  unsigned dstx, unsigned dsty, unsigned dstz,
+			  struct pipe_resource *srcr, unsigned src_level,
+			  const struct pipe_box *src_box)
 {
 	static int copy_threshold = -1;
 	struct nv04_2d_context *ctx = nvfx_screen(pipe->screen)->eng2d;
@@ -247,6 +246,8 @@ nvfx_resource_copy_region(struct pipe_context *pipe,
 	int src_on_gpu;
 	boolean small;
 	int ret;
+	unsigned w = src_box->width;
+	unsigned h = src_box->height;
 
 	if(!w || !h)
 		return;
@@ -257,8 +258,8 @@ nvfx_resource_copy_region(struct pipe_context *pipe,
 	dst_to_gpu = dstr->usage != PIPE_USAGE_DYNAMIC && dstr->usage != PIPE_USAGE_STAGING;
 	src_on_gpu = nvfx_resource_on_gpu(srcr);
 
-	nvfx_region_init_for_subresource(&dst, dstr, subdst, dstx, dsty, dstz, TRUE);
-	nvfx_region_init_for_subresource(&src, srcr, subsrc, srcx, srcy, srcz, FALSE);
+	nvfx_region_init_for_subresource(&dst, dstr, dst_level, dstx, dsty, dstz, TRUE);
+	nvfx_region_init_for_subresource(&src, srcr, src_level, src_box->x, src_box->y, src_box->z, FALSE);
 	w = util_format_get_stride(dstr->format, w) >> dst.bpps;
 	h = util_format_get_nblocksy(dstr->format, h);
 
@@ -279,7 +280,7 @@ nvfx_resource_copy_region(struct pipe_context *pipe,
 		 * TODO: perhaps support reinterpreting the formats
 		 */
 		struct blitter_context* blitter = nvfx_get_blitter(pipe, 1);
-		util_blitter_copy_region(blitter, dstr, subdst, dstx, dsty, dstz, srcr, subsrc, srcx, srcy, srcz, w, h, TRUE);
+		util_blitter_copy_region(blitter, dstr, dst_level, dstx, dsty, dstz, srcr, src_level, src_box, TRUE);
 		nvfx_put_blitter(pipe, blitter);
 	}
 	else
@@ -371,7 +372,7 @@ static void
 nvfx_surface_copy_temp(struct pipe_context* pipe, struct pipe_surface* surf, int to_temp)
 {
 	struct nvfx_surface* ns = (struct nvfx_surface*)surf;
-	struct pipe_subresource tempsr, surfsr;
+	struct pipe_box box;
 	struct nvfx_context* nvfx = nvfx_context(pipe);
 	struct nvfx_miptree* temp;
 	unsigned use_vertex_buffers;
@@ -387,15 +388,20 @@ nvfx_surface_copy_temp(struct pipe_context* pipe, struct pipe_surface* surf, int
 	use_index_buffer = nvfx->use_index_buffer;
 	base_vertex = nvfx->base_vertex;
 
-	tempsr.face = 0;
-	tempsr.level = 0;
-	surfsr.face = surf->face;
-	surfsr.level = surf->level;
+	box.x = box.y = 0;
+	assert(surf->u.tex.first_layer == surf->u.tex.last_layer);
+	box.width = surf->width;
+	box.height = surf->height;
+	box.depth = 1;
 
-	if(to_temp)
-		nvfx_resource_copy_region(pipe, &temp->base.base, tempsr, 0, 0, 0, surf->texture, surfsr, 0, 0, surf->zslice, surf->width, surf->height);
-	else
-		nvfx_resource_copy_region(pipe, surf->texture, surfsr, 0, 0, surf->zslice, &temp->base.base, tempsr, 0, 0, 0, surf->width, surf->height);
+	if(to_temp) {
+	        box.z = surf->u.tex.first_layer;
+		nvfx_resource_copy_region(pipe, &temp->base.base, 0, 0, 0, 0, surf->texture, surf->u.tex.level, &box);
+	}
+	else {
+		box.z = 0;
+		nvfx_resource_copy_region(pipe, surf->texture, surf->u.tex.level, 0, 0, surf->u.tex.first_layer, &temp->base.base, 0, &box);
+	}
 
 	/* If this triggers, it probably means we attempted to use the blitter
 	 * but failed due to non-renderability of the target.

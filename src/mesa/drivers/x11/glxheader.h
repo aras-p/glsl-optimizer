@@ -32,13 +32,6 @@
 
 #include "main/glheader.h"
 
-#ifdef XFree86Server
-
-# include "xorg-server.h"
-# include "resource.h"
-# include "windowstr.h"
-
-#else
 
 # include <X11/Xlib.h>
 # include <X11/Xlibint.h>
@@ -51,7 +44,6 @@
 # include <GL/glx.h>
 # include <sys/time.h>
 
-#endif
 
 
 

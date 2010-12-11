@@ -91,6 +91,7 @@ enum radeon_family {
 	CHIP_JUNIPER,
 	CHIP_CYPRESS,
 	CHIP_HEMLOCK,
+	CHIP_PALM,
 	CHIP_LAST,
 };
 
@@ -292,5 +293,7 @@ void evergreen_context_pipe_state_set_vs_resource(struct r600_context *ctx, stru
 void evergreen_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid);
 void evergreen_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
 void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id);
+
+struct radeon *radeon_decref(struct radeon *radeon);
 
 #endif

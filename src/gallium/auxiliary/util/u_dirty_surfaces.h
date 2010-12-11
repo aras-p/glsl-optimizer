@@ -77,7 +77,7 @@ util_dirty_surfaces_use_levels_for_sampling(struct pipe_context *pipe, struct ut
       struct util_dirty_surface *ds = LIST_ENTRY(struct util_dirty_surface, p, dirty_list);
       next = p->next;
 
-      if(ds->base.level >= first && ds->base.level <= last)
+      if(ds->base.u.tex.level >= first && ds->base.u.tex.level <= last)
 	 flush(pipe, &ds->base);
    }
 }
@@ -86,7 +86,8 @@ static INLINE void
 util_dirty_surfaces_use_for_sampling_with(struct pipe_context *pipe, struct util_dirty_surfaces *dss, struct pipe_sampler_view *psv, struct pipe_sampler_state *pss, util_dirty_surface_flush_t flush)
 {
    if(!LIST_IS_EMPTY(&dss->dirty_list))
-      util_dirty_surfaces_use_levels_for_sampling(pipe, dss, (unsigned)pss->min_lod + psv->first_level, MIN2((unsigned)ceilf(pss->max_lod) + psv->first_level, psv->last_level), flush);
+      util_dirty_surfaces_use_levels_for_sampling(pipe, dss, (unsigned)pss->min_lod + psv->u.tex.first_level,
+						  MIN2((unsigned)ceilf(pss->max_lod) + psv->u.tex.first_level, psv->u.tex.last_level), flush);
 }
 
 static INLINE void

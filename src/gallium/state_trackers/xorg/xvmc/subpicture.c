@@ -135,6 +135,7 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    struct pipe_video_context *vpipe;
    struct pipe_resource template;
    struct pipe_resource *tex;
+   struct pipe_surface surf_template;
    Status ret;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Creating subpicture %p.\n", subpicture);
@@ -181,8 +182,11 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
 
    subpicture_priv->context = context;
    tex = vpipe->screen->resource_create(vpipe->screen, &template);
-   subpicture_priv->sfc = vpipe->screen->get_tex_surface(vpipe->screen, tex, 0, 0, 0,
-                                                         PIPE_BIND_SAMPLER_VIEW);
+
+   memset(&surf_template, 0, sizeof(surf_template));
+   surf_template.format = tex->format;
+   surf_template.usage = PIPE_BIND_SAMPLER_VIEW;
+   subpicture_priv->sfc = vpipe->create_surface(vpipe, tex, &surf_template);
    pipe_resource_reference(&tex, NULL);
    if (!subpicture_priv->sfc) {
       FREE(subpicture_priv);
@@ -239,7 +243,6 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
    unsigned char *src, *dst, *dst_line;
    unsigned x, y;
    struct pipe_box dst_box = {dstx, dsty, 0, width, height, 1};
-   struct pipe_subresource sr = {0, 0};
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Compositing subpicture %p.\n", subpicture);
 
@@ -264,7 +267,7 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
    /* TODO: Assert rects are within bounds? Or clip? */
 
    xfer = vpipe->get_transfer(vpipe, subpicture_priv->sfc->texture,
-                              sr, PIPE_TRANSFER_WRITE, &dst_box);
+                              0, PIPE_TRANSFER_WRITE, &dst_box);
    if (!xfer)
       return BadAlloc;
 

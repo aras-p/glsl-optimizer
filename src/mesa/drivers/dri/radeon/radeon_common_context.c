@@ -99,6 +99,7 @@ static const char* get_chip_family_name(int chip_family)
 	case CHIP_FAMILY_JUNIPER: return "JUNIPER";
 	case CHIP_FAMILY_CYPRESS: return "CYPRESS";
 	case CHIP_FAMILY_HEMLOCK: return "HEMLOCK";
+	case CHIP_FAMILY_PALM: return "PALM";
 	default: return "unknown";
 	}
 }

@@ -87,12 +87,11 @@ nv50_user_buffer_create(struct pipe_screen *screen,
 
 
 struct pipe_surface *
-nv50_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_resource *pt,
-			 unsigned face, unsigned level, unsigned zslice,
-			 unsigned flags);
+nv50_miptree_surface_new(struct pipe_context *pipe, struct pipe_resource *pt,
+			 const struct pipe_surface *surf_tmpl);
 
 void
-nv50_miptree_surface_del(struct pipe_surface *ps);
+nv50_miptree_surface_del(struct pipe_context *pipe, struct pipe_surface *ps);
 
 
 #endif

@@ -172,6 +172,7 @@ i915_vbuf_render_reserve(struct i915_vbuf_render *i915_render, size_t size)
  *
  * Side effects:
  *    Updates hw_offset, sw_offset, index and allocates a new buffer.
+ *    Will set i915->vbo to null on buffer allocation.
  */
 static void
 i915_vbuf_render_new_buf(struct i915_vbuf_render *i915_render, size_t size)
@@ -179,8 +180,16 @@ i915_vbuf_render_new_buf(struct i915_vbuf_render *i915_render, size_t size)
    struct i915_context *i915 = i915_render->i915;
    struct i915_winsys *iws = i915->iws;
 
-   if (i915_render->vbo)
+   if (i915_render->vbo) {
       iws->buffer_destroy(iws, i915_render->vbo);
+      /*
+       * XXX If buffers where referenced then this should be done in
+       * update_vbo_state but since they arn't and malloc likes to reuse
+       * memory we need to set it to null
+       */
+      i915->vbo = NULL;
+      i915_render->vbo = NULL;
+   }
 
    i915->vbo_flushed = 0;
 
@@ -198,7 +207,7 @@ i915_vbuf_render_new_buf(struct i915_vbuf_render *i915_render, size_t size)
 #endif
 
    i915_render->vbo = iws->buffer_create(iws, i915_render->vbo_size,
-                                         64, I915_NEW_VERTEX);
+                                         I915_NEW_VERTEX);
 }
 
 /**
@@ -726,7 +735,7 @@ i915_vbuf_render_create(struct i915_context *i915)
    i915_render->pool_fifo = u_fifo_create(6);
    for (i = 0; i < 6; i++)
       u_fifo_add(i915_render->pool_fifo,
-                 iws->buffer_create(iws, i915_render->pool_buffer_size, 64,
+                 iws->buffer_create(iws, i915_render->pool_buffer_size,
                                     I915_NEW_VERTEX));
 #else
    (void)i;

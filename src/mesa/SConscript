@@ -16,7 +16,6 @@ if env['platform'] == 'windows':
     env.Append(CPPDEFINES = [
         '_GDI32_', # prevent gl* being declared __declspec(dllimport) in MS headers
         'BUILD_GL32', # declare gl* as __declspec(dllexport) in Mesa headers
-        'WIN32_THREADS', # use Win32 thread API
     ])
     env.Prepend(CPPPATH = ['#src/talloc'])
 else:

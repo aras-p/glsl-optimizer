@@ -46,7 +46,7 @@ nv40_sampler_view_init(struct pipe_context *pipe,
 	struct nvfx_miptree* mt = (struct nvfx_miptree*)pt;
 	struct nvfx_texture_format *tf = &nvfx_texture_formats[sv->base.format];
 	unsigned txf;
-	unsigned level = pt->target == PIPE_TEXTURE_CUBE ? 0 : sv->base.first_level;
+	unsigned level = pt->target == PIPE_TEXTURE_CUBE ? 0 : sv->base.u.tex.first_level;
 	assert(tf->fmt[4] >= 0);
 
 	txf = sv->u.init_fmt;
@@ -54,7 +54,7 @@ nv40_sampler_view_init(struct pipe_context *pipe,
 	if(pt->target == PIPE_TEXTURE_CUBE)
 		txf |= ((pt->last_level + 1) << NV40_3D_TEX_FORMAT_MIPMAP_COUNT__SHIFT);
 	else
-		txf |= (((sv->base.last_level - sv->base.first_level) + 1) << NV40_3D_TEX_FORMAT_MIPMAP_COUNT__SHIFT);
+		txf |= (((sv->base.u.tex.last_level - sv->base.u.tex.first_level) + 1) << NV40_3D_TEX_FORMAT_MIPMAP_COUNT__SHIFT);
 
 	if (!mt->linear_pitch)
 		sv->u.nv40.npot_size2 = 0;
@@ -68,8 +68,8 @@ nv40_sampler_view_init(struct pipe_context *pipe,
 
 	sv->u.nv40.npot_size2 |= (u_minify(pt->depth0, level) << NV40_3D_TEX_SIZE1_DEPTH__SHIFT);
 
-	sv->lod_offset = (sv->base.first_level - level) * 256;
-	sv->max_lod_limit = (sv->base.last_level - level) * 256;
+	sv->lod_offset = (sv->base.u.tex.first_level - level) * 256;
+	sv->max_lod_limit = (sv->base.u.tex.last_level - level) * 256;
 }
 
 void

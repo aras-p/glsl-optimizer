@@ -92,6 +92,7 @@ struct program
 
 static void init_prog(struct program *p)
 {
+	struct pipe_surface surf_tmpl;
 	/* create the software rasterizer */
 	p->screen = sw_screen_create(null_sw_create());
 	/* wrap the screen with any debugger */
@@ -141,6 +142,7 @@ static void init_prog(struct program *p)
 		tmplt.width0 = WIDTH;
 		tmplt.height0 = HEIGHT;
 		tmplt.depth0 = 1;
+		tmplt.array_size = 1;
 		tmplt.last_level = 0;
 		tmplt.bind = PIPE_BIND_RENDER_TARGET;
 
@@ -153,7 +155,6 @@ static void init_prog(struct program *p)
 		struct pipe_transfer *t;
 		struct pipe_resource t_tmplt;
 		struct pipe_sampler_view v_tmplt;
-		struct pipe_subresource sub;
 		struct pipe_box box;
 
 		memset(&t_tmplt, 0, sizeof(t_tmplt));
@@ -162,17 +163,17 @@ static void init_prog(struct program *p)
 		t_tmplt.width0 = 2;
 		t_tmplt.height0 = 2;
 		t_tmplt.depth0 = 1;
+		t_tmplt.array_size = 1;
 		t_tmplt.last_level = 0;
 		t_tmplt.bind = PIPE_BIND_RENDER_TARGET;
 
 		p->tex = p->screen->resource_create(p->screen, &t_tmplt);
 
-		memset(&sub, 0, sizeof(sub));
 		memset(&box, 0, sizeof(box));
 		box.width = 2;
 		box.height = 2;
 
-		t = p->pipe->get_transfer(p->pipe, p->tex, sub, PIPE_TRANSFER_WRITE, &box);
+		t = p->pipe->get_transfer(p->pipe, p->tex, 0, PIPE_TRANSFER_WRITE, &box);
 
 		ptr = p->pipe->transfer_map(p->pipe, t);
 		ptr[0] = 0xffff0000;
@@ -210,12 +211,17 @@ static void init_prog(struct program *p)
 	p->sampler.mag_img_filter = PIPE_TEX_MIPFILTER_LINEAR;
 	p->sampler.normalized_coords = 1;
 
+	surf_tmpl.format = templat.format;
+	surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
+	surf_tmpl.u.tex.level = 0;
+	surf_tmpl.u.tex.first_layer = 0;
+	surf_tmpl.u.tex.last_layer = 0;
 	/* drawing destination */
 	memset(&p->framebuffer, 0, sizeof(p->framebuffer));
 	p->framebuffer.width = WIDTH;
 	p->framebuffer.height = HEIGHT;
 	p->framebuffer.nr_cbufs = 1;
-	p->framebuffer.cbufs[0] = p->screen->get_tex_surface(p->screen, p->target, 0, 0, 0, PIPE_BIND_RENDER_TARGET);
+	p->framebuffer.cbufs[0] = p->pipe->create_surface(p->pipe, p->target, &surf_tmpl);
 
 	/* viewport, depth isn't really needed */
 	{

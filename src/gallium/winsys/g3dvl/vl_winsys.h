@@ -61,7 +61,7 @@ vl_video_create(struct vl_screen *vscreen,
 void vl_video_destroy(struct vl_context *vctx);
 
 struct pipe_surface*
-vl_drawable_surface_get(struct vl_screen *vscreen, Drawable drawable);
+vl_drawable_surface_get(struct vl_context *vctx, Drawable drawable);
 
 void*
 vl_contextprivate_get(struct vl_context *vctx, struct pipe_surface *drawable_surface);

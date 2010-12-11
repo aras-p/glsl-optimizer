@@ -707,17 +707,13 @@ rbug_set_sample_mask(struct pipe_context *_pipe,
 static void
 rbug_resource_copy_region(struct pipe_context *_pipe,
                           struct pipe_resource *_dst,
-                          struct pipe_subresource subdst,
+                          unsigned dst_level,
                           unsigned dstx,
                           unsigned dsty,
                           unsigned dstz,
                           struct pipe_resource *_src,
-                          struct pipe_subresource subsrc,
-                          unsigned srcx,
-                          unsigned srcy,
-                          unsigned srcz,
-                          unsigned width,
-                          unsigned height)
+                          unsigned src_level,
+                          const struct pipe_box *src_box)
 {
    struct rbug_context *rb_pipe = rbug_context(_pipe);
    struct rbug_resource *rb_resource_dst = rbug_resource(_dst);
@@ -728,17 +724,13 @@ rbug_resource_copy_region(struct pipe_context *_pipe,
 
    pipe->resource_copy_region(pipe,
                               dst,
-                              subdst,
+                              dst_level,
                               dstx,
                               dsty,
                               dstz,
                               src,
-                              subsrc,
-                              srcx,
-                              srcy,
-                              srcz,
-                              width,
-                              height);
+                              src_level,
+                              src_box);
 }
 
 static void
@@ -820,8 +812,8 @@ rbug_flush(struct pipe_context *_pipe,
 static unsigned int
 rbug_is_resource_referenced(struct pipe_context *_pipe,
                             struct pipe_resource *_resource,
-                            unsigned face,
-                            unsigned level)
+                            unsigned level,
+                            int layer)
 {
    struct rbug_context *rb_pipe = rbug_context(_pipe);
    struct rbug_resource *rb_resource = rbug_resource(_resource);
@@ -830,8 +822,8 @@ rbug_is_resource_referenced(struct pipe_context *_pipe,
 
    return pipe->is_resource_referenced(pipe,
                                        resource,
-                                       face,
-                                       level);
+                                       level,
+                                       layer);
 }
 
 static struct pipe_sampler_view *
@@ -862,10 +854,40 @@ rbug_context_sampler_view_destroy(struct pipe_context *_pipe,
                              rbug_sampler_view(_view));
 }
 
+static struct pipe_surface *
+rbug_context_create_surface(struct pipe_context *_pipe,
+                            struct pipe_resource *_resource,
+                            const struct pipe_surface *surf_tmpl)
+{
+   struct rbug_context *rb_pipe = rbug_context(_pipe);
+   struct rbug_resource *rb_resource = rbug_resource(_resource);
+   struct pipe_context *pipe = rb_pipe->pipe;
+   struct pipe_resource *resource = rb_resource->resource;
+   struct pipe_surface *result;
+
+   result = pipe->create_surface(pipe,
+                                 resource,
+                                 surf_tmpl);
+
+   if (result)
+      return rbug_surface_create(rb_pipe, rb_resource, result);
+   return NULL;
+}
+
+static void
+rbug_context_surface_destroy(struct pipe_context *_pipe,
+                             struct pipe_surface *_surface)
+{
+   rbug_surface_destroy(rbug_context(_pipe),
+                        rbug_surface(_surface));
+}
+
+
+
 static struct pipe_transfer *
 rbug_context_get_transfer(struct pipe_context *_context,
                           struct pipe_resource *_resource,
-                          struct pipe_subresource sr,
+                          unsigned level,
                           unsigned usage,
                           const struct pipe_box *box)
 {
@@ -877,7 +899,7 @@ rbug_context_get_transfer(struct pipe_context *_context,
 
    result = context->get_transfer(context,
                                   resource,
-                                  sr,
+                                  level,
                                   usage,
                                   box);
 
@@ -942,12 +964,12 @@ rbug_context_transfer_unmap(struct pipe_context *_context,
 static void
 rbug_context_transfer_inline_write(struct pipe_context *_context,
                                    struct pipe_resource *_resource,
-                                   struct pipe_subresource sr,
+                                   unsigned level,
                                    unsigned usage,
                                    const struct pipe_box *box,
                                    const void *data,
                                    unsigned stride,
-                                   unsigned slice_stride)
+                                   unsigned layer_stride)
 {
    struct rbug_context *rb_pipe = rbug_context(_context);
    struct rbug_resource *rb_resource = rbug_resource(_resource);
@@ -956,12 +978,12 @@ rbug_context_transfer_inline_write(struct pipe_context *_context,
 
    context->transfer_inline_write(context,
                                   resource,
-                                  sr,
+                                  level,
                                   usage,
                                   box,
                                   data,
                                   stride,
-                                  slice_stride);
+                                  layer_stride);
 }
 
 
@@ -1042,6 +1064,8 @@ rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    rb_pipe->base.is_resource_referenced = rbug_is_resource_referenced;
    rb_pipe->base.create_sampler_view = rbug_context_create_sampler_view;
    rb_pipe->base.sampler_view_destroy = rbug_context_sampler_view_destroy;
+   rb_pipe->base.create_surface = rbug_context_create_surface;
+   rb_pipe->base.surface_destroy = rbug_context_surface_destroy;
    rb_pipe->base.get_transfer = rbug_context_get_transfer;
    rb_pipe->base.transfer_destroy = rbug_context_transfer_destroy;
    rb_pipe->base.transfer_map = rbug_context_transfer_map;

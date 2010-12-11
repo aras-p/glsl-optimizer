@@ -51,7 +51,7 @@
     int cs_count = 0; (void) cs_count; (void) cs_winsys;
 
 #define BEGIN_CS(size) do { \
-    assert(size <= (cs_copy->ndw - cs_copy->cdw)); \
+    assert(size <= (R300_MAX_CMDBUF_DWORDS - cs_copy->cdw)); \
     CS_DEBUG(cs_count = size;) \
 } while (0)
 
@@ -72,7 +72,7 @@
  */
 
 #define OUT_CS(value) do { \
-    cs_copy->ptr[cs_copy->cdw++] = (value); \
+    cs_copy->buf[cs_copy->cdw++] = (value); \
     CS_DEBUG(cs_count--;) \
 } while (0)
 
@@ -96,7 +96,7 @@
     OUT_CS(CP_PACKET3(op, count))
 
 #define OUT_CS_TABLE(values, count) do { \
-    memcpy(cs_copy->ptr + cs_copy->cdw, values, count * 4); \
+    memcpy(cs_copy->buf + cs_copy->cdw, values, count * 4); \
     cs_copy->cdw += count; \
     CS_DEBUG(cs_count -= count;) \
 } while (0)
@@ -115,17 +115,17 @@
 
 #define OUT_CS_BUF_RELOC(bo, offset, rd, wd) do { \
     assert(bo); \
-    OUT_CS_RELOC(r300_buffer(bo)->buf, offset, rd, wd); \
+    OUT_CS_RELOC(r300_buffer(bo)->cs_buf, offset, rd, wd); \
 } while (0)
 
 #define OUT_CS_TEX_RELOC(tex, offset, rd, wd) do { \
     assert(tex); \
-    OUT_CS_RELOC(tex->buffer, offset, rd, wd); \
+    OUT_CS_RELOC(tex->cs_buffer, offset, rd, wd); \
 } while (0)
 
 #define OUT_CS_BUF_RELOC_NO_OFFSET(bo, rd, wd) do { \
     assert(bo); \
-    cs_winsys->cs_write_reloc(cs_copy, r300_buffer(bo)->buf, rd, wd); \
+    cs_winsys->cs_write_reloc(cs_copy, r300_buffer(bo)->cs_buf, rd, wd); \
     CS_DEBUG(cs_count -= 2;) \
 } while (0)
 
@@ -136,7 +136,7 @@
 
 #define WRITE_CS_TABLE(values, count) do { \
     CS_DEBUG(assert(cs_count == 0);) \
-    memcpy(cs_copy->ptr + cs_copy->cdw, (values), (count) * 4); \
+    memcpy(cs_copy->buf + cs_copy->cdw, (values), (count) * 4); \
     cs_copy->cdw += (count); \
 } while (0)
 

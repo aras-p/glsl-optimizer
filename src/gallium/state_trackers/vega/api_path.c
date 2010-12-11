@@ -479,6 +479,7 @@ void vegaDrawPath(VGPath path, VGbitfield paintModes)
 
    if (path_is_empty((struct path*)path))
       return;
-   path_render((struct path*)path, paintModes);
+   path_render((struct path*)path, paintModes,
+         &ctx->state.vg.path_user_to_surface_matrix);
 }
 

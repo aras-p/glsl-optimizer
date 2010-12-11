@@ -84,7 +84,14 @@ in the result register. For example, ``swizzle_r`` specifies what is going to be
 placed in first component of result register.
 
 The ``first_level`` and ``last_level`` fields of sampler view template specify
-the LOD range the texture is going to be constrained to.
+the LOD range the texture is going to be constrained to. Note that these
+values are in addition to the respective min_lod, max_lod values in the
+pipe_sampler_state (that is if min_lod is 2.0, and first_level 3, the first mip
+level used for sampling from the resource is effectively the fifth).
+
+The ``first_layer`` and ``last_layer`` fields specify the layer range the
+texture is going to be constrained to. Similar to the LOD range, this is added
+to the array index which is used for sampling.
 
 * ``set_fragment_sampler_views`` binds an array of sampler views to
   fragment shader stage. Every binding point acquires a reference
@@ -103,6 +110,22 @@ the LOD range the texture is going to be constrained to.
 * ``sampler_view_destroy`` destroys a sampler view and releases its reference
   to associated texture.
 
+Surfaces
+^^^^^^^^
+
+These are the means to use resources as color render targets or depthstencil
+attachments. To create one, specify the mip level, the range of layers, and
+the bind flags (either PIPE_BIND_DEPTH_STENCIL or PIPE_BIND_RENDER_TARGET).
+Note that layer values are in addition to what is indicated by the geometry
+shader output variable XXX_FIXME (that is if first_layer is 3 and geometry
+shader indicates index 2, the 5th layer of the resource will be used). These
+first_layer and last_layer parameters will only be used for 1d array, 2d array,
+cube, and 3d textures otherwise they are 0.
+
+* ``create_surface`` creates a new surface.
+
+* ``surface_destroy`` destroys a surface and releases its reference to the
+  associated resource.
 
 Clearing
 ^^^^^^^^
@@ -118,8 +141,7 @@ used by GL), and always clears the whole surfaces (no scissoring as used by
 GL clear or explicit rectangles like d3d9 uses). It can, however, also clear
 only depth or stencil in a combined depth/stencil surface, if the driver
 supports PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE.
-If a surface includes several layers/slices (XXX: not yet...) then all layers
-will be cleared.
+If a surface includes several layers then all layers will be cleared.
 
 ``clear_render_target`` clears a single color rendertarget with the specified
 color value. While it is only possible to clear one surface at a time (which can
@@ -271,12 +293,12 @@ These methods operate directly on ``pipe_resource`` objects, and stand
 apart from any 3D state in the context.  Blitting functionality may be
 moved to a separate abstraction at some point in the future.
 
-``resource_copy_region`` blits a region of a subresource of a resource to a
-region of another subresource of a resource, provided that both resources have
-the same format, or compatible formats, i.e., formats for which copying the
-bytes from the source resource unmodified to the destination resource will
-achieve the same effect of a textured quad blitter. The source and destination
-may be the same resource, but overlapping blits are not permitted.
+``resource_copy_region`` blits a region of a resource to a region of another
+resource, provided that both resources have the same format, or compatible
+formats, i.e., formats for which copying the bytes from the source resource
+unmodified to the destination resource will achieve the same effect of a
+textured quad blitter.. The source and destination may be the same resource,
+but overlapping blits are not permitted.
 
 ``resource_resolve`` resolves a multisampled resource into a non-multisampled
 one. Formats and dimensions must match. This function must be present if a driver

@@ -153,6 +153,18 @@ sp_mpeg12_get_param(struct pipe_video_context *vpipe, int param)
    }
 }
 
+static struct pipe_surface *
+sp_mpeg12_create_surface(struct pipe_video_context *vpipe,
+                         struct pipe_resource *resource,
+                         const struct pipe_surface *templat)
+{
+   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+
+   assert(vpipe);
+
+   return ctx->pipe->create_surface(ctx->pipe, resource, templat);
+}
+
 static boolean
 sp_mpeg12_is_format_supported(struct pipe_video_context *vpipe,
                               enum pipe_format format,
@@ -228,26 +240,27 @@ sp_mpeg12_surface_copy(struct pipe_video_context *vpipe,
    assert(vpipe);
    assert(dst);
 
-   struct pipe_subresource subdst, subsrc;
-   subdst.face = dst->face;
-   subdst.level = dst->level;
-   subsrc.face = src->face;
-   subsrc.level = src->level;
+   struct pipe_box box;
+   box.x = srcx;
+   box.y = srcy;
+   box.z = 0;
+   box.width = width;
+   box.height = height;
 
    if (ctx->pipe->resource_copy_region)
-      ctx->pipe->resource_copy_region(ctx->pipe, dst->texture, subdst, dstx, dsty, dst->zslice,
-                                      src->texture, subsrc, srcx, srcy, src->zslice,
-                                      width, height);
+      ctx->pipe->resource_copy_region(ctx->pipe, dst->texture, dst->u.tex.level,
+                                      dstx, dsty, dst->u.tex.first_layer,
+                                      src->texture, src->u.tex.level, &box);
    else
-      util_resource_copy_region(ctx->pipe, dst->texture, subdst, dstx, dsty, dst->zslice,
-                                src->texture, subsrc, srcx, srcy, src->zslice,
-                                width, height);
+      util_resource_copy_region(ctx->pipe, dst->texture, dst->u.tex.level,
+                                dstx, dsty, dst->u.tex.first_layer,
+                                src->texture, src->u.tex.level, &box);
 }
 
 static struct pipe_transfer*
 sp_mpeg12_get_transfer(struct pipe_video_context *vpipe,
                        struct pipe_resource *resource,
-                       struct pipe_subresource subresource,
+                       unsigned level,
                        unsigned usage,  /* a combination of PIPE_TRANSFER_x */
                        const struct pipe_box *box)
 {
@@ -257,7 +270,7 @@ sp_mpeg12_get_transfer(struct pipe_video_context *vpipe,
    assert(resource);
    assert(box);
 
-   return ctx->pipe->get_transfer(ctx->pipe, resource, subresource, usage, box);
+   return ctx->pipe->get_transfer(ctx->pipe, resource, level, usage, box);
 }
 
 static void
@@ -313,7 +326,7 @@ sp_mpeg12_transfer_unmap(struct pipe_video_context *vpipe,
 static void
 sp_mpeg12_transfer_inline_write(struct pipe_video_context *vpipe,
                                 struct pipe_resource *resource,
-                                struct pipe_subresource subresource,
+                                unsigned level,
                                 unsigned usage, /* a combination of PIPE_TRANSFER_x */
                                 const struct pipe_box *box,
                                 const void *data,
@@ -328,7 +341,7 @@ sp_mpeg12_transfer_inline_write(struct pipe_video_context *vpipe,
    assert(data);
    assert(ctx->pipe->transfer_inline_write);
 
-   ctx->pipe->transfer_inline_write(ctx->pipe, resource, subresource, usage,
+   ctx->pipe->transfer_inline_write(ctx->pipe, resource, level, usage,
                                     box, data, stride, slice_stride);
 }
 
@@ -528,6 +541,7 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
    ctx->base.destroy = sp_mpeg12_destroy;
    ctx->base.get_param = sp_mpeg12_get_param;
    ctx->base.is_format_supported = sp_mpeg12_is_format_supported;
+   ctx->base.create_surface = sp_mpeg12_create_surface;
    ctx->base.decode_macroblocks = sp_mpeg12_decode_macroblocks;
    ctx->base.render_picture = sp_mpeg12_render_picture;
    ctx->base.surface_fill = sp_mpeg12_surface_fill;

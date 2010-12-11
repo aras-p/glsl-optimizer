@@ -56,7 +56,7 @@ struct st_framebuffer {
    struct st_renderbuffer *strb;
    struct st_renderbuffer *dsrb;
 
-   struct pipe_sampler_view *alpha_mask_view;
+   struct pipe_sampler_view *surface_mask_view;
 
    struct pipe_sampler_view *blend_texture_view;
 
@@ -78,14 +78,13 @@ enum vg_object_type {
    VG_OBJECT_LAST
 };
 enum dirty_state {
-   NONE_DIRTY          = 0<<0,
-   BLEND_DIRTY         = 1<<1,
-   RASTERIZER_DIRTY    = 1<<2,
-   VIEWPORT_DIRTY      = 1<<3,
-   VS_DIRTY            = 1<<4,
-   DEPTH_STENCIL_DIRTY = 1<<5,
-   ALL_DIRTY           = BLEND_DIRTY | RASTERIZER_DIRTY |
-   VIEWPORT_DIRTY | VS_DIRTY | DEPTH_STENCIL_DIRTY
+   BLEND_DIRTY         = 1 << 0,
+   FRAMEBUFFER_DIRTY   = 1 << 1,
+   DEPTH_STENCIL_DIRTY = 1 << 2,
+
+   ALL_DIRTY           = BLEND_DIRTY |
+                         FRAMEBUFFER_DIRTY |
+                         DEPTH_STENCIL_DIRTY
 };
 
 struct vg_context
@@ -98,13 +97,6 @@ struct vg_context
 
    struct {
       struct vg_state vg;
-      struct {
-         struct pipe_blend_state blend;
-         struct pipe_rasterizer_state rasterizer;
-         struct pipe_shader_state vs_state;
-         struct pipe_depth_stencil_alpha_state dsa;
-         struct pipe_framebuffer_state fb;
-      } g3d;
       VGbitfield dirty;
    } state;
 
@@ -116,14 +108,6 @@ struct vg_context
    struct cso_hash *owned_objects[VG_OBJECT_LAST];
 
    struct {
-      struct pipe_shader_state vert_shader;
-      struct pipe_shader_state frag_shader;
-      struct pipe_rasterizer_state raster;
-      void *fs;
-      float vertices[4][2][4];  /**< vertex pos + color */
-   } clear;
-
-   struct {
       struct pipe_resource *cbuf;
       struct pipe_sampler_state sampler;
 
@@ -133,31 +117,16 @@ struct vg_context
       struct vg_shader *set_fs;
    } mask;
 
-   struct vg_shader *pass_through_depth_fs;
-
    struct cso_context *cso_context;
-
-   struct pipe_resource *stencil_quad;
-   VGfloat stencil_vertices[4][2][4];
 
    struct renderer *renderer;
    struct shaders_cache *sc;
    struct shader *shader;
 
    struct pipe_sampler_state blend_sampler;
-   struct {
-      struct pipe_resource *buffer;
-      void *color_matrix_fs;
-   } filter;
    struct vg_paint *default_paint;
 
    struct blit_state *blit;
-
-   struct vg_shader *plain_vs;
-   struct vg_shader *clear_vs;
-   struct vg_shader *texture_vs;
-   struct pipe_resource *vs_const_buffer;
-   struct pipe_vertex_element velems[2];
 };
 
 struct vg_object {
@@ -189,9 +158,15 @@ void vg_validate_state(struct vg_context *ctx);
 void vg_set_error(struct vg_context *ctx,
                   VGErrorCode code);
 
-void vg_prepare_blend_surface(struct vg_context *ctx);
-void vg_prepare_blend_surface_from_mask(struct vg_context *ctx);
+struct pipe_sampler_view *vg_prepare_blend_surface(struct vg_context *ctx);
+struct pipe_sampler_view *vg_prepare_blend_surface_from_mask(struct vg_context *ctx);
 
+struct pipe_sampler_view *vg_get_surface_mask(struct vg_context *ctx);
+
+VGboolean vg_get_paint_matrix(struct vg_context *ctx,
+                              const struct matrix *paint_to_user,
+                              const struct matrix *user_to_surface,
+                              struct matrix *mat);
 
 static INLINE VGboolean is_aligned_to(const void *ptr, VGbyte alignment)
 {
@@ -291,14 +266,5 @@ static INLINE void vg_bound_rect(VGfloat coords[4],
       return;
    }
 }
-
-void *vg_plain_vs(struct vg_context *ctx);
-void *vg_clear_vs(struct vg_context *ctx);
-void *vg_texture_vs(struct vg_context *ctx);
-typedef enum {
-   VEGA_Y0_TOP,
-   VEGA_Y0_BOTTOM
-} VegaOrientation;
-void vg_set_viewport(struct vg_context *ctx, VegaOrientation orientation);
 
 #endif

@@ -216,6 +216,8 @@ st_translate_vertex_program(struct st_context *st,
       return NULL;
    }
 
+   vpv->key = *key;
+
    vpv->num_inputs = stvp->num_inputs;
    num_outputs = stvp->num_outputs;
    if (key->passthrough_edgeflags) {

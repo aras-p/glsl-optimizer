@@ -170,6 +170,11 @@ struct st_context *st_create_context(gl_api api, struct pipe_context *pipe,
    struct gl_context *shareCtx = share ? share->ctx : NULL;
    struct dd_function_table funcs;
 
+   /* Sanity checks */
+   assert(MESA_SHADER_VERTEX == PIPE_SHADER_VERTEX);
+   assert(MESA_SHADER_FRAGMENT == PIPE_SHADER_FRAGMENT);
+   assert(MESA_SHADER_GEOMETRY == PIPE_SHADER_GEOMETRY);
+
    memset(&funcs, 0, sizeof(funcs));
    st_init_driver_functions(&funcs);
 
@@ -239,8 +244,8 @@ void st_destroy_context( struct st_context *st )
    pipe->set_index_buffer(pipe, NULL);
 
    for (i = 0; i < PIPE_SHADER_TYPES; i++) {
-      pipe->set_constant_buffer(pipe, PIPE_SHADER_VERTEX, 0, NULL);
-      pipe_resource_reference(&st->state.constants[PIPE_SHADER_VERTEX], NULL);
+      pipe->set_constant_buffer(pipe, i, 0, NULL);
+      pipe_resource_reference(&st->state.constants[i], NULL);
    }
 
    _mesa_delete_program_cache(st->ctx, st->pixel_xfer.cache);

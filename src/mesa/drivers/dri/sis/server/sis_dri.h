@@ -72,13 +72,4 @@ typedef struct {
   int dummy;
 } SISDRIContextRec, *SISDRIContextPtr;
 
-#ifdef XFree86Server
-
-#include "screenint.h"
-
-Bool SISDRIScreenInit(ScreenPtr pScreen);
-void SISDRICloseScreen(ScreenPtr pScreen);
-Bool SISDRIFinishScreenInit(ScreenPtr pScreen);
-
-#endif
 #endif

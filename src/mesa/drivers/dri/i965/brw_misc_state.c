@@ -38,40 +38,6 @@
 #include "brw_state.h"
 #include "brw_defines.h"
 
-
-
-
-
-/***********************************************************************
- * Blend color
- */
-
-static void upload_blend_constant_color(struct brw_context *brw)
-{
-   struct gl_context *ctx = &brw->intel.ctx;
-   struct brw_blend_constant_color bcc;
-
-   memset(&bcc, 0, sizeof(bcc));      
-   bcc.header.opcode = CMD_BLEND_CONSTANT_COLOR;
-   bcc.header.length = sizeof(bcc)/4-2;
-   bcc.blend_constant_color[0] = ctx->Color.BlendColor[0];
-   bcc.blend_constant_color[1] = ctx->Color.BlendColor[1];
-   bcc.blend_constant_color[2] = ctx->Color.BlendColor[2];
-   bcc.blend_constant_color[3] = ctx->Color.BlendColor[3];
-
-   BRW_CACHED_BATCH_STRUCT(brw, &bcc);
-}
-
-
-const struct brw_tracked_state brw_blend_constant_color = {
-   .dirty = {
-      .mesa = _NEW_COLOR,
-      .brw = BRW_NEW_CONTEXT,
-      .cache = 0
-   },
-   .emit = upload_blend_constant_color
-};
-
 /* Constant single cliprect for framebuffer object or DRI2 drawing */
 static void upload_drawing_rect(struct brw_context *brw)
 {
@@ -339,6 +305,9 @@ static void upload_polygon_stipple(struct brw_context *brw)
    struct brw_polygon_stipple bps;
    GLuint i;
 
+   if (!ctx->Polygon.StippleFlag)
+      return;
+
    memset(&bps, 0, sizeof(bps));
    bps.header.opcode = CMD_POLY_STIPPLE_PATTERN;
    bps.header.length = sizeof(bps)/4-2;
@@ -381,6 +350,9 @@ static void upload_polygon_stipple_offset(struct brw_context *brw)
    struct gl_context *ctx = &brw->intel.ctx;
    struct brw_polygon_stipple_offset bpso;
 
+   if (!ctx->Polygon.StippleFlag)
+      return;
+
    memset(&bpso, 0, sizeof(bpso));
    bpso.header.opcode = CMD_POLY_STIPPLE_OFFSET;
    bpso.header.length = sizeof(bpso)/4-2;
@@ -409,7 +381,7 @@ static void upload_polygon_stipple_offset(struct brw_context *brw)
 
 const struct brw_tracked_state brw_polygon_stipple_offset = {
    .dirty = {
-      .mesa = _NEW_WINDOW_POS,
+      .mesa = _NEW_WINDOW_POS | _NEW_POLYGONSTIPPLE,
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
@@ -421,9 +393,10 @@ const struct brw_tracked_state brw_polygon_stipple_offset = {
  */
 static void upload_aa_line_parameters(struct brw_context *brw)
 {
+   struct gl_context *ctx = &brw->intel.ctx;
    struct brw_aa_line_parameters balp;
 
-   if (!brw->has_aa_line_parameters)
+   if (!ctx->Line.SmoothFlag || !brw->has_aa_line_parameters)
       return;
 
    /* use legacy aa line coverage computation */
@@ -436,7 +409,7 @@ static void upload_aa_line_parameters(struct brw_context *brw)
 
 const struct brw_tracked_state brw_aa_line_parameters = {
    .dirty = {
-      .mesa = 0,
+      .mesa = _NEW_LINE,
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
@@ -453,6 +426,9 @@ static void upload_line_stipple(struct brw_context *brw)
    struct brw_line_stipple bls;
    GLfloat tmp;
    GLint tmpi;
+
+   if (!ctx->Line.StippleFlag)
+      return;
 
    memset(&bls, 0, sizeof(bls));
    bls.header.opcode = CMD_LINE_STIPPLE_PATTERN;
