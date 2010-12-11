@@ -102,6 +102,15 @@ API_XML = \
 
 COMMON = $(API_XML) gl_XML.py glX_XML.py license.py typeexpr.py
 
+COMMON_ES = \
+	$(COMMON) \
+	gl_and_es_API.xml \
+	es_EXT.xml \
+	ARB_ES2_compatibility.xml \
+	ARB_get_program_binary.xml \
+	OES_fixed_point.xml \
+	OES_single_precision.xml
+
 COMMON_GLX = $(COMMON) glX_API.xml glX_XML.py glX_proto_common.py
 
 ######################################################################
