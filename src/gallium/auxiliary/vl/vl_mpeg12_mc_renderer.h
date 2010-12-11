@@ -55,8 +55,7 @@ struct vl_mpeg12_mc_renderer
    enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode;
    unsigned macroblocks_per_batch;
 
-   unsigned pos_stride;
-   unsigned mv_stride[4];
+   unsigned vertex_stream_stride;
 
    struct pipe_viewport_state viewport;
    struct pipe_framebuffer_state fb_state;
@@ -83,8 +82,7 @@ struct vl_mpeg12_mc_buffer
 {
    struct vl_idct_buffer idct_y, idct_cb, idct_cr;
 
-   struct vl_vertex_buffer pos;
-   struct vl_vertex_buffer mv[4];
+   struct vl_vertex_buffer vertex_stream;
 
    union
    {
@@ -100,9 +98,9 @@ struct vl_mpeg12_mc_buffer
 
    union
    {
-      struct pipe_vertex_buffer all[6];
+      struct pipe_vertex_buffer all[2];
       struct {
-         struct pipe_vertex_buffer quad, pos, mv[4];
+         struct pipe_vertex_buffer quad, stream;
       } individual;
    } vertex_bufs;
 

@@ -43,7 +43,7 @@
 #define BLOCK_WIDTH 8
 #define BLOCK_HEIGHT 8
 
-struct vertex_stream_0
+struct vertex_stream
 {
    struct vertex2f pos;
    struct {
@@ -55,6 +55,7 @@ struct vertex_stream_0
    float frame_pred;
    float ref_frames;
    float bkwd_pred;
+   struct vertex2f mv[4];
 };
 
 enum VS_INPUT
@@ -584,13 +585,11 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    /* forward=0.0f backward=1.0f */
    vertex_elems[VS_I_BKWD_PRED].src_format = PIPE_FORMAT_R32_FLOAT;
 
-   r->pos_stride = vl_vb_element_helper(&vertex_elems[VS_I_VPOS], 9, 1);
-
-   for (i = 0; i < 4; ++i) {
+   for (i = 0; i < 4; ++i)
       /* motion vector 0..4 element */
       vertex_elems[VS_I_MV0 + i].src_format = PIPE_FORMAT_R32G32_FLOAT;
-      r->mv_stride[i] = vl_vb_element_helper(&vertex_elems[VS_I_MV0 + i], 1, i + 2);
-   }
+
+   r->vertex_stream_stride = vl_vb_element_helper(&vertex_elems[VS_I_VPOS], 13, 1);
 
    r->vertex_elems_state = r->pipe->create_vertex_elements_state(
       r->pipe, NUM_VS_INPUTS, vertex_elems);
@@ -734,49 +733,45 @@ grab_vectors(struct vl_mpeg12_mc_renderer *r,
              struct vl_mpeg12_mc_buffer *buffer,
              struct pipe_mpeg12_macroblock *mb)
 {
-   struct vertex2f mv[4];
-   struct vertex_stream_0 info;
+   struct vertex_stream stream;
 
    unsigned i, j;
 
    assert(r);
    assert(mb);
 
-   info.pos.x = mb->mbx;
-   info.pos.y = mb->mby;
+   stream.pos.x = mb->mbx;
+   stream.pos.y = mb->mby;
    for ( i = 0; i < 2; ++i) {
       for ( j = 0; j < 2; ++j) {
-         info.eb[i][j].y = empty_block(r->chroma_format, mb->cbp, 0, j, i);
-         info.eb[i][j].cr = empty_block(r->chroma_format, mb->cbp, 1, j, i);
-         info.eb[i][j].cb = empty_block(r->chroma_format, mb->cbp, 2, j, i);         
+         stream.eb[i][j].y = empty_block(r->chroma_format, mb->cbp, 0, j, i);
+         stream.eb[i][j].cr = empty_block(r->chroma_format, mb->cbp, 1, j, i);
+         stream.eb[i][j].cb = empty_block(r->chroma_format, mb->cbp, 2, j, i);         
       }
    }
-   info.interlaced = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD ? 1.0f : 0.0f;
-   info.frame_pred = mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME ? 1.0f : 0.0f;
-   info.bkwd_pred = mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BKWD ? 1.0f : 0.0f;
+   stream.interlaced = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD ? 1.0f : 0.0f;
+   stream.frame_pred = mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME ? 1.0f : 0.0f;
+   stream.bkwd_pred = mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BKWD ? 1.0f : 0.0f;
    switch (mb->mb_type) {
       case PIPE_MPEG12_MACROBLOCK_TYPE_INTRA:
-         info.ref_frames = -1.0f;
+         stream.ref_frames = -1.0f;
          break;
 
       case PIPE_MPEG12_MACROBLOCK_TYPE_FWD:
       case PIPE_MPEG12_MACROBLOCK_TYPE_BKWD:
-         info.ref_frames = 1.0f;
+         stream.ref_frames = 1.0f;
          break;
         
       case PIPE_MPEG12_MACROBLOCK_TYPE_BI:
-         info.ref_frames = 0.0f;
+         stream.ref_frames = 0.0f;
          break;
 
       default:
          assert(0);
    }
 
-   vl_vb_add_block(&buffer->pos, (float*)&info);
-
-   get_motion_vectors(mb, mv);
-   for ( j = 0; j < 4; ++j )
-      vl_vb_add_block(&buffer->mv[j], (float*)&mv[j]);
+   get_motion_vectors(mb, stream.mv);
+   vl_vb_add_block(&buffer->vertex_stream, (float*)&stream);
 }
 
 static void
@@ -961,17 +956,10 @@ vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg1
    buffer->vertex_bufs.individual.quad.buffer_offset = renderer->quad.buffer_offset;
    pipe_resource_reference(&buffer->vertex_bufs.individual.quad.buffer, renderer->quad.buffer);
 
-   buffer->vertex_bufs.individual.pos = vl_vb_init(
-      &buffer->pos, renderer->pipe, renderer->macroblocks_per_batch, 
-      sizeof(struct vertex_stream_0) / sizeof(float),
-      renderer->pos_stride);
-
-   for (i = 0; i < 4; ++i) {
-      buffer->vertex_bufs.individual.mv[i] = vl_vb_init(
-         &buffer->mv[i], renderer->pipe, renderer->macroblocks_per_batch,
-         sizeof(struct vertex2f) / sizeof(float),
-         renderer->mv_stride[i]);
-   }
+   buffer->vertex_bufs.individual.stream = vl_vb_init(
+      &buffer->vertex_stream, renderer->pipe, renderer->macroblocks_per_batch, 
+      sizeof(struct vertex_stream) / sizeof(float),
+      renderer->vertex_stream_stride);
 
    return true;
 }
@@ -990,9 +978,7 @@ vl_mpeg12_mc_cleanup_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mp
    }
 
    pipe_resource_reference(&buffer->vertex_bufs.individual.quad.buffer, NULL);
-   vl_vb_cleanup(&buffer->pos);
-   for (i = 0; i < 4; ++i)
-      vl_vb_cleanup(&buffer->mv[i]);
+   vl_vb_cleanup(&buffer->vertex_stream);
 
    vl_idct_cleanup_buffer(&renderer->idct_luma, &buffer->idct_y);
    vl_idct_cleanup_buffer(&renderer->idct_chroma, &buffer->idct_cb);
@@ -1006,17 +992,13 @@ vl_mpeg12_mc_cleanup_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mp
 void
 vl_mpeg12_mc_map_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer)
 {
-   unsigned i;
-
    assert(renderer && buffer);
 
    vl_idct_map_buffers(&renderer->idct_luma, &buffer->idct_y);
    vl_idct_map_buffers(&renderer->idct_chroma, &buffer->idct_cr);
    vl_idct_map_buffers(&renderer->idct_chroma, &buffer->idct_cb);
 
-   vl_vb_map(&buffer->pos, renderer->pipe);
-   for(i = 0; i < 4; ++i)
-      vl_vb_map(&buffer->mv[i], renderer->pipe);
+   vl_vb_map(&buffer->vertex_stream, renderer->pipe);
 }
 
 void
@@ -1071,24 +1053,18 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer *renderer,
 void
 vl_mpeg12_mc_unmap_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer)
 {
-   unsigned i;
-
    assert(renderer && buffer);
 
    vl_idct_unmap_buffers(&renderer->idct_luma, &buffer->idct_y);
    vl_idct_unmap_buffers(&renderer->idct_chroma, &buffer->idct_cr);
    vl_idct_unmap_buffers(&renderer->idct_chroma, &buffer->idct_cb);
 
-   vl_vb_unmap(&buffer->pos, renderer->pipe);
-   for(i = 0; i < 4; ++i)
-      vl_vb_unmap(&buffer->mv[i], renderer->pipe);
+   vl_vb_unmap(&buffer->vertex_stream, renderer->pipe);
 }
 
 void
 vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer)
 {
-   unsigned i;
-
    assert(renderer && buffer);
    assert(buffer->num_macroblocks <= renderer->macroblocks_per_batch);
 
@@ -1099,15 +1075,13 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mp
    vl_idct_flush(&renderer->idct_chroma, &buffer->idct_cr);
    vl_idct_flush(&renderer->idct_chroma, &buffer->idct_cb);
 
-   vl_vb_restart(&buffer->pos);
-   for(i = 0; i < 4; ++i)
-      vl_vb_restart(&buffer->mv[i]);
+   vl_vb_restart(&buffer->vertex_stream);
 
    renderer->fb_state.cbufs[0] = buffer->surface;
    renderer->pipe->bind_rasterizer_state(renderer->pipe, renderer->rs_state);
    renderer->pipe->set_framebuffer_state(renderer->pipe, &renderer->fb_state);
    renderer->pipe->set_viewport_state(renderer->pipe, &renderer->viewport);
-   renderer->pipe->set_vertex_buffers(renderer->pipe, 6, buffer->vertex_bufs.all);
+   renderer->pipe->set_vertex_buffers(renderer->pipe, 2, buffer->vertex_bufs.all);
    renderer->pipe->bind_vertex_elements_state(renderer->pipe, renderer->vertex_elems_state);
 
    if (buffer->past) {
