@@ -78,8 +78,8 @@ nvc0_vertprog_validate(struct nvc0_context *nvc0)
 
    // BEGIN_RING(chan, RING_3D_(0x163c), 1);
    // OUT_RING  (chan, 0);
-   // BEGIN_RING(chan, RING_3D_(0x2600), 1);
-   // OUT_RING  (chan, 1);
+   BEGIN_RING(chan, RING_3D(VERT_COLOR_CLAMP_EN), 1);
+   OUT_RING  (chan, 1);
 }
 
 void
