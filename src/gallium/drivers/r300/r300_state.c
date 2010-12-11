@@ -1496,14 +1496,14 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
                 any_user_buffer = TRUE;
             }
 
+            /* The stride of zero means we will be fetching only the first
+             * vertex, so don't care about max_index. */
+            if (!vbo->stride)
+                continue;
+
             if (vbo->max_index == ~0) {
-                /* if no VBO stride then only one vertex value so max index is 1 */
-                /* should think about converting to VS constants like svga does */
-                if (!vbo->stride)
-                    vbo->max_index = 1;
-                else
-                    vbo->max_index =
-                             (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
+                vbo->max_index =
+                        (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
             }
 
             max_index = MIN2(vbo->max_index, max_index);
