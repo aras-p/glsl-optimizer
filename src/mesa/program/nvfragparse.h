@@ -30,7 +30,10 @@
 #ifndef NVFRAGPARSE_H
 #define NVFRAGPARSE_H
 
-#include "main/mtypes.h"
+#include "main/glheader.h"
+
+struct gl_context;
+struct gl_fragment_program;
 
 extern void
 _mesa_parse_nv_fragment_program(struct gl_context *ctx, GLenum target,
