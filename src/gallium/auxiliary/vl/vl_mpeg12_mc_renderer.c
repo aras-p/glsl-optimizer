@@ -206,6 +206,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
          ureg_scalar(vrect, TGSI_SWIZZLE_Y),
          ureg_imm1f(shader, MACROBLOCK_HEIGHT / 2));
 
+   ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
    ureg_ENDIF(shader);
 
    ureg_CMP(shader, ureg_writemask(o_eb[0], TGSI_WRITEMASK_XYZ),
@@ -319,6 +320,7 @@ fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct
             ureg_TEX(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), TGSI_TEXTURE_3D, tc[2], sampler[i]);
          }
 
+      ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
       ureg_ENDIF(shader);
    }
 
@@ -366,10 +368,13 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
           */
          ureg_IF(shader, bkwd_pred, &label);
             ureg_TEX(shader, result, TGSI_TEXTURE_2D, ureg_src(tmp), sampler[1]);
+         ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
          ureg_ELSE(shader, &label);
             ureg_TEX(shader, result, TGSI_TEXTURE_2D, ureg_src(tmp), sampler[0]);
+         ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
          ureg_ENDIF(shader);
 
+      ureg_fixup_label(shader, bi_label, ureg_get_instruction_number(shader));
       ureg_ELSE(shader, &bi_label);
 
          /*
@@ -388,7 +393,9 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
          ureg_LRP(shader, result, ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X),
             ureg_src(ref[0]), ureg_src(ref[1]));
 
+      ureg_fixup_label(shader, bi_label, ureg_get_instruction_number(shader));
       ureg_ENDIF(shader);
+   ureg_fixup_label(shader, intra_label, ureg_get_instruction_number(shader));
    ureg_ENDIF(shader);
 
    for (i = 0; i < 2; ++i)
