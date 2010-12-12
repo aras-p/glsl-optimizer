@@ -140,18 +140,15 @@ create_vert_shader(struct vl_idct *idct)
 }
 
 static void
-fetch_four(struct ureg_program *shader, struct ureg_dst m[2],
-           struct ureg_src tc, struct ureg_src sampler,
-           struct ureg_src start, bool right_side,
-           bool transposed, float size)
+calc_addr(struct ureg_program *shader, struct ureg_dst addr[2],
+          struct ureg_src tc, struct ureg_src start, bool right_side,
+          bool transposed, float size)
 {
-   struct ureg_dst t_tc;
    unsigned wm_start = (right_side == transposed) ? TGSI_WRITEMASK_X : TGSI_WRITEMASK_Y;
    unsigned wm_tc = (right_side == transposed) ? TGSI_WRITEMASK_Y : TGSI_WRITEMASK_X;
 
-   t_tc = ureg_DECL_temporary(shader);
-   m[0] = ureg_DECL_temporary(shader);
-   m[1] = ureg_DECL_temporary(shader);
+   addr[0] = ureg_DECL_temporary(shader);
+   addr[1] = ureg_DECL_temporary(shader);
 
    /*
     * t_tc.x = right_side ? start.x : tc.x
@@ -159,44 +156,58 @@ fetch_four(struct ureg_program *shader, struct ureg_dst m[2],
     * m[0..1] = tex(t_tc++, sampler)
     */
    if(!right_side) {
-      ureg_MOV(shader, ureg_writemask(t_tc, wm_start), ureg_scalar(start, TGSI_SWIZZLE_X));
-      ureg_MOV(shader, ureg_writemask(t_tc, wm_tc), ureg_scalar(tc, TGSI_SWIZZLE_Y));
+      ureg_MOV(shader, ureg_writemask(addr[0], wm_start), ureg_scalar(start, TGSI_SWIZZLE_X));
+      ureg_MOV(shader, ureg_writemask(addr[0], wm_tc), ureg_scalar(tc, TGSI_SWIZZLE_Y));
    } else {
-      ureg_MOV(shader, ureg_writemask(t_tc, wm_start), ureg_scalar(start, TGSI_SWIZZLE_Y));
-      ureg_MOV(shader, ureg_writemask(t_tc, wm_tc), ureg_scalar(tc, TGSI_SWIZZLE_X));
+      ureg_MOV(shader, ureg_writemask(addr[0], wm_start), ureg_scalar(start, TGSI_SWIZZLE_Y));
+      ureg_MOV(shader, ureg_writemask(addr[0], wm_tc), ureg_scalar(tc, TGSI_SWIZZLE_X));
    }
-   ureg_FRC(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Z), tc);
+   ureg_FRC(shader, ureg_writemask(addr[0], TGSI_WRITEMASK_Z), tc);
 
-   ureg_TEX(shader, m[0], TGSI_TEXTURE_3D, ureg_src(t_tc), sampler);
-   ureg_ADD(shader, ureg_writemask(t_tc, wm_start), ureg_src(t_tc), ureg_imm1f(shader, 1.0f / size));
-   ureg_TEX(shader, m[1], TGSI_TEXTURE_3D, ureg_src(t_tc), sampler);
+   ureg_ADD(shader, ureg_writemask(addr[1], wm_start), ureg_src(addr[0]), ureg_imm1f(shader, 1.0f / size));
+   ureg_MOV(shader, ureg_writemask(addr[1], wm_tc | TGSI_WRITEMASK_Z), ureg_src(addr[0]));
+}
 
-   ureg_release_temporary(shader, t_tc);
+static void
+increment_addr(struct ureg_program *shader, struct ureg_dst addr[2],
+               bool right_side, bool transposed, float size)
+{
+   unsigned wm_tc = (right_side == transposed) ? TGSI_WRITEMASK_Y : TGSI_WRITEMASK_X;
+
+   ureg_ADD(shader, ureg_writemask(addr[0], wm_tc),
+      ureg_src(addr[0]), ureg_imm1f(shader, 1.0f / size));
+   ureg_ADD(shader, ureg_writemask(addr[1], wm_tc),
+      ureg_src(addr[1]), ureg_imm1f(shader, 1.0f / size));
+}
+
+static void
+fetch_four(struct ureg_program *shader, struct ureg_dst m[2], struct ureg_dst addr[2], struct ureg_src sampler)
+{
+   m[0] = ureg_DECL_temporary(shader);
+   m[1] = ureg_DECL_temporary(shader);
+
+   ureg_TEX(shader, m[0], TGSI_TEXTURE_3D, ureg_src(addr[0]), sampler);
+   ureg_TEX(shader, m[1], TGSI_TEXTURE_3D, ureg_src(addr[1]), sampler);
 }
 
 static void
 matrix_mul(struct ureg_program *shader, struct ureg_dst dst, struct ureg_dst l[2], struct ureg_dst r[2])
 {
-   struct ureg_dst tmp[2];
-   unsigned i;
+   struct ureg_dst tmp;
 
-   for(i = 0; i < 2; ++i) {
-      tmp[i] = ureg_DECL_temporary(shader);
-   }
+   tmp = ureg_DECL_temporary(shader);
 
    /*
-    * tmp[0..1] = dot4(m[0][0..1], m[1][0..1])
-    * dst = tmp[0] + tmp[1]
+    * tmp.xy = dot4(m[0][0..1], m[1][0..1])
+    * dst = tmp.x + tmp.y
     */
-   ureg_DP4(shader, ureg_writemask(tmp[0], TGSI_WRITEMASK_X), ureg_src(l[0]), ureg_src(r[0]));
-   ureg_DP4(shader, ureg_writemask(tmp[1], TGSI_WRITEMASK_X), ureg_src(l[1]), ureg_src(r[1]));
+   ureg_DP4(shader, ureg_writemask(tmp, TGSI_WRITEMASK_X), ureg_src(l[0]), ureg_src(r[0]));
+   ureg_DP4(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y), ureg_src(l[1]), ureg_src(r[1]));
    ureg_ADD(shader, dst,
-      ureg_scalar(ureg_src(tmp[0]), TGSI_SWIZZLE_X),
-      ureg_scalar(ureg_src(tmp[1]), TGSI_SWIZZLE_X));
+      ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_X),
+      ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_Y));
 
-   for(i = 0; i < 2; ++i) {
-      ureg_release_temporary(shader, tmp[i]);
-   }
+   ureg_release_temporary(shader, tmp);
 }
 
 static void *
@@ -204,10 +215,9 @@ create_transpose_frag_shader(struct vl_idct *idct)
 {
    struct ureg_program *shader;
 
-   struct ureg_src block, tex, sampler[2];
-   struct ureg_src start[2];
+   struct ureg_src block, tex, start;
 
-   struct ureg_dst l[2], r[2];
+   struct ureg_dst laddr[2], l[2], r[2], raddr[2];
    struct ureg_dst tmp, fragment;
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
@@ -216,15 +226,12 @@ create_transpose_frag_shader(struct vl_idct *idct)
 
    block = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_BLOCK, TGSI_INTERPOLATE_LINEAR);
    tex = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX, TGSI_INTERPOLATE_CONSTANT);
+   start = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_START, TGSI_INTERPOLATE_CONSTANT);
 
-   sampler[0] = ureg_DECL_sampler(shader, 0);
-   sampler[1] = ureg_DECL_sampler(shader, 1);
-
-   start[0] = ureg_imm1f(shader, 0.0f);
-   start[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_START, TGSI_INTERPOLATE_CONSTANT);
-
-   fetch_four(shader, l, block, sampler[0], start[0], false, false, BLOCK_WIDTH / 4);
-   fetch_four(shader, r, tex, sampler[1], start[1], true, false, idct->buffer_height / 4);
+   calc_addr(shader, laddr, block, ureg_imm1f(shader, 0.0f), false, false, BLOCK_WIDTH / 4);
+   calc_addr(shader, raddr, tex, start, true, false, idct->buffer_height / 4);
+   fetch_four(shader, l, laddr, ureg_DECL_sampler(shader, 0));
+   fetch_four(shader, r, raddr, ureg_DECL_sampler(shader, 1));
 
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
@@ -233,8 +240,12 @@ create_transpose_frag_shader(struct vl_idct *idct)
    ureg_MUL(shader, fragment, ureg_src(tmp), ureg_imm1f(shader, STAGE2_SCALE));
 
    ureg_release_temporary(shader, tmp);
+   ureg_release_temporary(shader, laddr[0]);
+   ureg_release_temporary(shader, laddr[1]);
    ureg_release_temporary(shader, l[0]);
    ureg_release_temporary(shader, l[1]);
+   ureg_release_temporary(shader, raddr[0]);
+   ureg_release_temporary(shader, raddr[1]);
    ureg_release_temporary(shader, r[0]);
    ureg_release_temporary(shader, r[1]);
 
@@ -248,11 +259,10 @@ create_matrix_frag_shader(struct vl_idct *idct)
 {
    struct ureg_program *shader;
 
-   struct ureg_src tex, block, sampler[2];
-   struct ureg_src start[2];
+   struct ureg_src tex, block, start;
 
    struct ureg_dst l[4][2], r[2];
-   struct ureg_dst t_tc, tmp, fragment[NR_RENDER_TARGETS];
+   struct ureg_dst addr[2], fragment[NR_RENDER_TARGETS];
 
    unsigned i, j;
 
@@ -260,41 +270,31 @@ create_matrix_frag_shader(struct vl_idct *idct)
    if (!shader)
       return NULL;
 
-   t_tc = ureg_DECL_temporary(shader);
-   tmp = ureg_DECL_temporary(shader);
-
    tex = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX, TGSI_INTERPOLATE_LINEAR);
    block = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_BLOCK, TGSI_INTERPOLATE_LINEAR);
-
-   sampler[0] = ureg_DECL_sampler(shader, 1);
-   sampler[1] = ureg_DECL_sampler(shader, 0);
-
-   start[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_START, TGSI_INTERPOLATE_CONSTANT);
-   start[1] = ureg_imm1f(shader, 0.0f);
+   start = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_START, TGSI_INTERPOLATE_CONSTANT);
 
    for (i = 0; i < NR_RENDER_TARGETS; ++i)
        fragment[i] = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, i);
 
    for (i = 0; i < 4; ++i) {
       if(i == 0)
-         ureg_MOV(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Y), tex);
+         calc_addr(shader, addr, tex, start, false, false, idct->buffer_width / 4);
       else
-         ureg_ADD(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Y), 
-            ureg_src(t_tc), ureg_imm1f(shader, 1.0f / idct->buffer_height));
+         increment_addr(shader, addr, false, false, idct->buffer_height);
 
-      fetch_four(shader, l[i], ureg_src(t_tc), sampler[0], start[0], false, false, idct->buffer_width / 4);
+      fetch_four(shader, l[i], addr, ureg_DECL_sampler(shader, 1));
    }
+   ureg_release_temporary(shader, addr[0]);
+   ureg_release_temporary(shader, addr[1]);
    
    for (i = 0; i < NR_RENDER_TARGETS; ++i) {
+      if (i == 0)
+         calc_addr(shader, addr, block, ureg_imm1f(shader, 0.0f), true, true, BLOCK_WIDTH / 4);
+      else
+         increment_addr(shader, addr, true, true, BLOCK_HEIGHT);
 
-#if NR_RENDER_TARGETS == 1
-      fetch_four(shader, r, block, sampler[1], start[1], true, true, BLOCK_WIDTH / 4);
-#else
-      ureg_ADD(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_X), 
-         ureg_imm1f(shader, 1.0f / BLOCK_WIDTH * i),
-         block);
-      fetch_four(shader, r, ureg_src(t_tc), sampler[1], start[1], true, true, BLOCK_WIDTH / 4);
-#endif
+      fetch_four(shader, r, addr, ureg_DECL_sampler(shader, 0));
 
       for (j = 0; j < 4; ++j) {
          matrix_mul(shader, ureg_writemask(fragment[i], TGSI_WRITEMASK_X << j), l[j], r);
@@ -302,9 +302,8 @@ create_matrix_frag_shader(struct vl_idct *idct)
       ureg_release_temporary(shader, r[0]);
       ureg_release_temporary(shader, r[1]);
    }
-
-   ureg_release_temporary(shader, t_tc);
-   ureg_release_temporary(shader, tmp);
+   ureg_release_temporary(shader, addr[0]);
+   ureg_release_temporary(shader, addr[1]);
 
    for (i = 0; i < 4; ++i) {
       ureg_release_temporary(shader, l[i][0]);
