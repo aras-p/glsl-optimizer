@@ -53,7 +53,7 @@ struct vl_idct
       } individual;
    } samplers;
 
-   void *vs;
+   void *matrix_vs, *transpose_vs;
    void *matrix_fs, *transpose_fs;
 
    struct pipe_resource *matrix;
