@@ -1717,7 +1717,9 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	unsigned src_gpr;
 	int r, i;
 	int opcode;
-	boolean src_not_temp = inst->Src[0].Register.File != TGSI_FILE_TEMPORARY;
+	boolean src_not_temp =
+		inst->Src[0].Register.File != TGSI_FILE_TEMPORARY &&
+		inst->Src[0].Register.File != TGSI_FILE_INPUT;
 	uint32_t lit_vals[4];
 
 	src_gpr = ctx->file_offset[inst->Src[0].Register.File] + inst->Src[0].Register.Index;
