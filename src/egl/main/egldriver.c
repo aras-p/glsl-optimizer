@@ -186,11 +186,22 @@ _eglLoadModule(_EGLModule *mod)
 static void
 _eglUnloadModule(_EGLModule *mod)
 {
+#if defined(_EGL_OS_UNIX)
    /* destroy the driver */
    if (mod->Driver && mod->Driver->Unload)
       mod->Driver->Unload(mod->Driver);
+
+   /*
+    * XXX At this point (atexit), the module might be the last reference to
+    * libEGL.  Closing the module might unmap libEGL and give problems.
+    */
+#if 0
    if (mod->Handle)
       close_library(mod->Handle);
+#endif
+#elif defined(_EGL_OS_WINDOWS)
+   /* XXX Windows unloads DLLs before atexit */
+#endif
 
    mod->Driver = NULL;
    mod->Handle = NULL;
@@ -670,12 +681,7 @@ _eglUnloadDrivers(void)
 {
    /* this is called at atexit time */
    if (_eglModules) {
-#if defined(_EGL_OS_UNIX)
       _eglDestroyArray(_eglModules, _eglFreeModule);
-#elif defined(_EGL_OS_WINDOWS)
-      /* XXX Windows unloads DLLs before atexit */
-      _eglDestroyArray(_eglModules, NULL);
-#endif
       _eglModules = NULL;
    }
 }
