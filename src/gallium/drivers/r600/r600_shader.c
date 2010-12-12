@@ -1700,7 +1700,9 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	unsigned src_gpr;
 	int r, i;
 	int opcode;
-	boolean src_not_temp = inst->Src[0].Register.File != TGSI_FILE_TEMPORARY;
+	boolean src_not_temp =
+		inst->Src[0].Register.File != TGSI_FILE_TEMPORARY &&
+		inst->Src[0].Register.File != TGSI_FILE_INPUT;
 	uint32_t lit_vals[4];
 
 	src_gpr = ctx->file_offset[inst->Src[0].Register.File] + inst->Src[0].Register.Index;
@@ -1870,7 +1872,6 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	}
 
 	if (src_not_temp) {
-                assert(0);
 		for (i = 0; i < 4; i++) {
 			memset(&alu, 0, sizeof(struct r600_bc_alu));
 			alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV);
