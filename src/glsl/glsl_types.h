@@ -142,6 +142,7 @@ struct glsl_type {
     */
    /*@{*/
    static const glsl_type *const error_type;
+   static const glsl_type *const void_type;
    static const glsl_type *const int_type;
    static const glsl_type *const ivec4_type;
    static const glsl_type *const uint_type;
@@ -424,7 +425,7 @@ private:
     */
    /*@{*/
    static const glsl_type _error_type;
-   static const glsl_type void_type;
+   static const glsl_type _void_type;
    static const glsl_type builtin_core_types[];
    static const glsl_type builtin_structure_types[];
    static const glsl_type builtin_110_deprecated_structure_types[];
