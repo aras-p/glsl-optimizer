@@ -76,6 +76,7 @@ sources = [
     'opt_swizzle_swizzle.cpp',
     'opt_tree_grafting.cpp',
     's_expression.cpp',
+    'strtod.c',
 ]
 
 glsl = env.ConvenienceLibrary(

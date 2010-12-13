@@ -62,7 +62,7 @@ read_atom(void *ctx, const char *& src)
 
    // Check if the atom is a number.
    char *float_end = NULL;
-   double f = strtod(src, &float_end);
+   double f = glsl_strtod(src, &float_end);
    if (float_end != src) {
       char *int_end = NULL;
       int i = strtol(src, &int_end, 10);

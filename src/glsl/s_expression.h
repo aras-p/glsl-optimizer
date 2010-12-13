@@ -26,6 +26,7 @@
 #ifndef S_EXPRESSION_H
 #define S_EXPRESSION_H
 
+#include "strtod.h"
 #include "list.h"
 
 #define SX_AS_(t,x) ((x) && ((s_expression*) x)->is_##t()) ? ((s_##t*) (x)) \
