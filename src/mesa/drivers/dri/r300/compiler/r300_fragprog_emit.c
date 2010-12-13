@@ -64,6 +64,20 @@ struct r300_emit_state {
 			__FILE__, __FUNCTION__, ##args);	\
 	} while(0)
 
+static unsigned int get_msbs_alu(unsigned int bits)
+{
+	return (bits >> 6) & 0x7;
+}
+
+/**
+ * @param lsbs The number of least significant bits
+ */
+static unsigned int get_msbs_tex(unsigned int bits, unsigned int lsbs)
+{
+	return (bits >> lsbs) & 0x15;
+}
+
+#define R400_EXT_GET_MSBS(x, lsbs, mask) (((x) >> lsbs) & mask)
 
 /**
  * Mark a temporary register as used.
@@ -83,7 +97,7 @@ static unsigned int use_source(struct r300_fragment_program_code* code, struct r
 		return src.Index | (1 << 5);
 	} else if (src.File == RC_FILE_TEMPORARY) {
 		use_temporary(code, src.Index);
-		return src.Index;
+		return src.Index & 0x1f;
 	}
 
 	return 0;
@@ -151,11 +165,19 @@ static int emit_alu(struct r300_emit_state * emit, struct rc_pair_instruction* i
 	code->alu.inst[ip].alpha_inst = translate_alpha_opcode(c, inst->Alpha.Opcode);
 
 	for(j = 0; j < 3; ++j) {
+		/* Set the RGB address */
 		unsigned int src = use_source(code, inst->RGB.Src[j]);
 		unsigned int arg;
+		if (inst->RGB.Src[j].Index >= R300_PFS_NUM_TEMP_REGS)
+			code->alu.inst[ip].r400_ext_addr |= R400_ADDR_EXT_RGB_MSB_BIT(j);
+
 		code->alu.inst[ip].rgb_addr |= src << (6*j);
 
+		/* Set the Alpha address */
 		src = use_source(code, inst->Alpha.Src[j]);
+		if (inst->Alpha.Src[j].Index >= R300_PFS_NUM_TEMP_REGS)
+			code->alu.inst[ip].r400_ext_addr |= R400_ADDR_EXT_A_MSB_BIT(j);
+
 		code->alu.inst[ip].alpha_addr |= src << (6*j);
 
 		arg = r300FPTranslateRGBSwizzle(inst->RGB.Arg[j].Source, inst->RGB.Arg[j].Swizzle);
@@ -223,8 +245,10 @@ static int emit_alu(struct r300_emit_state * emit, struct rc_pair_instruction* i
 
 	if (inst->RGB.WriteMask) {
 		use_temporary(code, inst->RGB.DestIndex);
+		if (inst->RGB.DestIndex >= R300_PFS_NUM_TEMP_REGS)
+			code->alu.inst[ip].r400_ext_addr |= R400_ADDRD_EXT_RGB_MSB_BIT;
 		code->alu.inst[ip].rgb_addr |=
-			(inst->RGB.DestIndex << R300_ALU_DSTC_SHIFT) |
+			((inst->RGB.DestIndex & 0x1f) << R300_ALU_DSTC_SHIFT) |
 			(inst->RGB.WriteMask << R300_ALU_DSTC_REG_MASK_SHIFT);
 	}
 	if (inst->RGB.OutputWriteMask) {
@@ -236,8 +260,10 @@ static int emit_alu(struct r300_emit_state * emit, struct rc_pair_instruction* i
 
 	if (inst->Alpha.WriteMask) {
 		use_temporary(code, inst->Alpha.DestIndex);
+		if (inst->Alpha.DestIndex >= R300_PFS_NUM_TEMP_REGS)
+			code->alu.inst[ip].r400_ext_addr |= R400_ADDRD_EXT_A_MSB_BIT;
 		code->alu.inst[ip].alpha_addr |=
-			(inst->Alpha.DestIndex << R300_ALU_DSTA_SHIFT) |
+			((inst->Alpha.DestIndex & 0x1f) << R300_ALU_DSTA_SHIFT) |
 			R300_ALU_DSTA_REG;
 	}
 	if (inst->Alpha.OutputWriteMask) {
@@ -268,6 +294,8 @@ static int finish_node(struct r300_emit_state * emit)
 	unsigned alu_end;
 	unsigned tex_offset;
 	unsigned tex_end;
+
+	unsigned int alu_offset_msbs, alu_end_msbs;
 
 	if (code->alu.length == emit->node_first_alu) {
 		/* Generate a single NOP for this node */
@@ -301,13 +329,48 @@ static int finish_node(struct r300_emit_state * emit)
 	 *
 	 * Also note that the register specification from AMD is slightly
 	 * incorrect in its description of this register. */
-	code->code_addr[emit->current_node] =
-			(alu_offset << R300_ALU_START_SHIFT) |
-			(alu_end << R300_ALU_SIZE_SHIFT) |
-			(tex_offset << R300_TEX_START_SHIFT) |
-			(tex_end << R300_TEX_SIZE_SHIFT) |
-			emit->node_flags;
+	code->code_addr[emit->current_node]  =
+			((alu_offset << R300_ALU_START_SHIFT)
+				& R300_ALU_START_MASK)
+			| ((alu_end << R300_ALU_SIZE_SHIFT)
+				& R300_ALU_SIZE_MASK)
+			| ((tex_offset << R300_TEX_START_SHIFT)
+				& R300_TEX_START_MASK)
+			| ((tex_end << R300_TEX_SIZE_SHIFT)
+				& R300_TEX_SIZE_MASK)
+			| emit->node_flags
+			| (get_msbs_tex(tex_offset, 5)
+				<< R400_TEX_START_MSB_SHIFT)
+			| (get_msbs_tex(tex_end, 5)
+				<< R400_TEX_SIZE_MSB_SHIFT)
+			;
 
+	/* Write r400 extended instruction fields.  These will be ignored on
+	 * r300 cards.  */
+	alu_offset_msbs = get_msbs_alu(alu_offset);
+	alu_end_msbs = get_msbs_alu(alu_end);
+	switch(emit->current_node) {
+	case 0:
+		code->r400_code_offset_ext |=
+			alu_offset_msbs << R400_ALU_START3_MSB_SHIFT
+			| alu_end_msbs << R400_ALU_SIZE3_MSB_SHIFT;
+		break;
+	case 1:
+		code->r400_code_offset_ext |=
+			alu_offset_msbs << R400_ALU_START2_MSB_SHIFT
+			| alu_end_msbs << R400_ALU_SIZE2_MSB_SHIFT;
+		break;
+	case 2:
+		code->r400_code_offset_ext |=
+			alu_offset_msbs << R400_ALU_START1_MSB_SHIFT
+			| alu_end_msbs << R400_ALU_SIZE1_MSB_SHIFT;
+		break;
+	case 3:
+		code->r400_code_offset_ext |=
+			alu_offset_msbs << R400_ALU_START0_MSB_SHIFT
+			| alu_end_msbs << R400_ALU_SIZE0_MSB_SHIFT;
+		break;
+	}
 	return 1;
 }
 
@@ -348,7 +411,7 @@ static int emit_tex(struct r300_emit_state * emit, struct rc_instruction * inst)
 	unsigned int opcode;
 	PROG_CODE;
 
-	if (code->tex.length >= R300_PFS_MAX_TEX_INST) {
+	if (code->tex.length >= emit->compiler->Base.max_tex_insts) {
 		error("Too many TEX instructions");
 		return 0;
 	}
@@ -376,10 +439,17 @@ static int emit_tex(struct r300_emit_state * emit, struct rc_instruction * inst)
 	use_temporary(code, inst->U.I.SrcReg[0].Index);
 
 	code->tex.inst[code->tex.length++] =
-		(inst->U.I.SrcReg[0].Index << R300_SRC_ADDR_SHIFT) |
-		(dest << R300_DST_ADDR_SHIFT) |
-		(unit << R300_TEX_ID_SHIFT) |
-		(opcode << R300_TEX_INST_SHIFT);
+		((inst->U.I.SrcReg[0].Index << R300_SRC_ADDR_SHIFT)
+			& R300_SRC_ADDR_MASK)
+		| ((dest << R300_DST_ADDR_SHIFT)
+			& R300_DST_ADDR_MASK)
+		| (unit << R300_TEX_ID_SHIFT)
+		| (opcode << R300_TEX_INST_SHIFT)
+		| (inst->U.I.SrcReg[0].Index >= R300_PFS_NUM_TEMP_REGS ?
+			R400_SRC_ADDR_EXT_BIT : 0)
+		| (dest >= R300_PFS_NUM_TEMP_REGS ?
+			R400_DST_ADDR_EXT_BIT : 0)
+		;
 	return 1;
 }
 
@@ -393,6 +463,7 @@ void r300BuildFragmentProgramHwCode(struct radeon_compiler *c, void *user)
 	struct r300_fragment_program_compiler *compiler = (struct r300_fragment_program_compiler*)c;
 	struct r300_emit_state emit;
 	struct r300_fragment_program_code *code = &compiler->code->code.r300;
+	unsigned int tex_end;
 
 	memset(&emit, 0, sizeof(emit));
 	emit.compiler = compiler;
@@ -424,11 +495,28 @@ void r300BuildFragmentProgramHwCode(struct radeon_compiler *c, void *user)
 	finish_node(&emit);
 
 	code->config |= emit.current_node; /* FIRST_NODE_HAS_TEX set by finish_node */
+
+	/* Set r400 extended instruction fields.  These values will be ignored
+	 * on r300 cards. */
+	code->r400_code_offset_ext |=
+		(get_msbs_alu(0)
+				<< R400_ALU_OFFSET_MSB_SHIFT)
+		| (get_msbs_alu(code->alu.length - 1)
+				<< R400_ALU_SIZE_MSB_SHIFT);
+
+	tex_end = code->tex.length ? code->tex.length - 1 : 0;
 	code->code_offset =
-		(0 << R300_PFS_CNTL_ALU_OFFSET_SHIFT) |
-		((code->alu.length-1) << R300_PFS_CNTL_ALU_END_SHIFT) |
-		(0 << R300_PFS_CNTL_TEX_OFFSET_SHIFT) |
-		((code->tex.length ? code->tex.length-1 : 0) << R300_PFS_CNTL_TEX_END_SHIFT);
+		((0 << R300_PFS_CNTL_ALU_OFFSET_SHIFT)
+			& R300_PFS_CNTL_ALU_OFFSET_MASK)
+		| (((code->alu.length - 1) << R300_PFS_CNTL_ALU_END_SHIFT)
+			& R300_PFS_CNTL_ALU_END_MASK)
+		| ((0 << R300_PFS_CNTL_TEX_OFFSET_SHIFT)
+			& R300_PFS_CNTL_TEX_OFFSET_MASK)
+		| ((tex_end << R300_PFS_CNTL_TEX_END_SHIFT)
+			& R300_PFS_CNTL_TEX_END_MASK)
+		| (get_msbs_tex(0, 5) << R400_TEX_START_MSB_SHIFT)
+		| (get_msbs_tex(tex_end, 6) << R400_TEX_SIZE_MSB_SHIFT)
+		;
 
 	if (emit.current_node < 3) {
 		int shift = 3 - emit.current_node;
@@ -437,5 +525,12 @@ void r300BuildFragmentProgramHwCode(struct radeon_compiler *c, void *user)
 			code->code_addr[shift + i] = code->code_addr[i];
 		for(i = 0; i < shift; ++i)
 			code->code_addr[i] = 0;
+	}
+
+	if (code->pixsize >= R300_PFS_NUM_TEMP_REGS
+	    || code->alu.length > R300_PFS_MAX_ALU_INST
+	    || code->tex.length > R300_PFS_MAX_TEX_INST) {
+
+		code->r390_mode = 1;
 	}
 }

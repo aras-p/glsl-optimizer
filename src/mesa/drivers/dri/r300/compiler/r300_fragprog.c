@@ -49,6 +49,11 @@ static void presub_string(char out[10], unsigned int inst)
 	}
 }
 
+static int get_msb(unsigned int bit, unsigned int r400_ext_addr)
+{
+	return (r400_ext_addr & bit) ? 1 << 5 : 0;
+}
+
 /* just some random things... */
 void r300FragmentProgramDump(struct radeon_compiler *c, void *user)
 {
@@ -61,16 +66,21 @@ void r300FragmentProgramDump(struct radeon_compiler *c, void *user)
 
 	fprintf(stderr, "Hardware program\n");
 	fprintf(stderr, "----------------\n");
+	if (c->is_r400) {
+		fprintf(stderr, "code_offset_ext: %08x\n", code->r400_code_offset_ext);
+	}
 
 	for (n = 0; n <= (code->config & 3); n++) {
 		uint32_t code_addr = code->code_addr[3 - (code->config & 3) + n];
-		int alu_offset = (code_addr & R300_ALU_START_MASK) >> R300_ALU_START_SHIFT;
-		int alu_end = (code_addr & R300_ALU_SIZE_MASK) >> R300_ALU_SIZE_SHIFT;
+		unsigned int alu_offset = ((code_addr & R300_ALU_START_MASK) >> R300_ALU_START_SHIFT) +
+				(((code->r400_code_offset_ext >> (24 - (n * 6))) & 0x7) << 6);
+		unsigned int alu_end = ((code_addr & R300_ALU_SIZE_MASK) >> R300_ALU_SIZE_SHIFT) +
+				(((code->r400_code_offset_ext >> (27 - (n * 6))) & 0x7) << 6);
 		int tex_offset = (code_addr & R300_TEX_START_MASK) >> R300_TEX_START_SHIFT;
 		int tex_end = (code_addr & R300_TEX_SIZE_MASK) >> R300_TEX_SIZE_SHIFT;
 
-		fprintf(stderr, "NODE %d: alu_offset: %d, tex_offset: %d, "
-			"alu_end: %d, tex_end: %d  (code_addr: %08x)\n", n,
+		fprintf(stderr, "NODE %d: alu_offset: %u, tex_offset: %d, "
+			"alu_end: %u, tex_end: %d  (code_addr: %08x)\n", n,
 			alu_offset, tex_offset, alu_end, tex_end, code_addr);
 
 		if (n > 0 || (code->config & R300_PFS_CNTL_FIRST_NODE_HAS_TEX)) {
@@ -125,11 +135,15 @@ void r300FragmentProgramDump(struct radeon_compiler *c, void *user)
 			for (j = 0; j < 3; ++j) {
 				int regc = code->alu.inst[i].rgb_addr >> (j * 6);
 				int rega = code->alu.inst[i].alpha_addr >> (j * 6);
+				int msbc = get_msb(R400_ADDR_EXT_RGB_MSB_BIT(j),
+					code->alu.inst[i].r400_ext_addr);
+				int msba = get_msb(R400_ADDR_EXT_A_MSB_BIT(j),
+					code->alu.inst[i].r400_ext_addr);
 
 				sprintf(srcc[j], "%c%i",
-					(regc & 32) ? 'c' : 't', regc & 31);
+					(regc & 32) ? 'c' : 't', (regc & 31) | msbc);
 				sprintf(srca[j], "%c%i",
-					(rega & 32) ? 'c' : 't', rega & 31);
+					(rega & 32) ? 'c' : 't', (rega & 31) | msba);
 			}
 
 			dstc[0] = 0;
@@ -141,9 +155,14 @@ void r300FragmentProgramDump(struct radeon_compiler *c, void *user)
 				(code->alu.inst[i].
 				 rgb_addr & R300_ALU_DSTC_REG_Z) ? "z" : "");
 			if (flags[0] != 0) {
+				unsigned int msb = get_msb(
+					R400_ADDRD_EXT_RGB_MSB_BIT,
+					code->alu.inst[i].r400_ext_addr);
+
 				sprintf(dstc, "t%i.%s ",
-					(code->alu.inst[i].
-					 rgb_addr >> R300_ALU_DSTC_SHIFT) & 31,
+					((code->alu.inst[i].
+					 rgb_addr >> R300_ALU_DSTC_SHIFT)
+					 & 31) | msb,
 					flags);
 			}
 			sprintf(flags, "%s%s%s",
@@ -166,9 +185,13 @@ void r300FragmentProgramDump(struct radeon_compiler *c, void *user)
 
 			dsta[0] = 0;
 			if (code->alu.inst[i].alpha_addr & R300_ALU_DSTA_REG) {
+				unsigned int msb = get_msb(
+					R400_ADDRD_EXT_A_MSB_BIT,
+					code->alu.inst[i].r400_ext_addr);
 				sprintf(dsta, "t%i.w ",
-					(code->alu.inst[i].
-					 alpha_addr >> R300_ALU_DSTA_SHIFT) & 31);
+					((code->alu.inst[i].
+					 alpha_addr >> R300_ALU_DSTA_SHIFT) & 31)
+					 | msb);
 			}
 			if (code->alu.inst[i].alpha_addr & R300_ALU_DSTA_OUTPUT) {
 				sprintf(tmp, "o%i.w ",

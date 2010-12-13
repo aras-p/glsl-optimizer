@@ -298,44 +298,98 @@ static void r300_emit_fs_code_to_buffer(
         }
     } else { /* r300 */
         struct r300_fragment_program_code *code = &generic_code->code.r300;
+        unsigned int alu_length = code->alu.length;
+        unsigned int alu_iterations = ((alu_length - 1) / 64) + 1;
+        unsigned int tex_length = code->tex.length;
+        unsigned int tex_iterations =
+            tex_length > 0 ? ((tex_length - 1) / 32) + 1 : 0;
+        unsigned int iterations =
+            alu_iterations > tex_iterations ? alu_iterations : tex_iterations;
+        unsigned int bank = 0;
 
-        shader->cb_code_size = 19 +
-                               (r300->screen->caps.is_r400 ? 2 : 0) +
-                               code->alu.length * 4 +
-                               (code->tex.length ? (1 + code->tex.length) : 0) +
-                               imm_count * 5;
+        shader->cb_code_size = 15 +
+            /* R400_US_CODE_BANK */
+            (r300->screen->caps.is_r400 ? 2 * (iterations + 1): 0) +
+            /* R400_US_CODE_EXT */
+            (r300->screen->caps.is_r400 ? 2 : 0) +
+            /* R300_US_ALU_{RGB,ALPHA}_{INST,ADDR}_0, R400_US_ALU_EXT_ADDR_0 */
+            (code->r390_mode ? (5 * alu_iterations) : 4) +
+            /* R400_US_ALU_EXT_ADDR_[0-63] */
+            (code->r390_mode ? (code->alu.length) : 0) +
+            /* R300_US_ALU_{RGB,ALPHA}_{INST,ADDR}_0 */
+            code->alu.length * 4 +
+            /* R300_US_TEX_INST_0, R300_US_TEX_INST_[0-31] */
+            (code->tex.length > 0 ? code->tex.length + tex_iterations : 0) +
+            imm_count * 5;
 
         NEW_CB(shader->cb_code, shader->cb_code_size);
-
-        if (r300->screen->caps.is_r400)
-            OUT_CB_REG(R400_US_CODE_BANK, 0);
 
         OUT_CB_REG(R300_US_CONFIG, code->config);
         OUT_CB_REG(R300_US_PIXSIZE, code->pixsize);
         OUT_CB_REG(R300_US_CODE_OFFSET, code->code_offset);
 
+        if (code->r390_mode) {
+            OUT_CB_REG(R400_US_CODE_EXT, code->r400_code_offset_ext);
+        } else if (r300->screen->caps.is_r400) {
+            /* This register appears to affect shaders even if r390_mode is
+             * disabled, so it needs to be set to 0 for shaders that
+             * don't use r390_mode. */
+            OUT_CB_REG(R400_US_CODE_EXT, 0);
+        }
+
         OUT_CB_REG_SEQ(R300_US_CODE_ADDR_0, 4);
         OUT_CB_TABLE(code->code_addr, 4);
 
-        OUT_CB_REG_SEQ(R300_US_ALU_RGB_INST_0, code->alu.length);
-        for (i = 0; i < code->alu.length; i++)
-            OUT_CB(code->alu.inst[i].rgb_inst);
+        do {
+            unsigned int bank_alu_length = (alu_length < 64 ? alu_length : 64);
+            unsigned int bank_alu_offset = bank * 64;
+            unsigned int bank_tex_length = (tex_length < 32 ? tex_length : 32);
+            unsigned int bank_tex_offset = bank * 32;
 
-        OUT_CB_REG_SEQ(R300_US_ALU_RGB_ADDR_0, code->alu.length);
-        for (i = 0; i < code->alu.length; i++)
-            OUT_CB(code->alu.inst[i].rgb_addr);
+            if (r300->screen->caps.is_r400) {
+                OUT_CB_REG(R400_US_CODE_BANK, code->r390_mode ?
+                                (bank << R400_BANK_SHIFT) | R400_R390_MODE_ENABLE : 0);//2
+            }
 
-        OUT_CB_REG_SEQ(R300_US_ALU_ALPHA_INST_0, code->alu.length);
-        for (i = 0; i < code->alu.length; i++)
-            OUT_CB(code->alu.inst[i].alpha_inst);
+            if (bank_alu_length > 0) {
+                OUT_CB_REG_SEQ(R300_US_ALU_RGB_INST_0, bank_alu_length);
+                for (i = 0; i < bank_alu_length; i++)
+                    OUT_CB(code->alu.inst[i + bank_alu_offset].rgb_inst);
 
-        OUT_CB_REG_SEQ(R300_US_ALU_ALPHA_ADDR_0, code->alu.length);
-        for (i = 0; i < code->alu.length; i++)
-            OUT_CB(code->alu.inst[i].alpha_addr);
+                OUT_CB_REG_SEQ(R300_US_ALU_RGB_ADDR_0, bank_alu_length);
+                for (i = 0; i < bank_alu_length; i++)
+                    OUT_CB(code->alu.inst[i + bank_alu_offset].rgb_addr);
 
-        if (code->tex.length) {
-            OUT_CB_REG_SEQ(R300_US_TEX_INST_0, code->tex.length);
-            OUT_CB_TABLE(code->tex.inst, code->tex.length);
+                OUT_CB_REG_SEQ(R300_US_ALU_ALPHA_INST_0, bank_alu_length);
+                for (i = 0; i < bank_alu_length; i++)
+                    OUT_CB(code->alu.inst[i + bank_alu_offset].alpha_inst);
+
+                OUT_CB_REG_SEQ(R300_US_ALU_ALPHA_ADDR_0, bank_alu_length);
+                for (i = 0; i < bank_alu_length; i++)
+                    OUT_CB(code->alu.inst[i + bank_alu_offset].alpha_addr);
+
+                if (code->r390_mode) {
+                    OUT_CB_REG_SEQ(R400_US_ALU_EXT_ADDR_0, bank_alu_length);
+                    for (i = 0; i < bank_alu_length; i++)
+                        OUT_CB(code->alu.inst[i + bank_alu_offset].r400_ext_addr);
+                }
+            }
+
+            if (bank_tex_length > 0) {
+                OUT_CB_REG_SEQ(R300_US_TEX_INST_0, bank_tex_length);
+                OUT_CB_TABLE(code->tex.inst + bank_tex_offset, bank_tex_length);
+            }
+
+            alu_length -= bank_alu_length;
+            tex_length -= bank_tex_length;
+            bank++;
+        } while(code->r390_mode && (alu_length > 0 || tex_length > 0));
+
+        /* R400_US_CODE_BANK needs to be reset to 0, otherwise some shaders
+         * will be rendered incorrectly. */
+        if (r300->screen->caps.is_r400) {
+            OUT_CB_REG(R400_US_CODE_BANK,
+                code->r390_mode ? R400_R390_MODE_ENABLE : 0);
         }
 
         /* Emit immediates. */
@@ -384,12 +438,17 @@ static void r300_translate_fragment_shader(
     compiler.code = &shader->code;
     compiler.state = shader->compare_state;
     compiler.Base.is_r500 = r300->screen->caps.is_r500;
+    compiler.Base.is_r400 = r300->screen->caps.is_r400;
     compiler.Base.disable_optimizations = DBG_ON(r300, DBG_NO_OPT);
     compiler.Base.has_half_swizzles = TRUE;
     compiler.Base.has_presub = TRUE;
-    compiler.Base.max_temp_regs = compiler.Base.is_r500 ? 128 : 32;
+    compiler.Base.max_temp_regs =
+        compiler.Base.is_r500 ? 128 : (compiler.Base.is_r400 ? 64 : 32);
     compiler.Base.max_constants = compiler.Base.is_r500 ? 256 : 32;
-    compiler.Base.max_alu_insts = compiler.Base.is_r500 ? 512 : 64;
+    compiler.Base.max_alu_insts =
+        (compiler.Base.is_r500 || compiler.Base.is_r400) ? 512 : 64;
+    compiler.Base.max_tex_insts =
+        (compiler.Base.is_r500 || compiler.Base.is_r400) ? 512 : 32;
     compiler.AllocateHwInputs = &allocate_hardware_inputs;
     compiler.UserData = &shader->inputs;
 

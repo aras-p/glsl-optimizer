@@ -50,6 +50,7 @@ struct radeon_compiler {
 	char * ErrorMsg;
 
 	/* Hardware specification. */
+	unsigned is_r400:1;
 	unsigned is_r500:1;
 	unsigned has_half_swizzles:1;
 	unsigned has_presub:1;
@@ -57,6 +58,7 @@ struct radeon_compiler {
 	unsigned max_temp_regs;
 	unsigned max_constants;
 	int max_alu_insts;
+	unsigned max_tex_insts;
 
 	/* Whether to remove unused constants and empty holes in constant space. */
 	unsigned remove_unused_constants:1;
