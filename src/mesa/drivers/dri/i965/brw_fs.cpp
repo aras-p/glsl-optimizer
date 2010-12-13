@@ -474,8 +474,13 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
    wpos.reg_offset++;
 
    /* gl_FragCoord.z */
-   emit(fs_inst(FS_OPCODE_LINTERP, wpos, this->delta_x, this->delta_y,
-		interp_reg(FRAG_ATTRIB_WPOS, 2)));
+   if (intel->gen >= 6) {
+      emit(fs_inst(BRW_OPCODE_MOV, wpos,
+		   fs_reg(brw_vec8_grf(c->source_depth_reg, 0))));
+   } else {
+      emit(fs_inst(FS_OPCODE_LINTERP, wpos, this->delta_x, this->delta_y,
+		   interp_reg(FRAG_ATTRIB_WPOS, 2)));
+   }
    wpos.reg_offset++;
 
    /* gl_FragCoord.w: Already set up in emit_interpolation */
