@@ -35,19 +35,6 @@
 #include "utils.h"
 #include "xmlpool.h"
 
-#include "intel_batchbuffer.h"
-#include "intel_buffers.h"
-#include "intel_bufmgr.h"
-#include "intel_chipset.h"
-#include "intel_fbo.h"
-#include "intel_screen.h"
-#include "intel_tex.h"
-#include "intel_regions.h"
-
-#include "i915_drm.h"
-
-#define DRI_CONF_TEXTURE_TILING(def) \
-
 PUBLIC const char __driConfigOptions[] =
    DRI_CONF_BEGIN
    DRI_CONF_SECTION_PERFORMANCE
@@ -91,6 +78,17 @@ PUBLIC const char __driConfigOptions[] =
 DRI_CONF_END;
 
 const GLuint __driNConfigOptions = 11;
+
+#include "intel_batchbuffer.h"
+#include "intel_buffers.h"
+#include "intel_bufmgr.h"
+#include "intel_chipset.h"
+#include "intel_fbo.h"
+#include "intel_screen.h"
+#include "intel_tex.h"
+#include "intel_regions.h"
+
+#include "i915_drm.h"
 
 #ifdef USE_NEW_INTERFACE
 static PFNGLXCREATECONTEXTMODES create_context_modes = NULL;

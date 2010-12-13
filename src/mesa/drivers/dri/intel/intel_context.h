@@ -29,7 +29,7 @@
 #define INTELCONTEXT_INC
 
 
-
+#include <stdbool.h>
 #include "main/mtypes.h"
 #include "main/mm.h"
 #include "dri_metaops.h"
