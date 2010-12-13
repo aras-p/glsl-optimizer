@@ -658,6 +658,22 @@ static void emit_min( struct brw_compile *p,
    }
 }
 
+static void emit_arl(struct brw_compile *p,
+		     struct brw_reg dst,
+		     struct brw_reg src)
+{
+   struct intel_context *intel = &p->brw->intel;
+
+   if (intel->gen >= 6) {
+      struct brw_reg dst_f = retype(dst, BRW_REGISTER_TYPE_F);
+
+      brw_RNDD(p, dst_f, src);
+      brw_MOV(p, dst, dst_f);
+   } else {
+      brw_RNDD(p, dst, src);
+   }
+}
+
 static void emit_math1_gen4(struct brw_vs_compile *c,
 			    GLuint function,
 			    struct brw_reg dst,
@@ -1963,7 +1979,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 emit_math1(c, BRW_MATH_FUNCTION_EXP, dst, args[0], BRW_MATH_PRECISION_FULL);
 	 break;
       case OPCODE_ARL:
-	 brw_RNDD(p, dst, args[0]);
+	 emit_arl(p, dst, args[0]);
 	 break;
       case OPCODE_FLR:
 	 brw_RNDD(p, dst, args[0]);
