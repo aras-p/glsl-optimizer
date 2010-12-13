@@ -487,14 +487,35 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 	 /* Check that the types match between stages.
 	  */
 	 if (input->type != output->type) {
-	    linker_error_printf(prog,
-				"%s shader output `%s' declared as "
-				"type `%s', but %s shader input declared "
-				"as type `%s'\n",
-				producer_stage, output->name,
-				output->type->name,
-				consumer_stage, input->type->name);
-	    return false;
+	    /* There is a bit of a special case for gl_TexCoord.  This
+	     * built-in is unsized by default.  Appliations that variable
+	     * access it must redeclare it with a size.  There is some
+	     * language in the GLSL spec that implies the fragment shader
+	     * and vertex shader do not have to agree on this size.  Other
+	     * driver behave this way, and one or two applications seem to
+	     * rely on it.
+	     *
+	     * Neither declaration needs to be modified here because the array
+	     * sizes are fixed later when update_array_sizes is called.
+	     *
+	     * From page 48 (page 54 of the PDF) of the GLSL 1.10 spec:
+	     *
+	     *     "Unlike user-defined varying variables, the built-in
+	     *     varying variables don't have a strict one-to-one
+	     *     correspondence between the vertex language and the
+	     *     fragment language."
+	     */
+	    if (!output->type->is_array()
+		|| (strncmp("gl_", output->name, 3) != 0)) {
+	       linker_error_printf(prog,
+				   "%s shader output `%s' declared as "
+				   "type `%s', but %s shader input declared "
+				   "as type `%s'\n",
+				   producer_stage, output->name,
+				   output->type->name,
+				   consumer_stage, input->type->name);
+	       return false;
+	    }
 	 }
 
 	 /* Check that all of the qualifiers match between stages.
