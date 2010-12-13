@@ -67,6 +67,8 @@ struct vp_stage_data {
    GLvector4f ndcCoords;              /**< normalized device coords */
    GLubyte *clipmask;                 /**< clip flags */
    GLubyte ormask, andmask;           /**< for clipping */
+
+   struct gl_program_machine machine;
 };
 
 
@@ -311,7 +313,7 @@ run_vp( struct gl_context *ctx, struct tnl_pipeline_stage *stage )
    struct vp_stage_data *store = VP_STAGE_DATA(stage);
    struct vertex_buffer *VB = &tnl->vb;
    struct gl_vertex_program *program = ctx->VertexProgram._Current;
-   struct gl_program_machine machine = { 0 };
+   struct gl_program_machine *machine = &store->machine;
    GLuint outputs[VERT_RESULT_MAX], numOutputs;
    GLuint i, j;
 
@@ -339,7 +341,7 @@ run_vp( struct gl_context *ctx, struct tnl_pipeline_stage *stage )
    for (i = 0; i < VB->Count; i++) {
       GLuint attr;
 
-      init_machine(ctx, &machine);
+      init_machine(ctx, machine);
 
 #if 0
       printf("Input  %d: %f, %f, %f, %f\n", i,
@@ -372,23 +374,23 @@ run_vp( struct gl_context *ctx, struct tnl_pipeline_stage *stage )
             check_float(data[2]);
             check_float(data[3]);
 #endif
-	    COPY_CLEAN_4V(machine.VertAttribs[attr], size, data);
+	    COPY_CLEAN_4V(machine->VertAttribs[attr], size, data);
 	 }
       }
 
       /* execute the program */
-      _mesa_execute_program(ctx, &program->Base, &machine);
+      _mesa_execute_program(ctx, &program->Base, machine);
 
       /* copy the output registers into the VB->attribs arrays */
       for (j = 0; j < numOutputs; j++) {
          const GLuint attr = outputs[j];
 #ifdef NAN_CHECK
-         check_float(machine.Outputs[attr][0]);
-         check_float(machine.Outputs[attr][1]);
-         check_float(machine.Outputs[attr][2]);
-         check_float(machine.Outputs[attr][3]);
+         check_float(machine->Outputs[attr][0]);
+         check_float(machine->Outputs[attr][1]);
+         check_float(machine->Outputs[attr][2]);
+         check_float(machine->Outputs[attr][3]);
 #endif
-         COPY_4V(store->results[attr].data[i], machine.Outputs[attr]);
+         COPY_4V(store->results[attr].data[i], machine->Outputs[attr]);
       }
 
       /* FOGC is a special case.  Fragment shader expects (f,0,0,1) */
@@ -398,14 +400,14 @@ run_vp( struct gl_context *ctx, struct tnl_pipeline_stage *stage )
          store->results[VERT_RESULT_FOGC].data[i][3] = 1.0;
       }
 #ifdef NAN_CHECK
-      ASSERT(machine.Outputs[0][3] != 0.0F);
+      ASSERT(machine->Outputs[0][3] != 0.0F);
 #endif
 #if 0
       printf("HPOS: %f %f %f %f\n",
-             machine.Outputs[0][0], 
-             machine.Outputs[0][1], 
-             machine.Outputs[0][2], 
-             machine.Outputs[0][3]);
+             machine->Outputs[0][0], 
+             machine->Outputs[0][1], 
+             machine->Outputs[0][2], 
+             machine->Outputs[0][3]);
 #endif
    }
 
@@ -501,7 +503,7 @@ init_vp(struct gl_context *ctx, struct tnl_pipeline_stage *stage)
    const GLuint size = VB->Size;
    GLuint i;
 
-   stage->privatePtr = MALLOC(sizeof(*store));
+   stage->privatePtr = CALLOC(sizeof(*store));
    store = VP_STAGE_DATA(stage);
    if (!store)
       return GL_FALSE;
