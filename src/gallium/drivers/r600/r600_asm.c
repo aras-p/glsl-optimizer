@@ -631,6 +631,8 @@ int r600_bc_add_literal(struct r600_bc *bc, const u32 *value)
 	}
 	/* same on EG */
 	if (((bc->cf_last->inst != (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3)) &&
+	     (bc->cf_last->inst != (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER << 3)) &&
+	     (bc->cf_last->inst != (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER << 3)) &&
 	     (bc->cf_last->inst != (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3))) ||
 		LIST_IS_EMPTY(&bc->cf_last->alu)) {
 		R600_ERR("last CF is not ALU (%p)\n", bc->cf_last);
@@ -853,6 +855,8 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 	switch (cf->inst) {
 	case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3):
 	case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
+	case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER << 3):
+	case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER << 3):
 		bc->bytecode[id++] = S_SQ_CF_ALU_WORD0_ADDR(cf->addr >> 1) |
 			S_SQ_CF_ALU_WORD0_KCACHE_MODE0(cf->kcache[0].mode) |
 			S_SQ_CF_ALU_WORD0_KCACHE_BANK0(cf->kcache[0].bank) |
@@ -932,6 +936,8 @@ int r600_bc_build(struct r600_bc *bc)
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
 		switch (cf->inst) {
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3):
+		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER << 3):
+		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER << 3):
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
 			break;
 		case V_SQ_CF_WORD1_SQ_CF_INST_TEX:
@@ -978,6 +984,8 @@ int r600_bc_build(struct r600_bc *bc)
 			return r;
 		switch (cf->inst) {
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3):
+		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER << 3):
+		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER << 3):
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
 			LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
 				switch(bc->chiprev) {

@@ -2703,9 +2703,25 @@ static int emit_logic_pred(struct r600_shader_ctx *ctx, int opcode)
 
 static int pops(struct r600_shader_ctx *ctx, int pops)
 {
-	r600_bc_add_cfinst(ctx->bc, CTX_INST(V_SQ_CF_WORD1_SQ_CF_INST_POP));
-	ctx->bc->cf_last->pop_count = pops;
-	ctx->bc->cf_last->cf_addr = ctx->bc->cf_last->id + 2;
+	int alu_pop = 3;
+	if (ctx->bc->cf_last) {
+		if (ctx->bc->cf_last->inst == CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU) << 3)
+			alu_pop = 0;
+		else if (ctx->bc->cf_last->inst == CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER) << 3)
+			alu_pop = 1;
+	}
+	alu_pop += pops;
+	if (alu_pop == 1) {
+		ctx->bc->cf_last->inst = CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER) << 3;
+		ctx->bc->force_add_cf = 1;
+	} else if (alu_pop == 2) {
+		ctx->bc->cf_last->inst = CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER) << 3;
+		ctx->bc->force_add_cf = 1;
+	} else {
+		r600_bc_add_cfinst(ctx->bc, CTX_INST(V_SQ_CF_WORD1_SQ_CF_INST_POP));
+		ctx->bc->cf_last->pop_count = pops;
+		ctx->bc->cf_last->cf_addr = ctx->bc->cf_last->id + 2;
+	}
 	return 0;
 }
 
