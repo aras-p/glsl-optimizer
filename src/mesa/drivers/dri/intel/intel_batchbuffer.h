@@ -31,6 +31,7 @@ struct intel_batchbuffer
    } emit;
 #endif
 
+   bool is_blit;
    GLuint dirty_state;
    GLuint reserved_space;
 };
@@ -55,7 +56,7 @@ void intel_batchbuffer_reset(struct intel_batchbuffer *batch);
  * intel_buffer_dword() calls.
  */
 void intel_batchbuffer_data(struct intel_batchbuffer *batch,
-                            const void *data, GLuint bytes);
+                            const void *data, GLuint bytes, bool is_blit);
 
 void intel_batchbuffer_release_space(struct intel_batchbuffer *batch,
                                      GLuint bytes);
@@ -114,8 +115,16 @@ intel_batchbuffer_emit_float(struct intel_batchbuffer *batch, float f)
 
 static INLINE void
 intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
-                                GLuint sz)
+                                GLuint sz, int is_blit)
 {
+
+   if (batch->intel->gen >= 6 && batch->is_blit != is_blit &&
+       batch->ptr != batch->map) {
+      intel_batchbuffer_flush(batch);
+   }
+
+   batch->is_blit = is_blit;
+
 #ifdef DEBUG
    assert(sz < batch->size - 8);
 #endif
@@ -124,9 +133,10 @@ intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
 }
 
 static INLINE void
-intel_batchbuffer_begin(struct intel_batchbuffer *batch, int n)
+intel_batchbuffer_begin(struct intel_batchbuffer *batch, int n, bool is_blit)
 {
-   intel_batchbuffer_require_space(batch, n * 4);
+   intel_batchbuffer_require_space(batch, n * 4, is_blit);
+
 #ifdef DEBUG
    assert(batch->map);
    assert(batch->emit.start_ptr == NULL);
@@ -154,7 +164,8 @@ intel_batchbuffer_advance(struct intel_batchbuffer *batch)
  */
 #define BATCH_LOCALS
 
-#define BEGIN_BATCH(n) intel_batchbuffer_begin(intel->batch, n)
+#define BEGIN_BATCH(n) intel_batchbuffer_begin(intel->batch, n, false)
+#define BEGIN_BATCH_BLT(n) intel_batchbuffer_begin(intel->batch, n, true)
 #define OUT_BATCH(d) intel_batchbuffer_emit_dword(intel->batch, d)
 #define OUT_BATCH_F(f) intel_batchbuffer_emit_float(intel->batch,f)
 #define OUT_RELOC(buf, read_domains, write_domain, delta) do {		\

@@ -107,10 +107,6 @@ intelEmitCopyBlit(struct intel_context *intel,
    drm_intel_bo *aper_array[3];
    BATCH_LOCALS;
 
-   /* Blits are in a different ringbuffer so we don't use them. */
-   if (intel->gen >= 6)
-      return GL_FALSE;
-
    if (dst_tiling != I915_TILING_NONE) {
       if (dst_offset & 4095)
 	 return GL_FALSE;
@@ -140,7 +136,7 @@ intelEmitCopyBlit(struct intel_context *intel,
    if (pass >= 2)
       return GL_FALSE;
 
-   intel_batchbuffer_require_space(intel->batch, 8 * 4);
+   intel_batchbuffer_require_space(intel->batch, 8 * 4, true);
    DBG("%s src:buf(%p)/%d+%d %d,%d dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
        __FUNCTION__,
        src_buffer, src_pitch, src_offset, src_x, src_y,
@@ -181,7 +177,7 @@ intelEmitCopyBlit(struct intel_context *intel,
    assert(dst_x < dst_x2);
    assert(dst_y < dst_y2);
 
-   BEGIN_BATCH(8);
+   BEGIN_BATCH_BLT(8);
    OUT_BATCH(CMD);
    OUT_BATCH(BR13 | (uint16_t)dst_pitch);
    OUT_BATCH((dst_y << 16) | dst_x);
@@ -218,9 +214,6 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
    GLboolean all;
    GLint cx, cy, cw, ch;
    BATCH_LOCALS;
-
-   /* Blits are in a different ringbuffer so we don't use them. */
-   assert(intel->gen < 6);
 
    /*
     * Compute values for clearing the buffers.
@@ -356,7 +349,7 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
 	 intel_batchbuffer_flush(intel->batch);
       }
 
-      BEGIN_BATCH(6);
+      BEGIN_BATCH_BLT(6);
       OUT_BATCH(CMD);
       OUT_BATCH(BR13);
       OUT_BATCH((y1 << 16) | x1);
@@ -393,10 +386,6 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    int dwords = ALIGN(src_size, 8) / 4;
    uint32_t opcode, br13, blit_cmd;
 
-   /* Blits are in a different ringbuffer so we don't use them. */
-   if (intel->gen >= 6)
-      return GL_FALSE;
-
    if (dst_tiling != I915_TILING_NONE) {
       if (dst_offset & 4095)
 	 return GL_FALSE;
@@ -420,7 +409,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    intel_batchbuffer_require_space( intel->batch,
 				    (8 * 4) +
 				    (3 * 4) +
-				    dwords * 4 );
+				    dwords * 4, true);
 
    opcode = XY_SETUP_BLT_CMD;
    if (cpp == 4)
@@ -439,7 +428,7 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    if (dst_tiling != I915_TILING_NONE)
       blit_cmd |= XY_DST_TILED;
 
-   BEGIN_BATCH(8 + 3);
+   BEGIN_BATCH_BLT(8 + 3);
    OUT_BATCH(opcode);
    OUT_BATCH(br13);
    OUT_BATCH((0 << 16) | 0); /* clip x1, y1 */
@@ -456,9 +445,9 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    OUT_BATCH(((y + h) << 16) | (x + w));
    ADVANCE_BATCH();
 
-   intel_batchbuffer_data( intel->batch,
-			   src_bits,
-			   dwords * 4 );
+   intel_batchbuffer_data(intel->batch,
+			  src_bits,
+			  dwords * 4, true);
 
    intel_batchbuffer_emit_mi_flush(intel->batch);
 
@@ -479,9 +468,6 @@ intel_emit_linear_blit(struct intel_context *intel,
 {
    GLuint pitch, height;
    GLboolean ok;
-
-   /* Blits are in a different ringbuffer so we don't use them. */
-   assert(intel->gen < 6);
 
    /* The pitch given to the GPU must be DWORD aligned, and
     * we want width to match pitch. Max width is (1 << 15 - 1),

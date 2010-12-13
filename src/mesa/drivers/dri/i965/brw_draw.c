@@ -159,7 +159,7 @@ static void brw_emit_prim(struct brw_context *brw,
    }
    if (prim_packet.verts_per_instance) {
       intel_batchbuffer_data( brw->intel.batch, &prim_packet,
-			      sizeof(prim_packet));
+			      sizeof(prim_packet), false);
    }
    if (intel->always_flush_cache) {
       intel_batchbuffer_emit_mi_flush(intel->batch);
@@ -351,7 +351,8 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
        * an upper bound of how much we might emit in a single
        * brw_try_draw_prims().
        */
-      intel_batchbuffer_require_space(intel->batch, intel->batch->size / 4);
+      intel_batchbuffer_require_space(intel->batch, intel->batch->size / 4,
+				      false);
 
       hw_prim = brw_set_prim(brw, &prim[i]);
 
