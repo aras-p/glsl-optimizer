@@ -973,34 +973,23 @@ void emit_math2(struct brw_wm_compile *c,
       struct brw_reg temp_dst = dst[dst_chan];
 
       if (arg0[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
-	 if (arg1[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
-	    /* Both scalar arguments.  Do scalar calc. */
-	    src0.hstride = BRW_HORIZONTAL_STRIDE_1;
-	    src1.hstride = BRW_HORIZONTAL_STRIDE_1;
-	    temp_dst.hstride = BRW_HORIZONTAL_STRIDE_1;
-	    temp_dst.width = BRW_WIDTH_1;
+	 brw_MOV(p, temp_dst, src0);
+	 src0 = temp_dst;
+      }
 
-	    if (arg0[0].subnr != 0) {
-	       brw_MOV(p, temp_dst, src0);
-	       src0 = temp_dst;
-
-	       /* Ouch.  We've used the temp as a dst, and we still
-		* need a temp to store arg1 in, because src and dst
-		* offsets have to be equal.  Leaving this up to
-		* glsl2-965 to handle correctly.
-		*/
-	       assert(arg1[0].subnr == 0);
-	    } else if (arg1[0].subnr != 0) {
-	       brw_MOV(p, temp_dst, src1);
-	       src1 = temp_dst;
-	    }
-	 } else {
-	    brw_MOV(p, temp_dst, src0);
-	    src0 = temp_dst;
-	 }
-      } else if (arg1[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
-	 brw_MOV(p, temp_dst, src1);
-	 src1 = temp_dst;
+      if (arg1[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
+	 /* This is a heinous hack to get a temporary register for use
+	  * in case both arg0 and arg1 are constants.  Why you're
+	  * doing exponentiation on constant values in the shader, we
+	  * don't know.
+	  *
+	  * max_wm_grf is almost surely less than the maximum GRF, and
+	  * gen6 doesn't care about the number of GRFs used in a
+	  * shader like pre-gen6 did.
+	  */
+	 struct brw_reg temp = brw_vec8_grf(c->max_wm_grf, 0);
+	 brw_MOV(p, temp, src1);
+	 src1 = temp;
       }
 
       brw_set_saturate(p, (mask & SATURATE) ? 1 : 0);
@@ -1017,14 +1006,6 @@ void emit_math2(struct brw_wm_compile *c,
 		   function,
 		   sechalf(src0),
 		   sechalf(src1));
-      }
-
-      /* Splat a scalar result into all the channels. */
-      if (arg0[0].hstride == BRW_HORIZONTAL_STRIDE_0 &&
-	  arg1[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
-	 temp_dst.hstride = BRW_HORIZONTAL_STRIDE_0;
-	 temp_dst.vstride = BRW_VERTICAL_STRIDE_0;
-	 brw_MOV(p, dst[dst_chan], temp_dst);
       }
    } else {
       GLuint saturate = ((mask & SATURATE) ?
