@@ -1668,15 +1668,13 @@ static int tgsi_dp(struct r600_shader_ctx *ctx)
 			alu.src[j] = r600_src[j];
 			alu.src[j].chan = tgsi_chan(&inst->Src[j], i);
 		}
-		if(inst->Dst[0].Register.WriteMask & (1 << i)) {
-			r = tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
-			if (r)
-				return r;
-		} else {
-			alu.dst.sel = ctx->temp_reg;
-		}
+
+		r = tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
+		if (r)
+			return r;
+
 		alu.dst.chan = i;
-		alu.dst.write = 1;
+		alu.dst.write = (inst->Dst[0].Register.WriteMask >> i) & 1;
 		/* handle some special cases */
 		switch (ctx->inst_info->tgsi_opcode) {
 		case TGSI_OPCODE_DP2:
