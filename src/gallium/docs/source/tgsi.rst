@@ -577,17 +577,45 @@ This instruction replicates its result.
 
 .. opcode:: TEX - Texture Lookup
 
-  TBD
+.. math::
+
+  coord = src0
+
+  bias = 0.0
+
+  dst = texture_sample(unit, coord, bias)
 
 
 .. opcode:: TXD - Texture Lookup with Derivatives
 
-  TBD
+.. math::
+
+  coord = src0
+
+  ddx = src1
+
+  ddy = src2
+
+  bias = 0.0
+
+  dst = texture_sample_deriv(unit, coord, bias, ddx, ddy)
 
 
 .. opcode:: TXP - Projective Texture Lookup
 
-  TBD
+.. math::
+
+  coord.x = src0.x / src.w
+
+  coord.y = src0.y / src.w
+
+  coord.z = src0.z / src.w
+
+  coord.w = src0.w
+
+  bias = 0.0
+
+  dst = texture_sample(unit, coord, bias)
 
 
 .. opcode:: UP2H - Unpack Two 16-Bit Floats
@@ -729,7 +757,19 @@ This instruction replicates its result.
 
 .. opcode:: TXB - Texture Lookup With Bias
 
-  TBD
+.. math::
+
+  coord.x = src.x
+
+  coord.y = src.y
+
+  coord.z = src.z
+
+  coord.w = 1.0
+
+  bias = src.z
+
+  dst = texture_sample(unit, coord, bias)
 
 
 .. opcode:: NRM - 3-component Vector Normalise
@@ -767,9 +807,21 @@ This instruction replicates its result.
   dst = src0.x \times src1.x + src0.y \times src1.y
 
 
-.. opcode:: TXL - Texture Lookup With LOD
+.. opcode:: TXL - Texture Lookup With explicit LOD
 
-  TBD
+.. math::
+
+  coord.x = src0.x
+
+  coord.y = src0.y
+
+  coord.z = src0.z
+
+  coord.w = 1.0
+
+  lod = src0.w
+
+  dst = texture_sample(unit, coord, lod)
 
 
 .. opcode:: BRK - Break
