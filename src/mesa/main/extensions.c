@@ -249,7 +249,8 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
 #if FEATURE_ARB_framebuffer_object
    ctx->Extensions.ARB_framebuffer_object = GL_TRUE;
 #endif
-#if FEATURE_ARB_geometry_shader4
+#if FEATURE_ARB_geometry_shader4 && 0
+   /* XXX re-enable when GLSL compiler again supports geometry shaders */
    ctx->Extensions.ARB_geometry_shader4 = GL_TRUE;
 #endif
    ctx->Extensions.ARB_half_float_pixel = GL_TRUE;
