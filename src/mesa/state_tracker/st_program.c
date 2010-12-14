@@ -1008,18 +1008,18 @@ destroy_program_variants(struct st_context *st, struct gl_program *program)
    case GL_VERTEX_PROGRAM_ARB:
       {
          struct st_vertex_program *stvp = (struct st_vertex_program *) program;
-         struct st_vp_varient *vpv, **prev = &stvp->varients;
+         struct st_vp_varient *vpv, **prevPtr = &stvp->varients;
 
          for (vpv = stvp->varients; vpv; ) {
             struct st_vp_varient *next = vpv->next;
             if (vpv->key.st == st) {
                /* unlink from list */
-               *prev = next;
+               *prevPtr = next;
                /* destroy this variant */
                delete_vp_varient(st, vpv);
             }
             else {
-               prev = &vpv;
+               prevPtr = &vpv->next;
             }
             vpv = next;
          }
@@ -1029,18 +1029,18 @@ destroy_program_variants(struct st_context *st, struct gl_program *program)
       {
          struct st_fragment_program *stfp =
             (struct st_fragment_program *) program;
-         struct st_fp_varient *fpv, **prev = &stfp->varients;
+         struct st_fp_varient *fpv, **prevPtr = &stfp->varients;
 
          for (fpv = stfp->varients; fpv; ) {
             struct st_fp_varient *next = fpv->next;
             if (fpv->key.st == st) {
                /* unlink from list */
-               *prev = next;
+               *prevPtr = next;
                /* destroy this variant */
                delete_fp_varient(st, fpv);
             }
             else {
-               prev = &fpv;
+               prevPtr = &fpv->next;
             }
             fpv = next;
          }
@@ -1050,18 +1050,18 @@ destroy_program_variants(struct st_context *st, struct gl_program *program)
       {
          struct st_geometry_program *stgp =
             (struct st_geometry_program *) program;
-         struct st_gp_varient *gpv, **prev = &stgp->varients;
+         struct st_gp_varient *gpv, **prevPtr = &stgp->varients;
 
          for (gpv = stgp->varients; gpv; ) {
             struct st_gp_varient *next = gpv->next;
             if (gpv->key.st == st) {
                /* unlink from list */
-               *prev = next;
+               *prevPtr = next;
                /* destroy this variant */
                delete_gp_varient(st, gpv);
             }
             else {
-               prev = &gpv;
+               prevPtr = &gpv->next;
             }
             gpv = next;
          }
