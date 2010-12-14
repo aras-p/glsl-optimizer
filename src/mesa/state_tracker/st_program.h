@@ -91,6 +91,7 @@ struct st_fragment_program
 
 
 
+/** Vertex program variant key */
 struct st_vp_varient_key
 {
    struct st_context *st;          /**< variants are per-context */
@@ -124,7 +125,7 @@ struct st_vp_varient
    /** Next in linked list */
    struct st_vp_varient *next;  
 
-   /** similar to that in st_vertex_program, but with information about edgeflags too */
+   /** similar to that in st_vertex_program, but with edgeflags info too */
    GLuint num_inputs;
 };
 
@@ -155,6 +156,7 @@ struct st_vertex_program
 
 
 
+/** Geometry program varient key */
 struct st_gp_varient_key
 {
    struct st_context *st;          /**< variants are per-context */
