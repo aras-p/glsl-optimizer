@@ -315,23 +315,22 @@ st_translate_vertex_program(struct st_context *st,
       debug_printf("\n");
    }
 
-   error = 
-      st_translate_mesa_program(st->ctx,
-                                TGSI_PROCESSOR_VERTEX,
-                                ureg,
-                                &stvp->Base.Base,
-                                /* inputs */
-                                vpv->num_inputs,
-                                stvp->input_to_index,
-                                NULL, /* input semantic name */
-                                NULL, /* input semantic index */
-                                NULL,
-                                /* outputs */
-                                num_outputs,
-                                stvp->result_to_output,
-                                stvp->output_semantic_name,
-                                stvp->output_semantic_index,
-                                key->passthrough_edgeflags );
+   error = st_translate_mesa_program(st->ctx,
+                                     TGSI_PROCESSOR_VERTEX,
+                                     ureg,
+                                     &stvp->Base.Base,
+                                     /* inputs */
+                                     vpv->num_inputs,
+                                     stvp->input_to_index,
+                                     NULL, /* input semantic name */
+                                     NULL, /* input semantic index */
+                                     NULL,
+                                     /* outputs */
+                                     num_outputs,
+                                     stvp->result_to_output,
+                                     stvp->output_semantic_name,
+                                     stvp->output_semantic_index,
+                                     key->passthrough_edgeflags );
 
    if (error)
       goto fail;
