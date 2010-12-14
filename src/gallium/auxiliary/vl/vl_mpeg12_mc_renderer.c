@@ -390,7 +390,7 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
             tc[3], tc[2]);
          ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, ureg_src(tmp), sampler[1]);
 
-         ureg_LRP(shader, result, ureg_scalar(ureg_imm1f(shader, 0.5f), TGSI_SWIZZLE_X),
+         ureg_LRP(shader, result, ureg_imm1f(shader, 0.5f),
             ureg_src(ref[0]), ureg_src(ref[1]));
 
       ureg_fixup_label(shader, bi_label, ureg_get_instruction_number(shader));
