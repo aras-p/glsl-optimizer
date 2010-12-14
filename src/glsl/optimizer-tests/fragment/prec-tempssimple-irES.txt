@@ -1,0 +1,11 @@
+varying lowp vec2 var_uv;
+uniform sampler2D _MainTex;
+void main ()
+{
+  vec4 tmpvar_1;
+  tmpvar_1 = texture2D (_MainTex, var_uv);
+  vec4 tmpvar_2;
+  tmpvar_2 = (tmpvar_1 * 2.0);
+  gl_FragColor = tmpvar_2;
+}
+
