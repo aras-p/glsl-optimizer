@@ -417,7 +417,7 @@ st_translate_fragment_program(struct st_context *st,
                                       &fp, &varient->bitmap_sampler);
 
       varient->parameters = _mesa_clone_parameter_list(fp->Base.Parameters);
-      stfp = (struct st_fragment_program *) fp;
+      stfp = st_fragment_program(fp);
    }
    else if (key->drawpixels) {
       /* glDrawPixels drawing */
@@ -432,7 +432,7 @@ st_translate_fragment_program(struct st_context *st,
          st_make_drawpix_fragment_program(st, &stfp->Base, &fp);
          varient->parameters = _mesa_clone_parameter_list(fp->Base.Parameters);
       }
-      stfp = (struct st_fragment_program *) fp;
+      stfp = st_fragment_program(fp);
    }
 
    if (!stfp->tgsi.tokens) {
