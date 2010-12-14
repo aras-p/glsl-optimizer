@@ -542,7 +542,7 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 
 	ctx.file_offset[TGSI_FILE_CONSTANT] = 128;
 
-	ctx.file_offset[TGSI_FILE_IMMEDIATE] = 253;
+	ctx.file_offset[TGSI_FILE_IMMEDIATE] = V_SQ_ALU_SRC_LITERAL;
 	ctx.temp_reg = ctx.file_offset[TGSI_FILE_TEMPORARY] +
 			ctx.info.file_count[TGSI_FILE_TEMPORARY];
 
@@ -730,22 +730,54 @@ static int tgsi_src(struct r600_shader_ctx *ctx,
 			const struct tgsi_full_src_register *tgsi_src,
 			struct r600_bc_alu_src *r600_src)
 {
-	int index;
 	memset(r600_src, 0, sizeof(struct r600_bc_alu_src));
-	r600_src->sel = tgsi_src->Register.Index;
-	if (tgsi_src->Register.File == TGSI_FILE_IMMEDIATE) {
-		r600_src->sel = 0;
+	r600_src->neg = tgsi_src->Register.Negate;
+	r600_src->abs = tgsi_src->Register.Absolute;
+	if (tgsi_src->Register.File == TGSI_FILE_IMMEDIATE) {		
+		int index;
+		if((tgsi_src->Register.SwizzleX == tgsi_src->Register.SwizzleY) &&
+			(tgsi_src->Register.SwizzleX == tgsi_src->Register.SwizzleZ) &&
+			(tgsi_src->Register.SwizzleX == tgsi_src->Register.SwizzleW)) {
+
+			index = tgsi_src->Register.Index * 4 + tgsi_src->Register.SwizzleX;
+			switch(ctx->literals[index]) {
+			case 0:
+				r600_src->sel = V_SQ_ALU_SRC_0;
+				return 0;
+			case 1:
+				r600_src->sel = V_SQ_ALU_SRC_1_INT;
+				return 0;
+			case -1:
+				r600_src->sel = V_SQ_ALU_SRC_M_1_INT;
+				return 0;
+			case 0x3F800000: // 1.0f
+				r600_src->sel = V_SQ_ALU_SRC_1;
+				return 0;
+			case 0x3F000000: // 0.5f
+				r600_src->sel = V_SQ_ALU_SRC_0_5;
+				return 0;
+			case 0xBF800000: // -1.0f
+				r600_src->sel = V_SQ_ALU_SRC_1;
+				r600_src->neg ^= 1;
+				return 0;
+			case 0xBF000000: // -0.5f
+				r600_src->sel = V_SQ_ALU_SRC_0_5;
+				r600_src->neg ^= 1;
+				return 0;
+			}
+		}
 		index = tgsi_src->Register.Index;
+		r600_src->sel = V_SQ_ALU_SRC_LITERAL;
 		ctx->value[0] = ctx->literals[index * 4 + 0];
 		ctx->value[1] = ctx->literals[index * 4 + 1];
 		ctx->value[2] = ctx->literals[index * 4 + 2];
 		ctx->value[3] = ctx->literals[index * 4 + 3];
+	} else {
+		if (tgsi_src->Register.Indirect)
+			r600_src->rel = V_SQ_REL_RELATIVE;
+		r600_src->sel = tgsi_src->Register.Index;
+		r600_src->sel += ctx->file_offset[tgsi_src->Register.File];
 	}
-	if (tgsi_src->Register.Indirect)
-		r600_src->rel = V_SQ_REL_RELATIVE;
-	r600_src->neg = tgsi_src->Register.Negate;
-	r600_src->abs = tgsi_src->Register.Absolute;
-	r600_src->sel += ctx->file_offset[tgsi_src->Register.File];
 	return 0;
 }
 
@@ -833,12 +865,12 @@ static int tgsi_split_literal_constant(struct r600_shader_ctx *ctx, struct r600_
 	int i, j, k, nliteral, r;
 
 	for (i = 0, nliteral = 0; i < inst->Instruction.NumSrcRegs; i++) {
-		if (inst->Src[i].Register.File == TGSI_FILE_IMMEDIATE) {
+		if (r600_src[i].sel == V_SQ_ALU_SRC_LITERAL) {
 			nliteral++;
 		}
 	}
 	for (i = 0, j = nliteral - 1; i < inst->Instruction.NumSrcRegs; i++) {
-		if (j > 0 && inst->Src[i].Register.File == TGSI_FILE_IMMEDIATE) {
+		if (j > 0 && r600_src[i].sel == V_SQ_ALU_SRC_LITERAL) {
 			int treg = r600_get_temp(ctx);
 			for (k = 0; k < 4; k++) {
 				memset(&alu, 0, sizeof(struct r600_bc_alu));
