@@ -166,10 +166,13 @@ def abi_parse(filename):
         # post-process attributes
         if attrs['alias']:
             try:
-                ent = entry_dict[attrs['alias']]
-                slot = ent.slot
+                alias = entry_dict[attrs['alias']]
             except KeyError:
                 raise Exception('failed to alias %s' % attrs['alias'])
+            if alias.alias:
+                raise Exception('recursive alias %s' % ent.name)
+            slot = alias.slot
+            attrs['alias'] = alias
         else:
             slot = next_slot
             next_slot += 1
@@ -194,7 +197,7 @@ def abi_parse(filename):
             raise Exception('entries are not ordered by slots')
         if entries[i].alias:
             raise Exception('first entry of slot %d aliases %s'
-                    % (slot, entries[i].alias))
+                    % (slot, entries[i].alias.name))
         while i < len(entries) and entries[i].slot == slot:
             i += 1
     if i < len(entries):
@@ -374,7 +377,6 @@ class ABIPrinter(object):
 
     def c_asm_gcc(self, prefix):
         asm = []
-        to_name = None
 
         asm.append('__asm__(')
         for ent in self.entries:
@@ -385,11 +387,11 @@ class ABIPrinter(object):
 
             if ent.alias:
                 asm.append('".globl %s\\n"' % (name))
-                asm.append('".set %s, %s\\n"' % (name, to_name))
+                asm.append('".set %s, %s\\n"' % (name,
+                    prefix + ent.alias.name))
             else:
                 asm.append('STUB_ASM_ENTRY("%s")"\\n"' % (name))
                 asm.append('"\\t"STUB_ASM_CODE("%d")"\\n"' % (ent.slot))
-                to_name = name
         asm.append(');')
 
         return "\n".join(asm)
