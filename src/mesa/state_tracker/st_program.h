@@ -220,9 +220,9 @@ st_vertex_program( struct gl_vertex_program *vp )
 }
 
 static INLINE struct st_geometry_program *
-st_geometry_program( struct gl_geometry_program *vp )
+st_geometry_program( struct gl_geometry_program *gp )
 {
-   return (struct st_geometry_program *)vp;
+   return (struct st_geometry_program *)gp;
 }
 
 static INLINE void
