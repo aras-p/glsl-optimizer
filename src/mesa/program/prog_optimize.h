@@ -27,9 +27,10 @@
 
 
 #include "main/config.h"
-#include "main/mtypes.h"
+#include "main/glheader.h"
 
 
+struct gl_context;
 struct gl_program;
 struct prog_instruction;
 
