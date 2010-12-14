@@ -34,6 +34,8 @@
 
 struct dd_function_table;
 struct st_context;
+struct gl_fragment_program;
+struct st_fragment_program;
 
 #if FEATURE_drawpix
 
@@ -45,6 +47,12 @@ st_init_bitmap(struct st_context *st);
 
 extern void
 st_destroy_bitmap(struct st_context *st);
+
+extern void
+st_make_bitmap_fragment_program(struct st_context *st,
+                                struct gl_fragment_program *fpIn,
+                                struct gl_fragment_program **fpOut,
+                                GLuint *bitmap_sampler);
 
 extern void
 st_flush_bitmap_cache(struct st_context *st);

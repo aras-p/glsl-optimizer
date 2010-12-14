@@ -252,6 +252,8 @@ void st_destroy_context( struct st_context *st )
 
    _vbo_DestroyContext(st->ctx);
 
+   st_destroy_program_variants(st);
+
    _mesa_free_context_data(ctx);
 
    st_destroy_context_priv(st);

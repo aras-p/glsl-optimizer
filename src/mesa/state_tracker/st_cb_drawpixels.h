@@ -42,6 +42,16 @@ extern void st_init_drawpixels_functions(struct dd_function_table *functions);
 extern void
 st_destroy_drawpix(struct st_context *st);
 
+extern void
+st_make_drawpix_fragment_program(struct st_context *st,
+                                 struct gl_fragment_program *fpIn,
+                                 struct gl_fragment_program **fpOut);
+
+extern struct gl_fragment_program *
+st_make_drawpix_z_stencil_program(struct st_context *st,
+                                  GLboolean write_depth,
+                                  GLboolean write_stencil);
+
 #else
 
 static INLINE void

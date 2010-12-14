@@ -46,8 +46,6 @@
 #include "st_cb_program.h"
 
 
-static GLuint SerialNo = 1;
-
 
 /**
  * Called via ctx->Driver.BindProgram() to bind an ARB vertex or
@@ -100,8 +98,6 @@ static struct gl_program *st_new_program( struct gl_context *ctx,
    case GL_VERTEX_PROGRAM_ARB: {
       struct st_vertex_program *prog = ST_CALLOC_STRUCT(st_vertex_program);
 
-      prog->serialNo = SerialNo++;
-
       return _mesa_init_vertex_program( ctx, 
 					&prog->Base,
 					target, 
@@ -112,8 +108,6 @@ static struct gl_program *st_new_program( struct gl_context *ctx,
    case GL_FRAGMENT_PROGRAM_NV: {
       struct st_fragment_program *prog = ST_CALLOC_STRUCT(st_fragment_program);
 
-      prog->serialNo = SerialNo++;
-
       return _mesa_init_fragment_program( ctx, 
 					  &prog->Base,
 					  target, 
@@ -122,8 +116,6 @@ static struct gl_program *st_new_program( struct gl_context *ctx,
 
    case MESA_GEOMETRY_PROGRAM: {
       struct st_geometry_program *prog = ST_CALLOC_STRUCT(st_geometry_program);
-
-      prog->serialNo = SerialNo++;
 
       return _mesa_init_geometry_program( ctx,
                                           &prog->Base,
@@ -152,12 +144,10 @@ st_delete_program(struct gl_context *ctx, struct gl_program *prog)
       break;
    case MESA_GEOMETRY_PROGRAM:
       {
-         struct st_geometry_program *stgp = (struct st_geometry_program *) prog;
+         struct st_geometry_program *stgp =
+            (struct st_geometry_program *) prog;
 
-         if (stgp->driver_shader) {
-            cso_delete_geometry_shader(st->cso_context, stgp->driver_shader);
-            stgp->driver_shader = NULL;
-         }
+         st_gp_release_varients(st, stgp);
 
          if (stgp->tgsi.tokens) {
             st_free_tokens((void *) stgp->tgsi.tokens);
@@ -167,22 +157,14 @@ st_delete_program(struct gl_context *ctx, struct gl_program *prog)
       break;
    case GL_FRAGMENT_PROGRAM_ARB:
       {
-         struct st_fragment_program *stfp = (struct st_fragment_program *) prog;
+         struct st_fragment_program *stfp =
+            (struct st_fragment_program *) prog;
 
-         if (stfp->driver_shader) {
-            cso_delete_fragment_shader(st->cso_context, stfp->driver_shader);
-            stfp->driver_shader = NULL;
-         }
+         st_fp_release_varients(st, stfp);
          
          if (stfp->tgsi.tokens) {
             st_free_tokens(stfp->tgsi.tokens);
             stfp->tgsi.tokens = NULL;
-         }
-
-         if (stfp->bitmap_program) {
-            struct gl_program *prg = &stfp->bitmap_program->Base.Base;
-            _mesa_reference_program(ctx, &prg, NULL);
-            stfp->bitmap_program = NULL;
          }
       }
       break;
@@ -212,12 +194,7 @@ static GLboolean st_program_string_notify( struct gl_context *ctx,
    if (target == GL_FRAGMENT_PROGRAM_ARB) {
       struct st_fragment_program *stfp = (struct st_fragment_program *) prog;
 
-      stfp->serialNo++;
-
-      if (stfp->driver_shader) {
-         cso_delete_fragment_shader(st->cso_context, stfp->driver_shader);
-         stfp->driver_shader = NULL;
-      }
+      st_fp_release_varients(st, stfp);
 
       if (stfp->tgsi.tokens) {
          st_free_tokens(stfp->tgsi.tokens);
@@ -230,12 +207,7 @@ static GLboolean st_program_string_notify( struct gl_context *ctx,
    else if (target == MESA_GEOMETRY_PROGRAM) {
       struct st_geometry_program *stgp = (struct st_geometry_program *) prog;
 
-      stgp->serialNo++;
-
-      if (stgp->driver_shader) {
-         cso_delete_geometry_shader(st->cso_context, stgp->driver_shader);
-         stgp->driver_shader = NULL;
-      }
+      st_gp_release_varients(st, stgp);
 
       if (stgp->tgsi.tokens) {
          st_free_tokens((void *) stgp->tgsi.tokens);
@@ -247,8 +219,6 @@ static GLboolean st_program_string_notify( struct gl_context *ctx,
    }
    else if (target == GL_VERTEX_PROGRAM_ARB) {
       struct st_vertex_program *stvp = (struct st_vertex_program *) prog;
-
-      stvp->serialNo++;
 
       st_vp_release_varients( st, stvp );
 

@@ -185,48 +185,47 @@ find_free_bit(uint bitfield)
 
 /**
  * Combine basic bitmap fragment program with the user-defined program.
+ * \param st  current context
+ * \param fpIn  the incoming fragment program
+ * \param fpOut  the new fragment program which does fragment culling
+ * \param bitmap_sampler  sampler number for the bitmap texture
  */
-static struct st_fragment_program *
-combined_bitmap_fragment_program(struct gl_context *ctx)
+void
+st_make_bitmap_fragment_program(struct st_context *st,
+                                struct gl_fragment_program *fpIn,
+                                struct gl_fragment_program **fpOut,
+                                GLuint *bitmap_sampler)
 {
-   struct st_context *st = st_context(ctx);
-   struct st_fragment_program *stfp = st->fp;
+   struct st_fragment_program *bitmap_prog;
+   struct gl_program *newProg;
+   uint sampler;
 
-   if (!stfp->bitmap_program) {
-      /*
-       * Generate new program which is the user-defined program prefixed
-       * with the bitmap sampler/kill instructions.
-       */
-      struct st_fragment_program *bitmap_prog;
-      uint sampler;
+   /*
+    * Generate new program which is the user-defined program prefixed
+    * with the bitmap sampler/kill instructions.
+    */
+   sampler = find_free_bit(fpIn->Base.SamplersUsed);
+   bitmap_prog = make_bitmap_fragment_program(st->ctx, sampler);
 
-      sampler = find_free_bit(st->fp->Base.Base.SamplersUsed);
-      bitmap_prog = make_bitmap_fragment_program(ctx, sampler);
-
-      stfp->bitmap_program = (struct st_fragment_program *)
-         _mesa_combine_programs(ctx,
-                                &bitmap_prog->Base.Base, &stfp->Base.Base);
-      stfp->bitmap_program->bitmap_sampler = sampler;
-
-      /* done with this after combining */
-      st_reference_fragprog(st, &bitmap_prog, NULL);
+   newProg = _mesa_combine_programs(st->ctx,
+                                    &bitmap_prog->Base.Base,
+                                    &fpIn->Base);
+   /* done with this after combining */
+   st_reference_fragprog(st, &bitmap_prog, NULL);
 
 #if 0
-      {
-         struct gl_program *p = &stfp->bitmap_program->Base.Base;
-         printf("Combined bitmap program:\n");
-         _mesa_print_program(p);
-         printf("InputsRead: 0x%x\n", p->InputsRead);
-         printf("OutputsWritten: 0x%x\n", p->OutputsWritten);
-         _mesa_print_parameter_list(p->Parameters);
-      }
+   {
+      printf("Combined bitmap program:\n");
+      _mesa_print_program(newProg);
+      printf("InputsRead: 0x%x\n", newProg->InputsRead);
+      printf("OutputsWritten: 0x%x\n", newProg->OutputsWritten);
+      _mesa_print_parameter_list(newProg->Parameters);
+   }
 #endif
 
-      /* translate to TGSI tokens */
-      st_translate_fragment_program(st, stfp->bitmap_program);
-   }
-
-   return stfp->bitmap_program;
+   /* return results */
+   *fpOut = (struct gl_fragment_program *) newProg;
+   *bitmap_sampler = sampler;
 }
 
 
@@ -411,11 +410,16 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
    struct cso_context *cso = st->cso_context;
-   struct st_fragment_program *stfp;
+   struct st_fp_varient *fpv;
+   struct st_fp_varient_key key;
    GLuint maxSize;
    GLuint offset;
 
-   stfp = combined_bitmap_fragment_program(ctx);
+   memset(&key, 0, sizeof(key));
+   key.st = st;
+   key.bitmap = GL_TRUE;
+
+   fpv = st_get_fp_varient(st, st->fp, &key);
 
    /* As an optimization, Mesa's fragment programs will sometimes get the
     * primary color from a statevar/constant rather than a varying variable.
@@ -428,7 +432,7 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
       GLfloat colorSave[4];
       COPY_4V(colorSave, ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);
       COPY_4V(ctx->Current.Attrib[VERT_ATTRIB_COLOR0], color);
-      st_upload_constants(st, stfp->Base.Base.Parameters, PIPE_SHADER_FRAGMENT);
+      st_upload_constants(st, fpv->parameters, PIPE_SHADER_FRAGMENT);
       COPY_4V(ctx->Current.Attrib[VERT_ATTRIB_COLOR0], colorSave);
    }
 
@@ -454,7 +458,7 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_set_rasterizer(cso, &st->bitmap.rasterizer);
 
    /* fragment shader state: TEX lookup program */
-   cso_set_fragment_shader_handle(cso, stfp->driver_shader);
+   cso_set_fragment_shader_handle(cso, fpv->driver_shader);
 
    /* vertex shader state: position + texcoord pass-through */
    cso_set_vertex_shader_handle(cso, st->bitmap.vs);
@@ -462,21 +466,21 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    /* user samplers, plus our bitmap sampler */
    {
       struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS];
-      uint num = MAX2(stfp->bitmap_sampler + 1, st->state.num_samplers);
+      uint num = MAX2(fpv->bitmap_sampler + 1, st->state.num_samplers);
       uint i;
       for (i = 0; i < st->state.num_samplers; i++) {
          samplers[i] = &st->state.samplers[i];
       }
-      samplers[stfp->bitmap_sampler] = &st->bitmap.samplers[sv->texture->target != PIPE_TEXTURE_RECT];
+      samplers[fpv->bitmap_sampler] = &st->bitmap.samplers[sv->texture->target != PIPE_TEXTURE_RECT];
       cso_set_samplers(cso, num, (const struct pipe_sampler_state **) samplers);
    }
 
    /* user textures, plus the bitmap texture */
    {
       struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
-      uint num = MAX2(stfp->bitmap_sampler + 1, st->state.num_textures);
+      uint num = MAX2(fpv->bitmap_sampler + 1, st->state.num_textures);
       memcpy(sampler_views, st->state.sampler_views, sizeof(sampler_views));
-      sampler_views[stfp->bitmap_sampler] = sv;
+      sampler_views[fpv->bitmap_sampler] = sv;
       cso_set_fragment_sampler_views(cso, num, sampler_views);
    }
 
