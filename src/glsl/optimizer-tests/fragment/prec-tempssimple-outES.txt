@@ -2,6 +2,6 @@ varying lowp vec2 var_uv;
 uniform sampler2D _MainTex;
 void main ()
 {
-  gl_FragColor = (texture2D (_MainTex, var_uv) * 2.0);
+  gl_FragColor = ((texture2D (_MainTex, var_uv) * 2.0) + abs (var_uv.xxxx));
 }
 
