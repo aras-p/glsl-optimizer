@@ -278,15 +278,15 @@ st_get_gp_varient(struct st_context *st,
 
 
 extern void
-st_vp_release_varients( struct st_context *st,
+st_release_vp_varients( struct st_context *st,
                         struct st_vertex_program *stvp );
 
 extern void
-st_fp_release_varients( struct st_context *st,
+st_release_fp_varients( struct st_context *st,
                         struct st_fragment_program *stfp );
 
 extern void
-st_gp_release_varients(struct st_context *st,
+st_release_gp_varients(struct st_context *st,
                        struct st_geometry_program *stgp);
 
 

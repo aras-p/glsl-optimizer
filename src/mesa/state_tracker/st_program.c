@@ -82,7 +82,7 @@ delete_vp_varient(struct st_context *st, struct st_vp_varient *vpv)
  * Clean out any old compilations:
  */
 void
-st_vp_release_varients( struct st_context *st,
+st_release_vp_varients( struct st_context *st,
                         struct st_vertex_program *stvp )
 {
    struct st_vp_varient *vpv;
@@ -116,7 +116,7 @@ delete_fp_varient(struct st_context *st, struct st_fp_varient *fpv)
  * Free all varients of a fragment program.
  */
 void
-st_fp_release_varients(struct st_context *st, struct st_fragment_program *stfp)
+st_release_fp_varients(struct st_context *st, struct st_fragment_program *stfp)
 {
    struct st_fp_varient *fpv;
 
@@ -148,7 +148,7 @@ delete_gp_varient(struct st_context *st, struct st_gp_varient *gpv)
  * Free all varients of a geometry program.
  */
 void
-st_gp_release_varients(struct st_context *st, struct st_geometry_program *stgp)
+st_release_gp_varients(struct st_context *st, struct st_geometry_program *stgp)
 {
    struct st_gp_varient *gpv;
 
