@@ -1295,11 +1295,6 @@ void evergreen_vertex_buffer_update(struct r600_pipe_context *rctx)
 	if (rctx->vertex_elements == NULL || !rctx->nvertex_buffer)
 		return;
 
-	/* delete previous translated vertex elements */
-	if (rctx->tran.new_velems) {
-		r600_end_vertex_translate(rctx);
-	}
-
 	if (rctx->vertex_elements->incompatible_layout) {
 		/* translate rebind new vertex elements so
 		 * return once translated

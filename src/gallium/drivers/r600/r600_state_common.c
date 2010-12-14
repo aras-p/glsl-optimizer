@@ -119,6 +119,11 @@ void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_vertex_element *v = (struct r600_vertex_element*)state;
 
+	/* delete previous translated vertex elements */
+	if (rctx->tran.new_velems) {
+		r600_end_vertex_translate(rctx);
+	}
+
 	rctx->vertex_elements = v;
 	if (v) {
 		rctx->states[v->rstate.id] = &v->rstate;

@@ -135,11 +135,6 @@ void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 	if (rctx->vertex_elements == NULL || !rctx->nvertex_buffer)
 		return;
 
-	/* delete previous translated vertex elements */
-	if (rctx->tran.new_velems) {
-		r600_end_vertex_translate(rctx);
-	}
-
 	if (rctx->vertex_elements->incompatible_layout) {
 		/* translate rebind new vertex elements so
 		 * return once translated
@@ -280,7 +275,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_drawl draw;
-	boolean translate = FALSE;
 
 	memset(&draw, 0, sizeof(struct r600_drawl));
 	draw.ctx = ctx;
@@ -311,9 +305,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		draw.index_bias = info->start;
 	}
 	r600_draw_common(&draw);
-
-	if (translate)
-		r600_end_vertex_translate(rctx);
 
 	pipe_resource_reference(&draw.index_buffer, NULL);
 }
