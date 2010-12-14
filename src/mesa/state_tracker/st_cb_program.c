@@ -119,7 +119,7 @@ st_new_program(struct gl_context *ctx, GLenum target, GLuint id)
 /**
  * Called via ctx->Driver.DeleteProgram()
  */
-void
+static void
 st_delete_program(struct gl_context *ctx, struct gl_program *prog)
 {
    struct st_context *st = st_context(ctx);
