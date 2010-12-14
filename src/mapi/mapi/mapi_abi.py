@@ -302,6 +302,8 @@ class ABIPrinter(object):
         self.api_entry = 'KHRONOS_APIENTRY'
         self.api_attrs = 'KHRONOS_APIATTRIBUTES'
 
+        self.c_header = ''
+
         self.lib_need_table_size = True
         self.lib_need_noop_array = True
         self.lib_need_stubs = True
@@ -432,12 +434,12 @@ class ABIPrinter(object):
             if ent.ret:
                 ret = 'return '
             stmt1 = self.indent
-            stmt1 += 'const struct mapi_table *tbl = u_current_get();'
+            stmt1 += 'const struct mapi_table *_tbl = u_current_get();'
             stmt2 = self.indent
-            stmt2 += 'mapi_func func = ((const mapi_func *) tbl)[%d];' % (
+            stmt2 += 'mapi_func _func = ((const mapi_func *) _tbl)[%d];' % (
                     ent.slot)
             stmt3 = self.indent
-            stmt3 += '%s((%s) func)(%s);' % (ret, cast, ent.c_args())
+            stmt3 += '%s((%s) _func)(%s);' % (ret, cast, ent.c_args())
 
             disp = '%s\n{\n%s\n%s\n%s\n}' % (proto, stmt1, stmt2, stmt3)
 
@@ -555,6 +557,11 @@ class ABIPrinter(object):
 
     def output_for_lib(self):
         print self.c_notice()
+
+        if self.c_header:
+            print
+            print self.c_header
+
         print
         print '#ifdef MAPI_TMP_DEFINES'
         print self.c_public_includes()
@@ -575,7 +582,7 @@ class ABIPrinter(object):
             print '#ifdef MAPI_TMP_NOOP_ARRAY'
             print '#ifdef DEBUG'
             print
-            print self.c_noop_functions(self.prefix_noop, self.prefix_lib)
+            print self.c_noop_functions(self.prefix_noop, self.prefix_warn)
             print
             print 'const mapi_func table_%s_array[] = {' % (self.prefix_noop)
             print self.c_noop_initializer(self.prefix_noop, False)
@@ -640,8 +647,9 @@ class ABIPrinter(object):
 class GLAPIPrinter(ABIPrinter):
     """OpenGL API Printer"""
 
-    def __init__(self, entries):
-        super(GLAPIPrinter, self).__init__(entries)
+    def __init__(self, entries, api=None):
+        api_entries = self._get_api_entries(entries, api)
+        super(GLAPIPrinter, self).__init__(api_entries)
 
         self.api_defines = ['GL_GLEXT_PROTOTYPES']
         self.api_headers = ['"GL/gl.h"', '"GL/glext.h"']
@@ -649,33 +657,509 @@ class GLAPIPrinter(ABIPrinter):
         self.api_entry = 'APIENTRY'
         self.api_attrs = ''
 
-        self.prefix_lib = 'gl'
+        self.prefix_lib = 'GLAPI_PREFIX'
         self.prefix_app = '_mesa_'
         self.prefix_noop = 'noop'
+        self.prefix_warn = self.prefix_lib
 
-    def output_for_app(self):
-        # not used
-        pass
+        self.c_header = self._get_c_header()
+
+    def _get_api_entries(self, entries, api):
+        """Override the entry attributes according to API."""
+        import copy
+
+        # no override
+        if api is None:
+            return entries
+
+        api_entries = {}
+        for ent in entries:
+            ent = copy.copy(ent)
+
+            # override 'hidden' and 'handcode'
+            ent.hidden = ent.name not in api
+            ent.handcode = False
+            if ent.alias:
+                ent.alias = api_entries[ent.alias.name]
+
+            api_entries[ent.name] = ent
+
+        # sanity check
+        missed = [name for name in api if name not in api_entries]
+        if missed:
+            raise Exception('%s is missing' % str(missed))
+
+        entries = api_entries.values()
+        entries.sort()
+
+        return entries
+
+    def _get_c_header(self):
+        header = """#ifndef _GLAPI_TMP_H_
+#define _GLAPI_TMP_H_
+#ifdef USE_MGL_NAMESPACE
+#define GLAPI_PREFIX(func)  mgl##func
+#define GLAPI_PREFIX_STR(func)  "mgl"#func
+#else
+#define GLAPI_PREFIX(func)  gl##func
+#define GLAPI_PREFIX_STR(func)  "gl"#func
+#endif /* USE_MGL_NAMESPACE */
+
+typedef int GLfixed;
+typedef int GLclampx;
+#endif /* _GLAPI_TMP_H_ */"""
+
+        return header
 
 class ES1APIPrinter(GLAPIPrinter):
     """OpenGL ES 1.x API Printer"""
 
     def __init__(self, entries):
-        super(ES1APIPrinter, self).__init__(entries)
+        es1_api = [
+                # OpenGL ES 1.1
+                'ActiveTexture',
+                'AlphaFunc',
+                'AlphaFuncx',
+                'BindBuffer',
+                'BindTexture',
+                'BlendFunc',
+                'BufferData',
+                'BufferSubData',
+                'Clear',
+                'ClearColor',
+                'ClearColorx',
+                'ClearDepthf',
+                'ClearDepthx',
+                'ClearStencil',
+                'ClientActiveTexture',
+                'ClipPlanef',
+                'ClipPlanex',
+                'Color4f',
+                'Color4ub',
+                'Color4x',
+                'ColorMask',
+                'ColorPointer',
+                'CompressedTexImage2D',
+                'CompressedTexSubImage2D',
+                'CopyTexImage2D',
+                'CopyTexSubImage2D',
+                'CullFace',
+                'DeleteBuffers',
+                'DeleteTextures',
+                'DepthFunc',
+                'DepthMask',
+                'DepthRangef',
+                'DepthRangex',
+                'Disable',
+                'DisableClientState',
+                'DrawArrays',
+                'DrawElements',
+                'Enable',
+                'EnableClientState',
+                'Finish',
+                'Flush',
+                'Fogf',
+                'Fogfv',
+                'Fogx',
+                'Fogxv',
+                'FrontFace',
+                'Frustumf',
+                'Frustumx',
+                'GenBuffers',
+                'GenTextures',
+                'GetBooleanv',
+                'GetBufferParameteriv',
+                'GetClipPlanef',
+                'GetClipPlanex',
+                'GetError',
+                'GetFixedv',
+                'GetFloatv',
+                'GetIntegerv',
+                'GetLightfv',
+                'GetLightxv',
+                'GetMaterialfv',
+                'GetMaterialxv',
+                'GetPointerv',
+                'GetString',
+                'GetTexEnvfv',
+                'GetTexEnviv',
+                'GetTexEnvxv',
+                'GetTexParameterfv',
+                'GetTexParameteriv',
+                'GetTexParameterxv',
+                'Hint',
+                'IsBuffer',
+                'IsEnabled',
+                'IsTexture',
+                'Lightf',
+                'Lightfv',
+                'LightModelf',
+                'LightModelfv',
+                'LightModelx',
+                'LightModelxv',
+                'Lightx',
+                'Lightxv',
+                'LineWidth',
+                'LineWidthx',
+                'LoadIdentity',
+                'LoadMatrixf',
+                'LoadMatrixx',
+                'LogicOp',
+                'Materialf',
+                'Materialfv',
+                'Materialx',
+                'Materialxv',
+                'MatrixMode',
+                'MultiTexCoord4f',
+                'MultiTexCoord4x',
+                'MultMatrixf',
+                'MultMatrixx',
+                'Normal3f',
+                'Normal3x',
+                'NormalPointer',
+                'Orthof',
+                'Orthox',
+                'PixelStorei',
+                'PointParameterf',
+                'PointParameterfv',
+                'PointParameterx',
+                'PointParameterxv',
+                'PointSize',
+                'PointSizex',
+                'PolygonOffset',
+                'PolygonOffsetx',
+                'PopMatrix',
+                'PushMatrix',
+                'ReadPixels',
+                'Rotatef',
+                'Rotatex',
+                'SampleCoverage',
+                'SampleCoveragex',
+                'Scalef',
+                'Scalex',
+                'Scissor',
+                'ShadeModel',
+                'StencilFunc',
+                'StencilMask',
+                'StencilOp',
+                'TexCoordPointer',
+                'TexEnvf',
+                'TexEnvfv',
+                'TexEnvi',
+                'TexEnviv',
+                'TexEnvx',
+                'TexEnvxv',
+                'TexImage2D',
+                'TexParameterf',
+                'TexParameterfv',
+                'TexParameteri',
+                'TexParameteriv',
+                'TexParameterx',
+                'TexParameterxv',
+                'TexSubImage2D',
+                'Translatef',
+                'Translatex',
+                'VertexPointer',
+                'Viewport',
+                # GL_OES_EGL_image
+                'EGLImageTargetTexture2DOES',
+                'EGLImageTargetRenderbufferStorageOES',
+                # GL_OES_mapbuffer
+                'GetBufferPointervOES',
+                'MapBufferOES',
+                'UnmapBufferOES',
+                # GL_EXT_multi_draw_arrays
+                'MultiDrawArraysEXT',
+                'MultiDrawElementsEXT',
+                # GL_OES_blend_equation_separate
+                'BlendEquationSeparateOES',
+                # GL_OES_blend_func_separate
+                'BlendFuncSeparateOES',
+                # GL_OES_blend_subtract
+                'BlendEquationOES',
+                # GL_OES_draw_texture
+                'DrawTexiOES',
+                'DrawTexivOES',
+                'DrawTexfOES',
+                'DrawTexfvOES',
+                'DrawTexsOES',
+                'DrawTexsvOES',
+                'DrawTexxOES',
+                'DrawTexxvOES',
+                # GL_OES_fixed_point
+                'AlphaFuncxOES',
+                'ClearColorxOES',
+                'ClearDepthxOES',
+                'Color4xOES',
+                'DepthRangexOES',
+                'FogxOES',
+                'FogxvOES',
+                'FrustumxOES',
+                'LightModelxOES',
+                'LightModelxvOES',
+                'LightxOES',
+                'LightxvOES',
+                'LineWidthxOES',
+                'LoadMatrixxOES',
+                'MaterialxOES',
+                'MaterialxvOES',
+                'MultiTexCoord4xOES',
+                'MultMatrixxOES',
+                'Normal3xOES',
+                'OrthoxOES',
+                'PointSizexOES',
+                'PolygonOffsetxOES',
+                'RotatexOES',
+                'SampleCoveragexOES',
+                'ScalexOES',
+                'TexEnvxOES',
+                'TexEnvxvOES',
+                'TexParameterxOES',
+                'TranslatexOES',
+                'ClipPlanexOES',
+                'GetClipPlanexOES',
+                'GetFixedvOES',
+                'GetLightxvOES',
+                'GetMaterialxvOES',
+                'GetTexEnvxvOES',
+                'GetTexParameterxvOES',
+                'PointParameterxOES',
+                'PointParameterxvOES',
+                'TexParameterxvOES',
+                # GL_OES_framebuffer_object
+                'BindFramebufferOES',
+                'BindRenderbufferOES',
+                'CheckFramebufferStatusOES',
+                'DeleteFramebuffersOES',
+                'DeleteRenderbuffersOES',
+                'FramebufferRenderbufferOES',
+                'FramebufferTexture2DOES',
+                'GenerateMipmapOES',
+                'GenFramebuffersOES',
+                'GenRenderbuffersOES',
+                'GetFramebufferAttachmentParameterivOES',
+                'GetRenderbufferParameterivOES',
+                'IsFramebufferOES',
+                'IsRenderbufferOES',
+                'RenderbufferStorageOES',
+                # GL_OES_point_size_array
+                'PointSizePointerOES',
+                # GL_OES_query_matrix
+                'QueryMatrixxOES',
+                # GL_OES_single_precision
+                'ClearDepthfOES',
+                'DepthRangefOES',
+                'FrustumfOES',
+                'OrthofOES',
+                'ClipPlanefOES',
+                'GetClipPlanefOES',
+                # GL_OES_texture_cube_map
+                'GetTexGenfvOES',
+                'GetTexGenivOES',
+                'GetTexGenxvOES',
+                'TexGenfOES',
+                'TexGenfvOES',
+                'TexGeniOES',
+                'TexGenivOES',
+                'TexGenxOES',
+                'TexGenxvOES',
+        ]
 
-        self.api_headers = ['"GLES/gl.h"', '"GLES/glext.h"']
-        self.api_call = 'GL_API'
-        self.api_entry = 'GL_APIENTRY'
+        super(ES1APIPrinter, self).__init__(entries, es1_api)
+        self.prefix_lib = 'gl'
+        self.prefix_warn = 'gl'
+
+    def _get_c_header(self):
+        header = """#ifndef _GLAPI_TMP_H_
+#define _GLAPI_TMP_H_
+typedef int GLfixed;
+typedef int GLclampx;
+#endif /* _GLAPI_TMP_H_ */"""
+
+        return header
 
 class ES2APIPrinter(GLAPIPrinter):
     """OpenGL ES 2.x API Printer"""
 
     def __init__(self, entries):
-        super(ES2APIPrinter, self).__init__(entries)
+        es2_api = [
+                # OpenGL ES 2.0
+                "ActiveTexture",
+                "AttachShader",
+                "BindAttribLocation",
+                "BindBuffer",
+                "BindFramebuffer",
+                "BindRenderbuffer",
+                "BindTexture",
+                "BlendColor",
+                "BlendEquation",
+                "BlendEquationSeparate",
+                "BlendFunc",
+                "BlendFuncSeparate",
+                "BufferData",
+                "BufferSubData",
+                "CheckFramebufferStatus",
+                "Clear",
+                "ClearColor",
+                "ClearDepthf",
+                "ClearStencil",
+                "ColorMask",
+                "CompileShader",
+                "CompressedTexImage2D",
+                "CompressedTexSubImage2D",
+                "CopyTexImage2D",
+                "CopyTexSubImage2D",
+                "CreateProgram",
+                "CreateShader",
+                "CullFace",
+                "DeleteBuffers",
+                "DeleteFramebuffers",
+                "DeleteProgram",
+                "DeleteRenderbuffers",
+                "DeleteShader",
+                "DeleteTextures",
+                "DepthFunc",
+                "DepthMask",
+                "DepthRangef",
+                "DetachShader",
+                "Disable",
+                "DisableVertexAttribArray",
+                "DrawArrays",
+                "DrawElements",
+                "Enable",
+                "EnableVertexAttribArray",
+                "Finish",
+                "Flush",
+                "FramebufferRenderbuffer",
+                "FramebufferTexture2D",
+                "FrontFace",
+                "GenBuffers",
+                "GenerateMipmap",
+                "GenFramebuffers",
+                "GenRenderbuffers",
+                "GenTextures",
+                "GetActiveAttrib",
+                "GetActiveUniform",
+                "GetAttachedShaders",
+                "GetAttribLocation",
+                "GetBooleanv",
+                "GetBufferParameteriv",
+                "GetError",
+                "GetFloatv",
+                "GetFramebufferAttachmentParameteriv",
+                "GetIntegerv",
+                "GetProgramInfoLog",
+                "GetProgramiv",
+                "GetRenderbufferParameteriv",
+                "GetShaderInfoLog",
+                "GetShaderiv",
+                "GetShaderPrecisionFormat",
+                "GetShaderSource",
+                "GetString",
+                "GetTexParameterfv",
+                "GetTexParameteriv",
+                "GetUniformfv",
+                "GetUniformiv",
+                "GetUniformLocation",
+                "GetVertexAttribfv",
+                "GetVertexAttribiv",
+                "GetVertexAttribPointerv",
+                "Hint",
+                "IsBuffer",
+                "IsEnabled",
+                "IsFramebuffer",
+                "IsProgram",
+                "IsRenderbuffer",
+                "IsShader",
+                "IsTexture",
+                "LineWidth",
+                "LinkProgram",
+                "PixelStorei",
+                "PolygonOffset",
+                "ReadPixels",
+                "ReleaseShaderCompiler",
+                "RenderbufferStorage",
+                "SampleCoverage",
+                "Scissor",
+                "ShaderBinary",
+                "ShaderSource",
+                "StencilFunc",
+                "StencilFuncSeparate",
+                "StencilMask",
+                "StencilMaskSeparate",
+                "StencilOp",
+                "StencilOpSeparate",
+                "TexImage2D",
+                "TexParameterf",
+                "TexParameterfv",
+                "TexParameteri",
+                "TexParameteriv",
+                "TexSubImage2D",
+                "Uniform1f",
+                "Uniform1fv",
+                "Uniform1i",
+                "Uniform1iv",
+                "Uniform2f",
+                "Uniform2fv",
+                "Uniform2i",
+                "Uniform2iv",
+                "Uniform3f",
+                "Uniform3fv",
+                "Uniform3i",
+                "Uniform3iv",
+                "Uniform4f",
+                "Uniform4fv",
+                "Uniform4i",
+                "Uniform4iv",
+                "UniformMatrix2fv",
+                "UniformMatrix3fv",
+                "UniformMatrix4fv",
+                "UseProgram",
+                "ValidateProgram",
+                "VertexAttrib1f",
+                "VertexAttrib1fv",
+                "VertexAttrib2f",
+                "VertexAttrib2fv",
+                "VertexAttrib3f",
+                "VertexAttrib3fv",
+                "VertexAttrib4f",
+                "VertexAttrib4fv",
+                "VertexAttribPointer",
+                "Viewport",
+                # GL_OES_EGL_image
+                'EGLImageTargetTexture2DOES',
+                'EGLImageTargetRenderbufferStorageOES',
+                # GL_OES_mapbuffer
+                'GetBufferPointervOES',
+                'MapBufferOES',
+                'UnmapBufferOES',
+                # GL_EXT_multi_draw_arrays
+                'MultiDrawArraysEXT',
+                'MultiDrawElementsEXT',
+                # GL_OES_texture_3D
+                'CompressedTexImage3DOES',
+                'CompressedTexSubImage3DOES',
+                'CopyTexSubImage3DOES',
+                'FramebufferTexture3DOES',
+                'TexImage3DOES',
+                'TexSubImage3DOES',
+                # GL_OES_get_program_binary
+                'GetProgramBinaryOES',
+                'ProgramBinaryOES',
+        ]
 
-        self.api_headers = ['"GLES2/gl2.h"', '"GLES2/gl2ext.h"']
-        self.api_call = 'GL_APICALL'
-        self.api_entry = 'GL_APIENTRY'
+        super(ES2APIPrinter, self).__init__(entries, es2_api)
+        self.prefix_lib = 'gl'
+        self.prefix_warn = 'gl'
+
+    def _get_c_header(self):
+        header = """#ifndef _GLAPI_TMP_H_
+#define _GLAPI_TMP_H_
+typedef int GLfixed;
+typedef int GLclampx;
+#endif /* _GLAPI_TMP_H_ */"""
+
+        return header
 
 class VGAPIPrinter(ABIPrinter):
     """OpenVG API Printer"""
@@ -692,6 +1176,7 @@ class VGAPIPrinter(ABIPrinter):
         self.prefix_lib = 'vg'
         self.prefix_app = 'vega'
         self.prefix_noop = 'noop'
+        self.prefix_warn = 'vg'
 
 def parse_args():
     printers = ['glapi', 'es1api', 'es2api', 'vgapi']
