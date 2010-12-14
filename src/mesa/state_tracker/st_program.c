@@ -1046,6 +1046,27 @@ destroy_program_variants(struct st_context *st, struct gl_program *program)
          }
       }
       break;
+   case MESA_GEOMETRY_PROGRAM:
+      {
+         struct st_geometry_program *stgp =
+            (struct st_geometry_program *) program;
+         struct st_gp_varient *gpv, **prev = &stgp->varients;
+
+         for (gpv = stgp->varients; gpv; ) {
+            struct st_gp_varient *next = gpv->next;
+            if (gpv->key.st == st) {
+               /* unlink from list */
+               *prev = next;
+               /* destroy this variant */
+               delete_gp_varient(st, gpv);
+            }
+            else {
+               prev = &gpv;
+            }
+            gpv = next;
+         }
+      }
+      break;
    default:
       _mesa_problem(NULL, "Unexpected program target in "
                     "destroy_program_variants_cb()");
