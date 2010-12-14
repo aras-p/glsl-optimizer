@@ -97,10 +97,21 @@ static bool InitializeOpenGL ()
 	return hasGLSL;
 }
 
-static bool CheckGLSL (bool vertex, const char* prefix, const char* source)
+static bool CheckGLSL (bool vertex, bool gles, const char* prefix, const std::string& source)
 {
+	std::string src;
+	if (gles)
+	{
+		src += "#define lowp\n";
+		src += "#define mediump\n";
+		src += "#define highp\n";
+	}
+	src += source;
+	const char* sourcePtr = src.c_str();
+	
+	
 	GLhandleARB shader = glCreateShaderObjectARB (vertex ? GL_VERTEX_SHADER_ARB : GL_FRAGMENT_SHADER_ARB);
-	glShaderSourceARB (shader, 1, &source, NULL);
+	glShaderSourceARB (shader, 1, &sourcePtr, NULL);
 	glCompileShaderARB (shader);
 	GLint status;
 	glGetObjectParameterivARB (shader, GL_OBJECT_COMPILE_STATUS_ARB, &status);
@@ -228,9 +239,10 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 		printf ("  failed to read input file\n");
 		return false;
 	}
-	if (doCheckGLSL && !CheckGLSL (vertex, "input", input.c_str()))
+	if (doCheckGLSL)
 	{
-		return false;
+		if (!CheckGLSL (vertex, gles, "input", input.c_str()))
+			return false;
 	}
 
 	if (gles)
@@ -275,9 +287,9 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 			printf ("  does not match optimized output\n");
 			res = false;
 		}
-		if (res && doCheckGLSL && !CheckGLSL (vertex, "raw", textHir.c_str()))
+		if (res && doCheckGLSL && !CheckGLSL (vertex, gles, "raw", textHir.c_str()))
 			res = false;
-		if (res && doCheckGLSL && !CheckGLSL (vertex, "optimized", textOpt.c_str()))
+		if (res && doCheckGLSL && !CheckGLSL (vertex, gles, "optimized", textOpt.c_str()))
 			res = false;
 	}
 	else
