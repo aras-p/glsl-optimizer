@@ -64,7 +64,11 @@ union sp_sampler_key {
       unsigned is_pot:1;
       unsigned processor:2;
       unsigned unit:4;
-      unsigned pad:22;
+      unsigned swizzle_r:3;
+      unsigned swizzle_g:3;
+      unsigned swizzle_b:3;
+      unsigned swizzle_a:3;
+      unsigned pad:10;
    } bits;
    unsigned value;
 };
@@ -113,6 +117,7 @@ struct sp_sampler_varient
 
    filter_func mip_filter;
    filter_func compare;
+   filter_func sample_target;
    
    /* Linked list:
     */

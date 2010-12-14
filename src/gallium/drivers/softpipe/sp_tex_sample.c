@@ -1731,6 +1731,86 @@ sample_cube(struct tgsi_sampler *tgsi_sampler,
 }
 
 
+static void
+sample_swizzle(struct tgsi_sampler *tgsi_sampler,
+               const float s[QUAD_SIZE],
+               const float t[QUAD_SIZE],
+               const float p[QUAD_SIZE],
+               const float c0[QUAD_SIZE],
+               enum tgsi_sampler_control control,
+               float rgba[NUM_CHANNELS][QUAD_SIZE])
+{
+   struct sp_sampler_varient *samp = sp_sampler_varient(tgsi_sampler);
+   float rgba_temp[NUM_CHANNELS][QUAD_SIZE];
+   const unsigned swizzle_r = samp->key.bits.swizzle_r;
+   const unsigned swizzle_g = samp->key.bits.swizzle_g;
+   const unsigned swizzle_b = samp->key.bits.swizzle_b;
+   const unsigned swizzle_a = samp->key.bits.swizzle_a;
+   unsigned j;
+
+   samp->sample_target(tgsi_sampler, s, t, p, c0, control, rgba_temp);
+
+   switch (swizzle_r) {
+   case PIPE_SWIZZLE_ZERO:
+      for (j = 0; j < 4; j++)
+         rgba[0][j] = 0.0f;
+      break;
+   case PIPE_SWIZZLE_ONE:
+      for (j = 0; j < 4; j++)
+         rgba[0][j] = 1.0f;
+      break;
+   default:
+      assert(swizzle_r < 4);
+      for (j = 0; j < 4; j++)
+         rgba[0][j] = rgba_temp[swizzle_r][j];
+   }
+
+   switch (swizzle_g) {
+   case PIPE_SWIZZLE_ZERO:
+      for (j = 0; j < 4; j++)
+         rgba[1][j] = 0.0f;
+      break;
+   case PIPE_SWIZZLE_ONE:
+      for (j = 0; j < 4; j++)
+         rgba[1][j] = 1.0f;
+      break;
+   default:
+      assert(swizzle_g < 4);
+      for (j = 0; j < 4; j++)
+         rgba[1][j] = rgba_temp[swizzle_g][j];
+   }
+
+   switch (swizzle_b) {
+   case PIPE_SWIZZLE_ZERO:
+      for (j = 0; j < 4; j++)
+         rgba[2][j] = 0.0f;
+      break;
+   case PIPE_SWIZZLE_ONE:
+      for (j = 0; j < 4; j++)
+         rgba[2][j] = 1.0f;
+      break;
+   default:
+      assert(swizzle_b < 4);
+      for (j = 0; j < 4; j++)
+         rgba[2][j] = rgba_temp[swizzle_b][j];
+   }
+
+   switch (swizzle_a) {
+   case PIPE_SWIZZLE_ZERO:
+      for (j = 0; j < 4; j++)
+         rgba[3][j] = 0.0f;
+      break;
+   case PIPE_SWIZZLE_ONE:
+      for (j = 0; j < 4; j++)
+         rgba[3][j] = 1.0f;
+      break;
+   default:
+      assert(swizzle_a < 4);
+      for (j = 0; j < 4; j++)
+         rgba[3][j] = rgba_temp[swizzle_a][j];
+   }
+}
+
 
 static wrap_nearest_func
 get_nearest_unorm_wrap(unsigned mode)
@@ -2015,7 +2095,7 @@ sp_create_sampler_varient( const struct pipe_sampler_state *sampler,
    }
    
    if (key.bits.target == PIPE_TEXTURE_CUBE) {
-      samp->base.get_samples = sample_cube;
+      samp->sample_target = sample_cube;
    }
    else {
       samp->faces[0] = 0;
@@ -2026,7 +2106,17 @@ sp_create_sampler_varient( const struct pipe_sampler_state *sampler,
       /* Skip cube face determination by promoting the compare
        * function pointer:
        */
-      samp->base.get_samples = samp->compare;
+      samp->sample_target = samp->compare;
+   }
+
+   if (key.bits.swizzle_r != PIPE_SWIZZLE_RED ||
+       key.bits.swizzle_g != PIPE_SWIZZLE_GREEN ||
+       key.bits.swizzle_b != PIPE_SWIZZLE_BLUE ||
+       key.bits.swizzle_a != PIPE_SWIZZLE_ALPHA) {
+      samp->base.get_samples = sample_swizzle;
+   }
+   else {
+      samp->base.get_samples = samp->sample_target;
    }
 
    return samp;

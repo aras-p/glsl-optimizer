@@ -289,6 +289,7 @@ softpipe_set_geometry_sampler_views(struct pipe_context *pipe,
 static struct sp_sampler_varient *
 get_sampler_varient( unsigned unit,
                      struct sp_sampler *sampler,
+                     struct pipe_sampler_view *view,
                      struct pipe_resource *resource,
                      unsigned processor )
 {
@@ -303,6 +304,10 @@ get_sampler_varient( unsigned unit,
    key.bits.is_pot = sp_texture->pot;
    key.bits.processor = processor;
    key.bits.unit = unit;
+   key.bits.swizzle_r = view->swizzle_r;
+   key.bits.swizzle_g = view->swizzle_g;
+   key.bits.swizzle_b = view->swizzle_b;
+   key.bits.swizzle_a = view->swizzle_a;
    key.bits.pad = 0;
 
    if (sampler->current && 
@@ -347,6 +352,7 @@ softpipe_reset_sampler_varients(struct softpipe_context *softpipe)
          softpipe->tgsi.vert_samplers_list[i] = 
             get_sampler_varient( i,
                                  sp_sampler(softpipe->vertex_samplers[i]),
+                                 softpipe->vertex_sampler_views[i],
                                  texture,
                                  TGSI_PROCESSOR_VERTEX );
 
@@ -369,6 +375,7 @@ softpipe_reset_sampler_varients(struct softpipe_context *softpipe)
                get_sampler_varient(
                   i,
                   sp_sampler(softpipe->geometry_samplers[i]),
+                  softpipe->geometry_sampler_views[i],
                   texture,
                   TGSI_PROCESSOR_GEOMETRY );
 
@@ -391,6 +398,7 @@ softpipe_reset_sampler_varients(struct softpipe_context *softpipe)
          softpipe->tgsi.frag_samplers_list[i] =
             get_sampler_varient( i,
                                  sp_sampler(softpipe->sampler[i]),
+                                 softpipe->sampler_views[i],
                                  texture,
                                  TGSI_PROCESSOR_FRAGMENT );
 
