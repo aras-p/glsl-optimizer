@@ -187,8 +187,6 @@ lp_build_sample_texel_soa(struct lp_build_sample_context *bld,
                                            border_chan_vec, texel_out[chan]);
       }
    }
-
-   apply_sampler_swizzle(bld, texel_out);
 }
 
 
@@ -1268,4 +1266,6 @@ lp_build_sample_soa(struct gallivm_state *gallivm,
    }
 
    lp_build_sample_compare(&bld, r, texel_out);
+
+   apply_sampler_swizzle(&bld, texel_out);
 }
