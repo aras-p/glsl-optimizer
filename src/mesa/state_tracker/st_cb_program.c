@@ -51,9 +51,8 @@
  * Called via ctx->Driver.BindProgram() to bind an ARB vertex or
  * fragment program.
  */
-static void st_bind_program( struct gl_context *ctx,
-			     GLenum target, 
-			     struct gl_program *prog )
+static void
+st_bind_program(struct gl_context *ctx, GLenum target, struct gl_program *prog)
 {
    struct st_context *st = st_context(ctx);
 
@@ -75,7 +74,8 @@ static void st_bind_program( struct gl_context *ctx,
  * Called via ctx->Driver.UseProgram() to bind a linked GLSL program
  * (vertex shader + fragment shader).
  */
-static void st_use_program( struct gl_context *ctx, struct gl_shader_program *shProg)
+static void
+st_use_program(struct gl_context *ctx, struct gl_shader_program *shProg)
 {
    struct st_context *st = st_context(ctx);
 
@@ -85,42 +85,28 @@ static void st_use_program( struct gl_context *ctx, struct gl_shader_program *sh
 }
 
 
-
 /**
  * Called via ctx->Driver.NewProgram() to allocate a new vertex or
  * fragment program.
  */
-static struct gl_program *st_new_program( struct gl_context *ctx,
-					  GLenum target,
-					  GLuint id )
+static struct gl_program *
+st_new_program(struct gl_context *ctx, GLenum target, GLuint id)
 {
    switch (target) {
    case GL_VERTEX_PROGRAM_ARB: {
       struct st_vertex_program *prog = ST_CALLOC_STRUCT(st_vertex_program);
-
-      return _mesa_init_vertex_program( ctx, 
-					&prog->Base,
-					target, 
-					id );
+      return _mesa_init_vertex_program(ctx, &prog->Base, target, id);
    }
 
    case GL_FRAGMENT_PROGRAM_ARB:
    case GL_FRAGMENT_PROGRAM_NV: {
       struct st_fragment_program *prog = ST_CALLOC_STRUCT(st_fragment_program);
-
-      return _mesa_init_fragment_program( ctx, 
-					  &prog->Base,
-					  target, 
-					  id );
+      return _mesa_init_fragment_program(ctx, &prog->Base, target, id);
    }
 
    case MESA_GEOMETRY_PROGRAM: {
       struct st_geometry_program *prog = ST_CALLOC_STRUCT(st_geometry_program);
-
-      return _mesa_init_geometry_program( ctx,
-                                          &prog->Base,
-                                          target,
-                                          id );
+      return _mesa_init_geometry_program(ctx, &prog->Base, target, id);
    }
 
    default:
@@ -130,6 +116,9 @@ static struct gl_program *st_new_program( struct gl_context *ctx,
 }
 
 
+/**
+ * Called via ctx->Driver.DeleteProgram()
+ */
 void
 st_delete_program(struct gl_context *ctx, struct gl_program *prog)
 {
@@ -177,15 +166,25 @@ st_delete_program(struct gl_context *ctx, struct gl_program *prog)
 }
 
 
-static GLboolean st_is_program_native( struct gl_context *ctx,
-				       GLenum target, 
-				       struct gl_program *prog )
+/**
+ * Called via ctx->Driver.IsProgramNative()
+ */
+static GLboolean
+st_is_program_native(struct gl_context *ctx,
+                     GLenum target, 
+                     struct gl_program *prog)
 {
    return GL_TRUE;
 }
 
 
-static GLboolean st_program_string_notify( struct gl_context *ctx,
+/**
+ * Called via ctx->Driver.ProgramStringNotify()
+ * Called when the program's text/code is changed.  We have to free
+ * all shader varients and corresponding gallium shaders when this happens.
+ */
+static GLboolean
+st_program_string_notify( struct gl_context *ctx,
                                            GLenum target,
                                            struct gl_program *prog )
 {
@@ -231,8 +230,11 @@ static GLboolean st_program_string_notify( struct gl_context *ctx,
 }
 
 
-
-void st_init_program_functions(struct dd_function_table *functions)
+/**
+ * Plug in the program and shader-related device driver functions.
+ */
+void
+st_init_program_functions(struct dd_function_table *functions)
 {
    functions->BindProgram = st_bind_program;
    functions->UseProgram = st_use_program;
