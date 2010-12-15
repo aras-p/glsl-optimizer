@@ -454,10 +454,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\lower_mod_to_fract.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\lower_noise.cpp"
 					>
 				</File>
