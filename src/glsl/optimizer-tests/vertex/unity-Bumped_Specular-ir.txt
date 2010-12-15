@@ -53,13 +53,13 @@ mat3 xll_constructMat3 (
   mat3 tmpvar_4;
   vec3 tmpvar_5;
   tmpvar_5 = tmpvar_1;
-  tmpvar_4[0] = tmpvar_5.xyz;
+  tmpvar_4[0] = tmpvar_5;
   vec3 tmpvar_6;
   tmpvar_6 = tmpvar_2;
-  tmpvar_4[1] = tmpvar_6.xyz;
+  tmpvar_4[1] = tmpvar_6;
   vec3 tmpvar_7;
   tmpvar_7 = tmpvar_3;
-  tmpvar_4[2] = tmpvar_7.xyz;
+  tmpvar_4[2] = tmpvar_7;
   return tmpvar_4;
 }
 

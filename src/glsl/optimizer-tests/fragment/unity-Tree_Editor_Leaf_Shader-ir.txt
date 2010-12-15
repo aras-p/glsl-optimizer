@@ -87,10 +87,10 @@ mat2 xll_saturate (
   mat2 tmpvar_3;
   vec2 tmpvar_4;
   tmpvar_4 = tmpvar_1;
-  tmpvar_3[0] = tmpvar_4.xy;
+  tmpvar_3[0] = tmpvar_4;
   vec2 tmpvar_5;
   tmpvar_5 = tmpvar_2;
-  tmpvar_3[1] = tmpvar_5.xy;
+  tmpvar_3[1] = tmpvar_5;
   return tmpvar_3;
 }
 
@@ -107,13 +107,13 @@ mat3 xll_saturate (
   mat3 tmpvar_4;
   vec3 tmpvar_5;
   tmpvar_5 = tmpvar_1;
-  tmpvar_4[0] = tmpvar_5.xyz;
+  tmpvar_4[0] = tmpvar_5;
   vec3 tmpvar_6;
   tmpvar_6 = tmpvar_2;
-  tmpvar_4[1] = tmpvar_6.xyz;
+  tmpvar_4[1] = tmpvar_6;
   vec3 tmpvar_7;
   tmpvar_7 = tmpvar_3;
-  tmpvar_4[2] = tmpvar_7.xyz;
+  tmpvar_4[2] = tmpvar_7;
   return tmpvar_4;
 }
 
@@ -132,16 +132,16 @@ mat4 xll_saturate (
   mat4 tmpvar_5;
   vec4 tmpvar_6;
   tmpvar_6 = tmpvar_1;
-  tmpvar_5[0] = tmpvar_6.xyzw;
+  tmpvar_5[0] = tmpvar_6;
   vec4 tmpvar_7;
   tmpvar_7 = tmpvar_2;
-  tmpvar_5[1] = tmpvar_7.xyzw;
+  tmpvar_5[1] = tmpvar_7;
   vec4 tmpvar_8;
   tmpvar_8 = tmpvar_3;
-  tmpvar_5[2] = tmpvar_8.xyzw;
+  tmpvar_5[2] = tmpvar_8;
   vec4 tmpvar_9;
   tmpvar_9 = tmpvar_4;
-  tmpvar_5[3] = tmpvar_9.xyzw;
+  tmpvar_5[3] = tmpvar_9;
   return tmpvar_5;
 }
 
