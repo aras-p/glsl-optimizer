@@ -384,6 +384,8 @@ glsl_type::record_key_compare(const void *a, const void *b)
    for (unsigned i = 0; i < key1->length; i++) {
       if (key1->fields.structure[i].type != key2->fields.structure[i].type)
 	 return 1;
+      if (key1->fields.structure[i].precision != key2->fields.structure[i].precision)
+	 return 1;
       if (strcmp(key1->fields.structure[i].name,
 		 key2->fields.structure[i].name) != 0)
 	 return 1;
