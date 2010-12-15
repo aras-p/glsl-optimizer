@@ -61,10 +61,8 @@ struct wrapper_sw_displaytarget
    struct pipe_resource *tex;
    struct pipe_transfer *transfer;
 
-   unsigned width;
-   unsigned height;
    unsigned map_count;
-   unsigned stride; /**< because we give stride at create */
+   unsigned stride; /**< because we get stride at create */
    void *ptr;
 };
 
@@ -95,7 +93,7 @@ wsw_dt_get_stride(struct wrapper_sw_displaytarget *wdt, unsigned *stride)
 
    tr = pipe_get_transfer(pipe, tex, 0, 0,
                           PIPE_TRANSFER_READ_WRITE,
-                          0, 0, wdt->width, wdt->height);
+                          0, 0, wdt->tex->width0, wdt->tex->height0);
    if (!tr)
       return FALSE;
 
@@ -208,7 +206,7 @@ wsw_dt_map(struct sw_winsys *ws,
 
       tr = pipe_get_transfer(pipe, tex, 0, 0,
                              PIPE_TRANSFER_READ_WRITE,
-                             0, 0, wdt->width, wdt->height);
+                             0, 0, wdt->tex->width0, wdt->tex->height0);
       if (!tr)
          return NULL;
 
