@@ -349,7 +349,11 @@ struct ast_type_qualifier {
 	  * qualifier is used.
 	  */
 	 unsigned explicit_location:1;
-      } q;
+      }
+      /** \brief Set of flags, accessed by name. */
+      q;
+
+      /** \brief Set of flags, accessed as a bitmask. */
       unsigned i;
    } flags;
 
