@@ -103,7 +103,7 @@ static void r600_buffer_destroy(struct pipe_screen *screen,
 {
 	struct r600_resource_buffer *rbuffer = r600_buffer(buf);
 
-	if (!rbuffer->uploaded && rbuffer->r.bo) {
+	if (rbuffer->r.bo) {
 		r600_bo_reference((struct radeon*)screen->winsys, &rbuffer->r.bo, NULL);
 	}
 	rbuffer->r.bo = NULL;

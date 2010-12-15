@@ -69,6 +69,7 @@ void r600_upload_flush(struct r600_upload *upload)
 	upload->default_size = MAX2(upload->total_alloc_size, upload->default_size);
 	upload->total_alloc_size = 0;
 	upload->size = 0;
+	upload->offset = 0;
 	upload->ptr = NULL;
 	upload->buffer = NULL;
 }
@@ -105,7 +106,8 @@ int r600_upload_buffer(struct r600_upload *upload, unsigned offset,
 	memcpy(upload->ptr + upload->offset, (uint8_t *) in_ptr + offset, size);
 	*out_offset = upload->offset;
 	*out_size = upload->size;
-	*out_buffer = upload->buffer;
+	*out_buffer = NULL;
+	r600_bo_reference(upload->rctx->radeon, out_buffer, upload->buffer);
 	upload->offset += alloc_size;
 
 	return 0;
