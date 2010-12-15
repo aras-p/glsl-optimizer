@@ -50,44 +50,20 @@
  * Do the best we can using the blitter.  A future project is to use
  * the texture engine and fragment programs for these copies.
  */
-static const struct intel_region *
-get_teximage_source(struct intel_context *intel, GLenum internalFormat)
+static struct intel_renderbuffer *
+get_teximage_readbuffer(struct intel_context *intel, GLenum internalFormat)
 {
-   struct intel_renderbuffer *irb;
-
    DBG("%s %s\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(internalFormat));
 
    switch (internalFormat) {
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT16:
-      irb = intel_get_renderbuffer(intel->ctx.ReadBuffer, BUFFER_DEPTH);
-      if (irb && irb->region && irb->region->cpp == 2)
-         return irb->region;
-      return NULL;
    case GL_DEPTH24_STENCIL8_EXT:
    case GL_DEPTH_STENCIL_EXT:
-      irb = intel_get_renderbuffer(intel->ctx.ReadBuffer, BUFFER_DEPTH);
-      if (irb && irb->region && irb->region->cpp == 4)
-         return irb->region;
-      return NULL;
-   case 4:
-   case GL_RGBA:
-   case GL_RGBA8:
-      irb = intel_renderbuffer(intel->ctx.ReadBuffer->_ColorReadBuffer);
-      /* We're required to set alpha to 1.0 in this case, but we can't
-       * do that with the blitter, so fall back.  We could use the 3D
-       * engine or do two passes with the blitter, but it doesn't seem
-       * worth it for this case. */
-      if (irb->Base._BaseFormat == GL_RGB)
-	 return NULL;
-      return irb->region;
-   case 3:
-   case GL_RGB:
-   case GL_RGB8:
-      return intel_readbuf_region(intel);
+      return intel_get_renderbuffer(intel->ctx.ReadBuffer, BUFFER_DEPTH);
    default:
-      return NULL;
+      return intel_renderbuffer(intel->ctx.ReadBuffer->_ColorReadBuffer);
    }
 }
 
@@ -101,20 +77,24 @@ do_copy_texsubimage(struct intel_context *intel,
                     GLint x, GLint y, GLsizei width, GLsizei height)
 {
    struct gl_context *ctx = &intel->ctx;
-   const struct intel_region *src;
+   struct intel_renderbuffer *irb;
 
    intel_prepare_render(intel);
-   src = get_teximage_source(intel, internalFormat);
-   if (!intelImage->mt || !src || !src->buffer) {
+
+   irb = get_teximage_readbuffer(intel, internalFormat);
+   if (!intelImage->mt || !irb) {
       if (unlikely(INTEL_DEBUG & DEBUG_FALLBACKS))
 	 fprintf(stderr, "%s fail %p %p (0x%08x)\n",
-		 __FUNCTION__, intelImage->mt, src, internalFormat);
+		 __FUNCTION__, intelImage->mt, irb, internalFormat);
       return GL_FALSE;
    }
 
-   if (intelImage->mt->cpp != src->cpp) {
-      fallback_debug("%s fail %d vs %d cpp\n",
-		     __FUNCTION__, intelImage->mt->cpp, src->cpp);
+   if (intelImage->base.TexFormat != irb->Base.Format) {
+      if (unlikely(INTEL_DEBUG & DEBUG_FALLBACKS))
+	 fprintf(stderr, "%s mismatched formats %s, %s\n",
+		 __FUNCTION__,
+		 _mesa_get_format_name(intelImage->base.TexFormat),
+		 _mesa_get_format_name(irb->Base.Format));
       return GL_FALSE;
    }
 
@@ -140,24 +120,24 @@ do_copy_texsubimage(struct intel_context *intel,
       if (ctx->ReadBuffer->Name == 0) {
 	 /* Flip vertical orientation for system framebuffers */
 	 y = ctx->ReadBuffer->Height - (y + height);
-	 src_pitch = -src->pitch;
+	 src_pitch = -irb->region->pitch;
       } else {
 	 /* reading from a FBO, y is already oriented the way we like */
-	 src_pitch = src->pitch;
+	 src_pitch = irb->region->pitch;
       }
 
       /* blit from src buffer to texture */
       if (!intelEmitCopyBlit(intel,
 			     intelImage->mt->cpp,
 			     src_pitch,
-			     src->buffer,
+			     irb->region->buffer,
 			     0,
-			     src->tiling,
+			     irb->region->tiling,
 			     intelImage->mt->region->pitch,
 			     dst_bo,
 			     0,
 			     intelImage->mt->region->tiling,
-			     src->draw_x + x, src->draw_y + y,
+			     irb->region->draw_x + x, irb->region->draw_y + y,
 			     image_x + dstx, image_y + dsty,
 			     width, height,
 			     GL_COPY)) {
