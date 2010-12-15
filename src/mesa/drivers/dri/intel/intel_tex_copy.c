@@ -103,7 +103,6 @@ do_copy_texsubimage(struct intel_context *intel,
    struct gl_context *ctx = &intel->ctx;
    const struct intel_region *src;
 
-   /* intel_flush(ctx); */
    intel_prepare_render(intel);
    src = get_teximage_source(intel, internalFormat);
    if (!intelImage->mt || !src || !src->buffer) {
