@@ -59,7 +59,7 @@ add_variable(const char *name, enum ir_variable_mode mode, int slot,
     */
    instructions->push_tail(var);
 
-   symtab->add_variable(var->name, var);
+   symtab->add_variable(var);
    return var;
 }
 

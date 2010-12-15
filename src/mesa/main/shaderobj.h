@@ -98,7 +98,7 @@ extern void
 _mesa_free_shader_state(struct gl_context *ctx);
 
 
-static INLINE GLuint
+static INLINE gl_shader_type
 _mesa_shader_type_to_index(GLenum v)
 {
    switch (v) {
@@ -110,7 +110,7 @@ _mesa_shader_type_to_index(GLenum v)
       return MESA_SHADER_GEOMETRY;
    default:
       ASSERT(0 && "bad value in _mesa_shader_type_to_index()");
-      return ~0;
+      return MESA_SHADER_TYPES;
    }
 }
 

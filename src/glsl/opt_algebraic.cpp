@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_algebraic.cpp
+ * \file opt_algebraic.cpp
  *
  * Takes advantage of association, commutivity, and other algebraic
  * properties to simplify expressions.
@@ -181,6 +181,7 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
    ir_expression *temp;
    unsigned int i;
 
+   assert(ir->get_num_operands() <= 2);
    for (i = 0; i < ir->get_num_operands(); i++) {
       if (ir->operands[i]->type->is_matrix())
 	 return ir;
@@ -393,7 +394,7 @@ ir_algebraic_visitor::handle_rvalue(ir_rvalue **rvalue)
       return;
 
    ir_expression *expr = (*rvalue)->as_expression();
-   if (!expr)
+   if (!expr || expr->operation == ir_quadop_vector)
       return;
 
    *rvalue = handle_expression(expr);

@@ -434,15 +434,15 @@
 					>
 				</File>
 				<File
-					RelativePath="..\lower_div_to_mul_rcp.cpp"
-					>
-				</File>
-				<File
-					RelativePath="..\lower_explog_to_explog2.cpp"
+					RelativePath="..\lower_discard.cpp"
 					>
 				</File>
 				<File
 					RelativePath="..\lower_if_to_cond_assign.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\lower_instructions.cpp"
 					>
 				</File>
 				<File
@@ -462,10 +462,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\lower_sub_to_add_neg.cpp"
-					>
-				</File>
-				<File
 					RelativePath="..\lower_variable_index_to_cond_assign.cpp"
 					>
 				</File>
@@ -475,6 +471,10 @@
 				</File>
 				<File
 					RelativePath="..\lower_vec_index_to_swizzle.cpp"
+					>
+				</File>
+				<File
+					RelativePath="..\lower_vector.cpp"
 					>
 				</File>
 				<File
@@ -530,6 +530,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\opt_discard_simplification.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\opt_function_inlining.cpp"
 					>
 				</File>
@@ -567,6 +571,14 @@
 				</File>
 				<File
 					RelativePath="..\s_expression.h"
+					>
+				</File>
+				<File
+					RelativePath="..\strtod.c"
+					>
+				</File>
+				<File
+					RelativePath="..\strtod.h"
 					>
 				</File>
 				<Filter

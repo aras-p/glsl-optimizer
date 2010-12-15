@@ -714,9 +714,11 @@ static const char builtin_cross[] =
    "((function cross\n"
    "   (signature vec3\n"
    "     (parameters\n"
-   "       (declare (in) vec3 arg0)\n"
-   "       (declare (in) vec3 arg1))\n"
-   "     ((return (expression vec3 cross (var_ref arg0) (var_ref arg1)))))\n"
+   "       (declare (in) vec3 a)\n"
+   "       (declare (in) vec3 b))\n"
+   "     ((return (expression vec3 -\n"
+   "        (expression vec3 * (swiz yzx (var_ref a)) (swiz zxy (var_ref b)))\n"
+   "        (expression vec3 * (swiz zxy (var_ref a)) (swiz yzx (var_ref b)))))))\n"
    "))\n"
    ""
 ;
@@ -13588,7 +13590,6 @@ _mesa_read_profile(struct _mesa_glsl_parse_state *state,
       builtin_profiles[profile_index] = sh;
    }
 
-   import_prototypes(sh->ir, instructions, state->symbols, state);
    state->builtins_to_link[state->num_builtins_to_link] = sh;
    state->num_builtins_to_link++;
 }

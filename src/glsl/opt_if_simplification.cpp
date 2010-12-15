@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_if_simplification.cpp
+ * \file opt_if_simplification.cpp
  *
  * Moves constant branches of if statements out to the surrounding
  * instruction stream.

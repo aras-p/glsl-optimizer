@@ -22,7 +22,7 @@
   */
 
  /**
-  * \file ir_dead_functions.cpp
+  * \file opt_dead_functions.cpp
   *
   * Eliminates unused functions from the linked program.
   */

@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_constant_propagation.cpp
+ * \file opt_constant_propagation.cpp
  *
  * Tracks assignments of constants to channels of variables, and
  * usage of those constant channels with direct usage of the constants.

@@ -61,6 +61,8 @@ can_inline(ir_call *call)
    ir_function_can_inline_visitor v;
    const ir_function_signature *callee = call->get_callee();
    if (callee->is_builtin)
+	   return false;
+   if (!callee->is_defined)
       return false;
 
    v.run((exec_list *) &callee->body);

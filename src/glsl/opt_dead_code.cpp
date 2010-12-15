@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_dead_code.cpp
+ * \file opt_dead_code.cpp
  *
  * Eliminates dead assignments and variable declarations from the code.
  */

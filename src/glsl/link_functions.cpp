@@ -183,7 +183,7 @@ public:
 	     * it to the linked shader.
 	     */
 	    var = ir->var->clone(linked, NULL);
-	    linked->symbols->add_variable(var->name, var);
+	    linked->symbols->add_variable(var);
 	    linked->ir->push_head(var);
 	 }
 

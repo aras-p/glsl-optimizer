@@ -350,6 +350,8 @@ static const char *const operator_glsl_strs[] = {
 	"roundEven",
 	"sin",
 	"cos",
+	"sin", // reduced
+	"cos", // reduced
 	"dFdx",
 	"dFdy",
 	"noise",
@@ -375,10 +377,10 @@ static const char *const operator_glsl_strs[] = {
 	"^^",
 	"||",
 	"dot",
-	"cross",
 	"min",
 	"max",
 	"pow",
+	"vectorTODO",
 };
 
 void ir_print_glsl_visitor::visit(ir_expression *ir)

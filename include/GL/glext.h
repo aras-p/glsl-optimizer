@@ -29,9 +29,9 @@ extern "C" {
 */
 
 /* Header file version number, required by OpenGL ABI for Linux */
-/* glext.h last updated $Date: 2010-08-03 01:30:25 -0700 (Tue, 03 Aug 2010) $ */
+/* glext.h last updated $Date: 2010-11-03 18:59:30 -0700 (Wed, 03 Nov 2010) $ */
 /* Current version at http://www.opengl.org/registry/ */
-#define GL_GLEXT_VERSION 64
+#define GL_GLEXT_VERSION 66
 /* Function declaration macros - to move into glplatform.h */
 
 #if defined(_WIN32) && !defined(APIENTRY) && !defined(__CYGWIN__) && !defined(__SCITECH_SNAP__)
@@ -4840,7 +4840,7 @@ extern "C" {
 #endif
 
 #ifndef GL_AMD_seamless_cubemap_per_texture
-/* reuse GL_TEXTURE_CUBE_MAP_SEAMLESS_ARB */
+/* reuse GL_TEXTURE_CUBE_MAP_SEAMLESS */
 #endif
 
 #ifndef GL_AMD_conservative_depth
@@ -4925,6 +4925,8 @@ extern "C" {
 #define GL_MIN_FRAGMENT_INTERPOLATION_OFFSET_NV 0x8E5B
 #define GL_MAX_FRAGMENT_INTERPOLATION_OFFSET_NV 0x8E5C
 #define GL_FRAGMENT_PROGRAM_INTERPOLATION_OFFSET_BITS_NV 0x8E5D
+#define GL_MIN_PROGRAM_TEXTURE_GATHER_OFFSET_NV 0x8E5E
+#define GL_MAX_PROGRAM_TEXTURE_GATHER_OFFSET_NV 0x8E5F
 #define GL_MAX_PROGRAM_SUBROUTINE_PARAMETERS_NV 0x8F44
 #define GL_MAX_PROGRAM_SUBROUTINE_NUM_NV  0x8F45
 #endif
@@ -5017,6 +5019,11 @@ extern "C" {
 #endif
 
 #ifndef GL_AMD_transform_feedback3_lines_triangles
+#endif
+
+#ifndef GL_AMD_depth_clamp_separate
+#define GL_DEPTH_CLAMP_NEAR_AMD           0x901E
+#define GL_DEPTH_CLAMP_FAR_AMD            0x901F
 #endif
 
 
@@ -8765,8 +8772,8 @@ GLAPI void APIENTRY glProgramParameter4dNV (GLenum target, GLuint index, GLdoubl
 GLAPI void APIENTRY glProgramParameter4dvNV (GLenum target, GLuint index, const GLdouble *v);
 GLAPI void APIENTRY glProgramParameter4fNV (GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 GLAPI void APIENTRY glProgramParameter4fvNV (GLenum target, GLuint index, const GLfloat *v);
-GLAPI void APIENTRY glProgramParameters4dvNV (GLenum target, GLuint index, GLuint count, const GLdouble *v);
-GLAPI void APIENTRY glProgramParameters4fvNV (GLenum target, GLuint index, GLuint count, const GLfloat *v);
+GLAPI void APIENTRY glProgramParameters4dvNV (GLenum target, GLuint index, GLsizei count, const GLdouble *v);
+GLAPI void APIENTRY glProgramParameters4fvNV (GLenum target, GLuint index, GLsizei count, const GLfloat *v);
 GLAPI void APIENTRY glRequestResidentProgramsNV (GLsizei n, const GLuint *programs);
 GLAPI void APIENTRY glTrackMatrixNV (GLenum target, GLuint address, GLenum matrix, GLenum transform);
 GLAPI void APIENTRY glVertexAttribPointerNV (GLuint index, GLint fsize, GLenum type, GLsizei stride, const GLvoid *pointer);
@@ -8830,8 +8837,8 @@ typedef void (APIENTRYP PFNGLPROGRAMPARAMETER4DNVPROC) (GLenum target, GLuint in
 typedef void (APIENTRYP PFNGLPROGRAMPARAMETER4DVNVPROC) (GLenum target, GLuint index, const GLdouble *v);
 typedef void (APIENTRYP PFNGLPROGRAMPARAMETER4FNVPROC) (GLenum target, GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w);
 typedef void (APIENTRYP PFNGLPROGRAMPARAMETER4FVNVPROC) (GLenum target, GLuint index, const GLfloat *v);
-typedef void (APIENTRYP PFNGLPROGRAMPARAMETERS4DVNVPROC) (GLenum target, GLuint index, GLuint count, const GLdouble *v);
-typedef void (APIENTRYP PFNGLPROGRAMPARAMETERS4FVNVPROC) (GLenum target, GLuint index, GLuint count, const GLfloat *v);
+typedef void (APIENTRYP PFNGLPROGRAMPARAMETERS4DVNVPROC) (GLenum target, GLuint index, GLsizei count, const GLdouble *v);
+typedef void (APIENTRYP PFNGLPROGRAMPARAMETERS4FVNVPROC) (GLenum target, GLuint index, GLsizei count, const GLfloat *v);
 typedef void (APIENTRYP PFNGLREQUESTRESIDENTPROGRAMSNVPROC) (GLsizei n, const GLuint *programs);
 typedef void (APIENTRYP PFNGLTRACKMATRIXNVPROC) (GLenum target, GLuint address, GLenum matrix, GLenum transform);
 typedef void (APIENTRYP PFNGLVERTEXATTRIBPOINTERNVPROC) (GLuint index, GLint fsize, GLenum type, GLsizei stride, const GLvoid *pointer);
@@ -11018,6 +11025,10 @@ typedef void (APIENTRYP PFNGLVDPAUUNMAPSURFACESNVPROC) (GLsizei numSurface, cons
 
 #ifndef GL_AMD_transform_feedback3_lines_triangles
 #define GL_AMD_transform_feedback3_lines_triangles 1
+#endif
+
+#ifndef GL_AMD_depth_clamp_separate
+#define GL_AMD_depth_clamp_separate 1
 #endif
 
 

@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_function_inlining.cpp
+ * \file opt_function_inlining.cpp
  *
  * Replaces calls to functions with the body of the function.
  */

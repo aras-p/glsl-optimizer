@@ -360,8 +360,12 @@ cross_validate_globals(struct gl_shader_program *prog,
 		   && (var->type->fields.array == existing->type->fields.array)
 		   && ((var->type->length == 0)
 		       || (existing->type->length == 0))) {
-		  if (existing->type->length == 0)
+		  if (existing->type->length == 0) {
 		     existing->type = var->type;
+		     existing->max_array_access =
+			MAX2(existing->max_array_access,
+			     var->max_array_access);
+		  }
 	       } else {
 		  linker_error_printf(prog, "%s `%s' declared as type "
 				      "`%s' and type `%s'\n",
@@ -411,8 +415,15 @@ cross_validate_globals(struct gl_shader_program *prog,
 		  existing->constant_value =
 		     var->constant_value->clone(talloc_parent(existing), NULL);
 	    }
+
+	    if (existing->invariant != var->invariant) {
+	       linker_error_printf(prog, "declarations for %s `%s' have "
+	                           "mismatching invariant qualifiers\n",
+	                           mode_string(var), var->name);
+	       return false;
+	    }
 	 } else
-	    variables.add_variable(var->name, var);
+	    variables.add_variable(var);
       }
    }
 
@@ -454,7 +465,7 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
       if ((var == NULL) || (var->mode != ir_var_out))
 	 continue;
 
-      parameters.add_variable(var->name, var);
+      parameters.add_variable(var);
    }
 
 
@@ -476,14 +487,35 @@ cross_validate_outputs_to_inputs(struct gl_shader_program *prog,
 	 /* Check that the types match between stages.
 	  */
 	 if (input->type != output->type) {
-	    linker_error_printf(prog,
-				"%s shader output `%s' declared as "
-				"type `%s', but %s shader input declared "
-				"as type `%s'\n",
-				producer_stage, output->name,
-				output->type->name,
-				consumer_stage, input->type->name);
-	    return false;
+	    /* There is a bit of a special case for gl_TexCoord.  This
+	     * built-in is unsized by default.  Appliations that variable
+	     * access it must redeclare it with a size.  There is some
+	     * language in the GLSL spec that implies the fragment shader
+	     * and vertex shader do not have to agree on this size.  Other
+	     * driver behave this way, and one or two applications seem to
+	     * rely on it.
+	     *
+	     * Neither declaration needs to be modified here because the array
+	     * sizes are fixed later when update_array_sizes is called.
+	     *
+	     * From page 48 (page 54 of the PDF) of the GLSL 1.10 spec:
+	     *
+	     *     "Unlike user-defined varying variables, the built-in
+	     *     varying variables don't have a strict one-to-one
+	     *     correspondence between the vertex language and the
+	     *     fragment language."
+	     */
+	    if (!output->type->is_array()
+		|| (strncmp("gl_", output->name, 3) != 0)) {
+	       linker_error_printf(prog,
+				   "%s shader output `%s' declared as "
+				   "type `%s', but %s shader input declared "
+				   "as type `%s'\n",
+				   producer_stage, output->name,
+				   output->type->name,
+				   consumer_stage, input->type->name);
+	       return false;
+	    }
 	 }
 
 	 /* Check that all of the qualifiers match between stages.
@@ -546,9 +578,9 @@ populate_symbol_table(gl_shader *sh)
       ir_function *func;
 
       if ((func = inst->as_function()) != NULL) {
-	 sh->symbols->add_function(func->name, func);
+	 sh->symbols->add_function(func);
       } else if ((var = inst->as_variable()) != NULL) {
-	 sh->symbols->add_variable(var->name, var);
+	 sh->symbols->add_variable(var);
       }
    }
 }
@@ -605,7 +637,7 @@ remap_variables(ir_instruction *inst, struct gl_shader *target,
 	 else {
 	    ir_variable *copy = ir->var->clone(this->target, NULL);
 
-	    this->symbols->add_variable(copy->name, copy);
+	    this->symbols->add_variable(copy);
 	    this->instructions->push_head(copy);
 	    ir->var = copy;
 	 }
@@ -726,7 +758,8 @@ get_main_function_signature(gl_shader *sh)
  * shader is returned.
  */
 static struct gl_shader *
-link_intrastage_shaders(struct gl_context *ctx,
+link_intrastage_shaders(void *mem_ctx,
+			struct gl_context *ctx,
 			struct gl_shader_program *prog,
 			struct gl_shader **shader_list,
 			unsigned num_shaders)
@@ -802,7 +835,7 @@ link_intrastage_shaders(struct gl_context *ctx,
 
    gl_shader *linked = ctx->Driver.NewShader(NULL, 0, main->Type);
    linked->ir = new(linked) exec_list;
-   clone_ir_list(linked, linked->ir, main->ir);
+   clone_ir_list(mem_ctx, linked->ir, main->ir);
 
    populate_symbol_table(linked);
 
@@ -854,6 +887,32 @@ link_intrastage_shaders(struct gl_context *ctx,
    }
 
    free(linking_shaders);
+
+   /* Make a pass over all global variables to ensure that arrays with
+    * unspecified sizes have a size specified.  The size is inferred from the
+    * max_array_access field.
+    */
+   if (linked != NULL) {
+      foreach_list(node, linked->ir) {
+	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
+
+	 if (var == NULL)
+	    continue;
+
+	 if ((var->mode != ir_var_auto) && (var->mode != ir_var_temporary))
+	    continue;
+
+	 if (!var->type->is_array() || (var->type->length != 0))
+	    continue;
+
+	 const glsl_type *type =
+	    glsl_type::get_array_instance(var->type->fields.array,
+					  var->max_array_access);
+
+	 assert(type != NULL);
+	 var->type = type;
+      }
+   }
 
    return linked;
 }
@@ -1407,6 +1466,8 @@ assign_varying_locations(struct gl_shader_program *prog,
 void
 link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 {
+   void *mem_ctx = talloc_init("temporary linker context");
+
    prog->LinkStatus = false;
    prog->Validated = false;
    prog->_Used = false;
@@ -1475,7 +1536,8 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
     */
    if (num_vert_shaders > 0) {
       gl_shader *const sh =
-	 link_intrastage_shaders(ctx, prog, vert_shader_list, num_vert_shaders);
+	 link_intrastage_shaders(mem_ctx, ctx, prog, vert_shader_list,
+				 num_vert_shaders);
 
       if (sh == NULL)
 	 goto done;
@@ -1489,7 +1551,8 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
    if (num_frag_shaders > 0) {
       gl_shader *const sh =
-	 link_intrastage_shaders(ctx, prog, frag_shader_list, num_frag_shaders);
+	 link_intrastage_shaders(mem_ctx, ctx, prog, frag_shader_list,
+				 num_frag_shaders);
 
       if (sh == NULL)
 	 goto done;
@@ -1598,4 +1661,14 @@ link_shaders(struct gl_context *ctx, struct gl_shader_program *prog)
 
 done:
    free(vert_shader_list);
+
+   for (unsigned i = 0; i < MESA_SHADER_TYPES; i++) {
+      if (prog->_LinkedShaders[i] == NULL)
+	 continue;
+
+      /* Retain any live IR, but trash the rest. */
+      reparent_ir(prog->_LinkedShaders[i]->ir, prog->_LinkedShaders[i]->ir);
+   }
+
+   talloc_free(mem_ctx);
 }

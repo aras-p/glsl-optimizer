@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_constant_folding.cpp
+ * \file opt_constant_folding.cpp
  * Replace constant-valued expressions with references to constant values.
  */
 

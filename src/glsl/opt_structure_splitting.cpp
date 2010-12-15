@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_structure_splitting.cpp
+ * \file opt_structure_splitting.cpp
  *
  * If a structure is only ever referenced by its components, then
  * split those components out to individual variables so they can be

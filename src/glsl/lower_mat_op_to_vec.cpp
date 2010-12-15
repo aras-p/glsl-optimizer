@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_mat_op_to_vec.cpp
+ * \file lower_mat_op_to_vec.cpp
  *
  * Breaks matrix operation expressions down to a series of vector operations.
  *
@@ -365,6 +365,8 @@ ir_mat_op_to_vec_visitor::visit_leave(ir_assignment *orig_assign)
 
    if (!has_matrix_operand(orig_expr, matrix_columns))
       return visit_continue;
+
+   assert(orig_expr->get_num_operands() <= 2);
 
    mem_ctx = talloc_parent(orig_assign);
 

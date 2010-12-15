@@ -124,6 +124,7 @@ public:
    virtual class ir_if *                as_if()               { return NULL; }
    virtual class ir_swizzle *           as_swizzle()          { return NULL; }
    virtual class ir_constant *          as_constant()         { return NULL; }
+   virtual class ir_discard *           as_discard()          { return NULL; }
    /*@}*/
 
 protected:
@@ -145,6 +146,8 @@ public:
    {
       return this;
    }
+
+   ir_rvalue *as_rvalue_to_saturate();
 
    virtual bool is_lvalue()
    {
@@ -175,6 +178,42 @@ public:
    }
 
    glsl_precision get_precision() const { return precision; }
+
+   /**
+    * Determine if an r-value has the value zero
+    *
+    * The base implementation of this function always returns \c false.  The
+    * \c ir_constant class over-rides this function to return \c true \b only
+    * for vector and scalar types that have all elements set to the value
+    * zero (or \c false for booleans).
+    *
+    * \sa ir_constant::has_value, ir_rvalue::is_one, ir_rvalue::is_negative_one
+    */
+   virtual bool is_zero() const;
+
+   /**
+    * Determine if an r-value has the value one
+    *
+    * The base implementation of this function always returns \c false.  The
+    * \c ir_constant class over-rides this function to return \c true \b only
+    * for vector and scalar types that have all elements set to the value
+    * one (or \c true for booleans).
+    *
+    * \sa ir_constant::has_value, ir_rvalue::is_zero, ir_rvalue::is_negative_one
+    */
+   virtual bool is_one() const;
+
+   /**
+    * Determine if an r-value has the value negative one
+    *
+    * The base implementation of this function always returns \c false.  The
+    * \c ir_constant class over-rides this function to return \c true \b only
+    * for vector and scalar types that have all elements set to the value
+    * negative one.  For boolean times, the result is always \c false.
+    *
+    * \sa ir_constant::has_value, ir_rvalue::is_zero, ir_rvalue::is_one
+    */
+   virtual bool is_negative_one() const;
 
 protected:
    ir_rvalue(glsl_precision precision);
@@ -346,6 +385,8 @@ public:
 
    virtual ir_function_signature *clone(void *mem_ctx,
 					struct hash_table *ht) const;
+   ir_function_signature *clone_prototype(void *mem_ctx,
+					  struct hash_table *ht) const;
 
    virtual void accept(ir_visitor *v)
    {
@@ -715,6 +756,8 @@ enum ir_expression_operation {
    /*@{*/
    ir_unop_sin,
    ir_unop_cos,
+   ir_unop_sin_reduced,    /**< Reduced range sin. [-pi, pi] */
+   ir_unop_cos_reduced,    /**< Reduced range cos. [-pi, pi] */
    /*@}*/
 
    /**
@@ -726,6 +769,11 @@ enum ir_expression_operation {
    /*@}*/
 
    ir_unop_noise,
+
+   /**
+    * A sentinel marking the last of the unary operations.
+    */
+   ir_last_unop = ir_unop_noise,
 
    ir_binop_add,
    ir_binop_sub,
@@ -781,17 +829,44 @@ enum ir_expression_operation {
    ir_binop_logic_or,
 
    ir_binop_dot,
-   ir_binop_cross,
    ir_binop_min,
    ir_binop_max,
 
-   ir_binop_pow
+   ir_binop_pow,
+
+   /**
+    * A sentinel marking the last of the binary operations.
+    */
+   ir_last_binop = ir_binop_pow,
+
+   ir_quadop_vector,
+
+   /**
+    * A sentinel marking the last of all operations.
+    */
+   ir_last_opcode = ir_last_binop
 };
 
 class ir_expression : public ir_rvalue {
 public:
+   /**
+    * Constructor for unary operation expressions
+    */
+   ir_expression(int op, const struct glsl_type *type, ir_rvalue *);
+   ir_expression(int op, ir_rvalue *);
+
+   /**
+    * Constructor for binary operation expressions
+    */
    ir_expression(int op, const struct glsl_type *type,
 		 ir_rvalue *, ir_rvalue *);
+   ir_expression(int op, ir_rvalue *op0, ir_rvalue *op1);
+
+   /**
+    * Constructor for quad operator expressions
+    */
+   ir_expression(int op, const struct glsl_type *type,
+		 ir_rvalue *, ir_rvalue *, ir_rvalue *, ir_rvalue *);
 
    virtual ir_expression *as_expression()
    {
@@ -818,7 +893,8 @@ public:
     */
    unsigned int get_num_operands() const
    {
-      return get_num_operands(operation);
+      return (this->operation == ir_quadop_vector)
+	 ? this->type->vector_elements : get_num_operands(operation);
    }
 
    /**
@@ -845,7 +921,7 @@ public:
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
 
    ir_expression_operation operation;
-   ir_rvalue *operands[2];
+   ir_rvalue *operands[4];
 };
 
 
@@ -1059,6 +1135,11 @@ public:
    }
 
    virtual ir_visitor_status accept(ir_hierarchical_visitor *);
+
+   virtual ir_discard *as_discard()
+   {
+      return this;
+   }
 
    ir_rvalue *condition;
 };
@@ -1455,31 +1536,14 @@ public:
    /**
     * Determine whether a constant has the same value as another constant
     *
-    * \sa ir_constant::is_zero, ir_constant::is_one
+    * \sa ir_constant::is_zero, ir_constant::is_one,
+    * ir_constant::is_negative_one
     */
    bool has_value(const ir_constant *) const;
 
-   /**
-    * Determine if a constant has the value zero
-    *
-    * \note
-    * This function always returns \c false for constants that are not
-    * scalars or vectors.
-    *
-    * \sa ir_constant::has_value, ir_constant::is_one
-    */
-   bool is_zero() const;
-
-   /**
-    * Determine if a constant has the value one
-    *
-    * \note
-    * This function always returns \c false for constants that are not
-    * scalars or vectors.
-    *
-    * \sa ir_constant::has_value, ir_constant::is_zero
-    */
-   bool is_one() const;
+   virtual bool is_zero() const;
+   virtual bool is_one() const;
+   virtual bool is_negative_one() const;
 
    /**
     * Value of the constant.

@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_noop_swizzle.cpp
+ * \file opt_noop_swizzle.cpp
  *
  * If a swizzle doesn't change the order or count of components, then
  * remove the swizzle so that other optimization passes see the value

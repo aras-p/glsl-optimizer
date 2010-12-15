@@ -44,7 +44,7 @@
 
 #include "u_compiler.h"
 
-#if defined(PTHREADS) || defined(WIN32_THREADS) || defined(BEOS_THREADS)
+#if defined(PTHREADS) || defined(WIN32) || defined(BEOS_THREADS)
 #ifndef THREADS
 #define THREADS
 #endif
@@ -85,7 +85,7 @@ typedef pthread_mutex_t u_mutex;
  * IMPORTANT: Link with multithreaded runtime library when THREADS are
  * used!
  */
-#ifdef WIN32_THREADS
+#ifdef WIN32
 #include <windows.h>
 
 struct u_tsd {
@@ -104,7 +104,7 @@ typedef CRITICAL_SECTION u_mutex;
 #define u_mutex_lock(name)    EnterCriticalSection(&name)
 #define u_mutex_unlock(name)  LeaveCriticalSection(&name)
 
-#endif /* WIN32_THREADS */
+#endif /* WIN32 */
 
 
 /*

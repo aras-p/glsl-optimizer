@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_swizzle_swizzle.cpp
+ * \file opt_swizzle_swizzle.cpp
  *
  * Eliminates the second swizzle in a swizzle chain.
  */

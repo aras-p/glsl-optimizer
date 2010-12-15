@@ -22,7 +22,7 @@
  */
 
 /**
- * \file ir_constant_variable.cpp
+ * \file opt_constant_variable.cpp
  *
  * Marks variables assigned a single constant value over the course
  * of the program as constant.
