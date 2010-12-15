@@ -43,7 +43,7 @@ mediump vec4 xlat_main (
   mediump vec2 tmpvar_9;
   tmpvar_9 = (c.xy + tmpvar_8);
   c.xy = tmpvar_9.xy.xy;
-  float tmpvar_10;
+  highp float tmpvar_10;
   tmpvar_10 = fract (uv.x);
   float tmpvar_11;
   if (bool(tmpvar_10)) {

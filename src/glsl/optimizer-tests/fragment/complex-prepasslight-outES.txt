@@ -23,7 +23,7 @@ void main ()
   mediump vec3 normal;
   highp vec2 tmpvar_1;
   tmpvar_1 = (xlv_TEXCOORD0.xy / xlv_TEXCOORD0.w);
-  vec4 tmpvar_2;
+  lowp vec4 tmpvar_2;
   tmpvar_2 = texture2D (_CameraNormalsTexture, tmpvar_1);
   normal = normalize (((tmpvar_2.xyz * 2.0) - 1.0));
   highp vec4 tmpvar_3;
@@ -68,7 +68,7 @@ void main ()
   } else {
     tmpvar_11 = 1.0;
   };
-  highp vec4 tmpvar_12;
+  vec4 tmpvar_12;
   tmpvar_12.x = tmpvar_8;
   tmpvar_12.y = tmpvar_9;
   tmpvar_12.z = tmpvar_10;

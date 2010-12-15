@@ -1,8 +1,8 @@
 varying highp vec4 xlv_TEXCOORD0;
 vec2 xll_vecTSel (
   in bvec2 a,
-  in highp vec2 b,
-  in highp vec2 c
+  in vec2 b,
+  in vec2 c
 )
 {
   float tmpvar_1;
@@ -17,7 +17,7 @@ vec2 xll_vecTSel (
   } else {
     tmpvar_2 = c.y;
   };
-  highp vec2 tmpvar_3;
+  vec2 tmpvar_3;
   tmpvar_3.x = tmpvar_1;
   tmpvar_3.y = tmpvar_2;
   return tmpvar_3;
@@ -25,8 +25,8 @@ vec2 xll_vecTSel (
 
 vec3 xll_vecTSel (
   in bvec3 a,
-  in highp vec3 b,
-  in highp vec3 c
+  in vec3 b,
+  in vec3 c
 )
 {
   float tmpvar_1;
@@ -47,7 +47,7 @@ vec3 xll_vecTSel (
   } else {
     tmpvar_3 = c.z;
   };
-  highp vec3 tmpvar_4;
+  vec3 tmpvar_4;
   tmpvar_4.x = tmpvar_1;
   tmpvar_4.y = tmpvar_2;
   tmpvar_4.z = tmpvar_3;
@@ -56,8 +56,8 @@ vec3 xll_vecTSel (
 
 vec4 xll_vecTSel (
   in bvec4 a,
-  in highp vec4 b,
-  in highp vec4 c
+  in vec4 b,
+  in vec4 c
 )
 {
   float tmpvar_1;
@@ -84,7 +84,7 @@ vec4 xll_vecTSel (
   } else {
     tmpvar_4 = c.w;
   };
-  highp vec4 tmpvar_5;
+  vec4 tmpvar_5;
   tmpvar_5.x = tmpvar_1;
   tmpvar_5.y = tmpvar_2;
   tmpvar_5.z = tmpvar_3;
@@ -102,33 +102,33 @@ mediump vec4 xlat_main (
   a = tmpvar_1;
   bvec4 tmpvar_2;
   tmpvar_2 = greaterThan (uv, vec4(0.5, 0.5, 0.5, 0.5));
-  highp vec4 tmpvar_3;
+  lowp vec4 tmpvar_3;
   tmpvar_3 = xll_vecTSel (tmpvar_2, vec4(1.0, 2.0, 3.0, 4.0), vec4(5.0, 6.0, 7.0, 8.0));
   highp vec4 tmpvar_4;
   tmpvar_4 = (a + tmpvar_3);
   a = tmpvar_4;
   bvec4 tmpvar_5;
   tmpvar_5 = greaterThan (uv, vec4(0.5, 0.5, 0.5, 0.5));
-  highp vec4 tmpvar_6;
+  lowp vec4 tmpvar_6;
   tmpvar_6 = xll_vecTSel (tmpvar_5, vec4(1.0, 2.0, 3.0, 4.0), vec4(5.0, 6.0, 7.0, 8.0));
   highp vec4 tmpvar_7;
   tmpvar_7 = (a + tmpvar_6);
   a = tmpvar_7;
   bvec4 tmpvar_8;
   tmpvar_8 = greaterThan (uv, vec4(0.5, 0.5, 0.5, 0.5));
-  highp vec4 tmpvar_9;
+  lowp vec4 tmpvar_9;
   tmpvar_9 = xll_vecTSel (tmpvar_8, vec4(1.0, 1.0, 1.0, 1.0), vec4(2.0, 2.0, 2.0, 2.0));
   highp vec4 tmpvar_10;
   tmpvar_10 = (a + tmpvar_9);
   a = tmpvar_10;
   bvec4 tmpvar_11;
   tmpvar_11 = greaterThan (uv, vec4(0.5, 0.5, 0.5, 0.5));
-  highp vec4 tmpvar_12;
+  lowp vec4 tmpvar_12;
   tmpvar_12 = xll_vecTSel (tmpvar_11, vec4(1.0, 1.0, 1.0, 1.0), vec4(2.0, 2.0, 2.0, 2.0));
   highp vec4 tmpvar_13;
   tmpvar_13 = (a + tmpvar_12);
   a = tmpvar_13;
-  vec4 tmpvar_14;
+  highp vec4 tmpvar_14;
   tmpvar_14 = fract (uv);
   bvec4 tmpvar_15;
   tmpvar_15 = bvec4(tmpvar_14).xyzw;

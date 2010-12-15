@@ -27,7 +27,7 @@ void main ()
   } else {
     tmpvar_5 = 8.0;
   };
-  highp vec4 tmpvar_6;
+  vec4 tmpvar_6;
   tmpvar_6.x = tmpvar_2;
   tmpvar_6.y = tmpvar_3;
   tmpvar_6.z = tmpvar_4;
@@ -58,7 +58,7 @@ void main ()
   } else {
     tmpvar_11 = 8.0;
   };
-  highp vec4 tmpvar_12;
+  vec4 tmpvar_12;
   tmpvar_12.x = tmpvar_8;
   tmpvar_12.y = tmpvar_9;
   tmpvar_12.z = tmpvar_10;
@@ -91,7 +91,7 @@ void main ()
   } else {
     tmpvar_18 = 2.0;
   };
-  highp vec4 tmpvar_19;
+  vec4 tmpvar_19;
   tmpvar_19.x = tmpvar_15;
   tmpvar_19.y = tmpvar_16;
   tmpvar_19.z = tmpvar_17;
@@ -124,7 +124,7 @@ void main ()
   } else {
     tmpvar_25 = 2.0;
   };
-  highp vec4 tmpvar_26;
+  vec4 tmpvar_26;
   tmpvar_26.x = tmpvar_22;
   tmpvar_26.y = tmpvar_23;
   tmpvar_26.z = tmpvar_24;
@@ -157,7 +157,7 @@ void main ()
   } else {
     tmpvar_32 = 2.0;
   };
-  highp vec4 tmpvar_33;
+  vec4 tmpvar_33;
   tmpvar_33.x = tmpvar_29;
   tmpvar_33.y = tmpvar_30;
   tmpvar_33.z = tmpvar_31;

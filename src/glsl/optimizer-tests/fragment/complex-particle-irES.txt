@@ -10,7 +10,7 @@ mediump vec4 xlat_main (
   in v2f i
 )
 {
-  vec4 tmpvar_1;
+  lowp vec4 tmpvar_1;
   tmpvar_1 = texture2D (_MainTex, i.texcoord);
   return (i.color * tmpvar_1);
 }

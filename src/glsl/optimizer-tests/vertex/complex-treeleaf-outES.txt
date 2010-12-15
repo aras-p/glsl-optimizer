@@ -3,7 +3,7 @@ varying highp vec3 xlv_TEXCOORD2;
 varying highp vec3 xlv_TEXCOORD1;
 varying highp vec4 xlv_COLOR0;
 varying highp vec2 xlv_TEXCOORD0;
-attribute highp vec4 TANGENT;
+attribute vec4 TANGENT;
 uniform highp vec4 unity_Scale;
 uniform highp mat4 glstate_matrix_mvp;
 uniform highp mat4 glstate_matrix_invtrans_modelview0;
@@ -27,7 +27,7 @@ void main ()
 {
   highp vec4 tmpvar_1;
   highp vec4 tmpvar_2;
-  float tmpvar_3;
+  highp float tmpvar_3;
   tmpvar_3 = (1.0 - abs (TANGENT.w));
   highp vec4 tmpvar_4;
   tmpvar_4.w = 0.0;
@@ -40,12 +40,12 @@ void main ()
   tmpvar_6.xy = _glesNormal.xy;
   highp vec4 tmpvar_7;
   tmpvar_7 = (_glesVertex + ((tmpvar_6 * glstate_matrix_invtrans_modelview0) * tmpvar_3));
-  vec3 tmpvar_8;
+  highp vec3 tmpvar_8;
   tmpvar_8 = mix (_glesNormal, normalize ((tmpvar_4 * glstate_matrix_invtrans_modelview0)).xyz, vec3(tmpvar_3));
   highp vec4 tmpvar_9;
   tmpvar_9.w = -1.0;
   tmpvar_9.xyz = normalize ((tmpvar_5 * glstate_matrix_invtrans_modelview0)).xyz;
-  vec4 tmpvar_10;
+  highp vec4 tmpvar_10;
   tmpvar_10 = mix (TANGENT, tmpvar_9, vec4(tmpvar_3));
   tmpvar_1 = tmpvar_7;
   tmpvar_2 = tmpvar_10;
@@ -61,7 +61,7 @@ void main ()
   highp vec2 tmpvar_13;
   tmpvar_13.x = dot (tmpvar_1.xyz, vec3((tmpvar_11.y + tmpvar_12)));
   tmpvar_13.y = tmpvar_12;
-  vec4 tmpvar_14;
+  highp vec4 tmpvar_14;
   tmpvar_14 = abs (((fract ((((fract (((_Time.yy + tmpvar_13).xxyy * vec4(1.975, 0.793, 0.375, 0.193))) * 2.0) - 1.0) + 0.5)) * 2.0) - 1.0));
   highp vec4 tmpvar_15;
   tmpvar_15 = ((tmpvar_14 * tmpvar_14) * (3.0 - (2.0 * tmpvar_14)));
@@ -80,12 +80,12 @@ void main ()
   highp vec4 tmpvar_19;
   tmpvar_19.xyz = vec3(1.0, 1.0, 1.0);
   tmpvar_19.w = _glesColor.w;
-  vec3 tmpvar_20;
+  highp vec3 tmpvar_20;
   tmpvar_20 = normalize (tmpvar_8);
   tmpvar_2.xyz = normalize (tmpvar_10.xyz);
   highp vec3 tmpvar_21;
   tmpvar_21 = (cross (tmpvar_20, tmpvar_2.xyz) * tmpvar_2.w);
-  highp mat3 tmpvar_22;
+  mat3 tmpvar_22;
   tmpvar_22[0].x = tmpvar_2.x;
   tmpvar_22[0].y = tmpvar_21.x;
   tmpvar_22[0].z = tmpvar_20.x;

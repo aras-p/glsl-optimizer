@@ -35,7 +35,7 @@ void main ()
     tmpvar_6 = vec2(0.1, 0.1);
   };
   c.xy = (c.xy + tmpvar_6);
-  float tmpvar_7;
+  highp float tmpvar_7;
   tmpvar_7 = fract (xlv_TEXCOORD0.x);
   float tmpvar_8;
   if (bool(tmpvar_7)) {

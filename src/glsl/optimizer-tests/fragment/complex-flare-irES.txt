@@ -6,7 +6,7 @@ mediump vec4 xlat_main (
   in highp vec2 texcoord
 )
 {
-  vec4 tmpvar_1;
+  lowp vec4 tmpvar_1;
   tmpvar_1 = texture2D (_FlareTexture, texcoord);
   return (tmpvar_1 * color);
 }
