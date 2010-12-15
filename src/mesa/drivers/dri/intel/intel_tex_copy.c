@@ -78,18 +78,25 @@ do_copy_texsubimage(struct intel_context *intel,
 {
    struct gl_context *ctx = &intel->ctx;
    struct intel_renderbuffer *irb;
+   bool copy_supported_with_alpha_override = false;
 
    intel_prepare_render(intel);
 
    irb = get_teximage_readbuffer(intel, internalFormat);
-   if (!intelImage->mt || !irb) {
+   if (!intelImage->mt || !irb || !irb->region) {
       if (unlikely(INTEL_DEBUG & DEBUG_FALLBACKS))
 	 fprintf(stderr, "%s fail %p %p (0x%08x)\n",
 		 __FUNCTION__, intelImage->mt, irb, internalFormat);
       return GL_FALSE;
    }
 
-   if (intelImage->base.TexFormat != irb->Base.Format) {
+   if (irb->Base.Format == MESA_FORMAT_XRGB8888 &&
+       intelImage->base.TexFormat == MESA_FORMAT_ARGB8888) {
+      copy_supported_with_alpha_override = true;
+   }
+
+   if (intelImage->base.TexFormat != irb->Base.Format &&
+       !copy_supported_with_alpha_override) {
       if (unlikely(INTEL_DEBUG & DEBUG_FALLBACKS))
 	 fprintf(stderr, "%s mismatched formats %s, %s\n",
 		 __FUNCTION__,
@@ -144,6 +151,9 @@ do_copy_texsubimage(struct intel_context *intel,
 	 return GL_FALSE;
       }
    }
+
+   if (copy_supported_with_alpha_override)
+      intel_set_teximage_alpha_to_one(ctx, intelImage);
 
    return GL_TRUE;
 }
