@@ -91,6 +91,27 @@ prototype_string(const glsl_type *return_type, const char *name,
    return str;
 }
 
+static glsl_precision precision_from_call (const ir_function_signature* sig, glsl_precision max_prec, glsl_precision first_prec)
+{
+	if (sig->precision != glsl_precision_undefined)
+		return sig->precision;
+
+	// if return type is boolean, treat as lowp
+	if (sig->return_type->base_type == GLSL_TYPE_BOOL)
+		return glsl_precision_low;
+
+	// if it's a built-in texture function, precision comes from sampler (1st param) precision
+	if (sig->is_builtin)
+	{
+		if (strncmp (sig->function_name(), "texture", 7) == 0)
+			return first_prec;
+
+	}
+
+	// otherwise: max precision of parameters
+	return max_prec;
+}
+
 
 static ir_rvalue *
 process_call(exec_list *instructions, ir_function *f,
@@ -100,6 +121,10 @@ process_call(exec_list *instructions, ir_function *f,
    void *ctx = state;
 
    ir_function_signature *sig = f->matching_signature(actual_parameters);
+
+   glsl_precision prec_params_max = glsl_precision_undefined;
+   glsl_precision prec_params_first = glsl_precision_undefined;
+   int params_counter = 0;
 
    if (sig != NULL) {
       /* Verify that 'out' and 'inout' actual parameters are lvalues.  This
@@ -115,6 +140,11 @@ process_call(exec_list *instructions, ir_function *f,
 
 	 assert(actual != NULL);
 	 assert(formal != NULL);
+
+	 glsl_precision param_prec = higher_precision(actual->get_precision(), (glsl_precision)formal->precision);
+	 prec_params_max = higher_precision (prec_params_max, param_prec);
+	 if (params_counter == 0)
+		 prec_params_first = param_prec;
 
 	 if ((formal->mode == ir_var_out)
 	     || (formal->mode == ir_var_inout)) {
@@ -134,6 +164,7 @@ process_call(exec_list *instructions, ir_function *f,
 
 	 actual_iter.next();
 	 formal_iter.next();
+	 ++params_counter;
       }
 
       /* Always insert the call in the instruction stream, and return a deref
@@ -148,7 +179,7 @@ process_call(exec_list *instructions, ir_function *f,
 	 var = new(ctx) ir_variable(sig->return_type,
 				    talloc_asprintf(ctx, "%s_retval",
 						    sig->function_name()),
-				    ir_var_temporary, sig->precision);
+				    ir_var_temporary, precision_from_call(sig, prec_params_max, prec_params_first));
 	 instructions->push_tail(var);
 
 	 deref = new(ctx) ir_dereference_variable(var);
@@ -492,6 +523,7 @@ emit_inline_vector_constructor(const glsl_type *type, unsigned ast_precision,
       ir_rvalue *first_param = (ir_rvalue *)parameters->head;
       ir_rvalue *rhs = new(ctx) ir_swizzle(first_param, 0, 0, 0, 0,
 					   lhs_components);
+	  var->precision = higher_precision ((glsl_precision)var->precision, rhs->get_precision());
       ir_dereference_variable *lhs = new(ctx) ir_dereference_variable(var);
       const unsigned mask = (1U << lhs_components) - 1;
 
@@ -509,6 +541,7 @@ emit_inline_vector_constructor(const glsl_type *type, unsigned ast_precision,
 
       foreach_list(node, parameters) {
 	 ir_rvalue *param = (ir_rvalue *) node;
+	 var->precision = higher_precision ((glsl_precision)var->precision, param->get_precision());
 	 unsigned rhs_components = param->type->components();
 
 	 /* Do not try to assign more components to the vector than it has!

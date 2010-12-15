@@ -26,7 +26,7 @@
 #include "ir_visitor.h"
 #include "glsl_types.h"
 
-static inline glsl_precision higher_precision (ir_instruction* a, ir_instruction* b)
+glsl_precision higher_precision (ir_instruction* a, ir_instruction* b)
 {
 	if (!a && !b)
 		return glsl_precision_undefined;

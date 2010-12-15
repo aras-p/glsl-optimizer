@@ -687,6 +687,17 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
       }
    }
 
+   if (lhs->get_precision() == glsl_precision_undefined)
+   {
+	   glsl_precision prec = precision_from_ir (rhs);
+	   ir_dereference *const d = lhs->as_dereference();
+	   if (d)
+	   {
+		   ir_variable *const var = d->variable_referenced();
+		   var->precision = prec;
+	   }
+   }
+
    /* Most callers of do_assignment (assign, add_assign, pre_inc/dec,
     * but not post_inc) need the converted assigned value as an rvalue
     * to handle things like:
@@ -1010,7 +1021,7 @@ ast_expression::hir(exec_list *instructions,
       } else {
 	 ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
 						       "and_tmp",
-						       ir_var_temporary, glsl_precision_undefined);
+						       ir_var_temporary, glsl_precision_low);
 	 instructions->push_tail(tmp);
 
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
@@ -1075,7 +1086,7 @@ ast_expression::hir(exec_list *instructions,
       } else {
 	 ir_variable *const tmp = new(ctx) ir_variable(glsl_type::bool_type,
 						       "or_tmp",
-						       ir_var_temporary, glsl_precision_undefined);
+						       ir_var_temporary, glsl_precision_low);
 	 instructions->push_tail(tmp);
 
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
@@ -1282,7 +1293,7 @@ ast_expression::hir(exec_list *instructions,
 	 result = (cond_val->value.b[0]) ? then_val : else_val;
       } else {
 	 ir_variable *const tmp =
-	    new(ctx) ir_variable(type, "conditional_tmp", ir_var_temporary, glsl_precision_undefined);
+	    new(ctx) ir_variable(type, "conditional_tmp", ir_var_temporary, higher_precision(op[1], op[2]));
 	 instructions->push_tail(tmp);
 
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
@@ -1827,9 +1838,10 @@ apply_precision_to_variable(const struct ast_type_specifier *spec,
 {
 	if (!state->es_shader)
 		return;
-	if (var->type->is_sampler() && spec->precision == ast_precision_high)
-		return;
-	var->precision = spec->precision;
+	if (var->type->is_sampler() && spec->precision == ast_precision_undefined)
+		var->precision = ast_precision_low; // samplers default to low precision
+	else
+		var->precision = spec->precision;
 }
 
 

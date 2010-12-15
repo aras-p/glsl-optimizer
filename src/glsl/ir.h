@@ -1558,6 +1558,7 @@ extern glsl_precision
 precision_from_ir (ir_instruction* ir);
 
 
+extern glsl_precision higher_precision (ir_instruction* a, ir_instruction* b);
 static inline glsl_precision higher_precision (glsl_precision a, glsl_precision b)
 {
 	return MIN2 (a, b);
