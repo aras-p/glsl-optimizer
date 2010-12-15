@@ -26,10 +26,6 @@
 #include "ir_visitor.h"
 #include "glsl_types.h"
 
-static inline glsl_precision higher_precision (glsl_precision a, glsl_precision b)
-{
-	return MIN2 (a, b);
-}
 static inline glsl_precision higher_precision (ir_instruction* a, ir_instruction* b)
 {
 	if (!a && !b)

@@ -37,6 +37,7 @@ extern "C" {
 #include "list.h"
 #include "ir_visitor.h"
 #include "ir_hierarchical_visitor.h"
+#include "main/macros.h"
 
 /**
  * \defgroup IR Intermediate representation nodes
@@ -1555,5 +1556,12 @@ do_set_program_inouts(exec_list *instructions, struct gl_program *prog);
 
 extern glsl_precision
 precision_from_ir (ir_instruction* ir);
+
+
+static inline glsl_precision higher_precision (glsl_precision a, glsl_precision b)
+{
+	return MIN2 (a, b);
+}
+
 
 #endif /* IR_H */
