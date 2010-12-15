@@ -381,6 +381,8 @@ galahad_create_vertex_elements_state(struct pipe_context *_pipe,
    struct galahad_context *glhd_pipe = galahad_context(_pipe);
    struct pipe_context *pipe = glhd_pipe->pipe;
 
+   /* XXX check if stride lines up with element size, at least for floats */
+
    return pipe->create_vertex_elements_state(pipe,
                                              num_elements,
                                              vertex_elements);

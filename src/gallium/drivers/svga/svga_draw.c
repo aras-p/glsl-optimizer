@@ -315,7 +315,6 @@ enum pipe_error svga_hwtnl_prim( struct svga_hwtnl *hwtnl,
             break;
          }
 
-         assert(!stride || width <= stride);
          if (max_index != ~0) {
             assert(offset + (index_bias + max_index) * stride + width <= size);
          }
