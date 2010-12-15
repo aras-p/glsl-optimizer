@@ -7,13 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		2B38545D1293BE5000F3E692 /* lower_div_to_mul_rcp.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3854461293BE5000F3E692 /* lower_div_to_mul_rcp.cpp */; };
-		2B38545E1293BE5000F3E692 /* lower_explog_to_explog2.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3854471293BE5000F3E692 /* lower_explog_to_explog2.cpp */; };
 		2B38545F1293BE5000F3E692 /* lower_if_to_cond_assign.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3854481293BE5000F3E692 /* lower_if_to_cond_assign.cpp */; };
 		2B3854601293BE5000F3E692 /* lower_jumps.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B3854491293BE5000F3E692 /* lower_jumps.cpp */; };
 		2B3854611293BE5000F3E692 /* lower_mat_op_to_vec.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B38544A1293BE5000F3E692 /* lower_mat_op_to_vec.cpp */; };
-		2B3854621293BE5000F3E692 /* lower_mod_to_fract.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B38544B1293BE5000F3E692 /* lower_mod_to_fract.cpp */; };
-		2B3854631293BE5000F3E692 /* lower_sub_to_add_neg.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B38544C1293BE5000F3E692 /* lower_sub_to_add_neg.cpp */; };
 		2B3854641293BE5000F3E692 /* lower_vec_index_to_cond_assign.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B38544D1293BE5000F3E692 /* lower_vec_index_to_cond_assign.cpp */; };
 		2B3854651293BE5000F3E692 /* lower_vec_index_to_swizzle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B38544E1293BE5000F3E692 /* lower_vec_index_to_swizzle.cpp */; };
 		2B3854661293BE5000F3E692 /* opt_algebraic.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2B38544F1293BE5000F3E692 /* opt_algebraic.cpp */; };
@@ -98,6 +94,12 @@
 		2BA55AE41207FEA6002DC82D /* program.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A991207FEA6002DC82D /* program.h */; };
 		2BA55AE51207FEA6002DC82D /* s_expression.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BA55A9A1207FEA6002DC82D /* s_expression.cpp */; };
 		2BA55AE61207FEA6002DC82D /* s_expression.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BA55A9B1207FEA6002DC82D /* s_expression.h */; };
+		2BB2F5B012B8F1580052C6B0 /* lower_discard.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BB2F5AA12B8F1580052C6B0 /* lower_discard.cpp */; };
+		2BB2F5B112B8F1580052C6B0 /* lower_instructions.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BB2F5AB12B8F1580052C6B0 /* lower_instructions.cpp */; };
+		2BB2F5B212B8F1580052C6B0 /* lower_vector.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BB2F5AC12B8F1580052C6B0 /* lower_vector.cpp */; };
+		2BB2F5B312B8F1580052C6B0 /* opt_discard_simplification.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BB2F5AD12B8F1580052C6B0 /* opt_discard_simplification.cpp */; };
+		2BB2F5B412B8F1580052C6B0 /* strtod.c in Sources */ = {isa = PBXBuildFile; fileRef = 2BB2F5AE12B8F1580052C6B0 /* strtod.c */; };
+		2BB2F5B512B8F1580052C6B0 /* strtod.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BB2F5AF12B8F1580052C6B0 /* strtod.h */; };
 		2BBA49281254706A00D42573 /* glsl_symbol_table.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BBA491F1254706A00D42573 /* glsl_symbol_table.cpp */; };
 		2BBA492A1254706A00D42573 /* loop_analysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BBA49211254706A00D42573 /* loop_analysis.cpp */; };
 		2BBA492B1254706A00D42573 /* loop_analysis.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BBA49221254706A00D42573 /* loop_analysis.h */; };
@@ -109,13 +111,9 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		2B3854461293BE5000F3E692 /* lower_div_to_mul_rcp.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_div_to_mul_rcp.cpp; path = ../lower_div_to_mul_rcp.cpp; sourceTree = SOURCE_ROOT; };
-		2B3854471293BE5000F3E692 /* lower_explog_to_explog2.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_explog_to_explog2.cpp; path = ../lower_explog_to_explog2.cpp; sourceTree = SOURCE_ROOT; };
 		2B3854481293BE5000F3E692 /* lower_if_to_cond_assign.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_if_to_cond_assign.cpp; path = ../lower_if_to_cond_assign.cpp; sourceTree = SOURCE_ROOT; };
 		2B3854491293BE5000F3E692 /* lower_jumps.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_jumps.cpp; path = ../lower_jumps.cpp; sourceTree = SOURCE_ROOT; };
 		2B38544A1293BE5000F3E692 /* lower_mat_op_to_vec.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_mat_op_to_vec.cpp; path = ../lower_mat_op_to_vec.cpp; sourceTree = SOURCE_ROOT; };
-		2B38544B1293BE5000F3E692 /* lower_mod_to_fract.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_mod_to_fract.cpp; path = ../lower_mod_to_fract.cpp; sourceTree = SOURCE_ROOT; };
-		2B38544C1293BE5000F3E692 /* lower_sub_to_add_neg.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_sub_to_add_neg.cpp; path = ../lower_sub_to_add_neg.cpp; sourceTree = SOURCE_ROOT; };
 		2B38544D1293BE5000F3E692 /* lower_vec_index_to_cond_assign.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_vec_index_to_cond_assign.cpp; path = ../lower_vec_index_to_cond_assign.cpp; sourceTree = SOURCE_ROOT; };
 		2B38544E1293BE5000F3E692 /* lower_vec_index_to_swizzle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_vec_index_to_swizzle.cpp; path = ../lower_vec_index_to_swizzle.cpp; sourceTree = SOURCE_ROOT; };
 		2B38544F1293BE5000F3E692 /* opt_algebraic.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_algebraic.cpp; path = ../opt_algebraic.cpp; sourceTree = SOURCE_ROOT; };
@@ -205,6 +203,12 @@
 		2BA55A991207FEA6002DC82D /* program.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = program.h; path = ../program.h; sourceTree = SOURCE_ROOT; };
 		2BA55A9A1207FEA6002DC82D /* s_expression.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = s_expression.cpp; path = ../s_expression.cpp; sourceTree = SOURCE_ROOT; };
 		2BA55A9B1207FEA6002DC82D /* s_expression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = s_expression.h; path = ../s_expression.h; sourceTree = SOURCE_ROOT; };
+		2BB2F5AA12B8F1580052C6B0 /* lower_discard.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_discard.cpp; path = ../lower_discard.cpp; sourceTree = SOURCE_ROOT; };
+		2BB2F5AB12B8F1580052C6B0 /* lower_instructions.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_instructions.cpp; path = ../lower_instructions.cpp; sourceTree = SOURCE_ROOT; };
+		2BB2F5AC12B8F1580052C6B0 /* lower_vector.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lower_vector.cpp; path = ../lower_vector.cpp; sourceTree = SOURCE_ROOT; };
+		2BB2F5AD12B8F1580052C6B0 /* opt_discard_simplification.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_discard_simplification.cpp; path = ../opt_discard_simplification.cpp; sourceTree = SOURCE_ROOT; };
+		2BB2F5AE12B8F1580052C6B0 /* strtod.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = strtod.c; path = ../strtod.c; sourceTree = SOURCE_ROOT; };
+		2BB2F5AF12B8F1580052C6B0 /* strtod.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = strtod.h; path = ../strtod.h; sourceTree = SOURCE_ROOT; };
 		2BBA491F1254706A00D42573 /* glsl_symbol_table.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = glsl_symbol_table.cpp; path = ../glsl_symbol_table.cpp; sourceTree = SOURCE_ROOT; };
 		2BBA49211254706A00D42573 /* loop_analysis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = loop_analysis.cpp; path = ../loop_analysis.cpp; sourceTree = SOURCE_ROOT; };
 		2BBA49221254706A00D42573 /* loop_analysis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = loop_analysis.h; path = ../loop_analysis.h; sourceTree = SOURCE_ROOT; };
@@ -283,6 +287,12 @@
 		2BA55A501207FE41002DC82D /* glsl */ = {
 			isa = PBXGroup;
 			children = (
+				2BB2F5AA12B8F1580052C6B0 /* lower_discard.cpp */,
+				2BB2F5AB12B8F1580052C6B0 /* lower_instructions.cpp */,
+				2BB2F5AC12B8F1580052C6B0 /* lower_vector.cpp */,
+				2BB2F5AD12B8F1580052C6B0 /* opt_discard_simplification.cpp */,
+				2BB2F5AE12B8F1580052C6B0 /* strtod.c */,
+				2BB2F5AF12B8F1580052C6B0 /* strtod.h */,
 				2B6A99EB1223B1460059FBED /* glcpp */,
 				2BA55A511207FEA6002DC82D /* ast_expr.cpp */,
 				2BA55A521207FEA6002DC82D /* ast_function.cpp */,
@@ -345,14 +355,10 @@
 				2BBA49221254706A00D42573 /* loop_analysis.h */,
 				2BBA49231254706A00D42573 /* loop_controls.cpp */,
 				2BBA49241254706A00D42573 /* loop_unroll.cpp */,
-				2B3854461293BE5000F3E692 /* lower_div_to_mul_rcp.cpp */,
-				2B3854471293BE5000F3E692 /* lower_explog_to_explog2.cpp */,
 				2B3854481293BE5000F3E692 /* lower_if_to_cond_assign.cpp */,
 				2B3854491293BE5000F3E692 /* lower_jumps.cpp */,
 				2B38544A1293BE5000F3E692 /* lower_mat_op_to_vec.cpp */,
-				2B38544B1293BE5000F3E692 /* lower_mod_to_fract.cpp */,
 				2BBA49251254706A00D42573 /* lower_noise.cpp */,
-				2B38544C1293BE5000F3E692 /* lower_sub_to_add_neg.cpp */,
 				2BBA49261254706A00D42573 /* lower_variable_index_to_cond_assign.cpp */,
 				2B38544D1293BE5000F3E692 /* lower_vec_index_to_cond_assign.cpp */,
 				2B38544E1293BE5000F3E692 /* lower_vec_index_to_swizzle.cpp */,
@@ -425,6 +431,7 @@
 				2B6A99F71223B1670059FBED /* glcpp-parse.h in Headers */,
 				2B6A99FA1223B1670059FBED /* glcpp.h in Headers */,
 				2BBA492B1254706A00D42573 /* loop_analysis.h in Headers */,
+				2BB2F5B512B8F1580052C6B0 /* strtod.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -522,13 +529,9 @@
 				2BBA492E1254706A00D42573 /* lower_noise.cpp in Sources */,
 				2BBA492F1254706A00D42573 /* lower_variable_index_to_cond_assign.cpp in Sources */,
 				2BBA49301254706A00D42573 /* opt_redundant_jumps.cpp in Sources */,
-				2B38545D1293BE5000F3E692 /* lower_div_to_mul_rcp.cpp in Sources */,
-				2B38545E1293BE5000F3E692 /* lower_explog_to_explog2.cpp in Sources */,
 				2B38545F1293BE5000F3E692 /* lower_if_to_cond_assign.cpp in Sources */,
 				2B3854601293BE5000F3E692 /* lower_jumps.cpp in Sources */,
 				2B3854611293BE5000F3E692 /* lower_mat_op_to_vec.cpp in Sources */,
-				2B3854621293BE5000F3E692 /* lower_mod_to_fract.cpp in Sources */,
-				2B3854631293BE5000F3E692 /* lower_sub_to_add_neg.cpp in Sources */,
 				2B3854641293BE5000F3E692 /* lower_vec_index_to_cond_assign.cpp in Sources */,
 				2B3854651293BE5000F3E692 /* lower_vec_index_to_swizzle.cpp in Sources */,
 				2B3854661293BE5000F3E692 /* opt_algebraic.cpp in Sources */,
@@ -545,6 +548,11 @@
 				2B3854711293BE5000F3E692 /* opt_structure_splitting.cpp in Sources */,
 				2B3854721293BE5000F3E692 /* opt_swizzle_swizzle.cpp in Sources */,
 				2B3854731293BE5000F3E692 /* opt_tree_grafting.cpp in Sources */,
+				2BB2F5B012B8F1580052C6B0 /* lower_discard.cpp in Sources */,
+				2BB2F5B112B8F1580052C6B0 /* lower_instructions.cpp in Sources */,
+				2BB2F5B212B8F1580052C6B0 /* lower_vector.cpp in Sources */,
+				2BB2F5B312B8F1580052C6B0 /* opt_discard_simplification.cpp in Sources */,
+				2BB2F5B412B8F1580052C6B0 /* strtod.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
