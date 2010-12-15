@@ -272,8 +272,15 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 		{
 			// write output
 			FILE* f = fopen (hirPath.c_str(), "wb");
-			fwrite (textHir.c_str(), 1, textHir.size(), f);
-			fclose (f);
+			if (!f)
+			{
+				printf ("  can't write to IR file!\n");
+			}
+			else
+			{
+				fwrite (textHir.c_str(), 1, textHir.size(), f);
+				fclose (f);
+			}
 			printf ("  does not match raw output\n");
 			res = false;
 		}
@@ -282,8 +289,15 @@ static bool TestFile (glslopt_ctx* ctx, bool vertex,
 		{
 			// write output
 			FILE* f = fopen (outputPath.c_str(), "wb");
-			fwrite (textOpt.c_str(), 1, textOpt.size(), f);
-			fclose (f);
+			if (!f)
+			{
+				printf ("  can't write to optimized file!\n");
+			}
+			else
+			{
+				fwrite (textOpt.c_str(), 1, textOpt.size(), f);
+				fclose (f);
+			}
 			printf ("  does not match optimized output\n");
 			res = false;
 		}
