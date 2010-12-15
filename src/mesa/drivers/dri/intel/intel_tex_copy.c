@@ -101,8 +101,11 @@ do_copy_texsubimage(struct intel_context *intel,
                     GLint x, GLint y, GLsizei width, GLsizei height)
 {
    struct gl_context *ctx = &intel->ctx;
-   const struct intel_region *src = get_teximage_source(intel, internalFormat);
+   const struct intel_region *src;
 
+   /* intel_flush(ctx); */
+   intel_prepare_render(intel);
+   src = get_teximage_source(intel, internalFormat);
    if (!intelImage->mt || !src || !src->buffer) {
       if (unlikely(INTEL_DEBUG & DEBUG_FALLBACKS))
 	 fprintf(stderr, "%s fail %p %p (0x%08x)\n",
@@ -116,8 +119,6 @@ do_copy_texsubimage(struct intel_context *intel,
       return GL_FALSE;
    }
 
-   /* intel_flush(ctx); */
-   intel_prepare_render(intel);
    {
       drm_intel_bo *dst_bo = intel_region_buffer(intel,
 						 intelImage->mt->region,
