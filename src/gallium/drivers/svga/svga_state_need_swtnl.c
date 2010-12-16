@@ -177,7 +177,7 @@ static int update_need_swtnl( struct svga_context *svga,
 
    if (need_swtnl != svga->state.sw.need_swtnl) {
       SVGA_DBG(DEBUG_SWTNL|DEBUG_PERF,
-               "%s need_swvfetch: %s, need_pipeline %s\n",
+               "%s: need_swvfetch %s, need_pipeline %s\n",
                __FUNCTION__,
                svga->state.sw.need_swvfetch ? "true" : "false",
                svga->state.sw.need_pipeline ? "true" : "false");
