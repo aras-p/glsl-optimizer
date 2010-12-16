@@ -273,13 +273,12 @@ static struct ureg_dst
 fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct ureg_dst field)
 {
    struct ureg_src tc[3], sampler[3], eb[2];
-   struct ureg_dst texel, t_tc, t_eb_info, tmp;
+   struct ureg_dst texel, t_tc, t_eb_info;
    unsigned i, label;
 
    texel = ureg_DECL_temporary(shader);
    t_tc = ureg_DECL_temporary(shader);
    t_eb_info = ureg_DECL_temporary(shader);
-   tmp = ureg_DECL_temporary(shader);
 
    tc[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX0, TGSI_INTERPOLATE_LINEAR);
    tc[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX1, TGSI_INTERPOLATE_LINEAR);
@@ -326,7 +325,6 @@ fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct
 
    ureg_release_temporary(shader, t_tc);
    ureg_release_temporary(shader, t_eb_info);
-   ureg_release_temporary(shader, tmp);
 
    return texel;
 }
@@ -336,7 +334,7 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
 {
    struct ureg_src ref_frames, bkwd_pred;
    struct ureg_src tc[4], sampler[2];
-   struct ureg_dst ref[2], tmp, result;
+   struct ureg_dst ref[2], result;
    unsigned i, intra_label, bi_label, label;
 
    ref_frames = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_REF_FRAMES, TGSI_INTERPOLATE_CONSTANT);
@@ -350,14 +348,13 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
       ref[i] = ureg_DECL_temporary(shader);
    }
 
-   tmp = ureg_DECL_temporary(shader);
    result = ureg_DECL_temporary(shader);
 
    ureg_MOV(shader, result, ureg_imm1f(shader, 0.5f));
 
-   ureg_SGE(shader, ureg_writemask(tmp, TGSI_WRITEMASK_X), ref_frames, ureg_imm1f(shader, 0.0f));
-   ureg_IF(shader, ureg_scalar(ureg_src(tmp), TGSI_SWIZZLE_X), &intra_label);
-      ureg_CMP(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY),
+   ureg_SGE(shader, ureg_writemask(ref[0], TGSI_WRITEMASK_X), ref_frames, ureg_imm1f(shader, 0.0f));
+   ureg_IF(shader, ureg_scalar(ureg_src(ref[0]), TGSI_SWIZZLE_X), &intra_label);
+      ureg_CMP(shader, ureg_writemask(ref[0], TGSI_WRITEMASK_XY),
                ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
                tc[1], tc[0]);
 
@@ -367,10 +364,10 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
           * result = tex(field.z ? tc[1] : tc[0], sampler[bkwd_pred ? 1 : 0])
           */
          ureg_IF(shader, bkwd_pred, &label);
-            ureg_TEX(shader, result, TGSI_TEXTURE_2D, ureg_src(tmp), sampler[1]);
+            ureg_TEX(shader, result, TGSI_TEXTURE_2D, ureg_src(ref[0]), sampler[1]);
          ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
          ureg_ELSE(shader, &label);
-            ureg_TEX(shader, result, TGSI_TEXTURE_2D, ureg_src(tmp), sampler[0]);
+            ureg_TEX(shader, result, TGSI_TEXTURE_2D, ureg_src(ref[0]), sampler[0]);
          ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
          ureg_ENDIF(shader);
 
@@ -383,12 +380,11 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
           * else
           *    ref[0..1] = tex(tc[2..3], sampler[0..1])
           */
-         ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, ureg_src(tmp), sampler[0]);
-
-         ureg_CMP(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY),
+         ureg_CMP(shader, ureg_writemask(ref[1], TGSI_WRITEMASK_XY),
             ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
             tc[3], tc[2]);
-         ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, ureg_src(tmp), sampler[1]);
+         ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, ureg_src(ref[0]), sampler[0]);
+         ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, ureg_src(ref[1]), sampler[1]);
 
          ureg_LRP(shader, result, ureg_imm1f(shader, 0.5f),
             ureg_src(ref[0]), ureg_src(ref[1]));
@@ -400,7 +396,6 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
 
    for (i = 0; i < 2; ++i)
       ureg_release_temporary(shader, ref[i]);
-   ureg_release_temporary(shader, tmp);
 
    return result;
 }
