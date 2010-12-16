@@ -831,6 +831,7 @@ static int r600_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsign
 					S_SQ_ALU_WORD1_OP2_SRC0_ABS(alu->src[0].abs) |
 					S_SQ_ALU_WORD1_OP2_SRC1_ABS(alu->src[1].abs) |
 					S_SQ_ALU_WORD1_OP2_WRITE_MASK(alu->dst.write) |
+					S_SQ_ALU_WORD1_OP2_OMOD(alu->omod) |
 					S_SQ_ALU_WORD1_OP2_ALU_INST(alu->inst) |
 					S_SQ_ALU_WORD1_BANK_SWIZZLE(alu->bank_swizzle) |
 					S_SQ_ALU_WORD1_OP2_UPDATE_EXECUTE_MASK(alu->predicate) |
@@ -1205,6 +1206,7 @@ void r600_bc_dump(struct r600_bc *bc)
 				fprintf(stderr, "SRC0_ABS:%d ", alu->src[0].abs);
 				fprintf(stderr, "SRC1_ABS:%d ", alu->src[1].abs);
 				fprintf(stderr, "WRITE_MASK:%d ", alu->dst.write);
+				fprintf(stderr, "OMOD:%d ", alu->omod);
 				fprintf(stderr, "EXECUTE_MASK:%d ", alu->predicate);
 				fprintf(stderr, "UPDATE_PRED:%d\n", alu->predicate);
 			}

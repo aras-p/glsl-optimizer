@@ -2004,6 +2004,35 @@ static int tgsi_lrp(struct r600_shader_ctx *ctx)
 	r = tgsi_split_literal_constant(ctx, r600_src);
 	if (r)
 		return r;
+
+	/* optimize if it's just an equal balance */
+	if(r600_src[0].sel == V_SQ_ALU_SRC_0_5) {
+		for (i = 0; i < lasti + 1; i++) {
+			if (!(inst->Dst[0].Register.WriteMask & (1 << i)))
+				continue;
+
+			memset(&alu, 0, sizeof(struct r600_bc_alu));
+			alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD);
+			alu.src[0] = r600_src[1];
+			alu.src[0].chan = tgsi_chan(&inst->Src[1], i);
+			alu.src[1] = r600_src[2];
+			alu.src[1].chan = tgsi_chan(&inst->Src[2], i);
+			alu.omod = 3;
+			r = tgsi_dst(ctx, &inst->Dst[0], i, &alu.dst);
+			if (r)
+				return r;
+
+			alu.dst.chan = i;
+			if (i == lasti) {
+				alu.last = 1;
+			}
+			r = r600_bc_add_alu(ctx->bc, &alu);
+			if (r)
+				return r;
+		}
+		return 0;
+	}
+
 	/* 1 - src0 */
 	for (i = 0; i < lasti + 1; i++) {
 		if (!(inst->Dst[0].Register.WriteMask & (1 << i)))

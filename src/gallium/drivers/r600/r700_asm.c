@@ -61,6 +61,7 @@ int r700_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id)
 					S_SQ_ALU_WORD1_OP2_SRC0_ABS(alu->src[0].abs) |
 					S_SQ_ALU_WORD1_OP2_SRC1_ABS(alu->src[1].abs) |
 					S_SQ_ALU_WORD1_OP2_WRITE_MASK(alu->dst.write) |
+					S_SQ_ALU_WORD1_OP2_OMOD(alu->omod) |
 					S_SQ_ALU_WORD1_OP2_ALU_INST(alu->inst) |
 					S_SQ_ALU_WORD1_BANK_SWIZZLE(alu->bank_swizzle) |
 			                S_SQ_ALU_WORD1_OP2_UPDATE_EXECUTE_MASK(alu->predicate) |
