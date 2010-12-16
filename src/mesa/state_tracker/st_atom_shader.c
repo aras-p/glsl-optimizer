@@ -74,7 +74,7 @@ static void
 update_fp( struct st_context *st )
 {
    struct st_fragment_program *stfp;
-   struct st_fp_varient_key key;
+   struct st_fp_variant_key key;
 
    assert(st->ctx->FragmentProgram._Current);
    stfp = st_fragment_program(st->ctx->FragmentProgram._Current);
@@ -83,7 +83,7 @@ update_fp( struct st_context *st )
    memset(&key, 0, sizeof(key));
    key.st = st;
 
-   st->fp_varient = st_get_fp_varient(st, stfp, &key);
+   st->fp_variant = st_get_fp_variant(st, stfp, &key);
 
    st_reference_fragprog(st, &st->fp, stfp);
 
@@ -94,7 +94,7 @@ update_fp( struct st_context *st )
    }
    else {
       cso_set_fragment_shader_handle(st->cso_context,
-                                     st->fp_varient->driver_shader);
+                                     st->fp_variant->driver_shader);
    }
 }
 
@@ -118,7 +118,7 @@ static void
 update_vp( struct st_context *st )
 {
    struct st_vertex_program *stvp;
-   struct st_vp_varient_key key;
+   struct st_vp_variant_key key;
 
    /* find active shader and params -- Should be covered by
     * ST_NEW_VERTEX_PROGRAM
@@ -141,12 +141,12 @@ update_vp( struct st_context *st )
                                 st->ctx->Polygon.FrontMode != GL_FILL ||
                                 st->ctx->Polygon.BackMode != GL_FILL));
 
-   st->vp_varient = st_get_vp_varient(st, stvp, &key);
+   st->vp_variant = st_get_vp_variant(st, stvp, &key);
 
    st_reference_vertprog(st, &st->vp, stvp);
 
    cso_set_vertex_shader_handle(st->cso_context, 
-                                st->vp_varient->driver_shader);
+                                st->vp_variant->driver_shader);
 
    st->vertex_result_to_slot = stvp->result_to_output;
 }
@@ -167,7 +167,7 @@ static void
 update_gp( struct st_context *st )
 {
    struct st_geometry_program *stgp;
-   struct st_gp_varient_key key;
+   struct st_gp_variant_key key;
 
    if (!st->ctx->GeometryProgram._Current) {
       cso_set_geometry_shader_handle(st->cso_context, NULL);
@@ -180,12 +180,12 @@ update_gp( struct st_context *st )
    memset(&key, 0, sizeof(key));
    key.st = st;
 
-   st->gp_varient = st_get_gp_varient(st, stgp, &key);
+   st->gp_variant = st_get_gp_variant(st, stgp, &key);
 
    st_reference_geomprog(st, &st->gp, stgp);
 
    cso_set_geometry_shader_handle(st->cso_context,
-                                  st->gp_varient->driver_shader);
+                                  st->gp_variant->driver_shader);
 }
 
 const struct st_tracked_state st_update_gp = {

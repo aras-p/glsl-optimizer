@@ -128,7 +128,7 @@ st_delete_program(struct gl_context *ctx, struct gl_program *prog)
    case GL_VERTEX_PROGRAM_ARB:
       {
          struct st_vertex_program *stvp = (struct st_vertex_program *) prog;
-         st_release_vp_varients( st, stvp );
+         st_release_vp_variants( st, stvp );
       }
       break;
    case MESA_GEOMETRY_PROGRAM:
@@ -136,7 +136,7 @@ st_delete_program(struct gl_context *ctx, struct gl_program *prog)
          struct st_geometry_program *stgp =
             (struct st_geometry_program *) prog;
 
-         st_release_gp_varients(st, stgp);
+         st_release_gp_variants(st, stgp);
 
          if (stgp->tgsi.tokens) {
             st_free_tokens((void *) stgp->tgsi.tokens);
@@ -149,7 +149,7 @@ st_delete_program(struct gl_context *ctx, struct gl_program *prog)
          struct st_fragment_program *stfp =
             (struct st_fragment_program *) prog;
 
-         st_release_fp_varients(st, stfp);
+         st_release_fp_variants(st, stfp);
          
          if (stfp->tgsi.tokens) {
             st_free_tokens(stfp->tgsi.tokens);
@@ -181,7 +181,7 @@ st_is_program_native(struct gl_context *ctx,
 /**
  * Called via ctx->Driver.ProgramStringNotify()
  * Called when the program's text/code is changed.  We have to free
- * all shader varients and corresponding gallium shaders when this happens.
+ * all shader variants and corresponding gallium shaders when this happens.
  */
 static GLboolean
 st_program_string_notify( struct gl_context *ctx,
@@ -193,7 +193,7 @@ st_program_string_notify( struct gl_context *ctx,
    if (target == GL_FRAGMENT_PROGRAM_ARB) {
       struct st_fragment_program *stfp = (struct st_fragment_program *) prog;
 
-      st_release_fp_varients(st, stfp);
+      st_release_fp_variants(st, stfp);
 
       if (stfp->tgsi.tokens) {
          st_free_tokens(stfp->tgsi.tokens);
@@ -206,7 +206,7 @@ st_program_string_notify( struct gl_context *ctx,
    else if (target == MESA_GEOMETRY_PROGRAM) {
       struct st_geometry_program *stgp = (struct st_geometry_program *) prog;
 
-      st_release_gp_varients(st, stgp);
+      st_release_gp_variants(st, stgp);
 
       if (stgp->tgsi.tokens) {
          st_free_tokens((void *) stgp->tgsi.tokens);
@@ -219,7 +219,7 @@ st_program_string_notify( struct gl_context *ctx,
    else if (target == GL_VERTEX_PROGRAM_ARB) {
       struct st_vertex_program *stvp = (struct st_vertex_program *) prog;
 
-      st_release_vp_varients( st, stvp );
+      st_release_vp_variants( st, stvp );
 
       if (st->vp == stvp)
 	 st->dirty.st |= ST_NEW_VERTEX_PROGRAM;

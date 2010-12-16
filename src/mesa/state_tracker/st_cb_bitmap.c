@@ -412,8 +412,8 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
    struct cso_context *cso = st->cso_context;
-   struct st_fp_varient *fpv;
-   struct st_fp_varient_key key;
+   struct st_fp_variant *fpv;
+   struct st_fp_variant_key key;
    GLuint maxSize;
    GLuint offset;
 
@@ -421,7 +421,7 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    key.st = st;
    key.bitmap = GL_TRUE;
 
-   fpv = st_get_fp_varient(st, st->fp, &key);
+   fpv = st_get_fp_variant(st, st->fp, &key);
 
    /* As an optimization, Mesa's fragment programs will sometimes get the
     * primary color from a statevar/constant rather than a varying variable.

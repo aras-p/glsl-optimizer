@@ -41,15 +41,15 @@
 
 
 /** Fragment program variant key */
-struct st_fp_varient_key
+struct st_fp_variant_key
 {
    struct st_context *st;         /**< variants are per-context */
 
    /** for glBitmap */
-   GLuint bitmap:1;               /**< glBitmap varient? */
+   GLuint bitmap:1;               /**< glBitmap variant? */
 
    /** for glDrawPixels */
-   GLuint drawpixels:1;           /**< glDrawPixels varient */
+   GLuint drawpixels:1;           /**< glDrawPixels variant */
    GLuint scaleAndBias:1;         /**< glDrawPixels w/ scale and/or bias? */
    GLuint pixelMaps:1;            /**< glDrawPixels w/ pixel lookup map? */
    GLuint drawpixels_z:1;         /**< glDrawPixels(GL_DEPTH) */
@@ -60,10 +60,10 @@ struct st_fp_varient_key
 /**
  * Variant of a fragment program.
  */
-struct st_fp_varient
+struct st_fp_variant
 {
    /** Parameters which generated this version of fragment program */
-   struct st_fp_varient_key key;
+   struct st_fp_variant_key key;
 
    /** Driver's compiled shader */
    void *driver_shader;
@@ -73,7 +73,7 @@ struct st_fp_varient
    uint bitmap_sampler;
 
    /** next in linked list */
-   struct st_fp_varient *next;
+   struct st_fp_variant *next;
 };
 
 
@@ -86,13 +86,13 @@ struct st_fragment_program
 
    struct pipe_shader_state tgsi;
 
-   struct st_fp_varient *varients;
+   struct st_fp_variant *variants;
 };
 
 
 
 /** Vertex program variant key */
-struct st_vp_varient_key
+struct st_vp_variant_key
 {
    struct st_context *st;          /**< variants are per-context */
    boolean passthrough_edgeflags;
@@ -103,12 +103,12 @@ struct st_vp_varient_key
  * This represents a vertex program, especially translated to match
  * the inputs of a particular fragment shader.
  */
-struct st_vp_varient
+struct st_vp_variant
 {
    /* Parameters which generated this translated version of a vertex
     * shader:
     */
-   struct st_vp_varient_key key;
+   struct st_vp_variant_key key;
 
    /**
     * TGSI tokens (to later generate a 'draw' module shader for
@@ -123,7 +123,7 @@ struct st_vp_varient
    struct draw_vertex_shader *draw_shader;
 
    /** Next in linked list */
-   struct st_vp_varient *next;  
+   struct st_vp_variant *next;  
 
    /** similar to that in st_vertex_program, but with edgeflags info too */
    GLuint num_inputs;
@@ -149,15 +149,15 @@ struct st_vertex_program
    ubyte output_semantic_index[VERT_RESULT_MAX];
    GLuint num_outputs;
 
-   /** List of translated varients of this vertex program.
+   /** List of translated variants of this vertex program.
     */
-   struct st_vp_varient *varients;
+   struct st_vp_variant *variants;
 };
 
 
 
-/** Geometry program varient key */
-struct st_gp_varient_key
+/** Geometry program variant key */
+struct st_gp_variant_key
 {
    struct st_context *st;          /**< variants are per-context */
    /* no other fields yet */
@@ -167,14 +167,14 @@ struct st_gp_varient_key
 /**
  * Geometry program variant.
  */
-struct st_gp_varient
+struct st_gp_variant
 {
    /* Parameters which generated this translated version of a vertex */
-   struct st_gp_varient_key key;
+   struct st_gp_variant_key key;
 
    void *driver_shader;
 
-   struct st_gp_varient *next;
+   struct st_gp_variant *next;
 };
 
 
@@ -203,7 +203,7 @@ struct st_geometry_program
 
    struct pipe_shader_state tgsi;
 
-   struct st_gp_varient *varients;
+   struct st_gp_variant *variants;
 };
 
 
@@ -258,35 +258,35 @@ st_reference_fragprog(struct st_context *st,
 }
 
 
-extern struct st_vp_varient *
-st_get_vp_varient(struct st_context *st,
+extern struct st_vp_variant *
+st_get_vp_variant(struct st_context *st,
                   struct st_vertex_program *stvp,
-                  const struct st_vp_varient_key *key);
+                  const struct st_vp_variant_key *key);
 
 
-extern struct st_fp_varient *
-st_get_fp_varient(struct st_context *st,
+extern struct st_fp_variant *
+st_get_fp_variant(struct st_context *st,
                   struct st_fragment_program *stfp,
-                  const struct st_fp_varient_key *key);
+                  const struct st_fp_variant_key *key);
 
 
-extern struct st_gp_varient *
-st_get_gp_varient(struct st_context *st,
+extern struct st_gp_variant *
+st_get_gp_variant(struct st_context *st,
                   struct st_geometry_program *stgp,
-                  const struct st_gp_varient_key *key);
+                  const struct st_gp_variant_key *key);
 
 
 
 extern void
-st_release_vp_varients( struct st_context *st,
+st_release_vp_variants( struct st_context *st,
                         struct st_vertex_program *stvp );
 
 extern void
-st_release_fp_varients( struct st_context *st,
+st_release_fp_variants( struct st_context *st,
                         struct st_fragment_program *stfp );
 
 extern void
-st_release_gp_varients(struct st_context *st,
+st_release_gp_variants(struct st_context *st,
                        struct st_geometry_program *stgp);
 
 

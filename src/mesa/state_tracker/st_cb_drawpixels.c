@@ -846,12 +846,12 @@ draw_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
  * Get fragment program variant for a glDrawPixels or glCopyPixels
  * command for RGBA data.
  */
-static struct st_fp_varient *
-get_color_fp_varient(struct st_context *st)
+static struct st_fp_variant *
+get_color_fp_variant(struct st_context *st)
 {
    struct gl_context *ctx = st->ctx;
-   struct st_fp_varient_key key;
-   struct st_fp_varient *fpv;
+   struct st_fp_variant_key key;
+   struct st_fp_variant *fpv;
 
    memset(&key, 0, sizeof(key));
 
@@ -867,7 +867,7 @@ get_color_fp_varient(struct st_context *st)
                        ctx->Pixel.AlphaScale != 1.0);
    key.pixelMaps = ctx->Pixel.MapColorFlag;
 
-   fpv = st_get_fp_varient(st, st->fp, &key);
+   fpv = st_get_fp_variant(st, st->fp, &key);
 
    return fpv;
 }
@@ -877,12 +877,12 @@ get_color_fp_varient(struct st_context *st)
  * Get fragment program variant for a glDrawPixels or glCopyPixels
  * command for depth/stencil data.
  */
-static struct st_fp_varient *
-get_depth_stencil_fp_varient(struct st_context *st, GLboolean write_depth,
+static struct st_fp_variant *
+get_depth_stencil_fp_variant(struct st_context *st, GLboolean write_depth,
                              GLboolean write_stencil)
 {
-   struct st_fp_varient_key key;
-   struct st_fp_varient *fpv;
+   struct st_fp_variant_key key;
+   struct st_fp_variant *fpv;
 
    memset(&key, 0, sizeof(key));
 
@@ -891,7 +891,7 @@ get_depth_stencil_fp_varient(struct st_context *st, GLboolean write_depth,
    key.drawpixels_z = write_depth;
    key.drawpixels_stencil = write_stencil;
 
-   fpv = st_get_fp_varient(st, st->fp, &key);
+   fpv = st_get_fp_variant(st, st->fp, &key);
 
    return fpv;
 }
@@ -914,7 +914,7 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y,
    struct pipe_sampler_view *sv[2];
    int num_sampler_view = 1;
    enum pipe_format stencil_format = PIPE_FORMAT_NONE;
-   struct st_fp_varient *fpv;
+   struct st_fp_variant *fpv;
 
    if (format == GL_DEPTH_STENCIL)
       write_stencil = write_depth = GL_TRUE;
@@ -951,7 +951,7 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y,
     * Get vertex/fragment shaders
     */
    if (write_depth || write_stencil) {
-      fpv = get_depth_stencil_fp_varient(st, write_depth, write_stencil);
+      fpv = get_depth_stencil_fp_variant(st, write_depth, write_stencil);
 
       driver_fp = fpv->driver_shader;
 
@@ -960,7 +960,7 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y,
       color = ctx->Current.RasterColor;
    }
    else {
-      fpv = get_color_fp_varient(st);
+      fpv = get_color_fp_variant(st);
 
       driver_fp = fpv->driver_shader;
 
@@ -1156,7 +1156,7 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
    GLint readX, readY, readW, readH;
    GLuint sample_count;
    struct gl_pixelstore_attrib pack = ctx->DefaultPacking;
-   struct st_fp_varient *fpv;
+   struct st_fp_variant *fpv;
 
    st_validate_state(st);
 
@@ -1173,7 +1173,7 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       rbRead = st_get_color_read_renderbuffer(ctx);
       color = NULL;
 
-      fpv = get_color_fp_varient(st);
+      fpv = get_color_fp_variant(st);
       driver_fp = fpv->driver_shader;
 
       driver_vp = make_passthrough_vertex_shader(st, GL_FALSE);
@@ -1188,7 +1188,7 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       rbRead = st_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
       color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
 
-      fpv = get_depth_stencil_fp_varient(st, GL_TRUE, GL_FALSE);
+      fpv = get_depth_stencil_fp_variant(st, GL_TRUE, GL_FALSE);
       driver_fp = fpv->driver_shader;
 
       driver_vp = make_passthrough_vertex_shader(st, GL_TRUE);

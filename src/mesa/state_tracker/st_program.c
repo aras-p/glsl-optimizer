@@ -56,11 +56,11 @@
 
 
 /**
- * Delete a vertex program varient.  Note the caller must unlink
- * the varient from the linked list.
+ * Delete a vertex program variant.  Note the caller must unlink
+ * the variant from the linked list.
  */
 static void
-delete_vp_varient(struct st_context *st, struct st_vp_varient *vpv)
+delete_vp_variant(struct st_context *st, struct st_vp_variant *vpv)
 {
    if (vpv->driver_shader) 
       cso_delete_vertex_shader(st->cso_context, vpv->driver_shader);
@@ -82,28 +82,28 @@ delete_vp_varient(struct st_context *st, struct st_vp_varient *vpv)
  * Clean out any old compilations:
  */
 void
-st_release_vp_varients( struct st_context *st,
+st_release_vp_variants( struct st_context *st,
                         struct st_vertex_program *stvp )
 {
-   struct st_vp_varient *vpv;
+   struct st_vp_variant *vpv;
 
-   for (vpv = stvp->varients; vpv; ) {
-      struct st_vp_varient *next = vpv->next;
-      delete_vp_varient(st, vpv);
+   for (vpv = stvp->variants; vpv; ) {
+      struct st_vp_variant *next = vpv->next;
+      delete_vp_variant(st, vpv);
       vpv = next;
    }
 
-   stvp->varients = NULL;
+   stvp->variants = NULL;
 }
 
 
 
 /**
- * Delete a fragment program varient.  Note the caller must unlink
- * the varient from the linked list.
+ * Delete a fragment program variant.  Note the caller must unlink
+ * the variant from the linked list.
  */
 static void
-delete_fp_varient(struct st_context *st, struct st_fp_varient *fpv)
+delete_fp_variant(struct st_context *st, struct st_fp_variant *fpv)
 {
    if (fpv->driver_shader) 
       cso_delete_fragment_shader(st->cso_context, fpv->driver_shader);
@@ -113,29 +113,29 @@ delete_fp_varient(struct st_context *st, struct st_fp_varient *fpv)
 
 
 /**
- * Free all varients of a fragment program.
+ * Free all variants of a fragment program.
  */
 void
-st_release_fp_varients(struct st_context *st, struct st_fragment_program *stfp)
+st_release_fp_variants(struct st_context *st, struct st_fragment_program *stfp)
 {
-   struct st_fp_varient *fpv;
+   struct st_fp_variant *fpv;
 
-   for (fpv = stfp->varients; fpv; ) {
-      struct st_fp_varient *next = fpv->next;
-      delete_fp_varient(st, fpv);
+   for (fpv = stfp->variants; fpv; ) {
+      struct st_fp_variant *next = fpv->next;
+      delete_fp_variant(st, fpv);
       fpv = next;
    }
 
-   stfp->varients = NULL;
+   stfp->variants = NULL;
 }
 
 
 /**
- * Delete a geometry program varient.  Note the caller must unlink
- * the varient from the linked list.
+ * Delete a geometry program variant.  Note the caller must unlink
+ * the variant from the linked list.
  */
 static void
-delete_gp_varient(struct st_context *st, struct st_gp_varient *gpv)
+delete_gp_variant(struct st_context *st, struct st_gp_variant *gpv)
 {
    if (gpv->driver_shader) 
       cso_delete_geometry_shader(st->cso_context, gpv->driver_shader);
@@ -145,20 +145,20 @@ delete_gp_varient(struct st_context *st, struct st_gp_varient *gpv)
 
 
 /**
- * Free all varients of a geometry program.
+ * Free all variants of a geometry program.
  */
 void
-st_release_gp_varients(struct st_context *st, struct st_geometry_program *stgp)
+st_release_gp_variants(struct st_context *st, struct st_geometry_program *stgp)
 {
-   struct st_gp_varient *gpv;
+   struct st_gp_variant *gpv;
 
-   for (gpv = stgp->varients; gpv; ) {
-      struct st_gp_varient *next = gpv->next;
-      delete_gp_varient(st, gpv);
+   for (gpv = stgp->variants; gpv; ) {
+      struct st_gp_variant *next = gpv->next;
+      delete_gp_variant(st, gpv);
       gpv = next;
    }
 
-   stgp->varients = NULL;
+   stgp->variants = NULL;
 }
 
 
@@ -276,14 +276,14 @@ st_prepare_vertex_program(struct st_context *st,
 
 
 /**
- * Translate a vertex program to create a new varient.
+ * Translate a vertex program to create a new variant.
  */
-static struct st_vp_varient *
+static struct st_vp_variant *
 st_translate_vertex_program(struct st_context *st,
                             struct st_vertex_program *stvp,
-                            const struct st_vp_varient_key *key)
+                            const struct st_vp_variant_key *key)
 {
-   struct st_vp_varient *vpv = CALLOC_STRUCT(st_vp_varient);
+   struct st_vp_variant *vpv = CALLOC_STRUCT(st_vp_variant);
    struct pipe_context *pipe = st->pipe;
    struct ureg_program *ureg;
    enum pipe_error error;
@@ -361,17 +361,17 @@ fail:
 
 
 /**
- * Find/create a vertex program varient.
+ * Find/create a vertex program variant.
  */
-struct st_vp_varient *
-st_get_vp_varient(struct st_context *st,
+struct st_vp_variant *
+st_get_vp_variant(struct st_context *st,
                   struct st_vertex_program *stvp,
-                  const struct st_vp_varient_key *key)
+                  const struct st_vp_variant_key *key)
 {
-   struct st_vp_varient *vpv;
+   struct st_vp_variant *vpv;
 
-   /* Search for existing varient */
-   for (vpv = stvp->varients; vpv; vpv = vpv->next) {
+   /* Search for existing variant */
+   for (vpv = stvp->variants; vpv; vpv = vpv->next) {
       if (memcmp(&vpv->key, key, sizeof(*key)) == 0) {
          break;
       }
@@ -382,8 +382,8 @@ st_get_vp_varient(struct st_context *st,
       vpv = st_translate_vertex_program(st, stvp, key);
       if (vpv) {
          /* insert into list */
-         vpv->next = stvp->varients;
-         stvp->varients = vpv;
+         vpv->next = stvp->variants;
+         stvp->variants = vpv;
       }
    }
 
@@ -396,15 +396,15 @@ st_get_vp_varient(struct st_context *st,
  * the key.
  * \return  new fragment program variant
  */
-static struct st_fp_varient *
+static struct st_fp_variant *
 st_translate_fragment_program(struct st_context *st,
                               struct st_fragment_program *stfp,
-                              const struct st_fp_varient_key *key)
+                              const struct st_fp_variant_key *key)
 {
    struct pipe_context *pipe = st->pipe;
-   struct st_fp_varient *varient = CALLOC_STRUCT(st_fp_varient);
+   struct st_fp_variant *variant = CALLOC_STRUCT(st_fp_variant);
 
-   if (!varient)
+   if (!variant)
       return NULL;
 
    assert(!(key->bitmap && key->drawpixels));
@@ -414,9 +414,9 @@ st_translate_fragment_program(struct st_context *st,
       struct gl_fragment_program *fp;
 
       st_make_bitmap_fragment_program(st, &stfp->Base,
-                                      &fp, &varient->bitmap_sampler);
+                                      &fp, &variant->bitmap_sampler);
 
-      varient->parameters = _mesa_clone_parameter_list(fp->Base.Parameters);
+      variant->parameters = _mesa_clone_parameter_list(fp->Base.Parameters);
       stfp = st_fragment_program(fp);
    }
    else if (key->drawpixels) {
@@ -430,7 +430,7 @@ st_translate_fragment_program(struct st_context *st,
       else {
          /* RGBA */
          st_make_drawpix_fragment_program(st, &stfp->Base, &fp);
-         varient->parameters = _mesa_clone_parameter_list(fp->Base.Parameters);
+         variant->parameters = _mesa_clone_parameter_list(fp->Base.Parameters);
       }
       stfp = st_fragment_program(fp);
    }
@@ -613,31 +613,31 @@ st_translate_fragment_program(struct st_context *st,
       ureg_destroy( ureg );
    }
 
-   /* fill in varient */
-   varient->driver_shader = pipe->create_fs_state(pipe, &stfp->tgsi);
-   varient->key = *key;
+   /* fill in variant */
+   variant->driver_shader = pipe->create_fs_state(pipe, &stfp->tgsi);
+   variant->key = *key;
 
    if (ST_DEBUG & DEBUG_TGSI) {
       tgsi_dump( stfp->tgsi.tokens, 0/*TGSI_DUMP_VERBOSE*/ );
       debug_printf("\n");
    }
 
-   return varient;
+   return variant;
 }
 
 
 /**
  * Translate fragment program if needed.
  */
-struct st_fp_varient *
-st_get_fp_varient(struct st_context *st,
+struct st_fp_variant *
+st_get_fp_variant(struct st_context *st,
                   struct st_fragment_program *stfp,
-                  const struct st_fp_varient_key *key)
+                  const struct st_fp_variant_key *key)
 {
-   struct st_fp_varient *fpv;
+   struct st_fp_variant *fpv;
 
-   /* Search for existing varient */
-   for (fpv = stfp->varients; fpv; fpv = fpv->next) {
+   /* Search for existing variant */
+   for (fpv = stfp->variants; fpv; fpv = fpv->next) {
       if (memcmp(&fpv->key, key, sizeof(*key)) == 0) {
          break;
       }
@@ -648,8 +648,8 @@ st_get_fp_varient(struct st_context *st,
       fpv = st_translate_fragment_program(st, stfp, key);
       if (fpv) {
          /* insert into list */
-         fpv->next = stfp->varients;
-         stfp->varients = fpv;
+         fpv->next = stfp->variants;
+         stfp->variants = fpv;
       }
    }
 
@@ -658,12 +658,12 @@ st_get_fp_varient(struct st_context *st,
 
 
 /**
- * Translate a geometry program to create a new varient.
+ * Translate a geometry program to create a new variant.
  */
-static struct st_gp_varient *
+static struct st_gp_variant *
 st_translate_geometry_program(struct st_context *st,
                               struct st_geometry_program *stgp,
-                              const struct st_gp_varient_key *key)
+                              const struct st_gp_variant_key *key)
 {
    GLuint inputMapping[GEOM_ATTRIB_MAX];
    GLuint outputMapping[GEOM_RESULT_MAX];
@@ -686,9 +686,9 @@ st_translate_geometry_program(struct st_context *st,
    GLuint maxSlot = 0;
    struct ureg_program *ureg;
 
-   struct st_gp_varient *gpv;
+   struct st_gp_variant *gpv;
 
-   gpv = CALLOC_STRUCT(st_gp_varient);
+   gpv = CALLOC_STRUCT(st_gp_variant);
    if (!gpv)
       return NULL;
 
@@ -896,7 +896,7 @@ st_translate_geometry_program(struct st_context *st,
    stgp->tgsi.tokens = ureg_get_tokens( ureg, NULL );
    ureg_destroy( ureg );
 
-   /* fill in new varient */
+   /* fill in new variant */
    gpv->driver_shader = pipe->create_gs_state(pipe, &stgp->tgsi);
    gpv->key = *key;
 
@@ -917,15 +917,15 @@ st_translate_geometry_program(struct st_context *st,
 /**
  * Get/create geometry program variant.
  */
-struct st_gp_varient *
-st_get_gp_varient(struct st_context *st,
+struct st_gp_variant *
+st_get_gp_variant(struct st_context *st,
                   struct st_geometry_program *stgp,
-                  const struct st_gp_varient_key *key)
+                  const struct st_gp_variant_key *key)
 {
-   struct st_gp_varient *gpv;
+   struct st_gp_variant *gpv;
 
-   /* Search for existing varient */
-   for (gpv = stgp->varients; gpv; gpv = gpv->next) {
+   /* Search for existing variant */
+   for (gpv = stgp->variants; gpv; gpv = gpv->next) {
       if (memcmp(&gpv->key, key, sizeof(*key)) == 0) {
          break;
       }
@@ -936,8 +936,8 @@ st_get_gp_varient(struct st_context *st,
       gpv = st_translate_geometry_program(st, stgp, key);
       if (gpv) {
          /* insert into list */
-         gpv->next = stgp->varients;
-         stgp->varients = gpv;
+         gpv->next = stgp->variants;
+         stgp->variants = gpv;
       }
    }
 
@@ -1008,15 +1008,15 @@ destroy_program_variants(struct st_context *st, struct gl_program *program)
    case GL_VERTEX_PROGRAM_ARB:
       {
          struct st_vertex_program *stvp = (struct st_vertex_program *) program;
-         struct st_vp_varient *vpv, **prevPtr = &stvp->varients;
+         struct st_vp_variant *vpv, **prevPtr = &stvp->variants;
 
-         for (vpv = stvp->varients; vpv; ) {
-            struct st_vp_varient *next = vpv->next;
+         for (vpv = stvp->variants; vpv; ) {
+            struct st_vp_variant *next = vpv->next;
             if (vpv->key.st == st) {
                /* unlink from list */
                *prevPtr = next;
                /* destroy this variant */
-               delete_vp_varient(st, vpv);
+               delete_vp_variant(st, vpv);
             }
             else {
                prevPtr = &vpv->next;
@@ -1029,15 +1029,15 @@ destroy_program_variants(struct st_context *st, struct gl_program *program)
       {
          struct st_fragment_program *stfp =
             (struct st_fragment_program *) program;
-         struct st_fp_varient *fpv, **prevPtr = &stfp->varients;
+         struct st_fp_variant *fpv, **prevPtr = &stfp->variants;
 
-         for (fpv = stfp->varients; fpv; ) {
-            struct st_fp_varient *next = fpv->next;
+         for (fpv = stfp->variants; fpv; ) {
+            struct st_fp_variant *next = fpv->next;
             if (fpv->key.st == st) {
                /* unlink from list */
                *prevPtr = next;
                /* destroy this variant */
-               delete_fp_varient(st, fpv);
+               delete_fp_variant(st, fpv);
             }
             else {
                prevPtr = &fpv->next;
@@ -1050,15 +1050,15 @@ destroy_program_variants(struct st_context *st, struct gl_program *program)
       {
          struct st_geometry_program *stgp =
             (struct st_geometry_program *) program;
-         struct st_gp_varient *gpv, **prevPtr = &stgp->varients;
+         struct st_gp_variant *gpv, **prevPtr = &stgp->variants;
 
-         for (gpv = stgp->varients; gpv; ) {
-            struct st_gp_varient *next = gpv->next;
+         for (gpv = stgp->variants; gpv; ) {
+            struct st_gp_variant *next = gpv->next;
             if (gpv->key.st == st) {
                /* unlink from list */
                *prevPtr = next;
                /* destroy this variant */
-               delete_gp_varient(st, gpv);
+               delete_gp_variant(st, gpv);
             }
             else {
                prevPtr = &gpv->next;

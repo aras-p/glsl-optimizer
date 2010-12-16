@@ -130,9 +130,9 @@ struct st_context
    struct st_fragment_program *fp;  /**< Currently bound fragment program */
    struct st_geometry_program *gp;  /**< Currently bound geometry program */
 
-   struct st_vp_varient *vp_varient;
-   struct st_fp_varient *fp_varient;
-   struct st_gp_varient *gp_varient;
+   struct st_vp_variant *vp_variant;
+   struct st_fp_variant *fp_variant;
+   struct st_gp_variant *gp_variant;
 
    struct gl_texture_object *default_texture;
 
