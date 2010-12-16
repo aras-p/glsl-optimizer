@@ -45,8 +45,6 @@ vmw_winsys_create( int fd, boolean use_old_scanout_flag )
 
    vws->ioctl.drm_fd = fd;
    vws->use_old_scanout_flag = use_old_scanout_flag;
-   debug_printf("%s: use_old_scanout_flag == %s\n", __FUNCTION__,
-		use_old_scanout_flag ? "true" : "false");
 
    if (!vmw_ioctl_init(vws))
       goto out_no_ioctl;
