@@ -2158,6 +2158,25 @@ ast_declarator_list::hir(exec_list *instructions,
 	 }
       }
 
+      /* Integer vertex outputs must be qualified with 'flat'.
+       *
+       * From section 4.3.6 of the GLSL 1.30 spec:
+       *    "If a vertex output is a signed or unsigned integer or integer
+       *    vector, then it must be qualified with the interpolation qualifier
+       *    flat."
+       */
+      if (state->language_version >= 130
+          && state->target == vertex_shader
+          && state->current_function == NULL
+          && var->type->is_integer()
+          && var->mode == ir_var_out
+          && var->interpolation != ir_var_flat) {
+
+         _mesa_glsl_error(&loc, state, "If a vertex output is an integer, "
+                          "then it must be qualified with 'flat'");
+      }
+
+
       /* Process the initializer and add its instructions to a temporary
        * list.  This list will be added to the instruction stream (below) after
        * the declaration is added.  This is done because in some cases (such as
