@@ -125,4 +125,22 @@ lp_build_const_float(struct gallivm_state *gallivm, float x)
 }
 
 
+/** Return constant-valued pointer to int */
+static INLINE LLVMValueRef
+lp_build_const_int_pointer(struct gallivm_state *gallivm, const void *ptr)
+{
+   LLVMTypeRef int_type;
+   LLVMValueRef v;
+
+   /* int type large enough to hold a pointer */
+   int_type = LLVMIntTypeInContext(gallivm->context, 8 * sizeof(void *));
+   v = LLVMConstInt(int_type, (unsigned long long) ptr, 0);
+   v = LLVMBuildIntToPtr(gallivm->builder, v,
+                         LLVMPointerType(int_type, 0),
+                         "cast int to ptr");
+   return v;
+}
+
+
+
 #endif /* !LP_BLD_CONST_H */
