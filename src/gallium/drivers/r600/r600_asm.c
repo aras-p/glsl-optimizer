@@ -550,7 +550,7 @@ int r600_bc_add_vtx(struct r600_bc *bc, const struct r600_bc_vtx *vtx)
 	/* each fetch use 4 dwords */
 	bc->cf_last->ndw += 4;
 	bc->ndw += 4;
-	if ((bc->ndw / 4) > 7)
+	if ((bc->cf_last->ndw / 4) > 7)
 		bc->force_add_cf = 1;
 	return 0;
 }
@@ -579,7 +579,7 @@ int r600_bc_add_tex(struct r600_bc *bc, const struct r600_bc_tex *tex)
 	/* each texture fetch use 4 dwords */
 	bc->cf_last->ndw += 4;
 	bc->ndw += 4;
-	if ((bc->ndw / 4) > 7)
+	if ((bc->cf_last->ndw / 4) > 7)
 		bc->force_add_cf = 1;
 	return 0;
 }
