@@ -2344,6 +2344,27 @@ ast_declarator_list::hir(exec_list *instructions,
 	     */
 	    earlier->origin_upper_left = var->origin_upper_left;
 	    earlier->pixel_center_integer = var->pixel_center_integer;
+
+	 /* According to section 4.3.7 of the GLSL 1.30 spec,
+	  * the following built-in varaibles can be redeclared with an
+	  * interpolation qualifier:
+	  *    * gl_FrontColor
+	  *    * gl_BackColor
+	  *    * gl_FrontSecondaryColor
+	  *    * gl_BackSecondaryColor
+	  *    * gl_Color
+	  *    * gl_SecondaryColor
+	  */
+	 } else if (state->language_version >= 130
+	            && (strcmp(var->name, "gl_FrontColor") == 0
+                        || strcmp(var->name, "gl_BackColor") == 0
+                        || strcmp(var->name, "gl_FrontSecondaryColor") == 0
+                        || strcmp(var->name, "gl_BackSecondaryColor") == 0
+                        || strcmp(var->name, "gl_Color") == 0
+                        || strcmp(var->name, "gl_SecondaryColor") == 0)
+	            && earlier->type == var->type
+	            && earlier->mode == var->mode) {
+	    earlier->interpolation = var->interpolation;
 	 } else {
 	    YYLTYPE loc = this->get_location();
 	    _mesa_glsl_error(&loc, state, "`%s' redeclared", decl->identifier);
