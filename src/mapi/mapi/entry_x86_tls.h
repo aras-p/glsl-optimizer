@@ -27,7 +27,6 @@
  */
 
 #include <string.h>
-#include "u_execmem.h"
 #include "u_macros.h"
 
 #ifdef __linux__
@@ -79,6 +78,10 @@ __asm__(".balign 16\n"
         "x86_entry_end:");
 __asm__(".text");
 #endif /* GLX_X86_READONLY_TEXT */
+
+#ifndef MAPI_MODE_BRIDGE
+
+#include "u_execmem.h"
 
 extern unsigned long
 x86_current_tls();
@@ -139,3 +142,5 @@ entry_generate(int slot)
 
    return entry;
 }
+
+#endif /* MAPI_MODE_BRIDGE */

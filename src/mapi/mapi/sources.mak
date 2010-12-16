@@ -10,6 +10,9 @@
 #
 #  - In glapi mode, mapi implements the interface defined by glapi.h.  To use
 #    this mode, compile MAPI_GLAPI_SOURCES with MAPI_MODE_GLAPI defined.
+#
+#  - In bridge mode, mapi provides entry points calling into glapi.  To use
+#    this mode, compile MAPI_BRIDGE_SOURCES with MAPI_MODE_BRIDGE defined.
 
 MAPI_UTIL_SOURCES = \
 	u_current.c \
@@ -29,3 +32,6 @@ MAPI_GLAPI_SOURCES = \
 	stub.c \
 	table.c \
 	$(MAPI_UTIL_SOURCES)
+
+MAPI_BRIDGE_SOURCES = \
+	entry.c

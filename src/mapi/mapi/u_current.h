@@ -1,7 +1,8 @@
 #ifndef _U_CURRENT_H_
 #define _U_CURRENT_H_
 
-#if defined(MAPI_MODE_UTIL) || defined(MAPI_MODE_GLAPI)
+#if defined(MAPI_MODE_UTIL) || defined(MAPI_MODE_GLAPI) || \
+    defined(MAPI_MODE_BRIDGE)
 
 #include "glapi/glapi.h"
 
@@ -21,7 +22,7 @@
 
 #define u_current_table_tsd _gl_DispatchTSD
 
-#else /* MAPI_MODE_UTIL || MAPI_MODE_GLAPI */
+#else /* MAPI_MODE_UTIL || MAPI_MODE_GLAPI || MAPI_MODE_BRIDGE */
 
 #include "u_compiler.h"
 
@@ -42,7 +43,7 @@ extern void *u_current_user;
 
 #endif /* GLX_USE_TLS */
 
-#endif /* MAPI_MODE_UTIL || MAPI_MODE_GLAPI */
+#endif /* MAPI_MODE_UTIL || MAPI_MODE_GLAPI || MAPI_MODE_BRIDGE */
 
 void
 u_current_init(void);
