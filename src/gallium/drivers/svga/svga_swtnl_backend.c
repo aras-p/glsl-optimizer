@@ -158,7 +158,7 @@ svga_vbuf_render_set_primitive( struct vbuf_render *render,
 }
 
 static void
-svga_vbuf_sumbit_state( struct svga_vbuf_render *svga_render )
+svga_vbuf_submit_state( struct svga_vbuf_render *svga_render )
 {
    struct svga_context *svga = svga_render->svga;
    SVGA3dVertexDecl vdecl[PIPE_MAX_ATTRIBS];
@@ -221,7 +221,8 @@ svga_vbuf_render_draw_arrays( struct vbuf_render *render,
    unsigned bias = (svga_render->vbuf_offset - svga_render->vdecl_offset) / svga_render->vertex_size;
    enum pipe_error ret = 0;
 
-   svga_vbuf_sumbit_state(svga_render);
+   /* off to hardware */
+   svga_vbuf_submit_state(svga_render);
 
    /* Need to call update_state() again as the draw module may have
     * altered some of our state behind our backs.  Testcase:
@@ -267,9 +268,8 @@ svga_vbuf_render_draw_elements( struct vbuf_render *render,
    pipe_buffer_write_nooverlap(&svga->pipe, svga_render->ibuf,
 			       svga_render->ibuf_offset, 2 * nr_indices, indices);
 
-
    /* off to hardware */
-   svga_vbuf_sumbit_state(svga_render);
+   svga_vbuf_submit_state(svga_render);
 
    /* Need to call update_state() again as the draw module may have
     * altered some of our state behind our backs.  Testcase:
