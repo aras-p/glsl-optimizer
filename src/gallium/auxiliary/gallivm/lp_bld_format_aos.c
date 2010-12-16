@@ -562,7 +562,7 @@ lp_build_fetch_rgba_aos(struct gallivm_state *gallivm,
 
       /* make const pointer for the C fetch_rgba_float function */
       callee = lp_build_const_int_pointer(gallivm,
-         func_to_pointer((func_pointer) format_desc->fetch_rgba_float));
+         func_to_pointer((func_pointer) format_desc->fetch_rgba_8unorm));
 
       /* cast the callee pointer to the function's type */
       function = LLVMBuildBitCast(builder, callee,
