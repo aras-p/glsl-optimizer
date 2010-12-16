@@ -68,7 +68,7 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
    /* need this for draw module. */
    rast->templ = *templ;
 
-   /* light_twoside          - XXX: need fragment shader varient */
+   /* light_twoside          - XXX: need fragment shader variant */
    /* poly_smooth            - XXX: no fallback available */
    /* poly_stipple_enable    - draw module */
    /* sprite_coord_enable    - ? */
