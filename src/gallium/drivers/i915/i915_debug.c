@@ -976,7 +976,7 @@ i915_dump_hardware_dirty(struct i915_context *i915, const char *func)
       {I915_HW_PROGRAM,   "program"},
       {I915_HW_CONSTANTS, "constants"},
       {I915_HW_IMMEDIATE, "immediate"},
-      {I915_HW_INVARIENT, "invarient"},
+      {I915_HW_INVARIANT, "invariant"},
       {0, NULL},
    };
    int i;

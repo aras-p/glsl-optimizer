@@ -142,7 +142,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
    save_relocs = i915->batch->relocs;
 
    /* 14 dwords, 0 relocs */
-   if (i915->hardware_dirty & I915_HW_INVARIENT)
+   if (i915->hardware_dirty & I915_HW_INVARIANT)
    {
       OUT_BATCH(_3DSTATE_AA_CMD |
                 AA_LINE_ECAAR_WIDTH_ENABLE |

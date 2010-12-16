@@ -272,7 +272,7 @@ struct i915_context {
 #define I915_HW_PROGRAM           (1<<I915_CACHE_PROGRAM)
 #define I915_HW_CONSTANTS         (1<<I915_CACHE_CONSTANTS)
 #define I915_HW_IMMEDIATE         (1<<(I915_MAX_CACHE+0))
-#define I915_HW_INVARIENT         (1<<(I915_MAX_CACHE+1))
+#define I915_HW_INVARIANT         (1<<(I915_MAX_CACHE+1))
 
 
 /***********************************************************************
