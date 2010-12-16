@@ -1077,7 +1077,12 @@ void r600_bc_clear(struct r600_bc *bc)
 
 void r600_bc_dump(struct r600_bc *bc)
 {
-	unsigned i;
+	struct r600_bc_cf *cf;
+	struct r600_bc_alu *alu;
+	struct r600_bc_vtx *vtx;
+	struct r600_bc_tex *tex;
+
+	unsigned i, id;
 	char chip = '6';
 
 	switch (bc->chiprev) {
@@ -1094,9 +1099,132 @@ void r600_bc_dump(struct r600_bc *bc)
 	}
 	fprintf(stderr, "bytecode %d dw -----------------------\n", bc->ndw);
 	fprintf(stderr, "     %c\n", chip);
-	for (i = 0; i < bc->ndw; i++) {
-		fprintf(stderr, "0x%08X\n", bc->bytecode[i]);
+
+	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
+		id = cf->id;
+
+		switch (cf->inst) {
+		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3):
+		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER << 3):
+		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER << 3):
+		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
+			fprintf(stderr, "%04d %08X ALU ", id, bc->bytecode[id]);
+			fprintf(stderr, "ADDR:%d ", cf->addr);
+			fprintf(stderr, "KCACHE_MODE0:%X ", cf->kcache[0].mode);
+			fprintf(stderr, "KCACHE_BANK0:%X ", cf->kcache[0].bank);
+			fprintf(stderr, "KCACHE_BANK1:%X\n", cf->kcache[1].bank);
+			id++;
+			fprintf(stderr, "%04d %08X ALU ", id, bc->bytecode[id]);
+			fprintf(stderr, "INST:%d ", cf->inst);
+			fprintf(stderr, "KCACHE_MODE1:%X ", cf->kcache[1].mode);
+			fprintf(stderr, "KCACHE_ADDR0:%X ", cf->kcache[0].addr);
+			fprintf(stderr, "KCACHE_ADDR1:%X ", cf->kcache[1].addr);
+			fprintf(stderr, "COUNT:%d\n", cf->ndw / 2);
+			break;
+		case V_SQ_CF_WORD1_SQ_CF_INST_TEX:
+		case V_SQ_CF_WORD1_SQ_CF_INST_VTX:
+		case V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC:
+			fprintf(stderr, "%04d %08X TEX/VTX ", id, bc->bytecode[id]);
+			fprintf(stderr, "ADDR:%d\n", cf->addr);
+			id++;
+			fprintf(stderr, "%04d %08X TEX/VTX ", id, bc->bytecode[id]);
+			fprintf(stderr, "INST:%d ", cf->inst);
+			fprintf(stderr, "COUNT:%d\n", cf->ndw / 4);
+			break;
+		case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
+		case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
+			fprintf(stderr, "%04d %08X EXPORT ", id, bc->bytecode[id]);
+			fprintf(stderr, "GPR:%X ", cf->output.gpr);
+			fprintf(stderr, "ELEM_SIZE:%X ", cf->output.elem_size);
+			fprintf(stderr, "ARRAY_BASE:%X ", cf->output.array_base);
+			fprintf(stderr, "TYPE:%X\n", cf->output.type);
+			id++;
+			fprintf(stderr, "%04d %08X EXPORT ", id, bc->bytecode[id]);
+			fprintf(stderr, "SWIZ_X:%X ", cf->output.swizzle_x);
+			fprintf(stderr, "SWIZ_Y:%X ", cf->output.swizzle_y);
+			fprintf(stderr, "SWIZ_Z:%X ", cf->output.swizzle_z);
+			fprintf(stderr, "SWIZ_W:%X ", cf->output.swizzle_w);
+			fprintf(stderr, "SWIZ_W:%X ", cf->output.swizzle_w);
+			fprintf(stderr, "BARRIER:%X ", cf->output.barrier);
+			fprintf(stderr, "INST:%d ", cf->output.inst);
+			fprintf(stderr, "EOP:%X\n", cf->output.end_of_program);
+			break;
+		case V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
+		case V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
+		case V_SQ_CF_WORD1_SQ_CF_INST_POP:
+		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_START_NO_AL:
+		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END:
+		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE:
+		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK:
+		case V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS:
+		case V_SQ_CF_WORD1_SQ_CF_INST_RETURN:
+			fprintf(stderr, "%04d %08X CF ", id, bc->bytecode[id]);
+			fprintf(stderr, "ADDR:%d\n", cf->cf_addr);
+			id++;
+			fprintf(stderr, "%04d %08X CF ", id, bc->bytecode[id]);
+			fprintf(stderr, "INST:%d ", cf->inst);
+			fprintf(stderr, "COND:%X ", cf->cond);
+			fprintf(stderr, "POP_COUNT:%X\n", cf->pop_count);
+			break;
+		}
+
+		LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
+			id = cf->addr;
+			fprintf(stderr, "%04d %08X\t", id, bc->bytecode[id]);
+			fprintf(stderr, "SRC0(SEL:%d ", alu->src[0].sel);
+			fprintf(stderr, "REL:%d ", alu->src[0].rel);
+			fprintf(stderr, "CHAN:%d ", alu->src[0].chan);
+			fprintf(stderr, "NEG:%d) ", alu->src[0].neg);
+			fprintf(stderr, "SRC1(SEL:%d ", alu->src[1].sel);
+			fprintf(stderr, "REL:%d ", alu->src[1].rel);
+			fprintf(stderr, "CHAN:%d ", alu->src[1].chan);
+			fprintf(stderr, "NEG:%d) ", alu->src[1].neg);
+			fprintf(stderr, "LAST:%d)\n", alu->last);
+			id++;
+			if (alu->is_op3) {
+				fprintf(stderr, "%04d %08X\t", id, bc->bytecode[id]);
+				fprintf(stderr, "DST(SEL:%d ", alu->dst.sel);
+				fprintf(stderr, "CHAN:%d ", alu->dst.chan);
+				fprintf(stderr, "REL:%d ", alu->dst.rel);
+				fprintf(stderr, "CLAMP:%d) ", alu->dst.clamp);
+				fprintf(stderr, "SRC2(SEL:%d ", alu->src[2].sel);
+				fprintf(stderr, "REL:%d ", alu->src[2].rel);
+				fprintf(stderr, "CHAN:%d ", alu->src[2].chan);
+				fprintf(stderr, "NEG:%d) ", alu->src[2].neg);
+				fprintf(stderr, "INST:%d ", alu->inst);
+				fprintf(stderr, "BANK_SWIZZLE:%d\n", alu->bank_swizzle);
+			} else {
+				fprintf(stderr, "%04d %08X\t", id, bc->bytecode[id]);
+				fprintf(stderr, "DST(SEL:%d ", alu->dst.sel);
+				fprintf(stderr, "CHAN:%d ", alu->dst.chan);
+				fprintf(stderr, "REL:%d ", alu->dst.rel);
+				fprintf(stderr, "CLAMP:%d) ", alu->dst.clamp);
+				fprintf(stderr, "SRC0_ABS:%d ", alu->src[0].abs);
+				fprintf(stderr, "SRC1_ABS:%d ", alu->src[1].abs);
+				fprintf(stderr, "WRITE_MASK:%d ", alu->dst.write);
+				fprintf(stderr, "INST:%d ", alu->inst);
+				fprintf(stderr, "BANK_SWIZZLE:%d ", alu->bank_swizzle);
+				fprintf(stderr, "EXECUTE_MASK:%d ", alu->predicate);
+				fprintf(stderr, "UPDATE_PRED:%d\n", alu->predicate);
+			}
+
+			if (alu->last) {
+				for (i = 0; i < alu->nliteral; i++) {
+					float *f = (float*)(bc->bytecode + id);
+					fprintf(stderr, "%04d %08X %f\n", id, bc->bytecode[id], *f);
+				}
+			}
+		}
+
+		LIST_FOR_EACH_ENTRY(tex, &cf->tex, list) {
+			//TODO
+		}
+
+		LIST_FOR_EACH_ENTRY(vtx, &cf->vtx, list) {
+			//TODO
+		}
 	}
+
 	fprintf(stderr, "--------------------------------------\n");
 }
 
@@ -1306,31 +1434,6 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 	return;
 out_unknown:
 	R600_ERR("unsupported vertex format %s\n", util_format_name(pformat));
-}
-
-static void r600_bc(unsigned ndw, unsigned chiprev, u32 *bytecode)
-{
-	unsigned i;
-	char chip = '6';
-
-	switch (chiprev) {
-	case 1:
-		chip = '7';
-		break;
-	case 2:
-		chip = 'E';
-		break;
-	case 0:
-	default:
-		chip = '6';
-		break;
-	}
-	fprintf(stderr, "bytecode %d dw -----------------------\n", ndw);
-	fprintf(stderr, "    %c\n", chip);
-	for (i = 0; i < ndw; i++) {
-		fprintf(stderr, "0x%08X\n", bytecode[i]);
-	}
-	fprintf(stderr, "--------------------------------------\n");
 }
 
 int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, struct r600_vertex_element *ve)
