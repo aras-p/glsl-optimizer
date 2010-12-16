@@ -1134,7 +1134,7 @@ GLboolean EG_assemble_vfetch_instruction(r700_AssemblerBase* pAsm,
              EG_VTX_WORD1__DST_SEL_W_shift,
              EG_VTX_WORD1__DST_SEL_W_mask);
     
-    SETfield(vfetch_instruction_ptr->m_Word1.val, 0, /* use format here, in r6/r7, format used set in const, need to use same */
+    SETfield(vfetch_instruction_ptr->m_Word1.val, 1, 
              EG_VTX_WORD1__UCF_shift,
              EG_VTX_WORD1__UCF_bit);
     SETfield(vfetch_instruction_ptr->m_Word1.val, data_format,
