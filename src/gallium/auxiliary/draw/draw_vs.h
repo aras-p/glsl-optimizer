@@ -38,7 +38,7 @@
 struct draw_context;
 struct pipe_shader_state;
 
-struct draw_varient_input 
+struct draw_variant_input 
 {
    enum pipe_format format;
    unsigned buffer;
@@ -46,19 +46,19 @@ struct draw_varient_input
    unsigned instance_divisor;
 };
 
-struct draw_varient_output
+struct draw_variant_output
 {
    enum pipe_format format;     /* output format */
    unsigned vs_output:8;        /* which vertex shader output is this? */
    unsigned offset:24;          /* offset into output vertex */
 };
 
-struct draw_varient_element {
-   struct draw_varient_input in;
-   struct draw_varient_output out;
+struct draw_variant_element {
+   struct draw_variant_input in;
+   struct draw_variant_output out;
 };
 
-struct draw_vs_varient_key {
+struct draw_vs_variant_key {
    unsigned output_stride;
    unsigned nr_elements:8;      /* max2(nr_inputs, nr_outputs) */
    unsigned nr_inputs:8;
@@ -66,34 +66,34 @@ struct draw_vs_varient_key {
    unsigned viewport:1;
    unsigned clip:1;
    unsigned const_vbuffers:5;
-   struct draw_varient_element element[PIPE_MAX_ATTRIBS];
+   struct draw_variant_element element[PIPE_MAX_ATTRIBS];
 };
 
-struct draw_vs_varient;
+struct draw_vs_variant;
 
 
-struct draw_vs_varient {
-   struct draw_vs_varient_key key;
+struct draw_vs_variant {
+   struct draw_vs_variant_key key;
 
    struct draw_vertex_shader *vs;
 
-   void (*set_buffer)( struct draw_vs_varient *,
+   void (*set_buffer)( struct draw_vs_variant *,
                       unsigned i,
                       const void *ptr,
                       unsigned stride,
                       unsigned max_stride );
 
-   void (PIPE_CDECL *run_linear)( struct draw_vs_varient *shader,
+   void (PIPE_CDECL *run_linear)( struct draw_vs_variant *shader,
                                   unsigned start,
                                   unsigned count,
                                   void *output_buffer );
 
-   void (PIPE_CDECL *run_elts)( struct draw_vs_varient *shader,
+   void (PIPE_CDECL *run_elts)( struct draw_vs_variant *shader,
                                 const unsigned *elts,
                                 unsigned count,
                                 void *output_buffer );
 
-   void (*destroy)( struct draw_vs_varient * );
+   void (*destroy)( struct draw_vs_variant * );
 };
 
 
@@ -117,11 +117,11 @@ struct draw_vertex_shader {
 
    /* 
     */
-   struct draw_vs_varient *varient[16];
-   unsigned nr_varients;
-   unsigned last_varient;
-   struct draw_vs_varient *(*create_varient)( struct draw_vertex_shader *shader,
-                                              const struct draw_vs_varient_key *key );
+   struct draw_vs_variant *variant[16];
+   unsigned nr_variants;
+   unsigned last_variant;
+   struct draw_vs_variant *(*create_variant)( struct draw_vertex_shader *shader,
+                                              const struct draw_vs_variant_key *key );
 
 
    void (*prepare)( struct draw_vertex_shader *shader,
@@ -144,9 +144,9 @@ struct draw_vertex_shader {
 };
 
 
-struct draw_vs_varient *
-draw_vs_lookup_varient( struct draw_vertex_shader *base,
-                        const struct draw_vs_varient_key *key );
+struct draw_vs_variant *
+draw_vs_lookup_variant( struct draw_vertex_shader *base,
+                        const struct draw_vs_variant_key *key );
 
 
 /********************************************************************************
@@ -166,12 +166,12 @@ draw_create_vs_ppc(struct draw_context *draw,
 		   const struct pipe_shader_state *templ);
 
 
-struct draw_vs_varient_key;
+struct draw_vs_variant_key;
 struct draw_vertex_shader;
 
-struct draw_vs_varient *
-draw_vs_create_varient_aos_sse( struct draw_vertex_shader *vs,
-                                const struct draw_vs_varient_key *key );
+struct draw_vs_variant *
+draw_vs_create_variant_aos_sse( struct draw_vertex_shader *vs,
+                                const struct draw_vs_variant_key *key );
 
 #if HAVE_LLVM
 struct draw_vertex_shader *
@@ -181,7 +181,7 @@ draw_create_vs_llvm(struct draw_context *draw,
 
 
 /********************************************************************************
- * Helpers for vs implementations that don't do their own fetch/emit varients.
+ * Helpers for vs implementations that don't do their own fetch/emit variants.
  * Means these can be shared between shaders.
  */
 struct translate;
@@ -194,21 +194,21 @@ struct translate *draw_vs_get_fetch( struct draw_context *draw,
 struct translate *draw_vs_get_emit( struct draw_context *draw,
                                     struct translate_key *key );
 
-struct draw_vs_varient *
-draw_vs_create_varient_generic( struct draw_vertex_shader *vs,
-                                const struct draw_vs_varient_key *key );
+struct draw_vs_variant *
+draw_vs_create_variant_generic( struct draw_vertex_shader *vs,
+                                const struct draw_vs_variant_key *key );
 
 
 
-static INLINE int draw_vs_varient_keysize( const struct draw_vs_varient_key *key )
+static INLINE int draw_vs_variant_keysize( const struct draw_vs_variant_key *key )
 {
-   return 2 * sizeof(int) + key->nr_elements * sizeof(struct draw_varient_element);
+   return 2 * sizeof(int) + key->nr_elements * sizeof(struct draw_variant_element);
 }
 
-static INLINE int draw_vs_varient_key_compare( const struct draw_vs_varient_key *a,
-                                         const struct draw_vs_varient_key *b )
+static INLINE int draw_vs_variant_key_compare( const struct draw_vs_variant_key *a,
+                                         const struct draw_vs_variant_key *b )
 {
-   int keysize = draw_vs_varient_keysize(a);
+   int keysize = draw_vs_variant_keysize(a);
    return memcmp(a, b, keysize);
 }
 

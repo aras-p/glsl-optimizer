@@ -165,10 +165,10 @@ draw_delete_vertex_shader(struct draw_context *draw,
 {
    unsigned i;
 
-   for (i = 0; i < dvs->nr_varients; i++) 
-      dvs->varient[i]->destroy( dvs->varient[i] );
+   for (i = 0; i < dvs->nr_variants; i++) 
+      dvs->variant[i]->destroy( dvs->variant[i] );
 
-   dvs->nr_varients = 0;
+   dvs->nr_variants = 0;
 
    dvs->delete( dvs );
 }
@@ -225,40 +225,40 @@ draw_vs_destroy( struct draw_context *draw )
 }
 
 
-struct draw_vs_varient *
-draw_vs_lookup_varient( struct draw_vertex_shader *vs,
-                        const struct draw_vs_varient_key *key )
+struct draw_vs_variant *
+draw_vs_lookup_variant( struct draw_vertex_shader *vs,
+                        const struct draw_vs_variant_key *key )
 {
-   struct draw_vs_varient *varient;
+   struct draw_vs_variant *variant;
    unsigned i;
 
-   /* Lookup existing varient: 
+   /* Lookup existing variant: 
     */
-   for (i = 0; i < vs->nr_varients; i++)
-      if (draw_vs_varient_key_compare(key, &vs->varient[i]->key) == 0)
-         return vs->varient[i];
+   for (i = 0; i < vs->nr_variants; i++)
+      if (draw_vs_variant_key_compare(key, &vs->variant[i]->key) == 0)
+         return vs->variant[i];
    
    /* Else have to create a new one: 
     */
-   varient = vs->create_varient( vs, key );
-   if (varient == NULL)
+   variant = vs->create_variant( vs, key );
+   if (variant == NULL)
       return NULL;
 
    /* Add it to our list, could be smarter: 
     */
-   if (vs->nr_varients < Elements(vs->varient)) {
-      vs->varient[vs->nr_varients++] = varient;
+   if (vs->nr_variants < Elements(vs->variant)) {
+      vs->variant[vs->nr_variants++] = variant;
    }
    else {
-      vs->last_varient++;
-      vs->last_varient %= Elements(vs->varient);
-      vs->varient[vs->last_varient]->destroy(vs->varient[vs->last_varient]);
-      vs->varient[vs->last_varient] = varient;
+      vs->last_variant++;
+      vs->last_variant %= Elements(vs->variant);
+      vs->variant[vs->last_variant]->destroy(vs->variant[vs->last_variant]);
+      vs->variant[vs->last_variant] = variant;
    }
 
    /* Done 
     */
-   return varient;
+   return variant;
 }
 
 
