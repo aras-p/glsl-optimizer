@@ -175,6 +175,14 @@ static int update_need_swtnl( struct svga_context *svga,
       need_swtnl = 1;
    }
 
+   /*
+    * Some state changes the draw module does makes us belive we
+    * we don't need swtnl. This causes the vdecl code to pickup
+    * the wrong buffers and vertex formats. Try trivial/line-wide.
+    */
+   if (svga->state.sw.in_swtnl_draw)
+      need_swtnl = 1;
+
    if (need_swtnl != svga->state.sw.need_swtnl) {
       SVGA_DBG(DEBUG_SWTNL|DEBUG_PERF,
                "%s: need_swvfetch %s, need_pipeline %s\n",
