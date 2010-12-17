@@ -512,8 +512,6 @@ lp_build_fetch_rgba_aos(struct gallivm_state *gallivm,
        * or incentive to optimize.
        */
 
-      LLVMModuleRef module = LLVMGetGlobalParent(LLVMGetBasicBlockParent(LLVMGetInsertBlock(gallivm->builder)));
-      char name[256];
       LLVMTypeRef i8t = LLVMInt8TypeInContext(gallivm->context);
       LLVMTypeRef pi8t = LLVMPointerType(i8t, 0);
       LLVMTypeRef i32t = LLVMInt32TypeInContext(gallivm->context);
@@ -521,22 +519,18 @@ lp_build_fetch_rgba_aos(struct gallivm_state *gallivm,
       LLVMValueRef tmp_ptr;
       LLVMValueRef tmp;
       LLVMValueRef res;
-      LLVMValueRef callee;
       unsigned k;
 
-      util_snprintf(name, sizeof name, "util_format_%s_fetch_rgba_8unorm",
-                    format_desc->short_name);
-
       if (gallivm_debug & GALLIVM_DEBUG_PERF) {
-         debug_printf("%s: falling back to %s\n", __FUNCTION__, name);
+         debug_printf("%s: falling back to util_format_%s_fetch_rgba_8unorm\n",
+                      __FUNCTION__, format_desc->short_name);
       }
 
       /*
        * Declare and bind format_desc->fetch_rgba_8unorm().
        */
 
-      function = LLVMGetNamedFunction(module, name);
-      if (!function) {
+      {
          /*
           * Function to call looks like:
           *   fetch(uint8_t *dst, const uint8_t *src, unsigned i, unsigned j)
@@ -552,21 +546,16 @@ lp_build_fetch_rgba_aos(struct gallivm_state *gallivm,
          arg_types[3] = i32t;
          function_type = LLVMFunctionType(ret_type, arg_types,
                                           Elements(arg_types), 0);
-         function = LLVMAddFunction(module, name, function_type);
 
-         LLVMSetFunctionCallConv(function, LLVMCCallConv);
-         LLVMSetLinkage(function, LLVMExternalLinkage);
+         /* make const pointer for the C fetch_rgba_8unorm function */
+         function = lp_build_const_int_pointer(gallivm,
+            func_to_pointer((func_pointer) format_desc->fetch_rgba_8unorm));
 
-         assert(LLVMIsDeclaration(function));
+         /* cast the callee pointer to the function's type */
+         function = LLVMBuildBitCast(builder, function,
+                                     LLVMPointerType(function_type, 0),
+                                     "cast callee");
       }
-
-      /* make const pointer for the C fetch_rgba_float function */
-      callee = lp_build_const_int_pointer(gallivm,
-         func_to_pointer((func_pointer) format_desc->fetch_rgba_8unorm));
-
-      /* cast the callee pointer to the function's type */
-      function = LLVMBuildBitCast(builder, callee,
-                                  LLVMTypeOf(function), "cast callee");
 
       tmp_ptr = lp_build_alloca(gallivm, i32t, "");
 
@@ -627,8 +616,6 @@ lp_build_fetch_rgba_aos(struct gallivm_state *gallivm,
        * or incentive to optimize.
        */
 
-      LLVMModuleRef module = LLVMGetGlobalParent(LLVMGetBasicBlockParent(LLVMGetInsertBlock(builder)));
-      char name[256];
       LLVMTypeRef f32t = LLVMFloatTypeInContext(gallivm->context);
       LLVMTypeRef f32x4t = LLVMVectorType(f32t, 4);
       LLVMTypeRef pf32t = LLVMPointerType(f32t, 0);
@@ -638,22 +625,18 @@ lp_build_fetch_rgba_aos(struct gallivm_state *gallivm,
       LLVMValueRef tmp_ptr;
       LLVMValueRef tmps[LP_MAX_VECTOR_LENGTH/4];
       LLVMValueRef res;
-      LLVMValueRef callee;
       unsigned k;
 
-      util_snprintf(name, sizeof name, "util_format_%s_fetch_rgba_float",
-                    format_desc->short_name);
-
       if (gallivm_debug & GALLIVM_DEBUG_PERF) {
-         debug_printf("%s: falling back to %s\n", __FUNCTION__, name);
+         debug_printf("%s: falling back to util_format_%s_fetch_rgba_float\n",
+                      __FUNCTION__, format_desc->short_name);
       }
 
       /*
        * Declare and bind format_desc->fetch_rgba_float().
        */
 
-      function = LLVMGetNamedFunction(module, name);
-      if (!function) {
+      {
          /*
           * Function to call looks like:
           *   fetch(float *dst, const uint8_t *src, unsigned i, unsigned j)
@@ -669,26 +652,20 @@ lp_build_fetch_rgba_aos(struct gallivm_state *gallivm,
          arg_types[3] = i32t;
          function_type = LLVMFunctionType(ret_type, arg_types,
                                           Elements(arg_types), 0);
-         function = LLVMAddFunction(module, name, function_type);
 
-         LLVMSetFunctionCallConv(function, LLVMCCallConv);
-         LLVMSetLinkage(function, LLVMExternalLinkage);
+         /* Note: we're using this casting here instead of LLVMAddGlobalMapping()
+          * to work around a bug in LLVM 2.6, and for efficiency/simplicity.
+          */
 
-         assert(LLVMIsDeclaration(function));
+         /* make const pointer for the C fetch_rgba_float function */
+         function = lp_build_const_int_pointer(gallivm,
+            func_to_pointer((func_pointer) format_desc->fetch_rgba_float));
+
+         /* cast the callee pointer to the function's type */
+         function = LLVMBuildBitCast(builder, function,
+                                     LLVMPointerType(function_type, 0),
+                                     "cast callee");
       }
-
-      /* Note: we're using this casting here instead of LLVMAddGlobalMapping()
-       * to work around a bug in LLVM 2.6.
-       */
-
-      /* make const pointer for the C fetch_rgba_float function */
-      callee = lp_build_const_int_pointer(gallivm,
-         func_to_pointer((func_pointer) format_desc->fetch_rgba_float));
-
-      /* cast the callee pointer to the function's type */
-      function = LLVMBuildBitCast(builder, callee,
-                                  LLVMTypeOf(function), "cast callee");
-
 
       tmp_ptr = lp_build_alloca(gallivm, f32x4t, "");
 
