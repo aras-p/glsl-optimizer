@@ -858,8 +858,6 @@ make_extension_string_es2(const struct gl_context *ctx, GLubyte *str)
 {
    size_t len = 0;
 
-   len += append_extension(&str, "GL_OES_compressed_paletted_texture");
-
    if (ctx->Extensions.ARB_framebuffer_object) {
       len += append_extension(&str, "GL_OES_depth24");
       len += append_extension(&str, "GL_OES_depth32");
