@@ -278,15 +278,23 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
          tc->tex_z = addr.bits.z;
       }
 
-      /* get tile from the transfer (view into texture) */
-      pipe_get_tile_rgba(tc->pipe,
-                         tc->tex_trans,
-                         addr.bits.x * TILE_SIZE, 
-                         addr.bits.y * TILE_SIZE,
-                         TILE_SIZE,
-                         TILE_SIZE,
-                         (float *) tile->data.color);
-                         
+      /* get tile from the transfer (view into texture)
+       * Note we're using the swizzle version of this fuction only because
+       * we need to pass the texture cache's format explicitly.
+       */
+      pipe_get_tile_swizzle(tc->pipe,
+			    tc->tex_trans,
+                            addr.bits.x * TILE_SIZE, 
+                            addr.bits.y * TILE_SIZE,
+                            TILE_SIZE,
+                            TILE_SIZE,
+                            PIPE_SWIZZLE_RED,
+                            PIPE_SWIZZLE_GREEN,
+                            PIPE_SWIZZLE_BLUE,
+                            PIPE_SWIZZLE_ALPHA,
+                            tc->format,
+                            (float *) tile->data.color);
+
       tile->addr = addr;
    }
 
