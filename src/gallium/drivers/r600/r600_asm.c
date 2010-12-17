@@ -1053,9 +1053,9 @@ void r600_bc_dump(struct r600_bc *bc)
 			break;
 		}
 
+		id = cf->addr;
 		LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
-			id = cf->addr;
-			fprintf(stderr, "%04d %08X\t", id, bc->bytecode[id]);
+			fprintf(stderr, "%04d %08X   ", id, bc->bytecode[id]);
 			fprintf(stderr, "SRC0(SEL:%d ", alu->src[0].sel);
 			fprintf(stderr, "REL:%d ", alu->src[0].rel);
 			fprintf(stderr, "CHAN:%d ", alu->src[0].chan);
@@ -1066,38 +1066,32 @@ void r600_bc_dump(struct r600_bc *bc)
 			fprintf(stderr, "NEG:%d) ", alu->src[1].neg);
 			fprintf(stderr, "LAST:%d)\n", alu->last);
 			id++;
+			fprintf(stderr, "%04d %08X %c ", id, bc->bytecode[id], alu->last ? '*' : ' ');
+			fprintf(stderr, "INST:%d ", alu->inst);
+			fprintf(stderr, "DST(SEL:%d ", alu->dst.sel);
+			fprintf(stderr, "CHAN:%d ", alu->dst.chan);
+			fprintf(stderr, "REL:%d ", alu->dst.rel);
+			fprintf(stderr, "CLAMP:%d) ", alu->dst.clamp);
+			fprintf(stderr, "BANK_SWIZZLE:%d ", alu->bank_swizzle);
 			if (alu->is_op3) {
-				fprintf(stderr, "%04d %08X\t", id, bc->bytecode[id]);
-				fprintf(stderr, "DST(SEL:%d ", alu->dst.sel);
-				fprintf(stderr, "CHAN:%d ", alu->dst.chan);
-				fprintf(stderr, "REL:%d ", alu->dst.rel);
-				fprintf(stderr, "CLAMP:%d) ", alu->dst.clamp);
 				fprintf(stderr, "SRC2(SEL:%d ", alu->src[2].sel);
 				fprintf(stderr, "REL:%d ", alu->src[2].rel);
 				fprintf(stderr, "CHAN:%d ", alu->src[2].chan);
-				fprintf(stderr, "NEG:%d) ", alu->src[2].neg);
-				fprintf(stderr, "INST:%d ", alu->inst);
-				fprintf(stderr, "BANK_SWIZZLE:%d\n", alu->bank_swizzle);
+				fprintf(stderr, "NEG:%d)\n", alu->src[2].neg);
 			} else {
-				fprintf(stderr, "%04d %08X\t", id, bc->bytecode[id]);
-				fprintf(stderr, "DST(SEL:%d ", alu->dst.sel);
-				fprintf(stderr, "CHAN:%d ", alu->dst.chan);
-				fprintf(stderr, "REL:%d ", alu->dst.rel);
-				fprintf(stderr, "CLAMP:%d) ", alu->dst.clamp);
 				fprintf(stderr, "SRC0_ABS:%d ", alu->src[0].abs);
 				fprintf(stderr, "SRC1_ABS:%d ", alu->src[1].abs);
 				fprintf(stderr, "WRITE_MASK:%d ", alu->dst.write);
 				fprintf(stderr, "OMOD:%d ", alu->omod);
-				fprintf(stderr, "INST:%d ", alu->inst);
-				fprintf(stderr, "BANK_SWIZZLE:%d ", alu->bank_swizzle);
 				fprintf(stderr, "EXECUTE_MASK:%d ", alu->predicate);
 				fprintf(stderr, "UPDATE_PRED:%d\n", alu->predicate);
 			}
 
+			id++;
 			if (alu->last) {
-				for (i = 0; i < alu->nliteral; i++) {
+				for (i = 0; i < alu->nliteral; i++, id++) {
 					float *f = (float*)(bc->bytecode + id);
-					fprintf(stderr, "%04d %08X %f\n", id, bc->bytecode[id], *f);
+					fprintf(stderr, "%04d %08X   %f\n", id, bc->bytecode[id], *f);
 				}
 			}
 		}
