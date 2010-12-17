@@ -539,16 +539,29 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 	memcpy(nalu, alu, sizeof(struct r600_bc_alu));
 	nalu->nliteral = 0;
 
+	if (bc->cf_last != NULL && bc->cf_last->inst != (type << 3)) {
+		/* check if we could add it anyway */
+		if (bc->cf_last->inst == (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3) &&
+			type == V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE) {
+			LIST_FOR_EACH_ENTRY(lalu, &bc->cf_last->alu, list) {
+				if (lalu->predicate) {
+					bc->force_add_cf = 1;
+					break;
+				}
+			}
+		} else
+			bc->force_add_cf = 1;
+	}
+
 	/* cf can contains only alu or only vtx or only tex */
-	if (bc->cf_last == NULL || bc->cf_last->inst != (type << 3) ||
-		bc->force_add_cf) {
+	if (bc->cf_last == NULL || bc->force_add_cf) {
 		r = r600_bc_add_cf(bc);
 		if (r) {
 			free(nalu);
 			return r;
 		}
-		bc->cf_last->inst = (type << 3);
 	}
+	bc->cf_last->inst = (type << 3);
 
 	/* Setup the kcache for this ALU instruction. This will start a new
 	 * ALU clause if needed. */
