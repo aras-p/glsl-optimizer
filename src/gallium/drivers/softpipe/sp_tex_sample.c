@@ -659,8 +659,7 @@ get_texel_2d(const struct sp_sampler_variant *samp,
 
    if (x < 0 || x >= (int) u_minify(texture->width0, level) ||
        y < 0 || y >= (int) u_minify(texture->height0, level)) {
-      return sp_tex_tile_cache_border_color(samp->cache,
-                                            samp->sampler->border_color);
+      return samp->sampler->border_color;
    }
    else {
       return get_texel_2d_no_border( samp, addr, x, y );
@@ -754,8 +753,7 @@ get_texel_3d(const struct sp_sampler_variant *samp,
    if (x < 0 || x >= (int) u_minify(texture->width0, level) ||
        y < 0 || y >= (int) u_minify(texture->height0, level) ||
        z < 0 || z >= (int) u_minify(texture->depth0, level)) {
-      return sp_tex_tile_cache_border_color(samp->cache,
-                                            samp->sampler->border_color);
+      return samp->sampler->border_color;
    }
    else {
       return get_texel_3d_no_border( samp, addr, x, y, z );

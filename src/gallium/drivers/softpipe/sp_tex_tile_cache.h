@@ -95,8 +95,6 @@ struct softpipe_tex_tile_cache
    unsigned format;
 
    struct softpipe_tex_cached_tile *last_tile;  /**< most recently retrieved tile */
-
-   float swz_border_color[4]; /**< swizzled border color */
 };
 
 
@@ -159,11 +157,6 @@ sp_get_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
 
    return sp_find_cached_tile_tex( tc, addr );
 }
-
-
-const float *
-sp_tex_tile_cache_border_color(struct softpipe_tex_tile_cache *tc,
-                               const float border_color[4]);
 
 
 #endif /* SP_TEX_TILE_CACHE_H */
