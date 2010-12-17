@@ -386,7 +386,7 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
          ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, ureg_src(ref[0]), sampler[0]);
          ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, ureg_src(ref[1]), sampler[1]);
 
-         ureg_LRP(shader, result, ureg_imm1f(shader, 0.5f),
+         ureg_LRP(shader, ureg_writemask(result, TGSI_WRITEMASK_XYZ), ureg_imm1f(shader, 0.5f),
             ureg_src(ref[0]), ureg_src(ref[1]));
 
       ureg_fixup_label(shader, bi_label, ureg_get_instruction_number(shader));
@@ -419,7 +419,7 @@ create_frag_shader(struct vl_mpeg12_mc_renderer *r)
 
    result = fetch_ref(shader, field);
 
-   ureg_ADD(shader, fragment, ureg_src(texel), ureg_src(result));
+   ureg_ADD(shader, ureg_writemask(fragment, TGSI_WRITEMASK_XYZ), ureg_src(texel), ureg_src(result));
 
    ureg_release_temporary(shader, field);
    ureg_release_temporary(shader, texel);
