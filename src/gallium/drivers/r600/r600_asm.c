@@ -192,6 +192,151 @@ int r600_bc_add_output(struct r600_bc *bc, const struct r600_bc_output *output)
 	return 0;
 }
 
+/* alu instructions that can ony exits once per group */
+static int is_alu_once_inst(struct r600_bc_alu *alu)
+{
+	return !alu->is_op3 && (
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLNE ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT_UINT ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE_UINT ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE_INT ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT_INT ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE_INT ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLNE_INT ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_UINT ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_UINT ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SET_INV ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SET_POP ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SET_CLR ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SET_RESTORE ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_PUSH ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_PUSH ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_PUSH ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE_PUSH ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_INT ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_INT ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_INT ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE_INT ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_PUSH_INT ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_PUSH_INT ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_PUSH_INT ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE_PUSH_INT ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETLT_PUSH_INT ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETLE_PUSH_INT);
+}
+
+static int is_alu_reduction_inst(struct r600_bc_alu *alu)
+{
+	return !alu->is_op3 && (
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4 ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4_IEEE ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX4);
+}
+
+static int is_alu_mova_inst(struct r600_bc_alu *alu)
+{
+	return !alu->is_op3 && (
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_FLOOR ||
+		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT);
+}
+
+/* alu instructions that can only execute on the vector unit */
+static int is_alu_vec_unit_inst(struct r600_bc_alu *alu)
+{
+	return is_alu_reduction_inst(alu) ||
+		is_alu_mova_inst(alu);
+}
+
+/* alu instructions that can only execute on the trans unit */
+static int is_alu_trans_unit_inst(struct r600_bc_alu *alu)
+{
+	if(!alu->is_op3)
+		return alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ASHR_INT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHL_INT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHR_INT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_INT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_UINT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_INT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_UINT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_INT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_UINT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_UINT_TO_FLT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_CLAMPED ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_IEEE ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_CLAMPED ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_FF ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_CLAMPED ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_FF ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_IEEE ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SQRT_IEEE;
+	else
+		return alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT ||
+			alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT_D2 ||
+			alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT_M2 ||
+			alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT_M4;
+}
+
+/* alu instructions that can execute on any unit */
+static int is_alu_any_unit_inst(struct r600_bc_alu *alu)
+{
+	return !is_alu_vec_unit_inst(alu) &&
+		!is_alu_trans_unit_inst(alu);
+}
+
+static int assign_alu_units(struct r600_bc_alu *alu_first, struct r600_bc_alu *assignment[5])
+{
+	struct r600_bc_alu *alu;
+	unsigned i, chan, trans;
+
+	for (i = 0; i < 5; i++)
+		assignment[i] = NULL;
+
+	for (alu = alu_first; alu; alu = container_of(alu->list.next, alu, list)) {
+		chan = alu->dst.chan;
+		if (is_alu_trans_unit_inst(alu))
+			trans = 1;
+		else if (is_alu_vec_unit_inst(alu))
+			trans = 0;
+		else if (assignment[chan])
+			trans = 1; // assume ALU_INST_PREFER_VECTOR
+		else
+			trans = 0;
+
+		if (trans) {
+			if (assignment[4]) {
+				assert(0); //ALU.Trans has already been allocated
+				return -1;
+			}
+			assignment[4] = alu;
+		} else {
+			if (assignment[chan]) {
+				assert(0); //ALU.chan has already been allocated
+				return -1;
+			}
+			assignment[chan] = alu;
+		}
+
+		if (alu->last)
+			break;
+	}
+	return 0;
+}
+
 const unsigned bank_swizzle_vec[8] = {SQ_ALU_VEC_210,  //000
 				      SQ_ALU_VEC_120,  //001
 				      SQ_ALU_VEC_102,  //010
@@ -388,25 +533,30 @@ static int check_vector(struct r600_bc *bc, struct r600_bc_alu *alu)
 
 static int check_and_set_bank_swizzle(struct r600_bc *bc, struct r600_bc_alu *alu_first)
 {
-	struct r600_bc_alu *alu = NULL;
-	int num_instr = 1;
+	struct r600_bc_alu *assignment[5];
+	int i, r;
 
-	init_gpr(alu_first);
+	r = init_gpr(alu_first);
+	if (r)
+		return r;
 
-	LIST_FOR_EACH_ENTRY(alu, &alu_first->bs_list, bs_list) {
-		num_instr++;
-	}
+	r = assign_alu_units(alu_first, assignment);
+	if (r)
+		return r;
 
-	if (num_instr == 1) {
-		check_scalar(bc, alu_first);
-		
-	} else {
-/*		check_read_slots(bc, bc->cf_last->curr_bs_head);*/
-		check_vector(bc, alu_first);
-		LIST_FOR_EACH_ENTRY(alu, &alu_first->bs_list, bs_list) {
-			check_vector(bc, alu);
+	for (i = 0; i < 4; i++)
+		if (assignment[i]) {
+			r = check_vector(bc, assignment[i]);
+			if (r)
+				return r;
 		}
+
+	if (assignment[4]) {
+		r = check_scalar(bc, assignment[4]);
+		if (r)
+			return r;
 	}
+	
 	return 0;
 }
 
@@ -487,7 +637,9 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 
 	/* process cur ALU instructions for bank swizzle */
 	if (alu->last) {
-		check_and_set_bank_swizzle(bc, bc->cf_last->curr_bs_head);
+		r = check_and_set_bank_swizzle(bc, bc->cf_last->curr_bs_head);
+		if (r)
+			return r;
 		bc->cf_last->curr_bs_head = NULL;
 	}
 	return 0;
