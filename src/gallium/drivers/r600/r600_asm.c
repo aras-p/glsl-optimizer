@@ -32,6 +32,9 @@
 #include "r600_formats.h"
 #include "r600d.h"
 
+#define NUM_OF_CYCLES 3
+#define NUM_OF_COMPONENTS 4
+
 static inline unsigned int r600_bc_get_num_operands(struct r600_bc_alu *alu)
 {
 	if(alu->is_op3)
@@ -340,228 +343,220 @@ static int assign_alu_units(struct r600_bc_alu *alu_first, struct r600_bc_alu *a
 	return 0;
 }
 
-const unsigned bank_swizzle_vec[8] = {SQ_ALU_VEC_210,  //000
-				      SQ_ALU_VEC_120,  //001
-				      SQ_ALU_VEC_102,  //010
+struct alu_bank_swizzle {
+	int	hw_gpr[NUM_OF_CYCLES][NUM_OF_COMPONENTS];
+	int	hw_cfile_addr[4];
+	int	hw_cfile_elem[4];
+};
 
-				      SQ_ALU_VEC_201,  //011
-				      SQ_ALU_VEC_012,  //100
-				      SQ_ALU_VEC_021,  //101
+const unsigned cycle_for_bank_swizzle_vec[][3] = {
+	[SQ_ALU_VEC_012] = { 0, 1, 2 },
+	[SQ_ALU_VEC_021] = { 0, 2, 1 },
+	[SQ_ALU_VEC_120] = { 1, 2, 0 },
+	[SQ_ALU_VEC_102] = { 1, 0, 2 },
+	[SQ_ALU_VEC_201] = { 2, 0, 1 },
+	[SQ_ALU_VEC_210] = { 2, 1, 0 }
+};
 
-				      SQ_ALU_VEC_012,  //110
-				      SQ_ALU_VEC_012}; //111
+const unsigned cycle_for_bank_swizzle_scl[][3] = {
+	[SQ_ALU_SCL_210] = { 2, 1, 0 },
+	[SQ_ALU_SCL_122] = { 1, 2, 2 },
+	[SQ_ALU_SCL_212] = { 2, 1, 2 },
+	[SQ_ALU_SCL_221] = { 2, 2, 1 }
+};
 
-const unsigned bank_swizzle_scl[8] = {SQ_ALU_SCL_210,  //000
-				      SQ_ALU_SCL_122,  //001
-				      SQ_ALU_SCL_122,  //010
-
-				      SQ_ALU_SCL_221,  //011
-				      SQ_ALU_SCL_212,  //100
-				      SQ_ALU_SCL_122,  //101
-
-				      SQ_ALU_SCL_122,  //110
-				      SQ_ALU_SCL_122}; //111
-
-static int init_gpr(struct r600_bc_alu *alu)
+static void init_bank_swizzle(struct alu_bank_swizzle *bs)
 {
-	int cycle, component;
+	int i, cycle, component;
 	/* set up gpr use */
 	for (cycle = 0; cycle < NUM_OF_CYCLES; cycle++)
 		for (component = 0; component < NUM_OF_COMPONENTS; component++)
-			 alu->hw_gpr[cycle][component] = -1;
-	return 0;
+			 bs->hw_gpr[cycle][component] = -1;
+	for (i = 0; i < 4; i++)
+		bs->hw_cfile_addr[i] = -1;
+	for (i = 0; i < 4; i++)
+		bs->hw_cfile_elem[i] = -1;
 }
-
-#if 0
-static int reserve_gpr(struct r600_bc_alu *alu, unsigned sel, unsigned chan, unsigned cycle)
+ 
+static int reserve_gpr(struct alu_bank_swizzle *bs, unsigned sel, unsigned chan, unsigned cycle)
 {
-	if (alu->hw_gpr[cycle][chan] < 0)
-		alu->hw_gpr[cycle][chan] = sel;
-	else if (alu->hw_gpr[cycle][chan] != (int)sel) {
-		R600_ERR("Another scalar operation has already used GPR read port for channel\n");
+	if (bs->hw_gpr[cycle][chan] == -1)
+		bs->hw_gpr[cycle][chan] = sel;
+	else if (bs->hw_gpr[cycle][chan] != (int)sel) {
+		// Another scalar operation has already used GPR read port for channel
 		return -1;
 	}
 	return 0;
 }
-
-static int cycle_for_scalar_bank_swizzle(const int swiz, const int sel, unsigned *p_cycle)
+ 
+static int reserve_cfile(struct alu_bank_swizzle *bs, unsigned sel, unsigned chan)
 {
-	int table[3];
-	int ret = 0;
-	switch (swiz) {
-	case SQ_ALU_SCL_210:
-		table[0] = 2; table[1] = 1; table[2] = 0;
-                *p_cycle = table[sel];
-                break;
-	case SQ_ALU_SCL_122:
-		table[0] = 1; table[1] = 2; table[2] = 2;
-                *p_cycle = table[sel];
-                break;
-	case SQ_ALU_SCL_212:
-		table[0] = 2; table[1] = 1; table[2] = 2;
-                *p_cycle = table[sel];
-                break;
-	case SQ_ALU_SCL_221:
-		table[0] = 2; table[1] = 2; table[2] = 1;
-		*p_cycle = table[sel];
-                break;
-		break;
-	default:
-		R600_ERR("bad scalar bank swizzle value\n");
-		ret = -1;
-		break;
+	int res, resmatch = -1, resempty = -1;
+	for (res = 3; res >= 0; --res) {
+		if (bs->hw_cfile_addr[res] == -1)
+			resempty = res;
+		else if (bs->hw_cfile_addr[res] == sel &&
+			bs->hw_cfile_elem[res] == chan)
+			resmatch = res;
 	}
-	return ret;
-}
-
-static int cycle_for_vector_bank_swizzle(const int swiz, const int sel, unsigned *p_cycle)
-{
-	int table[3];
-	int ret;
-
-	switch (swiz) {
-	case SQ_ALU_VEC_012:
-		table[0] = 0; table[1] = 1; table[2] = 2;
-                *p_cycle = table[sel];
-                break;
-	case SQ_ALU_VEC_021:
-		table[0] = 0; table[1] = 2; table[2] = 1;
-                *p_cycle = table[sel];
-                break;
-	case SQ_ALU_VEC_120:
-		table[0] = 1; table[1] = 2; table[2] = 0;
-                *p_cycle = table[sel];
-                break;
-	case SQ_ALU_VEC_102:
-		table[0] = 1; table[1] = 0; table[2] = 2;
-                *p_cycle = table[sel];
-                break;
-	case SQ_ALU_VEC_201:
-		table[0] = 2; table[1] = 0; table[2] = 1;
-                *p_cycle = table[sel];
-                break;
-	case SQ_ALU_VEC_210:
-		table[0] = 2; table[1] = 1; table[2] = 0;
-                *p_cycle = table[sel];
-                break;
-	default:
-		R600_ERR("bad vector bank swizzle value\n");
-		ret = -1;
-		break;
-	}
-	return ret;
-}
-
-
-
-static void update_chan_counter(struct r600_bc_alu *alu, int *chan_counter)
-{
-	int num_src;
-	int i;
-	int channel_swizzle;
-
-	num_src = r600_bc_get_num_operands(alu);
-
-	for (i = 0; i < num_src; i++) {
-		channel_swizzle = alu->src[i].chan;
-		if ((alu->src[i].sel > 0 && alu->src[i].sel < 128) && channel_swizzle <= 3)
-			chan_counter[channel_swizzle]++;
-	}
-}
-
-/* we need something like this I think - but this is bogus */
-int check_read_slots(struct r600_bc *bc, struct r600_bc_alu *alu_first)
-{
-	struct r600_bc_alu *alu;
-	int chan_counter[4]  = { 0 };
-
-	update_chan_counter(alu_first, chan_counter);
-
-	LIST_FOR_EACH_ENTRY(alu, &alu_first->bs_list, bs_list) {
-		update_chan_counter(alu, chan_counter);
-	}
-
-	if (chan_counter[0] > 3 ||
-	    chan_counter[1] > 3 ||
-	    chan_counter[2] > 3 ||
-	    chan_counter[3] > 3) {
-		R600_ERR("needed to split instruction for input ran out of banks %x %d %d %d %d\n",
-			 alu_first->inst, chan_counter[0], chan_counter[1], chan_counter[2], chan_counter[3]);
+	if (resmatch != -1)
+		return 0; // Read for this scalar element already reserved, nothing to do here.
+	else if (resempty != -1) {
+		bs->hw_cfile_addr[resempty] = sel;
+		bs->hw_cfile_elem[resempty] = chan;
+	} else {
+		// All cfile read ports are used, cannot reference vector element
 		return -1;
 	}
-	return 0;
+	return 0;	
 }
-#endif
+ 
+static int is_gpr(unsigned sel)
+{
+	return (sel >= 0 && sel <= 127);
+}
 
 /* CB constants start at 512, and get translated to a kcache index when ALU
  * clauses are constructed. Note that we handle kcache constants the same way
  * as (the now gone) cfile constants, is that really required? */
+static int is_cfile(unsigned sel)
+{
+	return (sel > 255 && sel < 512) ||
+		(sel > 511 && sel < 4607) || // Kcache before translate
+		(sel > 127 && sel < 192); // Kcache after translate
+}
+ 
 static int is_const(int sel)
 {
-	if (sel > 511 && sel < 4607)
-		return 1;
-	return 0;
+	return is_cfile(sel) ||
+		(sel >= V_SQ_ALU_SRC_0 && 
+		sel <= V_SQ_ALU_SRC_LITERAL);
 }
-
-static int check_scalar(struct r600_bc *bc, struct r600_bc_alu *alu)
+ 
+static int check_vector(struct r600_bc_alu *alu, struct alu_bank_swizzle *bs, int bank_swizzle)
 {
-	unsigned swizzle_key;
-
-	if (alu->bank_swizzle_force) {
-		alu->bank_swizzle = alu->bank_swizzle_force;
-		return 0;
-	}
-	swizzle_key = (is_const(alu->src[0].sel) ? 4 : 0 ) + 
-		(is_const(alu->src[1].sel) ? 2 : 0 ) + 
-		(is_const(alu->src[2].sel) ? 1 : 0 );
-
-	alu->bank_swizzle = bank_swizzle_scl[swizzle_key];
-	return 0;
-}
-
-static int check_vector(struct r600_bc *bc, struct r600_bc_alu *alu)
-{
-	unsigned swizzle_key;
-
-	if (alu->bank_swizzle_force) {
-		alu->bank_swizzle = alu->bank_swizzle_force;
-		return 0;
-	}
-	swizzle_key = (is_const(alu->src[0].sel) ? 4 : 0 ) + 
-		(is_const(alu->src[1].sel) ? 2 : 0 ) + 
-		(is_const(alu->src[2].sel) ? 1 : 0 );
-
-	alu->bank_swizzle = bank_swizzle_vec[swizzle_key];
-	return 0;
-}
-
-static int check_and_set_bank_swizzle(struct r600_bc *bc, struct r600_bc_alu *alu_first)
-{
-	struct r600_bc_alu *assignment[5];
-	int i, r;
-
-	r = init_gpr(alu_first);
-	if (r)
-		return r;
-
-	r = assign_alu_units(alu_first, assignment);
-	if (r)
-		return r;
-
-	for (i = 0; i < 4; i++)
-		if (assignment[i]) {
-			r = check_vector(bc, assignment[i]);
+	int r, src, num_src, sel, elem, cycle;
+ 
+	num_src = r600_bc_get_num_operands(alu);
+	for (src = 0; src < num_src; src++) {
+		sel = alu->src[src].sel;
+		elem = alu->src[src].chan;
+		if (is_gpr(sel)) {
+			cycle = cycle_for_bank_swizzle_vec[bank_swizzle][src];
+			if (src == 1 && sel == alu->src[0].sel && elem == alu->src[0].chan)
+				// Nothing to do; special-case optimization, 
+				// second source uses first source’s reservation
+				continue;
+			else {
+				r = reserve_gpr(bs, sel, elem, cycle);
+				if (r)
+					return r;
+			}
+		} else if (is_cfile(sel)) {
+			r = reserve_cfile(bs, sel, elem);
 			if (r)
 				return r;
 		}
-
-	if (assignment[4]) {
-		r = check_scalar(bc, assignment[4]);
-		if (r)
-			return r;
+		// No restrictions on PV, PS, literal or special constants
 	}
-	
 	return 0;
+}
+ 
+static int check_scalar(struct r600_bc_alu *alu, struct alu_bank_swizzle *bs, int bank_swizzle)
+{
+	int r, src, num_src, const_count, sel, elem, cycle;
+ 
+	num_src = r600_bc_get_num_operands(alu);
+	for (const_count = 0, src = 0; src < num_src; ++src) {
+		sel = alu->src[src].sel;
+		elem = alu->src[src].chan;
+		if (is_const(sel)) { // Any constant, including literal and inline constants
+			if (const_count >= 2)
+				// More than two references to a constant in
+				// transcendental operation.
+				return -1; 
+			else
+				const_count++;
+		}
+		if (is_cfile(sel)) {
+			r = reserve_cfile(bs, sel, elem);
+			if (r)
+				return r;
+		}
+	}
+	for (src = 0; src < num_src; ++src) {
+		sel = alu->src[src].sel;
+		elem = alu->src[src].chan;
+		if (is_gpr(sel)) {
+			cycle = cycle_for_bank_swizzle_scl[bank_swizzle][src];
+			if (cycle < const_count)
+				// Cycle for GPR load conflicts with
+				// constant load in transcendental operation.
+				return -1;
+			r = reserve_gpr(bs, sel, elem, cycle);
+			if (r)
+				return r;
+		}
+		// Constants already processed
+		// No restrictions on PV, PS
+	}
+	return 0;
+}
+ 
+static int check_and_set_bank_swizzle(struct r600_bc *bc, struct r600_bc_alu *alu_first)
+{
+	struct r600_bc_alu *assignment[5];
+	struct alu_bank_swizzle bs;
+	int bank_swizzle[5];
+	int i, r;
+ 
+	r = assign_alu_units(alu_first, assignment);
+	if (r)
+		return r;
+ 
+	if(alu_first->bank_swizzle_force) {
+		for (i = 0; i < 5; i++)
+			if (assignment[i])
+				assignment[i]->bank_swizzle = assignment[i]->bank_swizzle_force;
+		return 0;
+	}
+
+	// just check every possible combination of bank swizzle
+	// not very efficent, but works on the first try in most of the cases
+	for (i = 0; i < 4; i++)
+		bank_swizzle[i] = SQ_ALU_VEC_012;
+	bank_swizzle[4] = SQ_ALU_SCL_210;
+	while(bank_swizzle[4] <= SQ_ALU_SCL_221) {
+		init_bank_swizzle(&bs);
+		for (i = 0; i < 4; i++) {
+			if (assignment[i]) {
+				r = check_vector(assignment[i], &bs, bank_swizzle[i]);
+				if (r)
+					break;
+			}
+		}
+		if (!r && assignment[4]) {
+			r = check_scalar(assignment[4], &bs, bank_swizzle[4]);
+		}
+		if (!r) {
+			for (i = 0; i < 5; i++) {
+				if (assignment[i])
+					assignment[i]->bank_swizzle = bank_swizzle[i];
+			}
+			return 0;
+		}
+
+		for (i = 0; i < 5; i++) {
+			bank_swizzle[i]++;
+			if (bank_swizzle[i] <= SQ_ALU_VEC_210)
+				break;
+			else
+				bank_swizzle[i] = SQ_ALU_VEC_012;
+		}
+	}
+
+	// couldn't find a working swizzle
+	return -1;
 }
 
 /* This code handles kcache lines as single blocks of 32 constants. We could
