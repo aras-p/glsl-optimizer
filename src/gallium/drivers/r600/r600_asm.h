@@ -25,9 +25,6 @@
 
 #include "util/u_double_list.h"
 
-#define NUM_OF_CYCLES 3
-#define NUM_OF_COMPONENTS 4
-
 struct r600_vertex_element;
 struct r600_pipe_context;
 
@@ -61,7 +58,6 @@ struct r600_bc_alu {
 	unsigned			bank_swizzle;
 	unsigned			bank_swizzle_force;
 	u32				value[4];
-	int				hw_gpr[NUM_OF_CYCLES][NUM_OF_COMPONENTS];
 	unsigned			omod;
 };
 
