@@ -108,7 +108,6 @@ static struct r600_bc_alu *r600_bc_alu(void)
 	if (alu == NULL)
 		return NULL;
 	LIST_INITHEAD(&alu->list);
-	LIST_INITHEAD(&alu->bs_list);
 	return alu;
 }
 
@@ -560,6 +559,63 @@ static int check_and_set_bank_swizzle(struct r600_bc *bc, struct r600_bc_alu *al
 	return -1;
 }
 
+static int replace_gpr_with_pv_ps(struct r600_bc_alu *alu_first, struct r600_bc_alu *alu_prev)
+{
+	struct r600_bc_alu *slots[5];
+	int gpr[5], chan[5];
+	int i, j, r, src, num_src;
+	
+	r = assign_alu_units(alu_prev, slots);
+	if (r)
+		return r;
+
+	for (i = 0; i < 5; ++i) {
+		if(slots[i] && slots[i]->dst.write && !slots[i]->dst.rel) {
+			gpr[i] = slots[i]->dst.sel;
+			if (is_alu_reduction_inst(slots[i]))
+				chan[i] = 0;
+			else
+				chan[i] = slots[i]->dst.chan;
+		} else
+			gpr[i] = -1;
+		
+	}
+
+	r = assign_alu_units(alu_first, slots);
+	if (r)
+		return r;
+
+	for (i = 0; i < 5; ++i) {
+		struct r600_bc_alu *alu = slots[i];
+		if(!alu)
+			continue;
+
+		num_src = r600_bc_get_num_operands(alu);
+		for (src = 0; src < num_src; ++src) {
+			if (!is_gpr(alu->src[src].sel) || alu->src[src].rel)
+				continue;
+
+			if (alu->src[src].sel == gpr[4] &&
+				alu->src[src].chan == chan[4]) {
+				alu->src[src].sel = V_SQ_ALU_SRC_PS;
+				alu->src[src].chan = 0;
+				continue;
+			}
+
+			for (j = 0; j < 4; ++j) {
+				if (alu->src[src].sel == gpr[j] &&
+					alu->src[src].chan == j) {
+					alu->src[src].sel = V_SQ_ALU_SRC_PV;
+					alu->src[src].chan = chan[j];
+					break;
+				}
+			}
+		}
+	}
+
+	return 0;
+}
+
 /* This code handles kcache lines as single blocks of 32 constants. We could
  * probably do slightly better by recognizing that we actually have two
  * consecutive lines of 16 constants, but the resulting code would also be
@@ -718,9 +774,6 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 
 	if (!bc->cf_last->curr_bs_head) {
 		bc->cf_last->curr_bs_head = nalu;
-		LIST_INITHEAD(&nalu->bs_list);
-	} else {
-		LIST_ADDTAIL(&nalu->bs_list, &bc->cf_last->curr_bs_head->bs_list);
 	}
 	/* at most 128 slots, one add alu can add 4 slots + 4 constants(2 slots)
 	 * worst case */
@@ -757,9 +810,12 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 
 	/* process cur ALU instructions for bank swizzle */
 	if (nalu->last) {
+		if (bc->cf_last->prev_bs_head)
+			replace_gpr_with_pv_ps(bc->cf_last->curr_bs_head, bc->cf_last->prev_bs_head);
 		r = check_and_set_bank_swizzle(bc, bc->cf_last->curr_bs_head);
 		if (r)
 			return r;
+		bc->cf_last->prev_bs_head = bc->cf_last->curr_bs_head;
 		bc->cf_last->curr_bs_head = NULL;
 	}
 	return 0;
