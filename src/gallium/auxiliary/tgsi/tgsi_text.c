@@ -1264,7 +1264,8 @@ static const char *property_names[] =
    "GS_OUTPUT_PRIMITIVE",
    "GS_MAX_OUTPUT_VERTICES",
    "FS_COORD_ORIGIN",
-   "FS_COORD_PIXEL_CENTER"
+   "FS_COORD_PIXEL_CENTER",
+   "FS_COLOR0_WRITE_ALL_CBUFS"
 };
 
 static const char *primitive_names[] =
@@ -1397,6 +1398,8 @@ static boolean parse_property( struct translate_ctx *ctx )
          report_error( ctx, "Unknown coord pixel center as property: must be HALF_INTEGER or INTEGER!" );
          return FALSE;
       }
+      break;
+   case TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS:
       break;
    default:
       if (!parse_uint(&ctx->cur, &values[0] )) {
