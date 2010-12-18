@@ -697,7 +697,8 @@ void r500_emit_index_bias(struct r300_context *r300, int index_bias);
 enum r300_fb_state_change {
     R300_CHANGED_FB_STATE = 0,
     R300_CHANGED_CBZB_FLAG,
-    R300_CHANGED_ZCLEAR_FLAG
+    R300_CHANGED_ZCLEAR_FLAG,
+    R300_CHANGED_MULTIWRITE
 };
 
 void r300_mark_fb_state_dirty(struct r300_context *r300,

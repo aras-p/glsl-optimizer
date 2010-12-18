@@ -369,6 +369,8 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
     struct r300_surface* surf;
     unsigned i;
     boolean can_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
+    uint32_t rb3d_cctl = 0;
+
     CS_LOCALS(r300);
 
     BEGIN_CS(size);
@@ -376,11 +378,13 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
     /* NUM_MULTIWRITES replicates COLOR[0] to all colorbuffers, which is not
      * what we usually want. */
     if (r300->screen->caps.is_r500) {
-        OUT_CS_REG(R300_RB3D_CCTL,
-            R300_RB3D_CCTL_INDEPENDENT_COLORFORMAT_ENABLE_ENABLE);
-    } else {
-        OUT_CS_REG(R300_RB3D_CCTL, 0);
+        rb3d_cctl = R300_RB3D_CCTL_INDEPENDENT_COLORFORMAT_ENABLE_ENABLE;
     }
+    if (r300_fragment_shader_writes_all(r300_fs(r300))) {
+        rb3d_cctl |= R300_RB3D_CCTL_NUM_MULTIWRITES(fb->nr_cbufs);
+    }
+
+    OUT_CS_REG(R300_RB3D_CCTL, rb3d_cctl);
 
     /* Set up colorbuffers. */
     for (i = 0; i < fb->nr_cbufs; i++) {
@@ -482,15 +486,21 @@ void r300_emit_fb_state_pipelined(struct r300_context *r300,
 {
     struct pipe_framebuffer_state* fb =
             (struct pipe_framebuffer_state*)r300->fb_state.state;
-    unsigned i;
+    unsigned i, num_cbufs = fb->nr_cbufs;
     CS_LOCALS(r300);
+
+    /* If we use the multiwrite feature, the colorbuffers 2,3,4 must be
+     * marked as UNUSED in the US block. */
+    if (r300_fragment_shader_writes_all(r300_fs(r300))) {
+        num_cbufs = MIN2(num_cbufs, 1);
+    }
 
     BEGIN_CS(size);
 
     /* Colorbuffer format in the US block.
      * (must be written after unpipelined regs) */
     OUT_CS_REG_SEQ(R300_US_OUT_FMT_0, 4);
-    for (i = 0; i < fb->nr_cbufs; i++) {
+    for (i = 0; i < num_cbufs; i++) {
         OUT_CS(r300_surface(fb->cbufs[i])->format);
     }
     for (; i < 4; i++) {
