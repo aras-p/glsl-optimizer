@@ -35,6 +35,7 @@
 #include "util/u_memory.h"
 #include "util/u_format.h"
 #include "sp_context.h"
+#include "sp_state.h"
 #include "sp_quad.h"
 #include "sp_tile_cache.h"
 #include "sp_quad_pipe.h"
@@ -794,6 +795,9 @@ blend_fallback(struct quad_stage *qs,
    struct softpipe_context *softpipe = qs->softpipe;
    const struct pipe_blend_state *blend = softpipe->blend;
    unsigned cbuf;
+   boolean write_all;
+
+   write_all = softpipe->fs->color0_writes_all_cbufs;
 
    for (cbuf = 0; cbuf < softpipe->framebuffer.nr_cbufs; cbuf++) 
    {
@@ -806,15 +810,19 @@ blend_fallback(struct quad_stage *qs,
                               quads[0]->input.y0);
       boolean has_dst_alpha
          = util_format_has_alpha(softpipe->framebuffer.cbufs[cbuf]->format);
-      uint q, i, j;
+      uint q, i, j, qbuf;
+
+      qbuf = write_all ? 0 : cbuf;
 
       for (q = 0; q < nr; q++) {
          struct quad_header *quad = quads[q];
-         float (*quadColor)[4] = quad->output.color[cbuf];
+         float (*quadColor)[4];
          const int itx = (quad->input.x0 & (TILE_SIZE-1));
          const int ity = (quad->input.y0 & (TILE_SIZE-1));
 
-         /* get/swizzle dest colors 
+         quadColor = quad->output.color[qbuf];
+
+         /* get/swizzle dest colors
           */
          for (j = 0; j < QUAD_SIZE; j++) {
             int x = itx + (j & 1);

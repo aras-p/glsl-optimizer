@@ -74,7 +74,7 @@ struct sp_fragment_shader {
 
    boolean origin_lower_left; /**< fragment shader uses lower left position origin? */
    boolean pixel_center_integer; /**< fragment shader uses integer pixel center? */
-
+   boolean color0_writes_all_cbufs; /**< fragment shader writes color0 to all bound cbufs */
    void (*prepare)( const struct sp_fragment_shader *shader,
 		    struct tgsi_exec_machine *machine,
 		    struct tgsi_sampler **samplers);
