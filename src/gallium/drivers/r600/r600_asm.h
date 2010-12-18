@@ -46,7 +46,6 @@ struct r600_bc_alu_dst {
 
 struct r600_bc_alu {
 	struct list_head		list;
-	struct list_head		bs_list; /* bank swizzle list */
 	struct r600_bc_alu_src		src[3];
 	struct r600_bc_alu_dst		dst;
 	unsigned			inst;
@@ -143,6 +142,7 @@ struct r600_bc_cf {
 	struct list_head		vtx;
 	struct r600_bc_output		output;
 	struct r600_bc_alu		*curr_bs_head;
+	struct r600_bc_alu		*prev_bs_head;
 };
 
 #define FC_NONE				0

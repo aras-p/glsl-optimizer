@@ -187,6 +187,8 @@
 #define     V_SQ_ALU_SRC_M_1_INT                                     0x000000FB
 #define     V_SQ_ALU_SRC_0_5                                         0x000000FC
 #define     V_SQ_ALU_SRC_LITERAL                                     0x000000FD
+#define     V_SQ_ALU_SRC_PV                                          0x000000FE
+#define     V_SQ_ALU_SRC_PS                                          0x000000FF
 #define     V_SQ_ALU_SRC_PARAM_BASE                                  0x000001C0
 #define   S_SQ_ALU_WORD0_SRC0_REL(x)                                 (((x) & 0x1) << 9)
 #define   G_SQ_ALU_WORD0_SRC0_REL(x)                                 (((x) >> 9) & 0x1)
