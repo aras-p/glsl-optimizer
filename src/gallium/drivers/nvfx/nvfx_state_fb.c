@@ -7,7 +7,7 @@ nvfx_surface_linear_renderable(struct pipe_surface* surf)
 {
 	/* TODO: precompute this in nvfx_surface creation */
 	return (surf->texture->flags & NVFX_RESOURCE_FLAG_LINEAR)
-		&& !(surf->offset & 63)
+		&& !(((struct nvfx_surface*)surf)->offset & 63)
 		&& !(((struct nvfx_surface*)surf)->pitch & 63);
 }
 
@@ -16,8 +16,8 @@ nvfx_surface_swizzled_renderable(struct pipe_framebuffer_state* fb, struct pipe_
 {
 	/* TODO: precompute this in nvfx_surface creation */
 	return !((struct nvfx_miptree*)surf->texture)->linear_pitch
-		&& (surf->texture->target != PIPE_TEXTURE_3D || u_minify(surf->texture->depth0, surf->level) <= 1)
-		&& !(surf->offset & 127)
+		&& (surf->texture->target != PIPE_TEXTURE_3D || u_minify(surf->texture->depth0, surf->u.tex.level) <= 1)
+		&& !(((struct nvfx_surface*)surf)->offset & 127)
 		&& (surf->width == fb->width)
 		&& (surf->height == fb->height)
 		&& !((struct nvfx_surface*)surf)->temp
@@ -31,7 +31,7 @@ nvfx_surface_get_render_target(struct pipe_surface* surf, int all_swizzled, stru
 	if(!ns->temp)
 	{
 		target->bo = ((struct nvfx_miptree*)surf->texture)->base.bo;
-		target->offset = surf->offset;
+		target->offset = ns->offset;
 		target->pitch = align(ns->pitch, 64);
 		assert(target->pitch);
 		return FALSE;
@@ -54,7 +54,7 @@ nvfx_framebuffer_prepare(struct nvfx_context *nvfx)
 	int all_swizzled = 1;
 
 	if(!nvfx->is_nv4x)
-		assert(fb->nr_cbufs <= 2);
+		assert(fb->nr_cbufs <= 1);
 	else
 		assert(fb->nr_cbufs <= 4);
 
@@ -113,7 +113,9 @@ nvfx_framebuffer_validate(struct nvfx_context *nvfx, unsigned prepare_result)
 		nvfx->state.render_temps |= nvfx_surface_get_render_target(fb->cbufs[i], prepare_result, &nvfx->hw_rt[i]) << i;
 
 	for(; i < 4; ++i)
-		nvfx->hw_rt[i].bo = 0;
+		nvfx->hw_rt[i].bo = NULL;
+
+	nvfx->hw_zeta.bo = NULL;
 
 	if (fb->zsbuf) {
 		nvfx->state.render_temps |= nvfx_surface_get_render_target(fb->zsbuf, prepare_result, &nvfx->hw_zeta) << 7;

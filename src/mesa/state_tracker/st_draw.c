@@ -241,7 +241,7 @@ st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
  */
 static GLboolean
 is_interleaved_arrays(const struct st_vertex_program *vp,
-                      const struct st_vp_varient *vpv,
+                      const struct st_vp_variant *vpv,
                       const struct gl_client_array **arrays,
                       GLboolean *userSpace)
 {
@@ -297,7 +297,7 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
  */
 static void
 get_arrays_bounds(const struct st_vertex_program *vp,
-                  const struct st_vp_varient *vpv,
+                  const struct st_vp_variant *vpv,
                   const struct gl_client_array **arrays,
                   GLuint max_index,
                   const GLubyte **low, const GLubyte **high)
@@ -343,7 +343,7 @@ get_arrays_bounds(const struct st_vertex_program *vp,
 static void
 setup_interleaved_attribs(struct gl_context *ctx,
                           const struct st_vertex_program *vp,
-                          const struct st_vp_varient *vpv,
+                          const struct st_vp_variant *vpv,
                           const struct gl_client_array **arrays,
                           GLuint max_index,
                           GLboolean userSpace,
@@ -409,7 +409,7 @@ setup_interleaved_attribs(struct gl_context *ctx,
 static void
 setup_non_interleaved_attribs(struct gl_context *ctx,
                               const struct st_vertex_program *vp,
-                              const struct st_vp_varient *vpv,
+                              const struct st_vp_variant *vpv,
                               const struct gl_client_array **arrays,
                               GLuint max_index,
                               GLboolean *userSpace,
@@ -617,7 +617,7 @@ st_draw_vbo(struct gl_context *ctx,
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
    const struct st_vertex_program *vp;
-   const struct st_vp_varient *vpv;
+   const struct st_vp_variant *vpv;
    struct pipe_vertex_buffer vbuffer[PIPE_MAX_SHADER_INPUTS];
    GLuint attr;
    struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
@@ -650,7 +650,7 @@ st_draw_vbo(struct gl_context *ctx,
 
    /* must get these after state validation! */
    vp = st->vp;
-   vpv = st->vp_varient;
+   vpv = st->vp_variant;
 
 #if 0
    if (MESA_VERBOSE & VERBOSE_GLSL) {

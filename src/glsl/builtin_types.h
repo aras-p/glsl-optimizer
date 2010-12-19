@@ -24,10 +24,11 @@
 const glsl_type glsl_type::_error_type =
    glsl_type(GL_INVALID_ENUM, GLSL_TYPE_ERROR, 0, 0, "");
 
-const glsl_type glsl_type::void_type =
+const glsl_type glsl_type::_void_type =
    glsl_type(GL_INVALID_ENUM, GLSL_TYPE_VOID, 0, 0, "void");
 
 const glsl_type *const glsl_type::error_type = & glsl_type::_error_type;
+const glsl_type *const glsl_type::void_type = & glsl_type::_void_type;
 
 /** \name Core built-in types
  *

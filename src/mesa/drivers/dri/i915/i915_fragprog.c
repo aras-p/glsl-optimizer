@@ -569,10 +569,14 @@ upload_program(struct i915_fragment_program *p)
 	 if (inst->DstReg.CondMask == COND_TR) {
 	    tmp = i915_get_utemp(p);
 
+	    /* The KIL instruction discards the fragment if any component of
+	     * the source is < 0.  Emit an immediate operand of {-1}.xywz.
+	     */
 	    i915_emit_texld(p, get_live_regs(p, inst),
 			    tmp, A0_DEST_CHANNEL_ALL,
 			    0, /* use a dummy dest reg */
-			    swizzle(tmp, ONE, ONE, ONE, ONE), /* always */
+			    negate(swizzle(tmp, ONE, ONE, ONE, ONE),
+				   1, 1, 1, 1),
 			    T0_TEXKILL);
 	 } else {
 	    p->error = 1;
@@ -1158,11 +1162,6 @@ translate_program(struct i915_fragment_program *p)
    fixup_depth_write(p);
    i915_fini_program(p);
 
-   if (INTEL_DEBUG & DEBUG_WM) {
-      printf("i915:\n");
-      i915_disassemble_program(i915->state.Program, i915->state.ProgramSize);
-   }
-
    p->translated = 1;
 }
 
@@ -1423,6 +1422,11 @@ i915ValidateFragmentProgram(struct i915_context *i915)
 
    if (!p->on_hardware)
       i915_upload_program(i915, p);
+
+   if (INTEL_DEBUG & DEBUG_WM) {
+      printf("i915:\n");
+      i915_disassemble_program(i915->state.Program, i915->state.ProgramSize);
+   }
 }
 
 void

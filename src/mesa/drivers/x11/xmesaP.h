@@ -33,9 +33,6 @@
 #include "fxmesa.h"
 #include "xm_glide.h"
 #endif
-#ifdef XFree86Server
-#include "xm_image.h"
-#endif
 
 
 extern _glthread_Mutex _xmesa_lock;
@@ -88,13 +85,8 @@ struct xmesa_visual {
    XMesaDisplay *display;	/* The X11 display */
    int screen, visualID;
    int visualType;
-#ifdef XFree86Server
-   GLint ColormapEntries;
-   GLint nplanes;
-#else
    XMesaVisualInfo visinfo;	/* X's visual info (pointer to private copy) */
    XVisualInfo *vishandle;	/* Only used in fakeglx.c */
-#endif
    GLint BitsPerPixel;		/* True bits per pixel for XImages */
 
    GLboolean ximage_flag;	/* Use XImage for back buffer (not pixmap)? */
@@ -233,7 +225,7 @@ struct xmesa_buffer {
 				/*    0 = not available			*/
 				/*    1 = XImage support available	*/
 				/*    2 = Pixmap support available too	*/
-#if defined(USE_XSHM) && !defined(XFree86Server)
+#if defined(USE_XSHM) 
    XShmSegmentInfo shminfo;
 #endif
 
@@ -259,11 +251,7 @@ struct xmesa_buffer {
 
    /* Used to do XAllocColor/XFreeColors accounting: */
    int num_alloced;
-#if defined(XFree86Server)
-   Pixel alloced_colors[256];
-#else
    unsigned long alloced_colors[256];
-#endif
 
 #if defined( FX )
    /* For 3Dfx Glide only */
@@ -578,9 +566,7 @@ extern void xmesa_register_swrast_functions( struct gl_context *ctx );
 
 #define ENABLE_EXT_texure_compression_s3tc 0 /* SW texture compression */
 
-#ifdef XFree86Server
-#define ENABLE_EXT_timer_query 0
-#elif defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
+#if   defined(__STDC_VERSION__) && __STDC_VERSION__ >= 199901L
 #define ENABLE_EXT_timer_query 1 /* should have 64-bit GLuint64EXT */
 #else
 #define ENABLE_EXT_timer_query 0 /* may not have 64-bit GLuint64EXT */

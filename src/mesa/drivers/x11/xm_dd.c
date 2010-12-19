@@ -93,16 +93,12 @@ const int xmesa_kernel1[16] = {
 static void
 finish_or_flush( struct gl_context *ctx )
 {
-#ifdef XFree86Server
-      /* NOT_NEEDED */
-#else
    const XMesaContext xmesa = XMESA_CONTEXT(ctx);
    if (xmesa) {
       _glthread_LOCK_MUTEX(_xmesa_lock);
       XSync( xmesa->display, False );
       _glthread_UNLOCK_MUTEX(_xmesa_lock);
    }
-#endif
 }
 
 
@@ -388,7 +384,6 @@ clear_buffers(struct gl_context *ctx, GLbitfield buffers)
 }
 
 
-#ifndef XFree86Server
 /* XXX these functions haven't been tested in the Xserver environment */
 
 
@@ -731,7 +726,6 @@ xmesa_CopyPixels( struct gl_context *ctx,
    }
 }
 
-#endif /* XFree86Server */
 
 
 
@@ -745,17 +739,9 @@ get_string( struct gl_context *ctx, GLenum name )
    (void) ctx;
    switch (name) {
       case GL_RENDERER:
-#ifdef XFree86Server
-         return (const GLubyte *) "Mesa GLX Indirect";
-#else
          return (const GLubyte *) "Mesa X11";
-#endif
       case GL_VENDOR:
-#ifdef XFree86Server
-         return (const GLubyte *) "Mesa project: www.mesa3d.org";
-#else
          return NULL;
-#endif
       default:
          return NULL;
    }
@@ -948,43 +934,6 @@ xmesa_update_state( struct gl_context *ctx, GLbitfield new_state )
 
 
 /**
- * Called via ctx->Driver.TestProxyTeximage().  Normally, we'd just use
- * the _mesa_test_proxy_teximage() fallback function, but we're going to
- * special-case the 3D texture case to allow textures up to 512x512x32
- * texels.
- */
-static GLboolean
-test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
-                    GLint internalFormat, GLenum format, GLenum type,
-                    GLint width, GLint height, GLint depth, GLint border)
-{
-   if (target == GL_PROXY_TEXTURE_3D) {
-      /* special case for 3D textures */
-      if (width * height * depth > 512 * 512 * 64 ||
-          width  < 2 * border ||
-          (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           _mesa_bitcount(width  - 2 * border) != 1) ||
-          height < 2 * border ||
-          (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           _mesa_bitcount(height - 2 * border) != 1) ||
-          depth  < 2 * border ||
-          (!ctx->Extensions.ARB_texture_non_power_of_two &&
-           _mesa_bitcount(depth  - 2 * border) != 1)) {
-         /* Bad size, or too many texels */
-         return GL_FALSE;
-      }
-      return GL_TRUE;
-   }
-   else {
-      /* use the fallback routine for 1D, 2D, cube and rect targets */
-      return _mesa_test_proxy_teximage(ctx, target, level, internalFormat,
-                                       format, type, width, height, depth,
-                                       border);
-   }
-}
-
-
-/**
  * In SW, we don't really compress GL_COMPRESSED_RGB[A] textures!
  */
 static gl_format
@@ -1124,7 +1073,6 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
    }
    else {
       driver->Clear = clear_buffers;
-#ifndef XFree86Server
       driver->CopyPixels = xmesa_CopyPixels;
       if (xmvisual->undithered_pf == PF_8R8G8B &&
           xmvisual->dithered_pf == PF_8R8G8B &&
@@ -1134,9 +1082,8 @@ xmesa_init_driver_functions( XMesaVisual xmvisual,
       else if (xmvisual->undithered_pf == PF_5R6G5B) {
          driver->DrawPixels = xmesa_DrawPixels_5R6G5B;
       }
-#endif
    }
-   driver->TestProxyTexImage = test_proxy_teximage;
+
 #if ENABLE_EXT_texure_compression_s3tc
    driver->ChooseTextureFormat = choose_tex_format;
 #else

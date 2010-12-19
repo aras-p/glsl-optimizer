@@ -41,8 +41,8 @@
 
 /* A first pass at incorporating vertex fetch/emit functionality into 
  */
-struct draw_vs_varient_generic {
-   struct draw_vs_varient base;
+struct draw_vs_variant_generic {
+   struct draw_vs_variant base;
 
    struct draw_vertex_shader *shader;
    struct draw_context *draw;
@@ -63,13 +63,13 @@ struct draw_vs_varient_generic {
 
 
 
-static void vsvg_set_buffer( struct draw_vs_varient *varient,
+static void vsvg_set_buffer( struct draw_vs_variant *variant,
                              unsigned buffer,
                              const void *ptr,
                              unsigned stride,
                              unsigned max_index )
 {
-   struct draw_vs_varient_generic *vsvg = (struct draw_vs_varient_generic *)varient;
+   struct draw_vs_variant_generic *vsvg = (struct draw_vs_variant_generic *)variant;
 
    vsvg->fetch->set_buffer(vsvg->fetch, 
                            buffer, 
@@ -81,7 +81,7 @@ static void vsvg_set_buffer( struct draw_vs_varient *varient,
 
 /* Mainly for debug at this stage:
  */
-static void do_rhw_viewport( struct draw_vs_varient_generic *vsvg,
+static void do_rhw_viewport( struct draw_vs_variant_generic *vsvg,
                              unsigned count,
                              void *output_buffer )
 {
@@ -104,7 +104,7 @@ static void do_rhw_viewport( struct draw_vs_varient_generic *vsvg,
    }
 }
 
-static void do_viewport( struct draw_vs_varient_generic *vsvg,
+static void do_viewport( struct draw_vs_variant_generic *vsvg,
                          unsigned count,
                          void *output_buffer )
 {
@@ -126,12 +126,12 @@ static void do_viewport( struct draw_vs_varient_generic *vsvg,
 }
                          
 
-static void PIPE_CDECL vsvg_run_elts( struct draw_vs_varient *varient,
+static void PIPE_CDECL vsvg_run_elts( struct draw_vs_variant *variant,
                                       const unsigned *elts,
                                       unsigned count,
                                       void *output_buffer)
 {
-   struct draw_vs_varient_generic *vsvg = (struct draw_vs_varient_generic *)varient;
+   struct draw_vs_variant_generic *vsvg = (struct draw_vs_variant_generic *)variant;
    unsigned temp_vertex_stride = vsvg->temp_vertex_stride;
    void *temp_buffer = MALLOC( align(count,4) * temp_vertex_stride );
    
@@ -193,12 +193,12 @@ static void PIPE_CDECL vsvg_run_elts( struct draw_vs_varient *varient,
 }
 
 
-static void PIPE_CDECL vsvg_run_linear( struct draw_vs_varient *varient,
+static void PIPE_CDECL vsvg_run_linear( struct draw_vs_variant *variant,
                                         unsigned start,
                                         unsigned count,
                                         void *output_buffer )
 {
-   struct draw_vs_varient_generic *vsvg = (struct draw_vs_varient_generic *)varient;
+   struct draw_vs_variant_generic *vsvg = (struct draw_vs_variant_generic *)variant;
    unsigned temp_vertex_stride = vsvg->temp_vertex_stride;
    void *temp_buffer = MALLOC( align(count,4) * temp_vertex_stride );
 	
@@ -259,20 +259,20 @@ static void PIPE_CDECL vsvg_run_linear( struct draw_vs_varient *varient,
 
 
 
-static void vsvg_destroy( struct draw_vs_varient *varient )
+static void vsvg_destroy( struct draw_vs_variant *variant )
 {
-   FREE(varient);
+   FREE(variant);
 }
 
 
-struct draw_vs_varient *
-draw_vs_create_varient_generic( struct draw_vertex_shader *vs,
-                                const struct draw_vs_varient_key *key )
+struct draw_vs_variant *
+draw_vs_create_variant_generic( struct draw_vertex_shader *vs,
+                                const struct draw_vs_variant_key *key )
 {
    unsigned i;
    struct translate_key fetch, emit;
 
-   struct draw_vs_varient_generic *vsvg = CALLOC_STRUCT( draw_vs_varient_generic );
+   struct draw_vs_variant_generic *vsvg = CALLOC_STRUCT( draw_vs_variant_generic );
    if (vsvg == NULL)
       return NULL;
 

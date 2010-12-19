@@ -120,7 +120,7 @@ struct lp_type {
  */
 struct lp_build_context
 {
-   LLVMBuilderRef builder;
+   struct gallivm_state *gallivm;
 
    /**
     * This not only describes the input/output LLVM types, but also whether
@@ -285,11 +285,11 @@ lp_type_ufixed(unsigned width)
 
 
 LLVMTypeRef
-lp_build_elem_type(struct lp_type type);
+lp_build_elem_type(struct gallivm_state *gallivm, struct lp_type type);
 
 
 LLVMTypeRef
-lp_build_vec_type(struct lp_type type);
+lp_build_vec_type(struct gallivm_state *gallivm, struct lp_type type);
 
 
 boolean
@@ -305,15 +305,15 @@ lp_check_value(struct lp_type type, LLVMValueRef val);
 
 
 LLVMTypeRef
-lp_build_int_elem_type(struct lp_type type);
+lp_build_int_elem_type(struct gallivm_state *gallivm, struct lp_type type);
 
 
 LLVMTypeRef
-lp_build_int_vec_type(struct lp_type type);
+lp_build_int_vec_type(struct gallivm_state *gallivm, struct lp_type type);
 
 
 LLVMTypeRef
-lp_build_int32_vec4_type(void);
+lp_build_int32_vec4_type(struct gallivm_state *gallivm);
 
 
 static INLINE struct lp_type
@@ -394,7 +394,7 @@ lp_dump_llvmtype(LLVMTypeRef t);
 
 void
 lp_build_context_init(struct lp_build_context *bld,
-                      LLVMBuilderRef builder,
+                      struct gallivm_state *gallivm,
                       struct lp_type type);
 
 

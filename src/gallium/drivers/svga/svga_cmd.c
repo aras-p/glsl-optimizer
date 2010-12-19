@@ -455,8 +455,8 @@ SVGA3D_SurfaceDMA(struct svga_winsys_context *swc,
    cmd->guest.pitch = st->base.stride;
 
    swc->surface_relocation(swc, &cmd->host.sid, texture->handle, surface_flags);
-   cmd->host.face = st->base.sr.face; /* PIPE_TEX_FACE_* and SVGA3D_CUBEFACE_* match */
-   cmd->host.mipmap = st->base.sr.level;
+   cmd->host.face = st->face; /* PIPE_TEX_FACE_* and SVGA3D_CUBEFACE_* match */
+   cmd->host.mipmap = st->base.level;
 
    cmd->transfer = transfer;
 

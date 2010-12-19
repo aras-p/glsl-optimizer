@@ -286,7 +286,11 @@ static void evergreenSetupVTXConstants(struct gl_context  * ctx,
     if (!paos->bo)
 	    return;
 
-	r700SyncSurf(context, paos->bo, RADEON_GEM_DOMAIN_GTT, 0, VC_ACTION_ENA_bit);
+    if ((context->radeon.radeonScreen->chip_family == CHIP_FAMILY_CEDAR) ||
+	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_PALM))
+	    r700SyncSurf(context, paos->bo, RADEON_GEM_DOMAIN_GTT, 0, TC_ACTION_ENA_bit);
+    else
+	    r700SyncSurf(context, paos->bo, RADEON_GEM_DOMAIN_GTT, 0, VC_ACTION_ENA_bit);
 
     //uSQ_VTX_CONSTANT_WORD0_0
     uSQ_VTX_CONSTANT_WORD0_0 = paos->offset;

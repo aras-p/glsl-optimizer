@@ -462,6 +462,13 @@
 #define BRW_COMPRESSION_2NDHALF       1
 #define BRW_COMPRESSION_COMPRESSED    2
 
+#define GEN6_COMPRESSION_1Q		0
+#define GEN6_COMPRESSION_2Q		1
+#define GEN6_COMPRESSION_3Q		2
+#define GEN6_COMPRESSION_4Q		3
+#define GEN6_COMPRESSION_1H		0
+#define GEN6_COMPRESSION_2H		2
+
 #define BRW_CONDITIONAL_NONE  0
 #define BRW_CONDITIONAL_Z     1
 #define BRW_CONDITIONAL_NZ    2
@@ -899,6 +906,8 @@
 # define GEN6_VS_VECTOR_MASK_ENABLE			(1 << 30)
 # define GEN6_VS_SAMPLER_COUNT_SHIFT			27
 # define GEN6_VS_BINDING_TABLE_ENTRY_COUNT_SHIFT	18
+# define GEN6_VS_FLOATING_POINT_MODE_IEEE_754		(0 << 16)
+# define GEN6_VS_FLOATING_POINT_MODE_ALT		(1 << 16)
 /* DW4 */
 # define GEN6_VS_DISPATCH_START_GRF_SHIFT		20
 # define GEN6_VS_URB_READ_LENGTH_SHIFT			11
@@ -1022,6 +1031,13 @@
 # define ATTRIBUTE_0_CONST_SOURCE_SHIFT			9
 # define ATTRIBUTE_0_SWIZZLE_SHIFT			6
 # define ATTRIBUTE_0_SOURCE_SHIFT			0
+
+# define ATTRIBUTE_SWIZZLE_INPUTATTR                    0
+# define ATTRIBUTE_SWIZZLE_INPUTATTR_FACING             1
+# define ATTRIBUTE_SWIZZLE_INPUTATTR_W                  2
+# define ATTRIBUTE_SWIZZLE_INPUTATTR_FACING_W           3
+# define ATTRIBUTE_SWIZZLE_SHIFT                        6
+
 /* DW16: Point sprite texture coordinate enables */
 /* DW17: Constant interpolation enables */
 /* DW18: attr 0-7 wrap shortest enables */
@@ -1034,6 +1050,8 @@
 # define GEN6_WM_VECTOR_MASK_ENABLE			(1 << 30)
 # define GEN6_WM_SAMPLER_COUNT_SHIFT			27
 # define GEN6_WM_BINDING_TABLE_ENTRY_COUNT_SHIFT	18
+# define GEN6_WM_FLOATING_POINT_MODE_IEEE_754		(0 << 16)
+# define GEN6_WM_FLOATING_POINT_MODE_ALT		(1 << 16)
 /* DW3: scratch space */
 /* DW4 */
 # define GEN6_WM_STATISTICS_ENABLE			(1 << 31)

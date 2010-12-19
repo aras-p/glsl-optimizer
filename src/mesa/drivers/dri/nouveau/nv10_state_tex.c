@@ -28,13 +28,9 @@
 #include "nouveau_context.h"
 #include "nouveau_gldefs.h"
 #include "nouveau_texture.h"
-#include "nouveau_class.h"
+#include "nv10_3d.xml.h"
 #include "nouveau_util.h"
 #include "nv10_driver.h"
-
-#define TX_GEN_MODE(i, j) (NV10TCL_TX_GEN_MODE_S(i) + 4 * (j))
-#define TX_GEN_COEFF(i, j) (NV10TCL_TX_GEN_COEFF_S_A(i) + 16 * (j))
-#define TX_MATRIX(i) (NV10TCL_TX0_MATRIX(0) + 64 * (i))
 
 void
 nv10_emit_tex_gen(struct gl_context *ctx, int emit)
@@ -53,15 +49,15 @@ nv10_emit_tex_gen(struct gl_context *ctx, int emit)
 
 			if (k) {
 				BEGIN_RING(chan, celsius,
-					   TX_GEN_COEFF(i, j), 4);
+					   NV10_3D_TEX_GEN_COEFF(i, j), 4);
 				OUT_RINGp(chan, k, 4);
 			}
 
-			BEGIN_RING(chan, celsius, TX_GEN_MODE(i, j), 1);
+			BEGIN_RING(chan, celsius, NV10_3D_TEX_GEN_MODE(i,j), 1);
 			OUT_RING(chan, nvgl_texgen_mode(coord->Mode));
 
 		} else {
-			BEGIN_RING(chan, celsius, TX_GEN_MODE(i, j), 1);
+			BEGIN_RING(chan, celsius, NV10_3D_TEX_GEN_MODE(i,j), 1);
 			OUT_RING(chan, 0);
 		}
 	}
@@ -80,14 +76,14 @@ nv10_emit_tex_mat(struct gl_context *ctx, int emit)
 	if (nctx->fallback == HWTNL &&
 	    ((ctx->Texture._TexMatEnabled & 1 << i) ||
 	     ctx->Texture.Unit[i]._GenFlags)) {
-		BEGIN_RING(chan, celsius, NV10TCL_TX_MATRIX_ENABLE(i), 1);
+		BEGIN_RING(chan, celsius, NV10_3D_TEX_MATRIX_ENABLE(i), 1);
 		OUT_RING(chan, 1);
 
-		BEGIN_RING(chan, celsius, TX_MATRIX(i), 16);
+		BEGIN_RING(chan, celsius, NV10_3D_TEX_MATRIX(i, 0), 16);
 		OUT_RINGm(chan, ctx->TextureMatrixStack[i].Top->m);
 
 	} else {
-		BEGIN_RING(chan, celsius, NV10TCL_TX_MATRIX_ENABLE(i), 1);
+		BEGIN_RING(chan, celsius, NV10_3D_TEX_MATRIX_ENABLE(i), 1);
 		OUT_RING(chan, 0);
 	}
 }
@@ -97,29 +93,29 @@ get_tex_format_pot(struct gl_texture_image *ti)
 {
 	switch (ti->TexFormat) {
 	case MESA_FORMAT_ARGB8888:
-		return NV10TCL_TX_FORMAT_FORMAT_A8R8G8B8;
+		return NV10_3D_TEX_FORMAT_FORMAT_A8R8G8B8;
 
 	case MESA_FORMAT_XRGB8888:
-		return NV10TCL_TX_FORMAT_FORMAT_X8R8G8B8;
+		return NV10_3D_TEX_FORMAT_FORMAT_X8R8G8B8;
 
 	case MESA_FORMAT_ARGB1555:
-		return NV10TCL_TX_FORMAT_FORMAT_A1R5G5B5;
+		return NV10_3D_TEX_FORMAT_FORMAT_A1R5G5B5;
 
 	case MESA_FORMAT_ARGB4444:
-		return NV10TCL_TX_FORMAT_FORMAT_A4R4G4B4;
+		return NV10_3D_TEX_FORMAT_FORMAT_A4R4G4B4;
 
 	case MESA_FORMAT_RGB565:
-		return NV10TCL_TX_FORMAT_FORMAT_R5G6B5;
+		return NV10_3D_TEX_FORMAT_FORMAT_R5G6B5;
 
 	case MESA_FORMAT_A8:
 	case MESA_FORMAT_I8:
-		return NV10TCL_TX_FORMAT_FORMAT_A8;
+		return NV10_3D_TEX_FORMAT_FORMAT_I8;
 
 	case MESA_FORMAT_L8:
-		return NV10TCL_TX_FORMAT_FORMAT_L8;
+		return NV10_3D_TEX_FORMAT_FORMAT_L8;
 
 	case MESA_FORMAT_CI8:
-		return NV10TCL_TX_FORMAT_FORMAT_INDEX8;
+		return NV10_3D_TEX_FORMAT_FORMAT_INDEX8;
 
 	default:
 		assert(0);
@@ -131,19 +127,19 @@ get_tex_format_rect(struct gl_texture_image *ti)
 {
 	switch (ti->TexFormat) {
 	case MESA_FORMAT_ARGB1555:
-		return NV10TCL_TX_FORMAT_FORMAT_A1R5G5B5_RECT;
+		return NV10_3D_TEX_FORMAT_FORMAT_A1R5G5B5_RECT;
 
 	case MESA_FORMAT_RGB565:
-		return NV10TCL_TX_FORMAT_FORMAT_R5G6B5_RECT;
+		return NV10_3D_TEX_FORMAT_FORMAT_R5G6B5_RECT;
 
 	case MESA_FORMAT_ARGB8888:
 	case MESA_FORMAT_XRGB8888:
-		return NV10TCL_TX_FORMAT_FORMAT_A8R8G8B8_RECT;
+		return NV10_3D_TEX_FORMAT_FORMAT_A8R8G8B8_RECT;
 
 	case MESA_FORMAT_A8:
 	case MESA_FORMAT_L8:
 	case MESA_FORMAT_I8:
-		return NV10TCL_TX_FORMAT_FORMAT_A8_RECT;
+		return NV10_3D_TEX_FORMAT_FORMAT_I8_RECT;
 
 	default:
 		assert(0);
@@ -164,7 +160,7 @@ nv10_emit_tex_obj(struct gl_context *ctx, int emit)
 	uint32_t tx_format, tx_filter, tx_enable;
 
 	if (!ctx->Texture.Unit[i]._ReallyEnabled) {
-		BEGIN_RING(chan, celsius, NV10TCL_TX_ENABLE(i), 1);
+		BEGIN_RING(chan, celsius, NV10_3D_TEX_ENABLE(i), 1);
 		OUT_RING(chan, 0);
 		return;
 	}
@@ -186,13 +182,13 @@ nv10_emit_tex_obj(struct gl_context *ctx, int emit)
 	tx_filter = nvgl_filter_mode(t->MagFilter) << 28
 		| nvgl_filter_mode(t->MinFilter) << 24;
 
-	tx_enable = NV10TCL_TX_ENABLE_ENABLE
+	tx_enable = NV10_3D_TEX_ENABLE_ENABLE
 		| log2i(t->MaxAnisotropy) << 4;
 
 	if (t->Target == GL_TEXTURE_RECTANGLE) {
-		BEGIN_RING(chan, celsius, NV10TCL_TX_NPOT_PITCH(i), 1);
+		BEGIN_RING(chan, celsius, NV10_3D_TEX_NPOT_PITCH(i), 1);
 		OUT_RING(chan, s->pitch << 16);
-		BEGIN_RING(chan, celsius, NV10TCL_TX_NPOT_SIZE(i), 1);
+		BEGIN_RING(chan, celsius, NV10_3D_TEX_NPOT_SIZE(i), 1);
 		OUT_RING(chan, align(s->width, 2) << 16 | s->height);
 
 		tx_format |= get_tex_format_rect(ti);
@@ -211,26 +207,26 @@ nv10_emit_tex_obj(struct gl_context *ctx, int emit)
 		lod_min = CLAMP(lod_min, 0, 15);
 		lod_bias = CLAMP(lod_bias, 0, 15);
 
-		tx_format |= NV10TCL_TX_FORMAT_MIPMAP;
+		tx_format |= NV10_3D_TEX_FORMAT_MIPMAP;
 		tx_filter |= lod_bias << 8;
 		tx_enable |= lod_min << 26
 			| lod_max << 14;
 	}
 
 	/* Write it to the hardware. */
-	nouveau_bo_mark(bctx, celsius, NV10TCL_TX_FORMAT(i),
+	nouveau_bo_mark(bctx, celsius, NV10_3D_TEX_FORMAT(i),
 			s->bo, tx_format, 0,
-			NV10TCL_TX_FORMAT_DMA0,
-			NV10TCL_TX_FORMAT_DMA1,
+			NV10_3D_TEX_FORMAT_DMA0,
+			NV10_3D_TEX_FORMAT_DMA1,
 			bo_flags | NOUVEAU_BO_OR);
 
-	nouveau_bo_markl(bctx, celsius, NV10TCL_TX_OFFSET(i),
+	nouveau_bo_markl(bctx, celsius, NV10_3D_TEX_OFFSET(i),
 			 s->bo, s->offset, bo_flags);
 
-	BEGIN_RING(chan, celsius, NV10TCL_TX_FILTER(i), 1);
+	BEGIN_RING(chan, celsius, NV10_3D_TEX_FILTER(i), 1);
 	OUT_RING(chan, tx_filter);
 
-	BEGIN_RING(chan, celsius, NV10TCL_TX_ENABLE(i), 1);
+	BEGIN_RING(chan, celsius, NV10_3D_TEX_ENABLE(i), 1);
 	OUT_RING(chan, tx_enable);
 }
 

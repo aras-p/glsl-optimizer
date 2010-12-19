@@ -55,4 +55,33 @@
 #endif
 
 
+/**
+ * Redefine these LLVM entrypoints as invalid macros to make sure we
+ * don't accidentally use them.  We need to use the functions which
+ * take an explicit LLVMContextRef parameter.
+ */
+#define LLVMInt1Type ILLEGAL_LLVM_FUNCTION
+#define LLVMInt8Type ILLEGAL_LLVM_FUNCTION
+#define LLVMInt16Type ILLEGAL_LLVM_FUNCTION
+#define LLVMInt32Type ILLEGAL_LLVM_FUNCTION
+#define LLVMInt64Type ILLEGAL_LLVM_FUNCTION
+#define LLVMIntType ILLEGAL_LLVM_FUNCTION
+#define LLVMFloatType ILLEGAL_LLVM_FUNCTION
+#define LLVMDoubleType ILLEGAL_LLVM_FUNCTION
+#define LLVMX86FP80Type ILLEGAL_LLVM_FUNCTION
+#define LLVMFP128Type ILLEGAL_LLVM_FUNCTION
+#define LLVMPPCFP128Type ILLEGAL_LLVM_FUNCTION
+#define LLVMStructType ILLEGAL_LLVM_FUNCTION
+#define LLVMVoidType ILLEGAL_LLVM_FUNCTION
+#define LLVMLabelType ILLEGAL_LLVM_FUNCTION
+#define LLVMOpaqueType ILLEGAL_LLVM_FUNCTION
+#define LLVMUnionType ILLEGAL_LLVM_FUNCTION
+#define LLVMMDString ILLEGAL_LLVM_FUNCTION
+#define LLVMMDNode ILLEGAL_LLVM_FUNCTION
+#define LLVMConstString ILLEGAL_LLVM_FUNCTION
+#define LLVMConstStruct ILLEGAL_LLVM_FUNCTION
+#define LLVMAppendBasicBlock ILLEGAL_LLVM_FUNCTION
+#define LLVMInsertBasicBlock ILLEGAL_LLVM_FUNCTION
+#define LLVMCreateBuilder ILLEGAL_LLVM_FUNCTION
+
 #endif /* LP_BLD_H */

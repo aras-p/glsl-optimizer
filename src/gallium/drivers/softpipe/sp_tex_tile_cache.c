@@ -48,6 +48,9 @@ sp_create_tex_tile_cache( struct pipe_context *pipe )
    struct softpipe_tex_tile_cache *tc;
    uint pos;
 
+   /* make sure max texture size works */
+   assert((TILE_SIZE << TEX_ADDR_BITS) >= (1 << (SP_MAX_TEXTURE_2D_LEVELS-1)));
+
    tc = CALLOC_STRUCT( softpipe_tex_tile_cache );
    if (tc) {
       tc->pipe = pipe;
@@ -260,15 +263,14 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
          }
 
          tc->tex_trans = 
-            pipe_get_transfer(tc->pipe, tc->texture, 
-			      addr.bits.face, 
-			      addr.bits.level, 
-			      addr.bits.z, 
-			      PIPE_TRANSFER_READ | PIPE_TRANSFER_UNSYNCHRONIZED,
-			      0, 0,
-			      u_minify(tc->texture->width0, addr.bits.level),
-			      u_minify(tc->texture->height0, addr.bits.level));
-         
+            pipe_get_transfer(tc->pipe, tc->texture,
+                              addr.bits.level,
+                              addr.bits.face + addr.bits.z,
+                              PIPE_TRANSFER_READ | PIPE_TRANSFER_UNSYNCHRONIZED,
+                              0, 0,
+                              u_minify(tc->texture->width0, addr.bits.level),
+                              u_minify(tc->texture->height0, addr.bits.level));
+
          tc->tex_trans_map = tc->pipe->transfer_map(tc->pipe, tc->tex_trans);
 
          tc->tex_face = addr.bits.face;
@@ -276,45 +278,26 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
          tc->tex_z = addr.bits.z;
       }
 
-      /* get tile from the transfer (view into texture) */
+      /* get tile from the transfer (view into texture)
+       * Note we're using the swizzle version of this fuction only because
+       * we need to pass the texture cache's format explicitly.
+       */
       pipe_get_tile_swizzle(tc->pipe,
 			    tc->tex_trans,
                             addr.bits.x * TILE_SIZE, 
                             addr.bits.y * TILE_SIZE,
                             TILE_SIZE,
                             TILE_SIZE,
-                            tc->swizzle_r,
-                            tc->swizzle_g,
-                            tc->swizzle_b,
-                            tc->swizzle_a,
+                            PIPE_SWIZZLE_RED,
+                            PIPE_SWIZZLE_GREEN,
+                            PIPE_SWIZZLE_BLUE,
+                            PIPE_SWIZZLE_ALPHA,
                             tc->format,
                             (float *) tile->data.color);
+
       tile->addr = addr;
    }
 
    tc->last_tile = tile;
    return tile;
-}
-
-
-
-/**
- * Return the swizzled border color.
- */
-const float *
-sp_tex_tile_cache_border_color(struct softpipe_tex_tile_cache *tc,
-                               const float border_color[4])
-{
-   float rgba01[6];
-
-   COPY_4V(rgba01, border_color);
-   rgba01[PIPE_SWIZZLE_ZERO] = 0.0f;
-   rgba01[PIPE_SWIZZLE_ONE] = 1.0f;
-
-   tc->swz_border_color[0] = rgba01[tc->swizzle_r];
-   tc->swz_border_color[1] = rgba01[tc->swizzle_g];
-   tc->swz_border_color[2] = rgba01[tc->swizzle_b];
-   tc->swz_border_color[3] = rgba01[tc->swizzle_a];
-
-   return tc->swz_border_color;
 }

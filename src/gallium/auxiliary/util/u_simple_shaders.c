@@ -204,7 +204,8 @@ util_make_fragment_tex_shader_writedepth(struct pipe_context *pipe,
 void *
 util_make_fragment_passthrough_shader(struct pipe_context *pipe)
 {
-   return util_make_fragment_clonecolor_shader(pipe, 1);
+   return util_make_fragment_cloneinput_shader(pipe, 1, TGSI_SEMANTIC_COLOR,
+                                               TGSI_INTERPOLATE_PERSPECTIVE);
 }
 
 
@@ -212,7 +213,9 @@ util_make_fragment_passthrough_shader(struct pipe_context *pipe)
  * Make a fragment shader that copies the input color to N output colors.
  */
 void *
-util_make_fragment_clonecolor_shader(struct pipe_context *pipe, int num_cbufs)
+util_make_fragment_cloneinput_shader(struct pipe_context *pipe, int num_cbufs,
+                                     int input_semantic,
+                                     int input_interpolate)
 {
    struct ureg_program *ureg;
    struct ureg_src src;
@@ -225,8 +228,8 @@ util_make_fragment_clonecolor_shader(struct pipe_context *pipe, int num_cbufs)
    if (ureg == NULL)
       return NULL;
 
-   src = ureg_DECL_fs_input( ureg, TGSI_SEMANTIC_COLOR, 0, 
-                             TGSI_INTERPOLATE_PERSPECTIVE );
+   src = ureg_DECL_fs_input( ureg, input_semantic, 0,
+                             input_interpolate );
 
    for (i = 0; i < num_cbufs; i++)
       dst[i] = ureg_DECL_output( ureg, TGSI_SEMANTIC_COLOR, i );

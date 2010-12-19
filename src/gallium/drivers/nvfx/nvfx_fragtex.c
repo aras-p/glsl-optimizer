@@ -122,8 +122,8 @@ nvfx_create_sampler_view(struct pipe_context *pipe,
 	}
 	else
 	{
-		sv->offset = nvfx_subresource_offset(pt, 0, sv->base.first_level, 0);
-		sv->npot_size = (u_minify(pt->width0, sv->base.first_level) << NV30_3D_TEX_NPOT_SIZE_W__SHIFT) | u_minify(pt->height0, sv->base.first_level);
+		sv->offset = nvfx_subresource_offset(pt, 0, sv->base.u.tex.first_level, 0);
+		sv->npot_size = (u_minify(pt->width0, sv->base.u.tex.first_level) << NV30_3D_TEX_NPOT_SIZE_W__SHIFT) | u_minify(pt->height0, sv->base.u.tex.first_level);
 
 		/* apparently, we need to ignore the t coordinate for 1D textures to fix piglit tex1d-2dborder */
 		if(pt->target == PIPE_TEXTURE_1D)

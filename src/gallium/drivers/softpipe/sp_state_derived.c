@@ -197,7 +197,7 @@ update_tgsi_samplers( struct softpipe_context *softpipe )
 {
    unsigned i;
 
-   softpipe_reset_sampler_varients( softpipe );
+   softpipe_reset_sampler_variants( softpipe );
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       struct softpipe_tex_tile_cache *tc = softpipe->tex_cache[i];

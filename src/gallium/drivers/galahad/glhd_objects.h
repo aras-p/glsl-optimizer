@@ -149,11 +149,13 @@ void
 galahad_resource_destroy(struct galahad_resource *glhd_resource);
 
 struct pipe_surface *
-galahad_surface_create(struct galahad_resource *glhd_resource,
+galahad_surface_create(struct galahad_context *glhd_context,
+                       struct galahad_resource *glhd_resource,
                         struct pipe_surface *surface);
 
 void
-galahad_surface_destroy(struct galahad_surface *glhd_surface);
+galahad_surface_destroy(struct galahad_context *glhd_context,
+                         struct galahad_surface *glhd_surface);
 
 struct pipe_sampler_view *
 galahad_sampler_view_create(struct galahad_context *glhd_context,

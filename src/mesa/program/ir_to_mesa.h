@@ -25,8 +25,11 @@
 extern "C" {
 #endif
 
-#include "main/config.h"
-#include "main/mtypes.h"
+#include "main/glheader.h"
+
+struct gl_context;
+struct gl_shader;
+struct gl_shader_program;
 
 void _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *sh);
 void _mesa_glsl_link_shader(struct gl_context *ctx, struct gl_shader_program *prog);

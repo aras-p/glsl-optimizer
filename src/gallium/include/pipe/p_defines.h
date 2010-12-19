@@ -138,12 +138,14 @@ enum pipe_error {
 /** Texture types.
  * See the documentation for info on PIPE_TEXTURE_RECT vs PIPE_TEXTURE_2D */
 enum pipe_texture_target {
-   PIPE_BUFFER       = 0,
-   PIPE_TEXTURE_1D   = 1,
-   PIPE_TEXTURE_2D   = 2,
-   PIPE_TEXTURE_3D   = 3,
-   PIPE_TEXTURE_CUBE = 4,
-   PIPE_TEXTURE_RECT = 5,
+   PIPE_BUFFER           = 0,
+   PIPE_TEXTURE_1D       = 1,
+   PIPE_TEXTURE_2D       = 2,
+   PIPE_TEXTURE_3D       = 3,
+   PIPE_TEXTURE_CUBE     = 4,
+   PIPE_TEXTURE_RECT     = 5,
+   PIPE_TEXTURE_1D_ARRAY = 6,
+   PIPE_TEXTURE_2D_ARRAY = 7,
    PIPE_MAX_TEXTURE_TYPES
 };
 
@@ -177,14 +179,6 @@ enum pipe_texture_target {
 
 #define PIPE_TEX_COMPARE_NONE          0
 #define PIPE_TEX_COMPARE_R_TO_TEXTURE  1
-
-
-/**
- * Surface layout -- a hint?  Or some driver-internal poking out into
- * the interface?
- */
-#define PIPE_SURFACE_LAYOUT_LINEAR  0
-
 
 /**
  * Clear buffer bits
@@ -281,9 +275,9 @@ enum pipe_transfer_usage {
  * Resource binding flags -- state tracker must specify in advance all
  * the ways a resource might be used.
  */
-#define PIPE_BIND_DEPTH_STENCIL        (1 << 0) /* get_tex_surface */
-#define PIPE_BIND_RENDER_TARGET        (1 << 1) /* get_tex_surface */
-#define PIPE_BIND_SAMPLER_VIEW         (1 << 2) /* get_sampler_view */
+#define PIPE_BIND_DEPTH_STENCIL        (1 << 0) /* create_surface */
+#define PIPE_BIND_RENDER_TARGET        (1 << 1) /* create_surface */
+#define PIPE_BIND_SAMPLER_VIEW         (1 << 2) /* create_sampler_view */
 #define PIPE_BIND_VERTEX_BUFFER        (1 << 3) /* set_vertex_buffers */
 #define PIPE_BIND_INDEX_BUFFER         (1 << 4) /* draw_elements */
 #define PIPE_BIND_CONSTANT_BUFFER      (1 << 5) /* set_constant_buffer */
@@ -461,6 +455,7 @@ enum pipe_cap {
    /** different blend funcs per rendertarget */
    PIPE_CAP_INDEP_BLEND_FUNC,
    PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE,
+   PIPE_CAP_ARRAY_TEXTURES,
    PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT,
    PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT,
    PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER,
@@ -489,6 +484,7 @@ enum pipe_shader_cap
    PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR,
    PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR,
    PIPE_SHADER_CAP_INDIRECT_CONST_ADDR,
+   PIPE_SHADER_CAP_SUBROUTINES, /* BGNSUB, ENDSUB, CAL, RET */
 };
 
 /**

@@ -43,8 +43,8 @@ enum r300_buffer_tiling {
 };
 
 enum r300_buffer_domain { /* bitfield */
-    R300_DOMAIN_GTT  = 1,
-    R300_DOMAIN_VRAM = 2
+    R300_DOMAIN_GTT  = 2,
+    R300_DOMAIN_VRAM = 4
 };
 
 #endif

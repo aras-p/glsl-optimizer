@@ -108,6 +108,7 @@ get_tile_depth(uint32_t tile_mode)
 
 struct nv50_surface {
 	struct pipe_surface base;
+	unsigned offset;
 };
 
 static INLINE struct nv50_surface *

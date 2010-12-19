@@ -30,6 +30,7 @@
 
 
 #include "pipe/p_compiler.h"
+#include "sp_texture.h"
 
 
 struct softpipe_tile_cache;
@@ -38,18 +39,22 @@ struct softpipe_tile_cache;
 /**
  * Cache tile size (width and height). This needs to be a power of two.
  */
-#define TILE_SIZE 64
+#define TILE_SIZE_LOG2 6
+#define TILE_SIZE (1 << TILE_SIZE_LOG2)
 
 
-/* If we need to support > 4096, just expand this to be a 64 bit
- * union, or consider tiling in Z as well.
+#define TILE_ADDR_BITS (SP_MAX_TEXTURE_2D_LEVELS - 1 - TILE_SIZE_LOG2)
+
+
+/**
+ * Surface tile address as a union for fast compares.
  */
 union tile_address {
    struct {
-      unsigned x:6;             /* 4096 / TILE_SIZE */
-      unsigned y:6;             /* 4096 / TILE_SIZE */
+      unsigned x:TILE_ADDR_BITS;     /* 16K / TILE_SIZE */
+      unsigned y:TILE_ADDR_BITS;     /* 16K / TILE_SIZE */
       unsigned invalid:1;
-      unsigned pad:19;
+      unsigned pad:15;
    } bits;
    unsigned value;
 };
@@ -68,11 +73,6 @@ struct softpipe_cached_tile
 };
 
 #define NUM_ENTRIES 50
-
-
-/** XXX move these */
-#define MAX_WIDTH 4096
-#define MAX_HEIGHT 4096
 
 
 struct softpipe_tile_cache

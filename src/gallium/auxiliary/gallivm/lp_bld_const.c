@@ -39,6 +39,7 @@
 
 #include "lp_bld_type.h"
 #include "lp_bld_const.h"
+#include "lp_bld_init.h"
 
 
 unsigned
@@ -211,31 +212,31 @@ lp_const_eps(struct lp_type type)
 
 
 LLVMValueRef
-lp_build_undef(struct lp_type type)
+lp_build_undef(struct gallivm_state *gallivm, struct lp_type type)
 {
-   LLVMTypeRef vec_type = lp_build_vec_type(type);
+   LLVMTypeRef vec_type = lp_build_vec_type(gallivm, type);
    return LLVMGetUndef(vec_type);
 }
                
 
 LLVMValueRef
-lp_build_zero(struct lp_type type)
+lp_build_zero(struct gallivm_state *gallivm, struct lp_type type)
 {
    if (type.length == 1) {
       if (type.floating)
-         return LLVMConstReal(LLVMFloatType(), 0.0);
+         return lp_build_const_float(gallivm, 0.0);
       else
-         return LLVMConstInt(LLVMIntType(type.width), 0, 0);
+         return LLVMConstInt(LLVMIntTypeInContext(gallivm->context, type.width), 0, 0);
    }
    else {
-      LLVMTypeRef vec_type = lp_build_vec_type(type);
+      LLVMTypeRef vec_type = lp_build_vec_type(gallivm, type);
       return LLVMConstNull(vec_type);
    }
 }
                
 
 LLVMValueRef
-lp_build_one(struct lp_type type)
+lp_build_one(struct gallivm_state *gallivm, struct lp_type type)
 {
    LLVMTypeRef elem_type;
    LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
@@ -243,7 +244,7 @@ lp_build_one(struct lp_type type)
 
    assert(type.length <= LP_MAX_VECTOR_LENGTH);
 
-   elem_type = lp_build_elem_type(type);
+   elem_type = lp_build_elem_type(gallivm, type);
 
    if(type.floating)
       elems[0] = LLVMConstReal(elem_type, 1.0);
@@ -283,10 +284,11 @@ lp_build_one(struct lp_type type)
  * Build constant-valued element from a scalar value.
  */
 LLVMValueRef
-lp_build_const_elem(struct lp_type type,
+lp_build_const_elem(struct gallivm_state *gallivm,
+                    struct lp_type type,
                     double val)
 {
-   LLVMTypeRef elem_type = lp_build_elem_type(type);
+   LLVMTypeRef elem_type = lp_build_elem_type(gallivm, type);
    LLVMValueRef elem;
 
    if(type.floating) {
@@ -306,15 +308,15 @@ lp_build_const_elem(struct lp_type type,
  * Build constant-valued vector from a scalar value.
  */
 LLVMValueRef
-lp_build_const_vec(struct lp_type type,
+lp_build_const_vec(struct gallivm_state *gallivm, struct lp_type type,
                    double val)
 {
    if (type.length == 1) {
-      return lp_build_const_elem(type, val);
+      return lp_build_const_elem(gallivm, type, val);
    } else {
       LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
       unsigned i;
-      elems[0] = lp_build_const_elem(type, val);
+      elems[0] = lp_build_const_elem(gallivm, type, val);
       for(i = 1; i < type.length; ++i)
          elems[i] = elems[0];
       return LLVMConstVector(elems, type.length);
@@ -323,10 +325,10 @@ lp_build_const_vec(struct lp_type type,
 
 
 LLVMValueRef
-lp_build_const_int_vec(struct lp_type type,
-                          long long val)
+lp_build_const_int_vec(struct gallivm_state *gallivm, struct lp_type type,
+                       long long val)
 {
-   LLVMTypeRef elem_type = lp_build_int_elem_type(type);
+   LLVMTypeRef elem_type = lp_build_int_elem_type(gallivm, type);
    LLVMValueRef elems[LP_MAX_VECTOR_LENGTH];
    unsigned i;
 
@@ -343,7 +345,8 @@ lp_build_const_int_vec(struct lp_type type,
 
 
 LLVMValueRef
-lp_build_const_aos(struct lp_type type, 
+lp_build_const_aos(struct gallivm_state *gallivm,
+                   struct lp_type type, 
                    double r, double g, double b, double a, 
                    const unsigned char *swizzle)
 {
@@ -355,7 +358,7 @@ lp_build_const_aos(struct lp_type type,
    assert(type.length % 4 == 0);
    assert(type.length <= LP_MAX_VECTOR_LENGTH);
 
-   elem_type = lp_build_elem_type(type);
+   elem_type = lp_build_elem_type(gallivm, type);
 
    if(swizzle == NULL)
       swizzle = default_swizzle;
@@ -386,10 +389,11 @@ lp_build_const_aos(struct lp_type type,
  * @param mask TGSI_WRITEMASK_xxx
  */
 LLVMValueRef
-lp_build_const_mask_aos(struct lp_type type,
+lp_build_const_mask_aos(struct gallivm_state *gallivm,
+                        struct lp_type type,
                         unsigned mask)
 {
-   LLVMTypeRef elem_type = LLVMIntType(type.width);
+   LLVMTypeRef elem_type = LLVMIntTypeInContext(gallivm->context, type.width);
    LLVMValueRef masks[LP_MAX_VECTOR_LENGTH];
    unsigned i, j;
 

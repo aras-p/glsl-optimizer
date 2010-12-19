@@ -641,8 +641,8 @@ extern HIDDEN void __indirect_glGetVertexAttribfvNV(GLuint index, GLenum pname, 
 extern HIDDEN void __indirect_glGetVertexAttribivNV(GLuint index, GLenum pname, GLint * params);
 extern HIDDEN GLboolean __indirect_glIsProgramNV(GLuint program);
 extern HIDDEN void __indirect_glLoadProgramNV(GLenum target, GLuint id, GLsizei len, const GLubyte * program);
-extern HIDDEN void __indirect_glProgramParameters4dvNV(GLenum target, GLuint index, GLuint num, const GLdouble * params);
-extern HIDDEN void __indirect_glProgramParameters4fvNV(GLenum target, GLuint index, GLuint num, const GLfloat * params);
+extern HIDDEN void __indirect_glProgramParameters4dvNV(GLenum target, GLuint index, GLsizei num, const GLdouble * params);
+extern HIDDEN void __indirect_glProgramParameters4fvNV(GLenum target, GLuint index, GLsizei num, const GLfloat * params);
 extern HIDDEN void __indirect_glRequestResidentProgramsNV(GLsizei n, const GLuint * ids);
 extern HIDDEN void __indirect_glTrackMatrixNV(GLenum target, GLuint address, GLenum matrix, GLenum transform);
 extern HIDDEN void __indirect_glVertexAttrib1dNV(GLuint index, GLdouble x);

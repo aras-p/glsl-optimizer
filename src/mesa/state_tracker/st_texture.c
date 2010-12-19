@@ -84,6 +84,7 @@ st_texture_create(struct st_context *st,
    pt.width0 = width0;
    pt.height0 = height0;
    pt.depth0 = depth0;
+   pt.array_size = (target == PIPE_TEXTURE_CUBE ? 6 : 1);
    pt.usage = PIPE_USAGE_DEFAULT;
    pt.bind = bind;
    pt.flags = 0;
@@ -136,7 +137,7 @@ st_texture_match_image(const struct pipe_resource *pt,
  */
 GLubyte *
 st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
-		     GLuint zoffset, enum pipe_transfer_usage usage,
+                     GLuint zoffset, enum pipe_transfer_usage usage,
                      GLuint x, GLuint y, GLuint w, GLuint h)
 {
    struct pipe_context *pipe = st->pipe;
@@ -144,9 +145,9 @@ st_texture_image_map(struct st_context *st, struct st_texture_image *stImage,
 
    DBG("%s \n", __FUNCTION__);
 
-   stImage->transfer = pipe_get_transfer(st->pipe, pt, stImage->face,
-						    stImage->level, zoffset,
-						    usage, x, y, w, h);
+   stImage->transfer = pipe_get_transfer(st->pipe, pt, stImage->level,
+                                         stImage->face + zoffset,
+                                         usage, x, y, w, h);
 
    if (stImage->transfer)
       return pipe_transfer_map(pipe, stImage->transfer);
@@ -219,10 +220,10 @@ st_texture_image_data(struct st_context *st,
    DBG("%s\n", __FUNCTION__);
 
    for (i = 0; i < depth; i++) {
-      dst_transfer = pipe_get_transfer(st->pipe, dst, face, level, i,
-						  PIPE_TRANSFER_WRITE, 0, 0,
-						  u_minify(dst->width0, level),
-                                                  u_minify(dst->height0, level));
+      dst_transfer = pipe_get_transfer(st->pipe, dst, level, face + i,
+                                       PIPE_TRANSFER_WRITE, 0, 0,
+                                       u_minify(dst->width0, level),
+                                       u_minify(dst->height0, level));
 
       st_surface_data(pipe, dst_transfer,
 		      0, 0,                             /* dstx, dsty */
@@ -230,7 +231,7 @@ st_texture_image_data(struct st_context *st,
 		      src_row_stride,
 		      0, 0,                             /* source x, y */
 		      u_minify(dst->width0, level),
-                      u_minify(dst->height0, level));      /* width, height */
+                      u_minify(dst->height0, level));    /* width, height */
 
       pipe->transfer_destroy(pipe, dst_transfer);
 
@@ -245,13 +246,9 @@ st_texture_image_data(struct st_context *st,
 static void
 print_center_pixel(struct pipe_context *pipe, struct pipe_resource *src)
 {
-   struct pipe_subresource rect;
    struct pipe_transfer *xfer;
    struct pipe_box region;
    ubyte *map;
-
-   rect.face = 0;
-   rect.level = 0;
 
    region.x = src->width0 / 2;
    region.y = src->height0 / 2;
@@ -260,7 +257,7 @@ print_center_pixel(struct pipe_context *pipe, struct pipe_resource *src)
    region.height = 1;
    region.depth = 1;
 
-   xfer = pipe->get_transfer(pipe, src, rect, PIPE_TRANSFER_READ, &region);
+   xfer = pipe->get_transfer(pipe, src, 0, PIPE_TRANSFER_READ, &region);
    map = pipe->transfer_map(pipe, xfer);
 
    printf("center pixel: %d %d %d %d\n", map[0], map[1], map[2], map[3]);
@@ -282,22 +279,26 @@ st_texture_image_copy(struct pipe_context *pipe,
                       struct pipe_resource *src, GLuint srcLevel,
                       GLuint face)
 {
-   GLuint width = u_minify(dst->width0, dstLevel); 
-   GLuint height = u_minify(dst->height0, dstLevel); 
-   GLuint depth = u_minify(dst->depth0, dstLevel); 
-   struct pipe_subresource dstsub, srcsub;
+   GLuint width = u_minify(dst->width0, dstLevel);
+   GLuint height = u_minify(dst->height0, dstLevel);
+   GLuint depth = u_minify(dst->depth0, dstLevel);
+   struct pipe_box src_box;
    GLuint i;
 
    assert(u_minify(src->width0, srcLevel) == width);
    assert(u_minify(src->height0, srcLevel) == height);
    assert(u_minify(src->depth0, srcLevel) == depth);
 
-   dstsub.face = face;
-   dstsub.level = dstLevel;
-   srcsub.face = face;
-   srcsub.level = srcLevel;
+   src_box.x = 0;
+   src_box.y = 0;
+   src_box.width = width;
+   src_box.height = height;
+   src_box.depth = 1;
    /* Loop over 3D image slices */
-   for (i = 0; i < depth; i++) {
+   /* could (and probably should) use "true" 3d box here -
+      but drivers can't quite handle it yet */
+   for (i = face; i < face + depth; i++) {
+      src_box.z = i;
 
       if (0)  {
          print_center_pixel(pipe, src);
@@ -305,12 +306,11 @@ st_texture_image_copy(struct pipe_context *pipe,
 
       pipe->resource_copy_region(pipe,
                                  dst,
-                                 dstsub,
+                                 dstLevel,
                                  0, 0, i,/* destX, Y, Z */
                                  src,
-                                 srcsub,
-                                 0, 0, i,/* srcX, Y, Z */
-                                 width, height);
+                                 srcLevel,
+                                 &src_box);
    }
 }
 

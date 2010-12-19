@@ -422,6 +422,7 @@ void svga_init_vertex_functions( struct svga_context *svga );
 void svga_init_constbuffer_functions( struct svga_context *svga );
 void svga_init_draw_functions( struct svga_context *svga );
 void svga_init_query_functions( struct svga_context *svga );
+void svga_init_surface_functions(struct svga_context *svga);
 
 void svga_cleanup_vertex_state( struct svga_context *svga );
 void svga_cleanup_tss_binding( struct svga_context *svga );

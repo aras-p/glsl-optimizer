@@ -164,9 +164,8 @@ struct st_egl_image
    /* this is owned by the caller */
    struct pipe_resource *texture;
 
-   unsigned face;
    unsigned level;
-   unsigned zslice;
+   unsigned layer;
 };
 
 /**
@@ -349,6 +348,12 @@ struct st_context_iface
                 struct st_context_iface *stsrci, unsigned mask);
 
    /**
+    * Used to implement wglShareLists.
+    */
+   boolean (*share)(struct st_context_iface *stctxi,
+                    struct st_context_iface *stsrci);
+
+   /**
     * Look up and return the info of a resource for EGLImage.
     *
     * This function is optional.
@@ -401,6 +406,11 @@ struct st_manager
  */
 struct st_api
 {
+   /**
+    * The name of the rendering API.  This is informative.
+    */
+   const char *name;
+
    /**
     * The supported rendering API.
     */

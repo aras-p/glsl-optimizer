@@ -828,6 +828,16 @@ void XMesaDestroyVisual( XMesaVisual v )
 
 
 /**
+ * Return the informative name.
+ */
+const char *
+xmesa_get_name(void)
+{
+   return stapi->name;
+}
+
+
+/**
  * Do per-display initializations.
  */
 void

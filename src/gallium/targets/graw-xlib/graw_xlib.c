@@ -3,8 +3,8 @@
 #include "pipe/p_screen.h"
 #include "util/u_debug.h"
 #include "util/u_memory.h"
-#include "target-helpers/wrap_screen.h"
 #include "target-helpers/inline_sw_helper.h"
+#include "target-helpers/inline_debug_helper.h"
 #include "state_tracker/xlib_sw_winsys.h"
 #include "state_tracker/graw.h"
 
@@ -36,7 +36,7 @@ graw_create_screen( void )
 
    /* Inject any wrapping layers we want to here:
     */
-   return gallium_wrap_screen( screen );
+   return debug_screen_wrap( screen );
 }
 
 

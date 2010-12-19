@@ -31,7 +31,6 @@
 #include "api.h"
 #include "renderer.h"
 #include "shaders_cache.h"
-#include "st_inlines.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
@@ -41,7 +40,6 @@
 #include "util/u_format.h"
 #include "util/u_sampler.h"
 #include "util/u_string.h"
-
 
 #include "asm_filters.h"
 
@@ -73,6 +71,7 @@ static INLINE struct pipe_resource *create_texture_1d(struct vg_context *ctx,
    templ.width0 = color_data_len;
    templ.height0 = 1;
    templ.depth0 = 1;
+   templ.array_size = 1;
    templ.bind = PIPE_BIND_SAMPLER_VIEW;
 
    tex = screen->resource_create(screen, &templ);
@@ -80,9 +79,9 @@ static INLINE struct pipe_resource *create_texture_1d(struct vg_context *ctx,
    { /* upload color_data */
       struct pipe_transfer *transfer =
          pipe_get_transfer(pipe, tex,
-				0, 0, 0,
-				PIPE_TRANSFER_READ_WRITE ,
-				0, 0, tex->width0, tex->height0);
+                           0, 0,
+                           PIPE_TRANSFER_READ_WRITE ,
+                           0, 0, tex->width0, tex->height0);
       void *map = pipe->transfer_map(pipe, transfer);
       memcpy(map, color_data, sizeof(VGint)*color_data_len);
       pipe->transfer_unmap(pipe, transfer);
@@ -114,153 +113,11 @@ static INLINE struct pipe_sampler_view *create_texture_1d_view(struct vg_context
    return view;
 }
 
-static INLINE struct pipe_surface * setup_framebuffer(struct vg_image *dst)
-{
-   struct vg_context *ctx = vg_current_context();
-   struct pipe_context *pipe = ctx->pipe;
-   struct pipe_framebuffer_state fb;
-   struct pipe_surface *dst_surf = pipe->screen->get_tex_surface(
-      pipe->screen, dst->sampler_view->texture, 0, 0, 0,
-      PIPE_BIND_RENDER_TARGET);
-
-   /* drawing dest */
-   memset(&fb, 0, sizeof(fb));
-   fb.width  = dst->x + dst_surf->width;
-   fb.height = dst->y + dst_surf->height;
-   fb.nr_cbufs = 1;
-   fb.cbufs[0] = dst_surf;
-   {
-      VGint i;
-      for (i = 1; i < PIPE_MAX_COLOR_BUFS; ++i)
-         fb.cbufs[i] = 0;
-   }
-   cso_set_framebuffer(ctx->cso_context, &fb);
-
-   return dst_surf;
-}
-
-static void setup_viewport(struct vg_image *dst)
-{
-   struct vg_context *ctx = vg_current_context();
-   vg_set_viewport(ctx, VEGA_Y0_TOP);
-}
-
-static void setup_blend()
-{
-   struct vg_context *ctx = vg_current_context();
-   struct pipe_blend_state blend;
-   memset(&blend, 0, sizeof(blend));
-   blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
-   blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-   if (ctx->state.vg.filter_channel_mask & VG_RED)
-      blend.rt[0].colormask |= PIPE_MASK_R;
-   if (ctx->state.vg.filter_channel_mask & VG_GREEN)
-      blend.rt[0].colormask |= PIPE_MASK_G;
-   if (ctx->state.vg.filter_channel_mask & VG_BLUE)
-      blend.rt[0].colormask |= PIPE_MASK_B;
-   if (ctx->state.vg.filter_channel_mask & VG_ALPHA)
-      blend.rt[0].colormask |= PIPE_MASK_A;
-   blend.rt[0].blend_enable = 0;
-   cso_set_blend(ctx->cso_context, &blend);
-}
-
-static void setup_constant_buffer(struct vg_context *ctx, const void *buffer,
-                                  VGint param_bytes)
-{
-   struct pipe_context *pipe = ctx->pipe;
-   struct pipe_resource **cbuf = &ctx->filter.buffer;
-
-   /* We always need to get a new buffer, to keep the drivers simple and
-    * avoid gratuitous rendering synchronization. */
-   pipe_resource_reference(cbuf, NULL);
-
-   *cbuf = pipe_buffer_create(pipe->screen, 
-                              PIPE_BIND_CONSTANT_BUFFER,
-                              param_bytes);
-
-   if (*cbuf) {
-      st_no_flush_pipe_buffer_write(ctx, *cbuf,
-                                    0, param_bytes, buffer);
-   }
-
-   ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_FRAGMENT, 0, *cbuf);
-}
-
-static void setup_samplers(struct vg_context *ctx, struct filter_info *info)
-{
-   struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS];
-   struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
-   struct pipe_sampler_state sampler[3];
-   int num_samplers = 0;
-   int num_textures = 0;
-
-   samplers[0] = NULL;
-   samplers[1] = NULL;
-   samplers[2] = NULL;
-   samplers[3] = NULL;
-   sampler_views[0] = NULL;
-   sampler_views[1] = NULL;
-   sampler_views[2] = NULL;
-   sampler_views[3] = NULL;
-
-   memset(&sampler[0], 0, sizeof(struct pipe_sampler_state));
-   sampler[0].wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler[0].wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler[0].wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-   sampler[0].min_img_filter = PIPE_TEX_MIPFILTER_LINEAR;
-   sampler[0].mag_img_filter = PIPE_TEX_MIPFILTER_LINEAR;
-   sampler[0].normalized_coords = 1;
-
-   switch(info->tiling_mode) {
-   case VG_TILE_FILL:
-      sampler[0].wrap_s = PIPE_TEX_WRAP_CLAMP_TO_BORDER;
-      sampler[0].wrap_t = PIPE_TEX_WRAP_CLAMP_TO_BORDER;
-      memcpy(sampler[0].border_color,
-             ctx->state.vg.tile_fill_color,
-             sizeof(VGfloat) * 4);
-      break;
-   case VG_TILE_PAD:
-      sampler[0].wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-      sampler[0].wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-      break;
-   case VG_TILE_REPEAT:
-      sampler[0].wrap_s = PIPE_TEX_WRAP_REPEAT;
-      sampler[0].wrap_t = PIPE_TEX_WRAP_REPEAT;
-      break;
-   case VG_TILE_REFLECT:
-      sampler[0].wrap_s = PIPE_TEX_WRAP_MIRROR_REPEAT;
-      sampler[0].wrap_t = PIPE_TEX_WRAP_MIRROR_REPEAT;
-      break;
-   default:
-      debug_assert(!"Unknown tiling mode");
-   }
-
-   samplers[0] = &sampler[0];
-   sampler_views[0] = info->src->sampler_view;
-   ++num_samplers;
-   ++num_textures;
-
-   if (info->extra_texture_view) {
-      memcpy(&sampler[1], &sampler[0], sizeof(struct pipe_sampler_state));
-      samplers[1] = &sampler[1];
-      sampler_views[1] = info->extra_texture_view;
-      ++num_samplers;
-      ++num_textures;
-   }
-
-
-   cso_set_samplers(ctx->cso_context, num_samplers, (const struct pipe_sampler_state **)samplers);
-   cso_set_fragment_sampler_views(ctx->cso_context, num_textures, sampler_views);
-}
-
 static struct vg_shader * setup_color_matrix(struct vg_context *ctx, void *user_data)
 {
    struct vg_shader *shader =
       shader_create_from_text(ctx->pipe, color_matrix_asm, 200,
          PIPE_SHADER_FRAGMENT);
-   cso_set_fragment_shader_handle(ctx->cso_context, shader->driver);
    return shader;
 }
 
@@ -275,7 +132,6 @@ static struct vg_shader * setup_convolution(struct vg_context *ctx, void *user_d
    shader = shader_create_from_text(ctx->pipe, buffer, 200,
                                     PIPE_SHADER_FRAGMENT);
 
-   cso_set_fragment_shader_handle(ctx->cso_context, shader->driver);
    return shader;
 }
 
@@ -285,7 +141,6 @@ static struct vg_shader * setup_lookup(struct vg_context *ctx, void *user_data)
       shader_create_from_text(ctx->pipe, lookup_asm,
                               200, PIPE_SHADER_FRAGMENT);
 
-   cso_set_fragment_shader_handle(ctx->cso_context, shader->driver);
    return shader;
 }
 
@@ -316,49 +171,68 @@ static struct vg_shader * setup_lookup_single(struct vg_context *ctx, void *user
    shader = shader_create_from_text(ctx->pipe, buffer, 200,
                                     PIPE_SHADER_FRAGMENT);
 
-   cso_set_fragment_shader_handle(ctx->cso_context, shader->driver);
    return shader;
 }
 
 static void execute_filter(struct vg_context *ctx,
                            struct filter_info *info)
 {
-   struct pipe_surface *dst_surf;
    struct vg_shader *shader;
+   const struct pipe_sampler_state *samplers[2];
+   struct pipe_sampler_view *views[2];
+   struct pipe_sampler_state sampler;
+   uint tex_wrap;
 
-   cso_save_framebuffer(ctx->cso_context);
-   cso_save_fragment_shader(ctx->cso_context);
-   cso_save_viewport(ctx->cso_context);
-   cso_save_blend(ctx->cso_context);
-   cso_save_samplers(ctx->cso_context);
-   cso_save_fragment_sampler_views(ctx->cso_context);
+   memset(&sampler, 0, sizeof(sampler));
+   sampler.min_img_filter = PIPE_TEX_FILTER_LINEAR;
+   sampler.mag_img_filter = PIPE_TEX_FILTER_LINEAR;
+   sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
+   sampler.normalized_coords = 1;
 
-   dst_surf = setup_framebuffer(info->dst);
-   setup_viewport(info->dst);
-   setup_blend();
-   setup_constant_buffer(ctx, info->const_buffer, info->const_buffer_len);
+   switch (info->tiling_mode) {
+   case VG_TILE_FILL:
+      tex_wrap = PIPE_TEX_WRAP_CLAMP_TO_BORDER;
+      /* copy border color */
+      memcpy(sampler.border_color, ctx->state.vg.tile_fill_color,
+            sizeof(sampler.border_color));
+      break;
+   case VG_TILE_PAD:
+      tex_wrap = PIPE_TEX_WRAP_CLAMP_TO_EDGE;;
+      break;
+   case VG_TILE_REPEAT:
+      tex_wrap = PIPE_TEX_WRAP_REPEAT;;
+      break;
+   case VG_TILE_REFLECT:
+      tex_wrap = PIPE_TEX_WRAP_MIRROR_REPEAT;
+      break;
+   default:
+      debug_assert(!"Unknown tiling mode");
+      tex_wrap = 0;
+      break;
+   }
+
+   sampler.wrap_s = tex_wrap;
+   sampler.wrap_t = tex_wrap;
+   sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+
+   samplers[0] = samplers[1] = &sampler;
+   views[0] = info->src->sampler_view;
+   views[1] = info->extra_texture_view;
+
    shader = info->setup_shader(ctx, info->user_data);
-   setup_samplers(ctx, info);
 
-   renderer_draw_texture(ctx->renderer,
-                         info->src->sampler_view->texture,
-                         info->dst->x, info->dst->y,
-                         info->dst->x + info->dst->width,
-                         info->dst->y + info->dst->height,
-                         info->dst->x, info->dst->y,
-                         info->dst->x + info->dst->width,
-                         info->dst->y + info->dst->height);
-
-   cso_restore_framebuffer(ctx->cso_context);
-   cso_restore_fragment_shader(ctx->cso_context);
-   cso_restore_viewport(ctx->cso_context);
-   cso_restore_blend(ctx->cso_context);
-   cso_restore_samplers(ctx->cso_context);
-   cso_restore_fragment_sampler_views(ctx->cso_context);
+   if (renderer_filter_begin(ctx->renderer,
+            info->dst->sampler_view->texture, VG_TRUE,
+            ctx->state.vg.filter_channel_mask,
+            samplers, views, (info->extra_texture_view) ? 2 : 1,
+            shader->driver, info->const_buffer, info->const_buffer_len)) {
+      renderer_filter(ctx->renderer,
+            info->dst->x, info->dst->y, info->dst->width, info->dst->height,
+            info->src->x, info->src->y, info->src->width, info->src->height);
+      renderer_filter_end(ctx->renderer);
+   }
 
    vg_shader_destroy(ctx, shader);
-
-   pipe_surface_reference(&dst_surf, NULL);
 }
 
 void vegaColorMatrix(VGImage dst, VGImage src,
@@ -795,6 +669,8 @@ void vegaLookupSingle(VGImage dst, VGImage src,
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return;
    }
+
+   vg_validate_state(ctx);
 
    for (i = 0; i < 256; ++i) {
       VGuint rgba = lookupTable[i];

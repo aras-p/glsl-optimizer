@@ -27,9 +27,9 @@
 
 enum r600_blitter_op /* bitmask */
 {
-    R600_CLEAR         = 1,
-    R600_CLEAR_SURFACE = 2,
-    R600_COPY          = 4
+	R600_CLEAR         = 1,
+	R600_CLEAR_SURFACE = 2,
+	R600_COPY          = 4
 };
 
 static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op)
@@ -81,16 +81,21 @@ static void r600_blitter_end(struct pipe_context *ctx)
 int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct pipe_surface *zsurf, *cbsurf;
+	struct pipe_surface *zsurf, *cbsurf, surf_tmpl;
 	int level = 0;
 	float depth = 1.0f;
+	surf_tmpl.format = texture->resource.base.b.format;
+	surf_tmpl.u.tex.level = level;
+	surf_tmpl.u.tex.first_layer = 0;
+	surf_tmpl.u.tex.last_layer = 0;
+	surf_tmpl.usage = PIPE_BIND_DEPTH_STENCIL;
 
-	zsurf = ctx->screen->get_tex_surface(ctx->screen, &texture->resource.base.b, 0, level, 0,
-					     PIPE_BIND_DEPTH_STENCIL);
+	zsurf = ctx->create_surface(ctx, &texture->resource.base.b, &surf_tmpl);
 
-	cbsurf = ctx->screen->get_tex_surface(ctx->screen,
-			(struct pipe_resource*)texture->flushed_depth_texture,
-			0, level, 0, PIPE_BIND_RENDER_TARGET);
+	surf_tmpl.format = ((struct pipe_resource*)texture->flushed_depth_texture)->format;
+	surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
+	cbsurf = ctx->create_surface(ctx,
+			(struct pipe_resource*)texture->flushed_depth_texture, &surf_tmpl);
 
 	if (rctx->family == CHIP_RV610 || rctx->family == CHIP_RV630 ||
 	    rctx->family == CHIP_RV620 || rctx->family == CHIP_RV635)
@@ -154,42 +159,38 @@ static void r600_clear_depth_stencil(struct pipe_context *ctx,
 
 /* Copy a block of pixels from one surface to another using HW. */
 static void r600_hw_copy_region(struct pipe_context *ctx,
-                                struct pipe_resource *dst,
-                                struct pipe_subresource subdst,
-                                unsigned dstx, unsigned dsty, unsigned dstz,
-                                struct pipe_resource *src,
-                                struct pipe_subresource subsrc,
-                                unsigned srcx, unsigned srcy, unsigned srcz,
-                                unsigned width, unsigned height)
+				struct pipe_resource *dst,
+				unsigned dst_level,
+				unsigned dstx, unsigned dsty, unsigned dstz,
+				struct pipe_resource *src,
+				unsigned src_level,
+				const struct pipe_box *src_box)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 
 	r600_blitter_begin(ctx, R600_COPY);
-	util_blitter_copy_region(rctx->blitter, dst, subdst, dstx, dsty, dstz,
-				 src, subsrc, srcx, srcy, srcz, width, height,
-				 TRUE);
+	util_blitter_copy_region(rctx->blitter, dst, dst_level, dstx, dsty, dstz,
+				 src, src_level, src_box, TRUE);
 	r600_blitter_end(ctx);
 }
 
 static void r600_resource_copy_region(struct pipe_context *ctx,
 				      struct pipe_resource *dst,
-				      struct pipe_subresource subdst,
+				      unsigned dst_level,
 				      unsigned dstx, unsigned dsty, unsigned dstz,
 				      struct pipe_resource *src,
-				      struct pipe_subresource subsrc,
-				      unsigned srcx, unsigned srcy, unsigned srcz,
-				      unsigned width, unsigned height)
+				      unsigned src_level,
+				      const struct pipe_box *src_box)
 {
 	boolean is_depth;
 	/* there is something wrong with depth resource copies at the moment so avoid them for now */
 	is_depth = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 0) != 0;
 	if (is_depth)
-		util_resource_copy_region(ctx, dst, subdst, dstx, dsty, dstz,
-					  src, subsrc, srcx, srcy, srcz, width, height);
+		util_resource_copy_region(ctx, dst, dst_level, dstx, dsty, dstz,
+					  src, src_level, src_box);
 	else
-		r600_hw_copy_region(ctx, dst, subdst, dstx, dsty, dstz,
-				    src, subsrc, srcx, srcy, srcz, width, height);
-
+		r600_hw_copy_region(ctx, dst, dst_level, dstx, dsty, dstz,
+				    src, src_level, src_box);
 }
 
 void r600_init_blit_functions(struct r600_pipe_context *rctx)

@@ -44,7 +44,7 @@ $(VGAPI_OBJECTS): %.o: $(MAPI)/%.c
 
 vgapi_tmp.h: vgapi.csv $(MAPI)/mapi_abi.py
 	$(PYTHON2) $(PYTHON_FLAGS) $(MAPI)/mapi_abi.py \
-		-i vgapi/vgapi_defines.h $< > $@
+		--printer vgapi --mode lib $< > $@
 
 .PHONY: clean
 clean:
@@ -87,3 +87,5 @@ depend: $(VGAPI_SOURCES)
 	@$(MKDEP) $(MKDEP_OPTIONS) -f- $(DEFINES) $(INCLUDE_DIRS) \
 		$(VGAPI_CPPFLAGS) $(VGAPI_SOURCES) 2>/dev/null | \
 		sed -e 's,^$(MAPI)/,,' > depend
+
+-include depend

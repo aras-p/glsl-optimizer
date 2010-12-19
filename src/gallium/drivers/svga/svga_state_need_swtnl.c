@@ -114,7 +114,7 @@ static int update_need_pipeline( struct svga_context *svga,
    /* SVGA_NEW_RAST, SVGA_NEW_REDUCED_PRIMITIVE
     */
    if (svga->curr.rast->need_pipeline & (1 << svga->curr.reduced_prim)) {
-      SVGA_DBG(DEBUG_SWTNL, "%s: rast need_pipeline (%d) & prim (%x)\n", 
+      SVGA_DBG(DEBUG_SWTNL, "%s: rast need_pipeline (0x%x) & prim (0x%x)\n",
                  __FUNCTION__,
                  svga->curr.rast->need_pipeline,
                  (1 << svga->curr.reduced_prim) );

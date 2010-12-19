@@ -15,11 +15,20 @@ struct lp_setup_variant_list_item
 
 
 struct lp_setup_variant_key {   
+   unsigned size:16;
    unsigned num_inputs:8;
+   unsigned color_slot:8;
+
+   unsigned bcolor_slot:8;
+   unsigned spec_slot:8;
+   unsigned bspec_slot:8;
    unsigned flatshade_first:1;
    unsigned pixel_center_half:1;
-   unsigned pad:7;
-   unsigned size:16;
+   unsigned twoside:1;
+   unsigned pad:5;
+
+   float units;
+   float scale;      
    struct lp_shader_input inputs[PIPE_MAX_SHADER_INPUTS];
 };
 

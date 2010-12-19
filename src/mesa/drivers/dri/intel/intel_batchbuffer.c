@@ -92,9 +92,17 @@ do_flush_locked(struct intel_batchbuffer *batch, GLuint used)
 
    batch->ptr = NULL;
 
-   if (!intel->no_hw) {
-      drm_intel_bo_exec(batch->buf, used, NULL, 0,
-			(x_off & 0xffff) | (y_off << 16));
+   if (!intel->intelScreen->no_hw) {
+      int ring;
+
+      if (intel->gen < 6 || !intel->batch->is_blit) {
+	 ring = I915_EXEC_RENDER;
+      } else {
+	 ring = I915_EXEC_BLT;
+      }
+
+      drm_intel_bo_mrb_exec(batch->buf, used, NULL, 0,
+			    (x_off & 0xffff) | (y_off << 16), ring);
    }
 
    if (unlikely(INTEL_DEBUG & DEBUG_BATCH)) {
@@ -242,10 +250,10 @@ intel_batchbuffer_emit_reloc_fenced(struct intel_batchbuffer *batch,
 
 void
 intel_batchbuffer_data(struct intel_batchbuffer *batch,
-                       const void *data, GLuint bytes)
+                       const void *data, GLuint bytes, bool is_blit)
 {
    assert((bytes & 3) == 0);
-   intel_batchbuffer_require_space(batch, bytes);
+   intel_batchbuffer_require_space(batch, bytes, is_blit);
    __memcpy(batch->ptr, data, bytes);
    batch->ptr += bytes;
 }
@@ -262,22 +270,29 @@ intel_batchbuffer_emit_mi_flush(struct intel_batchbuffer *batch)
    struct intel_context *intel = batch->intel;
 
    if (intel->gen >= 6) {
-      BEGIN_BATCH(8);
+      if (intel->batch->is_blit) {
+	 BEGIN_BATCH_BLT(1);
+	 OUT_BATCH(MI_FLUSH);
+	 ADVANCE_BATCH();
+      } else {
+	 BEGIN_BATCH(8);
+	 /* XXX workaround: issue any post sync != 0 before write
+	  * cache flush = 1
+	  */
+	 OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+	 OUT_BATCH(PIPE_CONTROL_WRITE_IMMEDIATE);
+	 OUT_BATCH(0); /* write address */
+	 OUT_BATCH(0); /* write data */
 
-      /* XXX workaround: issue any post sync != 0 before write cache flush = 1 */
-      OUT_BATCH(_3DSTATE_PIPE_CONTROL);
-      OUT_BATCH(PIPE_CONTROL_WRITE_IMMEDIATE);
-      OUT_BATCH(0); /* write address */
-      OUT_BATCH(0); /* write data */
-
-      OUT_BATCH(_3DSTATE_PIPE_CONTROL);
-      OUT_BATCH(PIPE_CONTROL_INSTRUCTION_FLUSH |
-		PIPE_CONTROL_WRITE_FLUSH |
-		PIPE_CONTROL_DEPTH_CACHE_FLUSH |
-		PIPE_CONTROL_NO_WRITE);
-      OUT_BATCH(0); /* write address */
-      OUT_BATCH(0); /* write data */
-      ADVANCE_BATCH();
+	 OUT_BATCH(_3DSTATE_PIPE_CONTROL);
+	 OUT_BATCH(PIPE_CONTROL_INSTRUCTION_FLUSH |
+		   PIPE_CONTROL_WRITE_FLUSH |
+		   PIPE_CONTROL_DEPTH_CACHE_FLUSH |
+		   PIPE_CONTROL_NO_WRITE);
+	 OUT_BATCH(0); /* write address */
+	 OUT_BATCH(0); /* write data */
+	 ADVANCE_BATCH();
+      }
    } else if (intel->gen >= 4) {
       BEGIN_BATCH(4);
       OUT_BATCH(_3DSTATE_PIPE_CONTROL |

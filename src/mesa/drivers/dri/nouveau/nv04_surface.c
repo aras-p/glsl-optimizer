@@ -25,7 +25,10 @@
  */
 
 #include "nouveau_driver.h"
-#include "nouveau_class.h"
+#include "nv_object.xml.h"
+#include "nv_m2mf.xml.h"
+#include "nv01_2d.xml.h"
+#include "nv04_3d.xml.h"
 #include "nouveau_context.h"
 #include "nouveau_util.h"
 #include "nv04_driver.h"
@@ -283,9 +286,9 @@ nv04_surface_copy_m2mf(struct gl_context *ctx,
 	unsigned dst_offset = dst->offset + dy * dst->pitch + dx * dst->cpp;
 	unsigned src_offset = src->offset + sy * src->pitch + sx * src->cpp;
 
-	nouveau_bo_marko(bctx, m2mf, NV04_MEMORY_TO_MEMORY_FORMAT_DMA_BUFFER_IN,
+	nouveau_bo_marko(bctx, m2mf, NV04_M2MF_DMA_BUFFER_IN,
 			 src->bo, bo_flags | NOUVEAU_BO_RD);
-	nouveau_bo_marko(bctx, m2mf, NV04_MEMORY_TO_MEMORY_FORMAT_DMA_BUFFER_OUT,
+	nouveau_bo_marko(bctx, m2mf, NV04_M2MF_DMA_BUFFER_OUT,
 			 dst->bo, bo_flags | NOUVEAU_BO_WR);
 
 	while (h) {
@@ -293,7 +296,7 @@ nv04_surface_copy_m2mf(struct gl_context *ctx,
 
 		MARK_RING(chan, 9, 2);
 
-		BEGIN_RING(chan, m2mf, NV04_MEMORY_TO_MEMORY_FORMAT_OFFSET_IN, 8);
+		BEGIN_RING(chan, m2mf, NV04_M2MF_OFFSET_IN, 8);
 		OUT_RELOCl(chan, src->bo, src_offset,
 			   bo_flags | NOUVEAU_BO_RD);
 		OUT_RELOCl(chan, dst->bo, dst_offset,
@@ -488,12 +491,11 @@ nv04_surface_init(struct gl_context *ctx)
 		goto fail;
 
 	/* Memory to memory format. */
-	ret = nouveau_grobj_alloc(chan, handle++, NV04_MEMORY_TO_MEMORY_FORMAT,
-				  &hw->m2mf);
+	ret = nouveau_grobj_alloc(chan, handle++, NV04_M2MF, &hw->m2mf);
 	if (ret)
 		goto fail;
 
-	BEGIN_RING(chan, hw->m2mf, NV04_MEMORY_TO_MEMORY_FORMAT_DMA_NOTIFY, 1);
+	BEGIN_RING(chan, hw->m2mf, NV04_M2MF_DMA_NOTIFY, 1);
 	OUT_RING  (chan, hw->ntfy->handle);
 
 	/* Context surfaces 2D. */

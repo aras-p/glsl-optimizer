@@ -1558,7 +1558,7 @@ AC_ARG_ENABLE([gallium-llvm],
 if test "x$enable_gallium_llvm" = xyes; then
     if test "x$LLVM_CONFIG" != xno; then
 	LLVM_VERSION=`$LLVM_CONFIG --version`
-	LLVM_CFLAGS=`$LLVM_CONFIG --cflags`
+	LLVM_CFLAGS=`$LLVM_CONFIG --cppflags`
 	LLVM_LIBS="`$LLVM_CONFIG --libs jit interpreter nativecodegen bitwriter` -lstdc++"
 
 	if test "x$HAS_UDIS86" != xno; then
@@ -1706,6 +1706,19 @@ if test "x$enable_gallium_swrast" = xyes || test "x$enable_gallium_swrast" = xau
     if test "x$HAVE_ST_DRI" = xyes; then
         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-swrast"
     fi
+fi
+
+dnl
+dnl Gallium noop configuration
+dnl
+AC_ARG_ENABLE([gallium-noop],
+    [AS_HELP_STRING([--enable-gallium-noop],
+        [build gallium radeon @<:@default=disabled@:>@])],
+    [enable_gallium_noop="$enableval"],
+    [enable_gallium_noop=auto])
+if test "x$enable_gallium_noop" = xyes; then
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS noop"
+    GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-noop"
 fi
 
 dnl prepend CORE_DIRS to SRC_DIRS

@@ -52,6 +52,7 @@
 #include "lp_bld_flow.h"
 #include "lp_bld_gather.h"
 #include "lp_bld_format.h"
+#include "lp_bld_init.h"
 #include "lp_bld_sample.h"
 #include "lp_bld_sample_aos.h"
 #include "lp_bld_quad.h"
@@ -82,6 +83,7 @@ lp_build_sample_wrap_nearest_int(struct lp_build_sample_context *bld,
                                  LLVMValueRef *out_i)
 {
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
+   LLVMBuilderRef builder = bld->gallivm->builder;
    LLVMValueRef length_minus_one;
 
    length_minus_one = lp_build_sub(int_coord_bld, length, int_coord_bld->one);
@@ -89,12 +91,12 @@ lp_build_sample_wrap_nearest_int(struct lp_build_sample_context *bld,
    switch(wrap_mode) {
    case PIPE_TEX_WRAP_REPEAT:
       if(is_pot)
-         coord = LLVMBuildAnd(bld->builder, coord, length_minus_one, "");
+         coord = LLVMBuildAnd(builder, coord, length_minus_one, "");
       else {
          /* Add a bias to the texcoord to handle negative coords */
          LLVMValueRef bias = lp_build_mul_imm(int_coord_bld, length, 1024);
-         coord = LLVMBuildAdd(bld->builder, coord, bias, "");
-         coord = LLVMBuildURem(bld->builder, coord, length, "");
+         coord = LLVMBuildAdd(builder, coord, bias, "");
+         coord = LLVMBuildURem(builder, coord, length, "");
       }
       break;
 
@@ -147,6 +149,7 @@ lp_build_sample_wrap_linear_int(struct lp_build_sample_context *bld,
                                 LLVMValueRef *i1)
 {
    struct lp_build_context *int_coord_bld = &bld->int_coord_bld;
+   LLVMBuilderRef builder = bld->gallivm->builder;
    LLVMValueRef length_minus_one;
    LLVMValueRef lmask, umask, mask;
 
@@ -195,39 +198,39 @@ lp_build_sample_wrap_linear_int(struct lp_build_sample_context *bld,
    switch(wrap_mode) {
    case PIPE_TEX_WRAP_REPEAT:
       if (is_pot) {
-         coord0 = LLVMBuildAnd(bld->builder, coord0, length_minus_one, "");
+         coord0 = LLVMBuildAnd(builder, coord0, length_minus_one, "");
       }
       else {
          /* Add a bias to the texcoord to handle negative coords */
          LLVMValueRef bias = lp_build_mul_imm(int_coord_bld, length, 1024);
-         coord0 = LLVMBuildAdd(bld->builder, coord0, bias, "");
-         coord0 = LLVMBuildURem(bld->builder, coord0, length, "");
+         coord0 = LLVMBuildAdd(builder, coord0, bias, "");
+         coord0 = LLVMBuildURem(builder, coord0, length, "");
       }
 
-      mask = lp_build_compare(bld->builder, int_coord_bld->type,
+      mask = lp_build_compare(bld->gallivm, int_coord_bld->type,
                               PIPE_FUNC_NOTEQUAL, coord0, length_minus_one);
 
       *offset0 = lp_build_mul(int_coord_bld, coord0, stride);
-      *offset1 = LLVMBuildAnd(bld->builder,
+      *offset1 = LLVMBuildAnd(builder,
                               lp_build_add(int_coord_bld, *offset0, stride),
                               mask, "");
       break;
 
    case PIPE_TEX_WRAP_CLAMP_TO_EDGE:
-      lmask = lp_build_compare(int_coord_bld->builder, int_coord_bld->type,
+      lmask = lp_build_compare(int_coord_bld->gallivm, int_coord_bld->type,
                                PIPE_FUNC_GEQUAL, coord0, int_coord_bld->zero);
-      umask = lp_build_compare(int_coord_bld->builder, int_coord_bld->type,
+      umask = lp_build_compare(int_coord_bld->gallivm, int_coord_bld->type,
                                PIPE_FUNC_LESS, coord0, length_minus_one);
 
       coord0 = lp_build_select(int_coord_bld, lmask, coord0, int_coord_bld->zero);
       coord0 = lp_build_select(int_coord_bld, umask, coord0, length_minus_one);
 
-      mask = LLVMBuildAnd(bld->builder, lmask, umask, "");
+      mask = LLVMBuildAnd(builder, lmask, umask, "");
 
       *offset0 = lp_build_mul(int_coord_bld, coord0, stride);
       *offset1 = lp_build_add(int_coord_bld,
                               *offset0,
-                              LLVMBuildAnd(bld->builder, stride, mask, ""));
+                              LLVMBuildAnd(builder, stride, mask, ""));
       break;
 
    case PIPE_TEX_WRAP_CLAMP:
@@ -263,7 +266,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
                               LLVMValueRef *colors_hi)
 {
    const unsigned dims = bld->dims;
-   LLVMBuilderRef builder = bld->builder;
+   LLVMBuilderRef builder = bld->gallivm->builder;
    struct lp_build_context i32, h16, u8n;
    LLVMTypeRef i32_vec_type, h16_vec_type, u8n_vec_type;
    LLVMValueRef i32_c8;
@@ -273,13 +276,13 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
    LLVMValueRef x_offset, offset;
    LLVMValueRef x_subcoord, y_subcoord, z_subcoord;
 
-   lp_build_context_init(&i32, builder, lp_type_int_vec(32));
-   lp_build_context_init(&h16, builder, lp_type_ufixed(16));
-   lp_build_context_init(&u8n, builder, lp_type_unorm(8));
+   lp_build_context_init(&i32, bld->gallivm, lp_type_int_vec(32));
+   lp_build_context_init(&h16, bld->gallivm, lp_type_ufixed(16));
+   lp_build_context_init(&u8n, bld->gallivm, lp_type_unorm(8));
 
-   i32_vec_type = lp_build_vec_type(i32.type);
-   h16_vec_type = lp_build_vec_type(h16.type);
-   u8n_vec_type = lp_build_vec_type(u8n.type);
+   i32_vec_type = lp_build_vec_type(bld->gallivm, i32.type);
+   h16_vec_type = lp_build_vec_type(bld->gallivm, h16.type);
+   u8n_vec_type = lp_build_vec_type(bld->gallivm, u8n.type);
 
    lp_build_extract_image_sizes(bld,
                                 bld->int_size_type,
@@ -317,7 +320,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
       r = LLVMBuildFPToSI(builder, r, i32_vec_type, "");
 
    /* compute floor (shift right 8) */
-   i32_c8 = lp_build_const_int_vec(i32.type, 8);
+   i32_c8 = lp_build_const_int_vec(bld->gallivm, i32.type, 8);
    s_ipart = LLVMBuildAShr(builder, s, i32_c8, "");
    if (dims >= 2)
       t_ipart = LLVMBuildAShr(builder, t, i32_c8, "");
@@ -325,7 +328,8 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
       r_ipart = LLVMBuildAShr(builder, r, i32_c8, "");
 
    /* get pixel, row, image strides */
-   x_stride = lp_build_const_vec(bld->int_coord_bld.type,
+   x_stride = lp_build_const_vec(bld->gallivm,
+                                 bld->int_coord_bld.type,
                                  bld->format_desc->block.bits/8);
 
    /* Do texcoord wrapping, compute texel offset */
@@ -387,7 +391,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
           * Given the format is a rgba8, just read the pixels as is,
           * without any swizzling. Swizzling will be done later.
           */
-         rgba8 = lp_build_gather(bld->builder,
+         rgba8 = lp_build_gather(bld->gallivm,
                                  bld->texel_type.length,
                                  bld->format_desc->block.bits,
                                  bld->texel_type.width,
@@ -396,7 +400,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
          rgba8 = LLVMBuildBitCast(builder, rgba8, u8n_vec_type, "");
       }
       else {
-         rgba8 = lp_build_fetch_rgba_aos(bld->builder,
+         rgba8 = lp_build_fetch_rgba_aos(bld->gallivm,
                                          bld->format_desc,
                                          u8n.type,
                                          data_ptr, offset,
@@ -405,7 +409,7 @@ lp_build_sample_image_nearest(struct lp_build_sample_context *bld,
       }
 
       /* Expand one 4*rgba8 to two 2*rgba16 */
-      lp_build_unpack2(builder, u8n.type, h16.type,
+      lp_build_unpack2(bld->gallivm, u8n.type, h16.type,
                        rgba8,
                        colors_lo, colors_hi);
    }
@@ -429,7 +433,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                              LLVMValueRef *colors_hi)
 {
    const unsigned dims = bld->dims;
-   LLVMBuilderRef builder = bld->builder;
+   LLVMBuilderRef builder = bld->gallivm->builder;
    struct lp_build_context i32, h16, u8n;
    LLVMTypeRef i32_vec_type, h16_vec_type, u8n_vec_type;
    LLVMValueRef i32_c8, i32_c128, i32_c255;
@@ -450,13 +454,13 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    unsigned i, j, k;
    unsigned numj, numk;
 
-   lp_build_context_init(&i32, builder, lp_type_int_vec(32));
-   lp_build_context_init(&h16, builder, lp_type_ufixed(16));
-   lp_build_context_init(&u8n, builder, lp_type_unorm(8));
+   lp_build_context_init(&i32, bld->gallivm, lp_type_int_vec(32));
+   lp_build_context_init(&h16, bld->gallivm, lp_type_ufixed(16));
+   lp_build_context_init(&u8n, bld->gallivm, lp_type_unorm(8));
 
-   i32_vec_type = lp_build_vec_type(i32.type);
-   h16_vec_type = lp_build_vec_type(h16.type);
-   u8n_vec_type = lp_build_vec_type(u8n.type);
+   i32_vec_type = lp_build_vec_type(bld->gallivm, i32.type);
+   h16_vec_type = lp_build_vec_type(bld->gallivm, h16.type);
+   u8n_vec_type = lp_build_vec_type(bld->gallivm, u8n.type);
 
    lp_build_extract_image_sizes(bld,
                                 bld->int_size_type,
@@ -494,7 +498,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
       r = LLVMBuildFPToSI(builder, r, i32_vec_type, "");
 
    /* subtract 0.5 (add -128) */
-   i32_c128 = lp_build_const_int_vec(i32.type, -128);
+   i32_c128 = lp_build_const_int_vec(bld->gallivm, i32.type, -128);
    s = LLVMBuildAdd(builder, s, i32_c128, "");
    if (dims >= 2) {
       t = LLVMBuildAdd(builder, t, i32_c128, "");
@@ -504,7 +508,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
    }
 
    /* compute floor (shift right 8) */
-   i32_c8 = lp_build_const_int_vec(i32.type, 8);
+   i32_c8 = lp_build_const_int_vec(bld->gallivm, i32.type, 8);
    s_ipart = LLVMBuildAShr(builder, s, i32_c8, "");
    if (dims >= 2)
       t_ipart = LLVMBuildAShr(builder, t, i32_c8, "");
@@ -512,7 +516,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
       r_ipart = LLVMBuildAShr(builder, r, i32_c8, "");
 
    /* compute fractional part (AND with 0xff) */
-   i32_c255 = lp_build_const_int_vec(i32.type, 255);
+   i32_c255 = lp_build_const_int_vec(bld->gallivm, i32.type, 255);
    s_fpart = LLVMBuildAnd(builder, s, i32_c255, "");
    if (dims >= 2)
       t_fpart = LLVMBuildAnd(builder, t, i32_c255, "");
@@ -520,7 +524,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
       r_fpart = LLVMBuildAnd(builder, r, i32_c255, "");
 
    /* get pixel, row and image strides */
-   x_stride = lp_build_const_vec(bld->int_coord_bld.type,
+   x_stride = lp_build_const_vec(bld->gallivm, bld->int_coord_bld.type,
                                  bld->format_desc->block.bits/8);
    y_stride = row_stride_vec;
    z_stride = img_stride_vec;
@@ -612,7 +616,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
       r_fpart = LLVMBuildBitCast(builder, r_fpart, h16_vec_type, "");
 
    {
-      LLVMTypeRef elem_type = LLVMInt32Type();
+      LLVMTypeRef elem_type = LLVMInt32TypeInContext(bld->gallivm->context);
       LLVMValueRef shuffles_lo[LP_MAX_VECTOR_LENGTH];
       LLVMValueRef shuffles_hi[LP_MAX_VECTOR_LENGTH];
       LLVMValueRef shuffle_lo;
@@ -685,7 +689,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                 * Given the format is a rgba8, just read the pixels as is,
                 * without any swizzling. Swizzling will be done later.
                 */
-               rgba8 = lp_build_gather(bld->builder,
+               rgba8 = lp_build_gather(bld->gallivm,
                                        bld->texel_type.length,
                                        bld->format_desc->block.bits,
                                        bld->texel_type.width,
@@ -694,7 +698,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
                rgba8 = LLVMBuildBitCast(builder, rgba8, u8n_vec_type, "");
             }
             else {
-               rgba8 = lp_build_fetch_rgba_aos(bld->builder,
+               rgba8 = lp_build_fetch_rgba_aos(bld->gallivm,
                                                bld->format_desc,
                                                u8n.type,
                                                data_ptr, offset[k][j][i],
@@ -703,7 +707,7 @@ lp_build_sample_image_linear(struct lp_build_sample_context *bld,
             }
 
             /* Expand one 4*rgba8 to two 2*rgba16 */
-            lp_build_unpack2(builder, u8n.type, h16.type,
+            lp_build_unpack2(bld->gallivm, u8n.type, h16.type,
                              rgba8,
                              &neighbors_lo[k][j][i], &neighbors_hi[k][j][i]);
          }
@@ -790,7 +794,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
                        LLVMValueRef colors_lo_var,
                        LLVMValueRef colors_hi_var)
 {
-   LLVMBuilderRef builder = bld->builder;
+   LLVMBuilderRef builder = bld->gallivm->builder;
    LLVMValueRef size0;
    LLVMValueRef size1;
    LLVMValueRef row_stride0_vec;
@@ -801,7 +805,6 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    LLVMValueRef data_ptr1;
    LLVMValueRef colors0_lo, colors0_hi;
    LLVMValueRef colors1_lo, colors1_hi;
-
 
    /* sample the first mipmap level */
    lp_build_mipmap_level_sizes(bld, ilevel0,
@@ -829,8 +832,8 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
    LLVMBuildStore(builder, colors0_hi, colors_hi_var);
 
    if (mip_filter == PIPE_TEX_MIPFILTER_LINEAR) {
-      LLVMValueRef h16_scale = LLVMConstReal(LLVMFloatType(), 256.0);
-      LLVMTypeRef i32_type = LLVMIntType(32);
+      LLVMValueRef h16_scale = lp_build_const_float(bld->gallivm, 256.0);
+      LLVMTypeRef i32_type = LLVMIntTypeInContext(bld->gallivm->context, 32);
       struct lp_build_if_state if_ctx;
       LLVMValueRef need_lerp;
 
@@ -842,11 +845,11 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
                                 lod_fpart, LLVMConstNull(i32_type),
                                 "need_lerp");
 
-      lp_build_if(&if_ctx, builder, need_lerp);
+      lp_build_if(&if_ctx, bld->gallivm, need_lerp);
       {
          struct lp_build_context h16_bld;
 
-         lp_build_context_init(&h16_bld, builder, lp_type_ufixed(16));
+         lp_build_context_init(&h16_bld, bld->gallivm, lp_type_ufixed(16));
 
          /* sample the second mipmap level */
          lp_build_mipmap_level_sizes(bld, ilevel1,
@@ -885,7 +888,7 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
             int i;
             assert(h16_bld.type.length <= Elements(shuffles));
             for (i = 0; i < h16_bld.type.length; i++)
-               shuffles[i] = lp_build_const_int32(2 * (i & 1));
+               shuffles[i] = lp_build_const_int32(bld->gallivm, 2 * (i & 1));
             shuffle = LLVMConstVector(shuffles, h16_bld.type.length);
             lod_fpart = LLVMBuildShuffleVector(builder,
                                                lod_fpart, lod_fpart,
@@ -925,7 +928,7 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
                     LLVMValueRef texel_out[4])
 {
    struct lp_build_context *int_bld = &bld->int_bld;
-   LLVMBuilderRef builder = bld->builder;
+   LLVMBuilderRef builder = bld->gallivm->builder;
    const unsigned mip_filter = bld->static_state->min_mip_filter;
    const unsigned min_filter = bld->static_state->min_img_filter;
    const unsigned mag_filter = bld->static_state->mag_img_filter;
@@ -936,8 +939,7 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
    LLVMValueRef unswizzled[4];
    LLVMValueRef face_ddx[4], face_ddy[4];
    struct lp_build_context h16_bld;
-   LLVMTypeRef i32t = LLVMInt32Type();
-   LLVMValueRef i32t_zero = LLVMConstInt(i32t, 0, 0);
+   LLVMValueRef i32t_zero = lp_build_const_int32(bld->gallivm, 0);
 
    /* we only support the common/simple wrap modes at this time */
    assert(lp_is_simple_wrap_mode(bld->static_state->wrap_s));
@@ -948,7 +950,7 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
 
 
    /* make 16-bit fixed-pt builder context */
-   lp_build_context_init(&h16_bld, builder, lp_type_ufixed(16));
+   lp_build_context_init(&h16_bld, bld->gallivm, lp_type_ufixed(16));
 
    /* cube face selection, compute pre-face coords, etc. */
    if (bld->static_state->target == PIPE_TEXTURE_CUBE) {
@@ -1026,8 +1028,8 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
     * Get/interpolate texture colors.
     */
 
-   packed_lo = lp_build_alloca(builder, h16_bld.vec_type, "packed_lo");
-   packed_hi = lp_build_alloca(builder, h16_bld.vec_type, "packed_hi");
+   packed_lo = lp_build_alloca(bld->gallivm, h16_bld.vec_type, "packed_lo");
+   packed_hi = lp_build_alloca(bld->gallivm, h16_bld.vec_type, "packed_hi");
 
    if (min_filter == mag_filter) {
       /* no need to distinquish between minification and magnification */
@@ -1048,7 +1050,7 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
       minify = LLVMBuildICmp(builder, LLVMIntSGE,
                              lod_ipart, int_bld->zero, "");
 
-      lp_build_if(&if_ctx, builder, minify);
+      lp_build_if(&if_ctx, bld->gallivm, minify);
       {
          /* Use the minification filter */
          lp_build_sample_mipmap(bld,
@@ -1073,7 +1075,7 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
     * combine the values stored in 'packed_lo' and 'packed_hi' variables
     * into 'packed'
     */
-   packed = lp_build_pack2(builder,
+   packed = lp_build_pack2(bld->gallivm,
                            h16_bld.type, lp_type_unorm(8),
                            LLVMBuildLoad(builder, packed_lo, ""),
                            LLVMBuildLoad(builder, packed_hi, ""));
@@ -1081,7 +1083,7 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
    /*
     * Convert to SoA and swizzle.
     */
-   lp_build_rgba8_to_f32_soa(builder,
+   lp_build_rgba8_to_f32_soa(bld->gallivm,
                              bld->texel_type,
                              packed, unswizzled);
 
@@ -1096,6 +1098,4 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
       texel_out[2] = unswizzled[2];
       texel_out[3] = unswizzled[3];
    }
-
-   apply_sampler_swizzle(bld, texel_out);
 }

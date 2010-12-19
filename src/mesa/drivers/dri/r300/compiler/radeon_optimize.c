@@ -54,12 +54,7 @@ static struct rc_src_register chain_srcregs(struct rc_src_register outer, struct
 		combine.Negate = outer.Negate;
 	} else {
 		combine.Abs = inner.Abs;
-		combine.Negate = 0;
-		for(unsigned int chan = 0; chan < 4; ++chan) {
-			unsigned int swz = GET_SWZ(outer.Swizzle, chan);
-			if (swz < 4)
-				combine.Negate |= GET_BIT(inner.Negate, swz) << chan;
-		}
+		combine.Negate = swizzle_mask(outer.Swizzle, inner.Negate);
 		combine.Negate ^= outer.Negate;
 	}
 	combine.Swizzle = combine_swizzles(inner.Swizzle, outer.Swizzle);
@@ -71,12 +66,13 @@ static void copy_propagate_scan_read(void * data, struct rc_instruction * inst,
 {
 	rc_register_file file = src->File;
 	struct rc_reader_data * reader_data = data;
-	const struct rc_opcode_info * info = rc_get_opcode_info(inst->U.I.Opcode);
 
-	/* It is possible to do copy propigation in this situation,
-	 * just not right now, see peephole_add_presub_inv() */
-	if (reader_data->Writer->U.I.PreSub.Opcode != RC_PRESUB_NONE &&
-			(info->NumSrcRegs > 2 || info->HasTexture)) {
+	if(!rc_inst_can_use_presub(inst,
+				reader_data->Writer->U.I.PreSub.Opcode,
+				rc_swizzle_to_writemask(src->Swizzle),
+				*src,
+				reader_data->Writer->U.I.PreSub.SrcReg[0],
+				reader_data->Writer->U.I.PreSub.SrcReg[1])) {
 		reader_data->Abort = 1;
 		return;
 	}
@@ -112,11 +108,11 @@ static void src_clobbered_reads_cb(
 	    && src->Index == sc_data->Index
 	    && (rc_swizzle_to_writemask(src->Swizzle) & sc_data->Mask)) {
 
-		sc_data->ReaderData->AbortOnRead = 1;
+		sc_data->ReaderData->AbortOnRead = RC_MASK_XYZW;
 	}
 
 	if (src->RelAddr && sc_data->File == RC_FILE_ADDRESS) {
-		sc_data->ReaderData->AbortOnRead = 1;
+		sc_data->ReaderData->AbortOnRead = RC_MASK_XYZW;
 	}
 }
 
@@ -149,8 +145,9 @@ static void copy_propagate(struct radeon_compiler * c, struct rc_instruction * i
 		return;
 
 	/* Get a list of all the readers of this MOV instruction. */
-	rc_get_readers_normal(c, inst_mov, &reader_data,
-			copy_propagate_scan_read, is_src_clobbered_scan_write);
+	rc_get_readers(c, inst_mov, &reader_data,
+		       copy_propagate_scan_read, NULL,
+		       is_src_clobbered_scan_write);
 
 	if (reader_data.Abort || reader_data.ReaderCount == 0)
 		return;
@@ -158,7 +155,7 @@ static void copy_propagate(struct radeon_compiler * c, struct rc_instruction * i
 	/* Propagate the MOV instruction. */
 	for (i = 0; i < reader_data.ReaderCount; i++) {
 		struct rc_instruction * inst = reader_data.Readers[i].Inst;
-		*reader_data.Readers[i].Src = chain_srcregs(*reader_data.Readers[i].Src, inst_mov->U.I.SrcReg[0]);
+		*reader_data.Readers[i].U.Src = chain_srcregs(*reader_data.Readers[i].U.Src, inst_mov->U.I.SrcReg[0]);
 
 		if (inst_mov->U.I.SrcReg[0].File == RC_FILE_PRESUB)
 			inst->U.I.PreSub = inst_mov->U.I.PreSub;
@@ -423,24 +420,13 @@ static void presub_scan_read(
 	struct rc_src_register * src)
 {
 	struct rc_reader_data * reader_data = data;
-	const struct rc_opcode_info * info =
-					rc_get_opcode_info(inst->U.I.Opcode);
-	/* XXX: There are some situations where instructions
-	 * with more than 2 src registers can use the
-	 * presubtract select, but to keep things simple we
-	 * will disable presubtract on these instructions for
-	 * now. */
-	if (info->NumSrcRegs > 2 || info->HasTexture) {
-		reader_data->Abort = 1;
-		return;
-	}
+	rc_presubtract_op * presub_opcode = reader_data->CbData;
 
-	/* We can't use more than one presubtract value in an
-	 * instruction, unless the two prsubtract operations
-	 * are the same and read from the same registers.
-	 * XXX For now we will limit instructions to only one presubtract
-	 * value.*/
-	if (inst->U.I.PreSub.Opcode != RC_PRESUB_NONE) {
+	if (!rc_inst_can_use_presub(inst, *presub_opcode,
+			reader_data->Writer->U.I.DstReg.WriteMask,
+			*src,
+			reader_data->Writer->U.I.SrcReg[0],
+			reader_data->Writer->U.I.SrcReg[1])) {
 		reader_data->Abort = 1;
 		return;
 	}
@@ -454,8 +440,10 @@ static int presub_helper(
 {
 	struct rc_reader_data reader_data;
 	unsigned int i;
+	rc_presubtract_op cb_op = presub_opcode;
 
-	rc_get_readers_normal(c, inst_add, &reader_data, presub_scan_read,
+	reader_data.CbData = &cb_op;
+	rc_get_readers(c, inst_add, &reader_data, presub_scan_read, NULL,
 						is_src_clobbered_scan_write);
 
 	if (reader_data.Abort || reader_data.ReaderCount == 0)
@@ -468,7 +456,7 @@ static int presub_helper(
 				rc_get_opcode_info(reader.Inst->U.I.Opcode);
 
 		for (src_index = 0; src_index < info->NumSrcRegs; src_index++) {
-			if (&reader.Inst->U.I.SrcReg[src_index] == reader.Src)
+			if (&reader.Inst->U.I.SrcReg[src_index] == reader.U.Src)
 				presub_replace(inst_add, reader.Inst, src_index);
 		}
 	}
@@ -505,7 +493,9 @@ static void presub_replace_add(
 	inst_reader->U.I.SrcReg[src_index].Index = presub_opcode;
 }
 
-static int is_presub_candidate(struct rc_instruction * inst)
+static int is_presub_candidate(
+	struct radeon_compiler * c,
+	struct rc_instruction * inst)
 {
 	const struct rc_opcode_info * info = rc_get_opcode_info(inst->U.I.Opcode);
 	unsigned int i;
@@ -514,7 +504,12 @@ static int is_presub_candidate(struct rc_instruction * inst)
 		return 0;
 
 	for(i = 0; i < info->NumSrcRegs; i++) {
-		if (src_reads_dst_mask(inst->U.I.SrcReg[i], inst->U.I.DstReg))
+		struct rc_src_register src = inst->U.I.SrcReg[i];
+		if (src_reads_dst_mask(src, inst->U.I.DstReg))
+			return 0;
+
+		src.File = RC_FILE_PRESUB;
+		if (!c->SwizzleCaps->IsNative(inst->U.I.Opcode, src))
 			return 0;
 	}
 	return 1;
@@ -528,7 +523,7 @@ static int peephole_add_presub_add(
 	struct rc_src_register * src1 = NULL;
 	unsigned int i;
 
-	if (!is_presub_candidate(inst_add))
+	if (!is_presub_candidate(c, inst_add))
 		return 0;
 
 	if (inst_add->U.I.SrcReg[0].Swizzle != inst_add->U.I.SrcReg[1].Swizzle)
@@ -592,7 +587,7 @@ static int peephole_add_presub_inv(
 {
 	unsigned int i, swz, mask;
 
-	if (!is_presub_candidate(inst_add))
+	if (!is_presub_candidate(c, inst_add))
 		return 0;
 
 	mask = inst_add->U.I.DstReg.WriteMask;

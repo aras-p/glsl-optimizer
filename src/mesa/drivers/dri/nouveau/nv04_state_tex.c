@@ -29,7 +29,8 @@
 #include "nouveau_texture.h"
 #include "nouveau_util.h"
 #include "nouveau_gldefs.h"
-#include "nouveau_class.h"
+#include "nv_object.xml.h"
+#include "nv04_3d.xml.h"
 #include "nv04_driver.h"
 
 static uint32_t

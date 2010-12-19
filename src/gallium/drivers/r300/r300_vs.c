@@ -213,7 +213,6 @@ void r300_translate_vertex_shader(struct r300_context *r300,
     compiler.Base.max_temp_regs = 32;
     compiler.Base.max_constants = 256;
     compiler.Base.max_alu_insts = r300->screen->caps.is_r500 ? 1024 : 256;
-    compiler.Base.remove_unused_constants = TRUE;
 
     if (compiler.Base.Debug & RC_DBG_LOG) {
         DBG(r300, DBG_VP, "r300: Initial vertex program\n");
@@ -226,6 +225,10 @@ void r300_translate_vertex_shader(struct r300_context *r300,
     ttr.use_half_swizzles = FALSE;
 
     r300_tgsi_to_rc(&ttr, vs->state.tokens);
+
+    if (compiler.Base.Program.Constants.Count > 200) {
+        compiler.Base.remove_unused_constants = TRUE;
+    }
 
     compiler.RequiredOutputs = ~(~0 << (vs->info.num_outputs + 1));
     compiler.SetHwInputOutput = &set_vertex_inputs_outputs;

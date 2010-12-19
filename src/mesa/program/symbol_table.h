@@ -33,6 +33,10 @@ extern void _mesa_symbol_table_pop_scope(struct _mesa_symbol_table *table);
 extern int _mesa_symbol_table_add_symbol(struct _mesa_symbol_table *symtab,
     int name_space, const char *name, void *declaration);
 
+extern int _mesa_symbol_table_add_global_symbol(
+    struct _mesa_symbol_table *symtab, int name_space, const char *name,
+    void *declaration);
+
 extern int _mesa_symbol_table_symbol_scope(struct _mesa_symbol_table *table,
     int name_space, const char *name);
 

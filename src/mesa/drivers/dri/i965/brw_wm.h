@@ -59,18 +59,12 @@
 #define AA_ALWAYS    2
 
 struct brw_wm_prog_key {
-   GLuint source_depth_reg:3;
-   GLuint source_w_reg:3;
-   GLuint aa_dest_stencil_reg:3;
-   GLuint dest_depth_reg:3;
-   GLuint nr_payload_regs:4;
-   GLuint computes_depth:1;	/* could be derived from program string */
-   GLuint source_depth_to_render_target:1;
+   GLuint stats_wm:1;
    GLuint flat_shade:1;
    GLuint linear_color:1;  /**< linear interpolation vs perspective interp */
-   GLuint runtime_check_aads_emit:1;
    GLuint nr_color_regions:5;
-   
+   GLuint render_to_fbo:1;
+
    GLbitfield proj_attrib_mask; /**< one bit per fragment program attribute */
    GLuint shadowtex_mask:16;
    GLuint yuvtex_mask:16;
@@ -80,6 +74,8 @@ struct brw_wm_prog_key {
 
    GLushort drawable_height;
    GLbitfield64 vp_outputs_written;
+   GLuint iz_lookup;
+   GLuint line_aa;
    GLuint program_string_id:32;
 };
 
@@ -203,6 +199,15 @@ struct brw_wm_compile {
       PASS2_DONE
    } state;
 
+   GLuint source_depth_reg:3;
+   GLuint source_w_reg:3;
+   GLuint aa_dest_stencil_reg:3;
+   GLuint dest_depth_reg:3;
+   GLuint nr_payload_regs:4;
+   GLuint computes_depth:1;	/* could be derived from program string */
+   GLuint source_depth_to_render_target:1;
+   GLuint runtime_check_aads_emit:1;
+
    /* Initial pass - translate fp instructions to fp instructions,
     * simplifying and adding instructions for interpolation and
     * framebuffer writes.
@@ -305,14 +310,9 @@ void brw_wm_print_insn( struct brw_wm_compile *c,
 void brw_wm_print_program( struct brw_wm_compile *c,
 			   const char *stage );
 
-void brw_wm_lookup_iz( struct intel_context *intel,
-		       GLuint line_aa,
-		       GLuint lookup,
-		       GLboolean ps_uses_depth,
-		       struct brw_wm_prog_key *key );
+void brw_wm_lookup_iz(struct intel_context *intel,
+		      struct brw_wm_compile *c);
 
-GLboolean brw_wm_is_glsl(const struct gl_fragment_program *fp);
-void brw_wm_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c);
 GLboolean brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c);
 
 /* brw_wm_emit.c */
@@ -380,7 +380,6 @@ void emit_fb_write(struct brw_wm_compile *c,
 void emit_frontfacing(struct brw_compile *p,
 		      const struct brw_reg *dst,
 		      GLuint mask);
-void emit_kil_nv(struct brw_wm_compile *c);
 void emit_linterp(struct brw_compile *p,
 		  const struct brw_reg *dst,
 		  GLuint mask,

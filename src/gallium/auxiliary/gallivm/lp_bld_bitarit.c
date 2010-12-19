@@ -40,6 +40,7 @@
 LLVMValueRef
 lp_build_or(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
 {
+   LLVMBuilderRef builder = bld->gallivm->builder;
    const struct lp_type type = bld->type;
    LLVMValueRef res;
 
@@ -48,14 +49,14 @@ lp_build_or(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
 
    /* can't do bitwise ops on floating-point values */
    if (type.floating) {
-      a = LLVMBuildBitCast(bld->builder, a, bld->int_vec_type, "");
-      b = LLVMBuildBitCast(bld->builder, b, bld->int_vec_type, "");
+      a = LLVMBuildBitCast(builder, a, bld->int_vec_type, "");
+      b = LLVMBuildBitCast(builder, b, bld->int_vec_type, "");
    }
 
-   res = LLVMBuildOr(bld->builder, a, b, "");
+   res = LLVMBuildOr(builder, a, b, "");
 
    if (type.floating) {
-      res = LLVMBuildBitCast(bld->builder, res, bld->vec_type, "");
+      res = LLVMBuildBitCast(builder, res, bld->vec_type, "");
    }
 
    return res;
@@ -68,6 +69,7 @@ lp_build_or(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
 LLVMValueRef
 lp_build_and(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
 {
+   LLVMBuilderRef builder = bld->gallivm->builder;
    const struct lp_type type = bld->type;
    LLVMValueRef res;
 
@@ -76,14 +78,14 @@ lp_build_and(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
 
    /* can't do bitwise ops on floating-point values */
    if (type.floating) {
-      a = LLVMBuildBitCast(bld->builder, a, bld->int_vec_type, "");
-      b = LLVMBuildBitCast(bld->builder, b, bld->int_vec_type, "");
+      a = LLVMBuildBitCast(builder, a, bld->int_vec_type, "");
+      b = LLVMBuildBitCast(builder, b, bld->int_vec_type, "");
    }
 
-   res = LLVMBuildAnd(bld->builder, a, b, "");
+   res = LLVMBuildAnd(builder, a, b, "");
 
    if (type.floating) {
-      res = LLVMBuildBitCast(bld->builder, res, bld->vec_type, "");
+      res = LLVMBuildBitCast(builder, res, bld->vec_type, "");
    }
 
    return res;
@@ -96,6 +98,7 @@ lp_build_and(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
 LLVMValueRef
 lp_build_andnot(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
 {
+   LLVMBuilderRef builder = bld->gallivm->builder;
    const struct lp_type type = bld->type;
    LLVMValueRef res;
 
@@ -104,15 +107,15 @@ lp_build_andnot(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
 
    /* can't do bitwise ops on floating-point values */
    if (type.floating) {
-      a = LLVMBuildBitCast(bld->builder, a, bld->int_vec_type, "");
-      b = LLVMBuildBitCast(bld->builder, b, bld->int_vec_type, "");
+      a = LLVMBuildBitCast(builder, a, bld->int_vec_type, "");
+      b = LLVMBuildBitCast(builder, b, bld->int_vec_type, "");
    }
 
-   res = LLVMBuildNot(bld->builder, b, "");
-   res = LLVMBuildAnd(bld->builder, a, res, "");
+   res = LLVMBuildNot(builder, b, "");
+   res = LLVMBuildAnd(builder, a, res, "");
 
    if (type.floating) {
-      res = LLVMBuildBitCast(bld->builder, res, bld->vec_type, "");
+      res = LLVMBuildBitCast(builder, res, bld->vec_type, "");
    }
 
    return res;
@@ -125,6 +128,7 @@ lp_build_andnot(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
 LLVMValueRef
 lp_build_shl(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
 {
+   LLVMBuilderRef builder = bld->gallivm->builder;
    const struct lp_type type = bld->type;
    LLVMValueRef res;
 
@@ -133,7 +137,7 @@ lp_build_shl(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
    assert(lp_check_value(type, a));
    assert(lp_check_value(type, b));
 
-   res = LLVMBuildShl(bld->builder, a, b, "");
+   res = LLVMBuildShl(builder, a, b, "");
 
    return res;
 }
@@ -145,6 +149,7 @@ lp_build_shl(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
 LLVMValueRef
 lp_build_shr(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
 {
+   LLVMBuilderRef builder = bld->gallivm->builder;
    const struct lp_type type = bld->type;
    LLVMValueRef res;
 
@@ -154,9 +159,9 @@ lp_build_shr(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
    assert(lp_check_value(type, b));
 
    if (type.sign) {
-      res = LLVMBuildAShr(bld->builder, a, b, "");
+      res = LLVMBuildAShr(builder, a, b, "");
    } else {
-      res = LLVMBuildLShr(bld->builder, a, b, "");
+      res = LLVMBuildLShr(builder, a, b, "");
    }
 
    return res;
@@ -169,7 +174,7 @@ lp_build_shr(struct lp_build_context *bld, LLVMValueRef a, LLVMValueRef b)
 LLVMValueRef
 lp_build_shl_imm(struct lp_build_context *bld, LLVMValueRef a, unsigned imm)
 {
-   LLVMValueRef b = lp_build_const_int_vec(bld->type, imm);
+   LLVMValueRef b = lp_build_const_int_vec(bld->gallivm, bld->type, imm);
    assert(imm <= bld->type.width);
    return lp_build_shl(bld, a, b);
 }
@@ -181,7 +186,7 @@ lp_build_shl_imm(struct lp_build_context *bld, LLVMValueRef a, unsigned imm)
 LLVMValueRef
 lp_build_shr_imm(struct lp_build_context *bld, LLVMValueRef a, unsigned imm)
 {
-   LLVMValueRef b = lp_build_const_int_vec(bld->type, imm);
+   LLVMValueRef b = lp_build_const_int_vec(bld->gallivm, bld->type, imm);
    assert(imm <= bld->type.width);
    return lp_build_shr(bld, a, b);
 }

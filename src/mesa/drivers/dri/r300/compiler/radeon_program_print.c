@@ -129,6 +129,7 @@ static char rc_swizzle_char(unsigned int swz)
 	case RC_SWIZZLE_HALF: return 'H';
 	case RC_SWIZZLE_UNUSED: return '_';
 	}
+	fprintf(stderr, "bad swz: %u\n", swz);
 	return '?';
 }
 

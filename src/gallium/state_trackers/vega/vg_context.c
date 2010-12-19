@@ -31,9 +31,9 @@
 #include "shaders_cache.h"
 #include "shader.h"
 #include "asm_util.h"
-#include "st_inlines.h"
 #include "vg_manager.h"
 #include "api.h"
+#include "mask.h"
 
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
@@ -44,25 +44,14 @@
 #include "util/u_memory.h"
 #include "util/u_blit.h"
 #include "util/u_sampler.h"
+#include "util/u_surface.h"
+#include "util/u_format.h"
 
 struct vg_context *_vg_context = 0;
 
 struct vg_context * vg_current_context(void)
 {
    return _vg_context;
-}
-
-static void init_clear(struct vg_context *st)
-{
-   struct pipe_context *pipe = st->pipe;
-
-   /* rasterizer state: bypass clipping */
-   memset(&st->clear.raster, 0, sizeof(st->clear.raster));
-   st->clear.raster.gl_rasterization_rules = 1;
-
-   /* fragment shader state: color pass-through program */
-   st->clear.fs =
-      util_make_fragment_passthrough_shader(pipe);
 }
 
 /**
@@ -101,7 +90,6 @@ struct vg_context * vg_create_context(struct pipe_context *pipe,
                                       struct vg_context *share)
 {
    struct vg_context *ctx;
-   unsigned i;
 
    ctx = CALLOC_STRUCT(vg_context);
 
@@ -118,8 +106,6 @@ struct vg_context * vg_create_context(struct pipe_context *pipe,
 
    ctx->cso_context = cso_create_context(pipe);
 
-   init_clear(ctx);
-
    ctx->default_paint = paint_create(ctx);
    ctx->state.vg.stroke_paint = ctx->default_paint;
    ctx->state.vg.fill_paint = ctx->default_paint;
@@ -127,6 +113,7 @@ struct vg_context * vg_create_context(struct pipe_context *pipe,
 
    ctx->mask.sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    ctx->mask.sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   ctx->mask.sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    ctx->mask.sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
    ctx->mask.sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
    ctx->mask.sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
@@ -134,17 +121,11 @@ struct vg_context * vg_create_context(struct pipe_context *pipe,
 
    ctx->blend_sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    ctx->blend_sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   ctx->blend_sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    ctx->blend_sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
    ctx->blend_sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
    ctx->blend_sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
    ctx->blend_sampler.normalized_coords = 0;
-
-   for (i = 0; i < 2; i++) {
-      ctx->velems[i].src_offset = i * 4 * sizeof(float);
-      ctx->velems[i].instance_divisor = 0;
-      ctx->velems[i].vertex_buffer_index = 0;
-      ctx->velems[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-   }
 
    vg_set_error(ctx, VG_NO_ERROR);
 
@@ -166,7 +147,6 @@ struct vg_context * vg_create_context(struct pipe_context *pipe,
 void vg_destroy_context(struct vg_context *ctx)
 {
    struct pipe_resource **cbuf = &ctx->mask.cbuf;
-   struct pipe_resource **vsbuf = &ctx->vs_const_buffer;
 
    util_destroy_blit(ctx->blit);
    renderer_destroy(ctx->renderer);
@@ -177,29 +157,6 @@ void vg_destroy_context(struct vg_context *ctx)
    if (*cbuf)
       pipe_resource_reference(cbuf, NULL);
 
-   if (*vsbuf)
-      pipe_resource_reference(vsbuf, NULL);
-
-   if (ctx->clear.fs) {
-      cso_delete_fragment_shader(ctx->cso_context, ctx->clear.fs);
-      ctx->clear.fs = NULL;
-   }
-
-   if (ctx->plain_vs) {
-      vg_shader_destroy(ctx, ctx->plain_vs);
-      ctx->plain_vs = NULL;
-   }
-   if (ctx->clear_vs) {
-      vg_shader_destroy(ctx, ctx->clear_vs);
-      ctx->clear_vs = NULL;
-   }
-   if (ctx->texture_vs) {
-      vg_shader_destroy(ctx, ctx->texture_vs);
-      ctx->texture_vs = NULL;
-   }
-
-   if (ctx->pass_through_depth_fs)
-      vg_shader_destroy(ctx, ctx->pass_through_depth_fs);
    if (ctx->mask.union_fs)
       vg_shader_destroy(ctx, ctx->mask.union_fs);
    if (ctx->mask.intersect_fs)
@@ -266,186 +223,195 @@ void vg_context_remove_object(struct vg_context *ctx,
    }
 }
 
-static void update_clip_state(struct vg_context *ctx)
+static struct pipe_resource *
+create_texture(struct pipe_context *pipe, enum pipe_format format,
+                    VGint width, VGint height)
 {
-   struct pipe_depth_stencil_alpha_state *dsa = &ctx->state.g3d.dsa;
-   struct vg_state *state =  &ctx->state.vg;
+   struct pipe_resource templ;
 
-   memset(dsa, 0, sizeof(struct pipe_depth_stencil_alpha_state));
+   memset(&templ, 0, sizeof(templ));
 
-   if (state->scissoring) {
-      struct pipe_blend_state *blend = &ctx->state.g3d.blend;
-      struct pipe_framebuffer_state *fb = &ctx->state.g3d.fb;
-      int i;
-
-      dsa->depth.writemask = 1;/*glDepthMask(TRUE);*/
-      dsa->depth.func = PIPE_FUNC_ALWAYS;
-      dsa->depth.enabled = 1;
-
-      cso_save_blend(ctx->cso_context);
-      cso_save_fragment_shader(ctx->cso_context);
-      /* set a passthrough shader */
-      if (!ctx->pass_through_depth_fs)
-         ctx->pass_through_depth_fs = shader_create_from_text(ctx->pipe,
-                                                              pass_through_depth_asm,
-                                                              40,
-                                                              PIPE_SHADER_FRAGMENT);
-      cso_set_fragment_shader_handle(ctx->cso_context,
-                                     ctx->pass_through_depth_fs->driver);
-      cso_set_depth_stencil_alpha(ctx->cso_context, dsa);
-
-      ctx->pipe->clear(ctx->pipe, PIPE_CLEAR_DEPTHSTENCIL, NULL, 1.0, 0);
-
-      /* disable color writes */
-      blend->rt[0].colormask = 0; /*disable colorwrites*/
-      cso_set_blend(ctx->cso_context, blend);
-
-      /* enable scissoring */
-      for (i = 0; i < state->scissor_rects_num; ++i) {
-         const float x      = state->scissor_rects[i * 4 + 0].f;
-         const float y      = state->scissor_rects[i * 4 + 1].f;
-         const float width  = state->scissor_rects[i * 4 + 2].f;
-         const float height = state->scissor_rects[i * 4 + 3].f;
-         VGfloat minx, miny, maxx, maxy;
-
-         minx = 0;
-         miny = 0;
-         maxx = fb->width;
-         maxy = fb->height;
-
-         if (x > minx)
-            minx = x;
-         if (y > miny)
-            miny = y;
-
-         if (x + width < maxx)
-            maxx = x + width;
-         if (y + height < maxy)
-            maxy = y + height;
-
-         /* check for null space */
-         if (minx >= maxx || miny >= maxy)
-            minx = miny = maxx = maxy = 0;
-
-         /*glClear(GL_DEPTH_BUFFER_BIT);*/
-         renderer_draw_quad(ctx->renderer, minx, miny, maxx, maxy, 0.0f);
-      }
-
-      cso_restore_blend(ctx->cso_context);
-      cso_restore_fragment_shader(ctx->cso_context);
-
-      dsa->depth.enabled = 1; /* glEnable(GL_DEPTH_TEST); */
-      dsa->depth.writemask = 0;/*glDepthMask(FALSE);*/
-      dsa->depth.func = PIPE_FUNC_GEQUAL;
+   if (format != PIPE_FORMAT_NONE) {
+      templ.format = format;
    }
+   else {
+      templ.format = PIPE_FORMAT_B8G8R8A8_UNORM;
+   }
+
+   templ.target = PIPE_TEXTURE_2D;
+   templ.width0 = width;
+   templ.height0 = height;
+   templ.depth0 = 1;
+   templ.array_size = 1;
+   templ.last_level = 0;
+
+   if (util_format_get_component_bits(format, UTIL_FORMAT_COLORSPACE_ZS, 1)) {
+      templ.bind = PIPE_BIND_DEPTH_STENCIL;
+   } else {
+      templ.bind = (PIPE_BIND_DISPLAY_TARGET |
+                    PIPE_BIND_RENDER_TARGET |
+                    PIPE_BIND_SAMPLER_VIEW);
+   }
+
+   return pipe->screen->resource_create(pipe->screen, &templ);
+}
+
+static struct pipe_sampler_view *
+create_tex_and_view(struct pipe_context *pipe, enum pipe_format format,
+                    VGint width, VGint height)
+{
+   struct pipe_resource *texture;
+   struct pipe_sampler_view view_templ;
+   struct pipe_sampler_view *view;
+
+   texture = create_texture(pipe, format, width, height);
+
+   if (!texture)
+      return NULL;
+
+   u_sampler_view_default_template(&view_templ, texture, texture->format);
+   view = pipe->create_sampler_view(pipe, texture, &view_templ);
+   /* want the texture to go away if the view is freed */
+   pipe_resource_reference(&texture, NULL);
+
+   return view;
+}
+
+static void
+vg_context_update_surface_mask_view(struct vg_context *ctx,
+                                    uint width, uint height)
+{
+   struct st_framebuffer *stfb = ctx->draw_buffer;
+   struct pipe_sampler_view *old_sampler_view = stfb->surface_mask_view;
+   struct pipe_context *pipe = ctx->pipe;
+
+   if (old_sampler_view &&
+       old_sampler_view->texture->width0 == width &&
+       old_sampler_view->texture->height0 == height)
+      return;
+
+   /*
+     we use PIPE_FORMAT_B8G8R8A8_UNORM because we want to render to
+     this texture and use it as a sampler, so while this wastes some
+     space it makes both of those a lot simpler
+   */
+   stfb->surface_mask_view = create_tex_and_view(pipe,
+         PIPE_FORMAT_B8G8R8A8_UNORM, width, height);
+
+   if (!stfb->surface_mask_view) {
+      if (old_sampler_view)
+         pipe_sampler_view_reference(&old_sampler_view, NULL);
+      return;
+   }
+
+   /* XXX could this call be avoided? */
+   vg_validate_state(ctx);
+
+   /* alpha mask starts with 1.f alpha */
+   mask_fill(0, 0, width, height, 1.f);
+
+   /* if we had an old surface copy it over */
+   if (old_sampler_view) {
+      struct pipe_box src_box;
+      u_box_origin_2d(MIN2(old_sampler_view->texture->width0,
+                           stfb->surface_mask_view->texture->width0),
+                      MIN2(old_sampler_view->texture->height0,
+                           stfb->surface_mask_view->texture->height0),
+                      &src_box);
+
+      pipe->resource_copy_region(pipe,
+                                 stfb->surface_mask_view->texture,
+                                 0, 0, 0, 0,
+                                 old_sampler_view->texture,
+                                 0, &src_box);
+   }
+
+   /* Free the old texture
+    */
+   if (old_sampler_view)
+      pipe_sampler_view_reference(&old_sampler_view, NULL);
+}
+
+static void
+vg_context_update_blend_texture_view(struct vg_context *ctx,
+                                     uint width, uint height)
+{
+   struct pipe_context *pipe = ctx->pipe;
+   struct st_framebuffer *stfb = ctx->draw_buffer;
+   struct pipe_sampler_view *old = stfb->blend_texture_view;
+
+   if (old &&
+       old->texture->width0 == width &&
+       old->texture->height0 == height)
+      return;
+
+   stfb->blend_texture_view = create_tex_and_view(pipe,
+         PIPE_FORMAT_B8G8R8A8_UNORM, width, height);
+
+   pipe_sampler_view_reference(&old, NULL);
+}
+
+static boolean
+vg_context_update_depth_stencil_rb(struct vg_context * ctx,
+                                   uint width, uint height)
+{
+   struct st_renderbuffer *dsrb = ctx->draw_buffer->dsrb;
+   struct pipe_context *pipe = ctx->pipe;
+   struct pipe_surface surf_tmpl;
+
+   if ((dsrb->width == width && dsrb->height == height) && dsrb->texture)
+      return FALSE;
+
+   /* unreference existing ones */
+   pipe_surface_reference(&dsrb->surface, NULL);
+   pipe_resource_reference(&dsrb->texture, NULL);
+   dsrb->width = dsrb->height = 0;
+
+   dsrb->texture = create_texture(pipe, dsrb->format, width, height);
+   if (!dsrb->texture)
+      return TRUE;
+
+   memset(&surf_tmpl, 0, sizeof(surf_tmpl));
+   u_surface_default_template(&surf_tmpl, dsrb->texture,
+                              PIPE_BIND_DEPTH_STENCIL);
+   dsrb->surface = pipe->create_surface(pipe,
+                                        dsrb->texture,
+                                        &surf_tmpl);
+   if (!dsrb->surface) {
+      pipe_resource_reference(&dsrb->texture, NULL);
+      return TRUE;
+   }
+
+   dsrb->width = width;
+   dsrb->height = height;
+
+   assert(dsrb->surface->width == width);
+   assert(dsrb->surface->height == height);
+
+   return TRUE;
 }
 
 void vg_validate_state(struct vg_context *ctx)
 {
+   struct st_framebuffer *stfb = ctx->draw_buffer;
+
    vg_manager_validate_framebuffer(ctx);
 
-   if ((ctx->state.dirty & BLEND_DIRTY)) {
-      struct pipe_blend_state *blend = &ctx->state.g3d.blend;
-      memset(blend, 0, sizeof(struct pipe_blend_state));
-      blend->rt[0].blend_enable = 1;
-      blend->rt[0].colormask = PIPE_MASK_RGBA;
+   if (vg_context_update_depth_stencil_rb(ctx, stfb->width, stfb->height))
+      ctx->state.dirty |= DEPTH_STENCIL_DIRTY;
 
-      switch (ctx->state.vg.blend_mode) {
-      case VG_BLEND_SRC:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].blend_enable = 0;
-         break;
-      case VG_BLEND_SRC_OVER:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_SRC_ALPHA;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
-         break;
-      case VG_BLEND_DST_OVER:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_INV_DST_ALPHA;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_INV_DST_ALPHA;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_DST_ALPHA;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_DST_ALPHA;
-         break;
-      case VG_BLEND_SRC_IN:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_DST_ALPHA;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_DST_ALPHA;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-         break;
-      case VG_BLEND_DST_IN:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_SRC_ALPHA;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_SRC_ALPHA;
-         break;
-      case VG_BLEND_MULTIPLY:
-      case VG_BLEND_SCREEN:
-      case VG_BLEND_DARKEN:
-      case VG_BLEND_LIGHTEN:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
-         blend->rt[0].blend_enable = 0;
-         break;
-      case VG_BLEND_ADDITIVE:
-         blend->rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_ONE;
-         blend->rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
-         break;
-      default:
-         assert(!"not implemented blend mode");
-      }
-      cso_set_blend(ctx->cso_context, &ctx->state.g3d.blend);
-   }
-   if ((ctx->state.dirty & RASTERIZER_DIRTY)) {
-      struct pipe_rasterizer_state *raster = &ctx->state.g3d.rasterizer;
-      memset(raster, 0, sizeof(struct pipe_rasterizer_state));
-      raster->gl_rasterization_rules = 1;
-      cso_set_rasterizer(ctx->cso_context, &ctx->state.g3d.rasterizer);
-   }
-   if ((ctx->state.dirty & VIEWPORT_DIRTY)) {
-      struct pipe_framebuffer_state *fb = &ctx->state.g3d.fb;
-      const VGint param_bytes = 8 * sizeof(VGfloat);
-      VGfloat vs_consts[8] = {
-         2.f/fb->width, 2.f/fb->height, 1, 1,
-         -1, -1, 0, 0
-      };
-      struct pipe_resource **cbuf = &ctx->vs_const_buffer;
+   /* blend state depends on fb format */
+   if (ctx->state.dirty & FRAMEBUFFER_DIRTY)
+      ctx->state.dirty |= BLEND_DIRTY;
 
-      vg_set_viewport(ctx, VEGA_Y0_BOTTOM);
+   renderer_validate(ctx->renderer, ctx->state.dirty,
+         ctx->draw_buffer, &ctx->state.vg);
 
-      pipe_resource_reference(cbuf, NULL);
-      *cbuf = pipe_buffer_create(ctx->pipe->screen, 
-				 PIPE_BIND_CONSTANT_BUFFER,
-				 param_bytes);
-
-      if (*cbuf) {
-         st_no_flush_pipe_buffer_write(ctx, *cbuf,
-                                       0, param_bytes, vs_consts);
-      }
-      ctx->pipe->set_constant_buffer(ctx->pipe, PIPE_SHADER_VERTEX, 0, *cbuf);
-   }
-   if ((ctx->state.dirty & VS_DIRTY)) {
-      cso_set_vertex_shader_handle(ctx->cso_context,
-                                   vg_plain_vs(ctx));
-   }
-
-   /* must be last because it renders to the depth buffer*/
-   if ((ctx->state.dirty & DEPTH_STENCIL_DIRTY)) {
-      update_clip_state(ctx);
-      cso_set_depth_stencil_alpha(ctx->cso_context, &ctx->state.g3d.dsa);
-   }
+   ctx->state.dirty = 0;
 
    shader_set_masking(ctx->shader, ctx->state.vg.masking);
    shader_set_image_mode(ctx->shader, ctx->state.vg.image_mode);
-
-   ctx->state.dirty = NONE_DIRTY;
+   shader_set_color_transform(ctx->shader, ctx->state.vg.color_transform);
 }
 
 VGboolean vg_object_is_valid(void *ptr, enum vg_object_type type)
@@ -468,130 +434,94 @@ void vg_set_error(struct vg_context *ctx,
       ctx->_error = code;
 }
 
-void vg_prepare_blend_surface(struct vg_context *ctx)
+static void vg_prepare_blend_texture(struct vg_context *ctx,
+                                     struct pipe_sampler_view *src)
 {
-   struct pipe_surface *dest_surface = NULL;
+   struct st_framebuffer *stfb = ctx->draw_buffer;
+   struct pipe_surface *surf;
+   struct pipe_surface surf_tmpl;
+
+   vg_context_update_blend_texture_view(ctx, stfb->width, stfb->height);
+
+   memset(&surf_tmpl, 0, sizeof(surf_tmpl));
+   u_surface_default_template(&surf_tmpl, stfb->blend_texture_view->texture,
+                              PIPE_BIND_RENDER_TARGET);
+   surf = ctx->pipe->create_surface(ctx->pipe,
+                                    stfb->blend_texture_view->texture,
+                                    &surf_tmpl);
+   if (surf) {
+      util_blit_pixels_tex(ctx->blit,
+                           src, 0, 0, stfb->width, stfb->height,
+                           surf, 0, 0, stfb->width, stfb->height,
+                           0.0, PIPE_TEX_MIPFILTER_NEAREST);
+
+      pipe_surface_reference(&surf, NULL);
+   }
+}
+
+struct pipe_sampler_view *vg_prepare_blend_surface(struct vg_context *ctx)
+{
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_sampler_view *view;
    struct pipe_sampler_view view_templ;
    struct st_framebuffer *stfb = ctx->draw_buffer;
    struct st_renderbuffer *strb = stfb->strb;
 
-   /* first finish all pending rendering */
-   vgFinish();
+   vg_validate_state(ctx);
 
    u_sampler_view_default_template(&view_templ, strb->texture, strb->texture->format);
    view = pipe->create_sampler_view(pipe, strb->texture, &view_templ);
 
-   dest_surface = pipe->screen->get_tex_surface(pipe->screen,
-                                                stfb->blend_texture_view->texture,
-                                                0, 0, 0,
-                                                PIPE_BIND_RENDER_TARGET);
-   /* flip it, because we want to use it as a sampler */
-   util_blit_pixels_tex(ctx->blit,
-                        view,
-                        0, strb->height,
-                        strb->width, 0,
-                        dest_surface,
-                        0, 0,
-                        strb->width, strb->height,
-                        0.0, PIPE_TEX_MIPFILTER_NEAREST);
-
-   if (dest_surface)
-      pipe_surface_reference(&dest_surface, NULL);
-
-   /* make sure it's complete */
-   vgFinish();
+   vg_prepare_blend_texture(ctx, view);
 
    pipe_sampler_view_reference(&view, NULL);
+
+   return stfb->blend_texture_view;
 }
 
 
-void vg_prepare_blend_surface_from_mask(struct vg_context *ctx)
+struct pipe_sampler_view *vg_prepare_blend_surface_from_mask(struct vg_context *ctx)
 {
-   struct pipe_surface *dest_surface = NULL;
-   struct pipe_context *pipe = ctx->pipe;
    struct st_framebuffer *stfb = ctx->draw_buffer;
-   struct st_renderbuffer *strb = stfb->strb;
 
    vg_validate_state(ctx);
 
-   /* first finish all pending rendering */
-   vgFinish();
+   vg_context_update_surface_mask_view(ctx, stfb->width, stfb->height);
+   vg_prepare_blend_texture(ctx, stfb->surface_mask_view);
 
-   dest_surface = pipe->screen->get_tex_surface(pipe->screen,
-                                                stfb->blend_texture_view->texture,
-                                                0, 0, 0,
-                                                PIPE_BIND_RENDER_TARGET);
-
-   /* flip it, because we want to use it as a sampler */
-   util_blit_pixels_tex(ctx->blit,
-                        stfb->alpha_mask_view,
-                        0, strb->height,
-                        strb->width, 0,
-                        dest_surface,
-                        0, 0,
-                        strb->width, strb->height,
-                        0.0, PIPE_TEX_MIPFILTER_NEAREST);
-
-   /* make sure it's complete */
-   vgFinish();
-
-   if (dest_surface)
-      pipe_surface_reference(&dest_surface, NULL);
+   return stfb->blend_texture_view;
 }
 
-void * vg_plain_vs(struct vg_context *ctx)
+struct pipe_sampler_view *vg_get_surface_mask(struct vg_context *ctx)
 {
-   if (!ctx->plain_vs) {
-      ctx->plain_vs = shader_create_from_text(ctx->pipe,
-                                              vs_plain_asm,
-                                              200,
-                                              PIPE_SHADER_VERTEX);
-   }
+   struct st_framebuffer *stfb = ctx->draw_buffer;
 
-   return ctx->plain_vs->driver;
+   vg_context_update_surface_mask_view(ctx, stfb->width, stfb->height);
+
+   return stfb->surface_mask_view;
 }
 
-
-void * vg_clear_vs(struct vg_context *ctx)
+/**
+ * A transformation from window coordinates to paint coordinates.
+ */
+VGboolean vg_get_paint_matrix(struct vg_context *ctx,
+                              const struct matrix *paint_to_user,
+                              const struct matrix *user_to_surface,
+                              struct matrix *mat)
 {
-   if (!ctx->clear_vs) {
-      ctx->clear_vs = shader_create_from_text(ctx->pipe,
-                                              vs_clear_asm,
-                                              200,
-                                              PIPE_SHADER_VERTEX);
-   }
+   struct matrix tmp;
 
-   return ctx->clear_vs->driver;
-}
+   /* get user-to-paint matrix */
+   memcpy(mat, paint_to_user, sizeof(*paint_to_user));
+   if (!matrix_invert(mat))
+      return VG_FALSE;
 
-void * vg_texture_vs(struct vg_context *ctx)
-{
-   if (!ctx->texture_vs) {
-      ctx->texture_vs = shader_create_from_text(ctx->pipe,
-                                                vs_texture_asm,
-                                                200,
-                                                PIPE_SHADER_VERTEX);
-   }
+   /* get surface-to-user matrix */
+   memcpy(&tmp, user_to_surface, sizeof(*user_to_surface));
+   if (!matrix_invert(&tmp))
+      return VG_FALSE;
 
-   return ctx->texture_vs->driver;
-}
+   matrix_mult(mat, &tmp);
 
-void vg_set_viewport(struct vg_context *ctx, VegaOrientation orientation)
-{
-   struct pipe_viewport_state viewport;
-   struct pipe_framebuffer_state *fb = &ctx->state.g3d.fb;
-   VGfloat y_scale = (orientation == VEGA_Y0_BOTTOM) ? -2.f : 2.f;
-
-   viewport.scale[0] =  fb->width / 2.f;
-   viewport.scale[1] =  fb->height / y_scale;
-   viewport.scale[2] =  1.0;
-   viewport.scale[3] =  1.0;
-   viewport.translate[0] = fb->width / 2.f;
-   viewport.translate[1] = fb->height / 2.f;
-   viewport.translate[2] = 0.0;
-   viewport.translate[3] = 0.0;
-
-   cso_set_viewport(ctx->cso_context, &viewport);
+   return VG_TRUE;
 }

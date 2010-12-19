@@ -30,7 +30,11 @@
 #define ST_CB_ACCUM_H
 
 
-#include "main/mtypes.h"
+#include "main/mfeatures.h"
+
+struct dd_function_table;
+struct gl_context;
+struct gl_renderbuffer;
 
 #if FEATURE_accum
 

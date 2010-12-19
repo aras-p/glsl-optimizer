@@ -30,7 +30,6 @@
 #include <sys/ioctl.h>
 #include "util/u_inlines.h"
 #include "util/u_debug.h"
-#include <pipebuffer/pb_bufmgr.h>
 #include "r600.h"
 #include "r600_priv.h"
 #include "r600_drm_public.h"
@@ -40,6 +39,9 @@
 #ifndef RADEON_INFO_TILING_CONFIG
 #define RADEON_INFO_TILING_CONFIG 0x6
 #endif
+
+static struct radeon *radeon_new(int fd, unsigned device);
+
 static int radeon_get_device(struct radeon *radeon)
 {
 	struct drm_radeon_info info;
@@ -108,7 +110,7 @@ static int radeon_drm_get_tiling(struct radeon *radeon)
 	return 0;
 }
 
-struct radeon *radeon_new(int fd, unsigned device)
+static struct radeon *radeon_new(int fd, unsigned device)
 {
 	struct radeon *radeon;
 	int r;
@@ -150,6 +152,7 @@ struct radeon *radeon_new(int fd, unsigned device)
 	case CHIP_JUNIPER:
 	case CHIP_CYPRESS:
 	case CHIP_HEMLOCK:
+	case CHIP_PALM:
 		break;
 	case CHIP_R100:
 	case CHIP_RV100:
@@ -195,19 +198,26 @@ struct radeon *radeon_new(int fd, unsigned device)
 	case CHIP_RS780:
 	case CHIP_RS880:
 		radeon->chip_class = R600;
+		/* set default group bytes, overridden by tiling info ioctl */
+		radeon->tiling_info.group_bytes = 256;
 		break;
 	case CHIP_RV770:
 	case CHIP_RV730:
 	case CHIP_RV710:
 	case CHIP_RV740:
 		radeon->chip_class = R700;
+		/* set default group bytes, overridden by tiling info ioctl */
+		radeon->tiling_info.group_bytes = 256;
 		break;
 	case CHIP_CEDAR:
 	case CHIP_REDWOOD:
 	case CHIP_JUNIPER:
 	case CHIP_CYPRESS:
 	case CHIP_HEMLOCK:
+	case CHIP_PALM:
 		radeon->chip_class = EVERGREEN;
+		/* set default group bytes, overridden by tiling info ioctl */
+		radeon->tiling_info.group_bytes = 512;
 		break;
 	default:
 		fprintf(stderr, "%s unknown or unsupported chipset 0x%04X\n",
@@ -219,12 +229,10 @@ struct radeon *radeon_new(int fd, unsigned device)
 		if (radeon_drm_get_tiling(radeon))
 			return NULL;
 	}
-	radeon->kman = radeon_bo_pbmgr_create(radeon);
-	if (!radeon->kman)
+	radeon->bomgr = r600_bomgr_create(radeon, 1000000);
+	if (radeon->bomgr == NULL) {
 		return NULL;
-	radeon->cman = pb_cache_manager_create(radeon->kman, 100000);
-	if (!radeon->cman)
-		return NULL;
+	}
 	return radeon;
 }
 
@@ -241,14 +249,11 @@ struct radeon *radeon_decref(struct radeon *radeon)
 		return NULL;
 	}
 
-        if (radeon->cman)
-           radeon->cman->destroy(radeon->cman);
+	if (radeon->bomgr)
+		r600_bomgr_destroy(radeon->bomgr);
 
-        if (radeon->kman)
-           radeon->kman->destroy(radeon->kman);
-
-        if (radeon->fd >= 0)
-           drmClose(radeon->fd);
+	if (radeon->fd >= 0)
+		drmClose(radeon->fd);
 
 	free(radeon);
 	return NULL;

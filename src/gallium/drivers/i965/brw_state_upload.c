@@ -69,7 +69,7 @@ const struct brw_tracked_state *atoms[] =
 
    /* Command packets:
     */
-   &brw_invarient_state,
+   &brw_invariant_state,
    &brw_state_base_address,
 
    &brw_binding_table_pointers,

@@ -290,6 +290,7 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 	switch (format) {
 		/* 8-bit buffers. */
 	case PIPE_FORMAT_A8_UNORM:
+		return V_028C70_SWAP_ALT_REV;
 	case PIPE_FORMAT_I8_UNORM:
 	case PIPE_FORMAT_L8_UNORM:
 	case PIPE_FORMAT_R8_UNORM:
@@ -311,6 +312,8 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 	case PIPE_FORMAT_Z16_UNORM:
 		return V_028C70_SWAP_STD;
 
+	case PIPE_FORMAT_L8A8_UNORM:
+		return V_028C70_SWAP_ALT;
 	case PIPE_FORMAT_R8G8_UNORM:
 		return V_028C70_SWAP_STD;
 
@@ -400,6 +403,7 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_Z16_UNORM:
 		return V_028C70_COLOR_16;
 
+	case PIPE_FORMAT_L8A8_UNORM:
 	case PIPE_FORMAT_R8G8_UNORM:
 		return V_028C70_COLOR_8_8;
 
@@ -447,8 +451,10 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 		return V_028C70_COLOR_16_16;
 
 		/* 64-bit buffers. */
-	case PIPE_FORMAT_R16G16B16A16_SSCALED:
+	case PIPE_FORMAT_R16G16B16_USCALED:
+	case PIPE_FORMAT_R16G16B16A16_USCALED:
 	case PIPE_FORMAT_R16G16B16_SSCALED:
+	case PIPE_FORMAT_R16G16B16A16_SSCALED:
 	case PIPE_FORMAT_R16G16B16A16_UNORM:
 	case PIPE_FORMAT_R16G16B16A16_SNORM:
 		return V_028C70_COLOR_16_16_16_16;
@@ -460,6 +466,7 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_R32G32_FLOAT:
 		return V_028C70_COLOR_32_32_FLOAT;
 
+	case PIPE_FORMAT_R32G32_USCALED:
 	case PIPE_FORMAT_R32G32_SSCALED:
 		return V_028C70_COLOR_32_32;
 
@@ -632,40 +639,6 @@ static INLINE uint32_t r600_translate_vertex_data_type(enum pipe_format format)
 out_unknown:
 	R600_ERR("unsupported vertex format %s\n", util_format_name(format));
 	return ~0;
-}
-
-static INLINE uint32_t r600_translate_vertex_data_swizzle(enum pipe_format format)
-{
-	const struct util_format_description *desc = util_format_description(format);
-	unsigned i;
-	uint32_t word3;
-
-	assert(format);
-
-	if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
-		fprintf(stderr, "r600: Bad format %s in %s:%d\n",
-				util_format_short_name(format), __FUNCTION__, __LINE__);
-		return 0;
-	}
-
-	word3 = 0;
-	for (i = 0; i < desc->nr_channels; i++) {
-		switch (i) {
-		case 0:
-			word3 |= S_03000C_DST_SEL_X(desc->swizzle[0]);
-			break;
-		case 1:
-			word3 |= S_03000C_DST_SEL_Y(desc->swizzle[1]);
-			break;
-		case 2:
-			word3 |= S_03000C_DST_SEL_Z(desc->swizzle[2]);
-			break;
-		case 3:
-			word3 |= S_03000C_DST_SEL_W(desc->swizzle[3]);
-			break;
-		}
-	}
-	return word3;
 }
 
 #endif

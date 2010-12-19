@@ -32,7 +32,7 @@
 
 #include "os/os_thread.h"
 
-struct pipe_surface;
+struct pipe_resource;
 struct st_framebuffer_iface;
 struct stw_pixelformat_info;
 
@@ -143,7 +143,7 @@ stw_framebuffer_from_hdc(
 BOOL
 stw_framebuffer_present_locked(HDC hdc,
                                struct stw_framebuffer *fb,
-                               struct pipe_surface *surface);
+                               struct pipe_resource *res);
 
 void
 stw_framebuffer_update(

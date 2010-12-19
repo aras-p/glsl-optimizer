@@ -114,7 +114,7 @@ first_point( struct lp_setup_context *setup,
    setup->point( setup, v0 );
 }
 
-static void lp_setup_reset( struct lp_setup_context *setup )
+void lp_setup_reset( struct lp_setup_context *setup )
 {
    LP_DBG(DEBUG_SETUP, "%s\n", __FUNCTION__);
 
@@ -263,7 +263,6 @@ execute_clears( struct lp_setup_context *setup )
 
 const char *states[] = {
    "FLUSHED",
-   "EMPTY  ",
    "CLEARED",
    "ACTIVE "
 };
@@ -913,6 +912,12 @@ lp_setup_update_state( struct lp_setup_context *setup,
          llvmpipe_update_derived(lp);
       }
 
+      if (lp->setup->dirty) {
+         llvmpipe_update_setup(lp);
+      }
+
+      assert(setup->setup.variant);
+
       /* Will probably need to move this somewhere else, just need  
        * to know about vertex shader point size attribute.
        */
@@ -928,7 +933,7 @@ lp_setup_update_state( struct lp_setup_context *setup,
 		    setup->setup.variant->key.size) == 0);
    }
 
-   if (update_scene) {
+   if (update_scene && setup->state != SETUP_ACTIVE) {
       if (!set_scene_state( setup, SETUP_ACTIVE, __FUNCTION__ ))
          return FALSE;
    }
@@ -990,6 +995,8 @@ lp_setup_destroy( struct lp_setup_context *setup )
 
       lp_scene_destroy(scene);
    }
+
+   lp_fence_reference(&setup->last_fence, NULL);
 
    FREE( setup );
 }

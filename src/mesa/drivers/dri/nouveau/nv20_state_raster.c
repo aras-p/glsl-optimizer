@@ -27,7 +27,8 @@
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
 #include "nouveau_gldefs.h"
-#include "nouveau_class.h"
+#include "nouveau_util.h"
+#include "nv20_3d.xml.h"
 #include "nv20_driver.h"
 
 void
@@ -36,7 +37,7 @@ nv20_emit_logic_opcode(struct gl_context *ctx, int emit)
 	struct nouveau_channel *chan = context_chan(ctx);
 	struct nouveau_grobj *kelvin = context_eng3d(ctx);
 
-	BEGIN_RING(chan, kelvin, NV20TCL_COLOR_LOGIC_OP_ENABLE, 2);
-	OUT_RING(chan, ctx->Color.ColorLogicOpEnabled ? 1 : 0);
+	BEGIN_RING(chan, kelvin, NV20_3D_COLOR_LOGIC_OP_ENABLE, 2);
+	OUT_RINGb(chan, ctx->Color.ColorLogicOpEnabled);
 	OUT_RING(chan, nvgl_logicop_func(ctx->Color.LogicOp));
 }

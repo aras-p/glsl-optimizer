@@ -45,14 +45,10 @@ static void r600_copy_to_staging_texture(struct pipe_context *ctx, struct r600_t
 {
 	struct pipe_transfer *transfer = (struct pipe_transfer*)rtransfer;
 	struct pipe_resource *texture = transfer->resource;
-	struct pipe_subresource subdst;
 
-	subdst.face = 0;
-	subdst.level = 0;
 	ctx->resource_copy_region(ctx, rtransfer->staging_texture,
-				subdst, 0, 0, 0, texture, transfer->sr,
-				transfer->box.x, transfer->box.y, transfer->box.z,
-				transfer->box.width, transfer->box.height);
+				0, 0, 0, 0, texture, transfer->level,
+				&transfer->box);
 }
 
 
@@ -61,34 +57,32 @@ static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600
 {
 	struct pipe_transfer *transfer = (struct pipe_transfer*)rtransfer;
 	struct pipe_resource *texture = transfer->resource;
-	struct pipe_subresource subsrc;
+	struct pipe_box sbox;
 
-	subsrc.face = 0;
-	subsrc.level = 0;
-	ctx->resource_copy_region(ctx, texture, transfer->sr,
+	sbox.x = sbox.y = sbox.z = 0;
+	sbox.width = transfer->box.width;
+	sbox.height = transfer->box.height;
+	/* XXX that might be wrong */
+	sbox.depth = 1;
+	ctx->resource_copy_region(ctx, texture, transfer->level,
 				  transfer->box.x, transfer->box.y, transfer->box.z,
-				  rtransfer->staging_texture, subsrc,
-				  0, 0, 0,
-				  transfer->box.width, transfer->box.height);
+				  rtransfer->staging_texture,
+				  0, &sbox);
 
 	ctx->flush(ctx, 0, NULL);
 }
 
-static unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
-					unsigned level, unsigned zslice,
-					unsigned face)
+unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
+					unsigned level, unsigned layer)
 {
 	unsigned offset = rtex->offset[level];
 
 	switch (rtex->resource.base.b.target) {
 	case PIPE_TEXTURE_3D:
-		assert(face == 0);
-		return offset + zslice * rtex->layer_size[level];
 	case PIPE_TEXTURE_CUBE:
-		assert(zslice == 0);
-		return offset + face * rtex->layer_size[level];
+		return offset + layer * rtex->layer_size[level];
 	default:
-		assert(zslice == 0 && face == 0);
+		assert(layer == 0);
 		return offset;
 	}
 }
@@ -109,11 +103,11 @@ static unsigned r600_get_pixel_alignment(struct pipe_screen *screen,
 	case V_038000_ARRAY_2D_TILED_THIN1:
 		p_align = MAX2(rscreen->tiling_info->num_banks,
 			       (((rscreen->tiling_info->group_bytes / 8 / pixsize)) *
-				rscreen->tiling_info->num_banks));
+				rscreen->tiling_info->num_banks)) * 8;
 		break;
-	case 0:
+	case V_038000_ARRAY_LINEAR_GENERAL:
 	default:
-		p_align = 64;
+		p_align = rscreen->tiling_info->group_bytes / pixsize;
 		break;
 	}
 	return p_align;
@@ -139,6 +133,29 @@ static unsigned r600_get_height_alignment(struct pipe_screen *screen,
 	return h_align;
 }
 
+static unsigned r600_get_base_alignment(struct pipe_screen *screen,
+					enum pipe_format format,
+					unsigned array_mode)
+{
+	struct r600_screen* rscreen = (struct r600_screen *)screen;
+	unsigned pixsize = util_format_get_blocksize(format);
+	int p_align = r600_get_pixel_alignment(screen, format, array_mode);
+	int h_align = r600_get_height_alignment(screen, array_mode);
+	int b_align;
+
+	switch (array_mode) {
+	case V_038000_ARRAY_2D_TILED_THIN1:
+		b_align = MAX2(rscreen->tiling_info->num_banks * rscreen->tiling_info->num_channels * 8 * 8 * pixsize,
+			       p_align * pixsize * h_align);
+		break;
+	case V_038000_ARRAY_1D_TILED_THIN1:
+	default:
+		b_align = rscreen->tiling_info->group_bytes;
+		break;
+	}
+	return b_align;
+}
+
 static unsigned mip_minify(unsigned size, unsigned level)
 {
 	unsigned val;
@@ -153,10 +170,8 @@ static unsigned r600_texture_get_stride(struct pipe_screen *screen,
 					unsigned level)
 {
 	struct pipe_resource *ptex = &rtex->resource.base.b;
-	struct radeon *radeon = (struct radeon *)screen->winsys;
-	enum chip_class chipc = r600_get_family_class(radeon);
 	unsigned width, stride, tile_width;
-	
+
 	if (rtex->pitch_override)
 		return rtex->pitch_override;
 
@@ -167,11 +182,6 @@ static unsigned r600_texture_get_stride(struct pipe_screen *screen,
 		width = align(width, tile_width);
 	}
 	stride = util_format_get_stride(ptex->format, width);
-	if (chipc == EVERGREEN)
-		stride = align(stride, 512);
-
-        if (ptex->bind & PIPE_BIND_RENDER_TARGET)
-		stride = align(stride, 512);
 
 	return stride;
 }
@@ -193,11 +203,10 @@ static unsigned r600_texture_get_nblocksy(struct pipe_screen *screen,
 }
 
 /* Get a width in pixels from a stride in bytes. */
-static unsigned pitch_to_width(enum pipe_format format,
-                                unsigned pitch_in_bytes)
+static unsigned pitch_to_width(enum pipe_format format, unsigned pitch_in_bytes)
 {
-    return (pitch_in_bytes / util_format_get_blocksize(format)) *
-            util_format_get_blockwidth(format);
+	return (pitch_in_bytes / util_format_get_blocksize(format)) *
+		util_format_get_blockwidth(format);
 }
 
 static void r600_texture_set_array_mode(struct pipe_screen *screen,
@@ -257,6 +266,9 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 		}
 		else
 			size = layer_size * u_minify(ptex->depth0, i);
+		/* align base image and start of miptree */
+		if ((i == 0) || (i == 1))
+			offset = align(offset, r600_get_base_alignment(screen, ptex->format, array_mode));
 		rtex->offset[i] = offset;
 		rtex->layer_size[i] = layer_size;
 		rtex->pitch_in_bytes[i] = pitch;
@@ -297,7 +309,10 @@ r600_texture_create_object(struct pipe_screen *screen,
 	resource->size = rtex->size;
 
 	if (!resource->bo) {
-		resource->bo = r600_bo(radeon, rtex->size, 4096, base->bind, base->usage);
+		struct pipe_resource *ptex = &rtex->resource.base.b;
+		int base_align = r600_get_base_alignment(screen, ptex->format, array_mode);
+
+		resource->bo = r600_bo(radeon, rtex->size, base_align, base->bind, base->usage);
 		if (!resource->bo) {
 			FREE(rtex);
 			return NULL;
@@ -310,12 +325,12 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 						const struct pipe_resource *templ)
 {
 	unsigned array_mode = 0;
-        static int force_tiling = -1;
+	static int force_tiling = -1;
 
-        /* Would like some magic "get_bool_option_once" routine.
+	/* Would like some magic "get_bool_option_once" routine.
 	 */
 	if (force_tiling == -1)
-                force_tiling = debug_get_bool_option("R600_FORCE_TILING", FALSE);
+		force_tiling = debug_get_bool_option("R600_FORCE_TILING", FALSE);
 
 	if (force_tiling) {
 		if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
@@ -346,8 +361,8 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 }
 
 static boolean r600_texture_get_handle(struct pipe_screen* screen,
-                                       struct pipe_resource *ptex,
-                                       struct winsys_handle *whandle)
+					struct pipe_resource *ptex,
+					struct winsys_handle *whandle)
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)ptex;
 	struct r600_resource *resource = &rtex->resource;
@@ -357,36 +372,39 @@ static boolean r600_texture_get_handle(struct pipe_screen* screen,
 			rtex->pitch_in_bytes[0], whandle);
 }
 
-static struct pipe_surface *r600_get_tex_surface(struct pipe_screen *screen,
+static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
 						struct pipe_resource *texture,
-						unsigned face, unsigned level,
-						unsigned zslice, unsigned flags)
+						const struct pipe_surface *surf_tmpl)
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
 	struct r600_surface *surface = CALLOC_STRUCT(r600_surface);
-	unsigned offset, tile_height;
+	unsigned tile_height;
+	unsigned level = surf_tmpl->u.tex.level;
 
+	assert(surf_tmpl->u.tex.first_layer == surf_tmpl->u.tex.last_layer);
 	if (surface == NULL)
 		return NULL;
-	offset = r600_texture_get_offset(rtex, level, zslice, face);
+	/* XXX no offset */
+/*	offset = r600_texture_get_offset(rtex, level, surf_tmpl->u.tex.first_layer);*/
 	pipe_reference_init(&surface->base.reference, 1);
 	pipe_resource_reference(&surface->base.texture, texture);
-	surface->base.format = texture->format;
+	surface->base.context = pipe;
+	surface->base.format = surf_tmpl->format;
 	surface->base.width = mip_minify(texture->width0, level);
 	surface->base.height = mip_minify(texture->height0, level);
-	surface->base.offset = offset;
-	surface->base.usage = flags;
-	surface->base.zslice = zslice;
+	surface->base.usage = surf_tmpl->usage;
 	surface->base.texture = texture;
-	surface->base.face = face;
-	surface->base.level = level;
+	surface->base.u.tex.first_layer = surf_tmpl->u.tex.first_layer;
+	surface->base.u.tex.last_layer = surf_tmpl->u.tex.last_layer;
+	surface->base.u.tex.level = level;
 
-	tile_height = r600_get_height_alignment(screen, rtex->array_mode[level]);
+	tile_height = r600_get_height_alignment(pipe->screen, rtex->array_mode[level]);
 	surface->aligned_height = align(surface->base.height, tile_height);
 	return &surface->base;
 }
 
-static void r600_tex_surface_destroy(struct pipe_surface *surface)
+static void r600_surface_destroy(struct pipe_context *pipe,
+				 struct pipe_surface *surface)
 {
 	pipe_resource_reference(&surface->texture, NULL);
 	FREE(surface);
@@ -419,7 +437,7 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 
 static unsigned int r600_texture_is_referenced(struct pipe_context *context,
 						struct pipe_resource *texture,
-						unsigned face, unsigned level)
+						unsigned level, int layer)
 {
 	/* FIXME */
 	return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
@@ -466,7 +484,7 @@ out:
  */
 static INLINE unsigned u_box_volume( const struct pipe_box *box )
 {
-        return box->width * box->depth * box->height;
+	return box->width * box->depth * box->height;
 };
 
 
@@ -474,44 +492,44 @@ static INLINE unsigned u_box_volume( const struct pipe_box *box )
  * If so, don't use a staging resource.
  */
 static boolean permit_hardware_blit(struct pipe_screen *screen,
-                                    struct pipe_resource *res)
+					struct pipe_resource *res)
 {
-        unsigned bind;
+	unsigned bind;
 
-        if (util_format_is_depth_or_stencil(res->format))
-                bind = PIPE_BIND_DEPTH_STENCIL;
-        else
-                bind = PIPE_BIND_RENDER_TARGET;
+	if (util_format_is_depth_or_stencil(res->format))
+		bind = PIPE_BIND_DEPTH_STENCIL;
+	else
+		bind = PIPE_BIND_RENDER_TARGET;
 
 	/* See r600_resource_copy_region: there is something wrong
-         * with depth resource copies at the moment so avoid them for
-         * now.
-         */
+	 * with depth resource copies at the moment so avoid them for
+	 * now.
+	 */
 	if (util_format_get_component_bits(res->format,
-                                           UTIL_FORMAT_COLORSPACE_ZS,
-                                           0) != 0)
-                return FALSE;
+				UTIL_FORMAT_COLORSPACE_ZS,
+				0) != 0)
+		return FALSE;
 
-        if (!screen->is_format_supported(screen,
-                                         res->format,
-                                         res->target,
-                                         res->nr_samples,
-                                         bind, 0))
-                return FALSE;
+	if (!screen->is_format_supported(screen,
+				res->format,
+				res->target,
+				res->nr_samples,
+				bind, 0))
+		return FALSE;
 
-        if (!screen->is_format_supported(screen,
-                                         res->format,
-                                         res->target,
-                                         res->nr_samples,
-                                         PIPE_BIND_SAMPLER_VIEW, 0))
-                return FALSE;
+	if (!screen->is_format_supported(screen,
+				res->format,
+				res->target,
+				res->nr_samples,
+				PIPE_BIND_SAMPLER_VIEW, 0))
+		return FALSE;
 
-        return TRUE;
+	return TRUE;
 }
 
 struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 						struct pipe_resource *texture,
-						struct pipe_subresource sr,
+						unsigned level,
 						unsigned usage,
 						const struct pipe_box *box)
 {
@@ -531,37 +549,36 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	if (rtex->tiled)
 		use_staging_texture = TRUE;
 
-	if ((usage & PIPE_TRANSFER_READ) &&
-            u_box_volume(box) > 1024)
-                use_staging_texture = TRUE;
+	if ((usage & PIPE_TRANSFER_READ) && u_box_volume(box) > 1024)
+		use_staging_texture = TRUE;
 
-        /* XXX: Use a staging texture for uploads if the underlying BO
-         * is busy.  No interface for checking that currently? so do
-         * it eagerly whenever the transfer doesn't require a readback
-         * and might block.
-         */
-        if ((usage & PIPE_TRANSFER_WRITE) &&
-            !(usage & (PIPE_TRANSFER_READ |
-                       PIPE_TRANSFER_DONTBLOCK |
-                       PIPE_TRANSFER_UNSYNCHRONIZED)))
-                use_staging_texture = TRUE;
+	/* XXX: Use a staging texture for uploads if the underlying BO
+	 * is busy.  No interface for checking that currently? so do
+	 * it eagerly whenever the transfer doesn't require a readback
+	 * and might block.
+	 */
+	if ((usage & PIPE_TRANSFER_WRITE) &&
+			!(usage & (PIPE_TRANSFER_READ |
+					PIPE_TRANSFER_DONTBLOCK |
+					PIPE_TRANSFER_UNSYNCHRONIZED)))
+		use_staging_texture = TRUE;
 
-        if (!permit_hardware_blit(ctx->screen, texture) ||
-            (texture->flags & R600_RESOURCE_FLAG_TRANSFER))
-                use_staging_texture = FALSE;
+	if (!permit_hardware_blit(ctx->screen, texture) ||
+		(texture->flags & R600_RESOURCE_FLAG_TRANSFER))
+		use_staging_texture = FALSE;
 
 	trans = CALLOC_STRUCT(r600_transfer);
 	if (trans == NULL)
 		return NULL;
 	pipe_resource_reference(&trans->transfer.resource, texture);
-	trans->transfer.sr = sr;
+	trans->transfer.level = level;
 	trans->transfer.usage = usage;
 	trans->transfer.box = *box;
 	if (rtex->depth) {
-                /* XXX: only readback the rectangle which is being mapped?
-                 */
-                /* XXX: when discard is true, no need to read back from depth texture
-                 */
+		/* XXX: only readback the rectangle which is being mapped?
+		*/
+		/* XXX: when discard is true, no need to read back from depth texture
+		*/
 		r = r600_texture_depth_flush(ctx, texture);
 		if (r < 0) {
 			R600_ERR("failed to create temporary texture to hold untiled copy\n");
@@ -575,6 +592,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		resource.width0 = box->width;
 		resource.height0 = box->height;
 		resource.depth0 = 1;
+		resource.array_size = 1;
 		resource.last_level = 0;
 		resource.nr_samples = 0;
 		resource.usage = PIPE_USAGE_STAGING;
@@ -600,7 +618,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		}
 
 		trans->transfer.stride =
-                        ((struct r600_resource_texture *)trans->staging_texture)->pitch_in_bytes[0];
+			((struct r600_resource_texture *)trans->staging_texture)->pitch_in_bytes[0];
 		if (usage & PIPE_TRANSFER_READ) {
 			r600_copy_to_staging_texture(ctx, trans);
 			/* Always referenced in the blit. */
@@ -608,8 +626,8 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		}
 		return &trans->transfer;
 	}
-	trans->transfer.stride = rtex->pitch_in_bytes[sr.level];
-	trans->offset = r600_texture_get_offset(rtex, sr.level, box->z, sr.face);
+	trans->transfer.stride = rtex->pitch_in_bytes[level];
+	trans->offset = r600_texture_get_offset(rtex, level, box->z);
 	return &trans->transfer;
 }
 
@@ -722,10 +740,10 @@ struct u_resource_vtbl r600_texture_vtbl =
 	u_default_transfer_inline_write	/* transfer_inline_write */
 };
 
-void r600_init_screen_texture_functions(struct pipe_screen *screen)
+void r600_init_surface_functions(struct r600_pipe_context *r600)
 {
-	screen->get_tex_surface = r600_get_tex_surface;
-	screen->tex_surface_destroy = r600_tex_surface_destroy;
+	r600->context.create_surface = r600_create_surface;
+	r600->context.surface_destroy = r600_surface_destroy;
 }
 
 static unsigned r600_get_swizzle_combined(const unsigned char *swizzle_format,
@@ -826,8 +844,8 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 	case UTIL_FORMAT_COLORSPACE_YUV:
 		yuv_format |= (1 << 30);
 		switch (format) {
-                case PIPE_FORMAT_UYVY:
-                case PIPE_FORMAT_YUYV:
+		case PIPE_FORMAT_UYVY:
+		case PIPE_FORMAT_YUYV:
 		default:
 			break;
 		}
@@ -845,29 +863,29 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 
 	/* S3TC formats. TODO */
 	if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
-                static int r600_enable_s3tc = -1;
+		static int r600_enable_s3tc = -1;
 
-                if (r600_enable_s3tc == -1)
-                        r600_enable_s3tc = 
-                                debug_get_bool_option("R600_ENABLE_S3TC", FALSE);
+		if (r600_enable_s3tc == -1)
+			r600_enable_s3tc = 
+				debug_get_bool_option("R600_ENABLE_S3TC", FALSE);
 
-                if (!r600_enable_s3tc)
-                        goto out_unknown;
+		if (!r600_enable_s3tc)
+			goto out_unknown;
 
 		switch (format) {
 		case PIPE_FORMAT_DXT1_RGB:
 		case PIPE_FORMAT_DXT1_RGBA:
-                        result = FMT_BC1;
-                        goto out_word4;
+			result = FMT_BC1;
+			goto out_word4;
 		case PIPE_FORMAT_DXT3_RGBA:
-                        result = FMT_BC2;
-                        goto out_word4;
+			result = FMT_BC2;
+			goto out_word4;
 		case PIPE_FORMAT_DXT5_RGBA:
-                        result = FMT_BC3;
-                        goto out_word4;
-                default:
-                        goto out_unknown;
-                }
+			result = FMT_BC3;
+			goto out_word4;
+		default:
+			goto out_unknown;
+		}
 	}
 
 

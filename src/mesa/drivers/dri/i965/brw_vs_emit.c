@@ -140,9 +140,13 @@ clear_current_const(struct brw_vs_compile *c)
 static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 {
    struct intel_context *intel = &c->func.brw->intel;
-   GLuint i, reg = 0, mrf;
+   GLuint i, reg = 0, mrf, j;
    int attributes_in_vue;
    int first_reladdr_output;
+   int max_constant;
+   int constant = 0;
+   int vert_result_reoder[VERT_RESULT_MAX];
+   int bfc = 0;
 
    /* Determine whether to use a real constant buffer or use a block
     * of GRF registers for constants.  The later is faster but only
@@ -181,62 +185,81 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 
    }
 
-   /* Vertex program parameters from curbe:
+   /* Assign some (probably all) of the vertex program constants to
+    * the push constant buffer/CURBE.
+    *
+    * There's an obvious limit to the numer of push constants equal to
+    * the number of register available, and that number is smaller
+    * than the minimum maximum number of vertex program parameters, so
+    * support for pull constants is required if we overflow.
+    * Additionally, on gen6 the number of push constants is even
+    * lower.
+    *
+    * When there's relative addressing, we don't know what range of
+    * Mesa IR registers can be accessed.  And generally, when relative
+    * addressing is used we also have too many constants to load them
+    * all as push constants.  So, we'll just support relative
+    * addressing out of the pull constant buffers, and try to load as
+    * many statically-accessed constants into the push constant buffer
+    * as we can.
     */
-   if (c->vp->use_const_buffer) {
-      int max_constant = BRW_MAX_GRF - 20 - c->vp->program.Base.NumTemporaries;
-      int constant = 0;
+   if (intel->gen >= 6) {
+      /* We can only load 32 regs of push constants. */
+      max_constant = 32 * 2 - c->key.nr_userclip;
+   } else {
+      max_constant = BRW_MAX_GRF - 20 - c->vp->program.Base.NumTemporaries;
+   }
 
-      /* We've got more constants than we can load with the push
-       * mechanism.  This is often correlated with reladdr loads where
-       * we should probably be using a pull mechanism anyway to avoid
-       * excessive reading.  However, the pull mechanism is slow in
-       * general.  So, we try to allocate as many non-reladdr-loaded
-       * constants through the push buffer as we can before giving up.
-       */
-      memset(c->constant_map, -1, c->vp->program.Base.Parameters->NumParameters);
-      for (i = 0;
-	   i < c->vp->program.Base.NumInstructions && constant < max_constant;
-	   i++) {
-	 struct prog_instruction *inst = &c->vp->program.Base.Instructions[i];
-	 int arg;
+   /* constant_map maps from ParameterValues[] index to index in the
+    * push constant buffer, or -1 if it's only in the pull constant
+    * buffer.
+    */
+   memset(c->constant_map, -1, c->vp->program.Base.Parameters->NumParameters);
+   for (i = 0;
+	i < c->vp->program.Base.NumInstructions && constant < max_constant;
+	i++) {
+      struct prog_instruction *inst = &c->vp->program.Base.Instructions[i];
+      int arg;
 
-	 for (arg = 0; arg < 3 && constant < max_constant; arg++) {
-	    if ((inst->SrcReg[arg].File != PROGRAM_STATE_VAR &&
-		 inst->SrcReg[arg].File != PROGRAM_CONSTANT &&
-		 inst->SrcReg[arg].File != PROGRAM_UNIFORM &&
-		 inst->SrcReg[arg].File != PROGRAM_ENV_PARAM &&
-		 inst->SrcReg[arg].File != PROGRAM_LOCAL_PARAM) ||
-		inst->SrcReg[arg].RelAddr)
-	       continue;
+      for (arg = 0; arg < 3 && constant < max_constant; arg++) {
+	 if (inst->SrcReg[arg].File != PROGRAM_STATE_VAR &&
+	     inst->SrcReg[arg].File != PROGRAM_CONSTANT &&
+	     inst->SrcReg[arg].File != PROGRAM_UNIFORM &&
+	     inst->SrcReg[arg].File != PROGRAM_ENV_PARAM &&
+	     inst->SrcReg[arg].File != PROGRAM_LOCAL_PARAM) {
+	    continue;
+	 }
 
-	    if (c->constant_map[inst->SrcReg[arg].Index] == -1) {
-	       c->constant_map[inst->SrcReg[arg].Index] = constant++;
-	    }
+	 if (inst->SrcReg[arg].RelAddr) {
+	    c->vp->use_const_buffer = GL_TRUE;
+	    continue;
+	 }
+
+	 if (c->constant_map[inst->SrcReg[arg].Index] == -1) {
+	    c->constant_map[inst->SrcReg[arg].Index] = constant++;
 	 }
       }
-
-      for (i = 0; i < constant; i++) {
-         c->regs[PROGRAM_STATE_VAR][i] = stride( brw_vec4_grf(reg+i/2,
-							      (i%2) * 4),
-						 0, 4, 1);
-      }
-      reg += (constant + 1) / 2;
-      c->prog_data.curb_read_length = reg - 1;
-      /* XXX 0 causes a bug elsewhere... */
-      c->prog_data.nr_params = MAX2(constant * 4, 4);
    }
-   else {
-      /* use a section of the GRF for constants */
-      GLuint nr_params = c->vp->program.Base.Parameters->NumParameters;
-      for (i = 0; i < nr_params; i++) {
-         c->regs[PROGRAM_STATE_VAR][i] = stride( brw_vec4_grf(reg+i/2, (i%2) * 4), 0, 4, 1);
-      }
-      reg += (nr_params + 1) / 2;
-      c->prog_data.curb_read_length = reg - 1;
 
-      c->prog_data.nr_params = nr_params * 4;
+   /* If we ran out of push constant space, then we'll also upload all
+    * constants through the pull constant buffer so that they can be
+    * accessed no matter what.  For relative addressing (the common
+    * case) we need them all in place anyway.
+    */
+   if (constant == max_constant)
+      c->vp->use_const_buffer = GL_TRUE;
+
+   for (i = 0; i < constant; i++) {
+      c->regs[PROGRAM_STATE_VAR][i] = stride(brw_vec4_grf(reg + i / 2,
+							  (i % 2) * 4),
+					     0, 4, 1);
    }
+   reg += (constant + 1) / 2;
+   c->prog_data.curb_read_length = reg - 1;
+   c->prog_data.nr_params = constant * 4;
+   /* XXX 0 causes a bug elsewhere... */
+   if (intel->gen < 6 && c->prog_data.nr_params == 0)
+      c->prog_data.nr_params = 4;
 
    /* Allocate input regs:  
     */
@@ -270,7 +293,36 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
       mrf = 4;
 
    first_reladdr_output = get_first_reladdr_output(&c->vp->program);
-   for (i = 0; i < VERT_RESULT_MAX; i++) {
+
+   for (i = 0; i < VERT_RESULT_MAX; i++)
+       vert_result_reoder[i] = i;
+
+   /* adjust attribute order in VUE for BFC0/BFC1 on Gen6+ */
+   if (intel->gen >= 6 && c->key.two_side_color) {
+       if ((c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_COL1)) &&
+           (c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC1))) {
+           assert(c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_COL0));
+           assert(c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC0));
+           bfc = 2;
+       } else if ((c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_COL0)) &&
+           (c->prog_data.outputs_written & BITFIELD64_BIT(VERT_RESULT_BFC0)))
+           bfc = 1;
+
+       if (bfc) {
+           for (i = 0; i < bfc; i++) {
+               vert_result_reoder[VERT_RESULT_COL0 + i * 2 + 0] = VERT_RESULT_COL0 + i;
+               vert_result_reoder[VERT_RESULT_COL0 + i * 2 + 1] = VERT_RESULT_BFC0 + i;
+           }
+
+           for (i = VERT_RESULT_COL0 + bfc * 2; i < VERT_RESULT_BFC0 + bfc; i++) {
+               vert_result_reoder[i] = i - bfc;
+           }
+       }
+   }
+
+   for (j = 0; j < VERT_RESULT_MAX; j++) {
+      i = vert_result_reoder[j];
+
       if (c->prog_data.outputs_written & BITFIELD64_BIT(i)) {
 	 c->nr_outputs++;
          assert(i < Elements(c->regs[PROGRAM_OUTPUT]));
@@ -281,7 +333,6 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 	 else if (i == VERT_RESULT_PSIZ) {
 	    c->regs[PROGRAM_OUTPUT][i] = brw_vec8_grf(reg, 0);
 	    reg++;
-	    mrf++;		/* just a placeholder?  XXX fix later stages & remove this */
 	 }
 	 else {
 	    /* Two restrictions on our compute-to-MRF here.  The
@@ -574,9 +625,18 @@ static void emit_max( struct brw_compile *p,
 		      struct brw_reg arg0,
 		      struct brw_reg arg1 )
 {
-   brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_GE, arg0, arg1);
-   brw_SEL(p, dst, arg0, arg1);
-   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+   struct intel_context *intel = &p->brw->intel;
+
+   if (intel->gen >= 6) {
+      brw_set_conditionalmod(p, BRW_CONDITIONAL_GE);
+      brw_SEL(p, dst, arg0, arg1);
+      brw_set_conditionalmod(p, BRW_CONDITIONAL_NONE);
+      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+   } else {
+      brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_GE, arg0, arg1);
+      brw_SEL(p, dst, arg0, arg1);
+      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+   }
 }
 
 static void emit_min( struct brw_compile *p, 
@@ -584,9 +644,34 @@ static void emit_min( struct brw_compile *p,
 		      struct brw_reg arg0,
 		      struct brw_reg arg1 )
 {
-   brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, arg0, arg1);
-   brw_SEL(p, dst, arg0, arg1);
-   brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+   struct intel_context *intel = &p->brw->intel;
+
+   if (intel->gen >= 6) {
+      brw_set_conditionalmod(p, BRW_CONDITIONAL_L);
+      brw_SEL(p, dst, arg0, arg1);
+      brw_set_conditionalmod(p, BRW_CONDITIONAL_NONE);
+      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+   } else {
+      brw_CMP(p, brw_null_reg(), BRW_CONDITIONAL_L, arg0, arg1);
+      brw_SEL(p, dst, arg0, arg1);
+      brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+   }
+}
+
+static void emit_arl(struct brw_compile *p,
+		     struct brw_reg dst,
+		     struct brw_reg src)
+{
+   struct intel_context *intel = &p->brw->intel;
+
+   if (intel->gen >= 6) {
+      struct brw_reg dst_f = retype(dst, BRW_REGISTER_TYPE_F);
+
+      brw_RNDD(p, dst_f, src);
+      brw_MOV(p, dst, dst_f);
+   } else {
+      brw_RNDD(p, dst, src);
+   }
 }
 
 static void emit_math1_gen4(struct brw_vs_compile *c,
@@ -680,7 +765,7 @@ emit_math1(struct brw_vs_compile *c,
       emit_math1_gen4(c, function, dst, arg0, precision);
 }
 
-static void emit_math2( struct brw_vs_compile *c, 
+static void emit_math2_gen4( struct brw_vs_compile *c, 
 			GLuint function,
 			struct brw_reg dst,
 			struct brw_reg arg0,
@@ -688,14 +773,11 @@ static void emit_math2( struct brw_vs_compile *c,
 			GLuint precision)
 {
    struct brw_compile *p = &c->func;
-   struct intel_context *intel = &p->brw->intel;
    struct brw_reg tmp = dst;
    GLboolean need_tmp = GL_FALSE;
 
-   if (dst.file != BRW_GENERAL_REGISTER_FILE)
-      need_tmp = GL_TRUE;
-
-   if (intel->gen < 6 && dst.dw1.bits.writemask != 0xf)
+   if (dst.file != BRW_GENERAL_REGISTER_FILE ||
+       dst.dw1.bits.writemask != 0xf)
       need_tmp = GL_TRUE;
 
    if (need_tmp) 
@@ -718,6 +800,53 @@ static void emit_math2( struct brw_vs_compile *c,
    }
 }
 
+static void emit_math2_gen6( struct brw_vs_compile *c, 
+			GLuint function,
+			struct brw_reg dst,
+			struct brw_reg arg0,
+			struct brw_reg arg1,
+			GLuint precision)
+{
+   struct brw_compile *p = &c->func;
+   struct brw_reg tmp_src0, tmp_src1, tmp_dst;
+
+   tmp_src0 = get_tmp(c);
+   tmp_src1 = get_tmp(c);
+   tmp_dst = get_tmp(c);
+
+   brw_MOV(p, tmp_src0, arg0);
+   brw_MOV(p, tmp_src1, arg1);
+   
+   brw_set_access_mode(p, BRW_ALIGN_1);
+   brw_math2(p,
+	    tmp_dst,
+	    function,
+	    tmp_src0,
+	    tmp_src1);
+   brw_set_access_mode(p, BRW_ALIGN_16);
+
+   brw_MOV(p, dst, tmp_dst);
+
+   release_tmp(c, tmp_src0);
+   release_tmp(c, tmp_src1);
+   release_tmp(c, tmp_dst);
+}
+
+static void emit_math2( struct brw_vs_compile *c, 
+			GLuint function,
+			struct brw_reg dst,
+			struct brw_reg arg0,
+			struct brw_reg arg1,
+			GLuint precision)
+{
+   struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
+
+   if (intel->gen >= 6)
+      emit_math2_gen6(c, function, dst, arg0, arg1, precision);
+   else
+      emit_math2_gen4(c, function, dst, arg0, arg1, precision);
+}
 
 static void emit_exp_noalias( struct brw_vs_compile *c,
 			      struct brw_reg dst,
@@ -990,8 +1119,6 @@ get_constant(struct brw_vs_compile *c,
 
    assert(argIndex < 3);
 
-   assert(c->func.brw->intel.gen < 6); /* FINISHME */
-
    if (c->current_const[argIndex].index != src->Index) {
       /* Keep track of the last constant loaded in this slot, for reuse. */
       c->current_const[argIndex].index = src->Index;
@@ -1022,13 +1149,13 @@ get_reladdr_constant(struct brw_vs_compile *c,
 {
    const struct prog_src_register *src = &inst->SrcReg[argIndex];
    struct brw_compile *p = &c->func;
+   struct brw_context *brw = p->brw;
+   struct intel_context *intel = &brw->intel;
    struct brw_reg const_reg = c->current_const[argIndex].reg;
-   struct brw_reg addrReg = c->regs[PROGRAM_ADDRESS][0];
-   struct brw_reg byte_addr_reg = retype(get_tmp(c), BRW_REGISTER_TYPE_D);
+   struct brw_reg addr_reg = c->regs[PROGRAM_ADDRESS][0];
+   uint32_t offset;
 
    assert(argIndex < 3);
-
-   assert(c->func.brw->intel.gen < 6); /* FINISHME */
 
    /* Can't reuse a reladdr constant load. */
    c->current_const[argIndex].index = -1;
@@ -1038,15 +1165,21 @@ get_reladdr_constant(struct brw_vs_compile *c,
 	  src->Index, argIndex, c->current_const[argIndex].reg.nr);
 #endif
 
-   brw_MUL(p, byte_addr_reg, addrReg, brw_imm_ud(16));
+   if (intel->gen >= 6) {
+      offset = src->Index;
+   } else {
+      struct brw_reg byte_addr_reg = retype(get_tmp(c), BRW_REGISTER_TYPE_D);
+      brw_MUL(p, byte_addr_reg, addr_reg, brw_imm_d(16));
+      addr_reg = byte_addr_reg;
+      offset = 16 * src->Index;
+   }
 
    /* fetch the first vec4 */
    brw_dp_READ_4_vs_relative(p,
-			     const_reg,                     /* writeback dest */
-			     byte_addr_reg,                 /* address register */
-			     16 * src->Index,               /* byte offset */
-			     SURF_INDEX_VERT_CONST_BUFFER   /* binding table index */
-			     );
+			     const_reg,
+			     addr_reg,
+			     offset,
+			     SURF_INDEX_VERT_CONST_BUFFER);
 
    return const_reg;
 }
@@ -1241,21 +1374,17 @@ get_src_reg( struct brw_vs_compile *c,
    case PROGRAM_UNIFORM:
    case PROGRAM_ENV_PARAM:
    case PROGRAM_LOCAL_PARAM:
-      if (c->vp->use_const_buffer) {
-	 if (!relAddr && c->constant_map[index] != -1) {
-	    assert(c->regs[PROGRAM_STATE_VAR][c->constant_map[index]].nr != 0);
-	    return c->regs[PROGRAM_STATE_VAR][c->constant_map[index]];
-	 } else if (relAddr)
+      if (!relAddr && c->constant_map[index] != -1) {
+	 /* Take from the push constant buffer if possible. */
+	 assert(c->regs[PROGRAM_STATE_VAR][c->constant_map[index]].nr != 0);
+	 return c->regs[PROGRAM_STATE_VAR][c->constant_map[index]];
+      } else {
+	 /* Must be in the pull constant buffer then .*/
+	 assert(c->vp->use_const_buffer);
+	 if (relAddr)
 	    return get_reladdr_constant(c, inst, argIndex);
 	 else
 	    return get_constant(c, inst, argIndex);
-      }
-      else if (relAddr) {
-         return deref(c, c->regs[PROGRAM_STATE_VAR][0], index, 16);
-      }
-      else {
-         assert(c->regs[PROGRAM_STATE_VAR][index].nr != 0);
-         return c->regs[PROGRAM_STATE_VAR][index];
       }
    case PROGRAM_ADDRESS:
       assert(index == 0);
@@ -1585,6 +1714,8 @@ static void emit_vertex_write( struct brw_vs_compile *c)
 	 break;
       if (!(c->prog_data.outputs_written & BITFIELD64_BIT(i)))
 	 continue;
+      if (i == VERT_RESULT_PSIZ)
+	 continue;
 
       if (i >= VERT_RESULT_TEX0 &&
 	  c->regs[PROGRAM_OUTPUT][i].file == BRW_GENERAL_REGISTER_FILE) {
@@ -1848,7 +1979,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 emit_math1(c, BRW_MATH_FUNCTION_EXP, dst, args[0], BRW_MATH_PRECISION_FULL);
 	 break;
       case OPCODE_ARL:
-	 brw_RNDD(p, dst, args[0]);
+	 emit_arl(p, dst, args[0]);
 	 break;
       case OPCODE_FLR:
 	 brw_RNDD(p, dst, args[0]);
@@ -1895,7 +2026,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
 	 emit_math1(c, BRW_MATH_FUNCTION_INV, dst, args[0], BRW_MATH_PRECISION_FULL);
 	 break;
       case OPCODE_RSQ:
-	 emit_math1(c, BRW_MATH_FUNCTION_RSQ, dst, args[0], BRW_MATH_PRECISION_FULL);
+	 emit_math1(c, BRW_MATH_FUNCTION_RSQ, dst, brw_abs(args[0]), BRW_MATH_PRECISION_FULL);
 	 break;
 
       case OPCODE_SEQ:
@@ -1969,35 +2100,42 @@ void brw_vs_emit(struct brw_vs_compile *c )
          break;
       case OPCODE_CONT:
 	 brw_set_predicate_control(p, get_predicate(inst));
-	 brw_CONT(p, if_depth_in_loop[loop_depth]);
+	 if (intel->gen >= 6) {
+	    brw_CONT_gen6(p, loop_inst[loop_depth - 1]);
+	 } else {
+	    brw_CONT(p, if_depth_in_loop[loop_depth]);
+	 }
          brw_set_predicate_control(p, BRW_PREDICATE_NONE);
          break;
-      case OPCODE_ENDLOOP: 
-         {
-	    clear_current_const(c);
-            struct brw_instruction *inst0, *inst1;
-	    GLuint br = 1;
 
-            loop_depth--;
+      case OPCODE_ENDLOOP: {
+	 clear_current_const(c);
+	 struct brw_instruction *inst0, *inst1;
+	 GLuint br = 1;
 
-	    if (intel->gen == 5)
-	       br = 2;
+	 loop_depth--;
 
-            inst0 = inst1 = brw_WHILE(p, loop_inst[loop_depth]);
-            /* patch all the BREAK/CONT instructions from last BEGINLOOP */
-            while (inst0 > loop_inst[loop_depth]) {
-               inst0--;
-               if (inst0->header.opcode == BRW_OPCODE_BREAK &&
+	 if (intel->gen == 5)
+	    br = 2;
+
+	 inst0 = inst1 = brw_WHILE(p, loop_inst[loop_depth]);
+
+	 if (intel->gen < 6) {
+	    /* patch all the BREAK/CONT instructions from last BEGINLOOP */
+	    while (inst0 > loop_inst[loop_depth]) {
+	       inst0--;
+	       if (inst0->header.opcode == BRW_OPCODE_BREAK &&
 		   inst0->bits3.if_else.jump_count == 0) {
-                  inst0->bits3.if_else.jump_count = br * (inst1 - inst0 + 1);
-               }
-               else if (inst0->header.opcode == BRW_OPCODE_CONTINUE &&
-			inst0->bits3.if_else.jump_count == 0) {
-                  inst0->bits3.if_else.jump_count = br * (inst1 - inst0);
-               }
-            }
-         }
+		  inst0->bits3.if_else.jump_count = br * (inst1 - inst0 + 1);
+	       } else if (inst0->header.opcode == BRW_OPCODE_CONTINUE &&
+			  inst0->bits3.if_else.jump_count == 0) {
+		  inst0->bits3.if_else.jump_count = br * (inst1 - inst0);
+	       }
+	    }
+	 }
+      }
          break;
+
       case OPCODE_BRA:
 	 brw_set_predicate_control(p, get_predicate(inst));
          brw_ADD(p, brw_ip_reg(), brw_ip_reg(), brw_imm_d(1*16));
@@ -2088,6 +2226,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
    }
 
    brw_resolve_cals(p);
+   brw_set_uip_jip(p);
 
    brw_optimize(p);
 

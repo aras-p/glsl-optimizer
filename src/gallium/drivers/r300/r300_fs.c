@@ -390,7 +390,6 @@ static void r300_translate_fragment_shader(
     compiler.Base.max_temp_regs = compiler.Base.is_r500 ? 128 : 32;
     compiler.Base.max_constants = compiler.Base.is_r500 ? 256 : 32;
     compiler.Base.max_alu_insts = compiler.Base.is_r500 ? 512 : 64;
-    compiler.Base.remove_unused_constants = TRUE;
     compiler.AllocateHwInputs = &allocate_hardware_inputs;
     compiler.UserData = &shader->inputs;
 
@@ -407,6 +406,11 @@ static void r300_translate_fragment_shader(
     ttr.use_half_swizzles = TRUE;
 
     r300_tgsi_to_rc(&ttr, tokens);
+
+    if (!r300->screen->caps.is_r500 ||
+        compiler.Base.Program.Constants.Count > 200) {
+        compiler.Base.remove_unused_constants = TRUE;
+    }
 
     /**
      * Transform the program to support WPOS.

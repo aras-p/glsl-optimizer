@@ -37,8 +37,6 @@ void trace_dump_format(enum pipe_format format);
 
 void trace_dump_resource_template(const struct pipe_resource *templat);
 
-void trace_dump_subresource(const struct pipe_subresource *subresource);
-
 void trace_dump_box(const struct pipe_box *box);
 
 void trace_dump_rasterizer_state(const struct pipe_rasterizer_state *state);

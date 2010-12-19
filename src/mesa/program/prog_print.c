@@ -42,8 +42,8 @@
 /**
  * Return string name for given program/register file.
  */
-static const char *
-file_string(gl_register_file f, gl_prog_print_mode mode)
+const char *
+_mesa_register_file_name(gl_register_file f)
 {
    switch (f) {
    case PROGRAM_TEMPORARY:
@@ -275,7 +275,8 @@ reg_string(gl_register_file f, GLint index, gl_prog_print_mode mode,
 
    switch (mode) {
    case PROG_PRINT_DEBUG:
-      sprintf(str, "%s[%s%d]", file_string(f, mode), addr, index);
+      sprintf(str, "%s[%s%d]",
+              _mesa_register_file_name(f), addr, index);
       if (hasIndex2) {
          int offset = strlen(str);
          const char *addr2 = relAddr2 ? "ADDR+" : "";
@@ -497,7 +498,7 @@ fprint_dst_reg(FILE * f,
 
 #if 0
    fprintf(f, "%s[%d]%s",
-	   file_string((gl_register_file) dstReg->File, mode),
+	   _mesa_register_file_name((gl_register_file) dstReg->File),
 	   dstReg->Index,
 	   _mesa_writemask_string(dstReg->WriteMask));
 #endif
@@ -522,7 +523,7 @@ fprint_src_reg(FILE *f,
 	   abs);
 #if 0
    fprintf(f, "%s[%d]%s",
-	   file_string((gl_register_file) srcReg->File, mode),
+	   _mesa_register_file_name((gl_register_file) srcReg->File),
 	   srcReg->Index,
 	   _mesa_swizzle_string(srcReg->Swizzle,
 				srcReg->Negate, GL_FALSE));
@@ -615,8 +616,7 @@ _mesa_fprint_instruction_opt(FILE *f,
       if (inst->SrcReg[0].File != PROGRAM_UNDEFINED) {
          fprintf(f, ", ");
          fprintf(f, "%s[%d]%s",
-		 file_string((gl_register_file) inst->SrcReg[0].File,
-			     mode),
+                 _mesa_register_file_name((gl_register_file) inst->SrcReg[0].File),
 		 inst->SrcReg[0].Index,
 		 _mesa_swizzle_string(inst->SrcReg[0].Swizzle,
 				      inst->SrcReg[0].Negate, GL_FALSE));
@@ -632,8 +632,7 @@ _mesa_fprint_instruction_opt(FILE *f,
       fprintf(f, " ");
       fprint_dst_reg(f, &inst->DstReg, mode, prog);
       fprintf(f, ", %s[%d], %s",
-	      file_string((gl_register_file) inst->SrcReg[0].File,
-			  mode),
+	      _mesa_register_file_name((gl_register_file) inst->SrcReg[0].File),
 	      inst->SrcReg[0].Index,
 	      _mesa_swizzle_string(inst->SrcReg[0].Swizzle,
 				   inst->SrcReg[0].Negate, GL_TRUE));
@@ -964,7 +963,6 @@ static void
 _mesa_fprint_parameter_list(FILE *f,
                             const struct gl_program_parameter_list *list)
 {
-   const gl_prog_print_mode mode = PROG_PRINT_DEBUG;
    GLuint i;
 
    if (!list)
@@ -978,7 +976,7 @@ _mesa_fprint_parameter_list(FILE *f,
       const GLfloat *v = list->ParameterValues[i];
       fprintf(f, "param[%d] sz=%d %s %s = {%.3g, %.3g, %.3g, %.3g}",
 	      i, param->Size,
-	      file_string(list->Parameters[i].Type, mode),
+	      _mesa_register_file_name(list->Parameters[i].Type),
 	      param->Name, v[0], v[1], v[2], v[3]);
       if (param->Flags & PROG_PARAM_BIT_CENTROID)
          fprintf(f, " Centroid");

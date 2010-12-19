@@ -26,6 +26,7 @@
 
 #include "../r300_reg.h"
 
+#include "radeon_compiler_util.h"
 #include "radeon_dataflow.h"
 #include "radeon_program_alu.h"
 #include "radeon_swizzle.h"
@@ -790,19 +791,14 @@ static void allocate_temporary_registers(struct radeon_compiler *c, void *user)
 						if (!hwtemps[j])
 							break;
 					}
-					if (j >= c->max_temp_regs) {
-						rc_error(c, "Too many temporaries\n");
-						return;
+					ta[orig].Allocated = 1;
+					if (last_inst_src_reladdr &&
+					    last_inst_src_reladdr->IP > inst->IP) {
+						ta[orig].HwTemp = orig;
 					} else {
-						ta[orig].Allocated = 1;
-						if (last_inst_src_reladdr &&
-						    last_inst_src_reladdr->IP > inst->IP) {
-							ta[orig].HwTemp = orig;
-						} else {
-							ta[orig].HwTemp = j;
-						}
-						hwtemps[ta[orig].HwTemp] = 1;
+						ta[orig].HwTemp = j;
 					}
+					hwtemps[ta[orig].HwTemp] = 1;
 				}
 
 				inst->U.I.DstReg.Index = ta[orig].HwTemp;
@@ -1018,7 +1014,6 @@ static struct rc_swizzle_caps r300_vertprog_swizzle_caps = {
 void r3xx_compile_vertex_program(struct r300_vertex_program_compiler *c)
 {
 	int is_r500 = c->Base.is_r500;
-	int kill_consts = c->Base.remove_unused_constants;
 	int opt = !c->Base.disable_optimizations;
 
 	/* Lists of instruction transformations. */
@@ -1062,18 +1057,18 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler *c)
 		{"dataflow optimize",		1, opt,		rc_optimize,			NULL},
 		/* This pass must be done after optimizations. */
 		{"source conflict resolve",	1, 1,		rc_local_transform,		resolve_src_conflicts},
-		{"dataflow swizzles",		1, 1,		rc_dataflow_swizzles,		NULL},
 		{"register allocation",		1, opt,		allocate_temporary_registers,	NULL},
-		{"dead constants",		1, kill_consts, rc_remove_unused_constants,	&c->code->constants_remap_table},
+		{"dead constants",		1, 1,		rc_remove_unused_constants,	&c->code->constants_remap_table},
 		{"final code validation",	0, 1,		rc_validate_final_shader,	NULL},
 		{"machine code generation",	0, 1,		translate_vertex_program,	NULL},
 		{"dump machine code",		0, c->Base.Debug & RC_DBG_LOG, r300_vertex_program_dump,	NULL},
 		{NULL, 0, 0, NULL, NULL}
 	};
 
+	c->Base.type = RC_VERTEX_PROGRAM;
 	c->Base.SwizzleCaps = &r300_vertprog_swizzle_caps;
 
-	rc_run_compiler(&c->Base, vs_list, "Vertex Program");
+	rc_run_compiler(&c->Base, vs_list);
 
 	c->code->InputsRead = c->Base.Program.InputsRead;
 	c->code->OutputsWritten = c->Base.Program.OutputsWritten;

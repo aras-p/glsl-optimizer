@@ -19,9 +19,6 @@ env.Prepend(LIBS = env['X11_LIBS'])
 env.Prepend(LIBS = [
     st_xlib,
     ws_xlib,
-    trace,
-    rbug,
-    identity,
     glapi,
     mesa,
     glsl,
@@ -34,15 +31,11 @@ sources = [
 ]
 
 if True:
-    env.Append(CPPDEFINES = 'GALLIUM_SOFTPIPE')
-    env.Prepend(LIBS = [softpipe])
-
-if True:
-    env.Append(CPPDEFINES = 'GALLIUM_GALAHAD')
-    env.Prepend(LIBS = [galahad])
+    env.Append(CPPDEFINES = ['GALLIUM_TRACE', 'GALLIUM_RBUG', 'GALLIUM_GALAHAD', 'GALLIUM_SOFTPIPE'])
+    env.Prepend(LIBS = [trace, rbug, galahad, softpipe])
 
 if env['llvm']:
-    env.Append(CPPDEFINES = 'GALLIUM_LLVMPIPE')
+    env.Append(CPPDEFINES = ['GALLIUM_LLVMPIPE'])
     env.Prepend(LIBS = [llvmpipe])
     
 if False:

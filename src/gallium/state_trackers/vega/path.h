@@ -104,8 +104,8 @@ VGboolean path_interpolate(struct path *dst,
                            VGfloat amount);
 
 void path_clear(struct path *p, VGbitfield capabilities);
-void path_render(struct path *p, VGbitfield paintModes);
-void path_fill(struct path *p, struct matrix *mat);
+void path_render(struct path *p, VGbitfield paintModes, struct matrix *mat);
+void path_fill(struct path *p);
 void path_stroke(struct path *p);
 
 void path_move_to(struct path *p, float x, float y);

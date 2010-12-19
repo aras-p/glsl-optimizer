@@ -33,100 +33,51 @@
 
 #include "radeon_compiler.h"
 #include "radeon_dataflow.h"
-
-struct reg_rename {
-	int old_index;
-	int new_index;
-	int temp_index;
-};
-
-static void rename_reg(void * data, struct rc_instruction * inst,
-			rc_register_file * file, unsigned int * index)
-{
-	struct reg_rename *r = data;
-
-	if(r->old_index == *index && *file == RC_FILE_TEMPORARY) {
-		*index = r->new_index;
-	}
-	else if(r->new_index == *index && *file == RC_FILE_TEMPORARY) {
-		*index = r->temp_index;
-	}
-}
-
-static void rename_all(
-	struct radeon_compiler *c,
-	struct rc_instruction * start,
-	unsigned int old,
-	unsigned int new,
-	unsigned int temp)
-{
-	struct rc_instruction * inst;
-	struct reg_rename r;
-	r.old_index = old;
-	r.new_index = new;
-	r.temp_index = temp;
-	for(inst = start; inst != &c->Program.Instructions;
-						inst = inst->Next) {
-		rc_remap_registers(inst, rename_reg, &r);
-	}
-}
+#include "radeon_program.h"
 
 /**
  * This function renames registers in an attempt to get the code close to
  * SSA form.  After this function has completed, most of the register are only
- * written to one time, with a few exceptions.  For example, this block of code
- * will not be modified by this function:
- * Mov Temp[0].x Const[0].x
- * Mov Temp[0].y Const[0].y
- * Basically, destination registers will be renamed if:
- * 1. There have been no previous writes to that register
- * or
- * 2. If the instruction is writting to the exact components (no more, no less)
- * of a register that has been written to by previous instructions.
+ * written to one time, with a few exceptions.
  *
  * This function assumes all the instructions are still of type
  * RC_INSTRUCTION_NORMAL.
  */
 void rc_rename_regs(struct radeon_compiler *c, void *user)
 {
-	unsigned int cur_index = 0;
-	unsigned int icount;
+	unsigned int i, used_length;
+	int new_index;
 	struct rc_instruction * inst;
-	unsigned int * masks;
+	struct rc_reader_data reader_data;
+	unsigned char * used;
 
-	/* The number of instructions in the program is also the maximum
-	 * number of temp registers that could potentially be used. */
-	icount = rc_recompute_ips(c);
-	masks = memory_pool_malloc(&c->Pool, icount * sizeof(unsigned int));
-	memset(masks, 0, icount * sizeof(unsigned int));
+	used_length = 2 * rc_recompute_ips(c);
+	used = memory_pool_malloc(&c->Pool, sizeof(unsigned char) * used_length);
+	memset(used, 0, sizeof(unsigned char) * used_length);
 
+	rc_get_used_temporaries(c, used, used_length);
 	for(inst = c->Program.Instructions.Next;
 					inst != &c->Program.Instructions;
 					inst = inst->Next) {
-		const struct rc_opcode_info * info;
-		unsigned int old_index, temp_index;
-		struct rc_dst_register * dst;
-		if(inst->Type != RC_INSTRUCTION_NORMAL) {
-			rc_error(c, "%s only works with normal instructions.",
-								__FUNCTION__);
+
+		if (inst->U.I.DstReg.File != RC_FILE_TEMPORARY)
+			continue;
+
+		rc_get_readers(c, inst, &reader_data, NULL, NULL, NULL);
+
+		if (reader_data.Abort || reader_data.ReaderCount == 0)
+			continue;
+
+		new_index = rc_find_free_temporary_list(c, used, used_length,
+						RC_MASK_XYZW);
+		if (new_index < 0) {
+			rc_error(c, "Ran out of temporary registers\n");
 			return;
 		}
-		dst = &inst->U.I.DstReg;
-		info = rc_get_opcode_info(inst->U.I.Opcode);
-		if(!info->HasDstReg || dst->File != RC_FILE_TEMPORARY) {
-			continue;
+
+		reader_data.Writer->U.I.DstReg.Index = new_index;
+		for(i = 0; i < reader_data.ReaderCount; i++) {
+			reader_data.Readers[i].U.Src->Index = new_index;
 		}
-		if(dst->Index >= icount || !masks[dst->Index] ||
-					masks[dst->Index] == dst->WriteMask) {
-			old_index = dst->Index;
-			/* We need to set dst->Index here so get free temporary
-			 * will work. */
-			dst->Index = cur_index++;
-			temp_index = rc_find_free_temporary(c);
-			rename_all(c, inst->Next, old_index,
-						dst->Index, temp_index);
-		}
-		assert(dst->Index < icount);
-		masks[dst->Index] |= dst->WriteMask;
 	}
 }

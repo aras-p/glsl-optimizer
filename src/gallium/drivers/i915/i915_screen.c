@@ -83,6 +83,12 @@ i915_get_name(struct pipe_screen *screen)
    case PCI_CHIP_Q33_G:
       chipset = "Q33";
       break;
+   case PCI_CHIP_PINEVIEW_G:
+      chipset = "Pineview G";
+      break;
+   case PCI_CHIP_PINEVIEW_M:
+      chipset = "Pineview M";
+      break;
    default:
       chipset = "unknown";
       break;
@@ -183,6 +189,8 @@ i915_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_sha
       case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
       case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
          return 1;
+      case PIPE_SHADER_CAP_SUBROUTINES:
+         return 0;
       default:
          assert(0);
          return 0;
@@ -225,10 +233,6 @@ i915_is_format_supported(struct pipe_screen *screen,
    static const enum pipe_format tex_supported[] = {
       PIPE_FORMAT_B8G8R8A8_UNORM,
       PIPE_FORMAT_B8G8R8X8_UNORM,
-      PIPE_FORMAT_R8G8B8A8_UNORM,
-#if 0
-      PIPE_FORMAT_R8G8B8X8_UNORM,
-#endif
       PIPE_FORMAT_B5G6R5_UNORM,
       PIPE_FORMAT_L8_UNORM,
       PIPE_FORMAT_A8_UNORM,
@@ -351,6 +355,8 @@ i915_screen_create(struct i915_winsys *iws)
    case PCI_CHIP_G33_G:
    case PCI_CHIP_Q33_G:
    case PCI_CHIP_Q35_G:
+   case PCI_CHIP_PINEVIEW_G:
+   case PCI_CHIP_PINEVIEW_M:
       is->is_i945 = TRUE;
       break;
 
@@ -381,7 +387,6 @@ i915_screen_create(struct i915_winsys *iws)
    is->base.fence_finish = i915_fence_finish;
 
    i915_init_screen_resource_functions(is);
-   i915_init_screen_surface_functions(is);
 
    i915_debug_init(is);
 

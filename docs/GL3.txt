@@ -20,7 +20,7 @@ Float textures, renderbuffers                         some infrastructure done
 Framebuffer objects (GL_EXT_framebuffer_object)       DONE
 Half-float                                            some infrastructure done
 Multisample blit                                      DONE
-Non-normalized Integer texture/framebuffer formats    not started
+Non-normalized Integer texture/framebuffer formats    ~50% done
 1D/2D Texture arrays                                  core Mesa, swrast done
 Packed depth/stencil formats                          DONE
 Per-buffer blend and masks (GL_EXT_draw_buffers2)     DONE
@@ -31,10 +31,11 @@ Transform feedback (GL_EXT_transform_feedback)        ~50% done
    glBindBufferRange, glBindBufferBase commands
 Vertex array objects (GL_APPLE_vertex_array_object)   DONE
 sRGB framebuffer format (GL_EXT_framebuffer_sRGB)     not started
-glClearBuffer commands                                DONE, except for dispatch
-glGetStringi command                                  DONE, except for dispatch
-glTexParameterI, glGetTexParameterI commands          DONE, except for dispatch
-glVertexAttribI commands                              not started
+glClearBuffer commands                                DONE
+glGetStringi command                                  DONE
+glTexParameterI, glGetTexParameterI commands          DONE
+glVertexAttribI commands                              DONE (but converts int
+                                                            values to floats)
 
 
 GL 3.1:
@@ -70,7 +71,7 @@ GL 3.3:
 GLSL 3.30                                             not started
 GL_ARB_blend_func_extended                            not started
 GL_ARB_explicit_attrib_location                       DONE (swrast, i915, i965)
-GL_ARB_occlusion_query2                               not started
+GL_ARB_occlusion_query2                               DONE (swrast, gallium)
 GL_ARB_sampler_objects                                not started
 GL_ARB_texture_rgb10_a2ui                             not started
 GL_ARB_texture_swizzle                                DONE (same as EXT version)
@@ -93,6 +94,18 @@ GL_ARB_texture_buffer_object_rgb32                   not started
 GL_ARB_texture_cube_map_array                        not started
 GL_ARB_texture_gather                                not started
 GL_ARB_transform_feedback2                           not started
+GL_ARB_transform_feedback3                           not started
+
+
+GL 4.1:
+
+GLSL 4.1                                             not started
+GL_ARB_ES2_compatibility                             not started
+GL_ARB_get_program_binary                            not started
+GL_ARB_separate_shader_objects                       some infrastructure done
+GL_ARB_shader_precision                              not started
+GL_ARB_vertex_attrib_64bit                           not started
+GL_ARB_viewport_array                                not started
 
 
 

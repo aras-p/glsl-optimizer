@@ -13,7 +13,7 @@ if env['platform'] != 'winddk':
 		target = '#src/mapi/vgapi/vgapi_tmp.h',
 		script = '../mapi/mapi_abi.py',
 		source = 'vgapi.csv',
-		command = python_cmd + ' $SCRIPT -i vgapi/vgapi_defines.h $SOURCE > $TARGET'
+		command = python_cmd + ' $SCRIPT --printer vgapi --mode lib $SOURCE > $TARGET'
 	)
 
 	env.Append(CPPDEFINES = [
@@ -53,4 +53,4 @@ if env['platform'] != 'winddk':
 
 	vgapi = [env.FindIxes(openvg, 'LIBPREFIX', 'LIBSUFFIX')]
 
-	Export(['vgapi', 'vgapi_header'])
+	Export(['vgapi'])

@@ -1,8 +1,8 @@
-/* $Revision: 6810 $ on $Date:: 2008-10-29 10:31:37 -0400 #$ */
+/* $Revision: 6810 $ on $Date:: 2008-10-29 07:31:37 -0700 #$ */
 
 /*------------------------------------------------------------------------
  * 
- * VGU 1.0.1 Reference Implementation
+ * VGU 1.1 Reference Implementation
  * -------------------------------------
  *
  * Copyright (c) 2008 The Khronos Group Inc.
@@ -28,7 +28,7 @@
  *
  *//**
  * \file
- * \brief	VGU 1.0.1 API.
+ * \brief	VGU 1.1 API.
  *//*-------------------------------------------------------------------*/
 
 #ifndef _VGU_H
@@ -41,6 +41,7 @@ extern "C" {
 #include <VG/openvg.h>
 
 #define VGU_VERSION_1_0 1
+#define VGU_VERSION_1_1 2
 
 #ifndef VGU_API_CALL
 #	error VGU_API_CALL must be defined

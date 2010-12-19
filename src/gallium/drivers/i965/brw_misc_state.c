@@ -287,11 +287,12 @@ static int emit_depthbuffer(struct brw_context *brw)
       OUT_BATCH(((pitch * cpp) - 1) |
 		(format << 18) |
 		(BRW_TILEWALK_YMAJOR << 26) |
-		((surface->layout != PIPE_SURFACE_LAYOUT_LINEAR) << 27) |
+                /* always linear ?
+		((surface->layout != PIPE_SURFACE_LAYOUT_LINEAR) << 27) |*/
 		(BRW_SURFACE_2D << 29));
       OUT_RELOC(bo,
 		BRW_USAGE_DEPTH_BUFFER,
-		surface->offset);
+		brw_surface(surface)->offset);
       OUT_BATCH((BRW_SURFACE_MIPMAPLAYOUT_BELOW << 1) |
 		((pitch - 1) << 6) |
 		((surface->height - 1) << 19));
@@ -362,10 +363,10 @@ const struct brw_tracked_state brw_line_stipple = {
 
 
 /***********************************************************************
- * Misc invarient state packets
+ * Misc invariant state packets
  */
 
-static int upload_invarient_state( struct brw_context *brw )
+static int upload_invariant_state( struct brw_context *brw )
 {
    {
       /* 0x61040000  Pipeline Select */
@@ -438,7 +439,7 @@ static int upload_invarient_state( struct brw_context *brw )
    {
       struct brw_polygon_stipple_offset bpso;
       
-      /* This is invarient state in gallium:
+      /* This is invariant state in gallium:
        */
       memset(&bpso, 0, sizeof(bpso));
       bpso.header.opcode = CMD_POLY_STIPPLE_OFFSET;
@@ -452,13 +453,13 @@ static int upload_invarient_state( struct brw_context *brw )
    return 0;
 }
 
-const struct brw_tracked_state brw_invarient_state = {
+const struct brw_tracked_state brw_invariant_state = {
    .dirty = {
       .mesa = 0,
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
-   .emit = upload_invarient_state
+   .emit = upload_invariant_state
 };
 
 

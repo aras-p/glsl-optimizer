@@ -146,15 +146,6 @@ load_text_file(void *ctx, const char *file_name)
 	return text;
 }
 
-
-void
-usage_fail(const char *name)
-{
-      printf("%s <filename.frag|filename.vert>\n", name);
-      exit(EXIT_FAILURE);
-}
-
-
 int glsl_es = 0;
 int dump_ast = 0;
 int dump_hir = 0;
@@ -169,6 +160,25 @@ const struct option compiler_opts[] = {
    { "link",     0, &do_link,  1 },
    { NULL, 0, NULL, 0 }
 };
+
+/**
+ * \brief Print proper usage and exit with failure.
+ */
+void
+usage_fail(const char *name)
+{
+
+   const char *header =
+      "usage: %s [options] <file.vert | file.geom | file.frag>\n"
+      "\n"
+      "Possible options are:\n";
+   printf(header, name, name);
+   for (const struct option *o = compiler_opts; o->name != 0; ++o) {
+      printf("    --%s\n", o->name);
+   }
+   exit(EXIT_FAILURE);
+}
+
 
 void
 compile_shader(struct gl_context *ctx, struct gl_shader *shader)
@@ -208,26 +218,7 @@ compile_shader(struct gl_context *ctx, struct gl_shader *shader)
    if (!state->error && !shader->ir->is_empty()) {
       bool progress;
       do {
-	 progress = false;
-
-	 progress = do_function_inlining(shader->ir) || progress;
-	 progress = do_if_simplification(shader->ir) || progress;
-	 progress = do_copy_propagation(shader->ir) || progress;
-	 progress = do_dead_code_local(shader->ir) || progress;
-	 progress = do_dead_code_unlinked(shader->ir) || progress;
-	 progress = do_tree_grafting(shader->ir) || progress;
-	 progress = do_constant_propagation(shader->ir) || progress;
-	 progress = do_constant_variable_unlinked(shader->ir) || progress;
-	 progress = do_constant_folding(shader->ir) || progress;
-	 progress = do_algebraic(shader->ir) || progress;
-	 progress = do_vec_index_to_swizzle(shader->ir) || progress;
-	 progress = do_vec_index_to_cond_assign(shader->ir) || progress;
-	 progress = do_swizzle_swizzle(shader->ir) || progress;
-
-	 loop_state *ls = analyze_loop_variables(shader->ir);
-	 progress = set_loop_controls(shader->ir, ls) || progress;
-	 progress = unroll_loops(shader->ir, ls, 32) || progress;
-	 delete ls;
+	 progress = do_common_optimization(shader->ir, false, 32);
       } while (progress);
 
       validate_ir_tree(shader->ir);

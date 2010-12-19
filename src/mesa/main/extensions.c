@@ -249,7 +249,8 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
 #if FEATURE_ARB_framebuffer_object
    ctx->Extensions.ARB_framebuffer_object = GL_TRUE;
 #endif
-#if FEATURE_ARB_geometry_shader4
+#if FEATURE_ARB_geometry_shader4 && 0
+   /* XXX re-enable when GLSL compiler again supports geometry shaders */
    ctx->Extensions.ARB_geometry_shader4 = GL_TRUE;
 #endif
    ctx->Extensions.ARB_half_float_pixel = GL_TRUE;
@@ -258,6 +259,7 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.ARB_multitexture = GL_TRUE;
 #if FEATURE_queryobj
    ctx->Extensions.ARB_occlusion_query = GL_TRUE;
+   ctx->Extensions.ARB_occlusion_query2 = GL_TRUE;
 #endif
    ctx->Extensions.ARB_point_sprite = GL_TRUE;
 #if FEATURE_ARB_shader_objects
@@ -857,8 +859,6 @@ make_extension_string_es2(const struct gl_context *ctx, GLubyte *str)
 {
    size_t len = 0;
 
-   len += append_extension(&str, "GL_OES_compressed_paletted_texture");
-
    if (ctx->Extensions.ARB_framebuffer_object) {
       len += append_extension(&str, "GL_OES_depth24");
       len += append_extension(&str, "GL_OES_depth32");
@@ -873,8 +873,12 @@ make_extension_string_es2(const struct gl_context *ctx, GLubyte *str)
    if (ctx->Extensions.ARB_vertex_buffer_object)
       len += append_extension(&str, "GL_OES_mapbuffer");
 
+#if 0
+   /* disabled because of missing GLSL support */
    if (ctx->Extensions.EXT_texture3D)
       len += append_extension(&str, "GL_OES_texture_3D");
+#endif
+
    if (ctx->Extensions.ARB_texture_non_power_of_two)
       len += append_extension(&str, "GL_OES_texture_npot");
    if (ctx->Extensions.EXT_texture_filter_anisotropic)

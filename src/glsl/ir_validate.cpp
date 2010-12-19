@@ -273,6 +273,8 @@ ir_validate::visit_leave(ir_expression *ir)
    case ir_unop_fract:
    case ir_unop_sin:
    case ir_unop_cos:
+   case ir_unop_sin_reduced:
+   case ir_unop_cos_reduced:
    case ir_unop_dFdx:
    case ir_unop_dFdy:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
@@ -373,11 +375,50 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->operands[0]->type == ir->operands[1]->type);
       break;
 
-   case ir_binop_cross:
-      assert(ir->operands[0]->type == glsl_type::vec3_type);
-      assert(ir->operands[1]->type == glsl_type::vec3_type);
-      assert(ir->type == glsl_type::vec3_type);
-      break;
+   case ir_quadop_vector:
+      /* The vector operator collects some number of scalars and generates a
+       * vector from them.
+       *
+       *  - All of the operands must be scalar.
+       *  - Number of operands must matche the size of the resulting vector.
+       *  - Base type of the operands must match the base type of the result.
+       */
+      assert(ir->type->is_vector());
+      switch (ir->type->vector_elements) {
+      case 2:
+	 assert(ir->operands[0]->type->is_scalar());
+	 assert(ir->operands[0]->type->base_type == ir->type->base_type);
+	 assert(ir->operands[1]->type->is_scalar());
+	 assert(ir->operands[1]->type->base_type == ir->type->base_type);
+	 assert(ir->operands[2] == NULL);
+	 assert(ir->operands[3] == NULL);
+	 break;
+      case 3:
+	 assert(ir->operands[0]->type->is_scalar());
+	 assert(ir->operands[0]->type->base_type == ir->type->base_type);
+	 assert(ir->operands[1]->type->is_scalar());
+	 assert(ir->operands[1]->type->base_type == ir->type->base_type);
+	 assert(ir->operands[2]->type->is_scalar());
+	 assert(ir->operands[2]->type->base_type == ir->type->base_type);
+	 assert(ir->operands[3] == NULL);
+	 break;
+      case 4:
+	 assert(ir->operands[0]->type->is_scalar());
+	 assert(ir->operands[0]->type->base_type == ir->type->base_type);
+	 assert(ir->operands[1]->type->is_scalar());
+	 assert(ir->operands[1]->type->base_type == ir->type->base_type);
+	 assert(ir->operands[2]->type->is_scalar());
+	 assert(ir->operands[2]->type->base_type == ir->type->base_type);
+	 assert(ir->operands[3]->type->is_scalar());
+	 assert(ir->operands[3]->type->base_type == ir->type->base_type);
+	 break;
+      default:
+	 /* The is_vector assertion above should prevent execution from ever
+	  * getting here.
+	  */
+	 assert(!"Should not get here.");
+	 break;
+      }
    }
 
    return visit_continue;

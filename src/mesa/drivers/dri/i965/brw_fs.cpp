@@ -101,10 +101,12 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       clone_ir_list(mem_ctx, shader->ir, shader->base.ir);
 
       do_mat_op_to_vec(shader->ir);
-      do_mod_to_fract(shader->ir);
-      do_div_to_mul_rcp(shader->ir);
-      do_sub_to_add_neg(shader->ir);
-      do_explog_to_explog2(shader->ir);
+      lower_instructions(shader->ir,
+			 MOD_TO_FRACT |
+			 DIV_TO_MUL_RCP |
+			 SUB_TO_ADD_NEG |
+			 EXP_TO_EXP2 |
+			 LOG_TO_LOG2);
       do_lower_texture_projection(shader->ir);
       brw_do_cubemap_normalize(shader->ir);
 
@@ -130,6 +132,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 						GL_TRUE, /* temp */
 						GL_TRUE /* uniform */
 						) || progress;
+	 progress = lower_quadop_vector(shader->ir, false) || progress;
       } while (progress);
 
       validate_ir_tree(shader->ir);
@@ -171,6 +174,46 @@ type_size(const struct glsl_type *type)
    default:
       assert(!"not reached");
       return 0;
+   }
+}
+
+/**
+ * Returns how many MRFs an FS opcode will write over.
+ *
+ * Note that this is not the 0 or 1 implied writes in an actual gen
+ * instruction -- the FS opcodes often generate MOVs in addition.
+ */
+int
+fs_visitor::implied_mrf_writes(fs_inst *inst)
+{
+   if (inst->mlen == 0)
+      return 0;
+
+   switch (inst->opcode) {
+   case FS_OPCODE_RCP:
+   case FS_OPCODE_RSQ:
+   case FS_OPCODE_SQRT:
+   case FS_OPCODE_EXP2:
+   case FS_OPCODE_LOG2:
+   case FS_OPCODE_SIN:
+   case FS_OPCODE_COS:
+      return 1;
+   case FS_OPCODE_POW:
+      return 2;
+   case FS_OPCODE_TEX:
+   case FS_OPCODE_TXB:
+   case FS_OPCODE_TXL:
+      return 1;
+   case FS_OPCODE_FB_WRITE:
+      return 2;
+   case FS_OPCODE_PULL_CONSTANT_LOAD:
+   case FS_OPCODE_UNSPILL:
+      return 1;
+   case FS_OPCODE_SPILL:
+      return 2;
+   default:
+      assert(!"not reached");
+      return inst->mlen;
    }
 }
 
@@ -299,6 +342,10 @@ fs_visitor::setup_uniform_values(int loc, const glsl_type *type)
 	 case GLSL_TYPE_BOOL:
 	    c->prog_data.param_convert[param] = PARAM_CONVERT_F2B;
 	    break;
+	 default:
+	    assert(!"not reached");
+	    c->prog_data.param_convert[param] = PARAM_NO_CONVERT;
+	    break;
 	 }
 
 	 c->prog_data.param[param] = &vec_values[i];
@@ -400,6 +447,7 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
    fs_reg wpos = *reg;
    fs_reg neg_y = this->pixel_y;
    neg_y.negate = true;
+   bool flip = !ir->origin_upper_left ^ c->key.render_to_fbo;
 
    /* gl_FragCoord.x */
    if (ir->pixel_center_integer) {
@@ -410,13 +458,13 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
    wpos.reg_offset++;
 
    /* gl_FragCoord.y */
-   if (ir->origin_upper_left && ir->pixel_center_integer) {
+   if (!flip && ir->pixel_center_integer) {
       emit(fs_inst(BRW_OPCODE_MOV, wpos, this->pixel_y));
    } else {
       fs_reg pixel_y = this->pixel_y;
       float offset = (ir->pixel_center_integer ? 0.0 : 0.5);
 
-      if (!ir->origin_upper_left) {
+      if (flip) {
 	 pixel_y.negate = true;
 	 offset += c->key.drawable_height - 1.0;
       }
@@ -426,8 +474,13 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
    wpos.reg_offset++;
 
    /* gl_FragCoord.z */
-   emit(fs_inst(FS_OPCODE_LINTERP, wpos, this->delta_x, this->delta_y,
-		interp_reg(FRAG_ATTRIB_WPOS, 2)));
+   if (intel->gen >= 6) {
+      emit(fs_inst(BRW_OPCODE_MOV, wpos,
+		   fs_reg(brw_vec8_grf(c->source_depth_reg, 0))));
+   } else {
+      emit(fs_inst(FS_OPCODE_LINTERP, wpos, this->delta_x, this->delta_y,
+		   interp_reg(FRAG_ATTRIB_WPOS, 2)));
+   }
    wpos.reg_offset++;
 
    /* gl_FragCoord.w: Already set up in emit_interpolation */
@@ -552,8 +605,13 @@ fs_visitor::emit_math(fs_opcodes opcode, fs_reg dst, fs_reg src)
     * might be able to do better by doing execsize = 1 math and then
     * expanding that result out, but we would need to be careful with
     * masking.
+    *
+    * The hardware ignores source modifiers (negate and abs) on math
+    * instructions, so we also move to a temp to set those up.
     */
-   if (intel->gen >= 6 && src.file == UNIFORM) {
+   if (intel->gen >= 6 && (src.file == UNIFORM ||
+			   src.abs ||
+			   src.negate)) {
       fs_reg expanded = fs_reg(this, glsl_type::float_type);
       emit(fs_inst(BRW_OPCODE_MOV, expanded, src));
       src = expanded;
@@ -696,12 +754,38 @@ fs_visitor::visit(ir_dereference_array *ir)
    }
 }
 
+/* Instruction selection: Produce a MOV.sat instead of
+ * MIN(MAX(val, 0), 1) when possible.
+ */
+bool
+fs_visitor::try_emit_saturate(ir_expression *ir)
+{
+   ir_rvalue *sat_val = ir->as_rvalue_to_saturate();
+
+   if (!sat_val)
+      return false;
+
+   sat_val->accept(this);
+   fs_reg src = this->result;
+
+   this->result = fs_reg(this, ir->type);
+   fs_inst *inst = emit(fs_inst(BRW_OPCODE_MOV, this->result, src));
+   inst->saturate = true;
+
+   return true;
+}
+
 void
 fs_visitor::visit(ir_expression *ir)
 {
    unsigned int operand;
    fs_reg op[2], temp;
    fs_inst *inst;
+
+   assert(ir->get_num_operands() <= 2);
+
+   if (try_emit_saturate(ir))
+      return;
 
    for (operand = 0; operand < ir->get_num_operands(); operand++) {
       ir->operands[operand]->accept(this);
@@ -773,9 +857,11 @@ fs_visitor::visit(ir_expression *ir)
       assert(!"not reached: should be handled by ir_explog_to_explog2");
       break;
    case ir_unop_sin:
+   case ir_unop_sin_reduced:
       emit_math(FS_OPCODE_SIN, this->result, op[0]);
       break;
    case ir_unop_cos:
+   case ir_unop_cos_reduced:
       emit_math(FS_OPCODE_COS, this->result, op[0]);
       break;
 
@@ -849,13 +935,16 @@ fs_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_dot:
-   case ir_binop_cross:
    case ir_unop_any:
       assert(!"not reached: should be handled by brw_fs_channel_expressions");
       break;
 
    case ir_unop_noise:
       assert(!"not reached: should be handled by lower_noise");
+      break;
+
+   case ir_quadop_vector:
+      assert(!"not reached: should be handled by lower_quadop_vector");
       break;
 
    case ir_unop_sqrt:
@@ -1348,28 +1437,70 @@ fs_visitor::visit(ir_discard *ir)
 void
 fs_visitor::visit(ir_constant *ir)
 {
-   fs_reg reg(this, ir->type);
-   this->result = reg;
+   /* Set this->result to reg at the bottom of the function because some code
+    * paths will cause this visitor to be applied to other fields.  This will
+    * cause the value stored in this->result to be modified.
+    *
+    * Make reg constant so that it doesn't get accidentally modified along the
+    * way.  Yes, I actually had this problem. :(
+    */
+   const fs_reg reg(this, ir->type);
+   fs_reg dst_reg = reg;
 
-   for (unsigned int i = 0; i < ir->type->vector_elements; i++) {
-      switch (ir->type->base_type) {
-      case GLSL_TYPE_FLOAT:
-	 emit(fs_inst(BRW_OPCODE_MOV, reg, fs_reg(ir->value.f[i])));
-	 break;
-      case GLSL_TYPE_UINT:
-	 emit(fs_inst(BRW_OPCODE_MOV, reg, fs_reg(ir->value.u[i])));
-	 break;
-      case GLSL_TYPE_INT:
-	 emit(fs_inst(BRW_OPCODE_MOV, reg, fs_reg(ir->value.i[i])));
-	 break;
-      case GLSL_TYPE_BOOL:
-	 emit(fs_inst(BRW_OPCODE_MOV, reg, fs_reg((int)ir->value.b[i])));
-	 break;
-      default:
-	 assert(!"Non-float/uint/int/bool constant");
+   if (ir->type->is_array()) {
+      const unsigned size = type_size(ir->type->fields.array);
+
+      for (unsigned i = 0; i < ir->type->length; i++) {
+	 ir->array_elements[i]->accept(this);
+	 fs_reg src_reg = this->result;
+
+	 dst_reg.type = src_reg.type;
+	 for (unsigned j = 0; j < size; j++) {
+	    emit(fs_inst(BRW_OPCODE_MOV, dst_reg, src_reg));
+	    src_reg.reg_offset++;
+	    dst_reg.reg_offset++;
+	 }
       }
-      reg.reg_offset++;
+   } else if (ir->type->is_record()) {
+      foreach_list(node, &ir->components) {
+	 ir_instruction *const field = (ir_instruction *) node;
+	 const unsigned size = type_size(field->type);
+
+	 field->accept(this);
+	 fs_reg src_reg = this->result;
+
+	 dst_reg.type = src_reg.type;
+	 for (unsigned j = 0; j < size; j++) {
+	    emit(fs_inst(BRW_OPCODE_MOV, dst_reg, src_reg));
+	    src_reg.reg_offset++;
+	    dst_reg.reg_offset++;
+	 }
+      }
+   } else {
+      const unsigned size = type_size(ir->type);
+
+      for (unsigned i = 0; i < size; i++) {
+	 switch (ir->type->base_type) {
+	 case GLSL_TYPE_FLOAT:
+	    emit(fs_inst(BRW_OPCODE_MOV, dst_reg, fs_reg(ir->value.f[i])));
+	    break;
+	 case GLSL_TYPE_UINT:
+	    emit(fs_inst(BRW_OPCODE_MOV, dst_reg, fs_reg(ir->value.u[i])));
+	    break;
+	 case GLSL_TYPE_INT:
+	    emit(fs_inst(BRW_OPCODE_MOV, dst_reg, fs_reg(ir->value.i[i])));
+	    break;
+	 case GLSL_TYPE_BOOL:
+	    emit(fs_inst(BRW_OPCODE_MOV, dst_reg, fs_reg((int)ir->value.b[i])));
+	    break;
+	 default:
+	    assert(!"Non-float/uint/int/bool constant");
+	 }
+	 dst_reg.reg_offset++;
+      }
    }
+
+   this->result = reg;
 }
 
 void
@@ -1381,6 +1512,7 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
       fs_reg op[2];
       fs_inst *inst;
 
+      assert(expr->get_num_operands() <= 2);
       for (unsigned int i = 0; i < expr->get_num_operands(); i++) {
 	 assert(expr->operands[i]->type->is_scalar());
 
@@ -1488,6 +1620,7 @@ fs_visitor::emit_if_gen6(ir_if *ir)
       fs_inst *inst;
       fs_reg temp;
 
+      assert(expr->get_num_operands() <= 2);
       for (unsigned int i = 0; i < expr->get_num_operands(); i++) {
 	 assert(expr->operands[i]->type->is_scalar());
 
@@ -1497,7 +1630,7 @@ fs_visitor::emit_if_gen6(ir_if *ir)
 
       switch (expr->operation) {
       case ir_unop_logic_not:
-	 inst = emit(fs_inst(BRW_OPCODE_IF, temp, op[0], fs_reg(1)));
+	 inst = emit(fs_inst(BRW_OPCODE_IF, temp, op[0], fs_reg(0)));
 	 inst->conditional_mod = BRW_CONDITIONAL_Z;
 	 return;
 
@@ -1874,7 +2007,7 @@ fs_visitor::emit_interpolation_setup_gen6()
    emit(fs_inst(BRW_OPCODE_MOV, this->pixel_y, int_pixel_y));
 
    this->current_annotation = "compute 1/pos.w";
-   this->wpos_w = fs_reg(brw_vec8_grf(c->key.source_w_reg, 0));
+   this->wpos_w = fs_reg(brw_vec8_grf(c->source_w_reg, 0));
    this->pixel_w = fs_reg(this, glsl_type::float_type);
    emit_math(FS_OPCODE_RCP, this->pixel_w, wpos_w);
 
@@ -1902,17 +2035,17 @@ fs_visitor::emit_fb_writes()
       nr += 2;
    }
 
-   if (c->key.aa_dest_stencil_reg) {
+   if (c->aa_dest_stencil_reg) {
       emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, nr++),
-		   fs_reg(brw_vec8_grf(c->key.aa_dest_stencil_reg, 0))));
+		   fs_reg(brw_vec8_grf(c->aa_dest_stencil_reg, 0))));
    }
 
    /* Reserve space for color. It'll be filled in per MRT below. */
    int color_mrf = nr;
    nr += 4;
 
-   if (c->key.source_depth_to_render_target) {
-      if (c->key.computes_depth) {
+   if (c->source_depth_to_render_target) {
+      if (c->computes_depth) {
 	 /* Hand over gl_FragDepth. */
 	 assert(this->frag_depth);
 	 fs_reg depth = *(variable_storage(this->frag_depth));
@@ -1921,20 +2054,22 @@ fs_visitor::emit_fb_writes()
       } else {
 	 /* Pass through the payload depth. */
 	 emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, nr++),
-		      fs_reg(brw_vec8_grf(c->key.source_depth_reg, 0))));
+		      fs_reg(brw_vec8_grf(c->source_depth_reg, 0))));
       }
    }
 
-   if (c->key.dest_depth_reg) {
+   if (c->dest_depth_reg) {
       emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, nr++),
-		   fs_reg(brw_vec8_grf(c->key.dest_depth_reg, 0))));
+		   fs_reg(brw_vec8_grf(c->dest_depth_reg, 0))));
    }
 
    fs_reg color = reg_undef;
    if (this->frag_color)
       color = *(variable_storage(this->frag_color));
-   else if (this->frag_data)
+   else if (this->frag_data) {
       color = *(variable_storage(this->frag_data));
+      color.type = BRW_REGISTER_TYPE_F;
+   }
 
    for (int target = 0; target < c->key.nr_color_regions; target++) {
       this->current_annotation = talloc_asprintf(this->mem_ctx,
@@ -2375,7 +2510,7 @@ fs_visitor::generate_pull_constant_load(fs_inst *inst, struct brw_reg dst)
 void
 fs_visitor::assign_curb_setup()
 {
-   c->prog_data.first_curbe_grf = c->key.nr_payload_regs;
+   c->prog_data.first_curbe_grf = c->nr_payload_regs;
    c->prog_data.curb_read_length = ALIGN(c->prog_data.nr_params, 8) / 8;
 
    /* Map the offsets in the UNIFORM file to fixed HW regs. */
@@ -2515,6 +2650,7 @@ fs_visitor::split_virtual_grfs()
 	 for (int j = 2; j < this->virtual_grf_sizes[i]; j++) {
 	    int reg = virtual_grf_alloc(1);
 	    assert(reg == new_virtual_grf[i] + j - 1);
+	    (void) reg;
 	 }
 	 this->virtual_grf_sizes[i] = 1;
       }
@@ -2768,6 +2904,7 @@ fs_visitor::propagate_constants()
 	       }
 	       break;
 	    case BRW_OPCODE_CMP:
+	    case BRW_OPCODE_SEL:
 	       if (i == 1) {
 		  scan_inst->src[i] = inst->src[0];
 		  progress = true;
@@ -2796,26 +2933,17 @@ bool
 fs_visitor::dead_code_eliminate()
 {
    bool progress = false;
-   int num_vars = this->virtual_grf_next;
-   bool dead[num_vars];
-
-   for (int i = 0; i < num_vars; i++) {
-      dead[i] = this->virtual_grf_def[i] >= this->virtual_grf_use[i];
-
-      if (dead[i]) {
-	 /* Mark off its interval so it won't interfere with anything. */
-	 this->virtual_grf_def[i] = -1;
-	 this->virtual_grf_use[i] = -1;
-      }
-   }
+   int pc = 0;
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
 
-      if (inst->dst.file == GRF && dead[inst->dst.reg]) {
+      if (inst->dst.file == GRF && this->virtual_grf_use[inst->dst.reg] <= pc) {
 	 inst->remove();
 	 progress = true;
       }
+
+      pc++;
    }
 
    return progress;
@@ -2933,57 +3061,10 @@ fs_visitor::compute_to_mrf()
       /* Found a move of a GRF to a MRF.  Let's see if we can go
        * rewrite the thing that made this GRF to write into the MRF.
        */
-      bool found = false;
       fs_inst *scan_inst;
       for (scan_inst = (fs_inst *)inst->prev;
 	   scan_inst->prev != NULL;
 	   scan_inst = (fs_inst *)scan_inst->prev) {
-	 /* We don't handle flow control here.  Most computation of
-	  * values that end up in MRFs are shortly before the MRF
-	  * write anyway.
-	  */
-	 if (scan_inst->opcode == BRW_OPCODE_DO ||
-	     scan_inst->opcode == BRW_OPCODE_WHILE ||
-	     scan_inst->opcode == BRW_OPCODE_ENDIF) {
-	    break;
-	 }
-
-	 /* You can't read from an MRF, so if someone else reads our
-	  * MRF's source GRF that we wanted to rewrite, that stops us.
-	  */
-	 bool interfered = false;
-	 for (int i = 0; i < 3; i++) {
-	    if (scan_inst->src[i].file == GRF &&
-		scan_inst->src[i].reg == inst->src[0].reg &&
-		scan_inst->src[i].reg_offset == inst->src[0].reg_offset) {
-	       interfered = true;
-	    }
-	 }
-	 if (interfered)
-	    break;
-
-	 if (scan_inst->dst.file == MRF &&
-	     scan_inst->dst.hw_reg == inst->dst.hw_reg) {
-	    /* Somebody else wrote our MRF here, so we can't can't
-	     * compute-to-MRF before that.
-	     */
-	    break;
-	 }
-
-	 if (scan_inst->mlen > 0) {
-	    /* Found a SEND instruction, which will do some amount of
-	     * implied write that may overwrite our MRF that we were
-	     * hoping to compute-to-MRF somewhere above it.  Nothing
-	     * we have implied-writes more than 2 MRFs from base_mrf,
-	     * though.
-	     */
-	    int implied_write_len = MIN2(scan_inst->mlen, 2);
-	    if (inst->dst.hw_reg >= scan_inst->base_mrf &&
-		inst->dst.hw_reg < scan_inst->base_mrf + implied_write_len) {
-	       break;
-	    }
-	 }
-
 	 if (scan_inst->dst.file == GRF &&
 	     scan_inst->dst.reg == inst->src[0].reg) {
 	    /* Found the last thing to write our reg we want to turn
@@ -3025,17 +3106,130 @@ fs_visitor::compute_to_mrf()
 
 	    if (scan_inst->dst.reg_offset == inst->src[0].reg_offset) {
 	       /* Found the creator of our MRF's source value. */
-	       found = true;
+	       scan_inst->dst.file = MRF;
+	       scan_inst->dst.hw_reg = inst->dst.hw_reg;
+	       scan_inst->saturate |= inst->saturate;
+	       inst->remove();
+	       progress = true;
+	    }
+	    break;
+	 }
+
+	 /* We don't handle flow control here.  Most computation of
+	  * values that end up in MRFs are shortly before the MRF
+	  * write anyway.
+	  */
+	 if (scan_inst->opcode == BRW_OPCODE_DO ||
+	     scan_inst->opcode == BRW_OPCODE_WHILE ||
+	     scan_inst->opcode == BRW_OPCODE_ENDIF) {
+	    break;
+	 }
+
+	 /* You can't read from an MRF, so if someone else reads our
+	  * MRF's source GRF that we wanted to rewrite, that stops us.
+	  */
+	 bool interfered = false;
+	 for (int i = 0; i < 3; i++) {
+	    if (scan_inst->src[i].file == GRF &&
+		scan_inst->src[i].reg == inst->src[0].reg &&
+		scan_inst->src[i].reg_offset == inst->src[0].reg_offset) {
+	       interfered = true;
+	    }
+	 }
+	 if (interfered)
+	    break;
+
+	 if (scan_inst->dst.file == MRF &&
+	     scan_inst->dst.hw_reg == inst->dst.hw_reg) {
+	    /* Somebody else wrote our MRF here, so we can't can't
+	     * compute-to-MRF before that.
+	     */
+	    break;
+	 }
+
+	 if (scan_inst->mlen > 0) {
+	    /* Found a SEND instruction, which means that there are
+	     * live values in MRFs from base_mrf to base_mrf +
+	     * scan_inst->mlen - 1.  Don't go pushing our MRF write up
+	     * above it.
+	     */
+	    if (inst->dst.hw_reg >= scan_inst->base_mrf &&
+		inst->dst.hw_reg < scan_inst->base_mrf + scan_inst->mlen) {
 	       break;
 	    }
 	 }
       }
-      if (found) {
-	 scan_inst->dst.file = MRF;
-	 scan_inst->dst.hw_reg = inst->dst.hw_reg;
-	 scan_inst->saturate |= inst->saturate;
-	 inst->remove();
-	 progress = true;
+   }
+
+   return progress;
+}
+
+/**
+ * Walks through basic blocks, locking for repeated MRF writes and
+ * removing the later ones.
+ */
+bool
+fs_visitor::remove_duplicate_mrf_writes()
+{
+   fs_inst *last_mrf_move[16];
+   bool progress = false;
+
+   memset(last_mrf_move, 0, sizeof(last_mrf_move));
+
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      fs_inst *inst = (fs_inst *)iter.get();
+
+      switch (inst->opcode) {
+      case BRW_OPCODE_DO:
+      case BRW_OPCODE_WHILE:
+      case BRW_OPCODE_IF:
+      case BRW_OPCODE_ELSE:
+      case BRW_OPCODE_ENDIF:
+	 memset(last_mrf_move, 0, sizeof(last_mrf_move));
+	 continue;
+      default:
+	 break;
+      }
+
+      if (inst->opcode == BRW_OPCODE_MOV &&
+	  inst->dst.file == MRF) {
+	 fs_inst *prev_inst = last_mrf_move[inst->dst.hw_reg];
+	 if (prev_inst && inst->equals(prev_inst)) {
+	    inst->remove();
+	    progress = true;
+	    continue;
+	 }
+      }
+
+      /* Clear out the last-write records for MRFs that were overwritten. */
+      if (inst->dst.file == MRF) {
+	 last_mrf_move[inst->dst.hw_reg] = NULL;
+      }
+
+      if (inst->mlen > 0) {
+	 /* Found a SEND instruction, which will include two of fewer
+	  * implied MRF writes.  We could do better here.
+	  */
+	 for (int i = 0; i < implied_mrf_writes(inst); i++) {
+	    last_mrf_move[inst->base_mrf + i] = NULL;
+	 }
+      }
+
+      /* Clear out any MRF move records whose sources got overwritten. */
+      if (inst->dst.file == GRF) {
+	 for (unsigned int i = 0; i < Elements(last_mrf_move); i++) {
+	    if (last_mrf_move[i] &&
+		last_mrf_move[i]->src[0].reg == inst->dst.reg) {
+	       last_mrf_move[i] = NULL;
+	    }
+	 }
+      }
+
+      if (inst->opcode == BRW_OPCODE_MOV &&
+	  inst->dst.file == MRF &&
+	  inst->src[0].file == GRF &&
+	  !inst->predicated) {
+	 last_mrf_move[inst->dst.hw_reg] = inst;
       }
    }
 
@@ -3091,6 +3285,7 @@ static struct brw_reg brw_reg_from_fs_reg(fs_reg *reg)
 	 break;
       default:
 	 assert(!"not reached");
+	 brw_reg = brw_null_reg();
 	 break;
       }
       break;
@@ -3102,6 +3297,10 @@ static struct brw_reg brw_reg_from_fs_reg(fs_reg *reg)
       brw_reg = brw_null_reg();
       break;
    case UNIFORM:
+      assert(!"not reached");
+      brw_reg = brw_null_reg();
+      break;
+   default:
       assert(!"not reached");
       brw_reg = brw_null_reg();
       break;
@@ -3159,6 +3358,7 @@ fs_visitor::generate_code()
 
       brw_set_conditionalmod(p, inst->conditional_mod);
       brw_set_predicate_control(p, inst->predicated);
+      brw_set_saturate(p, inst->saturate);
 
       switch (inst->opcode) {
       case BRW_OPCODE_MOV:
@@ -3245,7 +3445,11 @@ fs_visitor::generate_code()
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 	 break;
       case BRW_OPCODE_CONTINUE:
-	 brw_CONT(p, if_depth_in_loop[loop_stack_depth]);
+	 /* FINISHME: We need to write the loop instruction support still. */
+	 if (intel->gen >= 6)
+	    brw_CONT_gen6(p, loop_stack[loop_stack_depth - 1]);
+	 else
+	    brw_CONT(p, if_depth_in_loop[loop_stack_depth]);
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
 	 break;
 
@@ -3259,16 +3463,18 @@ fs_visitor::generate_code()
 	 assert(loop_stack_depth > 0);
 	 loop_stack_depth--;
 	 inst0 = inst1 = brw_WHILE(p, loop_stack[loop_stack_depth]);
-	 /* patch all the BREAK/CONT instructions from last BGNLOOP */
-	 while (inst0 > loop_stack[loop_stack_depth]) {
-	    inst0--;
-	    if (inst0->header.opcode == BRW_OPCODE_BREAK &&
-		inst0->bits3.if_else.jump_count == 0) {
-	       inst0->bits3.if_else.jump_count = br * (inst1 - inst0 + 1);
+	 if (intel->gen < 6) {
+	    /* patch all the BREAK/CONT instructions from last BGNLOOP */
+	    while (inst0 > loop_stack[loop_stack_depth]) {
+	       inst0--;
+	       if (inst0->header.opcode == BRW_OPCODE_BREAK &&
+		   inst0->bits3.if_else.jump_count == 0) {
+		  inst0->bits3.if_else.jump_count = br * (inst1 - inst0 + 1);
 	    }
-	    else if (inst0->header.opcode == BRW_OPCODE_CONTINUE &&
-		     inst0->bits3.if_else.jump_count == 0) {
-	       inst0->bits3.if_else.jump_count = br * (inst1 - inst0);
+	       else if (inst0->header.opcode == BRW_OPCODE_CONTINUE &&
+			inst0->bits3.if_else.jump_count == 0) {
+		  inst0->bits3.if_else.jump_count = br * (inst1 - inst0);
+	       }
 	    }
 	 }
       }
@@ -3340,11 +3546,30 @@ fs_visitor::generate_code()
 		      ((uint32_t *)&p->store[i])[0]);
 	    }
 	    brw_disasm(stdout, &p->store[i], intel->gen);
-	    printf("\n");
 	 }
       }
 
       last_native_inst = p->nr_insn;
+   }
+
+   brw_set_uip_jip(p);
+
+   /* OK, while the INTEL_DEBUG=wm above is very nice for debugging FS
+    * emit issues, it doesn't get the jump distances into the output,
+    * which is often something we want to debug.  So this is here in
+    * case you're doing that.
+    */
+   if (0) {
+      if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
+	 for (unsigned int i = 0; i < p->nr_insn; i++) {
+	    printf("0x%08x 0x%08x 0x%08x 0x%08x ",
+		   ((uint32_t *)&p->store[i])[3],
+		   ((uint32_t *)&p->store[i])[2],
+		   ((uint32_t *)&p->store[i])[1],
+		   ((uint32_t *)&p->store[i])[0]);
+	    brw_disasm(stdout, &p->store[i], intel->gen);
+	 }
+      }
    }
 }
 
@@ -3410,6 +3635,9 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
       bool progress;
       do {
 	 progress = false;
+
+	 progress = v.remove_duplicate_mrf_writes() || progress;
+
 	 v.calculate_live_intervals();
 	 progress = v.propagate_constants() || progress;
 	 progress = v.register_coalesce() || progress;

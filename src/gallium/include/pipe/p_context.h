@@ -54,7 +54,6 @@ struct pipe_scissor_state;
 struct pipe_shader_state;
 struct pipe_stencil_ref;
 struct pipe_stream_output_state;
-struct pipe_subresource;
 struct pipe_surface;
 struct pipe_vertex_buffer;
 struct pipe_vertex_element;
@@ -256,12 +255,11 @@ struct pipe_context {
     */
    void (*resource_copy_region)(struct pipe_context *pipe,
                                 struct pipe_resource *dst,
-                                struct pipe_subresource subdst,
+                                unsigned dst_level,
                                 unsigned dstx, unsigned dsty, unsigned dstz,
                                 struct pipe_resource *src,
-                                struct pipe_subresource subsrc,
-                                unsigned srcx, unsigned srcy, unsigned srcz,
-                                unsigned width, unsigned height);
+                                unsigned src_level,
+                                const struct pipe_box *src_box);
 
    /**
     * Resolve a multisampled resource into a non-multisampled one.
@@ -269,9 +267,9 @@ struct pipe_context {
     */
    void (*resource_resolve)(struct pipe_context *pipe,
                             struct pipe_resource *dst,
-                            struct pipe_subresource subdst,
+                            unsigned dst_layer,
                             struct pipe_resource *src,
-                            struct pipe_subresource subsrc);
+                            unsigned src_layer);
 
    /*@}*/
 
@@ -328,13 +326,13 @@ struct pipe_context {
     * PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE.
     * \param pipe  context whose unflushed hw commands will be checked.
     * \param texture  texture to check.
-    * \param face  cubemap face. Use 0 for non-cubemap texture.
     * \param level  mipmap level.
+    * \param layer  cubemap face, 2d array or 3d slice, 0 otherwise. Use -1 for any layer.
     * \return mask of PIPE_REFERENCED_FOR_READ/WRITE or PIPE_UNREFERENCED
     */
    unsigned int (*is_resource_referenced)(struct pipe_context *pipe,
-					  struct pipe_resource *texture,
-					  unsigned face, unsigned level);
+                                          struct pipe_resource *texture,
+                                          unsigned level, int layer);
 
    /**
     * Create a view on a texture to be used by a shader stage.
@@ -348,20 +346,32 @@ struct pipe_context {
 
 
    /**
+    * Get a surface which is a "view" into a resource, used by
+    * render target / depth stencil stages.
+    * \param usage  bitmaks of PIPE_BIND_* flags
+    */
+   struct pipe_surface *(*create_surface)(struct pipe_context *ctx,
+                                          struct pipe_resource *resource,
+                                          const struct pipe_surface *templat);
+
+   void (*surface_destroy)(struct pipe_context *ctx,
+                           struct pipe_surface *);
+
+   /**
     * Get a transfer object for transferring data to/from a texture.
     *
     * Transfers are (by default) context-private and allow uploads to be
     * interleaved with
     */
    struct pipe_transfer *(*get_transfer)(struct pipe_context *,
-					 struct pipe_resource *resource,
-					 struct pipe_subresource,
-					 unsigned usage,  /* a combination of PIPE_TRANSFER_x */
-					 const struct pipe_box *);
+                                         struct pipe_resource *resource,
+                                         unsigned level,
+                                         unsigned usage,  /* a combination of PIPE_TRANSFER_x */
+                                         const struct pipe_box *);
 
    void (*transfer_destroy)(struct pipe_context *,
-                                struct pipe_transfer *);
-   
+                            struct pipe_transfer *);
+
    void *(*transfer_map)( struct pipe_context *,
                           struct pipe_transfer *transfer );
 
@@ -381,13 +391,13 @@ struct pipe_context {
     * pointer.  XXX: strides??
     */
    void (*transfer_inline_write)( struct pipe_context *,
-				  struct pipe_resource *,
-				  struct pipe_subresource,
-				  unsigned usage, /* a combination of PIPE_TRANSFER_x */
-				  const struct pipe_box *,
-				  const void *data,
-				  unsigned stride,
-				  unsigned slice_stride);
+                                  struct pipe_resource *,
+                                  unsigned level,
+                                  unsigned usage, /* a combination of PIPE_TRANSFER_x */
+                                  const struct pipe_box *,
+                                  const void *data,
+                                  unsigned stride,
+                                  unsigned layer_stride);
 
 };
 

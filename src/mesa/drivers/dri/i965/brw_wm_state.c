@@ -87,7 +87,6 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    const struct gl_fragment_program *fp = brw->fragment_program;
-   const struct brw_fragment_program *bfp = (struct brw_fragment_program *) fp;
    struct intel_context *intel = &brw->intel;
 
    memset(key, 0, sizeof(*key));
@@ -132,7 +131,6 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
 
    /* _NEW_COLOR */
    key->uses_kill = fp->UsesKill || ctx->Color.AlphaEnabled;
-   key->is_glsl = bfp->isGLSL;
 
    /* If using the fragment shader backend, the program is always
     * 8-wide.

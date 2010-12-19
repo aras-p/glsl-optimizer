@@ -30,10 +30,7 @@
 
 
 #include "pipe/p_state.h"
-
-
-#define SP_MAX_TEXTURE_2D_LEVELS 13  /* 4K x 4K */
-#define SP_MAX_TEXTURE_3D_LEVELS 9   /* 512 x 512 x 512 */
+#include "sp_limits.h"
 
 
 struct pipe_context;

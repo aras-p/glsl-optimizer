@@ -200,6 +200,7 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
    templ.width0 = dri_drawable->w;
    templ.height0 = dri_drawable->h;
    templ.depth0 = 1;
+   templ.array_size = 1;
 
    memset(&whandle, 0, sizeof(whandle));
 
@@ -348,6 +349,7 @@ dri2_create_image_from_name(__DRIscreen *_screen,
    templ.width0 = width;
    templ.height0 = height;
    templ.depth0 = 1;
+   templ.array_size = 1;
 
    memset(&whandle, 0, sizeof(whandle));
    whandle.handle = name;
@@ -360,9 +362,8 @@ dri2_create_image_from_name(__DRIscreen *_screen,
       return NULL;
    }
 
-   img->face = 0;
    img->level = 0;
-   img->zslice = 0;
+   img->layer = 0;
    img->loader_private = loaderPrivate;
 
    return img;
@@ -430,9 +431,8 @@ dri2_create_image(__DRIscreen *_screen,
       return NULL;
    }
 
-   img->face = 0;
    img->level = 0;
-   img->zslice = 0;
+   img->layer = 0;
 
    img->loader_private = loaderPrivate;
    return img;

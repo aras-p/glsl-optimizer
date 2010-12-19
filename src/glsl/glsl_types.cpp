@@ -46,7 +46,7 @@ glsl_type::init_talloc_type_ctx(void)
 }
 
 glsl_type::glsl_type(GLenum gl_type,
-		     unsigned base_type, unsigned vector_elements,
+		     glsl_base_type base_type, unsigned vector_elements,
 		     unsigned matrix_columns, const char *name) :
    gl_type(gl_type),
    base_type(base_type),
@@ -120,7 +120,7 @@ glsl_type::generate_100ES_types(glsl_symbol_table *symtab)
    add_types_to_symbol_table(symtab, builtin_structure_types,
 			     Elements(builtin_structure_types),
 			     false);
-   add_types_to_symbol_table(symtab, &void_type, 1, false);
+   add_types_to_symbol_table(symtab, void_type, 1, false);
 }
 
 void
@@ -279,7 +279,7 @@ const glsl_type *
 glsl_type::get_instance(unsigned base_type, unsigned rows, unsigned columns)
 {
    if (base_type == GLSL_TYPE_VOID)
-      return &void_type;
+      return void_type;
 
    if ((rows < 1) || (rows > 4) || (columns < 1) || (columns > 4))
       return error_type;

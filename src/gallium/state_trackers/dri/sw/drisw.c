@@ -87,40 +87,17 @@ drisw_put_image(struct dri_drawable *drawable,
    put_image(dPriv, data, width, height);
 }
 
-static struct pipe_surface *
-drisw_get_pipe_surface(struct dri_drawable *drawable, struct pipe_resource *ptex)
-{
-   struct pipe_screen *pipe_screen = dri_screen(drawable->sPriv)->base.screen;
-   struct pipe_surface *psurf = drawable->drisw_surface;
-
-   if (!psurf || psurf->texture != ptex) {
-      pipe_surface_reference(&drawable->drisw_surface, NULL);
-
-      drawable->drisw_surface = pipe_screen->get_tex_surface(pipe_screen,
-            ptex, 0, 0, 0, 0/* no bind flag???*/);
-
-      psurf = drawable->drisw_surface;
-   }
-
-   return psurf;
-}
-
 static INLINE void
 drisw_present_texture(__DRIdrawable *dPriv,
                       struct pipe_resource *ptex)
 {
    struct dri_drawable *drawable = dri_drawable(dPriv);
    struct dri_screen *screen = dri_screen(drawable->sPriv);
-   struct pipe_surface *psurf;
 
    if (swrast_no_present)
       return;
 
-   psurf = drisw_get_pipe_surface(drawable, ptex);
-   if (!psurf)
-      return;
-
-   screen->base.screen->flush_frontbuffer(screen->base.screen, psurf, drawable);
+   screen->base.screen->flush_frontbuffer(screen->base.screen, ptex, 0, 0, drawable);
 }
 
 static INLINE void
@@ -220,6 +197,7 @@ drisw_allocate_textures(struct dri_drawable *drawable,
    templ.width0 = width;
    templ.height0 = height;
    templ.depth0 = 1;
+   templ.array_size = 1;
    templ.last_level = 0;
 
    for (i = 0; i < count; i++) {

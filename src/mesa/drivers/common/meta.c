@@ -266,13 +266,16 @@ struct gen_mipmap_state
    GLuint FBO;
 };
 
-
+#define MAX_META_OPS_DEPTH      2
 /**
  * All per-context meta state.
  */
 struct gl_meta_state
 {
-   struct save_state Save;    /**< state saved during meta-ops */
+   /** Stack of state saved during meta-ops */
+   struct save_state Save[MAX_META_OPS_DEPTH];
+   /** Save stack depth */
+   GLuint SaveStackDepth;
 
    struct temp_texture TempTex;
 
@@ -324,8 +327,13 @@ _mesa_meta_free(struct gl_context *ctx)
 static void
 _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
 {
-   struct save_state *save = &ctx->Meta->Save;
+   struct save_state *save;
 
+   /* hope MAX_META_OPS_DEPTH is large enough */
+   assert(ctx->Meta->SaveStackDepth < MAX_META_OPS_DEPTH);
+
+   save = &ctx->Meta->Save[ctx->Meta->SaveStackDepth++];
+   memset(save, 0, sizeof(*save));
    save->SavedState = state;
 
    if (state & META_ALPHA_TEST) {
@@ -575,7 +583,7 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
 static void
 _mesa_meta_end(struct gl_context *ctx)
 {
-   struct save_state *save = &ctx->Meta->Save;
+   struct save_state *save = &ctx->Meta->Save[--ctx->Meta->SaveStackDepth];
    const GLbitfield state = save->SavedState;
 
    if (state & META_ALPHA_TEST) {
@@ -1398,6 +1406,7 @@ _mesa_meta_Clear(struct gl_context *ctx, GLbitfield buffers)
    struct vertex verts[4];
    /* save all state but scissor, pixel pack/unpack */
    GLbitfield metaSave = META_ALL - META_SCISSOR - META_PIXEL_STORE;
+   const GLuint stencilMax = (1 << ctx->DrawBuffer->Visual.stencilBits) - 1;
 
    if (buffers & BUFFER_BITS_COLOR) {
       /* if clearing color buffers, don't save/restore colormask */
@@ -1453,7 +1462,7 @@ _mesa_meta_Clear(struct gl_context *ctx, GLbitfield buffers)
       _mesa_StencilOpSeparate(GL_FRONT_AND_BACK,
                               GL_REPLACE, GL_REPLACE, GL_REPLACE);
       _mesa_StencilFuncSeparate(GL_FRONT_AND_BACK, GL_ALWAYS,
-                                ctx->Stencil.Clear & 0x7fffffff,
+                                ctx->Stencil.Clear & stencilMax,
                                 ctx->Stencil.WriteMask[0]);
    }
    else {
@@ -2593,7 +2602,6 @@ copy_tex_image(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
 {
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
-   GLsizei postConvWidth = width, postConvHeight = height;
    GLenum format, type;
    GLint bpp;
    void *buf;
@@ -2601,6 +2609,7 @@ copy_tex_image(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
    texObj = _mesa_get_current_tex_object(ctx, target);
    texImage = _mesa_get_tex_image(ctx, texObj, target, level);
 
+   /* Choose format/type for temporary image buffer */
    format = _mesa_base_tex_format(ctx, internalFormat);
    type = get_temp_image_type(ctx, format);
    bpp = _mesa_bytes_per_pixel(format, type);
@@ -2632,12 +2641,8 @@ copy_tex_image(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
       ctx->Driver.FreeTexImageData(ctx, texImage);
    }
 
-   _mesa_init_teximage_fields(ctx, target, texImage,
-                              postConvWidth, postConvHeight, 1,
-                              border, internalFormat);
-
-   _mesa_choose_texture_format(ctx, texObj, texImage, target, level,
-                               internalFormat, GL_NONE, GL_NONE);
+   /* The texture's format was already chosen in _mesa_CopyTexImage() */
+   ASSERT(texImage->TexFormat != MESA_FORMAT_NONE);
 
    /*
     * Store texture data (with pixel transfer ops)
@@ -2690,7 +2695,8 @@ _mesa_meta_CopyTexImage2D(struct gl_context *ctx, GLenum target, GLint level,
  * Have to be careful with locking and meta state for pixel transfer.
  */
 static void
-copy_tex_sub_image(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
+copy_tex_sub_image(struct gl_context *ctx,
+                   GLuint dims, GLenum target, GLint level,
                    GLint xoffset, GLint yoffset, GLint zoffset,
                    GLint x, GLint y,
                    GLsizei width, GLsizei height)
@@ -2704,6 +2710,7 @@ copy_tex_sub_image(struct gl_context *ctx, GLuint dims, GLenum target, GLint lev
    texObj = _mesa_get_current_tex_object(ctx, target);
    texImage = _mesa_select_tex_image(ctx, texObj, target, level);
 
+   /* Choose format/type for temporary image buffer */
    format = _mesa_get_format_base_format(texImage->TexFormat);
    type = get_temp_image_type(ctx, format);
    bpp = _mesa_bytes_per_pixel(format, type);

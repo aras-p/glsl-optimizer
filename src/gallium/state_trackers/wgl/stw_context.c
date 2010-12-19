@@ -29,11 +29,9 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_context.h"
+#include "pipe/p_state.h"
+#include "util/u_memory.h"
 #include "state_tracker/st_api.h"
-
-/* for _mesa_share_state */
-#include "state_tracker/st_context.h"
-#include "main/core.h"
 
 #include "stw_icd.h"
 #include "stw_device.h"
@@ -102,13 +100,8 @@ DrvShareLists(
    ctx1 = stw_lookup_context_locked( dhglrc1 );
    ctx2 = stw_lookup_context_locked( dhglrc2 );
 
-   if (ctx1 && ctx2) {
-      struct st_context *st1, *st2;
-
-      st1 = (struct st_context *) ctx1->st;
-      st2 = (struct st_context *) ctx2->st;
-      ret = _mesa_share_state(st2->ctx, st1->ctx);
-   }
+   if (ctx1 && ctx2 && ctx2->st->share)
+      ret = ctx2->st->share(ctx2->st, ctx1->st);
 
    pipe_mutex_unlock( stw_dev->ctx_mutex );
    
@@ -271,75 +264,82 @@ stw_make_current(
    struct stw_context *curctx = NULL;
    struct stw_context *ctx = NULL;
    struct stw_framebuffer *fb = NULL;
+   BOOL ret = FALSE;
 
    if (!stw_dev)
-      goto fail;
+      return FALSE;
 
    curctx = stw_current_context();
    if (curctx != NULL) {
-      if (curctx->dhglrc != dhglrc)
+      if (curctx->dhglrc == dhglrc) {
+         if (curctx->hdc == hdc) {
+            /* Return if already current. */
+            return TRUE;
+         }
+      } else {
          curctx->st->flush(curctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
-      
-      /* Return if already current. */
-      if (curctx->dhglrc == dhglrc && curctx->hdc == hdc) {
-         ctx = curctx;
-         fb = stw_framebuffer_from_hdc( hdc );
-         goto success;
+      }
+   }
+
+   if (dhglrc) {
+      pipe_mutex_lock( stw_dev->ctx_mutex );
+      ctx = stw_lookup_context_locked( dhglrc );
+      pipe_mutex_unlock( stw_dev->ctx_mutex );
+      if (!ctx) {
+         goto fail;
       }
 
+      fb = stw_framebuffer_from_hdc( hdc );
+      if (fb) {
+         stw_framebuffer_update(fb);
+      }
+      else {
+         /* Applications should call SetPixelFormat before creating a context,
+          * but not all do, and the opengl32 runtime seems to use a default pixel
+          * format in some cases, so we must create a framebuffer for those here
+          */
+         int iPixelFormat = GetPixelFormat(hdc);
+         if (iPixelFormat)
+            fb = stw_framebuffer_create( hdc, iPixelFormat );
+         if (!fb)
+            goto fail;
+      }
+   
+      if (fb->iPixelFormat != ctx->iPixelFormat) {
+         SetLastError(ERROR_INVALID_PIXEL_FORMAT);
+         goto fail;
+      }
+
+      /* Bind the new framebuffer */
+      ctx->hdc = hdc;
+
+      ret = stw_dev->stapi->make_current(stw_dev->stapi, ctx->st, fb->stfb, fb->stfb);
+      stw_framebuffer_reference(&ctx->current_framebuffer, fb);
+   } else {
+      ret = stw_dev->stapi->make_current(stw_dev->stapi, NULL, NULL, NULL);
+   }
+   
+fail:
+
+   if (fb) {
+      stw_framebuffer_release(fb);
+   }
+
+   /* On failure, make the thread's current rendering context not current
+    * before returning */
+   if (!ret) {
+      stw_dev->stapi->make_current(stw_dev->stapi, NULL, NULL, NULL);
+      ctx = NULL;
+   }
+
+   /* Unreference the previous framebuffer if any. It must be done after
+    * make_current, as it can be referenced inside.
+    */
+   if (curctx && curctx != ctx) {
       stw_framebuffer_reference(&curctx->current_framebuffer, NULL);
    }
 
-   if (hdc == NULL || dhglrc == 0) {
-      return stw_dev->stapi->make_current(stw_dev->stapi, NULL, NULL, NULL);
-   }
-
-   pipe_mutex_lock( stw_dev->ctx_mutex ); 
-   ctx = stw_lookup_context_locked( dhglrc );
-   pipe_mutex_unlock( stw_dev->ctx_mutex ); 
-   if(!ctx)
-      goto fail;
-
-   fb = stw_framebuffer_from_hdc( hdc );
-   if (fb) {
-      stw_framebuffer_update(fb);
-   }
-   else {
-      /* Applications should call SetPixelFormat before creating a context,
-       * but not all do, and the opengl32 runtime seems to use a default pixel
-       * format in some cases, so we must create a framebuffer for those here
-       */
-      int iPixelFormat = GetPixelFormat(hdc);
-      if(iPixelFormat)
-         fb = stw_framebuffer_create( hdc, iPixelFormat );
-      if(!fb) 
-         goto fail;
-   }
-   
-   if(fb->iPixelFormat != ctx->iPixelFormat)
-      goto fail;
-
-   /* Bind the new framebuffer */
-   ctx->hdc = hdc;
-   
-   if (!stw_dev->stapi->make_current(stw_dev->stapi, ctx->st, fb->stfb, fb->stfb))
-      goto fail;
-
-   stw_framebuffer_reference(&ctx->current_framebuffer, fb);
-
-success:
-   assert(fb);
-   if(fb) {
-      stw_framebuffer_release(fb);
-   }
-   
-   return TRUE;
-
-fail:
-   if(fb)
-      stw_framebuffer_release(fb);
-   stw_dev->stapi->make_current(stw_dev->stapi, NULL, NULL, NULL);
-   return FALSE;
+   return ret;
 }
 
 /**

@@ -10,4 +10,6 @@ identity = env.ConvenienceLibrary(
 		'id_screen.c',
 	])
 
+env.Alias('identity', identity)
+
 Export('identity')

@@ -364,7 +364,7 @@ i830_emit_invarient_state(struct intel_context *intel)
 
 
 #define emit( intel, state, size )			\
-   intel_batchbuffer_data(intel->batch, state, size )
+   intel_batchbuffer_data(intel->batch, state, size, false)
 
 static GLuint
 get_dirty(struct i830_hw_state *state)
@@ -429,7 +429,8 @@ i830_emit_state(struct intel_context *intel)
     * batchbuffer fills up.
     */
    intel_batchbuffer_require_space(intel->batch,
-				   get_state_size(state) + INTEL_PRIM_EMIT_SIZE);
+				   get_state_size(state) + INTEL_PRIM_EMIT_SIZE,
+				   false);
    count = 0;
  again:
    aper_count = 0;

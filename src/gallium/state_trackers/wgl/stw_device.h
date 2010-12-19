@@ -50,6 +50,10 @@ struct stw_device
    
    struct pipe_screen *screen;
    
+   /* Cache some PIPE_CAP_* */
+   unsigned max_2d_levels;
+   unsigned max_2d_length;
+
    struct st_api *stapi;
    struct st_manager *smapi;
 

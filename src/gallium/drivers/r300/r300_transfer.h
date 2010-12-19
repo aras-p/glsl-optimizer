@@ -30,22 +30,22 @@ struct r300_context;
 
 struct pipe_transfer*
 r300_texture_get_transfer(struct pipe_context *ctx,
-			  struct pipe_resource *texture,
-			  struct pipe_subresource sr,
-			  unsigned usage,
-			  const struct pipe_box *box);
+                          struct pipe_resource *texture,
+                          unsigned level,
+                          unsigned usage,
+                          const struct pipe_box *box);
 
 void
 r300_texture_transfer_destroy(struct pipe_context *ctx,
-			      struct pipe_transfer *trans);
+                              struct pipe_transfer *trans);
 
 void*
 r300_texture_transfer_map(struct pipe_context *ctx,
-			  struct pipe_transfer *transfer);
+                          struct pipe_transfer *transfer);
 
 void
 r300_texture_transfer_unmap(struct pipe_context *ctx,
-			    struct pipe_transfer *transfer);
+                            struct pipe_transfer *transfer);
 
 
 #endif

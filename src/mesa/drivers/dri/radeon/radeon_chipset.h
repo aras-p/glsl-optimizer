@@ -440,6 +440,11 @@
 #define PCI_CHIP_HEMLOCK_689C           0x689C
 #define PCI_CHIP_HEMLOCK_689D           0x689D
 
+#define PCI_CHIP_PALM_9802              0x9802
+#define PCI_CHIP_PALM_9803              0x9803
+#define PCI_CHIP_PALM_9804              0x9804
+#define PCI_CHIP_PALM_9805              0x9805
+
 enum {
    CHIP_FAMILY_R100,
    CHIP_FAMILY_RV100,
@@ -483,6 +488,7 @@ enum {
    CHIP_FAMILY_JUNIPER,
    CHIP_FAMILY_CYPRESS,
    CHIP_FAMILY_HEMLOCK,
+   CHIP_FAMILY_PALM,
    CHIP_FAMILY_LAST
 };
 

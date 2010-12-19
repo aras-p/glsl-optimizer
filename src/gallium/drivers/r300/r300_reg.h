@@ -427,7 +427,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_PVS_CONST_START          512
 #       define R500_PVS_CONST_START          1024
 #       define R300_MAX_PVS_CONST_VECS       256
-#       define R500_MAX_PVS_CONST_VECS       1024
+#       define R500_MAX_PVS_CONST_VECS       256
 #       define R300_PVS_UCP_START            1024
 #       define R500_PVS_UCP_START            1536
 #       define R300_POINT_VPORT_SCALE_OFFSET 1030
@@ -553,6 +553,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 /* Addresses are relative to the vertex program parameters area. */
 #define R300_VAP_PVS_CONST_CNTL             0x22D4
 #       define R300_PVS_CONST_BASE_OFFSET_SHIFT  0
+#       define R300_PVS_CONST_BASE_OFFSET(x)     (x)
 #       define R300_PVS_MAX_CONST_ADDR_SHIFT     16
 #       define R300_PVS_MAX_CONST_ADDR(x)        ((x) << 16)
 #define R300_VAP_PVS_CODE_CNTL_1	    0x22D8
@@ -1520,11 +1521,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R300_TX_TRI_PERF_3_8            (3<<15)
 #	define R300_ANISO_THRESHOLD_MASK       (7<<17)
 
+#       define R400_DXTC_SWIZZLE_ENABLE        (1<<21)
 #	define R500_MACRO_SWITCH               (1<<22)
 #       define R500_TX_MAX_ANISO(x)            ((x) << 23)
 #       define R500_TX_MAX_ANISO_MASK          (63 << 23)
 #       define R500_TX_ANISO_HIGH_QUALITY      (1 << 30)
-
 #	define R500_BORDER_FIX                 (1<<31)
 
 #define R300_TX_FORMAT0_0                   0x4480

@@ -369,8 +369,6 @@ static void vbo_exec_fixup_vertex( struct gl_context *ctx,
 }
 
 
-#if FEATURE_beginend
-
 /* 
  */
 #define ATTR( A, N, V0, V1, V2, V3 )				\
@@ -411,7 +409,7 @@ do {								\
 #include "vbo_attrib_tmp.h"
 
 
-
+#if FEATURE_beginend
 
 
 #if FEATURE_evaluators
@@ -706,30 +704,6 @@ static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
 #else /* FEATURE_beginend */
 
 
-#define ATTR( A, N, V0, V1, V2, V3 )				\
-do {								\
-   struct vbo_exec_context *exec = &vbo_context(ctx)->exec;	\
-								\
-   /* FLUSH_UPDATE_CURRENT needs to be set manually */		\
-   exec->ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;		\
-								\
-   if (exec->vtx.active_sz[A] != N)				\
-      vbo_exec_fixup_vertex(ctx, A, N);				\
-								\
-   {								\
-      GLfloat *dest = exec->vtx.attrptr[A];			\
-      if (N>0) dest[0] = V0;					\
-      if (N>1) dest[1] = V1;					\
-      if (N>2) dest[2] = V2;					\
-      if (N>3) dest[3] = V3;					\
-   }								\
-} while (0)
-
-#define ERROR() _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ )
-#define TAG(x) vbo_##x
-
-#include "vbo_attrib_tmp.h"
-
 static void vbo_exec_vtxfmt_init( struct vbo_exec_context *exec )
 {
    /* silence warnings */
@@ -998,35 +972,35 @@ static void reset_attrfv( struct vbo_exec_context *exec )
       
 
 void GLAPIENTRY
-_vbo_Color4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a)
+_es_Color4f(GLfloat r, GLfloat g, GLfloat b, GLfloat a)
 {
    vbo_Color4f(r, g, b, a);
 }
 
 
 void GLAPIENTRY
-_vbo_Normal3f(GLfloat x, GLfloat y, GLfloat z)
+_es_Normal3f(GLfloat x, GLfloat y, GLfloat z)
 {
    vbo_Normal3f(x, y, z);
 }
 
 
 void GLAPIENTRY
-_vbo_MultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q)
+_es_MultiTexCoord4f(GLenum target, GLfloat s, GLfloat t, GLfloat r, GLfloat q)
 {
    vbo_MultiTexCoord4f(target, s, t, r, q);
 }
 
 
 void GLAPIENTRY
-_vbo_Materialfv(GLenum face, GLenum pname, const GLfloat *params)
+_es_Materialfv(GLenum face, GLenum pname, const GLfloat *params)
 {
    vbo_Materialfv(face, pname, params);
 }
 
 
 void GLAPIENTRY
-_vbo_Materialf(GLenum face, GLenum pname, GLfloat param)
+_es_Materialf(GLenum face, GLenum pname, GLfloat param)
 {
    GLfloat p[4];
    p[0] = param;
@@ -1035,57 +1009,71 @@ _vbo_Materialf(GLenum face, GLenum pname, GLfloat param)
 }
 
 
-void GLAPIENTRY
-_vbo_VertexAttrib4f(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+/**
+ * A special version of glVertexAttrib4f that does not treat index 0 as
+ * VBO_ATTRIB_POS.
+ */
+static void
+VertexAttrib4f_nopos(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
 {
-   vbo_VertexAttrib4fARB(index, x, y, z, w);
+   GET_CURRENT_CONTEXT(ctx);
+   if (index < MAX_VERTEX_GENERIC_ATTRIBS)
+      ATTR(VBO_ATTRIB_GENERIC0 + index, 4, x, y, z, w);
+   else
+      ERROR();
+}
+
+void GLAPIENTRY
+_es_VertexAttrib4f(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
+{
+   VertexAttrib4f_nopos(index, x, y, z, w);
 }
 
 
 void GLAPIENTRY
-_vbo_VertexAttrib1f(GLuint indx, GLfloat x)
+_es_VertexAttrib1f(GLuint indx, GLfloat x)
 {
-   vbo_VertexAttrib1fARB(indx, x);
+   VertexAttrib4f_nopos(indx, x, 0.0f, 0.0f, 1.0f);
 }
 
 
 void GLAPIENTRY
-_vbo_VertexAttrib1fv(GLuint indx, const GLfloat* values)
+_es_VertexAttrib1fv(GLuint indx, const GLfloat* values)
 {
-   vbo_VertexAttrib1fvARB(indx, values);
+   VertexAttrib4f_nopos(indx, values[0], 0.0f, 0.0f, 1.0f);
 }
 
 
 void GLAPIENTRY
-_vbo_VertexAttrib2f(GLuint indx, GLfloat x, GLfloat y)
+_es_VertexAttrib2f(GLuint indx, GLfloat x, GLfloat y)
 {
-   vbo_VertexAttrib2fARB(indx, x, y);
+   VertexAttrib4f_nopos(indx, x, y, 0.0f, 1.0f);
 }
 
 
 void GLAPIENTRY
-_vbo_VertexAttrib2fv(GLuint indx, const GLfloat* values)
+_es_VertexAttrib2fv(GLuint indx, const GLfloat* values)
 {
-   vbo_VertexAttrib2fvARB(indx, values);
+   VertexAttrib4f_nopos(indx, values[0], values[1], 0.0f, 1.0f);
 }
 
 
 void GLAPIENTRY
-_vbo_VertexAttrib3f(GLuint indx, GLfloat x, GLfloat y, GLfloat z)
+_es_VertexAttrib3f(GLuint indx, GLfloat x, GLfloat y, GLfloat z)
 {
-   vbo_VertexAttrib3fARB(indx, x, y, z);
+   VertexAttrib4f_nopos(indx, x, y, z, 1.0f);
 }
 
 
 void GLAPIENTRY
-_vbo_VertexAttrib3fv(GLuint indx, const GLfloat* values)
+_es_VertexAttrib3fv(GLuint indx, const GLfloat* values)
 {
-   vbo_VertexAttrib3fvARB(indx, values);
+   VertexAttrib4f_nopos(indx, values[0], values[1], values[2], 1.0f);
 }
 
 
 void GLAPIENTRY
-_vbo_VertexAttrib4fv(GLuint indx, const GLfloat* values)
+_es_VertexAttrib4fv(GLuint indx, const GLfloat* values)
 {
-   vbo_VertexAttrib4fvARB(indx, values);
+   VertexAttrib4f_nopos(indx, values[0], values[1], values[2], values[3]);
 }

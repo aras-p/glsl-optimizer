@@ -28,16 +28,15 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
-#include "xf86drm.h"
-#include "r600.h"
-#include "r600d.h"
-#include "radeon_drm.h"
-#include "bof.h"
-#include "pipe/p_compiler.h"
-#include "util/u_inlines.h"
-#include "util/u_memory.h"
+#include <pipe/p_compiler.h>
+#include <util/u_inlines.h>
+#include <util/u_memory.h>
 #include <pipebuffer/pb_bufmgr.h>
+#include "xf86drm.h"
+#include "radeon_drm.h"
 #include "r600_priv.h"
+#include "bof.h"
+#include "r600d.h"
 
 #define GROUP_FORCE_NEW_BLOCK	0
 
@@ -50,6 +49,7 @@ int r600_context_init_fence(struct r600_context *ctx)
 	}
 	ctx->cfence = r600_bo_map(ctx->radeon, ctx->fence_bo, PB_USAGE_UNSYNCHRONIZED, NULL);
 	*ctx->cfence = 0;
+	ctx->radeon->cfence = ctx->cfence;
 	LIST_INITHEAD(&ctx->fenced_bo);
 	return 0;
 }
@@ -593,6 +593,17 @@ static int r600_loop_const_init(struct r600_context *ctx, u32 offset)
 	return r600_context_add_block(ctx, r600_loop_consts, nreg);
 }
 
+static void r600_context_clear_fenced_bo(struct r600_context *ctx)
+{
+	struct radeon_bo *bo, *tmp;
+
+	LIST_FOR_EACH_ENTRY_SAFE(bo, tmp, &ctx->fenced_bo, fencedlist) {
+		LIST_DELINIT(&bo->fencedlist);
+		bo->fence = 0;
+		bo->ctx = NULL;
+	}
+}
+
 /* initialize */
 void r600_context_fini(struct r600_context *ctx)
 {
@@ -607,6 +618,9 @@ void r600_context_fini(struct r600_context *ctx)
 					range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
 					range->blocks[CTX_BLOCK_ID(ctx, offset)] = NULL;
 				}
+				for (int k = 1; k <= block->nbo; k++) {
+					r600_bo_reference(ctx->radeon, &block->reloc[k].bo, NULL);
+				}
 				free(block);
 			}
 		}
@@ -616,6 +630,8 @@ void r600_context_fini(struct r600_context *ctx)
 	free(ctx->reloc);
 	free(ctx->bo);
 	free(ctx->pm4);
+
+	r600_context_clear_fenced_bo(ctx);
 	if (ctx->fence_bo) {
 		r600_bo_reference(ctx->radeon, &ctx->fence_bo, NULL);
 	}
@@ -689,6 +705,12 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 	}
 	/* VS RESOURCE */
 	for (int j = 0, offset = 0x1180; j < 160; j++, offset += 0x1C) {
+		r = r600_state_resource_init(ctx, offset);
+		if (r)
+			goto out_err;
+	}
+	/* FS RESOURCE */
+	for (int j = 0, offset = 0x2300; j < 16; j++, offset += 0x1C) {
 		r = r600_state_resource_init(ctx, offset);
 		if (r)
 			goto out_err;
@@ -792,6 +814,7 @@ void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct r600_bo *r
 	ctx->reloc[ctx->creloc].write_domain = rbo->domains & (RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM);
 	ctx->reloc[ctx->creloc].flags = 0;
 	radeon_bo_reference(ctx->radeon, &ctx->bo[ctx->creloc], bo);
+	rbo->fence = ctx->fence;
 	ctx->creloc++;
 	/* set PKT3 to point to proper reloc */
 	*pm4 = bo->reloc_id;
@@ -814,6 +837,7 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 			/* find relocation */
 			id = block->pm4_bo_index[id];
 			r600_bo_reference(ctx->radeon, &block->reloc[id].bo, state->regs[i].bo);
+			state->regs[i].bo->fence = ctx->fence;
 		}
 		if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
 			block->status |= R600_BLOCK_STATUS_ENABLED;
@@ -853,10 +877,13 @@ static inline void r600_context_pipe_state_set_resource(struct r600_context *ctx
 		 */
 		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[0].bo);
 		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[0].bo);
+		state->regs[0].bo->fence = ctx->fence;
 	} else {
 		/* TEXTURE RESOURCE */
 		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[2].bo);
 		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[3].bo);
+		state->regs[2].bo->fence = ctx->fence;
+		state->regs[3].bo->fence = ctx->fence;
 	}
 	if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
 		block->status |= R600_BLOCK_STATUS_ENABLED;
@@ -876,6 +903,13 @@ void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r6
 void r600_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
 {
 	unsigned offset = R_038000_SQ_TEX_RESOURCE_WORD0_0 + 0x1180 + 0x1C * rid;
+
+	r600_context_pipe_state_set_resource(ctx, state, offset);
+}
+
+void r600_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
+{
+	unsigned offset = R_038000_SQ_TEX_RESOURCE_WORD0_0 + 0x2300 + 0x1C * rid;
 
 	r600_context_pipe_state_set_resource(ctx, state, offset);
 }
@@ -1049,7 +1083,7 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_draw_initiator;
 	}
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT;
+	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
 
 	/* flush color buffer */
 	for (int i = 0; i < 8; i++) {
@@ -1082,11 +1116,11 @@ void r600_context_flush(struct r600_context *ctx)
 	/* suspend queries */
 	r600_context_queries_suspend(ctx);
 
-	radeon_bo_pbmgr_flush_maps(ctx->radeon->kman);
-
 	/* emit fence */
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT | (5 << 8);
+	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	ctx->pm4[ctx->pm4_cdwords++] = (1 << 29) | (0 << 24);
 	ctx->pm4[ctx->pm4_cdwords++] = ctx->fence;
@@ -1266,7 +1300,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 
 	/* emit begin query */
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE_ZPASS_DONE;
+	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
 	ctx->pm4[ctx->pm4_cdwords++] = query->num_results + r600_bo_offset(query->buffer);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
@@ -1282,7 +1316,7 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 {
 	/* emit begin query */
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE_ZPASS_DONE;
+	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
 	ctx->pm4[ctx->pm4_cdwords++] = query->num_results + 8 + r600_bo_offset(query->buffer);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);

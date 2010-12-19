@@ -57,7 +57,7 @@ static unsigned translate_opcode(unsigned opcode)
      /* case TGSI_OPCODE_DP2A: return RC_OPCODE_DP2A; */
                                         /* gap */
         case TGSI_OPCODE_FRC: return RC_OPCODE_FRC;
-     /* case TGSI_OPCODE_CLAMP: return RC_OPCODE_CLAMP; */
+        case TGSI_OPCODE_CLAMP: return RC_OPCODE_CLAMP;
         case TGSI_OPCODE_FLR: return RC_OPCODE_FLR;
      /* case TGSI_OPCODE_ROUND: return RC_OPCODE_ROUND; */
         case TGSI_OPCODE_EX2: return RC_OPCODE_EX2;
@@ -363,10 +363,7 @@ void r300_tgsi_to_rc(struct tgsi_to_rc * ttr,
                 break;
             case TGSI_TOKEN_TYPE_INSTRUCTION:
                 inst = &parser.FullToken.FullInstruction;
-                /* This hack with the RET opcode woudn't work with
-                 * conditionals. */
-                if (inst->Instruction.Opcode == TGSI_OPCODE_END ||
-                    inst->Instruction.Opcode == TGSI_OPCODE_RET) {
+                if (inst->Instruction.Opcode == TGSI_OPCODE_END) {
                     break;
                 }
 

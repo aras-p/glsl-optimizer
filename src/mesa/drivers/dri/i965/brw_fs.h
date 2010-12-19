@@ -96,10 +96,7 @@ public:
 
    void init()
    {
-      this->reg = 0;
-      this->reg_offset = 0;
-      this->negate = 0;
-      this->abs = 0;
+      memset(this, 0, sizeof(*this));
       this->hw_reg = -1;
       this->smear = -1;
    }
@@ -151,6 +148,21 @@ public:
    fs_reg(enum register_file file, int hw_reg, uint32_t type);
    fs_reg(class fs_visitor *v, const struct glsl_type *type);
 
+   bool equals(fs_reg *r)
+   {
+      return (file == r->file &&
+	      reg == r->reg &&
+	      reg_offset == r->reg_offset &&
+	      hw_reg == r->hw_reg &&
+	      type == r->type &&
+	      negate == r->negate &&
+	      abs == r->abs &&
+	      memcmp(&fixed_hw_reg, &r->fixed_hw_reg,
+		     sizeof(fixed_hw_reg)) == 0 &&
+	      smear == r->smear &&
+	      imm.u == r->imm.u);
+   }
+
    /** Register file: ARF, GRF, MRF, IMM. */
    enum register_file file;
    /** virtual register number.  0 = fixed hw reg */
@@ -174,6 +186,10 @@ public:
    } imm;
 };
 
+static const fs_reg reg_undef;
+static const fs_reg reg_null_f(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_F);
+static const fs_reg reg_null_d(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_D);
+
 class fs_inst : public exec_node {
 public:
    /* Callers of this talloc-based new need not call delete. It's
@@ -190,18 +206,14 @@ public:
 
    void init()
    {
+      memset(this, 0, sizeof(*this));
       this->opcode = BRW_OPCODE_NOP;
-      this->saturate = false;
       this->conditional_mod = BRW_CONDITIONAL_NONE;
-      this->predicated = false;
-      this->sampler = 0;
-      this->target = 0;
-      this->eot = false;
-      this->header_present = false;
-      this->shadow_compare = false;
-      this->mlen = 0;
-      this->base_mrf = 0;
-      this->offset = 0;
+
+      this->dst = reg_undef;
+      this->src[0] = reg_undef;
+      this->src[1] = reg_undef;
+      this->src[2] = reg_undef;
    }
 
    fs_inst()
@@ -271,6 +283,26 @@ public:
 	 assert(src[1].reg_offset >= 0);
       if (src[2].file == GRF)
 	 assert(src[2].reg_offset >= 0);
+   }
+
+   bool equals(fs_inst *inst)
+   {
+      return (opcode == inst->opcode &&
+	      dst.equals(&inst->dst) &&
+	      src[0].equals(&inst->src[0]) &&
+	      src[1].equals(&inst->src[1]) &&
+	      src[2].equals(&inst->src[2]) &&
+	      saturate == inst->saturate &&
+	      predicated == inst->predicated &&
+	      conditional_mod == inst->conditional_mod &&
+	      mlen == inst->mlen &&
+	      base_mrf == inst->base_mrf &&
+	      sampler == inst->sampler &&
+	      target == inst->target &&
+	      eot == inst->eot &&
+	      header_present == inst->header_present &&
+	      shadow_compare == inst->shadow_compare &&
+	      offset == inst->offset);
    }
 
    int opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
@@ -375,6 +407,7 @@ public:
    bool register_coalesce();
    bool compute_to_mrf();
    bool dead_code_eliminate();
+   bool remove_duplicate_mrf_writes();
    bool virtual_grf_interferes(int a, int b);
    void generate_code();
    void generate_fb_write(fs_inst *inst);
@@ -400,6 +433,7 @@ public:
    fs_inst *emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate);
    fs_inst *emit_math(fs_opcodes op, fs_reg dst, fs_reg src0);
    fs_inst *emit_math(fs_opcodes op, fs_reg dst, fs_reg src0, fs_reg src1);
+   bool try_emit_saturate(ir_expression *ir);
    void emit_bool_to_cond_code(ir_rvalue *condition);
    void emit_if_gen6(ir_if *ir);
    void emit_unspill(fs_inst *inst, fs_reg reg, uint32_t spill_offset);
@@ -411,6 +445,7 @@ public:
    struct brw_reg interp_reg(int location, int channel);
    int setup_uniform_values(int loc, const glsl_type *type);
    void setup_builtin_uniform_values(ir_variable *ir);
+   int implied_mrf_writes(fs_inst *inst);
 
    struct brw_context *brw;
    const struct gl_fragment_program *fp;
@@ -453,10 +488,6 @@ public:
 
    int grf_used;
 };
-
-static const fs_reg reg_undef;
-static const fs_reg reg_null_f(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_F);
-static const fs_reg reg_null_d(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_D);
 
 GLboolean brw_do_channel_expressions(struct exec_list *instructions);
 GLboolean brw_do_vector_splitting(struct exec_list *instructions);

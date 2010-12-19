@@ -141,6 +141,8 @@ lp_setup_draw_elements(struct vbuf_render *vbr, const ushort *indices, uint nr)
    const boolean flatshade_first = setup->flatshade_first;
    unsigned i;
 
+   assert(setup->setup.variant);
+
    if (!lp_setup_update_state(setup, TRUE))
       return;
 

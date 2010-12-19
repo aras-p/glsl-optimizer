@@ -29,7 +29,7 @@
 #include "gdi/gdi_sw_winsys.h"
 #include "pipe/p_screen.h"
 #include "state_tracker/graw.h"
-#include "target-helpers/wrap_screen.h"
+#include "target-helpers/inline_debug_helper.h"
 #include "target-helpers/inline_sw_helper.h"
 #include <windows.h>
 
@@ -116,7 +116,7 @@ graw_create_window_and_screen(int x,
 
    *handle = (void *)hDC;
 
-   return gallium_wrap_screen(screen);
+   return debug_screen_wrap(screen);
 
 fail:
    if (hWnd)

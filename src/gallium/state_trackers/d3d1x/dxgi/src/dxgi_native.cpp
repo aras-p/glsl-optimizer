@@ -1159,8 +1159,15 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 			unsigned blit_x, blit_y, blit_w, blit_h;
 			float black[4] = {0, 0, 0, 0};
 
-			if(!formats_compatible || src->width0 != dst_w || src->height0 != dst_h)
-				dst_surface = pipe->screen->get_tex_surface(pipe->screen, dst, 0, 0, 0, PIPE_BIND_RENDER_TARGET);
+			if(!formats_compatible || src->width0 != dst_w || src->height0 != dst_h) {
+				struct pipe_surface templat;
+				templat.usage = PIPE_BIND_RENDER_TARGET;
+				templat.format = dst->format;
+				templat.u.tex.level = 0;
+				templat.u.tex.first_layer = 0;
+				templat.u.tex.last_layer = 0;
+				dst_surface = pipe->create_surface(pipe, dst, &templat);
+			}
 
 			if(preserve_aspect_ratio)
 			{
@@ -1199,10 +1206,12 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 
 			if(formats_compatible && blit_w == src->width0 && blit_h == src->height0)
 			{
-				pipe_subresource sr;
-				sr.face = 0;
-				sr.level = 0;
-				pipe->resource_copy_region(pipe, dst, sr, rect.left, rect.top, 0, src, sr, 0, 0, 0, blit_w, blit_h);
+				pipe_box box;
+				box.x = box.y = box.z;
+				box.width = blit_w;
+				box.height = blit_h;
+				box.z = 1;
+				pipe->resource_copy_region(pipe, dst, 0, rect.left, rect.top, 0, src, 0, &box);
 			}
 			else
 			{
@@ -1218,7 +1227,7 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 		}
 
 		if(dst_surface)
-			pipe->screen->tex_surface_destroy(dst_surface);
+			pipe->surface_destroy(pipe, dst_surface);
 
 		pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, 0);
 

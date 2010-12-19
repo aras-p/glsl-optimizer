@@ -1670,6 +1670,18 @@ _mesa_execute_program(struct gl_context * ctx,
 
             fetch_texel(ctx, machine, inst, texcoord, lodBias, color);
 
+            if (DEBUG_PROG) {
+               printf("TXB (%g, %g, %g, %g) = texture[%d][%g %g %g %g]"
+                      "  bias %g\n",
+                      color[0], color[1], color[2], color[3],
+                      inst->TexSrcUnit,
+                      texcoord[0],
+                      texcoord[1],
+                      texcoord[2],
+                      texcoord[3],
+                      lodBias);
+            }
+
             store_vector4(inst, machine, color);
          }
          break;

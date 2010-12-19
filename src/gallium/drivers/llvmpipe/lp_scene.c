@@ -74,6 +74,7 @@ lp_scene_create( struct pipe_context *pipe )
 void
 lp_scene_destroy(struct lp_scene *scene)
 {
+   lp_fence_reference(&scene->fence, NULL);
    pipe_mutex_destroy(scene->mutex);
    assert(scene->data.head->next == NULL);
    FREE(scene->data.head);
@@ -136,30 +137,30 @@ lp_scene_begin_rasterization(struct lp_scene *scene)
    int i;
 
    //LP_DBG(DEBUG_RAST, "%s\n", __FUNCTION__);
-   
+
    for (i = 0; i < scene->fb.nr_cbufs; i++) {
       struct pipe_surface *cbuf = scene->fb.cbufs[i];
+      assert(cbuf->u.tex.first_layer == cbuf->u.tex.last_layer);
       scene->cbufs[i].stride = llvmpipe_resource_stride(cbuf->texture,
-                                                        cbuf->level);
+                                                        cbuf->u.tex.level);
 
       scene->cbufs[i].map = llvmpipe_resource_map(cbuf->texture,
-                                                  cbuf->face,
-                                                  cbuf->level,
-                                                  cbuf->zslice,
+                                                  cbuf->u.tex.level,
+                                                  cbuf->u.tex.first_layer,
                                                   LP_TEX_USAGE_READ_WRITE,
                                                   LP_TEX_LAYOUT_LINEAR);
    }
 
    if (fb->zsbuf) {
       struct pipe_surface *zsbuf = scene->fb.zsbuf;
-      scene->zsbuf.stride = llvmpipe_resource_stride(zsbuf->texture, zsbuf->level);
+      assert(zsbuf->u.tex.first_layer == zsbuf->u.tex.last_layer);
+      scene->zsbuf.stride = llvmpipe_resource_stride(zsbuf->texture, zsbuf->u.tex.level);
       scene->zsbuf.blocksize = 
          util_format_get_blocksize(zsbuf->texture->format);
 
       scene->zsbuf.map = llvmpipe_resource_map(zsbuf->texture,
-                                               zsbuf->face,
-                                               zsbuf->level,
-                                               zsbuf->zslice,
+                                               zsbuf->u.tex.level,
+                                               zsbuf->u.tex.first_layer,
                                                LP_TEX_USAGE_READ_WRITE,
                                                LP_TEX_LAYOUT_NONE);
    }
@@ -181,9 +182,8 @@ lp_scene_end_rasterization(struct lp_scene *scene )
       if (scene->cbufs[i].map) {
          struct pipe_surface *cbuf = scene->fb.cbufs[i];
          llvmpipe_resource_unmap(cbuf->texture,
-                                 cbuf->face,
-                                 cbuf->level,
-                                 cbuf->zslice);
+                                 cbuf->u.tex.level,
+                                 cbuf->u.tex.first_layer);
          scene->cbufs[i].map = NULL;
       }
    }
@@ -192,9 +192,8 @@ lp_scene_end_rasterization(struct lp_scene *scene )
    if (scene->zsbuf.map) {
       struct pipe_surface *zsbuf = scene->fb.zsbuf;
       llvmpipe_resource_unmap(zsbuf->texture,
-                             zsbuf->face,
-                             zsbuf->level,
-                             zsbuf->zslice);
+                              zsbuf->u.tex.level,
+                              zsbuf->u.tex.first_layer);
       scene->zsbuf.map = NULL;
    }
 

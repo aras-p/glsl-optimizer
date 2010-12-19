@@ -653,6 +653,7 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_form
 	radeonTexObjPtr t;
 	uint32_t pitch_val;
 	uint32_t internalFormat, type, format;
+	gl_format texFormat;
 
 	type = GL_BGRA;
 	format = GL_UNSIGNED_BYTE;
@@ -692,10 +693,6 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_form
 	radeon_miptree_unreference(&t->mt);
 	radeon_miptree_unreference(&rImage->mt);
 
-	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
-				   rb->base.Width, rb->base.Height, 1, 0, rb->cpp);
-	texImage->RowStride = rb->pitch / rb->cpp;
-
 	rImage->bo = rb->bo;
 	radeon_bo_ref(rImage->bo);
 	t->bo = rb->bo;
@@ -705,22 +702,33 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_form
 	t->override_offset = 0;
 	switch (rb->cpp) {
 	case 4:
-		if (texture_format == __DRI_TEXTURE_FORMAT_RGB)
+		if (texture_format == __DRI_TEXTURE_FORMAT_RGB) {
 			t->pp_txformat = tx_table[MESA_FORMAT_RGB888].format;
-		else
+			texFormat = MESA_FORMAT_RGB888;
+		}
+		else {
 			t->pp_txformat = tx_table[MESA_FORMAT_ARGB8888].format;
+			texFormat = MESA_FORMAT_ARGB8888;
+		}
 		t->pp_txfilter |= tx_table[MESA_FORMAT_ARGB8888].filter;
 		break;
 	case 3:
 	default:
+		texFormat = MESA_FORMAT_RGB888;
 		t->pp_txformat = tx_table[MESA_FORMAT_RGB888].format;
 		t->pp_txfilter |= tx_table[MESA_FORMAT_RGB888].filter;
 		break;
 	case 2:
+		texFormat = MESA_FORMAT_RGB565;
 		t->pp_txformat = tx_table[MESA_FORMAT_RGB565].format;
 		t->pp_txfilter |= tx_table[MESA_FORMAT_RGB565].filter;
 		break;
 	}
+
+	_mesa_init_teximage_fields(radeon->glCtx, target, texImage,
+				   rb->base.Width, rb->base.Height, 1, 0,
+				   rb->cpp, texFormat);
+	texImage->RowStride = rb->pitch / rb->cpp;
 
 	t->pp_txpitch &= (1 << 13) -1;
 	pitch_val = rb->pitch;

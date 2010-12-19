@@ -30,10 +30,12 @@
 
 
 #include "lp_bld.h"
+#include "lp_bld_init.h"
 
 
 LLVMValueRef
-lp_build_assert(LLVMBuilderRef builder, LLVMValueRef condition,
+lp_build_assert(struct gallivm_state *gallivm,
+                LLVMValueRef condition,
                 const char *msg);
 
 

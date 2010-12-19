@@ -57,7 +57,7 @@ and create a window, you must do the following to use the X/Mesa interface:
 #define XMESA_H
 
 
-#include "main/core.h" /* for GLvisual and MESA_VERSION_STRING */
+#include "main/core.h" /* for gl_config */
 #include "state_tracker/st_api.h"
 #include "os/os_thread.h"
 
@@ -350,6 +350,9 @@ struct xmesa_buffer {
 };
 
 
+
+extern const char *
+xmesa_get_name(void);
 
 extern void
 xmesa_init(Display *dpy);

@@ -92,9 +92,8 @@ struct egl_g3d_config {
 struct egl_g3d_image {
    _EGLImage base;
    struct pipe_resource *texture;
-   unsigned face;
    unsigned level;
-   unsigned zslice;
+   unsigned layer;
 };
 
 /* standard typecasts */

@@ -29,7 +29,7 @@
 #define INTELCONTEXT_INC
 
 
-
+#include <stdbool.h>
 #include "main/mtypes.h"
 #include "main/mm.h"
 #include "dri_metaops.h"
@@ -207,7 +207,6 @@ struct intel_context
    GLboolean hw_stipple;
    GLboolean depth_buffer_is_float;
    GLboolean no_rast;
-   GLboolean no_hw;
    GLboolean always_flush_batch;
    GLboolean always_flush_cache;
 
@@ -362,7 +361,6 @@ extern int INTEL_DEBUG;
 #define DEBUG_WM        0x800000
 #define DEBUG_URB       0x1000000
 #define DEBUG_VS        0x2000000
-#define DEBUG_GLSL_FORCE 0x4000000
 #define DEBUG_CLIP      0x8000000
 
 #define DBG(...) do {						\

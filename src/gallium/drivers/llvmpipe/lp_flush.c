@@ -56,6 +56,13 @@ llvmpipe_flush( struct pipe_context *pipe,
    /* ask the setup module to flush */
    lp_setup_flush(llvmpipe->setup, flags, fence, reason);
 
+
+   if (llvmpipe_variant_count > 1000) {
+      /* time to do a garbage collection */
+      gallivm_garbage_collect(llvmpipe->gallivm);
+      llvmpipe_variant_count = 0;
+   }
+
    /* Enable to dump BMPs of the color/depth buffers each frame */
    if (0) {
       if (flags & PIPE_FLUSH_FRAME) {
@@ -101,8 +108,8 @@ llvmpipe_finish( struct pipe_context *pipe,
 boolean
 llvmpipe_flush_resource(struct pipe_context *pipe,
                         struct pipe_resource *resource,
-                        unsigned face,
                         unsigned level,
+                        int layer,
                         unsigned flush_flags,
                         boolean read_only,
                         boolean cpu_access,
@@ -111,7 +118,7 @@ llvmpipe_flush_resource(struct pipe_context *pipe,
 {
    unsigned referenced;
 
-   referenced = pipe->is_resource_referenced(pipe, resource, face, level);
+   referenced = pipe->is_resource_referenced(pipe, resource, level, layer);
 
    if ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
        ((referenced & PIPE_REFERENCED_FOR_READ) && !read_only)) {

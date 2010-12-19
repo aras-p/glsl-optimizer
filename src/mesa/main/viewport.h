@@ -28,7 +28,8 @@
 #define VIEWPORT_H
 
 #include "glheader.h"
-#include "mtypes.h"
+
+struct gl_context;
 
 extern void GLAPIENTRY
 _mesa_Viewport(GLint x, GLint y, GLsizei width, GLsizei height);

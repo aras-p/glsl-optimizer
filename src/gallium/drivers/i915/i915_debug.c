@@ -46,10 +46,12 @@ static const struct debug_named_value debug_options[] = {
 };
 
 unsigned i915_debug = 0;
+boolean i915_tiling = TRUE;
 
 void i915_debug_init(struct i915_screen *screen)
 {
    i915_debug = debug_get_flags_option("I915_DEBUG", debug_options, 0);
+   i915_tiling = !debug_get_bool_option("I915_NO_TILING", FALSE);
 }
 
 
@@ -974,7 +976,7 @@ i915_dump_hardware_dirty(struct i915_context *i915, const char *func)
       {I915_HW_PROGRAM,   "program"},
       {I915_HW_CONSTANTS, "constants"},
       {I915_HW_IMMEDIATE, "immediate"},
-      {I915_HW_INVARIENT, "invarient"},
+      {I915_HW_INVARIANT, "invariant"},
       {0, NULL},
    };
    int i;

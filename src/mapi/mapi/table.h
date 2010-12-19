@@ -33,13 +33,11 @@
 #include "stub.h"
 
 #define MAPI_TMP_DEFINES
-#include "mapi_tmp.h"
-
-struct mapi_table {
 #define MAPI_TMP_TABLE
 #include "mapi_tmp.h"
-   mapi_func last;
-};
+
+#define MAPI_TABLE_NUM_SLOTS (MAPI_TABLE_NUM_STATIC + MAPI_TABLE_NUM_DYNAMIC)
+#define MAPI_TABLE_SIZE (MAPI_TABLE_NUM_SLOTS * sizeof(mapi_func))
 
 extern const mapi_func table_noop_array[];
 

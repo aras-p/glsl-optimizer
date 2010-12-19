@@ -9,14 +9,13 @@ if env['platform'] != 'winddk':
     env = env.Clone()
     
     env.Append(CPPDEFINES = [
-        'MAPI_GLAPI_CURRENT',
+        'MAPI_MODE_UTIL',
     ])
 
     if env['platform'] == 'windows':
         env.Append(CPPDEFINES = [
             '_GDI32_', # prevent gl* being declared __declspec(dllimport) in MS headers
             'BUILD_GL32', # declare gl* as __declspec(dllexport) in Mesa headers
-            'WIN32_THREADS', # use Win32 thread API
         ])
 
     env.Append(CPPPATH = [
@@ -30,6 +29,7 @@ if env['platform'] != 'winddk':
         'glapi_getproc.c',
         'glapi_nop.c',
         'glthread.c',
+        'glapi.c',
     ]
     
     mapi_sources = [

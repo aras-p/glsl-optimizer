@@ -29,15 +29,10 @@
 #define ST_CB_PROGRAM_H
 
 
-#include "main/mtypes.h"
-
 struct dd_function_table;
 
 extern void
 st_init_program_functions(struct dd_function_table *functions);
-
-extern void
-st_delete_program(struct gl_context *ctx, struct gl_program *prog);
 
 
 #endif

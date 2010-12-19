@@ -50,99 +50,6 @@
 #include "st_program.h"
 
 
-
-/**
- * Translate fragment program if needed.
- */
-static void
-translate_fp(struct st_context *st,
-             struct st_fragment_program *stfp)
-{
-   if (!stfp->tgsi.tokens) {
-      assert(stfp->Base.Base.NumInstructions > 0);
-
-      st_translate_fragment_program(st, stfp);
-   }
-}
-
-/*
- * Translate geometry program if needed.
- */
-static void
-translate_gp(struct st_context *st,
-             struct st_geometry_program *stgp)
-{
-   if (!stgp->tgsi.tokens) {
-      assert(stgp->Base.Base.NumInstructions > 1);
-
-      st_translate_geometry_program(st, stgp);
-   }
-}
-
-/**
- * Find a translated vertex program that corresponds to stvp and
- * has outputs matched to stfp's inputs.
- * This performs vertex and fragment translation (to TGSI) when needed.
- */
-static struct st_vp_varient *
-find_translated_vp(struct st_context *st,
-                   struct st_vertex_program *stvp )
-{
-   struct st_vp_varient *vpv;
-   struct st_vp_varient_key key;
-
-   /* Nothing in our key yet.  This will change:
-    */
-   memset(&key, 0, sizeof key);
-
-   /* When this is true, we will add an extra input to the vertex
-    * shader translation (for edgeflags), an extra output with
-    * edgeflag semantics, and extend the vertex shader to pass through
-    * the input to the output.  We'll need to use similar logic to set
-    * up the extra vertex_element input for edgeflags.
-    * _NEW_POLYGON, ST_NEW_EDGEFLAGS_DATA
-    */
-   key.passthrough_edgeflags = (st->vertdata_edgeflags && (
-                                st->ctx->Polygon.FrontMode != GL_FILL ||
-                                st->ctx->Polygon.BackMode != GL_FILL));
-
-
-   /* Do we need to throw away old translations after a change in the
-    * GL program string?
-    */
-   if (stvp->serialNo != stvp->lastSerialNo) {
-      /* These may have changed if the program string changed.
-       */
-      st_prepare_vertex_program( st, stvp );
-
-      /* We are now up-to-date:
-       */
-      stvp->lastSerialNo = stvp->serialNo;
-   }
-   
-   /* See if we've got a translated vertex program whose outputs match
-    * the fragment program's inputs.
-    */
-   for (vpv = stvp->varients; vpv; vpv = vpv->next) {
-      if (memcmp(&vpv->key, &key, sizeof key) == 0) {
-         break;
-      }
-   }
-
-   /* No?  Perform new translation here. */
-   if (!vpv) {
-      vpv = st_translate_vertex_program(st, stvp, &key);
-      if (!vpv)
-         return NULL;
-      
-      vpv->next = stvp->varients;
-      stvp->varients = vpv;
-   }
-
-   return vpv;
-}
-
-
 /**
  * Return pointer to a pass-through fragment shader.
  * This shader is used when a texture is missing/incomplete.
@@ -167,12 +74,16 @@ static void
 update_fp( struct st_context *st )
 {
    struct st_fragment_program *stfp;
+   struct st_fp_variant_key key;
 
    assert(st->ctx->FragmentProgram._Current);
    stfp = st_fragment_program(st->ctx->FragmentProgram._Current);
    assert(stfp->Base.Base.Target == GL_FRAGMENT_PROGRAM_ARB);
 
-   translate_fp(st, stfp);
+   memset(&key, 0, sizeof(key));
+   key.st = st;
+
+   st->fp_variant = st_get_fp_variant(st, stfp, &key);
 
    st_reference_fragprog(st, &st->fp, stfp);
 
@@ -182,7 +93,8 @@ update_fp( struct st_context *st )
       cso_set_fragment_shader_handle(st->cso_context, fs);
    }
    else {
-      cso_set_fragment_shader_handle(st->cso_context, stfp->driver_shader);
+      cso_set_fragment_shader_handle(st->cso_context,
+                                     st->fp_variant->driver_shader);
    }
 }
 
@@ -206,6 +118,7 @@ static void
 update_vp( struct st_context *st )
 {
    struct st_vertex_program *stvp;
+   struct st_vp_variant_key key;
 
    /* find active shader and params -- Should be covered by
     * ST_NEW_VERTEX_PROGRAM
@@ -214,12 +127,26 @@ update_vp( struct st_context *st )
    stvp = st_vertex_program(st->ctx->VertexProgram._Current);
    assert(stvp->Base.Base.Target == GL_VERTEX_PROGRAM_ARB);
 
-   st->vp_varient = find_translated_vp(st, stvp);
+   memset(&key, 0, sizeof key);
+   key.st = st;  /* variants are per-context */
+
+   /* When this is true, we will add an extra input to the vertex
+    * shader translation (for edgeflags), an extra output with
+    * edgeflag semantics, and extend the vertex shader to pass through
+    * the input to the output.  We'll need to use similar logic to set
+    * up the extra vertex_element input for edgeflags.
+    * _NEW_POLYGON, ST_NEW_EDGEFLAGS_DATA
+    */
+   key.passthrough_edgeflags = (st->vertdata_edgeflags && (
+                                st->ctx->Polygon.FrontMode != GL_FILL ||
+                                st->ctx->Polygon.BackMode != GL_FILL));
+
+   st->vp_variant = st_get_vp_variant(st, stvp, &key);
 
    st_reference_vertprog(st, &st->vp, stvp);
 
    cso_set_vertex_shader_handle(st->cso_context, 
-                                st->vp_varient->driver_shader);
+                                st->vp_variant->driver_shader);
 
    st->vertex_result_to_slot = stvp->result_to_output;
 }
@@ -231,14 +158,16 @@ const struct st_tracked_state st_update_vp = {
       _NEW_POLYGON,					/* mesa */
       ST_NEW_VERTEX_PROGRAM | ST_NEW_EDGEFLAGS_DATA	/* st */
    },
-   update_vp					/* update */
+   update_vp						/* update */
 };
+
+
 
 static void
 update_gp( struct st_context *st )
 {
-
    struct st_geometry_program *stgp;
+   struct st_gp_variant_key key;
 
    if (!st->ctx->GeometryProgram._Current) {
       cso_set_geometry_shader_handle(st->cso_context, NULL);
@@ -248,18 +177,22 @@ update_gp( struct st_context *st )
    stgp = st_geometry_program(st->ctx->GeometryProgram._Current);
    assert(stgp->Base.Base.Target == MESA_GEOMETRY_PROGRAM);
 
-   translate_gp(st, stgp);
+   memset(&key, 0, sizeof(key));
+   key.st = st;
+
+   st->gp_variant = st_get_gp_variant(st, stgp, &key);
 
    st_reference_geomprog(st, &st->gp, stgp);
 
-   cso_set_geometry_shader_handle(st->cso_context, stgp->driver_shader);
+   cso_set_geometry_shader_handle(st->cso_context,
+                                  st->gp_variant->driver_shader);
 }
 
 const struct st_tracked_state st_update_gp = {
-   "st_update_gp",					/* name */
-   {							/* dirty */
-      0,						/* mesa */
-      ST_NEW_GEOMETRY_PROGRAM                           /* st */
+   "st_update_gp",			/* name */
+   {					/* dirty */
+      0,				/* mesa */
+      ST_NEW_GEOMETRY_PROGRAM           /* st */
    },
-   update_gp  					/* update */
+   update_gp  				/* update */
 };

@@ -51,7 +51,7 @@
 #include "u_current.h"
 #include "u_thread.h"
 
-#ifndef MAPI_GLAPI_CURRENT
+#ifndef MAPI_MODE_UTIL
 
 #include "table.h"
 #include "stub.h"
@@ -99,15 +99,12 @@ extern void (*__glapi_noop_table[])(void);
 /*@{*/
 #if defined(GLX_USE_TLS)
 
-__thread struct mapi_table *u_current_table_tls
+__thread struct mapi_table *u_current_table
     __attribute__((tls_model("initial-exec")))
     = (struct mapi_table *) table_noop_array;
 
-__thread void *u_current_user_tls
+__thread void *u_current_user
     __attribute__((tls_model("initial-exec")));
-
-const struct mapi_table *u_current_table;
-const void *u_current_user;
 
 #else
 
@@ -128,7 +125,7 @@ static int ThreadSafe;
 void
 u_current_destroy(void)
 {
-#if defined(THREADS) && defined(WIN32_THREADS)
+#if defined(THREADS) && defined(WIN32)
    u_tsd_destroy(&u_current_table_tsd);
    u_tsd_destroy(&u_current_user_tsd);
 #endif
@@ -147,7 +144,7 @@ u_current_init_tsd(void)
 /**
  * Mutex for multithread check.
  */
-#ifdef WIN32_THREADS
+#ifdef WIN32
 /* _glthread_DECLARE_STATIC_MUTEX is broken on windows.  There will be race! */
 #define CHECK_MULTITHREAD_LOCK()
 #define CHECK_MULTITHREAD_UNLOCK()
@@ -179,8 +176,8 @@ u_current_init(void)
    }
    else if (knownID != u_thread_self()) {
       ThreadSafe = 1;
-      u_current_set_internal(NULL);
-      u_current_set_user_internal(NULL);
+      u_current_set(NULL);
+      u_current_set_user(NULL);
    }
    CHECK_MULTITHREAD_UNLOCK();
 }
@@ -202,17 +199,17 @@ u_current_init(void)
  * void from the real context pointer type.
  */
 void
-u_current_set_user_internal(void *ptr)
+u_current_set_user(const void *ptr)
 {
    u_current_init();
 
 #if defined(GLX_USE_TLS)
-   u_current_user_tls = ptr;
+   u_current_user = (void *) ptr;
 #elif defined(THREADS)
-   u_tsd_set(&u_current_user_tsd, ptr);
-   u_current_user = (ThreadSafe) ? NULL : ptr;
+   u_tsd_set(&u_current_user_tsd, (void *) ptr);
+   u_current_user = (ThreadSafe) ? NULL : (void *) ptr;
 #else
-   u_current_user = ptr;
+   u_current_user = (void *) ptr;
 #endif
 }
 
@@ -225,7 +222,7 @@ void *
 u_current_get_user_internal(void)
 {
 #if defined(GLX_USE_TLS)
-   return u_current_user_tls;
+   return u_current_user;
 #elif defined(THREADS)
    return (ThreadSafe)
       ? u_tsd_get(&u_current_user_tsd)
@@ -241,22 +238,22 @@ u_current_get_user_internal(void)
  * table (__glapi_noop_table).
  */
 void
-u_current_set_internal(struct mapi_table *tbl)
+u_current_set(const struct mapi_table *tbl)
 {
    u_current_init();
 
    stub_init_once();
 
    if (!tbl)
-      tbl = (struct mapi_table *) table_noop_array;
+      tbl = (const struct mapi_table *) table_noop_array;
 
 #if defined(GLX_USE_TLS)
-   u_current_table_tls = tbl;
+   u_current_table = (struct mapi_table *) tbl;
 #elif defined(THREADS)
    u_tsd_set(&u_current_table_tsd, (void *) tbl);
-   u_current_table = (ThreadSafe) ? NULL : tbl;
+   u_current_table = (ThreadSafe) ? NULL : (void *) tbl;
 #else
-   u_current_table = tbl;
+   u_current_table = (struct mapi_table *) tbl;
 #endif
 }
 
@@ -267,7 +264,7 @@ struct mapi_table *
 u_current_get_internal(void)
 {
 #if defined(GLX_USE_TLS)
-   return u_current_table_tls;
+   return u_current_table;
 #elif defined(THREADS)
    return (struct mapi_table *) ((ThreadSafe) ?
          u_tsd_get(&u_current_table_tsd) : (void *) u_current_table);

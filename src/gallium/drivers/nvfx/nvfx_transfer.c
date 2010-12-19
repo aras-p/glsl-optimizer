@@ -21,10 +21,10 @@ struct nvfx_staging_transfer
 
 struct pipe_transfer *
 nvfx_transfer_new(struct pipe_context *pipe,
-			  struct pipe_resource *pt,
-			  struct pipe_subresource sr,
-			  unsigned usage,
-			  const struct pipe_box *box)
+		  struct pipe_resource *pt,
+		  unsigned level,
+		  unsigned usage,
+		  const struct pipe_box *box)
 {
         if((usage & (PIPE_TRANSFER_UNSYNCHRONIZED | PIPE_TRANSFER_DONTBLOCK)) == PIPE_TRANSFER_DONTBLOCK)
         {
@@ -44,11 +44,11 @@ nvfx_transfer_new(struct pipe_context *pipe,
 			return NULL;
 
 		pipe_resource_reference(&tx->resource, pt);
-		tx->sr = sr;
+		tx->level = level;
 		tx->usage = usage;
 		tx->box = *box;
 
-		tx->slice_stride = tx->stride = util_format_get_stride(pt->format, box->width);
+		tx->layer_stride = tx->stride = util_format_get_stride(pt->format, box->width);
 		tx->data = buffer->data + util_format_get_stride(pt->format, box->x);
 
 		return tx;
@@ -62,20 +62,20 @@ nvfx_transfer_new(struct pipe_context *pipe,
 	        if(!tx)
 	        	return NULL;
 
-	        util_staging_transfer_init(pipe, pt, sr, usage, box, direct, &tx->base);
+	        util_staging_transfer_init(pipe, pt, level, usage, box, direct, &tx->base);
 
 		if(direct)
 		{
-			tx->base.base.stride = nvfx_subresource_pitch(pt, sr.level);
-			tx->base.base.slice_stride = tx->base.base.stride * u_minify(pt->height0, sr.level);
-			tx->offset = nvfx_subresource_offset(pt, sr.face, sr.level, box->z)
+			tx->base.base.stride = nvfx_subresource_pitch(pt, level);
+			tx->base.base.layer_stride = tx->base.base.stride * u_minify(pt->height0, level);
+			tx->offset = nvfx_subresource_offset(pt, box->z, level, box->z)
 				+ util_format_get_2d_size(pt->format, tx->base.base.stride, box->y)
 				+ util_format_get_stride(pt->format, box->x);
 		}
 		else
 		{
 			tx->base.base.stride = nvfx_subresource_pitch(tx->base.staging_resource, 0);
-			tx->base.base.slice_stride = tx->base.base.stride * tx->base.staging_resource->height0;
+			tx->base.base.layer_stride = tx->base.base.stride * tx->base.staging_resource->height0;
 			tx->offset = 0;
 		}
 
@@ -187,7 +187,7 @@ nvfx_transfer_unmap(struct pipe_context *pipe, struct pipe_transfer *ptx)
 
 static void nvfx_transfer_inline_write( struct pipe_context *pipe,
 				      struct pipe_resource *pr,
-				      struct pipe_subresource sr,
+				      unsigned level,
 				      unsigned usage,
 				      const struct pipe_box *box,
 				      const void *data,
@@ -196,7 +196,7 @@ static void nvfx_transfer_inline_write( struct pipe_context *pipe,
 {
 	if(pr->target != PIPE_BUFFER)
 	{
-		u_default_transfer_inline_write(pipe, pr, sr, usage, box, data, stride, slice_stride);
+		u_default_transfer_inline_write(pipe, pr, level, usage, box, data, stride, slice_stride);
 	}
 	else
 	{

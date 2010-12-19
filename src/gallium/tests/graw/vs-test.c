@@ -87,6 +87,7 @@ static void init_fs_constbuf( void )
    templat.width0 = sizeof(constants);
    templat.height0 = 1;
    templat.depth0 = 1;
+   templat.array_size = 1;
    templat.last_level = 0;
    templat.nr_samples = 1;
    templat.bind = PIPE_BIND_CONSTANT_BUFFER;
@@ -101,7 +102,7 @@ static void init_fs_constbuf( void )
 
    ctx->transfer_inline_write(ctx,
                               constbuf,
-                              u_subresource(0,0),
+                              0,
                               PIPE_TRANSFER_WRITE,
                               &box,
                               constants,
@@ -231,7 +232,7 @@ static void draw( void )
 
    graw_save_surface_to_file(ctx, surf, NULL);
 
-   screen->flush_frontbuffer(screen, surf, window);
+   screen->flush_frontbuffer(screen, rttex, 0, 0, window);
 }
 
 #define SIZE 16
@@ -291,6 +292,7 @@ static void init_tex( void )
    templat.width0 = SIZE;
    templat.height0 = SIZE;
    templat.depth0 = 1;
+   templat.array_size = 1;
    templat.last_level = 0;
    templat.nr_samples = 1;
    templat.bind = PIPE_BIND_SAMPLER_VIEW;
@@ -305,7 +307,7 @@ static void init_tex( void )
 
    ctx->transfer_inline_write(ctx,
                               samptex,
-                              u_subresource(0,0),
+                              0,
                               PIPE_TRANSFER_WRITE,
                               &box,
                               tex2d,
@@ -319,7 +321,7 @@ static void init_tex( void )
       struct pipe_transfer *t;
       uint32_t *ptr;
       t = pipe_get_transfer(ctx, samptex,
-                            0, 0, 0, /* face, level, zslice */
+                            0, 0, /* level, layer */
                             PIPE_TRANSFER_READ,
                             0, 0, SIZE, SIZE); /* x, y, width, height */
 
@@ -338,8 +340,6 @@ static void init_tex( void )
    memset(&sv_template, 0, sizeof sv_template);
    sv_template.format = samptex->format;
    sv_template.texture = samptex;
-   sv_template.first_level = 0;
-   sv_template.last_level = 0;
    sv_template.swizzle_r = 0;
    sv_template.swizzle_g = 1;
    sv_template.swizzle_b = 2;
@@ -375,6 +375,7 @@ static void init( void )
 {
    struct pipe_framebuffer_state fb;
    struct pipe_resource templat;
+   struct pipe_surface surf_tmpl;
    int i;
 
    /* It's hard to say whether window or screen should be created
@@ -401,6 +402,7 @@ static void init( void )
    templat.width0 = WIDTH;
    templat.height0 = HEIGHT;
    templat.depth0 = 1;
+   templat.array_size = 1;
    templat.last_level = 0;
    templat.nr_samples = 1;
    templat.bind = (PIPE_BIND_RENDER_TARGET |
@@ -411,9 +413,12 @@ static void init( void )
    if (rttex == NULL)
       exit(4);
 
-   surf = screen->get_tex_surface(screen, rttex, 0, 0, 0,
-                                  PIPE_BIND_RENDER_TARGET |
-                                  PIPE_BIND_DISPLAY_TARGET);
+   surf_tmpl.format = templat.format;
+   surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
+   surf_tmpl.u.tex.level = 0;
+   surf_tmpl.u.tex.first_layer = 0;
+   surf_tmpl.u.tex.last_layer = 0;
+   surf = ctx->create_surface(ctx, rttex, &surf_tmpl);
    if (surf == NULL)
       exit(5);
 

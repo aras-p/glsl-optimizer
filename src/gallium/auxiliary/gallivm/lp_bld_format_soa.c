@@ -97,12 +97,13 @@ lp_build_format_swizzle_soa(const struct util_format_description *format_desc,
  * \param rgba_out  returns the SoA R,G,B,A vectors
  */
 void
-lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
+lp_build_unpack_rgba_soa(struct gallivm_state *gallivm,
                          const struct util_format_description *format_desc,
                          struct lp_type type,
                          LLVMValueRef packed,
                          LLVMValueRef rgba_out[4])
 {
+   LLVMBuilderRef builder = gallivm->builder;
    struct lp_build_context bld;
    LLVMValueRef inputs[4];
    unsigned start;
@@ -116,7 +117,7 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
    assert(type.floating);
    assert(type.width == 32);
 
-   lp_build_context_init(&bld, builder, type);
+   lp_build_context_init(&bld, gallivm, type);
 
    /* Decode the input vector components */
    start = 0;
@@ -129,7 +130,7 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
 
       switch(format_desc->channel[chan].type) {
       case UTIL_FORMAT_TYPE_VOID:
-         input = lp_build_undef(type);
+         input = lp_build_undef(gallivm, type);
          break;
 
       case UTIL_FORMAT_TYPE_UNSIGNED:
@@ -138,7 +139,7 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
           */
 
          if (start) {
-            input = LLVMBuildLShr(builder, input, lp_build_const_int_vec(type, start), "");
+            input = LLVMBuildLShr(builder, input, lp_build_const_int_vec(gallivm, type, start), "");
          }
 
          /*
@@ -147,7 +148,7 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
 
          if (stop < format_desc->block.bits) {
             unsigned mask = ((unsigned long long)1 << width) - 1;
-            input = LLVMBuildAnd(builder, input, lp_build_const_int_vec(type, mask), "");
+            input = LLVMBuildAnd(builder, input, lp_build_const_int_vec(gallivm, type, mask), "");
          }
 
          /*
@@ -156,14 +157,15 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
 
          if (type.floating) {
             if(format_desc->channel[chan].normalized)
-               input = lp_build_unsigned_norm_to_float(builder, width, type, input);
+               input = lp_build_unsigned_norm_to_float(gallivm, width, type, input);
             else
-               input = LLVMBuildSIToFP(builder, input, lp_build_vec_type(type), "");
+               input = LLVMBuildSIToFP(builder, input,
+                                       lp_build_vec_type(gallivm, type), "");
          }
          else {
             /* FIXME */
             assert(0);
-            input = lp_build_undef(type);
+            input = lp_build_undef(gallivm, type);
          }
 
          break;
@@ -175,7 +177,7 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
 
          if (stop < type.width) {
             unsigned bits = type.width - stop;
-            LLVMValueRef bits_val = lp_build_const_int_vec(type, bits);
+            LLVMValueRef bits_val = lp_build_const_int_vec(gallivm, type, bits);
             input = LLVMBuildShl(builder, input, bits_val, "");
          }
 
@@ -185,7 +187,7 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
 
          if (format_desc->channel[chan].size < type.width) {
             unsigned bits = type.width - format_desc->channel[chan].size;
-            LLVMValueRef bits_val = lp_build_const_int_vec(type, bits);
+            LLVMValueRef bits_val = lp_build_const_int_vec(gallivm, type, bits);
             input = LLVMBuildAShr(builder, input, bits_val, "");
          }
 
@@ -194,17 +196,17 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
           */
 
          if (type.floating) {
-            input = LLVMBuildSIToFP(builder, input, lp_build_vec_type(type), "");
+            input = LLVMBuildSIToFP(builder, input, lp_build_vec_type(gallivm, type), "");
             if (format_desc->channel[chan].normalized) {
                double scale = 1.0 / ((1 << (format_desc->channel[chan].size - 1)) - 1);
-               LLVMValueRef scale_val = lp_build_const_vec(type, scale);
+               LLVMValueRef scale_val = lp_build_const_vec(gallivm, type, scale);
                input = LLVMBuildFMul(builder, input, scale_val, "");
             }
          }
          else {
             /* FIXME */
             assert(0);
-            input = lp_build_undef(type);
+            input = lp_build_undef(gallivm, type);
          }
 
          break;
@@ -214,32 +216,32 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
             assert(start == 0);
             assert(stop == 32);
             assert(type.width == 32);
-            input = LLVMBuildBitCast(builder, input, lp_build_vec_type(type), "");
+            input = LLVMBuildBitCast(builder, input, lp_build_vec_type(gallivm, type), "");
          }
          else {
             /* FIXME */
             assert(0);
-            input = lp_build_undef(type);
+            input = lp_build_undef(gallivm, type);
          }
          break;
 
       case UTIL_FORMAT_TYPE_FIXED:
          if (type.floating) {
             double scale = 1.0 / ((1 << (format_desc->channel[chan].size/2)) - 1);
-            LLVMValueRef scale_val = lp_build_const_vec(type, scale);
-            input = LLVMBuildSIToFP(builder, input, lp_build_vec_type(type), "");
+            LLVMValueRef scale_val = lp_build_const_vec(gallivm, type, scale);
+            input = LLVMBuildSIToFP(builder, input, lp_build_vec_type(gallivm, type), "");
             input = LLVMBuildFMul(builder, input, scale_val, "");
          }
          else {
             /* FIXME */
             assert(0);
-            input = lp_build_undef(type);
+            input = lp_build_undef(gallivm, type);
          }
          break;
 
       default:
          assert(0);
-         input = lp_build_undef(type);
+         input = lp_build_undef(gallivm, type);
          break;
       }
 
@@ -253,16 +255,17 @@ lp_build_unpack_rgba_soa(LLVMBuilderRef builder,
 
 
 void
-lp_build_rgba8_to_f32_soa(LLVMBuilderRef builder,
+lp_build_rgba8_to_f32_soa(struct gallivm_state *gallivm,
                           struct lp_type dst_type,
                           LLVMValueRef packed,
                           LLVMValueRef *rgba)
 {
-   LLVMValueRef mask = lp_build_const_int_vec(dst_type, 0xff);
+   LLVMBuilderRef builder = gallivm->builder;
+   LLVMValueRef mask = lp_build_const_int_vec(gallivm, dst_type, 0xff);
    unsigned chan;
 
    packed = LLVMBuildBitCast(builder, packed,
-                             lp_build_int_vec_type(dst_type), "");
+                             lp_build_int_vec_type(gallivm, dst_type), "");
 
    /* Decode the input vector components */
    for (chan = 0; chan < 4; ++chan) {
@@ -274,12 +277,12 @@ lp_build_rgba8_to_f32_soa(LLVMBuilderRef builder,
 
       if (start)
          input = LLVMBuildLShr(builder, input,
-                               lp_build_const_int_vec(dst_type, start), "");
+                               lp_build_const_int_vec(gallivm, dst_type, start), "");
 
       if (stop < 32)
          input = LLVMBuildAnd(builder, input, mask, "");
 
-      input = lp_build_unsigned_norm_to_float(builder, 8, dst_type, input);
+      input = lp_build_unsigned_norm_to_float(gallivm, 8, dst_type, input);
 
       rgba[chan] = input;
    }
@@ -303,7 +306,7 @@ lp_build_rgba8_to_f32_soa(LLVMBuilderRef builder,
  *              be in [0, block_width-1] and j will be in [0, block_height-1].
  */
 void
-lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
+lp_build_fetch_rgba_soa(struct gallivm_state *gallivm,
                         const struct util_format_description *format_desc,
                         struct lp_type type,
                         LLVMValueRef base_ptr,
@@ -312,6 +315,7 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
                         LLVMValueRef j,
                         LLVMValueRef rgba_out[4])
 {
+   LLVMBuilderRef builder = gallivm->builder;
 
    if (format_desc->layout == UTIL_FORMAT_LAYOUT_PLAIN &&
        (format_desc->colorspace == UTIL_FORMAT_COLORSPACE_RGB ||
@@ -334,7 +338,7 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
        * gather the texels from the texture
        * Ex: packed = {BGRA, BGRA, BGRA, BGRA}.
        */
-      packed = lp_build_gather(builder,
+      packed = lp_build_gather(gallivm,
                                type.length,
                                format_desc->block.bits,
                                type.width,
@@ -343,7 +347,7 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
       /*
        * convert texels to float rgba
        */
-      lp_build_unpack_rgba_soa(builder,
+      lp_build_unpack_rgba_soa(gallivm,
                                format_desc,
                                type,
                                packed, rgba_out);
@@ -364,10 +368,10 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
       tmp_type.length = type.length * 4;
       tmp_type.norm = TRUE;
 
-      tmp = lp_build_fetch_rgba_aos(builder, format_desc, tmp_type,
+      tmp = lp_build_fetch_rgba_aos(gallivm, format_desc, tmp_type,
                                     base_ptr, offset, i, j);
 
-      lp_build_rgba8_to_f32_soa(builder,
+      lp_build_rgba8_to_f32_soa(gallivm,
                                 type,
                                 tmp,
                                 rgba_out);
@@ -397,23 +401,24 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
       tmp_type.length = 4;
 
       for (chan = 0; chan < 4; ++chan) {
-         rgba_out[chan] = lp_build_undef(type);
+         rgba_out[chan] = lp_build_undef(gallivm, type);
       }
 
       /* loop over number of pixels */
       for(k = 0; k < type.length; ++k) {
-         LLVMValueRef index = LLVMConstInt(LLVMInt32Type(), k, 0);
+         LLVMValueRef index = lp_build_const_int32(gallivm, k);
          LLVMValueRef offset_elem;
          LLVMValueRef i_elem, j_elem;
          LLVMValueRef tmp;
 
-         offset_elem = LLVMBuildExtractElement(builder, offset, index, "");
+         offset_elem = LLVMBuildExtractElement(builder, offset,
+                                               index, "");
 
          i_elem = LLVMBuildExtractElement(builder, i, index, "");
          j_elem = LLVMBuildExtractElement(builder, j, index, "");
 
          /* Get a single float[4]={R,G,B,A} pixel */
-         tmp = lp_build_fetch_rgba_aos(builder, format_desc, tmp_type,
+         tmp = lp_build_fetch_rgba_aos(gallivm, format_desc, tmp_type,
                                        base_ptr, offset_elem,
                                        i_elem, j_elem);
 
@@ -422,7 +427,7 @@ lp_build_fetch_rgba_soa(LLVMBuilderRef builder,
           * position = 'index'.
           */
          for (chan = 0; chan < 4; ++chan) {
-            LLVMValueRef chan_val = LLVMConstInt(LLVMInt32Type(), chan, 0),
+            LLVMValueRef chan_val = lp_build_const_int32(gallivm, chan),
             tmp_chan = LLVMBuildExtractElement(builder, tmp, chan_val, "");
             rgba_out[chan] = LLVMBuildInsertElement(builder, rgba_out[chan],
                                                     tmp_chan, index, "");

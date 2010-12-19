@@ -34,7 +34,7 @@ unsigned r300_get_pixel_alignment(enum pipe_format format,
                                   unsigned num_samples,
                                   enum r300_buffer_tiling microtile,
                                   enum r300_buffer_tiling macrotile,
-                                  enum r300_dim dim)
+                                  enum r300_dim dim, boolean is_rs690)
 {
     static const unsigned table[2][5][3][2] =
     {
@@ -57,6 +57,7 @@ unsigned r300_get_pixel_alignment(enum pipe_format format,
             {{ 16, 8}, { 0,  0}, { 0,  0}}  /* 128 bits per pixel */
         }
     };
+
     static const unsigned aa_block[2] = {4, 8};
     unsigned tile = 0;
     unsigned pixsize = util_format_get_blocksize(format);
@@ -74,6 +75,14 @@ unsigned r300_get_pixel_alignment(enum pipe_format format,
     } else {
         /* Standard alignment. */
         tile = table[macrotile][util_logbase2(pixsize)][microtile][dim];
+        if (macrotile == 0 && is_rs690 && dim == DIM_WIDTH) {
+            int align;
+            int h_tile;
+            h_tile = table[macrotile][util_logbase2(pixsize)][microtile][DIM_HEIGHT];
+            align = 64 / (pixsize * h_tile);
+            if (tile < align)
+                tile = align;
+        }
     }
 
     assert(tile);
@@ -89,7 +98,7 @@ static boolean r300_texture_macro_switch(struct r300_texture_desc *desc,
     unsigned tile, texdim;
 
     tile = r300_get_pixel_alignment(desc->b.b.format, desc->b.b.nr_samples,
-                                    desc->microtile, R300_BUFFER_TILED, dim);
+                                    desc->microtile, R300_BUFFER_TILED, dim, 0);
     if (dim == DIM_WIDTH) {
         texdim = u_minify(desc->width0, level);
     } else {
@@ -113,6 +122,9 @@ static unsigned r300_texture_get_stride(struct r300_screen *screen,
                                         unsigned level)
 {
     unsigned tile_width, width, stride;
+    boolean is_rs690 = (screen->caps.family == CHIP_FAMILY_RS600 ||
+                        screen->caps.family == CHIP_FAMILY_RS690 ||
+                        screen->caps.family == CHIP_FAMILY_RS740);
 
     if (desc->stride_in_bytes_override)
         return desc->stride_in_bytes_override;
@@ -131,38 +143,14 @@ static unsigned r300_texture_get_stride(struct r300_screen *screen,
                                               desc->b.b.nr_samples,
                                               desc->microtile,
                                               desc->macrotile[level],
-                                              DIM_WIDTH);
+                                              DIM_WIDTH, is_rs690);
         width = align(width, tile_width);
 
         stride = util_format_get_stride(desc->b.b.format, width);
-
-        /* Some IGPs need a minimum stride of 64 bytes, hmm... */
-        if (!desc->macrotile[level] &&
-            (screen->caps.family == CHIP_FAMILY_RS600 ||
-             screen->caps.family == CHIP_FAMILY_RS690 ||
-             screen->caps.family == CHIP_FAMILY_RS740)) {
-            unsigned min_stride;
-
-            if (desc->microtile) {
-                unsigned tile_height =
-                        r300_get_pixel_alignment(desc->b.b.format,
-                                                 desc->b.b.nr_samples,
-                                                 desc->microtile,
-                                                 desc->macrotile[level],
-                                                 DIM_HEIGHT);
-
-                min_stride = 64 / tile_height;
-            } else {
-                min_stride = 64;
-            }
-
-            return stride < min_stride ? min_stride : stride;
-        }
-
         /* The alignment to 32 bytes is sort of implied by the layout... */
         return stride;
     } else {
-        return align(util_format_get_stride(desc->b.b.format, width), 32);
+        return align(util_format_get_stride(desc->b.b.format, width), is_rs690 ? 64 : 32);
     }
 }
 
@@ -179,7 +167,7 @@ static unsigned r300_texture_get_nblocksy(struct r300_texture_desc *desc,
                                                desc->b.b.nr_samples,
                                                desc->microtile,
                                                desc->macrotile[level],
-                                               DIM_HEIGHT);
+                                               DIM_HEIGHT, 0);
         height = align(height, tile_height);
 
         /* This is needed for the kernel checker, unfortunately. */
@@ -474,22 +462,17 @@ boolean r300_texture_desc_init(struct r300_screen *rscreen,
 }
 
 unsigned r300_texture_get_offset(struct r300_texture_desc *desc,
-                                 unsigned level, unsigned zslice,
-                                 unsigned face)
+                                 unsigned level, unsigned layer)
 {
     unsigned offset = desc->offset_in_bytes[level];
 
     switch (desc->b.b.target) {
         case PIPE_TEXTURE_3D:
-            assert(face == 0);
-            return offset + zslice * desc->layer_size_in_bytes[level];
-
         case PIPE_TEXTURE_CUBE:
-            assert(zslice == 0);
-            return offset + face * desc->layer_size_in_bytes[level];
+            return offset + layer * desc->layer_size_in_bytes[level];
 
         default:
-            assert(zslice == 0 && face == 0);
+            assert(layer == 0);
             return offset;
     }
 }

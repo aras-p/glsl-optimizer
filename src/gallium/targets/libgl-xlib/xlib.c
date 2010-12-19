@@ -32,17 +32,15 @@
  */
 #include "pipe/p_compiler.h"
 #include "util/u_debug.h"
-#include "target-helpers/wrap_screen.h"
-#include "target-helpers/inline_sw_helper.h"
 #include "state_tracker/xlib_sw_winsys.h"
 #include "xm_public.h"
 
 #include "state_tracker/st_api.h"
 #include "state_tracker/st_gl_api.h"
+#include "target-helpers/inline_sw_helper.h"
+#include "target-helpers/inline_debug_helper.h"
 
-#if defined(GALLIUM_GALAHAD)
-#include "galahad/glhd_public.h"
-#endif
+
 
 /* Helper function to build a subset of a driver stack consisting of
  * one of the software rasterizers (cell, llvmpipe, softpipe) and the
@@ -67,18 +65,9 @@ swrast_xlib_create_screen( Display *display )
    if (screen == NULL)
       goto fail;
 
-   /* XXX will fix soon */
-#if defined(GALLIUM_GALAHAD)
-   if (screen) {
-      struct pipe_screen *galahad_screen = galahad_screen_create( screen );
-      if (galahad_screen)
-         screen = galahad_screen;
-   }
-#endif
-
    /* Inject any wrapping layers we want to here:
     */
-   return gallium_wrap_screen( screen );
+   return debug_screen_wrap( screen );
 
 fail:
    if (winsys)

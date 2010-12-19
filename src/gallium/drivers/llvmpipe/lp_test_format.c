@@ -30,13 +30,6 @@
 #include <stdio.h>
 #include <float.h>
 
-#include "gallivm/lp_bld.h"
-#include "gallivm/lp_bld_debug.h"
-#include "gallivm/lp_bld_init.h"
-#include <llvm-c/Analysis.h>
-#include <llvm-c/Target.h>
-#include <llvm-c/Transforms/Scalar.h>
-
 #include "util/u_memory.h"
 #include "util/u_pointer.h"
 #include "util/u_string.h"
@@ -44,7 +37,11 @@
 #include "util/u_format_tests.h"
 #include "util/u_format_s3tc.h"
 
+#include "gallivm/lp_bld.h"
+#include "gallivm/lp_bld_debug.h"
 #include "gallivm/lp_bld_format.h"
+#include "gallivm/lp_bld_init.h"
+
 #include "lp_test.h"
 
 
@@ -78,56 +75,57 @@ typedef void
 
 
 static LLVMValueRef
-add_fetch_rgba_test(unsigned verbose,
+add_fetch_rgba_test(struct gallivm_state *gallivm, unsigned verbose,
                     const struct util_format_description *desc,
                     struct lp_type type)
 {
    char name[256];
+   LLVMContextRef context = gallivm->context;
+   LLVMModuleRef module = gallivm->module;
+   LLVMBuilderRef builder = gallivm->builder;
+   LLVMPassManagerRef passmgr = gallivm->passmgr;
    LLVMTypeRef args[4];
    LLVMValueRef func;
    LLVMValueRef packed_ptr;
-   LLVMValueRef offset = LLVMConstNull(LLVMInt32Type());
+   LLVMValueRef offset = LLVMConstNull(LLVMInt32TypeInContext(context));
    LLVMValueRef rgba_ptr;
    LLVMValueRef i;
    LLVMValueRef j;
    LLVMBasicBlockRef block;
-   LLVMBuilderRef builder;
    LLVMValueRef rgba;
 
    util_snprintf(name, sizeof name, "fetch_%s_%s", desc->short_name,
                  type.floating ? "float" : "unorm8");
 
-   args[0] = LLVMPointerType(lp_build_vec_type(type), 0);
-   args[1] = LLVMPointerType(LLVMInt8Type(), 0);
-   args[3] = args[2] = LLVMInt32Type();
+   args[0] = LLVMPointerType(lp_build_vec_type(gallivm, type), 0);
+   args[1] = LLVMPointerType(LLVMInt8TypeInContext(context), 0);
+   args[3] = args[2] = LLVMInt32TypeInContext(context);
 
-   func = LLVMAddFunction(lp_build_module, name,
-                          LLVMFunctionType(LLVMVoidType(), args, Elements(args), 0));
+   func = LLVMAddFunction(module, name,
+                          LLVMFunctionType(LLVMVoidTypeInContext(context),
+                                           args, Elements(args), 0));
    LLVMSetFunctionCallConv(func, LLVMCCallConv);
    rgba_ptr = LLVMGetParam(func, 0);
    packed_ptr = LLVMGetParam(func, 1);
    i = LLVMGetParam(func, 2);
    j = LLVMGetParam(func, 3);
 
-   block = LLVMAppendBasicBlock(func, "entry");
-   builder = LLVMCreateBuilder();
+   block = LLVMAppendBasicBlockInContext(context, func, "entry");
    LLVMPositionBuilderAtEnd(builder, block);
 
-   rgba = lp_build_fetch_rgba_aos(builder, desc, type,
+   rgba = lp_build_fetch_rgba_aos(gallivm, desc, type,
                                   packed_ptr, offset, i, j);
 
    LLVMBuildStore(builder, rgba, rgba_ptr);
 
    LLVMBuildRetVoid(builder);
 
-   LLVMDisposeBuilder(builder);
-
    if (LLVMVerifyFunction(func, LLVMPrintMessageAction)) {
       LLVMDumpValue(func);
       abort();
    }
 
-   LLVMRunFunctionPassManager(lp_build_pass, func);
+   LLVMRunFunctionPassManager(passmgr, func);
 
    if (verbose >= 1) {
       LLVMDumpValue(func);
@@ -139,10 +137,11 @@ add_fetch_rgba_test(unsigned verbose,
 
 PIPE_ALIGN_STACK
 static boolean
-test_format_float(unsigned verbose, FILE *fp,
+test_format_float(struct gallivm_state *gallivm, unsigned verbose, FILE *fp,
                   const struct util_format_description *desc)
 {
    LLVMValueRef fetch = NULL;
+   LLVMExecutionEngineRef engine = gallivm->engine;
    fetch_ptr_t fetch_ptr;
    PIPE_ALIGN_VAR(16) float unpacked[4];
    boolean first = TRUE;
@@ -150,9 +149,9 @@ test_format_float(unsigned verbose, FILE *fp,
    unsigned i, j, k, l;
    void *f;
 
-   fetch = add_fetch_rgba_test(verbose, desc, lp_float32_vec4_type());
+   fetch = add_fetch_rgba_test(gallivm, verbose, desc, lp_float32_vec4_type());
 
-   f = LLVMGetPointerToGlobal(lp_build_engine, fetch);
+   f = LLVMGetPointerToGlobal(engine, fetch);
    fetch_ptr = (fetch_ptr_t) pointer_to_func(f);
 
    if (verbose >= 2) {
@@ -208,7 +207,7 @@ test_format_float(unsigned verbose, FILE *fp,
       }
    }
 
-   LLVMFreeMachineCodeForFunction(lp_build_engine, fetch);
+   LLVMFreeMachineCodeForFunction(engine, fetch);
    LLVMDeleteFunction(fetch);
 
    if(fp)
@@ -220,7 +219,8 @@ test_format_float(unsigned verbose, FILE *fp,
 
 PIPE_ALIGN_STACK
 static boolean
-test_format_unorm8(unsigned verbose, FILE *fp,
+test_format_unorm8(struct gallivm_state *gallivm,
+                   unsigned verbose, FILE *fp,
                    const struct util_format_description *desc)
 {
    LLVMValueRef fetch = NULL;
@@ -231,9 +231,9 @@ test_format_unorm8(unsigned verbose, FILE *fp,
    unsigned i, j, k, l;
    void *f;
 
-   fetch = add_fetch_rgba_test(verbose, desc, lp_unorm8_vec4_type());
+   fetch = add_fetch_rgba_test(gallivm, verbose, desc, lp_unorm8_vec4_type());
 
-   f = LLVMGetPointerToGlobal(lp_build_engine, fetch);
+   f = LLVMGetPointerToGlobal(gallivm->engine, fetch);
    fetch_ptr = (fetch_ptr_t) pointer_to_func(f);
 
    if (verbose >= 2) {
@@ -290,7 +290,7 @@ test_format_unorm8(unsigned verbose, FILE *fp,
    if (!success)
       LLVMDumpValue(fetch);
 
-   LLVMFreeMachineCodeForFunction(lp_build_engine, fetch);
+   LLVMFreeMachineCodeForFunction(gallivm->engine, fetch);
    LLVMDeleteFunction(fetch);
 
    if(fp)
@@ -303,16 +303,17 @@ test_format_unorm8(unsigned verbose, FILE *fp,
 
 
 static boolean
-test_one(unsigned verbose, FILE *fp,
+test_one(struct gallivm_state *gallivm,
+         unsigned verbose, FILE *fp,
          const struct util_format_description *format_desc)
 {
    boolean success = TRUE;
 
-   if (!test_format_float(verbose, fp, format_desc)) {
+   if (!test_format_float(gallivm, verbose, fp, format_desc)) {
      success = FALSE;
    }
 
-   if (!test_format_unorm8(verbose, fp, format_desc)) {
+   if (!test_format_unorm8(gallivm, verbose, fp, format_desc)) {
      success = FALSE;
    }
 
@@ -321,7 +322,7 @@ test_one(unsigned verbose, FILE *fp,
 
 
 boolean
-test_all(unsigned verbose, FILE *fp)
+test_all(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
 {
    enum pipe_format format;
    boolean success = TRUE;
@@ -349,7 +350,7 @@ test_all(unsigned verbose, FILE *fp)
          continue;
       }
 
-      if (!test_one(verbose, fp, format_desc)) {
+      if (!test_one(gallivm, verbose, fp, format_desc)) {
            success = FALSE;
       }
    }
@@ -359,14 +360,15 @@ test_all(unsigned verbose, FILE *fp)
 
 
 boolean
-test_some(unsigned verbose, FILE *fp, unsigned long n)
+test_some(struct gallivm_state *gallivm, unsigned verbose, FILE *fp,
+          unsigned long n)
 {
-   return test_all(verbose, fp);
+   return test_all(gallivm, verbose, fp);
 }
 
 
 boolean
-test_single(unsigned verbose, FILE *fp)
+test_single(struct gallivm_state *gallivm, unsigned verbose, FILE *fp)
 {
    printf("no test_single()");
    return TRUE;

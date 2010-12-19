@@ -159,47 +159,6 @@ struct rc_program {
 	struct rc_constant_list Constants;
 };
 
-static inline rc_swizzle get_swz(unsigned int swz, rc_swizzle idx)
-{
-	if (idx & 0x4)
-		return idx;
-	return GET_SWZ(swz, idx);
-}
-
-static inline unsigned int combine_swizzles4(unsigned int src,
-		rc_swizzle swz_x, rc_swizzle swz_y, rc_swizzle swz_z, rc_swizzle swz_w)
-{
-	unsigned int ret = 0;
-
-	ret |= get_swz(src, swz_x);
-	ret |= get_swz(src, swz_y) << 3;
-	ret |= get_swz(src, swz_z) << 6;
-	ret |= get_swz(src, swz_w) << 9;
-
-	return ret;
-}
-
-static inline unsigned int combine_swizzles(unsigned int src, unsigned int swz)
-{
-	unsigned int ret = 0;
-
-	ret |= get_swz(src, GET_SWZ(swz, RC_SWIZZLE_X));
-	ret |= get_swz(src, GET_SWZ(swz, RC_SWIZZLE_Y)) << 3;
-	ret |= get_swz(src, GET_SWZ(swz, RC_SWIZZLE_Z)) << 6;
-	ret |= get_swz(src, GET_SWZ(swz, RC_SWIZZLE_W)) << 9;
-
-	return ret;
-}
-
-struct rc_src_register lmul_swizzle(unsigned int swizzle, struct rc_src_register srcreg);
-
-static inline void reset_srcreg(struct rc_src_register* reg)
-{
-	memset(reg, 0, sizeof(struct rc_src_register));
-	reg->Swizzle = RC_SWIZZLE_XYZW;
-}
-
-
 /**
  * A transformation that can be passed to \ref rc_local_transform.
  *
@@ -222,6 +181,17 @@ void rc_local_transform(
 	struct radeon_compiler *c,
 	void *user);
 
+void rc_get_used_temporaries(
+	struct radeon_compiler * c,
+	unsigned char * used,
+	unsigned int used_length);
+
+int rc_find_free_temporary_list(
+	struct radeon_compiler * c,
+	unsigned char * used,
+	unsigned int used_length,
+	unsigned int mask);
+
 unsigned int rc_find_free_temporary(struct radeon_compiler * c);
 
 struct rc_instruction *rc_alloc_instruction(struct radeon_compiler * c);
@@ -233,4 +203,5 @@ unsigned int rc_recompute_ips(struct radeon_compiler * c);
 
 void rc_print_program(const struct rc_program *prog);
 
+rc_swizzle rc_mask_to_swizzle(unsigned int mask);
 #endif

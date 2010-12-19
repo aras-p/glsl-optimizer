@@ -221,7 +221,7 @@ read_function(_mesa_glsl_parse_state *st, s_list *list, bool skip_body)
    ir_function *f = st->symbols->get_function(name->value());
    if (f == NULL) {
       f = new(ctx) ir_function(name->value());
-      added = st->symbols->add_function(f->name, f);
+      added = st->symbols->add_function(f);
       assert(added);
    }
 
@@ -474,7 +474,7 @@ read_declaration(_mesa_glsl_parse_state *st, s_list *list)
    }
 
    // Add the variable to the symbol table
-   st->symbols->add_variable(var->name, var);
+   st->symbols->add_variable(var);
 
    return var;
 }

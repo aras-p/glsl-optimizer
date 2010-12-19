@@ -43,8 +43,8 @@
 
 struct sp_sampler {
    struct pipe_sampler_state base;
-   struct sp_sampler_varient *varients;
-   struct sp_sampler_varient *current;
+   struct sp_sampler_variant *variants;
+   struct sp_sampler_variant *current;
 };
 
 static struct sp_sampler *sp_sampler( struct pipe_sampler_state *sampler )
@@ -60,7 +60,7 @@ softpipe_create_sampler_state(struct pipe_context *pipe,
    struct sp_sampler *sp_sampler = CALLOC_STRUCT(sp_sampler);
 
    sp_sampler->base = *sampler;
-   sp_sampler->varients = NULL;
+   sp_sampler->variants = NULL;
 
    return (void *)sp_sampler;
 }
@@ -277,23 +277,24 @@ softpipe_set_geometry_sampler_views(struct pipe_context *pipe,
 
 
 /**
- * Find/create an sp_sampler_varient object for sampling the given texture,
+ * Find/create an sp_sampler_variant object for sampling the given texture,
  * sampler and tex unit.
  *
  * Note that the tex unit is significant.  We can't re-use a sampler
- * varient for multiple texture units because the sampler varient contains
+ * variant for multiple texture units because the sampler variant contains
  * the texture object pointer.  If the texture object pointer were stored
- * somewhere outside the sampler varient, we could re-use samplers for
+ * somewhere outside the sampler variant, we could re-use samplers for
  * multiple texture units.
  */
-static struct sp_sampler_varient *
-get_sampler_varient( unsigned unit,
+static struct sp_sampler_variant *
+get_sampler_variant( unsigned unit,
                      struct sp_sampler *sampler,
+                     struct pipe_sampler_view *view,
                      struct pipe_resource *resource,
                      unsigned processor )
 {
    struct softpipe_resource *sp_texture = softpipe_resource(resource);
-   struct sp_sampler_varient *v = NULL;
+   struct sp_sampler_variant *v = NULL;
    union sp_sampler_key key;
 
    /* if this fails, widen the key.unit field and update this assertion */
@@ -303,6 +304,10 @@ get_sampler_varient( unsigned unit,
    key.bits.is_pot = sp_texture->pot;
    key.bits.processor = processor;
    key.bits.unit = unit;
+   key.bits.swizzle_r = view->swizzle_r;
+   key.bits.swizzle_g = view->swizzle_g;
+   key.bits.swizzle_b = view->swizzle_b;
+   key.bits.swizzle_a = view->swizzle_a;
    key.bits.pad = 0;
 
    if (sampler->current && 
@@ -311,14 +316,14 @@ get_sampler_varient( unsigned unit,
    }
 
    if (v == NULL) {
-      for (v = sampler->varients; v; v = v->next)
+      for (v = sampler->variants; v; v = v->next)
          if (v->key.value == key.value)
             break;
 
       if (v == NULL) {
-         v = sp_create_sampler_varient( &sampler->base, key );
-         v->next = sampler->varients;
-         sampler->varients = v;
+         v = sp_create_sampler_variant( &sampler->base, key );
+         v->next = sampler->variants;
+         sampler->variants = v;
       }
    }
    
@@ -328,7 +333,7 @@ get_sampler_varient( unsigned unit,
 
 
 void
-softpipe_reset_sampler_varients(struct softpipe_context *softpipe)
+softpipe_reset_sampler_variants(struct softpipe_context *softpipe)
 {
    int i;
 
@@ -345,12 +350,13 @@ softpipe_reset_sampler_varients(struct softpipe_context *softpipe)
          }
 
          softpipe->tgsi.vert_samplers_list[i] = 
-            get_sampler_varient( i,
+            get_sampler_variant( i,
                                  sp_sampler(softpipe->vertex_samplers[i]),
+                                 softpipe->vertex_sampler_views[i],
                                  texture,
                                  TGSI_PROCESSOR_VERTEX );
 
-         sp_sampler_varient_bind_texture( softpipe->tgsi.vert_samplers_list[i], 
+         sp_sampler_variant_bind_texture( softpipe->tgsi.vert_samplers_list[i], 
                                           softpipe->vertex_tex_cache[i],
                                           texture );
       }
@@ -366,13 +372,14 @@ softpipe_reset_sampler_varients(struct softpipe_context *softpipe)
             }
 
             softpipe->tgsi.geom_samplers_list[i] =
-               get_sampler_varient(
+               get_sampler_variant(
                   i,
                   sp_sampler(softpipe->geometry_samplers[i]),
+                  softpipe->geometry_sampler_views[i],
                   texture,
                   TGSI_PROCESSOR_GEOMETRY );
 
-            sp_sampler_varient_bind_texture(
+            sp_sampler_variant_bind_texture(
                softpipe->tgsi.geom_samplers_list[i],
                softpipe->geometry_tex_cache[i],
                texture );
@@ -389,12 +396,13 @@ softpipe_reset_sampler_varients(struct softpipe_context *softpipe)
          }
 
          softpipe->tgsi.frag_samplers_list[i] =
-            get_sampler_varient( i,
+            get_sampler_variant( i,
                                  sp_sampler(softpipe->sampler[i]),
+                                 softpipe->sampler_views[i],
                                  texture,
                                  TGSI_PROCESSOR_FRAGMENT );
 
-         sp_sampler_varient_bind_texture( softpipe->tgsi.frag_samplers_list[i], 
+         sp_sampler_variant_bind_texture( softpipe->tgsi.frag_samplers_list[i], 
                                           softpipe->tex_cache[i],
                                           texture );
       }
@@ -406,11 +414,11 @@ softpipe_delete_sampler_state(struct pipe_context *pipe,
                               void *sampler)
 {
    struct sp_sampler *sp_sampler = (struct sp_sampler *)sampler;
-   struct sp_sampler_varient *v, *tmp;
+   struct sp_sampler_variant *v, *tmp;
 
-   for (v = sp_sampler->varients; v; v = tmp) {
+   for (v = sp_sampler->variants; v; v = tmp) {
       tmp = v->next;
-      sp_sampler_varient_destroy(v);
+      sp_sampler_variant_destroy(v);
    }
 
    FREE( sampler );

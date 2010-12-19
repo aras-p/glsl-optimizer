@@ -93,13 +93,40 @@ prototype_string(const glsl_type *return_type, const char *name,
 
 
 static ir_rvalue *
-process_call(exec_list *instructions, ir_function *f,
-	     YYLTYPE *loc, exec_list *actual_parameters,
-	     struct _mesa_glsl_parse_state *state)
+match_function_by_name(exec_list *instructions, const char *name,
+		       YYLTYPE *loc, exec_list *actual_parameters,
+		       struct _mesa_glsl_parse_state *state)
 {
    void *ctx = state;
+   ir_function *f = state->symbols->get_function(name);
+   ir_function_signature *sig;
 
-   ir_function_signature *sig = f->matching_signature(actual_parameters);
+   sig = f ? f->matching_signature(actual_parameters) : NULL;
+
+   /* FINISHME: This doesn't handle the case where shader X contains a
+    * FINISHME: matching signature but shader X + N contains an _exact_
+    * FINISHME: matching signature.
+    */
+   if (sig == NULL && (f == NULL || state->es_shader || !f->has_user_signature()) && state->symbols->get_type(name) == NULL && (state->language_version == 110 || state->symbols->get_variable(name) == NULL)) {
+      /* The current shader doesn't contain a matching function or signature.
+       * Before giving up, look for the prototype in the built-in functions.
+       */
+      for (unsigned i = 0; i < state->num_builtins_to_link; i++) {
+	 ir_function *builtin;
+	 builtin = state->builtins_to_link[i]->symbols->get_function(name);
+	 sig = builtin ? builtin->matching_signature(actual_parameters) : NULL;
+	 if (sig != NULL) {
+	    if (f == NULL) {
+	       f = new(ctx) ir_function(name);
+	       state->symbols->add_global_function(f);
+	       emit_function(state, instructions, f);
+	    }
+
+	    f->add_signature(sig->clone_prototype(f, NULL));
+	    break;
+	 }
+      }
+   }
 
    if (sig != NULL) {
       /* Verify that 'out' and 'inout' actual parameters are lvalues.  This
@@ -164,45 +191,35 @@ process_call(exec_list *instructions, ir_function *f,
 	 return NULL;
       }
    } else {
-      char *str = prototype_string(NULL, f->name, actual_parameters);
+      char *str = prototype_string(NULL, name, actual_parameters);
 
       _mesa_glsl_error(loc, state, "no matching function for call to `%s'",
 		       str);
       talloc_free(str);
 
       const char *prefix = "candidates are: ";
-      foreach_list (node, &f->signatures) {
-	 ir_function_signature *sig = (ir_function_signature *) node;
 
-	 str = prototype_string(sig->return_type, f->name, &sig->parameters);
-	 _mesa_glsl_error(loc, state, "%s%s\n", prefix, str);
-	 talloc_free(str);
+      for (int i = -1; i < state->num_builtins_to_link; i++) {
+	 glsl_symbol_table *syms = i >= 0 ? state->builtins_to_link[i]->symbols
+					  : state->symbols;
+	 f = syms->get_function(name);
+	 if (f == NULL)
+	    continue;
 
-	 prefix = "                ";
+	 foreach_list (node, &f->signatures) {
+	    ir_function_signature *sig = (ir_function_signature *) node;
+
+	    str = prototype_string(sig->return_type, f->name, &sig->parameters);
+	    _mesa_glsl_error(loc, state, "%s%s\n", prefix, str);
+	    talloc_free(str);
+
+	    prefix = "                ";
+	 }
+
       }
 
       return ir_call::get_error_instruction(ctx);
    }
-}
-
-
-static ir_rvalue *
-match_function_by_name(exec_list *instructions, const char *name,
-		       YYLTYPE *loc, exec_list *actual_parameters,
-		       struct _mesa_glsl_parse_state *state)
-{
-   void *ctx = state;
-   ir_function *f = state->symbols->get_function(name);
-
-   if (f == NULL) {
-      _mesa_glsl_error(loc, state, "function `%s' undeclared", name);
-      return ir_call::get_error_instruction(ctx);
-   }
-
-   /* Once we've determined that the function being called might exist, try
-    * to find an overload of the function that matches the parameters.
-    */
-   return process_call(instructions, f, loc, actual_parameters, state);
 }
 
 
@@ -577,18 +594,17 @@ emit_inline_vector_constructor(const glsl_type *type,
 
 	 const ir_constant *const c = param->as_constant();
 	 if (c == NULL) {
-	    /* Generate a swizzle in case rhs_components != rhs->type->vector_elements. */
-	    unsigned swiz[4] = { 0, 0, 0, 0 };
-	    for (unsigned i = 0; i < rhs_components; i++)
-	       swiz[i] = i;
-
 	    /* Mask of fields to be written in the assignment.
 	     */
 	    const unsigned write_mask = ((1U << rhs_components) - 1)
 	       << base_component;
 
 	    ir_dereference *lhs = new(ctx) ir_dereference_variable(var);
-	    ir_rvalue *rhs = new(ctx) ir_swizzle(param, swiz, rhs_components);
+
+	    /* Generate a swizzle so that LHS and RHS sizes match.
+	     */
+	    ir_rvalue *rhs =
+	       new(ctx) ir_swizzle(param, 0, 1, 2, 3, rhs_components);
 
 	    ir_instruction *inst =
 	       new(ctx) ir_assignment(lhs, rhs, NULL, write_mask);
@@ -628,21 +644,21 @@ assign_to_matrix_column(ir_variable *var, unsigned column, unsigned row_base,
    assert(column_ref->type->components() >= (row_base + count));
    assert(src->type->components() >= (src_base + count));
 
-   /* Generate a swizzle that puts the first element of the source at the
-    * location of the first element of the destination.
+   /* Generate a swizzle that extracts the number of components from the source
+    * that are to be assigned to the column of the matrix.
     */
-   unsigned swiz[4] = { src_base, src_base, src_base, src_base };
-   for (unsigned i = 0; i < count; i++)
-      swiz[i + row_base] = i;
-
-   ir_rvalue *const rhs =
-      new(mem_ctx) ir_swizzle(src, swiz, count);
+   if (count < src->type->vector_elements) {
+      src = new(mem_ctx) ir_swizzle(src,
+				    src_base + 0, src_base + 1,
+				    src_base + 2, src_base + 3,
+				    count);
+   }
 
    /* Mask of fields to be written in the assignment.
     */
    const unsigned write_mask = ((1U << count) - 1) << row_base;
 
-   return new(mem_ctx) ir_assignment(column_ref, rhs, NULL, write_mask);
+   return new(mem_ctx) ir_assignment(column_ref, src, NULL, write_mask);
 }
 
 

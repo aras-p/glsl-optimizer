@@ -107,14 +107,14 @@ static void dump_wm_surface_state(struct brw_context *brw)
       char name[20];
 
       if (surf_bo == NULL) {
-	 fprintf(stderr, "  WM SS%d: NULL\n", i);
+	 fprintf(stderr, "WM SURF%d: NULL\n", i);
 	 continue;
       }
       drm_intel_bo_map(surf_bo, GL_FALSE);
       surfoff = surf_bo->offset + brw->wm.surf_offset[i];
       surf = (struct brw_surface_state *)(surf_bo->virtual + brw->wm.surf_offset[i]);
 
-      sprintf(name, "WM SS%d", i);
+      sprintf(name, "WM SURF%d", i);
       state_out(name, surf, surfoff, 0, "%s %s\n",
 		get_965_surfacetype(surf->ss0.surface_type),
 		get_965_surface_format(surf->ss0.surface_format));
@@ -130,6 +130,53 @@ static void dump_wm_surface_state(struct brw_context *brw)
 
       drm_intel_bo_unmap(surf_bo);
    }
+}
+
+
+static void dump_wm_sampler_state(struct brw_context *brw)
+{
+   struct gl_context *ctx = &brw->intel.ctx;
+   int i;
+
+   if (!brw->wm.sampler_bo) {
+      fprintf(stderr, "WM_SAMPLER: NULL\n");
+      return;
+   }
+
+   drm_intel_bo_map(brw->wm.sampler_bo, GL_FALSE);
+   for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
+      unsigned int offset;
+      struct brw_sampler_state *samp;
+      struct brw_sampler_default_color *sdc;
+      char name[20];
+
+      if (!ctx->Texture.Unit[i]._ReallyEnabled) {
+	 fprintf(stderr, "WM SAMP%d: disabled\n", i);
+	 continue;
+      }
+
+      offset = brw->wm.sampler_bo->offset +
+	 i * sizeof(struct brw_sampler_state);
+      samp = (struct brw_sampler_state *)(brw->wm.sampler_bo->virtual +
+					  i * sizeof(struct brw_sampler_state));
+
+      sprintf(name, "WM SAMP%d", i);
+      state_out(name, samp, offset, 0, "filtering\n");
+      state_out(name, samp, offset, 1, "wrapping, lod\n");
+      state_out(name, samp, offset, 2, "default color pointer\n");
+      state_out(name, samp, offset, 3, "chroma key, aniso\n");
+
+      sprintf(name, " WM SDC%d", i);
+
+      drm_intel_bo_map(brw->wm.sdc_bo[i], GL_FALSE);
+      sdc = (struct brw_sampler_default_color *)(brw->wm.sdc_bo[i]->virtual);
+      state_out(name, sdc, brw->wm.sdc_bo[i]->offset, 0, "r\n");
+      state_out(name, sdc, brw->wm.sdc_bo[i]->offset, 1, "g\n");
+      state_out(name, sdc, brw->wm.sdc_bo[i]->offset, 2, "b\n");
+      state_out(name, sdc, brw->wm.sdc_bo[i]->offset, 3, "a\n");
+      drm_intel_bo_unmap(brw->wm.sdc_bo[i]);
+   }
+   drm_intel_bo_unmap(brw->wm.sampler_bo);
 }
 
 static void dump_sf_viewport_state(struct brw_context *brw)
@@ -324,6 +371,7 @@ void brw_debug_batch(struct intel_context *intel)
 
    state_struct_out("WM bind", brw->wm.bind_bo, 4 * brw->wm.nr_surfaces);
    dump_wm_surface_state(brw);
+   dump_wm_sampler_state(brw);
 
    if (intel->gen < 6)
        state_struct_out("VS", brw->vs.state_bo, sizeof(struct brw_vs_unit_state));

@@ -30,6 +30,19 @@
 #include "u_execmem.h"
 #include "u_macros.h"
 
+#ifdef __linux__
+__asm__(".section .note.ABI-tag, \"a\"\n\t"
+        ".p2align 2\n\t"
+        ".long 1f - 0f\n\t"      /* name length */
+        ".long 3f - 2f\n\t"      /* data length */
+        ".long 1\n\t"            /* note length */
+        "0: .asciz \"GNU\"\n\t"  /* vendor name */
+        "1: .p2align 2\n\t"
+        "2: .long 0\n\t"         /* note data: the ABI tag */
+        ".long 2,4,20\n\t"       /* Minimum kernel version w/TLS */
+        "3: .p2align 2\n\t");    /* pad out section */
+#endif /* __linux__ */
+
 __asm__(".text");
 
 __asm__("x86_current_tls:\n\t"
@@ -37,7 +50,7 @@ __asm__("x86_current_tls:\n\t"
         "1:\n\t"
         "popl %eax\n\t"
 	"addl $_GLOBAL_OFFSET_TABLE_+[.-1b], %eax\n\t"
-	"movl u_current_table_tls@GOTNTPOFF(%eax), %eax\n\t"
+	"movl u_current_table@GOTNTPOFF(%eax), %eax\n\t"
 	"ret");
 
 #ifndef GLX_X86_READONLY_TEXT

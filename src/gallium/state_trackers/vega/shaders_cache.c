@@ -50,14 +50,16 @@
 
 /* Essentially we construct an ubber-shader based on the state
  * of the pipeline. The stages are:
- * 1) Fill (mandatory, solid color/gradient/pattern/image draw)
- * 2) Image composition (image mode multiply and stencil)
- * 3) Mask
- * 4) Extended blend (multiply/screen/darken/lighten)
- * 5) Premultiply/Unpremultiply
- * 6) Color transform (to black and white)
+ * 1) Paint generation (color/gradient/pattern)
+ * 2) Image composition (normal/multiply/stencil)
+ * 3) Color transform
+ * 4) Per-channel alpha generation
+ * 5) Extended blend (multiply/screen/darken/lighten)
+ * 6) Mask
+ * 7) Premultiply/Unpremultiply
+ * 8) Color transform (to black and white)
  */
-#define SHADER_STAGES 6
+#define SHADER_STAGES 8
 
 struct cached_shader {
    void *driver_shader;
@@ -85,13 +87,6 @@ static INLINE struct tgsi_token *tokens_from_assembly(const char *txt, int num_t
 
    return tokens;
 }
-
-#define ALL_FILLS (VEGA_SOLID_FILL_SHADER | \
-   VEGA_LINEAR_GRADIENT_SHADER | \
-   VEGA_RADIAL_GRADIENT_SHADER | \
-   VEGA_PATTERN_SHADER         | \
-   VEGA_IMAGE_NORMAL_SHADER)
-
 
 /*
 static const char max_shader_preamble[] =
@@ -257,98 +252,126 @@ create_shader(struct pipe_context *pipe,
               int id,
               struct pipe_shader_state *shader)
 {
-   int idx = 0;
+   int idx = 0, sh;
    const struct shader_asm_info * shaders[SHADER_STAGES];
 
-   /* the shader has to have a fill */
-   debug_assert(id & ALL_FILLS);
-
    /* first stage */
-   if (id & VEGA_SOLID_FILL_SHADER) {
-      debug_assert(idx == 0);
-      shaders[idx] = &shaders_asm[0];
-      debug_assert(shaders_asm[0].id == VEGA_SOLID_FILL_SHADER);
-      ++idx;
-   }
-   if ((id & VEGA_LINEAR_GRADIENT_SHADER)) {
-      debug_assert(idx == 0);
-      shaders[idx] = &shaders_asm[1];
-      debug_assert(shaders_asm[1].id == VEGA_LINEAR_GRADIENT_SHADER);
-      ++idx;
-   }
-   if ((id & VEGA_RADIAL_GRADIENT_SHADER)) {
-      debug_assert(idx == 0);
-      shaders[idx] = &shaders_asm[2];
-      debug_assert(shaders_asm[2].id == VEGA_RADIAL_GRADIENT_SHADER);
-      ++idx;
-   }
-   if ((id & VEGA_PATTERN_SHADER)) {
-      debug_assert(idx == 0);
-      debug_assert(shaders_asm[3].id == VEGA_PATTERN_SHADER);
-      shaders[idx] = &shaders_asm[3];
-      ++idx;
-   }
-   if ((id & VEGA_IMAGE_NORMAL_SHADER)) {
-      debug_assert(idx == 0);
-      debug_assert(shaders_asm[4].id == VEGA_IMAGE_NORMAL_SHADER);
-      shaders[idx] = &shaders_asm[4];
-      ++idx;
+   sh = SHADERS_GET_PAINT_SHADER(id);
+   switch (sh << SHADERS_PAINT_SHIFT) {
+   case VEGA_SOLID_FILL_SHADER:
+   case VEGA_LINEAR_GRADIENT_SHADER:
+   case VEGA_RADIAL_GRADIENT_SHADER:
+   case VEGA_PATTERN_SHADER:
+   case VEGA_PAINT_DEGENERATE_SHADER:
+      shaders[idx] = &shaders_paint_asm[(sh >> SHADERS_PAINT_SHIFT) - 1];
+      assert(shaders[idx]->id == sh);
+      idx++;
+      break;
+   default:
+      break;
    }
 
    /* second stage */
-   if ((id & VEGA_IMAGE_MULTIPLY_SHADER)) {
-      debug_assert(shaders_asm[5].id == VEGA_IMAGE_MULTIPLY_SHADER);
-      shaders[idx] = &shaders_asm[5];
-      ++idx;
-   } else if ((id & VEGA_IMAGE_STENCIL_SHADER)) {
-      debug_assert(shaders_asm[6].id == VEGA_IMAGE_STENCIL_SHADER);
-      shaders[idx] = &shaders_asm[6];
-      ++idx;
+   sh = SHADERS_GET_IMAGE_SHADER(id);
+   switch (sh) {
+   case VEGA_IMAGE_NORMAL_SHADER:
+   case VEGA_IMAGE_MULTIPLY_SHADER:
+   case VEGA_IMAGE_STENCIL_SHADER:
+      shaders[idx] = &shaders_image_asm[(sh >> SHADERS_IMAGE_SHIFT) - 1];
+      assert(shaders[idx]->id == sh);
+      idx++;
+      break;
+   default:
+      break;
    }
 
+   /* sanity check */
+   assert(idx == ((!sh || sh == VEGA_IMAGE_NORMAL_SHADER) ? 1 : 2));
+
    /* third stage */
-   if ((id & VEGA_MASK_SHADER)) {
-      debug_assert(idx == 1);
-      debug_assert(shaders_asm[7].id == VEGA_MASK_SHADER);
-      shaders[idx] = &shaders_asm[7];
-      ++idx;
+   sh = SHADERS_GET_COLOR_TRANSFORM_SHADER(id);
+   switch (sh) {
+   case VEGA_COLOR_TRANSFORM_SHADER:
+      shaders[idx] = &shaders_color_transform_asm[
+         (sh >> SHADERS_COLOR_TRANSFORM_SHIFT) - 1];
+      assert(shaders[idx]->id == sh);
+      idx++;
+      break;
+   default:
+      break;
    }
 
    /* fourth stage */
-   if ((id & VEGA_BLEND_MULTIPLY_SHADER)) {
-      debug_assert(shaders_asm[8].id == VEGA_BLEND_MULTIPLY_SHADER);
-      shaders[idx] = &shaders_asm[8];
-      ++idx;
-   } else if ((id & VEGA_BLEND_SCREEN_SHADER)) {
-      debug_assert(shaders_asm[9].id == VEGA_BLEND_SCREEN_SHADER);
-      shaders[idx] = &shaders_asm[9];
-      ++idx;
-   } else if ((id & VEGA_BLEND_DARKEN_SHADER)) {
-      debug_assert(shaders_asm[10].id == VEGA_BLEND_DARKEN_SHADER);
-      shaders[idx] = &shaders_asm[10];
-      ++idx;
-   } else if ((id & VEGA_BLEND_LIGHTEN_SHADER)) {
-      debug_assert(shaders_asm[11].id == VEGA_BLEND_LIGHTEN_SHADER);
-      shaders[idx] = &shaders_asm[11];
-      ++idx;
+   sh = SHADERS_GET_ALPHA_SHADER(id);
+   switch (sh) {
+   case VEGA_ALPHA_NORMAL_SHADER:
+   case VEGA_ALPHA_PER_CHANNEL_SHADER:
+      shaders[idx] = &shaders_alpha_asm[
+         (sh >> SHADERS_ALPHA_SHIFT) - 1];
+      assert(shaders[idx]->id == sh);
+      idx++;
+      break;
+   default:
+      break;
    }
 
    /* fifth stage */
-   if ((id & VEGA_PREMULTIPLY_SHADER)) {
-      debug_assert(shaders_asm[12].id == VEGA_PREMULTIPLY_SHADER);
-      shaders[idx] = &shaders_asm[12];
-      ++idx;
-   } else if ((id & VEGA_UNPREMULTIPLY_SHADER)) {
-      debug_assert(shaders_asm[13].id == VEGA_UNPREMULTIPLY_SHADER);
-      shaders[idx] = &shaders_asm[13];
-      ++idx;
+   sh = SHADERS_GET_BLEND_SHADER(id);
+   switch (sh) {
+   case VEGA_BLEND_SRC_SHADER:
+   case VEGA_BLEND_SRC_OVER_SHADER:
+   case VEGA_BLEND_DST_OVER_SHADER:
+   case VEGA_BLEND_SRC_IN_SHADER:
+   case VEGA_BLEND_DST_IN_SHADER:
+   case VEGA_BLEND_MULTIPLY_SHADER:
+   case VEGA_BLEND_SCREEN_SHADER:
+   case VEGA_BLEND_DARKEN_SHADER:
+   case VEGA_BLEND_LIGHTEN_SHADER:
+   case VEGA_BLEND_ADDITIVE_SHADER:
+      shaders[idx] = &shaders_blend_asm[(sh >> SHADERS_BLEND_SHIFT) - 1];
+      assert(shaders[idx]->id == sh);
+      idx++;
+      break;
+   default:
+      break;
    }
 
    /* sixth stage */
-   if ((id & VEGA_BW_SHADER)) {
-      debug_assert(shaders_asm[14].id == VEGA_BW_SHADER);
-      shaders[idx] = &shaders_asm[14];
-      ++idx;
+   sh = SHADERS_GET_MASK_SHADER(id);
+   switch (sh) {
+   case VEGA_MASK_SHADER:
+      shaders[idx] = &shaders_mask_asm[(sh >> SHADERS_MASK_SHIFT) - 1];
+      assert(shaders[idx]->id == sh);
+      idx++;
+      break;
+   default:
+      break;
+   }
+
+   /* seventh stage */
+   sh = SHADERS_GET_PREMULTIPLY_SHADER(id);
+   switch (sh) {
+   case VEGA_PREMULTIPLY_SHADER:
+   case VEGA_UNPREMULTIPLY_SHADER:
+      shaders[idx] = &shaders_premultiply_asm[
+         (sh >> SHADERS_PREMULTIPLY_SHIFT) - 1];
+      assert(shaders[idx]->id == sh);
+      idx++;
+      break;
+   default:
+      break;
+   }
+
+   /* eighth stage */
+   sh = SHADERS_GET_BW_SHADER(id);
+   switch (sh) {
+   case VEGA_BW_SHADER:
+      shaders[idx] = &shaders_bw_asm[(sh >> SHADERS_BW_SHIFT) - 1];
+      assert(shaders[idx]->id == sh);
+      idx++;
+      break;
+   default:
+      break;
    }
 
    return combine_shaders(shaders, idx, pipe, shader);

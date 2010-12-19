@@ -85,6 +85,8 @@ struct svga_transfer
 {
    struct pipe_transfer base;
 
+   unsigned face;
+
    struct svga_winsys_buffer *hwbuf;
 
    /* Height of the hardware buffer in pixel blocks */

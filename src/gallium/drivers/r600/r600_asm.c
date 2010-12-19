@@ -22,11 +22,15 @@
  */
 #include <stdio.h>
 #include <errno.h>
+#include "util/u_format.h"
 #include "util/u_memory.h"
+#include "pipe/p_shader_tokens.h"
 #include "r600_pipe.h"
 #include "r600_sq.h"
 #include "r600_opcodes.h"
 #include "r600_asm.h"
+#include "r600_formats.h"
+#include "r600d.h"
 
 static inline unsigned int r600_bc_get_num_operands(struct r600_bc_alu *alu)
 {
@@ -55,8 +59,8 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc_alu *alu)
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4:
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4_IEEE:
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE:
-		return 2;  
-		
+		return 2;
+
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV: 
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_FLOOR:
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FRACT:
@@ -74,7 +78,7 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc_alu *alu)
 	default: R600_ERR(
 		"Need instruction operand number for 0x%x.\n", alu->inst); 
 	};
-	
+
 	return 3;
 }
 
@@ -137,20 +141,21 @@ int r600_bc_init(struct r600_bc *bc, enum radeon_family family)
 	case CHIP_RV635:
 	case CHIP_RS780:
 	case CHIP_RS880:
-		bc->chiprev = 0;
+		bc->chiprev = CHIPREV_R600;
 		break;
 	case CHIP_RV770:
 	case CHIP_RV730:
 	case CHIP_RV710:
 	case CHIP_RV740:
-		bc->chiprev = 1;
+		bc->chiprev = CHIPREV_R700;
 		break;
 	case CHIP_CEDAR:
 	case CHIP_REDWOOD:
 	case CHIP_JUNIPER:
 	case CHIP_CYPRESS:
 	case CHIP_HEMLOCK:
-		bc->chiprev = 2;
+	case CHIP_PALM:
+		bc->chiprev = CHIPREV_EVERGREEN;
 		break;
 	default:
 		R600_ERR("unknown family %d\n", bc->family);
@@ -199,9 +204,9 @@ const unsigned bank_swizzle_vec[8] = {SQ_ALU_VEC_210,  //000
 				      SQ_ALU_VEC_012}; //111
 
 const unsigned bank_swizzle_scl[8] = {SQ_ALU_SCL_210,  //000
-				      SQ_ALU_SCL_122,  //001 
+				      SQ_ALU_SCL_122,  //001
 				      SQ_ALU_SCL_122,  //010
-				      
+
 				      SQ_ALU_SCL_221,  //011
 				      SQ_ALU_SCL_212,  //100
 				      SQ_ALU_SCL_122,  //101
@@ -592,10 +597,34 @@ int r600_bc_add_cfinst(struct r600_bc *bc, int inst)
 /* common to all 3 families */
 static int r600_bc_vtx_build(struct r600_bc *bc, struct r600_bc_vtx *vtx, unsigned id)
 {
-	bc->bytecode[id++] = S_SQ_VTX_WORD0_BUFFER_ID(vtx->buffer_id) |
-				S_SQ_VTX_WORD0_SRC_GPR(vtx->src_gpr) |
-				S_SQ_VTX_WORD0_SRC_SEL_X(vtx->src_sel_x) |
-				S_SQ_VTX_WORD0_MEGA_FETCH_COUNT(vtx->mega_fetch_count);
+	unsigned fetch_resource_start = 0;
+
+	/* check if we are fetch shader */
+			/* fetch shader can also access vertex resource,
+			 * first fetch shader resource is at 160
+			 */
+	if (bc->type == -1) {
+		switch (bc->chiprev) {
+		/* r600 */
+		case CHIPREV_R600:
+		/* r700 */
+		case CHIPREV_R700:
+			fetch_resource_start = 160;
+			break;
+		/* evergreen */
+		case CHIPREV_EVERGREEN:
+			fetch_resource_start = 0;
+			break;
+		default:
+			fprintf(stderr,  "%s:%s:%d unknown chiprev %d\n",
+				__FILE__, __func__, __LINE__, bc->chiprev);
+			break;
+		}
+	}
+	bc->bytecode[id++] = S_SQ_VTX_WORD0_BUFFER_ID(vtx->buffer_id + fetch_resource_start) |
+			S_SQ_VTX_WORD0_SRC_GPR(vtx->src_gpr) |
+			S_SQ_VTX_WORD0_SRC_SEL_X(vtx->src_sel_x) |
+			S_SQ_VTX_WORD0_MEGA_FETCH_COUNT(vtx->mega_fetch_count);
 	bc->bytecode[id++] = S_SQ_VTX_WORD1_DST_SEL_X(vtx->dst_sel_x) |
 				S_SQ_VTX_WORD1_DST_SEL_Y(vtx->dst_sel_y) |
 				S_SQ_VTX_WORD1_DST_SEL_Z(vtx->dst_sel_z) |
@@ -678,8 +707,8 @@ static int r600_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsign
 					S_SQ_ALU_WORD1_OP2_WRITE_MASK(alu->dst.write) |
 					S_SQ_ALU_WORD1_OP2_ALU_INST(alu->inst) |
 					S_SQ_ALU_WORD1_BANK_SWIZZLE(alu->bank_swizzle) |
-			                S_SQ_ALU_WORD1_OP2_UPDATE_EXECUTE_MASK(alu->predicate) |
-		 	                S_SQ_ALU_WORD1_OP2_UPDATE_PRED(alu->predicate);
+					S_SQ_ALU_WORD1_OP2_UPDATE_EXECUTE_MASK(alu->predicate) |
+					S_SQ_ALU_WORD1_OP2_UPDATE_PRED(alu->predicate);
 	}
 	if (alu->last) {
 		if (alu->nliteral && !alu->literal_added) {
@@ -710,7 +739,7 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 			S_SQ_CF_ALU_WORD1_KCACHE_ADDR0(cf->kcache0_addr) |
 			S_SQ_CF_ALU_WORD1_KCACHE_ADDR1(cf->kcache1_addr) |
 					S_SQ_CF_ALU_WORD1_BARRIER(1) |
-					S_SQ_CF_ALU_WORD1_USES_WATERFALL(bc->chiprev == 0 ? cf->r6xx_uses_waterfall : 0) |
+					S_SQ_CF_ALU_WORD1_USES_WATERFALL(bc->chiprev == CHIPREV_R600 ? cf->r6xx_uses_waterfall : 0) |
 					S_SQ_CF_ALU_WORD1_COUNT((cf->ndw / 2) - 1);
 		break;
 	case V_SQ_CF_WORD1_SQ_CF_INST_TEX:
@@ -742,6 +771,8 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 	case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END:
 	case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE:
 	case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK:
+	case V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS:
+	case V_SQ_CF_WORD1_SQ_CF_INST_RETURN:
 		bc->bytecode[id++] = S_SQ_CF_WORD0_ADDR(cf->cf_addr >> 1);
 		bc->bytecode[id++] = S_SQ_CF_WORD1_CF_INST(cf->inst) |
 					S_SQ_CF_WORD1_BARRIER(1) |
@@ -766,7 +797,10 @@ int r600_bc_build(struct r600_bc *bc)
 	int r;
 
 	if (bc->callstack[0].max > 0)
-	    bc->nstack = ((bc->callstack[0].max + 3) >> 2) + 2;
+		bc->nstack = ((bc->callstack[0].max + 3) >> 2) + 2;
+	if (bc->type == TGSI_PROCESSOR_VERTEX && !bc->nstack) {
+		bc->nstack = 1;
+	}
 
 	/* first path compute addr of each CF block */
 	/* addr start after all the CF instructions */
@@ -795,6 +829,8 @@ int r600_bc_build(struct r600_bc *bc)
 		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END:
 		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE:
 		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK:
+		case V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS:
+		case V_SQ_CF_WORD1_SQ_CF_INST_RETURN:
 			break;
 		default:
 			R600_ERR("unsupported CF instruction (0x%X)\n", cf->inst);
@@ -810,7 +846,7 @@ int r600_bc_build(struct r600_bc *bc)
 		return -ENOMEM;
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
 		addr = cf->addr;
-		if (bc->chiprev == 2)
+		if (bc->chiprev == CHIPREV_EVERGREEN)
 			r = eg_bc_cf_build(bc, cf);
 		else
 			r = r600_bc_cf_build(bc, cf);
@@ -821,11 +857,11 @@ int r600_bc_build(struct r600_bc *bc)
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
 			LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
 				switch(bc->chiprev) {
-				case 0:
+				case CHIPREV_R600:
 					r = r600_bc_alu_build(bc, alu, addr);
 					break;
-				case 1:
-				case 2: /* eg alu is same encoding as r700 */
+				case CHIPREV_R700:
+				case CHIPREV_EVERGREEN: /* eg alu is same encoding as r700 */
 					r = r700_bc_alu_build(bc, alu, addr);
 					break;
 				default:
@@ -868,6 +904,8 @@ int r600_bc_build(struct r600_bc *bc)
 		case V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
 		case V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
 		case V_SQ_CF_WORD1_SQ_CF_INST_POP:
+		case V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS:
+		case V_SQ_CF_WORD1_SQ_CF_INST_RETURN:
 			break;
 		default:
 			R600_ERR("unsupported CF instruction (0x%X)\n", cf->inst);
@@ -911,4 +949,343 @@ void r600_bc_clear(struct r600_bc *bc)
 	}
 
 	LIST_INITHEAD(&cf->list);
+}
+
+void r600_bc_dump(struct r600_bc *bc)
+{
+	unsigned i;
+	char chip = '6';
+
+	switch (bc->chiprev) {
+	case 1:
+		chip = '7';
+		break;
+	case 2:
+		chip = 'E';
+		break;
+	case 0:
+	default:
+		chip = '6';
+		break;
+	}
+	fprintf(stderr, "bytecode %d dw -----------------------\n", bc->ndw);
+	fprintf(stderr, "     %c\n", chip);
+	for (i = 0; i < bc->ndw; i++) {
+		fprintf(stderr, "0x%08X\n", bc->bytecode[i]);
+	}
+	fprintf(stderr, "--------------------------------------\n");
+}
+
+void r600_cf_vtx(struct r600_vertex_element *ve, u32 *bytecode, unsigned count)
+{
+	struct r600_pipe_state *rstate;
+	unsigned i = 0;
+
+	if (count > 8) {
+		bytecode[i++] = S_SQ_CF_WORD0_ADDR(8 >> 1);
+		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX) |
+						S_SQ_CF_WORD1_BARRIER(1) |
+						S_SQ_CF_WORD1_COUNT(8 - 1);
+		bytecode[i++] = S_SQ_CF_WORD0_ADDR(40 >> 1);
+		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX) |
+						S_SQ_CF_WORD1_BARRIER(1) |
+						S_SQ_CF_WORD1_COUNT(count - 8 - 1);
+	} else {
+		bytecode[i++] = S_SQ_CF_WORD0_ADDR(8 >> 1);
+		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX) |
+						S_SQ_CF_WORD1_BARRIER(1) |
+						S_SQ_CF_WORD1_COUNT(count - 1);
+	}
+	bytecode[i++] = S_SQ_CF_WORD0_ADDR(0);
+	bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_RETURN) |
+			S_SQ_CF_WORD1_BARRIER(1);
+
+	rstate = &ve->rstate;
+	rstate->id = R600_PIPE_STATE_FETCH_SHADER;
+	rstate->nregs = 0;
+	r600_pipe_state_add_reg(rstate, R_0288A4_SQ_PGM_RESOURCES_FS,
+				0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0288DC_SQ_PGM_CF_OFFSET_FS,
+				0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028894_SQ_PGM_START_FS,
+				r600_bo_offset(ve->fetch_shader) >> 8,
+				0xFFFFFFFF, ve->fetch_shader);
+}
+
+void r600_cf_vtx_tc(struct r600_vertex_element *ve, u32 *bytecode, unsigned count)
+{
+	struct r600_pipe_state *rstate;
+	unsigned i = 0;
+
+	if (count > 8) {
+		bytecode[i++] = S_SQ_CF_WORD0_ADDR(8 >> 1);
+		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC) |
+						S_SQ_CF_WORD1_BARRIER(1) |
+						S_SQ_CF_WORD1_COUNT(8 - 1);
+		bytecode[i++] = S_SQ_CF_WORD0_ADDR(40 >> 1);
+		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC) |
+						S_SQ_CF_WORD1_BARRIER(1) |
+						S_SQ_CF_WORD1_COUNT((count - 8) - 1);
+	} else {
+		bytecode[i++] = S_SQ_CF_WORD0_ADDR(8 >> 1);
+		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC) |
+						S_SQ_CF_WORD1_BARRIER(1) |
+						S_SQ_CF_WORD1_COUNT(count - 1);
+	}
+	bytecode[i++] = S_SQ_CF_WORD0_ADDR(0);
+	bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_RETURN) |
+			S_SQ_CF_WORD1_BARRIER(1);
+
+	rstate = &ve->rstate;
+	rstate->id = R600_PIPE_STATE_FETCH_SHADER;
+	rstate->nregs = 0;
+	r600_pipe_state_add_reg(rstate, R_0288A4_SQ_PGM_RESOURCES_FS,
+				0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0288DC_SQ_PGM_CF_OFFSET_FS,
+				0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_028894_SQ_PGM_START_FS,
+				r600_bo_offset(ve->fetch_shader) >> 8,
+				0xFFFFFFFF, ve->fetch_shader);
+}
+
+static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
+				unsigned *num_format, unsigned *format_comp)
+{
+	const struct util_format_description *desc;
+	unsigned i;
+
+	*format = 0;
+	*num_format = 0;
+	*format_comp = 0;
+
+	desc = util_format_description(pformat);
+	if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
+		goto out_unknown;
+	}
+
+	/* Find the first non-VOID channel. */
+	for (i = 0; i < 4; i++) {
+		if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
+			break;
+		}
+	}
+
+	switch (desc->channel[i].type) {
+		/* Half-floats, floats, doubles */
+	case UTIL_FORMAT_TYPE_FLOAT:
+		switch (desc->channel[i].size) {
+		case 16:
+			switch (desc->nr_channels) {
+			case 1:
+				*format = FMT_16_FLOAT;
+				break;
+			case 2:
+				*format = FMT_16_16_FLOAT;
+				break;
+			case 3:
+				*format = FMT_16_16_16_FLOAT;
+				break;
+			case 4:
+				*format = FMT_16_16_16_16_FLOAT;
+				break;
+			}
+			break;
+		case 32:
+			switch (desc->nr_channels) {
+			case 1:
+				*format = FMT_32_FLOAT;
+				break;
+			case 2:
+				*format = FMT_32_32_FLOAT;
+				break;
+			case 3:
+				*format = FMT_32_32_32_FLOAT;
+				break;
+			case 4:
+				*format = FMT_32_32_32_32_FLOAT;
+				break;
+			}
+			break;
+		default:
+			goto out_unknown;
+		}
+		break;
+		/* Unsigned ints */
+	case UTIL_FORMAT_TYPE_UNSIGNED:
+		/* Signed ints */
+	case UTIL_FORMAT_TYPE_SIGNED:
+		switch (desc->channel[i].size) {
+		case 8:
+			switch (desc->nr_channels) {
+			case 1:
+				*format = FMT_8;
+				break;
+			case 2:
+				*format = FMT_8_8;
+				break;
+			case 3:
+			//	*format = FMT_8_8_8; /* fails piglit draw-vertices test */
+			//	break;
+			case 4:
+				*format = FMT_8_8_8_8;
+				break;
+			}
+			break;
+		case 16:
+			switch (desc->nr_channels) {
+			case 1:
+				*format = FMT_16;
+				break;
+			case 2:
+				*format = FMT_16_16;
+				break;
+			case 3:
+			//	*format = FMT_16_16_16; /* fails piglit draw-vertices test */
+			//	break;
+			case 4:
+				*format = FMT_16_16_16_16;
+				break;
+			}
+			break;
+		case 32:
+			switch (desc->nr_channels) {
+			case 1:
+				*format = FMT_32;
+				break;
+			case 2:
+				*format = FMT_32_32;
+				break;
+			case 3:
+				*format = FMT_32_32_32;
+				break;
+			case 4:
+				*format = FMT_32_32_32_32;
+				break;
+			}
+			break;
+		default:
+			goto out_unknown;
+		}
+		break;
+	default:
+		goto out_unknown;
+	}
+
+	if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
+		*format_comp = 1;
+	}
+	if (desc->channel[i].normalized) {
+		*num_format = 0;
+	} else {
+		*num_format = 2;
+	}
+	return;
+out_unknown:
+	R600_ERR("unsupported vertex format %s\n", util_format_name(pformat));
+}
+
+static void r600_bc(unsigned ndw, unsigned chiprev, u32 *bytecode)
+{
+	unsigned i;
+	char chip = '6';
+
+	switch (chiprev) {
+	case 1:
+		chip = '7';
+		break;
+	case 2:
+		chip = 'E';
+		break;
+	case 0:
+	default:
+		chip = '6';
+		break;
+	}
+	fprintf(stderr, "bytecode %d dw -----------------------\n", ndw);
+	fprintf(stderr, "    %c\n", chip);
+	for (i = 0; i < ndw; i++) {
+		fprintf(stderr, "0x%08X\n", bytecode[i]);
+	}
+	fprintf(stderr, "--------------------------------------\n");
+}
+
+int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, struct r600_vertex_element *ve)
+{
+	unsigned ndw, i;
+	u32 *bytecode;
+	unsigned fetch_resource_start = 0, format, num_format, format_comp;
+	struct pipe_vertex_element *elements = ve->elements;
+	const struct util_format_description *desc;
+
+	/* 2 dwords for cf aligned to 4 + 4 dwords per input */
+	ndw = 8 + ve->count * 4;
+	ve->fs_size = ndw * 4;
+
+	/* use PIPE_BIND_VERTEX_BUFFER so we use the cache buffer manager */
+	ve->fetch_shader = r600_bo(rctx->radeon, ndw*4, 256, PIPE_BIND_VERTEX_BUFFER, 0);
+	if (ve->fetch_shader == NULL) {
+		return -ENOMEM;
+	}
+
+	bytecode = r600_bo_map(rctx->radeon, ve->fetch_shader, 0, NULL);
+	if (bytecode == NULL) {
+		r600_bo_reference(rctx->radeon, &ve->fetch_shader, NULL);
+		return -ENOMEM;
+	}
+
+	if (rctx->family >= CHIP_CEDAR) {
+		eg_cf_vtx(ve, &bytecode[0], (ndw - 8) / 4);
+	} else {
+		r600_cf_vtx(ve, &bytecode[0], (ndw - 8) / 4);
+		fetch_resource_start = 160;
+	}
+
+	/* vertex elements offset need special handling, if offset is bigger
+	 * than what we can put in fetch instruction then we need to alterate
+	 * the vertex resource offset. In such case in order to simplify code
+	 * we will bound one resource per elements. It's a worst case scenario.
+	 */
+	for (i = 0; i < ve->count; i++) {
+		ve->vbuffer_offset[i] = C_SQ_VTX_WORD2_OFFSET & elements[i].src_offset;
+		if (ve->vbuffer_offset[i]) {
+			ve->vbuffer_need_offset = 1;
+		}
+	}
+
+	for (i = 0; i < ve->count; i++) {
+		unsigned vbuffer_index;
+		r600_vertex_data_type(ve->hw_format[i], &format, &num_format, &format_comp);
+		desc = util_format_description(ve->hw_format[i]);
+		if (desc == NULL) {
+			R600_ERR("unknown format %d\n", ve->hw_format[i]);
+			r600_bo_reference(rctx->radeon, &ve->fetch_shader, NULL);
+			return -EINVAL;
+		}
+
+		/* see above for vbuffer_need_offset explanation */
+		vbuffer_index = elements[i].vertex_buffer_index;
+		if (ve->vbuffer_need_offset) {
+			bytecode[8 + i * 4 + 0] = S_SQ_VTX_WORD0_BUFFER_ID(i + fetch_resource_start);
+		} else {
+			bytecode[8 + i * 4 + 0] = S_SQ_VTX_WORD0_BUFFER_ID(vbuffer_index + fetch_resource_start);
+		}
+		bytecode[8 + i * 4 + 0] |= S_SQ_VTX_WORD0_SRC_GPR(0) |
+					S_SQ_VTX_WORD0_SRC_SEL_X(0) |
+					S_SQ_VTX_WORD0_MEGA_FETCH_COUNT(0x1F);
+		bytecode[8 + i * 4 + 1] = S_SQ_VTX_WORD1_DST_SEL_X(desc->swizzle[0]) |
+					S_SQ_VTX_WORD1_DST_SEL_Y(desc->swizzle[1]) |
+					S_SQ_VTX_WORD1_DST_SEL_Z(desc->swizzle[2]) |
+					S_SQ_VTX_WORD1_DST_SEL_W(desc->swizzle[3]) |
+					S_SQ_VTX_WORD1_USE_CONST_FIELDS(0) |
+					S_SQ_VTX_WORD1_DATA_FORMAT(format) |
+					S_SQ_VTX_WORD1_NUM_FORMAT_ALL(num_format) |
+					S_SQ_VTX_WORD1_FORMAT_COMP_ALL(format_comp) |
+					S_SQ_VTX_WORD1_SRF_MODE_ALL(1) |
+					S_SQ_VTX_WORD1_GPR_DST_GPR(i + 1);
+		bytecode[8 + i * 4 + 2] = S_SQ_VTX_WORD2_OFFSET(elements[i].src_offset) |
+					S_SQ_VTX_WORD2_MEGA_FETCH(1);
+		bytecode[8 + i * 4 + 3] = 0;
+	}
+	r600_bo_unmap(rctx->radeon, ve->fetch_shader);
+	return 0;
 }

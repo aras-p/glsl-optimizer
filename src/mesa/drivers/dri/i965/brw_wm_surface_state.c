@@ -68,103 +68,53 @@ static GLuint translate_tex_target( GLenum target )
    }
 }
 
+static uint32_t brw_format_for_mesa_format[MESA_FORMAT_COUNT] =
+{
+   [MESA_FORMAT_L8] = BRW_SURFACEFORMAT_L8_UNORM,
+   [MESA_FORMAT_I8] = BRW_SURFACEFORMAT_I8_UNORM,
+   [MESA_FORMAT_A8] = BRW_SURFACEFORMAT_A8_UNORM,
+   [MESA_FORMAT_AL88] = BRW_SURFACEFORMAT_L8A8_UNORM,
+   [MESA_FORMAT_AL1616] = BRW_SURFACEFORMAT_L16A16_UNORM,
+   [MESA_FORMAT_R8] = BRW_SURFACEFORMAT_R8_UNORM,
+   [MESA_FORMAT_R16] = BRW_SURFACEFORMAT_R16_UNORM,
+   [MESA_FORMAT_RG88] = BRW_SURFACEFORMAT_R8G8_UNORM,
+   [MESA_FORMAT_RG1616] = BRW_SURFACEFORMAT_R16G16_UNORM,
+   [MESA_FORMAT_ARGB8888] = BRW_SURFACEFORMAT_B8G8R8A8_UNORM,
+   [MESA_FORMAT_XRGB8888] = BRW_SURFACEFORMAT_B8G8R8X8_UNORM,
+   [MESA_FORMAT_RGB565] = BRW_SURFACEFORMAT_B5G6R5_UNORM,
+   [MESA_FORMAT_ARGB1555] = BRW_SURFACEFORMAT_B5G5R5A1_UNORM,
+   [MESA_FORMAT_ARGB4444] = BRW_SURFACEFORMAT_B4G4R4A4_UNORM,
+   [MESA_FORMAT_YCBCR_REV] = BRW_SURFACEFORMAT_YCRCB_NORMAL,
+   [MESA_FORMAT_YCBCR] = BRW_SURFACEFORMAT_YCRCB_SWAPUVY,
+   [MESA_FORMAT_RGB_FXT1] = BRW_SURFACEFORMAT_FXT1,
+   [MESA_FORMAT_RGBA_FXT1] = BRW_SURFACEFORMAT_FXT1,
+   [MESA_FORMAT_RGB_DXT1] = BRW_SURFACEFORMAT_DXT1_RGB,
+   [MESA_FORMAT_RGBA_DXT1] = BRW_SURFACEFORMAT_BC1_UNORM,
+   [MESA_FORMAT_RGBA_DXT3] = BRW_SURFACEFORMAT_BC2_UNORM,
+   [MESA_FORMAT_RGBA_DXT5] = BRW_SURFACEFORMAT_BC3_UNORM,
+   [MESA_FORMAT_SRGB_DXT1] = BRW_SURFACEFORMAT_BC1_UNORM_SRGB,
+   [MESA_FORMAT_SARGB8] = BRW_SURFACEFORMAT_B8G8R8A8_UNORM_SRGB,
+   [MESA_FORMAT_SLA8] = BRW_SURFACEFORMAT_L8A8_UNORM_SRGB,
+   [MESA_FORMAT_SL8] = BRW_SURFACEFORMAT_L8_UNORM_SRGB,
+   [MESA_FORMAT_DUDV8] = BRW_SURFACEFORMAT_R8G8_SNORM,
+   [MESA_FORMAT_SIGNED_RGBA8888_REV] = BRW_SURFACEFORMAT_R8G8B8A8_SNORM,
+};
 
 static GLuint translate_tex_format( gl_format mesa_format,
                                     GLenum internal_format,
 				    GLenum depth_mode )
 {
    switch( mesa_format ) {
-   case MESA_FORMAT_L8:
-      return BRW_SURFACEFORMAT_L8_UNORM;
-
-   case MESA_FORMAT_I8:
-      return BRW_SURFACEFORMAT_I8_UNORM;
-
-   case MESA_FORMAT_A8:
-      return BRW_SURFACEFORMAT_A8_UNORM; 
-
-   case MESA_FORMAT_AL88:
-      return BRW_SURFACEFORMAT_L8A8_UNORM;
-
-   case MESA_FORMAT_AL1616:
-      return BRW_SURFACEFORMAT_L16A16_UNORM;
-
-   case MESA_FORMAT_R8:
-      return BRW_SURFACEFORMAT_R8_UNORM;
-
-   case MESA_FORMAT_R16:
-      return BRW_SURFACEFORMAT_R16_UNORM;
-
-   case MESA_FORMAT_RG88:
-      return BRW_SURFACEFORMAT_R8G8_UNORM;
-
-   case MESA_FORMAT_RG1616:
-      return BRW_SURFACEFORMAT_R16G16_UNORM;
-
-   case MESA_FORMAT_RGB888:
-      assert(0);		/* not supported for sampling */
-      return BRW_SURFACEFORMAT_R8G8B8_UNORM;      
-
-   case MESA_FORMAT_ARGB8888:
-      return BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-
-   case MESA_FORMAT_XRGB8888:
-      return BRW_SURFACEFORMAT_B8G8R8X8_UNORM;
-
-   case MESA_FORMAT_RGBA8888_REV:
-      _mesa_problem(NULL, "unexpected format in i965:translate_tex_format()");
-      return BRW_SURFACEFORMAT_R8G8B8A8_UNORM;
-
-   case MESA_FORMAT_RGB565:
-      return BRW_SURFACEFORMAT_B5G6R5_UNORM;
-
-   case MESA_FORMAT_ARGB1555:
-      return BRW_SURFACEFORMAT_B5G5R5A1_UNORM;
-
-   case MESA_FORMAT_ARGB4444:
-      return BRW_SURFACEFORMAT_B4G4R4A4_UNORM;
-
-   case MESA_FORMAT_YCBCR_REV:
-      return BRW_SURFACEFORMAT_YCRCB_NORMAL;
-
-   case MESA_FORMAT_YCBCR:
-      return BRW_SURFACEFORMAT_YCRCB_SWAPUVY;
-
-   case MESA_FORMAT_RGB_FXT1:
-   case MESA_FORMAT_RGBA_FXT1:
-      return BRW_SURFACEFORMAT_FXT1;
 
    case MESA_FORMAT_Z16:
       if (depth_mode == GL_INTENSITY) 
 	  return BRW_SURFACEFORMAT_I16_UNORM;
       else if (depth_mode == GL_ALPHA)
 	  return BRW_SURFACEFORMAT_A16_UNORM;
+      else if (depth_mode == GL_RED)
+	  return BRW_SURFACEFORMAT_R16_UNORM;
       else
 	  return BRW_SURFACEFORMAT_L16_UNORM;
-
-   case MESA_FORMAT_RGB_DXT1:
-       return BRW_SURFACEFORMAT_DXT1_RGB;
-
-   case MESA_FORMAT_RGBA_DXT1:
-       return BRW_SURFACEFORMAT_BC1_UNORM;
-       
-   case MESA_FORMAT_RGBA_DXT3:
-       return BRW_SURFACEFORMAT_BC2_UNORM;
-       
-   case MESA_FORMAT_RGBA_DXT5:
-       return BRW_SURFACEFORMAT_BC3_UNORM;
-
-   case MESA_FORMAT_SARGB8:
-      return BRW_SURFACEFORMAT_B8G8R8A8_UNORM_SRGB;
-
-   case MESA_FORMAT_SLA8:
-      return BRW_SURFACEFORMAT_L8A8_UNORM_SRGB;
-
-   case MESA_FORMAT_SL8:
-      return BRW_SURFACEFORMAT_L8_UNORM_SRGB;
-
-   case MESA_FORMAT_SRGB_DXT1:
-      return BRW_SURFACEFORMAT_BC1_UNORM_SRGB;
 
    case MESA_FORMAT_S8_Z24:
       /* XXX: these different surface formats don't seem to
@@ -174,18 +124,14 @@ static GLuint translate_tex_format( gl_format mesa_format,
          return BRW_SURFACEFORMAT_I24X8_UNORM;
       else if (depth_mode == GL_ALPHA)
          return BRW_SURFACEFORMAT_A24X8_UNORM;
+      else if (depth_mode == GL_RED)
+         return BRW_SURFACEFORMAT_R24_UNORM_X8_TYPELESS;
       else
          return BRW_SURFACEFORMAT_L24X8_UNORM;
 
-   case MESA_FORMAT_DUDV8:
-      return BRW_SURFACEFORMAT_R8G8_SNORM;
-
-   case MESA_FORMAT_SIGNED_RGBA8888_REV:
-      return BRW_SURFACEFORMAT_R8G8B8A8_SNORM;
-
    default:
-      assert(0);
-      return 0;
+      assert(brw_format_for_mesa_format[mesa_format] != 0);
+      return brw_format_for_mesa_format[mesa_format];
    }
 }
 
@@ -274,6 +220,7 @@ brw_create_constant_surface(struct brw_context *brw,
 			    drm_intel_bo **out_bo,
 			    uint32_t *out_offset)
 {
+   struct intel_context *intel = &brw->intel;
    const GLint w = width - 1;
    struct brw_surface_state surf;
    void *map;
@@ -283,6 +230,9 @@ brw_create_constant_surface(struct brw_context *brw,
    surf.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
    surf.ss0.surface_type = BRW_SURFACE_BUFFER;
    surf.ss0.surface_format = BRW_SURFACEFORMAT_R32G32B32A32_FLOAT;
+
+   if (intel->gen >= 6)
+      surf.ss0.render_cache_read_write = 1;
 
    assert(bo);
    surf.ss1.base_addr = bo->offset; /* reloc */
@@ -440,45 +390,19 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 
       key.surface_type = BRW_SURFACE_2D;
       switch (irb->Base.Format) {
-      /* XRGB and ARGB are treated the same here because the chips in this
-       * family cannot render to XRGB targets.  This means that we have to
-       * mask writes to alpha (ala glColorMask) and reconfigure the alpha
-       * blending hardware to use GL_ONE (or GL_ZERO) for cases where
-       * GL_DST_ALPHA (or GL_ONE_MINUS_DST_ALPHA) is used.
-       */
-      case MESA_FORMAT_ARGB8888:
       case MESA_FORMAT_XRGB8888:
+	 /* XRGB is handled as ARGB because the chips in this family
+	  * cannot render to XRGB targets.  This means that we have to
+	  * mask writes to alpha (ala glColorMask) and reconfigure the
+	  * alpha blending hardware to use GL_ONE (or GL_ZERO) for
+	  * cases where GL_DST_ALPHA (or GL_ONE_MINUS_DST_ALPHA) is
+	  * used.
+	  */
 	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 	 break;
-      case MESA_FORMAT_SARGB8:
-	 key.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM_SRGB;
-	 break;
-      case MESA_FORMAT_RGB565:
-	 key.surface_format = BRW_SURFACEFORMAT_B5G6R5_UNORM;
-	 break;
-      case MESA_FORMAT_ARGB1555:
-	 key.surface_format = BRW_SURFACEFORMAT_B5G5R5A1_UNORM;
-	 break;
-      case MESA_FORMAT_ARGB4444:
-	 key.surface_format = BRW_SURFACEFORMAT_B4G4R4A4_UNORM;
-	 break;
-      case MESA_FORMAT_A8:
-	 key.surface_format = BRW_SURFACEFORMAT_A8_UNORM;
-	 break;
-      case MESA_FORMAT_R8:
-	 key.surface_format = BRW_SURFACEFORMAT_R8_UNORM;
-	 break;
-      case MESA_FORMAT_R16:
-	 key.surface_format = BRW_SURFACEFORMAT_R16_UNORM;
-	 break;
-      case MESA_FORMAT_RG88:
-	 key.surface_format = BRW_SURFACEFORMAT_R8G8_UNORM;
-	 break;
-      case MESA_FORMAT_RG1616:
-	 key.surface_format = BRW_SURFACEFORMAT_R16G16_UNORM;
-	 break;
       default:
-	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n", irb->Base.Format);
+	 key.surface_format = brw_format_for_mesa_format[irb->Base.Format];
+	 assert(key.surface_format != 0);
       }
       key.tiling = region->tiling;
       key.width = rb->Width;

@@ -572,6 +572,24 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
          value[3] = 0.0F;
          return;
 
+      case STATE_FB_WPOS_Y_TRANSFORM:
+         /* A driver may negate this conditional by using ZW swizzle
+          * instead of XY (based on e.g. some other state). */
+         if (ctx->DrawBuffer->Name != 0) {
+            /* Identity (XY) followed by flipping Y upside down (ZW). */
+            value[0] = 1.0F;
+            value[1] = 0.0F;
+            value[2] = -1.0F;
+            value[3] = (GLfloat) (ctx->DrawBuffer->Height - 1);
+         } else {
+            /* Flipping Y upside down (XY) followed by identity (ZW). */
+            value[0] = -1.0F;
+            value[1] = (GLfloat) (ctx->DrawBuffer->Height - 1);
+            value[2] = 1.0F;
+            value[3] = 0.0F;
+         }
+         return;
+
       case STATE_ROT_MATRIX_0:
          {
             const int unit = (int) state[2];
@@ -695,6 +713,7 @@ _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH])
          return _NEW_PIXEL;
 
       case STATE_FB_SIZE:
+      case STATE_FB_WPOS_Y_TRANSFORM:
          return _NEW_BUFFERS;
 
       default:
@@ -900,6 +919,9 @@ append_token(char *dst, gl_state_index k)
    case STATE_FB_SIZE:
       append(dst, "FbSize");
       break;
+   case STATE_FB_WPOS_Y_TRANSFORM:
+      append(dst, "FbWposYTransform");
+      break;
    case STATE_ROT_MATRIX_0:
       append(dst, "rotMatrixRow0");
       break;
@@ -1046,7 +1068,9 @@ _mesa_program_state_string(const gl_state_index state[STATE_LENGTH])
  * Loop over all the parameters in a parameter list.  If the parameter
  * is a GL state reference, look up the current value of that state
  * variable and put it into the parameter's Value[4] array.
- * This would be called at glBegin time when using a fragment program.
+ * Other parameter types never change or are explicitly set by the user
+ * with glUniform() or glProgramParameter(), etc.
+ * This would be called at glBegin time.
  */
 void
 _mesa_load_state_parameters(struct gl_context *ctx,
@@ -1057,12 +1081,10 @@ _mesa_load_state_parameters(struct gl_context *ctx,
    if (!paramList)
       return;
 
-   /*assert(ctx->Driver.NeedFlush == 0);*/
-
    for (i = 0; i < paramList->NumParameters; i++) {
       if (paramList->Parameters[i].Type == PROGRAM_STATE_VAR) {
          _mesa_fetch_state(ctx,
-			   (gl_state_index *) paramList->Parameters[i].StateIndexes,
+			   paramList->Parameters[i].StateIndexes,
                            paramList->ParameterValues[i]);
       }
    }

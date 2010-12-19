@@ -33,9 +33,12 @@ struct shader;
 struct vg_paint;
 struct vg_context;
 struct vg_image;
+struct matrix;
 
 struct shader *shader_create(struct vg_context *context);
 void shader_destroy(struct shader *shader);
+
+void shader_set_color_transform(struct shader *shader, VGboolean set);
 
 void shader_set_masking(struct shader *shader, VGboolean set);
 VGboolean shader_is_masking(struct shader *shader);
@@ -50,6 +53,10 @@ void shader_set_drawing_image(struct shader *shader, VGboolean drawing_image);
 VGboolean shader_drawing_image(struct shader *shader);
 
 void shader_set_image(struct shader *shader, struct vg_image *img);
+
+void shader_set_surface_matrix(struct shader *shader,
+                               const struct matrix *mat);
+void shader_set_paint_matrix(struct shader *shader, const struct matrix *mat);
 
 void shader_bind(struct shader *shader);
 

@@ -52,9 +52,8 @@ struct brw_screen
 
 union brw_surface_id {
    struct {
-      unsigned face:3;
-      unsigned zslice:13;
       unsigned level:16;
+      unsigned layer:16;
    } bits;
    unsigned value;
 };
@@ -63,8 +62,9 @@ union brw_surface_id {
 struct brw_surface
 {
    struct pipe_surface base;
-   
+
    union brw_surface_id id;
+   unsigned offset;
    unsigned cpp;
    unsigned pitch;
    unsigned draw_offset;
@@ -95,8 +95,6 @@ brw_surface(struct pipe_surface *surface)
 
 unsigned
 brw_surface_pitch( const struct pipe_surface *surface );
-
-void brw_screen_tex_surface_init( struct brw_screen *brw_screen );
 
 
 #endif /* BRW_SCREEN_H */

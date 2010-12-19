@@ -26,7 +26,7 @@
 
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
-#include "nouveau_class.h"
+#include "nv20_3d.xml.h"
 #include "nv10_driver.h"
 #include "nv20_driver.h"
 
@@ -40,15 +40,15 @@ nv20_emit_tex_env(struct gl_context *ctx, int emit)
 
 	nv10_get_general_combiner(ctx, i, &a_in, &a_out, &c_in, &c_out, &k);
 
-	BEGIN_RING(chan, kelvin, NV20TCL_RC_IN_ALPHA(i), 1);
+	BEGIN_RING(chan, kelvin, NV20_3D_RC_IN_ALPHA(i), 1);
 	OUT_RING(chan, a_in);
-	BEGIN_RING(chan, kelvin, NV20TCL_RC_OUT_ALPHA(i), 1);
+	BEGIN_RING(chan, kelvin, NV20_3D_RC_OUT_ALPHA(i), 1);
 	OUT_RING(chan, a_out);
-	BEGIN_RING(chan, kelvin, NV20TCL_RC_IN_RGB(i), 1);
+	BEGIN_RING(chan, kelvin, NV20_3D_RC_IN_RGB(i), 1);
 	OUT_RING(chan, c_in);
-	BEGIN_RING(chan, kelvin, NV20TCL_RC_OUT_RGB(i), 1);
+	BEGIN_RING(chan, kelvin, NV20_3D_RC_OUT_RGB(i), 1);
 	OUT_RING(chan, c_out);
-	BEGIN_RING(chan, kelvin, NV20TCL_RC_CONSTANT_COLOR0(i), 1);
+	BEGIN_RING(chan, kelvin, NV20_3D_RC_CONSTANT_COLOR0(i), 1);
 	OUT_RING(chan, k);
 
 	context_dirty(ctx, FRAG);
@@ -64,10 +64,10 @@ nv20_emit_frag(struct gl_context *ctx, int emit)
 
 	nv10_get_final_combiner(ctx, &in, &n);
 
-	BEGIN_RING(chan, kelvin, NV20TCL_RC_FINAL0, 2);
+	BEGIN_RING(chan, kelvin, NV20_3D_RC_FINAL0, 2);
 	OUT_RING(chan, in);
 	OUT_RING(chan, in >> 32);
 
-	BEGIN_RING(chan, kelvin, NV20TCL_RC_ENABLE, 1);
+	BEGIN_RING(chan, kelvin, NV20_3D_RC_ENABLE, 1);
 	OUT_RING(chan, n);
 }

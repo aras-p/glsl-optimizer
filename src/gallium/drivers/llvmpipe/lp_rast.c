@@ -47,6 +47,7 @@
 #ifdef DEBUG
 int jit_line = 0;
 const struct lp_rast_state *jit_state = NULL;
+const struct lp_rasterizer_task *jit_task = NULL;
 #endif
 
 
@@ -119,8 +120,8 @@ lp_rast_tile_begin(struct lp_rasterizer_task *task,
           * and update the tile's layout info.
           */
          (void) llvmpipe_get_texture_tile(lpt,
-                                          zsbuf->face + zsbuf->zslice,
-                                          zsbuf->level,
+                                          zsbuf->u.tex.first_layer,
+                                          zsbuf->u.tex.level,
                                           usage,
                                           task->x,
                                           task->y);
@@ -288,7 +289,6 @@ lp_rast_clear_zstencil(struct lp_rasterizer_task *task,
 
 
 
-
 /**
  * Convert the color tile from tiled to linear layout.
  * This is generally only done when we're flushing the scene just prior to
@@ -306,15 +306,15 @@ lp_rast_store_linear_color( struct lp_rasterizer_task *task )
 
    for (buf = 0; buf < scene->fb.nr_cbufs; buf++) {
       struct pipe_surface *cbuf = scene->fb.cbufs[buf];
-      const unsigned face_slice = cbuf->face + cbuf->zslice;
-      const unsigned level = cbuf->level;
+      const unsigned layer = cbuf->u.tex.first_layer;
+      const unsigned level = cbuf->u.tex.level;
       struct llvmpipe_resource *lpt = llvmpipe_resource(cbuf->texture);
 
       if (!task->color_tiles[buf])
          continue;
 
       llvmpipe_unswizzle_cbuf_tile(lpt,
-                                   face_slice,
+                                   layer,
                                    level,
                                    task->x, task->y,
                                    task->color_tiles[buf]);
@@ -362,7 +362,7 @@ lp_rast_shade_tile(struct lp_rasterizer_task *task,
          depth = lp_rast_get_depth_block_pointer(task, tile_x + x, tile_y + y);
 
          /* run shader on 4x4 block */
-         BEGIN_JIT_CALL(state);
+         BEGIN_JIT_CALL(state, task);
          variant->jit_function[RAST_WHOLE]( &state->jit_context,
                                             tile_x + x, tile_y + y,
                                             inputs->frontfacing,
@@ -443,7 +443,7 @@ lp_rast_shade_quads_mask(struct lp_rasterizer_task *task,
    assert(lp_check_alignment(state->jit_context.blend_color, 16));
 
    /* run shader on 4x4 block */
-   BEGIN_JIT_CALL(state);
+   BEGIN_JIT_CALL(state, task);
    variant->jit_function[RAST_EDGE_TEST](&state->jit_context,
                                          x, y,
                                          inputs->frontfacing,

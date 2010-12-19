@@ -29,7 +29,6 @@
 #include "main/imports.h"
 #include "main/mipmap.h"
 #include "main/teximage.h"
-#include "main/texformat.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
@@ -80,11 +79,15 @@ st_render_mipmap(struct st_context *st,
    const uint face = _mesa_tex_target_to_face(target);
 
    assert(psv->texture == stObj->pt);
-   assert(target != GL_TEXTURE_3D); /* not done yet */
+#if 0
+   assert(target != GL_TEXTURE_3D); /* implemented but untested */
+#endif
 
    /* check if we can render in the texture's format */
-   if (!screen->is_format_supported(screen, psv->format, psv->texture->target, 0,
-                                    PIPE_BIND_RENDER_TARGET, 0)) {
+   /* XXX should probably kill this and always use util_gen_mipmap
+      since this implements a sw fallback as well */
+   if (!screen->is_format_supported(screen, psv->format, psv->texture->target,
+                                    0, PIPE_BIND_RENDER_TARGET, 0)) {
       return FALSE;
    }
 
@@ -162,12 +165,12 @@ fallback_generate_mipmap(struct gl_context *ctx, GLenum target,
    struct pipe_resource *pt = st_get_texobj_resource(texObj);
    const uint baseLevel = texObj->BaseLevel;
    const uint lastLevel = pt->last_level;
-   const uint face = _mesa_tex_target_to_face(target), zslice = 0;
+   const uint face = _mesa_tex_target_to_face(target);
    uint dstLevel;
    GLenum datatype;
    GLuint comps;
    GLboolean compressed;
-   
+
    if (ST_DEBUG & DEBUG_FALLBACK)
       debug_printf("%s: fallback processing\n", __FUNCTION__);
 
@@ -199,16 +202,15 @@ fallback_generate_mipmap(struct gl_context *ctx, GLenum target,
       ubyte *dstData;
       int srcStride, dstStride;
 
-      srcTrans = pipe_get_transfer(st_context(ctx)->pipe, pt, face,
-						srcLevel, zslice,
-						PIPE_TRANSFER_READ, 0, 0,
-                                                srcWidth, srcHeight);
-						
+      srcTrans = pipe_get_transfer(st_context(ctx)->pipe, pt, srcLevel,
+                                   face,
+                                   PIPE_TRANSFER_READ, 0, 0,
+                                   srcWidth, srcHeight);
 
-      dstTrans = pipe_get_transfer(st_context(ctx)->pipe, pt, face,
-						dstLevel, zslice,
-						PIPE_TRANSFER_WRITE, 0, 0,
-						dstWidth, dstHeight);
+      dstTrans = pipe_get_transfer(st_context(ctx)->pipe, pt, dstLevel,
+                                   face,
+                                   PIPE_TRANSFER_WRITE, 0, 0,
+                                   dstWidth, dstHeight);
 
       srcData = (ubyte *) pipe_transfer_map(pipe, srcTrans);
       dstData = (ubyte *) pipe_transfer_map(pipe, dstTrans);
@@ -216,6 +218,8 @@ fallback_generate_mipmap(struct gl_context *ctx, GLenum target,
       srcStride = srcTrans->stride / util_format_get_blocksize(srcTrans->resource->format);
       dstStride = dstTrans->stride / util_format_get_blocksize(dstTrans->resource->format);
 
+     /* this cannot work correctly for 3d since it does
+        not respect layerStride. */
       if (compressed) {
          const enum pipe_format format = pt->format;
          const uint bw = util_format_get_blockwidth(format);
@@ -366,6 +370,12 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
 
       pt = stObj->pt;
    }
+   else {
+      /* Make sure that the base texture image data is present in the
+       * texture buffer.
+       */
+      st_finalize_texture(ctx, st->pipe, texObj);
+   }
 
    assert(pt->last_level >= lastLevel);
 
@@ -373,6 +383,8 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
     * use the software fallback.
     */
    if (!st_render_mipmap(st, target, stObj, baseLevel, lastLevel)) {
+      /* since the util code actually also has a fallback, should
+         probably make it never fail and kill this */
       fallback_generate_mipmap(ctx, target, texObj);
    }
 
@@ -400,9 +412,8 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
 
       /* initialize new image */
       _mesa_init_teximage_fields(ctx, target, dstImage, dstWidth, dstHeight,
-                                 dstDepth, border, srcImage->InternalFormat);
-
-      dstImage->TexFormat = srcImage->TexFormat;
+                                 dstDepth, border, srcImage->InternalFormat,
+                                 srcImage->TexFormat);
 
       stImage = st_texture_image(dstImage);
       stImage->level = dstLevel;

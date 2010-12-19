@@ -127,8 +127,8 @@ update_array(struct gl_context *ctx,
    GLsizei elementSize;
    GLenum format = GL_RGBA;
 
-   if (ctx->API != API_OPENGLES) {
-      /* fixed point arrays / data is only allowed with OpenGL ES 1.x */
+   if (ctx->API != API_OPENGLES && ctx->API != API_OPENGLES2) {
+      /* fixed point arrays / data is only allowed with OpenGL ES 1.x/2.0 */
       legalTypesMask &= ~FIXED_BIT;
    }
 
@@ -297,7 +297,8 @@ _mesa_TexCoordPointer(GLint size, GLenum type, GLsizei stride,
                       const GLvoid *ptr)
 {
    GLbitfield legalTypes = (SHORT_BIT | INT_BIT |
-                            HALF_BIT | FLOAT_BIT | DOUBLE_BIT);
+                            HALF_BIT | FLOAT_BIT | DOUBLE_BIT |
+                            FIXED_BIT);
    GET_CURRENT_CONTEXT(ctx);
    const GLuint unit = ctx->Array.ActiveTexture;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);

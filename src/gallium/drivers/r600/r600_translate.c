@@ -41,6 +41,8 @@ void r600_begin_vertex_translate(struct r600_pipe_context *rctx)
 	struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {0}, *out_transfer;
 	struct pipe_resource *out_buffer;
 	unsigned i, num_verts;
+	struct pipe_vertex_element new_velems[PIPE_MAX_ATTRIBS];
+	void *tmp;
 
 	/* Initialize the translate key, i.e. the recipe how vertices should be
 	 * translated. */
@@ -51,9 +53,7 @@ void r600_begin_vertex_translate(struct r600_pipe_context *rctx)
 		unsigned output_format_size = ve->hw_format_size[i];
 
 		/* Check for support. */
-		if (ve->elements[i].src_format == ve->hw_format[i] &&
-		    (vb->buffer_offset + ve->elements[i].src_offset) % 4 == 0 &&
-		    vb->stride % 4 == 0) {
+		if (ve->elements[i].src_format == ve->hw_format[i]) {
 			continue;
 		}
 
@@ -147,28 +147,22 @@ void r600_begin_vertex_translate(struct r600_pipe_context *rctx)
 	}
 
 	/* Save and replace vertex elements. */
-	{
-		struct pipe_vertex_element new_velems[PIPE_MAX_ATTRIBS];
-
-		rctx->tran.saved_velems = rctx->vertex_elements;
-
-		for (i = 0; i < ve->count; i++) {
-			if (vb_translated[ve->elements[i].vertex_buffer_index]) {
-				te = &key.element[tr_elem_index[i]];
-				new_velems[i].instance_divisor = ve->elements[i].instance_divisor;
-				new_velems[i].src_format = te->output_format;
-				new_velems[i].src_offset = te->output_offset;
-				new_velems[i].vertex_buffer_index = rctx->tran.vb_slot;
-			} else {
-				memcpy(&new_velems[i], &ve->elements[i],
-				       sizeof(struct pipe_vertex_element));
-			}
+	for (i = 0; i < ve->count; i++) {
+		if (vb_translated[ve->elements[i].vertex_buffer_index]) {
+			te = &key.element[tr_elem_index[i]];
+			new_velems[i].instance_divisor = ve->elements[i].instance_divisor;
+			new_velems[i].src_format = te->output_format;
+			new_velems[i].src_offset = te->output_offset;
+			new_velems[i].vertex_buffer_index = rctx->tran.vb_slot;
+		} else {
+			memcpy(&new_velems[i], &ve->elements[i],
+					sizeof(struct pipe_vertex_element));
 		}
-
-		rctx->tran.new_velems =
-			pipe->create_vertex_elements_state(pipe, ve->count, new_velems);
-		pipe->bind_vertex_elements_state(pipe, rctx->tran.new_velems);
 	}
+
+	tmp = pipe->create_vertex_elements_state(pipe, ve->count, new_velems);
+	pipe->bind_vertex_elements_state(pipe, tmp);
+	rctx->tran.new_velems = tmp;
 
 	pipe_resource_reference(&out_buffer, NULL);
 }
@@ -177,13 +171,15 @@ void r600_end_vertex_translate(struct r600_pipe_context *rctx)
 {
 	struct pipe_context *pipe = &rctx->context;
 
+	if (rctx->tran.new_velems == NULL) {
+		return;
+	}
 	/* Restore vertex elements. */
-	pipe->bind_vertex_elements_state(pipe, rctx->tran.saved_velems);
 	pipe->delete_vertex_elements_state(pipe, rctx->tran.new_velems);
+	rctx->tran.new_velems = NULL;
 
 	/* Delete the now-unused VBO. */
-	pipe_resource_reference(&rctx->vertex_buffer[rctx->tran.vb_slot].buffer,
-				NULL);
+	pipe_resource_reference(&rctx->vertex_buffer[rctx->tran.vb_slot].buffer, NULL);
 }
 
 void r600_translate_index_buffer(struct r600_pipe_context *r600,
@@ -197,14 +193,7 @@ void r600_translate_index_buffer(struct r600_pipe_context *r600,
 		*index_size = 2;
 		*start = 0;
 		break;
-
 	case 2:
-		if (*start % 2 != 0) {
-			util_rebuild_ushort_elts(&r600->context, index_buffer, 0, *start, count);
-			*start = 0;
-		}
-		break;
-
 	case 4:
 		break;
 	}

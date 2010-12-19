@@ -205,6 +205,8 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    case ir_unop_round_even:
    case ir_unop_sin:
    case ir_unop_cos:
+   case ir_unop_sin_reduced:
+   case ir_unop_cos_reduced:
    case ir_unop_dFdx:
    case ir_unop_dFdy:
       for (i = 0; i < vector_elements; i++) {
@@ -288,34 +290,6 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
       break;
    }
 
-   case ir_binop_cross: {
-      for (i = 0; i < vector_elements; i++) {
-	 int swiz0 = (i + 1) % 3;
-	 int swiz1 = (i + 2) % 3;
-	 ir_expression *temp1, *temp2;
-
-	 temp1 = new(mem_ctx) ir_expression(ir_binop_mul,
-					    element_type,
-					    get_element(op_var[0], swiz0),
-					    get_element(op_var[1], swiz1));
-
-	 temp2 = new(mem_ctx) ir_expression(ir_binop_mul,
-					    element_type,
-					    get_element(op_var[1], swiz0),
-					    get_element(op_var[0], swiz1));
-
-	 temp2 = new(mem_ctx) ir_expression(ir_unop_neg,
-					    element_type,
-					    temp2,
-					    NULL);
-
-	 assign(ir, i, new(mem_ctx) ir_expression(ir_binop_add,
-						  element_type,
-						  temp1, temp2));
-      }
-      break;
-   }
-
    case ir_binop_logic_and:
    case ir_binop_logic_xor:
    case ir_binop_logic_or:
@@ -355,6 +329,9 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
    }
    case ir_unop_noise:
       assert(!"noise should have been broken down to function call");
+      break;
+   case ir_quadop_vector:
+      assert(!"should have been lowered");
       break;
    }
 

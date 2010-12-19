@@ -708,7 +708,7 @@ do_common_optimization(exec_list *ir, bool linked, unsigned max_unroll_iteration
 {
    GLboolean progress = GL_FALSE;
 
-   progress = do_sub_to_add_neg(ir) || progress;
+   progress = lower_instructions(ir, SUB_TO_ADD_NEG) || progress;
 
    if (linked) {
       progress = do_function_inlining(ir) || progress;
@@ -716,6 +716,7 @@ do_common_optimization(exec_list *ir, bool linked, unsigned max_unroll_iteration
    }
    progress = do_structure_splitting(ir) || progress;
    progress = do_if_simplification(ir) || progress;
+   progress = do_discard_simplification(ir) || progress;
    progress = do_copy_propagation(ir) || progress;
    if (linked)
       progress = do_dead_code(ir) || progress;

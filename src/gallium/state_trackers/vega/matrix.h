@@ -129,7 +129,7 @@ static INLINE void matrix_make_affine(struct matrix *matrix)
 }
 
 static INLINE void matrix_mult(struct matrix *dst,
-                               struct matrix *src)
+                               const struct matrix *src)
 {
    VGfloat m11 = dst->m[0]*src->m[0] + dst->m[3]*src->m[1] + dst->m[6]*src->m[2];
    VGfloat m12 = dst->m[0]*src->m[3] + dst->m[3]*src->m[4] + dst->m[6]*src->m[5];

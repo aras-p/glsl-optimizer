@@ -36,7 +36,6 @@
 #include "pipe/p_compiler.h"
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
-#include <pipebuffer/pb_bufmgr.h>
 #include "r600_priv.h"
 
 #define GROUP_FORCE_NEW_BLOCK	0
@@ -577,6 +576,12 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 		if (r)
 			goto out_err;
 	}
+	/* FS RESOURCE */
+	for (int j = 0, offset = 0x7C00; j < 16; j++, offset += 0x20) {
+		r = evergreen_state_resource_init(ctx, offset);
+		if (r)
+			goto out_err;
+	}
 
 	/* PS loop const */
 	evergreen_loop_const_init(ctx, 0);
@@ -682,6 +687,13 @@ void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, stru
 void evergreen_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
 {
 	unsigned offset = R_030000_SQ_TEX_RESOURCE_WORD0_0 + 0x1600 + 0x20 * rid;
+
+	evergreen_context_pipe_state_set_resource(ctx, state, offset);
+}
+
+void evergreen_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
+{
+	unsigned offset = R_030000_SQ_TEX_RESOURCE_WORD0_0 + 0x7C00 + 0x20 * rid;
 
 	evergreen_context_pipe_state_set_resource(ctx, state, offset);
 }
@@ -842,7 +854,7 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_draw_initiator;
 	}
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT;
+	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
 
 	/* flush color buffer */
 	for (int i = 0; i < 12; i++) {
@@ -914,6 +926,13 @@ void evergreen_ps_resource_set(struct r600_context *ctx, struct r600_pipe_state 
 void evergreen_vs_resource_set(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
 {
 	unsigned offset = R_030000_RESOURCE0_WORD0 + 0x1600 + 0x20 * rid;
+
+	evergreen_resource_set(ctx, state, offset);
+}
+
+void evergreen_fs_resource_set(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
+{
+	unsigned offset = R_030000_RESOURCE0_WORD0 + 0x7C00 + 0x20 * rid;
 
 	evergreen_resource_set(ctx, state, offset);
 }

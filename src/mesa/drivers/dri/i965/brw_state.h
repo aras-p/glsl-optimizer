@@ -164,7 +164,8 @@ void brw_destroy_caches( struct brw_context *brw );
 /***********************************************************************
  * brw_state_batch.c
  */
-#define BRW_BATCH_STRUCT(brw, s) intel_batchbuffer_data( brw->intel.batch, (s), sizeof(*(s)))
+#define BRW_BATCH_STRUCT(brw, s) intel_batchbuffer_data(brw->intel.batch, (s), \
+							sizeof(*(s)), false)
 #define BRW_CACHED_BATCH_STRUCT(brw, s) brw_cached_batch_struct( brw, (s), sizeof(*(s)) )
 
 GLboolean brw_cached_batch_struct( struct brw_context *brw,

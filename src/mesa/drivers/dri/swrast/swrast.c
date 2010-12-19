@@ -48,7 +48,6 @@
 #include "utils.h"
 
 #include "main/teximage.h"
-#include "main/texfetch.h"
 #include "main/texformat.h"
 #include "main/texstate.h"
 
@@ -69,6 +68,7 @@ static void swrastSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
     struct gl_texture_object *texObj;
     struct gl_texture_image *texImage;
     uint32_t internalFormat;
+    gl_format texFormat;
 
     dri_ctx = pDRICtx->driverPrivate;
 
@@ -82,15 +82,13 @@ static void swrastSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
 
     sPriv->swrast_loader->getDrawableInfo(dPriv, &x, &y, &w, &h, dPriv->loaderPrivate);
 
-    _mesa_init_teximage_fields(&dri_ctx->Base, target, texImage,
-			       w, h, 1, 0, internalFormat);
-
     if (texture_format == __DRI_TEXTURE_FORMAT_RGB)
-	texImage->TexFormat = MESA_FORMAT_XRGB8888;
+	texFormat = MESA_FORMAT_XRGB8888;
     else
-	texImage->TexFormat = MESA_FORMAT_ARGB8888;
+	texFormat = MESA_FORMAT_ARGB8888;
 
-    _mesa_set_fetch_functions(texImage, 2);
+    _mesa_init_teximage_fields(&dri_ctx->Base, target, texImage,
+			       w, h, 1, 0, internalFormat, texFormat);
 
     sPriv->swrast_loader->getImage(dPriv, x, y, w, h, (char *)texImage->Data,
 				   dPriv->loaderPrivate);

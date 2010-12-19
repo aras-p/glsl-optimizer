@@ -69,12 +69,43 @@ static GLuint translate_wrap_mode( GLenum wrap )
 static drm_intel_bo *upload_default_color( struct brw_context *brw,
 				     const GLfloat *color )
 {
-   struct brw_sampler_default_color sdc;
+   struct intel_context *intel = &brw->intel;
 
-   COPY_4V(sdc.color, color); 
-   
-   return brw_cache_data(&brw->cache, BRW_SAMPLER_DEFAULT_COLOR,
-			 &sdc, sizeof(sdc));
+   if (intel->gen >= 5) {
+      struct gen5_sampler_default_color sdc;
+
+      memset(&sdc, 0, sizeof(sdc));
+
+      UNCLAMPED_FLOAT_TO_UBYTE(sdc.ub[0], color[0]);
+      UNCLAMPED_FLOAT_TO_UBYTE(sdc.ub[1], color[1]);
+      UNCLAMPED_FLOAT_TO_UBYTE(sdc.ub[2], color[2]);
+      UNCLAMPED_FLOAT_TO_UBYTE(sdc.ub[3], color[3]);
+
+      UNCLAMPED_FLOAT_TO_USHORT(sdc.us[0], color[0]);
+      UNCLAMPED_FLOAT_TO_USHORT(sdc.us[1], color[1]);
+      UNCLAMPED_FLOAT_TO_USHORT(sdc.us[2], color[2]);
+      UNCLAMPED_FLOAT_TO_USHORT(sdc.us[3], color[3]);
+
+      UNCLAMPED_FLOAT_TO_SHORT(sdc.s[0], color[0]);
+      UNCLAMPED_FLOAT_TO_SHORT(sdc.s[1], color[1]);
+      UNCLAMPED_FLOAT_TO_SHORT(sdc.s[2], color[2]);
+      UNCLAMPED_FLOAT_TO_SHORT(sdc.s[3], color[3]);
+
+      /* XXX: Fill in half floats */
+      /* XXX: Fill in signed bytes */
+
+      COPY_4V(sdc.f, color);
+
+      return brw_cache_data(&brw->cache, BRW_SAMPLER_DEFAULT_COLOR,
+			    &sdc, sizeof(sdc));
+   } else {
+      struct brw_sampler_default_color sdc;
+
+      COPY_4V(sdc.color, color);
+
+      return brw_cache_data(&brw->cache, BRW_SAMPLER_DEFAULT_COLOR,
+			    &sdc, sizeof(sdc));
+   }
 }
 
 

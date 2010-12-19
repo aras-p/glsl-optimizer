@@ -43,12 +43,8 @@ struct r300_vertex_shader;
 struct r300_stencilref_context;
 
 struct r300_atom {
-    /* List pointers. */
-    struct r300_atom *prev, *next;
     /* Name, for debugging. */
     const char* name;
-    /* Stat counter. */
-    uint64_t counter;
     /* Opaque state. */
     void* state;
     /* Emit the state to the context. */
@@ -258,6 +254,8 @@ struct r300_constant_buffer {
     uint32_t *ptr;
     /* Remapping table. */
     unsigned *remap_table;
+    /* const buffer base */
+    uint32_t buffer_base;
 };
 
 /* Query object.
@@ -282,6 +280,7 @@ struct r300_query {
 
     /* The buffer where query results are stored. */
     struct r300_winsys_buffer *buffer;
+    struct r300_winsys_cs_buffer *cs_buffer;
     /* The size of the buffer. */
     unsigned buffer_size;
     /* The domain of the buffer. */
@@ -313,6 +312,7 @@ struct r300_surface {
 
     /* Winsys buffer backing the texture. */
     struct r300_winsys_buffer *buffer;
+    struct r300_winsys_cs_buffer *cs_buffer;
 
     enum r300_buffer_domain domain;
 
@@ -396,6 +396,7 @@ struct r300_texture {
 
     /* Pipe buffer backing this texture. */
     struct r300_winsys_buffer *buffer;
+    struct r300_winsys_cs_buffer *cs_buffer;
 
     /* Registers carrying texture format data. */
     /* Only format-independent bits should be filled in. */
@@ -480,6 +481,10 @@ struct r300_context {
      * dummy texture there. */
     struct r300_sampler_view *texkill_sampler;
 
+    /* When no vertex buffer is set, this one is used instead to prevent
+     * hardlocks. */
+    struct pipe_resource *dummy_vb;
+
     /* The currently active query. */
     struct r300_query *query_current;
     /* The saved query for blitter operations. */
@@ -488,65 +493,68 @@ struct r300_context {
     struct r300_query query_list;
 
     /* Various CSO state objects. */
-    /* Beginning of atom list. */
-    struct r300_atom atom_list;
+
+    /* Each atom is emitted in the order it appears here, which can affect
+     * performance and stability if not handled with care. */
+    /* GPU flush. */
+    struct r300_atom gpu_flush;
     /* Anti-aliasing (MSAA) state. */
     struct r300_atom aa_state;
+    /* Framebuffer state. */
+    struct r300_atom fb_state;
+    /* HyperZ state (various SC/ZB bits). */
+    struct r300_atom hyperz_state;
+    /* ZTOP state. */
+    struct r300_atom ztop_state;
+    /* Depth, stencil, and alpha state. */
+    struct r300_atom dsa_state;
     /* Blend state. */
     struct r300_atom blend_state;
     /* Blend color state. */
     struct r300_atom blend_color_state;
+    /* Scissor state. */
+    struct r300_atom scissor_state;
+    /* Invariant state. This must be emitted to get the engine started. */
+    struct r300_atom invariant_state;
+    /* Viewport state. */
+    struct r300_atom viewport_state;
+    /* PVS flush. */
+    struct r300_atom pvs_flush;
+    /* VAP invariant state. */
+    struct r300_atom vap_invariant_state;
+    /* Vertex stream formatting state. */
+    struct r300_atom vertex_stream_state;
+    /* Vertex shader. */
+    struct r300_atom vs_state;
     /* User clip planes. */
     struct r300_atom clip_state;
-    /* Depth, stencil, and alpha state. */
-    struct r300_atom dsa_state;
+    /* RS block state + VAP (vertex shader) output mapping state. */
+    struct r300_atom rs_block_state;
+    /* Rasterizer state. */
+    struct r300_atom rs_state;
+    /* Framebuffer state (pipelined regs). */
+    struct r300_atom fb_state_pipelined;
     /* Fragment shader. */
     struct r300_atom fs;
     /* Fragment shader RC_CONSTANT_STATE variables. */
     struct r300_atom fs_rc_constant_state;
     /* Fragment shader constant buffer. */
     struct r300_atom fs_constants;
-    /* Framebuffer state. */
-    struct r300_atom fb_state;
-    /* Framebuffer state (pipelined regs). */
-    struct r300_atom fb_state_pipelined;
-    /* HyperZ state (various SC/ZB bits). */
-    struct r300_atom hyperz_state;
-    /* Occlusion query. */
-    struct r300_atom query_start;
-    /* Rasterizer state. */
-    struct r300_atom rs_state;
-    /* RS block state + VAP (vertex shader) output mapping state. */
-    struct r300_atom rs_block_state;
-    /* Scissor state. */
-    struct r300_atom scissor_state;
-    /* Textures state. */
-    struct r300_atom textures_state;
-    /* Vertex stream formatting state. */
-    struct r300_atom vertex_stream_state;
-    /* Vertex shader. */
-    struct r300_atom vs_state;
     /* Vertex shader constant buffer. */
     struct r300_atom vs_constants;
-    /* Viewport state. */
-    struct r300_atom viewport_state;
-    /* ZTOP state. */
-    struct r300_atom ztop_state;
-    /* PVS flush. */
-    struct r300_atom pvs_flush;
-    /* VAP invariant state. */
-    struct r300_atom vap_invariant_state;
     /* Texture cache invalidate. */
     struct r300_atom texture_cache_inval;
-    /* GPU flush. */
-    struct r300_atom gpu_flush;
+    /* Textures state. */
+    struct r300_atom textures_state;
     /* HiZ clear */
     struct r300_atom hiz_clear;
     /* zmask clear */
     struct r300_atom zmask_clear;
+    /* Occlusion query. */
+    struct r300_atom query_start;
 
-    /* Invariant state. This must be emitted to get the engine started. */
-    struct r300_atom invariant_state;
+    /* The pointers to the first and the last atom. */
+    struct r300_atom *first_dirty, *last_dirty;
 
     /* Vertex buffers for Gallium. */
     struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
@@ -595,11 +603,28 @@ struct r300_context {
     struct u_upload_mgr *upload_vb;
     struct u_upload_mgr *upload_ib;
 
-    struct util_mempool pool_transfers;
+    struct util_slab_mempool pool_transfers;
 
     /* Stat counter. */
     uint64_t flush_counter;
+
+    /* const tracking for VS */
+    int vs_const_base;
+
+    /* AOS (PACKET3_3D_LOAD_VBPNTR) command buffer for the case offset=0. */
+    uint32_t aos_cb[(16 * 3 + 1) / 2];
+    boolean aos_dirty;
+
+    /* Whether any buffer (FB, textures, VBOs) has been set, but buffers
+     * haven't been validated yet. */
+    boolean validate_buffers;
 };
+
+#define foreach_atom(r300, atom) \
+    for (atom = &r300->gpu_flush; atom != (&r300->query_start)+1; atom++)
+
+#define foreach_dirty_atom(r300, atom) \
+    for (atom = r300->first_dirty; atom != r300->last_dirty; atom++)
 
 /* Convenience cast wrappers. */
 static INLINE struct r300_query* r300_query(struct pipe_query* q)
@@ -645,8 +670,8 @@ void r300_init_resource_functions(struct r300_context* r300);
 /* r300_blit.c */
 void r300_flush_depth_stencil(struct pipe_context *pipe,
                               struct pipe_resource *dst,
-                              struct pipe_subresource subdst,
-                              unsigned zslice);
+                              unsigned level,
+                              unsigned layer);
 
 /* r300_query.c */
 void r300_resume_query(struct r300_context *r300,
@@ -666,7 +691,6 @@ void r300_plug_in_stencil_ref_fallback(struct r300_context *r300);
 
 /* r300_render.c */
 void r300_draw_flush_vbuf(struct r300_context *r300);
-boolean r500_index_bias_supported(struct r300_context *r300);
 void r500_emit_index_bias(struct r300_context *r300, int index_bias);
 
 /* r300_state.c */
@@ -679,6 +703,22 @@ enum r300_fb_state_change {
 void r300_mark_fb_state_dirty(struct r300_context *r300,
                               enum r300_fb_state_change change);
 void r300_mark_fs_code_dirty(struct r300_context *r300);
+
+static INLINE void r300_mark_atom_dirty(struct r300_context *r300,
+                                        struct r300_atom *atom)
+{
+    atom->dirty = TRUE;
+
+    if (!r300->first_dirty) {
+        r300->first_dirty = atom;
+        r300->last_dirty = atom+1;
+    } else {
+        if (atom < r300->first_dirty)
+            r300->first_dirty = atom;
+        if (atom+1 > r300->last_dirty)
+            r300->last_dirty = atom+1;
+    }
+}
 
 /* r300_debug.c */
 void r500_dump_rs_block(struct r300_rs_block *rs);

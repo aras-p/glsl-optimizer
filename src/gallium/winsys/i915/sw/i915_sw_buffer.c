@@ -4,28 +4,15 @@
 
 static struct i915_winsys_buffer *
 i915_sw_buffer_create(struct i915_winsys *iws,
-                      unsigned size, unsigned alignment,
+                      unsigned size,
                       enum i915_winsys_buffer_type type)
 {
    struct i915_sw_buffer *buf = CALLOC_STRUCT(i915_sw_buffer);
-   char *name;
 
    if (!buf)
       return NULL;
 
-   if (type == I915_NEW_TEXTURE) {
-      name = "gallium3d_texture";
-   } else if (type == I915_NEW_VERTEX) {
-      name = "gallium3d_vertex";
-   } else if (type == I915_NEW_SCANOUT) {
-      name = "gallium3d_scanout";
-   } else {
-      assert(0);
-      name = "gallium3d_unknown";
-   }
-
    buf->magic = 0xDEAD1337;
-   buf->name = name;
    buf->type = type;
    buf->ptr = CALLOC(size, 1);
 
@@ -40,21 +27,32 @@ err:
    return NULL;
 }
 
-static int
-i915_sw_buffer_set_fence_reg(struct i915_winsys *iws,
-                               struct i915_winsys_buffer *buffer,
-                               unsigned stride,
-                               enum i915_winsys_buffer_tile tile)
+static struct i915_winsys_buffer *
+i915_sw_buffer_create_tiled(struct i915_winsys *iws,
+                      unsigned *stride, unsigned height, 
+                      enum i915_winsys_buffer_tile *tiling,
+                      enum i915_winsys_buffer_type type)
 {
-   struct i915_sw_buffer *buf = i915_sw_buffer(buffer);
+   struct i915_sw_buffer *buf = CALLOC_STRUCT(i915_sw_buffer);
 
-   if (tile != I915_TILE_NONE) {
-      assert(buf->map_count == 0);
-   }
+   if (!buf)
+      return NULL;
 
-   buf->tile = tile;
+   buf->magic = 0xDEAD1337;
+   buf->type = type;
+   buf->ptr = CALLOC(*stride * height, 1);
+   buf->tiling = *tiling;
+   buf->stride = *stride;
 
-   return 0;
+   if (!buf->ptr)
+      goto err;
+
+   return (struct i915_winsys_buffer *)buf;
+
+err:
+   assert(0);
+   FREE(buf);
+   return NULL;
 }
 
 static void *
@@ -108,7 +106,7 @@ void
 i915_sw_winsys_init_buffer_functions(struct i915_sw_winsys *isws)
 {
    isws->base.buffer_create = i915_sw_buffer_create;
-   isws->base.buffer_set_fence_reg = i915_sw_buffer_set_fence_reg;
+   isws->base.buffer_create_tiled = i915_sw_buffer_create_tiled;
    isws->base.buffer_map = i915_sw_buffer_map;
    isws->base.buffer_unmap = i915_sw_buffer_unmap;
    isws->base.buffer_write = i915_sw_buffer_write;

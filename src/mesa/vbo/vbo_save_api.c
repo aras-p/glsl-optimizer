@@ -294,26 +294,30 @@ static void _save_compile_vertex_list( struct gl_context *ctx )
    node->vertex_store->refcount++;
    node->prim_store->refcount++;
 
-
-   node->current_size = node->vertex_size - node->attrsz[0];
-   node->current_data = NULL;
-
-   if (node->current_size) {
-      /* If the malloc fails, we just pull the data out of the VBO
-       * later instead.
-       */
-      node->current_data = MALLOC( node->current_size * sizeof(GLfloat) );
-      if (node->current_data) {
-         const char *buffer = (const char *)save->vertex_store->buffer;
-         unsigned attr_offset = node->attrsz[0] * sizeof(GLfloat);
-         unsigned vertex_offset = 0;
-
-         if (node->count)
-            vertex_offset = (node->count-1) * node->vertex_size * sizeof(GLfloat);
-
-         memcpy( node->current_data,
-                 buffer + node->buffer_offset + vertex_offset + attr_offset,
-                 node->current_size * sizeof(GLfloat) );
+   if (node->prim[0].no_current_update) {
+      node->current_size = 0;
+      node->current_data = NULL;
+   } else {
+      node->current_size = node->vertex_size - node->attrsz[0];
+      node->current_data = NULL;
+     
+      if (node->current_size) {
+         /* If the malloc fails, we just pull the data out of the VBO
+          * later instead.
+          */
+         node->current_data = MALLOC( node->current_size * sizeof(GLfloat) );
+         if (node->current_data) {
+            const char *buffer = (const char *)save->vertex_store->buffer;
+            unsigned attr_offset = node->attrsz[0] * sizeof(GLfloat);
+            unsigned vertex_offset = 0;
+            
+            if (node->count)
+               vertex_offset = (node->count-1) * node->vertex_size * sizeof(GLfloat);
+         
+            memcpy( node->current_data,
+                    buffer + node->buffer_offset + vertex_offset + attr_offset,
+                    node->current_size * sizeof(GLfloat) );
+         }
       }
    }
 
@@ -397,6 +401,7 @@ static void _save_wrap_buffers( struct gl_context *ctx )
    GLint i = save->prim_count - 1;
    GLenum mode;
    GLboolean weak;
+   GLboolean no_current_update;
 
    assert(i < (GLint) save->prim_max);
    assert(i >= 0);
@@ -407,6 +412,7 @@ static void _save_wrap_buffers( struct gl_context *ctx )
 			  save->prim[i].start);
    mode = save->prim[i].mode;
    weak = save->prim[i].weak;
+   no_current_update = save->prim[i].no_current_update;
    
    /* store the copied vertices, and allocate a new list.
     */
@@ -416,6 +422,7 @@ static void _save_wrap_buffers( struct gl_context *ctx )
     */
    save->prim[0].mode = mode;
    save->prim[0].weak = weak;
+   save->prim[0].no_current_update = no_current_update;
    save->prim[0].begin = 0;
    save->prim[0].end = 0;
    save->prim[0].pad = 0;
@@ -770,10 +777,11 @@ GLboolean vbo_save_NotifyBegin( struct gl_context *ctx, GLenum mode )
    GLuint i = save->prim_count++;
 
    assert(i < save->prim_max);
-   save->prim[i].mode = mode & ~VBO_SAVE_PRIM_WEAK;
+   save->prim[i].mode = mode & VBO_SAVE_PRIM_MODE_MASK;
    save->prim[i].begin = 1;
    save->prim[i].end = 0;
    save->prim[i].weak = (mode & VBO_SAVE_PRIM_WEAK) ? 1 : 0;
+   save->prim[i].no_current_update = (mode & VBO_SAVE_PRIM_NO_CURRENT_UPDATE) ? 1 : 0;
    save->prim[i].pad = 0;
    save->prim[i].start = save->vert_count;
    save->prim[i].count = 0;   
@@ -934,7 +942,7 @@ static void GLAPIENTRY _save_OBE_DrawArrays(GLenum mode, GLint start, GLsizei co
 
    _ae_map_vbos( ctx );
 
-   vbo_save_NotifyBegin( ctx, mode | VBO_SAVE_PRIM_WEAK );
+   vbo_save_NotifyBegin( ctx, mode | VBO_SAVE_PRIM_WEAK | VBO_SAVE_PRIM_NO_CURRENT_UPDATE);
 
    for (i = 0; i < count; i++)
        CALL_ArrayElement(GET_DISPATCH(), (start + i));
@@ -960,7 +968,7 @@ static void GLAPIENTRY _save_OBE_DrawElements(GLenum mode, GLsizei count, GLenum
    if (_mesa_is_bufferobj(ctx->Array.ElementArrayBufferObj))
       indices = ADD_POINTERS(ctx->Array.ElementArrayBufferObj->Pointer, indices);
 
-   vbo_save_NotifyBegin( ctx, mode | VBO_SAVE_PRIM_WEAK );
+   vbo_save_NotifyBegin( ctx, mode | VBO_SAVE_PRIM_WEAK | VBO_SAVE_PRIM_NO_CURRENT_UPDATE );
 
    switch (type) {
    case GL_UNSIGNED_BYTE:

@@ -97,10 +97,15 @@ public:
     * reduces the clarity of the intention of code that uses these methods.
     */
    /*@{*/
-   bool add_variable(const char *name, ir_variable *v);
+   bool add_variable(ir_variable *v);
    bool add_type(const char *name, const glsl_type *t);
-   bool add_function(const char *name, ir_function *f);
+   bool add_function(ir_function *f);
    /*@}*/
+
+   /**
+    * Add an function at global scope without checking for scoping conflicts.
+    */
+   void add_global_function(ir_function *f);
 
    /**
     * \name Methods to get symbols from the table

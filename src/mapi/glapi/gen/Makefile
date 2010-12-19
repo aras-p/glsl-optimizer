@@ -93,7 +93,9 @@ API_XML = \
 	EXT_transform_feedback.xml \
 	NV_conditional_render.xml \
 	NV_primitive_restart.xml \
-	OES_EGL_image.xml
+	OES_EGL_image.xml \
+	GL3x.xml
+
 
 COMMON = $(API_XML) gl_XML.py glX_XML.py license.py typeexpr.py
 

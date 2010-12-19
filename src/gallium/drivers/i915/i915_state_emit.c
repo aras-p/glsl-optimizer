@@ -86,6 +86,22 @@ framebuffer_size(const struct pipe_framebuffer_state *fb,
    }
 }
 
+static inline uint32_t
+buf_3d_tiling_bits(enum i915_winsys_buffer_tile tiling)
+{
+         uint32_t tiling_bits = 0;
+
+         switch (tiling) {
+         case I915_TILE_Y:
+            tiling_bits |= BUF_3D_TILE_WALK_Y;
+         case I915_TILE_X:
+            tiling_bits |= BUF_3D_TILED_SURFACE;
+         case I915_TILE_NONE:
+            break;
+         }
+
+         return tiling_bits;
+}
 
 /* Push the state into the sarea and/or texture memory.
  */
@@ -126,7 +142,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
    save_relocs = i915->batch->relocs;
 
    /* 14 dwords, 0 relocs */
-   if (i915->hardware_dirty & I915_HW_INVARIENT)
+   if (i915->hardware_dirty & I915_HW_INVARIANT)
    {
       OUT_BATCH(_3DSTATE_AA_CMD |
                 AA_LINE_ECAAR_WIDTH_ENABLE |
@@ -220,46 +236,39 @@ i915_emit_hardware_state(struct i915_context *i915 )
       struct pipe_surface *depth_surface = i915->framebuffer.zsbuf;
 
       if (cbuf_surface) {
-         unsigned ctile = BUF_3D_USE_FENCE;
          struct i915_texture *tex = i915_texture(cbuf_surface->texture);
          assert(tex);
-
-         if (tex && tex->sw_tiled) {
-            ctile = BUF_3D_TILED_SURFACE;
-         }
 
          OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
 
          OUT_BATCH(BUF_3D_ID_COLOR_BACK |
                    BUF_3D_PITCH(tex->stride) |  /* pitch in bytes */
-                   ctile);
+                   buf_3d_tiling_bits(tex->tiling));
 
          OUT_RELOC(tex->buffer,
                    I915_USAGE_RENDER,
-                   cbuf_surface->offset);
+                   0);
       }
 
       /* What happens if no zbuf??
        */
       if (depth_surface) {
-         unsigned ztile = BUF_3D_USE_FENCE;
          struct i915_texture *tex = i915_texture(depth_surface->texture);
+         unsigned offset = i915_texture_offset(tex, depth_surface->u.tex.level,
+                                               depth_surface->u.tex.first_layer);
          assert(tex);
-
-         if (tex && tex->sw_tiled) {
-            ztile = BUF_3D_TILED_SURFACE;
-         }
+         assert(offset == 0);
 
          OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
 
          assert(tex);
          OUT_BATCH(BUF_3D_ID_DEPTH |
                    BUF_3D_PITCH(tex->stride) |  /* pitch in bytes */
-                   ztile);
+                   buf_3d_tiling_bits(tex->tiling));
 
          OUT_RELOC(tex->buffer,
                    I915_USAGE_RENDER,
-                   depth_surface->offset);
+                   0);
       }
 
       {
@@ -301,12 +310,11 @@ i915_emit_hardware_state(struct i915_context *i915 )
                if (enabled & (1 << unit)) {
                   struct i915_texture *texture = i915_texture(i915->fragment_sampler_views[unit]->texture);
                   struct i915_winsys_buffer *buf = texture->buffer;
-                  uint offset = 0;
                   assert(buf);
 
                   count++;
 
-                  OUT_RELOC(buf, I915_USAGE_SAMPLER, offset);
+                  OUT_RELOC(buf, I915_USAGE_SAMPLER, 0);
                   OUT_BATCH(i915->current.texbuffer[unit][0]); /* MS3 */
                   OUT_BATCH(i915->current.texbuffer[unit][1]); /* MS4 */
                }
@@ -399,18 +407,33 @@ i915_emit_hardware_state(struct i915_context *i915 )
 #if 01
    /* drawing surface size */
    /* 6 dwords, 0 relocs */
+   if (i915->hardware_dirty & I915_HW_STATIC)
    {
       uint w, h;
-      boolean k = framebuffer_size(&i915->framebuffer, &w, &h);
-      (void)k;
-      assert(k);
+      struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
+      struct i915_texture *tex = i915_texture(cbuf_surface->texture);
+      unsigned x, y;
+      int layer;
+      uint32_t draw_offset;
+      boolean ret;
 
+      ret = framebuffer_size(&i915->framebuffer, &w, &h);
+      assert(ret);
+
+      layer = cbuf_surface->u.tex.first_layer;
+
+      x = tex->image_offset[cbuf_surface->u.tex.level][layer].nblocksx;
+      y = tex->image_offset[cbuf_surface->u.tex.level][layer].nblocksy;
+
+      draw_offset = x | (y << 16);
+
+      /* XXX flush only required when the draw_offset changes! */
+      OUT_BATCH(MI_FLUSH | INHIBIT_FLUSH_RENDER_CACHE);
       OUT_BATCH(_3DSTATE_DRAW_RECT_CMD);
-      OUT_BATCH(0);
-      OUT_BATCH(0);
-      OUT_BATCH(((w - 1) & 0xffff) | ((h - 1) << 16));
-      OUT_BATCH(0);
-      OUT_BATCH(0);
+      OUT_BATCH(DRAW_RECT_DIS_DEPTH_OFS);
+      OUT_BATCH(draw_offset);
+      OUT_BATCH((w - 1 + x) | ((h - 1 + y) << 16));
+      OUT_BATCH(draw_offset);
    }
 #endif
 

@@ -34,14 +34,14 @@
 
 
 LLVMValueRef
-lp_build_gather_elem_ptr(LLVMBuilderRef builder,
+lp_build_gather_elem_ptr(struct gallivm_state *gallivm,
                          unsigned length,
                          LLVMValueRef base_ptr,
                          LLVMValueRef offsets,
                          unsigned i);
 
 LLVMValueRef
-lp_build_gather_elem(LLVMBuilderRef builder,
+lp_build_gather_elem(struct gallivm_state *gallivm,
                      unsigned length,
                      unsigned src_width,
                      unsigned dst_width,
@@ -50,7 +50,7 @@ lp_build_gather_elem(LLVMBuilderRef builder,
                      unsigned i);
 
 LLVMValueRef
-lp_build_gather(LLVMBuilderRef builder,
+lp_build_gather(struct gallivm_state *gallivm,
                 unsigned length,
                 unsigned src_width,
                 unsigned dst_width,

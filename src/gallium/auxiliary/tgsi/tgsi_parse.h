@@ -136,7 +136,8 @@ tgsi_parse_token(
 static INLINE unsigned
 tgsi_num_tokens(const struct tgsi_token *tokens)
 {
-   struct tgsi_header header = *(const struct tgsi_header *) tokens;
+   struct tgsi_header header;
+   memcpy(&header, tokens, sizeof(header));
    return header.HeaderSize + header.BodySize;
 }
 

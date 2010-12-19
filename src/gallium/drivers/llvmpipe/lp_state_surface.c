@@ -77,6 +77,7 @@ llvmpipe_set_framebuffer_state(struct pipe_context *pipe,
          else {
             mrd = 0.00002;
          }
+         lp->mrd = mrd;
          draw_set_mrd(lp->draw, mrd);
       }
 

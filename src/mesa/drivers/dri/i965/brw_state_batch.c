@@ -48,7 +48,7 @@ GLboolean brw_cached_batch_struct( struct brw_context *brw,
    struct header *newheader = (struct header *)data;
 
    if (brw->emit_state_always) {
-      intel_batchbuffer_data(brw->intel.batch, data, sz);
+      intel_batchbuffer_data(brw->intel.batch, data, sz, false);
       return GL_TRUE;
    }
 
@@ -75,7 +75,7 @@ GLboolean brw_cached_batch_struct( struct brw_context *brw,
 
  emit:
    memcpy(item->header, newheader, sz);
-   intel_batchbuffer_data(brw->intel.batch, data, sz);
+   intel_batchbuffer_data(brw->intel.batch, data, sz, false);
    return GL_TRUE;
 }
 

@@ -49,7 +49,7 @@ static void r300_flush(struct pipe_context* pipe,
     if (r300->dirty_hw) {
         r300_emit_hyperz_end(r300);
         r300_emit_query_end(r300);
-        if (r500_index_bias_supported(r300))
+        if (r300->screen->caps.index_bias_supported)
             r500_emit_index_bias(r300, 0);
 
         r300->flush_counter++;
@@ -57,9 +57,9 @@ static void r300_flush(struct pipe_context* pipe,
         r300->dirty_hw = 0;
 
         /* New kitchen sink, baby. */
-        foreach(atom, &r300->atom_list) {
+        foreach_atom(r300, atom) {
             if (atom->state || atom->allow_null_state) {
-                atom->dirty = TRUE;
+                r300_mark_atom_dirty(r300, atom);
             }
         }
 
@@ -68,6 +68,8 @@ static void r300_flush(struct pipe_context* pipe,
             r300->vs_state.dirty = FALSE;
             r300->vs_constants.dirty = FALSE;
         }
+
+        r300->validate_buffers = TRUE;
     }
 
     /* reset flushed query */

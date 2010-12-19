@@ -86,9 +86,27 @@ texture_combine( struct gl_context *ctx, GLuint unit, GLuint n,
    const GLfloat scaleA = (GLfloat) (1 << combine->ScaleShiftA);
    const GLuint numArgsRGB = combine->_NumArgsRGB;
    const GLuint numArgsA = combine->_NumArgsA;
-   GLfloat ccolor[MAX_COMBINER_TERMS][MAX_WIDTH][4]; /* temp color buffers */
-   GLfloat rgba[MAX_WIDTH][4];
+   float4_array ccolor[4], rgba;
    GLuint i, term;
+
+   /* alloc temp pixel buffers */
+   rgba = (float4_array) malloc(4 * n * sizeof(GLfloat));
+   if (!rgba) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "texture_combine");
+      return;
+   }
+
+   for (i = 0; i < numArgsRGB || i < numArgsA; i++) {
+      ccolor[i] = (float4_array) malloc(4 * n * sizeof(GLfloat));
+      if (!ccolor[i]) {
+         while (i) {
+            free(ccolor[i]);
+            i--;
+         }
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "texture_combine");
+         return;
+      }
+   }
 
    for (i = 0; i < n; i++) {
       rgba[i][RCOMP] = CHAN_TO_FLOAT(rgbaChan[i][RCOMP]);
@@ -163,7 +181,7 @@ texture_combine( struct gl_context *ctx, GLuint unit, GLuint n,
                const GLuint srcUnit = srcRGB - GL_TEXTURE0;
                ASSERT(srcUnit < ctx->Const.MaxTextureUnits);
                if (!ctx->Texture.Unit[srcUnit]._ReallyEnabled)
-                  return;
+                  goto end;
                argRGB[term] = get_texel_array(swrast, srcUnit);
             }
       }
@@ -253,7 +271,7 @@ texture_combine( struct gl_context *ctx, GLuint unit, GLuint n,
                const GLuint srcUnit = srcA - GL_TEXTURE0;
                ASSERT(srcUnit < ctx->Const.MaxTextureUnits);
                if (!ctx->Texture.Unit[srcUnit]._ReallyEnabled)
-                  return;
+                  goto end;
                argA[term] = get_texel_array(swrast, srcUnit);
             }
       }
@@ -411,7 +429,7 @@ texture_combine( struct gl_context *ctx, GLuint unit, GLuint n,
             rgba[i][BCOMP] = 0.0;
             rgba[i][ACOMP] = 1.0;
 	 }
-         return; /* no alpha processing */
+         goto end; /* no alpha processing */
       default:
          _mesa_problem(ctx, "invalid combine mode");
       }
@@ -519,6 +537,12 @@ texture_combine( struct gl_context *ctx, GLuint unit, GLuint n,
       UNCLAMPED_FLOAT_TO_CHAN(rgbaChan[i][BCOMP], rgba[i][BCOMP]);
       UNCLAMPED_FLOAT_TO_CHAN(rgbaChan[i][ACOMP], rgba[i][ACOMP]);
    }
+
+end:
+   for (i = 0; i < numArgsRGB || i < numArgsA; i++) {
+      free(ccolor[i]);
+   }
+   free(rgba);
 }
 
 
@@ -559,8 +583,15 @@ void
 _swrast_texture_span( struct gl_context *ctx, SWspan *span )
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   GLfloat primary_rgba[MAX_WIDTH][4];
+   float4_array primary_rgba;
    GLuint unit;
+
+   primary_rgba = (float4_array) malloc(span->end * 4 * sizeof(GLfloat));
+
+   if (!primary_rgba) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "texture_span");
+      return;
+   }
 
    ASSERT(span->end <= MAX_WIDTH);
 
@@ -706,4 +737,6 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
                           span->array->rgba );
       }
    }
+
+   free(primary_rgba);
 }

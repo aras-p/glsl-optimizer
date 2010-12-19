@@ -53,6 +53,7 @@ enum i915_winsys_buffer_type
    I915_NEW_VERTEX
 };
 
+/* These need to be in sync with the definitions of libdrm-intel! */
 enum i915_winsys_buffer_tile
 {
    I915_TILE_NONE,
@@ -106,7 +107,7 @@ struct i915_winsys {
    int (*batchbuffer_reloc)(struct i915_winsys_batchbuffer *batch,
                             struct i915_winsys_buffer *reloc,
                             enum i915_winsys_buffer_usage usage,
-                            unsigned offset);
+                            unsigned offset, bool fenced);
 
    /**
     * Flush a bufferbatch.
@@ -130,8 +131,22 @@ struct i915_winsys {
     */
    struct i915_winsys_buffer *
       (*buffer_create)(struct i915_winsys *iws,
-                       unsigned size, unsigned alignment,
+                       unsigned size,
                        enum i915_winsys_buffer_type type);
+
+   /**
+    * Create a tiled buffer.
+    *
+    * *stride, height are in bytes. The winsys tries to allocate the buffer with
+    * the tiling mode provide in *tiling. If tiling is no possible, *tiling will
+    * be set to I915_TILE_NONE. The calculated stride (incorporateing hw/kernel
+    * requirements) is always returned in *stride.
+    */
+   struct i915_winsys_buffer *
+      (*buffer_create_tiled)(struct i915_winsys *iws,
+                             unsigned *stride, unsigned height,
+                             enum i915_winsys_buffer_tile *tiling,
+                             enum i915_winsys_buffer_type type);
 
    /**
     * Creates a buffer from a handle.
@@ -142,6 +157,7 @@ struct i915_winsys {
    struct i915_winsys_buffer *
       (*buffer_from_handle)(struct i915_winsys *iws,
                             struct winsys_handle *whandle,
+                            enum i915_winsys_buffer_tile *tiling,
                             unsigned *stride);
 
    /**
@@ -152,15 +168,6 @@ struct i915_winsys {
                                 struct i915_winsys_buffer *buffer,
                                 struct winsys_handle *whandle,
                                 unsigned stride);
-
-   /**
-    * Fence a buffer with a fence reg.
-    * Not to be confused with pipe_fence_handle.
-    */
-   int (*buffer_set_fence_reg)(struct i915_winsys *iws,
-                               struct i915_winsys_buffer *buffer,
-                               unsigned stride,
-                               enum i915_winsys_buffer_tile tile);
 
    /**
     * Map a buffer.

@@ -21,6 +21,7 @@ C_SOURCES = \
 	evergreen_state.c \
 	eg_asm.c \
 	r600_translate.c \
-	r600_state_common.c
+	r600_state_common.c \
+	r600_upload.c
 
 include ../../Makefile.template

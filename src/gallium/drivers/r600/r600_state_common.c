@@ -58,6 +58,12 @@ void r600_bind_rs_state(struct pipe_context *ctx, void *state)
 
 	rctx->states[rs->rstate.id] = &rs->rstate;
 	r600_context_pipe_state_set(&rctx->ctx, &rs->rstate);
+
+	if (rctx->family >= CHIP_CEDAR) {
+		evergreen_polygon_offset_update(rctx);
+	} else {
+		r600_polygon_offset_update(rctx);
+	}
 }
 
 void r600_delete_rs_state(struct pipe_context *ctx, void *state)
@@ -113,7 +119,22 @@ void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_vertex_element *v = (struct r600_vertex_element*)state;
 
+	/* delete previous translated vertex elements */
+	if (rctx->tran.new_velems) {
+		r600_end_vertex_translate(rctx);
+	}
+
 	rctx->vertex_elements = v;
+	if (v) {
+		rctx->states[v->rstate.id] = &v->rstate;
+		r600_context_pipe_state_set(&rctx->ctx, &v->rstate);
+		if (rctx->family >= CHIP_CEDAR) {
+			evergreen_vertex_buffer_update(rctx);
+		} else {
+			r600_vertex_buffer_update(rctx);
+		}
+	}
+
 	if (v) {
 //		rctx->vs_rebuild = TRUE;
 	}
@@ -122,11 +143,16 @@ void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
 void r600_delete_vertex_element(struct pipe_context *ctx, void *state)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_vertex_element *v = (struct r600_vertex_element*)state;
 
-	FREE(state);
-
+	if (rctx->states[v->rstate.id] == &v->rstate) {
+		rctx->states[v->rstate.id] = NULL;
+	}
 	if (rctx->vertex_elements == state)
 		rctx->vertex_elements = NULL;
+
+	r600_bo_reference(rctx->radeon, &v->fetch_shader, NULL);
+	FREE(state);
 }
 
 
@@ -166,16 +192,23 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 			rctx->any_user_vbs = TRUE;
 		pipe_resource_reference(&rctx->vertex_buffer[i].buffer, buffers[i].buffer);
 
+		/* The stride of zero means we will be fetching only the first
+		 * vertex, so don't care about max_index. */
+		if (!vbo->stride)
+			continue;
+
 		if (vbo->max_index == ~0) {
-			if (!vbo->stride)
-				vbo->max_index = 1;
-			else
-				vbo->max_index = (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
+			vbo->max_index = (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
 		}
 		max_index = MIN2(vbo->max_index, max_index);
 	}
 	rctx->nvertex_buffer = count;
 	rctx->vb_max_index = max_index;
+	if (rctx->family >= CHIP_CEDAR) {
+		evergreen_vertex_buffer_update(rctx);
+	} else {
+		r600_vertex_buffer_update(rctx);
+	}
 }
 
 
@@ -186,9 +219,10 @@ void *r600_create_vertex_elements(struct pipe_context *ctx,
 				  unsigned count,
 				  const struct pipe_vertex_element *elements)
 {
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_vertex_element *v = CALLOC_STRUCT(r600_vertex_element);
-	int i;
 	enum pipe_format *format;
+	int i;
 
 	assert(count < 32);
 	if (!v)
@@ -202,19 +236,22 @@ void *r600_create_vertex_elements(struct pipe_context *ctx,
 		format = &v->hw_format[i];
 
 		switch (*format) {
-                    FORMAT_REPLACE(R64_FLOAT,           R32_FLOAT);
-                    FORMAT_REPLACE(R64G64_FLOAT,        R32G32_FLOAT);
-                    FORMAT_REPLACE(R64G64B64_FLOAT,     R32G32B32_FLOAT);
-                    FORMAT_REPLACE(R64G64B64A64_FLOAT,  R32G32B32A32_FLOAT);
+		FORMAT_REPLACE(R64_FLOAT,           R32_FLOAT);
+		FORMAT_REPLACE(R64G64_FLOAT,        R32G32_FLOAT);
+		FORMAT_REPLACE(R64G64B64_FLOAT,     R32G32B32_FLOAT);
+		FORMAT_REPLACE(R64G64B64A64_FLOAT,  R32G32B32A32_FLOAT);
 		default:;
 		}
 		v->incompatible_layout =
 			v->incompatible_layout ||
-			v->elements[i].src_format != v->hw_format[i] ||
-			v->elements[i].src_offset % 4 != 0;
+			v->elements[i].src_format != v->hw_format[i];
 
-                v->hw_format_size[i] =
-			align(util_format_get_blocksize(v->hw_format[i]), 4);
+		v->hw_format_size[i] = align(util_format_get_blocksize(v->hw_format[i]), 4);
+	}
+
+	if (r600_vertex_elements_build_fetch_shader(rctx, v)) {
+		FREE(v);
+		return NULL;
 	}
 
 	return v;
@@ -239,6 +276,9 @@ void r600_bind_ps_shader(struct pipe_context *ctx, void *state)
 
 	/* TODO delete old shader */
 	rctx->ps_shader = (struct r600_pipe_shader *)state;
+	if (state) {
+		r600_context_pipe_state_set(&rctx->ctx, &rctx->ps_shader->rstate);
+	}
 }
 
 void r600_bind_vs_shader(struct pipe_context *ctx, void *state)
@@ -247,6 +287,9 @@ void r600_bind_vs_shader(struct pipe_context *ctx, void *state)
 
 	/* TODO delete old shader */
 	rctx->vs_shader = (struct r600_pipe_shader *)state;
+	if (state) {
+		r600_context_pipe_state_set(&rctx->ctx, &rctx->vs_shader->rstate);
+	}
 }
 
 void r600_delete_ps_shader(struct pipe_context *ctx, void *state)

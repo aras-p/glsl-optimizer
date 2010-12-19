@@ -173,28 +173,28 @@
 
     <function name="Uniform1uiEXT" offset="assign">
         <param name="location" type="GLint"/>
-        <param name="v0" type="GLuint"/>
+        <param name="x" type="GLuint"/>
     </function>
 
     <function name="Uniform2uiEXT" offset="assign">
         <param name="location" type="GLint"/>
-        <param name="v0" type="GLuint"/>
-        <param name="v1" type="GLuint"/>
+        <param name="x" type="GLuint"/>
+        <param name="y" type="GLuint"/>
     </function>
 
     <function name="Uniform3uiEXT" offset="assign">
         <param name="location" type="GLint"/>
-        <param name="v0" type="GLuint"/>
-        <param name="v1" type="GLuint"/>
-        <param name="v2" type="GLuint"/>
+        <param name="x" type="GLuint"/>
+        <param name="y" type="GLuint"/>
+        <param name="z" type="GLuint"/>
     </function>
 
     <function name="Uniform4uiEXT" offset="assign">
         <param name="location" type="GLint"/>
-        <param name="v0" type="GLuint"/>
-        <param name="v1" type="GLuint"/>
-        <param name="v2" type="GLuint"/>
-        <param name="v3" type="GLuint"/>
+        <param name="x" type="GLuint"/>
+        <param name="y" type="GLuint"/>
+        <param name="z" type="GLuint"/>
+        <param name="w" type="GLuint"/>
     </function>
 
     <function name="Uniform1uivEXT" offset="assign">

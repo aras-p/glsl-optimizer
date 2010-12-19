@@ -73,4 +73,6 @@ svga = env.ConvenienceLibrary(
 	source = sources,
 )
 
+env.Alias('svga', svga)
+
 Export('svga')

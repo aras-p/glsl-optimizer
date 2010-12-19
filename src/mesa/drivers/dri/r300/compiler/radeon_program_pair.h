@@ -55,10 +55,6 @@ struct radeon_compiler;
  */
 #define RC_PAIR_PRESUB_SRC 3
 
-#define RC_PAIR_SOURCE_NONE  0x0
-#define RC_PAIR_SOURCE_RGB   0x1
-#define RC_PAIR_SOURCE_ALPHA 0x2
-
 struct rc_pair_instruction_source {
 	unsigned int Used:1;
 	unsigned int File:3;
@@ -115,9 +111,9 @@ void rc_pair_foreach_source_that_rgb_reads(
 	void * data,
 	rc_pair_foreach_src_fn cb);
 
-unsigned int rc_source_type_that_arg_reads(
-	unsigned int source,
-	unsigned int swizzle);
+struct rc_pair_instruction_source * rc_pair_get_src(
+	struct rc_pair_instruction * pair_inst,
+	struct rc_pair_instruction_arg * arg);
 /*@}*/
 
 

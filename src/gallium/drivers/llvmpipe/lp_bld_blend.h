@@ -30,6 +30,7 @@
 
 
 #include "gallivm/lp_bld.h"
+#include "gallivm/lp_bld_init.h"
  
 #include "pipe/p_format.h"
 
@@ -61,7 +62,7 @@ lp_build_blend_func(struct lp_build_context *bld,
 
 
 LLVMValueRef
-lp_build_blend_aos(LLVMBuilderRef builder,
+lp_build_blend_aos(struct gallivm_state *gallivm,
                    const struct pipe_blend_state *blend,
                    struct lp_type type,
                    unsigned rt,
@@ -72,7 +73,7 @@ lp_build_blend_aos(LLVMBuilderRef builder,
 
 
 void
-lp_build_blend_soa(LLVMBuilderRef builder,
+lp_build_blend_soa(struct gallivm_state *gallivm,
                    const struct pipe_blend_state *blend,
                    struct lp_type type,
                    unsigned rt,

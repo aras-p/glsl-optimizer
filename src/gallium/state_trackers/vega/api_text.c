@@ -27,21 +27,15 @@
 #include "VG/openvg.h"
 
 #include "vg_context.h"
+#include "text.h"
+#include "api.h"
 
 #include "util/u_memory.h"
 
 #ifdef OPENVG_VERSION_1_1
 
-struct vg_font {
-   struct vg_object base;
-
-   VGint glyph_indices[200];
-   VGint num_glyphs;
-};
-
 VGFont vegaCreateFont(VGint glyphCapacityHint)
 {
-   struct vg_font *font = 0;
    struct vg_context *ctx = vg_current_context();
 
    if (glyphCapacityHint < 0) {
@@ -49,10 +43,7 @@ VGFont vegaCreateFont(VGint glyphCapacityHint)
       return VG_INVALID_HANDLE;
    }
 
-   font = CALLOC_STRUCT(vg_font);
-   vg_init_object(&font->base, ctx, VG_OBJECT_FONT);
-   vg_context_add_object(ctx, VG_OBJECT_FONT, font);
-   return (VGFont)font;
+   return (VGFont) font_create(glyphCapacityHint);
 }
 
 void vegaDestroyFont(VGFont f)
@@ -64,20 +55,23 @@ void vegaDestroyFont(VGFont f)
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
+   if (!vg_object_is_valid((void *) font, VG_OBJECT_FONT)) {
+      vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
+      return;
+   }
 
-   vg_context_remove_object(ctx, VG_OBJECT_FONT, font);
-   /*free(font);*/
+   font_destroy(font);
 }
 
 void vegaSetGlyphToPath(VGFont font,
                         VGuint glyphIndex,
                         VGPath path,
                         VGboolean isHinted,
-                        VGfloat glyphOrigin [2],
-                        VGfloat escapement[2])
+                        const VGfloat glyphOrigin[2],
+                        const VGfloat escapement[2])
 {
    struct vg_context *ctx = vg_current_context();
-   struct vg_object *pathObj;
+   struct path *pathObj;
    struct vg_font *f;
 
    if (font == VG_INVALID_HANDLE ||
@@ -95,25 +89,22 @@ void vegaSetGlyphToPath(VGFont font,
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
-   pathObj = (struct vg_object*)path;
-   if (pathObj && pathObj->type != VG_OBJECT_PATH) {
-      vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
-      return;
-   }
 
-   f = (struct vg_font*)font;
-   f->glyph_indices[f->num_glyphs] = glyphIndex;
-   ++f->num_glyphs;
+   pathObj = (struct path*) path;
+   f = (struct vg_font*) font;
+
+   font_set_glyph_to_path(f, glyphIndex, pathObj,
+         isHinted, glyphOrigin, escapement);
 }
 
 void vegaSetGlyphToImage(VGFont font,
                          VGuint glyphIndex,
                          VGImage image,
-                         VGfloat glyphOrigin [2],
-                         VGfloat escapement[2])
+                         const VGfloat glyphOrigin[2],
+                         const VGfloat escapement[2])
 {
    struct vg_context *ctx = vg_current_context();
-   struct vg_object *img_obj;
+   struct vg_image *img_obj;
    struct vg_font *f;
 
    if (font == VG_INVALID_HANDLE ||
@@ -131,26 +122,11 @@ void vegaSetGlyphToImage(VGFont font,
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
-   img_obj = (struct vg_object*)image;
-   if (img_obj && img_obj->type != VG_OBJECT_IMAGE) {
-      vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
-      return;
-   }
-   f = (struct vg_font*)font;
-   f->glyph_indices[f->num_glyphs] = glyphIndex;
-   ++f->num_glyphs;
-}
 
-static INLINE VGboolean font_contains_glyph(struct vg_font *font,
-                                            VGuint glyph_index)
-{
-   VGint i;
-   for (i = 0; i < font->num_glyphs; ++i) {
-      if (font->glyph_indices[i] == glyph_index) {
-         return VG_TRUE;
-      }
-   }
-   return VG_FALSE;
+   img_obj = (struct vg_image*)image;
+   f = (struct vg_font*)font;
+
+   font_set_glyph_to_image(f, glyphIndex, img_obj, glyphOrigin, escapement);
 }
 
 void vegaClearGlyph(VGFont font,
@@ -158,30 +134,15 @@ void vegaClearGlyph(VGFont font,
 {
    struct vg_context *ctx = vg_current_context();
    struct vg_font *f;
-   VGint i;
 
    if (font == VG_INVALID_HANDLE) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
-   if (glyphIndex <= 0) {
-      vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
-      return;
-   }
-   f = (struct vg_font*)font;
-   if (!font_contains_glyph(f, glyphIndex)) {
-      vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
-      return;
-   }
 
-   for (i = 0; i < f->num_glyphs; ++i) {
-      if (f->glyph_indices[i] == glyphIndex) {
-         /*FIXME*/
-         f->glyph_indices[f->num_glyphs] = 0;
-         --f->num_glyphs;
-         return;
-      }
-   }
+   f = (struct vg_font*) font;
+
+   font_clear_glyph(f, glyphIndex);
 }
 
 void vegaDrawGlyph(VGFont font,
@@ -196,31 +157,24 @@ void vegaDrawGlyph(VGFont font,
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
-   if (glyphIndex <= 0) {
-      vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
-      return;
-   }
    if (paintModes & (~(VG_STROKE_PATH|VG_FILL_PATH))) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return;
    }
    f = (struct vg_font*)font;
-   if (!font_contains_glyph(f, glyphIndex)) {
-      vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
-      return;
-   }
+
+   font_draw_glyph(f, glyphIndex, paintModes, allowAutoHinting);
 }
 
 void vegaDrawGlyphs(VGFont font,
                     VGint glyphCount,
-                    VGuint *glyphIndices,
-                    VGfloat *adjustments_x,
-                    VGfloat *adjustments_y,
+                    const VGuint *glyphIndices,
+                    const VGfloat *adjustments_x,
+                    const VGfloat *adjustments_y,
                     VGbitfield paintModes,
                     VGboolean allowAutoHinting)
 {
    struct vg_context *ctx = vg_current_context();
-   VGint i;
    struct vg_font *f;
 
    if (font == VG_INVALID_HANDLE) {
@@ -235,8 +189,8 @@ void vegaDrawGlyphs(VGFont font,
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return;
    }
-   if (!adjustments_x || !is_aligned(adjustments_x) ||
-       !adjustments_y || !is_aligned(adjustments_y)) {
+   if ((adjustments_x && !is_aligned(adjustments_x)) ||
+       (adjustments_y && !is_aligned(adjustments_y))) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return;
    }
@@ -246,13 +200,9 @@ void vegaDrawGlyphs(VGFont font,
    }
 
    f = (struct vg_font*)font;
-   for (i = 0; i < glyphCount; ++i) {
-      VGuint glyph_index = glyphIndices[i];
-      if (!font_contains_glyph(f, glyph_index)) {
-         vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
-         return;
-      }
-   }
+
+   font_draw_glyphs(f, glyphCount, glyphIndices,
+         adjustments_x, adjustments_y, paintModes, allowAutoHinting);
 }
 
-#endif
+#endif /* OPENVG_VERSION_1_1 */

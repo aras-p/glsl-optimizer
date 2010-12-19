@@ -158,8 +158,8 @@ static void r300_update_hyperz(struct r300_context* r300)
     if (!r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
         return;
 
-    zmask_in_use = zstex->zmask_in_use[fb->zsbuf->level];
-    hiz_in_use = zstex->hiz_in_use[fb->zsbuf->level];
+    zmask_in_use = zstex->zmask_in_use[fb->zsbuf->u.tex.level];
+    hiz_in_use = zstex->hiz_in_use[fb->zsbuf->u.tex.level];
 
     /* Z fastfill. */
     if (zmask_in_use) {
@@ -282,7 +282,7 @@ static void r300_update_ztop(struct r300_context* r300)
         ztop_state->z_buffer_top = R300_ZTOP_ENABLE;
     }
     if (ztop_state->z_buffer_top != old_ztop)
-        r300->ztop_state.dirty = TRUE;
+        r300_mark_atom_dirty(r300, &r300->ztop_state);
 }
 
 #define ALIGN_DIVUP(x, y) (((x) + (y) - 1) / (y))
@@ -333,7 +333,7 @@ void r300_hiz_alloc_block(struct r300_context *r300, struct r300_surface *surf)
 {
     struct r300_texture *tex;
     uint32_t zsize, ndw;
-    int level = surf->base.level;
+    int level = surf->base.u.tex.level;
 
     tex = r300_texture(surf->base.texture);
 
@@ -352,7 +352,7 @@ void r300_zmask_alloc_block(struct r300_context *r300, struct r300_surface *surf
 {
     int bsize = 256;
     uint32_t zsize, ndw;
-    int level = surf->base.level;
+    int level = surf->base.u.tex.level;
     struct r300_texture *tex;
 
     tex = r300_texture(surf->base.texture);

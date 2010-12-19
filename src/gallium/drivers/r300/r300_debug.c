@@ -40,7 +40,6 @@ static const struct debug_named_value debug_options[] = {
     { "rs", DBG_RS, "Log rasterizer" },
     { "fb", DBG_FB, "Log framebuffer" },
     { "cbzb", DBG_CBZB, "Log fast color clear info" },
-    { "stats", DBG_STATS, "Log emission statistics" },
     { "hyperz", DBG_HYPERZ, "Log HyperZ info" },
     { "scissor", DBG_SCISSOR, "Log scissor info" },
     { "fakeocc", DBG_FAKE_OCC, "Use fake occlusion queries" },

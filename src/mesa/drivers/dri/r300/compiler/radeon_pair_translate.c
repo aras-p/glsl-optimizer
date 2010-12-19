@@ -280,9 +280,12 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 			pair->RGB.DestIndex = inst->DstReg.Index;
 			pair->RGB.WriteMask |= inst->DstReg.WriteMask & RC_MASK_XYZ;
 		}
+
 		if (needalpha) {
-			pair->Alpha.DestIndex = inst->DstReg.Index;
 			pair->Alpha.WriteMask |= GET_BIT(inst->DstReg.WriteMask, 3);
+			if (pair->Alpha.WriteMask) {
+				pair->Alpha.DestIndex = inst->DstReg.Index;
+			}
 		}
 	}
 

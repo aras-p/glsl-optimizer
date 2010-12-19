@@ -28,6 +28,9 @@
 #define NUM_OF_CYCLES 3
 #define NUM_OF_COMPONENTS 4
 
+struct r600_vertex_element;
+struct r600_pipe_context;
+
 struct r600_bc_alu_src {
 	unsigned			sel;
 	unsigned			chan;
@@ -145,12 +148,12 @@ struct r600_bc_cf {
 	struct r600_bc_alu		*curr_bs_head;
 };
 
-#define FC_NONE 0
-#define FC_IF 1
-#define FC_LOOP 2
-#define FC_REP 3
-#define FC_PUSH_VPM 4
-#define FC_PUSH_WQM 5
+#define FC_NONE				0
+#define FC_IF				1
+#define FC_LOOP				2
+#define FC_REP				3
+#define FC_PUSH_VPM			4
+#define FC_PUSH_WQM			5
 
 struct r600_cf_stack_entry {
 	int				type;
@@ -166,10 +169,11 @@ struct r600_cf_callstack {
 	int				current;
 	int				max;
 };
-	
+
 struct r600_bc {
 	enum radeon_family		family;
 	int				chiprev; /* 0 - r600, 1 - r700, 2 - evergreen */
+	int				type;
 	struct list_head		cf;
 	struct r600_bc_cf		*cf_last;
 	unsigned			ndw;
@@ -187,6 +191,7 @@ struct r600_bc {
 
 /* eg_asm.c */
 int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf);
+void eg_cf_vtx(struct r600_vertex_element *ve, u32 *bytecode, unsigned count);
 
 /* r600_asm.c */
 int r600_bc_init(struct r600_bc *bc, enum radeon_family family);
@@ -199,6 +204,11 @@ int r600_bc_add_output(struct r600_bc *bc, const struct r600_bc_output *output);
 int r600_bc_build(struct r600_bc *bc);
 int r600_bc_add_cfinst(struct r600_bc *bc, int inst);
 int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int type);
+void r600_bc_dump(struct r600_bc *bc);
+void r600_cf_vtx(struct r600_vertex_element *ve, u32 *bytecode, unsigned count);
+void r600_cf_vtx_tc(struct r600_vertex_element *ve, u32 *bytecode, unsigned count);
+
+int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, struct r600_vertex_element *ve);
 
 /* r700_asm.c */
 int r700_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id);

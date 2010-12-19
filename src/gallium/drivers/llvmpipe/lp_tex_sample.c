@@ -43,6 +43,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_shader_tokens.h"
 #include "gallivm/lp_bld_debug.h"
+#include "gallivm/lp_bld_const.h"
 #include "gallivm/lp_bld_type.h"
 #include "gallivm/lp_bld_sample.h"
 #include "gallivm/lp_bld_tgsi.h"
@@ -89,7 +90,7 @@ struct lp_llvm_sampler_soa
  */
 static LLVMValueRef
 lp_llvm_texture_member(const struct lp_sampler_dynamic_state *base,
-                       LLVMBuilderRef builder,
+                       struct gallivm_state *gallivm,
                        unsigned unit,
                        unsigned member_index,
                        const char *member_name,
@@ -97,6 +98,7 @@ lp_llvm_texture_member(const struct lp_sampler_dynamic_state *base,
 {
    struct llvmpipe_sampler_dynamic_state *state =
       (struct llvmpipe_sampler_dynamic_state *)base;
+   LLVMBuilderRef builder = gallivm->builder;
    LLVMValueRef indices[4];
    LLVMValueRef ptr;
    LLVMValueRef res;
@@ -104,13 +106,13 @@ lp_llvm_texture_member(const struct lp_sampler_dynamic_state *base,
    assert(unit < PIPE_MAX_SAMPLERS);
 
    /* context[0] */
-   indices[0] = LLVMConstInt(LLVMInt32Type(), 0, 0);
+   indices[0] = lp_build_const_int32(gallivm, 0);
    /* context[0].textures */
-   indices[1] = LLVMConstInt(LLVMInt32Type(), LP_JIT_CTX_TEXTURES, 0);
+   indices[1] = lp_build_const_int32(gallivm, LP_JIT_CTX_TEXTURES);
    /* context[0].textures[unit] */
-   indices[2] = LLVMConstInt(LLVMInt32Type(), unit, 0);
+   indices[2] = lp_build_const_int32(gallivm, unit);
    /* context[0].textures[unit].member */
-   indices[3] = LLVMConstInt(LLVMInt32Type(), member_index, 0);
+   indices[3] = lp_build_const_int32(gallivm, member_index);
 
    ptr = LLVMBuildGEP(builder, state->context_ptr, indices, Elements(indices), "");
 
@@ -137,10 +139,10 @@ lp_llvm_texture_member(const struct lp_sampler_dynamic_state *base,
 #define LP_LLVM_TEXTURE_MEMBER(_name, _index, _emit_load)  \
    static LLVMValueRef \
    lp_llvm_texture_##_name( const struct lp_sampler_dynamic_state *base, \
-                            LLVMBuilderRef builder, \
+                            struct gallivm_state *gallivm, \
                             unsigned unit) \
    { \
-      return lp_llvm_texture_member(base, builder, unit, _index, #_name, _emit_load ); \
+      return lp_llvm_texture_member(base, gallivm, unit, _index, #_name, _emit_load ); \
    }
 
 
@@ -170,7 +172,7 @@ lp_llvm_sampler_soa_destroy(struct lp_build_sampler_soa *sampler)
  */
 static void
 lp_llvm_sampler_soa_emit_fetch_texel(const struct lp_build_sampler_soa *base,
-                                     LLVMBuilderRef builder,
+                                     struct gallivm_state *gallivm,
                                      struct lp_type type,
                                      unsigned unit,
                                      unsigned num_coords,
@@ -186,11 +188,11 @@ lp_llvm_sampler_soa_emit_fetch_texel(const struct lp_build_sampler_soa *base,
    assert(unit < PIPE_MAX_SAMPLERS);
    
    if (LP_PERF & PERF_NO_TEX) {
-      lp_build_sample_nop(type, texel);
+      lp_build_sample_nop(gallivm, type, texel);
       return;
    }
 
-   lp_build_sample_soa(builder,
+   lp_build_sample_soa(gallivm,
                        &sampler->dynamic_state.static_state[unit],
                        &sampler->dynamic_state.base,
                        type,

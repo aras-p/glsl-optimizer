@@ -80,7 +80,7 @@ st_read_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
    /* Create a read transfer from the renderbuffer's texture */
 
    pt = pipe_get_transfer(pipe, strb->texture,
-                          0, 0, 0,  /* face, level, zslice */
+                          0, 0,
                           PIPE_TRANSFER_READ,
                           x, y, width, height);
 
@@ -236,7 +236,7 @@ st_fast_readpixels(struct gl_context *ctx, struct st_renderbuffer *strb,
       }
 
       trans = pipe_get_transfer(pipe, strb->texture,
-                                0, 0, 0,  /* face, level, zslice */
+                                0, 0,
                                 PIPE_TRANSFER_READ,
                                 x, y, width, height);
       if (!trans) {
@@ -328,7 +328,7 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
 {
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
-   GLfloat temp[MAX_WIDTH][4];
+   GLfloat (*temp)[4];
    const GLbitfield transferOps = ctx->_ImageTransferState;
    GLsizei i, j;
    GLint yStep, dfStride;
@@ -381,6 +381,13 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
       return;
    }
 
+   /* allocate temp pixel row buffer */
+   temp = (GLfloat (*)[4]) malloc(4 * width * sizeof(GLfloat));
+   if (!temp) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "glReadPixels");
+      return;
+   }
+
    if (format == GL_RGBA && type == GL_FLOAT) {
       /* write tile(row) directly into user's buffer */
       df = (GLfloat *) _mesa_image_address2d(&clippedPacking, dest, width,
@@ -400,7 +407,7 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
 
    /* Create a read transfer from the renderbuffer's texture */
    trans = pipe_get_transfer(pipe, strb->texture,
-                             0, 0, 0,  /* face, level, zslice */
+                             0, 0,
                              PIPE_TRANSFER_READ,
                              x, y, width, height);
 
@@ -532,6 +539,8 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
          }
       }
    }
+
+   free(temp);
 
    pipe->transfer_destroy(pipe, trans);
 

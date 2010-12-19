@@ -100,9 +100,14 @@ load_st_module(struct st_module *stmod,
 {
    struct st_api *(*create_api)(void);
 
-   _eglLog(_EGL_DEBUG, "searching for st module %s", name);
+   if (name) {
+      _eglLog(_EGL_DEBUG, "searching for st module %s", name);
+      stmod->name = loader_strdup(name);
+   }
+   else {
+      stmod->name = NULL;
+   }
 
-   stmod->name = loader_strdup(name);
    if (stmod->name)
       _eglSearchPathForEach(dlopen_st_module_cb, (void *) stmod);
    else
@@ -230,6 +235,21 @@ get_st_api_full(enum st_api_type api, enum st_profile_type profile)
    for (i = 0; i < count; i++) {
       if (load_st_module(stmod, names[i], symbol))
          break;
+   }
+
+   /* try again with libGL.so loaded */
+   if (!stmod->stapi && api == ST_API_OPENGL) {
+      struct util_dl_library *glapi = util_dl_open("libGL" UTIL_DL_EXT);
+
+      if (glapi) {
+         _eglLog(_EGL_DEBUG, "retry with libGL" UTIL_DL_EXT " loaded");
+         /* skip the last name (which is NULL) */
+         for (i = 0; i < count - 1; i++) {
+            if (load_st_module(stmod, names[i], symbol))
+               break;
+         }
+         util_dl_close(glapi);
+      }
    }
 
    if (!stmod->stapi) {

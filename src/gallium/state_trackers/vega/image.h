@@ -79,7 +79,7 @@ void image_copy(struct vg_image *dst, VGint dx, VGint dy,
                 VGint width, VGint height,
                 VGboolean dither);
 
-void image_draw(struct vg_image *img);
+void image_draw(struct vg_image *img, struct matrix *matrix);
 
 void image_set_pixels(VGint dx, VGint dy,
                       struct vg_image *src, VGint sx, VGint sy,

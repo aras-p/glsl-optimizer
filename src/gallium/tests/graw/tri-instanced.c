@@ -27,6 +27,7 @@ static const int HEIGHT = 300;
 static struct pipe_screen *screen = NULL;
 static struct pipe_context *ctx = NULL;
 static struct pipe_surface *surf = NULL;
+static struct pipe_resource *tex = NULL;
 static void *window = NULL;
 
 struct vertex {
@@ -216,14 +217,15 @@ static void draw( void )
 
    graw_save_surface_to_file(ctx, surf, NULL);
 
-   screen->flush_frontbuffer(screen, surf, window);
+   screen->flush_frontbuffer(screen, tex, 0, 0, window);
 }
 
 
 static void init( void )
 {
    struct pipe_framebuffer_state fb;
-   struct pipe_resource *tex, templat;
+   struct pipe_resource templat;
+   struct pipe_surface surf_tmpl;
    int i;
 
    /* It's hard to say whether window or screen should be created
@@ -250,6 +252,7 @@ static void init( void )
    templat.width0 = WIDTH;
    templat.height0 = HEIGHT;
    templat.depth0 = 1;
+   templat.array_size = 1;
    templat.last_level = 0;
    templat.nr_samples = 1;
    templat.bind = (PIPE_BIND_RENDER_TARGET |
@@ -260,9 +263,12 @@ static void init( void )
    if (tex == NULL)
       exit(4);
 
-   surf = screen->get_tex_surface(screen, tex, 0, 0, 0,
-                                  PIPE_BIND_RENDER_TARGET |
-                                  PIPE_BIND_DISPLAY_TARGET);
+   surf_tmpl.format = templat.format;
+   surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
+   surf_tmpl.u.tex.level = 0;
+   surf_tmpl.u.tex.first_layer = 0;
+   surf_tmpl.u.tex.last_layer = 0;
+   surf = ctx->create_surface(ctx, tex, &surf_tmpl);
    if (surf == NULL)
       exit(5);
 

@@ -14,9 +14,6 @@
 #define INTEL_BATCH_CLIPRECTS    0x2
 
 #undef INTEL_RUN_SYNC
-#undef INTEL_MAP_BATCHBUFFER
-#undef INTEL_MAP_GTT
-#define INTEL_ALWAYS_FLUSH
 
 struct i915_drm_batchbuffer
 {
@@ -41,7 +38,7 @@ i915_drm_batchbuffer_reset(struct i915_drm_batchbuffer *batch)
 
    if (batch->bo)
       drm_intel_bo_unreference(batch->bo);
-   batch->bo = drm_intel_bo_alloc(idws->pools.gem,
+   batch->bo = drm_intel_bo_alloc(idws->gem_manager,
                                   "gallium3d_batchbuffer",
                                   batch->actual_size,
                                   4096);
@@ -72,11 +69,7 @@ i915_drm_batchbuffer_create(struct i915_winsys *iws)
 
    batch->actual_size = idws->max_batch_size;
 
-#ifdef INTEL_MAP_BATCHBUFFER
-   batch->base.map = NULL;
-#else
    batch->base.map = MALLOC(batch->actual_size);
-#endif
    batch->base.ptr = NULL;
    batch->base.size = 0;
 
@@ -94,7 +87,7 @@ static int
 i915_drm_batchbuffer_reloc(struct i915_winsys_batchbuffer *ibatch,
                             struct i915_winsys_buffer *buffer,
                             enum i915_winsys_buffer_usage usage,
-                            unsigned pre_add)
+                            unsigned pre_add, bool fenced)
 {
    struct i915_drm_batchbuffer *batch = i915_drm_batchbuffer(ibatch);
    unsigned write_domain = 0;
@@ -104,37 +97,44 @@ i915_drm_batchbuffer_reloc(struct i915_winsys_batchbuffer *ibatch,
 
    assert(batch->base.relocs < batch->base.max_relocs);
 
-   if (usage == I915_USAGE_SAMPLER) {
+   switch (usage) {
+   case I915_USAGE_SAMPLER:
       write_domain = 0;
       read_domain = I915_GEM_DOMAIN_SAMPLER;
-
-   } else if (usage == I915_USAGE_RENDER) {
+      break;
+   case I915_USAGE_RENDER:
       write_domain = I915_GEM_DOMAIN_RENDER;
       read_domain = I915_GEM_DOMAIN_RENDER;
-
-   } else if (usage == I915_USAGE_2D_TARGET) {
+      break;
+   case I915_USAGE_2D_TARGET:
       write_domain = I915_GEM_DOMAIN_RENDER;
       read_domain = I915_GEM_DOMAIN_RENDER;
-
-   } else if (usage == I915_USAGE_2D_SOURCE) {
+      break;
+   case I915_USAGE_2D_SOURCE:
       write_domain = 0;
       read_domain = I915_GEM_DOMAIN_RENDER;
-
-   } else if (usage == I915_USAGE_VERTEX) {
+      break;
+   case I915_USAGE_VERTEX:
       write_domain = 0;
       read_domain = I915_GEM_DOMAIN_VERTEX;
-
-   } else {
+      break;
+   default:
       assert(0);
       return -1;
    }
 
    offset = (unsigned)(batch->base.ptr - batch->base.map);
 
-   ret = drm_intel_bo_emit_reloc(batch->bo, offset,
-                                 intel_bo(buffer), pre_add,
-                                 read_domain,
-                                 write_domain);
+   if (fenced)
+      ret = drm_intel_bo_emit_reloc_fence(batch->bo, offset,
+				    intel_bo(buffer), pre_add,
+				    read_domain,
+				    write_domain);
+   else
+      ret = drm_intel_bo_emit_reloc(batch->bo, offset,
+				    intel_bo(buffer), pre_add,
+				    read_domain,
+				    write_domain);
 
    ((uint32_t*)batch->base.ptr)[0] = intel_bo(buffer)->offset + pre_add;
    batch->base.ptr += 4;
@@ -150,70 +150,32 @@ i915_drm_batchbuffer_flush(struct i915_winsys_batchbuffer *ibatch,
                             struct pipe_fence_handle **fence)
 {
    struct i915_drm_batchbuffer *batch = i915_drm_batchbuffer(ibatch);
-   unsigned used = 0;
-   int ret = 0;
+   unsigned used;
+   int ret;
 
-   assert(i915_winsys_batchbuffer_space(ibatch) >= 0);
-
-   used = batch->base.ptr - batch->base.map;
-   assert((used & 3) == 0);
-
-
-#ifdef INTEL_ALWAYS_FLUSH
-   /* MI_FLUSH | FLUSH_MAP_CACHE */
-   i915_winsys_batchbuffer_dword(ibatch, (0x4<<23)|(1<<0));
-   used += 4;
-#endif
-
-   if ((used & 4) == 0) {
-      /* MI_NOOP */
-      i915_winsys_batchbuffer_dword(ibatch, 0);
-   }
    /* MI_BATCH_BUFFER_END */
-   i915_winsys_batchbuffer_dword(ibatch, (0xA<<23));
+   i915_winsys_batchbuffer_dword_unchecked(ibatch, (0xA<<23));
 
    used = batch->base.ptr - batch->base.map;
-   assert((used & 4) == 0);
-
-#ifdef INTEL_MAP_BATCHBUFFER
-#ifdef INTEL_MAP_GTT
-   drm_intel_gem_bo_unmap_gtt(batch->bo);
-#else
-   drm_intel_bo_unmap(batch->bo);
-#endif
-#else
-   drm_intel_bo_subdata(batch->bo, 0, used, batch->base.map);
-#endif
+   if (used & 4) {
+      /* MI_NOOP */
+      i915_winsys_batchbuffer_dword_unchecked(ibatch, 0);
+      used += 4;
+   }
 
    /* Do the sending to HW */
-   if (i915_drm_winsys(ibatch->iws)->send_cmd)
+   ret = drm_intel_bo_subdata(batch->bo, 0, used, batch->base.map);
+   if (ret == 0 && i915_drm_winsys(ibatch->iws)->send_cmd)
       ret = drm_intel_bo_exec(batch->bo, used, NULL, 0, 0);
-   else
-      ret = 0;
 
    if (ret != 0 || i915_drm_winsys(ibatch->iws)->dump_cmd) {
-#ifdef INTEL_MAP_BATCHBUFFER
-#ifdef INTEL_MAP_GTT
-      drm_intel_gem_bo_map_gtt(batch->bo);
-#else
-      drm_intel_bo_map(batch->bo, 0);
-#endif
-#endif
       i915_dump_batchbuffer(ibatch);
       assert(ret == 0);
-#ifdef INTEL_MAP_BATCHBUFFER
-#ifdef INTEL_MAP_GTT
-   drm_intel_gem_bo_unmap_gtt(batch->bo);
-#else
-   drm_intel_bo_unmap(batch->bo);
-#endif
-#endif
-   } else {
-#ifdef INTEL_RUN_SYNC
-      drm_intel_bo_map(batch->bo, FALSE);
-      drm_intel_bo_unmap(batch->bo);
-#endif
    }
+
+#ifdef INTEL_RUN_SYNC
+   drm_intel_bo_wait_rendering(batch->bo);
+#endif
 
    if (fence) {
       ibatch->iws->fence_reference(ibatch->iws, fence, NULL);
@@ -237,9 +199,7 @@ i915_drm_batchbuffer_destroy(struct i915_winsys_batchbuffer *ibatch)
    if (batch->bo)
       drm_intel_bo_unreference(batch->bo);
 
-#ifndef INTEL_MAP_BATCHBUFFER
    FREE(batch->base.map);
-#endif
    FREE(batch);
 }
 

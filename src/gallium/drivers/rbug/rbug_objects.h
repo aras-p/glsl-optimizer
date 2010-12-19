@@ -189,11 +189,13 @@ void
 rbug_resource_destroy(struct rbug_resource *rb_resource);
 
 struct pipe_surface *
-rbug_surface_create(struct rbug_resource *rb_resource,
+rbug_surface_create(struct rbug_context *rb_context,
+                    struct rbug_resource *rb_resource,
                     struct pipe_surface *surface);
 
 void
-rbug_surface_destroy(struct rbug_surface *rb_surface);
+rbug_surface_destroy(struct rbug_context *rb_context,
+                     struct rbug_surface *rb_surface);
 
 struct pipe_sampler_view *
 rbug_sampler_view_create(struct rbug_context *rb_context,

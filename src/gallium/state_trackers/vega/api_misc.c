@@ -63,8 +63,8 @@ const VGubyte *vegaGetString(VGStringID name)
 {
    struct vg_context *ctx = vg_current_context();
    static const VGubyte *vendor = (VGubyte *)"Tungsten Graphics, Inc";
-   static const VGubyte *renderer = (VGubyte *)"Vega OpenVG 1.0";
-   static const VGubyte *version = (VGubyte *)"1.0";
+   static const VGubyte *renderer = (VGubyte *)"Vega OpenVG 1.1";
+   static const VGubyte *version = (VGubyte *)"1.1";
 
    if (!ctx)
       return NULL;

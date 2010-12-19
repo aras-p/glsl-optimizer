@@ -53,8 +53,8 @@ svga_buffer_needs_hw_storage(unsigned usage)
 
 static unsigned int
 svga_buffer_is_referenced( struct pipe_context *pipe,
-			     struct pipe_resource *buf,
-			     unsigned face, unsigned level)
+                           struct pipe_resource *buf,
+                           unsigned level, int layer)
 {
    struct svga_screen *ss = svga_screen(pipe->screen);
    struct svga_buffer *sbuf = svga_buffer(buf);
@@ -337,6 +337,7 @@ svga_user_buffer_create(struct pipe_screen *screen,
    sbuf->b.b.width0 = bytes;
    sbuf->b.b.height0 = 1;
    sbuf->b.b.depth0 = 1;
+   sbuf->b.b.array_size = 1;
 
    sbuf->swbuf = ptr;
    sbuf->user = TRUE;

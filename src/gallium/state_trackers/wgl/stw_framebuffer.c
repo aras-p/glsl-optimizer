@@ -469,7 +469,7 @@ DrvPresentBuffers(HDC hdc, PGLPRESENTBUFFERSDATA data)
 {
    struct stw_framebuffer *fb;
    struct pipe_screen *screen;
-   struct pipe_surface *surface;
+   struct pipe_resource *res;
 
    if (!stw_dev)
       return FALSE;
@@ -480,7 +480,7 @@ DrvPresentBuffers(HDC hdc, PGLPRESENTBUFFERSDATA data)
 
    screen = stw_dev->screen;
 
-   surface = (struct pipe_surface *)data->pPrivateData;
+   res = (struct pipe_resource *)data->pPrivateData;
 
    if(data->hSharedSurface != fb->hSharedSurface) {
       if(fb->shared_surface) {
@@ -498,13 +498,13 @@ DrvPresentBuffers(HDC hdc, PGLPRESENTBUFFERSDATA data)
 
    if(fb->shared_surface) {
       stw_dev->stw_winsys->compose(screen,
-                                   surface,
+                                   res,
                                    fb->shared_surface,
                                    &fb->client_rect,
                                    data->PresentHistoryToken);
    }
    else {
-      stw_dev->stw_winsys->present( screen, surface, hdc );
+      stw_dev->stw_winsys->present( screen, res, hdc );
    }
 
    stw_framebuffer_update(fb);
@@ -524,7 +524,7 @@ DrvPresentBuffers(HDC hdc, PGLPRESENTBUFFERSDATA data)
 BOOL
 stw_framebuffer_present_locked(HDC hdc,
                                struct stw_framebuffer *fb,
-                               struct pipe_surface *surface)
+                               struct pipe_resource *res)
 {
    if(stw_dev->callbacks.wglCbPresentBuffers &&
       stw_dev->stw_winsys->compose) {
@@ -535,7 +535,7 @@ stw_framebuffer_present_locked(HDC hdc,
       data.magic2 = 0;
       data.AdapterLuid = stw_dev->AdapterLuid;
       data.rect = fb->client_rect;
-      data.pPrivateData = (void *)surface;
+      data.pPrivateData = (void *)res;
 
       stw_notify_current_locked(fb);
       stw_framebuffer_release(fb);
@@ -545,7 +545,7 @@ stw_framebuffer_present_locked(HDC hdc,
    else {
       struct pipe_screen *screen = stw_dev->screen;
 
-      stw_dev->stw_winsys->present( screen, surface, hdc );
+      stw_dev->stw_winsys->present( screen, res, hdc );
 
       stw_framebuffer_update(fb);
       stw_notify_current_locked(fb);

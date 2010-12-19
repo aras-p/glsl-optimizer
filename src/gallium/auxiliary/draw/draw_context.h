@@ -48,9 +48,14 @@ struct draw_vertex_shader;
 struct draw_geometry_shader;
 struct draw_fragment_shader;
 struct tgsi_sampler;
+struct gallivm_state;
+
 
 
 struct draw_context *draw_create( struct pipe_context *pipe );
+
+struct draw_context *
+draw_create_gallivm(struct pipe_context *pipe, struct gallivm_state *gallivm);
 
 void draw_destroy( struct draw_context *draw );
 

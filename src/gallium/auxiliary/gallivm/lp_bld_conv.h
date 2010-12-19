@@ -44,27 +44,27 @@ struct lp_type;
 
 
 LLVMValueRef
-lp_build_clamped_float_to_unsigned_norm(LLVMBuilderRef builder,
+lp_build_clamped_float_to_unsigned_norm(struct gallivm_state *gallivm,
                                         struct lp_type src_type,
                                         unsigned dst_width,
                                         LLVMValueRef src);
 
 LLVMValueRef
-lp_build_unsigned_norm_to_float(LLVMBuilderRef builder,
+lp_build_unsigned_norm_to_float(struct gallivm_state *gallivm,
                                 unsigned src_width,
                                 struct lp_type dst_type,
                                 LLVMValueRef src);
 
 
 void
-lp_build_conv(LLVMBuilderRef builder,
+lp_build_conv(struct gallivm_state *gallivm,
               struct lp_type src_type,
               struct lp_type dst_type,
               const LLVMValueRef *srcs, unsigned num_srcs,
               LLVMValueRef *dsts, unsigned num_dsts);
 
 void
-lp_build_conv_mask(LLVMBuilderRef builder,
+lp_build_conv_mask(struct gallivm_state *gallivm,
                    struct lp_type src_type,
                    struct lp_type dst_type,
                    const LLVMValueRef *src, unsigned num_srcs,

@@ -238,7 +238,6 @@ update_tss(struct svga_context *svga,
          // TEXCOORDINDEX -- hopefully not needed
 
          if (svga->curr.tex_flags.flag_1d & (1 << i)) {
-            debug_printf("wrap 1d tex %d\n", i);
             EMIT_TS(svga, i, SVGA3D_TEX_ADDRESS_WRAP, ADDRESSV, fail);
          }
          else

@@ -484,10 +484,24 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
                            const struct gl_pixelstore_attrib *dstPacking,
                            GLbitfield transferOps)
 {
-   GLfloat luminance[MAX_WIDTH];
+   GLfloat *luminance;
    const GLint comps = _mesa_components_in_format(dstFormat);
    const GLboolean intDstFormat = _mesa_is_integer_format(dstFormat);
    GLuint i;
+
+   if (dstFormat == GL_LUMINANCE ||
+       dstFormat == GL_LUMINANCE_ALPHA ||
+       dstFormat == GL_LUMINANCE_INTEGER_EXT ||
+       dstFormat == GL_LUMINANCE_ALPHA_INTEGER_EXT) {
+      luminance = (GLfloat *) malloc(n * sizeof(GLfloat));
+      if (!luminance) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel packing");
+         return;
+      }
+   }
+   else {
+      luminance = NULL;
+   }
 
    /* XXX
     * This test should probably go away.  Have the caller set/clear the
@@ -1907,6 +1921,8 @@ _mesa_pack_rgba_span_float(struct gl_context *ctx, GLuint n, GLfloat rgba[][4],
          }
       }
    }
+
+   free(luminance);
 }
 
 
@@ -3462,7 +3478,12 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
    {
       GLint dstComponents;
       GLint rDst, gDst, bDst, aDst, lDst, iDst;
-      GLfloat rgba[MAX_WIDTH][4];
+      GLfloat (*rgba)[4] = (GLfloat (*)[4]) malloc(4 * n * sizeof(GLfloat));
+
+      if (!rgba) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
+         return;
+      }
 
       dstComponents = _mesa_components_in_format( dstFormat );
       /* source & dest image formats should have been error checked by now */
@@ -3471,9 +3492,14 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
       /*
        * Extract image data and convert to RGBA floats
        */
-      assert(n <= MAX_WIDTH);
       if (srcFormat == GL_COLOR_INDEX) {
-         GLuint indexes[MAX_WIDTH];
+         GLuint *indexes = (GLuint *) malloc(n * sizeof(GLuint));
+
+         if (!indexes) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
+            return;
+         }
+
          extract_uint_indexes(n, indexes, srcFormat, srcType, source,
                               srcPacking);
 
@@ -3484,6 +3510,8 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
             for (i = 0; i < n; i++) {
                dest[i] = (GLchan) (indexes[i] & 0xff);
             }
+            free(indexes);
+            free(rgba);
             return;
          }
          else {
@@ -3498,6 +3526,8 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
           * with color indexes.
           */
          transferOps &= ~(IMAGE_SCALE_BIAS_BIT | IMAGE_MAP_COLOR_BIT);
+
+         free(indexes);
       }
       else {
          /* non-color index data */
@@ -3575,6 +3605,8 @@ _mesa_unpack_color_span_chan( struct gl_context *ctx,
             dst += dstComponents;
          }
       }
+
+      free(rgba);
    }
 }
 
@@ -3652,7 +3684,12 @@ _mesa_unpack_color_span_float( struct gl_context *ctx,
    {
       GLint dstComponents;
       GLint rDst, gDst, bDst, aDst, lDst, iDst;
-      GLfloat rgba[MAX_WIDTH][4];
+      GLfloat (*rgba)[4] = (GLfloat (*)[4]) malloc(4 * n * sizeof(GLfloat));
+
+      if (!rgba) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
+         return;
+      }
 
       dstComponents = _mesa_components_in_format( dstFormat );
       /* source & dest image formats should have been error checked by now */
@@ -3661,9 +3698,15 @@ _mesa_unpack_color_span_float( struct gl_context *ctx,
       /*
        * Extract image data and convert to RGBA floats
        */
-      assert(n <= MAX_WIDTH);
       if (srcFormat == GL_COLOR_INDEX) {
-         GLuint indexes[MAX_WIDTH];
+         GLuint *indexes = (GLuint *) malloc(n * sizeof(GLuint));
+
+         if (!indexes) {
+            _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
+            free(rgba);
+            return;
+         }
+
          extract_uint_indexes(n, indexes, srcFormat, srcType, source,
                               srcPacking);
 
@@ -3674,6 +3717,8 @@ _mesa_unpack_color_span_float( struct gl_context *ctx,
             for (i = 0; i < n; i++) {
                dest[i] = (GLchan) (indexes[i] & 0xff);
             }
+            free(indexes);
+            free(rgba);
             return;
          }
          else {
@@ -3688,6 +3733,8 @@ _mesa_unpack_color_span_float( struct gl_context *ctx,
           * with color indexes.
           */
          transferOps &= ~(IMAGE_SCALE_BIAS_BIT | IMAGE_MAP_COLOR_BIT);
+
+         free(indexes);
       }
       else {
          /* non-color index data */
@@ -3760,6 +3807,8 @@ _mesa_unpack_color_span_float( struct gl_context *ctx,
             dst += dstComponents;
          }
       }
+
+      free(rgba);
    }
 }
 
@@ -3776,9 +3825,12 @@ _mesa_unpack_color_span_uint(struct gl_context *ctx,
                              const GLvoid *source,
                              const struct gl_pixelstore_attrib *srcPacking)
 {
-   GLuint rgba[MAX_WIDTH][4];
+   GLuint (*rgba)[4] = (GLuint (*)[4]) malloc(n * 4 * sizeof(GLfloat));
 
-   ASSERT(n <= MAX_WIDTH);
+   if (!rgba) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
+      return;
+   }
 
    ASSERT(dstFormat == GL_ALPHA ||
           dstFormat == GL_LUMINANCE ||
@@ -3912,6 +3964,8 @@ _mesa_unpack_color_span_uint(struct gl_context *ctx,
          }
       }
    }
+
+   free(rgba);
 }
 
 
@@ -3943,9 +3997,14 @@ _mesa_unpack_dudv_span_byte( struct gl_context *ctx,
    /* general solution */
    {
       GLint dstComponents;
-      GLfloat rgba[MAX_WIDTH][4];
       GLbyte *dst = dest;
       GLuint i;
+      GLfloat (*rgba)[4] = (GLfloat (*)[4]) malloc(4 * n * sizeof(GLfloat));
+
+      if (!rgba) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
+         return;
+      }
 
       dstComponents = _mesa_components_in_format( dstFormat );
       /* source & dest image formats should have been error checked by now */
@@ -3954,7 +4013,6 @@ _mesa_unpack_dudv_span_byte( struct gl_context *ctx,
       /*
        * Extract image data and convert to RGBA floats
        */
-      assert(n <= MAX_WIDTH);
       extract_float_rgba(n, rgba, srcFormat, srcType, source,
                          srcPacking->SwapBytes);
 
@@ -3970,6 +4028,8 @@ _mesa_unpack_dudv_span_byte( struct gl_context *ctx,
          dst[1] = FLOAT_TO_BYTE(rgba[i][GCOMP]);
          dst += dstComponents;
       }
+
+      free(rgba);
    }
 }
 
@@ -3988,7 +4048,7 @@ _mesa_unpack_dudv_span_byte( struct gl_context *ctx,
  *        transferOps - the pixel transfer operations to apply
  */
 void
-_mesa_unpack_index_span( const struct gl_context *ctx, GLuint n,
+_mesa_unpack_index_span( struct gl_context *ctx, GLuint n,
                          GLenum dstType, GLvoid *dest,
                          GLenum srcType, const GLvoid *source,
                          const struct gl_pixelstore_attrib *srcPacking,
@@ -4026,8 +4086,12 @@ _mesa_unpack_index_span( const struct gl_context *ctx, GLuint n,
       /*
        * general solution
        */
-      GLuint indexes[MAX_WIDTH];
-      assert(n <= MAX_WIDTH);
+      GLuint *indexes = (GLuint *) malloc(n * sizeof(GLuint));
+
+      if (!indexes) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
+         return;
+      }
 
       extract_uint_indexes(n, indexes, GL_COLOR_INDEX, srcType, source,
                            srcPacking);
@@ -4061,19 +4125,24 @@ _mesa_unpack_index_span( const struct gl_context *ctx, GLuint n,
          default:
             _mesa_problem(ctx, "bad dstType in _mesa_unpack_index_span");
       }
+
+      free(indexes);
    }
 }
 
 
 void
-_mesa_pack_index_span( const struct gl_context *ctx, GLuint n,
+_mesa_pack_index_span( struct gl_context *ctx, GLuint n,
                        GLenum dstType, GLvoid *dest, const GLuint *source,
                        const struct gl_pixelstore_attrib *dstPacking,
                        GLbitfield transferOps )
 {
-   GLuint indexes[MAX_WIDTH];
+   GLuint *indexes = (GLuint *) malloc(n * sizeof(GLuint));
 
-   ASSERT(n <= MAX_WIDTH);
+   if (!indexes) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel packing");
+      return;
+   }
 
    transferOps &= (IMAGE_MAP_COLOR_BIT | IMAGE_SHIFT_OFFSET_BIT);
 
@@ -4178,6 +4247,8 @@ _mesa_pack_index_span( const struct gl_context *ctx, GLuint n,
    default:
       _mesa_problem(ctx, "bad type in _mesa_pack_index_span");
    }
+
+   free(indexes);
 }
 
 
@@ -4196,7 +4267,7 @@ _mesa_pack_index_span( const struct gl_context *ctx, GLuint n,
  *        transferOps - apply offset/bias/lookup ops?
  */
 void
-_mesa_unpack_stencil_span( const struct gl_context *ctx, GLuint n,
+_mesa_unpack_stencil_span( struct gl_context *ctx, GLuint n,
                            GLenum dstType, GLvoid *dest,
                            GLenum srcType, const GLvoid *source,
                            const struct gl_pixelstore_attrib *srcPacking,
@@ -4240,8 +4311,12 @@ _mesa_unpack_stencil_span( const struct gl_context *ctx, GLuint n,
       /*
        * general solution
        */
-      GLuint indexes[MAX_WIDTH];
-      assert(n <= MAX_WIDTH);
+      GLuint *indexes = (GLuint *) malloc(n * sizeof(GLuint));
+
+      if (!indexes) {
+         _mesa_error(ctx, GL_OUT_OF_MEMORY, "stencil unpacking");
+         return;
+      }
 
       extract_uint_indexes(n, indexes, GL_STENCIL_INDEX, srcType, source,
                            srcPacking);
@@ -4286,18 +4361,23 @@ _mesa_unpack_stencil_span( const struct gl_context *ctx, GLuint n,
          default:
             _mesa_problem(ctx, "bad dstType in _mesa_unpack_stencil_span");
       }
+
+      free(indexes);
    }
 }
 
 
 void
-_mesa_pack_stencil_span( const struct gl_context *ctx, GLuint n,
+_mesa_pack_stencil_span( struct gl_context *ctx, GLuint n,
                          GLenum dstType, GLvoid *dest, const GLstencil *source,
                          const struct gl_pixelstore_attrib *dstPacking )
 {
-   GLstencil stencil[MAX_WIDTH];
+   GLstencil *stencil = (GLstencil *) malloc(n * sizeof(GLstencil));
 
-   ASSERT(n <= MAX_WIDTH);
+   if (!stencil) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "stencil packing");
+      return;
+   }
 
    if (ctx->Pixel.IndexShift || ctx->Pixel.IndexOffset ||
        ctx->Pixel.MapStencilFlag) {
@@ -4436,6 +4516,8 @@ _mesa_pack_stencil_span( const struct gl_context *ctx, GLuint n,
    default:
       _mesa_problem(ctx, "bad type in _mesa_pack_index_span");
    }
+
+   free(stencil);
 }
 
 #define DEPTH_VALUES(GLTYPE, GLTYPE2FLOAT)                              \
@@ -4466,12 +4548,12 @@ _mesa_pack_stencil_span( const struct gl_context *ctx, GLuint n,
  *                  (ignored for GLfloat).
  */
 void
-_mesa_unpack_depth_span( const struct gl_context *ctx, GLuint n,
+_mesa_unpack_depth_span( struct gl_context *ctx, GLuint n,
                          GLenum dstType, GLvoid *dest, GLuint depthMax,
                          GLenum srcType, const GLvoid *source,
                          const struct gl_pixelstore_attrib *srcPacking )
 {
-   GLfloat depthTemp[MAX_WIDTH], *depthValues;
+   GLfloat *depthTemp, *depthValues;
    GLboolean needClamp = GL_FALSE;
 
    /* Look for special cases first.
@@ -4516,6 +4598,12 @@ _mesa_unpack_depth_span( const struct gl_context *ctx, GLuint n,
    }
 
    /* general case path follows */
+
+   depthTemp = (GLfloat *) malloc(n * sizeof(GLfloat));
+   if (!depthTemp) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel unpacking");
+      return;
+   }
 
    if (dstType == GL_FLOAT) {
       depthValues = (GLfloat *) dest;
@@ -4599,6 +4687,7 @@ _mesa_unpack_depth_span( const struct gl_context *ctx, GLuint n,
          break;
       default:
          _mesa_problem(NULL, "bad type in _mesa_unpack_depth_span()");
+         free(depthTemp);
          return;
    }
 
@@ -4658,6 +4747,8 @@ _mesa_unpack_depth_span( const struct gl_context *ctx, GLuint n,
       ASSERT(dstType == GL_FLOAT);
       /*ASSERT(depthMax == 1.0F);*/
    }
+
+   free(depthTemp);
 }
 
 
@@ -4665,13 +4756,15 @@ _mesa_unpack_depth_span( const struct gl_context *ctx, GLuint n,
  * Pack an array of depth values.  The values are floats in [0,1].
  */
 void
-_mesa_pack_depth_span( const struct gl_context *ctx, GLuint n, GLvoid *dest,
+_mesa_pack_depth_span( struct gl_context *ctx, GLuint n, GLvoid *dest,
                        GLenum dstType, const GLfloat *depthSpan,
                        const struct gl_pixelstore_attrib *dstPacking )
 {
-   GLfloat depthCopy[MAX_WIDTH];
-
-   ASSERT(n <= MAX_WIDTH);
+   GLfloat *depthCopy = (GLfloat *) malloc(n * sizeof(GLfloat));
+   if (!depthCopy) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel packing");
+      return;
+   }
 
    if (ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0) {
       memcpy(depthCopy, depthSpan, n * sizeof(GLfloat));
@@ -4773,6 +4866,8 @@ _mesa_pack_depth_span( const struct gl_context *ctx, GLuint n, GLvoid *dest,
    default:
       _mesa_problem(ctx, "bad type in _mesa_pack_depth_span");
    }
+
+   free(depthCopy);
 }
 
 
@@ -4781,16 +4876,21 @@ _mesa_pack_depth_span( const struct gl_context *ctx, GLuint n, GLvoid *dest,
  * Pack depth and stencil values as GL_DEPTH_STENCIL/GL_UNSIGNED_INT_24_8.
  */
 void
-_mesa_pack_depth_stencil_span(const struct gl_context *ctx, GLuint n, GLuint *dest,
+_mesa_pack_depth_stencil_span(struct gl_context *ctx, GLuint n, GLuint *dest,
                               const GLfloat *depthVals,
                               const GLstencil *stencilVals,
                               const struct gl_pixelstore_attrib *dstPacking)
 {
-   GLfloat depthCopy[MAX_WIDTH];
-   GLstencil stencilCopy[MAX_WIDTH];
+   GLfloat *depthCopy = (GLfloat *) malloc(n * sizeof(GLfloat));
+   GLstencil *stencilCopy = (GLstencil *) malloc(n * sizeof(GLstencil));
    GLuint i;
 
-   ASSERT(n <= MAX_WIDTH);
+   if (!depthCopy || !stencilCopy) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "pixel packing");
+      free(depthCopy);
+      free(stencilCopy);
+      return;
+   }
 
    if (ctx->Pixel.DepthScale != 1.0 || ctx->Pixel.DepthBias != 0.0) {
       memcpy(depthCopy, depthVals, n * sizeof(GLfloat));
@@ -4814,6 +4914,9 @@ _mesa_pack_depth_stencil_span(const struct gl_context *ctx, GLuint n, GLuint *de
    if (dstPacking->SwapBytes) {
       _mesa_swap4(dest, n);
    }
+
+   free(depthCopy);
+   free(stencilCopy);
 }
 
 

@@ -5,15 +5,31 @@
 
 #include "i915_drm.h"
 
+static char *i915_drm_type_to_name(enum i915_winsys_buffer_type type)
+{
+   char *name;
+
+   if (type == I915_NEW_TEXTURE) {
+      name = "gallium3d_texture";
+   } else if (type == I915_NEW_VERTEX) {
+      name = "gallium3d_vertex";
+   } else if (type == I915_NEW_SCANOUT) {
+      name = "gallium3d_scanout";
+   } else {
+      assert(0);
+      name = "gallium3d_unknown";
+   }
+
+   return name;
+}
+
 static struct i915_winsys_buffer *
 i915_drm_buffer_create(struct i915_winsys *iws,
-                        unsigned size, unsigned alignment,
+                        unsigned size,
                         enum i915_winsys_buffer_type type)
 {
    struct i915_drm_buffer *buf = CALLOC_STRUCT(i915_drm_buffer);
    struct i915_drm_winsys *idws = i915_drm_winsys(iws);
-   drm_intel_bufmgr *pool;
-   char *name;
 
    if (!buf)
       return NULL;
@@ -21,26 +37,9 @@ i915_drm_buffer_create(struct i915_winsys *iws,
    buf->magic = 0xDEAD1337;
    buf->flinked = FALSE;
    buf->flink = 0;
-   buf->map_gtt = FALSE;
 
-   if (type == I915_NEW_TEXTURE) {
-      name = "gallium3d_texture";
-      pool = idws->pools.gem;
-   } else if (type == I915_NEW_VERTEX) {
-      name = "gallium3d_vertex";
-      pool = idws->pools.gem;
-      buf->map_gtt = TRUE;
-   } else if (type == I915_NEW_SCANOUT) {
-      name = "gallium3d_scanout";
-      pool = idws->pools.gem;
-      buf->map_gtt = TRUE;
-   } else {
-      assert(0);
-      name = "gallium3d_unknown";
-      pool = idws->pools.gem;
-   }
-
-   buf->bo = drm_intel_bo_alloc(pool, name, size, alignment);
+   buf->bo = drm_intel_bo_alloc(idws->gem_manager,
+                                i915_drm_type_to_name(type), size, 0);
 
    if (!buf->bo)
       goto err;
@@ -54,9 +53,46 @@ err:
 }
 
 static struct i915_winsys_buffer *
+i915_drm_buffer_create_tiled(struct i915_winsys *iws,
+                             unsigned *stride, unsigned height, 
+                             enum i915_winsys_buffer_tile *tiling,
+                             enum i915_winsys_buffer_type type)
+{
+   struct i915_drm_buffer *buf = CALLOC_STRUCT(i915_drm_buffer);
+   struct i915_drm_winsys *idws = i915_drm_winsys(iws);
+   unsigned long pitch = 0;
+   uint32_t tiling_mode = *tiling;
+
+   if (!buf)
+      return NULL;
+
+   buf->magic = 0xDEAD1337;
+   buf->flinked = FALSE;
+   buf->flink = 0;
+
+   buf->bo = drm_intel_bo_alloc_tiled(idws->gem_manager,
+                                      i915_drm_type_to_name(type),
+		   		      *stride, height, 1,
+                                      &tiling_mode, &pitch, 0);
+
+   if (!buf->bo)
+      goto err;
+
+   *stride = pitch;
+   *tiling = tiling_mode;
+   return (struct i915_winsys_buffer *)buf;
+
+err:
+   assert(0);
+   FREE(buf);
+   return NULL;
+}
+
+static struct i915_winsys_buffer *
 i915_drm_buffer_from_handle(struct i915_winsys *iws,
-                             struct winsys_handle *whandle,
-                             unsigned *stride)
+                            struct winsys_handle *whandle,
+                            enum i915_winsys_buffer_tile *tiling,
+                            unsigned *stride)
 {
    struct i915_drm_winsys *idws = i915_drm_winsys(iws);
    struct i915_drm_buffer *buf = CALLOC_STRUCT(i915_drm_buffer);
@@ -66,7 +102,7 @@ i915_drm_buffer_from_handle(struct i915_winsys *iws,
       return NULL;
 
    buf->magic = 0xDEAD1337;
-   buf->bo = drm_intel_bo_gem_create_from_name(idws->pools.gem, "gallium3d_from_handle", whandle->handle);
+   buf->bo = drm_intel_bo_gem_create_from_name(idws->gem_manager, "gallium3d_from_handle", whandle->handle);
    buf->flinked = TRUE;
    buf->flink = whandle->handle;
 
@@ -74,10 +110,9 @@ i915_drm_buffer_from_handle(struct i915_winsys *iws,
       goto err;
 
    drm_intel_bo_get_tiling(buf->bo, &tile, &swizzle);
-   if (tile != I915_TILE_NONE)
-      buf->map_gtt = TRUE;
 
    *stride = whandle->stride;
+   *tiling = tile;
 
    return (struct i915_winsys_buffer *)buf;
 
@@ -113,25 +148,6 @@ i915_drm_buffer_get_handle(struct i915_winsys *iws,
    return TRUE;
 }
 
-static int
-i915_drm_buffer_set_fence_reg(struct i915_winsys *iws,
-                               struct i915_winsys_buffer *buffer,
-                               unsigned stride,
-                               enum i915_winsys_buffer_tile tile)
-{
-   struct i915_drm_buffer *buf = i915_drm_buffer(buffer);
-   assert(I915_TILING_NONE == I915_TILE_NONE);
-   assert(I915_TILING_X == I915_TILE_X);
-   assert(I915_TILING_Y == I915_TILE_Y);
-
-   if (tile != I915_TILE_NONE) {
-      assert(buf->map_count == 0);
-      buf->map_gtt = TRUE;
-   }
-
-   return drm_intel_bo_set_tiling(buf->bo, &tile, stride);
-}
-
 static void *
 i915_drm_buffer_map(struct i915_winsys *iws,
                      struct i915_winsys_buffer *buffer,
@@ -146,10 +162,7 @@ i915_drm_buffer_map(struct i915_winsys *iws,
    if (buf->map_count)
       goto out;
 
-   if (buf->map_gtt)
-      ret = drm_intel_gem_bo_map_gtt(bo);
-   else
-      ret = drm_intel_bo_map(bo, write);
+   ret = drm_intel_gem_bo_map_gtt(bo);
 
    buf->ptr = bo->virtual;
 
@@ -171,10 +184,7 @@ i915_drm_buffer_unmap(struct i915_winsys *iws,
    if (--buf->map_count)
       return;
 
-   if (buf->map_gtt)
-      drm_intel_gem_bo_unmap_gtt(intel_bo(buffer));
-   else
-      drm_intel_bo_unmap(intel_bo(buffer));
+   drm_intel_gem_bo_unmap_gtt(intel_bo(buffer));
 }
 
 static int
@@ -207,9 +217,9 @@ void
 i915_drm_winsys_init_buffer_functions(struct i915_drm_winsys *idws)
 {
    idws->base.buffer_create = i915_drm_buffer_create;
+   idws->base.buffer_create_tiled = i915_drm_buffer_create_tiled;
    idws->base.buffer_from_handle = i915_drm_buffer_from_handle;
    idws->base.buffer_get_handle = i915_drm_buffer_get_handle;
-   idws->base.buffer_set_fence_reg = i915_drm_buffer_set_fence_reg;
    idws->base.buffer_map = i915_drm_buffer_map;
    idws->base.buffer_unmap = i915_drm_buffer_unmap;
    idws->base.buffer_write = i915_drm_buffer_write;
