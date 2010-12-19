@@ -4,6 +4,8 @@
 
 #include "pipe/p_state.h"
 
+#define NVC0_SCISSORS_CLIPPING
+
 #define SB_BEGIN_3D(so, m, s)                                                  \
    (so)->state[(so)->size++] =                                                 \
       (0x2 << 28) | ((s) << 16) | (NVC0_SUBCH_3D << 13) | ((NVC0_3D_##m) >> 2)
@@ -46,7 +48,7 @@ nvc0_tic_entry(struct pipe_sampler_view *view)
 struct nvc0_rasterizer_stateobj {
    struct pipe_rasterizer_state pipe;
    int size;
-   uint32_t state[42];
+   uint32_t state[43];
 };
 
 struct nvc0_zsa_stateobj {

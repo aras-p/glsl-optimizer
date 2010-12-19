@@ -175,6 +175,10 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
     if (!so)
         return NULL;
     so->pipe = *cso;
+
+#ifndef NVC0_SCISSORS_CLIPPING
+    SB_OUT_3D  (so, SCISSOR_ENABLE(0), cso->scissor);
+#endif
     
     SB_BEGIN_3D(so, SHADE_MODEL, 1);
     SB_DATA    (so, cso->flatshade ? NVC0_3D_SHADE_MODEL_FLAT :
