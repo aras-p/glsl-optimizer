@@ -223,10 +223,10 @@ nvc0_graph_set_macro(struct nvc0_screen *screen, uint32_t m, unsigned pos,
 
    size /= 4;
 
-   BEGIN_RING(chan, RING_ANY(NVC0_GRAPH_MACRO_ID), 2);
+   BEGIN_RING(chan, RING_3D_(NVC0_GRAPH_MACRO_ID), 2);
    OUT_RING  (chan, (m - 0x3800) / 8);
    OUT_RING  (chan, pos);
-   BEGIN_RING_1I(chan, RING_ANY(NVC0_GRAPH_MACRO_UPLOAD_POS), size + 1);
+   BEGIN_RING_1I(chan, RING_3D_(NVC0_GRAPH_MACRO_UPLOAD_POS), size + 1);
    OUT_RING  (chan, pos);
    OUT_RINGp (chan, data, size);
 
@@ -398,8 +398,7 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    if (ret)
       FAIL_SCREEN_INIT("Error allocating PGRAPH context for M2MF: %d\n", ret);
 
-   BEGIN_RING(chan, RING_MF_(0x0000), 1);
-   OUT_RING  (chan, screen->m2mf->grclass);
+   BIND_RING (chan, screen->m2mf, NVC0_SUBCH_MF);
    BEGIN_RING(chan, RING_MF(NOTIFY_ADDRESS_HIGH), 3);
    OUT_RELOCh(chan, screen->fence.bo, 16, NOUVEAU_BO_GART | NOUVEAU_BO_RDWR);
    OUT_RELOCl(chan, screen->fence.bo, 16, NOUVEAU_BO_GART | NOUVEAU_BO_RDWR);
@@ -409,8 +408,7 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    if (ret)
       FAIL_SCREEN_INIT("Error allocating PGRAPH context for 2D: %d\n", ret);
 
-   BEGIN_RING(chan, RING_2D_(0x0000), 1);
-   OUT_RING  (chan, screen->eng2d->grclass);
+   BIND_RING (chan, screen->eng2d, NVC0_SUBCH_2D);
    BEGIN_RING(chan, RING_2D(OPERATION), 1);
    OUT_RING  (chan, NVC0_2D_OPERATION_SRCCOPY);
    BEGIN_RING(chan, RING_2D(CLIP_ENABLE), 1);
@@ -426,8 +424,7 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    if (ret)
       FAIL_SCREEN_INIT("Error allocating PGRAPH context for 3D: %d\n", ret);
 
-   BEGIN_RING(chan, RING_3D_(0x0000), 1);
-   OUT_RING  (chan, screen->fermi->grclass);
+   BIND_RING (chan, screen->fermi, NVC0_SUBCH_3D);
    BEGIN_RING(chan, RING_3D(NOTIFY_ADDRESS_HIGH), 3);
    OUT_RELOCh(chan, screen->fence.bo, 32, NOUVEAU_BO_GART | NOUVEAU_BO_RDWR);
    OUT_RELOCl(chan, screen->fence.bo, 32, NOUVEAU_BO_GART | NOUVEAU_BO_RDWR);

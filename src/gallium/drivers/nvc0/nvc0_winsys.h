@@ -8,6 +8,7 @@
 
 #include "nouveau/nouveau_bo.h"
 #include "nouveau/nouveau_channel.h"
+#include "nouveau/nouveau_grobj.h"
 #include "nouveau/nouveau_device.h"
 #include "nouveau/nouveau_resource.h"
 #include "nouveau/nouveau_reloc.h"
@@ -17,10 +18,6 @@
 #ifndef NV04_PFIFO_MAX_PACKET_LEN
 #define NV04_PFIFO_MAX_PACKET_LEN 2047
 #endif
-
-#define SLEEP(us) usleep(us)
-
-extern uint64_t nouveau_bo_gpu_address(struct nouveau_bo *);
 
 #define NVC0_SUBCH_3D 1
 #define NVC0_SUBCH_2D 2
@@ -36,7 +33,7 @@ extern uint64_t nouveau_bo_gpu_address(struct nouveau_bo *);
 #define RING_2D_(m) ((NVC0_SUBCH_2D << 13) | ((m) >> 2))
 #define RING_MF_(m) ((NVC0_SUBCH_MF << 13) | ((m) >> 2))
 
-#define RING_ANY(m) ((NVC0_SUBCH_3D << 13) | ((m) >> 2))
+#define RING_GR(gr, m) (((gr)->subc << 13) | ((m) >> 2))
 
 int nouveau_pushbuf_flush(struct nouveau_channel *, unsigned min);
 
@@ -169,6 +166,24 @@ static INLINE void
 FIRE_RING(struct nouveau_channel *chan)
 {
    nouveau_pushbuf_flush(chan, 0);
+}
+
+static INLINE void
+BIND_RING(struct nouveau_channel *chan, struct nouveau_grobj *gr, unsigned s)
+{
+   struct nouveau_subchannel *subc = &gr->channel->subc[s];
+
+   assert(s < 8);
+   if (subc->gr) {
+      assert(subc->gr->bound != NOUVEAU_GROBJ_BOUND_EXPLICIT);
+      subc->gr->bound = NOUVEAU_GROBJ_UNBOUND;
+   }
+   subc->gr = gr;
+   subc->gr->subc = s;
+   subc->gr->bound = NOUVEAU_GROBJ_BOUND_EXPLICIT;
+
+   BEGIN_RING(chan, RING_GR(gr, 0x0000), 1);
+   OUT_RING  (chan, gr->grclass);
 }
 
 #endif
