@@ -298,7 +298,7 @@ nvc0_push_vbo2(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
       struct nvc0_resource *res = nvc0_resource(nvc0->idxbuf.buffer);
       if (!res || nouveau_bo_map(res->bo, NOUVEAU_BO_RD))
          return;
-      ctx.idxbuf = res->bo->map;
+      ctx.idxbuf = (uint8_t *)res->bo->map + nvc0->idxbuf.offset + res->offset;
       nouveau_bo_unmap(res->bo);
       ctx.idxsize = nvc0->idxbuf.index_size;
    } else {

@@ -227,6 +227,8 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
                                    PIPE_TRANSFER_READ, &transfer);
       if (!ctx.idxbuf)
          return;
+      ctx.idxbuf = (uint8_t *)ctx.idxbuf + nvc0->idxbuf.offset;
+
       index_size = nvc0->idxbuf.index_size;
       ctx.primitive_restart = info->primitive_restart;
       ctx.restart_index = info->restart_index;

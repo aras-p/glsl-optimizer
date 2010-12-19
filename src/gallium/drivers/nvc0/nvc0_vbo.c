@@ -459,6 +459,7 @@ nvc0_draw_elements(struct nvc0_context *nvc0, boolean shorten,
                              PIPE_TRANSFER_READ, &transfer);
       if (!data)
          return;
+      data = (uint8_t *)data + nvc0->idxbuf.offset;
 
       while (instance_count--) {
          BEGIN_RING(chan, RING_3D(VERTEX_BEGIN_GL), 1);
