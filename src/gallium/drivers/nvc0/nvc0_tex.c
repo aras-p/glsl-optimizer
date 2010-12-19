@@ -54,6 +54,7 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
    const struct util_format_description *desc;
    uint32_t *tic;
    uint32_t swz[4];
+   uint32_t depth;
    struct nvc0_tic_entry *view;
    struct nvc0_miptree *mt = nvc0_miptree(texture);
 
@@ -101,7 +102,9 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
 
    tic[2] |=
       ((mt->base.bo->tile_mode & 0x0f0) << (22 - 4)) |
-      ((mt->base.bo->tile_mode & 0xf00) << (21 - 4));
+      ((mt->base.bo->tile_mode & 0xf00) << (25 - 8));
+
+   depth = MAX2(mt->base.base.array_size, mt->base.base.depth0);
 
    switch (mt->base.base.target) {
    case PIPE_TEXTURE_1D:
@@ -117,7 +120,17 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
       tic[2] |= NV50_TIC_2_TARGET_3D;
       break;
    case PIPE_TEXTURE_CUBE:
-      tic[2] |= NV50_TIC_2_TARGET_CUBE;
+      depth /= 6;
+      if (depth > 1)
+         tic[2] |= NV50_TIC_2_TARGET_CUBE_ARRAY;
+      else
+         tic[2] |= NV50_TIC_2_TARGET_CUBE;
+      break;
+   case PIPE_TEXTURE_1D_ARRAY:
+      tic[2] |= NV50_TIC_2_TARGET_1D_ARRAY;
+      break;
+   case PIPE_TEXTURE_2D_ARRAY:
+      tic[2] |= NV50_TIC_2_TARGET_2D_ARRAY;
       break;
    case PIPE_BUFFER:
       tic[2] |= NV50_TIC_2_TARGET_BUFFER | /* NV50_TIC_2_LINEAR */ (1 << 18);
@@ -134,12 +147,12 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
    tic[4] = (1 << 31) | mt->base.base.width0;
 
    tic[5] = mt->base.base.height0 & 0xffff;
-   tic[5] |= mt->base.base.depth0 << 16;
+   tic[5] |= depth << 16;
    tic[5] |= mt->base.base.last_level << 28;
 
    tic[6] = 0x03000000;
 
-   tic[7] = (view->pipe.last_level << 4) | view->pipe.first_level;
+   tic[7] = (view->pipe.u.tex.last_level << 4) | view->pipe.u.tex.first_level;
 
    return &view->pipe;
 }

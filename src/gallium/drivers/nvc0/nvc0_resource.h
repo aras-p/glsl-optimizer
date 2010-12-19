@@ -66,11 +66,15 @@ nvc0_resource_unmap(struct nvc0_resource *res)
       nouveau_bo_unmap(res->bo);
 }
 
-#define NVC0_TILE_H(m) (8 << ((m >> 4) & 0xf))
-#define NVC0_TILE_D(m) (1 << (m >> 8))
+#define NVC0_TILE_PITCH(m)  (64 << ((m) & 0xf))
+#define NVC0_TILE_HEIGHT(m) (8 << (((m) >> 4) & 0xf))
+#define NVC0_TILE_DEPTH(m)  (1 << ((m) >> 8))
+
+#define NVC0_TILE_SIZE(m) \
+   (NVC0_TILE_PITCH(m) * NVC0_TILE_HEIGHT(m) * NVC0_TILE_DEPTH(m))
 
 struct nvc0_miptree_level {
-   int *image_offset;
+   uint32_t offset;
    uint32_t pitch;
    uint32_t tile_mode;
 };
@@ -80,8 +84,9 @@ struct nvc0_miptree_level {
 struct nvc0_miptree {
    struct nvc0_resource base;
    struct nvc0_miptree_level level[NVC0_MAX_TEXTURE_LEVELS];
-   int image_nr;
-   int total_size;
+   uint32_t total_size;
+   uint32_t layer_stride;
+   boolean layout_3d; /* TRUE if layer count varies with mip level */
 };
 
 static INLINE struct nvc0_miptree *
@@ -132,12 +137,12 @@ nvc0_user_buffer_create(struct pipe_screen *screen,
 
 
 struct pipe_surface *
-nvc0_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_resource *pt,
-                         unsigned face, unsigned level, unsigned zslice,
-                         unsigned flags);
+nvc0_miptree_surface_new(struct pipe_context *,
+                         struct pipe_resource *,
+                         const struct pipe_surface *templ);
 
 void
-nvc0_miptree_surface_del(struct pipe_surface *ps);
+nvc0_miptree_surface_del(struct pipe_context *, struct pipe_surface *);
 
 struct nvc0_context;
 

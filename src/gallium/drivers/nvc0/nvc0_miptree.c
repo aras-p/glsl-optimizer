@@ -60,12 +60,12 @@ get_tile_dims(unsigned nx, unsigned ny, unsigned nz)
 static INLINE unsigned
 get_zslice_offset(uint32_t tile_mode, unsigned z, unsigned pitch, unsigned nbh)
 {
-   unsigned tile_h = NVC0_TILE_H(tile_mode);
-   unsigned tile_d = NVC0_TILE_D(tile_mode);
+   unsigned tile_h = NVC0_TILE_HEIGHT(tile_mode);
+   unsigned tile_d = NVC0_TILE_DEPTH(tile_mode);
 
    /* pitch_2d == to next slice within this volume tile */
    /* pitch_3d == size (in bytes) of a volume tile */
-   unsigned pitch_2d = tile_h * 64;
+   unsigned pitch_2d = tile_h * NVC0_TILE_PITCH(tile_mode);
    unsigned pitch_3d = tile_d * align(nbh, tile_h) * pitch;
 
    return (z % tile_d) * pitch_2d + (z / tile_d) * pitch_3d;
@@ -75,10 +75,6 @@ static void
 nvc0_miptree_destroy(struct pipe_screen *pscreen, struct pipe_resource *pt)
 {
    struct nvc0_miptree *mt = nvc0_miptree(pt);
-   unsigned l;
-
-   for (l = 0; l <= pt->last_level; ++l)
-      FREE(mt->level[l].image_offset);
 
    nouveau_screen_bo_release(pscreen, mt->base.bo);
 
@@ -125,8 +121,8 @@ nvc0_miptree_create(struct pipe_screen *pscreen,
    struct nouveau_device *dev = nouveau_screen(pscreen)->device;
    struct nvc0_miptree *mt = CALLOC_STRUCT(nvc0_miptree);
    struct pipe_resource *pt = &mt->base.base;
-   int ret, i;
-   unsigned w, h, d, l, image_alignment, alloc_size;
+   int ret;
+   unsigned w, h, d, l, alloc_size;
    uint32_t tile_flags;
 
    if (!mt)
@@ -137,9 +133,11 @@ nvc0_miptree_create(struct pipe_screen *pscreen,
    pipe_reference_init(&pt->reference, 1);
    pt->screen = pscreen;
 
+   mt->layout_3d = pt->target == PIPE_TEXTURE_3D;
+
    w = pt->width0;
    h = pt->height0;
-   d = pt->depth0;
+   d = mt->layout_3d ? pt->depth0 : 1;
 
    switch (pt->format) {
    case PIPE_FORMAT_Z16_UNORM:
@@ -180,47 +178,32 @@ nvc0_miptree_create(struct pipe_screen *pscreen,
       break;
    }
 
-   /* XXX: texture arrays */
-   mt->image_nr = (pt->target == PIPE_TEXTURE_CUBE) ? 6 : 1;
-
-   for (l = 0; l <= pt->last_level; l++) {
+   /* For 3D textures, a mipmap is spanned by all the layers, for array
+    * textures and cube maps, each layer contains its own mipmaps.
+    */
+   for (l = 0; l <= pt->last_level; ++l) {
       struct nvc0_miptree_level *lvl = &mt->level[l];
+      unsigned nbx = util_format_get_nblocksx(pt->format, w);
       unsigned nby = util_format_get_nblocksy(pt->format, h);
+      unsigned blocksize = util_format_get_blocksize(pt->format);
 
-      lvl->image_offset = CALLOC(mt->image_nr, sizeof(int));
-      lvl->pitch = align(util_format_get_stride(pt->format, w), 64);
-      lvl->tile_mode = get_tile_dims(w, nby, d);
+      lvl->offset = mt->total_size;
+      lvl->tile_mode = get_tile_dims(nbx, nby, d);
+      lvl->pitch = align(nbx * blocksize, NVC0_TILE_PITCH(lvl->tile_mode));
+
+      mt->total_size += lvl->pitch *
+         align(nby, NVC0_TILE_HEIGHT(lvl->tile_mode)) *
+         align(d, NVC0_TILE_DEPTH(lvl->tile_mode));
 
       w = u_minify(w, 1);
       h = u_minify(h, 1);
       d = u_minify(d, 1);
    }
 
-   image_alignment  = NVC0_TILE_H(mt->level[0].tile_mode) * 64;
-   image_alignment *= NVC0_TILE_D(mt->level[0].tile_mode);
-
-   /* NOTE the distinction between arrays of mip-mapped 2D textures and
-    * mip-mapped 3D textures. We can't use image_nr == depth for 3D mip.
-    */
-   for (i = 0; i < mt->image_nr; i++) {
-      for (l = 0; l <= pt->last_level; l++) {
-         struct nvc0_miptree_level *lvl = &mt->level[l];
-         int size;
-         unsigned tile_h = NVC0_TILE_H(lvl->tile_mode);
-         unsigned tile_d = NVC0_TILE_D(lvl->tile_mode);
-
-         h = u_minify(pt->height0, l);
-         d = u_minify(pt->depth0, l);
-
-         size  = lvl->pitch;
-         size *= align(util_format_get_nblocksy(pt->format, h), tile_h);
-         size *= align(d, tile_d);
-
-         lvl->image_offset[i] = mt->total_size;
-
-         mt->total_size += size;
-      }
-      mt->total_size = align(mt->total_size, image_alignment);
+   if (pt->array_size > 1) {
+      mt->layer_stride = align(mt->total_size,
+                               NVC0_TILE_SIZE(mt->level[0].tile_mode));
+      mt->total_size = mt->layer_stride * pt->array_size;
    }
 
    alloc_size = mt->total_size;
@@ -231,11 +214,10 @@ nvc0_miptree_create(struct pipe_screen *pscreen,
                              mt->level[0].tile_mode, tile_flags,
                              &mt->base.bo);
    if (ret) {
-      for (l = 0; l <= pt->last_level; ++l)
-         FREE(mt->level[l].image_offset);
       FREE(mt);
       return NULL;
    }
+   mt->base.domain = NOUVEAU_BO_VRAM;
 
    return pt;
 }
@@ -248,11 +230,12 @@ nvc0_miptree_from_handle(struct pipe_screen *pscreen,
    struct nvc0_miptree *mt;
    unsigned stride;
 
-	/* only supports 2D, non-mip mapped textures for the moment */
+   /* only supports 2D, non-mipmapped textures for the moment */
    if ((templ->target != PIPE_TEXTURE_2D &&
         templ->target != PIPE_TEXTURE_RECT) ||
        templ->last_level != 0 ||
-       templ->depth0 != 1)
+       templ->depth0 != 1 ||
+       templ->array_size > 1)
       return NULL;
 
    mt = CALLOC_STRUCT(nvc0_miptree);
@@ -269,9 +252,8 @@ nvc0_miptree_from_handle(struct pipe_screen *pscreen,
    mt->base.vtbl = &nvc0_miptree_vtbl;
    pipe_reference_init(&mt->base.base.reference, 1);
    mt->base.base.screen = pscreen;
-   mt->image_nr = 1;
    mt->level[0].pitch = stride;
-   mt->level[0].image_offset = CALLOC(1, sizeof(unsigned));
+   mt->level[0].offset = 0;
    mt->level[0].tile_mode = mt->base.bo->tile_mode;
 
    /* no need to adjust bo reference count */
@@ -283,41 +265,52 @@ nvc0_miptree_from_handle(struct pipe_screen *pscreen,
  */
 
 struct pipe_surface *
-nvc0_miptree_surface_new(struct pipe_screen *pscreen, struct pipe_resource *pt,
-                         unsigned face, unsigned level, unsigned zslice,
-                         unsigned flags)
+nvc0_miptree_surface_new(struct pipe_context *pipe,
+                         struct pipe_resource *pt,
+                         const struct pipe_surface *templ)
 {
-   struct nvc0_miptree *mt = nvc0_miptree(pt);
-   struct nvc0_miptree_level *lvl = &mt->level[level];
+   struct nvc0_miptree *mt = nvc0_miptree(pt); /* guaranteed */
+   struct nvc0_surface *ns;
    struct pipe_surface *ps;
-   unsigned img = 0;
+   struct nvc0_miptree_level *lvl = &mt->level[templ->u.tex.level];
 
-   if (pt->target == PIPE_TEXTURE_CUBE)
-      img = face;
-
-   ps = CALLOC_STRUCT(pipe_surface);
-   if (!ps)
+   ns = CALLOC_STRUCT(nvc0_surface);
+   if (!ns)
       return NULL;
-   pipe_resource_reference(&ps->texture, pt);
-   ps->format = pt->format;
-   ps->width = u_minify(pt->width0, level);
-   ps->height = u_minify(pt->height0, level);
-   ps->usage = flags;
-   pipe_reference_init(&ps->reference, 1);
-   ps->face = face;
-   ps->level = level;
-   ps->zslice = zslice;
-   ps->offset = lvl->image_offset[img];
+   ps = &ns->base;
 
-   if (pt->target == PIPE_TEXTURE_3D)
-      ps->offset += get_zslice_offset(lvl->tile_mode, zslice, lvl->pitch,
+   pipe_reference_init(&ps->reference, 1);
+   pipe_resource_reference(&ps->texture, pt);
+   ps->context = pipe;
+   ps->format = pt->format;
+   ps->usage = templ->usage;
+   ps->u.tex.level = templ->u.tex.level;
+   ps->u.tex.first_layer = templ->u.tex.first_layer;
+   ps->u.tex.last_layer = templ->u.tex.last_layer;
+
+   ns->width = u_minify(pt->width0, ps->u.tex.level);
+   ns->height = u_minify(pt->height0, ps->u.tex.level);
+   ns->depth = ps->u.tex.last_layer - ps->u.tex.first_layer + 1;
+   ns->offset = lvl->offset;
+
+   /* comment says there are going to be removed, but they're used by the st */
+   ps->width = ns->width;
+   ps->height = ns->height;
+
+   if (mt->layout_3d) {
+      ns->offset += get_zslice_offset(lvl->tile_mode, ps->u.tex.first_layer,
+                                      lvl->pitch,
                                       util_format_get_nblocksy(pt->format,
-                                                               ps->height));
+                                                               ns->height));
+   } else {
+      ns->offset += mt->layer_stride * ps->u.tex.first_layer;
+   }
+
    return ps;
 }
 
 void
-nvc0_miptree_surface_del(struct pipe_surface *ps)
+nvc0_miptree_surface_del(struct pipe_context *pipe, struct pipe_surface *ps)
 {
    struct nvc0_surface *s = nvc0_surface(ps);
 

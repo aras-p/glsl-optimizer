@@ -7,11 +7,14 @@ nvc0_validate_zcull(struct nvc0_context *nvc0)
 {
     struct nouveau_channel *chan = nvc0->screen->base.channel;
     struct pipe_framebuffer_state *fb = &nvc0->framebuffer;
-    struct nvc0_miptree *mt = nvc0_miptree(fb->zsbuf->texture);
+    struct nvc0_surface *sf = nvc0_surface(fb->zsbuf);
+    struct nvc0_miptree *mt = nvc0_miptree(sf->base.texture);
     struct nouveau_bo *bo = mt->base.bo;
     uint32_t size;
     uint32_t offset = align(mt->total_size, 1 << 17);
     unsigned width, height;
+
+    assert(mt->base.base.depth0 == 1 && mt->base.base.array_size < 2);
 
     size = mt->total_size * 2;
 
@@ -65,18 +68,20 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
 
     for (i = 0; i < fb->nr_cbufs; ++i) {
         struct nvc0_miptree *mt = nvc0_miptree(fb->cbufs[i]->texture);
+        struct nvc0_surface *sf = nvc0_surface(fb->cbufs[i]);
         struct nouveau_bo *bo = mt->base.bo;
-        unsigned offset = fb->cbufs[i]->offset;
+        uint32_t offset = sf->offset;
         
         BEGIN_RING(chan, RING_3D(RT_ADDRESS_HIGH(i)), 8);
         OUT_RELOCh(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
         OUT_RELOCl(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
-        OUT_RING  (chan, fb->cbufs[i]->width);
-        OUT_RING  (chan, fb->cbufs[i]->height);
-        OUT_RING  (chan, nvc0_format_table[fb->cbufs[i]->format].rt);
-        OUT_RING  (chan, mt->level[fb->cbufs[i]->level].tile_mode);
-        OUT_RING  (chan, 1);
-        OUT_RING  (chan, 0);
+        OUT_RING  (chan, sf->width);
+        OUT_RING  (chan, sf->height);
+        OUT_RING  (chan, nvc0_format_table[sf->base.format].rt);
+        OUT_RING  (chan, (mt->layout_3d << 16) |
+                   mt->level[sf->base.u.tex.level].tile_mode);
+        OUT_RING  (chan, sf->depth);
+        OUT_RING  (chan, mt->layer_stride);
 
         nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_FRAME, &mt->base,
                                  NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
@@ -84,21 +89,23 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
 
     if (fb->zsbuf) {
         struct nvc0_miptree *mt = nvc0_miptree(fb->zsbuf->texture);
+        struct nvc0_surface *sf = nvc0_surface(fb->zsbuf);
         struct nouveau_bo *bo = mt->base.bo;
-        unsigned offset = fb->zsbuf->offset;
+        int unk = mt->base.base.target == PIPE_TEXTURE_2D;
+        uint32_t offset = sf->offset;
         
         BEGIN_RING(chan, RING_3D(ZETA_ADDRESS_HIGH), 5);
         OUT_RELOCh(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
         OUT_RELOCl(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
         OUT_RING  (chan, nvc0_format_table[fb->zsbuf->format].rt);
-        OUT_RING  (chan, mt->level[fb->zsbuf->level].tile_mode);
+        OUT_RING  (chan, mt->level[sf->base.u.tex.level].tile_mode);
         OUT_RING  (chan, 0);
         BEGIN_RING(chan, RING_3D(ZETA_ENABLE), 1);
         OUT_RING  (chan, 1);
         BEGIN_RING(chan, RING_3D(ZETA_HORIZ), 3);
-        OUT_RING  (chan, fb->zsbuf->width);
-        OUT_RING  (chan, fb->zsbuf->height);
-        OUT_RING  (chan, (1 << 16) | 1);
+        OUT_RING  (chan, sf->width);
+        OUT_RING  (chan, sf->height);
+        OUT_RING  (chan, (unk << 16) | sf->depth);
 
         nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_FRAME, &mt->base,
                                  NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);

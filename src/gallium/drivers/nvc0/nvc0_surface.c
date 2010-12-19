@@ -78,75 +78,90 @@ nvc0_2d_format(enum pipe_format format)
 }
 
 static int
-nvc0_surface_set(struct nvc0_screen *screen, struct pipe_surface *ps, int dst)
+nvc0_2d_texture_set(struct nouveau_channel *chan, int dst,
+                    struct nvc0_miptree *mt, unsigned level, unsigned layer)
 {
-   struct nvc0_miptree *mt = nvc0_miptree(ps->texture);
-   struct nouveau_channel *chan = screen->base.channel;
-   struct nouveau_bo *bo = nvc0_miptree(ps->texture)->base.bo;
-   int format, mthd = dst ? NVC0_2D_DST_FORMAT : NVC0_2D_SRC_FORMAT;
-   int flags = NOUVEAU_BO_VRAM | (dst ? NOUVEAU_BO_WR : NOUVEAU_BO_RD);
+   struct nouveau_bo *bo = mt->base.bo;
+   uint32_t width, height, depth;
+   uint32_t format;
+   uint32_t mthd = dst ? NVC0_2D_DST_FORMAT : NVC0_2D_SRC_FORMAT;
+   uint32_t flags = mt->base.domain | (dst ? NOUVEAU_BO_WR : NOUVEAU_BO_RD);
+   uint32_t offset = mt->level[level].offset;
 
-   format = nvc0_2d_format(ps->format);
+   format = nvc0_2d_format(mt->base.base.format);
    if (!format) {
       NOUVEAU_ERR("invalid/unsupported surface format: %s\n",
-                  util_format_name(ps->format));
+                  util_format_name(mt->base.base.format));
       return 1;
    }
 
-   if (!bo->tile_flags) {
+   width = u_minify(mt->base.base.width0, level);
+   height = u_minify(mt->base.base.height0, level);
+
+   offset = mt->level[level].offset;
+   if (!mt->layout_3d) {
+      offset += mt->layer_stride * layer;
+      depth = 1;
+      layer = 0;
+   } else {
+      depth = u_minify(mt->base.base.depth0, level);
+   }
+
+   if (!(bo->tile_flags & NOUVEAU_BO_TILE_LAYOUT_MASK)) {
       BEGIN_RING(chan, RING_2D_(mthd), 2);
       OUT_RING  (chan, format);
       OUT_RING  (chan, 1);
       BEGIN_RING(chan, RING_2D_(mthd + 0x14), 5);
-      OUT_RING  (chan, mt->level[ps->level].pitch);
-      OUT_RING  (chan, ps->width);
-      OUT_RING  (chan, ps->height);
-      OUT_RELOCh(chan, bo, ps->offset, flags);
-      OUT_RELOCl(chan, bo, ps->offset, flags);
+      OUT_RING  (chan, mt->level[level].pitch);
+      OUT_RING  (chan, width);
+      OUT_RING  (chan, height);
+      OUT_RELOCh(chan, bo, offset, flags);
+      OUT_RELOCl(chan, bo, offset, flags);
    } else {
       BEGIN_RING(chan, RING_2D_(mthd), 5);
       OUT_RING  (chan, format);
       OUT_RING  (chan, 0);
-      OUT_RING  (chan, mt->level[ps->level].tile_mode);
-      OUT_RING  (chan, 1);
-      OUT_RING  (chan, 0);
+      OUT_RING  (chan, mt->level[level].tile_mode);
+      OUT_RING  (chan, depth);
+      OUT_RING  (chan, layer);
       BEGIN_RING(chan, RING_2D_(mthd + 0x18), 4);
-      OUT_RING  (chan, ps->width);
-      OUT_RING  (chan, ps->height);
-      OUT_RELOCh(chan, bo, ps->offset, flags);
-      OUT_RELOCl(chan, bo, ps->offset, flags);
+      OUT_RING  (chan, width);
+      OUT_RING  (chan, height);
+      OUT_RELOCh(chan, bo, offset, flags);
+      OUT_RELOCl(chan, bo, offset, flags);
    }
- 
+
 #if 0
    if (dst) {
       BEGIN_RING(chan, RING_2D_(NVC0_2D_CLIP_X), 4);
       OUT_RING  (chan, 0);
       OUT_RING  (chan, 0);
-      OUT_RING  (chan, surf->width);
-      OUT_RING  (chan, surf->height);
+      OUT_RING  (chan, width);
+      OUT_RING  (chan, height);
    }
 #endif
    return 0;
 }
 
 static int
-nvc0_surface_do_copy(struct nvc0_screen *screen,
-                     struct pipe_surface *dst, int dx, int dy,
-                     struct pipe_surface *src, int sx, int sy,
-                     int w, int h)
+nvc0_2d_texture_do_copy(struct nouveau_channel *chan,
+                        struct nvc0_miptree *dst, unsigned dst_level,
+                        unsigned dx, unsigned dy, unsigned dz,
+                        struct nvc0_miptree *src, unsigned src_level,
+                        unsigned sx, unsigned sy, unsigned sz,
+                        unsigned w, unsigned h)
 {
-   struct nouveau_channel *chan = screen->base.channel;
    int ret;
 
-   ret = MARK_RING(chan, 2*16 + 32, 4);
+   ret = MARK_RING(chan, 2 * 16 + 32, 4);
    if (ret)
       return ret;
 
-   ret = nvc0_surface_set(screen, dst, 1);
+   ret = nvc0_2d_texture_set(chan, 1, dst, dst_level, dz);
    if (ret)
       return ret;
 
-   ret = nvc0_surface_set(screen, src, 0);
+   ret = nvc0_2d_texture_set(chan, 0, src, src_level, sz);
    if (ret)
       return ret;
 
@@ -173,44 +188,44 @@ nvc0_surface_do_copy(struct nvc0_screen *screen,
 }
 
 static void
-nvc0_surface_copy(struct pipe_context *pipe,
-		  struct pipe_resource *dest, struct pipe_subresource subdst,
-		  unsigned destx, unsigned desty, unsigned destz,
-		  struct pipe_resource *src, struct pipe_subresource subsrc,
-		  unsigned srcx, unsigned srcy, unsigned srcz,
-		  unsigned width, unsigned height)
+nvc0_resource_copy_region(struct pipe_context *pipe,
+                          struct pipe_resource *dst, unsigned dst_level,
+                          unsigned dstx, unsigned dsty, unsigned dstz,
+                          struct pipe_resource *src, unsigned src_level,
+                          const struct pipe_box *src_box)
 {
-   struct nvc0_context *nv50 = nvc0_context(pipe);
-   struct nvc0_screen *screen = nv50->screen;
-   struct pipe_surface *ps_dst, *ps_src;
+   struct nvc0_screen *screen = nvc0_context(pipe)->screen;
+   int ret;
+   unsigned dst_layer = dstz, src_layer = src_box->z;
 
-   assert((src->format == dest->format) ||
+   assert((src->format == dst->format) ||
           (nvc0_2d_format_faithful(src->format) &&
-           nvc0_2d_format_faithful(dest->format)));
+           nvc0_2d_format_faithful(dst->format)));
 
-   ps_src = nvc0_miptree_surface_new(pipe->screen, src, subsrc.face,
-                                     subsrc.level, srcz, 0 /* bind flags */);
-   ps_dst = nvc0_miptree_surface_new(pipe->screen, dest, subdst.face,
-                                     subdst.level, destz, 0 /* bind flags */);
-
-   nvc0_surface_do_copy(screen, ps_dst, destx, desty, ps_src, srcx,
-                        srcy, width, height);
-
-   nvc0_miptree_surface_del(ps_src);
-   nvc0_miptree_surface_del(ps_dst);
+   for (; dst_layer < dstz + src_box->depth; ++dst_layer, ++src_layer) {
+      ret = nvc0_2d_texture_do_copy(screen->base.channel,
+                                    nvc0_miptree(dst), dst_level,
+                                    dstx, dsty, dst_layer,
+                                    nvc0_miptree(src), src_level,
+                                    src_box->x, src_box->y, src_layer,
+                                    src_box->width, src_box->height);
+      if (ret)
+         return;
+   }
 }
 
 static void
 nvc0_clear_render_target(struct pipe_context *pipe,
-			 struct pipe_surface *dst,
-			 const float *rgba,
-			 unsigned dstx, unsigned dsty,
-			 unsigned width, unsigned height)
+                         struct pipe_surface *dst,
+                         const float *rgba,
+                         unsigned dstx, unsigned dsty,
+                         unsigned width, unsigned height)
 {
 	struct nvc0_context *nv50 = nvc0_context(pipe);
 	struct nvc0_screen *screen = nv50->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nvc0_miptree *mt = nvc0_miptree(dst->texture);
+	struct nvc0_surface *sf = nvc0_surface(dst);
 	struct nouveau_bo *bo = mt->base.bo;
 
 	BEGIN_RING(chan, RING_3D(CLEAR_COLOR(0)), 4);
@@ -225,12 +240,12 @@ nvc0_clear_render_target(struct pipe_context *pipe,
 	BEGIN_RING(chan, RING_3D(RT_CONTROL), 1);
 	OUT_RING  (chan, 1);
 	BEGIN_RING(chan, RING_3D(RT_ADDRESS_HIGH(0)), 8);
-	OUT_RELOCh(chan, bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	OUT_RELOCl(chan, bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	OUT_RING  (chan, dst->width);
-	OUT_RING  (chan, dst->height);
+	OUT_RELOCh(chan, bo, sf->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCl(chan, bo, sf->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RING  (chan, sf->width);
+	OUT_RING  (chan, sf->height);
 	OUT_RING  (chan, nvc0_format_table[dst->format].rt);
-	OUT_RING  (chan, mt->level[dst->level].tile_mode);
+	OUT_RING  (chan, mt->level[sf->base.u.tex.level].tile_mode);
 	OUT_RING  (chan, 1);
 	OUT_RING  (chan, 0);
 
@@ -259,6 +274,7 @@ nvc0_clear_depth_stencil(struct pipe_context *pipe,
 	struct nvc0_screen *screen = nv50->screen;
 	struct nouveau_channel *chan = screen->base.channel;
 	struct nvc0_miptree *mt = nvc0_miptree(dst->texture);
+	struct nvc0_surface *sf = nvc0_surface(dst);
 	struct nouveau_bo *bo = mt->base.bo;
 	uint32_t mode = 0;
 
@@ -278,16 +294,16 @@ nvc0_clear_depth_stencil(struct pipe_context *pipe,
 		return;
 
 	BEGIN_RING(chan, RING_3D(ZETA_ADDRESS_HIGH), 5);
-	OUT_RELOCh(chan, bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
-	OUT_RELOCl(chan, bo, dst->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCh(chan, bo, sf->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+	OUT_RELOCl(chan, bo, sf->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	OUT_RING  (chan, nvc0_format_table[dst->format].rt);
-	OUT_RING  (chan, mt->level[dst->level].tile_mode);
+	OUT_RING  (chan, mt->level[sf->base.u.tex.level].tile_mode);
 	OUT_RING  (chan, 0);
 	BEGIN_RING(chan, RING_3D(ZETA_ENABLE), 1);
 	OUT_RING  (chan, 1);
 	BEGIN_RING(chan, RING_3D(ZETA_HORIZ), 3);
-	OUT_RING  (chan, dst->width);
-	OUT_RING  (chan, dst->height);
+	OUT_RING  (chan, sf->width);
+	OUT_RING  (chan, sf->height);
 	OUT_RING  (chan, (1 << 16) | 1);
 
 	BEGIN_RING(chan, RING_3D(VIEWPORT_HORIZ(0)), 2);
@@ -353,7 +369,7 @@ nvc0_clear(struct pipe_context *pipe, unsigned buffers,
 void
 nvc0_init_surface_functions(struct nvc0_context *nvc0)
 {
-	nvc0->pipe.resource_copy_region = nvc0_surface_copy;
+	nvc0->pipe.resource_copy_region = nvc0_resource_copy_region;
 	nvc0->pipe.clear_render_target = nvc0_clear_render_target;
 	nvc0->pipe.clear_depth_stencil = nvc0_clear_depth_stencil;
 }

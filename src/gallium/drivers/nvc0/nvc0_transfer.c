@@ -231,7 +231,7 @@ nvc0_m2mf_push_rect(struct pipe_screen *pscreen,
 struct pipe_transfer *
 nvc0_miptree_transfer_new(struct pipe_context *pctx,
                           struct pipe_resource *res,
-                          struct pipe_subresource sr,
+                          unsigned level,
                           unsigned usage,
                           const struct pipe_box *box)
 {
@@ -239,16 +239,21 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
    struct pipe_screen *pscreen = pctx->screen;
    struct nouveau_device *dev = nvc0->screen->base.device;
    struct nvc0_miptree *mt = nvc0_miptree(res);
-   struct nvc0_miptree_level *lvl = &mt->level[sr.level];
+   struct nvc0_miptree_level *lvl = &mt->level[level];
    struct nvc0_transfer *tx;
-   uint32_t image;
-   uint32_t w, h, z;
+   uint32_t size;
+   uint32_t w, h, d, z, layer;
    int ret;
 
-   if (res->target == PIPE_TEXTURE_CUBE)
-      image = sr.face;
-   else
-      image = 0;
+   if (mt->layout_3d) {
+      z = box->z;
+      d = u_minify(res->depth0, level);
+      layer = 0;
+   } else {
+      z = 0;
+      d = 1;
+      layer = box->z;
+   }
 
    tx = CALLOC_STRUCT(nvc0_transfer);
    if (!tx)
@@ -256,7 +261,7 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
 
    pipe_resource_reference(&tx->base.resource, res);
 
-   tx->base.sr = sr;
+   tx->base.level = level;
    tx->base.usage = usage;
    tx->base.box = *box;
 
@@ -265,30 +270,27 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
 
    tx->base.stride = tx->nblocksx * util_format_get_blocksize(res->format);
 
-   w = u_minify(res->width0, sr.level);
-   h = u_minify(res->height0, sr.level);
+   w = u_minify(res->width0, level);
+   h = u_minify(res->height0, level);
 
    tx->rect[0].cpp = tx->rect[1].cpp = util_format_get_blocksize(res->format);
 
    tx->rect[0].bo = mt->base.bo;
-   tx->rect[0].base = lvl->image_offset[image];
+   tx->rect[0].base = lvl->offset + layer * mt->layer_stride;
    tx->rect[0].tile_mode = lvl->tile_mode;
    tx->rect[0].x = util_format_get_nblocksx(res->format, box->x);
-   tx->rect[0].y = util_format_get_nblocksx(res->format, box->y);
-   tx->rect[0].z = box->z;
+   tx->rect[0].y = util_format_get_nblocksy(res->format, box->y);
+   tx->rect[0].z = z;
    tx->rect[0].width = util_format_get_nblocksx(res->format, w);
-   tx->rect[0].height = util_format_get_nblocksx(res->format, h);
-   tx->rect[0].depth = res->depth0;
+   tx->rect[0].height = util_format_get_nblocksy(res->format, h);
+   tx->rect[0].depth = d;
    tx->rect[0].pitch = lvl->pitch;
    tx->rect[0].domain = NOUVEAU_BO_VRAM;
 
-   if (!(usage & PIPE_TRANSFER_READ) &&
-       (res->depth0 == 1) && (tx->nblocksy * tx->base.stride < 512 * 4)) {
-      /* don't allocate scratch buffer, upload through FIFO */
-   }
+   size = tx->nblocksy * tx->base.stride;
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0,
-                        tx->nblocksy * tx->base.stride, &tx->rect[1].bo);
+                        size * tx->base.box.depth, &tx->rect[1].bo);
    if (ret) {
       FREE(tx);
       return NULL;
@@ -296,18 +298,23 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
 
    tx->rect[1].width = tx->nblocksx;
    tx->rect[1].height = tx->nblocksy;
-   tx->rect[1].depth = box->depth;
+   tx->rect[1].depth = 1;
    tx->rect[1].pitch = tx->base.stride;
    tx->rect[1].domain = NOUVEAU_BO_GART;
 
    if (usage & PIPE_TRANSFER_READ) {
-      for (z = 0; z < box->depth; ++z) {
+      unsigned i;
+      for (i = 0; i < box->depth; ++i) {
          nvc0_m2mf_transfer_rect(pscreen, &tx->rect[1], &tx->rect[0],
                                  tx->nblocksx, tx->nblocksy);
-         tx->rect[0].z++;
+         if (mt->layout_3d)
+            tx->rect[0].z++;
+         else
+            tx->rect[0].base += mt->layer_stride;
+         tx->rect[1].base += size;
       }
    }
-   tx->rect[0].z = box->z;
+   tx->rect[0].z = z;
 
    return &tx->base;
 }
@@ -318,13 +325,18 @@ nvc0_miptree_transfer_del(struct pipe_context *pctx,
 {
    struct pipe_screen *pscreen = pctx->screen;
    struct nvc0_transfer *tx = (struct nvc0_transfer *)transfer;
-   unsigned z;
+   struct nvc0_miptree *mt = nvc0_miptree(tx->base.resource);
+   unsigned i;
 
    if (tx->base.usage & PIPE_TRANSFER_WRITE) {
-      for (z = 0; z < tx->base.box.depth; ++z) {
+      for (i = 0; i < tx->base.box.depth; ++i) {
          nvc0_m2mf_transfer_rect(pscreen, &tx->rect[0], &tx->rect[1],
                                  tx->nblocksx, tx->nblocksy);
-         tx->rect[0].z++;
+         if (mt->layout_3d)
+            tx->rect[0].z++;
+         else
+            tx->rect[0].base += mt->layer_stride;
+         tx->rect[1].base += tx->nblocksy * tx->base.stride;
       }
    }
 
