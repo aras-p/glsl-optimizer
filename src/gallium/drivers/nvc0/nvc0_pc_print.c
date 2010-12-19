@@ -371,5 +371,7 @@ struct nv_op_info nvc0_op_info_table[NV_OP_COUNT + 1] =
 
    { NV_OP_FSET_F32, "fset", NV_TYPE_F32, NV_MOD_SGN, 0, 0, 0, 1, 0, 0, 2 },
 
+   { NV_OP_TXG, "texgrad", NV_TYPE_F32, 0, 0, 0, 1, 1, 0, 0, 0 },
+
    { NV_OP_UNDEF, "BAD_OP", NV_TYPE_ANY, 0, 0, 0, 0, 0, 0, 0, 0 }
 };

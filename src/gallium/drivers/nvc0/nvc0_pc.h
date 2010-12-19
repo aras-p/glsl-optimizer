@@ -52,7 +52,8 @@
 #define NV_OP_NOP        5
 
 /**
- * BIND forces source operand i into the same register as destination operand i
+ * BIND forces source operand i into the same register as destination operand i,
+ *  and the operands will be assigned consecutive registers (needed for TEX)
  * SELECT forces its multiple source operands and its destination operand into
  *  one and the same register.
  */
@@ -152,8 +153,9 @@
 #define NV_OP_SUB_S32     81
 #define NV_OP_MAD_F32     NV_OP_MAD
 #define NV_OP_FSET_F32    82
+#define NV_OP_TXG         83
 
-#define NV_OP_COUNT     83
+#define NV_OP_COUNT     84
 
 /* nv50 files omitted */
 #define NV_FILE_GPR      0
@@ -380,9 +382,11 @@ struct nv_instruction {
    unsigned flat       : 1;
    unsigned patch      : 1;
    unsigned lanes      : 4; /* 3rd byte */
-   unsigned tex_argc   : 3;
+   unsigned tex_dim    : 2;
+   unsigned tex_array  : 1;
+   unsigned tex_cube   : 1;
+   unsigned tex_shadow : 1; /* 4th byte */
    unsigned tex_live   : 1;
-   unsigned tex_cube   : 1; /* 4th byte */
    unsigned tex_mask   : 4;
 
    uint8_t quadop;

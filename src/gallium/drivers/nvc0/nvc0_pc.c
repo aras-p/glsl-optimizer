@@ -397,7 +397,7 @@ nvc0_generate_code(struct nvc0_translation_info *ti)
    if (ret)
       goto out;
 #if NOUVEAU_DEBUG > 1
-   nv_print_program(pc);
+   nvc0_print_program(pc);
    nv_print_cfgraph(pc, "nvc0_shader_cfgraph.dot", 0);
 #endif
 

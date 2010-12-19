@@ -492,6 +492,8 @@ pass_join_values(struct nv_pc_pass *ctx, int iter)
       case NV_OP_TXB:
       case NV_OP_TXL:
       case NV_OP_TXQ:
+         /* on nvc0, TEX src and dst can differ */
+         break;
       case NV_OP_BIND:
          if (iter)
             break;

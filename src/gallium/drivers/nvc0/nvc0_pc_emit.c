@@ -391,23 +391,37 @@ emit_minmax(struct nv_pc *pc, struct nv_instruction *i)
 static void
 emit_tex(struct nv_pc *pc, struct nv_instruction *i)
 {
+   int src1 = i->tex_array + i->tex_dim + i->tex_cube;
+
    pc->emit[0] = 0x00000086;
    pc->emit[1] = 0x80000000;
 
-   if (i->opcode == NV_OP_TXB) pc->emit[1] |= 0x04000000;
-   else
-   if (i->opcode == NV_OP_TXL) pc->emit[1] |= 0x06000000;
+   switch (i->opcode) {
+   case NV_OP_TEX: pc->emit[1] = 0x80000000; break;
+   case NV_OP_TXB: pc->emit[1] = 0x84000000; break;
+   case NV_OP_TXL: pc->emit[1] = 0x86000000; break;
+   case NV_OP_TXF: pc->emit[1] = 0x90000000; break;
+   case NV_OP_TXG: pc->emit[1] = 0xe0000000; break;
+   default:
+      assert(0);
+      break;
+   }
+
+   if (i->tex_array)
+      pc->emit[1] |= 0x00080000; /* layer index is u16, first value of SRC0 */
+   if (i->tex_shadow)
+      pc->emit[1] |= 0x01000000; /* shadow is part of SRC1, after bias/lod */
 
    set_pred(pc, i);
 
-   if (1)
-      pc->emit[0] |= 63 << 26; /* explicit derivatives */
-
    DID(pc, i->def[0], 14);
    SID(pc, i->src[0], 20);
+   SID(pc, i->src[src1], 26); /* may be NULL -> $r63 */
 
    pc->emit[1] |= i->tex_mask << 14;
-   pc->emit[1] |= (i->tex_argc - 1) << 20;
+   pc->emit[1] |= (i->tex_dim - 1) << 20;
+   if (i->tex_cube)
+      pc->emit[1] |= 3 << 20;
 
    assert(i->ext.tex.s < 16);
 

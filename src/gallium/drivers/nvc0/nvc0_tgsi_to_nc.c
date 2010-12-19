@@ -1156,30 +1156,59 @@ bld_lit(struct bld_context *bld, struct nv_value *dst0[4],
 }
 
 static INLINE void
-get_tex_dim(const struct tgsi_full_instruction *insn, int *dim, int *arg)
+describe_texture_target(unsigned target, int *dim,
+                        int *array, int *cube, int *shadow)
 {
-   switch (insn->Texture.Texture) {
+   *array = *cube = *shadow = 0;
+
+   switch (target) {
    case TGSI_TEXTURE_1D:
-      *arg = *dim = 1;
+      *dim = 1;
       break;
    case TGSI_TEXTURE_SHADOW1D:
-      *dim = 1;
-      *arg = 2;
+      *dim = *shadow = 1;
       break;
    case TGSI_TEXTURE_UNKNOWN:
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
-      *arg = *dim = 2;
+      *dim = 2;
       break;
    case TGSI_TEXTURE_SHADOW2D:
    case TGSI_TEXTURE_SHADOWRECT:
       *dim = 2;
-      *arg = 3;
+      *shadow = 1;
       break;
    case TGSI_TEXTURE_3D:
-   case TGSI_TEXTURE_CUBE:
-      *dim = *arg = 3;
+      *dim = 3;
       break;
+   case TGSI_TEXTURE_CUBE:
+      *dim = 2;
+      *cube = 1;
+      break;
+      /*
+   case TGSI_TEXTURE_CUBE_ARRAY:
+      *dim = 2;
+      *cube = *array = 1;
+      break;
+   case TGSI_TEXTURE_1D_ARRAY:
+      *dim = *array = 1;
+      break;
+   case TGSI_TEXTURE_2D_ARRAY:
+      *dim = 2;
+      *array = 1;
+      break;
+   case TGSI_TEXTURE_SHADOW1D_ARRAY:
+      *dim = *array = *shadow = 1;
+      break;
+   case TGSI_TEXTURE_SHADOW2D_ARRAY:
+      *dim = 2;
+      *array = *shadow = 1;
+      break;
+   case TGSI_TEXTURE_CUBE_ARRAY:
+      *dim = 2;
+      *array = *cube = 1;
+      break;
+      */
    default:
       assert(0);
       break;
@@ -1215,13 +1244,13 @@ bld_clone(struct bld_context *bld, struct nv_instruction *nvi)
 /* NOTE: proj(t0) = (t0 / w) / (tc3 / w) = tc0 / tc2 handled by optimizer */
 static void
 load_proj_tex_coords(struct bld_context *bld,
-                     struct nv_value *t[4], int dim, int arg,
+                     struct nv_value *t[4], int dim, int shadow,
                      const struct tgsi_full_instruction *insn)
 {
    int c;
    unsigned mask = (1 << dim) - 1;
 
-   if (arg != dim)
+   if (shadow)
       mask |= 4; /* depth comparison value */
 
    t[3] = emit_fetch(bld, insn, 0, 3);
@@ -1279,33 +1308,68 @@ bld_quadop(struct bld_context *bld, ubyte qop, struct nv_value *src0, int lane,
    return val;
 }
 
+/* order of TGSI operands: x y z layer shadow lod/bias */
+/* order of native operands: layer x y z | lod/bias shadow */
 static struct nv_instruction *
-emit_tex(struct bld_context *bld, uint opcode,
-         struct nv_value *dst[4], struct nv_value *t_in[4],
-         int argc, int tic, int tsc, int cube)
+emit_tex(struct bld_context *bld, uint opcode, int tic, int tsc,
+         struct nv_value *dst[4], struct nv_value *arg[4],
+         int dim, int array, int cube, int shadow)
 {
-   struct nv_value *t[4];
-   struct nv_instruction *nvi;
+   struct nv_value *src[4];
+   struct nv_instruction *nvi, *bnd;
    int c;
+   int s = 0;
+   boolean lodbias = opcode == NV_OP_TXB || opcode == NV_OP_TXL;
 
-   /* the inputs to a tex instruction must be separate values */
-   for (c = 0; c < argc; ++c) {
-      t[c] = bld_insn_1(bld, NV_OP_MOV, t_in[c]);
-      t[c]->insn->fixed = 1;
+   if (array)
+      arg[dim] = bld_cvt(bld, NV_TYPE_U32, NV_TYPE_F32, arg[dim]);
+
+   /* ensure that all inputs reside in a GPR */
+   for (c = 0; c < dim + array + cube + shadow; ++c)
+      (src[c] = bld_insn_1(bld, NV_OP_MOV, arg[c]))->insn->fixed = 1;
+
+   /* bind { layer x y z } and { lod/bias shadow } to adjacent regs */
+
+   bnd = new_instruction(bld->pc, NV_OP_BIND);
+   if (array) {
+      src[s] = new_value(bld->pc, NV_FILE_GPR, 4);
+      bld_def(bnd, s, src[s]);
+      nv_reference(bld->pc, bnd, s++, arg[dim + cube]);
+   }
+   for (c = 0; c < dim + cube; ++c, ++s) {
+      src[s] = bld_def(bnd, s, new_value(bld->pc, NV_FILE_GPR, 4));
+      nv_reference(bld->pc, bnd, s, arg[c]);
+   }
+
+   if (shadow || lodbias) {
+      bnd = new_instruction(bld->pc, NV_OP_BIND);
+
+      if (lodbias) {
+         src[s] = new_value(bld->pc, NV_FILE_GPR, 4);
+         bld_def(bnd, 0, src[s++]);
+         nv_reference(bld->pc, bnd, 0, arg[dim + cube + array + shadow]);
+      }
+      if (shadow) {
+         src[s] = new_value(bld->pc, NV_FILE_GPR, 4);
+         bld_def(bnd, lodbias, src[s++]);
+         nv_reference(bld->pc, bnd, lodbias, arg[dim + cube + array]);
+      }
    }
 
    nvi = new_instruction(bld->pc, opcode);
    for (c = 0; c < 4; ++c)
       dst[c] = bld_def(nvi, c, new_value(bld->pc, NV_FILE_GPR, 4));
-   for (c = 0; c < argc; ++c)
-      nv_reference(bld->pc, nvi, c, t[c]);
+   for (c = 0; c < s; ++c)
+      nv_reference(bld->pc, nvi, c, src[c]);
 
    nvi->ext.tex.t = tic;
    nvi->ext.tex.s = tsc;
    nvi->tex_mask = 0xf;
    nvi->tex_cube = cube;
+   nvi->tex_dim = dim;
+   nvi->tex_cube = cube;
+   nvi->tex_shadow = shadow;
    nvi->tex_live = 0;
-   nvi->tex_argc = argc;
 
    return nvi;
 }
@@ -1326,24 +1390,25 @@ bld_tex(struct bld_context *bld, struct nv_value *dst0[4],
 {
    struct nv_value *t[4], *s[3];
    uint opcode = translate_opcode(insn->Instruction.Opcode);
-   int arg, dim, c;
+   int c, dim, array, cube, shadow;
+   const int lodbias = opcode == NV_OP_TXB || opcode == NV_OP_TXL;
    const int tic = insn->Src[1].Register.Index;
    const int tsc = tic;
-   const int cube = (insn->Texture.Texture  == TGSI_TEXTURE_CUBE) ? 1 : 0;
 
-   get_tex_dim(insn, &dim, &arg);
+   describe_texture_target(insn->Texture.Texture, &dim, &array, &cube, &shadow);
+
+   assert(dim + array + shadow + lodbias <= 5);
 
    if (!cube && insn->Instruction.Opcode == TGSI_OPCODE_TXP)
-      load_proj_tex_coords(bld, t, dim, arg, insn);
+      load_proj_tex_coords(bld, t, dim, shadow, insn);
    else {
-      for (c = 0; c < dim; ++c)
+      for (c = 0; c < dim + cube + array; ++c)
          t[c] = emit_fetch(bld, insn, 0, c);
-      if (arg != dim)
-         t[dim] = emit_fetch(bld, insn, 0, 2);
+      if (shadow)
+         t[c] = emit_fetch(bld, insn, 0, MAX2(c, 2));
    }
 
    if (cube) {
-      assert(dim >= 3);
       for (c = 0; c < 3; ++c)
          s[c] = bld_insn_1(bld, NV_OP_ABS_F32, t[c]);
 
@@ -1355,9 +1420,10 @@ bld_tex(struct bld_context *bld, struct nv_value *dst0[4],
          t[c] = bld_insn_2(bld, NV_OP_MUL_F32, t[c], s[0]);
    }
 
-   if (opcode == NV_OP_TXB || opcode == NV_OP_TXL)
-      t[arg++] = emit_fetch(bld, insn, 0, 3);
-   emit_tex(bld, opcode, dst0, t, arg, tic, tsc, cube);
+   if (lodbias)
+      t[dim + cube + array + shadow] = emit_fetch(bld, insn, 0, 3);
+
+   emit_tex(bld, opcode, tic, tsc, dst0, t, dim, array, cube, shadow);
 }
 
 static INLINE struct nv_value *
