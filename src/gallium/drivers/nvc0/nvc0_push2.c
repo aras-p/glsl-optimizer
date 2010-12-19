@@ -161,7 +161,7 @@ emit_edgeflag(struct push_context *ctx, boolean enabled)
 {
    struct nouveau_channel *chan = ctx->nvc0->screen->base.channel;
    
-   INLIN_RING(chan, RING_3D(EDGEFLAG_ENABLE), enabled);
+   IMMED_RING(chan, RING_3D(EDGEFLAG_ENABLE), enabled);
 }
 
 static void
@@ -322,7 +322,7 @@ nvc0_push_vbo2(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
          emit_elt32(&ctx, info->start, info->count);
          break;
       }
-      INLIN_RING(nvc0->screen->base.channel, RING_3D(VERTEX_END_GL), 0);
+      IMMED_RING(nvc0->screen->base.channel, RING_3D(VERTEX_END_GL), 0);
 
       prim |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
    }

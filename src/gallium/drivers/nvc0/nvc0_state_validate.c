@@ -249,7 +249,7 @@ nvc0_validate_clip(struct nvc0_context *nvc0)
       BEGIN_RING(chan, RING_3D(VP_CLIP_DISTANCE_ENABLE), 1);
       OUT_RING  (chan, (1 << nvc0->clip.nr) - 1);
    } else {
-      INLIN_RING(chan, RING_3D(VP_CLIP_DISTANCE_ENABLE), 0);
+      IMMED_RING(chan, RING_3D(VP_CLIP_DISTANCE_ENABLE), 0);
    }
 }
 

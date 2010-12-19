@@ -261,7 +261,7 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
          assert(0);
          break;
       }
-      INLIN_RING(ctx.chan, RING_3D(VERTEX_END_GL), 0);
+      IMMED_RING(ctx.chan, RING_3D(VERTEX_END_GL), 0);
 
       ctx.prim |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
    }

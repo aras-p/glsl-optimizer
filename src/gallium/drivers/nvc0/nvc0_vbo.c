@@ -172,13 +172,13 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
 
       if (unlikely(ve->pipe.instance_divisor)) {
          if (!(nvc0->state.instance_bits & (1 << i))) {
-            INLIN_RING(chan, RING_3D(VERTEX_ARRAY_PER_INSTANCE(i)), 1);
+            IMMED_RING(chan, RING_3D(VERTEX_ARRAY_PER_INSTANCE(i)), 1);
          }
          BEGIN_RING(chan, RING_3D(VERTEX_ARRAY_DIVISOR(i)), 1);
          OUT_RING  (chan, ve->pipe.instance_divisor);
       } else
       if (unlikely(nvc0->state.instance_bits & (1 << i))) {
-         INLIN_RING(chan, RING_3D(VERTEX_ARRAY_PER_INSTANCE(i)), 0);
+         IMMED_RING(chan, RING_3D(VERTEX_ARRAY_PER_INSTANCE(i)), 0);
       }
 
       nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_VERTEX, res, NOUVEAU_BO_RD);
@@ -308,7 +308,7 @@ nvc0_draw_arrays(struct nvc0_context *nvc0,
       BEGIN_RING(chan, RING_3D(VERTEX_BUFFER_FIRST), 2);
       OUT_RING  (chan, start);
       OUT_RING  (chan, count);
-      INLIN_RING(chan, RING_3D(VERTEX_END_GL), 0);
+      IMMED_RING(chan, RING_3D(VERTEX_END_GL), 0);
 
       prim |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
    }
@@ -450,7 +450,7 @@ nvc0_draw_elements(struct nvc0_context *nvc0, boolean shorten,
          OUT_RING  (chan, index_size);
          OUT_RING  (chan, start);
          OUT_RING  (chan, count);
-         INLIN_RING(chan, RING_3D(VERTEX_END_GL), 0);
+         IMMED_RING(chan, RING_3D(VERTEX_END_GL), 0);
 
          mode |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
       }
@@ -481,7 +481,7 @@ nvc0_draw_elements(struct nvc0_context *nvc0, boolean shorten,
             assert(0);
             return;
          }
-         INLIN_RING(chan, RING_3D(VERTEX_END_GL), 0);
+         IMMED_RING(chan, RING_3D(VERTEX_END_GL), 0);
 
          prim |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
       }
@@ -540,7 +540,7 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
             if (info->restart_index > 65535)
                shorten = FALSE;
          } else {
-            INLIN_RING(chan, RING_3D(PRIM_RESTART_ENABLE), 0);
+            IMMED_RING(chan, RING_3D(PRIM_RESTART_ENABLE), 0);
          }
          nvc0->state.prim_restart = info->primitive_restart;
       } else

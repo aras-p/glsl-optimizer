@@ -82,7 +82,7 @@ BEGIN_RING_1I(struct nouveau_channel *chan, uint32_t mthd, unsigned size)
 
 /* inline-data */
 static INLINE void
-INLIN_RING(struct nouveau_channel *chan, uint32_t mthd, unsigned data)
+IMMED_RING(struct nouveau_channel *chan, uint32_t mthd, unsigned data)
 {
    WAIT_RING(chan, 1);
    OUT_RING (chan, (0x8 << 28) | (data << 16) | mthd);
