@@ -80,7 +80,7 @@ struct nvc0_context {
       uint8_t num_textures[5];
       uint8_t num_samplers[5];
       uint16_t scissor;
-      uint8_t uniform_buffer_bound; /* workaround */
+      uint32_t uniform_buffer_bound[5];
    } state;
 
    struct nvc0_blend_stateobj *blend;

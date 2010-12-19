@@ -263,7 +263,7 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
             BEGIN_RING(chan, RING_3D(CB_BIND(s)), 1);
             OUT_RING  (chan, (i << 4) | 0);
             if (i == 0)
-               nvc0->state.uniform_buffer_bound &= ~(1 << s);
+               nvc0->state.uniform_buffer_bound[s] = 0;
             continue;
          }
 
@@ -272,14 +272,15 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
                base = s << 16;
                bo = nvc0->screen->uniforms;
 
-               if (nvc0->state.uniform_buffer_bound & (1 << s))
+               if (nvc0->state.uniform_buffer_bound[s] >= res->base.width0)
                   rebind = FALSE;
                else
-                  nvc0->state.uniform_buffer_bound |= (1 << s);
+                  nvc0->state.uniform_buffer_bound[s] =
+                     align(res->base.width0, 0x100);
             } else {
                bo = res->bo;
             }
-#if 1
+#if 0
             nvc0_m2mf_push_linear(nvc0, bo, NOUVEAU_BO_VRAM,
                                   base, res->base.width0, res->data);
             BEGIN_RING(chan, RING_3D_(0x021c), 1);
@@ -290,7 +291,7 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
          } else {
             bo = res->bo;
             if (i == 0)
-               nvc0->state.uniform_buffer_bound &= ~(1 << s);
+               nvc0->state.uniform_buffer_bound[s] = 0;
          }
 
          if (bo != nvc0->screen->uniforms)
