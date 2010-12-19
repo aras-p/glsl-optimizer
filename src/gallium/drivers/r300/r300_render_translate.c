@@ -204,7 +204,7 @@ void r300_translate_index_buffer(struct r300_context *r300,
             break;
 
         case 2:
-            if (*start % 2 != 0 || index_offset) {
+            if (index_offset) {
                 util_rebuild_ushort_elts(&r300->context, index_buffer, index_offset, *start, count);
                 *start = 0;
                 r300->validate_buffers = TRUE;

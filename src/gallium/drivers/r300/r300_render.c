@@ -551,7 +551,27 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
                                 &start, count);
 
     r300_update_derived_state(r300);
-    r300_upload_index_buffer(r300, &indexBuffer, indexSize, start, count, &new_offset);
+
+    /* Fallback for misaligned ushort indices. */
+    if (indexSize == 2 && start % 2 == 1) {
+        struct pipe_transfer *transfer;
+        struct pipe_resource *userbuf;
+        uint16_t *ptr = pipe_buffer_map(pipe, indexBuffer,
+                                        PIPE_TRANSFER_READ, &transfer);
+
+        /* Copy the mapped index buffer directly to the upload buffer.
+         * The start index will be aligned simply from the fact that
+         * every sub-buffer in u_upload_mgr is aligned. */
+        userbuf = pipe->screen->user_buffer_create(pipe->screen,
+                                                   ptr + start, count * 2,
+                                                   PIPE_BIND_INDEX_BUFFER);
+        indexBuffer = userbuf;
+        r300_upload_index_buffer(r300, &indexBuffer, indexSize, 0, count, &new_offset);
+        pipe_resource_reference(&userbuf, NULL);
+        pipe_buffer_unmap(pipe, indexBuffer, transfer);
+    } else {
+        r300_upload_index_buffer(r300, &indexBuffer, indexSize, start, count, &new_offset);
+    }
 
     start = new_offset;
 
