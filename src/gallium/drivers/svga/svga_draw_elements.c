@@ -72,18 +72,18 @@ translate_indices( struct svga_hwtnl *hwtnl,
               nr,
               dst_map );
 
-   pipe_buffer_unmap( pipe, src, src_transfer );
-   pipe_buffer_unmap( pipe, dst, dst_transfer );
+   pipe_buffer_unmap( pipe, src_transfer );
+   pipe_buffer_unmap( pipe, dst_transfer );
 
    *out_buf = dst;
    return PIPE_OK;
 
 fail:
    if (src_map)
-      pipe_buffer_unmap( pipe, src, src_transfer );
+      pipe_buffer_unmap( pipe, src_transfer );
 
    if (dst_map)
-      pipe_buffer_unmap( pipe, dst, dst_transfer );
+      pipe_buffer_unmap( pipe, dst_transfer );
 
    if (dst)
       pipe->screen->resource_destroy( pipe->screen, dst );

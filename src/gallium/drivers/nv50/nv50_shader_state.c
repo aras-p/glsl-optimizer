@@ -71,7 +71,7 @@ nv50_transfer_constbuf(struct nv50_context *nv50,
       map += nr;
    }
 
-   pipe_buffer_unmap(pipe, buf, transfer);
+   pipe_buffer_unmap(pipe, transfer);
 }
 
 static void

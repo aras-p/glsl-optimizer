@@ -65,14 +65,14 @@ static enum pipe_error generate_indices( struct svga_hwtnl *hwtnl,
    generate( nr,
              dst_map );
 
-   pipe_buffer_unmap( pipe, dst, transfer );
+   pipe_buffer_unmap( pipe, transfer );
 
    *out_buf = dst;
    return PIPE_OK;
 
 fail:
    if (dst_map)
-      pipe_buffer_unmap( pipe, dst, transfer );
+      pipe_buffer_unmap( pipe, transfer );
 
    if (dst)
       pipe->screen->resource_destroy( pipe->screen, dst );

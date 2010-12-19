@@ -259,16 +259,14 @@ st_feedback_draw_vbo(struct gl_context *ctx,
 
 
    /* unmap constant buffers */
-   pipe_buffer_unmap(pipe, st->state.constants[PIPE_SHADER_VERTEX],
-		     cb_transfer);
+   pipe_buffer_unmap(pipe, cb_transfer);
 
    /*
     * unmap vertex/index buffers
     */
    for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
       if (draw->pt.vertex_buffer[i].buffer) {
-         pipe_buffer_unmap(pipe, draw->pt.vertex_buffer[i].buffer, 
-			   vb_transfer[i]);
+         pipe_buffer_unmap(pipe, vb_transfer[i]);
          pipe_resource_reference(&draw->pt.vertex_buffer[i].buffer, NULL);
          draw_set_mapped_vertex_buffer(draw, i, NULL);
       }
@@ -279,7 +277,7 @@ st_feedback_draw_vbo(struct gl_context *ctx,
       draw_set_index_buffer(draw, NULL);
 
       if (ib_transfer)
-         pipe_buffer_unmap(pipe, ibuffer.buffer, ib_transfer);
+         pipe_buffer_unmap(pipe, ib_transfer);
       pipe_resource_reference(&ibuffer.buffer, NULL);
    }
 }

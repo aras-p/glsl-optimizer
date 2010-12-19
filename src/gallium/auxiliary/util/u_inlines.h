@@ -242,7 +242,6 @@ pipe_buffer_map(struct pipe_context *pipe,
 
 static INLINE void
 pipe_buffer_unmap(struct pipe_context *pipe,
-                  struct pipe_resource *buf,
                   struct pipe_transfer *transfer)
 {
    if (transfer) {
@@ -341,7 +340,7 @@ pipe_buffer_read(struct pipe_context *pipe,
    if (map)
       memcpy(data, map + offset, size);
 
-   pipe_buffer_unmap(pipe, buf, src_transfer);
+   pipe_buffer_unmap(pipe, src_transfer);
 }
 
 static INLINE struct pipe_transfer *

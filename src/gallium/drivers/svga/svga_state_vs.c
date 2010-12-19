@@ -233,9 +233,7 @@ static int update_zero_stride( struct svga_context *svga,
          translate->run(translate, 0, 1, 0,
                         svga->curr.zero_stride_constants);
 
-         pipe_buffer_unmap(&svga->pipe,
-                           vbuffer->buffer,
-			   transfer);
+         pipe_buffer_unmap(&svga->pipe, transfer);
 
          translate->release(translate);
       }

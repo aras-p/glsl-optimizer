@@ -360,7 +360,7 @@ st_bufferobj_unmap(struct gl_context *ctx, GLenum target, struct gl_buffer_objec
    struct st_buffer_object *st_obj = st_buffer_object(obj);
 
    if (obj->Length)
-      pipe_buffer_unmap(pipe, st_obj->buffer, st_obj->transfer);
+      pipe_buffer_unmap(pipe, st_obj->transfer);
 
    st_obj->transfer = NULL;
    obj->Pointer = NULL;
@@ -409,8 +409,8 @@ st_copy_buffer_subdata(struct gl_context *ctx,
    if (srcPtr && dstPtr)
       memcpy(dstPtr + writeOffset, srcPtr + readOffset, size);
 
-   pipe_buffer_unmap(pipe, srcObj->buffer, src_transfer);
-   pipe_buffer_unmap(pipe, dstObj->buffer, dst_transfer);
+   pipe_buffer_unmap(pipe, src_transfer);
+   pipe_buffer_unmap(pipe, dst_transfer);
 }
 
 

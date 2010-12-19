@@ -425,7 +425,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
 
         if (transfer[vbi]) {
             vbuf = &r300->vertex_buffer[vbi];
-            pipe_buffer_unmap(&r300->context, vbuf->buffer, transfer[vbi]);
+            pipe_buffer_unmap(&r300->context, transfer[vbi]);
             transfer[vbi] = NULL;
         }
     }
@@ -568,7 +568,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
         indexBuffer = userbuf;
         r300_upload_index_buffer(r300, &indexBuffer, indexSize, 0, count, &new_offset);
         pipe_resource_reference(&userbuf, NULL);
-        pipe_buffer_unmap(pipe, indexBuffer, transfer);
+        pipe_buffer_unmap(pipe, transfer);
     } else {
         r300_upload_index_buffer(r300, &indexBuffer, indexSize, start, count, &new_offset);
     }
@@ -770,14 +770,13 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
 
     for (i = 0; i < r300->vertex_buffer_count; i++) {
         if (r300->vertex_buffer[i].buffer) {
-            pipe_buffer_unmap(pipe, r300->vertex_buffer[i].buffer,
-                              vb_transfer[i]);
+            pipe_buffer_unmap(pipe, vb_transfer[i]);
             draw_set_mapped_vertex_buffer(r300->draw, i, NULL);
         }
     }
 
     if (indexed) {
-        pipe_buffer_unmap(pipe, r300->index_buffer.buffer, ib_transfer);
+        pipe_buffer_unmap(pipe, ib_transfer);
         draw_set_mapped_index_buffer(r300->draw, NULL);
     }
 }
@@ -877,7 +876,7 @@ static void r300_render_unmap_vertices(struct vbuf_render* render,
 
     r300render->vbo_max_used = MAX2(r300render->vbo_max_used,
                                     r300render->vertex_size * (max + 1));
-    pipe_buffer_unmap(context, r300->vbo, r300render->vbo_transfer);
+    pipe_buffer_unmap(context, r300render->vbo_transfer);
 
     r300render->vbo_transfer = NULL;
 }

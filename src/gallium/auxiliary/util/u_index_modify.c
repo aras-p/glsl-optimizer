@@ -52,8 +52,8 @@ void util_shorten_ubyte_elts(struct pipe_context *context,
         out_map++;
     }
 
-    pipe_buffer_unmap(context, *elts, src_transfer);
-    pipe_buffer_unmap(context, new_elts, dst_transfer);
+    pipe_buffer_unmap(context, src_transfer);
+    pipe_buffer_unmap(context, dst_transfer);
 
     *elts = new_elts;
 }
@@ -86,8 +86,8 @@ void util_rebuild_ushort_elts(struct pipe_context *context,
         out_map++;
     }
 
-    pipe_buffer_unmap(context, *elts, in_transfer);
-    pipe_buffer_unmap(context, new_elts, out_transfer);
+    pipe_buffer_unmap(context, in_transfer);
+    pipe_buffer_unmap(context, out_transfer);
 
     *elts = new_elts;
 }
@@ -120,8 +120,8 @@ void util_rebuild_uint_elts(struct pipe_context *context,
         out_map++;
     }
 
-    pipe_buffer_unmap(context, *elts, in_transfer);
-    pipe_buffer_unmap(context, new_elts, out_transfer);
+    pipe_buffer_unmap(context, in_transfer);
+    pipe_buffer_unmap(context, out_transfer);
 
     *elts = new_elts;
 }
