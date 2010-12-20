@@ -267,7 +267,7 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
    }
 
    if (info->indexed)
-	   pipe_buffer_unmap(&nvc0->pipe, nvc0->idxbuf.buffer, transfer);
+	   pipe_buffer_unmap(&nvc0->pipe, transfer);
 
    for (i = 0; i < nvc0->num_vtxbufs; ++i) {
       struct nvc0_resource *res = nvc0_resource(nvc0->vtxbuf[i].buffer);
