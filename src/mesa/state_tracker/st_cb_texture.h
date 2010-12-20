@@ -31,9 +31,10 @@
 
 
 #include "main/glheader.h"
-#include "main/mtypes.h"
 
 struct dd_function_table;
+struct gl_context;
+struct gl_texture_object;
 struct pipe_context;
 struct st_context;
 
