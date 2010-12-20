@@ -34,11 +34,11 @@
 #include <stdio.h>
 #include <stdint.h>
 #include <nouveau/nouveau_device.h>
-#include <nouveau/nouveau_pushbuf.h>
 #include <nouveau/nouveau_channel.h>
 #include <nouveau/nouveau_bo.h>
 #include <nouveau/nouveau_notifier.h>
 #include <nouveau/nouveau_grobj.h>
+#include <nouveau/nv04_pushbuf.h>
 #include "nv04_2d.h"
 
 #include "nouveau/nv_object.xml.h"

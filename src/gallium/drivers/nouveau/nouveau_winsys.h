@@ -10,7 +10,7 @@
 #include "nouveau/nouveau_grobj.h"
 #include "nouveau/nouveau_notifier.h"
 #include "nouveau/nouveau_resource.h"
-#include "nouveau/nouveau_pushbuf.h"
+#include "nouveau/nv04_pushbuf.h"
 
 #ifndef NV04_PFIFO_MAX_PACKET_LEN
 #define NV04_PFIFO_MAX_PACKET_LEN 2047
