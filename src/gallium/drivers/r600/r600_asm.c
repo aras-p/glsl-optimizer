@@ -308,7 +308,7 @@ static int assign_alu_units(struct r600_bc_alu *alu_first, struct r600_bc_alu *a
 	for (i = 0; i < 5; i++)
 		assignment[i] = NULL;
 
-	for (alu = alu_first; alu; alu = container_of(alu->list.next, alu, list)) {
+	for (alu = alu_first; alu; alu = LIST_ENTRY(struct r600_bc_alu, alu->list.next, list)) {
 		chan = alu->dst.chan;
 		if (is_alu_trans_unit_inst(alu))
 			trans = 1;
@@ -494,23 +494,20 @@ static int check_scalar(struct r600_bc_alu *alu, struct alu_bank_swizzle *bs, in
 	return 0;
 }
 
-static int check_and_set_bank_swizzle(struct r600_bc *bc, struct r600_bc_alu *alu_first)
+static int check_and_set_bank_swizzle(struct r600_bc_alu *slots[5])
 {
-	struct r600_bc_alu *assignment[5];
 	struct alu_bank_swizzle bs;
 	int bank_swizzle[5];
-	int i, r;
+	int i, r = 0, forced = 0;
 
-	r = assign_alu_units(alu_first, assignment);
-	if (r)
-		return r;
-
-	if(alu_first->bank_swizzle_force) {
-		for (i = 0; i < 5; i++)
-			if (assignment[i])
-				assignment[i]->bank_swizzle = assignment[i]->bank_swizzle_force;
+	for (i = 0; i < 5; i++)
+		if (slots[i] && slots[i]->bank_swizzle_force) {
+			slots[i]->bank_swizzle = slots[i]->bank_swizzle_force;
+			forced = 1;
+		}
+	
+	if (forced)
 		return 0;
-	}
 
 	// just check every possible combination of bank swizzle
 	// not very efficent, but works on the first try in most of the cases
@@ -520,19 +517,19 @@ static int check_and_set_bank_swizzle(struct r600_bc *bc, struct r600_bc_alu *al
 	while(bank_swizzle[4] <= SQ_ALU_SCL_221) {
 		init_bank_swizzle(&bs);
 		for (i = 0; i < 4; i++) {
-			if (assignment[i]) {
-				r = check_vector(assignment[i], &bs, bank_swizzle[i]);
+			if (slots[i]) {
+				r = check_vector(slots[i], &bs, bank_swizzle[i]);
 				if (r)
 					break;
 			}
 		}
-		if (!r && assignment[4]) {
-			r = check_scalar(assignment[4], &bs, bank_swizzle[4]);
+		if (!r && slots[4]) {
+			r = check_scalar(slots[4], &bs, bank_swizzle[4]);
 		}
 		if (!r) {
 			for (i = 0; i < 5; i++) {
-				if (assignment[i])
-					assignment[i]->bank_swizzle = bank_swizzle[i];
+				if (slots[i])
+					slots[i]->bank_swizzle = bank_swizzle[i];
 			}
 			return 0;
 		}
@@ -550,31 +547,26 @@ static int check_and_set_bank_swizzle(struct r600_bc *bc, struct r600_bc_alu *al
 	return -1;
 }
 
-static int replace_gpr_with_pv_ps(struct r600_bc_alu *alu_first, struct r600_bc_alu *alu_prev)
+static int replace_gpr_with_pv_ps(struct r600_bc_alu *slots[5], struct r600_bc_alu *alu_prev)
 {
-	struct r600_bc_alu *slots[5];
+	struct r600_bc_alu *prev[5];
 	int gpr[5], chan[5];
 	int i, j, r, src, num_src;
 	
-	r = assign_alu_units(alu_prev, slots);
+	r = assign_alu_units(alu_prev, prev);
 	if (r)
 		return r;
 
 	for (i = 0; i < 5; ++i) {
-		if(slots[i] && slots[i]->dst.write && !slots[i]->dst.rel) {
-			gpr[i] = slots[i]->dst.sel;
-			if (is_alu_reduction_inst(slots[i]))
+		if(prev[i] && prev[i]->dst.write && !prev[i]->dst.rel) {
+			gpr[i] = prev[i]->dst.sel;
+			if (is_alu_reduction_inst(prev[i]))
 				chan[i] = 0;
 			else
-				chan[i] = slots[i]->dst.chan;
+				chan[i] = prev[i]->dst.chan;
 		} else
-			gpr[i] = -1;
-		
+			gpr[i] = -1;		
 	}
-
-	r = assign_alu_units(alu_first, slots);
-	if (r)
-		return r;
 
 	for (i = 0; i < 5; ++i) {
 		struct r600_bc_alu *alu = slots[i];
@@ -603,6 +595,109 @@ static int replace_gpr_with_pv_ps(struct r600_bc_alu *alu_first, struct r600_bc_
 			}
 		}
 	}
+
+	return 0;
+}
+
+static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5], struct r600_bc_alu *alu_prev)
+{
+	struct r600_bc_alu *prev[5];
+	struct r600_bc_alu *result[5] = { NULL };
+	int i, j, r, src, num_src;
+	int num_once_inst = 0;
+
+	r = assign_alu_units(alu_prev, prev);
+	if (r)
+		return r;
+
+	for (i = 0; i < 5; ++i) {
+		// TODO: we have literals? forget it!
+		if (prev[i] && prev[i]->nliteral)
+			return 0;
+		if (slots[i] && slots[i]->nliteral)
+			return 0;
+
+
+		// let's check used slots
+		if (prev[i] && !slots[i]) {
+			result[i] = prev[i];
+			num_once_inst += is_alu_once_inst(prev[i]);
+			continue;
+		} else if (prev[i] && slots[i]) {
+			if (result[4] == NULL && prev[4] == NULL && slots[4] == NULL) {
+				// trans unit is still free try to use it
+				if (is_alu_any_unit_inst(slots[i])) {
+					result[i] = prev[i];
+					result[4] = slots[i];
+				} else if (is_alu_any_unit_inst(prev[i])) {
+					result[i] = slots[i];
+					result[4] = prev[i];
+				} else
+					return 0;
+			} else
+				return 0;
+		} else if(!slots[i]) {
+			continue;
+		} else 
+			result[i] = slots[i];
+
+		// let's check source gprs
+		struct r600_bc_alu *alu = slots[i];
+		num_once_inst += is_alu_once_inst(alu);
+
+		num_src = r600_bc_get_num_operands(alu);
+		for (src = 0; src < num_src; ++src) {
+			// constants doesn't matter
+			if (!is_gpr(alu->src[src].sel))
+				continue;
+
+			for (j = 0; j < 5; ++j) {
+				if (!prev[j] || !prev[j]->dst.write)
+					continue;
+
+				// if it's relative then we can't determin which gpr is really used
+				if (prev[j]->dst.chan == alu->src[src].chan &&
+					(prev[j]->dst.sel == alu->src[src].sel ||
+					prev[j]->dst.rel || alu->src[src].rel))
+					return 0;
+			}
+		}
+	}
+
+	/* more than one PRED_ or KILL_ ? */
+	if (num_once_inst > 1)
+		return 0;
+
+	/* check if the result can still be swizzlet */
+	r = check_and_set_bank_swizzle(result);
+	if (r)
+		return 0;
+
+	/* looks like everything worked out right, apply the changes */
+
+	/* sort instructions */
+	for (i = 0; i < 5; ++i) {
+		slots[i] = result[i];
+		if (result[i]) {
+			LIST_DEL(&result[i]->list);
+			result[i]->last = 0;
+			LIST_ADDTAIL(&result[i]->list, &bc->cf_last->alu);
+		}
+	}
+
+	/* determine new last instruction */
+	LIST_ENTRY(struct r600_bc_alu, bc->cf_last->alu.prev, list)->last = 1;
+
+	/* determine new first instruction */
+	for (i = 0; i < 5; ++i) {
+		if (result[i]) {
+			bc->cf_last->curr_bs_head = result[i];
+			break;
+		}
+	}
+
+	bc->cf_last->prev_bs_head = bc->cf_last->prev2_bs_head;
+	bc->cf_last->prev2_bs_head = NULL;
 
 	return 0;
 }
@@ -644,7 +739,7 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 	if (!bc->cf_last->curr_bs_head) {
 		bc->cf_last->curr_bs_head = nalu;
 	}
-	/* at most 128 slots, one add alu can add 4 slots + 4 constants(2 slots)
+	/* at most 128 slots, one add alu can add 5 slots + 4 constants(2 slots)
 	 * worst case */
 	if (alu->last && (bc->cf_last->ndw >> 1) >= 120) {
 		bc->force_add_cf = 1;
@@ -681,11 +776,28 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 
 	/* process cur ALU instructions for bank swizzle */
 	if (alu->last) {
-		if (bc->cf_last->prev_bs_head)
-			replace_gpr_with_pv_ps(bc->cf_last->curr_bs_head, bc->cf_last->prev_bs_head);
-		r = check_and_set_bank_swizzle(bc, bc->cf_last->curr_bs_head);
+		struct r600_bc_alu *slots[5];
+		r = assign_alu_units(bc->cf_last->curr_bs_head, slots);
 		if (r)
 			return r;
+
+		if (bc->cf_last->prev_bs_head) {
+			r = merge_inst_groups(bc, slots, bc->cf_last->prev_bs_head);
+			if (r)
+				return r;
+		}
+
+		if (bc->cf_last->prev_bs_head) {
+			r = replace_gpr_with_pv_ps(slots, bc->cf_last->prev_bs_head);
+			if (r)
+				return r;
+		}
+
+		r = check_and_set_bank_swizzle(slots);
+		if (r)
+			return r;
+
+		bc->cf_last->prev2_bs_head = bc->cf_last->prev_bs_head;
 		bc->cf_last->prev_bs_head = bc->cf_last->curr_bs_head;
 		bc->cf_last->curr_bs_head = NULL;
 	}
