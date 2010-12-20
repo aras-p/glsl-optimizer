@@ -141,7 +141,7 @@ svga_vbuf_render_unmap_vertices( struct vbuf_render *render,
    pipe_buffer_flush_mapped_range(&svga->pipe,
 				  svga_render->vbuf_transfer,
 				  offset, length);
-   pipe_buffer_unmap(&svga->pipe, svga_render->vbuf, svga_render->vbuf_transfer);
+   pipe_buffer_unmap(&svga->pipe, svga_render->vbuf_transfer);
    svga_render->min_index = min_index;
    svga_render->max_index = max_index;
    svga_render->vbuf_used = MAX2(svga_render->vbuf_used, used);

@@ -220,7 +220,7 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
          }
       }
 
-      pipe_buffer_unmap(pipe, vbuffer, vbuffer_transfer);
+      pipe_buffer_unmap(pipe, vbuffer_transfer);
 
 #undef SET_ATTRIB
    }

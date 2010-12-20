@@ -125,12 +125,11 @@ void r600_begin_vertex_translate(struct r600_pipe_context *rctx)
 	/* Unmap all buffers. */
 	for (i = 0; i < rctx->nvertex_buffer; i++) {
 		if (vb_translated[i]) {
-			pipe_buffer_unmap(pipe, rctx->vertex_buffer[i].buffer,
-					  vb_transfer[i]);
+			pipe_buffer_unmap(pipe, vb_transfer[i]);
 		}
 	}
 
-	pipe_buffer_unmap(pipe, out_buffer, out_transfer);
+	pipe_buffer_unmap(pipe, out_transfer);
 
 	/* Setup the new vertex buffer in the first free slot. */
 	for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {

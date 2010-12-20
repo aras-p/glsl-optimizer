@@ -1,4 +1,3 @@
-//struct dd_function_table;
 /**************************************************************************
  * 
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.

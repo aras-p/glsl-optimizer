@@ -29,9 +29,11 @@
 #ifndef ST_CB_READPIXELS_H
 #define ST_CB_READPIXELS_H
 
-#include "main/mtypes.h"
+#include "main/glheader.h"
 
 struct dd_function_table;
+struct gl_context;
+struct gl_pixelstore_attrib;
 
 extern struct st_renderbuffer *
 st_get_color_read_renderbuffer(struct gl_context *ctx);

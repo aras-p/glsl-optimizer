@@ -11,7 +11,7 @@
 #include "nouveau/nouveau_notifier.h"
 #include "nouveau/nouveau_resource.h"
 #ifndef NOUVEAU_NVC0
-#include "nouveau/nouveau_pushbuf.h"
+#include "nouveau/nv04_pushbuf.h"
 #endif
 
 #ifndef NV04_PFIFO_MAX_PACKET_LEN

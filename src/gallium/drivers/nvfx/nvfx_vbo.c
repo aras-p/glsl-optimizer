@@ -9,8 +9,7 @@
 #include "nvfx_resource.h"
 
 #include "nouveau/nouveau_channel.h"
-
-#include "nouveau/nouveau_pushbuf.h"
+#include "nouveau/nv04_pushbuf.h"
 
 static inline unsigned
 util_guess_unique_indices_count(unsigned mode, unsigned indices)

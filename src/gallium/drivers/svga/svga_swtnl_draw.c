@@ -106,20 +106,17 @@ svga_swtnl_draw_vbo(struct svga_context *svga,
     * unmap vertex/index buffers
     */
    for (i = 0; i < svga->curr.num_vertex_buffers; i++) {
-      pipe_buffer_unmap(&svga->pipe, svga->curr.vb[i].buffer, 
-			vb_transfer[i]);
+      pipe_buffer_unmap(&svga->pipe, vb_transfer[i]);
       draw_set_mapped_vertex_buffer(draw, i, NULL);
    }
 
    if (ib_transfer) {
-      pipe_buffer_unmap(&svga->pipe, svga->curr.ib.buffer, ib_transfer);
+      pipe_buffer_unmap(&svga->pipe, ib_transfer);
       draw_set_mapped_index_buffer(draw, NULL);
    }
 
    if (svga->curr.cb[PIPE_SHADER_VERTEX]) {
-      pipe_buffer_unmap(&svga->pipe,
-                        svga->curr.cb[PIPE_SHADER_VERTEX],
-			cb_transfer);
+      pipe_buffer_unmap(&svga->pipe, cb_transfer);
    }
 
    return ret;

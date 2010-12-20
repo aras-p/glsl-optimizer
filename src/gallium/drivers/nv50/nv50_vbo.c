@@ -284,7 +284,7 @@ nv50_draw_elements_inline(struct pipe_context *pipe,
 		nzi = TRUE;
 	}
 
-	pipe_buffer_unmap(pipe, indexBuffer, transfer);
+	pipe_buffer_unmap(pipe, transfer);
 }
 
 static void

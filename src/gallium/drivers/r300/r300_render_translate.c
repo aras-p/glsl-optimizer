@@ -128,12 +128,11 @@ void r300_begin_vertex_translate(struct r300_context *r300)
     /* Unmap all buffers. */
     for (i = 0; i < r300->vertex_buffer_count; i++) {
         if (vb_translated[i]) {
-            pipe_buffer_unmap(pipe, r300->vertex_buffer[i].buffer,
-                              vb_transfer[i]);
+            pipe_buffer_unmap(pipe, vb_transfer[i]);
         }
     }
 
-    pipe_buffer_unmap(pipe, out_buffer, out_transfer);
+    pipe_buffer_unmap(pipe, out_transfer);
 
     /* Setup the new vertex buffer in the first free slot. */
     for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
