@@ -219,7 +219,7 @@ nvc0_m2mf_push_rect(struct pipe_screen *pscreen,
       OUT_RING  (chan, (1 << NVC0_M2MF_EXEC_INC__SHIFT) |
                  NVC0_M2MF_EXEC_PUSH | NVC0_M2MF_EXEC_LINEAR_IN);
 
-      BEGIN_RING(chan, RING_MF(DATA), words);
+      BEGIN_RING_NI(chan, RING_MF(DATA), words);
       OUT_RINGp (chan, src, words);
 
       dy += line_count;

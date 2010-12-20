@@ -188,7 +188,7 @@ nvc0_validate_tic(struct nvc0_context *nvc0, int s)
          OUT_RING  (chan, 1);
          BEGIN_RING(chan, RING_MF(EXEC), 1);
          OUT_RING  (chan, 0x100111);
-         BEGIN_RING(chan, RING_MF(DATA), 8);
+         BEGIN_RING_NI(chan, RING_MF(DATA), 8);
          OUT_RING  (chan, tic->tic[0]);
          OUT_RELOCl(chan, res->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
          OUT_RELOC (chan, res->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
