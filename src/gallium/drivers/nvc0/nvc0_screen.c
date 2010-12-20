@@ -375,7 +375,8 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    screen->base.vertex_buffer_flags = NOUVEAU_BO_GART;
    screen->base.index_buffer_flags = 0;
 
-   ret = nouveau_bo_new(dev, NOUVEAU_BO_GART, 0, 4096, &screen->fence.bo);
+   ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0, 4096,
+                        &screen->fence.bo);
    if (ret)
       goto fail;
    nouveau_bo_map(screen->fence.bo, NOUVEAU_BO_RDWR);
