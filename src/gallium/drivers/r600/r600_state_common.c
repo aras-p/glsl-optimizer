@@ -179,8 +179,16 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 	struct pipe_vertex_buffer *vbo;
 	unsigned max_index = (unsigned)-1;
 
-	for (int i = 0; i < rctx->nvertex_buffer; i++) {
-		pipe_resource_reference(&rctx->vertex_buffer[i].buffer, NULL);
+	if (rctx->family >= CHIP_CEDAR) {
+		for (int i = 0; i < rctx->nvertex_buffer; i++) {
+			pipe_resource_reference(&rctx->vertex_buffer[i].buffer, NULL);
+			evergreen_fs_resource_set(&rctx->ctx, NULL, i);
+		}
+	} else {
+		for (int i = 0; i < rctx->nvertex_buffer; i++) {
+			pipe_resource_reference(&rctx->vertex_buffer[i].buffer, NULL);
+			r600_context_pipe_state_set_fs_resource(&rctx->ctx, NULL, i);
+		}
 	}
 	memcpy(rctx->vertex_buffer, buffers, sizeof(struct pipe_vertex_buffer) * count);
 
@@ -188,6 +196,8 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 		vbo = (struct pipe_vertex_buffer*)&buffers[i];
 
 		rctx->vertex_buffer[i].buffer = NULL;
+		if (buffers[i].buffer == NULL)
+			continue;
 		if (r600_buffer_is_user_buffer(buffers[i].buffer))
 			rctx->any_user_vbs = TRUE;
 		pipe_resource_reference(&rctx->vertex_buffer[i].buffer, buffers[i].buffer);
