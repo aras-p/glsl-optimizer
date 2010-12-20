@@ -144,6 +144,7 @@ struct r600_bc_cf {
 	struct r600_bc_output		output;
 	struct r600_bc_alu		*curr_bs_head;
 	struct r600_bc_alu		*prev_bs_head;
+	struct r600_bc_alu		*prev2_bs_head;
 };
 
 #define FC_NONE				0
