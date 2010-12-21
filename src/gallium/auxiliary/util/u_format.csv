@@ -76,6 +76,7 @@ PIPE_FORMAT_B4G4R4X4_UNORM        , plain, 1, 1, un4 , un4 , un4 , x4  , zyx1, r
 PIPE_FORMAT_B5G6R5_UNORM          , plain, 1, 1, un5 , un6 , un5 ,     , zyx1, rgb
 PIPE_FORMAT_R10G10B10A2_UNORM     , plain, 1, 1, un10, un10, un10, un2 , xyzw, rgb
 PIPE_FORMAT_B10G10R10A2_UNORM     , plain, 1, 1, un10, un10, un10, un2 , zyxw, rgb
+PIPE_FORMAT_B2G3R3_UNORM          , plain, 1, 1, un2 , un3 , un3 ,     , zyx1, rgb
 
 # Luminance/Intensity/Alpha formats
 PIPE_FORMAT_L8_UNORM              , plain, 1, 1, un8 ,     ,     ,     , xxx1, rgb
@@ -84,6 +85,9 @@ PIPE_FORMAT_I8_UNORM              , plain, 1, 1, un8 ,     ,     ,     , xxxx, r
 PIPE_FORMAT_L4A4_UNORM            , plain, 1, 1, un4 , un4 ,     ,     , xxxy, rgb
 PIPE_FORMAT_L8A8_UNORM            , plain, 1, 1, un8 , un8 ,     ,     , xxxy, rgb
 PIPE_FORMAT_L16_UNORM             , plain, 1, 1, un16,     ,     ,     , xxx1, rgb
+PIPE_FORMAT_A16_UNORM             , plain, 1, 1, un16,     ,     ,     , 000x, rgb
+PIPE_FORMAT_I16_UNORM             , plain, 1, 1, un16,     ,     ,     , xxxx, rgb
+PIPE_FORMAT_L16A16_UNORM          , plain, 1, 1, un16, un16,     ,     , xxxy, rgb
 
 # SRGB formats
 PIPE_FORMAT_L8_SRGB               , plain, 1, 1, un8 ,     ,     ,     , xxx1, srgb 
