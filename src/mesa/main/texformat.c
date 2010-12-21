@@ -102,10 +102,12 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
       /* Alpha formats */
       case GL_ALPHA:
       case GL_ALPHA4:
-      case GL_ALPHA12:
-      case GL_ALPHA16:
       case GL_ALPHA8:
          return MESA_FORMAT_A8;
+
+      case GL_ALPHA12:
+      case GL_ALPHA16:
+         return MESA_FORMAT_A16;
 
       /* Luminance formats */
       case 1:

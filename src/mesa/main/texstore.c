@@ -2357,21 +2357,21 @@ _mesa_texstore_unorm1616(TEXSTORE_PARAMS)
 }
 
 
+/* Texstore for R16, A16. */
 static GLboolean
-_mesa_texstore_r16(TEXSTORE_PARAMS)
+_mesa_texstore_unorm16(TEXSTORE_PARAMS)
 {
    const GLboolean littleEndian = _mesa_little_endian();
    const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
-   ASSERT(dstFormat == MESA_FORMAT_R16);
+   ASSERT(dstFormat == MESA_FORMAT_R16 ||
+          dstFormat == MESA_FORMAT_A16);
    ASSERT(texelBytes == 2);
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
-       dstFormat == MESA_FORMAT_R16 &&
-       baseInternalFormat == GL_RED &&
-       srcFormat == GL_RED &&
+       baseInternalFormat == srcFormat &&
        srcType == GL_UNSIGNED_SHORT &&
        littleEndian) {
       /* simple memcpy path */
@@ -4048,6 +4048,7 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_AL1616_REV, _mesa_texstore_unorm1616 },
    { MESA_FORMAT_RGB332, _mesa_texstore_rgb332 },
    { MESA_FORMAT_A8, _mesa_texstore_a8 },
+   { MESA_FORMAT_A16, _mesa_texstore_unorm16 },
    { MESA_FORMAT_L8, _mesa_texstore_a8 },
    { MESA_FORMAT_I8, _mesa_texstore_a8 },
    { MESA_FORMAT_CI8, _mesa_texstore_ci8 },
@@ -4056,7 +4057,7 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_R8, _mesa_texstore_a8 },
    { MESA_FORMAT_RG88, _mesa_texstore_unorm88 },
    { MESA_FORMAT_RG88_REV, _mesa_texstore_unorm88 },
-   { MESA_FORMAT_R16, _mesa_texstore_r16 },
+   { MESA_FORMAT_R16, _mesa_texstore_unorm16 },
    { MESA_FORMAT_RG1616, _mesa_texstore_unorm1616 },
    { MESA_FORMAT_RG1616_REV, _mesa_texstore_unorm1616 },
    { MESA_FORMAT_ARGB2101010, _mesa_texstore_argb2101010 },

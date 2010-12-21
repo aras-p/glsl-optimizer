@@ -72,6 +72,7 @@ typedef enum
    MESA_FORMAT_AL1616_REV,      /* LLLL LLLL LLLL LLLL AAAA AAAA AAAA AAAA */
    MESA_FORMAT_RGB332,		/*                               RRRG GGBB */
    MESA_FORMAT_A8,		/*                               AAAA AAAA */
+   MESA_FORMAT_A16,             /*                     AAAA AAAA AAAA AAAA */
    MESA_FORMAT_L8,		/*                               LLLL LLLL */
    MESA_FORMAT_I8,		/*                               IIII IIII */
    MESA_FORMAT_CI8,		/*                               CCCC CCCC */

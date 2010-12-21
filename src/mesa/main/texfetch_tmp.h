@@ -1148,6 +1148,30 @@ static void store_texel_a8(struct gl_texture_image *texImage,
 #endif
 
 
+/* MESA_FORMAT_A16 ************************************************************/
+
+/* Fetch texel from 1D, 2D or 3D a8 texture, return 4 GLchans */
+static void FETCH(f_a16)( const struct gl_texture_image *texImage,
+                          GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLushort *src = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = 0.0F;
+   texel[ACOMP] = USHORT_TO_FLOAT( src[0] );
+}
+
+#if DIM == 3
+static void store_texel_a16(struct gl_texture_image *texImage,
+                            GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLushort *rgba = (const GLushort *) texel;
+   GLushort *dst = TEXEL_ADDR(GLushort, texImage, i, j, k, 1);
+   *dst = rgba[ACOMP];
+}
+#endif
+
+
 /* MESA_FORMAT_L8 ************************************************************/
 
 /* Fetch texel from 1D, 2D or 3D l8 texture, return 4 GLchans */

@@ -285,6 +285,15 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       1, 1, 1                      /* BlockWidth/Height,Bytes */
    },
    {
+      MESA_FORMAT_A16,             /* Name */
+      "MESA_FORMAT_A16",           /* StrName */
+      GL_ALPHA,                    /* BaseFormat */
+      GL_UNSIGNED_NORMALIZED,      /* DataType */
+      0, 0, 0, 16,                 /* Red/Green/Blue/AlphaBits */
+      0, 0, 0, 0, 0,               /* Lum/Int/Index/Depth/StencilBits */
+      1, 1, 2                      /* BlockWidth/Height,Bytes */
+   },
+   {
       MESA_FORMAT_L8,              /* Name */
       "MESA_FORMAT_L8",            /* StrName */
       GL_LUMINANCE,                /* BaseFormat */
@@ -1297,6 +1306,7 @@ _mesa_format_to_type_and_comps(gl_format format,
       return;
 
    case MESA_FORMAT_R16:
+   case MESA_FORMAT_A16:
       *datatype = GL_UNSIGNED_SHORT;
       *comps = 1;
       return;
