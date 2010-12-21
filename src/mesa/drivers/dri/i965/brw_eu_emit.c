@@ -1936,7 +1936,8 @@ void brw_SAMPLE(struct brw_compile *p,
 	 brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 	 brw_set_mask_control(p, BRW_MASK_DISABLE);
 
-	 brw_MOV(p, m1, brw_vec8_grf(0,0));	 
+	 brw_MOV(p, retype(m1, BRW_REGISTER_TYPE_UD),
+		 retype(brw_vec8_grf(0,0), BRW_REGISTER_TYPE_UD));
   	 brw_MOV(p, get_element_ud(m1, 2), brw_imm_ud(newmask << 12)); 
 
 	 brw_pop_insn_state(p);
@@ -1997,7 +1998,8 @@ void brw_SAMPLE(struct brw_compile *p,
        */
       brw_push_insn_state(p);
       brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-      brw_MOV(p, reg, reg);	      
+      brw_MOV(p, retype(reg, BRW_REGISTER_TYPE_UD),
+	      retype(reg, BRW_REGISTER_TYPE_UD));
       brw_pop_insn_state(p);
    }
 
@@ -2029,7 +2031,8 @@ void brw_urb_WRITE(struct brw_compile *p,
    if (intel->gen >= 6) {
       brw_push_insn_state(p);
       brw_set_mask_control( p, BRW_MASK_DISABLE );
-      brw_MOV(p, brw_message_reg(msg_reg_nr), src0);
+      brw_MOV(p, retype(brw_message_reg(msg_reg_nr), BRW_REGISTER_TYPE_UD),
+	      retype(src0, BRW_REGISTER_TYPE_UD));
       brw_pop_insn_state(p);
       src0 = brw_message_reg(msg_reg_nr);
    }

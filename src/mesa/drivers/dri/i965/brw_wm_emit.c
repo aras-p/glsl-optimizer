@@ -1501,7 +1501,8 @@ void emit_fb_write(struct brw_wm_compile *c,
        */
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
-      brw_MOV(p, brw_message_reg(0), brw_vec8_grf(0, 0));
+      brw_MOV(p, retype(brw_message_reg(0), BRW_REGISTER_TYPE_UD),
+	      retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
       brw_pop_insn_state(p);
 
       if (target != 0) {
