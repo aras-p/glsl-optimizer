@@ -717,8 +717,8 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 		/* check if we could add it anyway */
 		if (bc->cf_last->inst == (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3) &&
 			type == V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE) {
-			LIST_FOR_EACH_ENTRY(alu, &bc->cf_last->alu, list) {
-				if (alu->predicate) {
+			LIST_FOR_EACH_ENTRY(lalu, &bc->cf_last->alu, list) {
+				if (lalu->predicate) {
 					bc->force_add_cf = 1;
 					break;
 				}
