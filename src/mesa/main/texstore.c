@@ -2038,6 +2038,80 @@ _mesa_texstore_argb1555(TEXSTORE_PARAMS)
 }
 
 
+static GLboolean
+_mesa_texstore_argb2101010(TEXSTORE_PARAMS)
+{
+   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
+   const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
+
+   ASSERT(dstFormat == MESA_FORMAT_ARGB2101010);
+   ASSERT(texelBytes == 4);
+
+   if (!ctx->_ImageTransferState &&
+       !srcPacking->SwapBytes &&
+       dstFormat == MESA_FORMAT_ARGB2101010 &&
+       srcFormat == GL_BGRA &&
+       srcType == GL_UNSIGNED_INT_2_10_10_10_REV &&
+       baseInternalFormat == GL_RGBA) {
+      /* simple memcpy path */
+      memcpy_texture(ctx, dims,
+                     dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
+                     dstRowStride,
+                     dstImageOffsets,
+                     srcWidth, srcHeight, srcDepth, srcFormat, srcType,
+                     srcAddr, srcPacking);
+   }
+   else {
+      /* general path */
+      const GLchan *tempImage = _mesa_make_temp_chan_image(ctx, dims,
+                                                 baseInternalFormat,
+                                                 baseFormat,
+                                                 srcWidth, srcHeight, srcDepth,
+                                                 srcFormat, srcType, srcAddr,
+                                                 srcPacking);
+      const GLchan *src = tempImage;
+      GLint img, row, col;
+      if (!tempImage)
+         return GL_FALSE;
+      for (img = 0; img < srcDepth; img++) {
+         GLubyte *dstRow = (GLubyte *) dstAddr
+            + dstImageOffsets[dstZoffset + img] * texelBytes
+            + dstYoffset * dstRowStride
+            + dstXoffset * texelBytes;
+         if (baseInternalFormat == GL_RGBA) {
+            for (row = 0; row < srcHeight; row++) {
+               GLuint *dstUS = (GLuint *) dstRow;
+               for (col = 0; col < srcWidth; col++) {
+                  dstUS[col] = PACK_COLOR_2101010( CHAN_TO_UBYTE(src[ACOMP]),
+                                                   CHAN_TO_UBYTE(src[RCOMP]),
+                                                   CHAN_TO_UBYTE(src[GCOMP]),
+                                                   CHAN_TO_UBYTE(src[BCOMP]) );
+                  src += 4;
+               }
+               dstRow += dstRowStride;
+            }
+         } else if (baseInternalFormat == GL_RGB) {
+            for (row = 0; row < srcHeight; row++) {
+               GLuint *dstUS = (GLuint *) dstRow;
+               for (col = 0; col < srcWidth; col++) {
+                  dstUS[col] = PACK_COLOR_2101010( 0xff,
+                                                   CHAN_TO_UBYTE(src[RCOMP]),
+                                                   CHAN_TO_UBYTE(src[GCOMP]),
+                                                   CHAN_TO_UBYTE(src[BCOMP]) );
+                  src += 4;
+               }
+               dstRow += dstRowStride;
+            }
+         } else {
+            ASSERT(0);
+         }
+      }
+      free((void *) tempImage);
+   }
+   return GL_TRUE;
+}
+
+
 /**
  * Do texstore for 2-channel, 8-bit/channel, unsigned normalized formats.
  */
@@ -3938,6 +4012,7 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_R16, _mesa_texstore_r16 },
    { MESA_FORMAT_RG1616, _mesa_texstore_unorm1616 },
    { MESA_FORMAT_RG1616_REV, _mesa_texstore_unorm1616 },
+   { MESA_FORMAT_ARGB2101010, _mesa_texstore_argb2101010 },
    { MESA_FORMAT_Z24_S8, _mesa_texstore_z24_s8 },
    { MESA_FORMAT_S8_Z24, _mesa_texstore_s8_z24 },
    { MESA_FORMAT_Z16, _mesa_texstore_z16 },

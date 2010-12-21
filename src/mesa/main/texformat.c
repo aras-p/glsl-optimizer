@@ -75,6 +75,8 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
 
       /* deep RGBA formats */
       case GL_RGB10_A2:
+         return MESA_FORMAT_ARGB2101010;
+
       case GL_RGBA12:
       case GL_RGBA16:
          return MESA_FORMAT_RGBA_16;
