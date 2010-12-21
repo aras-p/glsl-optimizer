@@ -31,11 +31,12 @@
 #define ST_FORMAT_H
 
 #include "main/formats.h"
-#include "main/mtypes.h"
+#include "main/glheader.h"
 
 #include "pipe/p_defines.h"
 #include "pipe/p_format.h"
 
+struct gl_context;
 struct pipe_screen;
 
 extern GLenum
