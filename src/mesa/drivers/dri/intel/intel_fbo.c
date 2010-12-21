@@ -547,7 +547,8 @@ intel_finish_render_texture(struct gl_context * ctx,
        _glthread_GetID(), att->Texture->Name);
 
    /* Flag that this image may now be validated into the object's miptree. */
-   intel_image->used_as_render_target = GL_FALSE;
+   if (intel_image)
+      intel_image->used_as_render_target = GL_FALSE;
 
    /* Since we've (probably) rendered to the texture and will (likely) use
     * it in the texture domain later on in this batchbuffer, flush the
