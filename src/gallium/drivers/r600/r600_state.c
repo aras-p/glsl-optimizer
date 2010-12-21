@@ -174,7 +174,7 @@ void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
 			offset = 0;
 		}
-		if (vertex_buffer == NULL)
+		if (vertex_buffer == NULL || rbuffer == NULL)
 			continue;
 		offset += vertex_buffer->buffer_offset + r600_bo_offset(rbuffer->bo);
 
