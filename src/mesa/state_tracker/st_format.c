@@ -480,6 +480,8 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
    case GL_RGB:
       return default_rgb_format( screen, target, sample_count, bindings,
                                  geom_flags );
+   case GL_RGB12:
+   case GL_RGB16:
    case GL_RGBA12:
    case GL_RGBA16:
       if (screen->is_format_supported( screen, PIPE_FORMAT_R16G16B16A16_UNORM,
@@ -508,8 +510,6 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
 
    case GL_RGB8:
    case GL_RGB10:
-   case GL_RGB12:
-   case GL_RGB16:
       return default_rgb_format( screen, target, sample_count, bindings,
                                  geom_flags );
 
