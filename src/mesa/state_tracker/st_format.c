@@ -717,18 +717,30 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
 
    case GL_SRGB_EXT:
    case GL_SRGB8_EXT:
-   case GL_COMPRESSED_SRGB_EXT:
-   case GL_COMPRESSED_SRGB_ALPHA_EXT:
    case GL_SRGB_ALPHA_EXT:
    case GL_SRGB8_ALPHA8_EXT:
       return default_srgba_format( screen, target, sample_count, bindings,
                                    geom_flags );
+
+   case GL_COMPRESSED_SRGB_EXT:
    case GL_COMPRESSED_SRGB_S3TC_DXT1_EXT:
-      return PIPE_FORMAT_DXT1_SRGB;
+      if (screen->is_format_supported(screen, PIPE_FORMAT_DXT1_SRGB, target,
+                                      sample_count, bindings, geom_flags))
+         return PIPE_FORMAT_DXT1_SRGB;
+      return default_srgba_format( screen, target, sample_count, bindings,
+                                   geom_flags );
+
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT1_EXT:
       return PIPE_FORMAT_DXT1_SRGBA;
+
+   case GL_COMPRESSED_SRGB_ALPHA_EXT:
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT3_EXT:
-      return PIPE_FORMAT_DXT3_SRGBA;
+      if (screen->is_format_supported(screen, PIPE_FORMAT_DXT3_SRGBA, target,
+                                      sample_count, bindings, geom_flags))
+         return PIPE_FORMAT_DXT3_SRGBA;
+      return default_srgba_format( screen, target, sample_count, bindings,
+                                   geom_flags );
+
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
       return PIPE_FORMAT_DXT5_SRGBA;
 
