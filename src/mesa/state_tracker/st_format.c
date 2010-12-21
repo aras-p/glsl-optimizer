@@ -680,10 +680,10 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
    case GL_DEPTH_COMPONENT:
       {
          static const enum pipe_format formats[] = {
-            PIPE_FORMAT_Z16_UNORM,
             PIPE_FORMAT_Z32_UNORM,
             PIPE_FORMAT_Z24_UNORM_S8_USCALED,
-            PIPE_FORMAT_S8_USCALED_Z24_UNORM
+            PIPE_FORMAT_S8_USCALED_Z24_UNORM,
+            PIPE_FORMAT_Z16_UNORM
          };
          return find_supported_format(screen, formats, Elements(formats),
                                       target, sample_count, bindings, geom_flags);
