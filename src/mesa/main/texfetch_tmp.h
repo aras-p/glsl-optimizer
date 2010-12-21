@@ -883,6 +883,30 @@ static void store_texel_rg88_rev(struct gl_texture_image *texImage,
 #endif
 
 
+/* MESA_FORMAT_AL44 **********************************************************/
+
+/* Fetch texel from 1D, 2D or 3D al44 texture, return 4 GLchans */
+static void FETCH(f_al44)( const struct gl_texture_image *texImage,
+                           GLint i, GLint j, GLint k, GLfloat *texel )
+{
+   const GLubyte s = *TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = UBYTE_TO_FLOAT( (s & 0x0f) << 4 );
+   texel[ACOMP] = UBYTE_TO_FLOAT(  s & 0xf0 );
+}
+
+#if DIM == 3
+static void store_texel_al44(struct gl_texture_image *texImage,
+                             GLint i, GLint j, GLint k, const void *texel)
+{
+   const GLubyte *rgba = (const GLubyte *) texel;
+   GLubyte *dst = TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
+   *dst = PACK_COLOR_44(rgba[ACOMP], rgba[RCOMP]);
+}
+#endif
+
+
 /* MESA_FORMAT_AL88 **********************************************************/
 
 /* Fetch texel from 1D, 2D or 3D al88 texture, return 4 GLchans */

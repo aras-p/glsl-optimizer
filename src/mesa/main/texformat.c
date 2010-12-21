@@ -117,9 +117,11 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
          return MESA_FORMAT_L8;
 
       /* Luminance/Alpha formats */
+      case GL_LUMINANCE4_ALPHA4:
+         return MESA_FORMAT_AL44;
+
       case 2:
       case GL_LUMINANCE_ALPHA:
-      case GL_LUMINANCE4_ALPHA4:
       case GL_LUMINANCE6_ALPHA2:
       case GL_LUMINANCE8_ALPHA8:
          return MESA_FORMAT_AL88;

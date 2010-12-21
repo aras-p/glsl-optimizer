@@ -208,6 +208,9 @@ do {						\
 #define PACK_COLOR_4444_REV( R, G, B, A )				\
    ((((B) & 0xf0) << 8) | (((A) & 0xf0) << 4) | ((R) & 0xf0) | ((G) >> 4))
 
+#define PACK_COLOR_44( L, A )						\
+   (((L) & 0xf0) | (((A) & 0xf0) >> 4))
+
 #define PACK_COLOR_88( L, A )						\
    (((L) << 8) | (A))
 

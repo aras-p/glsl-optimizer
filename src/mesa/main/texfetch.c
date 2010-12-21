@@ -237,6 +237,13 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       store_texel_argb1555_rev
    },
    {
+      MESA_FORMAT_AL44,
+      fetch_texel_1d_f_al44,
+      fetch_texel_2d_f_al44,
+      fetch_texel_3d_f_al44,
+      store_texel_al44
+   },
+   {
       MESA_FORMAT_AL88,
       fetch_texel_1d_f_al88,
       fetch_texel_2d_f_al88,

@@ -222,6 +222,15 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
       1, 1, 2                      /* BlockWidth/Height,Bytes */
    },
    {
+      MESA_FORMAT_AL44,            /* Name */
+      "MESA_FORMAT_AL44",          /* StrName */
+      GL_LUMINANCE_ALPHA,          /* BaseFormat */
+      GL_UNSIGNED_NORMALIZED,      /* DataType */
+      0, 0, 0, 4,                  /* Red/Green/Blue/AlphaBits */
+      4, 0, 0, 0, 0,               /* Lum/Int/Index/Depth/StencilBits */
+      1, 1, 1                      /* BlockWidth/Height,Bytes */
+   },
+   {
       MESA_FORMAT_AL88,            /* Name */
       "MESA_FORMAT_AL88",          /* StrName */
       GL_LUMINANCE_ALPHA,          /* BaseFormat */
@@ -1270,6 +1279,7 @@ _mesa_format_to_type_and_comps(gl_format format,
       *comps = 4;
       return;
 
+   case MESA_FORMAT_AL44: /* XXX this isn't plain GL_UNSIGNED_BYTE */
    case MESA_FORMAT_AL88:
    case MESA_FORMAT_AL88_REV:
    case MESA_FORMAT_RG88:

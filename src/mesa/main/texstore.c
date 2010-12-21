@@ -2113,6 +2113,52 @@ _mesa_texstore_argb2101010(TEXSTORE_PARAMS)
 
 
 /**
+ * Do texstore for 2-channel, 4-bit/channel, unsigned normalized formats.
+ */
+static GLboolean
+_mesa_texstore_unorm44(TEXSTORE_PARAMS)
+{
+   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
+   const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
+
+   ASSERT(dstFormat == MESA_FORMAT_AL44);
+   ASSERT(texelBytes == 1);
+
+   {
+      /* general path */
+      const GLchan *tempImage = _mesa_make_temp_chan_image(ctx, dims,
+                                                 baseInternalFormat,
+                                                 baseFormat,
+                                                 srcWidth, srcHeight, srcDepth,
+                                                 srcFormat, srcType, srcAddr,
+                                                 srcPacking);
+      const GLchan *src = tempImage;
+      GLint img, row, col;
+      if (!tempImage)
+         return GL_FALSE;
+      for (img = 0; img < srcDepth; img++) {
+         GLubyte *dstRow = (GLubyte *) dstAddr
+            + dstImageOffsets[dstZoffset + img] * texelBytes
+            + dstYoffset * dstRowStride
+            + dstXoffset * texelBytes;
+         for (row = 0; row < srcHeight; row++) {
+            GLubyte *dstUS = (GLubyte *) dstRow;
+            for (col = 0; col < srcWidth; col++) {
+               /* src[0] is luminance, src[1] is alpha */
+               dstUS[col] = PACK_COLOR_44( CHAN_TO_UBYTE(src[1]),
+                                           CHAN_TO_UBYTE(src[0]) );
+               src += 2;
+            }
+            dstRow += dstRowStride;
+         }
+      }
+      free((void *) tempImage);
+   }
+   return GL_TRUE;
+}
+
+
+/**
  * Do texstore for 2-channel, 8-bit/channel, unsigned normalized formats.
  */
 static GLboolean
@@ -3995,6 +4041,7 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_RGBA5551, _mesa_texstore_rgba5551 },
    { MESA_FORMAT_ARGB1555, _mesa_texstore_argb1555 },
    { MESA_FORMAT_ARGB1555_REV, _mesa_texstore_argb1555 },
+   { MESA_FORMAT_AL44, _mesa_texstore_unorm44 },
    { MESA_FORMAT_AL88, _mesa_texstore_unorm88 },
    { MESA_FORMAT_AL88_REV, _mesa_texstore_unorm88 },
    { MESA_FORMAT_AL1616, _mesa_texstore_unorm1616 },
