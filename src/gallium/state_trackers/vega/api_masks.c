@@ -32,10 +32,6 @@
 
 #include "vg_context.h"
 #include "pipe/p_context.h"
-#include "util/u_inlines.h"
-
-#include "util/u_pack_color.h"
-#include "util/u_draw_quad.h"
 
 void vegaMask(VGHandle mask, VGMaskOperation operation,
               VGint x, VGint y,

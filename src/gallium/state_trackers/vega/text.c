@@ -30,7 +30,6 @@
 #include "text.h"
 #include "image.h"
 #include "path.h"
-#include "api.h"
 
 #ifdef OPENVG_VERSION_1_1
 

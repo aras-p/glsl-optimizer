@@ -28,7 +28,6 @@
 #include "renderer.h"
 
 #include "vg_context.h"
-#include "image.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"

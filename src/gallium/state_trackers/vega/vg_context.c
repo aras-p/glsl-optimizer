@@ -30,7 +30,6 @@
 #include "renderer.h"
 #include "shaders_cache.h"
 #include "shader.h"
-#include "asm_util.h"
 #include "vg_manager.h"
 #include "api.h"
 #include "mask.h"
@@ -40,7 +39,6 @@
 
 #include "cso_cache/cso_context.h"
 
-#include "util/u_simple_shaders.h"
 #include "util/u_memory.h"
 #include "util/u_blit.h"
 #include "util/u_sampler.h"
