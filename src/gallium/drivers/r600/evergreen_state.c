@@ -770,8 +770,6 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 
 	util_copy_framebuffer_state(&rctx->framebuffer, state);
 
-	rctx->pframebuffer = &rctx->framebuffer;
-
 	/* build states */
 	for (int i = 0; i < state->nr_cbufs; i++) {
 		evergreen_cb(rctx, rstate, state, i);

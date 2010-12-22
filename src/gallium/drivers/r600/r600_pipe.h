@@ -136,7 +136,6 @@ struct r600_upload;
 struct r600_pipe_context {
 	struct pipe_context		context;
 	struct blitter_context		*blitter;
-	struct pipe_framebuffer_state	*pframebuffer;
 	unsigned			family;
 	void				*custom_dsa_flush;
 	struct r600_screen		*screen;

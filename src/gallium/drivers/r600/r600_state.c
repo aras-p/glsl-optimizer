@@ -1019,8 +1019,6 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 
 	util_copy_framebuffer_state(&rctx->framebuffer, state);
 
-	rctx->pframebuffer = &rctx->framebuffer;
-
 	/* build states */
 	for (int i = 0; i < state->nr_cbufs; i++) {
 		r600_cb(rctx, rstate, state, i);
