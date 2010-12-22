@@ -219,7 +219,20 @@ llvmpipe_displaytarget_layout(struct llvmpipe_screen *screen,
                                           16,
                                           &lpr->row_stride[0] );
 
-   return lpr->dt != NULL;
+   if (lpr->dt == NULL)
+      return FALSE;
+
+   {
+      void *map = winsys->displaytarget_map(winsys, lpr->dt,
+                                            PIPE_TRANSFER_WRITE);
+
+      if (map)
+         memset(map, 0, height * lpr->row_stride[0]);
+
+      winsys->displaytarget_unmap(winsys, lpr->dt);
+   }
+
+   return TRUE;
 }
 
 
@@ -265,6 +278,7 @@ llvmpipe_resource_create(struct pipe_screen *_screen,
       lpr->data = align_malloc(bytes, 16);
       if (!lpr->data)
          goto fail;
+      memset(lpr->data, 0, bytes);
    }
 
    lpr->id = id_counter++;
@@ -964,11 +978,14 @@ alloc_image_data(struct llvmpipe_resource *lpr, unsigned level,
       /* tiled data is stored in regular memory */
       uint buffer_size = tex_image_size(lpr, level, layout);
       lpr->tiled[level].data = align_malloc(buffer_size, alignment);
+      memset(lpr->tiled[level].data, 0, buffer_size);
    }
    else {
       assert(layout == LP_TEX_LAYOUT_LINEAR);
       if (lpr->dt) {
-         /* we get the linear memory from the winsys */
+         /* we get the linear memory from the winsys, and it has
+          * already been zeroed
+          */
          struct llvmpipe_screen *screen = llvmpipe_screen(lpr->base.screen);
          struct sw_winsys *winsys = screen->winsys;
 
@@ -980,6 +997,7 @@ alloc_image_data(struct llvmpipe_resource *lpr, unsigned level,
          /* not a display target - allocate regular memory */
          uint buffer_size = tex_image_size(lpr, level, LP_TEX_LAYOUT_LINEAR);
          lpr->linear[level].data = align_malloc(buffer_size, alignment);
+         memset(lpr->linear[level].data, 0, buffer_size);
       }
    }
 }
