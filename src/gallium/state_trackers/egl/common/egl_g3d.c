@@ -226,8 +226,6 @@ init_config_attributes(_EGLConfig *conf, const struct native_config *nconf,
    }
 
    conf->Level = nconf->level;
-   conf->Samples = nconf->samples;
-   conf->SampleBuffers = 0;
 
    if (nconf->transparent_rgb) {
       conf->TransparentType = EGL_TRANSPARENT_RGB;
@@ -275,7 +273,7 @@ egl_g3d_init_config(_EGLDriver *drv, _EGLDisplay *dpy,
    gconf->stvis.color_format = nconf->color_format;
    gconf->stvis.depth_stencil_format = depth_stencil_format;
    gconf->stvis.accum_format = PIPE_FORMAT_NONE;
-   gconf->stvis.samples = nconf->samples;
+   gconf->stvis.samples = 0;
 
    gconf->stvis.render_buffer = (buffer_mask & ST_ATTACHMENT_BACK_LEFT_MASK) ?
       ST_ATTACHMENT_BACK_LEFT : ST_ATTACHMENT_FRONT_LEFT;

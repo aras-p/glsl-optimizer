@@ -126,7 +126,6 @@ struct native_config {
    int native_visual_id;
    int native_visual_type;
    int level;
-   int samples;
    boolean transparent_rgb;
    int transparent_rgb_values[3];
 };
