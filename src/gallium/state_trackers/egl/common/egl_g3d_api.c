@@ -324,7 +324,8 @@ egl_g3d_create_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
    }
 
    gsurf->stvis = gconf->stvis;
-   if (gsurf->base.RenderBuffer == EGL_SINGLE_BUFFER)
+   if (gsurf->base.RenderBuffer == EGL_SINGLE_BUFFER &&
+       gconf->stvis.buffer_mask & ST_ATTACHMENT_FRONT_LEFT_MASK)
       gsurf->stvis.render_buffer = ST_ATTACHMENT_FRONT_LEFT;
 
    gsurf->stfbi = egl_g3d_create_st_framebuffer(&gsurf->base);
