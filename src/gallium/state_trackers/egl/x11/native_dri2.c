@@ -40,11 +40,6 @@
 
 #ifdef GLX_DIRECT_RENDERING
 
-enum dri2_surface_type {
-   DRI2_SURFACE_TYPE_WINDOW,
-   DRI2_SURFACE_TYPE_PIXMAP,
-};
-
 struct dri2_display {
    struct native_display base;
    Display *dpy;
@@ -66,7 +61,6 @@ struct dri2_display {
 struct dri2_surface {
    struct native_surface base;
    Drawable drawable;
-   enum dri2_surface_type type;
    enum pipe_format color_format;
    struct dri2_display *dri2dpy;
 
@@ -439,12 +433,10 @@ dri2_surface_destroy(struct native_surface *nsurf)
 
 static struct dri2_surface *
 dri2_display_create_surface(struct native_display *ndpy,
-                            enum dri2_surface_type type,
                             Drawable drawable,
-                            const struct native_config *nconf)
+                            enum pipe_format color_format)
 {
    struct dri2_display *dri2dpy = dri2_display(ndpy);
-   struct dri2_config *dri2conf = dri2_config(nconf);
    struct dri2_surface *dri2surf;
 
    dri2surf = CALLOC_STRUCT(dri2_surface);
@@ -452,9 +444,8 @@ dri2_display_create_surface(struct native_display *ndpy,
       return NULL;
 
    dri2surf->dri2dpy = dri2dpy;
-   dri2surf->type = type;
    dri2surf->drawable = drawable;
-   dri2surf->color_format = dri2conf->base.color_format;
+   dri2surf->color_format = color_format;
 
    dri2surf->base.destroy = dri2_surface_destroy;
    dri2surf->base.present = dri2_surface_present;
@@ -480,8 +471,8 @@ dri2_display_create_window_surface(struct native_display *ndpy,
 {
    struct dri2_surface *dri2surf;
 
-   dri2surf = dri2_display_create_surface(ndpy, DRI2_SURFACE_TYPE_WINDOW,
-         (Drawable) win, nconf);
+   dri2surf = dri2_display_create_surface(ndpy,
+         (Drawable) win, nconf->color_format);
    return (dri2surf) ? &dri2surf->base : NULL;
 }
 
@@ -492,8 +483,29 @@ dri2_display_create_pixmap_surface(struct native_display *ndpy,
 {
    struct dri2_surface *dri2surf;
 
-   dri2surf = dri2_display_create_surface(ndpy, DRI2_SURFACE_TYPE_PIXMAP,
-         (Drawable) pix, nconf);
+   if (!nconf) {
+      struct dri2_display *dri2dpy = dri2_display(ndpy);
+      uint depth, nconf_depth;
+      int i;
+
+      depth = x11_drawable_get_depth(dri2dpy->xscr, (Drawable) pix);
+      for (i = 0; i < dri2dpy->num_configs; i++) {
+         nconf_depth = util_format_get_blocksizebits(
+               dri2dpy->configs[i].base.color_format);
+         /* simple depth match for now */
+         if (depth == nconf_depth ||
+             (depth == 24 && depth + 8 == nconf_depth)) {
+            nconf = &dri2dpy->configs[i].base;
+            break;
+         }
+      }
+
+      if (!nconf)
+         return NULL;
+   }
+
+   dri2surf = dri2_display_create_surface(ndpy,
+         (Drawable) pix, nconf->color_format);
    return (dri2surf) ? &dri2surf->base : NULL;
 }
 

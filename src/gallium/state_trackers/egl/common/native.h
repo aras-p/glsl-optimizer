@@ -185,7 +185,9 @@ struct native_display {
                                                    const struct native_config *nconf);
 
    /**
-    * Create a pixmap surface.  Required unless no config has pixmap_bit set.
+    * Create a pixmap surface.  The native config may be NULL.  In that case, a
+    * "best config" will be picked.  Required unless no config has pixmap_bit
+    * set.
     */
    struct native_surface *(*create_pixmap_surface)(struct native_display *ndpy,
                                                    EGLNativePixmapType pix,
