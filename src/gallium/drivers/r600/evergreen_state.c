@@ -1359,7 +1359,7 @@ void evergreen_vertex_buffer_update(struct r600_pipe_context *rctx)
 					0x00000000, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_03001C_RESOURCE0_WORD7,
 					0xC0000000, 0xFFFFFFFF, NULL);
-		evergreen_fs_resource_set(&rctx->ctx, rstate, i);
+		evergreen_context_pipe_state_set_fs_resource(&rctx->ctx, rstate, i);
 	}
 }
 
