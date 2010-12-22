@@ -229,9 +229,6 @@ init_config_attributes(_EGLConfig *conf, const struct native_config *nconf,
    conf->Samples = nconf->samples;
    conf->SampleBuffers = 0;
 
-   if (nconf->slow_config)
-      conf->ConfigCaveat = EGL_SLOW_CONFIG;
-
    if (nconf->transparent_rgb) {
       conf->TransparentType = EGL_TRANSPARENT_RGB;
       conf->TransparentRedValue = nconf->transparent_rgb_values[0];

@@ -319,7 +319,6 @@ gdi_display_get_configs(struct native_display *ndpy, int *num_configs)
          nconf->color_format = formats[i];
 
          nconf->window_bit = TRUE;
-         nconf->slow_config = TRUE;
       }
 
       gdpy->num_configs = count;

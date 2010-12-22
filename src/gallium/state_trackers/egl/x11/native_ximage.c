@@ -420,8 +420,6 @@ ximage_display_get_configs(struct native_display *ndpy, int *num_configs)
          xconf->base.native_visual_type = xconf->visual->class;
 #endif
 
-         xconf->base.slow_config = TRUE;
-
          count++;
       }
 

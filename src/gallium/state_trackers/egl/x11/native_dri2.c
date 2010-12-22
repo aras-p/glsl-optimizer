@@ -590,8 +590,6 @@ dri2_display_convert_config(struct native_display *ndpy,
    nconf->level = mode->level;
    nconf->samples = mode->samples;
 
-   nconf->slow_config = (mode->visualRating == GLX_SLOW_CONFIG);
-
    if (mode->transparentPixel == GLX_TRANSPARENT_RGB) {
       nconf->transparent_rgb = TRUE;
       nconf->transparent_rgb_values[0] = mode->transparentRed;
