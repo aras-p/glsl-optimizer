@@ -467,10 +467,10 @@ static void r300_emit_draw_elements(struct r300_context *r300,
                                     unsigned maxIndex,
                                     unsigned mode,
                                     unsigned start,
-                                    unsigned count)
+                                    unsigned count,
+                                    uint16_t *imm_indices3)
 {
-    uint32_t count_dwords;
-    uint32_t offset_dwords = indexSize * start / sizeof(uint32_t);
+    uint32_t count_dwords, offset_dwords;
     boolean alt_num_verts = count > 65535;
     CS_LOCALS(r300);
 
@@ -485,15 +485,39 @@ static void r300_emit_draw_elements(struct r300_context *r300,
     DBG(r300, DBG_DRAW, "r300: Indexbuf of %u indices, min %u max %u\n",
         count, minIndex, maxIndex);
 
-    BEGIN_CS(13 + (alt_num_verts ? 2 : 0));
-    if (alt_num_verts) {
-        OUT_CS_REG(R500_VAP_ALT_NUM_VERTICES, count);
-    }
+    BEGIN_CS(5);
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
             r300_provoking_vertex_fixes(r300, mode));
     OUT_CS_REG_SEQ(R300_VAP_VF_MAX_VTX_INDX, 2);
     OUT_CS(maxIndex);
     OUT_CS(minIndex);
+    END_CS;
+
+    /* If start is odd, render the first triangle with indices embedded
+     * in the command stream. This will increase start by 3 and make it
+     * even. We can then proceed without a fallback. */
+    if (indexSize == 2 && (start & 1) &&
+        mode == PIPE_PRIM_TRIANGLES) {
+        BEGIN_CS(4);
+        OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, 2);
+        OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (3 << 16) |
+               R300_VAP_VF_CNTL__PRIM_TRIANGLES);
+        OUT_CS(imm_indices3[1] << 16 | imm_indices3[0]);
+        OUT_CS(imm_indices3[2]);
+        END_CS;
+
+        start += 3;
+        count -= 3;
+        if (!count)
+           return;
+    }
+
+    offset_dwords = indexSize * start / sizeof(uint32_t);
+
+    BEGIN_CS(8 + (alt_num_verts ? 2 : 0));
+    if (alt_num_verts) {
+        OUT_CS_REG(R500_VAP_ALT_NUM_VERTICES, count);
+    }
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, 0);
     if (indexSize == 4) {
         count_dwords = count;
@@ -541,7 +565,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
                             r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0);
     unsigned short_count;
     int buffer_offset = 0, index_offset = 0; /* for index bias emulation */
-    unsigned new_offset;
+    uint16_t indices3[3];
 
     if (indexBias && !r300->screen->caps.index_bias_supported) {
         r300_split_index_bias(r300, indexBias, &buffer_offset, &index_offset);
@@ -553,43 +577,46 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
     r300_update_derived_state(r300);
 
     /* Fallback for misaligned ushort indices. */
-    if (indexSize == 2 && start % 2 == 1) {
+    if (indexSize == 2 && (start & 1)) {
         struct pipe_transfer *transfer;
         struct pipe_resource *userbuf;
+
         uint16_t *ptr = pipe_buffer_map(pipe, indexBuffer,
                                         PIPE_TRANSFER_READ, &transfer);
 
-        /* Copy the mapped index buffer directly to the upload buffer.
-         * The start index will be aligned simply from the fact that
-         * every sub-buffer in u_upload_mgr is aligned. */
-        userbuf = pipe->screen->user_buffer_create(pipe->screen,
-                                                   ptr + start, count * 2,
-                                                   PIPE_BIND_INDEX_BUFFER);
-        indexBuffer = userbuf;
-        r300_upload_index_buffer(r300, &indexBuffer, indexSize, 0, count, &new_offset);
-        pipe_resource_reference(&userbuf, NULL);
+        if (mode == PIPE_PRIM_TRIANGLES) {
+           memcpy(indices3, ptr + start, 6);
+        } else {
+            /* Copy the mapped index buffer directly to the upload buffer.
+             * The start index will be aligned simply from the fact that
+             * every sub-buffer in u_upload_mgr is aligned. */
+            userbuf = pipe->screen->user_buffer_create(pipe->screen,
+                                                       ptr + start, count * 2,
+                                                       PIPE_BIND_INDEX_BUFFER);
+            indexBuffer = userbuf;
+            r300_upload_index_buffer(r300, &indexBuffer, indexSize, 0, count, &start);
+            pipe_resource_reference(&userbuf, NULL);
+        }
         pipe_buffer_unmap(pipe, transfer);
     } else {
-        r300_upload_index_buffer(r300, &indexBuffer, indexSize, start, count, &new_offset);
+        r300_upload_index_buffer(r300, &indexBuffer, indexSize, start, count, &start);
     }
 
-    start = new_offset;
-
-    /* 15 dwords for emit_draw_elements. Give up if the function fails. */
+    /* 19 dwords for emit_draw_elements. Give up if the function fails. */
     if (!r300_prepare_for_rendering(r300,
             PREP_FIRST_DRAW | PREP_VALIDATE_VBOS | PREP_EMIT_AOS |
-            PREP_INDEXED, indexBuffer, 15, buffer_offset, indexBias))
+            PREP_INDEXED, indexBuffer, 19, buffer_offset, indexBias))
         goto done;
 
     if (alt_num_verts || count <= 65535) {
         r300_emit_draw_elements(r300, indexBuffer, indexSize,
-				minIndex, maxIndex, mode, start, count);
+				minIndex, maxIndex, mode, start, count, indices3);
     } else {
         do {
             short_count = MIN2(count, 65534);
             r300_emit_draw_elements(r300, indexBuffer, indexSize,
                                      minIndex, maxIndex,
-                                     mode, start, short_count);
+                                     mode, start, short_count, indices3);
 
             start += short_count;
             count -= short_count;
@@ -598,7 +625,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
             if (count) {
                 if (!r300_prepare_for_rendering(r300,
                         PREP_VALIDATE_VBOS | PREP_EMIT_AOS | PREP_INDEXED,
-                        indexBuffer, 15, buffer_offset, indexBias))
+                        indexBuffer, 19, buffer_offset, indexBias))
                     goto done;
             }
         } while (count);
