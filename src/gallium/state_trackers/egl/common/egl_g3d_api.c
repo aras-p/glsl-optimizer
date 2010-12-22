@@ -665,14 +665,13 @@ egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
 
    ptex = get_pipe_resource(gdpy->native, nsurf, NATIVE_ATTACHMENT_FRONT_LEFT);
    if (ptex) {
-      struct pipe_resource *psrc = gsurf->render_texture;
       struct pipe_box src_box;
+
       u_box_origin_2d(ptex->width0, ptex->height0, &src_box);
-      if (psrc) {
-         gdpy->pipe->resource_copy_region(gdpy->pipe, ptex, 0, 0, 0, 0,
-               gsurf->render_texture, 0, &src_box);
-         nsurf->present(nsurf, NATIVE_ATTACHMENT_FRONT_LEFT, FALSE, 0);
-      }
+      gdpy->pipe->resource_copy_region(gdpy->pipe, ptex, 0, 0, 0, 0,
+            gsurf->render_texture, 0, &src_box);
+      gdpy->pipe->flush(gdpy->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
+      nsurf->present(nsurf, NATIVE_ATTACHMENT_FRONT_LEFT, FALSE, 0);
 
       pipe_resource_reference(&ptex, NULL);
    }
