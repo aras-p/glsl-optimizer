@@ -481,6 +481,8 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
     } else {
         if (desc->channel[i].size == 16) {
             modifier |= R300_US_OUT_FMT_C4_16;
+        } else if (desc->channel[i].size == 10) {
+            modifier |= R300_US_OUT_FMT_C4_10;
         } else {
             /* C4_8 seems to be used for the formats whose pixel size
              * is <= 32 bits. */
