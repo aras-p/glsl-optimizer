@@ -516,7 +516,7 @@ static unsigned gen_data(struct vl_compositor *c,
       }
    }
 
-   pipe_buffer_unmap(c->pipe, c->vertex_buf.buffer, buf_transfer);
+   pipe_buffer_unmap(c->pipe, buf_transfer);
 
    return num_rects;
 }
@@ -633,6 +633,5 @@ void vl_compositor_set_csc_matrix(struct vl_compositor *compositor, const float 
       sizeof(struct fragment_shader_consts)
    );
 
-   pipe_buffer_unmap(compositor->pipe, compositor->fs_const_buf,
-                     buf_transfer);
+   pipe_buffer_unmap(compositor->pipe, buf_transfer);
 }

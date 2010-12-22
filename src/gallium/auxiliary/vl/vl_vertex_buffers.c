@@ -77,7 +77,7 @@ vl_vb_upload_quads(struct pipe_context *pipe, unsigned max_blocks)
    for ( i = 0; i < max_blocks; ++i)
      memcpy(v + i, &const_quad, sizeof(const_quad));
 
-   pipe_buffer_unmap(pipe, quad.buffer, buf_transfer);
+   pipe_buffer_unmap(pipe, buf_transfer);
 
    return quad;
 }
@@ -161,7 +161,7 @@ vl_vb_unmap(struct vl_vertex_buffer *buffer, struct pipe_context *pipe)
 {
    assert(buffer && pipe);
 
-   pipe_buffer_unmap(pipe, buffer->resource, buffer->transfer);
+   pipe_buffer_unmap(pipe, buffer->transfer);
 }
 
 unsigned
