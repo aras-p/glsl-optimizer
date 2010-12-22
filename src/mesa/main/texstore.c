@@ -2357,7 +2357,7 @@ _mesa_texstore_unorm1616(TEXSTORE_PARAMS)
 }
 
 
-/* Texstore for R16, A16. */
+/* Texstore for R16, A16, L16. */
 static GLboolean
 _mesa_texstore_unorm16(TEXSTORE_PARAMS)
 {
@@ -2366,7 +2366,8 @@ _mesa_texstore_unorm16(TEXSTORE_PARAMS)
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
    ASSERT(dstFormat == MESA_FORMAT_R16 ||
-          dstFormat == MESA_FORMAT_A16);
+          dstFormat == MESA_FORMAT_A16 ||
+          dstFormat == MESA_FORMAT_L16);
    ASSERT(texelBytes == 2);
 
    if (!ctx->_ImageTransferState &&
@@ -4050,6 +4051,7 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_A8, _mesa_texstore_a8 },
    { MESA_FORMAT_A16, _mesa_texstore_unorm16 },
    { MESA_FORMAT_L8, _mesa_texstore_a8 },
+   { MESA_FORMAT_L16, _mesa_texstore_unorm16 },
    { MESA_FORMAT_I8, _mesa_texstore_a8 },
    { MESA_FORMAT_CI8, _mesa_texstore_ci8 },
    { MESA_FORMAT_YCBCR, _mesa_texstore_ycbcr },

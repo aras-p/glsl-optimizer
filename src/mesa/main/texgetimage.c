@@ -432,6 +432,11 @@ get_tex_memcpy(struct gl_context *ctx, GLenum format, GLenum type, GLvoid *pixel
                type == GL_UNSIGNED_BYTE) {
          memCopy = GL_TRUE;
       }
+      else if (texImage->TexFormat == MESA_FORMAT_L16 &&
+               format == GL_LUMINANCE &&
+               type == GL_UNSIGNED_SHORT) {
+         memCopy = GL_TRUE;
+      }
       else if (texImage->TexFormat == MESA_FORMAT_A8 &&
                format == GL_ALPHA &&
                type == GL_UNSIGNED_BYTE) {

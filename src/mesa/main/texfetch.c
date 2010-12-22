@@ -300,6 +300,13 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       store_texel_l8
    },
    {
+      MESA_FORMAT_L16,
+      fetch_texel_1d_f_l16,
+      fetch_texel_2d_f_l16,
+      fetch_texel_3d_f_l16,
+      store_texel_l16
+   },
+   {
       MESA_FORMAT_I8,
       fetch_texel_1d_f_i8,
       fetch_texel_2d_f_i8,
