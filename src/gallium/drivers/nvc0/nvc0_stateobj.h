@@ -10,7 +10,7 @@
    (so)->state[(so)->size++] =                                                 \
       (0x2 << 28) | ((s) << 16) | (NVC0_SUBCH_3D << 13) | ((NVC0_3D_##m) >> 2)
 
-#define SB_OUT_3D(so, m, d)                                                    \
+#define SB_IMMED_3D(so, m, d)                                                  \
    (so)->state[(so)->size++] =                                                 \
       (0x8 << 28) | ((d) << 16) | (NVC0_SUBCH_3D << 13) | ((NVC0_3D_##m) >> 2)
 

@@ -95,7 +95,7 @@ nvc0_blend_state_create(struct pipe_context *pipe,
 
     so->pipe = *cso;
 
-    SB_OUT_3D(so, BLEND_INDEPENDENT, cso->independent_blend_enable);
+    SB_IMMED_3D(so, BLEND_INDEPENDENT, cso->independent_blend_enable);
 
     if (!cso->independent_blend_enable) {
         SB_BEGIN_3D(so, BLEND_ENABLES, 1);
@@ -143,7 +143,7 @@ nvc0_blend_state_create(struct pipe_context *pipe,
        SB_DATA    (so, 1);
        SB_DATA    (so, nvgl_logicop_func(cso->logicop_func));
     } else {
-       SB_OUT_3D  (so, LOGIC_OP_ENABLE, 0);
+       SB_IMMED_3D(so, LOGIC_OP_ENABLE, 0);
     }
 
     assert(so->size < (sizeof(so->state) / sizeof(so->state[0])));
@@ -177,18 +177,18 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
     so->pipe = *cso;
 
 #ifndef NVC0_SCISSORS_CLIPPING
-    SB_OUT_3D  (so, SCISSOR_ENABLE(0), cso->scissor);
+    SB_IMMED_3D(so, SCISSOR_ENABLE(0), cso->scissor);
 #endif
     
     SB_BEGIN_3D(so, SHADE_MODEL, 1);
     SB_DATA    (so, cso->flatshade ? NVC0_3D_SHADE_MODEL_FLAT :
                                      NVC0_3D_SHADE_MODEL_SMOOTH);
-    SB_OUT_3D  (so, PROVOKING_VERTEX_LAST, !cso->flatshade_first);
-    SB_OUT_3D  (so, VERTEX_TWO_SIDE_ENABLE, cso->light_twoside);
+    SB_IMMED_3D(so, PROVOKING_VERTEX_LAST, !cso->flatshade_first);
+    SB_IMMED_3D(so, VERTEX_TWO_SIDE_ENABLE, cso->light_twoside);
 
     SB_BEGIN_3D(so, LINE_WIDTH, 1);
     SB_DATA    (so, fui(cso->line_width));
-    SB_OUT_3D  (so, LINE_SMOOTH_ENABLE, cso->line_smooth);
+    SB_IMMED_3D(so, LINE_SMOOTH_ENABLE, cso->line_smooth);
 
     SB_BEGIN_3D(so, LINE_STIPPLE_ENABLE, 1);
     if (cso->line_stipple_enable) {
@@ -201,18 +201,18 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
         SB_DATA    (so, 0);
     }
 
-    SB_OUT_3D(so, VP_POINT_SIZE_EN, cso->point_size_per_vertex);
+    SB_IMMED_3D(so, VP_POINT_SIZE_EN, cso->point_size_per_vertex);
     if (!cso->point_size_per_vertex) {
        SB_BEGIN_3D(so, POINT_SIZE, 1);
        SB_DATA    (so, fui(cso->point_size));
     }
-    SB_OUT_3D(so, POINT_SPRITE_ENABLE, cso->point_quad_rasterization);
+    SB_IMMED_3D(so, POINT_SPRITE_ENABLE, cso->point_quad_rasterization);
 
     SB_BEGIN_3D(so, POLYGON_MODE_FRONT, 1);
     SB_DATA    (so, nvgl_polygon_mode(cso->fill_front));
     SB_BEGIN_3D(so, POLYGON_MODE_BACK, 1);
     SB_DATA    (so, nvgl_polygon_mode(cso->fill_back));
-    SB_OUT_3D  (so, POLYGON_SMOOTH_ENABLE, cso->poly_smooth);
+    SB_IMMED_3D(so, POLYGON_SMOOTH_ENABLE, cso->poly_smooth);
 
     SB_BEGIN_3D(so, CULL_FACE_ENABLE, 3);
     SB_DATA    (so, cso->cull_face != PIPE_FACE_NONE);
@@ -231,7 +231,7 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
        break;
     }
 
-    SB_OUT_3D  (so, POLYGON_STIPPLE_ENABLE, cso->poly_stipple_enable);
+    SB_IMMED_3D(so, POLYGON_STIPPLE_ENABLE, cso->poly_stipple_enable);
     SB_BEGIN_3D(so, POLYGON_OFFSET_POINT_ENABLE, 3);
     SB_DATA    (so, cso->offset_point);
     SB_DATA    (so, cso->offset_line);
@@ -271,7 +271,7 @@ nvc0_zsa_state_create(struct pipe_context *pipe,
 
    so->pipe = *cso;
 
-   SB_OUT_3D  (so, DEPTH_WRITE_ENABLE, cso->depth.writemask);
+   SB_IMMED_3D(so, DEPTH_WRITE_ENABLE, cso->depth.writemask);
    SB_BEGIN_3D(so, DEPTH_TEST_ENABLE, 1);
    if (cso->depth.enabled) {
       SB_DATA    (so, 1);
@@ -292,7 +292,7 @@ nvc0_zsa_state_create(struct pipe_context *pipe,
       SB_DATA    (so, cso->stencil[0].writemask);
       SB_DATA    (so, cso->stencil[0].valuemask);
    } else {
-      SB_OUT_3D  (so, STENCIL_FRONT_ENABLE, 0);
+      SB_IMMED_3D(so, STENCIL_FRONT_ENABLE, 0);
    }
 
    if (cso->stencil[1].enabled) {
@@ -306,7 +306,7 @@ nvc0_zsa_state_create(struct pipe_context *pipe,
       SB_DATA    (so, cso->stencil[1].writemask);
       SB_DATA    (so, cso->stencil[1].valuemask);
    } else {
-      SB_OUT_3D  (so, STENCIL_TWO_SIDE_ENABLE, 0);
+      SB_IMMED_3D(so, STENCIL_TWO_SIDE_ENABLE, 0);
    }
     
    SB_BEGIN_3D(so, ALPHA_TEST_ENABLE, 1);

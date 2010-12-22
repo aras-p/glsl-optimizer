@@ -127,7 +127,7 @@ nvc0_m2mf_push_linear(struct nvc0_context *nvc0,
 
       if (nr < 9) {
          FIRE_RING(chan);
-         nvc0_make_bo_resident(nvc0, dst, NOUVEAU_BO_WR);
+         nouveau_bo_validate(chan, dst, NOUVEAU_BO_WR);
          continue;
       }
       nr = MIN2(count, nr - 1);

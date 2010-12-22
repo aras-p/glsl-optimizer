@@ -11,6 +11,7 @@
 #include "nouveau/nouveau_grobj.h"
 #include "nouveau/nouveau_device.h"
 #include "nouveau/nouveau_resource.h"
+#include "nouveau/nouveau_pushbuf.h"
 #include "nouveau/nouveau_reloc.h"
 
 #include "nvc0_resource.h" /* OUT_RESRC */
@@ -44,16 +45,10 @@ nouveau_bo_tile_layout(struct nouveau_bo *bo)
 }
 
 static INLINE void
-WAIT_RING(struct nouveau_channel *chan, unsigned size)
+nouveau_bo_validate(struct nouveau_channel *chan,
+                    struct nouveau_bo *bo, unsigned flags)
 {
-   if (chan->cur + size > chan->end)
-      nouveau_pushbuf_flush(chan, size);
-}
-
-static INLINE void
-OUT_RING(struct nouveau_channel *chan, uint32_t data)
-{
-   *(chan->cur++) = (data);
+   nouveau_reloc_emit(chan, NULL, 0, NULL, bo, 0, 0, flags, 0, 0);
 }
 
 /* incremental methods */
@@ -88,66 +83,6 @@ IMMED_RING(struct nouveau_channel *chan, uint32_t mthd, unsigned data)
    OUT_RING (chan, (0x8 << 28) | (data << 16) | mthd);
 }
 
-int
-nouveau_pushbuf_marker_emit(struct nouveau_channel *chan,
-                            unsigned wait_dwords, unsigned wait_relocs);
-int
-nouveau_pushbuf_emit_reloc(struct nouveau_channel *, void *ptr,
-                           struct nouveau_bo *, uint32_t data, uint32_t data2,
-                           uint32_t flags, uint32_t vor, uint32_t tor);
-int
-nouveau_pushbuf_submit(struct nouveau_channel *chan, struct nouveau_bo *bo,
-                       unsigned offset, unsigned length);
-
-static INLINE int
-MARK_RING(struct nouveau_channel *chan, unsigned dwords, unsigned relocs)
-{
-   return nouveau_pushbuf_marker_emit(chan, dwords, relocs);
-}
-
-static INLINE void
-OUT_RINGf(struct nouveau_channel *chan, float data)
-{
-   union { uint32_t i; float f; } u;
-   u.f = data;
-   OUT_RING(chan, u.i);
-}
-
-static INLINE unsigned
-AVAIL_RING(struct nouveau_channel *chan)
-{
-   return chan->end - chan->cur;
-}
-
-static INLINE void
-OUT_RINGp(struct nouveau_channel *chan, const void *data, unsigned size)
-{
-   memcpy(chan->cur, data, size * 4);
-   chan->cur += size;
-}
-
-static INLINE int
-OUT_RELOC(struct nouveau_channel *chan, struct nouveau_bo *bo,
-          unsigned data, unsigned flags, unsigned vor, unsigned tor)
-{
-   return nouveau_pushbuf_emit_reloc(chan, chan->cur++, bo,
-                                     data, 0, flags, vor, tor);
-}
-
-static INLINE int
-OUT_RELOCl(struct nouveau_channel *chan, struct nouveau_bo *bo,
-           unsigned delta, unsigned flags)
-{
-   return OUT_RELOC(chan, bo, delta, flags | NOUVEAU_BO_LOW, 0, 0);
-}
-
-static INLINE int
-OUT_RELOCh(struct nouveau_channel *chan, struct nouveau_bo *bo,
-           unsigned delta, unsigned flags)
-{
-   return OUT_RELOC(chan, bo, delta, flags | NOUVEAU_BO_HIGH, 0, 0);
-}
-
 static INLINE int
 OUT_RESRCh(struct nouveau_channel *chan, struct nvc0_resource *res,
            unsigned delta, unsigned flags)
@@ -160,12 +95,6 @@ OUT_RESRCl(struct nouveau_channel *chan, struct nvc0_resource *res,
            unsigned delta, unsigned flags)
 {
    return OUT_RELOCl(chan, res->bo, res->offset + delta, res->domain | flags);
-}
-
-static INLINE void
-FIRE_RING(struct nouveau_channel *chan)
-{
-   nouveau_pushbuf_flush(chan, 0);
 }
 
 static INLINE void

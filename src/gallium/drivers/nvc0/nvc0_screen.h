@@ -112,8 +112,7 @@ nvc0_resource_validate(struct nvc0_resource *res, uint32_t flags)
    if (flags & NOUVEAU_BO_WR)
       nvc0_fence_reference(&res->fence_wr, screen->fence.current);
 
-   nouveau_reloc_emit(screen->base.channel,
-                      NULL, 0, NULL, res->bo, 0, 0, NOUVEAU_BO_RDWR, 0, 0);
+   nouveau_bo_validate(screen->base.channel, res->bo, flags);
 }
 
 

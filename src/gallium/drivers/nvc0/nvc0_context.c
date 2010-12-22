@@ -153,6 +153,7 @@ nvc0_bufctx_reset(struct nvc0_context *nvc0, int ctx)
 void
 nvc0_bufctx_emit_relocs(struct nvc0_context *nvc0)
 {
+   struct nouveau_channel *chan = nvc0->screen->base.channel;
    struct resident *rsd;
    struct util_dynarray *array;
    unsigned ctx, i;
@@ -163,11 +164,11 @@ nvc0_bufctx_emit_relocs(struct nvc0_context *nvc0)
       for (i = 0; i < array->size / sizeof(struct resident); ++i) {
          rsd = util_dynarray_element(array, struct resident, i);
 
-         nvc0_make_bo_resident(nvc0, rsd->bo, rsd->flags);
+         nouveau_bo_validate(chan, rsd->bo, rsd->flags);
       }
    }
 
-   nvc0_make_bo_resident(nvc0, nvc0->screen->text, NOUVEAU_BO_RD);
-   nvc0_make_bo_resident(nvc0, nvc0->screen->uniforms, NOUVEAU_BO_RD);
-   nvc0_make_bo_resident(nvc0, nvc0->screen->txc, NOUVEAU_BO_RD);
+   nouveau_bo_validate(chan, nvc0->screen->text, NOUVEAU_BO_RD);
+   nouveau_bo_validate(chan, nvc0->screen->uniforms, NOUVEAU_BO_RD);
+   nouveau_bo_validate(chan, nvc0->screen->txc, NOUVEAU_BO_RD);
 }

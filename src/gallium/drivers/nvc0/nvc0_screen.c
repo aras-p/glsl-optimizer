@@ -451,7 +451,6 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 17, 1 << 20, &screen->text);
    if (ret)
       goto fail;
-   /* nouveau_bo_pin(dev, screen->text); */
 
    nouveau_resource_init(&screen->text_heap, 0, 1 << 20);
 
@@ -498,7 +497,6 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
                         &screen->mp_stack_bo);
    if (ret)
       goto fail;
-   /* nouveau_bo_pin(dev, screen->mp_stack_bo); */
 
    BEGIN_RING(chan, RING_3D_(0x17bc), 3);
    OUT_RELOCh(chan, screen->mp_stack_bo, 0, NOUVEAU_BO_GART | NOUVEAU_BO_RDWR);
@@ -508,7 +506,6 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 17, 1 << 17, &screen->txc);
    if (ret)
       goto fail;
-   /* nouveau_bo_pin(dev, screen->txc); */
 
    BEGIN_RING(chan, RING_3D(TIC_ADDRESS_HIGH), 3);
    OUT_RELOCh(chan, screen->txc, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
@@ -622,9 +619,10 @@ nvc0_screen_make_buffers_resident(struct nvc0_screen *screen)
 
    const unsigned flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_RD;
 
-   nouveau_reloc_emit(chan, NULL, 0, NULL, screen->text, 0, 0, flags, 0, 0);
-   nouveau_reloc_emit(chan, NULL, 0, NULL, screen->txc, 0, 0, flags, 0, 0);
-   nouveau_reloc_emit(chan, NULL, 0, NULL, screen->tls, 0, 0, flags, 0, 0);
+   nouveau_bo_validate(chan, screen->text, flags);
+   nouveau_bo_validate(chan, screen->txc, flags);
+   nouveau_bo_validate(chan, screen->tls, flags);
+   nouveau_bo_validate(chan, screen->mp_stack_bo, flags);
 }
 
 int

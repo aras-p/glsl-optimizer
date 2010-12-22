@@ -143,22 +143,6 @@ nvc0_surface(struct pipe_surface *ps)
    return (struct nvc0_surface *)ps;
 }
 
-static INLINE void
-nvc0_make_bo_resident(struct nvc0_context *nvc0, struct nouveau_bo *bo,
-                      unsigned flags)
-{
-   nouveau_reloc_emit(nvc0->screen->base.channel,
-                      NULL, 0, NULL, bo, 0, 0, flags, 0, 0);
-}
-
-static INLINE void
-nvc0_make_buffer_resident(struct nvc0_context *nvc0,
-                          struct nvc0_resource *res, unsigned flags)
-{
-   nvc0_resource_validate(res, flags);
-   nvc0_make_bo_resident(nvc0, res->bo, flags);
-}
-
 /* nvc0_context.c */
 struct pipe_context *nvc0_create(struct pipe_screen *, void *);
 
