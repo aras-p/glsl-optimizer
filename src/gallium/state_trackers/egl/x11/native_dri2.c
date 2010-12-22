@@ -560,6 +560,10 @@ dri2_display_convert_config(struct native_display *ndpy,
    if (!mode->xRenderable || !mode->drawableType)
       return FALSE;
 
+   /* fast/slow configs are probably not relevant */
+   if (mode->visualRating == GLX_SLOW_CONFIG)
+      return FALSE;
+
    nconf->buffer_mask = 1 << NATIVE_ATTACHMENT_FRONT_LEFT;
    if (mode->doubleBufferMode)
       nconf->buffer_mask |= 1 << NATIVE_ATTACHMENT_BACK_LEFT;
@@ -580,13 +584,32 @@ dri2_display_convert_config(struct native_display *ndpy,
    if (nconf->color_format == PIPE_FORMAT_NONE)
       return FALSE;
 
-   if (mode->drawableType & GLX_WINDOW_BIT)
+   if ((mode->drawableType & GLX_WINDOW_BIT) && mode->visualID)
       nconf->window_bit = TRUE;
    if (mode->drawableType & GLX_PIXMAP_BIT)
       nconf->pixmap_bit = TRUE;
 
    nconf->native_visual_id = mode->visualID;
-   nconf->native_visual_type = mode->visualType;
+   switch (mode->visualType) {
+   case GLX_TRUE_COLOR:
+      nconf->native_visual_type = TrueColor;
+      break;
+   case GLX_DIRECT_COLOR:
+      nconf->native_visual_type = DirectColor;
+      break;
+   case GLX_PSEUDO_COLOR:
+      nconf->native_visual_type = PseudoColor;
+      break;
+   case GLX_STATIC_COLOR:
+      nconf->native_visual_type = StaticColor;
+      break;
+   case GLX_GRAY_SCALE:
+      nconf->native_visual_type = GrayScale;
+      break;
+   case GLX_STATIC_GRAY:
+      nconf->native_visual_type = StaticGray;
+      break;
+   }
    nconf->level = mode->level;
 
    if (mode->transparentPixel == GLX_TRANSPARENT_RGB) {
@@ -623,8 +646,17 @@ dri2_display_get_configs(struct native_display *ndpy, int *num_configs)
       count = 0;
       for (i = 0; i < num_modes; i++) {
          struct native_config *nconf = &dri2dpy->configs[count].base;
-         if (dri2_display_convert_config(&dri2dpy->base, modes, nconf))
-            count++;
+
+         if (dri2_display_convert_config(&dri2dpy->base, modes, nconf)) {
+            int j;
+            /* look for duplicates */
+            for (j = 0; j < count; j++) {
+               if (memcmp(&dri2dpy->configs[j], nconf, sizeof(*nconf)) == 0)
+                  break;
+            }
+            if (j == count)
+               count++;
+         }
          modes = modes->next;
       }
 
