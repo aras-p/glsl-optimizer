@@ -42,6 +42,7 @@ void r600_begin_vertex_translate(struct r600_pipe_context *rctx)
 	struct pipe_resource *out_buffer;
 	unsigned i, num_verts;
 	struct pipe_vertex_element new_velems[PIPE_MAX_ATTRIBS];
+	void *tmp;
 
 	/* Initialize the translate key, i.e. the recipe how vertices should be
 	 * translated. */
@@ -124,12 +125,11 @@ void r600_begin_vertex_translate(struct r600_pipe_context *rctx)
 	/* Unmap all buffers. */
 	for (i = 0; i < rctx->nvertex_buffer; i++) {
 		if (vb_translated[i]) {
-			pipe_buffer_unmap(pipe, rctx->vertex_buffer[i].buffer,
-					  vb_transfer[i]);
+			pipe_buffer_unmap(pipe, vb_transfer[i]);
 		}
 	}
 
-	pipe_buffer_unmap(pipe, out_buffer, out_transfer);
+	pipe_buffer_unmap(pipe, out_transfer);
 
 	/* Setup the new vertex buffer in the first free slot. */
 	for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
@@ -159,8 +159,9 @@ void r600_begin_vertex_translate(struct r600_pipe_context *rctx)
 		}
 	}
 
-	rctx->tran.new_velems = pipe->create_vertex_elements_state(pipe, ve->count, new_velems);
-	pipe->bind_vertex_elements_state(pipe, rctx->tran.new_velems);
+	tmp = pipe->create_vertex_elements_state(pipe, ve->count, new_velems);
+	pipe->bind_vertex_elements_state(pipe, tmp);
+	rctx->tran.new_velems = tmp;
 
 	pipe_resource_reference(&out_buffer, NULL);
 }
@@ -173,15 +174,11 @@ void r600_end_vertex_translate(struct r600_pipe_context *rctx)
 		return;
 	}
 	/* Restore vertex elements. */
-	if (rctx->vertex_elements == rctx->tran.new_velems) {
-		pipe->bind_vertex_elements_state(pipe, NULL);
-	}
 	pipe->delete_vertex_elements_state(pipe, rctx->tran.new_velems);
 	rctx->tran.new_velems = NULL;
 
 	/* Delete the now-unused VBO. */
-	pipe_resource_reference(&rctx->vertex_buffer[rctx->tran.vb_slot].buffer,
-				NULL);
+	pipe_resource_reference(&rctx->vertex_buffer[rctx->tran.vb_slot].buffer, NULL);
 }
 
 void r600_translate_index_buffer(struct r600_pipe_context *r600,

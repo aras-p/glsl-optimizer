@@ -863,7 +863,6 @@ const char *
 _mesa_get_format_name(gl_format format)
 {
    const struct gl_format_info *info = _mesa_get_format_info(format);
-   ASSERT(info->BytesPerBlock);
    return info->StrName;
 }
 

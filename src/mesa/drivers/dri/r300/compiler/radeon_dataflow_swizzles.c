@@ -56,6 +56,7 @@ static void rewrite_source(struct radeon_compiler * c,
 		mov->U.I.DstReg.Index = tempreg;
 		mov->U.I.DstReg.WriteMask = split.Phase[phase];
 		mov->U.I.SrcReg[0] = inst->U.I.SrcReg[src];
+		mov->U.I.PreSub = inst->U.I.PreSub;
 
 		phase_refmask = 0;
 		for(unsigned int chan = 0; chan < 4; ++chan) {

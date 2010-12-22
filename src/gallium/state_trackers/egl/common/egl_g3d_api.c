@@ -324,7 +324,8 @@ egl_g3d_create_surface(_EGLDriver *drv, _EGLDisplay *dpy, _EGLConfig *conf,
    }
 
    gsurf->stvis = gconf->stvis;
-   if (gsurf->base.RenderBuffer == EGL_SINGLE_BUFFER)
+   if (gsurf->base.RenderBuffer == EGL_SINGLE_BUFFER &&
+       gconf->stvis.buffer_mask & ST_ATTACHMENT_FRONT_LEFT_MASK)
       gsurf->stvis.render_buffer = ST_ATTACHMENT_FRONT_LEFT;
 
    gsurf->stfbi = egl_g3d_create_st_framebuffer(&gsurf->base);
@@ -402,7 +403,6 @@ egl_g3d_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *dpy,
                                _EGLConfig *conf, const EGLint *attribs)
 {
    struct egl_g3d_surface *gsurf;
-   struct pipe_resource *ptex = NULL;
 
    gsurf = create_pbuffer_surface(dpy, conf, attribs,
          "eglCreatePbufferSurface");
@@ -410,13 +410,6 @@ egl_g3d_create_pbuffer_surface(_EGLDriver *drv, _EGLDisplay *dpy,
       return NULL;
 
    gsurf->client_buffer_type = EGL_NONE;
-
-   if (!gsurf->stfbi->validate(gsurf->stfbi,
-            &gsurf->stvis.render_buffer, 1, &ptex)) {
-      egl_g3d_destroy_st_framebuffer(gsurf->stfbi);
-      FREE(gsurf);
-      return NULL;
-   }
 
    return &gsurf->base;
 }
@@ -477,12 +470,14 @@ egl_g3d_create_pbuffer_from_client_buffer(_EGLDriver *drv, _EGLDisplay *dpy,
    gsurf->client_buffer_type = buftype;
    gsurf->client_buffer = buffer;
 
+   /* validate now so that it fails if the client buffer is invalid */
    if (!gsurf->stfbi->validate(gsurf->stfbi,
             &gsurf->stvis.render_buffer, 1, &ptex)) {
       egl_g3d_destroy_st_framebuffer(gsurf->stfbi);
       FREE(gsurf);
       return NULL;
    }
+   pipe_resource_reference(&ptex, NULL);
 
    return &gsurf->base;
 }
@@ -643,19 +638,13 @@ egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
    struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
    _EGLContext *ctx = _eglGetCurrentContext();
-   struct egl_g3d_config *gconf;
    struct native_surface *nsurf;
    struct pipe_resource *ptex;
 
    if (!gsurf->render_texture)
       return EGL_TRUE;
 
-   gconf = egl_g3d_config(egl_g3d_find_pixmap_config(dpy, target));
-   if (!gconf)
-      return _eglError(EGL_BAD_NATIVE_PIXMAP, "eglCopyBuffers");
-
-   nsurf = gdpy->native->create_pixmap_surface(gdpy->native,
-         target, gconf->native);
+   nsurf = gdpy->native->create_pixmap_surface(gdpy->native, target, NULL);
    if (!nsurf)
       return _eglError(EGL_BAD_NATIVE_PIXMAP, "eglCopyBuffers");
 
@@ -676,14 +665,13 @@ egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
 
    ptex = get_pipe_resource(gdpy->native, nsurf, NATIVE_ATTACHMENT_FRONT_LEFT);
    if (ptex) {
-      struct pipe_resource *psrc = gsurf->render_texture;
       struct pipe_box src_box;
+
       u_box_origin_2d(ptex->width0, ptex->height0, &src_box);
-      if (psrc) {
-         gdpy->pipe->resource_copy_region(gdpy->pipe, ptex, 0, 0, 0, 0,
-               gsurf->render_texture, 0, &src_box);
-         nsurf->present(nsurf, NATIVE_ATTACHMENT_FRONT_LEFT, FALSE, 0);
-      }
+      gdpy->pipe->resource_copy_region(gdpy->pipe, ptex, 0, 0, 0, 0,
+            gsurf->render_texture, 0, &src_box);
+      gdpy->pipe->flush(gdpy->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
+      nsurf->present(nsurf, NATIVE_ATTACHMENT_FRONT_LEFT, FALSE, 0);
 
       pipe_resource_reference(&ptex, NULL);
    }
@@ -887,25 +875,6 @@ egl_g3d_show_screen_surface(_EGLDriver *drv, _EGLDisplay *dpy,
 }
 
 #endif /* EGL_MESA_screen_surface */
-
-/**
- * Find a config that supports the pixmap.
- */
-_EGLConfig *
-egl_g3d_find_pixmap_config(_EGLDisplay *dpy, EGLNativePixmapType pix)
-{
-   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
-   struct egl_g3d_config *gconf;
-   EGLint i;
-
-   for (i = 0; i < dpy->Configs->Size; i++) {
-      gconf = egl_g3d_config((_EGLConfig *) dpy->Configs->Elements[i]);
-      if (gdpy->native->is_pixmap_supported(gdpy->native, pix, gconf->native))
-         break;
-   }
-
-   return (i < dpy->Configs->Size) ? &gconf->base : NULL;
-}
 
 void
 egl_g3d_init_driver_api(_EGLDriver *drv)

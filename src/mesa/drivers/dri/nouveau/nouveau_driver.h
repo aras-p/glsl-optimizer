@@ -38,7 +38,6 @@
 #include <assert.h>
 
 #include "nouveau_device.h"
-#include "nouveau_pushbuf.h"
 #include "nouveau_grobj.h"
 #include "nouveau_channel.h"
 #include "nouveau_bo.h"
@@ -46,6 +45,7 @@
 #include "nouveau_screen.h"
 #include "nouveau_state.h"
 #include "nouveau_surface.h"
+#include "nv04_pushbuf.h"
 
 #define DRIVER_DATE	"20091015"
 #define DRIVER_AUTHOR	"Nouveau"

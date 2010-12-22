@@ -135,11 +135,6 @@ void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 	if (rctx->vertex_elements == NULL || !rctx->nvertex_buffer)
 		return;
 
-	/* delete previous translated vertex elements */
-	if (rctx->tran.new_velems) {
-		r600_end_vertex_translate(rctx);
-	}
-
 	if (rctx->vertex_elements->incompatible_layout) {
 		/* translate rebind new vertex elements so
 		 * return once translated
@@ -172,16 +167,16 @@ void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 			vbuffer_index = rctx->vertex_elements->elements[i].vertex_buffer_index;
 			vertex_buffer = &rctx->vertex_buffer[vbuffer_index];
 			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
-			offset = rctx->vertex_elements->vbuffer_offset[i] +
-				vertex_buffer->buffer_offset +
-				r600_bo_offset(rbuffer->bo);
+			offset = rctx->vertex_elements->vbuffer_offset[i];
 		} else {
 			/* bind vertex buffer once */
 			vertex_buffer = &rctx->vertex_buffer[i];
 			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
-			offset = vertex_buffer->buffer_offset +
-				r600_bo_offset(rbuffer->bo);
+			offset = 0;
 		}
+		if (vertex_buffer == NULL || rbuffer == NULL)
+			continue;
+		offset += vertex_buffer->buffer_offset + r600_bo_offset(rbuffer->bo);
 
 		r600_pipe_state_add_reg(rstate, R_038000_RESOURCE0_WORD0,
 					offset, 0xFFFFFFFF, rbuffer->bo);
@@ -280,7 +275,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_drawl draw;
-	boolean translate = FALSE;
 
 	memset(&draw, 0, sizeof(struct r600_drawl));
 	draw.ctx = ctx;
@@ -311,9 +305,6 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		draw.index_bias = info->start;
 	}
 	r600_draw_common(&draw);
-
-	if (translate)
-		r600_end_vertex_translate(rctx);
 
 	pipe_resource_reference(&draw.index_buffer, NULL);
 }
@@ -1038,8 +1029,6 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	rstate->id = R600_PIPE_STATE_FRAMEBUFFER;
 
 	util_copy_framebuffer_state(&rctx->framebuffer, state);
-
-	rctx->pframebuffer = &rctx->framebuffer;
 
 	/* build states */
 	for (int i = 0; i < state->nr_cbufs; i++) {

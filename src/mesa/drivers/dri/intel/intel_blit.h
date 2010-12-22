@@ -69,5 +69,7 @@ void intel_emit_linear_blit(struct intel_context *intel,
 			    drm_intel_bo *src_bo,
 			    unsigned int src_offset,
 			    unsigned int size);
+void intel_set_teximage_alpha_to_one(struct gl_context *ctx,
+				     struct intel_texture_image *intel_image);
 
 #endif

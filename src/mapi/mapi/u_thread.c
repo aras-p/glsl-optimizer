@@ -222,7 +222,7 @@ u_tsd_set(struct u_tsd *tsd, void *ptr)
  */
 
 unsigned long
-_glthread_GetID(void)
+u_thread_self(void)
 {
    return 0;
 }

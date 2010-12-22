@@ -22,7 +22,7 @@
 
 #define __NOUVEAU_PUSH_H__
 #include <stdint.h>
-#include "nouveau/nouveau_pushbuf.h"
+#include "nouveau/nv04_pushbuf.h"
 #include "nv50_context.h"
 #include "nv50_resource.h"
 #include "pipe/p_defines.h"

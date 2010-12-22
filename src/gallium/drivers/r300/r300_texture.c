@@ -481,6 +481,8 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
     } else {
         if (desc->channel[i].size == 16) {
             modifier |= R300_US_OUT_FMT_C4_16;
+        } else if (desc->channel[i].size == 10) {
+            modifier |= R300_US_OUT_FMT_C4_10;
         } else {
             /* C4_8 seems to be used for the formats whose pixel size
              * is <= 32 bits. */
@@ -899,7 +901,7 @@ struct pipe_surface* r300_create_surface(struct pipe_context * ctx,
                                                tex->desc.b.b.nr_samples,
                                                tex->desc.microtile,
                                                tex->desc.macrotile[level],
-                                               DIM_HEIGHT);
+                                               DIM_HEIGHT, 0);
 
         surface->cbzb_height = align((surface->base.height + 1) / 2,
                                      tile_height);

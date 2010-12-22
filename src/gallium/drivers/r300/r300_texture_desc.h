@@ -41,7 +41,7 @@ unsigned r300_get_pixel_alignment(enum pipe_format format,
                                   unsigned num_samples,
                                   enum r300_buffer_tiling microtile,
                                   enum r300_buffer_tiling macrotile,
-                                  enum r300_dim dim);
+                                  enum r300_dim dim, boolean is_rs690);
 
 boolean r300_texture_desc_init(struct r300_screen *rscreen,
                                struct r300_texture_desc *desc,

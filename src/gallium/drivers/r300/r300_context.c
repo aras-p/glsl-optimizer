@@ -35,8 +35,6 @@
 #include "r300_screen_buffer.h"
 #include "r300_winsys.h"
 
-#include <inttypes.h>
-
 static void r300_update_num_contexts(struct r300_screen *r300screen,
                                      int diff)
 {

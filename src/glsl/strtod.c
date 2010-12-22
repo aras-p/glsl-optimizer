@@ -1,8 +1,7 @@
-/**************************************************************************
- * 
- * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
+/*
+ * Copyright 2010 VMware, Inc.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,50 +9,48 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
- * IN NO EVENT SHALL TUNGSTEN GRAPHICS AND/OR ITS SUPPLIERS BE LIABLE FOR
+ * IN NO EVENT SHALL VMWARE AND/OR ITS SUPPLIERS BE LIABLE FOR
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
- **************************************************************************/
+ */
 
 
-#ifndef PROG_CACHE_H
-#define PROG_CACHE_H
+#include <stdlib.h>
+
+#ifdef _GNU_SOURCE
+#include <locale.h>
+#ifdef __APPLE__
+#include <xlocale.h>
+#endif
+#endif
+
+#include "strtod.h"
 
 
-#include "main/glheader.h"
 
-struct gl_context;
-
-/** Opaque type */
-struct gl_program_cache;
-
-
-extern struct gl_program_cache *
-_mesa_new_program_cache(void);
-
-extern void
-_mesa_delete_program_cache(struct gl_context *ctx, struct gl_program_cache *pc);
-
-
-extern struct gl_program *
-_mesa_search_program_cache(struct gl_program_cache *cache,
-                           const void *key, GLuint keysize);
-
-extern void
-_mesa_program_cache_insert(struct gl_context *ctx,
-                           struct gl_program_cache *cache,
-                           const void *key, GLuint keysize,
-                           struct gl_program *program);
-
-
-#endif /* PROG_CACHE_H */
+/**
+ * Wrapper around strtod which uses the "C" locale so the decimal
+ * point is always '.'
+ */
+double
+glsl_strtod(const char *s, char **end)
+{
+#if defined(_GNU_SOURCE) && !defined(__CYGWIN__) && !defined(__FreeBSD__)
+   static locale_t loc = NULL;
+   if (!loc) {
+      loc = newlocale(LC_CTYPE_MASK, "C", NULL);
+   }
+   return strtod_l(s, end, loc);
+#else
+   return strtod(s, end);
+#endif
+}

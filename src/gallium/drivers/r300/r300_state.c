@@ -1298,29 +1298,27 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
     }
 
     for (i = 0; i < count; i++) {
-        if (&state->sampler_views[i]->base != views[i]) {
-            pipe_sampler_view_reference(
-                    (struct pipe_sampler_view**)&state->sampler_views[i],
-                    views[i]);
+        pipe_sampler_view_reference(
+                (struct pipe_sampler_view**)&state->sampler_views[i],
+                views[i]);
 
-            if (!views[i]) {
-                continue;
-            }
-
-            /* A new sampler view (= texture)... */
-            dirty_tex = TRUE;
-
-            /* Set the texrect factor in the fragment shader.
-             * Needed for RECT and NPOT fallback. */
-            texture = r300_texture(views[i]->texture);
-            if (texture->desc.is_npot) {
-                r300_mark_atom_dirty(r300, &r300->fs_rc_constant_state);
-            }
-
-            state->sampler_views[i]->texcache_region =
-                r300_assign_texture_cache_region(view_index, real_num_views);
-            view_index++;
+        if (!views[i]) {
+            continue;
         }
+
+        /* A new sampler view (= texture)... */
+        dirty_tex = TRUE;
+
+        /* Set the texrect factor in the fragment shader.
+             * Needed for RECT and NPOT fallback. */
+        texture = r300_texture(views[i]->texture);
+        if (texture->desc.is_npot) {
+            r300_mark_atom_dirty(r300, &r300->fs_rc_constant_state);
+        }
+
+        state->sampler_views[i]->texcache_region =
+                r300_assign_texture_cache_region(view_index, real_num_views);
+        view_index++;
     }
 
     for (i = count; i < tex_units; i++) {
@@ -1496,14 +1494,14 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
                 any_user_buffer = TRUE;
             }
 
+            /* The stride of zero means we will be fetching only the first
+             * vertex, so don't care about max_index. */
+            if (!vbo->stride)
+                continue;
+
             if (vbo->max_index == ~0) {
-                /* if no VBO stride then only one vertex value so max index is 1 */
-                /* should think about converting to VS constants like svga does */
-                if (!vbo->stride)
-                    vbo->max_index = 1;
-                else
-                    vbo->max_index =
-                             (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
+                vbo->max_index =
+                        (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
             }
 
             max_index = MIN2(vbo->max_index, max_index);

@@ -1569,7 +1569,13 @@ ir_to_mesa_visitor::visit(ir_dereference_record *ir)
 	 break;
       offset += type_size(struct_type->fields.structure[i].type);
    }
-   this->result.swizzle = swizzle_for_size(ir->type->vector_elements);
+
+   /* If the type is smaller than a vec4, replicate the last channel out. */
+   if (ir->type->is_scalar() || ir->type->is_vector())
+      this->result.swizzle = swizzle_for_size(ir->type->vector_elements);
+   else
+      this->result.swizzle = SWIZZLE_NOOP;
+
    this->result.index += offset;
 }
 

@@ -42,6 +42,7 @@ void intelInitTextureCopyImageFuncs(struct dd_function_table *functions);
 
 gl_format intelChooseTextureFormat(struct gl_context *ctx, GLint internalFormat,
                                    GLenum format, GLenum type);
+GLenum intel_mesa_format_to_rb_datatype(gl_format format);
 
 void intelSetTexBuffer(__DRIcontext *pDRICtx,
 		       GLint target, __DRIdrawable *pDraw);

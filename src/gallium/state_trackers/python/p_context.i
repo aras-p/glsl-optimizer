@@ -360,7 +360,7 @@ struct st_context {
       if (!map)
          goto error2;
       memcpy(map, vertices, size);
-      pipe_buffer_unmap(pipe, vbuf, transfer);
+      pipe_buffer_unmap(pipe, transfer);
 
       cso_save_vertex_elements($self->cso);
 

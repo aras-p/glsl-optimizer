@@ -738,8 +738,8 @@ void util_blitter_copy_region(struct blitter_context *blitter,
       assert(!is_overlap(srcbox->x, srcbox->x + width, srcbox->y, srcbox->y + height,
                          dstx, dstx + width, dsty, dsty + height));
    } else {
-      assert(util_is_format_compatible(util_format_description(dst->format),
-                                       util_format_description(src->format)));
+      assert(util_is_format_compatible(util_format_description(src->format),
+                                       util_format_description(dst->format)));
    }
    assert(src->target < PIPE_MAX_TEXTURE_TYPES);
    /* XXX should handle 3d regions */

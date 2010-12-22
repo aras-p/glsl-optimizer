@@ -183,17 +183,21 @@ init_config_attributes(_EGLConfig *conf, const struct native_config *nconf,
    }
 
    surface_type = 0x0;
-   if (nconf->window_bit)
-      surface_type |= EGL_WINDOW_BIT;
-   if (nconf->pixmap_bit)
-      surface_type |= EGL_PIXMAP_BIT;
+   /* pixmap surfaces should be EGL_SINGLE_BUFFER */
+   if (nconf->buffer_mask & (1 << NATIVE_ATTACHMENT_FRONT_LEFT)) {
+      if (nconf->pixmap_bit)
+         surface_type |= EGL_PIXMAP_BIT;
+   }
+   /* the others surfaces should be EGL_BACK_BUFFER (or settable) */
+   if (nconf->buffer_mask & (1 << NATIVE_ATTACHMENT_BACK_LEFT)) {
+      if (nconf->window_bit)
+         surface_type |= EGL_WINDOW_BIT;
 #ifdef EGL_MESA_screen_surface
-   if (nconf->scanout_bit)
-      surface_type |= EGL_SCREEN_BIT_MESA;
+      if (nconf->scanout_bit)
+         surface_type |= EGL_SCREEN_BIT_MESA;
 #endif
-
-   if (nconf->buffer_mask & (1 << NATIVE_ATTACHMENT_BACK_LEFT))
       surface_type |= EGL_PBUFFER_BIT;
+   }
 
    conf->Conformant = api_mask;
    conf->RenderableType = api_mask;
@@ -226,11 +230,6 @@ init_config_attributes(_EGLConfig *conf, const struct native_config *nconf,
    }
 
    conf->Level = nconf->level;
-   conf->Samples = nconf->samples;
-   conf->SampleBuffers = 0;
-
-   if (nconf->slow_config)
-      conf->ConfigCaveat = EGL_SLOW_CONFIG;
 
    if (nconf->transparent_rgb) {
       conf->TransparentType = EGL_TRANSPARENT_RGB;
@@ -257,12 +256,8 @@ egl_g3d_init_config(_EGLDriver *drv, _EGLDisplay *dpy,
                     int preserve_buffer, int max_swap_interval)
 {
    struct egl_g3d_config *gconf = egl_g3d_config(conf);
-   EGLint buffer_mask, api_mask;
+   EGLint buffer_mask;
    EGLBoolean valid;
-
-   /* skip single-buffered configs */
-   if (!(nconf->buffer_mask & (1 << NATIVE_ATTACHMENT_BACK_LEFT)))
-      return EGL_FALSE;
 
    buffer_mask = 0x0;
    if (nconf->buffer_mask & (1 << NATIVE_ATTACHMENT_FRONT_LEFT))
@@ -278,24 +273,14 @@ egl_g3d_init_config(_EGLDriver *drv, _EGLDisplay *dpy,
    gconf->stvis.color_format = nconf->color_format;
    gconf->stvis.depth_stencil_format = depth_stencil_format;
    gconf->stvis.accum_format = PIPE_FORMAT_NONE;
-   gconf->stvis.samples = nconf->samples;
+   gconf->stvis.samples = 0;
 
+   /* will be overridden per surface */
    gconf->stvis.render_buffer = (buffer_mask & ST_ATTACHMENT_BACK_LEFT_MASK) ?
       ST_ATTACHMENT_BACK_LEFT : ST_ATTACHMENT_FRONT_LEFT;
 
-   api_mask = dpy->ClientAPIsMask;
-   /* this is required by EGL, not by OpenGL ES */
-   if (nconf->window_bit &&
-       gconf->stvis.render_buffer != ST_ATTACHMENT_BACK_LEFT)
-      api_mask &= ~(EGL_OPENGL_ES_BIT | EGL_OPENGL_ES2_BIT);
-
-   if (!api_mask) {
-      _eglLog(_EGL_DEBUG, "no state tracker supports config 0x%x",
-            nconf->native_visual_id);
-   }
-
    valid = init_config_attributes(&gconf->base,
-         nconf, api_mask, depth_stencil_format,
+         nconf, dpy->ClientAPIsMask, depth_stencil_format,
          preserve_buffer, max_swap_interval);
    if (!valid) {
       _eglLog(_EGL_DEBUG, "skip invalid config 0x%x", nconf->native_visual_id);

@@ -770,8 +770,6 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 
 	util_copy_framebuffer_state(&rctx->framebuffer, state);
 
-	rctx->pframebuffer = &rctx->framebuffer;
-
 	/* build states */
 	for (int i = 0; i < state->nr_cbufs; i++) {
 		evergreen_cb(rctx, rstate, state, i);
@@ -1295,11 +1293,6 @@ void evergreen_vertex_buffer_update(struct r600_pipe_context *rctx)
 	if (rctx->vertex_elements == NULL || !rctx->nvertex_buffer)
 		return;
 
-	/* delete previous translated vertex elements */
-	if (rctx->tran.new_velems) {
-		r600_end_vertex_translate(rctx);
-	}
-
 	if (rctx->vertex_elements->incompatible_layout) {
 		/* translate rebind new vertex elements so
 		 * return once translated
@@ -1332,16 +1325,16 @@ void evergreen_vertex_buffer_update(struct r600_pipe_context *rctx)
 			vbuffer_index = rctx->vertex_elements->elements[i].vertex_buffer_index;
 			vertex_buffer = &rctx->vertex_buffer[vbuffer_index];
 			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
-			offset = rctx->vertex_elements->vbuffer_offset[i] +
-				vertex_buffer->buffer_offset +
-				r600_bo_offset(rbuffer->bo);
+			offset = rctx->vertex_elements->vbuffer_offset[i];
 		} else {
 			/* bind vertex buffer once */
 			vertex_buffer = &rctx->vertex_buffer[i];
 			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
-			offset = vertex_buffer->buffer_offset +
-				r600_bo_offset(rbuffer->bo);
+			offset = 0;
 		}
+		if (vertex_buffer == NULL || rbuffer == NULL)
+			continue;
+		offset += vertex_buffer->buffer_offset + r600_bo_offset(rbuffer->bo);
 
 		r600_pipe_state_add_reg(rstate, R_030000_RESOURCE0_WORD0,
 					offset, 0xFFFFFFFF, rbuffer->bo);
@@ -1364,7 +1357,7 @@ void evergreen_vertex_buffer_update(struct r600_pipe_context *rctx)
 					0x00000000, 0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(rstate, R_03001C_RESOURCE0_WORD7,
 					0xC0000000, 0xFFFFFFFF, NULL);
-		evergreen_fs_resource_set(&rctx->ctx, rstate, i);
+		evergreen_context_pipe_state_set_fs_resource(&rctx->ctx, rstate, i);
 	}
 }
 

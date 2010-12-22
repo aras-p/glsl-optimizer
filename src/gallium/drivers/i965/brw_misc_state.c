@@ -363,10 +363,10 @@ const struct brw_tracked_state brw_line_stipple = {
 
 
 /***********************************************************************
- * Misc invarient state packets
+ * Misc invariant state packets
  */
 
-static int upload_invarient_state( struct brw_context *brw )
+static int upload_invariant_state( struct brw_context *brw )
 {
    {
       /* 0x61040000  Pipeline Select */
@@ -439,7 +439,7 @@ static int upload_invarient_state( struct brw_context *brw )
    {
       struct brw_polygon_stipple_offset bpso;
       
-      /* This is invarient state in gallium:
+      /* This is invariant state in gallium:
        */
       memset(&bpso, 0, sizeof(bpso));
       bpso.header.opcode = CMD_POLY_STIPPLE_OFFSET;
@@ -453,13 +453,13 @@ static int upload_invarient_state( struct brw_context *brw )
    return 0;
 }
 
-const struct brw_tracked_state brw_invarient_state = {
+const struct brw_tracked_state brw_invariant_state = {
    .dirty = {
       .mesa = 0,
       .brw = BRW_NEW_CONTEXT,
       .cache = 0
    },
-   .emit = upload_invarient_state
+   .emit = upload_invariant_state
 };
 
 

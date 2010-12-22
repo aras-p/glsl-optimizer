@@ -1189,12 +1189,12 @@ out_err:
 static inline void
 nvfx_fp_memcpy(void* dst, const void* src, size_t len)
 {
-#ifndef WORDS_BIGENDIAN
+#ifndef PIPE_ARCH_BIG_ENDIAN
 	memcpy(dst, src, len);
 #else
 	size_t i;
 	for(i = 0; i < len; i += 4) {
-		uint32_t v = (uint32_t*)((char*)src + i);
+		uint32_t v = *(uint32_t*)((char*)src + i);
 		*(uint32_t*)((char*)dst + i) = (v >> 16) | (v << 16);
 	}
 #endif

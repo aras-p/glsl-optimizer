@@ -219,43 +219,45 @@ void emit_wpos_xy(struct brw_wm_compile *c,
 		  const struct brw_reg *arg0)
 {
    struct brw_compile *p = &c->func;
+   struct intel_context *intel = &p->brw->intel;
+   struct brw_reg delta_x = retype(arg0[0], BRW_REGISTER_TYPE_W);
+   struct brw_reg delta_y = retype(arg0[1], BRW_REGISTER_TYPE_W);
 
    if (mask & WRITEMASK_X) {
+      if (intel->gen >= 6) {
+	 struct brw_reg delta_x_f = retype(delta_x, BRW_REGISTER_TYPE_F);
+	 brw_MOV(p, delta_x_f, delta_x);
+	 delta_x = delta_x_f;
+      }
+
       if (c->fp->program.PixelCenterInteger) {
 	 /* X' = X */
-	 brw_MOV(p,
-		 dst[0],
-		 retype(arg0[0], BRW_REGISTER_TYPE_W));
+	 brw_MOV(p, dst[0], delta_x);
       } else {
 	 /* X' = X + 0.5 */
-	 brw_ADD(p,
-		 dst[0],
-		 retype(arg0[0], BRW_REGISTER_TYPE_W),
-		 brw_imm_f(0.5));
+	 brw_ADD(p, dst[0], delta_x, brw_imm_f(0.5));
       }
    }
 
    if (mask & WRITEMASK_Y) {
+      if (intel->gen >= 6) {
+	 struct brw_reg delta_y_f = retype(delta_y, BRW_REGISTER_TYPE_F);
+	 brw_MOV(p, delta_y_f, delta_y);
+	 delta_y = delta_y_f;
+      }
+
       if (c->fp->program.OriginUpperLeft) {
 	 if (c->fp->program.PixelCenterInteger) {
 	    /* Y' = Y */
-	    brw_MOV(p,
-		    dst[1],
-		    retype(arg0[1], BRW_REGISTER_TYPE_W));
+	    brw_MOV(p, dst[1], delta_y);
 	 } else {
-	    /* Y' = Y + 0.5 */
-	    brw_ADD(p,
-		    dst[1],
-		    retype(arg0[1], BRW_REGISTER_TYPE_W),
-		    brw_imm_f(0.5));
+	    brw_ADD(p, dst[1], delta_y, brw_imm_f(0.5));
 	 }
       } else {
 	 float center_offset = c->fp->program.PixelCenterInteger ? 0.0 : 0.5;
 
 	 /* Y' = (height - 1) - Y + center */
-	 brw_ADD(p,
-		 dst[1],
-		 negate(retype(arg0[1], BRW_REGISTER_TYPE_W)),
+	 brw_ADD(p, dst[1], negate(delta_y),
 		 brw_imm_f(c->key.drawable_height - 1 + center_offset));
       }
    }
@@ -971,34 +973,23 @@ void emit_math2(struct brw_wm_compile *c,
       struct brw_reg temp_dst = dst[dst_chan];
 
       if (arg0[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
-	 if (arg1[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
-	    /* Both scalar arguments.  Do scalar calc. */
-	    src0.hstride = BRW_HORIZONTAL_STRIDE_1;
-	    src1.hstride = BRW_HORIZONTAL_STRIDE_1;
-	    temp_dst.hstride = BRW_HORIZONTAL_STRIDE_1;
-	    temp_dst.width = BRW_WIDTH_1;
+	 brw_MOV(p, temp_dst, src0);
+	 src0 = temp_dst;
+      }
 
-	    if (arg0[0].subnr != 0) {
-	       brw_MOV(p, temp_dst, src0);
-	       src0 = temp_dst;
-
-	       /* Ouch.  We've used the temp as a dst, and we still
-		* need a temp to store arg1 in, because src and dst
-		* offsets have to be equal.  Leaving this up to
-		* glsl2-965 to handle correctly.
-		*/
-	       assert(arg1[0].subnr == 0);
-	    } else if (arg1[0].subnr != 0) {
-	       brw_MOV(p, temp_dst, src1);
-	       src1 = temp_dst;
-	    }
-	 } else {
-	    brw_MOV(p, temp_dst, src0);
-	    src0 = temp_dst;
-	 }
-      } else if (arg1[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
-	 brw_MOV(p, temp_dst, src1);
-	 src1 = temp_dst;
+      if (arg1[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
+	 /* This is a heinous hack to get a temporary register for use
+	  * in case both arg0 and arg1 are constants.  Why you're
+	  * doing exponentiation on constant values in the shader, we
+	  * don't know.
+	  *
+	  * max_wm_grf is almost surely less than the maximum GRF, and
+	  * gen6 doesn't care about the number of GRFs used in a
+	  * shader like pre-gen6 did.
+	  */
+	 struct brw_reg temp = brw_vec8_grf(c->max_wm_grf, 0);
+	 brw_MOV(p, temp, src1);
+	 src1 = temp;
       }
 
       brw_set_saturate(p, (mask & SATURATE) ? 1 : 0);
@@ -1015,14 +1006,6 @@ void emit_math2(struct brw_wm_compile *c,
 		   function,
 		   sechalf(src0),
 		   sechalf(src1));
-      }
-
-      /* Splat a scalar result into all the channels. */
-      if (arg0[0].hstride == BRW_HORIZONTAL_STRIDE_0 &&
-	  arg1[0].hstride == BRW_HORIZONTAL_STRIDE_0) {
-	 temp_dst.hstride = BRW_HORIZONTAL_STRIDE_0;
-	 temp_dst.vstride = BRW_VERTICAL_STRIDE_0;
-	 brw_MOV(p, dst[dst_chan], temp_dst);
       }
    } else {
       GLuint saturate = ((mask & SATURATE) ?
@@ -1373,7 +1356,8 @@ static void fire_fb_write( struct brw_wm_compile *c,
 		target,		
 		nr,
 		0, 
-		eot);
+		eot,
+		GL_TRUE);
 }
 
 
@@ -1518,7 +1502,8 @@ void emit_fb_write(struct brw_wm_compile *c,
        */
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
-      brw_MOV(p, brw_message_reg(0), brw_vec8_grf(0, 0));
+      brw_MOV(p, retype(brw_message_reg(0), BRW_REGISTER_TYPE_UD),
+	      retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UD));
       brw_pop_insn_state(p);
 
       if (target != 0) {

@@ -94,88 +94,61 @@ is_passthrough_program(const struct gl_fragment_program *prog)
 /**
  * Make fragment shader for glDraw/CopyPixels.  This shader is made
  * by combining the pixel transfer shader with the user-defined shader.
- * \return pointer to Gallium driver fragment shader
+ * \param fpIn  the current/incoming fragment program
+ * \param fpOut  returns the combined fragment program
  */
-static void *
-combined_drawpix_fragment_program(struct gl_context *ctx)
+void
+st_make_drawpix_fragment_program(struct st_context *st,
+                                 struct gl_fragment_program *fpIn,
+                                 struct gl_fragment_program **fpOut)
 {
-   struct st_context *st = st_context(ctx);
-   struct st_fragment_program *stfp;
+   struct gl_program *newProg;
 
-   if (st->pixel_xfer.program->serialNo == st->pixel_xfer.xfer_prog_sn
-       && st->fp->serialNo == st->pixel_xfer.user_prog_sn) {
-      /* the pixel tranfer program has not changed and the user-defined
-       * program has not changed, so re-use the combined program.
-       */
-      stfp = st->pixel_xfer.combined_prog;
+   if (is_passthrough_program(fpIn)) {
+      newProg = (struct gl_program *) _mesa_clone_fragment_program(st->ctx,
+                                             &st->pixel_xfer.program->Base);
    }
    else {
-      /* Concatenate the pixel transfer program with the current user-
-       * defined program.
-       */
-      if (is_passthrough_program(&st->fp->Base)) {
-         stfp = (struct st_fragment_program *)
-            _mesa_clone_fragment_program(ctx, &st->pixel_xfer.program->Base);
-      }
-      else {
 #if 0
-         printf("Base program:\n");
-         _mesa_print_program(&st->fp->Base.Base);
-         printf("DrawPix program:\n");
-         _mesa_print_program(&st->pixel_xfer.program->Base.Base);
+      /* debug */
+      printf("Base program:\n");
+      _mesa_print_program(&fpIn->Base);
+      printf("DrawPix program:\n");
+      _mesa_print_program(&st->pixel_xfer.program->Base.Base);
 #endif
-         stfp = (struct st_fragment_program *)
-            _mesa_combine_programs(ctx,
-                                   &st->pixel_xfer.program->Base.Base,
-                                   &st->fp->Base.Base);
-      }
-
-#if 0
-      {
-         struct gl_program *p = &stfp->Base.Base;
-         printf("Combined DrawPixels program:\n");
-         _mesa_print_program(p);
-         printf("InputsRead: 0x%x\n", p->InputsRead);
-         printf("OutputsWritten: 0x%x\n", p->OutputsWritten);
-         _mesa_print_parameter_list(p->Parameters);
-      }
-#endif
-
-      /* translate to TGSI tokens */
-      st_translate_fragment_program(st, stfp);
-
-      /* save new program, update serial numbers */
-      st->pixel_xfer.xfer_prog_sn = st->pixel_xfer.program->serialNo;
-      st->pixel_xfer.user_prog_sn = st->fp->serialNo;
-      st->pixel_xfer.combined_prog_sn = stfp->serialNo;
-      /* can't reference new program directly, already have a reference on it */
-      st_reference_fragprog(st, &st->pixel_xfer.combined_prog, NULL);
-      st->pixel_xfer.combined_prog = stfp;
+      newProg = _mesa_combine_programs(st->ctx,
+                                       &st->pixel_xfer.program->Base.Base,
+                                       &fpIn->Base);
    }
 
-   /* Ideally we'd have updated the pipe constants during the normal
-    * st/atom mechanism.  But we can't since this is specific to glDrawPixels.
-    */
-   st_upload_constants(st, stfp->Base.Base.Parameters, PIPE_SHADER_FRAGMENT);
+#if 0
+   /* debug */
+   printf("Combined DrawPixels program:\n");
+   _mesa_print_program(newProg);
+   printf("InputsRead: 0x%x\n", newProg->InputsRead);
+   printf("OutputsWritten: 0x%x\n", newProg->OutputsWritten);
+   _mesa_print_parameter_list(newProg->Parameters);
+#endif
 
-   return stfp->driver_shader;
+   *fpOut = (struct gl_fragment_program *) newProg;
 }
 
 
 /**
- * Create fragment shader that does a TEX() instruction to get a Z and/or
+ * Create fragment program that does a TEX() instruction to get a Z and/or
  * stencil value value, then writes to FRAG_RESULT_DEPTH/FRAG_RESULT_STENCIL.
  * Used for glDrawPixels(GL_DEPTH_COMPONENT / GL_STENCIL_INDEX).
  * Pass fragment color through as-is.
- * \return pointer to the Gallium driver fragment shader
+ * \return pointer to the gl_fragment program
  */
-static void *
-make_fragment_shader_z_stencil(struct st_context *st, GLboolean write_depth,
-                               GLboolean write_stencil)
+struct gl_fragment_program *
+st_make_drawpix_z_stencil_program(struct st_context *st,
+                                  GLboolean write_depth,
+                                  GLboolean write_stencil)
 {
    struct gl_context *ctx = st->ctx;
    struct gl_program *p;
-   struct st_fragment_program *stp;
+   struct gl_fragment_program *fp;
    GLuint ic = 0;
    const GLuint shaderIndex = write_depth * 2 + write_stencil;
 
@@ -183,7 +156,7 @@ make_fragment_shader_z_stencil(struct st_context *st, GLboolean write_depth,
 
    if (st->drawpix.shaders[shaderIndex]) {
       /* already have the proper shader */
-      return st->drawpix.shaders[shaderIndex]->driver_shader;
+      return st->drawpix.shaders[shaderIndex];
    }
 
    /*
@@ -245,16 +218,13 @@ make_fragment_shader_z_stencil(struct st_context *st, GLboolean write_depth,
    if (write_stencil)
       p->SamplersUsed |= 1 << 1;
 
-   stp = st_fragment_program((struct gl_fragment_program *) p);
+   fp = (struct gl_fragment_program *) p;
 
    /* save the new shader */
-   st->drawpix.shaders[shaderIndex] = stp;
+   st->drawpix.shaders[shaderIndex] = fp;
 
-   st_translate_fragment_program(st, stp);
-
-   return stp->driver_shader;
+   return fp;
 }
-
 
 
 /**
@@ -873,6 +843,61 @@ draw_stencil_pixels(struct gl_context *ctx, GLint x, GLint y,
 
 
 /**
+ * Get fragment program variant for a glDrawPixels or glCopyPixels
+ * command for RGBA data.
+ */
+static struct st_fp_variant *
+get_color_fp_variant(struct st_context *st)
+{
+   struct gl_context *ctx = st->ctx;
+   struct st_fp_variant_key key;
+   struct st_fp_variant *fpv;
+
+   memset(&key, 0, sizeof(key));
+
+   key.st = st;
+   key.drawpixels = 1;
+   key.scaleAndBias = (ctx->Pixel.RedBias != 0.0 ||
+                       ctx->Pixel.RedScale != 1.0 ||
+                       ctx->Pixel.GreenBias != 0.0 ||
+                       ctx->Pixel.GreenScale != 1.0 ||
+                       ctx->Pixel.BlueBias != 0.0 ||
+                       ctx->Pixel.BlueScale != 1.0 ||
+                       ctx->Pixel.AlphaBias != 0.0 ||
+                       ctx->Pixel.AlphaScale != 1.0);
+   key.pixelMaps = ctx->Pixel.MapColorFlag;
+
+   fpv = st_get_fp_variant(st, st->fp, &key);
+
+   return fpv;
+}
+
+
+/**
+ * Get fragment program variant for a glDrawPixels or glCopyPixels
+ * command for depth/stencil data.
+ */
+static struct st_fp_variant *
+get_depth_stencil_fp_variant(struct st_context *st, GLboolean write_depth,
+                             GLboolean write_stencil)
+{
+   struct st_fp_variant_key key;
+   struct st_fp_variant *fpv;
+
+   memset(&key, 0, sizeof(key));
+
+   key.st = st;
+   key.drawpixels = 1;
+   key.drawpixels_z = write_depth;
+   key.drawpixels_stencil = write_stencil;
+
+   fpv = st_get_fp_variant(st, st->fp, &key);
+
+   return fpv;
+}
+
+
+/**
  * Called via ctx->Driver.DrawPixels()
  */
 static void
@@ -889,6 +914,7 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y,
    struct pipe_sampler_view *sv[2];
    int num_sampler_view = 1;
    enum pipe_format stencil_format = PIPE_FORMAT_NONE;
+   struct st_fp_variant *fpv;
 
    if (format == GL_DEPTH_STENCIL)
       write_stencil = write_depth = GL_TRUE;
@@ -921,20 +947,34 @@ st_DrawPixels(struct gl_context *ctx, GLint x, GLint y,
 
    st_validate_state(st);
 
+   /*
+    * Get vertex/fragment shaders
+    */
    if (write_depth || write_stencil) {
-      driver_fp = make_fragment_shader_z_stencil(st, write_depth, write_stencil);
+      fpv = get_depth_stencil_fp_variant(st, write_depth, write_stencil);
+
+      driver_fp = fpv->driver_shader;
+
       driver_vp = make_passthrough_vertex_shader(st, GL_TRUE);
+
       color = ctx->Current.RasterColor;
    }
    else {
-      driver_fp = combined_drawpix_fragment_program(ctx);
+      fpv = get_color_fp_variant(st);
+
+      driver_fp = fpv->driver_shader;
+
       driver_vp = make_passthrough_vertex_shader(st, GL_FALSE);
+
       color = NULL;
       if (st->pixel_xfer.pixelmap_enabled) {
 	  sv[1] = st->pixel_xfer.pixelmap_sampler_view;
 	  num_sampler_view++;
       }
    }
+
+   /* update fragment program constants */
+   st_upload_constants(st, fpv->parameters, PIPE_SHADER_FRAGMENT);
 
    /* draw with textured quad */
    {
@@ -1116,6 +1156,7 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
    GLint readX, readY, readW, readH;
    GLuint sample_count;
    struct gl_pixelstore_attrib pack = ctx->DefaultPacking;
+   struct st_fp_variant *fpv;
 
    st_validate_state(st);
 
@@ -1125,11 +1166,18 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       return;
    }
 
+   /*
+    * Get vertex/fragment shaders
+    */
    if (type == GL_COLOR) {
       rbRead = st_get_color_read_renderbuffer(ctx);
       color = NULL;
-      driver_fp = combined_drawpix_fragment_program(ctx);
+
+      fpv = get_color_fp_variant(st);
+      driver_fp = fpv->driver_shader;
+
       driver_vp = make_passthrough_vertex_shader(st, GL_FALSE);
+
       if (st->pixel_xfer.pixelmap_enabled) {
 	  sv[1] = st->pixel_xfer.pixelmap_sampler_view;
 	  num_sampler_view++;
@@ -1139,9 +1187,16 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       assert(type == GL_DEPTH);
       rbRead = st_renderbuffer(ctx->ReadBuffer->_DepthBuffer);
       color = ctx->Current.Attrib[VERT_ATTRIB_COLOR0];
-      driver_fp = make_fragment_shader_z_stencil(st, GL_TRUE, GL_FALSE);
+
+      fpv = get_depth_stencil_fp_variant(st, GL_TRUE, GL_FALSE);
+      driver_fp = fpv->driver_shader;
+
       driver_vp = make_passthrough_vertex_shader(st, GL_TRUE);
    }
+
+   /* update fragment program constants */
+   st_upload_constants(st, fpv->parameters, PIPE_SHADER_FRAGMENT);
+
 
    if (rbRead->Base.Wrapped)
       rbRead = st_renderbuffer(rbRead->Base.Wrapped);
@@ -1294,7 +1349,7 @@ st_destroy_drawpix(struct st_context *st)
 
    for (i = 0; i < Elements(st->drawpix.shaders); i++) {
       if (st->drawpix.shaders[i])
-         st_reference_fragprog(st, &st->drawpix.shaders[i], NULL);
+         _mesa_reference_fragprog(st->ctx, &st->drawpix.shaders[i], NULL);
    }
 
    st_reference_fragprog(st, &st->pixel_xfer.combined_prog, NULL);

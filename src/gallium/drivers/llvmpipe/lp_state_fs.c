@@ -90,7 +90,6 @@
 #include "lp_context.h"
 #include "lp_debug.h"
 #include "lp_perf.h"
-#include "lp_screen.h"
 #include "lp_setup.h"
 #include "lp_state.h"
 #include "lp_tex_sample.h"

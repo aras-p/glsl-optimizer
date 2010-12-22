@@ -309,7 +309,9 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
                                         unsigned usage,
                                         unsigned geom_flags)
 {
+    struct r300_winsys_screen *rws = r300_screen(screen)->rws;
     uint32_t retval = 0;
+    boolean drm_2_8_0 = rws->get_value(rws, R300_VID_DRM_2_8_0);
     boolean is_r500 = r300_screen(screen)->caps.is_r500;
     boolean is_r400 = r300_screen(screen)->caps.is_r400;
     boolean is_color2101010 = format == PIPE_FORMAT_R10G10B10A2_UNORM ||
@@ -363,7 +365,7 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
                   PIPE_BIND_SCANOUT |
                   PIPE_BIND_SHARED)) &&
         /* 2101010 cannot be rendered to on non-r5xx. */
-        (is_r500 || !is_color2101010) &&
+        (!is_color2101010 || (is_r500 && drm_2_8_0)) &&
         r300_is_colorbuffer_format_supported(format)) {
         retval |= usage &
             (PIPE_BIND_RENDER_TARGET |

@@ -598,17 +598,15 @@ ir_rvalue *
 validate_assignment(struct _mesa_glsl_parse_state *state,
 		    const glsl_type *lhs_type, ir_rvalue *rhs)
 {
-   const glsl_type *rhs_type = rhs->type;
-
    /* If there is already some error in the RHS, just return it.  Anything
     * else will lead to an avalanche of error message back to the user.
     */
-   if (rhs_type->is_error())
+   if (rhs->type->is_error())
       return rhs;
 
    /* If the types are identical, the assignment can trivially proceed.
     */
-   if (rhs_type == lhs_type)
+   if (rhs->type == lhs_type)
       return rhs;
 
    /* If the array element types are the same and the size of the LHS is zero,
@@ -625,8 +623,7 @@ validate_assignment(struct _mesa_glsl_parse_state *state,
 
    /* Check for implicit conversion in GLSL 1.20 */
    if (apply_implicit_conversion(lhs_type, rhs, state)) {
-      rhs_type = rhs->type;
-      if (rhs_type == lhs_type)
+      if (rhs->type == lhs_type)
 	 return rhs;
    }
 
@@ -2242,6 +2239,17 @@ ast_declarator_list::hir(exec_list *instructions,
 	    if (this->type->qualifier.flags.q.constant)
 	       var->read_only = false;
 
+	    /* Never emit code to initialize a uniform.
+	     */
+	    const glsl_type *initializer_type;
+	    if (!this->type->qualifier.flags.q.uniform) {
+	       result = do_assignment(&initializer_instructions, state,
+				      lhs, rhs,
+				      this->get_location());
+	       initializer_type = result->type;
+	    } else
+	       initializer_type = rhs->type;
+
 	    /* If the declared variable is an unsized array, it must inherrit
 	     * its full type from the initializer.  A declaration such as
 	     *
@@ -2256,16 +2264,14 @@ ast_declarator_list::hir(exec_list *instructions,
 	     *
 	     * If the declared variable is not an array, the types must
 	     * already match exactly.  As a result, the type assignment
-	     * here can be done unconditionally.
+	     * here can be done unconditionally.  For non-uniforms the call
+	     * to do_assignment can change the type of the initializer (via
+	     * the implicit conversion rules).  For uniforms the initializer
+	     * must be a constant expression, and the type of that expression
+	     * was validated above.
 	     */
-	    var->type = rhs->type;
+	    var->type = initializer_type;
 
-	    /* Never emit code to initialize a uniform.
-	     */
-	    if (!this->type->qualifier.flags.q.uniform)
-	       result = do_assignment(&initializer_instructions, state,
-				      lhs, rhs,
-				      this->get_location());
 	    var->read_only = temp;
 	 }
       }

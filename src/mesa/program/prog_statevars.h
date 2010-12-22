@@ -25,8 +25,10 @@
 #ifndef PROG_STATEVARS_H
 #define PROG_STATEVARS_H
 
-#include "main/mtypes.h"
+#include "main/glheader.h"
 
+struct gl_context;
+struct gl_program_parameter_list;
 
 /**
  * Number of STATE_* values we need to address any GL state.

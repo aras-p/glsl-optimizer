@@ -49,8 +49,10 @@ struct radeon_drm_winsys {
     boolean squaretiling;   /* Square tiling support. */
     /* DRM 2.3.0 (R500 VAP regs, MSPOS regs, fixed tex3D size checking) */
     boolean drm_2_3_0;
-    /* DRM 2.6.0 (Hyper-Z, GB_Z_PEQ_CONFIG allowed on rv350->r4xx) */
+    /* DRM 2.6.0 (Hyper-Z, GB_Z_PEQ_CONFIG allowed on rv350->r4xx, FG_ALPHA_VALUE) */
     boolean drm_2_6_0;
+    /* DRM 2.8.0 (US_FORMAT regs, ARGB2101010 colorbuffer) */
+    boolean drm_2_8_0;
     /* Hyper-Z user */
     boolean hyperz;
 

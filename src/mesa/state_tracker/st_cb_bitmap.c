@@ -185,48 +185,47 @@ find_free_bit(uint bitfield)
 
 /**
  * Combine basic bitmap fragment program with the user-defined program.
+ * \param st  current context
+ * \param fpIn  the incoming fragment program
+ * \param fpOut  the new fragment program which does fragment culling
+ * \param bitmap_sampler  sampler number for the bitmap texture
  */
-static struct st_fragment_program *
-combined_bitmap_fragment_program(struct gl_context *ctx)
+void
+st_make_bitmap_fragment_program(struct st_context *st,
+                                struct gl_fragment_program *fpIn,
+                                struct gl_fragment_program **fpOut,
+                                GLuint *bitmap_sampler)
 {
-   struct st_context *st = st_context(ctx);
-   struct st_fragment_program *stfp = st->fp;
+   struct st_fragment_program *bitmap_prog;
+   struct gl_program *newProg;
+   uint sampler;
 
-   if (!stfp->bitmap_program) {
-      /*
-       * Generate new program which is the user-defined program prefixed
-       * with the bitmap sampler/kill instructions.
-       */
-      struct st_fragment_program *bitmap_prog;
-      uint sampler;
+   /*
+    * Generate new program which is the user-defined program prefixed
+    * with the bitmap sampler/kill instructions.
+    */
+   sampler = find_free_bit(fpIn->Base.SamplersUsed);
+   bitmap_prog = make_bitmap_fragment_program(st->ctx, sampler);
 
-      sampler = find_free_bit(st->fp->Base.Base.SamplersUsed);
-      bitmap_prog = make_bitmap_fragment_program(ctx, sampler);
-
-      stfp->bitmap_program = (struct st_fragment_program *)
-         _mesa_combine_programs(ctx,
-                                &bitmap_prog->Base.Base, &stfp->Base.Base);
-      stfp->bitmap_program->bitmap_sampler = sampler;
-
-      /* done with this after combining */
-      st_reference_fragprog(st, &bitmap_prog, NULL);
+   newProg = _mesa_combine_programs(st->ctx,
+                                    &bitmap_prog->Base.Base,
+                                    &fpIn->Base);
+   /* done with this after combining */
+   st_reference_fragprog(st, &bitmap_prog, NULL);
 
 #if 0
-      {
-         struct gl_program *p = &stfp->bitmap_program->Base.Base;
-         printf("Combined bitmap program:\n");
-         _mesa_print_program(p);
-         printf("InputsRead: 0x%x\n", p->InputsRead);
-         printf("OutputsWritten: 0x%x\n", p->OutputsWritten);
-         _mesa_print_parameter_list(p->Parameters);
-      }
+   {
+      printf("Combined bitmap program:\n");
+      _mesa_print_program(newProg);
+      printf("InputsRead: 0x%x\n", newProg->InputsRead);
+      printf("OutputsWritten: 0x%x\n", newProg->OutputsWritten);
+      _mesa_print_parameter_list(newProg->Parameters);
+   }
 #endif
 
-      /* translate to TGSI tokens */
-      st_translate_fragment_program(st, stfp->bitmap_program);
-   }
-
-   return stfp->bitmap_program;
+   /* return results */
+   *fpOut = (struct gl_fragment_program *) newProg;
+   *bitmap_sampler = sampler;
 }
 
 
@@ -349,7 +348,8 @@ setup_bitmap_vertex_data(struct st_context *st, bool normalized,
    if (!st->bitmap.vbuf) {
       st->bitmap.vbuf = pipe_buffer_create(pipe->screen, 
                                            PIPE_BIND_VERTEX_BUFFER,
-                                           max_slots * sizeof(st->bitmap.vertices));
+                                           max_slots *
+                                           sizeof(st->bitmap.vertices));
    }
 
    /* Positions are in clip coords since we need to do clipping in case
@@ -389,10 +389,11 @@ setup_bitmap_vertex_data(struct st_context *st, bool normalized,
 
    /* put vertex data into vbuf */
    pipe_buffer_write_nooverlap(st->pipe,
-                                           st->bitmap.vbuf,
-                                           st->bitmap.vbuf_slot * sizeof st->bitmap.vertices,
-                                           sizeof st->bitmap.vertices,
-                                           st->bitmap.vertices);
+                               st->bitmap.vbuf,
+                               st->bitmap.vbuf_slot
+                               * sizeof(st->bitmap.vertices),
+                               sizeof st->bitmap.vertices,
+                               st->bitmap.vertices);
 
    return st->bitmap.vbuf_slot++ * sizeof st->bitmap.vertices;
 }
@@ -411,11 +412,16 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
    struct cso_context *cso = st->cso_context;
-   struct st_fragment_program *stfp;
+   struct st_fp_variant *fpv;
+   struct st_fp_variant_key key;
    GLuint maxSize;
    GLuint offset;
 
-   stfp = combined_bitmap_fragment_program(ctx);
+   memset(&key, 0, sizeof(key));
+   key.st = st;
+   key.bitmap = GL_TRUE;
+
+   fpv = st_get_fp_variant(st, st->fp, &key);
 
    /* As an optimization, Mesa's fragment programs will sometimes get the
     * primary color from a statevar/constant rather than a varying variable.
@@ -428,7 +434,7 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
       GLfloat colorSave[4];
       COPY_4V(colorSave, ctx->Current.Attrib[VERT_ATTRIB_COLOR0]);
       COPY_4V(ctx->Current.Attrib[VERT_ATTRIB_COLOR0], color);
-      st_upload_constants(st, stfp->Base.Base.Parameters, PIPE_SHADER_FRAGMENT);
+      st_upload_constants(st, fpv->parameters, PIPE_SHADER_FRAGMENT);
       COPY_4V(ctx->Current.Attrib[VERT_ATTRIB_COLOR0], colorSave);
    }
 
@@ -437,7 +443,8 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    /* XXX if the bitmap is larger than the max texture size, break
     * it up into chunks.
     */
-   maxSize = 1 << (pipe->screen->get_param(pipe->screen, PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
+   maxSize = 1 << (pipe->screen->get_param(pipe->screen,
+                                    PIPE_CAP_MAX_TEXTURE_2D_LEVELS) - 1);
    assert(width <= (GLsizei)maxSize);
    assert(height <= (GLsizei)maxSize);
 
@@ -454,7 +461,7 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_set_rasterizer(cso, &st->bitmap.rasterizer);
 
    /* fragment shader state: TEX lookup program */
-   cso_set_fragment_shader_handle(cso, stfp->driver_shader);
+   cso_set_fragment_shader_handle(cso, fpv->driver_shader);
 
    /* vertex shader state: position + texcoord pass-through */
    cso_set_vertex_shader_handle(cso, st->bitmap.vs);
@@ -462,21 +469,22 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    /* user samplers, plus our bitmap sampler */
    {
       struct pipe_sampler_state *samplers[PIPE_MAX_SAMPLERS];
-      uint num = MAX2(stfp->bitmap_sampler + 1, st->state.num_samplers);
+      uint num = MAX2(fpv->bitmap_sampler + 1, st->state.num_samplers);
       uint i;
       for (i = 0; i < st->state.num_samplers; i++) {
          samplers[i] = &st->state.samplers[i];
       }
-      samplers[stfp->bitmap_sampler] = &st->bitmap.samplers[sv->texture->target != PIPE_TEXTURE_RECT];
+      samplers[fpv->bitmap_sampler] =
+         &st->bitmap.samplers[sv->texture->target != PIPE_TEXTURE_RECT];
       cso_set_samplers(cso, num, (const struct pipe_sampler_state **) samplers);
    }
 
    /* user textures, plus the bitmap texture */
    {
       struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
-      uint num = MAX2(stfp->bitmap_sampler + 1, st->state.num_textures);
+      uint num = MAX2(fpv->bitmap_sampler + 1, st->state.num_textures);
       memcpy(sampler_views, st->state.sampler_views, sizeof(sampler_views));
-      sampler_views[stfp->bitmap_sampler] = sv;
+      sampler_views[fpv->bitmap_sampler] = sv;
       cso_set_fragment_sampler_views(cso, num, sampler_views);
    }
 
@@ -504,7 +512,9 @@ draw_bitmap_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    z = z * 2.0 - 1.0;
 
    /* draw textured quad */
-   offset = setup_bitmap_vertex_data(st, sv->texture->target != PIPE_TEXTURE_RECT, x, y, width, height, z, color);
+   offset = setup_bitmap_vertex_data(st,
+                                     sv->texture->target != PIPE_TEXTURE_RECT,
+                                     x, y, width, height, z, color);
 
    util_draw_vertex_buffer(pipe, st->bitmap.vbuf, offset,
                            PIPE_PRIM_TRIANGLE_FAN,
@@ -573,6 +583,9 @@ print_cache(const struct bitmap_cache *cache)
 }
 
 
+/**
+ * Create gallium pipe_transfer object for the bitmap cache.
+ */
 static void
 create_cache_trans(struct st_context *st)
 {
@@ -651,7 +664,9 @@ st_flush_bitmap_cache(struct st_context *st)
    }
 }
 
-/* Flush bitmap cache and release vertex buffer.
+
+/**
+ * Flush bitmap cache and release vertex buffer.
  */
 void
 st_flush_bitmap( struct st_context *st )
@@ -737,7 +752,8 @@ accum_bitmap(struct st_context *st,
  * Called via ctx->Driver.Bitmap()
  */
 static void
-st_Bitmap(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei height,
+st_Bitmap(struct gl_context *ctx, GLint x, GLint y,
+          GLsizei width, GLsizei height,
           const struct gl_pixelstore_attrib *unpack, const GLubyte *bitmap )
 {
    struct st_context *st = st_context(ctx);
@@ -764,7 +780,8 @@ st_Bitmap(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei heigh
 
    pt = make_bitmap_texture(ctx, width, height, unpack, bitmap);
    if (pt) {
-      struct pipe_sampler_view *sv = st_create_texture_sampler_view(st->pipe, pt);
+      struct pipe_sampler_view *sv =
+         st_create_texture_sampler_view(st->pipe, pt);
 
       assert(pt->target == PIPE_TEXTURE_2D || pt->target == PIPE_TEXTURE_RECT);
 
@@ -814,15 +831,18 @@ st_init_bitmap(struct st_context *st)
    st->bitmap.rasterizer.gl_rasterization_rules = 1;
 
    /* find a usable texture format */
-   if (screen->is_format_supported(screen, PIPE_FORMAT_I8_UNORM, PIPE_TEXTURE_2D, 0,
+   if (screen->is_format_supported(screen, PIPE_FORMAT_I8_UNORM,
+                                   PIPE_TEXTURE_2D, 0,
                                    PIPE_BIND_SAMPLER_VIEW, 0)) {
       st->bitmap.tex_format = PIPE_FORMAT_I8_UNORM;
    }
-   else if (screen->is_format_supported(screen, PIPE_FORMAT_A8_UNORM, PIPE_TEXTURE_2D, 0,
+   else if (screen->is_format_supported(screen, PIPE_FORMAT_A8_UNORM,
+                                        PIPE_TEXTURE_2D, 0,
                                         PIPE_BIND_SAMPLER_VIEW, 0)) {
       st->bitmap.tex_format = PIPE_FORMAT_A8_UNORM;
    }
-   else if (screen->is_format_supported(screen, PIPE_FORMAT_L8_UNORM, PIPE_TEXTURE_2D, 0,
+   else if (screen->is_format_supported(screen, PIPE_FORMAT_L8_UNORM,
+                                        PIPE_TEXTURE_2D, 0,
                                         PIPE_BIND_SAMPLER_VIEW, 0)) {
       st->bitmap.tex_format = PIPE_FORMAT_L8_UNORM;
    }
@@ -844,8 +864,6 @@ st_destroy_bitmap(struct st_context *st)
 {
    struct pipe_context *pipe = st->pipe;
    struct bitmap_cache *cache = st->bitmap.cache;
-
-
 
    if (st->bitmap.vs) {
       cso_delete_vertex_shader(st->cso_context, st->bitmap.vs);

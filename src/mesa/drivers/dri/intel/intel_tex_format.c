@@ -4,6 +4,39 @@
 #include "main/formats.h"
 
 /**
+ * Returns the renderbuffer DataType for a MESA_FORMAT.
+ */
+GLenum
+intel_mesa_format_to_rb_datatype(gl_format format)
+{
+   switch (format) {
+   case MESA_FORMAT_ARGB8888:
+   case MESA_FORMAT_XRGB8888:
+   case MESA_FORMAT_SARGB8:
+   case MESA_FORMAT_R8:
+   case MESA_FORMAT_RG88:
+   case MESA_FORMAT_A8:
+   case MESA_FORMAT_AL88:
+   case MESA_FORMAT_RGB565:
+   case MESA_FORMAT_ARGB1555:
+   case MESA_FORMAT_ARGB4444:
+      return GL_UNSIGNED_BYTE;
+   case MESA_FORMAT_R16:
+   case MESA_FORMAT_RG1616:
+   case MESA_FORMAT_Z16:
+      return GL_UNSIGNED_SHORT;
+   case MESA_FORMAT_X8_Z24:
+      return GL_UNSIGNED_INT;
+   case MESA_FORMAT_S8_Z24:
+      return GL_UNSIGNED_INT_24_8_EXT;
+   default:
+      _mesa_problem(NULL, "unexpected MESA_FORMAT for renderbuffer");
+      return GL_UNSIGNED_BYTE;
+   }
+}
+
+
+/**
  * Choose hardware texture format given the user's glTexImage parameters.
  *
  * It works out that this function is fine for all the supported

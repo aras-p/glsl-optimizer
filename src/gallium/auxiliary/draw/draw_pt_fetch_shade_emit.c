@@ -58,8 +58,8 @@ struct fetch_shade_emit {
    const ubyte *src[PIPE_MAX_ATTRIBS];
    unsigned prim;
 
-   struct draw_vs_varient_key key;
-   struct draw_vs_varient *active;
+   struct draw_vs_variant_key key;
+   struct draw_vs_variant *active;
 
 
    const struct vertex_info *vinfo;
@@ -150,7 +150,7 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
    }
 
    
-   fse->active = draw_vs_lookup_varient( draw->vs.vertex_shader, 
+   fse->active = draw_vs_lookup_variant( draw->vs.vertex_shader, 
                                          &fse->key );
 
    if (!fse->active) {

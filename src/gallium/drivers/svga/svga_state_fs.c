@@ -136,7 +136,7 @@ static int make_fs_key( const struct svga_context *svga,
 
    /* The blend workaround for simulating logicop xor behaviour
     * requires that the incoming fragment color be white.  This change
-    * achieves that by creating a varient of the current fragment
+    * achieves that by creating a variant of the current fragment
     * shader that overrides all output colors with 1,1,1,1
     *   
     * This will work for most shaders, including those containing

@@ -16,6 +16,7 @@ GLCPP_SOURCES = \
 	glcpp/glcpp.c
 
 C_SOURCES = \
+	strtod.c \
 	$(LIBGLCPP_SOURCES)
 
 CXX_SOURCES = \

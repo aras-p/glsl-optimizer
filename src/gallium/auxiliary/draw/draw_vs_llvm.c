@@ -107,7 +107,7 @@ draw_create_vs_llvm(struct draw_context *draw,
    vs->base.prepare = vs_llvm_prepare;
    vs->base.run_linear = vs_llvm_run_linear;
    vs->base.delete = vs_llvm_delete;
-   vs->base.create_varient = draw_vs_create_varient_generic;
+   vs->base.create_variant = draw_vs_create_variant_generic;
 
    make_empty_list(&vs->variants);
 

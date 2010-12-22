@@ -98,9 +98,9 @@ struct aos_buffer {
 
 
 
-/* This is the temporary storage used by all the aos_sse vs varients.
+/* This is the temporary storage used by all the aos_sse vs variants.
  * Create one per context and reuse by passing a pointer in at
- * vs_varient creation??
+ * vs_variant creation??
  */
 struct aos_machine {
    float input    [MAX_INPUTS    ][4];
@@ -134,7 +134,7 @@ struct aos_machine {
 
 struct aos_compilation {
    struct x86_function *func;
-   struct draw_vs_varient_aos_sse *vaos;
+   struct draw_vs_variant_aos_sse *vaos;
 
    unsigned insn_counter;
    unsigned num_immediates;
@@ -234,8 +234,8 @@ typedef void (PIPE_CDECL *vaos_run_linear_func)( struct aos_machine *,
                                                 void *output_buffer);
 
 
-struct draw_vs_varient_aos_sse {
-   struct draw_vs_varient base;
+struct draw_vs_variant_aos_sse {
+   struct draw_vs_variant base;
    struct draw_context *draw;
 
    struct aos_buffer *buffer;

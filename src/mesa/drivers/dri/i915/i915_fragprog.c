@@ -1162,11 +1162,6 @@ translate_program(struct i915_fragment_program *p)
    fixup_depth_write(p);
    i915_fini_program(p);
 
-   if (INTEL_DEBUG & DEBUG_WM) {
-      printf("i915:\n");
-      i915_disassemble_program(i915->state.Program, i915->state.ProgramSize);
-   }
-
    p->translated = 1;
 }
 
@@ -1427,6 +1422,11 @@ i915ValidateFragmentProgram(struct i915_context *i915)
 
    if (!p->on_hardware)
       i915_upload_program(i915, p);
+
+   if (INTEL_DEBUG & DEBUG_WM) {
+      printf("i915:\n");
+      i915_disassemble_program(i915->state.Program, i915->state.ProgramSize);
+   }
 }
 
 void

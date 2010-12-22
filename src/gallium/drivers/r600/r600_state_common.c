@@ -119,6 +119,11 @@ void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_vertex_element *v = (struct r600_vertex_element*)state;
 
+	/* delete previous translated vertex elements */
+	if (rctx->tran.new_velems) {
+		r600_end_vertex_translate(rctx);
+	}
+
 	rctx->vertex_elements = v;
 	if (v) {
 		rctx->states[v->rstate.id] = &v->rstate;
@@ -174,8 +179,16 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 	struct pipe_vertex_buffer *vbo;
 	unsigned max_index = (unsigned)-1;
 
-	for (int i = 0; i < rctx->nvertex_buffer; i++) {
-		pipe_resource_reference(&rctx->vertex_buffer[i].buffer, NULL);
+	if (rctx->family >= CHIP_CEDAR) {
+		for (int i = 0; i < rctx->nvertex_buffer; i++) {
+			pipe_resource_reference(&rctx->vertex_buffer[i].buffer, NULL);
+			evergreen_context_pipe_state_set_fs_resource(&rctx->ctx, NULL, i);
+		}
+	} else {
+		for (int i = 0; i < rctx->nvertex_buffer; i++) {
+			pipe_resource_reference(&rctx->vertex_buffer[i].buffer, NULL);
+			r600_context_pipe_state_set_fs_resource(&rctx->ctx, NULL, i);
+		}
 	}
 	memcpy(rctx->vertex_buffer, buffers, sizeof(struct pipe_vertex_buffer) * count);
 
@@ -183,15 +196,19 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 		vbo = (struct pipe_vertex_buffer*)&buffers[i];
 
 		rctx->vertex_buffer[i].buffer = NULL;
+		if (buffers[i].buffer == NULL)
+			continue;
 		if (r600_buffer_is_user_buffer(buffers[i].buffer))
 			rctx->any_user_vbs = TRUE;
 		pipe_resource_reference(&rctx->vertex_buffer[i].buffer, buffers[i].buffer);
 
+		/* The stride of zero means we will be fetching only the first
+		 * vertex, so don't care about max_index. */
+		if (!vbo->stride)
+			continue;
+
 		if (vbo->max_index == ~0) {
-			if (!vbo->stride)
-				vbo->max_index = 1;
-			else
-				vbo->max_index = (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
+			vbo->max_index = (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
 		}
 		max_index = MIN2(vbo->max_index, max_index);
 	}

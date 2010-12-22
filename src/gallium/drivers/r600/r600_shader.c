@@ -1421,7 +1421,7 @@ static int tgsi_pow(struct r600_shader_ctx *ctx)
 		return r;
 	/* b * LOG2(a) */
 	memset(&alu, 0, sizeof(struct r600_bc_alu));
-	alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL_IEEE);
+	alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL);
 	r = tgsi_src(ctx, &inst->Src[1], &alu.src[0]);
 	if (r)
 		return r;

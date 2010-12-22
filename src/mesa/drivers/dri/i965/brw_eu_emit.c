@@ -1812,12 +1812,12 @@ void brw_fb_WRITE(struct brw_compile *p,
                   GLuint binding_table_index,
                   GLuint msg_length,
                   GLuint response_length,
-                  GLboolean eot)
+                  GLboolean eot,
+                  GLboolean header_present)
 {
    struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *insn;
    GLuint msg_control, msg_type;
-   GLboolean header_present = GL_TRUE;
 
    if (intel->gen >= 6 && binding_table_index == 0) {
       insn = next_insn(p, BRW_OPCODE_SENDC);
@@ -1829,9 +1829,6 @@ void brw_fb_WRITE(struct brw_compile *p,
    insn->header.compression_control = BRW_COMPRESSION_NONE;
 
    if (intel->gen >= 6) {
-      if (msg_length == 4)
-	 header_present = GL_FALSE;
-
        /* headerless version, just submit color payload */
        src0 = brw_message_reg(msg_reg_nr);
 
@@ -1936,7 +1933,8 @@ void brw_SAMPLE(struct brw_compile *p,
 	 brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 	 brw_set_mask_control(p, BRW_MASK_DISABLE);
 
-	 brw_MOV(p, m1, brw_vec8_grf(0,0));	 
+	 brw_MOV(p, retype(m1, BRW_REGISTER_TYPE_UD),
+		 retype(brw_vec8_grf(0,0), BRW_REGISTER_TYPE_UD));
   	 brw_MOV(p, get_element_ud(m1, 2), brw_imm_ud(newmask << 12)); 
 
 	 brw_pop_insn_state(p);
@@ -1997,7 +1995,8 @@ void brw_SAMPLE(struct brw_compile *p,
        */
       brw_push_insn_state(p);
       brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-      brw_MOV(p, reg, reg);	      
+      brw_MOV(p, retype(reg, BRW_REGISTER_TYPE_UD),
+	      retype(reg, BRW_REGISTER_TYPE_UD));
       brw_pop_insn_state(p);
    }
 
@@ -2029,7 +2028,8 @@ void brw_urb_WRITE(struct brw_compile *p,
    if (intel->gen >= 6) {
       brw_push_insn_state(p);
       brw_set_mask_control( p, BRW_MASK_DISABLE );
-      brw_MOV(p, brw_message_reg(msg_reg_nr), src0);
+      brw_MOV(p, retype(brw_message_reg(msg_reg_nr), BRW_REGISTER_TYPE_UD),
+	      retype(src0, BRW_REGISTER_TYPE_UD));
       brw_pop_insn_state(p);
       src0 = brw_message_reg(msg_reg_nr);
    }

@@ -154,9 +154,9 @@ struct softpipe_context {
 
    /** TGSI exec things */
    struct {
-      struct sp_sampler_varient *geom_samplers_list[PIPE_MAX_GEOMETRY_SAMPLERS];
-      struct sp_sampler_varient *vert_samplers_list[PIPE_MAX_VERTEX_SAMPLERS];
-      struct sp_sampler_varient *frag_samplers_list[PIPE_MAX_SAMPLERS];
+      struct sp_sampler_variant *geom_samplers_list[PIPE_MAX_GEOMETRY_SAMPLERS];
+      struct sp_sampler_variant *vert_samplers_list[PIPE_MAX_VERTEX_SAMPLERS];
+      struct sp_sampler_variant *frag_samplers_list[PIPE_MAX_SAMPLERS];
    } tgsi;
 
    struct tgsi_exec_machine *fs_machine;
@@ -192,7 +192,7 @@ softpipe_context( struct pipe_context *pipe )
 }
 
 void
-softpipe_reset_sampler_varients(struct softpipe_context *softpipe);
+softpipe_reset_sampler_variants(struct softpipe_context *softpipe);
 
 struct pipe_context *
 softpipe_create_context( struct pipe_screen *, void *priv );

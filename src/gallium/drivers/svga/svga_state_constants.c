@@ -110,7 +110,7 @@ static int emit_consts( struct svga_context *svga,
 
 done:
    if (data)
-      pipe_buffer_unmap(&svga->pipe, svga->curr.cb[unit], transfer);
+      pipe_buffer_unmap(&svga->pipe, transfer);
 
    return ret;
 }

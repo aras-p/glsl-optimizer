@@ -689,11 +689,12 @@ static void transform_r300_vertex_fix_LIT(struct radeon_compiler* c,
 							 &constant_swizzle);
 
 	/* MOV dst, src */
+	dst.WriteMask = RC_MASK_XYZW;
 	emit1(c, inst->Prev, RC_OPCODE_MOV, 0,
 		dst,
 		inst->U.I.SrcReg[0]);
 
-	/* MAX dst.z, src, 0.00...001 */
+	/* MAX dst.y, src, 0.00...001 */
 	emit2(c, inst->Prev, RC_OPCODE_MAX, 0,
 		dstregtmpmask(dst.Index, RC_MASK_Y),
 		srcreg(RC_FILE_TEMPORARY, dst.Index),

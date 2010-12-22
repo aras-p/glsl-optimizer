@@ -36,9 +36,7 @@
 #include "util/u_memory.h"
 #include "gallivm/lp_bld_init.h"
 #include "gallivm/lp_bld_debug.h"
-#include "gallivm/lp_bld_intr.h"
 #include "lp_context.h"
-#include "lp_screen.h"
 #include "lp_jit.h"
 
 

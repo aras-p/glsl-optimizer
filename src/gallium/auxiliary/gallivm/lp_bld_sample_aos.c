@@ -1098,6 +1098,4 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
       texel_out[2] = unswizzled[2];
       texel_out[3] = unswizzled[3];
    }
-
-   apply_sampler_swizzle(bld, texel_out);
 }

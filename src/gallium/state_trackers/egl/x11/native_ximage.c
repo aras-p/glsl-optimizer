@@ -38,11 +38,6 @@
 #include "native_x11.h"
 #include "x11_screen.h"
 
-enum ximage_surface_type {
-   XIMAGE_SURFACE_TYPE_WINDOW,
-   XIMAGE_SURFACE_TYPE_PIXMAP,
-};
-
 struct ximage_display {
    struct native_display base;
    Display *dpy;
@@ -60,7 +55,6 @@ struct ximage_display {
 struct ximage_surface {
    struct native_surface base;
    Drawable drawable;
-   enum ximage_surface_type type;
    enum pipe_format color_format;
    XVisualInfo visual;
    struct ximage_display *xdpy;
@@ -245,7 +239,6 @@ ximage_surface_destroy(struct native_surface *nsurf)
 
 static struct ximage_surface *
 ximage_display_create_surface(struct native_display *ndpy,
-                              enum ximage_surface_type type,
                               Drawable drawable,
                               const struct native_config *nconf)
 {
@@ -258,7 +251,6 @@ ximage_display_create_surface(struct native_display *ndpy,
       return NULL;
 
    xsurf->xdpy = xdpy;
-   xsurf->type = type;
    xsurf->color_format = xconf->base.color_format;
    xsurf->drawable = drawable;
 
@@ -297,9 +289,35 @@ ximage_display_create_window_surface(struct native_display *ndpy,
 {
    struct ximage_surface *xsurf;
 
-   xsurf = ximage_display_create_surface(ndpy, XIMAGE_SURFACE_TYPE_WINDOW,
-         (Drawable) win, nconf);
+   xsurf = ximage_display_create_surface(ndpy, (Drawable) win, nconf);
    return (xsurf) ? &xsurf->base : NULL;
+}
+
+static enum pipe_format
+get_pixmap_format(struct native_display *ndpy, EGLNativePixmapType pix)
+{
+   struct ximage_display *xdpy = ximage_display(ndpy);
+   enum pipe_format fmt;
+   uint depth;
+
+   depth = x11_drawable_get_depth(xdpy->xscr, (Drawable) pix);
+
+   switch (depth) {
+   case 32:
+      fmt = PIPE_FORMAT_B8G8R8A8_UNORM;
+      break;
+   case 24:
+      fmt = PIPE_FORMAT_B8G8R8X8_UNORM;
+      break;
+   case 16:
+      fmt = PIPE_FORMAT_B5G6R5_UNORM;
+      break;
+   default:
+      fmt = PIPE_FORMAT_NONE;
+      break;
+   }
+
+   return fmt;
 }
 
 static struct native_surface *
@@ -309,8 +327,26 @@ ximage_display_create_pixmap_surface(struct native_display *ndpy,
 {
    struct ximage_surface *xsurf;
 
-   xsurf = ximage_display_create_surface(ndpy, XIMAGE_SURFACE_TYPE_PIXMAP,
-         (Drawable) pix, nconf);
+   /* find the config */
+   if (!nconf) {
+      struct ximage_display *xdpy = ximage_display(ndpy);
+      enum pipe_format fmt = get_pixmap_format(&xdpy->base, pix);
+      int i;
+
+      if (fmt != PIPE_FORMAT_NONE) {
+         for (i = 0; i < xdpy->num_configs; i++) {
+            if (xdpy->configs[i].base.color_format == fmt) {
+               nconf = &xdpy->configs[i].base;
+               break;
+            }
+         }
+      }
+
+      if (!nconf)
+         return NULL;
+   }
+
+   xsurf = ximage_display_create_surface(ndpy, (Drawable) pix, nconf);
    return (xsurf) ? &xsurf->base : NULL;
 }
 
@@ -384,8 +420,6 @@ ximage_display_get_configs(struct native_display *ndpy, int *num_configs)
          xconf->base.native_visual_type = xconf->visual->class;
 #endif
 
-         xconf->base.slow_config = TRUE;
-
          count++;
       }
 
@@ -408,24 +442,7 @@ ximage_display_is_pixmap_supported(struct native_display *ndpy,
                                    const struct native_config *nconf)
 {
    struct ximage_display *xdpy = ximage_display(ndpy);
-   enum pipe_format fmt;
-   uint depth;
-
-   depth = x11_drawable_get_depth(xdpy->xscr, (Drawable) pix);
-   switch (depth) {
-   case 32:
-      fmt = PIPE_FORMAT_B8G8R8A8_UNORM;
-      break;
-   case 24:
-      fmt = PIPE_FORMAT_B8G8R8X8_UNORM;
-      break;
-   case 16:
-      fmt = PIPE_FORMAT_B5G6R5_UNORM;
-      break;
-   default:
-      fmt = PIPE_FORMAT_NONE;
-      break;
-   }
+   enum pipe_format fmt = get_pixmap_format(&xdpy->base, pix);
 
    return (fmt == nconf->color_format);
 }

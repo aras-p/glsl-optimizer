@@ -9,7 +9,7 @@ if env['platform'] != 'winddk':
     env = env.Clone()
     
     env.Append(CPPDEFINES = [
-        'MAPI_GLAPI_CURRENT',
+        'MAPI_MODE_UTIL',
     ])
 
     if env['platform'] == 'windows':
@@ -29,6 +29,7 @@ if env['platform'] != 'winddk':
         'glapi_getproc.c',
         'glapi_nop.c',
         'glthread.c',
+        'glapi.c',
     ]
     
     mapi_sources = [

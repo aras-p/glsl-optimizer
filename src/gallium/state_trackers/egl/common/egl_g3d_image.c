@@ -48,17 +48,11 @@ static struct pipe_resource *
 egl_g3d_reference_native_pixmap(_EGLDisplay *dpy, EGLNativePixmapType pix)
 {
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
-   struct egl_g3d_config *gconf;
    struct native_surface *nsurf;
    struct pipe_resource *textures[NUM_NATIVE_ATTACHMENTS];
    enum native_attachment natt;
 
-   gconf = egl_g3d_config(egl_g3d_find_pixmap_config(dpy, pix));
-   if (!gconf)
-      return NULL;
-
-   nsurf = gdpy->native->create_pixmap_surface(gdpy->native,
-         pix, gconf->native);
+   nsurf = gdpy->native->create_pixmap_surface(gdpy->native, pix, NULL);
    if (!nsurf)
       return NULL;
 

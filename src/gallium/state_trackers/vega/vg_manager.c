@@ -33,14 +33,12 @@
 #include "pipe/p_screen.h"
 #include "util/u_memory.h"
 #include "util/u_inlines.h"
-#include "util/u_sampler.h"
 #include "util/u_box.h"
 #include "util/u_surface.h"
 
 #include "vg_api.h"
 #include "vg_manager.h"
 #include "vg_context.h"
-#include "image.h"
 #include "api.h"
 
 static boolean

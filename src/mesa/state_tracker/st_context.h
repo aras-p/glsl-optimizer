@@ -1,4 +1,3 @@
-//struct dd_function_table;
 /**************************************************************************
  * 
  * Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
@@ -130,7 +129,9 @@ struct st_context
    struct st_fragment_program *fp;  /**< Currently bound fragment program */
    struct st_geometry_program *gp;  /**< Currently bound geometry program */
 
-   struct st_vp_varient *vp_varient;
+   struct st_vp_variant *vp_variant;
+   struct st_fp_variant *fp_variant;
+   struct st_gp_variant *gp_variant;
 
    struct gl_texture_object *default_texture;
 
@@ -160,7 +161,7 @@ struct st_context
 
    /** for glDraw/CopyPixels */
    struct {
-      struct st_fragment_program *shaders[4];
+      struct gl_fragment_program *shaders[4];
       void *vert_shaders[2];   /**< ureg shaders */
    } drawpix;
 

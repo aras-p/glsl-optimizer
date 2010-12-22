@@ -123,10 +123,10 @@ st_feedback_draw_vbo(struct gl_context *ctx,
 
    /* must get these after state validation! */
    vp = st->vp;
-   vs = &st->vp_varient->tgsi;
+   vs = &st->vp_variant->tgsi;
 
-   if (!st->vp_varient->draw_shader) {
-      st->vp_varient->draw_shader = draw_create_vertex_shader(draw, vs);
+   if (!st->vp_variant->draw_shader) {
+      st->vp_variant->draw_shader = draw_create_vertex_shader(draw, vs);
    }
 
    /*
@@ -139,7 +139,7 @@ st_feedback_draw_vbo(struct gl_context *ctx,
    draw_set_viewport_state(draw, &st->state.viewport);
    draw_set_clip_state(draw, &st->state.clip);
    draw_set_rasterizer_state(draw, &st->state.rasterizer, NULL);
-   draw_bind_vertex_shader(draw, st->vp_varient->draw_shader);
+   draw_bind_vertex_shader(draw, st->vp_variant->draw_shader);
    set_feedback_vertex_format(ctx);
 
    /* loop over TGSI shader inputs to determine vertex buffer
@@ -259,16 +259,14 @@ st_feedback_draw_vbo(struct gl_context *ctx,
 
 
    /* unmap constant buffers */
-   pipe_buffer_unmap(pipe, st->state.constants[PIPE_SHADER_VERTEX],
-		     cb_transfer);
+   pipe_buffer_unmap(pipe, cb_transfer);
 
    /*
     * unmap vertex/index buffers
     */
    for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
       if (draw->pt.vertex_buffer[i].buffer) {
-         pipe_buffer_unmap(pipe, draw->pt.vertex_buffer[i].buffer, 
-			   vb_transfer[i]);
+         pipe_buffer_unmap(pipe, vb_transfer[i]);
          pipe_resource_reference(&draw->pt.vertex_buffer[i].buffer, NULL);
          draw_set_mapped_vertex_buffer(draw, i, NULL);
       }
@@ -279,7 +277,7 @@ st_feedback_draw_vbo(struct gl_context *ctx,
       draw_set_index_buffer(draw, NULL);
 
       if (ib_transfer)
-         pipe_buffer_unmap(pipe, ibuffer.buffer, ib_transfer);
+         pipe_buffer_unmap(pipe, ib_transfer);
       pipe_resource_reference(&ibuffer.buffer, NULL);
    }
 }
