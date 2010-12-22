@@ -645,6 +645,10 @@ static uint32_t r300_get_border_color(enum pipe_format format,
     }
 
     switch (desc->channel[0].size) {
+        case 2:
+            util_pack_color(border_swizzled, PIPE_FORMAT_B2G3R3_UNORM, &uc);
+            break;
+
         case 4:
             util_pack_color(border_swizzled, PIPE_FORMAT_B4G4R4A4_UNORM, &uc);
             break;

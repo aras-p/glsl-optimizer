@@ -244,6 +244,11 @@ uint32_t r300_translate_texformat(enum pipe_format format,
                     desc->channel[2].size == 6) {
                     return R300_TX_FORMAT_Z6Y5X5 | result;
                 }
+                if (desc->channel[0].size == 2 &&
+                    desc->channel[1].size == 3 &&
+                    desc->channel[2].size == 3) {
+                    return R300_TX_FORMAT_Z3Y3X2 | result;
+                }
                 return ~0; /* Unsupported/unknown. */
 
             case 4:
