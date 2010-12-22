@@ -47,6 +47,6 @@ struct r600_shader {
 	boolean			uses_kill;
 };
 
-int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *shader);
+int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *shader, u32 **literals);
 
 #endif

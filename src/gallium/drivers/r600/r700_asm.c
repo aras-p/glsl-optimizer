@@ -29,8 +29,6 @@
 
 int r700_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id)
 {
-	unsigned i;
-
 	bc->bytecode[id++] = S_SQ_ALU_WORD0_SRC0_SEL(alu->src[0].sel) |
 		S_SQ_ALU_WORD0_SRC0_REL(alu->src[0].rel) |
 		S_SQ_ALU_WORD0_SRC0_CHAN(alu->src[0].chan) |
@@ -66,14 +64,6 @@ int r700_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id)
 					S_SQ_ALU_WORD1_BANK_SWIZZLE(alu->bank_swizzle) |
 			                S_SQ_ALU_WORD1_OP2_UPDATE_EXECUTE_MASK(alu->predicate) |
 		 	                S_SQ_ALU_WORD1_OP2_UPDATE_PRED(alu->predicate);
-	}
-	if (alu->last) {
-		if (alu->nliteral && !alu->literal_added) {
-			R600_ERR("Bug in ALU processing for instruction 0x%08x, literal not added correctly\n", alu->inst);
-		}
-		for (i = 0; i < alu->nliteral; i++) {
-			bc->bytecode[id++] = alu->value[i];
-		}
 	}
 	return 0;
 }
