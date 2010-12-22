@@ -142,12 +142,12 @@ create_vert_shader(struct vl_idct *idct, bool matrix_stage)
 
    ureg_ADD(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_XY), vpos, vrect);
    ureg_MUL(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_XY), ureg_src(t_tex), scale);
-   ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(t_tex));
-   ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), vpos);
-
    ureg_MUL(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_Z),
       ureg_scalar(vrect, TGSI_SWIZZLE_X),
       ureg_imm1f(shader, BLOCK_WIDTH / NR_RENDER_TARGETS));
+
+   ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(t_tex));
+   ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), vpos);
 
    ureg_MUL(shader, ureg_writemask(t_start, TGSI_WRITEMASK_XY), vpos, scale);
 

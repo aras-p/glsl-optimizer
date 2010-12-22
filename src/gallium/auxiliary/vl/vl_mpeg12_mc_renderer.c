@@ -87,8 +87,7 @@ enum VS_OUTPUT
    VS_O_TEX2,
    VS_O_EB_0,
    VS_O_EB_1,
-   VS_O_REF_FRAMES,
-   VS_O_BKWD_PRED,
+   VS_O_INFO,
    VS_O_MV0,
    VS_O_MV1,
    VS_O_MV2,
@@ -99,12 +98,11 @@ static void *
 create_vert_shader(struct vl_mpeg12_mc_renderer *r)
 {
    struct ureg_program *shader;
-   struct ureg_src scale;
+   struct ureg_src block_scale, mv_scale;
    struct ureg_src vrect, vpos, eb[2][2], vmv[4];
    struct ureg_src interlaced, frame_pred, ref_frames, bkwd_pred;
    struct ureg_dst t_vpos, t_vtex, t_vmv;
-   struct ureg_dst o_vpos, o_line, o_vtex[3], o_eb[2], o_vmv[4];
-   struct ureg_dst o_ref_frames, o_bkwd_pred;
+   struct ureg_dst o_vpos, o_line, o_vtex[3], o_eb[2], o_vmv[4], o_info;
    unsigned i, label;
 
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
@@ -133,8 +131,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
    o_vtex[2] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX2);   
    o_eb[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB_0);
    o_eb[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB_1);
-   o_ref_frames = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_REF_FRAMES);
-   o_bkwd_pred = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_BKWD_PRED);
+   o_info = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_INFO);
    
    for (i = 0; i < 4; ++i) {
      vmv[i] = ureg_DECL_vs_input(shader, VS_I_MV0 + i);
@@ -142,11 +139,22 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
    }
 
    /*
-    * scale = (MACROBLOCK_WIDTH, MACROBLOCK_HEIGHT) / (dst.width, dst.height)
+    * block_scale = (MACROBLOCK_WIDTH, MACROBLOCK_HEIGHT) / (dst.width, dst.height)
+    * mv_scale = 0.5 / (dst.width, dst.height);
     *
-    * t_vpos = (vpos + vrect) * scale
+    * t_vpos = (vpos + vrect) * block_scale
     * o_vpos.xy = t_vpos
     * o_vpos.zw = vpos
+    *
+    * o_eb[0..1] = vrect.x ? eb[0..1][1] : eb[0..1][0]
+    *
+    * o_frame_pred = frame_pred
+    * o_info.x = ref_frames
+    * o_info.y = ref_frames > 0
+    * o_info.z = bkwd_pred
+    *
+    * // Apply motion vectors
+    * o_vmv[0..count] = t_vpos + vmv[0..count] * mv_scale
     *
     * o_line.xy = vrect * 8
     * o_line.z = interlaced
@@ -156,34 +164,53 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
     *    t_vtex.y = vrect.y * 0.5
     *    t_vtex += vpos
     *
-    *    o_vtex[0].xy = t_vtex * scale
+    *    o_vtex[0].xy = t_vtex * block_scale
     *
     *    t_vtex.y += 0.5
-    *    o_vtex[1].xy = t_vtex * scale
+    *    o_vtex[1].xy = t_vtex * block_scale
     * } else {
     *    o_vtex[0..1].xy = t_vpos
     * }
     * o_vtex[2].xy = t_vpos
     *
-    * o_eb[0..1] = vrect.x ? eb[0..1][1] : eb[0..1][0]
-    *
-    * o_frame_pred = frame_pred
-    * o_ref_frames = ref_frames
-    * o_bkwd_pred = bkwd_pred
-    *
-    * // Apply motion vectors
-    * scale = 0.5 / (dst.width, dst.height);
-    * o_vmv[0..count] = t_vpos + vmv[0..count] * scale
-    *
     */
-   scale = ureg_imm2f(shader,
+   block_scale = ureg_imm2f(shader,
       (float)MACROBLOCK_WIDTH / r->buffer_width,
       (float)MACROBLOCK_HEIGHT / r->buffer_height);
 
+   mv_scale = ureg_imm2f(shader,
+      0.5f / r->buffer_width,
+      0.5f / r->buffer_height);
+
    ureg_ADD(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_XY), vpos, vrect);
-   ureg_MUL(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos), scale);
+   ureg_MUL(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos), block_scale);
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos));
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), vpos);
+
+   ureg_CMP(shader, ureg_writemask(o_eb[0], TGSI_WRITEMASK_XYZ),
+            ureg_negate(ureg_scalar(vrect, TGSI_SWIZZLE_X)),
+            eb[0][1], eb[0][0]);
+   ureg_CMP(shader, ureg_writemask(o_eb[1], TGSI_WRITEMASK_XYZ),
+            ureg_negate(ureg_scalar(vrect, TGSI_SWIZZLE_X)),
+            eb[1][1], eb[1][0]);
+
+   ureg_MOV(shader, ureg_writemask(o_info, TGSI_WRITEMASK_X), ref_frames);
+   ureg_SGE(shader, ureg_writemask(o_info, TGSI_WRITEMASK_Y),
+      ureg_scalar(ref_frames, TGSI_SWIZZLE_X), ureg_imm1f(shader, 0.0f));
+   ureg_MOV(shader, ureg_writemask(o_info, TGSI_WRITEMASK_Z), ureg_scalar(bkwd_pred, TGSI_SWIZZLE_X));
+
+   ureg_MAD(shader, ureg_writemask(o_vmv[0], TGSI_WRITEMASK_XY), mv_scale, vmv[0], ureg_src(t_vpos));
+   ureg_MAD(shader, ureg_writemask(o_vmv[2], TGSI_WRITEMASK_XY), mv_scale, vmv[2], ureg_src(t_vpos));
+
+   ureg_CMP(shader, ureg_writemask(t_vmv, TGSI_WRITEMASK_XY),
+            ureg_negate(ureg_scalar(frame_pred, TGSI_SWIZZLE_X)),
+            vmv[0], vmv[1]);
+   ureg_MAD(shader, ureg_writemask(o_vmv[1], TGSI_WRITEMASK_XY), mv_scale, ureg_src(t_vmv), ureg_src(t_vpos));
+
+   ureg_CMP(shader, ureg_writemask(t_vmv, TGSI_WRITEMASK_XY),
+            ureg_negate(ureg_scalar(frame_pred, TGSI_SWIZZLE_X)),
+            vmv[2], vmv[3]);
+   ureg_MAD(shader, ureg_writemask(o_vmv[3], TGSI_WRITEMASK_XY), mv_scale, ureg_src(t_vmv), ureg_src(t_vpos));
 
    ureg_MOV(shader, ureg_writemask(o_vtex[0], TGSI_WRITEMASK_XY), ureg_src(t_vpos));
    ureg_MOV(shader, ureg_writemask(o_vtex[1], TGSI_WRITEMASK_XY), ureg_src(t_vpos));
@@ -198,9 +225,9 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
       ureg_MOV(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_X), vrect);
       ureg_MUL(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_Y), vrect, ureg_imm1f(shader, 0.5f));
       ureg_ADD(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_XY), vpos, ureg_src(t_vtex));
-      ureg_MUL(shader, ureg_writemask(o_vtex[0], TGSI_WRITEMASK_XY), ureg_src(t_vtex), scale);
+      ureg_MUL(shader, ureg_writemask(o_vtex[0], TGSI_WRITEMASK_XY), ureg_src(t_vtex), block_scale);
       ureg_ADD(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_Y), ureg_src(t_vtex), ureg_imm1f(shader, 0.5f));
-      ureg_MUL(shader, ureg_writemask(o_vtex[1], TGSI_WRITEMASK_XY), ureg_src(t_vtex), scale);
+      ureg_MUL(shader, ureg_writemask(o_vtex[1], TGSI_WRITEMASK_XY), ureg_src(t_vtex), block_scale);
 
       ureg_MUL(shader, ureg_writemask(o_line, TGSI_WRITEMASK_X),
          ureg_scalar(vrect, TGSI_SWIZZLE_Y),
@@ -208,33 +235,6 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
 
    ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
    ureg_ENDIF(shader);
-
-   ureg_CMP(shader, ureg_writemask(o_eb[0], TGSI_WRITEMASK_XYZ),
-            ureg_negate(ureg_scalar(vrect, TGSI_SWIZZLE_X)),
-            eb[0][1], eb[0][0]);
-   ureg_CMP(shader, ureg_writemask(o_eb[1], TGSI_WRITEMASK_XYZ),
-            ureg_negate(ureg_scalar(vrect, TGSI_SWIZZLE_X)),
-            eb[1][1], eb[1][0]);
-
-   ureg_MOV(shader, ureg_writemask(o_ref_frames, TGSI_WRITEMASK_X), ref_frames);
-   ureg_MOV(shader, ureg_writemask(o_bkwd_pred, TGSI_WRITEMASK_X), bkwd_pred);
-
-   scale = ureg_imm2f(shader,
-      0.5f / r->buffer_width,
-      0.5f / r->buffer_height);
-
-   ureg_MAD(shader, ureg_writemask(o_vmv[0], TGSI_WRITEMASK_XY), scale, vmv[0], ureg_src(t_vpos));
-   ureg_MAD(shader, ureg_writemask(o_vmv[2], TGSI_WRITEMASK_XY), scale, vmv[2], ureg_src(t_vpos));
-
-   ureg_CMP(shader, ureg_writemask(t_vmv, TGSI_WRITEMASK_XY),
-            ureg_negate(ureg_scalar(frame_pred, TGSI_SWIZZLE_X)),
-            vmv[0], vmv[1]);
-   ureg_MAD(shader, ureg_writemask(o_vmv[1], TGSI_WRITEMASK_XY), scale, ureg_src(t_vmv), ureg_src(t_vpos));
-
-   ureg_CMP(shader, ureg_writemask(t_vmv, TGSI_WRITEMASK_XY),
-            ureg_negate(ureg_scalar(frame_pred, TGSI_SWIZZLE_X)),
-            vmv[2], vmv[3]);
-   ureg_MAD(shader, ureg_writemask(o_vmv[3], TGSI_WRITEMASK_XY), scale, ureg_src(t_vmv), ureg_src(t_vpos));
 
    ureg_release_temporary(shader, t_vtex);
    ureg_release_temporary(shader, t_vpos);
@@ -332,13 +332,12 @@ fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct
 static struct ureg_dst
 fetch_ref(struct ureg_program *shader, struct ureg_dst field)
 {
-   struct ureg_src ref_frames, bkwd_pred;
+   struct ureg_src info;
    struct ureg_src tc[4], sampler[2];
    struct ureg_dst ref[2], result;
    unsigned i, intra_label, bi_label, label;
 
-   ref_frames = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_REF_FRAMES, TGSI_INTERPOLATE_CONSTANT);
-   bkwd_pred = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_BKWD_PRED, TGSI_INTERPOLATE_CONSTANT);
+   info = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_INFO, TGSI_INTERPOLATE_CONSTANT);
 
    for (i = 0; i < 4; ++i)
       tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV0 + i, TGSI_INTERPOLATE_LINEAR);
@@ -350,20 +349,19 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
 
    result = ureg_DECL_temporary(shader);
 
-   ureg_MOV(shader, result, ureg_imm1f(shader, 0.5f));
+   ureg_MOV(shader, ureg_writemask(result, TGSI_WRITEMASK_XYZ), ureg_imm1f(shader, 0.5f));
 
-   ureg_SGE(shader, ureg_writemask(ref[0], TGSI_WRITEMASK_X), ref_frames, ureg_imm1f(shader, 0.0f));
-   ureg_IF(shader, ureg_scalar(ureg_src(ref[0]), TGSI_SWIZZLE_X), &intra_label);
+   ureg_IF(shader, ureg_scalar(info, TGSI_SWIZZLE_Y), &intra_label);
       ureg_CMP(shader, ureg_writemask(ref[0], TGSI_WRITEMASK_XY),
                ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
                tc[1], tc[0]);
 
-      ureg_IF(shader, ureg_scalar(ref_frames, TGSI_SWIZZLE_X), &bi_label);
+      ureg_IF(shader, ureg_scalar(info, TGSI_SWIZZLE_X), &bi_label);
 
          /*
           * result = tex(field.z ? tc[1] : tc[0], sampler[bkwd_pred ? 1 : 0])
           */
-         ureg_IF(shader, bkwd_pred, &label);
+         ureg_IF(shader, ureg_scalar(info, TGSI_SWIZZLE_Z), &label);
             ureg_TEX(shader, result, TGSI_TEXTURE_2D, ureg_src(ref[0]), sampler[1]);
          ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
          ureg_ELSE(shader, &label);
