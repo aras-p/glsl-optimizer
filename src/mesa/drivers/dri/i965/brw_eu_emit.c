@@ -1812,12 +1812,12 @@ void brw_fb_WRITE(struct brw_compile *p,
                   GLuint binding_table_index,
                   GLuint msg_length,
                   GLuint response_length,
-                  GLboolean eot)
+                  GLboolean eot,
+                  GLboolean header_present)
 {
    struct intel_context *intel = &p->brw->intel;
    struct brw_instruction *insn;
    GLuint msg_control, msg_type;
-   GLboolean header_present = GL_TRUE;
 
    if (intel->gen >= 6 && binding_table_index == 0) {
       insn = next_insn(p, BRW_OPCODE_SENDC);
@@ -1829,9 +1829,6 @@ void brw_fb_WRITE(struct brw_compile *p,
    insn->header.compression_control = BRW_COMPRESSION_NONE;
 
    if (intel->gen >= 6) {
-      if (msg_length == 4)
-	 header_present = GL_FALSE;
-
        /* headerless version, just submit color payload */
        src0 = brw_message_reg(msg_reg_nr);
 

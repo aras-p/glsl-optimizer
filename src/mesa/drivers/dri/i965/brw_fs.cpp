@@ -2163,7 +2163,8 @@ fs_visitor::generate_fb_write(fs_inst *inst)
 		inst->target,
 		inst->mlen,
 		0,
-		eot);
+		eot,
+		inst->header_present);
 }
 
 void

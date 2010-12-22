@@ -861,7 +861,8 @@ void brw_fb_WRITE(struct brw_compile *p,
 		   GLuint binding_table_index,
 		   GLuint msg_length,
 		   GLuint response_length,
-		   GLboolean eot);
+		   GLboolean eot,
+		   GLboolean header_present);
 
 void brw_SAMPLE(struct brw_compile *p,
 		struct brw_reg dest,

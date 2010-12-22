@@ -1356,7 +1356,8 @@ static void fire_fb_write( struct brw_wm_compile *c,
 		target,		
 		nr,
 		0, 
-		eot);
+		eot,
+		GL_TRUE);
 }
 
 
