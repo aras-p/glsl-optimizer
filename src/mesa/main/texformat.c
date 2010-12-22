@@ -137,10 +137,12 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
 
       case GL_INTENSITY:
       case GL_INTENSITY4:
-      case GL_INTENSITY12:
-      case GL_INTENSITY16:
       case GL_INTENSITY8:
          return MESA_FORMAT_I8;
+
+      case GL_INTENSITY12:
+      case GL_INTENSITY16:
+         return MESA_FORMAT_I16;
 
       case GL_COLOR_INDEX:
       case GL_COLOR_INDEX1_EXT:
