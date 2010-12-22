@@ -182,7 +182,7 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 	if (rctx->family >= CHIP_CEDAR) {
 		for (int i = 0; i < rctx->nvertex_buffer; i++) {
 			pipe_resource_reference(&rctx->vertex_buffer[i].buffer, NULL);
-			evergreen_fs_resource_set(&rctx->ctx, NULL, i);
+			evergreen_context_pipe_state_set_fs_resource(&rctx->ctx, NULL, i);
 		}
 	} else {
 		for (int i = 0; i < rctx->nvertex_buffer; i++) {
