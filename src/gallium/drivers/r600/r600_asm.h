@@ -34,6 +34,7 @@ struct r600_bc_alu_src {
 	unsigned			neg;
 	unsigned			abs;
 	unsigned			rel;
+	u32				*value;
 };
 
 struct r600_bc_alu_dst {
@@ -52,11 +53,8 @@ struct r600_bc_alu {
 	unsigned			last;
 	unsigned			is_op3;
 	unsigned			predicate;
-	unsigned			nliteral;
-	unsigned			literal_added;
 	unsigned			bank_swizzle;
 	unsigned			bank_swizzle_force;
-	u32				value[4];
 	unsigned			omod;
 };
 
@@ -195,13 +193,13 @@ void eg_cf_vtx(struct r600_vertex_element *ve, u32 *bytecode, unsigned count);
 int r600_bc_init(struct r600_bc *bc, enum radeon_family family);
 void r600_bc_clear(struct r600_bc *bc);
 int r600_bc_add_alu(struct r600_bc *bc, const struct r600_bc_alu *alu);
-int r600_bc_add_literal(struct r600_bc *bc, const u32 *value);
 int r600_bc_add_vtx(struct r600_bc *bc, const struct r600_bc_vtx *vtx);
 int r600_bc_add_tex(struct r600_bc *bc, const struct r600_bc_tex *tex);
 int r600_bc_add_output(struct r600_bc *bc, const struct r600_bc_output *output);
 int r600_bc_build(struct r600_bc *bc);
 int r600_bc_add_cfinst(struct r600_bc *bc, int inst);
 int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int type);
+void r600_bc_special_constants(u32 value, unsigned *sel, unsigned *neg);
 void r600_bc_dump(struct r600_bc *bc);
 void r600_cf_vtx(struct r600_vertex_element *ve, u32 *bytecode, unsigned count);
 void r600_cf_vtx_tc(struct r600_vertex_element *ve, u32 *bytecode, unsigned count);

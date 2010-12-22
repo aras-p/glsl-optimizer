@@ -599,10 +599,90 @@ static int replace_gpr_with_pv_ps(struct r600_bc_alu *slots[5], struct r600_bc_a
 	return 0;
 }
 
+void r600_bc_special_constants(u32 value, unsigned *sel, unsigned *neg)
+{
+	switch(value) {
+	case 0:
+		*sel = V_SQ_ALU_SRC_0;
+		break;
+	case 1:
+		*sel = V_SQ_ALU_SRC_1_INT;
+		break;
+	case -1:
+		*sel = V_SQ_ALU_SRC_M_1_INT;
+		break;
+	case 0x3F800000: // 1.0f
+		*sel = V_SQ_ALU_SRC_1;
+		break;
+	case 0x3F000000: // 0.5f
+		*sel = V_SQ_ALU_SRC_0_5;
+		break;
+	case 0xBF800000: // -1.0f
+		*sel = V_SQ_ALU_SRC_1;
+		*neg ^= 1;
+		break;
+	case 0xBF000000: // -0.5f
+		*sel = V_SQ_ALU_SRC_0_5;
+		*neg ^= 1;
+		break;
+	default:
+		*sel = V_SQ_ALU_SRC_LITERAL;
+		break;
+	}
+}
+
+/* compute how many literal are needed */
+static int r600_bc_alu_nliterals(struct r600_bc_alu *alu, uint32_t literal[4], unsigned *nliteral)
+{
+	unsigned num_src = r600_bc_get_num_operands(alu);
+	unsigned i, j;
+
+	for (i = 0; i < num_src; ++i) {
+		if (alu->src[i].sel == V_SQ_ALU_SRC_LITERAL) {
+			uint32_t value = alu->src[i].value[alu->src[i].chan];
+			unsigned found = 0;
+			for (j = 0; j < *nliteral; ++j) {
+				if (literal[j] == value) {
+					found = 1;
+					break;
+				}
+			}
+			if (!found) {
+				if (*nliteral >= 4)
+					return -EINVAL;
+				literal[(*nliteral)++] = value;
+			}
+		}
+	}
+	return 0;
+}
+
+static void r600_bc_alu_adjust_literals(struct r600_bc_alu *alu, uint32_t literal[4], unsigned nliteral)
+{
+	unsigned num_src = r600_bc_get_num_operands(alu);
+	unsigned i, j;
+
+	for (i = 0; i < num_src; ++i) {
+		if (alu->src[i].sel == V_SQ_ALU_SRC_LITERAL) {
+			uint32_t value = alu->src[i].value[alu->src[i].chan];
+			for (j = 0; j < nliteral; ++j) {
+				if (literal[j] == value) {
+					alu->src[i].chan = j;
+					break;
+				}
+			}
+		}
+	}
+}
+
 static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5], struct r600_bc_alu *alu_prev)
 {
 	struct r600_bc_alu *prev[5];
 	struct r600_bc_alu *result[5] = { NULL };
+	
+	uint32_t literal[4];
+	unsigned nliteral = 0;
+
 	int i, j, r, src, num_src;
 	int num_once_inst = 0;
 
@@ -611,12 +691,11 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5], s
 		return r;
 
 	for (i = 0; i < 5; ++i) {
-		// TODO: we have literals? forget it!
-		if (prev[i] && prev[i]->nliteral)
+		/* check number of literals */
+		if (prev[i] && r600_bc_alu_nliterals(prev[i], literal, &nliteral))
 			return 0;
-		if (slots[i] && slots[i]->nliteral)
+		if (slots[i] && r600_bc_alu_nliterals(slots[i], literal, &nliteral))
 			return 0;
-
 
 		// let's check used slots
 		if (prev[i] && !slots[i]) {
@@ -711,7 +790,6 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 	if (nalu == NULL)
 		return -ENOMEM;
 	memcpy(nalu, alu, sizeof(struct r600_bc_alu));
-	nalu->nliteral = 0;
 
 	if (bc->cf_last != NULL && bc->cf_last->inst != (type << 3)) {
 		/* check if we could add it anyway */
@@ -749,20 +827,10 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 		if (alu->src[i].sel >= bc->ngpr && alu->src[i].sel < 128) {
 			bc->ngpr = alu->src[i].sel + 1;
 		}
-		/* compute how many literal are needed
-		 * either 2 or 4 literals
-		 */
-		if (alu->src[i].sel == 253) {
-			if (((alu->src[i].chan + 2) & 0x6) > nalu->nliteral) {
-				nalu->nliteral = (alu->src[i].chan + 2) & 0x6;
-			}
-		}
-	}
-	if (!LIST_IS_EMPTY(&bc->cf_last->alu)) {
-		lalu = LIST_ENTRY(struct r600_bc_alu, bc->cf_last->alu.prev, list);
-		if (!lalu->last && lalu->nliteral > nalu->nliteral) {
-			nalu->nliteral = lalu->nliteral;
-		}
+		if (nalu->src[i].sel == V_SQ_ALU_SRC_LITERAL)
+			r600_bc_special_constants(
+				nalu->src[i].value[nalu->src[i].chan], 
+				&nalu->src[i].sel, &nalu->src[i].neg);
 	}
 	if (alu->dst.sel >= bc->ngpr) {
 		bc->ngpr = alu->dst.sel + 1;
@@ -807,46 +875,6 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 int r600_bc_add_alu(struct r600_bc *bc, const struct r600_bc_alu *alu)
 {
 	return r600_bc_add_alu_type(bc, alu, BC_INST(bc, V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU));
-}
-
-int r600_bc_add_literal(struct r600_bc *bc, const u32 *value)
-{
-	struct r600_bc_alu *alu;
-
-	if (bc->cf_last == NULL) {
-		return 0;
-	}
-	if (bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_TEX) {
-		return 0;
-	}
-	/* all same on EG */
-	if (bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_JUMP ||
-	    bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_ELSE ||
-	    bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_LOOP_START_NO_AL ||
-	    bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK ||
-	    bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE ||
-	    bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END ||
-	    bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_POP) {
-		return 0;
-	}
-	/* same on EG */
-	if (((bc->cf_last->inst != (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3)) &&
-	     (bc->cf_last->inst != (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER << 3)) &&
-	     (bc->cf_last->inst != (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER << 3)) &&
-	     (bc->cf_last->inst != (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3))) ||
-		LIST_IS_EMPTY(&bc->cf_last->alu)) {
-		R600_ERR("last CF is not ALU (%p)\n", bc->cf_last);
-		return -EINVAL;
-	}
-	alu = LIST_ENTRY(struct r600_bc_alu, bc->cf_last->alu.prev, list);
-	if (!alu->last || !alu->nliteral || alu->literal_added) {
-		return 0;
-	}
-	memcpy(alu->value, value, 4 * 4);
-	bc->cf_last->ndw += alu->nliteral;
-	bc->ndw += alu->nliteral;
-	alu->literal_added = 1;
-	return 0;
 }
 
 int r600_bc_add_vtx(struct r600_bc *bc, const struct r600_bc_vtx *vtx)
@@ -999,8 +1027,6 @@ static int r600_bc_tex_build(struct r600_bc *bc, struct r600_bc_tex *tex, unsign
 /* r600 only, r700/eg bits in r700_asm.c */
 static int r600_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id)
 {
-	unsigned i;
-
 	/* don't replace gpr by pv or ps for destination register */
 	bc->bytecode[id++] = S_SQ_ALU_WORD0_SRC0_SEL(alu->src[0].sel) |
 				S_SQ_ALU_WORD0_SRC0_REL(alu->src[0].rel) |
@@ -1036,14 +1062,6 @@ static int r600_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsign
 					S_SQ_ALU_WORD1_BANK_SWIZZLE(alu->bank_swizzle) |
 					S_SQ_ALU_WORD1_OP2_UPDATE_EXECUTE_MASK(alu->predicate) |
 					S_SQ_ALU_WORD1_OP2_UPDATE_PRED(alu->predicate);
-	}
-	if (alu->last) {
-		if (alu->nliteral && !alu->literal_added) {
-			R600_ERR("Bug in ALU processing for instruction 0x%08x, literal not added correctly\n", alu->inst);
-		}
-		for (i = 0; i < alu->nliteral; i++) {
-			bc->bytecode[id++] = alu->value[i];
-		}
 	}
 	return 0;
 }
@@ -1122,8 +1140,10 @@ int r600_bc_build(struct r600_bc *bc)
 	struct r600_bc_alu *alu;
 	struct r600_bc_vtx *vtx;
 	struct r600_bc_tex *tex;
+	uint32_t literal[4];
+	unsigned nliteral;
 	unsigned addr;
-	int r;
+	int i, r;
 
 	if (bc->callstack[0].max > 0)
 		bc->nstack = ((bc->callstack[0].max + 3) >> 2) + 2;
@@ -1140,6 +1160,16 @@ int r600_bc_build(struct r600_bc *bc)
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER << 3):
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER << 3):
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
+			nliteral = 0;
+			LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
+				r = r600_bc_alu_nliterals(alu, literal, &nliteral);
+				if (r)
+					return r;
+				if (alu->last) {
+					cf->ndw += align(nliteral, 2);
+					nliteral = 0;
+				}
+			}
 			break;
 		case V_SQ_CF_WORD1_SQ_CF_INST_TEX:
 		case V_SQ_CF_WORD1_SQ_CF_INST_VTX:
@@ -1188,7 +1218,12 @@ int r600_bc_build(struct r600_bc *bc)
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER << 3):
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER << 3):
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
+			nliteral = 0;
 			LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
+				r = r600_bc_alu_nliterals(alu, literal, &nliteral);
+				if (r)
+					return r;
+				r600_bc_alu_adjust_literals(alu, literal, nliteral);
 				switch(bc->chiprev) {
 				case CHIPREV_R600:
 					r = r600_bc_alu_build(bc, alu, addr);
@@ -1205,7 +1240,10 @@ int r600_bc_build(struct r600_bc *bc)
 					return r;
 				addr += 2;
 				if (alu->last) {
-					addr += alu->nliteral;
+					for (i = 0; i < align(nliteral, 2); ++i) {
+						bc->bytecode[addr++] = literal[i];
+					}
+					nliteral = 0;
 				}
 			}
 			break;
@@ -1292,6 +1330,8 @@ void r600_bc_dump(struct r600_bc *bc)
 	struct r600_bc_tex *tex;
 
 	unsigned i, id;
+	uint32_t literal[4];
+	unsigned nliteral;
 	char chip = '6';
 
 	switch (bc->chiprev) {
@@ -1378,7 +1418,10 @@ void r600_bc_dump(struct r600_bc *bc)
 		}
 
 		id = cf->addr;
+		nliteral = 0;
 		LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
+			r600_bc_alu_nliterals(alu, literal, &nliteral);
+
 			fprintf(stderr, "%04d %08X   ", id, bc->bytecode[id]);
 			fprintf(stderr, "SRC0(SEL:%d ", alu->src[0].sel);
 			fprintf(stderr, "REL:%d ", alu->src[0].rel);
@@ -1413,10 +1456,12 @@ void r600_bc_dump(struct r600_bc *bc)
 
 			id++;
 			if (alu->last) {
-				for (i = 0; i < alu->nliteral; i++, id++) {
+				for (i = 0; i < nliteral; i++, id++) {
 					float *f = (float*)(bc->bytecode + id);
 					fprintf(stderr, "%04d %08X   %f\n", id, bc->bytecode[id], *f);
 				}
+				id += nliteral & 1;
+				nliteral = 0;
 			}
 		}
 
