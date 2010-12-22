@@ -1485,21 +1485,21 @@ void r600_cf_vtx(struct r600_vertex_element *ve, u32 *bytecode, unsigned count)
 	if (count > 8) {
 		bytecode[i++] = S_SQ_CF_WORD0_ADDR(8 >> 1);
 		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX) |
-						S_SQ_CF_WORD1_BARRIER(1) |
+						S_SQ_CF_WORD1_BARRIER(0) |
 						S_SQ_CF_WORD1_COUNT(8 - 1);
 		bytecode[i++] = S_SQ_CF_WORD0_ADDR(40 >> 1);
 		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX) |
-						S_SQ_CF_WORD1_BARRIER(1) |
+						S_SQ_CF_WORD1_BARRIER(0) |
 						S_SQ_CF_WORD1_COUNT(count - 8 - 1);
 	} else {
 		bytecode[i++] = S_SQ_CF_WORD0_ADDR(8 >> 1);
 		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX) |
-						S_SQ_CF_WORD1_BARRIER(1) |
+						S_SQ_CF_WORD1_BARRIER(0) |
 						S_SQ_CF_WORD1_COUNT(count - 1);
 	}
 	bytecode[i++] = S_SQ_CF_WORD0_ADDR(0);
 	bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_RETURN) |
-			S_SQ_CF_WORD1_BARRIER(1);
+			S_SQ_CF_WORD1_BARRIER(0);
 
 	rstate = &ve->rstate;
 	rstate->id = R600_PIPE_STATE_FETCH_SHADER;
@@ -1521,21 +1521,21 @@ void r600_cf_vtx_tc(struct r600_vertex_element *ve, u32 *bytecode, unsigned coun
 	if (count > 8) {
 		bytecode[i++] = S_SQ_CF_WORD0_ADDR(8 >> 1);
 		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC) |
-						S_SQ_CF_WORD1_BARRIER(1) |
+						S_SQ_CF_WORD1_BARRIER(0) |
 						S_SQ_CF_WORD1_COUNT(8 - 1);
 		bytecode[i++] = S_SQ_CF_WORD0_ADDR(40 >> 1);
 		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC) |
-						S_SQ_CF_WORD1_BARRIER(1) |
+						S_SQ_CF_WORD1_BARRIER(0) |
 						S_SQ_CF_WORD1_COUNT((count - 8) - 1);
 	} else {
 		bytecode[i++] = S_SQ_CF_WORD0_ADDR(8 >> 1);
 		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC) |
-						S_SQ_CF_WORD1_BARRIER(1) |
+						S_SQ_CF_WORD1_BARRIER(0) |
 						S_SQ_CF_WORD1_COUNT(count - 1);
 	}
 	bytecode[i++] = S_SQ_CF_WORD0_ADDR(0);
 	bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_RETURN) |
-			S_SQ_CF_WORD1_BARRIER(1);
+			S_SQ_CF_WORD1_BARRIER(0);
 
 	rstate = &ve->rstate;
 	rstate->id = R600_PIPE_STATE_FETCH_SHADER;

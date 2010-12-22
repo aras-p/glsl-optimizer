@@ -603,7 +603,7 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 		output[i].swizzle_y = 1;
 		output[i].swizzle_z = 2;
 		output[i].swizzle_w = 3;
-		output[i].barrier = 1;
+		output[i].barrier = i == 0;
 		output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
 		output[i].array_base = i - pos0;
 		output[i].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT);
