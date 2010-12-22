@@ -27,9 +27,10 @@
 
 /**
  * @file
- * Simple cache implementation.
+ * Improved cache implementation.
  *
- * We simply have fixed size array, and destroy previous values on collision. 
+ * Fixed size array with linear probing on collision and LRU eviction
+ * on full.
  * 
  * @author Jose Fonseca <jfonseca@vmware.com>
  */
@@ -41,10 +42,17 @@
 #include "util/u_math.h"
 #include "util/u_memory.h"
 #include "util/u_cache.h"
+#include "util/u_simple_list.h"
 
 
 struct util_cache_entry
 {
+   enum { EMPTY = 0, FILLED, DELETED } state;
+   uint32_t hash;
+
+   struct util_cache_entry *next;
+   struct util_cache_entry *prev;
+
    void *key;
    void *value;
    
@@ -69,11 +77,11 @@ struct util_cache
    
    struct util_cache_entry *entries;
    
-#ifdef DEBUG
    unsigned count;
-#endif
+   struct util_cache_entry lru;
 };
 
+#define CACHE_DEFAULT_ALPHA 2
 
 struct util_cache *
 util_cache_create(uint32_t (*hash)(const void *key),
@@ -90,6 +98,10 @@ util_cache_create(uint32_t (*hash)(const void *key),
    cache->hash = hash;
    cache->compare = compare;
    cache->destroy = destroy;
+
+   make_empty_list(&cache->lru);
+
+   size *= CACHE_DEFAULT_ALPHA;
    cache->size = size;
    
    cache->entries = CALLOC(size, sizeof(struct util_cache_entry));
@@ -102,15 +114,41 @@ util_cache_create(uint32_t (*hash)(const void *key),
 }
 
 
-static INLINE struct util_cache_entry *
+static struct util_cache_entry *
 util_cache_entry_get(struct util_cache *cache,
+                     uint32_t hash,
                      const void *key)
 {
-   uint32_t hash;
-   
-   hash = cache->hash(key);
+   struct util_cache_entry *first_unfilled = NULL;
+   uint32_t index = hash % cache->size;
+   uint32_t probe;
 
-   return &cache->entries[hash % cache->size];
+   /* Probe until we find either a matching FILLED entry or an EMPTY
+    * slot (which has never been occupied).
+    *
+    * Deleted or non-matching slots are not indicative of completion
+    * as a previous linear probe for the same key could have continued
+    * past this point.
+    */
+   for (probe = 0; probe < cache->size; probe++) {
+      uint32_t i = (index + probe) % cache->size;
+      struct util_cache_entry *current = &cache->entries[i];
+
+      if (current->state == FILLED) {
+         if (current->hash == hash &&
+             cache->compare(key, current->key) == 0)
+            return current;
+      }
+      else {
+         if (!first_unfilled)
+            first_unfilled = current;
+
+         if (current->state == EMPTY)
+            return first_unfilled;
+      }
+   }
+
+   return NULL;
 }
 
 static INLINE void
@@ -123,9 +161,15 @@ util_cache_entry_destroy(struct util_cache *cache,
    entry->key = NULL;
    entry->value = NULL;
    
-   if(key || value)
+   if (entry->state == FILLED) {
+      remove_from_list(entry);
+      cache->count--;
+
       if(cache->destroy)
          cache->destroy(key, value);
+
+      entry->state = DELETED;
+   }
 }
 
 
@@ -135,21 +179,29 @@ util_cache_set(struct util_cache *cache,
                void *value)
 {
    struct util_cache_entry *entry;
+   uint32_t hash = cache->hash(key);
 
    assert(cache);
    if (!cache)
       return;
 
-   entry = util_cache_entry_get(cache, key);
+   entry = util_cache_entry_get(cache, hash, key);
+   if (!entry || cache->count >= cache->size / CACHE_DEFAULT_ALPHA) {
+      entry = cache->lru.prev;
+   }
+
    util_cache_entry_destroy(cache, entry);
    
 #ifdef DEBUG
    ++entry->count;
-   ++cache->count;
 #endif
    
    entry->key = key;
+   entry->hash = hash;
    entry->value = value;
+   entry->state = FILLED;
+   insert_at_head(&cache->lru, entry);
+   cache->count++;
 }
 
 
@@ -158,17 +210,18 @@ util_cache_get(struct util_cache *cache,
                const void *key)
 {
    struct util_cache_entry *entry;
+   uint32_t hash = cache->hash(key);
 
    assert(cache);
    if (!cache)
       return NULL;
 
-   entry = util_cache_entry_get(cache, key);
-   if(!entry->key && !entry->value)
+   entry = util_cache_entry_get(cache, hash, key);
+   if (!entry)
       return NULL;
-   
-   if(cache->compare(key, entry->key) != 0)
-      return NULL;
+
+   if (entry->state == FILLED)
+      move_to_head(&cache->lru, entry);
    
    return entry->value;
 }
@@ -183,8 +236,13 @@ util_cache_clear(struct util_cache *cache)
    if (!cache)
       return;
 
-   for(i = 0; i < cache->size; ++i)
+   for(i = 0; i < cache->size; ++i) {
       util_cache_entry_destroy(cache, &cache->entries[i]);
+      cache->entries[i].state = EMPTY;
+   }
+
+   assert(cache->count == 0);
+   assert(is_empty_list(&cache->lru));
 }
 
 
