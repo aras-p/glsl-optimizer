@@ -2063,13 +2063,14 @@ _mesa_texstore_argb2101010(TEXSTORE_PARAMS)
    }
    else {
       /* general path */
-      const GLchan *tempImage = _mesa_make_temp_chan_image(ctx, dims,
+      const GLfloat *tempImage = make_temp_float_image(ctx, dims,
                                                  baseInternalFormat,
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
                                                  srcFormat, srcType, srcAddr,
-                                                 srcPacking);
-      const GLchan *src = tempImage;
+                                                 srcPacking,
+                                                 ctx->_ImageTransferState);
+      const GLfloat *src = tempImage;
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
@@ -2080,24 +2081,29 @@ _mesa_texstore_argb2101010(TEXSTORE_PARAMS)
             + dstXoffset * texelBytes;
          if (baseInternalFormat == GL_RGBA) {
             for (row = 0; row < srcHeight; row++) {
-               GLuint *dstUS = (GLuint *) dstRow;
+               GLuint *dstUI = (GLuint *) dstRow;
                for (col = 0; col < srcWidth; col++) {
-                  dstUS[col] = PACK_COLOR_2101010( CHAN_TO_UBYTE(src[ACOMP]),
-                                                   CHAN_TO_UBYTE(src[RCOMP]),
-                                                   CHAN_TO_UBYTE(src[GCOMP]),
-                                                   CHAN_TO_UBYTE(src[BCOMP]) );
+                  GLushort a,r,g,b;
+
+                  UNCLAMPED_FLOAT_TO_USHORT(a, src[ACOMP]);
+                  UNCLAMPED_FLOAT_TO_USHORT(r, src[RCOMP]);
+                  UNCLAMPED_FLOAT_TO_USHORT(g, src[GCOMP]);
+                  UNCLAMPED_FLOAT_TO_USHORT(b, src[BCOMP]);
+                  dstUI[col] = PACK_COLOR_2101010_US(a, r, g, b);
                   src += 4;
                }
                dstRow += dstRowStride;
             }
          } else if (baseInternalFormat == GL_RGB) {
             for (row = 0; row < srcHeight; row++) {
-               GLuint *dstUS = (GLuint *) dstRow;
+               GLuint *dstUI = (GLuint *) dstRow;
                for (col = 0; col < srcWidth; col++) {
-                  dstUS[col] = PACK_COLOR_2101010( 0xff,
-                                                   CHAN_TO_UBYTE(src[RCOMP]),
-                                                   CHAN_TO_UBYTE(src[GCOMP]),
-                                                   CHAN_TO_UBYTE(src[BCOMP]) );
+                  GLushort r,g,b;
+
+                  UNCLAMPED_FLOAT_TO_USHORT(r, src[RCOMP]);
+                  UNCLAMPED_FLOAT_TO_USHORT(g, src[GCOMP]);
+                  UNCLAMPED_FLOAT_TO_USHORT(b, src[BCOMP]);
+                  dstUI[col] = PACK_COLOR_2101010_US(0xffff, r, g, b);
                   src += 4;
                }
                dstRow += dstRowStride;
