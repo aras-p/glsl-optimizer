@@ -1028,8 +1028,13 @@ gl_format
 st_ChooseTextureFormat(struct gl_context *ctx, GLint internalFormat,
                        GLenum format, GLenum type)
 {
+   boolean want_renderable =
+      internalFormat == 3 || internalFormat == 4 ||
+      internalFormat == GL_RGB || internalFormat == GL_RGBA ||
+      internalFormat == GL_RGB8 || internalFormat == GL_RGBA8;
+
    return st_ChooseTextureFormat_renderable(ctx, internalFormat,
-					    format, type, GL_TRUE);
+					    format, type, want_renderable);
 }
 
 /**
