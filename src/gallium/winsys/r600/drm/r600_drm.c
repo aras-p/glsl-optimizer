@@ -42,6 +42,21 @@
 
 static struct radeon *radeon_new(int fd, unsigned device);
 
+enum radeon_family r600_get_family(struct radeon *r600)
+{
+	return r600->family;
+}
+
+enum chip_class r600_get_family_class(struct radeon *radeon)
+{
+	return radeon->chip_class;
+}
+
+struct r600_tiling_info *r600_get_tiling_info(struct radeon *radeon)
+{
+	return &radeon->tiling_info;
+}
+
 static int radeon_get_device(struct radeon *radeon)
 {
 	struct drm_radeon_info info;
