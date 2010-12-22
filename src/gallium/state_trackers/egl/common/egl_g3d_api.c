@@ -643,19 +643,13 @@ egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
    struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
    struct egl_g3d_surface *gsurf = egl_g3d_surface(surf);
    _EGLContext *ctx = _eglGetCurrentContext();
-   struct egl_g3d_config *gconf;
    struct native_surface *nsurf;
    struct pipe_resource *ptex;
 
    if (!gsurf->render_texture)
       return EGL_TRUE;
 
-   gconf = egl_g3d_config(egl_g3d_find_pixmap_config(dpy, target));
-   if (!gconf)
-      return _eglError(EGL_BAD_NATIVE_PIXMAP, "eglCopyBuffers");
-
-   nsurf = gdpy->native->create_pixmap_surface(gdpy->native,
-         target, gconf->native);
+   nsurf = gdpy->native->create_pixmap_surface(gdpy->native, target, NULL);
    if (!nsurf)
       return _eglError(EGL_BAD_NATIVE_PIXMAP, "eglCopyBuffers");
 
@@ -887,25 +881,6 @@ egl_g3d_show_screen_surface(_EGLDriver *drv, _EGLDisplay *dpy,
 }
 
 #endif /* EGL_MESA_screen_surface */
-
-/**
- * Find a config that supports the pixmap.
- */
-_EGLConfig *
-egl_g3d_find_pixmap_config(_EGLDisplay *dpy, EGLNativePixmapType pix)
-{
-   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
-   struct egl_g3d_config *gconf;
-   EGLint i;
-
-   for (i = 0; i < dpy->Configs->Size; i++) {
-      gconf = egl_g3d_config((_EGLConfig *) dpy->Configs->Elements[i]);
-      if (gdpy->native->is_pixmap_supported(gdpy->native, pix, gconf->native))
-         break;
-   }
-
-   return (i < dpy->Configs->Size) ? &gconf->base : NULL;
-}
 
 void
 egl_g3d_init_driver_api(_EGLDriver *drv)

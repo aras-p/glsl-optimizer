@@ -31,7 +31,4 @@
 void
 egl_g3d_init_driver_api(_EGLDriver *drv);
 
-_EGLConfig *
-egl_g3d_find_pixmap_config(_EGLDisplay *dpy, EGLNativePixmapType pix);
-
 #endif /* _EGL_G3D_API_H_ */
