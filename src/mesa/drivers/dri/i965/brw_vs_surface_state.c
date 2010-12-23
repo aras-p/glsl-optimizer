@@ -82,6 +82,15 @@ prepare_vs_constants(struct brw_context *brw)
 	     params->ParameterValues[i],
 	     4 * sizeof(float));
    }
+
+   if (0) {
+      for (i = 0; i < params->NumParameters; i++) {
+	 float *row = (float *)brw->vs.const_bo->virtual + i * 4;
+	 printf("vs const surface %3d: %4.3f %4.3f %4.3f %4.3f\n",
+		i, row[0], row[1], row[2], row[3]);
+      }
+   }
+
    drm_intel_gem_bo_unmap_gtt(brw->vs.const_bo);
    brw->state.dirty.brw |= BRW_NEW_VS_CONSTBUF;
 }
