@@ -536,6 +536,16 @@ brw_set_dp_read_message(struct brw_context *brw,
        insn->bits3.dp_read_gen5.end_of_thread = 0;
        insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_DATAPORT_READ;
        insn->bits2.send_gen5.end_of_thread = 0;
+   } else if (intel->is_g4x) {
+       insn->bits3.dp_read_g4x.binding_table_index = binding_table_index; /*0:7*/
+       insn->bits3.dp_read_g4x.msg_control = msg_control;  /*8:10*/
+       insn->bits3.dp_read_g4x.msg_type = msg_type;  /*11:13*/
+       insn->bits3.dp_read_g4x.target_cache = target_cache;  /*14:15*/
+       insn->bits3.dp_read_g4x.response_length = response_length;  /*16:19*/
+       insn->bits3.dp_read_g4x.msg_length = msg_length;  /*20:23*/
+       insn->bits3.dp_read_g4x.msg_target = BRW_MESSAGE_TARGET_DATAPORT_READ; /*24:27*/
+       insn->bits3.dp_read_g4x.pad1 = 0;
+       insn->bits3.dp_read_g4x.end_of_thread = 0;
    } else {
        insn->bits3.dp_read.binding_table_index = binding_table_index; /*0:7*/
        insn->bits3.dp_read.msg_control = msg_control;  /*8:11*/
