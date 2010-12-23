@@ -134,7 +134,7 @@ lp_build_const_int_pointer(struct gallivm_state *gallivm, const void *ptr)
 
    /* int type large enough to hold a pointer */
    int_type = LLVMIntTypeInContext(gallivm->context, 8 * sizeof(void *));
-   v = LLVMConstInt(int_type, (unsigned long long) ptr, 0);
+   v = LLVMConstInt(int_type, (uintptr_t) ptr, 0);
    v = LLVMBuildIntToPtr(gallivm->builder, v,
                          LLVMPointerType(int_type, 0),
                          "cast int to ptr");
