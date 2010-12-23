@@ -58,8 +58,6 @@
 
 #include "main/imports.h"
 #include "brw_state.h"
-#include "intel_batchbuffer.h"
-#include "brw_wm.h"
 
 #define FILE_DEBUG_FLAG DEBUG_STATE
 
