@@ -1534,7 +1534,7 @@ _mesa_format_to_type_and_comps(gl_format format,
    case MESA_FORMAT_NONE:
    case MESA_FORMAT_COUNT:
    /* For debug builds, warn if any formats are not handled */
-#ifndef DEBUG
+#ifdef DEBUG
    default:
 #endif
       _mesa_problem(NULL, "bad format %s in _mesa_format_to_type_and_comps",
