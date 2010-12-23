@@ -38,7 +38,6 @@
 #include "intel_reg.h"
 #include "intel_regions.h"
 #include "intel_batchbuffer.h"
-#include "intel_tex.h"
 #include "intel_mipmap_tree.h"
 
 #define FILE_DEBUG_FLAG DEBUG_BLIT
