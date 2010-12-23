@@ -110,6 +110,7 @@ extern const struct brw_tracked_state gen6_viewport_state;
 extern const struct brw_tracked_state gen6_vs_state;
 extern const struct brw_tracked_state gen6_wm_constants;
 extern const struct brw_tracked_state gen6_wm_state;
+extern const struct brw_tracked_state gen6_multisample_state;
 
 /***********************************************************************
  * brw_state.c
