@@ -60,7 +60,7 @@ static struct pipe_query *r300_create_query(struct pipe_context *pipe,
     q->buf = r300->rws->buffer_create(r300->rws, q->buffer_size, 4096,
                                          PIPE_BIND_CUSTOM, PIPE_USAGE_STREAM,
                                          q->domain);
-    q->cs_buf = r300->rws->buffer_get_cs_handle(r300->rws, q->buf);
+    q->cs_buf = r300->rws->buffer_get_cs_handle(q->buf);
 
     return (struct pipe_query*)q;
 }
@@ -68,10 +68,9 @@ static struct pipe_query *r300_create_query(struct pipe_context *pipe,
 static void r300_destroy_query(struct pipe_context* pipe,
                                struct pipe_query* query)
 {
-    struct r300_context *r300 = r300_context(pipe);
     struct r300_query* q = r300_query(query);
 
-    r300->rws->buffer_reference(r300->rws, &q->buf, NULL);
+    r300_winsys_bo_reference(&q->buf, NULL);
     remove_from_list(q);
     FREE(query);
 }
@@ -137,7 +136,7 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
 
     flags = PIPE_TRANSFER_READ | (!wait ? PIPE_TRANSFER_DONTBLOCK : 0);
 
-    map = r300->rws->buffer_map(r300->rws, q->buf, r300->cs, flags);
+    map = r300->rws->buffer_map(q->buf, r300->cs, flags);
     if (!map)
         return FALSE;
 
@@ -148,7 +147,7 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
         map++;
     }
 
-    r300->rws->buffer_unmap(r300->rws, q->buf);
+    r300->rws->buffer_unmap(q->buf);
 
     *result = temp;
     return TRUE;

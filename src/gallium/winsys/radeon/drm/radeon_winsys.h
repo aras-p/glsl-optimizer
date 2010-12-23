@@ -37,7 +37,6 @@ struct radeon_drm_winsys {
 
     int fd; /* DRM file descriptor */
 
-    struct radeon_bo_manager *bom; /* Radeon BO manager. */
     struct pb_manager *kman;
     struct pb_manager *cman;
 
@@ -62,7 +61,5 @@ radeon_drm_winsys(struct r300_winsys_screen *base)
 {
     return (struct radeon_drm_winsys*)base;
 }
-
-void radeon_winsys_init_functions(struct radeon_drm_winsys *ws);
 
 #endif

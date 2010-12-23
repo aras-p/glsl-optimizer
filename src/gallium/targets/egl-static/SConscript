@@ -104,7 +104,6 @@ if env['drm']:
         ])
 
     if env['drm_radeon']:
-        env.ParseConfig('pkg-config --cflags --libs libdrm_radeon')
         env.Append(CPPDEFINES = ['_EGL_PIPE_R300', '_EGL_PIPE_R600'])
         env.Prepend(LIBS = [
             radeonwinsys,

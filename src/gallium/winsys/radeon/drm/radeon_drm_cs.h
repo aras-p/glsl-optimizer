@@ -1,7 +1,7 @@
 #ifndef RADEON_DRM_CS_H
 #define RADEON_DRM_CS_H
 
-#include "radeon_winsys.h"
+#include "radeon_drm_bo.h"
 #include <radeon_drm.h>
 
 struct radeon_drm_cs {
@@ -31,10 +31,23 @@ struct radeon_drm_cs {
     unsigned                    reloc_indices_hashlist[256];
 };
 
+int radeon_get_reloc(struct radeon_drm_cs *cs, struct radeon_bo *bo);
+
 static INLINE struct radeon_drm_cs *
 radeon_drm_cs(struct r300_winsys_cs *base)
 {
     return (struct radeon_drm_cs*)base;
+}
+
+static INLINE int radeon_bo_is_referenced_by_cs(struct radeon_drm_cs *cs,
+                                                struct radeon_bo *bo)
+{
+    return radeon_get_reloc(cs, bo) != -1;
+}
+
+static INLINE int radeon_bo_is_referenced_by_any_cs(struct radeon_bo *bo)
+{
+    return bo->cref > 1;
 }
 
 void radeon_drm_cs_init_functions(struct radeon_drm_winsys *ws);

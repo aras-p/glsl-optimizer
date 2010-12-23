@@ -42,7 +42,7 @@ static unsigned r300_resource_is_referenced_by_cs(struct pipe_context *context,
                                                   struct pipe_resource *buf,
                                                   unsigned level, int layer)
 {
-    return r300_buffer_is_referenced(context, buf, R300_REF_CS);
+    return r300_buffer_is_referenced(context, buf);
 }
 
 void r300_init_resource_functions(struct r300_context *r300)

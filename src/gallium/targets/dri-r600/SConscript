@@ -2,8 +2,6 @@ Import('*')
 
 env = drienv.Clone()
 
-env.ParseConfig('pkg-config --cflags --libs libdrm_radeon')
-
 env.Append(CPPDEFINES = ['GALLIUM_RBUG', 'GALLIUM_TRACE'])
 
 env.Prepend(LIBS = [

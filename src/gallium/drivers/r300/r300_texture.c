@@ -706,10 +706,9 @@ static void r300_texture_destroy(struct pipe_screen *screen,
                                  struct pipe_resource* texture)
 {
     struct r300_resource* tex = (struct r300_resource*)texture;
-    struct r300_winsys_screen *rws = (struct r300_winsys_screen *)texture->screen->winsys;
     int i;
 
-    rws->buffer_reference(rws, &tex->buf, NULL);
+    r300_winsys_bo_reference(&tex->buf, NULL);
     for (i = 0; i < R300_MAX_TEXTURE_LEVELS; i++) {
         if (tex->hiz_mem[i])
             u_mmFreeMem(tex->hiz_mem[i]);
@@ -729,7 +728,7 @@ boolean r300_resource_get_handle(struct pipe_screen* screen,
         return FALSE;
     }
 
-    return rws->buffer_get_handle(rws, tex->buf,
+    return rws->buffer_get_handle(tex->buf,
                                   tex->tex.stride_in_bytes[0], whandle);
 }
 
@@ -754,13 +753,13 @@ r300_texture_create_object(struct r300_screen *rscreen,
                            enum r300_buffer_tiling macrotile,
                            unsigned stride_in_bytes_override,
                            unsigned max_buffer_size,
-                           struct r300_winsys_buffer *buffer)
+                           struct r300_winsys_bo *buffer)
 {
     struct r300_winsys_screen *rws = rscreen->rws;
     struct r300_resource *tex = CALLOC_STRUCT(r300_resource);
     if (!tex) {
         if (buffer)
-            rws->buffer_reference(rws, &buffer, NULL);
+            r300_winsys_bo_reference(&buffer, NULL);
         return NULL;
     }
 
@@ -780,7 +779,7 @@ r300_texture_create_object(struct r300_screen *rscreen,
 
     if (!r300_resource_set_properties(&rscreen->screen, &tex->b.b.b, 0, base)) {
         if (buffer)
-            rws->buffer_reference(rws, &buffer, NULL);
+            r300_winsys_bo_reference(&buffer, NULL);
         FREE(tex);
         return NULL;
     }
@@ -799,9 +798,9 @@ r300_texture_create_object(struct r300_screen *rscreen,
         tex->buf = buffer;
     }
 
-    tex->cs_buf = rws->buffer_get_cs_handle(rws, tex->buf);
+    tex->cs_buf = rws->buffer_get_cs_handle(tex->buf);
 
-    rws->buffer_set_tiling(rws, tex->buf,
+    rws->buffer_set_tiling(tex->buf,
             tex->tex.microtile, tex->tex.macrotile[0],
             tex->tex.stride_in_bytes[0]);
 
@@ -835,7 +834,7 @@ struct pipe_resource *r300_texture_from_handle(struct pipe_screen *screen,
 {
     struct r300_winsys_screen *rws = (struct r300_winsys_screen*)screen->winsys;
     struct r300_screen *rscreen = r300_screen(screen);
-    struct r300_winsys_buffer *buffer;
+    struct r300_winsys_bo *buffer;
     enum r300_buffer_tiling microtile, macrotile;
     unsigned stride, size;
 
@@ -851,7 +850,7 @@ struct pipe_resource *r300_texture_from_handle(struct pipe_screen *screen,
     if (!buffer)
         return NULL;
 
-    rws->buffer_get_tiling(rws, buffer, &microtile, &macrotile);
+    rws->buffer_get_tiling(buffer, &microtile, &macrotile);
 
     /* Enforce a microtiled zbuffer. */
     if (util_format_is_depth_or_stencil(base->format) &&

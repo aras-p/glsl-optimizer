@@ -30,16 +30,13 @@
  */
 
 #include "radeon_winsys.h"
-#include "radeon_drm_buffer.h"
+#include "radeon_drm_bo.h"
 #include "radeon_drm_cs.h"
 #include "radeon_drm_public.h"
 
 #include "pipebuffer/pb_bufmgr.h"
 #include "util/u_memory.h"
 
-#include <radeon_drm.h>
-#include <radeon_bo_gem.h>
-#include <radeon_cs_gem.h>
 #include <xf86drm.h>
 #include <stdio.h>
 
@@ -166,9 +163,45 @@ static void radeon_winsys_destroy(struct r300_winsys_screen *rws)
 
     ws->cman->destroy(ws->cman);
     ws->kman->destroy(ws->kman);
-
-    radeon_bo_manager_gem_dtor(ws->bom);
     FREE(rws);
+}
+
+static uint32_t radeon_get_value(struct r300_winsys_screen *rws,
+                                 enum r300_value_id id)
+{
+    struct radeon_drm_winsys *ws = (struct radeon_drm_winsys *)rws;
+
+    switch(id) {
+    case R300_VID_PCI_ID:
+	return ws->pci_id;
+    case R300_VID_GB_PIPES:
+	return ws->gb_pipes;
+    case R300_VID_Z_PIPES:
+	return ws->z_pipes;
+    case R300_VID_GART_SIZE:
+        return ws->gart_size;
+    case R300_VID_VRAM_SIZE:
+        return ws->vram_size;
+    case R300_VID_DRM_MAJOR:
+        return ws->drm_major;
+    case R300_VID_DRM_MINOR:
+        return ws->drm_minor;
+    case R300_VID_DRM_PATCHLEVEL:
+        return ws->drm_patchlevel;
+    case R300_VID_DRM_2_1_0:
+        return ws->drm_major*100 + ws->drm_minor >= 201;
+    case R300_VID_DRM_2_3_0:
+        return ws->drm_major*100 + ws->drm_minor >= 203;
+    case R300_VID_DRM_2_6_0:
+        return ws->drm_major*100 + ws->drm_minor >= 206;
+    case R300_VID_DRM_2_8_0:
+        return ws->drm_major*100 + ws->drm_minor >= 208;
+    case R300_CAN_HYPERZ:
+        return ws->hyperz;
+    case R300_CAN_AACOMPRESS:
+        return ws->aacompress;
+    }
+    return 0;
 }
 
 struct r300_winsys_screen *r300_drm_winsys_screen_create(int fd)
@@ -186,10 +219,7 @@ struct r300_winsys_screen *r300_drm_winsys_screen_create(int fd)
     }
 
     /* Create managers. */
-    ws->bom = radeon_bo_manager_gem_ctor(fd);
-    if (!ws->bom)
-	goto fail;
-    ws->kman = radeon_drm_bufmgr_create(ws);
+    ws->kman = radeon_bomgr_create(ws);
     if (!ws->kman)
 	goto fail;
     ws->cman = pb_cache_manager_create(ws->kman, 1000000);
@@ -198,22 +228,18 @@ struct r300_winsys_screen *r300_drm_winsys_screen_create(int fd)
 
     /* Set functions. */
     ws->base.destroy = radeon_winsys_destroy;
+    ws->base.get_value = radeon_get_value;
 
-    radeon_drm_bufmgr_init_functions(ws);
+    radeon_bomgr_init_functions(ws);
     radeon_drm_cs_init_functions(ws);
-    radeon_winsys_init_functions(ws);
 
     return &ws->base;
 
 fail:
-    if (ws->bom)
-	radeon_bo_manager_gem_dtor(ws->bom);
-
     if (ws->cman)
 	ws->cman->destroy(ws->cman);
     if (ws->kman)
 	ws->kman->destroy(ws->kman);
-
     FREE(ws);
     return NULL;
 }

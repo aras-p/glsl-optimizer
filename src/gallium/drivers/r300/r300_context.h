@@ -34,6 +34,7 @@
 
 #include "r300_defines.h"
 #include "r300_screen.h"
+#include "r300_winsys.h"
 
 struct u_upload_mgr;
 struct r300_context;
@@ -273,8 +274,8 @@ struct r300_query {
     boolean begin_emitted;
 
     /* The buffer where query results are stored. */
-    struct r300_winsys_buffer *buf;
-    struct r300_winsys_cs_buffer *cs_buf;
+    struct r300_winsys_bo *buf;
+    struct r300_winsys_cs_handle *cs_buf;
     /* The size of the buffer. */
     unsigned buffer_size;
     /* The domain of the buffer. */
@@ -305,8 +306,8 @@ struct r300_surface {
     struct pipe_surface base;
 
     /* Winsys buffer backing the texture. */
-    struct r300_winsys_buffer *buf;
-    struct r300_winsys_cs_buffer *cs_buf;
+    struct r300_winsys_bo *buf;
+    struct r300_winsys_cs_handle *cs_buf;
 
     enum r300_buffer_domain domain;
 
@@ -389,8 +390,8 @@ struct r300_resource
     struct u_vbuf_resource b;
 
     /* Winsys buffer backing this resource. */
-    struct r300_winsys_buffer *buf;
-    struct r300_winsys_cs_buffer *cs_buf;
+    struct r300_winsys_bo *buf;
+    struct r300_winsys_cs_handle *cs_buf;
     enum r300_buffer_domain domain;
     unsigned buf_size;
 

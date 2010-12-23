@@ -616,7 +616,8 @@ static void r300_set_stencil_ref(struct pipe_context* pipe,
 }
 
 static void r300_tex_set_tiling_flags(struct r300_context *r300,
-                                      struct r300_resource *tex, unsigned level)
+                                      struct r300_resource *tex,
+                                      unsigned level)
 {
     /* Check if the macrotile flag needs to be changed.
      * Skip changing the flags otherwise. */
@@ -624,11 +625,10 @@ static void r300_tex_set_tiling_flags(struct r300_context *r300,
         tex->tex.macrotile[level]) {
         /* Tiling determines how DRM treats the buffer data.
          * We must flush CS when changing it if the buffer is referenced. */
-        if (r300->rws->cs_is_buffer_referenced(r300->cs,
-                                               tex->cs_buf, R300_REF_CS))
+        if (r300->rws->cs_is_buffer_referenced(r300->cs, tex->cs_buf))
             r300->context.flush(&r300->context, 0, NULL);
 
-        r300->rws->buffer_set_tiling(r300->rws, tex->buf,
+        r300->rws->buffer_set_tiling(tex->buf,
                 tex->tex.microtile, tex->tex.macrotile[level],
                 tex->tex.stride_in_bytes[0]);
 

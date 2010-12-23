@@ -63,13 +63,12 @@
 */
 
 #include "radeon_drm_cs.h"
-#include "radeon_drm_buffer.h"
 
 #include "util/u_memory.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-#include <radeon_bo.h>
 #include <xf86drm.h>
 
 #define RELOC_DWORDS (sizeof(struct drm_radeon_cs_reloc) / sizeof(uint32_t))
@@ -131,8 +130,7 @@ static inline void update_domains(struct drm_radeon_cs_reloc *reloc,
     }
 }
 
-static int radeon_get_reloc(struct radeon_drm_cs *cs,
-                            struct radeon_bo *bo)
+int radeon_get_reloc(struct radeon_drm_cs *cs, struct radeon_bo *bo)
 {
     struct drm_radeon_cs_reloc *reloc;
     unsigned i;
@@ -235,7 +233,7 @@ static void radeon_add_reloc(struct radeon_drm_cs *cs,
 }
 
 static void radeon_drm_cs_add_reloc(struct r300_winsys_cs *rcs,
-                                    struct r300_winsys_cs_buffer *buf,
+                                    struct r300_winsys_cs_handle *buf,
                                     enum r300_buffer_domain rd,
                                     enum r300_buffer_domain wd)
 {
@@ -263,7 +261,7 @@ static boolean radeon_drm_cs_validate(struct r300_winsys_cs *rcs)
 }
 
 static void radeon_drm_cs_write_reloc(struct r300_winsys_cs *rcs,
-                                      struct r300_winsys_cs_buffer *buf)
+                                      struct r300_winsys_cs_handle *buf)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     struct radeon_bo *bo = (struct radeon_bo*)buf;
@@ -287,9 +285,6 @@ static void radeon_drm_cs_emit(struct r300_winsys_cs *rcs)
     int r;
 
     if (cs->base.cdw) {
-        /* Unmap buffers. */
-        radeon_drm_bufmgr_flush_maps(cs->ws->kman);
-
         /* Prepare the arguments. */
         cs->chunks[0].length_dw = cs->base.cdw;
 
@@ -319,7 +314,7 @@ static void radeon_drm_cs_emit(struct r300_winsys_cs *rcs)
 
     /* Unreference buffers, cleanup. */
     for (i = 0; i < cs->crelocs; i++) {
-        radeon_bo_unref((struct radeon_bo*)cs->relocs_bo[i]);
+        radeon_bo_unref(cs->relocs_bo[i]);
         cs->relocs_bo[i] = NULL;
     }
 
@@ -341,11 +336,20 @@ static void radeon_drm_cs_destroy(struct r300_winsys_cs *rcs)
 }
 
 static void radeon_drm_cs_set_flush(struct r300_winsys_cs *rcs,
-                             void (*flush)(void *), void *user)
+                                    void (*flush)(void *), void *user)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     cs->flush_cs = flush;
     cs->flush_data = user;
+}
+
+static boolean radeon_bo_is_referenced(struct r300_winsys_cs *rcs,
+                                       struct r300_winsys_cs_handle *_buf)
+{
+    struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
+    struct radeon_bo *bo = (struct radeon_bo*)_buf;
+
+    return radeon_bo_is_referenced_by_cs(cs, bo);
 }
 
 void radeon_drm_cs_init_functions(struct radeon_drm_winsys *ws)
@@ -357,4 +361,5 @@ void radeon_drm_cs_init_functions(struct radeon_drm_winsys *ws)
     ws->base.cs_write_reloc = radeon_drm_cs_write_reloc;
     ws->base.cs_flush = radeon_drm_cs_emit;
     ws->base.cs_set_flush = radeon_drm_cs_set_flush;
+    ws->base.cs_is_buffer_referenced = radeon_bo_is_referenced;
 }

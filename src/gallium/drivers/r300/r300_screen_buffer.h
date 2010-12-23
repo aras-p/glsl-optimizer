@@ -50,8 +50,7 @@ struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
 					      unsigned bind);
 
 unsigned r300_buffer_is_referenced(struct pipe_context *context,
-				   struct pipe_resource *buf,
-                                   enum r300_reference_domain domain);
+				   struct pipe_resource *buf);
 
 /* Inline functions. */
 

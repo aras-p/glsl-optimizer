@@ -92,7 +92,7 @@ nouveau_LIBS := \
 
 # r300 pipe driver
 r300_CPPFLAGS :=
-r300_SYS := -ldrm -ldrm_radeon
+r300_SYS := -ldrm
 r300_LIBS := \
 	$(TOP)/src/gallium/winsys/radeon/drm/libradeonwinsys.a \
 	$(TOP)/src/gallium/drivers/r300/libr300.a

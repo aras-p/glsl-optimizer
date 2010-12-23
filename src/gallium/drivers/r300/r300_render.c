@@ -330,15 +330,10 @@ static boolean immd_is_good_idea(struct r300_context *r300,
         if (!checked[vbi]) {
             buf = r300->vbuf_mgr->real_vertex_buffer[vbi];
 
-            if (!(r300_resource(buf)->domain & R300_DOMAIN_GTT)) {
+            if ((r300_resource(buf)->domain != R300_DOMAIN_GTT)) {
                 return FALSE;
             }
 
-            if (r300_buffer_is_referenced(&r300->context, buf,
-                                          R300_REF_CS | R300_REF_HW)) {
-                /* It's a very bad idea to map it... */
-                return FALSE;
-            }
             checked[vbi] = TRUE;
         }
     }
@@ -395,7 +390,8 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
         if (!transfer[vbi]) {
             map[vbi] = (uint32_t*)pipe_buffer_map(&r300->context,
                                                   r300->vbuf_mgr->real_vertex_buffer[vbi],
-                                                  PIPE_TRANSFER_READ,
+                                                  PIPE_TRANSFER_READ |
+                                                  PIPE_TRANSFER_UNSYNCHRONIZED,
 						  &transfer[vbi]);
             map[vbi] += (vbuf->buffer_offset / 4) + stride[i] * start;
         }
@@ -575,7 +571,9 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
         struct pipe_resource *userbuf;
 
         uint16_t *ptr = pipe_buffer_map(pipe, indexBuffer,
-                                        PIPE_TRANSFER_READ, &transfer);
+                                        PIPE_TRANSFER_READ |
+                                        PIPE_TRANSFER_UNSYNCHRONIZED,
+                                        &transfer);
 
         if (mode == PIPE_PRIM_TRIANGLES) {
            memcpy(indices3, ptr + start, 6);
@@ -771,7 +769,8 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
         if (r300->vbuf_mgr->vertex_buffer[i].buffer) {
             void *buf = pipe_buffer_map(pipe,
                                   r300->vbuf_mgr->vertex_buffer[i].buffer,
-                                  PIPE_TRANSFER_READ,
+                                  PIPE_TRANSFER_READ |
+                                  PIPE_TRANSFER_UNSYNCHRONIZED,
                                   &vb_transfer[i]);
             draw_set_mapped_vertex_buffer(r300->draw, i, buf);
         }
@@ -779,7 +778,8 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
 
     if (indexed) {
         indices = pipe_buffer_map(pipe, r300->index_buffer.buffer,
-                                  PIPE_TRANSFER_READ, &ib_transfer);
+                                  PIPE_TRANSFER_READ |
+                                  PIPE_TRANSFER_UNSYNCHRONIZED, &ib_transfer);
     }
 
     draw_set_mapped_index_buffer(r300->draw, indices);
@@ -876,7 +876,8 @@ static void* r300_render_map_vertices(struct vbuf_render* render)
 
     r300render->vbo_ptr = pipe_buffer_map(&r300render->r300->context,
 					  r300->vbo,
-                                          PIPE_TRANSFER_WRITE,
+                                          PIPE_TRANSFER_WRITE |
+                                          PIPE_TRANSFER_UNSYNCHRONIZED,
 					  &r300render->vbo_transfer);
 
     assert(r300render->vbo_ptr);
@@ -951,23 +952,6 @@ static void r300_render_draw_arrays(struct vbuf_render* render,
                 NULL, 0, 0, FALSE))
             return;
     }
-
-    /* Uncomment to dump all VBOs rendered through this interface.
-     * Slow and noisy!
-    ptr = pipe_buffer_map(&r300render->r300->context,
-                          r300render->vbo, PIPE_TRANSFER_READ,
-                          &r300render->vbo_transfer);
-
-    for (i = 0; i < count; i++) {
-        printf("r300: Vertex %d\n", i);
-        draw_dump_emitted_vertex(&r300->vertex_info, ptr);
-        ptr += r300->vertex_info.size * 4;
-        printf("\n");
-    }
-
-    pipe_buffer_unmap(&r300render->r300->context, r300render->vbo,
-        r300render->vbo_transfer);
-    */
 
     BEGIN_CS(dwords);
     OUT_CS_REG(R300_GA_COLOR_CONTROL,
