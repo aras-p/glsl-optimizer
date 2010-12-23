@@ -66,12 +66,17 @@ nvc0_resource_unmap(struct nvc0_resource *res)
       nouveau_bo_unmap(res->bo);
 }
 
-#define NVC0_TILE_PITCH(m)  (64 << ((m) & 0xf))
-#define NVC0_TILE_HEIGHT(m) (8 << (((m) >> 4) & 0xf))
-#define NVC0_TILE_DEPTH(m)  (1 << ((m) >> 8))
+#define NVC0_TILE_DIM_SHIFT(m, d) (((m) >> (d * 4)) & 0xf)
 
-#define NVC0_TILE_SIZE(m) \
-   (NVC0_TILE_PITCH(m) * NVC0_TILE_HEIGHT(m) * NVC0_TILE_DEPTH(m))
+#define NVC0_TILE_PITCH(m)  (64 << NVC0_TILE_DIM_SHIFT(m, 0))
+#define NVC0_TILE_HEIGHT(m) ( 8 << NVC0_TILE_DIM_SHIFT(m, 1))
+#define NVC0_TILE_DEPTH(m)  ( 1 << NVC0_TILE_DIM_SHIFT(m, 2))
+
+#define NVC0_TILE_SIZE_2D(m) (((64 * 8) <<                     \
+                               NVC0_TILE_DIM_SHIFT(m, 0)) <<   \
+                              NVC0_TILE_DIM_SHIFT(m, 1))
+
+#define NVC0_TILE_SIZE(m) (NVC0_TILE_SIZE_2D(m) << NVC0_TILE_DIM_SHIFT(m, 2))
 
 struct nvc0_miptree_level {
    uint32_t offset;

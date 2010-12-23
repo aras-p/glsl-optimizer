@@ -81,7 +81,7 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         OUT_RING  (chan, (mt->layout_3d << 16) |
                    mt->level[sf->base.u.tex.level].tile_mode);
         OUT_RING  (chan, sf->depth);
-        OUT_RING  (chan, mt->layer_stride);
+        OUT_RING  (chan, mt->layer_stride >> 2);
 
         nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_FRAME, &mt->base,
                                  NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
@@ -99,7 +99,7 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         OUT_RELOCl(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
         OUT_RING  (chan, nvc0_format_table[fb->zsbuf->format].rt);
         OUT_RING  (chan, mt->level[sf->base.u.tex.level].tile_mode);
-        OUT_RING  (chan, 0);
+        OUT_RING  (chan, mt->layer_stride >> 2);
         BEGIN_RING(chan, RING_3D(ZETA_ENABLE), 1);
         OUT_RING  (chan, 1);
         BEGIN_RING(chan, RING_3D(ZETA_HORIZ), 3);

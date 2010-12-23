@@ -58,17 +58,18 @@ get_tile_dims(unsigned nx, unsigned ny, unsigned nz)
 }
 
 static INLINE unsigned
-get_zslice_offset(uint32_t tile_mode, unsigned z, unsigned pitch, unsigned nbh)
+calc_zslice_offset(uint32_t tile_mode, unsigned z, unsigned pitch, unsigned nbh)
 {
    unsigned tile_h = NVC0_TILE_HEIGHT(tile_mode);
-   unsigned tile_d = NVC0_TILE_DEPTH(tile_mode);
+   unsigned tile_d_shift = NVC0_TILE_DIM_SHIFT(tile_mode, 2);
+   unsigned tile_d = 1 << tile_d_shift;
 
-   /* pitch_2d == to next slice within this volume tile */
-   /* pitch_3d == size (in bytes) of a volume tile */
-   unsigned pitch_2d = tile_h * NVC0_TILE_PITCH(tile_mode);
-   unsigned pitch_3d = tile_d * align(nbh, tile_h) * pitch;
+   /* stride_2d == to next slice within this volume tile */
+   /* stride_3d == size (in bytes) of a volume tile */
+   unsigned stride_2d = tile_h * NVC0_TILE_PITCH(tile_mode);
+   unsigned stride_3d = tile_d * align(nbh, tile_h) * pitch;
 
-   return (z % tile_d) * pitch_2d + (z / tile_d) * pitch_3d;
+   return (z & (tile_d - 1)) * stride_2d + (z >> tile_d_shift) * stride_3d;
 }
 
 static void
@@ -298,10 +299,16 @@ nvc0_miptree_surface_new(struct pipe_context *pipe,
    ps->height = ns->height;
 
    if (mt->layout_3d) {
-      ns->offset += get_zslice_offset(lvl->tile_mode, ps->u.tex.first_layer,
-                                      lvl->pitch,
-                                      util_format_get_nblocksy(pt->format,
-                                                               ns->height));
+      unsigned zslice = ps->u.tex.first_layer;
+
+      /* TODO: re-layout the texture to use only depth 1 tiles in this case: */
+      if (ns->depth > 1 && (zslice & (NVC0_TILE_DEPTH(lvl->tile_mode) - 1)))
+         NOUVEAU_ERR("Creating unsupported 3D surface of slices [%u:%u].\n",
+                     zslice, ps->u.tex.last_layer);
+
+      ns->offset += calc_zslice_offset(lvl->tile_mode, zslice, lvl->pitch,
+                                       util_format_get_nblocksy(pt->format,
+                                                                ns->height));
    } else {
       ns->offset += mt->layer_stride * ps->u.tex.first_layer;
    }
