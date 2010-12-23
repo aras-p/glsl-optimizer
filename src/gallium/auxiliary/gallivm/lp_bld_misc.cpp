@@ -144,6 +144,7 @@ lp_set_target_options(void)
    llvm::UnsafeFPMath = true;
 #endif
 
+#if HAVE_LLVM < 0x0209
    /*
     * LLVM will generate MMX instructions for vectors <= 64 bits, leading to
     * innefficient code, and in 32bit systems, to the corruption of the FPU
@@ -162,6 +163,7 @@ lp_set_target_options(void)
       llvm::cl::ParseCommandLineOptions(2, const_cast<char**>(options));
       first = FALSE;
    }
+#endif
 
    /*
     * By default LLVM adds a signal handler to output a pretty stack trace.
