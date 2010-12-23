@@ -40,7 +40,6 @@
 
 #include <stdlib.h>
 #include "u_current.h"
-#include "table.h"
 
 /* C version of the public entries */
 #define MAPI_TMP_PUBLIC_ENTRIES
