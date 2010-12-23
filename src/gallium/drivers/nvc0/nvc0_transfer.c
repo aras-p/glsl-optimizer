@@ -269,6 +269,7 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
    tx->nblocksy = util_format_get_nblocksy(res->format, box->height);
 
    tx->base.stride = tx->nblocksx * util_format_get_blocksize(res->format);
+   tx->base.layer_stride = tx->nblocksy * tx->base.stride;
 
    w = u_minify(res->width0, level);
    h = u_minify(res->height0, level);
@@ -287,7 +288,7 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
    tx->rect[0].pitch = lvl->pitch;
    tx->rect[0].domain = NOUVEAU_BO_VRAM;
 
-   size = tx->nblocksy * tx->base.stride;
+   size = tx->base.layer_stride;
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0,
                         size * tx->base.box.depth, &tx->rect[1].bo);
