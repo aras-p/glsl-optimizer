@@ -1400,7 +1400,6 @@ static boolean parse_property( struct translate_ctx *ctx )
       }
       break;
    case TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS:
-      break;
    default:
       if (!parse_uint(&ctx->cur, &values[0] )) {
          report_error( ctx, "Expected unsigned integer as property!" );
