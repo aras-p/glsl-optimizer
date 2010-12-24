@@ -1531,8 +1531,11 @@ _mesa_format_to_type_and_comps(gl_format format,
       *comps = 4;
       return;
 
-   case MESA_FORMAT_NONE:
    case MESA_FORMAT_COUNT:
+      assert(0);
+      return;
+
+   case MESA_FORMAT_NONE:
    /* For debug builds, warn if any formats are not handled */
 #ifdef DEBUG
    default:
