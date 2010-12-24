@@ -1727,6 +1727,7 @@ void brw_dp_READ_4_vs(struct brw_compile *p,
 
    /* Setup MRF[1] with location/offset into const buffer */
    brw_push_insn_state(p);
+   brw_set_access_mode(p, BRW_ALIGN_1);
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_mask_control(p, BRW_MASK_DISABLE);
    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
@@ -1774,6 +1775,7 @@ void brw_dp_READ_4_vs_relative(struct brw_compile *p,
 
    /* Setup MRF[1] with offset into const buffer */
    brw_push_insn_state(p);
+   brw_set_access_mode(p, BRW_ALIGN_1);
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_mask_control(p, BRW_MASK_DISABLE);
    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
