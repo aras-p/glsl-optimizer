@@ -198,8 +198,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	else
 		rctx->custom_dsa_flush = evergreen_create_db_flush_dsa(rctx);
 
-	r600_blit_uncompress_depth_ptr = r600_blit_uncompress_depth;
-
 	return &rctx->context;
 }
 
