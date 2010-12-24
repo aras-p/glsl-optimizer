@@ -32,7 +32,6 @@
 #include "u_compiler.h"
 #include "stub.h"
 
-#define MAPI_TMP_DEFINES
 #define MAPI_TMP_TABLE
 #include "mapi_tmp.h"
 
