@@ -48,6 +48,8 @@ struct u_upload_mgr {
    /* The active buffer:
     */
    struct pipe_resource *buffer;
+   struct pipe_transfer *transfer;
+   uint8_t *map;
    unsigned size;
    unsigned offset;
 };
@@ -71,48 +73,6 @@ struct u_upload_mgr *u_upload_create( struct pipe_context *pipe,
    return upload;
 }
 
-/* Slightly specialized version of buffer_write designed to maximize
- * chances of the driver consolidating successive writes into a single
- * upload.
- *
- * dirty_size may be slightly greater than size to cope with
- * alignment.  We don't want to leave holes between succesively mapped
- * regions as that may prevent the driver from consolidating uploads.
- * 
- * Note that the 'data' pointer has probably come from the application
- * and we cannot read even a byte past its end without risking
- * segfaults, or at least complaints from valgrind..
- */
-static INLINE enum pipe_error
-my_buffer_write(struct pipe_context *pipe,
-                struct pipe_resource *buf,
-                unsigned offset, unsigned size, unsigned dirty_size,
-                const void *data)
-{
-   struct pipe_transfer *transfer = NULL;
-   uint8_t *map;
-   
-   assert(offset < buf->width0);
-   assert(offset + size <= buf->width0);
-   assert(dirty_size >= size);
-   assert(size);
-
-   map = pipe_buffer_map_range(pipe, buf, offset, dirty_size,
-                               PIPE_TRANSFER_WRITE |
-                               PIPE_TRANSFER_FLUSH_EXPLICIT |
-                               PIPE_TRANSFER_DISCARD |
-                               PIPE_TRANSFER_UNSYNCHRONIZED,
-			       &transfer);
-   if (map == NULL) 
-      return PIPE_ERROR_OUT_OF_MEMORY;
-
-   memcpy(map + offset, data, size);
-   pipe_buffer_flush_mapped_range(pipe, transfer, offset, dirty_size);
-   pipe_buffer_unmap(pipe, transfer);
-
-   return PIPE_OK;
-}
-
 /* Release old buffer.
  * 
  * This must usually be called prior to firing the command stream
@@ -124,6 +84,10 @@ my_buffer_write(struct pipe_context *pipe,
  */
 void u_upload_flush( struct u_upload_mgr *upload )
 {
+   if (upload->transfer) {
+      pipe_transfer_unmap(upload->pipe, upload->transfer);
+      upload->transfer = NULL;
+   }
    pipe_resource_reference( &upload->buffer, NULL );
    upload->size = 0;
 }
@@ -155,6 +119,9 @@ u_upload_alloc_buffer( struct u_upload_mgr *upload,
                                         size );
    if (upload->buffer == NULL) 
       goto fail;
+
+   upload->map = pipe_buffer_map(upload->pipe, upload->buffer,
+                                 PIPE_TRANSFER_WRITE, &upload->transfer);
    
    upload->size = size;
 
@@ -184,16 +151,11 @@ enum pipe_error u_upload_data( struct u_upload_mgr *upload,
          return ret;
    }
 
-   /* Copy the data, using map_range if available:
-    */
-   ret = my_buffer_write( upload->pipe, 
-                          upload->buffer,
-                          upload->offset,
-                          size, 
-                          alloc_size,
-                          data );
-   if (ret)
-      return ret;
+   assert(upload->offset < upload->buffer->width0);
+   assert(upload->offset + size <= upload->buffer->width0);
+   assert(size);
+
+   memcpy(upload->map + upload->offset, data, size);
 
    /* Emit the return values:
     */
