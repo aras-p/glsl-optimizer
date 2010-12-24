@@ -132,7 +132,7 @@ mapi_get_proc_address(const char *name)
    if (!stub)
       stub = stub_find_dynamic(name, 0);
 
-   return (stub) ? (mapi_proc) stub->addr : NULL;
+   return (stub) ? (mapi_proc) stub_get_addr(stub) : NULL;
 }
 
 /**
@@ -172,11 +172,12 @@ mapi_table_fill(struct mapi_table *tbl, const mapi_proc *procs)
 
    for (i = 0; i < mapi_num_stubs; i++) {
       const struct mapi_stub *stub = mapi_stub_map[i];
+      int slot = stub_get_slot(stub);
       mapi_func func = (mapi_func) procs[i];
 
       if (!func)
-         func = table_get_func(noop, stub);
-      table_set_func(tbl, stub, func);
+         func = table_get_func(noop, slot);
+      table_set_func(tbl, slot, func);
    }
 }
 
