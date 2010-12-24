@@ -589,6 +589,8 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 			if (r)
 				goto out_err;
 			break;
+		case TGSI_TOKEN_TYPE_PROPERTY:
+			break;
 		default:
 			R600_ERR("unsupported token type %d\n", ctx.parse.FullToken.Token.Type);
 			r = -EINVAL;
