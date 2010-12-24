@@ -35,7 +35,7 @@
 #define RADEON_CTX_MAX_PM4	(64 * 1024 / 4)
 
 #define R600_ERR(fmt, args...) \
-	fprintf(stderr, "EE %s/%s:%d - "fmt, __FILE__, __func__, __LINE__, ##args)
+	fprintf(stderr, "EE %s:%d %s - "fmt, __FILE__, __LINE__, __func__, ##args)
 
 typedef uint64_t		u64;
 typedef uint32_t		u32;
