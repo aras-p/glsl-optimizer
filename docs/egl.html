@@ -19,10 +19,7 @@ API entry points and helper functions for use by the drivers.  Drivers are
 dynamically loaded by the main library and most of the EGL API calls are
 directly dispatched to the drivers.</p>
 
-<p>The driver in use decides the window system to support.  For drivers that
-support hardware rendering, there are usually multiple drivers supporting the
-same window system.  Each one of of them supports a certain range of graphics
-cards.</p>
+<p>The driver in use decides the window system to support.</p>
 
 <h2>Build EGL</h2>
 
@@ -86,16 +83,19 @@ select the right platforms automatically.</p>
 
 <li><code>--enable-gles1</code> and <code>--enable-gles2</code>
 
-<p>These options enable OpenGL ES support in OpenGL.  The result is
-one big library that supports multiple APIs.</p>
+<p>These options enable OpenGL ES support in OpenGL.  The result is one big
+internal library that supports multiple APIs.</p>
 
 </li>
 
 <li><code>--enable-gles-overlay</code>
 
-<p>This option enables OpenGL ES as separate libraries.  This is an alternative
-approach to enable OpenGL ES.  It is only supported by
-<code>egl_gallium</code>.</p>
+<p>This option enables OpenGL ES as separate internal libraries.  This is an
+alternative approach to enable OpenGL ES.</p>
+
+<p>This is only supported by <code>egl_gallium</code>.  For systems using DRI
+drivers, <code>--enable-gles1</code> and <code>--enable-gles2</code> are
+suggested instead as all drivers will benefit.</p>
 
 </li>
 
@@ -180,8 +180,10 @@ variable to true forces the use of software rendering.</p>
 <li><code>egl_dri2</code>
 
 <p>This driver supports both <code>x11</code> and <code>drm</code> platforms.
-It functions as a DRI2 driver loader.  For <code>x11</code> support, it talks
-to the X server directly using (XCB-)DRI2 protocol.</p>
+It functions as a DRI driver loader.  For <code>x11</code> support, it talks to
+the X server directly using (XCB-)DRI2 protocol.</p>
+
+<p>This driver can share DRI drivers with <code>libGL</code>.</p>
 
 </li>
 
@@ -190,6 +192,10 @@ to the X server directly using (XCB-)DRI2 protocol.</p>
 <p>This driver is based on Gallium3D.  It supports all rendering APIs and
 hardwares supported by Gallium3D.  It is the only driver that supports OpenVG.
 The supported platforms are X11, DRM, FBDEV, and GDI.</p>
+
+<p>This driver comes with its own hardware drivers
+(<code>pipe_&lt;hw&gt;</code>) and client API modules
+(<code>st_&lt;api&gt;</code>).</p>
 
 </li>
 
@@ -201,6 +207,21 @@ It is accelerated when the GLX is.  As such, it cannot provide functions that
 is not available in GLX or GLX extensions.</p>
 </li>
 </ul>
+
+<h2>Packaging</h2>
+
+<p>The ABI between the main library and its drivers are not stable.  Nor is
+there a plan to stabilize it at the moment.  Of the EGL drivers,
+<code>egl_gallium</code> has its own hardware drivers and client API modules.
+They are considered internal to <code>egl_gallium</code> and there is also no
+stable ABI between them.  These should be kept in mind when packaging for
+distribution.</p>
+
+<p>Generally, <code>egl_dri2</code> is preferred over <code>egl_gallium</code>
+when the system already has DRI drivers.  As <code>egl_gallium</code> is loaded
+before <code>egl_dri2</code> when both are available, <code>egl_gallium</code>
+may either be disabled with <code>--disable-gallium-egl</code> or packaged
+separately.</p>
 
 <h2>Developers</h2>
 
