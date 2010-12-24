@@ -378,6 +378,19 @@ class ABIPrinter(object):
 
         return '\n\n'.join(dispatches)
 
+    def c_public_initializer(self, prefix):
+        """Return the initializer for public dispatch functions."""
+        names = []
+        for ent in self.entries:
+            if ent.alias:
+                continue
+
+            name = '%s(mapi_func) %s' % (self.indent,
+                    self._c_function_call(ent, prefix))
+            names.append(name)
+
+        return ',\n'.join(names)
+
     def c_stub_string_pool(self):
         """Return the string pool for use by stubs."""
         # sort entries by their names
@@ -400,9 +413,8 @@ class ABIPrinter(object):
         """Return the initializer for struct mapi_stub array."""
         stubs = []
         for ent in self.entries_sorted_by_names:
-            stubs.append('%s{ (mapi_func) %s, %d, (void *) %d }' % (
-                self.indent, self._c_function_call(ent, prefix),
-                ent.slot, pool_offsets[ent]))
+            stubs.append('%s{ (void *) %d, %d, NULL }' % (
+                self.indent, pool_offsets[ent], ent.slot))
 
         return ',\n'.join(stubs)
 
@@ -526,6 +538,10 @@ class ABIPrinter(object):
             print
             print '#ifdef MAPI_TMP_PUBLIC_ENTRIES'
             print self.c_public_dispatches(self.prefix_lib)
+            print
+            print 'static const mapi_func public_entries[] = {'
+            print self.c_public_initializer(self.prefix_lib)
+            print '};'
             print '#undef MAPI_TMP_PUBLIC_ENTRIES'
             print '#endif /* MAPI_TMP_PUBLIC_ENTRIES */'
 

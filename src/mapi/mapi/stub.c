@@ -27,7 +27,6 @@
  */
 
 #include <stdlib.h>
-#include <stddef.h> /* for offsetof */
 #include <string.h>
 #include <assert.h>
 
@@ -40,9 +39,9 @@
 #define ARRAY_SIZE(x) (sizeof(x)/sizeof((x)[0]))
 
 struct mapi_stub {
-   mapi_func addr;
-   int slot;
    const void *name;
+   int slot;
+   mapi_func addr;
 };
 
 /* define public_string_pool and public_stubs */
@@ -203,5 +202,6 @@ stub_get_slot(const struct mapi_stub *stub)
 mapi_func
 stub_get_addr(const struct mapi_stub *stub)
 {
-   return stub->addr;
+   assert(stub->addr || (unsigned int) stub->slot < MAPI_TABLE_NUM_STATIC);
+   return (stub->addr) ? stub->addr : entry_get_public(stub->slot);
 }

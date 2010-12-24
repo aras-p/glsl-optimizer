@@ -49,6 +49,9 @@ __asm__("x86_64_current_tls:\n\t"
 	"movq u_current_table@GOTTPOFF(%rip), %rax\n\t"
 	"ret");
 
+__asm__(".balign 32\n"
+        "x86_64_entry_start:");
+
 #define STUB_ASM_ENTRY(func)                             \
    ".globl " func "\n"                                   \
    ".type " func ", @function\n"                         \
@@ -69,6 +72,13 @@ x86_64_current_tls();
 void
 entry_patch_public(void)
 {
+}
+
+mapi_func
+entry_get_public(int slot)
+{
+   extern char x86_64_entry_start[];
+   return (mapi_func) (x86_64_entry_start + slot * 32);
 }
 
 void

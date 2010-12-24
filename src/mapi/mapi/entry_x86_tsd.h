@@ -32,7 +32,9 @@
 
 #define X86_ENTRY_SIZE 32
 
-__asm__(".text");
+__asm__(".text\n"
+        ".balign 32\n"
+        "x86_entry_start:");
 
 #define STUB_ASM_ENTRY(func)        \
    ".globl " func "\n"              \
@@ -58,6 +60,13 @@ __asm__(".balign 32\n"
 void
 entry_patch_public(void)
 {
+}
+
+mapi_func
+entry_get_public(int slot)
+{
+   extern const char x86_entry_start[];
+   return (mapi_func) (x86_entry_start + slot * X86_ENTRY_SIZE);
 }
 
 void

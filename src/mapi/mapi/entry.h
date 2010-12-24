@@ -32,13 +32,11 @@
 #include "u_compiler.h"
 #include "stub.h"
 
-/* declare public entries */
-#define MAPI_TMP_DEFINES
-#define MAPI_TMP_PUBLIC_DECLARES
-#include "mapi_tmp.h"
-
 void
 entry_patch_public(void);
+
+mapi_func
+entry_get_public(int slot);
 
 mapi_func
 entry_generate(int slot);

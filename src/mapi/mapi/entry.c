@@ -42,12 +42,21 @@
 #include "u_current.h"
 
 /* C version of the public entries */
+#define MAPI_TMP_DEFINES
+#define MAPI_TMP_PUBLIC_DECLARES
 #define MAPI_TMP_PUBLIC_ENTRIES
 #include "mapi_tmp.h"
 
 void
 entry_patch_public(void)
 {
+}
+
+mapi_func
+entry_get_public(int slot)
+{
+   /* pubic_entries are defined by MAPI_TMP_PUBLIC_ENTRIES */
+   return public_entries[slot];
 }
 
 mapi_func
