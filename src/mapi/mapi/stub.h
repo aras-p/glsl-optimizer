@@ -29,7 +29,7 @@
 #ifndef _STUB_H_
 #define _STUB_H_
 
-typedef void (*mapi_func)(void);
+#include "entry.h"
 
 struct mapi_stub;
 

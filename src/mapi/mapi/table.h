@@ -30,7 +30,7 @@
 #define _TABLE_H_
 
 #include "u_compiler.h"
-#include "stub.h"
+#include "entry.h"
 
 #define MAPI_TMP_TABLE
 #include "mapi_tmp.h"

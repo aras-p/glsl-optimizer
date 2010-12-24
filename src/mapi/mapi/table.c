@@ -29,7 +29,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "stub.h"
 #include "table.h"
 
 static void

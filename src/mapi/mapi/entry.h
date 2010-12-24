@@ -30,7 +30,8 @@
 #define _ENTRY_H_
 
 #include "u_compiler.h"
-#include "stub.h"
+
+typedef void (*mapi_func)(void);
 
 void
 entry_patch_public(void);
