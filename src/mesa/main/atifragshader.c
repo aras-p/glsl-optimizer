@@ -316,6 +316,7 @@ _mesa_DeleteFragmentShaderATI(GLuint id)
       if (prog) {
 	 prog->RefCount--;
 	 if (prog->RefCount <= 0) {
+	    assert(prog != &DummyShader);
 	    free(prog);
 	 }
       }
