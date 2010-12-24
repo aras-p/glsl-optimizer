@@ -36,8 +36,6 @@
 #include "pipebuffer/pb_bufmgr.h"
 #include "util/u_memory.h"
 
-#include "state_tracker/drm_driver.h"
-
 #include <radeon_drm.h>
 #include <radeon_bo_gem.h>
 #include <radeon_cs_gem.h>
