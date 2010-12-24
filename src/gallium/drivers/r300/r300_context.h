@@ -459,6 +459,7 @@ struct r300_context {
     struct r300_screen *screen;
 
     /* Draw module. Used mostly for SW TCL. */
+    struct gallivm_state *gallivm;
     struct draw_context* draw;
     /* Vertex buffer for SW TCL. */
     struct pipe_resource* vbo;
