@@ -565,7 +565,8 @@ intel_glFlush(struct gl_context *ctx)
 
    intel_flush(ctx);
    intel_flush_front(ctx);
-   intel->need_throttle = GL_TRUE;
+   if (intel->is_front_buffer_rendering)
+      intel->need_throttle = GL_TRUE;
 }
 
 void
