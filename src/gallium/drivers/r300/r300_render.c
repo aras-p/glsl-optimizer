@@ -577,7 +577,8 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
     r300_update_derived_state(r300);
 
     /* Fallback for misaligned ushort indices. */
-    if (indexSize == 2 && (start & 1)) {
+    if (indexSize == 2 && (start & 1) &&
+        !r300_buffer_is_user_buffer(indexBuffer)) {
         struct pipe_transfer *transfer;
         struct pipe_resource *userbuf;
 
