@@ -28,7 +28,7 @@
 #define S_AALINE_H
 
 
-#include "main/mtypes.h"
+struct gl_context;
 
 
 extern void
