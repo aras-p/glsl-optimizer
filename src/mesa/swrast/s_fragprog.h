@@ -27,8 +27,9 @@
 #define S_FRAGPROG_H
 
 
-#include "main/mtypes.h"
 #include "s_span.h"
+
+struct gl_context;
 
 
 extern void
