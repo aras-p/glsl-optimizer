@@ -30,8 +30,10 @@
 #define ST_GEN_MIPMAP_H
 
 
-#include "main/mtypes.h"
+#include "main/glheader.h"
 
+struct gl_context;
+struct gl_texture_object;
 struct st_context;
 
 extern void
