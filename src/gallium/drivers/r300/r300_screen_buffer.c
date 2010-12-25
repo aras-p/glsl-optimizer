@@ -163,49 +163,17 @@ r300_buffer_transfer_map( struct pipe_context *pipe,
     struct r300_winsys_screen *rws = r300screen->rws;
     struct r300_buffer *rbuf = r300_buffer(transfer->resource);
     uint8_t *map;
-    boolean flush = FALSE;
-    unsigned i;
 
     if (rbuf->user_buffer)
         return (uint8_t *) rbuf->user_buffer + transfer->box.x;
     if (rbuf->constant_buffer)
         return (uint8_t *) rbuf->constant_buffer + transfer->box.x;
 
-    /* check if the mapping is to a range we already flushed */
-    if (transfer->usage & PIPE_TRANSFER_DISCARD) {
-	for (i = 0; i < rbuf->num_ranges; i++) {
-	    if ((transfer->box.x >= rbuf->ranges[i].start) &&
-		(transfer->box.x < rbuf->ranges[i].end))
-		flush = TRUE;
-
-	    if (flush) {
-		/* unreference this hw buffer and allocate a new one */
-		rws->buffer_reference(rws, &rbuf->buf, NULL);
-
-		rbuf->num_ranges = 0;
-                rbuf->buf =
-                    r300screen->rws->buffer_create(r300screen->rws,
-                                                   rbuf->b.b.width0, 16,
-                                                   rbuf->b.b.bind,
-                                                   rbuf->b.b.usage,
-                                                   rbuf->domain);
-                rbuf->cs_buf =
-                    r300screen->rws->buffer_get_cs_handle(r300screen->rws,
-                                                          rbuf->buf);
-		break;
-	    }
-	}
-    }
-
     map = rws->buffer_map(rws, rbuf->buf, r300->cs, transfer->usage);
 
     if (map == NULL)
         return NULL;
 
-    /* map_buffer() returned a pointer to the beginning of the buffer,
-     * but transfers are expected to return a pointer to just the
-     * region specified in the box.
-     */
     return map + transfer->box.x;
 }
 
@@ -213,30 +181,7 @@ static void r300_buffer_transfer_flush_region( struct pipe_context *pipe,
 					       struct pipe_transfer *transfer,
 					       const struct pipe_box *box)
 {
-    struct r300_buffer *rbuf = r300_buffer(transfer->resource);
-    unsigned i;
-    unsigned offset = transfer->box.x + box->x;
-    unsigned length = box->width;
-
-    assert(box->x + box->width <= transfer->box.width);
-
-    if (rbuf->user_buffer)
-	return;
-    if (rbuf->constant_buffer)
-        return;
-
-    /* mark the range as used */
-    for(i = 0; i < rbuf->num_ranges; ++i) {
-	if(offset <= rbuf->ranges[i].end && rbuf->ranges[i].start <= (offset+box->width)) {
-	    rbuf->ranges[i].start = MIN2(rbuf->ranges[i].start, offset);
-	    rbuf->ranges[i].end   = MAX2(rbuf->ranges[i].end, (offset+length));
-	    return;
-	}
-    }
-
-    rbuf->ranges[rbuf->num_ranges].start = offset;
-    rbuf->ranges[rbuf->num_ranges].end = offset+length;
-    rbuf->num_ranges++;
+    /* no-op */
 }
 
 static void r300_buffer_transfer_unmap( struct pipe_context *pipe,
@@ -308,7 +253,6 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     pipe_reference_init(&rbuf->b.b.reference, 1);
     rbuf->b.b.screen = screen;
     rbuf->domain = R300_DOMAIN_GTT;
-    rbuf->num_ranges = 0;
     rbuf->buf = NULL;
     rbuf->constant_buffer = NULL;
     rbuf->user_buffer = NULL;
@@ -360,7 +304,6 @@ struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
     rbuf->b.b.array_size = 1;
     rbuf->b.b.flags = 0;
     rbuf->domain = R300_DOMAIN_GTT;
-    rbuf->num_ranges = 0;
     rbuf->buf = NULL;
     rbuf->constant_buffer = NULL;
     rbuf->user_buffer = ptr;

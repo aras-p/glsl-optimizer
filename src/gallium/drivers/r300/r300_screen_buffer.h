@@ -57,8 +57,6 @@ struct r300_buffer
 
     uint8_t *user_buffer;
     uint8_t *constant_buffer;
-    struct r300_buffer_range ranges[R300_BUFFER_MAX_RANGES];
-    unsigned num_ranges;
 };
 
 /* Functions. */
