@@ -248,26 +248,26 @@ static void r300_buffer_transfer_inline_write(struct pipe_context *pipe,
                                               unsigned stride,
                                               unsigned layer_stride)
 {
+    struct r300_context *r300 = r300_context(pipe);
+    struct r300_winsys_screen *rws = r300->screen->rws;
     struct r300_buffer *rbuf = r300_buffer(resource);
-    struct pipe_transfer *transfer = NULL;
     uint8_t *map = NULL;
 
     if (rbuf->constant_buffer) {
         memcpy(rbuf->constant_buffer + box->x, data, box->width);
         return;
     }
+    assert(rbuf->user_buffer == NULL);
 
-    transfer = r300_buffer_get_transfer(pipe, resource, 0,
-                        PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD, box);
-    map = r300_buffer_transfer_map(pipe, transfer);
+    map = rws->buffer_map(rws, rbuf->buf, r300->cs,
+                          PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD | usage);
 
-    memcpy(map, data, box->width);
+    memcpy(map + box->x, data, box->width);
 
-    r300_buffer_transfer_unmap(pipe, transfer);
-    r300_buffer_transfer_destroy(pipe, transfer);
+    rws->buffer_unmap(rws, rbuf->buf);
 }
 
-struct u_resource_vtbl r300_buffer_vtbl = 
+struct u_resource_vtbl r300_buffer_vtbl =
 {
    u_default_resource_get_handle,      /* get_handle */
    r300_buffer_destroy,                /* resource_destroy */
