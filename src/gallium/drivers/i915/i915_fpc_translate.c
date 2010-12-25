@@ -924,6 +924,14 @@ i915_translate_instructions(struct i915_fp_compile *p,
       tgsi_parse_token( &parse );
 
       switch( parse.FullToken.Token.Type ) {
+      case TGSI_TOKEN_TYPE_PROPERTY:
+         /*
+          * We only support one cbuf, but we still need to ignore the property
+          * correctly so we don't hit the assert at the end of the switch case.
+          */
+         assert(parse.FullToken.FullProperty.Property.PropertyName ==
+                TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS);
+         break;
       case TGSI_TOKEN_TYPE_DECLARATION:
          if (parse.FullToken.FullDeclaration.Declaration.File
                   == TGSI_FILE_CONSTANT) {
