@@ -28,10 +28,10 @@ nvfx_render_flush(struct draw_stage *stage, unsigned flags)
 	struct nvfx_render_stage *rs = nvfx_render_stage(stage);
 	struct nvfx_context *nvfx = rs->nvfx;
 	struct nouveau_channel *chan = nvfx->screen->base.channel;
+	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 
 	if (rs->prim != NV30_3D_VERTEX_BEGIN_END_STOP) {
-		assert(AVAIL_RING(chan) >= 2);
-		OUT_RING(chan, RING_3D(NV30_3D_VERTEX_BEGIN_END, 1));
+		BEGIN_RING(chan, eng3d, NV30_3D_VERTEX_BEGIN_END, 1);
 		OUT_RING(chan, NV30_3D_VERTEX_BEGIN_END_STOP);
 		rs->prim = NV30_3D_VERTEX_BEGIN_END_STOP;
 	}
@@ -46,6 +46,7 @@ nvfx_render_prim(struct draw_stage *stage, struct prim_header *prim,
 
 	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *eng3d = screen->eng3d;
 	boolean no_elements = nvfx->vertprog->draw_no_elements;
 	unsigned num_attribs = nvfx->vertprog->draw_elements;
 
@@ -63,7 +64,7 @@ nvfx_render_prim(struct draw_stage *stage, struct prim_header *prim,
 	/* Switch primitive modes if necessary */
 	if (rs->prim != mode) {
 		if (rs->prim != NV30_3D_VERTEX_BEGIN_END_STOP) {
-			OUT_RING(chan, RING_3D(NV30_3D_VERTEX_BEGIN_END, 1));
+			BEGIN_RING(chan, eng3d, NV30_3D_VERTEX_BEGIN_END, 1);
 			OUT_RING(chan, NV30_3D_VERTEX_BEGIN_END_STOP);
 		}
 
@@ -74,23 +75,24 @@ nvfx_render_prim(struct draw_stage *stage, struct prim_header *prim,
 			int i;
 			for(i = 0; i < 32; ++i)
 			{
-				OUT_RING(chan, RING_3D(0x1dac, 1));
+				BEGIN_RING(chan, eng3d, 0x1dac, 1);
 				OUT_RING(chan, 0);
 			}
 		}
 
-		OUT_RING(chan, RING_3D(NV30_3D_VERTEX_BEGIN_END, 1));
+		BEGIN_RING(chan, eng3d, NV30_3D_VERTEX_BEGIN_END, 1);
 		OUT_RING  (chan, mode);
 		rs->prim = mode;
 	}
 
-	OUT_RING(chan, RING_3D_NI(NV30_3D_VERTEX_DATA, num_attribs * 4 * count));
 	if(no_elements) {
+		BEGIN_RING_NI(chan, eng3d, NV30_3D_VERTEX_DATA, 4);
 		OUT_RING(chan, 0);
 		OUT_RING(chan, 0);
 		OUT_RING(chan, 0);
 		OUT_RING(chan, 0);
 	} else {
+		BEGIN_RING_NI(chan, eng3d, NV30_3D_VERTEX_DATA, num_attribs * 4 * count);
 		for (unsigned i = 0; i < count; ++i)
 		{
 			struct vertex_header* v = prim->v[i];

@@ -7,11 +7,11 @@ void
 nvfx_state_viewport_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel *chan = nvfx->screen->base.channel;
+	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 	struct pipe_viewport_state *vpt = &nvfx->viewport;
 
-	WAIT_RING(chan, 11);
 	if(nvfx->render_mode == HW) {
-		OUT_RING(chan, RING_3D(NV30_3D_VIEWPORT_TRANSLATE_X, 8));
+		BEGIN_RING(chan, eng3d, NV30_3D_VIEWPORT_TRANSLATE_X, 8);
 		OUT_RINGf(chan, vpt->translate[0]);
 		OUT_RINGf(chan, vpt->translate[1]);
 		OUT_RINGf(chan, vpt->translate[2]);
@@ -20,10 +20,10 @@ nvfx_state_viewport_validate(struct nvfx_context *nvfx)
 		OUT_RINGf(chan, vpt->scale[1]);
 		OUT_RINGf(chan, vpt->scale[2]);
 		OUT_RINGf(chan, vpt->scale[3]);
-		OUT_RING(chan, RING_3D(0x1d78, 1));
+		BEGIN_RING(chan, eng3d, 0x1d78, 1);
 		OUT_RING(chan, 1);
 	} else {
-		OUT_RING(chan, RING_3D(NV30_3D_VIEWPORT_TRANSLATE_X, 8));
+		BEGIN_RING(chan, eng3d, NV30_3D_VIEWPORT_TRANSLATE_X, 8);
 		OUT_RINGf(chan, 0.0f);
 		OUT_RINGf(chan, 0.0f);
 		OUT_RINGf(chan, 0.0f);
@@ -32,7 +32,7 @@ nvfx_state_viewport_validate(struct nvfx_context *nvfx)
 		OUT_RINGf(chan, 1.0f);
 		OUT_RINGf(chan, 1.0f);
 		OUT_RINGf(chan, 1.0f);
-		OUT_RING(chan, RING_3D(0x1d78, 1));
+		BEGIN_RING(chan, eng3d, 0x1d78, 1);
 		OUT_RING(chan, nvfx->is_nv4x ? 0x110 : 1);
 	}
 }
@@ -41,6 +41,7 @@ void
 nvfx_state_scissor_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel *chan = nvfx->screen->base.channel;
+	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 	struct pipe_rasterizer_state *rast = &nvfx->rasterizer->pipe;
 	struct pipe_scissor_state *s = &nvfx->scissor;
 
@@ -48,8 +49,7 @@ nvfx_state_scissor_validate(struct nvfx_context *nvfx)
 		return;
 	nvfx->state.scissor_enabled = rast->scissor;
 
-	WAIT_RING(chan, 3);
-	OUT_RING(chan, RING_3D(NV30_3D_SCISSOR_HORIZ, 2));
+	BEGIN_RING(chan, eng3d, NV30_3D_SCISSOR_HORIZ, 2);
 	if (nvfx->state.scissor_enabled) {
 		OUT_RING(chan, ((s->maxx - s->minx) << 16) | s->minx);
 		OUT_RING(chan, ((s->maxy - s->miny) << 16) | s->miny);
@@ -63,12 +63,12 @@ void
 nvfx_state_sr_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
+	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 	struct pipe_stencil_ref *sr = &nvfx->stencil_ref;
 
-	WAIT_RING(chan, 4);
-	OUT_RING(chan, RING_3D(NV30_3D_STENCIL_FUNC_REF(0), 1));
+	BEGIN_RING(chan, eng3d, NV30_3D_STENCIL_FUNC_REF(0), 1);
 	OUT_RING(chan, sr->ref_value[0]);
-	OUT_RING(chan, RING_3D(NV30_3D_STENCIL_FUNC_REF(1), 1));
+	BEGIN_RING(chan, eng3d, NV30_3D_STENCIL_FUNC_REF(1), 1);
 	OUT_RING(chan, sr->ref_value[1]);
 }
 
@@ -76,10 +76,10 @@ void
 nvfx_state_blend_colour_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
+	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 	struct pipe_blend_color *bcol = &nvfx->blend_colour;
 
-	WAIT_RING(chan, 2);
-	OUT_RING(chan, RING_3D(NV30_3D_BLEND_COLOR, 1));
+	BEGIN_RING(chan, eng3d, NV30_3D_BLEND_COLOR, 1);
 	OUT_RING(chan, ((float_to_ubyte(bcol->color[3]) << 24) |
 		       (float_to_ubyte(bcol->color[0]) << 16) |
 		       (float_to_ubyte(bcol->color[1]) <<  8) |
@@ -90,9 +90,9 @@ void
 nvfx_state_stipple_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel *chan = nvfx->screen->base.channel;
+	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 
-	WAIT_RING(chan, 33);
-	OUT_RING(chan, RING_3D(NV30_3D_POLYGON_STIPPLE_PATTERN(0), 32));
+	BEGIN_RING(chan, eng3d, NV30_3D_POLYGON_STIPPLE_PATTERN(0), 32);
 	OUT_RINGp(chan, nvfx->stipple, 32);
 }
 
@@ -100,12 +100,12 @@ static void
 nvfx_coord_conventions_validate(struct nvfx_context* nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
+	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 	unsigned value = nvfx->hw_fragprog->coord_conventions;
 	if(value & NV30_3D_COORD_CONVENTIONS_ORIGIN_INVERTED)
 		value |= nvfx->framebuffer.height << NV30_3D_COORD_CONVENTIONS_HEIGHT__SHIFT;
 
-	WAIT_RING(chan, 2);
-	OUT_RING(chan, RING_3D(NV30_3D_COORD_CONVENTIONS, 1));
+	BEGIN_RING(chan, eng3d, NV30_3D_COORD_CONVENTIONS, 1);
 	OUT_RING(chan, value);
 }
 
@@ -113,6 +113,7 @@ static void
 nvfx_ucp_validate(struct nvfx_context* nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
+	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 	unsigned enables[7] =
 	{
 			0,
@@ -126,17 +127,15 @@ nvfx_ucp_validate(struct nvfx_context* nvfx)
 
 	if(!nvfx->use_vp_clipping)
 	{
-		WAIT_RING(chan, 2);
-		OUT_RING(chan, RING_3D(NV30_3D_VP_CLIP_PLANES_ENABLE, 1));
+		BEGIN_RING(chan, eng3d, NV30_3D_VP_CLIP_PLANES_ENABLE, 1);
 		OUT_RING(chan, 0);
 
-		WAIT_RING(chan, 6 * 4 + 1);
-		OUT_RING(chan, RING_3D(NV30_3D_VP_CLIP_PLANE(0, 0), nvfx->clip.nr * 4));
+		BEGIN_RING(chan, eng3d, NV30_3D_VP_CLIP_PLANE(0, 0),
+			   nvfx->clip.nr * 4);
 		OUT_RINGp(chan, &nvfx->clip.ucp[0][0], nvfx->clip.nr * 4);
 	}
 
-	WAIT_RING(chan, 2);
-	OUT_RING(chan, RING_3D(NV30_3D_VP_CLIP_PLANES_ENABLE, 1));
+	BEGIN_RING(chan, eng3d, NV30_3D_VP_CLIP_PLANES_ENABLE, 1);
 	OUT_RING(chan, enables[nvfx->clip.nr]);
 }
 
@@ -144,38 +143,37 @@ static void
 nvfx_vertprog_ucp_validate(struct nvfx_context* nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
+	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 	unsigned i;
 	struct nvfx_vertex_program* vp = nvfx->hw_vertprog;
 	if(nvfx->clip.nr != vp->clip_nr)
 	{
 		unsigned idx;
-		WAIT_RING(chan, 14);
 
 		/* remove last instruction bit */
 		if(vp->clip_nr >= 0)
 		{
 			idx = vp->nr_insns - 7 + vp->clip_nr;
-			OUT_RING(chan, RING_3D(NV30_3D_VP_UPLOAD_FROM_ID, 1));
+			BEGIN_RING(chan, eng3d, NV30_3D_VP_UPLOAD_FROM_ID, 1);
 			OUT_RING(chan,  vp->exec->start + idx);
-			OUT_RING(chan, RING_3D(NV30_3D_VP_UPLOAD_INST(0), 4));
+			BEGIN_RING(chan, eng3d, NV30_3D_VP_UPLOAD_INST(0), 4);
 			OUT_RINGp (chan, vp->insns[idx].data, 4);
 		}
 
 		 /* set last instruction bit */
 		idx = vp->nr_insns - 7 + nvfx->clip.nr;
-		OUT_RING(chan, RING_3D(NV30_3D_VP_UPLOAD_FROM_ID, 1));
+		BEGIN_RING(chan, eng3d, NV30_3D_VP_UPLOAD_FROM_ID, 1);
 		OUT_RING(chan,  vp->exec->start + idx);
-		OUT_RING(chan, RING_3D(NV30_3D_VP_UPLOAD_INST(0), 4));
+		BEGIN_RING(chan, eng3d, NV30_3D_VP_UPLOAD_INST(0), 4);
 		OUT_RINGp(chan, vp->insns[idx].data, 3);
 		OUT_RING(chan, vp->insns[idx].data[3] | 1);
 		vp->clip_nr = nvfx->clip.nr;
 	}
 
 	// TODO: only do this for the ones changed
-	WAIT_RING(chan, 6 * 6);
 	for(i = 0; i < nvfx->clip.nr; ++i)
 	{
-		OUT_RING(chan, RING_3D(NV30_3D_VP_UPLOAD_CONST_ID, 5));
+		BEGIN_RING(chan, eng3d, NV30_3D_VP_UPLOAD_CONST_ID, 5);
 		OUT_RING(chan, vp->data->start + i);
 		OUT_RINGp (chan, nvfx->clip.ucp[i], 4);
 	}
@@ -185,6 +183,7 @@ static boolean
 nvfx_state_validate_common(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
+	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 	unsigned dirty;
 	unsigned still_dirty = 0;
 	int new_fb_mode = -1; /* 1 = all swizzled, 0 = make all linear */
@@ -287,8 +286,7 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 
 		if(vp_output != nvfx->hw_vp_output)
 		{
-			WAIT_RING(chan, 2);
-			OUT_RING(chan, RING_3D(NV40_3D_VP_RESULT_EN, 1));
+			BEGIN_RING(chan, eng3d, NV40_3D_VP_RESULT_EN, 1);
 			OUT_RING(chan, vp_output);
 			nvfx->hw_vp_output = vp_output;
 		}
@@ -320,8 +318,7 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 
 	if(dirty & NVFX_NEW_ZSA || (new_fb_mode >= 0))
 	{
-		WAIT_RING(chan, 3);
-		OUT_RING(chan, RING_3D(NV30_3D_DEPTH_WRITE_ENABLE, 2));
+		BEGIN_RING(chan, eng3d, NV30_3D_DEPTH_WRITE_ENABLE, 2);
 		OUT_RING(chan, nvfx->framebuffer.zsbuf && nvfx->zsa->pipe.depth.writemask);
 	        OUT_RING(chan, nvfx->framebuffer.zsbuf && nvfx->zsa->pipe.depth.enabled);
 	}
@@ -334,10 +331,9 @@ nvfx_state_validate_common(struct nvfx_context *nvfx)
 		// TODO: what about nv30?
 		if(nvfx->is_nv4x)
 		{
-			WAIT_RING(chan, 4);
-			OUT_RING(chan, RING_3D(NV40_3D_TEX_CACHE_CTL, 1));
+			BEGIN_RING(chan, eng3d, NV40_3D_TEX_CACHE_CTL, 1);
 			OUT_RING(chan, 2);
-			OUT_RING(chan, RING_3D(NV40_3D_TEX_CACHE_CTL, 1));
+			BEGIN_RING(chan, eng3d, NV40_3D_TEX_CACHE_CTL, 1);
 			OUT_RING(chan, 1);
 		}
 	}

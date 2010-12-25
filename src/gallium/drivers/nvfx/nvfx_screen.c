@@ -301,98 +301,100 @@ nvfx_screen_destroy(struct pipe_screen *pscreen)
 static void nv30_screen_init(struct nvfx_screen *screen)
 {
 	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *eng3d = screen->eng3d;
 	int i;
 
 	/* TODO: perhaps we should do some of this on nv40 too? */
 	for (i=1; i<8; i++) {
-		OUT_RING(chan, RING_3D(NV30_3D_VIEWPORT_CLIP_HORIZ(i), 1));
+		BEGIN_RING(chan, eng3d, NV30_3D_VIEWPORT_CLIP_HORIZ(i), 1);
 		OUT_RING(chan, 0);
-		OUT_RING(chan, RING_3D(NV30_3D_VIEWPORT_CLIP_VERT(i), 1));
+		BEGIN_RING(chan, eng3d, NV30_3D_VIEWPORT_CLIP_VERT(i), 1);
 		OUT_RING(chan, 0);
 	}
 
-	OUT_RING(chan, RING_3D(0x220, 1));
+	BEGIN_RING(chan, eng3d, 0x220, 1);
 	OUT_RING(chan, 1);
 
-	OUT_RING(chan, RING_3D(0x03b0, 1));
+	BEGIN_RING(chan, eng3d, 0x03b0, 1);
 	OUT_RING(chan, 0x00100000);
-	OUT_RING(chan, RING_3D(0x1454, 1));
+	BEGIN_RING(chan, eng3d, 0x1454, 1);
 	OUT_RING(chan, 0);
-	OUT_RING(chan, RING_3D(0x1d80, 1));
+	BEGIN_RING(chan, eng3d, 0x1d80, 1);
 	OUT_RING(chan, 3);
-	OUT_RING(chan, RING_3D(0x1450, 1));
+	BEGIN_RING(chan, eng3d, 0x1450, 1);
 	OUT_RING(chan, 0x00030004);
 
 	/* NEW */
-	OUT_RING(chan, RING_3D(0x1e98, 1));
+	BEGIN_RING(chan, eng3d, 0x1e98, 1);
 	OUT_RING(chan, 0);
-	OUT_RING(chan, RING_3D(0x17e0, 3));
+	BEGIN_RING(chan, eng3d, 0x17e0, 3);
 	OUT_RING(chan, fui(0.0));
 	OUT_RING(chan, fui(0.0));
 	OUT_RING(chan, fui(1.0));
-	OUT_RING(chan, RING_3D(0x1f80, 16));
+	BEGIN_RING(chan, eng3d, 0x1f80, 16);
 	for (i=0; i<16; i++) {
 		OUT_RING(chan, (i==8) ? 0x0000ffff : 0);
 	}
 
-	OUT_RING(chan, RING_3D(0x120, 3));
+	BEGIN_RING(chan, eng3d, 0x120, 3);
 	OUT_RING(chan, 0);
 	OUT_RING(chan, 1);
 	OUT_RING(chan, 2);
 
-	OUT_RING(chan, RING_3D(0x1d88, 1));
+	BEGIN_RING(chan, eng3d, 0x1d88, 1);
 	OUT_RING(chan, 0x00001200);
 
-	OUT_RING(chan, RING_3D(NV30_3D_RC_ENABLE, 1));
+	BEGIN_RING(chan, eng3d, NV30_3D_RC_ENABLE, 1);
 	OUT_RING(chan, 0);
 
-	OUT_RING(chan, RING_3D(NV30_3D_DEPTH_RANGE_NEAR, 2));
+	BEGIN_RING(chan, eng3d, NV30_3D_DEPTH_RANGE_NEAR, 2);
 	OUT_RING(chan, fui(0.0));
 	OUT_RING(chan, fui(1.0));
 
-	OUT_RING(chan, RING_3D(NV30_3D_MULTISAMPLE_CONTROL, 1));
+	BEGIN_RING(chan, eng3d, NV30_3D_MULTISAMPLE_CONTROL, 1);
 	OUT_RING(chan, 0xffff0000);
 
 	/* enables use of vp rather than fixed-function somehow */
-	OUT_RING(chan, RING_3D(0x1e94, 1));
+	BEGIN_RING(chan, eng3d, 0x1e94, 1);
 	OUT_RING(chan, 0x13);
 }
 
 static void nv40_screen_init(struct nvfx_screen *screen)
 {
 	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *eng3d = screen->eng3d;
 
-	OUT_RING(chan, RING_3D(NV40_3D_DMA_COLOR2, 2));
+	BEGIN_RING(chan, eng3d, NV40_3D_DMA_COLOR2, 2);
 	OUT_RING(chan, screen->base.channel->vram->handle);
 	OUT_RING(chan, screen->base.channel->vram->handle);
 
-	OUT_RING(chan, RING_3D(0x1450, 1));
+	BEGIN_RING(chan, eng3d, 0x1450, 1);
 	OUT_RING(chan, 0x00000004);
 
-	OUT_RING(chan, RING_3D(0x1ea4, 3));
+	BEGIN_RING(chan, eng3d, 0x1ea4, 3);
 	OUT_RING(chan, 0x00000010);
 	OUT_RING(chan, 0x01000100);
 	OUT_RING(chan, 0xff800006);
 
 	/* vtxprog output routing */
-	OUT_RING(chan, RING_3D(0x1fc4, 1));
+	BEGIN_RING(chan, eng3d, 0x1fc4, 1);
 	OUT_RING(chan, 0x06144321);
-	OUT_RING(chan, RING_3D(0x1fc8, 2));
+	BEGIN_RING(chan, eng3d, 0x1fc8, 2);
 	OUT_RING(chan, 0xedcba987);
 	OUT_RING(chan, 0x0000006f);
-	OUT_RING(chan, RING_3D(0x1fd0, 1));
+	BEGIN_RING(chan, eng3d, 0x1fd0, 1);
 	OUT_RING(chan, 0x00171615);
-	OUT_RING(chan, RING_3D(0x1fd4, 1));
+	BEGIN_RING(chan, eng3d, 0x1fd4, 1);
 	OUT_RING(chan, 0x001b1a19);
 
-	OUT_RING(chan, RING_3D(0x1ef8, 1));
+	BEGIN_RING(chan, eng3d, 0x1ef8, 1);
 	OUT_RING(chan, 0x0020ffff);
-	OUT_RING(chan, RING_3D(0x1d64, 1));
+	BEGIN_RING(chan, eng3d, 0x1d64, 1);
 	OUT_RING(chan, 0x01d300d4);
-	OUT_RING(chan, RING_3D(0x1e94, 1));
+	BEGIN_RING(chan, eng3d, 0x1e94, 1);
 	OUT_RING(chan, 0x00000001);
 
-	OUT_RING(chan, RING_3D(NV40_3D_MIPMAP_ROUNDING, 1));
+	BEGIN_RING(chan, eng3d, NV40_3D_MIPMAP_ROUNDING, 1);
 	OUT_RING(chan, NV40_3D_MIPMAP_ROUNDING_MODE_DOWN);
 }
 
@@ -571,25 +573,25 @@ nvfx_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 
 	/* Static eng3d initialisation */
 	/* note that we just started using the channel, so we must have space in the pushbuffer */
-	OUT_RING(chan, RING_3D(NV30_3D_DMA_NOTIFY, 1));
+	BEGIN_RING(chan, screen->eng3d, NV30_3D_DMA_NOTIFY, 1);
 	OUT_RING(chan, screen->sync->handle);
-	OUT_RING(chan, RING_3D(NV30_3D_DMA_TEXTURE0, 2));
+	BEGIN_RING(chan, screen->eng3d, NV30_3D_DMA_TEXTURE0, 2);
 	OUT_RING(chan, chan->vram->handle);
 	OUT_RING(chan, chan->gart->handle);
-	OUT_RING(chan, RING_3D(NV30_3D_DMA_COLOR1, 1));
+	BEGIN_RING(chan, screen->eng3d, NV30_3D_DMA_COLOR1, 1);
 	OUT_RING(chan, chan->vram->handle);
-	OUT_RING(chan, RING_3D(NV30_3D_DMA_COLOR0, 2));
+	BEGIN_RING(chan, screen->eng3d, NV30_3D_DMA_COLOR0, 2);
 	OUT_RING(chan, chan->vram->handle);
 	OUT_RING(chan, chan->vram->handle);
-	OUT_RING(chan, RING_3D(NV30_3D_DMA_VTXBUF0, 2));
+	BEGIN_RING(chan, screen->eng3d, NV30_3D_DMA_VTXBUF0, 2);
 	OUT_RING(chan, chan->vram->handle);
 	OUT_RING(chan, chan->gart->handle);
 
-	OUT_RING(chan, RING_3D(NV30_3D_DMA_FENCE, 2));
+	BEGIN_RING(chan, screen->eng3d, NV30_3D_DMA_FENCE, 2);
 	OUT_RING(chan, 0);
 	OUT_RING(chan, screen->query->handle);
 
-	OUT_RING(chan, RING_3D(NV30_3D_DMA_UNK1AC, 2));
+	BEGIN_RING(chan, screen->eng3d, NV30_3D_DMA_UNK1AC, 2);
 	OUT_RING(chan, chan->vram->handle);
 	OUT_RING(chan, chan->vram->handle);
 

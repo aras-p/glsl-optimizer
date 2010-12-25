@@ -1182,6 +1182,7 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 {
 	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *eng3d = screen->eng3d;
 	struct nvfx_pipe_vertex_program *pvp = nvfx->vertprog;
 	struct nvfx_vertex_program* vp;
 	struct pipe_resource *constbuf;
@@ -1341,7 +1342,6 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 		}
 		*/
 
-		WAIT_RING(chan, 6 * vp->nr_consts);
 		for (i = nvfx->use_vp_clipping ? 6 : 0; i < vp->nr_consts; i++) {
 			struct nvfx_vertex_program_data *vpd = &vp->consts[i];
 
@@ -1356,7 +1356,7 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 
 			//printf("upload into %i + %i: %f %f %f %f\n", vp->data->start, i, vpd->value[0], vpd->value[1], vpd->value[2], vpd->value[3]);
 
-			OUT_RING(chan, RING_3D(NV30_3D_VP_UPLOAD_CONST_ID, 5));
+			BEGIN_RING(chan, eng3d, NV30_3D_VP_UPLOAD_CONST_ID, 5);
 			OUT_RING(chan, i + vp->data->start);
 			OUT_RINGp(chan, (uint32_t *)vpd->value, 4);
 		}
@@ -1364,11 +1364,10 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 
 	/* Upload vtxprog */
 	if (upload_code) {
-		WAIT_RING(chan, 2 + 5 * vp->nr_insns);
-		OUT_RING(chan, RING_3D(NV30_3D_VP_UPLOAD_FROM_ID, 1));
+		BEGIN_RING(chan, eng3d, NV30_3D_VP_UPLOAD_FROM_ID, 1);
 		OUT_RING(chan, vp->exec->start);
 		for (i = 0; i < vp->nr_insns; i++) {
-			OUT_RING(chan, RING_3D(NV30_3D_VP_UPLOAD_INST(0), 4));
+			BEGIN_RING(chan, eng3d, NV30_3D_VP_UPLOAD_INST(0), 4);
 			//printf("%08x %08x %08x %08x\n", vp->insns[i].data[0], vp->insns[i].data[1], vp->insns[i].data[2], vp->insns[i].data[3]);
 			OUT_RINGp(chan, vp->insns[i].data, 4);
 		}
@@ -1377,11 +1376,10 @@ nvfx_vertprog_validate(struct nvfx_context *nvfx)
 
 	if(nvfx->dirty & (NVFX_NEW_VERTPROG))
 	{
-		WAIT_RING(chan, 6);
-		OUT_RING(chan, RING_3D(NV30_3D_VP_START_FROM_ID, 1));
+		BEGIN_RING(chan, eng3d, NV30_3D_VP_START_FROM_ID, 1);
 		OUT_RING(chan, vp->exec->start);
 		if(nvfx->is_nv4x) {
-			OUT_RING(chan, RING_3D(NV40_3D_VP_ATTRIB_EN, 1));
+			BEGIN_RING(chan, eng3d, NV40_3D_VP_ATTRIB_EN, 1);
 			OUT_RING(chan, vp->ir);
 		}
 	}

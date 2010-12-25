@@ -177,6 +177,7 @@ void
 nvfx_fragtex_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
+	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 	unsigned samplers, unit;
 
 	samplers = nvfx->dirty_samplers;
@@ -197,9 +198,8 @@ nvfx_fragtex_validate(struct nvfx_context *nvfx)
 			else
 				nv40_fragtex_set(nvfx, unit);
 		} else {
-			WAIT_RING(chan, 2);
 			/* this is OK for nv40 too */
-			OUT_RING(chan, RING_3D(NV30_3D_TEX_ENABLE(unit), 1));
+			BEGIN_RING(chan, eng3d, NV30_3D_TEX_ENABLE(unit), 1);
 			OUT_RING(chan, 0);
 			nvfx->hw_samplers &= ~(1 << unit);
 		}

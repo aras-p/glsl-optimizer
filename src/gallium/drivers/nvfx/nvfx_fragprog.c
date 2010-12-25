@@ -1233,6 +1233,7 @@ void
 nvfx_fragprog_validate(struct nvfx_context *nvfx)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
+	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 	struct nvfx_pipe_fragment_program *pfp = nvfx->fragprog;
 	struct nvfx_vertex_program* vp;
 
@@ -1499,17 +1500,17 @@ update:
 		nvfx->hw_fragprog = fp;
 
 		MARK_RING(chan, 8, 1);
-		OUT_RING(chan, RING_3D(NV30_3D_FP_ACTIVE_PROGRAM, 1));
+		BEGIN_RING(chan, eng3d, NV30_3D_FP_ACTIVE_PROGRAM, 1);
 		OUT_RELOC(chan, fp->fpbo->bo, offset, NOUVEAU_BO_VRAM |
 			      NOUVEAU_BO_GART | NOUVEAU_BO_RD | NOUVEAU_BO_LOW |
 			      NOUVEAU_BO_OR, NV30_3D_FP_ACTIVE_PROGRAM_DMA0,
 			      NV30_3D_FP_ACTIVE_PROGRAM_DMA1);
-		OUT_RING(chan, RING_3D(NV30_3D_FP_CONTROL, 1));
+		BEGIN_RING(chan, eng3d, NV30_3D_FP_CONTROL, 1);
 		OUT_RING(chan, fp->fp_control);
 		if(!nvfx->is_nv4x) {
-			OUT_RING(chan, RING_3D(NV30_3D_FP_REG_CONTROL, 1));
+			BEGIN_RING(chan, eng3d, NV30_3D_FP_REG_CONTROL, 1);
 			OUT_RING(chan, (1<<16)|0x4);
-			OUT_RING(chan, RING_3D(NV30_3D_TEX_UNITS_ENABLE, 1));
+			BEGIN_RING(chan, eng3d, NV30_3D_TEX_UNITS_ENABLE, 1);
 			OUT_RING(chan, fp->samplers);
 		}
 	}
@@ -1518,8 +1519,7 @@ update:
 		unsigned pointsprite_control = fp->point_sprite_control | nvfx->rasterizer->pipe.point_quad_rasterization;
 		if(pointsprite_control != nvfx->hw_pointsprite_control)
 		{
-			WAIT_RING(chan, 2);
-			OUT_RING(chan, RING_3D(NV30_3D_POINT_SPRITE, 1));
+			BEGIN_RING(chan, eng3d, NV30_3D_POINT_SPRITE, 1);
 			OUT_RING(chan, pointsprite_control);
 			nvfx->hw_pointsprite_control = pointsprite_control;
 		}

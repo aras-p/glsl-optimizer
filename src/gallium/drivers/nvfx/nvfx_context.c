@@ -13,13 +13,13 @@ nvfx_flush(struct pipe_context *pipe, unsigned flags,
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *eng3d = screen->eng3d;
 
 	/* XXX: we need to actually be intelligent here */
 	if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
-		WAIT_RING(chan, 4);
-		OUT_RING(chan, RING_3D(0x1fd8, 1));
+		BEGIN_RING(chan, eng3d, 0x1fd8, 1);
 		OUT_RING(chan, 2);
-		OUT_RING(chan, RING_3D(0x1fd8, 1));
+		BEGIN_RING(chan, eng3d, 0x1fd8, 1);
 		OUT_RING(chan, 1);
 	}
 
