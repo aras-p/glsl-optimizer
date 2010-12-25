@@ -56,72 +56,42 @@ static unsigned r300_buffer_is_referenced_by_cs(struct pipe_context *context,
     return r300_buffer_is_referenced(context, buf, R300_REF_CS);
 }
 
-/* External helper, not required to implent u_resource_vtbl:
- */
-int r300_upload_index_buffer(struct r300_context *r300,
-			     struct pipe_resource **index_buffer,
-			     unsigned index_size,
-			     unsigned start,
-			     unsigned count,
-			     unsigned *out_offset)
+void r300_upload_index_buffer(struct r300_context *r300,
+			      struct pipe_resource **index_buffer,
+			      unsigned index_size, unsigned *start,
+			      unsigned count)
 {
-   struct pipe_resource *upload_buffer = NULL;
-   unsigned index_offset = start * index_size;
-   int ret = 0;
+    unsigned index_offset;
+    uint8_t *ptr = r300_buffer(*index_buffer)->user_buffer;
 
-    if (r300_buffer_is_user_buffer(*index_buffer)) {
-	ret = u_upload_buffer(r300->upload_ib,
-			      index_offset,
-			      count * index_size,
-			      *index_buffer,
-			      &index_offset,
-			      &upload_buffer);
-	if (ret) {
-	    goto done;
-	}
-	*index_buffer = upload_buffer;
-	*out_offset = index_offset / index_size;
-    } else
-        *out_offset = start;
+    *index_buffer = NULL;
 
- done:
-    //    if (upload_buffer)
-    //	pipe_resource_reference(&upload_buffer, NULL);
-    return ret;
+    u_upload_data(r300->upload_ib,
+                  count * index_size,
+                  ptr + (*start * index_size),
+                  &index_offset,
+                  index_buffer);
+
+    *start = index_offset / index_size;
 }
 
-/* External helper, not required to implement u_resource_vtbl:
- */
-int r300_upload_user_buffers(struct r300_context *r300)
+void r300_upload_user_buffers(struct r300_context *r300)
 {
-    enum pipe_error ret = PIPE_OK;
-    int i, nr;
-
-    nr = r300->velems->count;
+    int i, nr = r300->velems->count;
 
     for (i = 0; i < nr; i++) {
         struct pipe_vertex_buffer *vb =
             &r300->vertex_buffer[r300->velems->velem[i].vertex_buffer_index];
 
         if (r300_buffer_is_user_buffer(vb->buffer)) {
-            struct pipe_resource *upload_buffer = NULL;
-            unsigned offset = 0; /*vb->buffer_offset * 4;*/
-            unsigned size = vb->buffer->width0;
-            unsigned upload_offset;
-            ret = u_upload_buffer(r300->upload_vb,
-                                  offset, size,
-                                  vb->buffer,
-                                  &upload_offset, &upload_buffer);
-            if (ret)
-                return ret;
+            u_upload_data(r300->upload_vb,
+                          vb->buffer->width0,
+                          r300_buffer(vb->buffer)->user_buffer,
+                          &vb->buffer_offset, &vb->buffer);
 
-            pipe_resource_reference(&vb->buffer, NULL);
-            vb->buffer = upload_buffer;
-            vb->buffer_offset = upload_offset;
             r300->validate_buffers = TRUE;
         }
     }
-    return ret;
 }
 
 static void r300_buffer_destroy(struct pipe_screen *screen,

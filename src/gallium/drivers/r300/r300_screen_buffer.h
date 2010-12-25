@@ -63,13 +63,12 @@ struct r300_buffer
 
 /* Functions. */
 
-int r300_upload_user_buffers(struct r300_context *r300);
+void r300_upload_user_buffers(struct r300_context *r300);
 
-int r300_upload_index_buffer(struct r300_context *r300,
-			     struct pipe_resource **index_buffer,
-			     unsigned index_size,
-			     unsigned start,
-			     unsigned count, unsigned *out_offset);
+void r300_upload_index_buffer(struct r300_context *r300,
+			      struct pipe_resource **index_buffer,
+			      unsigned index_size, unsigned *start,
+			      unsigned count);
 
 struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ);

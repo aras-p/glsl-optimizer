@@ -592,15 +592,16 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
              * The start index will be aligned simply from the fact that
              * every sub-buffer in u_upload_mgr is aligned. */
             userbuf = pipe->screen->user_buffer_create(pipe->screen,
-                                                       ptr + start, count * 2,
+                                                       ptr, count * 2,
                                                        PIPE_BIND_INDEX_BUFFER);
             indexBuffer = userbuf;
-            r300_upload_index_buffer(r300, &indexBuffer, indexSize, 0, count, &start);
+            r300_upload_index_buffer(r300, &indexBuffer, indexSize, &start, count);
             pipe_resource_reference(&userbuf, NULL);
         }
         pipe_buffer_unmap(pipe, transfer);
     } else {
-        r300_upload_index_buffer(r300, &indexBuffer, indexSize, start, count, &start);
+        if (r300_buffer_is_user_buffer(indexBuffer))
+            r300_upload_index_buffer(r300, &indexBuffer, indexSize, &start, count);
     }
 
     /* 19 dwords for emit_draw_elements. Give up if the function fails. */
