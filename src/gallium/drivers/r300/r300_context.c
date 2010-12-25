@@ -470,14 +470,14 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
             goto fail;
 
     r300->upload_ib = u_upload_create(&r300->context,
-				      32 * 1024, 16,
+				      64 * 1024, 16,
 				      PIPE_BIND_INDEX_BUFFER);
 
     if (r300->upload_ib == NULL)
         goto fail;
 
     r300->upload_vb = u_upload_create(&r300->context,
-				      128 * 1024, 16,
+				      1024 * 1024, 16,
 				      PIPE_BIND_VERTEX_BUFFER);
     if (r300->upload_vb == NULL)
         goto fail;

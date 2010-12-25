@@ -1068,8 +1068,7 @@ static struct vbuf_render* r300_render_create(struct r300_context* r300)
 
     r300render->r300 = r300;
 
-    /* XXX find real numbers plz */
-    r300render->base.max_vertex_buffer_bytes = 128 * 1024;
+    r300render->base.max_vertex_buffer_bytes = 1024 * 1024;
     r300render->base.max_indices = 16 * 1024;
 
     r300render->base.get_vertex_info = r300_render_get_vertex_info;
