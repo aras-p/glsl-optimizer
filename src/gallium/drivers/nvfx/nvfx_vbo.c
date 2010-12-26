@@ -407,7 +407,6 @@ static void
 nvfx_idxbuf_emit(struct nvfx_context* nvfx, unsigned ib_flags)
 {
 	struct nouveau_channel* chan = nvfx->screen->base.channel;
-	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 	unsigned ib_format = (nvfx->idxbuf.index_size == 2) ? NV30_3D_IDXBUF_FORMAT_TYPE_U16 : NV30_3D_IDXBUF_FORMAT_TYPE_U32;
 	struct nouveau_bo* bo = nvfx_resource(nvfx->idxbuf.buffer)->bo;
 	ib_flags |= nvfx->screen->index_buffer_reloc_flags | NOUVEAU_BO_RD;
