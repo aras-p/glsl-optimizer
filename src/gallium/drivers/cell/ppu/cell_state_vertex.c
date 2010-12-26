@@ -82,8 +82,9 @@ cell_set_vertex_buffers(struct pipe_context *pipe,
 
    assert(count <= PIPE_MAX_ATTRIBS);
 
-   memcpy(cell->vertex_buffer, buffers, count * sizeof(buffers[0]));
-   cell->num_vertex_buffers = count;
+   util_copy_vertex_buffers(cell->vertex_buffer,
+                            &cell->num_vertex_buffers,
+                            buffers, count);
 
    cell->dirty |= CELL_NEW_VERTEX;
 

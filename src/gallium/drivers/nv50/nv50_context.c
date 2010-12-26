@@ -49,6 +49,10 @@ nv50_destroy(struct pipe_context *pipe)
 	struct nv50_context *nv50 = nv50_context(pipe);
 	int i;
 
+        for (i = 0; i < nv50->vtxbuf_nr; i++) {
+           pipe_resource_reference(&nv50->vtxbuf[i].buffer, NULL);
+        }
+
 	for (i = 0; i < 64; i++) {
 		if (!nv50->state.hw[i])
 			continue;

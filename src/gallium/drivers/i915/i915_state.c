@@ -760,8 +760,9 @@ static void i915_set_vertex_buffers(struct pipe_context *pipe,
     */
    draw_flush(i915->draw);
 
-   memcpy(i915->vertex_buffer, buffers, count * sizeof(buffers[0]));
-   i915->num_vertex_buffers = count;
+   util_copy_vertex_buffers(i915->vertex_buffer,
+                            &i915->num_vertex_buffers,
+                            buffers, count);
 
    /* pass-through to draw module */
    draw_set_vertex_buffers(i915->draw, count, buffers);

@@ -400,6 +400,24 @@ static INLINE boolean util_get_offset(
    }
 }
 
+static INLINE void util_copy_vertex_buffers(struct pipe_vertex_buffer *dst,
+                                            unsigned *dst_count,
+                                            const struct pipe_vertex_buffer *src,
+                                            unsigned src_count)
+{
+   unsigned i;
+
+   for (i = 0; i < src_count; i++) {
+      pipe_resource_reference(&dst[i].buffer, src[i].buffer);
+   }
+   for (; i < *dst_count; i++) {
+      pipe_resource_reference(&dst[i].buffer, NULL);
+   }
+
+   *dst_count = src_count;
+   memcpy(dst, src, src_count * sizeof(struct pipe_vertex_buffer));
+}
+
 #ifdef __cplusplus
 }
 #endif

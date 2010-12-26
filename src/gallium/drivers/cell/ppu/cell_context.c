@@ -37,6 +37,7 @@
 #include "pipe/p_format.h"
 #include "util/u_memory.h"
 #include "pipe/p_screen.h"
+#include "util/u_inlines.h"
 
 #include "draw/draw_context.h"
 #include "draw/draw_private.h"
@@ -61,6 +62,11 @@ static void
 cell_destroy_context( struct pipe_context *pipe )
 {
    struct cell_context *cell = cell_context(pipe);
+   unsigned i;
+
+   for (i = 0; i < cell->num_vertex_buffers; i++) {
+      pipe_resource_reference(&cell->vertex_buffer[i].buffer, NULL);
+   }
 
    util_delete_keymap(cell->fragment_ops_cache, NULL);
 
