@@ -10657,5 +10657,65 @@ __indirect_glFramebufferTextureLayerEXT(GLenum target, GLenum attachment,
 }
 
 
-#  undef FASTCALL
-#  undef NOINLINE
+#ifdef GLX_SHARED_GLAPI
+
+static const struct proc_pair {
+    const char *name;
+    _glapi_proc proc;
+} proc_pairs[20] = {
+    {
+    "AreTexturesResidentEXT", (_glapi_proc) glAreTexturesResidentEXT}, {
+    "DeleteTexturesEXT", (_glapi_proc) glDeleteTexturesEXT}, {
+    "GenTexturesEXT", (_glapi_proc) glGenTexturesEXT}, {
+    "GetColorTableEXT", (_glapi_proc) glGetColorTableEXT}, {
+    "GetColorTableParameterfvEXT",
+            (_glapi_proc) glGetColorTableParameterfvEXT}, {
+    "GetColorTableParameterfvSGI",
+            (_glapi_proc) glGetColorTableParameterfvEXT}, {
+    "GetColorTableParameterivEXT",
+            (_glapi_proc) glGetColorTableParameterivEXT}, {
+    "GetColorTableParameterivSGI",
+            (_glapi_proc) glGetColorTableParameterivEXT}, {
+    "GetColorTableSGI", (_glapi_proc) glGetColorTableEXT}, {
+    "GetConvolutionFilterEXT", (_glapi_proc) gl_dispatch_stub_356}, {
+    "GetConvolutionParameterfvEXT", (_glapi_proc) gl_dispatch_stub_357}, {
+    "GetConvolutionParameterivEXT", (_glapi_proc) gl_dispatch_stub_358}, {
+    "GetHistogramEXT", (_glapi_proc) gl_dispatch_stub_361}, {
+    "GetHistogramParameterfvEXT", (_glapi_proc) gl_dispatch_stub_362}, {
+    "GetHistogramParameterivEXT", (_glapi_proc) gl_dispatch_stub_363}, {
+    "GetMinmaxEXT", (_glapi_proc) gl_dispatch_stub_364}, {
+    "GetMinmaxParameterfvEXT", (_glapi_proc) gl_dispatch_stub_365}, {
+    "GetMinmaxParameterivEXT", (_glapi_proc) gl_dispatch_stub_366}, {
+    "GetSeparableFilterEXT", (_glapi_proc) gl_dispatch_stub_359}, {
+    "IsTextureEXT", (_glapi_proc) glIsTextureEXT}
+};
+
+static int
+__indirect_get_proc_compare(const void *key, const void *memb)
+{
+    const struct proc_pair *pair = (const struct proc_pair *) memb;
+    return strcmp((const char *) key, pair->name);
+}
+
+_glapi_proc
+__indirect_get_proc_address(const char *name)
+{
+    const struct proc_pair *pair;
+
+    /* skip "gl" */
+    name += 2;
+
+    pair = (const struct proc_pair *) bsearch((const void *) name,
+                                              (const void *) proc_pairs,
+                                              ARRAY_SIZE(proc_pairs),
+                                              sizeof(proc_pairs[0]),
+                                              __indirect_get_proc_compare);
+
+    return (pair) ? pair->proc : NULL;
+}
+
+#endif /* GLX_SHARED_GLAPI */
+
+
+#undef FASTCALL
+#undef NOINLINE

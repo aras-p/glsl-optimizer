@@ -1,6 +1,6 @@
 # src/mapi/shared-glapi/Makefile
 #
-# Used by OpenGL ES
+# Used by OpenGL ES or when --enable-shared-glapi is specified
 #
 
 TOP := ../../..

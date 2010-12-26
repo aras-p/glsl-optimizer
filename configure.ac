@@ -528,6 +528,18 @@ if test "x$enable_gles2" = xyes; then
 fi
 AC_SUBST([API_DEFINES])
 
+AC_ARG_ENABLE([shared-glapi],
+    [AS_HELP_STRING([--enable-shared-glapi],
+        [EXPERIMENTAL.  Enable shared glapi for OpenGL @<:@default=no@:>@])],
+    [enable_shared_glapi="$enableval"],
+    [enable_shared_glapi=no])
+
+SHARED_GLAPI="0"
+if test "x$enable_shared_glapi" = xyes; then
+    SHARED_GLAPI="1"
+fi
+AC_SUBST([SHARED_GLAPI])
+
 dnl
 dnl Driver configuration. Options are xlib, dri and osmesa right now.
 dnl More later: fbdev, ...
@@ -589,8 +601,8 @@ GALLIUM_WINSYS_DIRS="sw"
 GALLIUM_DRIVERS_DIRS="softpipe failover galahad trace rbug noop identity"
 GALLIUM_STATE_TRACKERS_DIRS=""
 
-# build shared-glapi if OpenGL ES is enabled
-case "x$enable_gles1$enable_gles2" in
+# build shared-glapi if enabled for OpenGL or if OpenGL ES is enabled
+case "x$enabled_shared_glapi$enable_gles1$enable_gles2" in
 x*yes*)
     CORE_DIRS="$CORE_DIRS mapi/shared-glapi"
     ;;

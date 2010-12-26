@@ -46,6 +46,12 @@ SOURCES = \
 	  applegl_glx.c
 
 
+ifeq ($(SHARED_GLAPI),1)
+GL_LIB_DEPS := -L$(TOP)/$(LIB_DIR) -l$(GLAPI_LIB) $(GL_LIB_DEPS)
+EXTRA_DEFINES += -DGLX_SHARED_GLAPI
+endif
+
+# override GLAPI_LIB
 GLAPI_LIB = $(TOP)/src/mapi/glapi/libglapi.a
 
 OBJECTS = $(SOURCES:.c=.o)

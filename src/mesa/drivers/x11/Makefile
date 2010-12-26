@@ -47,6 +47,9 @@ INCLUDE_DIRS = \
 
 CORE_MESA = $(TOP)/src/mesa/libmesa.a $(TOP)/src/mapi/glapi/libglapi.a
 
+ifeq ($(SHARED_GLAPI),1)
+GL_LIB_DEPS := -L$(TOP)/$(LIB_DIR) -l$(GLAPI_LIB) $(GL_LIB_DEPS)
+endif
 
 
 .c.o:

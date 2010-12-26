@@ -715,6 +715,10 @@ extern HIDDEN void __indirect_glRenderbufferStorageEXT(GLenum target, GLenum int
 extern HIDDEN void __indirect_glBlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1, GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1, GLbitfield mask, GLenum filter);
 extern HIDDEN void __indirect_glFramebufferTextureLayerEXT(GLenum target, GLenum attachment, GLuint texture, GLint level, GLint layer);
 
+#ifdef GLX_SHARED_GLAPI
+extern HIDDEN void (*__indirect_get_proc_address(const char *name))(void);
+#endif
+
 #  undef HIDDEN
 #  undef FASTCALL
 #  undef NOINLINE

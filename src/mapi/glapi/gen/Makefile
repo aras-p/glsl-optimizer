@@ -9,9 +9,11 @@ include $(TOP)/configs/current
 
 MESA_DIR = $(TOP)/src/mesa
 MESA_GLAPI_DIR = $(TOP)/src/mapi/glapi
+MESA_MAPI_DIR = $(TOP)/src/mapi/mapi
 MESA_GLX_DIR = $(TOP)/src/glx
 
 MESA_GLAPI_OUTPUTS = \
+	$(MESA_GLAPI_DIR)/glapi_mapi_tmp.h \
 	$(MESA_GLAPI_DIR)/glprocs.h \
 	$(MESA_GLAPI_DIR)/glapitemp.h \
 	$(MESA_GLAPI_DIR)/glapitable.h
@@ -140,6 +142,10 @@ $(XORG_GLAPI_DIR)/%.h: $(MESA_GLAPI_DIR)/%.h
 	cp $< $@
 
 ######################################################################
+
+$(MESA_GLAPI_DIR)/glapi_mapi_tmp.h: $(MESA_MAPI_DIR)/mapi_abi.py $(COMMON_ES)
+	$(PYTHON2) $(PYTHON_FLAGS) $< \
+		--printer glapi --mode lib gl_and_es_API.xml > $@
 
 $(MESA_GLAPI_DIR)/glprocs.h: gl_procs.py $(COMMON)
 	$(PYTHON2) $(PYTHON_FLAGS) $< > $@
