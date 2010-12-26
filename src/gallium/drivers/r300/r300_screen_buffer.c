@@ -40,7 +40,7 @@ unsigned r300_buffer_is_referenced(struct pipe_context *context,
     struct r300_context *r300 = r300_context(context);
     struct r300_buffer *rbuf = r300_buffer(buf);
 
-    if (r300_buffer_is_user_buffer(buf))
+    if (r300_is_user_buffer(buf))
  	return PIPE_UNREFERENCED;
 
     if (r300->rws->cs_is_buffer_referenced(r300->cs, rbuf->cs_buf, domain))
@@ -81,20 +81,36 @@ void r300_upload_index_buffer(struct r300_context *r300,
     }
 }
 
-void r300_upload_user_buffers(struct r300_context *r300)
+void r300_upload_user_buffers(struct r300_context *r300,
+                              int min_index, int max_index)
 {
     int i, nr = r300->velems->count;
+    unsigned count = max_index + 1 - min_index;
     boolean flushed;
 
     for (i = 0; i < nr; i++) {
-        struct pipe_vertex_buffer *vb =
-            &r300->vertex_buffer[r300->velems->velem[i].vertex_buffer_index];
+        unsigned index = r300->velems->velem[i].vertex_buffer_index;
+        struct pipe_vertex_buffer *vb = &r300->vertex_buffer[index];
+        struct r300_buffer *userbuf = r300_buffer(vb->buffer);
 
-        if (r300_buffer_is_user_buffer(vb->buffer)) {
-            u_upload_data(r300->upload_vb,
-                          0, vb->buffer->width0,
-                          r300_buffer(vb->buffer)->user_buffer,
-                          &vb->buffer_offset, &vb->buffer, &flushed);
+        if (userbuf && userbuf->user_buffer) {
+            unsigned first, size;
+
+            if (vb->stride) {
+                first = vb->stride * min_index;
+                size = vb->stride * count;
+            } else {
+                first = 0;
+                size = r300->velems->hw_format_size[i];
+            }
+
+            u_upload_data(r300->upload_vb, first, size,
+                          userbuf->user_buffer + first,
+                          &vb->buffer_offset,
+                          &r300->valid_vertex_buffer[index],
+                          &flushed);
+
+            vb->buffer_offset -= first;
 
             r300->vertex_arrays_dirty = TRUE;
 
@@ -102,6 +118,8 @@ void r300_upload_user_buffers(struct r300_context *r300)
                 r300->upload_vb_validated = FALSE;
                 r300->validate_buffers = TRUE;
             }
+        } else {
+            assert(r300->valid_vertex_buffer[index]);
         }
     }
 }
@@ -280,8 +298,7 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
 }
 
 struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
-					      void *ptr,
-					      unsigned bytes,
+					      void *ptr, unsigned size,
 					      unsigned bind)
 {
     struct r300_screen *r300screen = r300_screen(screen);
@@ -298,7 +315,7 @@ struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
     rbuf->b.b.format = PIPE_FORMAT_R8_UNORM;
     rbuf->b.b.usage = PIPE_USAGE_IMMUTABLE;
     rbuf->b.b.bind = bind;
-    rbuf->b.b.width0 = bytes;
+    rbuf->b.b.width0 = ~0;
     rbuf->b.b.height0 = 1;
     rbuf->b.b.depth0 = 1;
     rbuf->b.b.array_size = 1;

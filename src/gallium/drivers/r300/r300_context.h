@@ -440,9 +440,6 @@ struct r300_translate_context {
     /* Translate cache for incompatible vertex offset/stride/format fallback. */
     struct translate_cache *translate_cache;
 
-    /* The vertex buffer slot containing the translated buffer. */
-    unsigned vb_slot;
-
     /* Saved and new vertex element state. */
     void *saved_velems, *new_velems;
 };
@@ -558,12 +555,15 @@ struct r300_context {
     struct r300_atom *first_dirty, *last_dirty;
 
     /* Vertex buffers for Gallium. */
+    /* May contain user buffers. */
     struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+    /* Contains only non-user buffers. */
+    struct pipe_resource *valid_vertex_buffer[PIPE_MAX_ATTRIBS];
     int vertex_buffer_count;
     int vertex_buffer_max_index;
+    boolean any_user_vbs;
     /* Vertex elements for Gallium. */
     struct r300_vertex_element_state *velems;
-    bool any_user_vbs;
 
     struct pipe_index_buffer index_buffer;
 
@@ -683,7 +683,8 @@ void r300_resume_query(struct r300_context *r300,
 void r300_stop_query(struct r300_context *r300);
 
 /* r300_render_translate.c */
-void r300_begin_vertex_translate(struct r300_context *r300);
+void r300_begin_vertex_translate(struct r300_context *r300,
+                                 int min_index, int max_index);
 void r300_end_vertex_translate(struct r300_context *r300);
 void r300_translate_index_buffer(struct r300_context *r300,
                                  struct pipe_resource **index_buffer,

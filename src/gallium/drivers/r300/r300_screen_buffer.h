@@ -61,7 +61,8 @@ struct r300_buffer
 
 /* Functions. */
 
-void r300_upload_user_buffers(struct r300_context *r300);
+void r300_upload_user_buffers(struct r300_context *r300,
+			      int min_index, int max_index);
 
 void r300_upload_index_buffer(struct r300_context *r300,
 			      struct pipe_resource **index_buffer,
@@ -72,9 +73,8 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ);
 
 struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
-					      void *ptr,
-					      unsigned bytes,
-					      unsigned usage);
+					      void *ptr, unsigned size,
+					      unsigned bind);
 
 unsigned r300_buffer_is_referenced(struct pipe_context *context,
 				   struct pipe_resource *buf,
@@ -87,7 +87,7 @@ static INLINE struct r300_buffer *r300_buffer(struct pipe_resource *buffer)
     return (struct r300_buffer *)buffer;
 }
 
-static INLINE boolean r300_buffer_is_user_buffer(struct pipe_resource *buffer)
+static INLINE boolean r300_is_user_buffer(struct pipe_resource *buffer)
 {
     return r300_buffer(buffer)->user_buffer ? true : false;
 }

@@ -236,12 +236,6 @@ static boolean r300_emit_states(struct r300_context *r300,
 
     /* Validate buffers and emit dirty state if needed. */
     if (first_draw) {
-        /* upload buffers first */
-        if (r300->screen->caps.has_tcl && r300->any_user_vbs) {
-            r300_upload_user_buffers(r300);
-            r300->any_user_vbs = false;
-        }
-
         if (r300->validate_buffers) {
             if (!r300_emit_buffer_validate(r300, validate_vbos,
                                            index_buffer)) {
@@ -256,7 +250,7 @@ static boolean r300_emit_states(struct r300_context *r300,
                 if (r300->any_user_vbs)
                     r300->upload_vb_validated = TRUE;
                 if (r300->index_buffer.buffer &&
-                    r300_buffer_is_user_buffer(r300->index_buffer.buffer)) {
+                    r300_is_user_buffer(r300->index_buffer.buffer)) {
                     r300->upload_ib_validated = TRUE;
                 }
             }
@@ -308,7 +302,7 @@ static boolean immd_is_good_idea(struct r300_context *r300,
                                  unsigned count)
 {
     struct pipe_vertex_element* velem;
-    struct pipe_vertex_buffer* vbuf;
+    struct pipe_resource *buf;
     boolean checked[PIPE_MAX_ATTRIBS] = {0};
     unsigned vertex_element_count = r300->velems->count;
     unsigned i, vbi;
@@ -332,14 +326,13 @@ static boolean immd_is_good_idea(struct r300_context *r300,
         vbi = velem->vertex_buffer_index;
 
         if (!checked[vbi]) {
-            vbuf = &r300->vertex_buffer[vbi];
+            buf = r300->valid_vertex_buffer[vbi];
 
-            if (!(r300_buffer(vbuf->buffer)->domain & R300_DOMAIN_GTT)) {
+            if (!(r300_buffer(buf)->domain & R300_DOMAIN_GTT)) {
                 return FALSE;
             }
 
-            if (r300_buffer_is_referenced(&r300->context,
-                                          vbuf->buffer,
+            if (r300_buffer_is_referenced(&r300->context, buf,
                                           R300_REF_CS | R300_REF_HW)) {
                 /* It's a very bad idea to map it... */
                 return FALSE;
@@ -398,7 +391,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
         /* Map the buffer. */
         if (!transfer[vbi]) {
             map[vbi] = (uint32_t*)pipe_buffer_map(&r300->context,
-                                                  vbuf->buffer,
+                                                  r300->valid_vertex_buffer[vbi],
                                                   PIPE_TRANSFER_READ,
 						  &transfer[vbi]);
             map[vbi] += (vbuf->buffer_offset / 4) + stride[i] * start;
@@ -430,7 +423,6 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
         vbi = r300->velems->velem[i].vertex_buffer_index;
 
         if (transfer[vbi]) {
-            vbuf = &r300->vertex_buffer[vbi];
             pipe_buffer_unmap(&r300->context, transfer[vbi]);
             transfer[vbi] = NULL;
         }
@@ -485,8 +477,6 @@ static void r300_emit_draw_elements(struct r300_context *r300,
                 "refusing to render.\n", count);
         return;
     }
-
-    maxIndex = MIN2(maxIndex, r300->vertex_buffer_max_index);
 
     DBG(r300, DBG_DRAW, "r300: Indexbuf of %u indices, min %u max %u\n",
         count, minIndex, maxIndex);
@@ -555,8 +545,6 @@ static void r300_emit_draw_elements(struct r300_context *r300,
 
 /* This is the fast-path drawing & emission for HW TCL. */
 static void r300_draw_range_elements(struct pipe_context* pipe,
-                                     struct pipe_resource* indexBuffer,
-                                     unsigned indexSize,
                                      int indexBias,
                                      unsigned minIndex,
                                      unsigned maxIndex,
@@ -565,6 +553,8 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
                                      unsigned count)
 {
     struct r300_context* r300 = r300_context(pipe);
+    struct pipe_resource *indexBuffer = r300->index_buffer.buffer;
+    unsigned indexSize = r300->index_buffer.index_size;
     struct pipe_resource* orgIndexBuffer = indexBuffer;
     boolean alt_num_verts = r300->screen->caps.is_r500 &&
                             count > 65536 &&
@@ -584,7 +574,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
 
     /* Fallback for misaligned ushort indices. */
     if (indexSize == 2 && (start & 1) &&
-        !r300_buffer_is_user_buffer(indexBuffer)) {
+        !r300_is_user_buffer(indexBuffer)) {
         struct pipe_transfer *transfer;
         struct pipe_resource *userbuf;
 
@@ -598,7 +588,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
              * The start index will be aligned simply from the fact that
              * every sub-buffer in u_upload_mgr is aligned. */
             userbuf = pipe->screen->user_buffer_create(pipe->screen,
-                                                       ptr, count * 2,
+                                                       ptr, 0,
                                                        PIPE_BIND_INDEX_BUFFER);
             indexBuffer = userbuf;
             r300_upload_index_buffer(r300, &indexBuffer, indexSize, &start, count);
@@ -606,7 +596,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
         }
         pipe_buffer_unmap(pipe, transfer);
     } else {
-        if (r300_buffer_is_user_buffer(indexBuffer))
+        if (r300_is_user_buffer(indexBuffer))
             r300_upload_index_buffer(r300, &indexBuffer, indexSize, &start, count);
     }
 
@@ -694,7 +684,8 @@ static void r300_draw_vbo(struct pipe_context* pipe,
     unsigned count = info->count;
     boolean translate = FALSE;
     boolean indexed = info->indexed && r300->index_buffer.buffer;
-    unsigned start_indexed = 0;
+    unsigned min_index = 0;
+    unsigned max_index = r300->vertex_buffer_max_index;
 
     if (r300->skip_rendering) {
         return;
@@ -704,43 +695,61 @@ static void r300_draw_vbo(struct pipe_context* pipe,
         return;
     }
 
-    /* Index buffer range checking. */
     if (indexed) {
-        assert(r300->index_buffer.offset % r300->index_buffer.index_size == 0);
-
-        /* Compute start for draw_elements, taking the offset into account. */
-        start_indexed =
+        int real_min_index, real_max_index;
+        /* Compute the start for draw_elements, taking the offset into account. */
+        unsigned start_indexed =
             info->start +
             (r300->index_buffer.offset / r300->index_buffer.index_size);
 
+        assert(r300->index_buffer.offset % r300->index_buffer.index_size == 0);
+
+        /* Index buffer range checking. */
         if ((start_indexed + count) * r300->index_buffer.index_size >
             r300->index_buffer.buffer->width0) {
             fprintf(stderr, "r300: Invalid index buffer range. Skipping rendering.\n");
             return;
         }
-    }
 
-    /* Set up fallback for incompatible vertex layout if needed. */
-    if (r300->incompatible_vb_layout || r300->velems->incompatible_layout) {
-        r300_begin_vertex_translate(r300);
-        translate = TRUE;
-    }
+        min_index = MAX2(min_index, info->min_index);
+        max_index = MIN2(max_index, info->max_index);
+        real_min_index = (int)min_index - info->index_bias;
+        real_max_index = (int)max_index - info->index_bias;
 
-    if (indexed) {
-        r300_draw_range_elements(pipe,
-                                 r300->index_buffer.buffer,
-                                 r300->index_buffer.index_size,
-                                 info->index_bias,
-                                 info->min_index,
-                                 info->max_index,
-                                 info->mode,
-                                 start_indexed,
-                                 count);
+        if (max_index >= (1 << 24) - 1) {
+            fprintf(stderr, "r300: Invalid max_index: %i. Skipping rendering...\n", max_index);
+            return;
+        }
+
+        /* Set up the fallback for an incompatible vertex layout if needed. */
+        if (r300->incompatible_vb_layout || r300->velems->incompatible_layout) {
+            r300_begin_vertex_translate(r300, real_min_index, real_max_index);
+            translate = TRUE;
+        }
+
+        /* Upload vertex buffers. */
+        if (r300->any_user_vbs) {
+            r300_upload_user_buffers(r300, real_min_index, real_max_index);
+        }
+
+        r300_draw_range_elements(pipe, info->index_bias, min_index, max_index,
+                                 info->mode, start_indexed, count);
     } else {
-        r300_draw_arrays(pipe,
-                         info->mode,
-                         info->start,
-                         count);
+        min_index = MAX2(min_index, info->start);
+        max_index = MIN2(max_index, info->start + count - 1);
+
+        /* Set up the fallback for an incompatible vertex layout if needed. */
+        if (r300->incompatible_vb_layout || r300->velems->incompatible_layout) {
+            r300_begin_vertex_translate(r300, min_index, max_index);
+            translate = TRUE;
+        }
+
+        /* Upload vertex buffers. */
+        if (r300->any_user_vbs) {
+            r300_upload_user_buffers(r300, min_index, max_index);
+        }
+
+        r300_draw_arrays(pipe, info->mode, info->start, count);
     }
 
     if (translate) {

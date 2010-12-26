@@ -1465,7 +1465,7 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
                                     const struct pipe_vertex_buffer* buffers)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct pipe_vertex_buffer *vbo;
+    const struct pipe_vertex_buffer *vbo;
     unsigned i, max_index = (1 << 24) - 1;
     boolean any_user_buffer = FALSE;
     boolean any_nonuser_buffer = FALSE;
@@ -1474,7 +1474,6 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
     /* There must be at least one vertex buffer set, otherwise it locks up. */
     if (!count) {
         dummy_vb.buffer = r300->dummy_vb;
-        dummy_vb.max_index = r300->dummy_vb->width0 / 4;
         buffers = &dummy_vb;
         count = 1;
     }
@@ -1501,16 +1500,18 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
         }
 
         for (i = 0; i < count; i++) {
-            /* Why, yes, I AM casting away constness. How did you know? */
-            vbo = (struct pipe_vertex_buffer*)&buffers[i];
+            vbo = &buffers[i];
 
             /* Skip NULL buffers */
-            if (!buffers[i].buffer) {
+            if (!vbo->buffer) {
                 continue;
             }
 
-            if (r300_buffer_is_user_buffer(vbo->buffer)) {
+            /* User buffers have no info about maximum index,
+             * we will have to compute it in draw_vbo. */
+            if (r300_is_user_buffer(vbo->buffer)) {
                 any_user_buffer = TRUE;
+                continue;
             }
             any_nonuser_buffer = TRUE;
 
@@ -1519,12 +1520,12 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
             if (!vbo->stride)
                 continue;
 
-            if (vbo->max_index == ~0) {
-                vbo->max_index =
-                        (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
+            /* Update the maximum index. */
+            {
+                unsigned vbo_max_index =
+                      (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
+                max_index = MIN2(max_index, vbo_max_index);
             }
-
-            max_index = MIN2(vbo->max_index, max_index);
         }
 
         r300->any_user_vbs = any_user_buffer;
@@ -1541,16 +1542,25 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
 
     /* Common code. */
     for (i = 0; i < count; i++) {
+        vbo = &buffers[i];
+
         /* Reference our buffer. */
-        pipe_resource_reference(&r300->vertex_buffer[i].buffer, buffers[i].buffer);
+        pipe_resource_reference(&r300->vertex_buffer[i].buffer, vbo->buffer);
+        if (vbo->buffer && r300_is_user_buffer(vbo->buffer)) {
+            pipe_resource_reference(&r300->valid_vertex_buffer[i], NULL);
+        } else {
+            pipe_resource_reference(&r300->valid_vertex_buffer[i], vbo->buffer);
+        }
     }
     for (; i < r300->vertex_buffer_count; i++) {
         /* Dereference any old buffers. */
         pipe_resource_reference(&r300->vertex_buffer[i].buffer, NULL);
+        pipe_resource_reference(&r300->valid_vertex_buffer[i], NULL);
     }
 
     memcpy(r300->vertex_buffer, buffers,
-        sizeof(struct pipe_vertex_buffer) * count);
+           sizeof(struct pipe_vertex_buffer) * count);
+
     r300->vertex_buffer_count = count;
 }
 
@@ -1564,7 +1574,7 @@ static void r300_set_index_buffer(struct pipe_context* pipe,
         memcpy(&r300->index_buffer, ib, sizeof(r300->index_buffer));
 
         if (r300->screen->caps.has_tcl &&
-            !r300_buffer_is_user_buffer(ib->buffer)) {
+            !r300_is_user_buffer(ib->buffer)) {
             r300->validate_buffers = TRUE;
             r300->upload_ib_validated = FALSE;
         }

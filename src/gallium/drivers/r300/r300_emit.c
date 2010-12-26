@@ -854,6 +854,7 @@ static void r300_update_vertex_arrays_cb(struct r300_context *r300, unsigned pac
 void r300_emit_vertex_arrays(struct r300_context* r300, int offset, boolean indexed)
 {
     struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
+    struct pipe_resource **valid_vbuf = r300->valid_vertex_buffer;
     struct pipe_vertex_element *velem = r300->velems->velem;
     struct r300_buffer *buf;
     int i;
@@ -897,7 +898,7 @@ void r300_emit_vertex_arrays(struct r300_context* r300, int offset, boolean inde
     }
 
     for (i = 0; i < vertex_array_count; i++) {
-        buf = r300_buffer(vbuf[velem[i].vertex_buffer_index].buffer);
+        buf = r300_buffer(valid_vbuf[velem[i].vertex_buffer_index]);
         OUT_CS_BUF_RELOC_NO_OFFSET(&buf->b.b, buf->domain, 0);
     }
     END_CS;
@@ -1224,9 +1225,7 @@ boolean r300_emit_buffer_validate(struct r300_context *r300,
     struct r300_textures_state *texstate =
         (struct r300_textures_state*)r300->textures_state.state;
     struct r300_texture* tex;
-    struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
-    struct pipe_vertex_element *velem = r300->velems->velem;
-    struct pipe_resource *pbuf;
+    struct pipe_resource **vbuf = r300->valid_vertex_buffer;
     unsigned i;
 
     /* Clean out BOs. */
@@ -1265,13 +1264,12 @@ boolean r300_emit_buffer_validate(struct r300_context *r300,
                                  r300_buffer(r300->vbo)->domain, 0);
     /* ...vertex buffers for HWTCL path... */
     if (do_validate_vertex_buffers) {
-        for (i = 0; i < r300->velems->count; i++) {
-            pbuf = vbuf[velem[i].vertex_buffer_index].buffer;
-            if (!pbuf)
+        for (i = 0; i < r300->vertex_buffer_count; i++) {
+            if (!vbuf[i])
                 continue;
 
-            r300->rws->cs_add_buffer(r300->cs, r300_buffer(pbuf)->cs_buf,
-                                     r300_buffer(pbuf)->domain, 0);
+            r300->rws->cs_add_buffer(r300->cs, r300_buffer(vbuf[i])->cs_buf,
+                                     r300_buffer(vbuf[i])->domain, 0);
         }
     }
     /* ...and index buffer for HWTCL path. */
