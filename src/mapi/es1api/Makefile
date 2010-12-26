@@ -7,27 +7,27 @@ include $(TOP)/configs/current
 ifeq ($(ES),)
 ES := es1
 
-GLES_HEADER := GLES
-GLES_PC := glesv1_cm.pc
+esapi_HEADER := GLES
+esapi_PC := glesv1_cm.pc
 
-GLES_LIB := $(GLESv1_CM_LIB)
-GLES_LIB_NAME := $(GLESv1_CM_LIB_NAME)
-GLES_LIB_GLOB := $(GLESv1_CM_LIB_GLOB)
-GLES_LIB_DEPS := $(GLESv1_CM_LIB_DEPS)
-GLES_LIB_MAJOR := 1
-GLES_LIB_MINOR := 1
-GLES_LIB_PATCH := 0
+esapi_LIB := $(GLESv1_CM_LIB)
+esapi_LIB_NAME := $(GLESv1_CM_LIB_NAME)
+esapi_LIB_GLOB := $(GLESv1_CM_LIB_GLOB)
+esapi_LIB_DEPS := $(GLESv1_CM_LIB_DEPS)
+esapi_LIB_MAJOR := 1
+esapi_LIB_MINOR := 1
+esapi_LIB_PATCH := 0
 else
-GLES_HEADER := GLES2
-GLES_PC := glesv2.pc
+esapi_HEADER := GLES2
+esapi_PC := glesv2.pc
 
-GLES_LIB := $(GLESv2_LIB)
-GLES_LIB_NAME := $(GLESv2_LIB_NAME)
-GLES_LIB_GLOB := $(GLESv2_LIB_GLOB)
-GLES_LIB_DEPS := $(GLESv2_LIB_DEPS)
-GLES_LIB_MAJOR := 2
-GLES_LIB_MINOR := 0
-GLES_LIB_PATCH := 0
+esapi_LIB := $(GLESv2_LIB)
+esapi_LIB_NAME := $(GLESv2_LIB_NAME)
+esapi_LIB_GLOB := $(GLESv2_LIB_GLOB)
+esapi_LIB_DEPS := $(GLESv2_LIB_DEPS)
+esapi_LIB_MAJOR := 2
+esapi_LIB_MINOR := 0
+esapi_LIB_PATCH := 0
 endif
 
 ESAPI = $(ES)api
@@ -37,51 +37,40 @@ MAPI := $(TOP)/src/mapi/mapi
 # directory for generated sources/headers
 GEN := glapi
 
-include $(GLAPI)/sources.mak
-GLAPI_OBJECTS := $(GLAPI_SOURCES:.c=.o)
-GLAPI_SOURCES := $(addprefix $(GLAPI)/, $(GLAPI_SOURCES))
-GLAPI_ASM_OBJECTS := $(GLAPI_ASM_SOURCES:.S=.o)
-GLAPI_ASM_SOURCES := $(addprefix $(GEN)/, $(GLAPI_ASM_SOURCES))
+esapi_CPPFLAGS := \
+	-I$(TOP)/include \
+	-I$(TOP)/src/mapi \
+	-DMAPI_ABI_HEADER=\"$(ESAPI)/glapi_mapi_tmp.h\"
 
 include $(MAPI)/sources.mak
-MAPI_UTIL_OBJECTS := $(MAPI_UTIL_SOURCES:.c=.o)
-MAPI_UTIL_SOURCES := $(addprefix $(MAPI)/, $(MAPI_UTIL_SOURCES))
+esapi_SOURCES := $(addprefix $(MAPI)/, $(MAPI_BRIDGE_SOURCES))
+esapi_OBJECTS := $(MAPI_BRIDGE_SOURCES:.c=.o)
+esapi_CPPFLAGS += -DMAPI_MODE_BRIDGE
 
-ESAPI_OBJECTS = $(GLAPI_OBJECTS) $(GLAPI_ASM_OBJECTS) $(MAPI_UTIL_OBJECTS)
-
-INCLUDE_DIRS = \
-	-I$(TOP)/include \
-	-I$(TOP)/src/mapi/$(ESAPI) \
-	-I$(TOP)/src/mapi \
-	-I$(TOP)/src/mesa
+esapi_LIB_DEPS := -L$(TOP)/$(LIB_DIR) -l$(GLAPI_LIB) $(esapi_LIB_DEPS)
 
 .PHONY: default
-default: depend $(TOP)/$(LIB_DIR)/$(GLES_LIB_NAME)
+default: depend $(TOP)/$(LIB_DIR)/$(esapi_LIB_NAME)
 
-$(TOP)/$(LIB_DIR)/$(GLES_LIB_NAME): $(ESAPI_OBJECTS)
-	$(MKLIB) -o $(GLES_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
-		-major $(GLES_LIB_MAJOR) \
-		-minor $(GLES_LIB_MINOR) \
-		-patch $(GLES_LIB_PATCH) \
-		-id $(INSTALL_LIB_DIR)/lib$(GLES_LIB).$(GLES_LIB_MAJOR).dylib \
+$(TOP)/$(LIB_DIR)/$(esapi_LIB_NAME): $(esapi_OBJECTS)
+	$(MKLIB) -o $(esapi_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
+		-major $(esapi_LIB_MAJOR) \
+		-minor $(esapi_LIB_MINOR) \
+		-patch $(esapi_LIB_PATCH) \
+		-id $(INSTALL_LIB_DIR)/lib$(esapi_LIB).$(esapi_LIB_MAJOR).dylib \
 		$(MKLIB_OPTIONS) -install $(TOP)/$(LIB_DIR) \
-		$(ESAPI_OBJECTS) $(GLES_LIB_DEPS)
+		$(esapi_OBJECTS) $(esapi_LIB_DEPS)
 
 # not used, but kept for completeness
-lib$(ESAPI).a: $(ESAPI_OBJECTS)
-	@$(MKLIB) -o $(ESAPI) -static $(ESAPI_OBJECTS)
+lib$(ESAPI).a: $(esapi_OBJECTS)
+	@$(MKLIB) -o $(ESAPI) -static $(esapi_OBJECTS)
 
-$(GLAPI_OBJECTS): %.o: $(GLAPI)/%.c
-	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) -DMAPI_MODE_UTIL $< -o $@
+$(esapi_OBJECTS): %.o: $(MAPI)/%.c
+	$(CC) -c $(esapi_CPPFLAGS) $(CFLAGS) $< -o $@
 
-$(GLAPI_ASM_OBJECTS): %.o: $(GEN)/%.S
-	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $< -o $@
+$(esapi_SOURCES): | glapi-stamp
 
-$(MAPI_UTIL_OBJECTS): %.o: $(MAPI)/%.c
-	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) -DMAPI_MODE_UTIL $< -o $@
-
-$(GLAPI_SOURCES) $(GLAPI_ASM_SOURCES): | glapi-stamp
-
+.PHONY: glapi-stamp
 glapi-stamp:
 	@# generate sources/headers
 	@$(MAKE) -C $(GLAPI)/gen-es $(ES)
@@ -89,10 +78,10 @@ glapi-stamp:
 
 .PHONY: clean
 clean:
-	-rm -f $(GLES_PC)
-	-rm -f $(TOP)/$(LIB_DIR)/$(GLES_LIB_NAME)
+	-rm -f $(esapi_PC)
+	-rm -f $(TOP)/$(LIB_DIR)/$(esapi_LIB_NAME)
 	-rm -f lib$(ESAPI).a
-	-rm -f $(ESAPI_OBJECTS)
+	-rm -f $(esapi_OBJECTS)
 	-rm -f depend depend.bak
 	-rm -f glapi-stamp
 	@# clean generated sources/headers
@@ -118,27 +107,28 @@ pcedit-es2 = \
 	-e 's,@GLESv2_PC_CFLAGS@,$(GLESv2_PC_CFLAGS),' \
 	-e 's,@GLESv2_LIB@,$(GLESv2_LIB),'
 
-$(GLES_PC): $(GLES_PC).in
+$(esapi_PC): $(esapi_PC).in
 	@sed $(pcedit-$(ES)) $< > $@
 
 install-headers:
-	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/$(GLES_HEADER)
-	$(INSTALL) -m 644 $(TOP)/include/$(GLES_HEADER)/*.h \
-		$(DESTDIR)$(INSTALL_INC_DIR)/$(GLES_HEADER)
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/$(esapi_HEADER)
+	$(INSTALL) -m 644 $(TOP)/include/$(esapi_HEADER)/*.h \
+		$(DESTDIR)$(INSTALL_INC_DIR)/$(esapi_HEADER)
 
-install-pc: $(GLES_PC)
+install-pc: $(esapi_PC)
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
-	$(INSTALL) -m 644 $(GLES_PC) $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
+	$(INSTALL) -m 644 $(esapi_PC) $(DESTDIR)$(INSTALL_LIB_DIR)/pkgconfig
 
 install: default install-headers install-pc
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_LIB_DIR)
-	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(GLES_LIB_GLOB) \
+	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(esapi_LIB_GLOB) \
 		$(DESTDIR)$(INSTALL_LIB_DIR)
 
-depend: $(GLAPI_SOURCES) $(MAPI_UTIL_SOURCES)
+depend: $(esapi_SOURCES)
 	@echo "running $(MKDEP)"
 	@touch depend
-	@$(MKDEP) $(MKDEP_OPTIONS) -f- $(DEFINES) $(INCLUDE_DIRS) \
-		-DMAPI_MODE_UTIL $(GLAPI_SOURCES) $(MAPI_UTIL_SOURCES) \
-		2>/dev/null | sed -e 's,^$(GLAPI)/,,' -e 's,^$(MAPI)/,,' \
-		> depend
+	@$(MKDEP) $(MKDEP_OPTIONS) -f- $(DEFINES) $(esapi_CPPFLAGS) \
+		$(esapi_SOURCES) 2>/dev/null | \
+		sed -e 's,^$(GLAPI)/,,' -e 's,^$(MAPI)/,,' > depend
+
+-include depend

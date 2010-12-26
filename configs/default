@@ -59,6 +59,7 @@ EGL_LIB = EGL
 GLESv1_CM_LIB = GLESv1_CM
 GLESv2_LIB = GLESv2
 VG_LIB = OpenVG
+GLAPI_LIB = glapi
 
 
 # Library names (actual file names)
@@ -71,6 +72,7 @@ EGL_LIB_NAME = lib$(EGL_LIB).so
 GLESv1_CM_LIB_NAME = lib$(GLESv1_CM_LIB).so
 GLESv2_LIB_NAME = lib$(GLESv2_LIB).so
 VG_LIB_NAME = lib$(VG_LIB).so
+GLAPI_LIB_NAME = lib$(GLAPI_LIB).so
 
 # globs used to install the lib and all symlinks
 GL_LIB_GLOB = $(GL_LIB_NAME)*
@@ -82,6 +84,7 @@ EGL_LIB_GLOB = $(EGL_LIB_NAME)*
 GLESv1_CM_LIB_GLOB = $(GLESv1_CM_LIB_NAME)*
 GLESv2_LIB_GLOB = $(GLESv2_LIB_NAME)*
 VG_LIB_GLOB = $(VG_LIB_NAME)*
+GLAPI_LIB_GLOB = $(GLAPI_LIB_NAME)*
 
 TALLOC_LIBS = `pkg-config --libs talloc`
 TALLOC_CFLAGS = `pkg-config --cflags talloc`
@@ -130,6 +133,7 @@ APP_LIB_DEPS    = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GLUT_LIB) -l$(GLU_LI
 GLESv1_CM_LIB_DEPS = $(EXTRA_LIB_PATH) -lpthread
 GLESv2_LIB_DEPS = $(EXTRA_LIB_PATH) -lpthread
 VG_LIB_DEPS    = $(EXTRA_LIB_PATH) -lpthread
+GLAPI_LIB_DEPS = $(EXTRA_LIB_PATH) -lpthread
 
 # Program dependencies - specific GL/glut libraries added in Makefiles
 APP_LIB_DEPS = -lm
