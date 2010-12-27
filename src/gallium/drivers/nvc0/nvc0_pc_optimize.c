@@ -276,7 +276,7 @@ nvc0_pass_fold_loads(struct nv_pass *ctx, struct nv_basic_block *b)
 
       for (s = 0; s < 3 && nvi->src[s]; ++s) {
          ld = nvi->src[s]->value->insn;
-         if (!ld || ld->opcode != NV_OP_LD)
+         if (!ld || (ld->opcode != NV_OP_LD && ld->opcode != NV_OP_MOV))
             continue;
          if (!nvc0_insn_can_load(nvi, s, ld))
             continue;
@@ -383,9 +383,8 @@ nv_pass_lower_mods(struct nv_pass *ctx, struct nv_basic_block *b)
 
 #define SRC_IS_MUL(s) ((s)->insn && (s)->insn->opcode == NV_OP_MUL)
 
-/*
 static void
-modifiers_apply(uint32_t *val, ubyte type, ubyte mod)
+apply_modifiers(uint32_t *val, uint8_t type, uint8_t mod)
 {
    if (mod & NV_MOD_ABS) {
       if (type == NV_TYPE_F32)
@@ -400,10 +399,28 @@ modifiers_apply(uint32_t *val, ubyte type, ubyte mod)
       else
          *val = ~(*val) + 1;
    }
+   if (mod & NV_MOD_SAT) {
+      union {
+         float f;
+         uint32_t u;
+         int32_t i;
+      } u;
+      u.u = *val;
+      if (type == NV_TYPE_F32) {
+         u.f = CLAMP(u.f, -1.0f, 1.0f);
+      } else
+      if (type == NV_TYPE_U16) {
+         u.u = MIN2(u.u, 0xffff);
+      } else
+      if (type == NV_TYPE_S16) {
+         u.i = CLAMP(u.i, -32768, 32767);
+      }
+      *val = u.u;
+   }
+   if (mod & NV_MOD_NOT)
+      *val = ~*val;
 }
-*/
 
-#if 0
 static void
 constant_expression(struct nv_pc *pc, struct nv_instruction *nvi,
                     struct nv_value *src0, struct nv_value *src1)
@@ -424,8 +441,8 @@ constant_expression(struct nv_pc *pc, struct nv_instruction *nvi,
    u0.u32 = src0->reg.imm.u32;
    u1.u32 = src1->reg.imm.u32;
 
-   modifiers_apply(&u0.u32, type, nvi->src[0]->mod);
-   modifiers_apply(&u1.u32, type, nvi->src[1]->mod);
+   apply_modifiers(&u0.u32, type, nvi->src[0]->mod);
+   apply_modifiers(&u1.u32, type, nvi->src[1]->mod);
 
    switch (nvi->opcode) {
    case NV_OP_MAD:
@@ -468,14 +485,14 @@ constant_expression(struct nv_pc *pc, struct nv_instruction *nvi,
 
    nvi->opcode = NV_OP_MOV;
 
-   val = new_value(pc, NV_FILE_IMM, type);
-
+   val = new_value(pc, NV_FILE_IMM, nv_type_sizeof(type));
    val->reg.imm.u32 = u.u32;
 
    nv_reference(pc, nvi, 1, NULL);
    nv_reference(pc, nvi, 0, val);
 
-   if (nvi->src[2]) { /* from MAD */
+   if (nvi->src[2]) {
+      /* from MAD */
       nvi->src[1] = nvi->src[0];
       nvi->src[0] = nvi->src[2];
       nvi->src[2] = NULL;
@@ -506,7 +523,7 @@ constant_operand(struct nv_pc *pc,
    type = NV_OPTYPE(nvi->opcode);
 
    u.u32 = val->reg.imm.u32;
-   modifiers_apply(&u.u32, type, nvi->src[s]->mod);
+   apply_modifiers(&u.u32, type, nvi->src[s]->mod);
 
    switch (NV_BASEOP(nvi->opcode)) {
    case NV_OP_MUL:
@@ -576,23 +593,22 @@ constant_operand(struct nv_pc *pc,
       break;
    }
 }
-#endif
 
 static int
 nv_pass_lower_arith(struct nv_pass *ctx, struct nv_basic_block *b)
 {
-#if 0
    struct nv_instruction *nvi, *next;
    int j;
 
    for (nvi = b->entry; nvi; nvi = next) {
       struct nv_value *src0, *src1, *src;
-      int mod;
+      int s;
+      uint8_t mod[4];
 
       next = nvi->next;
 
-      src0 = nvcg_find_immediate(nvi->src[0]);
-      src1 = nvcg_find_immediate(nvi->src[1]);
+      src0 = nvc0_pc_find_immediate(nvi->src[0]);
+      src1 = nvc0_pc_find_immediate(nvi->src[1]);
 
       if (src0 && src1)
          constant_expression(ctx->pc, nvi, src0, src1);
@@ -604,7 +620,7 @@ nv_pass_lower_arith(struct nv_pass *ctx, struct nv_basic_block *b)
             constant_operand(ctx->pc, nvi, src1, 1);
       }
 
-      /* try to combine MUL, ADD into MAD */
+      /* check if we can MUL + ADD -> MAD/FMA */
       if (nvi->opcode != NV_OP_ADD)
          continue;
 
@@ -622,20 +638,27 @@ nv_pass_lower_arith(struct nv_pass *ctx, struct nv_basic_block *b)
       /* could have an immediate from above constant_*  */
       if (src0->reg.file != NV_FILE_GPR || src1->reg.file != NV_FILE_GPR)
          continue;
+      s = (src == src0) ? 0 : 1;
+
+      mod[0] = nvi->src[0]->mod;
+      mod[1] = nvi->src[1]->mod;
+      mod[2] = src->insn->src[0]->mod;
+      mod[3] = src->insn->src[0]->mod;
+
+      if ((mod[0] | mod[1] | mod[2] | mod[3]) & ~NV_MOD_NEG)
+         continue;
 
       nvi->opcode = NV_OP_MAD;
-      mod = nvi->src[(src == src0) ? 0 : 1]->mod;
-      nv_reference(ctx->pc, &nvi->src[(src == src0) ? 0 : 1], NULL);
-      nvi->src[2] = nvi->src[(src == src0) ? 1 : 0];
+      nv_reference(ctx->pc, nvi, s, NULL);
+      nvi->src[2] = nvi->src[!s];
 
-      assert(!(mod & ~NV_MOD_NEG));
       nvi->src[0] = new_ref(ctx->pc, src->insn->src[0]->value);
       nvi->src[1] = new_ref(ctx->pc, src->insn->src[1]->value);
-      nvi->src[0]->mod = src->insn->src[0]->mod ^ mod;
-      nvi->src[1]->mod = src->insn->src[1]->mod;
+      nvi->src[0]->mod = mod[2] ^ mod[s];
+      nvi->src[1]->mod = mod[3];
    }
    DESCEND_ARBITRARY(j, nv_pass_lower_arith);
-#endif
+
    return 0;
 }
 
@@ -1016,7 +1039,6 @@ nv_pass_flatten(struct nv_pass *ctx, struct nv_basic_block *b)
 static int
 nv_pass_cse(struct nv_pass *ctx, struct nv_basic_block *b)
 {
-#if 0
    struct nv_instruction *ir, *ik, *next;
    struct nv_instruction *entry = b->phi ? b->phi : b->entry;
    int s;
@@ -1030,23 +1052,13 @@ nv_pass_cse(struct nv_pass *ctx, struct nv_basic_block *b)
             if (ir->opcode != ik->opcode || ir->fixed)
                continue;
 
-            if (!ir->def[0] || !ik->def[0] ||
-                ik->opcode == NV_OP_LDA ||
-                ik->opcode == NV_OP_STA ||
-                ik->opcode == NV_OP_MOV ||
-                nv_is_vector_op(ik->opcode))
-               continue; /* ignore loads, stores & moves */
+            if (!ir->def[0] || !ik->def[0] || ir->def[1] || ik->def[1])
+               continue;
 
-            if (ik->src[4] || ir->src[4])
-               continue; /* don't mess with address registers */
+            if (ik->indirect != ir->indirect || ik->predicate != ir->predicate)
+               continue;
 
-            if (ik->flags_src || ir->flags_src ||
-                ik->flags_def || ir->flags_def)
-               continue; /* and also not with flags, for now */
-
-            if (ik->def[0]->reg.file == NV_FILE_OUT ||
-                ir->def[0]->reg.file == NV_FILE_OUT ||
-                !values_equal(ik->def[0], ir->def[0]))
+            if (!values_equal(ik->def[0], ir->def[0]))
                continue;
 
             for (s = 0; s < 3; ++s) {
@@ -1071,7 +1083,7 @@ nv_pass_cse(struct nv_pass *ctx, struct nv_basic_block *b)
             if (s == 3) {
                nvc0_insn_delete(ir);
                ++reps;
-               nvcg_replace_value(ctx->pc, ir->def[0], ik->def[0]);
+               nvc0_pc_replace_value(ctx->pc, ir->def[0], ik->def[0]);
                break;
             }
          }
@@ -1079,7 +1091,7 @@ nv_pass_cse(struct nv_pass *ctx, struct nv_basic_block *b)
    } while(reps);
 
    DESCEND_ARBITRARY(s, nv_pass_cse);
-#endif
+
    return 0;
 }
 
