@@ -3,6 +3,10 @@
 import sys
 import StringIO
 
+# Bitfield constants for the 'variant' argument to generate_sigs
+Proj = 1
+Offset = 2
+
 def vec_type(g, size):
     if size == 1:
         if g == "i":
@@ -39,9 +43,10 @@ def get_extra_dim(sampler_type, use_proj, unused_fields):
         extra_dim += 1
     return extra_dim
 
-def generate_sigs(g, tex_inst, sampler_type, use_proj = False, unused_fields = 0):
+def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
     coord_dim = get_coord_dim(sampler_type)
-    extra_dim = get_extra_dim(sampler_type, use_proj, unused_fields)
+    extra_dim = get_extra_dim(sampler_type, variant & Proj, unused_fields)
+    offset_dim = get_sampler_dim(sampler_type)
 
     # Print parameters
     print "   (signature " + g + "vec4"
@@ -72,7 +77,7 @@ def generate_sigs(g, tex_inst, sampler_type, use_proj = False, unused_fields = 0
 
     if tex_inst != "txf":
         # Projective divisor
-        if use_proj:
+        if variant & Proj:
             print "(swiz " + "xyzw"[coord_dim + extra_dim-1] + " (var_ref P))",
         else:
             print "1",
@@ -94,10 +99,10 @@ def generate_sigs(g, tex_inst, sampler_type, use_proj = False, unused_fields = 0
         print "((var_ref dPdx) (var_ref dPdy))",
     print "))))\n"
 
-def generate_fiu_sigs(tex_inst, sampler_type, use_proj = False, unused_fields = 0):
-    generate_sigs("",  tex_inst, sampler_type, use_proj, unused_fields)
-    generate_sigs("i", tex_inst, sampler_type, use_proj, unused_fields)
-    generate_sigs("u", tex_inst, sampler_type, use_proj, unused_fields)
+def generate_fiu_sigs(tex_inst, sampler_type, variant = 0, unused_fields = 0):
+    generate_sigs("",  tex_inst, sampler_type, variant, unused_fields)
+    generate_sigs("i", tex_inst, sampler_type, variant, unused_fields)
+    generate_sigs("u", tex_inst, sampler_type, variant, unused_fields)
 
 def start_function(name):
     sys.stdout = StringIO.StringIO()
@@ -131,17 +136,17 @@ def generate_texture_functions(fs):
     end_function(fs, "texture")
 
     start_function("textureProj")
-    generate_fiu_sigs("tex", "1D", True)
-    generate_fiu_sigs("tex", "1D", True, 2)
-    generate_fiu_sigs("tex", "2D", True)
-    generate_fiu_sigs("tex", "2D", True, 1)
-    generate_fiu_sigs("tex", "3D", True)
+    generate_fiu_sigs("tex", "1D", Proj)
+    generate_fiu_sigs("tex", "1D", Proj, 2)
+    generate_fiu_sigs("tex", "2D", Proj)
+    generate_fiu_sigs("tex", "2D", Proj, 1)
+    generate_fiu_sigs("tex", "3D", Proj)
 
-    generate_fiu_sigs("txb", "1D", True)
-    generate_fiu_sigs("txb", "1D", True, 2)
-    generate_fiu_sigs("txb", "2D", True)
-    generate_fiu_sigs("txb", "2D", True, 1)
-    generate_fiu_sigs("txb", "3D", True)
+    generate_fiu_sigs("txb", "1D", Proj)
+    generate_fiu_sigs("txb", "1D", Proj, 2)
+    generate_fiu_sigs("txb", "2D", Proj)
+    generate_fiu_sigs("txb", "2D", Proj, 1)
+    generate_fiu_sigs("txb", "3D", Proj)
     end_function(fs, "textureProj")
 
     start_function("textureLod")
@@ -162,11 +167,11 @@ def generate_texture_functions(fs):
     end_function(fs, "texelFetch")
 
     start_function("textureProjLod")
-    generate_fiu_sigs("txl", "1D", True)
-    generate_fiu_sigs("txl", "1D", True, 2)
-    generate_fiu_sigs("txl", "2D", True)
-    generate_fiu_sigs("txl", "2D", True, 1)
-    generate_fiu_sigs("txl", "3D", True)
+    generate_fiu_sigs("txl", "1D", Proj)
+    generate_fiu_sigs("txl", "1D", Proj, 2)
+    generate_fiu_sigs("txl", "2D", Proj)
+    generate_fiu_sigs("txl", "2D", Proj, 1)
+    generate_fiu_sigs("txl", "3D", Proj)
     end_function(fs, "textureProjLod")
 
     start_function("textureGrad")
@@ -179,11 +184,11 @@ def generate_texture_functions(fs):
     end_function(fs, "textureGrad")
 
     start_function("textureProjGrad")
-    generate_fiu_sigs("txd", "1D", True)
-    generate_fiu_sigs("txd", "1D", True, 2)
-    generate_fiu_sigs("txd", "2D", True)
-    generate_fiu_sigs("txd", "2D", True, 1)
-    generate_fiu_sigs("txd", "3D", True)
+    generate_fiu_sigs("txd", "1D", Proj)
+    generate_fiu_sigs("txd", "1D", Proj, 2)
+    generate_fiu_sigs("txd", "2D", Proj)
+    generate_fiu_sigs("txd", "2D", Proj, 1)
+    generate_fiu_sigs("txd", "3D", Proj)
     end_function(fs, "textureProjGrad")
 
     # ARB_texture_rectangle extension
@@ -192,8 +197,8 @@ def generate_texture_functions(fs):
     end_function(fs, "texture2DRect")
 
     start_function("texture2DRectProj")
-    generate_sigs("", "tex", "2DRect", True)
-    generate_sigs("", "tex", "2DRect", True, 1)
+    generate_sigs("", "tex", "2DRect", Proj)
+    generate_sigs("", "tex", "2DRect", Proj, 1)
     end_function(fs, "texture2DRectProj")
 
     start_function("shadow2DRect")
@@ -201,7 +206,7 @@ def generate_texture_functions(fs):
     end_function(fs, "shadow2DRect")
 
     start_function("shadow2DRectProj")
-    generate_sigs("", "tex", "2DRectShadow", True)
+    generate_sigs("", "tex", "2DRectShadow", Proj)
     end_function(fs, "shadow2DRectProj")
 
     # EXT_texture_array extension
@@ -247,15 +252,15 @@ def generate_texture_functions(fs):
     end_function(fs, "texture1DLod")
 
     start_function("texture1DProj")
-    generate_sigs("", "tex", "1D", True)
-    generate_sigs("", "tex", "1D", True, 2)
-    generate_sigs("", "txb", "1D", True)
-    generate_sigs("", "txb", "1D", True, 2)
+    generate_sigs("", "tex", "1D", Proj)
+    generate_sigs("", "tex", "1D", Proj, 2)
+    generate_sigs("", "txb", "1D", Proj)
+    generate_sigs("", "txb", "1D", Proj, 2)
     end_function(fs, "texture1DProj")
 
     start_function("texture1DProjLod")
-    generate_sigs("", "txl", "1D", True)
-    generate_sigs("", "txl", "1D", True, 2)
+    generate_sigs("", "txl", "1D", Proj)
+    generate_sigs("", "txl", "1D", Proj, 2)
     end_function(fs, "texture1DProjLod")
 
     start_function("texture2D")
@@ -268,15 +273,15 @@ def generate_texture_functions(fs):
     end_function(fs, "texture2DLod")
 
     start_function("texture2DProj")
-    generate_sigs("", "tex", "2D", True)
-    generate_sigs("", "tex", "2D", True, 1)
-    generate_sigs("", "txb", "2D", True)
-    generate_sigs("", "txb", "2D", True, 1)
+    generate_sigs("", "tex", "2D", Proj)
+    generate_sigs("", "tex", "2D", Proj, 1)
+    generate_sigs("", "txb", "2D", Proj)
+    generate_sigs("", "txb", "2D", Proj, 1)
     end_function(fs, "texture2DProj")
 
     start_function("texture2DProjLod")
-    generate_sigs("", "txl", "2D", True)
-    generate_sigs("", "txl", "2D", True, 1)
+    generate_sigs("", "txl", "2D", Proj)
+    generate_sigs("", "txl", "2D", Proj, 1)
     end_function(fs, "texture2DProjLod")
 
     start_function("texture3D")
@@ -289,12 +294,12 @@ def generate_texture_functions(fs):
     end_function(fs, "texture3DLod")
 
     start_function("texture3DProj")
-    generate_sigs("", "tex", "3D", True)
-    generate_sigs("", "txb", "3D", True)
+    generate_sigs("", "tex", "3D", Proj)
+    generate_sigs("", "txb", "3D", Proj)
     end_function(fs, "texture3DProj")
 
     start_function("texture3DProjLod")
-    generate_sigs("", "txl", "3D", True)
+    generate_sigs("", "txl", "3D", Proj)
     end_function(fs, "texture3DProjLod")
 
     start_function("textureCube")
@@ -316,12 +321,12 @@ def generate_texture_functions(fs):
     end_function(fs, "shadow1DLod")
 
     start_function("shadow1DProj")
-    generate_sigs("", "tex", "1DShadow", True, 1)
-    generate_sigs("", "txb", "1DShadow", True, 1)
+    generate_sigs("", "tex", "1DShadow", Proj, 1)
+    generate_sigs("", "txb", "1DShadow", Proj, 1)
     end_function(fs, "shadow1DProj")
 
     start_function("shadow1DProjLod")
-    generate_sigs("", "txl", "1DShadow", True, 1)
+    generate_sigs("", "txl", "1DShadow", Proj, 1)
     end_function(fs, "shadow1DProjLod")
 
     start_function("shadow2D")
@@ -334,12 +339,12 @@ def generate_texture_functions(fs):
     end_function(fs, "shadow2DLod")
 
     start_function("shadow2DProj")
-    generate_sigs("", "tex", "2DShadow", True)
-    generate_sigs("", "txb", "2DShadow", True)
+    generate_sigs("", "tex", "2DShadow", Proj)
+    generate_sigs("", "txb", "2DShadow", Proj)
     end_function(fs, "shadow2DProj")
 
     start_function("shadow2DProjLod")
-    generate_sigs("", "txl", "2DShadow", True)
+    generate_sigs("", "txl", "2DShadow", Proj)
     end_function(fs, "shadow2DProjLod")
 
     sys.stdout = sys.__stdout__
