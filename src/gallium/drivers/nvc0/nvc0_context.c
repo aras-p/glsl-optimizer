@@ -104,7 +104,7 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
 }
 
 struct resident {
-   struct nouveau_bo *bo;
+   struct nvc0_resource *res;
    uint32_t flags;
 };
 
@@ -112,12 +112,14 @@ void
 nvc0_bufctx_add_resident(struct nvc0_context *nvc0, int ctx,
                          struct nvc0_resource *resource, uint32_t flags)
 {
-   struct resident rsd = { NULL, flags };
+   struct resident rsd = { resource, flags };
 
    if (!resource->bo)
       return;
-   nouveau_bo_ref(resource->bo, &rsd.bo);
 
+   /* We don't need to reference the resource here, it will be referenced
+    * in the context/state, and bufctx will be reset when state changes.
+    */
    util_dynarray_append(&nvc0->residents[ctx], struct resident, rsd);
 }
 
@@ -125,35 +127,24 @@ void
 nvc0_bufctx_del_resident(struct nvc0_context *nvc0, int ctx,
                          struct nvc0_resource *resource)
 {
-   struct resident *rsd, rem;
+   struct resident *rsd, *top;
    unsigned i;
 
    for (i = 0; i < nvc0->residents[ctx].size / sizeof(struct resident); ++i) {
       rsd = util_dynarray_element(&nvc0->residents[ctx], struct resident, i);
 
-      if (rsd->bo == resource->bo) {
-         rem = util_dynarray_pop(&nvc0->residents[ctx], struct resident);
-         nouveau_bo_ref(NULL, &rem.bo);
+      if (rsd->res == resource) {
+         top = util_dynarray_pop_ptr(&nvc0->residents[ctx], struct resident);
+         if (rsd != top)
+            *rsd = *top;
          break;
       }
    }
 }
 
 void
-nvc0_bufctx_reset(struct nvc0_context *nvc0, int ctx)
-{
-   unsigned i;
-
-   for (i = 0; i < nvc0->residents[ctx].size / sizeof(struct resident); ++i)
-      nouveau_bo_ref(NULL, &util_dynarray_element(&nvc0->residents[ctx],
-                                                  struct resident, i)->bo);
-   util_dynarray_resize(&nvc0->residents[ctx], 0);
-}
-
-void
 nvc0_bufctx_emit_relocs(struct nvc0_context *nvc0)
 {
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
    struct resident *rsd;
    struct util_dynarray *array;
    unsigned ctx, i;
@@ -164,11 +155,9 @@ nvc0_bufctx_emit_relocs(struct nvc0_context *nvc0)
       for (i = 0; i < array->size / sizeof(struct resident); ++i) {
          rsd = util_dynarray_element(array, struct resident, i);
 
-         nouveau_bo_validate(chan, rsd->bo, rsd->flags);
+         nvc0_resource_validate(rsd->res, rsd->flags);
       }
    }
 
-   nouveau_bo_validate(chan, nvc0->screen->text, NOUVEAU_BO_RD);
-   nouveau_bo_validate(chan, nvc0->screen->uniforms, NOUVEAU_BO_RD);
-   nouveau_bo_validate(chan, nvc0->screen->txc, NOUVEAU_BO_RD);
+   nvc0_screen_make_buffers_resident(nvc0->screen);
 }

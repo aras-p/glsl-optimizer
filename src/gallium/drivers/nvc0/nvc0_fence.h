@@ -24,6 +24,7 @@ void nvc0_fence_emit(struct nvc0_fence *);
 void nvc0_fence_del(struct nvc0_fence *);
 
 boolean nvc0_fence_wait(struct nvc0_fence *);
+boolean nvc0_fence_signalled(struct nvc0_fence *);
 
 static INLINE void
 nvc0_fence_reference(struct nvc0_fence **ref, struct nvc0_fence *fence)

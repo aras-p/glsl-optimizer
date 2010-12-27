@@ -215,7 +215,8 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
       struct pipe_vertex_buffer *vb = &nvc0->vtxbuf[i];
       struct nvc0_resource *res = nvc0_resource(vb->buffer);
 
-      data = nvc0_resource_map_offset(res, vb->buffer_offset, NOUVEAU_BO_RD);
+      data = nvc0_resource_map_offset(nvc0, res,
+                                      vb->buffer_offset, NOUVEAU_BO_RD);
       if (info->indexed)
          data += info->index_bias * vb->stride;
 
@@ -223,12 +224,11 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
    }
 
    if (info->indexed) {
-      ctx.idxbuf = pipe_buffer_map(&nvc0->pipe, nvc0->idxbuf.buffer,
-                                   PIPE_TRANSFER_READ, &transfer);
+      ctx.idxbuf = nvc0_resource_map_offset(nvc0,
+                                            nvc0_resource(nvc0->idxbuf.buffer),
+                                            nvc0->idxbuf.offset, NOUVEAU_BO_RD);
       if (!ctx.idxbuf)
          return;
-      ctx.idxbuf = (uint8_t *)ctx.idxbuf + nvc0->idxbuf.offset;
-
       index_size = nvc0->idxbuf.index_size;
       ctx.primitive_restart = info->primitive_restart;
       ctx.restart_index = info->restart_index;

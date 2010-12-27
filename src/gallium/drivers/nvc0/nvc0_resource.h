@@ -12,6 +12,14 @@
 
 struct pipe_resource;
 struct nouveau_bo;
+struct nvc0_context;
+
+#define NVC0_BUFFER_SCORE_MIN -25000
+#define NVC0_BUFFER_SCORE_MAX  25000
+#define NVC0_BUFFER_SCORE_VRAM_THRESHOLD 20000
+
+#define NVC0_BUFFER_STATUS_DIRTY       (1 << 0)
+#define NVC0_BUFFER_STATUS_USER_MEMORY (1 << 7)
 
 /* Resources, if mapped into the GPU's address space, are guaranteed to
  * have constant virtual addresses.
@@ -21,7 +29,6 @@ struct nouveau_bo;
 struct nvc0_resource {
    struct pipe_resource base;
    const struct u_resource_vtbl *vtbl;
-   uint64_t address;
 
    uint8_t *data;
    struct nouveau_bo *bo;
@@ -38,22 +45,55 @@ struct nvc0_resource {
    struct nvc0_mm_allocation *mm;
 };
 
+boolean
+nvc0_buffer_download(struct nvc0_context *, struct nvc0_resource *,
+                     unsigned start, unsigned size);
+
+boolean
+nvc0_buffer_migrate(struct nvc0_context *,
+                    struct nvc0_resource *, unsigned domain);
+
+static INLINE void
+nvc0_buffer_adjust_score(struct nvc0_context *nvc0, struct nvc0_resource *res,
+                         int16_t score)
+{
+   if (score < 0) {
+      if (res->score > NVC0_BUFFER_SCORE_MIN)
+         res->score += score;
+   } else
+   if (score > 0){
+      if (res->score < NVC0_BUFFER_SCORE_MAX)
+         res->score += score;
+      if (res->domain == NOUVEAU_BO_GART &&
+          res->score > NVC0_BUFFER_SCORE_VRAM_THRESHOLD)
+         nvc0_buffer_migrate(nvc0, res, NOUVEAU_BO_VRAM);
+   }
+}
+
 /* XXX: wait for fence (atm only using this for vertex push) */
 static INLINE void *
-nvc0_resource_map_offset(struct nvc0_resource *res, uint32_t offset,
+nvc0_resource_map_offset(struct nvc0_context *nvc0,
+                         struct nvc0_resource *res, uint32_t offset,
                          uint32_t flags)
 {
    void *map;
 
-   if (res->domain == 0)
+   nvc0_buffer_adjust_score(nvc0, res, -250);
+
+   if ((res->domain == NOUVEAU_BO_VRAM) &&
+       (res->status & NVC0_BUFFER_STATUS_DIRTY))
+      nvc0_buffer_download(nvc0, res, 0, res->base.width0);
+
+   if (res->domain != NOUVEAU_BO_GART)
       return res->data + offset;
 
+   if (res->mm)
+      flags |= NOUVEAU_BO_NOSYNC;
+
    if (nouveau_bo_map_range(res->bo, res->offset + offset,
-                            res->base.width0, flags | NOUVEAU_BO_NOSYNC))
+                            res->base.width0, flags))
       return NULL;
 
-   /* With suballocation, the same bo can be mapped several times, so unmap
-    * immediately. Maps are guaranteed to persist. */
    map = res->bo->map;
    nouveau_bo_unmap(res->bo);
    return map;
@@ -148,12 +188,6 @@ nvc0_miptree_surface_new(struct pipe_context *,
 
 void
 nvc0_miptree_surface_del(struct pipe_context *, struct pipe_surface *);
-
-struct nvc0_context;
-
-boolean
-nvc0_buffer_migrate(struct nvc0_context *,
-                    struct nvc0_resource *, unsigned domain);
 
 boolean
 nvc0_migrate_vertices(struct nvc0_resource *buf, unsigned base, unsigned size);

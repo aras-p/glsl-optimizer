@@ -539,6 +539,8 @@ nvc0_stage_set_sampler_views(struct nvc0_context *nvc0, int s,
 
    nvc0->num_textures[s] = nr;
 
+   nvc0_bufctx_reset(nvc0, NVC0_BUFCTX_TEXTURES);
+
    nvc0->dirty |= NVC0_NEW_TEXTURES;
 }
 
@@ -772,6 +774,8 @@ nvc0_set_vertex_buffers(struct pipe_context *pipe,
 
     memcpy(nvc0->vtxbuf, vb, sizeof(*vb) * count);
     nvc0->num_vtxbufs = count;
+
+    nvc0_bufctx_reset(nvc0, NVC0_BUFCTX_VERTEX);
 
     nvc0->dirty |= NVC0_NEW_ARRAYS;
 }

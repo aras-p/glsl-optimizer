@@ -101,18 +101,26 @@ int nvc0_screen_tic_alloc(struct nvc0_screen *, void *);
 int nvc0_screen_tsc_alloc(struct nvc0_screen *, void *);
 
 static INLINE void
+nvc0_resource_fence(struct nvc0_resource *res, uint32_t flags)
+{
+   struct nvc0_screen *screen = nvc0_screen(res->base.screen);
+
+   if (res->mm) {
+      nvc0_fence_reference(&res->fence, screen->fence.current);
+
+      if (flags & NOUVEAU_BO_WR)
+         nvc0_fence_reference(&res->fence_wr, screen->fence.current);
+   }
+}
+
+static INLINE void
 nvc0_resource_validate(struct nvc0_resource *res, uint32_t flags)
 {
    struct nvc0_screen *screen = nvc0_screen(res->base.screen);
 
-   assert(res->mm);
-
-   nvc0_fence_reference(&res->fence, screen->fence.current);
-
-   if (flags & NOUVEAU_BO_WR)
-      nvc0_fence_reference(&res->fence_wr, screen->fence.current);
-
    nouveau_bo_validate(screen->base.channel, res->bo, flags);
+
+   nvc0_resource_fence(res, flags);
 }
 
 

@@ -248,7 +248,7 @@ nvc0_screen_fence_signalled(struct pipe_screen *pscreen,
                             struct pipe_fence_handle *fence,
                             unsigned flags)
 {
-   return !(((struct nvc0_fence *)fence)->state == NVC0_FENCE_STATE_SIGNALLED);
+   return !(nvc0_fence_signalled(nvc0_fence(fence)));
 }
 
 static int
@@ -622,6 +622,7 @@ nvc0_screen_make_buffers_resident(struct nvc0_screen *screen)
    const unsigned flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_RD;
 
    nouveau_bo_validate(chan, screen->text, flags);
+   nouveau_bo_validate(chan, screen->uniforms, flags);
    nouveau_bo_validate(chan, screen->txc, flags);
    nouveau_bo_validate(chan, screen->tls, flags);
    nouveau_bo_validate(chan, screen->mp_stack_bo, flags);

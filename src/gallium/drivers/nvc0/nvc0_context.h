@@ -147,11 +147,15 @@ nvc0_surface(struct pipe_surface *ps)
 struct pipe_context *nvc0_create(struct pipe_screen *, void *);
 
 void nvc0_bufctx_emit_relocs(struct nvc0_context *);
-void nvc0_bufctx_reset(struct nvc0_context *, int ctx);
 void nvc0_bufctx_add_resident(struct nvc0_context *, int ctx,
                               struct nvc0_resource *, uint32_t flags);
 void nvc0_bufctx_del_resident(struct nvc0_context *, int ctx,
                               struct nvc0_resource *);
+static INLINE void
+nvc0_bufctx_reset(struct nvc0_context *nvc0, int ctx)
+{
+   util_dynarray_resize(&nvc0->residents[ctx], 0);
+}
 
 /* nvc0_draw.c */
 extern struct draw_stage *nvc0_draw_render_stage(struct nvc0_context *);

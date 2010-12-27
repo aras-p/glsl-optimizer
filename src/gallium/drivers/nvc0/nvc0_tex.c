@@ -218,8 +218,6 @@ void nvc0_validate_textures(struct nvc0_context *nvc0)
 {
    boolean need_flush;
 
-   nvc0_bufctx_reset(nvc0, NVC0_BUFCTX_TEXTURES);
-
    need_flush  = nvc0_validate_tic(nvc0, 0);
    need_flush |= nvc0_validate_tic(nvc0, 4);
 

@@ -11,7 +11,15 @@
 #include "nvc0_context.h"
 #include "nvc0_resource.h"
 
-#define NVC0_BUFFER_STATUS_USER_MEMORY 0xff
+struct nvc0_transfer {
+   struct pipe_transfer base;
+};
+
+static INLINE struct nvc0_transfer *
+nvc0_transfer(struct pipe_transfer *transfer)
+{
+   return (struct nvc0_transfer *)transfer;
+}
 
 static INLINE boolean
 nvc0_buffer_allocate(struct nvc0_screen *screen, struct nvc0_resource *buf,
@@ -28,12 +36,13 @@ nvc0_buffer_allocate(struct nvc0_screen *screen, struct nvc0_resource *buf,
                                  &buf->offset);
       if (!buf->bo)
          return FALSE;
-   } else {
-      assert(!domain);
-      if (!buf->data)
+   }
+   if (domain != NOUVEAU_BO_GART) {
+      if (!buf->data) {
          buf->data = MALLOC(buf->base.width0);
-      if (!buf->data)
-         return FALSE;
+         if (!buf->data)
+            return FALSE;
+      }
    }
    buf->domain = domain;
    return TRUE;
@@ -59,68 +68,199 @@ nvc0_buffer_destroy(struct pipe_screen *pscreen,
    if (res->mm)
       release_allocation(&res->mm, screen->fence.current);
 
-   if (res->status != NVC0_BUFFER_STATUS_USER_MEMORY && res->data)
+   if (res->data && !(res->status & NVC0_BUFFER_STATUS_USER_MEMORY))
       FREE(res->data);
 
    FREE(res);
 }
 
-static INLINE uint32_t
-nouveau_buffer_rw_flags(unsigned pipe)
+/* Maybe just migrate to GART right away if we actually need to do this. */
+boolean
+nvc0_buffer_download(struct nvc0_context *nvc0, struct nvc0_resource *buf,
+                     unsigned start, unsigned size)
 {
-   uint32_t flags = 0;
+   struct nvc0_mm_allocation *mm;
+   struct nouveau_bo *bounce = NULL;
+   uint32_t offset;
 
-   if (pipe & PIPE_TRANSFER_READ)
-      flags = NOUVEAU_BO_RD;
-   if (pipe & PIPE_TRANSFER_WRITE)
-      flags |= NOUVEAU_BO_WR;
+   assert(buf->domain == NOUVEAU_BO_VRAM);
 
-   return flags;
+   mm = nvc0_mm_allocate(nvc0->screen->mm_GART, size, &bounce, &offset);
+   if (!bounce)
+      return FALSE;
+
+   nvc0_m2mf_copy_linear(nvc0, bounce, offset, NOUVEAU_BO_GART,
+                         buf->bo, buf->offset + start, NOUVEAU_BO_VRAM,
+                         size);
+
+   if (nouveau_bo_map_range(bounce, offset, size, NOUVEAU_BO_RD))
+      return FALSE;
+   memcpy(buf->data + start, bounce->map, size);
+   nouveau_bo_unmap(bounce);
+
+   buf->status &= ~NVC0_BUFFER_STATUS_DIRTY;
+
+   nouveau_bo_ref(NULL, &bounce);
+   if (mm)
+      nvc0_mm_free(mm);
+   return TRUE;
+}
+
+static boolean
+nvc0_buffer_upload(struct nvc0_context *nvc0, struct nvc0_resource *buf,
+                   unsigned start, unsigned size)
+{
+   struct nvc0_mm_allocation *mm;
+   struct nouveau_bo *bounce = NULL;
+   uint32_t offset;
+
+   mm = nvc0_mm_allocate(nvc0->screen->mm_GART, size, &bounce, &offset);
+   if (!bounce)
+      return FALSE;
+
+   nouveau_bo_map_range(bounce, offset, size,
+                        NOUVEAU_BO_WR | NOUVEAU_BO_NOSYNC);
+   memcpy(bounce->map, buf->data + start, size);
+   nouveau_bo_unmap(bounce);
+
+   nvc0_m2mf_copy_linear(nvc0, buf->bo, buf->offset + start, NOUVEAU_BO_VRAM,
+                         bounce, offset, NOUVEAU_BO_GART, size);
+
+   nouveau_bo_ref(NULL, &bounce);
+   if (mm)
+      release_allocation(&mm, nvc0->screen->fence.current);
+
+   if (start == 0 && size == buf->base.width0)
+      buf->status &= ~NVC0_BUFFER_STATUS_DIRTY;
+   return TRUE;
+}
+
+static struct pipe_transfer *
+nvc0_buffer_transfer_get(struct pipe_context *pipe,
+                         struct pipe_resource *resource,
+                         unsigned level,
+                         unsigned usage,
+                         const struct pipe_box *box)
+{
+   struct nvc0_resource *buf = nvc0_resource(resource);
+   struct nvc0_transfer *xfr = CALLOC_STRUCT(nvc0_transfer);
+   if (!xfr)
+      return NULL;
+
+   xfr->base.resource = resource;
+   xfr->base.box.x = box->x;
+   xfr->base.box.width = box->width;
+   xfr->base.usage = usage;
+
+   if (buf->domain == NOUVEAU_BO_VRAM) {
+      if (usage & PIPE_TRANSFER_READ) {
+         if (buf->status & NVC0_BUFFER_STATUS_DIRTY)
+            nvc0_buffer_download(nvc0_context(pipe), buf, 0, buf->base.width0);
+      }
+   }
+
+   return &xfr->base;
+}
+
+static void
+nvc0_buffer_transfer_destroy(struct pipe_context *pipe,
+                             struct pipe_transfer *transfer)
+{
+   struct nvc0_resource *buf = nvc0_resource(transfer->resource);
+   struct nvc0_transfer *xfr = nvc0_transfer(transfer);
+
+   if (xfr->base.usage & PIPE_TRANSFER_WRITE) {
+      /* writing is worse */
+      nvc0_buffer_adjust_score(nvc0_context(pipe), buf, -5000);
+
+      if (buf->domain == NOUVEAU_BO_VRAM) {
+         nvc0_buffer_upload(nvc0_context(pipe), buf,
+                            transfer->box.x, transfer->box.width);
+      }
+
+      if (buf->domain != 0 && (buf->base.bind & (PIPE_BIND_VERTEX_BUFFER |
+                                                 PIPE_BIND_INDEX_BUFFER)))
+         nvc0_context(pipe)->vbo_dirty = TRUE;
+   }
+
+   FREE(xfr);
+}
+
+static INLINE boolean
+nvc0_buffer_sync(struct nvc0_resource *buf, unsigned rw)
+{
+   if (rw == PIPE_TRANSFER_READ) {
+      if (!buf->fence_wr)
+         return TRUE;
+      if (!nvc0_fence_wait(buf->fence_wr))
+         return FALSE;
+   } else {
+      if (!buf->fence)
+         return TRUE;
+      if (!nvc0_fence_wait(buf->fence))
+         return FALSE;
+
+      nvc0_fence_reference(&buf->fence, NULL);
+   }
+   nvc0_fence_reference(&buf->fence_wr, NULL);
+
+   return TRUE;
+}
+
+static INLINE boolean
+nvc0_buffer_busy(struct nvc0_resource *buf, unsigned rw)
+{
+   if (rw == PIPE_TRANSFER_READ)
+      return (buf->fence_wr && !nvc0_fence_signalled(buf->fence_wr));
+   else
+      return (buf->fence && !nvc0_fence_signalled(buf->fence));
 }
 
 static void *
 nvc0_buffer_transfer_map(struct pipe_context *pipe,
                          struct pipe_transfer *transfer)
 {
-   struct nvc0_resource *res = nvc0_resource(transfer->resource);
-   struct nvc0_fence *fence;
+   struct nvc0_transfer *xfr = nvc0_transfer(transfer);
+   struct nvc0_resource *buf = nvc0_resource(transfer->resource);
+   struct nouveau_bo *bo = buf->bo;
    uint8_t *map;
    int ret;
-   uint32_t flags = nouveau_buffer_rw_flags(transfer->usage);
+   uint32_t offset = xfr->base.box.x;
+   uint32_t flags;
 
-   if ((res->base.bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER)) &&
-       (flags & NOUVEAU_BO_WR))
-      nvc0_context(pipe)->vbo_dirty = TRUE;
+   nvc0_buffer_adjust_score(nvc0_context(pipe), buf, -250);
 
-   if (res->domain == 0)
-      return res->data + transfer->box.x;
+   if (buf->domain != NOUVEAU_BO_GART)
+      return buf->data + offset;
 
-   if (res->domain == NOUVEAU_BO_VRAM) {
-      NOUVEAU_ERR("transfers to/from VRAM buffers are not allowed\n");
-      /* if this happens, migrate back to GART */
-      return NULL;
-   }
+   if (buf->mm)
+      flags = NOUVEAU_BO_NOSYNC | NOUVEAU_BO_RDWR;
+   else
+      flags = nouveau_screen_transfer_flags(xfr->base.usage);
 
-   if (res->score > -1024)
-      --res->score;
+   offset += buf->offset;
 
-   ret = nouveau_bo_map(res->bo, flags | NOUVEAU_BO_NOSYNC);
+   ret = nouveau_bo_map_range(buf->bo, offset, xfr->base.box.width, flags);
    if (ret)
       return NULL;
-   map = res->bo->map;
-   nouveau_bo_unmap(res->bo);
+   map = bo->map;
 
-   fence = (flags == NOUVEAU_BO_RD) ? res->fence_wr : res->fence;
+   /* Unmap right now. Since multiple buffers can share a single nouveau_bo,
+    * not doing so might make future maps fail or trigger "reloc while mapped"
+    * errors. For now, mappings to userspace are guaranteed to be persistent.
+    */
+   nouveau_bo_unmap(bo);
 
-   if (fence) {
-      if (nvc0_fence_wait(fence) == FALSE)
-         NOUVEAU_ERR("failed to fence buffer\n");
-
-      nvc0_fence_reference(&res->fence, NULL);
-      nvc0_fence_reference(&res->fence_wr, NULL);
+   if (buf->mm) {
+      if (xfr->base.usage & PIPE_TRANSFER_DONTBLOCK) {
+         if (nvc0_buffer_busy(buf, xfr->base.usage & PIPE_TRANSFER_READ_WRITE))
+            return NULL;
+      } else
+      if (!(xfr->base.usage & PIPE_TRANSFER_UNSYNCHRONIZED)) {
+         nvc0_buffer_sync(buf, xfr->base.usage & PIPE_TRANSFER_READ_WRITE);
+      }
    }
-
-   return map + transfer->box.x + res->offset;
+   return map;
 }
 
 
@@ -131,26 +271,23 @@ nvc0_buffer_transfer_flush_region(struct pipe_context *pipe,
                                   const struct pipe_box *box)
 {
    struct nvc0_resource *res = nvc0_resource(transfer->resource);
+   struct nouveau_bo *bo = res->bo;
+   unsigned offset = res->offset + transfer->box.x + box->x;
 
-   if (!res->bo)
+   /* not using non-snoop system memory yet, no need for cflush */
+   if (1)
       return;
 
-   nouveau_screen_bo_map_flush_range(pipe->screen,
-                                     res->bo,
-                                     res->offset + transfer->box.x + box->x,
-                                     box->width);
+   /* XXX: maybe need to upload for VRAM buffers here */
+
+   nouveau_screen_bo_map_flush_range(pipe->screen, bo, offset, box->width);
 }
 
 static void
 nvc0_buffer_transfer_unmap(struct pipe_context *pipe,
                            struct pipe_transfer *transfer)
 {
-   struct nvc0_resource *res = nvc0_resource(transfer->resource);
-
-   if (res->data)
-      return;
-
-   /* nouveau_screen_bo_unmap(pipe->screen, res->bo); */
+   /* we've called nouveau_bo_unmap right after map */
 }
 
 const struct u_resource_vtbl nvc0_buffer_vtbl =
@@ -158,8 +295,8 @@ const struct u_resource_vtbl nvc0_buffer_vtbl =
    u_default_resource_get_handle,     /* get_handle */
    nvc0_buffer_destroy,               /* resource_destroy */
    NULL,                              /* is_resource_referenced */
-   u_default_get_transfer,            /* get_transfer */
-   u_default_transfer_destroy,        /* transfer_destroy */
+   nvc0_buffer_transfer_get,          /* get_transfer */
+   nvc0_buffer_transfer_destroy,      /* transfer_destroy */
    nvc0_buffer_transfer_map,          /* transfer_map */
    nvc0_buffer_transfer_flush_region, /* transfer_flush_region */
    nvc0_buffer_transfer_unmap,        /* transfer_unmap */
@@ -227,6 +364,23 @@ nvc0_user_buffer_create(struct pipe_screen *pscreen,
    return &buffer->base;
 }
 
+static INLINE boolean
+nvc0_buffer_fetch_data(struct nvc0_resource *buf,
+                       struct nouveau_bo *bo, unsigned offset, unsigned size)
+{
+   if (!buf->data) {
+      buf->data = MALLOC(size);
+      if (!buf->data)
+         return FALSE;
+   }
+   if (nouveau_bo_map_range(bo, offset, size, NOUVEAU_BO_RD))
+      return FALSE;
+   memcpy(buf->data, bo->map, size);
+   nouveau_bo_unmap(bo);
+
+   return TRUE;
+}
+
 /* Migrate a linear buffer (vertex, index, constants) USER -> GART -> VRAM. */
 boolean
 nvc0_buffer_migrate(struct nvc0_context *nvc0,
@@ -235,38 +389,52 @@ nvc0_buffer_migrate(struct nvc0_context *nvc0,
    struct nvc0_screen *screen = nvc0_screen(buf->base.screen);
    struct nouveau_bo *bo;
    unsigned size = buf->base.width0;
+   unsigned offset;
    int ret;
+
+   assert(domain != buf->domain);
 
    if (domain == NOUVEAU_BO_GART && buf->domain == 0) {
       if (!nvc0_buffer_allocate(screen, buf, domain))
          return FALSE;
-      ret = nouveau_bo_map(buf->bo, NOUVEAU_BO_WR | NOUVEAU_BO_NOSYNC);
+      ret = nouveau_bo_map_range(buf->bo, buf->offset, size, NOUVEAU_BO_WR |
+                                 NOUVEAU_BO_NOSYNC);
       if (ret)
          return ret;
-      memcpy((uint8_t *)buf->bo->map + buf->offset, buf->data, size);
+      memcpy(buf->bo->map, buf->data, size);
       nouveau_bo_unmap(buf->bo);
+      FREE(buf->data);
    } else
-   if (domain == NOUVEAU_BO_VRAM && buf->domain == NOUVEAU_BO_GART) {
+   if (domain != 0 && buf->domain != 0) {
       struct nvc0_mm_allocation *mm = buf->mm;
 
+      if (domain == NOUVEAU_BO_VRAM) {
+         /* keep a system memory copy of our data in case we hit a fallback */
+         if (!nvc0_buffer_fetch_data(buf, buf->bo, buf->offset, size))
+            return FALSE;
+         debug_printf("migrating %u KiB to VRAM\n", size / 1024);
+      }
+
+      offset = buf->offset;
       bo = buf->bo;
       buf->bo = NULL;
       buf->mm = NULL;
       nvc0_buffer_allocate(screen, buf, domain);
 
-      nvc0_m2mf_copy_linear(nvc0, buf->bo, 0, NOUVEAU_BO_VRAM,
-                            bo, 0, NOUVEAU_BO_GART, buf->base.width0);
+      nvc0_m2mf_copy_linear(nvc0, buf->bo, buf->offset, domain,
+                            bo, offset, buf->domain, buf->base.width0);
 
-      release_allocation(&mm, screen->fence.current);
       nouveau_bo_ref(NULL, &bo);
+      if (mm)
+         release_allocation(&mm, screen->fence.current);
    } else
    if (domain == NOUVEAU_BO_VRAM && buf->domain == 0) {
-      /* should use a scratch buffer instead here */
-      if (!nvc0_buffer_migrate(nvc0, buf, NOUVEAU_BO_GART))
+      if (!nvc0_buffer_allocate(screen, buf, NOUVEAU_BO_VRAM))
          return FALSE;
-      return nvc0_buffer_migrate(nvc0, buf, NOUVEAU_BO_VRAM);
+      if (!nvc0_buffer_upload(nvc0, buf, 0, buf->base.width0))
+         return FALSE;
    } else
-      return -1;
+      return FALSE;
 
    buf->domain = domain;
 

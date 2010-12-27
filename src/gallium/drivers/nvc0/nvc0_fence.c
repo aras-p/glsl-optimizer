@@ -139,6 +139,17 @@ nvc0_screen_fence_update(struct nvc0_screen *screen)
 #define NVC0_FENCE_MAX_SPINS (1 << 17)
 
 boolean
+nvc0_fence_signalled(struct nvc0_fence *fence)
+{
+   struct nvc0_screen *screen = fence->screen;
+
+   if (fence->state == NVC0_FENCE_STATE_EMITTED)
+      nvc0_screen_fence_update(screen);
+
+   return fence->state == NVC0_FENCE_STATE_SIGNALLED;
+}
+
+boolean
 nvc0_fence_wait(struct nvc0_fence *fence)
 {
    struct nvc0_screen *screen = fence->screen;

@@ -94,6 +94,8 @@ static INLINE int
 OUT_RESRCl(struct nouveau_channel *chan, struct nvc0_resource *res,
            unsigned delta, unsigned flags)
 {
+   if (flags & NOUVEAU_BO_WR)
+      res->status |= NVC0_BUFFER_STATUS_DIRTY;
    return OUT_RELOCl(chan, res->bo, res->offset + delta, res->domain | flags);
 }
 
