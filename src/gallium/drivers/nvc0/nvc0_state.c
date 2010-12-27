@@ -771,6 +771,12 @@ nvc0_set_vertex_buffers(struct pipe_context *pipe,
                         const struct pipe_vertex_buffer *vb)
 {
     struct nvc0_context *nvc0 = nvc0_context(pipe);
+    unsigned i;
+
+    for (i = 0; i < count; ++i)
+       pipe_resource_reference(&nvc0->vtxbuf[i].buffer, vb[i].buffer);
+    for (; i < nvc0->num_vtxbufs; ++i)
+       pipe_resource_reference(&nvc0->vtxbuf[i].buffer, NULL);
 
     memcpy(nvc0->vtxbuf, vb, sizeof(*vb) * count);
     nvc0->num_vtxbufs = count;
