@@ -245,6 +245,7 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
 	 arrays[attr]._MaxElement = count; /* ??? */
 
          varying_inputs |= 1 << attr;
+         ctx->NewState |= _NEW_ARRAY;
       }
    }
 
