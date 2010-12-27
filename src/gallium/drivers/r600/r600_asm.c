@@ -48,10 +48,10 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc_alu *alu)
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT:
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE:
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLNE:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL: 
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL:
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX:
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MIN:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETE: 
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETE:
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETNE:
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGT:
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGE:
@@ -64,7 +64,7 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc_alu *alu)
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE:
 		return 2;
 
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV: 
+	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV:
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_FLOOR:
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FRACT:
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLOOR:
@@ -79,7 +79,7 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc_alu *alu)
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS:
 		return 1;
 	default: R600_ERR(
-		"Need instruction operand number for 0x%x.\n", alu->inst); 
+		"Need instruction operand number for 0x%x.\n", alu->inst);
 	};
 
 	return 3;
@@ -404,7 +404,7 @@ static int reserve_cfile(struct alu_bank_swizzle *bs, unsigned sel, unsigned cha
 		// All cfile read ports are used, cannot reference vector element
 		return -1;
 	}
-	return 0;	
+	return 0;
 }
 
 static int is_gpr(unsigned sel)
@@ -420,7 +420,7 @@ static int is_cfile(unsigned sel)
 static int is_const(int sel)
 {
 	return is_cfile(sel) ||
-		(sel >= V_SQ_ALU_SRC_0 && 
+		(sel >= V_SQ_ALU_SRC_0 &&
 		sel <= V_SQ_ALU_SRC_LITERAL);
 }
 
@@ -435,7 +435,7 @@ static int check_vector(struct r600_bc_alu *alu, struct alu_bank_swizzle *bs, in
 		if (is_gpr(sel)) {
 			cycle = cycle_for_bank_swizzle_vec[bank_swizzle][src];
 			if (src == 1 && sel == alu->src[0].sel && elem == alu->src[0].chan)
-				// Nothing to do; special-case optimization, 
+				// Nothing to do; special-case optimization,
 				// second source uses first source’s reservation
 				continue;
 			else {
@@ -465,7 +465,7 @@ static int check_scalar(struct r600_bc_alu *alu, struct alu_bank_swizzle *bs, in
 			if (const_count >= 2)
 				// More than two references to a constant in
 				// transcendental operation.
-				return -1; 
+				return -1;
 			else
 				const_count++;
 		}
@@ -505,7 +505,7 @@ static int check_and_set_bank_swizzle(struct r600_bc_alu *slots[5])
 			slots[i]->bank_swizzle = slots[i]->bank_swizzle_force;
 			forced = 1;
 		}
-	
+
 	if (forced)
 		return 0;
 
@@ -552,7 +552,7 @@ static int replace_gpr_with_pv_ps(struct r600_bc_alu *slots[5], struct r600_bc_a
 	struct r600_bc_alu *prev[5];
 	int gpr[5], chan[5];
 	int i, j, r, src, num_src;
-	
+
 	r = assign_alu_units(alu_prev, prev);
 	if (r)
 		return r;
@@ -565,7 +565,7 @@ static int replace_gpr_with_pv_ps(struct r600_bc_alu *slots[5], struct r600_bc_a
 			else
 				chan[i] = prev[i]->dst.chan;
 		} else
-			gpr[i] = -1;		
+			gpr[i] = -1;
 	}
 
 	for (i = 0; i < 5; ++i) {
@@ -679,7 +679,7 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5], s
 {
 	struct r600_bc_alu *prev[5];
 	struct r600_bc_alu *result[5] = { NULL };
-	
+
 	uint32_t literal[4];
 	unsigned nliteral = 0;
 
@@ -717,7 +717,7 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5], s
 				return 0;
 		} else if(!slots[i]) {
 			continue;
-		} else 
+		} else
 			result[i] = slots[i];
 
 		// let's check source gprs
@@ -829,7 +829,7 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 		}
 		if (nalu->src[i].sel == V_SQ_ALU_SRC_LITERAL)
 			r600_bc_special_constants(
-				nalu->src[i].value[nalu->src[i].chan], 
+				nalu->src[i].value[nalu->src[i].chan],
 				&nalu->src[i].sel, &nalu->src[i].neg);
 	}
 	if (alu->dst.sel >= bc->ngpr) {
@@ -1066,16 +1066,59 @@ static int r600_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsign
 	return 0;
 }
 
-/* common for r600/r700 - eg in eg_asm.c */
-static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
+enum cf_class
 {
-	unsigned id = cf->id;
+	CF_CLASS_ALU,
+	CF_CLASS_TEXTURE,
+	CF_CLASS_VERTEX,
+	CF_CLASS_EXPORT,
+	CF_CLASS_OTHER
+};
 
+static enum cf_class get_cf_class(struct r600_bc_cf *cf)
+{
 	switch (cf->inst) {
 	case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3):
 	case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER << 3):
 	case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER << 3):
 	case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
+		return CF_CLASS_ALU;
+
+	case V_SQ_CF_WORD1_SQ_CF_INST_TEX:
+		return CF_CLASS_TEXTURE;
+
+	case V_SQ_CF_WORD1_SQ_CF_INST_VTX:
+	case V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC:
+		return CF_CLASS_VERTEX;
+
+	case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
+	case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
+		return CF_CLASS_EXPORT;
+
+	case V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
+	case V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
+	case V_SQ_CF_WORD1_SQ_CF_INST_POP:
+	case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_START_NO_AL:
+	case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END:
+	case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE:
+	case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK:
+	case V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS:
+	case V_SQ_CF_WORD1_SQ_CF_INST_RETURN:
+		return CF_CLASS_OTHER;
+
+	default:
+		R600_ERR("unsupported CF instruction (0x%X)\n", cf->inst);
+		return -EINVAL;
+	}
+}
+
+/* common for r600/r700 - eg in eg_asm.c */
+static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
+{
+	unsigned id = cf->id;
+
+	switch (get_cf_class(cf)) {
+	case CF_CLASS_ALU:
 		bc->bytecode[id++] = S_SQ_CF_ALU_WORD0_ADDR(cf->addr >> 1) |
 			S_SQ_CF_ALU_WORD0_KCACHE_MODE0(cf->kcache0_mode) |
 			S_SQ_CF_ALU_WORD0_KCACHE_BANK0(cf->kcache0_bank) |
@@ -1089,16 +1132,14 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 					S_SQ_CF_ALU_WORD1_USES_WATERFALL(bc->chiprev == CHIPREV_R600 ? cf->r6xx_uses_waterfall : 0) |
 					S_SQ_CF_ALU_WORD1_COUNT((cf->ndw / 2) - 1);
 		break;
-	case V_SQ_CF_WORD1_SQ_CF_INST_TEX:
-	case V_SQ_CF_WORD1_SQ_CF_INST_VTX:
-	case V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC:
+	case CF_CLASS_TEXTURE:
+	case CF_CLASS_VERTEX:
 		bc->bytecode[id++] = S_SQ_CF_WORD0_ADDR(cf->addr >> 1);
 		bc->bytecode[id++] = S_SQ_CF_WORD1_CF_INST(cf->inst) |
 					S_SQ_CF_WORD1_BARRIER(1) |
 					S_SQ_CF_WORD1_COUNT((cf->ndw / 4) - 1);
 		break;
-	case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
-	case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
+	case CF_CLASS_EXPORT:
 		bc->bytecode[id++] = S_SQ_CF_ALLOC_EXPORT_WORD0_RW_GPR(cf->output.gpr) |
 			S_SQ_CF_ALLOC_EXPORT_WORD0_ELEM_SIZE(cf->output.elem_size) |
 			S_SQ_CF_ALLOC_EXPORT_WORD0_ARRAY_BASE(cf->output.array_base) |
@@ -1111,15 +1152,7 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 			S_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(cf->output.inst) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_END_OF_PROGRAM(cf->output.end_of_program);
 		break;
-	case V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
-	case V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
-	case V_SQ_CF_WORD1_SQ_CF_INST_POP:
-	case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_START_NO_AL:
-	case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END:
-	case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE:
-	case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK:
-	case V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS:
-	case V_SQ_CF_WORD1_SQ_CF_INST_RETURN:
+	case CF_CLASS_OTHER:
 		bc->bytecode[id++] = S_SQ_CF_WORD0_ADDR(cf->cf_addr >> 1);
 		bc->bytecode[id++] = S_SQ_CF_WORD1_CF_INST(cf->inst) |
 					S_SQ_CF_WORD1_BARRIER(1) |
@@ -1132,6 +1165,445 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 		return -EINVAL;
 	}
 	return 0;
+}
+
+struct gpr_usage_range {
+	int	replacement;
+	int32_t	start;
+	int32_t	end;
+};
+
+struct gpr_usage {
+	unsigned		channels:4;
+	int32_t			first_write;
+	unsigned	        nranges;
+	struct gpr_usage_range  *ranges;
+};
+
+static struct gpr_usage_range* add_gpr_usage_range(struct gpr_usage *usage)
+{
+	usage->nranges++;
+	usage->ranges = realloc(usage->ranges, usage->nranges * sizeof(struct gpr_usage_range));
+	if (!usage->ranges)
+		return NULL;
+	return &usage->ranges[usage->nranges-1];
+}
+
+static void notice_gpr_read(struct gpr_usage *usage, uint32_t id, unsigned chan)
+{
+        usage->channels |= 1 << chan;
+        usage->first_write = -1;
+        if (!usage->nranges) {
+                add_gpr_usage_range(usage)->start = -1;
+        }
+        usage->ranges[usage->nranges-1].end = id;
+}
+
+static void notice_gpr_rel_read(struct gpr_usage usage[128], uint32_t id, unsigned chan)
+{
+	unsigned i;
+	for (i = 0; i < 128; ++i)
+		notice_gpr_read(&usage[i], id, chan);
+}
+
+static void notice_gpr_write(struct gpr_usage *usage, uint32_t id, unsigned chan)
+{
+	uint32_t start = usage->first_write != -1 ? usage->first_write : id;
+	usage->channels &= ~(1 << chan);
+	if (usage->channels) {
+		if (usage->first_write == -1)
+			usage->first_write = id;
+	} else if (!usage->nranges || usage->ranges[usage->nranges-1].start != start) {
+		usage->first_write = start;
+		struct gpr_usage_range* range = add_gpr_usage_range(usage);
+                range->start = start;
+                range->end = -1;
+        }
+}
+
+static void notice_gpr_rel_write(struct gpr_usage usage[128], uint32_t id, unsigned chan)
+{
+	/* we can't know wich gpr is really used, so ignore it for now*/
+}
+
+static void notice_alu_src_gprs(struct r600_bc_alu *alu, struct gpr_usage usage[128], uint32_t id)
+{
+	unsigned src, num_src;
+
+	num_src = r600_bc_get_num_operands(alu);
+	for (src = 0; src < num_src; ++src) {
+		// constants doesn't matter
+		if (!is_gpr(alu->src[src].sel))
+			continue;
+
+		if (alu->src[src].rel)
+			notice_gpr_rel_read(usage, id, alu->src[src].chan);
+		else
+			notice_gpr_read(&usage[alu->src[src].sel], id, alu->src[src].chan);
+	}
+}
+
+static void notice_alu_dst_gprs(struct r600_bc_alu *alu_first, struct gpr_usage usage[128], uint32_t id)
+{
+	struct r600_bc_alu *alu;
+	for (alu = alu_first; alu; alu = LIST_ENTRY(struct r600_bc_alu, alu->list.next, list)) {
+		if (alu->dst.write) {
+			if (alu->dst.rel)
+				notice_gpr_rel_write(usage, id, alu->dst.chan);
+			else
+				notice_gpr_write(&usage[alu->dst.sel], id, alu->dst.chan);
+		}
+
+		if (alu->last)
+			break;
+	}
+}
+
+static void notice_tex_gprs(struct r600_bc_tex *tex, struct gpr_usage usage[128], uint32_t id)
+{
+	if (tex->src_rel) {
+                if (tex->src_sel_x < 4)
+			notice_gpr_rel_read(usage, id, tex->src_sel_x);
+		if (tex->src_sel_y < 4)
+			notice_gpr_rel_read(usage, id, tex->src_sel_y);
+		if (tex->src_sel_z < 4)
+			notice_gpr_rel_read(usage, id, tex->src_sel_z);
+		if (tex->src_sel_w < 4)
+			notice_gpr_rel_read(usage, id, tex->src_sel_w);
+        } else {
+		if (tex->src_sel_x < 4)
+			notice_gpr_read(&usage[tex->src_gpr], id, tex->src_sel_x);
+		if (tex->src_sel_y < 4)
+			notice_gpr_read(&usage[tex->src_gpr], id, tex->src_sel_y);
+		if (tex->src_sel_z < 4)
+			notice_gpr_read(&usage[tex->src_gpr], id, tex->src_sel_z);
+		if (tex->src_sel_w < 4)
+			notice_gpr_read(&usage[tex->src_gpr], id, tex->src_sel_w);
+	}
+	if (tex->dst_rel) {
+		if (tex->dst_sel_x != 7)
+			notice_gpr_rel_write(usage, id, 0);
+		if (tex->dst_sel_y != 7)
+			notice_gpr_rel_write(usage, id, 1);
+		if (tex->dst_sel_z != 7)
+			notice_gpr_rel_write(usage, id, 2);
+		if (tex->dst_sel_w != 7)
+			notice_gpr_rel_write(usage, id, 3);
+	} else {
+		if (tex->dst_sel_x != 7)
+			notice_gpr_write(&usage[tex->dst_gpr], id, 0);
+		if (tex->dst_sel_y != 7)
+			notice_gpr_write(&usage[tex->dst_gpr], id, 1);
+		if (tex->dst_sel_z != 7)
+			notice_gpr_write(&usage[tex->dst_gpr], id, 2);
+		if (tex->dst_sel_w != 7)
+			notice_gpr_write(&usage[tex->dst_gpr], id, 3);
+	}
+}
+
+static void notice_vtx_gprs(struct r600_bc_vtx *vtx, struct gpr_usage usage[128], uint32_t id)
+{
+	notice_gpr_read(&usage[vtx->src_gpr], id, vtx->src_sel_x);
+
+	if (vtx->dst_sel_x != 7)
+		notice_gpr_write(&usage[vtx->dst_gpr], id, 0);
+	if (vtx->dst_sel_y != 7)
+		notice_gpr_write(&usage[vtx->dst_gpr], id, 1);
+	if (vtx->dst_sel_z != 7)
+		notice_gpr_write(&usage[vtx->dst_gpr], id, 2);
+	if (vtx->dst_sel_w != 7)
+		notice_gpr_write(&usage[vtx->dst_gpr], id, 3);
+}
+
+static void notice_export_gprs(struct r600_bc_cf *cf, struct gpr_usage usage[128], uint32_t id)
+{
+	//TODO handle other memory operations
+	if (cf->output.swizzle_x < 4)
+		notice_gpr_read(&usage[cf->output.gpr], id, cf->output.swizzle_x);
+	if (cf->output.swizzle_y < 4)
+		notice_gpr_read(&usage[cf->output.gpr], id, cf->output.swizzle_y);
+	if (cf->output.swizzle_z < 4)
+		notice_gpr_read(&usage[cf->output.gpr], id, cf->output.swizzle_z);
+	if (cf->output.swizzle_w < 4)
+		notice_gpr_read(&usage[cf->output.gpr], id, cf->output.swizzle_w);
+}
+
+static int is_in_range(struct gpr_usage_range* range, int32_t value)
+{
+	int32_t start = range->start == -1 ? 0 : range->start;
+	int32_t end = range->end;
+
+	return start <= value && value < end;
+}
+
+static int rate_replacement(struct gpr_usage *usage, struct gpr_usage_range* range)
+{
+	unsigned i;
+	uint32_t best_start = 0x3FFFFFFF, best_end = 0x3FFFFFFF;
+
+	for (i = 0; i < usage->nranges; ++i) {
+		if (usage->ranges[i].replacement != -1)
+			continue; /* ignore already remapped ranges */
+
+		if (is_in_range(&usage->ranges[i], range->start) ||
+			is_in_range(&usage->ranges[i], range->end))
+			return -1; /* forget it if usages overlap */
+
+		if (range->start >= usage->ranges[i].end)
+			best_start = MIN2(best_start, range->start - usage->ranges[i].end);
+
+		if (range->end != -1 && range->end <= usage->ranges[i].start)
+			best_end = MIN2(best_end, usage->ranges[i].start - range->end);
+	}
+	return best_start + best_end;
+}
+
+static void find_replacement(struct gpr_usage usage[128], unsigned current, struct gpr_usage_range *range)
+{
+	unsigned i;
+	int best_gpr = -1, best_rate = 0x7FFFFFFF;
+
+	if ((range->start & ~0xFF) == (range->end & ~0xFF)) {
+		/* register is just used inside one ALU clause */
+		/* try to use clause temporaryis for it */
+		for (i = 127; i > 123; --i) {
+			int rate = rate_replacement(&usage[i], range);
+
+			if (rate == -1) /* can't be used because ranges overlap */
+				continue;
+
+			if (rate < best_rate) {
+				best_rate = rate;
+				best_gpr = i;
+
+				/* can't get better than this */
+				if (rate == 0)
+					break;
+			}
+		}
+	}
+
+	if (best_gpr == -1) {
+		for (i = 0; i < current; ++i) {
+			int rate = rate_replacement(&usage[i], range);
+
+			if (rate == -1) /* can't be used because ranges overlap */
+				continue;
+
+			if (rate < best_rate) {
+				best_rate = rate;
+				best_gpr = i;
+
+				/* can't get better than this */
+				if (rate == 0)
+					break;
+			}
+		}
+	}
+
+	range->replacement = best_gpr;
+	if (best_gpr != -1) {
+		struct gpr_usage_range *reservation = add_gpr_usage_range(&usage[best_gpr]);
+		reservation->replacement = -1;
+		reservation->start = range->start;
+		reservation->end = range->end;
+	}
+}
+
+static struct gpr_usage_range *find_src_range(struct gpr_usage *usage, int32_t id)
+{
+	unsigned i;
+	for (i = 0; i < usage->nranges; ++i) {
+		struct gpr_usage_range* range = &usage->ranges[i];
+
+		if (range->start < id && id <= range->end)
+			return range;
+	}
+	return NULL;
+}
+
+static struct gpr_usage_range *find_dst_range(struct gpr_usage *usage, int32_t id)
+{
+	unsigned i;
+	for (i = 0; i < usage->nranges; ++i) {
+		struct gpr_usage_range* range = &usage->ranges[i];
+		int32_t end = range->end;
+
+		if (range->start <= id && (id < end || end == -1))
+			return range;
+	}
+	return NULL;
+}
+
+static void replace_alu_gprs(struct r600_bc_alu *alu, struct gpr_usage usage[128], uint32_t id)
+{
+	struct gpr_usage_range *range;
+	unsigned src, num_src;
+
+	num_src = r600_bc_get_num_operands(alu);
+	for (src = 0; src < num_src; ++src) {
+		// constants doesn't matter
+		if (!is_gpr(alu->src[src].sel))
+			continue;
+
+		range = find_src_range(&usage[alu->src[src].sel], id);
+		if (range->replacement != -1)
+			alu->src[src].sel = range->replacement;
+	}
+
+	if (alu->dst.write) {
+		range = find_dst_range(&usage[alu->dst.sel], id);
+		assert(range);
+		if (range->replacement == alu->dst.sel) {
+			if (!alu->is_op3)
+				alu->dst.write = 0;
+			else
+				/*TODO: really check that register 123 is useable */
+				alu->dst.sel = 123;
+		} else if (range->replacement != -1) {
+			alu->dst.sel = range->replacement;
+		}
+	}
+}
+
+static void replace_tex_gprs(struct r600_bc_tex *tex, struct gpr_usage usage[128], uint32_t id)
+{
+	struct gpr_usage_range *range;
+	range = find_src_range(&usage[tex->src_gpr], id);
+	if (range->replacement != -1)
+		tex->src_gpr = range->replacement;
+
+	range = find_dst_range(&usage[tex->dst_gpr], id);
+	if (range->replacement != -1)
+		tex->dst_gpr = range->replacement;
+}
+
+static void replace_vtx_gprs(struct r600_bc_vtx *vtx, struct gpr_usage usage[128], uint32_t id)
+{
+	struct gpr_usage_range *range;
+	range = find_src_range(&usage[vtx->src_gpr], id);
+	if (range->replacement != -1)
+		vtx->src_gpr = range->replacement;
+
+	range = find_dst_range(&usage[vtx->dst_gpr], id);
+	if (range->replacement != -1)
+		vtx->dst_gpr = range->replacement;
+}
+
+static void replace_export_gprs(struct r600_bc_cf *cf, struct gpr_usage usage[128], uint32_t id)
+{
+	//TODO handle other memory operations
+	struct gpr_usage_range *range;
+	range = find_src_range(&usage[cf->output.gpr], id);
+	if (range->replacement != -1)
+		cf->output.gpr = range->replacement;
+}
+
+static void r600_bc_optimize_gprs(struct r600_bc *bc)
+{
+	struct r600_bc_cf *cf;
+	struct r600_bc_alu *first;
+	struct r600_bc_alu *alu;
+	struct r600_bc_vtx *vtx;
+	struct r600_bc_tex *tex;
+	struct gpr_usage usage[128];
+	uint32_t id;
+	unsigned i, j;
+
+	memset(&usage, 0, sizeof(usage));
+	for (i = 0; i < 128; ++i)
+		usage[i].first_write = -1;
+
+	/* first gather some informations about the gpr usage */
+	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
+	        id = cf->id << 8;
+		switch (get_cf_class(cf)) {
+		case CF_CLASS_ALU:
+			first = NULL;
+			LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
+				if (!first)
+					first = alu;
+				notice_alu_src_gprs(alu, usage, id);
+				if (alu->last) {
+					notice_alu_dst_gprs(first, usage, id);
+					first = NULL;
+					++id;
+				}
+			}
+			break;
+		case CF_CLASS_TEXTURE:
+			LIST_FOR_EACH_ENTRY(tex, &cf->tex, list) {
+				notice_tex_gprs(tex, usage, id++);
+			}
+			break;
+		case CF_CLASS_VERTEX:
+			LIST_FOR_EACH_ENTRY(vtx, &cf->vtx, list) {
+				notice_vtx_gprs(vtx, usage, id++);
+			}
+			break;
+		case CF_CLASS_EXPORT:
+			notice_export_gprs(cf, usage, id);
+			break;
+		case CF_CLASS_OTHER:
+			// TODO implement conditional and loop handling
+			if (cf->inst != V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS)
+				goto out;
+			break;
+		}
+	}
+
+	/* try to optimize gpr usage */
+	for (i = 0; i < 124; ++i) {
+		for (j = 0; j < usage[i].nranges; ++j) {
+			struct gpr_usage_range *range = &usage[i].ranges[j];
+			if (range->start == -1)
+				range->replacement = -1;
+			else if (range->end == -1)
+				range->replacement = i;
+			else
+				find_replacement(usage, i, range);
+
+			if (range->replacement == -1)
+				bc->ngpr = i;
+			else if (range->replacement < i && range->replacement > bc->ngpr)
+				bc->ngpr = range->replacement;
+		}
+	}
+	bc->ngpr++;
+
+	/* apply the changes */
+	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
+	        id = cf->id << 8;
+		switch (get_cf_class(cf)) {
+		case CF_CLASS_ALU:
+			LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
+				replace_alu_gprs(alu, usage, id);
+				if (alu->last)
+					++id;
+			}
+			break;
+		case CF_CLASS_TEXTURE:
+			LIST_FOR_EACH_ENTRY(tex, &cf->tex, list) {
+				replace_tex_gprs(tex, usage, id++);
+			}
+			break;
+		case CF_CLASS_VERTEX:
+			LIST_FOR_EACH_ENTRY(vtx, &cf->vtx, list) {
+				replace_vtx_gprs(vtx, usage, id++);
+			}
+			break;
+		case CF_CLASS_EXPORT:
+			replace_export_gprs(cf, usage, id);
+			break;
+		case CF_CLASS_OTHER:
+			break;
+		}
+	}
+
+out:
+	for (i = 0; i < 128; ++i) {
+		free(usage[i].ranges);
+	}
 }
 
 int r600_bc_build(struct r600_bc *bc)
@@ -1151,15 +1623,14 @@ int r600_bc_build(struct r600_bc *bc)
 		bc->nstack = 1;
 	}
 
+	r600_bc_optimize_gprs(bc);
+
 	/* first path compute addr of each CF block */
 	/* addr start after all the CF instructions */
 	addr = bc->cf_last->id + 2;
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
-		switch (cf->inst) {
-		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3):
-		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER << 3):
-		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER << 3):
-		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
+		switch (get_cf_class(cf)) {
+		case CF_CLASS_ALU:
 			nliteral = 0;
 			LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
 				r = r600_bc_alu_nliterals(alu, literal, &nliteral);
@@ -1171,27 +1642,16 @@ int r600_bc_build(struct r600_bc *bc)
 				}
 			}
 			break;
-		case V_SQ_CF_WORD1_SQ_CF_INST_TEX:
-		case V_SQ_CF_WORD1_SQ_CF_INST_VTX:
-		case V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC:
+		case CF_CLASS_TEXTURE:
+		case CF_CLASS_VERTEX:
 			/* fetch node need to be 16 bytes aligned*/
 			addr += 3;
 			addr &= 0xFFFFFFFCUL;
 			break;
-		case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
-		case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
-		case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
-		case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
 			break;
-		case V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
-		case V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
-		case V_SQ_CF_WORD1_SQ_CF_INST_POP:
-		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_START_NO_AL:
-		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END:
-		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE:
-		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK:
-		case V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS:
-		case V_SQ_CF_WORD1_SQ_CF_INST_RETURN:
+		case CF_CLASS_EXPORT:
+			break;
+		case CF_CLASS_OTHER:
 			break;
 		default:
 			R600_ERR("unsupported CF instruction (0x%X)\n", cf->inst);
@@ -1213,11 +1673,8 @@ int r600_bc_build(struct r600_bc *bc)
 			r = r600_bc_cf_build(bc, cf);
 		if (r)
 			return r;
-		switch (cf->inst) {
-		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3):
-		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER << 3):
-		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER << 3):
-		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
+		switch (get_cf_class(cf)) {
+		case CF_CLASS_ALU:
 			nliteral = 0;
 			LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
 				r = r600_bc_alu_nliterals(alu, literal, &nliteral);
@@ -1247,8 +1704,7 @@ int r600_bc_build(struct r600_bc *bc)
 				}
 			}
 			break;
-		case V_SQ_CF_WORD1_SQ_CF_INST_VTX:
-		case V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC:
+		case CF_CLASS_VERTEX:
 			LIST_FOR_EACH_ENTRY(vtx, &cf->vtx, list) {
 				r = r600_bc_vtx_build(bc, vtx, addr);
 				if (r)
@@ -1256,7 +1712,7 @@ int r600_bc_build(struct r600_bc *bc)
 				addr += 4;
 			}
 			break;
-		case V_SQ_CF_WORD1_SQ_CF_INST_TEX:
+		case CF_CLASS_TEXTURE:
 			LIST_FOR_EACH_ENTRY(tex, &cf->tex, list) {
 				r = r600_bc_tex_build(bc, tex, addr);
 				if (r)
@@ -1264,19 +1720,8 @@ int r600_bc_build(struct r600_bc *bc)
 				addr += 4;
 			}
 			break;
-		case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
-		case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
-		case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
-		case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
-		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_START_NO_AL:
-		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END:
-		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE:
-		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK:
-		case V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
-		case V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
-		case V_SQ_CF_WORD1_SQ_CF_INST_POP:
-		case V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS:
-		case V_SQ_CF_WORD1_SQ_CF_INST_RETURN:
+		case CF_CLASS_EXPORT:
+		case CF_CLASS_OTHER:
 			break;
 		default:
 			R600_ERR("unsupported CF instruction (0x%X)\n", cf->inst);
@@ -1352,11 +1797,8 @@ void r600_bc_dump(struct r600_bc *bc)
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
 		id = cf->id;
 
-		switch (cf->inst) {
-		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3):
-		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER << 3):
-		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER << 3):
-		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
+		switch (get_cf_class(cf)) {
+		case CF_CLASS_ALU:
 			fprintf(stderr, "%04d %08X ALU ", id, bc->bytecode[id]);
 			fprintf(stderr, "ADDR:%d ", cf->addr);
 			fprintf(stderr, "KCACHE_MODE0:%X ", cf->kcache0_mode);
@@ -1370,9 +1812,8 @@ void r600_bc_dump(struct r600_bc *bc)
 			fprintf(stderr, "KCACHE_ADDR1:%X ", cf->kcache1_addr);
 			fprintf(stderr, "COUNT:%d\n", cf->ndw / 2);
 			break;
-		case V_SQ_CF_WORD1_SQ_CF_INST_TEX:
-		case V_SQ_CF_WORD1_SQ_CF_INST_VTX:
-		case V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC:
+		case CF_CLASS_TEXTURE:
+		case CF_CLASS_VERTEX:
 			fprintf(stderr, "%04d %08X TEX/VTX ", id, bc->bytecode[id]);
 			fprintf(stderr, "ADDR:%d\n", cf->addr);
 			id++;
@@ -1380,8 +1821,7 @@ void r600_bc_dump(struct r600_bc *bc)
 			fprintf(stderr, "INST:%d ", cf->inst);
 			fprintf(stderr, "COUNT:%d\n", cf->ndw / 4);
 			break;
-		case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
-		case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
+		case CF_CLASS_EXPORT:
 			fprintf(stderr, "%04d %08X EXPORT ", id, bc->bytecode[id]);
 			fprintf(stderr, "GPR:%X ", cf->output.gpr);
 			fprintf(stderr, "ELEM_SIZE:%X ", cf->output.elem_size);
@@ -1398,15 +1838,8 @@ void r600_bc_dump(struct r600_bc *bc)
 			fprintf(stderr, "INST:%d ", cf->output.inst);
 			fprintf(stderr, "EOP:%X\n", cf->output.end_of_program);
 			break;
-		case V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
-		case V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
-		case V_SQ_CF_WORD1_SQ_CF_INST_POP:
-		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_START_NO_AL:
-		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END:
-		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_CONTINUE:
-		case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK:
-		case V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS:
-		case V_SQ_CF_WORD1_SQ_CF_INST_RETURN:
+			break;
+		case CF_CLASS_OTHER:
 			fprintf(stderr, "%04d %08X CF ", id, bc->bytecode[id]);
 			fprintf(stderr, "ADDR:%d\n", cf->cf_addr);
 			id++;
