@@ -1337,6 +1337,37 @@ fs_visitor::visit(ir_texture *ir)
    ir->coordinate->accept(this);
    fs_reg coordinate = this->result;
 
+   if (ir->offset != NULL) {
+      ir_constant *offset = ir->offset->as_constant();
+      assert(offset != NULL);
+
+      signed char offsets[3];
+      for (unsigned i = 0; i < ir->offset->type->vector_elements; i++)
+	 offsets[i] = (signed char) offset->value.i[i];
+
+      /* Combine all three offsets into a single unsigned dword:
+       *
+       *    bits 11:8 - U Offset (X component)
+       *    bits  7:4 - V Offset (Y component)
+       *    bits  3:0 - R Offset (Z component)
+       */
+      unsigned offset_bits = 0;
+      for (unsigned i = 0; i < ir->offset->type->vector_elements; i++) {
+	 const unsigned shift = 4 * (2 - i);
+	 offset_bits |= (offsets[i] << shift) & (0xF << shift);
+      }
+
+      /* Explicitly set up the message header by copying g0 to msg reg m1. */
+      emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, 1, BRW_REGISTER_TYPE_UD),
+				   fs_reg(GRF, 0, BRW_REGISTER_TYPE_UD)));
+
+      /* Then set the offset bits in DWord 2 of the message header. */
+      emit(fs_inst(BRW_OPCODE_MOV,
+		   fs_reg(retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE, 1, 2),
+				 BRW_REGISTER_TYPE_UD)),
+		   fs_reg(brw_imm_uw(offset_bits))));
+   }
+
    /* Should be lowered by do_lower_texture_projection */
    assert(!ir->projector);
 
@@ -1396,6 +1427,14 @@ fs_visitor::visit(ir_texture *ir)
    } else {
       inst = emit_texture_gen5(ir, dst, coordinate);
    }
+
+   /* If there's an offset, we already set up m1.  To avoid the implied move,
+    * use the null register.  Otherwise, we want an implied move from g0.
+    */
+   if (ir->offset != NULL)
+      inst->src[0] = fs_reg(brw_null_reg());
+   else
+      inst->src[0] = fs_reg(retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW));
 
    inst->sampler = sampler;
 
@@ -2243,7 +2282,7 @@ fs_visitor::generate_math(fs_inst *inst,
 }
 
 void
-fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst)
+fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 {
    int msg_type = -1;
    int rlen = 4;
@@ -2301,7 +2340,7 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst)
    brw_SAMPLE(p,
 	      retype(dst, BRW_REGISTER_TYPE_UW),
 	      inst->base_mrf,
-	      retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW),
+	      src,
               SURF_INDEX_TEXTURE(inst->sampler),
 	      inst->sampler,
 	      WRITEMASK_XYZW,
@@ -3539,7 +3578,7 @@ fs_visitor::generate_code()
       case FS_OPCODE_TEX:
       case FS_OPCODE_TXB:
       case FS_OPCODE_TXL:
-	 generate_tex(inst, dst);
+	 generate_tex(inst, dst, src[0]);
 	 break;
       case FS_OPCODE_DISCARD_NOT:
 	 generate_discard_not(inst, dst);
