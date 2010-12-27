@@ -253,6 +253,12 @@ static boolean r300_emit_states(struct r300_context *r300,
             /* Consider the validation done only if everything was validated. */
             if (validate_vbos) {
                 r300->validate_buffers = FALSE;
+                if (r300->any_user_vbs)
+                    r300->upload_vb_validated = TRUE;
+                if (r300->index_buffer.buffer &&
+                    r300_buffer_is_user_buffer(r300->index_buffer.buffer)) {
+                    r300->upload_ib_validated = TRUE;
+                }
             }
         }
 

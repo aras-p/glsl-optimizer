@@ -70,6 +70,8 @@ static void r300_flush(struct pipe_context* pipe,
         }
 
         r300->validate_buffers = TRUE;
+        r300->upload_vb_validated = FALSE;
+        r300->upload_ib_validated = FALSE;
     }
 
     /* reset flushed query */

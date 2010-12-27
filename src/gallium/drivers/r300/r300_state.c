@@ -1468,6 +1468,7 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
     struct pipe_vertex_buffer *vbo;
     unsigned i, max_index = (1 << 24) - 1;
     boolean any_user_buffer = FALSE;
+    boolean any_nonuser_buffer = FALSE;
     struct pipe_vertex_buffer dummy_vb = {0};
 
     /* There must be at least one vertex buffer set, otherwise it locks up. */
@@ -1511,6 +1512,7 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
             if (r300_buffer_is_user_buffer(vbo->buffer)) {
                 any_user_buffer = TRUE;
             }
+            any_nonuser_buffer = TRUE;
 
             /* The stride of zero means we will be fetching only the first
              * vertex, so don't care about max_index. */
@@ -1528,7 +1530,10 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
         r300->any_user_vbs = any_user_buffer;
         r300->vertex_buffer_max_index = max_index;
         r300->vertex_arrays_dirty = TRUE;
-        r300->validate_buffers = TRUE;
+        if (any_nonuser_buffer)
+            r300->validate_buffers = TRUE;
+        if (!any_user_buffer)
+            r300->upload_vb_validated = FALSE;
     } else {
         /* SW TCL. */
         draw_set_vertex_buffers(r300->draw, count, buffers);
@@ -1554,19 +1559,22 @@ static void r300_set_index_buffer(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    if (ib) {
+    if (ib && ib->buffer) {
         pipe_resource_reference(&r300->index_buffer.buffer, ib->buffer);
         memcpy(&r300->index_buffer, ib, sizeof(r300->index_buffer));
+
+        if (r300->screen->caps.has_tcl &&
+            !r300_buffer_is_user_buffer(ib->buffer)) {
+            r300->validate_buffers = TRUE;
+            r300->upload_ib_validated = FALSE;
+        }
     }
     else {
         pipe_resource_reference(&r300->index_buffer.buffer, NULL);
         memset(&r300->index_buffer, 0, sizeof(r300->index_buffer));
     }
 
-    if (r300->screen->caps.has_tcl) {
-        r300->validate_buffers = TRUE;
-    }
-    else {
+    if (!r300->screen->caps.has_tcl) {
         draw_set_index_buffer(r300->draw, ib);
     }
 }

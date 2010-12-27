@@ -619,6 +619,9 @@ struct r300_context {
     /* Whether any buffer (FB, textures, VBOs) has been set, but buffers
      * haven't been validated yet. */
     boolean validate_buffers;
+    /* Whether user buffers have been validated. */
+    boolean upload_vb_validated;
+    boolean upload_ib_validated;
 };
 
 #define foreach_atom(r300, atom) \

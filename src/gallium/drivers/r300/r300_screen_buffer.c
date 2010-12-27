@@ -62,8 +62,8 @@ void r300_upload_index_buffer(struct r300_context *r300,
 			      unsigned count)
 {
     unsigned index_offset;
-    boolean flushed;
     uint8_t *ptr = r300_buffer(*index_buffer)->user_buffer;
+    boolean flushed;
 
     *index_buffer = NULL;
 
@@ -74,6 +74,11 @@ void r300_upload_index_buffer(struct r300_context *r300,
                   index_buffer, &flushed);
 
     *start = index_offset / index_size;
+
+    if (flushed || !r300->upload_ib_validated) {
+        r300->upload_ib_validated = FALSE;
+        r300->validate_buffers = TRUE;
+    }
 }
 
 void r300_upload_user_buffers(struct r300_context *r300)
@@ -91,8 +96,12 @@ void r300_upload_user_buffers(struct r300_context *r300)
                           r300_buffer(vb->buffer)->user_buffer,
                           &vb->buffer_offset, &vb->buffer, &flushed);
 
-            r300->validate_buffers = TRUE;
             r300->vertex_arrays_dirty = TRUE;
+
+            if (flushed || !r300->upload_vb_validated) {
+                r300->upload_vb_validated = FALSE;
+                r300->validate_buffers = TRUE;
+            }
         }
     }
 }
