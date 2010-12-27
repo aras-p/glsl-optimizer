@@ -89,6 +89,9 @@ brw_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
 GLboolean
 brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 {
+   struct brw_context *brw = brw_context(ctx);
+   struct intel_context *intel = &brw->intel;
+
    struct brw_shader *shader =
       (struct brw_shader *)prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
    if (shader != NULL) {
@@ -107,6 +110,13 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 			 SUB_TO_ADD_NEG |
 			 EXP_TO_EXP2 |
 			 LOG_TO_LOG2);
+
+      /* Pre-gen6 HW can only nest if-statements 16 deep.  Beyond this,
+       * if-statements need to be flattened.
+       */
+      if (intel->gen < 6)
+	 lower_if_to_cond_assign(shader->ir, 16);
+
       do_lower_texture_projection(shader->ir);
       brw_do_cubemap_normalize(shader->ir);
 
