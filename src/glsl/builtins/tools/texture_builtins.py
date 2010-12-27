@@ -12,16 +12,20 @@ def vec_type(g, size):
         return "float"
     return g + "vec" + str(size)
 
-# Get the base dimension - i.e. sampler3D gives 3
-# Array samplers also get +1 here since the layer is really an extra coordinate
-def get_coord_dim(sampler_type):
+# Get the sampler dimension - i.e. sampler3D gives 3
+def get_sampler_dim(sampler_type):
     if sampler_type[0].isdigit():
-        coord_dim = int(sampler_type[0])
+        sampler_dim = int(sampler_type[0])
     elif sampler_type.startswith("Cube"):
-        coord_dim = 3
+        sampler_dim = 3
     else:
         assert False ("coord_dim: invalid sampler_type: " + sampler_type)
+    return sampler_dim
 
+# Get the coordinate dimension for a given sampler type.
+# Array samplers also get +1 here since the layer is really an extra coordinate
+def get_coord_dim(sampler_type):
+    coord_dim = get_sampler_dim(sampler_type)
     if sampler_type.find("Array") != -1:
         coord_dim += 1
     return coord_dim
