@@ -96,6 +96,9 @@ static void compile_gs_prog( struct brw_context *brw,
       brw_gs_quad_strip( &c, key );
       break;
    case GL_LINE_LOOP:
+      /* Gen6: LINELOOP is converted to LINESTRIP at the beginning of the 3D pipeline */
+      if (intel->gen == 6)
+          return;
       brw_gs_lines( &c );
       break;
    case GL_LINES:
@@ -189,7 +192,7 @@ static void populate_key( struct brw_context *brw,
    }
 
    if (intel->gen == 6)
-       prim_gs_always = brw->primitive == GL_LINE_LOOP;
+       prim_gs_always = 0;
    else
        prim_gs_always = brw->primitive == GL_QUADS ||
 			brw->primitive == GL_QUAD_STRIP ||
