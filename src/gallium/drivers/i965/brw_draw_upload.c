@@ -89,13 +89,16 @@ static int brw_prepare_vertices(struct brw_context *brw)
 			  vb->buffer->width0 - vb->buffer_offset :
 			  MAX2(vb->buffer->width0 - vb->buffer_offset,
 			       vb->stride * (max_index + 1 - min_index)));
+	 boolean flushed;
 
-	 ret = u_upload_buffer( brw->vb.upload_vertex, 
+	 ret = u_upload_buffer( brw->vb.upload_vertex,
+				0,
 				vb->buffer_offset + min_index * vb->stride,
 				size,
 				vb->buffer,
 				&offset,
-				&upload_buf );
+				&upload_buf,
+				&flushed );
 	 if (ret)
 	    return ret;
 
@@ -251,13 +254,16 @@ static int brw_prepare_indices(struct brw_context *brw)
    /* Turn userbuffer into a proper hardware buffer?
     */
    if (brw_buffer_is_user_buffer(index_buffer)) {
+      boolean flushed;
 
       ret = u_upload_buffer( brw->vb.upload_index,
+                             0,
 			     index_offset,
 			     ib_size,
 			     index_buffer,
 			     &offset,
-			     &upload_buf );
+			     &upload_buf,
+			     &flushed );
       if (ret)
 	 return ret;
 

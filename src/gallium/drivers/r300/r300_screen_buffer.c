@@ -62,15 +62,16 @@ void r300_upload_index_buffer(struct r300_context *r300,
 			      unsigned count)
 {
     unsigned index_offset;
+    boolean flushed;
     uint8_t *ptr = r300_buffer(*index_buffer)->user_buffer;
 
     *index_buffer = NULL;
 
     u_upload_data(r300->upload_ib,
-                  count * index_size,
+                  0, count * index_size,
                   ptr + (*start * index_size),
                   &index_offset,
-                  index_buffer);
+                  index_buffer, &flushed);
 
     *start = index_offset / index_size;
 }
@@ -78,6 +79,7 @@ void r300_upload_index_buffer(struct r300_context *r300,
 void r300_upload_user_buffers(struct r300_context *r300)
 {
     int i, nr = r300->velems->count;
+    boolean flushed;
 
     for (i = 0; i < nr; i++) {
         struct pipe_vertex_buffer *vb =
@@ -85,9 +87,9 @@ void r300_upload_user_buffers(struct r300_context *r300)
 
         if (r300_buffer_is_user_buffer(vb->buffer)) {
             u_upload_data(r300->upload_vb,
-                          vb->buffer->width0,
+                          0, vb->buffer->width0,
                           r300_buffer(vb->buffer)->user_buffer,
-                          &vb->buffer_offset, &vb->buffer);
+                          &vb->buffer_offset, &vb->buffer, &flushed);
 
             r300->validate_buffers = TRUE;
             r300->vertex_arrays_dirty = TRUE;
