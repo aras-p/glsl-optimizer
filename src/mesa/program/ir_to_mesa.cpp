@@ -2867,7 +2867,7 @@ _mesa_ir_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 
 	 if (options->EmitNoIfs) {
 	    progress = lower_discard(ir) || progress;
-	    progress = do_if_to_cond_assign(ir) || progress;
+	    progress = lower_if_to_cond_assign(ir) || progress;
 	 }
 
 	 if (options->EmitNoNoise)

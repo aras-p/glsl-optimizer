@@ -24,12 +24,25 @@
 /**
  * \file lower_if_to_cond_assign.cpp
  *
- * This attempts to flatten all if statements to conditional
- * assignments for GPUs that don't do control flow.
+ * This attempts to flatten if-statements to conditional assignments for
+ * GPUs with limited or no flow control support.
  *
  * It can't handle other control flow being inside of its block, such
  * as calls or loops.  Hopefully loop unrolling and inlining will take
  * care of those.
+ *
+ * Drivers for GPUs with no control flow support should simply call
+ *
+ *    lower_if_to_cond_assign(instructions)
+ *
+ * to attempt to flatten all if-statements.
+ *
+ * Some GPUs (such as i965 prior to gen6) do support control flow, but have a
+ * maximum nesting depth N.  Drivers for such hardware can call
+ *
+ *    lower_if_to_cond_assign(instructions, N)
+ *
+ * to attempt to flatten any if-statements appearing at depth > N.
  */
 
 #include "glsl_types.h"
@@ -37,20 +50,25 @@
 
 class ir_if_to_cond_assign_visitor : public ir_hierarchical_visitor {
 public:
-   ir_if_to_cond_assign_visitor()
+   ir_if_to_cond_assign_visitor(unsigned max_depth)
    {
       this->progress = false;
+      this->max_depth = max_depth;
+      this->depth = 0;
    }
 
+   ir_visitor_status visit_enter(ir_if *);
    ir_visitor_status visit_leave(ir_if *);
 
    bool progress;
+   unsigned max_depth;
+   unsigned depth;
 };
 
 bool
-do_if_to_cond_assign(exec_list *instructions)
+lower_if_to_cond_assign(exec_list *instructions, unsigned max_depth)
 {
-   ir_if_to_cond_assign_visitor v;
+   ir_if_to_cond_assign_visitor v(max_depth);
 
    visit_list_elements(&v, instructions);
 
@@ -120,8 +138,22 @@ move_block_to_cond_assign(void *mem_ctx,
 }
 
 ir_visitor_status
+ir_if_to_cond_assign_visitor::visit_enter(ir_if *ir)
+{
+   (void) ir;
+   this->depth++;
+   return visit_continue;
+}
+
+ir_visitor_status
 ir_if_to_cond_assign_visitor::visit_leave(ir_if *ir)
 {
+   /* Only flatten when beyond the GPU's maximum supported nesting depth. */
+   if (this->depth <= this->max_depth)
+      return visit_continue;
+
+   this->depth--;
+
    bool found_control_flow = false;
    ir_variable *cond_var;
    ir_assignment *assign;
