@@ -108,8 +108,6 @@ struct r600_bc_vtx {
 struct r600_bc_output {
 	unsigned			array_base;
 	unsigned			type;
-	unsigned			end_of_program;
-	unsigned			inst;
 	unsigned			elem_size;
 	unsigned			gpr;
 	unsigned			swizzle_x;

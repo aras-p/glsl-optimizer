@@ -487,7 +487,7 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 	struct tgsi_full_immediate *immediate;
 	struct r600_shader_ctx ctx;
 	struct r600_bc_output output[32];
-	unsigned output_done, noutput;
+	unsigned noutput;
 	unsigned opcode;
 	int i, r = 0, pos0;
 
@@ -606,7 +606,6 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 		output[i].barrier = i == 0;
 		output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
 		output[i].array_base = i - pos0;
-		output[i].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT);
 		switch (ctx.type) {
 		case TGSI_PROCESSOR_VERTEX:
 			if (shader->output[i].name == TGSI_SEMANTIC_POSITION) {
@@ -669,7 +668,6 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 			output[i].barrier = 1;
 			output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
 			output[i].array_base = 0;
-			output[i].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT);
 			noutput++;
 		}
 	}
@@ -685,18 +683,7 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 		output[0].barrier = 1;
 		output[0].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 		output[0].array_base = 0;
-		output[0].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT);
 		noutput++;
-	}
-	/* set export done on last export of each type */
-	for (i = noutput - 1, output_done = 0; i >= 0; i--) {
-		if (i == (noutput - 1)) {
-			output[i].end_of_program = 1;
-		}
-		if (!(output_done & (1 << output[i].type))) {
-			output_done |= (1 << output[i].type);
-			output[i].inst = BC_INST(ctx.bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE);
-		}
 	}
 	/* add output to bytecode */
 	for (i = 0; i < noutput; i++) {
@@ -731,7 +718,7 @@ static int tgsi_src(struct r600_shader_ctx *ctx,
 	memset(r600_src, 0, sizeof(struct r600_bc_alu_src));
 	r600_src->neg = tgsi_src->Register.Negate;
 	r600_src->abs = tgsi_src->Register.Absolute;
-	if (tgsi_src->Register.File == TGSI_FILE_IMMEDIATE) {		
+	if (tgsi_src->Register.File == TGSI_FILE_IMMEDIATE) {
 		int index;
 		if((tgsi_src->Register.SwizzleX == tgsi_src->Register.SwizzleY) &&
 			(tgsi_src->Register.SwizzleX == tgsi_src->Register.SwizzleZ) &&
