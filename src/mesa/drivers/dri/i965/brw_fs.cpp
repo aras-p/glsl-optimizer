@@ -785,6 +785,30 @@ fs_visitor::try_emit_saturate(ir_expression *ir)
    return true;
 }
 
+static uint32_t
+brw_conditional_for_comparison(unsigned int op)
+{
+   switch (op) {
+   case ir_binop_less:
+      return BRW_CONDITIONAL_L;
+   case ir_binop_greater:
+      return BRW_CONDITIONAL_G;
+   case ir_binop_lequal:
+      return BRW_CONDITIONAL_LE;
+   case ir_binop_gequal:
+      return BRW_CONDITIONAL_GE;
+   case ir_binop_equal:
+   case ir_binop_all_equal: /* same as equal for scalars */
+      return BRW_CONDITIONAL_Z;
+   case ir_binop_nequal:
+   case ir_binop_any_nequal: /* same as nequal for scalars */
+      return BRW_CONDITIONAL_NZ;
+   default:
+      assert(!"not reached: bad operation for comparison");
+      return BRW_CONDITIONAL_NZ;
+   }
+}
+
 void
 fs_visitor::visit(ir_expression *ir)
 {
@@ -900,35 +924,15 @@ fs_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_less:
-      inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], op[1]));
-      inst->conditional_mod = BRW_CONDITIONAL_L;
-      emit(fs_inst(BRW_OPCODE_AND, this->result, this->result, fs_reg(0x1)));
-      break;
    case ir_binop_greater:
-      inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], op[1]));
-      inst->conditional_mod = BRW_CONDITIONAL_G;
-      emit(fs_inst(BRW_OPCODE_AND, this->result, this->result, fs_reg(0x1)));
-      break;
    case ir_binop_lequal:
-      inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], op[1]));
-      inst->conditional_mod = BRW_CONDITIONAL_LE;
-      emit(fs_inst(BRW_OPCODE_AND, this->result, this->result, fs_reg(0x1)));
-      break;
    case ir_binop_gequal:
-      inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], op[1]));
-      inst->conditional_mod = BRW_CONDITIONAL_GE;
-      emit(fs_inst(BRW_OPCODE_AND, this->result, this->result, fs_reg(0x1)));
-      break;
    case ir_binop_equal:
-   case ir_binop_all_equal: /* same as nequal for scalars */
-      inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], op[1]));
-      inst->conditional_mod = BRW_CONDITIONAL_Z;
-      emit(fs_inst(BRW_OPCODE_AND, this->result, this->result, fs_reg(0x1)));
-      break;
+   case ir_binop_all_equal:
    case ir_binop_nequal:
-   case ir_binop_any_nequal: /* same as nequal for scalars */
+   case ir_binop_any_nequal:
       inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], op[1]));
-      inst->conditional_mod = BRW_CONDITIONAL_NZ;
+      inst->conditional_mod = brw_conditional_for_comparison(ir->operation);
       emit(fs_inst(BRW_OPCODE_AND, this->result, this->result, fs_reg(0x1)));
       break;
 
@@ -1571,31 +1575,18 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
 	 break;
 
       case ir_binop_greater:
-	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_d, op[0], op[1]));
-	 inst->conditional_mod = BRW_CONDITIONAL_G;
-	 break;
       case ir_binop_gequal:
-	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_d, op[0], op[1]));
-	 inst->conditional_mod = BRW_CONDITIONAL_GE;
-	 break;
       case ir_binop_less:
-	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_d, op[0], op[1]));
-	 inst->conditional_mod = BRW_CONDITIONAL_L;
-	 break;
       case ir_binop_lequal:
-	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_d, op[0], op[1]));
-	 inst->conditional_mod = BRW_CONDITIONAL_LE;
-	 break;
       case ir_binop_equal:
       case ir_binop_all_equal:
-	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_d, op[0], op[1]));
-	 inst->conditional_mod = BRW_CONDITIONAL_Z;
-	 break;
       case ir_binop_nequal:
       case ir_binop_any_nequal:
 	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_d, op[0], op[1]));
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 inst->conditional_mod =
+	    brw_conditional_for_comparison(expr->operation);
 	 break;
+
       default:
 	 assert(!"not reached");
 	 this->fail = true;
@@ -1674,30 +1665,16 @@ fs_visitor::emit_if_gen6(ir_if *ir)
 	 return;
 
       case ir_binop_greater:
-	 inst = emit(fs_inst(BRW_OPCODE_IF, reg_null_d, op[0], op[1]));
-	 inst->conditional_mod = BRW_CONDITIONAL_G;
-	 return;
       case ir_binop_gequal:
-	 inst = emit(fs_inst(BRW_OPCODE_IF, reg_null_d, op[0], op[1]));
-	 inst->conditional_mod = BRW_CONDITIONAL_GE;
-	 return;
       case ir_binop_less:
-	 inst = emit(fs_inst(BRW_OPCODE_IF, reg_null_d, op[0], op[1]));
-	 inst->conditional_mod = BRW_CONDITIONAL_L;
-	 return;
       case ir_binop_lequal:
-	 inst = emit(fs_inst(BRW_OPCODE_IF, reg_null_d, op[0], op[1]));
-	 inst->conditional_mod = BRW_CONDITIONAL_LE;
-	 return;
       case ir_binop_equal:
       case ir_binop_all_equal:
-	 inst = emit(fs_inst(BRW_OPCODE_IF, reg_null_d, op[0], op[1]));
-	 inst->conditional_mod = BRW_CONDITIONAL_Z;
-	 return;
       case ir_binop_nequal:
       case ir_binop_any_nequal:
 	 inst = emit(fs_inst(BRW_OPCODE_IF, reg_null_d, op[0], op[1]));
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
+	 inst->conditional_mod =
+	    brw_conditional_for_comparison(expr->operation);
 	 return;
       default:
 	 assert(!"not reached");
@@ -1779,32 +1756,9 @@ fs_visitor::visit(ir_loop *ir)
       this->base_ir = ir->to;
       ir->to->accept(this);
 
-      fs_inst *inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_d,
+      fs_inst *inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_cmp,
 				   counter, this->result));
-      switch (ir->cmp) {
-      case ir_binop_equal:
-	 inst->conditional_mod = BRW_CONDITIONAL_Z;
-	 break;
-      case ir_binop_nequal:
-	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
-	 break;
-      case ir_binop_gequal:
-	 inst->conditional_mod = BRW_CONDITIONAL_GE;
-	 break;
-      case ir_binop_lequal:
-	 inst->conditional_mod = BRW_CONDITIONAL_LE;
-	 break;
-      case ir_binop_greater:
-	 inst->conditional_mod = BRW_CONDITIONAL_G;
-	 break;
-      case ir_binop_less:
-	 inst->conditional_mod = BRW_CONDITIONAL_L;
-	 break;
-      default:
-	 assert(!"not reached: unknown loop condition");
-	 this->fail = true;
-	 break;
-      }
+      inst->conditional_mod = brw_conditional_for_comparison(ir->cmp);
 
       inst = emit(fs_inst(BRW_OPCODE_BREAK));
       inst->predicated = true;
