@@ -488,6 +488,31 @@ static void upload_invarient_state( struct brw_context *brw )
       BRW_BATCH_STRUCT(brw, &gdo);
    }
 
+   if (intel->gen >= 6) {
+      int i;
+
+      BEGIN_BATCH(3);
+      OUT_BATCH(CMD_3D_MULTISAMPLE << 16 | (3 - 2));
+      OUT_BATCH(MS_PIXEL_LOCATION_CENTER |
+		MS_NUMSAMPLES_1);
+      OUT_BATCH(0); /* positions for 4/8-sample */
+      ADVANCE_BATCH();
+
+      BEGIN_BATCH(2);
+      OUT_BATCH(CMD_3D_SAMPLE_MASK << 16 | (2 - 2));
+      OUT_BATCH(1);
+      ADVANCE_BATCH();
+
+      for (i = 0; i < 4; i++) {
+	 BEGIN_BATCH(4);
+	 OUT_BATCH(CMD_GS_SVB_INDEX << 16 | (4 - 2));
+	 OUT_BATCH(i << SVB_INDEX_SHIFT);
+	 OUT_BATCH(0);
+	 OUT_BATCH(0xffffffff);
+	 ADVANCE_BATCH();
+      }
+   }
+
    /* 0x61020000  State Instruction Pointer */
    {
       struct brw_system_instruction_pointer sip;
@@ -520,42 +545,6 @@ const struct brw_tracked_state brw_invarient_state = {
       .cache = 0
    },
    .emit = upload_invarient_state
-};
-
-static void gen6_upload_multisample_state( struct brw_context *brw )
-{
-   struct intel_context *intel = &brw->intel;
-   int i;
-
-   BEGIN_BATCH(3);
-   OUT_BATCH(CMD_3D_MULTISAMPLE << 16 | (3 - 2));
-   OUT_BATCH(MS_PIXEL_LOCATION_CENTER |
-	     MS_NUMSAMPLES_1);
-   OUT_BATCH(0); /* positions for 4/8-sample */
-   ADVANCE_BATCH();
-
-   BEGIN_BATCH(2);
-   OUT_BATCH(CMD_3D_SAMPLE_MASK << 16 | (2 - 2));
-   OUT_BATCH(1);
-   ADVANCE_BATCH();
-
-   for (i = 0; i < 4; i++) {
-      BEGIN_BATCH(4);
-      OUT_BATCH(CMD_GS_SVB_INDEX << 16 | (4 - 2));
-      OUT_BATCH(i << SVB_INDEX_SHIFT);
-      OUT_BATCH(0);
-      OUT_BATCH(0xffffffff);
-      ADVANCE_BATCH();
-   }
-}
-
-const struct brw_tracked_state gen6_multisample_state = {
-   .dirty = {
-      .mesa = 0,
-      .brw = (BRW_NEW_CONTEXT | BRW_NEW_FRAGMENT_PROGRAM),
-      .cache = 0,
-   },
-   .emit = gen6_upload_multisample_state
 };
 
 /**
