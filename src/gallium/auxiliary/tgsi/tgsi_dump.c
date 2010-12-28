@@ -166,7 +166,8 @@ static const char *property_names[] =
    "GS_OUTPUT_PRIMITIVE",
    "GS_MAX_OUTPUT_VERTICES",
    "FS_COORD_ORIGIN",
-   "FS_COORD_PIXEL_CENTER"
+   "FS_COORD_PIXEL_CENTER",
+   "FS_COLOR0_WRITES_ALL_CBUFS",
 };
 
 static const char *primitive_names[] =
