@@ -35,6 +35,9 @@
 #define NUM_OF_CYCLES 3
 #define NUM_OF_COMPONENTS 4
 
+#define PREV_ALU(alu) LIST_ENTRY(struct r600_bc_alu, alu->list.prev, list)
+#define NEXT_ALU(alu) LIST_ENTRY(struct r600_bc_alu, alu->list.next, list)
+
 static inline unsigned int r600_bc_get_num_operands(struct r600_bc_alu *alu)
 {
 	if(alu->is_op3)
@@ -182,6 +185,19 @@ static int r600_bc_add_cf(struct r600_bc *bc)
 	return 0;
 }
 
+static void r600_bc_remove_cf(struct r600_bc *bc, struct r600_bc_cf *cf)
+{
+	struct r600_bc_cf *other;
+	LIST_FOR_EACH_ENTRY(other, &bc->cf, list) {
+		if (other->id > cf->id)
+			other->id -= 2;
+		if (other->cf_addr > cf->id)
+			other->cf_addr -= 2;
+	}
+	LIST_DEL(&cf->list);
+	free(cf);
+}
+
 int r600_bc_add_output(struct r600_bc *bc, const struct r600_bc_output *output)
 {
 	int r;
@@ -321,7 +337,7 @@ static int assign_alu_units(struct r600_bc_alu *alu_first, struct r600_bc_alu *a
 	for (i = 0; i < 5; i++)
 		assignment[i] = NULL;
 
-	for (alu = alu_first; alu; alu = LIST_ENTRY(struct r600_bc_alu, alu->list.next, list)) {
+	for (alu = alu_first; alu; alu = NEXT_ALU(alu)) {
 		chan = alu->dst.chan;
 		if (is_alu_trans_unit_inst(alu))
 			trans = 1;
@@ -884,6 +900,16 @@ int r600_bc_add_alu(struct r600_bc *bc, const struct r600_bc_alu *alu)
 	return r600_bc_add_alu_type(bc, alu, BC_INST(bc, V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU));
 }
 
+static void r600_bc_remove_alu(struct r600_bc_cf *cf, struct r600_bc_alu *alu)
+{
+	if (alu->last && alu->list.prev != &cf->alu) {
+		PREV_ALU(alu)->last = 1;
+	}
+	LIST_DEL(&alu->list);
+	free(alu);
+	cf->ndw -= 2;
+}
+
 int r600_bc_add_vtx(struct r600_bc *bc, const struct r600_bc_vtx *vtx)
 {
 	struct r600_bc_vtx *nvtx = r600_bc_vtx();
@@ -1213,7 +1239,8 @@ static void notice_gpr_rel_read(struct gpr_usage usage[128], uint32_t id, unsign
 		notice_gpr_read(&usage[i], id, chan);
 }
 
-static void notice_gpr_write(struct gpr_usage *usage, uint32_t id, unsigned chan, int predicate)
+static void notice_gpr_write(struct gpr_usage *usage, uint32_t id, unsigned chan,
+				int predicate, int prefered_replacement)
 {
 	uint32_t start = usage->first_write != -1 ? usage->first_write : id;
 	usage->channels &= ~(1 << chan);
@@ -1223,8 +1250,11 @@ static void notice_gpr_write(struct gpr_usage *usage, uint32_t id, unsigned chan
 	} else if (!usage->nranges || (usage->ranges[usage->nranges-1].start != start && !predicate)) {
 		usage->first_write = start;
 		struct gpr_usage_range* range = add_gpr_usage_range(usage);
+		range->replacement = prefered_replacement;
                 range->start = start;
                 range->end = -1;
+        } else if (usage->ranges[usage->nranges-1].start == start && prefered_replacement != -1) {
+        	usage->ranges[usage->nranges-1].replacement = prefered_replacement;
         }
 }
 
@@ -1258,8 +1288,11 @@ static void notice_alu_dst_gprs(struct r600_bc_alu *alu_first, struct gpr_usage 
 		if (alu->dst.write) {
 			if (alu->dst.rel)
 				notice_gpr_rel_write(usage, id, alu->dst.chan);
+			else if (alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV && is_gpr(alu->src[0].sel))
+				notice_gpr_write(&usage[alu->dst.sel], id, alu->dst.chan,
+						predicate, alu->src[0].sel);
 			else
-				notice_gpr_write(&usage[alu->dst.sel], id, alu->dst.chan, predicate);
+				notice_gpr_write(&usage[alu->dst.sel], id, alu->dst.chan, predicate, -1);
 		}
 
 		if (alu->last)
@@ -1300,13 +1333,13 @@ static void notice_tex_gprs(struct r600_bc_tex *tex, struct gpr_usage usage[128]
 			notice_gpr_rel_write(usage, id, 3);
 	} else {
 		if (tex->dst_sel_x != 7)
-			notice_gpr_write(&usage[tex->dst_gpr], id, 0, predicate);
+			notice_gpr_write(&usage[tex->dst_gpr], id, 0, predicate, -1);
 		if (tex->dst_sel_y != 7)
-			notice_gpr_write(&usage[tex->dst_gpr], id, 1, predicate);
+			notice_gpr_write(&usage[tex->dst_gpr], id, 1, predicate, -1);
 		if (tex->dst_sel_z != 7)
-			notice_gpr_write(&usage[tex->dst_gpr], id, 2, predicate);
+			notice_gpr_write(&usage[tex->dst_gpr], id, 2, predicate, -1);
 		if (tex->dst_sel_w != 7)
-			notice_gpr_write(&usage[tex->dst_gpr], id, 3, predicate);
+			notice_gpr_write(&usage[tex->dst_gpr], id, 3, predicate, -1);
 	}
 }
 
@@ -1316,13 +1349,13 @@ static void notice_vtx_gprs(struct r600_bc_vtx *vtx, struct gpr_usage usage[128]
 	notice_gpr_read(&usage[vtx->src_gpr], id, vtx->src_sel_x);
 
 	if (vtx->dst_sel_x != 7)
-		notice_gpr_write(&usage[vtx->dst_gpr], id, 0, predicate);
+		notice_gpr_write(&usage[vtx->dst_gpr], id, 0, predicate, -1);
 	if (vtx->dst_sel_y != 7)
-		notice_gpr_write(&usage[vtx->dst_gpr], id, 1, predicate);
+		notice_gpr_write(&usage[vtx->dst_gpr], id, 1, predicate, -1);
 	if (vtx->dst_sel_z != 7)
-		notice_gpr_write(&usage[vtx->dst_gpr], id, 2, predicate);
+		notice_gpr_write(&usage[vtx->dst_gpr], id, 2, predicate, -1);
 	if (vtx->dst_sel_w != 7)
-		notice_gpr_write(&usage[vtx->dst_gpr], id, 3, predicate);
+		notice_gpr_write(&usage[vtx->dst_gpr], id, 3, predicate, -1);
 }
 
 static void notice_export_gprs(struct r600_bc_cf *cf, struct gpr_usage usage[128], uint32_t id)
@@ -1336,6 +1369,33 @@ static void notice_export_gprs(struct r600_bc_cf *cf, struct gpr_usage usage[128
 		notice_gpr_read(&usage[cf->output.gpr], id, cf->output.swizzle_z);
 	if (cf->output.swizzle_w < 4)
 		notice_gpr_read(&usage[cf->output.gpr], id, cf->output.swizzle_w);
+}
+
+static struct gpr_usage_range *find_src_range(struct gpr_usage *usage, int32_t id)
+{
+	unsigned i;
+	for (i = 0; i < usage->nranges; ++i) {
+		struct gpr_usage_range* range = &usage->ranges[i];
+
+		if (range->start < id && id <= range->end)
+			return range;
+	}
+	assert(0); /* should not happen */
+	return NULL;
+}
+
+static struct gpr_usage_range *find_dst_range(struct gpr_usage *usage, int32_t id)
+{
+	unsigned i;
+	for (i = 0; i < usage->nranges; ++i) {
+		struct gpr_usage_range* range = &usage->ranges[i];
+		int32_t end = range->end;
+
+		if (range->start <= id && (id < end || end == -1))
+			return range;
+	}
+	assert(0); /* should not happen */
+	return NULL;
 }
 
 static int is_intersection(struct gpr_usage_range* a, struct gpr_usage_range* b)
@@ -1369,7 +1429,23 @@ static void find_replacement(struct gpr_usage usage[128], unsigned current, stru
 	unsigned i;
 	int best_gpr = -1, best_rate = 0x7FFFFFFF;
 
-	if ((range->start & ~0xFF) == (range->end & ~0xFF)) {
+	if (range->replacement != -1 && range->replacement <= current) {
+		struct gpr_usage_range *other = find_src_range(&usage[range->replacement], range->start);
+		if (other->replacement != -1)
+			range->replacement = other->replacement;
+	}
+
+	if (range->replacement != -1 && range->replacement < current) {
+		int rate = rate_replacement(&usage[range->replacement], range);
+
+		/* check if prefered replacement can be used */
+		if (rate != -1) {
+			best_rate = rate;
+			best_gpr = range->replacement;
+		}
+	}
+
+	if (best_gpr == -1 && (range->start & ~0xFF) == (range->end & ~0xFF)) {
 		/* register is just used inside one ALU clause */
 		/* try to use clause temporaryis for it */
 		for (i = 127; i > 123; --i) {
@@ -1416,31 +1492,6 @@ static void find_replacement(struct gpr_usage usage[128], unsigned current, stru
 	}
 }
 
-static struct gpr_usage_range *find_src_range(struct gpr_usage *usage, int32_t id)
-{
-	unsigned i;
-	for (i = 0; i < usage->nranges; ++i) {
-		struct gpr_usage_range* range = &usage->ranges[i];
-
-		if (range->start < id && id <= range->end)
-			return range;
-	}
-	return NULL;
-}
-
-static struct gpr_usage_range *find_dst_range(struct gpr_usage *usage, int32_t id)
-{
-	unsigned i;
-	for (i = 0; i < usage->nranges; ++i) {
-		struct gpr_usage_range* range = &usage->ranges[i];
-		int32_t end = range->end;
-
-		if (range->start <= id && (id < end || end == -1))
-			return range;
-	}
-	return NULL;
-}
-
 static void replace_alu_gprs(struct r600_bc_alu *alu, struct gpr_usage usage[128], uint32_t id)
 {
 	struct gpr_usage_range *range;
@@ -1459,7 +1510,6 @@ static void replace_alu_gprs(struct r600_bc_alu *alu, struct gpr_usage usage[128
 
 	if (alu->dst.write) {
 		range = find_dst_range(&usage[alu->dst.sel], id);
-		assert(range);
 		if (range->replacement == alu->dst.sel) {
 			if (!alu->is_op3)
 				alu->dst.write = 0;
@@ -1505,10 +1555,57 @@ static void replace_export_gprs(struct r600_bc_cf *cf, struct gpr_usage usage[12
 		cf->output.gpr = range->replacement;
 }
 
-static void r600_bc_optimize_gprs(struct r600_bc *bc)
+static void optimize_alu_inst(struct r600_bc_cf *cf, struct r600_bc_alu *alu)
 {
-	struct r600_bc_cf *cf;
-	struct r600_bc_alu *first;
+	struct r600_bc_alu *alu_next;
+	unsigned chan;
+	unsigned src, num_src;
+
+	/* check if a MOV could be optimized away */
+	if (alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV) {
+
+		/* destination equals source? */
+		if (alu->dst.sel != alu->src[0].sel ||
+			alu->dst.chan != alu->src[0].chan)
+			return;
+
+		/* any special handling for the source? */
+		if (alu->src[0].rel || alu->src[0].neg || alu->src[0].abs)
+			return;
+
+		/* any special handling for destination? */
+		if (alu->dst.rel || alu->dst.clamp)
+			return;
+
+		/* ok find next instruction group and check if ps/pv is used */
+		for (alu_next = alu; !alu_next->last; alu_next = NEXT_ALU(alu_next));
+
+		if (alu_next->list.next != &cf->alu) {
+			chan = is_alu_reduction_inst(alu) ? 0 : alu->dst.chan;
+			for (alu_next = NEXT_ALU(alu_next); alu_next; alu_next = NEXT_ALU(alu_next)) {
+				num_src = r600_bc_get_num_operands(alu_next);
+				for (src = 0; src < num_src; ++src) {
+					if (alu_next->src[src].sel == V_SQ_ALU_SRC_PV &&
+						alu_next->src[src].chan == chan)
+						return;
+
+					if (alu_next->src[src].sel == V_SQ_ALU_SRC_PS)
+						return;
+				}
+
+				if (alu_next->last)
+					break;
+			}
+		}
+
+		r600_bc_remove_alu(cf, alu);
+	}
+}
+
+static void r600_bc_optimize(struct r600_bc *bc)
+{
+	struct r600_bc_cf *cf, *next_cf;
+	struct r600_bc_alu *first, *next_alu;
 	struct r600_bc_alu *alu;
 	struct r600_bc_vtx *vtx;
 	struct r600_bc_tex *tex;
@@ -1521,8 +1618,10 @@ static void r600_bc_optimize_gprs(struct r600_bc *bc)
 		usage[i].first_write = -1;
 
 	/* first gather some informations about the gpr usage */
+	id = 0;
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
-	        id = cf->id << 8;
+	        id += 0x100;
+	        id &= ~0xFF;
 		switch (get_cf_class(cf)) {
 		case CF_CLASS_ALU:
 			predicate = 0;
@@ -1598,14 +1697,21 @@ static void r600_bc_optimize_gprs(struct r600_bc *bc)
 	bc->ngpr++;
 
 	/* apply the changes */
-	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
-	        id = cf->id << 8;
+	id = 0;
+	LIST_FOR_EACH_ENTRY_SAFE(cf, next_cf, &bc->cf, list) {
+	        id += 0x100;
+	        id &= ~0xFF;
 		switch (get_cf_class(cf)) {
 		case CF_CLASS_ALU:
-			LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
+			LIST_FOR_EACH_ENTRY_SAFE(alu, next_alu, &cf->alu, list) {
 				replace_alu_gprs(alu, usage, id);
 				if (alu->last)
 					++id;
+
+				optimize_alu_inst(cf, alu);
+			}
+			if (LIST_IS_EMPTY(&cf->alu)) {
+				r600_bc_remove_cf(bc, cf);
 			}
 			break;
 		case CF_CLASS_TEXTURE:
@@ -1649,7 +1755,7 @@ int r600_bc_build(struct r600_bc *bc)
 		bc->nstack = 1;
 	}
 
-	r600_bc_optimize_gprs(bc);
+	r600_bc_optimize(bc);
 
 	/* first path compute addr of each CF block */
 	/* addr start after all the CF instructions */
@@ -1817,7 +1923,7 @@ void r600_bc_dump(struct r600_bc *bc)
 		chip = '6';
 		break;
 	}
-	fprintf(stderr, "bytecode %d dw -----------------------\n", bc->ndw);
+	fprintf(stderr, "bytecode %d dw -- %d gprs -----------------------\n", bc->ndw, bc->ngpr);
 	fprintf(stderr, "     %c\n", chip);
 
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
@@ -1826,7 +1932,7 @@ void r600_bc_dump(struct r600_bc *bc)
 		switch (get_cf_class(cf)) {
 		case CF_CLASS_ALU:
 			fprintf(stderr, "%04d %08X ALU ", id, bc->bytecode[id]);
-			fprintf(stderr, "ADDR:%d ", cf->addr);
+			fprintf(stderr, "ADDR:%04d ", cf->addr);
 			fprintf(stderr, "KCACHE_MODE0:%X ", cf->kcache0_mode);
 			fprintf(stderr, "KCACHE_BANK0:%X ", cf->kcache0_bank);
 			fprintf(stderr, "KCACHE_BANK1:%X\n", cf->kcache1_bank);
@@ -1841,7 +1947,7 @@ void r600_bc_dump(struct r600_bc *bc)
 		case CF_CLASS_TEXTURE:
 		case CF_CLASS_VERTEX:
 			fprintf(stderr, "%04d %08X TEX/VTX ", id, bc->bytecode[id]);
-			fprintf(stderr, "ADDR:%d\n", cf->addr);
+			fprintf(stderr, "ADDR:%04d\n", cf->addr);
 			id++;
 			fprintf(stderr, "%04d %08X TEX/VTX ", id, bc->bytecode[id]);
 			fprintf(stderr, "INST:%d ", cf->inst);
@@ -1849,7 +1955,7 @@ void r600_bc_dump(struct r600_bc *bc)
 			break;
 		case CF_CLASS_EXPORT:
 			fprintf(stderr, "%04d %08X EXPORT ", id, bc->bytecode[id]);
-			fprintf(stderr, "GPR:%X ", cf->output.gpr);
+			fprintf(stderr, "GPR:%d ", cf->output.gpr);
 			fprintf(stderr, "ELEM_SIZE:%X ", cf->output.elem_size);
 			fprintf(stderr, "ARRAY_BASE:%X ", cf->output.array_base);
 			fprintf(stderr, "TYPE:%X\n", cf->output.type);
@@ -1867,7 +1973,7 @@ void r600_bc_dump(struct r600_bc *bc)
 			break;
 		case CF_CLASS_OTHER:
 			fprintf(stderr, "%04d %08X CF ", id, bc->bytecode[id]);
-			fprintf(stderr, "ADDR:%d\n", cf->cf_addr);
+			fprintf(stderr, "ADDR:%04d\n", cf->cf_addr);
 			id++;
 			fprintf(stderr, "%04d %08X CF ", id, bc->bytecode[id]);
 			fprintf(stderr, "INST:%d ", cf->inst);
