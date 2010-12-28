@@ -613,8 +613,8 @@ struct r300_context {
     int vs_const_base;
 
     /* AOS (PACKET3_3D_LOAD_VBPNTR) command buffer for the case offset=0. */
-    uint32_t aos_cb[(16 * 3 + 1) / 2];
-    boolean aos_dirty;
+    uint32_t vertex_arrays_cb[(16 * 3 + 1) / 2];
+    boolean vertex_arrays_dirty;
 
     /* Whether any buffer (FB, textures, VBOs) has been set, but buffers
      * haven't been validated yet. */

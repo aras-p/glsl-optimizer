@@ -816,17 +816,17 @@ void r300_emit_textures_state(struct r300_context *r300,
     END_CS;
 }
 
-static void r300_update_aos_cb(struct r300_context *r300, unsigned packet_size)
+static void r300_update_vertex_arrays_cb(struct r300_context *r300, unsigned packet_size)
 {
     struct pipe_vertex_buffer *vb1, *vb2, *vbuf = r300->vertex_buffer;
     struct pipe_vertex_element *velem = r300->velems->velem;
     unsigned *hw_format_size = r300->velems->hw_format_size;
-    unsigned size1, size2, aos_count = r300->velems->count;
+    unsigned size1, size2, vertex_array_count = r300->velems->count;
     int i;
     CB_LOCALS;
 
-    BEGIN_CB(r300->aos_cb, packet_size);
-    for (i = 0; i < aos_count - 1; i += 2) {
+    BEGIN_CB(r300->vertex_arrays_cb, packet_size);
+    for (i = 0; i < vertex_array_count - 1; i += 2) {
         vb1 = &vbuf[velem[i].vertex_buffer_index];
         vb2 = &vbuf[velem[i+1].vertex_buffer_index];
         size1 = hw_format_size[i];
@@ -838,7 +838,7 @@ static void r300_update_aos_cb(struct r300_context *r300, unsigned packet_size)
         OUT_CB(vb2->buffer_offset + velem[i+1].src_offset);
     }
 
-    if (aos_count & 1) {
+    if (vertex_array_count & 1) {
         vb1 = &vbuf[velem[i].vertex_buffer_index];
         size1 = hw_format_size[i];
 
@@ -847,34 +847,34 @@ static void r300_update_aos_cb(struct r300_context *r300, unsigned packet_size)
     }
     END_CB;
 
-    r300->aos_dirty = FALSE;
+    r300->vertex_arrays_dirty = FALSE;
 }
 
-void r300_emit_aos(struct r300_context* r300, int offset, boolean indexed)
+void r300_emit_vertex_arrays(struct r300_context* r300, int offset, boolean indexed)
 {
     struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
     struct pipe_vertex_element *velem = r300->velems->velem;
     struct r300_buffer *buf;
     int i;
-    unsigned aos_count = r300->velems->count;
-    unsigned packet_size = (aos_count * 3 + 1) / 2;
+    unsigned vertex_array_count = r300->velems->count;
+    unsigned packet_size = (vertex_array_count * 3 + 1) / 2;
     CS_LOCALS(r300);
 
-    BEGIN_CS(2 + packet_size + aos_count * 2);
+    BEGIN_CS(2 + packet_size + vertex_array_count * 2);
     OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, packet_size);
-    OUT_CS(aos_count | (!indexed ? R300_VC_FORCE_PREFETCH : 0));
+    OUT_CS(vertex_array_count | (!indexed ? R300_VC_FORCE_PREFETCH : 0));
 
     if (!offset) {
-        if (r300->aos_dirty) {
-            r300_update_aos_cb(r300, packet_size);
+        if (r300->vertex_arrays_dirty) {
+            r300_update_vertex_arrays_cb(r300, packet_size);
         }
-        OUT_CS_TABLE(r300->aos_cb, packet_size);
+        OUT_CS_TABLE(r300->vertex_arrays_cb, packet_size);
     } else {
         struct pipe_vertex_buffer *vb1, *vb2;
         unsigned *hw_format_size = r300->velems->hw_format_size;
         unsigned size1, size2;
 
-        for (i = 0; i < aos_count - 1; i += 2) {
+        for (i = 0; i < vertex_array_count - 1; i += 2) {
             vb1 = &vbuf[velem[i].vertex_buffer_index];
             vb2 = &vbuf[velem[i+1].vertex_buffer_index];
             size1 = hw_format_size[i];
@@ -886,7 +886,7 @@ void r300_emit_aos(struct r300_context* r300, int offset, boolean indexed)
             OUT_CS(vb2->buffer_offset + velem[i+1].src_offset + offset * vb2->stride);
         }
 
-        if (aos_count & 1) {
+        if (vertex_array_count & 1) {
             vb1 = &vbuf[velem[i].vertex_buffer_index];
             size1 = hw_format_size[i];
 
@@ -895,14 +895,14 @@ void r300_emit_aos(struct r300_context* r300, int offset, boolean indexed)
         }
     }
 
-    for (i = 0; i < aos_count; i++) {
+    for (i = 0; i < vertex_array_count; i++) {
         buf = r300_buffer(vbuf[velem[i].vertex_buffer_index].buffer);
         OUT_CS_BUF_RELOC_NO_OFFSET(&buf->b.b, buf->domain, 0);
     }
     END_CS;
 }
 
-void r300_emit_aos_swtcl(struct r300_context *r300, boolean indexed)
+void r300_emit_vertex_arrays_swtcl(struct r300_context *r300, boolean indexed)
 {
     CS_LOCALS(r300);
 

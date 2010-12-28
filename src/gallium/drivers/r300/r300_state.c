@@ -1527,7 +1527,7 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
 
         r300->any_user_vbs = any_user_buffer;
         r300->vertex_buffer_max_index = max_index;
-        r300->aos_dirty = TRUE;
+        r300->vertex_arrays_dirty = TRUE;
         r300->validate_buffers = TRUE;
     } else {
         /* SW TCL. */
@@ -1735,7 +1735,7 @@ static void r300_bind_vertex_elements_state(struct pipe_context *pipe,
 
     UPDATE_STATE(&velems->vertex_stream, r300->vertex_stream_state);
     r300->vertex_stream_state.size = (1 + velems->vertex_stream.count) * 2;
-    r300->aos_dirty = TRUE;
+    r300->vertex_arrays_dirty = TRUE;
 }
 
 static void r300_delete_vertex_elements_state(struct pipe_context *pipe, void *state)

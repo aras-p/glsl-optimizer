@@ -90,7 +90,7 @@ void r300_upload_user_buffers(struct r300_context *r300)
                           &vb->buffer_offset, &vb->buffer);
 
             r300->validate_buffers = TRUE;
-            r300->aos_dirty = TRUE;
+            r300->vertex_arrays_dirty = TRUE;
         }
     }
 }

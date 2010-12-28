@@ -130,7 +130,7 @@ void r500_emit_index_bias(struct r300_context *r300, int index_bias)
 
 /* This function splits the index bias value into two parts:
  * - buffer_offset: the value that can be safely added to buffer offsets
- *   in r300_emit_aos (it must yield a positive offset when added to
+ *   in r300_emit_vertex_arrays (it must yield a positive offset when added to
  *   a vertex buffer offset)
  * - index_offset: the value that must be manually subtracted from indices
  *   in an index buffer to achieve negative offsets. */
@@ -166,8 +166,8 @@ static void r300_split_index_bias(struct r300_context *r300, int index_bias,
 enum r300_prepare_flags {
     PREP_FIRST_DRAW     = (1 << 0), /* call emit_dirty_state and friends? */
     PREP_VALIDATE_VBOS  = (1 << 1), /* validate VBOs? */
-    PREP_EMIT_AOS       = (1 << 2), /* call emit_aos? */
-    PREP_EMIT_AOS_SWTCL = (1 << 3), /* call emit_aos_swtcl? */
+    PREP_EMIT_AOS       = (1 << 2), /* call emit_vertex_arrays? */
+    PREP_EMIT_AOS_SWTCL = (1 << 3), /* call emit_vertex_arrays_swtcl? */
     PREP_INDEXED        = (1 << 4)  /* is this draw_elements? */
 };
 
@@ -185,8 +185,8 @@ static boolean r300_reserve_cs_dwords(struct r300_context *r300,
 {
     boolean flushed        = FALSE;
     boolean first_draw     = flags & PREP_FIRST_DRAW;
-    boolean emit_aos       = flags & PREP_EMIT_AOS;
-    boolean emit_aos_swtcl = flags & PREP_EMIT_AOS_SWTCL;
+    boolean emit_vertex_arrays       = flags & PREP_EMIT_AOS;
+    boolean emit_vertex_arrays_swtcl = flags & PREP_EMIT_AOS_SWTCL;
 
     /* Add dirty state, index offset, and AOS. */
     if (first_draw) {
@@ -195,11 +195,11 @@ static boolean r300_reserve_cs_dwords(struct r300_context *r300,
         if (r300->screen->caps.index_bias_supported)
             cs_dwords += 2; /* emit_index_offset */
 
-        if (emit_aos)
-            cs_dwords += 55; /* emit_aos */
+        if (emit_vertex_arrays)
+            cs_dwords += 55; /* emit_vertex_arrays */
 
-        if (emit_aos_swtcl)
-            cs_dwords += 7; /* emit_aos_swtcl */
+        if (emit_vertex_arrays_swtcl)
+            cs_dwords += 7; /* emit_vertex_arrays_swtcl */
     }
 
     cs_dwords += r300_get_num_cs_end_dwords(r300);
@@ -218,19 +218,19 @@ static boolean r300_reserve_cs_dwords(struct r300_context *r300,
  * \param r300          The context.
  * \param flags         See r300_prepare_flags.
  * \param index_buffer  The index buffer to validate. The parameter may be NULL.
- * \param aos_offset    The offset passed to emit_aos.
+ * \param buffer_offset The offset passed to emit_vertex_arrays.
  * \param index_bias    The index bias to emit.
  * \return TRUE if rendering should be skipped
  */
 static boolean r300_emit_states(struct r300_context *r300,
                                 enum r300_prepare_flags flags,
                                 struct pipe_resource *index_buffer,
-                                int aos_offset,
+                                int buffer_offset,
                                 int index_bias)
 {
     boolean first_draw     = flags & PREP_FIRST_DRAW;
-    boolean emit_aos       = flags & PREP_EMIT_AOS;
-    boolean emit_aos_swtcl = flags & PREP_EMIT_AOS_SWTCL;
+    boolean emit_vertex_arrays       = flags & PREP_EMIT_AOS;
+    boolean emit_vertex_arrays_swtcl = flags & PREP_EMIT_AOS_SWTCL;
     boolean indexed        = flags & PREP_INDEXED;
     boolean validate_vbos  = flags & PREP_VALIDATE_VBOS;
 
@@ -264,11 +264,11 @@ static boolean r300_emit_states(struct r300_context *r300,
                 r500_emit_index_bias(r300, 0);
         }
 
-        if (emit_aos)
-            r300_emit_aos(r300, aos_offset, indexed);
+        if (emit_vertex_arrays)
+            r300_emit_vertex_arrays(r300, buffer_offset, indexed);
 
-        if (emit_aos_swtcl)
-            r300_emit_aos_swtcl(r300, indexed);
+        if (emit_vertex_arrays_swtcl)
+            r300_emit_vertex_arrays_swtcl(r300, indexed);
     }
 
     return TRUE;
@@ -281,7 +281,7 @@ static boolean r300_emit_states(struct r300_context *r300,
  * \param flags         See r300_prepare_flags.
  * \param index_buffer  The index buffer to validate. The parameter may be NULL.
  * \param cs_dwords     The number of dwords to reserve in CS.
- * \param aos_offset    The offset passed to emit_aos.
+ * \param buffer_offset The offset passed to emit_vertex_arrays.
  * \param index_bias    The index bias to emit.
  * \return TRUE if rendering should be skipped
  */
@@ -289,13 +289,13 @@ static boolean r300_prepare_for_rendering(struct r300_context *r300,
                                           enum r300_prepare_flags flags,
                                           struct pipe_resource *index_buffer,
                                           unsigned cs_dwords,
-                                          int aos_offset,
+                                          int buffer_offset,
                                           int index_bias)
 {
     if (r300_reserve_cs_dwords(r300, flags, cs_dwords))
         flags |= PREP_FIRST_DRAW;
 
-    return r300_emit_states(r300, flags, index_buffer, aos_offset, index_bias);
+    return r300_emit_states(r300, flags, index_buffer, buffer_offset, index_bias);
 }
 
 static boolean immd_is_good_idea(struct r300_context *r300,
