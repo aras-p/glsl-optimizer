@@ -931,7 +931,12 @@ fs_visitor::visit(ir_expression *ir)
    case ir_binop_all_equal:
    case ir_binop_nequal:
    case ir_binop_any_nequal:
-      inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], op[1]));
+      temp = this->result;
+      /* original gen4 does implicit conversion before comparison. */
+      if (intel->gen < 5)
+	 temp.type = op[0].type;
+
+      inst = emit(fs_inst(BRW_OPCODE_CMP, temp, op[0], op[1]));
       inst->conditional_mod = brw_conditional_for_comparison(ir->operation);
       emit(fs_inst(BRW_OPCODE_AND, this->result, this->result, fs_reg(0x1)));
       break;
@@ -977,7 +982,12 @@ fs_visitor::visit(ir_expression *ir)
       break;
    case ir_unop_f2b:
    case ir_unop_i2b:
-      inst = emit(fs_inst(BRW_OPCODE_CMP, this->result, op[0], fs_reg(0.0f)));
+      temp = this->result;
+      /* original gen4 does implicit conversion before comparison. */
+      if (intel->gen < 5)
+	 temp.type = op[0].type;
+
+      inst = emit(fs_inst(BRW_OPCODE_CMP, temp, op[0], fs_reg(0.0f)));
       inst->conditional_mod = BRW_CONDITIONAL_NZ;
       inst = emit(fs_inst(BRW_OPCODE_AND, this->result,
 			  this->result, fs_reg(1)));
@@ -1560,7 +1570,7 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
 	    inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_d,
 				op[0], fs_reg(0.0f)));
 	 } else {
-	    inst = emit(fs_inst(BRW_OPCODE_MOV, reg_null_d, op[0]));
+	    inst = emit(fs_inst(BRW_OPCODE_MOV, reg_null_f, op[0]));
 	 }
 	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
 	 break;
@@ -1582,7 +1592,7 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
       case ir_binop_all_equal:
       case ir_binop_nequal:
       case ir_binop_any_nequal:
-	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_d, op[0], op[1]));
+	 inst = emit(fs_inst(BRW_OPCODE_CMP, reg_null_cmp, op[0], op[1]));
 	 inst->conditional_mod =
 	    brw_conditional_for_comparison(expr->operation);
 	 break;
