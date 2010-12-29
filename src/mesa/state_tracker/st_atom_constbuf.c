@@ -56,7 +56,6 @@ void st_upload_constants( struct st_context *st,
                           unsigned shader_type)
 {
    struct pipe_context *pipe = st->pipe;
-   struct pipe_resource **cbuf = &st->state.constants[shader_type];
 
    assert(shader_type == PIPE_SHADER_VERTEX ||
           shader_type == PIPE_SHADER_FRAGMENT ||
@@ -64,6 +63,7 @@ void st_upload_constants( struct st_context *st,
 
    /* update constants */
    if (params && params->NumParameters) {
+      struct pipe_resource *cbuf;
       const uint paramBytes = params->NumParameters * sizeof(GLfloat) * 4;
 
       /* Update the constants which come from fixed-function state, such as
@@ -75,11 +75,12 @@ void st_upload_constants( struct st_context *st,
 
       /* We always need to get a new buffer, to keep the drivers simple and
        * avoid gratuitous rendering synchronization.
+       * Let's use a user buffer to avoid an unnecessary copy.
        */
-      pipe_resource_reference(cbuf, NULL );
-      *cbuf = pipe_buffer_create(pipe->screen,
-				 PIPE_BIND_CONSTANT_BUFFER,
-				 paramBytes );
+      cbuf = pipe_user_buffer_create(pipe->screen,
+                                     params->ParameterValues,
+                                     paramBytes,
+                                     PIPE_BIND_CONSTANT_BUFFER);
 
       if (ST_DEBUG & DEBUG_CONSTANTS) {
 	 debug_printf("%s(shader=%d, numParams=%d, stateFlags=0x%x)\n", 
@@ -88,17 +89,15 @@ void st_upload_constants( struct st_context *st,
          _mesa_print_parameter_list(params);
       }
 
-      /* load Mesa constants into the constant buffer */
-      pipe_buffer_write(st->pipe, *cbuf,
-				    0, paramBytes,
-				    params->ParameterValues);
+      st->pipe->set_constant_buffer(st->pipe, shader_type, 0, cbuf);
+      pipe_resource_reference(&cbuf, NULL);
 
-      st->pipe->set_constant_buffer(st->pipe, shader_type, 0, *cbuf);
+      st->state.constants[shader_type].ptr = params->ParameterValues;
+      st->state.constants[shader_type].size = paramBytes;
    }
-   else if (*cbuf) {
-      st->constants.tracked_state[shader_type].dirty.mesa = 0x0;
-
-      pipe_resource_reference(cbuf, NULL);
+   else if (st->state.constants[shader_type].ptr) {
+      st->state.constants[shader_type].ptr = NULL;
+      st->state.constants[shader_type].size = 0;
       st->pipe->set_constant_buffer(st->pipe, shader_type, 0, NULL);
    }
 }
