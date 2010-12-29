@@ -24,26 +24,21 @@
 #include "util/u_index_modify.h"
 #include "util/u_inlines.h"
 
-void util_shorten_ubyte_elts(struct pipe_context *context,
-			     struct pipe_resource **elts,
-			     int index_bias,
-			     unsigned start,
-			     unsigned count)
+/* Ubyte indices. */
+
+void util_shorten_ubyte_elts_to_userptr(struct pipe_context *context,
+					struct pipe_resource *elts,
+					int index_bias,
+					unsigned start,
+					unsigned count,
+					void *out)
 {
-    struct pipe_screen* screen = context->screen;
-    struct pipe_resource* new_elts;
+    struct pipe_transfer *src_transfer;
     unsigned char *in_map;
-    unsigned short *out_map;
-    struct pipe_transfer *src_transfer, *dst_transfer;
+    unsigned short *out_map = out;
     unsigned i;
 
-    new_elts = pipe_buffer_create(screen,
-                                  PIPE_BIND_INDEX_BUFFER,
-                                  2 * count);
-
-    in_map = pipe_buffer_map(context, *elts, PIPE_TRANSFER_READ, &src_transfer);
-    out_map = pipe_buffer_map(context, new_elts, PIPE_TRANSFER_WRITE, &dst_transfer);
-
+    in_map = pipe_buffer_map(context, elts, PIPE_TRANSFER_READ, &src_transfer);
     in_map += start;
 
     for (i = 0; i < count; i++) {
@@ -53,33 +48,48 @@ void util_shorten_ubyte_elts(struct pipe_context *context,
     }
 
     pipe_buffer_unmap(context, src_transfer);
-    pipe_buffer_unmap(context, dst_transfer);
-
-    *elts = new_elts;
 }
 
-void util_rebuild_ushort_elts(struct pipe_context *context,
-			      struct pipe_resource **elts,
-			      int index_bias,
-			      unsigned start, unsigned count)
+void util_shorten_ubyte_elts(struct pipe_context *context,
+			     struct pipe_resource **elts,
+			     int index_bias,
+			     unsigned start,
+			     unsigned count)
 {
-    struct pipe_transfer *in_transfer = NULL;
-    struct pipe_transfer *out_transfer = NULL;
-    struct pipe_resource *new_elts;
-    unsigned short *in_map;
+    struct pipe_resource* new_elts;
     unsigned short *out_map;
-    unsigned i;
+    struct pipe_transfer *dst_transfer;
 
     new_elts = pipe_buffer_create(context->screen,
                                   PIPE_BIND_INDEX_BUFFER,
                                   2 * count);
 
-    in_map = pipe_buffer_map(context, *elts,
-                             PIPE_TRANSFER_READ, &in_transfer);
-    out_map = pipe_buffer_map(context, new_elts,
-                              PIPE_TRANSFER_WRITE, &out_transfer);
+    out_map = pipe_buffer_map(context, new_elts, PIPE_TRANSFER_WRITE,
+                              &dst_transfer);
+    util_shorten_ubyte_elts_to_userptr(context, *elts, index_bias,
+                                       start, count, out_map);
+    pipe_buffer_unmap(context, dst_transfer);
 
+    *elts = new_elts;
+}
+
+
+/* Ushort indices. */
+
+void util_rebuild_ushort_elts_to_userptr(struct pipe_context *context,
+					 struct pipe_resource *elts,
+					 int index_bias,
+					 unsigned start, unsigned count,
+					 void *out)
+{
+    struct pipe_transfer *in_transfer = NULL;
+    unsigned short *in_map;
+    unsigned short *out_map = out;
+    unsigned i;
+
+    in_map = pipe_buffer_map(context, elts, PIPE_TRANSFER_READ, &in_transfer);
     in_map += start;
+
     for (i = 0; i < count; i++) {
         *out_map = (unsigned short)(*in_map + index_bias);
         in_map++;
@@ -87,33 +97,47 @@ void util_rebuild_ushort_elts(struct pipe_context *context,
     }
 
     pipe_buffer_unmap(context, in_transfer);
-    pipe_buffer_unmap(context, out_transfer);
-
-    *elts = new_elts;
 }
 
-void util_rebuild_uint_elts(struct pipe_context *context,
-			    struct pipe_resource **elts,
-			    int index_bias,
-			    unsigned start, unsigned count)
+void util_rebuild_ushort_elts(struct pipe_context *context,
+			      struct pipe_resource **elts,
+			      int index_bias,
+			      unsigned start, unsigned count)
 {
-    struct pipe_transfer *in_transfer = NULL;
     struct pipe_transfer *out_transfer = NULL;
     struct pipe_resource *new_elts;
-    unsigned int *in_map;
-    unsigned int *out_map;
-    unsigned i;
+    unsigned short *out_map;
 
     new_elts = pipe_buffer_create(context->screen,
                                   PIPE_BIND_INDEX_BUFFER,
                                   2 * count);
 
-    in_map = pipe_buffer_map(context, *elts,
-                             PIPE_TRANSFER_READ, &in_transfer);
     out_map = pipe_buffer_map(context, new_elts,
                               PIPE_TRANSFER_WRITE, &out_transfer);
+    util_rebuild_ushort_elts_to_userptr(context, *elts, index_bias,
+                                        start, count, out_map);
+    pipe_buffer_unmap(context, out_transfer);
 
+    *elts = new_elts;
+}
+
+
+/* Uint indices. */
+
+void util_rebuild_uint_elts_to_userptr(struct pipe_context *context,
+				       struct pipe_resource *elts,
+				       int index_bias,
+				       unsigned start, unsigned count,
+				       void *out)
+{
+    struct pipe_transfer *in_transfer = NULL;
+    unsigned int *in_map;
+    unsigned int *out_map = out;
+    unsigned i;
+
+    in_map = pipe_buffer_map(context, elts, PIPE_TRANSFER_READ, &in_transfer);
     in_map += start;
+
     for (i = 0; i < count; i++) {
         *out_map = (unsigned int)(*in_map + index_bias);
         in_map++;
@@ -121,6 +145,25 @@ void util_rebuild_uint_elts(struct pipe_context *context,
     }
 
     pipe_buffer_unmap(context, in_transfer);
+}
+
+void util_rebuild_uint_elts(struct pipe_context *context,
+			    struct pipe_resource **elts,
+			    int index_bias,
+			    unsigned start, unsigned count)
+{
+    struct pipe_transfer *out_transfer = NULL;
+    struct pipe_resource *new_elts;
+    unsigned int *out_map;
+
+    new_elts = pipe_buffer_create(context->screen,
+                                  PIPE_BIND_INDEX_BUFFER,
+                                  2 * count);
+
+    out_map = pipe_buffer_map(context, new_elts,
+                              PIPE_TRANSFER_WRITE, &out_transfer);
+    util_rebuild_uint_elts_to_userptr(context, *elts, index_bias,
+                                      start, count, out_map);
     pipe_buffer_unmap(context, out_transfer);
 
     *elts = new_elts;
