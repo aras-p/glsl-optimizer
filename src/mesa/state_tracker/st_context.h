@@ -108,15 +108,6 @@ struct st_context
       GLuint poly_stipple[32];  /**< In OpenGL's bottom-to-top order */
    } state;
 
-   struct {
-      struct st_tracked_state tracked_state[PIPE_SHADER_TYPES];
-   } constants;
-
-   /* XXX unused: */
-   struct {
-      struct gl_fragment_program *fragment_program;
-   } cb;
-
    char vendor[100];
    char renderer[100];
 
