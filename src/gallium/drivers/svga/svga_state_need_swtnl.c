@@ -118,6 +118,11 @@ static int update_need_pipeline( struct svga_context *svga,
                  __FUNCTION__,
                  svga->curr.rast->need_pipeline,
                  (1 << svga->curr.reduced_prim) );
+      SVGA_DBG(DEBUG_SWTNL, "%s: rast need_pipeline tris (%s), lines (%s), points (%s)\n",
+                 __FUNCTION__,
+                 svga->curr.rast->need_pipeline_tris_str,
+                 svga->curr.rast->need_pipeline_lines_str,
+                 svga->curr.rast->need_pipeline_points_str);
       need_pipeline = TRUE;
    }
 

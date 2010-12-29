@@ -148,6 +148,10 @@ struct svga_rasterizer_state {
    
    unsigned hw_unfilled:16;         /* PIPE_POLYGON_MODE_x */
    unsigned need_pipeline:16;    /* which prims do we need help for? */
+
+   const char* need_pipeline_tris_str;
+   const char* need_pipeline_lines_str;
+   const char* need_pipeline_points_str;
 };
 
 struct svga_sampler_state {
@@ -317,6 +321,9 @@ struct svga_context
       unsigned shader_id;
 
       unsigned disable_shader;
+
+      boolean no_line_width;
+      boolean force_hw_line_stipple;
    } debug;
 
    struct {

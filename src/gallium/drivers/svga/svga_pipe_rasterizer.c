@@ -64,7 +64,9 @@ static void *
 svga_create_rasterizer_state(struct pipe_context *pipe,
                              const struct pipe_rasterizer_state *templ)
 {
+   struct svga_context *svga = svga_context(pipe);
    struct svga_rasterizer_state *rast = CALLOC_STRUCT( svga_rasterizer_state );
+
    /* need this for draw module. */
    rast->templ = *templ;
 
@@ -93,17 +95,22 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
 
    /* Use swtnl + decomposition implement these:
     */
-   if (templ->poly_stipple_enable)
+   if (templ->poly_stipple_enable) {
       rast->need_pipeline |= SVGA_PIPELINE_FLAG_TRIS;
+      rast->need_pipeline_tris_str = "poly stipple";
+   }
 
    if (templ->line_width != 1.0 &&
-       templ->line_width != 0.0)
+       templ->line_width != 0.0 &&
+       !svga->debug.no_line_width) {
       rast->need_pipeline |= SVGA_PIPELINE_FLAG_LINES;
+      rast->need_pipeline_lines_str = "line width";
+   }
 
    if (templ->line_stipple_enable) {
       /* LinePattern not implemented on all backends. 
        */
-      if (0) {
+      if (!svga->debug.force_hw_line_stipple) {
          SVGA3dLinePattern lp;
          lp.repeat = templ->line_stipple_factor + 1;
          lp.pattern = templ->line_stipple_pattern;
@@ -111,11 +118,14 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
       }
       else {
          rast->need_pipeline |= SVGA_PIPELINE_FLAG_LINES;
+         rast->need_pipeline_lines_str = "line stipple";
       }
    } 
 
-   if (templ->point_smooth)
+   if (templ->point_smooth) {
       rast->need_pipeline |= SVGA_PIPELINE_FLAG_POINTS;
+      rast->need_pipeline_points_str = "smooth points";
+   }
 
    {
       int fill_front = templ->fill_front;
@@ -148,6 +158,7 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
              * front/back fill modes:
              */
             rast->need_pipeline |= SVGA_PIPELINE_FLAG_TRIS;
+            rast->need_pipeline_tris_str = "different front/back fillmodes";
          }
          else {
             offset = offset_front;
@@ -172,6 +183,7 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
       {
          fill = PIPE_POLYGON_MODE_FILL;
          rast->need_pipeline |= SVGA_PIPELINE_FLAG_TRIS;
+         rast->need_pipeline_tris_str = "unfilled primitives with no index manipulation";
       }
 
       /* If we are decomposing to lines, and lines need the pipeline,
@@ -182,6 +194,7 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
       {
          fill = PIPE_POLYGON_MODE_FILL;
          rast->need_pipeline |= SVGA_PIPELINE_FLAG_TRIS;
+         rast->need_pipeline_tris_str = "decomposing lines";
       }
 
       /* Similarly for points:
@@ -191,6 +204,7 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
       {
          fill = PIPE_POLYGON_MODE_FILL;
          rast->need_pipeline |= SVGA_PIPELINE_FLAG_TRIS;
+         rast->need_pipeline_tris_str = "decomposing points";
       }
 
       if (offset) {
