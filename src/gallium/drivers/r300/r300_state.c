@@ -1827,6 +1827,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_constant_buffer *cbuf;
+    struct r300_buffer *rbuf = r300_buffer(buf);
     uint32_t *mapped;
 
     switch (shader) {
@@ -1840,10 +1841,15 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
             return;
     }
 
-    if (buf == NULL || buf->width0 == 0 ||
-        (mapped = (uint32_t*)r300_buffer(buf)->constant_buffer) == NULL) {
+    if (buf == NULL || buf->width0 == 0)
         return;
-    }
+
+    if (rbuf->user_buffer)
+        mapped = (uint32_t*)rbuf->user_buffer;
+    else if (rbuf->constant_buffer)
+        mapped = (uint32_t*)rbuf->constant_buffer;
+    else
+        return;
 
     if (shader == PIPE_SHADER_FRAGMENT ||
         (shader == PIPE_SHADER_VERTEX && r300->screen->caps.has_tcl)) {
