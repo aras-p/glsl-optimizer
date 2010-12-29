@@ -118,6 +118,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 	 lower_if_to_cond_assign(shader->ir, 16);
 
       do_lower_texture_projection(shader->ir);
+      do_vec_index_to_cond_assign(shader->ir);
       brw_do_cubemap_normalize(shader->ir);
 
       do {
