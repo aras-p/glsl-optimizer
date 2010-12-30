@@ -392,11 +392,6 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
          goto fail;
    }
 
-   for (i = 0; i < 8; ++i) {
-      BEGIN_RING(chan, (i << 13) | (0x0000 >> 2), 1);
-      OUT_RING  (chan, 0x0000);
-   }
-
    ret = nouveau_grobj_alloc(chan, 0xbeef9039, NVC0_M2MF, &screen->m2mf);
    if (ret)
       FAIL_SCREEN_INIT("Error allocating PGRAPH context for M2MF: %d\n", ret);
