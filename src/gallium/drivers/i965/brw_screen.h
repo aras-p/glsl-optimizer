@@ -43,7 +43,11 @@ struct brw_winsys_screen;
 struct brw_screen
 {
    struct pipe_screen base;
-   struct brw_chipset chipset;
+   int gen;
+   boolean has_negative_rhw_bug;
+   boolean needs_ff_sync;
+   boolean is_g4x;
+   int pci_id;
    struct brw_winsys_screen *sws;
    boolean no_tiling;
 };

@@ -255,7 +255,7 @@ static void brw_set_math_message( struct brw_context *brw,
 {
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (BRW_IS_IGDNG(brw)) {
+   if (brw->gen == 5) {
        insn->bits3.math_igdng.function = function;
        insn->bits3.math_igdng.int_type = integer_type;
        insn->bits3.math_igdng.precision = low_precision;
@@ -322,7 +322,7 @@ static void brw_set_urb_message( struct brw_context *brw,
 {
     brw_set_src1(insn, brw_imm_d(0));
 
-    if (BRW_IS_IGDNG(brw)) {
+    if (brw->gen == 5) {
         insn->bits3.urb_igdng.opcode = 0;	/* ? */
         insn->bits3.urb_igdng.offset = offset;
         insn->bits3.urb_igdng.swizzle_control = swizzle_control;
@@ -361,7 +361,7 @@ static void brw_set_dp_write_message( struct brw_context *brw,
 {
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (BRW_IS_IGDNG(brw)) {
+   if (brw->gen == 5) {
        insn->bits3.dp_write_igdng.binding_table_index = binding_table_index;
        insn->bits3.dp_write_igdng.msg_control = msg_control;
        insn->bits3.dp_write_igdng.pixel_scoreboard_clear = pixel_scoreboard_clear;
@@ -398,7 +398,7 @@ static void brw_set_dp_read_message( struct brw_context *brw,
 {
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (BRW_IS_IGDNG(brw)) {
+   if (brw->gen == 5) {
        insn->bits3.dp_read_igdng.binding_table_index = binding_table_index;
        insn->bits3.dp_read_igdng.msg_control = msg_control;
        insn->bits3.dp_read_igdng.msg_type = msg_type;
@@ -437,7 +437,7 @@ static void brw_set_sampler_message(struct brw_context *brw,
    assert(eot == 0);
    brw_set_src1(insn, brw_imm_d(0));
 
-   if (BRW_IS_IGDNG(brw)) {
+   if (brw->gen == 5) {
       insn->bits3.sampler_igdng.binding_table_index = binding_table_index;
       insn->bits3.sampler_igdng.sampler = sampler;
       insn->bits3.sampler_igdng.msg_type = msg_type;
@@ -448,7 +448,7 @@ static void brw_set_sampler_message(struct brw_context *brw,
       insn->bits3.sampler_igdng.end_of_thread = eot;
       insn->bits2.send_igdng.sfid = BRW_MESSAGE_TARGET_SAMPLER;
       insn->bits2.send_igdng.end_of_thread = eot;
-   } else if (BRW_IS_G4X(brw)) {
+   } else if (brw->is_g4x) {
       insn->bits3.sampler_g4x.binding_table_index = binding_table_index;
       insn->bits3.sampler_g4x.sampler = sampler;
       insn->bits3.sampler_g4x.msg_type = msg_type;
@@ -658,7 +658,7 @@ struct brw_instruction *brw_ELSE(struct brw_compile *p,
    struct brw_instruction *insn;
    GLuint br = 1;
 
-   if (BRW_IS_IGDNG(p->brw))
+   if (p->brw->gen == 5)
       br = 2;
 
    if (p->single_program_flow) {
@@ -699,7 +699,7 @@ void brw_ENDIF(struct brw_compile *p,
 {
    GLuint br = 1;
 
-   if (BRW_IS_IGDNG(p->brw))
+   if (p->brw->gen == 5)
       br = 2; 
  
    if (p->single_program_flow) {
@@ -813,7 +813,7 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
    struct brw_instruction *insn;
    GLuint br = 1;
 
-   if (BRW_IS_IGDNG(p->brw))
+   if (p->brw->gen == 5)
       br = 2;
 
    if (p->single_program_flow)
@@ -856,7 +856,7 @@ void brw_land_fwd_jump(struct brw_compile *p,
    struct brw_instruction *landing = &p->store[p->nr_insn];
    GLuint jmpi = 1;
 
-   if (BRW_IS_IGDNG(p->brw))
+   if (p->brw->gen == 5)
        jmpi = 2;
 
    assert(jmp_insn->header.opcode == BRW_OPCODE_JMPI);

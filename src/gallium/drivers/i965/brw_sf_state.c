@@ -148,7 +148,7 @@ sf_unit_create_from_key(struct brw_context *brw,
 
    sf.thread3.dispatch_grf_start_reg = 3;
 
-   if (BRW_IS_IGDNG(brw))
+   if (brw->gen == 5)
        sf.thread3.urb_entry_read_offset = 3;
    else
        sf.thread3.urb_entry_read_offset = 1;
@@ -161,7 +161,7 @@ sf_unit_create_from_key(struct brw_context *brw,
    /* Each SF thread produces 1 PUE, and there can be up to 24(Pre-IGDNG) or 
     * 48(IGDNG) threads 
     */
-   if (BRW_IS_IGDNG(brw))
+   if (brw->gen == 5)
       chipset_max_threads = 48;
    else
       chipset_max_threads = 24;

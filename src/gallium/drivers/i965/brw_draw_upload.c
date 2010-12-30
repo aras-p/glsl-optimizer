@@ -170,7 +170,7 @@ static int brw_emit_vertex_buffers( struct brw_context *brw )
       OUT_RELOC(brw->vb.vb[i].bo,
 		BRW_USAGE_VERTEX,
 		brw->vb.vb[i].offset);
-      if (BRW_IS_IGDNG(brw)) {
+      if (brw->gen == 5) {
 	 OUT_RELOC(brw->vb.vb[i].bo,
 		   BRW_USAGE_VERTEX,
 		   brw->vb.vb[i].bo->size - 1);

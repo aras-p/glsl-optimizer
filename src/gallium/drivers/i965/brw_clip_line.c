@@ -32,6 +32,7 @@
 #include "util/u_debug.h"
 
 #include "brw_defines.h"
+#include "brw_context.h"
 #include "brw_eu.h"
 #include "brw_clip.h"
 
@@ -41,7 +42,7 @@
 static void brw_clip_line_alloc_regs( struct brw_clip_compile *c )
 {
    GLuint i = 0,j;
-
+   struct brw_context *brw = c->func.brw;
    /* Register usage is static, precompute here:
     */
    c->reg.R0 = retype(brw_vec8_grf(i, 0), BRW_REGISTER_TYPE_UD); i++;
@@ -79,7 +80,7 @@ static void brw_clip_line_alloc_regs( struct brw_clip_compile *c )
       i++;
    }
 
-   if (c->need_ff_sync) {
+   if (brw->needs_ff_sync) {
       c->reg.ff_sync = retype(brw_vec1_grf(i, 0), BRW_REGISTER_TYPE_UD);
       i++;
    }
@@ -120,6 +121,7 @@ static void brw_clip_line_alloc_regs( struct brw_clip_compile *c )
 static void clip_and_emit_line( struct brw_clip_compile *c )
 {
    struct brw_compile *p = &c->func;
+   struct brw_context *brw = p->brw;
    struct brw_indirect vtx0     = brw_indirect(0, 0);
    struct brw_indirect vtx1      = brw_indirect(1, 0);
    struct brw_indirect newvtx0   = brw_indirect(2, 0);
@@ -146,7 +148,7 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
    brw_clip_init_clipmask(c);
 
    /* -ve rhw workaround */
-   if (c->chipset.is_965) {
+   if (brw->has_negative_rhw_bug) {
       brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
       brw_AND(p, brw_null_reg(), get_element_ud(c->reg.R0, 2),
               brw_imm_ud(1<<20));
@@ -183,7 +185,7 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
               * Both can be negative on GM965/G965 due to RHW workaround
               * if so, this object should be rejected.
               */
-             if (c->chipset.is_965) {
+	     if (brw->has_negative_rhw_bug) {
                  brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_LE, c->reg.dp0, brw_imm_f(0.0));
                  is_neg2 = brw_IF(p, BRW_EXECUTE_1);
                  {
@@ -208,7 +210,7 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
 
              /* If both are positive, do nothing */
              /* Only on GM965/G965 */
-             if (c->chipset.is_965) {
+	     if (brw->has_negative_rhw_bug) {
                  brw_CMP(p, vec1(brw_null_reg()), BRW_CONDITIONAL_L, c->reg.dp0, brw_imm_f(0.0));
                  is_neg2 = brw_IF(p, BRW_EXECUTE_1);
              }
@@ -223,7 +225,7 @@ static void clip_and_emit_line( struct brw_clip_compile *c )
                  brw_set_predicate_control(p, BRW_PREDICATE_NONE);
              }
 
-             if (c->chipset.is_965) {
+	     if (brw->has_negative_rhw_bug) {
                  brw_ENDIF(p, is_neg2);
              }
          }

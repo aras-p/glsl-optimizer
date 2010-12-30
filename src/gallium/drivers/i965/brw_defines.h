@@ -839,8 +839,8 @@
 #define R02_PRIM_END    0x1
 #define R02_PRIM_START  0x2
 
-#define URB_SIZES(brw)                  (BRW_IS_IGDNG(brw) ? 1024 : \
-                                         (BRW_IS_G4X(brw) ? 384 : 256))  /* 512 bit units */
+#define URB_SIZES(brw)                  (brw->gen == 5 ? 1024 : \
+                                         (brw->is_g4x ? 384 : 256))  /* 512 bit units */
 
 
 

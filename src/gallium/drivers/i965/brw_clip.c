@@ -66,16 +66,14 @@ compile_clip_prog( struct brw_context *brw,
 
    c.func.single_program_flow = 1;
 
-   c.chipset = brw->chipset;
    c.key = *key;
-   c.need_ff_sync = c.chipset.is_igdng;
 
    /* Need to locate the two positions present in vertex + header.
     * These are currently hardcoded:
     */
    c.header_position_offset = ATTR_SIZE;
 
-   if (c.chipset.is_igdng)
+   if (brw->gen == 5)
        delta = 3 * REG_SIZE;
    else
        delta = REG_SIZE;
@@ -97,7 +95,7 @@ compile_clip_prog( struct brw_context *brw,
    if (c.key.output_edgeflag != BRW_OUTPUT_NOT_PRESENT)
       c.offset_edgeflag = delta + c.key.output_edgeflag * ATTR_SIZE;
    
-   if (BRW_IS_IGDNG(brw))
+   if (brw->gen == 5)
        c.nr_regs = (c.key.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
    else
        c.nr_regs = (c.key.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */

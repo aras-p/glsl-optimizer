@@ -161,7 +161,7 @@ static void do_flatshade_triangle( struct brw_sf_compile *c )
    if (c->key.primitive == SF_UNFILLED_TRIS)
       return;
 
-   if (BRW_IS_IGDNG(p->brw))
+   if (p->brw->gen == 5)
        jmpi = 2;
 
    brw_push_insn_state(p);
@@ -205,7 +205,7 @@ static void do_flatshade_line( struct brw_sf_compile *c )
    if (c->key.primitive == SF_UNFILLED_TRIS)
       return;
 
-   if (BRW_IS_IGDNG(p->brw))
+   if (p->brw->gen == 5)
        jmpi = 2;
 
    brw_push_insn_state(p);

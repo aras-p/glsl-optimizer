@@ -31,6 +31,7 @@
 
 
 #include "brw_defines.h"
+#include "brw_context.h"
 #include "brw_eu.h"
 #include "brw_clip.h"
 
@@ -126,6 +127,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
 			     GLboolean force_edgeflag)
 {
    struct brw_compile *p = &c->func;
+   struct brw_context *brw = p->brw;
    struct brw_reg tmp = get_tmp(c);
    GLuint i;
 
@@ -142,7 +144,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
    for (i = 0; i < c->key.nr_attrs; i++) {
       GLuint delta = i*16 + 32;
 
-      if (c->chipset.is_igdng)
+      if (brw->gen == 5)
           delta = i * 16 + 32 * 3;
 
       if (delta == c->offset_edgeflag) {
@@ -176,7 +178,7 @@ void brw_clip_interp_vertex( struct brw_clip_compile *c,
    if (i & 1) {
       GLuint delta = i*16 + 32;
 
-      if (c->chipset.is_igdng)
+      if (brw->gen == 5)
           delta = i * 16 + 32 * 3;
 
       brw_MOV(p, deref_4f(dest_ptr, delta), brw_imm_f(0));
@@ -350,7 +352,8 @@ void brw_clip_init_clipmask( struct brw_clip_compile *c )
 
 void brw_clip_ff_sync(struct brw_clip_compile *c)
 {
-    if (c->need_ff_sync) {
+    struct brw_context *brw = c->func.brw;
+    if (brw->needs_ff_sync) {
         struct brw_compile *p = &c->func;
         struct brw_instruction *need_ff_sync;
 
@@ -379,7 +382,8 @@ void brw_clip_ff_sync(struct brw_clip_compile *c)
 
 void brw_clip_init_ff_sync(struct brw_clip_compile *c)
 {
-    if (c->need_ff_sync) {
+    struct brw_context *brw = c->func.brw;
+    if (brw->needs_ff_sync) {
 	struct brw_compile *p = &c->func;
         
         brw_MOV(p, c->reg.ff_sync, brw_imm_ud(0));

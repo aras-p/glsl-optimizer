@@ -51,13 +51,13 @@ static enum pipe_error compile_gs_prog( struct brw_context *brw,
    memset(&c, 0, sizeof(c));
    
    c.key = *key;
-   c.need_ff_sync = BRW_IS_IGDNG(brw);
+   c.need_ff_sync = brw->gen == 5;
    /* Need to locate the two positions present in vertex + header.
     * These are currently hardcoded:
     */
    c.nr_attrs = c.key.nr_attrs;
 
-   if (BRW_IS_IGDNG(brw))
+   if (brw->gen == 5)
       c.nr_regs = (c.nr_attrs + 1) / 2 + 3;  /* are vertices packed, or reg-aligned? */
    else
       c.nr_regs = (c.nr_attrs + 1) / 2 + 1;  /* are vertices packed, or reg-aligned? */

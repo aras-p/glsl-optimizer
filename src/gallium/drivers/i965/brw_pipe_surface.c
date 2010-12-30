@@ -169,20 +169,15 @@ static struct brw_surface *create_in_place_view( struct brw_screen *brw_screen,
 
       surface->ss.ss1.base_addr = surface->offset - tile_offset;
 
-      if (brw_screen->chipset.is_g4x) {
-	 if (tex->tiling == BRW_TILING_X) {
-	    /* Note that the low bits of these fields are missing, so
-	     * there's the possibility of getting in trouble.
-	     */
-	    surface->ss.ss5.x_offset = (tile_offset % 512) / tex->cpp / 4;
-	    surface->ss.ss5.y_offset = tile_offset / 512 / 2;
-	 } else {
-	    surface->ss.ss5.x_offset = (tile_offset % 128) / tex->cpp / 4;
+      if (tex->tiling == BRW_TILING_X) {
+	/* Note that the low bits of these fields are missing, so
+	 * there's the possibility of getting in trouble.
+	 */
+	surface->ss.ss5.x_offset = (tile_offset % 512) / tex->cpp / 4;
+	surface->ss.ss5.y_offset = tile_offset / 512 / 2;
+      } else {
+	surface->ss.ss5.x_offset = (tile_offset % 128) / tex->cpp / 4;
 	    surface->ss.ss5.y_offset = tile_offset / 128 / 2;
-	 }
-      }
-      else {
-	 assert(tile_offset == 0);
       }
    }
 

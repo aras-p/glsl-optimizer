@@ -103,7 +103,7 @@ gs_unit_create_from_key(struct brw_context *brw,
    else
       gs.thread4.max_threads = 0;
 
-   if (BRW_IS_IGDNG(brw))
+   if (brw->gen == 5)
       gs.thread4.rendering_enable = 1;
 
    if (BRW_DEBUG & DEBUG_STATS)

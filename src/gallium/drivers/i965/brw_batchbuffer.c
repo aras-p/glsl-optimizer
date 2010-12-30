@@ -64,13 +64,11 @@ brw_batchbuffer_reset(struct brw_batchbuffer *batch)
 }
 
 struct brw_batchbuffer *
-brw_batchbuffer_alloc(struct brw_winsys_screen *sws,
-                      struct brw_chipset chipset)
+brw_batchbuffer_alloc(struct brw_winsys_screen *sws)
 {
    struct brw_batchbuffer *batch = CALLOC_STRUCT(brw_batchbuffer);
 
    batch->sws = sws;
-   batch->chipset = chipset;
    brw_batchbuffer_reset(batch);
 
    return batch;

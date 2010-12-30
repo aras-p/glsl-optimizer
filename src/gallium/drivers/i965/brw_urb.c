@@ -147,7 +147,7 @@ static int recalculate_urb_fence( struct brw_context *brw )
 
       brw->urb.constrained = 0;
 
-      if (BRW_IS_IGDNG(brw)) {
+      if (brw->gen == 5) {
          brw->urb.nr_vs_entries = 128;
          brw->urb.nr_sf_entries = 48;
          if (check_urb_layout(brw)) {
@@ -157,7 +157,7 @@ static int recalculate_urb_fence( struct brw_context *brw )
             brw->urb.nr_vs_entries = limits[VS].preferred_nr_entries;
             brw->urb.nr_sf_entries = limits[SF].preferred_nr_entries;
          }
-      } else if (BRW_IS_G4X(brw)) {
+      } else if (brw->is_g4x) {
 	 brw->urb.nr_vs_entries = 64;
 	 if (check_urb_layout(brw)) {
 	    goto done;
