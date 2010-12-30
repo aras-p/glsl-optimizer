@@ -28,8 +28,11 @@
 #ifndef _TNL_H
 #define _TNL_H
 
-#include "main/mtypes.h"
+#include "main/glheader.h"
 
+struct gl_client_array;
+struct gl_context;
+struct gl_program;
 
 
 /* These are the public-access functions exported from tnl.  (A few
