@@ -470,11 +470,9 @@ intel_prepare_render(struct intel_context *intel)
     * the swap, and getting our hands on that doesn't seem worth it,
     * so we just us the first batch we emitted after the last swap.
     */
-   if (intel->need_throttle && intel->first_post_swapbuffers_batch) {
-      drm_intel_bo_wait_rendering(intel->first_post_swapbuffers_batch);
-      drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
-      intel->first_post_swapbuffers_batch = NULL;
-      intel->need_throttle = GL_FALSE;
+   if (intel->need_throttle) {
+       drmCommandNone(intel->driFd, DRM_I915_GEM_THROTTLE);
+       intel->need_throttle = GL_FALSE;
    }
 }
 
@@ -926,8 +924,6 @@ intelDestroyContext(__DRIcontext * driContextPriv)
       intel->prim.vb = NULL;
       drm_intel_bo_unreference(intel->prim.vb_bo);
       intel->prim.vb_bo = NULL;
-      drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
-      intel->first_post_swapbuffers_batch = NULL;
 
       driDestroyOptionCache(&intel->optionCache);
 

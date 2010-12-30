@@ -182,7 +182,6 @@ struct intel_context
       bool is_blit;
    } batch;
 
-   drm_intel_bo *first_post_swapbuffers_batch;
    GLboolean need_throttle;
    GLboolean no_batch_wrap;
 
