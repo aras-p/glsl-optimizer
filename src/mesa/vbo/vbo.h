@@ -32,7 +32,10 @@
 #ifndef _VBO_H
 #define _VBO_H
 
-#include "main/mtypes.h"
+#include "main/glheader.h"
+
+struct gl_client_array;
+struct gl_context;
 
 struct _mesa_prim {
    GLuint mode:8;
