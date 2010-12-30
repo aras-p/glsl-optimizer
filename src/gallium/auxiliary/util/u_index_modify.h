@@ -23,6 +23,9 @@
 #ifndef UTIL_INDEX_MODIFY_H
 #define UTIL_INDEX_MODIFY_H
 
+struct pipe_context;
+struct pipe_resource;
+
 void util_shorten_ubyte_elts_to_userptr(struct pipe_context *context,
 					struct pipe_resource *elts,
 					int index_bias,
