@@ -28,11 +28,13 @@
 #ifndef TGSI_TEXT_H
 #define TGSI_TEXT_H
 
-#include "pipe/p_shader_tokens.h"
-
 #if defined __cplusplus
 extern "C" {
 #endif
+
+#include "pipe/p_compiler.h"
+
+struct tgsi_token;
 
 boolean
 tgsi_text_translate(
