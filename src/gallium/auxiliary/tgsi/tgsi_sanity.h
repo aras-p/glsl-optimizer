@@ -28,11 +28,13 @@
 #ifndef TGSI_SANITY_H
 #define TGSI_SANITY_H
 
-#include "pipe/p_shader_tokens.h"
-
 #if defined __cplusplus
 extern "C" {
 #endif
+
+#include "pipe/p_compiler.h"
+
+struct tgsi_token;
 
 /* Check the given token stream for errors and common mistakes.
  * Diagnostic messages are printed out to the debug output, and is
