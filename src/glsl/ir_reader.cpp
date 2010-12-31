@@ -62,12 +62,6 @@ static ir_texture *read_texture(_mesa_glsl_parse_state *, s_expression *);
 
 static ir_dereference *read_dereference(_mesa_glsl_parse_state *,
 				        s_expression *);
-static ir_dereference_variable *
-read_var_ref(_mesa_glsl_parse_state *, s_expression *);
-static ir_dereference_array *
-read_array_ref(_mesa_glsl_parse_state *, s_expression *);
-static ir_dereference_record *
-read_record_ref(_mesa_glsl_parse_state *, s_expression *);
 
 void
 _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
@@ -827,85 +821,44 @@ read_constant(_mesa_glsl_parse_state *st, s_expression *expr)
 static ir_dereference *
 read_dereference(_mesa_glsl_parse_state *st, s_expression *expr)
 {
-   s_list *list = SX_AS_LIST(expr);
-   if (list == NULL || list->subexpressions.is_empty())
-      return NULL;
+   s_symbol *s_var;
+   s_expression *s_subject;
+   s_expression *s_index;
+   s_symbol *s_field;
 
-   s_symbol *tag = SX_AS_SYMBOL(list->subexpressions.head);
-   assert(tag != NULL);
+   s_pattern var_pat[] = { "var_ref", s_var };
+   s_pattern array_pat[] = { "array_ref", s_subject, s_index };
+   s_pattern record_pat[] = { "record_ref", s_subject, s_field };
 
-   if (strcmp(tag->value(), "var_ref") == 0)
-      return read_var_ref(st, list);
-   if (strcmp(tag->value(), "array_ref") == 0)
-      return read_array_ref(st, list);
-   if (strcmp(tag->value(), "record_ref") == 0)
-      return read_record_ref(st, list);
+   if (MATCH(expr, var_pat)) {
+      ir_variable *var = st->symbols->get_variable(s_var->value());
+      if (var == NULL) {
+	 ir_read_error(st, expr, "undeclared variable: %s", s_var->value());
+	 return NULL;
+      }
+      return new(st) ir_dereference_variable(var);
+   } else if (MATCH(expr, array_pat)) {
+      ir_rvalue *subject = read_rvalue(st, s_subject);
+      if (subject == NULL) {
+	 ir_read_error(st, NULL, "when reading the subject of an array_ref");
+	 return NULL;
+      }
+
+      ir_rvalue *idx = read_rvalue(st, s_index);
+      if (subject == NULL) {
+	 ir_read_error(st, NULL, "when reading the index of an array_ref");
+	 return NULL;
+      }
+      return new(st) ir_dereference_array(subject, idx);
+   } else if (MATCH(expr, record_pat)) {
+      ir_rvalue *subject = read_rvalue(st, s_subject);
+      if (subject == NULL) {
+	 ir_read_error(st, NULL, "when reading the subject of a record_ref");
+	 return NULL;
+      }
+      return new(st) ir_dereference_record(subject, s_field->value());
+   }
    return NULL;
-}
-
-static ir_dereference_variable *
-read_var_ref(_mesa_glsl_parse_state *st, s_expression *expr)
-{
-   void *ctx = st;
-   s_symbol *var_name;
-
-   s_pattern pat[] = { "var_ref", var_name };
-   if (!MATCH(expr, pat)) {
-      ir_read_error(st, expr, "expected (var_ref <variable name>)");
-      return NULL;
-   }
-
-   ir_variable *var = st->symbols->get_variable(var_name->value());
-   if (var == NULL) {
-      ir_read_error(st, expr, "undeclared variable: %s", var_name->value());
-      return NULL;
-   }
-
-   return new(ctx) ir_dereference_variable(var);
-}
-
-static ir_dereference_array *
-read_array_ref(_mesa_glsl_parse_state *st, s_expression *expr)
-{
-   void *ctx = st;
-   s_expression *subj_expr;
-   s_expression *idx_expr;
-
-   s_pattern pat[] = { "array_ref", subj_expr, idx_expr };
-   if (!MATCH(expr, pat)) {
-      ir_read_error(st, expr, "expected (array_ref <rvalue> <index>)");
-      return NULL;
-   }
-
-   ir_rvalue *subject = read_rvalue(st, subj_expr);
-   if (subject == NULL) {
-      ir_read_error(st, NULL, "when reading the subject of an array_ref");
-      return NULL;
-   }
-
-   ir_rvalue *idx = read_rvalue(st, idx_expr);
-   return new(ctx) ir_dereference_array(subject, idx);
-}
-
-static ir_dereference_record *
-read_record_ref(_mesa_glsl_parse_state *st, s_expression *expr)
-{
-   void *ctx = st;
-   s_expression *subj_expr;
-   s_symbol *field;
-
-   s_pattern pat[] = { "record_ref", subj_expr, field };
-   if (!MATCH(expr, pat)) {
-      ir_read_error(st, expr, "expected (record_ref <rvalue> <field>)");
-      return NULL;
-   }
-
-   ir_rvalue *subject = read_rvalue(st, subj_expr);
-   if (subject == NULL) {
-      ir_read_error(st, NULL, "when reading the subject of a record_ref");
-      return NULL;
-   }
-   return new(ctx) ir_dereference_record(subject, field->value());
 }
 
 static ir_texture *
