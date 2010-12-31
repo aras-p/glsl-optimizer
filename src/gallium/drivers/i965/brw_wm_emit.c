@@ -850,9 +850,9 @@ static void emit_tex( struct brw_wm_compile *c,
 
    if (p->brw->gen == 5) {
        if (shadow)
-           msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE_IGDNG;
+           msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_GEN5;
        else
-           msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_IGDNG;
+	   msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_GEN5;
    } else {
        if (shadow)
            msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE;
@@ -918,7 +918,7 @@ static void emit_txb( struct brw_wm_compile *c,
    msgLength = 9;
 
    if (p->brw->gen == 5)
-       msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS_IGDNG;
+       msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_GEN5;
    else
        msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS;
 
