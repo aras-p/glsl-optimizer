@@ -38,16 +38,6 @@ s_list::s_list()
 {
 }
 
-unsigned
-s_list::length() const
-{
-   unsigned i = 0;
-   foreach_iter(exec_list_iterator, it, this->subexpressions) {
-      i++;
-   }
-   return i;
-}
-
 static s_expression *
 read_atom(void *ctx, const char *& src)
 {

@@ -139,7 +139,6 @@ public:
    s_list();
 
    virtual bool is_list() const { return true; }
-   unsigned length() const;
 
    void print();
 

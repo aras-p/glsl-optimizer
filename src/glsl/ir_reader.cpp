@@ -754,13 +754,7 @@ read_constant(_mesa_glsl_parse_state *st, s_list *list)
    }
 
    if (type->is_array()) {
-      const unsigned elements_supplied = values->length();
-      if (elements_supplied != type->length) {
-	 ir_read_error(st, values, "expected exactly %u array elements, "
-		       "given %u", type->length, elements_supplied);
-	 return NULL;
-      }
-
+      unsigned elements_supplied = 0;
       exec_list elements;
       foreach_iter(exec_list_iterator, it, values->subexpressions) {
 	 s_expression *expr = (s_expression *) it.get();
@@ -774,6 +768,13 @@ read_constant(_mesa_glsl_parse_state *st, s_list *list)
 	 if (ir_elt == NULL)
 	    return NULL;
 	 elements.push_tail(ir_elt);
+	 elements_supplied++;
+      }
+
+      if (elements_supplied != type->length) {
+	 ir_read_error(st, values, "expected exactly %u array elements, "
+		       "given %u", type->length, elements_supplied);
+	 return NULL;
       }
       return new(ctx) ir_constant(type, &elements);
    }
