@@ -813,7 +813,7 @@ static int src1 (FILE *file, struct brw_instruction *inst)
     }
 }
 
-int brw_disasm_insn (FILE *file, const struct brw_instruction *inst)
+int brw_disasm_insn (FILE *file, struct brw_instruction *inst, int gen)
 {
     int	err = 0;
     int space = 0;
@@ -863,7 +863,8 @@ int brw_disasm_insn (FILE *file, const struct brw_instruction *inst)
 	err |= src1 (file, inst);
     }
 
-    if (inst->header.opcode == BRW_OPCODE_SEND) {
+    if (inst->header.opcode == BRW_OPCODE_SEND ||
+        inst->header.opcode == BRW_OPCODE_SENDC) {
 	newline (file);
 	pad (file, 16);
 	space = 0;
@@ -883,24 +884,70 @@ int brw_disasm_insn (FILE *file, const struct brw_instruction *inst)
 			    inst->bits3.math.precision, &space);
 	    break;
 	case BRW_MESSAGE_TARGET_SAMPLER:
-	    format (file, " (%d, %d, ",
-		    inst->bits3.sampler.binding_table_index,
-		    inst->bits3.sampler.sampler);
-	    err |= control (file, "sampler target format", sampler_target_format,
-			    inst->bits3.sampler.return_format, NULL);
-	    string (file, ")");
+	    if (gen >= 5) {
+		format (file, " (%d, %d, %d, %d)",
+			inst->bits3.sampler_gen5.binding_table_index,
+			inst->bits3.sampler_gen5.sampler,
+			inst->bits3.sampler_gen5.msg_type,
+			inst->bits3.sampler_gen5.simd_mode);
+	    } else if (0 /* FINISHME: is_g4x */) {
+	      format (file, " (%d, %d)",
+			inst->bits3.sampler_g4x.binding_table_index,
+			inst->bits3.sampler_g4x.sampler);
+	    } else {
+		format (file, " (%d, %d, ",
+			inst->bits3.sampler.binding_table_index,
+			inst->bits3.sampler.sampler);
+		err |= control (file, "sampler target format", sampler_target_format,
+				inst->bits3.sampler.return_format, NULL);
+		string (file, ")");
+	    }
+	    break;
+	case BRW_MESSAGE_TARGET_DATAPORT_READ:
+	    if (gen >= 6) {
+		format (file, " (%d, %d, %d, %d, %d, %d)",
+			inst->bits3.dp_render_cache.binding_table_index,
+			inst->bits3.dp_render_cache.msg_control,
+			inst->bits3.dp_render_cache.msg_type,
+			inst->bits3.dp_render_cache.send_commit_msg,
+			inst->bits3.dp_render_cache.msg_length,
+			inst->bits3.dp_render_cache.response_length);
+	    } else if (gen >= 5 /* FINISHME: || is_g4x */) {
+		format (file, " (%d, %d, %d)",
+			inst->bits3.dp_read_gen5.binding_table_index,
+			inst->bits3.dp_read_gen5.msg_control,
+			inst->bits3.dp_read_gen5.msg_type);
+	    } else {
+		format (file, " (%d, %d, %d)",
+			inst->bits3.dp_read.binding_table_index,
+			inst->bits3.dp_read.msg_control,
+			inst->bits3.dp_read.msg_type);
+	    }
 	    break;
 	case BRW_MESSAGE_TARGET_DATAPORT_WRITE:
-	    format (file, " (%d, %d, %d, %d)",
-		    inst->bits3.dp_write.binding_table_index,
-		    (inst->bits3.dp_write.pixel_scoreboard_clear << 3) |
-		    inst->bits3.dp_write.msg_control,
-		    inst->bits3.dp_write.msg_type,
-		    inst->bits3.dp_write.send_commit_msg);
+	    if (gen >= 6) {
+		format (file, " (%d, %d, %d, %d, %d, %d)",
+			inst->bits3.dp_render_cache.binding_table_index,
+			inst->bits3.dp_render_cache.msg_control,
+			inst->bits3.dp_render_cache.msg_type,
+			inst->bits3.dp_render_cache.send_commit_msg,
+			inst->bits3.dp_render_cache.msg_length,
+			inst->bits3.dp_render_cache.response_length);
+	    } else {
+		format (file, " (%d, %d, %d, %d)",
+			inst->bits3.dp_write.binding_table_index,
+			(inst->bits3.dp_write.pixel_scoreboard_clear << 3) |
+			inst->bits3.dp_write.msg_control,
+			inst->bits3.dp_write.msg_type,
+			inst->bits3.dp_write.send_commit_msg);
+	    }
 	    break;
 	case BRW_MESSAGE_TARGET_URB:
-	    format (file, " %d", inst->bits3.urb.offset);
-	    space = 1;
+	    if (gen >= 5) {
+		format (file, " %d", inst->bits3.urb_gen5.offset);
+	    } else {
+		format (file, " %d", inst->bits3.urb.offset);
+	    }
 	    err |= control (file, "urb swizzle", urb_swizzle,
 			    inst->bits3.urb.swizzle_control, &space);
 	    err |= control (file, "urb allocate", urb_allocate,
@@ -909,6 +956,11 @@ int brw_disasm_insn (FILE *file, const struct brw_instruction *inst)
 			    inst->bits3.urb.used, &space);
 	    err |= control (file, "urb complete", urb_complete,
 			    inst->bits3.urb.complete, &space);
+	    if (gen >= 5) {
+		format (file, " mlen %d, rlen %d\n",
+			inst->bits3.urb_gen5.msg_length,
+			inst->bits3.urb_gen5.response_length);
+	    }
 	    break;
 	case BRW_MESSAGE_TARGET_THREAD_SPAWNER:
 	    break;
@@ -918,10 +970,17 @@ int brw_disasm_insn (FILE *file, const struct brw_instruction *inst)
 	}
 	if (space)
 	    string (file, " ");
-	format (file, "mlen %d",
-		inst->bits3.generic.msg_length);
-	format (file, " rlen %d",
-		inst->bits3.generic.response_length);
+	if (gen >= 5) {
+	   format (file, "mlen %d",
+		   inst->bits3.generic_gen5.msg_length);
+	   format (file, " rlen %d",
+		   inst->bits3.generic_gen5.response_length);
+	} else {
+	    format (file, "mlen %d",
+		    inst->bits3.generic.msg_length);
+	    format (file, " rlen %d",
+		    inst->bits3.generic.response_length);
+	}
     }
     pad (file, 64);
     if (inst->header.opcode != BRW_OPCODE_NOP) {
@@ -932,7 +991,8 @@ int brw_disasm_insn (FILE *file, const struct brw_instruction *inst)
 	err |= control (file, "dependency control", dep_ctrl, inst->header.dependency_control, &space);
 	err |= control (file, "compression control", compr_ctrl, inst->header.compression_control, &space);
 	err |= control (file, "thread control", thread_ctrl, inst->header.thread_control, &space);
-	if (inst->header.opcode == BRW_OPCODE_SEND)
+	if (inst->header.opcode == BRW_OPCODE_SEND ||
+            inst->header.opcode == BRW_OPCODE_SENDC)
 	    err |= control (file, "end of thread", end_of_thread,
 			    inst->bits3.generic.end_of_thread, &space);
 	if (space)
@@ -946,13 +1006,13 @@ int brw_disasm_insn (FILE *file, const struct brw_instruction *inst)
 
 
 int brw_disasm (FILE *file, 
-                const struct brw_instruction *inst,
-                unsigned count)
+                struct brw_instruction *inst,
+                unsigned count, int gen)
 {
    int i, err;
 
    for (i = 0; i < count; i++) {
-      err = brw_disasm_insn(stderr, &inst[i]);
+      err = brw_disasm_insn(stderr, &inst[i], gen);
       if (err)
          return err;
    }

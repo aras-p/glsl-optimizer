@@ -148,7 +148,7 @@ static INLINE void make_reloc(struct brw_winsys_reloc *reloc,
 struct brw_winsys_screen {
 
    unsigned pci_id;
-
+   int gen;
    /**
     * Buffer functions.
     */
@@ -282,7 +282,7 @@ void brw_dump_data( unsigned pci_id,
 		    enum brw_buffer_data_type data_type,
 		    unsigned offset,
 		    const void *data,
-		    size_t size );
+		    size_t size, int gen );
 
 
 #endif

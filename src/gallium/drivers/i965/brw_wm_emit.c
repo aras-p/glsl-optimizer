@@ -1516,6 +1516,6 @@ void brw_wm_emit( struct brw_wm_compile *c )
 
    if (BRW_DEBUG & DEBUG_WM) {
       debug_printf("wm-native:\n");
-      brw_disasm(stderr, p->store, p->nr_insn);
+      brw_disasm(stderr, p->store, p->nr_insn, p->brw->gen);
    }
 }

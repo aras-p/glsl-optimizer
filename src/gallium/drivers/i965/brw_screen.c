@@ -437,6 +437,7 @@ brw_screen_create(struct brw_winsys_screen *sws)
       return NULL;
    }
 
+   sws->gen = bscreen->gen;
    bscreen->sws = sws;
    bscreen->base.winsys = NULL;
    bscreen->base.destroy = brw_destroy_screen;

@@ -478,7 +478,7 @@ static struct brw_instruction *next_insn( struct brw_compile *p,
    if (0 && (BRW_DEBUG & DEBUG_DISASSEM))
    {
       if (p->nr_insn) 
-         brw_disasm_insn(stderr, &p->store[p->nr_insn-1]);
+	  brw_disasm_insn(stderr, &p->store[p->nr_insn-1], p->brw->gen);
    }
 
    assert(p->nr_insn + 1 < BRW_EU_MAX_INSN);

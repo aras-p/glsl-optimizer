@@ -1655,6 +1655,6 @@ void brw_vs_emit(struct brw_vs_compile *c)
 
    if (BRW_DEBUG & DEBUG_VS) {
       debug_printf("vs-native:\n");
-      brw_disasm(stderr, p->store, p->nr_insn);
+      brw_disasm(stderr, p->store, p->nr_insn, p->brw->gen);
    }
 }
