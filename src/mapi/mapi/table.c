@@ -40,7 +40,7 @@ noop_warn(const char *name)
       debug = (getenv("MESA_DEBUG") || getenv("LIBGL_DEBUG"));
 
    if (debug)
-      fprintf(stderr, "%s is no-op", name);
+      fprintf(stderr, "%s is no-op\n", name);
 }
 
 static int
