@@ -38,7 +38,7 @@ static const glsl_type *read_type(_mesa_glsl_parse_state *, s_expression *);
 
 static void scan_for_prototypes(_mesa_glsl_parse_state *, exec_list *,
 			        s_expression *);
-static ir_function *read_function(_mesa_glsl_parse_state *, s_list *,
+static ir_function *read_function(_mesa_glsl_parse_state *, s_expression *,
 				  bool skip_body);
 static void read_function_sig(_mesa_glsl_parse_state *, ir_function *,
 			      s_expression *, bool skip_body);
@@ -47,27 +47,27 @@ static void read_instructions(_mesa_glsl_parse_state *, exec_list *,
 			      s_expression *, ir_loop *);
 static ir_instruction *read_instruction(_mesa_glsl_parse_state *,
 				        s_expression *, ir_loop *);
-static ir_variable *read_declaration(_mesa_glsl_parse_state *, s_list *);
-static ir_if *read_if(_mesa_glsl_parse_state *, s_list *, ir_loop *);
-static ir_loop *read_loop(_mesa_glsl_parse_state *st, s_list *list);
-static ir_return *read_return(_mesa_glsl_parse_state *, s_list *);
+static ir_variable *read_declaration(_mesa_glsl_parse_state *, s_expression *);
+static ir_if *read_if(_mesa_glsl_parse_state *, s_expression *, ir_loop *);
+static ir_loop *read_loop(_mesa_glsl_parse_state *st, s_expression *);
+static ir_return *read_return(_mesa_glsl_parse_state *, s_expression *);
 
 static ir_rvalue *read_rvalue(_mesa_glsl_parse_state *, s_expression *);
-static ir_assignment *read_assignment(_mesa_glsl_parse_state *, s_list *);
-static ir_expression *read_expression(_mesa_glsl_parse_state *, s_list *);
-static ir_call *read_call(_mesa_glsl_parse_state *, s_list *);
-static ir_swizzle *read_swizzle(_mesa_glsl_parse_state *, s_list *);
-static ir_constant *read_constant(_mesa_glsl_parse_state *, s_list *);
-static ir_texture *read_texture(_mesa_glsl_parse_state *, s_list *);
+static ir_assignment *read_assignment(_mesa_glsl_parse_state *, s_expression *);
+static ir_expression *read_expression(_mesa_glsl_parse_state *, s_expression *);
+static ir_call *read_call(_mesa_glsl_parse_state *, s_expression *);
+static ir_swizzle *read_swizzle(_mesa_glsl_parse_state *, s_expression *);
+static ir_constant *read_constant(_mesa_glsl_parse_state *, s_expression *);
+static ir_texture *read_texture(_mesa_glsl_parse_state *, s_expression *);
 
 static ir_dereference *read_dereference(_mesa_glsl_parse_state *,
 				        s_expression *);
 static ir_dereference_variable *
-read_var_ref(_mesa_glsl_parse_state *, s_list *);
+read_var_ref(_mesa_glsl_parse_state *, s_expression *);
 static ir_dereference_array *
-read_array_ref(_mesa_glsl_parse_state *, s_list *);
+read_array_ref(_mesa_glsl_parse_state *, s_expression *);
 static ir_dereference_record *
-read_record_ref(_mesa_glsl_parse_state *, s_list *);
+read_record_ref(_mesa_glsl_parse_state *, s_expression *);
 
 void
 _mesa_glsl_read_ir(_mesa_glsl_parse_state *state, exec_list *instructions,
@@ -177,15 +177,15 @@ scan_for_prototypes(_mesa_glsl_parse_state *st, exec_list *instructions,
 }
 
 static ir_function *
-read_function(_mesa_glsl_parse_state *st, s_list *list, bool skip_body)
+read_function(_mesa_glsl_parse_state *st, s_expression *expr, bool skip_body)
 {
    void *ctx = st;
    bool added = false;
    s_symbol *name;
 
    s_pattern pat[] = { "function", name };
-   if (!PARTIAL_MATCH(list, pat)) {
-      ir_read_error(st, list, "Expected (function <name> (signature ...) ...)");
+   if (!PARTIAL_MATCH(expr, pat)) {
+      ir_read_error(st, expr, "Expected (function <name> (signature ...) ...)");
       return NULL;
    }
 
@@ -196,7 +196,7 @@ read_function(_mesa_glsl_parse_state *st, s_list *list, bool skip_body)
       assert(added);
    }
 
-   exec_list_iterator it = list->subexpressions.iterator();
+   exec_list_iterator it = ((s_list *) expr)->subexpressions.iterator();
    it.next(); // skip "function" tag
    it.next(); // skip function name
    for (/* nothing */; it.has_next(); it.next()) {
@@ -238,8 +238,7 @@ read_function_sig(_mesa_glsl_parse_state *st, ir_function *f,
 
    exec_list_iterator it = paramlist->subexpressions.iterator();
    for (it.next() /* skip "parameters" */; it.has_next(); it.next()) {
-      s_list *decl = SX_AS_LIST(it.get());
-      ir_variable *var = read_declaration(st, decl);
+      ir_variable *var = read_declaration(st, (s_expression *) it.get());
       if (var == NULL)
 	 return;
 
@@ -364,15 +363,15 @@ read_instruction(_mesa_glsl_parse_state *st, s_expression *expr,
 }
 
 static ir_variable *
-read_declaration(_mesa_glsl_parse_state *st, s_list *list)
+read_declaration(_mesa_glsl_parse_state *st, s_expression *expr)
 {
    s_list *s_quals;
    s_expression *s_type;
    s_symbol *s_name;
 
    s_pattern pat[] = { "declare", s_quals, s_type, s_name };
-   if (!MATCH(list, pat)) {
-      ir_read_error(st, list, "expected (declare (<qualifiers>) <type> "
+   if (!MATCH(expr, pat)) {
+      ir_read_error(st, expr, "expected (declare (<qualifiers>) <type> "
 			      "<name>)");
       return NULL;
    }
@@ -386,7 +385,7 @@ read_declaration(_mesa_glsl_parse_state *st, s_list *list)
    foreach_iter(exec_list_iterator, it, s_quals->subexpressions) {
       s_symbol *qualifier = SX_AS_SYMBOL(it.get());
       if (qualifier == NULL) {
-	 ir_read_error(st, list, "qualifier list must contain only symbols");
+	 ir_read_error(st, expr, "qualifier list must contain only symbols");
 	 return NULL;
       }
 
@@ -412,7 +411,7 @@ read_declaration(_mesa_glsl_parse_state *st, s_list *list)
       } else if (strcmp(qualifier->value(), "noperspective") == 0) {
 	 var->interpolation = ir_var_noperspective;
       } else {
-	 ir_read_error(st, list, "unknown qualifier: %s", qualifier->value());
+	 ir_read_error(st, expr, "unknown qualifier: %s", qualifier->value());
 	 return NULL;
       }
    }
@@ -425,15 +424,15 @@ read_declaration(_mesa_glsl_parse_state *st, s_list *list)
 
 
 static ir_if *
-read_if(_mesa_glsl_parse_state *st, s_list *list, ir_loop *loop_ctx)
+read_if(_mesa_glsl_parse_state *st, s_expression *expr, ir_loop *loop_ctx)
 {
    s_expression *s_cond;
    s_expression *s_then;
    s_expression *s_else;
 
    s_pattern pat[] = { "if", s_cond, s_then, s_else };
-   if (!MATCH(list, pat)) {
-      ir_read_error(st, list, "expected (if <condition> (<then> ...) "
+   if (!MATCH(expr, pat)) {
+      ir_read_error(st, expr, "expected (if <condition> (<then> ...) "
 			      "(<else> ...))");
       return NULL;
    }
@@ -457,13 +456,13 @@ read_if(_mesa_glsl_parse_state *st, s_list *list, ir_loop *loop_ctx)
 
 
 static ir_loop *
-read_loop(_mesa_glsl_parse_state *st, s_list *list)
+read_loop(_mesa_glsl_parse_state *st, s_expression *expr)
 {
    s_expression *s_counter, *s_from, *s_to, *s_inc, *s_body;
 
    s_pattern pat[] = { "loop", s_counter, s_from, s_to, s_inc, s_body };
-   if (!MATCH(list, pat)) {
-      ir_read_error(st, list, "expected (loop <counter> <from> <to> "
+   if (!MATCH(expr, pat)) {
+      ir_read_error(st, expr, "expected (loop <counter> <from> <to> "
 			      "<increment> <body>)");
       return NULL;
    }
@@ -481,17 +480,17 @@ read_loop(_mesa_glsl_parse_state *st, s_list *list)
 
 
 static ir_return *
-read_return(_mesa_glsl_parse_state *st, s_list *list)
+read_return(_mesa_glsl_parse_state *st, s_expression *expr)
 {
-   s_expression *expr;
+   s_expression *s_retval;
 
-   s_pattern pat[] = { "return", expr };
-   if (!MATCH(list, pat)) {
-      ir_read_error(st, list, "expected (return <rvalue>)");
+   s_pattern pat[] = { "return", s_retval};
+   if (!MATCH(expr, pat)) {
+      ir_read_error(st, expr, "expected (return <rvalue>)");
       return NULL;
    }
 
-   ir_rvalue *retval = read_rvalue(st, expr);
+   ir_rvalue *retval = read_rvalue(st, s_retval);
    if (retval == NULL) {
       ir_read_error(st, NULL, "when reading return value");
       return NULL;
@@ -535,14 +534,14 @@ read_rvalue(_mesa_glsl_parse_state *st, s_expression *expr)
 }
 
 static ir_assignment *
-read_assignment(_mesa_glsl_parse_state *st, s_list *list)
+read_assignment(_mesa_glsl_parse_state *st, s_expression *expr)
 {
    s_expression *cond_expr, *lhs_expr, *rhs_expr;
    s_list       *mask_list;
 
    s_pattern pat[] = { "assign", cond_expr, mask_list, lhs_expr, rhs_expr };
-   if (!MATCH(list, pat)) {
-      ir_read_error(st, list, "expected (assign <condition> (<write mask>) "
+   if (!MATCH(expr, pat)) {
+      ir_read_error(st, expr, "expected (assign <condition> (<write mask>) "
 			      "<lhs> <rhs>)");
       return NULL;
    }
@@ -561,7 +560,7 @@ read_assignment(_mesa_glsl_parse_state *st, s_list *list)
       const char *mask_str = mask_symbol->value();
       unsigned mask_length = strlen(mask_str);
       if (mask_length > 4) {
-	 ir_read_error(st, list, "invalid write mask: %s", mask_str);
+	 ir_read_error(st, expr, "invalid write mask: %s", mask_str);
 	 return NULL;
       }
 
@@ -569,7 +568,7 @@ read_assignment(_mesa_glsl_parse_state *st, s_list *list)
 
       for (unsigned i = 0; i < mask_length; i++) {
 	 if (mask_str[i] < 'w' || mask_str[i] > 'z') {
-	    ir_read_error(st, list, "write mask contains invalid character: %c",
+	    ir_read_error(st, expr, "write mask contains invalid character: %c",
 			  mask_str[i]);
 	    return NULL;
 	 }
@@ -593,7 +592,7 @@ read_assignment(_mesa_glsl_parse_state *st, s_list *list)
    }
 
    if (mask == 0 && (lhs->type->is_vector() || lhs->type->is_scalar())) {
-      ir_read_error(st, list, "non-zero write mask required.");
+      ir_read_error(st, expr, "non-zero write mask required.");
       return NULL;
    }
 
@@ -601,15 +600,15 @@ read_assignment(_mesa_glsl_parse_state *st, s_list *list)
 }
 
 static ir_call *
-read_call(_mesa_glsl_parse_state *st, s_list *list)
+read_call(_mesa_glsl_parse_state *st, s_expression *expr)
 {
    void *ctx = st;
    s_symbol *name;
    s_list *params;
 
    s_pattern pat[] = { "call", name, params };
-   if (!MATCH(list, pat)) {
-      ir_read_error(st, list, "expected (call <name> (<param> ...))");
+   if (!MATCH(expr, pat)) {
+      ir_read_error(st, expr, "expected (call <name> (<param> ...))");
       return NULL;
    }
 
@@ -619,7 +618,7 @@ read_call(_mesa_glsl_parse_state *st, s_list *list)
       s_expression *expr = (s_expression*) it.get();
       ir_rvalue *param = read_rvalue(st, expr);
       if (param == NULL) {
-	 ir_read_error(st, list, "when reading parameter to function call");
+	 ir_read_error(st, expr, "when reading parameter to function call");
 	 return NULL;
       }
       parameters.push_tail(param);
@@ -627,14 +626,14 @@ read_call(_mesa_glsl_parse_state *st, s_list *list)
 
    ir_function *f = st->symbols->get_function(name->value());
    if (f == NULL) {
-      ir_read_error(st, list, "found call to undefined function %s",
+      ir_read_error(st, expr, "found call to undefined function %s",
 		    name->value());
       return NULL;
    }
 
    ir_function_signature *callee = f->matching_signature(&parameters);
    if (callee == NULL) {
-      ir_read_error(st, list, "couldn't find matching signature for function "
+      ir_read_error(st, expr, "couldn't find matching signature for function "
                     "%s", name->value());
       return NULL;
    }
@@ -643,7 +642,7 @@ read_call(_mesa_glsl_parse_state *st, s_list *list)
 }
 
 static ir_expression *
-read_expression(_mesa_glsl_parse_state *st, s_list *list)
+read_expression(_mesa_glsl_parse_state *st, s_expression *expr)
 {
    void *ctx = st;
    s_expression *s_type;
@@ -651,8 +650,8 @@ read_expression(_mesa_glsl_parse_state *st, s_list *list)
    s_expression *s_arg1;
 
    s_pattern pat[] = { "expression", s_type, s_op, s_arg1 };
-   if (!PARTIAL_MATCH(list, pat)) {
-      ir_read_error(st, list, "expected (expression <type> <operator> "
+   if (!PARTIAL_MATCH(expr, pat)) {
+      ir_read_error(st, expr, "expected (expression <type> <operator> "
 			      "<operand> [<operand>])");
       return NULL;
    }
@@ -665,13 +664,13 @@ read_expression(_mesa_glsl_parse_state *st, s_list *list)
    /* Read the operator */
    ir_expression_operation op = ir_expression::get_operator(s_op->value());
    if (op == (ir_expression_operation) -1) {
-      ir_read_error(st, list, "invalid operator: %s", s_op->value());
+      ir_read_error(st, expr, "invalid operator: %s", s_op->value());
       return NULL;
    }
     
    unsigned num_operands = ir_expression::get_num_operands(op);
    if (num_operands == 1 && !s_arg1->next->is_tail_sentinel()) {
-      ir_read_error(st, list, "expected (expression <type> %s <operand>)",
+      ir_read_error(st, expr, "expected (expression <type> %s <operand>)",
 		    s_op->value());
       return NULL;
    }
@@ -686,7 +685,7 @@ read_expression(_mesa_glsl_parse_state *st, s_list *list)
 
    if (num_operands == 2) {
       if (s_arg2->is_tail_sentinel() || !s_arg2->next->is_tail_sentinel()) {
-	 ir_read_error(st, list, "expected (expression <type> %s <operand> "
+	 ir_read_error(st, expr, "expected (expression <type> %s <operand> "
 				 "<operand>)", s_op->value());
 	 return NULL;
       }
@@ -702,19 +701,19 @@ read_expression(_mesa_glsl_parse_state *st, s_list *list)
 }
 
 static ir_swizzle *
-read_swizzle(_mesa_glsl_parse_state *st, s_list *list)
+read_swizzle(_mesa_glsl_parse_state *st, s_expression *expr)
 {
    s_symbol *swiz;
    s_expression *sub;
 
    s_pattern pat[] = { "swiz", swiz, sub };
-   if (!MATCH(list, pat)) {
-      ir_read_error(st, list, "expected (swiz <swizzle> <rvalue>)");
+   if (!MATCH(expr, pat)) {
+      ir_read_error(st, expr, "expected (swiz <swizzle> <rvalue>)");
       return NULL;
    }
 
    if (strlen(swiz->value()) > 4) {
-      ir_read_error(st, list, "expected a valid swizzle; found %s",
+      ir_read_error(st, expr, "expected a valid swizzle; found %s",
 		    swiz->value());
       return NULL;
    }
@@ -726,21 +725,21 @@ read_swizzle(_mesa_glsl_parse_state *st, s_list *list)
    ir_swizzle *ir = ir_swizzle::create(rvalue, swiz->value(),
 				       rvalue->type->vector_elements);
    if (ir == NULL)
-      ir_read_error(st, list, "invalid swizzle");
+      ir_read_error(st, expr, "invalid swizzle");
 
    return ir;
 }
 
 static ir_constant *
-read_constant(_mesa_glsl_parse_state *st, s_list *list)
+read_constant(_mesa_glsl_parse_state *st, s_expression *expr)
 {
    void *ctx = st;
    s_expression *type_expr;
    s_list *values;
 
    s_pattern pat[] = { "constant", type_expr, values };
-   if (!MATCH(list, pat)) {
-      ir_read_error(st, list, "expected (constant <type> (...))");
+   if (!MATCH(expr, pat)) {
+      ir_read_error(st, expr, "expected (constant <type> (...))");
       return NULL;
    }
 
@@ -749,7 +748,7 @@ read_constant(_mesa_glsl_parse_state *st, s_list *list)
       return NULL;
 
    if (values == NULL) {
-      ir_read_error(st, list, "expected (constant <type> (...))");
+      ir_read_error(st, expr, "expected (constant <type> (...))");
       return NULL;
    }
 
@@ -757,13 +756,7 @@ read_constant(_mesa_glsl_parse_state *st, s_list *list)
       unsigned elements_supplied = 0;
       exec_list elements;
       foreach_iter(exec_list_iterator, it, values->subexpressions) {
-	 s_expression *expr = (s_expression *) it.get();
-	 s_list *elt = SX_AS_LIST(expr);
-	 if (elt == NULL) {
-	    ir_read_error(st, expr, "expected (constant ...) array element");
-	    return NULL;
-	 }
-
+	 s_expression *elt = (s_expression *) it.get();
 	 ir_constant *ir_elt = read_constant(st, elt);
 	 if (ir_elt == NULL)
 	    return NULL;
@@ -851,20 +844,20 @@ read_dereference(_mesa_glsl_parse_state *st, s_expression *expr)
 }
 
 static ir_dereference_variable *
-read_var_ref(_mesa_glsl_parse_state *st, s_list *list)
+read_var_ref(_mesa_glsl_parse_state *st, s_expression *expr)
 {
    void *ctx = st;
    s_symbol *var_name;
 
    s_pattern pat[] = { "var_ref", var_name };
-   if (!MATCH(list, pat)) {
-      ir_read_error(st, list, "expected (var_ref <variable name>)");
+   if (!MATCH(expr, pat)) {
+      ir_read_error(st, expr, "expected (var_ref <variable name>)");
       return NULL;
    }
 
    ir_variable *var = st->symbols->get_variable(var_name->value());
    if (var == NULL) {
-      ir_read_error(st, list, "undeclared variable: %s", var_name->value());
+      ir_read_error(st, expr, "undeclared variable: %s", var_name->value());
       return NULL;
    }
 
@@ -872,15 +865,15 @@ read_var_ref(_mesa_glsl_parse_state *st, s_list *list)
 }
 
 static ir_dereference_array *
-read_array_ref(_mesa_glsl_parse_state *st, s_list *list)
+read_array_ref(_mesa_glsl_parse_state *st, s_expression *expr)
 {
    void *ctx = st;
    s_expression *subj_expr;
    s_expression *idx_expr;
 
    s_pattern pat[] = { "array_ref", subj_expr, idx_expr };
-   if (!MATCH(list, pat)) {
-      ir_read_error(st, list, "expected (array_ref <rvalue> <index>)");
+   if (!MATCH(expr, pat)) {
+      ir_read_error(st, expr, "expected (array_ref <rvalue> <index>)");
       return NULL;
    }
 
@@ -895,15 +888,15 @@ read_array_ref(_mesa_glsl_parse_state *st, s_list *list)
 }
 
 static ir_dereference_record *
-read_record_ref(_mesa_glsl_parse_state *st, s_list *list)
+read_record_ref(_mesa_glsl_parse_state *st, s_expression *expr)
 {
    void *ctx = st;
    s_expression *subj_expr;
    s_symbol *field;
 
    s_pattern pat[] = { "record_ref", subj_expr, field };
-   if (!MATCH(list, pat)) {
-      ir_read_error(st, list, "expected (record_ref <rvalue> <field>)");
+   if (!MATCH(expr, pat)) {
+      ir_read_error(st, expr, "expected (record_ref <rvalue> <field>)");
       return NULL;
    }
 
@@ -916,7 +909,7 @@ read_record_ref(_mesa_glsl_parse_state *st, s_list *list)
 }
 
 static ir_texture *
-read_texture(_mesa_glsl_parse_state *st, s_list *list)
+read_texture(_mesa_glsl_parse_state *st, s_expression *expr)
 {
    s_symbol *tag = NULL;
    s_expression *s_sampler = NULL;
@@ -935,11 +928,11 @@ read_texture(_mesa_glsl_parse_state *st, s_list *list)
    s_pattern other_pattern[] =
       { tag, s_sampler, s_coord, s_offset, s_proj, s_shadow, s_lod };
 
-   if (MATCH(list, tex_pattern)) {
+   if (MATCH(expr, tex_pattern)) {
       op = ir_tex;
-   } else if (MATCH(list, txf_pattern)) {
+   } else if (MATCH(expr, txf_pattern)) {
       op = ir_txf;
-   } else if (MATCH(list, other_pattern)) {
+   } else if (MATCH(expr, other_pattern)) {
       op = ir_texture::get_opcode(tag->value());
       if (op == -1)
 	 return NULL;
