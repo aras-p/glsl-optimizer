@@ -538,20 +538,25 @@ ir_reader::read_rvalue(s_expression *expr)
 ir_assignment *
 ir_reader::read_assignment(s_expression *expr)
 {
-   s_expression *cond_expr, *lhs_expr, *rhs_expr;
+   s_expression *cond_expr = NULL;
+   s_expression *lhs_expr, *rhs_expr;
    s_list       *mask_list;
 
-   s_pattern pat[] = { "assign", cond_expr, mask_list, lhs_expr, rhs_expr };
-   if (!MATCH(expr, pat)) {
-      ir_read_error(expr, "expected (assign <condition> (<write mask>) "
+   s_pattern pat4[] = { "assign",            mask_list, lhs_expr, rhs_expr };
+   s_pattern pat5[] = { "assign", cond_expr, mask_list, lhs_expr, rhs_expr };
+   if (!MATCH(expr, pat4) && !MATCH(expr, pat5)) {
+      ir_read_error(expr, "expected (assign [<condition>] (<write mask>) "
 			  "<lhs> <rhs>)");
       return NULL;
    }
 
-   ir_rvalue *condition = read_rvalue(cond_expr);
-   if (condition == NULL) {
-      ir_read_error(NULL, "when reading condition of assignment");
-      return NULL;
+   ir_rvalue *condition = NULL;
+   if (cond_expr != NULL) {
+      condition = read_rvalue(cond_expr);
+      if (condition == NULL) {
+	 ir_read_error(NULL, "when reading condition of assignment");
+	 return NULL;
+      }
    }
 
    unsigned mask = 0;

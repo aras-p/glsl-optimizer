@@ -281,9 +281,6 @@ void ir_print_visitor::visit(ir_assignment *ir)
 
    if (ir->condition)
       ir->condition->accept(this);
-   else
-      printf("(constant bool (1))");
-
 
    char mask[5];
    unsigned j = 0;
