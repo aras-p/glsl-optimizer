@@ -1582,8 +1582,7 @@ _mesa_glsl_initialize_variables(exec_list *instructions,
 				struct _mesa_glsl_parse_state *state);
 
 extern void
-_mesa_glsl_initialize_functions(exec_list *instructions,
-				struct _mesa_glsl_parse_state *state);
+_mesa_glsl_initialize_functions(_mesa_glsl_parse_state *state);
 
 extern void
 _mesa_glsl_release_functions(void);

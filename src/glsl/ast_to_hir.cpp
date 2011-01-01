@@ -60,7 +60,7 @@ void
 _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
 {
    _mesa_glsl_initialize_variables(instructions, state);
-   _mesa_glsl_initialize_functions(instructions, state);
+   _mesa_glsl_initialize_functions(state);
 
    state->symbols->language_version = state->language_version;
 
