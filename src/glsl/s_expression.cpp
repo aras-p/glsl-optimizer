@@ -38,15 +38,25 @@ s_list::s_list()
 {
 }
 
+static void
+skip_whitespace(const char *& src)
+{
+   src += strspn(src, " \v\t\r\n");
+   /* Also skip Scheme-style comments: semi-colon 'til end of line */
+   if (src[0] == ';') {
+      src += strcspn(src, "\n");
+      skip_whitespace(src);
+   }
+}
+
 static s_expression *
 read_atom(void *ctx, const char *& src)
 {
    s_expression *expr = NULL;
 
-   // Skip leading spaces.
-   src += strspn(src, " \v\t\r\n");
+   skip_whitespace(src);
 
-   size_t n = strcspn(src, "( \v\t\r\n)");
+   size_t n = strcspn(src, "( \v\t\r\n);");
    if (n == 0)
       return NULL; // no atom
 
@@ -80,8 +90,7 @@ s_expression::read_expression(void *ctx, const char *&src)
    if (atom != NULL)
       return atom;
 
-   // Skip leading spaces.
-   src += strspn(src, " \v\t\r\n");
+   skip_whitespace(src);
    if (src[0] == '(') {
       ++src;
 
@@ -91,7 +100,7 @@ s_expression::read_expression(void *ctx, const char *&src)
       while ((expr = read_expression(ctx, src)) != NULL) {
 	 list->subexpressions.push_tail(expr);
       }
-      src += strspn(src, " \v\t\r\n");
+      skip_whitespace(src);
       if (src[0] != ')') {
 	 printf("Unclosed expression (check your parenthesis).\n");
 	 return NULL;
