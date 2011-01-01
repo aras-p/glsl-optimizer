@@ -77,7 +77,7 @@ void brw_dump_data( unsigned pci_id,
    if (BRW_DUMP & DUMP_BATCH) {
       switch (data_type) {
       case BRW_DATA_BATCH_BUFFER:
-         intel_decode(data, size / 4, offset, pci_id);
+         intel_decode(data, size / 4, offset, pci_id, 0);
          break;
       default:
          break;

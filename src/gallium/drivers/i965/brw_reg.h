@@ -127,6 +127,8 @@
 #define IS_ILM(devid)           (devid == PCI_CHIP_ILM_G)
 #define IS_GEN5(devid)          (IS_ILD(devid) || IS_ILM(devid))
 
+#define IS_IRONLAKE(devid)	IS_GEN5(devid)
+
 #define IS_GEN6(devid)		(devid == PCI_CHIP_SANDYBRIDGE_GT1 || \
 				 devid == PCI_CHIP_SANDYBRIDGE_GT2 || \
 				 devid == PCI_CHIP_SANDYBRIDGE_GT2_PLUS	|| \
