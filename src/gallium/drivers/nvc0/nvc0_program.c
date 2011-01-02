@@ -134,6 +134,7 @@ nvc0_indirect_outputs(struct nvc0_translation_info *ti, int id)
 static INLINE unsigned
 nvc0_system_value_location(unsigned sn, unsigned si)
 {
+   /* NOTE: locations 0xfxx indicate special regs */
    switch (sn) {
       /*
    case TGSI_SEMANTIC_VERTEXID:
@@ -151,6 +152,10 @@ nvc0_system_value_location(unsigned sn, unsigned si)
       return 0x2f8;
    case TGSI_SEMANTIC_FACE:
       return 0x3fc;
+      /*
+   case TGSI_SEMANTIC_INVOCATIONID:
+      return 0xf11;
+      */
    default:
       assert(0);
       return 0x000;
@@ -426,11 +431,11 @@ nvc0_vp_gen_header(struct nvc0_program *vp, struct nvc0_translation_info *ti)
 static int
 nvc0_gp_gen_header(struct nvc0_program *gp, struct nvc0_translation_info *ti)
 {
+   unsigned invocations = 1;
    unsigned max_output_verts, output_prim;
    unsigned i;
 
-   gp->hdr[0] = 0x00021061;
-   gp->hdr[2] = 0x01000000;
+   gp->hdr[0] = 0x21061;
 
    for (i = 0; i < ti->scan.num_properties; ++i) {
       switch (ti->scan.properties[i].name) {
@@ -439,11 +444,20 @@ nvc0_gp_gen_header(struct nvc0_program *gp, struct nvc0_translation_info *ti)
          break;
       case TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES:
          max_output_verts = ti->scan.properties[i].data[0];
+         assert(max_output_verts < 512);
          break;
+         /*
+      case TGSI_PROPERTY_GS_INVOCATIONS:
+         invocations = ti->scan.properties[i].data[0];
+         assert(invocations <= 32);
+         break;
+         */
       default:
          break;
       }
    }
+
+   gp->hdr[2] = MIN2(invocations, 32) << 24;
 
    switch (output_prim) {
    case PIPE_PRIM_POINTS:
