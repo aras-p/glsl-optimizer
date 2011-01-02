@@ -295,19 +295,6 @@ nvc0_pass_fold_loads(struct nv_pass *ctx, struct nv_basic_block *b)
    return 0;
 }
 
-static INLINE uint
-modifiers_opcode(uint8_t mod)
-{
-   switch (mod) {
-   case NV_MOD_NEG: return NV_OP_NEG;
-   case NV_MOD_ABS: return NV_OP_ABS;
-   case 0:
-      return NV_OP_MOV;
-   default:
-      return NV_OP_NOP;
-   }
-}
-
 /* NOTE: Assumes loads have not yet been folded. */
 static int
 nv_pass_lower_mods(struct nv_pass *ctx, struct nv_basic_block *b)
@@ -445,45 +432,33 @@ constant_expression(struct nv_pc *pc, struct nv_instruction *nvi,
    apply_modifiers(&u1.u32, type, nvi->src[1]->mod);
 
    switch (nvi->opcode) {
-   case NV_OP_MAD:
+   case NV_OP_MAD_F32:
       if (nvi->src[2]->value->reg.file != NV_FILE_GPR)
          return;
       /* fall through */
-   case NV_OP_MUL:
-      switch (type) {
-      case NV_TYPE_F32: u.f32 = u0.f32 * u1.f32; break;
-      case NV_TYPE_U32: u.u32 = u0.u32 * u1.u32; break;
-      case NV_TYPE_S32: u.s32 = u0.s32 * u1.s32; break;
-      default:
-         assert(0);
-         break;
-      }
+   case NV_OP_MUL_F32:
+      u.f32 = u0.f32 * u1.f32;
       break;
-   case NV_OP_ADD:
-      switch (type) {
-      case NV_TYPE_F32: u.f32 = u0.f32 + u1.f32; break;
-      case NV_TYPE_U32: u.u32 = u0.u32 + u1.u32; break;
-      case NV_TYPE_S32: u.s32 = u0.s32 + u1.s32; break;
-      default:
-         assert(0);
-         break;
-      }
+   case NV_OP_MUL_B32:
+      u.u32 = u0.u32 * u1.u32;
       break;
-   case NV_OP_SUB:
-      switch (type) {
-      case NV_TYPE_F32: u.f32 = u0.f32 - u1.f32; break;
-      case NV_TYPE_U32: u.u32 = u0.u32 - u1.u32; break;
-      case NV_TYPE_S32: u.s32 = u0.s32 - u1.s32; break;
-      default:
-         assert(0);
-         break;
-      }
+   case NV_OP_ADD_F32:
+      u.f32 = u0.f32 + u1.f32;
       break;
+   case NV_OP_ADD_B32:
+      u.u32 = u0.u32 + u1.u32;
+      break;
+   case NV_OP_SUB_F32:
+      u.f32 = u0.f32 - u1.f32;
+      break;
+      /*
+   case NV_OP_SUB_B32:
+      u.u32 = u0.u32 - u1.u32;
+      break;
+      */
    default:
       return;
    }
-
-   nvi->opcode = NV_OP_MOV;
 
    val = new_value(pc, NV_FILE_IMM, nv_type_sizeof(type));
    val->reg.imm.u32 = u.u32;
@@ -491,17 +466,18 @@ constant_expression(struct nv_pc *pc, struct nv_instruction *nvi,
    nv_reference(pc, nvi, 1, NULL);
    nv_reference(pc, nvi, 0, val);
 
-   if (nvi->src[2]) {
-      /* from MAD */
+   if (nvi->opcode == NV_OP_MAD_F32) {
       nvi->src[1] = nvi->src[0];
       nvi->src[0] = nvi->src[2];
       nvi->src[2] = NULL;
-      nvi->opcode = NV_OP_ADD;
+      nvi->opcode = NV_OP_ADD_F32;
 
       if (val->reg.imm.u32 == 0) {
          nvi->src[1] = NULL;
          nvi->opcode = NV_OP_MOV;
       }
+   } else {
+      nvi->opcode = NV_OP_MOV;
    }
 }
 
@@ -514,6 +490,7 @@ constant_operand(struct nv_pc *pc,
       uint32_t u32;
       int32_t s32;
    } u;
+   int shift;
    int t = s ? 0 : 1;
    uint op;
    ubyte type;
@@ -525,54 +502,83 @@ constant_operand(struct nv_pc *pc,
    u.u32 = val->reg.imm.u32;
    apply_modifiers(&u.u32, type, nvi->src[s]->mod);
 
-   switch (NV_BASEOP(nvi->opcode)) {
-   case NV_OP_MUL:
-      if ((type == NV_TYPE_F32 && u.f32 == 1.0f) ||
-          (NV_TYPE_ISINT(type) && u.u32 == 1)) {
-         if ((op = modifiers_opcode(nvi->src[t]->mod)) == NV_OP_NOP)
-            break;
-         nvi->opcode = op;
-         nv_reference(pc, nvi, s, NULL);
-         nvi->src[0] = nvi->src[t];
+   if (u.u32 == 0 && NV_BASEOP(nvi->opcode) == NV_OP_MUL) {
+      nvi->opcode = NV_OP_MOV;
+      nv_reference(pc, nvi, t, NULL);
+      if (s) {
+         nvi->src[0] = nvi->src[1];
          nvi->src[1] = NULL;
+      }
+      return;
+   }
+
+   switch (nvi->opcode) {
+   case NV_OP_MUL_F32:
+      if (u.f32 == 1.0f || u.f32 == -1.0f) {
+         if (u.f32 == -1.0f)
+            nvi->src[t]->mod ^= NV_MOD_NEG;
+         switch (nvi->src[t]->mod) {
+         case 0: op = nvi->saturate ? NV_OP_SAT : NV_OP_MOV; break;
+         case NV_MOD_NEG: op = NV_OP_NEG_F32; break;
+         case NV_MOD_ABS: op = NV_OP_ABS_F32; break;
+         default:
+            return;
+         }
+         nvi->opcode = op;
+         nv_reference(pc, nvi, 0, nvi->src[t]->value);
+         nv_reference(pc, nvi, 1, NULL);
+         nvi->src[0]->mod = 0;
       } else
-      if ((type == NV_TYPE_F32 && u.f32 == 2.0f) ||
-          (NV_TYPE_ISINT(type) && u.u32 == 2)) {
-         nvi->opcode = NV_OP_ADD;
+      if (u.f32 == 2.0f || u.f32 == -2.0f) {
+         if (u.f32 == -2.0f)
+            nvi->src[t]->mod ^= NV_MOD_NEG;
+         nvi->opcode = NV_OP_ADD_F32;
          nv_reference(pc, nvi, s, nvi->src[t]->value);
          nvi->src[s]->mod = nvi->src[t]->mod;
-      } else
-      if (type == NV_TYPE_F32 && u.f32 == -1.0f) {
-         if (nvi->src[t]->mod & NV_MOD_NEG)
-            nvi->opcode = NV_OP_MOV;
-         else
-            nvi->opcode = NV_OP_NEG;
-         nv_reference(pc, nvi, s, NULL);
-         nvi->src[0] = nvi->src[t];
-         nvi->src[1] = NULL;
-      } else
-      if (type == NV_TYPE_F32 && u.f32 == -2.0f) {
-         nvi->opcode = NV_OP_ADD;
-         nv_reference(pc, nvi, s, nvi->src[t]->value);
-         nvi->src[s]->mod = (nvi->src[t]->mod ^= NV_MOD_NEG);
-      } else
+      }
+   case NV_OP_ADD_F32:
       if (u.u32 == 0) {
-         nvi->opcode = NV_OP_MOV;
-         nv_reference(pc, nvi, t, NULL);
-         if (s) {
-            nvi->src[0] = nvi->src[1];
-            nvi->src[1] = NULL;
+         switch (nvi->src[t]->mod) {
+         case 0: op = nvi->saturate ? NV_OP_SAT : NV_OP_MOV; break;
+         case NV_MOD_NEG: op = NV_OP_NEG_F32; break;
+         case NV_MOD_ABS: op = NV_OP_ABS_F32; break;
+         case NV_MOD_NEG | NV_MOD_ABS:
+            op = NV_OP_CVT;
+            nvi->ext.cvt.s = nvi->ext.cvt.d = type;
+            break;
+         default:
+            return;
          }
+         nvi->opcode = op;
+         nv_reference(pc, nvi, 0, nvi->src[t]->value);
+         nv_reference(pc, nvi, 1, NULL);
+         if (nvi->opcode != NV_OP_CVT)
+            nvi->src[0]->mod = 0;
+      }
+   case NV_OP_ADD_B32:
+      if (u.u32 == 0) {
+         assert(nvi->src[t]->mod == 0);
+         nvi->opcode = nvi->saturate ? NV_OP_CVT : NV_OP_MOV;
+         nvi->ext.cvt.s = nvi->ext.cvt.d = type;
+         nv_reference(pc, nvi, 0, nvi->src[t]->value);
+         nv_reference(pc, nvi, 1, NULL);
       }
       break;
-   case NV_OP_ADD:
-      if (u.u32 == 0) {
-         if ((op = modifiers_opcode(nvi->src[t]->mod)) == NV_OP_NOP)
-            break;
-         nvi->opcode = op;
-         nv_reference(pc, nvi, s, NULL);
-         nvi->src[0] = nvi->src[t];
-         nvi->src[1] = NULL;
+   case NV_OP_MUL_B32:
+      /* multiplication by 0 already handled above */
+      assert(nvi->src[s]->mod == 0);
+      shift = ffs(u.s32) - 1;
+      if (shift == 0) {
+         nvi->opcode = NV_OP_MOV;
+         nv_reference(pc, nvi, 0, nvi->src[t]->value);
+         nv_reference(pc, nvi, 1, NULL);
+      } else
+      if (u.s32 > 0 && u.s32 == (1 << shift)) {
+         nvi->opcode = NV_OP_SHL;
+         (val = new_value(pc, NV_FILE_IMM, NV_TYPE_U32))->reg.imm.s32 = shift;
+         nv_reference(pc, nvi, 0, nvi->src[t]->value);
+         nv_reference(pc, nvi, 1, val);
+         break;
       }
       break;
    case NV_OP_RCP:
