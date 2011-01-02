@@ -201,7 +201,6 @@ void
 nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
 {
    struct push_context ctx;
-   struct pipe_transfer *transfer = NULL;
    unsigned i, index_size;
    unsigned inst = info->instance_count;
 
@@ -267,12 +266,8 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
    }
 
    if (info->indexed)
-	   pipe_buffer_unmap(&nvc0->pipe, transfer);
+      nvc0_resource_unmap(nvc0_resource(nvc0->idxbuf.buffer));
 
-   for (i = 0; i < nvc0->num_vtxbufs; ++i) {
-      struct nvc0_resource *res = nvc0_resource(nvc0->vtxbuf[i].buffer);
-
-      if (res->bo)
-         nouveau_bo_unmap(res->bo);
-   }
+   for (i = 0; i < nvc0->num_vtxbufs; ++i)
+      nvc0_resource_unmap(nvc0_resource(nvc0->vtxbuf[i].buffer));
 }

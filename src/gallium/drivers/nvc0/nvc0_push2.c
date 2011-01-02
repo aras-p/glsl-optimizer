@@ -1,4 +1,6 @@
 
+#if 0 /* not used, kept for now to compare with util/translate */
+
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "util/u_inlines.h"
@@ -327,3 +329,5 @@ nvc0_push_vbo2(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
       prim |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
    }
 }
+
+#endif

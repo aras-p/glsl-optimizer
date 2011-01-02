@@ -102,8 +102,7 @@ nvc0_resource_map_offset(struct nvc0_context *nvc0,
 static INLINE void
 nvc0_resource_unmap(struct nvc0_resource *res)
 {
-   if (res->domain != 0 && 0)
-      nouveau_bo_unmap(res->bo);
+   /* no-op */
 }
 
 #define NVC0_TILE_DIM_SHIFT(m, d) (((m) >> (d * 4)) & 0xf)
