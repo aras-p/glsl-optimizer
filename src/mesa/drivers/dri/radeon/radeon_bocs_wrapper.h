@@ -67,6 +67,9 @@ struct drm_radeon_info {
 #define DRM_RADEON_INFO 0x1
 #endif
 
+static inline void radeon_gem_get_kernel_name(struct radeon_bo *dummy, uint32_t *value)
+{
+}
 
 static inline uint32_t radeon_gem_name_bo(struct radeon_bo *dummy)
 {
