@@ -1352,7 +1352,7 @@ if test "x$enable_gallium_egl" = xauto; then
         enable_gallium_egl=$enable_egl
         ;;
     *)
-        enable_gallium_egl=no
+        enable_gallium_egl=$enable_openvg
         ;;
     esac
 fi
@@ -1467,10 +1467,6 @@ AC_SUBST([EGL_CLIENT_APIS])
 
 if test "x$HAVE_ST_EGL" = xyes; then
 	GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl"
-	# define GLX_DIRECT_RENDERING even when the driver is not dri
-	if test "x$mesa_driver" != xdri -a "x$driglx_direct" = xyes; then
-            DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
-	fi
 fi
 
 if test "x$HAVE_ST_XORG" = xyes; then
