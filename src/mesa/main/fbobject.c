@@ -542,8 +542,7 @@ test_attachment_completeness(const struct gl_context *ctx, GLenum format,
          return;
       }
       if (format == GL_COLOR) {
-         if (baseFormat != GL_RGB &&
-             baseFormat != GL_RGBA) {
+         if (!is_legal_color_format(ctx, baseFormat)) {
             att_incomplete("bad renderbuffer color format");
             att->Complete = GL_FALSE;
             return;
