@@ -180,7 +180,7 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
 
    if (blit_mask) {
       debug_mask("blit", blit_mask);
-      intelClearWithBlit(ctx, blit_mask);
+      tri_mask |= intelClearWithBlit(ctx, blit_mask);
    }
 
    if (tri_mask) {
