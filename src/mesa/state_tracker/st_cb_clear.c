@@ -470,13 +470,9 @@ st_Clear(struct gl_context *ctx, GLbitfield mask)
          if (mask & (1 << b)) {
             struct gl_renderbuffer *rb
                = ctx->DrawBuffer->Attachment[b].Renderbuffer;
-            struct st_renderbuffer *strb;
+            struct st_renderbuffer *strb = st_renderbuffer(rb);
 
-            assert(rb);
-
-            strb = st_renderbuffer(rb);
-
-            if (!strb->surface)
+            if (!strb || !strb->surface)
                continue;
 
             if (check_clear_color_with_quad( ctx, rb ))
