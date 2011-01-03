@@ -1481,7 +1481,7 @@ _mesa_add_color_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
                               GLboolean frontLeft, GLboolean backLeft,
                               GLboolean frontRight, GLboolean backRight)
 {
-   GLuint b;
+   gl_buffer_index b;
 
    if (rgbBits > 16 || alphaBits > 16) {
       _mesa_problem(ctx,
@@ -1545,7 +1545,7 @@ _mesa_add_alpha_renderbuffers(struct gl_context *ctx, struct gl_framebuffer *fb,
                               GLboolean frontLeft, GLboolean backLeft,
                               GLboolean frontRight, GLboolean backRight)
 {
-   GLuint b;
+   gl_buffer_index b;
 
    /* for window system framebuffers only! */
    assert(fb->Name == 0);
@@ -1883,10 +1883,11 @@ _mesa_add_soft_renderbuffers(struct gl_framebuffer *fb,
 
 /**
  * Attach a renderbuffer to a framebuffer.
+ * \param bufferName  one of the BUFFER_x tokens
  */
 void
 _mesa_add_renderbuffer(struct gl_framebuffer *fb,
-                       GLuint bufferName, struct gl_renderbuffer *rb)
+                       gl_buffer_index bufferName, struct gl_renderbuffer *rb)
 {
    assert(fb);
    assert(rb);
@@ -1916,9 +1917,11 @@ _mesa_add_renderbuffer(struct gl_framebuffer *fb,
 
 /**
  * Remove the named renderbuffer from the given framebuffer.
+ * \param bufferName  one of the BUFFER_x tokens
  */
 void
-_mesa_remove_renderbuffer(struct gl_framebuffer *fb, GLuint bufferName)
+_mesa_remove_renderbuffer(struct gl_framebuffer *fb,
+                          gl_buffer_index bufferName)
 {
    struct gl_renderbuffer *rb;
 

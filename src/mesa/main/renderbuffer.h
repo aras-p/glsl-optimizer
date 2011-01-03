@@ -95,10 +95,11 @@ _mesa_add_soft_renderbuffers(struct gl_framebuffer *fb,
 
 extern void
 _mesa_add_renderbuffer(struct gl_framebuffer *fb,
-                       GLuint bufferName, struct gl_renderbuffer *rb);
+                       gl_buffer_index bufferName, struct gl_renderbuffer *rb);
 
 extern void
-_mesa_remove_renderbuffer(struct gl_framebuffer *fb, GLuint bufferName);
+_mesa_remove_renderbuffer(struct gl_framebuffer *fb,
+                          gl_buffer_index bufferName);
 
 extern void
 _mesa_reference_renderbuffer(struct gl_renderbuffer **ptr,
