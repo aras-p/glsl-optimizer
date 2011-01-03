@@ -1171,8 +1171,17 @@ get_component_bits(GLenum pname, GLenum baseFormat, gl_format format)
    switch (pname) {
    case GL_RENDERBUFFER_RED_SIZE_EXT:
    case GL_FRAMEBUFFER_ATTACHMENT_RED_SIZE:
+      if (baseFormat == GL_RGB || baseFormat == GL_RGBA ||
+	  baseFormat == GL_RG || baseFormat == GL_RED)
+         return _mesa_get_format_bits(format, pname);
+      else
+         return 0;
    case GL_RENDERBUFFER_GREEN_SIZE_EXT:
    case GL_FRAMEBUFFER_ATTACHMENT_GREEN_SIZE:
+      if (baseFormat == GL_RGB || baseFormat == GL_RGBA || baseFormat == GL_RG)
+         return _mesa_get_format_bits(format, pname);
+      else
+         return 0;
    case GL_RENDERBUFFER_BLUE_SIZE_EXT:
    case GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE:
       if (baseFormat == GL_RGB || baseFormat == GL_RGBA)
