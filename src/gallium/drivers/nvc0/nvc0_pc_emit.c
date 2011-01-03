@@ -812,7 +812,12 @@ emit_ld(struct nv_pc *pc, struct nv_instruction *i)
 {
    if (SFILE(i, 0) >= NV_FILE_MEM_C(0) &&
        SFILE(i, 0) <= NV_FILE_MEM_C(15)) {
-      emit_ld_const(pc, i);
+      if (SSIZE(i, 0) == 4 && i->indirect < 0) {
+         i->lanes = 0xf;
+         emit_mov(pc, i);
+      } else {
+         emit_ld_const(pc, i);
+      }
    } else {
       NOUVEAU_ERR("emit_ld(%u): not handled yet\n", SFILE(i, 0));
       abort();
