@@ -402,8 +402,8 @@ fbo_incomplete(const char *msg, int index)
 /**
  * Is the given base format a legal format for a color renderbuffer?
  */
-static GLboolean
-is_legal_color_format(const struct gl_context *ctx, GLenum baseFormat)
+GLboolean
+_mesa_is_legal_color_format(const struct gl_context *ctx, GLenum baseFormat)
 {
    switch (baseFormat) {
    case GL_RGB:
@@ -488,7 +488,7 @@ test_attachment_completeness(const struct gl_context *ctx, GLenum format,
       baseFormat = _mesa_get_format_base_format(texImage->TexFormat);
 
       if (format == GL_COLOR) {
-         if (!is_legal_color_format(ctx, baseFormat)) {
+         if (!_mesa_is_legal_color_format(ctx, baseFormat)) {
             att_incomplete("bad format");
             att->Complete = GL_FALSE;
             return;
@@ -542,7 +542,7 @@ test_attachment_completeness(const struct gl_context *ctx, GLenum format,
          return;
       }
       if (format == GL_COLOR) {
-         if (!is_legal_color_format(ctx, baseFormat)) {
+         if (!_mesa_is_legal_color_format(ctx, baseFormat)) {
             att_incomplete("bad renderbuffer color format");
             att->Complete = GL_FALSE;
             return;
@@ -668,7 +668,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
          f = texImg->_BaseFormat;
          mesaFormat = texImg->TexFormat;
          numImages++;
-         if (!is_legal_color_format(ctx, f) &&
+         if (!_mesa_is_legal_color_format(ctx, f) &&
              !is_legal_depth_format(ctx, f)) {
             fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT;
             fbo_incomplete("texture attachment incomplete", -1);
@@ -792,7 +792,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
       fb->Height = minHeight;
 
       /* finally, update the visual info for the framebuffer */
-      _mesa_update_framebuffer_visual(fb);
+      _mesa_update_framebuffer_visual(ctx, fb);
    }
 }
 
@@ -1939,7 +1939,7 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
    /* Some subsequent GL commands may depend on the framebuffer's visual
     * after the binding is updated.  Update visual info now.
     */
-   _mesa_update_framebuffer_visual(fb);
+   _mesa_update_framebuffer_visual(ctx, fb);
 }
 
 

@@ -522,7 +522,8 @@ _mesa_update_draw_buffer_bounds(struct gl_context *ctx)
  * integer Z values.
  */
 void
-_mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
+_mesa_update_framebuffer_visual(struct gl_context *ctx,
+				struct gl_framebuffer *fb)
 {
    GLuint i;
 
@@ -542,9 +543,8 @@ _mesa_update_framebuffer_visual(struct gl_framebuffer *fb)
          const struct gl_renderbuffer *rb = fb->Attachment[i].Renderbuffer;
          const GLenum baseFormat = _mesa_get_format_base_format(rb->Format);
          const gl_format fmt = rb->Format;
-         
-         if (baseFormat == GL_RGBA || baseFormat == GL_RGB ||
-	     baseFormat == GL_ALPHA) {
+
+         if (_mesa_is_legal_color_format(ctx, baseFormat)) {
             fb->Visual.redBits = _mesa_get_format_bits(fmt, GL_RED_BITS);
             fb->Visual.greenBits = _mesa_get_format_bits(fmt, GL_GREEN_BITS);
             fb->Visual.blueBits = _mesa_get_format_bits(fmt, GL_BLUE_BITS);
