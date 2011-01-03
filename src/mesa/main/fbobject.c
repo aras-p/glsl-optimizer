@@ -1190,7 +1190,8 @@ get_component_bits(GLenum pname, GLenum baseFormat, gl_format format)
          return 0;
    case GL_RENDERBUFFER_ALPHA_SIZE_EXT:
    case GL_FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE:
-      if (baseFormat == GL_RGBA || baseFormat == GL_ALPHA)
+      if (baseFormat == GL_RGBA || baseFormat == GL_ALPHA ||
+	  baseFormat == GL_LUMINANCE_ALPHA)
          return _mesa_get_format_bits(format, pname);
       else
          return 0;
