@@ -85,6 +85,8 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
    GLbitfield blit_mask = 0;
    GLbitfield swrast_mask = 0;
    struct gl_framebuffer *fb = ctx->DrawBuffer;
+   struct intel_renderbuffer *irb;
+   int i;
 
    if (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_FRONT_RIGHT)) {
       intel->front_buffer_dirty = GL_TRUE;
@@ -92,6 +94,22 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
 
    if (0)
       fprintf(stderr, "%s\n", __FUNCTION__);
+
+   /* Get SW clears out of the way: Anything without an intel_renderbuffer */
+   for (i = 0; i < BUFFER_COUNT; i++) {
+      if (!(mask & (1 << i)))
+	 continue;
+
+      irb = intel_get_renderbuffer(fb, i);
+      if (unlikely(!irb)) {
+	 swrast_mask |= (1 << i);
+	 mask &= ~(1 << i);
+      }
+   }
+   if (unlikely(swrast_mask)) {
+      debug_mask("swrast", swrast_mask);
+      _swrast_Clear(ctx, swrast_mask);
+   }
 
    /* HW color buffers (front, back, aux, generic FBO, etc) */
    if (colorMask == ~0) {
@@ -157,23 +175,8 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
       blit_mask = 0;
    }
 
-   /* SW fallback clearing */
-   swrast_mask = mask & ~tri_mask & ~blit_mask;
-
-   {
-      /* look for non-Intel renderbuffers (clear them with swrast) */
-      GLbitfield blit_or_tri = blit_mask | tri_mask;
-      while (blit_or_tri) {
-         GLuint i = _mesa_ffs(blit_or_tri) - 1;
-         GLbitfield bufBit = 1 << i;
-         if (!fb->Attachment[i].Renderbuffer->ClassID) {
-            blit_mask &= ~bufBit;
-            tri_mask &= ~bufBit;
-            swrast_mask |= bufBit;
-         }
-         blit_or_tri ^= bufBit;
-      }
-   }
+   /* Anything left, just use tris */
+   tri_mask |= mask & ~blit_mask;
 
    if (blit_mask) {
       debug_mask("blit", blit_mask);
@@ -183,11 +186,6 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
    if (tri_mask) {
       debug_mask("tri", tri_mask);
       _mesa_meta_Clear(&intel->ctx, tri_mask);
-   }
-
-   if (swrast_mask) {
-      debug_mask("swrast", swrast_mask);
-      _swrast_Clear(ctx, swrast_mask);
    }
 }
 
