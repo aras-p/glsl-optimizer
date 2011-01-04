@@ -66,7 +66,7 @@ void nouveau_screen_fini(struct nouveau_screen *);
 
 
 
-
+#ifndef NOUVEAU_NVC0
 static INLINE unsigned
 RING_3D(unsigned mthd, unsigned size)
 {
@@ -78,5 +78,6 @@ RING_3D_NI(unsigned mthd, unsigned size)
 {
 	return 0x40000000 | (7 << 13) | (size << 18) | mthd;
 }
+#endif
 
 #endif
