@@ -43,7 +43,10 @@ upload_clip_state(struct brw_context *brw)
       depth_clamp = GEN6_CLIP_Z_TEST;
 
    if (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION) {
-      provoking = 0;
+      provoking =
+	 (0 << GEN6_CLIP_TRI_PROVOKE_SHIFT) |
+	 (1 << GEN6_CLIP_TRIFAN_PROVOKE_SHIFT) |
+	 (0 << GEN6_CLIP_LINE_PROVOKE_SHIFT);
    } else {
       provoking =
 	 (2 << GEN6_CLIP_TRI_PROVOKE_SHIFT) |
