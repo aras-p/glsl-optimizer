@@ -499,7 +499,7 @@ nvc0_fp_gen_header(struct nvc0_program *fp, struct nvc0_translation_info *ti)
          fp->hdr[0] |= 0x4000; /* FP_MULTIPLE_COLOR_OUTPUTS */
    } else {
    if (ti->scan.num_outputs > 1)
-      fp->hdr[0] |= 0x8000; /* FP_MULTIPLE_COLOR_OUTPUTS */
+      fp->hdr[0] |= 0x4000; /* FP_MULTIPLE_COLOR_OUTPUTS */
    }
 
    for (i = 0; i <= ti->scan.file_max[TGSI_FILE_INPUT]; ++i) {
