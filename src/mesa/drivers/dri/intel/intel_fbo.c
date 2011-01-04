@@ -571,10 +571,10 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
    int i;
 
    if (depthRb && stencilRb && stencilRb != depthRb) {
-      if (ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Type == GL_TEXTURE &&
-	  ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Type == GL_TEXTURE &&
-	  (ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Texture->Name ==
-	   ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Texture->Name)) {
+      if (fb->Attachment[BUFFER_DEPTH].Type == GL_TEXTURE &&
+	  fb->Attachment[BUFFER_STENCIL].Type == GL_TEXTURE &&
+	  (fb->Attachment[BUFFER_DEPTH].Texture->Name ==
+	   fb->Attachment[BUFFER_STENCIL].Texture->Name)) {
 	 /* OK */
       } else {
 	 /* we only support combined depth/stencil buffers, not separate
