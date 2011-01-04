@@ -470,7 +470,22 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 	bc->cf_last->ndw += 2;
 	bc->ndw += 2;
 
-	bc->cf_last->kcache0_mode = 2;
+	/* The following configuration provides 64 128-bit constants.
+	 * Each cacheline holds 16 128-bit constants and each
+	 * kcache can lock 2 cachelines and there are 2 kcaches per
+	 * ALU clause for a max of 64 constants.
+	 * For supporting more than 64 constants, the code needs
+	 * to be broken down into multiple ALU clauses.
+	 */
+	/* select the constant buffer (0-15) for each kcache */
+	bc->cf_last->kcache0_bank = 0;
+	bc->cf_last->kcache1_bank = 0;
+	/* lock 2 cachelines per kcache; 4 total */
+	bc->cf_last->kcache0_mode = V_SQ_CF_KCACHE_LOCK_2;
+	bc->cf_last->kcache1_mode = V_SQ_CF_KCACHE_LOCK_2;
+	/* set the cacheline offsets for each kcache */
+	bc->cf_last->kcache0_addr = 0;
+	bc->cf_last->kcache1_addr = 2;
 
 	/* process cur ALU instructions for bank swizzle */
 	if (alu->last) {

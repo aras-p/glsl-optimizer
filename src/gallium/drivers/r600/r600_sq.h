@@ -74,6 +74,10 @@
 #define   S_SQ_CF_ALU_WORD0_KCACHE_MODE0(x)                          (((x) & 0x3) << 30)
 #define   G_SQ_CF_ALU_WORD0_KCACHE_MODE0(x)                          (((x) >> 30) & 0x3)
 #define   C_SQ_CF_ALU_WORD0_KCACHE_MODE0                             0x3FFFFFFF
+#define     V_SQ_CF_KCACHE_NOP                                       0x00000000
+#define     V_SQ_CF_KCACHE_LOCK_1                                    0x00000001
+#define     V_SQ_CF_KCACHE_LOCK_2                                    0x00000002
+#define     V_SQ_CF_KCACHE_LOCK_LOOP_INDEX                           0x00000003
 #define P_SQ_CF_ALU_WORD1
 #define   S_SQ_CF_ALU_WORD1_KCACHE_MODE1(x)                          (((x) & 0x3) << 0)
 #define   G_SQ_CF_ALU_WORD1_KCACHE_MODE1(x)                          (((x) >> 0) & 0x3)
