@@ -899,8 +899,8 @@ static void FETCH(f_al44)( const struct gl_texture_image *texImage,
    const GLubyte s = *TEXEL_ADDR(GLubyte, texImage, i, j, k, 1);
    texel[RCOMP] =
    texel[GCOMP] =
-   texel[BCOMP] = UBYTE_TO_FLOAT( (s & 0x0f) << 4 );
-   texel[ACOMP] = UBYTE_TO_FLOAT(  s & 0xf0 );
+   texel[BCOMP] = (s & 0xf) * (1.0F / 15.0F);
+   texel[ACOMP] = ((s >> 4) & 0xf) * (1.0F / 15.0F);
 }
 
 #if DIM == 3
