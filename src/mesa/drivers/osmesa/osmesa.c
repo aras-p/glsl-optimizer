@@ -1356,7 +1356,7 @@ OSMesaMakeCurrent( OSMesaContext osmesa, void *buffer, GLenum type,
 
 
    /* this updates the visual's red/green/blue/alphaBits fields */
-   _mesa_update_framebuffer_visual(osmesa->gl_buffer);
+   _mesa_update_framebuffer_visual(&osmesa->mesa, osmesa->gl_buffer);
 
    /* update the framebuffer size */
    _mesa_resize_framebuffer(&osmesa->mesa, osmesa->gl_buffer, width, height);
