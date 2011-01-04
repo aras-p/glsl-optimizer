@@ -587,13 +587,25 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
       }
    }
 
-   for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
-      struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[i];
-      struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+   for (i = 0; i < Elements(fb->Attachment); i++) {
+      struct gl_renderbuffer *rb;
+      struct intel_renderbuffer *irb;
 
-      if (rb == NULL)
+      if (fb->Attachment[i].Type == GL_NONE)
 	 continue;
 
+      /* A supported attachment will have a Renderbuffer set either
+       * from being a Renderbuffer or being a texture that got the
+       * intel_wrap_texture() treatment.
+       */
+      rb = fb->Attachment[i].Renderbuffer;
+      if (rb == NULL) {
+	 DBG("attachment without renderbuffer\n");
+	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+	 continue;
+      }
+
+      irb = intel_renderbuffer(rb);
       if (irb == NULL) {
 	 DBG("software rendering renderbuffer\n");
 	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
