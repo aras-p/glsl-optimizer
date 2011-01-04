@@ -1,7 +1,7 @@
 #ifndef INTEL_STRUCTS_H
 #define INTEL_STRUCTS_H
 
-#include <GL/gl.h>
+#include "brw_types.h"
 
 struct br0 {
    GLuint length:8;
