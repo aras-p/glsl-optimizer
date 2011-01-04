@@ -450,7 +450,7 @@ nvc0_draw_elements(struct nvc0_context *nvc0, boolean shorten,
    struct nouveau_channel *chan = nvc0->screen->base.channel;
    void *data;
    unsigned prim;
-   unsigned index_size = nvc0->idxbuf.index_size;
+   const unsigned index_size = nvc0->idxbuf.index_size;
 
    chan->flush_notify = nvc0_draw_vbo_flush_notify;
    chan->user_private = nvc0;
@@ -468,12 +468,6 @@ nvc0_draw_elements(struct nvc0_context *nvc0, boolean shorten,
       unsigned offset = nvc0->idxbuf.offset;
       unsigned limit = nvc0->idxbuf.buffer->width0 - 1;
 
-      if (index_size == 4)
-         index_size = 2;
-      else
-      if (index_size == 2)
-         index_size = 1;
-
       nvc0_buffer_adjust_score(nvc0, res, 1);
 
       while (instance_count--) {
@@ -485,7 +479,7 @@ nvc0_draw_elements(struct nvc0_context *nvc0, boolean shorten,
          OUT_RESRCl(chan, res, offset, NOUVEAU_BO_RD);
          OUT_RESRCh(chan, res, limit, NOUVEAU_BO_RD);
          OUT_RESRCl(chan, res, limit, NOUVEAU_BO_RD);
-         OUT_RING  (chan, index_size);
+         OUT_RING  (chan, index_size >> 1);
          OUT_RING  (chan, start);
          OUT_RING  (chan, count);
          IMMED_RING(chan, RING_3D(VERTEX_END_GL), 0);
