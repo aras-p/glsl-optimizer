@@ -223,7 +223,6 @@ unsigned int rc_inst_can_use_presub(
 {
 	struct can_use_presub_data d;
 	unsigned int num_presub_srcs;
-	unsigned int presub_src_type = rc_source_type_mask(presub_writemask);
 	const struct rc_opcode_info * info =
 					rc_get_opcode_info(inst->U.I.Opcode);
 
@@ -253,13 +252,7 @@ unsigned int rc_inst_can_use_presub(
 
 	num_presub_srcs = rc_presubtract_src_reg_count(presub_op);
 
-	if ((presub_src_type & RC_SOURCE_RGB)
-					&& d.RGBCount + num_presub_srcs > 3) {
-		return 0;
-	}
-
-	if ((presub_src_type & RC_SOURCE_ALPHA)
-					&& d.AlphaCount + num_presub_srcs > 3) {
+	if (d.RGBCount + num_presub_srcs > 3 || d.AlphaCount + num_presub_srcs > 3) {
 		return 0;
 	}
 
