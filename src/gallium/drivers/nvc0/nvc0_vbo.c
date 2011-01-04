@@ -224,8 +224,8 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
       OUT_RING  (chan, (1 << 12) | vb->stride);
       BEGIN_RING_1I(chan, RING_3D(VERTEX_ARRAY_SELECT), 5);
       OUT_RING  (chan, i);
-      OUT_RESRCh(chan, res, size, NOUVEAU_BO_RD);
-      OUT_RESRCl(chan, res, size, NOUVEAU_BO_RD);
+      OUT_RESRCh(chan, res, size - 1, NOUVEAU_BO_RD);
+      OUT_RESRCl(chan, res, size - 1, NOUVEAU_BO_RD);
       OUT_RESRCh(chan, res, offset, NOUVEAU_BO_RD);
       OUT_RESRCl(chan, res, offset, NOUVEAU_BO_RD);
    }
