@@ -113,7 +113,6 @@ intelGenerateMipmap(struct gl_context *ctx, GLenum target,
 void
 intelInitTextureFuncs(struct dd_function_table *functions)
 {
-   functions->ChooseTextureFormat = intelChooseTextureFormat;
    functions->GenerateMipmap = intelGenerateMipmap;
 
    functions->NewTextureObject = intelNewTextureObject;

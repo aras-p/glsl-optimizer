@@ -683,6 +683,64 @@ intelInitContext(struct intel_context *intel,
       }
    }
 
+   memset(&ctx->TextureFormatSupported, 0,
+	  sizeof(ctx->TextureFormatSupported));
+   ctx->TextureFormatSupported[MESA_FORMAT_ARGB8888] = GL_TRUE;
+   if (intel->has_xrgb_textures)
+      ctx->TextureFormatSupported[MESA_FORMAT_XRGB8888] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_ARGB4444] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_ARGB1555] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_RGB565] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_L8] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_A8] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_I8] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_AL88] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_AL1616] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_S8_Z24] = GL_TRUE;
+   /*
+    * This was disabled in initial FBO enabling to avoid combinations
+    * of depth+stencil that wouldn't work together.  We since decided
+    * that it was OK, since it's up to the app to come up with the
+    * combo that actually works, so this can probably be re-enabled.
+    */
+   /*
+   ctx->TextureFormatSupported[MESA_FORMAT_Z16] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_Z24] = GL_TRUE;
+   */
+
+   /* ctx->Extensions.MESA_ycbcr_texture */
+   ctx->TextureFormatSupported[MESA_FORMAT_YCBCR] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_YCBCR_REV] = GL_TRUE;
+
+   /* GL_3DFX_texture_compression_FXT1 */
+   ctx->TextureFormatSupported[MESA_FORMAT_RGB_FXT1] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_FXT1] = GL_TRUE;
+
+   /* GL_EXT_texture_compression_s3tc */
+   ctx->TextureFormatSupported[MESA_FORMAT_RGB_DXT1] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_DXT1] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_DXT3] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_DXT5] = GL_TRUE;
+
+#ifndef I915
+   /* GL_ARB_texture_rg */
+   ctx->TextureFormatSupported[MESA_FORMAT_R8] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_R16] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_RG88] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_RG1616] = GL_TRUE;
+
+   ctx->TextureFormatSupported[MESA_FORMAT_DUDV8] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RGBA8888_REV] = GL_TRUE;
+
+   /* GL_EXT_texture_sRGB */
+   ctx->TextureFormatSupported[MESA_FORMAT_SARGB8] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_SRGB_DXT1] = GL_TRUE;
+   if (intel->has_luminance_srgb) {
+      ctx->TextureFormatSupported[MESA_FORMAT_SL8] = GL_TRUE;
+      ctx->TextureFormatSupported[MESA_FORMAT_SLA8] = GL_TRUE;
+   }
+#endif
+
    driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
                        sPriv->myNum, (intel->gen >= 4) ? "i965" : "i915");
    if (intelScreen->deviceID == PCI_CHIP_I865_G)
