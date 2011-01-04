@@ -1333,9 +1333,11 @@ static void fire_fb_write( struct brw_wm_compile *c,
       dst = retype(vec8(brw_null_reg()), BRW_REGISTER_TYPE_UW);
 
    /* Pass through control information:
+    * 
+    * Gen6 has done m1 mov in emit_fb_write() for current SIMD16 case.
     */
 /*  mov (8) m1.0<1>:ud   r1.0<8;8,1>:ud   { Align1 NoMask } */
-   if (intel->gen < 6) /* gen6, use headerless for fb write */
+   if (intel->gen < 6)
    {
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE); /* ? */
