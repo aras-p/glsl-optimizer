@@ -51,6 +51,14 @@ void rc_rename_regs(struct radeon_compiler *c, void *user)
 	struct rc_reader_data reader_data;
 	unsigned char * used;
 
+	/* XXX Remove this once the register allocation works with flow control. */
+	for(inst = c->Program.Instructions.Next;
+					inst != &c->Program.Instructions;
+					inst = inst->Next) {
+		if (inst->U.I.Opcode == RC_OPCODE_BGNLOOP)
+			return;
+	}
+
 	used_length = 2 * rc_recompute_ips(c);
 	used = memory_pool_malloc(&c->Pool, sizeof(unsigned char) * used_length);
 	memset(used, 0, sizeof(unsigned char) * used_length);
