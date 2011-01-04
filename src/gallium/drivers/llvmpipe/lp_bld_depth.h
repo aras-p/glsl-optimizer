@@ -36,10 +36,14 @@
 #define LP_BLD_DEPTH_H
 
 
+#include "pipe/p_compiler.h"
+#include "pipe/p_state.h"
+
 #include "gallivm/lp_bld.h"
 
  
 struct pipe_depth_state;
+struct gallivm_state;
 struct util_format_description;
 struct lp_type;
 struct lp_build_mask_context;
