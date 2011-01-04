@@ -243,3 +243,32 @@ nvc0_mm_create(struct nouveau_device *dev, uint32_t domain,
    return cache;
 }
 
+static INLINE void
+nvc0_mm_free_slabs(struct list_head *head)
+{
+   struct mm_slab *slab, *next;
+
+   LIST_FOR_EACH_ENTRY_SAFE(slab, next, head, head) {
+      LIST_DEL(&slab->head);
+      nouveau_bo_ref(NULL, &slab->bo);
+      FREE(slab);
+   }
+}
+
+void
+nvc0_mm_destroy(struct nvc0_mman *cache)
+{
+   int i;
+
+   for (i = 0; i < MM_NUM_BUCKETS; ++i) {
+      if (!LIST_IS_EMPTY(&cache->bucket[i].used) ||
+          !LIST_IS_EMPTY(&cache->bucket[i].full))
+         debug_printf("WARNING: destroying GPU memory cache "
+                      "with some buffers still in use\n");
+
+      nvc0_mm_free_slabs(&cache->bucket[i].free);
+      nvc0_mm_free_slabs(&cache->bucket[i].used);
+      nvc0_mm_free_slabs(&cache->bucket[i].full);
+   }
+}
+

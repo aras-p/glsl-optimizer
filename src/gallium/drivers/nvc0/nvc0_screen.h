@@ -89,6 +89,9 @@ struct nvc0_mm_allocation {
 extern struct nvc0_mman *
 nvc0_mm_create(struct nouveau_device *, uint32_t domain, uint32_t storage_type);
 
+extern void
+nvc0_mm_destroy(struct nvc0_mman *);
+
 extern struct nvc0_mm_allocation *
 nvc0_mm_allocate(struct nvc0_mman *,
                  uint32_t size, struct nouveau_bo **, uint32_t *offset);

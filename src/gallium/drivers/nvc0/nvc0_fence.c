@@ -73,6 +73,9 @@ nvc0_fence_emit(struct nvc0_fence *fence)
    fence->state = NVC0_FENCE_STATE_EMITTED;
 }
 
+static void
+nvc0_fence_trigger_release_buffers(struct nvc0_fence *fence);
+
 void
 nvc0_fence_del(struct nvc0_fence *fence)
 {
@@ -91,6 +94,13 @@ nvc0_fence_del(struct nvc0_fence *fence)
             screen->fence.tail = it;
       }
    }
+
+   if (fence->buffers) {
+      debug_printf("WARNING: deleting fence with buffers "
+                   "still hooked to it !\n");
+      nvc0_fence_trigger_release_buffers(fence);
+   }
+
    FREE(fence);
 }
 
@@ -104,6 +114,7 @@ nvc0_fence_trigger_release_buffers(struct nvc0_fence *fence)
       nvc0_mm_free(alloc);
       alloc = next;
    };
+   fence->buffers = NULL;
 }
 
 static void

@@ -197,6 +197,9 @@ nvc0_screen_destroy(struct pipe_screen *pscreen)
 {
    struct nvc0_screen *screen = nvc0_screen(pscreen);
 
+   nvc0_fence_wait(screen->fence.current);
+   nvc0_fence_reference(&screen->fence.current, NULL);
+
    nouveau_bo_ref(NULL, &screen->text);
    nouveau_bo_ref(NULL, &screen->tls);
    nouveau_bo_ref(NULL, &screen->txc);
@@ -207,6 +210,10 @@ nvc0_screen_destroy(struct pipe_screen *pscreen)
 
    if (screen->tic.entries)
       FREE(screen->tic.entries);
+
+   nvc0_mm_destroy(screen->mm_GART);
+   nvc0_mm_destroy(screen->mm_VRAM);
+   nvc0_mm_destroy(screen->mm_VRAM_fe0);
 
    nouveau_grobj_free(&screen->fermi);
    nouveau_grobj_free(&screen->eng2d);
