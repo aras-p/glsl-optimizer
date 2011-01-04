@@ -58,7 +58,7 @@ upload_clip_state(struct brw_context *brw)
    userclip = (1 << brw_count_bits(ctx->Transform.ClipPlanesEnabled)) - 1;
 
    BEGIN_BATCH(4);
-   OUT_BATCH(CMD_3D_CLIP_STATE << 16 | (4 - 2));
+   OUT_BATCH(_3DSTATE_CLIP << 16 | (4 - 2));
    OUT_BATCH(GEN6_CLIP_STATISTICS_ENABLE);
    OUT_BATCH(GEN6_CLIP_ENABLE |
 	     GEN6_CLIP_API_OGL |

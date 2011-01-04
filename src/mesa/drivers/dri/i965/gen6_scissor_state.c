@@ -92,7 +92,7 @@ static void upload_scissor_state_pointers(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
 
    BEGIN_BATCH(2);
-   OUT_BATCH(CMD_3D_SCISSOR_STATE_POINTERS << 16 | (2 - 2));
+   OUT_BATCH(_3DSTATE_SCISSOR_STATE_POINTERS << 16 | (2 - 2));
    OUT_RELOC(brw->sf.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
    ADVANCE_BATCH();
 

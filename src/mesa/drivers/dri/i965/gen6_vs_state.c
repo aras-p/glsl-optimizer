@@ -47,7 +47,7 @@ upload_vs_state(struct brw_context *brw)
    if (brw->vs.prog_data->nr_params == 0 && !ctx->Transform.ClipPlanesEnabled) {
       /* Disable the push constant buffers. */
       BEGIN_BATCH(5);
-      OUT_BATCH(CMD_3D_CONSTANT_VS_STATE << 16 | (5 - 2));
+      OUT_BATCH(_3DSTATE_CONSTANT_VS << 16 | (5 - 2));
       OUT_BATCH(0);
       OUT_BATCH(0);
       OUT_BATCH(0);
@@ -112,7 +112,7 @@ upload_vs_state(struct brw_context *brw)
       assert(param_regs <= 32);
 
       BEGIN_BATCH(5);
-      OUT_BATCH(CMD_3D_CONSTANT_VS_STATE << 16 |
+      OUT_BATCH(_3DSTATE_CONSTANT_VS << 16 |
 		GEN6_CONSTANT_BUFFER_0_ENABLE |
 		(5 - 2));
       OUT_RELOC(constant_bo,
@@ -127,7 +127,7 @@ upload_vs_state(struct brw_context *brw)
    }
 
    BEGIN_BATCH(6);
-   OUT_BATCH(CMD_3D_VS_STATE << 16 | (6 - 2));
+   OUT_BATCH(_3DSTATE_VS << 16 | (6 - 2));
    OUT_RELOC(brw->vs.prog_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
    OUT_BATCH((0 << GEN6_VS_SAMPLER_COUNT_SHIFT) |
 	     GEN6_VS_FLOATING_POINT_MODE_ALT |

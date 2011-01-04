@@ -117,7 +117,7 @@ static void upload_viewport_state_pointers(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
 
    BEGIN_BATCH(4);
-   OUT_BATCH(CMD_VIEWPORT_STATE_POINTERS << 16 | (4 - 2) |
+   OUT_BATCH(_3DSTATE_VIEWPORT_STATE_POINTERS << 16 | (4 - 2) |
 	     GEN6_CC_VIEWPORT_MODIFY |
 	     GEN6_SF_VIEWPORT_MODIFY |
 	     GEN6_CLIP_VIEWPORT_MODIFY);
