@@ -266,6 +266,7 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 	 maxlod_fixed = U_FIXED(CLAMP(maxlod, 0.0, 11.75), 2);
 	 maxlod_fixed = MAX2(maxlod_fixed, (minlod_fixed + 3) >> 2);
 	 state[I830_TEXREG_TM0S3] |= maxlod_fixed << TM0S3_MIN_MIP_SHIFT;
+	 state[I830_TEXREG_TM0S2] |= TM0S2_LOD_PRECLAMP;
       } else {
 	 maxlod_fixed = U_FIXED(CLAMP(maxlod, 0.0, 11), 0);
 	 maxlod_fixed = MAX2(maxlod_fixed, (minlod_fixed + 15) >> 4);

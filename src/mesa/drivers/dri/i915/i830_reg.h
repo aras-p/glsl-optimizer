@@ -585,6 +585,8 @@
 #define TM0S2_VERITCAL_LINE_STRIDE_OFF  (1<<12)
 #define TM0S2_OUTPUT_CHAN_SHIFT         10
 #define TM0S2_OUTPUT_CHAN_MASK          (3<<10)
+#define TM0S2_BASE_MIP_LEVEL_SHIFT      1
+#define TM0S2_LOD_PRECLAMP              (1 << 0)
 
 #define TM0S3_MIP_FILTER_MASK           (0x3<<30)
 #define TM0S3_MIP_FILTER_SHIFT          30
