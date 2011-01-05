@@ -1564,18 +1564,38 @@ ast_expression::hir(exec_list *instructions,
 	 }
       }
 
-      /* From section 4.1.7 of the GLSL 1.30 spec:
+      /* From page 23 (29 of the PDF) of the GLSL 1.30 spec:
+       *
        *    "Samplers aggregated into arrays within a shader (using square
        *    brackets [ ]) can only be indexed with integral constant
        *    expressions [...]."
+       *
+       * This restriction was added in GLSL 1.30.  Shaders using earlier version
+       * of the language should not be rejected by the compiler front-end for
+       * using this construct.  This allows useful things such as using a loop
+       * counter as the index to an array of samplers.  If the loop in unrolled,
+       * the code should compile correctly.  Instead, emit a warning.
        */
       if (array->type->is_array() &&
           array->type->element_type()->is_sampler() &&
           const_index == NULL) {
 
-         _mesa_glsl_error(&loc, state, "sampler arrays can only be indexed "
-                          "with constant expressions");
-         error_emitted = true;
+	 if (state->language_version == 100) {
+	    _mesa_glsl_warning(&loc, state,
+			       "sampler arrays indexed with non-constant "
+			       "expressions is optional in GLSL ES 1.00");
+	 } else if (state->language_version < 130) {
+	    _mesa_glsl_warning(&loc, state,
+			       "sampler arrays indexed with non-constant "
+			       "expressions is forbidden in GLSL 1.30 and "
+			       "later");
+	 } else {
+	    _mesa_glsl_error(&loc, state,
+			     "sampler arrays indexed with non-constant "
+			     "expressions is forbidden in GLSL 1.30 and "
+			     "later");
+	    error_emitted = true;
+	 }
       }
 
       if (error_emitted)
