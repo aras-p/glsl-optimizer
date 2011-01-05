@@ -513,7 +513,7 @@ get_uniform_rows_cols(const struct gl_program_parameter *p,
          *cols = p->Size;
       }
       else {
-         *rows = p->Size / 4 + 1;
+         *rows = (p->Size + 3) / 4;
          if (p->Size % 4 == 0)
             *cols = 4;
          else
