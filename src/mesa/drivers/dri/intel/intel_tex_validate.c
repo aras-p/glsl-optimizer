@@ -64,7 +64,6 @@ intel_calculate_first_last_level(struct intel_context *intel,
       }
       break;
    case GL_TEXTURE_RECTANGLE_NV:
-   case GL_TEXTURE_4D_SGIS:
       firstLevel = lastLevel = 0;
       break;
    default:
