@@ -111,6 +111,8 @@ extern const struct brw_tracked_state gen6_vs_constants;
 extern const struct brw_tracked_state gen6_vs_state;
 extern const struct brw_tracked_state gen6_wm_constants;
 extern const struct brw_tracked_state gen6_wm_state;
+extern const struct brw_tracked_state gen7_sbe_state;
+extern const struct brw_tracked_state gen7_sf_state;
 extern const struct brw_tracked_state gen7_urb;
 
 /***********************************************************************

@@ -966,7 +966,7 @@
 # define GEN6_CLIP_FORCE_ZERO_RTAINDEX			(1 << 5)
 
 #define _3DSTATE_SF				0x7813 /* GEN6+ */
-/* DW1 */
+/* DW1 (for gen6) */
 # define GEN6_SF_NUM_OUTPUTS_SHIFT			22
 # define GEN6_SF_SWIZZLE_ENABLE				(1 << 21)
 # define GEN6_SF_POINT_SPRITE_LOWERLEFT			(1 << 20)
@@ -1041,6 +1041,27 @@
 /* DW17: Constant interpolation enables */
 /* DW18: attr 0-7 wrap shortest enables */
 /* DW19: attr 8-16 wrap shortest enables */
+
+/* On GEN7, many fields of 3DSTATE_SF were split out into a new command:
+ * 3DSTATE_SBE.  The remaining fields live in different DWords, but retain
+ * the same bit-offset.  The only new field:
+ */
+/* GEN7/DW1: */
+# define GEN7_SF_DEPTH_BUFFER_SURFACE_FORMAT_SHIFT	12
+
+#define _3DSTATE_SBE				0x781F /* GEN7+ */
+/* DW1 */
+# define GEN7_SBE_SWIZZLE_CONTROL_MODE			(1 << 28)
+# define GEN7_SBE_NUM_OUTPUTS_SHIFT			22
+# define GEN7_SBE_SWIZZLE_ENABLE			(1 << 21)
+# define GEN7_SBE_POINT_SPRITE_LOWERLEFT		(1 << 20)
+# define GEN7_SBE_URB_ENTRY_READ_LENGTH_SHIFT		11
+# define GEN7_SBE_URB_ENTRY_READ_OFFSET_SHIFT		4
+/* DW2-9: Attribute setup (same as DW8-15 of gen6 _3DSTATE_SF) */
+/* DW10: Point sprite texture coordinate enables */
+/* DW11: Constant interpolation enables */
+/* DW12: attr 0-7 wrap shortest enables */
+/* DW13: attr 8-16 wrap shortest enables */
 
 #define _3DSTATE_WM				0x7814 /* GEN6+ */
 /* DW1: kernel pointer */
