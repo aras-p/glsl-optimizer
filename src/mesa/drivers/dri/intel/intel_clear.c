@@ -169,12 +169,6 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
       }
    }
 
-   if (intel->gen >= 6) {
-      /* Blits are in a different ringbuffer so we don't use them. */
-      tri_mask |= blit_mask;
-      blit_mask = 0;
-   }
-
    /* Anything left, just use tris */
    tri_mask |= mask & ~blit_mask;
 
