@@ -51,8 +51,12 @@ nvc0_buffer_allocate(struct nvc0_screen *screen, struct nvc0_resource *buf,
 static INLINE void
 release_allocation(struct nvc0_mm_allocation **mm, struct nvc0_fence *fence)
 {
-   (*mm)->next = fence->buffers;
-   fence->buffers = (*mm);
+   if (fence && fence->state != NVC0_FENCE_STATE_SIGNALLED) {
+      (*mm)->next = fence->buffers;
+      fence->buffers = (*mm);
+   } else {
+      nvc0_mm_free(*mm);
+   }
    (*mm) = NULL;
 }
 
@@ -60,13 +64,12 @@ static void
 nvc0_buffer_destroy(struct pipe_screen *pscreen,
                     struct pipe_resource *presource)
 {
-   struct nvc0_screen *screen = nvc0_screen(pscreen);
    struct nvc0_resource *res = nvc0_resource(presource);
 
    nouveau_bo_ref(NULL, &res->bo);
 
    if (res->mm)
-      release_allocation(&res->mm, screen->fence.current);
+      release_allocation(&res->mm, res->fence);
 
    if (res->data && !(res->status & NVC0_BUFFER_STATUS_USER_MEMORY))
       FREE(res->data);
