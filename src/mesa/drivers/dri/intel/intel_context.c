@@ -734,7 +734,11 @@ intelInitContext(struct intel_context *intel,
 
    /* GL_EXT_texture_sRGB */
    ctx->TextureFormatSupported[MESA_FORMAT_SARGB8] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_SRGB_DXT1] = GL_TRUE;
+   if (intel->gen >= 5 || intel->is_g4x)
+      ctx->TextureFormatSupported[MESA_FORMAT_SRGB_DXT1] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_SRGBA_DXT1] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_SRGBA_DXT3] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_SRGBA_DXT5] = GL_TRUE;
    if (intel->has_luminance_srgb) {
       ctx->TextureFormatSupported[MESA_FORMAT_SL8] = GL_TRUE;
       ctx->TextureFormatSupported[MESA_FORMAT_SLA8] = GL_TRUE;

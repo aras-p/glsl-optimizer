@@ -389,6 +389,7 @@
 #define BRW_SURFACEFORMAT_R8_SSCALED                     0x149
 #define BRW_SURFACEFORMAT_R8_USCALED                     0x14A
 #define BRW_SURFACEFORMAT_L8_UNORM_SRGB                  0x14C
+#define BRW_SURFACEFORMAT_DXT1_RGB_SRGB                  0x180
 #define BRW_SURFACEFORMAT_R1_UINT                        0x181 
 #define BRW_SURFACEFORMAT_YCRCB_NORMAL                   0x182 
 #define BRW_SURFACEFORMAT_YCRCB_SWAPUVY                  0x183 
