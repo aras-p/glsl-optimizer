@@ -34,7 +34,6 @@
 #include "main/colormac.h"
 #include "main/imports.h"
 #include "main/macros.h"
-#include "main/texformat.h"
 #include "program/prog_instruction.h"
 
 #include "s_aatriangle.h"
