@@ -44,6 +44,7 @@
 #include "xf86Crtc.h"
 #include "miscstruct.h"
 #include "dixstruct.h"
+#include "xf86cmap.h"
 #include "xf86xv.h"
 #include "xorgVersion.h"
 #ifndef XSERVER_LIBPCIACCESS
@@ -414,6 +415,7 @@ drv_pre_init(ScrnInfoPtr pScrn, int flags)
 	return FALSE;
 
     switch (pScrn->depth) {
+    case 8:
     case 15:
     case 16:
     case 24:
@@ -677,6 +679,65 @@ drv_set_master(ScrnInfoPtr pScrn)
 }
 
 
+static void drv_load_palette(ScrnInfoPtr pScrn, int numColors,
+			     int *indices, LOCO *colors, VisualPtr pVisual)
+{
+    xf86CrtcConfigPtr xf86_config = XF86_CRTC_CONFIG_PTR(pScrn);
+    modesettingPtr ms = modesettingPTR(pScrn);
+    int index, j, i;
+    int c;
+
+    switch(pScrn->depth) {
+    case 15:
+	for (i = 0; i < numColors; i++) {
+	    index = indices[i];
+	    for (j = 0; j < 8; j++) {
+		ms->lut_r[index * 8 + j] = colors[index].red << 8;
+		ms->lut_g[index * 8 + j] = colors[index].green << 8;
+		ms->lut_b[index * 8 + j] = colors[index].blue << 8;
+	    }
+	}
+	break;
+    case 16:
+	for (i = 0; i < numColors; i++) {
+	    index = indices[i];
+
+	    if (index < 32) {
+		for (j = 0; j < 8; j++) {
+		    ms->lut_r[index * 8 + j] = colors[index].red << 8;
+		    ms->lut_b[index * 8 + j] = colors[index].blue << 8;
+		}
+	    }
+
+	    for (j = 0; j < 4; j++) {
+		ms->lut_g[index * 4 + j] = colors[index].green << 8;
+	    }
+	}
+	break;
+    default:
+	for (i = 0; i < numColors; i++) {
+	    index = indices[i];
+	    ms->lut_r[index] = colors[index].red << 8;
+	    ms->lut_g[index] = colors[index].green << 8;
+	    ms->lut_b[index] = colors[index].blue << 8;
+	}
+	break;
+    }
+
+    for (c = 0; c < xf86_config->num_crtc; c++) {
+	xf86CrtcPtr crtc = xf86_config->crtc[c];
+
+	/* Make the change through RandR */
+#ifdef RANDR_12_INTERFACE
+	if (crtc->randr_crtc)
+	    RRCrtcGammaSet(crtc->randr_crtc, ms->lut_r, ms->lut_g, ms->lut_b);
+	else
+#endif
+	    crtc->funcs->gamma_set(crtc, ms->lut_r, ms->lut_g, ms->lut_b, 256);
+    }
+}
+
+
 static Bool
 drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 {
@@ -815,6 +876,10 @@ drv_screen_init(int scrnIndex, ScreenPtr pScreen, int argc, char **argv)
 	return FALSE;
 
     if (!miCreateDefColormap(pScreen))
+	return FALSE;
+    if (!xf86HandleColormaps(pScreen, 256, 8, drv_load_palette, NULL,
+			     CMAP_PALETTED_TRUECOLOR |
+			     CMAP_RELOAD_ON_MODE_SWITCH))
 	return FALSE;
 
     xf86DPMSInit(pScreen, xf86DPMSSet, 0);
