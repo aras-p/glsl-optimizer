@@ -41,17 +41,16 @@
 struct u_upload_mgr {
    struct pipe_context *pipe;
 
-   unsigned default_size;
-   unsigned alignment;
-   unsigned bind;
+   unsigned default_size;  /* Minimum size of the upload buffer, in bytes. */
+   unsigned alignment;     /* Alignment of each sub-allocation. */
+   unsigned bind;          /* Bitmask of PIPE_BIND_* flags. */
 
-   /* The active buffer:
-    */
-   struct pipe_resource *buffer;
-   struct pipe_transfer *transfer;
-   uint8_t *map;
-   unsigned size;
-   unsigned offset;
+   struct pipe_resource *buffer;   /* Upload buffer. */
+   struct pipe_transfer *transfer; /* Transfer object for the upload buffer. */
+   uint8_t *map;    /* Pointer to the mapped upload buffer. */
+   unsigned size;   /* Actual size of the upload buffer. */
+   unsigned offset; /* Aligned offset to the upload buffer, pointing
+                     * at the first unused byte. */
 };
 
 
@@ -84,6 +83,7 @@ struct u_upload_mgr *u_upload_create( struct pipe_context *pipe,
  */
 void u_upload_flush( struct u_upload_mgr *upload )
 {
+   /* Unmap and unreference the upload buffer. */
    if (upload->transfer) {
       pipe_transfer_unmap(upload->pipe, upload->transfer);
       upload->transfer = NULL;
@@ -106,7 +106,7 @@ u_upload_alloc_buffer( struct u_upload_mgr *upload,
 {
    unsigned size;
 
-   /* Release old buffer, if present:
+   /* Release the old buffer, if present:
     */
    u_upload_flush( upload );
 
@@ -120,6 +120,7 @@ u_upload_alloc_buffer( struct u_upload_mgr *upload,
    if (upload->buffer == NULL) 
       goto fail;
 
+   /* Map the new buffer. */
    upload->map = pipe_buffer_map(upload->pipe, upload->buffer,
                                  PIPE_TRANSFER_WRITE, &upload->transfer);
    
@@ -147,6 +148,8 @@ enum pipe_error u_upload_alloc( struct u_upload_mgr *upload,
    unsigned alloc_offset = align(min_out_offset, upload->alignment);
    unsigned offset;
 
+   /* Make sure we have enough space in the upload buffer
+    * for the sub-allocation. */
    if (MAX2(upload->offset, alloc_offset) + alloc_size > upload->size) {
       enum pipe_error ret = u_upload_alloc_buffer(upload,
                                                   alloc_offset + alloc_size);
@@ -164,12 +167,11 @@ enum pipe_error u_upload_alloc( struct u_upload_mgr *upload,
    assert(offset + size <= upload->buffer->width0);
    assert(size);
 
+   /* Emit the return values: */
    *ptr = upload->map + offset;
-
-   /* Emit the return values:
-    */
    pipe_resource_reference( outbuf, upload->buffer );
    *out_offset = offset;
+
    upload->offset = offset + alloc_size;
    return PIPE_OK;
 }
