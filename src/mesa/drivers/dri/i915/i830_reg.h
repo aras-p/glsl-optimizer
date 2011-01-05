@@ -605,6 +605,8 @@
 #define TM0S3_MAX_MIP_MASK		(0xff<<9)
 #define TM0S3_MIN_MIP_SHIFT		3
 #define TM0S3_MIN_MIP_MASK		(0x3f<<3)
+#define TM0S3_MIN_MIP_SHIFT_830		5
+#define TM0S3_MIN_MIP_MASK_830		(0x3f<<5)
 #define TM0S3_KILL_PIXEL		(1<<2)
 #define TM0S3_KEYED_FILTER		(1<<1)
 #define TM0S3_CHROMA_KEY		(1<<0)

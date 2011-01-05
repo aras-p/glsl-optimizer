@@ -34,26 +34,15 @@ intel_calculate_first_last_level(struct intel_context *intel,
        */
       lastLevel = tObj->BaseLevel;
    } else {
-      if (intel->gen == 2) {
-	 firstLevel += (GLint) (tObj->MinLod + 0.5);
-	 firstLevel = MAX2(firstLevel, tObj->BaseLevel);
-	 firstLevel = MIN2(firstLevel, tObj->BaseLevel + baseImage->MaxLog2);
-	 lastLevel = tObj->BaseLevel + (GLint) (tObj->MaxLod + 0.5);
-	 lastLevel = MAX2(lastLevel, tObj->BaseLevel);
-	 lastLevel = MIN2(lastLevel, tObj->BaseLevel + baseImage->MaxLog2);
-	 lastLevel = MIN2(lastLevel, tObj->MaxLevel);
-	 lastLevel = MAX2(firstLevel, lastLevel);       /* need at least one level */
-      } else {
-	 /* Min/max LOD are taken into account in sampler state.  We don't
-	  * want to re-layout textures just because clamping has been applied
-	  * since it means a bunch of blitting around and probably no memory
-	  * savings (since we have to keep the other levels around anyway).
-	  */
-	 lastLevel = MIN2(tObj->BaseLevel + baseImage->MaxLog2,
-			  tObj->MaxLevel);
-	 /* need at least one level */
-	 lastLevel = MAX2(firstLevel, lastLevel);
-      }
+      /* Min/max LOD are taken into account in sampler state.  We don't
+       * want to re-layout textures just because clamping has been applied
+       * since it means a bunch of blitting around and probably no memory
+       * savings (since we have to keep the other levels around anyway).
+       */
+      lastLevel = MIN2(tObj->BaseLevel + baseImage->MaxLog2,
+		       tObj->MaxLevel);
+      /* need at least one level */
+      lastLevel = MAX2(firstLevel, lastLevel);
    }
 
    /* save these values */
