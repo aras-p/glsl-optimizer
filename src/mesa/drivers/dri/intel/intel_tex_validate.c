@@ -24,7 +24,7 @@ intel_calculate_first_last_level(struct intel_context *intel,
     * and having firstLevel and lastLevel as signed prevents the need for
     * extra sign checks.
     */
-   int firstLevel;
+   int firstLevel = tObj->BaseLevel;
    int lastLevel;
 
    /* Yes, this looks overly complicated, but it's all needed.
@@ -37,11 +37,11 @@ intel_calculate_first_last_level(struct intel_context *intel,
       if (tObj->MinFilter == GL_NEAREST || tObj->MinFilter == GL_LINEAR) {
          /* GL_NEAREST and GL_LINEAR only care about GL_TEXTURE_BASE_LEVEL.
           */
-         firstLevel = lastLevel = tObj->BaseLevel;
+         lastLevel = tObj->BaseLevel;
       }
       else {
 	 if (intel->gen == 2) {
-	    firstLevel = tObj->BaseLevel + (GLint) (tObj->MinLod + 0.5);
+	    firstLevel += (GLint) (tObj->MinLod + 0.5);
 	    firstLevel = MAX2(firstLevel, tObj->BaseLevel);
 	    firstLevel = MIN2(firstLevel, tObj->BaseLevel + baseImage->MaxLog2);
 	    lastLevel = tObj->BaseLevel + (GLint) (tObj->MaxLod + 0.5);
@@ -55,7 +55,6 @@ intel_calculate_first_last_level(struct intel_context *intel,
 	     * since it means a bunch of blitting around and probably no memory
 	     * savings (since we have to keep the other levels around anyway).
 	     */
-	    firstLevel = tObj->BaseLevel;
 	    lastLevel = MIN2(tObj->BaseLevel + baseImage->MaxLog2,
 			     tObj->MaxLevel);
 	    /* need at least one level */
@@ -64,7 +63,7 @@ intel_calculate_first_last_level(struct intel_context *intel,
       }
       break;
    case GL_TEXTURE_RECTANGLE_NV:
-      firstLevel = lastLevel = 0;
+      lastLevel = 0;
       break;
    default:
       return;
