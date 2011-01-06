@@ -108,6 +108,13 @@ struct _mesa_glsl_parse_state {
    /** Was there an error during compilation? */
    bool error;
 
+   /**
+    * Are all shader inputs / outputs invariant?
+    *
+    * This is set when the 'STDGL invariant(all)' pragma is used.
+    */
+   bool all_invariant;
+
    /** Loop or switch statement containing the current instructions. */
    class ir_instruction *loop_or_switch_nesting;
    class ast_iteration_statement *loop_or_switch_nesting_ast;
