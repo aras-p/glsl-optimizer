@@ -155,6 +155,9 @@ int r600_bc_init(struct r600_bc *bc, enum radeon_family family)
 	case CHIP_CYPRESS:
 	case CHIP_HEMLOCK:
 	case CHIP_PALM:
+	case CHIP_BARTS:
+	case CHIP_TURKS:
+	case CHIP_CAICOS:
 		bc->chiprev = CHIPREV_EVERGREEN;
 		break;
 	default:
