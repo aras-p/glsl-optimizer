@@ -316,6 +316,7 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
       }
    }
    tx->rect[0].z = z;
+   tx->rect[1].base = 0;
 
    return &tx->base;
 }
