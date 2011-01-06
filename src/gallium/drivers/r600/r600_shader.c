@@ -952,7 +952,7 @@ static int tgsi_setup_trig(struct r600_shader_ctx *ctx,
 			   struct r600_bc_alu_src r600_src[3])
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
-	int r;
+	int r, src0_chan;
 	uint32_t lit_vals[4];
 	struct r600_bc_alu alu;
 
@@ -963,6 +963,19 @@ static int tgsi_setup_trig(struct r600_shader_ctx *ctx,
 	r = tgsi_split_literal_constant(ctx, r600_src);
 	if (r)
 		return r;
+
+	src0_chan = tgsi_chan(&inst->Src[0], 0);
+
+	/* We are going to feed two literals to the MAD below,
+	 * which means that if the first operand is a literal as well,
+	 * we need to copy its value manually.
+	 */
+	if (r600_src[0].sel == V_SQ_ALU_SRC_LITERAL) {
+		unsigned index = inst->Src[0].Register.Index;
+
+		lit_vals[2] = ctx->literals[index * 4 + src0_chan];
+		src0_chan = 2;
+	}
 
 	lit_vals[0] = fui(1.0 /(3.1415926535 * 2));
 	lit_vals[1] = fui(0.5f);
@@ -976,7 +989,7 @@ static int tgsi_setup_trig(struct r600_shader_ctx *ctx,
 	alu.dst.write = 1;
 
 	alu.src[0] = r600_src[0];
-	alu.src[0].chan = tgsi_chan(&inst->Src[0], 0);
+	alu.src[0].chan = src0_chan;
 
 	alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
 	alu.src[1].chan = 0;
