@@ -1469,6 +1469,30 @@ static void evergreenInitSQConfig(struct gl_context * ctx)
         uMaxThreads = 192;
         uMaxStackEntries = 256;
 	    break;
+    case CHIP_FAMILY_BARTS:
+	    uSqNumCfInsts       = 2;
+        bVC_ENABLE = GL_TRUE;
+        uMaxGPRs = 256;
+        uPSThreadCount = 128;
+        uMaxThreads = 248;
+        uMaxStackEntries = 512;
+	    break;
+    case CHIP_FAMILY_TURKS:
+	    uSqNumCfInsts       = 2;
+        bVC_ENABLE = GL_TRUE;
+        uMaxGPRs = 256;
+        uPSThreadCount = 128;
+        uMaxThreads = 248;
+        uMaxStackEntries = 256;
+	    break;
+    case CHIP_FAMILY_CAICOS:
+	    uSqNumCfInsts       = 1;
+        bVC_ENABLE = GL_FALSE;
+        uMaxGPRs = 256;
+        uPSThreadCount = 128;
+        uMaxThreads = 192;
+        uMaxStackEntries = 256;
+	    break;
     default:
         uSqNumCfInsts       = 2;
         bVC_ENABLE = GL_TRUE;

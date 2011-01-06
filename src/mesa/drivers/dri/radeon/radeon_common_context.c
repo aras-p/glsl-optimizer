@@ -100,6 +100,9 @@ static const char* get_chip_family_name(int chip_family)
 	case CHIP_FAMILY_CYPRESS: return "CYPRESS";
 	case CHIP_FAMILY_HEMLOCK: return "HEMLOCK";
 	case CHIP_FAMILY_PALM: return "PALM";
+	case CHIP_FAMILY_BARTS: return "BARTS";
+	case CHIP_FAMILY_TURKS: return "TURKS";
+	case CHIP_FAMILY_CAICOS: return "CAICOS";
 	default: return "unknown";
 	}
 }

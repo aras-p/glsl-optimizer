@@ -445,6 +445,45 @@
 #define PCI_CHIP_PALM_9804              0x9804
 #define PCI_CHIP_PALM_9805              0x9805
 
+#define PCI_CHIP_BARTS_6720             0x6720
+#define PCI_CHIP_BARTS_6721             0x6721
+#define PCI_CHIP_BARTS_6722             0x6722
+#define PCI_CHIP_BARTS_6723             0x6723
+#define PCI_CHIP_BARTS_6724             0x6724
+#define PCI_CHIP_BARTS_6725             0x6725
+#define PCI_CHIP_BARTS_6726             0x6726
+#define PCI_CHIP_BARTS_6727             0x6727
+#define PCI_CHIP_BARTS_6728             0x6728
+#define PCI_CHIP_BARTS_6729             0x6729
+#define PCI_CHIP_BARTS_6738             0x6738
+#define PCI_CHIP_BARTS_6739             0x6739
+
+#define PCI_CHIP_TURKS_6740             0x6740
+#define PCI_CHIP_TURKS_6741             0x6741
+#define PCI_CHIP_TURKS_6742             0x6742
+#define PCI_CHIP_TURKS_6743             0x6743
+#define PCI_CHIP_TURKS_6744             0x6744
+#define PCI_CHIP_TURKS_6745             0x6745
+#define PCI_CHIP_TURKS_6746             0x6746
+#define PCI_CHIP_TURKS_6747             0x6747
+#define PCI_CHIP_TURKS_6748             0x6748
+#define PCI_CHIP_TURKS_6749             0x6749
+#define PCI_CHIP_TURKS_6750             0x6750
+#define PCI_CHIP_TURKS_6758             0x6758
+#define PCI_CHIP_TURKS_6759             0x6759
+
+#define PCI_CHIP_CAICOS_6760            0x6760
+#define PCI_CHIP_CAICOS_6761            0x6761
+#define PCI_CHIP_CAICOS_6762            0x6762
+#define PCI_CHIP_CAICOS_6763            0x6763
+#define PCI_CHIP_CAICOS_6764            0x6764
+#define PCI_CHIP_CAICOS_6765            0x6765
+#define PCI_CHIP_CAICOS_6766            0x6766
+#define PCI_CHIP_CAICOS_6767            0x6767
+#define PCI_CHIP_CAICOS_6768            0x6768
+#define PCI_CHIP_CAICOS_6770            0x6770
+#define PCI_CHIP_CAICOS_6779            0x6779
+
 enum {
    CHIP_FAMILY_R100,
    CHIP_FAMILY_RV100,
@@ -489,6 +528,9 @@ enum {
    CHIP_FAMILY_CYPRESS,
    CHIP_FAMILY_HEMLOCK,
    CHIP_FAMILY_PALM,
+   CHIP_FAMILY_BARTS,
+   CHIP_FAMILY_TURKS,
+   CHIP_FAMILY_CAICOS,
    CHIP_FAMILY_LAST
 };
 
