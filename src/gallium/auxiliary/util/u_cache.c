@@ -215,3 +215,25 @@ util_cache_destroy(struct util_cache *cache)
    FREE(cache->entries);
    FREE(cache);
 }
+
+
+void
+util_cache_remove(struct util_cache *cache,
+                  const void *key)
+{
+   struct util_cache_entry *entry;
+   uint32_t hash;
+
+   assert(cache);
+   if (!cache)
+      return;
+
+   hash = cache->hash(key);
+
+   entry = util_cache_entry_get(cache, hash, key);
+   if (!entry)
+      return;
+
+   if (entry->state == FILLED)
+      util_cache_entry_destroy(cache, entry);
+}
