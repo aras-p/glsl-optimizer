@@ -39,6 +39,7 @@
 #include "dlopen.h"
 #include "image.h"
 #include "macros.h"
+#include "mtypes.h"
 #include "texcompress.h"
 #include "texcompress_s3tc.h"
 #include "texstore.h"

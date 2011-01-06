@@ -35,6 +35,7 @@
 #include "colormac.h"
 #include "context.h"
 #include "enums.h"
+#include "mtypes.h"
 
 
 #define BAD_MASK ~0u

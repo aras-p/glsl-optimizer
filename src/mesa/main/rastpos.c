@@ -32,6 +32,7 @@
 #include "context.h"
 #include "feedback.h"
 #include "macros.h"
+#include "mtypes.h"
 #include "rastpos.h"
 #include "state.h"
 #include "main/dispatch.h"

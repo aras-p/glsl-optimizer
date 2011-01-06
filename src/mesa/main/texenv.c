@@ -34,6 +34,7 @@
 #include "main/context.h"
 #include "main/enums.h"
 #include "main/macros.h"
+#include "main/mtypes.h"
 #include "main/texenv.h"
 #include "main/texstate.h"
 

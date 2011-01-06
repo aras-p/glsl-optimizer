@@ -61,6 +61,7 @@
 #include "macros.h"
 #include "get.h"
 #include "dispatch.h"
+#include "mtypes.h"
 
 #if FEATURE_ARB_sync
 #include "syncobj.h"

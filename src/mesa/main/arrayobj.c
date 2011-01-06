@@ -48,6 +48,7 @@
 #endif
 #include "arrayobj.h"
 #include "macros.h"
+#include "mtypes.h"
 #include "main/dispatch.h"
 
 

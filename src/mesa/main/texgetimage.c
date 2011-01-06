@@ -35,6 +35,7 @@
 #include "context.h"
 #include "formats.h"
 #include "image.h"
+#include "mtypes.h"
 #include "pack.h"
 #include "texgetimage.h"
 #include "teximage.h"

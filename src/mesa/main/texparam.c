@@ -35,6 +35,7 @@
 #include "main/context.h"
 #include "main/formats.h"
 #include "main/macros.h"
+#include "main/mtypes.h"
 #include "main/texcompress.h"
 #include "main/texparam.h"
 #include "main/teximage.h"

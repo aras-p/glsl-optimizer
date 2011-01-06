@@ -33,6 +33,7 @@
 #include "colormac.h"
 #include "pixeltransfer.h"
 #include "imports.h"
+#include "mtypes.h"
 
 
 /*

@@ -24,6 +24,7 @@
 #include "main/drawtex.h"
 #include "main/state.h"
 #include "main/imports.h"
+#include "main/mtypes.h"
 
 
 #if FEATURE_OES_draw_texture

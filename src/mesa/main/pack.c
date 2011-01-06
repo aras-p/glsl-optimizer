@@ -34,6 +34,7 @@
 #include "enums.h"
 #include "image.h"
 #include "imports.h"
+#include "mtypes.h"
 #include "pack.h"
 #include "pixeltransfer.h"
 #include "imports.h"

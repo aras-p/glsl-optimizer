@@ -28,6 +28,7 @@
 
 #include "glheader.h"
 #include "imports.h"
+#include "mtypes.h"
 #include "program/program.h"
 #include "program/prog_parameter.h"
 #include "program/prog_cache.h"

@@ -58,6 +58,7 @@
 #include "image.h"
 #include "macros.h"
 #include "mipmap.h"
+#include "mtypes.h"
 #include "pack.h"
 #include "imports.h"
 #include "pack.h"
