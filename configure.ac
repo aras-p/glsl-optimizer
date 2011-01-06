@@ -377,14 +377,14 @@ if test "x$enable_asm" = xyes; then
     case "$host_cpu" in
     i?86)
         case "$host_os" in
-        linux* | *freebsd* | dragonfly*)
+        linux* | *freebsd* | dragonfly* | *netbsd*)
             test "x$enable_64bit" = xyes && asm_arch=x86_64 || asm_arch=x86
             ;;
         esac
         ;;
     x86_64)
         case "$host_os" in
-        linux* | *freebsd* | dragonfly*)
+        linux* | *freebsd* | dragonfly* | *netbsd*)
             test "x$enable_32bit" = xyes && asm_arch=x86 || asm_arch=x86_64
             ;;
         esac
@@ -542,7 +542,7 @@ linux*)
     i*86|x86_64|powerpc*|sparc*) default_driver="dri";;
     esac
     ;;
-*freebsd* | dragonfly*)
+*freebsd* | dragonfly* | *netbsd*)
     case "$host_cpu" in
     i*86|x86_64|powerpc*|sparc*) default_driver="dri";;
     esac
@@ -909,15 +909,12 @@ if test "$mesa_driver" = dri -o "$mesa_driver" = no; then
             ;;
         esac
         ;;
-    freebsd* | dragonfly*)
+    freebsd* | dragonfly* | *netbsd*)
         DEFINES="$DEFINES -DPTHREADS -DUSE_EXTERNAL_DXTN_LIB=1"
         DEFINES="$DEFINES -DIN_DRI_DRIVER -DHAVE_ALIAS"
         DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING"
         if test "x$driglx_direct" = xyes; then
             DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
-        fi
-        if test "x$GXX" = xyes; then
-            CXXFLAGS="$CXXFLAGS -ansi -pedantic"
         fi
 
         if test "x$DRI_DIRS" = "xyes"; then

@@ -307,7 +307,7 @@ fi
 #
 case $ARCH in
 
-    'Linux' | 'OpenBSD' | 'DragonFly' | 'GNU' | GNU/*)
+    'Linux' | 'OpenBSD' | 'DragonFly' | 'GNU' | GNU/* | 'NetBSD')
 	# we assume gcc
 
 	if [ "x$LINK" = "x" ] ; then
@@ -571,20 +571,6 @@ case $ARCH in
 	    ${LINK} ${OPTS} ${LDFLAGS} -o ${SHLIB} ${OBJECTS} ${DEPS}
 	    ln -sf ${SHLIB} "lib${LIBNAME}.so"
 	    FINAL_LIBS="${SHLIB} lib${LIBNAME}.so"
-	fi
-	;;
-
-    'NetBSD')
-        if [ $STATIC = 1 ] ; then
-	    LIBNAME="lib${LIBNAME}_pic.a"
-	    echo "mklib: Making NetBSD PIC static library: " ${LIBNAME}
-	    FINAL_LIBS=`make_ar_static_lib cq 1 ${LIBNAME} ${OBJECTS}`
-	else
-	    LIBNAME="lib${LIBNAME}.so.${MAJOR}.${MINOR}"
-	    echo "mklib: Making NetBSD PIC shared library: " ${LIBNAME}
-	    rm -f ${LIBNAME}
-	    ld -x -Bshareable -Bforcearchive -o ${LIBNAME} ${OBJECTS}
-	    FINAL_LIBS=${LIBNAME}
 	fi
 	;;
 
