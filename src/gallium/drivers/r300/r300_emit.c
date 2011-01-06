@@ -380,7 +380,8 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
     if (r300->screen->caps.is_r500) {
         rb3d_cctl = R300_RB3D_CCTL_INDEPENDENT_COLORFORMAT_ENABLE_ENABLE;
     }
-    if (r300_fragment_shader_writes_all(r300_fs(r300))) {
+    if (fb->nr_cbufs &&
+        r300_fragment_shader_writes_all(r300_fs(r300))) {
         rb3d_cctl |= R300_RB3D_CCTL_NUM_MULTIWRITES(fb->nr_cbufs);
     }
 
