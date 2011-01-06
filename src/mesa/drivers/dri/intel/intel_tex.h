@@ -65,4 +65,10 @@ void intel_tex_unmap_images(struct intel_context *intel,
 
 int intel_compressed_num_bytes(GLuint mesaFormat);
 
+struct intel_mipmap_tree *
+intel_miptree_create_for_teximage(struct intel_context *intel,
+				  struct intel_texture_object *intelObj,
+				  struct intel_texture_image *intelImage,
+				  GLboolean expect_accelerated_upload);
+
 #endif

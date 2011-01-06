@@ -115,6 +115,7 @@ struct wm_sampler_key {
    struct wm_sampler_entry {
       GLenum tex_target;
       GLenum wrap_r, wrap_s, wrap_t;
+      uint32_t base_level;
       float maxlod, minlod;
       float lod_bias;
       float max_aniso;
@@ -243,14 +244,7 @@ static void brw_update_sampler_state(struct brw_context *brw,
    sampler->ss0.lod_preclamp = 1; /* OpenGL mode */
    sampler->ss0.default_color_mode = 0; /* OpenGL/DX10 mode */
 
-   /* Set BaseMipLevel, MaxLOD, MinLOD: 
-    *
-    * XXX: I don't think that using firstLevel, lastLevel works,
-    * because we always setup the surface state as if firstLevel ==
-    * level zero.  Probably have to subtract firstLevel from each of
-    * these:
-    */
-   sampler->ss0.base_level = U_FIXED(0, 1);
+   sampler->ss0.base_level = U_FIXED(key->base_level, 1);
 
    sampler->ss1.max_lod = U_FIXED(CLAMP(key->maxlod, 0, 13), 6);
    sampler->ss1.min_lod = U_FIXED(CLAMP(key->minlod, 0, 13), 6);
@@ -292,6 +286,7 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	 entry->wrap_s = texObj->WrapS;
 	 entry->wrap_t = texObj->WrapT;
 
+	 entry->base_level = texObj->BaseLevel;
 	 entry->maxlod = texObj->MaxLod;
 	 entry->minlod = texObj->MinLod;
 	 entry->lod_bias = texUnit->LodBias + texObj->LodBias;
