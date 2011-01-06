@@ -32,11 +32,11 @@ struct intel_texture_object
 {
    struct gl_texture_object base;       /* The "parent" object */
 
-   /* The mipmap tree must include at least these levels once
-    * validated:
+   /* This is a mirror of base._MaxLevel, updated at validate time,
+    * except that we don't bother with the non-base levels for
+    * non-mipmapped textures.
     */
-   GLuint firstLevel;
-   GLuint lastLevel;
+   unsigned int _MaxLevel;
 
    /* Offset for firstLevel image:
     */

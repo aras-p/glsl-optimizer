@@ -63,8 +63,8 @@ static GLboolean do_check_fallback(struct brw_context *brw)
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       struct gl_texture_unit *texUnit = &ctx->Texture.Unit[i];
       if (texUnit->_ReallyEnabled) {
-	 struct intel_texture_object *intelObj = intel_texture_object(texUnit->_Current);
-	 struct gl_texture_image *texImage = intelObj->base.Image[0][intelObj->firstLevel];
+	 struct gl_texture_object *tex_obj = texUnit->_Current;
+	 struct gl_texture_image *texImage = tex_obj->Image[0][tex_obj->BaseLevel];
 	 if (texImage->Border) {
 	    DBG("FALLBACK: texture border\n");
 	    return GL_TRUE;

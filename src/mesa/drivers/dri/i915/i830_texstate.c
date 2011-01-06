@@ -140,9 +140,9 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    /* Get first image here, since intelObj->firstLevel will get set in
     * the intel_finalize_mipmap_tree() call above.
     */
-   firstImage = tObj->Image[0][intelObj->firstLevel];
+   firstImage = tObj->Image[0][tObj->BaseLevel];
 
-   intel_miptree_get_image_offset(intelObj->mt, intelObj->firstLevel, 0, 0,
+   intel_miptree_get_image_offset(intelObj->mt, tObj->BaseLevel, 0, 0,
 				  &dst_x, &dst_y);
 
    drm_intel_bo_reference(intelObj->mt->region->buffer);

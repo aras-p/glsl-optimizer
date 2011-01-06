@@ -8,46 +8,21 @@
 #define FILE_DEBUG_FLAG DEBUG_TEXTURE
 
 /**
- * Compute which mipmap levels that really need to be sent to the hardware.
- * This depends on the base image size, GL_TEXTURE_MIN_LOD,
- * GL_TEXTURE_MAX_LOD, GL_TEXTURE_BASE_LEVEL, and GL_TEXTURE_MAX_LEVEL.
+ * When validating, we only care about the texture images that could
+ * be seen, so for non-mipmapped modes we want to ignore everything
+ * but BaseLevel.
  */
 static void
-intel_calculate_first_last_level(struct intel_context *intel,
-				 struct intel_texture_object *intelObj)
+intel_update_max_level(struct intel_context *intel,
+		       struct intel_texture_object *intelObj)
 {
    struct gl_texture_object *tObj = &intelObj->base;
-   const struct gl_texture_image *const baseImage =
-      tObj->Image[0][tObj->BaseLevel];
 
-   /* These must be signed values.  MinLod and MaxLod can be negative numbers,
-    * and having firstLevel and lastLevel as signed prevents the need for
-    * extra sign checks.
-    */
-   int firstLevel = tObj->BaseLevel;
-   int lastLevel;
-
-   /* Yes, this looks overly complicated, but it's all needed.
-    */
    if (tObj->MinFilter == GL_NEAREST || tObj->MinFilter == GL_LINEAR) {
-      /* GL_NEAREST and GL_LINEAR only care about GL_TEXTURE_BASE_LEVEL.
-       */
-      lastLevel = tObj->BaseLevel;
+      intelObj->_MaxLevel = tObj->BaseLevel;
    } else {
-      /* Min/max LOD are taken into account in sampler state.  We don't
-       * want to re-layout textures just because clamping has been applied
-       * since it means a bunch of blitting around and probably no memory
-       * savings (since we have to keep the other levels around anyway).
-       */
-      lastLevel = MIN2(tObj->BaseLevel + baseImage->MaxLog2,
-		       tObj->MaxLevel);
-      /* need at least one level */
-      lastLevel = MAX2(firstLevel, lastLevel);
+      intelObj->_MaxLevel = tObj->_MaxLevel;
    }
-
-   /* save these values */
-   intelObj->firstLevel = firstLevel;
-   intelObj->lastLevel = lastLevel;
 }
 
 /**
@@ -109,8 +84,8 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
 
    /* What levels must the tree include at a minimum?
     */
-   intel_calculate_first_last_level(intel, intelObj);
-   firstImage = intel_texture_image(tObj->Image[0][intelObj->firstLevel]);
+   intel_update_max_level(intel, intelObj);
+   firstImage = intel_texture_image(tObj->Image[0][tObj->BaseLevel]);
 
    /* Fallback case:
     */
@@ -129,8 +104,8 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
     */
    if (firstImage->mt &&
        firstImage->mt != intelObj->mt &&
-       firstImage->mt->first_level <= intelObj->firstLevel &&
-       firstImage->mt->last_level >= intelObj->lastLevel) {
+       firstImage->mt->first_level <= tObj->BaseLevel &&
+       firstImage->mt->last_level >= intelObj->_MaxLevel) {
 
       if (intelObj->mt)
          intel_miptree_release(intel, &intelObj->mt);
@@ -157,8 +132,8 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    if (intelObj->mt &&
        (intelObj->mt->target != intelObj->base.Target ||
 	intelObj->mt->internal_format != firstImage->base.InternalFormat ||
-	intelObj->mt->first_level != intelObj->firstLevel ||
-	intelObj->mt->last_level != intelObj->lastLevel ||
+	intelObj->mt->first_level != tObj->BaseLevel ||
+	intelObj->mt->last_level != intelObj->_MaxLevel ||
 	intelObj->mt->width0 != firstImage->base.Width ||
 	intelObj->mt->height0 != firstImage->base.Height ||
 	intelObj->mt->depth0 != firstImage->base.Depth ||
@@ -175,8 +150,8 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
                                           intelObj->base.Target,
                                           firstImage->base._BaseFormat,
                                           firstImage->base.InternalFormat,
-                                          intelObj->firstLevel,
-                                          intelObj->lastLevel,
+                                          tObj->BaseLevel,
+                                          intelObj->_MaxLevel,
                                           firstImage->base.Width,
                                           firstImage->base.Height,
                                           firstImage->base.Depth,
@@ -189,7 +164,7 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
     */
    nr_faces = (intelObj->base.Target == GL_TEXTURE_CUBE_MAP) ? 6 : 1;
    for (face = 0; face < nr_faces; face++) {
-      for (i = intelObj->firstLevel; i <= intelObj->lastLevel; i++) {
+      for (i = tObj->BaseLevel; i <= intelObj->_MaxLevel; i++) {
          struct intel_texture_image *intelImage =
             intel_texture_image(intelObj->base.Image[face][i]);
 
@@ -263,7 +238,7 @@ intel_tex_map_images(struct intel_context *intel,
 
    DBG("%s\n", __FUNCTION__);
 
-   for (i = intelObj->firstLevel; i <= intelObj->lastLevel; i++)
+   for (i = intelObj->base.BaseLevel; i <= intelObj->_MaxLevel; i++)
       intel_tex_map_level_images(intel, intelObj, i);
 }
 
@@ -273,6 +248,6 @@ intel_tex_unmap_images(struct intel_context *intel,
 {
    int i;
 
-   for (i = intelObj->firstLevel; i <= intelObj->lastLevel; i++)
+   for (i = intelObj->base.BaseLevel; i <= intelObj->_MaxLevel; i++)
       intel_tex_unmap_level_images(intel, intelObj, i);
 }

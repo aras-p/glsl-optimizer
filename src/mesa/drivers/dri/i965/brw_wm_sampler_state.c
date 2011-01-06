@@ -276,9 +276,8 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	 struct wm_sampler_entry *entry = &key->sampler[unit];
 	 struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
 	 struct gl_texture_object *texObj = texUnit->_Current;
-	 struct intel_texture_object *intelObj = intel_texture_object(texObj);
 	 struct gl_texture_image *firstImage =
-	    texObj->Image[0][intelObj->firstLevel];
+	    texObj->Image[0][texObj->BaseLevel];
 
 	 memset(last_entry_end, 0, 
 		(char*)entry - last_entry_end + sizeof(*entry));

@@ -163,7 +163,7 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    struct brw_context *brw = brw_context(ctx);
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
-   struct gl_texture_image *firstImage = tObj->Image[0][intelObj->firstLevel];
+   struct gl_texture_image *firstImage = tObj->Image[0][tObj->BaseLevel];
    const GLuint surf_index = SURF_INDEX_TEXTURE(unit);
    struct brw_surface_state surf;
    void *map;
@@ -181,7 +181,7 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
 /*    surf.ss0.data_return_format = BRW_SURFACERETURNFORMAT_S1; */
    surf.ss1.base_addr = intelObj->mt->region->buffer->offset; /* reloc */
 
-   surf.ss2.mip_count = intelObj->lastLevel - intelObj->firstLevel;
+   surf.ss2.mip_count = intelObj->_MaxLevel - tObj->BaseLevel;
    surf.ss2.width = firstImage->Width - 1;
    surf.ss2.height = firstImage->Height - 1;
    brw_set_surface_tiling(&surf, intelObj->mt->region->tiling);
