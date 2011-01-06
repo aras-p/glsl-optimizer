@@ -711,8 +711,7 @@ intelSetTexBuffer2(__DRIcontext *pDRICtx, GLint target,
    }
 
    mt = intel_miptree_create_for_region(intel, target,
-					internalFormat,
-					0, 0, rb->region, 1, 0);
+					internalFormat, rb->region, 1, 0);
    if (mt == NULL)
        return;
 
@@ -777,7 +776,7 @@ intel_image_target_texture_2d(struct gl_context *ctx, GLenum target,
 
    mt = intel_miptree_create_for_region(intel, target,
 					image->internal_format,
-					0, 0, image->region, 1, 0);
+					image->region, 1, 0);
    if (mt == NULL)
        return;
 
