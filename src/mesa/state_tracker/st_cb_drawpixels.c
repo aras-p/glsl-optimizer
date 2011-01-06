@@ -34,6 +34,7 @@
 #include "main/image.h"
 #include "main/bufferobj.h"
 #include "main/macros.h"
+#include "main/mtypes.h"
 #include "main/pack.h"
 #include "main/texformat.h"
 #include "main/texstore.h"
