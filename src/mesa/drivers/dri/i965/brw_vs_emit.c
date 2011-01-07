@@ -1426,11 +1426,10 @@ static struct brw_reg get_arg( struct brw_vs_compile *c,
 					  GET_SWZ(src->Swizzle, 1),
 					  GET_SWZ(src->Swizzle, 2),
 					  GET_SWZ(src->Swizzle, 3));
-   }
 
-   /* Note this is ok for non-swizzle instructions: 
-    */
-   reg.negate = src->Negate ? 1 : 0;   
+      /* Note this is ok for non-swizzle ARB_vp instructions */
+      reg.negate = src->Negate ? 1 : 0;
+   }
 
    return reg;
 }
