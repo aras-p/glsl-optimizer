@@ -101,6 +101,8 @@ struct nvc0_context {
    unsigned num_vtxbufs;
    struct pipe_index_buffer idxbuf;
    uint32_t vbo_fifo;
+   unsigned vbo_min_index; /* from pipe_draw_info, for vertex upload */
+   unsigned vbo_max_index;
 
    struct pipe_sampler_view *textures[5][PIPE_MAX_SAMPLERS];
    unsigned num_textures[5];

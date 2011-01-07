@@ -161,9 +161,10 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
             continue;
          push = nvc0->vbo_push_hint;
          if (!push) {
-            nvc0_migrate_vertices(nvc0_resource(vb->buffer),
-                                  vb->buffer_offset,
-                                  vb->buffer->width0 - vb->buffer_offset);
+            unsigned base, size;
+            base = vb->buffer_offset + nvc0->vbo_min_index * vb->stride;
+            size = (nvc0->vbo_max_index - nvc0->vbo_min_index + 1) * vb->stride;
+            nvc0_migrate_vertices(nvc0_resource(vb->buffer), base, size);
             nvc0->vbo_dirty = TRUE;
          } else
             continue;
@@ -535,6 +536,9 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    nvc0->vbo_push_hint = /* the 64 is heuristic */
       !(info->indexed &&
         ((info->max_index - info->min_index + 64) < info->count));
+
+   nvc0->vbo_min_index = info->min_index;
+   nvc0->vbo_max_index = info->max_index;
 
    nvc0_state_validate(nvc0);
 
