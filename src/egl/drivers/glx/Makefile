@@ -11,6 +11,6 @@ EGL_INCLUDES = \
 	-I$(TOP)/src/egl/main
 
 EGL_CFLAGS = $(X11_CFLAGS)
-EGL_LIBS = $(X11_LIBS) -lGL
+EGL_LIBS = $(X11_LIBS) $(DLOPEN_LIBS)
 
 include ../Makefile.template
