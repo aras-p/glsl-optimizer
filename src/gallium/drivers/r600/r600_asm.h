@@ -125,6 +125,12 @@ struct r600_bc_output {
 	unsigned			barrier;
 };
 
+struct r600_bc_kcache {
+	unsigned			bank;
+	unsigned			mode;
+	unsigned			addr;
+};
+
 struct r600_bc_cf {
 	struct list_head		list;
 	unsigned			inst;
@@ -134,12 +140,7 @@ struct r600_bc_cf {
 	unsigned			cond;
 	unsigned			pop_count;
 	unsigned			cf_addr; /* control flow addr */
-	unsigned			kcache0_mode;
-	unsigned			kcache1_mode;
-	unsigned			kcache0_addr;
-	unsigned			kcache1_addr;
-	unsigned			kcache0_bank;
-	unsigned			kcache1_bank;
+	struct r600_bc_kcache		kcache[2];
 	unsigned			r6xx_uses_waterfall;
 	struct list_head		alu;
 	struct list_head		tex;

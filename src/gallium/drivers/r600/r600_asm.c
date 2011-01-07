@@ -481,14 +481,14 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 	 * to be broken down into multiple ALU clauses.
 	 */
 	/* select the constant buffer (0-15) for each kcache */
-	bc->cf_last->kcache0_bank = 0;
-	bc->cf_last->kcache1_bank = 0;
+	bc->cf_last->kcache[0].bank = 0;
+	bc->cf_last->kcache[1].bank = 0;
 	/* lock 2 cachelines per kcache; 4 total */
-	bc->cf_last->kcache0_mode = V_SQ_CF_KCACHE_LOCK_2;
-	bc->cf_last->kcache1_mode = V_SQ_CF_KCACHE_LOCK_2;
+	bc->cf_last->kcache[0].mode = V_SQ_CF_KCACHE_LOCK_2;
+	bc->cf_last->kcache[1].mode = V_SQ_CF_KCACHE_LOCK_2;
 	/* set the cacheline offsets for each kcache */
-	bc->cf_last->kcache0_addr = 0;
-	bc->cf_last->kcache1_addr = 2;
+	bc->cf_last->kcache[0].addr = 0;
+	bc->cf_last->kcache[1].addr = 2;
 
 	/* process cur ALU instructions for bank swizzle */
 	if (alu->last) {
@@ -748,14 +748,14 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 	case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3):
 	case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
 		bc->bytecode[id++] = S_SQ_CF_ALU_WORD0_ADDR(cf->addr >> 1) |
-			S_SQ_CF_ALU_WORD0_KCACHE_MODE0(cf->kcache0_mode) |
-			S_SQ_CF_ALU_WORD0_KCACHE_BANK0(cf->kcache0_bank) |
-			S_SQ_CF_ALU_WORD0_KCACHE_BANK1(cf->kcache1_bank);
+			S_SQ_CF_ALU_WORD0_KCACHE_MODE0(cf->kcache[0].mode) |
+			S_SQ_CF_ALU_WORD0_KCACHE_BANK0(cf->kcache[0].bank) |
+			S_SQ_CF_ALU_WORD0_KCACHE_BANK1(cf->kcache[1].bank);
 
 		bc->bytecode[id++] = S_SQ_CF_ALU_WORD1_CF_INST(cf->inst >> 3) |
-			S_SQ_CF_ALU_WORD1_KCACHE_MODE1(cf->kcache1_mode) |
-			S_SQ_CF_ALU_WORD1_KCACHE_ADDR0(cf->kcache0_addr) |
-			S_SQ_CF_ALU_WORD1_KCACHE_ADDR1(cf->kcache1_addr) |
+			S_SQ_CF_ALU_WORD1_KCACHE_MODE1(cf->kcache[1].mode) |
+			S_SQ_CF_ALU_WORD1_KCACHE_ADDR0(cf->kcache[0].addr) |
+			S_SQ_CF_ALU_WORD1_KCACHE_ADDR1(cf->kcache[1].addr) |
 					S_SQ_CF_ALU_WORD1_BARRIER(1) |
 					S_SQ_CF_ALU_WORD1_USES_WATERFALL(bc->chiprev == CHIPREV_R600 ? cf->r6xx_uses_waterfall : 0) |
 					S_SQ_CF_ALU_WORD1_COUNT((cf->ndw / 2) - 1);
