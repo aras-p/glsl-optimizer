@@ -442,20 +442,20 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 	}
 	/* at most 128 slots, one add alu can add 4 slots + 4 constants(2 slots)
 	 * worst case */
-	if (alu->last && (bc->cf_last->ndw >> 1) >= 120) {
+	if (nalu->last && (bc->cf_last->ndw >> 1) >= 120) {
 		bc->force_add_cf = 1;
 	}
 	/* number of gpr == the last gpr used in any alu */
 	for (i = 0; i < 3; i++) {
-		if (alu->src[i].sel >= bc->ngpr && alu->src[i].sel < 128) {
-			bc->ngpr = alu->src[i].sel + 1;
+		if (nalu->src[i].sel >= bc->ngpr && nalu->src[i].sel < 128) {
+			bc->ngpr = nalu->src[i].sel + 1;
 		}
 		/* compute how many literal are needed
 		 * either 2 or 4 literals
 		 */
-		if (alu->src[i].sel == 253) {
-			if (((alu->src[i].chan + 2) & 0x6) > nalu->nliteral) {
-				nalu->nliteral = (alu->src[i].chan + 2) & 0x6;
+		if (nalu->src[i].sel == 253) {
+			if (((nalu->src[i].chan + 2) & 0x6) > nalu->nliteral) {
+				nalu->nliteral = (nalu->src[i].chan + 2) & 0x6;
 			}
 		}
 	}
@@ -465,8 +465,8 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 			nalu->nliteral = lalu->nliteral;
 		}
 	}
-	if (alu->dst.sel >= bc->ngpr) {
-		bc->ngpr = alu->dst.sel + 1;
+	if (nalu->dst.sel >= bc->ngpr) {
+		bc->ngpr = nalu->dst.sel + 1;
 	}
 	LIST_ADDTAIL(&nalu->list, &bc->cf_last->alu);
 	/* each alu use 2 dwords */
@@ -491,7 +491,7 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 	bc->cf_last->kcache[1].addr = 2;
 
 	/* process cur ALU instructions for bank swizzle */
-	if (alu->last) {
+	if (nalu->last) {
 		check_and_set_bank_swizzle(bc, bc->cf_last->curr_bs_head);
 		bc->cf_last->curr_bs_head = NULL;
 	}
