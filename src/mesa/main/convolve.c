@@ -36,6 +36,7 @@
 #include "colormac.h"
 #include "convolve.h"
 #include "macros.h"
+#include "mfeatures.h"
 #include "mtypes.h"
 #include "main/dispatch.h"
 

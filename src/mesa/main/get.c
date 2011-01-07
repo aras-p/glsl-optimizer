@@ -29,6 +29,7 @@
 #include "extensions.h"
 #include "get.h"
 #include "macros.h"
+#include "mfeatures.h"
 #include "mtypes.h"
 #include "state.h"
 #include "texcompress.h"

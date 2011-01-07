@@ -26,6 +26,7 @@
 #define TEXCOMPRESS_FXT1_H
 
 #include "glheader.h"
+#include "mfeatures.h"
 #include "texstore.h"
 
 struct gl_texture_image;

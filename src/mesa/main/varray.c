@@ -33,6 +33,7 @@
 #include "hash.h"
 #include "image.h"
 #include "macros.h"
+#include "mfeatures.h"
 #include "mtypes.h"
 #include "varray.h"
 #include "arrayobj.h"

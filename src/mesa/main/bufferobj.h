@@ -29,6 +29,7 @@
 #define BUFFEROBJ_H
 
 
+#include "mfeatures.h"
 #include "mtypes.h"
 
 

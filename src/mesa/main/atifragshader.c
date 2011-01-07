@@ -26,6 +26,7 @@
 #include "main/hash.h"
 #include "main/imports.h"
 #include "main/macros.h"
+#include "main/mfeatures.h"
 #include "main/enums.h"
 #include "main/mtypes.h"
 #include "main/dispatch.h"

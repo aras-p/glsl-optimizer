@@ -39,6 +39,7 @@
 #include "context.h"
 #include "bufferobj.h"
 #include "fbobject.h"
+#include "mfeatures.h"
 #include "mtypes.h"
 #include "texobj.h"
 

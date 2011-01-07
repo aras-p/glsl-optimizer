@@ -40,6 +40,7 @@
 #include "framebuffer.h"
 #include "hash.h"
 #include "macros.h"
+#include "mfeatures.h"
 #include "mtypes.h"
 #include "renderbuffer.h"
 #include "state.h"

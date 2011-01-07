@@ -28,6 +28,7 @@
 #define API_ARRAYELT_H
 
 
+#include "main/mfeatures.h"
 #include "main/mtypes.h"
 
 #if FEATURE_arrayelt

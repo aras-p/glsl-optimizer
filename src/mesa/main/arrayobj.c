@@ -43,6 +43,7 @@
 #include "hash.h"
 #include "imports.h"
 #include "context.h"
+#include "mfeatures.h"
 #if FEATURE_ARB_vertex_buffer_object
 #include "bufferobj.h"
 #endif

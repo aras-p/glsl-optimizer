@@ -29,6 +29,7 @@
 #include "context.h"
 #include "image.h"
 #include "macros.h"
+#include "mfeatures.h"
 #include "mtypes.h"
 #include "pack.h"
 #include "state.h"

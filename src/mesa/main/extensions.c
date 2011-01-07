@@ -28,6 +28,7 @@
 #include "imports.h"
 #include "context.h"
 #include "extensions.h"
+#include "mfeatures.h"
 #include "mtypes.h"
 
 

@@ -59,6 +59,7 @@
 #include "imports.h"
 #include "context.h"
 #include "macros.h"
+#include "mfeatures.h"
 #include "get.h"
 #include "dispatch.h"
 #include "mtypes.h"

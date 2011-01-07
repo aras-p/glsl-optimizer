@@ -41,6 +41,7 @@
 #include "main/dispatch.h"
 #include "main/enums.h"
 #include "main/hash.h"
+#include "main/mfeatures.h"
 #include "main/mtypes.h"
 #include "main/shaderapi.h"
 #include "main/shaderobj.h"

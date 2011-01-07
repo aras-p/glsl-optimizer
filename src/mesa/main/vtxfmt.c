@@ -30,6 +30,7 @@
 #include "api_arrayelt.h"
 #include "context.h"
 #include "imports.h"
+#include "mfeatures.h"
 #include "mtypes.h"
 #include "vtxfmt.h"
 #include "eval.h"
