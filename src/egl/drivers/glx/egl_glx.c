@@ -1115,7 +1115,7 @@ fail:
  * Create a new _EGLDriver object and init its dispatch table.
  */
 _EGLDriver *
-_eglMain(const char *args)
+_EGL_MAIN(const char *args)
 {
    struct GLX_egl_driver *GLX_drv = CALLOC_STRUCT(GLX_egl_driver);
 

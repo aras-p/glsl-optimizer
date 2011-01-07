@@ -3,7 +3,7 @@
 TOP = ../../../..
 include $(TOP)/configs/current
 
-EGL_DRIVER = egl_dri2.so
+EGL_DRIVER = egl_dri2
 EGL_SOURCES = egl_dri2.c
 
 EGL_INCLUDES = \
@@ -16,5 +16,8 @@ EGL_INCLUDES = \
 	$(LIBDRM_CFLAGS)
 
 EGL_LIBS = $(XCB_DRI2_LIBS) $(LIBUDEV_LIBS) $(DLOPEN_LIBS) $(LIBDRM_LIB)
+
+EGL_CFLAGS = -D_EGL_MAIN=_eglBuiltInDriverDRI2
+EGL_BUILTIN = true
 
 include ../Makefile.template

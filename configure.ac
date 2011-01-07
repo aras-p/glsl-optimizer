@@ -1783,7 +1783,7 @@ if test "$enable_egl" = yes; then
 
     egl_drivers=""
     for d in $EGL_DRIVERS_DIRS; do
-        egl_drivers="$egl_drivers egl_$d"
+        egl_drivers="$egl_drivers builtin:egl_$d"
     done
 
     if test "$enable_gallium" = yes -a "$HAVE_ST_EGL" = yes; then

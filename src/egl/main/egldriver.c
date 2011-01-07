@@ -25,6 +25,7 @@
 
 typedef struct _egl_module {
    char *Path;
+   _EGLMain_t BuiltIn;
    void *Handle;
    _EGLDriver *Driver;
 } _EGLModule;
@@ -32,6 +33,18 @@ typedef struct _egl_module {
 static _EGL_DECLARE_MUTEX(_eglModuleMutex);
 static _EGLArray *_eglModules;
 
+const struct {
+   const char *name;
+   _EGLMain_t main;
+} _eglBuiltInDrivers[] = {
+#ifdef _EGL_BUILT_IN_DRIVER_DRI2
+   { "egl_dri2", _eglBuiltInDriverDRI2 },
+#endif
+#ifdef _EGL_BUILT_IN_DRIVER_GLX
+   { "egl_glx", _eglBuiltInDriverGLX },
+#endif
+   { NULL, NULL }
+};
 
 /**
  * Wrappers for dlopen/dlclose()
@@ -157,9 +170,18 @@ _eglLoadModule(_EGLModule *mod)
    lib_handle lib;
    _EGLDriver *drv;
 
-   mainFunc = _eglOpenLibrary(mod->Path, &lib);
-   if (!mainFunc)
-      return EGL_FALSE;
+   if (mod->Driver)
+      return EGL_TRUE;
+
+   if (mod->BuiltIn) {
+      lib = (lib_handle) NULL;
+      mainFunc = mod->BuiltIn;
+   }
+   else {
+      mainFunc = _eglOpenLibrary(mod->Path, &lib);
+      if (!mainFunc)
+         return EGL_FALSE;
+   }
 
    drv = mainFunc(NULL);
    if (!drv) {
@@ -313,68 +335,6 @@ _eglLoaderFile(const char *dir, size_t len, void *loader_data)
 
 
 /**
- * A loader function for use with _eglPreloadForEach.  The loader data is the
- * pattern (prefix) of the files to look for.
- */
-static EGLBoolean
-_eglLoaderPattern(const char *dir, size_t len, void *loader_data)
-{
-#if defined(_EGL_OS_UNIX)
-   const char *prefix, *suffix;
-   size_t prefix_len, suffix_len;
-   DIR *dirp;
-   struct dirent *dirent;
-   char path[1024];
-
-   if (len + 2 > sizeof(path))
-      return EGL_TRUE;
-   if (len) {
-      memcpy(path, dir, len);
-      path[len++] = '/';
-   }
-   path[len] = '\0';
-
-   dirp = opendir(path);
-   if (!dirp)
-      return EGL_TRUE;
-
-   prefix = (const char *) loader_data;
-   prefix_len = strlen(prefix);
-   suffix = library_suffix();
-   suffix_len = (suffix) ? strlen(suffix) : 0;
-
-   while ((dirent = readdir(dirp))) {
-      size_t dirent_len = strlen(dirent->d_name);
-      const char *p;
-
-      /* match the prefix */
-      if (strncmp(dirent->d_name, prefix, prefix_len) != 0)
-         continue;
-      /* match the suffix */
-      if (suffix) {
-         p = dirent->d_name + dirent_len - suffix_len;
-         if (p < dirent->d_name || strcmp(p, suffix) != 0)
-            continue;
-      }
-
-      /* make a full path and add it to the module array */
-      if (len + dirent_len + 1 <= sizeof(path)) {
-         strcpy(path + len, dirent->d_name);
-         _eglAddModule(path);
-      }
-   }
-
-   closedir(dirp);
-
-   return EGL_TRUE;
-#else /* _EGL_OS_UNIX */
-   /* stop immediately */
-   return EGL_FALSE;
-#endif
-}
-
-
-/**
  * Run the callback function on each driver directory.
  *
  * The process may end prematurely if the callback function returns false.
@@ -489,34 +449,37 @@ _eglAddUserDriver(void)
       }
    }
 #endif /* _EGL_OS_UNIX */
-   if (env)
+   if (env) {
+      _EGLModule *mod;
+      EGLint i;
+
+      /* env can be a path */
       _eglPreloadForEach(search_path, _eglLoaderFile, (void *) env);
+      /* or the name of a built-in driver */
+      for (i = 0; _eglBuiltInDrivers[i].name; i++) {
+         if (!strcmp(_eglBuiltInDrivers[i].name, env)) {
+            mod = _eglAddModule(env);
+            if (mod)
+               mod->BuiltIn = _eglBuiltInDrivers[i].main;
+         }
+      }
+   }
 }
 
 
 /**
- * Add default drivers to the module array.
+ * Add built-in drivers to the module array.
  */
 static void
-_eglAddDefaultDrivers(void)
+_eglAddBuiltInDrivers(void)
 {
-   const char *search_path = _eglGetSearchPath();
+   _EGLModule *mod;
    EGLint i;
-#if defined(_EGL_OS_WINDOWS)
-   const char *DefaultDriverNames[] = {
-      "egl_gallium"
-   };
-#elif defined(_EGL_OS_UNIX)
-   const char *DefaultDriverNames[] = {
-      "egl_gallium",
-      "egl_dri2",
-      "egl_glx"
-   };
-#endif
 
-   for (i = 0; i < ARRAY_SIZE(DefaultDriverNames); i++) {
-      void *name = (void *) DefaultDriverNames[i];
-      _eglPreloadForEach(search_path, _eglLoaderFile, name);
+   for (i = 0; _eglBuiltInDrivers[i].name; i++) {
+      mod = _eglAddModule(_eglBuiltInDrivers[i].name);
+      if (mod)
+         mod->BuiltIn = _eglBuiltInDrivers[i].main;
    }
 }
 
@@ -528,13 +491,15 @@ _eglAddDefaultDrivers(void)
 static EGLBoolean
 _eglAddDrivers(void)
 {
+   void *external = (void *) "egl_gallium";
+
    if (_eglModules)
       return EGL_TRUE;
 
    /* the order here decides the priorities of the drivers */
    _eglAddUserDriver();
-   _eglAddDefaultDrivers();
-   _eglPreloadForEach(_eglGetSearchPath(), _eglLoaderPattern, (void *) "egl_");
+   _eglPreloadForEach(_eglGetSearchPath(), _eglLoaderFile, external);
+   _eglAddBuiltInDrivers();
 
    return (_eglModules != NULL);
 }

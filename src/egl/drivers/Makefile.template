@@ -2,6 +2,7 @@
 #
 # Drivers should define
 #
+# EGL_BUILTIN, the driver is built-in or external
 # EGL_DRIVER, the driver name
 # EGL_SOURCES, the driver sources
 # EGL_INCLUDES, the include pathes
@@ -12,32 +13,45 @@
 #
 
 
-EGL_DRIVER_PATH = $(TOP)/$(LIB_DIR)/egl/$(EGL_DRIVER)
+EGL_DRIVER_PATH = $(TOP)/$(LIB_DIR)/egl/$(EGL_DRIVER).so
 EGL_OBJECTS = $(EGL_SOURCES:.c=.o)
 
+# built-in or external
+ifeq ($(EGL_BUILTIN),true)
+EGL_TARGET = lib$(EGL_DRIVER).a
+EGL_INSTALL =
+else
+EGL_TARGET = $(EGL_DRIVER_PATH)
+EGL_INSTALL = install-so
+endif
 
-default: depend $(EGL_DRIVER_PATH)
+default: depend $(EGL_TARGET)
 
-$(EGL_DRIVER_PATH): $(EGL_DRIVER)
+$(EGL_DRIVER_PATH): $(EGL_DRIVER).so
 	@$(INSTALL) -d $(TOP)/$(LIB_DIR)/egl
 	$(INSTALL) $< $(TOP)/$(LIB_DIR)/egl
 
-$(EGL_DRIVER): $(EGL_OBJECTS) Makefile $(TOP)/src/egl/drivers/Makefile.template
-	@$(MKLIB) -o $(EGL_DRIVER) -noprefix \
+$(EGL_DRIVER).so: $(EGL_OBJECTS) Makefile $(TOP)/src/egl/drivers/Makefile.template
+	@$(MKLIB) -o $(EGL_DRIVER).so -noprefix \
 		-linker '$(CC)' -ldflags '-L$(TOP)/$(LIB_DIR) $(LDFLAGS)' \
 		$(MKLIB_OPTIONS) \
 		$(EGL_OBJECTS) $(EGL_LIBS) -l$(EGL_LIB)
 
+lib$(EGL_DRIVER).a: $(EGL_OBJECTS) Makefile $(TOP)/src/egl/drivers/Makefile.template
+	@$(MKLIB) -o $(EGL_DRIVER) -static $(EGL_OBJECTS)
+
 .c.o:
 	$(CC) -c $(EGL_INCLUDES) $(CFLAGS) $(EGL_CFLAGS) $< -o $@
 
-
-install: $(EGL_DRIVER_PATH)
+install-so: $(EGL_DRIVER_PATH)
 	$(INSTALL) -d $(DESTDIR)$(EGL_DRIVER_INSTALL_DIR)
 	$(MINSTALL) $(EGL_DRIVER_PATH) $(DESTDIR)$(EGL_DRIVER_INSTALL_DIR)
 
+install: $(EGL_INSTALL)
+
 clean:
-	rm -f $(EGL_DRIVER)
+	rm -f $(EGL_DRIVER).so
+	rm -f lib$(EGL_DRIVER).a
 	rm -f $(EGL_OBJECTS)
 	rm -f depend depend.bak
 

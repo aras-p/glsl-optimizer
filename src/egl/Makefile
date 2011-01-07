@@ -3,7 +3,7 @@
 TOP = ../..
 include $(TOP)/configs/current
 
-SUBDIRS = main drivers
+SUBDIRS = drivers main
 
 
 default: subdirs

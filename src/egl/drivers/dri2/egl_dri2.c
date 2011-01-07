@@ -2372,7 +2372,7 @@ dri2_load(_EGLDriver *drv)
  * Create a new _EGLDriver object and init its dispatch table.
  */
 _EGLDriver *
-_eglMain(const char *args)
+_EGL_MAIN(const char *args)
 {
    struct dri2_egl_driver *dri2_drv;
 
