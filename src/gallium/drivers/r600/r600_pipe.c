@@ -69,6 +69,7 @@ static void r600_flush(struct pipe_context *ctx, unsigned flags,
 	r600_context_flush(&rctx->ctx);
 
 	r600_upload_flush(rctx->rupload_vb);
+	r600_upload_flush(rctx->rupload_const);
 }
 
 static void r600_destroy_context(struct pipe_context *context)
@@ -88,6 +89,7 @@ static void r600_destroy_context(struct pipe_context *context)
 	}
 
 	r600_upload_destroy(rctx->rupload_vb);
+	r600_upload_destroy(rctx->rupload_const);
 
 	if (rctx->tran.translate_cache)
 		translate_cache_destroy(rctx->tran.translate_cache);
@@ -167,6 +169,12 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 
 	rctx->rupload_vb = r600_upload_create(rctx, 128 * 1024, 16);
 	if (rctx->rupload_vb == NULL) {
+		r600_destroy_context(&rctx->context);
+		return NULL;
+	}
+
+	rctx->rupload_const = r600_upload_create(rctx, 128 * 1024, 256);
+	if (rctx->rupload_const == NULL) {
 		r600_destroy_context(&rctx->context);
 		return NULL;
 	}

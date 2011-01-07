@@ -131,4 +131,5 @@ int r600_upload_buffer(struct r600_upload *upload, unsigned offset,
 			unsigned *out_offset, unsigned *out_size,
 			struct r600_bo **out_buffer);
 
+int r600_upload_const_buffer(struct r600_pipe_context *rctx, struct pipe_resource *cbuffer, uint32_t *offset);
 #endif

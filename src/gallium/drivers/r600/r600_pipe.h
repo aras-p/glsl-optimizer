@@ -169,6 +169,7 @@ struct r600_pipe_context {
 	struct r600_textures_info	ps_samplers;
 	unsigned			vb_max_index;
 	struct r600_translate_context	tran;
+	struct r600_upload		*rupload_const;
 };
 
 struct r600_drawl {
