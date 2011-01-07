@@ -17,7 +17,7 @@ target="_parent"> http://www.khronos.org/opengles/</a>.</p>
 
 <h2>Build the Libraries</h2>
 <ol>
-<li>Run <code>configure</code> with <code>--enable-gles-overlay</code> and enable the Gallium driver for your hardware.</li>
+<li>Run <code>configure</code> with <code>--enable-gles1 --enable-gles2</code> and enable the Gallium driver for your hardware.</li>
 <li>Build and install Mesa as usual.</li>
 </ol>
 
@@ -53,8 +53,6 @@ your build.  For example,</p>
 	<tr><td>Library Name</td><td>Used By</td><td>Enabled</td><td>OpenGL</td><td>OpenGL ES 1.x</td><td>OpenGL ES 2.x</td></tr>
 	<tr><td><code>libmesa.a</td><td>Classic DRI drivers</td><td>y</td><td>y</td><td>--enable-gles1</td><td>--enable-gles2</td></tr>
 	<tr><td><code>libmesagallium.a</td><td>Gallium EGL and DRI drivers</td><td>y</td><td>y</td><td>--enable-gles1</td><td>--enable-gles2</td></tr>
-	<tr><td><code>libes1gallium.a</td><td>Gallium EGL drivers</td><td>--enable-gles-overlay</td><td>n</td><td>y</td><td>n</td></tr>
-	<tr><td><code>libes2gallium.a</td><td>Gallium EGL drivers</td><td>--enable-gles-overlay</td><td>n</td><td>n</td><td>y</td></tr>
 </table>
 
 <h3>Dispatch Table</h3>

@@ -483,9 +483,9 @@ AC_ARG_ENABLE([gles2],
     [enable_gles2=no])
 AC_ARG_ENABLE([gles-overlay],
     [AS_HELP_STRING([--enable-gles-overlay],
-        [build separate OpenGL ES only libraries @<:@default=no@:>@])],
-    [enable_gles_overlay="$enableval"],
-    [enable_gles_overlay=no])
+        [DEPRECATED.  Same as --enable-gles1 and --enable-gles2])],
+    [enable_gles1="$enableval"; enable_gles2="$enableval"],
+    [])
 
 AC_ARG_ENABLE([openvg],
     [AS_HELP_STRING([--enable-openvg],
@@ -506,13 +506,11 @@ fi
 if test "x$enable_opengl" = xno -a \
         "x$enable_gles1" = xno -a \
         "x$enable_gles2" = xno -a \
-        "x$enable_gles_overlay" = xno -a \
         "x$enable_openvg" = xno; then
     AC_MSG_ERROR([at least one API should be enabled])
 fi
 
 API_DEFINES=""
-GLES_OVERLAY=0
 if test "x$enable_opengl" = xno; then
     API_DEFINES="$API_DEFINES -DFEATURE_GL=0"
 else
@@ -524,11 +522,7 @@ fi
 if test "x$enable_gles2" = xyes; then
     API_DEFINES="$API_DEFINES -DFEATURE_ES2=1"
 fi
-if test "x$enable_gles_overlay" = xyes; then
-    GLES_OVERLAY=1
-fi
 AC_SUBST([API_DEFINES])
-AC_SUBST([GLES_OVERLAY])
 
 dnl
 dnl Driver configuration. Options are xlib, dri and osmesa right now.
@@ -596,12 +590,15 @@ if test "x$enable_opengl" = xyes; then
     CORE_DIRS="$CORE_DIRS mapi/glapi"
 fi
 
-# build es1api and es2api if OpenGL ES is enabled
-case "x$enable_gles1$enable_gles2$enable_gles_overlay" in
-x*yes*)
-    CORE_DIRS="$CORE_DIRS mapi/es1api mapi/es2api"
-    ;;
-esac
+# build es1api if OpenGL ES 1.x is enabled
+if test "x$enable_gles1" = xyes; then
+    CORE_DIRS="$CORE_DIRS mapi/es1api"
+fi
+
+# build es2api if OpenGL ES 2.x is enabled
+if test "x$enable_gles2" = xyes; then
+    CORE_DIRS="$CORE_DIRS mapi/es2api"
+fi
 
 # build vgapi if OpenVG is enabled
 if test "x$enable_openvg" = xyes; then
@@ -609,7 +606,7 @@ if test "x$enable_openvg" = xyes; then
 fi
 
 # build glsl and mesa if OpenGL or OpenGL ES is enabled
-case "x$enable_opengl$enable_gles1$enable_gles2$enable_gles_overlay" in
+case "x$enable_opengl$enable_gles1$enable_gles2" in
 x*yes*)
     CORE_DIRS="$CORE_DIRS glsl mesa"
     ;;
@@ -1451,9 +1448,6 @@ x*yes*)
     EGL_CLIENT_APIS="$EGL_CLIENT_APIS "'$(GL_LIB)'
     ;;
 esac
-if test "x$enable_gles_overlay" = xyes; then
-    EGL_CLIENT_APIS="$EGL_CLIENT_APIS "'$(GLESv1_CM_LIB) $(GLESv2_LIB)'
-fi
 if test "x$enable_openvg" = xyes; then
     EGL_CLIENT_APIS="$EGL_CLIENT_APIS "'$(VG_LIB)'
     VG_LIB_DEPS="$VG_LIB_DEPS -lpthread"
@@ -1746,7 +1740,6 @@ echo "        includedir:      $includedir"
 dnl API info
 echo ""
 echo "        OpenGL:          $enable_opengl (ES1: $enable_gles1 ES2: $enable_gles2)"
-echo "        GLES overlay:    $enable_gles_overlay"
 echo "        OpenVG:          $enable_openvg"
 
 dnl Driver info
