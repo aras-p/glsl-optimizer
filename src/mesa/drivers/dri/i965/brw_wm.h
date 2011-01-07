@@ -474,5 +474,6 @@ struct gl_shader *brw_new_shader(struct gl_context *ctx, GLuint name, GLuint typ
 struct gl_shader_program *brw_new_shader_program(struct gl_context *ctx, GLuint name);
 
 bool brw_color_buffer_write_enabled(struct brw_context *brw);
+bool brw_render_target_supported(gl_format format);
 
 #endif

@@ -564,6 +564,7 @@ intel_finish_render_texture(struct gl_context * ctx,
 static void
 intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
+   struct intel_context *intel = intel_context(ctx);
    const struct intel_renderbuffer *depthRb =
       intel_get_renderbuffer(fb, BUFFER_DEPTH);
    const struct intel_renderbuffer *stencilRb =
@@ -612,7 +613,8 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 	 continue;
       }
 
-      if (!intel_span_supports_format(irb->Base.Format)) {
+      if (!intel_span_supports_format(irb->Base.Format) ||
+	  !intel->vtbl.render_target_supported(irb->Base.Format)) {
 	 DBG("Unsupported texture/renderbuffer format attached: %s\n",
 	     _mesa_get_format_name(irb->Base.Format));
 	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;

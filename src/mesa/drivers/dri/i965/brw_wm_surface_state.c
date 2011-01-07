@@ -42,7 +42,7 @@
 #include "brw_context.h"
 #include "brw_state.h"
 #include "brw_defines.h"
-
+#include "brw_wm.h"
 
 static GLuint translate_tex_target( GLenum target )
 {
@@ -102,6 +102,21 @@ static uint32_t brw_format_for_mesa_format[MESA_FORMAT_COUNT] =
    [MESA_FORMAT_DUDV8] = BRW_SURFACEFORMAT_R8G8_SNORM,
    [MESA_FORMAT_SIGNED_RGBA8888_REV] = BRW_SURFACEFORMAT_R8G8B8A8_SNORM,
 };
+
+bool
+brw_render_target_supported(gl_format format)
+{
+   if (format == MESA_FORMAT_S8_Z24 ||
+       format == MESA_FORMAT_X8_Z24 ||
+       format == MESA_FORMAT_Z16) {
+      return true;
+   }
+
+   /* Not exactly true, as some of those formats are not renderable.
+    * But at least we know how to translate them.
+    */
+   return brw_format_for_mesa_format[format] != 0;
+}
 
 static GLuint translate_tex_format( gl_format mesa_format,
                                     GLenum internal_format,
