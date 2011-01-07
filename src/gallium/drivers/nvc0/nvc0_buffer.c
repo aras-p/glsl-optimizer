@@ -387,18 +387,19 @@ nvc0_buffer_fetch_data(struct nvc0_resource *buf,
 /* Migrate a linear buffer (vertex, index, constants) USER -> GART -> VRAM. */
 boolean
 nvc0_buffer_migrate(struct nvc0_context *nvc0,
-                    struct nvc0_resource *buf, unsigned domain)
+                    struct nvc0_resource *buf, const unsigned new_domain)
 {
    struct nvc0_screen *screen = nvc0_screen(buf->base.screen);
    struct nouveau_bo *bo;
+   const unsigned old_domain = buf->domain;
    unsigned size = buf->base.width0;
    unsigned offset;
    int ret;
 
-   assert(domain != buf->domain);
+   assert(new_domain != old_domain);
 
-   if (domain == NOUVEAU_BO_GART && buf->domain == 0) {
-      if (!nvc0_buffer_allocate(screen, buf, domain))
+   if (new_domain == NOUVEAU_BO_GART && old_domain == 0) {
+      if (!nvc0_buffer_allocate(screen, buf, new_domain))
          return FALSE;
       ret = nouveau_bo_map_range(buf->bo, buf->offset, size, NOUVEAU_BO_WR |
                                  NOUVEAU_BO_NOSYNC);
@@ -408,10 +409,10 @@ nvc0_buffer_migrate(struct nvc0_context *nvc0,
       nouveau_bo_unmap(buf->bo);
       FREE(buf->data);
    } else
-   if (domain != 0 && buf->domain != 0) {
+   if (old_domain != 0 && new_domain != 0) {
       struct nvc0_mm_allocation *mm = buf->mm;
 
-      if (domain == NOUVEAU_BO_VRAM) {
+      if (new_domain == NOUVEAU_BO_VRAM) {
          /* keep a system memory copy of our data in case we hit a fallback */
          if (!nvc0_buffer_fetch_data(buf, buf->bo, buf->offset, size))
             return FALSE;
@@ -422,16 +423,16 @@ nvc0_buffer_migrate(struct nvc0_context *nvc0,
       bo = buf->bo;
       buf->bo = NULL;
       buf->mm = NULL;
-      nvc0_buffer_allocate(screen, buf, domain);
+      nvc0_buffer_allocate(screen, buf, new_domain);
 
-      nvc0_m2mf_copy_linear(nvc0, buf->bo, buf->offset, domain,
-                            bo, offset, buf->domain, buf->base.width0);
+      nvc0_m2mf_copy_linear(nvc0, buf->bo, buf->offset, new_domain,
+                            bo, offset, old_domain, buf->base.width0);
 
       nouveau_bo_ref(NULL, &bo);
       if (mm)
          release_allocation(&mm, screen->fence.current);
    } else
-   if (domain == NOUVEAU_BO_VRAM && buf->domain == 0) {
+   if (new_domain == NOUVEAU_BO_VRAM && old_domain == 0) {
       if (!nvc0_buffer_allocate(screen, buf, NOUVEAU_BO_VRAM))
          return FALSE;
       if (!nvc0_buffer_upload(nvc0, buf, 0, buf->base.width0))
@@ -439,8 +440,7 @@ nvc0_buffer_migrate(struct nvc0_context *nvc0,
    } else
       return FALSE;
 
-   buf->domain = domain;
-
+   assert(buf->domain == new_domain);
    return TRUE;
 }
 
