@@ -46,14 +46,14 @@ int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 			S_SQ_CF_ALU_WORD1_KCACHE_MODE1(cf->kcache1_mode) |
 			S_SQ_CF_ALU_WORD1_KCACHE_ADDR0(cf->kcache0_addr) |
 			S_SQ_CF_ALU_WORD1_KCACHE_ADDR1(cf->kcache1_addr) |
-					S_SQ_CF_ALU_WORD1_BARRIER(1) |
+					S_SQ_CF_ALU_WORD1_BARRIER(cf->barrier) |
 					S_SQ_CF_ALU_WORD1_COUNT((cf->ndw / 2) - 1);
 		break;
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_TEX:
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_VTX:
 		bc->bytecode[id++] = S_SQ_CF_WORD0_ADDR(cf->addr >> 1);
 		bc->bytecode[id++] = S_SQ_CF_WORD1_CF_INST(cf->inst) |
-			S_SQ_CF_WORD1_BARRIER(1) |
+			S_SQ_CF_WORD1_BARRIER(cf->barrier) |
 			S_SQ_CF_WORD1_COUNT((cf->ndw / 4) - 1) |
 			S_SQ_CF_WORD1_END_OF_PROGRAM(end_of_program);
 		break;
@@ -67,7 +67,7 @@ int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_Y(cf->output.swizzle_y) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_Z(cf->output.swizzle_z) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_W(cf->output.swizzle_w) |
-			S_SQ_CF_ALLOC_EXPORT_WORD1_BARRIER(cf->output.barrier) |
+			S_SQ_CF_ALLOC_EXPORT_WORD1_BARRIER(cf->barrier) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(cf->inst) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_END_OF_PROGRAM(end_of_program);
 		break;
@@ -82,7 +82,7 @@ int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_RETURN:
 		bc->bytecode[id++] = S_SQ_CF_WORD0_ADDR(cf->cf_addr >> 1);
 		bc->bytecode[id++] = S_SQ_CF_WORD1_CF_INST(cf->inst) |
-			S_SQ_CF_WORD1_BARRIER(1) |
+			S_SQ_CF_WORD1_BARRIER(cf->barrier) |
 			S_SQ_CF_WORD1_COND(cf->cond) |
 			S_SQ_CF_WORD1_POP_COUNT(cf->pop_count) |
 			S_SQ_CF_WORD1_END_OF_PROGRAM(end_of_program);

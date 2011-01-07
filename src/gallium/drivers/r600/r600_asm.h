@@ -114,7 +114,6 @@ struct r600_bc_output {
 	unsigned			swizzle_y;
 	unsigned			swizzle_z;
 	unsigned			swizzle_w;
-	unsigned			barrier;
 };
 
 struct r600_bc_cf {
@@ -126,6 +125,7 @@ struct r600_bc_cf {
 	unsigned			cond;
 	unsigned			pop_count;
 	unsigned			cf_addr; /* control flow addr */
+	unsigned			barrier;
 	unsigned			kcache0_mode;
 	unsigned			kcache1_mode;
 	unsigned			kcache0_addr;

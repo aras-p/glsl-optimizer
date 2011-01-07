@@ -603,7 +603,6 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 		output[i].swizzle_y = 1;
 		output[i].swizzle_z = 2;
 		output[i].swizzle_w = 3;
-		output[i].barrier = i == 0;
 		output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
 		output[i].array_base = i - pos0;
 		switch (ctx.type) {
@@ -665,7 +664,6 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 			output[i].swizzle_y = 1;
 			output[i].swizzle_z = 2;
 			output[i].swizzle_w = 3;
-			output[i].barrier = 1;
 			output[i].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PARAM;
 			output[i].array_base = 0;
 			noutput++;
@@ -680,7 +678,6 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 		output[0].swizzle_y = 7;
 		output[0].swizzle_z = 7;
 		output[0].swizzle_w = 7;
-		output[0].barrier = 1;
 		output[0].type = V_SQ_CF_ALLOC_EXPORT_WORD0_SQ_EXPORT_PIXEL;
 		output[0].array_base = 0;
 		noutput++;
