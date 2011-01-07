@@ -540,7 +540,9 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 	ctx.file_offset[TGSI_FILE_TEMPORARY] = ctx.file_offset[TGSI_FILE_OUTPUT] +
 						ctx.info.file_count[TGSI_FILE_OUTPUT];
 
-	ctx.file_offset[TGSI_FILE_CONSTANT] = 128;
+	/* Outside the GPR range. This will be translated to one of the
+	 * kcache banks later. */
+	ctx.file_offset[TGSI_FILE_CONSTANT] = 512;
 
 	ctx.file_offset[TGSI_FILE_IMMEDIATE] = 253;
 	ctx.temp_reg = ctx.file_offset[TGSI_FILE_TEMPORARY] +

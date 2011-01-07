@@ -348,11 +348,12 @@ int check_read_slots(struct r600_bc *bc, struct r600_bc_alu *alu_first)
 }
 #endif
 
+/* CB constants start at 512, and get translated to a kcache index when ALU
+ * clauses are constructed. Note that we handle kcache constants the same way
+ * as (the now gone) cfile constants, is that really required? */
 static int is_const(int sel)
 {
-	if (sel > 255 && sel < 512)
-		return 1;
-	if (sel >= V_SQ_ALU_SRC_0 && sel <= V_SQ_ALU_SRC_LITERAL)
+	if (sel > 511 && sel < 4607)
 		return 1;
 	return 0;
 }
@@ -413,6 +414,120 @@ static int check_and_set_bank_swizzle(struct r600_bc *bc, struct r600_bc_alu *al
 	return 0;
 }
 
+/* This code handles kcache lines as single blocks of 32 constants. We could
+ * probably do slightly better by recognizing that we actually have two
+ * consecutive lines of 16 constants, but the resulting code would also be
+ * somewhat more complicated. */
+static int r600_bc_alloc_kcache_lines(struct r600_bc *bc, struct r600_bc_alu *alu, int type)
+{
+	struct r600_bc_kcache *kcache = bc->cf_last->kcache;
+	unsigned int required_lines;
+	unsigned int free_lines = 0;
+	unsigned int cache_line[3];
+	unsigned int count = 0;
+	unsigned int i, j;
+	int r;
+
+	/* Collect required cache lines. */
+	for (i = 0; i < 3; ++i) {
+		bool found = false;
+		unsigned int line;
+
+		if (alu->src[i].sel < 512)
+			continue;
+
+		line = ((alu->src[i].sel - 512) / 32) * 2;
+
+		for (j = 0; j < count; ++j) {
+			if (cache_line[j] == line) {
+				found = true;
+				break;
+			}
+		}
+
+		if (!found)
+			cache_line[count++] = line;
+	}
+
+	/* This should never actually happen. */
+	if (count >= 3) return -ENOMEM;
+
+	for (i = 0; i < 2; ++i) {
+		if (kcache[i].mode == V_SQ_CF_KCACHE_NOP) {
+			++free_lines;
+		}
+	}
+
+	/* Filter lines pulled in by previous intructions. Note that this is
+	 * only for the required_lines count, we can't remove these from the
+	 * cache_line array since we may have to start a new ALU clause. */
+	for (i = 0, required_lines = count; i < count; ++i) {
+		for (j = 0; j < 2; ++j) {
+			if (kcache[j].mode == V_SQ_CF_KCACHE_LOCK_2 &&
+			    kcache[j].addr == cache_line[i]) {
+				--required_lines;
+				break;
+			}
+		}
+	}
+
+	/* Start a new ALU clause if needed. */
+	if (required_lines > free_lines) {
+		if ((r = r600_bc_add_cf(bc))) {
+			return r;
+		}
+		bc->cf_last->inst = (type << 3);
+		kcache = bc->cf_last->kcache;
+	}
+
+	/* Setup the kcache lines. */
+	for (i = 0; i < count; ++i) {
+		bool found = false;
+
+		for (j = 0; j < 2; ++j) {
+			if (kcache[j].mode == V_SQ_CF_KCACHE_LOCK_2 &&
+			    kcache[j].addr == cache_line[i]) {
+				found = true;
+				break;
+			}
+		}
+
+		if (found) continue;
+
+		for (j = 0; j < 2; ++j) {
+			if (kcache[j].mode == V_SQ_CF_KCACHE_NOP) {
+				kcache[j].bank = 0;
+				kcache[j].addr = cache_line[i];
+				kcache[j].mode = V_SQ_CF_KCACHE_LOCK_2;
+				break;
+			}
+		}
+	}
+
+	/* Alter the src operands to refer to the kcache. */
+	for (i = 0; i < 3; ++i) {
+		static const unsigned int base[] = {128, 160, 256, 288};
+		unsigned int line;
+
+		if (alu->src[i].sel < 512)
+			continue;
+
+		alu->src[i].sel -= 512;
+		line = (alu->src[i].sel / 32) * 2;
+
+		for (j = 0; j < 2; ++j) {
+			if (kcache[j].mode == V_SQ_CF_KCACHE_LOCK_2 &&
+			    kcache[j].addr == line) {
+				alu->src[i].sel &= 0x1f;
+				alu->src[i].sel += base[j];
+				break;
+			}
+		}
+	}
+
+	return 0;
+}
+
 int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int type)
 {
 	struct r600_bc_alu *nalu = r600_bc_alu();
@@ -434,6 +549,14 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 		}
 		bc->cf_last->inst = (type << 3);
 	}
+
+	/* Setup the kcache for this ALU instruction. This will start a new
+	 * ALU clause if needed. */
+	if ((r = r600_bc_alloc_kcache_lines(bc, nalu, type))) {
+		free(nalu);
+		return r;
+	}
+
 	if (!bc->cf_last->curr_bs_head) {
 		bc->cf_last->curr_bs_head = nalu;
 		LIST_INITHEAD(&nalu->bs_list);
@@ -472,23 +595,6 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 	/* each alu use 2 dwords */
 	bc->cf_last->ndw += 2;
 	bc->ndw += 2;
-
-	/* The following configuration provides 64 128-bit constants.
-	 * Each cacheline holds 16 128-bit constants and each
-	 * kcache can lock 2 cachelines and there are 2 kcaches per
-	 * ALU clause for a max of 64 constants.
-	 * For supporting more than 64 constants, the code needs
-	 * to be broken down into multiple ALU clauses.
-	 */
-	/* select the constant buffer (0-15) for each kcache */
-	bc->cf_last->kcache[0].bank = 0;
-	bc->cf_last->kcache[1].bank = 0;
-	/* lock 2 cachelines per kcache; 4 total */
-	bc->cf_last->kcache[0].mode = V_SQ_CF_KCACHE_LOCK_2;
-	bc->cf_last->kcache[1].mode = V_SQ_CF_KCACHE_LOCK_2;
-	/* set the cacheline offsets for each kcache */
-	bc->cf_last->kcache[0].addr = 0;
-	bc->cf_last->kcache[1].addr = 2;
 
 	/* process cur ALU instructions for bank swizzle */
 	if (nalu->last) {
