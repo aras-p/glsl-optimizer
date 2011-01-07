@@ -270,7 +270,9 @@ int r600_upload_const_buffer(struct r600_pipe_context *rctx, struct pipe_resourc
 			return ret;
 		rbuffer->uploaded = TRUE;
 		*const_offset = upload_offset;
+		return 0;
 	}
 
+	*const_offset = 0;
 	return 0;
 }
