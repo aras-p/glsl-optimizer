@@ -361,7 +361,7 @@ nvc0_draw_elements_inline_u08(struct nouveau_channel *chan, uint8_t *map,
 
    if (count & 3) {
       unsigned i;
-      BEGIN_RING(chan, RING_3D(VB_ELEMENT_U32), count & 3);
+      BEGIN_RING_NI(chan, RING_3D(VB_ELEMENT_U32), count & 3);
       for (i = 0; i < (count & 3); ++i)
          OUT_RING(chan, *map++);
       count &= ~3;
