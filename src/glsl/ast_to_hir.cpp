@@ -2076,18 +2076,18 @@ ast_declarator_list::hir(exec_list *instructions,
        *
        * This is relaxed in GLSL 1.30.
        */
-      if (state->language_version < 120) {
+      if (state->language_version < 130) {
 	 if (this->type->qualifier.flags.q.out) {
 	    _mesa_glsl_error(& loc, state,
 			     "`out' qualifier in declaration of `%s' "
-			     "only valid for function parameters in GLSL 1.10.",
-			     decl->identifier);
+			     "only valid for function parameters in %s.",
+			     decl->identifier, state->version_string);
 	 }
 	 if (this->type->qualifier.flags.q.in) {
 	    _mesa_glsl_error(& loc, state,
 			     "`in' qualifier in declaration of `%s' "
-			     "only valid for function parameters in GLSL 1.10.",
-			     decl->identifier);
+			     "only valid for function parameters in %s.",
+			     decl->identifier, state->version_string);
 	 }
 	 /* FINISHME: Test for other invalid qualifiers. */
       }
