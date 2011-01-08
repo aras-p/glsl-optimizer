@@ -145,10 +145,15 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
    DBG("Allocating %d x %d Intel RBO\n", width, height);
 
    tiling = I915_TILING_NONE;
+   if (intel->use_texture_tiling) {
+      GLenum base_format = _mesa_get_format_base_format(rb->Format);
 
-   /* Gen6 requires depth must be tiling */
-   if (intel->gen >= 6 && rb->Format == MESA_FORMAT_S8_Z24)
-       tiling = I915_TILING_Y;
+      if (intel->gen >= 4 && (base_format == GL_DEPTH_COMPONENT ||
+			      base_format == GL_DEPTH_STENCIL))
+	 tiling = I915_TILING_Y;
+      else
+	 tiling = I915_TILING_X;
+   }
 
    irb->region = intel_region_alloc(intel->intelScreen, tiling, cpp,
 				    width, height, GL_TRUE);
