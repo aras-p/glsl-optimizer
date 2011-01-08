@@ -1325,6 +1325,7 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
    this->constant_value = NULL;
    this->origin_upper_left = false;
    this->pixel_center_integer = false;
+   this->used = false;
 
    if (type && type->base_type == GLSL_TYPE_SAMPLER)
       this->read_only = true;

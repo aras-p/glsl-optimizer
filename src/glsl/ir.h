@@ -295,6 +295,15 @@ public:
    unsigned invariant:1;
 
    /**
+    * Has this variable been used for reading or writing?
+    *
+    * Several GLSL semantic checks require knowledge of whether or not a
+    * variable has been used.  For example, it is an error to redeclare a
+    * variable as invariant after it has been used.
+    */
+   unsigned used:1;
+
+   /**
     * Storage class of the variable.
     *
     * \sa ir_variable_mode
