@@ -35,7 +35,6 @@
 #include "state_tracker/xlib_sw_winsys.h"
 #include "xm_public.h"
 
-#include "state_tracker/st_api.h"
 #include "state_tracker/st_gl_api.h"
 #include "target-helpers/inline_sw_helper.h"
 #include "target-helpers/inline_debug_helper.h"

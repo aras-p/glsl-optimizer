@@ -203,4 +203,5 @@ void brwInitVtbl( struct brw_context *brw )
    brw->intel.vtbl.destroy = brw_destroy_context;
    brw->intel.vtbl.set_draw_region = brw_set_draw_region;
    brw->intel.vtbl.debug_batch = brw_debug_batch;
+   brw->intel.vtbl.render_target_supported = brw_render_target_supported;
 }

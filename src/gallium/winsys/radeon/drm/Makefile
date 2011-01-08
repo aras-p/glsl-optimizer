@@ -6,6 +6,7 @@ LIBNAME = radeonwinsys
 
 C_SOURCES = \
 	radeon_drm_buffer.c \
+	radeon_drm_cs.c \
 	radeon_drm_common.c \
 	radeon_r300.c
 

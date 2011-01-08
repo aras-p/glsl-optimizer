@@ -10,6 +10,7 @@ PIPE_DRIVERS = \
 	$(TOP)/src/gallium/drivers/rbug/librbug.a \
 	$(TOP)/src/gallium/drivers/nvfx/libnvfx.a \
 	$(TOP)/src/gallium/drivers/nv50/libnv50.a \
+	$(TOP)/src/gallium/drivers/nvc0/libnvc0.a \
 	$(TOP)/src/gallium/drivers/softpipe/libsoftpipe.a \
 	$(TOP)/src/gallium/drivers/nouveau/libnouveau.a
 

@@ -25,7 +25,6 @@
 #include "util/u_memory.h"
 #include "pipebuffer/pb_bufmgr.h"
 
-#include "radeon_cs_gem.h"
 #include "state_tracker/drm_driver.h"
 
 static unsigned get_pb_usage_from_create_flags(unsigned bind, unsigned usage,
@@ -134,65 +133,6 @@ static boolean radeon_r300_winsys_buffer_get_handle(struct r300_winsys_screen *r
     return radeon_drm_bufmgr_get_handle(_buf, whandle);
 }
 
-static void radeon_r300_winsys_cs_set_flush(struct r300_winsys_cs *rcs,
-                                            void (*flush)(void *),
-                                            void *user)
-{
-    struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
-    cs->flush_cs = flush;
-    cs->flush_data = user;
-    radeon_cs_space_set_flush(cs->cs, flush, user);
-}
-
-static boolean radeon_r300_winsys_cs_validate(struct r300_winsys_cs *rcs)
-{
-    struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
-
-    return radeon_cs_space_check(cs->cs) >= 0;
-}
-
-static void radeon_r300_winsys_cs_reset_buffers(struct r300_winsys_cs *rcs)
-{
-    struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
-    radeon_cs_space_reset_bos(cs->cs);
-}
-
-static void radeon_r300_winsys_cs_flush(struct r300_winsys_cs *rcs)
-{
-    struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
-    int retval;
-
-    /* Don't flush a zero-sized CS. */
-    if (!cs->base.cdw) {
-        return;
-    }
-
-    cs->cs->cdw = cs->base.cdw;
-
-    radeon_drm_bufmgr_flush_maps(cs->ws->kman);
-
-    /* Emit the CS. */
-    retval = radeon_cs_emit(cs->cs);
-    if (retval) {
-        if (debug_get_bool_option("RADEON_DUMP_CS", FALSE)) {
-            fprintf(stderr, "radeon: The kernel rejected CS, dumping...\n");
-            radeon_cs_print(cs->cs, stderr);
-        } else {
-            fprintf(stderr, "radeon: The kernel rejected CS, "
-                            "see dmesg for more information.\n");
-        }
-    }
-
-    /* Reset CS.
-     * Someday, when we care about performance, we should really find a way
-     * to rotate between two or three CS objects so that the GPU can be
-     * spinning through one CS while another one is being filled. */
-    radeon_cs_erase(cs->cs);
-
-    cs->base.buf = cs->cs->packets;
-    cs->base.cdw = cs->cs->cdw;
-}
-
 static uint32_t radeon_get_value(struct r300_winsys_screen *rws,
                                  enum r300_value_id id)
 {
@@ -219,39 +159,6 @@ static uint32_t radeon_get_value(struct r300_winsys_screen *rws,
     return 0;
 }
 
-static struct r300_winsys_cs *radeon_r300_winsys_cs_create(struct r300_winsys_screen *rws)
-{
-    struct radeon_drm_winsys *ws = radeon_drm_winsys(rws);
-    struct radeon_drm_cs *cs = CALLOC_STRUCT(radeon_drm_cs);
-
-    if (!cs)
-        return NULL;
-
-    /* Size limit on IBs is 64 kibibytes. */
-    cs->cs = radeon_cs_create(ws->csm, 1024 * 64 / 4);
-    if (!cs->cs) {
-        FREE(cs);
-        return NULL;
-    }
-
-    radeon_cs_set_limit(cs->cs,
-            RADEON_GEM_DOMAIN_GTT, ws->gart_size);
-    radeon_cs_set_limit(cs->cs,
-            RADEON_GEM_DOMAIN_VRAM, ws->vram_size);
-
-    cs->ws = ws;
-    cs->base.buf = cs->cs->packets;
-    cs->base.cdw = cs->cs->cdw;
-    return &cs->base;
-}
-
-static void radeon_r300_winsys_cs_destroy(struct r300_winsys_cs *rcs)
-{
-    struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
-    radeon_cs_destroy(cs->cs);
-    FREE(cs);
-}
-
 void radeon_winsys_init_functions(struct radeon_drm_winsys *ws)
 {
     ws->base.get_value = radeon_get_value;
@@ -259,10 +166,4 @@ void radeon_winsys_init_functions(struct radeon_drm_winsys *ws)
     ws->base.buffer_reference = radeon_r300_winsys_buffer_reference;
     ws->base.buffer_from_handle = radeon_r300_winsys_buffer_from_handle;
     ws->base.buffer_get_handle = radeon_r300_winsys_buffer_get_handle;
-    ws->base.cs_create = radeon_r300_winsys_cs_create;
-    ws->base.cs_destroy = radeon_r300_winsys_cs_destroy;
-    ws->base.cs_validate = radeon_r300_winsys_cs_validate;
-    ws->base.cs_flush = radeon_r300_winsys_cs_flush;
-    ws->base.cs_reset_buffers = radeon_r300_winsys_cs_reset_buffers;
-    ws->base.cs_set_flush = radeon_r300_winsys_cs_set_flush;
 }

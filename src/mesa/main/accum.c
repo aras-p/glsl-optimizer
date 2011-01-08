@@ -27,6 +27,7 @@
 #include "context.h"
 #include "imports.h"
 #include "macros.h"
+#include "mfeatures.h"
 #include "state.h"
 #include "mtypes.h"
 #include "main/dispatch.h"

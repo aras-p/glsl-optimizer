@@ -177,7 +177,8 @@ union tgsi_immediate_data
 #define TGSI_PROPERTY_GS_MAX_OUTPUT_VERTICES 2
 #define TGSI_PROPERTY_FS_COORD_ORIGIN        3
 #define TGSI_PROPERTY_FS_COORD_PIXEL_CENTER  4
-#define TGSI_PROPERTY_COUNT                  5
+#define TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS 5
+#define TGSI_PROPERTY_COUNT                  6
 
 struct tgsi_property {
    unsigned Type         : 4;  /**< TGSI_TOKEN_TYPE_PROPERTY */

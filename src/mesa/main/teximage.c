@@ -40,6 +40,7 @@
 #include "image.h"
 #include "imports.h"
 #include "macros.h"
+#include "mfeatures.h"
 #include "state.h"
 #include "texcompress.h"
 #include "texfetch.h"
@@ -340,11 +341,11 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
          return GL_RGBA;
       case GL_SLUMINANCE_ALPHA_EXT:
       case GL_SLUMINANCE8_ALPHA8_EXT:
-      case GL_COMPRESSED_SLUMINANCE_EXT:
       case GL_COMPRESSED_SLUMINANCE_ALPHA_EXT:
          return GL_LUMINANCE_ALPHA;
       case GL_SLUMINANCE_EXT:
       case GL_SLUMINANCE8_EXT:
+      case GL_COMPRESSED_SLUMINANCE_EXT:
          return GL_LUMINANCE;
       default:
          ; /* fallthrough */

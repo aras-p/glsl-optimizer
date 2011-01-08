@@ -686,13 +686,22 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
     struct pipe_framebuffer_state *state = r300->fb_state.state;
     boolean can_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
 
-    /* What is marked as dirty depends on the enum r300_fb_state_change. */
     r300_mark_atom_dirty(r300, &r300->gpu_flush);
     r300_mark_atom_dirty(r300, &r300->fb_state);
-    r300_mark_atom_dirty(r300, &r300->hyperz_state);
 
+    /* What is marked as dirty depends on the enum r300_fb_state_change. */
     if (change == R300_CHANGED_FB_STATE) {
         r300_mark_atom_dirty(r300, &r300->aa_state);
+    }
+
+    if (change == R300_CHANGED_FB_STATE ||
+        change == R300_CHANGED_CBZB_FLAG ||
+        change == R300_CHANGED_ZCLEAR_FLAG) {
+        r300_mark_atom_dirty(r300, &r300->hyperz_state);
+    }
+
+    if (change == R300_CHANGED_FB_STATE ||
+        change == R300_CHANGED_MULTIWRITE) {
         r300_mark_atom_dirty(r300, &r300->fb_state_pipelined);
     }
 
@@ -876,15 +885,24 @@ static void r300_bind_fs_state(struct pipe_context* pipe, void* shader)
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_fragment_shader* fs = (struct r300_fragment_shader*)shader;
+    struct pipe_framebuffer_state *fb = r300->fb_state.state;
+    boolean last_multi_write;
 
     if (fs == NULL) {
         r300->fs.state = NULL;
         return;
     }
 
+    last_multi_write = r300_fragment_shader_writes_all(r300_fs(r300));
+
     r300->fs.state = fs;
     r300_pick_fragment_shader(r300);
     r300_mark_fs_code_dirty(r300);
+
+    if (fb->nr_cbufs > 1 &&
+        last_multi_write != r300_fragment_shader_writes_all(fs)) {
+        r300_mark_fb_state_dirty(r300, R300_CHANGED_MULTIWRITE);
+    }
 
     r300_mark_atom_dirty(r300, &r300->rs_block_state); /* Will be updated before the emission. */
 }
@@ -1447,15 +1465,15 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
                                     const struct pipe_vertex_buffer* buffers)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct pipe_vertex_buffer *vbo;
+    const struct pipe_vertex_buffer *vbo;
     unsigned i, max_index = (1 << 24) - 1;
     boolean any_user_buffer = FALSE;
+    boolean any_nonuser_buffer = FALSE;
     struct pipe_vertex_buffer dummy_vb = {0};
 
     /* There must be at least one vertex buffer set, otherwise it locks up. */
     if (!count) {
         dummy_vb.buffer = r300->dummy_vb;
-        dummy_vb.max_index = r300->dummy_vb->width0 / 4;
         buffers = &dummy_vb;
         count = 1;
     }
@@ -1482,35 +1500,41 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
         }
 
         for (i = 0; i < count; i++) {
-            /* Why, yes, I AM casting away constness. How did you know? */
-            vbo = (struct pipe_vertex_buffer*)&buffers[i];
+            vbo = &buffers[i];
 
             /* Skip NULL buffers */
-            if (!buffers[i].buffer) {
+            if (!vbo->buffer) {
                 continue;
             }
 
-            if (r300_buffer_is_user_buffer(vbo->buffer)) {
+            /* User buffers have no info about maximum index,
+             * we will have to compute it in draw_vbo. */
+            if (r300_is_user_buffer(vbo->buffer)) {
                 any_user_buffer = TRUE;
+                continue;
             }
+            any_nonuser_buffer = TRUE;
 
             /* The stride of zero means we will be fetching only the first
              * vertex, so don't care about max_index. */
             if (!vbo->stride)
                 continue;
 
-            if (vbo->max_index == ~0) {
-                vbo->max_index =
-                        (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
+            /* Update the maximum index. */
+            {
+                unsigned vbo_max_index =
+                      (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
+                max_index = MIN2(max_index, vbo_max_index);
             }
-
-            max_index = MIN2(vbo->max_index, max_index);
         }
 
         r300->any_user_vbs = any_user_buffer;
         r300->vertex_buffer_max_index = max_index;
-        r300->aos_dirty = TRUE;
-        r300->validate_buffers = TRUE;
+        r300->vertex_arrays_dirty = TRUE;
+        if (any_nonuser_buffer)
+            r300->validate_buffers = TRUE;
+        if (!any_user_buffer)
+            r300->upload_vb_validated = FALSE;
     } else {
         /* SW TCL. */
         draw_set_vertex_buffers(r300->draw, count, buffers);
@@ -1518,16 +1542,25 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
 
     /* Common code. */
     for (i = 0; i < count; i++) {
+        vbo = &buffers[i];
+
         /* Reference our buffer. */
-        pipe_resource_reference(&r300->vertex_buffer[i].buffer, buffers[i].buffer);
+        pipe_resource_reference(&r300->vertex_buffer[i].buffer, vbo->buffer);
+        if (vbo->buffer && r300_is_user_buffer(vbo->buffer)) {
+            pipe_resource_reference(&r300->valid_vertex_buffer[i], NULL);
+        } else {
+            pipe_resource_reference(&r300->valid_vertex_buffer[i], vbo->buffer);
+        }
     }
     for (; i < r300->vertex_buffer_count; i++) {
         /* Dereference any old buffers. */
         pipe_resource_reference(&r300->vertex_buffer[i].buffer, NULL);
+        pipe_resource_reference(&r300->valid_vertex_buffer[i], NULL);
     }
 
     memcpy(r300->vertex_buffer, buffers,
-        sizeof(struct pipe_vertex_buffer) * count);
+           sizeof(struct pipe_vertex_buffer) * count);
+
     r300->vertex_buffer_count = count;
 }
 
@@ -1536,19 +1569,22 @@ static void r300_set_index_buffer(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    if (ib) {
+    if (ib && ib->buffer) {
         pipe_resource_reference(&r300->index_buffer.buffer, ib->buffer);
         memcpy(&r300->index_buffer, ib, sizeof(r300->index_buffer));
+
+        if (r300->screen->caps.has_tcl &&
+            !r300_is_user_buffer(ib->buffer)) {
+            r300->validate_buffers = TRUE;
+            r300->upload_ib_validated = FALSE;
+        }
     }
     else {
         pipe_resource_reference(&r300->index_buffer.buffer, NULL);
         memset(&r300->index_buffer, 0, sizeof(r300->index_buffer));
     }
 
-    if (r300->screen->caps.has_tcl) {
-        r300->validate_buffers = TRUE;
-    }
-    else {
+    if (!r300->screen->caps.has_tcl) {
         draw_set_index_buffer(r300->draw, ib);
     }
 }
@@ -1717,7 +1753,7 @@ static void r300_bind_vertex_elements_state(struct pipe_context *pipe,
 
     UPDATE_STATE(&velems->vertex_stream, r300->vertex_stream_state);
     r300->vertex_stream_state.size = (1 + velems->vertex_stream.count) * 2;
-    r300->aos_dirty = TRUE;
+    r300->vertex_arrays_dirty = TRUE;
 }
 
 static void r300_delete_vertex_elements_state(struct pipe_context *pipe, void *state)
@@ -1809,6 +1845,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_constant_buffer *cbuf;
+    struct r300_buffer *rbuf = r300_buffer(buf);
     uint32_t *mapped;
 
     switch (shader) {
@@ -1822,14 +1859,18 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
             return;
     }
 
-    if (buf == NULL || buf->width0 == 0 ||
-        (mapped = (uint32_t*)r300_buffer(buf)->constant_buffer) == NULL) {
+    if (buf == NULL || buf->width0 == 0)
         return;
-    }
+
+    if (rbuf->user_buffer)
+        mapped = (uint32_t*)rbuf->user_buffer;
+    else if (rbuf->constant_buffer)
+        mapped = (uint32_t*)rbuf->constant_buffer;
+    else
+        return;
 
     if (shader == PIPE_SHADER_FRAGMENT ||
         (shader == PIPE_SHADER_VERTEX && r300->screen->caps.has_tcl)) {
-        assert((buf->width0 % (4 * sizeof(float))) == 0);
         cbuf->ptr = mapped;
     }
 

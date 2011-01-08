@@ -30,6 +30,7 @@
 #include "imports.h"
 #include "formats.h"
 #include "mipmap.h"
+#include "mtypes.h"
 #include "teximage.h"
 #include "texstore.h"
 #include "image.h"

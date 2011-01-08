@@ -842,6 +842,7 @@ static void evergreen_set_constant_buffer(struct pipe_context *ctx, uint shader,
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_resource *rbuffer = (struct r600_resource*)buffer;
+	uint32_t offset;
 
 	/* Note that the state tracker can unbind constant buffers by
 	 * passing NULL here.
@@ -849,6 +850,8 @@ static void evergreen_set_constant_buffer(struct pipe_context *ctx, uint shader,
 	if (buffer == NULL) {
 		return;
 	}
+
+	r600_upload_const_buffer(rctx, buffer, &offset);
 
 	switch (shader) {
 	case PIPE_SHADER_VERTEX:
@@ -859,7 +862,7 @@ static void evergreen_set_constant_buffer(struct pipe_context *ctx, uint shader,
 					0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(&rctx->vs_const_buffer,
 					R_028980_ALU_CONST_CACHE_VS_0,
-					(r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
+					(r600_bo_offset(rbuffer->bo) + offset) >> 8, 0xFFFFFFFF, rbuffer->bo);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->vs_const_buffer);
 		break;
 	case PIPE_SHADER_FRAGMENT:
@@ -870,7 +873,7 @@ static void evergreen_set_constant_buffer(struct pipe_context *ctx, uint shader,
 					0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(&rctx->ps_const_buffer,
 					R_028940_ALU_CONST_CACHE_PS_0,
-					(r600_bo_offset(rbuffer->bo)) >> 8, 0xFFFFFFFF, rbuffer->bo);
+					(r600_bo_offset(rbuffer->bo) + offset) >> 8, 0xFFFFFFFF, rbuffer->bo);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->ps_const_buffer);
 		break;
 	default:
@@ -1067,12 +1070,76 @@ void evergreen_init_config(struct r600_pipe_context *rctx)
 		num_hs_stack_entries = 42;
 		num_ls_stack_entries = 42;
 		break;
+	case CHIP_BARTS:
+		num_ps_gprs = 93;
+		num_vs_gprs = 46;
+		num_temp_gprs = 4;
+		num_gs_gprs = 31;
+		num_es_gprs = 31;
+		num_hs_gprs = 23;
+		num_ls_gprs = 23;
+		num_ps_threads = 128;
+		num_vs_threads = 20;
+		num_gs_threads = 20;
+		num_es_threads = 20;
+		num_hs_threads = 20;
+		num_ls_threads = 20;
+		num_ps_stack_entries = 85;
+		num_vs_stack_entries = 85;
+		num_gs_stack_entries = 85;
+		num_es_stack_entries = 85;
+		num_hs_stack_entries = 85;
+		num_ls_stack_entries = 85;
+		break;
+	case CHIP_TURKS:
+		num_ps_gprs = 93;
+		num_vs_gprs = 46;
+		num_temp_gprs = 4;
+		num_gs_gprs = 31;
+		num_es_gprs = 31;
+		num_hs_gprs = 23;
+		num_ls_gprs = 23;
+		num_ps_threads = 128;
+		num_vs_threads = 20;
+		num_gs_threads = 20;
+		num_es_threads = 20;
+		num_hs_threads = 20;
+		num_ls_threads = 20;
+		num_ps_stack_entries = 42;
+		num_vs_stack_entries = 42;
+		num_gs_stack_entries = 42;
+		num_es_stack_entries = 42;
+		num_hs_stack_entries = 42;
+		num_ls_stack_entries = 42;
+		break;
+	case CHIP_CAICOS:
+		num_ps_gprs = 93;
+		num_vs_gprs = 46;
+		num_temp_gprs = 4;
+		num_gs_gprs = 31;
+		num_es_gprs = 31;
+		num_hs_gprs = 23;
+		num_ls_gprs = 23;
+		num_ps_threads = 128;
+		num_vs_threads = 10;
+		num_gs_threads = 10;
+		num_es_threads = 10;
+		num_hs_threads = 10;
+		num_ls_threads = 10;
+		num_ps_stack_entries = 42;
+		num_vs_stack_entries = 42;
+		num_gs_stack_entries = 42;
+		num_es_stack_entries = 42;
+		num_hs_stack_entries = 42;
+		num_ls_stack_entries = 42;
+		break;
 	}
 
 	tmp = 0x00000000;
 	switch (family) {
 	case CHIP_CEDAR:
 	case CHIP_PALM:
+	case CHIP_CAICOS:
 		break;
 	default:
 		tmp |= S_008C00_VC_ENABLE(1);

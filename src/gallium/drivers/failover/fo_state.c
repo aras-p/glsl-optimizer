@@ -574,10 +574,10 @@ failover_set_vertex_buffers(struct pipe_context *pipe,
 {
    struct failover_context *failover = failover_context(pipe);
 
-   memcpy(failover->vertex_buffers, vertex_buffers,
-          count * sizeof(vertex_buffers[0]));
+   util_copy_vertex_buffers(failover->vertex_buffers,
+                            &failover->num_vertex_buffers,
+                            vertex_buffers, count);
    failover->dirty |= FO_NEW_VERTEX_BUFFER;
-   failover->num_vertex_buffers = count;
    failover->sw->set_vertex_buffers( failover->sw, count, vertex_buffers );
    failover->hw->set_vertex_buffers( failover->hw, count, vertex_buffers );
 }

@@ -34,10 +34,12 @@
 #ifndef LP_BLD_ALPHA_H
 #define LP_BLD_ALPHA_H
 
+#include "pipe/p_compiler.h"
 
 #include "gallivm/lp_bld.h"
 
 struct pipe_alpha_state;
+struct gallivm_state;
 struct lp_type;
 struct lp_build_mask_context;
 

@@ -27,8 +27,11 @@
 #define S_DEPTH_H
 
 
-#include "main/mtypes.h"
+#include "main/glheader.h"
 #include "s_span.h"
+
+struct gl_context;
+struct gl_renderbuffer;
 
 
 extern GLuint

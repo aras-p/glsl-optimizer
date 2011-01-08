@@ -1665,6 +1665,18 @@ struct brw_instruction
 
       struct {
 	 GLuint binding_table_index:8;
+	 GLuint msg_control:3;
+	 GLuint msg_type:3;
+	 GLuint target_cache:2;
+	 GLuint response_length:4;
+	 GLuint msg_length:4;
+	 GLuint msg_target:4;
+	 GLuint pad1:3;
+	 GLuint end_of_thread:1;
+      } dp_read_g4x;
+
+      struct {
+	 GLuint binding_table_index:8;
 	 GLuint msg_control:3;  
 	 GLuint msg_type:3;  
 	 GLuint target_cache:2;    

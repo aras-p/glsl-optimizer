@@ -29,6 +29,8 @@
 #include "get.h"
 #include "enums.h"
 #include "extensions.h"
+#include "mfeatures.h"
+#include "mtypes.h"
 
 
 /**

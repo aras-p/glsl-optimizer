@@ -34,6 +34,8 @@
 #include "imports.h"
 #include "colormac.h"
 #include "formats.h"
+#include "mfeatures.h"
+#include "mtypes.h"
 #include "texcompress.h"
 
 

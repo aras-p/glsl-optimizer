@@ -34,6 +34,8 @@
 #include "bufferobj.h"
 #include "context.h"
 #include "hash.h"
+#include "mfeatures.h"
+#include "mtypes.h"
 #include "transformfeedback.h"
 #include "shaderapi.h"
 #include "shaderobj.h"

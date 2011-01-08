@@ -65,14 +65,18 @@ typedef enum
    MESA_FORMAT_RGBA5551,        /*                     RRRR RGGG GGBB BBBA */
    MESA_FORMAT_ARGB1555,	/*                     ARRR RRGG GGGB BBBB */
    MESA_FORMAT_ARGB1555_REV,	/*                     GGGB BBBB ARRR RRGG */
+   MESA_FORMAT_AL44,		/*                               AAAA LLLL */
    MESA_FORMAT_AL88,		/*                     AAAA AAAA LLLL LLLL */
    MESA_FORMAT_AL88_REV,	/*                     LLLL LLLL AAAA AAAA */
    MESA_FORMAT_AL1616,          /* AAAA AAAA AAAA AAAA LLLL LLLL LLLL LLLL */
    MESA_FORMAT_AL1616_REV,      /* LLLL LLLL LLLL LLLL AAAA AAAA AAAA AAAA */
    MESA_FORMAT_RGB332,		/*                               RRRG GGBB */
    MESA_FORMAT_A8,		/*                               AAAA AAAA */
+   MESA_FORMAT_A16,             /*                     AAAA AAAA AAAA AAAA */
    MESA_FORMAT_L8,		/*                               LLLL LLLL */
+   MESA_FORMAT_L16,             /*                     LLLL LLLL LLLL LLLL */
    MESA_FORMAT_I8,		/*                               IIII IIII */
+   MESA_FORMAT_I16,             /*                     IIII IIII IIII IIII */
    MESA_FORMAT_CI8,		/*                               CCCC CCCC */
    MESA_FORMAT_YCBCR,		/*                     YYYY YYYY UorV UorV */
    MESA_FORMAT_YCBCR_REV,	/*                     UorV UorV YYYY YYYY */
@@ -82,6 +86,7 @@ typedef enum
    MESA_FORMAT_R16,		/*                     RRRR RRRR RRRR RRRR */
    MESA_FORMAT_RG1616,		/* RRRR RRRR RRRR RRRR GGGG GGGG GGGG GGGG */
    MESA_FORMAT_RG1616_REV,	/* GGGG GGGG GGGG GGGG RRRR RRRR RRRR RRRR */
+   MESA_FORMAT_ARGB2101010,     /* AARR RRRR RRRR GGGG GGGG GGBB BBBB BBBB */
    MESA_FORMAT_Z24_S8,          /* ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ SSSS SSSS */
    MESA_FORMAT_S8_Z24,          /* SSSS SSSS ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ ZZZZ */
    MESA_FORMAT_Z16,             /*                     ZZZZ ZZZZ ZZZZ ZZZZ */

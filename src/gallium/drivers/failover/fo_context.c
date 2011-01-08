@@ -29,6 +29,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_memory.h"
 #include "pipe/p_context.h"
+#include "util/u_inlines.h"
 
 #include "fo_context.h"
 #include "fo_winsys.h"
@@ -38,6 +39,11 @@
 static void failover_destroy( struct pipe_context *pipe )
 {
    struct failover_context *failover = failover_context( pipe );
+   unsigned i;
+
+   for (i = 0; i < failover->num_vertex_buffers; i++) {
+      pipe_resource_reference(&failover->vertex_buffers[i].buffer, NULL);
+   }
 
    FREE( failover );
 }

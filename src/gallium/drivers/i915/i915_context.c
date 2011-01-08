@@ -107,6 +107,10 @@ static void i915_destroy(struct pipe_context *pipe)
    if(i915->batch)
       i915->iws->batchbuffer_destroy(i915->batch);
 
+   for (i = 0; i < i915->num_vertex_buffers; i++) {
+      pipe_resource_reference(&i915->vertex_buffer[i].buffer, NULL);
+   }
+
    /* unbind framebuffer */
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
       pipe_surface_reference(&i915->framebuffer.cbufs[i], NULL);

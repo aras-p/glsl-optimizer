@@ -108,6 +108,7 @@
 %token VERSION EXTENSION LINE COLON EOL INTERFACE OUTPUT
 %token PRAGMA_DEBUG_ON PRAGMA_DEBUG_OFF
 %token PRAGMA_OPTIMIZE_ON PRAGMA_OPTIMIZE_OFF
+%token PRAGMA_INVARIANT_ALL
 %token LAYOUT_TOK
 
    /* Reserved words that are not actually used in the grammar.
@@ -241,6 +242,19 @@ pragma_statement:
 	| PRAGMA_DEBUG_OFF EOL
 	| PRAGMA_OPTIMIZE_ON EOL
 	| PRAGMA_OPTIMIZE_OFF EOL
+	| PRAGMA_INVARIANT_ALL EOL
+	{
+	   if (state->language_version < 120) {
+	      _mesa_glsl_warning(& @1, state,
+				 "pragma `invariant(all)' not supported in "
+				 "GLSL%s %d.%02d",
+				 state->es_shader ? " ES" : "",
+				 state->language_version / 100,
+				 state->language_version % 100);
+	   } else {
+	      state->all_invariant = true;
+	   }
+	}
 	;
 
 extension_statement_list:

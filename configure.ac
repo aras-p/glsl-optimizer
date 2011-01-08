@@ -377,14 +377,14 @@ if test "x$enable_asm" = xyes; then
     case "$host_cpu" in
     i?86)
         case "$host_os" in
-        linux* | *freebsd* | dragonfly*)
+        linux* | *freebsd* | dragonfly* | *netbsd*)
             test "x$enable_64bit" = xyes && asm_arch=x86_64 || asm_arch=x86
             ;;
         esac
         ;;
     x86_64)
         case "$host_os" in
-        linux* | *freebsd* | dragonfly*)
+        linux* | *freebsd* | dragonfly* | *netbsd*)
             test "x$enable_32bit" = xyes && asm_arch=x86 || asm_arch=x86_64
             ;;
         esac
@@ -542,7 +542,7 @@ linux*)
     i*86|x86_64|powerpc*|sparc*) default_driver="dri";;
     esac
     ;;
-*freebsd* | dragonfly*)
+*freebsd* | dragonfly* | *netbsd*)
     case "$host_cpu" in
     i*86|x86_64|powerpc*|sparc*) default_driver="dri";;
     esac
@@ -909,15 +909,12 @@ if test "$mesa_driver" = dri -o "$mesa_driver" = no; then
             ;;
         esac
         ;;
-    freebsd* | dragonfly*)
+    freebsd* | dragonfly* | *netbsd*)
         DEFINES="$DEFINES -DPTHREADS -DUSE_EXTERNAL_DXTN_LIB=1"
         DEFINES="$DEFINES -DIN_DRI_DRIVER -DHAVE_ALIAS"
         DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING"
         if test "x$driglx_direct" = xyes; then
             DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
-        fi
-        if test "x$GXX" = xyes; then
-            CXXFLAGS="$CXXFLAGS -ansi -pedantic"
         fi
 
         if test "x$DRI_DIRS" = "xyes"; then
@@ -972,7 +969,7 @@ AC_SUBST([DRI_LIB_DEPS])
 
 case $DRI_DIRS in
 *i915*|*i965*)
-    PKG_CHECK_MODULES([INTEL], [libdrm_intel >= 2.4.21])
+    PKG_CHECK_MODULES([INTEL], [libdrm_intel >= 2.4.23])
     ;;
 esac
 
@@ -1352,7 +1349,7 @@ if test "x$enable_gallium_egl" = xauto; then
         enable_gallium_egl=$enable_egl
         ;;
     *)
-        enable_gallium_egl=no
+        enable_gallium_egl=$enable_openvg
         ;;
     esac
 fi
@@ -1474,10 +1471,6 @@ AC_SUBST([EGL_CLIENT_APIS])
 
 if test "x$HAVE_ST_EGL" = xyes; then
 	GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS egl"
-	# define GLX_DIRECT_RENDERING even when the driver is not dri
-	if test "x$mesa_driver" != xdri -a "x$driglx_direct" = xyes; then
-            DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
-	fi
 fi
 
 if test "x$HAVE_ST_XORG" = xyes; then
@@ -1700,7 +1693,7 @@ AC_ARG_ENABLE([gallium-nouveau],
     [enable_gallium_nouveau="$enableval"],
     [enable_gallium_nouveau=no])
 if test "x$enable_gallium_nouveau" = xyes; then
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nvfx nv50"
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS nouveau nvfx nv50 nvc0"
     gallium_check_st "nouveau/drm" "dri-nouveau" "xorg-nouveau" "xvmc-nouveau"
 fi
 

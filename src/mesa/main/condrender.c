@@ -34,6 +34,7 @@
 #include "glheader.h"
 #include "condrender.h"
 #include "enums.h"
+#include "mtypes.h"
 #include "queryobj.h"
 
 

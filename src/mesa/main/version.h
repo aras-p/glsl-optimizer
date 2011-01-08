@@ -1,6 +1,6 @@
 /*
  * Mesa 3-D graphics library
- * Version:  7.10
+ * Version:  7.11
  *
  * Copyright (C) 1999-2008  Brian Paul   All Rights Reserved.
  * Copyright (C) 2009  VMware, Inc.  All Rights Reserved.
@@ -33,9 +33,9 @@ struct gl_context;
 
 /* Mesa version */
 #define MESA_MAJOR 7
-#define MESA_MINOR 10
+#define MESA_MINOR 11
 #define MESA_PATCH 0
-#define MESA_VERSION_STRING "7.10-devel"
+#define MESA_VERSION_STRING "7.11-devel"
 
 /* To make version comparison easy */
 #define MESA_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))

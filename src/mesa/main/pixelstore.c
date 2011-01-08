@@ -32,6 +32,7 @@
 #include "bufferobj.h"
 #include "context.h"
 #include "pixelstore.h"
+#include "mfeatures.h"
 #include "mtypes.h"
 
 

@@ -507,7 +507,9 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 	/* Values [0,127] correspond to GPR[0..127].
 	 * Values [128,159] correspond to constant buffer bank 0
 	 * Values [160,191] correspond to constant buffer bank 1
-	 * Values [256,511] correspond to cfile constants c[0..255].
+	 * Values [256,511] correspond to cfile constants c[0..255]. (Gone on EG)
+	 * Values [256,287] correspond to constant buffer bank 2 (EG)
+	 * Values [288,319] correspond to constant buffer bank 3 (EG)
 	 * Other special values are shown in the list below.
 	 * 244  ALU_SRC_1_DBL_L: special constant 1.0 double-float, LSW. (RV670+)
 	 * 245  ALU_SRC_1_DBL_M: special constant 1.0 double-float, MSW. (RV670+)
@@ -541,7 +543,9 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 	ctx.file_offset[TGSI_FILE_TEMPORARY] = ctx.file_offset[TGSI_FILE_OUTPUT] +
 						ctx.info.file_count[TGSI_FILE_OUTPUT];
 
-	ctx.file_offset[TGSI_FILE_CONSTANT] = 128;
+	/* Outside the GPR range. This will be translated to one of the
+	 * kcache banks later. */
+	ctx.file_offset[TGSI_FILE_CONSTANT] = 512;
 
 	ctx.file_offset[TGSI_FILE_IMMEDIATE] = V_SQ_ALU_SRC_LITERAL;
 	ctx.temp_reg = ctx.file_offset[TGSI_FILE_TEMPORARY] +
@@ -586,6 +590,8 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 			r = ctx.inst_info->process(&ctx);
 			if (r)
 				goto out_err;
+			break;
+		case TGSI_TOKEN_TYPE_PROPERTY:
 			break;
 		default:
 			R600_ERR("unsupported token type %d\n", ctx.parse.FullToken.Token.Type);

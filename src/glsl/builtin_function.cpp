@@ -13523,7 +13523,6 @@ _mesa_glsl_release_functions(void)
 
 static void
 _mesa_read_profile(struct _mesa_glsl_parse_state *state,
-		   exec_list *instructions,
                    int profile_index,
 		   const char *prototypes,
 		   const char **functions,
@@ -13542,8 +13541,7 @@ _mesa_read_profile(struct _mesa_glsl_parse_state *state,
 }
 
 void
-_mesa_glsl_initialize_functions(exec_list *instructions,
-                                struct _mesa_glsl_parse_state *state)
+_mesa_glsl_initialize_functions(struct _mesa_glsl_parse_state *state)
 {
    if (builtin_mem_ctx == NULL) {
       builtin_mem_ctx = talloc_init("GLSL built-in functions");
@@ -13553,84 +13551,84 @@ _mesa_glsl_initialize_functions(exec_list *instructions,
    state->num_builtins_to_link = 0;
 
    if (state->target == fragment_shader && state->language_version == 100) {
-      _mesa_read_profile(state, instructions, 0,
+      _mesa_read_profile(state, 0,
                          prototypes_for_100_frag,
                          functions_for_100_frag,
                          Elements(functions_for_100_frag));
    }
 
    if (state->target == vertex_shader && state->language_version == 100) {
-      _mesa_read_profile(state, instructions, 1,
+      _mesa_read_profile(state, 1,
                          prototypes_for_100_vert,
                          functions_for_100_vert,
                          Elements(functions_for_100_vert));
    }
 
    if (state->target == fragment_shader && state->language_version == 110) {
-      _mesa_read_profile(state, instructions, 2,
+      _mesa_read_profile(state, 2,
                          prototypes_for_110_frag,
                          functions_for_110_frag,
                          Elements(functions_for_110_frag));
    }
 
    if (state->target == vertex_shader && state->language_version == 110) {
-      _mesa_read_profile(state, instructions, 3,
+      _mesa_read_profile(state, 3,
                          prototypes_for_110_vert,
                          functions_for_110_vert,
                          Elements(functions_for_110_vert));
    }
 
    if (state->target == fragment_shader && state->language_version == 120) {
-      _mesa_read_profile(state, instructions, 4,
+      _mesa_read_profile(state, 4,
                          prototypes_for_120_frag,
                          functions_for_120_frag,
                          Elements(functions_for_120_frag));
    }
 
    if (state->target == vertex_shader && state->language_version == 120) {
-      _mesa_read_profile(state, instructions, 5,
+      _mesa_read_profile(state, 5,
                          prototypes_for_120_vert,
                          functions_for_120_vert,
                          Elements(functions_for_120_vert));
    }
 
    if (state->target == fragment_shader && state->language_version == 130) {
-      _mesa_read_profile(state, instructions, 6,
+      _mesa_read_profile(state, 6,
                          prototypes_for_130_frag,
                          functions_for_130_frag,
                          Elements(functions_for_130_frag));
    }
 
    if (state->target == vertex_shader && state->language_version == 130) {
-      _mesa_read_profile(state, instructions, 7,
+      _mesa_read_profile(state, 7,
                          prototypes_for_130_vert,
                          functions_for_130_vert,
                          Elements(functions_for_130_vert));
    }
 
    if (state->target == fragment_shader && state->ARB_texture_rectangle_enable) {
-      _mesa_read_profile(state, instructions, 8,
+      _mesa_read_profile(state, 8,
                          prototypes_for_ARB_texture_rectangle_frag,
                          functions_for_ARB_texture_rectangle_frag,
                          Elements(functions_for_ARB_texture_rectangle_frag));
    }
 
    if (state->target == vertex_shader && state->ARB_texture_rectangle_enable) {
-      _mesa_read_profile(state, instructions, 9,
+      _mesa_read_profile(state, 9,
                          prototypes_for_ARB_texture_rectangle_vert,
                          functions_for_ARB_texture_rectangle_vert,
                          Elements(functions_for_ARB_texture_rectangle_vert));
    }
 
    if (state->target == fragment_shader && state->EXT_texture_array_enable) {
-      _mesa_read_profile(state, instructions, 10,
+      _mesa_read_profile(state, 10,
                          prototypes_for_EXT_texture_array_frag,
                          functions_for_EXT_texture_array_frag,
                          Elements(functions_for_EXT_texture_array_frag));
    }
 
    if (state->target == vertex_shader && state->EXT_texture_array_enable) {
-      _mesa_read_profile(state, instructions, 11,
+      _mesa_read_profile(state, 11,
                          prototypes_for_EXT_texture_array_vert,
                          functions_for_EXT_texture_array_vert,
                          Elements(functions_for_EXT_texture_array_vert));

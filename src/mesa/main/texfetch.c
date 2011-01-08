@@ -237,6 +237,13 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       store_texel_argb1555_rev
    },
    {
+      MESA_FORMAT_AL44,
+      fetch_texel_1d_f_al44,
+      fetch_texel_2d_f_al44,
+      fetch_texel_3d_f_al44,
+      store_texel_al44
+   },
+   {
       MESA_FORMAT_AL88,
       fetch_texel_1d_f_al88,
       fetch_texel_2d_f_al88,
@@ -279,6 +286,13 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       store_texel_a8
    },
    {
+      MESA_FORMAT_A16,
+      fetch_texel_1d_f_a16,
+      fetch_texel_2d_f_a16,
+      fetch_texel_3d_f_a16,
+      store_texel_a16
+   },
+   {
       MESA_FORMAT_L8,
       fetch_texel_1d_f_l8,
       fetch_texel_2d_f_l8,
@@ -286,11 +300,25 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       store_texel_l8
    },
    {
+      MESA_FORMAT_L16,
+      fetch_texel_1d_f_l16,
+      fetch_texel_2d_f_l16,
+      fetch_texel_3d_f_l16,
+      store_texel_l16
+   },
+   {
       MESA_FORMAT_I8,
       fetch_texel_1d_f_i8,
       fetch_texel_2d_f_i8,
       fetch_texel_3d_f_i8,
       store_texel_i8
+   },
+   {
+      MESA_FORMAT_I16,
+      fetch_texel_1d_f_i16,
+      fetch_texel_2d_f_i16,
+      fetch_texel_3d_f_i16,
+      store_texel_i16
    },
    {
       MESA_FORMAT_CI8,
@@ -354,6 +382,13 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       fetch_texel_2d_f_rg1616_rev,
       fetch_texel_3d_f_rg1616_rev,
       store_texel_rg1616_rev,
+   },
+   {
+      MESA_FORMAT_ARGB2101010,
+      fetch_texel_1d_f_argb2101010,
+      fetch_texel_2d_f_argb2101010,
+      fetch_texel_3d_f_argb2101010,
+      store_texel_argb2101010
    },
    {
       MESA_FORMAT_Z24_S8,

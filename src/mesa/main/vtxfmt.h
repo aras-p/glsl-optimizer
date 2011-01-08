@@ -34,6 +34,7 @@
 #define _VTXFMT_H_
 
 #include "compiler.h"
+#include "mfeatures.h"
 #include "mtypes.h"
 
 #if FEATURE_beginend

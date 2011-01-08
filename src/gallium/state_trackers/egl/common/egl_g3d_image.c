@@ -35,7 +35,6 @@
 
 #include "native.h"
 #include "egl_g3d.h"
-#include "egl_g3d_api.h"
 #include "egl_g3d_image.h"
 
 /* for struct winsys_handle */

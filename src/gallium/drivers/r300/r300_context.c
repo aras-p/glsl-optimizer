@@ -35,6 +35,10 @@
 #include "r300_screen_buffer.h"
 #include "r300_winsys.h"
 
+#ifdef HAVE_LLVM
+#include "gallivm/lp_bld_init.h"
+#endif
+
 static void r300_update_num_contexts(struct r300_screen *r300screen,
                                      int diff)
 {
@@ -86,6 +90,7 @@ static void r300_release_referenced_objects(struct r300_context *r300)
     /* Vertex buffers. */
     for (i = 0; i < r300->vertex_buffer_count; i++) {
         pipe_resource_reference(&r300->vertex_buffer[i].buffer, NULL);
+        pipe_resource_reference(&r300->valid_vertex_buffer[i], NULL);
     }
 
     /* If there are any queries pending or not destroyed, remove them now. */
@@ -101,8 +106,13 @@ static void r300_destroy_context(struct pipe_context* context)
 
     if (r300->blitter)
         util_blitter_destroy(r300->blitter);
-    if (r300->draw)
+    if (r300->draw) {
         draw_destroy(r300->draw);
+
+#ifdef HAVE_LLVM
+        gallivm_destroy(r300->gallivm);
+#endif
+    }
 
     if (r300->upload_vb)
         u_upload_destroy(r300->upload_vb);
@@ -422,7 +432,12 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     if (!r300screen->caps.has_tcl) {
         /* Create a Draw. This is used for SW TCL. */
+#ifdef HAVE_LLVM
+        r300->gallivm = gallivm_create();
+        r300->draw = draw_create_gallivm(&r300->context, r300->gallivm);
+#else
         r300->draw = draw_create(&r300->context);
+#endif
         if (r300->draw == NULL)
             goto fail;
         /* Enable our renderer. */
@@ -456,14 +471,14 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
             goto fail;
 
     r300->upload_ib = u_upload_create(&r300->context,
-				      32 * 1024, 16,
+				      64 * 1024, 16,
 				      PIPE_BIND_INDEX_BUFFER);
 
     if (r300->upload_ib == NULL)
         goto fail;
 
     r300->upload_vb = u_upload_create(&r300->context,
-				      128 * 1024, 16,
+				      1024 * 1024, 16,
 				      PIPE_BIND_VERTEX_BUFFER);
     if (r300->upload_vb == NULL)
         goto fail;

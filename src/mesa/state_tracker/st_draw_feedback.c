@@ -109,9 +109,7 @@ st_feedback_draw_vbo(struct gl_context *ctx,
    struct pipe_index_buffer ibuffer;
    struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
    struct pipe_transfer *ib_transfer = NULL;
-   struct pipe_transfer *cb_transfer;
    GLuint attr, i;
-   ubyte *mapped_constants;
    const void *mapped_indices = NULL;
 
    assert(draw);
@@ -242,14 +240,10 @@ st_feedback_draw_vbo(struct gl_context *ctx,
       draw_set_mapped_index_buffer(draw, mapped_indices);
    }
 
-   /* map constant buffers */
-   mapped_constants = pipe_buffer_map(pipe,
-                                      st->state.constants[PIPE_SHADER_VERTEX],
-                                      PIPE_TRANSFER_READ,
-				      &cb_transfer);
+   /* set the constant buffer */
    draw_set_mapped_constant_buffer(st->draw, PIPE_SHADER_VERTEX, 0,
-                                   mapped_constants,
-                                   st->state.constants[PIPE_SHADER_VERTEX]->width0);
+                                   st->state.constants[PIPE_SHADER_VERTEX].ptr,
+                                   st->state.constants[PIPE_SHADER_VERTEX].size);
 
 
    /* draw here */
@@ -257,9 +251,6 @@ st_feedback_draw_vbo(struct gl_context *ctx,
       draw_arrays(draw, prims[i].mode, prims[i].start, prims[i].count);
    }
 
-
-   /* unmap constant buffers */
-   pipe_buffer_unmap(pipe, cb_transfer);
 
    /*
     * unmap vertex/index buffers

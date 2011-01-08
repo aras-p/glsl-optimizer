@@ -2,14 +2,14 @@ Import('*')
 
 env = drienv.Clone()
 
-env.Append(CPPDEFINES = ['GALLIUM_RBUG', 'GALLIUM_TRACE'])
+if True:
+    env.Append(CPPDEFINES = ['GALLIUM_TRACE', 'GALLIUM_RBUG', 'GALLIUM_GALAHAD', 'GALLIUM_SOFTPIPE'])
+    env.Prepend(LIBS = [trace, rbug, galahad, softpipe, ws_wrapper])
 
 env.Prepend(LIBS = [
     st_dri,
     svgadrm,
     svga,
-    trace,
-    rbug,
     mesa,
     glsl,
     gallium,

@@ -585,6 +585,8 @@
 #define TM0S2_VERITCAL_LINE_STRIDE_OFF  (1<<12)
 #define TM0S2_OUTPUT_CHAN_SHIFT         10
 #define TM0S2_OUTPUT_CHAN_MASK          (3<<10)
+#define TM0S2_BASE_MIP_LEVEL_SHIFT      1
+#define TM0S2_LOD_PRECLAMP              (1 << 0)
 
 #define TM0S3_MIP_FILTER_MASK           (0x3<<30)
 #define TM0S3_MIP_FILTER_SHIFT          30
@@ -605,6 +607,8 @@
 #define TM0S3_MAX_MIP_MASK		(0xff<<9)
 #define TM0S3_MIN_MIP_SHIFT		3
 #define TM0S3_MIN_MIP_MASK		(0x3f<<3)
+#define TM0S3_MIN_MIP_SHIFT_830		5
+#define TM0S3_MIN_MIP_MASK_830		(0x3f<<5)
 #define TM0S3_KILL_PIXEL		(1<<2)
 #define TM0S3_KEYED_FILTER		(1<<1)
 #define TM0S3_CHROMA_KEY		(1<<0)

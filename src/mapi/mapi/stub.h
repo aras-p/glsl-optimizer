@@ -29,13 +29,9 @@
 #ifndef _STUB_H_
 #define _STUB_H_
 
-typedef void (*mapi_func)(void);
+#include "entry.h"
 
-struct mapi_stub {
-   mapi_func addr;
-   int slot;
-   const void *name;
-};
+struct mapi_stub;
 
 void
 stub_init_once(void);
@@ -48,5 +44,14 @@ stub_find_dynamic(const char *name, int generate);
 
 void
 stub_fix_dynamic(struct mapi_stub *stub, const struct mapi_stub *alias);
+
+const char *
+stub_get_name(const struct mapi_stub *stub);
+
+int
+stub_get_slot(const struct mapi_stub *stub);
+
+mapi_func
+stub_get_addr(const struct mapi_stub *stub);
 
 #endif /* _STUB_H_ */

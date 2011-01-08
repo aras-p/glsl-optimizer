@@ -96,6 +96,7 @@ nvfx_framebuffer_validate(struct nvfx_context *nvfx, unsigned prepare_result)
 {
 	struct pipe_framebuffer_state *fb = &nvfx->framebuffer;
 	struct nouveau_channel *chan = nvfx->screen->base.channel;
+	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 	uint32_t rt_enable, rt_format;
 	int i;
 	unsigned rt_flags = NOUVEAU_BO_RDWR | NOUVEAU_BO_VRAM;
@@ -204,11 +205,11 @@ nvfx_framebuffer_validate(struct nvfx_context *nvfx, unsigned prepare_result)
 
 		//printf("rendering to bo %p [%i] at offset %i with pitch %i\n", rt0->bo, rt0->bo->handle, rt0->offset, pitch);
 
-		OUT_RING(chan, RING_3D(NV30_3D_DMA_COLOR0, 1));
+		BEGIN_RING(chan, eng3d, NV30_3D_DMA_COLOR0, 1);
 		OUT_RELOC(chan, rt0->bo, 0,
 			      rt_flags | NOUVEAU_BO_OR,
 			      chan->vram->handle, chan->gart->handle);
-		OUT_RING(chan, RING_3D(NV30_3D_COLOR0_PITCH, 2));
+		BEGIN_RING(chan, eng3d, NV30_3D_COLOR0_PITCH, 2);
 		OUT_RING(chan, pitch);
 		OUT_RELOC(chan, rt0->bo,
 			      rt0->offset, rt_flags | NOUVEAU_BO_LOW,
@@ -216,11 +217,11 @@ nvfx_framebuffer_validate(struct nvfx_context *nvfx, unsigned prepare_result)
 	}
 
 	if (rt_enable & NV30_3D_RT_ENABLE_COLOR1) {
-		OUT_RING(chan, RING_3D(NV30_3D_DMA_COLOR1, 1));
+		BEGIN_RING(chan, eng3d, NV30_3D_DMA_COLOR1, 1);
 		OUT_RELOC(chan, nvfx->hw_rt[1].bo, 0,
 			      rt_flags | NOUVEAU_BO_OR,
 			      chan->vram->handle, chan->gart->handle);
-		OUT_RING(chan, RING_3D(NV30_3D_COLOR1_OFFSET, 2));
+		BEGIN_RING(chan, eng3d, NV30_3D_COLOR1_OFFSET, 2);
 		OUT_RELOC(chan, nvfx->hw_rt[1].bo,
 				nvfx->hw_rt[1].offset, rt_flags | NOUVEAU_BO_LOW,
 			      0, 0);
@@ -230,68 +231,68 @@ nvfx_framebuffer_validate(struct nvfx_context *nvfx, unsigned prepare_result)
 	if(nvfx->is_nv4x)
 	{
 		if (rt_enable & NV40_3D_RT_ENABLE_COLOR2) {
-			OUT_RING(chan, RING_3D(NV40_3D_DMA_COLOR2, 1));
+			BEGIN_RING(chan, eng3d, NV40_3D_DMA_COLOR2, 1);
 			OUT_RELOC(chan, nvfx->hw_rt[2].bo, 0,
 				      rt_flags | NOUVEAU_BO_OR,
 				      chan->vram->handle, chan->gart->handle);
-			OUT_RING(chan, RING_3D(NV40_3D_COLOR2_OFFSET, 1));
+			BEGIN_RING(chan, eng3d, NV40_3D_COLOR2_OFFSET, 1);
 			OUT_RELOC(chan, nvfx->hw_rt[2].bo,
 				      nvfx->hw_rt[2].offset, rt_flags | NOUVEAU_BO_LOW,
 				      0, 0);
-			OUT_RING(chan, RING_3D(NV40_3D_COLOR2_PITCH, 1));
+			BEGIN_RING(chan, eng3d, NV40_3D_COLOR2_PITCH, 1);
 			OUT_RING(chan, nvfx->hw_rt[2].pitch);
 		}
 
 		if (rt_enable & NV40_3D_RT_ENABLE_COLOR3) {
-			OUT_RING(chan, RING_3D(NV40_3D_DMA_COLOR3, 1));
+			BEGIN_RING(chan, eng3d, NV40_3D_DMA_COLOR3, 1);
 			OUT_RELOC(chan, nvfx->hw_rt[3].bo, 0,
 				      rt_flags | NOUVEAU_BO_OR,
 				      chan->vram->handle, chan->gart->handle);
-			OUT_RING(chan, RING_3D(NV40_3D_COLOR3_OFFSET, 1));
+			BEGIN_RING(chan, eng3d, NV40_3D_COLOR3_OFFSET, 1);
 			OUT_RELOC(chan, nvfx->hw_rt[3].bo,
 					nvfx->hw_rt[3].offset, rt_flags | NOUVEAU_BO_LOW,
 				      0, 0);
-			OUT_RING(chan, RING_3D(NV40_3D_COLOR3_PITCH, 1));
+			BEGIN_RING(chan, eng3d, NV40_3D_COLOR3_PITCH, 1);
 			OUT_RING(chan, nvfx->hw_rt[3].pitch);
 		}
 	}
 
 	if (fb->zsbuf) {
-		OUT_RING(chan, RING_3D(NV30_3D_DMA_ZETA, 1));
+		BEGIN_RING(chan, eng3d, NV30_3D_DMA_ZETA, 1);
 		OUT_RELOC(chan, nvfx->hw_zeta.bo, 0,
 			      rt_flags | NOUVEAU_BO_OR,
 			      chan->vram->handle, chan->gart->handle);
-		OUT_RING(chan, RING_3D(NV30_3D_ZETA_OFFSET, 1));
+		BEGIN_RING(chan, eng3d, NV30_3D_ZETA_OFFSET, 1);
 		/* TODO: reverse engineer LMA */
 		OUT_RELOC(chan, nvfx->hw_zeta.bo,
 			     nvfx->hw_zeta.offset, rt_flags | NOUVEAU_BO_LOW, 0, 0);
 	        if(nvfx->is_nv4x) {
-			OUT_RING(chan, RING_3D(NV40_3D_ZETA_PITCH, 1));
+			BEGIN_RING(chan, eng3d, NV40_3D_ZETA_PITCH, 1);
 			OUT_RING(chan, nvfx->hw_zeta.pitch);
 		}
 	}
 	else if(nvfx->is_nv4x) {
-		OUT_RING(chan, RING_3D(NV40_3D_ZETA_PITCH, 1));
+		BEGIN_RING(chan, eng3d, NV40_3D_ZETA_PITCH, 1);
 		OUT_RING(chan, 64);
 	}
 
-	OUT_RING(chan, RING_3D(NV30_3D_RT_ENABLE, 1));
+	BEGIN_RING(chan, eng3d, NV30_3D_RT_ENABLE, 1);
 	OUT_RING(chan, rt_enable);
-	OUT_RING(chan, RING_3D(NV30_3D_RT_HORIZ, 3));
+	BEGIN_RING(chan, eng3d, NV30_3D_RT_HORIZ, 3);
 	OUT_RING(chan, (w << 16) | 0);
 	OUT_RING(chan, (h << 16) | 0);
 	OUT_RING(chan, rt_format);
-	OUT_RING(chan, RING_3D(NV30_3D_VIEWPORT_HORIZ, 2));
+	BEGIN_RING(chan, eng3d, NV30_3D_VIEWPORT_HORIZ, 2);
 	OUT_RING(chan, (w << 16) | 0);
 	OUT_RING(chan, (h << 16) | 0);
-	OUT_RING(chan, RING_3D(NV30_3D_VIEWPORT_CLIP_HORIZ(0), 2));
+	BEGIN_RING(chan, eng3d, NV30_3D_VIEWPORT_CLIP_HORIZ(0), 2);
 	OUT_RING(chan, ((w - 1) << 16) | 0);
 	OUT_RING(chan, ((h - 1) << 16) | 0);
 
 	if(!nvfx->is_nv4x) {
 		/* Wonder why this is needed, context should all be set to zero on init */
 		/* TODO: we can most likely remove this, after putting it in context init */
-		OUT_RING(chan, RING_3D(NV30_3D_VIEWPORT_TX_ORIGIN, 1));
+		BEGIN_RING(chan, eng3d, NV30_3D_VIEWPORT_TX_ORIGIN, 1);
 		OUT_RING(chan, 0);
 	}
 	nvfx->relocs_needed &=~ NVFX_RELOCATE_FRAMEBUFFER;

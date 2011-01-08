@@ -250,3 +250,29 @@ int r600_upload_user_buffers(struct r600_pipe_context *rctx)
 	}
 	return ret;
 }
+
+
+int r600_upload_const_buffer(struct r600_pipe_context *rctx, struct pipe_resource *cbuffer,
+			     uint32_t *const_offset)
+{
+	if (r600_buffer_is_user_buffer(cbuffer)) {
+		struct r600_resource_buffer *rbuffer = r600_buffer(cbuffer);
+		unsigned upload_offset;
+		int ret = 0;
+
+		ret = r600_upload_buffer(rctx->rupload_const,
+					 0, cbuffer->width0,
+					 rbuffer,
+					 &upload_offset,
+					 &rbuffer->r.bo_size,
+					 &rbuffer->r.bo);
+		if (ret)
+			return ret;
+		rbuffer->uploaded = TRUE;
+		*const_offset = upload_offset;
+		return 0;
+	}
+
+	*const_offset = 0;
+	return 0;
+}

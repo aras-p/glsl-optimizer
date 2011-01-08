@@ -30,6 +30,7 @@
 #include "framebuffer.h"
 #include "formats.h"
 #include "image.h"
+#include "mtypes.h"
 #include "state.h"
 
 

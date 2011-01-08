@@ -780,8 +780,9 @@ nv50_set_vertex_buffers(struct pipe_context *pipe, unsigned count,
 {
 	struct nv50_context *nv50 = nv50_context(pipe);
 
-	memcpy(nv50->vtxbuf, vb, sizeof(*vb) * count);
-	nv50->vtxbuf_nr = count;
+        util_copy_vertex_buffers(nv50->vtxbuf,
+                                 &nv50->vtxbuf_nr,
+                                 vb, count);
 
 	nv50->dirty |= NV50_NEW_ARRAYS;
 }

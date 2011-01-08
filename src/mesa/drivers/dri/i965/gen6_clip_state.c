@@ -43,7 +43,10 @@ upload_clip_state(struct brw_context *brw)
       depth_clamp = GEN6_CLIP_Z_TEST;
 
    if (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION) {
-      provoking = 0;
+      provoking =
+	 (0 << GEN6_CLIP_TRI_PROVOKE_SHIFT) |
+	 (1 << GEN6_CLIP_TRIFAN_PROVOKE_SHIFT) |
+	 (0 << GEN6_CLIP_LINE_PROVOKE_SHIFT);
    } else {
       provoking =
 	 (2 << GEN6_CLIP_TRI_PROVOKE_SHIFT) |
@@ -55,7 +58,7 @@ upload_clip_state(struct brw_context *brw)
    userclip = (1 << brw_count_bits(ctx->Transform.ClipPlanesEnabled)) - 1;
 
    BEGIN_BATCH(4);
-   OUT_BATCH(CMD_3D_CLIP_STATE << 16 | (4 - 2));
+   OUT_BATCH(_3DSTATE_CLIP << 16 | (4 - 2));
    OUT_BATCH(GEN6_CLIP_STATISTICS_ENABLE);
    OUT_BATCH(GEN6_CLIP_ENABLE |
 	     GEN6_CLIP_API_OGL |

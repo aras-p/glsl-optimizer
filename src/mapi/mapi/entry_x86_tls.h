@@ -54,10 +54,11 @@ __asm__("x86_current_tls:\n\t"
 	"ret");
 
 #ifndef GLX_X86_READONLY_TEXT
-__asm__(".section wtext, \"awx\", @progbits\n"
-        ".balign 16\n"
-        "x86_entry_start:");
+__asm__(".section wtext, \"awx\", @progbits");
 #endif /* GLX_X86_READONLY_TEXT */
+
+__asm__(".balign 16\n"
+        "x86_entry_start:");
 
 #define STUB_ASM_ENTRY(func)     \
    ".globl " func "\n"           \
@@ -99,6 +100,13 @@ entry_patch_public(void)
    for (entry = x86_entry_start; entry < x86_entry_end; entry += 16)
       memcpy(entry, patch, sizeof(patch));
 #endif
+}
+
+mapi_func
+entry_get_public(int slot)
+{
+   extern char x86_entry_start[];
+   return (mapi_func) (x86_entry_start + slot * 16);
 }
 
 void

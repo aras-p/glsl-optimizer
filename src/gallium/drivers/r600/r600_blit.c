@@ -78,7 +78,7 @@ static void r600_blitter_end(struct pipe_context *ctx)
 	r600_context_queries_resume(&rctx->ctx);
 }
 
-int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture)
+void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct pipe_surface *zsurf, *cbsurf, surf_tmpl;
@@ -107,9 +107,6 @@ int r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_te
 
 	pipe_surface_reference(&zsurf, NULL);
 	pipe_surface_reference(&cbsurf, NULL);
-
-
-	return 0;
 }
 
 static void r600_clear(struct pipe_context *ctx, unsigned buffers,

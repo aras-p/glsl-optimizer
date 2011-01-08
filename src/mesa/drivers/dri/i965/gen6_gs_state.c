@@ -37,7 +37,7 @@ upload_gs_state(struct brw_context *brw)
 
    /* Disable all the constant buffers. */
    BEGIN_BATCH(5);
-   OUT_BATCH(CMD_3D_CONSTANT_GS_STATE << 16 | (5 - 2));
+   OUT_BATCH(_3DSTATE_CONSTANT_GS << 16 | (5 - 2));
    OUT_BATCH(0);
    OUT_BATCH(0);
    OUT_BATCH(0);
@@ -46,7 +46,7 @@ upload_gs_state(struct brw_context *brw)
 
    if (brw->gs.prog_bo) {
       BEGIN_BATCH(7);
-      OUT_BATCH(CMD_3D_GS_STATE << 16 | (7 - 2));
+      OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
       OUT_RELOC(brw->gs.prog_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
       OUT_BATCH(GEN6_GS_SPF_MODE |
 		(0 << GEN6_GS_SAMPLER_COUNT_SHIFT) |
@@ -62,7 +62,7 @@ upload_gs_state(struct brw_context *brw)
       ADVANCE_BATCH();
    } else {
       BEGIN_BATCH(7);
-      OUT_BATCH(CMD_3D_GS_STATE << 16 | (7 - 2));
+      OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
       OUT_BATCH(0); /* prog_bo */
       OUT_BATCH((0 << GEN6_GS_SAMPLER_COUNT_SHIFT) |
 		(0 << GEN6_GS_BINDING_TABLE_ENTRY_COUNT_SHIFT));

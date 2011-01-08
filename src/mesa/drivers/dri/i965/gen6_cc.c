@@ -278,7 +278,7 @@ static void upload_cc_state_pointers(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
 
    BEGIN_BATCH(4);
-   OUT_BATCH(CMD_3D_CC_STATE_POINTERS << 16 | (4 - 2));
+   OUT_BATCH(_3DSTATE_CC_STATE_POINTERS << 16 | (4 - 2));
    OUT_RELOC(brw->cc.blend_state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
    OUT_RELOC(brw->cc.depth_stencil_state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
    OUT_RELOC(brw->cc.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);

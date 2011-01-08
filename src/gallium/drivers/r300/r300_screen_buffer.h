@@ -57,27 +57,24 @@ struct r300_buffer
 
     uint8_t *user_buffer;
     uint8_t *constant_buffer;
-    struct r300_buffer_range ranges[R300_BUFFER_MAX_RANGES];
-    unsigned num_ranges;
 };
 
 /* Functions. */
 
-int r300_upload_user_buffers(struct r300_context *r300);
+void r300_upload_user_buffers(struct r300_context *r300,
+			      int min_index, int max_index);
 
-int r300_upload_index_buffer(struct r300_context *r300,
-			     struct pipe_resource **index_buffer,
-			     unsigned index_size,
-			     unsigned start,
-			     unsigned count, unsigned *out_offset);
+void r300_upload_index_buffer(struct r300_context *r300,
+			      struct pipe_resource **index_buffer,
+			      unsigned index_size, unsigned *start,
+			      unsigned count);
 
 struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ);
 
 struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
-					      void *ptr,
-					      unsigned bytes,
-					      unsigned usage);
+					      void *ptr, unsigned size,
+					      unsigned bind);
 
 unsigned r300_buffer_is_referenced(struct pipe_context *context,
 				   struct pipe_resource *buf,
@@ -90,7 +87,7 @@ static INLINE struct r300_buffer *r300_buffer(struct pipe_resource *buffer)
     return (struct r300_buffer *)buffer;
 }
 
-static INLINE boolean r300_buffer_is_user_buffer(struct pipe_resource *buffer)
+static INLINE boolean r300_is_user_buffer(struct pipe_resource *buffer)
 {
     return r300_buffer(buffer)->user_buffer ? true : false;
 }

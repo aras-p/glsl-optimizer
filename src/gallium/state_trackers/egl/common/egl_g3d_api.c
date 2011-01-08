@@ -158,17 +158,17 @@ egl_g3d_choose_config(_EGLDriver *drv, _EGLDisplay *dpy, const EGLint *attribs,
          (_EGLArrayForEach) egl_g3d_match_config, (void *) &criteria);
 
    /* perform sorting of configs */
-   if (tmp_configs && tmp_size) {
+   if (configs && tmp_size) {
       _eglSortConfigs((const _EGLConfig **) tmp_configs, tmp_size,
             egl_g3d_compare_config, (void *) &criteria);
-      size = MIN2(tmp_size, size);
-      for (i = 0; i < size; i++)
+      tmp_size = MIN2(tmp_size, size);
+      for (i = 0; i < tmp_size; i++)
          configs[i] = _eglGetConfigHandle(tmp_configs[i]);
    }
 
    FREE(tmp_configs);
 
-   *num_configs = size;
+   *num_configs = tmp_size;
 
    return EGL_TRUE;
 }

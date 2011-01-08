@@ -535,14 +535,9 @@ i830_emit_state(struct intel_context *intel)
          BEGIN_BATCH(I830_TEX_SETUP_SIZE + 1);
          OUT_BATCH(state->Tex[i][I830_TEXREG_TM0LI]);
 
-         if (state->tex_buffer[i]) {
-            OUT_RELOC(state->tex_buffer[i],
-		      I915_GEM_DOMAIN_SAMPLER, 0,
-                      state->tex_offset[i]);
-         }
-	 else {
-	    OUT_BATCH(state->tex_offset[i]);
-	 }
+	 OUT_RELOC(state->tex_buffer[i],
+		   I915_GEM_DOMAIN_SAMPLER, 0,
+		   state->tex_offset[i]);
 
          OUT_BATCH(state->Tex[i][I830_TEXREG_TM0S1]);
          OUT_BATCH(state->Tex[i][I830_TEXREG_TM0S2]);
@@ -585,6 +580,27 @@ i830_destroy_context(struct intel_context *intel)
    _tnl_free_vertices(&intel->ctx);
 }
 
+static uint32_t i830_render_target_format_for_mesa_format[MESA_FORMAT_COUNT] =
+{
+   [MESA_FORMAT_ARGB8888] = DV_PF_8888,
+   [MESA_FORMAT_XRGB8888] = DV_PF_8888,
+   [MESA_FORMAT_RGB565] = DV_PF_565,
+   [MESA_FORMAT_ARGB1555] = DV_PF_1555,
+   [MESA_FORMAT_ARGB4444] = DV_PF_4444,
+};
+
+static bool
+i830_render_target_supported(gl_format format)
+{
+   if (format == MESA_FORMAT_S8_Z24 ||
+       format == MESA_FORMAT_X8_Z24 ||
+       format == MESA_FORMAT_Z16) {
+      return true;
+   }
+
+   return i830_render_target_format_for_mesa_format[format] != 0;
+}
+
 static void
 i830_set_draw_region(struct intel_context *intel,
                      struct intel_region *color_regions[],
@@ -624,24 +640,7 @@ i830_set_draw_region(struct intel_context *intel,
             DSTORG_VERT_BIAS(0x8) | DEPTH_IS_Z);    /* .5 */
 
    if (irb != NULL) {
-      switch (irb->Base.Format) {
-      case MESA_FORMAT_ARGB8888:
-      case MESA_FORMAT_XRGB8888:
-	 value |= DV_PF_8888;
-	 break;
-      case MESA_FORMAT_RGB565:
-	 value |= DV_PF_565;
-	 break;
-      case MESA_FORMAT_ARGB1555:
-	 value |= DV_PF_1555;
-	 break;
-      case MESA_FORMAT_ARGB4444:
-	 value |= DV_PF_4444;
-	 break;
-      default:
-	 _mesa_problem(ctx, "Bad renderbuffer format: %d\n",
-		       irb->Base.Format);
-      }
+      value |= i830_render_target_format_for_mesa_format[irb->Base.Format];
    }
 
    if (depth_region && depth_region->cpp == 4) {
@@ -729,4 +728,5 @@ i830InitVtbl(struct i830_context *i830)
    i830->intel.vtbl.assert_not_dirty = i830_assert_not_dirty;
    i830->intel.vtbl.finish_batch = intel_finish_vb;
    i830->intel.vtbl.invalidate_state = i830_invalidate_state;
+   i830->intel.vtbl.render_target_supported = i830_render_target_supported;
 }

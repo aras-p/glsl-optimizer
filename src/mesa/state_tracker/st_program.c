@@ -409,6 +409,7 @@ st_translate_fragment_program(struct st_context *st,
 
    assert(!(key->bitmap && key->drawpixels));
 
+#if FEATURE_drawpix
    if (key->bitmap) {
       /* glBitmap drawing */
       struct gl_fragment_program *fp;
@@ -434,6 +435,7 @@ st_translate_fragment_program(struct st_context *st,
       }
       stfp = st_fragment_program(fp);
    }
+#endif
 
    if (!stfp->tgsi.tokens) {
       /* need to translate Mesa instructions to TGSI now */
@@ -444,6 +446,7 @@ st_translate_fragment_program(struct st_context *st,
       enum pipe_error error;
       const GLbitfield inputsRead = stfp->Base.Base.InputsRead;
       struct ureg_program *ureg;
+      GLboolean write_all = GL_FALSE;
 
       ubyte input_semantic_name[PIPE_MAX_SHADER_INPUTS];
       ubyte input_semantic_index[PIPE_MAX_SHADER_INPUTS];
@@ -568,6 +571,8 @@ st_translate_fragment_program(struct st_context *st,
                   /* handled above */
                   assert(0);
                   break;
+               case FRAG_RESULT_COLOR:
+                  write_all = GL_TRUE; /* fallthrough */
                default:
                   assert(attr == FRAG_RESULT_COLOR ||
                          (FRAG_RESULT_DATA0 <= attr && attr < FRAG_RESULT_MAX));
@@ -592,6 +597,8 @@ st_translate_fragment_program(struct st_context *st,
          _mesa_print_program_parameters(st->ctx, &stfp->Base.Base);
          debug_printf("\n");
       }
+      if (write_all == GL_TRUE)
+         ureg_property_fs_color0_writes_all_cbufs(ureg, 1);
 
       error = st_translate_mesa_program(st->ctx,
                                         TGSI_PROCESSOR_FRAGMENT,

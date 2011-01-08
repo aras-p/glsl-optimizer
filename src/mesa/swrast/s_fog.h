@@ -28,9 +28,10 @@
 #define S_FOG_H
 
 
-#include "main/mtypes.h"
+#include "main/glheader.h"
 #include "s_span.h"
 
+struct gl_context;
 
 extern GLfloat
 _swrast_z_to_fogfactor(struct gl_context *ctx, GLfloat z);

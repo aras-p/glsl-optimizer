@@ -28,8 +28,11 @@
 #ifndef _TNL_VERTEX_H
 #define _TNL_VERTEX_H
 
-#include "main/mtypes.h"
+#include "main/glheader.h"
 #include "t_context.h"
+
+struct gl_context;
+struct tnl_clipspace;
 
 /* New mechanism to specify hardware vertices so that tnl can build
  * and manipulate them directly.  

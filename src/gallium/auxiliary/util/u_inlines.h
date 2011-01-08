@@ -400,6 +400,34 @@ static INLINE boolean util_get_offset(
    }
 }
 
+/**
+ * This function is used to copy an array of pipe_vertex_buffer structures,
+ * while properly referencing the pipe_vertex_buffer::buffer member.
+ *
+ * \sa util_copy_framebuffer_state
+ */
+static INLINE void util_copy_vertex_buffers(struct pipe_vertex_buffer *dst,
+                                            unsigned *dst_count,
+                                            const struct pipe_vertex_buffer *src,
+                                            unsigned src_count)
+{
+   unsigned i;
+
+   /* Reference the buffers of 'src' in 'dst'. */
+   for (i = 0; i < src_count; i++) {
+      pipe_resource_reference(&dst[i].buffer, src[i].buffer);
+   }
+   /* Unreference the rest of the buffers in 'dst'. */
+   for (; i < *dst_count; i++) {
+      pipe_resource_reference(&dst[i].buffer, NULL);
+   }
+
+   /* Update the size of 'dst' and copy over the other members
+    * of pipe_vertex_buffer. */
+   *dst_count = src_count;
+   memcpy(dst, src, src_count * sizeof(struct pipe_vertex_buffer));
+}
+
 #ifdef __cplusplus
 }
 #endif

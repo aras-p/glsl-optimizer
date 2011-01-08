@@ -53,7 +53,7 @@ bool do_lower_jumps(exec_list *instructions, bool pull_out_jumps = true, bool lo
 bool do_lower_texture_projection(exec_list *instructions);
 bool do_if_simplification(exec_list *instructions);
 bool do_discard_simplification(exec_list *instructions);
-bool do_if_to_cond_assign(exec_list *instructions);
+bool lower_if_to_cond_assign(exec_list *instructions, unsigned max_depth = 0);
 bool do_mat_op_to_vec(exec_list *instructions);
 bool do_mod_to_fract(exec_list *instructions);
 bool do_noop_swizzle(exec_list *instructions);

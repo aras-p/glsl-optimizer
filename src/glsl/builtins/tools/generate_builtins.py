@@ -200,7 +200,6 @@ _mesa_glsl_release_functions(void)
 
 static void
 _mesa_read_profile(struct _mesa_glsl_parse_state *state,
-		   exec_list *instructions,
                    int profile_index,
 		   const char *prototypes,
 		   const char **functions,
@@ -219,8 +218,7 @@ _mesa_read_profile(struct _mesa_glsl_parse_state *state,
 }
 
 void
-_mesa_glsl_initialize_functions(exec_list *instructions,
-                                struct _mesa_glsl_parse_state *state)
+_mesa_glsl_initialize_functions(struct _mesa_glsl_parse_state *state)
 {
    if (builtin_mem_ctx == NULL) {
       builtin_mem_ctx = talloc_init("GLSL built-in functions");
@@ -244,7 +242,7 @@ _mesa_glsl_initialize_functions(exec_list *instructions,
             check += 'state->' + version + '_enable'
 
         print '   if (' + check + ') {'
-        print '      _mesa_read_profile(state, instructions, %d,' % i
+        print '      _mesa_read_profile(state, %d,' % i
         print '                         prototypes_for_' + profile + ','
         print '                         functions_for_' + profile + ','
         print '                         Elements(functions_for_' + profile + '));'

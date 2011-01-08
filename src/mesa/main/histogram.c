@@ -28,6 +28,7 @@
 #include "colormac.h"
 #include "histogram.h"
 #include "macros.h"
+#include "mfeatures.h"
 #include "main/dispatch.h"
 
 

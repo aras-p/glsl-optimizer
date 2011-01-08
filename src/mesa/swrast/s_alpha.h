@@ -1,4 +1,3 @@
-
 /*
  * Mesa 3-D graphics library
  * Version:  4.1
@@ -28,9 +27,10 @@
 #define S_ALPHA_H
 
 
-#include "main/mtypes.h"
+#include "main/glheader.h"
 #include "s_span.h"
 
+struct gl_context;
 
 extern GLint
 _swrast_alpha_test( const struct gl_context *ctx, SWspan *span );

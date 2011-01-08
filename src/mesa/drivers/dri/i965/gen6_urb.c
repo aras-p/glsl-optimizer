@@ -60,7 +60,7 @@ upload_urb(struct brw_context *brw)
    assert(!brw->gs.prog_bo || brw->urb.vs_size < 5);
 
    BEGIN_BATCH(3);
-   OUT_BATCH(CMD_URB << 16 | (3 - 2));
+   OUT_BATCH(_3DSTATE_URB << 16 | (3 - 2));
    OUT_BATCH(((brw->urb.vs_size - 1) << GEN6_URB_VS_SIZE_SHIFT) |
 	     ((brw->urb.nr_vs_entries) << GEN6_URB_VS_ENTRIES_SHIFT));
    OUT_BATCH(((brw->urb.vs_size - 1) << GEN6_URB_GS_SIZE_SHIFT) |

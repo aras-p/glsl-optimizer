@@ -42,6 +42,7 @@
 #include "main/hash.h"
 #include "main/imports.h"
 #include "main/macros.h"
+#include "main/mtypes.h"
 #include "main/nvprogram.h"
 #include "program/arbprogparse.h"
 #include "program/nvfragparse.h"

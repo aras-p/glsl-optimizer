@@ -70,7 +70,8 @@ extern void
 _mesa_update_draw_buffer_bounds(struct gl_context *ctx);
 
 extern void
-_mesa_update_framebuffer_visual(struct gl_framebuffer *fb);
+_mesa_update_framebuffer_visual(struct gl_context *ctx,
+				struct gl_framebuffer *fb);
 
 extern void
 _mesa_update_depth_buffer(struct gl_context *ctx, struct gl_framebuffer *fb,

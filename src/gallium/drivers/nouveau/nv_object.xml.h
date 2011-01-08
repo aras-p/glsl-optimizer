@@ -8,12 +8,10 @@ http://0x04.net/cgit/index.cgi/rules-ng-ng
 git clone git://0x04.net/rules-ng-ng
 
 The rules-ng-ng source files this header was generated from are:
-- nv30-40_3d.xml (  31709 bytes, from 2010-09-05 07:53:14)
-- copyright.xml  (   6503 bytes, from 2010-04-10 23:15:50)
-- nv_3ddefs.xml  (  15193 bytes, from 2010-09-05 07:50:15)
-- nv_defs.xml    (   4437 bytes, from 2010-08-05 19:38:53)
-- nv_object.xml  (  10424 bytes, from 2010-08-05 19:38:53)
-- nvchipsets.xml (   2824 bytes, from 2010-08-05 19:38:53)
+- nv_object.xml  (  11547 bytes, from 2010-10-24 15:29:34)
+- copyright.xml  (   6498 bytes, from 2010-10-03 13:18:37)
+- nvchipsets.xml (   2907 bytes, from 2010-10-15 16:28:21)
+- nv_defs.xml    (   4437 bytes, from 2010-07-06 07:43:58)
 
 Copyright (C) 2006-2010 by the following authors:
 - Artur Huillet <arthur.huillet@free.fr> (ahuillet)
@@ -37,7 +35,7 @@ Copyright (C) 2006-2010 by the following authors:
 - Mark Carey <mark.carey@gmail.com> (careym)
 - Matthieu Castet <matthieu.castet@parrot.com> (mat-c)
 - nvidiaman <nvidiaman@users.sf.net> (nvidiaman)
-- Patrice Mandin <mandin.patrice@orange.fr> (pmandin, pmdata)
+- Patrice Mandin <patmandin@gmail.com> (pmandin, pmdata)
 - Pekka Paalanen <pq@iki.fi> (pq, ppaalanen)
 - Peter Popov <ironpeter@users.sf.net> (ironpeter)
 - Richard Hughes <hughsient@users.sf.net> (hughsient)
@@ -180,6 +178,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NV50_COMPUTE						0x000050c0
 #define NVA3_COMPUTE						0x000085c0
 #define NVC0_COMPUTE						0x000090c0
+#define NV84_CRYPT						0x000074c1
 #define NV01_SUBCHAN__SIZE					0x00002000
 #define NV01_SUBCHAN						0x00000000
 
@@ -194,9 +193,9 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define NV84_SUBCHAN_QUERY_GET					0x0000001c
 
-#define NV84_SUBCHAN_UNK20					0x00000020
+#define NV84_SUBCHAN_QUERY_INTR					0x00000020
 
-#define NV84_SUBCHAN_UNK24					0x00000024
+#define NV84_SUBCHAN_WRCACHE_FLUSH				0x00000024
 
 #define NV10_SUBCHAN_REF_CNT					0x00000050
 
@@ -209,7 +208,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #define NV11_SUBCHAN_SEMAPHORE_RELEASE				0x0000006c
 
-#define NV50_SUBCHAN_UNK80					0x00000080
+#define NV40_SUBCHAN_YIELD					0x00000080
 
 #define NV01_GRAPH						0x00000000
 
@@ -226,6 +225,44 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NVA3_GRAPH_UNK0124					0x00000124
 
 #define NV40_GRAPH_PM_TRIGGER					0x00000140
+
+#define NVC0_SUBCHAN__SIZE					0x00008000
+#define NVC0_SUBCHAN						0x00000000
+
+#define NVC0_SUBCHAN_OBJECT					0x00000000
+
+
+#define NVC0_SUBCHAN_QUERY_ADDRESS_HIGH				0x00000010
+
+#define NVC0_SUBCHAN_QUERY_ADDRESS_LOW				0x00000014
+
+#define NVC0_SUBCHAN_QUERY_SEQUENCE				0x00000018
+
+#define NVC0_SUBCHAN_QUERY_GET					0x0000001c
+
+#define NVC0_SUBCHAN_REF_CNT					0x00000050
+
+#define NVC0_GRAPH						0x00000000
+
+#define NVC0_GRAPH_NOP						0x00000100
+
+#define NVC0_GRAPH_NOTIFY_ADDRESS_HIGH				0x00000104
+
+#define NVC0_GRAPH_NOTIFY_ADDRESS_LOW				0x00000108
+
+#define NVC0_GRAPH_NOTIFY					0x0000010c
+#define NVC0_GRAPH_NOTIFY_WRITE					0x00000000
+#define NVC0_GRAPH_NOTIFY_WRITE_AND_AWAKEN			0x00000001
+
+#define NVC0_GRAPH_SERIALIZE					0x00000110
+
+#define NVC0_GRAPH_MACRO_UPLOAD_POS				0x00000114
+
+#define NVC0_GRAPH_MACRO_UPLOAD_DATA				0x00000118
+
+#define NVC0_GRAPH_MACRO_ID					0x0000011c
+
+#define NVC0_GRAPH_MACRO_POS					0x00000120
 
 
 #endif /* NV_OBJECT_XML */

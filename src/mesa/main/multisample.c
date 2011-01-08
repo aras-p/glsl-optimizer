@@ -27,6 +27,7 @@
 #include "main/context.h"
 #include "main/macros.h"
 #include "main/multisample.h"
+#include "main/mtypes.h"
 
 
 /**

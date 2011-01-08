@@ -232,6 +232,12 @@ brw_prepare_query_begin(struct brw_context *brw)
       brw->query.bo = NULL;
 
       brw->query.bo = drm_intel_bo_alloc(intel->bufmgr, "query", 4096, 1);
+
+      /* clear target buffer */
+      drm_intel_bo_map(brw->query.bo, GL_TRUE);
+      memset((char *)brw->query.bo->virtual, 0, 4096);
+      drm_intel_bo_unmap(brw->query.bo);
+
       brw->query.index = 0;
    }
 

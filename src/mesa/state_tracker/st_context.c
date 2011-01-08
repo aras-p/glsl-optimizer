@@ -207,12 +207,6 @@ static void st_destroy_context_priv( struct st_context *st )
       pipe_sampler_view_reference(&st->state.sampler_views[i], NULL);
    }
 
-   for (i = 0; i < Elements(st->state.constants); i++) {
-      if (st->state.constants[i]) {
-         pipe_resource_reference(&st->state.constants[i], NULL);
-      }
-   }
-
    if (st->default_texture) {
       st->ctx->Driver.DeleteTexture(st->ctx, st->default_texture);
       st->default_texture = NULL;
@@ -245,7 +239,6 @@ void st_destroy_context( struct st_context *st )
 
    for (i = 0; i < PIPE_SHADER_TYPES; i++) {
       pipe->set_constant_buffer(pipe, i, 0, NULL);
-      pipe_resource_reference(&st->state.constants[i], NULL);
    }
 
    _mesa_delete_program_cache(st->ctx, st->pixel_xfer.cache);

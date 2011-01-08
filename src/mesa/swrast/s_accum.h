@@ -27,7 +27,8 @@
 #define S_ACCUM_H
 
 
-#include "main/mtypes.h"
+struct gl_context;
+struct gl_renderbuffer;
 
 
 extern void

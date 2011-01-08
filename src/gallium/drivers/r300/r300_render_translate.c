@@ -31,7 +31,10 @@
 #include "translate/translate.h"
 #include "util/u_index_modify.h"
 
-void r300_begin_vertex_translate(struct r300_context *r300)
+/* XXX Optimization: use min_index and translate only that range. */
+/* XXX Use the uploader. */
+void r300_begin_vertex_translate(struct r300_context *r300,
+                                 int min_index, int max_index)
 {
     struct pipe_context *pipe = &r300->context;
     struct translate_key key = {0};
@@ -44,6 +47,7 @@ void r300_begin_vertex_translate(struct r300_context *r300)
     struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {0}, *out_transfer;
     struct pipe_resource *out_buffer;
     unsigned i, num_verts;
+    unsigned slot;
 
     /* Initialize the translate key, i.e. the recipe how vertices should be
      * translated. */
@@ -108,12 +112,12 @@ void r300_begin_vertex_translate(struct r300_context *r300)
             vb_map[i] = pipe_buffer_map(pipe, vb->buffer,
                                         PIPE_TRANSFER_READ, &vb_transfer[i]);
 
-            tr->set_buffer(tr, i, vb_map[i], vb->stride, vb->max_index);
+            tr->set_buffer(tr, i, vb_map[i], vb->stride, max_index);
         }
     }
 
     /* Create and map the output buffer. */
-    num_verts = r300->vertex_buffer_max_index + 1;
+    num_verts = max_index + 1;
 
     out_buffer = pipe_buffer_create(&r300->screen->screen,
                                     PIPE_BIND_VERTEX_BUFFER,
@@ -135,19 +139,23 @@ void r300_begin_vertex_translate(struct r300_context *r300)
     pipe_buffer_unmap(pipe, out_transfer);
 
     /* Setup the new vertex buffer in the first free slot. */
+    slot = ~0;
     for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
         struct pipe_vertex_buffer *vb = &r300->vertex_buffer[i];
 
         if (!vb->buffer) {
-            pipe_resource_reference(&vb->buffer, out_buffer);
+            pipe_resource_reference(&r300->valid_vertex_buffer[i], out_buffer);
             vb->buffer_offset = 0;
-            vb->max_index = num_verts - 1;
             vb->stride = key.output_stride;
-            r300->tran.vb_slot = i;
+            slot = i;
+            /* XXX probably need to preserve the real count for u_blitter_save_*. */
+            r300->vertex_buffer_count = MAX2(r300->vertex_buffer_count, i+1);
             r300->validate_buffers = TRUE;
             break;
         }
     }
+    /* XXX This may fail. */
+    assert(slot != ~0);
 
     /* Save and replace vertex elements. */
     {
@@ -161,7 +169,7 @@ void r300_begin_vertex_translate(struct r300_context *r300)
                 new_velems[i].instance_divisor = ve->velem[i].instance_divisor;
                 new_velems[i].src_format = te->output_format;
                 new_velems[i].src_offset = te->output_offset;
-                new_velems[i].vertex_buffer_index = r300->tran.vb_slot;
+                new_velems[i].vertex_buffer_index = slot;
             } else {
                 memcpy(&new_velems[i], &ve->velem[i],
                        sizeof(struct pipe_vertex_element));
@@ -183,12 +191,9 @@ void r300_end_vertex_translate(struct r300_context *r300)
     /* Restore vertex elements. */
     pipe->bind_vertex_elements_state(pipe, r300->tran.saved_velems);
     pipe->delete_vertex_elements_state(pipe, r300->tran.new_velems);
-
-    /* Delete the now-unused VBO. */
-    pipe_resource_reference(&r300->vertex_buffer[r300->tran.vb_slot].buffer,
-                            NULL);
 }
 
+/* XXX Use the uploader. */
 void r300_translate_index_buffer(struct r300_context *r300,
                                  struct pipe_resource **index_buffer,
                                  unsigned *index_size, unsigned index_offset,

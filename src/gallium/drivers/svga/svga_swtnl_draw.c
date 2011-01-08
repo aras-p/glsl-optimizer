@@ -51,6 +51,9 @@ svga_swtnl_draw_vbo(struct svga_context *svga,
    assert(svga->state.sw.need_swtnl);
    assert(draw);
 
+   /* Make sure that the need_swtnl flag does not go away */
+   svga->state.sw.in_swtnl_draw = TRUE;
+
    ret = svga_update_state(svga, SVGA_STATE_SWTNL_DRAW);
    if (ret) {
       svga_context_flush(svga, NULL);
@@ -118,6 +121,9 @@ svga_swtnl_draw_vbo(struct svga_context *svga,
    if (svga->curr.cb[PIPE_SHADER_VERTEX]) {
       pipe_buffer_unmap(&svga->pipe, cb_transfer);
    }
+
+   /* Now safe to remove the need_swtnl flag in any update_state call */
+   svga->state.sw.in_swtnl_draw = FALSE;
 
    return ret;
 }

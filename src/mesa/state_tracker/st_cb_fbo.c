@@ -61,7 +61,8 @@
  * during window resize.
  */
 static GLboolean
-st_renderbuffer_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *rb,
+st_renderbuffer_alloc_storage(struct gl_context * ctx,
+                              struct gl_renderbuffer *rb,
                               GLenum internalFormat,
                               GLuint width, GLuint height)
 {
@@ -75,7 +76,8 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx, struct gl_renderbuffer *r
    if (strb->format != PIPE_FORMAT_NONE)
       format = strb->format;
    else
-      format = st_choose_renderbuffer_format(screen, internalFormat, rb->NumSamples);
+      format = st_choose_renderbuffer_format(screen, internalFormat,
+                                             rb->NumSamples);
       
    /* init renderbuffer fields */
    strb->Base.Width  = width;

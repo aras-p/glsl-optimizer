@@ -1,6 +1,7 @@
 
 #include "pipe/p_compiler.h"
 #include "pipe/p_context.h"
+#include "pipe/p_shader_tokens.h"
 #include "pipe/p_state.h"
 #include "tgsi/tgsi_text.h"
 #include "util/u_debug.h"

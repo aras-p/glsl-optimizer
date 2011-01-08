@@ -36,6 +36,7 @@
 #include "colormac.h"
 #include "enums.h"
 #include "macros.h"
+#include "mtypes.h"
 #include "state.h"
 
 

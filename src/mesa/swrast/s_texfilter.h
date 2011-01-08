@@ -27,8 +27,10 @@
 #define S_TEXFILTER_H
 
 
-#include "main/mtypes.h"
 #include "s_context.h"
+
+struct gl_context;
+struct gl_texture_object;
 
 
 extern texture_sample_func

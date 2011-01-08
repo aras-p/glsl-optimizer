@@ -40,6 +40,8 @@
 #include "framebuffer.h"
 #include "hash.h"
 #include "macros.h"
+#include "mfeatures.h"
+#include "mtypes.h"
 #include "renderbuffer.h"
 #include "state.h"
 #include "teximage.h"
@@ -402,8 +404,8 @@ fbo_incomplete(const char *msg, int index)
 /**
  * Is the given base format a legal format for a color renderbuffer?
  */
-static GLboolean
-is_legal_color_format(const struct gl_context *ctx, GLenum baseFormat)
+GLboolean
+_mesa_is_legal_color_format(const struct gl_context *ctx, GLenum baseFormat)
 {
    switch (baseFormat) {
    case GL_RGB:
@@ -488,7 +490,7 @@ test_attachment_completeness(const struct gl_context *ctx, GLenum format,
       baseFormat = _mesa_get_format_base_format(texImage->TexFormat);
 
       if (format == GL_COLOR) {
-         if (!is_legal_color_format(ctx, baseFormat)) {
+         if (!_mesa_is_legal_color_format(ctx, baseFormat)) {
             att_incomplete("bad format");
             att->Complete = GL_FALSE;
             return;
@@ -542,8 +544,7 @@ test_attachment_completeness(const struct gl_context *ctx, GLenum format,
          return;
       }
       if (format == GL_COLOR) {
-         if (baseFormat != GL_RGB &&
-             baseFormat != GL_RGBA) {
+         if (!_mesa_is_legal_color_format(ctx, baseFormat)) {
             att_incomplete("bad renderbuffer color format");
             att->Complete = GL_FALSE;
             return;
@@ -669,7 +670,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
          f = texImg->_BaseFormat;
          mesaFormat = texImg->TexFormat;
          numImages++;
-         if (!is_legal_color_format(ctx, f) &&
+         if (!_mesa_is_legal_color_format(ctx, f) &&
              !is_legal_depth_format(ctx, f)) {
             fb->_Status = GL_FRAMEBUFFER_INCOMPLETE_FORMATS_EXT;
             fbo_incomplete("texture attachment incomplete", -1);
@@ -793,7 +794,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
       fb->Height = minHeight;
 
       /* finally, update the visual info for the framebuffer */
-      _mesa_update_framebuffer_visual(fb);
+      _mesa_update_framebuffer_visual(ctx, fb);
    }
 }
 
@@ -1172,8 +1173,17 @@ get_component_bits(GLenum pname, GLenum baseFormat, gl_format format)
    switch (pname) {
    case GL_RENDERBUFFER_RED_SIZE_EXT:
    case GL_FRAMEBUFFER_ATTACHMENT_RED_SIZE:
+      if (baseFormat == GL_RGB || baseFormat == GL_RGBA ||
+	  baseFormat == GL_RG || baseFormat == GL_RED)
+         return _mesa_get_format_bits(format, pname);
+      else
+         return 0;
    case GL_RENDERBUFFER_GREEN_SIZE_EXT:
    case GL_FRAMEBUFFER_ATTACHMENT_GREEN_SIZE:
+      if (baseFormat == GL_RGB || baseFormat == GL_RGBA || baseFormat == GL_RG)
+         return _mesa_get_format_bits(format, pname);
+      else
+         return 0;
    case GL_RENDERBUFFER_BLUE_SIZE_EXT:
    case GL_FRAMEBUFFER_ATTACHMENT_BLUE_SIZE:
       if (baseFormat == GL_RGB || baseFormat == GL_RGBA)
@@ -1182,7 +1192,8 @@ get_component_bits(GLenum pname, GLenum baseFormat, gl_format format)
          return 0;
    case GL_RENDERBUFFER_ALPHA_SIZE_EXT:
    case GL_FRAMEBUFFER_ATTACHMENT_ALPHA_SIZE:
-      if (baseFormat == GL_RGBA || baseFormat == GL_ALPHA)
+      if (baseFormat == GL_RGBA || baseFormat == GL_ALPHA ||
+	  baseFormat == GL_LUMINANCE_ALPHA)
          return _mesa_get_format_bits(format, pname);
       else
          return 0;
@@ -1940,7 +1951,7 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
    /* Some subsequent GL commands may depend on the framebuffer's visual
     * after the binding is updated.  Update visual info now.
     */
-   _mesa_update_framebuffer_visual(fb);
+   _mesa_update_framebuffer_visual(ctx, fb);
 }
 
 

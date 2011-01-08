@@ -32,15 +32,28 @@
 #ifndef U_UPLOAD_MGR_H
 #define U_UPLOAD_MGR_H
 
+#include "pipe/p_compiler.h"
+
 struct pipe_context;
 struct pipe_resource;
 
 
+/**
+ * Create the upload manager.
+ *
+ * \param pipe          Pipe driver.
+ * \param default_size  Minimum size of the upload buffer, in bytes.
+ * \param alignment     Alignment of each suballocation in the upload buffer.
+ * \param bind          Bitmask of PIPE_BIND_* flags.
+ */
 struct u_upload_mgr *u_upload_create( struct pipe_context *pipe,
                                       unsigned default_size,
                                       unsigned alignment,
-                                      unsigned usage );
+                                      unsigned bind );
 
+/**
+ * Destroy the upload manager.
+ */
 void u_upload_destroy( struct u_upload_mgr *upload );
 
 /* Unmap and release old buffer.
@@ -53,20 +66,55 @@ void u_upload_destroy( struct u_upload_mgr *upload );
  */
 void u_upload_flush( struct u_upload_mgr *upload );
 
+/**
+ * Sub-allocate new memory from the upload buffer.
+ *
+ * \param upload           Upload manager
+ * \param min_out_offset   Minimum offset that should be returned in out_offset.
+ * \param size             Size of the allocation.
+ * \param out_offset       Pointer to where the new buffer offset will be returned.
+ * \param outbuf           Pointer to where the upload buffer will be returned.
+ * \param flushed          Whether the upload buffer was flushed.
+ * \param ptr              Pointer to the allocated memory that is returned.
+ */
+enum pipe_error u_upload_alloc( struct u_upload_mgr *upload,
+                                unsigned min_out_offset,
+                                unsigned size,
+                                unsigned *out_offset,
+                                struct pipe_resource **outbuf,
+                                boolean *flushed,
+                                void **ptr );
 
+
+/**
+ * Allocate and write data to the upload buffer.
+ *
+ * Same as u_upload_alloc, but in addition to that, it copies "data"
+ * to the pointer returned from u_upload_alloc.
+ */
 enum pipe_error u_upload_data( struct u_upload_mgr *upload,
+                               unsigned min_out_offset,
                                unsigned size,
                                const void *data,
                                unsigned *out_offset,
-                               struct pipe_resource **outbuf );
+                               struct pipe_resource **outbuf,
+                               boolean *flushed );
 
 
+/**
+ * Allocate and copy an input buffer to the upload buffer.
+ *
+ * Same as u_upload_data, except that the input data comes from a buffer
+ * instead of a user pointer.
+ */
 enum pipe_error u_upload_buffer( struct u_upload_mgr *upload,
+                                 unsigned min_out_offset,
                                  unsigned offset,
                                  unsigned size,
                                  struct pipe_resource *inbuf,
                                  unsigned *out_offset,
-                                 struct pipe_resource **outbuf );
+                                 struct pipe_resource **outbuf,
+                                 boolean *flushed );
 
 
 

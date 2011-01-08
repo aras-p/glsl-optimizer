@@ -1516,6 +1516,11 @@ GL_ARB_fragment_coord_conventions extension.
 DirectX 9 uses INTEGER.
 DirectX 10 uses HALF_INTEGER.
 
+FS_COLOR0_WRITES_ALL_CBUFS
+""""""""""""""""""""""""""
+Specifies that writes to the fragment shader color 0 are replicated to all
+bound cbufs. This facilitates OpenGL's fragColor output vs fragData[0] where
+fragData is directed to a single color buffer, but fragColor is broadcast.
 
 
 Texture Sampling and Texture Formats

@@ -198,11 +198,22 @@ do {						\
    ((((B) & 0xf8) >> 1) | (((G) & 0xc0) >> 6) | (((G) & 0x38) << 10) | (((R) & 0xf8) << 5) |	\
     ((A) ? 0x80 : 0))
 
+#define PACK_COLOR_2101010_UB( A, B, G, R )					\
+   (((B) << 22) | ((G) << 12) | ((R) << 2) |	\
+    (((A) & 0xc0) << 24))
+
+#define PACK_COLOR_2101010_US( A, B, G, R )					\
+   ((((B) >> 6) << 20) | (((G) >> 6) << 10) | ((R) >> 6) |	\
+    (((A) >> 14) << 30))
+
 #define PACK_COLOR_4444( R, G, B, A )					\
    ((((R) & 0xf0) << 8) | (((G) & 0xf0) << 4) | ((B) & 0xf0) | ((A) >> 4))
 
 #define PACK_COLOR_4444_REV( R, G, B, A )				\
    ((((B) & 0xf0) << 8) | (((A) & 0xf0) << 4) | ((R) & 0xf0) | ((G) >> 4))
+
+#define PACK_COLOR_44( L, A )						\
+   (((L) & 0xf0) | (((A) & 0xf0) >> 4))
 
 #define PACK_COLOR_88( L, A )						\
    (((L) << 8) | (A))

@@ -60,7 +60,7 @@ void
 _mesa_ast_to_hir(exec_list *instructions, struct _mesa_glsl_parse_state *state)
 {
    _mesa_glsl_initialize_variables(instructions, state);
-   _mesa_glsl_initialize_functions(instructions, state);
+   _mesa_glsl_initialize_functions(state);
 
    state->symbols->language_version = state->language_version;
 
@@ -1564,18 +1564,38 @@ ast_expression::hir(exec_list *instructions,
 	 }
       }
 
-      /* From section 4.1.7 of the GLSL 1.30 spec:
+      /* From page 23 (29 of the PDF) of the GLSL 1.30 spec:
+       *
        *    "Samplers aggregated into arrays within a shader (using square
        *    brackets [ ]) can only be indexed with integral constant
        *    expressions [...]."
+       *
+       * This restriction was added in GLSL 1.30.  Shaders using earlier version
+       * of the language should not be rejected by the compiler front-end for
+       * using this construct.  This allows useful things such as using a loop
+       * counter as the index to an array of samplers.  If the loop in unrolled,
+       * the code should compile correctly.  Instead, emit a warning.
        */
       if (array->type->is_array() &&
           array->type->element_type()->is_sampler() &&
           const_index == NULL) {
 
-         _mesa_glsl_error(&loc, state, "sampler arrays can only be indexed "
-                          "with constant expressions");
-         error_emitted = true;
+	 if (state->language_version == 100) {
+	    _mesa_glsl_warning(&loc, state,
+			       "sampler arrays indexed with non-constant "
+			       "expressions is optional in GLSL ES 1.00");
+	 } else if (state->language_version < 130) {
+	    _mesa_glsl_warning(&loc, state,
+			       "sampler arrays indexed with non-constant "
+			       "expressions is forbidden in GLSL 1.30 and "
+			       "later");
+	 } else {
+	    _mesa_glsl_error(&loc, state,
+			     "sampler arrays indexed with non-constant "
+			     "expressions is forbidden in GLSL 1.30 and "
+			     "later");
+	    error_emitted = true;
+	 }
       }
 
       if (error_emitted)
@@ -1831,6 +1851,23 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       var->mode = ir_var_out;
    else if (qual->flags.q.uniform)
       var->mode = ir_var_uniform;
+
+   if (state->all_invariant && (state->current_function == NULL)) {
+      switch (state->target) {
+      case vertex_shader:
+	 if (var->mode == ir_var_out)
+	    var->invariant = true;
+	 break;
+      case geometry_shader:
+	 if ((var->mode == ir_var_in) || (var->mode == ir_var_out))
+	    var->invariant = true;
+	 break;
+      case fragment_shader:
+	 if (var->mode == ir_var_in)
+	    var->invariant = true;
+	 break;
+      }
+   }
 
    if (qual->flags.q.flat)
       var->interpolation = ir_var_flat;
@@ -2158,6 +2195,25 @@ ast_declarator_list::hir(exec_list *instructions,
 	 }
       }
 
+      /* Integer vertex outputs must be qualified with 'flat'.
+       *
+       * From section 4.3.6 of the GLSL 1.30 spec:
+       *    "If a vertex output is a signed or unsigned integer or integer
+       *    vector, then it must be qualified with the interpolation qualifier
+       *    flat."
+       */
+      if (state->language_version >= 130
+          && state->target == vertex_shader
+          && state->current_function == NULL
+          && var->type->is_integer()
+          && var->mode == ir_var_out
+          && var->interpolation != ir_var_flat) {
+
+         _mesa_glsl_error(&loc, state, "If a vertex output is an integer, "
+                          "then it must be qualified with 'flat'");
+      }
+
+
       /* Process the initializer and add its instructions to a temporary
        * list.  This list will be added to the instruction stream (below) after
        * the declaration is added.  This is done because in some cases (such as
@@ -2344,6 +2400,27 @@ ast_declarator_list::hir(exec_list *instructions,
 	     */
 	    earlier->origin_upper_left = var->origin_upper_left;
 	    earlier->pixel_center_integer = var->pixel_center_integer;
+
+	 /* According to section 4.3.7 of the GLSL 1.30 spec,
+	  * the following built-in varaibles can be redeclared with an
+	  * interpolation qualifier:
+	  *    * gl_FrontColor
+	  *    * gl_BackColor
+	  *    * gl_FrontSecondaryColor
+	  *    * gl_BackSecondaryColor
+	  *    * gl_Color
+	  *    * gl_SecondaryColor
+	  */
+	 } else if (state->language_version >= 130
+	            && (strcmp(var->name, "gl_FrontColor") == 0
+                        || strcmp(var->name, "gl_BackColor") == 0
+                        || strcmp(var->name, "gl_FrontSecondaryColor") == 0
+                        || strcmp(var->name, "gl_BackSecondaryColor") == 0
+                        || strcmp(var->name, "gl_Color") == 0
+                        || strcmp(var->name, "gl_SecondaryColor") == 0)
+	            && earlier->type == var->type
+	            && earlier->mode == var->mode) {
+	    earlier->interpolation = var->interpolation;
 	 } else {
 	    YYLTYPE loc = this->get_location();
 	    _mesa_glsl_error(&loc, state, "`%s' redeclared", decl->identifier);

@@ -271,8 +271,11 @@ intel_batchbuffer_emit_mi_flush(struct intel_batchbuffer *batch)
 
    if (intel->gen >= 6) {
       if (intel->batch->is_blit) {
-	 BEGIN_BATCH_BLT(1);
-	 OUT_BATCH(MI_FLUSH);
+	 BEGIN_BATCH_BLT(4);
+	 OUT_BATCH(MI_FLUSH_DW);
+	 OUT_BATCH(0);
+	 OUT_BATCH(0);
+	 OUT_BATCH(0);
 	 ADVANCE_BATCH();
       } else {
 	 BEGIN_BATCH(8);

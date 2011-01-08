@@ -57,12 +57,14 @@ upload_user_buffers( struct svga_context *svga )
          struct svga_buffer *buffer = svga_buffer(svga->curr.vb[i].buffer);
 
          if (!buffer->uploaded.buffer) {
+            boolean flushed;
             ret = u_upload_buffer( svga->upload_vb,
-                                   0,
+                                   0, 0,
                                    buffer->b.b.width0,
                                    &buffer->b.b,
                                    &buffer->uploaded.offset,
-                                   &buffer->uploaded.buffer );
+                                   &buffer->uploaded.buffer,
+                                   &flushed);
             if (ret)
                return ret;
 

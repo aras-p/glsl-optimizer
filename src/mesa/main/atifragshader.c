@@ -26,6 +26,7 @@
 #include "main/hash.h"
 #include "main/imports.h"
 #include "main/macros.h"
+#include "main/mfeatures.h"
 #include "main/enums.h"
 #include "main/mtypes.h"
 #include "main/dispatch.h"
@@ -316,6 +317,7 @@ _mesa_DeleteFragmentShaderATI(GLuint id)
       if (prog) {
 	 prog->RefCount--;
 	 if (prog->RefCount <= 0) {
+	    assert(prog != &DummyShader);
 	    free(prog);
 	 }
       }

@@ -33,6 +33,7 @@
 #include "colormac.h"
 #include "context.h"
 #include "macros.h"
+#include "mfeatures.h"
 #include "pixel.h"
 #include "mtypes.h"
 #include "main/dispatch.h"

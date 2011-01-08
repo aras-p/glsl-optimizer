@@ -339,30 +339,31 @@ extern void nvfx_init_vertprog_functions(struct nvfx_context *nvfx);
 /* nvfx_push.c */
 extern void nvfx_push_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info);
 
-/* must WAIT_RING(chan, ncomp + 1) or equivalent beforehand! */
-static inline void nvfx_emit_vtx_attr(struct nouveau_channel* chan, unsigned attrib, const float* v, unsigned ncomp)
+static inline void nvfx_emit_vtx_attr(struct nouveau_channel* chan,
+		struct nouveau_grobj *eng3d, unsigned attrib, const float* v,
+		unsigned ncomp)
 {
 	switch (ncomp) {
 	case 4:
-		OUT_RING(chan, RING_3D(NV30_3D_VTX_ATTR_4F_X(attrib), 4));
+		BEGIN_RING(chan, eng3d, NV30_3D_VTX_ATTR_4F_X(attrib), 4);
 		OUT_RING(chan, fui(v[0]));
 		OUT_RING(chan, fui(v[1]));
 		OUT_RING(chan,  fui(v[2]));
 		OUT_RING(chan,  fui(v[3]));
 		break;
 	case 3:
-		OUT_RING(chan, RING_3D(NV30_3D_VTX_ATTR_3F_X(attrib), 3));
+		BEGIN_RING(chan, eng3d, NV30_3D_VTX_ATTR_3F_X(attrib), 3);
 		OUT_RING(chan,  fui(v[0]));
 		OUT_RING(chan,  fui(v[1]));
 		OUT_RING(chan,  fui(v[2]));
 		break;
 	case 2:
-		OUT_RING(chan, RING_3D(NV30_3D_VTX_ATTR_2F_X(attrib), 2));
+		BEGIN_RING(chan, eng3d, NV30_3D_VTX_ATTR_2F_X(attrib), 2);
 		OUT_RING(chan,  fui(v[0]));
 		OUT_RING(chan,  fui(v[1]));
 		break;
 	case 1:
-		OUT_RING(chan, RING_3D(NV30_3D_VTX_ATTR_1F(attrib), 1));
+		BEGIN_RING(chan, eng3d, NV30_3D_VTX_ATTR_1F(attrib), 1);
 		OUT_RING(chan,  fui(v[0]));
 		break;
 	}

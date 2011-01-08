@@ -237,7 +237,7 @@ upload_sf_state(struct brw_context *brw)
    }
 
    BEGIN_BATCH(20);
-   OUT_BATCH(CMD_3D_SF_STATE << 16 | (20 - 2));
+   OUT_BATCH(_3DSTATE_SF << 16 | (20 - 2));
    OUT_BATCH(dw1);
    OUT_BATCH(dw2);
    OUT_BATCH(dw3);

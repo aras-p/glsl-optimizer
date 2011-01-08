@@ -30,6 +30,7 @@
 
 
 #include "imports.h"
+#include "mfeatures.h"
 #include "mtypes.h"
 #include "hash.h"
 #if FEATURE_ATI_fragment_shader

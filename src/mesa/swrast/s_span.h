@@ -28,7 +28,12 @@
 #define S_SPAN_H
 
 
-#include "swrast.h"
+#include "main/config.h"
+#include "main/glheader.h"
+#include "main/mtypes.h"
+
+struct gl_context;
+struct gl_renderbuffer;
 
 
 /**

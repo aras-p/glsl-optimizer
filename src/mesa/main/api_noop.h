@@ -25,6 +25,7 @@
 #ifndef _API_NOOP_H
 #define _API_NOOP_H
 
+#include "main/mfeatures.h"
 #include "main/mtypes.h"
 
 #if FEATURE_beginend

@@ -30,6 +30,7 @@
 #include "context.h"
 #include "light.h"
 #include "macros.h"
+#include "mfeatures.h"
 #include "dlist.h"
 #include "eval.h"
 #include "main/dispatch.h"

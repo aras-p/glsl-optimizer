@@ -36,6 +36,7 @@
 #include "tgsi_parse.h"
 #include "tgsi_sanity.h"
 #include "tgsi_util.h"
+#include "tgsi_dump.h"
 
 static boolean is_alpha_underscore( const char *cur )
 {
@@ -1258,42 +1259,6 @@ static boolean parse_immediate( struct translate_ctx *ctx )
    return TRUE;
 }
 
-static const char *property_names[] =
-{
-   "GS_INPUT_PRIMITIVE",
-   "GS_OUTPUT_PRIMITIVE",
-   "GS_MAX_OUTPUT_VERTICES",
-   "FS_COORD_ORIGIN",
-   "FS_COORD_PIXEL_CENTER"
-};
-
-static const char *primitive_names[] =
-{
-   "POINTS",
-   "LINES",
-   "LINE_LOOP",
-   "LINE_STRIP",
-   "TRIANGLES",
-   "TRIANGLE_STRIP",
-   "TRIANGLE_FAN",
-   "QUADS",
-   "QUAD_STRIP",
-   "POLYGON"
-};
-
-static const char *fs_coord_origin_names[] =
-{
-   "UPPER_LEFT",
-   "LOWER_LEFT"
-};
-
-static const char *fs_coord_pixel_center_names[] =
-{
-   "HALF_INTEGER",
-   "INTEGER"
-};
-
-
 static boolean
 parse_primitive( const char **pcur, uint *primitive )
 {
@@ -1302,7 +1267,7 @@ parse_primitive( const char **pcur, uint *primitive )
    for (i = 0; i < PIPE_PRIM_MAX; i++) {
       const char *cur = *pcur;
 
-      if (str_match_no_case( &cur, primitive_names[i])) {
+      if (str_match_no_case( &cur, tgsi_primitive_names[i])) {
          *primitive = i;
          *pcur = cur;
          return TRUE;
@@ -1316,10 +1281,10 @@ parse_fs_coord_origin( const char **pcur, uint *fs_coord_origin )
 {
    uint i;
 
-   for (i = 0; i < sizeof(fs_coord_origin_names) / sizeof(fs_coord_origin_names[0]); i++) {
+   for (i = 0; i < Elements(tgsi_fs_coord_origin_names); i++) {
       const char *cur = *pcur;
 
-      if (str_match_no_case( &cur, fs_coord_origin_names[i])) {
+      if (str_match_no_case( &cur, tgsi_fs_coord_origin_names[i])) {
          *fs_coord_origin = i;
          *pcur = cur;
          return TRUE;
@@ -1333,10 +1298,10 @@ parse_fs_coord_pixel_center( const char **pcur, uint *fs_coord_pixel_center )
 {
    uint i;
 
-   for (i = 0; i < sizeof(fs_coord_pixel_center_names) / sizeof(fs_coord_pixel_center_names[0]); i++) {
+   for (i = 0; i < Elements(tgsi_fs_coord_pixel_center_names); i++) {
       const char *cur = *pcur;
 
-      if (str_match_no_case( &cur, fs_coord_pixel_center_names[i])) {
+      if (str_match_no_case( &cur, tgsi_fs_coord_pixel_center_names[i])) {
          *fs_coord_pixel_center = i;
          *pcur = cur;
          return TRUE;
@@ -1364,7 +1329,7 @@ static boolean parse_property( struct translate_ctx *ctx )
    }
    for (property_name = 0; property_name < TGSI_PROPERTY_COUNT;
         ++property_name) {
-      if (streq_nocase_uprcase(property_names[property_name], id)) {
+      if (streq_nocase_uprcase(tgsi_property_names[property_name], id)) {
          break;
       }
    }
@@ -1398,6 +1363,7 @@ static boolean parse_property( struct translate_ctx *ctx )
          return FALSE;
       }
       break;
+   case TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS:
    default:
       if (!parse_uint(&ctx->cur, &values[0] )) {
          report_error( ctx, "Expected unsigned integer as property!" );

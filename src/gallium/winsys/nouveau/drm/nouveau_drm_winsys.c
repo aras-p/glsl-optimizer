@@ -50,6 +50,9 @@ nouveau_drm_screen_create(int fd)
 	case 0xa0:
 		init = nv50_screen_create;
 		break;
+	case 0xc0:
+		init = nvc0_screen_create;
+		break;
 	default:
 		debug_printf("%s: unknown chipset nv%02x\n", __func__,
 			     dev->chipset);

@@ -149,6 +149,7 @@ struct intel_context
       void (*assert_not_dirty) (struct intel_context *intel);
 
       void (*debug_batch)(struct intel_context *intel);
+      bool (*render_target_supported)(gl_format format);
    } vtbl;
 
    struct dri_metaops meta;

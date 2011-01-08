@@ -440,9 +440,6 @@ struct r300_translate_context {
     /* Translate cache for incompatible vertex offset/stride/format fallback. */
     struct translate_cache *translate_cache;
 
-    /* The vertex buffer slot containing the translated buffer. */
-    unsigned vb_slot;
-
     /* Saved and new vertex element state. */
     void *saved_velems, *new_velems;
 };
@@ -459,6 +456,7 @@ struct r300_context {
     struct r300_screen *screen;
 
     /* Draw module. Used mostly for SW TCL. */
+    struct gallivm_state *gallivm;
     struct draw_context* draw;
     /* Vertex buffer for SW TCL. */
     struct pipe_resource* vbo;
@@ -557,12 +555,15 @@ struct r300_context {
     struct r300_atom *first_dirty, *last_dirty;
 
     /* Vertex buffers for Gallium. */
+    /* May contain user buffers. */
     struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
+    /* Contains only non-user buffers. */
+    struct pipe_resource *valid_vertex_buffer[PIPE_MAX_ATTRIBS];
     int vertex_buffer_count;
     int vertex_buffer_max_index;
+    boolean any_user_vbs;
     /* Vertex elements for Gallium. */
     struct r300_vertex_element_state *velems;
-    bool any_user_vbs;
 
     struct pipe_index_buffer index_buffer;
 
@@ -612,12 +613,15 @@ struct r300_context {
     int vs_const_base;
 
     /* AOS (PACKET3_3D_LOAD_VBPNTR) command buffer for the case offset=0. */
-    uint32_t aos_cb[(16 * 3 + 1) / 2];
-    boolean aos_dirty;
+    uint32_t vertex_arrays_cb[(16 * 3 + 1) / 2];
+    boolean vertex_arrays_dirty;
 
     /* Whether any buffer (FB, textures, VBOs) has been set, but buffers
      * haven't been validated yet. */
     boolean validate_buffers;
+    /* Whether user buffers have been validated. */
+    boolean upload_vb_validated;
+    boolean upload_ib_validated;
 };
 
 #define foreach_atom(r300, atom) \
@@ -679,7 +683,8 @@ void r300_resume_query(struct r300_context *r300,
 void r300_stop_query(struct r300_context *r300);
 
 /* r300_render_translate.c */
-void r300_begin_vertex_translate(struct r300_context *r300);
+void r300_begin_vertex_translate(struct r300_context *r300,
+                                 int min_index, int max_index);
 void r300_end_vertex_translate(struct r300_context *r300);
 void r300_translate_index_buffer(struct r300_context *r300,
                                  struct pipe_resource **index_buffer,
@@ -697,7 +702,8 @@ void r500_emit_index_bias(struct r300_context *r300, int index_bias);
 enum r300_fb_state_change {
     R300_CHANGED_FB_STATE = 0,
     R300_CHANGED_CBZB_FLAG,
-    R300_CHANGED_ZCLEAR_FLAG
+    R300_CHANGED_ZCLEAR_FLAG,
+    R300_CHANGED_MULTIWRITE
 };
 
 void r300_mark_fb_state_dirty(struct r300_context *r300,

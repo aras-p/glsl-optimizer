@@ -49,6 +49,7 @@ nvfx_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 	struct nvfx_query *q = nvfx_query(pq);
 	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
+	struct nouveau_grobj *eng3d = screen->eng3d;
 	uint64_t tmp;
 
 	assert(!nvfx->query);
@@ -72,10 +73,9 @@ nvfx_query_begin(struct pipe_context *pipe, struct pipe_query *pq)
 
 	nouveau_notifier_reset(nvfx->screen->query, q->object->start);
 
-	WAIT_RING(chan, 4);
-	OUT_RING(chan, RING_3D(NV30_3D_QUERY_RESET, 1));
+	BEGIN_RING(chan, eng3d, NV30_3D_QUERY_RESET, 1);
 	OUT_RING(chan, 1);
-	OUT_RING(chan, RING_3D(NV30_3D_QUERY_ENABLE, 1));
+	BEGIN_RING(chan, eng3d, NV30_3D_QUERY_ENABLE, 1);
 	OUT_RING(chan, 1);
 
 	q->ready = FALSE;
@@ -88,15 +88,15 @@ nvfx_query_end(struct pipe_context *pipe, struct pipe_query *pq)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nouveau_channel *chan = nvfx->screen->base.channel;
+	struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
 	struct nvfx_query *q = nvfx_query(pq);
 
 	assert(nvfx->query == pq);
 
-	WAIT_RING(chan, 4);
-	OUT_RING(chan, RING_3D(NV30_3D_QUERY_GET, 1));
+	BEGIN_RING(chan, eng3d, NV30_3D_QUERY_GET, 1);
 	OUT_RING  (chan, (0x01 << NV30_3D_QUERY_GET_UNK24__SHIFT) |
 		   ((q->object->start * 32) << NV30_3D_QUERY_GET_OFFSET__SHIFT));
-	OUT_RING(chan, RING_3D(NV30_3D_QUERY_ENABLE, 1));
+	BEGIN_RING(chan, eng3d, NV30_3D_QUERY_ENABLE, 1);
 	OUT_RING(chan, 0);
 	FIRE_RING(chan);
 

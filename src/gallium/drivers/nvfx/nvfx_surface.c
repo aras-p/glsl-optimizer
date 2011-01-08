@@ -168,8 +168,8 @@ nvfx_get_blitter(struct pipe_context* pipe, int copy)
 	if(nvfx->query && !nvfx->blitters_in_use)
 	{
 		struct nouveau_channel* chan = nvfx->screen->base.channel;
-		WAIT_RING(chan, 2);
-		OUT_RING(chan, RING_3D(NV30_3D_QUERY_ENABLE, 1));
+		struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
+		BEGIN_RING(chan, eng3d, NV30_3D_QUERY_ENABLE, 1);
 		OUT_RING(chan, 0);
 	}
 
@@ -209,8 +209,8 @@ nvfx_put_blitter(struct pipe_context* pipe, struct blitter_context* blitter)
 	if(nvfx->query && !nvfx->blitters_in_use)
 	{
 		struct nouveau_channel* chan = nvfx->screen->base.channel;
-		WAIT_RING(chan, 2);
-		OUT_RING(chan, RING_3D(NV30_3D_QUERY_ENABLE, 1));
+		struct nouveau_grobj *eng3d = nvfx->screen->eng3d;
+		BEGIN_RING(chan, eng3d, NV30_3D_QUERY_ENABLE, 1);
 		OUT_RING(chan, 1);
 	}
 }

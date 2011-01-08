@@ -288,6 +288,11 @@ struct svga_sw_state
    boolean need_swvfetch;
    boolean need_pipeline;
    boolean need_swtnl;
+
+   /* Flag to make sure that need sw is on while
+    * updating state within a swtnl call.
+    */
+   boolean in_swtnl_draw;
 };
 
 

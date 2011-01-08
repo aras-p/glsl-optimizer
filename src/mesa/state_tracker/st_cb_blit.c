@@ -40,7 +40,6 @@
 #include "st_cb_fbo.h"
 
 #include "util/u_blit.h"
-#include "util/u_inlines.h"
 
 
 void

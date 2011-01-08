@@ -129,6 +129,7 @@ typedef struct _modesettingRec
     /* kms */
     struct kms_driver *kms;
     struct kms_bo *root_bo;
+    uint16_t lut_r[256], lut_g[256], lut_b[256];
 
     /* gallium */
     struct pipe_screen *screen;

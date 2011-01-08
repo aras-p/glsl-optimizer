@@ -177,6 +177,9 @@ static struct radeon *radeon_new(int fd, unsigned device)
 	case CHIP_CYPRESS:
 	case CHIP_HEMLOCK:
 	case CHIP_PALM:
+	case CHIP_BARTS:
+	case CHIP_TURKS:
+	case CHIP_CAICOS:
 		radeon->chip_class = EVERGREEN;
 		/* set default group bytes, overridden by tiling info ioctl */
 		radeon->tiling_info.group_bytes = 512;

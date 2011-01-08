@@ -29,6 +29,8 @@
 #ifndef LP_SCENE_QUEUE
 #define LP_SCENE_QUEUE
 
+#include "pipe/p_compiler.h"
+
 struct lp_scene_queue;
 struct lp_scene;
 

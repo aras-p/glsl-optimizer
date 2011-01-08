@@ -32,7 +32,7 @@
 
 #include "main/glheader.h"
 #include "main/ffvertex_prog.h"
-#include "main/dd.h"
+#include "main/mtypes.h"
 #include "t_vp_build.h"
 
 

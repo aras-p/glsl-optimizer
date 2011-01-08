@@ -36,7 +36,7 @@ upload_sampler_state_pointers(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
 
    BEGIN_BATCH(4);
-   OUT_BATCH(CMD_3D_SAMPLER_STATE_POINTERS << 16 |
+   OUT_BATCH(_3DSTATE_SAMPLER_STATE_POINTERS << 16 |
 	     VS_SAMPLER_STATE_CHANGE |
 	     GS_SAMPLER_STATE_CHANGE |
 	     PS_SAMPLER_STATE_CHANGE |

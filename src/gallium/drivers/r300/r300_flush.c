@@ -70,6 +70,12 @@ static void r300_flush(struct pipe_context* pipe,
         }
 
         r300->validate_buffers = TRUE;
+        r300->upload_vb_validated = FALSE;
+        r300->upload_ib_validated = FALSE;
+    } else {
+        /* Even if hw is not dirty, we should at least reset the CS in case
+         * the space checking failed for the first draw operation. */
+        r300->rws->cs_flush(r300->cs);
     }
 
     /* reset flushed query */

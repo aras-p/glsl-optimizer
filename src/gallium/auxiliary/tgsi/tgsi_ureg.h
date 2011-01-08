@@ -153,6 +153,10 @@ void
 ureg_property_fs_coord_pixel_center(struct ureg_program *ureg,
                             unsigned fs_coord_pixel_center);
 
+void
+ureg_property_fs_color0_writes_all_cbufs(struct ureg_program *ureg,
+                            unsigned fs_color0_writes_all_cbufs);
+
 /***********************************************************************
  * Build shader declarations:
  */

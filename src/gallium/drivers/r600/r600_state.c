@@ -1120,6 +1120,7 @@ static void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_resource *rbuffer = (struct r600_resource*)buffer;
+	uint32_t offset;
 
 	/* Note that the state tracker can unbind constant buffers by
 	 * passing NULL here.
@@ -1127,6 +1128,8 @@ static void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint
 	if (buffer == NULL) {
 		return;
 	}
+
+	r600_upload_const_buffer(rctx, buffer, &offset);
 
 	switch (shader) {
 	case PIPE_SHADER_VERTEX:
@@ -1137,7 +1140,7 @@ static void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint
 					0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(&rctx->vs_const_buffer,
 					R_028980_ALU_CONST_CACHE_VS_0,
-					r600_bo_offset(rbuffer->bo) >> 8, 0xFFFFFFFF, rbuffer->bo);
+					(r600_bo_offset(rbuffer->bo) + offset) >> 8, 0xFFFFFFFF, rbuffer->bo);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->vs_const_buffer);
 		break;
 	case PIPE_SHADER_FRAGMENT:
@@ -1148,7 +1151,7 @@ static void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint
 					0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(&rctx->ps_const_buffer,
 					R_028940_ALU_CONST_CACHE_PS_0,
-					r600_bo_offset(rbuffer->bo) >> 8, 0xFFFFFFFF, rbuffer->bo);
+					(r600_bo_offset(rbuffer->bo) + offset) >> 8, 0xFFFFFFFF, rbuffer->bo);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->ps_const_buffer);
 		break;
 	default:

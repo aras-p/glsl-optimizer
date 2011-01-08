@@ -156,7 +156,7 @@ i915_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    /* Get first image here, since intelObj->firstLevel will get set in
     * the intel_finalize_mipmap_tree() call above.
     */
-   firstImage = tObj->Image[0][intelObj->firstLevel];
+   firstImage = tObj->Image[0][tObj->BaseLevel];
 
    drm_intel_bo_reference(intelObj->mt->region->buffer);
    i915->state.tex_buffer[unit] = intelObj->mt->region->buffer;

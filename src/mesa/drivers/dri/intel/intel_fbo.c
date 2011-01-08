@@ -115,8 +115,8 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
        * except they're less useful because you can't texture with
        * them.
        */
-      rb->Format = intelChooseTextureFormat(ctx, internalFormat,
-					    GL_NONE, GL_NONE);
+      rb->Format = intel->ctx.Driver.ChooseTextureFormat(ctx, internalFormat,
+							 GL_NONE, GL_NONE);
       break;
    case GL_STENCIL_INDEX:
    case GL_STENCIL_INDEX1_EXT:
@@ -145,10 +145,15 @@ intel_alloc_renderbuffer_storage(struct gl_context * ctx, struct gl_renderbuffer
    DBG("Allocating %d x %d Intel RBO\n", width, height);
 
    tiling = I915_TILING_NONE;
+   if (intel->use_texture_tiling) {
+      GLenum base_format = _mesa_get_format_base_format(rb->Format);
 
-   /* Gen6 requires depth must be tiling */
-   if (intel->gen >= 6 && rb->Format == MESA_FORMAT_S8_Z24)
-       tiling = I915_TILING_Y;
+      if (intel->gen >= 4 && (base_format == GL_DEPTH_COMPONENT ||
+			      base_format == GL_DEPTH_STENCIL))
+	 tiling = I915_TILING_Y;
+      else
+	 tiling = I915_TILING_X;
+   }
 
    irb->region = intel_region_alloc(intel->intelScreen, tiling, cpp,
 				    width, height, GL_TRUE);
@@ -284,42 +289,7 @@ intel_create_renderbuffer(gl_format format)
 
    _mesa_init_renderbuffer(&irb->Base, 0);
    irb->Base.ClassID = INTEL_RB_CLASS;
-
-   switch (format) {
-   case MESA_FORMAT_RGB565:
-      irb->Base._BaseFormat = GL_RGB;
-      break;
-   case MESA_FORMAT_XRGB8888:
-      irb->Base._BaseFormat = GL_RGB;
-      break;
-   case MESA_FORMAT_ARGB8888:
-      irb->Base._BaseFormat = GL_RGBA;
-      break;
-   case MESA_FORMAT_Z16:
-      irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
-      break;
-   case MESA_FORMAT_X8_Z24:
-      irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
-      break;
-   case MESA_FORMAT_S8_Z24:
-      irb->Base._BaseFormat = GL_DEPTH_STENCIL;
-      break;
-   case MESA_FORMAT_A8:
-      irb->Base._BaseFormat = GL_ALPHA;
-      break;
-   case MESA_FORMAT_R8:
-      irb->Base._BaseFormat = GL_RED;
-      break;
-   case MESA_FORMAT_RG88:
-      irb->Base._BaseFormat = GL_RG;
-      break;
-   default:
-      _mesa_problem(NULL,
-                    "Unexpected intFormat in intel_create_renderbuffer");
-      free(irb);
-      return NULL;
-   }
-
+   irb->Base._BaseFormat = _mesa_get_format_base_format(format);
    irb->Base.Format = format;
    irb->Base.InternalFormat = irb->Base._BaseFormat;
    irb->Base.DataType = intel_mesa_format_to_rb_datatype(format);
@@ -564,6 +534,7 @@ intel_finish_render_texture(struct gl_context * ctx,
 static void
 intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
 {
+   struct intel_context *intel = intel_context(ctx);
    const struct intel_renderbuffer *depthRb =
       intel_get_renderbuffer(fb, BUFFER_DEPTH);
    const struct intel_renderbuffer *stencilRb =
@@ -571,10 +542,10 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
    int i;
 
    if (depthRb && stencilRb && stencilRb != depthRb) {
-      if (ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Type == GL_TEXTURE &&
-	  ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Type == GL_TEXTURE &&
-	  (ctx->DrawBuffer->Attachment[BUFFER_DEPTH].Texture->Name ==
-	   ctx->DrawBuffer->Attachment[BUFFER_STENCIL].Texture->Name)) {
+      if (fb->Attachment[BUFFER_DEPTH].Type == GL_TEXTURE &&
+	  fb->Attachment[BUFFER_STENCIL].Type == GL_TEXTURE &&
+	  (fb->Attachment[BUFFER_DEPTH].Texture->Name ==
+	   fb->Attachment[BUFFER_STENCIL].Texture->Name)) {
 	 /* OK */
       } else {
 	 /* we only support combined depth/stencil buffers, not separate
@@ -587,20 +558,33 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
       }
    }
 
-   for (i = 0; i < ctx->Const.MaxDrawBuffers; i++) {
-      struct gl_renderbuffer *rb = ctx->DrawBuffer->_ColorDrawBuffers[i];
-      struct intel_renderbuffer *irb = intel_renderbuffer(rb);
+   for (i = 0; i < Elements(fb->Attachment); i++) {
+      struct gl_renderbuffer *rb;
+      struct intel_renderbuffer *irb;
 
-      if (rb == NULL)
+      if (fb->Attachment[i].Type == GL_NONE)
 	 continue;
 
+      /* A supported attachment will have a Renderbuffer set either
+       * from being a Renderbuffer or being a texture that got the
+       * intel_wrap_texture() treatment.
+       */
+      rb = fb->Attachment[i].Renderbuffer;
+      if (rb == NULL) {
+	 DBG("attachment without renderbuffer\n");
+	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+	 continue;
+      }
+
+      irb = intel_renderbuffer(rb);
       if (irb == NULL) {
 	 DBG("software rendering renderbuffer\n");
 	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
 	 continue;
       }
 
-      if (!intel_span_supports_format(irb->Base.Format)) {
+      if (!intel_span_supports_format(irb->Base.Format) ||
+	  !intel->vtbl.render_target_supported(irb->Base.Format)) {
 	 DBG("Unsupported texture/renderbuffer format attached: %s\n",
 	     _mesa_get_format_name(irb->Base.Format));
 	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;

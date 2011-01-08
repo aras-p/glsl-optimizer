@@ -39,15 +39,15 @@ int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 	case (EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
 		assert(!end_of_program);
 		bc->bytecode[id++] = S_SQ_CF_ALU_WORD0_ADDR(cf->addr >> 1) |
-			S_SQ_CF_ALU_WORD0_KCACHE_MODE0(cf->kcache0_mode) |
-			S_SQ_CF_ALU_WORD0_KCACHE_BANK0(cf->kcache0_bank) |
-			S_SQ_CF_ALU_WORD0_KCACHE_BANK1(cf->kcache1_bank);
+			S_SQ_CF_ALU_WORD0_KCACHE_MODE0(cf->kcache[0].mode) |
+			S_SQ_CF_ALU_WORD0_KCACHE_BANK0(cf->kcache[0].bank) |
+			S_SQ_CF_ALU_WORD0_KCACHE_BANK1(cf->kcache[1].bank);
 		bc->bytecode[id++] = S_SQ_CF_ALU_WORD1_CF_INST(cf->inst >> 3) |
-			S_SQ_CF_ALU_WORD1_KCACHE_MODE1(cf->kcache1_mode) |
-			S_SQ_CF_ALU_WORD1_KCACHE_ADDR0(cf->kcache0_addr) |
-			S_SQ_CF_ALU_WORD1_KCACHE_ADDR1(cf->kcache1_addr) |
-					S_SQ_CF_ALU_WORD1_BARRIER(cf->barrier) |
-					S_SQ_CF_ALU_WORD1_COUNT((cf->ndw / 2) - 1);
+			S_SQ_CF_ALU_WORD1_KCACHE_MODE1(cf->kcache[1].mode) |
+			S_SQ_CF_ALU_WORD1_KCACHE_ADDR0(cf->kcache[0].addr) |
+			S_SQ_CF_ALU_WORD1_KCACHE_ADDR1(cf->kcache[1].addr) |
+			S_SQ_CF_ALU_WORD1_BARRIER(cf->barrier) |
+			S_SQ_CF_ALU_WORD1_COUNT((cf->ndw / 2) - 1);
 		break;
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_TEX:
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_VTX:

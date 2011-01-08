@@ -248,7 +248,6 @@ static void brw_set_vertex_buffers(struct pipe_context *pipe,
                                    const struct pipe_vertex_buffer *buffers)
 {
    struct brw_context *brw = brw_context(pipe);
-   unsigned i;
 
    /* Check for no change */
    if (count == brw->curr.num_vertex_buffers &&
@@ -257,18 +256,9 @@ static void brw_set_vertex_buffers(struct pipe_context *pipe,
               count * sizeof buffers[0]) == 0)
       return;
 
-   /* Adjust refcounts */
-   for (i = 0; i < count; i++) 
-      pipe_resource_reference(&brw->curr.vertex_buffer[i].buffer, 
-                            buffers[i].buffer);
-
-   for ( ; i < brw->curr.num_vertex_buffers; i++)
-      pipe_resource_reference(&brw->curr.vertex_buffer[i].buffer,
-                            NULL);
-
-   /* Copy remaining data */
-   memcpy(brw->curr.vertex_buffer, buffers, count * sizeof buffers[0]);
-   brw->curr.num_vertex_buffers = count;
+   util_copy_vertex_buffers(brw->curr.vertex_buffer,
+                            &brw->curr.num_vertex_buffers,
+                            buffers, count);
 
    brw->state.dirty.mesa |= PIPE_NEW_VERTEX_BUFFER;
 }
@@ -318,9 +308,13 @@ brw_pipe_vertex_init( struct brw_context *brw )
 void 
 brw_pipe_vertex_cleanup( struct brw_context *brw )
 {
+   unsigned i;
 
    /* Release bound pipe vertex_buffers
     */
+   for (i = 0; i < brw->curr.num_vertex_buffers; i++) {
+      pipe_resource_reference(&brw->curr.vertex_buffer[i].buffer, NULL);
+   }
 
    /* Release some other stuff
     */

@@ -443,8 +443,6 @@ static unsigned int r600_texture_is_referenced(struct pipe_context *context,
 	return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 }
 
-int (*r600_blit_uncompress_depth_ptr)(struct pipe_context *ctx, struct r600_resource_texture *texture);
-
 int r600_texture_depth_flush(struct pipe_context *ctx,
 			     struct pipe_resource *texture)
 {
@@ -476,7 +474,7 @@ int r600_texture_depth_flush(struct pipe_context *ctx,
 out:
 	/* XXX: only do this if the depth texture has actually changed:
 	 */
-	r600_blit_uncompress_depth_ptr(ctx, rtex);
+	r600_blit_uncompress_depth(ctx, rtex);
 	return 0;
 }
 

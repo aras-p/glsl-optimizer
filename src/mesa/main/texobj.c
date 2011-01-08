@@ -470,6 +470,12 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
 
    ASSERT(maxLevels > 0);
 
+   if (t->MaxLevel < t->BaseLevel) {
+      incomplete(t, "MAX_LEVEL (%d) < BASE_LEVEL (%d)",
+		 t->MaxLevel, t->BaseLevel);
+      return;
+   }
+
    t->_MaxLevel = baseLevel + maxLog2;
    t->_MaxLevel = MIN2(t->_MaxLevel, t->MaxLevel);
    t->_MaxLevel = MIN2(t->_MaxLevel, maxLevels - 1);

@@ -28,13 +28,14 @@
 #include "main/mtypes.h"
 #include "main/enums.h"
 #include "main/colormac.h"
+#include "main/macros.h"
 
 #include "intel_mipmap_tree.h"
 #include "intel_tex.h"
 
 #include "i830_context.h"
 #include "i830_reg.h"
-
+#include "intel_chipset.h"
 
 
 static GLuint
@@ -139,9 +140,9 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    /* Get first image here, since intelObj->firstLevel will get set in
     * the intel_finalize_mipmap_tree() call above.
     */
-   firstImage = tObj->Image[0][intelObj->firstLevel];
+   firstImage = tObj->Image[0][tObj->BaseLevel];
 
-   intel_miptree_get_image_offset(intelObj->mt, intelObj->firstLevel, 0, 0,
+   intel_miptree_get_image_offset(intelObj->mt, tObj->BaseLevel, 0, 0,
 				  &dst_x, &dst_y);
 
    drm_intel_bo_reference(intelObj->mt->region->buffer);
@@ -189,6 +190,8 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
 
    {
       GLuint minFilt, mipFilt, magFilt;
+      float maxlod;
+      uint32_t minlod_fixed, maxlod_fixed;
 
       switch (tObj->MinFilter) {
       case GL_NEAREST:
@@ -252,10 +255,24 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
          state[I830_TEXREG_TM0S3] |= SS2_COLORSPACE_CONVERSION;
 #endif
 
-      state[I830_TEXREG_TM0S3] |= ((intelObj->lastLevel -
-                                    intelObj->firstLevel) *
-                                   4) << TM0S3_MIN_MIP_SHIFT;
-
+      /* We get one field with fraction bits for the maximum
+       * addressable (smallest resolution) LOD.  Use it to cover both
+       * MAX_LEVEL and MAX_LOD.
+       */
+      minlod_fixed = U_FIXED(CLAMP(tObj->MinLod, 0.0, 11), 4);
+      maxlod = MIN2(tObj->MaxLod, tObj->_MaxLevel - tObj->BaseLevel);
+      if (intel->intelScreen->deviceID == PCI_CHIP_I855_GM ||
+	  intel->intelScreen->deviceID == PCI_CHIP_I865_G) {
+	 maxlod_fixed = U_FIXED(CLAMP(maxlod, 0.0, 11.75), 2);
+	 maxlod_fixed = MAX2(maxlod_fixed, (minlod_fixed + 3) >> 2);
+	 state[I830_TEXREG_TM0S3] |= maxlod_fixed << TM0S3_MIN_MIP_SHIFT;
+	 state[I830_TEXREG_TM0S2] |= TM0S2_LOD_PRECLAMP;
+      } else {
+	 maxlod_fixed = U_FIXED(CLAMP(maxlod, 0.0, 11), 0);
+	 maxlod_fixed = MAX2(maxlod_fixed, (minlod_fixed + 15) >> 4);
+	 state[I830_TEXREG_TM0S3] |= maxlod_fixed << TM0S3_MIN_MIP_SHIFT_830;
+      }
+      state[I830_TEXREG_TM0S3] |= minlod_fixed << TM0S3_MAX_MIP_SHIFT;
       state[I830_TEXREG_TM0S3] |= ((minFilt << TM0S3_MIN_FILTER_SHIFT) |
                                    (mipFilt << TM0S3_MIP_FILTER_SHIFT) |
                                    (magFilt << TM0S3_MAG_FILTER_SHIFT));

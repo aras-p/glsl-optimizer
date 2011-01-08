@@ -145,6 +145,10 @@ HASH		^{SPC}#{SPC}
 				  BEGIN PP;
 				  return PRAGMA_OPTIMIZE_OFF;
 				}
+^{SPC}#{SPC}pragma{SPCP}STDGL{SPCP}invariant{SPC}\({SPC}all{SPC}\) {
+				  BEGIN PP;
+				  return PRAGMA_INVARIANT_ALL;
+				}
 ^{SPC}#{SPC}pragma{SPCP}	{ BEGIN PRAGMA; }
 
 <PRAGMA>\n			{ BEGIN 0; yylineno++; yycolumn = 0; }

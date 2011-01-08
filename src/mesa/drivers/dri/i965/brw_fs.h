@@ -348,6 +348,23 @@ public:
 					  hash_table_pointer_hash,
 					  hash_table_pointer_compare);
 
+      /* There's a question that appears to be left open in the spec:
+       * How do implicit dst conversions interact with the CMP
+       * instruction or conditional mods?  On gen6, the instruction:
+       *
+       * CMP null<d> src0<f> src1<f>
+       *
+       * will do src1 - src0 and compare that result as if it was an
+       * integer.  On gen4, it will do src1 - src0 as float, convert
+       * the result to int, and compare as int.  In between, it
+       * appears that it does src1 - src0 and does the compare in the
+       * execution type so dst type doesn't matter.
+       */
+      if (this->intel->gen > 4)
+	 this->reg_null_cmp = reg_null_d;
+      else
+	 this->reg_null_cmp = reg_null_f;
+
       this->frag_color = NULL;
       this->frag_data = NULL;
       this->frag_depth = NULL;
@@ -485,6 +502,7 @@ public:
    fs_reg pixel_w;
    fs_reg delta_x;
    fs_reg delta_y;
+   fs_reg reg_null_cmp;
 
    int grf_used;
 };

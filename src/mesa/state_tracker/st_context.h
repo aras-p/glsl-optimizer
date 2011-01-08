@@ -92,7 +92,10 @@ struct st_context
       struct pipe_sampler_state             samplers[PIPE_MAX_SAMPLERS];
       struct pipe_sampler_state             *sampler_list[PIPE_MAX_SAMPLERS];
       struct pipe_clip_state clip;
-      struct pipe_resource *constants[PIPE_SHADER_TYPES];
+      struct {
+         void *ptr;
+         unsigned size;
+      } constants[PIPE_SHADER_TYPES];
       struct pipe_framebuffer_state framebuffer;
       struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
       struct pipe_scissor_state scissor;
@@ -104,15 +107,6 @@ struct st_context
 
       GLuint poly_stipple[32];  /**< In OpenGL's bottom-to-top order */
    } state;
-
-   struct {
-      struct st_tracked_state tracked_state[PIPE_SHADER_TYPES];
-   } constants;
-
-   /* XXX unused: */
-   struct {
-      struct gl_fragment_program *fragment_program;
-   } cb;
 
    char vendor[100];
    char renderer[100];

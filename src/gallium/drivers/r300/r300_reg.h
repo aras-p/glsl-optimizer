@@ -2631,8 +2631,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define R300_ZB_BW_CNTL                     0x4f1c
 #	define R300_HIZ_DISABLE                              (0 << 0)
 #	define R300_HIZ_ENABLE                               (1 << 0)
-#	define R300_HIZ_MIN                                  (0 << 1)
-#	define R300_HIZ_MAX                                  (1 << 1)
+#	define R300_HIZ_MAX                                  (0 << 1)
+#	define R300_HIZ_MIN                                  (1 << 1)
 #	define R300_FAST_FILL_DISABLE                        (0 << 2)
 #	define R300_FAST_FILL_ENABLE                         (1 << 2)
 #	define R300_RD_COMP_DISABLE                          (0 << 3)

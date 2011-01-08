@@ -107,7 +107,7 @@ upload_wm_state(struct brw_context *brw)
    if (brw->wm.prog_data->nr_params == 0) {
       /* Disable the push constant buffers. */
       BEGIN_BATCH(5);
-      OUT_BATCH(CMD_3D_CONSTANT_PS_STATE << 16 | (5 - 2));
+      OUT_BATCH(_3DSTATE_CONSTANT_PS << 16 | (5 - 2));
       OUT_BATCH(0);
       OUT_BATCH(0);
       OUT_BATCH(0);
@@ -115,7 +115,7 @@ upload_wm_state(struct brw_context *brw)
       ADVANCE_BATCH();
    } else {
       BEGIN_BATCH(5);
-      OUT_BATCH(CMD_3D_CONSTANT_PS_STATE << 16 |
+      OUT_BATCH(_3DSTATE_CONSTANT_PS << 16 |
 		GEN6_CONSTANT_BUFFER_0_ENABLE |
 		(5 - 2));
       OUT_RELOC(brw->wm.push_const_bo,
@@ -181,7 +181,7 @@ upload_wm_state(struct brw_context *brw)
       GEN6_WM_NUM_SF_OUTPUTS_SHIFT;
 
    BEGIN_BATCH(9);
-   OUT_BATCH(CMD_3D_WM_STATE << 16 | (9 - 2));
+   OUT_BATCH(_3DSTATE_WM << 16 | (9 - 2));
    OUT_RELOC(brw->wm.prog_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
    OUT_BATCH(dw2);
    OUT_BATCH(0); /* scratch space base offset */

@@ -35,6 +35,7 @@
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "util/u_cpu_detect.h"
+#include "util/u_inlines.h"
 #include "draw_context.h"
 #include "draw_vs.h"
 #include "draw_gs.h"
@@ -162,6 +163,10 @@ void draw_destroy( struct draw_context *draw )
             pipe->delete_rasterizer_state(pipe, draw->rasterizer_no_cull[i][j]);
          }
       }
+   }
+
+   for (i = 0; i < draw->pt.nr_vertex_buffers; i++) {
+      pipe_resource_reference(&draw->pt.vertex_buffer[i].buffer, NULL);
    }
 
    /* Not so fast -- we're just borrowing this at the moment.
@@ -307,8 +312,9 @@ draw_set_vertex_buffers(struct draw_context *draw,
 {
    assert(count <= PIPE_MAX_ATTRIBS);
 
-   memcpy(draw->pt.vertex_buffer, buffers, count * sizeof(buffers[0]));
-   draw->pt.nr_vertex_buffers = count;
+   util_copy_vertex_buffers(draw->pt.vertex_buffer,
+                            &draw->pt.nr_vertex_buffers,
+                            buffers, count);
 }
 
 

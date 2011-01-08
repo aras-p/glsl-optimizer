@@ -286,6 +286,9 @@ _eglError(EGLint errCode, const char *msg)
       case EGL_BAD_SURFACE:
          s = "EGL_BAD_SURFACE";
          break;
+      case EGL_NOT_INITIALIZED:
+         s = "EGL_NOT_INITIALIZED";
+         break;
 #ifdef EGL_MESA_screen_surface
       case EGL_BAD_SCREEN_MESA:
          s = "EGL_BAD_SCREEN_MESA";
@@ -295,7 +298,7 @@ _eglError(EGLint errCode, const char *msg)
          break;
 #endif
       default:
-         s = "other";
+         s = "other EGL error";
       }
       _eglLog(_EGL_DEBUG, "EGL user error 0x%x (%s) in %s\n", errCode, s, msg);
    }

@@ -326,6 +326,7 @@ void r300_flush_depth_stencil(struct pipe_context *pipe,
     r300->z_decomp_rd = FALSE;
 
     tex->zmask_in_use[level] = FALSE;
+    pipe_surface_reference(&dstsurf, NULL);
 }
 
 /* Copy a block of pixels from one surface to another using HW. */

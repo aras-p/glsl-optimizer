@@ -1163,6 +1163,54 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
        screen->chip_flags = RADEON_CHIPSET_TCL;
        break;
 
+   case PCI_CHIP_BARTS_6720:
+   case PCI_CHIP_BARTS_6721:
+   case PCI_CHIP_BARTS_6722:
+   case PCI_CHIP_BARTS_6723:
+   case PCI_CHIP_BARTS_6724:
+   case PCI_CHIP_BARTS_6725:
+   case PCI_CHIP_BARTS_6726:
+   case PCI_CHIP_BARTS_6727:
+   case PCI_CHIP_BARTS_6728:
+   case PCI_CHIP_BARTS_6729:
+   case PCI_CHIP_BARTS_6738:
+   case PCI_CHIP_BARTS_6739:
+       screen->chip_family = CHIP_FAMILY_BARTS;
+       screen->chip_flags = RADEON_CHIPSET_TCL;
+       break;
+
+   case PCI_CHIP_TURKS_6740:
+   case PCI_CHIP_TURKS_6741:
+   case PCI_CHIP_TURKS_6742:
+   case PCI_CHIP_TURKS_6743:
+   case PCI_CHIP_TURKS_6744:
+   case PCI_CHIP_TURKS_6745:
+   case PCI_CHIP_TURKS_6746:
+   case PCI_CHIP_TURKS_6747:
+   case PCI_CHIP_TURKS_6748:
+   case PCI_CHIP_TURKS_6749:
+   case PCI_CHIP_TURKS_6750:
+   case PCI_CHIP_TURKS_6758:
+   case PCI_CHIP_TURKS_6759:
+       screen->chip_family = CHIP_FAMILY_TURKS;
+       screen->chip_flags = RADEON_CHIPSET_TCL;
+       break;
+
+   case PCI_CHIP_CAICOS_6760:
+   case PCI_CHIP_CAICOS_6761:
+   case PCI_CHIP_CAICOS_6762:
+   case PCI_CHIP_CAICOS_6763:
+   case PCI_CHIP_CAICOS_6764:
+   case PCI_CHIP_CAICOS_6765:
+   case PCI_CHIP_CAICOS_6766:
+   case PCI_CHIP_CAICOS_6767:
+   case PCI_CHIP_CAICOS_6768:
+   case PCI_CHIP_CAICOS_6770:
+   case PCI_CHIP_CAICOS_6779:
+       screen->chip_family = CHIP_FAMILY_CAICOS;
+       screen->chip_flags = RADEON_CHIPSET_TCL;
+       break;
+
    default:
       fprintf(stderr, "unknown chip id 0x%x, can't guess.\n",
 	      device_id);

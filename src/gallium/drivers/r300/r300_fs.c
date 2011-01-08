@@ -395,6 +395,13 @@ static void r300_translate_fragment_shader(
 
     find_output_registers(&compiler, shader);
 
+    shader->write_all = FALSE;
+    for (i = 0; i < shader->info.num_properties; i++) {
+        if (shader->info.properties[i].name == TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS) {
+            shader->write_all = TRUE;
+        }
+    }
+
     if (compiler.Base.Debug & RC_DBG_LOG) {
         DBG(r300, DBG_FP, "r300: Initial fragment program\n");
         tgsi_dump(tokens, 0);
