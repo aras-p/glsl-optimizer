@@ -584,6 +584,9 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       if (info->primitive_restart) {
          BEGIN_RING(chan, RING_3D(PRIM_RESTART_INDEX), 1);
          OUT_RING  (chan, info->restart_index);
+
+         if (info->restart_index > 65535)
+            shorten = FALSE;
       }
 
       nvc0_draw_elements(nvc0, shorten,
