@@ -695,7 +695,8 @@ intelInitContext(struct intel_context *intel,
    ctx->TextureFormatSupported[MESA_FORMAT_A8] = GL_TRUE;
    ctx->TextureFormatSupported[MESA_FORMAT_I8] = GL_TRUE;
    ctx->TextureFormatSupported[MESA_FORMAT_AL88] = GL_TRUE;
-   ctx->TextureFormatSupported[MESA_FORMAT_AL1616] = GL_TRUE;
+   if (intel->gen >= 4)
+      ctx->TextureFormatSupported[MESA_FORMAT_AL1616] = GL_TRUE;
    ctx->TextureFormatSupported[MESA_FORMAT_S8_Z24] = GL_TRUE;
    /*
     * This was disabled in initial FBO enabling to avoid combinations
