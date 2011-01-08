@@ -2088,9 +2088,12 @@ ast_declarator_list::hir(exec_list *instructions,
        *
        *     Local variables can only use the qualifier const."
        *
-       * This is relaxed in GLSL 1.30.
+       * This is relaxed in GLSL 1.30.  It is also relaxed by any extension
+       * that adds the 'layout' keyword.
        */
-      if (state->language_version < 130) {
+      if ((state->language_version < 130)
+	  && !state->ARB_explicit_attrib_location_enable
+	  && !state->ARB_fragment_coord_conventions_enable) {
 	 if (this->type->qualifier.flags.q.out) {
 	    _mesa_glsl_error(& loc, state,
 			     "`out' qualifier in declaration of `%s' "
