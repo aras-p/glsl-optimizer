@@ -436,15 +436,9 @@ i915_emit_state(struct intel_context *intel)
       OUT_BATCH((dirty & I915_UPLOAD_TEX_ALL) >> I915_UPLOAD_TEX_0_SHIFT);
       for (i = 0; i < I915_TEX_UNITS; i++)
          if (dirty & I915_UPLOAD_TEX(i)) {
-
-            if (state->tex_buffer[i]) {
-               OUT_RELOC(state->tex_buffer[i],
-			 I915_GEM_DOMAIN_SAMPLER, 0,
-                         state->tex_offset[i]);
-            }
-            else {
-               OUT_BATCH(state->tex_offset[i]);
-            }
+	    OUT_RELOC(state->tex_buffer[i],
+		      I915_GEM_DOMAIN_SAMPLER, 0,
+		      state->tex_offset[i]);
 
             OUT_BATCH(state->Tex[i][I915_TEXREG_MS3]);
             OUT_BATCH(state->Tex[i][I915_TEXREG_MS4]);

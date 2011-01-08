@@ -535,14 +535,9 @@ i830_emit_state(struct intel_context *intel)
          BEGIN_BATCH(I830_TEX_SETUP_SIZE + 1);
          OUT_BATCH(state->Tex[i][I830_TEXREG_TM0LI]);
 
-         if (state->tex_buffer[i]) {
-            OUT_RELOC(state->tex_buffer[i],
-		      I915_GEM_DOMAIN_SAMPLER, 0,
-                      state->tex_offset[i]);
-         }
-	 else {
-	    OUT_BATCH(state->tex_offset[i]);
-	 }
+	 OUT_RELOC(state->tex_buffer[i],
+		   I915_GEM_DOMAIN_SAMPLER, 0,
+		   state->tex_offset[i]);
 
          OUT_BATCH(state->Tex[i][I830_TEXREG_TM0S1]);
          OUT_BATCH(state->Tex[i][I830_TEXREG_TM0S2]);
