@@ -304,7 +304,7 @@ nvfx_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 
-	nvfx->constbuf[shader] = buf;
+	pipe_resource_reference(&nvfx->constbuf[shader], buf);
 	nvfx->constbuf_nr[shader] = buf ? (buf->width0 / (4 * sizeof(float))) : 0;
 
 	if (shader == PIPE_SHADER_VERTEX) {
