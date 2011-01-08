@@ -284,42 +284,7 @@ intel_create_renderbuffer(gl_format format)
 
    _mesa_init_renderbuffer(&irb->Base, 0);
    irb->Base.ClassID = INTEL_RB_CLASS;
-
-   switch (format) {
-   case MESA_FORMAT_RGB565:
-      irb->Base._BaseFormat = GL_RGB;
-      break;
-   case MESA_FORMAT_XRGB8888:
-      irb->Base._BaseFormat = GL_RGB;
-      break;
-   case MESA_FORMAT_ARGB8888:
-      irb->Base._BaseFormat = GL_RGBA;
-      break;
-   case MESA_FORMAT_Z16:
-      irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
-      break;
-   case MESA_FORMAT_X8_Z24:
-      irb->Base._BaseFormat = GL_DEPTH_COMPONENT;
-      break;
-   case MESA_FORMAT_S8_Z24:
-      irb->Base._BaseFormat = GL_DEPTH_STENCIL;
-      break;
-   case MESA_FORMAT_A8:
-      irb->Base._BaseFormat = GL_ALPHA;
-      break;
-   case MESA_FORMAT_R8:
-      irb->Base._BaseFormat = GL_RED;
-      break;
-   case MESA_FORMAT_RG88:
-      irb->Base._BaseFormat = GL_RG;
-      break;
-   default:
-      _mesa_problem(NULL,
-                    "Unexpected intFormat in intel_create_renderbuffer");
-      free(irb);
-      return NULL;
-   }
-
+   irb->Base._BaseFormat = _mesa_get_format_base_format(format);
    irb->Base.Format = format;
    irb->Base.InternalFormat = irb->Base._BaseFormat;
    irb->Base.DataType = intel_mesa_format_to_rb_datatype(format);
