@@ -233,6 +233,7 @@ int r600_bc_add_output(struct r600_bc *bc, const struct r600_bc_output *output)
 		return r;
 	bc->cf_last->inst = BC_INST(bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT);
 	memcpy(&bc->cf_last->output, output, sizeof(struct r600_bc_output));
+	bc->cf_last->output.burst_count = 1;
 	return 0;
 }
 
@@ -1206,7 +1207,8 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 			S_SQ_CF_ALLOC_EXPORT_WORD0_ELEM_SIZE(cf->output.elem_size) |
 			S_SQ_CF_ALLOC_EXPORT_WORD0_ARRAY_BASE(cf->output.array_base) |
 			S_SQ_CF_ALLOC_EXPORT_WORD0_TYPE(cf->output.type);
-		bc->bytecode[id++] = S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_X(cf->output.swizzle_x) |
+		bc->bytecode[id++] = S_SQ_CF_ALLOC_EXPORT_WORD1_BURST_COUNT(cf->output.burst_count - 1) |
+			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_X(cf->output.swizzle_x) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_Y(cf->output.swizzle_y) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_Z(cf->output.swizzle_z) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_W(cf->output.swizzle_w) |
@@ -1436,7 +1438,6 @@ static struct gpr_usage_range *find_src_range(struct gpr_usage *usage, int32_t i
 		if (range->start < id && id <= range->end)
 			return range;
 	}
-	assert(0); /* should not happen */
 	return NULL;
 }
 
@@ -1488,14 +1489,15 @@ static int rate_replacement(struct gpr_usage *usage, struct gpr_usage_range* ran
 	return best_start + best_end;
 }
 
-static void find_replacement(struct gpr_usage usage[128], unsigned current, struct gpr_usage_range *range)
+static void find_replacement(struct gpr_usage usage[128], unsigned current,
+				struct gpr_usage_range *range, int is_export)
 {
 	unsigned i;
 	int best_gpr = -1, best_rate = 0x7FFFFFFF;
 
 	if (range->replacement != -1 && range->replacement <= current) {
 		struct gpr_usage_range *other = find_src_range(&usage[range->replacement], range->start);
-		if (other->replacement != -1)
+		if (other && other->replacement != -1)
 			range->replacement = other->replacement;
 	}
 
@@ -1523,7 +1525,7 @@ static void find_replacement(struct gpr_usage usage[128], unsigned current, stru
 				best_gpr = i;
 
 				/* can't get better than this */
-				if (rate == 0)
+				if (rate == 0 || is_export)
 					break;
 			}
 		}
@@ -1554,6 +1556,22 @@ static void find_replacement(struct gpr_usage usage[128], unsigned current, stru
 		reservation->start = range->start;
 		reservation->end = range->end;
 	}
+}
+
+static void find_export_replacement(struct gpr_usage usage[128],
+				struct gpr_usage_range *range, struct r600_bc_cf *current,
+				struct r600_bc_cf *next, int32_t next_id)
+{
+	if (!next || next_id <= range->start || next_id > range->end)
+		return;
+
+	if (current->output.type != next->output.type)
+		return;
+
+	if ((current->output.array_base + 1) != next->output.array_base)
+		return;
+
+	find_src_range(&usage[next->output.gpr], next_id)->replacement = range->replacement + 1;
 }
 
 static void replace_alu_gprs(struct r600_bc_alu *alu, struct gpr_usage usage[128],
@@ -1738,6 +1756,36 @@ static void optimize_alu_inst(struct r600_bc_cf *cf, struct r600_bc_alu *alu)
 	}
 }
 
+static void optimize_export_inst(struct r600_bc *bc, struct r600_bc_cf *cf)
+{
+	struct r600_bc_cf *prev = LIST_ENTRY(struct r600_bc_cf, cf->list.prev, list);
+	if (&prev->list == &bc->cf ||
+		prev->inst != cf->inst ||
+		prev->output.type != cf->output.type ||
+		prev->output.elem_size != cf->output.elem_size ||
+		prev->output.swizzle_x != cf->output.swizzle_x ||
+		prev->output.swizzle_y != cf->output.swizzle_y ||
+		prev->output.swizzle_z != cf->output.swizzle_z ||
+		prev->output.swizzle_w != cf->output.swizzle_w)
+		return;
+
+	if ((prev->output.burst_count + cf->output.burst_count) > 16)
+		return;
+
+	if ((prev->output.gpr + prev->output.burst_count) == cf->output.gpr &&
+		(prev->output.array_base + prev->output.burst_count) == cf->output.array_base) {
+
+		prev->output.burst_count += cf->output.burst_count;
+		r600_bc_remove_cf(bc, cf);
+
+	} else if (prev->output.gpr == (cf->output.gpr + cf->output.burst_count) &&
+		prev->output.array_base == (cf->output.array_base + cf->output.burst_count)) {
+
+		cf->output.burst_count += prev->output.burst_count;
+		r600_bc_remove_cf(bc, prev);
+	}
+}
+
 static void r600_bc_optimize(struct r600_bc *bc)
 {
 	struct r600_bc_cf *cf, *next_cf;
@@ -1827,23 +1875,31 @@ static void r600_bc_optimize(struct r600_bc *bc)
 	for (i = 0; i < 124; ++i) {
 		for (j = 0; j < usage[i].nranges; ++j) {
 			struct gpr_usage_range *range = &usage[i].ranges[j];
+			int is_export = export_cf[i] && export_cf[i + 1] &&
+				range->start < export_remap[i] &&
+				export_remap[i] <= range->end;
+
 			if (range->start == -1)
 				range->replacement = -1;
 			else if (range->end == -1)
 				range->replacement = i;
 			else
-				find_replacement(usage, i, range);
+				find_replacement(usage, i, range, is_export);
 
 			if (range->replacement == -1)
 				bc->ngpr = i;
 			else if (range->replacement < i && range->replacement > bc->ngpr)
 				bc->ngpr = range->replacement;
+
+			if (is_export && range->replacement != -1) {
+				find_export_replacement(usage, range, export_cf[i],
+							export_cf[i + 1], export_remap[i + 1]);
+			}
 		}
 	}
 	bc->ngpr++;
 
 	/* apply the changes */
-
 	for (i = 0; i < 128; ++i) {
 		usage[i].last_write[0] = -1;
 		usage[i].last_write[1] = -1;
@@ -1923,6 +1979,7 @@ static void r600_bc_optimize(struct r600_bc *bc)
 			if (export_cf[i]->barrier)
 				barrier[stack] = id - 1;
 			next_cf = LIST_ENTRY(struct r600_bc_cf, export_cf[i]->list.next, list);
+			optimize_export_inst(bc, export_cf[i]);
 			export_cf[i] = NULL;
 		}
 	}
@@ -2176,7 +2233,8 @@ void r600_bc_dump(struct r600_bc *bc)
 			fprintf(stderr, "SWIZ_W:%X ", cf->output.swizzle_w);
 			fprintf(stderr, "SWIZ_W:%X ", cf->output.swizzle_w);
 			fprintf(stderr, "BARRIER:%d ", cf->barrier);
-			fprintf(stderr, "INST:%d\n", cf->inst);
+			fprintf(stderr, "INST:%d ", cf->inst);
+			fprintf(stderr, "BURST_COUNT:%d\n", cf->output.burst_count);
 			break;
 		case CF_CLASS_OTHER:
 			fprintf(stderr, "%04d %08X CF ", id, bc->bytecode[id]);

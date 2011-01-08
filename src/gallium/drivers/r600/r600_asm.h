@@ -114,6 +114,7 @@ struct r600_bc_output {
 	unsigned			swizzle_y;
 	unsigned			swizzle_z;
 	unsigned			swizzle_w;
+	unsigned			burst_count;
 };
 
 struct r600_bc_cf {
