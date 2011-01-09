@@ -709,7 +709,7 @@ st_draw_vbo(struct gl_context *ctx,
    }
 #endif
 
-   pipe->set_vertex_buffers(pipe, num_vbuffers, vbuffer);
+   cso_set_vertex_buffers(st->cso_context, num_vbuffers, vbuffer);
    cso_set_vertex_elements(st->cso_context, num_velements, velements);
 
    setup_index_buffer(ctx, ib, &ibuffer);

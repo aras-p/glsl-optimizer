@@ -81,6 +81,12 @@ struct cso_context {
    struct sampler_info fragment_samplers;
    struct sampler_info vertex_samplers;
 
+   uint nr_vertex_buffers;
+   struct pipe_vertex_buffer vertex_buffers[PIPE_MAX_ATTRIBS];
+
+   uint nr_vertex_buffers_saved;
+   struct pipe_vertex_buffer vertex_buffers_saved[PIPE_MAX_ATTRIBS];
+
    /** Current and saved state.
     * The saved state is used as a 1-deep stack.
     */
@@ -311,6 +317,13 @@ void cso_release_all( struct cso_context *ctx )
 
    util_unreference_framebuffer_state(&ctx->fb);
    util_unreference_framebuffer_state(&ctx->fb_saved);
+
+   util_copy_vertex_buffers(ctx->vertex_buffers,
+                            &ctx->nr_vertex_buffers,
+                            NULL, 0);
+   util_copy_vertex_buffers(ctx->vertex_buffers_saved,
+                            &ctx->nr_vertex_buffers_saved,
+                            NULL, 0);
 
    if (ctx->cache) {
       cso_cache_delete( ctx->cache );
@@ -921,6 +934,38 @@ void cso_restore_vertex_elements(struct cso_context *ctx)
    ctx->velements_saved = NULL;
 }
 
+/* vertex buffers */
+
+void cso_set_vertex_buffers(struct cso_context *ctx,
+                            unsigned count,
+                            const struct pipe_vertex_buffer *buffers)
+{
+   if (count != ctx->nr_vertex_buffers ||
+       memcmp(buffers, ctx->vertex_buffers,
+              sizeof(struct pipe_vertex_buffer) * count) != 0) {
+      util_copy_vertex_buffers(ctx->vertex_buffers, &ctx->nr_vertex_buffers,
+                               buffers, count);
+      ctx->pipe->set_vertex_buffers(ctx->pipe, count, buffers);
+   }
+}
+
+void cso_save_vertex_buffers(struct cso_context *ctx)
+{
+   util_copy_vertex_buffers(ctx->vertex_buffers_saved,
+                            &ctx->nr_vertex_buffers_saved,
+                            ctx->vertex_buffers,
+                            ctx->nr_vertex_buffers);
+}
+
+void cso_restore_vertex_buffers(struct cso_context *ctx)
+{
+   util_copy_vertex_buffers(ctx->vertex_buffers,
+                            &ctx->nr_vertex_buffers,
+                            ctx->vertex_buffers_saved,
+                            ctx->nr_vertex_buffers_saved);
+   ctx->pipe->set_vertex_buffers(ctx->pipe, ctx->nr_vertex_buffers,
+                                 ctx->vertex_buffers);
+}
 
 
 /**************** fragment/vertex sampler view state *************************/

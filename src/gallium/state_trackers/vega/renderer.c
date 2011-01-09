@@ -572,7 +572,7 @@ static void renderer_quad_draw(struct renderer *r)
                                  sizeof(r->vertices),
                                  PIPE_BIND_VERTEX_BUFFER);
    if (buf) {
-      util_draw_vertex_buffer(r->pipe, buf, 0,
+      util_draw_vertex_buffer(r->pipe, r->cso, buf, 0,
                               PIPE_PRIM_TRIANGLE_FAN,
                               Elements(r->vertices),     /* verts */
                               Elements(r->vertices[0])); /* attribs/vert */
@@ -1050,7 +1050,7 @@ void renderer_polygon_stencil(struct renderer *renderer,
 {
    assert(renderer->state == RENDERER_STATE_POLYGON_STENCIL);
 
-   renderer->pipe->set_vertex_buffers(renderer->pipe, 1, vbuf);
+   cso_set_vertex_buffers(renderer->cso, 1, vbuf);
 
    if (!renderer->u.polygon_stencil.manual_two_sides) {
       util_draw_arrays(renderer->pipe, mode, start, count);

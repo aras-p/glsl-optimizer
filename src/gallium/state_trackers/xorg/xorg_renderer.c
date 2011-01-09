@@ -73,7 +73,7 @@ renderer_draw(struct xorg_renderer *r)
    if (buf) {
       cso_set_vertex_elements(r->cso, r->attrs_per_vertex, r->velems);
 
-      util_draw_vertex_buffer(pipe, buf, 0,
+      util_draw_vertex_buffer(pipe, r->cso, buf, 0,
                               PIPE_PRIM_QUADS,
                               num_verts,  /* verts */
                               r->attrs_per_vertex); /* attribs/vert */
@@ -616,7 +616,7 @@ void renderer_draw_yuv(struct xorg_renderer *r,
 
       cso_set_vertex_elements(r->cso, num_attribs, r->velems);
 
-      util_draw_vertex_buffer(pipe, buf, 0,
+      util_draw_vertex_buffer(pipe, r->cso, buf, 0,
                               PIPE_PRIM_QUADS,
                               4,  /* verts */
                               num_attribs); /* attribs/vert */

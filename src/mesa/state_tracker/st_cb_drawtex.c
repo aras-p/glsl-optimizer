@@ -230,6 +230,7 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
    cso_save_viewport(cso);
    cso_save_vertex_shader(cso);
    cso_save_vertex_elements(cso);
+   cso_save_vertex_buffers(cso);
 
    {
       void *vs = lookup_shader(pipe, numAttribs,
@@ -277,6 +278,7 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
    cso_restore_viewport(cso);
    cso_restore_vertex_shader(cso);
    cso_restore_vertex_elements(cso);
+   cso_restore_vertex_buffers(cso);
 }
 
 

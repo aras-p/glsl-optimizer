@@ -1616,7 +1616,8 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
                                   face,
                                   rcoord);
 
-         util_draw_vertex_buffer(ctx->pipe, 
+         util_draw_vertex_buffer(ctx->pipe,
+                                 ctx->cso,
                                  ctx->vbuf,
                                  offset,
                                  PIPE_PRIM_TRIANGLE_FAN,

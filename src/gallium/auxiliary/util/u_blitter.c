@@ -639,7 +639,7 @@ static void blitter_draw_rectangle(struct blitter_context *blitter,
    }
 
    blitter_set_rectangle(ctx, x1, y1, x2, y2, depth);
-   util_draw_vertex_buffer(ctx->base.pipe, ctx->vbuf, 0,
+   util_draw_vertex_buffer(ctx->base.pipe, NULL, ctx->vbuf, 0,
                            PIPE_PRIM_TRIANGLE_FAN, 4, 2);
 }
 
@@ -867,7 +867,7 @@ void util_blitter_copy_region(struct blitter_context *blitter,
 
          /* Draw. */
          blitter_set_rectangle(ctx, dstx, dsty, dstx+width, dsty+height, 0);
-         util_draw_vertex_buffer(ctx->base.pipe, ctx->vbuf, 0,
+         util_draw_vertex_buffer(ctx->base.pipe, NULL, ctx->vbuf, 0,
                                  PIPE_PRIM_TRIANGLE_FAN, 4, 2);
          break;
 

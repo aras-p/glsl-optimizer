@@ -480,6 +480,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_save_vertex_shader(ctx->cso);
    cso_save_clip(ctx->cso);
    cso_save_vertex_elements(ctx->cso);
+   cso_save_vertex_buffers(ctx->cso);
 
    /* set misc state we care about */
    cso_set_blend(ctx->cso, &ctx->blend);
@@ -554,7 +555,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
                                   s1, t1,
                                   z);
 
-   util_draw_vertex_buffer(ctx->pipe, ctx->vbuf, offset,
+   util_draw_vertex_buffer(ctx->pipe, ctx->cso, ctx->vbuf, offset,
                            PIPE_PRIM_TRIANGLE_FAN,
                            4,  /* verts */
                            2); /* attribs/vert */
@@ -571,6 +572,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_restore_vertex_shader(ctx->cso);
    cso_restore_clip(ctx->cso);
    cso_restore_vertex_elements(ctx->cso);
+   cso_restore_vertex_buffers(ctx->cso);
 
    pipe_sampler_view_reference(&sampler_view, NULL);
 }
@@ -672,6 +674,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_save_vertex_shader(ctx->cso);
    cso_save_clip(ctx->cso);
    cso_save_vertex_elements(ctx->cso);
+   cso_save_vertex_buffers(ctx->cso);
 
    /* set misc state we care about */
    cso_set_blend(ctx->cso, &ctx->blend);
@@ -722,7 +725,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
                                   s0, t0, s1, t1,
                                   z);
 
-   util_draw_vertex_buffer(ctx->pipe, 
+   util_draw_vertex_buffer(ctx->pipe, ctx->cso,
                            ctx->vbuf, offset,
                            PIPE_PRIM_TRIANGLE_FAN,
                            4,  /* verts */
@@ -740,4 +743,5 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_restore_vertex_shader(ctx->cso);
    cso_restore_clip(ctx->cso);
    cso_restore_vertex_elements(ctx->cso);
+   cso_restore_vertex_buffers(ctx->cso);
 }
