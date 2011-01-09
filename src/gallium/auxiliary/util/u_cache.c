@@ -81,6 +81,9 @@ struct util_cache
    struct util_cache_entry lru;
 };
 
+static void
+ensure_sanity(const struct util_cache *cache);
+
 #define CACHE_DEFAULT_ALPHA 2
 
 struct util_cache *
@@ -110,6 +113,7 @@ util_cache_create(uint32_t (*hash)(const void *key),
       return NULL;
    }
    
+   ensure_sanity(cache);
    return cache;
 }
 
@@ -186,9 +190,11 @@ util_cache_set(struct util_cache *cache,
       return;
 
    entry = util_cache_entry_get(cache, hash, key);
-   if (!entry || cache->count >= cache->size / CACHE_DEFAULT_ALPHA) {
+   if (!entry)
       entry = cache->lru.prev;
-   }
+
+   if (cache->count >= cache->size / CACHE_DEFAULT_ALPHA)
+      util_cache_entry_destroy(cache, cache->lru.prev);
 
    util_cache_entry_destroy(cache, entry);
    
@@ -202,6 +208,8 @@ util_cache_set(struct util_cache *cache,
    entry->state = FILLED;
    insert_at_head(&cache->lru, entry);
    cache->count++;
+
+   ensure_sanity(cache);
 }
 
 
@@ -243,6 +251,7 @@ util_cache_clear(struct util_cache *cache)
 
    assert(cache->count == 0);
    assert(is_empty_list(&cache->lru));
+   ensure_sanity(cache);
 }
 
 
@@ -294,4 +303,49 @@ util_cache_remove(struct util_cache *cache,
 
    if (entry->state == FILLED)
       util_cache_entry_destroy(cache, entry);
+
+   ensure_sanity(cache);
+}
+
+
+static void
+ensure_sanity(const struct util_cache *cache)
+{
+#ifdef DEBUG
+   unsigned i, cnt = 0;
+
+   assert(cache);
+   for (i = 0; i < cache->size; i++) {
+      struct util_cache_entry *header = &cache->entries[i];
+
+      assert(header);
+      assert(header->state == FILLED ||
+             header->state == EMPTY ||
+             header->state == DELETED);
+      if (header->state == FILLED) {
+         cnt++;
+         assert(header->hash == cache->hash(header->key));
+      }
+   }
+
+   assert(cnt == cache->count);
+   assert(cache->size >= cnt);
+
+   if (cache->count == 0) {
+      assert (is_empty_list(&cache->lru));
+   }
+   else {
+      struct util_cache_entry *header = cache->lru.next;
+
+      assert (header);
+      assert (!is_empty_list(&cache->lru));
+
+      for (i = 0; i < cache->count; i++)
+         header = header->next;
+
+      assert(header == &cache->lru);
+   }
+#endif
+
+   (void)cache;
 }
