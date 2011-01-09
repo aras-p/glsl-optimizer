@@ -18,7 +18,7 @@ void brw_dump_data( unsigned pci_id,
       case BRW_DATA_GS_VS_PROG:
       case BRW_DATA_GS_GS_PROG:
       case BRW_DATA_GS_CLIP_PROG:
-         brw_disasm( stderr, data, size / sizeof(struct brw_instruction), gen );
+         brw_disasm( stderr, (struct brw_instruction *)data, size / sizeof(struct brw_instruction), gen );
          break;
       default:
          break;

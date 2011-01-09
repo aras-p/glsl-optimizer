@@ -405,7 +405,6 @@ struct pipe_screen *
 brw_screen_create(struct brw_winsys_screen *sws)
 {
    struct brw_screen *bscreen;
-   int gen;
 #ifdef DEBUG
    BRW_DEBUG = debug_get_flags_option("BRW_DEBUG", debug_names, 0);
    BRW_DEBUG |= debug_get_flags_option("INTEL_DEBUG", debug_names, 0);
