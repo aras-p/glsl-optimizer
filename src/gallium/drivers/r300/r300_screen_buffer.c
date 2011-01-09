@@ -87,13 +87,14 @@ void r300_upload_user_buffers(struct r300_context *r300,
     int i, nr = r300->velems->count;
     unsigned count = max_index + 1 - min_index;
     boolean flushed;
+    boolean uploaded[16] = {0};
 
     for (i = 0; i < nr; i++) {
         unsigned index = r300->velems->velem[i].vertex_buffer_index;
         struct pipe_vertex_buffer *vb = &r300->vertex_buffer[index];
         struct r300_buffer *userbuf = r300_buffer(vb->buffer);
 
-        if (userbuf && userbuf->user_buffer) {
+        if (userbuf && userbuf->user_buffer && !uploaded[index]) {
             unsigned first, size;
 
             if (vb->stride) {
@@ -118,6 +119,7 @@ void r300_upload_user_buffers(struct r300_context *r300,
                 r300->upload_vb_validated = FALSE;
                 r300->validate_buffers = TRUE;
             }
+            uploaded[index] = TRUE;
         } else {
             assert(r300->valid_vertex_buffer[index]);
         }
