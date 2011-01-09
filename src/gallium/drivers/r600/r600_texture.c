@@ -321,6 +321,45 @@ r600_texture_create_object(struct pipe_screen *screen,
 	return rtex;
 }
 
+/* Figure out whether u_blitter will fallback to a transfer operation.
+ * If so, don't use a staging resource.
+ */
+static boolean permit_hardware_blit(struct pipe_screen *screen,
+					const struct pipe_resource *res)
+{
+	unsigned bind;
+
+	if (util_format_is_depth_or_stencil(res->format))
+		bind = PIPE_BIND_DEPTH_STENCIL;
+	else
+		bind = PIPE_BIND_RENDER_TARGET;
+
+	/* See r600_resource_copy_region: there is something wrong
+	 * with depth resource copies at the moment so avoid them for
+	 * now.
+	 */
+	if (util_format_get_component_bits(res->format,
+				UTIL_FORMAT_COLORSPACE_ZS,
+				0) != 0)
+		return FALSE;
+
+	if (!screen->is_format_supported(screen,
+				res->format,
+				res->target,
+				res->nr_samples,
+				bind, 0))
+		return FALSE;
+
+	if (!screen->is_format_supported(screen,
+				res->format,
+				res->target,
+				res->nr_samples,
+				PIPE_BIND_SAMPLER_VIEW, 0))
+		return FALSE;
+
+	return TRUE;
+}
+
 struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 						const struct pipe_resource *templ)
 {
@@ -332,7 +371,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 	if (force_tiling == -1)
 		force_tiling = debug_get_bool_option("R600_FORCE_TILING", FALSE);
 
-	if (force_tiling) {
+	if (force_tiling && permit_hardware_blit(screen, templ)) {
 		if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
 		    !(templ->bind & PIPE_BIND_SCANOUT)) {
 			array_mode = V_038000_ARRAY_2D_TILED_THIN1;
@@ -484,46 +523,6 @@ static INLINE unsigned u_box_volume( const struct pipe_box *box )
 {
 	return box->width * box->depth * box->height;
 };
-
-
-/* Figure out whether u_blitter will fallback to a transfer operation.
- * If so, don't use a staging resource.
- */
-static boolean permit_hardware_blit(struct pipe_screen *screen,
-					struct pipe_resource *res)
-{
-	unsigned bind;
-
-	if (util_format_is_depth_or_stencil(res->format))
-		bind = PIPE_BIND_DEPTH_STENCIL;
-	else
-		bind = PIPE_BIND_RENDER_TARGET;
-
-	/* See r600_resource_copy_region: there is something wrong
-	 * with depth resource copies at the moment so avoid them for
-	 * now.
-	 */
-	if (util_format_get_component_bits(res->format,
-				UTIL_FORMAT_COLORSPACE_ZS,
-				0) != 0)
-		return FALSE;
-
-	if (!screen->is_format_supported(screen,
-				res->format,
-				res->target,
-				res->nr_samples,
-				bind, 0))
-		return FALSE;
-
-	if (!screen->is_format_supported(screen,
-				res->format,
-				res->target,
-				res->nr_samples,
-				PIPE_BIND_SAMPLER_VIEW, 0))
-		return FALSE;
-
-	return TRUE;
-}
 
 struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 						struct pipe_resource *texture,
