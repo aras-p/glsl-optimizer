@@ -2655,6 +2655,8 @@ struct gl_constants
 struct gl_extensions
 {
    GLboolean dummy;  /* don't remove this! */
+   GLboolean dummy_true;  /* Set true by _mesa_init_extensions(). */
+   GLboolean dummy_false; /* Set false by _mesa_init_extensions(). */
    GLboolean ARB_blend_func_extended;
    GLboolean ARB_copy_buffer;
    GLboolean ARB_depth_buffer_float;
@@ -2809,6 +2811,7 @@ struct gl_extensions
    GLboolean OES_EGL_image;
    GLboolean OES_draw_texture;
    GLboolean EXT_texture_format_BGRA8888;
+   GLboolean extension_sentinel;
    /** The extension string */
    const GLubyte *String;
    /** Number of supported extensions */
