@@ -1983,10 +1983,31 @@ static EGLBoolean
 dri2_release_tex_image(_EGLDriver *drv,
 		       _EGLDisplay *disp, _EGLSurface *surf, EGLint buffer)
 {
-   (void) drv;
-   (void) disp;
-   (void) surf;
-   (void) buffer;
+#if __DRI_TEX_BUFFER_VERSION >= 3
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   struct dri2_egl_surface *dri2_surf = dri2_egl_surface(surf);
+   struct dri2_egl_context *dri2_ctx;
+   _EGLContext *ctx;
+   GLint  target;
+
+   ctx = _eglGetCurrentContext();
+   dri2_ctx = dri2_egl_context(ctx);
+
+   if (!_eglReleaseTexImage(drv, disp, surf, buffer))
+      return EGL_FALSE;
+
+   switch (dri2_surf->base.TextureTarget) {
+   case EGL_TEXTURE_2D:
+      target = GL_TEXTURE_2D;
+      break;
+   default:
+      assert(0);
+   }
+   if (dri2_dpy->tex_buffer->releaseTexBuffer!=NULL)
+    (*dri2_dpy->tex_buffer->releaseTexBuffer)(dri2_ctx->dri_context,
+                                             target,
+                                             dri2_surf->dri_drawable);
+#endif
 
    return EGL_TRUE;
 }
