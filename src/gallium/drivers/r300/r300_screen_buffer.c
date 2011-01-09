@@ -105,6 +105,12 @@ void r300_upload_user_buffers(struct r300_context *r300,
                 size = r300->velems->hw_format_size[i];
             }
 
+            DBG(r300, DBG_UPLOAD,
+                "Uploading %i bytes, index: %i, buffer: %p, userptr: %p "
+                "offset: %i, stride: %i.\n",
+                size, index, userbuf, userbuf->user_buffer,
+                vb->buffer_offset, vb->stride);
+
             u_upload_data(r300->upload_vb, first, size,
                           userbuf->user_buffer + first,
                           &vb->buffer_offset,
@@ -124,6 +130,7 @@ void r300_upload_user_buffers(struct r300_context *r300,
             assert(r300->valid_vertex_buffer[index]);
         }
     }
+    DBG(r300, DBG_UPLOAD, "-------\n");
 }
 
 static void r300_buffer_destroy(struct pipe_screen *screen,
