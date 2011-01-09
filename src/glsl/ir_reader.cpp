@@ -869,7 +869,7 @@ ir_reader::read_texture(s_expression *expr)
    s_symbol *tag = NULL;
    s_expression *s_sampler = NULL;
    s_expression *s_coord = NULL;
-   s_list *s_offset = NULL;
+   s_expression *s_offset = NULL;
    s_expression *s_proj = NULL;
    s_list *s_shadow = NULL;
    s_expression *s_lod = NULL;
@@ -915,18 +915,15 @@ ir_reader::read_texture(s_expression *expr)
       return NULL;
    }
 
-   // Read texel offset, i.e. (0 0 0)
-   s_int *offset_x;
-   s_int *offset_y;
-   s_int *offset_z;
-   s_pattern offset_pat[] = { offset_x, offset_y, offset_z };
-   if (!MATCH(s_offset, offset_pat)) {
-      ir_read_error(s_offset, "expected (<int> <int> <int>)");
-      return NULL;
+   // Read texel offset - either 0 or an rvalue.
+   s_int *si_offset = SX_AS_INT(s_offset);
+   if (si_offset == NULL || si_offset->value() != 0) {
+      tex->offset = read_rvalue(s_offset);
+      if (tex->offset == NULL) {
+	 ir_read_error(s_offset, "expected 0 or an expression");
+	 return NULL;
+      }
    }
-   tex->offsets[0] = offset_x->value();
-   tex->offsets[1] = offset_y->value();
-   tex->offsets[2] = offset_z->value();
 
    if (op != ir_txf) {
       s_int *proj_as_int = SX_AS_INT(s_proj);

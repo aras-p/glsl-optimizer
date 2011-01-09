@@ -217,8 +217,8 @@ ir_texture::clone(void *mem_ctx, struct hash_table *ht) const
       new_tex->shadow_comparitor = this->shadow_comparitor->clone(mem_ctx, ht);
    }
 
-   for (int i = 0; i < 3; i++)
-      new_tex->offsets[i] = this->offsets[i];
+   if (this->offset != NULL)
+      new_tex->offset = this->offset->clone(mem_ctx, ht);
 
    switch (this->op) {
    case ir_tex:

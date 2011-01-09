@@ -1190,21 +1190,21 @@ enum ir_texture_opcode {
  * selected from \c ir_texture_opcodes.  In the printed IR, these will
  * appear as:
  *
- *                              Texel offset
- *                              |       Projection divisor
- *                              |       |   Shadow comparitor
- *                              |       |   |
- *                              v       v   v
- * (tex (sampler) (coordinate) (0 0 0) (1) ( ))
- * (txb (sampler) (coordinate) (0 0 0) (1) ( ) (bias))
- * (txl (sampler) (coordinate) (0 0 0) (1) ( ) (lod))
- * (txd (sampler) (coordinate) (0 0 0) (1) ( ) (dPdx dPdy))
- * (txf (sampler) (coordinate) (0 0 0)         (lod))
+ *                             Texel offset (0 or an expression)
+ *                             | Projection divisor
+ *                             | |  Shadow comparitor
+ *                             | |  |
+ *                             v v  v
+ * (tex <sampler> <coordinate> 0 1 ( ))
+ * (txb <sampler> <coordinate> 0 1 ( ) <bias>)
+ * (txl <sampler> <coordinate> 0 1 ( ) <lod>)
+ * (txd <sampler> <coordinate> 0 1 ( ) (dPdx dPdy))
+ * (txf <sampler> <coordinate> 0       <lod>)
  */
 class ir_texture : public ir_rvalue {
 public:
    ir_texture(enum ir_texture_opcode op)
-      : op(op), projector(NULL), shadow_comparitor(NULL)
+      : op(op), projector(NULL), shadow_comparitor(NULL), offset(NULL)
    {
       this->ir_type = ir_type_texture;
    }
@@ -1258,8 +1258,8 @@ public:
     */
    ir_rvalue *shadow_comparitor;
 
-   /** Explicit texel offsets. */
-   signed char offsets[3];
+   /** Texel offset. */
+   ir_rvalue *offset;
 
    union {
       ir_rvalue *lod;		/**< Floating point LOD */

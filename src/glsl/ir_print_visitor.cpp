@@ -192,7 +192,15 @@ void ir_print_visitor::visit(ir_texture *ir)
 
    ir->coordinate->accept(this);
 
-   printf(" (%d %d %d) ", ir->offsets[0], ir->offsets[1], ir->offsets[2]);
+   printf(" ");
+
+   if (ir->offset != NULL) {
+      ir->offset->accept(this);
+   } else {
+      printf("0");
+   }
+
+   printf(" ");
 
    if (ir->op != ir_txf) {
       if (ir->projector)

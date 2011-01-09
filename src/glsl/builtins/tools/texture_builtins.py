@@ -64,7 +64,7 @@ def generate_sigs(g, tex_inst, sampler_type, use_proj = False, unused_fields = 0
         print "(var_ref P)",
 
     # Offset
-    print "(0 0 0)",
+    print "0",
 
     if tex_inst != "txf":
         # Projective divisor
