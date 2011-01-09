@@ -7,12 +7,22 @@ Import('*')
 env = env.Clone()
 
 env.Append(CPPDEFINES = [
-    '_EGL_NATIVE_PLATFORM=_EGL_PLATFORM_WINDOWS',
+    '_EGL_BUILT_IN_DRIVER_GALLIUM',
     '_EGL_DRIVER_SEARCH_DIR=\\"\\"',
-    '_EGL_OS_WINDOWS',
-    '_EGL_GET_CORE_ADDRESSES',
-    'KHRONOS_DLL_EXPORTS',
 ])
+
+if env['platform'] == 'windows':
+    env.Append(CPPDEFINES = [
+        '_EGL_NATIVE_PLATFORM=_EGL_PLATFORM_WINDOWS',
+        '_EGL_OS_WINDOWS',
+        '_EGL_GET_CORE_ADDRESSES',
+        'KHRONOS_DLL_EXPORTS',
+    ])
+else:
+    env.Append(CPPDEFINES = [
+        '_EGL_NATIVE_PLATFORM=_EGL_PLATFORM_X11',
+        '_EGL_OS_UNIX',
+    ])
 
 env.Append(CPPPATH = [
     '#/include',
@@ -38,15 +48,9 @@ egl_sources = [
     'eglsync.c',
 ]
 
-egl = env.SharedLibrary(
-    target = 'libEGL',
-    source = egl_sources + ['egl.def'],
+egl = env.ConvenienceLibrary(
+    target = 'egl',
+    source = egl_sources,
 )
-
-installed_egl = env.InstallSharedLibrary(egl, version=(1, 4, 0))
-
-env.Alias('egl', installed_egl)
-
-egl = [env.FindIxes(egl, 'LIBPREFIX', 'LIBSUFFIX')]
 
 Export('egl')
