@@ -1020,7 +1020,15 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 			r600_bc_special_constants(
 				nalu->src[i].value[nalu->src[i].chan],
 				&nalu->src[i].sel, &nalu->src[i].neg);
+
+		if (nalu->src[i].sel >= bc->ngpr && nalu->src[i].sel < 128) {
+			bc->ngpr = nalu->src[i].sel + 1;
+		}
 	}
+	if (nalu->dst.sel >= bc->ngpr) {
+		bc->ngpr = nalu->dst.sel + 1;
+	}
+
 	LIST_ADDTAIL(&nalu->list, &bc->cf_last->alu);
 	/* each alu use 2 dwords */
 	bc->cf_last->ndw += 2;
@@ -2331,15 +2339,15 @@ void r600_bc_dump(struct r600_bc *bc)
 		case CF_CLASS_ALU:
 			fprintf(stderr, "%04d %08X ALU ", id, bc->bytecode[id]);
 			fprintf(stderr, "ADDR:%04d ", cf->addr);
-			fprintf(stderr, "KCACHE_MODE0:%X ", cf->kcache0_mode);
-			fprintf(stderr, "KCACHE_BANK0:%X ", cf->kcache0_bank);
-			fprintf(stderr, "KCACHE_BANK1:%X\n", cf->kcache1_bank);
+			fprintf(stderr, "KCACHE_MODE0:%X ", cf->kcache[0].mode);
+			fprintf(stderr, "KCACHE_BANK0:%X ", cf->kcache[0].bank);
+			fprintf(stderr, "KCACHE_BANK1:%X\n", cf->kcache[1].bank);
 			id++;
 			fprintf(stderr, "%04d %08X ALU ", id, bc->bytecode[id]);
 			fprintf(stderr, "INST:%d ", cf->inst);
-			fprintf(stderr, "KCACHE_MODE1:%X ", cf->kcache1_mode);
-			fprintf(stderr, "KCACHE_ADDR0:%X ", cf->kcache0_addr);
-			fprintf(stderr, "KCACHE_ADDR1:%X ", cf->kcache1_addr);
+			fprintf(stderr, "KCACHE_MODE1:%X ", cf->kcache[1].mode);
+			fprintf(stderr, "KCACHE_ADDR0:%X ", cf->kcache[0].addr);
+			fprintf(stderr, "KCACHE_ADDR1:%X ", cf->kcache[1].addr);
 			fprintf(stderr, "BARRIER:%d ", cf->barrier);
 			fprintf(stderr, "COUNT:%d\n", cf->ndw / 2);
 			break;
