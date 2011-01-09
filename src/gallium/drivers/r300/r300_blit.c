@@ -179,6 +179,12 @@ static void r300_clear(struct pipe_context* pipe,
     boolean can_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
     uint32_t hyperz_dcv = hyperz->zb_depthclearvalue;
 
+    /* Decompress zbuffers that are bound as textures. If we didn't flush here,
+     * it would happen inside the blitter when updating derived state,
+     * causing a blitter operation to be called from inside the blitter,
+     * which would overwrite saved states and they would never get restored. */
+    r300_flush_depth_textures(r300);
+
     /* Enable fast Z clear.
      * The zbuffer must be in micro-tiled mode, otherwise it locks up. */
     if ((buffers & PIPE_CLEAR_DEPTHSTENCIL) && can_hyperz) {
@@ -274,6 +280,12 @@ static void r300_clear_render_target(struct pipe_context *pipe,
 {
     struct r300_context *r300 = r300_context(pipe);
 
+    /* Decompress zbuffers that are bound as textures. If we didn't flush here,
+     * it would happen inside the blitter when updating derived state,
+     * causing a blitter operation to be called from inside the blitter,
+     * which would overwrite saved states and they would never get restored. */
+    r300_flush_depth_textures(r300);
+
     r300_blitter_begin(r300, R300_CLEAR_SURFACE);
     util_blitter_clear_render_target(r300->blitter, dst, rgba,
                                      dstx, dsty, width, height);
@@ -291,6 +303,12 @@ static void r300_clear_depth_stencil(struct pipe_context *pipe,
 {
     struct r300_context *r300 = r300_context(pipe);
 
+    /* Decompress zbuffers that are bound as textures. If we didn't flush here,
+     * it would happen inside the blitter when updating derived state,
+     * causing a blitter operation to be called from inside the blitter,
+     * which would overwrite saved states and they would never get restored. */
+    r300_flush_depth_textures(r300);
+
     r300_blitter_begin(r300, R300_CLEAR_SURFACE);
     util_blitter_clear_depth_stencil(r300->blitter, dst, clear_flags, depth, stencil,
                                      dstx, dsty, width, height);
@@ -298,10 +316,10 @@ static void r300_clear_depth_stencil(struct pipe_context *pipe,
 }
 
 /* Flush a depth stencil buffer. */
-void r300_flush_depth_stencil(struct pipe_context *pipe,
-                              struct pipe_resource *dst,
-                              unsigned level,
-                              unsigned layer)
+static void r300_flush_depth_stencil(struct pipe_context *pipe,
+                                     struct pipe_resource *dst,
+                                     unsigned level,
+                                     unsigned layer)
 {
     struct r300_context *r300 = r300_context(pipe);
     struct pipe_surface *dstsurf, surf_tmpl;
@@ -320,6 +338,7 @@ void r300_flush_depth_stencil(struct pipe_context *pipe,
     dstsurf = pipe->create_surface(pipe, dst, &surf_tmpl);
 
     r300->z_decomp_rd = TRUE;
+
     r300_blitter_begin(r300, R300_CLEAR_SURFACE);
     util_blitter_flush_depth_stencil(r300->blitter, dstsurf);
     r300_blitter_end(r300);
@@ -327,6 +346,39 @@ void r300_flush_depth_stencil(struct pipe_context *pipe,
 
     tex->zmask_in_use[level] = FALSE;
     pipe_surface_reference(&dstsurf, NULL);
+}
+
+/* We can't use compressed zbuffers as samplers. */
+void r300_flush_depth_textures(struct r300_context *r300)
+{
+    struct r300_textures_state *state =
+        (struct r300_textures_state*)r300->textures_state.state;
+    unsigned i, level;
+    unsigned count = MIN2(state->sampler_view_count,
+                          state->sampler_state_count);
+
+    if (r300->z_decomp_rd)
+        return;
+
+    for (i = 0; i < count; i++)
+        if (state->sampler_views[i] && state->sampler_states[i]) {
+            struct pipe_resource *tex = state->sampler_views[i]->base.texture;
+
+            if (tex->target == PIPE_TEXTURE_3D ||
+                tex->target == PIPE_TEXTURE_CUBE)
+                continue;
+
+            /* Ignore non-depth textures.
+             * Also ignore reinterpreted depth textures, e.g. resource_copy. */
+            if (!util_format_is_depth_or_stencil(tex->format))
+                continue;
+
+            for (level = 0; level <= tex->last_level; level++)
+                if (r300_texture(tex)->zmask_in_use[level]) {
+                    /* We don't handle 3D textures and cubemaps yet. */
+                    r300_flush_depth_stencil(&r300->context, tex, level, 0);
+                 }
+        }
 }
 
 /* Copy a block of pixels from one surface to another using HW. */
@@ -360,6 +412,7 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
     enum pipe_format old_format = dst->format;
     enum pipe_format new_format = old_format;
     boolean is_depth;
+
     if (!pipe->screen->is_format_supported(pipe->screen,
                                            old_format, src->target,
                                            src->nr_samples,
@@ -390,6 +443,7 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
     if (is_depth) {
         r300_flush_depth_stencil(pipe, src, src_level, src_box->z);
     }
+
     if (old_format != new_format) {
         r300_texture_reinterpret_format(pipe->screen,
                                         dst, new_format);

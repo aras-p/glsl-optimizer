@@ -32,7 +32,6 @@
 #include "r300_hyperz.h"
 #include "r300_screen.h"
 #include "r300_shader_semantics.h"
-#include "r300_state_derived.h"
 #include "r300_state_inlines.h"
 #include "r300_texture.h"
 #include "r300_vs.h"
@@ -861,39 +860,6 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             r300_mark_fs_code_dirty(r300);
         }
     }
-}
-
-/* We can't use compressed zbuffers as samplers. */
-static void r300_flush_depth_textures(struct r300_context *r300)
-{
-    struct r300_textures_state *state =
-        (struct r300_textures_state*)r300->textures_state.state;
-    unsigned i, level;
-    unsigned count = MIN2(state->sampler_view_count,
-                          state->sampler_state_count);
-
-    if (r300->z_decomp_rd)
-        return;
-
-    for (i = 0; i < count; i++)
-        if (state->sampler_views[i] && state->sampler_states[i]) {
-            struct pipe_resource *tex = state->sampler_views[i]->base.texture;
-
-            if (tex->target == PIPE_TEXTURE_3D ||
-                tex->target == PIPE_TEXTURE_CUBE)
-                continue;
-
-            /* Ignore non-depth textures.
-             * Also ignore reinterpreted depth textures, e.g. resource_copy. */
-            if (!util_format_is_depth_or_stencil(tex->format))
-                continue;
-
-            for (level = 0; level <= tex->last_level; level++)
-                if (r300_texture(tex)->zmask_in_use[level]) {
-                    /* We don't handle 3D textures and cubemaps yet. */
-                    r300_flush_depth_stencil(&r300->context, tex, level, 0);
-                 }
-        }
 }
 
 void r300_update_derived_state(struct r300_context* r300)
