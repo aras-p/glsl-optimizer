@@ -38,6 +38,7 @@
 
 #include "main/imports.h"
 #include "main/macros.h"
+#include "main/mfeatures.h"
 #include "main/feedback.h"
 
 #include "st_context.h"
