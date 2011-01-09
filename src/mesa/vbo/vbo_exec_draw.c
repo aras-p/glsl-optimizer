@@ -29,6 +29,7 @@
 #include "main/bufferobj.h"
 #include "main/compiler.h"
 #include "main/enums.h"
+#include "main/mfeatures.h"
 #include "main/state.h"
 
 #include "vbo_context.h"

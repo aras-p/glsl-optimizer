@@ -51,6 +51,7 @@
 #ifndef _VBO_CONTEXT_H
 #define _VBO_CONTEXT_H
 
+#include "main/mfeatures.h"
 #include "vbo.h"
 #include "vbo_attrib.h"
 #include "vbo_exec.h"
