@@ -24,6 +24,8 @@
  *
  */
 
+#include "main/mfeatures.h"
+
 #include "nouveau_driver.h"
 #include "nouveau_context.h"
 #include "nouveau_fbo.h"
