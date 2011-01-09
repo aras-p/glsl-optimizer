@@ -94,6 +94,12 @@ enum VS_OUTPUT
    VS_O_MV3
 };
 
+static const unsigned const_empty_block_mask_420[3][2][2] = {
+        { { 0x20, 0x10 },  { 0x08, 0x04 } },
+        { { 0x02, 0x02 },  { 0x02, 0x02 } },
+        { { 0x01, 0x01 },  { 0x01, 0x01 } }
+};
+
 static void *
 create_vert_shader(struct vl_mpeg12_mc_renderer *r)
 {
@@ -125,14 +131,14 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
    bkwd_pred = ureg_DECL_vs_input(shader, VS_I_BKWD_PRED);
 
    o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, VS_O_VPOS);
-   o_line = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_LINE);   
+   o_line = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_LINE);
    o_vtex[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX0);
    o_vtex[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX1);
-   o_vtex[2] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX2);   
+   o_vtex[2] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX2);
    o_eb[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB_0);
    o_eb[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB_1);
    o_info = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_INFO);
-   
+
    for (i = 0; i < 4; ++i) {
      vmv[i] = ureg_DECL_vs_input(shader, VS_I_MV0 + i);
      o_vmv[i] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV0 + i);
@@ -217,7 +223,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
    ureg_MOV(shader, ureg_writemask(o_vtex[2], TGSI_WRITEMASK_XY), ureg_src(t_vpos));
 
    ureg_MOV(shader, ureg_writemask(o_line, TGSI_WRITEMASK_X), ureg_scalar(vrect, TGSI_SWIZZLE_Y));
-   ureg_MUL(shader, ureg_writemask(o_line, TGSI_WRITEMASK_Y), 
+   ureg_MUL(shader, ureg_writemask(o_line, TGSI_WRITEMASK_Y),
       vrect, ureg_imm1f(shader, MACROBLOCK_HEIGHT / 2));
 
    ureg_IF(shader, ureg_scalar(interlaced, TGSI_SWIZZLE_X), &label);
@@ -712,20 +718,6 @@ get_motion_vectors(struct pipe_mpeg12_macroblock *mb, struct vertex2f mv[4])
    }
 }
 
-static bool
-empty_block(enum pipe_video_chroma_format chroma_format,
-            unsigned cbp, unsigned component,
-            unsigned x, unsigned y)
-{
-   /* TODO: Implement 422, 444 */
-   assert(chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
-
-   if(component == 0) /*luma*/
-      return !(cbp  & (1 << (5 - (x + y * 2))));
-   else /*cr cb*/
-      return !(cbp & (1 << (2 - component)));
-}
-
 static void
 grab_vectors(struct vl_mpeg12_mc_renderer *r,
              struct vl_mpeg12_mc_buffer *buffer,
@@ -742,9 +734,9 @@ grab_vectors(struct vl_mpeg12_mc_renderer *r,
    stream.pos.y = mb->mby;
    for ( i = 0; i < 2; ++i) {
       for ( j = 0; j < 2; ++j) {
-         stream.eb[i][j].y = empty_block(r->chroma_format, mb->cbp, 0, j, i);
-         stream.eb[i][j].cr = empty_block(r->chroma_format, mb->cbp, 1, j, i);
-         stream.eb[i][j].cb = empty_block(r->chroma_format, mb->cbp, 2, j, i);         
+         stream.eb[i][j].y = !(mb->cbp & (*r->empty_block_mask)[0][i][j]);
+         stream.eb[i][j].cr = !(mb->cbp & (*r->empty_block_mask)[1][i][j]);
+         stream.eb[i][j].cb = !(mb->cbp & (*r->empty_block_mask)[2][i][j]);
       }
    }
    stream.interlaced = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD ? 1.0f : 0.0f;
@@ -759,7 +751,7 @@ grab_vectors(struct vl_mpeg12_mc_renderer *r,
       case PIPE_MPEG12_MACROBLOCK_TYPE_BKWD:
          stream.ref_frames = 1.0f;
          break;
-        
+
       case PIPE_MPEG12_MACROBLOCK_TYPE_BI:
          stream.ref_frames = 0.0f;
          break;
@@ -786,7 +778,7 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r,
 
    for (y = 0; y < 2; ++y) {
       for (x = 0; x < 2; ++x, ++tb) {
-         if (!empty_block(r->chroma_format, cbp, 0, x, y)) {
+         if (cbp & (*r->empty_block_mask)[0][y][x]) {
             vl_idct_add_block(&buffer->idct_y, mbx * 2 + x, mby * 2 + y, blocks);
             blocks += BLOCK_WIDTH * BLOCK_HEIGHT;
          }
@@ -797,7 +789,7 @@ grab_blocks(struct vl_mpeg12_mc_renderer *r,
    assert(r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
 
    for (tb = 1; tb < 3; ++tb) {
-      if (!empty_block(r->chroma_format, cbp, tb, 0, 0)) {
+      if (cbp & (*r->empty_block_mask)[tb][0][0]) {
          if(tb == 1)
             vl_idct_add_block(&buffer->idct_cb, mbx, mby, blocks);
          else
@@ -859,6 +851,10 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
    renderer->buffer_height = buffer_height;
    renderer->chroma_format = chroma_format;
    renderer->bufmode = bufmode;
+
+   /* TODO: Implement 422, 444 */
+   assert(chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
+   renderer->empty_block_mask = &const_empty_block_mask_420;
 
    renderer->texview_map = util_new_keymap(sizeof(struct pipe_surface*), -1,
                                            texview_map_delete);
@@ -959,7 +955,7 @@ vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg1
    pipe_resource_reference(&buffer->vertex_bufs.individual.quad.buffer, renderer->quad.buffer);
 
    buffer->vertex_bufs.individual.stream = vl_vb_init(
-      &buffer->vertex_stream, renderer->pipe, renderer->macroblocks_per_batch, 
+      &buffer->vertex_stream, renderer->pipe, renderer->macroblocks_per_batch,
       sizeof(struct vertex_stream) / sizeof(float),
       renderer->vertex_stream_stride);
 

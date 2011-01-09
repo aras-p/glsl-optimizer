@@ -52,6 +52,7 @@ struct vl_mpeg12_mc_renderer
    unsigned buffer_width;
    unsigned buffer_height;
    enum pipe_video_chroma_format chroma_format;
+   const unsigned (*empty_block_mask)[3][2][2];
    enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode;
    unsigned macroblocks_per_batch;
 
