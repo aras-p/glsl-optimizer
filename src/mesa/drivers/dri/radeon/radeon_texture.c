@@ -33,6 +33,7 @@
 #include "main/imports.h"
 #include "main/context.h"
 #include "main/enums.h"
+#include "main/mfeatures.h"
 #include "main/mipmap.h"
 #include "main/texcompress.h"
 #include "main/texstore.h"

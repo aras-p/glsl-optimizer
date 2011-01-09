@@ -32,6 +32,7 @@
 #define RADEON_TEXTURE_H
 
 #include "main/formats.h"
+#include "main/mfeatures.h"
 
 void copy_rows(void* dst, GLuint dststride, const void* src, GLuint srcstride,
 	GLuint numrows, GLuint rowsize);
