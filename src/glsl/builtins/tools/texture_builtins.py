@@ -53,9 +53,7 @@ def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
     print "     (parameters"
     print "       (declare (in) " + g + "sampler" + sampler_type + " sampler)"
     print "       (declare (in) " + vec_type("i" if tex_inst == "txf" else "", coord_dim + extra_dim) + " P)",
-    if tex_inst == "txb":
-        print "\n       (declare (in) float bias)",
-    elif tex_inst == "txl":
+    if tex_inst == "txl":
         print "\n       (declare (in) float lod)",
     elif tex_inst == "txf":
         print "\n       (declare (in) int lod)",
@@ -63,6 +61,11 @@ def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
         grad_type = vec_type("", coord_dim)
         print "\n       (declare (in) " + grad_type + " dPdx)",
         print "\n       (declare (in) " + grad_type + " dPdy)",
+
+    if variant & Offset:
+        print "\n       (declare (const_in) " + vec_type("i", offset_dim) + " offset)",
+    if tex_inst == "txb":
+        print "\n       (declare (in) float bias)",
 
     print ")\n     ((return (" + tex_inst + " (var_ref sampler)",
 
@@ -72,8 +75,10 @@ def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
     else:
         print "(var_ref P)",
 
-    # Offset
-    print "0",
+    if variant & Offset:
+        print "(var_ref offset)",
+    else:
+        print "0",
 
     if tex_inst != "txf":
         # Projective divisor
@@ -158,6 +163,28 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("txl", "2DArray")
     end_function(fs, "textureLod")
 
+    start_function("textureLodOffset")
+    generate_fiu_sigs("txl", "1D", Offset)
+    generate_fiu_sigs("txl", "2D", Offset)
+    generate_fiu_sigs("txl", "3D", Offset)
+    generate_fiu_sigs("txl", "1DArray", Offset)
+    generate_fiu_sigs("txl", "2DArray", Offset)
+    end_function(fs, "textureLodOffset")
+
+    start_function("textureOffset")
+    generate_fiu_sigs("tex", "1D", Offset)
+    generate_fiu_sigs("tex", "2D", Offset)
+    generate_fiu_sigs("tex", "3D", Offset)
+    generate_fiu_sigs("tex", "1DArray", Offset)
+    generate_fiu_sigs("tex", "2DArray", Offset)
+
+    generate_fiu_sigs("txb", "1D", Offset)
+    generate_fiu_sigs("txb", "2D", Offset)
+    generate_fiu_sigs("txb", "3D", Offset)
+    generate_fiu_sigs("txb", "1DArray", Offset)
+    generate_fiu_sigs("txb", "2DArray", Offset)
+    end_function(fs, "textureOffset")
+
     start_function("texelFetch")
     generate_fiu_sigs("txf", "1D")
     generate_fiu_sigs("txf", "2D")
@@ -166,6 +193,28 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("txf", "2DArray")
     end_function(fs, "texelFetch")
 
+    start_function("texelFetchOffset")
+    generate_fiu_sigs("txf", "1D", Offset)
+    generate_fiu_sigs("txf", "2D", Offset)
+    generate_fiu_sigs("txf", "3D", Offset)
+    generate_fiu_sigs("txf", "1DArray", Offset)
+    generate_fiu_sigs("txf", "2DArray", Offset)
+    end_function(fs, "texelFetchOffset")
+
+    start_function("textureProjOffset")
+    generate_fiu_sigs("tex", "1D", Proj | Offset)
+    generate_fiu_sigs("tex", "1D", Proj | Offset, 2)
+    generate_fiu_sigs("tex", "2D", Proj | Offset)
+    generate_fiu_sigs("tex", "2D", Proj | Offset, 1)
+    generate_fiu_sigs("tex", "3D", Proj | Offset)
+
+    generate_fiu_sigs("txb", "1D", Proj | Offset)
+    generate_fiu_sigs("txb", "1D", Proj | Offset, 2)
+    generate_fiu_sigs("txb", "2D", Proj | Offset)
+    generate_fiu_sigs("txb", "2D", Proj | Offset, 1)
+    generate_fiu_sigs("txb", "3D", Proj | Offset)
+    end_function(fs, "textureProjOffset")
+
     start_function("textureProjLod")
     generate_fiu_sigs("txl", "1D", Proj)
     generate_fiu_sigs("txl", "1D", Proj, 2)
@@ -173,6 +222,14 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("txl", "2D", Proj, 1)
     generate_fiu_sigs("txl", "3D", Proj)
     end_function(fs, "textureProjLod")
+
+    start_function("textureProjLodOffset")
+    generate_fiu_sigs("txl", "1D", Proj | Offset)
+    generate_fiu_sigs("txl", "1D", Proj | Offset, 2)
+    generate_fiu_sigs("txl", "2D", Proj | Offset)
+    generate_fiu_sigs("txl", "2D", Proj | Offset, 1)
+    generate_fiu_sigs("txl", "3D", Proj | Offset)
+    end_function(fs, "textureProjLodOffset")
 
     start_function("textureGrad")
     generate_fiu_sigs("txd", "1D")
@@ -183,6 +240,15 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("txd", "2DArray")
     end_function(fs, "textureGrad")
 
+    start_function("textureGradOffset")
+    generate_fiu_sigs("txd", "1D", Offset)
+    generate_fiu_sigs("txd", "2D", Offset)
+    generate_fiu_sigs("txd", "3D", Offset)
+    generate_fiu_sigs("txd", "Cube", Offset)
+    generate_fiu_sigs("txd", "1DArray", Offset)
+    generate_fiu_sigs("txd", "2DArray", Offset)
+    end_function(fs, "textureGradOffset")
+
     start_function("textureProjGrad")
     generate_fiu_sigs("txd", "1D", Proj)
     generate_fiu_sigs("txd", "1D", Proj, 2)
@@ -190,6 +256,15 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("txd", "2D", Proj, 1)
     generate_fiu_sigs("txd", "3D", Proj)
     end_function(fs, "textureProjGrad")
+
+    start_function("textureProjGradOffset")
+    generate_fiu_sigs("txd", "1D", Proj | Offset)
+    generate_fiu_sigs("txd", "1D", Proj | Offset, 2)
+    generate_fiu_sigs("txd", "2D", Proj | Offset)
+    generate_fiu_sigs("txd", "2D", Proj | Offset, 1)
+    generate_fiu_sigs("txd", "3D", Proj | Offset)
+    end_function(fs, "textureProjGradOffset")
+
 
     # ARB_texture_rectangle extension
     start_function("texture2DRect")
