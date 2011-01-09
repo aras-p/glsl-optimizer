@@ -166,6 +166,9 @@ extern struct draw_stage *nvc0_draw_render_stage(struct nvc0_context *);
 boolean nvc0_program_translate(struct nvc0_program *);
 void nvc0_program_destroy(struct nvc0_context *, struct nvc0_program *);
 
+/* nvc0_query.c */
+void nvc0_init_query_functions(struct nvc0_context *);
+
 /* nvc0_shader_state.c */
 void nvc0_vertprog_validate(struct nvc0_context *);
 void nvc0_tctlprog_validate(struct nvc0_context *);

@@ -92,6 +92,7 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
 
    screen->base.channel->user_private = nvc0;
 
+   nvc0_init_query_functions(nvc0);
    nvc0_init_surface_functions(nvc0);
    nvc0_init_state_functions(nvc0);
    nvc0_init_resource_functions(&nvc0->pipe);

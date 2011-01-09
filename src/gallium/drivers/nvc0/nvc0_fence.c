@@ -59,7 +59,8 @@ nvc0_fence_emit(struct nvc0_fence *fence)
    OUT_RELOCh(chan, screen->fence.bo, 0, NOUVEAU_BO_WR);
    OUT_RELOCl(chan, screen->fence.bo, 0, NOUVEAU_BO_WR);
    OUT_RING  (chan, fence->sequence);
-   OUT_RING  (chan, NVC0_3D_QUERY_GET_FENCE);
+   OUT_RING  (chan, NVC0_3D_QUERY_GET_FENCE | NVC0_3D_QUERY_GET_SHORT |
+              (0xf << NVC0_3D_QUERY_GET_UNIT__SHIFT));
 
    ++fence->ref;
 

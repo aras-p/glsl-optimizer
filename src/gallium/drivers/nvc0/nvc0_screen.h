@@ -86,6 +86,13 @@ struct nvc0_mm_allocation {
    uint32_t offset;
 };
 
+static INLINE void
+nvc0_fence_sched_release(struct nvc0_fence *nf, struct nvc0_mm_allocation *mm)
+{
+   mm->next = nf->buffers;
+   nf->buffers = mm;
+}
+
 extern struct nvc0_mman *
 nvc0_mm_create(struct nouveau_device *, uint32_t domain, uint32_t storage_type);
 

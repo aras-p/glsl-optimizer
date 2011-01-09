@@ -92,9 +92,9 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_MAX_RENDER_TARGETS:
       return 8;
+   case PIPE_CAP_TIMER_QUERY:
    case PIPE_CAP_OCCLUSION_QUERY:
       return 1;
-   case PIPE_CAP_TIMER_QUERY:
    case PIPE_CAP_STREAM_OUTPUT:
       return 0;
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:

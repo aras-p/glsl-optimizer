@@ -52,8 +52,7 @@ static INLINE void
 release_allocation(struct nvc0_mm_allocation **mm, struct nvc0_fence *fence)
 {
    if (fence && fence->state != NVC0_FENCE_STATE_SIGNALLED) {
-      (*mm)->next = fence->buffers;
-      fence->buffers = (*mm);
+      nvc0_fence_sched_release(fence, *mm);
    } else {
       nvc0_mm_free(*mm);
    }
