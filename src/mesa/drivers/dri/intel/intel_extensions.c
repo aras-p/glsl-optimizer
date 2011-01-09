@@ -25,6 +25,8 @@
  * 
  **************************************************************************/
 
+#include "main/mfeatures.h"
+
 #include "intel_chipset.h"
 #include "intel_context.h"
 #include "intel_extensions.h"

@@ -31,6 +31,7 @@
 #include "main/renderbuffer.h"
 #include "main/hash.h"
 #include "main/fbobject.h"
+#include "main/mfeatures.h"
 
 #include "utils.h"
 #include "xmlpool.h"

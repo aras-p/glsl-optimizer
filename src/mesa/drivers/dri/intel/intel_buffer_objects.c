@@ -27,6 +27,7 @@
 
 
 #include "main/imports.h"
+#include "main/mfeatures.h"
 #include "main/mtypes.h"
 #include "main/macros.h"
 #include "main/bufferobj.h"

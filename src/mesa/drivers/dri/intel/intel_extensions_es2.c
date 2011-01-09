@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "main/extensions.h"
+#include "main/mfeatures.h"
 
 #include "intel_extensions.h"
 
