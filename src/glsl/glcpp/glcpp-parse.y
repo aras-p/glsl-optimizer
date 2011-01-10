@@ -398,7 +398,12 @@ expression:
 		$$ = $1 % $3;
 	}
 |	expression '/' expression {
-		$$ = $1 / $3;
+		if ($3 == 0) {
+			yyerror (& @1, parser,
+				 "division by 0 in preprocessor directive");
+		} else {
+			$$ = $1 / $3;
+		}
 	}
 |	expression '*' expression {
 		$$ = $1 * $3;
