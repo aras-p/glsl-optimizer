@@ -888,7 +888,7 @@ vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg1
    template.width0 = renderer->buffer_width;
    template.height0 = renderer->buffer_height;
    template.depth0 = 1;
-   template.usage = PIPE_USAGE_DYNAMIC;
+   template.usage = PIPE_USAGE_STATIC;
    template.bind = PIPE_BIND_SAMPLER_VIEW;
    template.flags = 0;
 
