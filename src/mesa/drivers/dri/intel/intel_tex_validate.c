@@ -104,7 +104,8 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
     */
    if (firstImage->mt &&
        firstImage->mt != intelObj->mt &&
-       firstImage->mt->levels >= intelObj->_MaxLevel) {
+       firstImage->mt->first_level <= tObj->BaseLevel &&
+       firstImage->mt->last_level >= intelObj->_MaxLevel) {
 
       if (intelObj->mt)
          intel_miptree_release(intel, &intelObj->mt);
@@ -131,10 +132,11 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    if (intelObj->mt &&
        (intelObj->mt->target != intelObj->base.Target ||
 	intelObj->mt->internal_format != firstImage->base.InternalFormat ||
-	intelObj->mt->levels <= intelObj->_MaxLevel ||
-	intelObj->mt->width0 != firstImage->mt->width0 ||
-	intelObj->mt->height0 != firstImage->mt->height0 ||
-	intelObj->mt->depth0 != firstImage->mt->depth0 ||
+	intelObj->mt->first_level != tObj->BaseLevel ||
+	intelObj->mt->last_level != intelObj->_MaxLevel ||
+	intelObj->mt->width0 != firstImage->base.Width ||
+	intelObj->mt->height0 != firstImage->base.Height ||
+	intelObj->mt->depth0 != firstImage->base.Depth ||
 	intelObj->mt->cpp != cpp ||
 	intelObj->mt->compressed != _mesa_is_format_compressed(firstImage->base.TexFormat))) {
       intel_miptree_release(intel, &intelObj->mt);
@@ -144,9 +146,18 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
    /* May need to create a new tree:
     */
    if (!intelObj->mt) {
-      intelObj->mt = intel_miptree_create_for_teximage(intel, intelObj,
-						       firstImage,
-						       GL_TRUE);
+      intelObj->mt = intel_miptree_create(intel,
+                                          intelObj->base.Target,
+                                          firstImage->base._BaseFormat,
+                                          firstImage->base.InternalFormat,
+                                          tObj->BaseLevel,
+                                          intelObj->_MaxLevel,
+                                          firstImage->base.Width,
+                                          firstImage->base.Height,
+                                          firstImage->base.Depth,
+                                          cpp,
+                                          comp_byte,
+					  GL_TRUE);
    }
 
    /* Pull in any images not in the object's tree:

@@ -196,15 +196,15 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
 /*    surf.ss0.data_return_format = BRW_SURFACERETURNFORMAT_S1; */
    surf.ss1.base_addr = intelObj->mt->region->buffer->offset; /* reloc */
 
-   /* mip_count is #levels - 1 */
    surf.ss2.mip_count = intelObj->_MaxLevel - tObj->BaseLevel;
-   surf.ss2.width = intelObj->mt->width0 - 1;
-   surf.ss2.height = intelObj->mt->height0 - 1;
+   surf.ss2.width = firstImage->Width - 1;
+   surf.ss2.height = firstImage->Height - 1;
    brw_set_surface_tiling(&surf, intelObj->mt->region->tiling);
    surf.ss3.pitch = (intelObj->mt->region->pitch * intelObj->mt->cpp) - 1;
-   surf.ss3.depth = intelObj->mt->depth0 - 1;
-   surf.ss4.min_lod = tObj->BaseLevel;
+   surf.ss3.depth = firstImage->Depth - 1;
 
+   surf.ss4.min_lod = 0;
+ 
    if (tObj->Target == GL_TEXTURE_CUBE_MAP) {
       surf.ss0.cube_pos_x = 1;
       surf.ss0.cube_pos_y = 1;

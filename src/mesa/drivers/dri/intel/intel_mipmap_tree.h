@@ -93,7 +93,8 @@ struct intel_mipmap_tree
    GLenum target;
    GLenum internal_format;
 
-   GLuint levels;
+   GLuint first_level;
+   GLuint last_level;
 
    GLuint width0, height0, depth0; /**< Level zero image dimensions */
    GLuint cpp;
@@ -123,7 +124,8 @@ struct intel_mipmap_tree *intel_miptree_create(struct intel_context *intel,
                                                GLenum target,
                                                GLenum base_format,
                                                GLenum internal_format,
-                                               GLuint levels,
+                                               GLuint first_level,
+                                               GLuint last_level,
                                                GLuint width0,
                                                GLuint height0,
                                                GLuint depth0,

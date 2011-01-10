@@ -86,7 +86,7 @@ void i945_miptree_layout_2d(struct intel_context *intel,
     * constraints of mipmap placement push the right edge of the
     * 2nd mipmap out past the width of its parent.
     */
-   if (mt->levels > 1) {
+   if (mt->first_level != mt->last_level) {
        GLuint mip1_width;
 
        if (mt->compressed) {
@@ -104,7 +104,7 @@ void i945_miptree_layout_2d(struct intel_context *intel,
 
    mt->total_height = 0;
 
-   for (level = 0; level < mt->levels; level++) {
+   for ( level = mt->first_level ; level <= mt->last_level ; level++ ) {
       GLuint img_height;
 
       intel_miptree_set_level_info(mt, level, nr_images, x, y, width,
@@ -123,7 +123,7 @@ void i945_miptree_layout_2d(struct intel_context *intel,
 
       /* Layout_below: step right after second mipmap.
        */
-      if (level == 1) {
+      if (level == mt->first_level + 1) {
 	 x += ALIGN(width, align_w);
       }
       else {
