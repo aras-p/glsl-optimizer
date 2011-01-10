@@ -32,6 +32,7 @@
 #include <util/u_inlines.h>
 #include <util/u_memory.h>
 #include <util/u_keymap.h>
+#include <util/u_draw.h>
 #include <util/u_sampler.h>
 #include <tgsi/tgsi_ureg.h>
 #include "vl_csc.h"
@@ -557,6 +558,7 @@ static void draw_layers(struct vl_compositor *c,
 
       c->pipe->bind_fs_state(c->pipe, frag_shaders[i]);
       c->pipe->set_fragment_sampler_views(c->pipe, 1, &surface_view);
+
       util_draw_arrays(c->pipe, PIPE_PRIM_TRIANGLES, i * 6, 6);
 
       if (delete_view) {
@@ -629,8 +631,8 @@ void vl_compositor_set_csc_matrix(struct vl_compositor *compositor, const float 
       pipe_buffer_map(compositor->pipe, compositor->fs_const_buf,
                       PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
                       &buf_transfer),
-      mat,
-      sizeof(struct fragment_shader_consts)
+		mat,
+		sizeof(struct fragment_shader_consts)
    );
 
    pipe_buffer_unmap(compositor->pipe, buf_transfer);

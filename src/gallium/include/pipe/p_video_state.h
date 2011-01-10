@@ -74,6 +74,7 @@ enum pipe_mpeg12_dct_type
    PIPE_MPEG12_DCT_TYPE_FRAME
 };
 
+
 struct pipe_macroblock
 {
    enum pipe_video_codec codec;

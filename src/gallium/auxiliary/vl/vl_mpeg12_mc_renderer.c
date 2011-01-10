@@ -35,6 +35,7 @@
 #include <util/u_memory.h>
 #include <util/u_keymap.h>
 #include <util/u_sampler.h>
+#include <util/u_draw.h>
 #include <tgsi/tgsi_ureg.h>
 
 #define DEFAULT_BUF_ALIGNMENT 1
@@ -636,7 +637,6 @@ get_motion_vectors(struct pipe_mpeg12_macroblock *mb, struct vertex2s mv[4])
       case PIPE_MPEG12_MACROBLOCK_TYPE_BI:
       {
          if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
-
             mv[2].x = mb->pmv[0][1][0];
             mv[2].y = mb->pmv[0][1][1];
 

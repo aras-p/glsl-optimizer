@@ -1,7 +1,7 @@
 TOP = ../../../..
 include $(TOP)/configs/current
 
-LIBBASENAME = XvMCsoftpipe
+LIBBASENAME = softpipe_drv_video
 
 DRIVER_DEFINES = -DGALLIUM_SOFTPIPE
 DRIVER_INCLUDES =
@@ -16,6 +16,6 @@ C_SOURCES = \
 
 DRIVER_LIBS =
 
-include ../Makefile.xvmc
+include ../Makefile.va
 
 symlinks:

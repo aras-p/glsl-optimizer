@@ -506,6 +506,7 @@ enum pipe_video_codec
 
 enum pipe_video_profile
 {
+   PIPE_VIDEO_PROFILE_UNKNOWN,
    PIPE_VIDEO_PROFILE_MPEG1,
    PIPE_VIDEO_PROFILE_MPEG2_SIMPLE,
    PIPE_VIDEO_PROFILE_MPEG2_MAIN,
@@ -518,6 +519,7 @@ enum pipe_video_profile
    PIPE_VIDEO_PROFILE_MPEG4_AVC_MAIN,
    PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH
 };
+
 
 /**
  * Composite query types
@@ -532,6 +534,7 @@ struct pipe_query_data_timestamp_disjoint
    uint64_t frequency;
    boolean  disjoint;
 };
+
 
 #ifdef __cplusplus
 }

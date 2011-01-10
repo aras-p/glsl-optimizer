@@ -179,6 +179,7 @@ sp_mpeg12_is_format_supported(struct pipe_video_context *vpipe,
    if (geom & PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO)
       return FALSE;
 
+
    return ctx->pipe->screen->is_format_supported(ctx->pipe->screen, format, PIPE_TEXTURE_2D,
                                                  0, usage, geom);
 }
@@ -209,11 +210,10 @@ sp_mpeg12_decode_macroblocks(struct pipe_video_context *vpipe,
 }
 
 static void
-sp_mpeg12_surface_fill(struct pipe_video_context *vpipe,
+sp_mpeg12_clear_render_target(struct pipe_video_context *vpipe,
                        struct pipe_surface *dst,
                        unsigned dstx, unsigned dsty,
-                       unsigned width, unsigned height,
-                       unsigned value)
+                       unsigned width, unsigned height)
 {
    struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
    float rgba[4] = { 0, 0, 0, 0 };
@@ -228,7 +228,7 @@ sp_mpeg12_surface_fill(struct pipe_video_context *vpipe,
 }
 
 static void
-sp_mpeg12_surface_copy(struct pipe_video_context *vpipe,
+sp_mpeg12_resource_copy_region(struct pipe_video_context *vpipe,
                        struct pipe_surface *dst,
                        unsigned dstx, unsigned dsty,
                        struct pipe_surface *src,
@@ -462,14 +462,16 @@ init_pipe_state(struct sp_mpeg12_context *ctx)
    rast.line_width = 1;
    rast.point_smooth = 0;
    rast.point_quad_rasterization = 0;
-   rast.point_size = 1;
+   rast.point_size_per_vertex = 1;
    rast.offset_units = 1;
    rast.offset_scale = 1;
    rast.gl_rasterization_rules = 1;
+   
    ctx->rast = ctx->pipe->create_rasterizer_state(ctx->pipe, &rast);
    ctx->pipe->bind_rasterizer_state(ctx->pipe, ctx->rast);
 
    memset(&blend, 0, sizeof blend);
+
    blend.independent_blend_enable = 0;
    blend.rt[0].blend_enable = 0;
    blend.rt[0].rgb_func = PIPE_BLEND_ADD;
@@ -538,14 +540,15 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
    ctx->base.height = height;
 
    ctx->base.screen = pipe->screen;
+
    ctx->base.destroy = sp_mpeg12_destroy;
    ctx->base.get_param = sp_mpeg12_get_param;
    ctx->base.is_format_supported = sp_mpeg12_is_format_supported;
    ctx->base.create_surface = sp_mpeg12_create_surface;
    ctx->base.decode_macroblocks = sp_mpeg12_decode_macroblocks;
    ctx->base.render_picture = sp_mpeg12_render_picture;
-   ctx->base.surface_fill = sp_mpeg12_surface_fill;
-   ctx->base.surface_copy = sp_mpeg12_surface_copy;
+   ctx->base.clear_render_target = sp_mpeg12_clear_render_target;
+   ctx->base.resource_copy_region = sp_mpeg12_resource_copy_region;
    ctx->base.get_transfer = sp_mpeg12_get_transfer;
    ctx->base.transfer_destroy = sp_mpeg12_transfer_destroy;
    ctx->base.transfer_map = sp_mpeg12_transfer_map;

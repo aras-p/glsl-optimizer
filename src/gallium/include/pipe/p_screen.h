@@ -92,13 +92,13 @@ struct pipe_screen {
     */
    int (*get_shader_param)( struct pipe_screen *, unsigned shader, enum pipe_shader_cap param );
 
-   struct pipe_context * (*context_create)( struct pipe_screen *,
-                                            void *priv );
+   struct pipe_context * (*context_create)( struct pipe_screen *, void *priv );
 
    struct pipe_video_context * (*video_context_create)( struct pipe_screen *screen,
                                                         enum pipe_video_profile profile,
                                                         enum pipe_video_chroma_format chroma_format,
                                                         unsigned width, unsigned height, void *priv );
+
 
    /**
     * Check if the given pipe_format is supported as a texture or

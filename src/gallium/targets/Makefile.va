@@ -1,23 +1,23 @@
-# This makefile template is used to build libvdpau_g3dvl.so
+# This makefile template is used to build "driver"_drv_video.so
 
-LIBBASENAME = vdpau_g3dvl
 LIBNAME = lib$(LIBBASENAME).so
-VDPAU_LIB_GLOB=lib$(LIBBASENAME).*so*
-VDPAU_MAJOR = 1
-VDPAU_MINOR = 0
+VA_LIB_GLOB= lib$(LIBBASENAME).*so*
+VA_MAJOR = 0
+VA_MINOR = 3
 INCLUDES = -I$(TOP)/src/gallium/include \
 	   -I$(TOP)/src/gallium/drivers \
 	   -I$(TOP)/src/gallium/auxiliary \
+	   -I$(TOP)/src/gallium/winsys \
 	   -I$(TOP)/src/gallium/winsys/g3dvl \
 	   $(DRIVER_INCLUDES)
-DEFINES = -DGALLIUM_TRACE -DVER_MAJOR=$(VDPAU_MAJOR) -DVER_MINOR=$(VDPAU_MINOR) $(DRIVER_DEFINES)
-LIBS = $(EXTRA_LIB_PATH) $(DRIVER_LIBS) -lvdpau -lXext -lX11 -lm
-STATE_TRACKER_LIB = $(TOP)/src/gallium/state_trackers/vdpau/libvdpautracker.a
+DEFINES = -DGALLIUM_TRACE -DVER_MAJOR=$(VA_MAJOR) -DVER_MINOR=$(VA_MINOR) $(DRIVER_DEFINES)
+LIBS = $(EXTRA_LIB_PATH) $(DRIVER_LIBS) -lva -lXext -lX11 -lm
+STATE_TRACKER_LIB = $(TOP)/src/gallium/state_trackers/va/libvatracker.a
 
-# XXX: Hack, VDPAU public funcs aren't exported if we link to libvdpautracker.a :(
+# XXX: Hack, VA public funcs aren't exported
 OBJECTS = $(C_SOURCES:.c=.o) \
 	  $(ASM_SOURCES:.S=.o) \
-	  $(TOP)/src/gallium/state_trackers/vdpau/*.o
+	  $(TOP)/src/gallium/state_trackers/va/*.o
 
 ##### RULES #####
 
@@ -33,7 +33,7 @@ default: depend symlinks $(TOP)/$(LIB_DIR)/gallium/$(LIBNAME)
 
 $(TOP)/$(LIB_DIR)/gallium/$(LIBNAME): $(OBJECTS) $(PIPE_DRIVERS) $(STATE_TRACKER_LIB) $(TOP)/$(LIB_DIR)/gallium Makefile
 	$(MKLIB) -o $(LIBBASENAME) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
-		-major $(VDPAU_MAJOR) -minor $(VDPAU_MINOR) $(MKLIB_OPTIONS) \
+		-major $(VA_MAJOR) -minor $(VA_MINOR) $(MKLIB_OPTIONS) \
 		-install $(TOP)/$(LIB_DIR)/gallium \
 		$(OBJECTS) $(STATE_TRACKER_LIB) $(PIPE_DRIVERS) $(LIBS)
 
@@ -56,7 +56,7 @@ clean:
 	-rm -f depend depend.bak
 
 install: default
-	$(INSTALL) -d $(DESTDIR)$(VDPAU_LIB_INSTALL_DIR)
-	$(MINSTALL) -m 755 $(TOP)/$(LIB_DIR)/gallium/$(VDPAU_LIB_GLOB) $(DESTDIR)$(VDPAU_LIB_INSTALL_DIR)
+	$(INSTALL) -d $(DESTDIR)$(VA_LIB_INSTALL_DIR)
+	$(MINSTALL) -m 755 $(TOP)/$(LIB_DIR)/gallium/$(VA_LIB_GLOB) $(DESTDIR)$(VA_LIB_INSTALL_DIR)
 
 include depend

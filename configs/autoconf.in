@@ -157,6 +157,12 @@ DRI_DRIVER_SEARCH_DIR = @DRI_DRIVER_SEARCH_DIR@
 # EGL driver install directory
 EGL_DRIVER_INSTALL_DIR = @EGL_DRIVER_INSTALL_DIR@
 
+# VDPAU library install directory
+VDPAU_LIB_INSTALL_DIR=@VDPAU_LIB_INSTALL_DIR@
+
+# VA library install directory
+VA_LIB_INSTALL_DIR=@VA_LIB_INSTALL_DIR@
+
 # Xorg driver install directory (for xorg state-tracker)
 XORG_DRIVER_INSTALL_DIR = @XORG_DRIVER_INSTALL_DIR@
 

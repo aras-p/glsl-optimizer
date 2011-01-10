@@ -1426,12 +1426,26 @@ yes)
                 AC_MSG_ERROR([cannot build vega state tracker without --enable-openvg])
             fi
             ;;
-        xorg/xvmc)
-            # Check for libXvMC?
+	xorg/xvmc)
+            # Check for xvmc?
             if test "x$enable_gallium_g3dvl" != xyes; then
                 AC_MSG_ERROR([cannot build XvMC state tracker without --enable-gallium-g3dvl])
             fi
             HAVE_ST_XVMC="yes"
+            ;;
+        vdpau)
+            # Check for libvdpau?
+            if test "x$enable_gallium_g3dvl" != xyes; then
+                AC_MSG_ERROR([cannot build vdpau state tracker without --enable-gallium-g3dvl])
+            fi
+            HAVE_ST_VDPAU="yes"
+            ;;
+	va)
+            # Check for libva?
+            if test "x$enable_gallium_g3dvl" != xyes; then
+                AC_MSG_ERROR([cannot build va state tracker without --enable-gallium-g3dvl])
+            fi
+            HAVE_ST_VA="yes"
             ;;
         esac
 
@@ -1580,7 +1594,7 @@ dnl
 dnl Gallium helper functions
 dnl
 gallium_check_st() {
-    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_XORG" = xyes || test "x$HAVE_ST_XVMC" = xyes; then
+    if test "x$HAVE_ST_DRI" = xyes || test "x$HAVE_ST_XORG" = xyes || test "x$HAVE_ST_XVMC" = xyes || test "x$HAVE_ST_VDPAU" = xyes || test "x$HAVE_ST_VA" = xyes; then
          GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS $1"
     fi
     if test "x$HAVE_ST_DRI" = xyes && test "x$2" != x; then
@@ -1589,8 +1603,14 @@ gallium_check_st() {
     if test "x$HAVE_ST_XORG" = xyes && test "x$3" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $3"
     fi
-    if test "x$HAVE_ST_XVMC" = xyes && test "x$5" != x; then
+    if test "x$HAVE_ST_XVMC" = xyes && test "x$4" != x; then
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $4"
+    fi
+    if test "x$HAVE_ST_VDPAU" = xyes && test "x$5" != x; then
          GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $5"
+    fi
+    if test "x$HAVE_ST_VA" = xyes && test "x$6" != x; then
+         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS $6"
     fi
 }
 
@@ -1678,7 +1698,7 @@ AC_ARG_ENABLE([gallium-r600],
 if test "x$enable_gallium_r600" = xyes; then
     if test "x$HAVE_LIBDRM_RADEON" = xyes; then
 	GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r600"
-	gallium_check_st "r600/drm" "dri-r600" "xvmc-r600"
+	gallium_check_st "r600/drm" "dri-r600" "xvmc-r600" "va-r600"
     else
 	AC_MSG_ERROR([libdrm_radeon is missing, cannot build gallium-r600])
     fi
@@ -1708,13 +1728,36 @@ AC_ARG_ENABLE([gallium-g3dvl],
 if test "x$enable_gallium_g3dvl" = xyes; then
     case "$mesa_driver" in
     xlib)
+	if test "x$HAVE_ST_VDPAU" = xyes; then
+        GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS vdpau-softpipe"
+	fi
+	if test "x$HAVE_ST_XVMC" = xyes; then
         GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS xvmc-softpipe"
-        ;;
+	fi
+	if test "x$HAVE_ST_VA" = xyes; then
+	GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS va-softpipe"
+	fi
+	;;
     dri)
         GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS g3dvl/dri"
         ;;
     esac
 fi
+dnl Directory for VDPAU libs
+AC_ARG_WITH([vdpau-libdir],
+    [AS_HELP_STRING([--with-vdpau-libdir=DIR],
+        [directory for the VDPAU libraries @<:@default=${libdir}/vdpau@:>@])],
+    [VDPAU_LIB_INSTALL_DIR="$withval"],
+    [VDPAU_LIB_INSTALL_DIR='${libdir}/vdpau'])
+AC_SUBST([VDPAU_LIB_INSTALL_DIR])
+
+dnl Directory for VA libs
+AC_ARG_WITH([va-libdir],
+    [AS_HELP_STRING([--with-va-libdir=DIR],
+        [directory for the VA libraries @<:@default=${libdir}/va@:>@])],
+    [VA_LIB_INSTALL_DIR="$withval"],
+    [VA_LIB_INSTALL_DIR='${libdir}/va'])
+AC_SUBST([VA_LIB_INSTALL_DIR])
 
 dnl
 dnl Gallium swrast configuration

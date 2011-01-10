@@ -105,17 +105,19 @@ struct pipe_video_context
                           struct pipe_video_rect        *dst_area,
                           struct pipe_fence_handle      **fence);
 
-   void (*surface_fill)(struct pipe_video_context *vpipe,
+   void (*clear_render_target)(struct pipe_video_context *vpipe,
                         struct pipe_surface *dst,
                         unsigned dstx, unsigned dsty,
-                        unsigned width, unsigned height,
-                        unsigned value);
+						const float *rgba,
+                        unsigned width, unsigned height);
 
-   void (*surface_copy)(struct pipe_video_context *vpipe,
-                        struct pipe_surface *dst,
-                        unsigned dstx, unsigned dsty,
-                        struct pipe_surface *src,
-                        unsigned srcx, unsigned srcy,
+   void (*resource_copy_region)(struct pipe_video_context *vpipe,
+                        struct pipe_resource *dst,
+						struct pipe_subresource subdst,
+                        unsigned dstx, unsigned dsty, unsigned dstz,
+                        struct pipe_resource *src,
+						struct pipe_subresource subsrc,
+                        unsigned srcx, unsigned srcy, unsigned srcz,
                         unsigned width, unsigned height);
 
    struct pipe_transfer *(*get_transfer)(struct pipe_video_context *vpipe,

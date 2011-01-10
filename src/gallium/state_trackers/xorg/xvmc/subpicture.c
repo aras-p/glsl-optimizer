@@ -215,18 +215,27 @@ Status XvMCClearSubpicture(Display *dpy, XvMCSubpicture *subpicture, short x, sh
 {
    XvMCSubpicturePrivate *subpicture_priv;
    XvMCContextPrivate *context_priv;
+   unsigned int tmp_color;
+   float color_f[4];
 
    assert(dpy);
 
    if (!subpicture)
       return XvMCBadSubpicture;
+	  	
+   /* Convert color to float */
+   util_format_read_4f(PIPE_FORMAT_B8G8R8A8_UNORM,
+                    color_f, 1,
+                    &color, 4,
+                    0, 0, 1, 1);
 
    subpicture_priv = subpicture->privData;
    context_priv = subpicture_priv->context->privData;
    /* TODO: Assert clear rect is within bounds? Or clip? */
-   context_priv->vctx->vpipe->surface_fill(context_priv->vctx->vpipe,
+   context_priv->vctx->vpipe->clear_render_target(context_priv->vctx->vpipe,
                                            subpicture_priv->sfc, x, y,
-                                           width, height, color);
+										   color_f,
+                                           width, height);
 
    return Success;
 }

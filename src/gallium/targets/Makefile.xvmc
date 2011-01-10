@@ -1,7 +1,7 @@
 # This makefile template is used to build libXvMCg3dvl.so
 
-LIBBASENAME = XvMCg3dvl
 LIBNAME = lib$(LIBBASENAME).so
+LIB_GLOB=lib$(LIBBASENAME).*so*
 XVMC_MAJOR = 1
 XVMC_MINOR = 0
 INCLUDES = -I$(TOP)/src/gallium/include \
@@ -11,7 +11,7 @@ INCLUDES = -I$(TOP)/src/gallium/include \
 	   -I$(TOP)/src/gallium/winsys/g3dvl \
 	   $(DRIVER_INCLUDES)
 DEFINES = -DGALLIUM_TRACE $(DRIVER_DEFINES)
-LIBS = $(EXTRA_LIB_PATH) $(DRIVER_LIBS) -lXvMC -lXv -lX11 -lm
+LIBS = $(EXTRA_LIB_PATH) $(DRIVER_LIBS) -lXv -lX11 -lm
 STATE_TRACKER_LIB = $(TOP)/src/gallium/state_trackers/xorg/xvmc/libxvmctracker.a
 
 # XXX: Hack, XvMC public funcs aren't exported if we link to libxvmctracker.a :(
@@ -55,8 +55,8 @@ clean:
 	-rm -f *.o *~ *.so $(SYMLINKS)
 	-rm -f depend depend.bak
 
-#install: $(LIBNAME)
-#	$(INSTALL) -d $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
-#	$(MINSTALL) -m 755 $(LIBNAME) $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
+install: default
+	$(INSTALL) -d $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
+	$(MINSTALL) -m 755 $(TOP)/$(LIB_DIR)/gallium/$(LIB_GLOB) $(DESTDIR)$(INSTALL_DIR)/$(LIB_DIR)
 
 include depend
