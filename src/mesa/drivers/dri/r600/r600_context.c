@@ -44,6 +44,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/bufferobj.h"
 #include "main/texobj.h"
 #include "main/points.h"
+#include "main/mfeatures.h"
 
 #include "swrast/swrast.h"
 #include "swrast_setup/swrast_setup.h"
