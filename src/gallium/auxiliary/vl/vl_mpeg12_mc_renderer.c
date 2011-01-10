@@ -45,35 +45,28 @@
 
 struct vertex_stream
 {
-   struct vertex2f pos;
+   struct vertex2s pos;
+   struct vertex2s mv[4];
    struct {
-      float y;
-      float cr;
-      float cb;
+      int8_t y;
+      int8_t cr;
+      int8_t cb;
+      int8_t flag;
    } eb[2][2];
-   float interlaced;
-   float frame_pred;
-   float ref_frames;
-   float bkwd_pred;
-   struct vertex2f mv[4];
 };
 
 enum VS_INPUT
 {
    VS_I_RECT,
    VS_I_VPOS,
-   VS_I_EB_0_0,
-   VS_I_EB_0_1,
-   VS_I_EB_1_0,
-   VS_I_EB_1_1,
-   VS_I_INTERLACED,
-   VS_I_FRAME_PRED,
-   VS_I_REF_FRAMES,
-   VS_I_BKWD_PRED,
    VS_I_MV0,
    VS_I_MV1,
    VS_I_MV2,
    VS_I_MV3,
+   VS_I_EB_0_0,
+   VS_I_EB_0_1,
+   VS_I_EB_1_0,
+   VS_I_EB_1_1,
 
    NUM_VS_INPUTS
 };
@@ -106,7 +99,6 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
    struct ureg_program *shader;
    struct ureg_src block_scale, mv_scale;
    struct ureg_src vrect, vpos, eb[2][2], vmv[4];
-   struct ureg_src interlaced, frame_pred, ref_frames, bkwd_pred;
    struct ureg_dst t_vpos, t_vtex, t_vmv;
    struct ureg_dst o_vpos, o_line, o_vtex[3], o_eb[2], o_vmv[4], o_info;
    unsigned i, label;
@@ -125,10 +117,6 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
    eb[1][0] = ureg_DECL_vs_input(shader, VS_I_EB_1_0);
    eb[0][1] = ureg_DECL_vs_input(shader, VS_I_EB_0_1);
    eb[1][1] = ureg_DECL_vs_input(shader, VS_I_EB_1_1);
-   interlaced = ureg_DECL_vs_input(shader, VS_I_INTERLACED);
-   frame_pred = ureg_DECL_vs_input(shader, VS_I_FRAME_PRED);
-   ref_frames = ureg_DECL_vs_input(shader, VS_I_REF_FRAMES);
-   bkwd_pred = ureg_DECL_vs_input(shader, VS_I_BKWD_PRED);
 
    o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, VS_O_VPOS);
    o_line = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_LINE);
@@ -165,7 +153,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
     * o_line.xy = vrect * 8
     * o_line.z = interlaced
     *
-    * if(interlaced) {
+    * if(eb[0][0].w) { //interlaced
     *    t_vtex.x = vrect.x
     *    t_vtex.y = vrect.y * 0.5
     *    t_vtex += vpos
@@ -200,21 +188,23 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
             ureg_negate(ureg_scalar(vrect, TGSI_SWIZZLE_X)),
             eb[1][1], eb[1][0]);
 
-   ureg_MOV(shader, ureg_writemask(o_info, TGSI_WRITEMASK_X), ref_frames);
+   ureg_MOV(shader, ureg_writemask(o_info, TGSI_WRITEMASK_X),
+            ureg_scalar(eb[1][1], TGSI_SWIZZLE_W));
    ureg_SGE(shader, ureg_writemask(o_info, TGSI_WRITEMASK_Y),
-      ureg_scalar(ref_frames, TGSI_SWIZZLE_X), ureg_imm1f(shader, 0.0f));
-   ureg_MOV(shader, ureg_writemask(o_info, TGSI_WRITEMASK_Z), ureg_scalar(bkwd_pred, TGSI_SWIZZLE_X));
+      ureg_scalar(eb[1][1], TGSI_SWIZZLE_W), ureg_imm1f(shader, 0.0f));
+   ureg_MOV(shader, ureg_writemask(o_info, TGSI_WRITEMASK_Z),
+            ureg_scalar(eb[1][0], TGSI_SWIZZLE_W));
 
    ureg_MAD(shader, ureg_writemask(o_vmv[0], TGSI_WRITEMASK_XY), mv_scale, vmv[0], ureg_src(t_vpos));
    ureg_MAD(shader, ureg_writemask(o_vmv[2], TGSI_WRITEMASK_XY), mv_scale, vmv[2], ureg_src(t_vpos));
 
    ureg_CMP(shader, ureg_writemask(t_vmv, TGSI_WRITEMASK_XY),
-            ureg_negate(ureg_scalar(frame_pred, TGSI_SWIZZLE_X)),
+            ureg_negate(ureg_scalar(eb[0][1], TGSI_SWIZZLE_W)),
             vmv[0], vmv[1]);
    ureg_MAD(shader, ureg_writemask(o_vmv[1], TGSI_WRITEMASK_XY), mv_scale, ureg_src(t_vmv), ureg_src(t_vpos));
 
    ureg_CMP(shader, ureg_writemask(t_vmv, TGSI_WRITEMASK_XY),
-            ureg_negate(ureg_scalar(frame_pred, TGSI_SWIZZLE_X)),
+            ureg_negate(ureg_scalar(eb[0][1], TGSI_SWIZZLE_W)),
             vmv[2], vmv[3]);
    ureg_MAD(shader, ureg_writemask(o_vmv[3], TGSI_WRITEMASK_XY), mv_scale, ureg_src(t_vmv), ureg_src(t_vpos));
 
@@ -226,7 +216,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
    ureg_MUL(shader, ureg_writemask(o_line, TGSI_WRITEMASK_Y),
       vrect, ureg_imm1f(shader, MACROBLOCK_HEIGHT / 2));
 
-   ureg_IF(shader, ureg_scalar(interlaced, TGSI_SWIZZLE_X), &label);
+   ureg_IF(shader, ureg_scalar(eb[0][0], TGSI_SWIZZLE_W), &label);
 
       ureg_MOV(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_X), vrect);
       ureg_MUL(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_Y), vrect, ureg_imm1f(shader, 0.5f));
@@ -563,37 +553,25 @@ init_buffers(struct vl_mpeg12_mc_renderer *r)
    r->quad = vl_vb_upload_quads(r->pipe, r->macroblocks_per_batch);
 
    /* Position element */
-   vertex_elems[VS_I_VPOS].src_format = PIPE_FORMAT_R32G32_FLOAT;
-
-   /* y, cr, cb empty block element top left block */
-   vertex_elems[VS_I_EB_0_0].src_format = PIPE_FORMAT_R32G32B32_FLOAT;
-
-   /* y, cr, cb empty block element top right block */
-   vertex_elems[VS_I_EB_0_1].src_format = PIPE_FORMAT_R32G32B32_FLOAT;
-
-   /* y, cr, cb empty block element bottom left block */
-   vertex_elems[VS_I_EB_1_0].src_format = PIPE_FORMAT_R32G32B32_FLOAT;
-
-   /* y, cr, cb empty block element bottom right block */
-   vertex_elems[VS_I_EB_1_1].src_format = PIPE_FORMAT_R32G32B32_FLOAT;
-
-   /* progressive=0.0f interlaced=1.0f */
-   vertex_elems[VS_I_INTERLACED].src_format = PIPE_FORMAT_R32_FLOAT;
-
-   /* frame=0.0f field=1.0f */
-   vertex_elems[VS_I_FRAME_PRED].src_format = PIPE_FORMAT_R32_FLOAT;
-
-   /* intra=-1.0f forward/backward=1.0f bi=0.0f */
-   vertex_elems[VS_I_REF_FRAMES].src_format = PIPE_FORMAT_R32_FLOAT;
-
-   /* forward=0.0f backward=1.0f */
-   vertex_elems[VS_I_BKWD_PRED].src_format = PIPE_FORMAT_R32_FLOAT;
+   vertex_elems[VS_I_VPOS].src_format = PIPE_FORMAT_R16G16_SSCALED;
 
    for (i = 0; i < 4; ++i)
       /* motion vector 0..4 element */
-      vertex_elems[VS_I_MV0 + i].src_format = PIPE_FORMAT_R32G32_FLOAT;
+      vertex_elems[VS_I_MV0 + i].src_format = PIPE_FORMAT_R16G16_SSCALED;
 
-   r->vertex_stream_stride = vl_vb_element_helper(&vertex_elems[VS_I_VPOS], 13, 1);
+   /* y, cr, cb empty block element top left block */
+   vertex_elems[VS_I_EB_0_0].src_format = PIPE_FORMAT_R8G8B8A8_SSCALED;
+
+   /* y, cr, cb empty block element top right block */
+   vertex_elems[VS_I_EB_0_1].src_format = PIPE_FORMAT_R8G8B8A8_SSCALED;
+
+   /* y, cr, cb empty block element bottom left block */
+   vertex_elems[VS_I_EB_1_0].src_format = PIPE_FORMAT_R8G8B8A8_SSCALED;
+
+   /* y, cr, cb empty block element bottom right block */
+   vertex_elems[VS_I_EB_1_1].src_format = PIPE_FORMAT_R8G8B8A8_SSCALED;
+
+   r->vertex_stream_stride = vl_vb_element_helper(&vertex_elems[VS_I_VPOS], 9, 1);
 
    r->vertex_elems_state = r->pipe->create_vertex_elements_state(
       r->pipe, NUM_VS_INPUTS, vertex_elems);
@@ -652,7 +630,7 @@ static struct pipe_sampler_view
 }
 
 static void
-get_motion_vectors(struct pipe_mpeg12_macroblock *mb, struct vertex2f mv[4])
+get_motion_vectors(struct pipe_mpeg12_macroblock *mb, struct vertex2s mv[4])
 {
    switch (mb->mb_type) {
       case PIPE_MPEG12_MACROBLOCK_TYPE_BI:
@@ -739,21 +717,21 @@ grab_vectors(struct vl_mpeg12_mc_renderer *r,
          stream.eb[i][j].cb = !(mb->cbp & (*r->empty_block_mask)[2][i][j]);
       }
    }
-   stream.interlaced = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD ? 1.0f : 0.0f;
-   stream.frame_pred = mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME ? 1.0f : 0.0f;
-   stream.bkwd_pred = mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BKWD ? 1.0f : 0.0f;
+   stream.eb[0][0].flag = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD;
+   stream.eb[0][1].flag = mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME;
+   stream.eb[1][0].flag = mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BKWD;
    switch (mb->mb_type) {
       case PIPE_MPEG12_MACROBLOCK_TYPE_INTRA:
-         stream.ref_frames = -1.0f;
+         stream.eb[1][1].flag = -1;
          break;
 
       case PIPE_MPEG12_MACROBLOCK_TYPE_FWD:
       case PIPE_MPEG12_MACROBLOCK_TYPE_BKWD:
-         stream.ref_frames = 1.0f;
+         stream.eb[1][1].flag = 1;
          break;
 
       case PIPE_MPEG12_MACROBLOCK_TYPE_BI:
-         stream.ref_frames = 0.0f;
+         stream.eb[1][1].flag = 0;
          break;
 
       default:
@@ -761,7 +739,7 @@ grab_vectors(struct vl_mpeg12_mc_renderer *r,
    }
 
    get_motion_vectors(mb, stream.mv);
-   vl_vb_add_block(&buffer->vertex_stream, (float*)&stream);
+   vl_vb_add_block(&buffer->vertex_stream, &stream);
 }
 
 static void
@@ -956,7 +934,6 @@ vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg1
 
    buffer->vertex_bufs.individual.stream = vl_vb_init(
       &buffer->vertex_stream, renderer->pipe, renderer->macroblocks_per_batch,
-      sizeof(struct vertex_stream) / sizeof(float),
       renderer->vertex_stream_stride);
 
    return true;

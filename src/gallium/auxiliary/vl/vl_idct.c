@@ -175,11 +175,11 @@ increment_addr(struct ureg_program *shader, struct ureg_dst daddr[2],
    unsigned wm_start = (right_side == transposed) ? TGSI_WRITEMASK_X : TGSI_WRITEMASK_Y;
    unsigned wm_tc = (right_side == transposed) ? TGSI_WRITEMASK_Y : TGSI_WRITEMASK_X;
 
-   /* 
-    * daddr[0..1].(start) = saddr[0..1].(start) 
-    * daddr[0..1].(tc) = saddr[0..1].(tc) 
+   /*
+    * daddr[0..1].(start) = saddr[0..1].(start)
+    * daddr[0..1].(tc) = saddr[0..1].(tc)
     */
-   
+
    ureg_MOV(shader, ureg_writemask(daddr[0], wm_start), saddr[0]);
    ureg_ADD(shader, ureg_writemask(daddr[0], wm_tc), saddr[0], ureg_imm1f(shader, pos / size));
    ureg_MOV(shader, ureg_writemask(daddr[1], wm_start), saddr[1]);
@@ -256,7 +256,7 @@ create_matrix_frag_shader(struct vl_idct *idct)
       s_addr[1] = i == 0 ? l_addr[1] : ureg_src(l[i][1]);
       fetch_four(shader, l[i], s_addr, ureg_DECL_sampler(shader, 1));
    }
-   
+
    for (i = 0; i < NR_RENDER_TARGETS; ++i) {
       if(i > 0)
          increment_addr(shader, r, r_addr, true, true, i, BLOCK_HEIGHT);
@@ -334,7 +334,7 @@ init_shaders(struct vl_idct *idct)
    idct->transpose_vs = create_vert_shader(idct, false);
    idct->transpose_fs = create_transpose_frag_shader(idct);
 
-   return 
+   return
       idct->matrix_vs != NULL &&
       idct->matrix_fs != NULL &&
       idct->transpose_vs != NULL &&
@@ -396,7 +396,7 @@ init_state(struct vl_idct *idct)
    vertex_elems[VS_I_RECT] = vl_vb_get_quad_vertex_element();
 
    /* Pos element */
-   vertex_elems[VS_I_VPOS].src_format = PIPE_FORMAT_R32G32_FLOAT;
+   vertex_elems[VS_I_VPOS].src_format = PIPE_FORMAT_R16G16_SSCALED;
 
    idct->vertex_buffer_stride = vl_vb_element_helper(&vertex_elems[VS_I_VPOS], 1, 1);
    idct->vertex_elems_state = idct->pipe->create_vertex_elements_state(idct->pipe, 2, vertex_elems);
@@ -483,7 +483,7 @@ init_vertex_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    pipe_resource_reference(&buffer->vertex_bufs.individual.quad.buffer, idct->quad.buffer);
 
    buffer->vertex_bufs.individual.pos = vl_vb_init(
-      &buffer->blocks, idct->pipe, idct->max_blocks, 2,
+      &buffer->blocks, idct->pipe, idct->max_blocks,
       idct->vertex_buffer_stride);
 
    if(buffer->vertex_bufs.individual.pos.buffer == NULL)
@@ -553,7 +553,7 @@ vl_idct_upload_matrix(struct pipe_context *pipe)
    return matrix;
 }
 
-bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, 
+bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
                   unsigned buffer_width, unsigned buffer_height,
                   struct pipe_resource *matrix)
 {
@@ -701,7 +701,7 @@ vl_idct_map_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 void
 vl_idct_add_block(struct vl_idct_buffer *buffer, unsigned x, unsigned y, short *block)
 {
-   struct vertex2f v;
+   struct vertex2s v;
    unsigned tex_pitch;
    short *texels;
 
@@ -717,7 +717,7 @@ vl_idct_add_block(struct vl_idct_buffer *buffer, unsigned x, unsigned y, short *
 
    v.x = x;
    v.y = y;
-   vl_vb_add_block(&buffer->blocks, (float*)&v);
+   vl_vb_add_block(&buffer->blocks, &v);
 }
 
 void

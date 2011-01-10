@@ -83,7 +83,7 @@ vl_vb_upload_quads(struct pipe_context *pipe, unsigned max_blocks)
 }
 
 struct pipe_vertex_element
-vl_vb_get_quad_vertex_element()
+vl_vb_get_quad_vertex_element(void)
 {
    struct pipe_vertex_element element;
 
@@ -100,7 +100,7 @@ unsigned
 vl_vb_element_helper(struct pipe_vertex_element* elements, unsigned num_elements,
                               unsigned vertex_buffer_index)
 {
-   unsigned i, offset = 0;
+   unsigned i, size, offset = 0;
 
    assert(elements && num_elements);
 
@@ -116,14 +116,14 @@ vl_vb_element_helper(struct pipe_vertex_element* elements, unsigned num_elements
 
 struct pipe_vertex_buffer
 vl_vb_init(struct vl_vertex_buffer *buffer, struct pipe_context *pipe,
-           unsigned max_blocks, unsigned num_elements, unsigned stride)
+           unsigned max_blocks, unsigned stride)
 {
    struct pipe_vertex_buffer buf;
 
    assert(buffer);
 
    buffer->num_verts = 0;
-   buffer->num_elements = num_elements;
+   buffer->stride = stride;
 
    buf.stride = stride;
    buf.max_index = 4 * max_blocks - 1;

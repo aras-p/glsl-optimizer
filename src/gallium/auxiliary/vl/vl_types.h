@@ -33,6 +33,11 @@ struct vertex2f
    float x, y;
 };
 
+struct vertex2s
+{
+   short x, y;
+};
+
 struct vertex4f
 {
    float x, y, z, w;
