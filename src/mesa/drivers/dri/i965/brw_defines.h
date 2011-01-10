@@ -1120,6 +1120,9 @@
 # define MS_NUMSAMPLES_4				(2 << 1)
 # define MS_NUMSAMPLES_8				(3 << 1)
 
+#define _3DSTATE_STENCIL_BUFFER			0x790e /* ILK, SNB */
+#define _3DSTATE_HIER_DEPTH_BUFFER		0x790f /* ILK, SNB */
+
 #define _3DSTATE_CLEAR_PARAMS			0x7910 /* ILK+ */
 # define DEPTH_CLEAR_VALID				(1 << 15)
 /* DW1: depth clear value */
