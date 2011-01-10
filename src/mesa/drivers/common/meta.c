@@ -2260,7 +2260,6 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    const GLuint maxLevel = texObj->MaxLevel;
    const GLenum minFilterSave = texObj->MinFilter;
    const GLenum magFilterSave = texObj->MagFilter;
-   const GLint baseLevelSave = texObj->BaseLevel;
    const GLint maxLevelSave = texObj->MaxLevel;
    const GLboolean genMipmapSave = texObj->GenerateMipmap;
    const GLenum wrapSSave = texObj->WrapS;
@@ -2496,8 +2495,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
          }
       }
 
-      /* limit sampling to src level */
-      _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, srcLevel);
+      /* limit minification to src level */
       _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, srcLevel);
 
       /* Set to draw into the current dstLevel */
@@ -2549,7 +2547,6 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
 
    _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, minFilterSave);
    _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, magFilterSave);
-   _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, baseLevelSave);
    _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, maxLevelSave);
    _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, genMipmapSave);
    _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, wrapSSave);
