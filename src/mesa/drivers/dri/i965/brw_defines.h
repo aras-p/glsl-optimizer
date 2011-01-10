@@ -35,28 +35,6 @@
 
 /* 3D state:
  */
-#define _3DOP_3DSTATE_PIPELINED       0x0
-#define _3DOP_3DSTATE_NONPIPELINED    0x1
-#define _3DOP_3DCONTROL               0x2
-#define _3DOP_3DPRIMITIVE             0x3
-
-#define _3DSTATE_PIPELINED_POINTERS       0x00
-#define _3DSTATE_BINDING_TABLE_POINTERS   0x01
-#define _3DSTATE_VERTEX_BUFFERS           0x08
-#define _3DSTATE_VERTEX_ELEMENTS          0x09
-#define _3DSTATE_INDEX_BUFFER             0x0A
-#define _3DSTATE_VF_STATISTICS            0x0B
-#define _3DSTATE_DRAWING_RECTANGLE            0x00
-#define _3DSTATE_CONSTANT_COLOR               0x01
-#define _3DSTATE_SAMPLER_PALETTE_LOAD         0x02
-#define _3DSTATE_CHROMA_KEY                   0x04
-#define _3DSTATE_DEPTH_BUFFER                 0x05
-#define _3DSTATE_POLY_STIPPLE_OFFSET          0x06
-#define _3DSTATE_POLY_STIPPLE_PATTERN         0x07
-#define _3DSTATE_LINE_STIPPLE                 0x08
-#define _3DSTATE_GLOBAL_DEPTH_OFFSET_CLAMP    0x09
-#define _3DCONTROL    0x00
-
 #define PIPE_CONTROL_NOWRITE          0x00
 #define PIPE_CONTROL_WRITEIMMEDIATE   0x01
 #define PIPE_CONTROL_WRITEDEPTH       0x02
