@@ -96,23 +96,6 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
       return GL_FALSE;
    }
 
-
-   /* If both firstImage and intelObj have a tree which can contain
-    * all active images, favour firstImage.  Note that because of the
-    * completeness requirement, we know that the image dimensions
-    * will match.
-    */
-   if (firstImage->mt &&
-       firstImage->mt != intelObj->mt &&
-       firstImage->mt->first_level <= tObj->BaseLevel &&
-       firstImage->mt->last_level >= intelObj->_MaxLevel) {
-
-      if (intelObj->mt)
-         intel_miptree_release(intel, &intelObj->mt);
-
-      intel_miptree_reference(&intelObj->mt, firstImage->mt);
-   }
-
    if (_mesa_is_format_compressed(firstImage->base.TexFormat)) {
       comp_byte = intel_compressed_num_bytes(firstImage->base.TexFormat);
       cpp = comp_byte;
