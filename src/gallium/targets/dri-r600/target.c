@@ -1,5 +1,5 @@
 #include "state_tracker/drm_driver.h"
-#include "target-helpers/inline_debug_helper.h"
+#include "target-helpers/inline_noop_helper.h"
 #include "r600/drm/r600_drm_public.h"
 #include "r600/r600_public.h"
 
