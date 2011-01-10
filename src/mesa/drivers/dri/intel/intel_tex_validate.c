@@ -122,18 +122,17 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
 
    /* Check tree can hold all active levels.  Check tree matches
     * target, imageFormat, etc.
-    * 
-    * XXX: For some layouts (eg i945?), the test might have to be
-    * first_level == firstLevel, as the tree isn't valid except at the
-    * original start level.  Hope to get around this by
-    * programming minLod, maxLod, baseLevel into the hardware and
-    * leaving the tree alone.
+    *
+    * For pre-gen4, we have to match first_level == tObj->BaseLevel,
+    * because we don't have the control that gen4 does to make min/mag
+    * determination happen at a nonzero (hardware) baselevel.  Because
+    * of that, we just always relayout on baselevel change.
     */
    if (intelObj->mt &&
        (intelObj->mt->target != intelObj->base.Target ||
 	intelObj->mt->internal_format != firstImage->base.InternalFormat ||
 	intelObj->mt->first_level != tObj->BaseLevel ||
-	intelObj->mt->last_level != intelObj->_MaxLevel ||
+	intelObj->mt->last_level < intelObj->_MaxLevel ||
 	intelObj->mt->width0 != firstImage->base.Width ||
 	intelObj->mt->height0 != firstImage->base.Height ||
 	intelObj->mt->depth0 != firstImage->base.Depth ||
