@@ -20,6 +20,7 @@ struct texture_renderbuffer
    struct gl_renderbuffer Base;   /**< Base class object */
    struct gl_texture_image *TexImage;
    StoreTexelFunc Store;
+   FetchTexelFuncF Fetchf;
    GLint Yoffset;                 /**< Layer for 1D array textures. */
    GLint Zoffset;                 /**< Layer for 2D array textures, or slice
 				   * for 3D textures
@@ -48,7 +49,7 @@ texture_get_row(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count
       GLchan *rgbaOut = (GLchan *) values;
       for (i = 0; i < count; i++) {
          GLfloat rgba[4];
-         trb->TexImage->FetchTexelf(trb->TexImage, x + i, y, z, rgba);
+         trb->Fetchf(trb->TexImage, x + i, y, z, rgba);
          UNCLAMPED_FLOAT_TO_RGBA_CHAN(rgbaOut + 4 * i, rgba);
       }
    }
@@ -56,7 +57,7 @@ texture_get_row(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count
       GLushort *zValues = (GLushort *) values;
       for (i = 0; i < count; i++) {
          GLfloat flt;
-         trb->TexImage->FetchTexelf(trb->TexImage, x + i, y, z, &flt);
+         trb->Fetchf(trb->TexImage, x + i, y, z, &flt);
          zValues[i] = (GLushort) (flt * 0xffff);
       }
    }
@@ -67,7 +68,7 @@ texture_get_row(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count
       */
       for (i = 0; i < count; i++) {
          GLfloat flt;
-         trb->TexImage->FetchTexelf(trb->TexImage, x + i, y, z, &flt);
+         trb->Fetchf(trb->TexImage, x + i, y, z, &flt);
 #if 0
          /* this should work, but doesn't (overflow due to low precision) */
          zValues[i] = (GLuint) (flt * scale);
@@ -81,7 +82,7 @@ texture_get_row(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count
       GLuint *zValues = (GLuint *) values;
       for (i = 0; i < count; i++) {
          GLfloat flt;
-         trb->TexImage->FetchTexelf(trb->TexImage, x + i, y, z, &flt);
+         trb->Fetchf(trb->TexImage, x + i, y, z, &flt);
          zValues[i] = ((GLuint) (flt * 0xffffff)) << 8;
       }
    }
@@ -89,7 +90,7 @@ texture_get_row(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count
       GLuint *zValues = (GLuint *) values;
       for (i = 0; i < count; i++) {
          GLfloat flt;
-         trb->TexImage->FetchTexelf(trb->TexImage, x + i, y, z, &flt);
+         trb->Fetchf(trb->TexImage, x + i, y, z, &flt);
          zValues[i] = (GLuint) (flt * 0xffffff);
       }
    }
@@ -112,7 +113,7 @@ texture_get_values(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint co
       GLchan *rgbaOut = (GLchan *) values;
       for (i = 0; i < count; i++) {
          GLfloat rgba[4];
-         trb->TexImage->FetchTexelf(trb->TexImage, x[i], y[i] + trb->Yoffset,
+         trb->Fetchf(trb->TexImage, x[i], y[i] + trb->Yoffset,
 				    z, rgba);
          UNCLAMPED_FLOAT_TO_RGBA_CHAN(rgbaOut + 4 * i, rgba);
       }
@@ -121,7 +122,7 @@ texture_get_values(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint co
       GLushort *zValues = (GLushort *) values;
       for (i = 0; i < count; i++) {
          GLfloat flt;
-         trb->TexImage->FetchTexelf(trb->TexImage, x[i], y[i] + trb->Yoffset,
+         trb->Fetchf(trb->TexImage, x[i], y[i] + trb->Yoffset,
 				    z, &flt);
          zValues[i] = (GLushort) (flt * 0xffff);
       }
@@ -130,7 +131,7 @@ texture_get_values(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint co
       GLuint *zValues = (GLuint *) values;
       for (i = 0; i < count; i++) {
          GLfloat flt;
-         trb->TexImage->FetchTexelf(trb->TexImage, x[i], y[i] + trb->Yoffset,
+         trb->Fetchf(trb->TexImage, x[i], y[i] + trb->Yoffset,
 				    z, &flt);
 #if 0
          zValues[i] = (GLuint) (flt * 0xffffffff);
@@ -143,7 +144,7 @@ texture_get_values(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint co
       GLuint *zValues = (GLuint *) values;
       for (i = 0; i < count; i++) {
          GLfloat flt;
-         trb->TexImage->FetchTexelf(trb->TexImage, x[i], y[i] + trb->Yoffset,
+         trb->Fetchf(trb->TexImage, x[i], y[i] + trb->Yoffset,
 				    z, &flt);
          zValues[i] = ((GLuint) (flt * 0xffffff)) << 8;
       }
@@ -152,7 +153,7 @@ texture_get_values(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint co
       GLuint *zValues = (GLuint *) values;
       for (i = 0; i < count; i++) {
          GLfloat flt;
-         trb->TexImage->FetchTexelf(trb->TexImage, x[i], y[i] + trb->Yoffset,
+         trb->Fetchf(trb->TexImage, x[i], y[i] + trb->Yoffset,
 				    z, &flt);
          zValues[i] = (GLuint) (flt * 0xffffff);
       }
@@ -517,8 +518,6 @@ wrap_texture(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
    _mesa_reference_renderbuffer(&att->Renderbuffer, &(trb->Base));
 }
 
-
-
 /**
  * Update the renderbuffer wrapper for rendering to a texture.
  * For example, update the width, height of the RB based on the texture size,
@@ -541,6 +540,8 @@ update_wrapper(struct gl_context *ctx, const struct gl_renderbuffer_attachment *
       /* we'll never draw into some textures (compressed formats) */
       trb->Store = store_nop;
    }
+
+   trb->Fetchf = trb->TexImage->FetchTexelf;
 
    if (att->Texture->Target == GL_TEXTURE_1D_ARRAY_EXT) {
       trb->Yoffset = att->Zoffset;
@@ -581,6 +582,17 @@ update_wrapper(struct gl_context *ctx, const struct gl_renderbuffer_attachment *
    case MESA_FORMAT_Z32:
       trb->Base.DataType = GL_UNSIGNED_INT;
       trb->Base._BaseFormat = GL_DEPTH_COMPONENT;
+      break;
+   /* SRGB formats pre EXT_framebuffer_sRGB don't do sRGB translations on FBO readback */
+   case MESA_FORMAT_SRGB8:
+      trb->Fetchf = _mesa_get_texel_fetch_func(MESA_FORMAT_RGB888, _mesa_get_texture_dimensions(att->Texture->Target));
+      trb->Base.DataType = CHAN_TYPE;
+      trb->Base._BaseFormat = GL_RGBA;
+      break;
+   case MESA_FORMAT_SRGBA8:
+      trb->Fetchf = _mesa_get_texel_fetch_func(MESA_FORMAT_RGBA8888, _mesa_get_texture_dimensions(att->Texture->Target));
+      trb->Base.DataType = CHAN_TYPE;
+      trb->Base._BaseFormat = GL_RGBA;
       break;
    default:
       trb->Base.DataType = CHAN_TYPE;

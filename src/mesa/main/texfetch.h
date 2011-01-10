@@ -34,6 +34,9 @@
 extern StoreTexelFunc
 _mesa_get_texel_store_func(gl_format format);
 
+extern FetchTexelFuncF
+_mesa_get_texel_fetch_func(gl_format format, GLuint dims);
+
 extern void
 _mesa_set_fetch_functions(struct gl_texture_image *texImage, GLuint dims);
 
