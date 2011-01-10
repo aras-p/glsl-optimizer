@@ -25,6 +25,7 @@ CXXFLAGS = -O
 LDFLAGS =
 HOST_CFLAGS = $(CFLAGS)
 GLU_CFLAGS = 
+GLX_TLS = no
 
 # Compiler for building demos/tests/etc
 APP_CC = $(CC)
