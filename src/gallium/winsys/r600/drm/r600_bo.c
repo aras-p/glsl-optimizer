@@ -63,12 +63,25 @@ struct r600_bo *r600_bo(struct radeon *radeon,
 	 * and are used for uploads and downloads from regular
 	 * resources.  We generate them internally for some transfers.
 	 */
-	if (usage == PIPE_USAGE_STAGING)
-		bo->domains = RADEON_GEM_DOMAIN_CPU | RADEON_GEM_DOMAIN_GTT;
-	else
-		bo->domains = (RADEON_GEM_DOMAIN_CPU |
+	switch (usage) {
+        case PIPE_USAGE_DEFAULT:
+		bo->domains = RADEON_GEM_DOMAIN_CPU |
 				RADEON_GEM_DOMAIN_GTT |
-				RADEON_GEM_DOMAIN_VRAM);
+				RADEON_GEM_DOMAIN_VRAM;
+                break;
+
+        case PIPE_USAGE_DYNAMIC:
+        case PIPE_USAGE_STREAM:
+        case PIPE_USAGE_STAGING:
+		bo->domains = RADEON_GEM_DOMAIN_CPU |
+                                RADEON_GEM_DOMAIN_GTT;
+		break;
+
+        case PIPE_USAGE_STATIC:
+        case PIPE_USAGE_IMMUTABLE:
+		bo->domains = RADEON_GEM_DOMAIN_VRAM;
+		break;
+        }
 
 	pipe_reference_init(&bo->reference, 1);
 	return bo;
