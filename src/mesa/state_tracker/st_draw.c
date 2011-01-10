@@ -384,7 +384,6 @@ setup_interleaved_attribs(struct gl_context *ctx,
             vbuffer->buffer_offset = pointer_to_offset(low);
          }
          vbuffer->stride = stride; /* in bytes */
-         vbuffer->max_index = max_index;
       }
 
       /*
@@ -488,10 +487,6 @@ setup_non_interleaved_attribs(struct gl_context *ctx,
 
       /* common-case setup */
       vbuffer[attr].stride = stride; /* in bytes */
-      if (arrays[mesaAttr]->InstanceDivisor)
-         vbuffer[attr].max_index = arrays[mesaAttr]->_MaxElement;
-      else
-         vbuffer[attr].max_index = max_index;
 
       velements[attr].src_offset = 0;
       velements[attr].instance_divisor = arrays[mesaAttr]->InstanceDivisor;

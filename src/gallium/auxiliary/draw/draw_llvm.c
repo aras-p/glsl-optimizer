@@ -214,13 +214,12 @@ static LLVMTypeRef
 create_jit_vertex_buffer_type(struct gallivm_state *gallivm)
 {
    LLVMTargetDataRef target = gallivm->target;
-   LLVMTypeRef elem_types[4];
+   LLVMTypeRef elem_types[3];
    LLVMTypeRef vb_type;
 
    elem_types[0] =
-   elem_types[1] =
-   elem_types[2] = LLVMInt32TypeInContext(gallivm->context);
-   elem_types[3] = LLVMPointerType(LLVMInt8TypeInContext(gallivm->context), 0); /* vs_constants */
+   elem_types[1] = LLVMInt32TypeInContext(gallivm->context);
+   elem_types[2] = LLVMPointerType(LLVMInt8TypeInContext(gallivm->context), 0); /* vs_constants */
 
    vb_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                      Elements(elem_types), 0);
@@ -229,10 +228,8 @@ create_jit_vertex_buffer_type(struct gallivm_state *gallivm)
 
    LP_CHECK_MEMBER_OFFSET(struct pipe_vertex_buffer, stride,
                           target, vb_type, 0);
-   LP_CHECK_MEMBER_OFFSET(struct pipe_vertex_buffer, max_index,
-                          target, vb_type, 1);
    LP_CHECK_MEMBER_OFFSET(struct pipe_vertex_buffer, buffer_offset,
-                          target, vb_type, 2);
+                          target, vb_type, 1);
 
    LP_CHECK_STRUCT_SIZE(struct pipe_vertex_buffer, target, vb_type);
 
@@ -513,9 +510,7 @@ generate_fetch(struct gallivm_state *gallivm,
    LLVMValueRef vbuffer_ptr = LLVMBuildGEP(builder, vbuffers_ptr,
                                            &indices, 1, "");
    LLVMValueRef vb_stride = draw_jit_vbuffer_stride(gallivm, vbuf);
-   LLVMValueRef vb_max_index = draw_jit_vbuffer_max_index(gallivm, vbuf);
    LLVMValueRef vb_buffer_offset = draw_jit_vbuffer_offset(gallivm, vbuf);
-   LLVMValueRef cond;
    LLVMValueRef stride;
 
    if (velem->instance_divisor) {
@@ -524,10 +519,6 @@ generate_fetch(struct gallivm_state *gallivm,
                             lp_build_const_int32(gallivm, velem->instance_divisor),
                             "instance_divisor");
    }
-
-   /* limit index to min(index, vb_max_index) */
-   cond = LLVMBuildICmp(builder, LLVMIntULE, index, vb_max_index, "");
-   index = LLVMBuildSelect(builder, cond, index, vb_max_index, "");
 
    stride = LLVMBuildMul(builder, vb_stride, index, "");
 

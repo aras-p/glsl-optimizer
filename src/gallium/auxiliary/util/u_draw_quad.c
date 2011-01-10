@@ -56,7 +56,6 @@ util_draw_vertex_buffer(struct pipe_context *pipe,
    vbuffer.buffer = vbuf;
    vbuffer.stride = num_attribs * 4 * sizeof(float);  /* vertex size */
    vbuffer.buffer_offset = offset;
-   vbuffer.max_index = num_verts - 1;
 
    if (cso) {
       cso_set_vertex_buffers(cso, 1, &vbuffer);

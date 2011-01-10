@@ -152,7 +152,7 @@ nvc0_vbuf_range(struct nvc0_context *nvc0, int vbi,
    if (unlikely(nvc0->vertex->instance_bufs & (1 << vbi))) {
       /* TODO: use min and max instance divisor to get a proper range */
       *base = 0;
-      *size = (nvc0->vtxbuf[vbi].max_index + 1) * nvc0->vtxbuf[vbi].stride;
+      *size = nvc0->vtxbuf[vbi].buffer->width0;
    } else {
       assert(nvc0->vbo_max_index != ~0);
       *base = nvc0->vbo_min_index * nvc0->vtxbuf[vbi].stride;

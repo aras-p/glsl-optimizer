@@ -796,7 +796,6 @@ struct dxgi_blitter
 
 		vbuf.buffer = pipe_buffer_create(pipe->screen, PIPE_BIND_VERTEX_BUFFER, sizeof(quad_data));
 		vbuf.buffer_offset = 0;
-		vbuf.max_index = ~0;
 		vbuf.stride = 4 * sizeof(float);
 		pipe_buffer_write(pipe, vbuf.buffer, 0, sizeof(quad_data), quad_data);
 

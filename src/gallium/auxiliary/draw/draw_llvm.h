@@ -133,11 +133,8 @@ struct draw_jit_context
 #define draw_jit_vbuffer_stride(_gallivm, _ptr)         \
    lp_build_struct_get(_gallivm, _ptr, 0, "stride")
 
-#define draw_jit_vbuffer_max_index(_gallivm, _ptr)      \
-   lp_build_struct_get(_gallivm, _ptr, 1, "max_index")
-
 #define draw_jit_vbuffer_offset(_gallivm, _ptr)         \
-   lp_build_struct_get(_gallivm, _ptr, 2, "buffer_offset")
+   lp_build_struct_get(_gallivm, _ptr, 1, "buffer_offset")
 
 
 typedef int

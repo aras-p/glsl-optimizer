@@ -179,7 +179,6 @@ st_feedback_draw_vbo(struct gl_context *ctx,
 
       /* common-case setup */
       vbuffers[attr].stride = arrays[mesaAttr]->StrideB; /* in bytes */
-      vbuffers[attr].max_index = max_index;
       velements[attr].instance_divisor = 0;
       velements[attr].vertex_buffer_index = attr;
       velements[attr].src_format = 
