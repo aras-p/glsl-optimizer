@@ -141,9 +141,6 @@ _eglOpenLibrary(const char *driverPath, lib_handle *handle)
    if (!lib) {
       _eglLog(_EGL_WARNING, "Could not open driver %s (%s)",
               driverPath, error);
-      if (!getenv("EGL_DRIVER"))
-         _eglLog(_EGL_WARNING,
-                 "The driver can be overridden by setting EGL_DRIVER");
       return NULL;
    }
 
@@ -468,6 +465,19 @@ _eglAddUserDriver(void)
 
 
 /**
+ * Add egl_gallium to the module array.
+ */
+static void
+_eglAddGalliumDriver(void)
+{
+#ifndef _EGL_BUILT_IN_DRIVER_GALLIUM
+   void *external = (void *) "egl_gallium";
+   _eglPreloadForEach(_eglGetSearchPath(), _eglLoaderFile, external);
+#endif
+}
+
+
+/**
  * Add built-in drivers to the module array.
  */
 static void
@@ -491,14 +501,12 @@ _eglAddBuiltInDrivers(void)
 static EGLBoolean
 _eglAddDrivers(void)
 {
-   void *external = (void *) "egl_gallium";
-
    if (_eglModules)
       return EGL_TRUE;
 
    /* the order here decides the priorities of the drivers */
    _eglAddUserDriver();
-   _eglPreloadForEach(_eglGetSearchPath(), _eglLoaderFile, external);
+   _eglAddGalliumDriver();
    _eglAddBuiltInDrivers();
 
    return (_eglModules != NULL);
