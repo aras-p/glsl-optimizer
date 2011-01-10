@@ -239,7 +239,7 @@ static void upload_blend_constant_color(struct brw_context *brw)
    struct brw_blend_constant_color bcc;
 
    memset(&bcc, 0, sizeof(bcc));
-   bcc.header.opcode = CMD_BLEND_CONSTANT_COLOR;
+   bcc.header.opcode = _3DSTATE_BLEND_CONSTANT_COLOR;
    bcc.header.length = sizeof(bcc)/4-2;
    bcc.blend_constant_color[0] = ctx->Color.BlendColor[0];
    bcc.blend_constant_color[1] = ctx->Color.BlendColor[1];

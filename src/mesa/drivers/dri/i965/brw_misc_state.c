@@ -214,7 +214,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 
    if (region == NULL) {
       BEGIN_BATCH(len);
-      OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (len - 2));
+      OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (len - 2));
       OUT_BATCH((BRW_DEPTHFORMAT_D32_FLOAT << 18) |
 		(BRW_SURFACE_NULL << 29));
       OUT_BATCH(0);
@@ -251,7 +251,7 @@ static void emit_depthbuffer(struct brw_context *brw)
 	 assert(region->tiling != I915_TILING_NONE);
 
       BEGIN_BATCH(len);
-      OUT_BATCH(CMD_DEPTH_BUFFER << 16 | (len - 2));
+      OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (len - 2));
       OUT_BATCH(((region->pitch * region->cpp) - 1) |
 		(format << 18) |
 		(BRW_TILEWALK_YMAJOR << 26) |
@@ -277,7 +277,7 @@ static void emit_depthbuffer(struct brw_context *brw)
    /* Initialize it for safety. */
    if (intel->gen >= 6) {
       BEGIN_BATCH(2);
-      OUT_BATCH(CMD_3D_CLEAR_PARAMS << 16 | (2 - 2));
+      OUT_BATCH(_3DSTATE_CLEAR_PARAMS << 16 | (2 - 2));
       OUT_BATCH(0);
       ADVANCE_BATCH();
    }
@@ -309,7 +309,7 @@ static void upload_polygon_stipple(struct brw_context *brw)
       return;
 
    memset(&bps, 0, sizeof(bps));
-   bps.header.opcode = CMD_POLY_STIPPLE_PATTERN;
+   bps.header.opcode = _3DSTATE_POLY_STIPPLE_PATTERN;
    bps.header.length = sizeof(bps)/4-2;
 
    /* Polygon stipple is provided in OpenGL order, i.e. bottom
@@ -354,7 +354,7 @@ static void upload_polygon_stipple_offset(struct brw_context *brw)
       return;
 
    memset(&bpso, 0, sizeof(bpso));
-   bpso.header.opcode = CMD_POLY_STIPPLE_OFFSET;
+   bpso.header.opcode = _3DSTATE_POLY_STIPPLE_OFFSET;
    bpso.header.length = sizeof(bpso)/4-2;
 
    /* If we're drawing to a system window (ctx->DrawBuffer->Name == 0),
@@ -401,7 +401,7 @@ static void upload_aa_line_parameters(struct brw_context *brw)
 
    /* use legacy aa line coverage computation */
    memset(&balp, 0, sizeof(balp));
-   balp.header.opcode = CMD_AA_LINE_PARAMETERS;
+   balp.header.opcode = _3DSTATE_AA_LINE_PARAMETERS;
    balp.header.length = sizeof(balp) / 4 - 2;
    
    BRW_CACHED_BATCH_STRUCT(brw, &balp);
@@ -431,7 +431,7 @@ static void upload_line_stipple(struct brw_context *brw)
       return;
 
    memset(&bls, 0, sizeof(bls));
-   bls.header.opcode = CMD_LINE_STIPPLE_PATTERN;
+   bls.header.opcode = _3DSTATE_LINE_STIPPLE_PATTERN;
    bls.header.length = sizeof(bls)/4 - 2;
 
    bls.bits0.pattern = ctx->Line.StipplePattern;
@@ -481,7 +481,7 @@ static void upload_invarient_state( struct brw_context *brw )
 
       /* Disable depth offset clamping. 
        */
-      gdo.header.opcode = CMD_GLOBAL_DEPTH_OFFSET_CLAMP;
+      gdo.header.opcode = _3DSTATE_GLOBAL_DEPTH_OFFSET_CLAMP;
       gdo.header.length = sizeof(gdo)/4 - 2;
       gdo.depth_offset_clamp = 0.0;
 
@@ -505,7 +505,7 @@ static void upload_invarient_state( struct brw_context *brw )
 
       for (i = 0; i < 4; i++) {
 	 BEGIN_BATCH(4);
-	 OUT_BATCH(CMD_GS_SVB_INDEX << 16 | (4 - 2));
+	 OUT_BATCH(_3DSTATE_GS_SVB_INDEX << 16 | (4 - 2));
 	 OUT_BATCH(i << SVB_INDEX_SHIFT);
 	 OUT_BATCH(0);
 	 OUT_BATCH(0xffffffff);
