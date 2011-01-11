@@ -1168,6 +1168,27 @@ _mesa_format_row_stride(gl_format format, GLsizei width)
 }
 
 
+/**
+ * Debug/test: check that all formats are handled in the
+ * _mesa_format_to_type_and_comps() function.  When new pixel formats
+ * are added to Mesa, that function needs to be updated.
+ * This is a no-op after the first call.
+ */
+static void
+check_format_to_type_and_comps(void)
+{
+   gl_format f;
+
+   for (f = MESA_FORMAT_NONE + 1; f < MESA_FORMAT_COUNT; f++) {
+      GLenum datatype = 0;
+      GLuint comps = 0;
+      /* This function will emit a problem/warning if the format is
+       * not handled.
+       */
+      _mesa_format_to_type_and_comps(f, &datatype, &comps);
+   }
+}
+
 
 /**
  * Do sanity checking of the format info table.
@@ -1251,8 +1272,9 @@ _mesa_test_formats(void)
          assert(info->LuminanceBits == 0);
          assert(info->IntensityBits > 0);
       }
-
    }
+
+   check_format_to_type_and_comps();
 }
 
 
