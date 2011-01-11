@@ -26,6 +26,7 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
+#include "main/mfeatures.h"
 #include "main/texobj.h"
 #include "main/texfetch.h"
 #include "main/teximage.h"

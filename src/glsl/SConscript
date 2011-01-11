@@ -2,6 +2,8 @@ import common
 
 Import('*')
 
+from sys import executable as python_cmd
+
 env = env.Clone()
 
 env.Prepend(CPPPATH = [
@@ -20,7 +22,6 @@ sources = [
     'ast_function.cpp',
     'ast_to_hir.cpp',
     'ast_type.cpp',
-    'builtin_function.cpp',
     'glsl_lexer.cpp',
     'glsl_parser.cpp',
     'glsl_parser_extras.cpp',
@@ -79,9 +80,28 @@ sources = [
     'strtod.c',
 ]
 
+env.Prepend(LIBS = ['talloc'])
+env.Append(CPPPATH = ['#/src/glsl'])
+
+builtin_compiler = env.Program(
+    target = 'builtin_compiler',
+    source = sources + ['main.cpp', 'builtin_stubs.cpp',
+                        '#src/mesa/program/hash_table.c',
+                        '#src/mesa/program/symbol_table.c'],
+)
+
+env.CodeGenerate(
+    target = 'builtin_function.cpp',
+    script = 'builtins/tools/generate_builtins.py',
+    source = builtin_compiler,
+    command = python_cmd + ' $SCRIPT $SOURCE > $TARGET'
+)
+
+env.Depends('builtin_function.cpp', ['builtins/tools/generate_builtins.py', 'builtins/tools/texture_builtins.py'] + Glob('builtins/ir/*'))
+
 glsl = env.ConvenienceLibrary(
     target = 'glsl',
-    source = sources,
+    source = sources + [ 'builtin_function.cpp' ],
 )
 
 Export('glsl')

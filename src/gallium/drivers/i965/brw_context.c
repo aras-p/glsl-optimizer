@@ -107,7 +107,7 @@ struct pipe_context *brw_create_context(struct pipe_screen *screen,
 					void *priv)
 {
    struct brw_context *brw = (struct brw_context *) CALLOC_STRUCT(brw_context);
-
+   struct brw_screen *brs = brw_screen(screen);
    if (!brw) {
       debug_printf("%s: failed to alloc context\n", __FUNCTION__);
       return NULL;
@@ -117,7 +117,10 @@ struct pipe_context *brw_create_context(struct pipe_screen *screen,
    brw->base.priv = priv;
    brw->base.destroy = brw_destroy_context;
    brw->sws = brw_screen(screen)->sws;
-   brw->chipset = brw_screen(screen)->chipset;
+   brw->is_g4x = brs->is_g4x;
+   brw->needs_ff_sync = brs->needs_ff_sync;
+   brw->has_negative_rhw_bug = brs->has_negative_rhw_bug;
+   brw->gen = brs->gen;
 
    brw_init_resource_functions( brw );
    brw_pipe_blend_init( brw );
@@ -145,7 +148,7 @@ struct pipe_context *brw_create_context(struct pipe_screen *screen,
 
    make_empty_list(&brw->query.active_head);
 
-   brw->batch = brw_batchbuffer_alloc( brw->sws, brw->chipset );
+   brw->batch = brw_batchbuffer_alloc( brw->sws );
    if (brw->batch == NULL)
       goto fail;
 

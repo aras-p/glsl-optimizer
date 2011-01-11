@@ -100,7 +100,7 @@ vs_unit_create_from_key(struct brw_context *brw,
     */
    vs.thread1.single_program_flow = 0;
 
-   if (BRW_IS_IGDNG(brw))
+   if (brw->gen == 5)
       vs.thread1.binding_table_entry_count = 0; /* hardware requirement */
    else
       vs.thread1.binding_table_entry_count = key->nr_surfaces;
@@ -111,16 +111,16 @@ vs_unit_create_from_key(struct brw_context *brw,
    vs.thread3.urb_entry_read_offset = 0;
    vs.thread3.const_urb_entry_read_offset = key->curbe_offset * 2;
 
-   if (BRW_IS_IGDNG(brw))
+   if (brw->gen == 5)
        vs.thread4.nr_urb_entries = key->nr_urb_entries >> 2;
    else
        vs.thread4.nr_urb_entries = key->nr_urb_entries;
 
    vs.thread4.urb_entry_allocation_size = key->urb_size - 1;
 
-   if (BRW_IS_IGDNG(brw))
+   if (brw->gen == 5)
       chipset_max_threads = 72;
-   else if (BRW_IS_G4X(brw))
+   else if (brw->is_g4x)
       chipset_max_threads = 32;
    else
       chipset_max_threads = 16;

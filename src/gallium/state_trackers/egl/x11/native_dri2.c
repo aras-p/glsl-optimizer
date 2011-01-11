@@ -799,7 +799,7 @@ dri2_display_hash_table_hash(void *key)
 static int
 dri2_display_hash_table_compare(void *key1, void *key2)
 {
-   return (key1 - key2);
+   return ((char *) key1 - (char *) key2);
 }
 
 struct native_display *

@@ -125,12 +125,10 @@ struct brw_clip_compile {
    GLuint last_tmp;
 
    GLboolean need_direction;
-   struct brw_chipset chipset;
 
    GLuint last_mrf;
 
    GLuint header_position_offset;
-   GLboolean need_ff_sync;
 
    GLuint nr_color_attrs;
    GLuint offset_color0;

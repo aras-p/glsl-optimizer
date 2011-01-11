@@ -1017,7 +1017,14 @@ struct brw_wm_unit_state
       GLuint enable_32_pix:1; 
       GLuint enable_con_32_pix:1;
       GLuint enable_con_64_pix:1;
-      GLuint pad0:5;
+      GLuint pad0:1;
+
+      /* These next four bits are for Ironlake+ */
+      GLuint fast_span_coverage_enable:1;
+      GLuint depth_buffer_clear:1;
+      GLuint depth_buffer_resolve_enable:1;
+      GLuint hierarchical_depth_buffer_resolve_enable:1;
+
       GLuint legacy_global_depth_bias:1; 
       GLuint line_stipple:1; 
       GLuint depth_offset:1; 

@@ -49,12 +49,14 @@ struct {
     [BRW_OPCODE_MAC] = { .name = "mac", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_MACH] = { .name = "mach", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_LINE] = { .name = "line", .nsrc = 2, .ndst = 1 },
+    [BRW_OPCODE_PLN] = { .name = "pln", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_SAD2] = { .name = "sad2", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_SADA2] = { .name = "sada2", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_DP4] = { .name = "dp4", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_DPH] = { .name = "dph", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_DP3] = { .name = "dp3", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_DP2] = { .name = "dp2", .nsrc = 2, .ndst = 1 },
+    [BRW_OPCODE_MATH] = { .name = "math", .nsrc = 2, .ndst = 1 },
 
     [BRW_OPCODE_AVG] = { .name = "avg", .nsrc = 2, .ndst = 1 },
     [BRW_OPCODE_ADD] = { .name = "add", .nsrc = 2, .ndst = 1 },
@@ -69,13 +71,14 @@ struct {
     [BRW_OPCODE_CMPN] = { .name = "cmpn", .nsrc = 2, .ndst = 1 },
 
     [BRW_OPCODE_SEND] = { .name = "send", .nsrc = 1, .ndst = 1 },
+    [BRW_OPCODE_SENDC] = { .name = "sendc", .nsrc = 1, .ndst = 1 },
     [BRW_OPCODE_NOP] = { .name = "nop", .nsrc = 0, .ndst = 0 },
     [BRW_OPCODE_JMPI] = { .name = "jmpi", .nsrc = 1, .ndst = 0 },
     [BRW_OPCODE_IF] = { .name = "if", .nsrc = 2, .ndst = 0 },
-    [BRW_OPCODE_IFF] = { .name = "iff", .nsrc = 1, .ndst = 01 },
-    [BRW_OPCODE_WHILE] = { .name = "while", .nsrc = 1, .ndst = 0 },
+    [BRW_OPCODE_IFF] = { .name = "iff", .nsrc = 2, .ndst = 1 },
+    [BRW_OPCODE_WHILE] = { .name = "while", .nsrc = 2, .ndst = 0 },
     [BRW_OPCODE_ELSE] = { .name = "else", .nsrc = 2, .ndst = 0 },
-    [BRW_OPCODE_BREAK] = { .name = "break", .nsrc = 1, .ndst = 0 },
+    [BRW_OPCODE_BREAK] = { .name = "break", .nsrc = 2, .ndst = 0 },
     [BRW_OPCODE_CONTINUE] = { .name = "cont", .nsrc = 1, .ndst = 0 },
     [BRW_OPCODE_HALT] = { .name = "halt", .nsrc = 1, .ndst = 0 },
     [BRW_OPCODE_MSAVE] = { .name = "msave", .nsrc = 1, .ndst = 1 },
@@ -144,7 +147,6 @@ char *chan_sel[4] = {
 };
 
 char *dest_condmod[16] = {
-   [0] = NULL
 };
 
 char *debug_ctrl[2] = {
@@ -155,6 +157,16 @@ char *debug_ctrl[2] = {
 char *saturate[2] = {
     [0] = "",
     [1] = ".sat"
+};
+
+char *accwr[2] = {
+    [0] = "",
+    [1] = "AccWrEnable"
+};
+
+char *wectrl[2] = {
+    [0] = "WE_normal",
+    [1] = "WE_all"
 };
 
 char *exec_size[8] = {
@@ -204,6 +216,7 @@ char *compr_ctrl[4] = {
     [0] = "",
     [1] = "sechalf",
     [2] = "compr",
+    [3] = "compr4",
 };
 
 char *dep_ctrl[4] = {
@@ -231,6 +244,16 @@ char *reg_encoding[8] = {
     [4] = "UB",
     [5] = "B",
     [7] = "F"
+};
+
+int reg_type_size[8] = {
+    [0] = 4,
+    [1] = 4,
+    [2] = 2,
+    [3] = 2,
+    [4] = 1,
+    [5] = 1,
+    [7] = 4
 };
 
 char *imm_encoding[8] = {
@@ -319,6 +342,11 @@ char *math_scalar[2] = {
 char *math_precision[2] = {
     [0] = "",
     [1] = "partial_precision"
+};
+
+char *urb_opcode[2] = {
+    [0] = "urb_write",
+    [1] = "ff_sync",
 };
 
 char *urb_swizzle[4] = {
@@ -416,6 +444,11 @@ static int print_opcode (FILE *file, int id)
 static int reg (FILE *file, GLuint _reg_file, GLuint _reg_nr)
 {
     int	err = 0;
+
+    /* Clear the Compr4 instruction compression bit. */
+    if (_reg_file == BRW_MESSAGE_REGISTER_FILE)
+       _reg_nr &= ~(1 << 7);
+
     if (_reg_file == BRW_ARCHITECTURE_REGISTER_FILE) {
 	switch (_reg_nr & 0xf0) {
 	case BRW_ARF_NULL:
@@ -426,6 +459,9 @@ static int reg (FILE *file, GLuint _reg_file, GLuint _reg_nr)
 	    break;
 	case BRW_ARF_ACCUMULATOR:
 	    format (file, "acc%d", _reg_nr & 0x0f);
+	    break;
+	case BRW_ARF_FLAG:
+	    format (file, "f%d", _reg_nr & 0x0f);
 	    break;
 	case BRW_ARF_MASK:
 	    format (file, "mask%d", _reg_nr & 0x0f);
@@ -457,7 +493,7 @@ static int reg (FILE *file, GLuint _reg_file, GLuint _reg_nr)
     return err;
 }
 
-static int dest (FILE *file, const struct brw_instruction *inst)
+static int dest (FILE *file, struct brw_instruction *inst)
 {
     int	err = 0;
 
@@ -469,7 +505,8 @@ static int dest (FILE *file, const struct brw_instruction *inst)
 	    if (err == -1)
 		return 0;
 	    if (inst->bits1.da1.dest_subreg_nr)
-		format (file, ".%d", inst->bits1.da1.dest_subreg_nr);
+		format (file, ".%d", inst->bits1.da1.dest_subreg_nr /
+				     reg_type_size[inst->bits1.da1.dest_reg_type]);
 	    format (file, "<%d>", inst->bits1.da1.dest_horiz_stride);
 	    err |= control (file, "dest reg encoding", reg_encoding, inst->bits1.da1.dest_reg_type, NULL);
 	}
@@ -477,7 +514,8 @@ static int dest (FILE *file, const struct brw_instruction *inst)
 	{
 	    string (file, "g[a0");
 	    if (inst->bits1.ia1.dest_subreg_nr)
-		format (file, ".%d", inst->bits1.ia1.dest_subreg_nr);
+		format (file, ".%d", inst->bits1.ia1.dest_subreg_nr /
+					reg_type_size[inst->bits1.ia1.dest_reg_type]);
 	    if (inst->bits1.ia1.dest_indirect_offset)
 		format (file, " %d", inst->bits1.ia1.dest_indirect_offset);
 	    string (file, "]");
@@ -493,7 +531,8 @@ static int dest (FILE *file, const struct brw_instruction *inst)
 	    if (err == -1)
 		return 0;
 	    if (inst->bits1.da16.dest_subreg_nr)
-		format (file, ".%d", inst->bits1.da16.dest_subreg_nr);
+		format (file, ".%d", inst->bits1.da16.dest_subreg_nr /
+				     reg_type_size[inst->bits1.da16.dest_reg_type]);
 	    string (file, "<1>");
 	    err |= control (file, "writemask", writemask, inst->bits1.da16.dest_writemask, NULL);
 	    err |= control (file, "dest reg encoding", reg_encoding, inst->bits1.da16.dest_reg_type, NULL);
@@ -534,7 +573,7 @@ static int src_da1 (FILE *file, GLuint type, GLuint _reg_file,
     if (err == -1)
 	return 0;
     if (sub_reg_num)
-	format (file, ".%d", sub_reg_num);
+	format (file, ".%d", sub_reg_num / reg_type_size[type]); /* use formal style like spec */
     src_align1_region (file, _vert_stride, _width, _horiz_stride);
     err |= control (file, "src reg encoding", reg_encoding, type, NULL);
     return err;
@@ -588,11 +627,12 @@ static int src_da16 (FILE *file,
     if (err == -1)
 	return 0;
     if (_subreg_nr)
-	format (file, ".%d", _subreg_nr);
+	/* bit4 for subreg number byte addressing. Make this same meaning as
+	   in da1 case, so output looks consistent. */
+	format (file, ".%d", 16 / reg_type_size[_reg_type]);
     string (file, "<");
     err |= control (file, "vert stride", vert_stride, _vert_stride, NULL);
-    string (file, ",1,1>");
-    err |= control (file, "src da16 reg type", reg_encoding, _reg_type, NULL);
+    string (file, ",4,1>");
     /*
      * Three kinds of swizzle display:
      *  identity - nothing printed
@@ -619,11 +659,12 @@ static int src_da16 (FILE *file,
 	err |= control (file, "channel select", chan_sel, swz_z, NULL);
 	err |= control (file, "channel select", chan_sel, swz_w, NULL);
     }
+    err |= control (file, "src da16 reg type", reg_encoding, _reg_type, NULL);
     return err;
 }
 
 
-static int imm (FILE *file, GLuint type, const struct brw_instruction *inst) {
+static int imm (FILE *file, GLuint type, struct brw_instruction *inst) {
     switch (type) {
     case BRW_REGISTER_TYPE_UD:
 	format (file, "0x%08xUD", inst->bits3.ud);
@@ -652,7 +693,7 @@ static int imm (FILE *file, GLuint type, const struct brw_instruction *inst) {
     return 0;
 }
 
-static int src0 (FILE *file, const struct brw_instruction *inst)
+static int src0 (FILE *file, struct brw_instruction *inst)
 {
     if (inst->bits1.da1.src0_reg_file == BRW_IMMEDIATE_VALUE)
 	return imm (file, inst->bits1.da1.src0_reg_type,
@@ -712,7 +753,7 @@ static int src0 (FILE *file, const struct brw_instruction *inst)
     }
 }
 
-static int src1 (FILE *file, const struct brw_instruction *inst)
+static int src1 (FILE *file, struct brw_instruction *inst)
 {
     if (inst->bits1.da1.src1_reg_file == BRW_IMMEDIATE_VALUE)
 	return imm (file, inst->bits1.da1.src1_reg_type,
@@ -772,7 +813,7 @@ static int src1 (FILE *file, const struct brw_instruction *inst)
     }
 }
 
-int brw_disasm_insn (FILE *file, const struct brw_instruction *inst)
+int brw_disasm_insn (FILE *file, struct brw_instruction *inst, int gen)
 {
     int	err = 0;
     int space = 0;
@@ -822,7 +863,8 @@ int brw_disasm_insn (FILE *file, const struct brw_instruction *inst)
 	err |= src1 (file, inst);
     }
 
-    if (inst->header.opcode == BRW_OPCODE_SEND) {
+    if (inst->header.opcode == BRW_OPCODE_SEND ||
+        inst->header.opcode == BRW_OPCODE_SENDC) {
 	newline (file);
 	pad (file, 16);
 	space = 0;
@@ -842,24 +884,70 @@ int brw_disasm_insn (FILE *file, const struct brw_instruction *inst)
 			    inst->bits3.math.precision, &space);
 	    break;
 	case BRW_MESSAGE_TARGET_SAMPLER:
-	    format (file, " (%d, %d, ",
-		    inst->bits3.sampler.binding_table_index,
-		    inst->bits3.sampler.sampler);
-	    err |= control (file, "sampler target format", sampler_target_format,
-			    inst->bits3.sampler.return_format, NULL);
-	    string (file, ")");
+	    if (gen >= 5) {
+		format (file, " (%d, %d, %d, %d)",
+			inst->bits3.sampler_gen5.binding_table_index,
+			inst->bits3.sampler_gen5.sampler,
+			inst->bits3.sampler_gen5.msg_type,
+			inst->bits3.sampler_gen5.simd_mode);
+	    } else if (0 /* FINISHME: is_g4x */) {
+	      format (file, " (%d, %d)",
+			inst->bits3.sampler_g4x.binding_table_index,
+			inst->bits3.sampler_g4x.sampler);
+	    } else {
+		format (file, " (%d, %d, ",
+			inst->bits3.sampler.binding_table_index,
+			inst->bits3.sampler.sampler);
+		err |= control (file, "sampler target format", sampler_target_format,
+				inst->bits3.sampler.return_format, NULL);
+		string (file, ")");
+	    }
+	    break;
+	case BRW_MESSAGE_TARGET_DATAPORT_READ:
+	    if (gen >= 6) {
+		format (file, " (%d, %d, %d, %d, %d, %d)",
+			inst->bits3.dp_render_cache.binding_table_index,
+			inst->bits3.dp_render_cache.msg_control,
+			inst->bits3.dp_render_cache.msg_type,
+			inst->bits3.dp_render_cache.send_commit_msg,
+			inst->bits3.dp_render_cache.msg_length,
+			inst->bits3.dp_render_cache.response_length);
+	    } else if (gen >= 5 /* FINISHME: || is_g4x */) {
+		format (file, " (%d, %d, %d)",
+			inst->bits3.dp_read_gen5.binding_table_index,
+			inst->bits3.dp_read_gen5.msg_control,
+			inst->bits3.dp_read_gen5.msg_type);
+	    } else {
+		format (file, " (%d, %d, %d)",
+			inst->bits3.dp_read.binding_table_index,
+			inst->bits3.dp_read.msg_control,
+			inst->bits3.dp_read.msg_type);
+	    }
 	    break;
 	case BRW_MESSAGE_TARGET_DATAPORT_WRITE:
-	    format (file, " (%d, %d, %d, %d)",
-		    inst->bits3.dp_write.binding_table_index,
-		    (inst->bits3.dp_write.pixel_scoreboard_clear << 3) |
-		    inst->bits3.dp_write.msg_control,
-		    inst->bits3.dp_write.msg_type,
-		    inst->bits3.dp_write.send_commit_msg);
+	    if (gen >= 6) {
+		format (file, " (%d, %d, %d, %d, %d, %d)",
+			inst->bits3.dp_render_cache.binding_table_index,
+			inst->bits3.dp_render_cache.msg_control,
+			inst->bits3.dp_render_cache.msg_type,
+			inst->bits3.dp_render_cache.send_commit_msg,
+			inst->bits3.dp_render_cache.msg_length,
+			inst->bits3.dp_render_cache.response_length);
+	    } else {
+		format (file, " (%d, %d, %d, %d)",
+			inst->bits3.dp_write.binding_table_index,
+			(inst->bits3.dp_write.pixel_scoreboard_clear << 3) |
+			inst->bits3.dp_write.msg_control,
+			inst->bits3.dp_write.msg_type,
+			inst->bits3.dp_write.send_commit_msg);
+	    }
 	    break;
 	case BRW_MESSAGE_TARGET_URB:
-	    format (file, " %d", inst->bits3.urb.offset);
-	    space = 1;
+	    if (gen >= 5) {
+		format (file, " %d", inst->bits3.urb_gen5.offset);
+	    } else {
+		format (file, " %d", inst->bits3.urb.offset);
+	    }
 	    err |= control (file, "urb swizzle", urb_swizzle,
 			    inst->bits3.urb.swizzle_control, &space);
 	    err |= control (file, "urb allocate", urb_allocate,
@@ -868,6 +956,11 @@ int brw_disasm_insn (FILE *file, const struct brw_instruction *inst)
 			    inst->bits3.urb.used, &space);
 	    err |= control (file, "urb complete", urb_complete,
 			    inst->bits3.urb.complete, &space);
+	    if (gen >= 5) {
+		format (file, " mlen %d, rlen %d\n",
+			inst->bits3.urb_gen5.msg_length,
+			inst->bits3.urb_gen5.response_length);
+	    }
 	    break;
 	case BRW_MESSAGE_TARGET_THREAD_SPAWNER:
 	    break;
@@ -877,10 +970,17 @@ int brw_disasm_insn (FILE *file, const struct brw_instruction *inst)
 	}
 	if (space)
 	    string (file, " ");
-	format (file, "mlen %d",
-		inst->bits3.generic.msg_length);
-	format (file, " rlen %d",
-		inst->bits3.generic.response_length);
+	if (gen >= 5) {
+	   format (file, "mlen %d",
+		   inst->bits3.generic_gen5.msg_length);
+	   format (file, " rlen %d",
+		   inst->bits3.generic_gen5.response_length);
+	} else {
+	    format (file, "mlen %d",
+		    inst->bits3.generic.msg_length);
+	    format (file, " rlen %d",
+		    inst->bits3.generic.response_length);
+	}
     }
     pad (file, 64);
     if (inst->header.opcode != BRW_OPCODE_NOP) {
@@ -891,7 +991,8 @@ int brw_disasm_insn (FILE *file, const struct brw_instruction *inst)
 	err |= control (file, "dependency control", dep_ctrl, inst->header.dependency_control, &space);
 	err |= control (file, "compression control", compr_ctrl, inst->header.compression_control, &space);
 	err |= control (file, "thread control", thread_ctrl, inst->header.thread_control, &space);
-	if (inst->header.opcode == BRW_OPCODE_SEND)
+	if (inst->header.opcode == BRW_OPCODE_SEND ||
+            inst->header.opcode == BRW_OPCODE_SENDC)
 	    err |= control (file, "end of thread", end_of_thread,
 			    inst->bits3.generic.end_of_thread, &space);
 	if (space)
@@ -905,13 +1006,13 @@ int brw_disasm_insn (FILE *file, const struct brw_instruction *inst)
 
 
 int brw_disasm (FILE *file, 
-                const struct brw_instruction *inst,
-                unsigned count)
+                struct brw_instruction *inst,
+                unsigned count, int gen)
 {
    int i, err;
 
    for (i = 0; i < count; i++) {
-      err = brw_disasm_insn(stderr, &inst[i]);
+      err = brw_disasm_insn(stderr, &inst[i], gen);
       if (err)
          return err;
    }

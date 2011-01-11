@@ -9,7 +9,7 @@ void brw_dump_data( unsigned pci_id,
 		    enum brw_buffer_data_type data_type,
 		    unsigned offset,
 		    const void *data,
-		    size_t size )
+		    size_t size, int gen )
 {
    if (BRW_DUMP & DUMP_ASM) {
       switch (data_type) {
@@ -18,7 +18,7 @@ void brw_dump_data( unsigned pci_id,
       case BRW_DATA_GS_VS_PROG:
       case BRW_DATA_GS_GS_PROG:
       case BRW_DATA_GS_CLIP_PROG:
-         brw_disasm( stderr, data, size / sizeof(struct brw_instruction) );
+         brw_disasm( stderr, (struct brw_instruction *)data, size / sizeof(struct brw_instruction), gen );
          break;
       default:
          break;
@@ -77,7 +77,7 @@ void brw_dump_data( unsigned pci_id,
    if (BRW_DUMP & DUMP_BATCH) {
       switch (data_type) {
       case BRW_DATA_BATCH_BUFFER:
-         intel_decode(data, size / 4, offset, pci_id);
+         intel_decode(data, size / 4, offset, pci_id, 0);
          break;
       default:
          break;

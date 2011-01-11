@@ -156,7 +156,7 @@ int radeon_bo_wait(struct radeon *radeon, struct radeon_bo *bo)
         if (!bo->shared) {
                 if (!bo->fence)
 			return 0;
-		if (bo->fence <= *bo->ctx->cfence) {
+		if (bo->fence <= *radeon->cfence) {
 			LIST_DELINIT(&bo->fencedlist);
 			bo->fence = 0;
 			return 0;
@@ -181,7 +181,7 @@ int radeon_bo_busy(struct radeon *radeon, struct radeon_bo *bo, uint32_t *domain
 	if (!bo->shared) {
 		if (!bo->fence)
 			return 0;
-		if (bo->fence <= *bo->ctx->cfence) {
+		if (bo->fence <= *radeon->cfence) {
 			LIST_DELINIT(&bo->fencedlist);
 			bo->fence = 0;
 			return 0;

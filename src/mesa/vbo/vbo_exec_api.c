@@ -34,6 +34,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/bufferobj.h"
 #include "main/context.h"
 #include "main/macros.h"
+#include "main/mfeatures.h"
 #include "main/vtxfmt.h"
 #include "main/dlist.h"
 #include "main/eval.h"

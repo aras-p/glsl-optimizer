@@ -422,6 +422,12 @@ cross_validate_globals(struct gl_shader_program *prog,
 	                           mode_string(var), var->name);
 	       return false;
 	    }
+            if (existing->centroid != var->centroid) {
+               linker_error_printf(prog, "declarations for %s `%s' have "
+                                   "mismatching centroid qualifiers\n",
+                                   mode_string(var), var->name);
+               return false;
+            }
 	 } else
 	    variables.add_variable(var);
       }

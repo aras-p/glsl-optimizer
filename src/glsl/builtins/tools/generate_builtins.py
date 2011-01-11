@@ -5,11 +5,19 @@ import re
 from glob import glob
 from os import path
 from subprocess import Popen, PIPE
+from sys import argv
 
 # Local module: generator for texture lookup builtins
 from texture_builtins import generate_texture_functions
 
 builtins_dir = path.join(path.dirname(path.abspath(__file__)), "..")
+
+# Get the path to the standalone GLSL compiler
+if len(argv) != 2:
+   print "Usage:", argv[0], "<path to compiler>"
+   sys.exit(1)
+
+compiler = argv[1]
 
 # Read the files in builtins/ir/*...add them to the supplied dictionary.
 def read_ir_files(fs):
@@ -47,8 +55,7 @@ def write_function_definitions():
         print stringify(v), ';'
 
 def run_compiler(args):
-    compiler_path = path.join(path.join(builtins_dir, '..'), 'glsl_compiler')
-    command = [compiler_path, '--dump-lir'] + args
+    command = [compiler, '--dump-lir'] + args
     p = Popen(command, 1, stdout=PIPE, shell=False)
     output = p.communicate()[0]
 

@@ -42,6 +42,7 @@ struct assignment_generator
    ir_instruction* base_ir;
    ir_rvalue* array;
    bool is_write;
+   unsigned int write_mask;
    ir_variable* var;
 
    assignment_generator()
@@ -54,14 +55,18 @@ struct assignment_generator
        * underlying variable.
        */
       void *mem_ctx = talloc_parent(base_ir);
-      ir_rvalue *element =
+      ir_dereference *element =
 	 new(mem_ctx) ir_dereference_array(this->array->clone(mem_ctx, NULL),
 					   new(mem_ctx) ir_constant(i));
       ir_rvalue *variable = new(mem_ctx) ir_dereference_variable(this->var);
 
-      ir_assignment *assignment = (is_write)
-	 ? new(mem_ctx) ir_assignment(element, variable, condition)
-	 : new(mem_ctx) ir_assignment(variable, element, condition);
+      ir_assignment *assignment;
+      if (is_write) {
+	 assignment = new(mem_ctx) ir_assignment(element, variable, condition,
+						 write_mask);
+      } else {
+	 assignment = new(mem_ctx) ir_assignment(variable, element, condition);
+      }
 
       list->push_tail(assignment);
    }
@@ -262,7 +267,7 @@ public:
    }
 
    ir_variable *convert_dereference_array(ir_dereference_array *orig_deref,
-					  ir_rvalue* value)
+					  ir_assignment* orig_assign)
    {
       assert(is_array_or_matrix(orig_deref->array));
 
@@ -271,16 +276,30 @@ public:
          : orig_deref->array->type->matrix_columns;
 
       void *const mem_ctx = talloc_parent(base_ir);
-      ir_variable *var =
-	 new(mem_ctx) ir_variable(orig_deref->type, "dereference_array_value",
-				  ir_var_temporary);
-      base_ir->insert_before(var);
 
-      if (value) {
+      /* Temporary storage for either the result of the dereference of
+       * the array, or the RHS that's being assigned into the
+       * dereference of the array.
+       */
+      ir_variable *var;
+
+      if (orig_assign) {
+	 var = new(mem_ctx) ir_variable(orig_assign->rhs->type,
+					"dereference_array_value",
+					ir_var_temporary);
+	 base_ir->insert_before(var);
+
 	 ir_dereference *lhs = new(mem_ctx) ir_dereference_variable(var);
-	 ir_assignment *assign = new(mem_ctx) ir_assignment(lhs, value, NULL);
+	 ir_assignment *assign = new(mem_ctx) ir_assignment(lhs,
+							    orig_assign->rhs,
+							    NULL);
 
          base_ir->insert_before(assign);
+      } else {
+	 var = new(mem_ctx) ir_variable(orig_deref->type,
+					"dereference_array_value",
+					ir_var_temporary);
+	 base_ir->insert_before(var);
       }
 
       /* Store the index to a temporary to avoid reusing its tree. */
@@ -298,7 +317,12 @@ public:
       ag.array = orig_deref->array;
       ag.base_ir = base_ir;
       ag.var = var;
-      ag.is_write = !!value;
+      if (orig_assign) {
+	 ag.is_write = true;
+	 ag.write_mask = orig_assign->write_mask;
+      } else {
+	 ag.is_write = false;
+      }
 
       switch_generator sg(ag, index, 4, 4);
 
@@ -331,7 +355,7 @@ public:
       ir_dereference_array *orig_deref = ir->lhs->as_dereference_array();
 
       if (needs_lowering(orig_deref)) {
-         convert_dereference_array(orig_deref, ir->rhs);
+         convert_dereference_array(orig_deref, ir);
          ir->remove();
          this->progress = true;
       }

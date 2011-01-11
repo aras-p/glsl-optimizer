@@ -35,28 +35,6 @@
 
 /* 3D state:
  */
-#define _3DOP_3DSTATE_PIPELINED       0x0
-#define _3DOP_3DSTATE_NONPIPELINED    0x1
-#define _3DOP_3DCONTROL               0x2
-#define _3DOP_3DPRIMITIVE             0x3
-
-#define _3DSTATE_PIPELINED_POINTERS       0x00
-#define _3DSTATE_BINDING_TABLE_POINTERS   0x01
-#define _3DSTATE_VERTEX_BUFFERS           0x08
-#define _3DSTATE_VERTEX_ELEMENTS          0x09
-#define _3DSTATE_INDEX_BUFFER             0x0A
-#define _3DSTATE_VF_STATISTICS            0x0B
-#define _3DSTATE_DRAWING_RECTANGLE            0x00
-#define _3DSTATE_CONSTANT_COLOR               0x01
-#define _3DSTATE_SAMPLER_PALETTE_LOAD         0x02
-#define _3DSTATE_CHROMA_KEY                   0x04
-#define _3DSTATE_DEPTH_BUFFER                 0x05
-#define _3DSTATE_POLY_STIPPLE_OFFSET          0x06
-#define _3DSTATE_POLY_STIPPLE_PATTERN         0x07
-#define _3DSTATE_LINE_STIPPLE                 0x08
-#define _3DSTATE_GLOBAL_DEPTH_OFFSET_CLAMP    0x09
-#define _3DCONTROL    0x00
-
 #define PIPE_CONTROL_NOWRITE          0x00
 #define PIPE_CONTROL_WRITEIMMEDIATE   0x01
 #define PIPE_CONTROL_WRITEDEPTH       0x02
@@ -1117,17 +1095,17 @@
 
 #define _3DSTATE_SAMPLE_MASK			0x7818 /* GEN6+ */
 
-#define CMD_DRAW_RECT                 0x7900
-#define CMD_BLEND_CONSTANT_COLOR      0x7901
-#define CMD_CHROMA_KEY                0x7904
-#define CMD_DEPTH_BUFFER              0x7905
-#define CMD_POLY_STIPPLE_OFFSET       0x7906
-#define CMD_POLY_STIPPLE_PATTERN      0x7907
-#define CMD_LINE_STIPPLE_PATTERN      0x7908
-#define CMD_GLOBAL_DEPTH_OFFSET_CLAMP 0x7909
-#define CMD_AA_LINE_PARAMETERS        0x790a
+#define _3DSTATE_DRAWING_RECTANGLE		0x7900
+#define _3DSTATE_BLEND_CONSTANT_COLOR		0x7901
+#define _3DSTATE_CHROMA_KEY			0x7904
+#define _3DSTATE_DEPTH_BUFFER			0x7905
+#define _3DSTATE_POLY_STIPPLE_OFFSET		0x7906
+#define _3DSTATE_POLY_STIPPLE_PATTERN		0x7907
+#define _3DSTATE_LINE_STIPPLE_PATTERN		0x7908
+#define _3DSTATE_GLOBAL_DEPTH_OFFSET_CLAMP	0x7909
+#define _3DSTATE_AA_LINE_PARAMETERS		0x790a /* G45+ */
 
-#define CMD_GS_SVB_INDEX			0x790b /* CTG+ */
+#define _3DSTATE_GS_SVB_INDEX			0x790b /* CTG+ */
 /* DW1 */
 # define SVB_INDEX_SHIFT				29
 # define SVB_LOAD_INTERNAL_VERTEX_COUNT			(1 << 0) /* SNB+ */
@@ -1142,7 +1120,10 @@
 # define MS_NUMSAMPLES_4				(2 << 1)
 # define MS_NUMSAMPLES_8				(3 << 1)
 
-#define CMD_3D_CLEAR_PARAMS			0x7910 /* ILK+ */
+#define _3DSTATE_STENCIL_BUFFER			0x790e /* ILK, SNB */
+#define _3DSTATE_HIER_DEPTH_BUFFER		0x790f /* ILK, SNB */
+
+#define _3DSTATE_CLEAR_PARAMS			0x7910 /* ILK+ */
 # define DEPTH_CLEAR_VALID				(1 << 15)
 /* DW1: depth clear value */
 

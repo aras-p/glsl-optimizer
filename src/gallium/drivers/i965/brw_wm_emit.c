@@ -848,11 +848,11 @@ static void emit_tex( struct brw_wm_compile *c,
 
    responseLength = 8;		/* always */
 
-   if (BRW_IS_IGDNG(p->brw)) {
+   if (p->brw->gen == 5) {
        if (shadow)
-           msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE_IGDNG;
+           msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_GEN5;
        else
-           msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_IGDNG;
+	   msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_GEN5;
    } else {
        if (shadow)
            msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_COMPARE;
@@ -917,8 +917,8 @@ static void emit_txb( struct brw_wm_compile *c,
    brw_MOV(p, brw_message_reg(8), coord[3]);
    msgLength = 9;
 
-   if (BRW_IS_IGDNG(p->brw))
-       msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS_IGDNG;
+   if (p->brw->gen == 5)
+       msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_GEN5;
    else
        msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS;
 
@@ -1516,6 +1516,6 @@ void brw_wm_emit( struct brw_wm_compile *c )
 
    if (BRW_DEBUG & DEBUG_WM) {
       debug_printf("wm-native:\n");
-      brw_disasm(stderr, p->store, p->nr_insn);
+      brw_disasm(stderr, p->store, p->nr_insn, p->brw->gen);
    }
 }

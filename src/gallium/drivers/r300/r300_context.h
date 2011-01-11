@@ -656,6 +656,22 @@ static INLINE struct r300_fragment_shader *r300_fs(struct r300_context *r300)
     return (struct r300_fragment_shader*)r300->fs.state;
 }
 
+static INLINE void r300_mark_atom_dirty(struct r300_context *r300,
+                                        struct r300_atom *atom)
+{
+    atom->dirty = TRUE;
+
+    if (!r300->first_dirty) {
+        r300->first_dirty = atom;
+        r300->last_dirty = atom+1;
+    } else {
+        if (atom < r300->first_dirty)
+            r300->first_dirty = atom;
+        else if (atom+1 > r300->last_dirty)
+            r300->last_dirty = atom+1;
+    }
+}
+
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                          void *priv);
 
@@ -672,10 +688,7 @@ void r300_init_state_functions(struct r300_context* r300);
 void r300_init_resource_functions(struct r300_context* r300);
 
 /* r300_blit.c */
-void r300_flush_depth_stencil(struct pipe_context *pipe,
-                              struct pipe_resource *dst,
-                              unsigned level,
-                              unsigned layer);
+void r300_flush_depth_textures(struct r300_context *r300);
 
 /* r300_query.c */
 void r300_resume_query(struct r300_context *r300,
@@ -710,21 +723,8 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
                               enum r300_fb_state_change change);
 void r300_mark_fs_code_dirty(struct r300_context *r300);
 
-static INLINE void r300_mark_atom_dirty(struct r300_context *r300,
-                                        struct r300_atom *atom)
-{
-    atom->dirty = TRUE;
-
-    if (!r300->first_dirty) {
-        r300->first_dirty = atom;
-        r300->last_dirty = atom+1;
-    } else {
-        if (atom < r300->first_dirty)
-            r300->first_dirty = atom;
-        if (atom+1 > r300->last_dirty)
-            r300->last_dirty = atom+1;
-    }
-}
+/* r300_state_derived.c */
+void r300_update_derived_state(struct r300_context* r300);
 
 /* r300_debug.c */
 void r500_dump_rs_block(struct r300_rs_block *rs);

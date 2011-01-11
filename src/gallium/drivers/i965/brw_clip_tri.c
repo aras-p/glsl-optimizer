@@ -30,6 +30,7 @@
   */
 
 #include "brw_defines.h"
+#include "brw_context.h"
 #include "brw_eu.h"
 #include "brw_clip.h"
 
@@ -43,6 +44,7 @@ void brw_clip_tri_alloc_regs( struct brw_clip_compile *c,
 			      GLuint nr_verts )
 {
    GLuint i = 0,j;
+   struct brw_context *brw = c->func.brw;
 
    /* Register usage is static, precompute here:
     */
@@ -69,7 +71,7 @@ void brw_clip_tri_alloc_regs( struct brw_clip_compile *c,
       for (j = 0; j < 3; j++) {
 	 GLuint delta = c->key.nr_attrs*16 + 32;
 
-         if (c->chipset.is_igdng)
+         if (brw->gen == 5)
              delta = c->key.nr_attrs * 16 + 32 * 3;
 
 	 brw_MOV(&c->func, byte_offset(c->reg.vertex[j], delta), brw_imm_f(0));
@@ -110,7 +112,7 @@ void brw_clip_tri_alloc_regs( struct brw_clip_compile *c,
       i++;
    }
 
-   if (c->need_ff_sync) {
+   if (brw->needs_ff_sync) {
       c->reg.ff_sync = retype(brw_vec1_grf(i, 0), BRW_REGISTER_TYPE_UD);
       i++;
    }
@@ -563,7 +565,7 @@ void brw_emit_tri_clip( struct brw_clip_compile *c )
 
    /* if -ve rhw workaround bit is set, 
       do cliptest */
-   if (c->chipset.is_965) {
+   if (p->brw->has_negative_rhw_bug) {
       brw_set_conditionalmod(p, BRW_CONDITIONAL_NZ);
       brw_AND(p, brw_null_reg(), get_element_ud(c->reg.R0, 2), 
               brw_imm_ud(1<<20));

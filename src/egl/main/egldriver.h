@@ -64,6 +64,14 @@ struct _egl_driver
 };
 
 
+extern _EGLDriver *
+_eglBuiltInDriverDRI2(const char *args);
+
+
+extern _EGLDriver *
+_eglBuiltInDriverGLX(const char *args);
+
+
 PUBLIC _EGLDriver *
 _eglMain(const char *args);
 

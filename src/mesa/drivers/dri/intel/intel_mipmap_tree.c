@@ -56,7 +56,8 @@ static struct intel_mipmap_tree *
 intel_miptree_create_internal(struct intel_context *intel,
 			      GLenum target,
 			      GLenum internal_format,
-			      GLuint levels,
+			      GLuint first_level,
+			      GLuint last_level,
 			      GLuint width0,
 			      GLuint height0,
 			      GLuint depth0, GLuint cpp, GLuint compress_byte,
@@ -65,14 +66,15 @@ intel_miptree_create_internal(struct intel_context *intel,
    GLboolean ok;
    struct intel_mipmap_tree *mt = calloc(sizeof(*mt), 1);
 
-   DBG("%s target %s format %s levels %d <-- %p\n", __FUNCTION__,
+   DBG("%s target %s format %s level %d..%d <-- %p\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
        _mesa_lookup_enum_by_nr(internal_format), 
-       levels, mt);
+       first_level, last_level, mt);
 
    mt->target = target_to_target(target);
    mt->internal_format = internal_format;
-   mt->levels = levels;
+   mt->first_level = first_level;
+   mt->last_level = last_level;
    mt->width0 = width0;
    mt->height0 = height0;
    mt->depth0 = depth0;
@@ -104,7 +106,8 @@ intel_miptree_create(struct intel_context *intel,
 		     GLenum target,
 		     GLenum base_format,
 		     GLenum internal_format,
-		     GLuint levels,
+		     GLuint first_level,
+		     GLuint last_level,
 		     GLuint width0,
 		     GLuint height0,
 		     GLuint depth0, GLuint cpp, GLuint compress_byte,
@@ -123,7 +126,7 @@ intel_miptree_create(struct intel_context *intel,
    }
 
    mt = intel_miptree_create_internal(intel, target, internal_format,
-				      levels, width0,
+				      first_level, last_level, width0,
 				      height0, depth0, cpp, compress_byte,
 				      tiling);
    /*
@@ -161,7 +164,7 @@ intel_miptree_create_for_region(struct intel_context *intel,
    struct intel_mipmap_tree *mt;
 
    mt = intel_miptree_create_internal(intel, target, internal_format,
-				      1,
+				      0, 0,
 				      region->width, region->height, 1,
 				      region->cpp, compress_byte,
 				      I915_TILING_NONE);

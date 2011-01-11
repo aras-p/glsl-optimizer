@@ -72,7 +72,7 @@ brw_dump_aa_line_parameters(const struct brw_aa_line_parameters *ptr)
 {
    debug_printf("\t\t.header.length = 0x%x\n", (*ptr).header.length);
    debug_printf("\t\t.header.opcode = 0x%x\n", (*ptr).header.opcode);
-   debug_printf("\t\t.bits0.aa_coverage_scope = 0x%x\n", (*ptr).bits0.aa_coverage_scope);
+   debug_printf("\t\t.bits0.aa_coverage_scope = 0x%x\n", (*ptr).bits0.aa_coverage_slope);
    debug_printf("\t\t.bits0.aa_coverage_bias = 0x%x\n", (*ptr).bits0.aa_coverage_bias);
    debug_printf("\t\t.bits1.aa_coverage_endcap_slope = 0x%x\n", (*ptr).bits1.aa_coverage_endcap_slope);
    debug_printf("\t\t.bits1.aa_coverage_endcap_bias = 0x%x\n", (*ptr).bits1.aa_coverage_endcap_bias);

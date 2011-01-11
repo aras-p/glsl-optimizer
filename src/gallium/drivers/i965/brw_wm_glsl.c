@@ -1607,7 +1607,7 @@ static void emit_txb(struct brw_wm_compile *c,
     brw_MOV(p, brw_message_reg(5), src[3]);          /* bias */
     brw_MOV(p, brw_message_reg(6), brw_imm_f(0));    /* ref (unused?) */
 
-    if (BRW_IS_IGDNG(p->brw)) {
+    if (p->brw->gen == 5) {
         msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_BIAS_IGDNG;
     } else {
         /* Does it work well on SIMD8? */
@@ -1688,7 +1688,7 @@ static void emit_tex(struct brw_wm_compile *c,
        brw_MOV(p, brw_message_reg(6), src[2]);        /* ref value / R coord */
     }
 
-    if (BRW_IS_IGDNG(p->brw)) {
+    if (p->brw->gen == 5) {
         if (shadow)
             msg_type = BRW_SAMPLER_MESSAGE_SIMD8_SAMPLE_COMPARE_IGDNG;
         else
@@ -1970,7 +1970,7 @@ static void brw_wm_emit_branching_shader(struct brw_context *brw, struct brw_wm_
                   struct brw_instruction *inst0, *inst1;
                   GLuint br = 1;
 
-                  if (BRW_IS_IGDNG(brw))
+                  if (brw->gen == 5)
                      br = 2;
  
                   loop_depth--;

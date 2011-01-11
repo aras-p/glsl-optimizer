@@ -529,7 +529,14 @@ struct brw_query_object {
 struct brw_context 
 {
    struct pipe_context base;
-   struct brw_chipset chipset;
+   int gen;
+   boolean has_negative_rhw_bug;
+   boolean needs_ff_sync;
+   boolean is_g4x;
+
+   int urb_size;
+   int vs_max_threads;
+   int wm_max_threads;
 
    struct brw_winsys_screen *sws;
 
@@ -853,12 +860,6 @@ brw_context( struct pipe_context *ctx )
 {
    return (struct brw_context *)ctx;
 }
-
-
-#define BRW_IS_965(brw)    ((brw)->chipset.is_965)
-#define BRW_IS_IGDNG(brw)  ((brw)->chipset.is_igdng)
-#define BRW_IS_G4X(brw)    ((brw)->chipset.is_g4x)
-
 
 #endif
 

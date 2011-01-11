@@ -23,8 +23,7 @@
 #ifndef NOOP_PUBLIC_H
 #define NOOP_PUBLIC_H
 
-struct sw_winsys;
-
-struct pipe_screen *noop_screen_create(struct sw_winsys *winsys);
+struct pipe_screen;
+struct pipe_screen *noop_screen_create(struct pipe_screen *screen);
 
 #endif

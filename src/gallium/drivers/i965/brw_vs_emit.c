@@ -116,6 +116,7 @@ static boolean find_output_slot( struct brw_vs_compile *c,
  */
 static void brw_vs_alloc_regs( struct brw_vs_compile *c )
 {
+   struct brw_context *brw = c->func.brw;
    GLuint i, reg = 0, subreg = 0, mrf;
    int attributes_in_vue;
 
@@ -218,7 +219,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     */
    c->nr_outputs = c->prog_data.nr_outputs;
 
-   if (c->chipset.is_igdng)
+   if (brw->gen == 5)
       mrf = 8;
    else
       mrf = 4;
@@ -333,7 +334,7 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
     */
    attributes_in_vue = MAX2(c->nr_outputs, c->nr_inputs);
 
-   if (c->chipset.is_igdng)
+   if (brw->gen == 5)
       c->prog_data.urb_entry_size = (attributes_in_vue + 6 + 3) / 4;
    else
       c->prog_data.urb_entry_size = (attributes_in_vue + 2 + 3) / 4;
@@ -1124,6 +1125,7 @@ static struct brw_reg get_dst( struct brw_vs_compile *c,
 static void emit_vertex_write( struct brw_vs_compile *c)
 {
    struct brw_compile *p = &c->func;
+   struct brw_context *brw = p->brw;
    struct brw_reg m0 = brw_message_reg(0);
    struct brw_reg pos = c->regs[TGSI_FILE_OUTPUT][VERT_RESULT_HPOS];
    struct brw_reg ndc;
@@ -1143,7 +1145,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
     */
    if (c->prog_data.writes_psiz ||
        c->key.nr_userclip || 
-       c->chipset.is_965)
+       brw->has_negative_rhw_bug)
    {
       struct brw_reg header1 = retype(get_tmp(c), BRW_REGISTER_TYPE_UD);
       GLuint i;
@@ -1174,7 +1176,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
        * Later, clipping will detect ucp[6] and ensure the primitive is
        * clipped against all fixed planes.
        */
-      if (c->chipset.is_965) {
+      if (brw->has_negative_rhw_bug) {
 	 brw_CMP(p,
 		 vec8(brw_null_reg()),
 		 BRW_CONDITIONAL_L,
@@ -1202,7 +1204,7 @@ static void emit_vertex_write( struct brw_vs_compile *c)
    brw_set_access_mode(p, BRW_ALIGN_1);
    brw_MOV(p, offset(m0, 2), ndc);
 
-   if (c->chipset.is_igdng) {
+   if (brw->gen == 5) {
        /* There are 20 DWs (D0-D19) in VUE vertex header on IGDNG */
        brw_MOV(p, offset(m0, 3), pos); /* a portion of vertex header */
        /* m4, m5 contain the distances from vertex to the user clip planeXXX. 
@@ -1339,6 +1341,7 @@ static void emit_insn(struct brw_vs_compile *c,
    unsigned opcode = inst->Instruction.Opcode;
    unsigned label = inst->Label.Label;
    struct brw_compile *p = &c->func;
+   struct brw_context *brw = p->brw;
    struct brw_reg args[3], dst;
    GLuint i;
 
@@ -1514,7 +1517,7 @@ static void emit_insn(struct brw_vs_compile *c,
 
       c->loop_depth--;
 
-      if (c->chipset.is_igdng)
+      if (brw->gen == 5)
 	 br = 2;
 
       inst0 = inst1 = brw_WHILE(p, c->loop_inst[c->loop_depth]);
@@ -1652,6 +1655,6 @@ void brw_vs_emit(struct brw_vs_compile *c)
 
    if (BRW_DEBUG & DEBUG_VS) {
       debug_printf("vs-native:\n");
-      brw_disasm(stderr, p->store, p->nr_insn);
+      brw_disasm(stderr, p->store, p->nr_insn, p->brw->gen);
    }
 }

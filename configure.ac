@@ -18,11 +18,11 @@ AC_CONFIG_AUX_DIR([bin])
 AC_CANONICAL_HOST
 
 dnl Versions for external dependencies
-LIBDRM_REQUIRED=2.4.15
-LIBDRM_RADEON_REQUIRED=2.4.17
+LIBDRM_REQUIRED=2.4.23
+LIBDRM_RADEON_REQUIRED=2.4.23
 DRI2PROTO_REQUIRED=2.1
 GLPROTO_REQUIRED=1.4.11
-LIBDRM_XORG_REQUIRED=2.4.17
+LIBDRM_XORG_REQUIRED=2.4.23
 LIBKMS_XORG_REQUIRED=1.0.0
 
 dnl Check for progs
@@ -483,9 +483,9 @@ AC_ARG_ENABLE([gles2],
     [enable_gles2=no])
 AC_ARG_ENABLE([gles-overlay],
     [AS_HELP_STRING([--enable-gles-overlay],
-        [build separate OpenGL ES only libraries @<:@default=no@:>@])],
-    [enable_gles_overlay="$enableval"],
-    [enable_gles_overlay=no])
+        [DEPRECATED.  Same as --enable-gles1 and --enable-gles2])],
+    [enable_gles1="$enableval"; enable_gles2="$enableval"],
+    [])
 
 AC_ARG_ENABLE([openvg],
     [AS_HELP_STRING([--enable-openvg],
@@ -506,13 +506,11 @@ fi
 if test "x$enable_opengl" = xno -a \
         "x$enable_gles1" = xno -a \
         "x$enable_gles2" = xno -a \
-        "x$enable_gles_overlay" = xno -a \
         "x$enable_openvg" = xno; then
     AC_MSG_ERROR([at least one API should be enabled])
 fi
 
 API_DEFINES=""
-GLES_OVERLAY=0
 if test "x$enable_opengl" = xno; then
     API_DEFINES="$API_DEFINES -DFEATURE_GL=0"
 else
@@ -524,11 +522,7 @@ fi
 if test "x$enable_gles2" = xyes; then
     API_DEFINES="$API_DEFINES -DFEATURE_ES2=1"
 fi
-if test "x$enable_gles_overlay" = xyes; then
-    GLES_OVERLAY=1
-fi
 AC_SUBST([API_DEFINES])
-AC_SUBST([GLES_OVERLAY])
 
 dnl
 dnl Driver configuration. Options are xlib, dri and osmesa right now.
@@ -588,7 +582,7 @@ GLU_DIRS="sgi"
 GALLIUM_DIRS="auxiliary drivers state_trackers"
 GALLIUM_TARGET_DIRS=""
 GALLIUM_WINSYS_DIRS="sw"
-GALLIUM_DRIVERS_DIRS="softpipe failover galahad trace rbug identity"
+GALLIUM_DRIVERS_DIRS="softpipe failover galahad trace rbug noop identity"
 GALLIUM_STATE_TRACKERS_DIRS=""
 
 # build glapi if OpenGL is enabled
@@ -596,12 +590,15 @@ if test "x$enable_opengl" = xyes; then
     CORE_DIRS="$CORE_DIRS mapi/glapi"
 fi
 
-# build es1api and es2api if OpenGL ES is enabled
-case "x$enable_gles1$enable_gles2$enable_gles_overlay" in
-x*yes*)
-    CORE_DIRS="$CORE_DIRS mapi/es1api mapi/es2api"
-    ;;
-esac
+# build es1api if OpenGL ES 1.x is enabled
+if test "x$enable_gles1" = xyes; then
+    CORE_DIRS="$CORE_DIRS mapi/es1api"
+fi
+
+# build es2api if OpenGL ES 2.x is enabled
+if test "x$enable_gles2" = xyes; then
+    CORE_DIRS="$CORE_DIRS mapi/es2api"
+fi
 
 # build vgapi if OpenVG is enabled
 if test "x$enable_openvg" = xyes; then
@@ -609,7 +606,7 @@ if test "x$enable_openvg" = xyes; then
 fi
 
 # build glsl and mesa if OpenGL or OpenGL ES is enabled
-case "x$enable_opengl$enable_gles1$enable_gles2$enable_gles_overlay" in
+case "x$enable_opengl$enable_gles1$enable_gles2" in
 x*yes*)
     CORE_DIRS="$CORE_DIRS glsl mesa"
     ;;
@@ -811,13 +808,19 @@ if test "$mesa_driver" = xlib; then
 fi
 
 dnl
-dnl More DRI setup
+dnl TLS detection
 dnl
+
 AC_ARG_ENABLE([glx-tls],
     [AS_HELP_STRING([--enable-glx-tls],
         [enable TLS support in GLX @<:@default=disabled@:>@])],
     [GLX_USE_TLS="$enableval"],
     [GLX_USE_TLS=no])
+AC_SUBST(GLX_TLS, ${GLX_USE_TLS})
+
+dnl
+dnl More DRI setup
+dnl
 dnl Directory for DRI drivers
 AC_ARG_WITH([dri-driverdir],
     [AS_HELP_STRING([--with-dri-driverdir=DIR],
@@ -1472,9 +1475,6 @@ x*yes*)
     EGL_CLIENT_APIS="$EGL_CLIENT_APIS "'$(GL_LIB)'
     ;;
 esac
-if test "x$enable_gles_overlay" = xyes; then
-    EGL_CLIENT_APIS="$EGL_CLIENT_APIS "'$(GLESv1_CM_LIB) $(GLESv2_LIB)'
-fi
 if test "x$enable_openvg" = xyes; then
     EGL_CLIENT_APIS="$EGL_CLIENT_APIS "'$(VG_LIB)'
     VG_LIB_DEPS="$VG_LIB_DEPS -lpthread"
@@ -1773,19 +1773,6 @@ if test "x$enable_gallium_swrast" = xyes || test "x$enable_gallium_swrast" = xau
     fi
 fi
 
-dnl
-dnl Gallium noop configuration
-dnl
-AC_ARG_ENABLE([gallium-noop],
-    [AS_HELP_STRING([--enable-gallium-noop],
-        [build gallium radeon @<:@default=disabled@:>@])],
-    [enable_gallium_noop="$enableval"],
-    [enable_gallium_noop=auto])
-if test "x$enable_gallium_noop" = xyes; then
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS noop"
-    GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-noop"
-fi
-
 dnl prepend CORE_DIRS to SRC_DIRS
 SRC_DIRS="$CORE_DIRS $SRC_DIRS"
 
@@ -1818,7 +1805,6 @@ echo "        includedir:      $includedir"
 dnl API info
 echo ""
 echo "        OpenGL:          $enable_opengl (ES1: $enable_gles1 ES2: $enable_gles2)"
-echo "        GLES overlay:    $enable_gles_overlay"
 echo "        OpenVG:          $enable_openvg"
 
 dnl Driver info
@@ -1855,7 +1841,7 @@ if test "$enable_egl" = yes; then
 
     egl_drivers=""
     for d in $EGL_DRIVERS_DIRS; do
-        egl_drivers="$egl_drivers egl_$d"
+        egl_drivers="$egl_drivers builtin:egl_$d"
     done
 
     if test "$enable_gallium" = yes -a "$HAVE_ST_EGL" = yes; then

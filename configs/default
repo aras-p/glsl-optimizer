@@ -25,6 +25,7 @@ CXXFLAGS = -O
 LDFLAGS =
 HOST_CFLAGS = $(CFLAGS)
 GLU_CFLAGS = 
+GLX_TLS = no
 
 # Compiler for building demos/tests/etc
 APP_CC = $(CC)
@@ -107,7 +108,7 @@ EGL_DRIVERS_DIRS = glx
 # Gallium directories and 
 GALLIUM_DIRS = auxiliary drivers state_trackers
 GALLIUM_AUXILIARIES = $(TOP)/src/gallium/auxiliary/libgallium.a
-GALLIUM_DRIVERS_DIRS = softpipe trace rbug identity galahad i915 i965 svga r300 nvfx nv50 failover
+GALLIUM_DRIVERS_DIRS = softpipe trace rbug noop identity galahad i915 i965 svga r300 nvfx nv50 failover
 GALLIUM_DRIVERS = $(foreach DIR,$(GALLIUM_DRIVERS_DIRS),$(TOP)/src/gallium/drivers/$(DIR)/lib$(DIR).a)
 GALLIUM_WINSYS_DIRS = sw sw/xlib
 GALLIUM_TARGET_DIRS = libgl-xlib

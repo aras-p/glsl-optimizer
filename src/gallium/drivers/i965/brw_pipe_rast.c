@@ -35,7 +35,7 @@ calculate_clip_key_rast( const struct brw_context *brw,
 {
    memset(key, 0, sizeof *key);
 
-   if (brw->chipset.is_igdng)
+   if (brw->gen == 5)
        key->clip_mode = BRW_CLIPMODE_KERNEL_CLIP;
    else
        key->clip_mode = BRW_CLIPMODE_NORMAL;

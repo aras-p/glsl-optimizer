@@ -932,8 +932,8 @@ _mesa_max_texture_levels(struct gl_context *ctx, GLenum target)
 /**
  * Return number of dimensions per mipmap level for the given texture target.
  */
-static GLint
-get_texture_dimensions(GLenum target)
+GLint
+_mesa_get_texture_dimensions(GLenum target)
 {
    switch (target) {
    case GL_TEXTURE_1D:
@@ -1158,7 +1158,7 @@ _mesa_init_teximage_fields(struct gl_context *ctx, GLenum target,
 
    img->TexFormat = format;
 
-   dims = get_texture_dimensions(target);
+   dims = _mesa_get_texture_dimensions(target);
 
    _mesa_set_fetch_functions(img, dims);
 }

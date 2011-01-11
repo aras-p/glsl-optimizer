@@ -47,7 +47,6 @@
 #include <libudev.h>
 #endif
 
-#include <glapi/glapi.h>
 #include "eglconfig.h"
 #include "eglcontext.h"
 #include "egldisplay.h"
@@ -63,6 +62,7 @@ struct dri2_egl_driver
 {
    _EGLDriver base;
 
+   _EGLProc (*get_proc_address)(const char *procname);
    void (*glFlush)(void);
 };
 
@@ -1867,11 +1867,9 @@ dri2_swap_buffers_region(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw,
 static _EGLProc
 dri2_get_proc_address(_EGLDriver *drv, const char *procname)
 {
-   (void) drv;
+   struct dri2_egl_driver *dri2_drv = dri2_egl_driver(drv);
 
-   /* FIXME: Do we need to support lookup of EGL symbols too? */
-
-   return (_EGLProc) _glapi_get_proc_address(procname);
+   return dri2_drv->get_proc_address(procname);
 }
 
 static EGLBoolean
@@ -1901,13 +1899,6 @@ dri2_wait_native(_EGLDriver *drv, _EGLDisplay *disp, EGLint engine)
    /* glXWaitX(); */
 
    return EGL_TRUE;
-}
-
-static void
-dri2_unload(_EGLDriver *drv)
-{
-   struct dri2_egl_driver *dri2_drv = dri2_egl_driver(drv);
-   free(dri2_drv);
 }
 
 static EGLBoolean
@@ -1983,10 +1974,31 @@ static EGLBoolean
 dri2_release_tex_image(_EGLDriver *drv,
 		       _EGLDisplay *disp, _EGLSurface *surf, EGLint buffer)
 {
-   (void) drv;
-   (void) disp;
-   (void) surf;
-   (void) buffer;
+#if __DRI_TEX_BUFFER_VERSION >= 3
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   struct dri2_egl_surface *dri2_surf = dri2_egl_surface(surf);
+   struct dri2_egl_context *dri2_ctx;
+   _EGLContext *ctx;
+   GLint  target;
+
+   ctx = _eglGetCurrentContext();
+   dri2_ctx = dri2_egl_context(ctx);
+
+   if (!_eglReleaseTexImage(drv, disp, surf, buffer))
+      return EGL_FALSE;
+
+   switch (dri2_surf->base.TextureTarget) {
+   case EGL_TEXTURE_2D:
+      target = GL_TEXTURE_2D;
+      break;
+   default:
+      assert(0);
+   }
+   if (dri2_dpy->tex_buffer->releaseTexBuffer!=NULL)
+    (*dri2_dpy->tex_buffer->releaseTexBuffer)(dri2_ctx->dri_context,
+                                             target,
+                                             dri2_surf->dri_drawable);
+#endif
 
    return EGL_TRUE;
 }
@@ -2316,12 +2328,51 @@ dri2_export_drm_image_mesa(_EGLDriver *drv, _EGLDisplay *disp, _EGLImage *img,
    return EGL_TRUE;
 }
 
+static void
+dri2_unload(_EGLDriver *drv)
+{
+   struct dri2_egl_driver *dri2_drv = dri2_egl_driver(drv);
+   free(dri2_drv);
+}
+
+static EGLBoolean
+dri2_load(_EGLDriver *drv)
+{
+   struct dri2_egl_driver *dri2_drv = dri2_egl_driver(drv);
+   void *handle;
+
+   handle = dlopen(NULL, RTLD_LAZY | RTLD_GLOBAL);
+   if (handle) {
+      dri2_drv->get_proc_address = (_EGLProc (*)(const char *))
+         dlsym(handle, "_glapi_get_proc_address");
+      /* no need to keep a reference */
+      dlclose(handle);
+   }
+
+   /*
+    * If glapi is not available, loading DRI drivers will fail.  Ideally, we
+    * should load one of libGL, libGLESv1_CM, or libGLESv2 and go on.  But if
+    * the app has loaded another one of them with RTLD_LOCAL, there may be
+    * unexpected behaviors later because there will be two copies of glapi
+    * (with global variables of the same names!) in the memory.
+    */
+   if (!dri2_drv->get_proc_address) {
+      _eglLog(_EGL_WARNING, "DRI2: failed to find _glapi_get_proc_address");
+      return EGL_FALSE;
+   }
+
+   dri2_drv->glFlush = (void (*)(void))
+      dri2_drv->get_proc_address("glFlush");
+
+   return EGL_TRUE;
+}
+
 /**
  * This is the main entrypoint into the driver, called by libEGL.
  * Create a new _EGLDriver object and init its dispatch table.
  */
 _EGLDriver *
-_eglMain(const char *args)
+_EGL_MAIN(const char *args)
 {
    struct dri2_egl_driver *dri2_drv;
 
@@ -2329,6 +2380,9 @@ _eglMain(const char *args)
 
    dri2_drv = malloc(sizeof *dri2_drv);
    if (!dri2_drv)
+      return NULL;
+
+   if (!dri2_load(&dri2_drv->base))
       return NULL;
 
    memset(dri2_drv, 0, sizeof *dri2_drv);
@@ -2356,9 +2410,6 @@ _eglMain(const char *args)
 
    dri2_drv->base.Name = "DRI2";
    dri2_drv->base.Unload = dri2_unload;
-
-   dri2_drv->glFlush =
-      (void (*)(void)) dri2_get_proc_address(&dri2_drv->base, "glFlush");
 
    return &dri2_drv->base;
 }

@@ -39,7 +39,6 @@
 #include "r300_screen_buffer.h"
 #include "r300_emit.h"
 #include "r300_reg.h"
-#include "r300_state_derived.h"
 
 #include <limits.h>
 
@@ -569,8 +568,6 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
     r300_translate_index_buffer(r300, &indexBuffer, &indexSize, index_offset,
                                 &start, count);
 
-    r300_update_derived_state(r300);
-
     /* Fallback for misaligned ushort indices. */
     if (indexSize == 2 && (start & 1) &&
         !r300_is_user_buffer(indexBuffer)) {
@@ -642,8 +639,6 @@ static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
                             count > 65536 &&
                             r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0);
     unsigned short_count;
-
-    r300_update_derived_state(r300);
 
     if (immd_is_good_idea(r300, count)) {
         r300_emit_draw_arrays_immediate(r300, mode, start, count);
@@ -720,6 +715,8 @@ static void r300_draw_vbo(struct pipe_context* pipe,
             return;
         }
 
+        r300_update_derived_state(r300);
+
         /* Set up the fallback for an incompatible vertex layout if needed. */
         if (r300->incompatible_vb_layout || r300->velems->incompatible_layout) {
             r300_begin_vertex_translate(r300, real_min_index, real_max_index);
@@ -736,6 +733,8 @@ static void r300_draw_vbo(struct pipe_context* pipe,
     } else {
         min_index = MAX2(min_index, info->start);
         max_index = MIN2(max_index, info->start + count - 1);
+
+        r300_update_derived_state(r300);
 
         /* Set up the fallback for an incompatible vertex layout if needed. */
         if (r300->incompatible_vb_layout || r300->velems->incompatible_layout) {

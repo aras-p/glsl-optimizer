@@ -127,7 +127,7 @@ i915_miptree_layout_cube(struct intel_context *intel,
    mt->total_width = dim * 2;
    mt->total_height = dim * 4;
 
-   for (level = 0; level < mt->levels; level++) {
+   for (level = mt->first_level; level <= mt->last_level; level++) {
       intel_miptree_set_level_info(mt, level, 6,
 				   0, 0,
 				   lvlWidth, lvlHeight,
@@ -141,12 +141,12 @@ i915_miptree_layout_cube(struct intel_context *intel,
       GLuint y = initial_offsets[face][1] * dim;
       GLuint d = dim;
 
-      for (level = 0; level < mt->levels; level++) {
+      for (level = mt->first_level; level <= mt->last_level; level++) {
 	 intel_miptree_set_image_offset(mt, level, face, x, y);
 
 	 if (d == 0)
-	    printf("cube mipmap %d/%d (%d) is 0x0\n",
-		   face, level, mt->levels);
+	    printf("cube mipmap %d/%d (%d..%d) is 0x0\n",
+		   face, level, mt->first_level, mt->last_level);
 
 	 d >>= 1;
 	 x += step_offsets[face][0] * d;
@@ -170,7 +170,7 @@ i915_miptree_layout_3d(struct intel_context *intel,
    mt->total_width = mt->width0;
 
    /* XXX: hardware expects/requires 9 levels at minimum. */
-   for (level = 0; level < MAX2(9, mt->levels); level++) {
+   for (level = mt->first_level; level <= MAX2(8, mt->last_level); level++) {
       intel_miptree_set_level_info(mt, level, depth, 0, mt->total_height,
 				   width, height, depth);
 
@@ -183,7 +183,7 @@ i915_miptree_layout_3d(struct intel_context *intel,
 
    /* Fixup depth image_offsets: */
    depth = mt->depth0;
-   for (level = 0; level < mt->levels; level++) {
+   for (level = mt->first_level; level <= mt->last_level; level++) {
       GLuint i;
       for (i = 0; i < depth; i++) {
 	 intel_miptree_set_image_offset(mt, level, i,
@@ -213,7 +213,7 @@ i915_miptree_layout_2d(struct intel_context *intel,
    mt->total_width = mt->width0;
    mt->total_height = 0;
 
-   for (level = 0; level < mt->levels; level++) {
+   for (level = mt->first_level; level <= mt->last_level; level++) {
       intel_miptree_set_level_info(mt, level, 1,
 				   0, mt->total_height,
 				   width, height, 1);
@@ -345,7 +345,7 @@ i945_miptree_layout_cube(struct intel_context *intel,
       mt->total_height = 4;
 
    /* Set all the levels to effectively occupy the whole rectangular region. */
-   for (level = 0; level < mt->levels; level++) {
+   for (level = mt->first_level; level <= mt->last_level; level++) {
       intel_miptree_set_level_info(mt, level, 6,
 				   0, 0,
 				   lvlWidth, lvlHeight, 1);
@@ -361,12 +361,12 @@ i945_miptree_layout_cube(struct intel_context *intel,
       if (dim == 4 && face >= 4) {
 	 y = mt->total_height - 4;
 	 x = (face - 4) * 8;
-      } else if (dim < 4 && face > 0) {
+      } else if (dim < 4 && (face > 0 || mt->first_level > 0)) {
 	 y = mt->total_height - 4;
 	 x = face * 8;
       }
 
-      for (level = 0; level < mt->levels; level++) {
+      for (level = mt->first_level; level <= mt->last_level; level++) {
 	 intel_miptree_set_image_offset(mt, level, face, x, y);
 
 	 d >>= 1;
@@ -429,7 +429,7 @@ i945_miptree_layout_3d(struct intel_context *intel,
    pack_x_pitch = mt->total_width;
    pack_x_nr = 1;
 
-   for (level = 0; level < mt->levels; level++) {
+   for (level = mt->first_level; level <= mt->last_level; level++) {
       GLint x = 0;
       GLint y = 0;
       GLint q, j;

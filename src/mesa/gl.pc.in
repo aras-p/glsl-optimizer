@@ -10,3 +10,4 @@ Version: @VERSION@
 Libs: -L${libdir} -l@GL_LIB@
 Libs.private: @GL_PC_LIB_PRIV@
 Cflags: -I${includedir} @GL_PC_CFLAGS@
+glx_tls: @GLX_TLS@

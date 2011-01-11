@@ -325,7 +325,7 @@ i965_libdrm_bo_subdata(struct brw_winsys_buffer *buffer,
       brw_dump_data( idws->base.pci_id,
 		     data_type,
 		     buf->bo->offset + offset, 
-		     data, size );
+		     data, size, buffer->sws->gen );
 
    /* XXX: use bo_map_gtt/memcpy/unmap_gtt under some circumstances???
     */
@@ -464,7 +464,7 @@ i965_libdrm_bo_flush_range(struct brw_winsys_buffer *buffer,
 		     buf->data_type,
 		     buf->bo->offset + offset, 
 		     (char*)buf->bo->virtual + offset, 
-		     length );
+		     length, buffer->sws->gen );
 }
 
 static void 

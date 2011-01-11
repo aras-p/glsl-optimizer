@@ -88,17 +88,6 @@ internal library that supports multiple APIs.</p>
 
 </li>
 
-<li><code>--enable-gles-overlay</code>
-
-<p>This option enables OpenGL ES as separate internal libraries.  This is an
-alternative approach to enable OpenGL ES.</p>
-
-<p>This is only supported by <code>egl_gallium</code>.  For systems using DRI
-drivers, <code>--enable-gles1</code> and <code>--enable-gles2</code> are
-suggested instead as all drivers will benefit.</p>
-
-</li>
-
 <li><code>--enable-openvg</code>
 
 <p>OpenVG must be explicitly enabled by this option.</p>
@@ -148,9 +137,10 @@ may set</p>
 
 <li><code>EGL_DRIVER</code>
 
-<p>This variable specifies a full path to an EGL driver and it forces the
-specified EGL driver to be loaded.  It comes in handy when one wants to test a
-specific driver.  This variable is ignored for setuid/setgid binaries.</p>
+<p>This variable specifies a full path to or the name of an EGL driver.  It
+forces the specified EGL driver to be loaded.  It comes in handy when one wants
+to test a specific driver.  This variable is ignored for setuid/setgid
+binaries.</p>
 
 </li>
 

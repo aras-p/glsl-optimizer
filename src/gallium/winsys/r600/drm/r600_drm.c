@@ -30,6 +30,7 @@
 #include <sys/ioctl.h>
 #include "util/u_inlines.h"
 #include "util/u_debug.h"
+#include <pipebuffer/pb_bufmgr.h>
 #include "r600.h"
 #include "r600_priv.h"
 #include "r600_drm_public.h"
@@ -125,6 +126,18 @@ static int radeon_drm_get_tiling(struct radeon *radeon)
 	return 0;
 }
 
+static int radeon_init_fence(struct radeon *radeon)
+{
+	radeon->fence = 1;
+	radeon->fence_bo = r600_bo(radeon, 4096, 0, 0, 0);
+	if (radeon->fence_bo == NULL) {
+		return -ENOMEM;
+	}
+	radeon->cfence = r600_bo_map(radeon, radeon->fence_bo, PB_USAGE_UNSYNCHRONIZED, NULL);
+	*radeon->cfence = 0;
+	return 0;
+}
+
 static struct radeon *radeon_new(int fd, unsigned device)
 {
 	struct radeon *radeon;
@@ -198,6 +211,11 @@ static struct radeon *radeon_new(int fd, unsigned device)
 	if (radeon->bomgr == NULL) {
 		return NULL;
 	}
+	r = radeon_init_fence(radeon);
+	if (r) {
+		radeon_decref(radeon);
+		return NULL;
+	}
 	return radeon;
 }
 
@@ -212,6 +230,10 @@ struct radeon *radeon_decref(struct radeon *radeon)
 		return NULL;
 	if (--radeon->refcount > 0) {
 		return NULL;
+	}
+
+	if (radeon->fence_bo) {
+		r600_bo_reference(radeon, &radeon->fence_bo, NULL);
 	}
 
 	if (radeon->bomgr)

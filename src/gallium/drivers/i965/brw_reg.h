@@ -93,18 +93,54 @@
 #define PCI_CHIP_G45_G                  0x2E22
 #define PCI_CHIP_G41_G                  0x2E32
 #define PCI_CHIP_B43_G                  0x2E42
+#define PCI_CHIP_B43_G1                 0x2E92
 
 #define PCI_CHIP_ILD_G                  0x0042
 #define PCI_CHIP_ILM_G                  0x0046
 
-struct brw_chipset {
-   unsigned pci_id:16;
-   unsigned is_965:1;
-   unsigned is_igdng:1;
-   unsigned is_g4x:1;
-   unsigned pad:13;
-};
+#define PCI_CHIP_SANDYBRIDGE_GT1	0x0102	/* Desktop */
+#define PCI_CHIP_SANDYBRIDGE_GT2	0x0112
+#define PCI_CHIP_SANDYBRIDGE_GT2_PLUS	0x0122
+#define PCI_CHIP_SANDYBRIDGE_M_GT1	0x0106	/* Mobile */
+#define PCI_CHIP_SANDYBRIDGE_M_GT2	0x0116
+#define PCI_CHIP_SANDYBRIDGE_M_GT2_PLUS	0x0126
+#define PCI_CHIP_SANDYBRIDGE_S		0x010A	/* Server */
 
+#define IS_G45(devid)           (devid == PCI_CHIP_IGD_E_G || \
+                                 devid == PCI_CHIP_Q45_G || \
+                                 devid == PCI_CHIP_G45_G || \
+                                 devid == PCI_CHIP_G41_G || \
+                                 devid == PCI_CHIP_B43_G || \
+                                 devid == PCI_CHIP_B43_G1)
+#define IS_GM45(devid)          (devid == PCI_CHIP_GM45_GM)
+#define IS_G4X(devid)		(IS_G45(devid) || IS_GM45(devid))
+
+#define IS_GEN4(devid)		(devid == PCI_CHIP_I965_G || \
+				 devid == PCI_CHIP_I965_Q || \
+				 devid == PCI_CHIP_I965_G_1 || \
+				 devid == PCI_CHIP_I965_GM || \
+				 devid == PCI_CHIP_I965_GME || \
+				 devid == PCI_CHIP_I946_GZ || \
+				 IS_G4X(devid))
+
+#define IS_ILD(devid)           (devid == PCI_CHIP_ILD_G)
+#define IS_ILM(devid)           (devid == PCI_CHIP_ILM_G)
+#define IS_GEN5(devid)          (IS_ILD(devid) || IS_ILM(devid))
+
+#define IS_IRONLAKE(devid)	IS_GEN5(devid)
+
+#define IS_GEN6(devid)		(devid == PCI_CHIP_SANDYBRIDGE_GT1 || \
+				 devid == PCI_CHIP_SANDYBRIDGE_GT2 || \
+				 devid == PCI_CHIP_SANDYBRIDGE_GT2_PLUS	|| \
+				 devid == PCI_CHIP_SANDYBRIDGE_M_GT1 || \
+				 devid == PCI_CHIP_SANDYBRIDGE_M_GT2 || \
+				 devid == PCI_CHIP_SANDYBRIDGE_M_GT2_PLUS || \
+				 devid == PCI_CHIP_SANDYBRIDGE_S)
+
+#define IS_965(devid)		(IS_GEN4(devid) || \
+				 IS_G4X(devid) || \
+				 IS_GEN5(devid) || \
+				 IS_GEN6(devid))
 
 /* XXX: hacks
  */

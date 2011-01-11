@@ -251,6 +251,15 @@ struct __DRItexBufferExtensionRec {
 			  GLint target,
 			  GLint format,
 			  __DRIdrawable *pDraw);
+    /**
+     * Method to release texture buffer in case some special platform
+     * need this.
+     *
+     * For GLX_EXT_texture_from_pixmap with AIGLX.
+     */
+    void (*releaseTexBuffer)(__DRIcontext *pDRICtx,
+			GLint target,
+			__DRIdrawable *pDraw);
 };
 
 /**

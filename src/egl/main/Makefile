@@ -52,6 +52,19 @@ OBJECTS = $(SOURCES:.c=.o)
 
 # use dl*() to load drivers
 LOCAL_CFLAGS = -D_EGL_OS_UNIX=1
+LOCAL_LIBS =
+
+# egl_dri2 and egl_glx are built-ins
+ifeq ($(filter dri2, $(EGL_DRIVERS_DIRS)),dri2)
+LOCAL_CFLAGS += -D_EGL_BUILT_IN_DRIVER_DRI2
+LOCAL_LIBS += $(TOP)/src/egl/drivers/dri2/libegl_dri2.a
+EGL_LIB_DEPS += $(XCB_DRI2_LIBS) $(LIBUDEV_LIBS) $(DLOPEN_LIBS) $(LIBDRM_LIB)
+endif
+ifeq ($(filter glx, $(EGL_DRIVERS_DIRS)),glx)
+LOCAL_CFLAGS += -D_EGL_BUILT_IN_DRIVER_GLX
+LOCAL_LIBS += $(TOP)/src/egl/drivers/glx/libegl_glx.a
+EGL_LIB_DEPS += $(X11_LIBS) $(DLOPEN_LIBS)
+endif
 
 # translate --with-egl-platforms to _EGLPlatformType
 EGL_NATIVE_PLATFORM=_EGL_INVALID_PLATFORM
@@ -84,7 +97,8 @@ $(TOP)/$(LIB_DIR)/$(EGL_LIB_NAME): $(OBJECTS)
 	$(MKLIB) -o $(EGL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(EGL_MAJOR) -minor $(EGL_MINOR) \
 		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
-		$(EGL_LIB_DEPS) $(OBJECTS)
+		-L$(TOP)/$(LIB_DIR) $(EGL_LIB_DEPS) \
+		$(OBJECTS) $(LOCAL_LIBS)
 
 install-headers:
 	$(INSTALL) -d $(DESTDIR)$(INSTALL_INC_DIR)/KHR

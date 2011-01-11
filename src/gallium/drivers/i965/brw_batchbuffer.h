@@ -26,7 +26,6 @@ struct brw_batchbuffer {
 
    struct brw_winsys_screen *sws;
    struct brw_winsys_buffer *buf;
-   struct brw_chipset chipset;
 
    /**
     * Values exported to speed up the writing the batchbuffer,
@@ -47,8 +46,8 @@ struct brw_batchbuffer {
    /*@}*/
 };
 
-struct brw_batchbuffer *brw_batchbuffer_alloc( struct brw_winsys_screen *sws,
-                                               struct brw_chipset chipset );
+struct brw_batchbuffer *brw_batchbuffer_alloc( struct brw_winsys_screen *sws );
+
 
 void brw_batchbuffer_free(struct brw_batchbuffer *batch);
 

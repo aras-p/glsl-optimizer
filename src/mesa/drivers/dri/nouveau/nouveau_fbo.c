@@ -32,6 +32,7 @@
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 #include "main/fbobject.h"
+#include "main/mfeatures.h"
 
 static GLboolean
 set_renderbuffer_format(struct gl_renderbuffer *rb, GLenum internalFormat)

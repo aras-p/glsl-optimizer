@@ -34,6 +34,7 @@
 #include "main/image.h"
 #include "main/bufferobj.h"
 #include "main/macros.h"
+#include "main/mfeatures.h"
 #include "program/program.h"
 #include "program/prog_print.h"
 

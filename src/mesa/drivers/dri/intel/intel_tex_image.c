@@ -1,6 +1,7 @@
 
 #include "main/glheader.h"
 #include "main/macros.h"
+#include "main/mfeatures.h"
 #include "main/mtypes.h"
 #include "main/enums.h"
 #include "main/bufferobj.h"
@@ -44,12 +45,24 @@ logbase2(int n)
    return log2;
 }
 
-struct intel_mipmap_tree *
+
+/* Otherwise, store it in memory if (Border != 0) or (any dimension ==
+ * 1).
+ *    
+ * Otherwise, if max_level >= level >= min_level, create tree with
+ * space for textures from min_level down to max_level.
+ *
+ * Otherwise, create tree with space for textures from (level
+ * 0)..(1x1).  Consider pruning this tree at a validation if the
+ * saving is worth it.
+ */
+static struct intel_mipmap_tree *
 intel_miptree_create_for_teximage(struct intel_context *intel,
 				  struct intel_texture_object *intelObj,
 				  struct intel_texture_image *intelImage,
 				  GLboolean expect_accelerated_upload)
 {
+   GLuint firstLevel;
    GLuint lastLevel;
    GLuint width = intelImage->base.Width;
    GLuint height = intelImage->base.Height;
@@ -62,28 +75,50 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
    if (intelImage->base.Border)
       return NULL;
 
-   /* Figure out image dimensions at start level. 
-    */
-   for (i = intelImage->level; i > 0; i--) {
-      width <<= 1;
-      if (height != 1)
-         height <<= 1;
-      if (depth != 1)
-         depth <<= 1;
-   }
+   if (intelImage->level > intelObj->base.BaseLevel &&
+       (intelImage->base.Width == 1 ||
+        (intelObj->base.Target != GL_TEXTURE_1D &&
+         intelImage->base.Height == 1) ||
+        (intelObj->base.Target == GL_TEXTURE_3D &&
+         intelImage->base.Depth == 1))) {
+      /* For this combination, we're at some lower mipmap level and
+       * some important dimension is 1.  We can't extrapolate up to a
+       * likely base level width/height/depth for a full mipmap stack
+       * from this info, so just allocate this one level.
+       */
+      firstLevel = intelImage->level;
+      lastLevel = intelImage->level;
+   } else {
+      /* If this image disrespects BaseLevel, allocate from level zero.
+       * Usually BaseLevel == 0, so it's unlikely to happen.
+       */
+      if (intelImage->level < intelObj->base.BaseLevel)
+	 firstLevel = 0;
+      else
+	 firstLevel = intelObj->base.BaseLevel;
 
-   /* Guess a reasonable value for lastLevel.  This is probably going
-    * to be wrong fairly often and might mean that we have to look at
-    * resizable buffers, or require that buffers implement lazy
-    * pagetable arrangements.
-    */
-   if ((intelObj->base.MinFilter == GL_NEAREST ||
-        intelObj->base.MinFilter == GL_LINEAR) &&
-       intelImage->level == 0) {
-      lastLevel = 0;
-   }
-   else {
-      lastLevel = logbase2(MAX2(MAX2(width, height), depth));
+      /* Figure out image dimensions at start level. */
+      for (i = intelImage->level; i > firstLevel; i--) {
+	 width <<= 1;
+	 if (height != 1)
+	    height <<= 1;
+	 if (depth != 1)
+	    depth <<= 1;
+      }
+
+      /* Guess a reasonable value for lastLevel.  This is probably going
+       * to be wrong fairly often and might mean that we have to look at
+       * resizable buffers, or require that buffers implement lazy
+       * pagetable arrangements.
+       */
+      if ((intelObj->base.MinFilter == GL_NEAREST ||
+	   intelObj->base.MinFilter == GL_LINEAR) &&
+	  intelImage->level == firstLevel &&
+	  (intel->gen < 4 || firstLevel == 0)) {
+	 lastLevel = firstLevel;
+      } else {
+	 lastLevel = firstLevel + logbase2(MAX2(MAX2(width, height), depth));
+      }
    }
 
    if (_mesa_is_format_compressed(intelImage->base.TexFormat))
@@ -95,7 +130,8 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
 			       intelObj->base.Target,
 			       intelImage->base._BaseFormat,
 			       intelImage->base.InternalFormat,
-			       lastLevel + 1,
+			       firstLevel,
+			       lastLevel,
 			       width,
 			       height,
 			       depth,
@@ -309,22 +345,28 @@ intelTexImage(struct gl_context * ctx,
       texImage->Data = NULL;
    }
 
-   if (intelObj->mt && intel_miptree_match_image(intelObj->mt,
-						 &intelImage->base)) {
+   assert(!intelImage->mt);
+
+   if (intelObj->mt &&
+       intel_miptree_match_image(intelObj->mt, &intelImage->base)) {
+      /* Use an existing miptree when possible */
       intel_miptree_reference(&intelImage->mt, intelObj->mt);
-   } else {
-      intel_miptree_release(intel, &intelImage->mt);
+      assert(intelImage->mt);
+   } else if (intelImage->base.Border == 0) {
+      /* Didn't fit in the object miptree, but it's suitable for inclusion in
+       * a miptree, so create one just for our level and store it in the image.
+       * It'll get moved into the object miptree at validate time.
+       */
       intelImage->mt = intel_miptree_create_for_teximage(intel, intelObj,
 							 intelImage,
 							 pixels == NULL);
-      if (!intelImage->mt) {
-	 DBG("guess_and_alloc_mipmap_tree: failed\n");
-      }
 
-      /* Speculatively set up the object with this miptree so that the
-       * later levels can just load into the miptree we just made.
+      /* Even if the object currently has a mipmap tree associated
+       * with it, this one is a more likely candidate to represent the
+       * whole object since our level didn't fit what was there
+       * before, and any lower levels would fit into our miptree.
        */
-      if (!intelObj->mt && intelImage->mt)
+      if (intelImage->mt)
 	 intel_miptree_reference(&intelObj->mt, intelImage->mt);
    }
 
@@ -344,7 +386,10 @@ intelTexImage(struct gl_context * ctx,
        * performance (in particular when intel_region_cow() is
        * required).
        */
-      if (intelImage->mt->levels == 1) {
+      if (intelObj->mt == intelImage->mt &&
+          intelObj->mt->first_level == level &&
+          intelObj->mt->last_level == level) {
+
          if (try_pbo_zcopy(intel, intelImage, unpack,
                            internalFormat,
                            width, height, format, type, pixels)) {

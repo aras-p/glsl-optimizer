@@ -392,7 +392,7 @@ brw_texture_create( struct pipe_screen *screen,
    if (tex->compressed == 0 &&
        !bscreen->no_tiling) 
    {
-      if (bscreen->chipset.is_965 &&
+      if (bscreen->gen < 5 &&
 	  util_format_is_depth_or_stencil(template->format))
 	 tex->tiling = BRW_TILING_Y;
       else

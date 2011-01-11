@@ -41,6 +41,7 @@ static const struct debug_named_value debug_options[] = {
     { "fb", DBG_FB, "Log framebuffer" },
     { "cbzb", DBG_CBZB, "Log fast color clear info" },
     { "hyperz", DBG_HYPERZ, "Log HyperZ info" },
+    { "upload", DBG_UPLOAD, "Log user buffer upload info" },
     { "scissor", DBG_SCISSOR, "Log scissor info" },
     { "fakeocc", DBG_FAKE_OCC, "Use fake occlusion queries" },
     { "anisohq", DBG_ANISOHQ, "Use high quality anisotropic filtering" },

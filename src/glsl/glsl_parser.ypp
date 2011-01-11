@@ -228,6 +228,11 @@ version_statement:
 	   case 130:
 	      /* FINISHME: Check against implementation support versions. */
 	      state->language_version = $2;
+	      state->version_string =
+		 talloc_asprintf(state, "GLSL%s %d.%02d",
+				 state->es_shader ? " ES" : "",
+				 state->language_version / 100,
+				 state->language_version % 100);
 	      break;
 	   default:
 	      _mesa_glsl_error(& @2, state, "Shading language version"
@@ -246,11 +251,8 @@ pragma_statement:
 	{
 	   if (state->language_version < 120) {
 	      _mesa_glsl_warning(& @1, state,
-				 "pragma `invariant(all)' not supported in "
-				 "GLSL%s %d.%02d",
-				 state->es_shader ? " ES" : "",
-				 state->language_version / 100,
-				 state->language_version % 100);
+				 "pragma `invariant(all)' not supported in %s",
+				 state->version_string);
 	   } else {
 	      state->all_invariant = true;
 	   }
@@ -1296,10 +1298,9 @@ precision_qualifier:
 		     if (!state->es_shader && state->language_version < 130)
 			_mesa_glsl_error(& @1, state,
 				         "precision qualifier forbidden "
-					 "in GLSL %d.%d (1.30 or later "
+					 "in %s (1.30 or later "
 					 "required)\n",
-					 state->language_version / 100,
-					 state->language_version % 100);
+					 state->version_string);
 
 		     $$ = ast_precision_high;
 		  }
@@ -1307,10 +1308,9 @@ precision_qualifier:
 		     if (!state->es_shader && state->language_version < 130)
 			_mesa_glsl_error(& @1, state,
 					 "precision qualifier forbidden "
-					 "in GLSL %d.%d (1.30 or later "
+					 "in %s (1.30 or later "
 					 "required)\n",
-					 state->language_version / 100,
-					 state->language_version % 100);
+					 state->version_string);
 
 		     $$ = ast_precision_medium;
 		  }
@@ -1318,10 +1318,9 @@ precision_qualifier:
 		     if (!state->es_shader && state->language_version < 130)
 			_mesa_glsl_error(& @1, state,
 					 "precision qualifier forbidden "
-					 "in GLSL %d.%d (1.30 or later "
+					 "in %s (1.30 or later "
 					 "required)\n",
-					 state->language_version / 100,
-					 state->language_version % 100);
+					 state->version_string);
 
 		     $$ = ast_precision_low;
 		  }

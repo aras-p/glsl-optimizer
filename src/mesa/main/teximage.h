@@ -126,6 +126,8 @@ _mesa_test_proxy_teximage(struct gl_context *ctx, GLenum target, GLint level,
 extern GLuint
 _mesa_tex_target_to_face(GLenum target);
 
+extern GLint
+_mesa_get_texture_dimensions(GLenum target);
 
 /**
  * Lock a texture for updating.  See also _mesa_lock_context_textures().

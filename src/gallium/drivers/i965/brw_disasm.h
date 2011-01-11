@@ -27,10 +27,10 @@
 
 struct brw_instruction;
 
-int brw_disasm_insn (FILE *file, const struct brw_instruction *inst);
+int brw_disasm_insn (FILE *file, struct brw_instruction *inst, int gen);
 int brw_disasm (FILE *file, 
-                const struct brw_instruction *inst,
-                unsigned count);
+                struct brw_instruction *inst,
+                unsigned count, int gen);
 
 #endif
 

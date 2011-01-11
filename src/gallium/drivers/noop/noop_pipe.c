@@ -30,9 +30,15 @@
 #include <util/u_inlines.h>
 #include <util/u_format.h>
 #include "noop_public.h"
-#include "state_tracker/sw_winsys.h"
+
+DEBUG_GET_ONCE_BOOL_OPTION(noop, "GALLIUM_NOOP", FALSE)
 
 void noop_init_state_functions(struct pipe_context *ctx);
+
+struct noop_pipe_screen {
+	struct pipe_screen	pscreen;
+	struct pipe_screen	*oscreen;
+};
 
 /*
  * query
@@ -108,52 +114,29 @@ static struct pipe_resource *noop_resource_create(struct pipe_screen *screen,
 		FREE(nresource);
 		return NULL;
 	}
-#if 0
-	if (nresource->base.bind & (PIPE_BIND_DISPLAY_TARGET |
-					PIPE_BIND_SCANOUT |
-					PIPE_BIND_SHARED)) {
-		struct sw_winsys *winsys = (struct sw_winsys *)screen->winsys;
-		unsigned stride;
-
-		nresource->dt = winsys->displaytarget_create(winsys, nresource->base.bind,
-								nresource->base.format,
-								nresource->base.width0, 
-								nresource->base.height0,
-								16, &stride);
-	}
-#endif
 	return &nresource->base;
 }
 
-static struct pipe_resource *noop_resource_from_handle(struct pipe_screen * screen,
+static struct pipe_resource *noop_resource_from_handle(struct pipe_screen *screen,
 							const struct pipe_resource *templ,
-							struct winsys_handle *whandle)
+							struct winsys_handle *handle)
 {
-	struct sw_winsys *winsys = (struct sw_winsys *)screen->winsys;
-	struct noop_resource *nresource;
-	struct sw_displaytarget *dt;
-	unsigned stride;
+	struct noop_pipe_screen *noop_screen = (struct noop_pipe_screen*)screen;
+	struct pipe_screen *oscreen = noop_screen->oscreen;
+	struct pipe_resource *result;
+	struct noop_resource *noop_resource;
 
-	dt = winsys->displaytarget_from_handle(winsys, templ, whandle, &stride);
-	if (dt == NULL) {
-		return NULL;
-	}
-	nresource = (struct noop_resource *)noop_resource_create(screen, templ);
-	nresource->dt = dt;
-	return &nresource->base;
+	result = oscreen->resource_from_handle(oscreen, templ, handle);
+	noop_resource = noop_resource_create(screen, result);
+	pipe_resource_reference(&result, NULL);
+	return noop_resource;
 }
 
 static boolean noop_resource_get_handle(struct pipe_screen *screen,
 					struct pipe_resource *resource,
 					struct winsys_handle *handle)
 {
-	struct sw_winsys *winsys = (struct sw_winsys *)screen->winsys;
-	struct noop_resource *nresource = (struct noop_resource *)resource;
-
-	if (nresource->dt == NULL)
-		return FALSE;
-
-	return winsys->displaytarget_get_handle(winsys, nresource->dt, handle);
+	return FALSE;
 }
 
 static void noop_resource_destroy(struct pipe_screen *screen,
@@ -161,11 +144,6 @@ static void noop_resource_destroy(struct pipe_screen *screen,
 {
 	struct noop_resource *nresource = (struct noop_resource *)resource;
 
-	if (nresource->dt) {
-		/* display target */
-		struct sw_winsys *winsys = (struct sw_winsys *)screen->winsys;
-		winsys->displaytarget_destroy(winsys, nresource->dt);
-	}
 	free(nresource->data);
 	FREE(resource);
 }
@@ -483,19 +461,30 @@ static boolean noop_is_format_supported(struct pipe_screen* screen,
 
 static void noop_destroy_screen(struct pipe_screen *screen)
 {
+	struct noop_pipe_screen *noop_screen = (struct noop_pipe_screen*)screen;
+	struct pipe_screen *oscreen = noop_screen->oscreen;
+
+	oscreen->destroy(oscreen);
 	FREE(screen);
 }
 
-struct pipe_screen *noop_screen_create(struct sw_winsys *winsys)
+struct pipe_screen *noop_screen_create(struct pipe_screen *oscreen)
 {
+	struct noop_pipe_screen *noop_screen;
 	struct pipe_screen *screen;
 
-	screen = CALLOC_STRUCT(pipe_screen);
-	if (screen == NULL) {
-		return NULL;
+	if (!debug_get_option_noop()) {
+		return oscreen;
 	}
 
-	screen->winsys = (struct pipe_winsys*)winsys;
+	noop_screen = CALLOC_STRUCT(noop_pipe_screen);
+	if (noop_screen == NULL) {
+		return NULL;
+	}
+	noop_screen->oscreen = oscreen;
+	screen = &noop_screen->pscreen;
+
+	screen->winsys = oscreen->winsys;
 	screen->destroy = noop_destroy_screen;
 	screen->get_name = noop_get_name;
 	screen->get_vendor = noop_get_vendor;

@@ -203,7 +203,7 @@ static void brw_translate_vertex_elements(struct brw_context *brw,
       brw_velems->ve[i].ve1.vfcomponent2 = comp2;
       brw_velems->ve[i].ve1.vfcomponent3 = comp3;
 
-      if (BRW_IS_IGDNG(brw))
+      if (brw->gen == 5)
          brw_velems->ve[i].ve1.dst_offset = 0;
       else
          brw_velems->ve[i].ve1.dst_offset = i * 4;

@@ -388,7 +388,7 @@ GLboolean brw_texture_layout(struct brw_screen *brw_screen,
 {
    switch (tex->b.b.target) {
    case PIPE_TEXTURE_CUBE:
-      if (brw_screen->chipset.is_igdng)
+      if (brw_screen->gen == 5)
 	 brw_layout_cubemap_idgng( tex );
       else
 	 brw_layout_3d_cube( tex );

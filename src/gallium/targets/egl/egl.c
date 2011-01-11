@@ -205,19 +205,7 @@ get_st_api_full(enum st_api_type api, enum st_profile_type profile)
    switch (api) {
    case ST_API_OPENGL:
       symbol = ST_CREATE_OPENGL_SYMBOL;
-      switch (profile) {
-      case ST_PROFILE_OPENGL_ES1:
-         names[count++] = "GLESv1_CM";
-         names[count++] = "GL";
-         break;
-      case ST_PROFILE_OPENGL_ES2:
-         names[count++] = "GLESv2";
-         names[count++] = "GL";
-         break;
-      default:
-         names[count++] = "GL";
-         break;
-      }
+      names[count++] = "GL";
       break;
    case ST_API_OPENVG:
       symbol = ST_CREATE_OPENVG_SYMBOL;

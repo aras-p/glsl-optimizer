@@ -38,6 +38,7 @@
 #include "main/fbobject.h"
 #include "main/framebuffer.h"
 #include "main/macros.h"
+#include "main/mfeatures.h"
 #include "main/renderbuffer.h"
 
 #include "pipe/p_context.h"

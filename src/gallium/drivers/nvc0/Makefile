@@ -28,6 +28,7 @@ C_SOURCES = \
 	nvc0_push.c \
 	nvc0_push2.c \
 	nvc0_fence.c \
-	nvc0_mm.c
+	nvc0_mm.c \
+	nvc0_query.c
 
 include ../../Makefile.template

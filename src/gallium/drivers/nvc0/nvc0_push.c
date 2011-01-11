@@ -75,13 +75,15 @@ emit_vertices_i08(struct push_context *ctx, unsigned start, unsigned count)
 
       BEGIN_RING_NI(ctx->chan, RING_3D(VERTEX_DATA), size);
 
-      ctx->translate->run_elts8(ctx->translate, elts, push, 0, ctx->chan->cur);
+      ctx->translate->run_elts8(ctx->translate, elts, nr, 0, ctx->chan->cur);
 
       ctx->chan->cur += size;
-      count -= push;
-      elts += push;
+      count -= nr;
+      elts += nr;
 
       if (nr != push) {
+         count--;
+         elts++;
          BEGIN_RING(ctx->chan, RING_3D(VERTEX_END_GL), 2);
          OUT_RING  (ctx->chan, 0);
          OUT_RING  (ctx->chan, ctx->prim);
@@ -106,13 +108,15 @@ emit_vertices_i16(struct push_context *ctx, unsigned start, unsigned count)
 
       BEGIN_RING_NI(ctx->chan, RING_3D(VERTEX_DATA), size);
 
-      ctx->translate->run_elts16(ctx->translate, elts, push, 0, ctx->chan->cur);
+      ctx->translate->run_elts16(ctx->translate, elts, nr, 0, ctx->chan->cur);
 
       ctx->chan->cur += size;
-      count -= push;
-      elts += push;
+      count -= nr;
+      elts += nr;
 
       if (nr != push) {
+         count--;
+         elts++;
          BEGIN_RING(ctx->chan, RING_3D(VERTEX_END_GL), 2);
          OUT_RING  (ctx->chan, 0);
          OUT_RING  (ctx->chan, ctx->prim);
@@ -137,13 +141,15 @@ emit_vertices_i32(struct push_context *ctx, unsigned start, unsigned count)
 
       BEGIN_RING_NI(ctx->chan, RING_3D(VERTEX_DATA), size);
 
-      ctx->translate->run_elts(ctx->translate, elts, push, 0, ctx->chan->cur);
+      ctx->translate->run_elts(ctx->translate, elts, nr, 0, ctx->chan->cur);
 
       ctx->chan->cur += size;
-      count -= push;
-      elts += push;
+      count -= nr;
+      elts += nr;
 
       if (nr != push) {
+         count--;
+         elts++;
          BEGIN_RING(ctx->chan, RING_3D(VERTEX_END_GL), 2);
          OUT_RING  (ctx->chan, 0);
          OUT_RING  (ctx->chan, ctx->prim);

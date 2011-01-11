@@ -38,6 +38,7 @@
 
 #include "main/mtypes.h"
 #include "main/context.h"
+#include "main/mfeatures.h"
 #include "main/texobj.h"
 #include "main/teximage.h"
 #include "main/texstate.h"

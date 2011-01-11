@@ -28,6 +28,7 @@
 
 #include "main/imports.h"
 #include "main/macros.h"
+#include "main/mfeatures.h"
 #include "main/mtypes.h"
 #include "main/fbobject.h"
 #include "main/framebuffer.h"
@@ -44,6 +45,9 @@
 #include "intel_regions.h"
 #include "intel_tex.h"
 #include "intel_span.h"
+#ifndef I915
+#include "brw_context.h"
+#endif
 
 #define FILE_DEBUG_FLAG DEBUG_FBO
 
@@ -420,6 +424,24 @@ intel_wrap_texture(struct gl_context * ctx, struct gl_texture_image *texImage)
    return irb;
 }
 
+static void
+intel_set_draw_offset_for_image(struct intel_texture_image *intel_image,
+				int zoffset)
+{
+   struct intel_mipmap_tree *mt = intel_image->mt;
+   unsigned int dst_x, dst_y;
+
+   /* compute offset of the particular 2D image within the texture region */
+   intel_miptree_get_image_offset(intel_image->mt,
+				  intel_image->level,
+				  intel_image->face,
+				  zoffset,
+				  &dst_x, &dst_y);
+
+   mt->region->draw_offset = (dst_y * mt->region->pitch + dst_x) * mt->cpp;
+   mt->region->draw_x = dst_x;
+   mt->region->draw_y = dst_y;
+}
 
 /**
  * Called by glFramebufferTexture[123]DEXT() (and other places) to
@@ -432,11 +454,11 @@ intel_render_texture(struct gl_context * ctx,
                      struct gl_framebuffer *fb,
                      struct gl_renderbuffer_attachment *att)
 {
+   struct intel_context *intel = intel_context(ctx);
    struct gl_texture_image *newImage
       = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
    struct intel_renderbuffer *irb = intel_renderbuffer(att->Renderbuffer);
    struct intel_texture_image *intel_image;
-   GLuint dst_x, dst_y;
 
    (void) fb;
 
@@ -482,19 +504,52 @@ intel_render_texture(struct gl_context * ctx,
       intel_region_reference(&irb->region, intel_image->mt->region);
    }
 
-   /* compute offset of the particular 2D image within the texture region */
-   intel_miptree_get_image_offset(intel_image->mt,
-				  att->TextureLevel,
-				  att->CubeMapFace,
-				  att->Zoffset,
-				  &dst_x, &dst_y);
-
-   intel_image->mt->region->draw_offset = (dst_y * intel_image->mt->region->pitch +
-					   dst_x) * intel_image->mt->cpp;
-   intel_image->mt->region->draw_x = dst_x;
-   intel_image->mt->region->draw_y = dst_y;
+   intel_set_draw_offset_for_image(intel_image, att->Zoffset);
    intel_image->used_as_render_target = GL_TRUE;
 
+#ifndef I915
+   if (!brw_context(ctx)->has_surface_tile_offset &&
+       (intel_image->mt->region->draw_offset & 4095) != 0) {
+      /* Original gen4 hardware couldn't draw to a non-tile-aligned
+       * destination in a miptree unless you actually setup your
+       * renderbuffer as a miptree and used the fragile
+       * lod/array_index/etc. controls to select the image.  So,
+       * instead, we just make a new single-level miptree and render
+       * into that.
+       */
+      struct intel_mipmap_tree *old_mt = intel_image->mt;
+      struct intel_mipmap_tree *new_mt;
+      int comp_byte = 0, texel_bytes;
+
+      if (_mesa_is_format_compressed(intel_image->base.TexFormat))
+	 comp_byte = intel_compressed_num_bytes(intel_image->base.TexFormat);
+
+      texel_bytes = _mesa_get_format_bytes(intel_image->base.TexFormat);
+
+      new_mt = intel_miptree_create(intel, newImage->TexObject->Target,
+				    intel_image->base._BaseFormat,
+				    intel_image->base.InternalFormat,
+				    intel_image->level,
+				    intel_image->level,
+				    intel_image->base.Width,
+				    intel_image->base.Height,
+				    intel_image->base.Depth,
+				    texel_bytes, comp_byte, GL_TRUE);
+
+      intel_miptree_image_copy(intel,
+                               new_mt,
+                               intel_image->face,
+			       intel_image->level,
+			       old_mt);
+
+      intel_miptree_release(intel, &intel_image->mt);
+      intel_image->mt = new_mt;
+      intel_set_draw_offset_for_image(intel_image, att->Zoffset);
+
+      intel_region_release(&irb->region);
+      intel_region_reference(&irb->region, intel_image->mt->region);
+   }
+#endif
    /* update drawing region, etc */
    intel_draw_buffer(ctx, fb);
 }

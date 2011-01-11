@@ -398,7 +398,12 @@ expression:
 		$$ = $1 % $3;
 	}
 |	expression '/' expression {
-		$$ = $1 / $3;
+		if ($3 == 0) {
+			yyerror (& @1, parser,
+				 "division by 0 in preprocessor directive");
+		} else {
+			$$ = $1 / $3;
+		}
 	}
 |	expression '*' expression {
 		$$ = $1 * $3;
@@ -825,9 +830,30 @@ _token_list_trim_trailing_space (token_list_t *list)
 }
 
 int
+_token_list_is_empty_ignoring_space (token_list_t *l)
+{
+	token_node_t *n;
+
+	if (l == NULL)
+		return 1;
+
+	n = l->head;
+	while (n != NULL && n->token->type == SPACE)
+		n = n->next;
+
+	return n == NULL;
+}
+
+int
 _token_list_equal_ignoring_space (token_list_t *a, token_list_t *b)
 {
 	token_node_t *node_a, *node_b;
+
+	if (a == NULL || b == NULL) {
+		int a_empty = _token_list_is_empty_ignoring_space(a);
+		int b_empty = _token_list_is_empty_ignoring_space(b);
+		return a_empty == b_empty;
+	}
 
 	node_a = a->head;
 	node_b = b->head;

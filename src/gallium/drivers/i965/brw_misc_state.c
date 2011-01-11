@@ -239,7 +239,7 @@ static int prepare_depthbuffer(struct brw_context *brw)
 static int emit_depthbuffer(struct brw_context *brw)
 {
    struct pipe_surface *surface = brw->curr.fb.zsbuf;
-   unsigned int len = (BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)) ? 6 : 5;
+   unsigned int len = (brw->is_g4x || brw->gen == 5) ? 6 : 5;
 
    if (surface == NULL) {
       BEGIN_BATCH(len, IGNORE_CLIPRECTS);
@@ -250,7 +250,7 @@ static int emit_depthbuffer(struct brw_context *brw)
       OUT_BATCH(0);
       OUT_BATCH(0);
 
-      if (BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw))
+      if (brw->is_g4x || brw->gen == 5)
          OUT_BATCH(0);
 
       ADVANCE_BATCH();
@@ -298,7 +298,7 @@ static int emit_depthbuffer(struct brw_context *brw)
 		((surface->height - 1) << 19));
       OUT_BATCH(0);
 
-      if (BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw))
+      if (brw->is_g4x || brw->gen == 5)
          OUT_BATCH(0);
 
       ADVANCE_BATCH();
@@ -374,7 +374,7 @@ static int upload_invariant_state( struct brw_context *brw )
       struct brw_pipeline_select ps;
 
       memset(&ps, 0, sizeof(ps));
-      if (BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw))
+      if (brw->is_g4x || brw->gen == 5)
 	 ps.header.opcode = CMD_PIPELINE_SELECT_GM45;
       else
 	 ps.header.opcode = CMD_PIPELINE_SELECT_965;
@@ -413,7 +413,7 @@ static int upload_invariant_state( struct brw_context *brw )
       struct brw_vf_statistics vfs;
       memset(&vfs, 0, sizeof(vfs));
 
-      if (BRW_IS_G4X(brw) || BRW_IS_IGDNG(brw)) 
+      if (brw->is_g4x || brw->gen == 5)
 	 vfs.opcode = CMD_VF_STATISTICS_GM45;
       else 
 	 vfs.opcode = CMD_VF_STATISTICS_965;
@@ -424,7 +424,7 @@ static int upload_invariant_state( struct brw_context *brw )
       BRW_BATCH_STRUCT(brw, &vfs);
    }
    
-   if (!BRW_IS_965(brw))
+   if (!(brw->gen == 4))
    {
       struct brw_aa_line_parameters balp;
 
@@ -480,7 +480,7 @@ static int upload_state_base_address( struct brw_context *brw )
    /* Output the structure (brw_state_base_address) directly to the
     * batchbuffer, so we can emit relocations inline.
     */
-   if (BRW_IS_IGDNG(brw)) {
+   if (brw->gen == 5) {
        BEGIN_BATCH(8, IGNORE_CLIPRECTS);
        OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (8 - 2));
        OUT_BATCH(1); /* General state base address */

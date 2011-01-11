@@ -33,6 +33,7 @@
 
 #include "main/imports.h"
 #include "main/hash.h"
+#include "main/mfeatures.h"
 #include "main/mtypes.h"
 #include "program/prog_parameter.h"
 #include "program/prog_print.h"

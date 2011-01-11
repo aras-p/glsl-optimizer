@@ -36,8 +36,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <X11/Xlib.h>
-#include <GL/glx.h>
-#include <EGL/egl.h>
+#include <dlfcn.h>
+#include "GL/glx.h"
 
 #include "eglconfig.h"
 #include "eglcontext.h"
@@ -54,10 +54,66 @@
 #error "GL/glx.h must be equal to or greater than GLX 1.4"
 #endif
 
+/* GLX 1.0 */
+typedef GLXContext (*GLXCREATECONTEXTPROC)( Display *dpy, XVisualInfo *vis, GLXContext shareList, Bool direct );
+typedef void (*GLXDESTROYCONTEXTPROC)( Display *dpy, GLXContext ctx );
+typedef Bool (*GLXMAKECURRENTPROC)( Display *dpy, GLXDrawable drawable, GLXContext ctx);
+typedef void (*GLXSWAPBUFFERSPROC)( Display *dpy, GLXDrawable drawable );
+typedef GLXPixmap (*GLXCREATEGLXPIXMAPPROC)( Display *dpy, XVisualInfo *visual, Pixmap pixmap );
+typedef void (*GLXDESTROYGLXPIXMAPPROC)( Display *dpy, GLXPixmap pixmap );
+typedef Bool (*GLXQUERYVERSIONPROC)( Display *dpy, int *maj, int *min );
+typedef int (*GLXGETCONFIGPROC)( Display *dpy, XVisualInfo *visual, int attrib, int *value );
+typedef void (*GLXWAITGLPROC)( void );
+typedef void (*GLXWAITXPROC)( void );
+
+/* GLX 1.1 */
+typedef const char *(*GLXQUERYEXTENSIONSSTRINGPROC)( Display *dpy, int screen );
+typedef const char *(*GLXQUERYSERVERSTRINGPROC)( Display *dpy, int screen, int name );
+typedef const char *(*GLXGETCLIENTSTRINGPROC)( Display *dpy, int name );
+
 /** subclass of _EGLDriver */
 struct GLX_egl_driver
 {
    _EGLDriver Base;   /**< base class */
+
+   void *handle;
+
+   /* GLX 1.0 */
+   GLXCREATECONTEXTPROC glXCreateContext;
+   GLXDESTROYCONTEXTPROC glXDestroyContext;
+   GLXMAKECURRENTPROC glXMakeCurrent;
+   GLXSWAPBUFFERSPROC glXSwapBuffers;
+   GLXCREATEGLXPIXMAPPROC glXCreateGLXPixmap;
+   GLXDESTROYGLXPIXMAPPROC glXDestroyGLXPixmap;
+   GLXQUERYVERSIONPROC glXQueryVersion;
+   GLXGETCONFIGPROC glXGetConfig;
+   GLXWAITGLPROC glXWaitGL;
+   GLXWAITXPROC glXWaitX;
+
+   /* GLX 1.1 */
+   GLXQUERYEXTENSIONSSTRINGPROC glXQueryExtensionsString;
+   GLXQUERYSERVERSTRINGPROC glXQueryServerString;
+   GLXGETCLIENTSTRINGPROC glXGetClientString;
+
+   /* GLX 1.3 or (GLX_SGI_make_current_read and GLX_SGIX_fbconfig) */
+   PFNGLXGETFBCONFIGSPROC glXGetFBConfigs;
+   PFNGLXGETFBCONFIGATTRIBPROC glXGetFBConfigAttrib;
+   PFNGLXGETVISUALFROMFBCONFIGPROC glXGetVisualFromFBConfig;
+   PFNGLXCREATEWINDOWPROC glXCreateWindow;
+   PFNGLXDESTROYWINDOWPROC glXDestroyWindow;
+   PFNGLXCREATEPIXMAPPROC glXCreatePixmap;
+   PFNGLXDESTROYPIXMAPPROC glXDestroyPixmap;
+   PFNGLXCREATEPBUFFERPROC glXCreatePbuffer;
+   PFNGLXDESTROYPBUFFERPROC glXDestroyPbuffer;
+   PFNGLXCREATENEWCONTEXTPROC glXCreateNewContext;
+   PFNGLXMAKECONTEXTCURRENTPROC glXMakeContextCurrent;
+
+   /* GLX 1.4 or GLX_ARB_get_proc_address */
+   PFNGLXGETPROCADDRESSPROC glXGetProcAddress;
+
+   /* GLX_SGIX_pbuffer */
+   PFNGLXCREATEGLXPBUFFERSGIXPROC glXCreateGLXPbufferSGIX;
+   PFNGLXDESTROYGLXPBUFFERSGIXPROC glXDestroyGLXPbufferSGIX;
 };
 
 
@@ -76,14 +132,9 @@ struct GLX_egl_display
    EGLBoolean have_fbconfig;
    EGLBoolean have_pbuffer;
 
-   /* GLX_SGIX_pbuffer */
-   PFNGLXCREATEGLXPBUFFERSGIXPROC glXCreateGLXPbufferSGIX;
-   PFNGLXDESTROYGLXPBUFFERSGIXPROC glXDestroyGLXPbufferSGIX;
-
    /* workaround quirks of different GLX implementations */
    EGLBoolean single_buffered_quirk;
    EGLBoolean glx_window_quirk;
-
 };
 
 
@@ -168,19 +219,21 @@ static const struct {
 
 
 static EGLBoolean
-convert_fbconfig(Display *dpy, GLXFBConfig fbconfig,
+convert_fbconfig(struct GLX_egl_driver *GLX_drv,
+                 struct GLX_egl_display *GLX_dpy, GLXFBConfig fbconfig,
                  struct GLX_egl_config *GLX_conf)
 {
+   Display *dpy = GLX_dpy->dpy;
    int err, attr, val;
    unsigned i;
 
    /* must have rgba bit */
-   err = glXGetFBConfigAttrib(dpy, fbconfig, GLX_RENDER_TYPE, &val);
+   err = GLX_drv->glXGetFBConfigAttrib(dpy, fbconfig, GLX_RENDER_TYPE, &val);
    if (err || !(val & GLX_RGBA_BIT))
       return EGL_FALSE;
 
    /* must know whether it is double-buffered */
-   err = glXGetFBConfigAttrib(dpy, fbconfig, GLX_DOUBLEBUFFER, &val);
+   err = GLX_drv->glXGetFBConfigAttrib(dpy, fbconfig, GLX_DOUBLEBUFFER, &val);
    if (err)
       return EGL_FALSE;
    GLX_conf->double_buffered = val;
@@ -196,7 +249,7 @@ convert_fbconfig(Display *dpy, GLXFBConfig fbconfig,
       if (!egl_attr)
          continue;
 
-      err = glXGetFBConfigAttrib(dpy, fbconfig, attr, &val);
+      err = GLX_drv->glXGetFBConfigAttrib(dpy, fbconfig, attr, &val);
       if (err) {
          if (err == GLX_BAD_ATTRIBUTE) {
             err = 0;
@@ -303,21 +356,23 @@ static const struct {
 };
 
 static EGLBoolean
-convert_visual(Display *dpy, XVisualInfo *vinfo,
+convert_visual(struct GLX_egl_driver *GLX_drv,
+               struct GLX_egl_display *GLX_dpy, XVisualInfo *vinfo,
                struct GLX_egl_config *GLX_conf)
 {
+   Display *dpy = GLX_dpy->dpy;
    int err, attr, val;
    unsigned i;
 
    /* the visual must support OpenGL and RGBA buffer */
-   err = glXGetConfig(dpy, vinfo, GLX_USE_GL, &val);
+   err = GLX_drv->glXGetConfig(dpy, vinfo, GLX_USE_GL, &val);
    if (!err && val)
-      err = glXGetConfig(dpy, vinfo, GLX_RGBA, &val);
+      err = GLX_drv->glXGetConfig(dpy, vinfo, GLX_RGBA, &val);
    if (err || !val)
       return EGL_FALSE;
 
    /* must know whether it is double-buffered */
-   err = glXGetConfig(dpy, vinfo, GLX_DOUBLEBUFFER, &val);
+   err = GLX_drv->glXGetConfig(dpy, vinfo, GLX_DOUBLEBUFFER, &val);
    if (err)
       return EGL_FALSE;
    GLX_conf->double_buffered = val;
@@ -341,7 +396,7 @@ convert_visual(Display *dpy, XVisualInfo *vinfo,
       if (!egl_attr)
          continue;
 
-      err = glXGetConfig(dpy, vinfo, attr, &val);
+      err = GLX_drv->glXGetConfig(dpy, vinfo, attr, &val);
       if (err) {
          if (err == GLX_BAD_ATTRIBUTE) {
             err = 0;
@@ -406,14 +461,16 @@ fix_config(struct GLX_egl_display *GLX_dpy, struct GLX_egl_config *GLX_conf)
 
 
 static EGLBoolean
-create_configs(_EGLDisplay *dpy, struct GLX_egl_display *GLX_dpy,
-               EGLint screen)
+create_configs(_EGLDriver *drv, _EGLDisplay *dpy, EGLint screen)
 {
+   struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
+   struct GLX_egl_display *GLX_dpy = GLX_egl_display(dpy);
    EGLint num_configs = 0, i;
    EGLint id = 1;
 
    if (GLX_dpy->have_fbconfig) {
-      GLX_dpy->fbconfigs = glXGetFBConfigs(GLX_dpy->dpy, screen, &num_configs);
+      GLX_dpy->fbconfigs =
+         GLX_drv->glXGetFBConfigs(GLX_dpy->dpy, screen, &num_configs);
    }
    else {
       XVisualInfo vinfo_template;
@@ -434,10 +491,14 @@ create_configs(_EGLDisplay *dpy, struct GLX_egl_display *GLX_dpy,
 
       memset(&template, 0, sizeof(template));
       _eglInitConfig(&template.Base, dpy, id);
-      if (GLX_dpy->have_fbconfig)
-         ok = convert_fbconfig(GLX_dpy->dpy, GLX_dpy->fbconfigs[i], &template);
-      else
-         ok = convert_visual(GLX_dpy->dpy, &GLX_dpy->visuals[i], &template);
+      if (GLX_dpy->have_fbconfig) {
+         ok = convert_fbconfig(GLX_drv, GLX_dpy,
+               GLX_dpy->fbconfigs[i], &template);
+      }
+      else {
+         ok = convert_visual(GLX_drv, GLX_dpy,
+               &GLX_dpy->visuals[i], &template);
+      }
       if (!ok)
         continue;
 
@@ -462,13 +523,12 @@ create_configs(_EGLDisplay *dpy, struct GLX_egl_display *GLX_dpy,
 
 
 static void
-check_extensions(struct GLX_egl_display *GLX_dpy, EGLint screen)
+check_extensions(struct GLX_egl_driver *GLX_drv,
+                 struct GLX_egl_display *GLX_dpy, EGLint screen)
 {
    GLX_dpy->extensions =
-      glXQueryExtensionsString(GLX_dpy->dpy, screen);
+      GLX_drv->glXQueryExtensionsString(GLX_dpy->dpy, screen);
    if (GLX_dpy->extensions) {
-      /* glXGetProcAddress is assumed */
-
       if (strstr(GLX_dpy->extensions, "GLX_SGI_make_current_read")) {
          /* GLX 1.3 entry points are used */
          GLX_dpy->have_make_current_read = EGL_TRUE;
@@ -480,13 +540,8 @@ check_extensions(struct GLX_egl_display *GLX_dpy, EGLint screen)
       }
 
       if (strstr(GLX_dpy->extensions, "GLX_SGIX_pbuffer")) {
-         GLX_dpy->glXCreateGLXPbufferSGIX = (PFNGLXCREATEGLXPBUFFERSGIXPROC)
-            glXGetProcAddress((const GLubyte *) "glXCreateGLXPbufferSGIX");
-         GLX_dpy->glXDestroyGLXPbufferSGIX = (PFNGLXDESTROYGLXPBUFFERSGIXPROC)
-            glXGetProcAddress((const GLubyte *) "glXDestroyGLXPbufferSGIX");
-
-         if (GLX_dpy->glXCreateGLXPbufferSGIX &&
-             GLX_dpy->glXDestroyGLXPbufferSGIX &&
+         if (GLX_drv->glXCreateGLXPbufferSGIX &&
+             GLX_drv->glXDestroyGLXPbufferSGIX &&
              GLX_dpy->have_fbconfig)
             GLX_dpy->have_pbuffer = EGL_TRUE;
       }
@@ -502,16 +557,17 @@ check_extensions(struct GLX_egl_display *GLX_dpy, EGLint screen)
 
 
 static void
-check_quirks(struct GLX_egl_display *GLX_dpy, EGLint screen)
+check_quirks(struct GLX_egl_driver *GLX_drv,
+             struct GLX_egl_display *GLX_dpy, EGLint screen)
 {
    const char *vendor;
 
    GLX_dpy->single_buffered_quirk = EGL_TRUE;
    GLX_dpy->glx_window_quirk = EGL_TRUE;
 
-   vendor = glXGetClientString(GLX_dpy->dpy, GLX_VENDOR);
+   vendor = GLX_drv->glXGetClientString(GLX_dpy->dpy, GLX_VENDOR);
    if (vendor && strstr(vendor, "NVIDIA")) {
-      vendor = glXQueryServerString(GLX_dpy->dpy, screen, GLX_VENDOR);
+      vendor = GLX_drv->glXQueryServerString(GLX_dpy->dpy, screen, GLX_VENDOR);
       if (vendor && strstr(vendor, "NVIDIA")) {
          _eglLog(_EGL_DEBUG, "disable quirks");
          GLX_dpy->single_buffered_quirk = EGL_FALSE;
@@ -528,9 +584,8 @@ static EGLBoolean
 GLX_eglInitialize(_EGLDriver *drv, _EGLDisplay *disp,
                    EGLint *major, EGLint *minor)
 {
+   struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
    struct GLX_egl_display *GLX_dpy;
-
-   (void) drv;
 
    if (disp->Platform != _EGL_PLATFORM_X11)
       return EGL_FALSE;
@@ -549,20 +604,9 @@ GLX_eglInitialize(_EGLDriver *drv, _EGLDisplay *disp,
       }
    }
 
-   if (!glXQueryVersion(GLX_dpy->dpy, &GLX_dpy->glx_maj, &GLX_dpy->glx_min)) {
+   if (!GLX_drv->glXQueryVersion(GLX_dpy->dpy,
+            &GLX_dpy->glx_maj, &GLX_dpy->glx_min)) {
       _eglLog(_EGL_WARNING, "GLX: glXQueryVersion failed");
-      if (!disp->PlatformDisplay)
-         XCloseDisplay(GLX_dpy->dpy);
-      free(GLX_dpy);
-      return EGL_FALSE;
-   }
-
-   check_extensions(GLX_dpy, DefaultScreen(GLX_dpy->dpy));
-   check_quirks(GLX_dpy, DefaultScreen(GLX_dpy->dpy));
-
-   create_configs(disp, GLX_dpy, DefaultScreen(GLX_dpy->dpy));
-   if (!_eglGetArraySize(disp->Configs)) {
-      _eglLog(_EGL_WARNING, "GLX: failed to create any config");
       if (!disp->PlatformDisplay)
          XCloseDisplay(GLX_dpy->dpy);
       free(GLX_dpy);
@@ -572,12 +616,25 @@ GLX_eglInitialize(_EGLDriver *drv, _EGLDisplay *disp,
    disp->DriverData = (void *) GLX_dpy;
    disp->ClientAPIsMask = EGL_OPENGL_BIT;
 
+   check_extensions(GLX_drv, GLX_dpy, DefaultScreen(GLX_dpy->dpy));
+   check_quirks(GLX_drv, GLX_dpy, DefaultScreen(GLX_dpy->dpy));
+
+   create_configs(drv, disp, DefaultScreen(GLX_dpy->dpy));
+   if (!_eglGetArraySize(disp->Configs)) {
+      _eglLog(_EGL_WARNING, "GLX: failed to create any config");
+      if (!disp->PlatformDisplay)
+         XCloseDisplay(GLX_dpy->dpy);
+      free(GLX_dpy);
+      return EGL_FALSE;
+   }
+
    /* we're supporting EGL 1.4 */
    *major = 1;
    *minor = 4;
 
    return EGL_TRUE;
 }
+
 
 /**
  * Called via eglTerminate(), drv->API.Terminate().
@@ -612,11 +669,10 @@ static _EGLContext *
 GLX_eglCreateContext(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
                       _EGLContext *share_list, const EGLint *attrib_list)
 {
+   struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
    struct GLX_egl_context *GLX_ctx = CALLOC_STRUCT(GLX_egl_context);
    struct GLX_egl_display *GLX_dpy = GLX_egl_display(disp);
    struct GLX_egl_context *GLX_ctx_shared = GLX_egl_context(share_list);
-
-   (void) drv;
 
    if (!GLX_ctx) {
       _eglError(EGL_BAD_ALLOC, "eglCreateContext");
@@ -628,19 +684,19 @@ GLX_eglCreateContext(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
       return NULL;
    }
 
-   if (GLX_dpy->have_fbconfig)
-      GLX_ctx->context =
-         glXCreateNewContext(GLX_dpy->dpy,
-                             GLX_dpy->fbconfigs[GLX_egl_config_index(conf)],
-                             GLX_RGBA_TYPE,
-                             GLX_ctx_shared ? GLX_ctx_shared->context : NULL,
-                             GL_TRUE);
-   else
-      GLX_ctx->context =
-         glXCreateContext(GLX_dpy->dpy,
-                          &GLX_dpy->visuals[GLX_egl_config_index(conf)],
-                          GLX_ctx_shared ? GLX_ctx_shared->context : NULL,
-                          GL_TRUE);
+   if (GLX_dpy->have_fbconfig) {
+      GLX_ctx->context = GLX_drv->glXCreateNewContext(GLX_dpy->dpy,
+            GLX_dpy->fbconfigs[GLX_egl_config_index(conf)],
+            GLX_RGBA_TYPE,
+            GLX_ctx_shared ? GLX_ctx_shared->context : NULL,
+            GL_TRUE);
+   }
+   else {
+      GLX_ctx->context = GLX_drv->glXCreateContext(GLX_dpy->dpy,
+            &GLX_dpy->visuals[GLX_egl_config_index(conf)],
+            GLX_ctx_shared ? GLX_ctx_shared->context : NULL,
+            GL_TRUE);
+   }
    if (!GLX_ctx->context) {
       free(GLX_ctx);
       return NULL;
@@ -673,6 +729,7 @@ static EGLBoolean
 GLX_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
                    _EGLSurface *rsurf, _EGLContext *ctx)
 {
+   struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
    struct GLX_egl_display *GLX_dpy = GLX_egl_display(disp);
    struct GLX_egl_surface *GLX_dsurf = GLX_egl_surface(dsurf);
    struct GLX_egl_surface *GLX_rsurf = GLX_egl_surface(rsurf);
@@ -683,8 +740,6 @@ GLX_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
    GLXContext cctx;
    EGLBoolean ret = EGL_FALSE;
 
-   (void) drv;
-
    /* make new bindings */
    if (!_eglBindContext(ctx, dsurf, rsurf, &old_ctx, &old_dsurf, &old_rsurf))
       return EGL_FALSE;
@@ -694,9 +749,9 @@ GLX_eglMakeCurrent(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
    cctx = (GLX_ctx) ? GLX_ctx->context : NULL;
 
    if (GLX_dpy->have_make_current_read)
-      ret = glXMakeContextCurrent(GLX_dpy->dpy, ddraw, rdraw, cctx);
+      ret = GLX_drv->glXMakeContextCurrent(GLX_dpy->dpy, ddraw, rdraw, cctx);
    else if (ddraw == rdraw)
-      ret = glXMakeCurrent(GLX_dpy->dpy, ddraw, cctx);
+      ret = GLX_drv->glXMakeCurrent(GLX_dpy->dpy, ddraw, cctx);
 
    if (ret) {
       if (_eglPutSurface(old_dsurf))
@@ -747,11 +802,10 @@ GLX_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *disp,
                            _EGLConfig *conf, EGLNativeWindowType window,
                            const EGLint *attrib_list)
 {
+   struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
    struct GLX_egl_display *GLX_dpy = GLX_egl_display(disp);
    struct GLX_egl_surface *GLX_surf;
    uint width, height;
-
-   (void) drv;
 
    GLX_surf = CALLOC_STRUCT(GLX_egl_surface);
    if (!GLX_surf) {
@@ -767,13 +821,14 @@ GLX_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *disp,
 
    GLX_surf->drawable = window;
 
-   if (GLX_dpy->have_1_3 && !GLX_dpy->glx_window_quirk)
-      GLX_surf->glx_drawable =
-         glXCreateWindow(GLX_dpy->dpy,
-                         GLX_dpy->fbconfigs[GLX_egl_config_index(conf)],
-                         GLX_surf->drawable, NULL);
-   else
+   if (GLX_dpy->have_1_3 && !GLX_dpy->glx_window_quirk) {
+      GLX_surf->glx_drawable = GLX_drv->glXCreateWindow(GLX_dpy->dpy,
+            GLX_dpy->fbconfigs[GLX_egl_config_index(conf)],
+            GLX_surf->drawable, NULL);
+   }
+   else {
       GLX_surf->glx_drawable = GLX_surf->drawable;
+   }
 
    if (!GLX_surf->glx_drawable) {
       free(GLX_surf);
@@ -781,7 +836,7 @@ GLX_eglCreateWindowSurface(_EGLDriver *drv, _EGLDisplay *disp,
    }
 
    if (GLX_dpy->have_1_3 && !GLX_dpy->glx_window_quirk)
-      GLX_surf->destroy = glXDestroyWindow;
+      GLX_surf->destroy = GLX_drv->glXDestroyWindow;
 
    get_drawable_size(GLX_dpy->dpy, window, &width, &height);
    GLX_surf->Base.Width = width;
@@ -795,11 +850,10 @@ GLX_eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *disp,
                            _EGLConfig *conf, EGLNativePixmapType pixmap,
                            const EGLint *attrib_list)
 {
+   struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
    struct GLX_egl_display *GLX_dpy = GLX_egl_display(disp);
    struct GLX_egl_surface *GLX_surf;
    uint width, height;
-
-   (void) drv;
 
    GLX_surf = CALLOC_STRUCT(GLX_egl_surface);
    if (!GLX_surf) {
@@ -816,25 +870,25 @@ GLX_eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *disp,
    GLX_surf->drawable = pixmap;
 
    if (GLX_dpy->have_1_3) {
-      GLX_surf->glx_drawable =
-         glXCreatePixmap(GLX_dpy->dpy,
-                         GLX_dpy->fbconfigs[GLX_egl_config_index(conf)],
-                         GLX_surf->drawable, NULL);
+      GLX_surf->glx_drawable = GLX_drv->glXCreatePixmap(GLX_dpy->dpy,
+            GLX_dpy->fbconfigs[GLX_egl_config_index(conf)],
+            GLX_surf->drawable, NULL);
    }
    else if (GLX_dpy->have_fbconfig) {
       GLXFBConfig fbconfig = GLX_dpy->fbconfigs[GLX_egl_config_index(conf)];
-      XVisualInfo *vinfo = glXGetVisualFromFBConfig(GLX_dpy->dpy, fbconfig);
+      XVisualInfo *vinfo;
+
+      vinfo = GLX_drv->glXGetVisualFromFBConfig(GLX_dpy->dpy, fbconfig);
       if (vinfo) {
-         GLX_surf->glx_drawable =
-            glXCreateGLXPixmap(GLX_dpy->dpy, vinfo, GLX_surf->drawable);
+         GLX_surf->glx_drawable = GLX_drv->glXCreateGLXPixmap(GLX_dpy->dpy,
+               vinfo, GLX_surf->drawable);
          XFree(vinfo);
       }
    }
    else {
-      GLX_surf->glx_drawable =
-         glXCreateGLXPixmap(GLX_dpy->dpy,
-                            &GLX_dpy->visuals[GLX_egl_config_index(conf)],
-                            GLX_surf->drawable);
+      GLX_surf->glx_drawable = GLX_drv->glXCreateGLXPixmap(GLX_dpy->dpy,
+            &GLX_dpy->visuals[GLX_egl_config_index(conf)],
+            GLX_surf->drawable);
    }
 
    if (!GLX_surf->glx_drawable) {
@@ -843,7 +897,7 @@ GLX_eglCreatePixmapSurface(_EGLDriver *drv, _EGLDisplay *disp,
    }
 
    GLX_surf->destroy = (GLX_dpy->have_1_3) ?
-      glXDestroyPixmap : glXDestroyGLXPixmap;
+      GLX_drv->glXDestroyPixmap : GLX_drv->glXDestroyGLXPixmap;
 
    get_drawable_size(GLX_dpy->dpy, pixmap, &width, &height);
    GLX_surf->Base.Width = width;
@@ -856,12 +910,11 @@ static _EGLSurface *
 GLX_eglCreatePbufferSurface(_EGLDriver *drv, _EGLDisplay *disp,
                             _EGLConfig *conf, const EGLint *attrib_list)
 {
+   struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
    struct GLX_egl_display *GLX_dpy = GLX_egl_display(disp);
    struct GLX_egl_surface *GLX_surf;
    int attribs[5];
    int i;
-
-   (void) drv;
 
    GLX_surf = CALLOC_STRUCT(GLX_egl_surface);
    if (!GLX_surf) {
@@ -892,14 +945,11 @@ GLX_eglCreatePbufferSurface(_EGLDriver *drv, _EGLDisplay *disp,
       }
       attribs[i] = None;
 
-      GLX_surf->glx_drawable =
-         glXCreatePbuffer(GLX_dpy->dpy,
-                          GLX_dpy->fbconfigs[GLX_egl_config_index(conf)],
-                          attribs);
+      GLX_surf->glx_drawable = GLX_drv->glXCreatePbuffer(GLX_dpy->dpy,
+            GLX_dpy->fbconfigs[GLX_egl_config_index(conf)], attribs);
    }
    else if (GLX_dpy->have_pbuffer) {
-      GLX_surf->glx_drawable = GLX_dpy->glXCreateGLXPbufferSGIX(
-            GLX_dpy->dpy,
+      GLX_surf->glx_drawable = GLX_drv->glXCreateGLXPbufferSGIX(GLX_dpy->dpy,
             GLX_dpy->fbconfigs[GLX_egl_config_index(conf)],
             GLX_surf->Base.Width,
             GLX_surf->Base.Height,
@@ -912,7 +962,7 @@ GLX_eglCreatePbufferSurface(_EGLDriver *drv, _EGLDisplay *disp,
    }
 
    GLX_surf->destroy = (GLX_dpy->have_1_3) ?
-      glXDestroyPbuffer : GLX_dpy->glXDestroyGLXPbufferSGIX;
+      GLX_drv->glXDestroyPbuffer : GLX_drv->glXDestroyGLXPbufferSGIX;
 
    return &GLX_surf->Base;
 }
@@ -933,12 +983,11 @@ GLX_eglDestroySurface(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *surf)
 static EGLBoolean
 GLX_eglSwapBuffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 {
+   struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
    struct GLX_egl_display *GLX_dpy = GLX_egl_display(disp);
    struct GLX_egl_surface *GLX_surf = GLX_egl_surface(draw);
 
-   (void) drv;
-
-   glXSwapBuffers(GLX_dpy->dpy, GLX_surf->glx_drawable);
+   GLX_drv->glXSwapBuffers(GLX_dpy->dpy, GLX_surf->glx_drawable);
 
    return EGL_TRUE;
 }
@@ -949,31 +998,33 @@ GLX_eglSwapBuffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 static _EGLProc
 GLX_eglGetProcAddress(_EGLDriver *drv, const char *procname)
 {
-   (void) drv;
+   struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
 
-   return (_EGLProc) glXGetProcAddress((const GLubyte *) procname);
+   return (_EGLProc) GLX_drv->glXGetProcAddress((const GLubyte *) procname);
 }
 
 static EGLBoolean
 GLX_eglWaitClient(_EGLDriver *drv, _EGLDisplay *dpy, _EGLContext *ctx)
 {
-   (void) drv;
+   struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
+
    (void) dpy;
    (void) ctx;
 
-   glXWaitGL();
+   GLX_drv->glXWaitGL();
    return EGL_TRUE;
 }
 
 static EGLBoolean
 GLX_eglWaitNative(_EGLDriver *drv, _EGLDisplay *dpy, EGLint engine)
 {
-   (void) drv;
+   struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
+
    (void) dpy;
 
    if (engine != EGL_CORE_NATIVE_ENGINE)
       return _eglError(EGL_BAD_PARAMETER, "eglWaitNative");
-   glXWaitX();
+   GLX_drv->glXWaitX();
    return EGL_TRUE;
 }
 
@@ -981,7 +1032,81 @@ static void
 GLX_Unload(_EGLDriver *drv)
 {
    struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
+
+   if (GLX_drv->handle)
+      dlclose(GLX_drv->handle);
    free(GLX_drv);
+}
+
+
+static EGLBoolean
+GLX_Load(_EGLDriver *drv)
+{
+   struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
+   void *handle;
+
+   handle = dlopen("libGL.so", RTLD_LAZY | RTLD_LOCAL);
+   if (!handle)
+      goto fail;
+
+   GLX_drv->glXGetProcAddress = dlsym(handle, "glXGetProcAddress");
+   if (!GLX_drv->glXGetProcAddress)
+      GLX_drv->glXGetProcAddress = dlsym(handle, "glXGetProcAddressARB");
+   if (!GLX_drv->glXGetProcAddress)
+      goto fail;
+
+#define GET_PROC(proc_type, proc_name, check)                        \
+   do {                                                              \
+      GLX_drv->proc_name = (proc_type)                               \
+         GLX_drv->glXGetProcAddress((const GLubyte *) #proc_name);   \
+      if (check && !GLX_drv->proc_name) goto fail;                   \
+   } while (0)
+
+   /* GLX 1.0 */
+   GET_PROC(GLXCREATECONTEXTPROC, glXCreateContext, EGL_TRUE);
+   GET_PROC(GLXDESTROYCONTEXTPROC, glXDestroyContext, EGL_TRUE);
+   GET_PROC(GLXMAKECURRENTPROC, glXMakeCurrent, EGL_TRUE);
+   GET_PROC(GLXSWAPBUFFERSPROC, glXSwapBuffers, EGL_TRUE);
+   GET_PROC(GLXCREATEGLXPIXMAPPROC, glXCreateGLXPixmap, EGL_TRUE);
+   GET_PROC(GLXDESTROYGLXPIXMAPPROC, glXDestroyGLXPixmap, EGL_TRUE);
+   GET_PROC(GLXQUERYVERSIONPROC, glXQueryVersion, EGL_TRUE);
+   GET_PROC(GLXGETCONFIGPROC, glXGetConfig, EGL_TRUE);
+   GET_PROC(GLXWAITGLPROC, glXWaitGL, EGL_TRUE);
+   GET_PROC(GLXWAITXPROC, glXWaitX, EGL_TRUE);
+
+   /* GLX 1.1 */
+   GET_PROC(GLXQUERYEXTENSIONSSTRINGPROC, glXQueryExtensionsString, EGL_TRUE);
+   GET_PROC(GLXQUERYSERVERSTRINGPROC, glXQueryServerString, EGL_TRUE);
+   GET_PROC(GLXGETCLIENTSTRINGPROC, glXGetClientString, EGL_TRUE);
+
+   /* GLX 1.3 */
+   GET_PROC(PFNGLXGETFBCONFIGSPROC, glXGetFBConfigs, EGL_FALSE);
+   GET_PROC(PFNGLXGETFBCONFIGATTRIBPROC, glXGetFBConfigAttrib, EGL_FALSE);
+   GET_PROC(PFNGLXGETVISUALFROMFBCONFIGPROC, glXGetVisualFromFBConfig, EGL_FALSE);
+   GET_PROC(PFNGLXCREATEWINDOWPROC, glXCreateWindow, EGL_FALSE);
+   GET_PROC(PFNGLXDESTROYWINDOWPROC, glXDestroyWindow, EGL_FALSE);
+   GET_PROC(PFNGLXCREATEPIXMAPPROC, glXCreatePixmap, EGL_FALSE);
+   GET_PROC(PFNGLXDESTROYPIXMAPPROC, glXDestroyPixmap, EGL_FALSE);
+   GET_PROC(PFNGLXCREATEPBUFFERPROC, glXCreatePbuffer, EGL_FALSE);
+   GET_PROC(PFNGLXDESTROYPBUFFERPROC, glXDestroyPbuffer, EGL_FALSE);
+   GET_PROC(PFNGLXCREATENEWCONTEXTPROC, glXCreateNewContext, EGL_FALSE);
+   GET_PROC(PFNGLXMAKECONTEXTCURRENTPROC, glXMakeContextCurrent, EGL_FALSE);
+
+   /* GLX_SGIX_pbuffer */
+   GET_PROC(PFNGLXCREATEGLXPBUFFERSGIXPROC,
+         glXCreateGLXPbufferSGIX, EGL_FALSE);
+   GET_PROC(PFNGLXDESTROYGLXPBUFFERSGIXPROC,
+         glXDestroyGLXPbufferSGIX, EGL_FALSE);
+#undef GET_PROC
+
+   GLX_drv->handle = handle;
+
+   return EGL_TRUE;
+
+fail:
+   if (handle)
+      dlclose(handle);
+   return EGL_FALSE;
 }
 
 
@@ -990,7 +1115,7 @@ GLX_Unload(_EGLDriver *drv)
  * Create a new _EGLDriver object and init its dispatch table.
  */
 _EGLDriver *
-_eglMain(const char *args)
+_EGL_MAIN(const char *args)
 {
    struct GLX_egl_driver *GLX_drv = CALLOC_STRUCT(GLX_egl_driver);
 
@@ -998,6 +1123,12 @@ _eglMain(const char *args)
 
    if (!GLX_drv)
       return NULL;
+
+   if (!GLX_Load(&GLX_drv->Base)) {
+      _eglLog(_EGL_WARNING, "GLX: failed to load GLX");
+      free(GLX_drv);
+      return NULL;
+   }
 
    _eglInitDriverFallbacks(&GLX_drv->Base);
    GLX_drv->Base.API.Initialize = GLX_eglInitialize;

@@ -67,7 +67,7 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
 
 	  i945_miptree_layout_2d(intel, mt, tiling, 6);
 
-          for (level = 0; level < mt->levels; level++) {
+          for (level = mt->first_level; level <= mt->last_level; level++) {
 	     for (q = 0; q < 6; q++) {
 		intel_miptree_set_image_offset(mt, level, q, 0, q * qpitch);
 	     }
@@ -101,7 +101,7 @@ GLboolean brw_miptree_layout(struct intel_context *intel,
       pack_x_pitch = width;
       pack_x_nr = 1;
 
-      for (level = 0; level < mt->levels; level++) {
+      for (level = mt->first_level ; level <= mt->last_level ; level++) {
 	 GLuint nr_images = mt->target == GL_TEXTURE_3D ? depth : 6;
 	 GLint x = 0;
 	 GLint y = 0;

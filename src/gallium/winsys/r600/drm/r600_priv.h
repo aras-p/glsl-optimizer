@@ -36,6 +36,7 @@
 #include "r600.h"
 
 struct r600_bomgr;
+struct r600_bo;
 
 struct radeon {
 	int				fd;
@@ -45,7 +46,9 @@ struct radeon {
 	enum chip_class			chip_class;
 	struct r600_tiling_info		tiling_info;
 	struct r600_bomgr		*bomgr;
+	unsigned			fence;
 	unsigned			*cfence;
+	struct r600_bo			*fence_bo;
 };
 
 struct r600_reg {
