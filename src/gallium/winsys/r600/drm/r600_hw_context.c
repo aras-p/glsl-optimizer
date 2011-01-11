@@ -40,27 +40,13 @@
 
 #define GROUP_FORCE_NEW_BLOCK	0
 
-int r600_context_init_fence(struct r600_context *ctx)
-{
-	ctx->fence = 1;
-	ctx->fence_bo = r600_bo(ctx->radeon, 4096, 0, 0, 0);
-	if (ctx->fence_bo == NULL) {
-		return -ENOMEM;
-	}
-	ctx->cfence = r600_bo_map(ctx->radeon, ctx->fence_bo, PB_USAGE_UNSYNCHRONIZED, NULL);
-	*ctx->cfence = 0;
-	ctx->radeon->cfence = ctx->cfence;
-	LIST_INITHEAD(&ctx->fenced_bo);
-	return 0;
-}
-
 static void INLINE r600_context_update_fenced_list(struct r600_context *ctx)
 {
 	for (int i = 0; i < ctx->creloc; i++) {
 		if (!LIST_IS_EMPTY(&ctx->bo[i]->fencedlist))
 			LIST_DELINIT(&ctx->bo[i]->fencedlist);
 		LIST_ADDTAIL(&ctx->bo[i]->fencedlist, &ctx->fenced_bo);
-		ctx->bo[i]->fence = ctx->fence;
+		ctx->bo[i]->fence = ctx->radeon->fence;
 		ctx->bo[i]->ctx = ctx;
 	}
 }
@@ -71,7 +57,7 @@ static void INLINE r600_context_fence_wraparound(struct r600_context *ctx, unsig
 	struct radeon_bo *tmp;
 
 	LIST_FOR_EACH_ENTRY_SAFE(bo, tmp, &ctx->fenced_bo, fencedlist) {
-		if (bo->fence <= *ctx->cfence) {
+		if (bo->fence <= *ctx->radeon->cfence) {
 			LIST_DELINIT(&bo->fencedlist);
 			bo->fence = 0;
 		} else {
@@ -632,9 +618,6 @@ void r600_context_fini(struct r600_context *ctx)
 	free(ctx->pm4);
 
 	r600_context_clear_fenced_bo(ctx);
-	if (ctx->fence_bo) {
-		r600_bo_reference(ctx->radeon, &ctx->fence_bo, NULL);
-	}
 	memset(ctx, 0, sizeof(struct r600_context));
 }
 
@@ -763,10 +746,7 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 	/* save 16dwords space for fence mecanism */
 	ctx->pm4_ndwords -= 16;
 
-	r = r600_context_init_fence(ctx);
-	if (r) {
-		goto out_err;
-	}
+	LIST_INITHEAD(&ctx->fenced_bo);
 
 	/* init dirty list */
 	LIST_INITHEAD(&ctx->dirty);
@@ -814,7 +794,7 @@ void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct r600_bo *r
 	ctx->reloc[ctx->creloc].write_domain = rbo->domains & (RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM);
 	ctx->reloc[ctx->creloc].flags = 0;
 	radeon_bo_reference(ctx->radeon, &ctx->bo[ctx->creloc], bo);
-	rbo->fence = ctx->fence;
+	rbo->fence = ctx->radeon->fence;
 	ctx->creloc++;
 	/* set PKT3 to point to proper reloc */
 	*pm4 = bo->reloc_id;
@@ -837,7 +817,7 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 			/* find relocation */
 			id = block->pm4_bo_index[id];
 			r600_bo_reference(ctx->radeon, &block->reloc[id].bo, state->regs[i].bo);
-			state->regs[i].bo->fence = ctx->fence;
+			state->regs[i].bo->fence = ctx->radeon->fence;
 		}
 		if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
 			block->status |= R600_BLOCK_STATUS_ENABLED;
@@ -877,13 +857,13 @@ static inline void r600_context_pipe_state_set_resource(struct r600_context *ctx
 		 */
 		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[0].bo);
 		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[0].bo);
-		state->regs[0].bo->fence = ctx->fence;
+		state->regs[0].bo->fence = ctx->radeon->fence;
 	} else {
 		/* TEXTURE RESOURCE */
 		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[2].bo);
 		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[3].bo);
-		state->regs[2].bo->fence = ctx->fence;
-		state->regs[3].bo->fence = ctx->fence;
+		state->regs[2].bo->fence = ctx->radeon->fence;
+		state->regs[3].bo->fence = ctx->radeon->fence;
 	}
 	if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
 		block->status |= R600_BLOCK_STATUS_ENABLED;
@@ -1123,11 +1103,11 @@ void r600_context_flush(struct r600_context *ctx)
 	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	ctx->pm4[ctx->pm4_cdwords++] = (1 << 29) | (0 << 24);
-	ctx->pm4[ctx->pm4_cdwords++] = ctx->fence;
+	ctx->pm4[ctx->pm4_cdwords++] = ctx->radeon->fence;
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
-	r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], ctx->fence_bo);
+	r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], ctx->radeon->fence_bo);
 
 #if 1
 	/* emit cs */
@@ -1144,18 +1124,18 @@ void r600_context_flush(struct r600_context *ctx)
 	r = drmCommandWriteRead(ctx->radeon->fd, DRM_RADEON_CS, &drmib,
 				sizeof(struct drm_radeon_cs));
 #else
-	*ctx->cfence = ctx->fence;
+	*ctx->radeon->cfence = ctx->radeon->fence;
 #endif
 
 	r600_context_update_fenced_list(ctx);
 
-	fence = ctx->fence + 1;
-	if (fence < ctx->fence) {
+	fence = ctx->radeon->fence + 1;
+	if (fence < ctx->radeon->fence) {
 		/* wrap around */
 		fence = 1;
 		r600_context_fence_wraparound(ctx, fence);
 	}
-	ctx->fence = fence;
+	ctx->radeon->fence = fence;
 
 	/* restart */
 	for (int i = 0; i < ctx->creloc; i++) {

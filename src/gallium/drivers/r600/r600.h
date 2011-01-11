@@ -248,10 +248,7 @@ struct r600_context {
 	u32			*pm4;
 	struct list_head	query_list;
 	unsigned		num_query_running;
-	unsigned		fence;
 	struct list_head	fenced_bo;
-	unsigned		*cfence;
-	struct r600_bo		*fence_bo;
 };
 
 struct r600_draw {
