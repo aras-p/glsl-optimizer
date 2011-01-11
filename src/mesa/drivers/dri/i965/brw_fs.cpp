@@ -2929,9 +2929,34 @@ bool
 fs_visitor::register_coalesce()
 {
    bool progress = false;
+   int if_depth = 0;
+   int loop_depth = 0;
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
+
+      /* Make sure that we dominate the instructions we're going to
+       * scan for interfering with our coalescing, or we won't have
+       * scanned enough to see if anything interferes with our
+       * coalescing.  We don't dominate the following instructions if
+       * we're in a loop or an if block.
+       */
+      switch (inst->opcode) {
+      case BRW_OPCODE_DO:
+	 loop_depth++;
+	 break;
+      case BRW_OPCODE_WHILE:
+	 loop_depth--;
+	 break;
+      case BRW_OPCODE_IF:
+	 if_depth++;
+	 break;
+      case BRW_OPCODE_ENDIF:
+	 if_depth--;
+	 break;
+      }
+      if (loop_depth || if_depth)
+	 continue;
 
       if (inst->opcode != BRW_OPCODE_MOV ||
 	  inst->predicated ||
@@ -2949,14 +2974,6 @@ fs_visitor::register_coalesce()
       scan_iter.next();
       for (; scan_iter.has_next(); scan_iter.next()) {
 	 fs_inst *scan_inst = (fs_inst *)scan_iter.get();
-
-	 if (scan_inst->opcode == BRW_OPCODE_DO ||
-	     scan_inst->opcode == BRW_OPCODE_WHILE ||
-	     scan_inst->opcode == BRW_OPCODE_ENDIF) {
-	    interfered = true;
-	    iter = scan_iter;
-	    break;
-	 }
 
 	 if (scan_inst->dst.file == GRF) {
 	    if (scan_inst->dst.reg == inst->dst.reg &&
@@ -2976,10 +2993,6 @@ fs_visitor::register_coalesce()
       if (interfered) {
 	 continue;
       }
-
-      /* Update live interval so we don't have to recalculate. */
-      this->virtual_grf_use[inst->src[0].reg] = MAX2(virtual_grf_use[inst->src[0].reg],
-						     virtual_grf_use[inst->dst.reg]);
 
       /* Rewrite the later usage to point at the source of the move to
        * be removed.
@@ -3617,6 +3630,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 	 v.calculate_live_intervals();
 	 progress = v.propagate_constants() || progress;
 	 progress = v.register_coalesce() || progress;
+	 v.calculate_live_intervals();
 	 progress = v.compute_to_mrf() || progress;
 	 progress = v.dead_code_eliminate() || progress;
       } while (progress);
