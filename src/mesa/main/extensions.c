@@ -80,6 +80,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_depth_clamp",                         o(ARB_depth_clamp),                         GL             },
    { "GL_ARB_depth_texture",                       o(ARB_depth_texture),                       GL             },
    { "GL_ARB_draw_buffers",                        o(ARB_draw_buffers),                        GL             },
+   { "GL_ARB_draw_buffers_blend",                  o(ARB_draw_buffers_blend),                  GL             },
    { "GL_ARB_draw_elements_base_vertex",           o(ARB_draw_elements_base_vertex),           GL             },
    { "GL_ARB_draw_instanced",                      o(ARB_draw_instanced),                      GL             },
    { "GL_ARB_explicit_attrib_location",            o(ARB_explicit_attrib_location),            GL             },

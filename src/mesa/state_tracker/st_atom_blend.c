@@ -169,13 +169,18 @@ colormask_per_rt(struct gl_context *ctx)
 }
 
 /**
- * Figure out if blend enables are different per rt.
+ * Figure out if blend enables/state are different per rt.
  */
 static GLboolean
 blend_per_rt(struct gl_context *ctx)
 {
    if (ctx->Color.BlendEnabled &&
       (ctx->Color.BlendEnabled != ((1 << ctx->Const.MaxDrawBuffers) - 1))) {
+      /* This can only happen if GL_EXT_draw_buffers2 is enabled */
+      return GL_TRUE;
+   }
+   if (ctx->Color._BlendFuncPerBuffer || ctx->Color._BlendEquationPerBuffer) {
+      /* this can only happen if GL_ARB_draw_buffers_blend is enabled */
       return GL_TRUE;
    }
    return GL_FALSE;
@@ -202,7 +207,7 @@ update_blend( struct st_context *st )
       don't happen. */
    if (st->ctx->Color.ColorLogicOpEnabled ||
        (st->ctx->Color.BlendEnabled &&
-        st->ctx->Color.BlendEquationRGB == GL_LOGIC_OP)) {
+        st->ctx->Color.Blend[0].EquationRGB == GL_LOGIC_OP)) {
       /* logicop enabled */
       blend->logicop_enable = 1;
       blend->logicop_func = translate_logicop(st->ctx->Color.LogicOp);
@@ -213,28 +218,36 @@ update_blend( struct st_context *st )
 
          blend->rt[i].blend_enable = (st->ctx->Color.BlendEnabled >> i) & 0x1;
 
-         blend->rt[i].rgb_func = translate_blend(st->ctx->Color.BlendEquationRGB);
-         if (st->ctx->Color.BlendEquationRGB == GL_MIN ||
-             st->ctx->Color.BlendEquationRGB == GL_MAX) {
+         blend->rt[i].rgb_func =
+            translate_blend(st->ctx->Color.Blend[i].EquationRGB);
+
+         if (st->ctx->Color.Blend[i].EquationRGB == GL_MIN ||
+             st->ctx->Color.Blend[i].EquationRGB == GL_MAX) {
             /* Min/max are special */
             blend->rt[i].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
             blend->rt[i].rgb_dst_factor = PIPE_BLENDFACTOR_ONE;
          }
          else {
-            blend->rt[i].rgb_src_factor = translate_blend(st->ctx->Color.BlendSrcRGB);
-            blend->rt[i].rgb_dst_factor = translate_blend(st->ctx->Color.BlendDstRGB);
+            blend->rt[i].rgb_src_factor =
+               translate_blend(st->ctx->Color.Blend[i].SrcRGB);
+            blend->rt[i].rgb_dst_factor =
+               translate_blend(st->ctx->Color.Blend[i].DstRGB);
          }
 
-         blend->rt[i].alpha_func = translate_blend(st->ctx->Color.BlendEquationA);
-         if (st->ctx->Color.BlendEquationA == GL_MIN ||
-             st->ctx->Color.BlendEquationA == GL_MAX) {
+         blend->rt[i].alpha_func =
+            translate_blend(st->ctx->Color.Blend[i].EquationA);
+
+         if (st->ctx->Color.Blend[i].EquationA == GL_MIN ||
+             st->ctx->Color.Blend[i].EquationA == GL_MAX) {
             /* Min/max are special */
             blend->rt[i].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
             blend->rt[i].alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
          }
          else {
-            blend->rt[i].alpha_src_factor = translate_blend(st->ctx->Color.BlendSrcA);
-            blend->rt[i].alpha_dst_factor = translate_blend(st->ctx->Color.BlendDstA);
+            blend->rt[i].alpha_src_factor =
+               translate_blend(st->ctx->Color.Blend[i].SrcA);
+            blend->rt[i].alpha_dst_factor =
+               translate_blend(st->ctx->Color.Blend[i].DstA);
          }
       }
    }

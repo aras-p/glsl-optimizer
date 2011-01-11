@@ -66,12 +66,12 @@ intel_check_blit_fragment_ops(struct gl_context * ctx, GLboolean src_alpha_is_on
    }
 
    if (ctx->Color.BlendEnabled &&
-       (effective_func(ctx->Color.BlendSrcRGB, src_alpha_is_one) != GL_ONE ||
-	effective_func(ctx->Color.BlendDstRGB, src_alpha_is_one) != GL_ZERO ||
-	ctx->Color.BlendEquationRGB != GL_FUNC_ADD ||
-	effective_func(ctx->Color.BlendSrcA, src_alpha_is_one) != GL_ONE ||
-	effective_func(ctx->Color.BlendDstA, src_alpha_is_one) != GL_ZERO ||
-	ctx->Color.BlendEquationA != GL_FUNC_ADD)) {
+       (effective_func(ctx->Color.Blend[0].SrcRGB, src_alpha_is_one) != GL_ONE ||
+	effective_func(ctx->Color.Blend[0].DstRGB, src_alpha_is_one) != GL_ZERO ||
+	ctx->Color.Blend[0].EquationRGB != GL_FUNC_ADD ||
+	effective_func(ctx->Color.Blend[0].SrcA, src_alpha_is_one) != GL_ONE ||
+	effective_func(ctx->Color.Blend[0].DstA, src_alpha_is_one) != GL_ZERO ||
+	ctx->Color.Blend[0].EquationA != GL_FUNC_ADD)) {
       DBG("fallback due to blend\n");
       return GL_FALSE;
    }

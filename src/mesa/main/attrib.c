@@ -954,20 +954,39 @@ _mesa_PopAttrib(void)
                      _mesa_set_enable(ctx, GL_BLEND, (color->BlendEnabled & 1));
                   }
                }
-               _mesa_BlendFuncSeparateEXT(color->BlendSrcRGB,
-                                          color->BlendDstRGB,
-                                          color->BlendSrcA,
-                                          color->BlendDstA);
-	       /* This special case is because glBlendEquationSeparateEXT
-		* cannot take GL_LOGIC_OP as a parameter.
-		*/
-	       if ( color->BlendEquationRGB == color->BlendEquationA ) {
-		  _mesa_BlendEquation(color->BlendEquationRGB);
-	       }
-	       else {
-		  _mesa_BlendEquationSeparateEXT(color->BlendEquationRGB,
-						 color->BlendEquationA);
-	       }
+               if (ctx->Color._BlendFuncPerBuffer ||
+                   ctx->Color._BlendEquationPerBuffer) {
+                  /* set blend per buffer */
+                  GLuint buf;
+                  for (buf = 0; buf < ctx->Const.MaxDrawBuffers; buf++) {
+                     _mesa_BlendFuncSeparatei(buf, color->Blend[buf].SrcRGB,
+                                              color->Blend[buf].DstRGB,
+                                              color->Blend[buf].SrcA,
+                                              color->Blend[buf].DstA);
+                     _mesa_BlendEquationSeparatei(buf,
+                                                  color->Blend[buf].EquationRGB,
+                                                  color->Blend[buf].EquationA);
+                  }
+               }
+               else {
+                  /* set same blend modes for all buffers */
+                  _mesa_BlendFuncSeparateEXT(color->Blend[0].SrcRGB,
+                                             color->Blend[0].DstRGB,
+                                             color->Blend[0].SrcA,
+                                             color->Blend[0].DstA);
+                  /* This special case is because glBlendEquationSeparateEXT
+                   * cannot take GL_LOGIC_OP as a parameter.
+                   */
+                  if (color->Blend[0].EquationRGB ==
+                      color->Blend[0].EquationA) {
+                     _mesa_BlendEquation(color->Blend[0].EquationRGB);
+                  }
+                  else {
+                     _mesa_BlendEquationSeparateEXT(
+                                                 color->Blend[0].EquationRGB,
+                                                 color->Blend[0].EquationA);
+                  }
+               }
                _mesa_BlendColor(color->BlendColor[0],
                                 color->BlendColor[1],
                                 color->BlendColor[2],

@@ -220,12 +220,12 @@ static void r300SetBlendState(struct gl_context * ctx)
 	}
 
 	func =
-	    (blend_factor(ctx->Color.BlendSrcRGB, GL_TRUE) <<
-	     R300_SRC_BLEND_SHIFT) | (blend_factor(ctx->Color.BlendDstRGB,
+	    (blend_factor(ctx->Color.Blend[0].SrcRGB, GL_TRUE) <<
+	     R300_SRC_BLEND_SHIFT) | (blend_factor(ctx->Color.Blend[0].DstRGB,
 						   GL_FALSE) <<
 				      R300_DST_BLEND_SHIFT);
 
-	switch (ctx->Color.BlendEquationRGB) {
+	switch (ctx->Color.Blend[0].EquationRGB) {
 	case GL_FUNC_ADD:
 		eqn = R300_COMB_FCN_ADD_CLAMP;
 		break;
@@ -253,17 +253,17 @@ static void r300SetBlendState(struct gl_context * ctx)
 	default:
 		fprintf(stderr,
 			"[%s:%u] Invalid RGB blend equation (0x%04x).\n",
-			__FUNCTION__, __LINE__, ctx->Color.BlendEquationRGB);
+			__FUNCTION__, __LINE__, ctx->Color.Blend[0].EquationRGB);
 		return;
 	}
 
 	funcA =
-	    (blend_factor(ctx->Color.BlendSrcA, GL_TRUE) <<
-	     R300_SRC_BLEND_SHIFT) | (blend_factor(ctx->Color.BlendDstA,
+	    (blend_factor(ctx->Color.Blend[0].SrcA, GL_TRUE) <<
+	     R300_SRC_BLEND_SHIFT) | (blend_factor(ctx->Color.Blend[0].DstA,
 						   GL_FALSE) <<
 				      R300_DST_BLEND_SHIFT);
 
-	switch (ctx->Color.BlendEquationA) {
+	switch (ctx->Color.Blend[0].EquationA) {
 	case GL_FUNC_ADD:
 		eqnA = R300_COMB_FCN_ADD_CLAMP;
 		break;
@@ -291,7 +291,7 @@ static void r300SetBlendState(struct gl_context * ctx)
 	default:
 		fprintf(stderr,
 			"[%s:%u] Invalid A blend equation (0x%04x).\n",
-			__FUNCTION__, __LINE__, ctx->Color.BlendEquationA);
+			__FUNCTION__, __LINE__, ctx->Color.Blend[0].EquationA);
 		return;
 	}
 

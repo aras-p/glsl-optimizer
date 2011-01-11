@@ -267,12 +267,12 @@ i915UpdateBlendState(struct gl_context * ctx)
                   ~(S6_CBUF_SRC_BLEND_FACT_MASK |
                     S6_CBUF_DST_BLEND_FACT_MASK | S6_CBUF_BLEND_FUNC_MASK));
 
-   GLuint eqRGB = ctx->Color.BlendEquationRGB;
-   GLuint eqA = ctx->Color.BlendEquationA;
-   GLuint srcRGB = ctx->Color.BlendSrcRGB;
-   GLuint dstRGB = ctx->Color.BlendDstRGB;
-   GLuint srcA = ctx->Color.BlendSrcA;
-   GLuint dstA = ctx->Color.BlendDstA;
+   GLuint eqRGB = ctx->Color.Blend[0].EquationRGB;
+   GLuint eqA = ctx->Color.Blend[0].EquationA;
+   GLuint srcRGB = ctx->Color.Blend[0].SrcRGB;
+   GLuint dstRGB = ctx->Color.Blend[0].DstRGB;
+   GLuint srcA = ctx->Color.Blend[0].SrcA;
+   GLuint dstA = ctx->Color.Blend[0].DstA;
 
    if (eqRGB == GL_MIN || eqRGB == GL_MAX) {
       srcRGB = dstRGB = GL_ONE;

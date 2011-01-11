@@ -719,13 +719,20 @@ struct gl_colorbuffer_attrib
     */
    /*@{*/
    GLbitfield BlendEnabled;		/**< Per-buffer blend enable flags */
-   GLenum BlendSrcRGB;			/**< Blending source operator */
-   GLenum BlendDstRGB;			/**< Blending destination operator */
-   GLenum BlendSrcA;			/**< GL_INGR_blend_func_separate */
-   GLenum BlendDstA;			/**< GL_INGR_blend_func_separate */
-   GLenum BlendEquationRGB;		/**< Blending equation */
-   GLenum BlendEquationA;		/**< GL_EXT_blend_equation_separate */
    GLfloat BlendColor[4];		/**< Blending color */
+   struct
+   {
+      GLenum SrcRGB;             /**< RGB blend source term */
+      GLenum DstRGB;             /**< RGB blend dest term */
+      GLenum SrcA;               /**< Alpha blend source term */
+      GLenum DstA;               /**< Alpha blend dest term */
+      GLenum EquationRGB;        /**< GL_ADD, GL_SUBTRACT, etc. */
+      GLenum EquationA;          /**< GL_ADD, GL_SUBTRACT, etc. */
+   } Blend[MAX_DRAW_BUFFERS];
+   /** Are the blend func terms currently different for each buffer/target? */
+   GLboolean _BlendFuncPerBuffer;
+   /** Are the blend equations currently different for each buffer/target? */
+   GLboolean _BlendEquationPerBuffer;
    /*@}*/
 
    /** 
@@ -2679,6 +2686,7 @@ struct gl_extensions
    GLboolean ARB_depth_clamp;
    GLboolean ARB_depth_texture;
    GLboolean ARB_draw_buffers;
+   GLboolean ARB_draw_buffers_blend;
    GLboolean ARB_draw_elements_base_vertex;
    GLboolean ARB_draw_instanced;
    GLboolean ARB_fragment_coord_conventions;

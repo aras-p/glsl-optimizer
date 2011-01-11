@@ -372,7 +372,7 @@ static const struct value_desc values[] = {
      API_OPENGL_BIT | API_OPENGLES_BIT | API_OPENGLES2_BIT, NO_EXTRA},
    { GL_ALPHA_BITS, BUFFER_INT(Visual.alphaBits), extra_new_buffers },
    { GL_BLEND, CONTEXT_BIT0(Color.BlendEnabled), NO_EXTRA },
-   { GL_BLEND_SRC, CONTEXT_ENUM(Color.BlendSrcRGB), NO_EXTRA },
+   { GL_BLEND_SRC, CONTEXT_ENUM(Color.Blend[0].SrcRGB), NO_EXTRA },
    { GL_BLUE_BITS, BUFFER_INT(Visual.blueBits), extra_new_buffers },
    { GL_COLOR_CLEAR_VALUE, CONTEXT_FIELD(Color.ClearColor[0], TYPE_FLOATN_4), NO_EXTRA },
    { GL_COLOR_WRITEMASK, LOC_CUSTOM, TYPE_INT_4, 0, NO_EXTRA },
@@ -435,15 +435,15 @@ static const struct value_desc values[] = {
      extra_ARB_texture_cube_map }, /* XXX: OES_texture_cube_map */
 
    /* XXX: OES_blend_subtract */
-   { GL_BLEND_SRC_RGB_EXT, CONTEXT_ENUM(Color.BlendSrcRGB), NO_EXTRA },
-   { GL_BLEND_DST_RGB_EXT, CONTEXT_ENUM(Color.BlendDstRGB), NO_EXTRA },
-   { GL_BLEND_SRC_ALPHA_EXT, CONTEXT_ENUM(Color.BlendSrcA), NO_EXTRA },
-   { GL_BLEND_DST_ALPHA_EXT, CONTEXT_ENUM(Color.BlendDstA), NO_EXTRA },
+   { GL_BLEND_SRC_RGB_EXT, CONTEXT_ENUM(Color.Blend[0].SrcRGB), NO_EXTRA },
+   { GL_BLEND_DST_RGB_EXT, CONTEXT_ENUM(Color.Blend[0].DstRGB), NO_EXTRA },
+   { GL_BLEND_SRC_ALPHA_EXT, CONTEXT_ENUM(Color.Blend[0].SrcA), NO_EXTRA },
+   { GL_BLEND_DST_ALPHA_EXT, CONTEXT_ENUM(Color.Blend[0].DstA), NO_EXTRA },
 
    /* GL_BLEND_EQUATION_RGB, which is what we're really after, is
     * defined identically to GL_BLEND_EQUATION. */
-   { GL_BLEND_EQUATION, CONTEXT_ENUM(Color.BlendEquationRGB), NO_EXTRA },
-   { GL_BLEND_EQUATION_ALPHA_EXT, CONTEXT_ENUM(Color.BlendEquationA), NO_EXTRA },
+   { GL_BLEND_EQUATION, CONTEXT_ENUM(Color.Blend[0].EquationRGB), NO_EXTRA },
+   { GL_BLEND_EQUATION_ALPHA_EXT, CONTEXT_ENUM(Color.Blend[0].EquationA), NO_EXTRA },
 
    /* GL_ARB_texture_compression */
    { GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB, LOC_CUSTOM, TYPE_INT, 0, NO_EXTRA },
@@ -512,7 +512,7 @@ static const struct value_desc values[] = {
    { GL_ALPHA_TEST, CONTEXT_BOOL(Color.AlphaEnabled), NO_EXTRA },
    { GL_ALPHA_TEST_FUNC, CONTEXT_ENUM(Color.AlphaFunc), NO_EXTRA },
    { GL_ALPHA_TEST_REF, CONTEXT_FIELD(Color.AlphaRef, TYPE_FLOATN), NO_EXTRA },
-   { GL_BLEND_DST, CONTEXT_ENUM(Color.BlendDstRGB), NO_EXTRA },
+   { GL_BLEND_DST, CONTEXT_ENUM(Color.Blend[0].DstRGB), NO_EXTRA },
    { GL_CLIP_PLANE0, CONTEXT_BIT0(Transform.ClipPlanesEnabled), NO_EXTRA },
    { GL_CLIP_PLANE1, CONTEXT_BIT1(Transform.ClipPlanesEnabled), NO_EXTRA },
    { GL_CLIP_PLANE2, CONTEXT_BIT2(Transform.ClipPlanesEnabled), NO_EXTRA },

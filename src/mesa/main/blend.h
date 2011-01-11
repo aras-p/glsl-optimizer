@@ -48,11 +48,28 @@ _mesa_BlendFuncSeparateEXT( GLenum sfactorRGB, GLenum dfactorRGB,
 
 
 extern void GLAPIENTRY
+_mesa_BlendFunci(GLuint buf, GLenum sfactor, GLenum dfactor);
+
+
+extern void GLAPIENTRY
+_mesa_BlendFuncSeparatei(GLuint buf, GLenum sfactorRGB, GLenum dfactorRGB,
+                         GLenum sfactorA, GLenum dfactorA);
+
+
+extern void GLAPIENTRY
 _mesa_BlendEquation( GLenum mode );
 
 
 extern void GLAPIENTRY
+_mesa_BlendEquationi(GLuint buf, GLenum mode);
+
+
+extern void GLAPIENTRY
 _mesa_BlendEquationSeparateEXT( GLenum modeRGB, GLenum modeA );
+
+
+extern void
+_mesa_BlendEquationSeparatei(GLuint buf, GLenum modeRGB, GLenum modeA);
 
 
 extern void GLAPIENTRY

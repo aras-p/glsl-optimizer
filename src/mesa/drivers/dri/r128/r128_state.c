@@ -178,12 +178,12 @@ static void r128UpdateAlphaMode( struct gl_context *ctx )
 	     (R128_ALPHA_BLEND_MASK << R128_ALPHA_BLEND_DST_SHIFT)
 	     | R128_ALPHA_COMB_FCN_MASK);
 
-      a |= blend_factor( rmesa, ctx->Color.BlendSrcRGB, GL_TRUE ) 
+      a |= blend_factor( rmesa, ctx->Color.Blend[0].SrcRGB, GL_TRUE ) 
 	  << R128_ALPHA_BLEND_SRC_SHIFT;
-      a |= blend_factor( rmesa, ctx->Color.BlendDstRGB, GL_FALSE ) 
+      a |= blend_factor( rmesa, ctx->Color.Blend[0].DstRGB, GL_FALSE ) 
 	  << R128_ALPHA_BLEND_DST_SHIFT;
 
-      switch (ctx->Color.BlendEquationRGB) {
+      switch (ctx->Color.Blend[0].EquationRGB) {
       case GL_FUNC_ADD:
 	 a |= R128_ALPHA_COMB_ADD_CLAMP;
 	 break;

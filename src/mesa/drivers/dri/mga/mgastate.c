@@ -141,7 +141,7 @@ static void mgaDDBlendFuncSeparate( struct gl_context *ctx, GLenum sfactorRGB,
    GLuint   src;
    GLuint   dst;
 
-   switch (ctx->Color.BlendSrcRGB) {
+   switch (ctx->Color.Blend[0].SrcRGB) {
    case GL_ZERO:
       src = AC_src_zero; break;
    case GL_SRC_ALPHA:
@@ -169,7 +169,7 @@ static void mgaDDBlendFuncSeparate( struct gl_context *ctx, GLenum sfactorRGB,
       break;
    }
 
-   switch (ctx->Color.BlendDstRGB) {
+   switch (ctx->Color.Blend[0].DstRGB) {
    case GL_SRC_ALPHA:
       dst = AC_dst_src_alpha; break;
    case GL_ONE_MINUS_SRC_ALPHA:

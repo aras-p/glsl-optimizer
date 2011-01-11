@@ -136,7 +136,7 @@ static void savageBlendFunc_s4(struct gl_context *ctx)
      * blend modes
      */
     if(ctx->Color.BlendEnabled){
-        switch (ctx->Color.BlendDstRGB)
+        switch (ctx->Color.Blend[0].DstRGB)
         {
             case GL_ZERO:
                 imesa->regs.s4.drawLocalCtrl.ni.dstAlphaMode = DAM_Zero;
@@ -192,7 +192,7 @@ static void savageBlendFunc_s4(struct gl_context *ctx)
                 break;
         }
 
-        switch (ctx->Color.BlendSrcRGB)
+        switch (ctx->Color.Blend[0].SrcRGB)
         {
             case GL_ZERO:
                 imesa->regs.s4.drawLocalCtrl.ni.srcAlphaMode = SAM_Zero;
@@ -310,7 +310,7 @@ static void savageBlendFunc_s3d(struct gl_context *ctx)
      * blend modes
      */
     if(ctx->Color.BlendEnabled){
-        switch (ctx->Color.BlendDstRGB)
+        switch (ctx->Color.Blend[0].DstRGB)
         {
             case GL_ZERO:
                 imesa->regs.s3d.drawCtrl.ni.dstAlphaMode = DAM_Zero;
@@ -366,7 +366,7 @@ static void savageBlendFunc_s3d(struct gl_context *ctx)
                 break;
         }
 
-        switch (ctx->Color.BlendSrcRGB)
+        switch (ctx->Color.Blend[0].SrcRGB)
         {
             case GL_ZERO:
                 imesa->regs.s3d.drawCtrl.ni.srcAlphaMode = SAM_Zero;

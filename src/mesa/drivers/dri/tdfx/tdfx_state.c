@@ -84,7 +84,7 @@ static void tdfxUpdateAlphaMode( struct gl_context *ctx )
 
    if ( ctx->Color.BlendEnabled
         && (fxMesa->Fallback & TDFX_FALLBACK_BLEND) == 0 ) {
-      switch ( ctx->Color.BlendSrcRGB ) {
+      switch ( ctx->Color.Blend[0].SrcRGB ) {
       case GL_ZERO:
 	 srcRGB = GR_BLEND_ZERO;
 	 break;
@@ -126,7 +126,7 @@ static void tdfxUpdateAlphaMode( struct gl_context *ctx )
 	 srcRGB = GR_BLEND_ONE;
       }
 
-      switch ( ctx->Color.BlendSrcA ) {
+      switch ( ctx->Color.Blend[0].SrcA ) {
       case GL_ZERO:
 	 srcA = GR_BLEND_ZERO;
 	 break;
@@ -156,7 +156,7 @@ static void tdfxUpdateAlphaMode( struct gl_context *ctx )
 	 srcA = GR_BLEND_ONE;
       }
 
-      switch ( ctx->Color.BlendDstRGB ) {
+      switch ( ctx->Color.Blend[0].DstRGB ) {
       case GL_ZERO:
 	 dstRGB = GR_BLEND_ZERO;
 	 break;
@@ -195,7 +195,7 @@ static void tdfxUpdateAlphaMode( struct gl_context *ctx )
 	 dstRGB = GR_BLEND_ZERO;
       }
 
-      switch ( ctx->Color.BlendDstA ) {
+      switch ( ctx->Color.Blend[0].DstA ) {
       case GL_ZERO:
 	 dstA = GR_BLEND_ZERO;
 	 break;
@@ -222,7 +222,7 @@ static void tdfxUpdateAlphaMode( struct gl_context *ctx )
 	 dstA = GR_BLEND_ZERO;
       }
 
-      switch ( ctx->Color.BlendEquationRGB ) {
+      switch ( ctx->Color.Blend[0].EquationRGB ) {
       case GL_FUNC_SUBTRACT:
 	 eqRGB = GR_BLEND_OP_SUB;
 	 break;
@@ -235,7 +235,7 @@ static void tdfxUpdateAlphaMode( struct gl_context *ctx )
 	 break;
       }
 
-      switch ( ctx->Color.BlendEquationA ) {
+      switch ( ctx->Color.Blend[0].EquationA ) {
       case GL_FUNC_SUBTRACT:
 	 eqA = GR_BLEND_OP_SUB;
 	 break;

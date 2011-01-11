@@ -552,7 +552,7 @@ static void viaBlendFunc(struct gl_context *ctx, GLenum sfactor, GLenum dfactor)
     if (VIA_DEBUG & DEBUG_STATE) 
        fprintf(stderr, "%s in\n", __FUNCTION__);
 
-    switch (ctx->Color.BlendSrcRGB) {
+    switch (ctx->Color.Blend[0].SrcRGB) {
     case GL_SRC_ALPHA_SATURATE:  
     case GL_CONSTANT_COLOR:
     case GL_ONE_MINUS_CONSTANT_COLOR:
@@ -564,7 +564,7 @@ static void viaBlendFunc(struct gl_context *ctx, GLenum sfactor, GLenum dfactor)
         break;
     }
 
-    switch (ctx->Color.BlendDstRGB) {
+    switch (ctx->Color.Blend[0].DstRGB) {
     case GL_CONSTANT_COLOR:
     case GL_ONE_MINUS_CONSTANT_COLOR:
     case GL_CONSTANT_ALPHA:
@@ -757,14 +757,14 @@ void viaInitState(struct gl_context *ctx)
     */
 
    ctx->Driver.BlendEquationSeparate( ctx, 
-				      ctx->Color.BlendEquationRGB,
-				      ctx->Color.BlendEquationA);
+				      ctx->Color.Blend[0].EquationRGB,
+				      ctx->Color.Blend[0].EquationA);
 
    ctx->Driver.BlendFuncSeparate( ctx,
-				  ctx->Color.BlendSrcRGB,
-				  ctx->Color.BlendDstRGB,
-				  ctx->Color.BlendSrcA,
-				  ctx->Color.BlendDstA);
+				  ctx->Color.Blend[0].SrcRGB,
+				  ctx->Color.Blend[0].DstRGB,
+				  ctx->Color.Blend[0].SrcA,
+				  ctx->Color.Blend[0].DstA);
 
    ctx->Driver.Scissor( ctx, ctx->Scissor.X, ctx->Scissor.Y,
 			ctx->Scissor.Width, ctx->Scissor.Height );
@@ -953,8 +953,8 @@ static GLboolean viaChooseTextureState(struct gl_context *ctx)
 static void viaChooseColorState(struct gl_context *ctx) 
 {
     struct via_context *vmesa = VIA_CONTEXT(ctx);
-    GLenum s = ctx->Color.BlendSrcRGB;
-    GLenum d = ctx->Color.BlendDstRGB;
+    GLenum s = ctx->Color.Blend[0].SrcRGB;
+    GLenum d = ctx->Color.Blend[0].DstRGB;
 
     /* The HW's blending equation is:
      * (Ca * FCa + Cbias + Cb * FCb) << Cshift

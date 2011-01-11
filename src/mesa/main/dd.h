@@ -635,10 +635,15 @@ struct dd_function_table {
    void (*BlendColor)(struct gl_context *ctx, const GLfloat color[4]);
    /** Set the blend equation */
    void (*BlendEquationSeparate)(struct gl_context *ctx, GLenum modeRGB, GLenum modeA);
+   void (*BlendEquationSeparatei)(struct gl_context *ctx, GLuint buffer,
+                                  GLenum modeRGB, GLenum modeA);
    /** Specify pixel arithmetic */
    void (*BlendFuncSeparate)(struct gl_context *ctx,
                              GLenum sfactorRGB, GLenum dfactorRGB,
                              GLenum sfactorA, GLenum dfactorA);
+   void (*BlendFuncSeparatei)(struct gl_context *ctx, GLuint buffer,
+                              GLenum sfactorRGB, GLenum dfactorRGB,
+                              GLenum sfactorA, GLenum dfactorA);
    /** Specify clear values for the color buffers */
    void (*ClearColor)(struct gl_context *ctx, const GLfloat color[4]);
    /** Specify the clear value for the depth buffer */
