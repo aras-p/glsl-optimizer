@@ -1701,19 +1701,6 @@ if test "x$enable_gallium_swrast" = xyes || test "x$enable_gallium_swrast" = xau
     fi
 fi
 
-dnl
-dnl Gallium noop configuration
-dnl
-AC_ARG_ENABLE([gallium-noop],
-    [AS_HELP_STRING([--enable-gallium-noop],
-        [build gallium radeon @<:@default=disabled@:>@])],
-    [enable_gallium_noop="$enableval"],
-    [enable_gallium_noop=auto])
-if test "x$enable_gallium_noop" = xyes; then
-    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS noop"
-    GALLIUM_TARGET_DIRS="$GALLIUM_TARGET_DIRS dri-noop"
-fi
-
 dnl prepend CORE_DIRS to SRC_DIRS
 SRC_DIRS="$CORE_DIRS $SRC_DIRS"
 
