@@ -802,7 +802,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    {
       MESA_FORMAT_SIGNED_R8,        /* Name */
       "MESA_FORMAT_SIGNED_R8",      /* StrName */
-      GL_RGBA,                      /* BaseFormat */
+      GL_RED,                       /* BaseFormat */
       GL_SIGNED_NORMALIZED,         /* DataType */
       8, 0, 0, 0,                   /* Red/Green/Blue/AlphaBits */
       0, 0, 0, 0, 0,                /* Lum/Int/Index/Depth/StencilBits */
@@ -811,7 +811,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    {
       MESA_FORMAT_SIGNED_RG88,
       "MESA_FORMAT_SIGNED_RG88",
-      GL_RGBA,
+      GL_RG,
       GL_SIGNED_NORMALIZED,
       8, 8, 0, 0,
       0, 0, 0, 0, 0,
@@ -820,7 +820,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    {
       MESA_FORMAT_SIGNED_RGBX8888,
       "MESA_FORMAT_SIGNED_RGBX8888",
-      GL_RGBA,
+      GL_RGB,
       GL_SIGNED_NORMALIZED,
       8, 8, 8, 0,
       0, 0, 0, 0, 0,
@@ -849,7 +849,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    {
       MESA_FORMAT_SIGNED_R_16,
       "MESA_FORMAT_SIGNED_R_16",
-      GL_RGBA,
+      GL_RED,
       GL_SIGNED_NORMALIZED,
       16, 0, 0, 0,
       0, 0, 0, 0, 0,
@@ -858,7 +858,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    {
       MESA_FORMAT_SIGNED_RG_16,
       "MESA_FORMAT_SIGNED_RG_16",
-      GL_RGBA,
+      GL_RG,
       GL_SIGNED_NORMALIZED,
       16, 16, 0, 0,
       0, 0, 0, 0, 0,
@@ -867,7 +867,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    {
       MESA_FORMAT_SIGNED_RGB_16,
       "MESA_FORMAT_SIGNED_RGB_16",
-      GL_RGBA,
+      GL_RGB,
       GL_SIGNED_NORMALIZED,
       16, 16, 16, 0,
       0, 0, 0, 0, 0,
@@ -1192,7 +1192,7 @@ _mesa_test_formats(void)
          if (info->RedBits > 0) {
             GLuint t = info->RedBits + info->GreenBits
                + info->BlueBits + info->AlphaBits;
-            assert(t / 8 == info->BytesPerBlock);
+            assert(t / 8 <= info->BytesPerBlock);
             (void) t;
          }
       }
@@ -1200,6 +1200,7 @@ _mesa_test_formats(void)
       assert(info->DataType == GL_UNSIGNED_NORMALIZED ||
              info->DataType == GL_SIGNED_NORMALIZED ||
              info->DataType == GL_UNSIGNED_INT ||
+             info->DataType == GL_INT ||
              info->DataType == GL_FLOAT);
 
       if (info->BaseFormat == GL_RGB) {
