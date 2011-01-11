@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2009 Younes Manton.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,7 +22,7 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 #ifndef PIPE_VIDEO_CONTEXT_H
@@ -106,19 +106,17 @@ struct pipe_video_context
                           struct pipe_fence_handle      **fence);
 
    void (*clear_render_target)(struct pipe_video_context *vpipe,
-                        struct pipe_surface *dst,
-                        unsigned dstx, unsigned dsty,
-						const float *rgba,
-                        unsigned width, unsigned height);
+                               struct pipe_surface *dst,
+                               unsigned dstx, unsigned dsty,
+                               const float *rgba,
+                               unsigned width, unsigned height);
 
    void (*resource_copy_region)(struct pipe_video_context *vpipe,
-                        struct pipe_resource *dst,
-						struct pipe_subresource subdst,
-                        unsigned dstx, unsigned dsty, unsigned dstz,
-                        struct pipe_resource *src,
-						struct pipe_subresource subsrc,
-                        unsigned srcx, unsigned srcy, unsigned srcz,
-                        unsigned width, unsigned height);
+                                struct pipe_resource *dst,
+                                unsigned dstx, unsigned dsty, unsigned dstz,
+                                struct pipe_resource *src,
+                                unsigned srcx, unsigned srcy, unsigned srcz,
+                                unsigned width, unsigned height);
 
    struct pipe_transfer *(*get_transfer)(struct pipe_video_context *vpipe,
                                          struct pipe_resource *resource,
