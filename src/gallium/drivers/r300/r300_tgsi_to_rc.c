@@ -266,6 +266,7 @@ static void transform_texture(struct rc_instruction * dst, struct tgsi_instructi
             *shadowSamplers |= 1 << dst->U.I.TexSrcUnit;
             break;
     }
+    dst->U.I.TexSwizzle = RC_SWIZZLE_XYZW;
 }
 
 static void transform_instruction(struct tgsi_to_rc * ttr, struct tgsi_full_instruction * src)

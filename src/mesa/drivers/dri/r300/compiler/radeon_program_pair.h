@@ -114,6 +114,10 @@ void rc_pair_foreach_source_that_rgb_reads(
 struct rc_pair_instruction_source * rc_pair_get_src(
 	struct rc_pair_instruction * pair_inst,
 	struct rc_pair_instruction_arg * arg);
+
+int rc_pair_get_src_index(
+	struct rc_pair_instruction * pair_inst,
+	struct rc_pair_instruction_source * src);
 /*@}*/
 
 

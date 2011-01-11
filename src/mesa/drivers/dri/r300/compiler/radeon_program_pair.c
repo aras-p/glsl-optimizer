@@ -223,3 +223,17 @@ struct rc_pair_instruction_source * rc_pair_get_src(
 		return NULL;
 	}
 }
+
+int rc_pair_get_src_index(
+	struct rc_pair_instruction * pair_inst,
+	struct rc_pair_instruction_source * src)
+{
+	int i;
+	for (i = 0; i < 3; i++) {
+		if (&pair_inst->RGB.Src[i] == src
+			|| &pair_inst->Alpha.Src[i] == src) {
+			return i;
+		}
+	}
+	return -1;
+}

@@ -37,6 +37,7 @@ struct rc_swizzle_caps;
 struct rc_src_register;
 struct rc_pair_instruction_arg;
 struct rc_pair_instruction_source;
+struct rc_pair_sub_instruction;
 struct rc_compiler;
 
 
@@ -103,6 +104,15 @@ struct rc_reader_data {
 void rc_get_readers(
 	struct radeon_compiler * c,
 	struct rc_instruction * writer,
+	struct rc_reader_data * data,
+	rc_read_src_fn read_normal_cb,
+	rc_pair_read_arg_fn read_pair_cb,
+	rc_read_write_mask_fn write_cb);
+
+void rc_get_readers_sub(
+	struct radeon_compiler * c,
+	struct rc_instruction * writer,
+	struct rc_pair_sub_instruction * sub_writer,
 	struct rc_reader_data * data,
 	rc_read_src_fn read_normal_cb,
 	rc_pair_read_arg_fn read_pair_cb,

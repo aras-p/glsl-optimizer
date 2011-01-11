@@ -24,9 +24,11 @@ C_SOURCES = \
 		radeon_dataflow.c \
 		radeon_dataflow_deadcode.c \
 		radeon_dataflow_swizzles.c \
+		radeon_list.c \
 		radeon_optimize.c \
 		radeon_remove_constants.c \
 		radeon_rename_regs.c \
+		radeon_variable.c \
 		r3xx_fragprog.c \
 		r300_fragprog.c \
 		r300_fragprog_swizzle.c \
@@ -49,6 +51,7 @@ INCLUDES = \
 	-I. \
 	-I$(TOP)/include \
 	-I$(TOP)/src/mesa \
+	-I$(TOP)/src/glsl \
 
 
 ##### TARGETS #####

@@ -1,0 +1,434 @@
+/*
+ * Copyright 2011 Tom Stellard <tstellar@gmail.com>
+ *
+ * All Rights Reserved.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the
+ * next paragraph) shall be included in all copies or substantial
+ * portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE COPYRIGHT OWNER(S) AND/OR ITS SUPPLIERS BE
+ * LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+ * OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+ * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ *
+ */
+
+#include "radeon_variable.h"
+
+#include "memory_pool.h"
+#include "radeon_compiler_util.h"
+#include "radeon_dataflow.h"
+#include "radeon_list.h"
+#include "radeon_opcodes.h"
+#include "radeon_program.h"
+
+/**
+ * Rewrite the index and writemask for the destination register of var
+ * and its friends to new_index and new_writemask.  This function also takes
+ * care of rewriting the swizzles for the sources of var.
+ */
+void rc_variable_change_dst(
+	struct rc_variable * var,
+	unsigned int new_index,
+	unsigned int new_writemask)
+{
+	unsigned int new_idx, old_idx;
+	unsigned int conversion_swizzle = rc_init_swizzle(RC_SWIZZLE_UNUSED, 0);
+	struct rc_variable * var_ptr;
+	struct rc_list * readers;
+	unsigned int old_mask = rc_variable_writemask_sum(var);
+
+	new_idx = 0;
+	for (old_idx = 0; old_idx < 4; old_idx++) {
+		if (!GET_BIT(old_mask, old_idx))
+			continue;
+		for ( ; new_idx < 4; new_idx++) {
+			if (GET_BIT(new_writemask, new_idx)) {
+				SET_SWZ(conversion_swizzle, old_idx, new_idx);
+				new_idx++;
+				break;
+			}
+		}
+	}
+
+	for (var_ptr = var; var_ptr; var_ptr = var_ptr->Friend) {
+		if (var_ptr->Inst->Type == RC_INSTRUCTION_NORMAL) {
+			rc_normal_rewrite_writemask(var_ptr->Inst,
+							conversion_swizzle);
+			var_ptr->Inst->U.I.DstReg.Index = new_index;
+		} else {
+			struct rc_pair_sub_instruction * sub;
+			if (var_ptr->Dst.WriteMask == RC_MASK_W) {
+				assert(new_writemask & RC_MASK_W);
+				sub = &var_ptr->Inst->U.P.Alpha;
+			} else {
+				sub = &var_ptr->Inst->U.P.RGB;
+				rc_pair_rewrite_writemask(sub,
+							conversion_swizzle);
+			}
+			sub->DestIndex = new_index;
+		}
+	}
+
+	readers = rc_variable_readers_union(var);
+
+	for ( ; readers; readers = readers->Next) {
+		struct rc_reader * reader = readers->Item;
+		if (reader->Inst->Type == RC_INSTRUCTION_NORMAL) {
+			reader->U.I.Src->Index = new_index;
+			reader->U.I.Src->Swizzle = rc_rewrite_swizzle(
+				reader->U.I.Src->Swizzle, conversion_swizzle);
+		} else {
+			struct rc_pair_instruction * pair_inst =
+							&reader->Inst->U.P;
+			unsigned int src_type = rc_source_type_swz(
+							reader->U.P.Arg->Swizzle);
+
+			int src_index = reader->U.P.Arg->Source;
+			if (src_index == RC_PAIR_PRESUB_SRC) {
+				src_index = rc_pair_get_src_index(
+						pair_inst, reader->U.P.Src);
+			}
+			/* Try to delete the old src, it is OK if this fails,
+			 * because rc_pair_alloc_source might be able to
+			 * find a source the ca be reused.
+			 */
+			if (rc_pair_remove_src(reader->Inst, src_type,
+							src_index, old_mask)) {
+				/* Reuse the source index of the source that
+				 * was just deleted and set its register
+				 * index.  We can't use rc_pair_alloc_source
+				 * for this becuase it might return a source
+				 * index that is already being used. */
+				if (src_type & RC_SOURCE_RGB) {
+					pair_inst->RGB.Src[src_index]
+						.Used =	1;
+					pair_inst->RGB.Src[src_index]
+						.Index = new_index;
+					pair_inst->RGB.Src[src_index]
+						.File = RC_FILE_TEMPORARY;
+				}
+				if (src_type & RC_SOURCE_ALPHA) {
+					pair_inst->Alpha.Src[src_index]
+						.Used = 1;
+					pair_inst->Alpha.Src[src_index]
+						.Index = new_index;
+					pair_inst->Alpha.Src[src_index]
+						.File = RC_FILE_TEMPORARY;
+				}
+			} else {
+				src_index = rc_pair_alloc_source(
+						&reader->Inst->U.P,
+						src_type & RC_SOURCE_RGB,
+						src_type & RC_SOURCE_ALPHA,
+						RC_FILE_TEMPORARY,
+						new_index);
+				if (src_index < 0) {
+					rc_error(var->C, "Rewrite of inst %u failed "
+						"Can't allocate source for "
+						"Inst %u src_type=%x "
+						"new_index=%u new_mask=%u\n",
+						var->Inst->IP, reader->Inst->IP, src_type, new_index, new_writemask);
+						continue;
+				}
+			}
+			reader->U.P.Arg->Swizzle = rc_rewrite_swizzle(
+				reader->U.P.Arg->Swizzle, conversion_swizzle);
+			if (reader->U.P.Arg->Source != RC_PAIR_PRESUB_SRC) {
+				reader->U.P.Arg->Source = src_index;
+			}
+		}
+	}
+}
+
+/**
+ * Compute the live intervals for var and its friends.
+ */
+void rc_variable_compute_live_intervals(struct rc_variable * var)
+{
+	while(var) {
+		unsigned int i;
+		unsigned int start = var->Inst->IP;
+
+		for (i = 0; i < var->ReaderCount; i++) {
+			unsigned int chan;
+			unsigned int mask = var->Readers[i].WriteMask;
+			for (chan = 0; chan < 4; chan++) {
+				if ((mask >> chan) & 0x1) {
+					var->Live[chan].Start = start;
+					var->Live[chan].End =
+						var->Readers[i].Inst->IP;
+					var->Live[chan].Used = 1;
+				}
+			}
+		}
+		var = var->Friend;
+	}
+}
+
+/**
+ * @return 1 if a and b share a reader
+ * @return 0 if they do not
+ */
+static unsigned int readers_intersect(
+	struct rc_variable * a,
+	struct rc_variable * b)
+{
+	unsigned int a_index, b_index;
+	for (a_index = 0; a_index < a->ReaderCount; a_index++) {
+		struct rc_reader reader_a = a->Readers[a_index];
+		for (b_index = 0; b_index < b->ReaderCount; b_index++) {
+			struct rc_reader reader_b = b->Readers[b_index];
+			if (reader_a.Inst->Type == RC_INSTRUCTION_NORMAL
+				&& reader_b.Inst->Type == RC_INSTRUCTION_NORMAL
+				&& reader_a.U.I.Src == reader_b.U.I.Src) {
+
+				return 1;
+			}
+
+			if (reader_a.Inst->Type == RC_INSTRUCTION_PAIR
+				&& reader_b.Inst->Type == RC_INSTRUCTION_PAIR
+				&& reader_a.U.P.Arg == reader_b.U.P.Arg) {
+
+				return 1;
+			}
+		}
+	}
+	return 0;
+}
+
+void rc_variable_add_friend(
+	struct rc_variable * var,
+	struct rc_variable * friend)
+{
+	while(var->Friend) {
+		var = var->Friend;
+	}
+	var->Friend = friend;
+}
+
+struct rc_variable * rc_variable(
+	struct radeon_compiler * c,
+	unsigned int DstFile,
+	unsigned int DstIndex,
+	unsigned int DstWriteMask,
+	struct rc_reader_data * reader_data)
+{
+	struct rc_variable * new =
+			memory_pool_malloc(&c->Pool, sizeof(struct rc_variable));
+	memset(new, 0, sizeof(struct rc_variable));
+	new->C = c;
+	new->Dst.File = DstFile;
+	new->Dst.Index = DstIndex;
+	new->Dst.WriteMask = DstWriteMask;
+	if (reader_data) {
+		new->Inst = reader_data->Writer;
+		new->ReaderCount = reader_data->ReaderCount;
+		new->Readers = reader_data->Readers;
+	}
+	return new;
+}
+
+static void get_variable_helper(
+	struct rc_list ** aborted_list,
+	struct rc_list ** variable_list,
+	unsigned int aborted,
+	struct rc_variable * variable)
+{
+	if (aborted) {
+		rc_list_add(aborted_list, rc_list(&variable->C->Pool, variable));
+	} else {
+		rc_list_add(variable_list, rc_list(&variable->C->Pool, variable));
+	}
+}
+
+static void get_variable_pair_helper(
+	struct rc_list ** aborted_list,
+	struct rc_list ** variable_list,
+	struct radeon_compiler * c,
+	struct rc_instruction * inst,
+	struct rc_pair_sub_instruction * sub_inst)
+{
+	struct rc_reader_data reader_data;
+	struct rc_variable * new_var;
+	rc_register_file file;
+	unsigned int writemask;
+
+	if (sub_inst->Opcode == RC_OPCODE_NOP) {
+		return;
+	}
+	memset(&reader_data, 0, sizeof(struct rc_reader_data));
+	rc_get_readers_sub(c, inst, sub_inst, &reader_data, NULL, NULL, NULL);
+
+	if (reader_data.ReaderCount == 0) {
+		return;
+	}
+
+	if (sub_inst->WriteMask) {
+		file = RC_FILE_TEMPORARY;
+		writemask = sub_inst->WriteMask;
+	} else if (sub_inst->OutputWriteMask) {
+		file = RC_FILE_OUTPUT;
+		writemask = sub_inst->OutputWriteMask;
+	} else {
+		writemask = 0;
+		file = RC_FILE_NONE;
+	}
+	new_var = rc_variable(c, file, sub_inst->DestIndex, writemask,
+								&reader_data);
+	get_variable_helper(aborted_list, variable_list, reader_data.Abort,
+								new_var);
+}
+
+/**
+ * Generate a list of variables used by the shader program.  Each instruction
+ * that writes to a register is considered a variable.  The struct rc_variable
+ * data structure includes a list of readers and is essentially a
+ * definition-use chain.  Any two variables that share a reader are considered
+ * "friends" and they are linked together via the Friend attribute.
+ */
+struct rc_list * rc_get_variables(struct radeon_compiler * c)
+{
+	struct rc_instruction * inst;
+	struct rc_list * aborted_list = NULL;
+	struct rc_list * variable_list = NULL;
+	struct rc_list * var_ptr;
+	struct rc_list * search_ptr;
+
+	for (inst = c->Program.Instructions.Next;
+					inst != &c->Program.Instructions;
+					inst = inst->Next) {
+		struct rc_reader_data reader_data;
+		struct rc_variable * new_var;
+		memset(&reader_data, 0, sizeof(reader_data));
+
+		if (inst->Type == RC_INSTRUCTION_NORMAL) {
+			rc_get_readers(c, inst, &reader_data, NULL, NULL, NULL);
+			if (reader_data.ReaderCount == 0) {
+				continue;
+			}
+			new_var = rc_variable(c, inst->U.I.DstReg.File,
+				inst->U.I.DstReg.Index,
+				inst->U.I.DstReg.WriteMask, &reader_data);
+			get_variable_helper(&aborted_list, &variable_list,
+						reader_data.Abort, new_var);
+		} else {
+			get_variable_pair_helper(&aborted_list, &variable_list,
+					c, inst, &inst->U.P.RGB);
+			get_variable_pair_helper(&aborted_list, &variable_list,
+					c, inst, &inst->U.P.Alpha);
+		}
+	}
+
+	/* The aborted_list contains a list of variables that might share a
+	 * reader with another variable.  We need to search through this list
+	 * and pair together variables that do share the same reader.
+	 */
+	while (aborted_list) {
+		struct rc_list * search_ptr_next;
+		var_ptr = aborted_list;
+
+		search_ptr = var_ptr->Next;
+		while(search_ptr) {
+			search_ptr_next = search_ptr->Next;
+			if (readers_intersect(var_ptr->Item, search_ptr->Item)){
+				rc_list_remove(&aborted_list, search_ptr);
+				rc_variable_add_friend(var_ptr->Item,
+							search_ptr->Item);
+			}
+			search_ptr = search_ptr_next;
+		}
+		rc_list_remove(&aborted_list, var_ptr);
+		rc_list_add(&variable_list, rc_list(
+			&((struct rc_variable*)(var_ptr->Item))->C->Pool,
+			var_ptr->Item));
+	}
+	return variable_list;
+}
+
+/**
+ * @return The bitwise or of the writemasks of a variable and all of its
+ * friends.
+ */
+unsigned int rc_variable_writemask_sum(struct rc_variable * var)
+{
+	unsigned int writemask = 0;
+	while(var) {
+		writemask |= var->Dst.WriteMask;
+		var = var->Friend;
+	}
+	return writemask;
+}
+
+/*
+ * @return A list of readers for a variable and its friends.  Readers
+ * that read from two different variable friends are only included once in
+ * this list.
+ */
+struct rc_list * rc_variable_readers_union(struct rc_variable * var)
+{
+	struct rc_list * list = NULL;
+	while (var) {
+		unsigned int i;
+		for (i = 0; i < var->ReaderCount; i++) {
+			struct rc_list * temp;
+			struct rc_reader * a = &var->Readers[i];
+			unsigned int match = 0;
+			for (temp = list; temp; temp = temp->Next) {
+				struct rc_reader * b = temp->Item;
+				if (a->Inst->Type != b->Inst->Type) {
+					continue;
+				}
+				if (a->Inst->Type == RC_INSTRUCTION_NORMAL) {
+					if (a->U.I.Src == b->U.I.Src) {
+						match = 1;
+						break;
+					}
+				}
+				if (a->Inst->Type == RC_INSTRUCTION_PAIR) {
+					if (a->U.P.Arg == b->U.P.Arg
+					    && a->U.P.Src == b->U.P.Src) {
+						match = 1;
+						break;
+					}
+				}
+			}
+			if (match) {
+				continue;
+			}
+			rc_list_add(&list, rc_list(&var->C->Pool, a));
+		}
+		var = var->Friend;
+	}
+	return list;
+}
+
+void rc_variable_print(struct rc_variable * var)
+{
+	unsigned int i;
+	while (var) {
+		fprintf(stderr, "%u: TEMP[%u].%u: ",
+			var->Inst->IP, var->Dst.Index, var->Dst.WriteMask);
+		for (i = 0; i < 4; i++) {
+			fprintf(stderr, "chan %u: start=%u end=%u ", i,
+					var->Live[i].Start, var->Live[i].End);
+		}
+		fprintf(stderr, "%u readers\n", var->ReaderCount);
+		if (var->Friend) {
+			fprintf(stderr, "Friend: \n\t");
+		}
+		var = var->Friend;
+	}
+}

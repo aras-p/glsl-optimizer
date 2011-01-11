@@ -151,6 +151,7 @@ static void pair_sub_for_all_args(
 			unsigned int presub_src_count;
 			struct rc_pair_instruction_source * src_array;
 			unsigned int j;
+//			fprintf(stderr, "Presubtract reader\n");
 			if (src_type & RC_SOURCE_RGB) {
 				presub_type = fullinst->
 					U.P.RGB.Src[RC_PAIR_PRESUB_SRC].Index;
@@ -165,7 +166,9 @@ static void pair_sub_for_all_args(
 			for(j = 0; j < presub_src_count; j++) {
 				cb(userdata, fullinst, &sub->Arg[i],
 								&src_array[j]);
+//				fprintf(stderr, "Callback for presub %u type=%u\n", j, src_type);
 			}
+//			fprintf(stderr, "Done presubtract reader\n");
 		} else {
 			struct rc_pair_instruction_source * src =
 				rc_pair_get_src(&fullinst->U.P, &sub->Arg[i]);
@@ -586,6 +589,8 @@ static void get_readers_pair_read_callback(
 				0 /*Pair Instructions don't use RelAddr*/,
 				src->File, src->Index, arg->Swizzle);
 
+//	fprintf(stderr, "Shared mask = %u for [%u].%u writemask=%u abort=%u exit=%u\n",
+//			shared_mask, src->Index, arg->Swizzle, d->AliveWriteMask,d->ReaderData->Abort, d->ReaderData->ExitOnAbort);
 	if (shared_mask == RC_MASK_NONE)
 		return;
 
@@ -775,6 +780,26 @@ static void get_readers_for_single_write(
 	}
 }
 
+static void init_get_readers_callback_data(
+	struct get_readers_callback_data * d,
+	struct rc_reader_data * reader_data,
+	struct radeon_compiler * c,
+	rc_read_src_fn read_normal_cb,
+	rc_pair_read_arg_fn read_pair_cb,
+	rc_read_write_mask_fn write_cb)
+{
+	reader_data->Abort = 0;
+	reader_data->ReaderCount = 0;
+	reader_data->ReadersReserved = 0;
+	reader_data->Readers = NULL;
+
+	d->C = c;
+	d->ReaderData = reader_data;
+	d->ReadNormalCB = read_normal_cb;
+	d->ReadPairCB = read_pair_cb;
+	d->WriteCB = write_cb;
+}
+
 /**
  * This function will create a list of readers via the rc_reader_data struct.
  * This function will abort (set the flag data->Abort) and return if it
@@ -823,16 +848,28 @@ void rc_get_readers(
 {
 	struct get_readers_callback_data d;
 
-	data->Abort = 0;
-	data->ReaderCount = 0;
-	data->ReadersReserved = 0;
-	data->Readers = NULL;
-
-	d.C = c;
-	d.ReaderData = data;
-	d.ReadNormalCB = read_normal_cb;
-	d.ReadPairCB = read_pair_cb;
-	d.WriteCB = write_cb;
+	init_get_readers_callback_data(&d, data, c, read_normal_cb,
+						read_pair_cb, write_cb);
 
 	rc_for_all_writes_mask(writer, get_readers_for_single_write, &d);
+}
+
+void rc_get_readers_sub(
+	struct radeon_compiler * c,
+	struct rc_instruction * writer,
+	struct rc_pair_sub_instruction * sub_writer,
+	struct rc_reader_data * data,
+	rc_read_src_fn read_normal_cb,
+	rc_pair_read_arg_fn read_pair_cb,
+	rc_read_write_mask_fn write_cb)
+{
+	struct get_readers_callback_data d;
+
+	init_get_readers_callback_data(&d, data, c, read_normal_cb,
+						read_pair_cb, write_cb);
+
+	if (sub_writer->WriteMask) {
+		get_readers_for_single_write(&d, writer, RC_FILE_TEMPORARY,
+			sub_writer->DestIndex, sub_writer->WriteMask);
+	}
 }
