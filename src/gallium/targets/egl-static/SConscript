@@ -61,7 +61,7 @@ if env['platform'] == 'windows':
 
     # OpenVG
     env.Append(CPPDEFINES = ['FEATURE_VG=1'])
-    env.Prepend(LIBS = [vgapi, st_vega])
+    env.Prepend(LIBS = [openvg, st_vega])
 else:
     env.Prepend(LIBS = [
         st_egl,
