@@ -432,7 +432,7 @@ _eglGetSearchPath(void)
  *
  * The user driver is specified by EGL_DRIVER.
  */
-static void
+static EGLBoolean
 _eglAddUserDriver(void)
 {
    const char *search_path = _eglGetSearchPath();
@@ -463,7 +463,11 @@ _eglAddUserDriver(void)
                mod->BuiltIn = _eglBuiltInDrivers[i].main;
          }
       }
+
+      return EGL_TRUE;
    }
+
+   return EGL_FALSE;
 }
 
 
@@ -507,10 +511,14 @@ _eglAddDrivers(void)
    if (_eglModules)
       return EGL_TRUE;
 
-   /* the order here decides the priorities of the drivers */
-   _eglAddUserDriver();
-   _eglAddGalliumDriver();
-   _eglAddBuiltInDrivers();
+   if (!_eglAddUserDriver()) {
+      /*
+       * Add other drivers only when EGL_DRIVER is not set.  The order here
+       * decides the priorities.
+       */
+      _eglAddGalliumDriver();
+      _eglAddBuiltInDrivers();
+   }
 
    return (_eglModules != NULL);
 }
@@ -535,6 +543,7 @@ _eglMatchDriver(_EGLDisplay *dpy, EGLBoolean use_probe)
 
    if (!_eglAddDrivers()) {
       _eglUnlockMutex(&_eglModuleMutex);
+      _eglLog(_EGL_WARNING, "failed to find any driver");
       return EGL_FALSE;
    }
 
