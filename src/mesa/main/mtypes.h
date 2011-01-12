@@ -2191,6 +2191,7 @@ struct gl_shader_state
    struct gl_shader_program *CurrentVertexProgram;
    struct gl_shader_program *CurrentGeometryProgram;
    struct gl_shader_program *CurrentFragmentProgram;
+   struct gl_shader_program *_CurrentFragmentProgram;
 
    /**
     * Program used by glUniform calls.
