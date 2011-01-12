@@ -45,6 +45,7 @@ add_variable(const char *name, enum ir_variable_mode mode, int slot,
    switch (var->mode) {
    case ir_var_auto:
    case ir_var_in:
+   case ir_var_const_in:
    case ir_var_uniform:
    case ir_var_system_value:
       var->read_only = true;

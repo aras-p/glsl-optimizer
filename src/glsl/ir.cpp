@@ -1379,6 +1379,21 @@ ir_function_signature::ir_function_signature(const glsl_type *return_type)
 }
 
 
+static bool
+modes_match(unsigned a, unsigned b)
+{
+   if (a == b)
+      return true;
+
+   /* Accept "in" vs. "const in" */
+   if ((a == ir_var_const_in && b == ir_var_in) ||
+       (b == ir_var_const_in && a == ir_var_in))
+      return true;
+
+   return false;
+}
+
+
 const char *
 ir_function_signature::qualifiers_match(exec_list *params)
 {
@@ -1391,7 +1406,7 @@ ir_function_signature::qualifiers_match(exec_list *params)
       ir_variable *b = (ir_variable *)iter_b.get();
 
       if (a->read_only != b->read_only ||
-	  a->mode != b->mode ||
+	  !modes_match(a->mode, b->mode) ||
 	  a->interpolation != b->interpolation ||
 	  a->centroid != b->centroid) {
 

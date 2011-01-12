@@ -299,6 +299,7 @@ mode_string(const ir_variable *var)
    case ir_var_out:     return "shader output";
    case ir_var_inout:   return "shader inout";
 
+   case ir_var_const_in:
    case ir_var_temporary:
    default:
       assert(!"Should not get here.");

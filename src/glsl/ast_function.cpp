@@ -132,6 +132,9 @@ match_function_by_name(exec_list *instructions, const char *name,
       /* Verify that 'out' and 'inout' actual parameters are lvalues.  This
        * isn't done in ir_function::matching_signature because that function
        * cannot generate the necessary diagnostics.
+       *
+       * Also, validate that 'const_in' formal parameters (an extension of our
+       * IR) correspond to ir_constant actual parameters.
        */
       exec_list_iterator actual_iter = actual_parameters->iterator();
       exec_list_iterator formal_iter = sig->parameters.iterator();
@@ -142,6 +145,12 @@ match_function_by_name(exec_list *instructions, const char *name,
 
 	 assert(actual != NULL);
 	 assert(formal != NULL);
+
+	 if (formal->mode == ir_var_const_in && !actual->as_constant()) {
+	    _mesa_glsl_error(loc, state,
+			     "parameter `%s' must be a constant expression",
+			     formal->name);
+	 }
 
 	 if ((formal->mode == ir_var_out)
 	     || (formal->mode == ir_var_inout)) {

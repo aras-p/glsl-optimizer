@@ -397,6 +397,8 @@ ir_reader::read_declaration(s_expression *expr)
 	 var->mode = ir_var_auto;
       } else if (strcmp(qualifier->value(), "in") == 0) {
 	 var->mode = ir_var_in;
+      } else if (strcmp(qualifier->value(), "const_in") == 0) {
+	 var->mode = ir_var_const_in;
       } else if (strcmp(qualifier->value(), "out") == 0) {
 	 var->mode = ir_var_out;
       } else if (strcmp(qualifier->value(), "inout") == 0) {

@@ -195,7 +195,7 @@ ir_tree_grafting_visitor::visit_enter(ir_call *ir)
       ir_rvalue *ir = (ir_rvalue *)iter.get();
       ir_rvalue *new_ir = ir;
 
-      if (sig_param->mode != ir_var_in)
+      if (sig_param->mode != ir_var_in && sig_param->mode != ir_var_const_in)
 	 continue;
 
       if (do_graft(&new_ir)) {

@@ -165,6 +165,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
 
       /* Move the actual param into our param variable if it's an 'in' type. */
       if (parameters[i] && (sig_param->mode == ir_var_in ||
+			    sig_param->mode == ir_var_const_in ||
 			    sig_param->mode == ir_var_inout)) {
 	 ir_assignment *assign;
 
