@@ -2382,10 +2382,11 @@ _EGL_MAIN(const char *args)
    if (!dri2_drv)
       return NULL;
 
+   memset(dri2_drv, 0, sizeof *dri2_drv);
+
    if (!dri2_load(&dri2_drv->base))
       return NULL;
 
-   memset(dri2_drv, 0, sizeof *dri2_drv);
    _eglInitDriverFallbacks(&dri2_drv->base);
    dri2_drv->base.API.Initialize = dri2_initialize;
    dri2_drv->base.API.Terminate = dri2_terminate;
