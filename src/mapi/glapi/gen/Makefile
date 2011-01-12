@@ -72,6 +72,7 @@ API_XML = \
 	gl_API.xml \
 	ARB_copy_buffer.xml \
 	ARB_depth_clamp.xml \
+	ARB_draw_buffers_blend.xml \
 	ARB_draw_elements_base_vertex.xml \
 	ARB_draw_instanced.xml \
 	ARB_ES2_compatibility.xml \
