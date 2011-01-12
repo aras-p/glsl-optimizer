@@ -699,6 +699,12 @@ int r600_bc_add_tex(struct r600_bc *bc, const struct r600_bc_tex *tex)
 		}
 		bc->cf_last->inst = V_SQ_CF_WORD1_SQ_CF_INST_TEX;
 	}
+	if (ntex->src_gpr >= bc->ngpr) {
+		bc->ngpr = ntex->src_gpr + 1;
+	}
+	if (ntex->dst_gpr >= bc->ngpr) {
+		bc->ngpr = ntex->dst_gpr + 1;
+	}
 	LIST_ADDTAIL(&ntex->list, &bc->cf_last->tex);
 	/* each texture fetch use 4 dwords */
 	bc->cf_last->ndw += 4;
@@ -1106,7 +1112,7 @@ void r600_bc_dump(struct r600_bc *bc)
 		chip = '6';
 		break;
 	}
-	fprintf(stderr, "bytecode %d dw -----------------------\n", bc->ndw);
+	fprintf(stderr, "bytecode %d dw -- %d gprs ---------------------\n", bc->ndw, bc->ngpr);
 	fprintf(stderr, "     %c\n", chip);
 
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
