@@ -45,15 +45,15 @@ if env['platform'] != 'winddk':
 	env.Depends(vgapi_objects, vgapi_header)
 
 	openvg = env.SharedLibrary(
-		target = 'libOpenVG',
+		target = 'OpenVG',
 		source = vgapi_objects,
 	)
 
 	env.InstallSharedLibrary(openvg, version=(1, 0, 0))
 
 	if env['platform'] == 'windows':
-	    vgapi = env.FindIxes(openvg, 'LIBPREFIX', 'LIBSUFFIX')
+	    openvg = env.FindIxes(openvg, 'LIBPREFIX', 'LIBSUFFIX')
 	else:
-	    vgapi = env.FindIxes(openvg, 'SHLIBPREFIX', 'SHLIBSUFFIX')
+	    openvg = env.FindIxes(openvg, 'SHLIBPREFIX', 'SHLIBSUFFIX')
 
-	Export(['vgapi'])
+	Export(['openvg'])

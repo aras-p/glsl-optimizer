@@ -74,6 +74,7 @@ else:
 
     # OpenVG
     env.Append(CPPDEFINES = ['FEATURE_VG=1'])
+    env.Prepend(LIBPATH = [openvg.dir])
     env.Prepend(LIBS = ['OpenVG', st_vega])
 
 
@@ -115,7 +116,7 @@ egl_gallium = env.SharedLibrary(
     source = sources,
 )
 
-env.Depends(egl_gallium, [vgapi])
+env.Depends(egl_gallium, [openvg])
 
 egl_gallium = env.InstallSharedLibrary(egl_gallium, version=(1, 4, 0))
 
