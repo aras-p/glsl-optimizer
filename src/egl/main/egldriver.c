@@ -585,8 +585,13 @@ _eglMatchDriver(_EGLDisplay *dpy, EGLBoolean test_only)
 
    /* set options */
    dpy->Options.TestOnly = test_only;
+   dpy->Options.UseFallback = EGL_FALSE;
 
    best_drv = _eglMatchAndInitialize(dpy);
+   if (!best_drv) {
+      dpy->Options.UseFallback = EGL_TRUE;
+      best_drv = _eglMatchAndInitialize(dpy);
+   }
 
    _eglUnlockMutex(&_eglModuleMutex);
 

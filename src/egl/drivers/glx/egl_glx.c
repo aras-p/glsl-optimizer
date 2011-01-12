@@ -589,6 +589,10 @@ GLX_eglInitialize(_EGLDriver *drv, _EGLDisplay *disp)
    if (disp->Platform != _EGL_PLATFORM_X11)
       return EGL_FALSE;
 
+   /* this is a fallback driver */
+   if (!disp->Options.UseFallback)
+      return EGL_FALSE;
+
    if (disp->Options.TestOnly)
       return EGL_TRUE;
 

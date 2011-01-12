@@ -1470,6 +1470,10 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
 static EGLBoolean
 dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp)
 {
+   /* not until swrast_dri is supported */
+   if (disp->Options.UseFallback)
+      return EGL_FALSE;
+
    switch (disp->Platform) {
    case _EGL_PLATFORM_X11:
       if (disp->Options.TestOnly)

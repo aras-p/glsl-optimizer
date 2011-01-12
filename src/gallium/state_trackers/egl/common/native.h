@@ -226,8 +226,9 @@ native_attachment_mask_test(uint mask, enum native_attachment att)
 struct native_platform {
    const char *name;
 
+   void (*set_event_handler)(struct native_event_handler *handler);
    struct native_display *(*create_display)(void *dpy,
-                                            struct native_event_handler *handler,
+                                            boolean use_sw,
                                             void *user_data);
 };
 

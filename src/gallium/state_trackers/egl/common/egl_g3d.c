@@ -38,6 +38,46 @@
 #include "egl_g3d_loader.h"
 #include "native.h"
 
+static void
+egl_g3d_invalid_surface(struct native_display *ndpy,
+                        struct native_surface *nsurf,
+                        unsigned int seq_num)
+{
+   /* XXX not thread safe? */
+   struct egl_g3d_surface *gsurf = egl_g3d_surface(nsurf->user_data);
+   struct egl_g3d_context *gctx;
+   
+   /*
+    * Some functions such as egl_g3d_copy_buffers create a temporary native
+    * surface.  There is no gsurf associated with it.
+    */
+   gctx = (gsurf) ? egl_g3d_context(gsurf->base.CurrentContext) : NULL;
+   if (gctx)
+      gctx->stctxi->notify_invalid_framebuffer(gctx->stctxi, gsurf->stfbi);
+}
+
+static struct pipe_screen *
+egl_g3d_new_drm_screen(struct native_display *ndpy, const char *name, int fd)
+{
+   _EGLDisplay *dpy = (_EGLDisplay *) ndpy->user_data;
+   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+   return gdpy->loader->create_drm_screen(name, fd);
+}
+
+static struct pipe_screen *
+egl_g3d_new_sw_screen(struct native_display *ndpy, struct sw_winsys *ws)
+{
+   _EGLDisplay *dpy = (_EGLDisplay *) ndpy->user_data;
+   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+   return gdpy->loader->create_sw_screen(ws);
+}
+
+static struct native_event_handler egl_g3d_native_event_handler = {
+   egl_g3d_invalid_surface,
+   egl_g3d_new_drm_screen,
+   egl_g3d_new_sw_screen
+};
+
 /**
  * Get the native platform.
  */
@@ -79,7 +119,9 @@ egl_g3d_get_platform(_EGLDriver *drv, _EGLPlatformType plat)
          break;
       }
 
-      if (!nplat)
+      if (nplat)
+         nplat->set_event_handler(&egl_g3d_native_event_handler);
+      else
          _eglLog(_EGL_WARNING, "unsupported platform %s", plat_name);
 
       gdrv->platforms[plat] = nplat;
@@ -384,46 +426,6 @@ egl_g3d_add_configs(_EGLDriver *drv, _EGLDisplay *dpy, EGLint id)
 }
 
 static void
-egl_g3d_invalid_surface(struct native_display *ndpy,
-                        struct native_surface *nsurf,
-                        unsigned int seq_num)
-{
-   /* XXX not thread safe? */
-   struct egl_g3d_surface *gsurf = egl_g3d_surface(nsurf->user_data);
-   struct egl_g3d_context *gctx;
-   
-   /*
-    * Some functions such as egl_g3d_copy_buffers create a temporary native
-    * surface.  There is no gsurf associated with it.
-    */
-   gctx = (gsurf) ? egl_g3d_context(gsurf->base.CurrentContext) : NULL;
-   if (gctx)
-      gctx->stctxi->notify_invalid_framebuffer(gctx->stctxi, gsurf->stfbi);
-}
-
-static struct pipe_screen *
-egl_g3d_new_drm_screen(struct native_display *ndpy, const char *name, int fd)
-{
-   _EGLDisplay *dpy = (_EGLDisplay *) ndpy->user_data;
-   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
-   return gdpy->loader->create_drm_screen(name, fd);
-}
-
-static struct pipe_screen *
-egl_g3d_new_sw_screen(struct native_display *ndpy, struct sw_winsys *ws)
-{
-   _EGLDisplay *dpy = (_EGLDisplay *) ndpy->user_data;
-   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
-   return gdpy->loader->create_sw_screen(ws);
-}
-
-static struct native_event_handler egl_g3d_native_event_handler = {
-   egl_g3d_invalid_surface,
-   egl_g3d_new_drm_screen,
-   egl_g3d_new_sw_screen
-};
-
-static void
 egl_g3d_free_config(void *conf)
 {
    struct egl_g3d_config *gconf = egl_g3d_config((_EGLConfig *) conf);
@@ -497,7 +499,7 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy)
 
    _eglLog(_EGL_INFO, "use %s for display %p", nplat->name, dpy->PlatformDisplay);
    gdpy->native = nplat->create_display(dpy->PlatformDisplay,
-         &egl_g3d_native_event_handler, (void *) dpy);
+         dpy->Options.UseFallback, (void *) dpy);
    if (!gdpy->native) {
       _eglError(EGL_NOT_INITIALIZED, "eglInitialize(no usable display)");
       goto fail;

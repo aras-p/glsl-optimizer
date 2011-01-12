@@ -93,6 +93,7 @@ struct _egl_display
    /* options that affect how the driver initializes the display */
    struct {
       EGLBoolean TestOnly;    /**< Driver should not set fields when true */
+      EGLBoolean UseFallback; /**< Use fallback driver (sw or less features) */
    } Options;
 
    /* these fields are set by the driver during init */
