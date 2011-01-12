@@ -2271,6 +2271,53 @@ find_value_indexed(const char *func, GLenum pname, int index, union value *v)
       v->value_int = (ctx->Color.BlendEnabled >> index) & 1;
       return TYPE_INT;
 
+   case GL_BLEND_SRC:
+      /* fall-through */
+   case GL_BLEND_SRC_RGB:
+      if (index >= ctx->Const.MaxDrawBuffers)
+	 goto invalid_value;
+      if (!ctx->Extensions.ARB_draw_buffers_blend)
+	 goto invalid_enum;
+      v->value_int = ctx->Color.Blend[index].SrcRGB;
+      return TYPE_INT;
+   case GL_BLEND_SRC_ALPHA:
+      if (index >= ctx->Const.MaxDrawBuffers)
+	 goto invalid_value;
+      if (!ctx->Extensions.ARB_draw_buffers_blend)
+	 goto invalid_enum;
+      v->value_int = ctx->Color.Blend[index].SrcA;
+      return TYPE_INT;
+   case GL_BLEND_DST:
+      /* fall-through */
+   case GL_BLEND_DST_RGB:
+      if (index >= ctx->Const.MaxDrawBuffers)
+	 goto invalid_value;
+      if (!ctx->Extensions.ARB_draw_buffers_blend)
+	 goto invalid_enum;
+      v->value_int = ctx->Color.Blend[index].DstRGB;
+      return TYPE_INT;
+   case GL_BLEND_DST_ALPHA:
+      if (index >= ctx->Const.MaxDrawBuffers)
+	 goto invalid_value;
+      if (!ctx->Extensions.ARB_draw_buffers_blend)
+	 goto invalid_enum;
+      v->value_int = ctx->Color.Blend[index].DstA;
+      return TYPE_INT;
+   case GL_BLEND_EQUATION_RGB:
+      if (index >= ctx->Const.MaxDrawBuffers)
+	 goto invalid_value;
+      if (!ctx->Extensions.ARB_draw_buffers_blend)
+	 goto invalid_enum;
+      v->value_int = ctx->Color.Blend[index].EquationRGB;
+      return TYPE_INT;
+   case GL_BLEND_EQUATION_ALPHA:
+      if (index >= ctx->Const.MaxDrawBuffers)
+	 goto invalid_value;
+      if (!ctx->Extensions.ARB_draw_buffers_blend)
+	 goto invalid_enum;
+      v->value_int = ctx->Color.Blend[index].EquationA;
+      return TYPE_INT;
+
    case GL_COLOR_WRITEMASK:
       if (index >= ctx->Const.MaxDrawBuffers)
 	 goto invalid_value;
