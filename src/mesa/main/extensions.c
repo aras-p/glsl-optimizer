@@ -227,7 +227,7 @@ static const struct extension extension_table[] = {
    { "GL_OES_matrix_get",                          o(dummy_true),                                   ES1       },
    { "GL_OES_packed_depth_stencil",                o(EXT_packed_depth_stencil),                     ES1 | ES2 },
    { "GL_OES_point_size_array",                    o(dummy_true),                                   ES1       },
-   { "GL_OES_point_sprite",                        o(dummy_true),                                   ES1       },
+   { "GL_OES_point_sprite",                        o(ARB_point_sprite),                             ES1       },
    { "GL_OES_query_matrix",                        o(dummy_true),                                   ES1       },
    { "GL_OES_read_format",                         o(OES_read_format),                         GL | ES1       },
    { "GL_OES_rgb8_rgba8",                          o(EXT_framebuffer_object),                       ES1 | ES2 },
