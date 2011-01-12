@@ -228,11 +228,19 @@ int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *shader);
 int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens)
 {
+	static int dump_shaders = -1;
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	int r;
 
-//fprintf(stderr, "--------------------------------------------------------------\n");
-//tgsi_dump(tokens, 0);
+        /* Would like some magic "get_bool_option_once" routine.
+         */
+        if (dump_shaders == -1)
+                dump_shaders = debug_get_bool_option("R600_DUMP_SHADERS", FALSE);
+
+	if (dump_shaders) {
+		fprintf(stderr, "--------------------------------------------------------------\n");
+		tgsi_dump(tokens, 0);
+	}
 	shader->shader.family = r600_get_family(rctx->radeon);
 	r = r600_shader_from_tgsi(tokens, &shader->shader);
 	if (r) {
@@ -244,8 +252,10 @@ int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *s
 		R600_ERR("building bytecode failed !\n");
 		return r;
 	}
-//r600_bc_dump(&shader->shader.bc);
-//fprintf(stderr, "______________________________________________________________\n");
+	if (dump_shaders) {
+		r600_bc_dump(&shader->shader.bc);
+		fprintf(stderr, "______________________________________________________________\n");
+	}
 	return r600_pipe_shader(ctx, shader);
 }
 
