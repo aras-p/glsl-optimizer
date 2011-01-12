@@ -49,9 +49,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <err.h>
 #include <errno.h>
 #include <getopt.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -198,7 +198,7 @@ parse_long_options(char * const *nargv, const char *options,
 		else {
 			/* ambiguous abbreviation */
 			if (PRINT_ERROR)
-				warnx(ambig, (int)current_argv_len,
+				fprintf(stderr, ambig, (int)current_argv_len,
 				     current_argv);
 			optopt = 0;
 			return (BADCH);
@@ -208,7 +208,7 @@ parse_long_options(char * const *nargv, const char *options,
 		if (long_options[match].has_arg == no_argument
 		    && has_equal) {
 			if (PRINT_ERROR)
-				warnx(noarg, (int)current_argv_len,
+				fprintf(stderr, noarg, (int)current_argv_len,
 				     current_argv);
 			/*
 			 * XXX: GNU sets optopt to val regardless of flag
@@ -238,7 +238,7 @@ parse_long_options(char * const *nargv, const char *options,
 			 * should be generated.
 			 */
 			if (PRINT_ERROR)
-				warnx(recargstring,
+				fprintf(stderr, recargstring,
 				    current_argv);
 			/*
 			 * XXX: GNU sets optopt to val regardless of flag
@@ -256,7 +256,7 @@ parse_long_options(char * const *nargv, const char *options,
 			return (-1);
 		}
 		if (PRINT_ERROR)
-			warnx(illoptstring, current_argv);
+			fprintf(stderr, illoptstring, current_argv);
 		optopt = 0;
 		return (BADCH);
 	}
@@ -418,7 +418,7 @@ start:
 		if (!*place)
 			++optind;
 		if (PRINT_ERROR)
-			warnx(illoptchar, optchar);
+			fprintf(stderr, illoptchar, optchar);
 		optopt = optchar;
 		return (BADCH);
 	}
@@ -429,7 +429,7 @@ start:
 		else if (++optind >= nargc) {	/* no arg */
 			place = EMSG;
 			if (PRINT_ERROR)
-				warnx(recargchar, optchar);
+				fprintf(stderr, recargchar, optchar);
 			optopt = optchar;
 			return (BADARG);
 		} else				/* white space */
@@ -450,7 +450,7 @@ start:
 			if (++optind >= nargc) {	/* no arg */
 				place = EMSG;
 				if (PRINT_ERROR)
-					warnx(recargchar, optchar);
+					fprintf(stderr, recargchar, optchar);
 				optopt = optchar;
 				return (BADARG);
 			} else
