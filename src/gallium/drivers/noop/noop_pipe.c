@@ -124,7 +124,7 @@ static struct pipe_resource *noop_resource_from_handle(struct pipe_screen *scree
 	struct noop_pipe_screen *noop_screen = (struct noop_pipe_screen*)screen;
 	struct pipe_screen *oscreen = noop_screen->oscreen;
 	struct pipe_resource *result;
-	struct noop_resource *noop_resource;
+	struct pipe_resource *noop_resource;
 
 	result = oscreen->resource_from_handle(oscreen, templ, handle);
 	noop_resource = noop_resource_create(screen, result);
