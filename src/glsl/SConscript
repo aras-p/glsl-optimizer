@@ -84,7 +84,11 @@ if env['msvc']:
     env.Prepend(CPPPATH = ['#/src/getopt'])
     env.PrependUnique(LIBS = [getopt])
 
-env.Prepend(LIBS = ['talloc'])
+if env['platform'] == 'windows':
+    env.Prepend(LIBS = [talloc])
+else:
+    env.Prepend(LIBS = ['talloc'])
+
 env.Append(CPPPATH = ['#/src/glsl'])
 
 builtin_compiler = env.Program(
@@ -102,6 +106,14 @@ env.CodeGenerate(
 )
 
 env.Depends('builtin_function.cpp', ['builtins/tools/generate_builtins.py', 'builtins/tools/texture_builtins.py'] + Glob('builtins/ir/*'))
+
+if env['msvc']:
+    # There is no LD_LIBRARY_PATH equivalent on Windows. We need to ensure
+    # talloc.dll is on the same dir as builtin_function.
+    talloc_dll_src = talloc.dir.File('talloc.dll')
+    talloc_dll_dst = builtin_compiler[0].dir.File('talloc.dll')
+    talloc_dll = env.Command(talloc_dll_dst, talloc_dll_src, Copy(talloc_dll_dst, talloc_dll_src))
+    env.Depends('builtin_function.cpp', talloc_dll)
 
 glsl = env.ConvenienceLibrary(
     target = 'glsl',
