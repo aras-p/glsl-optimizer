@@ -93,7 +93,7 @@ default: depend library
 # EGL Library
 library: $(TOP)/$(LIB_DIR)/$(EGL_LIB_NAME)
 
-$(TOP)/$(LIB_DIR)/$(EGL_LIB_NAME): $(OBJECTS)
+$(TOP)/$(LIB_DIR)/$(EGL_LIB_NAME): $(OBJECTS) $(LOCAL_LIBS)
 	$(MKLIB) -o $(EGL_LIB) -linker '$(CC)' -ldflags '$(LDFLAGS)' \
 		-major $(EGL_MAJOR) -minor $(EGL_MINOR) \
 		-install $(TOP)/$(LIB_DIR) $(MKLIB_OPTIONS) \
