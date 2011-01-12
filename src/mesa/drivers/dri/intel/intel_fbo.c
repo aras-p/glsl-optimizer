@@ -454,7 +454,6 @@ intel_render_texture(struct gl_context * ctx,
                      struct gl_framebuffer *fb,
                      struct gl_renderbuffer_attachment *att)
 {
-   struct intel_context *intel = intel_context(ctx);
    struct gl_texture_image *newImage
       = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
    struct intel_renderbuffer *irb = intel_renderbuffer(att->Renderbuffer);
@@ -517,6 +516,7 @@ intel_render_texture(struct gl_context * ctx,
        * instead, we just make a new single-level miptree and render
        * into that.
        */
+      struct intel_context *intel = intel_context(ctx);
       struct intel_mipmap_tree *old_mt = intel_image->mt;
       struct intel_mipmap_tree *new_mt;
       int comp_byte = 0, texel_bytes;
