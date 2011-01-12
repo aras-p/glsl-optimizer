@@ -2727,6 +2727,9 @@ fs_visitor::calculate_live_intervals()
    int loop_start = 0;
    int bb_header_ip = 0;
 
+   if (this->live_intervals_valid)
+      return;
+
    for (int i = 0; i < num_vars; i++) {
       def[i] = 1 << 30;
       use[i] = -1;
@@ -2806,6 +2809,8 @@ fs_visitor::calculate_live_intervals()
    talloc_free(this->virtual_grf_use);
    this->virtual_grf_def = def;
    this->virtual_grf_use = use;
+
+   this->live_intervals_valid = true;
 }
 
 /**
@@ -2820,6 +2825,8 @@ bool
 fs_visitor::propagate_constants()
 {
    bool progress = false;
+
+   calculate_live_intervals();
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
@@ -2878,6 +2885,7 @@ fs_visitor::propagate_constants()
 		  /* Fit this constant in by commuting the operands */
 		  scan_inst->src[0] = scan_inst->src[1];
 		  scan_inst->src[1] = inst->src[0];
+		  progress = true;
 	       }
 	       break;
 	    case BRW_OPCODE_CMP:
@@ -2898,6 +2906,9 @@ fs_visitor::propagate_constants()
       }
    }
 
+   if (progress)
+       this->live_intervals_valid = false;
+
    return progress;
 }
 /**
@@ -2912,6 +2923,8 @@ fs_visitor::dead_code_eliminate()
    bool progress = false;
    int pc = 0;
 
+   calculate_live_intervals();
+
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
 
@@ -2922,6 +2935,9 @@ fs_visitor::dead_code_eliminate()
 
       pc++;
    }
+
+   if (progress)
+      live_intervals_valid = false;
 
    return progress;
 }
@@ -3019,6 +3035,9 @@ fs_visitor::register_coalesce()
       progress = true;
    }
 
+   if (progress)
+      live_intervals_valid = false;
+
    return progress;
 }
 
@@ -3028,6 +3047,8 @@ fs_visitor::compute_to_mrf()
 {
    bool progress = false;
    int next_ip = 0;
+
+   calculate_live_intervals();
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
@@ -3628,10 +3649,8 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 
 	 progress = v.remove_duplicate_mrf_writes() || progress;
 
-	 v.calculate_live_intervals();
 	 progress = v.propagate_constants() || progress;
 	 progress = v.register_coalesce() || progress;
-	 v.calculate_live_intervals();
 	 progress = v.compute_to_mrf() || progress;
 	 progress = v.dead_code_eliminate() || progress;
       } while (progress);
@@ -3642,7 +3661,6 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 	 for (int i = 1; i < virtual_grf_count; i++) {
 	    v.spill_reg(i);
 	 }
-	 v.calculate_live_intervals();
       }
 
       if (0)
@@ -3651,8 +3669,6 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 	 while (!v.assign_regs()) {
 	    if (v.fail)
 	       break;
-
-	    v.calculate_live_intervals();
 	 }
       }
    }
