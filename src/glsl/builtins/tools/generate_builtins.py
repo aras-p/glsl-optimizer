@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import re
+import sys
 from glob import glob
 from os import path
 from subprocess import Popen, PIPE
