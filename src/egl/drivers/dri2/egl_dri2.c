@@ -1472,10 +1472,14 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp)
 {
    switch (disp->Platform) {
    case _EGL_PLATFORM_X11:
+      if (disp->Options.TestOnly)
+         return EGL_TRUE;
       return dri2_initialize_x11(drv, disp);
 
 #ifdef HAVE_LIBUDEV
    case _EGL_PLATFORM_DRM:
+      if (disp->Options.TestOnly)
+         return EGL_TRUE;
       return dri2_initialize_drm(drv, disp);
 #endif
 

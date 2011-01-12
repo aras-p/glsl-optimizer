@@ -589,6 +589,9 @@ GLX_eglInitialize(_EGLDriver *drv, _EGLDisplay *disp)
    if (disp->Platform != _EGL_PLATFORM_X11)
       return EGL_FALSE;
 
+   if (disp->Options.TestOnly)
+      return EGL_TRUE;
+
    GLX_dpy = CALLOC_STRUCT(GLX_egl_display);
    if (!GLX_dpy)
       return _eglError(EGL_BAD_ALLOC, "eglInitialize");

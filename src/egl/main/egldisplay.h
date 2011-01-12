@@ -90,6 +90,11 @@ struct _egl_display
    _EGLDriver *Driver;        /**< Matched driver of the display */
    EGLBoolean Initialized;    /**< True if the display is initialized */
 
+   /* options that affect how the driver initializes the display */
+   struct {
+      EGLBoolean TestOnly;    /**< Driver should not set fields when true */
+   } Options;
+
    /* these fields are set by the driver during init */
    void *DriverData;          /**< Driver private data */
    EGLint VersionMajor;       /**< EGL major version */

@@ -484,6 +484,9 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy)
    if (!nplat)
       return EGL_FALSE;
 
+   if (dpy->Options.TestOnly)
+      return EGL_TRUE;
+
    gdpy = CALLOC_STRUCT(egl_g3d_display);
    if (!gdpy) {
       _eglError(EGL_BAD_ALLOC, "eglInitialize");
@@ -572,12 +575,6 @@ egl_g3d_get_proc_address(_EGLDriver *drv, const char *procname)
          stapi->get_proc_address(stapi, procname) : NULL);
 }
 
-static EGLint
-egl_g3d_probe(_EGLDriver *drv, _EGLDisplay *dpy)
-{
-   return (egl_g3d_get_platform(drv, dpy->Platform)) ? 90 : 0;
-}
-
 _EGLDriver *
 egl_g3d_create_driver(const struct egl_g3d_loader *loader)
 {
@@ -593,8 +590,6 @@ egl_g3d_create_driver(const struct egl_g3d_loader *loader)
    gdrv->base.API.Initialize = egl_g3d_initialize;
    gdrv->base.API.Terminate = egl_g3d_terminate;
    gdrv->base.API.GetProcAddress = egl_g3d_get_proc_address;
-
-   gdrv->base.Probe = egl_g3d_probe;
 
    /* to be filled by the caller */
    gdrv->base.Name = NULL;
