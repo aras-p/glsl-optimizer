@@ -80,6 +80,10 @@ sources = [
     'strtod.c',
 ]
 
+if env['msvc']:
+    env.Prepend(CPPPATH = ['#/src/getopt'])
+    env.PrependUnique(LIBS = [getopt])
+
 env.Prepend(LIBS = ['talloc'])
 env.Append(CPPPATH = ['#/src/glsl'])
 

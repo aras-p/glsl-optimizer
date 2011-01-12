@@ -1,0 +1,13 @@
+Import('*')
+
+if not env['msvc']:
+    Return()
+
+env = env.Clone()
+
+getopt = env.ConvenienceLibrary(
+    target = 'getopt',
+    source = ['getopt_long.c'],
+)
+
+Export('getopt')
