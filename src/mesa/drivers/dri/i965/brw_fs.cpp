@@ -534,24 +534,39 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 	    continue;
 	 }
 
-	 for (unsigned int c = 0; c < type->vector_elements; c++) {
-	    struct brw_reg interp = interp_reg(location, c);
-	    emit(fs_inst(FS_OPCODE_LINTERP,
-			 attr,
-			 this->delta_x,
-			 this->delta_y,
-			 fs_reg(interp)));
-	    attr.reg_offset++;
-	 }
-
-	 if (intel->gen < 6) {
-	    attr.reg_offset -= type->vector_elements;
+	 if (c->key.flat_shade && (location == FRAG_ATTRIB_COL0 ||
+				   location == FRAG_ATTRIB_COL1)) {
+	    /* Constant interpolation (flat shading) case. The SF has
+	     * handed us defined values in only the constant offset
+	     * field of the setup reg.
+	     */
 	    for (unsigned int c = 0; c < type->vector_elements; c++) {
-	       emit(fs_inst(BRW_OPCODE_MUL,
-			    attr,
-			    attr,
-			    this->pixel_w));
+	       struct brw_reg interp = interp_reg(location, c);
+	       interp = suboffset(interp, 3);
+	       emit(fs_inst(FS_OPCODE_CINTERP, attr, fs_reg(interp)));
 	       attr.reg_offset++;
+	    }
+	 } else {
+	    /* Perspective interpolation case. */
+	    for (unsigned int c = 0; c < type->vector_elements; c++) {
+	       struct brw_reg interp = interp_reg(location, c);
+	       emit(fs_inst(FS_OPCODE_LINTERP,
+			    attr,
+			    this->delta_x,
+			    this->delta_y,
+			    fs_reg(interp)));
+	       attr.reg_offset++;
+	    }
+
+	    if (intel->gen < 6) {
+	       attr.reg_offset -= type->vector_elements;
+	       for (unsigned int c = 0; c < type->vector_elements; c++) {
+		  emit(fs_inst(BRW_OPCODE_MUL,
+			       attr,
+			       attr,
+			       this->pixel_w));
+		  attr.reg_offset++;
+	       }
 	    }
 	 }
 	 location++;
@@ -2557,12 +2572,15 @@ fs_visitor::assign_urb_setup()
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
 
-      if (inst->opcode != FS_OPCODE_LINTERP)
-	 continue;
+      if (inst->opcode == FS_OPCODE_LINTERP) {
+	 assert(inst->src[2].file == FIXED_HW_REG);
+	 inst->src[2].fixed_hw_reg.nr += urb_start;
+      }
 
-      assert(inst->src[2].file == FIXED_HW_REG);
-
-      inst->src[2].fixed_hw_reg.nr += urb_start;
+      if (inst->opcode == FS_OPCODE_CINTERP) {
+	 assert(inst->src[0].file == FIXED_HW_REG);
+	 inst->src[0].fixed_hw_reg.nr += urb_start;
+      }
    }
 
    this->first_non_payload_grf = urb_start + c->prog_data.urb_read_length;
@@ -3500,6 +3518,9 @@ fs_visitor::generate_code()
       case FS_OPCODE_SIN:
       case FS_OPCODE_COS:
 	 generate_math(inst, dst, src);
+	 break;
+      case FS_OPCODE_CINTERP:
+	 brw_MOV(p, dst, src[0]);
 	 break;
       case FS_OPCODE_LINTERP:
 	 generate_linterp(inst, dst, src);
