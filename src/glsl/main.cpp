@@ -24,11 +24,6 @@
 #include <cstdio>
 #include <getopt.h>
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
-
 #include "ast.h"
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
@@ -110,38 +105,40 @@ static char *
 load_text_file(void *ctx, const char *file_name)
 {
 	char *text = NULL;
-	struct stat st;
-	ssize_t total_read = 0;
-	int fd = open(file_name, O_RDONLY);
+	size_t size;
+	size_t total_read = 0;
+	FILE *fp = fopen(file_name, "rb");
 
-	if (fd < 0) {
+	if (!fp) {
 		return NULL;
 	}
 
-	if (fstat(fd, & st) == 0) {
-	   text = (char *) talloc_size(ctx, st.st_size + 1);
-		if (text != NULL) {
-			do {
-				ssize_t bytes = read(fd, text + total_read,
-						     st.st_size - total_read);
-				if (bytes < 0) {
-					free(text);
-					text = NULL;
-					break;
-				}
+	fseek(fp, 0L, SEEK_END);
+	size = ftell(fp);
+	fseek(fp, 0L, SEEK_SET);
 
-				if (bytes == 0) {
-					break;
-				}
+	text = (char *) talloc_size(ctx, size + 1);
+	if (text != NULL) {
+		do {
+			size_t bytes = fread(text + total_read,
+					     1, size - total_read, fp);
+			if (bytes < size - total_read) {
+				free(text);
+				text = NULL;
+				break;
+			}
 
-				total_read += bytes;
-			} while (total_read < st.st_size);
+			if (bytes == 0) {
+				break;
+			}
 
-			text[total_read] = '\0';
-		}
+			total_read += bytes;
+		} while (total_read < size);
+
+		text[total_read] = '\0';
 	}
 
-	close(fd);
+	fclose(fp);
 
 	return text;
 }
