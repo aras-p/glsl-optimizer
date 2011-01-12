@@ -2303,6 +2303,41 @@ ast_declarator_list::hir(exec_list *instructions,
       }
 
 
+      /* Interpolation qualifiers can only apply to vertex shader outputs and
+       * fragment shader inputs.
+       *
+       * From page 29 (page 35 of the PDF) of the GLSL 1.30 spec:
+       *    "Outputs from a vertex shader (out) and inputs to a fragment
+       *    shader (in) can be further qualified with one or more of these
+       *    interpolation qualifiers"
+       */
+      if (state->language_version >= 130
+          && this->type->qualifier.has_interpolation()) {
+
+         const char *i = this->type->qualifier.interpolation_string();
+         assert(i != NULL);
+
+         switch (state->target) {
+         case vertex_shader:
+            if (this->type->qualifier.flags.q.in) {
+               _mesa_glsl_error(&loc, state,
+                                "qualifier '%s' cannot be applied to vertex "
+                                "shader inputs", i);
+            }
+            break;
+         case fragment_shader:
+            if (this->type->qualifier.flags.q.out) {
+               _mesa_glsl_error(&loc, state,
+                                "qualifier '%s' cannot be applied to fragment "
+                                "shader outputs", i);
+            }
+            break;
+         default:
+            assert(0);
+         }
+      }
+
+
       /* Process the initializer and add its instructions to a temporary
        * list.  This list will be added to the instruction stream (below) after
        * the declaration is added.  This is done because in some cases (such as
