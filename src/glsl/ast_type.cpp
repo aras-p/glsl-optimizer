@@ -116,3 +116,16 @@ ast_fully_specified_type::has_qualifiers() const
 {
    return this->qualifier.flags.i != 0;
 }
+
+const char*
+ast_type_qualifier::interpolation_string() const
+{
+   if (this->flags.q.smooth)
+      return "smooth";
+   else if (this->flags.q.flat)
+      return "flat";
+   else if (this->flags.q.noperspective)
+      return "noperspective";
+   else
+      return NULL;
+}

@@ -364,6 +364,18 @@ struct ast_type_qualifier {
     * This field is only valid if \c explicit_location is set.
     */
    unsigned location;
+
+   /**
+    * \brief Return string representation of interpolation qualifier.
+    *
+    * If an interpolation qualifier is present, then return that qualifier's
+    * string representation. Otherwise, return null. For example, if the
+    * noperspective bit is set, then this returns "noperspective".
+    *
+    * If multiple interpolation qualifiers are somehow present, then the
+    * returned string is undefined but not null.
+    */
+   const char *interpolation_string() const;
 };
 
 class ast_struct_specifier : public ast_node {
