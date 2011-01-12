@@ -2772,6 +2772,7 @@ struct gl_extensions
    GLboolean EXT_vertex_array;
    GLboolean EXT_vertex_array_bgra;
    GLboolean EXT_vertex_array_set;
+   GLboolean OES_standard_derivatives;
    /* vendor extensions */
    GLboolean APPLE_client_storage;
    GLboolean APPLE_packed_pixels;

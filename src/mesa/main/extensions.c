@@ -232,7 +232,7 @@ static const struct extension extension_table[] = {
    { "GL_OES_read_format",                         o(OES_read_format),                         GL | ES1       },
    { "GL_OES_rgb8_rgba8",                          o(EXT_framebuffer_object),                       ES1 | ES2 },
    { "GL_OES_single_precision",                    o(dummy_true),                                   ES1       },
-   { "GL_OES_standard_derivatives",                o(ARB_fragment_shader),                                ES2 },
+   { "GL_OES_standard_derivatives",                o(OES_standard_derivatives),                           ES2 },
    { "GL_OES_stencil1",                            o(dummy_false),                     DISABLE                },
    { "GL_OES_stencil4",                            o(dummy_false),                     DISABLE                },
    { "GL_OES_stencil8",                            o(EXT_framebuffer_object),                       ES1 | ES2 },
@@ -351,6 +351,7 @@ static const size_t default_extensions[] = {
    o(EXT_vertex_array),
 
    o(OES_read_format),
+   o(OES_standard_derivatives),
 
    /* Vendor Extensions */
    o(APPLE_packed_pixels),
