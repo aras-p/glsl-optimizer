@@ -117,6 +117,13 @@ ast_fully_specified_type::has_qualifiers() const
    return this->qualifier.flags.i != 0;
 }
 
+bool ast_type_qualifier::has_interpolation() const
+{
+   return this->flags.q.smooth
+          || this->flags.q.flat
+          || this->flags.q.noperspective;
+}
+
 const char*
 ast_type_qualifier::interpolation_string() const
 {

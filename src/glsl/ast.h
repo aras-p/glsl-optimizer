@@ -366,6 +366,11 @@ struct ast_type_qualifier {
    unsigned location;
 
    /**
+    * Return true if and only if an interpolation qualifier is present.
+    */
+   bool has_interpolation() const;
+
+   /**
     * \brief Return string representation of interpolation qualifier.
     *
     * If an interpolation qualifier is present, then return that qualifier's

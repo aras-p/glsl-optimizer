@@ -2277,6 +2277,32 @@ ast_declarator_list::hir(exec_list *instructions,
       }
 
 
+      /* Interpolation qualifiers cannot be applied to 'centroid' and
+       * 'centroid varying'.
+       *
+       * From page 29 (page 35 of the PDF) of the GLSL 1.30 spec:
+       *    "interpolation qualifiers may only precede the qualifiers in,
+       *    centroid in, out, or centroid out in a declaration. They do not apply
+       *    to the deprecated storage qualifiers varying or centroid varying."
+       */
+      if (state->language_version >= 130
+          && this->type->qualifier.has_interpolation()
+          && this->type->qualifier.flags.q.varying) {
+
+         const char *i = this->type->qualifier.interpolation_string();
+         assert(i != NULL);
+         const char *s;
+         if (this->type->qualifier.flags.q.centroid)
+            s = "centroid varying";
+         else
+            s = "varying";
+
+         _mesa_glsl_error(&loc, state,
+                          "qualifier '%s' cannot be applied to the "
+                          "deprecated storage qualifier '%s'", i, s);
+      }
+
+
       /* Process the initializer and add its instructions to a temporary
        * list.  This list will be added to the instruction stream (below) after
        * the declaration is added.  This is done because in some cases (such as
