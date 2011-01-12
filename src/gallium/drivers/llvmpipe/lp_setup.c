@@ -1064,6 +1064,8 @@ lp_setup_begin_query(struct lp_setup_context *setup,
 {
    /* init the query to its beginning state */
    assert(setup->active_query == NULL);
+
+   set_scene_state(setup, SETUP_ACTIVE, "begin_query");
    
    if (setup->scene) {
       if (!lp_scene_bin_everywhere(setup->scene,
@@ -1092,6 +1094,8 @@ void
 lp_setup_end_query(struct lp_setup_context *setup, struct llvmpipe_query *pq)
 {
    union lp_rast_cmd_arg dummy = { 0 };
+
+   set_scene_state(setup, SETUP_ACTIVE, "end_query");
 
    assert(setup->active_query == pq);
    setup->active_query = NULL;
