@@ -2319,7 +2319,7 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    }
    _mesa_BindFramebufferEXT(GL_FRAMEBUFFER_EXT, mipmap->FBO);
 
-   _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+   _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
    _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
    _mesa_TexParameteri(target, GL_GENERATE_MIPMAP, GL_FALSE);
    _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
