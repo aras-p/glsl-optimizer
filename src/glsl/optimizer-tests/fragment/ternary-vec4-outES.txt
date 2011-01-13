@@ -163,7 +163,9 @@ void main ()
   tmpvar_34.y = tmpvar_31;
   tmpvar_34.z = tmpvar_32;
   tmpvar_34.w = tmpvar_33;
-  tmpvar_1 = (tmpvar_28 + tmpvar_34);
+  highp vec4 tmpvar_35;
+  tmpvar_35 = (tmpvar_28 + tmpvar_34);
+  tmpvar_1 = tmpvar_35;
   gl_FragData[0] = tmpvar_1;
 }
 

@@ -11,14 +11,30 @@ void main ()
   poisson[6] = vec2(-0.757088, 0.349334);
   poisson[7] = vec2(0.574619, 0.685879);
   c = vec4(0.0, 0.0, 0.0, 0.0);
-  c.xy = poisson[0];
-  c.xy = (c.xy + poisson[1]);
-  c.xy = (c.xy + poisson[2]);
-  c.xy = (c.xy + poisson[3]);
-  c.xy = (c.xy + poisson[4]);
-  c.xy = (c.xy + poisson[5]);
-  c.xy = (c.xy + poisson[6]);
-  c.xy = (c.xy + poisson[7]);
+  highp vec2 tmpvar_1;
+  tmpvar_1 = poisson[0];
+  c.xy = tmpvar_1;
+  highp vec2 tmpvar_2;
+  tmpvar_2 = (c.xy + poisson[1]);
+  c.xy = tmpvar_2;
+  highp vec2 tmpvar_3;
+  tmpvar_3 = (c.xy + poisson[2]);
+  c.xy = tmpvar_3;
+  highp vec2 tmpvar_4;
+  tmpvar_4 = (c.xy + poisson[3]);
+  c.xy = tmpvar_4;
+  highp vec2 tmpvar_5;
+  tmpvar_5 = (c.xy + poisson[4]);
+  c.xy = tmpvar_5;
+  highp vec2 tmpvar_6;
+  tmpvar_6 = (c.xy + poisson[5]);
+  c.xy = tmpvar_6;
+  highp vec2 tmpvar_7;
+  tmpvar_7 = (c.xy + poisson[6]);
+  c.xy = tmpvar_7;
+  highp vec2 tmpvar_8;
+  tmpvar_8 = (c.xy + poisson[7]);
+  c.xy = tmpvar_8;
   gl_FragData[0] = c;
 }
 

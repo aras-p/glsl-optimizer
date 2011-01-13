@@ -39,7 +39,7 @@ void surf( in Input IN, inout SurfaceOutput o ) {
 lowp vec4 LightingMobileBlinnPhong( in SurfaceOutput s, in lowp vec3 lightDir, in lowp vec3 halfDir, in lowp float atten ) {
     lowp float diff;
     lowp float nh;
-    mediump float spec;
+    lowp float spec;
     lowp vec4 c;
     diff = max( 0.0, dot( s.Normal, lightDir));
     nh = max( 0.0, dot( s.Normal, halfDir));

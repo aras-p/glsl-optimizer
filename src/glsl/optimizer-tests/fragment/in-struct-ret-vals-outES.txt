@@ -4,7 +4,9 @@ void main ()
 {
   mediump vec4 c;
   c = xlv_COLOR;
-  c.xy = (c.xy + xlv_TEXCOORD0);
+  highp vec2 tmpvar_1;
+  tmpvar_1 = (c.xy + xlv_TEXCOORD0);
+  c.xy = tmpvar_1;
   gl_FragData[0] = c;
 }
 

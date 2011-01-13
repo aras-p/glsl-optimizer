@@ -4,7 +4,11 @@ varying lowp vec3 normal;
 void main ()
 {
   lowp vec4 c;
-  c = vec4(pow (dot (normal, halfDir), specPower));
+  lowp float tmpvar_1;
+  tmpvar_1 = dot (normal, halfDir);
+  mediump vec4 tmpvar_2;
+  tmpvar_2 = vec4(pow (tmpvar_1, specPower));
+  c = tmpvar_2;
   gl_FragColor = c;
 }
 

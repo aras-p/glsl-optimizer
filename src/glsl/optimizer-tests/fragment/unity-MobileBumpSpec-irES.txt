@@ -71,7 +71,7 @@ lowp vec4 LightingMobileBlinnPhong (
 )
 {
   lowp vec4 c;
-  mediump float spec;
+  lowp float spec;
   lowp float nh;
   lowp float diff;
   lowp float tmpvar_1;
@@ -93,7 +93,7 @@ lowp vec4 LightingMobileBlinnPhong (
   mediump float tmpvar_8;
   tmpvar_8 = (tmpvar_7 * s.Gloss);
   spec = tmpvar_8;
-  mediump vec3 tmpvar_9;
+  lowp vec3 tmpvar_9;
   tmpvar_9 = ((((s.Albedo * diff) + spec) * _LightColor0.xyz) * (atten * 2.0));
   c.xyz = tmpvar_9.xyz.xyz;
   float tmpvar_10;
