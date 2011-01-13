@@ -19,17 +19,17 @@ _platform_map = {
 	'win32': 'windows',
 }
 
-default_platform = sys.platform
-default_platform = _platform_map.get(default_platform, default_platform)
+host_platform = sys.platform
+host_platform = _platform_map.get(host_platform, host_platform)
 
 # Search sys.argv[] for a "platform=foo" argument since we don't have
 # an 'env' variable at this point.
 if 'platform' in SCons.Script.ARGUMENTS:
-    selected_platform = SCons.Script.ARGUMENTS['platform']
+    target_platform = SCons.Script.ARGUMENTS['platform']
 else:
-    selected_platform = default_platform
+    target_platform = host_platform
 
-cross_compiling = selected_platform != default_platform
+cross_compiling = target_platform != host_platform
 
 _machine_map = {
 	'x86': 'x86',
@@ -42,15 +42,17 @@ _machine_map = {
 }
 
 
-# find default_machine value
+# find host_machine value
 if 'PROCESSOR_ARCHITECTURE' in os.environ:
-	default_machine = os.environ['PROCESSOR_ARCHITECTURE']
+	host_machine = os.environ['PROCESSOR_ARCHITECTURE']
 else:
-	default_machine = _platform.machine()
-default_machine = _machine_map.get(default_machine, 'generic')
+	host_machine = _platform.machine()
+host_machine = _machine_map.get(host_machine, 'generic')
+
+default_machine = host_machine
 default_toolchain = 'default'
 
-if selected_platform == 'windows' and cross_compiling:
+if target_platform == 'windows' and cross_compiling:
     default_machine = 'x86'
     default_toolchain = 'crossmingw'
 
@@ -61,7 +63,7 @@ if 'LLVM' in os.environ:
 else:
     default_llvm = 'no'
     try:
-        if selected_platform != 'windows' and \
+        if target_platform != 'windows' and \
            subprocess.call(['llvm-config', '--version'], stdout=subprocess.PIPE) == 0:
             default_llvm = 'yes'
     except:
@@ -85,7 +87,7 @@ def AddOptions(opts):
 	opts.Add(BoolOption('quiet', 'quiet command lines', 'yes'))
 	opts.Add(EnumOption('machine', 'use machine-specific assembly code', default_machine,
 											 allowed_values=('generic', 'ppc', 'x86', 'x86_64')))
-	opts.Add(EnumOption('platform', 'target platform', default_platform,
+	opts.Add(EnumOption('platform', 'target platform', host_platform,
 											 allowed_values=('linux', 'cell', 'windows', 'winddk', 'wince', 'darwin', 'embedded', 'cygwin', 'sunos5', 'freebsd8')))
 	opts.Add('toolchain', 'compiler toolchain', default_toolchain)
 	opts.Add(BoolOption('llvm', 'use LLVM', default_llvm))
