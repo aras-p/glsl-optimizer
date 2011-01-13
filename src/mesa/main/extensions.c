@@ -304,10 +304,12 @@ static const struct extension extension_table[] = {
 static size_t
 name_to_offset(const char* name)
 {
+   const struct extension *i;
+
    if (name == 0)
       return 0;
 
-   for (const struct extension *i = extension_table; i->name != 0; ++i) {
+   for (i = extension_table; i->name != 0; ++i) {
       if (strcmp(name, i->name) == 0)
 	 return i->offset;
    }
@@ -807,15 +809,17 @@ _mesa_init_extensions( struct gl_context *ctx )
 {
    GLboolean *base = (GLboolean *) &ctx->Extensions;
    GLboolean *sentinel = base + o(extension_sentinel);
+   GLboolean *i;
+   const size_t *j;
 
    /* First, turn all extensions off. */
-   for (GLboolean *i = base; i != sentinel; ++i)
+   for (i = base; i != sentinel; ++i)
       *i = GL_FALSE;
 
    /* Then, selectively turn default extensions on. */
    ctx->Extensions.dummy_true = GL_TRUE;
-   for (const size_t *i = default_extensions; *i != 0; ++i)
-      base[*i] = GL_TRUE;
+   for (j = default_extensions; *j != 0; ++j)
+      base[*j] = GL_TRUE;
 }
 
 
@@ -833,9 +837,10 @@ _mesa_make_extension_string(struct gl_context *ctx)
    /* String of extra extensions. */
    char *extra_extensions = get_extension_override(ctx);
    GLboolean *base = (GLboolean *) &ctx->Extensions;
+   const struct extension *i;
 
    /* Compute length of the extension string. */
-   for (const struct extension *i = extension_table; i->name != 0; ++i) {
+   for (i = extension_table; i->name != 0; ++i) {
       if (base[i->offset] && (i->api_set & (1 << ctx->API))) {
 	 length += strlen(i->name) + 1; /* +1 for space */
       }
@@ -850,7 +855,7 @@ _mesa_make_extension_string(struct gl_context *ctx)
    }
 
    /* Build the extension string.*/
-   for (const struct extension *i = extension_table; i->name != 0; ++i) {
+   for (i = extension_table; i->name != 0; ++i) {
       if (base[i->offset] && (i->api_set & (1 << ctx->API))) {
          strcat(exts, i->name);
          strcat(exts, " ");
@@ -871,13 +876,14 @@ GLuint
 _mesa_get_extension_count(struct gl_context *ctx)
 {
    GLboolean *base;
+   const struct extension *i;
 
    /* only count once */
    if (ctx->Extensions.Count != 0)
       return ctx->Extensions.Count;
 
    base = (GLboolean *) &ctx->Extensions;
-   for (const struct extension *i = extension_table; i->name != 0; ++i) {
+   for (i = extension_table; i->name != 0; ++i) {
       if (base[i->offset]) {
 	 ctx->Extensions.Count++;
       }
@@ -893,13 +899,14 @@ _mesa_get_enabled_extension(struct gl_context *ctx, GLuint index)
 {
    const GLboolean *base;
    size_t n;
+   const struct extension *i;
 
    if (index < 0)
       return NULL;
 
    base = (GLboolean*) &ctx->Extensions;
    n = 0;
-   for (const struct extension *i = extension_table; i->name != 0; ++i) {
+   for (i = extension_table; i->name != 0; ++i) {
       if (n == index && base[i->offset]) {
 	 return (GLubyte*) i->name;
       } else if (base[i->offset]) {
