@@ -1924,6 +1924,13 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
                      " renderbuffer %u)", renderbuffer);
 	 return;
       }
+      else if (rb == &DummyRenderbuffer) {
+         /* This is what NVIDIA does */
+	 _mesa_error(ctx, GL_INVALID_VALUE,
+		     "glFramebufferRenderbufferEXT(renderbuffer %u)",
+                     renderbuffer);
+	 return;
+      }
    }
    else {
       /* remove renderbuffer attachment */
