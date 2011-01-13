@@ -295,6 +295,8 @@ public:
 
    bool process_move_condition(ir_rvalue *ir);
 
+   void copy_propagate(void);
+
    void *mem_ctx;
 };
 
@@ -2616,6 +2618,131 @@ set_uniform_initializers(struct gl_context *ctx,
    talloc_free(mem_ctx);
 }
 
+/*
+ * On a basic block basis, tracks available PROGRAM_TEMPORARY register
+ * channels for copy propagation and updates following instructions to
+ * use the original versions.
+ *
+ * The ir_to_mesa_visitor lazily produces code assuming that this pass
+ * will occur.  As an example, a TXP production before this pass:
+ *
+ * 0: MOV TEMP[1], INPUT[4].xyyy;
+ * 1: MOV TEMP[1].w, INPUT[4].wwww;
+ * 2: TXP TEMP[2], TEMP[1], texture[0], 2D;
+ *
+ * and after:
+ *
+ * 0: MOV TEMP[1], INPUT[4].xyyy;
+ * 1: MOV TEMP[1].w, INPUT[4].wwww;
+ * 2: TXP TEMP[2], INPUT[4].xyyw, texture[0], 2D;
+ *
+ * which allows for dead code elimination on TEMP[1]'s writes.
+ */
+void
+ir_to_mesa_visitor::copy_propagate(void)
+{
+   ir_to_mesa_instruction *acp[this->next_temp * 4];
+
+   memset(&acp, 0, sizeof(acp));
+
+   foreach_iter(exec_list_iterator, iter, this->instructions) {
+      ir_to_mesa_instruction *inst = (ir_to_mesa_instruction *)iter.get();
+
+      /* First, do any copy propagation possible into the src regs. */
+      for (int r = 0; r < 3; r++) {
+	 ir_to_mesa_instruction *first = NULL;
+	 bool good = true;
+	 int acp_base = inst->src_reg[r].index * 4;
+
+	 if (inst->src_reg[r].file != PROGRAM_TEMPORARY ||
+	     inst->src_reg[r].reladdr)
+	    continue;
+
+	 /* See if we can find entries in the ACP consisting of MOVs
+	  * from the same src register for all the swizzled channels
+	  * of this src register reference.
+	  */
+	 for (int i = 0; i < 4; i++) {
+	    int src_chan = GET_SWZ(inst->src_reg[r].swizzle, i);
+	    ir_to_mesa_instruction *copy_chan = acp[acp_base + src_chan];
+
+	    if (!copy_chan) {
+	       good = false;
+	       break;
+	    }
+
+	    if (!first) {
+	       first = copy_chan;
+	    } else {
+	       if (first->src_reg[0].file != copy_chan->src_reg[0].file ||
+		   first->src_reg[0].index != copy_chan->src_reg[0].index) {
+		  good = false;
+		  break;
+	       }
+	    }
+	 }
+
+	 if (good) {
+	    /* We've now validated that we can copy-propagate to
+	     * replace this src register reference.  Do it.
+	     */
+	    inst->src_reg[r].file = first->src_reg[0].file;
+	    inst->src_reg[r].index = first->src_reg[0].index;
+
+	    int swizzle = 0;
+	    for (int i = 0; i < 4; i++) {
+	       int src_chan = GET_SWZ(inst->src_reg[r].swizzle, i);
+	       ir_to_mesa_instruction *copy_inst = acp[acp_base + src_chan];
+	       swizzle |= (GET_SWZ(copy_inst->src_reg[0].swizzle, src_chan) <<
+			   (3 * i));
+	    }
+	    inst->src_reg[r].swizzle = swizzle;
+	 }
+      }
+
+      switch (inst->op) {
+      case OPCODE_BGNLOOP:
+      case OPCODE_ENDLOOP:
+      case OPCODE_ELSE:
+      case OPCODE_ENDIF:
+	 /* End of a basic block, clear the ACP entirely. */
+	 memset(&acp, 0, sizeof(acp));
+	 break;
+
+      default:
+	 /* Continuing the block, clear any written channels from
+	  * the ACP.
+	  */
+	 if (inst->dst_reg.file == PROGRAM_TEMPORARY) {
+	    if (inst->dst_reg.reladdr) {
+	       memset(&acp, 0, sizeof(acp));
+	    } else {
+	       for (int i = 0; i < 4; i++) {
+		  if (inst->dst_reg.writemask & (1 << i)) {
+		     acp[4 * inst->dst_reg.index + i] = NULL;
+		  }
+	       }
+	    }
+	 }
+	 break;
+      }
+
+      /* If this is a copy, add it to the ACP. */
+      if (inst->op == OPCODE_MOV &&
+	  inst->dst_reg.file == PROGRAM_TEMPORARY &&
+	  !inst->dst_reg.reladdr &&
+	  !inst->saturate &&
+	  !inst->src_reg[0].reladdr &&
+	  !inst->src_reg[0].negate) {
+	 for (int i = 0; i < 4; i++) {
+	    if (inst->dst_reg.writemask & (1 << i)) {
+	       acp[4 * inst->dst_reg.index + i] = inst;
+	    }
+	 }
+      }
+   }
+}
+
 
 /**
  * Convert a shader's GLSL IR into a Mesa gl_program.
@@ -2714,6 +2841,8 @@ get_mesa_program(struct gl_context *ctx,
 					sizeof(*mesa_instructions));
    mesa_instruction_annotation = talloc_array(v.mem_ctx, ir_instruction *,
 					      num_instructions);
+
+   v.copy_propagate();
 
    /* Convert ir_mesa_instructions into prog_instructions.
     */
