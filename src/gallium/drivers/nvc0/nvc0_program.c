@@ -598,6 +598,13 @@ nvc0_prog_scan(struct nvc0_translation_info *ti)
    case PIPE_SHADER_FRAGMENT:
       ti->input_file = NV_FILE_MEM_V;
       ti->output_file = NV_FILE_GPR;
+
+      if (ti->scan.writes_z)
+         prog->flags[0] = 0x11; /* ? */
+      else
+      if (!ti->global_stores)
+         prog->fp.early_z = 1;
+
       ret = nvc0_fp_gen_header(prog, ti);
       break;
    default:
