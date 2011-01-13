@@ -299,7 +299,7 @@ ir_mat_op_to_vec_visitor::do_equal_mat_mat(ir_variable *result_var,
 
    ir_variable *const tmp_bvec =
       new(this->mem_ctx) ir_variable(bvec_type, "mat_cmp_bvec",
-				     ir_var_temporary, glsl_precision_undefined);
+				     ir_var_temporary, glsl_precision_low);
    this->base_ir->insert_before(tmp_bvec);
 
    for (unsigned i = 0; i < columns; i++) {

@@ -1159,7 +1159,7 @@ ast_function_expression::hir(exec_list *instructions,
 
 	    /* Create a temporary containing the matrix. */
 	    ir_variable *var = new(ctx) ir_variable(matrix->type, "matrix_tmp",
-						    ir_var_temporary, glsl_precision_undefined);
+						    ir_var_temporary, matrix->get_precision());
 	    instructions->push_tail(var);
 	    instructions->push_tail(new(ctx) ir_assignment(new(ctx)
 	       ir_dereference_variable(var), matrix, NULL));
