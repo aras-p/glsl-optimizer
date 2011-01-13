@@ -1,0 +1,19 @@
+varying mediump vec2 uv;
+varying lowp vec3 lightDir;
+varying lowp vec3 halfDir;
+uniform sampler2D bumpMap;
+uniform mediump float specPower;
+
+void main()
+{
+	lowp vec3 normal = texture2D (bumpMap, uv).xyz * 2.0 - 1.0;
+	
+	lowp float diff = max (0.0, dot (normal, lightDir));
+	lowp float nh = max (0.0, dot (normal, halfDir));
+	mediump float spec = pow (nh, specPower);
+	
+	lowp vec4 c;
+	c.rgb = vec3(diff) + vec3(spec);
+	c.a = 0.0;
+	gl_FragColor = c;
+}
