@@ -67,6 +67,7 @@ public:
    }
 
    virtual ir_visitor_status visit_leave(class ir_assignment *);
+   virtual ir_visitor_status visit_enter(class ir_assignment *);
    virtual ir_visitor_status visit_enter(class ir_call *);
    virtual ir_visitor_status visit_enter(class ir_expression *);
    virtual ir_visitor_status visit_enter(class ir_function *);
@@ -175,6 +176,16 @@ ir_tree_grafting_visitor::visit_leave(ir_assignment *ir)
 
    return visit_continue;
 }
+
+ir_visitor_status
+ir_tree_grafting_visitor::visit_enter(ir_assignment *ir)
+{
+	// if we're entering into assignment of different precision, leave now
+	if (ir->lhs->get_precision() != this->graft_var->precision && ir->lhs->get_precision() != glsl_precision_undefined && this->graft_var->precision != glsl_precision_undefined)
+		return visit_continue_with_parent;
+	return visit_continue;
+}
+
 
 ir_visitor_status
 ir_tree_grafting_visitor::visit_enter(ir_function *ir)
