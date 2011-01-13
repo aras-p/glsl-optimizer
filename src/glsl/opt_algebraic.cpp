@@ -84,9 +84,15 @@ static void
 update_type(ir_expression *ir)
 {
    if (ir->operands[0]->type->is_vector())
+   {
       ir->type = ir->operands[0]->type;
+	  ir->set_precision (ir->operands[0]->get_precision());
+   }
    else
+   {
       ir->type = ir->operands[1]->type;
+	  ir->set_precision (ir->operands[1]->get_precision());
+   }
 }
 
 void

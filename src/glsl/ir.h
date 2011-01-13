@@ -178,6 +178,7 @@ public:
    }
 
    glsl_precision get_precision() const { return precision; }
+   void set_precision (glsl_precision prec) { precision = prec; }
 
    /**
     * Determine if an r-value has the value zero
