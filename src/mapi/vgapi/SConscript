@@ -44,6 +44,9 @@ if env['platform'] != 'winddk':
 
 	env.Depends(vgapi_objects, vgapi_header)
 
+	# libOpenVG.dll
+	env['SHLIBPREFIX'] = 'lib'
+
 	openvg = env.SharedLibrary(
 		target = 'OpenVG',
 		source = vgapi_objects,

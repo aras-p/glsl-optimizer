@@ -111,8 +111,11 @@ if env['drm']:
         svga,
     ])
 
+# libEGL.dll
+env['SHLIBPREFIX'] = 'lib'
+
 egl_gallium = env.SharedLibrary(
-    target ='libEGL',
+    target ='EGL',
     source = sources,
 )
 
