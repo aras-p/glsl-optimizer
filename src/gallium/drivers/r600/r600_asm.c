@@ -700,6 +700,8 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5], s
 		return r;
 
 	for (i = 0; i < 5; ++i) {
+		struct r600_bc_alu *alu;
+
 		/* check number of literals */
 		if (prev[i] && r600_bc_alu_nliterals(prev[i], literal, &nliteral))
 			return 0;
@@ -730,7 +732,7 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5], s
 			result[i] = slots[i];
 
 		// let's check source gprs
-		struct r600_bc_alu *alu = slots[i];
+		alu = slots[i];
 		num_once_inst += is_alu_once_inst(alu);
 
 		num_src = r600_bc_get_num_operands(alu);
