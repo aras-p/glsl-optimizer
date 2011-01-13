@@ -5,6 +5,8 @@ uniform sampler2D tex_lowp;
 uniform sampler2D tex_def;
 void main ()
 {
-  gl_FragColor = (((((texture2D (tex_def, var_lowp) * 2.0) + (texture2D (tex_def, var_mediump) * 2.0)) + (texture2D (tex_highp, var_mediump) * 2.0)) + (texture2D (tex_lowp, var_mediump) * 2.0)) + abs (var_lowp.xxxx));
+  highp vec4 tmpvar_1;
+  tmpvar_1 = (texture2D (tex_highp, var_mediump) * 2.0);
+  gl_FragColor = (((((texture2D (tex_def, var_lowp) * 2.0) + (texture2D (tex_def, var_mediump) * 2.0)) + tmpvar_1) + (texture2D (tex_lowp, var_mediump) * 2.0)) + abs (var_lowp.xxxx));
 }
 

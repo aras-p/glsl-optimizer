@@ -122,6 +122,11 @@ ir_tree_grafting_visitor::do_graft(ir_rvalue **rvalue)
    if (!deref || deref->var != this->graft_var)
       return false;
 
+   glsl_precision rvl_prec = deref->get_precision();
+   glsl_precision rhs_prec = this->graft_assign->rhs->get_precision();
+   if (rvl_prec != rhs_prec && rvl_prec != glsl_precision_undefined && rhs_prec != glsl_precision_undefined)
+	   return false;
+
    if (debug) {
       printf("GRAFTING:\n");
       this->graft_assign->print();

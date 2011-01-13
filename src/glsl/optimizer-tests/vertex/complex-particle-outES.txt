@@ -7,8 +7,10 @@ attribute highp vec4 _glesMultiTexCoord0;
 attribute highp vec4 _glesVertex;
 void main ()
 {
+  highp vec2 tmpvar_1;
+  tmpvar_1 = ((_glesMultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
   gl_Position = (glstate_matrix_mvp * _glesVertex);
   xlv_COLOR = _glesColor;
-  xlv_TEXCOORD0 = ((_glesMultiTexCoord0.xy * _MainTex_ST.xy) + _MainTex_ST.zw);
+  xlv_TEXCOORD0 = tmpvar_1;
 }
 
