@@ -1,15 +1,10 @@
 uniform mediump float specPower;
-uniform sampler2D bumpMap;
 varying lowp vec3 halfDir;
-varying lowp vec3 lightDir;
-varying mediump vec2 uv;
+varying lowp vec3 normal;
 void main ()
 {
   lowp vec4 c;
-  lowp vec3 tmpvar_1;
-  tmpvar_1 = ((texture2D (bumpMap, uv).xyz * 2.0) - 1.0);
-  c.xyz = (vec3(max (0.0, dot (tmpvar_1, lightDir))) + vec3(pow (max (0.0, dot (tmpvar_1, halfDir)), specPower)));
-  c.w = 0.0;
+  c = vec4(pow (dot (normal, halfDir), specPower));
   gl_FragColor = c;
 }
 
