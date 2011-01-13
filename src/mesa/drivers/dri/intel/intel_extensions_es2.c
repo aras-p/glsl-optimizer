@@ -81,6 +81,17 @@ static const char *es2_extensions[] = {
 };
 
 /**
+ * \brief Extensions to disable.
+ *
+ * These extensions must be manually disabled because they may have been
+ * enabled by default.
+ */
+static const char* es2_extensions_disabled[] = {
+   "GL_OES_standard_derivatives",
+   NULL,
+};
+
+/**
  * Initializes potential list of extensions if ctx == NULL, or actually enables
  * extensions for a context.
  */
@@ -94,4 +105,6 @@ intelInitExtensionsES2(struct gl_context *ctx)
 
    for (i = 0; es2_extensions[i]; i++)
       _mesa_enable_extension(ctx, es2_extensions[i]);
+   for (i = 0; es2_extensions_disabled[i]; i++)
+      _mesa_disable_extension(ctx, es2_extensions_disabled[i]);
 }
