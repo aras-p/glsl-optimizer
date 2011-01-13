@@ -4,7 +4,7 @@ void main ()
 {
   mediump vec4 c;
   c = xlv_COLOR;
-  c.xy = (xlv_COLOR.xy + xlv_TEXCOORD0);
+  c.xy = (c.xy + xlv_TEXCOORD0);
   gl_FragData[0] = c;
 }
 

@@ -7,19 +7,21 @@ attribute mediump vec3 _glesNormal;
 attribute highp vec4 _glesVertex;
 void main ()
 {
-  highp vec4 tmpvar_1;
-  tmpvar_1 = (glstate_matrix_mvp * _glesVertex);
-  highp vec4 o_i0;
+  highp vec3 tmpvar_1;
+  tmpvar_1 = _glesNormal;
   highp vec4 tmpvar_2;
-  tmpvar_2 = (tmpvar_1 * 0.5);
-  o_i0 = tmpvar_2;
-  highp vec2 tmpvar_3;
-  tmpvar_3.x = tmpvar_2.x;
-  tmpvar_3.y = (tmpvar_2.y * _ProjectionParams.x);
-  o_i0.xy = (tmpvar_3 + tmpvar_2.w);
-  o_i0.zw = tmpvar_1.zw;
-  gl_Position = tmpvar_1;
+  tmpvar_2 = (glstate_matrix_mvp * _glesVertex);
+  highp vec4 o_i0;
+  highp vec4 tmpvar_3;
+  tmpvar_3 = (tmpvar_2 * 0.5);
+  o_i0 = tmpvar_3;
+  highp vec2 tmpvar_4;
+  tmpvar_4.x = tmpvar_3.x;
+  tmpvar_4.y = (tmpvar_3.y * _ProjectionParams.x);
+  o_i0.xy = (tmpvar_4 + tmpvar_3.w);
+  o_i0.zw = tmpvar_2.zw;
+  gl_Position = tmpvar_2;
   xlv_TEXCOORD0 = o_i0;
-  xlv_TEXCOORD1 = mix (((glstate_matrix_modelview0 * _glesVertex).xyz * vec3(-1.0, -1.0, 1.0)), _glesNormal, vec3(float((_glesNormal.z != 0.0))));
+  xlv_TEXCOORD1 = mix (((glstate_matrix_modelview0 * _glesVertex).xyz * vec3(-1.0, -1.0, 1.0)), tmpvar_1, vec3(float((tmpvar_1.z != 0.0))));
 }
 

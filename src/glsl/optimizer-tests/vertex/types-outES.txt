@@ -7,11 +7,11 @@ attribute mediump vec3 _glesNormal;
 attribute highp vec4 _glesVertex;
 void main ()
 {
-  highp vec2 tmpvar_1;
-  tmpvar_1 = _glesMultiTexCoord0.xy;
+  mediump vec2 tmpvar_1;
   lowp vec4 tmpvar_2;
   tmpvar_2 = _glesColor;
   tmpvar_2.xyz = (_glesColor.xyz + _glesNormal);
+  tmpvar_1 = _glesMultiTexCoord0.xy;
   gl_Position = (mvp * _glesVertex);
   xlv_TEXCOORD0 = tmpvar_1;
   xlv_COLOR = tmpvar_2;

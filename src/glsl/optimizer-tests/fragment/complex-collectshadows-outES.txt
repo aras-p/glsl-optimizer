@@ -12,41 +12,46 @@ uniform highp vec4 _LightShadowData;
 uniform sampler2D _CameraDepthTexture;
 void main ()
 {
+  mediump vec4 tmpvar_1;
   highp vec4 res;
-  lowp float tmpvar_1;
-  tmpvar_1 = texture2D (_CameraDepthTexture, xlv_TEXCOORD0).x;
+  highp float depth;
+  depth = texture2D (_CameraDepthTexture, xlv_TEXCOORD0).x;
   highp float tmpvar_2;
-  tmpvar_2 = 1.0/(((_ZBufferParams.x * tmpvar_1) + _ZBufferParams.y));
+  tmpvar_2 = 1.0/(((_ZBufferParams.x * depth) + _ZBufferParams.y));
+  depth = tmpvar_2;
   highp vec4 tmpvar_3;
   tmpvar_3.w = 1.0;
   tmpvar_3.xyz = (xlv_TEXCOORD1 * tmpvar_2);
+  mediump float shadow_i0;
+  highp vec4 far;
+  highp vec4 near;
   highp float tmpvar_4;
   tmpvar_4 = tmpvar_3.z;
-  lowp vec4 tmpvar_5;
-  tmpvar_5 = vec4(greaterThanEqual (vec4(tmpvar_4), _LightSplitsNear));
-  lowp vec4 tmpvar_6;
-  tmpvar_6 = vec4(lessThan (vec4(tmpvar_4), _LightSplitsFar));
-  highp vec4 tmpvar_7;
-  tmpvar_7 = (tmpvar_5 * tmpvar_6);
-  highp vec4 tmpvar_8;
-  tmpvar_8.w = 1.0;
-  tmpvar_8.xyz = (((((_View2Shadow * tmpvar_3).xyz * tmpvar_7.x) + ((_View2Shadow1 * tmpvar_3).xyz * tmpvar_7.y)) + ((_View2Shadow2 * tmpvar_3).xyz * tmpvar_7.z)) + ((_View2Shadow3 * tmpvar_3).xyz * tmpvar_7.w));
-  lowp vec4 tmpvar_9;
-  tmpvar_9 = texture2D (_ShadowMapTexture, tmpvar_8.xy);
-  highp float tmpvar_10;
-  if ((tmpvar_9.x < tmpvar_8.z)) {
-    tmpvar_10 = _LightShadowData.x;
+  near = vec4(greaterThanEqual (vec4(tmpvar_4), _LightSplitsNear));
+  far = vec4(lessThan (vec4(tmpvar_4), _LightSplitsFar));
+  highp vec4 tmpvar_5;
+  tmpvar_5 = (near * far);
+  highp vec4 tmpvar_6;
+  tmpvar_6.w = 1.0;
+  tmpvar_6.xyz = (((((_View2Shadow * tmpvar_3).xyz * tmpvar_5.x) + ((_View2Shadow1 * tmpvar_3).xyz * tmpvar_5.y)) + ((_View2Shadow2 * tmpvar_3).xyz * tmpvar_5.z)) + ((_View2Shadow3 * tmpvar_3).xyz * tmpvar_5.w));
+  lowp vec4 tmpvar_7;
+  tmpvar_7 = texture2D (_ShadowMapTexture, tmpvar_6.xy);
+  highp float tmpvar_8;
+  if ((tmpvar_7.x < tmpvar_6.z)) {
+    tmpvar_8 = _LightShadowData.x;
   } else {
-    tmpvar_10 = 1.0;
+    tmpvar_8 = 1.0;
   };
-  res.x = tmpvar_10;
+  shadow_i0 = tmpvar_8;
+  res.x = shadow_i0;
   res.y = 1.0;
   highp vec2 enc;
-  highp vec2 tmpvar_11;
-  tmpvar_11 = fract ((vec2(1.0, 255.0) * (1.0 - tmpvar_2)));
-  enc = tmpvar_11;
-  enc.x = (tmpvar_11.x - (tmpvar_11.y * 0.00392157));
+  highp vec2 tmpvar_9;
+  tmpvar_9 = fract ((vec2(1.0, 255.0) * (1.0 - tmpvar_2)));
+  enc = tmpvar_9;
+  enc.x = (tmpvar_9.x - (tmpvar_9.y * 0.00392157));
   res.zw = enc;
-  gl_FragData[0] = res;
+  tmpvar_1 = res;
+  gl_FragData[0] = tmpvar_1;
 }
 
