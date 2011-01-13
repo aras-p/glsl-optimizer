@@ -120,7 +120,8 @@ brw_render_target_supported(gl_format format)
 
 static GLuint translate_tex_format( gl_format mesa_format,
                                     GLenum internal_format,
-				    GLenum depth_mode )
+				    GLenum depth_mode, 
+				    GLenum srgb_decode )
 {
    switch( mesa_format ) {
 
@@ -146,7 +147,14 @@ static GLuint translate_tex_format( gl_format mesa_format,
          return BRW_SURFACEFORMAT_R24_UNORM_X8_TYPELESS;
       else
          return BRW_SURFACEFORMAT_L24X8_UNORM;
-
+      
+   case MESA_FORMAT_SARGB8:
+   case MESA_FORMAT_SLA8:
+   case MESA_FORMAT_SL8:
+      if (srgb_decode == GL_DECODE_EXT)
+	 return brw_format_for_mesa_format[mesa_format];
+      else if (srgb_decode == GL_SKIP_DECODE_EXT)
+	 return brw_format_for_mesa_format[_mesa_get_srgb_format_linear(mesa_format)];
    default:
       assert(brw_format_for_mesa_format[mesa_format] != 0);
       return brw_format_for_mesa_format[mesa_format];
@@ -189,7 +197,7 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    surf.ss0.surface_type = translate_tex_target(tObj->Target);
    surf.ss0.surface_format = translate_tex_format(firstImage->TexFormat,
 						  firstImage->InternalFormat,
-						  tObj->DepthMode);
+						  tObj->DepthMode, tObj->sRGBDecode);
 
    /* This is ok for all textures with channel width 8bit or less:
     */
