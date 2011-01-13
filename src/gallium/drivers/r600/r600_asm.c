@@ -1092,10 +1092,10 @@ void r600_bc_clear(struct r600_bc *bc)
 
 void r600_bc_dump(struct r600_bc *bc)
 {
-	struct r600_bc_cf *cf;
-	struct r600_bc_alu *alu;
-	struct r600_bc_vtx *vtx;
-	struct r600_bc_tex *tex;
+	struct r600_bc_cf *cf = NULL;
+	struct r600_bc_alu *alu = NULL;
+	struct r600_bc_vtx *vtx = NULL;
+	struct r600_bc_tex *tex = NULL;
 
 	unsigned i, id;
 	char chip = '6';
