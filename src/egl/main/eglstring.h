@@ -2,9 +2,9 @@
 #define EGLSTRING_INCLUDED
 
 #include <string.h>
+#include <stdio.h>
 
 #ifdef _EGL_OS_WINDOWS
-#include <stdio.h>
 #define _eglstrcasecmp _stricmp
 #define _eglsnprintf _snprintf
 #else
