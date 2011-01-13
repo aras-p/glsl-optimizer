@@ -1322,6 +1322,7 @@ struct gl_texture_object
    GLboolean _Complete;		/**< Is texture object complete? */
    GLboolean _RenderToTexture;  /**< Any rendering to this texture? */
    GLboolean Purgeable;         /**< Is the buffer purgeable under memory pressure? */
+   GLenum sRGBDecode;
 
    /** Actual texture images, indexed by [cube face] and [mipmap level] */
    struct gl_texture_image *Image[MAX_FACES][MAX_TEXTURE_LEVELS];
@@ -2790,6 +2791,7 @@ struct gl_extensions
    GLboolean EXT_texture_mirror_clamp;
    GLboolean EXT_texture_shared_exponent;
    GLboolean EXT_texture_sRGB;
+   GLboolean EXT_texture_sRGB_decode;
    GLboolean EXT_texture_swizzle;
    GLboolean EXT_transform_feedback;
    GLboolean EXT_timer_query;

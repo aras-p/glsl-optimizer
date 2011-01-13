@@ -197,6 +197,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_texture_rectangle",                   o(NV_texture_rectangle),                    GL             },
    { "GL_EXT_texture_shared_exponent",             o(EXT_texture_shared_exponent),             GL             },
    { "GL_EXT_texture_sRGB",                        o(EXT_texture_sRGB),                        GL             },
+   { "GL_EXT_texture_sRGB_decode",                 o(EXT_texture_sRGB_decode),                        GL             },
    { "GL_EXT_texture_swizzle",                     o(EXT_texture_swizzle),                     GL             },
    { "GL_EXT_texture_type_2_10_10_10_REV",         o(dummy_true),                                         ES2 },
    { "GL_EXT_timer_query",                         o(EXT_timer_query),                         GL             },
@@ -488,6 +489,7 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;
 #if FEATURE_EXT_texture_sRGB
    ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
+   ctx->Extensions.EXT_texture_sRGB_decode = GL_TRUE;
 #endif
    ctx->Extensions.EXT_texture_swizzle = GL_TRUE;
 #if FEATURE_EXT_transform_feedback
