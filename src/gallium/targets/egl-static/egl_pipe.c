@@ -27,7 +27,6 @@
  */
 #include "target-helpers/inline_debug_helper.h"
 #include "target-helpers/inline_sw_helper.h"
-#include "state_tracker/drm_driver.h"
 #include "egl_pipe.h"
 
 /* for i915 */
