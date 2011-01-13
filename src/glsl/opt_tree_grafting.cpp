@@ -337,6 +337,11 @@ tree_grafting_basic_block(ir_instruction *bb_first,
 	  entry->referenced_count != 2)
 	 continue;
 
+	  glsl_precision var_prec = (glsl_precision)lhs_var->precision;
+	  glsl_precision rhs_prec = assign->rhs->get_precision();
+	  if (var_prec != rhs_prec && var_prec != glsl_precision_undefined && rhs_prec != glsl_precision_undefined)
+		  continue;
+
       assert(assign == entry->assign);
 
       /* Found a possibly graftable assignment.  Now, walk through the

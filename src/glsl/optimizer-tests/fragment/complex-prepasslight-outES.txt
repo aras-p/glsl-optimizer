@@ -80,7 +80,9 @@ void main ()
   tmpvar_14 = ((atten * dot (tmpvar_12, vec4(0.25, 0.25, 0.25, 0.25))) * textureCube (_LightTexture0, (_LightMatrix0 * tmpvar_13).xyz).w);
   atten = tmpvar_14;
   res.xyz = (_LightColor.xyz * (max (0.0, dot (lightDir, normal)) * tmpvar_14));
-  res.w = ((pow (max (0.0, dot (normalize ((lightDir - normalize ((tmpvar_4 - _WorldSpaceCameraPos)))), normal)), (tmpvar_2.w * 128.0)) * clamp (tmpvar_14, 0.0, 1.0)) * dot (_LightColor.xyz, vec3(0.22, 0.707, 0.071)));
+  mediump vec3 c;
+  c = _LightColor.xyz;
+  res.w = ((pow (max (0.0, dot (normalize ((lightDir - normalize ((tmpvar_4 - _WorldSpaceCameraPos)))), normal)), (tmpvar_2.w * 128.0)) * clamp (tmpvar_14, 0.0, 1.0)) * dot (c, vec3(0.22, 0.707, 0.071)));
   highp vec4 tmpvar_15;
   tmpvar_15 = (res * clamp ((1.0 - ((tmpvar_3.z * unity_LightmapFade.z) + unity_LightmapFade.w)), 0.0, 1.0));
   res = tmpvar_15;
