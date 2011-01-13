@@ -503,8 +503,8 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
       goto fail;
 
    BEGIN_RING(chan, RING_3D_(0x17bc), 3);
-   OUT_RELOCh(chan, screen->mp_stack_bo, 0, NOUVEAU_BO_GART | NOUVEAU_BO_RDWR);
-   OUT_RELOCl(chan, screen->mp_stack_bo, 0, NOUVEAU_BO_GART | NOUVEAU_BO_RDWR);
+   OUT_RELOCh(chan, screen->mp_stack_bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
+   OUT_RELOCl(chan, screen->mp_stack_bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
    OUT_RING  (chan, 1);
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 17, 1 << 17, &screen->txc);
