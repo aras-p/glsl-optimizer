@@ -599,6 +599,7 @@ update_wrapper(struct gl_context *ctx, const struct gl_renderbuffer_attachment *
       trb->Fetchf = _mesa_get_texel_fetch_func(MESA_FORMAT_ARGB8888, _mesa_get_texture_dimensions(att->Texture->Target));
       trb->Base.DataType = CHAN_TYPE;
       trb->Base._BaseFormat = GL_RGBA;
+      break;
    default:
       trb->Base.DataType = CHAN_TYPE;
       trb->Base._BaseFormat = GL_RGBA;
