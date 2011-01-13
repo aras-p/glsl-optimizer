@@ -112,6 +112,7 @@ if env['drm']:
     ])
 
 # libEGL.dll
+env['LIBPREFIX'] = 'lib'
 env['SHLIBPREFIX'] = 'lib'
 
 egl_gallium = env.SharedLibrary(
