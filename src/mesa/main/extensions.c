@@ -651,13 +651,15 @@ _mesa_enable_2_1_extensions(struct gl_context *ctx)
 static GLboolean
 set_extension( struct gl_context *ctx, const char *name, GLboolean state )
 {
+   size_t offset;
+
    if (ctx->Extensions.String) {
       /* The string was already queried - can't change it now! */
       _mesa_problem(ctx, "Trying to enable/disable extension after glGetString(GL_EXTENSIONS): %s", name);
       return GL_FALSE;
    }
 
-   size_t offset = name_to_offset(name);
+   offset = name_to_offset(name);
    if (offset == 0) {
       _mesa_problem(ctx, "Trying to enable/disable unknown extension %s",
 	            name);
@@ -704,13 +706,16 @@ _mesa_disable_extension( struct gl_context *ctx, const char *name )
 GLboolean
 _mesa_extension_is_enabled( struct gl_context *ctx, const char *name )
 {
+   size_t offset;
+   GLboolean *base;
+
    if (name == 0)
       return GL_FALSE;
 
-   size_t offset = name_to_offset(name);
+   offset = name_to_offset(name);
    if (offset == 0)
       return GL_FALSE;
-   GLboolean *base = (GLboolean *) &ctx->Extensions;
+   base = (GLboolean *) &ctx->Extensions;
    return base[offset];
 }
 
@@ -865,11 +870,13 @@ _mesa_make_extension_string(struct gl_context *ctx)
 GLuint
 _mesa_get_extension_count(struct gl_context *ctx)
 {
+   GLboolean *base;
+
    /* only count once */
    if (ctx->Extensions.Count != 0)
       return ctx->Extensions.Count;
 
-   GLboolean *base = (GLboolean *) &ctx->Extensions;
+   base = (GLboolean *) &ctx->Extensions;
    for (const struct extension *i = extension_table; i->name != 0; ++i) {
       if (base[i->offset]) {
 	 ctx->Extensions.Count++;
@@ -884,11 +891,14 @@ _mesa_get_extension_count(struct gl_context *ctx)
 const GLubyte *
 _mesa_get_enabled_extension(struct gl_context *ctx, GLuint index)
 {
+   const GLboolean *base;
+   size_t n;
+
    if (index < 0)
       return NULL;
 
-   const GLboolean *base = (GLboolean*) &ctx->Extensions;
-   size_t n = 0;
+   base = (GLboolean*) &ctx->Extensions;
+   n = 0;
    for (const struct extension *i = extension_table; i->name != 0; ++i) {
       if (n == index && base[i->offset]) {
 	 return (GLubyte*) i->name;
