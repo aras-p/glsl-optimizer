@@ -387,6 +387,7 @@ void st_init_extensions(struct st_context *st)
                                    PIPE_TEXTURE_2D, 0,
                                    PIPE_BIND_SAMPLER_VIEW, 0)) {
       ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
+      ctx->Extensions.EXT_texture_sRGB_decode = GL_TRUE;
    }
 
    if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8_UNORM,
