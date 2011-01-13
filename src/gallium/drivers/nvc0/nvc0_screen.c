@@ -292,8 +292,10 @@ nvc0_magic_3d_init(struct nouveau_channel *chan)
    BEGIN_RING(chan, RING_3D_(0x165c), 1);
    OUT_RING  (chan, 0);
 
+#if 0 /* software method */
    BEGIN_RING(chan, RING_3D_(0x1528), 1); /* MP poke */
    OUT_RING  (chan, 0);
+#endif
 
    BEGIN_RING(chan, RING_3D_(0x12ac), 1);
    OUT_RING  (chan, 0);
@@ -323,8 +325,10 @@ nvc0_magic_3d_init(struct nouveau_channel *chan)
    OUT_RING  (chan, 0);
    BEGIN_RING(chan, RING_3D_(0x0300), 1);
    OUT_RING  (chan, 3);
+#if 0 /* software method */
    BEGIN_RING(chan, RING_3D_(0x1280), 1); /* PGRAPH poke */
    OUT_RING  (chan, 0);
+#endif
    BEGIN_RING(chan, RING_3D_(0x02d0), 1);
    OUT_RING  (chan, 0x1f40);
    BEGIN_RING(chan, RING_3D_(0x00fdc), 1);
