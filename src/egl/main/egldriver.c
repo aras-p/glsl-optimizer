@@ -537,7 +537,7 @@ _eglMatchDriver(_EGLDisplay *dpy, EGLBoolean use_probe)
    _EGLModule *mod;
    _EGLDriver *best_drv = NULL;
    EGLint best_score = 0;
-   EGLint major, minor, i;
+   EGLint i;
 
    _eglLockMutex(&_eglModuleMutex);
 
@@ -562,7 +562,7 @@ _eglMatchDriver(_EGLDisplay *dpy, EGLBoolean use_probe)
          }
       }
       else {
-         if (mod->Driver->API.Initialize(mod->Driver, dpy, &major, &minor)) {
+         if (mod->Driver->API.Initialize(mod->Driver, dpy)) {
             best_drv = mod->Driver;
             best_score = 100;
          }
@@ -591,7 +591,7 @@ _eglMatchDriver(_EGLDisplay *dpy, EGLBoolean use_probe)
                mod->Driver->Probe(mod->Driver, dpy) : 1;
          }
          else {
-            if (mod->Driver->API.Initialize(mod->Driver, dpy, &major, &minor))
+            if (mod->Driver->API.Initialize(mod->Driver, dpy))
                best_score = 100;
          }
 
@@ -621,8 +621,6 @@ _eglMatchDriver(_EGLDisplay *dpy, EGLBoolean use_probe)
       if (!use_probe) {
          dpy->Driver = best_drv;
          dpy->Initialized = EGL_TRUE;
-         dpy->APImajor = major;
-         dpy->APIminor = minor;
       }
    }
 

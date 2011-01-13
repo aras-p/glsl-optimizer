@@ -280,7 +280,7 @@ egl_g3d_init_config(_EGLDriver *drv, _EGLDisplay *dpy,
       ST_ATTACHMENT_BACK_LEFT : ST_ATTACHMENT_FRONT_LEFT;
 
    valid = init_config_attributes(&gconf->base,
-         nconf, dpy->ClientAPIsMask, depth_stencil_format,
+         nconf, dpy->ClientAPIs, depth_stencil_format,
          preserve_buffer, max_swap_interval);
    if (!valid) {
       _eglLog(_EGL_DEBUG, "skip invalid config 0x%x", nconf->native_visual_id);
@@ -474,8 +474,7 @@ egl_g3d_terminate(_EGLDriver *drv, _EGLDisplay *dpy)
 }
 
 static EGLBoolean
-egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
-                   EGLint *major, EGLint *minor)
+egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy)
 {
    struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
    struct egl_g3d_display *gdpy;
@@ -502,13 +501,13 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
    }
 
    if (gdpy->loader->profile_masks[ST_API_OPENGL] & ST_PROFILE_DEFAULT_MASK)
-      dpy->ClientAPIsMask |= EGL_OPENGL_BIT;
+      dpy->ClientAPIs |= EGL_OPENGL_BIT;
    if (gdpy->loader->profile_masks[ST_API_OPENGL] & ST_PROFILE_OPENGL_ES1_MASK)
-      dpy->ClientAPIsMask |= EGL_OPENGL_ES_BIT;
+      dpy->ClientAPIs |= EGL_OPENGL_ES_BIT;
    if (gdpy->loader->profile_masks[ST_API_OPENGL] & ST_PROFILE_OPENGL_ES2_MASK)
-      dpy->ClientAPIsMask |= EGL_OPENGL_ES2_BIT;
+      dpy->ClientAPIs |= EGL_OPENGL_ES2_BIT;
    if (gdpy->loader->profile_masks[ST_API_OPENVG] & ST_PROFILE_DEFAULT_MASK)
-      dpy->ClientAPIsMask |= EGL_OPENVG_BIT;
+      dpy->ClientAPIs |= EGL_OPENVG_BIT;
 
    gdpy->smapi = egl_g3d_create_st_manager(dpy);
    if (!gdpy->smapi) {
@@ -547,8 +546,8 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
       goto fail;
    }
 
-   *major = 1;
-   *minor = 4;
+   dpy->VersionMajor = 1;
+   dpy->VersionMinor = 4;
 
    return EGL_TRUE;
 

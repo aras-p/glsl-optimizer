@@ -581,8 +581,7 @@ check_quirks(struct GLX_egl_driver *GLX_drv,
  * Called via eglInitialize(), GLX_drv->API.Initialize().
  */
 static EGLBoolean
-GLX_eglInitialize(_EGLDriver *drv, _EGLDisplay *disp,
-                   EGLint *major, EGLint *minor)
+GLX_eglInitialize(_EGLDriver *drv, _EGLDisplay *disp)
 {
    struct GLX_egl_driver *GLX_drv = GLX_egl_driver(drv);
    struct GLX_egl_display *GLX_dpy;
@@ -614,7 +613,7 @@ GLX_eglInitialize(_EGLDriver *drv, _EGLDisplay *disp,
    }
 
    disp->DriverData = (void *) GLX_dpy;
-   disp->ClientAPIsMask = EGL_OPENGL_BIT;
+   disp->ClientAPIs = EGL_OPENGL_BIT;
 
    check_extensions(GLX_drv, GLX_dpy, DefaultScreen(GLX_dpy->dpy));
    check_quirks(GLX_drv, GLX_dpy, DefaultScreen(GLX_dpy->dpy));
@@ -629,8 +628,8 @@ GLX_eglInitialize(_EGLDriver *drv, _EGLDisplay *disp,
    }
 
    /* we're supporting EGL 1.4 */
-   *major = 1;
-   *minor = 4;
+   disp->VersionMajor = 1;
+   disp->VersionMinor = 4;
 
    return EGL_TRUE;
 }

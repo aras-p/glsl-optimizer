@@ -260,8 +260,8 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
          base.BindToTextureRGBA = bind_to_texture_rgba;
    }
 
-   base.RenderableType = disp->ClientAPIsMask;
-   base.Conformant = disp->ClientAPIsMask;
+   base.RenderableType = disp->ClientAPIs;
+   base.Conformant = disp->ClientAPIs;
 
    if (!_eglValidateConfig(&base, EGL_FALSE)) {
       _eglLog(_EGL_DEBUG, "DRI2: failed to validate config %d", id);
@@ -752,13 +752,13 @@ dri2_create_screen(_EGLDisplay *disp)
    else
       api_mask = 1 << __DRI_API_OPENGL;
 
-   disp->ClientAPIsMask = 0;
+   disp->ClientAPIs = 0;
    if (api_mask & (1 <<__DRI_API_OPENGL))
-      disp->ClientAPIsMask |= EGL_OPENGL_BIT;
+      disp->ClientAPIs |= EGL_OPENGL_BIT;
    if (api_mask & (1 <<__DRI_API_GLES))
-      disp->ClientAPIsMask |= EGL_OPENGL_ES_BIT;
+      disp->ClientAPIs |= EGL_OPENGL_ES_BIT;
    if (api_mask & (1 << __DRI_API_GLES2))
-      disp->ClientAPIsMask |= EGL_OPENGL_ES2_BIT;
+      disp->ClientAPIs |= EGL_OPENGL_ES2_BIT;
 
    if (dri2_dpy->dri2->base.version >= 2) {
       disp->Extensions.KHR_surfaceless_gles1 = EGL_TRUE;
@@ -775,8 +775,7 @@ dri2_create_screen(_EGLDisplay *disp)
 }
 
 static EGLBoolean
-dri2_initialize_x11(_EGLDriver *drv, _EGLDisplay *disp,
-		    EGLint *major, EGLint *minor)
+dri2_initialize_x11(_EGLDriver *drv, _EGLDisplay *disp)
 {
    struct dri2_egl_display *dri2_dpy;
 
@@ -855,8 +854,8 @@ dri2_initialize_x11(_EGLDriver *drv, _EGLDisplay *disp,
    disp->Extensions.NOK_texture_from_pixmap = EGL_TRUE;
 
    /* we're supporting EGL 1.4 */
-   *major = 1;
-   *minor = 4;
+   disp->VersionMajor = 1;
+   disp->VersionMinor = 4;
 
    return EGL_TRUE;
 
@@ -1415,8 +1414,7 @@ dri2_get_driver_for_fd(int fd)
 }
 
 static EGLBoolean
-dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp,
-		    EGLint *major, EGLint *minor)
+dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
 {
    struct dri2_egl_display *dri2_dpy;
    int i;
@@ -1451,8 +1449,8 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp,
    disp->Extensions.KHR_gl_texture_2D_image = EGL_TRUE;
 
    /* we're supporting EGL 1.4 */
-   *major = 1;
-   *minor = 4;
+   disp->VersionMajor = 1;
+   disp->VersionMinor = 4;
 
    return EGL_TRUE;
 
@@ -1470,16 +1468,15 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp,
  * Called via eglInitialize(), GLX_drv->API.Initialize().
  */
 static EGLBoolean
-dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp,
-		EGLint *major, EGLint *minor)
+dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp)
 {
    switch (disp->Platform) {
    case _EGL_PLATFORM_X11:
-      return dri2_initialize_x11(drv, disp, major, minor);
+      return dri2_initialize_x11(drv, disp);
 
 #ifdef HAVE_LIBUDEV
    case _EGL_PLATFORM_DRM:
-      return dri2_initialize_drm(drv, disp, major, minor);
+      return dri2_initialize_drm(drv, disp);
 #endif
 
    default:
