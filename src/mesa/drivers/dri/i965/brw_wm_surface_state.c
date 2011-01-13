@@ -435,6 +435,11 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
        */
       surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
       break;
+   case MESA_FORMAT_SARGB8:
+      /* without GL_EXT_framebuffer_sRGB we shouldn't bind sRGB
+	 surfaces to the blend/update as sRGB */
+      surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+      break;
    default:
       surf.ss0.surface_format = brw_format_for_mesa_format[irb->Base.Format];
       assert(surf.ss0.surface_format != 0);
