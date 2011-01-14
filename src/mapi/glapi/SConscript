@@ -17,6 +17,11 @@ if env['platform'] != 'winddk':
             '_GDI32_', # prevent gl* being declared __declspec(dllimport) in MS headers
             'BUILD_GL32', # declare gl* as __declspec(dllexport) in Mesa headers
         ])
+        if env['gles']:
+            env.Append(CPPDEFINES = ['_GLAPI_DLL_EXPORTS'])
+        else:
+            # prevent _glapi_* from being declared __declspec(dllimport)
+            env.Append(CPPDEFINES = ['_GLAPI_NO_EXPORTS'])
 
     env.Append(CPPPATH = [
         '#/src/mapi',

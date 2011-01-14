@@ -90,6 +90,7 @@ def AddOptions(opts):
 	opts.Add(EnumOption('platform', 'target platform', host_platform,
 											 allowed_values=('linux', 'cell', 'windows', 'winddk', 'wince', 'darwin', 'embedded', 'cygwin', 'sunos5', 'freebsd8')))
 	opts.Add('toolchain', 'compiler toolchain', default_toolchain)
+	opts.Add(BoolOption('gles', 'EXPERIMENTAL: enable OpenGL ES support', 'no'))
 	opts.Add(BoolOption('llvm', 'use LLVM', default_llvm))
 	opts.Add(BoolOption('debug', 'DEPRECATED: debug build', 'yes'))
 	opts.Add(BoolOption('profile', 'DEPRECATED: profile build', 'no'))

@@ -37,6 +37,12 @@ drivers += [trace, rbug]
 
 env['no_import_lib'] = 1
 
+# when GLES is enabled, gl* and _glapi_* belong to bridge_glapi and
+# shared_glapi respectively
+if env['gles']:
+    env.Prepend(LIBPATH = [shared_glapi.dir])
+    glapi = [bridge_glapi, 'libglapi']
+
 opengl32 = env.SharedLibrary(
     target ='opengl32',
     source = sources,

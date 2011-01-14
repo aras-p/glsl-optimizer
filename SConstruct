@@ -56,6 +56,12 @@ else:
 
 Help(opts.GenerateHelpText(env))
 
+# fail early for a common error on windows
+if env['gles']:
+    try:
+        import libxml2
+    except ImportError:
+        raise SCons.Errors.UserError, "GLES requires libxml2-python to build"
 
 #######################################################################
 # Environment setup

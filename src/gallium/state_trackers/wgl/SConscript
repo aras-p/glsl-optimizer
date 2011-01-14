@@ -15,6 +15,9 @@ env.AppendUnique(CPPDEFINES = [
     'BUILD_GL32', # declare gl* as __declspec(dllexport) in Mesa headers 
     'WIN32_LEAN_AND_MEAN', # http://msdn2.microsoft.com/en-us/library/6dwk3a1z.aspx
 ])
+if not env['gles']:
+    # prevent _glapi_* from being declared __declspec(dllimport)
+    env.Append(CPPDEFINES = ['_GLAPI_NO_EXPORTS'])
 
 sources = [
     'stw_context.c',
