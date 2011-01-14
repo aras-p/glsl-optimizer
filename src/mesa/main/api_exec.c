@@ -361,6 +361,10 @@ _mesa_create_exec_table(void)
    SET_PointParameterfvEXT(exec, _mesa_PointParameterfv);
 #endif
 
+   /* 95. GL_ARB_ES2_compatibility */
+   SET_ClearDepthf(exec, _mesa_ClearDepthf);
+   SET_DepthRangef(exec, _mesa_DepthRangef);
+
    /* 97. GL_EXT_compiled_vertex_array */
 #if _HAVE_FULL_GL
    SET_LockArraysEXT(exec, _mesa_LockArraysEXT);

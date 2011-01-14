@@ -43,6 +43,9 @@ _mesa_set_viewport(struct gl_context *ctx, GLint x, GLint y,
 extern void GLAPIENTRY
 _mesa_DepthRange(GLclampd nearval, GLclampd farval);
 
+extern void GLAPIENTRY
+_mesa_DepthRangef(GLclampf nearval, GLclampf farval);
+
 
 extern void 
 _mesa_init_viewport(struct gl_context *ctx);
