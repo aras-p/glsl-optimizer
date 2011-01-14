@@ -318,7 +318,8 @@ public:
 
 
 enum {
-   ast_precision_high = 0, /**< Default precision. */
+   ast_precision_none = 0, /**< Absence of precision qualifier. */
+   ast_precision_high,
    ast_precision_medium,
    ast_precision_low
 };
@@ -461,7 +462,7 @@ public:
    /** Construct a type specifier from a type name */
    ast_type_specifier(const char *name) 
       : type_specifier(ast_type_name), type_name(name), structure(NULL),
-	is_array(false), array_size(NULL), precision(ast_precision_high)
+	is_array(false), array_size(NULL), precision(ast_precision_none)
    {
       /* empty */
    }
@@ -469,7 +470,7 @@ public:
    /** Construct a type specifier from a structure definition */
    ast_type_specifier(ast_struct_specifier *s)
       : type_specifier(ast_struct), type_name(s->name), structure(s),
-	is_array(false), array_size(NULL), precision(ast_precision_high)
+	is_array(false), array_size(NULL), precision(ast_precision_none)
    {
       /* empty */
    }
