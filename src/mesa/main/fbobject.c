@@ -989,6 +989,7 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_RGB10:
    case GL_RGB12:
    case GL_RGB16:
+   case GL_SRGB8_EXT:
       return GL_RGB;
    case GL_RGBA:
    case GL_RGBA2:
@@ -1000,7 +1001,6 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_RGBA16:
    case GL_RGBA16_SNORM:
    case GL_SRGB8_ALPHA8_EXT:
-   case GL_SRGB8_EXT:
       return GL_RGBA;
    case GL_STENCIL_INDEX:
    case GL_STENCIL_INDEX1_EXT:
