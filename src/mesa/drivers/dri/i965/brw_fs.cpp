@@ -48,6 +48,7 @@ extern "C" {
 #include "../glsl/ir_optimization.h"
 #include "../glsl/ir_print_visitor.h"
 
+#define MAX_INSTRUCTION (1 << 30)
 static struct brw_reg brw_reg_from_fs_reg(class fs_reg *reg);
 
 struct gl_shader *
@@ -2750,7 +2751,7 @@ fs_visitor::calculate_live_intervals()
       return;
 
    for (int i = 0; i < num_vars; i++) {
-      def[i] = 1 << 30;
+      def[i] = MAX_INSTRUCTION;
       use[i] = -1;
    }
 
@@ -3272,15 +3273,16 @@ fs_visitor::virtual_grf_interferes(int a, int b)
    int start = MAX2(this->virtual_grf_def[a], this->virtual_grf_def[b]);
    int end = MIN2(this->virtual_grf_use[a], this->virtual_grf_use[b]);
 
-   /* For dead code, just check if the def interferes with the other range. */
-   if (this->virtual_grf_use[a] == -1) {
-      return (this->virtual_grf_def[a] >= this->virtual_grf_def[b] &&
-	      this->virtual_grf_def[a] < this->virtual_grf_use[b]);
-   }
-   if (this->virtual_grf_use[b] == -1) {
-      return (this->virtual_grf_def[b] >= this->virtual_grf_def[a] &&
-	      this->virtual_grf_def[b] < this->virtual_grf_use[a]);
-   }
+   /* We can't handle dead register writes here, without iterating
+    * over the whole instruction stream to find every single dead
+    * write to that register to compare to the live interval of the
+    * other register.  Just assert that dead_code_eliminate() has been
+    * called.
+    */
+   assert((this->virtual_grf_use[a] != -1 ||
+	   this->virtual_grf_def[a] == MAX_INSTRUCTION) &&
+	  (this->virtual_grf_use[b] != -1 ||
+	   this->virtual_grf_def[b] == MAX_INSTRUCTION));
 
    return start < end;
 }
