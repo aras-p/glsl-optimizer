@@ -79,7 +79,9 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc_alu *alu)
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_CLAMPED:
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_IEEE:
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT:
+#if 0
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT_FLOOR:
+#endif
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN:
 	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS:
 		return 1;
