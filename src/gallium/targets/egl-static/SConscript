@@ -32,6 +32,7 @@ env.Prepend(LIBS = [
     galahad,
     gallium,
     egl,
+    st_egl,
 ])
 
 if env['llvm']:
@@ -55,28 +56,26 @@ if env['platform'] == 'windows':
     ])
 
     env.Prepend(LIBS = [
-        st_egl,
         ws_gdi,
     ])
-
-    # OpenVG
-    env.Append(CPPDEFINES = ['FEATURE_VG=1'])
-    env.Prepend(LIBS = [openvg, st_vega])
 else:
-    env.Prepend(LIBS = [
-        st_egl,
-        ws_xlib,
-    ])
-
     # OpenGL
     env.Append(CPPDEFINES = ['FEATURE_GL=1'])
     env.Prepend(LIBS = ['GL', 'talloc', glsl, mesa])
 
-    # OpenVG
+# OpenVG
+if True:
     env.Append(CPPDEFINES = ['FEATURE_VG=1'])
     env.Prepend(LIBPATH = [openvg.dir])
-    env.Prepend(LIBS = ['OpenVG', st_vega])
+    # manually add LIBPREFIX on windows
+    openvg_name = 'OpenVG' if env['platform'] != 'windows' else 'libOpenVG'
+    env.Prepend(LIBS = [openvg_name, st_vega])
 
+if env['x11']:
+    env.Prepend(LIBS = [
+        ws_xlib,
+        env['X11_LIBS'],
+    ])
 
 if env['dri']:
     env.ParseConfig('pkg-config --cflags --libs xfixes')
@@ -93,6 +92,7 @@ if env['drm']:
             i915,
             i965drm,
             i965,
+            ws_wrapper,
         ])
 
     if env['drm_radeon']:
