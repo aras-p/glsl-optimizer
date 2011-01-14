@@ -133,7 +133,7 @@ _eglUpdateAPIsString(_EGLDisplay *dpy)
    if (dpy->ClientAPIs & EGL_OPENVG_BIT)
       strcat(apis, "OpenVG ");
 
-   assert(strlen(apis) < sizeof(dpy->ClientAPIs));
+   assert(strlen(apis) < sizeof(dpy->ClientAPIsString));
 }
 
 
