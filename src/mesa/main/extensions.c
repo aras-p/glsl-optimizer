@@ -73,6 +73,7 @@ struct extension {
  */
 static const struct extension extension_table[] = {
    /* ARB Extensions */
+   { "GL_ARB_ES2_compatibility",                   o(ARB_ES2_compatibility),                   GL             },
    { "GL_ARB_blend_func_extended",                 o(ARB_blend_func_extended),                 GL             },
    { "GL_ARB_copy_buffer",                         o(ARB_copy_buffer),                         GL             },
    { "GL_ARB_depth_buffer_float",                  o(ARB_depth_buffer_float),                  GL             },

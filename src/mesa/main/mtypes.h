@@ -2657,6 +2657,7 @@ struct gl_extensions
    GLboolean dummy;  /* don't remove this! */
    GLboolean dummy_true;  /* Set true by _mesa_init_extensions(). */
    GLboolean dummy_false; /* Set false by _mesa_init_extensions(). */
+   GLboolean ARB_ES2_compatibility;
    GLboolean ARB_blend_func_extended;
    GLboolean ARB_copy_buffer;
    GLboolean ARB_depth_buffer_float;
