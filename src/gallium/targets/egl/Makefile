@@ -74,7 +74,8 @@ i965_CPPFLAGS :=
 i965_SYS := -ldrm_intel
 i965_LIBS := \
 	$(TOP)/src/gallium/winsys/i965/drm/libi965drm.a \
-	$(TOP)/src/gallium/drivers/i965/libi965.a
+	$(TOP)/src/gallium/drivers/i965/libi965.a \
+	$(TOP)/src/gallium/winsys/sw/wrapper/libwsw.a
 
 # nouveau pipe driver
 nouveau_CPPFLAGS :=
