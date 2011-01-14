@@ -2671,6 +2671,7 @@ fs_visitor::split_virtual_grfs()
 	 }
       }
    }
+   this->live_intervals_valid = false;
 }
 
 /**
