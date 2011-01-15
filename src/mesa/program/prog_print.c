@@ -72,6 +72,8 @@ _mesa_register_file_name(gl_register_file f)
       return "ADDR";
    case PROGRAM_SAMPLER:
       return "SAMPLER";
+   case PROGRAM_SYSTEM_VALUE:
+      return "SYSVAL";
    case PROGRAM_UNDEFINED:
       return "UNDEFINED";
    default:
@@ -309,6 +311,9 @@ reg_string(gl_register_file f, GLint index, gl_prog_print_mode mode,
          break;
       case PROGRAM_UNIFORM: /* extension */
          sprintf(str, "uniform[%s%d]", addr, index);
+         break;
+      case PROGRAM_SYSTEM_VALUE:
+         sprintf(str, "sysvalue[%s%d]", addr, index);
          break;
       case PROGRAM_STATE_VAR:
          {

@@ -220,7 +220,8 @@ _tnl_program_string(struct gl_context *ctx, GLenum target, struct gl_program *pr
  * Initialize virtual machine state prior to executing vertex program.
  */
 static void
-init_machine(struct gl_context *ctx, struct gl_program_machine *machine)
+init_machine(struct gl_context *ctx, struct gl_program_machine *machine,
+             GLuint instID)
 {
    /* Input registers get initialized from the current vertex attribs */
    memcpy(machine->VertAttribs, ctx->Current.Attrib,
@@ -256,6 +257,8 @@ init_machine(struct gl_context *ctx, struct gl_program_machine *machine)
    machine->FetchTexelDeriv = NULL; /* not used by vertex programs */
 
    machine->Samplers = ctx->VertexProgram._Current->Base.SamplerUnits;
+
+   machine->SystemValues[SYSTEM_VALUE_INSTANCE_ID][0] = (GLfloat) instID;
 }
 
 
@@ -341,7 +344,7 @@ run_vp( struct gl_context *ctx, struct tnl_pipeline_stage *stage )
    for (i = 0; i < VB->Count; i++) {
       GLuint attr;
 
-      init_machine(ctx, machine);
+      init_machine(ctx, machine, tnl->CurInstance);
 
 #if 0
       printf("Input  %d: %f, %f, %f, %f\n", i,

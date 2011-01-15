@@ -61,6 +61,7 @@ struct gl_program_machine
    GLfloat (*EnvParams)[4]; /**< Vertex or Fragment env parameters */
    GLuint CondCodes[4];  /**< COND_* value for x/y/z/w */
    GLint AddressReg[MAX_PROGRAM_ADDRESS_REGS][4];
+   GLfloat SystemValues[SYSTEM_VALUE_MAX][4];
 
    const GLubyte *Samplers;  /** Array mapping sampler var to tex unit */
 

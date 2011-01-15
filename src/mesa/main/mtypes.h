@@ -1748,9 +1748,22 @@ typedef enum
    PROGRAM_WRITE_ONLY,  /**< A dummy, write-only register */
    PROGRAM_ADDRESS,     /**< machine->AddressReg */
    PROGRAM_SAMPLER,     /**< for shader samplers, compile-time only */
+   PROGRAM_SYSTEM_VALUE,/**< InstanceId, PrimitiveID, etc. */
    PROGRAM_UNDEFINED,   /**< Invalid/TBD value */
    PROGRAM_FILE_MAX
 } gl_register_file;
+
+
+/**
+ * If the register file is PROGRAM_SYSTEM_VALUE, the register index will be
+ * one of these values.
+ */
+typedef enum
+{
+   SYSTEM_VALUE_FRONT_FACE,  /**< Fragment shader only (not done yet) */
+   SYSTEM_VALUE_INSTANCE_ID, /**< Vertex shader only */
+   SYSTEM_VALUE_MAX          /**< Number of values */
+} gl_system_value;
 
 
 /** Vertex and fragment instructions */
@@ -1775,6 +1788,7 @@ struct gl_program
 
    GLbitfield InputsRead;     /**< Bitmask of which input regs are read */
    GLbitfield64 OutputsWritten; /**< Bitmask of which output regs are written */
+   GLbitfield SystemValuesRead;   /**< Bitmask of SYSTEM_VALUE_x inputs used */
    GLbitfield InputFlags[MAX_PROGRAM_INPUTS];   /**< PROG_PARAM_BIT_x flags */
    GLbitfield OutputFlags[MAX_PROGRAM_OUTPUTS]; /**< PROG_PARAM_BIT_x flags */
    GLbitfield TexturesUsed[MAX_TEXTURE_UNITS];  /**< TEXTURE_x_BIT bitmask */

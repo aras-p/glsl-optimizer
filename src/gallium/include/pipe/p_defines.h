@@ -462,6 +462,7 @@ enum pipe_cap {
    PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER,
    PIPE_CAP_DEPTH_CLAMP,
    PIPE_CAP_SHADER_STENCIL_EXPORT,
+   PIPE_CAP_INSTANCED_DRAWING,
 };
 
 /* Shader caps not specific to any single stage */

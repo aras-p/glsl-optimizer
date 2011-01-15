@@ -51,6 +51,9 @@ struct tgsi_shader_info
    ubyte output_semantic_name[PIPE_MAX_SHADER_OUTPUTS]; /**< TGSI_SEMANTIC_x */
    ubyte output_semantic_index[PIPE_MAX_SHADER_OUTPUTS];
 
+   ubyte num_system_values;
+   ubyte system_value_semantic_name[PIPE_MAX_SHADER_INPUTS];
+
    uint file_mask[TGSI_FILE_COUNT];  /**< bitmask of declared registers */
    uint file_count[TGSI_FILE_COUNT];  /**< number of declared registers */
    int file_max[TGSI_FILE_COUNT];  /**< highest index of declared registers */
@@ -64,6 +67,7 @@ struct tgsi_shader_info
    boolean writes_stencil; /**< does fragment shader write stencil value? */
    boolean writes_edgeflag; /**< vertex shader outputs edgeflag */
    boolean uses_kill;  /**< KIL or KILP instruction used? */
+   boolean uses_instanceid;
 
    /**
     * Bitmask indicating which register files are accessed with

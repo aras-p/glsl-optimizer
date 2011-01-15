@@ -294,13 +294,15 @@ emit_fetch(struct gen_context *gen,
    case TGSI_SWIZZLE_W:
       switch (reg->Register.File) {
       case TGSI_FILE_INPUT:
-      case TGSI_FILE_SYSTEM_VALUE:
          {
             int offset = (reg->Register.Index * 4 + swizzle) * 16;
             int offset_reg = emit_li_offset(gen, offset);
             dst_vec = ppc_allocate_vec_register(gen->f);
             ppc_lvx(gen->f, dst_vec, gen->inputs_reg, offset_reg);
          }
+         break;
+      case TGSI_FILE_SYSTEM_VALUE:
+         assert(!"unhandled system value in tgsi_ppc.c");
          break;
       case TGSI_FILE_TEMPORARY:
          if (is_ppc_vec_temporary(reg)) {

@@ -461,4 +461,8 @@ void st_init_extensions(struct st_context *st)
    if (screen->get_param(screen, PIPE_CAP_SHADER_STENCIL_EXPORT)) {
       ctx->Extensions.ARB_shader_stencil_export = GL_TRUE;
    }
+
+   if (screen->get_param(screen, PIPE_CAP_INSTANCED_DRAWING)) {
+      ctx->Extensions.ARB_draw_instanced = GL_TRUE;
+   }
 }

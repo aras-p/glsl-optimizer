@@ -1038,7 +1038,6 @@ fetch_src_file_channel(const struct tgsi_exec_machine *mach,
       break;
 
    case TGSI_FILE_INPUT:
-   case TGSI_FILE_SYSTEM_VALUE:
       for (i = 0; i < QUAD_SIZE; i++) {
          /*
          if (TGSI_PROCESSOR_GEOMETRY == mach->Processor) {
@@ -1050,6 +1049,15 @@ fetch_src_file_channel(const struct tgsi_exec_machine *mach,
          assert(pos >= 0);
          assert(pos < Elements(mach->Inputs));
          chan->u[i] = mach->Inputs[pos].xyzw[swizzle].u[i];
+      }
+      break;
+
+   case TGSI_FILE_SYSTEM_VALUE:
+      /* XXX no swizzling at this point.  Will be needed if we put
+       * gl_FragCoord, for example, in a sys value register.
+       */
+      for (i = 0; i < QUAD_SIZE; i++) {
+         chan->f[i] = mach->SystemValue[index->i[i]][0];
       }
       break;
 
@@ -1907,8 +1915,7 @@ exec_declaration(struct tgsi_exec_machine *mach,
                  const struct tgsi_full_declaration *decl)
 {
    if (mach->Processor == TGSI_PROCESSOR_FRAGMENT) {
-      if (decl->Declaration.File == TGSI_FILE_INPUT ||
-          decl->Declaration.File == TGSI_FILE_SYSTEM_VALUE) {
+      if (decl->Declaration.File == TGSI_FILE_INPUT) {
          uint first, last, mask;
 
          first = decl->Range.First;
@@ -1921,6 +1928,7 @@ exec_declaration(struct tgsi_exec_machine *mach,
           * ureg code to emit the right UsageMask value (WRITEMASK_X).
           * Then, we could remove the tgsi_exec_machine::Face field.
           */
+         /* XXX make FACE a system value */
          if (decl->Semantic.Name == TGSI_SEMANTIC_FACE) {
             uint i;
 
@@ -1962,7 +1970,12 @@ exec_declaration(struct tgsi_exec_machine *mach,
          }
       }
    }
+
+   if (decl->Declaration.File == TGSI_FILE_SYSTEM_VALUE) {
+      mach->SysSemanticToIndex[decl->Declaration.Semantic] = decl->Range.First;
+   }
 }
+
 
 typedef void (* micro_op)(union tgsi_exec_channel *dst);
 

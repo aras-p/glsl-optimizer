@@ -180,6 +180,15 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 	 state->ARB_draw_buffers_enable = (ext_mode != extension_disable);
 	 state->ARB_draw_buffers_warn = (ext_mode == extension_warn);
       }
+   } else if (strcmp(name, "GL_ARB_draw_instanced") == 0) {
+      /* This extension is only supported in vertex shaders.
+       */
+      if (state->target != vertex_shader) {
+	 unsupported = true;
+      } else {
+	 state->ARB_draw_instanced_enable = (ext_mode != extension_disable);
+	 state->ARB_draw_instanced_warn = (ext_mode == extension_warn);
+      }
    } else if (strcmp(name, "GL_ARB_explicit_attrib_location") == 0) {
       state->ARB_explicit_attrib_location_enable =
 	 (ext_mode != extension_disable);
