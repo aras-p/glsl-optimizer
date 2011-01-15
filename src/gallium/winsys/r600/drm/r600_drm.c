@@ -41,8 +41,6 @@
 #define RADEON_INFO_TILING_CONFIG 0x6
 #endif
 
-static struct radeon *radeon_new(int fd, unsigned device);
-
 enum radeon_family r600_get_family(struct radeon *r600)
 {
 	return r600->family;
