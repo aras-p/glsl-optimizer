@@ -18,6 +18,12 @@ struct nvc0_context;
 #define NVC0_BUFFER_SCORE_MAX  25000
 #define NVC0_BUFFER_SCORE_VRAM_THRESHOLD 20000
 
+/* DIRTY: buffer was (or will be after the next flush) written to by GPU and
+ *  resource->data has not been updated to reflect modified VRAM contents
+ *
+ * USER_MEMORY: resource->data is a pointer to client memory and may change
+ *  between GL calls
+ */
 #define NVC0_BUFFER_STATUS_DIRTY       (1 << 0)
 #define NVC0_BUFFER_STATUS_USER_MEMORY (1 << 7)
 
@@ -84,7 +90,8 @@ nvc0_resource_map_offset(struct nvc0_context *nvc0,
        (res->status & NVC0_BUFFER_STATUS_DIRTY))
       nvc0_buffer_download(nvc0, res, 0, res->base.width0);
 
-   if (res->domain != NOUVEAU_BO_GART)
+   if ((res->domain != NOUVEAU_BO_GART) ||
+       (res->status & NVC0_BUFFER_STATUS_USER_MEMORY))
       return res->data + offset;
 
    if (res->mm)
@@ -189,6 +196,6 @@ void
 nvc0_miptree_surface_del(struct pipe_context *, struct pipe_surface *);
 
 boolean
-nvc0_migrate_vertices(struct nvc0_resource *buf, unsigned base, unsigned size);
+nvc0_user_buffer_upload(struct nvc0_resource *, unsigned base, unsigned size);
 
 #endif
