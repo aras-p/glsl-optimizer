@@ -77,6 +77,7 @@ API_XML = \
 	ARB_ES2_compatibility.xml \
 	ARB_framebuffer_object.xml \
 	ARB_geometry_shader4.xml \
+	ARB_instanced_arrays.xml \
 	ARB_map_buffer_range.xml \
 	ARB_seamless_cube_map.xml \
 	ARB_sync.xml \
