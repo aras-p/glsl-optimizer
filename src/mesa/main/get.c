@@ -589,6 +589,7 @@ static const struct value_desc values[] = {
      LOC_CUSTOM, TYPE_BOOLEAN, offsetof(struct gl_client_array, Stride), NO_EXTRA },
 
    /* GL_ARB_ES2_compatibility */
+   { GL_SHADER_COMPILER, CONST(1), extra_ARB_ES2_compatibility },
    { GL_MAX_VARYING_VECTORS, CONTEXT_INT(Const.MaxVarying),
      extra_ARB_ES2_compatibility },
    { GL_MAX_VERTEX_UNIFORM_VECTORS, LOC_CUSTOM, TYPE_INT, 0,
