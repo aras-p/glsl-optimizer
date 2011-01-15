@@ -1101,6 +1101,40 @@ nv_pass_cse(struct nv_pass *ctx, struct nv_basic_block *b)
    return 0;
 }
 
+/* Make sure all sources of an NV_OP_BIND are distinct, they need to occupy
+ * neighbouring registers. CSE might have messed this up.
+ */
+static int
+nv_pass_fix_bind(struct nv_pass *ctx, struct nv_basic_block *b)
+{
+   struct nv_value *val;
+   struct nv_instruction *bnd, *nvi, *next;
+   int s, t;
+
+   for (bnd = b->entry; bnd; bnd = next) {
+      next = bnd->next;
+      if (bnd->opcode != NV_OP_BIND)
+         continue;
+      for (s = 0; s < 4 && bnd->src[s]; ++s) {
+         val = bnd->src[s]->value;
+         for (t = s + 1; t < 4 && bnd->src[t]; ++t) {
+            if (bnd->src[t]->value != val)
+               continue;
+            nvi = nv_alloc_instruction(ctx->pc, NV_OP_MOV);
+            nvi->def[0] = new_value_like(ctx->pc, val);
+            nvi->def[0]->insn = nvi;
+            nv_reference(ctx->pc, nvi, 0, val);
+            nvc0_insn_insert_before(bnd, nvi);
+
+            nv_reference(ctx->pc, bnd, t, nvi->def[0]);
+         }
+      }
+   }
+   DESCEND_ARBITRARY(t, nv_pass_fix_bind);
+
+   return 0;
+}
+
 static int
 nv_pc_pass0(struct nv_pc *pc, struct nv_basic_block *root)
 {
@@ -1176,6 +1210,9 @@ nv_pc_pass0(struct nv_pc *pc, struct nv_basic_block *root)
    ret = nv_pass_tex_mask(&pass, root);
    if (ret)
       return ret;
+
+   pc->pass_seq++;
+   ret = nv_pass_fix_bind(&pass, root);
 
    return ret;
 }
