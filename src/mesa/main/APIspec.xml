@@ -3590,6 +3590,7 @@
 	<function name="ClearColor" template="ClearColor" gltype="GLclampf"/>
 	<function name="ClearStencil" template="ClearStencil"/>
 	<function name="ClearDepth" template="ClearDepth" gltype="GLclampd"/>
+	<function name="ClearDepthf" template="ClearDepth" gltype="GLclampf"/>
 
 	<function name="StencilMask" template="StencilMask"/>
 	<function name="StencilMaskSeparate" template="StencilMaskSeparate"/>
@@ -3634,6 +3635,7 @@
 	<function name="IsEnabled" template="IsEnabled"/>
 
 	<function name="DepthRange" template="DepthRange" gltype="GLclampd"/>
+	<function name="DepthRangef" template="DepthRange" gltype="GLclampf"/>
 	<function name="Frustum" template="Frustum" gltype="GLdouble"/>
 
 	<function name="LoadIdentity" template="LoadIdentity"/>
