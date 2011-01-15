@@ -41,19 +41,19 @@
 
 #define __GLX_PAD(n) (((n) + 3) & ~3)
 
-#if defined(__i386__) && defined(__GNUC__) && !defined(__CYGWIN__) && !defined(__MINGW32__)
-#define FASTCALL __attribute__((fastcall))
-#else
-#define FASTCALL
-#endif
-#if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
-#define NOINLINE __attribute__((noinline))
-#else
-#define NOINLINE
-#endif
+#  if defined(__i386__) && defined(__GNUC__) && !defined(__CYGWIN__) && !defined(__MINGW32__)
+#    define FASTCALL __attribute__((fastcall))
+#  else
+#    define FASTCALL
+#  endif
+#  if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
+#    define NOINLINE __attribute__((noinline))
+#  else
+#    define NOINLINE
+#  endif
 
 #ifndef __GNUC__
-#define __builtin_expect(x, y) x
+#  define __builtin_expect(x, y) x
 #endif
 
 /* If the size and opcode values are known at compile-time, this will, on
@@ -10657,5 +10657,5 @@ __indirect_glFramebufferTextureLayerEXT(GLenum target, GLenum attachment,
 }
 
 
-#undef FASTCALL
-#undef NOINLINE
+#  undef FASTCALL
+#  undef NOINLINE

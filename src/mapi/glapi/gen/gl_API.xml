@@ -12523,5 +12523,6 @@
 <xi:include href="EXT_gpu_shader4.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 <xi:include href="GL3x.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
+<xi:include href="ARB_instanced_arrays.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 </OpenGLAPI>
