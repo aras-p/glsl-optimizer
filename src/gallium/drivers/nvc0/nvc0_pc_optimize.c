@@ -249,6 +249,13 @@ check_swap_src_0_1(struct nv_instruction *nvi)
          nvi->src[0] = src1;
          nvi->src[1] = src0;
       }
+   } else
+   if (is_immd32_load(src0->value->insn)) {
+      if (!is_cspace_load(src1->value->insn) &&
+          !is_immd32_load(src1->value->insn)) {
+         nvi->src[0] = src1;
+         nvi->src[1] = src0;
+      }
    }
 
    if (nvi->src[0] != src0 && nvi->opcode == NV_OP_SET)
