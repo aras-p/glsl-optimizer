@@ -185,7 +185,7 @@ compile_shader(struct gl_context *ctx, struct gl_shader *shader)
 
    const char *source = shader->Source;
    state->error = preprocess(state, &source, &state->info_log,
-			     state->extensions, ctx->API);
+			     state->extensions, ctx->API) != 0;
 
    if (!state->error) {
       _mesa_glsl_lexer_ctor(state, source);
