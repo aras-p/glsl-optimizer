@@ -89,10 +89,7 @@ _token_create_ival (void *ctx, int type, int ival);
 static token_list_t *
 _token_list_create (void *ctx);
 
-/* Note: This function adds a talloc_reference() to token.
- *
- * You may want to talloc_unlink any current reference if you no
- * longer need it. */
+/* Note: This function calls talloc_steal on token. */
 static void
 _token_list_append (token_list_t *list, token_t *token);
 
@@ -479,12 +476,10 @@ conditional_tokens:
 	conditional_token {
 		$$ = _token_list_create (parser);
 		_token_list_append ($$, $1);
-		talloc_unlink (parser, $1);
 	}
 |	conditional_tokens conditional_token {
 		$$ = $1;
 		_token_list_append ($$, $2);
-		talloc_unlink (parser, $2);
 	}
 ;
 
@@ -493,12 +488,10 @@ pp_tokens:
 		parser->space_tokens = 1;
 		$$ = _token_list_create (parser);
 		_token_list_append ($$, $1);
-		talloc_unlink (parser, $1);
 	}
 |	pp_tokens preprocessing_token {
 		$$ = $1;
 		_token_list_append ($$, $2);
-		talloc_unlink (parser, $2);
 	}
 ;
 
@@ -764,7 +757,7 @@ _token_list_append (token_list_t *list, token_t *token)
 	token_node_t *node;
 
 	node = talloc (list, token_node_t);
-	node->token = talloc_reference (list, token);
+	node->token = talloc_steal (list, token);
 
 	node->next = NULL;
 
@@ -805,8 +798,11 @@ _token_list_copy (void *ctx, token_list_t *other)
 		return NULL;
 
 	copy = _token_list_create (ctx);
-	for (node = other->head; node; node = node->next)
-		_token_list_append (copy, node->token);
+	for (node = other->head; node; node = node->next) {
+		token_t *new_token = talloc (copy, token_t);
+		*new_token = *node->token;
+		_token_list_append (copy, new_token);
+	}
 
 	return copy;
 }
@@ -1081,8 +1077,6 @@ static void add_builtin_define(glcpp_parser_t *parser,
    list = _token_list_create(parser);
    _token_list_append(list, tok);
    _define_object_macro(parser, NULL, name, list);
-
-   talloc_unlink(parser, tok);
 }
 
 glcpp_parser_t *
