@@ -2641,9 +2641,9 @@ set_uniform_initializers(struct gl_context *ctx,
 void
 ir_to_mesa_visitor::copy_propagate(void)
 {
-   ir_to_mesa_instruction **acp = new ir_to_mesa_instruction *[this->next_temp * 4];
-
-   memset(acp, 0, sizeof(acp) * this->next_temp * 4);
+   ir_to_mesa_instruction **acp = talloc_zero_array(mem_ctx,
+						    ir_to_mesa_instruction *,
+						    this->next_temp * 4);
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       ir_to_mesa_instruction *inst = (ir_to_mesa_instruction *)iter.get();
@@ -2706,7 +2706,7 @@ ir_to_mesa_visitor::copy_propagate(void)
       case OPCODE_ELSE:
       case OPCODE_ENDIF:
 	 /* End of a basic block, clear the ACP entirely. */
-	 memset(&acp, 0, sizeof(acp));
+	 memset(acp, 0, sizeof(*acp) * this->next_temp * 4);
 	 break;
 
       default:
@@ -2715,7 +2715,7 @@ ir_to_mesa_visitor::copy_propagate(void)
 	  */
 	 if (inst->dst_reg.file == PROGRAM_TEMPORARY) {
 	    if (inst->dst_reg.reladdr) {
-	       memset(&acp, 0, sizeof(acp));
+	       memset(acp, 0, sizeof(*acp) * this->next_temp * 4);
 	    } else {
 	       for (int i = 0; i < 4; i++) {
 		  if (inst->dst_reg.writemask & (1 << i)) {
@@ -2742,7 +2742,7 @@ ir_to_mesa_visitor::copy_propagate(void)
       }
    }
 
-   delete [] acp;
+   talloc_free(acp);
 }
 
 
