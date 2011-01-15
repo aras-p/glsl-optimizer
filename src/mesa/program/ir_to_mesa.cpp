@@ -2641,9 +2641,9 @@ set_uniform_initializers(struct gl_context *ctx,
 void
 ir_to_mesa_visitor::copy_propagate(void)
 {
-   ir_to_mesa_instruction *acp[this->next_temp * 4];
+   ir_to_mesa_instruction **acp = new ir_to_mesa_instruction *[this->next_temp * 4];
 
-   memset(&acp, 0, sizeof(acp));
+   memset(acp, 0, sizeof(acp) * this->next_temp * 4);
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       ir_to_mesa_instruction *inst = (ir_to_mesa_instruction *)iter.get();
@@ -2741,6 +2741,8 @@ ir_to_mesa_visitor::copy_propagate(void)
 	 }
       }
    }
+
+   delete [] acp;
 }
 
 
