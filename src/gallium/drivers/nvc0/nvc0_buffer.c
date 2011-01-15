@@ -116,6 +116,12 @@ nvc0_buffer_upload(struct nvc0_context *nvc0, struct nvc0_resource *buf,
    struct nouveau_bo *bounce = NULL;
    uint32_t offset;
 
+   if (size <= 192) {
+      nvc0_m2mf_push_linear(nvc0, buf->bo, buf->domain, buf->offset + start,
+                            size, buf->data + start);
+      return TRUE;
+   }
+
    mm = nvc0_mm_allocate(nvc0->screen->mm_GART, size, &bounce, &offset);
    if (!bounce)
       return FALSE;
