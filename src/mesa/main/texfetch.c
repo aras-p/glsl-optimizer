@@ -858,7 +858,7 @@ fetch_texel_chan_to_float(const struct gl_texture_image *texImage,
 void
 _mesa_set_fetch_functions(struct gl_texture_image *texImage, GLuint dims)
 {
-   GLuint format = texImage->TexFormat;
+   gl_format format = texImage->TexFormat;
 
    ASSERT(dims == 1 || dims == 2 || dims == 3);
 
@@ -866,8 +866,8 @@ _mesa_set_fetch_functions(struct gl_texture_image *texImage, GLuint dims)
        _mesa_get_format_color_encoding(format) == GL_SRGB) {
       format = _mesa_get_srgb_format_linear(format);
    }
-   texImage->FetchTexelf =
-      _mesa_get_texel_fetch_func(format, dims);
+
+   texImage->FetchTexelf = _mesa_get_texel_fetch_func(format, dims);
 
    texImage->FetchTexelc = fetch_texel_float_to_chan;
 
