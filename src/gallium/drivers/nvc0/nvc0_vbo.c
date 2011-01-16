@@ -58,7 +58,8 @@ nvc0_vertex_state_create(struct pipe_context *pipe,
     if (!so)
         return NULL;
     so->num_elements = num_elements;
-    so->instance_bits = 0;
+    so->instance_elts = 0;
+    so->instance_bufs = 0;
 
     transkey.nr_elements = 0;
     transkey.output_stride = 0;
@@ -85,7 +86,7 @@ nvc0_vertex_state_create(struct pipe_context *pipe,
         }
         so->element[i].state |= i;
 
-        if (likely(!ve->instance_divisor)) {
+        if (1) {
             unsigned j = transkey.nr_elements++;
 
             transkey.element[j].type = TRANSLATE_ELEMENT_NORMAL;
@@ -97,8 +98,11 @@ nvc0_vertex_state_create(struct pipe_context *pipe,
             transkey.element[j].output_format = fmt;
             transkey.element[j].output_offset = transkey.output_stride;
             transkey.output_stride += (util_format_get_stride(fmt, 1) + 3) & ~3;
-        } else {
-           so->instance_bits |= 1 << i;
+
+            if (unlikely(ve->instance_divisor)) {
+               so->instance_elts |= 1 << i;
+               so->instance_bufs |= 1 << vbi;
+            }
         }
     }
 
@@ -141,6 +145,22 @@ nvc0_emit_vtxattr(struct nvc0_context *nvc0, struct pipe_vertex_buffer *vb,
       OUT_RINGf(chan, v[i]);
 }
 
+static INLINE void
+nvc0_vbuf_range(struct nvc0_context *nvc0, int vbi,
+                uint32_t *base, uint32_t *size)
+{
+   if (unlikely(nvc0->vertex->instance_bufs & (1 << vbi))) {
+      /* TODO: use min and max instance divisor to get a proper range */
+      *base = 0;
+      *size = (nvc0->vtxbuf[vbi].max_index + 1) * nvc0->vtxbuf[vbi].stride;
+   } else {
+      assert(nvc0->vbo_max_index != ~0);
+      *base = nvc0->vbo_min_index * nvc0->vtxbuf[vbi].stride;
+      *size = (nvc0->vbo_max_index -
+               nvc0->vbo_min_index + 1) * nvc0->vtxbuf[vbi].stride;
+   }
+}
+
 static void
 nvc0_prevalidate_vbufs(struct nvc0_context *nvc0)
 {
@@ -165,9 +185,7 @@ nvc0_prevalidate_vbufs(struct nvc0_context *nvc0)
             if (buf->status & NVC0_BUFFER_STATUS_USER_MEMORY) {
                nvc0->vbo_user |= 1 << i;
                assert(vb->stride > vb->buffer_offset);
-               size = vb->stride * (nvc0->vbo_max_index -
-                                    nvc0->vbo_min_index + 1);
-               base = vb->stride * nvc0->vbo_min_index;
+               nvc0_vbuf_range(nvc0, i, &base, &size);
                nvc0_user_buffer_upload(buf, base, size);
             } else {
                nvc0_buffer_migrate(nvc0, buf, NOUVEAU_BO_GART);
@@ -184,7 +202,6 @@ static void
 nvc0_update_user_vbufs(struct nvc0_context *nvc0)
 {
    struct nouveau_channel *chan = nvc0->screen->base.channel;
-   const uint32_t vertex_count = nvc0->vbo_max_index - nvc0->vbo_min_index + 1;
    uint32_t base, offset, size;
    int i;
    uint32_t written = 0;
@@ -202,8 +219,7 @@ nvc0_update_user_vbufs(struct nvc0_context *nvc0)
          nvc0_emit_vtxattr(nvc0, vb, ve, i);
          continue;
       }
-      size = vb->stride * vertex_count;
-      base = vb->stride * nvc0->vbo_min_index;
+      nvc0_vbuf_range(nvc0, b, &base, &size);
 
       if (!(written & (1 << b))) {
          written |= 1 << b;
@@ -253,13 +269,13 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
       vb = &nvc0->vtxbuf[ve->pipe.vertex_buffer_index];
 
       if (unlikely(ve->pipe.instance_divisor)) {
-         if (!(nvc0->state.instance_bits & (1 << i))) {
+         if (!(nvc0->state.instance_elts & (1 << i))) {
             IMMED_RING(chan, RING_3D(VERTEX_ARRAY_PER_INSTANCE(i)), 1);
          }
          BEGIN_RING(chan, RING_3D(VERTEX_ARRAY_DIVISOR(i)), 1);
          OUT_RING  (chan, ve->pipe.instance_divisor);
       } else
-      if (unlikely(nvc0->state.instance_bits & (1 << i))) {
+      if (unlikely(nvc0->state.instance_elts & (1 << i))) {
          IMMED_RING(chan, RING_3D(VERTEX_ARRAY_PER_INSTANCE(i)), 0);
       }
 
@@ -293,7 +309,7 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
    }
 
    nvc0->state.num_vtxelts = vertex->num_elements;
-   nvc0->state.instance_bits = vertex->instance_bits;
+   nvc0->state.instance_elts = vertex->instance_elts;
 }
 
 #define NVC0_PRIM_GL_CASE(n) \
@@ -600,15 +616,16 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 
    nvc0_state_validate(nvc0);
 
-   if (nvc0->state.instance_base != info->start_instance) {
-      nvc0->state.instance_base = info->start_instance;
-      BEGIN_RING(chan, RING_3D(VB_INSTANCE_BASE), 1);
-      OUT_RING  (chan, info->start_instance);
-   }
-
    if (nvc0->vbo_fifo) {
       nvc0_push_vbo(nvc0, info);
       return;
+   }
+
+   if (nvc0->state.instance_base != info->start_instance) {
+      nvc0->state.instance_base = info->start_instance;
+      /* NOTE: this does not affect the shader input, should it ? */
+      BEGIN_RING(chan, RING_3D(VB_INSTANCE_BASE), 1);
+      OUT_RING  (chan, info->start_instance);
    }
 
    if (nvc0->vbo_dirty) {

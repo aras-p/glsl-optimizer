@@ -65,7 +65,8 @@ struct nvc0_vertex_element {
 struct nvc0_vertex_stateobj {
    struct translate *translate;
    unsigned num_elements;
-   uint32_t instance_bits;
+   uint32_t instance_elts;
+   uint32_t instance_bufs;
    unsigned vtx_size;
    unsigned vtx_per_packet_max;
    struct nvc0_vertex_element element[1];
