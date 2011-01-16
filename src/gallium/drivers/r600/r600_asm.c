@@ -852,6 +852,7 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5],
 
 	int i, j, r, src, num_src;
 	int num_once_inst = 0;
+	int have_mova = 0, have_rel = 0;
 
 	r = assign_alu_units(bc, alu_prev, prev);
 	if (r)
@@ -866,6 +867,12 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5],
 				return 0;
 			if (r600_bc_alu_nliterals(bc, prev[i], prev_literal, &prev_nliteral))
 				return 0;
+			if (is_alu_mova_inst(bc, prev[i])) {
+				if (have_rel)
+					return 0;
+				have_mova = 1;
+			}
+			num_once_inst += is_alu_once_inst(bc, prev[i]);
 		}
 		if (slots[i] && r600_bc_alu_nliterals(bc, slots[i], literal, &nliteral))
 			return 0;
@@ -873,7 +880,6 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5],
 		// let's check used slots
 		if (prev[i] && !slots[i]) {
 			result[i] = prev[i];
-			num_once_inst += is_alu_once_inst(bc, prev[i]);
 			continue;
 		} else if (prev[i] && slots[i]) {
 			if (result[4] == NULL && prev[4] == NULL && slots[4] == NULL) {
@@ -899,6 +905,12 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5],
 
 		num_src = r600_bc_get_num_operands(bc, alu);
 		for (src = 0; src < num_src; ++src) {
+			if (alu->src[src].rel) {
+				if (have_mova)
+					return 0;
+				have_rel = 1;
+			}
+
 			// constants doesn't matter
 			if (!is_gpr(alu->src[src].sel))
 				continue;
