@@ -84,7 +84,7 @@ GL 4.0:
 
 GLSL 4.0                                             not started
 GL_ARB_texture_query_lod                             not started
-GL_ARB_draw_buffers_blend                            not started
+GL_ARB_draw_buffers_blend                            DONE (gallium softpipe)
 GL_ARB_draw_indirect                                 not started
 GL_ARB_gpu_shader_fp64                               not started
 GL_ARB_sample_shading                                not started
