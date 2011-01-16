@@ -387,9 +387,16 @@ setup_interleaved_attribs(struct gl_context *ctx,
          vbuffer->max_index = max_index;
       }
 
+      /*
+      if (arrays[mesaAttr]->InstanceDivisor)
+         vbuffer[attr].max_index = arrays[mesaAttr]->_MaxElement;
+      else
+         vbuffer[attr].max_index = max_index;
+      */
+
       velements[attr].src_offset =
          (unsigned) (arrays[mesaAttr]->Ptr - offset0);
-      velements[attr].instance_divisor = 0;
+      velements[attr].instance_divisor = arrays[mesaAttr]->InstanceDivisor;
       velements[attr].vertex_buffer_index = 0;
       velements[attr].src_format =
          st_pipe_vertex_format(arrays[mesaAttr]->Type,
@@ -481,9 +488,13 @@ setup_non_interleaved_attribs(struct gl_context *ctx,
 
       /* common-case setup */
       vbuffer[attr].stride = stride; /* in bytes */
-      vbuffer[attr].max_index = max_index;
+      if (arrays[mesaAttr]->InstanceDivisor)
+         vbuffer[attr].max_index = arrays[mesaAttr]->_MaxElement;
+      else
+         vbuffer[attr].max_index = max_index;
+
       velements[attr].src_offset = 0;
-      velements[attr].instance_divisor = 0;
+      velements[attr].instance_divisor = arrays[mesaAttr]->InstanceDivisor;
       velements[attr].vertex_buffer_index = attr;
       velements[attr].src_format
          = st_pipe_vertex_format(arrays[mesaAttr]->Type,
