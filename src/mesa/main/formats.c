@@ -1090,6 +1090,11 @@ _mesa_get_format_color_encoding(gl_format format)
    }
 }
 
+
+/**
+ * For an sRGB format, return the corresponding linear color space format.
+ * For non-sRGB formats, return the format as-is.
+ */
 gl_format
 _mesa_get_srgb_format_linear(gl_format format)
 {
