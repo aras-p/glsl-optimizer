@@ -229,6 +229,8 @@ create_jit_vertex_buffer_type(struct gallivm_state *gallivm)
 
    LP_CHECK_MEMBER_OFFSET(struct pipe_vertex_buffer, stride,
                           target, vb_type, 0);
+   LP_CHECK_MEMBER_OFFSET(struct pipe_vertex_buffer, max_index,
+                          target, vb_type, 1);
    LP_CHECK_MEMBER_OFFSET(struct pipe_vertex_buffer, buffer_offset,
                           target, vb_type, 2);
 
