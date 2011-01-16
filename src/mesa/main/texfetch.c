@@ -858,8 +858,9 @@ fetch_texel_chan_to_float(const struct gl_texture_image *texImage,
 void
 _mesa_set_fetch_functions(struct gl_texture_image *texImage, GLuint dims)
 {
-   ASSERT(dims == 1 || dims == 2 || dims == 3);
    GLuint format = texImage->TexFormat;
+
+   ASSERT(dims == 1 || dims == 2 || dims == 3);
 
    if (texImage->TexObject->sRGBDecode == GL_SKIP_DECODE_EXT &&
        _mesa_get_format_color_encoding(format) == GL_SRGB) {
