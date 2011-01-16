@@ -846,9 +846,9 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5],
 {
 	struct r600_bc_alu *prev[5];
 	struct r600_bc_alu *result[5] = { NULL };
-
-	uint32_t literal[4];
-	unsigned nliteral = 0;
+	
+	uint32_t literal[4], prev_literal[4];
+	unsigned nliteral = 0, prev_nliteral = 0;
 
 	int i, j, r, src, num_src;
 	int num_once_inst = 0;
@@ -861,8 +861,12 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5],
 		struct r600_bc_alu *alu;
 
 		/* check number of literals */
-		if (prev[i] && r600_bc_alu_nliterals(bc, prev[i], literal, &nliteral))
-			return 0;
+		if (prev[i]) {
+			if (r600_bc_alu_nliterals(bc, prev[i], literal, &nliteral))
+				return 0;
+			if (r600_bc_alu_nliterals(bc, prev[i], prev_literal, &prev_nliteral))
+				return 0;
+		}
 		if (slots[i] && r600_bc_alu_nliterals(bc, slots[i], literal, &nliteral))
 			return 0;
 
@@ -922,6 +926,9 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5],
 		return 0;
 
 	/* looks like everything worked out right, apply the changes */
+
+	/* undo adding previus literals */
+	bc->cf_last->ndw -= align(prev_nliteral, 2);
 
 	/* sort instructions */
 	for (i = 0; i < 5; ++i) {
@@ -1108,11 +1115,6 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 	if (!bc->cf_last->curr_bs_head) {
 		bc->cf_last->curr_bs_head = nalu;
 	}
-	/* at most 128 slots, one add alu can add 5 slots + 4 constants(2 slots)
-	 * worst case */
-	if (nalu->last && (bc->cf_last->ndw >> 1) >= 120) {
-		bc->force_add_cf = 1;
-	}
 	/* number of gpr == the last gpr used in any alu */
 	for (i = 0; i < 3; i++) {
 		if (nalu->src[i].sel >= bc->ngpr && nalu->src[i].sel < 128) {
@@ -1133,6 +1135,8 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 
 	/* process cur ALU instructions for bank swizzle */
 	if (nalu->last) {
+		uint32_t literal[4];
+		unsigned nliteral;
 		struct r600_bc_alu *slots[5];
 		r = assign_alu_units(bc, bc->cf_last->curr_bs_head, slots);
 		if (r)
@@ -1153,6 +1157,21 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 		r = check_and_set_bank_swizzle(bc, slots);
 		if (r)
 			return r;
+
+		for (i = 0, nliteral = 0; i < 5; i++) {
+			if (slots[i]) {
+				r = r600_bc_alu_nliterals(bc, slots[i], literal, &nliteral);
+				if (r)
+					return r;
+			}
+		}
+		bc->cf_last->ndw += align(nliteral, 2);
+
+		/* at most 128 slots, one add alu can add 5 slots + 4 constants(2 slots)
+		 * worst case */
+		if ((bc->cf_last->ndw >> 1) >= 120) {
+			bc->force_add_cf = 1;
+		}
 
 		bc->cf_last->prev2_bs_head = bc->cf_last->prev_bs_head;
 		bc->cf_last->prev_bs_head = bc->cf_last->curr_bs_head;
@@ -1455,16 +1474,6 @@ int r600_bc_build(struct r600_bc *bc)
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER << 3):
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER << 3):
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
-			nliteral = 0;
-			LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
-				r = r600_bc_alu_nliterals(bc, alu, literal, &nliteral);
-				if (r)
-					return r;
-				if (alu->last) {
-					cf->ndw += align(nliteral, 2);
-					nliteral = 0;
-				}
-			}
 			break;
 		case V_SQ_CF_WORD1_SQ_CF_INST_TEX:
 		case V_SQ_CF_WORD1_SQ_CF_INST_VTX:
@@ -1514,6 +1523,7 @@ int r600_bc_build(struct r600_bc *bc)
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER << 3):
 		case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
 			nliteral = 0;
+			memset(literal, 0, sizeof(literal));
 			LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
 				r = r600_bc_alu_nliterals(bc, alu, literal, &nliteral);
 				if (r)
@@ -1539,6 +1549,7 @@ int r600_bc_build(struct r600_bc *bc)
 						bc->bytecode[addr++] = literal[i];
 					}
 					nliteral = 0;
+					memset(literal, 0, sizeof(literal));
 				}
 			}
 			break;

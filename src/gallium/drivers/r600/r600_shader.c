@@ -1000,7 +1000,7 @@ static int tgsi_setup_trig(struct r600_shader_ctx *ctx,
 	alu.src[1].chan = 0;
 	alu.src[1].value = (uint32_t *)&half_inv_pi;
 	alu.src[2].sel = V_SQ_ALU_SRC_0_5;
-	alu.src[2].chan = 1;
+	alu.src[2].chan = 0;
 	alu.last = 1;
 	r = r600_bc_add_alu(ctx->bc, &alu);
 	if (r)
@@ -1034,7 +1034,7 @@ static int tgsi_setup_trig(struct r600_shader_ctx *ctx,
 	alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
 	alu.src[1].chan = 0;
 	alu.src[2].sel = V_SQ_ALU_SRC_LITERAL;
-	alu.src[2].chan = 1;
+	alu.src[2].chan = 0;
 
 	if (ctx->bc->chiprev == CHIPREV_R600) {
 		alu.src[1].value = (uint32_t *)&double_pi;
