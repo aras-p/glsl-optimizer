@@ -2363,7 +2363,7 @@ ast_declarator_list::hir(exec_list *instructions,
       }
 
 
-      /* Precision qualifiers do not apply to bools and structs.
+      /* Precision qualifiers only apply to floating point and integer types.
        *
        * From section 4.5.2 of the GLSL 1.30 spec:
        *    "Any floating point or any integer declaration can have the type
@@ -2372,16 +2372,15 @@ ast_declarator_list::hir(exec_list *instructions,
        *    variables.
        */
       if (this->type->specifier->precision != ast_precision_none
-          && this->type->specifier->type_specifier == ast_bool) {
+          && !var->type->is_float()
+          && !var->type->is_integer()
+          && !(var->type->is_array()
+               && (var->type->fields.array->is_float()
+                   || var->type->fields.array->is_integer()))) {
 
          _mesa_glsl_error(&loc, state,
-                          "preicion qualifiers do not apply to type bool");
-      }
-      if (this->type->specifier->precision != ast_precision_none
-          && this->type->specifier->structure != NULL) {
-
-         _mesa_glsl_error(&loc, state,
-                          "precision qualifiers do not apply to structures");
+                          "precision qualifiers apply only to floating point "
+                          "and integer types");
       }
 
       /* Process the initializer and add its instructions to a temporary
