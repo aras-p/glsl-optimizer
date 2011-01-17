@@ -2351,6 +2351,39 @@ ast_declarator_list::hir(exec_list *instructions,
       }
 
 
+      /* Precision qualifiers exists only in GLSL versions 1.00 and >= 1.30.
+       */
+      if (this->type->specifier->precision != ast_precision_none
+          && state->language_version != 100
+          && state->language_version < 130) {
+
+         _mesa_glsl_error(&loc, state,
+                          "precision qualifiers are supported only in GLSL ES "
+                          "1.00, and GLSL 1.30 and later");
+      }
+
+
+      /* Precision qualifiers do not apply to bools and structs.
+       *
+       * From section 4.5.2 of the GLSL 1.30 spec:
+       *    "Any floating point or any integer declaration can have the type
+       *    preceded by one of these precision qualifiers [...] Literal
+       *    constants do not have precision qualifiers. Neither do Boolean
+       *    variables.
+       */
+      if (this->type->specifier->precision != ast_precision_none
+          && this->type->specifier->type_specifier == ast_bool) {
+
+         _mesa_glsl_error(&loc, state,
+                          "preicion qualifiers do not apply to type bool");
+      }
+      if (this->type->specifier->precision != ast_precision_none
+          && this->type->specifier->structure != NULL) {
+
+         _mesa_glsl_error(&loc, state,
+                          "precision qualifiers do not apply to structures");
+      }
+
       /* Process the initializer and add its instructions to a temporary
        * list.  This list will be added to the instruction stream (below) after
        * the declaration is added.  This is done because in some cases (such as
