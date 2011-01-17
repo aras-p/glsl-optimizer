@@ -290,10 +290,9 @@ static struct sp_sampler_variant *
 get_sampler_variant( unsigned unit,
                      struct sp_sampler *sampler,
                      struct pipe_sampler_view *view,
-                     struct pipe_resource *resource,
                      unsigned processor )
 {
-   struct softpipe_resource *sp_texture = softpipe_resource(resource);
+   struct softpipe_resource *sp_texture = softpipe_resource(view->texture);
    struct sp_sampler_variant *v = NULL;
    union sp_sampler_key key;
 
@@ -353,7 +352,6 @@ softpipe_reset_sampler_variants(struct softpipe_context *softpipe)
             get_sampler_variant( i,
                                  sp_sampler(softpipe->vertex_samplers[i]),
                                  softpipe->vertex_sampler_views[i],
-                                 texture,
                                  TGSI_PROCESSOR_VERTEX );
 
          sp_sampler_variant_bind_texture( softpipe->tgsi.vert_samplers_list[i], 
@@ -376,7 +374,6 @@ softpipe_reset_sampler_variants(struct softpipe_context *softpipe)
                   i,
                   sp_sampler(softpipe->geometry_samplers[i]),
                   softpipe->geometry_sampler_views[i],
-                  texture,
                   TGSI_PROCESSOR_GEOMETRY );
 
             sp_sampler_variant_bind_texture(
@@ -399,7 +396,6 @@ softpipe_reset_sampler_variants(struct softpipe_context *softpipe)
             get_sampler_variant( i,
                                  sp_sampler(softpipe->sampler[i]),
                                  softpipe->sampler_views[i],
-                                 texture,
                                  TGSI_PROCESSOR_FRAGMENT );
 
          sp_sampler_variant_bind_texture( softpipe->tgsi.frag_samplers_list[i], 
