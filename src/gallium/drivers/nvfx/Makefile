@@ -27,6 +27,7 @@ C_SOURCES = \
 	nvfx_vertprog.c
 
 LIBRARY_INCLUDES = \
+	$(LIBDRM_CFLAGS) \
 	-I$(TOP)/src/gallium/drivers/nouveau/include
 
 include ../../Makefile.template

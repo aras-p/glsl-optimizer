@@ -31,4 +31,7 @@ C_SOURCES = \
 	nvc0_mm.c \
 	nvc0_query.c
 
+LIBRARY_INCLUDES = \
+	$(LIBDRM_CFLAGS)
+
 include ../../Makefile.template
