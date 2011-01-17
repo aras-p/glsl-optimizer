@@ -178,6 +178,7 @@ static void split_prims( struct split_context *split)
 	    outprim->end = (nr == remaining && prim->end);
 	    outprim->start = prim->start + j;
 	    outprim->count = nr;
+            outprim->num_instances = prim->num_instances;
 
 	    update_index_bounds(split, outprim);
 
