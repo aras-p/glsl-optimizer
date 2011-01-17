@@ -1195,6 +1195,9 @@ storage_qualifier:
 
 type_specifier:
 	type_specifier_no_prec
+	{
+	   $$ = $1;
+	}
 	| precision_qualifier type_specifier_no_prec
 	{
 	   $$ = $2;
