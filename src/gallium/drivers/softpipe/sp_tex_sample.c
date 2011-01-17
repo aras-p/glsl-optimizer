@@ -566,7 +566,7 @@ compute_lambda_1d(const struct sp_sampler_variant *samp,
    const struct pipe_resource *texture = samp->view->texture;
    float dsdx = fabsf(s[QUAD_BOTTOM_RIGHT] - s[QUAD_BOTTOM_LEFT]);
    float dsdy = fabsf(s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT]);
-   float rho = MAX2(dsdx, dsdy) * texture->width0;
+   float rho = MAX2(dsdx, dsdy) * u_minify(texture->width0, samp->view->u.tex.first_level);
 
    return util_fast_log2(rho);
 }
@@ -583,8 +583,8 @@ compute_lambda_2d(const struct sp_sampler_variant *samp,
    float dsdy = fabsf(s[QUAD_TOP_LEFT]     - s[QUAD_BOTTOM_LEFT]);
    float dtdx = fabsf(t[QUAD_BOTTOM_RIGHT] - t[QUAD_BOTTOM_LEFT]);
    float dtdy = fabsf(t[QUAD_TOP_LEFT]     - t[QUAD_BOTTOM_LEFT]);
-   float maxx = MAX2(dsdx, dsdy) * texture->width0;
-   float maxy = MAX2(dtdx, dtdy) * texture->height0;
+   float maxx = MAX2(dsdx, dsdy) * u_minify(texture->width0, samp->view->u.tex.first_level);
+   float maxy = MAX2(dtdx, dtdy) * u_minify(texture->height0, samp->view->u.tex.first_level);
    float rho  = MAX2(maxx, maxy);
 
    return util_fast_log2(rho);
@@ -604,9 +604,9 @@ compute_lambda_3d(const struct sp_sampler_variant *samp,
    float dtdy = fabsf(t[QUAD_TOP_LEFT]     - t[QUAD_BOTTOM_LEFT]);
    float dpdx = fabsf(p[QUAD_BOTTOM_RIGHT] - p[QUAD_BOTTOM_LEFT]);
    float dpdy = fabsf(p[QUAD_TOP_LEFT]     - p[QUAD_BOTTOM_LEFT]);
-   float maxx = MAX2(dsdx, dsdy) * texture->width0;
-   float maxy = MAX2(dtdx, dtdy) * texture->height0;
-   float maxz = MAX2(dpdx, dpdy) * texture->depth0;
+   float maxx = MAX2(dsdx, dsdy) * u_minify(texture->width0, samp->view->u.tex.first_level);
+   float maxy = MAX2(dtdx, dtdy) * u_minify(texture->height0, samp->view->u.tex.first_level);
+   float maxz = MAX2(dpdx, dpdy) * u_minify(texture->depth0, samp->view->u.tex.first_level);
    float rho;
 
    rho = MAX2(maxx, maxy);
@@ -1590,10 +1590,10 @@ mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
    /* XXX: Take into account all lod values.
     */
    lambda = lod[0];
-   level0 = (int)lambda;
+   level0 = samp->view->u.tex.first_level + (int)lambda;
 
    if (lambda < 0.0) { 
-      samp->level = 0;
+      samp->level = samp->view->u.tex.first_level;
       samp->mag_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba);
    }
    else if (level0 >= texture->last_level) {
@@ -1601,7 +1601,7 @@ mip_filter_linear(struct tgsi_sampler *tgsi_sampler,
       samp->min_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba);
    }
    else {
-      float levelBlend = lambda - level0;
+      float levelBlend = frac(lambda);
       float rgba0[4][4];
       float rgba1[4][4];
       int c,j;
@@ -1658,11 +1658,11 @@ mip_filter_nearest(struct tgsi_sampler *tgsi_sampler,
    lambda = lod[0];
 
    if (lambda < 0.0) { 
-      samp->level = 0;
+      samp->level = samp->view->u.tex.first_level;
       samp->mag_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba);
    }
    else {
-      samp->level = (int)(lambda + 0.5) ;
+      samp->level = samp->view->u.tex.first_level + (int)(lambda + 0.5) ;
       samp->level = MIN2(samp->level, (int)texture->last_level);
       samp->min_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba);
    }
@@ -1699,6 +1699,7 @@ mip_filter_none(struct tgsi_sampler *tgsi_sampler,
     */
    lambda = lod[0];
 
+   samp->level = samp->view->u.tex.first_level;
    if (lambda < 0.0) { 
       samp->mag_img_filter(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba);
    }
@@ -1741,20 +1742,20 @@ mip_filter_linear_2d_linear_repeat_POT(
    /* XXX: Take into account all lod values.
     */
    lambda = lod[0];
-   level0 = (int)lambda;
+   level0 = samp->view->u.tex.first_level + (int)lambda;
 
    /* Catches both negative and large values of level0:
     */
    if ((unsigned)level0 >= texture->last_level) { 
       if (level0 < 0)
-         samp->level = 0;
+         samp->level = samp->view->u.tex.first_level;
       else
          samp->level = texture->last_level;
 
       img_filter_2d_linear_repeat_POT(tgsi_sampler, s, t, p, NULL, tgsi_sampler_lod_bias, rgba);
    }
    else {
-      float levelBlend = lambda - level0;
+      float levelBlend = frac(lambda);
       float rgba0[4][4];
       float rgba1[4][4];
       int c,j;
@@ -2238,14 +2239,13 @@ sp_sampler_variant_bind_view( struct sp_sampler_variant *samp,
                               struct softpipe_tex_tile_cache *tex_cache,
                               const struct pipe_sampler_view *view )
 {
-   const struct pipe_sampler_state *sampler = samp->sampler;
    const struct pipe_resource *texture = view->texture;
 
    samp->view = view;
    samp->cache = tex_cache;
    samp->xpot = util_unsigned_logbase2( texture->width0 );
    samp->ypot = util_unsigned_logbase2( texture->height0 );
-   samp->level = CLAMP((int) sampler->min_lod, 0, (int) texture->last_level);
+   samp->level = view->u.tex.first_level;
 }
 
 
