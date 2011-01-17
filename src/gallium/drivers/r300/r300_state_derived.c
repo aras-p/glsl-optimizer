@@ -768,7 +768,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
     struct r300_sampler_state *sampler;
     struct r300_sampler_view *view;
     struct r300_resource *tex;
-    unsigned min_level, max_level, i, j, size;
+    unsigned base_level, min_level, level_count, i, j, size;
     unsigned count = MIN2(state->sampler_view_count,
                           state->sampler_state_count);
     boolean has_us_format = r300->screen->caps.has_us_format;
@@ -801,21 +801,27 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                                       r300->screen->caps.is_r500);
 
             /* determine min/max levels */
-            max_level = MIN3(sampler->max_lod + view->base.u.tex.first_level,
-                             tex->b.b.b.last_level, view->base.u.tex.last_level);
-            min_level = MIN2(sampler->min_lod + view->base.u.tex.first_level,
-                             max_level);
+            base_level = view->base.u.tex.first_level;
+            min_level = sampler->min_lod;
+            level_count = MIN3(sampler->max_lod,
+                               tex->b.b.b.last_level - base_level,
+                               view->base.u.tex.last_level - base_level);
 
-            if (tex->tex.is_npot && min_level > 0) {
-                /* Even though we do not implement mipmapping for NPOT
-                 * textures, we should at least honor the minimum level
-                 * which is allowed to be displayed. We do this by setting up
-                 * the i-th mipmap level as the zero level. */
-                unsigned offset = tex->tex_offset +
-                                  tex->tex.offset_in_bytes[min_level];
+            if (base_level + min_level) {
+                unsigned offset;
+
+                if (tex->tex.is_npot) {
+                    /* Even though we do not implement mipmapping for NPOT
+                     * textures, we should at least honor the minimum level
+                     * which is allowed to be displayed. We do this by setting up
+                     * an i-th mipmap level as the zero level. */
+                    base_level += min_level;
+                }
+                offset = tex->tex_offset +
+                         tex->tex.offset_in_bytes[base_level];
 
                 r300_texture_setup_format_state(r300->screen, tex,
-                                                min_level,
+                                                base_level,
                                                 &texstate->format);
                 texstate->format.tile_config |= offset & 0xffffffe0;
                 assert((offset & 0x1f) == 0);
@@ -892,7 +898,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                 }
             } else {
                 /* the MAX_MIP level is the largest (finest) one */
-                texstate->format.format0 |= R300_TX_NUM_LEVELS(max_level);
+                texstate->format.format0 |= R300_TX_NUM_LEVELS(level_count);
                 texstate->filter0 |= R300_TX_MAX_MIP_LEVEL(min_level);
             }
 
