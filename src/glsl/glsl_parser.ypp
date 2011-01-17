@@ -702,12 +702,6 @@ declaration:
 	}
 	| PRECISION precision_qualifier type_specifier_no_prec ';'
 	{
-	   if (($3->type_specifier != ast_float)
-	       && ($3->type_specifier != ast_int)) {
-	      _mesa_glsl_error(& @3, state, "global precision qualifier can "
-			       "only be applied to `int' or `float'\n");
-	      YYERROR;
-	   }
 	   $3->precision = $2;
 	   $3->is_precision_statement = true;
 	   $$ = $3;
