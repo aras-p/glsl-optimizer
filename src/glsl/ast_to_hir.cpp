@@ -3239,6 +3239,58 @@ ir_rvalue *
 ast_type_specifier::hir(exec_list *instructions,
 			  struct _mesa_glsl_parse_state *state)
 {
+   if (!this->is_precision_statement && this->structure == NULL)
+      return NULL;
+
+   YYLTYPE loc = this->get_location();
+
+   if (this->precision != ast_precision_none
+       && state->language_version != 100
+       && state->language_version < 130) {
+      _mesa_glsl_error(&loc, state,
+                       "precision qualifiers exist only in "
+                       "GLSL ES 1.00, and GLSL 1.30 and later");
+      return NULL;
+   }
+   if (this->precision != ast_precision_none
+       && this->structure != NULL) {
+      _mesa_glsl_error(&loc, state,
+                       "precision qualifiers do not apply to structures");
+      return NULL;
+   }
+
+   /* If this is a precision statement, check that the type to which it is
+    * applied is either float or int.
+    *
+    * From section 4.5.3 of the GLSL 1.30 spec:
+    *    "The precision statement
+    *       precision precision-qualifier type;
+    *    can be used to establish a default precision qualifier. The type
+    *    field can be either int or float [...].  Any other types or
+    *    qualifiers will result in an error.
+    */
+   if (this->is_precision_statement) {
+      assert(this->precision != ast_precision_none);
+      assert(this->structure == NULL); /* The check for structures was
+                                        * performed above. */
+      if (this->is_array) {
+         _mesa_glsl_error(&loc, state,
+                          "default precision statements do not apply to "
+                          "arrays");
+         return NULL;
+      }
+      if (this->type_specifier != ast_float
+          && this->type_specifier != ast_int) {
+         _mesa_glsl_error(&loc, state,
+                          "default precision statements apply only to types "
+                          "float and int");
+         return NULL;
+      }
+
+      /* FINISHME: Translate precision statements into IR. */
+      return NULL;
+   }
+
    if (this->structure != NULL)
       return this->structure->hir(instructions, state);
 

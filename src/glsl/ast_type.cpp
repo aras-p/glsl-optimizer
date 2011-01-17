@@ -49,7 +49,8 @@ ast_type_specifier::print(void) const
 
 ast_type_specifier::ast_type_specifier(int specifier)
       : type_specifier(ast_types(specifier)), type_name(NULL), structure(NULL),
-	is_array(false), array_size(NULL), precision(ast_precision_none)
+	is_array(false), array_size(NULL), precision(ast_precision_none),
+	is_precision_statement(false)
 {
    static const char *const names[] = {
       "void",

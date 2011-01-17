@@ -276,16 +276,16 @@ extension_statement:
 external_declaration_list:
 	external_declaration
 	{
-	   /* FINISHME: The NULL test is only required because 'precision'
-	    * FINISHME: statements are not yet supported.
+	   /* FINISHME: The NULL test is required because pragmas are set to
+	    * FINISHME: NULL. (See production rule for external_declaration.)
 	    */
 	   if ($1 != NULL)
 	      state->translation_unit.push_tail(& $1->link);
 	}
 	| external_declaration_list external_declaration
 	{
-	   /* FINISHME: The NULL test is only required because 'precision'
-	    * FINISHME: statements are not yet supported.
+	   /* FINISHME: The NULL test is required because pragmas are set to
+	    * FINISHME: NULL. (See production rule for external_declaration.)
 	    */
 	   if ($2 != NULL)
 	      state->translation_unit.push_tail(& $2->link);
@@ -708,8 +708,9 @@ declaration:
 			       "only be applied to `int' or `float'\n");
 	      YYERROR;
 	   }
-
-	   $$ = NULL; /* FINISHME */
+	   $3->precision = $2;
+	   $3->is_precision_statement = true;
+	   $$ = $3;
 	}
 	;
 
