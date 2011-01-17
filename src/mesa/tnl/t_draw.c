@@ -468,6 +468,8 @@ void _tnl_draw_prims( struct gl_context *ctx,
 	       break;
 	 }
 
+         assert(prim[i].num_instances > 0);
+
 	 /* Binding inputs may imply mapping some vertex buffer objects.
 	  * They will need to be unmapped below.
 	  */
