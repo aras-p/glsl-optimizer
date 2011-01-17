@@ -432,15 +432,15 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.EXT_draw_buffers2 = GL_TRUE;
    }
 
+   if (screen->get_param(screen, PIPE_CAP_INDEP_BLEND_FUNC)) {
+      ctx->Extensions.ARB_draw_buffers_blend = GL_TRUE;
+   }
+
    /* GL_ARB_half_float_vertex */
    if (screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_FLOAT,
                                    PIPE_BUFFER, 0,
                                    PIPE_BIND_VERTEX_BUFFER, 0)) {
       ctx->Extensions.ARB_half_float_vertex = GL_TRUE;
-   }
-
-   if (screen->get_param(screen, PIPE_CAP_INDEP_BLEND_FUNC)) {
-      ctx->Extensions.ARB_draw_buffers_blend = GL_TRUE;
    }
 
    if (screen->get_shader_param(screen, PIPE_SHADER_GEOMETRY, PIPE_SHADER_CAP_MAX_INSTRUCTIONS) > 0) {
