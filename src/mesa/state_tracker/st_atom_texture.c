@@ -148,6 +148,7 @@ st_create_texture_sampler_view_from_stobj(struct pipe_context *pipe,
    u_sampler_view_default_template(&templ,
                                    stObj->pt,
                                    format);
+   templ.u.tex.first_level = stObj->base.BaseLevel;
 
    if (swizzle != SWIZZLE_NOOP) {
       templ.swizzle_r = GET_SWZ(swizzle, 0);
@@ -248,7 +249,8 @@ update_textures(struct st_context *st)
             if (check_sampler_swizzle(stObj->sampler_view,
                                       stObj->base._Swizzle,
                                       stObj->base.DepthMode) ||
-                (st_view_format != stObj->sampler_view->format))
+                (st_view_format != stObj->sampler_view->format) ||
+                stObj->base.BaseLevel != stObj->sampler_view->u.tex.first_level)
 	       pipe_sampler_view_reference(&stObj->sampler_view, NULL);
 
          sampler_view = st_get_texture_sampler_view_from_stobj(stObj, pipe, st_view_format);
