@@ -86,9 +86,6 @@ GLESv2_LIB_GLOB = $(GLESv2_LIB_NAME)*
 VG_LIB_GLOB = $(VG_LIB_NAME)*
 GLAPI_LIB_GLOB = $(GLAPI_LIB_NAME)*
 
-TALLOC_LIBS = `pkg-config --libs talloc`
-TALLOC_CFLAGS = `pkg-config --cflags talloc`
-
 # Optional assembly language optimization files for libGL
 MESA_ASM_SOURCES = 
 
@@ -123,7 +120,7 @@ EGL_CLIENT_APIS = $(GL_LIB)
 
 # Library dependencies
 #EXTRA_LIB_PATH ?=
-GL_LIB_DEPS     = $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread $(TALLOC_LIBS)
+GL_LIB_DEPS     = $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread
 EGL_LIB_DEPS    = $(EXTRA_LIB_PATH) -ldl -lpthread
 OSMESA_LIB_DEPS = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
 GLU_LIB_DEPS    = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lm

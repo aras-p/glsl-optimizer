@@ -19,7 +19,7 @@ MESA_GALLIUM_OBJECTS := $(addprefix $(MESA_OBJ_DIR)/, $(MESA_GALLIUM_OBJECTS))
 MESA_CPPFLAGS := $(API_DEFINES) $(DEFINES)
 
 # append include dirs
-MESA_CPPFLAGS += $(INCLUDE_DIRS) $(TALLOC_CFLAGS)
+MESA_CPPFLAGS += $(INCLUDE_DIRS)
 
 # tidy compiler flags
 CFLAGS := $(filter-out $(DEFINES), $(CFLAGS))

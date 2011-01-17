@@ -83,8 +83,7 @@ CXX_SOURCES = \
 	s_expression.cpp
 
 LIBS = \
-	$(TOP)/src/glsl/libglsl.a \
-	$(TALLOC_LIBS)
+	$(TOP)/src/glsl/libglsl.a
 
 APPS = glsl_compiler glcpp/glcpp
 
@@ -113,7 +112,6 @@ OBJECTS = \
 	$(CXX_SOURCES:.cpp=.o)
 
 INCLUDES = \
-	$(TALLOC_CFLAGS) \
 	-I. \
 	-I../mesa \
 	-I../mapi \
@@ -175,7 +173,7 @@ glcpp/glcpp-parse.c: glcpp/glcpp-parse.y
 	bison -v -o "$@" --defines=glcpp/glcpp-parse.h $<
 
 builtin_compiler: $(GLSL2_OBJECTS) $(OBJECTS) builtin_stubs.o
-	$(APP_CXX) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(OBJECTS) $(GLSL2_OBJECTS) builtin_stubs.o $(TALLOC_LIBS) -o $@
+	$(APP_CXX) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(OBJECTS) $(GLSL2_OBJECTS) builtin_stubs.o -o $@
 
 builtin_function.cpp: builtins/profiles/* builtins/ir/* builtins/tools/generate_builtins.py builtins/tools/texture_builtins.py builtin_compiler
 	@echo Regenerating builtin_function.cpp...

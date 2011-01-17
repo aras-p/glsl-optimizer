@@ -45,7 +45,7 @@ EXTRA_LIB_PATH=-L/usr/X11R6/lib
 
 LIBDRM_CFLAGS = $(shell pkg-config --cflags libdrm)
 LIBDRM_LIB = $(shell pkg-config --libs libdrm)
-DRI_LIB_DEPS  = $(EXTRA_LIB_PATH) -lm -lpthread -lexpat -ldl -ltalloc $(LIBDRM_LIB)
+DRI_LIB_DEPS  = $(EXTRA_LIB_PATH) -lm -lpthread -lexpat -ldl $(LIBDRM_LIB)
 GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lXdamage -lXfixes \
 		-lm -lpthread -ldl $(LIBDRM_LIB)
 
