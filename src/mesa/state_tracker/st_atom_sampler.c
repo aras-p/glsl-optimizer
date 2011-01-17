@@ -166,7 +166,9 @@ update_samplers(struct st_context *st)
          sampler->lod_bias = st->ctx->Texture.Unit[texUnit].LodBias +
             texobj->LodBias;
 
-         sampler->min_lod = MAX2(0.0f, texobj->MinLod);
+         sampler->min_lod = CLAMP(texobj->MinLod,
+                                  0.0f,
+                                  (GLfloat) texobj->MaxLevel - texobj->BaseLevel);
          sampler->max_lod = MIN2((GLfloat) texobj->MaxLevel - texobj->BaseLevel,
                                  texobj->MaxLod);
          if (sampler->max_lod < sampler->min_lod) {
