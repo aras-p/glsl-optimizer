@@ -329,7 +329,7 @@ _mesa_validate_DrawArrays(struct gl_context *ctx,
 
 GLboolean
 _mesa_validate_DrawArraysInstanced(struct gl_context *ctx, GLenum mode, GLint first,
-                                   GLsizei count, GLsizei primcount)
+                                   GLsizei count, GLsizei numInstances)
 {
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
@@ -346,10 +346,10 @@ _mesa_validate_DrawArraysInstanced(struct gl_context *ctx, GLenum mode, GLint fi
       return GL_FALSE;
    }
 
-   if (primcount <= 0) {
-      if (primcount < 0)
+   if (numInstances <= 0) {
+      if (numInstances < 0)
          _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glDrawArraysInstanced(primcount=%d)", primcount);
+                     "glDrawArraysInstanced(numInstances=%d)", numInstances);
       return GL_FALSE;
    }
 
@@ -374,7 +374,7 @@ _mesa_validate_DrawArraysInstanced(struct gl_context *ctx, GLenum mode, GLint fi
 GLboolean
 _mesa_validate_DrawElementsInstanced(struct gl_context *ctx,
                                      GLenum mode, GLsizei count, GLenum type,
-                                     const GLvoid *indices, GLsizei primcount)
+                                     const GLvoid *indices, GLsizei numInstances)
 {
    ASSERT_OUTSIDE_BEGIN_END_WITH_RETVAL(ctx, GL_FALSE);
 
@@ -399,10 +399,10 @@ _mesa_validate_DrawElementsInstanced(struct gl_context *ctx,
       return GL_FALSE;
    }
 
-   if (primcount <= 0) {
-      if (primcount < 0)
+   if (numInstances <= 0) {
+      if (numInstances < 0)
          _mesa_error(ctx, GL_INVALID_VALUE,
-                     "glDrawElementsInstanced(primcount=%d)", primcount);
+                     "glDrawElementsInstanced(numInstances=%d)", numInstances);
       return GL_FALSE;
    }
 
