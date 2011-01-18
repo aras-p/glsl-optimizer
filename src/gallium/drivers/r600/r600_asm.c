@@ -539,26 +539,24 @@ static int reserve_gpr(struct alu_bank_swizzle *bs, unsigned sel, unsigned chan,
 	return 0;
 }
 
-static int reserve_cfile(struct alu_bank_swizzle *bs, unsigned sel, unsigned chan)
+static int reserve_cfile(struct r600_bc *bc, struct alu_bank_swizzle *bs, unsigned sel, unsigned chan)
 {
-	int res, resmatch = -1, resempty = -1;
-	for (res = 3; res >= 0; --res) {
-		if (bs->hw_cfile_addr[res] == -1)
-			resempty = res;
-		else if (bs->hw_cfile_addr[res] == sel &&
+	int res, num_res = 4;
+	if (bc->chiprev >= CHIPREV_R700) {
+		num_res = 2;
+		chan /= 2;
+	}
+	for (res = 0; res < num_res; ++res) {
+		if (bs->hw_cfile_addr[res] == -1) {
+			bs->hw_cfile_addr[res] = sel;
+			bs->hw_cfile_elem[res] = chan;
+			return 0;
+		} else if (bs->hw_cfile_addr[res] == sel &&
 			bs->hw_cfile_elem[res] == chan)
-			resmatch = res;
+			return 0; // Read for this scalar element already reserved, nothing to do here.
 	}
-	if (resmatch != -1)
-		return 0; // Read for this scalar element already reserved, nothing to do here.
-	else if (resempty != -1) {
-		bs->hw_cfile_addr[resempty] = sel;
-		bs->hw_cfile_elem[resempty] = chan;
-	} else {
-		// All cfile read ports are used, cannot reference vector element
-		return -1;
-	}
-	return 0;
+	// All cfile read ports are used, cannot reference vector element
+	return -1;
 }
 
 static int is_gpr(unsigned sel)
@@ -604,7 +602,7 @@ static int check_vector(struct r600_bc *bc, struct r600_bc_alu *alu,
 					return r;
 			}
 		} else if (is_cfile(sel)) {
-			r = reserve_cfile(bs, sel, elem);
+			r = reserve_cfile(bc, bs, sel, elem);
 			if (r)
 				return r;
 		}
@@ -631,7 +629,7 @@ static int check_scalar(struct r600_bc *bc, struct r600_bc_alu *alu,
 				const_count++;
 		}
 		if (is_cfile(sel)) {
-			r = reserve_cfile(bs, sel, elem);
+			r = reserve_cfile(bc, bs, sel, elem);
 			if (r)
 				return r;
 		}
