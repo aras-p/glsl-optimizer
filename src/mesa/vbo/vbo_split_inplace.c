@@ -222,6 +222,7 @@ static void split_prims( struct split_context *split)
 	 tmpprim.indexed = 1;
 	 tmpprim.start = 0;
 	 tmpprim.count = count;
+         tmpprim.num_instances = 1;
 
 	 flush_vertex(split);
 
