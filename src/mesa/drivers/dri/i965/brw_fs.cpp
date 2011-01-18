@@ -3170,6 +3170,7 @@ fs_visitor::compute_to_mrf()
 	  */
 	 if (scan_inst->opcode == BRW_OPCODE_DO ||
 	     scan_inst->opcode == BRW_OPCODE_WHILE ||
+	     scan_inst->opcode == BRW_OPCODE_ELSE ||
 	     scan_inst->opcode == BRW_OPCODE_ENDIF) {
 	    break;
 	 }
