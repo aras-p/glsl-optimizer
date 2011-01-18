@@ -214,6 +214,8 @@ public:
 
    loop_variable_state *insert(ir_loop *ir);
 
+   bool loop_found;
+
 private:
    loop_state();
 
