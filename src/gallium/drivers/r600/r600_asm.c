@@ -527,7 +527,7 @@ static void init_bank_swizzle(struct alu_bank_swizzle *bs)
 	for (i = 0; i < 4; i++)
 		bs->hw_cfile_elem[i] = -1;
 }
- 
+
 static int reserve_gpr(struct alu_bank_swizzle *bs, unsigned sel, unsigned chan, unsigned cycle)
 {
 	if (bs->hw_gpr[cycle][chan] == -1)
@@ -538,7 +538,7 @@ static int reserve_gpr(struct alu_bank_swizzle *bs, unsigned sel, unsigned chan,
 	}
 	return 0;
 }
- 
+
 static int reserve_cfile(struct alu_bank_swizzle *bs, unsigned sel, unsigned chan)
 {
 	int res, resmatch = -1, resempty = -1;
@@ -558,9 +558,9 @@ static int reserve_cfile(struct alu_bank_swizzle *bs, unsigned sel, unsigned cha
 		// All cfile read ports are used, cannot reference vector element
 		return -1;
 	}
-	return 0;	
+	return 0;
 }
- 
+
 static int is_gpr(unsigned sel)
 {
 	return (sel >= 0 && sel <= 127);
@@ -575,19 +575,19 @@ static int is_cfile(unsigned sel)
 		(sel > 511 && sel < 4607) || // Kcache before translate
 		(sel > 127 && sel < 192); // Kcache after translate
 }
- 
+
 static int is_const(int sel)
 {
 	return is_cfile(sel) ||
-		(sel >= V_SQ_ALU_SRC_0 && 
+		(sel >= V_SQ_ALU_SRC_0 &&
 		sel <= V_SQ_ALU_SRC_LITERAL);
 }
- 
+
 static int check_vector(struct r600_bc *bc, struct r600_bc_alu *alu,
 			struct alu_bank_swizzle *bs, int bank_swizzle)
 {
 	int r, src, num_src, sel, elem, cycle;
- 
+
 	num_src = r600_bc_get_num_operands(bc, alu);
 	for (src = 0; src < num_src; src++) {
 		sel = alu->src[src].sel;
@@ -595,7 +595,7 @@ static int check_vector(struct r600_bc *bc, struct r600_bc_alu *alu,
 		if (is_gpr(sel)) {
 			cycle = cycle_for_bank_swizzle_vec[bank_swizzle][src];
 			if (src == 1 && sel == alu->src[0].sel && elem == alu->src[0].chan)
-				// Nothing to do; special-case optimization, 
+				// Nothing to do; special-case optimization,
 				// second source uses first source’s reservation
 				continue;
 			else {
@@ -612,12 +612,12 @@ static int check_vector(struct r600_bc *bc, struct r600_bc_alu *alu,
 	}
 	return 0;
 }
- 
+
 static int check_scalar(struct r600_bc *bc, struct r600_bc_alu *alu,
 			struct alu_bank_swizzle *bs, int bank_swizzle)
 {
 	int r, src, num_src, const_count, sel, elem, cycle;
- 
+
 	num_src = r600_bc_get_num_operands(bc, alu);
 	for (const_count = 0, src = 0; src < num_src; ++src) {
 		sel = alu->src[src].sel;
@@ -626,7 +626,7 @@ static int check_scalar(struct r600_bc *bc, struct r600_bc_alu *alu,
 			if (const_count >= 2)
 				// More than two references to a constant in
 				// transcendental operation.
-				return -1; 
+				return -1;
 			else
 				const_count++;
 		}
@@ -661,7 +661,7 @@ static int check_and_set_bank_swizzle(struct r600_bc *bc,
 	struct alu_bank_swizzle bs;
 	int bank_swizzle[5];
 	int i, r = 0, forced = 0;
- 
+
 	for (i = 0; i < 5; i++)
 		if (slots[i] && slots[i]->bank_swizzle_force) {
 			slots[i]->bank_swizzle = slots[i]->bank_swizzle_force;
@@ -846,7 +846,7 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5],
 {
 	struct r600_bc_alu *prev[5];
 	struct r600_bc_alu *result[5] = { NULL };
-	
+
 	uint32_t literal[4], prev_literal[4];
 	unsigned nliteral = 0, prev_nliteral = 0;
 
@@ -896,7 +896,7 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5],
 				return 0;
 		} else if(!slots[i]) {
 			continue;
-		} else 
+		} else
 			result[i] = slots[i];
 
 		// let's check source gprs
@@ -1134,7 +1134,7 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 		}
 		if (nalu->src[i].sel == V_SQ_ALU_SRC_LITERAL)
 			r600_bc_special_constants(
-				nalu->src[i].value[nalu->src[i].chan], 
+				nalu->src[i].value[nalu->src[i].chan],
 				&nalu->src[i].sel, &nalu->src[i].neg);
 	}
 	if (nalu->dst.sel >= bc->ngpr) {

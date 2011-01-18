@@ -46,7 +46,7 @@ static int bof_entry_grow(bof_t *bof)
 }
 
 /*
- * object 
+ * object
  */
 bof_t *bof_object(void)
 {

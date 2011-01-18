@@ -747,7 +747,7 @@ static int tgsi_src(struct r600_shader_ctx *ctx,
 	memset(r600_src, 0, sizeof(struct r600_bc_alu_src));
 	r600_src->neg = tgsi_src->Register.Negate;
 	r600_src->abs = tgsi_src->Register.Absolute;
-	if (tgsi_src->Register.File == TGSI_FILE_IMMEDIATE) {		
+	if (tgsi_src->Register.File == TGSI_FILE_IMMEDIATE) {
 		int index;
 		if((tgsi_src->Register.SwizzleX == tgsi_src->Register.SwizzleY) &&
 			(tgsi_src->Register.SwizzleX == tgsi_src->Register.SwizzleZ) &&
