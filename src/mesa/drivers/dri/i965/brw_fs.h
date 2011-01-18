@@ -412,6 +412,7 @@ public:
    void visit(ir_function_signature *ir);
 
    fs_inst *emit(fs_inst inst);
+   void setup_paramvalues_refs();
    void assign_curb_setup();
    void calculate_urb_setup();
    void assign_urb_setup();
@@ -475,6 +476,12 @@ public:
    struct brw_shader *shader;
    void *mem_ctx;
    exec_list instructions;
+
+   /* Delayed setup of c->prog_data.params[] due to realloc of
+    * ParamValues[] during compile.
+    */
+   int param_index[MAX_UNIFORMS * 4];
+   int param_offset[MAX_UNIFORMS * 4];
 
    int *virtual_grf_sizes;
    int virtual_grf_next;
