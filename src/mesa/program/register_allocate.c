@@ -71,6 +71,7 @@ struct ra_class {
 
 struct ra_node {
    GLboolean *adjacency;
+   unsigned int *adjacency_list;
    unsigned int class;
    unsigned int adjacency_count;
    unsigned int reg;
@@ -204,6 +205,14 @@ ra_set_finalize(struct ra_regs *regs)
    }
 }
 
+static void
+ra_add_node_adjacency(struct ra_graph *g, unsigned int n1, unsigned int n2)
+{
+   g->nodes[n1].adjacency[n2] = GL_TRUE;
+   g->nodes[n1].adjacency_list[g->nodes[n1].adjacency_count] = n2;
+   g->nodes[n1].adjacency_count++;
+}
+
 struct ra_graph *
 ra_alloc_interference_graph(struct ra_regs *regs, unsigned int count)
 {
@@ -219,7 +228,9 @@ ra_alloc_interference_graph(struct ra_regs *regs, unsigned int count)
 
    for (i = 0; i < count; i++) {
       g->nodes[i].adjacency = talloc_zero_array(g, GLboolean, count);
-      g->nodes[i].adjacency[i] = GL_TRUE;
+      g->nodes[i].adjacency_list = talloc_array(g, unsigned int, count);
+      g->nodes[i].adjacency_count = 0;
+      ra_add_node_adjacency(g, i, i);
       g->nodes[i].reg = ~0;
    }
 
@@ -237,13 +248,10 @@ void
 ra_add_node_interference(struct ra_graph *g,
 			 unsigned int n1, unsigned int n2)
 {
-   if (g->nodes[n1].adjacency[n2])
-      return;
-
-   g->nodes[n1].adjacency[n2] = GL_TRUE;
-   g->nodes[n2].adjacency_count++;
-   g->nodes[n2].adjacency[n1] = GL_TRUE;
-   g->nodes[n2].adjacency_count++;
+   if (!g->nodes[n1].adjacency[n2]) {
+      ra_add_node_adjacency(g, n1, n2);
+      ra_add_node_adjacency(g, n2, n1);
+   }
 }
 
 static GLboolean pq_test(struct ra_graph *g, unsigned int n)
@@ -252,13 +260,12 @@ static GLboolean pq_test(struct ra_graph *g, unsigned int n)
    unsigned int q = 0;
    int n_class = g->nodes[n].class;
 
-   for (j = 0; j < g->count; j++) {
-      if (j == n || g->nodes[j].in_stack)
-	 continue;
+   for (j = 0; j < g->nodes[n].adjacency_count; j++) {
+      unsigned int n2 = g->nodes[n].adjacency_list[j];
+      unsigned int n2_class = g->nodes[n2].class;
 
-      if (g->nodes[n].adjacency[j]) {
-	 unsigned int j_class = g->nodes[j].class;
-	 q += g->regs->classes[n_class]->q[j_class];
+      if (n != n2 && !g->nodes[n2].in_stack) {
+	 q += g->regs->classes[n_class]->q[n2_class];
       }
    }
 
