@@ -47,13 +47,13 @@
 void insert_wpos_code(struct gl_context *ctx, struct gl_fragment_program *fprog)
 {
     static const gl_state_index winstate[STATE_LENGTH]
-         = { STATE_INTERNAL, STATE_FB_SIZE, 0, 0, 0};
+         = { STATE_INTERNAL, STATE_FB_WPOS_Y_TRANSFORM, 0, 0, 0};
     struct prog_instruction *newInst, *inst;
     GLint  win_size;  /* state reference */
     GLuint wpos_temp; /* temp register */
     int i, j;
 
-    /* PARAM win_size = STATE_FB_SIZE */
+    /* PARAM win_size = STATE_FB_WPOS_Y_TRANSFORM */
     win_size = _mesa_add_state_reference(fprog->Base.Parameters, winstate);
 
     wpos_temp = fprog->Base.NumTemporaries++;
@@ -74,9 +74,8 @@ void insert_wpos_code(struct gl_context *ctx, struct gl_fragment_program *fprog)
     _mesa_insert_instructions(&(fprog->Base), 0, 1);
 
     newInst = fprog->Base.Instructions;
-    /* invert wpos.y
-     * wpos_temp.xyzw = wpos.x-yzw + winsize.0y00 */
-    newInst[0].Opcode = OPCODE_ADD;
+    /* possibly invert wpos.y depending on STATE_FB_WPOS_Y_TRANSFORM var */
+    newInst[0].Opcode = OPCODE_MAD;
     newInst[0].DstReg.File = PROGRAM_TEMPORARY;
     newInst[0].DstReg.Index = wpos_temp;
     newInst[0].DstReg.WriteMask = WRITEMASK_XYZW;
@@ -84,11 +83,14 @@ void insert_wpos_code(struct gl_context *ctx, struct gl_fragment_program *fprog)
     newInst[0].SrcReg[0].File = PROGRAM_INPUT;
     newInst[0].SrcReg[0].Index = FRAG_ATTRIB_WPOS;
     newInst[0].SrcReg[0].Swizzle = SWIZZLE_XYZW;
-    newInst[0].SrcReg[0].Negate = NEGATE_Y;
 
     newInst[0].SrcReg[1].File = PROGRAM_STATE_VAR;
     newInst[0].SrcReg[1].Index = win_size;
-    newInst[0].SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_ZERO, SWIZZLE_Y, SWIZZLE_ZERO, SWIZZLE_ZERO);
+    newInst[0].SrcReg[1].Swizzle = MAKE_SWIZZLE4(SWIZZLE_ONE, SWIZZLE_X, SWIZZLE_ONE, SWIZZLE_ONE);
+
+    newInst[0].SrcReg[2].File = PROGRAM_STATE_VAR;
+    newInst[0].SrcReg[2].Index = win_size;
+    newInst[0].SrcReg[2].Swizzle = MAKE_SWIZZLE4(SWIZZLE_ZERO, SWIZZLE_Y, SWIZZLE_ZERO, SWIZZLE_ZERO);
 
 }
 
