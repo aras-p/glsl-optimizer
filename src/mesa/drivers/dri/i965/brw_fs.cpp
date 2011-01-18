@@ -3257,7 +3257,7 @@ fs_visitor::remove_duplicate_mrf_writes()
       }
 
       if (inst->mlen > 0) {
-	 /* Found a SEND instruction, which will include two of fewer
+	 /* Found a SEND instruction, which will include two or fewer
 	  * implied MRF writes.  We could do better here.
 	  */
 	 for (int i = 0; i < implied_mrf_writes(inst); i++) {
