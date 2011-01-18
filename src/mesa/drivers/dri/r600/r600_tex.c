@@ -265,9 +265,9 @@ static void r600SetTexFilter(radeonTexObjPtr t, GLenum minf, GLenum magf, GLfloa
 static void r600SetTexBorderColor(radeonTexObjPtr t, const GLfloat color[4])
 {
 	t->TD_PS_SAMPLER0_BORDER_ALPHA = *((uint32_t*)&(color[3]));
-	t->TD_PS_SAMPLER0_BORDER_RED = *((uint32_t*)&(color[2]));
+	t->TD_PS_SAMPLER0_BORDER_BLUE = *((uint32_t*)&(color[2]));
 	t->TD_PS_SAMPLER0_BORDER_GREEN = *((uint32_t*)&(color[1]));
-	t->TD_PS_SAMPLER0_BORDER_BLUE = *((uint32_t*)&(color[0]));
+	t->TD_PS_SAMPLER0_BORDER_RED = *((uint32_t*)&(color[0]));
         SETfield(t->SQ_TEX_SAMPLER0, SQ_TEX_BORDER_COLOR_REGISTER,
 		 BORDER_COLOR_TYPE_shift, BORDER_COLOR_TYPE_mask);
 }
