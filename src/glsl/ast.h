@@ -606,25 +606,6 @@ private:
 };
 
 
-class ast_declaration_statement : public ast_node {
-public:
-   ast_declaration_statement(void);
-
-   enum {
-      ast_function,
-      ast_declaration,
-      ast_precision
-   } mode;
-
-   union {
-      class ast_function *function;
-      ast_declarator_list *declarator;
-      ast_type_specifier *type;
-      ast_node *node;
-   } declaration;
-};
-
-
 class ast_expression_statement : public ast_node {
 public:
    ast_expression_statement(ast_expression *);
