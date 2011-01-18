@@ -38,7 +38,6 @@
 #include "register_allocate.h"
 
 struct ra_reg {
-   char *name;
    GLboolean *conflicts;
    unsigned int *conflict_list;
    unsigned int conflict_list_size;
