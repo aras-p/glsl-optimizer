@@ -40,6 +40,9 @@
 struct ra_reg {
    char *name;
    GLboolean *conflicts;
+   unsigned int *conflict_list;
+   unsigned int conflict_list_size;
+   unsigned int num_conflicts;
 };
 
 struct ra_regs {
@@ -100,16 +103,39 @@ ra_alloc_reg_set(unsigned int count)
    for (i = 0; i < count; i++) {
       regs->regs[i].conflicts = talloc_zero_array(regs->regs, GLboolean, count);
       regs->regs[i].conflicts[i] = GL_TRUE;
+
+      regs->regs[i].conflict_list = talloc_array(regs->regs, unsigned int, 4);
+      regs->regs[i].conflict_list_size = 4;
+      regs->regs[i].conflict_list[0] = i;
+      regs->regs[i].num_conflicts = 1;
    }
 
    return regs;
 }
 
+static void
+ra_add_conflict_list(struct ra_regs *regs, unsigned int r1, unsigned int r2)
+{
+   struct ra_reg *reg1 = &regs->regs[r1];
+
+   if (reg1->conflict_list_size == reg1->num_conflicts) {
+      reg1->conflict_list_size *= 2;
+      reg1->conflict_list = talloc_realloc(regs,
+					   reg1->conflict_list,
+					   unsigned int,
+					   reg1->conflict_list_size);
+   }
+   reg1->conflict_list[reg1->num_conflicts++] = r2;
+   reg1->conflicts[r2] = GL_TRUE;
+}
+
 void
 ra_add_reg_conflict(struct ra_regs *regs, unsigned int r1, unsigned int r2)
 {
-   regs->regs[r1].conflicts[r2] = GL_TRUE;
-   regs->regs[r2].conflicts[r1] = GL_TRUE;
+   if (!regs->regs[r1].conflicts[r2]) {
+      ra_add_conflict_list(regs, r1, r2);
+      ra_add_conflict_list(regs, r2, r1);
+   }
 }
 
 unsigned int
@@ -160,15 +186,15 @@ ra_set_finalize(struct ra_regs *regs)
 	 int max_conflicts = 0;
 
 	 for (rc = 0; rc < regs->count; rc++) {
-	    unsigned int rb;
 	    int conflicts = 0;
+	    int i;
 
 	    if (!regs->classes[c]->regs[rc])
 	       continue;
 
-	    for (rb = 0; rb < regs->count; rb++) {
-	       if (regs->classes[b]->regs[rb] &&
-		   regs->regs[rb].conflicts[rc])
+	    for (i = 0; i < regs->regs[rc].num_conflicts; i++) {
+	       unsigned int rb = regs->regs[rc].conflict_list[i];
+	       if (regs->classes[b]->regs[rb])
 		  conflicts++;
 	    }
 	    max_conflicts = MAX2(max_conflicts, conflicts);
