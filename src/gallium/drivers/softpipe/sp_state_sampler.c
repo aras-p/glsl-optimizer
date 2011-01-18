@@ -67,8 +67,8 @@ softpipe_create_sampler_state(struct pipe_context *pipe,
 
 
 static void
-softpipe_bind_sampler_states(struct pipe_context *pipe,
-                             unsigned num, void **sampler)
+softpipe_bind_fragment_sampler_states(struct pipe_context *pipe,
+                                      unsigned num, void **sampler)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
    unsigned i;
@@ -181,9 +181,9 @@ softpipe_sampler_view_destroy(struct pipe_context *pipe,
 
 
 static void
-softpipe_set_sampler_views(struct pipe_context *pipe,
-                           unsigned num,
-                           struct pipe_sampler_view **views)
+softpipe_set_fragment_sampler_views(struct pipe_context *pipe,
+                                    unsigned num,
+                                    struct pipe_sampler_view **views)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
    uint i;
@@ -429,12 +429,12 @@ void
 softpipe_init_sampler_funcs(struct pipe_context *pipe)
 {
    pipe->create_sampler_state = softpipe_create_sampler_state;
-   pipe->bind_fragment_sampler_states  = softpipe_bind_sampler_states;
+   pipe->bind_fragment_sampler_states  = softpipe_bind_fragment_sampler_states;
    pipe->bind_vertex_sampler_states = softpipe_bind_vertex_sampler_states;
    pipe->bind_geometry_sampler_states = softpipe_bind_geometry_sampler_states;
    pipe->delete_sampler_state = softpipe_delete_sampler_state;
 
-   pipe->set_fragment_sampler_views = softpipe_set_sampler_views;
+   pipe->set_fragment_sampler_views = softpipe_set_fragment_sampler_views;
    pipe->set_vertex_sampler_views = softpipe_set_vertex_sampler_views;
    pipe->set_geometry_sampler_views = softpipe_set_geometry_sampler_views;
 
