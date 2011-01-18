@@ -232,9 +232,11 @@ The most common type of query is the occlusion query,
 ``PIPE_QUERY_OCCLUSION_COUNTER``, which counts the number of fragments which
 are written to the framebuffer without being culled by
 :ref:`Depth, Stencil, & Alpha` testing or shader KILL instructions.
+The result is an unsigned 64-bit integer.
 
 Another type of query, ``PIPE_QUERY_TIME_ELAPSED``, returns the amount of
 time, in nanoseconds, the context takes to perform operations.
+The result is an unsigned 64-bit integer.
 
 Gallium does not guarantee the availability of any query types; one must
 always check the capabilities of the :ref:`Screen` first.
