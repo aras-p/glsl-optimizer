@@ -401,17 +401,17 @@ ra_get_spill_benefit(struct ra_graph *g, unsigned int n)
    float benefit = 0;
    int n_class = g->nodes[n].class;
 
-   /* Define the benefit of eliminating an interference between n, j
+   /* Define the benefit of eliminating an interference between n, n2
     * through spilling as q(C, B) / p(C).  This is similar to the
     * "count number of edges" approach of traditional graph coloring,
     * but takes classes into account.
     */
-   for (j = 0; j < g->count; j++) {
-      if (j != n && g->nodes[n].adjacency[j]) {
-	 unsigned int j_class = g->nodes[j].class;
-	 benefit += ((float)g->regs->classes[n_class]->q[j_class] /
+   for (j = 0; j < g->nodes[n].adjacency_count; j++) {
+      unsigned int n2 = g->nodes[n].adjacency_list[j];
+      if (n != n2) {
+	 unsigned int n2_class = g->nodes[n2].class;
+	 benefit += ((float)g->regs->classes[n_class]->q[n2_class] /
 		     g->regs->classes[n_class]->p);
-	 break;
       }
    }
 
