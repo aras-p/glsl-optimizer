@@ -201,7 +201,7 @@ softpipe_set_sampler_views(struct pipe_context *pipe,
       struct pipe_sampler_view *view = i < num ? views[i] : NULL;
 
       pipe_sampler_view_reference(&softpipe->sampler_views[i], view);
-      sp_tex_tile_cache_set_sampler_view(softpipe->tex_cache[i], view);
+      sp_tex_tile_cache_set_sampler_view(softpipe->fragment_tex_cache[i], view);
    }
 
    softpipe->num_sampler_views = num;
@@ -403,7 +403,7 @@ softpipe_reset_sampler_variants(struct softpipe_context *softpipe)
                                  TGSI_PROCESSOR_FRAGMENT );
 
          sp_sampler_variant_bind_texture( softpipe->tgsi.frag_samplers_list[i], 
-                                          softpipe->tex_cache[i],
+                                          softpipe->fragment_tex_cache[i],
                                           texture );
       }
    }

@@ -200,7 +200,7 @@ update_tgsi_samplers( struct softpipe_context *softpipe )
    softpipe_reset_sampler_variants( softpipe );
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
-      struct softpipe_tex_tile_cache *tc = softpipe->tex_cache[i];
+      struct softpipe_tex_tile_cache *tc = softpipe->fragment_tex_cache[i];
       if (tc->texture) {
          struct softpipe_resource *spt = softpipe_resource(tc->texture);
          if (spt->timestamp != tc->timestamp) {

@@ -174,7 +174,7 @@ struct softpipe_context {
    struct softpipe_tile_cache *zsbuf_cache;
 
    unsigned tex_timestamp;
-   struct softpipe_tex_tile_cache *tex_cache[PIPE_MAX_SAMPLERS];
+   struct softpipe_tex_tile_cache *fragment_tex_cache[PIPE_MAX_SAMPLERS];
    struct softpipe_tex_tile_cache *vertex_tex_cache[PIPE_MAX_VERTEX_SAMPLERS];
    struct softpipe_tex_tile_cache *geometry_tex_cache[PIPE_MAX_GEOMETRY_SAMPLERS];
 
