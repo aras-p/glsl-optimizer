@@ -336,14 +336,15 @@ ra_select(struct ra_graph *g)
 	    continue;
 
 	 /* Check if any of our neighbors conflict with this register choice. */
-	 for (i = 0; i < g->count; i++) {
-	    if (g->nodes[n].adjacency[i] &&
-	       !g->nodes[i].in_stack &&
-		g->regs->regs[r].conflicts[g->nodes[i].reg]) {
+	 for (i = 0; i < g->nodes[n].adjacency_count; i++) {
+	    unsigned int n2 = g->nodes[n].adjacency_list[i];
+
+	    if (!g->nodes[n2].in_stack &&
+		g->regs->regs[r].conflicts[g->nodes[n2].reg]) {
 	       break;
 	    }
 	 }
-	 if (i == g->count)
+	 if (i == g->nodes[n].adjacency_count)
 	    break;
       }
       if (r == g->regs->count)
