@@ -639,21 +639,6 @@ void radeonSetTexOffset(__DRIcontext * pDRICtx, GLint texname,
 	}
 }
 
-static int
-logbase2(int n)
-{
-   GLint i = 1;
-   GLint log2 = 0;
-
-   while (n > i) {
-      i *= 2;
-      log2++;
-   }
-
-   return log2;
-}
-
-
 void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_format,
 			 __DRIdrawable *dPriv)
 {
