@@ -436,6 +436,8 @@ public:
    bool dead_code_eliminate();
    bool remove_duplicate_mrf_writes();
    bool virtual_grf_interferes(int a, int b);
+   void schedule_instructions();
+
    void generate_code();
    void generate_fb_write(fs_inst *inst);
    void generate_linterp(fs_inst *inst, struct brw_reg dst,

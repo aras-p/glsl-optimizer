@@ -3696,6 +3696,8 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 	 progress = v.dead_code_eliminate() || progress;
       } while (progress);
 
+      v.schedule_instructions();
+
       if (0) {
 	 /* Debug of register spilling: Go spill everything. */
 	 int virtual_grf_count = v.virtual_grf_next;
