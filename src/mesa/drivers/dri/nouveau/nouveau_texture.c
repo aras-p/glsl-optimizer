@@ -113,8 +113,10 @@ nouveau_teximage_map(struct gl_context *ctx, struct gl_texture_image *ti,
 			if (access & GL_MAP_WRITE_BIT)
 				flags |= NOUVEAU_BO_WR;
 
-			ret = nouveau_bo_map(s->bo, flags);
-			assert(!ret);
+			if (!s->bo->map) {
+				ret = nouveau_bo_map(s->bo, flags);
+				assert(!ret);
+			}
 
 			ti->Data = s->bo->map + y * s->pitch + x * s->cpp;
 		}
