@@ -438,6 +438,21 @@ instruction_scheduler::schedule_instructions(fs_inst *next_block_header)
 	    instructions.push_tail(child);
 	 }
       }
+
+      /* Shared resource: the mathbox.  There's one per EU (on later
+       * generations, it's even more limited pre-gen6), so if we send
+       * something off to it then the next math isn't going to make
+       * progress until the first is done.
+       */
+      if (chosen->inst->is_math()) {
+	 foreach_iter(exec_list_iterator, iter, instructions) {
+	    schedule_node *n = (schedule_node *)iter.get();
+
+	    if (n->inst->is_math())
+	       n->unblocked_time = MAX2(n->unblocked_time,
+					time + chosen->latency);
+	 }
+      }
    }
 
    assert(instructions_to_schedule == 0);
