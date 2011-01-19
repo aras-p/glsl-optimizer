@@ -3681,8 +3681,6 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 
       v.setup_paramvalues_refs();
       v.setup_pull_constants();
-      v.assign_curb_setup();
-      v.assign_urb_setup();
 
       bool progress;
       do {
@@ -3697,6 +3695,9 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
       } while (progress);
 
       v.schedule_instructions();
+
+      v.assign_curb_setup();
+      v.assign_urb_setup();
 
       if (0) {
 	 /* Debug of register spilling: Go spill everything. */
