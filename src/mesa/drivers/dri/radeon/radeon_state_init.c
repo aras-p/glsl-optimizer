@@ -488,7 +488,7 @@ static void ctx_emit_cs(struct gl_context *ctx, struct radeon_state_atom *atom)
 
    if (rrb) {
      OUT_BATCH(CP_PACKET0(RADEON_RB3D_COLOROFFSET, 0));
-     OUT_BATCH_RELOC(0, rrb->bo, 0, 0, RADEON_GEM_DOMAIN_VRAM, 0);
+     OUT_BATCH_RELOC(rrb->draw_offset, rrb->bo, rrb->draw_offset, 0, RADEON_GEM_DOMAIN_VRAM, 0);
 
      OUT_BATCH(CP_PACKET0(RADEON_RB3D_COLORPITCH, 0));
      OUT_BATCH_RELOC(cbpitch, rrb->bo, cbpitch, 0, RADEON_GEM_DOMAIN_VRAM, 0);
