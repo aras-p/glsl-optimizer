@@ -68,10 +68,6 @@
 #include <cstdarg>
 #include <climits>
 
-extern "C" {
-#include <talloc.h>
-}
-
 #include "main/core.h"
 #include "glsl_symbol_table.h"
 #include "ir.h"
