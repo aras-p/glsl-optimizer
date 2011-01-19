@@ -306,6 +306,13 @@ public:
 	      offset == inst->offset);
    }
 
+   bool is_tex()
+   {
+      return (opcode == FS_OPCODE_TEX ||
+	      opcode == FS_OPCODE_TXB ||
+	      opcode == FS_OPCODE_TXL);
+   }
+
    int opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
    fs_reg dst;
    fs_reg src[3];

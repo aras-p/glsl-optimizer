@@ -2647,10 +2647,7 @@ fs_visitor::split_virtual_grfs()
       fs_inst *inst = (fs_inst *)iter.get();
 
       /* Texturing produces 4 contiguous registers, so no splitting. */
-      if ((inst->opcode == FS_OPCODE_TEX ||
-	   inst->opcode == FS_OPCODE_TXB ||
-	   inst->opcode == FS_OPCODE_TXL) &&
-	  inst->dst.file == GRF) {
+      if (inst->is_tex()) {
 	 split_grf[inst->dst.reg] = false;
       }
    }
@@ -2938,7 +2935,7 @@ fs_visitor::propagate_constants()
 	 if (scan_inst->dst.file == GRF &&
 	     scan_inst->dst.reg == inst->dst.reg &&
 	     (scan_inst->dst.reg_offset == inst->dst.reg_offset ||
-	      scan_inst->opcode == FS_OPCODE_TEX)) {
+	      scan_inst->is_tex())) {
 	    break;
 	 }
       }
@@ -3033,13 +3030,13 @@ fs_visitor::register_coalesce()
 	 if (scan_inst->dst.file == GRF) {
 	    if (scan_inst->dst.reg == inst->dst.reg &&
 		(scan_inst->dst.reg_offset == inst->dst.reg_offset ||
-		 scan_inst->opcode == FS_OPCODE_TEX)) {
+		 scan_inst->is_tex())) {
 	       interfered = true;
 	       break;
 	    }
 	    if (scan_inst->dst.reg == inst->src[0].reg &&
 		(scan_inst->dst.reg_offset == inst->src[0].reg_offset ||
-		 scan_inst->opcode == FS_OPCODE_TEX)) {
+		 scan_inst->is_tex())) {
 	       interfered = true;
 	       break;
 	    }
@@ -3120,7 +3117,7 @@ fs_visitor::compute_to_mrf()
 	     * into a compute-to-MRF.
 	     */
 
-	    if (scan_inst->opcode == FS_OPCODE_TEX) {
+	    if (scan_inst->is_tex()) {
 	       /* texturing writes several continuous regs, so we can't
 		* compute-to-mrf that.
 		*/
