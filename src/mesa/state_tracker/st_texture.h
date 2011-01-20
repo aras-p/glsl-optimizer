@@ -125,9 +125,7 @@ st_create_texture_sampler_view(struct pipe_context *pipe,
 {
    struct pipe_sampler_view templ;
 
-   u_sampler_view_default_template(&templ,
-                                   texture,
-                                   texture->format);
+   u_sampler_view_default_template(&templ, texture, texture->format);
 
    return pipe->create_sampler_view(pipe, texture, &templ);
 }
@@ -140,17 +138,15 @@ st_create_texture_sampler_view_format(struct pipe_context *pipe,
 {
    struct pipe_sampler_view templ;
 
-   u_sampler_view_default_template(&templ,
-                                   texture,
-                                   format);
+   u_sampler_view_default_template(&templ, texture, format);
 
    return pipe->create_sampler_view(pipe, texture, &templ);
 }
 
+
 static INLINE struct pipe_sampler_view *
 st_get_texture_sampler_view(struct st_texture_object *stObj,
                             struct pipe_context *pipe)
-
 {
    if (!stObj || !stObj->pt) {
       return NULL;
