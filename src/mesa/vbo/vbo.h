@@ -38,7 +38,7 @@ struct gl_client_array;
 struct gl_context;
 
 struct _mesa_prim {
-   GLuint mode:8;
+   GLuint mode:8;    /**< GL_POINTS, GL_LINES, GL_QUAD_STRIP, etc */
    GLuint indexed:1;
    GLuint begin:1;
    GLuint end:1;
