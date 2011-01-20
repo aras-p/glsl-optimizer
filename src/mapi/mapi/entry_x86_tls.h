@@ -27,7 +27,6 @@
  */
 
 #include <string.h>
-#include "u_execmem.h"
 #include "u_macros.h"
 
 #ifdef __linux__
@@ -50,7 +49,7 @@ __asm__("x86_current_tls:\n\t"
         "1:\n\t"
         "popl %eax\n\t"
 	"addl $_GLOBAL_OFFSET_TABLE_+[.-1b], %eax\n\t"
-	"movl u_current_table@GOTNTPOFF(%eax), %eax\n\t"
+	"movl " ENTRY_CURRENT_TABLE "@GOTNTPOFF(%eax), %eax\n\t"
 	"ret");
 
 #ifndef GLX_X86_READONLY_TEXT
@@ -79,6 +78,10 @@ __asm__(".balign 16\n"
         "x86_entry_end:");
 __asm__(".text");
 #endif /* GLX_X86_READONLY_TEXT */
+
+#ifndef MAPI_MODE_BRIDGE
+
+#include "u_execmem.h"
 
 extern unsigned long
 x86_current_tls();
@@ -139,3 +142,5 @@ entry_generate(int slot)
 
    return entry;
 }
+
+#endif /* MAPI_MODE_BRIDGE */

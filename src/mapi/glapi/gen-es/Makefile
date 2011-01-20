@@ -1,18 +1,14 @@
 TOP = ../../../..
+MAPI = $(TOP)/src/mapi/mapi
 GLAPI = ../gen
 include $(TOP)/configs/current
 
 OUTPUTS :=			\
-	glapi/glapitable.h	\
-	glapi/glapitemp.h	\
-	glapi/glprocs.h		\
-	glapi/glapi_sparc.S	\
-	glapi/glapi_x86-64.S	\
-	glapi/glapi_x86.S	\
+	glapi_mapi_tmp.h	\
 	main/glapidispatch.h	\
 	main/remap_helper.h
 
-COMMON = gl_XML.py glX_XML.py license.py typeexpr.py
+COMMON = gl_and_es_API.xml gl_XML.py glX_XML.py license.py typeexpr.py
 COMMON := $(addprefix $(GLAPI)/, $(COMMON))
 
 ES1_APIXML := es1_API.xml
@@ -28,41 +24,41 @@ ES2_DEPS = $(ES2_APIXML) base2_API.xml es2_EXT.xml es_EXT.xml \
 ES1_OUTPUTS := $(addprefix $(ES1_OUTPUT_DIR)/, $(OUTPUTS))
 ES2_OUTPUTS := $(addprefix $(ES2_OUTPUT_DIR)/, $(OUTPUTS))
 
-all: es1 es2
+SHARED_GLAPI_APIXML := $(GLAPI)/gl_and_es_API.xml
+SHARED_GLAPI_OUTPUT_DIR := $(TOP)/src/mapi/shared-glapi
+SHARED_GLAPI_DEPS := $(SHARED_GLAPI_APIXML)
+SHARED_GLAPI_OUTPUTS = $(SHARED_GLAPI_OUTPUT_DIR)/glapi_mapi_tmp.h
+
+all: es1 es2 shared-glapi
 
 es1: $(ES1_OUTPUTS)
 es2: $(ES2_OUTPUTS)
+shared-glapi: $(SHARED_GLAPI_OUTPUTS)
 
 $(ES1_OUTPUTS): APIXML := $(ES1_APIXML)
-$(ES2_OUTPUTS): APIXML := $(ES2_APIXML)
+$(ES1_OUTPUTS): PRINTER := es1api
 $(ES1_OUTPUTS): $(ES1_DEPS)
+
+$(ES2_OUTPUTS): APIXML := $(ES2_APIXML)
+$(ES2_OUTPUTS): PRINTER := es2api
 $(ES2_OUTPUTS): $(ES2_DEPS)
+
+$(SHARED_GLAPI_OUTPUTS): APIXML := $(SHARED_GLAPI_APIXML)
+$(SHARED_GLAPI_OUTPUTS): PRINTER := shared-glapi
+$(SHARED_GLAPI_OUTPUTS): $(SHARED_GLAPI_DEPS)
 
 define gen-glapi
 	@mkdir -p $(dir $@)
 	$(PYTHON2) $(PYTHON_FLAGS) $< -f $(APIXML) $(1) > $@
 endef
 
-%/glapidispatch.h: $(GLAPI)/gl_table.py $(COMMON)
+%/glapi_mapi_tmp.h: $(MAPI)/mapi_abi.py $(COMMON)
+	@mkdir -p $(dir $@)
+	$(PYTHON2) $(PYTHON_FLAGS) $< \
+		--printer $(PRINTER) --mode lib $(GLAPI)/gl_and_es_API.xml > $@
+
+%/main/glapidispatch.h: $(GLAPI)/gl_table.py $(COMMON)
 	$(call gen-glapi,-c -m remap_table)
-
-%/glapitable.h: $(GLAPI)/gl_table.py $(COMMON)
-	$(call gen-glapi,-c)
-
-%/glapitemp.h: $(GLAPI)/gl_apitemp.py $(COMMON)
-	$(call gen-glapi,-c)
-
-%/glprocs.h: $(GLAPI)/gl_procs.py $(COMMON)
-	$(call gen-glapi,-c)
-
-%/glapi_sparc.S: $(GLAPI)/gl_SPARC_asm.py $(COMMON)
-	$(call gen-glapi)
-
-%/glapi_x86-64.S: $(GLAPI)/gl_x86-64_asm.py $(COMMON)
-	$(call gen-glapi)
-
-%/glapi_x86.S: $(GLAPI)/gl_x86_asm.py $(COMMON)
-	$(call gen-glapi)
 
 %/main/remap_helper.h: $(GLAPI)/remap_helper.py $(COMMON)
 	$(call gen-glapi)
@@ -81,12 +77,15 @@ verify_xml:
 	@rm -f tmp.xml
 
 clean-es1:
-	-rm -rf $(ES1_OUTPUT_DIR)/glapi
+	-rm -f $(ES1_OUTPUTS)
 	-rm -rf $(ES1_OUTPUT_DIR)/main
 
 clean-es2:
-	-rm -rf $(ES2_OUTPUT_DIR)/glapi
+	-rm -f $(ES2_OUTPUTS)
 	-rm -rf $(ES2_OUTPUT_DIR)/main
 
-clean: clean-es1 clean-es2
+clean-shared-glapi:
+	-rm -f $(SHARED_GLAPI_OUTPUTS)
+
+clean: clean-es1 clean-es2 clean-shared-glapi
 	-rm -f *~ *.pyc *.pyo

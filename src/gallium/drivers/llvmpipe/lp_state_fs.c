@@ -546,6 +546,7 @@ generate_fragment(struct llvmpipe_context *lp,
    unsigned i;
    unsigned chan;
    unsigned cbuf;
+   boolean cbuf0_write_all;
 
    /* Adjust color input interpolation according to flatshade state:
     */
@@ -559,6 +560,15 @@ generate_fragment(struct llvmpipe_context *lp,
       }
    }
 
+   /* check if writes to cbuf[0] are to be copied to all cbufs */
+   cbuf0_write_all = FALSE;
+   for (i = 0;i < shader->info.base.num_properties; i++) {
+      if (shader->info.base.properties[i].name ==
+          TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS) {
+         cbuf0_write_all = TRUE;
+         break;
+      }
+   }
 
    /* TODO: actually pick these based on the fs and color buffer
     * characteristics. */
@@ -697,9 +707,10 @@ generate_fragment(struct llvmpipe_context *lp,
                   mask_input,
                   counter);
 
-      for(cbuf = 0; cbuf < key->nr_cbufs; cbuf++)
-	 for(chan = 0; chan < NUM_CHANNELS; ++chan)
-	    fs_out_color[cbuf][chan][i] = out_color[cbuf][chan];
+      for (cbuf = 0; cbuf < key->nr_cbufs; cbuf++)
+         for (chan = 0; chan < NUM_CHANNELS; ++chan)
+            fs_out_color[cbuf][chan][i] =
+               out_color[cbuf * !cbuf0_write_all][chan];
    }
 
    sampler->destroy(sampler);

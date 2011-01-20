@@ -2277,6 +2277,112 @@ ast_declarator_list::hir(exec_list *instructions,
       }
 
 
+      /* Interpolation qualifiers cannot be applied to 'centroid' and
+       * 'centroid varying'.
+       *
+       * From page 29 (page 35 of the PDF) of the GLSL 1.30 spec:
+       *    "interpolation qualifiers may only precede the qualifiers in,
+       *    centroid in, out, or centroid out in a declaration. They do not apply
+       *    to the deprecated storage qualifiers varying or centroid varying."
+       */
+      if (state->language_version >= 130
+          && this->type->qualifier.has_interpolation()
+          && this->type->qualifier.flags.q.varying) {
+
+         const char *i = this->type->qualifier.interpolation_string();
+         assert(i != NULL);
+         const char *s;
+         if (this->type->qualifier.flags.q.centroid)
+            s = "centroid varying";
+         else
+            s = "varying";
+
+         _mesa_glsl_error(&loc, state,
+                          "qualifier '%s' cannot be applied to the "
+                          "deprecated storage qualifier '%s'", i, s);
+      }
+
+
+      /* Interpolation qualifiers can only apply to vertex shader outputs and
+       * fragment shader inputs.
+       *
+       * From page 29 (page 35 of the PDF) of the GLSL 1.30 spec:
+       *    "Outputs from a vertex shader (out) and inputs to a fragment
+       *    shader (in) can be further qualified with one or more of these
+       *    interpolation qualifiers"
+       */
+      if (state->language_version >= 130
+          && this->type->qualifier.has_interpolation()) {
+
+         const char *i = this->type->qualifier.interpolation_string();
+         assert(i != NULL);
+
+         switch (state->target) {
+         case vertex_shader:
+            if (this->type->qualifier.flags.q.in) {
+               _mesa_glsl_error(&loc, state,
+                                "qualifier '%s' cannot be applied to vertex "
+                                "shader inputs", i);
+            }
+            break;
+         case fragment_shader:
+            if (this->type->qualifier.flags.q.out) {
+               _mesa_glsl_error(&loc, state,
+                                "qualifier '%s' cannot be applied to fragment "
+                                "shader outputs", i);
+            }
+            break;
+         default:
+            assert(0);
+         }
+      }
+
+
+      /* From section 4.3.4 of the GLSL 1.30 spec:
+       *    "It is an error to use centroid in in a vertex shader."
+       */
+      if (state->language_version >= 130
+          && this->type->qualifier.flags.q.centroid
+          && this->type->qualifier.flags.q.in
+          && state->target == vertex_shader) {
+
+         _mesa_glsl_error(&loc, state,
+                          "'centroid in' cannot be used in a vertex shader");
+      }
+
+
+      /* Precision qualifiers exists only in GLSL versions 1.00 and >= 1.30.
+       */
+      if (this->type->specifier->precision != ast_precision_none
+          && state->language_version != 100
+          && state->language_version < 130) {
+
+         _mesa_glsl_error(&loc, state,
+                          "precision qualifiers are supported only in GLSL ES "
+                          "1.00, and GLSL 1.30 and later");
+      }
+
+
+      /* Precision qualifiers only apply to floating point and integer types.
+       *
+       * From section 4.5.2 of the GLSL 1.30 spec:
+       *    "Any floating point or any integer declaration can have the type
+       *    preceded by one of these precision qualifiers [...] Literal
+       *    constants do not have precision qualifiers. Neither do Boolean
+       *    variables.
+       */
+      if (this->type->specifier->precision != ast_precision_none
+          && !var->type->is_float()
+          && !var->type->is_integer()
+          && !(var->type->is_array()
+               && (var->type->fields.array->is_float()
+                   || var->type->fields.array->is_integer()))) {
+
+         _mesa_glsl_error(&loc, state,
+                          "precision qualifiers apply only to floating point "
+                          "and integer types");
+      }
+
       /* Process the initializer and add its instructions to a temporary
        * list.  This list will be added to the instruction stream (below) after
        * the declaration is added.  This is done because in some cases (such as
@@ -2403,7 +2509,8 @@ ast_declarator_list::hir(exec_list *instructions,
        */
       if (this->type->qualifier.flags.q.constant && decl->initializer == NULL) {
 	 _mesa_glsl_error(& loc, state,
-			  "const declaration of `%s' must be initialized");
+			  "const declaration of `%s' must be initialized",
+			  decl->identifier);
       }
 
       /* Check if this declaration is actually a re-declaration, either to
@@ -3132,6 +3239,58 @@ ir_rvalue *
 ast_type_specifier::hir(exec_list *instructions,
 			  struct _mesa_glsl_parse_state *state)
 {
+   if (!this->is_precision_statement && this->structure == NULL)
+      return NULL;
+
+   YYLTYPE loc = this->get_location();
+
+   if (this->precision != ast_precision_none
+       && state->language_version != 100
+       && state->language_version < 130) {
+      _mesa_glsl_error(&loc, state,
+                       "precision qualifiers exist only in "
+                       "GLSL ES 1.00, and GLSL 1.30 and later");
+      return NULL;
+   }
+   if (this->precision != ast_precision_none
+       && this->structure != NULL) {
+      _mesa_glsl_error(&loc, state,
+                       "precision qualifiers do not apply to structures");
+      return NULL;
+   }
+
+   /* If this is a precision statement, check that the type to which it is
+    * applied is either float or int.
+    *
+    * From section 4.5.3 of the GLSL 1.30 spec:
+    *    "The precision statement
+    *       precision precision-qualifier type;
+    *    can be used to establish a default precision qualifier. The type
+    *    field can be either int or float [...].  Any other types or
+    *    qualifiers will result in an error.
+    */
+   if (this->is_precision_statement) {
+      assert(this->precision != ast_precision_none);
+      assert(this->structure == NULL); /* The check for structures was
+                                        * performed above. */
+      if (this->is_array) {
+         _mesa_glsl_error(&loc, state,
+                          "default precision statements do not apply to "
+                          "arrays");
+         return NULL;
+      }
+      if (this->type_specifier != ast_float
+          && this->type_specifier != ast_int) {
+         _mesa_glsl_error(&loc, state,
+                          "default precision statements apply only to types "
+                          "float and int");
+         return NULL;
+      }
+
+      /* FINISHME: Translate precision statements into IR. */
+      return NULL;
+   }
+
    if (this->structure != NULL)
       return this->structure->hir(instructions, state);
 

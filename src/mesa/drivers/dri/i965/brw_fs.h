@@ -306,6 +306,25 @@ public:
 	      offset == inst->offset);
    }
 
+   bool is_tex()
+   {
+      return (opcode == FS_OPCODE_TEX ||
+	      opcode == FS_OPCODE_TXB ||
+	      opcode == FS_OPCODE_TXL);
+   }
+
+   bool is_math()
+   {
+      return (opcode == FS_OPCODE_RCP ||
+	      opcode == FS_OPCODE_RSQ ||
+	      opcode == FS_OPCODE_SQRT ||
+	      opcode == FS_OPCODE_EXP2 ||
+	      opcode == FS_OPCODE_LOG2 ||
+	      opcode == FS_OPCODE_SIN ||
+	      opcode == FS_OPCODE_COS ||
+	      opcode == FS_OPCODE_POW);
+   }
+
    int opcode; /* BRW_OPCODE_* or FS_OPCODE_* */
    fs_reg dst;
    fs_reg src[3];
@@ -412,6 +431,7 @@ public:
    void visit(ir_function_signature *ir);
 
    fs_inst *emit(fs_inst inst);
+   void setup_paramvalues_refs();
    void assign_curb_setup();
    void calculate_urb_setup();
    void assign_urb_setup();
@@ -428,6 +448,8 @@ public:
    bool dead_code_eliminate();
    bool remove_duplicate_mrf_writes();
    bool virtual_grf_interferes(int a, int b);
+   void schedule_instructions();
+
    void generate_code();
    void generate_fb_write(fs_inst *inst);
    void generate_linterp(fs_inst *inst, struct brw_reg dst,
@@ -475,6 +497,12 @@ public:
    struct brw_shader *shader;
    void *mem_ctx;
    exec_list instructions;
+
+   /* Delayed setup of c->prog_data.params[] due to realloc of
+    * ParamValues[] during compile.
+    */
+   int param_index[MAX_UNIFORMS * 4];
+   int param_offset[MAX_UNIFORMS * 4];
 
    int *virtual_grf_sizes;
    int virtual_grf_next;

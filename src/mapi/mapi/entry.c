@@ -27,6 +27,18 @@
  */
 
 #include "entry.h"
+#include "u_current.h"
+#include "u_macros.h"
+
+/* define macros for use by assembly dispatchers */
+#define ENTRY_CURRENT_TABLE U_STRINGIFY(u_current_table)
+
+/* in bridge mode, mapi is a user of glapi */
+#ifdef MAPI_MODE_BRIDGE
+#define ENTRY_CURRENT_TABLE_GET "_glapi_get_dispatch"
+#else
+#define ENTRY_CURRENT_TABLE_GET "u_current_get_internal"
+#endif
 
 #if defined(USE_X86_ASM) && defined(__GNUC__)
 #   ifdef GLX_USE_TLS
@@ -39,13 +51,24 @@
 #else
 
 #include <stdlib.h>
-#include "u_current.h"
+
+static INLINE const struct mapi_table *
+entry_current_get(void)
+{
+#ifdef MAPI_MODE_BRIDGE
+   return GET_DISPATCH();
+#else
+   return u_current_get();
+#endif
+}
 
 /* C version of the public entries */
 #define MAPI_TMP_DEFINES
 #define MAPI_TMP_PUBLIC_DECLARES
 #define MAPI_TMP_PUBLIC_ENTRIES
 #include "mapi_tmp.h"
+
+#ifndef MAPI_MODE_BRIDGE
 
 void
 entry_patch_public(void)
@@ -69,5 +92,7 @@ void
 entry_patch(mapi_func entry, int slot)
 {
 }
+
+#endif /* MAPI_MODE_BRIDGE */
 
 #endif /* asm */

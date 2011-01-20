@@ -256,11 +256,16 @@ struct GalliumDXGIAdapter
 	{
 		this->parent = factory;
 
+                /* FIXME handler should be static */
 		handler.invalid_surface = handle_invalid_surface;
 		handler.new_drm_screen = dxgi_loader_create_drm_screen;
 		handler.new_sw_screen = dxgi_loader_create_sw_screen;
-		display = platform->create_display(dpy, &handler, this);
+		platform->set_event_handler(&handler);
+
+		display = platform->create_display(dpy, FALSE, this);
 		if(!display)
+                   display = platform->create_display(dpy, TRUE, this);
+                if(!display)
 			throw E_FAIL;
 		memset(&desc, 0, sizeof(desc));
 		std::string s = std::string("GalliumD3D on ") + display->screen->get_name(display->screen) + " by " + display->screen->get_vendor(display->screen);

@@ -629,15 +629,15 @@ vbo_exec_DrawArrays(GLenum mode, GLint start, GLsizei count)
  */
 static void GLAPIENTRY
 vbo_exec_DrawArraysInstanced(GLenum mode, GLint start, GLsizei count,
-                             GLsizei primcount)
+                             GLsizei numInstances)
 {
    GET_CURRENT_CONTEXT(ctx);
 
    if (MESA_VERBOSE & VERBOSE_DRAW)
       _mesa_debug(ctx, "glDrawArraysInstanced(%s, %d, %d, %d)\n",
-                  _mesa_lookup_enum_by_nr(mode), start, count, primcount);
+                  _mesa_lookup_enum_by_nr(mode), start, count, numInstances);
 
-   if (!_mesa_validate_DrawArraysInstanced(ctx, mode, start, count, primcount))
+   if (!_mesa_validate_DrawArraysInstanced(ctx, mode, start, count, numInstances))
       return;
 
    FLUSH_CURRENT( ctx, 0 );
@@ -649,7 +649,7 @@ vbo_exec_DrawArraysInstanced(GLenum mode, GLint start, GLsizei count,
    if (0)
       check_draw_arrays_data(ctx, start, count);
 
-   vbo_draw_arrays(ctx, mode, start, count, primcount);
+   vbo_draw_arrays(ctx, mode, start, count, numInstances);
 
    if (0)
       print_draw_arrays(ctx, mode, start, count);
@@ -724,7 +724,7 @@ vbo_validated_drawrangeelements(struct gl_context *ctx, GLenum mode,
 				GLuint start, GLuint end,
 				GLsizei count, GLenum type,
 				const GLvoid *indices,
-				GLint basevertex, GLint primcount)
+				GLint basevertex, GLint numInstances)
 {
    struct vbo_context *vbo = vbo_context(ctx);
    struct vbo_exec_context *exec = &vbo->exec;
@@ -757,7 +757,7 @@ vbo_validated_drawrangeelements(struct gl_context *ctx, GLenum mode,
    prim[0].count = count;
    prim[0].indexed = 1;
    prim[0].basevertex = basevertex;
-   prim[0].num_instances = primcount;
+   prim[0].num_instances = numInstances;
 
    /* Need to give special consideration to rendering a range of
     * indices starting somewhere above zero.  Typically the
@@ -977,21 +977,21 @@ vbo_exec_DrawElementsBaseVertex(GLenum mode, GLsizei count, GLenum type,
  */
 static void GLAPIENTRY
 vbo_exec_DrawElementsInstanced(GLenum mode, GLsizei count, GLenum type,
-                               const GLvoid *indices, GLsizei primcount)
+                               const GLvoid *indices, GLsizei numInstances)
 {
    GET_CURRENT_CONTEXT(ctx);
 
    if (MESA_VERBOSE & VERBOSE_DRAW)
       _mesa_debug(ctx, "glDrawElementsInstanced(%s, %d, %s, %p, %d)\n",
                   _mesa_lookup_enum_by_nr(mode), count,
-                  _mesa_lookup_enum_by_nr(type), indices, primcount);
+                  _mesa_lookup_enum_by_nr(type), indices, numInstances);
 
    if (!_mesa_validate_DrawElementsInstanced(ctx, mode, count, type, indices,
-                                             primcount))
+                                             numInstances))
       return;
 
    vbo_validated_drawrangeelements(ctx, mode, GL_FALSE, ~0, ~0,
-				   count, type, indices, 0, primcount);
+				   count, type, indices, 0, numInstances);
 }
 
 

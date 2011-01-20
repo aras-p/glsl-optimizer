@@ -123,8 +123,12 @@ endif
 
 # OpenGL state tracker
 GL_CPPFLAGS := -I$(TOP)/src/mesa $(API_DEFINES)
-# cannot not link to $(GL_LIB) as the app might want GLES
+ifeq ($(SHARED_GLAPI),1)
+GL_SYS := $(DRI_LIB_DEPS) -l$(GLAPI_LIB)
+else
+# cannot link to $(GL_LIB) as the app might want GL or GLES
 GL_SYS := $(DRI_LIB_DEPS)
+endif
 GL_LIBS := $(TOP)/src/mesa/libmesagallium.a
 
 # OpenVG state tracker

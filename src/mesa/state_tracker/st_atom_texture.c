@@ -45,6 +45,7 @@
 #include "util/u_inlines.h"
 #include "cso_cache/cso_context.h"
 
+
 /**
  * Combine depth texture mode with "swizzle" so that depth mode swizzling
  * takes place before texture swizzling, and return the resulting swizzle.
@@ -54,8 +55,8 @@
  * \param swizzle    Texture swizzle, a bitmask computed using MAKE_SWIZZLE4.
  * \param depthmode  One of GL_LUMINANCE, GL_INTENSITY, GL_ALPHA, GL_RED.
  */
-static GLuint apply_depthmode(enum pipe_format format,
-                              GLuint swizzle, GLenum depthmode)
+static GLuint
+apply_depthmode(enum pipe_format format, GLuint swizzle, GLenum depthmode)
 {
    const struct util_format_description *desc =
          util_format_description(format);
@@ -109,6 +110,7 @@ static GLuint apply_depthmode(enum pipe_format format,
    return MAKE_SWIZZLE4(swiz[0], swiz[1], swiz[2], swiz[3]);
 }
 
+
 /**
  * Return TRUE if the swizzling described by "swizzle" and
  * "depthmode" (for depth textures only) is different from the swizzling
@@ -118,8 +120,9 @@ static GLuint apply_depthmode(enum pipe_format format,
  * \param swizzle    Texture swizzle, a bitmask computed using MAKE_SWIZZLE4.
  * \param depthmode  One of GL_LUMINANCE, GL_INTENSITY, GL_ALPHA.
  */
-static boolean check_sampler_swizzle(struct pipe_sampler_view *sv,
-                                     GLuint swizzle, GLenum depthmode)
+static boolean
+check_sampler_swizzle(struct pipe_sampler_view *sv,
+                      GLuint swizzle, GLenum depthmode)
 {
    swizzle = apply_depthmode(sv->texture->format, swizzle, depthmode);
 
@@ -127,15 +130,15 @@ static boolean check_sampler_swizzle(struct pipe_sampler_view *sv,
        (sv->swizzle_g != GET_SWZ(swizzle, 1)) ||
        (sv->swizzle_b != GET_SWZ(swizzle, 2)) ||
        (sv->swizzle_a != GET_SWZ(swizzle, 3)))
-      return true;
-   return false;
+      return TRUE;
+   return FALSE;
 }
+
 
 static INLINE struct pipe_sampler_view *
 st_create_texture_sampler_view_from_stobj(struct pipe_context *pipe,
 					  struct st_texture_object *stObj,
 					  enum pipe_format format)
-					  
 {
    struct pipe_sampler_view templ;
    GLuint swizzle = apply_depthmode(stObj->pt->format,
@@ -161,18 +164,19 @@ static INLINE struct pipe_sampler_view *
 st_get_texture_sampler_view_from_stobj(struct st_texture_object *stObj,
 				       struct pipe_context *pipe,
 				       enum pipe_format format)
-
 {
    if (!stObj || !stObj->pt) {
       return NULL;
    }
 
    if (!stObj->sampler_view) {
-      stObj->sampler_view = st_create_texture_sampler_view_from_stobj(pipe, stObj, format);
+      stObj->sampler_view =
+         st_create_texture_sampler_view_from_stobj(pipe, stObj, format);
    }
 
    return stObj->sampler_view;
 }
+
 
 static void 
 update_textures(struct st_context *st)
@@ -214,21 +218,29 @@ update_textures(struct st_context *st)
             continue;
          }
 
+         /* Determine the format of the texture sampler view */
 	 st_view_format = stObj->pt->format;
 	 {
-	    struct st_texture_image *firstImage;
-	    enum pipe_format firstImageFormat;
-	    firstImage = st_texture_image(stObj->base.Image[0][stObj->base.BaseLevel]);
+	    const struct st_texture_image *firstImage =
+               st_texture_image(stObj->base.Image[0][stObj->base.BaseLevel]);
+            const gl_format texFormat = firstImage->base.TexFormat;
+	    enum pipe_format firstImageFormat =
+               st_mesa_format_to_pipe_format(texFormat);
 
-	    firstImageFormat = st_mesa_format_to_pipe_format(firstImage->base.TexFormat);
-	    if ((stObj->base.sRGBDecode == GL_SKIP_DECODE_EXT) && (_mesa_get_format_color_encoding(firstImage->base.TexFormat) == GL_SRGB)) {
-	       firstImageFormat = st_mesa_format_to_pipe_format(_mesa_get_srgb_format_linear(firstImage->base.TexFormat));
+	    if ((stObj->base.sRGBDecode == GL_SKIP_DECODE_EXT) &&
+                (_mesa_get_format_color_encoding(texFormat) == GL_SRGB)) {
+               /* don't do sRGB->RGB conversion.  Interpret the texture
+                * texture data as linear values.
+                */
+               const gl_format linearFormat =
+                  _mesa_get_srgb_format_linear(texFormat);
+	       firstImageFormat = st_mesa_format_to_pipe_format(linearFormat);
 	    }
 
 	    if (firstImageFormat != stObj->pt->format)
 	       st_view_format = firstImageFormat;
-
 	 }
+
          st->state.num_textures = su + 1;
 
 	 /* if sampler view has changed dereference it */

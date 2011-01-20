@@ -532,7 +532,7 @@ void radeon_prepare_render(radeonContextPtr radeon)
 
 	/* Intel driver does the equivalent of this, no clue if it is needed:*/
 	draw = drawable->driverPrivate;
-	radeon_draw_buffer(radeon->glCtx, &draw->base);
+	radeon_draw_buffer(radeon->glCtx, radeon->glCtx->DrawBuffer);
 
 	driContext->dri2.draw_stamp = drawable->dri2.stamp;
     }

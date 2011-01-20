@@ -60,6 +60,10 @@ GL_LIB_DEPS += $(LLVM_LIBS)
 LDFLAGS += $(LLVM_LDFLAGS)
 endif
 
+ifeq ($(SHARED_GLAPI),1)
+GL_LIB_DEPS := -L$(TOP)/$(LIB_DIR) -l$(GLAPI_LIB) $(GL_LIB_DEPS)
+endif
+
 
 .SUFFIXES : .cpp
 

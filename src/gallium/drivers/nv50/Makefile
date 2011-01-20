@@ -29,4 +29,7 @@ C_SOURCES = \
 	nv50_pc_optimize.c \
 	nv50_pc_regalloc.c
 
+LIBRARY_INCLUDES = \
+	$(LIBDRM_CFLAGS)
+
 include ../../Makefile.template

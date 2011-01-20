@@ -26,6 +26,7 @@ struct push_context {
    boolean primitive_restart;
    uint32_t prim;
    uint32_t restart_index;
+   uint32_t instance_id;
 };
 
 static INLINE unsigned
@@ -75,7 +76,8 @@ emit_vertices_i08(struct push_context *ctx, unsigned start, unsigned count)
 
       BEGIN_RING_NI(ctx->chan, RING_3D(VERTEX_DATA), size);
 
-      ctx->translate->run_elts8(ctx->translate, elts, nr, 0, ctx->chan->cur);
+      ctx->translate->run_elts8(ctx->translate, elts, nr, ctx->instance_id,
+                                ctx->chan->cur);
 
       ctx->chan->cur += size;
       count -= nr;
@@ -86,7 +88,8 @@ emit_vertices_i08(struct push_context *ctx, unsigned start, unsigned count)
          elts++;
          BEGIN_RING(ctx->chan, RING_3D(VERTEX_END_GL), 2);
          OUT_RING  (ctx->chan, 0);
-         OUT_RING  (ctx->chan, ctx->prim);
+         OUT_RING  (ctx->chan, NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_CONT |
+                    (ctx->prim & ~NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT));
       }
    }
 }
@@ -108,7 +111,8 @@ emit_vertices_i16(struct push_context *ctx, unsigned start, unsigned count)
 
       BEGIN_RING_NI(ctx->chan, RING_3D(VERTEX_DATA), size);
 
-      ctx->translate->run_elts16(ctx->translate, elts, nr, 0, ctx->chan->cur);
+      ctx->translate->run_elts16(ctx->translate, elts, nr, ctx->instance_id,
+                                 ctx->chan->cur);
 
       ctx->chan->cur += size;
       count -= nr;
@@ -119,7 +123,8 @@ emit_vertices_i16(struct push_context *ctx, unsigned start, unsigned count)
          elts++;
          BEGIN_RING(ctx->chan, RING_3D(VERTEX_END_GL), 2);
          OUT_RING  (ctx->chan, 0);
-         OUT_RING  (ctx->chan, ctx->prim);
+         OUT_RING  (ctx->chan, NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_CONT |
+                    (ctx->prim & ~NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT));
       }
    }
 }
@@ -141,7 +146,8 @@ emit_vertices_i32(struct push_context *ctx, unsigned start, unsigned count)
 
       BEGIN_RING_NI(ctx->chan, RING_3D(VERTEX_DATA), size);
 
-      ctx->translate->run_elts(ctx->translate, elts, nr, 0, ctx->chan->cur);
+      ctx->translate->run_elts(ctx->translate, elts, nr, ctx->instance_id,
+                               ctx->chan->cur);
 
       ctx->chan->cur += size;
       count -= nr;
@@ -152,7 +158,8 @@ emit_vertices_i32(struct push_context *ctx, unsigned start, unsigned count)
          elts++;
          BEGIN_RING(ctx->chan, RING_3D(VERTEX_END_GL), 2);
          OUT_RING  (ctx->chan, 0);
-         OUT_RING  (ctx->chan, ctx->prim);
+         OUT_RING  (ctx->chan, NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_CONT |
+                    (ctx->prim & ~NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT));
       }
    }
 }
@@ -166,7 +173,8 @@ emit_vertices_seq(struct push_context *ctx, unsigned start, unsigned count)
 
       BEGIN_RING_NI(ctx->chan, RING_3D(VERTEX_DATA), size);
 
-      ctx->translate->run(ctx->translate, start, push, 0, ctx->chan->cur);
+      ctx->translate->run(ctx->translate, start, push, ctx->instance_id,
+                          ctx->chan->cur);
       ctx->chan->cur += size;
       count -= push;
       start += push;
@@ -244,6 +252,7 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
       ctx.restart_index = 0;
    }
 
+   ctx.instance_id = info->start_instance;
    ctx.prim = nvc0_prim_gl(info->mode);
 
    while (inst--) {
@@ -268,6 +277,7 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
       }
       IMMED_RING(ctx.chan, RING_3D(VERTEX_END_GL), 0);
 
+      ctx.instance_id++;
       ctx.prim |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
    }
 

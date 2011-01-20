@@ -132,15 +132,17 @@ nvc0_indirect_outputs(struct nvc0_translation_info *ti, int id)
 }
 
 static INLINE unsigned
-nvc0_system_value_location(unsigned sn, unsigned si)
+nvc0_system_value_location(unsigned sn, unsigned si, boolean *is_input)
 {
    /* NOTE: locations 0xfxx indicate special regs */
    switch (sn) {
       /*
    case TGSI_SEMANTIC_VERTEXID:
+      *is_input = TRUE;
       return 0x2fc;
       */
    case TGSI_SEMANTIC_PRIMID:
+      *is_input = TRUE;
       return 0x60;
       /*
    case TGSI_SEMANTIC_LAYER_INDEX:
@@ -149,8 +151,10 @@ nvc0_system_value_location(unsigned sn, unsigned si)
       return 0x68;
       */
    case TGSI_SEMANTIC_INSTANCEID:
+      *is_input = TRUE;
       return 0x2f8;
    case TGSI_SEMANTIC_FACE:
+      *is_input = TRUE;
       return 0x3fc;
       /*
    case TGSI_SEMANTIC_INVOCATIONID:
@@ -281,7 +285,7 @@ prog_decl(struct nvc0_translation_info *ti,
       }
       break;
    case TGSI_FILE_SYSTEM_VALUE:
-      ti->sysval_loc[i] = nvc0_system_value_location(sn, si);
+      ti->sysval_loc[i] = nvc0_system_value_location(sn, si, &ti->sysval_in[i]);
       assert(first == last);
       break;
    case TGSI_FILE_NULL:
@@ -414,6 +418,12 @@ nvc0_vp_gp_gen_header(struct nvc0_program *vp, struct nvc0_translation_info *ti)
       }
    }
 
+   for (i = 0; i < TGSI_SEMANTIC_COUNT; ++i) {
+      a = ti->sysval_loc[i] / 4;
+      if (a > 0 && a < (0xf00 / 4))
+         vp->hdr[(ti->sysval_in[i] ? 5 : 13) + a / 32] |= 1 << (a % 32);
+   }
+
    return 0;
 }
 
@@ -518,6 +528,12 @@ nvc0_fp_gen_header(struct nvc0_program *fp, struct nvc0_translation_info *ti)
    for (i = 0; i <= ti->scan.file_max[TGSI_FILE_OUTPUT]; ++i) {
       if (i != ti->fp_depth_output)
          fp->hdr[18] |= 0xf << ti->output_loc[i][0];
+   }
+
+   for (i = 0; i < TGSI_SEMANTIC_COUNT; ++i) {
+      a = ti->sysval_loc[i] / 2;
+      if ((a > 0) && (a < 0xf00 / 2))
+         fp->hdr[4 + a / 32] |= NVC0_INTERP_FLAT << (a % 32);
    }
 
    return 0;

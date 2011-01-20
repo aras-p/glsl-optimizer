@@ -63,6 +63,7 @@ struct nvc0_translation_info {
    uint16_t input_loc[PIPE_MAX_SHADER_INPUTS][4];
    uint16_t output_loc[PIPE_MAX_SHADER_OUTPUTS][4];
    uint16_t sysval_loc[TGSI_SEMANTIC_COUNT];
+   boolean sysval_in[TGSI_SEMANTIC_COUNT];
    int input_access[PIPE_MAX_SHADER_INPUTS][4];
    int output_access[PIPE_MAX_SHADER_OUTPUTS][4];
    ubyte interp_mode[PIPE_MAX_SHADER_INPUTS];

@@ -881,11 +881,6 @@ struct dd_function_table {
     */
    void (*ValidateTnlModule)( struct gl_context *ctx, GLuint new_state );
 
-
-#define PRIM_OUTSIDE_BEGIN_END   (GL_POLYGON+1)
-#define PRIM_INSIDE_UNKNOWN_PRIM (GL_POLYGON+2)
-#define PRIM_UNKNOWN             (GL_POLYGON+3)
-
    /**
     * Set by the driver-supplied T&L engine.  
     *

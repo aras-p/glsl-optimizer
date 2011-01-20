@@ -605,6 +605,7 @@ GLboolean r700SetupVertexProgram(struct gl_context * ctx)
     struct gl_program_parameter_list *paramList;
     unsigned int unNumParamData;
     unsigned int ui;
+    unsigned int num_sq_vs_gprs;
 
     if(GL_FALSE == vp->loaded)
     {
@@ -655,6 +656,16 @@ GLboolean r700SetupVertexProgram(struct gl_context * ctx)
 
     SETfield(r700->vs.SQ_PGM_RESOURCES_VS.u32All, vp->r700Shader.nRegs + 1,
              NUM_GPRS_shift, NUM_GPRS_mask);
+
+    num_sq_vs_gprs = ((r700->sq_config.SQ_GPR_RESOURCE_MGMT_1.u32All & NUM_VS_GPRS_mask) >> NUM_VS_GPRS_shift);
+ 
+    if((vp->r700Shader.nRegs + 1) > num_sq_vs_gprs)
+    {
+        /* care! thich changes sq - needs idle state */
+        R600_STATECHANGE(context, sq);
+        SETfield(r700->sq_config.SQ_GPR_RESOURCE_MGMT_1.u32All, vp->r700Shader.nRegs + 1,
+                 NUM_VS_GPRS_shift, NUM_VS_GPRS_mask);
+    }
 
     if(vp->r700Shader.uStackSize) /* we don't use branch for now, it should be zero. */
 	{

@@ -67,8 +67,8 @@ softpipe_create_sampler_state(struct pipe_context *pipe,
 
 
 static void
-softpipe_bind_sampler_states(struct pipe_context *pipe,
-                             unsigned num, void **sampler)
+softpipe_bind_fragment_sampler_states(struct pipe_context *pipe,
+                                      unsigned num, void **sampler)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
    unsigned i;
@@ -181,9 +181,9 @@ softpipe_sampler_view_destroy(struct pipe_context *pipe,
 
 
 static void
-softpipe_set_sampler_views(struct pipe_context *pipe,
-                           unsigned num,
-                           struct pipe_sampler_view **views)
+softpipe_set_fragment_sampler_views(struct pipe_context *pipe,
+                                    unsigned num,
+                                    struct pipe_sampler_view **views)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
    uint i;
@@ -192,7 +192,8 @@ softpipe_set_sampler_views(struct pipe_context *pipe,
 
    /* Check for no-op */
    if (num == softpipe->num_sampler_views &&
-       !memcmp(softpipe->sampler_views, views, num * sizeof(struct pipe_sampler_view *)))
+       !memcmp(softpipe->fragment_sampler_views, views,
+               num * sizeof(struct pipe_sampler_view *)))
       return;
 
    draw_flush(softpipe->draw);
@@ -200,8 +201,8 @@ softpipe_set_sampler_views(struct pipe_context *pipe,
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       struct pipe_sampler_view *view = i < num ? views[i] : NULL;
 
-      pipe_sampler_view_reference(&softpipe->sampler_views[i], view);
-      sp_tex_tile_cache_set_sampler_view(softpipe->tex_cache[i], view);
+      pipe_sampler_view_reference(&softpipe->fragment_sampler_views[i], view);
+      sp_tex_tile_cache_set_sampler_view(softpipe->fragment_tex_cache[i], view);
    }
 
    softpipe->num_sampler_views = num;
@@ -290,10 +291,9 @@ static struct sp_sampler_variant *
 get_sampler_variant( unsigned unit,
                      struct sp_sampler *sampler,
                      struct pipe_sampler_view *view,
-                     struct pipe_resource *resource,
                      unsigned processor )
 {
-   struct softpipe_resource *sp_texture = softpipe_resource(resource);
+   struct softpipe_resource *sp_texture = softpipe_resource(view->texture);
    struct sp_sampler_variant *v = NULL;
    union sp_sampler_key key;
 
@@ -343,68 +343,47 @@ softpipe_reset_sampler_variants(struct softpipe_context *softpipe)
     */
    for (i = 0; i <= softpipe->vs->max_sampler; i++) {
       if (softpipe->vertex_samplers[i]) {
-         struct pipe_resource *texture = NULL;
-
-         if (softpipe->vertex_sampler_views[i]) {
-            texture = softpipe->vertex_sampler_views[i]->texture;
-         }
-
          softpipe->tgsi.vert_samplers_list[i] = 
             get_sampler_variant( i,
                                  sp_sampler(softpipe->vertex_samplers[i]),
                                  softpipe->vertex_sampler_views[i],
-                                 texture,
                                  TGSI_PROCESSOR_VERTEX );
 
-         sp_sampler_variant_bind_texture( softpipe->tgsi.vert_samplers_list[i], 
-                                          softpipe->vertex_tex_cache[i],
-                                          texture );
+         sp_sampler_variant_bind_view( softpipe->tgsi.vert_samplers_list[i],
+                                       softpipe->vertex_tex_cache[i],
+                                       softpipe->vertex_sampler_views[i] );
       }
    }
 
    if (softpipe->gs) {
       for (i = 0; i <= softpipe->gs->max_sampler; i++) {
          if (softpipe->geometry_samplers[i]) {
-            struct pipe_resource *texture = NULL;
-
-            if (softpipe->geometry_sampler_views[i]) {
-               texture = softpipe->geometry_sampler_views[i]->texture;
-            }
-
             softpipe->tgsi.geom_samplers_list[i] =
                get_sampler_variant(
                   i,
                   sp_sampler(softpipe->geometry_samplers[i]),
                   softpipe->geometry_sampler_views[i],
-                  texture,
                   TGSI_PROCESSOR_GEOMETRY );
 
-            sp_sampler_variant_bind_texture(
+            sp_sampler_variant_bind_view(
                softpipe->tgsi.geom_samplers_list[i],
                softpipe->geometry_tex_cache[i],
-               texture );
+               softpipe->geometry_sampler_views[i] );
          }
       }
    }
 
    for (i = 0; i <= softpipe->fs->info.file_max[TGSI_FILE_SAMPLER]; i++) {
       if (softpipe->sampler[i]) {
-         struct pipe_resource *texture = NULL;
-
-         if (softpipe->sampler_views[i]) {
-            texture = softpipe->sampler_views[i]->texture;
-         }
-
          softpipe->tgsi.frag_samplers_list[i] =
             get_sampler_variant( i,
                                  sp_sampler(softpipe->sampler[i]),
-                                 softpipe->sampler_views[i],
-                                 texture,
+                                 softpipe->fragment_sampler_views[i],
                                  TGSI_PROCESSOR_FRAGMENT );
 
-         sp_sampler_variant_bind_texture( softpipe->tgsi.frag_samplers_list[i], 
-                                          softpipe->tex_cache[i],
-                                          texture );
+         sp_sampler_variant_bind_view( softpipe->tgsi.frag_samplers_list[i],
+                                       softpipe->fragment_tex_cache[i],
+                                       softpipe->fragment_sampler_views[i] );
       }
    }
 }
@@ -429,12 +408,12 @@ void
 softpipe_init_sampler_funcs(struct pipe_context *pipe)
 {
    pipe->create_sampler_state = softpipe_create_sampler_state;
-   pipe->bind_fragment_sampler_states  = softpipe_bind_sampler_states;
+   pipe->bind_fragment_sampler_states  = softpipe_bind_fragment_sampler_states;
    pipe->bind_vertex_sampler_states = softpipe_bind_vertex_sampler_states;
    pipe->bind_geometry_sampler_states = softpipe_bind_geometry_sampler_states;
    pipe->delete_sampler_state = softpipe_delete_sampler_state;
 
-   pipe->set_fragment_sampler_views = softpipe_set_sampler_views;
+   pipe->set_fragment_sampler_views = softpipe_set_fragment_sampler_views;
    pipe->set_vertex_sampler_views = softpipe_set_vertex_sampler_views;
    pipe->set_geometry_sampler_views = softpipe_set_geometry_sampler_views;
 

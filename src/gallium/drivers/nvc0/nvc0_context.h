@@ -71,7 +71,7 @@ struct nvc0_context {
    uint32_t dirty;
 
    struct {
-      uint32_t instance_bits;
+      uint32_t instance_elts; /* bitmask of per-instance elements */
       uint32_t instance_base;
       int32_t index_bias;
       boolean prim_restart;

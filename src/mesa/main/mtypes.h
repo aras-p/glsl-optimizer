@@ -121,6 +121,11 @@ struct st_context;
 /*@}*/
 
 
+/** Extra draw modes beyond GL_POINTS, GL_TRIANGLE_FAN, etc */
+#define PRIM_OUTSIDE_BEGIN_END   (GL_POLYGON+1)
+#define PRIM_INSIDE_UNKNOWN_PRIM (GL_POLYGON+2)
+#define PRIM_UNKNOWN             (GL_POLYGON+3)
+
 
 /**
  * Shader stages. Note that these will become 5 with tessellation.
@@ -296,8 +301,8 @@ typedef enum
 /**
  * Indexes for geometry program result attributes
  */
-/*@{*/
-typedef enum {
+typedef enum
+{
    GEOM_RESULT_POS  = 0,
    GEOM_RESULT_COL0  = 1,
    GEOM_RESULT_COL1  = 2,
@@ -320,7 +325,7 @@ typedef enum {
    /* ### we need to -2 because var0 is 18 instead 16 like in the others */
    GEOM_RESULT_MAX  =  (GEOM_RESULT_VAR0 + MAX_VARYING - 2)
 } gl_geom_result;
-/*@}*/
+
 
 /**
  * Indexes for fragment program input attributes.
@@ -1322,7 +1327,7 @@ struct gl_texture_object
    GLboolean _Complete;		/**< Is texture object complete? */
    GLboolean _RenderToTexture;  /**< Any rendering to this texture? */
    GLboolean Purgeable;         /**< Is the buffer purgeable under memory pressure? */
-   GLenum sRGBDecode;
+   GLenum sRGBDecode;           /**< GL_DECODE_EXT or GL_SKIP_DECODE_EXT */
 
    /** Actual texture images, indexed by [cube face] and [mipmap level] */
    struct gl_texture_image *Image[MAX_FACES][MAX_TEXTURE_LEVELS];
@@ -2549,6 +2554,17 @@ struct gl_framebuffer
 
 
 /**
+ * Precision info for shader datatypes.  See glGetShaderPrecisionFormat().
+ */
+struct gl_precision
+{
+   GLushort RangeMin;   /**< min value exponent */
+   GLushort RangeMax;   /**< max value exponent */
+   GLushort Precision;  /**< number of mantissa bits */
+};
+
+
+/**
  * Limits for vertex and fragment programs/shaders.
  */
 struct gl_program_constants
@@ -2582,6 +2598,9 @@ struct gl_program_constants
    GLuint MaxGeometryUniformComponents;
    GLuint MaxGeometryOutputVertices;
    GLuint MaxGeometryTotalOutputComponents;
+   /* ES 2.0 and GL_ARB_ES2_compatibility */
+   struct gl_precision LowFloat, MediumFloat, HighFloat;
+   struct gl_precision LowInt, MediumInt, HighInt;
 };
 
 
@@ -3074,14 +3093,17 @@ struct gl_dlist_state
    } Current;
 };
 
+
 /**
  * Enum for the OpenGL APIs we know about and may support.
  */
-typedef enum {
+typedef enum
+{
    API_OPENGL,
    API_OPENGLES,
    API_OPENGLES2
 } gl_api;
+
 
 /**
  * Mesa rendering context.
@@ -3293,10 +3315,6 @@ struct gl_context
    void *aelt_context;
    /*@}*/
 };
-
-
-/** The string names for GL_POINT, GL_LINE_LOOP, etc */
-extern const char *_mesa_prim_name[GL_POLYGON+4];
 
 
 #ifdef DEBUG

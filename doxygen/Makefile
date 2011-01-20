@@ -11,6 +11,7 @@ FULL = \
 	math.doxy \
 	vbo.doxy \
 	glapi.doxy \
+	glsl.doxy \
 	shader.doxy \
 	swrast.doxy \
 	swrast_setup.doxy \

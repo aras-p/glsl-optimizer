@@ -29,6 +29,7 @@
 #include "main/mfeatures.h"
 #include "main/enums.h"
 #include "main/imports.h"
+#include "main/mtypes.h"
 
 typedef struct {
    size_t offset;
@@ -6243,27 +6244,37 @@ const char *_mesa_lookup_enum_by_nr( int nr )
    }
 }
 
+/**
+ * Primitive names
+ */
+static const char *prim_names[PRIM_UNKNOWN + 1] = {
+   "GL_POINTS",
+   "GL_LINES",
+   "GL_LINE_LOOP",
+   "GL_LINE_STRIP",
+   "GL_TRIANGLES",
+   "GL_TRIANGLE_STRIP",
+   "GL_TRIANGLE_FAN",
+   "GL_QUADS",
+   "GL_QUAD_STRIP",
+   "GL_POLYGON",
+   "outside begin/end",
+   "inside unknown primitive",
+   "unknown state"
+};
+
+
 /* Get the name of an enum given that it is a primitive type.  Avoids
  * GL_FALSE/GL_POINTS ambiguity and others.
  */
-const char *_mesa_lookup_prim_by_nr( int nr )
+const char *
+_mesa_lookup_prim_by_nr(unsigned nr)
 {
-   switch (nr) {
-   case GL_POINTS: return "GL_POINTS";
-   case GL_LINES: return "GL_LINES";
-   case GL_LINE_STRIP: return "GL_LINE_STRIP";
-   case GL_LINE_LOOP: return "GL_LINE_LOOP";
-   case GL_TRIANGLES: return "GL_TRIANGLES";
-   case GL_TRIANGLE_STRIP: return "GL_TRIANGLE_STRIP";
-   case GL_TRIANGLE_FAN: return "GL_TRIANGLE_FAN";
-   case GL_QUADS: return "GL_QUADS";
-   case GL_QUAD_STRIP: return "GL_QUAD_STRIP";
-   case GL_POLYGON: return "GL_POLYGON";
-   case GL_POLYGON+1: return "OUTSIDE_BEGIN_END";
-   default: return "<invalid>";
-   }
+   if (nr < Elements(prim_names))
+      return prim_names[nr];
+   else
+      return "invalid mode";
 }
-
 
 
 int _mesa_lookup_enum_by_name( const char *symbol )

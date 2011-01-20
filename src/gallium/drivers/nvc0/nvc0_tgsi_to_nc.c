@@ -1085,6 +1085,20 @@ emit_fetch(struct bld_context *bld, const struct tgsi_full_instruction *insn,
    case TGSI_FILE_PREDICATE:
       res = bld_fetch_global(bld, &bld->pvs[idx][swz]);
       break;
+   case TGSI_FILE_SYSTEM_VALUE:
+      assert(bld->ti->sysval_loc[idx] < 0xf00); /* >= would mean special reg */
+      res = new_value(bld->pc,
+                      bld->pc->is_fragprog ? NV_FILE_MEM_V : NV_FILE_MEM_A, 4);
+      res->reg.address = bld->ti->sysval_loc[idx];
+
+      if (res->reg.file == NV_FILE_MEM_A)
+         res = bld_insn_1(bld, NV_OP_VFETCH, res);
+      else
+         res = bld_interp(bld, NVC0_INTERP_FLAT, res);
+
+      /* mesa doesn't do real integers yet :-(and in GL this should be S32) */
+      res = bld_cvt(bld, NV_TYPE_F32, NV_TYPE_U32, res);
+      break;
    default:
       NOUVEAU_ERR("illegal/unhandled src reg file: %d\n", src->Register.File);
       abort();

@@ -222,6 +222,7 @@ begin( struct copy_context *copy, GLenum mode, GLboolean begin_flag )
 
    prim->mode = mode;
    prim->begin = begin_flag;
+   prim->num_instances = 1;
 }
 
 

@@ -38,6 +38,7 @@ loop_state::loop_state()
    this->ht = hash_table_ctor(0, hash_table_pointer_hash,
 			      hash_table_pointer_compare);
    this->mem_ctx = talloc_init("loop state");
+   this->loop_found = false;
 }
 
 
@@ -52,7 +53,9 @@ loop_variable_state *
 loop_state::insert(ir_loop *ir)
 {
    loop_variable_state *ls = new(this->mem_ctx) loop_variable_state;
+
    hash_table_insert(this->ht, ls, ir);
+   this->loop_found = true;
 
    return ls;
 }

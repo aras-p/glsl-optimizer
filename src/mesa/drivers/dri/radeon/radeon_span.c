@@ -60,7 +60,7 @@ static void radeonSetSpanFunctions(struct radeon_renderbuffer *rrb);
 static GLubyte *r200_depth_2byte(const struct radeon_renderbuffer * rrb,
 				 GLint x, GLint y)
 {
-    GLubyte *ptr = rrb->bo->ptr;
+    GLubyte *ptr = rrb->bo->ptr + rrb->draw_offset;
     GLint offset;
     if (rrb->has_surface) {
 	offset = x * rrb->cpp + y * rrb->pitch;
@@ -85,7 +85,7 @@ static GLubyte *r200_depth_2byte(const struct radeon_renderbuffer * rrb,
 static GLubyte *r200_depth_4byte(const struct radeon_renderbuffer * rrb,
 				 GLint x, GLint y)
 {
-    GLubyte *ptr = rrb->bo->ptr;
+    GLubyte *ptr = rrb->bo->ptr + rrb->draw_offset;
     GLint offset;
     if (rrb->has_surface) {
 	offset = x * rrb->cpp + y * rrb->pitch;
@@ -439,7 +439,7 @@ static GLubyte *r600_ptr_color(const struct radeon_renderbuffer * rrb,
 static GLubyte *radeon_ptr_4byte(const struct radeon_renderbuffer * rrb,
 			     GLint x, GLint y)
 {
-    GLubyte *ptr = rrb->bo->ptr;
+    GLubyte *ptr = rrb->bo->ptr + rrb->draw_offset;
     uint32_t mask = RADEON_BO_FLAGS_MACRO_TILE | RADEON_BO_FLAGS_MICRO_TILE;
     GLint offset;
 
@@ -479,7 +479,7 @@ static GLubyte *radeon_ptr_4byte(const struct radeon_renderbuffer * rrb,
 static GLubyte *radeon_ptr_2byte_8x2(const struct radeon_renderbuffer * rrb,
 				     GLint x, GLint y)
 {
-    GLubyte *ptr = rrb->bo->ptr;
+    GLubyte *ptr = rrb->bo->ptr + rrb->draw_offset;
     uint32_t mask = RADEON_BO_FLAGS_MACRO_TILE | RADEON_BO_FLAGS_MICRO_TILE;
     GLint offset;
 

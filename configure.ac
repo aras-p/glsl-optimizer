@@ -316,6 +316,7 @@ EGL_LIB_NAME='lib$(EGL_LIB).'${LIB_EXTENSION}
 GLESv1_CM_LIB_NAME='lib$(GLESv1_CM_LIB).'${LIB_EXTENSION}
 GLESv2_LIB_NAME='lib$(GLESv2_LIB).'${LIB_EXTENSION}
 VG_LIB_NAME='lib$(VG_LIB).'${LIB_EXTENSION}
+GLAPI_LIB_NAME='lib$(GLAPI_LIB).'${LIB_EXTENSION}
 
 GL_LIB_GLOB=${LIB_PREFIX_GLOB}'$(GL_LIB)'${LIB_VERSION_SEPARATOR}'*'${LIB_EXTENSION}'*'
 GLU_LIB_GLOB=${LIB_PREFIX_GLOB}'$(GLU_LIB)'${LIB_VERSION_SEPARATOR}'*'${LIB_EXTENSION}'*'
@@ -327,6 +328,7 @@ EGL_LIB_GLOB=${LIB_PREFIX_GLOB}'$(EGL_LIB)'${LIB_VERSION_SEPARATOR}'*'${LIB_EXTE
 GLESv1_CM_LIB_GLOB=${LIB_PREFIX_GLOB}'$(GLESv1_CM_LIB)'${LIB_VERSION_SEPARATOR}'*'${LIB_EXTENSION}'*'
 GLESv2_LIB_GLOB=${LIB_PREFIX_GLOB}'$(GLESv2_LIB)'${LIB_VERSION_SEPARATOR}'*'${LIB_EXTENSION}'*'
 VG_LIB_GLOB=${LIB_PREFIX_GLOB}'$(VG_LIB)'${LIB_VERSION_SEPARATOR}'*'${LIB_EXTENSION}'*'
+GLAPI_LIB_GLOB=${LIB_PREFIX_GLOB}'$(GLAPI_LIB)'${LIB_VERSION_SEPARATOR}'*'${LIB_EXTENSION}'*'
 
 AC_SUBST([GL_LIB_NAME])
 AC_SUBST([GLU_LIB_NAME])
@@ -337,6 +339,7 @@ AC_SUBST([EGL_LIB_NAME])
 AC_SUBST([GLESv1_CM_LIB_NAME])
 AC_SUBST([GLESv2_LIB_NAME])
 AC_SUBST([VG_LIB_NAME])
+AC_SUBST([GLAPI_LIB_NAME])
 
 AC_SUBST([GL_LIB_GLOB])
 AC_SUBST([GLU_LIB_GLOB])
@@ -347,6 +350,7 @@ AC_SUBST([EGL_LIB_GLOB])
 AC_SUBST([GLESv1_CM_LIB_GLOB])
 AC_SUBST([GLESv2_LIB_GLOB])
 AC_SUBST([VG_LIB_GLOB])
+AC_SUBST([GLAPI_LIB_GLOB])
 
 dnl
 dnl Arch/platform-specific settings
@@ -524,6 +528,18 @@ if test "x$enable_gles2" = xyes; then
 fi
 AC_SUBST([API_DEFINES])
 
+AC_ARG_ENABLE([shared-glapi],
+    [AS_HELP_STRING([--enable-shared-glapi],
+        [EXPERIMENTAL.  Enable shared glapi for OpenGL @<:@default=no@:>@])],
+    [enable_shared_glapi="$enableval"],
+    [enable_shared_glapi=no])
+
+SHARED_GLAPI="0"
+if test "x$enable_shared_glapi" = xyes; then
+    SHARED_GLAPI="1"
+fi
+AC_SUBST([SHARED_GLAPI])
+
 dnl
 dnl Driver configuration. Options are xlib, dri and osmesa right now.
 dnl More later: fbdev, ...
@@ -584,6 +600,13 @@ GALLIUM_TARGET_DIRS=""
 GALLIUM_WINSYS_DIRS="sw"
 GALLIUM_DRIVERS_DIRS="softpipe failover galahad trace rbug noop identity"
 GALLIUM_STATE_TRACKERS_DIRS=""
+
+# build shared-glapi if enabled for OpenGL or if OpenGL ES is enabled
+case "x$enabled_shared_glapi$enable_gles1$enable_gles2" in
+x*yes*)
+    CORE_DIRS="$CORE_DIRS mapi/shared-glapi"
+    ;;
+esac
 
 # build glapi if OpenGL is enabled
 if test "x$enable_opengl" = xyes; then
@@ -792,6 +815,8 @@ AC_SUBST([GLESv1_CM_PC_LIB_PRIV])
 AC_SUBST([GLESv2_LIB_DEPS])
 AC_SUBST([GLESv2_PC_LIB_PRIV])
 
+GLAPI_LIB_DEPS="-lpthread"
+AC_SUBST([GLAPI_LIB_DEPS])
 
 AC_SUBST([HAVE_XF86VIDMODE])
 
@@ -1428,6 +1453,7 @@ yes)
             if test "x$enable_openvg" != xyes; then
                 AC_MSG_ERROR([cannot build vega state tracker without --enable-openvg])
             fi
+            have_st_vega="yes"
             ;;
 	xorg/xvmc)
             # Check for xvmc?
@@ -1463,6 +1489,14 @@ yes)
         fi
     done
     GALLIUM_STATE_TRACKERS_DIRS="$state_trackers"
+
+    # append --enable-openvg/--enable-gallium-egl to --with-state-trackers
+    if test "x$have_st_vega" != xyes -a "x$enable_openvg" = xyes; then
+        AC_MSG_ERROR([--with-state-trackers specified but vega is missing])
+    fi
+    if test "x$HAVE_ST_EGL" != xyes -a "x$enable_gallium_egl" = xyes; then
+        AC_MSG_ERROR([--with-state-trackers specified but egl is missing])
+    fi
     ;;
 esac
 

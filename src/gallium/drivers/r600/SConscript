@@ -9,7 +9,7 @@ except OSError:
     Return()
 
 env.Append(CPPPATH = [
-    '#/include', 
+    '#/include',
     '#/src/mesa',
 ])
 

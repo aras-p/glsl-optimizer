@@ -2091,6 +2091,9 @@ static GLboolean r100ValidateBuffers(struct gl_context *ctx)
 	 continue;
 
       t = rmesa->state.texture.unit[i].texobj;
+
+      if (!t)
+	 continue;
       if (t->image_override && t->bo)
 	radeon_cs_space_add_persistent_bo(rmesa->radeon.cmdbuf.cs, t->bo,
 			   RADEON_GEM_DOMAIN_GTT | RADEON_GEM_DOMAIN_VRAM, 0);

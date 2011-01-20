@@ -316,7 +316,6 @@ int
 fs_visitor::setup_uniform_values(int loc, const glsl_type *type)
 {
    unsigned int offset = 0;
-   float *vec_values;
 
    if (type->is_matrix()) {
       const glsl_type *column = glsl_type::get_instance(GLSL_TYPE_FLOAT,
@@ -335,7 +334,6 @@ fs_visitor::setup_uniform_values(int loc, const glsl_type *type)
    case GLSL_TYPE_UINT:
    case GLSL_TYPE_INT:
    case GLSL_TYPE_BOOL:
-      vec_values = fp->Base.Parameters->ParameterValues[loc];
       for (unsigned int i = 0; i < type->vector_elements; i++) {
 	 unsigned int param = c->prog_data.nr_params++;
 
@@ -359,8 +357,8 @@ fs_visitor::setup_uniform_values(int loc, const glsl_type *type)
 	    c->prog_data.param_convert[param] = PARAM_NO_CONVERT;
 	    break;
 	 }
-
-	 c->prog_data.param[param] = &vec_values[i];
+	 this->param_index[param] = loc;
+	 this->param_offset[param] = i;
       }
       return 1;
 
@@ -431,7 +429,6 @@ fs_visitor::setup_builtin_uniform_values(ir_variable *ir)
 	  */
 	 int index = _mesa_add_state_reference(this->fp->Base.Parameters,
 					       (gl_state_index *)tokens);
-	 float *vec_values = this->fp->Base.Parameters->ParameterValues[index];
 
 	 /* Add each of the unique swizzles of the element as a
 	  * parameter.  This'll end up matching the expected layout of
@@ -446,7 +443,9 @@ fs_visitor::setup_builtin_uniform_values(ir_variable *ir)
 
 	    c->prog_data.param_convert[c->prog_data.nr_params] =
 	       PARAM_NO_CONVERT;
-	    c->prog_data.param[c->prog_data.nr_params++] = &vec_values[swiz];
+	    this->param_index[c->prog_data.nr_params] = index;
+	    this->param_offset[c->prog_data.nr_params] = swiz;
+	    c->prog_data.nr_params++;
 	 }
       }
    }
@@ -1370,10 +1369,13 @@ fs_visitor::visit(ir_texture *ir)
       fs_reg scale_y = fs_reg(UNIFORM, c->prog_data.nr_params + 1);
       GLuint index = _mesa_add_state_reference(params,
 					       (gl_state_index *)tokens);
-      float *vec_values = this->fp->Base.Parameters->ParameterValues[index];
 
-      c->prog_data.param[c->prog_data.nr_params++] = &vec_values[0];
-      c->prog_data.param[c->prog_data.nr_params++] = &vec_values[1];
+      this->param_index[c->prog_data.nr_params] = index;
+      this->param_offset[c->prog_data.nr_params] = 0;
+      c->prog_data.nr_params++;
+      this->param_index[c->prog_data.nr_params] = index;
+      this->param_offset[c->prog_data.nr_params] = 1;
+      c->prog_data.nr_params++;
 
       fs_reg dst = fs_reg(this, ir->coordinate->type);
       fs_reg src = coordinate;
@@ -2500,6 +2502,22 @@ fs_visitor::generate_pull_constant_load(fs_inst *inst, struct brw_reg dst)
    }
 }
 
+/**
+ * To be called after the last _mesa_add_state_reference() call, to
+ * set up prog_data.param[] for assign_curb_setup() and
+ * setup_pull_constants().
+ */
+void
+fs_visitor::setup_paramvalues_refs()
+{
+   /* Set up the pointers to ParamValues now that that array is finalized. */
+   for (unsigned int i = 0; i < c->prog_data.nr_params; i++) {
+      c->prog_data.param[i] =
+	 fp->Base.Parameters->ParameterValues[this->param_index[i]] +
+	 this->param_offset[i];
+   }
+}
+
 void
 fs_visitor::assign_curb_setup()
 {
@@ -2629,10 +2647,7 @@ fs_visitor::split_virtual_grfs()
       fs_inst *inst = (fs_inst *)iter.get();
 
       /* Texturing produces 4 contiguous registers, so no splitting. */
-      if ((inst->opcode == FS_OPCODE_TEX ||
-	   inst->opcode == FS_OPCODE_TXB ||
-	   inst->opcode == FS_OPCODE_TXL) &&
-	  inst->dst.file == GRF) {
+      if (inst->is_tex()) {
 	 split_grf[inst->dst.reg] = false;
       }
    }
@@ -2920,7 +2935,7 @@ fs_visitor::propagate_constants()
 	 if (scan_inst->dst.file == GRF &&
 	     scan_inst->dst.reg == inst->dst.reg &&
 	     (scan_inst->dst.reg_offset == inst->dst.reg_offset ||
-	      scan_inst->opcode == FS_OPCODE_TEX)) {
+	      scan_inst->is_tex())) {
 	    break;
 	 }
       }
@@ -3015,13 +3030,13 @@ fs_visitor::register_coalesce()
 	 if (scan_inst->dst.file == GRF) {
 	    if (scan_inst->dst.reg == inst->dst.reg &&
 		(scan_inst->dst.reg_offset == inst->dst.reg_offset ||
-		 scan_inst->opcode == FS_OPCODE_TEX)) {
+		 scan_inst->is_tex())) {
 	       interfered = true;
 	       break;
 	    }
 	    if (scan_inst->dst.reg == inst->src[0].reg &&
 		(scan_inst->dst.reg_offset == inst->src[0].reg_offset ||
-		 scan_inst->opcode == FS_OPCODE_TEX)) {
+		 scan_inst->is_tex())) {
 	       interfered = true;
 	       break;
 	    }
@@ -3102,7 +3117,7 @@ fs_visitor::compute_to_mrf()
 	     * into a compute-to-MRF.
 	     */
 
-	    if (scan_inst->opcode == FS_OPCODE_TEX) {
+	    if (scan_inst->is_tex()) {
 	       /* texturing writes several continuous regs, so we can't
 		* compute-to-mrf that.
 		*/
@@ -3123,14 +3138,7 @@ fs_visitor::compute_to_mrf()
 	       /* gen6 math instructions must have the destination be
 		* GRF, so no compute-to-MRF for them.
 		*/
-	       if (scan_inst->opcode == FS_OPCODE_RCP ||
-		   scan_inst->opcode == FS_OPCODE_RSQ ||
-		   scan_inst->opcode == FS_OPCODE_SQRT ||
-		   scan_inst->opcode == FS_OPCODE_EXP2 ||
-		   scan_inst->opcode == FS_OPCODE_LOG2 ||
-		   scan_inst->opcode == FS_OPCODE_SIN ||
-		   scan_inst->opcode == FS_OPCODE_COS ||
-		   scan_inst->opcode == FS_OPCODE_POW) {
+	       if (scan_inst->is_math()) {
 		  break;
 	       }
 	    }
@@ -3152,6 +3160,7 @@ fs_visitor::compute_to_mrf()
 	  */
 	 if (scan_inst->opcode == BRW_OPCODE_DO ||
 	     scan_inst->opcode == BRW_OPCODE_WHILE ||
+	     scan_inst->opcode == BRW_OPCODE_ELSE ||
 	     scan_inst->opcode == BRW_OPCODE_ENDIF) {
 	    break;
 	 }
@@ -3238,7 +3247,7 @@ fs_visitor::remove_duplicate_mrf_writes()
       }
 
       if (inst->mlen > 0) {
-	 /* Found a SEND instruction, which will include two of fewer
+	 /* Found a SEND instruction, which will include two or fewer
 	  * implied MRF writes.  We could do better here.
 	  */
 	 for (int i = 0; i < implied_mrf_writes(inst); i++) {
@@ -3662,10 +3671,9 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
       v.emit_fb_writes();
 
       v.split_virtual_grfs();
-      v.setup_pull_constants();
 
-      v.assign_curb_setup();
-      v.assign_urb_setup();
+      v.setup_paramvalues_refs();
+      v.setup_pull_constants();
 
       bool progress;
       do {
@@ -3678,6 +3686,11 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 	 progress = v.compute_to_mrf() || progress;
 	 progress = v.dead_code_eliminate() || progress;
       } while (progress);
+
+      v.schedule_instructions();
+
+      v.assign_curb_setup();
+      v.assign_urb_setup();
 
       if (0) {
 	 /* Debug of register spilling: Go spill everything. */

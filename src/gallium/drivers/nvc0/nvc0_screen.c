@@ -110,6 +110,7 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_SHADER_STENCIL_EXPORT:
       return 0;
    case PIPE_CAP_PRIMITIVE_RESTART:
+   case PIPE_CAP_INSTANCED_DRAWING:
       return 1;
    default:
       NOUVEAU_ERR("unknown PIPE_CAP %d\n", param);

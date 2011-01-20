@@ -26,8 +26,6 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#include <string.h>
-#include "u_execmem.h"
 #include "u_macros.h"
 
 #define X86_ENTRY_SIZE 32
@@ -43,19 +41,24 @@ __asm__(".text\n"
    func ":"
 
 #define STUB_ASM_CODE(slot)         \
-   "movl u_current_table, %eax\n\t" \
+   "movl " ENTRY_CURRENT_TABLE ", %eax\n\t" \
    "testl %eax, %eax\n\t"           \
    "je 1f\n\t"                      \
    "jmp *(4 * " slot ")(%eax)\n"    \
    "1:\n\t"                         \
-   "call u_current_get_internal\n\t"\
+   "call " ENTRY_CURRENT_TABLE_GET "\n\t" \
    "jmp *(4 * " slot ")(%eax)"
 
 #define MAPI_TMP_STUB_ASM_GCC
 #include "mapi_tmp.h"
 
+#ifndef MAPI_MODE_BRIDGE
+
 __asm__(".balign 32\n"
         "x86_entry_end:");
+
+#include <string.h>
+#include "u_execmem.h"
 
 void
 entry_patch_public(void)
@@ -96,3 +99,5 @@ entry_generate(int slot)
 
    return entry;
 }
+
+#endif /* MAPI_MODE_BRIDGE */

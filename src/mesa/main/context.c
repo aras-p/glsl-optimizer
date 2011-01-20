@@ -526,6 +526,16 @@ init_program_limits(GLenum type, struct gl_program_constants *prog)
    prog->MaxNativeTemps = 0;
    prog->MaxNativeAddressRegs = 0;
    prog->MaxNativeParameters = 0;
+
+   /* Set GLSL datatype range/precision info assuming IEEE float values.
+    * Drivers should override these defaults as needed.
+    */
+   prog->MediumFloat.RangeMin = 127;
+   prog->MediumFloat.RangeMax = 127;
+   prog->MediumFloat.Precision = 23;
+   prog->LowFloat = prog->HighFloat = prog->MediumFloat;
+   /* assume ints are stored as floats for now */
+   prog->LowInt = prog->MediumInt = prog->HighInt = prog->MediumFloat;
 }
 
 

@@ -1822,7 +1822,9 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		for (i = 0; i < 4; i++) {
 			memset(&alu, 0, sizeof(struct r600_bc_alu));
 			alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV);
-			alu.src[0].sel = src_gpr;
+			r = tgsi_src(ctx, &inst->Src[0], &alu.src[0]);
+			if (r)
+				return r;
 			alu.src[0].chan = tgsi_chan(&inst->Src[0], i);
 			alu.dst.sel = ctx->temp_reg;
 			alu.dst.chan = i;
@@ -2471,7 +2473,7 @@ static int tgsi_eg_arl(struct r600_shader_ctx *ctx)
 	alu.dst.chan = 0;
 	alu.dst.sel = ctx->temp_reg;
 	alu.dst.write = 1;
-	r = r600_bc_add_alu_type(ctx->bc, &alu, CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU));
+	r = r600_bc_add_alu(ctx->bc, &alu);
 	if (r)
 		return r;
 	memset(&alu, 0, sizeof(struct r600_bc_alu));
@@ -2482,7 +2484,7 @@ static int tgsi_eg_arl(struct r600_shader_ctx *ctx)
 	alu.src[0].sel = ctx->temp_reg;
 	alu.src[0].chan = 0;
 	alu.last = 1;
-	r = r600_bc_add_alu_type(ctx->bc, &alu, CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU));
+	r = r600_bc_add_alu(ctx->bc, &alu);
 	if (r)
 		return r;
 	return 0;
@@ -2515,7 +2517,7 @@ static int tgsi_r600_arl(struct r600_shader_ctx *ctx)
 
 	alu.last = 1;
 
-	r = r600_bc_add_alu_type(ctx->bc, &alu, CTX_INST(V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU));
+	r = r600_bc_add_alu(ctx->bc, &alu);
 	if (r)
 		return r;
 	ctx->bc->cf_last->r6xx_uses_waterfall = 1;

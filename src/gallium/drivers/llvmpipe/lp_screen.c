@@ -151,7 +151,7 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
    case PIPE_CAP_INDEP_BLEND_ENABLE:
       return 1;
    case PIPE_CAP_INDEP_BLEND_FUNC:
-      return 0;
+      return 1;
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
       return 1;

@@ -35,13 +35,10 @@ public:
       return entry;
    }
 
-   /* If the user *does* call delete, that's OK, we will just
-    * talloc_free in that case. Here, C++ will have already called the
-    * destructor so tell talloc not to do that again. */
-   static void operator delete(void *table)
+   /* If the user *does* call delete, that's OK, we will just talloc_free. */
+   static void operator delete(void *entry)
    {
-      talloc_set_destructor(table, NULL);
-      talloc_free(table);
+      talloc_free(entry);
    }
 
    symbol_table_entry(ir_variable *v)                     : v(v), f(0), t(0) {}

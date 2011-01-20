@@ -28,6 +28,7 @@ C_SOURCES = \
 	nvfx_video_context.c
 
 LIBRARY_INCLUDES = \
+	$(LIBDRM_CFLAGS) \
 	-I$(TOP)/src/gallium/drivers/nouveau/include
 
 include ../../Makefile.template

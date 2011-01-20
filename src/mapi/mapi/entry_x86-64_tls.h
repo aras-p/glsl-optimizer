@@ -26,8 +26,6 @@
  *    Chia-I Wu <olv@lunarg.com>
  */
 
-#include <string.h>
-#include "u_execmem.h"
 #include "u_macros.h"
 
 #ifdef __linux__
@@ -43,13 +41,8 @@ __asm__(".section .note.ABI-tag, \"a\"\n\t"
         "3: .p2align 2\n\t");    /* pad out section */
 #endif /* __linux__ */
 
-__asm__(".text");
-
-__asm__("x86_64_current_tls:\n\t"
-	"movq u_current_table@GOTTPOFF(%rip), %rax\n\t"
-	"ret");
-
-__asm__(".balign 32\n"
+__asm__(".text\n"
+        ".balign 32\n"
         "x86_64_entry_start:");
 
 #define STUB_ASM_ENTRY(func)                             \
@@ -59,15 +52,24 @@ __asm__(".balign 32\n"
    func ":"
 
 #define STUB_ASM_CODE(slot)                              \
-   "movq u_current_table@GOTTPOFF(%rip), %rax\n\t"   \
+   "movq " ENTRY_CURRENT_TABLE "@GOTTPOFF(%rip), %rax\n\t"  \
    "movq %fs:(%rax), %r11\n\t"                           \
    "jmp *(8 * " slot ")(%r11)"
 
 #define MAPI_TMP_STUB_ASM_GCC
 #include "mapi_tmp.h"
 
+#ifndef MAPI_MODE_BRIDGE
+
+__asm__("x86_64_current_tls:\n\t"
+	"movq " ENTRY_CURRENT_TABLE "@GOTTPOFF(%rip), %rax\n\t"
+	"ret");
+
 extern unsigned long
 x86_64_current_tls();
+
+#include <string.h>
+#include "u_execmem.h"
 
 void
 entry_patch_public(void)
@@ -118,3 +120,5 @@ entry_generate(int slot)
 
    return entry;
 }
+
+#endif /* MAPI_MODE_BRIDGE */

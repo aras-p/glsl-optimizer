@@ -652,12 +652,11 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_form
 	struct radeon_framebuffer *rfb;
 	radeonTexObjPtr t;
 	uint32_t pitch_val;
-	uint32_t internalFormat, type, format;
+	uint32_t internalFormat, format;
 	gl_format texFormat;
 
-	type = GL_BGRA;
 	format = GL_UNSIGNED_BYTE;
-	internalFormat = (texture_format == __DRI_TEXTURE_FORMAT_RGB ? 3 : 4);
+	internalFormat = (texture_format == __DRI_TEXTURE_FORMAT_RGB ? GL_RGB : GL_RGBA);
 
 	radeon = pDRICtx->driverPrivate;
 	rmesa = pDRICtx->driverPrivate;
@@ -739,6 +738,14 @@ void radeonSetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_form
 		t->pp_txformat |= RADEON_TXFORMAT_NON_POWER2;
 		t->pp_txpitch = pitch_val;
 		t->pp_txpitch -= 32;
+	} else {
+	  t->pp_txformat &= ~(RADEON_TXFORMAT_WIDTH_MASK |
+			      RADEON_TXFORMAT_HEIGHT_MASK |
+			      RADEON_TXFORMAT_CUBIC_MAP_ENABLE |
+			      RADEON_TXFORMAT_F5_WIDTH_MASK |
+			      RADEON_TXFORMAT_F5_HEIGHT_MASK);
+	  t->pp_txformat |= ((texImage->WidthLog2 << RADEON_TXFORMAT_WIDTH_SHIFT) |
+			     (texImage->HeightLog2 << RADEON_TXFORMAT_HEIGHT_SHIFT));
 	}
 	t->validated = GL_TRUE;
 	_mesa_unlock_texture(radeon->glCtx, texObj);

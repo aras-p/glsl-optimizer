@@ -49,7 +49,8 @@ ast_type_specifier::print(void) const
 
 ast_type_specifier::ast_type_specifier(int specifier)
       : type_specifier(ast_types(specifier)), type_name(NULL), structure(NULL),
-	is_array(false), array_size(NULL), precision(ast_precision_high)
+	is_array(false), array_size(NULL), precision(ast_precision_none),
+	is_precision_statement(false)
 {
    static const char *const names[] = {
       "void",
@@ -115,4 +116,24 @@ bool
 ast_fully_specified_type::has_qualifiers() const
 {
    return this->qualifier.flags.i != 0;
+}
+
+bool ast_type_qualifier::has_interpolation() const
+{
+   return this->flags.q.smooth
+          || this->flags.q.flat
+          || this->flags.q.noperspective;
+}
+
+const char*
+ast_type_qualifier::interpolation_string() const
+{
+   if (this->flags.q.smooth)
+      return "smooth";
+   else if (this->flags.q.flat)
+      return "flat";
+   else if (this->flags.q.noperspective)
+      return "noperspective";
+   else
+      return NULL;
 }
