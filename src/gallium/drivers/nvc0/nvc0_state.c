@@ -207,6 +207,7 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
        SB_DATA    (so, fui(cso->point_size));
     }
     SB_IMMED_3D(so, POINT_SPRITE_ENABLE, cso->point_quad_rasterization);
+    SB_IMMED_3D(so, POINT_SMOOTH_ENABLE, cso->point_smooth);
 
     SB_BEGIN_3D(so, POLYGON_MODE_FRONT, 1);
     SB_DATA    (so, nvgl_polygon_mode(cso->fill_front));

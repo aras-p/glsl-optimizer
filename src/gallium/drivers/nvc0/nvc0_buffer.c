@@ -59,6 +59,18 @@ release_allocation(struct nvc0_mm_allocation **mm, struct nvc0_fence *fence)
    (*mm) = NULL;
 }
 
+static INLINE boolean
+nvc0_buffer_reallocate(struct nvc0_screen *screen, struct nvc0_resource *buf,
+                       unsigned domain)
+{
+   nouveau_bo_ref(NULL, &buf->bo);
+
+   if (buf->mm)
+      release_allocation(&buf->mm, buf->fence);
+
+   return nvc0_buffer_allocate(screen, buf, domain);
+}
+
 static void
 nvc0_buffer_destroy(struct pipe_screen *pscreen,
                     struct pipe_resource *presource)
@@ -115,6 +127,12 @@ nvc0_buffer_upload(struct nvc0_context *nvc0, struct nvc0_resource *buf,
    struct nvc0_mm_allocation *mm;
    struct nouveau_bo *bounce = NULL;
    uint32_t offset;
+
+   if (size <= 192) {
+      nvc0_m2mf_push_linear(nvc0, buf->bo, buf->domain, buf->offset + start,
+                            size, buf->data + start);
+      return TRUE;
+   }
 
    mm = nvc0_mm_allocate(nvc0->screen->mm_GART, size, &bounce, &offset);
    if (!bounce)
@@ -366,8 +384,9 @@ nvc0_user_buffer_create(struct pipe_screen *pscreen,
    return &buffer->base;
 }
 
+/* Like download, but for GART buffers. Merge ? */
 static INLINE boolean
-nvc0_buffer_fetch_data(struct nvc0_resource *buf,
+nvc0_buffer_data_fetch(struct nvc0_resource *buf,
                        struct nouveau_bo *bo, unsigned offset, unsigned size)
 {
    if (!buf->data) {
@@ -413,7 +432,7 @@ nvc0_buffer_migrate(struct nvc0_context *nvc0,
 
       if (new_domain == NOUVEAU_BO_VRAM) {
          /* keep a system memory copy of our data in case we hit a fallback */
-         if (!nvc0_buffer_fetch_data(buf, buf->bo, buf->offset, size))
+         if (!nvc0_buffer_data_fetch(buf, buf->bo, buf->offset, size))
             return FALSE;
          debug_printf("migrating %u KiB to VRAM\n", size / 1024);
       }
@@ -444,19 +463,22 @@ nvc0_buffer_migrate(struct nvc0_context *nvc0,
 }
 
 /* Migrate data from glVertexAttribPointer(non-VBO) user buffers to GART.
- * MUST NOT FLUSH THE PUSH BUFFER, we could be in the middle of a method.
+ * We'd like to only allocate @size bytes here, but then we'd have to rebase
+ * the vertex indices ...
  */
 boolean
-nvc0_migrate_vertices(struct nvc0_resource *buf, unsigned base, unsigned size)
+nvc0_user_buffer_upload(struct nvc0_resource *buf, unsigned base, unsigned size)
 {
    struct nvc0_screen *screen = nvc0_screen(buf->base.screen);
    int ret;
 
-   assert(buf->data && !buf->domain);
+   assert(buf->status & NVC0_BUFFER_STATUS_USER_MEMORY);
 
-   if (!nvc0_buffer_allocate(screen, buf, NOUVEAU_BO_GART))
+   buf->base.width0 = base + size;
+   if (!nvc0_buffer_reallocate(screen, buf, NOUVEAU_BO_GART))
       return FALSE;
-   ret = nouveau_bo_map_range(buf->bo, base + buf->offset, size,
+
+   ret = nouveau_bo_map_range(buf->bo, buf->offset + base, size,
                               NOUVEAU_BO_WR | NOUVEAU_BO_NOSYNC);
    if (ret)
       return FALSE;

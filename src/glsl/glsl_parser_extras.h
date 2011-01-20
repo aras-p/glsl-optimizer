@@ -132,6 +132,8 @@ struct _mesa_glsl_parse_state {
    /*@{*/
    unsigned ARB_draw_buffers_enable:1;
    unsigned ARB_draw_buffers_warn:1;
+   unsigned ARB_draw_instanced_enable:1;
+   unsigned ARB_draw_instanced_warn:1;
    unsigned ARB_explicit_attrib_location_enable:1;
    unsigned ARB_explicit_attrib_location_warn:1;
    unsigned ARB_fragment_coord_conventions_enable:1;

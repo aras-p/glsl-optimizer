@@ -960,8 +960,8 @@
 #define   S_038010_SRF_MODE_ALL(x)                     (((x) & 0x1) << 10)
 #define   G_038010_SRF_MODE_ALL(x)                     (((x) >> 10) & 0x1)
 #define   C_038010_SRF_MODE_ALL                        0xFFFFFBFF
-#define     V_038010_SFR_MODE_ZERO_CLAMP_MINUS_ONE     0x00000000
-#define     V_038010_SFR_MODE_NO_ZERO                  0x00000001
+#define     V_038010_SRF_MODE_ZERO_CLAMP_MINUS_ONE     0x00000000
+#define     V_038010_SRF_MODE_NO_ZERO                  0x00000001
 #define   S_038010_FORCE_DEGAMMA(x)                    (((x) & 0x1) << 11)
 #define   G_038010_FORCE_DEGAMMA(x)                    (((x) >> 11) & 0x1)
 #define   C_038010_FORCE_DEGAMMA                       0xFFFFF7FF

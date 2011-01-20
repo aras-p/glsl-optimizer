@@ -387,6 +387,7 @@ void st_init_extensions(struct st_context *st)
                                    PIPE_TEXTURE_2D, 0,
                                    PIPE_BIND_SAMPLER_VIEW, 0)) {
       ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
+      ctx->Extensions.EXT_texture_sRGB_decode = GL_TRUE;
    }
 
    if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8_UNORM,
@@ -438,11 +439,9 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_half_float_vertex = GL_TRUE;
    }
 
-#if 0 /* not yet */
    if (screen->get_param(screen, PIPE_CAP_INDEP_BLEND_FUNC)) {
       ctx->Extensions.ARB_draw_buffers_blend = GL_TRUE;
    }
-#endif
 
    if (screen->get_shader_param(screen, PIPE_SHADER_GEOMETRY, PIPE_SHADER_CAP_MAX_INSTRUCTIONS) > 0) {
 #if 0 /* XXX re-enable when GLSL compiler again supports geometry shaders */
@@ -460,5 +459,10 @@ void st_init_extensions(struct st_context *st)
 
    if (screen->get_param(screen, PIPE_CAP_SHADER_STENCIL_EXPORT)) {
       ctx->Extensions.ARB_shader_stencil_export = GL_TRUE;
+   }
+
+   if (screen->get_param(screen, PIPE_CAP_INSTANCED_DRAWING)) {
+      ctx->Extensions.ARB_draw_instanced = GL_TRUE;
+      ctx->Extensions.ARB_instanced_arrays = GL_TRUE;
    }
 }

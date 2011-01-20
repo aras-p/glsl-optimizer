@@ -320,7 +320,7 @@ do {									\
  */
 #define RGBA_LOGICOP_ENABLED(CTX) \
   ((CTX)->Color.ColorLogicOpEnabled || \
-   ((CTX)->Color.BlendEnabled && (CTX)->Color.BlendEquationRGB == GL_LOGIC_OP))
+   ((CTX)->Color.BlendEnabled && (CTX)->Color.Blend[0].EquationRGB == GL_LOGIC_OP))
 
 
 #endif /* CONTEXT_H */

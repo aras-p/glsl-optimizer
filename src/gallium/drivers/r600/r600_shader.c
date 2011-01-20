@@ -228,12 +228,20 @@ int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *shader, u32 **literals);
 int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens)
 {
+	static int dump_shaders = -1;
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	u32 *literals;
 	int r;
 
-//fprintf(stderr, "--------------------------------------------------------------\n");
-//tgsi_dump(tokens, 0);
+        /* Would like some magic "get_bool_option_once" routine.
+         */
+        if (dump_shaders == -1)
+                dump_shaders = debug_get_bool_option("R600_DUMP_SHADERS", FALSE);
+
+	if (dump_shaders) {
+		fprintf(stderr, "--------------------------------------------------------------\n");
+		tgsi_dump(tokens, 0);
+	}
 	shader->shader.family = r600_get_family(rctx->radeon);
 	r = r600_shader_from_tgsi(tokens, &shader->shader, &literals);
 	if (r) {
@@ -246,8 +254,10 @@ int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *s
 		R600_ERR("building bytecode failed !\n");
 		return r;
 	}
-//r600_bc_dump(&shader->shader.bc);
-//fprintf(stderr, "______________________________________________________________\n");
+	if (dump_shaders) {
+		r600_bc_dump(&shader->shader.bc);
+		fprintf(stderr, "______________________________________________________________\n");
+	}
 	return r600_pipe_shader(ctx, shader);
 }
 
@@ -974,7 +984,7 @@ static int tgsi_setup_trig(struct r600_shader_ctx *ctx,
 	alu.src[1].chan = 0;
 	alu.src[1].value = (uint32_t *)&half_inv_pi;
 	alu.src[2].sel = V_SQ_ALU_SRC_0_5;
-	alu.src[2].chan = 1;
+	alu.src[2].chan = 0;
 	alu.last = 1;
 	r = r600_bc_add_alu(ctx->bc, &alu);
 	if (r)
@@ -1008,7 +1018,7 @@ static int tgsi_setup_trig(struct r600_shader_ctx *ctx,
 	alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
 	alu.src[1].chan = 0;
 	alu.src[2].sel = V_SQ_ALU_SRC_LITERAL;
-	alu.src[2].chan = 1;
+	alu.src[2].chan = 0;
 
 	if (ctx->bc->chiprev == CHIPREV_R600) {
 		alu.src[1].value = (uint32_t *)&double_pi;
@@ -1772,6 +1782,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 
 		alu.src[2].sel = V_SQ_ALU_SRC_LITERAL;
 		alu.src[2].chan = 0;
+		alu.src[2].value = (u32*)&one_point_five;
 
 		alu.dst.sel = ctx->temp_reg;
 		alu.dst.chan = 0;

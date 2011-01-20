@@ -36,6 +36,8 @@ int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 
 	switch (cf->inst) {
 	case (EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3):
+	case (EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER << 3):
+	case (EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER << 3):
 	case (EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
 		assert(!end_of_program);
 		bc->bytecode[id++] = S_SQ_CF_ALU_WORD0_ADDR(cf->addr >> 1) |

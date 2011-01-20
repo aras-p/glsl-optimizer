@@ -258,9 +258,10 @@ vsplit_segment_fan_linear(struct vsplit_frontend *vsplit, unsigned flags,
    boolean use_spoken = ((flags & DRAW_SPLIT_BEFORE) != 0);
    unsigned nr = 0, i;
 
-   assert(icount + !!use_spoken <= vsplit->segment_size);
+   assert(icount <= vsplit->segment_size);
 
    if (use_spoken) {
+      /* replace istart by i0 */
       vsplit->fetch_elts[nr++] = i0;
       for (i = 1 ; i < icount; i++)
          vsplit->fetch_elts[nr++] = istart + i;

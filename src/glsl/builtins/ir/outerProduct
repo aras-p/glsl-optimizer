@@ -4,8 +4,8 @@
        (declare (in) vec2 u)
        (declare (in) vec2 v))
      ((declare () mat2 m)
-      (assign (constant bool (1)) (xy) (array_ref (var_ref m) (constant int (0))) (expression vec2 * (var_ref u) (swiz x (var_ref v))))
-      (assign (constant bool (1)) (xy) (array_ref (var_ref m) (constant int (1))) (expression vec2 * (var_ref u) (swiz y (var_ref v))))
+      (assign (xy) (array_ref (var_ref m) (constant int (0))) (expression vec2 * (var_ref u) (swiz x (var_ref v))))
+      (assign (xy) (array_ref (var_ref m) (constant int (1))) (expression vec2 * (var_ref u) (swiz y (var_ref v))))
       (return (var_ref m))))
 
    (signature mat2x3
@@ -13,8 +13,8 @@
        (declare (in) vec3 u)
        (declare (in) vec2 v))
      ((declare () mat2x3 m)
-      (assign (constant bool (1)) (xyz) (array_ref (var_ref m) (constant int (0))) (expression vec3 * (var_ref u) (swiz x (var_ref v))))
-      (assign (constant bool (1)) (xyz) (array_ref (var_ref m) (constant int (1))) (expression vec3 * (var_ref u) (swiz y (var_ref v))))
+      (assign (xyz) (array_ref (var_ref m) (constant int (0))) (expression vec3 * (var_ref u) (swiz x (var_ref v))))
+      (assign (xyz) (array_ref (var_ref m) (constant int (1))) (expression vec3 * (var_ref u) (swiz y (var_ref v))))
       (return (var_ref m))))
 
    (signature mat2x4
@@ -22,8 +22,8 @@
        (declare (in) vec4 u)
        (declare (in) vec2 v))
      ((declare () mat2x4 m)
-      (assign (constant bool (1)) (xyzw) (array_ref (var_ref m) (constant int (0))) (expression vec4 * (var_ref u) (swiz x (var_ref v))))
-      (assign (constant bool (1)) (xyzw) (array_ref (var_ref m) (constant int (1))) (expression vec4 * (var_ref u) (swiz y (var_ref v))))
+      (assign (xyzw) (array_ref (var_ref m) (constant int (0))) (expression vec4 * (var_ref u) (swiz x (var_ref v))))
+      (assign (xyzw) (array_ref (var_ref m) (constant int (1))) (expression vec4 * (var_ref u) (swiz y (var_ref v))))
       (return (var_ref m))))
 
    (signature mat3x2
@@ -31,9 +31,9 @@
        (declare (in) vec2 u)
        (declare (in) vec3 v))
      ((declare () mat3x2 m)
-      (assign (constant bool (1)) (xy) (array_ref (var_ref m) (constant int (0))) (expression vec2 * (var_ref u) (swiz x (var_ref v))))
-      (assign (constant bool (1)) (xy) (array_ref (var_ref m) (constant int (1))) (expression vec2 * (var_ref u) (swiz y (var_ref v))))
-      (assign (constant bool (1)) (xy) (array_ref (var_ref m) (constant int (2))) (expression vec2 * (var_ref u) (swiz z (var_ref v))))
+      (assign (xy) (array_ref (var_ref m) (constant int (0))) (expression vec2 * (var_ref u) (swiz x (var_ref v))))
+      (assign (xy) (array_ref (var_ref m) (constant int (1))) (expression vec2 * (var_ref u) (swiz y (var_ref v))))
+      (assign (xy) (array_ref (var_ref m) (constant int (2))) (expression vec2 * (var_ref u) (swiz z (var_ref v))))
       (return (var_ref m))
  ))
 
@@ -42,9 +42,9 @@
        (declare (in) vec3 u)
        (declare (in) vec3 v))
      ((declare () mat3 m)
-      (assign (constant bool (1)) (xyz) (array_ref (var_ref m) (constant int (0))) (expression vec3 * (var_ref u) (swiz x (var_ref v))))
-      (assign (constant bool (1)) (xyz) (array_ref (var_ref m) (constant int (1))) (expression vec3 * (var_ref u) (swiz y (var_ref v))))
-      (assign (constant bool (1)) (xyz) (array_ref (var_ref m) (constant int (2))) (expression vec3 * (var_ref u) (swiz z (var_ref v))))
+      (assign (xyz) (array_ref (var_ref m) (constant int (0))) (expression vec3 * (var_ref u) (swiz x (var_ref v))))
+      (assign (xyz) (array_ref (var_ref m) (constant int (1))) (expression vec3 * (var_ref u) (swiz y (var_ref v))))
+      (assign (xyz) (array_ref (var_ref m) (constant int (2))) (expression vec3 * (var_ref u) (swiz z (var_ref v))))
       (return (var_ref m))))
 
    (signature mat3x4
@@ -52,9 +52,9 @@
        (declare (in) vec4 u)
        (declare (in) vec3 v))
      ((declare () mat3x4 m)
-      (assign (constant bool (1)) (xyzw) (array_ref (var_ref m) (constant int (0))) (expression vec4 * (var_ref u) (swiz x (var_ref v))))
-      (assign (constant bool (1)) (xyzw) (array_ref (var_ref m) (constant int (1))) (expression vec4 * (var_ref u) (swiz y (var_ref v))))
-      (assign (constant bool (1)) (xyzw) (array_ref (var_ref m) (constant int (2))) (expression vec4 * (var_ref u) (swiz z (var_ref v))))
+      (assign (xyzw) (array_ref (var_ref m) (constant int (0))) (expression vec4 * (var_ref u) (swiz x (var_ref v))))
+      (assign (xyzw) (array_ref (var_ref m) (constant int (1))) (expression vec4 * (var_ref u) (swiz y (var_ref v))))
+      (assign (xyzw) (array_ref (var_ref m) (constant int (2))) (expression vec4 * (var_ref u) (swiz z (var_ref v))))
       (return (var_ref m))))
 
    (signature mat4x2
@@ -62,10 +62,10 @@
        (declare (in) vec2 u)
        (declare (in) vec4 v))
      ((declare () mat4x2 m)
-      (assign (constant bool (1)) (xy) (array_ref (var_ref m) (constant int (0))) (expression vec2 * (var_ref u) (swiz x (var_ref v))))
-      (assign (constant bool (1)) (xy) (array_ref (var_ref m) (constant int (1))) (expression vec2 * (var_ref u) (swiz y (var_ref v))))
-      (assign (constant bool (1)) (xy) (array_ref (var_ref m) (constant int (2))) (expression vec2 * (var_ref u) (swiz z (var_ref v))))
-      (assign (constant bool (1)) (xy) (array_ref (var_ref m) (constant int (3))) (expression vec2 * (var_ref u) (swiz w (var_ref v))))
+      (assign (xy) (array_ref (var_ref m) (constant int (0))) (expression vec2 * (var_ref u) (swiz x (var_ref v))))
+      (assign (xy) (array_ref (var_ref m) (constant int (1))) (expression vec2 * (var_ref u) (swiz y (var_ref v))))
+      (assign (xy) (array_ref (var_ref m) (constant int (2))) (expression vec2 * (var_ref u) (swiz z (var_ref v))))
+      (assign (xy) (array_ref (var_ref m) (constant int (3))) (expression vec2 * (var_ref u) (swiz w (var_ref v))))
       (return (var_ref m))))
 
    (signature mat4x3
@@ -73,10 +73,10 @@
        (declare (in) vec3 u)
        (declare (in) vec4 v))
      ((declare () mat4x3 m)
-      (assign (constant bool (1)) (xyz) (array_ref (var_ref m) (constant int (0))) (expression vec3 * (var_ref u) (swiz x (var_ref v))))
-      (assign (constant bool (1)) (xyz) (array_ref (var_ref m) (constant int (1))) (expression vec3 * (var_ref u) (swiz y (var_ref v))))
-      (assign (constant bool (1)) (xyz) (array_ref (var_ref m) (constant int (2))) (expression vec3 * (var_ref u) (swiz z (var_ref v))))
-      (assign (constant bool (1)) (xyz) (array_ref (var_ref m) (constant int (3))) (expression vec3 * (var_ref u) (swiz w (var_ref v))))
+      (assign (xyz) (array_ref (var_ref m) (constant int (0))) (expression vec3 * (var_ref u) (swiz x (var_ref v))))
+      (assign (xyz) (array_ref (var_ref m) (constant int (1))) (expression vec3 * (var_ref u) (swiz y (var_ref v))))
+      (assign (xyz) (array_ref (var_ref m) (constant int (2))) (expression vec3 * (var_ref u) (swiz z (var_ref v))))
+      (assign (xyz) (array_ref (var_ref m) (constant int (3))) (expression vec3 * (var_ref u) (swiz w (var_ref v))))
       (return (var_ref m))))
 
    (signature mat4
@@ -84,9 +84,9 @@
        (declare (in) vec4 u)
        (declare (in) vec4 v))
      ((declare () mat4 m)
-      (assign (constant bool (1)) (xyzw) (array_ref (var_ref m) (constant int (0))) (expression vec4 * (var_ref u) (swiz x (var_ref v))))
-      (assign (constant bool (1)) (xyzw) (array_ref (var_ref m) (constant int (1))) (expression vec4 * (var_ref u) (swiz y (var_ref v))))
-      (assign (constant bool (1)) (xyzw) (array_ref (var_ref m) (constant int (2))) (expression vec4 * (var_ref u) (swiz z (var_ref v))))
-      (assign (constant bool (1)) (xyzw) (array_ref (var_ref m) (constant int (3))) (expression vec4 * (var_ref u) (swiz w (var_ref v))))
+      (assign (xyzw) (array_ref (var_ref m) (constant int (0))) (expression vec4 * (var_ref u) (swiz x (var_ref v))))
+      (assign (xyzw) (array_ref (var_ref m) (constant int (1))) (expression vec4 * (var_ref u) (swiz y (var_ref v))))
+      (assign (xyzw) (array_ref (var_ref m) (constant int (2))) (expression vec4 * (var_ref u) (swiz z (var_ref v))))
+      (assign (xyzw) (array_ref (var_ref m) (constant int (3))) (expression vec4 * (var_ref u) (swiz w (var_ref v))))
       (return (var_ref m))))
 ))

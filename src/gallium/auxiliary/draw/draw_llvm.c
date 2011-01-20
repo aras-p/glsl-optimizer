@@ -229,6 +229,8 @@ create_jit_vertex_buffer_type(struct gallivm_state *gallivm)
 
    LP_CHECK_MEMBER_OFFSET(struct pipe_vertex_buffer, stride,
                           target, vb_type, 0);
+   LP_CHECK_MEMBER_OFFSET(struct pipe_vertex_buffer, max_index,
+                          target, vb_type, 1);
    LP_CHECK_MEMBER_OFFSET(struct pipe_vertex_buffer, buffer_offset,
                           target, vb_type, 2);
 
@@ -437,6 +439,7 @@ generate_vs(struct draw_llvm *llvm,
             LLVMBuilderRef builder,
             LLVMValueRef (*outputs)[NUM_CHANNELS],
             const LLVMValueRef (*inputs)[NUM_CHANNELS],
+            LLVMValueRef system_values_array,
             LLVMValueRef context_ptr,
             struct lp_build_sampler_soa *draw_sampler)
 {
@@ -468,6 +471,7 @@ generate_vs(struct draw_llvm *llvm,
                      vs_type,
                      NULL /*struct lp_build_mask_context *mask*/,
                      consts_ptr,
+                     system_values_array,
                      NULL /*pos*/,
                      inputs,
                      outputs,
@@ -1118,7 +1122,9 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
    LLVMValueRef start, end, count, stride, step, io_itr;
    LLVMValueRef io_ptr, vbuffers_ptr, vb_ptr;
    LLVMValueRef instance_id;
+   LLVMValueRef system_values_array;
    struct draw_context *draw = llvm->draw;
+   const struct tgsi_shader_info *vs_info = &draw->vs.vertex_shader->info;
    unsigned i, j;
    struct lp_build_context bld;
    struct lp_build_loop_state lp_loop;
@@ -1179,6 +1185,9 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
 
    lp_build_context_init(&bld, llvm->gallivm, lp_type_int(32));
 
+   system_values_array = lp_build_system_values_array(gallivm, vs_info,
+                                                      instance_id, NULL);
+
    end = lp_build_add(&bld, start, count);
 
    step = lp_build_const_int32(gallivm, max_vertices);
@@ -1233,6 +1242,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
                   builder,
                   outputs,
                   ptr_aos,
+                  system_values_array,
                   context_ptr,
                   sampler);
 
@@ -1263,8 +1273,7 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
 
       /* store clipmask in vertex header and positions in data */
       convert_to_aos(gallivm, io, outputs, clipmask,
-                     draw->vs.vertex_shader->info.num_outputs,
-                     max_vertices);
+                     vs_info->num_outputs, max_vertices);
    }
 
    lp_build_loop_end_cond(&lp_loop, end, step, LLVMIntUGE);
@@ -1315,7 +1324,9 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
    LLVMValueRef fetch_elts, fetch_count, stride, step, io_itr;
    LLVMValueRef io_ptr, vbuffers_ptr, vb_ptr;
    LLVMValueRef instance_id;
+   LLVMValueRef system_values_array;
    struct draw_context *draw = llvm->draw;
+   const struct tgsi_shader_info *vs_info = &draw->vs.vertex_shader->info;
    unsigned i, j;
    struct lp_build_context bld;
    struct lp_build_loop_state lp_loop;
@@ -1375,6 +1386,10 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
    LLVMPositionBuilderAtEnd(builder, block);
 
    lp_build_context_init(&bld, gallivm, lp_type_int(32));
+
+   system_values_array = lp_build_system_values_array(gallivm, vs_info,
+                                                      instance_id, NULL);
+
 
    step = lp_build_const_int32(gallivm, max_vertices);
 
@@ -1438,6 +1453,7 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
                   builder,
                   outputs,
                   ptr_aos,
+                  system_values_array,
                   context_ptr,
                   sampler);
 
@@ -1471,8 +1487,7 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
        * and transformed positions in data 
        */   
       convert_to_aos(gallivm, io, outputs, clipmask,
-                     draw->vs.vertex_shader->info.num_outputs,
-                     max_vertices);
+                     vs_info->num_outputs, max_vertices);
    }
 
    lp_build_loop_end_cond(&lp_loop, fetch_count, step, LLVMIntUGE);

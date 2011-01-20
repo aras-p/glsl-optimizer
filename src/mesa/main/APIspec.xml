@@ -2004,6 +2004,14 @@
 			<value name="GL_UNSIGNED_INT_24_8_OES"/>
 		</desc>
 	</desc>
+
+	<desc name="format" category="EXT_texture_format_BGRA8888">
+		<value name="GL_BGRA_EXT"/>
+
+		<desc name="type" error="GL_INVALID_OPERATION">
+			<value name="GL_UNSIGNED_BYTE"/>
+		</desc>
+	</desc>
 </template>
 
 <template name="BindTexture">
@@ -3582,6 +3590,7 @@
 	<function name="ClearColor" template="ClearColor" gltype="GLclampf"/>
 	<function name="ClearStencil" template="ClearStencil"/>
 	<function name="ClearDepth" template="ClearDepth" gltype="GLclampd"/>
+	<function name="ClearDepthf" template="ClearDepth" gltype="GLclampf"/>
 
 	<function name="StencilMask" template="StencilMask"/>
 	<function name="StencilMaskSeparate" template="StencilMaskSeparate"/>
@@ -3626,6 +3635,7 @@
 	<function name="IsEnabled" template="IsEnabled"/>
 
 	<function name="DepthRange" template="DepthRange" gltype="GLclampd"/>
+	<function name="DepthRangef" template="DepthRange" gltype="GLclampf"/>
 	<function name="Frustum" template="Frustum" gltype="GLdouble"/>
 
 	<function name="LoadIdentity" template="LoadIdentity"/>

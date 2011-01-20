@@ -72,6 +72,7 @@ struct st_translate {
    struct ureg_src inputs[PIPE_MAX_SHADER_INPUTS];
    struct ureg_dst address[1];
    struct ureg_src samplers[PIPE_MAX_SAMPLERS];
+   struct ureg_src systemValues[SYSTEM_VALUE_MAX];
 
    /* Extra info for handling point size clamping in vertex shader */
    struct ureg_dst pointSizeResult; /**< Actual point size output register */
@@ -101,6 +102,13 @@ struct st_translate {
    unsigned procType;  /**< TGSI_PROCESSOR_VERTEX/FRAGMENT */
 
    boolean error;
+};
+
+
+/** Map Mesa's SYSTEM_VALUE_x to TGSI_SEMANTIC_x */
+static unsigned mesa_sysval_to_semantic[SYSTEM_VALUE_MAX] = {
+   TGSI_SEMANTIC_FACE,
+   TGSI_SEMANTIC_INSTANCEID
 };
 
 
@@ -244,6 +252,10 @@ src_register( struct st_translate *t,
 
    case PROGRAM_ADDRESS:
       return ureg_src(t->address[index]);
+
+   case PROGRAM_SYSTEM_VALUE:
+      assert(index < Elements(t->systemValues));
+      return t->systemValues[index];
 
    default:
       debug_assert( 0 );
@@ -1087,6 +1099,21 @@ st_translate_mesa_program(
    if (program->NumAddressRegs > 0) {
       debug_assert( program->NumAddressRegs == 1 );
       t->address[0] = ureg_DECL_address( ureg );
+   }
+
+   /* Declare misc input registers
+    */
+   {
+      GLbitfield sysInputs = program->SystemValuesRead;
+      unsigned numSys = 0;
+      for (i = 0; sysInputs; i++) {
+         if (sysInputs & (1 << i)) {
+            unsigned semName = mesa_sysval_to_semantic[i];
+            t->systemValues[i] = ureg_DECL_system_value(ureg, numSys, semName, 0);
+            numSys++;
+            sysInputs &= ~(1 << i);
+         }
+      }
    }
 
    if (program->IndirectRegisterFiles & (1 << PROGRAM_TEMPORARY)) {

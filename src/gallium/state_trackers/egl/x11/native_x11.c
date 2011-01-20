@@ -30,25 +30,30 @@
 
 #include "native_x11.h"
 
+static struct native_event_handler *x11_event_handler;
+
+static void
+native_set_event_handler(struct native_event_handler *event_handler)
+{
+   x11_event_handler = event_handler;
+}
+
 static struct native_display *
-native_create_display(void *dpy, struct native_event_handler *event_handler,
-                      void *user_data)
+native_create_display(void *dpy, boolean use_sw, void *user_data)
 {
    struct native_display *ndpy = NULL;
    boolean force_sw;
 
    force_sw = debug_get_bool_option("EGL_SOFTWARE", FALSE);
-   if (!force_sw) {
-      ndpy = x11_create_dri2_display((Display *) dpy,
-            event_handler, user_data);
-   }
 
-   if (!ndpy) {
-      EGLint level = (force_sw) ? _EGL_INFO : _EGL_WARNING;
-
-      _eglLog(level, "use software fallback");
+   if (force_sw || use_sw) {
+      _eglLog(_EGL_INFO, "use software fallback");
       ndpy = x11_create_ximage_display((Display *) dpy,
-            event_handler, user_data);
+            x11_event_handler, user_data);
+   }
+   else {
+      ndpy = x11_create_dri2_display((Display *) dpy,
+            x11_event_handler, user_data);
    }
 
    return ndpy;
@@ -56,6 +61,7 @@ native_create_display(void *dpy, struct native_event_handler *event_handler,
 
 static const struct native_platform x11_platform = {
    "X11", /* name */
+   native_set_event_handler,
    native_create_display
 };
 

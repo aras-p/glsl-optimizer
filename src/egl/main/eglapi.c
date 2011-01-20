@@ -57,7 +57,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "eglstring.h"
 #include "eglcontext.h"
 #include "egldisplay.h"
 #include "egltypedefs.h"
@@ -294,16 +293,14 @@ eglInitialize(EGLDisplay dpy, EGLint *major, EGLint *minor)
       if (!_eglMatchDriver(disp, EGL_FALSE))
          RETURN_EGL_ERROR(disp, EGL_NOT_INITIALIZED, EGL_FALSE);
 
-      _eglsnprintf(disp->Version, sizeof(disp->Version), "%d.%d (%s)",
-            disp->APImajor, disp->APIminor, disp->Driver->Name);
       /* limit to APIs supported by core */
-      disp->ClientAPIsMask &= _EGL_API_ALL_BITS;
+      disp->ClientAPIs &= _EGL_API_ALL_BITS;
    }
 
    /* Update applications version of major and minor if not NULL */
    if ((major != NULL) && (minor != NULL)) {
-      *major = disp->APImajor;
-      *minor = disp->APIminor;
+      *major = disp->VersionMajor;
+      *minor = disp->VersionMinor;
    }
 
    RETURN_EGL_SUCCESS(disp, EGL_TRUE);

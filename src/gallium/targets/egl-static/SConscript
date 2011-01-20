@@ -1,0 +1,127 @@
+#######################################################################
+# SConscript for egl-static target
+
+Import('*')
+
+env = env.Clone()
+
+env.Append(CPPPATH = [
+    '#/include',
+    '#/src/egl/main',
+    '#/src/gallium/auxiliary',
+    '#/src/gallium/drivers',
+    '#/src/gallium/include',
+    '#/src/gallium/winsys',
+    '#/src/gallium/state_trackers/egl',
+    '#/src/gallium/state_trackers/vega',
+    '#/src/mesa',
+])
+
+env.Append(CPPDEFINES = [
+    'GALLIUM_SOFTPIPE',
+    'GALLIUM_RBUG',
+    'GALLIUM_TRACE',
+    'GALLIUM_GALAHAD',
+    '_EGL_MAIN=_eglBuiltInDriverGALLIUM',
+])
+
+env.Prepend(LIBS = [
+    softpipe,
+    rbug,
+    trace,
+    galahad,
+    gallium,
+    egl,
+    st_egl,
+])
+
+if env['llvm']:
+    env.Append(CPPDEFINES = ['GALLIUM_LLVMPIPE'])
+    env.Prepend(LIBS = [llvmpipe])
+
+sources = [
+    'egl.c',
+    'egl_pipe.c',
+    'egl_st.c',
+]
+
+if env['platform'] == 'windows':
+    sources.append('#src/egl/main/egl.def')
+
+    env.Append(LIBS = [
+        'gdi32',
+        'user32',
+        'kernel32',
+        'ws2_32',
+    ])
+
+    env.Prepend(LIBS = [
+        ws_gdi,
+    ])
+else:
+    # OpenGL
+    env.Append(CPPDEFINES = ['FEATURE_GL=1'])
+    env.Prepend(LIBS = ['GL', 'talloc', glsl, mesa])
+
+# OpenVG
+if True:
+    env.Append(CPPDEFINES = ['FEATURE_VG=1'])
+    env.Prepend(LIBPATH = [openvg.dir])
+    # manually add LIBPREFIX on windows
+    openvg_name = 'OpenVG' if env['platform'] != 'windows' else 'libOpenVG'
+    env.Prepend(LIBS = [openvg_name, st_vega])
+
+if env['x11']:
+    env.Prepend(LIBS = [
+        ws_xlib,
+        env['X11_LIBS'],
+    ])
+
+if env['dri']:
+    env.ParseConfig('pkg-config --cflags --libs xfixes')
+
+# pipe drivers
+if env['drm']:
+    env.ParseConfig('pkg-config --cflags --libs libdrm')
+
+    if env['drm_intel']:
+        env.ParseConfig('pkg-config --cflags --libs libdrm_intel')
+        env.Append(CPPDEFINES = ['_EGL_PIPE_I915', '_EGL_PIPE_I965'])
+        env.Prepend(LIBS = [
+            i915drm,
+            i915,
+            i965drm,
+            i965,
+            ws_wrapper,
+        ])
+
+    if env['drm_radeon']:
+        env.ParseConfig('pkg-config --cflags --libs libdrm_radeon')
+        env.Append(CPPDEFINES = ['_EGL_PIPE_R300', '_EGL_PIPE_R600'])
+        env.Prepend(LIBS = [
+            radeonwinsys,
+            r300,
+            r600winsys,
+            r600,
+        ])
+
+    env.Append(CPPDEFINES = ['_EGL_PIPE_VMWGFX'])
+    env.Prepend(LIBS = [
+        svgadrm,
+        svga,
+    ])
+
+# libEGL.dll
+env['LIBPREFIX'] = 'lib'
+env['SHLIBPREFIX'] = 'lib'
+
+egl_gallium = env.SharedLibrary(
+    target ='EGL',
+    source = sources,
+)
+
+env.Depends(egl_gallium, [openvg])
+
+egl_gallium = env.InstallSharedLibrary(egl_gallium, version=(1, 4, 0))
+
+env.Alias('egl-gallium', egl_gallium)

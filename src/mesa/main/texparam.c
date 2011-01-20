@@ -41,6 +41,7 @@
 #include "main/texparam.h"
 #include "main/teximage.h"
 #include "main/texstate.h"
+#include "main/texfetch.h"
 #include "program/prog_instruction.h"
 
 
@@ -419,7 +420,20 @@ set_tex_parameteri(struct gl_context *ctx,
       }
       _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname=0x%x)", pname);
       return GL_FALSE;
-
+   case GL_TEXTURE_SRGB_DECODE_EXT:
+      if (ctx->Extensions.EXT_texture_sRGB_decode) {
+	 GLenum decode = params[0];
+	 if (decode == GL_DECODE_EXT || decode == GL_SKIP_DECODE_EXT) {
+	    if (texObj->sRGBDecode != decode) {
+	       flush(ctx, texObj);
+	       texObj->sRGBDecode = decode;
+	       _mesa_update_fetch_functions(texObj);
+	    }
+	    return GL_TRUE;
+	 }
+      }
+      _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname=0x%x)", pname);
+      return GL_FALSE;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname=0x%x)", pname);
    }
@@ -543,6 +557,7 @@ _mesa_TexParameterf(GLenum target, GLenum pname, GLfloat param)
    case GL_TEXTURE_COMPARE_MODE_ARB:
    case GL_TEXTURE_COMPARE_FUNC_ARB:
    case GL_DEPTH_TEXTURE_MODE_ARB:
+   case GL_TEXTURE_SRGB_DECODE_EXT:
       {
          /* convert float param to int */
          GLint p[4];
@@ -591,6 +606,7 @@ _mesa_TexParameterfv(GLenum target, GLenum pname, const GLfloat *params)
    case GL_TEXTURE_COMPARE_MODE_ARB:
    case GL_TEXTURE_COMPARE_FUNC_ARB:
    case GL_DEPTH_TEXTURE_MODE_ARB:
+   case GL_TEXTURE_SRGB_DECODE_EXT:
       {
          /* convert float param to int */
          GLint p[4];

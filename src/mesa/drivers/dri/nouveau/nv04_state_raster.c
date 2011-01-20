@@ -264,8 +264,8 @@ nv04_emit_blend(struct gl_context *ctx, int emit)
 			NV04_MULTITEX_TRIANGLE_BLEND_TEXTURE_PERSPECTIVE_ENABLE;
 
 		/* Alpha blending. */
-		blend |= get_blend_func(ctx->Color.BlendDstRGB) << 28 |
-			get_blend_func(ctx->Color.BlendSrcRGB) << 24;
+		blend |= get_blend_func(ctx->Color.Blend[0].DstRGB) << 28 |
+			get_blend_func(ctx->Color.Blend[0].SrcRGB) << 24;
 
 		if (ctx->Color.BlendEnabled)
 			blend |= NV04_MULTITEX_TRIANGLE_BLEND_BLEND_ENABLE;
@@ -296,8 +296,8 @@ nv04_emit_blend(struct gl_context *ctx, int emit)
 			NV04_TEXTURED_TRIANGLE_BLEND_TEXTURE_PERSPECTIVE_ENABLE;
 
 		/* Alpha blending. */
-		blend |= get_blend_func(ctx->Color.BlendDstRGB) << 28 |
-			get_blend_func(ctx->Color.BlendSrcRGB) << 24;
+		blend |= get_blend_func(ctx->Color.Blend[0].DstRGB) << 28 |
+			get_blend_func(ctx->Color.Blend[0].SrcRGB) << 24;
 
 		if (ctx->Color.BlendEnabled)
 			blend |= NV04_TEXTURED_TRIANGLE_BLEND_BLEND_ENABLE;

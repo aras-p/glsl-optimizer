@@ -50,6 +50,7 @@
 #include "program/prog_uniform.h"
 #include "talloc.h"
 #include <stdbool.h>
+#include "../glsl/glsl_parser_extras.h"
 
 /** Define this to enable shader substitution (see below) */
 #define SHADER_SUBST 0
@@ -1639,8 +1640,7 @@ _mesa_GetShaderPrecisionFormat(GLenum shadertype, GLenum precisiontype,
 void GLAPIENTRY
 _mesa_ReleaseShaderCompiler(void)
 {
-   GET_CURRENT_CONTEXT(ctx);
-   _mesa_error(ctx, GL_INVALID_OPERATION, __FUNCTION__);
+   _mesa_destroy_shader_compiler_caches();
 }
 
 
@@ -1882,6 +1882,9 @@ _mesa_init_shader_dispatch(struct _glapi_table *exec)
    /* GL_EXT_gpu_shader4 / GL 3.0 */
    SET_BindFragDataLocationEXT(exec, _mesa_BindFragDataLocation);
    SET_GetFragDataLocationEXT(exec, _mesa_GetFragDataLocation);
+
+   /* GL_ARB_ES2_compatibility */
+   SET_ReleaseShaderCompiler(exec, _mesa_ReleaseShaderCompiler);
 
 #endif /* FEATURE_GL */
 }

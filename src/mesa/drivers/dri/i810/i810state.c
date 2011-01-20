@@ -95,7 +95,7 @@ static void i810BlendFuncSeparate( struct gl_context *ctx, GLenum sfactorRGB,
    GLuint a = SDM_UPDATE_SRC_BLEND | SDM_UPDATE_DST_BLEND;
    GLboolean fallback = GL_FALSE;
 
-   switch (ctx->Color.BlendSrcRGB) {
+   switch (ctx->Color.Blend[0].SrcRGB) {
    case GL_ZERO:                a |= SDM_SRC_ZERO; break;
    case GL_ONE:                 a |= SDM_SRC_ONE; break;
    case GL_SRC_COLOR:           a |= SDM_SRC_SRC_COLOR; break;
@@ -124,7 +124,7 @@ static void i810BlendFuncSeparate( struct gl_context *ctx, GLenum sfactorRGB,
       return;
    }
 
-   switch (ctx->Color.BlendDstRGB) {
+   switch (ctx->Color.Blend[0].DstRGB) {
    case GL_ZERO:                a |= SDM_DST_ZERO; break;
    case GL_ONE:                 a |= SDM_DST_ONE; break;
    case GL_SRC_COLOR:           a |= SDM_DST_SRC_COLOR; break;

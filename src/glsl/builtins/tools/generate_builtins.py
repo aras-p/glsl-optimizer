@@ -1,7 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from __future__ import with_statement
+
 import re
+import sys
 from glob import glob
 from os import path
 from subprocess import Popen, PIPE
@@ -14,8 +17,8 @@ builtins_dir = path.join(path.dirname(path.abspath(__file__)), "..")
 
 # Get the path to the standalone GLSL compiler
 if len(argv) != 2:
-   print "Usage:", argv[0], "<path to compiler>"
-   sys.exit(1)
+    print "Usage:", argv[0], "<path to compiler>"
+    sys.exit(1)
 
 compiler = argv[1]
 
@@ -60,8 +63,8 @@ def run_compiler(args):
     output = p.communicate()[0]
 
     # Clean up output a bit by killing whitespace before a closing paren.
-    kill_paren_whitespace = re.compile(r'[ \n]*\)', re.MULTILINE);
-    output = kill_paren_whitespace.sub(')', output);
+    kill_paren_whitespace = re.compile(r'[ \n]*\)', re.MULTILINE)
+    output = kill_paren_whitespace.sub(')', output)
 
     # Also toss any duplicate newlines
     output = output.replace('\n\n', '\n')
@@ -76,12 +79,12 @@ def write_profile(filename, profile):
         return
 
     # Kill any global variable declarations.  We don't want them.
-    kill_globals = re.compile(r'^\(declare.*\n', re.MULTILINE);
+    kill_globals = re.compile(r'^\(declare.*\n', re.MULTILINE)
     proto_ir = kill_globals.sub('', proto_ir)
 
     # Kill pointer addresses.  They're not necessary in prototypes and just
     # clutter the diff output.
-    proto_ir = re.sub(r'@0x[0-9a-f]+', '', proto_ir);
+    proto_ir = re.sub(r'@0x[0-9a-f]+', '', proto_ir)
 
     print 'static const char prototypes_for_' + profile + '[] ='
     print stringify(proto_ir), ';'
@@ -235,7 +238,7 @@ _mesa_glsl_initialize_functions(struct _mesa_glsl_parse_state *state)
    state->num_builtins_to_link = 0;
 """
 
-    i=0
+    i = 0
     for (filename, profile) in profiles:
         if profile.endswith('_vert'):
             check = 'state->target == vertex_shader && '

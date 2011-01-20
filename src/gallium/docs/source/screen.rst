@@ -36,6 +36,7 @@ The integer capabilities:
   bound.
 * ``OCCLUSION_QUERY``: Whether occlusion queries are available.
 * ``TIMER_QUERY``: Whether timer queries are available.
+* ``INSTANCED_DRAWING``: indicates support for instanced drawing.
 * ``TEXTURE_SHADOW_MAP``: indicates whether the fragment shader hardware
   can do the depth texture / Z comparison operation in TEX instructions
   for shadow testing.

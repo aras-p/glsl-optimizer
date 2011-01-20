@@ -68,6 +68,7 @@ enum fs_opcodes {
    FS_OPCODE_COS,
    FS_OPCODE_DDX,
    FS_OPCODE_DDY,
+   FS_OPCODE_CINTERP,
    FS_OPCODE_LINTERP,
    FS_OPCODE_TEX,
    FS_OPCODE_TXB,
@@ -378,6 +379,7 @@ public:
       this->virtual_grf_array_size = 0;
       this->virtual_grf_def = NULL;
       this->virtual_grf_use = NULL;
+      this->live_intervals_valid = false;
 
       this->kill_emitted = false;
    }
@@ -479,6 +481,7 @@ public:
    int virtual_grf_array_size;
    int *virtual_grf_def;
    int *virtual_grf_use;
+   bool live_intervals_valid;
 
    struct hash_table *variable_ht;
    ir_variable *frag_color, *frag_data, *frag_depth;

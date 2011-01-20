@@ -39,6 +39,7 @@
 #include "texcompress_fxt1.h"
 #include "texcompress_s3tc.h"
 #include "texfetch.h"
+#include "teximage.h"
 
 
 /**
@@ -857,13 +858,36 @@ fetch_texel_chan_to_float(const struct gl_texture_image *texImage,
 void
 _mesa_set_fetch_functions(struct gl_texture_image *texImage, GLuint dims)
 {
+   gl_format format = texImage->TexFormat;
+
    ASSERT(dims == 1 || dims == 2 || dims == 3);
 
-   texImage->FetchTexelf =
-      _mesa_get_texel_fetch_func(texImage->TexFormat, dims);
+   if (texImage->TexObject->sRGBDecode == GL_SKIP_DECODE_EXT &&
+       _mesa_get_format_color_encoding(format) == GL_SRGB) {
+      format = _mesa_get_srgb_format_linear(format);
+   }
+
+   texImage->FetchTexelf = _mesa_get_texel_fetch_func(format, dims);
 
    texImage->FetchTexelc = fetch_texel_float_to_chan;
 
    ASSERT(texImage->FetchTexelc);
    ASSERT(texImage->FetchTexelf);
+}
+
+void
+_mesa_update_fetch_functions(struct gl_texture_object *texObj)
+{
+   GLuint face, i;
+   GLuint dims;
+
+   dims = _mesa_get_texture_dimensions(texObj->Target);
+
+   for (face = 0; face < 6; face++) {
+      for (i = 0; i < MAX_TEXTURE_LEVELS; i++) {
+         if (texObj->Image[face][i]) {
+	    _mesa_set_fetch_functions(texObj->Image[face][i], dims);
+         }
+      }
+   }
 }

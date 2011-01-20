@@ -66,7 +66,7 @@ enum jump_strength
    strength_always_clears_execute_flag,
    strength_continue,
    strength_break,
-   strength_return,
+   strength_return
 };
 
 struct block_record

@@ -146,7 +146,11 @@ _mesa_DepthRange(GLclampd nearval, GLclampd farval)
    }
 }
 
-
+void GLAPIENTRY
+_mesa_DepthRangef(GLclampf nearval, GLclampf farval)
+{
+   _mesa_DepthRange(nearval, farval);
+}
 
 /** 
  * Initialize the context viewport attribute group.

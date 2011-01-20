@@ -79,6 +79,8 @@ mark(struct gl_program *prog, ir_variable *var, int offset, int len)
    for (int i = 0; i < len; i++) {
       if (var->mode == ir_var_in)
 	 prog->InputsRead |= BITFIELD64_BIT(var->location + offset + i);
+      else if (var->mode == ir_var_system_value)
+         prog->SystemValuesRead |= (1 << (var->location + offset + i));
       else
 	 prog->OutputsWritten |= BITFIELD64_BIT(var->location + offset + i);
    }
@@ -134,7 +136,8 @@ ir_visitor_status
 ir_set_program_inouts_visitor::visit(ir_variable *ir)
 {
    if (ir->mode == ir_var_in ||
-       ir->mode == ir_var_out) {
+       ir->mode == ir_var_out ||
+       ir->mode == ir_var_system_value) {
       hash_table_insert(this->ht, ir, ir);
    }
 
@@ -158,5 +161,6 @@ do_set_program_inouts(exec_list *instructions, struct gl_program *prog)
 
    prog->InputsRead = 0;
    prog->OutputsWritten = 0;
+   prog->SystemValuesRead = 0;
    visit_list_elements(&v, instructions);
 }

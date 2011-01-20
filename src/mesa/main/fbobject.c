@@ -960,67 +960,42 @@ _mesa_GenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers)
 
 
 /**
- * Given an internal format token for a render buffer, return the
+ * Given an internal format token for a renderbuffer, return the
  * corresponding base format.
- * This is very similar to _mesa_base_tex_format() but the set of valid
- * internal formats is somewhat different.
- *
- * \return one of GL_RGB, GL_RGBA, GL_STENCIL_INDEX, GL_DEPTH_COMPONENT
- *  GL_DEPTH_STENCIL_EXT or zero if error.
- *
- * XXX in the future when we support red-only and red-green formats
- * we'll also return GL_RED and GL_RG.
  */
 GLenum
 _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
 {
+   GLenum baseFormat;
+
    switch (internalFormat) {
-   case GL_ALPHA:
-   case GL_ALPHA4:
-   case GL_ALPHA8:
-   case GL_ALPHA12:
-   case GL_ALPHA16:
-      return GL_ALPHA;
-   case GL_RGB:
-   case GL_R3_G3_B2:
-   case GL_RGB4:
-   case GL_RGB5:
-   case GL_RGB8:
-   case GL_RGB10:
-   case GL_RGB12:
-   case GL_RGB16:
-      return GL_RGB;
-   case GL_RGBA:
-   case GL_RGBA2:
-   case GL_RGBA4:
-   case GL_RGB5_A1:
-   case GL_RGBA8:
-   case GL_RGB10_A2:
-   case GL_RGBA12:
-   case GL_RGBA16:
    case GL_RGBA16_SNORM:
+      /* This is used internally by Mesa for accum buffers. */
       return GL_RGBA;
    case GL_STENCIL_INDEX:
    case GL_STENCIL_INDEX1_EXT:
    case GL_STENCIL_INDEX4_EXT:
    case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
+      /* This is not a valid texture internalFormat, but valid for
+       * renderbuffers.
+       */
       return GL_STENCIL_INDEX;
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT16:
    case GL_DEPTH_COMPONENT24:
    case GL_DEPTH_COMPONENT32:
+      /* This is an override of _mesa_base_tex_format's check that
+       * ARB_depth_texture is present.  We allow depth RBs without it.
+       */
       return GL_DEPTH_COMPONENT;
-   case GL_DEPTH_STENCIL_EXT:
-   case GL_DEPTH24_STENCIL8_EXT:
-      if (ctx->Extensions.EXT_packed_depth_stencil)
-         return GL_DEPTH_STENCIL_EXT;
-      else
-         return 0;
-   /* XXX add floating point formats eventually */
-   default:
-      return 0;
    }
+
+   baseFormat = _mesa_base_tex_format(ctx, internalFormat);
+   if (baseFormat < 0)
+      return 0;
+
+   return baseFormat;
 }
 
 
@@ -1052,6 +1027,14 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
 
    baseFormat = _mesa_base_fbo_format(ctx, internalFormat);
    if (baseFormat == 0) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "%s(internalFormat)", func);
+      return;
+   }
+
+   if (baseFormat != GL_DEPTH_COMPONENT &&
+       baseFormat != GL_STENCIL_INDEX &&
+       baseFormat != GL_DEPTH_STENCIL &&
+       !_mesa_is_legal_color_format(ctx, baseFormat)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "%s(internalFormat)", func);
       return;
    }
@@ -1922,6 +1905,13 @@ _mesa_FramebufferRenderbufferEXT(GLenum target, GLenum attachment,
 	 _mesa_error(ctx, GL_INVALID_OPERATION,
 		     "glFramebufferRenderbufferEXT(non-existant"
                      " renderbuffer %u)", renderbuffer);
+	 return;
+      }
+      else if (rb == &DummyRenderbuffer) {
+         /* This is what NVIDIA does */
+	 _mesa_error(ctx, GL_INVALID_VALUE,
+		     "glFramebufferRenderbufferEXT(renderbuffer %u)",
+                     renderbuffer);
 	 return;
       }
    }

@@ -100,7 +100,8 @@ struct nvc0_context {
    struct pipe_vertex_buffer vtxbuf[PIPE_MAX_ATTRIBS];
    unsigned num_vtxbufs;
    struct pipe_index_buffer idxbuf;
-   uint32_t vbo_fifo;
+   uint32_t vbo_fifo; /* bitmask of vertex elements to be pushed to FIFO */
+   uint32_t vbo_user; /* bitmask of vertex buffers pointing to user memory */
    unsigned vbo_min_index; /* from pipe_draw_info, for vertex upload */
    unsigned vbo_max_index;
 

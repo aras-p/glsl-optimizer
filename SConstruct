@@ -119,6 +119,39 @@ Export('env')
 
 
 #######################################################################
+# Invoke host SConscripts 
+# 
+# For things that are meant to be run on the native host build machine, instead
+# of the target machine.
+#
+
+# Create host environent
+if env['platform'] != common.host_platform:
+    host_env = Environment(
+        options = opts,
+        # no tool used
+        tools = [],
+        toolpath = ['#scons'],
+        ENV = os.environ,
+    )
+
+    # Override options
+    host_env['platform'] = common.host_platform
+    host_env['machine'] = common.host_machine
+    host_env['toolchain'] = 'default'
+    host_env['llvm'] = False
+
+    host_env.Tool('gallium')
+
+    SConscript(
+        'src/glsl/SConscript',
+        variant_dir = host_env['build_dir'],
+        duplicate = 0, # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
+        exports={'env':host_env},
+    )
+
+
+#######################################################################
 # Invoke SConscripts
 
 # TODO: Build several variants at the same time?

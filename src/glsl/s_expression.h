@@ -26,15 +26,21 @@
 #ifndef S_EXPRESSION_H
 #define S_EXPRESSION_H
 
+#include "main/core.h" /* for Elements */
 #include "strtod.h"
 #include "list.h"
 
+/* Type-safe downcasting macros (also safe to pass NULL) */
 #define SX_AS_(t,x) ((x) && ((s_expression*) x)->is_##t()) ? ((s_##t*) (x)) \
                                                            : NULL
 #define SX_AS_LIST(x)   SX_AS_(list, x)
 #define SX_AS_SYMBOL(x) SX_AS_(symbol, x)
 #define SX_AS_NUMBER(x) SX_AS_(number, x)
 #define SX_AS_INT(x)    SX_AS_(int, x)
+
+/* Pattern matching macros */
+#define MATCH(list, pat) s_match(list, Elements(pat), pat, false)
+#define PARTIAL_MATCH(list, pat) s_match(list, Elements(pat), pat, true)
 
 /* For our purposes, S-Expressions are:
  * - <int>
@@ -133,11 +139,42 @@ public:
    s_list();
 
    virtual bool is_list() const { return true; }
-   unsigned length() const;
 
    void print();
 
    exec_list subexpressions;
 };
+
+// ------------------------------------------------------------
+
+/**
+ * Part of a pattern to match - essentially a record holding a pointer to the
+ * storage for the component to match, along with the appropriate type.
+ */
+class s_pattern {
+public:
+   s_pattern(s_expression *&s) : p_expr(&s),   type(EXPR)   { }
+   s_pattern(s_list       *&s) : p_list(&s),   type(LIST)   { }
+   s_pattern(s_symbol     *&s) : p_symbol(&s), type(SYMBOL) { }
+   s_pattern(s_number     *&s) : p_number(&s), type(NUMBER) { }
+   s_pattern(s_int        *&s) : p_int(&s),    type(INT)    { }
+   s_pattern(const char *str)  : literal(str), type(STRING) { }
+
+   bool match(s_expression *expr);
+
+private:
+   union {
+      s_expression **p_expr;
+      s_list       **p_list;
+      s_symbol     **p_symbol;
+      s_number     **p_number;
+      s_int        **p_int;
+      const char *literal;
+   };
+   enum { EXPR, LIST, SYMBOL, NUMBER, INT, STRING } type;
+};
+
+bool
+s_match(s_expression *top, unsigned n, s_pattern *pattern, bool partial);
 
 #endif /* S_EXPRESSION_H */

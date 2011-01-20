@@ -71,6 +71,12 @@ vs_sse_prepare( struct draw_vertex_shader *base,
    struct tgsi_exec_machine *machine = shader->machine;
 
    machine->Samplers = draw->vs.samplers;
+
+   if (base->info.uses_instanceid) {
+      unsigned i = machine->SysSemanticToIndex[TGSI_SEMANTIC_INSTANCEID];
+      assert(i < Elements(machine->SystemValue));
+      machine->SystemValue[i][0] = base->draw->instance_id;
+   }
 }
 
 

@@ -68,7 +68,7 @@ nv10_emit_blend_equation(struct gl_context *ctx, int emit)
 	OUT_RINGb(chan, ctx->Color.BlendEnabled);
 
 	BEGIN_RING(chan, celsius, NV10_3D_BLEND_EQUATION, 1);
-	OUT_RING(chan, nvgl_blend_eqn(ctx->Color.BlendEquationRGB));
+	OUT_RING(chan, nvgl_blend_eqn(ctx->Color.Blend[0].EquationRGB));
 }
 
 void
@@ -78,8 +78,8 @@ nv10_emit_blend_func(struct gl_context *ctx, int emit)
 	struct nouveau_grobj *celsius = context_eng3d(ctx);
 
 	BEGIN_RING(chan, celsius, NV10_3D_BLEND_FUNC_SRC, 2);
-	OUT_RING(chan, nvgl_blend_func(ctx->Color.BlendSrcRGB));
-	OUT_RING(chan, nvgl_blend_func(ctx->Color.BlendDstRGB));
+	OUT_RING(chan, nvgl_blend_func(ctx->Color.Blend[0].SrcRGB));
+	OUT_RING(chan, nvgl_blend_func(ctx->Color.Blend[0].DstRGB));
 }
 
 void

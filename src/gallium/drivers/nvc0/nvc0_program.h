@@ -23,12 +23,15 @@ struct nvc0_program {
 
    uint32_t hdr[20];
 
-   uint32_t flags[2]; /* FP_ZORDER */
+   uint32_t flags[2];
 
    struct {
       uint8_t edgeflag;
       uint8_t num_ucps;
    } vp;
+   struct {
+      uint8_t early_z;
+   } fp;
 
    void *relocs;
    unsigned num_relocs;
@@ -66,6 +69,7 @@ struct nvc0_translation_info {
    boolean indirect_inputs;
    boolean indirect_outputs;
    boolean require_stores;
+   boolean global_stores;
    uint32_t *immd32;
    ubyte *immd32_ty;
    unsigned immd32_nr;

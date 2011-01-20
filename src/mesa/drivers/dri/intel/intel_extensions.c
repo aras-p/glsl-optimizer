@@ -33,6 +33,7 @@
 #include "utils.h"
 
 
+#define need_GL_ARB_ES2_compatibility
 #define need_GL_ARB_draw_elements_base_vertex
 #define need_GL_ARB_framebuffer_object
 #define need_GL_ARB_map_buffer_range
@@ -80,6 +81,7 @@
  * i965_dri.
  */
 static const struct dri_extension card_extensions[] = {
+   { "GL_ARB_ES2_compatibility",          GL_ARB_ES2_compatibility_functions },
    { "GL_ARB_draw_elements_base_vertex",  GL_ARB_draw_elements_base_vertex_functions },
    { "GL_ARB_explicit_attrib_location",   NULL },
    { "GL_ARB_framebuffer_object",         GL_ARB_framebuffer_object_functions},
@@ -176,6 +178,7 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_EXT_shadow_funcs",               NULL },
    { "GL_EXT_stencil_two_side",           GL_EXT_stencil_two_side_functions },
    { "GL_EXT_texture_sRGB",		  NULL },
+   { "GL_EXT_texture_sRGB_decode",	  NULL },
    { "GL_EXT_texture_swizzle",		  NULL },
    { "GL_EXT_vertex_array_bgra",	  NULL },
    { "GL_ATI_envmap_bumpmap",             GL_ATI_envmap_bumpmap_functions },

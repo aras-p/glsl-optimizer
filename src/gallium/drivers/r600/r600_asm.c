@@ -38,52 +38,109 @@
 #define PREV_ALU(alu) LIST_ENTRY(struct r600_bc_alu, alu->list.prev, list)
 #define NEXT_ALU(alu) LIST_ENTRY(struct r600_bc_alu, alu->list.next, list)
 
-static inline unsigned int r600_bc_get_num_operands(struct r600_bc_alu *alu)
+static inline unsigned int r600_bc_get_num_operands(struct r600_bc *bc, struct r600_bc_alu *alu)
 {
 	if(alu->is_op3)
 		return 3;
 
-	switch (alu->inst) {
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP:
-		return 0;
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLNE:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MIN:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETE:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETNE:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGT:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGE:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4_IEEE:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE:
-		return 2;
+	switch (bc->chiprev) {
+	case CHIPREV_R600:
+	case CHIPREV_R700:
+		switch (alu->inst) {
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP:
+			return 0;
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLNE:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MIN:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETE:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETNE:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGT:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGE:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4_IEEE:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE:
+			return 2;
 
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_FLOOR:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FRACT:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLOOR:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_TRUNC:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_CLAMPED:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_IEEE:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_IEEE:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN:
-	case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS:
-		return 1;
-	default: R600_ERR(
-		"Need instruction operand number for 0x%x.\n", alu->inst);
-	};
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_FLOOR:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FRACT:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLOOR:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_TRUNC:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_CLAMPED:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_IEEE:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_CLAMPED:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_CLAMPED:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_IEEE:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS:
+			return 1;
+		default: R600_ERR(
+			"Need instruction operand number for 0x%x.\n", alu->inst);
+		}
+		break;
+	case CHIPREV_EVERGREEN:
+		switch (alu->inst) {
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP:
+			return 0;
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLNE:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MIN:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETE:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETNE:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGT:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETGE:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4_IEEE:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_XY:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_ZW:
+			return 2;
+
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FRACT:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLOOR:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_TRUNC:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_CLAMPED:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_IEEE:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_CLAMPED:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_CLAMPED:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_IEEE:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT_FLOOR:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS:
+			return 1;
+		default: R600_ERR(
+			"Need instruction operand number for 0x%x.\n", alu->inst);
+		}
+		break;
+	}
 
 	return 3;
 }
@@ -241,125 +298,226 @@ int r600_bc_add_output(struct r600_bc *bc, const struct r600_bc_output *output)
 }
 
 /* alu predicate instructions */
-static int is_alu_pred_inst(struct r600_bc_alu *alu)
+static int is_alu_pred_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 {
-	return !alu->is_op3 && (
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_UINT ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_UINT ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SET_INV ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SET_POP ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SET_CLR ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SET_RESTORE ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_PUSH ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_PUSH ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_PUSH ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE_PUSH ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_INT ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_INT ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_INT ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE_INT ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_PUSH_INT ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_PUSH_INT ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_PUSH_INT ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE_PUSH_INT ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETLT_PUSH_INT ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETLE_PUSH_INT);
+	switch (bc->chiprev) {
+	case CHIPREV_R600:
+	case CHIPREV_R700:
+		return !alu->is_op3 && (
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_UINT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_UINT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SET_INV ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SET_POP ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SET_CLR ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SET_RESTORE ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_PUSH ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_PUSH ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_PUSH ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE_PUSH ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_INT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_INT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_INT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE_INT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_PUSH_INT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_PUSH_INT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_PUSH_INT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE_PUSH_INT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETLT_PUSH_INT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETLE_PUSH_INT);
+	case CHIPREV_EVERGREEN:
+	default:
+		return !alu->is_op3 && (
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_UINT ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_UINT ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SET_INV ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SET_POP ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SET_CLR ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SET_RESTORE ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_PUSH ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_PUSH ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_PUSH ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE_PUSH ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_INT ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_INT ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_INT ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE_INT ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETE_PUSH_INT ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGT_PUSH_INT ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETGE_PUSH_INT ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETNE_PUSH_INT ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETLT_PUSH_INT ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_PRED_SETLE_PUSH_INT);
+	}
 }
 
 /* alu kill instructions */
-static int is_alu_kill_inst(struct r600_bc_alu *alu)
+static int is_alu_kill_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 {
-	return !alu->is_op3 && (
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLNE ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT_UINT ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE_UINT ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE_INT ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT_INT ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE_INT ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLNE_INT);
+	switch (bc->chiprev) {
+	case CHIPREV_R600:
+	case CHIPREV_R700:
+		return !alu->is_op3 && (
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLNE ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT_UINT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE_UINT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE_INT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT_INT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE_INT ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLNE_INT);
+	case CHIPREV_EVERGREEN:
+	default:
+		return !alu->is_op3 && (
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLNE ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT_UINT ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE_UINT ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE_INT ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT_INT ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE_INT ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLNE_INT);
+	}
 }
 
 /* alu instructions that can ony exits once per group */
-static int is_alu_once_inst(struct r600_bc_alu *alu)
+static int is_alu_once_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 {
-	return is_alu_kill_inst(alu) ||
-		is_alu_pred_inst(alu);
+	return is_alu_kill_inst(bc, alu) ||
+		is_alu_pred_inst(bc, alu);
 }
 
-static int is_alu_reduction_inst(struct r600_bc_alu *alu)
+static int is_alu_reduction_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 {
-	return !alu->is_op3 && (
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4 ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4_IEEE ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX4);
+	switch (bc->chiprev) {
+	case CHIPREV_R600:
+	case CHIPREV_R700:
+		return !alu->is_op3 && (
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4 ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4_IEEE ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX4);
+	case CHIPREV_EVERGREEN:
+	default:
+		return !alu->is_op3 && (
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4 ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4_IEEE ||
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX4);
+	}
 }
 
-static int is_alu_mova_inst(struct r600_bc_alu *alu)
+static int is_alu_mova_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 {
-	return !alu->is_op3 && (
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_FLOOR ||
-		alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT);
+	switch (bc->chiprev) {
+	case CHIPREV_R600:
+	case CHIPREV_R700:
+		return !alu->is_op3 && (
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_FLOOR ||
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT);
+	case CHIPREV_EVERGREEN:
+	default:
+		return !alu->is_op3 && (
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT);
+	}
 }
 
 /* alu instructions that can only execute on the vector unit */
-static int is_alu_vec_unit_inst(struct r600_bc_alu *alu)
+static int is_alu_vec_unit_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 {
-	return is_alu_reduction_inst(alu) ||
-		is_alu_mova_inst(alu);
+	return is_alu_reduction_inst(bc, alu) ||
+		is_alu_mova_inst(bc, alu);
 }
 
 /* alu instructions that can only execute on the trans unit */
-static int is_alu_trans_unit_inst(struct r600_bc_alu *alu)
+static int is_alu_trans_unit_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 {
-	if(!alu->is_op3)
-		return alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ASHR_INT ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHL_INT ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHR_INT ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_INT ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_UINT ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_INT ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_UINT ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_INT ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_UINT ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_UINT_TO_FLT ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_CLAMPED ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_IEEE ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_CLAMPED ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_FF ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_CLAMPED ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_FF ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_IEEE ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN ||
-			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SQRT_IEEE;
-	else
-		return alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT ||
-			alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT_D2 ||
-			alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT_M2 ||
-			alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT_M4;
+	switch (bc->chiprev) {
+	case CHIPREV_R600:
+	case CHIPREV_R700:
+		if (!alu->is_op3)
+			return alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ASHR_INT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHL_INT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHR_INT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_INT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_UINT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_INT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_UINT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_INT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_UINT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_UINT_TO_FLT ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_CLAMPED ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_IEEE ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_CLAMPED ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_FF ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_CLAMPED ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_FF ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_IEEE ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN ||
+				alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SQRT_IEEE;
+		else
+			return alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT ||
+				alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT_D2 ||
+				alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT_M2 ||
+				alu->inst == V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT_M4;
+	case CHIPREV_EVERGREEN:
+	default:
+		if (!alu->is_op3)
+			return alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ASHR_INT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHL_INT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHR_INT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_INT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_UINT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_INT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_UINT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_INT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_UINT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_UINT_TO_FLT ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_CLAMPED ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LOG_IEEE ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_CLAMPED ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_FF ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_IEEE ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_CLAMPED ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_FF ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_IEEE ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN ||
+				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SQRT_IEEE;
+		else
+			return alu->inst == EG_V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MUL_LIT;
+	}
 }
 
 /* alu instructions that can execute on any unit */
-static int is_alu_any_unit_inst(struct r600_bc_alu *alu)
+static int is_alu_any_unit_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 {
-	return !is_alu_vec_unit_inst(alu) &&
-		!is_alu_trans_unit_inst(alu);
+	return !is_alu_vec_unit_inst(bc, alu) &&
+		!is_alu_trans_unit_inst(bc, alu);
 }
 
-static int assign_alu_units(struct r600_bc_alu *alu_first, struct r600_bc_alu *assignment[5])
+static int assign_alu_units(struct r600_bc *bc, struct r600_bc_alu *alu_first,
+			    struct r600_bc_alu *assignment[5])
 {
 	struct r600_bc_alu *alu;
 	unsigned i, chan, trans;
@@ -367,11 +525,11 @@ static int assign_alu_units(struct r600_bc_alu *alu_first, struct r600_bc_alu *a
 	for (i = 0; i < 5; i++)
 		assignment[i] = NULL;
 
-	for (alu = alu_first; alu; alu = NEXT_ALU(alu)) {
+	for (alu = alu_first; alu; alu = LIST_ENTRY(struct r600_bc_alu, alu->list.next, list)) {
 		chan = alu->dst.chan;
-		if (is_alu_trans_unit_inst(alu))
+		if (is_alu_trans_unit_inst(bc, alu))
 			trans = 1;
-		else if (is_alu_vec_unit_inst(alu))
+		else if (is_alu_vec_unit_inst(bc, alu))
 			trans = 0;
 		else if (assignment[chan])
 			trans = 1; // assume ALU_INST_PREFER_VECTOR
@@ -471,34 +629,29 @@ static int is_gpr(unsigned sel)
 	return (sel >= 0 && sel <= 127);
 }
 
-static int is_cfile(unsigned sel)
-{
-	return (sel > 255 && sel < 512);
-}
-
 /* CB constants start at 512, and get translated to a kcache index when ALU
  * clauses are constructed. Note that we handle kcache constants the same way
  * as (the now gone) cfile constants, is that really required? */
-static int is_cb_const(int sel)
+static int is_cfile(unsigned sel)
 {
-	if (sel > 511 && sel < 4607)
-		return 1;
-	return 0;
+	return (sel > 255 && sel < 512) ||
+		(sel > 511 && sel < 4607) || // Kcache before translate
+		(sel > 127 && sel < 192); // Kcache after translate
 }
 
 static int is_const(int sel)
 {
 	return is_cfile(sel) ||
-		is_cb_const(sel) ||
 		(sel >= V_SQ_ALU_SRC_0 &&
 		sel <= V_SQ_ALU_SRC_LITERAL);
 }
 
-static int check_vector(struct r600_bc_alu *alu, struct alu_bank_swizzle *bs, int bank_swizzle)
+static int check_vector(struct r600_bc *bc, struct r600_bc_alu *alu,
+			struct alu_bank_swizzle *bs, int bank_swizzle)
 {
 	int r, src, num_src, sel, elem, cycle;
 
-	num_src = r600_bc_get_num_operands(alu);
+	num_src = r600_bc_get_num_operands(bc, alu);
 	for (src = 0; src < num_src; src++) {
 		sel = alu->src[src].sel;
 		elem = alu->src[src].chan;
@@ -523,11 +676,12 @@ static int check_vector(struct r600_bc_alu *alu, struct alu_bank_swizzle *bs, in
 	return 0;
 }
 
-static int check_scalar(struct r600_bc_alu *alu, struct alu_bank_swizzle *bs, int bank_swizzle)
+static int check_scalar(struct r600_bc *bc, struct r600_bc_alu *alu,
+			struct alu_bank_swizzle *bs, int bank_swizzle)
 {
 	int r, src, num_src, const_count, sel, elem, cycle;
 
-	num_src = r600_bc_get_num_operands(alu);
+	num_src = r600_bc_get_num_operands(bc, alu);
 	for (const_count = 0, src = 0; src < num_src; ++src) {
 		sel = alu->src[src].sel;
 		elem = alu->src[src].chan;
@@ -564,7 +718,8 @@ static int check_scalar(struct r600_bc_alu *alu, struct alu_bank_swizzle *bs, in
 	return 0;
 }
 
-static int check_and_set_bank_swizzle(struct r600_bc_alu *slots[5])
+static int check_and_set_bank_swizzle(struct r600_bc *bc,
+				      struct r600_bc_alu *slots[5])
 {
 	struct alu_bank_swizzle bs;
 	int bank_swizzle[5];
@@ -588,13 +743,13 @@ static int check_and_set_bank_swizzle(struct r600_bc_alu *slots[5])
 		init_bank_swizzle(&bs);
 		for (i = 0; i < 4; i++) {
 			if (slots[i]) {
-				r = check_vector(slots[i], &bs, bank_swizzle[i]);
+				r = check_vector(bc, slots[i], &bs, bank_swizzle[i]);
 				if (r)
 					break;
 			}
 		}
 		if (!r && slots[4]) {
-			r = check_scalar(slots[4], &bs, bank_swizzle[4]);
+			r = check_scalar(bc, slots[4], &bs, bank_swizzle[4]);
 		}
 		if (!r) {
 			for (i = 0; i < 5; i++) {
@@ -617,20 +772,21 @@ static int check_and_set_bank_swizzle(struct r600_bc_alu *slots[5])
 	return -1;
 }
 
-static int replace_gpr_with_pv_ps(struct r600_bc_alu *slots[5], struct r600_bc_alu *alu_prev)
+static int replace_gpr_with_pv_ps(struct r600_bc *bc,
+				  struct r600_bc_alu *slots[5], struct r600_bc_alu *alu_prev)
 {
 	struct r600_bc_alu *prev[5];
 	int gpr[5], chan[5];
 	int i, j, r, src, num_src;
 
-	r = assign_alu_units(alu_prev, prev);
+	r = assign_alu_units(bc, alu_prev, prev);
 	if (r)
 		return r;
 
 	for (i = 0; i < 5; ++i) {
 		if(prev[i] && prev[i]->dst.write && !prev[i]->dst.rel) {
 			gpr[i] = prev[i]->dst.sel;
-			if (is_alu_reduction_inst(prev[i]))
+			if (is_alu_reduction_inst(bc, prev[i]))
 				chan[i] = 0;
 			else
 				chan[i] = prev[i]->dst.chan;
@@ -643,7 +799,7 @@ static int replace_gpr_with_pv_ps(struct r600_bc_alu *slots[5], struct r600_bc_a
 		if(!alu)
 			continue;
 
-		num_src = r600_bc_get_num_operands(alu);
+		num_src = r600_bc_get_num_operands(bc, alu);
 		for (src = 0; src < num_src; ++src) {
 			if (!is_gpr(alu->src[src].sel) || alu->src[src].rel)
 				continue;
@@ -702,9 +858,10 @@ void r600_bc_special_constants(u32 value, unsigned *sel, unsigned *neg)
 }
 
 /* compute how many literal are needed */
-static int r600_bc_alu_nliterals(struct r600_bc_alu *alu, uint32_t literal[4], unsigned *nliteral)
+static int r600_bc_alu_nliterals(struct r600_bc *bc, struct r600_bc_alu *alu,
+				 uint32_t literal[4], unsigned *nliteral)
 {
-	unsigned num_src = r600_bc_get_num_operands(alu);
+	unsigned num_src = r600_bc_get_num_operands(bc, alu);
 	unsigned i, j;
 
 	for (i = 0; i < num_src; ++i) {
@@ -727,9 +884,11 @@ static int r600_bc_alu_nliterals(struct r600_bc_alu *alu, uint32_t literal[4], u
 	return 0;
 }
 
-static void r600_bc_alu_adjust_literals(struct r600_bc_alu *alu, uint32_t literal[4], unsigned nliteral)
+static void r600_bc_alu_adjust_literals(struct r600_bc *bc,
+					struct r600_bc_alu *alu,
+					uint32_t literal[4], unsigned nliteral)
 {
-	unsigned num_src = r600_bc_get_num_operands(alu);
+	unsigned num_src = r600_bc_get_num_operands(bc, alu);
 	unsigned i, j;
 
 	for (i = 0; i < num_src; ++i) {
@@ -745,40 +904,47 @@ static void r600_bc_alu_adjust_literals(struct r600_bc_alu *alu, uint32_t litera
 	}
 }
 
-static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5], struct r600_bc_alu *alu_prev)
+static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5],
+			     struct r600_bc_alu *alu_prev)
 {
 	struct r600_bc_alu *prev[5];
 	struct r600_bc_alu *result[5] = { NULL };
 
-	uint32_t literal[4];
-	unsigned nliteral = 0;
+	uint32_t literal[4], prev_literal[4];
+	unsigned nliteral = 0, prev_nliteral = 0;
 
 	int i, j, r, src, num_src;
 	int num_once_inst = 0;
 
-	r = assign_alu_units(alu_prev, prev);
+	r = assign_alu_units(bc, alu_prev, prev);
 	if (r)
 		return r;
 
 	for (i = 0; i < 5; ++i) {
+		struct r600_bc_alu *alu;
+
 		/* check number of literals */
-		if (prev[i] && r600_bc_alu_nliterals(prev[i], literal, &nliteral))
-			return 0;
-		if (slots[i] && r600_bc_alu_nliterals(slots[i], literal, &nliteral))
+		if (prev[i]) {
+			if (r600_bc_alu_nliterals(bc, prev[i], literal, &nliteral))
+				return 0;
+			if (r600_bc_alu_nliterals(bc, prev[i], prev_literal, &prev_nliteral))
+				return 0;
+		}
+		if (slots[i] && r600_bc_alu_nliterals(bc, slots[i], literal, &nliteral))
 			return 0;
 
 		// let's check used slots
 		if (prev[i] && !slots[i]) {
 			result[i] = prev[i];
-			num_once_inst += is_alu_once_inst(prev[i]);
+			num_once_inst += is_alu_once_inst(bc, prev[i]);
 			continue;
 		} else if (prev[i] && slots[i]) {
 			if (result[4] == NULL && prev[4] == NULL && slots[4] == NULL) {
 				// trans unit is still free try to use it
-				if (is_alu_any_unit_inst(slots[i])) {
+				if (is_alu_any_unit_inst(bc, slots[i])) {
 					result[i] = prev[i];
 					result[4] = slots[i];
-				} else if (is_alu_any_unit_inst(prev[i])) {
+				} else if (is_alu_any_unit_inst(bc, prev[i])) {
 					result[i] = slots[i];
 					result[4] = prev[i];
 				} else
@@ -791,10 +957,10 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5], s
 			result[i] = slots[i];
 
 		// let's check source gprs
-		struct r600_bc_alu *alu = slots[i];
-		num_once_inst += is_alu_once_inst(alu);
+		alu = slots[i];
+		num_once_inst += is_alu_once_inst(bc, alu);
 
-		num_src = r600_bc_get_num_operands(alu);
+		num_src = r600_bc_get_num_operands(bc, alu);
 		for (src = 0; src < num_src; ++src) {
 			// constants doesn't matter
 			if (!is_gpr(alu->src[src].sel))
@@ -818,11 +984,14 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5], s
 		return 0;
 
 	/* check if the result can still be swizzlet */
-	r = check_and_set_bank_swizzle(result);
+	r = check_and_set_bank_swizzle(bc, result);
 	if (r)
 		return 0;
 
 	/* looks like everything worked out right, apply the changes */
+
+	/* undo adding previus literals */
+	bc->cf_last->ndw -= align(prev_nliteral, 2);
 
 	/* sort instructions */
 	for (i = 0; i < 5; ++i) {
@@ -1009,11 +1178,6 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 	if (!bc->cf_last->curr_bs_head) {
 		bc->cf_last->curr_bs_head = nalu;
 	}
-	/* at most 128 slots, one add alu can add 5 slots + 4 constants(2 slots)
-	 * worst case */
-	if (nalu->last && (bc->cf_last->ndw >> 1) >= 120) {
-		bc->force_add_cf = 1;
-	}
 	/* replace special constants */
 	for (i = 0; i < 3; i++) {
 		if (nalu->src[i].sel == V_SQ_ALU_SRC_LITERAL)
@@ -1036,8 +1200,10 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 
 	/* process cur ALU instructions for bank swizzle */
 	if (nalu->last) {
+		uint32_t literal[4];
+		unsigned nliteral;
 		struct r600_bc_alu *slots[5];
-		r = assign_alu_units(bc->cf_last->curr_bs_head, slots);
+		r = assign_alu_units(bc, bc->cf_last->curr_bs_head, slots);
 		if (r)
 			return r;
 
@@ -1048,14 +1214,29 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 		}
 
 		if (bc->cf_last->prev_bs_head) {
-			r = replace_gpr_with_pv_ps(slots, bc->cf_last->prev_bs_head);
+			r = replace_gpr_with_pv_ps(bc, slots, bc->cf_last->prev_bs_head);
 			if (r)
 				return r;
 		}
 
-		r = check_and_set_bank_swizzle(slots);
+		r = check_and_set_bank_swizzle(bc, slots);
 		if (r)
 			return r;
+
+		for (i = 0, nliteral = 0; i < 5; i++) {
+			if (slots[i]) {
+				r = r600_bc_alu_nliterals(bc, slots[i], literal, &nliteral);
+				if (r)
+					return r;
+			}
+		}
+		bc->cf_last->ndw += align(nliteral, 2);
+
+		/* at most 128 slots, one add alu can add 5 slots + 4 constants(2 slots)
+		 * worst case */
+		if ((bc->cf_last->ndw >> 1) >= 120) {
+			bc->force_add_cf = 1;
+		}
 
 		bc->cf_last->prev2_bs_head = bc->cf_last->prev_bs_head;
 		bc->cf_last->prev_bs_head = bc->cf_last->curr_bs_head;
@@ -1128,6 +1309,12 @@ int r600_bc_add_tex(struct r600_bc *bc, const struct r600_bc_tex *tex)
 			return r;
 		}
 		bc->cf_last->inst = V_SQ_CF_WORD1_SQ_CF_INST_TEX;
+	}
+	if (ntex->src_gpr >= bc->ngpr) {
+		bc->ngpr = ntex->src_gpr + 1;
+	}
+	if (ntex->dst_gpr >= bc->ngpr) {
+		bc->ngpr = ntex->dst_gpr + 1;
 	}
 	LIST_ADDTAIL(&ntex->list, &bc->cf_last->tex);
 	/* each texture fetch use 4 dwords */
@@ -1457,11 +1644,12 @@ static void notice_gpr_rel_write(struct gpr_usage usage[128], int32_t id, unsign
 		notice_gpr_write(&usage[i], id, chan, 1, -1);
 }
 
-static void notice_alu_src_gprs(struct r600_bc_alu *alu, struct gpr_usage usage[128], int32_t id)
+static void notice_alu_src_gprs(struct r600_bc *bc, struct r600_bc_alu *alu,
+                                struct gpr_usage usage[128], int32_t id)
 {
 	unsigned src, num_src;
 
-	num_src = r600_bc_get_num_operands(alu);
+	num_src = r600_bc_get_num_operands(bc, alu);
 	for (src = 0; src < num_src; ++src) {
 		// constants doesn't matter
 		if (!is_gpr(alu->src[src].sel))
@@ -1716,14 +1904,14 @@ static void find_export_replacement(struct gpr_usage usage[128],
 	find_src_range(&usage[next->output.gpr], next_id)->replacement = range->replacement + 1;
 }
 
-static void replace_alu_gprs(struct r600_bc_alu *alu, struct gpr_usage usage[128],
+static void replace_alu_gprs(struct r600_bc *bc, struct r600_bc_alu *alu, struct gpr_usage usage[128],
 				int32_t id, int32_t last_barrier, unsigned *barrier)
 {
 	struct gpr_usage *cur_usage;
 	struct gpr_usage_range *range;
 	unsigned src, num_src;
 
-	num_src = r600_bc_get_num_operands(alu);
+	num_src = r600_bc_get_num_operands(bc, alu);
 	for (src = 0; src < num_src; ++src) {
 		// constants doesn't matter
 		if (!is_gpr(alu->src[src].sel))
@@ -1851,7 +2039,7 @@ static void replace_export_gprs(struct r600_bc_cf *cf, struct gpr_usage usage[12
 		cf->output.gpr = range->replacement;
 }
 
-static void optimize_alu_inst(struct r600_bc_cf *cf, struct r600_bc_alu *alu)
+static void optimize_alu_inst(struct r600_bc *bc, struct r600_bc_cf *cf, struct r600_bc_alu *alu)
 {
 	struct r600_bc_alu *alu_next;
 	unsigned chan;
@@ -1877,9 +2065,9 @@ static void optimize_alu_inst(struct r600_bc_cf *cf, struct r600_bc_alu *alu)
 		for (alu_next = alu; !alu_next->last; alu_next = NEXT_ALU(alu_next));
 
 		if (alu_next->list.next != &cf->alu) {
-			chan = is_alu_reduction_inst(alu) ? 0 : alu->dst.chan;
+			chan = is_alu_reduction_inst(bc, alu) ? 0 : alu->dst.chan;
 			for (alu_next = NEXT_ALU(alu_next); alu_next; alu_next = NEXT_ALU(alu_next)) {
-				num_src = r600_bc_get_num_operands(alu_next);
+				num_src = r600_bc_get_num_operands(bc, alu_next);
 				for (src = 0; src < num_src; ++src) {
 					if (alu_next->src[src].sel == V_SQ_ALU_SRC_PV &&
 						alu_next->src[src].chan == chan)
@@ -1963,13 +2151,13 @@ static void r600_bc_optimize(struct r600_bc *bc)
 			LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
 				if (!first)
 					first = alu;
-				notice_alu_src_gprs(alu, usage, id);
+				notice_alu_src_gprs(bc, alu, usage, id);
 				if (alu->last) {
 					notice_alu_dst_gprs(first, usage, id, predicate || stack > 0);
 					first = NULL;
 					++id;
 				}
-				if (is_alu_pred_inst(alu))
+				if (is_alu_pred_inst(bc, alu))
 					predicate++;
 			}
 			if (cf->inst == V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3)
@@ -2058,15 +2246,15 @@ static void r600_bc_optimize(struct r600_bc *bc)
 			first = NULL;
 			cf->barrier = 0;
 			LIST_FOR_EACH_ENTRY_SAFE(alu, next_alu, &cf->alu, list) {
-				replace_alu_gprs(alu, usage, id, barrier[stack], &cf->barrier);
+				replace_alu_gprs(bc, alu, usage, id, barrier[stack], &cf->barrier);
 				if (alu->last)
 					++id;
 
-				if (is_alu_pred_inst(alu))
+				if (is_alu_pred_inst(bc, alu))
 					predicate++;
 
 				if (cf->inst == V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3)
-					optimize_alu_inst(cf, alu);
+					optimize_alu_inst(bc, cf, alu);
 			}
 			if (cf->inst == V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3)
 				stack += predicate;
@@ -2159,16 +2347,6 @@ int r600_bc_build(struct r600_bc *bc)
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
 		switch (get_cf_class(cf)) {
 		case CF_CLASS_ALU:
-			nliteral = 0;
-			LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
-				r = r600_bc_alu_nliterals(alu, literal, &nliteral);
-				if (r)
-					return r;
-				if (alu->last) {
-					cf->ndw += align(nliteral, 2);
-					nliteral = 0;
-				}
-			}
 			break;
 		case CF_CLASS_TEXTURE:
 		case CF_CLASS_VERTEX:
@@ -2214,11 +2392,12 @@ int r600_bc_build(struct r600_bc *bc)
 		switch (get_cf_class(cf)) {
 		case CF_CLASS_ALU:
 			nliteral = 0;
+			memset(literal, 0, sizeof(literal));
 			LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
-				r = r600_bc_alu_nliterals(alu, literal, &nliteral);
+				r = r600_bc_alu_nliterals(bc, alu, literal, &nliteral);
 				if (r)
 					return r;
-				r600_bc_alu_adjust_literals(alu, literal, nliteral);
+				r600_bc_alu_adjust_literals(bc, alu, literal, nliteral);
 				switch(bc->chiprev) {
 				case CHIPREV_R600:
 					r = r600_bc_alu_build(bc, alu, addr);
@@ -2239,6 +2418,7 @@ int r600_bc_build(struct r600_bc *bc)
 						bc->bytecode[addr++] = literal[i];
 					}
 					nliteral = 0;
+					memset(literal, 0, sizeof(literal));
 				}
 			}
 			break;
@@ -2307,10 +2487,10 @@ void r600_bc_clear(struct r600_bc *bc)
 
 void r600_bc_dump(struct r600_bc *bc)
 {
-	struct r600_bc_cf *cf;
-	struct r600_bc_alu *alu;
-	struct r600_bc_vtx *vtx;
-	struct r600_bc_tex *tex;
+	struct r600_bc_cf *cf = NULL;
+	struct r600_bc_alu *alu = NULL;
+	struct r600_bc_vtx *vtx = NULL;
+	struct r600_bc_tex *tex = NULL;
 
 	unsigned i, id;
 	uint32_t literal[4];
@@ -2329,7 +2509,7 @@ void r600_bc_dump(struct r600_bc *bc)
 		chip = '6';
 		break;
 	}
-	fprintf(stderr, "bytecode %d dw -- %d gprs -----------------------\n", bc->ndw, bc->ngpr);
+	fprintf(stderr, "bytecode %d dw -- %d gprs ---------------------\n", bc->ndw, bc->ngpr);
 	fprintf(stderr, "     %c\n", chip);
 
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
@@ -2393,7 +2573,7 @@ void r600_bc_dump(struct r600_bc *bc)
 		id = cf->addr;
 		nliteral = 0;
 		LIST_FOR_EACH_ENTRY(alu, &cf->alu, list) {
-			r600_bc_alu_nliterals(alu, literal, &nliteral);
+			r600_bc_alu_nliterals(bc, alu, literal, &nliteral);
 
 			fprintf(stderr, "%04d %08X   ", id, bc->bytecode[id]);
 			fprintf(stderr, "SRC0(SEL:%d ", alu->src[0].sel);
@@ -2431,7 +2611,7 @@ void r600_bc_dump(struct r600_bc *bc)
 			if (alu->last) {
 				for (i = 0; i < nliteral; i++, id++) {
 					float *f = (float*)(bc->bytecode + id);
-					fprintf(stderr, "%04d %08X   %f\n", id, bc->bytecode[id], *f);
+					fprintf(stderr, "%04d %08X\t%f\n", id, bc->bytecode[id], *f);
 				}
 				id += nliteral & 1;
 				nliteral = 0;

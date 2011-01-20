@@ -289,11 +289,11 @@ nvc0_magic_3d_init(struct nouveau_channel *chan)
    OUT_RING  (chan, (2 << 16) | 2);
    BEGIN_RING(chan, RING_3D_(0x0de8), 1);
    OUT_RING  (chan, 1);
-   BEGIN_RING(chan, RING_3D_(0x165c), 1);
-   OUT_RING  (chan, 0);
 
+#if 0 /* software method */
    BEGIN_RING(chan, RING_3D_(0x1528), 1); /* MP poke */
    OUT_RING  (chan, 0);
+#endif
 
    BEGIN_RING(chan, RING_3D_(0x12ac), 1);
    OUT_RING  (chan, 0);
@@ -323,8 +323,10 @@ nvc0_magic_3d_init(struct nouveau_channel *chan)
    OUT_RING  (chan, 0);
    BEGIN_RING(chan, RING_3D_(0x0300), 1);
    OUT_RING  (chan, 3);
+#if 0 /* software method */
    BEGIN_RING(chan, RING_3D_(0x1280), 1); /* PGRAPH poke */
    OUT_RING  (chan, 0);
+#endif
    BEGIN_RING(chan, RING_3D_(0x02d0), 1);
    OUT_RING  (chan, 0x1f40);
    BEGIN_RING(chan, RING_3D_(0x00fdc), 1);
@@ -441,9 +443,9 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    BEGIN_RING(chan, RING_3D(RT_CONTROL), 1);
    OUT_RING  (chan, 1);
 
-   BEGIN_RING(chan, RING_3D(MULTISAMPLE_ZETA_ENABLE), 1);
+   BEGIN_RING(chan, RING_3D(CSAA_ENABLE), 1);
    OUT_RING  (chan, 0);
-   BEGIN_RING(chan, RING_3D(MULTISAMPLE_COLOR_ENABLE), 1);
+   BEGIN_RING(chan, RING_3D(MULTISAMPLE_ENABLE), 1);
    OUT_RING  (chan, 0);
    BEGIN_RING(chan, RING_3D(MULTISAMPLE_MODE), 1);
    OUT_RING  (chan, NVC0_3D_MULTISAMPLE_MODE_1X);
@@ -503,8 +505,8 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
       goto fail;
 
    BEGIN_RING(chan, RING_3D_(0x17bc), 3);
-   OUT_RELOCh(chan, screen->mp_stack_bo, 0, NOUVEAU_BO_GART | NOUVEAU_BO_RDWR);
-   OUT_RELOCl(chan, screen->mp_stack_bo, 0, NOUVEAU_BO_GART | NOUVEAU_BO_RDWR);
+   OUT_RELOCh(chan, screen->mp_stack_bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
+   OUT_RELOCl(chan, screen->mp_stack_bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
    OUT_RING  (chan, 1);
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 17, 1 << 17, &screen->txc);
@@ -521,7 +523,7 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    OUT_RELOCl(chan, screen->txc, 65536, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
    OUT_RING  (chan, NVC0_TSC_MAX_ENTRIES - 1);
 
-   BEGIN_RING(chan, RING_3D(Y_ORIGIN_BOTTOM), 1);
+   BEGIN_RING(chan, RING_3D(SCREEN_Y_CONTROL), 1);
    OUT_RING  (chan, 0);
    BEGIN_RING(chan, RING_3D(WINDOW_OFFSET_X), 2);
    OUT_RING  (chan, 0);
@@ -587,6 +589,8 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 
    BEGIN_RING(chan, RING_3D(POINT_COORD_REPLACE), 1);
    OUT_RING  (chan, 0);
+   BEGIN_RING(chan, RING_3D(POINT_RASTER_RULES), 1);
+   OUT_RING  (chan, NVC0_3D_POINT_RASTER_RULES_OGL);
 
    BEGIN_RING(chan, RING_3D(FRAG_COLOR_CLAMP_EN), 1);
    OUT_RING  (chan, 0x11111111);

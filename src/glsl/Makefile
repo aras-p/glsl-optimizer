@@ -174,7 +174,7 @@ glcpp/glcpp-parse.c: glcpp/glcpp-parse.y
 	bison -v -o "$@" --defines=glcpp/glcpp-parse.h $<
 
 builtin_compiler: $(GLSL2_OBJECTS) $(OBJECTS) builtin_stubs.o
-	$(APP_CXX) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(TALLOC_LIBS) $(OBJECTS) $(GLSL2_OBJECTS) builtin_stubs.o -o builtin_compiler
+	$(APP_CXX) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(OBJECTS) $(GLSL2_OBJECTS) builtin_stubs.o $(TALLOC_LIBS) -o $@
 
 builtin_function.cpp: builtins/profiles/* builtins/ir/* builtins/tools/generate_builtins.py builtins/tools/texture_builtins.py builtin_compiler
 	@echo Regenerating builtin_function.cpp...

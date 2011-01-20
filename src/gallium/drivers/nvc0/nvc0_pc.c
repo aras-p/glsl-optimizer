@@ -515,6 +515,13 @@ nvc0_insn_insert_after(struct nv_instruction *at, struct nv_instruction *ni)
 }
 
 void
+nvc0_insn_insert_before(struct nv_instruction *at, struct nv_instruction *ni)
+{
+   nvc0_insn_insert_after(at, ni);
+   nvc0_insns_permute(at, ni);
+}
+
+void
 nvc0_insn_delete(struct nv_instruction *nvi)
 {
    struct nv_basic_block *b = nvi->bb;

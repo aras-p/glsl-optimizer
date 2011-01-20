@@ -225,6 +225,7 @@ enum ir_variable_mode {
    ir_var_in,
    ir_var_out,
    ir_var_inout,
+   ir_var_system_value, /**< Ex: front-face, instance-id, etc. */
    ir_var_temporary	/**< Temporary variable generated during compilation. */
 };
 
@@ -293,6 +294,15 @@ public:
    unsigned read_only:1;
    unsigned centroid:1;
    unsigned invariant:1;
+
+   /**
+    * Has this variable been used for reading or writing?
+    *
+    * Several GLSL semantic checks require knowledge of whether or not a
+    * variable has been used.  For example, it is an error to redeclare a
+    * variable as invariant after it has been used.
+    */
+   unsigned used:1;
 
    /**
     * Storage class of the variable.

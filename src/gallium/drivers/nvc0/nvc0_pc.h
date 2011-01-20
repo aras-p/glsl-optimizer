@@ -473,6 +473,7 @@ struct nv_pc {
 };
 
 void nvc0_insn_append(struct nv_basic_block *, struct nv_instruction *);
+void nvc0_insn_insert_before(struct nv_instruction *, struct nv_instruction *);
 void nvc0_insn_insert_after(struct nv_instruction *, struct nv_instruction *);
 
 static INLINE struct nv_instruction *

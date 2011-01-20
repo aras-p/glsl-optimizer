@@ -12,7 +12,7 @@ typedef void (*_EGLProc)(void);
  */
 
 /* driver funcs */
-typedef EGLBoolean (*Initialize_t)(_EGLDriver *, _EGLDisplay *dpy, EGLint *major, EGLint *minor);
+typedef EGLBoolean (*Initialize_t)(_EGLDriver *, _EGLDisplay *dpy);
 typedef EGLBoolean (*Terminate_t)(_EGLDriver *, _EGLDisplay *dpy);
 
 /* config funcs */

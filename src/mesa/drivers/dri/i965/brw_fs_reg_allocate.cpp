@@ -94,6 +94,8 @@ fs_visitor::assign_regs()
    int class_count = 0;
    int aligned_pair_class = -1;
 
+   calculate_live_intervals();
+
    /* Set up the register classes.
     *
     * The base registers store a scalar value.  For texture samples,
@@ -416,4 +418,6 @@ fs_visitor::spill_reg(int spill_reg)
 	 }
       }
    }
+
+   this->live_intervals_valid = false;
 }

@@ -141,6 +141,7 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
    obj->Swizzle[2] = GL_BLUE;
    obj->Swizzle[3] = GL_ALPHA;
    obj->_Swizzle = SWIZZLE_NOOP;
+   obj->sRGBDecode = GL_DECODE_EXT;
 }
 
 

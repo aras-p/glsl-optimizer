@@ -228,4 +228,7 @@ _mesa_format_to_type_and_comps(gl_format format,
 extern void
 _mesa_test_formats(void);
 
+extern gl_format
+_mesa_get_srgb_format_linear(gl_format format);
+
 #endif /* FORMATS_H */

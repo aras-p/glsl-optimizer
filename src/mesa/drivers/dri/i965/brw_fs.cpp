@@ -48,6 +48,7 @@ extern "C" {
 #include "../glsl/ir_optimization.h"
 #include "../glsl/ir_print_visitor.h"
 
+#define MAX_INSTRUCTION (1 << 30)
 static struct brw_reg brw_reg_from_fs_reg(class fs_reg *reg);
 
 struct gl_shader *
@@ -534,24 +535,39 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 	    continue;
 	 }
 
-	 for (unsigned int c = 0; c < type->vector_elements; c++) {
-	    struct brw_reg interp = interp_reg(location, c);
-	    emit(fs_inst(FS_OPCODE_LINTERP,
-			 attr,
-			 this->delta_x,
-			 this->delta_y,
-			 fs_reg(interp)));
-	    attr.reg_offset++;
-	 }
-
-	 if (intel->gen < 6) {
-	    attr.reg_offset -= type->vector_elements;
+	 if (c->key.flat_shade && (location == FRAG_ATTRIB_COL0 ||
+				   location == FRAG_ATTRIB_COL1)) {
+	    /* Constant interpolation (flat shading) case. The SF has
+	     * handed us defined values in only the constant offset
+	     * field of the setup reg.
+	     */
 	    for (unsigned int c = 0; c < type->vector_elements; c++) {
-	       emit(fs_inst(BRW_OPCODE_MUL,
-			    attr,
-			    attr,
-			    this->pixel_w));
+	       struct brw_reg interp = interp_reg(location, c);
+	       interp = suboffset(interp, 3);
+	       emit(fs_inst(FS_OPCODE_CINTERP, attr, fs_reg(interp)));
 	       attr.reg_offset++;
+	    }
+	 } else {
+	    /* Perspective interpolation case. */
+	    for (unsigned int c = 0; c < type->vector_elements; c++) {
+	       struct brw_reg interp = interp_reg(location, c);
+	       emit(fs_inst(FS_OPCODE_LINTERP,
+			    attr,
+			    this->delta_x,
+			    this->delta_y,
+			    fs_reg(interp)));
+	       attr.reg_offset++;
+	    }
+
+	    if (intel->gen < 6) {
+	       attr.reg_offset -= type->vector_elements;
+	       for (unsigned int c = 0; c < type->vector_elements; c++) {
+		  emit(fs_inst(BRW_OPCODE_MUL,
+			       attr,
+			       attr,
+			       this->pixel_w));
+		  attr.reg_offset++;
+	       }
 	    }
 	 }
 	 location++;
@@ -859,6 +875,7 @@ fs_visitor::visit(ir_expression *ir)
       break;
    case ir_unop_abs:
       op[0].abs = true;
+      op[0].negate = false;
       this->result = op[0];
       break;
    case ir_unop_sign:
@@ -2556,12 +2573,15 @@ fs_visitor::assign_urb_setup()
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
 
-      if (inst->opcode != FS_OPCODE_LINTERP)
-	 continue;
+      if (inst->opcode == FS_OPCODE_LINTERP) {
+	 assert(inst->src[2].file == FIXED_HW_REG);
+	 inst->src[2].fixed_hw_reg.nr += urb_start;
+      }
 
-      assert(inst->src[2].file == FIXED_HW_REG);
-
-      inst->src[2].fixed_hw_reg.nr += urb_start;
+      if (inst->opcode == FS_OPCODE_CINTERP) {
+	 assert(inst->src[0].file == FIXED_HW_REG);
+	 inst->src[0].fixed_hw_reg.nr += urb_start;
+      }
    }
 
    this->first_non_payload_grf = urb_start + c->prog_data.urb_read_length;
@@ -2652,6 +2672,7 @@ fs_visitor::split_virtual_grfs()
 	 }
       }
    }
+   this->live_intervals_valid = false;
 }
 
 /**
@@ -2726,8 +2747,11 @@ fs_visitor::calculate_live_intervals()
    int loop_start = 0;
    int bb_header_ip = 0;
 
+   if (this->live_intervals_valid)
+      return;
+
    for (int i = 0; i < num_vars; i++) {
-      def[i] = 1 << 30;
+      def[i] = MAX_INSTRUCTION;
       use[i] = -1;
    }
 
@@ -2805,6 +2829,8 @@ fs_visitor::calculate_live_intervals()
    talloc_free(this->virtual_grf_use);
    this->virtual_grf_def = def;
    this->virtual_grf_use = use;
+
+   this->live_intervals_valid = true;
 }
 
 /**
@@ -2819,6 +2845,8 @@ bool
 fs_visitor::propagate_constants()
 {
    bool progress = false;
+
+   calculate_live_intervals();
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
@@ -2877,6 +2905,7 @@ fs_visitor::propagate_constants()
 		  /* Fit this constant in by commuting the operands */
 		  scan_inst->src[0] = scan_inst->src[1];
 		  scan_inst->src[1] = inst->src[0];
+		  progress = true;
 	       }
 	       break;
 	    case BRW_OPCODE_CMP:
@@ -2897,6 +2926,9 @@ fs_visitor::propagate_constants()
       }
    }
 
+   if (progress)
+       this->live_intervals_valid = false;
+
    return progress;
 }
 /**
@@ -2911,6 +2943,8 @@ fs_visitor::dead_code_eliminate()
    bool progress = false;
    int pc = 0;
 
+   calculate_live_intervals();
+
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
 
@@ -2922,6 +2956,9 @@ fs_visitor::dead_code_eliminate()
       pc++;
    }
 
+   if (progress)
+      live_intervals_valid = false;
+
    return progress;
 }
 
@@ -2929,9 +2966,34 @@ bool
 fs_visitor::register_coalesce()
 {
    bool progress = false;
+   int if_depth = 0;
+   int loop_depth = 0;
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
+
+      /* Make sure that we dominate the instructions we're going to
+       * scan for interfering with our coalescing, or we won't have
+       * scanned enough to see if anything interferes with our
+       * coalescing.  We don't dominate the following instructions if
+       * we're in a loop or an if block.
+       */
+      switch (inst->opcode) {
+      case BRW_OPCODE_DO:
+	 loop_depth++;
+	 break;
+      case BRW_OPCODE_WHILE:
+	 loop_depth--;
+	 break;
+      case BRW_OPCODE_IF:
+	 if_depth++;
+	 break;
+      case BRW_OPCODE_ENDIF:
+	 if_depth--;
+	 break;
+      }
+      if (loop_depth || if_depth)
+	 continue;
 
       if (inst->opcode != BRW_OPCODE_MOV ||
 	  inst->predicated ||
@@ -2949,14 +3011,6 @@ fs_visitor::register_coalesce()
       scan_iter.next();
       for (; scan_iter.has_next(); scan_iter.next()) {
 	 fs_inst *scan_inst = (fs_inst *)scan_iter.get();
-
-	 if (scan_inst->opcode == BRW_OPCODE_DO ||
-	     scan_inst->opcode == BRW_OPCODE_WHILE ||
-	     scan_inst->opcode == BRW_OPCODE_ENDIF) {
-	    interfered = true;
-	    iter = scan_iter;
-	    break;
-	 }
 
 	 if (scan_inst->dst.file == GRF) {
 	    if (scan_inst->dst.reg == inst->dst.reg &&
@@ -2976,10 +3030,6 @@ fs_visitor::register_coalesce()
       if (interfered) {
 	 continue;
       }
-
-      /* Update live interval so we don't have to recalculate. */
-      this->virtual_grf_use[inst->src[0].reg] = MAX2(virtual_grf_use[inst->src[0].reg],
-						     virtual_grf_use[inst->dst.reg]);
 
       /* Rewrite the later usage to point at the source of the move to
        * be removed.
@@ -3005,6 +3055,9 @@ fs_visitor::register_coalesce()
       progress = true;
    }
 
+   if (progress)
+      live_intervals_valid = false;
+
    return progress;
 }
 
@@ -3014,6 +3067,8 @@ fs_visitor::compute_to_mrf()
 {
    bool progress = false;
    int next_ip = 0;
+
+   calculate_live_intervals();
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
@@ -3218,15 +3273,16 @@ fs_visitor::virtual_grf_interferes(int a, int b)
    int start = MAX2(this->virtual_grf_def[a], this->virtual_grf_def[b]);
    int end = MIN2(this->virtual_grf_use[a], this->virtual_grf_use[b]);
 
-   /* For dead code, just check if the def interferes with the other range. */
-   if (this->virtual_grf_use[a] == -1) {
-      return (this->virtual_grf_def[a] >= this->virtual_grf_def[b] &&
-	      this->virtual_grf_def[a] < this->virtual_grf_use[b]);
-   }
-   if (this->virtual_grf_use[b] == -1) {
-      return (this->virtual_grf_def[b] >= this->virtual_grf_def[a] &&
-	      this->virtual_grf_def[b] < this->virtual_grf_use[a]);
-   }
+   /* We can't handle dead register writes here, without iterating
+    * over the whole instruction stream to find every single dead
+    * write to that register to compare to the live interval of the
+    * other register.  Just assert that dead_code_eliminate() has been
+    * called.
+    */
+   assert((this->virtual_grf_use[a] != -1 ||
+	   this->virtual_grf_def[a] == MAX_INSTRUCTION) &&
+	  (this->virtual_grf_use[b] != -1 ||
+	   this->virtual_grf_def[b] == MAX_INSTRUCTION));
 
    return start < end;
 }
@@ -3466,6 +3522,9 @@ fs_visitor::generate_code()
       case FS_OPCODE_COS:
 	 generate_math(inst, dst, src);
 	 break;
+      case FS_OPCODE_CINTERP:
+	 brw_MOV(p, dst, src[0]);
+	 break;
       case FS_OPCODE_LINTERP:
 	 generate_linterp(inst, dst, src);
 	 break;
@@ -3614,7 +3673,6 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 
 	 progress = v.remove_duplicate_mrf_writes() || progress;
 
-	 v.calculate_live_intervals();
 	 progress = v.propagate_constants() || progress;
 	 progress = v.register_coalesce() || progress;
 	 progress = v.compute_to_mrf() || progress;
@@ -3627,7 +3685,6 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 	 for (int i = 1; i < virtual_grf_count; i++) {
 	    v.spill_reg(i);
 	 }
-	 v.calculate_live_intervals();
       }
 
       if (0)
@@ -3636,8 +3693,6 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 	 while (!v.assign_regs()) {
 	    if (v.fail)
 	       break;
-
-	    v.calculate_live_intervals();
 	 }
       }
    }

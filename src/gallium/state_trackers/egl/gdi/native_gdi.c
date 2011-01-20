@@ -406,15 +406,23 @@ gdi_create_display(HDC hDC, struct native_event_handler *event_handler,
    return &gdpy->base;
 }
 
-static struct native_display *
-native_create_display(void *dpy, struct native_event_handler *event_handler,
-                      void *user_data)
+static struct native_event_handler *gdi_event_handler;
+
+static void
+native_set_event_handler(struct native_event_handler *event_handler)
 {
-   return gdi_create_display((HDC) dpy, event_handler, user_data);
+   gdi_event_handler = event_handler;
+}
+
+static struct native_display *
+native_create_display(void *dpy, boolean use_sw, void *user_data)
+{
+   return gdi_create_display((HDC) dpy, gdi_event_handler, user_data);
 }
 
 static const struct native_platform gdi_platform = {
    "GDI", /* name */
+   native_set_event_handler,
    native_create_display
 };
 

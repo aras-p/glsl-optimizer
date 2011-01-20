@@ -2,6 +2,7 @@
 #define EGLSTRING_INCLUDED
 
 #include <string.h>
+#include <stdio.h>
 
 #ifdef _EGL_OS_WINDOWS
 #define _eglstrcasecmp _stricmp

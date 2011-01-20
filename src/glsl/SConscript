@@ -9,6 +9,7 @@ env = env.Clone()
 env.Prepend(CPPPATH = [
     '#src/mapi',
     '#src/mesa',
+    '#src/glsl',
 ])
 
 if env['platform'] == 'windows':
@@ -78,30 +79,54 @@ sources = [
     'opt_tree_grafting.cpp',
     's_expression.cpp',
     'strtod.c',
-]
+] 
 
-env.Prepend(LIBS = ['talloc'])
-env.Append(CPPPATH = ['#/src/glsl'])
 
-builtin_compiler = env.Program(
-    target = 'builtin_compiler',
-    source = sources + ['main.cpp', 'builtin_stubs.cpp',
-                        '#src/mesa/program/hash_table.c',
-                        '#src/mesa/program/symbol_table.c'],
-)
+if env['platform'] == common.host_platform:
+    if env['msvc']:
+        env.Prepend(CPPPATH = ['#/src/getopt'])
+        env.PrependUnique(LIBS = [getopt])
 
-env.CodeGenerate(
-    target = 'builtin_function.cpp',
-    script = 'builtins/tools/generate_builtins.py',
-    source = builtin_compiler,
-    command = python_cmd + ' $SCRIPT $SOURCE > $TARGET'
-)
+    if env['platform'] == 'windows':
+        env.Prepend(CPPPATH = ['#src/talloc'])
+        env.Prepend(LIBS = [talloc])
+    else:
+        env.Prepend(LIBS = ['talloc'])
 
-env.Depends('builtin_function.cpp', ['builtins/tools/generate_builtins.py', 'builtins/tools/texture_builtins.py'] + Glob('builtins/ir/*'))
+    builtin_compiler = env.Program(
+        target = 'builtin_compiler',
+        source = sources + ['main.cpp', 'builtin_stubs.cpp',
+                            '#src/mesa/program/hash_table.c',
+                            '#src/mesa/program/symbol_table.c'],
+    )
+
+    builtin_glsl_function = env.CodeGenerate(
+        target = 'builtin_function.cpp',
+        script = 'builtins/tools/generate_builtins.py',
+        source = builtin_compiler,
+        command = python_cmd + ' $SCRIPT $SOURCE > $TARGET'
+    )
+
+    env.Depends(builtin_glsl_function, ['builtins/tools/generate_builtins.py', 'builtins/tools/texture_builtins.py'] + Glob('builtins/ir/*'))
+
+    if env['msvc']:
+        # There is no LD_LIBRARY_PATH equivalent on Windows. We need to ensure
+        # talloc.dll is on the same dir as builtin_function.
+        talloc_dll_src = talloc.dir.File('talloc.dll')
+        talloc_dll_dst = builtin_compiler[0].dir.File('talloc.dll')
+        talloc_dll = env.Command(talloc_dll_dst, talloc_dll_src, Copy(talloc_dll_dst, talloc_dll_src))
+        env.Depends('builtin_function.cpp', talloc_dll)
+
+    Export('builtin_glsl_function')
+
+    if common.cross_compiling:
+        Return()
+
+sources += builtin_glsl_function
 
 glsl = env.ConvenienceLibrary(
     target = 'glsl',
-    source = sources + [ 'builtin_function.cpp' ],
+    source = sources,
 )
 
 Export('glsl')

@@ -363,13 +363,13 @@ static void evergreenSetBlendState(struct gl_context * ctx) //diff : CB_COLOR_CO
 	}
 
 	SETfield(blend_reg,
-		 evergreenblend_factor(ctx->Color.BlendSrcRGB, GL_TRUE),
+		 evergreenblend_factor(ctx->Color.Blend[0].SrcRGB, GL_TRUE),
 		 COLOR_SRCBLEND_shift, COLOR_SRCBLEND_mask);
 	SETfield(blend_reg,
-		 evergreenblend_factor(ctx->Color.BlendDstRGB, GL_FALSE),
+		 evergreenblend_factor(ctx->Color.Blend[0].DstRGB, GL_FALSE),
 		 COLOR_DESTBLEND_shift, COLOR_DESTBLEND_mask);
 
-	switch (ctx->Color.BlendEquationRGB) {
+	switch (ctx->Color.Blend[0].EquationRGB) {
 	case GL_FUNC_ADD:
 		eqn = COMB_DST_PLUS_SRC;
 		break;
@@ -401,20 +401,20 @@ static void evergreenSetBlendState(struct gl_context * ctx) //diff : CB_COLOR_CO
 	default:
 		fprintf(stderr,
 			"[%s:%u] Invalid RGB blend equation (0x%04x).\n",
-			__FUNCTION__, __LINE__, ctx->Color.BlendEquationRGB);
+			__FUNCTION__, __LINE__, ctx->Color.Blend[0].EquationRGB);
 		return;
 	}
 	SETfield(blend_reg,
 		 eqn, COLOR_COMB_FCN_shift, COLOR_COMB_FCN_mask);
 
 	SETfield(blend_reg,
-		 evergreenblend_factor(ctx->Color.BlendSrcA, GL_TRUE),
+		 evergreenblend_factor(ctx->Color.Blend[0].SrcA, GL_TRUE),
 		 ALPHA_SRCBLEND_shift, ALPHA_SRCBLEND_mask);
 	SETfield(blend_reg,
-		 evergreenblend_factor(ctx->Color.BlendDstA, GL_FALSE),
+		 evergreenblend_factor(ctx->Color.Blend[0].DstA, GL_FALSE),
 		 ALPHA_DESTBLEND_shift, ALPHA_DESTBLEND_mask);
 
-	switch (ctx->Color.BlendEquationA) {
+	switch (ctx->Color.Blend[0].EquationA) {
 	case GL_FUNC_ADD:
 		eqnA = COMB_DST_PLUS_SRC;
 		break;
@@ -445,7 +445,7 @@ static void evergreenSetBlendState(struct gl_context * ctx) //diff : CB_COLOR_CO
 	default:
 		fprintf(stderr,
 			"[%s:%u] Invalid A blend equation (0x%04x).\n",
-			__FUNCTION__, __LINE__, ctx->Color.BlendEquationA);
+			__FUNCTION__, __LINE__, ctx->Color.Blend[0].EquationA);
 		return;
 	}
 

@@ -10,11 +10,8 @@ env.Append(CPPPATH = [
     '#/src/gallium/winsys/sw',
     '.',
 ])
-env.Append(CPPDEFINES = [
-    'HAVE_GDI_BACKEND',
-])
 
-common_sources = [
+sources = [
     'common/egl_g3d.c',
     'common/egl_g3d_api.c',
     'common/egl_g3d_image.c',
@@ -23,12 +20,31 @@ common_sources = [
     'common/native_helper.c',
 ]
 
-gdi_sources = common_sources + [
-    'gdi/native_gdi.c',
-]
+if env['platform'] == 'windows':
+    env.Append(CPPDEFINES = ['HAVE_GDI_BACKEND'])
+    sources.append('gdi/native_gdi.c')
+else:
+    if env['x11']:
+        env.Append(CPPDEFINES = ['HAVE_X11_BACKEND'])
+        env.Prepend(CPPPATH = [
+            '#/src/glx',
+            '#/src/mapi',
+        ])
+        sources.append([
+            'x11/native_x11.c',
+            'x11/native_dri2.c',
+            'x11/native_ximage.c',
+            'x11/x11_screen.c',
+            'x11/glxinit.c'])
+        if env['dri']:
+            env.Append(CPPDEFINES = ['GLX_DIRECT_RENDERING'])
+            sources.append(['#/src/glx/dri2.c'])
+    if env['drm']:
+        env.Append(CPPDEFINES = ['HAVE_DRM_BACKEND'])
+        sources.append(['drm/native_drm.c', 'drm/modeset.c'])
 
-st_egl_gdi = env.ConvenienceLibrary(
-    target = 'st_egl_gdi',
-    source = gdi_sources,
+st_egl = env.ConvenienceLibrary(
+    target = 'st_egl',
+    source = sources,
 )
-Export('st_egl_gdi')
+Export('st_egl')

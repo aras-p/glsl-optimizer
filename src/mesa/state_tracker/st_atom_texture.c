@@ -221,6 +221,10 @@ update_textures(struct st_context *st)
 	    firstImage = st_texture_image(stObj->base.Image[0][stObj->base.BaseLevel]);
 
 	    firstImageFormat = st_mesa_format_to_pipe_format(firstImage->base.TexFormat);
+	    if ((stObj->base.sRGBDecode == GL_SKIP_DECODE_EXT) && (_mesa_get_format_color_encoding(firstImage->base.TexFormat) == GL_SRGB)) {
+	       firstImageFormat = st_mesa_format_to_pipe_format(_mesa_get_srgb_format_linear(firstImage->base.TexFormat));
+	    }
+
 	    if (firstImageFormat != stObj->pt->format)
 	       st_view_format = firstImageFormat;
 

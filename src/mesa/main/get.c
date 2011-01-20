@@ -273,6 +273,7 @@ static const int extra_EXT_gpu_shader4[] = {
 };
 
 
+EXTRA_EXT(ARB_ES2_compatibility);
 EXTRA_EXT(ARB_multitexture);
 EXTRA_EXT(ARB_texture_cube_map);
 EXTRA_EXT(MESA_texture_array);
@@ -371,7 +372,7 @@ static const struct value_desc values[] = {
      API_OPENGL_BIT | API_OPENGLES_BIT | API_OPENGLES2_BIT, NO_EXTRA},
    { GL_ALPHA_BITS, BUFFER_INT(Visual.alphaBits), extra_new_buffers },
    { GL_BLEND, CONTEXT_BIT0(Color.BlendEnabled), NO_EXTRA },
-   { GL_BLEND_SRC, CONTEXT_ENUM(Color.BlendSrcRGB), NO_EXTRA },
+   { GL_BLEND_SRC, CONTEXT_ENUM(Color.Blend[0].SrcRGB), NO_EXTRA },
    { GL_BLUE_BITS, BUFFER_INT(Visual.blueBits), extra_new_buffers },
    { GL_COLOR_CLEAR_VALUE, CONTEXT_FIELD(Color.ClearColor[0], TYPE_FLOATN_4), NO_EXTRA },
    { GL_COLOR_WRITEMASK, LOC_CUSTOM, TYPE_INT_4, 0, NO_EXTRA },
@@ -434,15 +435,15 @@ static const struct value_desc values[] = {
      extra_ARB_texture_cube_map }, /* XXX: OES_texture_cube_map */
 
    /* XXX: OES_blend_subtract */
-   { GL_BLEND_SRC_RGB_EXT, CONTEXT_ENUM(Color.BlendSrcRGB), NO_EXTRA },
-   { GL_BLEND_DST_RGB_EXT, CONTEXT_ENUM(Color.BlendDstRGB), NO_EXTRA },
-   { GL_BLEND_SRC_ALPHA_EXT, CONTEXT_ENUM(Color.BlendSrcA), NO_EXTRA },
-   { GL_BLEND_DST_ALPHA_EXT, CONTEXT_ENUM(Color.BlendDstA), NO_EXTRA },
+   { GL_BLEND_SRC_RGB_EXT, CONTEXT_ENUM(Color.Blend[0].SrcRGB), NO_EXTRA },
+   { GL_BLEND_DST_RGB_EXT, CONTEXT_ENUM(Color.Blend[0].DstRGB), NO_EXTRA },
+   { GL_BLEND_SRC_ALPHA_EXT, CONTEXT_ENUM(Color.Blend[0].SrcA), NO_EXTRA },
+   { GL_BLEND_DST_ALPHA_EXT, CONTEXT_ENUM(Color.Blend[0].DstA), NO_EXTRA },
 
    /* GL_BLEND_EQUATION_RGB, which is what we're really after, is
     * defined identically to GL_BLEND_EQUATION. */
-   { GL_BLEND_EQUATION, CONTEXT_ENUM(Color.BlendEquationRGB), NO_EXTRA },
-   { GL_BLEND_EQUATION_ALPHA_EXT, CONTEXT_ENUM(Color.BlendEquationA), NO_EXTRA },
+   { GL_BLEND_EQUATION, CONTEXT_ENUM(Color.Blend[0].EquationRGB), NO_EXTRA },
+   { GL_BLEND_EQUATION_ALPHA_EXT, CONTEXT_ENUM(Color.Blend[0].EquationA), NO_EXTRA },
 
    /* GL_ARB_texture_compression */
    { GL_NUM_COMPRESSED_TEXTURE_FORMATS_ARB, LOC_CUSTOM, TYPE_INT, 0, NO_EXTRA },
@@ -511,7 +512,7 @@ static const struct value_desc values[] = {
    { GL_ALPHA_TEST, CONTEXT_BOOL(Color.AlphaEnabled), NO_EXTRA },
    { GL_ALPHA_TEST_FUNC, CONTEXT_ENUM(Color.AlphaFunc), NO_EXTRA },
    { GL_ALPHA_TEST_REF, CONTEXT_FIELD(Color.AlphaRef, TYPE_FLOATN), NO_EXTRA },
-   { GL_BLEND_DST, CONTEXT_ENUM(Color.BlendDstRGB), NO_EXTRA },
+   { GL_BLEND_DST, CONTEXT_ENUM(Color.Blend[0].DstRGB), NO_EXTRA },
    { GL_CLIP_PLANE0, CONTEXT_BIT0(Transform.ClipPlanesEnabled), NO_EXTRA },
    { GL_CLIP_PLANE1, CONTEXT_BIT1(Transform.ClipPlanesEnabled), NO_EXTRA },
    { GL_CLIP_PLANE2, CONTEXT_BIT2(Transform.ClipPlanesEnabled), NO_EXTRA },
@@ -586,6 +587,15 @@ static const struct value_desc values[] = {
      LOC_CUSTOM, TYPE_BOOLEAN, offsetof(struct gl_client_array, Type), NO_EXTRA },
    { GL_TEXTURE_COORD_ARRAY_STRIDE,
      LOC_CUSTOM, TYPE_BOOLEAN, offsetof(struct gl_client_array, Stride), NO_EXTRA },
+
+   /* GL_ARB_ES2_compatibility */
+   { GL_SHADER_COMPILER, CONST(1), extra_ARB_ES2_compatibility },
+   { GL_MAX_VARYING_VECTORS, CONTEXT_INT(Const.MaxVarying),
+     extra_ARB_ES2_compatibility },
+   { GL_MAX_VERTEX_UNIFORM_VECTORS, LOC_CUSTOM, TYPE_INT, 0,
+     extra_ARB_ES2_compatibility },
+   { GL_MAX_FRAGMENT_UNIFORM_VECTORS, LOC_CUSTOM, TYPE_INT, 0,
+     extra_ARB_ES2_compatibility },
 
    /* GL_ARB_multitexture */
    { GL_MAX_TEXTURE_UNITS_ARB,
@@ -2261,6 +2271,53 @@ find_value_indexed(const char *func, GLenum pname, int index, union value *v)
       v->value_int = (ctx->Color.BlendEnabled >> index) & 1;
       return TYPE_INT;
 
+   case GL_BLEND_SRC:
+      /* fall-through */
+   case GL_BLEND_SRC_RGB:
+      if (index >= ctx->Const.MaxDrawBuffers)
+	 goto invalid_value;
+      if (!ctx->Extensions.ARB_draw_buffers_blend)
+	 goto invalid_enum;
+      v->value_int = ctx->Color.Blend[index].SrcRGB;
+      return TYPE_INT;
+   case GL_BLEND_SRC_ALPHA:
+      if (index >= ctx->Const.MaxDrawBuffers)
+	 goto invalid_value;
+      if (!ctx->Extensions.ARB_draw_buffers_blend)
+	 goto invalid_enum;
+      v->value_int = ctx->Color.Blend[index].SrcA;
+      return TYPE_INT;
+   case GL_BLEND_DST:
+      /* fall-through */
+   case GL_BLEND_DST_RGB:
+      if (index >= ctx->Const.MaxDrawBuffers)
+	 goto invalid_value;
+      if (!ctx->Extensions.ARB_draw_buffers_blend)
+	 goto invalid_enum;
+      v->value_int = ctx->Color.Blend[index].DstRGB;
+      return TYPE_INT;
+   case GL_BLEND_DST_ALPHA:
+      if (index >= ctx->Const.MaxDrawBuffers)
+	 goto invalid_value;
+      if (!ctx->Extensions.ARB_draw_buffers_blend)
+	 goto invalid_enum;
+      v->value_int = ctx->Color.Blend[index].DstA;
+      return TYPE_INT;
+   case GL_BLEND_EQUATION_RGB:
+      if (index >= ctx->Const.MaxDrawBuffers)
+	 goto invalid_value;
+      if (!ctx->Extensions.ARB_draw_buffers_blend)
+	 goto invalid_enum;
+      v->value_int = ctx->Color.Blend[index].EquationRGB;
+      return TYPE_INT;
+   case GL_BLEND_EQUATION_ALPHA:
+      if (index >= ctx->Const.MaxDrawBuffers)
+	 goto invalid_value;
+      if (!ctx->Extensions.ARB_draw_buffers_blend)
+	 goto invalid_enum;
+      v->value_int = ctx->Color.Blend[index].EquationA;
+      return TYPE_INT;
+
    case GL_COLOR_WRITEMASK:
       if (index >= ctx->Const.MaxDrawBuffers)
 	 goto invalid_value;
@@ -2311,8 +2368,10 @@ void GLAPIENTRY
 _mesa_GetBooleanIndexedv( GLenum pname, GLuint index, GLboolean *params )
 {
    union value v;
+   enum value_type type =
+      find_value_indexed("glGetBooleanIndexedv", pname, index, &v);
 
-   switch (find_value_indexed("glGetBooleanIndexedv", pname, index, &v)) {
+   switch (type) {
    case TYPE_INT:
       params[0] = INT_TO_BOOLEAN(v.value_int);
       break;
@@ -2326,7 +2385,7 @@ _mesa_GetBooleanIndexedv( GLenum pname, GLuint index, GLboolean *params )
       params[0] = INT64_TO_BOOLEAN(v.value_int);
       break;
    default:
-      assert(0);
+      ; /* nothing - GL error was recorded */
    }
 }
 
@@ -2334,8 +2393,10 @@ void GLAPIENTRY
 _mesa_GetIntegerIndexedv( GLenum pname, GLuint index, GLint *params )
 {
    union value v;
+   enum value_type type =
+      find_value_indexed("glGetIntegerIndexedv", pname, index, &v);
 
-   switch (find_value_indexed("glGetIntegerIndexedv", pname, index, &v)) {
+   switch (type) {
    case TYPE_INT:
       params[0] = v.value_int;
       break;
@@ -2349,7 +2410,7 @@ _mesa_GetIntegerIndexedv( GLenum pname, GLuint index, GLint *params )
       params[0] = INT64_TO_INT(v.value_int);
       break;
    default:
-      assert(0);
+      ; /* nothing - GL error was recorded */
    }
 }
 
@@ -2358,8 +2419,10 @@ void GLAPIENTRY
 _mesa_GetInteger64Indexedv( GLenum pname, GLuint index, GLint64 *params )
 {
    union value v;
+   enum value_type type =
+      find_value_indexed("glGetIntegerIndexedv", pname, index, &v);      
 
-   switch (find_value_indexed("glGetIntegerIndexedv", pname, index, &v)) {
+   switch (type) {
    case TYPE_INT:
       params[0] = v.value_int;
       break;
@@ -2373,7 +2436,7 @@ _mesa_GetInteger64Indexedv( GLenum pname, GLuint index, GLint64 *params )
       params[0] = v.value_int;
       break;
    default:
-      assert(0);
+      ; /* nothing - GL error was recorded */
    }
 }
 #endif /* FEATURE_ARB_sync */

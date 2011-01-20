@@ -75,10 +75,10 @@ blend_noop(struct gl_context *ctx, GLuint n, const GLubyte mask[],
 {
    GLint bytes;
 
-   ASSERT(ctx->Color.BlendEquationRGB == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendEquationA == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendSrcRGB == GL_ZERO);
-   ASSERT(ctx->Color.BlendDstRGB == GL_ONE);
+   ASSERT(ctx->Color.Blend[0].EquationRGB == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].EquationA == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].SrcRGB == GL_ZERO);
+   ASSERT(ctx->Color.Blend[0].DstRGB == GL_ONE);
    (void) ctx;
 
    /* just memcpy */
@@ -101,10 +101,10 @@ static void _BLENDAPI
 blend_replace(struct gl_context *ctx, GLuint n, const GLubyte mask[],
               GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
-   ASSERT(ctx->Color.BlendEquationRGB == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendEquationA == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendSrcRGB == GL_ONE);
-   ASSERT(ctx->Color.BlendDstRGB == GL_ZERO);
+   ASSERT(ctx->Color.Blend[0].EquationRGB == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].EquationA == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].SrcRGB == GL_ONE);
+   ASSERT(ctx->Color.Blend[0].DstRGB == GL_ZERO);
    (void) ctx;
    (void) n;
    (void) mask;
@@ -125,12 +125,12 @@ blend_transparency_ubyte(struct gl_context *ctx, GLuint n, const GLubyte mask[],
    const GLubyte (*dest)[4] = (const GLubyte (*)[4]) dst;
    GLuint i;
 
-   ASSERT(ctx->Color.BlendEquationRGB == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendEquationA == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendSrcRGB == GL_SRC_ALPHA);
-   ASSERT(ctx->Color.BlendSrcA == GL_SRC_ALPHA);
-   ASSERT(ctx->Color.BlendDstRGB == GL_ONE_MINUS_SRC_ALPHA);
-   ASSERT(ctx->Color.BlendDstA == GL_ONE_MINUS_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].EquationRGB == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].EquationA == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].SrcRGB == GL_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].SrcA == GL_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].DstRGB == GL_ONE_MINUS_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].DstA == GL_ONE_MINUS_SRC_ALPHA);
    ASSERT(chanType == GL_UNSIGNED_BYTE);
 
    (void) ctx;
@@ -170,12 +170,12 @@ blend_transparency_ushort(struct gl_context *ctx, GLuint n, const GLubyte mask[]
    const GLushort (*dest)[4] = (const GLushort (*)[4]) dst;
    GLuint i;
 
-   ASSERT(ctx->Color.BlendEquationRGB == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendEquationA == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendSrcRGB == GL_SRC_ALPHA);
-   ASSERT(ctx->Color.BlendSrcA == GL_SRC_ALPHA);
-   ASSERT(ctx->Color.BlendDstRGB == GL_ONE_MINUS_SRC_ALPHA);
-   ASSERT(ctx->Color.BlendDstA == GL_ONE_MINUS_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].EquationRGB == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].EquationA == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].SrcRGB == GL_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].SrcA == GL_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].DstRGB == GL_ONE_MINUS_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].DstA == GL_ONE_MINUS_SRC_ALPHA);
    ASSERT(chanType == GL_UNSIGNED_SHORT);
 
    (void) ctx;
@@ -208,12 +208,12 @@ blend_transparency_float(struct gl_context *ctx, GLuint n, const GLubyte mask[],
    const GLfloat (*dest)[4] = (const GLfloat (*)[4]) dst;
    GLuint i;
 
-   ASSERT(ctx->Color.BlendEquationRGB == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendEquationA == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendSrcRGB == GL_SRC_ALPHA);
-   ASSERT(ctx->Color.BlendSrcA == GL_SRC_ALPHA);
-   ASSERT(ctx->Color.BlendDstRGB == GL_ONE_MINUS_SRC_ALPHA);
-   ASSERT(ctx->Color.BlendDstA == GL_ONE_MINUS_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].EquationRGB == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].EquationA == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].SrcRGB == GL_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].SrcA == GL_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].DstRGB == GL_ONE_MINUS_SRC_ALPHA);
+   ASSERT(ctx->Color.Blend[0].DstA == GL_ONE_MINUS_SRC_ALPHA);
    ASSERT(chanType == GL_FLOAT);
 
    (void) ctx;
@@ -248,10 +248,10 @@ blend_add(struct gl_context *ctx, GLuint n, const GLubyte mask[],
 {
    GLuint i;
 
-   ASSERT(ctx->Color.BlendEquationRGB == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendEquationA == GL_FUNC_ADD);
-   ASSERT(ctx->Color.BlendSrcRGB == GL_ONE);
-   ASSERT(ctx->Color.BlendDstRGB == GL_ONE);
+   ASSERT(ctx->Color.Blend[0].EquationRGB == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].EquationA == GL_FUNC_ADD);
+   ASSERT(ctx->Color.Blend[0].SrcRGB == GL_ONE);
+   ASSERT(ctx->Color.Blend[0].DstRGB == GL_ONE);
    (void) ctx;
 
    if (chanType == GL_UNSIGNED_BYTE) {
@@ -313,8 +313,8 @@ blend_min(struct gl_context *ctx, GLuint n, const GLubyte mask[],
           GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
    GLuint i;
-   ASSERT(ctx->Color.BlendEquationRGB == GL_MIN);
-   ASSERT(ctx->Color.BlendEquationA == GL_MIN);
+   ASSERT(ctx->Color.Blend[0].EquationRGB == GL_MIN);
+   ASSERT(ctx->Color.Blend[0].EquationA == GL_MIN);
    (void) ctx;
 
    if (chanType == GL_UNSIGNED_BYTE) {
@@ -366,8 +366,8 @@ blend_max(struct gl_context *ctx, GLuint n, const GLubyte mask[],
           GLvoid *src, const GLvoid *dst, GLenum chanType)
 {
    GLuint i;
-   ASSERT(ctx->Color.BlendEquationRGB == GL_MAX);
-   ASSERT(ctx->Color.BlendEquationA == GL_MAX);
+   ASSERT(ctx->Color.Blend[0].EquationRGB == GL_MAX);
+   ASSERT(ctx->Color.Blend[0].EquationA == GL_MAX);
    (void) ctx;
 
    if (chanType == GL_UNSIGNED_BYTE) {
@@ -500,7 +500,7 @@ blend_general_float(struct gl_context *ctx, GLuint n, const GLubyte mask[],
           */
 
          /* Source RGB factor */
-         switch (ctx->Color.BlendSrcRGB) {
+         switch (ctx->Color.Blend[0].SrcRGB) {
             case GL_ZERO:
                sR = sG = sB = 0.0F;
                break;
@@ -570,7 +570,7 @@ blend_general_float(struct gl_context *ctx, GLuint n, const GLubyte mask[],
          }
 
          /* Source Alpha factor */
-         switch (ctx->Color.BlendSrcA) {
+         switch (ctx->Color.Blend[0].SrcA) {
             case GL_ZERO:
                sA = 0.0F;
                break;
@@ -624,7 +624,7 @@ blend_general_float(struct gl_context *ctx, GLuint n, const GLubyte mask[],
          }
 
          /* Dest RGB factor */
-         switch (ctx->Color.BlendDstRGB) {
+         switch (ctx->Color.Blend[0].DstRGB) {
             case GL_ZERO:
                dR = dG = dB = 0.0F;
                break;
@@ -687,7 +687,7 @@ blend_general_float(struct gl_context *ctx, GLuint n, const GLubyte mask[],
          }
 
          /* Dest Alpha factor */
-         switch (ctx->Color.BlendDstA) {
+         switch (ctx->Color.Blend[0].DstA) {
             case GL_ZERO:
                dA = 0.0F;
                break;
@@ -738,7 +738,7 @@ blend_general_float(struct gl_context *ctx, GLuint n, const GLubyte mask[],
          }
 
          /* compute the blended RGB */
-         switch (ctx->Color.BlendEquationRGB) {
+         switch (ctx->Color.Blend[0].EquationRGB) {
          case GL_FUNC_ADD:
             r = Rs * sR + Rd * dR;
             g = Gs * sG + Gd * dG;
@@ -775,7 +775,7 @@ blend_general_float(struct gl_context *ctx, GLuint n, const GLubyte mask[],
          }
 
          /* compute the blended alpha */
-         switch (ctx->Color.BlendEquationA) {
+         switch (ctx->Color.Blend[0].EquationA) {
          case GL_FUNC_ADD:
             a = As * sA + Ad * dA;
             break;
@@ -907,13 +907,13 @@ void
 _swrast_choose_blend_func(struct gl_context *ctx, GLenum chanType)
 {
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
-   const GLenum eq = ctx->Color.BlendEquationRGB;
-   const GLenum srcRGB = ctx->Color.BlendSrcRGB;
-   const GLenum dstRGB = ctx->Color.BlendDstRGB;
-   const GLenum srcA = ctx->Color.BlendSrcA;
-   const GLenum dstA = ctx->Color.BlendDstA;
+   const GLenum eq = ctx->Color.Blend[0].EquationRGB;
+   const GLenum srcRGB = ctx->Color.Blend[0].SrcRGB;
+   const GLenum dstRGB = ctx->Color.Blend[0].DstRGB;
+   const GLenum srcA = ctx->Color.Blend[0].SrcA;
+   const GLenum dstA = ctx->Color.Blend[0].DstA;
 
-   if (ctx->Color.BlendEquationRGB != ctx->Color.BlendEquationA) {
+   if (ctx->Color.Blend[0].EquationRGB != ctx->Color.Blend[0].EquationA) {
       swrast->BlendFunc = blend_general;
    }
    else if (eq == GL_MIN) {

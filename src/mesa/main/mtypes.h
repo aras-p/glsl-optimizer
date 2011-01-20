@@ -719,13 +719,20 @@ struct gl_colorbuffer_attrib
     */
    /*@{*/
    GLbitfield BlendEnabled;		/**< Per-buffer blend enable flags */
-   GLenum BlendSrcRGB;			/**< Blending source operator */
-   GLenum BlendDstRGB;			/**< Blending destination operator */
-   GLenum BlendSrcA;			/**< GL_INGR_blend_func_separate */
-   GLenum BlendDstA;			/**< GL_INGR_blend_func_separate */
-   GLenum BlendEquationRGB;		/**< Blending equation */
-   GLenum BlendEquationA;		/**< GL_EXT_blend_equation_separate */
    GLfloat BlendColor[4];		/**< Blending color */
+   struct
+   {
+      GLenum SrcRGB;             /**< RGB blend source term */
+      GLenum DstRGB;             /**< RGB blend dest term */
+      GLenum SrcA;               /**< Alpha blend source term */
+      GLenum DstA;               /**< Alpha blend dest term */
+      GLenum EquationRGB;        /**< GL_ADD, GL_SUBTRACT, etc. */
+      GLenum EquationA;          /**< GL_ADD, GL_SUBTRACT, etc. */
+   } Blend[MAX_DRAW_BUFFERS];
+   /** Are the blend func terms currently different for each buffer/target? */
+   GLboolean _BlendFuncPerBuffer;
+   /** Are the blend equations currently different for each buffer/target? */
+   GLboolean _BlendEquationPerBuffer;
    /*@}*/
 
    /** 
@@ -1315,6 +1322,7 @@ struct gl_texture_object
    GLboolean _Complete;		/**< Is texture object complete? */
    GLboolean _RenderToTexture;  /**< Any rendering to this texture? */
    GLboolean Purgeable;         /**< Is the buffer purgeable under memory pressure? */
+   GLenum sRGBDecode;
 
    /** Actual texture images, indexed by [cube face] and [mipmap level] */
    struct gl_texture_image *Image[MAX_FACES][MAX_TEXTURE_LEVELS];
@@ -1546,6 +1554,7 @@ struct gl_client_array
    GLboolean Enabled;		/**< Enabled flag is a boolean */
    GLboolean Normalized;        /**< GL_ARB_vertex_program */
    GLboolean Integer;           /**< Integer-valued? */
+   GLuint InstanceDivisor;      /**< GL_ARB_instanced_arrays */
    GLuint _ElementSize;         /**< size of each element in bytes */
 
    struct gl_buffer_object *BufferObj;/**< GL_ARB_vertex_buffer_object */
@@ -1748,9 +1757,22 @@ typedef enum
    PROGRAM_WRITE_ONLY,  /**< A dummy, write-only register */
    PROGRAM_ADDRESS,     /**< machine->AddressReg */
    PROGRAM_SAMPLER,     /**< for shader samplers, compile-time only */
+   PROGRAM_SYSTEM_VALUE,/**< InstanceId, PrimitiveID, etc. */
    PROGRAM_UNDEFINED,   /**< Invalid/TBD value */
    PROGRAM_FILE_MAX
 } gl_register_file;
+
+
+/**
+ * If the register file is PROGRAM_SYSTEM_VALUE, the register index will be
+ * one of these values.
+ */
+typedef enum
+{
+   SYSTEM_VALUE_FRONT_FACE,  /**< Fragment shader only (not done yet) */
+   SYSTEM_VALUE_INSTANCE_ID, /**< Vertex shader only */
+   SYSTEM_VALUE_MAX          /**< Number of values */
+} gl_system_value;
 
 
 /** Vertex and fragment instructions */
@@ -1775,6 +1797,7 @@ struct gl_program
 
    GLbitfield InputsRead;     /**< Bitmask of which input regs are read */
    GLbitfield64 OutputsWritten; /**< Bitmask of which output regs are written */
+   GLbitfield SystemValuesRead;   /**< Bitmask of SYSTEM_VALUE_x inputs used */
    GLbitfield InputFlags[MAX_PROGRAM_INPUTS];   /**< PROG_PARAM_BIT_x flags */
    GLbitfield OutputFlags[MAX_PROGRAM_OUTPUTS]; /**< PROG_PARAM_BIT_x flags */
    GLbitfield TexturesUsed[MAX_TEXTURE_UNITS];  /**< TEXTURE_x_BIT bitmask */
@@ -2655,12 +2678,16 @@ struct gl_constants
 struct gl_extensions
 {
    GLboolean dummy;  /* don't remove this! */
+   GLboolean dummy_true;  /* Set true by _mesa_init_extensions(). */
+   GLboolean dummy_false; /* Set false by _mesa_init_extensions(). */
+   GLboolean ARB_ES2_compatibility;
    GLboolean ARB_blend_func_extended;
    GLboolean ARB_copy_buffer;
    GLboolean ARB_depth_buffer_float;
    GLboolean ARB_depth_clamp;
    GLboolean ARB_depth_texture;
    GLboolean ARB_draw_buffers;
+   GLboolean ARB_draw_buffers_blend;
    GLboolean ARB_draw_elements_base_vertex;
    GLboolean ARB_draw_instanced;
    GLboolean ARB_fragment_coord_conventions;
@@ -2764,12 +2791,14 @@ struct gl_extensions
    GLboolean EXT_texture_mirror_clamp;
    GLboolean EXT_texture_shared_exponent;
    GLboolean EXT_texture_sRGB;
+   GLboolean EXT_texture_sRGB_decode;
    GLboolean EXT_texture_swizzle;
    GLboolean EXT_transform_feedback;
    GLboolean EXT_timer_query;
    GLboolean EXT_vertex_array;
    GLboolean EXT_vertex_array_bgra;
    GLboolean EXT_vertex_array_set;
+   GLboolean OES_standard_derivatives;
    /* vendor extensions */
    GLboolean APPLE_client_storage;
    GLboolean APPLE_packed_pixels;
@@ -2809,6 +2838,7 @@ struct gl_extensions
    GLboolean OES_EGL_image;
    GLboolean OES_draw_texture;
    GLboolean EXT_texture_format_BGRA8888;
+   GLboolean extension_sentinel;
    /** The extension string */
    const GLubyte *String;
    /** Number of supported extensions */

@@ -1467,7 +1467,7 @@ create_new_program(struct gl_context *ctx, struct state_key *key,
    p.last_tex_stage = 0;
    release_temps(ctx, &p);
 
-   if (key->enabled_units) {
+   if (key->enabled_units && key->num_draw_buffers) {
       GLboolean needbumpstage = GL_FALSE;
 
       /* Zeroth pass - bump map textures first */
@@ -1560,7 +1560,7 @@ create_new_program(struct gl_context *ctx, struct state_key *key,
    _mesa_copy_instructions(p.program->Base.Instructions, instBuffer,
                            p.program->Base.NumInstructions);
 
-   if (p.program->FogOption) {
+   if (key->num_draw_buffers && p.program->FogOption) {
       _mesa_append_fog_code(ctx, p.program);
       p.program->FogOption = GL_NONE;
    }

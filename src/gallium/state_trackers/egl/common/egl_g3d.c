@@ -38,6 +38,46 @@
 #include "egl_g3d_loader.h"
 #include "native.h"
 
+static void
+egl_g3d_invalid_surface(struct native_display *ndpy,
+                        struct native_surface *nsurf,
+                        unsigned int seq_num)
+{
+   /* XXX not thread safe? */
+   struct egl_g3d_surface *gsurf = egl_g3d_surface(nsurf->user_data);
+   struct egl_g3d_context *gctx;
+   
+   /*
+    * Some functions such as egl_g3d_copy_buffers create a temporary native
+    * surface.  There is no gsurf associated with it.
+    */
+   gctx = (gsurf) ? egl_g3d_context(gsurf->base.CurrentContext) : NULL;
+   if (gctx)
+      gctx->stctxi->notify_invalid_framebuffer(gctx->stctxi, gsurf->stfbi);
+}
+
+static struct pipe_screen *
+egl_g3d_new_drm_screen(struct native_display *ndpy, const char *name, int fd)
+{
+   _EGLDisplay *dpy = (_EGLDisplay *) ndpy->user_data;
+   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+   return gdpy->loader->create_drm_screen(name, fd);
+}
+
+static struct pipe_screen *
+egl_g3d_new_sw_screen(struct native_display *ndpy, struct sw_winsys *ws)
+{
+   _EGLDisplay *dpy = (_EGLDisplay *) ndpy->user_data;
+   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
+   return gdpy->loader->create_sw_screen(ws);
+}
+
+static struct native_event_handler egl_g3d_native_event_handler = {
+   egl_g3d_invalid_surface,
+   egl_g3d_new_drm_screen,
+   egl_g3d_new_sw_screen
+};
+
 /**
  * Get the native platform.
  */
@@ -79,7 +119,9 @@ egl_g3d_get_platform(_EGLDriver *drv, _EGLPlatformType plat)
          break;
       }
 
-      if (!nplat)
+      if (nplat)
+         nplat->set_event_handler(&egl_g3d_native_event_handler);
+      else
          _eglLog(_EGL_WARNING, "unsupported platform %s", plat_name);
 
       gdrv->platforms[plat] = nplat;
@@ -280,7 +322,7 @@ egl_g3d_init_config(_EGLDriver *drv, _EGLDisplay *dpy,
       ST_ATTACHMENT_BACK_LEFT : ST_ATTACHMENT_FRONT_LEFT;
 
    valid = init_config_attributes(&gconf->base,
-         nconf, dpy->ClientAPIsMask, depth_stencil_format,
+         nconf, dpy->ClientAPIs, depth_stencil_format,
          preserve_buffer, max_swap_interval);
    if (!valid) {
       _eglLog(_EGL_DEBUG, "skip invalid config 0x%x", nconf->native_visual_id);
@@ -384,46 +426,6 @@ egl_g3d_add_configs(_EGLDriver *drv, _EGLDisplay *dpy, EGLint id)
 }
 
 static void
-egl_g3d_invalid_surface(struct native_display *ndpy,
-                        struct native_surface *nsurf,
-                        unsigned int seq_num)
-{
-   /* XXX not thread safe? */
-   struct egl_g3d_surface *gsurf = egl_g3d_surface(nsurf->user_data);
-   struct egl_g3d_context *gctx;
-   
-   /*
-    * Some functions such as egl_g3d_copy_buffers create a temporary native
-    * surface.  There is no gsurf associated with it.
-    */
-   gctx = (gsurf) ? egl_g3d_context(gsurf->base.CurrentContext) : NULL;
-   if (gctx)
-      gctx->stctxi->notify_invalid_framebuffer(gctx->stctxi, gsurf->stfbi);
-}
-
-static struct pipe_screen *
-egl_g3d_new_drm_screen(struct native_display *ndpy, const char *name, int fd)
-{
-   _EGLDisplay *dpy = (_EGLDisplay *) ndpy->user_data;
-   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
-   return gdpy->loader->create_drm_screen(name, fd);
-}
-
-static struct pipe_screen *
-egl_g3d_new_sw_screen(struct native_display *ndpy, struct sw_winsys *ws)
-{
-   _EGLDisplay *dpy = (_EGLDisplay *) ndpy->user_data;
-   struct egl_g3d_display *gdpy = egl_g3d_display(dpy);
-   return gdpy->loader->create_sw_screen(ws);
-}
-
-static struct native_event_handler egl_g3d_native_event_handler = {
-   egl_g3d_invalid_surface,
-   egl_g3d_new_drm_screen,
-   egl_g3d_new_sw_screen
-};
-
-static void
 egl_g3d_free_config(void *conf)
 {
    struct egl_g3d_config *gconf = egl_g3d_config((_EGLConfig *) conf);
@@ -474,8 +476,7 @@ egl_g3d_terminate(_EGLDriver *drv, _EGLDisplay *dpy)
 }
 
 static EGLBoolean
-egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
-                   EGLint *major, EGLint *minor)
+egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy)
 {
    struct egl_g3d_driver *gdrv = egl_g3d_driver(drv);
    struct egl_g3d_display *gdpy;
@@ -484,6 +485,9 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
    nplat = egl_g3d_get_platform(drv, dpy->Platform);
    if (!nplat)
       return EGL_FALSE;
+
+   if (dpy->Options.TestOnly)
+      return EGL_TRUE;
 
    gdpy = CALLOC_STRUCT(egl_g3d_display);
    if (!gdpy) {
@@ -495,20 +499,20 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
 
    _eglLog(_EGL_INFO, "use %s for display %p", nplat->name, dpy->PlatformDisplay);
    gdpy->native = nplat->create_display(dpy->PlatformDisplay,
-         &egl_g3d_native_event_handler, (void *) dpy);
+         dpy->Options.UseFallback, (void *) dpy);
    if (!gdpy->native) {
       _eglError(EGL_NOT_INITIALIZED, "eglInitialize(no usable display)");
       goto fail;
    }
 
    if (gdpy->loader->profile_masks[ST_API_OPENGL] & ST_PROFILE_DEFAULT_MASK)
-      dpy->ClientAPIsMask |= EGL_OPENGL_BIT;
+      dpy->ClientAPIs |= EGL_OPENGL_BIT;
    if (gdpy->loader->profile_masks[ST_API_OPENGL] & ST_PROFILE_OPENGL_ES1_MASK)
-      dpy->ClientAPIsMask |= EGL_OPENGL_ES_BIT;
+      dpy->ClientAPIs |= EGL_OPENGL_ES_BIT;
    if (gdpy->loader->profile_masks[ST_API_OPENGL] & ST_PROFILE_OPENGL_ES2_MASK)
-      dpy->ClientAPIsMask |= EGL_OPENGL_ES2_BIT;
+      dpy->ClientAPIs |= EGL_OPENGL_ES2_BIT;
    if (gdpy->loader->profile_masks[ST_API_OPENVG] & ST_PROFILE_DEFAULT_MASK)
-      dpy->ClientAPIsMask |= EGL_OPENVG_BIT;
+      dpy->ClientAPIs |= EGL_OPENVG_BIT;
 
    gdpy->smapi = egl_g3d_create_st_manager(dpy);
    if (!gdpy->smapi) {
@@ -547,8 +551,8 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy,
       goto fail;
    }
 
-   *major = 1;
-   *minor = 4;
+   dpy->VersionMajor = 1;
+   dpy->VersionMinor = 4;
 
    return EGL_TRUE;
 
@@ -573,12 +577,6 @@ egl_g3d_get_proc_address(_EGLDriver *drv, const char *procname)
          stapi->get_proc_address(stapi, procname) : NULL);
 }
 
-static EGLint
-egl_g3d_probe(_EGLDriver *drv, _EGLDisplay *dpy)
-{
-   return (egl_g3d_get_platform(drv, dpy->Platform)) ? 90 : 0;
-}
-
 _EGLDriver *
 egl_g3d_create_driver(const struct egl_g3d_loader *loader)
 {
@@ -594,8 +592,6 @@ egl_g3d_create_driver(const struct egl_g3d_loader *loader)
    gdrv->base.API.Initialize = egl_g3d_initialize;
    gdrv->base.API.Terminate = egl_g3d_terminate;
    gdrv->base.API.GetProcAddress = egl_g3d_get_proc_address;
-
-   gdrv->base.Probe = egl_g3d_probe;
 
    /* to be filled by the caller */
    gdrv->base.Name = NULL;

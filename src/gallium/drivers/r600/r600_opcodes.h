@@ -330,10 +330,14 @@
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_CLAMPED_64      0x00000098
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SQRT_64                   0x00000099
 /* TODO Fill in more ALU */
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT                0x0000009B
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_UINT_TO_FLT               0x0000009C
+/* TODO Fill in more ALU */
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT_FLOOR          0x000000B1
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4                      0x000000BE
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_DOT4_IEEE                 0x000000BF
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE                      0x000000C0
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX4                      0x000000C1
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT                  0x000000CC
 
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INTERP_XY                      0x000000D6

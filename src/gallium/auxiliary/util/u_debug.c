@@ -47,6 +47,7 @@
 
 void _debug_vprintf(const char *format, va_list ap)
 {
+#if defined(PIPE_OS_WINDOWS) || defined(PIPE_OS_EMBEDDED)
    /* We buffer until we find a newline. */
    static char buf[4096] = {'\0'};
    size_t len = strlen(buf);
@@ -55,6 +56,10 @@ void _debug_vprintf(const char *format, va_list ap)
       os_log_message(buf);
       buf[0] = '\0';
    }
+#else
+   /* Just print as-is to stderr */
+   vfprintf(stderr, format, ap);
+#endif
 }
 
 

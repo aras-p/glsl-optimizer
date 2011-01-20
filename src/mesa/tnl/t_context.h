@@ -527,6 +527,8 @@ typedef struct
    GLubyte *block[VERT_ATTRIB_MAX];
    GLuint nr_blocks;
 
+   GLuint CurInstance;
+
 } TNLcontext;
 
 

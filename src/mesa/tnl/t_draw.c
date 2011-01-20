@@ -453,6 +453,7 @@ void _tnl_draw_prims( struct gl_context *ctx,
        */
       struct gl_buffer_object *bo[VERT_ATTRIB_MAX + 1];
       GLuint nr_bo = 0;
+      GLuint inst;
 
       for (i = 0; i < nr_prims;) {
 	 GLuint this_nr_prims;
@@ -470,15 +471,19 @@ void _tnl_draw_prims( struct gl_context *ctx,
 	 /* Binding inputs may imply mapping some vertex buffer objects.
 	  * They will need to be unmapped below.
 	  */
-	 bind_prims(ctx, &prim[i], this_nr_prims);
-	 bind_inputs(ctx, arrays, max_index + prim[i].basevertex + 1,
-		     bo, &nr_bo);
-	 bind_indices(ctx, ib, bo, &nr_bo);
+         for (inst = 0; inst < prim[i].num_instances; inst++) {
 
-	 TNL_CONTEXT(ctx)->Driver.RunPipeline(ctx);
+            bind_prims(ctx, &prim[i], this_nr_prims);
+            bind_inputs(ctx, arrays, max_index + prim[i].basevertex + 1,
+                        bo, &nr_bo);
+            bind_indices(ctx, ib, bo, &nr_bo);
 
-	 unmap_vbos(ctx, bo, nr_bo);
-	 free_space(ctx);
+            tnl->CurInstance = inst;
+            TNL_CONTEXT(ctx)->Driver.RunPipeline(ctx);
+
+            unmap_vbos(ctx, bo, nr_bo);
+            free_space(ctx);
+         }
 
 	 i += this_nr_prims;
       }

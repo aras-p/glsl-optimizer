@@ -48,7 +48,7 @@ nvc0_tic_entry(struct pipe_sampler_view *view)
 struct nvc0_rasterizer_stateobj {
    struct pipe_rasterizer_state pipe;
    int size;
-   uint32_t state[43];
+   uint32_t state[36];
 };
 
 struct nvc0_zsa_stateobj {

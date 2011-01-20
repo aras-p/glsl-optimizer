@@ -1092,6 +1092,48 @@ _mesa_get_format_color_encoding(gl_format format)
 
 
 /**
+ * For an sRGB format, return the corresponding linear color space format.
+ * For non-sRGB formats, return the format as-is.
+ */
+gl_format
+_mesa_get_srgb_format_linear(gl_format format)
+{
+   switch (format) {
+   case MESA_FORMAT_SRGB8:
+      format = MESA_FORMAT_RGB888;
+      break;
+   case MESA_FORMAT_SRGBA8:
+      format = MESA_FORMAT_RGBA8888;
+      break;
+   case MESA_FORMAT_SARGB8:
+      format = MESA_FORMAT_ARGB8888;
+      break;
+   case MESA_FORMAT_SL8:
+      format = MESA_FORMAT_L8;
+      break;
+   case MESA_FORMAT_SLA8:
+      format = MESA_FORMAT_AL88;
+      break;
+   case MESA_FORMAT_SRGB_DXT1:
+      format = MESA_FORMAT_RGB_DXT1;
+      break;
+   case MESA_FORMAT_SRGBA_DXT1:
+      format = MESA_FORMAT_RGBA_DXT1;
+      break;
+   case MESA_FORMAT_SRGBA_DXT3:
+      format = MESA_FORMAT_RGBA_DXT3;
+      break;
+   case MESA_FORMAT_SRGBA_DXT5:
+      format = MESA_FORMAT_RGBA_DXT5;
+      break;
+   default:
+      break;
+   }
+   return format;
+}
+
+
+/**
  * Return number of bytes needed to store an image of the given size
  * in the given format.
  */

@@ -1,16 +1,20 @@
 Import('*')
 
-SConscript('mapi/vgapi/SConscript')
-
 if env['platform'] == 'windows':
-    SConscript('egl/main/SConscript')
+    SConscript('getopt/SConscript')
     SConscript('talloc/SConscript')
+else:
+    talloc = 'talloc'
+    Export('talloc')
 
 SConscript('glsl/SConscript')
 SConscript('mapi/glapi/SConscript')
 SConscript('mesa/SConscript')
 
+SConscript('mapi/vgapi/SConscript')
+
 if env['platform'] != 'embedded':
+    SConscript('egl/main/SConscript')
     SConscript('glut/glx/SConscript')
 
 SConscript('gallium/SConscript')

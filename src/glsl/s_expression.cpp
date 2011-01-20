@@ -38,14 +38,15 @@ s_list::s_list()
 {
 }
 
-unsigned
-s_list::length() const
+static void
+skip_whitespace(const char *& src)
 {
-   unsigned i = 0;
-   foreach_iter(exec_list_iterator, it, this->subexpressions) {
-      i++;
+   src += strspn(src, " \v\t\r\n");
+   /* Also skip Scheme-style comments: semi-colon 'til end of line */
+   if (src[0] == ';') {
+      src += strcspn(src, "\n");
+      skip_whitespace(src);
    }
-   return i;
 }
 
 static s_expression *
@@ -53,10 +54,9 @@ read_atom(void *ctx, const char *& src)
 {
    s_expression *expr = NULL;
 
-   // Skip leading spaces.
-   src += strspn(src, " \v\t\r\n");
+   skip_whitespace(src);
 
-   size_t n = strcspn(src, "( \v\t\r\n)");
+   size_t n = strcspn(src, "( \v\t\r\n);");
    if (n == 0)
       return NULL; // no atom
 
@@ -90,8 +90,7 @@ s_expression::read_expression(void *ctx, const char *&src)
    if (atom != NULL)
       return atom;
 
-   // Skip leading spaces.
-   src += strspn(src, " \v\t\r\n");
+   skip_whitespace(src);
    if (src[0] == '(') {
       ++src;
 
@@ -101,7 +100,7 @@ s_expression::read_expression(void *ctx, const char *&src)
       while ((expr = read_expression(ctx, src)) != NULL) {
 	 list->subexpressions.push_tail(expr);
       }
-      src += strspn(src, " \v\t\r\n");
+      skip_whitespace(src);
       if (src[0] != ')') {
 	 printf("Unclosed expression (check your parenthesis).\n");
 	 return NULL;
@@ -139,3 +138,49 @@ void s_list::print()
    printf(")");
 }
 
+// --------------------------------------------------
+
+bool
+s_pattern::match(s_expression *expr)
+{
+   switch (type)
+   {
+   case EXPR:   *p_expr = expr; break;
+   case LIST:   if (expr->is_list())   *p_list   = (s_list *)   expr; break;
+   case SYMBOL: if (expr->is_symbol()) *p_symbol = (s_symbol *) expr; break;
+   case NUMBER: if (expr->is_number()) *p_number = (s_number *) expr; break;
+   case INT:    if (expr->is_int())    *p_int    = (s_int *)    expr; break;
+   case STRING:
+      s_symbol *sym = SX_AS_SYMBOL(expr);
+      if (sym != NULL && strcmp(sym->value(), literal) == 0)
+	 return true;
+      return false;
+   };
+
+   return *p_expr == expr;
+}
+
+bool
+s_match(s_expression *top, unsigned n, s_pattern *pattern, bool partial)
+{
+   s_list *list = SX_AS_LIST(top);
+   if (list == NULL)
+      return false;
+
+   unsigned i = 0;
+   foreach_iter(exec_list_iterator, it, list->subexpressions) {
+      if (i >= n)
+	 return partial; /* More actual items than the pattern expected */
+
+      s_expression *expr = (s_expression *) it.get();
+      if (expr == NULL || !pattern[i].match(expr))
+	 return false;
+
+      i++;
+   }
+
+   if (i < n)
+      return false; /* Less actual items than the pattern expected */
+
+   return true;
+}

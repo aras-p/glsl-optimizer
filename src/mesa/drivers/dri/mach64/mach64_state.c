@@ -102,7 +102,7 @@ static void mach64UpdateAlphaMode( struct gl_context *ctx )
 	     MACH64_ALPHA_BLEND_DST_MASK |
 	     MACH64_ALPHA_BLEND_SAT);
 
-      switch ( ctx->Color.BlendSrcRGB ) {
+      switch ( ctx->Color.Blend[0].SrcRGB ) {
       case GL_ZERO:
 	 s |= MACH64_ALPHA_BLEND_SRC_ZERO;
 	 break;
@@ -135,7 +135,7 @@ static void mach64UpdateAlphaMode( struct gl_context *ctx )
          FALLBACK( mmesa, MACH64_FALLBACK_BLEND_FUNC, GL_TRUE );
       }
 
-      switch ( ctx->Color.BlendDstRGB ) {
+      switch ( ctx->Color.Blend[0].DstRGB ) {
       case GL_ZERO:
 	 s |= MACH64_ALPHA_BLEND_DST_ZERO;
 	 break;

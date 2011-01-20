@@ -237,9 +237,16 @@ drm_create_display(int fd, struct native_event_handler *event_handler,
    return &drmdpy->base;
 }
 
+static struct native_event_handler *drm_event_handler;
+
+static void
+native_set_event_handler(struct native_event_handler *event_handler)
+{
+   drm_event_handler = event_handler;
+}
+
 static struct native_display *
-native_create_display(void *dpy, struct native_event_handler *event_handler,
-                      void *user_data)
+native_create_display(void *dpy, boolean use_sw, void *user_data)
 {
    int fd;
 
@@ -252,11 +259,12 @@ native_create_display(void *dpy, struct native_event_handler *event_handler,
    if (fd < 0)
       return NULL;
 
-   return drm_create_display(fd, event_handler, user_data);
+   return drm_create_display(fd, drm_event_handler, user_data);
 }
 
 static const struct native_platform drm_platform = {
    "DRM", /* name */
+   native_set_event_handler,
    native_create_display
 };
 
