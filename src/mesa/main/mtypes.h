@@ -296,8 +296,8 @@ typedef enum
 /**
  * Indexes for geometry program result attributes
  */
-/*@{*/
-typedef enum {
+typedef enum
+{
    GEOM_RESULT_POS  = 0,
    GEOM_RESULT_COL0  = 1,
    GEOM_RESULT_COL1  = 2,
@@ -320,7 +320,7 @@ typedef enum {
    /* ### we need to -2 because var0 is 18 instead 16 like in the others */
    GEOM_RESULT_MAX  =  (GEOM_RESULT_VAR0 + MAX_VARYING - 2)
 } gl_geom_result;
-/*@}*/
+
 
 /**
  * Indexes for fragment program input attributes.
@@ -3088,14 +3088,17 @@ struct gl_dlist_state
    } Current;
 };
 
+
 /**
  * Enum for the OpenGL APIs we know about and may support.
  */
-typedef enum {
+typedef enum
+{
    API_OPENGL,
    API_OPENGLES,
    API_OPENGLES2
 } gl_api;
+
 
 /**
  * Mesa rendering context.
