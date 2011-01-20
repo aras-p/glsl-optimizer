@@ -171,16 +171,16 @@ i915CreateContext(int api,
    /* i915 stores all values in single-precision floats.  Values aren't set
     * for other program targets because software is used for those targets.
     */
-   ctx->FragmentProgram.MediumFloat.RangeMin = 127;
-   ctx->FragmentProgram.MediumFloat.RangeMax = 127;
-   ctx->FragmentProgram.MediumFloat.Precision = 23;
-   ctx->FragmentProgram.LowFloat = ctx->FragmentProgram.HighFloat =
-      ctx->FragmentProgram.MediumFloat;
-   ctx->FragmentProgram.MediumInt.RangeMin = 24;
-   ctx->FragmentProgram.MediumInt.RangeMax = 24;
-   ctx->FragmentProgram.MediumInt.Precision = 0;
-   ctx->FragmentProgram.LowInt = ctx->FragmentProgram.HighInt =
-      ctx->FragmentProgram.MediumInt;
+   ctx->Const.FragmentProgram.MediumFloat.RangeMin = 127;
+   ctx->Const.FragmentProgram.MediumFloat.RangeMax = 127;
+   ctx->Const.FragmentProgram.MediumFloat.Precision = 23;
+   ctx->Const.FragmentProgram.LowFloat = ctx->Const.FragmentProgram.HighFloat =
+      ctx->Const.FragmentProgram.MediumFloat;
+   ctx->Const.FragmentProgram.MediumInt.RangeMin = 24;
+   ctx->Const.FragmentProgram.MediumInt.RangeMax = 24;
+   ctx->Const.FragmentProgram.MediumInt.Precision = 0;
+   ctx->Const.FragmentProgram.LowInt = ctx->Const.FragmentProgram.HighInt =
+      ctx->Const.FragmentProgram.MediumInt;
 
    ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
 
