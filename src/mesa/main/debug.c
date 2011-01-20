@@ -37,26 +37,6 @@
 #include "texobj.h"
 
 
-/**
- * Primitive names
- */
-const char *_mesa_prim_name[GL_POLYGON+4] = {
-   "GL_POINTS",
-   "GL_LINES",
-   "GL_LINE_LOOP",
-   "GL_LINE_STRIP",
-   "GL_TRIANGLES",
-   "GL_TRIANGLE_STRIP",
-   "GL_TRIANGLE_FAN",
-   "GL_QUADS",
-   "GL_QUAD_STRIP",
-   "GL_POLYGON",
-   "outside begin/end",
-   "inside unknown primitive",
-   "unknown state"
-};
-
-
 static const char *
 tex_target_name(GLenum tgt)
 {

@@ -3317,10 +3317,6 @@ struct gl_context
 };
 
 
-/** The string names for GL_POINT, GL_LINE_LOOP, etc */
-extern const char *_mesa_prim_name[GL_POLYGON+4];
-
-
 #ifdef DEBUG
 extern int MESA_VERBOSE;
 extern int MESA_DEBUG_FLAGS;
