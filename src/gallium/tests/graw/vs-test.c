@@ -384,13 +384,16 @@ static void init( void )
     * Also, no easy way of querying supported formats if the screen
     * cannot be created first.
     */
-   for (i = 0; 
-        window == NULL && formats[i] != PIPE_FORMAT_NONE;
-        i++) {
-      
-      screen = graw_create_window_and_screen(0,0,WIDTH,HEIGHT,
+   for (i = 0; formats[i] != PIPE_FORMAT_NONE; i++) {
+      screen = graw_create_window_and_screen(0, 0, 300, 300,
                                              formats[i],
                                              &window);
+      if (window && screen)
+         break;
+   }
+   if (!screen || !window) {
+      fprintf(stderr, "Unable to create window\n");
+      exit(1);
    }
    
    ctx = screen->context_create(screen, NULL);
