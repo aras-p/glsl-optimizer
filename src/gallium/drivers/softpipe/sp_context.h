@@ -77,7 +77,7 @@ struct softpipe_context {
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
    struct pipe_scissor_state scissor;
-   struct pipe_sampler_view *sampler_views[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_view *fragment_sampler_views[PIPE_MAX_SAMPLERS];
    struct pipe_sampler_view *vertex_sampler_views[PIPE_MAX_VERTEX_SAMPLERS];
    struct pipe_sampler_view *geometry_sampler_views[PIPE_MAX_GEOMETRY_SAMPLERS];
    struct pipe_viewport_state viewport;

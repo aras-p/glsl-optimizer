@@ -89,7 +89,7 @@ struct sp_sampler_variant
 
    /* Currently bound texture:
     */
-   const struct pipe_resource *texture;
+   const struct pipe_sampler_view *view;
    struct softpipe_tex_tile_cache *cache;
 
    unsigned processor;
@@ -132,9 +132,9 @@ struct sp_sampler_variant *
 sp_create_sampler_variant( const struct pipe_sampler_state *sampler,
                            const union sp_sampler_key key );
 
-void sp_sampler_variant_bind_texture( struct sp_sampler_variant *variant,
-                                      struct softpipe_tex_tile_cache *tex_cache,
-                                      const struct pipe_resource *tex );
+void sp_sampler_variant_bind_view( struct sp_sampler_variant *variant,
+                                   struct softpipe_tex_tile_cache *tex_cache,
+                                   const struct pipe_sampler_view *view );
 
 void sp_sampler_variant_destroy( struct sp_sampler_variant * );
 

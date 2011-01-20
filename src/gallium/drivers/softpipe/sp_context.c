@@ -106,7 +106,7 @@ softpipe_destroy( struct pipe_context *pipe )
 
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       sp_destroy_tex_tile_cache(softpipe->fragment_tex_cache[i]);
-      pipe_sampler_view_reference(&softpipe->sampler_views[i], NULL);
+      pipe_sampler_view_reference(&softpipe->fragment_sampler_views[i], NULL);
    }
 
    for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {

@@ -192,7 +192,8 @@ softpipe_set_fragment_sampler_views(struct pipe_context *pipe,
 
    /* Check for no-op */
    if (num == softpipe->num_sampler_views &&
-       !memcmp(softpipe->sampler_views, views, num * sizeof(struct pipe_sampler_view *)))
+       !memcmp(softpipe->fragment_sampler_views, views,
+               num * sizeof(struct pipe_sampler_view *)))
       return;
 
    draw_flush(softpipe->draw);
@@ -200,7 +201,7 @@ softpipe_set_fragment_sampler_views(struct pipe_context *pipe,
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       struct pipe_sampler_view *view = i < num ? views[i] : NULL;
 
-      pipe_sampler_view_reference(&softpipe->sampler_views[i], view);
+      pipe_sampler_view_reference(&softpipe->fragment_sampler_views[i], view);
       sp_tex_tile_cache_set_sampler_view(softpipe->fragment_tex_cache[i], view);
    }
 
@@ -342,33 +343,21 @@ softpipe_reset_sampler_variants(struct softpipe_context *softpipe)
     */
    for (i = 0; i <= softpipe->vs->max_sampler; i++) {
       if (softpipe->vertex_samplers[i]) {
-         struct pipe_resource *texture = NULL;
-
-         if (softpipe->vertex_sampler_views[i]) {
-            texture = softpipe->vertex_sampler_views[i]->texture;
-         }
-
          softpipe->tgsi.vert_samplers_list[i] = 
             get_sampler_variant( i,
                                  sp_sampler(softpipe->vertex_samplers[i]),
                                  softpipe->vertex_sampler_views[i],
                                  TGSI_PROCESSOR_VERTEX );
 
-         sp_sampler_variant_bind_texture( softpipe->tgsi.vert_samplers_list[i], 
-                                          softpipe->vertex_tex_cache[i],
-                                          texture );
+         sp_sampler_variant_bind_view( softpipe->tgsi.vert_samplers_list[i],
+                                       softpipe->vertex_tex_cache[i],
+                                       softpipe->vertex_sampler_views[i] );
       }
    }
 
    if (softpipe->gs) {
       for (i = 0; i <= softpipe->gs->max_sampler; i++) {
          if (softpipe->geometry_samplers[i]) {
-            struct pipe_resource *texture = NULL;
-
-            if (softpipe->geometry_sampler_views[i]) {
-               texture = softpipe->geometry_sampler_views[i]->texture;
-            }
-
             softpipe->tgsi.geom_samplers_list[i] =
                get_sampler_variant(
                   i,
@@ -376,31 +365,25 @@ softpipe_reset_sampler_variants(struct softpipe_context *softpipe)
                   softpipe->geometry_sampler_views[i],
                   TGSI_PROCESSOR_GEOMETRY );
 
-            sp_sampler_variant_bind_texture(
+            sp_sampler_variant_bind_view(
                softpipe->tgsi.geom_samplers_list[i],
                softpipe->geometry_tex_cache[i],
-               texture );
+               softpipe->geometry_sampler_views[i] );
          }
       }
    }
 
    for (i = 0; i <= softpipe->fs->info.file_max[TGSI_FILE_SAMPLER]; i++) {
       if (softpipe->sampler[i]) {
-         struct pipe_resource *texture = NULL;
-
-         if (softpipe->sampler_views[i]) {
-            texture = softpipe->sampler_views[i]->texture;
-         }
-
          softpipe->tgsi.frag_samplers_list[i] =
             get_sampler_variant( i,
                                  sp_sampler(softpipe->sampler[i]),
-                                 softpipe->sampler_views[i],
+                                 softpipe->fragment_sampler_views[i],
                                  TGSI_PROCESSOR_FRAGMENT );
 
-         sp_sampler_variant_bind_texture( softpipe->tgsi.frag_samplers_list[i], 
-                                          softpipe->fragment_tex_cache[i],
-                                          texture );
+         sp_sampler_variant_bind_view( softpipe->tgsi.frag_samplers_list[i],
+                                       softpipe->fragment_tex_cache[i],
+                                       softpipe->fragment_sampler_views[i] );
       }
    }
 }
