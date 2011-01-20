@@ -1809,7 +1809,6 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       }
    }
 
-   /* FINISHME: Mark 'in' variables at global scope as read-only. */
    if (qual->flags.q.constant || qual->flags.q.attribute
        || qual->flags.q.uniform
        || (qual->flags.q.varying && (state->target == fragment_shader)))
@@ -2206,6 +2205,8 @@ ast_declarator_list::hir(exec_list *instructions,
 			     mode, var->name, extra);
 	 }
       } else if (var->mode == ir_var_in) {
+         var->read_only = true;
+
 	 if (state->target == vertex_shader) {
 	    bool error_emitted = false;
 
