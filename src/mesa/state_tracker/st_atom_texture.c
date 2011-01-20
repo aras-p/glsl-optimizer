@@ -218,22 +218,29 @@ update_textures(struct st_context *st)
             continue;
          }
 
+         /* Determine the format of the texture sampler view */
 	 st_view_format = stObj->pt->format;
 	 {
-	    struct st_texture_image *firstImage;
-	    enum pipe_format firstImageFormat;
-	    firstImage = st_texture_image(stObj->base.Image[0][stObj->base.BaseLevel]);
+	    const struct st_texture_image *firstImage =
+               st_texture_image(stObj->base.Image[0][stObj->base.BaseLevel]);
+            const gl_format texFormat = firstImage->base.TexFormat;
+	    enum pipe_format firstImageFormat =
+               st_mesa_format_to_pipe_format(texFormat);
 
-	    firstImageFormat = st_mesa_format_to_pipe_format(firstImage->base.TexFormat);
 	    if ((stObj->base.sRGBDecode == GL_SKIP_DECODE_EXT) &&
-                (_mesa_get_format_color_encoding(firstImage->base.TexFormat) == GL_SRGB)) {
-	       firstImageFormat = st_mesa_format_to_pipe_format(_mesa_get_srgb_format_linear(firstImage->base.TexFormat));
+                (_mesa_get_format_color_encoding(texFormat) == GL_SRGB)) {
+               /* don't do sRGB->RGB conversion.  Interpret the texture
+                * texture data as linear values.
+                */
+               const gl_format linearFormat =
+                  _mesa_get_srgb_format_linear(texFormat);
+	       firstImageFormat = st_mesa_format_to_pipe_format(linearFormat);
 	    }
 
 	    if (firstImageFormat != stObj->pt->format)
 	       st_view_format = firstImageFormat;
-
 	 }
+
          st->state.num_textures = su + 1;
 
 	 /* if sampler view has changed dereference it */
