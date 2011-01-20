@@ -121,6 +121,11 @@ struct st_context;
 /*@}*/
 
 
+/** Extra draw modes beyond GL_POINTS, GL_TRIANGLE_FAN, etc */
+#define PRIM_OUTSIDE_BEGIN_END   (GL_POLYGON+1)
+#define PRIM_INSIDE_UNKNOWN_PRIM (GL_POLYGON+2)
+#define PRIM_UNKNOWN             (GL_POLYGON+3)
+
 
 /**
  * Shader stages. Note that these will become 5 with tessellation.
