@@ -777,10 +777,9 @@ void r200SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_format
 	struct radeon_framebuffer *rfb;
 	radeonTexObjPtr t;
 	uint32_t pitch_val;
-	uint32_t internalFormat, type, format;
+	uint32_t internalFormat, format;
 	gl_format texFormat;
 
-	type = GL_BGRA;
 	format = GL_UNSIGNED_BYTE;
 	internalFormat = (texture_format == __DRI_TEXTURE_FORMAT_RGB ? 3 : 4);
 
@@ -860,9 +859,20 @@ void r200SetTexBuffer2(__DRIcontext *pDRICtx, GLint target, GLint texture_format
 
         t->pp_txsize = ((rb->base.Width - 1) << RADEON_TEX_USIZE_SHIFT)
 		   | ((rb->base.Height - 1) << RADEON_TEX_VSIZE_SHIFT);
-        t->pp_txformat |= R200_TXFORMAT_NON_POWER2;
-	t->pp_txpitch = pitch_val;
-        t->pp_txpitch -= 32;
+
+	if (target == GL_TEXTURE_RECTANGLE_NV) {
+		t->pp_txformat |= R200_TXFORMAT_NON_POWER2;
+		t->pp_txpitch = pitch_val;
+		t->pp_txpitch -= 32;
+	} else {
+		t->pp_txformat &= ~(R200_TXFORMAT_WIDTH_MASK |
+				    R200_TXFORMAT_HEIGHT_MASK |
+				    R200_TXFORMAT_CUBIC_MAP_ENABLE |
+				    R200_TXFORMAT_F5_WIDTH_MASK |
+				    R200_TXFORMAT_F5_HEIGHT_MASK);
+		t->pp_txformat |= ((texImage->WidthLog2 << R200_TXFORMAT_WIDTH_SHIFT) |
+				   (texImage->HeightLog2 << R200_TXFORMAT_HEIGHT_SHIFT));
+	}
 
 	t->validated = GL_TRUE;
 	_mesa_unlock_texture(radeon->glCtx, texObj);
