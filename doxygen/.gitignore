@@ -6,6 +6,7 @@ core
 core_subset
 gallium
 glapi
+glsl
 main
 math
 math_subset
