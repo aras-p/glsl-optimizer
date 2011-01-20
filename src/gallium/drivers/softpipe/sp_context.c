@@ -91,10 +91,17 @@ softpipe_destroy( struct pipe_context *pipe )
    if (softpipe->draw)
       draw_destroy( softpipe->draw );
 
-   softpipe->quad.shade->destroy( softpipe->quad.shade );
-   softpipe->quad.depth_test->destroy( softpipe->quad.depth_test );
-   softpipe->quad.blend->destroy( softpipe->quad.blend );
-   softpipe->quad.pstipple->destroy( softpipe->quad.pstipple );
+   if (softpipe->quad.shade)
+      softpipe->quad.shade->destroy( softpipe->quad.shade );
+
+   if (softpipe->quad.depth_test)
+      softpipe->quad.depth_test->destroy( softpipe->quad.depth_test );
+
+   if (softpipe->quad.blend)
+      softpipe->quad.blend->destroy( softpipe->quad.blend );
+
+   if (softpipe->quad.pstipple)
+      softpipe->quad.pstipple->destroy( softpipe->quad.pstipple );
 
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
       sp_destroy_tile_cache(softpipe->cbuf_cache[i]);
@@ -262,13 +269,22 @@ softpipe_create_context( struct pipe_screen *screen,
       softpipe->cbuf_cache[i] = sp_create_tile_cache( &softpipe->pipe );
    softpipe->zsbuf_cache = sp_create_tile_cache( &softpipe->pipe );
 
-   for (i = 0; i < PIPE_MAX_SAMPLERS; i++)
+   for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       softpipe->fragment_tex_cache[i] = sp_create_tex_tile_cache( &softpipe->pipe );
+      if (!softpipe->fragment_tex_cache[i])
+         goto fail;
+   }
+
    for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
       softpipe->vertex_tex_cache[i] = sp_create_tex_tile_cache( &softpipe->pipe );
+      if (!softpipe->vertex_tex_cache[i])
+         goto fail;
    }
+
    for (i = 0; i < PIPE_MAX_GEOMETRY_SAMPLERS; i++) {
       softpipe->geometry_tex_cache[i] = sp_create_tex_tile_cache( &softpipe->pipe );
+      if (!softpipe->geometry_tex_cache[i])
+         goto fail;
    }
 
    softpipe->fs_machine = tgsi_exec_machine_create();
