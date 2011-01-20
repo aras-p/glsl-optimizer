@@ -511,6 +511,7 @@ GLboolean r700SetupFragmentProgram(struct gl_context * ctx)
     unsigned int ui, i;
     unsigned int unNumOfReg;
     unsigned int unBit;
+    unsigned int num_sq_ps_gprs;
     GLuint exportCount;
     GLboolean point_sprite = GL_FALSE;
 
@@ -620,6 +621,15 @@ GLboolean r700SetupFragmentProgram(struct gl_context * ctx)
     ui = (unNumOfReg < ui) ? ui : unNumOfReg;
 
     SETfield(r700->ps.SQ_PGM_RESOURCES_PS.u32All, ui, NUM_GPRS_shift, NUM_GPRS_mask);
+
+    num_sq_ps_gprs = ((r700->sq_config.SQ_GPR_RESOURCE_MGMT_1.u32All & NUM_PS_GPRS_mask) >> NUM_PS_GPRS_shift);
+
+    if(ui > num_sq_ps_gprs)
+    {
+        /* care! thich changes sq - needs idle state */
+        R600_STATECHANGE(context, sq);
+        SETfield(r700->sq_config.SQ_GPR_RESOURCE_MGMT_1.u32All, ui, NUM_PS_GPRS_shift, NUM_PS_GPRS_mask);
+    } 
 
     CLEARbit(r700->ps.SQ_PGM_RESOURCES_PS.u32All, UNCACHED_FIRST_INST_bit);
 
