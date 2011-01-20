@@ -1428,6 +1428,7 @@ yes)
             if test "x$enable_openvg" != xyes; then
                 AC_MSG_ERROR([cannot build vega state tracker without --enable-openvg])
             fi
+            have_st_vega="yes"
             ;;
         esac
 
@@ -1442,6 +1443,14 @@ yes)
         fi
     done
     GALLIUM_STATE_TRACKERS_DIRS="$state_trackers"
+
+    # append --enable-openvg/--enable-gallium-egl to --with-state-trackers
+    if test "x$have_st_vega" != xyes -a "x$enable_openvg" = xyes; then
+        AC_MSG_ERROR([--with-state-trackers specified but vega is missing])
+    fi
+    if test "x$HAVE_ST_EGL" != xyes -a "x$enable_gallium_egl" = xyes; then
+        AC_MSG_ERROR([--with-state-trackers specified but egl is missing])
+    fi
     ;;
 esac
 
