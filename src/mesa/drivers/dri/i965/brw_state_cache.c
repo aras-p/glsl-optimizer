@@ -431,8 +431,6 @@ brw_clear_cache(struct brw_context *brw, struct brw_cache *cache)
 void
 brw_state_cache_check_size(struct brw_context *brw)
 {
-   DBG("%s (n_items=%d)\n", __FUNCTION__, brw->cache.n_items);
-
    /* un-tuned guess.  Each object is generally a page, so 1000 of them is 4 MB of
     * state cache.
     */
