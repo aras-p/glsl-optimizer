@@ -27,7 +27,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
-#include <talloc.h>
 
 #include "ralloc.h"
 
@@ -39,28 +38,123 @@
 #define unlikely(x)     !!(x)
 #endif
 
+#define CANARY 0x5A1106
+
+struct ralloc_header
+{
+   /* A canary value used to determine whether a pointer is ralloc'd. */
+   unsigned canary;
+
+   struct ralloc_header *parent;
+
+   /* The first child (head of a linked list) */
+   struct ralloc_header *child;
+
+   /* Linked list of siblings */
+   struct ralloc_header *prev;
+   struct ralloc_header *next;
+
+   void (*destructor)(void *);
+};
+
+typedef struct ralloc_header ralloc_header;
+
+static void unlink_block(ralloc_header *info);
+static void unsafe_free(ralloc_header *info);
+
+static ralloc_header *
+get_header(const void *ptr)
+{
+   ralloc_header *info = (ralloc_header *) (((char *) ptr) -
+					    sizeof(ralloc_header));
+   assert(info->canary == CANARY);
+   return info;
+}
+
+#define PTR_FROM_HEADER(info) (((char *) info) + sizeof(ralloc_header))
+
+static void
+add_child(ralloc_header *parent, ralloc_header *info)
+{
+   if (parent != NULL) {
+      info->parent = parent;
+      info->next = parent->child;
+      parent->child = info;
+
+      if (info->next != NULL)
+	 info->next->prev = info;
+   }
+}
+
 void *
 ralloc_context(const void *ctx)
 {
-   return talloc_new(ctx);
+   return ralloc_size(ctx, 0);
 }
 
 void *
 ralloc_size(const void *ctx, size_t size)
 {
-   return talloc_size(ctx, size);
+   void *block = calloc(1, size + sizeof(ralloc_header));
+
+   ralloc_header *info = (ralloc_header *) block;
+   ralloc_header *parent = ctx != NULL ? get_header(ctx) : NULL;
+
+   add_child(parent, info);
+
+   info->canary = CANARY;
+
+   return PTR_FROM_HEADER(info);
 }
 
 void *
 rzalloc_size(const void *ctx, size_t size)
 {
-   return talloc_zero_size(ctx, size);
+   void *ptr = ralloc_size(ctx, size);
+   if (likely(ptr != NULL))
+      memset(ptr, 0, size);
+   return ptr;
+}
+
+/* helper function - assumes ptr != NULL */
+static void *
+resize(void *ptr, size_t size)
+{
+   ralloc_header *child, *old, *info;
+
+   old = get_header(ptr);
+   info = realloc(old, size + sizeof(ralloc_header));
+
+   if (info == NULL)
+      return NULL;
+
+   /* Update parent and sibling's links to the reallocated node. */
+   if (info != old && info->parent != NULL) {
+      if (info->parent->child == old)
+	 info->parent->child = info;
+
+      if (info->prev != NULL)
+	 info->prev->next = info;
+
+      if (info->next != NULL)
+	 info->next->prev = info;
+   }
+
+   /* Update child->parent links for all children */
+   for (child = info->child; child != NULL; child = child->next)
+      child->parent = info;
+
+   return PTR_FROM_HEADER(info);
 }
 
 void *
 reralloc_size(const void *ctx, void *ptr, size_t size)
 {
-   return talloc_realloc_size(ctx, ptr, size);
+   if (unlikely(ptr == NULL))
+      return ralloc_size(ctx, size);
+
+   assert(ralloc_parent(ptr) == ctx);
+   return resize(ptr, size);
 }
 
 void *
@@ -69,7 +163,7 @@ ralloc_array_size(const void *ctx, size_t size, unsigned count)
    if (count > SIZE_MAX/size)
       return NULL;
 
-   return talloc_array_size(ctx, size, count);
+   return ralloc_size(ctx, size * count);
 }
 
 void *
@@ -85,7 +179,7 @@ void *
 reralloc_array_size(const void *ctx, void *ptr, size_t size, unsigned count)
 {
    if (count > SIZE_MAX/size)
-      return false;
+      return NULL;
 
    return reralloc_size(ctx, ptr, size * count);
 }
@@ -93,71 +187,177 @@ reralloc_array_size(const void *ctx, void *ptr, size_t size, unsigned count)
 void
 ralloc_free(void *ptr)
 {
-   talloc_free(ptr);
+   ralloc_header *info;
+
+   if (ptr == NULL)
+      return;
+
+   info = get_header(ptr);
+   unlink_block(info);
+   unsafe_free(info);
+}
+
+static void
+unlink_block(ralloc_header *info)
+{
+   /* Unlink from parent & siblings */
+   if (info->parent != NULL) {
+      if (info->parent->child == info)
+	 info->parent->child = info->next;
+
+      if (info->prev != NULL)
+	 info->prev->next = info->next;
+
+      if (info->next != NULL)
+	 info->next->prev = info->prev;
+   }
+   info->parent = NULL;
+   info->prev = NULL;
+   info->next = NULL;
+}
+
+static void
+unsafe_free(ralloc_header *info)
+{
+   /* Recursively free any children...don't waste time unlinking them. */
+   ralloc_header *temp;
+   while (info->child != NULL) {
+      temp = info->child;
+      info->child = temp->next;
+      unsafe_free(temp);
+   }
+
+   /* Free the block itself.  Call the destructor first, if any. */
+   if (info->destructor != NULL)
+      info->destructor(PTR_FROM_HEADER(info));
+
+   free(info);
 }
 
 void
 ralloc_steal(const void *new_ctx, void *ptr)
 {
-   talloc_steal(new_ctx, ptr);
+   ralloc_header *info, *parent;
+
+   if (unlikely(ptr == NULL))
+      return;
+
+   info = get_header(ptr);
+   parent = get_header(new_ctx);
+
+   unlink_block(info);
+
+   add_child(parent, info);
 }
 
 void *
 ralloc_parent(const void *ptr)
 {
-   return talloc_parent(ptr);
+   ralloc_header *info;
+
+   if (unlikely(ptr == NULL))
+      return NULL;
+
+   info = get_header(ptr);
+   return PTR_FROM_HEADER(info->parent);
+}
+
+static void *autofree_context = NULL;
+
+static void
+autofree(void)
+{
+   ralloc_free(autofree_context);
 }
 
 void *
 ralloc_autofree_context(void)
 {
-   return talloc_autofree_context();
+   if (unlikely(autofree_context == NULL)) {
+      autofree_context = ralloc_context(NULL);
+      atexit(autofree);
+   }
+   return autofree_context;
 }
 
 void
 ralloc_set_destructor(const void *ptr, void(*destructor)(void *))
 {
-   talloc_set_destructor(ptr, (int(*)(void *)) destructor);
+   ralloc_header *info = get_header(ptr);
+   info->destructor = destructor;
 }
 
 char *
 ralloc_strdup(const void *ctx, const char *str)
 {
-   return talloc_strdup(ctx, str);
+   size_t n;
+   char *ptr;
+
+   if (unlikely(str == NULL))
+      return NULL;
+
+   n = strlen(str);
+   ptr = ralloc_array(ctx, char, n + 1);
+   memcpy(ptr, str, n);
+   ptr[n] = '\0';
+   return ptr;
 }
 
 char *
 ralloc_strndup(const void *ctx, const char *str, size_t max)
 {
-   return talloc_strndup(ctx, str, max);
+   size_t n;
+   char *ptr;
+
+   if (unlikely(str == NULL))
+      return NULL;
+
+   n = strlen(str);
+   if (n > max)
+      n = max;
+
+   ptr = ralloc_array(ctx, char, n + 1);
+   memcpy(ptr, str, n);
+   ptr[n] = '\0';
+   return ptr;
 }
+
+/* helper routine for strcat/strncat - n is the exact amount to copy */
+static bool
+cat(char **dest, const char *str, size_t n)
+{
+   char *both;
+   size_t existing_length;
+   assert(dest != NULL && *dest != NULL);
+
+   existing_length = strlen(*dest);
+   both = resize(*dest, existing_length + n + 1);
+   if (unlikely(both == NULL))
+      return false;
+
+   memcpy(both + existing_length, str, n);
+   both[existing_length + n] = '\0';
+
+   *dest = both;
+   return true;
+}
+
 
 bool
 ralloc_strcat(char **dest, const char *str)
 {
-   void *ptr;
-   assert(dest != NULL);
-   ptr = talloc_strdup_append(*dest, str);
-
-   if (unlikely(ptr == NULL))
-      return false;
-
-   *dest = ptr;
-   return true;
+   return cat(dest, str, strlen(str));
 }
 
 bool
 ralloc_strncat(char **dest, const char *str, size_t n)
 {
-   void *ptr;
-   assert(dest != NULL);
-   ptr = talloc_strndup_append(*dest, str, n);
+   /* Clamp n to the string length */
+   size_t str_length = strlen(str);
+   if (str_length < n)
+      n = str_length;
 
-   if (unlikely(ptr == NULL))
-      return false;
-
-   *dest = ptr;
-   return true;
+   return cat(dest, str, n);
 }
 
 char *
@@ -171,32 +371,70 @@ ralloc_asprintf(const void *ctx, const char *fmt, ...)
    return ptr;
 }
 
+/* Return the length of the string that would be generated by a printf-style
+ * format and argument list, not including the \0 byte.
+ */
+static size_t
+printf_length(const char *fmt, va_list untouched_args)
+{
+   int size;
+   char junk;
+
+   /* Make a copy of the va_list so the original caller can still use it */
+   va_list args;
+   va_copy(args, untouched_args);
+
+   size = vsnprintf(&junk, 1, fmt, args);
+   assert(size >= 0);
+
+   return size;
+}
+
 char *
 ralloc_vasprintf(const void *ctx, const char *fmt, va_list args)
 {
-   return talloc_vasprintf(ctx, fmt, args);
+   size_t size = printf_length(fmt, args) + 1;
+
+   char *ptr = ralloc_size(ctx, size);
+   if (ptr != NULL)
+      vsnprintf(ptr, size, fmt, args);
+
+   return ptr;
 }
 
 bool
 ralloc_asprintf_append(char **str, const char *fmt, ...)
 {
+   bool success;
    va_list args;
-
    va_start(args, fmt);
-   return ralloc_vasprintf_append(str, fmt, args);
+   success = ralloc_vasprintf_append(str, fmt, args);
    va_end(args);
+   return success;
 }
 
 bool
 ralloc_vasprintf_append(char **str, const char *fmt, va_list args)
 {
-   void *ptr;
-   assert(str != NULL);
-   ptr = talloc_vasprintf_append(*str, fmt, args);
+   size_t existing_length, new_length;
+   char *ptr;
 
+   assert(str != NULL);
+
+   if (unlikely(*str == NULL)) {
+      // Assuming a NULL context is probably bad, but it's expected behavior.
+      *str = ralloc_vasprintf(NULL, fmt, args);
+      return true;
+   }
+
+   existing_length = strlen(*str);
+   new_length = printf_length(fmt, args);
+
+   ptr = resize(*str, existing_length + new_length + 1);
    if (unlikely(ptr == NULL))
       return false;
 
+   vsnprintf(ptr + existing_length, new_length + 1, fmt, args);
    *str = ptr;
    return true;
 }

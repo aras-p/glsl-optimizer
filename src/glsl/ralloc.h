@@ -34,7 +34,14 @@
  * ralloc_free on any particular object to free it and all of its
  * children.
  *
- * This is currently a wrapper around talloc, but that will change.
+ * The conceptual working of ralloc was directly inspired by Andrew
+ * Tridgell's talloc, but ralloc is an independent implementation
+ * released under the MIT license and tuned for Mesa.
+ *
+ * The talloc implementation is available under the GNU Lesser
+ * General Public License (GNU LGPL), version 3 or later. It is
+ * more sophisticated than ralloc in that it includes reference
+ * counting and debugging features. See: http://talloc.samba.org/
  */
 
 #ifndef RALLOC_H
