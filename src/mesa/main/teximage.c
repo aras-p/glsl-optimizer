@@ -183,6 +183,15 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
          ; /* fallthrough */
    }
 
+   if (ctx->Extensions.EXT_texture_format_BGRA8888) {
+      switch (internalFormat) {
+         case GL_BGRA_EXT:
+            return GL_RGBA;
+         default:
+            ; /* fallthrough */
+      }
+   }
+
    if (ctx->Extensions.EXT_paletted_texture) {
       switch (internalFormat) {
          case GL_COLOR_INDEX:
