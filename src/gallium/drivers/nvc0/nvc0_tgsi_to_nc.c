@@ -1388,16 +1388,6 @@ emit_tex(struct bld_context *bld, uint opcode, int tic, int tsc,
    return nvi;
 }
 
-/*
-static boolean
-bld_is_constant(struct nv_value *val)
-{
-   if (val->reg.file == NV_FILE_IMM)
-      return TRUE;
-   return val->insn && nvCG_find_constant(val->insn->src[0]);
-}
-*/
-
 static void
 bld_tex(struct bld_context *bld, struct nv_value *dst0[4],
         const struct tgsi_full_instruction *insn)

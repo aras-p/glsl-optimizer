@@ -310,7 +310,7 @@ struct nv_reg {
       int32_t s32;
       int64_t s64;
       uint64_t u64;
-      uint32_t u32;
+      uint32_t u32; /* expected to be 0 for $r63 */
       float f32;
       double f64;
    } imm;

@@ -103,6 +103,12 @@ nvc0_pc_replace_value(struct nv_pc *pc,
    return n;
 }
 
+static INLINE boolean
+is_gpr63(struct nv_value *val)
+{
+   return (val->reg.file == NV_FILE_GPR && val->reg.id == 63);
+}
+
 struct nv_value *
 nvc0_pc_find_constant(struct nv_ref *ref)
 {
@@ -116,7 +122,7 @@ nvc0_pc_find_constant(struct nv_ref *ref)
       assert(!src->insn->src[0]->mod);
       src = src->insn->src[0]->value;
    }
-   if ((src->reg.file == NV_FILE_IMM) ||
+   if ((src->reg.file == NV_FILE_IMM) || is_gpr63(src) ||
        (src->insn &&
         src->insn->opcode == NV_OP_LD &&
         src->insn->src[0]->value->reg.file >= NV_FILE_MEM_C(0) &&
@@ -130,7 +136,7 @@ nvc0_pc_find_immediate(struct nv_ref *ref)
 {
    struct nv_value *src = nvc0_pc_find_constant(ref);
 
-   return (src && src->reg.file == NV_FILE_IMM) ? src : NULL;
+   return (src && (src->reg.file == NV_FILE_IMM || is_gpr63(src))) ? src : NULL;
 }
 
 static void
