@@ -511,6 +511,14 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
       return default_rgba_format( screen, target, sample_count, bindings,
                                   geom_flags );
 
+   case GL_BGRA:
+      if (screen->is_format_supported( screen, PIPE_FORMAT_B8G8R8A8_UNORM,
+                                       target, sample_count, bindings,
+                                       geom_flags ))
+         return PIPE_FORMAT_B8G8R8A8_UNORM;
+      return default_rgba_format( screen, target, sample_count, bindings,
+                                  geom_flags );
+
    case 3:
    case GL_RGB:
    case GL_RGB8:
@@ -1032,7 +1040,8 @@ st_ChooseTextureFormat(struct gl_context *ctx, GLint internalFormat,
    boolean want_renderable =
       internalFormat == 3 || internalFormat == 4 ||
       internalFormat == GL_RGB || internalFormat == GL_RGBA ||
-      internalFormat == GL_RGB8 || internalFormat == GL_RGBA8;
+      internalFormat == GL_RGB8 || internalFormat == GL_RGBA8 ||
+      internalFormat == GL_BGRA;
 
    return st_ChooseTextureFormat_renderable(ctx, internalFormat,
 					    format, type, want_renderable);
