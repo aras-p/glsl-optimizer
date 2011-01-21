@@ -148,12 +148,14 @@ nvc0_bufctx_emit_relocs(struct nvc0_context *nvc0)
 {
    struct resident *rsd;
    struct util_dynarray *array;
-   unsigned ctx, i;
+   unsigned ctx, i, n;
 
    for (ctx = 0; ctx < NVC0_BUFCTX_COUNT; ++ctx) {
       array = &nvc0->residents[ctx];
 
-      for (i = 0; i < array->size / sizeof(struct resident); ++i) {
+      n = array->size / sizeof(struct resident);
+      MARK_RING(nvc0->screen->base.channel, n, n);
+      for (i = 0; i < n; ++i) {
          rsd = util_dynarray_element(array, struct resident, i);
 
          nvc0_resource_validate(rsd->res, rsd->flags);

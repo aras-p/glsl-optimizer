@@ -55,6 +55,7 @@ nvc0_fence_emit(struct nvc0_fence *fence)
 
    assert(fence->state == NVC0_FENCE_STATE_AVAILABLE);
 
+   MARK_RING (chan, 5, 2);
    BEGIN_RING(chan, RING_3D(QUERY_ADDRESS_HIGH), 4);
    OUT_RELOCh(chan, screen->fence.bo, 0, NOUVEAU_BO_WR);
    OUT_RELOCl(chan, screen->fence.bo, 0, NOUVEAU_BO_WR);

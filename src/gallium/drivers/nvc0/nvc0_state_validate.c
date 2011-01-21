@@ -25,6 +25,7 @@ nvc0_validate_zcull(struct nvc0_context *nvc0)
     else
        width = fb->width;
 
+    MARK_RING (chan, 23, 4);
     BEGIN_RING(chan, RING_3D_(0x1590), 1); /* ZCULL_REGION_INDEX (bits 0x3f) */
     OUT_RING  (chan, 0);
     BEGIN_RING(chan, RING_3D_(0x07e8), 2); /* ZCULL_ADDRESS_A_HIGH */
@@ -66,12 +67,14 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
     OUT_RING  (chan, fb->width << 16);
     OUT_RING  (chan, fb->height << 16);
 
+    MARK_RING(chan, 9 * fb->nr_cbufs, 2 * fb->nr_cbufs);
+
     for (i = 0; i < fb->nr_cbufs; ++i) {
         struct nvc0_miptree *mt = nvc0_miptree(fb->cbufs[i]->texture);
         struct nvc0_surface *sf = nvc0_surface(fb->cbufs[i]);
         struct nouveau_bo *bo = mt->base.bo;
         uint32_t offset = sf->offset;
-        
+
         BEGIN_RING(chan, RING_3D(RT_ADDRESS_HIGH(i)), 8);
         OUT_RELOCh(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
         OUT_RELOCl(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
@@ -93,7 +96,8 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         struct nouveau_bo *bo = mt->base.bo;
         int unk = mt->base.base.target == PIPE_TEXTURE_2D;
         uint32_t offset = sf->offset;
-        
+
+        MARK_RING (chan, 12, 2);
         BEGIN_RING(chan, RING_3D(ZETA_ADDRESS_HIGH), 5);
         OUT_RELOCh(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
         OUT_RELOCl(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
@@ -238,6 +242,7 @@ nvc0_validate_clip(struct nvc0_context *nvc0)
    if (nvc0->clip.nr) {
       struct nouveau_bo *bo = nvc0->screen->uniforms;
 
+      MARK_RING (chan, 6 + nvc0->clip.nr * 4, 2);
       BEGIN_RING(chan, RING_3D(CB_SIZE), 3);
       OUT_RING  (chan, 256);
       OUT_RELOCh(chan, bo, 5 << 16, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
@@ -340,6 +345,7 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
                                      NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 
          if (rebind) {
+            MARK_RING (chan, 4, 2);
             BEGIN_RING(chan, RING_3D(CB_SIZE), 3);
             OUT_RING  (chan, align(res->base.width0, 0x100));
             OUT_RELOCh(chan, bo, base, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
@@ -357,6 +363,7 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
             }
             nr = MIN2(MIN2(nr - 6, words), NV04_PFIFO_MAX_PACKET_LEN - 1);
 
+            MARK_RING (chan, nr + 5, 2);
             BEGIN_RING(chan, RING_3D(CB_SIZE), 3);
             OUT_RING  (chan, align(res->base.width0, 0x100));
             OUT_RELOCh(chan, bo, base, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);

@@ -227,6 +227,7 @@ nvc0_update_user_vbufs(struct nvc0_context *nvc0)
       }
       offset = vb->buffer_offset + ve->src_offset;
 
+      MARK_RING (chan, 6, 4);
       BEGIN_RING_1I(chan, RING_3D(VERTEX_ARRAY_SELECT), 5);
       OUT_RING  (chan, i);
       OUT_RESRCh(chan, buf, size - 1, NOUVEAU_BO_RD);
@@ -292,6 +293,7 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
       size = vb->buffer->width0;
       offset = ve->pipe.src_offset + vb->buffer_offset;
 
+      MARK_RING (chan, 8, 4);
       BEGIN_RING(chan, RING_3D(VERTEX_ARRAY_FETCH(i)), 1);
       OUT_RING  (chan, (1 << 12) | vb->stride);
       BEGIN_RING_1I(chan, RING_3D(VERTEX_ARRAY_SELECT), 5);
