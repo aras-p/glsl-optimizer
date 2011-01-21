@@ -240,7 +240,7 @@ check_swap_src_0_1(struct nv_instruction *nvi)
    struct nv_ref *src0 = nvi->src[0];
    struct nv_ref *src1 = nvi->src[1];
 
-   if (!nv_op_commutative(nvi->opcode))
+   if (!nv_op_commutative(nvi->opcode) && NV_BASEOP(nvi->opcode) != NV_OP_SET)
       return;
    assert(src0 && src1 && src0->value && src1->value);
 
