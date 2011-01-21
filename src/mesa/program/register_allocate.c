@@ -120,7 +120,7 @@ ra_add_conflict_list(struct ra_regs *regs, unsigned int r1, unsigned int r2)
 
    if (reg1->conflict_list_size == reg1->num_conflicts) {
       reg1->conflict_list_size *= 2;
-      reg1->conflict_list = talloc_realloc(regs,
+      reg1->conflict_list = talloc_realloc(regs->regs,
 					   reg1->conflict_list,
 					   unsigned int,
 					   reg1->conflict_list_size);
@@ -143,7 +143,7 @@ ra_alloc_reg_class(struct ra_regs *regs)
 {
    struct ra_class *class;
 
-   regs->classes = talloc_realloc(regs, regs->classes,
+   regs->classes = talloc_realloc(regs->regs, regs->classes,
 				  struct ra_class *,
 				  regs->class_count + 1);
 
