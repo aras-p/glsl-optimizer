@@ -37,6 +37,8 @@
 
 #include "tgsi/tgsi_scan.h"
 
+#include "util/u_slab.h"
+
 
 struct i915_winsys;
 struct i915_winsys_buffer;
@@ -134,7 +136,6 @@ struct i915_state
    unsigned immediate[I915_MAX_IMMEDIATE];
    unsigned dynamic[I915_MAX_DYNAMIC];
 
-   float constants[PIPE_SHADER_TYPES][I915_MAX_CONSTANT][4];
    /** number of constants passed in through a constant buffer */
    uint num_user_constants[PIPE_SHADER_TYPES];
 
@@ -212,7 +213,6 @@ struct i915_context {
    struct pipe_blend_color blend_color;
    struct pipe_stencil_ref stencil_ref;
    struct pipe_clip_state clip;
-   /* XXX unneded */
    struct pipe_resource *constants[PIPE_SHADER_TYPES];
    struct pipe_framebuffer_state framebuffer;
    struct pipe_poly_stipple poly_stipple;
@@ -237,6 +237,8 @@ struct i915_context {
 
    struct i915_state current;
    unsigned hardware_dirty;
+
+   struct util_slab_mempool transfer_pool;
 };
 
 /* A flag for each state_tracker state object:
@@ -253,9 +255,11 @@ struct i915_context {
 #define I915_NEW_DEPTH_STENCIL 0x200
 #define I915_NEW_SAMPLER       0x400
 #define I915_NEW_SAMPLER_VIEW  0x800
-#define I915_NEW_CONSTANTS     0x1000
-#define I915_NEW_VBO           0x2000
-#define I915_NEW_VS            0x4000
+#define I915_NEW_VS_CONSTANTS  0x1000
+#define I915_NEW_FS_CONSTANTS  0x2000
+#define I915_NEW_GS_CONSTANTS  0x4000
+#define I915_NEW_VBO           0x8000
+#define I915_NEW_VS            0x10000
 
 
 /* Driver's internally generated state flags:

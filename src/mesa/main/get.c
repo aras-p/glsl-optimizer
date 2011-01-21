@@ -317,6 +317,7 @@ EXTRA_EXT2(ARB_vertex_program, ARB_fragment_program);
 EXTRA_EXT(ARB_vertex_buffer_object);
 EXTRA_EXT(ARB_geometry_shader4);
 EXTRA_EXT(ARB_copy_buffer);
+EXTRA_EXT(EXT_framebuffer_sRGB);
 
 static const int
 extra_ARB_vertex_program_ARB_fragment_program_NV_vertex_program[] = {
@@ -1237,6 +1238,10 @@ static const struct value_desc values[] = {
    { GL_MAJOR_VERSION, CONTEXT_INT(VersionMajor), extra_version_30 },
    { GL_MINOR_VERSION, CONTEXT_INT(VersionMinor), extra_version_30  },
    { GL_CONTEXT_FLAGS, CONTEXT_INT(Const.ContextFlags), extra_version_30  },
+
+   /* GL3.0 / GL_EXT_framebuffer_sRGB */
+   { GL_FRAMEBUFFER_SRGB_EXT, CONTEXT_BOOL(Color.sRGBEnabled), extra_EXT_framebuffer_sRGB },
+   { GL_FRAMEBUFFER_SRGB_CAPABLE_EXT, BUFFER_INT(Visual.sRGBCapable), extra_EXT_framebuffer_sRGB },
 
    /* GL 3.1 */
    /* NOTE: different enum values for GL_PRIMITIVE_RESTART_NV

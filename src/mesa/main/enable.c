@@ -968,6 +968,12 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          }
          break;
 
+      /* GL3.0 - GL_framebuffer_sRGB */
+      case GL_FRAMEBUFFER_SRGB_EXT:
+	 CHECK_EXTENSION(EXT_framebuffer_sRGB, cap);
+	 ctx->Color.sRGBEnabled = state;
+	 break;
+
       default:
          goto invalid_enum_error;
    }
@@ -1479,6 +1485,11 @@ _mesa_IsEnabled( GLenum cap )
             goto invalid_enum_error;
          }
          return ctx->Array.PrimitiveRestart;
+
+      /* GL3.0 - GL_framebuffer_sRGB */
+      case GL_FRAMEBUFFER_SRGB_EXT:
+	 CHECK_EXTENSION(EXT_framebuffer_sRGB);
+	 return ctx->Color.sRGBEnabled;
 
       default:
          goto invalid_enum_error;

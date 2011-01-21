@@ -60,6 +60,38 @@ i915_buffer_destroy(struct pipe_screen *screen,
 }
 
 
+static struct pipe_transfer *
+i915_get_transfer(struct pipe_context *pipe,
+                  struct pipe_resource *resource,
+                  unsigned level,
+                  unsigned usage,
+                  const struct pipe_box *box)
+{
+   struct i915_context *i915 = i915_context(pipe);
+   struct pipe_transfer *transfer = util_slab_alloc(&i915->transfer_pool);
+
+   if (transfer == NULL)
+      return NULL;
+
+   transfer->resource = resource;
+   transfer->level = level;
+   transfer->usage = usage;
+   transfer->box = *box;
+
+   /* Note strides are zero, this is ok for buffers, but not for
+    * textures 2d & higher at least. 
+    */
+   return transfer;
+}
+
+static void
+i915_transfer_destroy(struct pipe_context *pipe,
+                      struct pipe_transfer *transfer)
+{
+   struct i915_context *i915 = i915_context(pipe);
+   util_slab_free(&i915->transfer_pool, transfer);
+}
+
 static void *
 i915_buffer_transfer_map( struct pipe_context *pipe,
                           struct pipe_transfer *transfer )
@@ -92,8 +124,8 @@ struct u_resource_vtbl i915_buffer_vtbl =
    i915_buffer_get_handle,	     /* get_handle */
    i915_buffer_destroy,		     /* resource_destroy */
    NULL,			     /* is_resource_referenced */
-   u_default_get_transfer,	     /* get_transfer */
-   u_default_transfer_destroy,	     /* transfer_destroy */
+   i915_get_transfer,		     /* get_transfer */
+   i915_transfer_destroy,	     /* transfer_destroy */
    i915_buffer_transfer_map,	     /* transfer_map */
    u_default_transfer_flush_region,  /* transfer_flush_region */
    u_default_transfer_unmap,	     /* transfer_unmap */
@@ -115,8 +147,7 @@ i915_buffer_create(struct pipe_screen *screen,
    buf->b.vtbl = &i915_buffer_vtbl;
    pipe_reference_init(&buf->b.b.reference, 1);
    buf->b.b.screen = screen;
-
-   buf->data = MALLOC(template->width0);
+   buf->data = align_malloc(template->width0, 16);
    buf->free_on_destroy = TRUE;
 
    if (!buf->data)

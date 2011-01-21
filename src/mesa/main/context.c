@@ -534,8 +534,17 @@ init_program_limits(GLenum type, struct gl_program_constants *prog)
    prog->MediumFloat.RangeMax = 127;
    prog->MediumFloat.Precision = 23;
    prog->LowFloat = prog->HighFloat = prog->MediumFloat;
-   /* assume ints are stored as floats for now */
-   prog->LowInt = prog->MediumInt = prog->HighInt = prog->MediumFloat;
+
+   /* Assume ints are stored as floats for now, since this is the least-common
+    * denominator.  The OpenGL ES spec implies (page 132) that the precision
+    * of integer types should be 0.  Practically speaking, IEEE
+    * single-precision floating point values can only store integers in the
+    * range [-0x01000000, 0x01000000] without loss of precision.
+    */
+   prog->MediumInt.RangeMin = 24;
+   prog->MediumInt.RangeMax = 24;
+   prog->MediumInt.Precision = 0;
+   prog->LowInt = prog->HighInt = prog->MediumInt;
 }
 
 

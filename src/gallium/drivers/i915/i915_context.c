@@ -51,6 +51,14 @@ i915_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    struct draw_context *draw = i915->draw;
    void *mapped_indices = NULL;
    unsigned i;
+   unsigned cbuf_dirty;
+
+
+   /*
+    * Ack vs contants here, helps ipers a lot.
+    */
+   cbuf_dirty = i915->dirty & I915_NEW_VS_CONSTANTS;
+   i915->dirty &= ~I915_NEW_VS_CONSTANTS;
 
    if (i915->dirty)
       i915_update_derived(i915);
@@ -70,10 +78,12 @@ i915_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       mapped_indices = i915_buffer(i915->index_buffer.buffer)->data;
    draw_set_mapped_index_buffer(draw, mapped_indices);
 
-   draw_set_mapped_constant_buffer(draw, PIPE_SHADER_VERTEX, 0,
-                                   i915->current.constants[PIPE_SHADER_VERTEX],
-                                   (i915->current.num_user_constants[PIPE_SHADER_VERTEX] * 
-                                      4 * sizeof(float)));
+   if (cbuf_dirty) {
+      draw_set_mapped_constant_buffer(draw, PIPE_SHADER_VERTEX, 0,
+                                      i915_buffer(i915->constants[PIPE_SHADER_VERTEX])->data,
+                                      (i915->current.num_user_constants[PIPE_SHADER_VERTEX] * 
+                                         4 * sizeof(float)));
+   }
 
    /*
     * Do the drawing
@@ -117,6 +127,11 @@ static void i915_destroy(struct pipe_context *pipe)
    }
    pipe_surface_reference(&i915->framebuffer.zsbuf, NULL);
 
+   /* unbind constant buffers */
+   for (i = 0; i < PIPE_SHADER_TYPES; i++) {
+      pipe_resource_reference(&i915->constants[i], NULL);
+   }
+
    FREE(i915);
 }
 
@@ -139,6 +154,10 @@ i915_create_context(struct pipe_screen *screen, void *priv)
    i915->base.clear = i915_clear;
 
    i915->base.draw_vbo = i915_draw_vbo;
+
+   /* init this before draw */
+   util_slab_create(&i915->transfer_pool, sizeof(struct pipe_transfer),
+                    16, UTIL_SLAB_SINGLETHREADED);
 
    /*
     * Create drawing context and plug our rendering stage into it.

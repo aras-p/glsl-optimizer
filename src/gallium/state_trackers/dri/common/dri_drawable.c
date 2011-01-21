@@ -233,6 +233,7 @@ const __DRItexBufferExtension driTexBufferExtension = {
     { __DRI_TEX_BUFFER, __DRI_TEX_BUFFER_VERSION },
    dri_set_tex_buffer,
    dri_set_tex_buffer2,
+   NULL,
 };
 
 /**

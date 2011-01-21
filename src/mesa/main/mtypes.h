@@ -524,6 +524,9 @@ struct gl_config
    GLint bindToMipmapTexture;
    GLint bindToTextureTargets;
    GLint yInverted;
+
+   /* EXT_framebuffer_sRGB */
+   GLint sRGBCapable;
 };
 
 
@@ -754,6 +757,8 @@ struct gl_colorbuffer_attrib
 
    GLenum ClampFragmentColor; /**< GL_TRUE, GL_FALSE or GL_FIXED_ONLY_ARB */
    GLenum ClampReadColor;     /**< GL_TRUE, GL_FALSE or GL_FIXED_ONLY_ARB */
+
+   GLboolean sRGBEnabled;	/**< Framebuffer sRGB blending/updating requested */
 };
 
 

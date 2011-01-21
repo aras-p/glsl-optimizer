@@ -38,7 +38,7 @@ static void radeonQueryGetResult(struct gl_context *ctx, struct gl_query_object 
 	radeonContextPtr radeon = RADEON_CONTEXT(ctx);
 	struct radeon_query_object *query = (struct radeon_query_object *)q;
         uint32_t *result;
-	int i;
+	int i, max_idx;
 
 	radeon_print(RADEON_STATE, RADEON_VERBOSE,
 			"%s: query id %d, result %d\n",
@@ -56,7 +56,11 @@ static void radeonQueryGetResult(struct gl_context *ctx, struct gl_query_object 
 		 * hw writes zpass end counts to qwords 1, 3, 5, 7.
 		 * then we substract. MSB is the valid bit.
 		 */
-		for (i = 0; i < 32; i += 4) {
+		if (radeon->radeonScreen->chip_family >= CHIP_FAMILY_CEDAR)
+			max_idx = 8 * 4; /* 8 DB's */
+		else
+			max_idx = 4 * 4; /* 4 DB's for r600, r700 */
+		for (i = 0; i < max_idx; i += 4) {
 			uint64_t start = (uint64_t)LE32_TO_CPU(result[i]) |
 					 (uint64_t)LE32_TO_CPU(result[i + 1]) << 32;
 			uint64_t end = (uint64_t)LE32_TO_CPU(result[i + 2]) |

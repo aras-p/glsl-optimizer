@@ -168,6 +168,20 @@ i915CreateContext(int api,
       MIN2(ctx->Const.FragmentProgram.MaxNativeParameters,
 	   ctx->Const.FragmentProgram.MaxEnvParams);
 
+   /* i915 stores all values in single-precision floats.  Values aren't set
+    * for other program targets because software is used for those targets.
+    */
+   ctx->Const.FragmentProgram.MediumFloat.RangeMin = 127;
+   ctx->Const.FragmentProgram.MediumFloat.RangeMax = 127;
+   ctx->Const.FragmentProgram.MediumFloat.Precision = 23;
+   ctx->Const.FragmentProgram.LowFloat = ctx->Const.FragmentProgram.HighFloat =
+      ctx->Const.FragmentProgram.MediumFloat;
+   ctx->Const.FragmentProgram.MediumInt.RangeMin = 24;
+   ctx->Const.FragmentProgram.MediumInt.RangeMax = 24;
+   ctx->Const.FragmentProgram.MediumInt.Precision = 0;
+   ctx->Const.FragmentProgram.LowInt = ctx->Const.FragmentProgram.HighInt =
+      ctx->Const.FragmentProgram.MediumInt;
+
    ctx->FragmentProgram._MaintainTexEnvProgram = GL_TRUE;
 
    /* FINISHME: Are there other options that should be enabled for software

@@ -1,6 +1,10 @@
 File: docs/README.WIN32
 
-Last updated: Apr 25, 2007 - Karl Schultz - kschultz@users.sourceforge.net
+Last updated: Apr 25, 2007
+
+NOTE: This information only applies to Mesa 7.8 and older.  Nowadays
+it's probably better to use Scons to build for Windows.
+
 
 Quick Start
 ----- -----
@@ -130,11 +134,5 @@ change all the gl* symbols to mgl*.  Because this is easy to do with a
 global replace operation in a text editor, no additional mangled
 version of mesa.def is maintained or shipped.
 
-If you have a Windows-related build problem or question, it is
-probably better to direct it to me (kschultz@users.sourceforge.net),
-rather than directly to the other Mesa developers.  I will help you as
-much as I can.  I also monitor the Mesa mailing lists and will answer
-questions in this area there as well.
-
-
-Karl Schultz
+If you have a Windows-related build problem or question, please post
+to the mesa-dev or mesa-users list.
