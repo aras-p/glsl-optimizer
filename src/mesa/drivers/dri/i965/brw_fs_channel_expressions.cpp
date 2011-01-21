@@ -141,7 +141,7 @@ ir_channel_expressions_visitor::visit_leave(ir_assignment *ir)
       return visit_continue;
 
    if (!this->mem_ctx)
-      this->mem_ctx = talloc_parent(ir);
+      this->mem_ctx = ralloc_parent(ir);
 
    for (i = 0; i < expr->get_num_operands(); i++) {
       if (expr->operands[i]->type->is_vector()) {

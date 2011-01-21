@@ -92,7 +92,7 @@ ir_reader::read(exec_list *instructions, const char *src, bool scan_for_protos)
    }
 
    read_instructions(instructions, expr, NULL);
-   talloc_free(expr);
+   ralloc_free(expr);
 
    if (debug)
       validate_ir_tree(instructions);
@@ -106,21 +106,19 @@ ir_reader::ir_read_error(s_expression *expr, const char *fmt, ...)
    state->error = true;
 
    if (state->current_function != NULL)
-      state->info_log = talloc_asprintf_append(state->info_log,
-			   "In function %s:\n",
-			   state->current_function->function_name());
-   state->info_log = talloc_strdup_append(state->info_log, "error: ");
+      ralloc_asprintf_append(&state->info_log, "In function %s:\n",
+			     state->current_function->function_name());
+   ralloc_strcat(&state->info_log, "error: ");
 
    va_start(ap, fmt);
-   state->info_log = talloc_vasprintf_append(state->info_log, fmt, ap);
+   ralloc_vasprintf_append(&state->info_log, fmt, ap);
    va_end(ap);
-   state->info_log = talloc_strdup_append(state->info_log, "\n");
+   ralloc_strcat(&state->info_log, "\n");
 
    if (expr != NULL) {
-      state->info_log = talloc_strdup_append(state->info_log,
-					     "...in this context:\n   ");
+      ralloc_strcat(&state->info_log, "...in this context:\n   ");
       expr->print();
-      state->info_log = talloc_strdup_append(state->info_log, "\n\n");
+      ralloc_strcat(&state->info_log, "\n\n");
    }
 }
 

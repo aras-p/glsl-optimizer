@@ -190,7 +190,7 @@ dead_code_local_basic_block(ir_instruction *first,
    bool *out_progress = (bool *)data;
    bool progress = false;
 
-   void *ctx = talloc_new(NULL);
+   void *ctx = ralloc_context(NULL);
    /* Safe looping, since process_assignment */
    for (ir = first, ir_next = (ir_instruction *)first->next;;
 	ir = ir_next, ir_next = (ir_instruction *)ir->next) {
@@ -212,7 +212,7 @@ dead_code_local_basic_block(ir_instruction *first,
 	 break;
    }
    *out_progress = progress;
-   talloc_free(ctx);
+   ralloc_free(ctx);
 }
 
 /**

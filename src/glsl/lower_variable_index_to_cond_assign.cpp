@@ -54,7 +54,7 @@ struct assignment_generator
       /* Just clone the rest of the deref chain when trying to get at the
        * underlying variable.
        */
-      void *mem_ctx = talloc_parent(base_ir);
+      void *mem_ctx = ralloc_parent(base_ir);
       ir_dereference *element =
 	 new(mem_ctx) ir_dereference_array(this->array->clone(mem_ctx, NULL),
 					   new(mem_ctx) ir_constant(i));
@@ -91,7 +91,7 @@ struct switch_generator
 	linear_sequence_max_length(linear_sequence_max_length),
 	condition_components(condition_components)
    {
-      this->mem_ctx = talloc_parent(index);
+      this->mem_ctx = ralloc_parent(index);
    }
 
    void linear_sequence(unsigned begin, unsigned end, exec_list *list)
@@ -275,7 +275,7 @@ public:
          ? orig_deref->array->type->length
          : orig_deref->array->type->matrix_columns;
 
-      void *const mem_ctx = talloc_parent(base_ir);
+      void *const mem_ctx = ralloc_parent(base_ir);
 
       /* Temporary storage for either the result of the dereference of
        * the array, or the RHS that's being assigned into the
@@ -342,7 +342,7 @@ public:
       if (needs_lowering(orig_deref)) {
          ir_variable* var = convert_dereference_array(orig_deref, 0);
          assert(var);
-         *pir = new(talloc_parent(base_ir)) ir_dereference_variable(var);
+         *pir = new(ralloc_parent(base_ir)) ir_dereference_variable(var);
          this->progress = true;
       }
    }

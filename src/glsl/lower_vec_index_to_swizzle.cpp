@@ -74,7 +74,7 @@ ir_vec_index_to_swizzle_visitor::convert_vec_index_to_swizzle(ir_rvalue *ir)
    if (!ir_constant)
       return ir;
 
-   void *ctx = talloc_parent(ir);
+   void *ctx = ralloc_parent(ir);
    this->progress = true;
    return new(ctx) ir_swizzle(deref->array,
 			      ir_constant->value.i[0], 0, 0, 0, 1);

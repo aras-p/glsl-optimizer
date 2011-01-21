@@ -54,13 +54,13 @@ class ir_variable_refcount_visitor : public ir_hierarchical_visitor {
 public:
    ir_variable_refcount_visitor(void)
    {
-      this->mem_ctx = talloc_new(NULL);
+      this->mem_ctx = ralloc_context(NULL);
       this->variable_list.make_empty();
    }
 
    ~ir_variable_refcount_visitor(void)
    {
-      talloc_free(this->mem_ctx);
+      ralloc_free(this->mem_ctx);
    }
 
    virtual ir_visitor_status visit(ir_variable *);

@@ -105,13 +105,13 @@ extern ir_to_mesa_src_reg ir_to_mesa_undef;
 
 class ir_to_mesa_instruction : public exec_node {
 public:
-   /* Callers of this talloc-based new need not call delete. It's
-    * easier to just talloc_free 'ctx' (or any of its ancestors). */
+   /* Callers of this ralloc-based new need not call delete. It's
+    * easier to just ralloc_free 'ctx' (or any of its ancestors). */
    static void* operator new(size_t size, void *ctx)
    {
       void *node;
 
-      node = talloc_zero_size(ctx, size);
+      node = rzalloc_size(ctx, size);
       assert(node != NULL);
 
       return node;
@@ -318,7 +318,7 @@ fail_link(struct gl_shader_program *prog, const char *fmt, ...)
 {
    va_list args;
    va_start(args, fmt);
-   prog->InfoLog = talloc_vasprintf_append(prog->InfoLog, fmt, args);
+   ralloc_vasprintf_append(&prog->InfoLog, fmt, args);
    va_end(args);
 
    prog->LinkStatus = GL_FALSE;
@@ -1570,7 +1570,7 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 			     this->result, src_reg_for_float(element_size));
       }
 
-      src_reg.reladdr = talloc(mem_ctx, ir_to_mesa_src_reg);
+      src_reg.reladdr = ralloc(mem_ctx, ir_to_mesa_src_reg);
       memcpy(src_reg.reladdr, &index_reg, sizeof(index_reg));
    }
 
@@ -1927,7 +1927,7 @@ ir_to_mesa_visitor::get_function_signature(ir_function_signature *sig)
 	 return entry;
    }
 
-   entry = talloc(mem_ctx, function_entry);
+   entry = ralloc(mem_ctx, function_entry);
    entry->sig = sig;
    entry->sig_id = this->next_signature_id++;
    entry->bgn_inst = NULL;
@@ -2264,12 +2264,12 @@ ir_to_mesa_visitor::ir_to_mesa_visitor()
    next_temp = 1;
    next_signature_id = 1;
    current_function = NULL;
-   mem_ctx = talloc_new(NULL);
+   mem_ctx = ralloc_context(NULL);
 }
 
 ir_to_mesa_visitor::~ir_to_mesa_visitor()
 {
-   talloc_free(mem_ctx);
+   ralloc_free(mem_ctx);
 }
 
 static struct prog_src_register
@@ -2318,8 +2318,8 @@ set_branchtargets(ir_to_mesa_visitor *v,
       }
    }
 
-   if_stack = talloc_zero_array(v->mem_ctx, int, if_count);
-   loop_stack = talloc_zero_array(v->mem_ctx, int, loop_count);
+   if_stack = rzalloc_array(v->mem_ctx, int, if_count);
+   loop_stack = rzalloc_array(v->mem_ctx, int, loop_count);
 
    for (i = 0; i < num_instructions; i++) {
       switch (mesa_instructions[i].Opcode) {
@@ -2462,7 +2462,7 @@ add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
    unsigned int next_sampler = 0, num_uniforms = 0;
    struct uniform_sort *sorted_uniforms;
 
-   sorted_uniforms = talloc_array(NULL, struct uniform_sort,
+   sorted_uniforms = ralloc_array(NULL, struct uniform_sort,
 				  shader_program->Uniforms->NumUniforms);
 
    for (i = 0; i < shader_program->Uniforms->NumUniforms; i++) {
@@ -2541,7 +2541,7 @@ add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
       }
    }
 
-   talloc_free(sorted_uniforms);
+   ralloc_free(sorted_uniforms);
 }
 
 static void
@@ -2557,7 +2557,7 @@ set_uniform_initializer(struct gl_context *ctx, void *mem_ctx,
 
       for (unsigned int i = 0; i < type->length; i++) {
 	 const glsl_type *field_type = type->fields.structure[i].type;
-	 const char *field_name = talloc_asprintf(mem_ctx, "%s.%s", name,
+	 const char *field_name = ralloc_asprintf(mem_ctx, "%s.%s", name,
 					    type->fields.structure[i].name);
 	 set_uniform_initializer(ctx, mem_ctx, shader_program, field_name,
 				 field_type, field_constant);
@@ -2588,7 +2588,7 @@ set_uniform_initializer(struct gl_context *ctx, void *mem_ctx,
       void *values;
 
       if (element_type->base_type == GLSL_TYPE_BOOL) {
-	 int *conv = talloc_array(mem_ctx, int, element_type->components());
+	 int *conv = ralloc_array(mem_ctx, int, element_type->components());
 	 for (unsigned int j = 0; j < element_type->components(); j++) {
 	    conv[j] = element->value.b[j];
 	 }
@@ -2634,14 +2634,14 @@ set_uniform_initializers(struct gl_context *ctx,
 	    continue;
 
 	 if (!mem_ctx)
-	    mem_ctx = talloc_new(NULL);
+	    mem_ctx = ralloc_context(NULL);
 
 	 set_uniform_initializer(ctx, mem_ctx, shader_program, var->name,
 				 var->type, var->constant_value);
       }
    }
 
-   talloc_free(mem_ctx);
+   ralloc_free(mem_ctx);
 }
 
 /*
@@ -2667,7 +2667,7 @@ set_uniform_initializers(struct gl_context *ctx,
 void
 ir_to_mesa_visitor::copy_propagate(void)
 {
-   ir_to_mesa_instruction **acp = talloc_zero_array(mem_ctx,
+   ir_to_mesa_instruction **acp = rzalloc_array(mem_ctx,
 						    ir_to_mesa_instruction *,
 						    this->next_temp * 4);
 
@@ -2771,7 +2771,7 @@ ir_to_mesa_visitor::copy_propagate(void)
       }
    }
 
-   talloc_free(acp);
+   ralloc_free(acp);
 }
 
 
@@ -2870,7 +2870,7 @@ get_mesa_program(struct gl_context *ctx,
    mesa_instructions =
       (struct prog_instruction *)calloc(num_instructions,
 					sizeof(*mesa_instructions));
-   mesa_instruction_annotation = talloc_array(v.mem_ctx, ir_instruction *,
+   mesa_instruction_annotation = ralloc_array(v.mem_ctx, ir_instruction *,
 					      num_instructions);
 
    v.copy_propagate();
@@ -3127,7 +3127,7 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
      _mesa_glsl_lexer_dtor(state);
    }
 
-   talloc_free(shader->ir);
+   ralloc_free(shader->ir);
    shader->ir = new(shader) exec_list;
    if (!state->error && !state->translation_unit.is_empty())
       _mesa_ast_to_hir(shader->ir, state);
@@ -3174,7 +3174,7 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
    /* Retain any live IR, but trash the rest. */
    reparent_ir(shader->ir, shader->ir);
 
-   talloc_free(state);
+   ralloc_free(state);
 
    if (shader->CompileStatus) {
       if (!ctx->Driver.CompileShader(ctx, shader))

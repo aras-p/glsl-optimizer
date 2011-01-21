@@ -795,6 +795,10 @@ int glcpp_get_lineno (yyscan_t yyscanner );
 
 void glcpp_set_lineno (int line_number ,yyscan_t yyscanner );
 
+int glcpp_get_column  (yyscan_t yyscanner );
+
+void glcpp_set_column (int column_no ,yyscan_t yyscanner );
+
 YYSTYPE * glcpp_get_lval (yyscan_t yyscanner );
 
 void glcpp_set_lval (YYSTYPE * yylval_param ,yyscan_t yyscanner );
@@ -954,7 +958,7 @@ YY_DECL
 
 
 	/* Single-line comments */
-#line 958 "glcpp/glcpp-lex.c"
+#line 962 "glcpp/glcpp-lex.c"
 
     yylval = yylval_param;
 
@@ -1121,7 +1125,7 @@ case 8:
 YY_RULE_SETUP
 #line 94 "glcpp/glcpp-lex.l"
 {
-	yylval->str = talloc_strdup (yyextra, yytext);
+	yylval->str = ralloc_strdup (yyextra, yytext);
 	yyextra->space_tokens = 0;
 	return HASH_VERSION;
 }
@@ -1132,7 +1136,7 @@ case 9:
 YY_RULE_SETUP
 #line 102 "glcpp/glcpp-lex.l"
 {
-	yylval->str = talloc_strdup (yyextra, yytext);
+	yylval->str = ralloc_strdup (yyextra, yytext);
 	yylineno++;
 	yycolumn = 0;
 	return OTHER;
@@ -1312,7 +1316,7 @@ case 24:
 YY_RULE_SETUP
 #line 221 "glcpp/glcpp-lex.l"
 {
-	yylval->str = talloc_strdup (yyextra, yytext);
+	yylval->str = ralloc_strdup (yyextra, yytext);
 	return INTEGER_STRING;
 }
 	YY_BREAK
@@ -1320,7 +1324,7 @@ case 25:
 YY_RULE_SETUP
 #line 226 "glcpp/glcpp-lex.l"
 {
-	yylval->str = talloc_strdup (yyextra, yytext);
+	yylval->str = ralloc_strdup (yyextra, yytext);
 	return INTEGER_STRING;
 }
 	YY_BREAK
@@ -1328,7 +1332,7 @@ case 26:
 YY_RULE_SETUP
 #line 231 "glcpp/glcpp-lex.l"
 {
-	yylval->str = talloc_strdup (yyextra, yytext);
+	yylval->str = ralloc_strdup (yyextra, yytext);
 	return INTEGER_STRING;
 }
 	YY_BREAK
@@ -1406,7 +1410,7 @@ case 37:
 YY_RULE_SETUP
 #line 276 "glcpp/glcpp-lex.l"
 {
-	yylval->str = talloc_strdup (yyextra, yytext);
+	yylval->str = ralloc_strdup (yyextra, yytext);
 	return IDENTIFIER;
 }
 	YY_BREAK
@@ -1421,7 +1425,7 @@ case 39:
 YY_RULE_SETUP
 #line 285 "glcpp/glcpp-lex.l"
 {
-	yylval->str = talloc_strdup (yyextra, yytext);
+	yylval->str = ralloc_strdup (yyextra, yytext);
 	return OTHER;
 }
 	YY_BREAK
@@ -1471,7 +1475,7 @@ YY_RULE_SETUP
 #line 319 "glcpp/glcpp-lex.l"
 ECHO;
 	YY_BREAK
-#line 1475 "glcpp/glcpp-lex.c"
+#line 1479 "glcpp/glcpp-lex.c"
 			case YY_STATE_EOF(DONE):
 			case YY_STATE_EOF(COMMENT):
 			case YY_STATE_EOF(UNREACHABLE):

@@ -48,7 +48,7 @@
 #include "program/program.h"
 #include "program/prog_parameter.h"
 #include "program/prog_uniform.h"
-#include "talloc.h"
+#include "ralloc.h"
 #include <stdbool.h>
 #include "../glsl/glsl_parser_extras.h"
 
@@ -1137,9 +1137,9 @@ validate_program(struct gl_context *ctx, GLuint program)
    if (!shProg->Validated) {
       /* update info log */
       if (shProg->InfoLog) {
-         talloc_free(shProg->InfoLog);
+         ralloc_free(shProg->InfoLog);
       }
-      shProg->InfoLog = talloc_strdup(shProg, errMsg);
+      shProg->InfoLog = ralloc_strdup(shProg, errMsg);
    }
 }
 
@@ -1855,7 +1855,7 @@ _mesa_CreateShaderProgramEXT(GLenum type, const GLchar *string)
 #endif
 	 }
 
-	 shProg->InfoLog = talloc_strdup_append(shProg->InfoLog, sh->InfoLog);
+	 ralloc_strcat(&shProg->InfoLog, sh->InfoLog);
       }
 
       delete_shader(ctx, shader);

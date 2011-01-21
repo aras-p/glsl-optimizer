@@ -578,7 +578,7 @@ ir_constant::ir_constant(const struct glsl_type *type, exec_list *value_list)
 	  || type->is_record() || type->is_array());
 
    if (type->is_array()) {
-      this->array_elements = talloc_array(this, ir_constant *, type->length);
+      this->array_elements = ralloc_array(this, ir_constant *, type->length);
       unsigned i = 0;
       foreach_list(node, value_list) {
 	 ir_constant *value = (ir_constant *) node;
@@ -1036,7 +1036,7 @@ ir_dereference_array::ir_dereference_array(ir_rvalue *value,
 ir_dereference_array::ir_dereference_array(ir_variable *var,
 					   ir_rvalue *array_index)
 {
-   void *ctx = talloc_parent(var);
+   void *ctx = ralloc_parent(var);
 
    this->ir_type = ir_type_dereference_array;
    this->array_index = array_index;
@@ -1069,7 +1069,7 @@ ir_dereference_record::ir_dereference_record(ir_rvalue *value,
 {
    this->ir_type = ir_type_dereference_record;
    this->record = value;
-   this->field = talloc_strdup(this, field);
+   this->field = ralloc_strdup(this, field);
    this->type = (this->record != NULL)
       ? this->record->type->field_type(field) : glsl_type::error_type;
 }
@@ -1078,11 +1078,11 @@ ir_dereference_record::ir_dereference_record(ir_rvalue *value,
 ir_dereference_record::ir_dereference_record(ir_variable *var,
 					     const char *field)
 {
-   void *ctx = talloc_parent(var);
+   void *ctx = ralloc_parent(var);
 
    this->ir_type = ir_type_dereference_record;
    this->record = new(ctx) ir_dereference_variable(var);
-   this->field = talloc_strdup(this, field);
+   this->field = ralloc_strdup(this, field);
    this->type = (this->record != NULL)
       ? this->record->type->field_type(field) : glsl_type::error_type;
 }
@@ -1245,7 +1245,7 @@ ir_swizzle::ir_swizzle(ir_rvalue *val, ir_swizzle_mask mask)
 ir_swizzle *
 ir_swizzle::create(ir_rvalue *val, const char *str, unsigned vector_length)
 {
-   void *ctx = talloc_parent(val);
+   void *ctx = ralloc_parent(val);
 
    /* For each possible swizzle character, this table encodes the value in
     * \c idx_map that represents the 0th element of the vector.  For invalid
@@ -1334,7 +1334,7 @@ ir_variable::ir_variable(const struct glsl_type *type, const char *name,
 {
    this->ir_type = ir_type_variable;
    this->type = type;
-   this->name = talloc_strdup(this, name);
+   this->name = ralloc_strdup(this, name);
    this->explicit_location = false;
    this->location = -1;
    this->warn_extension = NULL;
@@ -1426,7 +1426,7 @@ ir_function_signature::replace_parameters(exec_list *new_params)
 ir_function::ir_function(const char *name)
 {
    this->ir_type = ir_type_function;
-   this->name = talloc_strdup(this, name);
+   this->name = ralloc_strdup(this, name);
 }
 
 
@@ -1492,7 +1492,7 @@ steal_memory(ir_instruction *ir, void *new_ctx)
       }
    }
 
-   talloc_steal(new_ctx, ir);
+   ralloc_steal(new_ctx, ir);
 }
 
 

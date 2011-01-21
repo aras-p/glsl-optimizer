@@ -71,13 +71,13 @@ public:
    ir_copy_propagation_visitor()
    {
       progress = false;
-      mem_ctx = talloc_new(0);
+      mem_ctx = ralloc_context(0);
       this->acp = new(mem_ctx) exec_list;
       this->kills = new(mem_ctx) exec_list;
    }
    ~ir_copy_propagation_visitor()
    {
-      talloc_free(mem_ctx);
+      ralloc_free(mem_ctx);
    }
 
    virtual ir_visitor_status visit(class ir_dereference_variable *);
@@ -325,7 +325,7 @@ ir_copy_propagation_visitor::add_copy(ir_assignment *ir)
 	  * calling us.  Just flag it to not execute, and someone else
 	  * will clean up the mess.
 	  */
-	 ir->condition = new(talloc_parent(ir)) ir_constant(false);
+	 ir->condition = new(ralloc_parent(ir)) ir_constant(false);
 	 this->progress = true;
       } else {
 	 entry = new(this->mem_ctx) acp_entry(lhs_var, rhs_var);

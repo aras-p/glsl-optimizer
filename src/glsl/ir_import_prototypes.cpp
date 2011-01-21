@@ -109,7 +109,7 @@ private:
  * \param dest     Destination instruction stream where new \c ir_function and
  *                 \c ir_function_signature nodes will be stored
  * \param symbols  Symbol table where new functions will be stored
- * \param mem_ctx  talloc memory context used for new allocations
+ * \param mem_ctx  ralloc memory context used for new allocations
  */
 void
 import_prototypes(const exec_list *source, exec_list *dest,

@@ -55,7 +55,7 @@ lower_texture_projection_visitor::visit_leave(ir_texture *ir)
    if (!ir->projector)
       return visit_continue;
 
-   void *mem_ctx = talloc_parent(ir);
+   void *mem_ctx = ralloc_parent(ir);
 
    ir_variable *var = new(mem_ctx) ir_variable(ir->projector->type,
 					       "projector", ir_var_auto);

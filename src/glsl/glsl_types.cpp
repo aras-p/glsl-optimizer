@@ -37,10 +37,10 @@ hash_table *glsl_type::record_types = NULL;
 void *glsl_type::mem_ctx = NULL;
 
 void
-glsl_type::init_talloc_type_ctx(void)
+glsl_type::init_ralloc_type_ctx(void)
 {
    if (glsl_type::mem_ctx == NULL) {
-      glsl_type::mem_ctx = talloc_autofree_context();
+      glsl_type::mem_ctx = ralloc_autofree_context();
       assert(glsl_type::mem_ctx != NULL);
    }
 }
@@ -55,8 +55,8 @@ glsl_type::glsl_type(GLenum gl_type,
    vector_elements(vector_elements), matrix_columns(matrix_columns),
    length(0)
 {
-   init_talloc_type_ctx();
-   this->name = talloc_strdup(this->mem_ctx, name);
+   init_ralloc_type_ctx();
+   this->name = ralloc_strdup(this->mem_ctx, name);
    /* Neither dimension is zero or both dimensions are zero.
     */
    assert((vector_elements == 0) == (matrix_columns == 0));
@@ -73,8 +73,8 @@ glsl_type::glsl_type(GLenum gl_type,
    vector_elements(0), matrix_columns(0),
    length(0)
 {
-   init_talloc_type_ctx();
-   this->name = talloc_strdup(this->mem_ctx, name);
+   init_ralloc_type_ctx();
+   this->name = ralloc_strdup(this->mem_ctx, name);
    memset(& fields, 0, sizeof(fields));
 }
 
@@ -88,13 +88,13 @@ glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
 {
    unsigned int i;
 
-   init_talloc_type_ctx();
-   this->name = talloc_strdup(this->mem_ctx, name);
-   this->fields.structure = talloc_array(this->mem_ctx,
+   init_ralloc_type_ctx();
+   this->name = ralloc_strdup(this->mem_ctx, name);
+   this->fields.structure = ralloc_array(this->mem_ctx,
 					 glsl_struct_field, length);
    for (i = 0; i < length; i++) {
       this->fields.structure[i].type = fields[i].type;
-      this->fields.structure[i].name = talloc_strdup(this->fields.structure,
+      this->fields.structure[i].name = ralloc_strdup(this->fields.structure,
 						     fields[i].name);
    }
 }
@@ -264,7 +264,7 @@ glsl_type::glsl_type(const glsl_type *array, unsigned length) :
     * NUL.
     */
    const unsigned name_length = strlen(array->name) + 10 + 3;
-   char *const n = (char *) talloc_size(this->mem_ctx, name_length);
+   char *const n = (char *) ralloc_size(this->mem_ctx, name_length);
 
    if (length == 0)
       snprintf(n, name_length, "%s[]", array->name);
@@ -354,7 +354,7 @@ glsl_type::get_array_instance(const glsl_type *base, unsigned array_size)
    if (t == NULL) {
       t = new glsl_type(base, array_size);
 
-      hash_table_insert(array_types, (void *) t, talloc_strdup(mem_ctx, key));
+      hash_table_insert(array_types, (void *) t, ralloc_strdup(mem_ctx, key));
    }
 
    assert(t->base_type == GLSL_TYPE_ARRAY);

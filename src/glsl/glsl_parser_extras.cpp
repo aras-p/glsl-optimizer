@@ -26,10 +26,10 @@
 #include <assert.h>
 
 extern "C" {
-#include <talloc.h>
 #include "main/core.h" /* for struct gl_context */
 }
 
+#include "ralloc.h"
 #include "ast.h"
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
@@ -48,7 +48,7 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *ctx,
    this->scanner = NULL;
    this->translation_unit.make_empty();
    this->symbols = new(mem_ctx) glsl_symbol_table;
-   this->info_log = talloc_strdup(mem_ctx, "");
+   this->info_log = ralloc_strdup(mem_ctx, "");
    this->error = false;
    this->loop_or_switch_nesting = NULL;
 
@@ -104,15 +104,14 @@ _mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
    state->error = true;
 
    assert(state->info_log != NULL);
-   state->info_log = talloc_asprintf_append(state->info_log,
-					    "%u:%u(%u): error: ",
+   ralloc_asprintf_append(&state->info_log, "%u:%u(%u): error: ",
 					    locp->source,
 					    locp->first_line,
 					    locp->first_column);
    va_start(ap, fmt);
-   state->info_log = talloc_vasprintf_append(state->info_log, fmt, ap);
+   ralloc_vasprintf_append(&state->info_log, fmt, ap);
    va_end(ap);
-   state->info_log = talloc_strdup_append(state->info_log, "\n");
+   ralloc_strcat(&state->info_log, "\n");
 }
 
 
@@ -123,15 +122,14 @@ _mesa_glsl_warning(const YYLTYPE *locp, _mesa_glsl_parse_state *state,
    va_list ap;
 
    assert(state->info_log != NULL);
-   state->info_log = talloc_asprintf_append(state->info_log,
-					    "%u:%u(%u): warning: ",
+   ralloc_asprintf_append(&state->info_log, "%u:%u(%u): warning: ",
 					    locp->source,
 					    locp->first_line,
 					    locp->first_column);
    va_start(ap, fmt);
-   state->info_log = talloc_vasprintf_append(state->info_log, fmt, ap);
+   ralloc_vasprintf_append(&state->info_log, fmt, ap);
    va_end(ap);
-   state->info_log = talloc_strdup_append(state->info_log, "\n");
+   ralloc_strcat(&state->info_log, "\n");
 }
 
 
@@ -712,7 +710,7 @@ ast_struct_specifier::ast_struct_specifier(char *identifier,
 {
    if (identifier == NULL) {
       static unsigned anon_count = 1;
-      identifier = talloc_asprintf(this, "#anon_struct_%04x", anon_count);
+      identifier = ralloc_asprintf(this, "#anon_struct_%04x", anon_count);
       anon_count++;
    }
    name = identifier;

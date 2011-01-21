@@ -40,7 +40,7 @@ static void fail_link(struct gl_shader_program *prog, const char *fmt, ...)
 {
    va_list args;
    va_start(args, fmt);
-   prog->InfoLog = talloc_vasprintf_append(prog->InfoLog, fmt, args);
+   ralloc_vasprintf_append(&prog->InfoLog, fmt, args);
    va_end(args);
 
    prog->LinkStatus = GL_FALSE;
@@ -52,7 +52,7 @@ public:
    get_sampler_name(ir_dereference *last,
 		    struct gl_shader_program *shader_program)
    {
-      this->mem_ctx = talloc_new(NULL);
+      this->mem_ctx = ralloc_context(NULL);
       this->shader_program = shader_program;
       this->name = NULL;
       this->offset = 0;
@@ -61,7 +61,7 @@ public:
 
    ~get_sampler_name()
    {
-      talloc_free(this->mem_ctx);
+      ralloc_free(this->mem_ctx);
    }
 
    virtual ir_visitor_status visit(ir_dereference_variable *ir)
@@ -72,7 +72,7 @@ public:
 
    virtual ir_visitor_status visit_leave(ir_dereference_record *ir)
    {
-      this->name = talloc_asprintf(mem_ctx, "%s.%s", name, ir->field);
+      this->name = ralloc_asprintf(mem_ctx, "%s.%s", name, ir->field);
       return visit_continue;
    }
 
@@ -91,16 +91,14 @@ public:
 	  * all that would work would be an unrolled loop counter that ends
 	  * up being constant above.
 	  */
-	 shader_program->InfoLog =
-	    talloc_asprintf_append(shader_program->InfoLog,
-				   "warning: Variable sampler array index "
-				   "unsupported.\nThis feature of the language "
-				   "was removed in GLSL 1.20 and is unlikely "
-				   "to be supported for 1.10 in Mesa.\n");
+	 ralloc_strcat(&shader_program->InfoLog,
+		       "warning: Variable sampler array index unsupported.\n"
+		       "This feature of the language was removed in GLSL 1.20 "
+		       "and is unlikely to be supported for 1.10 in Mesa.\n");
 	 i = 0;
       }
       if (ir != last) {
-	 this->name = talloc_asprintf(mem_ctx, "%s[%d]", name, i);
+	 this->name = ralloc_asprintf(mem_ctx, "%s[%d]", name, i);
       } else {
 	 offset = i;
       }

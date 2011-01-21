@@ -2844,7 +2844,7 @@ yyreduce:
 	      /* FINISHME: Check against implementation support versions. */
 	      state->language_version = (yyvsp[(2) - (3)].n);
 	      state->version_string =
-		 talloc_asprintf(state, "GLSL%s %d.%02d",
+		 ralloc_asprintf(state, "GLSL%s %d.%02d",
 				 state->es_shader ? " ES" : "",
 				 state->language_version / 100,
 				 state->language_version % 100);

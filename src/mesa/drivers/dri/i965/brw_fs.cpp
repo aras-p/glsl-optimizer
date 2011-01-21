@@ -55,7 +55,7 @@ brw_new_shader(struct gl_context *ctx, GLuint name, GLuint type)
 {
    struct brw_shader *shader;
 
-   shader = talloc_zero(NULL, struct brw_shader);
+   shader = rzalloc(NULL, struct brw_shader);
    if (shader) {
       shader->base.Type = type;
       shader->base.Name = name;
@@ -69,7 +69,7 @@ struct gl_shader_program *
 brw_new_shader_program(struct gl_context *ctx, GLuint name)
 {
    struct brw_shader_program *prog;
-   prog = talloc_zero(NULL, struct brw_shader_program);
+   prog = rzalloc(NULL, struct brw_shader_program);
    if (prog) {
       prog->base.Name = name;
       _mesa_init_shader_program(ctx, &prog->base);
@@ -95,11 +95,11 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
    struct brw_shader *shader =
       (struct brw_shader *)prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
    if (shader != NULL) {
-      void *mem_ctx = talloc_new(NULL);
+      void *mem_ctx = ralloc_context(NULL);
       bool progress;
 
       if (shader->ir)
-	 talloc_free(shader->ir);
+	 ralloc_free(shader->ir);
       shader->ir = new(shader) exec_list;
       clone_ir_list(mem_ctx, shader->ir, shader->base.ir);
 
@@ -149,7 +149,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       validate_ir_tree(shader->ir);
 
       reparent_ir(shader->ir, shader->ir);
-      talloc_free(mem_ctx);
+      ralloc_free(mem_ctx);
    }
 
    if (!_mesa_ir_link_shader(ctx, prog))
@@ -236,8 +236,8 @@ fs_visitor::virtual_grf_alloc(int size)
 	 virtual_grf_array_size = 16;
       else
 	 virtual_grf_array_size *= 2;
-      virtual_grf_sizes = talloc_realloc(mem_ctx, virtual_grf_sizes,
-					 int, virtual_grf_array_size);
+      virtual_grf_sizes = reralloc(mem_ctx, virtual_grf_sizes, int,
+				   virtual_grf_array_size);
 
       /* This slot is always unused. */
       virtual_grf_sizes[0] = 0;
@@ -2065,7 +2065,7 @@ fs_visitor::emit_fb_writes()
    }
 
    for (int target = 0; target < c->key.nr_color_regions; target++) {
-      this->current_annotation = talloc_asprintf(this->mem_ctx,
+      this->current_annotation = ralloc_asprintf(this->mem_ctx,
 						 "FB write target %d",
 						 target);
       if (this->frag_color || this->frag_data) {
@@ -2755,8 +2755,8 @@ void
 fs_visitor::calculate_live_intervals()
 {
    int num_vars = this->virtual_grf_next;
-   int *def = talloc_array(mem_ctx, int, num_vars);
-   int *use = talloc_array(mem_ctx, int, num_vars);
+   int *def = ralloc_array(mem_ctx, int, num_vars);
+   int *use = ralloc_array(mem_ctx, int, num_vars);
    int loop_depth = 0;
    int loop_start = 0;
    int bb_header_ip = 0;
@@ -2839,8 +2839,8 @@ fs_visitor::calculate_live_intervals()
       }
    }
 
-   talloc_free(this->virtual_grf_def);
-   talloc_free(this->virtual_grf_use);
+   ralloc_free(this->virtual_grf_def);
+   ralloc_free(this->virtual_grf_use);
    this->virtual_grf_def = def;
    this->virtual_grf_use = use;
 

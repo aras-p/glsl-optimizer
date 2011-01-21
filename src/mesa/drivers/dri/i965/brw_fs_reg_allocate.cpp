@@ -233,8 +233,8 @@ fs_visitor::assign_regs()
       }
 
 
-      talloc_free(g);
-      talloc_free(regs);
+      ralloc_free(g);
+      ralloc_free(regs);
 
       return false;
    }
@@ -272,8 +272,8 @@ fs_visitor::assign_regs()
 
    this->grf_used = last_grf + 1;
 
-   talloc_free(g);
-   talloc_free(regs);
+   ralloc_free(g);
+   ralloc_free(regs);
 
    return true;
 }

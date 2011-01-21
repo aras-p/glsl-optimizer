@@ -69,7 +69,7 @@ public:
 
    ir_variable *components[4];
 
-   /** talloc_parent(this->var) -- the shader's talloc context. */
+   /** ralloc_parent(this->var) -- the shader's ralloc context. */
    void *mem_ctx;
 };
 
@@ -77,13 +77,13 @@ class ir_vector_reference_visitor : public ir_hierarchical_visitor {
 public:
    ir_vector_reference_visitor(void)
    {
-      this->mem_ctx = talloc_new(NULL);
+      this->mem_ctx = ralloc_context(NULL);
       this->variable_list.make_empty();
    }
 
    ~ir_vector_reference_visitor(void)
    {
-      talloc_free(mem_ctx);
+      ralloc_free(mem_ctx);
    }
 
    virtual ir_visitor_status visit(ir_variable *);
@@ -358,7 +358,7 @@ brw_do_vector_splitting(exec_list *instructions)
    if (refs.variable_list.is_empty())
       return false;
 
-   void *mem_ctx = talloc_new(NULL);
+   void *mem_ctx = ralloc_context(NULL);
 
    /* Replace the decls of the vectors to be split with their split
     * components.
@@ -368,10 +368,10 @@ brw_do_vector_splitting(exec_list *instructions)
       const struct glsl_type *type;
       type = glsl_type::get_instance(entry->var->type->base_type, 1, 1);
 
-      entry->mem_ctx = talloc_parent(entry->var);
+      entry->mem_ctx = ralloc_parent(entry->var);
 
       for (unsigned int i = 0; i < entry->var->type->vector_elements; i++) {
-	 const char *name = talloc_asprintf(mem_ctx, "%s_%c",
+	 const char *name = ralloc_asprintf(mem_ctx, "%s_%c",
 					    entry->var->name,
 					    "xyzw"[i]);
 
@@ -386,7 +386,7 @@ brw_do_vector_splitting(exec_list *instructions)
    ir_vector_splitting_visitor split(&refs.variable_list);
    visit_list_elements(&split, instructions);
 
-   talloc_free(mem_ctx);
+   ralloc_free(mem_ctx);
 
    return true;
 }
