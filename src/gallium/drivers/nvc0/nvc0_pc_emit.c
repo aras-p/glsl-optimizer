@@ -446,7 +446,7 @@ emit_flop(struct nv_pc *pc, struct nv_instruction *i, ubyte op)
 
    pc->emit[0] |= op << 26;
 
-   if (op >= 4) {
+   if (op >= 3) {
       if (i->src[0]->mod & NV_MOD_NEG) pc->emit[0] |= 1 << 9;
       if (i->src[0]->mod & NV_MOD_ABS) pc->emit[0] |= 1 << 7;
    } else {
