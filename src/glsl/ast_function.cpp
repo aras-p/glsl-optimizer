@@ -145,12 +145,27 @@ match_function_by_name(exec_list *instructions, const char *name,
 
 	 if ((formal->mode == ir_var_out)
 	     || (formal->mode == ir_var_inout)) {
-	    if (! actual->is_lvalue()) {
-	       /* FINISHME: Log a better diagnostic here.  There is no way
-		* FINISHME: to tell the user which parameter is invalid.
-		*/
-	       _mesa_glsl_error(loc, state, "`%s' parameter is not lvalue",
-				(formal->mode == ir_var_out) ? "out" : "inout");
+	    const char *mode = NULL;
+	    switch (formal->mode) {
+	    case ir_var_out:   mode = "out";   break;
+	    case ir_var_inout: mode = "inout"; break;
+	    default:           assert(false);  break;
+	    }
+            /* FIXME: 'loc' is incorrect (as of 2011-01-21). It is always
+             * FIXME: 0:0(0).
+             */
+	    if (actual->variable_referenced()
+	        && actual->variable_referenced()->read_only) {
+	       _mesa_glsl_error(loc, state,
+	                        "function parameter '%s %s' references the "
+	                        "read-only variable '%s'",
+	                        mode, formal->name,
+	                        actual->variable_referenced()->name);
+
+	    } else if (!actual->is_lvalue()) {
+               _mesa_glsl_error(loc, state,
+                                "function parameter '%s %s' is not an lvalue",
+                                mode, formal->name);
 	    }
 	 }
 
