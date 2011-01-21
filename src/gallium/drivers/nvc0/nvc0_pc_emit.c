@@ -236,7 +236,7 @@ emit_flow(struct nv_pc *pc, struct nv_instruction *i, uint8_t op)
       */
 
       pc->emit[0] |= (pcrel & 0x3f) << 26;
-      pc->emit[1] |= (pcrel >> 6) & 0x1ffff;
+      pc->emit[1] |= (pcrel >> 6) & 0x3ffff;
    }
 }
 
