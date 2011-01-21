@@ -260,6 +260,8 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
    ctx->Extensions.EXT_texture_lod_bias = GL_TRUE;
    ctx->Extensions.EXT_vertex_array_bgra = GL_TRUE;
+   if (ctx->API == API_OPENGLES || ctx->API == API_OPENGLES2)
+	   ctx->Extensions.EXT_texture_format_BGRA8888 = GL_TRUE;
 
    ctx->Extensions.APPLE_vertex_array_object = GL_TRUE;
 
