@@ -878,11 +878,10 @@ emit_store(struct bld_context *bld, const struct tgsi_full_instruction *inst,
       break;
    case TGSI_FILE_TEMPORARY:
       assert(idx < BLD_MAX_TEMPS);
-      if (!res->insn)
+      if (!res->insn || res->insn->bb != bld->pc->current_block)
          res = bld_insn_1(bld, NV_OP_MOV, res);
 
       assert(res->reg.file == NV_FILE_GPR);
-      assert(res->insn->bb = bld->pc->current_block);
 
       if (bld->ti->require_stores)
          bld_lmem_store(bld, ptr, idx * 4 + chan, res);
