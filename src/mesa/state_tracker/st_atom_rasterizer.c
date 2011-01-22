@@ -70,14 +70,16 @@ static void update_raster_state( struct st_context *st )
    {
       raster->front_ccw = (ctx->Polygon.FrontFace == GL_CCW);
 
-      /* XXX
-       * I think the intention here is that user-created framebuffer objects
-       * use Y=0=TOP layout instead of OpenGL's normal Y=0=bottom layout.
-       * Flipping Y changes CW to CCW and vice-versa.
-       * But this is an implementation/driver-specific artifact - remove...
+      /*
+       * Gallium's surfaces are Y=0=TOP orientation.  OpenGL is the
+       * opposite.  Window system surfaces are Y=0=TOP.  Mesa's FBOs
+       * must match OpenGL conventions so FBOs use Y=0=BOTTOM.  In that
+       * case, we must invert Y and flip the notion of front vs. back.
        */
-      if (ctx->DrawBuffer && ctx->DrawBuffer->Name != 0)
+      if (st_fb_orientation(ctx->DrawBuffer) == Y_0_BOTTOM) {
+         /* Drawing to an FBO.  The viewport will be inverted. */
          raster->front_ccw ^= 1;
+      }
    }
 
    /* _NEW_LIGHT
