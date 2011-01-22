@@ -391,23 +391,14 @@ pipe_get_tile_rgba(struct pipe_context *pipe,
 
 
 void
-pipe_get_tile_swizzle(struct pipe_context *pipe,
-		      struct pipe_transfer *pt,
-                      uint x,
-                      uint y,
-                      uint w,
-                      uint h,
-                      uint swizzle_r,
-                      uint swizzle_g,
-                      uint swizzle_b,
-                      uint swizzle_a,
-                      enum pipe_format format,
-                      float *p)
+pipe_get_tile_rgba_format(struct pipe_context *pipe,
+                          struct pipe_transfer *pt,
+                          uint x, uint y, uint w, uint h,
+                          enum pipe_format format,
+                          float *p)
 {
    unsigned dst_stride = w * 4;
    void *packed;
-   uint iy;
-   float rgba01[6];
 
    if (u_clip_tile(x, y, &w, &h, &pt->box)) {
       return;
@@ -427,35 +418,6 @@ pipe_get_tile_swizzle(struct pipe_context *pipe,
    pipe_tile_raw_to_rgba(format, packed, w, h, p, dst_stride);
 
    FREE(packed);
-
-   if (swizzle_r == PIPE_SWIZZLE_RED &&
-       swizzle_g == PIPE_SWIZZLE_GREEN &&
-       swizzle_b == PIPE_SWIZZLE_BLUE &&
-       swizzle_a == PIPE_SWIZZLE_ALPHA) {
-      /* no-op, skip */
-      return;
-   }
-
-   rgba01[PIPE_SWIZZLE_ZERO] = 0.0f;
-   rgba01[PIPE_SWIZZLE_ONE] = 1.0f;
-
-   for (iy = 0; iy < h; iy++) {
-      float *row = p;
-      uint ix;
-
-      for (ix = 0; ix < w; ix++) {
-         rgba01[PIPE_SWIZZLE_RED] = row[0];
-         rgba01[PIPE_SWIZZLE_GREEN] = row[1];
-         rgba01[PIPE_SWIZZLE_BLUE] = row[2];
-         rgba01[PIPE_SWIZZLE_ALPHA] = row[3];
-
-         *row++ = rgba01[swizzle_r];
-         *row++ = rgba01[swizzle_g];
-         *row++ = rgba01[swizzle_b];
-         *row++ = rgba01[swizzle_a];
-      }
-      p += dst_stride;
-   }
 }
 
 
