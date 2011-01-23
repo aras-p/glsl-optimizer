@@ -286,6 +286,7 @@ struct draw_context
 
 #ifdef HAVE_LLVM
    struct draw_llvm *llvm;
+   struct gallivm_state *own_gallivm;
 #endif
 
    struct pipe_sampler_view *sampler_views[PIPE_MAX_VERTEX_SAMPLERS];

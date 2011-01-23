@@ -88,8 +88,14 @@ draw_create_gallivm(struct pipe_context *pipe, struct gallivm_state *gallivm)
       goto fail;
 
 #if HAVE_LLVM
-   if (draw_get_option_use_llvm() && gallivm) {
-      draw->llvm = draw_llvm_create(draw, gallivm);
+   if (draw_get_option_use_llvm()) {
+      if (!gallivm) {
+         gallivm = gallivm_create();
+         draw->own_gallivm = gallivm;
+      }
+
+      if (gallivm)
+         draw->llvm = draw_llvm_create(draw, gallivm);
    }
 #endif
 
@@ -180,8 +186,11 @@ void draw_destroy( struct draw_context *draw )
    draw_vs_destroy( draw );
    draw_gs_destroy( draw );
 #ifdef HAVE_LLVM
-   if(draw->llvm)
+   if (draw->llvm)
       draw_llvm_destroy( draw->llvm );
+
+   if (draw->own_gallivm)
+      gallivm_destroy(draw->own_gallivm);
 #endif
 
    FREE( draw );
