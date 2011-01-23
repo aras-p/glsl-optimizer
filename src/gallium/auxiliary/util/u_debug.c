@@ -359,6 +359,41 @@ const char *u_prim_name( unsigned prim )
 
 
 
+#ifdef DEBUG
+int fl_indent = 0;
+const char* fl_function[1024];
+
+int debug_funclog_enter(const char* f, const int line, const char* file)
+{
+   int i;
+
+   for (i = 0; i < fl_indent; i++)
+      debug_printf("  ");
+   debug_printf("%s\n", f);
+
+   assert(fl_indent < 1023);
+   fl_function[fl_indent++] = f;
+
+   return 0;
+}
+
+void debug_funclog_exit(const char* f, const int line, const char* file)
+{
+   --fl_indent;
+   assert(fl_indent >= 0);
+   assert(fl_function[fl_indent] == f);
+}
+
+void debug_funclog_enter_exit(const char* f, const int line, const char* file)
+{
+   int i;
+   for (i = 0; i < fl_indent; i++)
+      debug_printf("  ");
+   debug_printf("%s\n", f);
+}
+#endif
+
+
 
 #ifdef DEBUG
 /**

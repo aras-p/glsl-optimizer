@@ -280,6 +280,43 @@ debug_dump_flags(const struct debug_named_value *names,
 
 
 /**
+ * Function enter exit loggers
+ */
+#ifdef DEBUG
+int debug_funclog_enter(const char* f, const int line, const char* file);
+void debug_funclog_exit(const char* f, const int line, const char* file);
+void debug_funclog_enter_exit(const char* f, const int line, const char* file);
+
+#define DEBUG_FUNCLOG_ENTER() \
+   int __debug_decleration_work_around = \
+      debug_funclog_enter(__FUNCTION__, __LINE__, __FILE__)
+#define DEBUG_FUNCLOG_EXIT() \
+   do { \
+      (void)__debug_decleration_work_around; \
+      debug_funclog_exit(__FUNCTION__, __LINE__, __FILE__); \
+      return; \
+   } while(0)
+#define DEBUG_FUNCLOG_EXIT_RET(ret) \
+   do { \
+      (void)__debug_decleration_work_around; \
+      debug_funclog_exit(__FUNCTION__, __LINE__, __FILE__); \
+      return ret; \
+   } while(0)
+#define DEBUG_FUNCLOG_ENTER_EXIT() \
+   debug_funclog_enter_exit(__FUNCTION__, __LINE__, __FILE__)
+
+#else
+#define DEBUG_FUNCLOG_ENTER() \
+   int __debug_decleration_work_around
+#define DEBUG_FUNCLOG_EXIT() \
+   do { (void)__debug_decleration_work_around; return; } while(0)
+#define DEBUG_FUNCLOG_EXIT_RET(ret) \
+   do { (void)__debug_decleration_work_around; return ret; } while(0)
+#define DEBUG_FUNCLOG_ENTER_EXIT()
+#endif
+
+
+/**
  * Get option.
  * 
  * It is an alias for getenv on Linux. 
