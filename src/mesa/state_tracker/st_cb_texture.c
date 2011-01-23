@@ -918,6 +918,7 @@ decompress_with_blit(struct gl_context * ctx, GLenum target, GLint level,
    else {
       /* format translation via floats */
       GLuint row;
+      enum pipe_format format = util_format_linear(dst_texture->format);
       for (row = 0; row < height; row++) {
          const GLbitfield transferOps = 0x0; /* bypassed for glGetTexImage() */
          GLfloat rgba[4 * MAX_WIDTH];
@@ -928,7 +929,8 @@ decompress_with_blit(struct gl_context * ctx, GLenum target, GLint level,
             debug_printf("%s: fallback format translation\n", __FUNCTION__);
 
          /* get float[4] rgba row from surface */
-         pipe_get_tile_rgba(pipe, tex_xfer, 0, row, width, 1, rgba);
+         pipe_get_tile_rgba_format(pipe, tex_xfer, 0, row, width, 1,
+                                   format, rgba);
 
          _mesa_pack_rgba_span_float(ctx, width, (GLfloat (*)[4]) rgba, format,
                                     type, dest, &ctx->Pack, transferOps);
@@ -1387,7 +1389,9 @@ fallback_copy_texsubimage(struct gl_context *ctx, GLenum target, GLint level,
          /* XXX this usually involves a lot of int/float conversion.
           * try to avoid that someday.
           */
-         pipe_get_tile_rgba(pipe, src_trans, 0, 0, width, height, tempSrc);
+         pipe_get_tile_rgba_format(pipe, src_trans, 0, 0, width, height,
+                                   util_format_linear(strb->texture->format),
+                                   tempSrc);
 
          /* Store into texture memory.
           * Note that this does some special things such as pixel transfer

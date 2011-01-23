@@ -1302,9 +1302,13 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       if (type == GL_COLOR) {
          /* alternate path using get/put_tile() */
          GLfloat *buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-         pipe_get_tile_rgba(pipe, ptRead, readX, readY, readW, readH, buf);
-         pipe_put_tile_rgba(pipe, ptTex, pack.SkipPixels, pack.SkipRows,
-                            readW, readH, buf);
+         enum pipe_format readFormat, drawFormat;
+         readFormat = util_format_linear(rbRead->texture->format);
+         drawFormat = util_format_linear(pt->format);
+         pipe_get_tile_rgba_format(pipe, ptRead, readX, readY, readW, readH,
+                                   readFormat, buf);
+         pipe_put_tile_rgba_format(pipe, ptTex, pack.SkipPixels, pack.SkipRows,
+                                   readW, readH, drawFormat, buf);
          free(buf);
       }
       else {

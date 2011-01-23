@@ -41,6 +41,7 @@
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
+#include "util/u_format.h"
 #include "util/u_inlines.h"
 #include "util/u_tile.h"
 
@@ -336,6 +337,7 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
    struct st_renderbuffer *strb;
    struct gl_pixelstore_attrib clippedPacking = *pack;
    struct pipe_transfer *trans;
+   enum pipe_format pformat;
 
    assert(ctx->ReadBuffer->Width > 0);
 
@@ -421,6 +423,9 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
       yStep = 1;
    }
 
+   /* possibly convert sRGB format to linear RGB format */
+   pformat = util_format_linear(trans->resource->format);
+
    if (ST_DEBUG & DEBUG_FALLBACK)
       debug_printf("%s: fallback processing\n", __FUNCTION__);
 
@@ -435,8 +440,8 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
       const GLint dstStride = _mesa_image_row_stride(&clippedPacking, width,
                                                      format, type);
 
-      if (trans->resource->format == PIPE_FORMAT_Z24_UNORM_S8_USCALED ||
-          trans->resource->format == PIPE_FORMAT_Z24X8_UNORM) {
+      if (pformat == PIPE_FORMAT_Z24_UNORM_S8_USCALED ||
+          pformat == PIPE_FORMAT_Z24X8_UNORM) {
          if (format == GL_DEPTH_COMPONENT) {
             for (i = 0; i < height; i++) {
                GLuint ztemp[MAX_WIDTH];
@@ -467,8 +472,8 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
             }
          }
       }
-      else if (trans->resource->format == PIPE_FORMAT_S8_USCALED_Z24_UNORM ||
-               trans->resource->format == PIPE_FORMAT_X8Z24_UNORM) {
+      else if (pformat == PIPE_FORMAT_S8_USCALED_Z24_UNORM ||
+               pformat == PIPE_FORMAT_X8Z24_UNORM) {
          if (format == GL_DEPTH_COMPONENT) {
             for (i = 0; i < height; i++) {
                GLuint ztemp[MAX_WIDTH];
@@ -494,7 +499,7 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
             }
          }
       }
-      else if (trans->resource->format == PIPE_FORMAT_Z16_UNORM) {
+      else if (pformat == PIPE_FORMAT_Z16_UNORM) {
          for (i = 0; i < height; i++) {
             GLushort ztemp[MAX_WIDTH];
             GLfloat zfloat[MAX_WIDTH];
@@ -509,7 +514,7 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
             dst += dstStride;
          }
       }
-      else if (trans->resource->format == PIPE_FORMAT_Z32_UNORM) {
+      else if (pformat == PIPE_FORMAT_Z32_UNORM) {
          for (i = 0; i < height; i++) {
             GLuint ztemp[MAX_WIDTH];
             GLfloat zfloat[MAX_WIDTH];
@@ -528,7 +533,8 @@ st_readpixels(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GLsizei h
          /* RGBA format */
          /* Do a row at a time to flip image data vertically */
          for (i = 0; i < height; i++) {
-            pipe_get_tile_rgba(pipe, trans, 0, y, width, 1, df);
+            pipe_get_tile_rgba_format(pipe, trans, 0, y, width, 1,
+                                      pformat, df);
             y += yStep;
             df += dfStride;
             if (!dfStride) {
