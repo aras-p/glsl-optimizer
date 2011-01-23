@@ -89,6 +89,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_fragment_program_shadow",             o(ARB_fragment_program_shadow),             GL             },
    { "GL_ARB_fragment_shader",                     o(ARB_fragment_shader),                     GL             },
    { "GL_ARB_framebuffer_object",                  o(ARB_framebuffer_object),                  GL             },
+   { "GL_ARB_framebuffer_sRGB",                    o(EXT_framebuffer_sRGB),                    GL             },
    { "GL_ARB_half_float_pixel",                    o(ARB_half_float_pixel),                    GL             },
    { "GL_ARB_half_float_vertex",                   o(ARB_half_float_vertex),                   GL             },
    { "GL_ARB_instanced_arrays",                    o(ARB_instanced_arrays),                    GL             },
