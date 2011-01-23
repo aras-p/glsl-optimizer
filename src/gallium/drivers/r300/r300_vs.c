@@ -226,6 +226,13 @@ void r300_translate_vertex_shader(struct r300_context *r300,
 
     r300_tgsi_to_rc(&ttr, vs->state.tokens);
 
+    if (ttr.error) {
+        fprintf(stderr, "r300 VP: Cannot translate a shader. "
+                "Using a dummy shader instead.\n");
+        r300_dummy_vertex_shader(r300, vs);
+        return;
+    }
+
     if (compiler.Base.Program.Constants.Count > 200) {
         compiler.Base.remove_unused_constants = TRUE;
     }

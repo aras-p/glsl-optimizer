@@ -91,7 +91,6 @@ static struct rc_dst_register dstregtmpmask(int index, int mask)
 	dst.File = RC_FILE_TEMPORARY;
 	dst.Index = index;
 	dst.WriteMask = mask;
-	dst.RelAddr = 0;
 	return dst;
 }
 

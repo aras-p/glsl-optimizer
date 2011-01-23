@@ -63,7 +63,6 @@ static void create_vertex_program(struct r300_context *r300)
     inst->U.I.Opcode = RC_OPCODE_MOV;
     inst->U.I.DstReg.File = RC_FILE_OUTPUT;
     inst->U.I.DstReg.Index = VERT_RESULT_HPOS;
-    inst->U.I.DstReg.RelAddr = 0;
     inst->U.I.DstReg.WriteMask = RC_MASK_XYZW;
     inst->U.I.SrcReg[0].Abs = 0;
     inst->U.I.SrcReg[0].File = RC_FILE_INPUT;
@@ -76,7 +75,6 @@ static void create_vertex_program(struct r300_context *r300)
     inst->U.I.Opcode = RC_OPCODE_MOV;
     inst->U.I.DstReg.File = RC_FILE_OUTPUT;
     inst->U.I.DstReg.Index = VERT_RESULT_TEX0;
-    inst->U.I.DstReg.RelAddr = 0;
     inst->U.I.DstReg.WriteMask = RC_MASK_XYZW;
     inst->U.I.SrcReg[0].Abs = 0;
     inst->U.I.SrcReg[0].File = RC_FILE_INPUT;

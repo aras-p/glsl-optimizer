@@ -191,7 +191,12 @@ static void transform_dstreg(
     dst->File = translate_register_file(src->Register.File);
     dst->Index = translate_register_index(ttr, src->Register.File, src->Register.Index);
     dst->WriteMask = src->Register.WriteMask;
-    dst->RelAddr = src->Register.Indirect;
+
+    if (src->Register.Indirect) {
+        ttr->error = TRUE;
+        fprintf(stderr, "r300: Relative addressing of destination operands "
+                "is unsupported.\n");
+    }
 }
 
 static void transform_srcreg(
@@ -331,6 +336,8 @@ void r300_tgsi_to_rc(struct tgsi_to_rc * ttr,
     struct tgsi_parse_context parser;
     unsigned imm_index = 0;
     int i;
+
+    ttr->error = FALSE;
 
     /* Allocate constants placeholders.
      *

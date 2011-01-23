@@ -414,6 +414,13 @@ static void r300_translate_fragment_shader(
 
     r300_tgsi_to_rc(&ttr, tokens);
 
+    if (ttr.error) {
+        fprintf(stderr, "r300 FP: Cannot translate a shader. "
+                "Using a dummy shader instead.\n");
+        r300_dummy_fragment_shader(r300, shader);
+        return;
+    }
+
     if (!r300->screen->caps.is_r500 ||
         compiler.Base.Program.Constants.Count > 200) {
         compiler.Base.remove_unused_constants = TRUE;

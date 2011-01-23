@@ -110,7 +110,7 @@ static void rc_print_mask(FILE * f, unsigned int mask)
 
 static void rc_print_dst_register(FILE * f, struct rc_dst_register dst)
 {
-	rc_print_register(f, dst.File, dst.Index, dst.RelAddr);
+	rc_print_register(f, dst.File, dst.Index, 0);
 	if (dst.WriteMask != RC_MASK_XYZW) {
 		fprintf(f, ".");
 		rc_print_mask(f, dst.WriteMask);

@@ -302,12 +302,6 @@ static void check_opcode_support(struct r300_fragment_program_compiler *c,
 	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->Opcode);
 
 	if (opcode->HasDstReg) {
-		if (inst->DstReg.RelAddr) {
-			rc_error(&c->Base, "Fragment program does not support relative addressing "
-				 "of destination operands.\n");
-			return;
-		}
-
 		if (inst->SaturateMode == RC_SATURATE_MINUS_PLUS_ONE) {
 			rc_error(&c->Base, "Fragment program does not support signed Saturate.\n");
 			return;
