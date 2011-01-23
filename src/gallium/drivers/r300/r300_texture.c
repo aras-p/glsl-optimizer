@@ -370,14 +370,20 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
     switch (format) {
         /* 8-bit buffers. */
         case PIPE_FORMAT_A8_UNORM:
+        /*case PIPE_FORMAT_A8_SNORM:*/
         case PIPE_FORMAT_I8_UNORM:
+        /*case PIPE_FORMAT_I8_SNORM:*/
         case PIPE_FORMAT_L8_UNORM:
+        /*case PIPE_FORMAT_L8_SNORM:*/
+        case PIPE_FORMAT_L8_SRGB:
         case PIPE_FORMAT_R8_UNORM:
         case PIPE_FORMAT_R8_SNORM:
             return R300_COLOR_FORMAT_I8;
 
         /* 16-bit buffers. */
         case PIPE_FORMAT_L8A8_UNORM:
+        /*case PIPE_FORMAT_L8A8_SNORM:*/
+        case PIPE_FORMAT_L8A8_SRGB:
         case PIPE_FORMAT_R8G8_UNORM:
         case PIPE_FORMAT_R8G8_SNORM:
             return R300_COLOR_FORMAT_UV88;
@@ -395,13 +401,29 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
 
         /* 32-bit buffers. */
         case PIPE_FORMAT_B8G8R8A8_UNORM:
+        /*case PIPE_FORMAT_B8G8R8A8_SNORM:*/
+        case PIPE_FORMAT_B8G8R8A8_SRGB:
         case PIPE_FORMAT_B8G8R8X8_UNORM:
+        /*case PIPE_FORMAT_B8G8R8X8_SNORM:*/
+        case PIPE_FORMAT_B8G8R8X8_SRGB:
         case PIPE_FORMAT_A8R8G8B8_UNORM:
+        /*case PIPE_FORMAT_A8R8G8B8_SNORM:*/
+        case PIPE_FORMAT_A8R8G8B8_SRGB:
         case PIPE_FORMAT_X8R8G8B8_UNORM:
+        /*case PIPE_FORMAT_X8R8G8B8_SNORM:*/
+        case PIPE_FORMAT_X8R8G8B8_SRGB:
         case PIPE_FORMAT_A8B8G8R8_UNORM:
+        /*case PIPE_FORMAT_A8B8G8R8_SNORM:*/
+        case PIPE_FORMAT_A8B8G8R8_SRGB:
+        case PIPE_FORMAT_R8G8B8A8_UNORM:
         case PIPE_FORMAT_R8G8B8A8_SNORM:
+        case PIPE_FORMAT_R8G8B8A8_SRGB:
         case PIPE_FORMAT_X8B8G8R8_UNORM:
+        /*case PIPE_FORMAT_X8B8G8R8_SNORM:*/
+        case PIPE_FORMAT_X8B8G8R8_SRGB:
         case PIPE_FORMAT_R8G8B8X8_UNORM:
+        /*case PIPE_FORMAT_R8G8B8X8_SNORM:*/
+        /*case PIPE_FORMAT_R8G8B8X8_SRGB:*/
         case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
             return R300_COLOR_FORMAT_ARGB8888;
 
@@ -506,9 +528,13 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         /* 8-bit outputs, one channel.
          * COLORFORMAT_I8 stores the C2 component. */
         case PIPE_FORMAT_A8_UNORM:
+        /*case PIPE_FORMAT_A8_SNORM:*/
             return modifier | R300_C2_SEL_A;
         case PIPE_FORMAT_I8_UNORM:
+        /*case PIPE_FORMAT_I8_SNORM:*/
         case PIPE_FORMAT_L8_UNORM:
+        /*case PIPE_FORMAT_L8_SNORM:*/
+        case PIPE_FORMAT_L8_SRGB:
         case PIPE_FORMAT_R8_UNORM:
         case PIPE_FORMAT_R8_SNORM:
             return modifier | R300_C2_SEL_R;
@@ -516,6 +542,8 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         /* 16-bit outputs, two channels.
          * COLORFORMAT_UV88 stores C2 and C0. */
         case PIPE_FORMAT_L8A8_UNORM:
+        /*case PIPE_FORMAT_L8A8_SNORM:*/
+        case PIPE_FORMAT_L8A8_SRGB:
             return modifier | R300_C0_SEL_A | R300_C2_SEL_R;
         case PIPE_FORMAT_R8G8_UNORM:
         case PIPE_FORMAT_R8G8_SNORM:
@@ -528,7 +556,11 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         case PIPE_FORMAT_B4G4R4A4_UNORM:
         case PIPE_FORMAT_B4G4R4X4_UNORM:
         case PIPE_FORMAT_B8G8R8A8_UNORM:
+        /*case PIPE_FORMAT_B8G8R8A8_SNORM:*/
+        case PIPE_FORMAT_B8G8R8A8_SRGB:
         case PIPE_FORMAT_B8G8R8X8_UNORM:
+        /*case PIPE_FORMAT_B8G8R8X8_SNORM:*/
+        case PIPE_FORMAT_B8G8R8X8_SRGB:
         case PIPE_FORMAT_B10G10R10A2_UNORM:
             return modifier |
                 R300_C0_SEL_B | R300_C1_SEL_G |
@@ -536,21 +568,33 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
 
         /* ARGB outputs. */
         case PIPE_FORMAT_A8R8G8B8_UNORM:
+        /*case PIPE_FORMAT_A8R8G8B8_SNORM:*/
+        case PIPE_FORMAT_A8R8G8B8_SRGB:
         case PIPE_FORMAT_X8R8G8B8_UNORM:
+        /*case PIPE_FORMAT_X8R8G8B8_SNORM:*/
+        case PIPE_FORMAT_X8R8G8B8_SRGB:
             return modifier |
                 R300_C0_SEL_A | R300_C1_SEL_R |
                 R300_C2_SEL_G | R300_C3_SEL_B;
 
         /* ABGR outputs. */
         case PIPE_FORMAT_A8B8G8R8_UNORM:
+        /*case PIPE_FORMAT_A8B8G8R8_SNORM:*/
+        case PIPE_FORMAT_A8B8G8R8_SRGB:
         case PIPE_FORMAT_X8B8G8R8_UNORM:
+        /*case PIPE_FORMAT_X8B8G8R8_SNORM:*/
+        case PIPE_FORMAT_X8B8G8R8_SRGB:
             return modifier |
                 R300_C0_SEL_A | R300_C1_SEL_B |
                 R300_C2_SEL_G | R300_C3_SEL_R;
 
         /* RGBA outputs. */
         case PIPE_FORMAT_R8G8B8X8_UNORM:
+        /*case PIPE_FORMAT_R8G8B8X8_SNORM:*/
+        /*case PIPE_FORMAT_R8G8B8X8_SRGB:*/
+        case PIPE_FORMAT_R8G8B8A8_UNORM:
         case PIPE_FORMAT_R8G8B8A8_SNORM:
+        case PIPE_FORMAT_R8G8B8A8_SRGB:
         case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
         case PIPE_FORMAT_R10G10B10A2_UNORM:
         case PIPE_FORMAT_R10G10B10X2_SNORM:
