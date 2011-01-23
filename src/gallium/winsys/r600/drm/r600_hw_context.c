@@ -1274,7 +1274,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	}
 
 	/* if query buffer is full force a flush */
-	if (query->num_results >= ((query->buffer_size >> 2) - 2)) {
+	if (query->num_results*4 >= query->buffer_size - 16) {
 		r600_context_flush(ctx);
 		r600_query_result(ctx, query);
 	}
@@ -1282,7 +1282,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	/* emit begin query */
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2);
 	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
-	ctx->pm4[ctx->pm4_cdwords++] = query->num_results + r600_bo_offset(query->buffer);
+	ctx->pm4[ctx->pm4_cdwords++] = query->num_results*4 + r600_bo_offset(query->buffer);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
@@ -1298,13 +1298,13 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 	/* emit begin query */
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2);
 	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
-	ctx->pm4[ctx->pm4_cdwords++] = query->num_results + 8 + r600_bo_offset(query->buffer);
+	ctx->pm4[ctx->pm4_cdwords++] = query->num_results*4 + 8 + r600_bo_offset(query->buffer);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], query->buffer);
 
-	query->num_results += 16;
+	query->num_results += 4;
 	query->state ^= R600_QUERY_STATE_STARTED;
 	query->state |= R600_QUERY_STATE_ENDED;
 	ctx->num_query_running--;
