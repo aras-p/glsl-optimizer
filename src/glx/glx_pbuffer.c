@@ -106,7 +106,7 @@ ChangeDrawableAttribute(Display * dpy, GLXDrawable drawable,
    if ((priv->majorVersion > 1) || (priv->minorVersion >= 3)) {
       xGLXChangeDrawableAttributesReq *req;
 
-      GetReqExtra(GLXChangeDrawableAttributes, 8 + (8 * num_attribs), req);
+      GetReqExtra(GLXChangeDrawableAttributes, 8 * num_attribs, req);
       output = (CARD32 *) (req + 1);
 
       req->reqType = opcode;
@@ -297,7 +297,7 @@ GetDrawableAttribute(Display * dpy, GLXDrawable drawable,
    if (use_glx_1_3) {
       xGLXGetDrawableAttributesReq *req;
 
-      GetReqExtra(GLXGetDrawableAttributes, 4, req);
+      GetReq(GLXGetDrawableAttributes, req);
       req->reqType = opcode;
       req->glxCode = X_GLXGetDrawableAttributes;
       req->drawable = drawable;
@@ -435,7 +435,7 @@ DestroyDrawable(Display * dpy, GLXDrawable drawable, CARD32 glxCode)
 
    LockDisplay(dpy);
 
-   GetReqExtra(GLXDestroyPbuffer, 4, req);
+   GetReq(GLXDestroyPbuffer, req);
    req->reqType = opcode;
    req->glxCode = glxCode;
    req->pbuffer = (GLXPbuffer) drawable;
