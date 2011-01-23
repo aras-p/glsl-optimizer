@@ -3010,27 +3010,26 @@ ast_jump_statement::hir(exec_list *instructions,
       assert(state->current_function);
 
       if (opt_return_value) {
-	 if (state->current_function->return_type->base_type ==
-	     GLSL_TYPE_VOID) {
-	    YYLTYPE loc = this->get_location();
-
-	    _mesa_glsl_error(& loc, state,
-			     "`return` with a value, in function `%s' "
-			     "returning void",
-			     state->current_function->function_name());
-	 }
-
 	 ir_rvalue *const ret = opt_return_value->hir(instructions, state);
-	 assert(ret != NULL);
+
+	 /* The value of the return type can be NULL if the shader says
+	  * 'return foo();' and foo() is a function that returns void.
+	  *
+	  * NOTE: The GLSL spec doesn't say that this is an error.  The type
+	  * of the return value is void.  If the return type of the function is
+	  * also void, then this should compile without error.  Seriously.
+	  */
+	 const glsl_type *const ret_type =
+	    (ret == NULL) ? glsl_type::void_type : ret->type;
 
 	 /* Implicit conversions are not allowed for return values. */
-	 if (state->current_function->return_type != ret->type) {
+	 if (state->current_function->return_type != ret_type) {
 	    YYLTYPE loc = this->get_location();
 
 	    _mesa_glsl_error(& loc, state,
 			     "`return' with wrong type %s, in function `%s' "
 			     "returning %s",
-			     ret->type->name,
+			     ret_type->name,
 			     state->current_function->function_name(),
 			     state->current_function->return_type->name);
 	 }
