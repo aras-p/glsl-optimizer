@@ -37,16 +37,6 @@
 #include <math.h>
 #include <assert.h>
 
-static VGboolean is_aligned_to(const void *ptr, VGbyte alignment)
-{
-   void *aligned = align_pointer(ptr, alignment);
-   return (ptr == aligned) ? VG_TRUE : VG_FALSE;
-}
-
-static VGboolean is_aligned(const void *ptr)
-{
-   return is_aligned_to(ptr, 4);
-}
 
 static void vgu_append_float_coords(VGPath path,
                                     const VGubyte *cmds,
