@@ -34,8 +34,15 @@
 #ifndef HANDLE_H
 #define HANDLE_H
 
-#include "VG/openvg.h"
 #include "pipe/p_compiler.h"
+#include "util/u_hash_table.h"
+#include "util/u_pointer.h"
+
+#include "VG/openvg.h"
+#include "vg_context.h"
+
+
+extern struct util_hash_table *handle_hash;
 
 
 struct vg_mask_layer;
@@ -45,43 +52,77 @@ struct vg_paint;
 struct path;
 
 
+extern void
+init_handles(void);
+
+
+extern void
+free_handles(void);
+
+
+extern VGHandle
+create_handle(void *object);
+
+
+extern void
+destroy_handle(VGHandle h);
+
+
+static INLINE VGHandle
+object_to_handle(struct vg_object *obj)
+{
+   return obj ? obj->handle : VG_INVALID_HANDLE;
+}
+
+
 static INLINE VGHandle
 image_to_handle(struct vg_image *img)
 {
-   return (VGHandle) img;
+   /* vg_image is derived from vg_object */
+   return object_to_handle((struct vg_object *) img);
 }
 
 
 static INLINE VGHandle
 masklayer_to_handle(struct vg_mask_layer *mask)
 {
-   return (VGHandle) mask;
+   /* vg_object is derived from vg_object */
+   return object_to_handle((struct vg_object *) mask);
 }
 
 
 static INLINE VGHandle
 font_to_handle(struct vg_font *font)
 {
-   return (VGHandle) font;
+   return object_to_handle((struct vg_object *) font);
 }
+
 
 static INLINE VGHandle
 paint_to_handle(struct vg_paint *paint)
 {
-   return (VGHandle) paint;
+   return object_to_handle((struct vg_object *) paint);
 }
+
 
 static INLINE VGHandle
 path_to_handle(struct path *path)
 {
-   return (VGHandle) path;
+   return object_to_handle((struct vg_object *) path);
 }
 
 
 static INLINE void *
 handle_to_pointer(VGHandle h)
 {
-   return (void *) h;
+   void *v = util_hash_table_get(handle_hash, intptr_to_pointer(h));
+#ifdef DEBUG
+   if (v) {
+      struct vg_object *obj = (struct vg_object *) v;
+      assert(obj->handle == h);
+   }
+#endif
+   return v;
 }
 
 

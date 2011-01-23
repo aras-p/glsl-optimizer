@@ -183,6 +183,15 @@ void vg_init_object(struct vg_object *obj, struct vg_context *ctx, enum vg_objec
 {
    obj->type = type;
    obj->ctx = ctx;
+   obj->handle = create_handle(obj);
+}
+
+/** free object resources, but not the object itself */
+void vg_free_object(struct vg_object *obj)
+{
+   obj->type = 0;
+   obj->ctx = NULL;
+   destroy_handle(obj->handle);
 }
 
 VGboolean vg_context_is_object_valid(struct vg_context *ctx,
@@ -416,7 +425,7 @@ void vg_validate_state(struct vg_context *ctx)
 VGboolean vg_object_is_valid(VGHandle object, enum vg_object_type type)
 {
    struct vg_object *obj = handle_to_object(object);
-   if (object && is_aligned(obj) && obj->type == type)
+   if (obj && is_aligned(obj) && obj->type == type)
       return VG_TRUE;
    else
       return VG_FALSE;

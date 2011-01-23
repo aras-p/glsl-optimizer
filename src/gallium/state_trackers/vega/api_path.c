@@ -170,7 +170,7 @@ void vegaAppendPathData(VGPath dstPath,
 
    p = handle_to_path(dstPath);
 
-   if (!pathData || !is_aligned_to(pathData, path_datatype_size(p))) {
+   if (!p || !is_aligned_to(p, path_datatype_size(p))) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return;
    }

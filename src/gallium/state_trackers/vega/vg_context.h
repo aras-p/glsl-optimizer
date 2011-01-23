@@ -129,11 +129,20 @@ struct vg_context
    struct blit_state *blit;
 };
 
+
+/**
+ *  Base class for VG objects like paths, images, fonts.
+ */
 struct vg_object {
    enum vg_object_type type;
+   VGHandle handle;
    struct vg_context *ctx;
 };
+
+
 void vg_init_object(struct vg_object *obj, struct vg_context *ctx, enum vg_object_type type);
+void vg_free_object(struct vg_object *obj);
+
 VGboolean vg_object_is_valid(VGHandle object, enum vg_object_type type);
 
 struct vg_context *vg_create_context(struct pipe_context *pipe,

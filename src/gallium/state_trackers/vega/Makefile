@@ -26,6 +26,7 @@ C_SOURCES = \
            api_transform.c \
            arc.c \
            bezier.c \
+           handle.c \
            image.c \
            mask.c \
            paint.c \

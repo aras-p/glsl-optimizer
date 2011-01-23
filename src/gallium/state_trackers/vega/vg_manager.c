@@ -40,6 +40,7 @@
 #include "vg_manager.h"
 #include "vg_context.h"
 #include "api.h"
+#include "handle.h"
 
 static boolean
 vg_context_update_color_rb(struct vg_context *ctx, struct pipe_resource *pt)
@@ -171,6 +172,9 @@ vg_api_create_context(struct st_api *stapi, struct st_manager *smapi,
    /* only 1.0 is supported */
    if (attribs->major > 1 || (attribs->major == 1 && attribs->minor > 0))
       return NULL;
+
+   /* for VGHandle / pointer lookups */
+   init_handles();
 
    pipe = smapi->screen->context_create(smapi->screen, NULL);
    if (!pipe)
