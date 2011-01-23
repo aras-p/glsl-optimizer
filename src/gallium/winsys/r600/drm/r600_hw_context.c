@@ -1247,13 +1247,19 @@ out_err:
 	bof_decref(root);
 }
 
-static void r600_query_result(struct r600_context *ctx, struct r600_query *query)
+static boolean r600_query_result(struct r600_context *ctx, struct r600_query *query, boolean wait)
 {
 	u64 start, end;
 	u32 *results;
 	int i;
 
-	results = r600_bo_map(ctx->radeon, query->buffer, 0, NULL);
+	if (wait)
+		results = r600_bo_map(ctx->radeon, query->buffer, PB_USAGE_CPU_READ, NULL);
+	else
+		results = r600_bo_map(ctx->radeon, query->buffer, PB_USAGE_DONTBLOCK | PB_USAGE_CPU_READ, NULL);
+	if (!results)
+		return FALSE;
+
 	for (i = 0; i < query->num_results; i += 4) {
 		start = (u64)results[i] | (u64)results[i + 1] << 32;
 		end = (u64)results[i + 2] | (u64)results[i + 3] << 32;
@@ -1263,6 +1269,8 @@ static void r600_query_result(struct r600_context *ctx, struct r600_query *query
 	}
 	r600_bo_unmap(ctx->radeon, query->buffer);
 	query->num_results = 0;
+
+	return TRUE;
 }
 
 void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
@@ -1276,7 +1284,7 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 	/* if query buffer is full force a flush */
 	if (query->num_results*4 >= query->buffer_size - 16) {
 		r600_context_flush(ctx);
-		r600_query_result(ctx, query);
+		r600_query_result(ctx, query, TRUE);
 	}
 
 	/* emit begin query */
@@ -1356,7 +1364,8 @@ boolean r600_context_query_result(struct r600_context *ctx,
 	if (query->num_results) {
 		r600_context_flush(ctx);
 	}
-	r600_query_result(ctx, query);
+	if (!r600_query_result(ctx, query, wait))
+		return FALSE;
 	*result = query->result;
 	query->result = 0;
 	return TRUE;
