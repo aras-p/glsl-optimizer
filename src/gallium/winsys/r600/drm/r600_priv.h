@@ -49,6 +49,7 @@ struct radeon {
 	unsigned			fence;
 	unsigned			*cfence;
 	struct r600_bo			*fence_bo;
+	unsigned			clock_crystal_freq;
 };
 
 struct r600_reg {

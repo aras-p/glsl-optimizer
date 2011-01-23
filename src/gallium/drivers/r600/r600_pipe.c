@@ -283,7 +283,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return 1;
 
 	/* Unsupported features (boolean caps). */
-	case PIPE_CAP_TIMER_QUERY:
 	case PIPE_CAP_STREAM_OUTPUT:
 	case PIPE_CAP_PRIMITIVE_RESTART:
 	case PIPE_CAP_INDEP_BLEND_FUNC: /* FIXME allow this */
@@ -317,6 +316,10 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
 		return 0;
+
+	/* Timer queries, present when the clock frequency is non zero. */
+	case PIPE_CAP_TIMER_QUERY:
+		return r600_get_clock_crystal_freq(rscreen->radeon) != 0;
 
 	default:
 		R600_ERR("r600: unknown param %d\n", param);

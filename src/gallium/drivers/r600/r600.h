@@ -113,6 +113,7 @@ struct r600_tiling_info {
 enum radeon_family r600_get_family(struct radeon *rw);
 enum chip_class r600_get_family_class(struct radeon *radeon);
 struct r600_tiling_info *r600_get_tiling_info(struct radeon *radeon);
+unsigned r600_get_clock_crystal_freq(struct radeon *radeon);
 
 /* r600_bo.c */
 struct r600_bo;
