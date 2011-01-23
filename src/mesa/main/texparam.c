@@ -175,13 +175,26 @@ set_swizzle_component(GLuint *swizzle, GLuint comp, GLuint swz)
 
 
 /**
- * This is called just prior to changing any texture object state.
+ * This is called just prior to changing any texture object state which
+ * will not effect texture completeness.
+ */
+static INLINE void
+flush(struct gl_context *ctx)
+{
+   FLUSH_VERTICES(ctx, _NEW_TEXTURE);
+}
+
+
+/**
+ * This is called just prior to changing any texture object state which
+ * can effect texture completeness (texture base level, max level,
+ * minification filter).
  * Any pending rendering will be flushed out, we'll set the _NEW_TEXTURE
  * state flag and then mark the texture object as 'incomplete' so that any
  * per-texture derived state gets recomputed.
  */
 static INLINE void
-flush(struct gl_context *ctx, struct gl_texture_object *texObj)
+incomplete(struct gl_context *ctx, struct gl_texture_object *texObj)
 {
    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
    texObj->_Complete = GL_FALSE;
@@ -204,7 +217,7 @@ set_tex_parameteri(struct gl_context *ctx,
       switch (params[0]) {
       case GL_NEAREST:
       case GL_LINEAR:
-         flush(ctx, texObj);
+         incomplete(ctx, texObj);
          texObj->MinFilter = params[0];
          return GL_TRUE;
       case GL_NEAREST_MIPMAP_NEAREST:
@@ -212,7 +225,7 @@ set_tex_parameteri(struct gl_context *ctx,
       case GL_NEAREST_MIPMAP_LINEAR:
       case GL_LINEAR_MIPMAP_LINEAR:
          if (texObj->Target != GL_TEXTURE_RECTANGLE_NV) {
-            flush(ctx, texObj);
+            incomplete(ctx, texObj);
             texObj->MinFilter = params[0];
             return GL_TRUE;
          }
@@ -229,7 +242,7 @@ set_tex_parameteri(struct gl_context *ctx,
       switch (params[0]) {
       case GL_NEAREST:
       case GL_LINEAR:
-         flush(ctx, texObj);
+         flush(ctx); /* does not effect completeness */
          texObj->MagFilter = params[0];
          return GL_TRUE;
       default:
@@ -242,7 +255,7 @@ set_tex_parameteri(struct gl_context *ctx,
       if (texObj->WrapS == params[0])
          return GL_FALSE;
       if (validate_texture_wrap_mode(ctx, texObj->Target, params[0])) {
-         flush(ctx, texObj);
+         flush(ctx);
          texObj->WrapS = params[0];
          return GL_TRUE;
       }
@@ -252,7 +265,7 @@ set_tex_parameteri(struct gl_context *ctx,
       if (texObj->WrapT == params[0])
          return GL_FALSE;
       if (validate_texture_wrap_mode(ctx, texObj->Target, params[0])) {
-         flush(ctx, texObj);
+         flush(ctx);
          texObj->WrapT = params[0];
          return GL_TRUE;
       }
@@ -262,7 +275,7 @@ set_tex_parameteri(struct gl_context *ctx,
       if (texObj->WrapR == params[0])
          return GL_FALSE;
       if (validate_texture_wrap_mode(ctx, texObj->Target, params[0])) {
-         flush(ctx, texObj);
+         flush(ctx);
          texObj->WrapR = params[0];
          return GL_TRUE;
       }
@@ -277,7 +290,7 @@ set_tex_parameteri(struct gl_context *ctx,
                      "glTexParameter(param=%d)", params[0]);
          return GL_FALSE;
       }
-      flush(ctx, texObj);
+      incomplete(ctx, texObj);
       texObj->BaseLevel = params[0];
       return GL_TRUE;
 
@@ -289,13 +302,13 @@ set_tex_parameteri(struct gl_context *ctx,
                      "glTexParameter(param=%d)", params[0]);
          return GL_FALSE;
       }
-      flush(ctx, texObj);
+      incomplete(ctx, texObj);
       texObj->MaxLevel = params[0];
       return GL_TRUE;
 
    case GL_GENERATE_MIPMAP_SGIS:
       if (texObj->GenerateMipmap != params[0]) {
-	 flush(ctx, texObj);
+         /* no flush() */
 	 texObj->GenerateMipmap = params[0] ? GL_TRUE : GL_FALSE;
 	 return GL_TRUE;
       }
@@ -306,7 +319,7 @@ set_tex_parameteri(struct gl_context *ctx,
           (params[0] == GL_NONE ||
            params[0] == GL_COMPARE_R_TO_TEXTURE_ARB)) {
          if (texObj->CompareMode != params[0]) {
-            flush(ctx, texObj);
+            flush(ctx);
             texObj->CompareMode = params[0];
             return GL_TRUE;
          }
@@ -325,7 +338,7 @@ set_tex_parameteri(struct gl_context *ctx,
          switch (params[0]) {
          case GL_LEQUAL:
          case GL_GEQUAL:
-            flush(ctx, texObj);
+            flush(ctx);
             texObj->CompareFunc = params[0];
             return GL_TRUE;
          case GL_EQUAL:
@@ -335,7 +348,7 @@ set_tex_parameteri(struct gl_context *ctx,
          case GL_ALWAYS:
          case GL_NEVER:
             if (ctx->Extensions.EXT_shadow_funcs) {
-               flush(ctx, texObj);
+               flush(ctx);
                texObj->CompareFunc = params[0];
                return GL_TRUE;
             }
@@ -357,7 +370,7 @@ set_tex_parameteri(struct gl_context *ctx,
            params[0] == GL_ALPHA ||
 	   (ctx->Extensions.ARB_texture_rg && params[0] == GL_RED))) {
          if (texObj->DepthMode != params[0]) {
-            flush(ctx, texObj);
+            flush(ctx);
             texObj->DepthMode = params[0];
             return GL_TRUE;
          }
@@ -391,7 +404,7 @@ set_tex_parameteri(struct gl_context *ctx,
          }
          ASSERT(comp < 4);
          if (swz >= 0) {
-            flush(ctx, texObj);
+            flush(ctx);
             texObj->Swizzle[comp] = params[0];
             set_swizzle_component(&texObj->_Swizzle, comp, swz);
             return GL_TRUE;
@@ -403,7 +416,7 @@ set_tex_parameteri(struct gl_context *ctx,
    case GL_TEXTURE_SWIZZLE_RGBA_EXT:
       if (ctx->Extensions.EXT_texture_swizzle) {
          GLuint comp;
-         flush(ctx, texObj);
+         flush(ctx);
          for (comp = 0; comp < 4; comp++) {
             const GLint swz = comp_to_swizzle(params[comp]);
             if (swz >= 0) {
@@ -425,7 +438,7 @@ set_tex_parameteri(struct gl_context *ctx,
 	 GLenum decode = params[0];
 	 if (decode == GL_DECODE_EXT || decode == GL_SKIP_DECODE_EXT) {
 	    if (texObj->sRGBDecode != decode) {
-	       flush(ctx, texObj);
+	       flush(ctx);
 	       texObj->sRGBDecode = decode;
 	       _mesa_update_fetch_functions(texObj);
 	    }
@@ -454,19 +467,19 @@ set_tex_parameterf(struct gl_context *ctx,
    case GL_TEXTURE_MIN_LOD:
       if (texObj->MinLod == params[0])
          return GL_FALSE;
-      flush(ctx, texObj);
+      flush(ctx);
       texObj->MinLod = params[0];
       return GL_TRUE;
 
    case GL_TEXTURE_MAX_LOD:
       if (texObj->MaxLod == params[0])
          return GL_FALSE;
-      flush(ctx, texObj);
+      flush(ctx);
       texObj->MaxLod = params[0];
       return GL_TRUE;
 
    case GL_TEXTURE_PRIORITY:
-      flush(ctx, texObj);
+      flush(ctx);
       texObj->Priority = CLAMP(params[0], 0.0F, 1.0F);
       return GL_TRUE;
 
@@ -478,7 +491,7 @@ set_tex_parameterf(struct gl_context *ctx,
             _mesa_error(ctx, GL_INVALID_VALUE, "glTexParameter(param)" );
             return GL_FALSE;
          }
-         flush(ctx, texObj);
+         flush(ctx);
          /* clamp to max, that's what NVIDIA does */
          texObj->MaxAnisotropy = MIN2(params[0],
                                       ctx->Const.MaxTextureMaxAnisotropy);
@@ -495,7 +508,7 @@ set_tex_parameterf(struct gl_context *ctx,
    case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
       if (ctx->Extensions.ARB_shadow_ambient) {
          if (texObj->CompareFailValue != params[0]) {
-            flush(ctx, texObj);
+            flush(ctx);
             texObj->CompareFailValue = CLAMP(params[0], 0.0F, 1.0F);
             return GL_TRUE;
          }
@@ -510,7 +523,7 @@ set_tex_parameterf(struct gl_context *ctx,
       /* NOTE: this is really part of OpenGL 1.4, not EXT_texture_lod_bias */
       if (ctx->Extensions.EXT_texture_lod_bias) {
          if (texObj->LodBias != params[0]) {
-            flush(ctx, texObj);
+            flush(ctx);
             texObj->LodBias = params[0];
             return GL_TRUE;
          }
@@ -519,7 +532,7 @@ set_tex_parameterf(struct gl_context *ctx,
       break;
 
    case GL_TEXTURE_BORDER_COLOR:
-      flush(ctx, texObj);
+      flush(ctx);
       texObj->BorderColor.f[RCOMP] = params[0];
       texObj->BorderColor.f[GCOMP] = params[1];
       texObj->BorderColor.f[BCOMP] = params[2];
