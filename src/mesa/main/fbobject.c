@@ -2072,7 +2072,14 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
                      "glGetFramebufferAttachmentParameterivEXT(pname)");
       }
       else {
-         *params = _mesa_get_format_color_encoding(att->Renderbuffer->Format);
+         if (ctx->Extensions.EXT_framebuffer_sRGB) {
+            *params = _mesa_get_format_color_encoding(att->Renderbuffer->Format);
+         }
+         else {
+            /* According to ARB_framebuffer_sRGB, we should return LINEAR
+             * if the sRGB conversion is unsupported. */
+            *params = GL_LINEAR;
+         }
       }
       return;
    case GL_FRAMEBUFFER_ATTACHMENT_COMPONENT_TYPE:
