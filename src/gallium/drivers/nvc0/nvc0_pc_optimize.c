@@ -700,6 +700,9 @@ struct pass_reld_elim {
    int alloc;
 };
 
+/* Extend the load operation in @rec to also cover the data loaded by @ld.
+ * The two loads may not overlap but reference adjacent memory locations.
+ */
 static void
 combine_load(struct mem_record *rec, struct nv_instruction *ld)
 {
@@ -716,7 +719,7 @@ combine_load(struct mem_record *rec, struct nv_instruction *ld)
          return;
       rec->ofst = mem->reg.address;
       for (j = 0; j < d; ++j)
-         fv->def[d + j] = fv->def[j];
+         fv->def[mem->reg.size / 4 + j] = fv->def[j];
       d = 0;
    } else
    if ((size == 8 && rec->ofst & 3) ||
@@ -729,6 +732,7 @@ combine_load(struct mem_record *rec, struct nv_instruction *ld)
       fv->def[d++]->insn = fv;
    }
 
+   fv->src[0]->value->reg.address = rec->ofst;
    fv->src[0]->value->reg.size = rec->size = size;
 
    nvc0_insn_delete(ld);
@@ -793,6 +797,7 @@ nv_pass_mem_opt(struct pass_reld_elim *ctx, struct nv_basic_block *b)
              ((it->ofst >> 4) == (ofst >> 4)) &&
              ((it->ofst + it->size == ofst) ||
               (it->ofst - mem->reg.size == ofst))) {
+            /* only NV_OP_VFETCH can load exactly 12 bytes */
             if (ld->opcode == NV_OP_LD && it->size + mem->reg.size == 12)
                continue;
             if (it->ofst < ofst) {
