@@ -367,26 +367,7 @@ pipe_get_tile_rgba(struct pipe_context *pipe,
                    uint x, uint y, uint w, uint h,
                    float *p)
 {
-   unsigned dst_stride = w * 4;
-   void *packed;
-   enum pipe_format format = pt->resource->format;
-
-   if (u_clip_tile(x, y, &w, &h, &pt->box))
-      return;
-
-   packed = MALLOC(util_format_get_nblocks(format, w, h) * util_format_get_blocksize(format));
-
-   if (!packed)
-      return;
-
-   if(format == PIPE_FORMAT_UYVY || format == PIPE_FORMAT_YUYV)
-      assert((x & 1) == 0);
-
-   pipe_get_tile_raw(pipe, pt, x, y, w, h, packed, 0);
-
-   pipe_tile_raw_to_rgba(format, packed, w, h, p, dst_stride);
-
-   FREE(packed);
+   pipe_get_tile_rgba_format(pipe, pt, x, y, w, h, pt->resource->format, p);
 }
 
 
