@@ -629,25 +629,28 @@ emit_slct(struct nv_pc *pc, struct nv_instruction *i)
 static void
 emit_cvt(struct nv_pc *pc, struct nv_instruction *i)
 {
+   uint32_t rint;
+
    pc->emit[0] = 0x00000004;
    pc->emit[1] = 0x10000000;
 
-   if (i->opcode != NV_OP_CVT)
+   /* if no type conversion specified, get type from opcode */
+   if (i->opcode != NV_OP_CVT && i->ext.cvt.d == i->ext.cvt.s)
       i->ext.cvt.d = i->ext.cvt.s = NV_OPTYPE(i->opcode);
 
    switch (i->ext.cvt.d) {
    case NV_TYPE_F32:
       switch (i->ext.cvt.s) {
       case NV_TYPE_F32: pc->emit[1] = 0x10000000; break;
-      case NV_TYPE_S32: pc->emit[0] |= 0x200;
+      case NV_TYPE_S32: pc->emit[0] |= 0x200; /* fall through */
       case NV_TYPE_U32: pc->emit[1] = 0x18000000; break;
       }
       break;
-   case NV_TYPE_S32: pc->emit[0] |= 0x80;
+   case NV_TYPE_S32: pc->emit[0] |= 0x80; /* fall through */
    case NV_TYPE_U32:
       switch (i->ext.cvt.s) {
       case NV_TYPE_F32: pc->emit[1] = 0x14000000; break;
-      case NV_TYPE_S32: pc->emit[0] |= 0x200;
+      case NV_TYPE_S32: pc->emit[0] |= 0x200; /* fall through */
       case NV_TYPE_U32: pc->emit[1] = 0x1c000000; break;
       }
       break;
@@ -656,14 +659,20 @@ emit_cvt(struct nv_pc *pc, struct nv_instruction *i)
       break;
    }
 
-   if (i->opcode == NV_OP_FLOOR)
-      pc->emit[1] |= 0x00020000;
-   else
-   if (i->opcode == NV_OP_CEIL)
-      pc->emit[1] |= 0x00040000;
-   else
-   if (i->opcode == NV_OP_TRUNC)
-      pc->emit[1] |= 0x00060000;
+   rint = (i->ext.cvt.d == NV_TYPE_F32) ? 1 << 7 : 0;
+
+   if (i->opcode == NV_OP_FLOOR) {
+      pc->emit[0] |= rint;
+      pc->emit[1] |= 2 << 16;
+   } else
+   if (i->opcode == NV_OP_CEIL) {
+      pc->emit[0] |= rint;
+      pc->emit[1] |= 4 << 16;
+   } else
+   if (i->opcode == NV_OP_TRUNC) {
+      pc->emit[0] |= rint;
+      pc->emit[1] |= 6 << 16;
+   }
 
    if (i->saturate || i->opcode == NV_OP_SAT)
       pc->emit[0] |= 0x20;
