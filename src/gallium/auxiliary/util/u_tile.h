@@ -92,6 +92,13 @@ pipe_put_tile_rgba(struct pipe_context *pipe,
                    uint x, uint y, uint w, uint h,
                    const float *p);
 
+void
+pipe_put_tile_rgba_format(struct pipe_context *pipe,
+                          struct pipe_transfer *pt,
+                          uint x, uint y, uint w, uint h,
+                          enum pipe_format format,
+                          const float *p);
+
 
 void
 pipe_get_tile_z(struct pipe_context *pipe,

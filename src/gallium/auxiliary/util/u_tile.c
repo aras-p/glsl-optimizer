@@ -408,9 +408,19 @@ pipe_put_tile_rgba(struct pipe_context *pipe,
                    uint x, uint y, uint w, uint h,
                    const float *p)
 {
+   pipe_put_tile_rgba_format(pipe, pt, x, y, w, h, pt->resource->format, p);
+}
+
+
+void
+pipe_put_tile_rgba_format(struct pipe_context *pipe,
+                          struct pipe_transfer *pt,
+                          uint x, uint y, uint w, uint h,
+                          enum pipe_format format,
+                          const float *p)
+{
    unsigned src_stride = w * 4;
    void *packed;
-   enum pipe_format format = pt->resource->format;
 
    if (u_clip_tile(x, y, &w, &h, &pt->box))
       return;
