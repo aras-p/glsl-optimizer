@@ -21,16 +21,18 @@ struct nvc0_program {
    unsigned code_size;
    unsigned parm_size;
 
-   uint32_t hdr[20];
+   uint32_t hdr[20]; /* TODO: move this into code to save space */
 
    uint32_t flags[2];
 
    struct {
       uint8_t edgeflag;
       uint8_t num_ucps;
+      uint8_t out_pos[PIPE_MAX_SHADER_OUTPUTS];
    } vp;
    struct {
       uint8_t early_z;
+      uint8_t in_pos[PIPE_MAX_SHADER_INPUTS];
    } fp;
 
    void *relocs;

@@ -185,8 +185,17 @@ nvc0_varying_location(unsigned sn, unsigned si)
       return 0x2e0;
       */
    case TGSI_SEMANTIC_GENERIC:
+      /* We'd really like to distinguish between TEXCOORD and GENERIC here,
+       * since only 0x300 to 0x37c can be replaced by sprite coordinates.
+       * Also, gl_PointCoord should be a system value and must be assigned to
+       * address 0x2e0. For now, let's cheat:
+       */
       assert(si < 31);
-      return 0x80 + (si * 16);
+      if (si <= 7)
+         return 0x300 + si * 16;
+      if (si == 9)
+         return 0x2e0;
+      return 0x80 + ((si - 8) * 16);
    case TGSI_SEMANTIC_NORMAL:
       return 0x360;
    case TGSI_SEMANTIC_PRIMID:
@@ -256,12 +265,14 @@ prog_decl(struct nvc0_translation_info *ti,
    case TGSI_FILE_INPUT:
       for (i = first; i <= last; ++i) {
          if (ti->prog->type == PIPE_SHADER_VERTEX) {
-            sn = TGSI_SEMANTIC_GENERIC;
-            si = i;
+            for (c = 0; c < 4; ++c)
+               ti->input_loc[i][c] = 0x80 + i * 16 + c * 4;
+         } else {
+            for (c = 0; c < 4; ++c)
+               ti->input_loc[i][c] = nvc0_varying_location(sn, si) + c * 4;
+            /* for sprite coordinates: */
+            ti->prog->fp.in_pos[i] = ti->input_loc[i][0] / 4;
          }
-         for (c = 0; c < 4; ++c)
-            ti->input_loc[i][c] = nvc0_varying_location(sn, si) + c * 4;
-
          if (ti->prog->type == PIPE_SHADER_FRAGMENT)
             ti->interp_mode[i] = nvc0_interp_mode(decl);
       }
@@ -281,6 +292,8 @@ prog_decl(struct nvc0_translation_info *ti,
          } else {
             for (c = 0; c < 4; ++c)
                ti->output_loc[i][c] = nvc0_varying_location(sn, si) + c * 4;
+            /* for TFB_VARYING_LOCS: */
+            ti->prog->vp.out_pos[i] = ti->output_loc[i][0] / 4;
          }
       }
       break;
@@ -518,6 +531,8 @@ nvc0_fp_gen_header(struct nvc0_program *fp, struct nvc0_translation_info *ti)
          if (!ti->input_access[i][c])
             continue;
          a = ti->input_loc[i][c] / 2;
+         if (ti->input_loc[i][c] >= 0x2c0)
+            a -= 32;
          if ((a & ~7) == 0x70/2)
             fp->hdr[5] |= 1 << (28 + (a & 7) / 2); /* FRAG_COORD_UMASK */
          else
