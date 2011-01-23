@@ -134,7 +134,7 @@ struct vg_object {
    struct vg_context *ctx;
 };
 void vg_init_object(struct vg_object *obj, struct vg_context *ctx, enum vg_object_type type);
-VGboolean vg_object_is_valid(void *ptr, enum vg_object_type type);
+VGboolean vg_object_is_valid(VGHandle object, enum vg_object_type type);
 
 struct vg_context *vg_create_context(struct pipe_context *pipe,
                                      const void *visual,
@@ -145,7 +145,7 @@ void vg_set_current_context(struct vg_context *ctx);
 
 VGboolean vg_context_is_object_valid(struct vg_context *ctx,
                                      enum vg_object_type type,
-                                     void *ptr);
+                                     VGHandle object);
 void vg_context_add_object(struct vg_context *ctx,
                            enum vg_object_type type,
                            void *ptr);

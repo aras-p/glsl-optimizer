@@ -33,6 +33,7 @@
 #include "vg_manager.h"
 #include "api.h"
 #include "mask.h"
+#include "handle.h"
 
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
@@ -186,13 +187,13 @@ void vg_init_object(struct vg_object *obj, struct vg_context *ctx, enum vg_objec
 
 VGboolean vg_context_is_object_valid(struct vg_context *ctx,
                                 enum vg_object_type type,
-                                void *ptr)
+                                VGHandle object)
 {
     if (ctx) {
        struct cso_hash *hash = ctx->owned_objects[type];
        if (!hash)
           return VG_FALSE;
-       return cso_hash_contains(hash, (unsigned)(long)ptr);
+       return cso_hash_contains(hash, (unsigned)(long)object);
     }
     return VG_FALSE;
 }
@@ -412,10 +413,10 @@ void vg_validate_state(struct vg_context *ctx)
    shader_set_color_transform(ctx->shader, ctx->state.vg.color_transform);
 }
 
-VGboolean vg_object_is_valid(void *ptr, enum vg_object_type type)
+VGboolean vg_object_is_valid(VGHandle object, enum vg_object_type type)
 {
-   struct vg_object *obj = ptr;
-   if (ptr && is_aligned(obj) && obj->type == type)
+   struct vg_object *obj = handle_to_object(object);
+   if (object && is_aligned(obj) && obj->type == type)
       return VG_TRUE;
    else
       return VG_FALSE;

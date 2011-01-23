@@ -29,6 +29,7 @@
 #include "vg_context.h"
 #include "image.h"
 #include "api.h"
+#include "handle.h"
 #include "renderer.h"
 #include "shaders_cache.h"
 
@@ -251,8 +252,8 @@ void vegaColorMatrix(VGImage dst, VGImage src,
       return;
    }
 
-   d = (struct vg_image*)dst;
-   s = (struct vg_image*)src;
+   d = handle_to_image(dst);
+   s = handle_to_image(src);
 
    if (vg_image_overlaps(d, s)) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
@@ -317,8 +318,8 @@ void vegaConvolve(VGImage dst, VGImage src,
       return;
    }
 
-   d = (struct vg_image*)dst;
-   s = (struct vg_image*)src;
+   d = handle_to_image(dst);
+   s = handle_to_image(src);
 
    if (vg_image_overlaps(d, s)) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
@@ -502,8 +503,8 @@ void vegaGaussianBlur(VGImage dst, VGImage src,
       return;
    }
 
-   d = (struct vg_image*)dst;
-   s = (struct vg_image*)src;
+   d = handle_to_image(dst);
+   s = handle_to_image(src);
 
    if (vg_image_overlaps(d, s)) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
@@ -599,8 +600,8 @@ void vegaLookup(VGImage dst, VGImage src,
       return;
    }
 
-   d = (struct vg_image*)dst;
-   s = (struct vg_image*)src;
+   d = handle_to_image(dst);
+   s = handle_to_image(src);
 
    if (vg_image_overlaps(d, s)) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
@@ -662,8 +663,8 @@ void vegaLookupSingle(VGImage dst, VGImage src,
       return;
    }
 
-   d = (struct vg_image*)dst;
-   s = (struct vg_image*)src;
+   d = handle_to_image(dst);
+   s = handle_to_image(src);
 
    if (vg_image_overlaps(d, s)) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);

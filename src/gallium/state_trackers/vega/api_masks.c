@@ -28,6 +28,7 @@
 
 #include "mask.h"
 #include "api.h"
+#include "handle.h"
 #include "renderer.h"
 
 #include "vg_context.h"
@@ -56,11 +57,11 @@ void vegaMask(VGHandle mask, VGMaskOperation operation,
       mask_fill(x, y, width, height, 0.f);
    } else if (operation == VG_FILL_MASK) {
       mask_fill(x, y, width, height, 1.f);
-   } else if (vg_object_is_valid((void*)mask, VG_OBJECT_IMAGE)) {
-      struct vg_image *image = (struct vg_image *)mask;
+   } else if (vg_object_is_valid(mask, VG_OBJECT_IMAGE)) {
+      struct vg_image *image = handle_to_image(mask);
       mask_using_image(image, operation, x, y, width, height);
-   } else if (vg_object_is_valid((void*)mask, VG_OBJECT_MASK)) {
-      struct vg_mask_layer *layer = (struct vg_mask_layer *)mask;
+   } else if (vg_object_is_valid(mask, VG_OBJECT_MASK)) {
+      struct vg_mask_layer *layer = handle_to_masklayer(mask);
       mask_using_layer(layer, operation, x, y, width, height);
    } else {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
@@ -123,14 +124,14 @@ void vegaRenderToMask(VGPath path,
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return;
    }
-   if (!vg_object_is_valid((void*)path, VG_OBJECT_PATH)) {
+   if (!vg_object_is_valid(path, VG_OBJECT_PATH)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
 
    vg_validate_state(ctx);
 
-   mask_render_to((struct path *)path, paintModes, operation);
+   mask_render_to(handle_to_path(path), paintModes, operation);
 }
 
 VGMaskLayer vegaCreateMaskLayer(VGint width, VGint height)
@@ -144,7 +145,7 @@ VGMaskLayer vegaCreateMaskLayer(VGint width, VGint height)
       return VG_INVALID_HANDLE;
    }
 
-   return (VGMaskLayer)mask_layer_create(width, height);
+   return masklayer_to_handle(mask_layer_create(width, height));
 }
 
 void vegaDestroyMaskLayer(VGMaskLayer maskLayer)
@@ -156,12 +157,12 @@ void vegaDestroyMaskLayer(VGMaskLayer maskLayer)
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
-   if (!vg_object_is_valid((void*)maskLayer, VG_OBJECT_MASK)) {
+   if (!vg_object_is_valid(maskLayer, VG_OBJECT_MASK)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
 
-   mask = (struct vg_mask_layer *)maskLayer;
+   mask = handle_to_masklayer(maskLayer);
    mask_layer_destroy(mask);
 }
 
@@ -192,12 +193,12 @@ void vegaFillMaskLayer(VGMaskLayer maskLayer,
       return;
    }
 
-   if (!vg_object_is_valid((void*)maskLayer, VG_OBJECT_MASK)) {
+   if (!vg_object_is_valid(maskLayer, VG_OBJECT_MASK)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
 
-   mask = (struct vg_mask_layer*)maskLayer;
+   mask = handle_to_masklayer(maskLayer);
 
    if (x + width > mask_layer_width(mask) ||
        y + height > mask_layer_height(mask)) {
@@ -226,14 +227,14 @@ void vegaCopyMask(VGMaskLayer maskLayer,
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return;
    }
-   if (!vg_object_is_valid((void*)maskLayer, VG_OBJECT_MASK)) {
+   if (!vg_object_is_valid(maskLayer, VG_OBJECT_MASK)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
 
    vg_validate_state(ctx);
 
-   mask = (struct vg_mask_layer*)maskLayer;
+   mask = handle_to_masklayer(maskLayer);
    mask_copy(mask, sx, sy, dx, dy, width, height);
 }
 

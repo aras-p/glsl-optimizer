@@ -29,6 +29,7 @@
 
 #include "matrix.h"
 #include "path.h"
+#include "handle.h"
 
 #include "util/u_debug.h"
 #include "util/u_pointer.h"
@@ -54,7 +55,7 @@ static void vgu_append_float_coords(VGPath path,
                                     VGint num_coords)
 {
    VGubyte common_data[40 * sizeof(VGfloat)];
-   struct path *p = (struct path *)path;
+   struct path *p = handle_to_path(path);
 
    vg_float_to_datatype(path_datatype(p), common_data, coords, num_coords);
    vgAppendPathData(path, num_cmds, cmds, common_data);

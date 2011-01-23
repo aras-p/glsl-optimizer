@@ -29,6 +29,7 @@
 #include "vg_context.h"
 #include "paint.h"
 #include "path.h"
+#include "handle.h"
 #include "image.h"
 #include "text.h"
 #include "matrix.h"
@@ -972,9 +973,9 @@ void vegaSetParameterf(VGHandle object,
                        VGfloat value)
 {
    struct vg_context *ctx = vg_current_context();
-   void *ptr = (void*)object;
+   void *ptr = handle_to_pointer(object);
 
-   if (!object || object == VG_INVALID_HANDLE || !is_aligned(ptr)) {
+   if (object == VG_INVALID_HANDLE || !is_aligned(ptr)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
@@ -994,7 +995,7 @@ void vegaSetParameterf(VGHandle object,
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       break;
    case VG_PAINT_COLOR_RAMP_PREMULTIPLIED: {
-      struct vg_paint *p = (struct vg_paint *)object;
+      struct vg_paint *p = handle_to_paint(object);
       paint_set_color_ramp_premultiplied(p, value);
    }
       break;
@@ -1026,9 +1027,9 @@ void vegaSetParameteri(VGHandle object,
                        VGint value)
 {
    struct vg_context *ctx = vg_current_context();
-   void *ptr = (void*)object;
+   void *ptr = handle_to_pointer(object);
 
-   if (!object || object == VG_INVALID_HANDLE || !is_aligned(ptr)) {
+   if (object == VG_INVALID_HANDLE || !is_aligned(ptr)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
@@ -1039,7 +1040,7 @@ void vegaSetParameteri(VGHandle object,
           value > VG_PAINT_TYPE_PATTERN)
          vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       else {
-         struct vg_paint *paint = (struct vg_paint *)ptr;
+         struct vg_paint *paint = handle_to_paint(object);
          paint_set_type(paint, value);
       }
       break;
@@ -1055,12 +1056,12 @@ void vegaSetParameteri(VGHandle object,
           value > VG_COLOR_RAMP_SPREAD_REFLECT)
          vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       else {
-         struct vg_paint *paint = (struct vg_paint *)ptr;
+         struct vg_paint *paint = handle_to_paint(object);
          paint_set_spread_mode(paint, value);
       }
       break;
    case VG_PAINT_COLOR_RAMP_PREMULTIPLIED: {
-      struct vg_paint *p = (struct vg_paint *)object;
+      struct vg_paint *p = handle_to_paint(object);
       paint_set_color_ramp_premultiplied(p, value);
    }
       break;
@@ -1069,7 +1070,7 @@ void vegaSetParameteri(VGHandle object,
           value > VG_TILE_REFLECT)
          vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       else {
-         struct vg_paint *paint = (struct vg_paint *)ptr;
+         struct vg_paint *paint = handle_to_paint(object);
          paint_set_pattern_tiling(paint, value);
       }
       break;
@@ -1102,10 +1103,10 @@ void vegaSetParameterfv(VGHandle object,
                         const VGfloat * values)
 {
    struct vg_context *ctx = vg_current_context();
-   void *ptr = (void*)object;
+   void *ptr = handle_to_pointer(object);
    VGint real_count = vgGetParameterVectorSize(object, paramType);
 
-   if (!object || object == VG_INVALID_HANDLE || !is_aligned(ptr)) {
+   if (object == VG_INVALID_HANDLE || !is_aligned(ptr)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
@@ -1132,7 +1133,7 @@ void vegaSetParameterfv(VGHandle object,
       if (count != 4)
          vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       else {
-         struct vg_paint *paint = (struct vg_paint *)object;
+         struct vg_paint *paint = handle_to_paint(object);
          paint_set_color(paint, values);
       }
    }
@@ -1141,7 +1142,7 @@ void vegaSetParameterfv(VGHandle object,
       if (count && count < 4)
          vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       else {
-         struct vg_paint *paint = (struct vg_paint *)object;
+         struct vg_paint *paint = handle_to_paint(object);
          count = MIN2(count, VEGA_MAX_COLOR_RAMP_STOPS);
          paint_set_ramp_stops(paint, values, count);
          {
@@ -1159,7 +1160,7 @@ void vegaSetParameterfv(VGHandle object,
       if (count != 4)
          vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       else {
-         struct vg_paint *paint = (struct vg_paint *)object;
+         struct vg_paint *paint = handle_to_paint(object);
          paint_set_linear_gradient(paint, values);
          {
             VGint vals[4];
@@ -1176,7 +1177,7 @@ void vegaSetParameterfv(VGHandle object,
       if (count != 5)
          vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       else {
-         struct vg_paint *paint = (struct vg_paint *)object;
+         struct vg_paint *paint = handle_to_paint(object);
          paint_set_radial_gradient(paint, values);
          {
             VGint vals[5];
@@ -1215,10 +1216,10 @@ void vegaSetParameteriv(VGHandle object,
                         const VGint * values)
 {
    struct vg_context *ctx = vg_current_context();
-   void *ptr = (void*)object;
+   void *ptr = handle_to_pointer(object);
    VGint real_count = vgGetParameterVectorSize(object, paramType);
 
-   if (!object || object == VG_INVALID_HANDLE || !is_aligned(ptr)) {
+   if (object == VG_INVALID_HANDLE || !is_aligned(ptr)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
@@ -1245,7 +1246,7 @@ void vegaSetParameteriv(VGHandle object,
       if (count != 4)
          vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       else {
-         struct vg_paint *paint = (struct vg_paint *)object;
+         struct vg_paint *paint = handle_to_paint(object);
          paint_set_coloriv(paint, values);
       }
    }
@@ -1256,7 +1257,7 @@ void vegaSetParameteriv(VGHandle object,
       else {
          VGfloat *vals = 0;
          int i;
-         struct vg_paint *paint = (struct vg_paint *)object;
+         struct vg_paint *paint = handle_to_paint(object);
          if (count) {
             vals = malloc(sizeof(VGfloat)*count);
             for (i = 0; i < count; ++i)
@@ -1274,7 +1275,7 @@ void vegaSetParameteriv(VGHandle object,
          vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       else {
          VGfloat vals[4];
-         struct vg_paint *paint = (struct vg_paint *)object;
+         struct vg_paint *paint = handle_to_paint(object);
          vals[0] = values[0];
          vals[1] = values[1];
          vals[2] = values[2];
@@ -1289,7 +1290,7 @@ void vegaSetParameteriv(VGHandle object,
          vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       else {
          VGfloat vals[5];
-         struct vg_paint *paint = (struct vg_paint *)object;
+         struct vg_paint *paint = handle_to_paint(object);
          vals[0] = values[0];
          vals[1] = values[1];
          vals[2] = values[2];
@@ -1318,9 +1319,8 @@ VGint vegaGetParameterVectorSize(VGHandle object,
                                  VGint paramType)
 {
    struct vg_context *ctx = vg_current_context();
-   void *ptr = (void*)object;
 
-   if (!ptr || object == VG_INVALID_HANDLE) {
+   if (object == VG_INVALID_HANDLE) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return 0;
    }
@@ -1334,7 +1334,7 @@ VGint vegaGetParameterVectorSize(VGHandle object,
    case VG_PAINT_COLOR:
       return 4;
    case VG_PAINT_COLOR_RAMP_STOPS: {
-      struct vg_paint *p = (struct vg_paint *)object;
+      struct vg_paint *p = handle_to_paint(object);
       return paint_num_ramp_stops(p);
    }
       break;
@@ -1374,9 +1374,8 @@ VGfloat vegaGetParameterf(VGHandle object,
                           VGint paramType)
 {
    struct vg_context *ctx = vg_current_context();
-   void *ptr = (void*)object;
 
-   if (!ptr || object == VG_INVALID_HANDLE) {
+   if (object == VG_INVALID_HANDLE) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return 0;
    }
@@ -1398,11 +1397,11 @@ VGfloat vegaGetParameterf(VGHandle object,
    case VG_PATH_FORMAT:
       return VG_PATH_FORMAT_STANDARD;
    case VG_PATH_SCALE: {
-      struct path *p = (struct path*)object;
+      struct path *p = handle_to_path(object);
       return path_scale(p);
    }
    case VG_PATH_BIAS: {
-      struct path *p = (struct path*)object;
+      struct path *p = handle_to_path(object);
       return path_bias(p);
    }
    case VG_PATH_DATATYPE:
@@ -1431,30 +1430,29 @@ VGint vegaGetParameteri(VGHandle object,
                         VGint paramType)
 {
    struct vg_context *ctx = vg_current_context();
-   void *ptr = (void*)object;
 
-   if (!ptr || object == VG_INVALID_HANDLE) {
+   if (object == VG_INVALID_HANDLE) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return 0;
    }
 
    switch(paramType) {
    case VG_PAINT_TYPE: {
-         struct vg_paint *paint = (struct vg_paint *)ptr;
+         struct vg_paint *paint = handle_to_paint(object);
          return paint_type(paint);
    }
       break;
    case VG_PAINT_COLOR_RAMP_SPREAD_MODE: {
-      struct vg_paint *p = (struct vg_paint *)object;
+      struct vg_paint *p = handle_to_paint(object);
       return paint_spread_mode(p);
    }
    case VG_PAINT_COLOR_RAMP_PREMULTIPLIED: {
-      struct vg_paint *p = (struct vg_paint *)object;
+      struct vg_paint *p = handle_to_paint(object);
       return paint_color_ramp_premultiplied(p);
    }
       break;
    case VG_PAINT_PATTERN_TILING_MODE: {
-      struct vg_paint *p = (struct vg_paint *)object;
+      struct vg_paint *p = handle_to_paint(object);
       return paint_pattern_tiling(p);
    }
       break;
@@ -1471,38 +1469,38 @@ VGint vegaGetParameteri(VGHandle object,
    case VG_PATH_BIAS:
       return vgGetParameterf(object, paramType);
    case VG_PATH_DATATYPE: {
-      struct path *p = (struct path*)object;
+      struct path *p = handle_to_path(object);
       return path_datatype(p);
    }
    case VG_PATH_NUM_SEGMENTS: {
-      struct path *p = (struct path*)object;
+      struct path *p = handle_to_path(object);
       return path_num_segments(p);
    }
    case VG_PATH_NUM_COORDS: {
-      struct path *p = (struct path*)object;
+      struct path *p = handle_to_path(object);
       return path_num_coords(p);
    }
       break;
 
    case VG_IMAGE_FORMAT: {
-      struct vg_image *img = (struct vg_image*)object;
+      struct vg_image *img = handle_to_image(object);
       return img->format;
    }
       break;
    case VG_IMAGE_WIDTH: {
-      struct vg_image *img = (struct vg_image*)object;
+      struct vg_image *img = handle_to_image(object);
       return img->width;
    }
       break;
    case VG_IMAGE_HEIGHT: {
-      struct vg_image *img = (struct vg_image*)object;
+      struct vg_image *img = handle_to_image(object);
       return img->height;
    }
       break;
 
 #ifdef OPENVG_VERSION_1_1
    case VG_FONT_NUM_GLYPHS: {
-      struct vg_font *font = (struct vg_font*)object;
+      struct vg_font *font = handle_to_font(object);
       return font_num_glyphs(font);
    }
       break;
@@ -1521,10 +1519,9 @@ void vegaGetParameterfv(VGHandle object,
                         VGfloat * values)
 {
    struct vg_context *ctx = vg_current_context();
-   void *ptr = (void*)object;
    VGint real_count = vgGetParameterVectorSize(object, paramType);
 
-   if (!ptr || object == VG_INVALID_HANDLE) {
+   if (object == VG_INVALID_HANDLE) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
@@ -1537,17 +1534,17 @@ void vegaGetParameterfv(VGHandle object,
 
    switch(paramType) {
    case VG_PAINT_TYPE: {
-      struct vg_paint *p = (struct vg_paint *)object;
+      struct vg_paint *p = handle_to_paint(object);
       values[0] = paint_type(p);
    }
       break;
    case VG_PAINT_COLOR_RAMP_SPREAD_MODE: {
-      struct vg_paint *p = (struct vg_paint *)object;
+      struct vg_paint *p = handle_to_paint(object);
       values[0] = paint_spread_mode(p);
    }
       break;
    case VG_PAINT_COLOR_RAMP_PREMULTIPLIED: {
-      struct vg_paint *p = (struct vg_paint *)object;
+      struct vg_paint *p = handle_to_paint(object);
       values[0] = paint_color_ramp_premultiplied(p);
    }
       break;
@@ -1556,22 +1553,22 @@ void vegaGetParameterfv(VGHandle object,
    }
       break;
    case VG_PAINT_COLOR: {
-      struct vg_paint *paint = (struct vg_paint *)object;
+      struct vg_paint *paint = handle_to_paint(object);
       paint_get_color(paint, values);
    }
       break;
    case VG_PAINT_COLOR_RAMP_STOPS: {
-      struct vg_paint *paint = (struct vg_paint *)object;
+      struct vg_paint *paint = handle_to_paint(object);
       paint_ramp_stops(paint, values, count);
    }
       break;
    case VG_PAINT_LINEAR_GRADIENT: {
-      struct vg_paint *paint = (struct vg_paint *)object;
+      struct vg_paint *paint = handle_to_paint(object);
       paint_linear_gradient(paint, values);
    }
       break;
    case VG_PAINT_RADIAL_GRADIENT: {
-      struct vg_paint *paint = (struct vg_paint *)object;
+      struct vg_paint *paint = handle_to_paint(object);
       paint_radial_gradient(paint, values);
    }
       break;
@@ -1608,10 +1605,9 @@ void vegaGetParameteriv(VGHandle object,
                         VGint * values)
 {
    struct vg_context *ctx = vg_current_context();
-   void *ptr = (void*)object;
    VGint real_count = vgGetParameterVectorSize(object, paramType);
 
-   if (!ptr || object == VG_INVALID_HANDLE) {
+   if (object || object == VG_INVALID_HANDLE) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
@@ -1633,22 +1629,22 @@ void vegaGetParameteriv(VGHandle object,
       break;
 #endif
    case VG_PAINT_COLOR: {
-      struct vg_paint *paint = (struct vg_paint *)object;
+      struct vg_paint *paint = handle_to_paint(object);
       paint_get_coloriv(paint, values);
    }
       break;
    case VG_PAINT_COLOR_RAMP_STOPS: {
-      struct vg_paint *paint = (struct vg_paint *)object;
+      struct vg_paint *paint = handle_to_paint(object);
       paint_ramp_stopsi(paint, values, count);
    }
       break;
    case VG_PAINT_LINEAR_GRADIENT: {
-      struct vg_paint *paint = (struct vg_paint *)object;
+      struct vg_paint *paint = handle_to_paint(object);
       paint_linear_gradienti(paint, values);
    }
       break;
    case VG_PAINT_RADIAL_GRADIENT: {
-      struct vg_paint *paint = (struct vg_paint *)object;
+      struct vg_paint *paint = handle_to_paint(object);
       paint_radial_gradienti(paint, values);
    }
       break;

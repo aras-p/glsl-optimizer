@@ -29,6 +29,7 @@
 #include "vg_context.h"
 #include "text.h"
 #include "api.h"
+#include "handle.h"
 
 #include "util/u_memory.h"
 
@@ -43,19 +44,19 @@ VGFont vegaCreateFont(VGint glyphCapacityHint)
       return VG_INVALID_HANDLE;
    }
 
-   return (VGFont) font_create(glyphCapacityHint);
+   return font_to_handle(font_create(glyphCapacityHint));
 }
 
 void vegaDestroyFont(VGFont f)
 {
-   struct vg_font *font = (struct vg_font *)f;
+   struct vg_font *font = handle_to_font(f);
    struct vg_context *ctx = vg_current_context();
 
    if (f == VG_INVALID_HANDLE) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
-   if (!vg_object_is_valid((void *) font, VG_OBJECT_FONT)) {
+   if (!vg_object_is_valid(f, VG_OBJECT_FONT)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
@@ -75,7 +76,7 @@ void vegaSetGlyphToPath(VGFont font,
    struct vg_font *f;
 
    if (font == VG_INVALID_HANDLE ||
-       !vg_context_is_object_valid(ctx, VG_OBJECT_FONT, (void *)font)) {
+       !vg_context_is_object_valid(ctx, VG_OBJECT_FONT, font)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
@@ -85,13 +86,13 @@ void vegaSetGlyphToPath(VGFont font,
       return;
    }
    if (path != VG_INVALID_HANDLE &&
-       !vg_context_is_object_valid(ctx, VG_OBJECT_PATH, (void *)path)) {
+       !vg_context_is_object_valid(ctx, VG_OBJECT_PATH, path)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
 
-   pathObj = (struct path*) path;
-   f = (struct vg_font*) font;
+   pathObj = handle_to_path(path);
+   f = handle_to_font(font);
 
    font_set_glyph_to_path(f, glyphIndex, pathObj,
          isHinted, glyphOrigin, escapement);
@@ -108,7 +109,7 @@ void vegaSetGlyphToImage(VGFont font,
    struct vg_font *f;
 
    if (font == VG_INVALID_HANDLE ||
-       !vg_context_is_object_valid(ctx, VG_OBJECT_FONT, (void *)font)) {
+       !vg_context_is_object_valid(ctx, VG_OBJECT_FONT, font)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
@@ -118,13 +119,13 @@ void vegaSetGlyphToImage(VGFont font,
       return;
    }
    if (image != VG_INVALID_HANDLE &&
-       !vg_context_is_object_valid(ctx, VG_OBJECT_IMAGE, (void *)image)) {
+       !vg_context_is_object_valid(ctx, VG_OBJECT_IMAGE, image)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
 
-   img_obj = (struct vg_image*)image;
-   f = (struct vg_font*)font;
+   img_obj = handle_to_image(image);
+   f = handle_to_font(font);
 
    font_set_glyph_to_image(f, glyphIndex, img_obj, glyphOrigin, escapement);
 }
@@ -140,7 +141,7 @@ void vegaClearGlyph(VGFont font,
       return;
    }
 
-   f = (struct vg_font*) font;
+   f = handle_to_font(font);
 
    font_clear_glyph(f, glyphIndex);
 }
@@ -161,7 +162,7 @@ void vegaDrawGlyph(VGFont font,
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return;
    }
-   f = (struct vg_font*)font;
+   f = handle_to_font(font);
 
    font_draw_glyph(f, glyphIndex, paintModes, allowAutoHinting);
 }
@@ -199,7 +200,7 @@ void vegaDrawGlyphs(VGFont font,
       return;
    }
 
-   f = (struct vg_font*)font;
+   f = handle_to_font(font);
 
    font_draw_glyphs(f, glyphCount, glyphIndices,
          adjustments_x, adjustments_y, paintModes, allowAutoHinting);

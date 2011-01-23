@@ -32,6 +32,7 @@
 #include "vg_translate.h"
 #include "api_consts.h"
 #include "api.h"
+#include "handle.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_screen.h"
@@ -122,19 +123,19 @@ VGImage vegaCreateImage(VGImageFormat format,
       return VG_INVALID_HANDLE;
    }
 
-   return (VGImage)image_create(format, width, height);
+   return image_to_handle(image_create(format, width, height));
 }
 
 void vegaDestroyImage(VGImage image)
 {
    struct vg_context *ctx = vg_current_context();
-   struct vg_image *img = (struct vg_image *)image;
+   struct vg_image *img = handle_to_image(image);
 
    if (image == VG_INVALID_HANDLE) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
-   if (!vg_object_is_valid((void*)image, VG_OBJECT_IMAGE)) {
+   if (!vg_object_is_valid(image, VG_OBJECT_IMAGE)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
@@ -157,7 +158,7 @@ void vegaClearImage(VGImage image,
       return;
    }
 
-   img = (struct vg_image*)image;
+   img = handle_to_image(image);
 
    if (x + width < 0 || y + height < 0)
       return;
@@ -189,7 +190,7 @@ void vegaImageSubData(VGImage image,
       return;
    }
 
-   img = (struct vg_image*)(image);
+   img = handle_to_image(image);
    image_sub_data(img, data, dataStride, dataFormat,
                   x, y, width, height);
 }
@@ -216,7 +217,7 @@ void vegaGetImageSubData(VGImage image,
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return;
    }
-   img = (struct vg_image*)image;
+   img = handle_to_image(image);
    image_get_sub_data(img, data, dataStride, dataFormat,
                       x, y, width, height);
 }
@@ -229,8 +230,8 @@ VGImage vegaChildImage(VGImage parent,
    struct vg_image *p;
 
    if (parent == VG_INVALID_HANDLE ||
-       !vg_context_is_object_valid(ctx, VG_OBJECT_IMAGE, (void*)parent) ||
-       !vg_object_is_valid((void*)parent, VG_OBJECT_IMAGE)) {
+       !vg_context_is_object_valid(ctx, VG_OBJECT_IMAGE, parent) ||
+       !vg_object_is_valid(parent, VG_OBJECT_IMAGE)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return VG_INVALID_HANDLE;
    }
@@ -238,7 +239,7 @@ VGImage vegaChildImage(VGImage parent,
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return VG_INVALID_HANDLE;
    }
-   p = (struct vg_image *)parent;
+   p = handle_to_image(parent);
    if (x > p->width  || y > p->height) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return VG_INVALID_HANDLE;
@@ -248,7 +249,7 @@ VGImage vegaChildImage(VGImage parent,
       return VG_INVALID_HANDLE;
    }
 
-   return (VGImage)image_child_image(p, x, y, width, height);
+   return image_to_handle(image_child_image(p, x, y, width, height));
 }
 
 VGImage vegaGetParent(VGImage image)
@@ -261,9 +262,9 @@ VGImage vegaGetParent(VGImage image)
       return VG_INVALID_HANDLE;
    }
 
-   img = (struct vg_image*)image;
+   img = handle_to_image(image);
    if (img->parent)
-      return (VGImage)img->parent;
+      return image_to_handle(img->parent);
    else
       return image;
 }
@@ -285,8 +286,8 @@ void vegaCopyImage(VGImage dst, VGint dx, VGint dy,
       return;
    }
    vg_validate_state(ctx);
-   image_copy((struct vg_image*)dst, dx, dy,
-              (struct vg_image*)src, sx, sy,
+   image_copy(handle_to_image(dst), dx, dy,
+              handle_to_image(src), sx, sy,
               width, height, dither);
 }
 
@@ -303,7 +304,7 @@ void vegaDrawImage(VGImage image)
    }
 
    vg_validate_state(ctx);
-   image_draw((struct vg_image*)image,
+   image_draw(handle_to_image(image),
          &ctx->state.vg.image_user_to_surface_matrix);
 }
 
@@ -323,7 +324,7 @@ void vegaSetPixels(VGint dx, VGint dy,
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return;
    }
-   image_set_pixels(dx, dy, (struct vg_image*)src, sx, sy, width,
+   image_set_pixels(dx, dy, handle_to_image(src), sx, sy, width,
                     height);
 }
 
@@ -343,7 +344,7 @@ void vegaGetPixels(VGImage dst, VGint dx, VGint dy,
       return;
    }
 
-   img = (struct vg_image*)dst;
+   img = handle_to_image(dst);
 
    image_get_pixels(img, dx, dy,
                     sx, sy, width, height);
