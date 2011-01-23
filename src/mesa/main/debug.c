@@ -65,13 +65,12 @@ void
 _mesa_print_state( const char *msg, GLuint state )
 {
    _mesa_debug(NULL,
-	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
+	   "%s: (0x%x) %s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s\n",
 	   msg,
 	   state,
 	   (state & _NEW_MODELVIEW)       ? "ctx->ModelView, " : "",
 	   (state & _NEW_PROJECTION)      ? "ctx->Projection, " : "",
 	   (state & _NEW_TEXTURE_MATRIX)  ? "ctx->TextureMatrix, " : "",
-	   (state & _NEW_ACCUM)           ? "ctx->Accum, " : "",
 	   (state & _NEW_COLOR)           ? "ctx->Color, " : "",
 	   (state & _NEW_DEPTH)           ? "ctx->Depth, " : "",
 	   (state & _NEW_EVAL)            ? "ctx->Eval/EvalMap, " : "",
