@@ -355,6 +355,10 @@ draw_set_vertex_elements(struct draw_context *draw,
 {
    assert(count <= PIPE_MAX_ATTRIBS);
 
+   /* We could improve this by only flushing the frontend and the fetch part
+    * of the middle. This would avoid recalculating the emit keys.*/
+   draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
+
    memcpy(draw->pt.vertex_element, elements, count * sizeof(elements[0]));
    draw->pt.nr_vertex_elements = count;
 }
@@ -653,6 +657,8 @@ void draw_do_flush( struct draw_context *draw, unsigned flags )
       draw->flushing = TRUE;
 
       draw_pipeline_flush( draw, flags );
+
+      draw_pt_flush( draw, flags );
 
       draw->flushing = FALSE;
    }

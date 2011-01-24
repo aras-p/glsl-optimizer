@@ -63,6 +63,7 @@ struct draw_stage;
 struct vbuf_render;
 struct tgsi_exec_machine;
 struct tgsi_sampler;
+struct draw_pt_front_end;
 
 
 /**
@@ -137,6 +138,12 @@ struct draw_context
    /* Support prototype passthrough path:
     */
    struct {
+      /* Current active frontend */
+      struct draw_pt_front_end *frontend;
+      unsigned prim;
+      unsigned opt;
+      unsigned eltSize; /* saved eltSize for flushing */
+
       struct {
          struct draw_pt_middle_end *fetch_emit;
          struct draw_pt_middle_end *fetch_shade_emit;
@@ -391,6 +398,7 @@ void draw_remove_extra_vertex_attribs(struct draw_context *draw);
 boolean draw_pt_init( struct draw_context *draw );
 void draw_pt_destroy( struct draw_context *draw );
 void draw_pt_reset_vertex_ids( struct draw_context *draw );
+void draw_pt_flush( struct draw_context *draw, unsigned flags );
 
 
 /*******************************************************************************

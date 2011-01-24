@@ -73,7 +73,7 @@ struct draw_pt_front_end {
                 unsigned start,
                 unsigned count );
 
-   void (*finish)( struct draw_pt_front_end * );
+   void (*flush)( struct draw_pt_front_end *, unsigned flags );
    void (*destroy)( struct draw_pt_front_end * );
 };
 

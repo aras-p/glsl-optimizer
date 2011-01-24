@@ -178,11 +178,14 @@ static void vsplit_prepare(struct draw_pt_front_end *frontend,
 }
 
 
-static void vsplit_finish(struct draw_pt_front_end *frontend)
+static void vsplit_flush(struct draw_pt_front_end *frontend, unsigned flags)
 {
    struct vsplit_frontend *vsplit = (struct vsplit_frontend *) frontend;
-   vsplit->middle->finish(vsplit->middle);
-   vsplit->middle = NULL;
+
+   if (!(flags & DRAW_FLUSH_BACKEND)) {
+      vsplit->middle->finish(vsplit->middle);
+      vsplit->middle = NULL;
+   }
 }
 
 
@@ -202,7 +205,7 @@ struct draw_pt_front_end *draw_pt_vsplit(struct draw_context *draw)
 
    vsplit->base.prepare = vsplit_prepare;
    vsplit->base.run     = NULL;
-   vsplit->base.finish  = vsplit_finish;
+   vsplit->base.flush   = vsplit_flush;
    vsplit->base.destroy = vsplit_destroy;
    vsplit->draw = draw;
 
