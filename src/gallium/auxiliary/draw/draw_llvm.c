@@ -220,7 +220,7 @@ create_jit_vertex_buffer_type(struct gallivm_state *gallivm)
    elem_types[0] =
    elem_types[1] =
    elem_types[2] = LLVMInt32TypeInContext(gallivm->context);
-   elem_types[3] = LLVMPointerType(LLVMOpaqueTypeInContext(gallivm->context), 0); /* vs_constants */
+   elem_types[3] = LLVMPointerType(LLVMInt8TypeInContext(gallivm->context), 0); /* vs_constants */
 
    vb_type = LLVMStructTypeInContext(gallivm->context, elem_types,
                                      Elements(elem_types), 0);
