@@ -75,6 +75,7 @@ enum tgsi_file_type {
    TGSI_FILE_SYSTEM_VALUE        =9,
    TGSI_FILE_IMMEDIATE_ARRAY     =10,
    TGSI_FILE_TEMPORARY_ARRAY     =11,
+   TGSI_FILE_RESOURCE            =12,
    TGSI_FILE_COUNT      /**< how many TGSI_FILE_ types */
 };
 
@@ -151,6 +152,14 @@ struct tgsi_declaration_semantic
    unsigned Name           : 8;  /**< one of TGSI_SEMANTIC_x */
    unsigned Index          : 16; /**< UINT */
    unsigned Padding        : 8;
+};
+
+struct tgsi_declaration_resource {
+   unsigned Resource    : 8; /**< one of TGSI_TEXTURE_ */
+   unsigned ReturnTypeX : 6; /**< one of enum pipe_type */
+   unsigned ReturnTypeY : 6; /**< one of enum pipe_type */
+   unsigned ReturnTypeZ : 6; /**< one of enum pipe_type */
+   unsigned ReturnTypeW : 6; /**< one of enum pipe_type */
 };
 
 #define TGSI_IMM_FLOAT32   0
@@ -339,7 +348,22 @@ struct tgsi_property_data {
 #define TGSI_OPCODE_CASE                142
 #define TGSI_OPCODE_DEFAULT             143
 #define TGSI_OPCODE_ENDSWITCH           144
-#define TGSI_OPCODE_LAST                145
+
+/* resource related opcodes */
+#define TGSI_OPCODE_LOAD                145
+#define TGSI_OPCODE_LOAD_MS             146
+#define TGSI_OPCODE_SAMPLE              147
+#define TGSI_OPCODE_SAMPLE_B            148
+#define TGSI_OPCODE_SAMPLE_C            149
+#define TGSI_OPCODE_SAMPLE_C_LZ         150
+#define TGSI_OPCODE_SAMPLE_D            151
+#define TGSI_OPCODE_SAMPLE_L            152
+#define TGSI_OPCODE_GATHER4             153
+#define TGSI_OPCODE_RESINFO             154
+#define TGSI_OPCODE_SAMPLE_POS          155
+#define TGSI_OPCODE_SAMPLE_INFO         156
+
+#define TGSI_OPCODE_LAST                157
 
 #define TGSI_SAT_NONE            0  /* do not saturate */
 #define TGSI_SAT_ZERO_ONE        1  /* clamp to [0,1] */

@@ -283,7 +283,8 @@ static const char *file_names[TGSI_FILE_COUNT] =
    "PRED",
    "SV",
    "IMMX",
-   "TEMPX"
+   "TEMPX",
+   "RES"
 };
 
 static boolean
@@ -828,6 +829,15 @@ static const char *texture_names[TGSI_TEXTURE_COUNT] =
    "SHADOWRECT"
 };
 
+static const char *type_names[] =
+{
+   "UNORM",
+   "SNORM",
+   "SINT",
+   "UINT",
+   "FLOAT"
+};
+
 static boolean
 match_inst_mnemonic(const char **pcur,
                     const struct tgsi_opcode_info *info)
@@ -1104,42 +1114,113 @@ static boolean parse_declaration( struct translate_ctx *ctx )
    cur = ctx->cur;
    eat_opt_white( &cur );
    if (*cur == ',' && !is_vs_input) {
-      uint i;
+      uint i, j;
 
       cur++;
       eat_opt_white( &cur );
-      for (i = 0; i < TGSI_SEMANTIC_COUNT; i++) {
-         if (str_match_no_case( &cur, semantic_names[i] )) {
-            const char *cur2 = cur;
-            uint index;
-
-            if (is_digit_alpha_underscore( cur ))
-               continue;
-            eat_opt_white( &cur2 );
-            if (*cur2 == '[') {
-               cur2++;
-               eat_opt_white( &cur2 );
-               if (!parse_uint( &cur2, &index )) {
-                  report_error( ctx, "Expected literal integer" );
-                  return FALSE;
+      if (file == TGSI_FILE_RESOURCE) {
+         for (i = 0; i < TGSI_TEXTURE_COUNT; i++) {
+            if (str_match_no_case(&cur, texture_names[i])) {
+               if (!is_digit_alpha_underscore(cur)) {
+                  decl.Resource.Resource = i;
+                  break;
                }
-               eat_opt_white( &cur2 );
-               if (*cur2 != ']') {
-                  report_error( ctx, "Expected `]'" );
-                  return FALSE;
-               }
-               cur2++;
-
-               decl.Semantic.Index = index;
-
-               cur = cur2;
             }
+         }
+         if (i == TGSI_TEXTURE_COUNT) {
+            report_error(ctx, "Expected texture target");
+            return FALSE;
+         }
+         eat_opt_white( &cur );
+         if (*cur != ',') {
+            report_error( ctx, "Expected `,'" );
+            return FALSE;
+         }
+         ++cur;
+         eat_opt_white( &cur );
+         for (j = 0; j < 4; ++j) {
+            for (i = 0; i < PIPE_TYPE_COUNT; ++i) {
+               if (str_match_no_case(&cur, type_names[i])) {
+                  if (!is_digit_alpha_underscore(cur)) {
+                     switch (j) {
+                     case 0:
+                        decl.Resource.ReturnTypeX = i;
+                        break;
+                     case 1:
+                        decl.Resource.ReturnTypeY = i;
+                        break;
+                     case 2:
+                        decl.Resource.ReturnTypeZ = i;
+                        break;
+                     case 3:
+                        decl.Resource.ReturnTypeW = i;
+                        break;
+                     default:
+                        assert(0);
+                     }
+                     break;
+                  }
+               }
+            }
+            if (i == PIPE_TYPE_COUNT) {
+               if (j == 0 || j >  2) {
+                  report_error(ctx, "Expected type name");
+                  return FALSE;
+               }
+               break;
+            } else {
+               const char *cur2 = cur;
+               eat_opt_white( &cur2 );
+               if (*cur2 == ',') {
+                  cur2++;
+                  eat_opt_white( &cur2 );
+                  cur = cur2;
+                  continue;
+               } else
+                  break;
+            }
+         }
+         if (j < 4) {
+            decl.Resource.ReturnTypeY =
+               decl.Resource.ReturnTypeZ =
+               decl.Resource.ReturnTypeW =
+               decl.Resource.ReturnTypeX;
+         }
+         ctx->cur = cur;
+      } else {
+         for (i = 0; i < TGSI_SEMANTIC_COUNT; i++) {
+            if (str_match_no_case( &cur, semantic_names[i] )) {
+               const char *cur2 = cur;
+               uint index;
 
-            decl.Declaration.Semantic = 1;
-            decl.Semantic.Name = i;
+               if (is_digit_alpha_underscore( cur ))
+                  continue;
+               eat_opt_white( &cur2 );
+               if (*cur2 == '[') {
+                  cur2++;
+                  eat_opt_white( &cur2 );
+                  if (!parse_uint( &cur2, &index )) {
+                     report_error( ctx, "Expected literal integer" );
+                     return FALSE;
+                  }
+                  eat_opt_white( &cur2 );
+                  if (*cur2 != ']') {
+                     report_error( ctx, "Expected `]'" );
+                     return FALSE;
+                  }
+                  cur2++;
 
-            ctx->cur = cur;
-            break;
+                  decl.Semantic.Index = index;
+
+                  cur = cur2;
+               }
+
+               decl.Declaration.Semantic = 1;
+               decl.Semantic.Name = i;
+
+               ctx->cur = cur;
+               break;
+            }
          }
       }
    } else if (is_imm_array) {

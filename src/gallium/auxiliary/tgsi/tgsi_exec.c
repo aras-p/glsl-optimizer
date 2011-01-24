@@ -1843,6 +1843,164 @@ exec_txd(struct tgsi_exec_machine *mach,
 }
 
 
+
+static void
+exec_sample(struct tgsi_exec_machine *mach,
+            const struct tgsi_full_instruction *inst,
+            uint modifier)
+{
+   const uint resource_unit = inst->Src[1].Register.Index;
+   const uint sampler_unit = inst->Src[2].Register.Index;
+   union tgsi_exec_channel r[4];
+   const union tgsi_exec_channel *lod = &ZeroVec;
+   enum tgsi_sampler_control control;
+   uint chan;
+
+   if (modifier != TEX_MODIFIER_NONE) {
+      if (modifier == TEX_MODIFIER_LOD_BIAS)
+         FETCH(&r[3], 3, CHAN_X);
+      else /*TEX_MODIFIER_LOD*/
+         FETCH(&r[3], 0, CHAN_W);
+
+      if (modifier != TEX_MODIFIER_PROJECTED) {
+         lod = &r[3];
+      }
+   }
+
+   if (modifier == TEX_MODIFIER_EXPLICIT_LOD) {
+      control = tgsi_sampler_lod_explicit;
+   } else {
+      control = tgsi_sampler_lod_bias;
+   }
+
+   switch (mach->Resources[resource_unit].Resource) {
+   case TGSI_TEXTURE_1D:
+   case TGSI_TEXTURE_SHADOW1D:
+      FETCH(&r[0], 0, CHAN_X);
+
+      if (modifier == TEX_MODIFIER_PROJECTED) {
+         micro_div(&r[0], &r[0], &r[3]);
+      }
+
+      fetch_texel(mach->Samplers[sampler_unit],
+                  &r[0], &ZeroVec, &ZeroVec, lod,  /* S, T, P, LOD */
+                  control,
+                  &r[0], &r[1], &r[2], &r[3]);     /* R, G, B, A */
+      break;
+
+   case TGSI_TEXTURE_2D:
+   case TGSI_TEXTURE_RECT:
+   case TGSI_TEXTURE_SHADOW2D:
+   case TGSI_TEXTURE_SHADOWRECT:
+      FETCH(&r[0], 0, CHAN_X);
+      FETCH(&r[1], 0, CHAN_Y);
+      FETCH(&r[2], 0, CHAN_Z);
+
+      if (modifier == TEX_MODIFIER_PROJECTED) {
+         micro_div(&r[0], &r[0], &r[3]);
+         micro_div(&r[1], &r[1], &r[3]);
+         micro_div(&r[2], &r[2], &r[3]);
+      }
+
+      fetch_texel(mach->Samplers[sampler_unit],
+                  &r[0], &r[1], &r[2], lod,     /* S, T, P, LOD */
+                  control,
+                  &r[0], &r[1], &r[2], &r[3]);  /* outputs */
+      break;
+
+   case TGSI_TEXTURE_3D:
+   case TGSI_TEXTURE_CUBE:
+      FETCH(&r[0], 0, CHAN_X);
+      FETCH(&r[1], 0, CHAN_Y);
+      FETCH(&r[2], 0, CHAN_Z);
+
+      if (modifier == TEX_MODIFIER_PROJECTED) {
+         micro_div(&r[0], &r[0], &r[3]);
+         micro_div(&r[1], &r[1], &r[3]);
+         micro_div(&r[2], &r[2], &r[3]);
+      }
+
+      fetch_texel(mach->Samplers[sampler_unit],
+                  &r[0], &r[1], &r[2], lod,
+                  control,
+                  &r[0], &r[1], &r[2], &r[3]);
+      break;
+
+   default:
+      assert(0);
+   }
+
+   for (chan = 0; chan < NUM_CHANNELS; chan++) {
+      if (inst->Dst[0].Register.WriteMask & (1 << chan)) {
+         store_dest(mach, &r[chan], &inst->Dst[0], inst, chan, TGSI_EXEC_DATA_FLOAT);
+      }
+   }
+}
+
+static void
+exec_sample_d(struct tgsi_exec_machine *mach,
+              const struct tgsi_full_instruction *inst)
+{
+   const uint resource_unit = inst->Src[1].Register.Index;
+   const uint sampler_unit = inst->Src[2].Register.Index;
+   union tgsi_exec_channel r[4];
+   uint chan;
+   /*
+    * XXX: This is fake SAMPLE_D -- the derivatives are not taken into account, yet.
+    */
+
+   switch (mach->Resources[resource_unit].Resource) {
+   case TGSI_TEXTURE_1D:
+   case TGSI_TEXTURE_SHADOW1D:
+
+      FETCH(&r[0], 0, CHAN_X);
+
+      fetch_texel(mach->Samplers[sampler_unit],
+                  &r[0], &ZeroVec, &ZeroVec, &ZeroVec,   /* S, T, P, BIAS */
+                  tgsi_sampler_lod_bias,
+                  &r[0], &r[1], &r[2], &r[3]);           /* R, G, B, A */
+      break;
+
+   case TGSI_TEXTURE_2D:
+   case TGSI_TEXTURE_RECT:
+   case TGSI_TEXTURE_SHADOW2D:
+   case TGSI_TEXTURE_SHADOWRECT:
+
+      FETCH(&r[0], 0, CHAN_X);
+      FETCH(&r[1], 0, CHAN_Y);
+      FETCH(&r[2], 0, CHAN_Z);
+
+      fetch_texel(mach->Samplers[sampler_unit],
+                  &r[0], &r[1], &r[2], &ZeroVec,   /* inputs */
+                  tgsi_sampler_lod_bias,
+                  &r[0], &r[1], &r[2], &r[3]);     /* outputs */
+      break;
+
+   case TGSI_TEXTURE_3D:
+   case TGSI_TEXTURE_CUBE:
+
+      FETCH(&r[0], 0, CHAN_X);
+      FETCH(&r[1], 0, CHAN_Y);
+      FETCH(&r[2], 0, CHAN_Z);
+
+      fetch_texel(mach->Samplers[sampler_unit],
+                  &r[0], &r[1], &r[2], &ZeroVec,
+                  tgsi_sampler_lod_bias,
+                  &r[0], &r[1], &r[2], &r[3]);
+      break;
+
+   default:
+      assert(0);
+   }
+
+   for (chan = 0; chan < NUM_CHANNELS; chan++) {
+      if (inst->Dst[0].Register.WriteMask & (1 << chan)) {
+         store_dest(mach, &r[chan], &inst->Dst[0], inst, chan, TGSI_EXEC_DATA_FLOAT);
+      }
+   }
+}
+
+
 /**
  * Evaluate a constant-valued coefficient at the position of the
  * current quad.
@@ -1914,6 +2072,11 @@ static void
 exec_declaration(struct tgsi_exec_machine *mach,
                  const struct tgsi_full_declaration *decl)
 {
+   if (decl->Declaration.File == TGSI_FILE_RESOURCE) {
+      mach->Resources[decl->Range.First] = decl->Resource;
+      return;
+   }
+
    if (mach->Processor == TGSI_PROCESSOR_FRAGMENT) {
       if (decl->Declaration.File == TGSI_FILE_INPUT) {
          uint first, last, mask;
@@ -3686,6 +3849,54 @@ exec_instruction(
 
    case TGSI_OPCODE_ENDSWITCH:
       exec_endswitch(mach);
+      break;
+
+   case TGSI_OPCODE_LOAD:
+      assert(0);
+      break;
+
+   case TGSI_OPCODE_LOAD_MS:
+      assert(0);
+      break;
+
+   case TGSI_OPCODE_SAMPLE:
+      exec_sample(mach, inst, TEX_MODIFIER_NONE);
+      break;
+
+   case TGSI_OPCODE_SAMPLE_B:
+      exec_sample(mach, inst, TEX_MODIFIER_LOD_BIAS);
+      break;
+
+   case TGSI_OPCODE_SAMPLE_C:
+      exec_sample(mach, inst, TEX_MODIFIER_NONE);
+      break;
+
+   case TGSI_OPCODE_SAMPLE_C_LZ:
+      exec_sample(mach, inst, TEX_MODIFIER_LOD_BIAS);
+      break;
+
+   case TGSI_OPCODE_SAMPLE_D:
+      exec_sample_d(mach, inst);
+      break;
+
+   case TGSI_OPCODE_SAMPLE_L:
+      exec_sample(mach, inst, TEX_MODIFIER_EXPLICIT_LOD);
+      break;
+
+   case TGSI_OPCODE_GATHER4:
+      assert(0);
+      break;
+
+   case TGSI_OPCODE_RESINFO:
+      assert(0);
+      break;
+
+   case TGSI_OPCODE_SAMPLE_POS:
+      assert(0);
+      break;
+
+   case TGSI_OPCODE_SAMPLE_INFO:
+      assert(0);
       break;
 
    default:

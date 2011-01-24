@@ -128,6 +128,10 @@ tgsi_parse_token(
          }
       }
 
+      if (decl->Declaration.File == TGSI_FILE_RESOURCE) {
+         next_token(ctx, &decl->Resource);
+      }
+
       break;
    }
 

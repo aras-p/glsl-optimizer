@@ -104,7 +104,8 @@ tgsi_file_names[TGSI_FILE_COUNT] =
    "PRED",
    "SV",
    "IMMX",
-   "TEMPX"
+   "TEMPX",
+   "RES"
 };
 
 static const char *interpolate_names[] =
@@ -168,6 +169,15 @@ const char *tgsi_property_names[TGSI_PROPERTY_COUNT] =
    "FS_COORD_ORIGIN",
    "FS_COORD_PIXEL_CENTER",
    "FS_COLOR0_WRITES_ALL_CBUFS",
+};
+
+static const char *tgsi_type_names[] =
+{
+   "UNORM",
+   "SNORM",
+   "SINT",
+   "UINT",
+   "FLOAT"
 };
 
 const char *tgsi_primitive_names[PIPE_PRIM_MAX] =
@@ -391,6 +401,26 @@ iter_declaration(
          UID( decl->Semantic.Index );
          CHR( ']' );
       }
+   }
+
+   if (decl->Declaration.File == TGSI_FILE_RESOURCE) {
+      TXT(", ");
+      ENM(decl->Resource.Resource, tgsi_texture_names);
+      TXT(", ");
+      if ((decl->Resource.ReturnTypeX == decl->Resource.ReturnTypeY) &&
+          (decl->Resource.ReturnTypeX == decl->Resource.ReturnTypeZ) &&
+          (decl->Resource.ReturnTypeX == decl->Resource.ReturnTypeW)) {
+         ENM(decl->Resource.ReturnTypeX, tgsi_type_names);
+      } else {
+         ENM(decl->Resource.ReturnTypeX, tgsi_type_names);
+         TXT(", ");
+         ENM(decl->Resource.ReturnTypeY, tgsi_type_names);
+         TXT(", ");
+         ENM(decl->Resource.ReturnTypeZ, tgsi_type_names);
+         TXT(", ");
+         ENM(decl->Resource.ReturnTypeW, tgsi_type_names);
+      }
+
    }
 
    if (iter->processor.Processor == TGSI_PROCESSOR_FRAGMENT &&
