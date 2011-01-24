@@ -442,8 +442,7 @@ static void r300_set_clip_state(struct pipe_context* pipe,
            OUT_CB_TABLE(state->ucp, state->nr * 4);
         }
         OUT_CB_REG(R300_VAP_CLIP_CNTL, ((1 << state->nr) - 1) |
-                R300_PS_UCP_MODE_CLIP_AS_TRIFAN |
-                (state->depth_clamp ? R300_CLIP_DISABLE : 0));
+                   R300_PS_UCP_MODE_CLIP_AS_TRIFAN);
         END_CB;
 
         r300_mark_atom_dirty(r300, &r300->clip_state);
