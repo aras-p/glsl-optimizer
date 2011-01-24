@@ -180,6 +180,43 @@ debug_get_num_option(const char *name, long dfault)
    return result;
 }
 
+static boolean str_has_option(const char *str, const char *name)
+{
+   const char *substr;
+
+   /* OPTION=all */
+   if (!util_strcmp(str, "all")) {
+      return TRUE;
+   }
+
+   /* OPTION=name */
+   if (!util_strcmp(str, name)) {
+      return TRUE;
+   }
+
+   substr = util_strstr(str, name);
+
+   if (substr) {
+      unsigned name_len = strlen(name);
+
+      /* OPTION=name,... */
+      if (substr == str && substr[name_len] == ',') {
+         return TRUE;
+      }
+
+      /* OPTION=...,name */
+      if (substr+name_len == str+strlen(str) && substr[-1] == ',') {
+         return TRUE;
+      }
+
+      /* OPTION=...,name,... */
+      if (substr[-1] == ',' && substr[name_len] == ',') {
+         return TRUE;
+      }
+   }
+
+   return FALSE;
+}
 
 unsigned long
 debug_get_flags_option(const char *name, 
@@ -207,7 +244,7 @@ debug_get_flags_option(const char *name,
    else {
       result = 0;
       while( flags->name ) {
-	 if (!util_strcmp(str, "all") || util_strstr(str, flags->name ))
+	 if (str_has_option(str, flags->name))
 	    result |= flags->value;
 	 ++flags;
       }
