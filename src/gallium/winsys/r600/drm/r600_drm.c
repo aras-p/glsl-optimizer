@@ -73,7 +73,7 @@ static int radeon_drm_get_tiling(struct radeon *radeon)
 {
 	struct drm_radeon_info info;
 	int r;
-	uint32_t tiling_config;
+	uint32_t tiling_config = 0;
 
 	info.request = RADEON_INFO_TILING_CONFIG;
 	info.value = (uintptr_t)&tiling_config;
