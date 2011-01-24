@@ -637,7 +637,8 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 		ctx->range[i].end_offset = ((i + 1) << ctx->hash_shift) - 1;
 		ctx->range[i].blocks = calloc(1 << ctx->hash_shift, sizeof(void*));
 		if (ctx->range[i].blocks == NULL) {
-			return -ENOMEM;
+			r = -ENOMEM;
+			goto out_err;
 		}
 	}
 
