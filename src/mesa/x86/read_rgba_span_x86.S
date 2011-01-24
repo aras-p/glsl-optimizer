@@ -648,7 +648,7 @@ _generic_read_RGBA_span_RGB565_MMX:
 	testl	$0x01, %ecx
 	je	.L01
 
-	movzxw	(%eax), %ecx
+	movzwl	(%eax), %ecx
 	movd	%ecx, %mm4
 
 	pshufw	$0x00, %mm4, %mm0
