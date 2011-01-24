@@ -417,9 +417,9 @@ static int is_alu_trans_unit_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 	case CHIPREV_EVERGREEN:
 	default:
 		if (!alu->is_op3)
+			/* Note that FLT_TO_INT* instructions are vector instructions
+			 * on Evergreen, despite what the documentation says. */
 			return alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ASHR_INT ||
-				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT ||
-				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT_FLOOR ||
 				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT ||
 				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHL_INT ||
 				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHR_INT ||
