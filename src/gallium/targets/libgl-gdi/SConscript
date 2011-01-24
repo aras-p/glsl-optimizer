@@ -15,7 +15,6 @@ env.Append(LIBS = [
     'user32',
     'kernel32',
     'ws2_32',
-    talloc,
 ])
 
 sources = ['libgl_gdi.c']

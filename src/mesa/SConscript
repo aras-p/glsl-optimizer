@@ -24,8 +24,6 @@ if env['platform'] == 'windows':
     if not env['gles']:
         # prevent _glapi_* from being declared __declspec(dllimport)
         env.Append(CPPDEFINES = ['_GLAPI_NO_EXPORTS'])
-
-    env.Prepend(CPPPATH = ['#src/talloc'])
 else:
     env.Append(CPPDEFINES = [
         'IN_DRI_DRIVER', # enable the remap table (for DRI drivers)

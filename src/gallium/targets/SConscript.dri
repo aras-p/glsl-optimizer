@@ -72,7 +72,6 @@ COMMON_DRI_DRM_OBJECTS = [
 
 drienv.AppendUnique(LIBS = [
     'expat',
-    'talloc',
 ])
 
 Export([

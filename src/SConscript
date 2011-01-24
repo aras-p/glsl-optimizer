@@ -2,10 +2,6 @@ Import('*')
 
 if env['platform'] == 'windows':
     SConscript('getopt/SConscript')
-    SConscript('talloc/SConscript')
-else:
-    talloc = 'talloc'
-    Export('talloc')
 
 SConscript('glsl/SConscript')
 # When env['gles'] is set, the targets defined in mapi/glapi/SConscript are not

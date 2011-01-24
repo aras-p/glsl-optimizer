@@ -69,7 +69,7 @@ if env['gles']:
     env.Prepend(LIBPATH = [shared_glapi.dir])
     # manually add LIBPREFIX on windows
     glapi_name = 'glapi' if env['platform'] != 'windows' else 'libglapi'
-    env.Prepend(LIBS = [glapi_name, talloc, glsl, mesa])
+    env.Prepend(LIBS = [glapi_name, glsl, mesa])
 
 # OpenVG
 if True:
