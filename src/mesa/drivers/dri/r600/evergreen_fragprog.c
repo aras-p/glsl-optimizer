@@ -624,10 +624,7 @@ GLboolean evergreenSetupFragmentProgram(struct gl_context * ctx)
             SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
             SETfield(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, ui,
                      SEMANTIC_shift, SEMANTIC_mask);
-            if (evergreen->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
-                    SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
-            else
-                    CLEARbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            CLEARbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
     }
 
     unBit = 1 << VERT_RESULT_COL0;
@@ -663,10 +660,7 @@ GLboolean evergreenSetupFragmentProgram(struct gl_context * ctx)
             SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
             SETfield(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, ui,
                      SEMANTIC_shift, SEMANTIC_mask);
-            if (evergreen->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
-                    SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
-            else
-                    CLEARbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            CLEARbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
     }
 
     for(i=0; i<8; i++)
@@ -694,10 +688,7 @@ GLboolean evergreenSetupFragmentProgram(struct gl_context * ctx)
             SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
             SETfield(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, ui,
                      SEMANTIC_shift, SEMANTIC_mask);
-            if (evergreen->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
-                    SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
-            else
-                    CLEARbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            CLEARbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
     }
     unBit = 1 << FRAG_ATTRIB_PNTC;
     if(mesa_fp->Base.InputsRead & unBit)
@@ -706,10 +697,7 @@ GLboolean evergreenSetupFragmentProgram(struct gl_context * ctx)
             SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
             SETfield(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, ui,
                      SEMANTIC_shift, SEMANTIC_mask);
-            if (evergreen->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
-                    SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
-            else
-                    CLEARbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            CLEARbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
             SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, PT_SPRITE_TEX_bit);
     }
 
@@ -725,10 +713,7 @@ GLboolean evergreenSetupFragmentProgram(struct gl_context * ctx)
             SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, SEL_CENTROID_bit);
             SETfield(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, ui,
 		             SEMANTIC_shift, SEMANTIC_mask);
-            if (evergreen->SPI_INTERP_CONTROL_0.u32All & FLAT_SHADE_ENA_bit)
-		        SETbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
-            else
-		        CLEARbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
+            CLEARbit(evergreen->SPI_PS_INPUT_CNTL[ui].u32All, FLAT_SHADE_bit);
         }
     }
 
