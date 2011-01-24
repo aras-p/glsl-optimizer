@@ -776,17 +776,25 @@ static void i915_set_vertex_buffers(struct pipe_context *pipe,
                                     const struct pipe_vertex_buffer *buffers)
 {
    struct i915_context *i915 = i915_context(pipe);
-   /* Because we change state before the draw_set_vertex_buffers call
-    * we need a flush here, just to be sure.
-    */
-   draw_flush(i915->draw);
+   struct draw_context *draw = i915->draw;
+   int i;
 
-   util_copy_vertex_buffers(i915->vertex_buffer,
-                            &i915->num_vertex_buffers,
-                            buffers, count);
+#if 0
+   /* XXX doesn't look like this is needed */
+   /* unmap old */
+   for (i = 0; i < i915->num_vertex_buffers; i++) {
+      draw_set_mapped_vertex_buffer(draw, i, NULL);
+   }
+#endif
 
    /* pass-through to draw module */
-   draw_set_vertex_buffers(i915->draw, count, buffers);
+   draw_set_vertex_buffers(draw, count, buffers);
+
+   /* map new */
+   for (i = 0; i < count; i++) {
+      void *buf = i915_buffer(buffers[i].buffer)->data;
+      draw_set_mapped_vertex_buffer(draw, i, buf);
+   }
 }
 
 static void *
@@ -810,11 +818,6 @@ i915_bind_vertex_elements_state(struct pipe_context *pipe,
 {
    struct i915_context *i915 = i915_context(pipe);
    struct i915_velems_state *i915_velems = (struct i915_velems_state *) velems;
-
-   /* Because we change state before the draw_set_vertex_buffers call
-    * we need a flush here, just to be sure.
-    */
-   draw_flush(i915->draw);
 
    /* pass-through to draw module */
    if (i915_velems) {

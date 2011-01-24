@@ -219,14 +219,12 @@ struct i915_context {
    struct pipe_scissor_state scissor;
    struct pipe_sampler_view *fragment_sampler_views[PIPE_MAX_SAMPLERS];
    struct pipe_viewport_state viewport;
-   struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
    struct pipe_index_buffer index_buffer;
 
    unsigned dirty;
 
    unsigned num_samplers;
    unsigned num_fragment_sampler_views;
-   unsigned num_vertex_buffers;
 
    struct i915_winsys_batchbuffer *batch;
 
