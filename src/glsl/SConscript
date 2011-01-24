@@ -91,6 +91,7 @@ if env['platform'] == common.host_platform:
         env.Prepend(CPPPATH = ['#src/talloc'])
         env.Prepend(LIBS = [talloc])
     else:
+        env.Prepend(CPPPATH = ['#include'])
         env.Prepend(LIBS = ['talloc'])
 
     builtin_compiler = env.Program(
