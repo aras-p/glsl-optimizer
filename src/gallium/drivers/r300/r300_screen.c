@@ -34,10 +34,6 @@
 
 #include "draw/draw_context.h"
 
-#ifdef HAVE_LLVM
-#include "gallivm/lp_bld_init.h"
-#endif
-
 /* Return the identifier behind whom the brave coders responsible for this
  * amalgamation of code, sweat, and duct tape, routinely obscure their names.
  *
@@ -482,10 +478,6 @@ struct pipe_screen* r300_screen_create(struct r300_winsys_screen *rws)
     r300_init_screen_resource_functions(r300screen);
 
     util_format_s3tc_init();
-
-#ifdef HAVE_LLVM
-    lp_build_init();
-#endif
 
     return &r300screen->screen;
 }
