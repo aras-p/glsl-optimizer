@@ -86,7 +86,6 @@ struct blitter_context_priv
    void *dsa_write_depth_keep_stencil;
    void *dsa_keep_depth_stencil;
    void *dsa_keep_depth_write_stencil;
-   void *dsa_flush_depth_stencil;
 
    void *velem_state;
 
@@ -156,10 +155,6 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    /* depth stencil alpha state objects */
    memset(&dsa, 0, sizeof(dsa));
    ctx->dsa_keep_depth_stencil =
-      pipe->create_depth_stencil_alpha_state(pipe, &dsa);
-
-   dsa.depth.writemask = 1;
-   ctx->dsa_flush_depth_stencil =
       pipe->create_depth_stencil_alpha_state(pipe, &dsa);
 
    dsa.depth.enabled = 1;
@@ -247,7 +242,6 @@ void util_blitter_destroy(struct blitter_context *blitter)
                                           ctx->dsa_write_depth_keep_stencil);
    pipe->delete_depth_stencil_alpha_state(pipe, ctx->dsa_write_depth_stencil);
    pipe->delete_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_write_stencil);
-   pipe->delete_depth_stencil_alpha_state(pipe, ctx->dsa_flush_depth_stencil);
 
    pipe->delete_rasterizer_state(pipe, ctx->rs_state);
    pipe->delete_vs_state(pipe, ctx->vs);
@@ -665,12 +659,13 @@ static void blitter_draw_rectangle(struct blitter_context *blitter,
    blitter_draw_quad(ctx);
 }
 
-void util_blitter_clear(struct blitter_context *blitter,
-                        unsigned width, unsigned height,
-                        unsigned num_cbufs,
-                        unsigned clear_buffers,
-                        const float *rgba,
-                        double depth, unsigned stencil)
+static void util_blitter_clear_custom(struct blitter_context *blitter,
+                                      unsigned width, unsigned height,
+                                      unsigned num_cbufs,
+                                      unsigned clear_buffers,
+                                      const float *rgba,
+                                      double depth, unsigned stencil,
+                                      void *custom_blend, void *custom_dsa)
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->base.pipe;
@@ -681,26 +676,28 @@ void util_blitter_clear(struct blitter_context *blitter,
    blitter_check_saved_CSOs(ctx);
 
    /* bind CSOs */
-   if (clear_buffers & PIPE_CLEAR_COLOR)
+   if (custom_blend) {
+      pipe->bind_blend_state(pipe, custom_blend);
+   } else if (clear_buffers & PIPE_CLEAR_COLOR) {
       pipe->bind_blend_state(pipe, ctx->blend_write_color);
-   else
+   } else {
       pipe->bind_blend_state(pipe, ctx->blend_keep_color);
+   }
 
-   if ((clear_buffers & PIPE_CLEAR_DEPTHSTENCIL) == PIPE_CLEAR_DEPTHSTENCIL) {
-      sr.ref_value[0] = stencil & 0xff;
+   if (custom_dsa) {
+      pipe->bind_depth_stencil_alpha_state(pipe, custom_dsa);
+   } else if ((clear_buffers & PIPE_CLEAR_DEPTHSTENCIL) == PIPE_CLEAR_DEPTHSTENCIL) {
       pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_write_depth_stencil);
-      pipe->set_stencil_ref(pipe, &sr);
-   }
-   else if (clear_buffers & PIPE_CLEAR_DEPTH) {
+   } else if (clear_buffers & PIPE_CLEAR_DEPTH) {
       pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_write_depth_keep_stencil);
-   }
-   else if (clear_buffers & PIPE_CLEAR_STENCIL) {
-      sr.ref_value[0] = stencil & 0xff;
+   } else if (clear_buffers & PIPE_CLEAR_STENCIL) {
       pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_write_stencil);
-      pipe->set_stencil_ref(pipe, &sr);
-   }
-   else
+   } else {
       pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
+   }
+
+   sr.ref_value[0] = stencil & 0xff;
+   pipe->set_stencil_ref(pipe, &sr);
 
    pipe->bind_rasterizer_state(pipe, ctx->rs_state);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
@@ -711,6 +708,27 @@ void util_blitter_clear(struct blitter_context *blitter,
    blitter->draw_rectangle(blitter, 0, 0, width, height, depth,
                            UTIL_BLITTER_ATTRIB_COLOR, rgba);
    blitter_restore_CSOs(ctx);
+}
+
+void util_blitter_clear(struct blitter_context *blitter,
+                        unsigned width, unsigned height,
+                        unsigned num_cbufs,
+                        unsigned clear_buffers,
+                        const float *rgba,
+                        double depth, unsigned stencil)
+{
+   util_blitter_clear_custom(blitter, width, height, num_cbufs,
+                             clear_buffers, rgba, depth, stencil,
+                             NULL, NULL);
+}
+
+void util_blitter_clear_depth_custom(struct blitter_context *blitter,
+                                     unsigned width, unsigned height,
+                                     double depth, void *custom_dsa)
+{
+    const float rgba[4] = {0, 0, 0, 0};
+    util_blitter_clear_custom(blitter, width, height, 0,
+                              0, rgba, depth, 0, NULL, custom_dsa);
 }
 
 static
@@ -1023,13 +1041,4 @@ void util_blitter_custom_depth_stencil(struct blitter_context *blitter,
    blitter->draw_rectangle(blitter, 0, 0, zsurf->width, zsurf->height, depth,
                            UTIL_BLITTER_ATTRIB_NONE, NULL);
    blitter_restore_CSOs(ctx);
-}
-
-/* flush a region of a depth stencil surface for r300g */
-void util_blitter_flush_depth_stencil(struct blitter_context *blitter,
-                                      struct pipe_surface *dstsurf)
-{
-	struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
-	util_blitter_custom_depth_stencil(blitter, dstsurf, NULL,
-					  ctx->dsa_flush_depth_stencil, 0.0f);
 }

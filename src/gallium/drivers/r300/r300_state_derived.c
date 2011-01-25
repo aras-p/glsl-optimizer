@@ -862,11 +862,35 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
     }
 }
 
+static void r300_decompress_depth_textures(struct r300_context *r300)
+{
+    struct r300_textures_state *state =
+        (struct r300_textures_state*)r300->textures_state.state;
+    struct pipe_resource *tex;
+    unsigned count = MIN2(state->sampler_view_count,
+                          state->sampler_state_count);
+    unsigned i;
+
+    if (!r300->zmask_locked || !r300->locked_zbuffer) {
+        return;
+    }
+
+    for (i = 0; i < count; i++) {
+        if (state->sampler_views[i] && state->sampler_states[i]) {
+            tex = state->sampler_views[i]->base.texture;
+
+            if (tex == r300->locked_zbuffer->texture) {
+                r300_decompress_zmask_locked(r300);
+                return;
+            }
+        }
+    }
+}
+
 void r300_update_derived_state(struct r300_context* r300)
 {
-    r300_flush_depth_textures(r300);
-
     if (r300->textures_state.dirty) {
+        r300_decompress_depth_textures(r300);
         r300_merge_textures_and_samplers(r300);
     }
 

@@ -160,6 +160,21 @@ pipe_surface_init(struct pipe_context *ctx, struct pipe_surface* ps,
    pipe_surface_reset(ctx, ps, pt, level, layer, flags);
 }
 
+/* Return true if the surfaces are equal. */
+static INLINE boolean
+pipe_surface_equal(struct pipe_surface *s1, struct pipe_surface *s2)
+{
+   return s1->texture == s2->texture &&
+          s1->format == s2->format &&
+          (s1->texture->target != PIPE_BUFFER ||
+           (s1->u.buf.first_element == s2->u.buf.first_element &&
+            s1->u.buf.last_element == s2->u.buf.last_element)) &&
+          (s1->texture->target == PIPE_BUFFER ||
+           (s1->u.tex.level == s2->u.tex.level &&
+            s1->u.tex.first_layer == s2->u.tex.first_layer &&
+            s1->u.tex.last_layer == s2->u.tex.last_layer));
+}
+
 /*
  * Convenience wrappers for screen buffer functions.
  */

@@ -55,13 +55,13 @@ struct blitter_context
     * \param y1      A Y coordinate of the top-left corner.
     * \param x2      An X coordinate of the bottom-right corner.
     * \param y2      A Y coordinate of the bottom-right corner.
-    * \param depth  A depth which the rectangle is rendered at.
+    * \param depth   A depth which the rectangle is rendered at.
     *
     * \param type   Semantics of the attributes "attrib".
     *               If type is UTIL_BLITTER_ATTRIB_NONE, ignore them.
     *               If type is UTIL_BLITTER_ATTRIB_COLOR, the attributes
-    *               make up a constant RGBA color, and should go to the COLOR0
-    *               varying slot of a fragment shader.
+    *               make up a constant RGBA color, and should go
+    *               to the GENERIC0 varying slot of a fragment shader.
     *               If type is UTIL_BLITTER_ATTRIB_TEXCOORD, {a1, a2} and
     *               {a3, a4} specify top-left and bottom-right texture
     *               coordinates of the rectangle, respectively, and should go
@@ -141,6 +141,10 @@ void util_blitter_clear(struct blitter_context *blitter,
                         const float *rgba,
                         double depth, unsigned stencil);
 
+void util_blitter_clear_depth_custom(struct blitter_context *blitter,
+                                     unsigned width, unsigned height,
+                                     double depth, void *custom_dsa);
+
 /**
  * Copy a block of pixels from one surface to another.
  *
@@ -199,9 +203,6 @@ void util_blitter_clear_depth_stencil(struct blitter_context *blitter,
                                       unsigned stencil,
                                       unsigned dstx, unsigned dsty,
                                       unsigned width, unsigned height);
-
-void util_blitter_flush_depth_stencil(struct blitter_context *blitter,
-                                      struct pipe_surface *dstsurf);
 
 void util_blitter_custom_depth_stencil(struct blitter_context *blitter,
 				       struct pipe_surface *zsurf,

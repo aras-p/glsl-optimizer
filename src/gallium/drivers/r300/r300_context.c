@@ -94,6 +94,9 @@ static void r300_release_referenced_objects(struct r300_context *r300)
         remove_from_list(query);
         FREE(query);
     }
+
+    r300->context.delete_depth_stencil_alpha_state(&r300->context,
+                                                   r300->dsa_decompress_zmask);
 }
 
 static void r300_destroy_context(struct pipe_context* context)
@@ -115,9 +118,6 @@ static void r300_destroy_context(struct pipe_context* context)
 
     /* XXX: This function assumes r300->query_list was initialized */
     r300_release_referenced_objects(r300);
-
-    if (r300->zmask_mm)
-        r300_hyperz_destroy_mm(r300);
 
     if (r300->cs)
         r300->rws->cs_destroy(r300->cs);
@@ -238,7 +238,7 @@ static boolean r300_setup_atoms(struct r300_context* r300)
         if (has_hiz_ram)
             R300_INIT_ATOM(hiz_clear, 0);
         /* zmask clear */
-        R300_INIT_ATOM(zmask_clear, 0);
+        R300_INIT_ATOM(zmask_clear, 4);
     }
     /* ZB (unpipelined), SU. */
     R300_INIT_ATOM(query_start, 4);
@@ -511,6 +511,15 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
         vb.depth0 = 1;
 
         r300->dummy_vb = screen->resource_create(screen, &vb);
+    }
+
+    {
+        struct pipe_depth_stencil_alpha_state dsa = {};
+        dsa.depth.writemask = 1;
+
+        r300->dsa_decompress_zmask =
+            r300->context.create_depth_stencil_alpha_state(&r300->context,
+                                                           &dsa);
     }
 
     return &r300->context;

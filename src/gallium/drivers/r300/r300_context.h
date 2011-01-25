@@ -406,8 +406,6 @@ struct r300_texture {
 
     /* hyper-z memory allocs */
     struct mem_block *hiz_mem[R300_MAX_TEXTURE_LEVELS];
-    struct mem_block *zmask_mem[R300_MAX_TEXTURE_LEVELS];
-    boolean zmask_in_use[R300_MAX_TEXTURE_LEVELS];
     boolean hiz_in_use[R300_MAX_TEXTURE_LEVELS];
 
     /* This is the level tiling flags were last time set for.
@@ -589,15 +587,21 @@ struct r300_context {
     boolean two_sided_color;
     /* Incompatible vertex buffer layout? (misaligned stride or buffer_offset) */
     boolean incompatible_vb_layout;
-#define R300_Z_COMPRESS_44 1
-#define RV350_Z_COMPRESS_88 2
-    int z_compression;
+
     boolean cbzb_clear;
-    boolean z_decomp_rd;
+    /* Whether ZMASK is enabled. */
+    boolean zmask_in_use;
+    /* Whether ZMASK is being decompressed. */
+    boolean zmask_decompress;
+    /* Whether ZMASK is locked, i.e. should be disabled and cannot be taken over. */
+    boolean zmask_locked;
+    /* The zbuffer the ZMASK of which is locked. */
+    struct pipe_surface *locked_zbuffer;
+
+    void *dsa_decompress_zmask;
 
     /* two mem block managers for hiz/zmask ram space */
     struct mem_block *hiz_mm;
-    struct mem_block *zmask_mm;
 
     /* upload managers */
     struct u_upload_mgr *upload_vb;
@@ -687,7 +691,9 @@ void r300_init_state_functions(struct r300_context* r300);
 void r300_init_resource_functions(struct r300_context* r300);
 
 /* r300_blit.c */
-void r300_flush_depth_textures(struct r300_context *r300);
+void r300_decompress_zmask(struct r300_context *r300);
+void r300_decompress_zmask_locked_unsafe(struct r300_context *r300);
+void r300_decompress_zmask_locked(struct r300_context *r300);
 
 /* r300_query.c */
 void r300_resume_query(struct r300_context *r300,
@@ -713,8 +719,7 @@ void r500_emit_index_bias(struct r300_context *r300, int index_bias);
 /* r300_state.c */
 enum r300_fb_state_change {
     R300_CHANGED_FB_STATE = 0,
-    R300_CHANGED_CBZB_FLAG,
-    R300_CHANGED_ZCLEAR_FLAG,
+    R300_CHANGED_HYPERZ_FLAG,
     R300_CHANGED_MULTIWRITE
 };
 

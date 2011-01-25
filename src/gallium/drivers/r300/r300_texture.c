@@ -743,8 +743,6 @@ static void r300_texture_destroy(struct pipe_screen *screen,
     for (i = 0; i < R300_MAX_TEXTURE_LEVELS; i++) {
         if (tex->hiz_mem[i])
             u_mmFreeMem(tex->hiz_mem[i]);
-        if (tex->zmask_mem[i])
-            u_mmFreeMem(tex->zmask_mem[i]);
     }
 
     FREE(tex);

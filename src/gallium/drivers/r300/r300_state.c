@@ -694,8 +694,7 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
     }
 
     if (change == R300_CHANGED_FB_STATE ||
-        change == R300_CHANGED_CBZB_FLAG ||
-        change == R300_CHANGED_ZCLEAR_FLAG) {
+        change == R300_CHANGED_HYPERZ_FLAG) {
         r300_mark_atom_dirty(r300, &r300->hyperz_state);
     }
 
@@ -719,8 +718,8 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
 }
 
 static void
-    r300_set_framebuffer_state(struct pipe_context* pipe,
-                               const struct pipe_framebuffer_state* state)
+r300_set_framebuffer_state(struct pipe_context* pipe,
+                           const struct pipe_framebuffer_state* state)
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_aa_state *aa = (struct r300_aa_state*)r300->aa_state.state;
@@ -728,7 +727,6 @@ static void
     boolean can_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
     unsigned max_width, max_height, i;
     uint32_t zbuffer_bpp = 0;
-    int blocksize;
 
     if (r300->screen->caps.is_r500) {
         max_width = max_height = 4096;
@@ -742,6 +740,32 @@ static void
         fprintf(stderr, "r300: Implementation error: Render targets are too "
         "big in %s, refusing to bind framebuffer state!\n", __FUNCTION__);
         return;
+    }
+
+    if (old_state->zsbuf && r300->zmask_in_use && !r300->zmask_locked) {
+        /* There is a zmask in use, what are we gonna do? */
+        if (state->zsbuf) {
+            if (!pipe_surface_equal(old_state->zsbuf, state->zsbuf)) {
+                /* Decompress the currently bound zbuffer before we bind another one. */
+                r300_decompress_zmask(r300);
+            }
+        } else {
+            /* We don't bind another zbuffer, so lock the current one. */
+            r300->zmask_locked = TRUE;
+            pipe_surface_reference(&r300->locked_zbuffer, old_state->zsbuf);
+        }
+    } else if (r300->zmask_locked && r300->locked_zbuffer) {
+        /* We have a locked zbuffer now, what are we gonna do? */
+        if (state->zsbuf) {
+            if (!pipe_surface_equal(r300->locked_zbuffer, state->zsbuf)) {
+                /* We are binding some other zbuffer, so decompress the locked one,
+                 * it gets unlocked automatically. */
+                r300_decompress_zmask_locked_unsafe(r300);
+            } else {
+                /* We are binding the locked zbuffer again, so unlock it. */
+                r300->zmask_locked = FALSE;
+            }
+        }
     }
 
     /* If nr_cbufs is changed from zero to non-zero or vice versa... */
@@ -758,14 +782,15 @@ static void
 
     util_copy_framebuffer_state(r300->fb_state.state, state);
 
+    if (!r300->zmask_locked) {
+        pipe_surface_reference(&r300->locked_zbuffer, NULL);
+    }
+
     r300_mark_fb_state_dirty(r300, R300_CHANGED_FB_STATE);
     r300->validate_buffers = TRUE;
 
-    r300->z_compression = false;
-    
     if (state->zsbuf) {
-        blocksize = util_format_get_blocksize(state->zsbuf->texture->format);
-        switch (blocksize) {
+        switch (util_format_get_blocksize(state->zsbuf->texture->format)) {
         case 2:
             zbuffer_bpp = 16;
             break;
@@ -773,30 +798,19 @@ static void
             zbuffer_bpp = 24;
             break;
         }
+
+        /* Setup Hyper-Z. */
         if (can_hyperz) {
             struct r300_surface *zs_surf = r300_surface(state->zsbuf);
-            struct r300_texture *tex;
-            int compress = r300->screen->caps.is_rv350 ? RV350_Z_COMPRESS_88 : R300_Z_COMPRESS_44;
+            struct r300_texture *tex = r300_texture(zs_surf->base.texture);
             int level = zs_surf->base.u.tex.level;
-
-            tex = r300_texture(zs_surf->base.texture);
 
             /* work out whether we can support hiz on this buffer */
             r300_hiz_alloc_block(r300, zs_surf);
-        
-            /* work out whether we can support zmask features on this buffer */
-            r300_zmask_alloc_block(r300, zs_surf, compress);
 
-            if (tex->zmask_mem[level]) {
-                /* compression causes hangs on 16-bit */
-                if (zbuffer_bpp == 24)
-                    r300->z_compression = compress;
-            }
             DBG(r300, DBG_HYPERZ,
-                "hyper-z features: hiz: %d @ %08x z-compression: %d z-fastfill: %d @ %08x\n", tex->hiz_mem[level] ? 1 : 0,
-                tex->hiz_mem[level] ? tex->hiz_mem[level]->ofs : 0xdeadbeef,
-                r300->z_compression, tex->zmask_mem[level] ? 1 : 0,
-                tex->zmask_mem[level] ? tex->zmask_mem[level]->ofs : 0xdeadbeef);
+                "hyper-z features: hiz: %d @ %08x\n", tex->hiz_mem[level] ? 1 : 0,
+                tex->hiz_mem[level] ? tex->hiz_mem[level]->ofs : 0xdeadbeef);
         }
 
         /* Polygon offset depends on the zbuffer bit depth. */

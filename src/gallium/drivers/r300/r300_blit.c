@@ -58,8 +58,9 @@ static void r300_blitter_begin(struct r300_context* r300, enum r300_blitter_op o
     util_blitter_save_vertex_buffers(r300->blitter, r300->vertex_buffer_count,
                                      r300->vertex_buffer);
 
-    if (op & (R300_CLEAR_SURFACE | R300_COPY))
+    if (op & (R300_CLEAR_SURFACE | R300_COPY)) {
         util_blitter_save_framebuffer(r300->blitter, r300->fb_state.state);
+    }
 
     if (op & R300_COPY) {
         struct r300_textures_state* state =
@@ -108,6 +109,23 @@ static boolean r300_cbzb_clear_allowed(struct r300_context *r300,
     return r300_surface(fb->cbufs[0])->cbzb_allowed;
 }
 
+static boolean r300_fast_zclear_allowed(struct r300_context *r300)
+{
+    struct pipe_framebuffer_state *fb =
+        (struct pipe_framebuffer_state*)r300->fb_state.state;
+
+    /* Cannot decompress zmask with a 16-bit zbuffer.
+     * Also compression causes a hung. */
+    if (util_format_get_blocksizebits(fb->zsbuf->texture->format) == 16)
+        return FALSE;
+
+    /* Cannot use compression with a linear zbuffer. */
+    if (!r300_texture(fb->zsbuf->texture)->desc.microtile)
+        return FALSE;
+
+    return TRUE;
+}
+
 static uint32_t r300_depth_clear_value(enum pipe_format format,
                                        double depth, unsigned stencil)
 {
@@ -132,37 +150,46 @@ static void r300_clear(struct pipe_context* pipe,
                        double depth,
                        unsigned stencil)
 {
-    /* My notes about fastfill:
+    /* My notes about Zbuffer compression:
      *
-     * 1) Only the zbuffer is cleared.
+     * 1) The zbuffer must be micro-tiled and whole microtiles must be
+     *    written if compression is enabled. If microtiling is disabled,
+     *    it locks up.
      *
-     * 2) The zbuffer must be micro-tiled and whole microtiles must be
-     *    written. If microtiling is disabled, it locks up.
+     * 2) There is ZMASK RAM which contains a compressed zbuffer.
+     *    Each dword of the Z Mask contains compression information
+     *    for 16 4x4 pixel tiles, that is 2 bits for each tile.
+     *    On chips with 2 Z pipes, every other dword maps to a different
+     *    pipe. On newer chipsets, there is a new compression mode
+     *    with 8x8 pixel tiles per 2 bits.
      *
-     * 3) There is Z Mask RAM which contains a compressed zbuffer and
-     *    it interacts with fastfill. We should figure out how to use it
-     *    to get more performance.
-     *    This is what we know about the Z Mask:
+     * 3) The FASTFILL bit has nothing to do with filling. It only tells hw
+     *    it should look in the ZMASK RAM first before fetching from a real
+     *    zbuffer.
      *
-     *       Each dword of the Z Mask contains compression information
-     *       for 16 4x4 pixel blocks, that is 2 bits for each block.
-     *       On chips with 2 Z pipes, every other dword maps to a different
-     *       pipe.
+     * 4) If a pixel is in a cleared state, ZB_DEPTHCLEARVALUE is returned
+     *    during zbuffer reads instead of the value that is actually stored
+     *    in the zbuffer memory. A pixel is in a cleared state when its ZMASK
+     *    is equal to 0. Therefore, if you clear ZMASK with zeros, you may
+     *    leave the zbuffer memory uninitialized, but then you must enable
+     *    compression, so that the ZMASK RAM is actually used.
      *
-     * 4) ZB_DEPTHCLEARVALUE is used to clear the zbuffer and the Z Mask must
-     *    be equal to 0. (clear the Z Mask RAM with zeros)
+     * 5) Each 4x4 (or 8x8) tile is automatically decompressed and recompressed
+     *    during zbuffer updates. A special decompressing operation should be
+     *    used to fully decompress a zbuffer, which basically just stores all
+     *    compressed tiles in ZMASK to the zbuffer memory.
      *
-     * 5) For 16-bit zbuffer, compression causes a hung with one or
+     * 6) For a 16-bit zbuffer, compression causes a hung with one or
      *    two samples and should not be used.
      *
-     * 6) FORCE_COMPRESSED_STENCIL_VALUE should be enabled for stencil clears
+     * 7) FORCE_COMPRESSED_STENCIL_VALUE should be enabled for stencil clears
      *    to avoid needless decompression.
      *
-     * 7) Fastfill must not be used if reading of compressed Z data is disabled
+     * 8) Fastfill must not be used if reading of compressed Z data is disabled
      *    and writing of compressed Z data is enabled (RD/WR_COMP_ENABLE),
      *    i.e. it cannot be used to compress the zbuffer.
      *
-     * 8) ZB_CB_CLEAR does not interact with fastfill in any way.
+     * 9) ZB_CB_CLEAR does not interact with zbuffer compression in any way.
      *
      * - Marek
      */
@@ -179,25 +206,23 @@ static void r300_clear(struct pipe_context* pipe,
     boolean can_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
     uint32_t hyperz_dcv = hyperz->zb_depthclearvalue;
 
-    /* Decompress zbuffers that are bound as textures. If we didn't flush here,
-     * it would happen inside the blitter when updating derived state,
-     * causing a blitter operation to be called from inside the blitter,
-     * which would overwrite saved states and they would never get restored. */
-    r300_flush_depth_textures(r300);
-
     /* Enable fast Z clear.
      * The zbuffer must be in micro-tiled mode, otherwise it locks up. */
     if ((buffers & PIPE_CLEAR_DEPTHSTENCIL) && can_hyperz) {
         hyperz_dcv = hyperz->zb_depthclearvalue =
             r300_depth_clear_value(fb->zsbuf->format, depth, stencil);
 
-        r300_mark_fb_state_dirty(r300, R300_CHANGED_ZCLEAR_FLAG);
-        if (zstex->zmask_mem[fb->zsbuf->u.tex.level]) {
+        if (r300_fast_zclear_allowed(r300)) {
             r300_mark_atom_dirty(r300, &r300->zmask_clear);
             buffers &= ~PIPE_CLEAR_DEPTHSTENCIL;
         }
+
         if (zstex->hiz_mem[fb->zsbuf->u.tex.level])
             r300_mark_atom_dirty(r300, &r300->hiz_clear);
+
+        /* XXX Change this to r300_mark_atom_dirty(r300, &r300->hyperz_state);
+         * once hiz offset is constant. */
+        r300_mark_fb_state_dirty(r300, R300_CHANGED_HYPERZ_FLAG);
     }
 
     /* Enable CBZB clear. */
@@ -211,7 +236,7 @@ static void r300_clear(struct pipe_context* pipe,
         height = surf->cbzb_height;
 
         r300->cbzb_clear = TRUE;
-        r300_mark_fb_state_dirty(r300, R300_CHANGED_CBZB_FLAG);
+        r300_mark_fb_state_dirty(r300, R300_CHANGED_HYPERZ_FLAG);
     }
 
     /* Clear. */
@@ -225,7 +250,7 @@ static void r300_clear(struct pipe_context* pipe,
                            buffers, rgba, depth, stencil);
         r300_blitter_end(r300);
     } else if (r300->zmask_clear.dirty) {
-        /* Just clear zmask and hiz now, this does not use a standard draw
+        /* Just clear zmask and hiz now, this does not use the standard draw
          * procedure. */
         unsigned dwords;
 
@@ -257,16 +282,15 @@ static void r300_clear(struct pipe_context* pipe,
     if (r300->cbzb_clear) {
         r300->cbzb_clear = FALSE;
         hyperz->zb_depthclearvalue = hyperz_dcv;
-        r300_mark_fb_state_dirty(r300, R300_CHANGED_CBZB_FLAG);
+        r300_mark_fb_state_dirty(r300, R300_CHANGED_HYPERZ_FLAG);
     }
 
     /* Enable fastfill and/or hiz.
      *
      * If we cleared zmask/hiz, it's in use now. The Hyper-Z state update
      * looks if zmask/hiz is in use and enables fastfill accordingly. */
-    if (zstex &&
-        (zstex->zmask_in_use[fb->zsbuf->u.tex.level] ||
-         zstex->hiz_in_use[fb->zsbuf->u.tex.level])) {
+    if (r300->zmask_in_use ||
+        (zstex && zstex->hiz_in_use[fb->zsbuf->u.tex.level])) {
         r300_mark_atom_dirty(r300, &r300->hyperz_state);
     }
 }
@@ -280,16 +304,16 @@ static void r300_clear_render_target(struct pipe_context *pipe,
 {
     struct r300_context *r300 = r300_context(pipe);
 
-    /* Decompress zbuffers that are bound as textures. If we didn't flush here,
-     * it would happen inside the blitter when updating derived state,
-     * causing a blitter operation to be called from inside the blitter,
-     * which would overwrite saved states and they would never get restored. */
-    r300_flush_depth_textures(r300);
+    r300->zmask_locked = TRUE;
+    r300_mark_atom_dirty(r300, &r300->hyperz_state);
 
     r300_blitter_begin(r300, R300_CLEAR_SURFACE);
     util_blitter_clear_render_target(r300->blitter, dst, rgba,
                                      dstx, dsty, width, height);
     r300_blitter_end(r300);
+
+    r300->zmask_locked = FALSE;
+    r300_mark_atom_dirty(r300, &r300->hyperz_state);
 }
 
 /* Clear a region of a depth stencil surface. */
@@ -302,83 +326,70 @@ static void r300_clear_depth_stencil(struct pipe_context *pipe,
                                      unsigned width, unsigned height)
 {
     struct r300_context *r300 = r300_context(pipe);
+    struct pipe_framebuffer_state *fb =
+        (struct pipe_framebuffer_state*)r300->fb_state.state;
 
-    /* Decompress zbuffers that are bound as textures. If we didn't flush here,
-     * it would happen inside the blitter when updating derived state,
-     * causing a blitter operation to be called from inside the blitter,
-     * which would overwrite saved states and they would never get restored. */
-    r300_flush_depth_textures(r300);
+    if (r300->zmask_in_use && !r300->zmask_locked) {
+        if (fb->zsbuf->texture == dst->texture) {
+            r300_decompress_zmask(r300);
+        } else {
+            r300->zmask_locked = TRUE;
+            r300_mark_atom_dirty(r300, &r300->hyperz_state);
+        }
+    }
 
     r300_blitter_begin(r300, R300_CLEAR_SURFACE);
     util_blitter_clear_depth_stencil(r300->blitter, dst, clear_flags, depth, stencil,
                                      dstx, dsty, width, height);
     r300_blitter_end(r300);
+
+    if (r300->zmask_locked) {
+        r300->zmask_locked = FALSE;
+        r300_mark_atom_dirty(r300, &r300->hyperz_state);
+    }
 }
 
-/* Flush a depth stencil buffer. */
-static void r300_flush_depth_stencil(struct pipe_context *pipe,
-                                     struct pipe_resource *dst,
-                                     unsigned level,
-                                     unsigned layer)
+void r300_decompress_zmask(struct r300_context *r300)
 {
-    struct r300_context *r300 = r300_context(pipe);
-    struct pipe_surface *dstsurf, surf_tmpl;
-    struct r300_texture *tex = r300_texture(dst);
+    struct pipe_framebuffer_state *fb =
+        (struct pipe_framebuffer_state*)r300->fb_state.state;
 
-    if (!tex->zmask_mem[level])
-        return;
-    if (!tex->zmask_in_use[level])
+    if (!r300->zmask_in_use || r300->zmask_locked)
         return;
 
-    surf_tmpl.format = dst->format;
-    surf_tmpl.usage = PIPE_BIND_DEPTH_STENCIL;
-    surf_tmpl.u.tex.level = level;
-    surf_tmpl.u.tex.first_layer = layer;
-    surf_tmpl.u.tex.last_layer = layer;
-    dstsurf = pipe->create_surface(pipe, dst, &surf_tmpl);
+    r300->zmask_decompress = TRUE;
+    r300_mark_atom_dirty(r300, &r300->hyperz_state);
 
-    r300->z_decomp_rd = TRUE;
-
-    r300_blitter_begin(r300, R300_CLEAR_SURFACE);
-    util_blitter_flush_depth_stencil(r300->blitter, dstsurf);
+    r300_blitter_begin(r300, R300_CLEAR);
+    util_blitter_clear_depth_custom(r300->blitter, fb->width, fb->height, 0,
+                                    r300->dsa_decompress_zmask);
     r300_blitter_end(r300);
-    r300->z_decomp_rd = FALSE;
 
-    tex->zmask_in_use[level] = FALSE;
-    pipe_surface_reference(&dstsurf, NULL);
+    r300->zmask_decompress = FALSE;
+    r300->zmask_in_use = FALSE;
+    r300_mark_atom_dirty(r300, &r300->hyperz_state);
 }
 
-/* We can't use compressed zbuffers as samplers. */
-void r300_flush_depth_textures(struct r300_context *r300)
+void r300_decompress_zmask_locked_unsafe(struct r300_context *r300)
 {
-    struct r300_textures_state *state =
-        (struct r300_textures_state*)r300->textures_state.state;
-    unsigned i, level;
-    unsigned count = MIN2(state->sampler_view_count,
-                          state->sampler_state_count);
+    struct pipe_framebuffer_state fb = {0};
+    fb.width = r300->locked_zbuffer->width;
+    fb.height = r300->locked_zbuffer->height;
+    fb.nr_cbufs = 0;
+    fb.zsbuf = r300->locked_zbuffer;
 
-    if (r300->z_decomp_rd)
-        return;
+    r300->context.set_framebuffer_state(&r300->context, &fb);
+    r300_decompress_zmask(r300);
+}
 
-    for (i = 0; i < count; i++)
-        if (state->sampler_views[i] && state->sampler_states[i]) {
-            struct pipe_resource *tex = state->sampler_views[i]->base.texture;
+void r300_decompress_zmask_locked(struct r300_context *r300)
+{
+    struct pipe_framebuffer_state saved_fb = {0};
 
-            if (tex->target == PIPE_TEXTURE_3D ||
-                tex->target == PIPE_TEXTURE_CUBE)
-                continue;
-
-            /* Ignore non-depth textures.
-             * Also ignore reinterpreted depth textures, e.g. resource_copy. */
-            if (!util_format_is_depth_or_stencil(tex->format))
-                continue;
-
-            for (level = 0; level <= tex->last_level; level++)
-                if (r300_texture(tex)->zmask_in_use[level]) {
-                    /* We don't handle 3D textures and cubemaps yet. */
-                    r300_flush_depth_stencil(&r300->context, tex, level, 0);
-                 }
-        }
+    util_copy_framebuffer_state(&saved_fb, r300->fb_state.state);
+    r300_decompress_zmask_locked_unsafe(r300);
+    r300->context.set_framebuffer_state(&r300->context, &saved_fb);
+    util_unreference_framebuffer_state(&saved_fb);
 }
 
 /* Copy a block of pixels from one surface to another using HW. */
@@ -393,8 +404,6 @@ static void r300_hw_copy_region(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
 
     r300_blitter_begin(r300, R300_COPY);
-
-    /* Do a copy */
     util_blitter_copy_region(r300->blitter, dst, dst_level, dstx, dsty, dstz,
                              src, src_level, src_box, TRUE);
     r300_blitter_end(r300);
@@ -409,10 +418,22 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
                                       unsigned src_level,
                                       const struct pipe_box *src_box)
 {
+    struct r300_context *r300 = r300_context(pipe);
+    struct pipe_framebuffer_state *fb =
+        (struct pipe_framebuffer_state*)r300->fb_state.state;
     enum pipe_format old_format = dst->format;
     enum pipe_format new_format = old_format;
     const struct util_format_description *desc = util_format_description(old_format);
-    boolean is_depth;
+
+    if (r300->zmask_in_use && !r300->zmask_locked) {
+        if (fb->zsbuf->texture == src ||
+            fb->zsbuf->texture == dst) {
+            r300_decompress_zmask(r300);
+        } else {
+            r300->zmask_locked = TRUE;
+            r300_mark_atom_dirty(r300, &r300->hyperz_state);
+        }
+    }
 
     if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB ||
         (!pipe->screen->is_format_supported(pipe->screen,
@@ -441,11 +462,6 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
         }
     }
 
-    is_depth = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 0) != 0;
-    if (is_depth) {
-        r300_flush_depth_stencil(pipe, src, src_level, src_box->z);
-    }
-
     if (old_format != new_format) {
         r300_texture_reinterpret_format(pipe->screen,
                                         dst, new_format);
@@ -461,6 +477,11 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
                                         dst, old_format);
         r300_texture_reinterpret_format(pipe->screen,
                                         src, old_format);
+    }
+
+    if (r300->zmask_locked) {
+        r300->zmask_locked = FALSE;
+        r300_mark_atom_dirty(r300, &r300->hyperz_state);
     }
 }
 
