@@ -890,30 +890,29 @@ link_intrastage_shaders(void *mem_ctx,
 
    free(linking_shaders);
 
-   /* Make a pass over all global variables to ensure that arrays with
+   /* Make a pass over all variable declarations to ensure that arrays with
     * unspecified sizes have a size specified.  The size is inferred from the
     * max_array_access field.
     */
    if (linked != NULL) {
-      foreach_list(node, linked->ir) {
-	 ir_variable *const var = ((ir_instruction *) node)->as_variable();
+      class array_sizing_visitor : public ir_hierarchical_visitor {
+      public:
+	 virtual ir_visitor_status visit(ir_variable *var)
+	 {
+	    if (var->type->is_array() && (var->type->length == 0)) {
+	       const glsl_type *type =
+		  glsl_type::get_array_instance(var->type->fields.array,
+						var->max_array_access);
 
-	 if (var == NULL)
-	    continue;
+	       assert(type != NULL);
+	       var->type = type;
+	    }
 
-	 if ((var->mode != ir_var_auto) && (var->mode != ir_var_temporary))
-	    continue;
+	    return visit_continue;
+	 }
+      } v;
 
-	 if (!var->type->is_array() || (var->type->length != 0))
-	    continue;
-
-	 const glsl_type *type =
-	    glsl_type::get_array_instance(var->type->fields.array,
-					  var->max_array_access);
-
-	 assert(type != NULL);
-	 var->type = type;
-      }
+      v.run(linked->ir);
    }
 
    return linked;
