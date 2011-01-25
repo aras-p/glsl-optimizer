@@ -356,11 +356,8 @@ cross_validate_globals(struct gl_shader_program *prog,
 		   && (var->type->fields.array == existing->type->fields.array)
 		   && ((var->type->length == 0)
 		       || (existing->type->length == 0))) {
-		  if (existing->type->length == 0) {
+		  if (var->type->length != 0) {
 		     existing->type = var->type;
-		     existing->max_array_access =
-			MAX2(existing->max_array_access,
-			     var->max_array_access);
 		  }
 	       } else {
 		  linker_error_printf(prog, "%s `%s' declared as type "
