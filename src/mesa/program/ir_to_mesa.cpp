@@ -754,27 +754,8 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 
    if (ir->mode == ir_var_uniform && strncmp(ir->name, "gl_", 3) == 0) {
       unsigned int i;
-      const struct gl_builtin_uniform_desc *statevar;
-
-      for (i = 0; _mesa_builtin_uniform_desc[i].name; i++) {
-	 if (strcmp(ir->name, _mesa_builtin_uniform_desc[i].name) == 0)
-	    break;
-      }
-
-      if (!_mesa_builtin_uniform_desc[i].name) {
-	 fail_link(this->shader_program,
-		   "Failed to find builtin uniform `%s'\n", ir->name);
-	 return;
-      }
-
-      statevar = &_mesa_builtin_uniform_desc[i];
-
-      int array_count;
-      if (ir->type->is_array()) {
-	 array_count = ir->type->length;
-      } else {
-	 array_count = 1;
-      }
+      const ir_state_slot *const slots = ir->state_slots;
+      assert(ir->state_slots != NULL);
 
       /* Check if this statevar's setup in the STATE file exactly
        * matches how we'll want to reference it as a
@@ -782,21 +763,27 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
        * temporary storage and hope that it'll get copy-propagated
        * out.
        */
-      for (i = 0; i < statevar->num_elements; i++) {
-	 if (statevar->elements[i].swizzle != SWIZZLE_XYZW) {
+      for (i = 0; i < ir->num_state_slots; i++) {
+	 if (slots[i].swizzle != SWIZZLE_XYZW) {
 	    break;
 	 }
       }
 
       struct variable_storage *storage;
       ir_to_mesa_dst_reg dst;
-      if (i == statevar->num_elements) {
+      if (i == ir->num_state_slots) {
 	 /* We'll set the index later. */
 	 storage = new(mem_ctx) variable_storage(ir, PROGRAM_STATE_VAR, -1);
 	 this->variables.push_tail(storage);
 
 	 dst = ir_to_mesa_undef_dst;
       } else {
+	 /* The variable_storage constructor allocates slots based on the size
+	  * of the type.  However, this had better match the number of state
+	  * elements that we're going to copy into the new temporary.
+	  */
+	 assert(ir->num_state_slots == type_size(ir->type));
+
 	 storage = new(mem_ctx) variable_storage(ir, PROGRAM_TEMPORARY,
 						 this->next_temp);
 	 this->variables.push_tail(storage);
@@ -808,29 +795,20 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
       }
 
 
-      for (int a = 0; a < array_count; a++) {
-	 for (unsigned int i = 0; i < statevar->num_elements; i++) {
-	    struct gl_builtin_uniform_element *element = &statevar->elements[i];
-	    int tokens[STATE_LENGTH];
-
-	    memcpy(tokens, element->tokens, sizeof(element->tokens));
-	    if (ir->type->is_array()) {
-	       tokens[1] = a;
-	    }
-
+      {
+	 for (unsigned int i = 0; i < ir->num_state_slots; i++) {
 	    int index = _mesa_add_state_reference(this->prog->Parameters,
-						  (gl_state_index *)tokens);
+						  (gl_state_index *)slots[i].tokens);
 
 	    if (storage->file == PROGRAM_STATE_VAR) {
 	       if (storage->index == -1) {
 		  storage->index = index;
 	       } else {
-		  assert(index ==
-                         (int)(storage->index + a * statevar->num_elements + i));
+		  assert(index == storage->index + (int)i);
 	       }
 	    } else {
 	       ir_to_mesa_src_reg src(PROGRAM_STATE_VAR, index, NULL);
-	       src.swizzle = element->swizzle;
+	       src.swizzle = slots[i].swizzle;
 	       ir_to_mesa_emit_op1(ir, OPCODE_MOV, dst, src);
 	       /* even a float takes up a whole vec4 reg in a struct/array. */
 	       dst.index++;
@@ -838,7 +816,7 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 	 }
       }
       if (storage->file == PROGRAM_TEMPORARY &&
-	  dst.index != storage->index + type_size(ir->type)) {
+	  dst.index != storage->index + ir->num_state_slots) {
 	 fail_link(this->shader_program,
 		   "failed to load builtin uniform `%s'  (%d/%d regs loaded)\n",
 		   ir->name, dst.index - storage->index,

@@ -399,41 +399,16 @@ fs_visitor::setup_uniform_values(int loc, const glsl_type *type)
 void
 fs_visitor::setup_builtin_uniform_values(ir_variable *ir)
 {
-   const struct gl_builtin_uniform_desc *statevar = NULL;
+   const ir_state_slot *const slots = ir->state_slots;
+   assert(ir->state_slots != NULL);
 
-   for (unsigned int i = 0; _mesa_builtin_uniform_desc[i].name; i++) {
-      statevar = &_mesa_builtin_uniform_desc[i];
-      if (strcmp(ir->name, _mesa_builtin_uniform_desc[i].name) == 0)
-	 break;
-   }
-
-   if (!statevar->name) {
-      fail("Failed to find builtin uniform `%s'\n", ir->name);
-      return;
-   }
-
-   int array_count;
-   if (ir->type->is_array()) {
-      array_count = ir->type->length;
-   } else {
-      array_count = 1;
-   }
-
-   for (int a = 0; a < array_count; a++) {
-      for (unsigned int i = 0; i < statevar->num_elements; i++) {
-	 struct gl_builtin_uniform_element *element = &statevar->elements[i];
-	 int tokens[STATE_LENGTH];
-
-	 memcpy(tokens, element->tokens, sizeof(element->tokens));
-	 if (ir->type->is_array()) {
-	    tokens[1] = a;
-	 }
-
+   {
+      for (unsigned int i = 0; i < ir->num_state_slots; i++) {
 	 /* This state reference has already been setup by ir_to_mesa,
 	  * but we'll get the same index back here.
 	  */
 	 int index = _mesa_add_state_reference(this->fp->Base.Parameters,
-					       (gl_state_index *)tokens);
+					       (gl_state_index *)slots[i].tokens);
 
 	 /* Add each of the unique swizzles of the element as a
 	  * parameter.  This'll end up matching the expected layout of
@@ -441,7 +416,7 @@ fs_visitor::setup_builtin_uniform_values(ir_variable *ir)
 	  */
 	 int last_swiz = -1;
 	 for (unsigned int j = 0; j < 4; j++) {
-	    int swiz = GET_SWZ(element->swizzle, j);
+	    int swiz = GET_SWZ(slots[i].swizzle, j);
 	    if (swiz == last_swiz)
 	       break;
 	    last_swiz = swiz;

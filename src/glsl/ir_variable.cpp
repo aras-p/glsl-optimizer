@@ -327,7 +327,43 @@ static ir_variable *
 add_uniform(exec_list *instructions, glsl_symbol_table *symtab,
 	    const char *name, const glsl_type *type)
 {
-   return add_variable(instructions, symtab, name, type, ir_var_uniform, -1);
+   ir_variable *const uni =
+      add_variable(instructions, symtab, name, type, ir_var_uniform, -1);
+
+   unsigned i;
+   for (i = 0; _mesa_builtin_uniform_desc[i].name != NULL; i++) {
+      if (strcmp(_mesa_builtin_uniform_desc[i].name, name) == 0) {
+	 break;
+      }
+   }
+
+   assert(_mesa_builtin_uniform_desc[i].name != NULL);
+   const struct gl_builtin_uniform_desc* const statevar =
+      &_mesa_builtin_uniform_desc[i];
+
+   const unsigned array_count = type->is_array() ? type->length : 1;
+   uni->num_state_slots = array_count * statevar->num_elements;
+
+   ir_state_slot *slots =
+      ralloc_array(uni, ir_state_slot, uni->num_state_slots);
+
+   uni->state_slots = slots;
+
+   for (unsigned a = 0; a < array_count; a++) {
+      for (unsigned j = 0; j < statevar->num_elements; j++) {
+	 struct gl_builtin_uniform_element *element = &statevar->elements[j];
+
+	 memcpy(slots->tokens, element->tokens, sizeof(element->tokens));
+	 if (type->is_array()) {
+	    slots->tokens[1] = a;
+	 }
+
+	 slots->swizzle = element->swizzle;
+	 slots++;
+      }
+   }
+
+   return uni;
 }
 
 static void
@@ -341,8 +377,12 @@ add_builtin_variable(exec_list *instructions, glsl_symbol_table *symtab,
 
    assert(type != NULL);
 
-   add_variable(instructions, symtab, proto->name, type, proto->mode,
-		proto->slot);
+   if (proto->mode == ir_var_uniform) {
+      add_uniform(instructions, symtab, proto->name, type);
+   } else {
+      add_variable(instructions, symtab, proto->name, type, proto->mode,
+		   proto->slot);
+   }
 }
 
 static void
