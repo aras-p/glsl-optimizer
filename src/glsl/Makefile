@@ -69,6 +69,7 @@ CXX_SOURCES = \
 	opt_constant_propagation.cpp \
 	opt_constant_variable.cpp \
 	opt_copy_propagation.cpp \
+	opt_copy_propagation_elements.cpp \
 	opt_dead_code.cpp \
 	opt_dead_code_local.cpp \
 	opt_dead_functions.cpp \
