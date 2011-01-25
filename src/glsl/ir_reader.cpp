@@ -876,7 +876,7 @@ ir_reader::read_texture(s_expression *expr)
    s_list *s_shadow = NULL;
    s_expression *s_lod = NULL;
 
-   ir_texture_opcode op;
+   ir_texture_opcode op = ir_tex; /* silence warning */
 
    s_pattern tex_pattern[] =
       { "tex", s_sampler, s_coord, s_offset, s_proj, s_shadow };
@@ -893,6 +893,9 @@ ir_reader::read_texture(s_expression *expr)
       op = ir_texture::get_opcode(tag->value());
       if (op == -1)
 	 return NULL;
+   } else {
+      ir_read_error(NULL, "unexpected texture pattern");
+      return NULL;
    }
 
    ir_texture *tex = new(mem_ctx) ir_texture(op);
