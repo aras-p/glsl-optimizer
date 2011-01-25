@@ -850,9 +850,12 @@ emit_wpos(struct st_context *st,
    boolean invert = FALSE;
 
    if (fp->OriginUpperLeft) {
+      /* Fragment shader wants origin in upper-left */
       if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT)) {
+         /* the driver supports upper-left origin */
       }
       else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT)) {
+         /* the driver supports lower-left origin, need to invert Y */
          ureg_property_fs_coord_origin(ureg, TGSI_FS_COORD_ORIGIN_LOWER_LEFT);
          invert = TRUE;
       }
@@ -860,26 +863,35 @@ emit_wpos(struct st_context *st,
          assert(0);
    }
    else {
+      /* Fragment shader wants origin in lower-left */
       if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT))
+         /* the driver supports lower-left origin */
          ureg_property_fs_coord_origin(ureg, TGSI_FS_COORD_ORIGIN_LOWER_LEFT);
       else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT))
+         /* the driver supports upper-left origin, need to invert Y */
          invert = TRUE;
       else
          assert(0);
    }
    
    if (fp->PixelCenterInteger) {
+      /* Fragment shader wants pixel center integer */
       if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER))
+         /* the driver supports pixel center integer */
          ureg_property_fs_coord_pixel_center(ureg, TGSI_FS_COORD_PIXEL_CENTER_INTEGER);
       else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER))
+         /* the driver supports pixel center half integer, need to bias X,Y */
          emit_adjusted_wpos(t, program, 0.5f, invert ? 0.5f : -0.5f);
       else
          assert(0);
    }
    else {
+      /* Fragment shader wants pixel center half integer */
       if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER)) {
+         /* the driver supports pixel center half integer */
       }
       else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER)) {
+         /* the driver supports pixel center integer, need to bias X,Y */
          ureg_property_fs_coord_pixel_center(ureg, TGSI_FS_COORD_PIXEL_CENTER_INTEGER);
          emit_adjusted_wpos(t, program, 0.5f, invert ? -0.5f : 0.5f);
       }
