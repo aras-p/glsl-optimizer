@@ -184,6 +184,7 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->RenderTexture = _mesa_render_texture;
    driver->FinishRenderTexture = _mesa_finish_render_texture;
    driver->FramebufferRenderbuffer = _mesa_framebuffer_renderbuffer;
+   driver->ValidateFramebuffer = _mesa_validate_framebuffer;
 
    driver->BlitFramebuffer = _swrast_BlitFramebuffer;
 

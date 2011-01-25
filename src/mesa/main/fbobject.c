@@ -373,6 +373,35 @@ _mesa_framebuffer_renderbuffer(struct gl_context *ctx,
 
 
 /**
+ * Fallback for ctx->Driver.ValidateFramebuffer()
+ * Check if the renderbuffer's formats are supported by the software
+ * renderer.
+ * Drivers should probably override this.
+ */
+void
+_mesa_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
+{
+   gl_buffer_index buf;
+   for (buf = 0; buf < BUFFER_COUNT; buf++) {
+      const struct gl_renderbuffer *rb = fb->Attachment[buf].Renderbuffer;
+      if (rb) {
+         switch (rb->_BaseFormat) {
+         case GL_ALPHA:
+         case GL_LUMINANCE_ALPHA:
+         case GL_LUMINANCE:
+         case GL_INTENSITY:
+            fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED;
+            return;
+         default:
+            /* render buffer format is supported by software rendering */
+            ;
+         }
+      }
+   }
+}
+
+
+/**
  * For debug only.
  */
 static void

@@ -1086,7 +1086,7 @@ _mesa_soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *
       pixelSize = sizeof(GLuint);
       break;
    default:
-      _mesa_problem(ctx, "Bad internalFormat in _mesa_soft_renderbuffer_storage");
+      /* unsupported format */
       return GL_FALSE;
    }
 
