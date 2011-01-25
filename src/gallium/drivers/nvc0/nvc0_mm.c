@@ -96,12 +96,12 @@ mm_bucket_by_size(struct nvc0_mman *cache, unsigned size)
 static INLINE uint32_t
 mm_default_slab_size(unsigned chunk_order)
 {
-   assert(chunk_order <= MM_MAX_ORDER && chunk_order >= MM_MIN_ORDER);
-
    static const int8_t slab_order[MM_MAX_ORDER - MM_MIN_ORDER + 1] =
    {
       12, 12, 13, 14, 14, 17, 17, 17, 17, 19, 19, 20, 21, 22
    };
+
+   assert(chunk_order <= MM_MAX_ORDER && chunk_order >= MM_MIN_ORDER);
 
    return 1 << slab_order[chunk_order - MM_MIN_ORDER];
 }
