@@ -25,6 +25,10 @@
 #include "glsl_parser_extras.h"
 #include "glsl_symbol_table.h"
 #include "builtin_variables.h"
+#include "main/uniforms.h"
+#include "program/prog_parameter.h"
+#include "program/prog_statevars.h"
+#include "program/prog_instruction.h"
 
 static void generate_ARB_draw_buffers_variables(exec_list *,
 						struct _mesa_glsl_parse_state *,
@@ -34,6 +38,255 @@ static void
 generate_ARB_draw_instanced_variables(exec_list *,
                                       struct _mesa_glsl_parse_state *,
                                       bool, _mesa_glsl_parser_targets);
+
+static struct gl_builtin_uniform_element gl_DepthRange_elements[] = {
+   {"near", {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_XXXX},
+   {"far", {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_YYYY},
+   {"diff", {STATE_DEPTH_RANGE, 0, 0}, SWIZZLE_ZZZZ},
+};
+
+static struct gl_builtin_uniform_element gl_ClipPlane_elements[] = {
+   {NULL, {STATE_CLIPPLANE, 0, 0}, SWIZZLE_XYZW}
+};
+
+static struct gl_builtin_uniform_element gl_Point_elements[] = {
+   {"size", {STATE_POINT_SIZE}, SWIZZLE_XXXX},
+   {"sizeMin", {STATE_POINT_SIZE}, SWIZZLE_YYYY},
+   {"sizeMax", {STATE_POINT_SIZE}, SWIZZLE_ZZZZ},
+   {"fadeThresholdSize", {STATE_POINT_SIZE}, SWIZZLE_WWWW},
+   {"distanceConstantAttenuation", {STATE_POINT_ATTENUATION}, SWIZZLE_XXXX},
+   {"distanceLinearAttenuation", {STATE_POINT_ATTENUATION}, SWIZZLE_YYYY},
+   {"distanceQuadraticAttenuation", {STATE_POINT_ATTENUATION}, SWIZZLE_ZZZZ},
+};
+
+static struct gl_builtin_uniform_element gl_FrontMaterial_elements[] = {
+   {"emission", {STATE_MATERIAL, 0, STATE_EMISSION}, SWIZZLE_XYZW},
+   {"ambient", {STATE_MATERIAL, 0, STATE_AMBIENT}, SWIZZLE_XYZW},
+   {"diffuse", {STATE_MATERIAL, 0, STATE_DIFFUSE}, SWIZZLE_XYZW},
+   {"specular", {STATE_MATERIAL, 0, STATE_SPECULAR}, SWIZZLE_XYZW},
+   {"shininess", {STATE_MATERIAL, 0, STATE_SHININESS}, SWIZZLE_XXXX},
+};
+
+static struct gl_builtin_uniform_element gl_BackMaterial_elements[] = {
+   {"emission", {STATE_MATERIAL, 1, STATE_EMISSION}, SWIZZLE_XYZW},
+   {"ambient", {STATE_MATERIAL, 1, STATE_AMBIENT}, SWIZZLE_XYZW},
+   {"diffuse", {STATE_MATERIAL, 1, STATE_DIFFUSE}, SWIZZLE_XYZW},
+   {"specular", {STATE_MATERIAL, 1, STATE_SPECULAR}, SWIZZLE_XYZW},
+   {"shininess", {STATE_MATERIAL, 1, STATE_SHININESS}, SWIZZLE_XXXX},
+};
+
+static struct gl_builtin_uniform_element gl_LightSource_elements[] = {
+   {"ambient", {STATE_LIGHT, 0, STATE_AMBIENT}, SWIZZLE_XYZW},
+   {"diffuse", {STATE_LIGHT, 0, STATE_DIFFUSE}, SWIZZLE_XYZW},
+   {"specular", {STATE_LIGHT, 0, STATE_SPECULAR}, SWIZZLE_XYZW},
+   {"position", {STATE_LIGHT, 0, STATE_POSITION}, SWIZZLE_XYZW},
+   {"halfVector", {STATE_LIGHT, 0, STATE_HALF_VECTOR}, SWIZZLE_XYZW},
+   {"spotDirection", {STATE_LIGHT, 0, STATE_SPOT_DIRECTION},
+    MAKE_SWIZZLE4(SWIZZLE_X,
+		  SWIZZLE_Y,
+		  SWIZZLE_Z,
+		  SWIZZLE_Z)},
+   {"spotCosCutoff", {STATE_LIGHT, 0, STATE_SPOT_DIRECTION}, SWIZZLE_WWWW},
+   {"spotCutoff", {STATE_LIGHT, 0, STATE_SPOT_CUTOFF}, SWIZZLE_XXXX},
+   {"spotExponent", {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_WWWW},
+   {"constantAttenuation", {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_XXXX},
+   {"linearAttenuation", {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_YYYY},
+   {"quadraticAttenuation", {STATE_LIGHT, 0, STATE_ATTENUATION}, SWIZZLE_ZZZZ},
+};
+
+static struct gl_builtin_uniform_element gl_LightModel_elements[] = {
+   {"ambient", {STATE_LIGHTMODEL_AMBIENT, 0}, SWIZZLE_XYZW},
+};
+
+static struct gl_builtin_uniform_element gl_FrontLightModelProduct_elements[] = {
+   {"sceneColor", {STATE_LIGHTMODEL_SCENECOLOR, 0}, SWIZZLE_XYZW},
+};
+
+static struct gl_builtin_uniform_element gl_BackLightModelProduct_elements[] = {
+   {"sceneColor", {STATE_LIGHTMODEL_SCENECOLOR, 1}, SWIZZLE_XYZW},
+};
+
+static struct gl_builtin_uniform_element gl_FrontLightProduct_elements[] = {
+   {"ambient", {STATE_LIGHTPROD, 0, 0, STATE_AMBIENT}, SWIZZLE_XYZW},
+   {"diffuse", {STATE_LIGHTPROD, 0, 0, STATE_DIFFUSE}, SWIZZLE_XYZW},
+   {"specular", {STATE_LIGHTPROD, 0, 0, STATE_SPECULAR}, SWIZZLE_XYZW},
+};
+
+static struct gl_builtin_uniform_element gl_BackLightProduct_elements[] = {
+   {"ambient", {STATE_LIGHTPROD, 0, 1, STATE_AMBIENT}, SWIZZLE_XYZW},
+   {"diffuse", {STATE_LIGHTPROD, 0, 1, STATE_DIFFUSE}, SWIZZLE_XYZW},
+   {"specular", {STATE_LIGHTPROD, 0, 1, STATE_SPECULAR}, SWIZZLE_XYZW},
+};
+
+static struct gl_builtin_uniform_element gl_TextureEnvColor_elements[] = {
+   {NULL, {STATE_TEXENV_COLOR, 0}, SWIZZLE_XYZW},
+};
+
+static struct gl_builtin_uniform_element gl_EyePlaneS_elements[] = {
+   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_S}, SWIZZLE_XYZW},
+};
+
+static struct gl_builtin_uniform_element gl_EyePlaneT_elements[] = {
+   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_T}, SWIZZLE_XYZW},
+};
+
+static struct gl_builtin_uniform_element gl_EyePlaneR_elements[] = {
+   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_R}, SWIZZLE_XYZW},
+};
+
+static struct gl_builtin_uniform_element gl_EyePlaneQ_elements[] = {
+   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_EYE_Q}, SWIZZLE_XYZW},
+};
+
+static struct gl_builtin_uniform_element gl_ObjectPlaneS_elements[] = {
+   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_S}, SWIZZLE_XYZW},
+};
+
+static struct gl_builtin_uniform_element gl_ObjectPlaneT_elements[] = {
+   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_T}, SWIZZLE_XYZW},
+};
+
+static struct gl_builtin_uniform_element gl_ObjectPlaneR_elements[] = {
+   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_R}, SWIZZLE_XYZW},
+};
+
+static struct gl_builtin_uniform_element gl_ObjectPlaneQ_elements[] = {
+   {NULL, {STATE_TEXGEN, 0, STATE_TEXGEN_OBJECT_Q}, SWIZZLE_XYZW},
+};
+
+static struct gl_builtin_uniform_element gl_Fog_elements[] = {
+   {"color", {STATE_FOG_COLOR}, SWIZZLE_XYZW},
+   {"density", {STATE_FOG_PARAMS}, SWIZZLE_XXXX},
+   {"start", {STATE_FOG_PARAMS}, SWIZZLE_YYYY},
+   {"end", {STATE_FOG_PARAMS}, SWIZZLE_ZZZZ},
+   {"scale", {STATE_FOG_PARAMS}, SWIZZLE_WWWW},
+};
+
+static struct gl_builtin_uniform_element gl_NormalScale_elements[] = {
+   {NULL, {STATE_NORMAL_SCALE}, SWIZZLE_XXXX},
+};
+
+static struct gl_builtin_uniform_element gl_MESABumpRotMatrix0_elements[] = {
+   {NULL, {STATE_INTERNAL, STATE_ROT_MATRIX_0}, SWIZZLE_XYZW},
+};
+
+static struct gl_builtin_uniform_element gl_MESABumpRotMatrix1_elements[] = {
+   {NULL, {STATE_INTERNAL, STATE_ROT_MATRIX_1}, SWIZZLE_XYZW},
+};
+
+static struct gl_builtin_uniform_element gl_MESAFogParamsOptimized_elements[] = {
+   {NULL, {STATE_INTERNAL, STATE_FOG_PARAMS_OPTIMIZED}, SWIZZLE_XYZW},
+};
+
+#define MATRIX(name, statevar, modifier)				\
+   static struct gl_builtin_uniform_element name ## _elements[] = {	\
+      { NULL, { statevar, 0, 0, 0, modifier}, SWIZZLE_XYZW },		\
+      { NULL, { statevar, 0, 1, 1, modifier}, SWIZZLE_XYZW },		\
+      { NULL, { statevar, 0, 2, 2, modifier}, SWIZZLE_XYZW },		\
+      { NULL, { statevar, 0, 3, 3, modifier}, SWIZZLE_XYZW },		\
+   }
+
+MATRIX(gl_ModelViewMatrix,
+       STATE_MODELVIEW_MATRIX, STATE_MATRIX_TRANSPOSE);
+MATRIX(gl_ModelViewMatrixInverse,
+       STATE_MODELVIEW_MATRIX, STATE_MATRIX_INVTRANS);
+MATRIX(gl_ModelViewMatrixTranspose,
+       STATE_MODELVIEW_MATRIX, 0);
+MATRIX(gl_ModelViewMatrixInverseTranspose,
+       STATE_MODELVIEW_MATRIX, STATE_MATRIX_INVERSE);
+
+MATRIX(gl_ProjectionMatrix,
+       STATE_PROJECTION_MATRIX, STATE_MATRIX_TRANSPOSE);
+MATRIX(gl_ProjectionMatrixInverse,
+       STATE_PROJECTION_MATRIX, STATE_MATRIX_INVTRANS);
+MATRIX(gl_ProjectionMatrixTranspose,
+       STATE_PROJECTION_MATRIX, 0);
+MATRIX(gl_ProjectionMatrixInverseTranspose,
+       STATE_PROJECTION_MATRIX, STATE_MATRIX_INVERSE);
+
+MATRIX(gl_ModelViewProjectionMatrix,
+       STATE_MVP_MATRIX, STATE_MATRIX_TRANSPOSE);
+MATRIX(gl_ModelViewProjectionMatrixInverse,
+       STATE_MVP_MATRIX, STATE_MATRIX_INVTRANS);
+MATRIX(gl_ModelViewProjectionMatrixTranspose,
+       STATE_MVP_MATRIX, 0);
+MATRIX(gl_ModelViewProjectionMatrixInverseTranspose,
+       STATE_MVP_MATRIX, STATE_MATRIX_INVERSE);
+
+MATRIX(gl_TextureMatrix,
+       STATE_TEXTURE_MATRIX, STATE_MATRIX_TRANSPOSE);
+MATRIX(gl_TextureMatrixInverse,
+       STATE_TEXTURE_MATRIX, STATE_MATRIX_INVTRANS);
+MATRIX(gl_TextureMatrixTranspose,
+       STATE_TEXTURE_MATRIX, 0);
+MATRIX(gl_TextureMatrixInverseTranspose,
+       STATE_TEXTURE_MATRIX, STATE_MATRIX_INVERSE);
+
+static struct gl_builtin_uniform_element gl_NormalMatrix_elements[] = {
+   { NULL, { STATE_MODELVIEW_MATRIX, 0, 0, 0, STATE_MATRIX_INVERSE},
+     SWIZZLE_XYZW },
+   { NULL, { STATE_MODELVIEW_MATRIX, 0, 1, 1, STATE_MATRIX_INVERSE},
+     SWIZZLE_XYZW },
+   { NULL, { STATE_MODELVIEW_MATRIX, 0, 2, 2, STATE_MATRIX_INVERSE},
+     SWIZZLE_XYZW },
+};
+
+#undef MATRIX
+
+#define STATEVAR(name) {#name, name ## _elements, Elements(name ## _elements)}
+
+const struct gl_builtin_uniform_desc _mesa_builtin_uniform_desc[] = {
+   STATEVAR(gl_DepthRange),
+   STATEVAR(gl_ClipPlane),
+   STATEVAR(gl_Point),
+   STATEVAR(gl_FrontMaterial),
+   STATEVAR(gl_BackMaterial),
+   STATEVAR(gl_LightSource),
+   STATEVAR(gl_LightModel),
+   STATEVAR(gl_FrontLightModelProduct),
+   STATEVAR(gl_BackLightModelProduct),
+   STATEVAR(gl_FrontLightProduct),
+   STATEVAR(gl_BackLightProduct),
+   STATEVAR(gl_TextureEnvColor),
+   STATEVAR(gl_EyePlaneS),
+   STATEVAR(gl_EyePlaneT),
+   STATEVAR(gl_EyePlaneR),
+   STATEVAR(gl_EyePlaneQ),
+   STATEVAR(gl_ObjectPlaneS),
+   STATEVAR(gl_ObjectPlaneT),
+   STATEVAR(gl_ObjectPlaneR),
+   STATEVAR(gl_ObjectPlaneQ),
+   STATEVAR(gl_Fog),
+
+   STATEVAR(gl_ModelViewMatrix),
+   STATEVAR(gl_ModelViewMatrixInverse),
+   STATEVAR(gl_ModelViewMatrixTranspose),
+   STATEVAR(gl_ModelViewMatrixInverseTranspose),
+
+   STATEVAR(gl_ProjectionMatrix),
+   STATEVAR(gl_ProjectionMatrixInverse),
+   STATEVAR(gl_ProjectionMatrixTranspose),
+   STATEVAR(gl_ProjectionMatrixInverseTranspose),
+
+   STATEVAR(gl_ModelViewProjectionMatrix),
+   STATEVAR(gl_ModelViewProjectionMatrixInverse),
+   STATEVAR(gl_ModelViewProjectionMatrixTranspose),
+   STATEVAR(gl_ModelViewProjectionMatrixInverseTranspose),
+
+   STATEVAR(gl_TextureMatrix),
+   STATEVAR(gl_TextureMatrixInverse),
+   STATEVAR(gl_TextureMatrixTranspose),
+   STATEVAR(gl_TextureMatrixInverseTranspose),
+
+   STATEVAR(gl_NormalMatrix),
+   STATEVAR(gl_NormalScale),
+
+   STATEVAR(gl_MESABumpRotMatrix0),
+   STATEVAR(gl_MESABumpRotMatrix1),
+   STATEVAR(gl_MESAFogParamsOptimized),
+
+   {NULL, NULL, 0}
+};
 
 static ir_variable *
 add_variable(exec_list *instructions, glsl_symbol_table *symtab,
