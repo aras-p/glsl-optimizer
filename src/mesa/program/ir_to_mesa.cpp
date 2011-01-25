@@ -651,6 +651,7 @@ type_size(const struct glsl_type *type)
 	 return 1;
       }
    case GLSL_TYPE_ARRAY:
+      assert(type->length > 0);
       return type_size(type->fields.array) * type->length;
    case GLSL_TYPE_STRUCT:
       size = 0;
@@ -2652,6 +2653,9 @@ ir_to_mesa_visitor::copy_propagate(void)
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       ir_to_mesa_instruction *inst = (ir_to_mesa_instruction *)iter.get();
+
+      assert(inst->dst_reg.file != PROGRAM_TEMPORARY
+	     || inst->dst_reg.index < this->next_temp);
 
       /* First, do any copy propagation possible into the src regs. */
       for (int r = 0; r < 3; r++) {
