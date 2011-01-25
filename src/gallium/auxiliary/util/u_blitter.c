@@ -105,6 +105,8 @@ struct blitter_context_priv
    /* Destination surface dimensions. */
    unsigned dst_width;
    unsigned dst_height;
+
+   boolean running;
 };
 
 static void blitter_draw_rectangle(struct blitter_context *blitter,
@@ -272,6 +274,12 @@ void util_blitter_destroy(struct blitter_context *blitter)
 
 static void blitter_check_saved_CSOs(struct blitter_context_priv *ctx)
 {
+   if (ctx->running) {
+      _debug_printf("u_blitter: Caught recursion on save. "
+                    "This is a driver bug.\n");
+   }
+   ctx->running = TRUE;
+
    /* make sure these CSOs have been saved */
    assert(ctx->base.saved_blend_state != INVALID_PTR &&
           ctx->base.saved_dsa_state != INVALID_PTR &&
@@ -302,7 +310,6 @@ static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
    ctx->base.saved_velem_state = INVALID_PTR;
 
    pipe->set_stencil_ref(pipe, &ctx->base.saved_stencil_ref);
-
    pipe->set_viewport_state(pipe, &ctx->base.saved_viewport);
    pipe->set_clip_state(pipe, &ctx->base.saved_clip);
 
@@ -346,6 +353,12 @@ static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
       }
       ctx->base.saved_num_vertex_buffers = ~0;
    }
+
+   if (!ctx->running) {
+      _debug_printf("u_blitter: Caught recursion on restore. "
+                    "This is a driver bug.\n");
+   }
+   ctx->running = FALSE;
 }
 
 static void blitter_set_rectangle(struct blitter_context_priv *ctx,
