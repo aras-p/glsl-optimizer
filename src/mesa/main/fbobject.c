@@ -390,6 +390,8 @@ _mesa_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
          case GL_LUMINANCE_ALPHA:
          case GL_LUMINANCE:
          case GL_INTENSITY:
+         case GL_RED:
+         case GL_RG:
             fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED;
             return;
          default:
@@ -1075,7 +1077,15 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
          return GL_DEPTH_STENCIL_EXT;
       else
          return 0;
-   /* XXX add floating point formats eventually */
+   case GL_RED:
+   case GL_R8:
+   case GL_R16:
+      return ctx->Extensions.ARB_texture_rg ? GL_RED : 0;
+   case GL_RG:
+   case GL_RG8:
+   case GL_RG16:
+      return ctx->Extensions.ARB_texture_rg ? GL_RG : 0;
+   /* XXX add floating point and integer formats eventually */
    default:
       return 0;
    }
