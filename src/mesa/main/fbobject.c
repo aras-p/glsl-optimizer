@@ -961,26 +961,53 @@ _mesa_GenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers)
 
 /**
  * Given an internal format token for a render buffer, return the
- * corresponding base format.
- * This is very similar to _mesa_base_tex_format() but the set of valid
- * internal formats is somewhat different.
+ * corresponding base format (one of GL_RGB, GL_RGBA, GL_STENCIL_INDEX,
+ * GL_DEPTH_COMPONENT, GL_DEPTH_STENCIL_EXT, GL_ALPHA, GL_LUMINANCE,
+ * GL_LUMINANCE_ALPHA, GL_INTENSITY, etc).
  *
- * \return one of GL_RGB, GL_RGBA, GL_STENCIL_INDEX, GL_DEPTH_COMPONENT
- *  GL_DEPTH_STENCIL_EXT or zero if error.
+ * This is similar to _mesa_base_tex_format() but the set of valid
+ * internal formats is different.
  *
- * XXX in the future when we support red-only and red-green formats
- * we'll also return GL_RED and GL_RG.
+ * Note that even if a format is determined to be legal here, validation
+ * of the FBO may fail if the format is not suppoted by the driver/GPU.
+ *
+ * \param internalFormat  as passed to glRenderbufferStorage()
+ * \return the base internal format, or 0 if internalFormat is illegal
  */
 GLenum
 _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
 {
+   /*
+    * Notes: some formats such as alpha, luminance, etc. were added
+    * with GL_ARB_framebuffer_object.
+    */
    switch (internalFormat) {
    case GL_ALPHA:
    case GL_ALPHA4:
    case GL_ALPHA8:
    case GL_ALPHA12:
    case GL_ALPHA16:
-      return GL_ALPHA;
+      return ctx->Extensions.ARB_framebuffer_object ? GL_ALPHA : 0;
+   case GL_LUMINANCE:
+   case GL_LUMINANCE4:
+   case GL_LUMINANCE8:
+   case GL_LUMINANCE12:
+   case GL_LUMINANCE16:
+      return ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE : 0;
+   case GL_LUMINANCE_ALPHA:
+   case GL_LUMINANCE4_ALPHA4:
+   case GL_LUMINANCE6_ALPHA2:
+   case GL_LUMINANCE8_ALPHA8:
+   case GL_LUMINANCE12_ALPHA4:
+   case GL_LUMINANCE12_ALPHA12:
+   case GL_LUMINANCE16_ALPHA16:
+      return ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE_ALPHA : 0;
+   case GL_INTENSITY:
+   case GL_INTENSITY4:
+   case GL_INTENSITY8:
+   case GL_INTENSITY12:
+   case GL_INTENSITY16:
+      return ctx->Extensions.ARB_framebuffer_object ? GL_INTENSITY : 0;
    case GL_RGB:
    case GL_R3_G3_B2:
    case GL_RGB4:
