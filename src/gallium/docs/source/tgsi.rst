@@ -1266,6 +1266,42 @@ instructions. If in doubt double check Direct3D documentation.
                LOAD dst, address, resource
                e.g.
                LOAD TEMP[0], TEMP[1], RES[0]
+               The 'address' is specified as unsigned integers. If the
+               'address' is out of range [0...(# texels - 1)] the
+               result of the fetch is always 0 in all components.
+               As such the instruction doesn't honor address wrap
+               modes, in cases where that behavior is desirable
+               'sample' instruction should be used.
+               address.w always provides an unsigned integer mipmap
+               level. If the value is out of the range then the
+               instruction always returns 0 in all components.
+               address.yz are ignored for buffers and 1d textures.
+               address.z is ignored for 1d texture arrays and 2d
+               textures.
+               For 1D texture arrays address.y provides the array
+               index (also as unsigned integer). If the value is
+               out of the range of available array indices
+               [0... (array size - 1)] then the opcode always returns
+               0 in all components.
+               For 2D texture arrays address.z provides the array
+               index, otherwise it exhibits the same behavior as in
+               the case for 1D texture arrays.
+               The exeact semantics of the source address are presented
+               in the table below:
+               resource type         X     Y     Z       W
+               -------------         ------------------------
+               PIPE_BUFFER           x                ignored
+               PIPE_TEXTURE_1D       x                  mpl
+               PIPE_TEXTURE_2D       x     y            mpl
+               PIPE_TEXTURE_3D       x     y     z      mpl
+               PIPE_TEXTURE_RECT     x     y            mpl
+               PIPE_TEXTURE_CUBE     not allowed as source
+               PIPE_TEXTURE_1D_ARRAY x    idx           mpl
+               PIPE_TEXTURE_2D_ARRAY x     y    idx     mpl
+
+               Where 'mpl' is a mipmap level and 'idx' is the
+               array index.
+
 
 .. opcode:: LOAD_MS - Just like LOAD but allows fetch data from
                multi-sampled surfaces.
@@ -1286,7 +1322,7 @@ instructions. If in doubt double check Direct3D documentation.
                e.g.
                SAMPLE_B TEMP[0], TEMP[1], RES[0], SAMP[0], TEMP[2].x
 
-.. opcode:: SAMPLE_C - Similar to the SAMPLE instruction but it 
+.. opcode:: SAMPLE_C - Similar to the SAMPLE instruction but it
                performs a comparison filter. The operands to SAMPLE_C
                are identical to SAMPLE, except that tere is an additional
                float32 operand, reference value, which must be a register
@@ -1337,20 +1373,31 @@ instructions. If in doubt double check Direct3D documentation.
                the magnitude of the deltas are half a texel.
 
 
-.. opcode:: RESINFO - query the dimentions of a given input buffer.
+.. opcode:: RESINFO - query the dimensions of a given input buffer.
                dst receives width, height, depth or array size and
-               total mip count (also can be slected by writemask).
+               number of mipmap levels. The dst can have a writemask
+               which will specify what info is the caller interested
+               in.
                RESINFO dst, src_mip_level, resource
                e.g.
                RESINFO TEMP[0], TEMP[1].x, RES[0]
+               src_mip_level is an unsigned integer scalar. If it's
+               out of range then returns 0 for width, height and
+               depth/array size but the total number of mipmap is
+               still returned correctly for the given resource.
+               The returned width, height and depth values are for
+               the mipmap level selected by the src_mip_level and
+               are in the number of texels.
+               For 1d texture array width is in dst.x, array size
+               is in dst.y and dst.zw are always 0.
 
 .. opcode:: SAMPLE_POS - query the position of a given sample.
                dst receives float4 (x, y, 0, 0) indicated where the
                sample is located. If the resource is not a multi-sample
                resource and not a render target, the result is 0.
 
-.. opcode:: SAMPLE_INFO - dst receives number of components in x.
-               If the resource is not a multi-sample resource and 
+.. opcode:: SAMPLE_INFO - dst receives number of samples in x.
+               If the resource is not a multi-sample resource and
                not a render target, the result is 0.
 
 
