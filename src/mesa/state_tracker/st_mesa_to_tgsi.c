@@ -751,10 +751,12 @@ compile_instruction(
 
 /**
  * Emit the TGSI instructions to adjust the WPOS pixel center convention
+ * Basically, add (adjX, adjY) to the fragment position.
  */
 static void
 emit_adjusted_wpos( struct st_translate *t,
-                    const struct gl_program *program, GLfloat value)
+                    const struct gl_program *program,
+                    GLfloat adjX, GLfloat adjY)
 {
    struct ureg_program *ureg = t->ureg;
    struct ureg_dst wpos_temp = ureg_DECL_temporary(ureg);
@@ -764,7 +766,7 @@ emit_adjusted_wpos( struct st_translate *t,
     * The shader might also use gl_FragCoord.w and .z.
     */
    ureg_ADD(ureg, wpos_temp, wpos_input,
-            ureg_imm4f(ureg, value, value, 0.0f, 0.0f));
+            ureg_imm4f(ureg, adjX, adjY, 0.0f, 0.0f));
 
    t->inputs[t->inputMapping[FRAG_ATTRIB_WPOS]] = ureg_src(wpos_temp);
 }
@@ -870,7 +872,7 @@ emit_wpos(struct st_context *st,
       if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER))
          ureg_property_fs_coord_pixel_center(ureg, TGSI_FS_COORD_PIXEL_CENTER_INTEGER);
       else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER))
-         emit_adjusted_wpos(t, program, invert ? 0.5f : -0.5f);
+         emit_adjusted_wpos(t, program, 0.5f, invert ? 0.5f : -0.5f);
       else
          assert(0);
    }
@@ -879,7 +881,7 @@ emit_wpos(struct st_context *st,
       }
       else if (pscreen->get_param(pscreen, PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER)) {
          ureg_property_fs_coord_pixel_center(ureg, TGSI_FS_COORD_PIXEL_CENTER_INTEGER);
-         emit_adjusted_wpos(t, program, invert ? -0.5f : 0.5f);
+         emit_adjusted_wpos(t, program, 0.5f, invert ? -0.5f : 0.5f);
       }
       else
          assert(0);
