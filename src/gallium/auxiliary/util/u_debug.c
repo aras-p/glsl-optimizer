@@ -44,6 +44,7 @@
 #include "util/u_surface.h"
 
 #include <limits.h> /* CHAR_BIT */
+#include <ctype.h> /* isalnum */
 
 void _debug_vprintf(const char *format, va_list ap)
 {
@@ -182,36 +183,41 @@ debug_get_num_option(const char *name, long dfault)
 
 static boolean str_has_option(const char *str, const char *name)
 {
-   const char *substr;
+   /* Empty string. */
+   if (!*str) {
+      return FALSE;
+   }
 
    /* OPTION=all */
    if (!util_strcmp(str, "all")) {
       return TRUE;
    }
 
-   /* OPTION=name */
-   if (!util_strcmp(str, name)) {
-      return TRUE;
-   }
-
-   substr = util_strstr(str, name);
-
-   if (substr) {
+   /* Find 'name' in 'str' surrounded by non-alphanumeric characters. */
+   {
+      const char *start = str;
       unsigned name_len = strlen(name);
 
-      /* OPTION=name,... */
-      if (substr == str && substr[name_len] == ',') {
-         return TRUE;
-      }
+      /* 'start' is the beginning of the currently-parsed word,
+       * we increment 'str' each iteration.
+       * if we find either the end of string or a non-alphanumeric character,
+       * we compare 'start' up to 'str-1' with 'name'. */
 
-      /* OPTION=...,name */
-      if (substr+name_len == str+strlen(str) && substr[-1] == ',') {
-         return TRUE;
-      }
+      while (1) {
+         if (!*str || !isalnum(*str)) {
+            if (str-start == name_len &&
+                !memcmp(start, name, name_len)) {
+               return TRUE;
+            }
 
-      /* OPTION=...,name,... */
-      if (substr[-1] == ',' && substr[name_len] == ',') {
-         return TRUE;
+            if (!*str) {
+               return FALSE;
+            }
+
+            start = str+1;
+         }
+
+         str++;
       }
    }
 
