@@ -117,7 +117,7 @@ ChangeDrawableAttribute(Display * dpy, GLXDrawable drawable,
    else {
       xGLXVendorPrivateWithReplyReq *vpreq;
 
-      GetReqExtra(GLXVendorPrivateWithReply, 4 + (8 * num_attribs), vpreq);
+      GetReqExtra(GLXVendorPrivateWithReply, 8 + (8 * num_attribs), vpreq);
       output = (CARD32 *) (vpreq + 1);
 
       vpreq->reqType = opcode;
@@ -125,7 +125,8 @@ ChangeDrawableAttribute(Display * dpy, GLXDrawable drawable,
       vpreq->vendorCode = X_GLXvop_ChangeDrawableAttributesSGIX;
 
       output[0] = (CARD32) drawable;
-      output++;
+      output[1] = num_attribs;
+      output += 2;
    }
 
    (void) memcpy(output, attribs, sizeof(CARD32) * 2 * num_attribs);
