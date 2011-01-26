@@ -862,7 +862,6 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
    }
 
    texObj = _mesa_select_tex_object(ctx, texUnit, target);
-   _mesa_lock_texture(ctx, texObj);
 
    img = _mesa_select_tex_image(ctx, texObj, target, level);
    if (!img || !img->TexFormat) {
@@ -871,7 +870,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          *params = 1;
       else
          *params = 0;
-      goto out;
+      return;
    }
 
    texFormat = img->TexFormat;
@@ -962,8 +961,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          if (ctx->Extensions.ARB_depth_texture)
             *params = _mesa_get_format_bits(texFormat, pname);
          else
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glGetTexLevelParameter[if]v(pname)");
+            goto invalid_pname;
          break;
       case GL_TEXTURE_STENCIL_SIZE_EXT:
          if (ctx->Extensions.EXT_packed_depth_stencil ||
@@ -971,8 +969,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
             *params = _mesa_get_format_bits(texFormat, pname);
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glGetTexLevelParameter[if]v(pname)");
+            goto invalid_pname;
          }
          break;
       case GL_TEXTURE_SHARED_SIZE:
@@ -983,8 +980,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
             *params = 0;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glGetTexLevelParameter[if]v(pname)");
+            goto invalid_pname;
          }
          break;
 
@@ -1010,8 +1006,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
                _mesa_get_format_datatype(texFormat) : GL_NONE;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glGetTexLevelParameter[if]v(pname)");
+            goto invalid_pname;
          }
          break;
       case GL_TEXTURE_GREEN_TYPE_ARB:
@@ -1020,8 +1015,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
                _mesa_get_format_datatype(texFormat) : GL_NONE;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glGetTexLevelParameter[if]v(pname)");
+            goto invalid_pname;
          }
          break;
       case GL_TEXTURE_BLUE_TYPE_ARB:
@@ -1030,8 +1024,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
                _mesa_get_format_datatype(texFormat) : GL_NONE;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glGetTexLevelParameter[if]v(pname)");
+            goto invalid_pname;
          }
          break;
       case GL_TEXTURE_ALPHA_TYPE_ARB:
@@ -1040,8 +1033,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
                _mesa_get_format_datatype(texFormat) : GL_NONE;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glGetTexLevelParameter[if]v(pname)");
+            goto invalid_pname;
          }
          break;
       case GL_TEXTURE_LUMINANCE_TYPE_ARB:
@@ -1050,8 +1042,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
                _mesa_get_format_datatype(texFormat) : GL_NONE;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glGetTexLevelParameter[if]v(pname)");
+            goto invalid_pname;
          }
          break;
       case GL_TEXTURE_INTENSITY_TYPE_ARB:
@@ -1060,8 +1051,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
                _mesa_get_format_datatype(texFormat) : GL_NONE;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glGetTexLevelParameter[if]v(pname)");
+            goto invalid_pname;
          }
          break;
       case GL_TEXTURE_DEPTH_TYPE_ARB:
@@ -1070,18 +1060,21 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
                _mesa_get_format_datatype(texFormat) : GL_NONE;
          }
          else {
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glGetTexLevelParameter[if]v(pname)");
+            goto invalid_pname;
          }
          break;
 
       default:
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glGetTexLevelParameter[if]v(pname)");
+         goto invalid_pname;
    }
 
- out:
-   _mesa_unlock_texture(ctx, texObj);
+   /* no error if we get here */
+   return;
+
+invalid_pname:
+   _mesa_error(ctx, GL_INVALID_ENUM,
+               "glGetTexLevelParameter[if]v(pname=%s)",
+               _mesa_lookup_enum_by_nr(pname));
 }
 
 
