@@ -703,6 +703,9 @@ _mesa_select_tex_object(struct gl_context *ctx,
                         const struct gl_texture_unit *texUnit,
                         GLenum target)
 {
+   const GLboolean arrayTex = (ctx->Extensions.MESA_texture_array ||
+                               ctx->Extensions.EXT_texture_array);
+
    switch (target) {
       case GL_TEXTURE_1D:
          return texUnit->CurrentTex[TEXTURE_1D_INDEX];
@@ -735,17 +738,13 @@ _mesa_select_tex_object(struct gl_context *ctx,
          return ctx->Extensions.NV_texture_rectangle
                 ? ctx->Texture.ProxyTex[TEXTURE_RECT_INDEX] : NULL;
       case GL_TEXTURE_1D_ARRAY_EXT:
-         return ctx->Extensions.MESA_texture_array
-                ? texUnit->CurrentTex[TEXTURE_1D_ARRAY_INDEX] : NULL;
+         return arrayTex ? texUnit->CurrentTex[TEXTURE_1D_ARRAY_INDEX] : NULL;
       case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
-         return ctx->Extensions.MESA_texture_array
-                ? ctx->Texture.ProxyTex[TEXTURE_1D_ARRAY_INDEX] : NULL;
+         return arrayTex ? ctx->Texture.ProxyTex[TEXTURE_1D_ARRAY_INDEX] : NULL;
       case GL_TEXTURE_2D_ARRAY_EXT:
-         return ctx->Extensions.MESA_texture_array
-                ? texUnit->CurrentTex[TEXTURE_2D_ARRAY_INDEX] : NULL;
+         return arrayTex ? texUnit->CurrentTex[TEXTURE_2D_ARRAY_INDEX] : NULL;
       case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
-         return ctx->Extensions.MESA_texture_array
-                ? ctx->Texture.ProxyTex[TEXTURE_2D_ARRAY_INDEX] : NULL;
+         return arrayTex ? ctx->Texture.ProxyTex[TEXTURE_2D_ARRAY_INDEX] : NULL;
       default:
          _mesa_problem(NULL, "bad target in _mesa_select_tex_object()");
          return NULL;
@@ -930,7 +929,8 @@ _mesa_max_texture_levels(struct gl_context *ctx, GLenum target)
    case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
    case GL_TEXTURE_2D_ARRAY_EXT:
    case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
-      return ctx->Extensions.MESA_texture_array
+      return (ctx->Extensions.MESA_texture_array ||
+              ctx->Extensions.EXT_texture_array)
          ? ctx->Const.MaxTextureLevels : 0;
    default:
       return 0; /* bad target */
@@ -1382,7 +1382,8 @@ target_can_be_compressed(const struct gl_context *ctx, GLenum target,
       return ctx->Extensions.ARB_texture_cube_map;
    case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
    case GL_TEXTURE_2D_ARRAY_EXT:
-      return ctx->Extensions.MESA_texture_array;
+      return (ctx->Extensions.MESA_texture_array ||
+              ctx->Extensions.MESA_texture_array);
    default:
       return GL_FALSE;
    }      
@@ -1423,7 +1424,8 @@ legal_teximage_target(struct gl_context *ctx, GLuint dims, GLenum target)
          return ctx->Extensions.NV_texture_rectangle;
       case GL_TEXTURE_1D_ARRAY_EXT:
       case GL_PROXY_TEXTURE_1D_ARRAY_EXT:
-         return ctx->Extensions.MESA_texture_array;
+         return (ctx->Extensions.MESA_texture_array ||
+                 ctx->Extensions.EXT_texture_array);
       default:
          return GL_FALSE;
       }
@@ -1434,7 +1436,8 @@ legal_teximage_target(struct gl_context *ctx, GLuint dims, GLenum target)
          return GL_TRUE;
       case GL_TEXTURE_2D_ARRAY_EXT:
       case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
-         return ctx->Extensions.MESA_texture_array;
+         return (ctx->Extensions.MESA_texture_array ||
+                 ctx->Extensions.EXT_texture_array);
       default:
          return GL_FALSE;
       }
@@ -1471,7 +1474,8 @@ legal_texsubimage_target(struct gl_context *ctx, GLuint dims, GLenum target)
       case GL_TEXTURE_RECTANGLE_NV:
          return ctx->Extensions.NV_texture_rectangle;
       case GL_TEXTURE_1D_ARRAY_EXT:
-         return ctx->Extensions.MESA_texture_array;
+         return (ctx->Extensions.MESA_texture_array ||
+                 ctx->Extensions.EXT_texture_array);
       default:
          return GL_FALSE;
       }
@@ -1480,7 +1484,8 @@ legal_texsubimage_target(struct gl_context *ctx, GLuint dims, GLenum target)
       case GL_TEXTURE_3D:
          return GL_TRUE;
       case GL_TEXTURE_2D_ARRAY_EXT:
-         return ctx->Extensions.MESA_texture_array;
+         return (ctx->Extensions.MESA_texture_array ||
+                 ctx->Extensions.EXT_texture_array);
       default:
          return GL_FALSE;
       }
