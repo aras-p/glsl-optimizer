@@ -158,7 +158,9 @@ tgsi_texture_names[TGSI_TEXTURE_COUNT] =
    "RECT",
    "SHADOW1D",
    "SHADOW2D",
-   "SHADOWRECT"
+   "SHADOWRECT",
+   "1DARRAY",
+   "2DARRAY"
 };
 
 const char *tgsi_property_names[TGSI_PROPERTY_COUNT] =

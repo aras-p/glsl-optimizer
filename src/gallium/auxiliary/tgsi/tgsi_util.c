@@ -280,7 +280,12 @@ tgsi_util_get_inst_usage_mask(const struct tgsi_full_instruction *inst,
          case TGSI_TEXTURE_CUBE:
             read_mask = TGSI_WRITEMASK_XYZ;
             break;
-
+         case TGSI_TEXTURE_1D_ARRAY:
+            read_mask = TGSI_WRITEMASK_XY;
+            break;
+         case TGSI_TEXTURE_2D_ARRAY:
+            read_mask = TGSI_WRITEMASK_XYZ;
+            break;
          default:
             assert(0);
             read_mask = 0;
