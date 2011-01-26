@@ -1383,7 +1383,7 @@ target_can_be_compressed(const struct gl_context *ctx, GLenum target,
    case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
    case GL_TEXTURE_2D_ARRAY_EXT:
       return (ctx->Extensions.MESA_texture_array ||
-              ctx->Extensions.MESA_texture_array);
+              ctx->Extensions.EXT_texture_array);
    default:
       return GL_FALSE;
    }      
