@@ -834,7 +834,6 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
    const struct gl_texture_unit *texUnit;
    struct gl_texture_object *texObj;
    const struct gl_texture_image *img = NULL;
-   GLboolean isProxy;
    GLint maxLevels;
    gl_format texFormat;
    GET_CURRENT_CONTEXT(ctx);
@@ -874,8 +873,6 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
    }
 
    texFormat = img->TexFormat;
-
-   isProxy = _mesa_is_proxy_texture(target);
 
    switch (pname) {
       case GL_TEXTURE_WIDTH:
@@ -986,7 +983,8 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
 
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSED_IMAGE_SIZE:
-	 if (_mesa_is_format_compressed(texFormat) && !isProxy) {
+	 if (_mesa_is_format_compressed(texFormat) &&
+             !_mesa_is_proxy_texture(target)) {
             *params = _mesa_format_image_size(texFormat, img->Width,
                                               img->Height, img->Depth);
 	 }
