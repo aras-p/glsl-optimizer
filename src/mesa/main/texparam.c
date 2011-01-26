@@ -888,9 +888,9 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
          *params = img->Depth;
          break;
       case GL_TEXTURE_INTERNAL_FORMAT:
-         if (_mesa_is_format_compressed(img->TexFormat)) {
+         if (_mesa_is_format_compressed(texFormat)) {
             /* need to return the actual compressed format */
-            *params = _mesa_compressed_format_to_glenum(ctx, img->TexFormat);
+            *params = _mesa_compressed_format_to_glenum(ctx, texFormat);
          }
          else {
             /* return the user's requested internal format */
@@ -986,7 +986,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
 
       /* GL_ARB_texture_compression */
       case GL_TEXTURE_COMPRESSED_IMAGE_SIZE:
-	 if (_mesa_is_format_compressed(img->TexFormat) && !isProxy) {
+	 if (_mesa_is_format_compressed(texFormat) && !isProxy) {
             *params = _mesa_format_image_size(texFormat, img->Width,
                                               img->Height, img->Depth);
 	 }
@@ -996,7 +996,7 @@ _mesa_GetTexLevelParameteriv( GLenum target, GLint level,
 	 }
          break;
       case GL_TEXTURE_COMPRESSED:
-         *params = (GLint) _mesa_is_format_compressed(img->TexFormat);
+         *params = (GLint) _mesa_is_format_compressed(texFormat);
          break;
 
       /* GL_ARB_texture_float */
