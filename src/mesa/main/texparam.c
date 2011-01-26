@@ -33,6 +33,7 @@
 #include "main/glheader.h"
 #include "main/colormac.h"
 #include "main/context.h"
+#include "main/enums.h"
 #include "main/formats.h"
 #include "main/macros.h"
 #include "main/mfeatures.h"
@@ -233,8 +234,7 @@ set_tex_parameteri(struct gl_context *ctx,
          }
          /* fall-through */
       default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glTexParameter(param=0x%x)",
-                      params[0] );
+         goto invalid_param;
       }
       return GL_FALSE;
 
@@ -248,8 +248,7 @@ set_tex_parameteri(struct gl_context *ctx,
          texObj->MagFilter = params[0];
          return GL_TRUE;
       default:
-         _mesa_error( ctx, GL_INVALID_ENUM, "glTexParameter(param=0x%x)",
-                      params[0]);
+         goto invalid_param;
       }
       return GL_FALSE;
 
@@ -317,21 +316,18 @@ set_tex_parameteri(struct gl_context *ctx,
       return GL_FALSE;
 
    case GL_TEXTURE_COMPARE_MODE_ARB:
-      if (ctx->Extensions.ARB_shadow &&
-          (params[0] == GL_NONE ||
-           params[0] == GL_COMPARE_R_TO_TEXTURE_ARB)) {
-         if (texObj->CompareMode != params[0]) {
+      if (ctx->Extensions.ARB_shadow) {
+         if (texObj->CompareMode == params[0])
+            return GL_FALSE;
+         if (params[0] == GL_NONE ||
+             params[0] == GL_COMPARE_R_TO_TEXTURE_ARB) {
             flush(ctx);
             texObj->CompareMode = params[0];
             return GL_TRUE;
          }
-         return GL_FALSE;
+         goto invalid_param;
       }
-      else {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glTexParameter(GL_TEXTURE_COMPARE_MODE_ARB)");
-      }
-      return GL_FALSE;
+      goto invalid_pname;
 
    case GL_TEXTURE_COMPARE_FUNC_ARB:
       if (ctx->Extensions.ARB_shadow) {
@@ -356,32 +352,26 @@ set_tex_parameteri(struct gl_context *ctx,
             }
             /* fall-through */
          default:
-            _mesa_error(ctx, GL_INVALID_ENUM,
-                        "glTexParameter(GL_TEXTURE_COMPARE_FUNC_ARB)");
+            goto invalid_param;
          }
       }
-      else {
-         _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname=0x%x)", pname);
-      }
-      return GL_FALSE;
+      goto invalid_pname;
 
    case GL_DEPTH_TEXTURE_MODE_ARB:
-      if (ctx->Extensions.ARB_depth_texture &&
-          (params[0] == GL_LUMINANCE ||
-           params[0] == GL_INTENSITY ||
-           params[0] == GL_ALPHA ||
-	   (ctx->Extensions.ARB_texture_rg && params[0] == GL_RED))) {
-         if (texObj->DepthMode != params[0]) {
+      if (ctx->Extensions.ARB_depth_texture) {
+         if (texObj->DepthMode == params[0])
+            return GL_FALSE;
+         if (params[0] == GL_LUMINANCE ||
+             params[0] == GL_INTENSITY ||
+             params[0] == GL_ALPHA ||
+             (ctx->Extensions.ARB_texture_rg && params[0] == GL_RED)) {
             flush(ctx);
             texObj->DepthMode = params[0];
             return GL_TRUE;
          }
+         goto invalid_param;
       }
-      else {
-         _mesa_error(ctx, GL_INVALID_ENUM,
-                     "glTexParameter(GL_DEPTH_TEXTURE_MODE_ARB)");
-      }
-      return GL_FALSE;
+      goto invalid_pname;
 
 #if FEATURE_OES_draw_texture
    case GL_TEXTURE_CROP_RECT_OES:
@@ -412,8 +402,7 @@ set_tex_parameteri(struct gl_context *ctx,
             return GL_TRUE;
          }
       }
-      _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname=0x%x)", pname);
-      return GL_FALSE;
+      goto invalid_pname;
 
    case GL_TEXTURE_SWIZZLE_RGBA_EXT:
       if (ctx->Extensions.EXT_texture_swizzle) {
@@ -433,8 +422,8 @@ set_tex_parameteri(struct gl_context *ctx,
          }
          return GL_TRUE;
       }
-      _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname=0x%x)", pname);
-      return GL_FALSE;
+      goto invalid_pname;
+
    case GL_TEXTURE_SRGB_DECODE_EXT:
       if (ctx->Extensions.EXT_texture_sRGB_decode) {
 	 GLenum decode = params[0];
@@ -447,11 +436,20 @@ set_tex_parameteri(struct gl_context *ctx,
 	    return GL_TRUE;
 	 }
       }
-      _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname=0x%x)", pname);
-      return GL_FALSE;
+      goto invalid_pname;
+
    default:
-      _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname=0x%x)", pname);
+      goto invalid_pname;
    }
+
+invalid_pname:
+   _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(pname=%s)",
+               _mesa_lookup_enum_by_nr(pname));
+   return GL_FALSE;
+
+invalid_param:
+   _mesa_error(ctx, GL_INVALID_ENUM, "glTexParameter(param=%s)",
+               _mesa_lookup_enum_by_nr(params[0]));
    return GL_FALSE;
 }
 
