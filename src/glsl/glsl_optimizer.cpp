@@ -111,7 +111,7 @@ struct glslopt_shader {
 
 	char*	rawOutput;
 	char*	optimizedOutput;
-	char*	infoLog;
+	const char*	infoLog;
 	bool	status;
 };
 
