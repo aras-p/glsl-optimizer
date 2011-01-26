@@ -420,6 +420,12 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.MESA_ycbcr_texture = GL_TRUE;
    }
 
+   /* GL_EXT_texture_array */
+   if (screen->get_param(screen, PIPE_CAP_ARRAY_TEXTURES)) {
+      ctx->Extensions.EXT_texture_array = GL_TRUE;
+      ctx->Extensions.MESA_texture_array = GL_TRUE;
+   }
+
    /* GL_ARB_framebuffer_object */
    if (ctx->Extensions.EXT_packed_depth_stencil) {
       /* we support always support GL_EXT_framebuffer_blit */

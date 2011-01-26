@@ -74,19 +74,18 @@ gl_target_to_pipe(GLenum target)
    switch (target) {
    case GL_TEXTURE_1D:
       return PIPE_TEXTURE_1D;
-
    case GL_TEXTURE_2D:
       return PIPE_TEXTURE_2D;
-
    case GL_TEXTURE_RECTANGLE_NV:
       return PIPE_TEXTURE_RECT;
-
    case GL_TEXTURE_3D:
       return PIPE_TEXTURE_3D;
-
    case GL_TEXTURE_CUBE_MAP_ARB:
       return PIPE_TEXTURE_CUBE;
-
+   case GL_TEXTURE_1D_ARRAY_EXT:
+      return PIPE_TEXTURE_1D_ARRAY;
+   case GL_TEXTURE_2D_ARRAY_EXT:
+      return PIPE_TEXTURE_2D_ARRAY;
    default:
       assert(0);
       return 0;
