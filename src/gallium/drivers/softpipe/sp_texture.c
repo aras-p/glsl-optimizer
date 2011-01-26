@@ -227,8 +227,12 @@ sp_get_tex_image_offset(const struct softpipe_resource *spr,
    unsigned offset = spr->level_offset[level];
 
    if (spr->base.target == PIPE_TEXTURE_CUBE ||
-       spr->base.target == PIPE_TEXTURE_3D) {
+       spr->base.target == PIPE_TEXTURE_3D ||
+       spr->base.target == PIPE_TEXTURE_2D_ARRAY) {
       offset += layer * nblocksy * spr->stride[level];
+   }
+   else if (spr->base.target == PIPE_TEXTURE_1D_ARRAY) {
+      offset += layer * spr->stride[level];
    }
    else {
       assert(layer == 0);
