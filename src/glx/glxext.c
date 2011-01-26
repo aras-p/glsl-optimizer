@@ -688,7 +688,7 @@ static GLboolean
    }
    else if (strstr(psc->serverGLXexts, "GLX_SGIX_fbconfig") != NULL) {
       GetReqExtra(GLXVendorPrivateWithReply,
-                  sz_xGLXGetFBConfigsSGIXReq +
+                  sz_xGLXGetFBConfigsSGIXReq -
                   sz_xGLXVendorPrivateWithReplyReq, vpreq);
       sgi_req = (xGLXGetFBConfigsSGIXReq *) vpreq;
       sgi_req->reqType = priv->majorOpcode;
