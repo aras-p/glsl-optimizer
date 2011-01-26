@@ -380,7 +380,8 @@ enum pipe_transfer_usage {
 #define PIPE_QUERY_SO_STATISTICS         5
 #define PIPE_QUERY_GPU_FINISHED          6
 #define PIPE_QUERY_TIMESTAMP_DISJOINT    7
-#define PIPE_QUERY_TYPES                 8
+#define PIPE_QUERY_OCCLUSION_PREDICATE   8
+#define PIPE_QUERY_TYPES                 9
 
 
 /**

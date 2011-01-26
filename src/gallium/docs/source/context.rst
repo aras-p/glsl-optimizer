@@ -233,6 +233,11 @@ The most common type of query is the occlusion query,
 are written to the framebuffer without being culled by
 :ref:`Depth, Stencil, & Alpha` testing or shader KILL instructions.
 The result is an unsigned 64-bit integer.
+In cases where a boolean result of an occlusion query is enough,
+``PIPE_QUERY_OCCLUSION_PREDICATE`` should be used. It is just like
+``PIPE_QUERY_OCCLUSION_COUNTER`` except that the result is a boolean
+value of FALSE for cases where COUNTER would result in 0 and TRUE
+for all other cases.
 
 Another type of query, ``PIPE_QUERY_TIME_ELAPSED``, returns the amount of
 time, in nanoseconds, the context takes to perform operations.
