@@ -1475,12 +1475,13 @@ void
 ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 {
    variable_storage *entry = find_variable_storage(ir->var);
+   ir_variable *var = ir->var;
 
    if (!entry) {
-      switch (ir->var->mode) {
+      switch (var->mode) {
       case ir_var_uniform:
-	 entry = new(mem_ctx) variable_storage(ir->var, PROGRAM_UNIFORM,
-					       ir->var->location);
+	 entry = new(mem_ctx) variable_storage(var, PROGRAM_UNIFORM,
+					       var->location);
 	 this->variables.push_tail(entry);
 	 break;
       case ir_var_in:
@@ -1494,49 +1495,49 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 	  *
 	  * FINISHME: We would hit this path for function arguments.  Fix!
 	  */
-	 assert(ir->var->location != -1);
-	 if (ir->var->mode == ir_var_in ||
-	     ir->var->mode == ir_var_inout) {
-	    entry = new(mem_ctx) variable_storage(ir->var,
+	 assert(var->location != -1);
+	 if (var->mode == ir_var_in ||
+	     var->mode == ir_var_inout) {
+	    entry = new(mem_ctx) variable_storage(var,
 						  PROGRAM_INPUT,
-						  ir->var->location);
+						  var->location);
 
 	    if (this->prog->Target == GL_VERTEX_PROGRAM_ARB &&
-		ir->var->location >= VERT_ATTRIB_GENERIC0) {
+		var->location >= VERT_ATTRIB_GENERIC0) {
 	       _mesa_add_attribute(prog->Attributes,
-				   ir->var->name,
-				   _mesa_sizeof_glsl_type(ir->var->type->gl_type),
-				   ir->var->type->gl_type,
-				   ir->var->location - VERT_ATTRIB_GENERIC0);
+				   var->name,
+				   _mesa_sizeof_glsl_type(var->type->gl_type),
+				   var->type->gl_type,
+				   var->location - VERT_ATTRIB_GENERIC0);
 	    }
-         } else if (ir->var->mode == ir_var_system_value) {
-	    entry = new(mem_ctx) variable_storage(ir->var,
+         } else if (var->mode == ir_var_system_value) {
+	    entry = new(mem_ctx) variable_storage(var,
 						  PROGRAM_SYSTEM_VALUE,
-						  ir->var->location);
+						  var->location);
 	 } else {
-	    entry = new(mem_ctx) variable_storage(ir->var,
+	    entry = new(mem_ctx) variable_storage(var,
 						  PROGRAM_OUTPUT,
-						  ir->var->location);
+						  var->location);
 	 }
 
 	 break;
       case ir_var_auto:
       case ir_var_temporary:
-	 entry = new(mem_ctx) variable_storage(ir->var, PROGRAM_TEMPORARY,
+	 entry = new(mem_ctx) variable_storage(var, PROGRAM_TEMPORARY,
 					       this->next_temp);
 	 this->variables.push_tail(entry);
 
-	 next_temp += type_size(ir->var->type);
+	 next_temp += type_size(var->type);
 	 break;
       }
 
       if (!entry) {
-	 printf("Failed to make storage for %s\n", ir->var->name);
+	 printf("Failed to make storage for %s\n", var->name);
 	 exit(1);
       }
    }
 
-   this->result = ir_to_mesa_src_reg(entry->file, entry->index, ir->var->type);
+   this->result = ir_to_mesa_src_reg(entry->file, entry->index, var->type);
 }
 
 void
