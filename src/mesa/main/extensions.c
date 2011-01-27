@@ -747,6 +747,11 @@ static char *
 get_extension_override( struct gl_context *ctx )
 {
    const char *env_const= _mesa_getenv("MESA_EXTENSION_OVERRIDE");
+   char *env;
+   char *ext;
+   char *extra_exts;
+   int len;
+
    if (env_const == NULL) {
       /* Return the empty string rather than NULL. This simplifies the logic
        * of client functions. */
@@ -754,13 +759,13 @@ get_extension_override( struct gl_context *ctx )
    }
 
    /* extra_exts: List of unrecognized extensions. */
-   char *extra_exts = calloc(strlen(env_const), sizeof(char));
+   extra_exts = calloc(strlen(env_const), sizeof(char));
 
    /* Copy env_const because strtok() is destructive. */
-   char *env = strdup(env_const);
-   char *ext;
+   env = strdup(env_const);
    for (ext = strtok(env, " "); ext != NULL; ext = strtok(NULL, " ")) {
       int enable;
+      int recognized;
       switch (ext[0]) {
       case '+':
          enable = 1;
@@ -774,7 +779,7 @@ get_extension_override( struct gl_context *ctx )
          enable = 1;
          break;
       }
-      int recognized = set_extension(ctx, ext, enable);
+      recognized = set_extension(ctx, ext, enable);
       if (!recognized) {
          strcat(extra_exts, ext);
          strcat(extra_exts, " ");
@@ -782,7 +787,7 @@ get_extension_override( struct gl_context *ctx )
    }
 
    /* Remove trailing space. */
-   int len  = strlen(extra_exts);
+   len  = strlen(extra_exts);
    if (extra_exts[len - 1] == ' ')
       extra_exts[len - 1] = '\0';
 
