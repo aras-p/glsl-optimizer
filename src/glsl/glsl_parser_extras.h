@@ -144,6 +144,8 @@ struct _mesa_glsl_parse_state {
    unsigned EXT_texture_array_warn:1;
    unsigned ARB_shader_stencil_export_enable:1;
    unsigned ARB_shader_stencil_export_warn:1;
+   unsigned AMD_conservative_depth_enable:1;
+   unsigned AMD_conservative_depth_warn:1;
    /*@}*/
 
    /** Extensions supported by the OpenGL implementation. */
