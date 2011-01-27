@@ -472,6 +472,22 @@ const char *ir_expression::operator_string()
    return operator_string(this->operation);
 }
 
+const char*
+depth_layout_string(ir_depth_layout layout)
+{
+   switch(layout) {
+   case ir_depth_layout_none:      return "";
+   case ir_depth_layout_any:       return "depth_any";
+   case ir_depth_layout_greater:   return "depth_greater";
+   case ir_depth_layout_less:      return "depth_less";
+   case ir_depth_layout_unchanged: return "depth_unchanged";
+
+   default:
+      assert(0);
+      return "";
+   }
+}
+
 ir_expression_operation
 ir_expression::get_operator(const char *str)
 {

@@ -235,6 +235,25 @@ enum ir_variable_interpolation {
    ir_var_noperspective
 };
 
+/**
+ * \brief Layout qualifiers for gl_FragDepth.
+ *
+ * The AMD_conservative_depth extension allows gl_FragDepth to be redeclared
+ * with a layout qualifier.
+ */
+enum ir_depth_layout {
+    ir_depth_layout_none, /**< No depth layout is specified. */
+    ir_depth_layout_any,
+    ir_depth_layout_greater,
+    ir_depth_layout_less,
+    ir_depth_layout_unchanged
+};
+
+/**
+ * \brief Convert depth layout qualifier to string.
+ */
+const char*
+depth_layout_string(ir_depth_layout layout);
 
 class ir_variable : public ir_instruction {
 public:
