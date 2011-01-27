@@ -86,6 +86,7 @@ void u_upload_flush( struct u_upload_mgr *upload )
    /* Unmap and unreference the upload buffer. */
    if (upload->transfer) {
       pipe_transfer_unmap(upload->pipe, upload->transfer);
+      pipe_transfer_destroy(upload->pipe, upload->transfer);
       upload->transfer = NULL;
    }
    pipe_resource_reference( &upload->buffer, NULL );
