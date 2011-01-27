@@ -735,6 +735,7 @@ _mesa_extension_is_enabled( struct gl_context *ctx, const char *name )
  *
  * \c MESA_EXTENSION_OVERRIDE is a space-separated list of extensions to
  * enable or disable. The list is processed thus:
+ *    - Enable recognized extension names that are prefixed with '+'.
  *    - Disable recognized extension names that are prefixed with '-'.
  *    - Enable recognized extension names that are not prefixed.
  *    - Collect unrecognized extension names in a new string.
@@ -761,6 +762,10 @@ get_extension_override( struct gl_context *ctx )
    for (ext = strtok(env, " "); ext != NULL; ext = strtok(NULL, " ")) {
       int enable;
       switch (ext[0]) {
+      case '+':
+         enable = 1;
+         ++ext;
+         break;
       case '-':
          enable = 0;
          ++ext;
