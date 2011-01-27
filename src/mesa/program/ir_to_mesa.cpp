@@ -1494,20 +1494,16 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 	  * FINISHME: We would hit this path for function arguments.  Fix!
 	  */
 	 assert(var->location != -1);
-	 if (var->mode == ir_var_in ||
-	     var->mode == ir_var_inout) {
-	    entry = new(mem_ctx) variable_storage(var,
-						  PROGRAM_INPUT,
-						  var->location);
-
-	    if (this->prog->Target == GL_VERTEX_PROGRAM_ARB &&
-		var->location >= VERT_ATTRIB_GENERIC0) {
-	       _mesa_add_attribute(prog->Attributes,
-				   var->name,
-				   _mesa_sizeof_glsl_type(var->type->gl_type),
-				   var->type->gl_type,
-				   var->location - VERT_ATTRIB_GENERIC0);
-	    }
+         entry = new(mem_ctx) variable_storage(var,
+                                               PROGRAM_INPUT,
+                                               var->location);
+         if (this->prog->Target == GL_VERTEX_PROGRAM_ARB &&
+             var->location >= VERT_ATTRIB_GENERIC0) {
+            _mesa_add_attribute(prog->Attributes,
+                                var->name,
+                                _mesa_sizeof_glsl_type(var->type->gl_type),
+                                var->type->gl_type,
+                                var->location - VERT_ATTRIB_GENERIC0);
          }
          break;
       case ir_var_out:
