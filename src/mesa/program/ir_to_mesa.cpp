@@ -1487,7 +1487,6 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
       case ir_var_in:
       case ir_var_out:
       case ir_var_inout:
-      case ir_var_system_value:
 	 /* The linker assigns locations for varyings and attributes,
 	  * including deprecated builtins (like gl_Color), user-assign
 	  * generic attributes (glBindVertexLocation), and
@@ -1510,10 +1509,6 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 				   var->type->gl_type,
 				   var->location - VERT_ATTRIB_GENERIC0);
 	    }
-         } else if (var->mode == ir_var_system_value) {
-	    entry = new(mem_ctx) variable_storage(var,
-						  PROGRAM_SYSTEM_VALUE,
-						  var->location);
 	 } else {
 	    entry = new(mem_ctx) variable_storage(var,
 						  PROGRAM_OUTPUT,
@@ -1521,6 +1516,11 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 	 }
 
 	 break;
+      case ir_var_system_value:
+         entry = new(mem_ctx) variable_storage(var,
+                                               PROGRAM_SYSTEM_VALUE,
+                                               var->location);
+         break;
       case ir_var_auto:
       case ir_var_temporary:
 	 entry = new(mem_ctx) variable_storage(var, PROGRAM_TEMPORARY,
