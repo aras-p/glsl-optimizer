@@ -889,7 +889,7 @@ struct pipe_resource *r300_texture_from_handle(struct pipe_screen *screen,
                 break;
 
             case 2:
-                if (rws->get_value(rws, R300_VID_SQUARE_TILING_SUPPORT))
+                if (rws->get_value(rws, R300_VID_DRM_2_1_0))
                     microtile = R300_BUFFER_SQUARETILED;
                 break;
         }

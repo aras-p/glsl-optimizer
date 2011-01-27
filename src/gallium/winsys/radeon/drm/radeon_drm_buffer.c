@@ -448,15 +448,18 @@ static void radeon_drm_buffer_set_tiling(struct r300_winsys_screen *ws,
                                          enum r300_buffer_tiling macrotiled,
                                          uint32_t pitch)
 {
+#ifndef RADEON_BO_FLAGS_MICRO_TILE_SQUARE
+#define RADEON_BO_FLAGS_MICRO_TILE_SQUARE 0x20
+#endif
+
     struct radeon_drm_buffer *buf = get_drm_buffer(radeon_pb_buffer(_buf));
     uint32_t flags = 0;
+
     if (microtiled == R300_BUFFER_TILED)
         flags |= RADEON_BO_FLAGS_MICRO_TILE;
-/* XXX Remove this ifdef when libdrm version 2.4.19 becomes mandatory. */
-#ifdef RADEON_BO_FLAGS_MICRO_TILE_SQUARE
     else if (microtiled == R300_BUFFER_SQUARETILED)
         flags |= RADEON_BO_FLAGS_MICRO_TILE_SQUARE;
-#endif
+
     if (macrotiled == R300_BUFFER_TILED)
         flags |= RADEON_BO_FLAGS_MACRO_TILE;
 

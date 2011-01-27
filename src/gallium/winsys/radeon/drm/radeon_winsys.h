@@ -46,7 +46,7 @@ struct radeon_drm_winsys {
     uint32_t z_pipes;       /* Z pipe count (rv530 only) */
     uint32_t gart_size;     /* GART size. */
     uint32_t vram_size;     /* VRAM size. */
-    boolean squaretiling;   /* Square tiling support. */
+    boolean drm_2_1_0;      /* Square tiling support. */
     /* DRM 2.3.0 (R500 VAP regs, MSPOS regs, fixed tex3D size checking) */
     boolean drm_2_3_0;
     /* DRM 2.6.0 (Hyper-Z, GB_Z_PEQ_CONFIG allowed on rv350->r4xx, FG_ALPHA_VALUE) */

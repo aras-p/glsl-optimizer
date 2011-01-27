@@ -361,7 +361,7 @@ static void r300_setup_tiling(struct r300_screen *screen,
             break;
 
         case 2:
-            if (rws->get_value(rws, R300_VID_SQUARE_TILING_SUPPORT)) {
+            if (rws->get_value(rws, R300_VID_DRM_2_1_0)) {
                 desc->microtile = R300_BUFFER_SQUARETILED;
             }
             break;

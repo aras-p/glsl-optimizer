@@ -107,12 +107,8 @@ static void do_ioctls(struct radeon_drm_winsys *winsys)
         exit(1);
     }
 
-/* XXX Remove this ifdef when libdrm version 2.4.19 becomes mandatory. */
-#ifdef RADEON_BO_FLAGS_MICRO_TILE_SQUARE
-    // Supported since 2.1.0.
-    winsys->squaretiling = version->version_major > 2 ||
-                           version->version_minor >= 1;
-#endif
+    winsys->drm_2_1_0 = version->version_major > 2 ||
+                        version->version_minor >= 1;
 
     winsys->drm_2_3_0 = version->version_major > 2 ||
                         version->version_minor >= 3;

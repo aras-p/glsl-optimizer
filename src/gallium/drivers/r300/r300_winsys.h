@@ -50,7 +50,7 @@ enum r300_value_id {
     R300_VID_PCI_ID,
     R300_VID_GB_PIPES,
     R300_VID_Z_PIPES,
-    R300_VID_SQUARE_TILING_SUPPORT,
+    R300_VID_DRM_2_1_0,  /* Square tiling. */
     R300_VID_DRM_2_3_0, /* R500 VAP regs, MSPOS regs, fixed tex3D size checking */
     R300_VID_DRM_2_6_0, /* Hyper-Z, GB_Z_PEQ_CONFIG on rv350->r4xx, R500 FG_ALPHA_VALUE */
     R300_VID_DRM_2_8_0, /* R500 US_FORMAT regs, R500 ARGB2101010 colorbuffer */
