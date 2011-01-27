@@ -727,6 +727,29 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 
       fp->OriginUpperLeft = ir->origin_upper_left;
       fp->PixelCenterInteger = ir->pixel_center_integer;
+
+   } else if (strcmp(ir->name, "gl_FragDepth") == 0) {
+      struct gl_fragment_program *fp = (struct gl_fragment_program *)this->prog;
+      switch (ir->depth_layout) {
+      case ir_depth_layout_none:
+	 fp->FragDepthLayout = FRAG_DEPTH_LAYOUT_NONE;
+	 break;
+      case ir_depth_layout_any:
+	 fp->FragDepthLayout = FRAG_DEPTH_LAYOUT_ANY;
+	 break;
+      case ir_depth_layout_greater:
+	 fp->FragDepthLayout = FRAG_DEPTH_LAYOUT_GREATER;
+	 break;
+      case ir_depth_layout_less:
+	 fp->FragDepthLayout = FRAG_DEPTH_LAYOUT_LESS;
+	 break;
+      case ir_depth_layout_unchanged:
+	 fp->FragDepthLayout = FRAG_DEPTH_LAYOUT_UNCHANGED;
+	 break;
+      default:
+	 assert(0);
+	 break;
+      }
    }
 
    if (ir->mode == ir_var_uniform && strncmp(ir->name, "gl_", 3) == 0) {

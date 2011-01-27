@@ -867,6 +867,23 @@ struct gl_fog_attrib
 };
 
 
+/**
+ * \brief Layout qualifiers for gl_FragDepth.
+ *
+ * Extension AMD_conservative_depth allows gl_FragDepth to be redeclared with
+ * a layout qualifier.
+ *
+ * \see enum ir_depth_layout
+ */
+enum gl_frag_depth_layout {
+    FRAG_DEPTH_LAYOUT_NONE, /**< No layout is specified. */
+    FRAG_DEPTH_LAYOUT_ANY,
+    FRAG_DEPTH_LAYOUT_GREATER,
+    FRAG_DEPTH_LAYOUT_LESS,
+    FRAG_DEPTH_LAYOUT_UNCHANGED
+};
+
+
 /** 
  * Hint attribute group (GL_HINT_BIT).
  * 
@@ -1889,6 +1906,7 @@ struct gl_fragment_program
    GLboolean UsesKill;          /**< shader uses KIL instruction */
    GLboolean OriginUpperLeft;
    GLboolean PixelCenterInteger;
+   enum gl_frag_depth_layout FragDepthLayout;
 };
 
 
