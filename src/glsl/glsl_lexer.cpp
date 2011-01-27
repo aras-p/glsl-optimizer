@@ -54,6 +54,7 @@ typedef int flex_int32_t;
 typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
+#endif /* ! C99 */
 
 /* Limits of integral types. */
 #ifndef INT8_MIN
@@ -83,8 +84,6 @@ typedef unsigned int flex_uint32_t;
 #ifndef UINT32_MAX
 #define UINT32_MAX             (4294967295U)
 #endif
-
-#endif /* ! C99 */
 
 #endif /* ! FLEXINT_H */
 
@@ -159,15 +158,7 @@ typedef void* yyscan_t;
 
 /* Size of default input buffer. */
 #ifndef YY_BUF_SIZE
-#ifdef __ia64__
-/* On IA-64, the buffer size is 16k, not 8k.
- * Moreover, YY_BUF_SIZE is 2*YY_READ_BUF_SIZE in the general case.
- * Ditto for the __ia64__ case accordingly.
- */
-#define YY_BUF_SIZE 32768
-#else
 #define YY_BUF_SIZE 16384
-#endif /* __ia64__ */
 #endif
 
 /* The state buf must be large enough to hold one state per character in the main buffer.
@@ -1076,7 +1067,7 @@ static yyconst flex_int16_t yy_chk[1283] =
  */
 #define ES yyextra->es_shader
 
-#line 1080 "glsl_lexer.cpp"
+#line 1071 "glsl_lexer.cpp"
 
 #define INITIAL 0
 #define PP 1
@@ -1163,6 +1154,10 @@ int _mesa_glsl_get_lineno (yyscan_t yyscanner );
 
 void _mesa_glsl_set_lineno (int line_number ,yyscan_t yyscanner );
 
+int _mesa_glsl_get_column  (yyscan_t yyscanner );
+
+void _mesa_glsl_set_column (int column_no ,yyscan_t yyscanner );
+
 YYSTYPE * _mesa_glsl_get_lval (yyscan_t yyscanner );
 
 void _mesa_glsl_set_lval (YYSTYPE * yylval_param ,yyscan_t yyscanner );
@@ -1203,12 +1198,7 @@ static int input (yyscan_t yyscanner );
 
 /* Amount of stuff to slurp up with each read. */
 #ifndef YY_READ_BUF_SIZE
-#ifdef __ia64__
-/* On IA-64, the buffer size is 16k, not 8k */
-#define YY_READ_BUF_SIZE 16384
-#else
 #define YY_READ_BUF_SIZE 8192
-#endif /* __ia64__ */
 #endif
 
 /* Copy whatever the last rule matched to the standard output. */
@@ -1227,7 +1217,7 @@ static int input (yyscan_t yyscanner );
 	if ( YY_CURRENT_BUFFER_LVALUE->yy_is_interactive ) \
 		{ \
 		int c = '*'; \
-		size_t n; \
+		unsigned n; \
 		for ( n = 0; n < max_size && \
 			     (c = getc( yyin )) != EOF && c != '\n'; ++n ) \
 			buf[n] = (char) c; \
@@ -1318,7 +1308,7 @@ YY_DECL
 #line 95 "glsl_lexer.lpp"
 
 
-#line 1322 "glsl_lexer.cpp"
+#line 1312 "glsl_lexer.cpp"
 
     yylval = yylval_param;
 
@@ -2560,7 +2550,7 @@ YY_RULE_SETUP
 #line 426 "glsl_lexer.lpp"
 ECHO;
 	YY_BREAK
-#line 2564 "glsl_lexer.cpp"
+#line 2554 "glsl_lexer.cpp"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(PP):
 case YY_STATE_EOF(PRAGMA):
@@ -3296,8 +3286,8 @@ YY_BUFFER_STATE _mesa_glsl__scan_string (yyconst char * yystr , yyscan_t yyscann
 
 /** Setup the input buffer state to scan the given bytes. The next call to _mesa_glsl_lex() will
  * scan from a @e copy of @a bytes.
- * @param yybytes the byte buffer to scan
- * @param _yybytes_len the number of bytes in the buffer pointed to by @a bytes.
+ * @param bytes the byte buffer to scan
+ * @param len the number of bytes in the buffer pointed to by @a bytes.
  * @param yyscanner The scanner object.
  * @return the newly allocated buffer state object.
  */
