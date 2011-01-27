@@ -1499,7 +1499,7 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
                                                var->location);
          if (this->prog->Target == GL_VERTEX_PROGRAM_ARB &&
              var->location >= VERT_ATTRIB_GENERIC0) {
-            _mesa_add_attribute(prog->Attributes,
+            _mesa_add_attribute(this->prog->Attributes,
                                 var->name,
                                 _mesa_sizeof_glsl_type(var->type->gl_type),
                                 var->type->gl_type,
