@@ -1485,7 +1485,6 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 	 this->variables.push_tail(entry);
 	 break;
       case ir_var_in:
-      case ir_var_out:
       case ir_var_inout:
 	 /* The linker assigns locations for varyings and attributes,
 	  * including deprecated builtins (like gl_Color), user-assign
@@ -1509,12 +1508,13 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 				   var->type->gl_type,
 				   var->location - VERT_ATTRIB_GENERIC0);
 	    }
-	 } else {
-	    entry = new(mem_ctx) variable_storage(var,
-						  PROGRAM_OUTPUT,
-						  var->location);
-	 }
-
+         }
+         break;
+      case ir_var_out:
+	 assert(var->location != -1);
+         entry = new(mem_ctx) variable_storage(var,
+                                               PROGRAM_OUTPUT,
+                                               var->location);
 	 break;
       case ir_var_system_value:
          entry = new(mem_ctx) variable_storage(var,
