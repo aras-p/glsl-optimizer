@@ -2009,6 +2009,40 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       }
    }
 
+   /* Layout qualifiers for gl_FragDepth, which are enabled by extension
+    * AMD_conservative_depth.
+    */
+   int depth_layout_count = qual->flags.q.depth_any
+      + qual->flags.q.depth_greater
+      + qual->flags.q.depth_less
+      + qual->flags.q.depth_unchanged;
+   if (depth_layout_count > 0
+       && !state->AMD_conservative_depth_enable) {
+       _mesa_glsl_error(loc, state,
+                        "extension GL_AMD_conservative_depth must be enabled "
+			"to use depth layout qualifiers");
+   } else if (depth_layout_count > 0
+              && strcmp(var->name, "gl_FragDepth") != 0) {
+       _mesa_glsl_error(loc, state,
+                        "depth layout qualifiers can be applied only to "
+                        "gl_FragDepth");
+   } else if (depth_layout_count > 1
+              && strcmp(var->name, "gl_FragDepth") == 0) {
+      _mesa_glsl_error(loc, state,
+                       "at most one depth layout qualifier can be applied to "
+                       "gl_FragDepth");
+   }
+   if (qual->flags.q.depth_any)
+      var->depth_layout = ir_depth_layout_any;
+   else if (qual->flags.q.depth_greater)
+      var->depth_layout = ir_depth_layout_greater;
+   else if (qual->flags.q.depth_less)
+      var->depth_layout = ir_depth_layout_less;
+   else if (qual->flags.q.depth_unchanged)
+       var->depth_layout = ir_depth_layout_unchanged;
+   else
+       var->depth_layout = ir_depth_layout_none;
+
    if (var->type->is_array() && state->language_version != 110) {
       var->array_lvalue = true;
    }
@@ -2599,6 +2633,36 @@ ast_declarator_list::hir(exec_list *instructions,
 	            && earlier->type == var->type
 	            && earlier->mode == var->mode) {
 	    earlier->interpolation = var->interpolation;
+
+         /* Layout qualifiers for gl_FragDepth. */
+         } else if (state->AMD_conservative_depth_enable
+                    && strcmp(var->name, "gl_FragDepth") == 0
+                    && earlier->type == var->type
+                    && earlier->mode == var->mode) {
+
+            /** From the AMD_conservative_depth spec:
+             *     Within any shader, the first redeclarations of gl_FragDepth
+             *     must appear before any use of gl_FragDepth.
+             */
+            if (earlier->used) {
+               _mesa_glsl_error(&loc, state,
+                                "the first redeclaration of gl_FragDepth "
+                                "must appear before any use of gl_FragDepth");
+            }
+
+            /* Prevent inconsistent redeclaration of depth layout qualifier. */
+            if (earlier->depth_layout != ir_depth_layout_none
+                && earlier->depth_layout != var->depth_layout) {
+               _mesa_glsl_error(&loc, state,
+                                "gl_FragDepth: depth layout is declared here "
+                                "as '%s, but it was previously declared as "
+                                "'%s'",
+                                depth_layout_string(var->depth_layout),
+                                depth_layout_string(earlier->depth_layout));
+            }
+
+            earlier->depth_layout = var->depth_layout;
+
 	 } else {
 	    YYLTYPE loc = this->get_location();
 	    _mesa_glsl_error(&loc, state, "`%s' redeclared", decl->identifier);
