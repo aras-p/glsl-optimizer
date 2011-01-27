@@ -350,6 +350,14 @@ struct ast_type_qualifier {
 	  * qualifier is used.
 	  */
 	 unsigned explicit_location:1;
+
+         /** \name Layout qualifiers for GL_AMD_conservative_depth */
+         /** \{ */
+         unsigned depth_any:1;
+         unsigned depth_greater:1;
+         unsigned depth_less:1;
+         unsigned depth_unchanged:1;
+         /** \} */
       }
       /** \brief Set of flags, accessed by name. */
       q;
