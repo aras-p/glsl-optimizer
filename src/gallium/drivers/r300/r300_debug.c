@@ -27,6 +27,7 @@
 #include <stdio.h>
 
 static const struct debug_named_value debug_options[] = {
+    { "info", DBG_INFO, "Print hardware info"},
     { "fp", DBG_FP, "Log fragment program compilation" },
     { "vp", DBG_VP, "Log vertex program compilation" },
     { "pstat", DBG_P_STAT, "Log vertex/fragment program stats" },

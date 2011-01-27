@@ -106,19 +106,9 @@ static void do_ioctls(struct radeon_drm_winsys *winsys)
         exit(1);
     }
 
-    winsys->drm_2_1_0 = version->version_major > 2 ||
-                        version->version_minor >= 1;
-
-    winsys->drm_2_3_0 = version->version_major > 2 ||
-                        version->version_minor >= 3;
-
-    winsys->drm_2_6_0 = version->version_major > 2 ||
-                        (version->version_major == 2 &&
-                         version->version_minor >= 6);
-
-    winsys->drm_2_8_0 = version->version_major > 2 ||
-                        (version->version_major == 2 &&
-                         version->version_minor >= 8);
+    winsys->drm_major = version->version_major;
+    winsys->drm_minor = version->version_minor;
+    winsys->drm_patchlevel = version->version_patchlevel;
 
     info.request = RADEON_INFO_DEVICE_ID;
     retval = drmCommandWriteRead(winsys->fd, DRM_RADEON_INFO, &info, sizeof(info));
@@ -166,17 +156,6 @@ static void do_ioctls(struct radeon_drm_winsys *winsys)
     }
     winsys->gart_size = gem_info.gart_size;
     winsys->vram_size = gem_info.vram_size;
-
-    debug_printf("radeon: Successfully grabbed chipset info from kernel!\n"
-                 "radeon: DRM version: %d.%d.%d ID: 0x%04x GB: %d Z: %d\n"
-                 "radeon: GART size: %d MB VRAM size: %d MB\n"
-                 "radeon: HyperZ: %s\n",
-                 version->version_major, version->version_minor,
-                 version->version_patchlevel, winsys->pci_id,
-                 winsys->gb_pipes, winsys->z_pipes,
-                 winsys->gart_size / 1024 / 1024,
-                 winsys->vram_size / 1024 / 1024,
-                 winsys->hyperz ? "YES" : "NO");
 
     drmFreeVersion(version);
 }

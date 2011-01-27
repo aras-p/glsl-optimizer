@@ -145,14 +145,24 @@ static uint32_t radeon_get_value(struct r300_winsys_screen *rws,
 	return ws->gb_pipes;
     case R300_VID_Z_PIPES:
 	return ws->z_pipes;
+    case R300_VID_GART_SIZE:
+        return ws->gart_size;
+    case R300_VID_VRAM_SIZE:
+        return ws->vram_size;
+    case R300_VID_DRM_MAJOR:
+        return ws->drm_major;
+    case R300_VID_DRM_MINOR:
+        return ws->drm_minor;
+    case R300_VID_DRM_PATCHLEVEL:
+        return ws->drm_patchlevel;
     case R300_VID_DRM_2_1_0:
-        return ws->drm_2_1_0;
+        return ws->drm_major*100 + ws->drm_minor >= 201;
     case R300_VID_DRM_2_3_0:
-        return ws->drm_2_3_0;
+        return ws->drm_major*100 + ws->drm_minor >= 203;
     case R300_VID_DRM_2_6_0:
-        return ws->drm_2_6_0;
+        return ws->drm_major*100 + ws->drm_minor >= 206;
     case R300_VID_DRM_2_8_0:
-        return ws->drm_2_8_0;
+        return ws->drm_major*100 + ws->drm_minor >= 208;
     case R300_CAN_HYPERZ:
         return ws->hyperz;
     case R300_CAN_AACOMPRESS:

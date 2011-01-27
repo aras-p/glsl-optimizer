@@ -94,6 +94,7 @@ r300_winsys_screen(struct pipe_screen *screen) {
 #define DBG_HYPERZ      (1 << 12)
 #define DBG_SCISSOR     (1 << 13)
 #define DBG_UPLOAD      (1 << 14)
+#define DBG_INFO        (1 << 15)
 /* Features. */
 #define DBG_ANISOHQ     (1 << 16)
 #define DBG_NO_TILING   (1 << 17)

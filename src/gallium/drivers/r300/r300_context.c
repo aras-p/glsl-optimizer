@@ -522,9 +522,34 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                                            &dsa);
     }
 
+    /* Print driver info. */
+#ifdef NDEBUG
+    if (DBG_ON(r300, DBG_INFO)) {
+#else
+    {
+#endif
+        fprintf(stderr,
+                "r300: DRM version: %d.%d.%d, Name: %s, ID: 0x%04x, GB: %d, Z: %d\n"
+                "r300: GART size: %d MB, VRAM size: %d MB\n"
+                "r300: AA compression: %s, Z compression: %s, HiZ: %s\n",
+                rws->get_value(rws, R300_VID_DRM_MAJOR),
+                rws->get_value(rws, R300_VID_DRM_MINOR),
+                rws->get_value(rws, R300_VID_DRM_PATCHLEVEL),
+                screen->get_name(screen),
+                rws->get_value(rws, R300_VID_PCI_ID),
+                rws->get_value(rws, R300_VID_GB_PIPES),
+                rws->get_value(rws, R300_VID_Z_PIPES),
+                rws->get_value(rws, R300_VID_GART_SIZE) >> 20,
+                rws->get_value(rws, R300_VID_VRAM_SIZE) >> 20,
+                rws->get_value(rws, R300_CAN_AACOMPRESS) ? "YES" : "NO",
+                rws->get_value(rws, R300_CAN_HYPERZ) ? "YES" : "NO",
+                rws->get_value(rws, R300_CAN_HYPERZ) &&
+                r300->screen->caps.hiz_ram ? "YES" : "NO");
+    }
+
     return &r300->context;
 
- fail:
+fail:
     r300_destroy_context(&r300->context);
     return NULL;
 }
