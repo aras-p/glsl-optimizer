@@ -43,22 +43,21 @@
 #include <xf86drm.h>
 #include <stdio.h>
 
-
-/* Enable/disable Hyper-Z access. Return TRUE on success. */
-static boolean radeon_set_hyperz_access(int fd, boolean enable)
-{
 #ifndef RADEON_INFO_WANT_HYPERZ
 #define RADEON_INFO_WANT_HYPERZ 7
 #endif
+#ifndef RADEON_INFO_WANT_CMASK
+#define RADEON_INFO_WANT_CMASK 8
+#endif
 
+/* Enable/disable feature access. Return TRUE on success. */
+static boolean radeon_set_fd_access(int fd, unsigned request, boolean enable)
+{
     struct drm_radeon_info info = {0};
     unsigned value = enable ? 1 : 0;
 
-    if (!debug_get_bool_option("RADEON_HYPERZ", FALSE))
-        return FALSE;
-
     info.value = (unsigned long)&value;
-    info.request = RADEON_INFO_WANT_HYPERZ;
+    info.request = request;
 
     if (drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info)) != 0)
         return FALSE;
@@ -148,7 +147,15 @@ static void do_ioctls(struct radeon_drm_winsys *winsys)
     }
     winsys->z_pipes = target;
 
-    winsys->hyperz = radeon_set_hyperz_access(winsys->fd, TRUE);
+    if (debug_get_bool_option("RADEON_HYPERZ", FALSE)) {
+        winsys->hyperz = radeon_set_fd_access(winsys->fd,
+                                              RADEON_INFO_WANT_HYPERZ, TRUE);
+    }
+
+    if (debug_get_bool_option("RADEON_CMASK", FALSE)) {
+        winsys->aacompress = radeon_set_fd_access(winsys->fd,
+                                                  RADEON_INFO_WANT_CMASK, TRUE);
+    }
 
     retval = drmCommandWriteRead(winsys->fd, DRM_RADEON_GEM_INFO,
             &gem_info, sizeof(gem_info));

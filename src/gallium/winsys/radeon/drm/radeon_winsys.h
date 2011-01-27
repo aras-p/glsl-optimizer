@@ -53,8 +53,11 @@ struct radeon_drm_winsys {
     boolean drm_2_6_0;
     /* DRM 2.8.0 (US_FORMAT regs, ARGB2101010 colorbuffer) */
     boolean drm_2_8_0;
+
     /* Hyper-Z user */
     boolean hyperz;
+    /* AA compression (CMask) */
+    boolean aacompress;
 };
 
 static INLINE struct radeon_drm_winsys *

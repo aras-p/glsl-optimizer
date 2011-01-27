@@ -155,6 +155,8 @@ static uint32_t radeon_get_value(struct r300_winsys_screen *rws,
         return ws->drm_2_8_0;
     case R300_CAN_HYPERZ:
         return ws->hyperz;
+    case R300_CAN_AACOMPRESS:
+        return ws->aacompress;
     }
     return 0;
 }
