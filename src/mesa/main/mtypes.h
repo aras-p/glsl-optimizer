@@ -2824,6 +2824,7 @@ struct gl_extensions
    GLboolean EXT_vertex_array_set;
    GLboolean OES_standard_derivatives;
    /* vendor extensions */
+   GLboolean AMD_conservative_depth;
    GLboolean APPLE_client_storage;
    GLboolean APPLE_packed_pixels;
    GLboolean APPLE_vertex_array_object;
