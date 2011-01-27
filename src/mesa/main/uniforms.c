@@ -450,6 +450,36 @@ _mesa_get_active_uniform(struct gl_context *ctx, GLuint program, GLuint index,
 }
 
 
+static unsigned
+get_vector_elements(GLenum type)
+{
+   switch (type) {
+   case GL_FLOAT:
+   case GL_INT:
+   case GL_BOOL:
+   case GL_UNSIGNED_INT:
+   default: /* Catch all the various sampler types. */
+      return 1;
+
+   case GL_FLOAT_VEC2:
+   case GL_INT_VEC2:
+   case GL_BOOL_VEC2:
+   case GL_UNSIGNED_INT_VEC2:
+      return 2;
+
+   case GL_FLOAT_VEC3:
+   case GL_INT_VEC3:
+   case GL_BOOL_VEC3:
+   case GL_UNSIGNED_INT_VEC3:
+      return 3;
+
+   case GL_FLOAT_VEC4:
+   case GL_INT_VEC4:
+   case GL_BOOL_VEC4:
+   case GL_UNSIGNED_INT_VEC4:
+      return 4;
+   }
+}
 
 static void
 get_matrix_dims(GLenum type, GLint *rows, GLint *cols)
@@ -508,17 +538,8 @@ get_uniform_rows_cols(const struct gl_program_parameter *p,
    get_matrix_dims(p->DataType, rows, cols);
    if (*rows == 0 && *cols == 0) {
       /* not a matrix type, probably a float or vector */
-      if (p->Size <= 4) {
-         *rows = 1;
-         *cols = p->Size;
-      }
-      else {
-         *rows = (p->Size + 3) / 4;
-         if (p->Size % 4 == 0)
-            *cols = 4;
-         else
-            *cols = p->Size % 4;
-      }
+      *rows = 1;
+      *cols = get_vector_elements(p->DataType);
    }
 }
 
@@ -642,8 +663,10 @@ _mesa_get_uniformfv(struct gl_context *ctx, GLuint program, GLint location,
 
       k = 0;
       for (i = 0; i < rows; i++) {
+	 const int base = paramPos + offset + i;
+
          for (j = 0; j < cols; j++ ) {
-            params[k++] = prog->Parameters->ParameterValues[paramPos+i][j];
+            params[k++] = prog->Parameters->ParameterValues[base][j];
          }
       }
    }
@@ -675,8 +698,10 @@ _mesa_get_uniformiv(struct gl_context *ctx, GLuint program, GLint location,
 
       k = 0;
       for (i = 0; i < rows; i++) {
+	 const int base = paramPos + offset + i;
+
          for (j = 0; j < cols; j++ ) {
-            params[k++] = (GLint) prog->Parameters->ParameterValues[paramPos+i][j];
+            params[k++] = (GLint) prog->Parameters->ParameterValues[base][j];
          }
       }
    }
@@ -709,8 +734,10 @@ _mesa_get_uniformuiv(struct gl_context *ctx, GLuint program, GLint location,
 
       k = 0;
       for (i = 0; i < rows; i++) {
+	 const int base = paramPos + offset + i;
+
          for (j = 0; j < cols; j++ ) {
-            params[k++] = (GLuint) prog->Parameters->ParameterValues[paramPos+i][j];
+            params[k++] = (GLuint) prog->Parameters->ParameterValues[base][j];
          }
       }
    }
