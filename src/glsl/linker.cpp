@@ -382,6 +382,32 @@ cross_validate_globals(struct gl_shader_program *prog,
 	       existing->explicit_location = true;
 	    }
 
+        /* Validate layout qualifiers for gl_FragDepth.
+         *
+         * From the AMD_conservative_depth spec:
+         *    "If gl_FragDepth is redeclared in any fragment shader in
+         *    a program, it must be redeclared in all fragment shaders in that
+         *    program that have static assignments to gl_FragDepth. All
+         *    redeclarations of gl_FragDepth in all fragment shaders in
+         *    a single program must have the same set of qualifiers."
+         */
+        if (strcmp(var->name, "gl_FragDepth") == 0) {
+           bool layout_declared = var->depth_layout != ir_depth_layout_none;
+           bool layout_differs = var->depth_layout != existing->depth_layout;
+           if (layout_declared && layout_differs) {
+              linker_error_printf(prog,
+                 "All redeclarations of gl_FragDepth in all fragment shaders "
+                 "in a single program must have the same set of qualifiers.");
+           }
+           if (var->used && layout_differs) {
+              linker_error_printf(prog,
+                    "If gl_FragDepth is redeclared with a layout qualifier in"
+                    "any fragment shader, it must be redeclared with the same"
+                    "layout qualifier in all fragment shaders that have"
+                    "assignments to gl_FragDepth");
+           }
+        }
+
 	    /* FINISHME: Handle non-constant initializers.
 	     */
 	    if (var->constant_value != NULL) {
