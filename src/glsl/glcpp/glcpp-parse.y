@@ -1124,6 +1124,8 @@ glcpp_parser_create (const struct gl_extensions *extensions, int api)
 
 	   if (extensions->ARB_explicit_attrib_location)
 	      add_builtin_define(parser, "GL_ARB_explicit_attrib_location", 1);
+	   if (extensions->AMD_conservative_depth)
+	      add_builtin_define(parser, "GL_AMD_conservative_depth", 1);
 	}
 
 	language_version = 110;
