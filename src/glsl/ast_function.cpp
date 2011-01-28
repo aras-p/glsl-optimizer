@@ -1017,6 +1017,16 @@ ast_function_expression::hir(exec_list *instructions,
 
       const glsl_type *const constructor_type = type->glsl_type(& name, state);
 
+      /* constructor_type can be NULL if a variable with the same name as the
+       * structure has come into scope.
+       */
+      if (constructor_type == NULL) {
+	 _mesa_glsl_error(& loc, state, "unknown type `%s' (structure name "
+			  "may be shadowed by a variable with the same name)",
+			  type->type_name);
+	 return ir_call::get_error_instruction(ctx);
+      }
+
 
       /* Constructors for samplers are illegal.
        */
@@ -1046,6 +1056,57 @@ ast_function_expression::hir(exec_list *instructions,
        * correct order.  These constructors follow essentially the same type
        * matching rules as functions.
        */
+      if (constructor_type->is_record()) {
+	 exec_list actual_parameters;
+
+	 process_parameters(instructions, &actual_parameters,
+			    &this->expressions, state);
+
+	 exec_node *node = actual_parameters.head;
+	 for (unsigned i = 0; i < constructor_type->length; i++) {
+	    ir_rvalue *ir = (ir_rvalue *) node;
+
+	    if (node->is_tail_sentinel()) {
+	       _mesa_glsl_error(&loc, state,
+				"insufficient parameters to constructor "
+				"for `%s'",
+				constructor_type->name);
+	       return ir_call::get_error_instruction(ctx);
+	    }
+
+	    if (apply_implicit_conversion(constructor_type->fields.structure[i].type,
+					  ir, state)) {
+	       node->replace_with(ir);
+	    } else {
+	       _mesa_glsl_error(&loc, state,
+				"parameter type mismatch in constructor "
+				"for `%s.%s' (%s vs %s)",
+				constructor_type->name,
+				constructor_type->fields.structure[i].name,
+				ir->type->name,
+				constructor_type->fields.structure[i].type->name);
+	       return ir_call::get_error_instruction(ctx);;
+	    }
+
+	    node = node->next;
+	 }
+
+	 if (!node->is_tail_sentinel()) {
+	    _mesa_glsl_error(&loc, state, "too many parameters in constructor "
+			     "for `%s'", constructor_type->name);
+	    return ir_call::get_error_instruction(ctx);
+	 }
+
+	 ir_rvalue *const constant =
+	    constant_record_constructor(constructor_type, &actual_parameters,
+					state);
+
+	 return (constant != NULL)
+	    ? constant
+	    : emit_inline_record_constructor(constructor_type, instructions,
+					     &actual_parameters, state);
+      }
+
       if (!constructor_type->is_numeric() && !constructor_type->is_boolean())
 	 return ir_call::get_error_instruction(ctx);
 
@@ -1220,54 +1281,6 @@ ast_function_expression::hir(exec_list *instructions,
 
       process_parameters(instructions, &actual_parameters, &this->expressions,
 			 state);
-
-      const glsl_type *const type =
-	 state->symbols->get_type(id->primary_expression.identifier);
-
-      if ((type != NULL) && type->is_record()) {
-	 exec_node *node = actual_parameters.head;
-	 for (unsigned i = 0; i < type->length; i++) {
-	    ir_rvalue *ir = (ir_rvalue *) node;
-
-	    if (node->is_tail_sentinel()) {
-	       _mesa_glsl_error(&loc, state,
-				"insufficient parameters to constructor "
-				"for `%s'",
-				type->name);
-	       return ir_call::get_error_instruction(ctx);
-	    }
-
-	    if (apply_implicit_conversion(type->fields.structure[i].type, ir,
-					  state)) {
-	       node->replace_with(ir);
-	    } else {
-	       _mesa_glsl_error(&loc, state,
-				"parameter type mismatch in constructor "
-				"for `%s.%s' (%s vs %s)",
-				type->name,
-				type->fields.structure[i].name,
-				ir->type->name,
-				type->fields.structure[i].type->name);
-	       return ir_call::get_error_instruction(ctx);;
-	    }
-
-	    node = node->next;
-	 }
-
-	 if (!node->is_tail_sentinel()) {
-	    _mesa_glsl_error(&loc, state, "too many parameters in constructor "
-			     "for `%s'", type->name);
-	    return ir_call::get_error_instruction(ctx);
-	 }
-
-	 ir_rvalue *const constant =
-	    constant_record_constructor(type, &actual_parameters, state);
-
-	 return (constant != NULL)
-	    ? constant
-	    : emit_inline_record_constructor(type, instructions,
-					     &actual_parameters, state);
-      }
 
       return match_function_by_name(instructions, 
 				    id->primary_expression.identifier, & loc,
