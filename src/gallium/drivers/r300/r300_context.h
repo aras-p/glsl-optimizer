@@ -387,6 +387,11 @@ struct r300_texture_desc {
 
     /* Whether CBZB fast color clear is allowed on the miplevel. */
     boolean cbzb_allowed[R300_MAX_TEXTURE_LEVELS];
+
+    /* Zbuffer compression info for each miplevel. */
+    boolean zcomp8x8[R300_MAX_TEXTURE_LEVELS];
+    /* If zero, then disable compression. */
+    unsigned zmask_dwords[R300_MAX_TEXTURE_LEVELS];
 };
 
 struct r300_texture {

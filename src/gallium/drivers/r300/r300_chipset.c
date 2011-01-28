@@ -424,7 +424,6 @@ void r300_parse_chipset(struct r300_capabilities* caps)
     }
 
     caps->is_rv350 = caps->family >= CHIP_FAMILY_RV350;
-    /* XXX The 8x8 compression mode doesn't always work (piglit/fbo-depth fails). */
-    caps->z_compress = /*caps->is_rv350 ? R300_ZCOMP_8X8 :*/ R300_ZCOMP_4X4;
+    caps->z_compress = caps->is_rv350 ? R300_ZCOMP_8X8 : R300_ZCOMP_4X4;
     caps->dxtc_swizzle = caps->is_r400 || caps->is_r500;
 }

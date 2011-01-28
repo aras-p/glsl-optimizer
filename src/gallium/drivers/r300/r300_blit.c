@@ -114,16 +114,7 @@ static boolean r300_fast_zclear_allowed(struct r300_context *r300)
     struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
 
-    /* Cannot decompress zmask with a 16-bit zbuffer.
-     * Also compression causes a hung. */
-    if (util_format_get_blocksizebits(fb->zsbuf->texture->format) == 16)
-        return FALSE;
-
-    /* Cannot use compression with a linear zbuffer. */
-    if (!r300_texture(fb->zsbuf->texture)->desc.microtile)
-        return FALSE;
-
-    return TRUE;
+    return r300_texture(fb->zsbuf->texture)->desc.zmask_dwords[fb->zsbuf->u.tex.level];
 }
 
 static uint32_t r300_depth_clear_value(enum pipe_format format,

@@ -334,6 +334,63 @@ static void r300_setup_cbzb_flags(struct r300_screen *rscreen,
         desc->cbzb_allowed[i] = first_level_valid && desc->macrotile[i];
 }
 
+#define ALIGN_DIVUP(x, y) (((x) + (y) - 1) / (y))
+
+static void r300_setup_zmask_flags(struct r300_screen *screen,
+                                   struct r300_texture_desc *desc)
+{
+    /* The tile size of 1 DWORD is:
+     *
+     * GPU    Pipes    4x4 mode   8x8 mode
+     * ------------------------------------------
+     * R580   4P/1Z    32x32      64x64
+     * RV570  3P/1Z    48x16      96x32
+     * RV530  1P/2Z    32x16      64x32
+     *        1P/1Z    16x16      32x32
+     */
+    static unsigned num_blocks_x_per_dw[4] = {4, 8, 12, 8};
+    static unsigned num_blocks_y_per_dw[4] = {4, 4,  4, 8};
+
+    if (util_format_is_depth_or_stencil(desc->b.b.format) &&
+        util_format_get_blocksizebits(desc->b.b.format) == 32 &&
+        desc->microtile) {
+        unsigned i, pipes;
+
+        if (screen->caps.family == CHIP_FAMILY_RV530) {
+            pipes = screen->caps.num_z_pipes;
+        } else {
+            pipes = screen->caps.num_frag_pipes;
+        }
+
+        for (i = 0; i <= desc->b.b.last_level; i++) {
+            unsigned numdw, compsize;
+
+            /* The 8x8 compression mode needs macrotiling. */
+            compsize = screen->caps.z_compress == R300_ZCOMP_8X8 &&
+                       desc->macrotile[i] ? 8 : 4;
+
+            /* Get the zbuffer size (with the aligned width and height). */
+            numdw = align(desc->stride_in_pixels[i],
+                          num_blocks_x_per_dw[pipes-1] * compsize) *
+                    align(u_minify(desc->b.b.height0, i),
+                          num_blocks_y_per_dw[pipes-1] * compsize);
+
+            /* Convert pixels -> dwords. */
+            numdw = ALIGN_DIVUP(numdw, num_blocks_x_per_dw[pipes-1] * compsize *
+                                       num_blocks_y_per_dw[pipes-1] * compsize);
+
+            /* Check that we have enough ZMASK memory. */
+            if (numdw <= screen->caps.zmask_ram * pipes) {
+                desc->zmask_dwords[i] = numdw;
+                desc->zcomp8x8[i] = compsize == 8;
+            } else {
+                desc->zmask_dwords[i] = 0;
+                desc->zcomp8x8[i] = FALSE;
+            }
+        }
+    }
+}
+
 static void r300_setup_tiling(struct r300_screen *screen,
                               struct r300_texture_desc *desc)
 {
@@ -439,6 +496,7 @@ boolean r300_texture_desc_init(struct r300_screen *rscreen,
     }
 
     r300_texture_3d_fix_mipmapping(rscreen, desc);
+    r300_setup_zmask_flags(rscreen, desc);
 
     if (max_buffer_size) {
         /* Make sure the buffer we got is large enough. */

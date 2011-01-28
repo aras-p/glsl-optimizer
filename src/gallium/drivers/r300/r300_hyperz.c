@@ -168,10 +168,10 @@ static void r300_update_hyperz(struct r300_context* r300)
         if (!r300->zmask_decompress) {
             z->zb_bw_cntl |= R300_WR_COMP_ENABLE;
         }
+    }
 
-        if (r300->screen->caps.z_compress == R300_ZCOMP_8X8) {
-            z->gb_z_peq_config |= R300_GB_Z_PEQ_CONFIG_Z_PEQ_SIZE_8_8;
-        }
+    if (zstex->desc.zcomp8x8[fb->zsbuf->u.tex.level]) {
+        z->gb_z_peq_config |= R300_GB_Z_PEQ_CONFIG_Z_PEQ_SIZE_8_8;
     }
 
     if (hiz_in_use && r300_can_hiz(r300)) {

@@ -1141,42 +1141,14 @@ void r300_emit_zmask_clear(struct r300_context *r300, unsigned size, void *state
     struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
     struct r300_texture *tex;
-    unsigned numdw, pipes;
-    unsigned compsize = r300->screen->caps.z_compress;
-    /* The tile size of 1 DWORD is:
-     *
-     * GPU    Pipes    4x4 mode   8x8 mode
-     * ------------------------------------------
-     * R580   4P/1Z    32x32      64x64
-     * RV570  3P/1Z    48x16      96x32
-     * RV530  1P/2Z    32x16      64x32
-     */
-    static unsigned num_blocks_x_per_dw[4] = {4, 8, 12, 8};
-    static unsigned num_blocks_y_per_dw[4] = {4, 4,  4, 8};
     CS_LOCALS(r300);
 
-    if (r300->screen->caps.family == CHIP_FAMILY_RV530) {
-        pipes = r300->screen->caps.num_z_pipes;
-    } else {
-        pipes = r300->screen->caps.num_frag_pipes;
-    }
-
     tex = r300_texture(fb->zsbuf->texture);
-
-    /* Get the zbuffer size (with the aligned width and height). */
-    numdw = align(tex->desc.stride_in_pixels[fb->zsbuf->u.tex.level],
-                  num_blocks_x_per_dw[pipes-1] * compsize) *
-            align(fb->zsbuf->height,
-                  num_blocks_y_per_dw[pipes-1] * compsize);
-
-    /* Convert pixels -> dwords. */
-    numdw = ALIGN_DIVUP(numdw, num_blocks_x_per_dw[pipes-1] * compsize *
-                               num_blocks_y_per_dw[pipes-1] * compsize);
 
     BEGIN_CS(size);
     OUT_CS_PKT3(R300_PACKET3_3D_CLEAR_ZMASK, 2);
     OUT_CS(0);
-    OUT_CS(numdw);
+    OUT_CS(tex->desc.zmask_dwords[fb->zsbuf->u.tex.level]);
     OUT_CS(0);
     END_CS;
 
