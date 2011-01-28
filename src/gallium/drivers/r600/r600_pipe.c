@@ -287,6 +287,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_PRIMITIVE_RESTART:
 	case PIPE_CAP_INDEP_BLEND_FUNC: /* FIXME allow this */
 	case PIPE_CAP_INSTANCED_DRAWING:
+	case PIPE_CAP_ARRAY_TEXTURES:
 		return 0;
 
 	/* Texturing. */
