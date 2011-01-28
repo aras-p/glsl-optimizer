@@ -367,7 +367,8 @@ static void r300_setup_zmask_flags(struct r300_screen *screen,
 
             /* The 8x8 compression mode needs macrotiling. */
             compsize = screen->caps.z_compress == R300_ZCOMP_8X8 &&
-                       desc->macrotile[i] ? 8 : 4;
+                       desc->macrotile[i] &&
+                       desc->b.b.nr_samples <= 1 ? 8 : 4;
 
             /* Get the zbuffer size (with the aligned width and height). */
             numdw = align(desc->stride_in_pixels[i],
