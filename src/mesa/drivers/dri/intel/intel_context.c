@@ -807,6 +807,7 @@ intelInitContext(struct intel_context *intel,
 
    meta_init_metaops(ctx, &intel->meta);
    if (intel->gen >= 4) {
+      ctx->Const.sRGBCapable = GL_TRUE;
       if (MAX_WIDTH > 8192)
 	 ctx->Const.MaxRenderbufferSize = 8192;
    } else {

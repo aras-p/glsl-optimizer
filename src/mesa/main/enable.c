@@ -970,9 +970,10 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 
       /* GL3.0 - GL_framebuffer_sRGB */
       case GL_FRAMEBUFFER_SRGB_EXT:
-	 CHECK_EXTENSION(EXT_framebuffer_sRGB, cap);
-	 ctx->Color.sRGBEnabled = state;
-	 break;
+         CHECK_EXTENSION(EXT_framebuffer_sRGB, cap);
+         FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+         ctx->Color.sRGBEnabled = state;
+         break;
 
       default:
          goto invalid_enum_error;

@@ -553,6 +553,8 @@ _mesa_update_framebuffer_visual(struct gl_context *ctx,
                + fb->Visual.greenBits + fb->Visual.blueBits;
             fb->Visual.floatMode = GL_FALSE;
             fb->Visual.samples = rb->NumSamples;
+            if (_mesa_get_format_color_encoding(fmt) == GL_SRGB)
+                fb->Visual.sRGBCapable = ctx->Const.sRGBCapable;
             break;
          }
       }
