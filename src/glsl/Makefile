@@ -148,8 +148,8 @@ install:
 
 ##### RULES #####
 
-glsl_compiler: $(GLSL2_OBJECTS) libglsl.a
-	$(APP_CXX) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(GLSL2_OBJECTS) $(LIBS) -o $@
+glsl_compiler: $(GLSL2_OBJECTS) libglsl.a builtin_stubs.o
+	$(APP_CXX) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(GLSL2_OBJECTS) builtin_stubs.o $(LIBS) -o $@
 
 glcpp/glcpp: $(GLCPP_OBJECTS) libglsl.a
 	$(APP_CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(GLCPP_OBJECTS) $(LIBS) -o $@
