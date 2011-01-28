@@ -123,6 +123,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	r600_init_query_functions(rctx);
 	r600_init_context_resource_functions(rctx);
 	r600_init_surface_functions(rctx);
+	rctx->context.draw_vbo = r600_draw_vbo;
 
 	switch (r600_get_family(rctx->radeon)) {
 	case CHIP_R600:
@@ -137,7 +138,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	case CHIP_RV730:
 	case CHIP_RV710:
 	case CHIP_RV740:
-		rctx->context.draw_vbo = r600_draw_vbo;
 		r600_init_state_functions(rctx);
 		if (r600_context_init(&rctx->ctx, rctx->radeon)) {
 			r600_destroy_context(&rctx->context);
@@ -154,7 +154,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	case CHIP_BARTS:
 	case CHIP_TURKS:
 	case CHIP_CAICOS:
-		rctx->context.draw_vbo = evergreen_draw_vbo;
 		evergreen_init_state_functions(rctx);
 		if (evergreen_context_init(&rctx->ctx, rctx->radeon)) {
 			r600_destroy_context(&rctx->context);

@@ -27,7 +27,9 @@
 #include <util/u_memory.h>
 #include <util/u_format.h>
 #include <pipebuffer/pb_buffer.h>
+#include "pipe/p_shader_tokens.h"
 #include "r600_pipe.h"
+#include "r600d.h"
 
 /* common state between evergreen and r600 */
 void r600_bind_blend_state(struct pipe_context *ctx, void *state)
@@ -326,4 +328,141 @@ void r600_delete_vs_shader(struct pipe_context *ctx, void *state)
 
 	r600_pipe_shader_destroy(ctx, shader);
 	free(shader);
+}
+
+/* FIXME optimize away spi update when it's not needed */
+void r600_spi_update(struct r600_pipe_context *rctx)
+{
+	struct r600_pipe_shader *shader = rctx->ps_shader;
+	struct r600_pipe_state rstate;
+	struct r600_shader *rshader = &shader->shader;
+	unsigned i, tmp;
+
+	rstate.nregs = 0;
+	for (i = 0; i < rshader->ninput; i++) {
+		tmp = S_028644_SEMANTIC(r600_find_vs_semantic_index(&rctx->vs_shader->shader, rshader, i));
+
+		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
+		    rshader->input[i].name == TGSI_SEMANTIC_BCOLOR ||
+		    rshader->input[i].name == TGSI_SEMANTIC_POSITION) {
+			tmp |= S_028644_FLAT_SHADE(rctx->flatshade);
+		}
+
+		if (rshader->input[i].name == TGSI_SEMANTIC_GENERIC &&
+		    rctx->sprite_coord_enable & (1 << rshader->input[i].sid)) {
+			tmp |= S_028644_PT_SPRITE_TEX(1);
+		}
+
+                if (rctx->family < CHIP_CEDAR) {
+                    if (rshader->input[i].centroid)
+                            tmp |= S_028644_SEL_CENTROID(1);
+
+                    if (rshader->input[i].interpolate == TGSI_INTERPOLATE_LINEAR)
+                            tmp |= S_028644_SEL_LINEAR(1);
+                }
+
+		r600_pipe_state_add_reg(&rstate, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4, tmp, 0xFFFFFFFF, NULL);
+	}
+	r600_context_pipe_state_set(&rctx->ctx, &rstate);
+}
+
+void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_resource *rbuffer;
+	u32 vgt_dma_index_type, vgt_draw_initiator, mask;
+	struct r600_draw rdraw;
+	struct r600_pipe_state vgt;
+	struct r600_drawl draw = {};
+	unsigned prim;
+
+	draw.info = *info;
+	draw.ctx = ctx;
+	if (info->indexed && rctx->index_buffer.buffer) {
+		draw.info.start += rctx->index_buffer.offset / rctx->index_buffer.index_size;
+
+		r600_translate_index_buffer(rctx, &rctx->index_buffer.buffer,
+					    &rctx->index_buffer.index_size,
+					    &draw.info.start,
+					    info->count);
+
+		draw.index_size = rctx->index_buffer.index_size;
+		pipe_resource_reference(&draw.index_buffer, rctx->index_buffer.buffer);
+		draw.index_buffer_offset = draw.info.start * draw.index_size;
+		draw.info.start = 0;
+		r600_upload_index_buffer(rctx, &draw);
+	} else {
+		draw.info.index_bias = info->start;
+	}
+
+	switch (draw.index_size) {
+	case 2:
+		vgt_draw_initiator = 0;
+		vgt_dma_index_type = 0;
+		break;
+	case 4:
+		vgt_draw_initiator = 0;
+		vgt_dma_index_type = 1;
+		break;
+	case 0:
+		vgt_draw_initiator = 2;
+		vgt_dma_index_type = 0;
+		break;
+	default:
+		R600_ERR("unsupported index size %d\n", draw.index_size);
+		return;
+	}
+	if (r600_conv_pipe_prim(draw.info.mode, &prim))
+		return;
+	if (unlikely(rctx->ps_shader == NULL)) {
+		R600_ERR("missing vertex shader\n");
+		return;
+	}
+	if (unlikely(rctx->vs_shader == NULL)) {
+		R600_ERR("missing vertex shader\n");
+		return;
+	}
+	/* there should be enough input */
+	if (rctx->vertex_elements->count < rctx->vs_shader->shader.bc.nresource) {
+		R600_ERR("%d resources provided, expecting %d\n",
+			rctx->vertex_elements->count, rctx->vs_shader->shader.bc.nresource);
+		return;
+	}
+
+	r600_spi_update(rctx);
+
+	mask = 0;
+	for (int i = 0; i < rctx->framebuffer.nr_cbufs; i++) {
+		mask |= (0xF << (i * 4));
+	}
+
+	vgt.id = R600_PIPE_STATE_VGT;
+	vgt.nregs = 0;
+	r600_pipe_state_add_reg(&vgt, R_008958_VGT_PRIMITIVE_TYPE, prim, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, R_028408_VGT_INDX_OFFSET, draw.info.index_bias, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, R_028400_VGT_MAX_VTX_INDX, draw.info.max_index, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, R_028404_VGT_MIN_VTX_INDX, draw.info.min_index, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, R_028238_CB_TARGET_MASK, rctx->cb_target_mask & mask, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, R_03CFF4_SQ_VTX_START_INST_LOC, 0, 0xFFFFFFFF, NULL);
+	r600_context_pipe_state_set(&rctx->ctx, &vgt);
+
+	rdraw.vgt_num_indices = draw.info.count;
+	rdraw.vgt_num_instances = 1;
+	rdraw.vgt_index_type = vgt_dma_index_type;
+	rdraw.vgt_draw_initiator = vgt_draw_initiator;
+	rdraw.indices = NULL;
+	if (draw.index_buffer) {
+		rbuffer = (struct r600_resource*)draw.index_buffer;
+		rdraw.indices = rbuffer->bo;
+		rdraw.indices_bo_offset = draw.index_buffer_offset;
+	}
+
+	if (rctx->family >= CHIP_CEDAR) {
+		evergreen_context_draw(&rctx->ctx, &rdraw);
+	} else {
+		r600_context_draw(&rctx->ctx, &rdraw);
+	}
+
+	pipe_resource_reference(&draw.index_buffer, NULL);
 }

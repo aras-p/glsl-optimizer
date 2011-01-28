@@ -181,7 +181,6 @@ struct r600_drawl {
 /* evergreen_state.c */
 void evergreen_init_state_functions(struct r600_pipe_context *rctx);
 void evergreen_init_config(struct r600_pipe_context *rctx);
-void evergreen_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
 void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx);
@@ -221,7 +220,7 @@ int r600_find_vs_semantic_index(struct r600_shader *vs,
 
 /* r600_state.c */
 void r600_init_state_functions(struct r600_pipe_context *rctx);
-void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
+void r600_spi_update(struct r600_pipe_context *rctx);
 void r600_init_config(struct r600_pipe_context *rctx);
 void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx);
 void r600_polygon_offset_update(struct r600_pipe_context *rctx);
@@ -270,6 +269,7 @@ void r600_bind_ps_shader(struct pipe_context *ctx, void *state);
 void r600_bind_vs_shader(struct pipe_context *ctx, void *state);
 void r600_delete_ps_shader(struct pipe_context *ctx, void *state);
 void r600_delete_vs_shader(struct pipe_context *ctx, void *state);
+void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
 
 /*
  * common helpers
