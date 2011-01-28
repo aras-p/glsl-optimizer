@@ -284,8 +284,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/x86/*.S					\
 	$(DIRECTORY)/src/mesa/x86/rtasm/*.[ch]				\
 	$(DIRECTORY)/src/mesa/x86-64/*.[chS]				\
-	$(DIRECTORY)/src/mesa/x86-64/Makefile				\
-	$(DIRECTORY)/windows/VC8/
+	$(DIRECTORY)/src/mesa/x86-64/Makefile
 
 MAPI_FILES = \
 	$(DIRECTORY)/include/GLES/*.h					\
