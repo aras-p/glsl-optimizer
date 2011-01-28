@@ -144,6 +144,7 @@ struct r600_pipe_context {
 	struct pipe_framebuffer_state	framebuffer;
 	struct pipe_index_buffer	index_buffer;
 	struct pipe_vertex_buffer	vertex_buffer[PIPE_MAX_ATTRIBS];
+	struct pipe_resource		*real_vertex_buffer[PIPE_MAX_ATTRIBS];
 	unsigned			nvertex_buffer;
 	unsigned			cb_target_mask;
 	/* for saving when using blitter */
@@ -207,7 +208,8 @@ unsigned r600_buffer_is_referenced_by_cs(struct pipe_context *context,
 struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,
 					      struct winsys_handle *whandle);
 void r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *draw);
-void r600_upload_user_buffers(struct r600_pipe_context *rctx);
+void r600_upload_user_buffers(struct r600_pipe_context *rctx,
+			      int min_index, int max_index);
 
 /* r600_query.c */
 void r600_init_query_functions(struct r600_pipe_context *rctx);
@@ -279,7 +281,6 @@ void r600_delete_ps_shader(struct pipe_context *ctx, void *state);
 void r600_delete_vs_shader(struct pipe_context *ctx, void *state);
 void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 			      struct pipe_resource *buffer);
-void r600_vertex_buffer_update(struct r600_pipe_context *rctx);
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
 
 /*

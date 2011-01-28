@@ -201,39 +201,52 @@ struct u_resource_vtbl r600_buffer_vtbl =
 
 void r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *draw)
 {
+	struct r600_resource_buffer *rbuffer = r600_buffer(draw->index_buffer);
+	boolean flushed;
 
-	if (r600_is_user_buffer(draw->index_buffer)) {
-		struct r600_resource_buffer *rbuffer = r600_buffer(draw->index_buffer);
-		boolean flushed;
-
-		u_upload_data(rctx->upload_vb, 0,
-			      draw->info.count * draw->index_size,
-			      rbuffer->user_buffer,
-			      &draw->index_buffer_offset,
-			      &draw->index_buffer, &flushed);
-	}
+	u_upload_data(rctx->upload_vb, 0,
+		      draw->info.count * draw->index_size,
+		      rbuffer->user_buffer,
+		      &draw->index_buffer_offset,
+		      &draw->index_buffer, &flushed);
 }
 
-void r600_upload_user_buffers(struct r600_pipe_context *rctx)
+void r600_upload_user_buffers(struct r600_pipe_context *rctx,
+			      int min_index, int max_index)
 {
-	int i, nr;
-
-	nr = rctx->vertex_elements->count;
-	nr = rctx->nvertex_buffer;
+	int i, nr = rctx->vertex_elements->count;
+	unsigned count = max_index + 1 - min_index;
+	boolean flushed;
+	boolean uploaded[32] = {0};
 
 	for (i = 0; i < nr; i++) {
-		struct pipe_vertex_buffer *vb = &rctx->vertex_buffer[i];
+		unsigned index = rctx->vertex_elements->elements[i].vertex_buffer_index;
+		struct pipe_vertex_buffer *vb = &rctx->vertex_buffer[index];
+		struct r600_resource_buffer *userbuf = r600_buffer(vb->buffer);
 
-		if (r600_is_user_buffer(vb->buffer)) {
-			struct r600_resource_buffer *rbuffer = r600_buffer(vb->buffer);
-			boolean flushed;
+		if (userbuf && userbuf->user_buffer && !uploaded[index]) {
+			unsigned first, size;
 
-			u_upload_data(rctx->upload_vb, 0,
-				      vb->buffer->width0,
-				      rbuffer->user_buffer,
+			if (vb->stride) {
+			    first = vb->stride * min_index;
+			    size = vb->stride * count;
+			} else {
+			    first = 0;
+			    size = rctx->vertex_elements->hw_format_size[i];
+			}
+
+			u_upload_data(rctx->upload_vb, first, size,
+				      userbuf->user_buffer + first,
 				      &vb->buffer_offset,
-				      &vb->buffer,
+				      &rctx->real_vertex_buffer[index],
 				      &flushed);
+
+			vb->buffer_offset -= first;
+
+			/* vertex_arrays_dirty = TRUE; */
+			uploaded[index] = TRUE;
+		} else {
+			assert(rctx->real_vertex_buffer[index]);
 		}
 	}
 }

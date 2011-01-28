@@ -121,20 +121,10 @@ void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_vertex_element *v = (struct r600_vertex_element*)state;
 
-	/* delete previous translated vertex elements */
-	if (rctx->tran.new_velems) {
-		r600_end_vertex_translate(rctx);
-	}
-
 	rctx->vertex_elements = v;
 	if (v) {
 		rctx->states[v->rstate.id] = &v->rstate;
 		r600_context_pipe_state_set(&rctx->ctx, &v->rstate);
-		r600_vertex_buffer_update(rctx);
-	}
-
-	if (v) {
-//		rctx->vs_rebuild = TRUE;
 	}
 }
 
@@ -175,45 +165,62 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct pipe_vertex_buffer *vbo;
-	unsigned max_index = (unsigned)-1;
+	unsigned max_index = ~0;
+	int i;
 
-	if (rctx->family >= CHIP_CEDAR) {
-		for (int i = 0; i < rctx->nvertex_buffer; i++) {
-			pipe_resource_reference(&rctx->vertex_buffer[i].buffer, NULL);
-			evergreen_context_pipe_state_set_fs_resource(&rctx->ctx, NULL, i);
-		}
-	} else {
-		for (int i = 0; i < rctx->nvertex_buffer; i++) {
-			pipe_resource_reference(&rctx->vertex_buffer[i].buffer, NULL);
-			r600_context_pipe_state_set_fs_resource(&rctx->ctx, NULL, i);
-		}
-	}
-	memcpy(rctx->vertex_buffer, buffers, sizeof(struct pipe_vertex_buffer) * count);
-
-	for (int i = 0; i < count; i++) {
+	for (i = 0; i < count; i++) {
 		vbo = (struct pipe_vertex_buffer*)&buffers[i];
 
-		rctx->vertex_buffer[i].buffer = NULL;
-		if (buffers[i].buffer == NULL)
+		pipe_resource_reference(&rctx->vertex_buffer[i].buffer, vbo->buffer);
+		pipe_resource_reference(&rctx->real_vertex_buffer[i], NULL);
+
+		if (!vbo->buffer) {
+			/* Zero states. */
+			if (rctx->family >= CHIP_CEDAR) {
+				evergreen_context_pipe_state_set_fs_resource(&rctx->ctx, NULL, i);
+			} else {
+				r600_context_pipe_state_set_fs_resource(&rctx->ctx, NULL, i);
+			}
 			continue;
-		if (r600_is_user_buffer(buffers[i].buffer))
+		}
+
+		if (r600_is_user_buffer(vbo->buffer)) {
 			rctx->any_user_vbs = TRUE;
-		pipe_resource_reference(&rctx->vertex_buffer[i].buffer, buffers[i].buffer);
+			continue;
+		}
+
+		pipe_resource_reference(&rctx->real_vertex_buffer[i], vbo->buffer);
 
 		/* The stride of zero means we will be fetching only the first
 		 * vertex, so don't care about max_index. */
-		if (!vbo->stride)
+		if (!vbo->stride) {
 			continue;
-
-		if (vbo->max_index == ~0) {
-			vbo->max_index = (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
 		}
-		max_index = MIN2(vbo->max_index, max_index);
+
+		/* Update the maximum index. */
+		{
+		    unsigned vbo_max_index =
+			  (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
+		    max_index = MIN2(max_index, vbo_max_index);
+		}
 	}
+
+	for (; i < rctx->nvertex_buffer; i++) {
+		pipe_resource_reference(&rctx->vertex_buffer[i].buffer, NULL);
+		pipe_resource_reference(&rctx->real_vertex_buffer[i], NULL);
+
+		/* Zero states. */
+		if (rctx->family >= CHIP_CEDAR) {
+			evergreen_context_pipe_state_set_fs_resource(&rctx->ctx, NULL, i);
+		} else {
+			r600_context_pipe_state_set_fs_resource(&rctx->ctx, NULL, i);
+		}
+	}
+
+	memcpy(rctx->vertex_buffer, buffers, sizeof(struct pipe_vertex_buffer) * count);
+
 	rctx->nvertex_buffer = count;
 	rctx->vb_max_index = max_index;
-
-	r600_vertex_buffer_update(rctx);
 }
 
 
@@ -407,29 +414,12 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 		pipe_resource_reference((struct pipe_resource**)&rbuffer, NULL);
 }
 
-void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
+static void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 {
 	struct r600_pipe_state *rstate;
 	struct r600_resource *rbuffer;
 	struct pipe_vertex_buffer *vertex_buffer;
 	unsigned i, offset;
-
-	/* we don't update until we know vertex elements */
-	if (rctx->vertex_elements == NULL || !rctx->nvertex_buffer)
-		return;
-
-	if (rctx->vertex_elements->incompatible_layout) {
-		/* translate rebind new vertex elements so
-		 * return once translated
-		 */
-		r600_begin_vertex_translate(rctx);
-		return;
-	}
-
-	if (rctx->any_user_vbs) {
-		r600_upload_user_buffers(rctx);
-		rctx->any_user_vbs = FALSE;
-	}
 
 	if (rctx->vertex_elements->vbuffer_need_offset) {
 		/* one resource per vertex elements */
@@ -449,12 +439,12 @@ void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 			unsigned vbuffer_index;
 			vbuffer_index = rctx->vertex_elements->elements[i].vertex_buffer_index;
 			vertex_buffer = &rctx->vertex_buffer[vbuffer_index];
-			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
+			rbuffer = (struct r600_resource*)rctx->real_vertex_buffer[vbuffer_index];
 			offset = rctx->vertex_elements->vbuffer_offset[i];
 		} else {
 			/* bind vertex buffer once */
 			vertex_buffer = &rctx->vertex_buffer[i];
-			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
+			rbuffer = (struct r600_resource*)rctx->real_vertex_buffer[i];
 			offset = 0;
 		}
 		if (vertex_buffer == NULL || rbuffer == NULL)
@@ -483,6 +473,16 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	struct r600_drawl draw = {};
 	unsigned prim;
 
+	if (rctx->vertex_elements->incompatible_layout) {
+		r600_begin_vertex_translate(rctx);
+	}
+
+	if (rctx->any_user_vbs) {
+		r600_upload_user_buffers(rctx, info->min_index, info->max_index);
+	}
+
+	r600_vertex_buffer_update(rctx);
+
 	draw.info = *info;
 	draw.ctx = ctx;
 	if (info->indexed && rctx->index_buffer.buffer) {
@@ -497,7 +497,10 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		pipe_resource_reference(&draw.index_buffer, rctx->index_buffer.buffer);
 		draw.index_buffer_offset = draw.info.start * draw.index_size;
 		draw.info.start = 0;
-		r600_upload_index_buffer(rctx, &draw);
+
+		if (r600_is_user_buffer(draw.index_buffer)) {
+			r600_upload_index_buffer(rctx, &draw);
+		}
 	} else {
 		draw.info.index_bias = info->start;
 	}
@@ -572,4 +575,9 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	}
 
 	pipe_resource_reference(&draw.index_buffer, NULL);
+
+	/* delete previous translated vertex elements */
+	if (rctx->tran.new_velems) {
+		r600_end_vertex_translate(rctx);
+	}
 }
