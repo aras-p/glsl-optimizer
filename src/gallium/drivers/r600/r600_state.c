@@ -223,7 +223,7 @@ static void r600_draw_common(struct r600_drawl *draw)
 		R600_ERR("unsupported index size %d\n", draw->index_size);
 		return;
 	}
-	if (r600_conv_pipe_prim(draw->mode, &prim))
+	if (r600_conv_pipe_prim(draw->info.mode, &prim))
 		return;
 	if (unlikely(rctx->ps_shader == NULL)) {
 		R600_ERR("missing vertex shader\n");
@@ -250,15 +250,15 @@ static void r600_draw_common(struct r600_drawl *draw)
 	vgt.id = R600_PIPE_STATE_VGT;
 	vgt.nregs = 0;
 	r600_pipe_state_add_reg(&vgt, R_008958_VGT_PRIMITIVE_TYPE, prim, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(&vgt, R_028408_VGT_INDX_OFFSET, draw->index_bias, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(&vgt, R_028400_VGT_MAX_VTX_INDX, draw->max_index, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(&vgt, R_028404_VGT_MIN_VTX_INDX, draw->min_index, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, R_028408_VGT_INDX_OFFSET, draw->info.index_bias, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, R_028400_VGT_MAX_VTX_INDX, draw->info.max_index, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, R_028404_VGT_MIN_VTX_INDX, draw->info.min_index, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(&vgt, R_028238_CB_TARGET_MASK, rctx->cb_target_mask & mask, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(&vgt, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(&vgt, R_03CFF4_SQ_VTX_START_INST_LOC, 0, 0xFFFFFFFF, NULL);
 	r600_context_pipe_state_set(&rctx->ctx, &vgt);
 
-	rdraw.vgt_num_indices = draw->count;
+	rdraw.vgt_num_indices = draw->info.count;
 	rdraw.vgt_num_instances = 1;
 	rdraw.vgt_index_type = vgt_dma_index_type;
 	rdraw.vgt_draw_initiator = vgt_draw_initiator;
@@ -274,35 +274,25 @@ static void r600_draw_common(struct r600_drawl *draw)
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_drawl draw;
+	struct r600_drawl draw = {};
 
-	memset(&draw, 0, sizeof(struct r600_drawl));
+	draw.info = *info;
 	draw.ctx = ctx;
-	draw.mode = info->mode;
-	draw.start = info->start;
-	draw.count = info->count;
 	if (info->indexed && rctx->index_buffer.buffer) {
-		draw.start += rctx->index_buffer.offset / rctx->index_buffer.index_size;
-		draw.min_index = info->min_index;
-		draw.max_index = info->max_index;
-		draw.index_bias = info->index_bias;
+		draw.info.start += rctx->index_buffer.offset / rctx->index_buffer.index_size;
 
 		r600_translate_index_buffer(rctx, &rctx->index_buffer.buffer,
 					    &rctx->index_buffer.index_size,
-					    &draw.start,
+					    &draw.info.start,
 					    info->count);
 
 		draw.index_size = rctx->index_buffer.index_size;
 		pipe_resource_reference(&draw.index_buffer, rctx->index_buffer.buffer);
-		draw.index_buffer_offset = draw.start * draw.index_size;
-		draw.start = 0;
+		draw.index_buffer_offset = draw.info.start * draw.index_size;
+		draw.info.start = 0;
 		r600_upload_index_buffer(rctx, &draw);
 	} else {
-		draw.index_size = 0;
-		draw.index_buffer = NULL;
-		draw.min_index = info->min_index;
-		draw.max_index = info->max_index;
-		draw.index_bias = info->start;
+		draw.info.index_bias = info->start;
 	}
 	r600_draw_common(&draw);
 

@@ -171,13 +171,8 @@ struct r600_pipe_context {
 };
 
 struct r600_drawl {
+	struct pipe_draw_info	info;
 	struct pipe_context	*ctx;
-	unsigned		mode;
-	unsigned		min_index;
-	unsigned		max_index;
-	unsigned		index_bias;
-	unsigned		start;
-	unsigned		count;
 	unsigned		index_size;
 	unsigned		index_buffer_offset;
 	struct pipe_resource	*index_buffer;
@@ -186,7 +181,7 @@ struct r600_drawl {
 /* evergreen_state.c */
 void evergreen_init_state_functions(struct r600_pipe_context *rctx);
 void evergreen_init_config(struct r600_pipe_context *rctx);
-void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info);
+void evergreen_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
 void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx);

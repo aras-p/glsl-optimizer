@@ -154,7 +154,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	case CHIP_BARTS:
 	case CHIP_TURKS:
 	case CHIP_CAICOS:
-		rctx->context.draw_vbo = evergreen_draw;
+		rctx->context.draw_vbo = evergreen_draw_vbo;
 		evergreen_init_state_functions(rctx);
 		if (evergreen_context_init(&rctx->ctx, rctx->radeon)) {
 			r600_destroy_context(&rctx->context);

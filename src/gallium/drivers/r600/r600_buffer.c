@@ -207,7 +207,7 @@ void r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl 
 		boolean flushed;
 
 		u_upload_data(rctx->upload_vb, 0,
-			      draw->count * draw->index_size,
+			      draw->info.count * draw->index_size,
 			      rbuffer->user_buffer,
 			      &draw->index_buffer_offset,
 			      &draw->index_buffer, &flushed);
