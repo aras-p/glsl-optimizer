@@ -136,7 +136,7 @@ static struct sh_opcode_info opcode_info[] =
    { "dsy",          1, 1, 0, 0, SVGA3DOP_INVALID,     },
    { "texldd",       1, 4, 0, 0, SVGA3DOP_INVALID,     },
    { "setp",         1, 2, 0, 0, SVGA3DOP_SETP,        },
-   { "texldl",       1, 2, 0, 0, SVGA3DOP_INVALID,     },
+   { "texldl",       1, 2, 0, 0, SVGA3DOP_TEXLDL,      },
    { "breakp",       0, 1, 0, 0, SVGA3DOP_INVALID,     },
 };
 
