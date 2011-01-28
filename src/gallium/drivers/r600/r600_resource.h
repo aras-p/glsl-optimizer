@@ -71,7 +71,6 @@ struct r600_resource_buffer {
 	struct r600_resource		r;
 	uint32_t			magic;
 	void				*user_buffer;
-	bool				uploaded;
 };
 
 struct r600_surface {
@@ -98,10 +97,8 @@ static INLINE struct r600_resource_buffer *r600_buffer(struct pipe_resource *buf
 	return NULL;
 }
 
-static INLINE boolean r600_buffer_is_user_buffer(struct pipe_resource *buffer)
+static INLINE boolean r600_is_user_buffer(struct pipe_resource *buffer)
 {
-	if (r600_buffer(buffer)->uploaded)
-		return FALSE;
 	return r600_buffer(buffer)->user_buffer ? TRUE : FALSE;
 }
 
@@ -121,15 +118,7 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 				 struct pipe_transfer* transfer);
 
 struct r600_pipe_context;
-struct r600_upload *r600_upload_create(struct r600_pipe_context *rctx,
-					unsigned default_size,
-					unsigned alignment);
-void r600_upload_flush(struct r600_upload *upload);
-void r600_upload_destroy(struct r600_upload *upload);
-int r600_upload_buffer(struct r600_upload *upload, unsigned offset,
-			unsigned size, struct r600_resource_buffer *in_buffer,
-			unsigned *out_offset, unsigned *out_size,
-			struct r600_bo **out_buffer);
 
-int r600_upload_const_buffer(struct r600_pipe_context *rctx, struct pipe_resource *cbuffer, uint32_t *offset);
+void r600_upload_const_buffer(struct r600_pipe_context *rctx, struct r600_resource_buffer **rbuffer, uint32_t *offset);
+
 #endif

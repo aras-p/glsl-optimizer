@@ -29,14 +29,17 @@
 #include <util/u_math.h>
 #include <util/u_inlines.h>
 #include <util/u_memory.h>
+#include "util/u_upload_mgr.h"
+
 #include "state_tracker/drm_driver.h"
+
 #include <xf86drm.h>
 #include "radeon_drm.h"
+
 #include "r600.h"
 #include "r600_pipe.h"
 
 extern struct u_resource_vtbl r600_buffer_vtbl;
-
 
 struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ)
@@ -58,7 +61,6 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 	rbuffer->r.base.vtbl = &r600_buffer_vtbl;
 	rbuffer->r.size = rbuffer->r.base.b.width0;
 	rbuffer->r.bo_size = rbuffer->r.size;
-	rbuffer->uploaded = FALSE;
 	bo = r600_bo((struct radeon*)screen->winsys, rbuffer->r.base.b.width0, alignment, rbuffer->r.base.b.bind, rbuffer->r.base.b.usage);
 	if (bo == NULL) {
 		FREE(rbuffer);
@@ -94,7 +96,6 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 	rbuffer->r.bo = NULL;
 	rbuffer->r.bo_size = 0;
 	rbuffer->user_buffer = ptr;
-	rbuffer->uploaded = FALSE;
 	return &rbuffer->r.base.b;
 }
 
@@ -198,32 +199,23 @@ struct u_resource_vtbl r600_buffer_vtbl =
 	u_default_transfer_inline_write		/* transfer_inline_write */
 };
 
-int r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *draw)
+void r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *draw)
 {
-	if (r600_buffer_is_user_buffer(draw->index_buffer)) {
+
+	if (r600_is_user_buffer(draw->index_buffer)) {
 		struct r600_resource_buffer *rbuffer = r600_buffer(draw->index_buffer);
-		unsigned upload_offset;
-		int ret = 0;
+		boolean flushed;
 
-		ret = r600_upload_buffer(rctx->rupload_vb,
-					draw->index_buffer_offset,
-					draw->count * draw->index_size,
-					rbuffer,
-					&upload_offset,
-					&rbuffer->r.bo_size,
-					&rbuffer->r.bo);
-		if (ret)
-			return ret;
-		rbuffer->uploaded = TRUE;
-		draw->index_buffer_offset = upload_offset;
+		u_upload_data(rctx->upload_vb, 0,
+			      draw->count * draw->index_size,
+			      rbuffer->user_buffer,
+			      &draw->index_buffer_offset,
+			      &draw->index_buffer, &flushed);
 	}
-
-	return 0;
 }
 
-int r600_upload_user_buffers(struct r600_pipe_context *rctx)
+void r600_upload_user_buffers(struct r600_pipe_context *rctx)
 {
-	enum pipe_error ret = PIPE_OK;
 	int i, nr;
 
 	nr = rctx->vertex_elements->count;
@@ -232,47 +224,33 @@ int r600_upload_user_buffers(struct r600_pipe_context *rctx)
 	for (i = 0; i < nr; i++) {
 		struct pipe_vertex_buffer *vb = &rctx->vertex_buffer[i];
 
-		if (r600_buffer_is_user_buffer(vb->buffer)) {
+		if (r600_is_user_buffer(vb->buffer)) {
 			struct r600_resource_buffer *rbuffer = r600_buffer(vb->buffer);
-			unsigned upload_offset;
+			boolean flushed;
 
-			ret = r600_upload_buffer(rctx->rupload_vb,
-						0, vb->buffer->width0,
-						rbuffer,
-						&upload_offset,
-						&rbuffer->r.bo_size,
-						&rbuffer->r.bo);
-			if (ret)
-				return ret;
-			rbuffer->uploaded = TRUE;
-			vb->buffer_offset = upload_offset;
+			u_upload_data(rctx->upload_vb, 0,
+				      vb->buffer->width0,
+				      rbuffer->user_buffer,
+				      &vb->buffer_offset,
+				      &vb->buffer,
+				      &flushed);
 		}
 	}
-	return ret;
 }
 
-
-int r600_upload_const_buffer(struct r600_pipe_context *rctx, struct pipe_resource *cbuffer,
+void r600_upload_const_buffer(struct r600_pipe_context *rctx, struct r600_resource_buffer **rbuffer,
 			     uint32_t *const_offset)
 {
-	if (r600_buffer_is_user_buffer(cbuffer)) {
-		struct r600_resource_buffer *rbuffer = r600_buffer(cbuffer);
-		unsigned upload_offset;
-		int ret = 0;
+	if ((*rbuffer)->user_buffer) {
+		uint8_t *ptr = (*rbuffer)->user_buffer;
+		unsigned size = (*rbuffer)->r.base.b.width0;
+		boolean flushed;
 
-		ret = r600_upload_buffer(rctx->rupload_const,
-					 0, cbuffer->width0,
-					 rbuffer,
-					 &upload_offset,
-					 &rbuffer->r.bo_size,
-					 &rbuffer->r.bo);
-		if (ret)
-			return ret;
-		rbuffer->uploaded = TRUE;
-		*const_offset = upload_offset;
-		return 0;
+		*rbuffer = NULL;
+
+		u_upload_data(rctx->upload_const, 0, size, ptr, const_offset,
+			      (struct pipe_resource**)rbuffer, &flushed);
+	} else {
+		*const_offset = 0;
 	}
-
-	*const_offset = 0;
-	return 0;
 }

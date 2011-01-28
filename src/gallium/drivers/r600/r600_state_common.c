@@ -198,7 +198,7 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 		rctx->vertex_buffer[i].buffer = NULL;
 		if (buffers[i].buffer == NULL)
 			continue;
-		if (r600_buffer_is_user_buffer(buffers[i].buffer))
+		if (r600_is_user_buffer(buffers[i].buffer))
 			rctx->any_user_vbs = TRUE;
 		pipe_resource_reference(&rctx->vertex_buffer[i].buffer, buffers[i].buffer);
 

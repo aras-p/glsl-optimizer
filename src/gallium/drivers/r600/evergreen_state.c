@@ -841,7 +841,7 @@ static void evergreen_set_constant_buffer(struct pipe_context *ctx, uint shader,
 					struct pipe_resource *buffer)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_resource *rbuffer = (struct r600_resource*)buffer;
+	struct r600_resource_buffer *rbuffer = r600_buffer(buffer);
 	uint32_t offset;
 
 	/* Note that the state tracker can unbind constant buffers by
@@ -851,7 +851,7 @@ static void evergreen_set_constant_buffer(struct pipe_context *ctx, uint shader,
 		return;
 	}
 
-	r600_upload_const_buffer(rctx, buffer, &offset);
+	r600_upload_const_buffer(rctx, &rbuffer, &offset);
 
 	switch (shader) {
 	case PIPE_SHADER_VERTEX:
@@ -862,7 +862,7 @@ static void evergreen_set_constant_buffer(struct pipe_context *ctx, uint shader,
 					0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(&rctx->vs_const_buffer,
 					R_028980_ALU_CONST_CACHE_VS_0,
-					(r600_bo_offset(rbuffer->bo) + offset) >> 8, 0xFFFFFFFF, rbuffer->bo);
+					(r600_bo_offset(rbuffer->r.bo) + offset) >> 8, 0xFFFFFFFF, rbuffer->r.bo);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->vs_const_buffer);
 		break;
 	case PIPE_SHADER_FRAGMENT:
@@ -873,13 +873,16 @@ static void evergreen_set_constant_buffer(struct pipe_context *ctx, uint shader,
 					0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(&rctx->ps_const_buffer,
 					R_028940_ALU_CONST_CACHE_PS_0,
-					(r600_bo_offset(rbuffer->bo) + offset) >> 8, 0xFFFFFFFF, rbuffer->bo);
+					(r600_bo_offset(rbuffer->r.bo) + offset) >> 8, 0xFFFFFFFF, rbuffer->r.bo);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->ps_const_buffer);
 		break;
 	default:
 		R600_ERR("unsupported %d\n", shader);
 		return;
 	}
+
+	if (!rbuffer->user_buffer)
+		pipe_resource_reference((struct pipe_resource**)&rbuffer, NULL);
 }
 
 void evergreen_init_state_functions(struct r600_pipe_context *rctx)
