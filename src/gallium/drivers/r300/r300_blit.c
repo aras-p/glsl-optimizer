@@ -426,13 +426,13 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
         }
     }
 
-    if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB ||
-        (!pipe->screen->is_format_supported(pipe->screen,
+    if (desc->layout == UTIL_FORMAT_LAYOUT_PLAIN &&
+        (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB ||
+         !pipe->screen->is_format_supported(pipe->screen,
                                             old_format, src->target,
                                             src->nr_samples,
                                             PIPE_BIND_RENDER_TARGET |
-                                            PIPE_BIND_SAMPLER_VIEW, 0) &&
-         desc->layout == UTIL_FORMAT_LAYOUT_PLAIN)) {
+                                            PIPE_BIND_SAMPLER_VIEW, 0))) {
         switch (util_format_get_blocksize(old_format)) {
             case 1:
                 new_format = PIPE_FORMAT_I8_UNORM;
