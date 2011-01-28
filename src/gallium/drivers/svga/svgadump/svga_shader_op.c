@@ -156,6 +156,8 @@ const struct sh_opcode_info *svga_opcode_info( uint op )
    if (info->svga_opcode == SVGA3DOP_INVALID) {
       /* No valid information. Please provide number of dst/src registers.
        */
+      _debug_printf("Missing information for opcode %u, '%s'\n", op,
+                    opcode_info[op].mnemonic);
       assert( 0 );
       return NULL;
    }
