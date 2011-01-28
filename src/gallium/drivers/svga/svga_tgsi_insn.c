@@ -57,7 +57,6 @@ translate_opcode(
    case TGSI_OPCODE_MUL:        return SVGA3DOP_MUL;
    case TGSI_OPCODE_NOP:        return SVGA3DOP_NOP;
    case TGSI_OPCODE_NRM4:       return SVGA3DOP_NRM;
-   case TGSI_OPCODE_SSG:        return SVGA3DOP_SGN;
    default:
       debug_printf("Unkown opcode %u\n", opcode);
       assert( 0 );
@@ -1066,6 +1065,41 @@ static boolean emit_cos(struct svga_shader_emitter *emit,
    return TRUE;
 }
 
+static boolean emit_ssg(struct svga_shader_emitter *emit,
+                        const struct tgsi_full_instruction *insn )
+{
+   SVGA3dShaderDestToken dst = translate_dst_register( emit, insn, 0 );
+   struct src_register src0 = translate_src_register(
+      emit, &insn->Src[0] );
+   SVGA3dShaderDestToken temp0 = get_temp( emit );
+   SVGA3dShaderDestToken temp1 = get_temp( emit );
+   struct src_register zero, one;
+
+   if (emit->unit == PIPE_SHADER_VERTEX) {
+      /* SGN  DST, SRC0, TMP0, TMP1 */
+      return submit_op3( emit, inst_token( SVGA3DOP_SGN ), dst, src0,
+                         src( temp0 ), src( temp1 ) );
+   }
+
+   zero = get_zero_immediate( emit );
+   one = scalar( zero, TGSI_SWIZZLE_W );
+   zero = scalar( zero, TGSI_SWIZZLE_X );
+
+   /* CMP  TMP0, SRC0, one, zero */
+   if (!submit_op3( emit, inst_token( SVGA3DOP_CMP ),
+                    writemask( temp0, dst.mask ), src0, one, zero ))
+      return FALSE;
+
+   /* CMP  TMP1, negate(SRC0), negate(one), zero */
+   if (!submit_op3( emit, inst_token( SVGA3DOP_CMP ),
+                    writemask( temp1, dst.mask ), negate( src0 ), negate( one ),
+                    zero ))
+      return FALSE;
+
+   /* ADD  DST, TMP0, TMP1 */
+   return submit_op2( emit, inst_token( SVGA3DOP_ADD ), dst, src( temp0 ),
+                      src( temp1 ) );
+}
 
 /*
  * ADD DST SRC0, negate(SRC0)
@@ -2366,6 +2400,9 @@ static boolean svga_emit_instruction( struct svga_shader_emitter *emit,
    case TGSI_OPCODE_LRP:
       return emit_lrp( emit, insn );
 
+   case TGSI_OPCODE_SSG:
+      return emit_ssg( emit, insn );
+
    default: {
       unsigned opcode = translate_opcode(insn->Instruction.Opcode);
 
@@ -2715,6 +2752,7 @@ needs_to_create_zero( struct svga_shader_emitter *emit )
          return TRUE;
 
       if (emit->info.opcode_count[TGSI_OPCODE_DST] >= 1 ||
+          emit->info.opcode_count[TGSI_OPCODE_SSG] >= 1 ||
           emit->info.opcode_count[TGSI_OPCODE_LIT] >= 1)
          return TRUE;
    }
