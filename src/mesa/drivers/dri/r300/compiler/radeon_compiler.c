@@ -402,10 +402,10 @@ static void print_stats(struct radeon_compiler * c)
 {
 	struct rc_program_stats s;
 
-	rc_get_stats(c, &s);
-
-	if (s.num_insts < 4)
+	if (c->initial_num_insts <= 5)
 		return;
+
+	rc_get_stats(c, &s);
 
 	switch (c->type) {
 	case RC_VERTEX_PROGRAM:
@@ -461,6 +461,11 @@ void rc_run_compiler_passes(struct radeon_compiler *c, struct radeon_compiler_pa
 /* Executes a list of compiler passes given in the parameter 'list'. */
 void rc_run_compiler(struct radeon_compiler *c, struct radeon_compiler_pass *list)
 {
+	struct rc_program_stats s;
+
+	rc_get_stats(c, &s);
+	c->initial_num_insts = s.num_insts;
+
 	if (c->Debug & RC_DBG_LOG) {
 		fprintf(stderr, "%s: before compilation\n", shader_name[c->type]);
 		rc_print_program(&c->Program);

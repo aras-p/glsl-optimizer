@@ -72,6 +72,8 @@ struct radeon_compiler {
 	/*@}*/
 
 	struct emulate_loop_state loop_state;
+
+	unsigned initial_num_insts; /* Number of instructions at start. */
 };
 
 void rc_init(struct radeon_compiler * c);
