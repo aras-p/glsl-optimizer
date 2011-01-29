@@ -191,7 +191,7 @@ ir_copy_propagation_visitor::visit_enter(ir_call *ir)
       sig_param_iter.next();
    }
 
-   /* Since we're unlinked, we don't (necssarily) know the side effects of
+   /* Since we're unlinked, we don't (necessarily) know the side effects of
     * this call.  So kill all copies.
     */
    acp->make_empty();
