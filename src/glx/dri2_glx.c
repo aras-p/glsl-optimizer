@@ -804,11 +804,14 @@ dri2CreateScreen(int screen, struct glx_display * priv)
       return NULL;
 
    memset(psc, 0, sizeof *psc);
-   if (!glx_screen_init(&psc->base, screen, priv))
-       return NULL;
+   if (!glx_screen_init(&psc->base, screen, priv)) {
+      Xfree(psc);
+      return NULL;
+   }
 
    if (!DRI2Connect(priv->dpy, RootWindow(priv->dpy, screen),
 		    &driverName, &deviceName)) {
+      glx_screen_cleanup(&psc->base);
       XFree(psc);
       return NULL;
    }
@@ -918,11 +921,14 @@ dri2CreateScreen(int screen, struct glx_display * priv)
    return &psc->base;
 
 handle_error:
+   if (psc->fd)
+      close(psc->fd);
+   if (psc->driver)
+      dlclose(psc->driver);
    Xfree(driverName);
    Xfree(deviceName);
+   glx_screen_cleanup(&psc->base);
    XFree(psc);
-
-   /* FIXME: clean up here */
 
    return NULL;
 }

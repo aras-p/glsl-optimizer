@@ -194,17 +194,7 @@ FreeScreenConfigs(struct glx_display * priv)
    screens = ScreenCount(priv->dpy);
    for (i = 0; i < screens; i++) {
       psc = priv->screens[i];
-      if (psc->configs) {
-	 glx_config_destroy_list(psc->configs);
-         if (psc->effectiveGLXexts)
-            Xfree(psc->effectiveGLXexts);
-         psc->configs = NULL;   /* NOTE: just for paranoia */
-      }
-      if (psc->visuals) {
-	 glx_config_destroy_list(psc->visuals);
-	 psc->visuals = NULL;   /* NOTE: just for paranoia */
-      }
-      Xfree((char *) psc->serverGLXexts);
+      glx_screen_cleanup(psc);
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
       if (psc->driScreen) {
@@ -726,6 +716,22 @@ glx_screen_init(struct glx_screen *psc,
    getFBConfigs(psc, priv, screen);
 
    return GL_TRUE;
+}
+
+_X_HIDDEN void
+glx_screen_cleanup(struct glx_screen *psc)
+{
+   if (psc->configs) {
+      glx_config_destroy_list(psc->configs);
+      if (psc->effectiveGLXexts)
+          Xfree(psc->effectiveGLXexts);
+      psc->configs = NULL;   /* NOTE: just for paranoia */
+   }
+   if (psc->visuals) {
+      glx_config_destroy_list(psc->visuals);
+      psc->visuals = NULL;   /* NOTE: just for paranoia */
+   }
+   Xfree((char *) psc->serverGLXexts);
 }
 
 /*
