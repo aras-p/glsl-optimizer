@@ -409,11 +409,8 @@ ir_copy_propagation_elements_visitor::add_copy(ir_assignment *ir)
    int orig_swizzle[4] = {0, 1, 2, 3};
    int swizzle[4];
 
-   if (ir->condition) {
-      ir_constant *condition = ir->condition->as_constant();
-      if (!condition || !condition->value.b[0])
-	 return;
-   }
+   if (ir->condition)
+      return;
 
    ir_dereference_variable *lhs = ir->lhs->as_dereference_variable();
    if (!lhs || !(lhs->type->is_scalar() || lhs->type->is_vector()))

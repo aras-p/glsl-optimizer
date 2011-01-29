@@ -131,15 +131,8 @@ process_assignment(void *ctx, ir_assignment *ir, exec_list *assignments)
    var = ir->lhs->variable_referenced();
    assert(var);
 
-   bool always_assign = true;
-   if (ir->condition) {
-      ir_constant *condition = ir->condition->as_constant();
-      if (!condition || !condition->value.b[0])
-	 always_assign = false;
-   }
-
    /* Now, check if we did a whole-variable assignment. */
-   if (always_assign && (ir->whole_variable_written() != NULL)) {
+   if (!ir->condition && (ir->whole_variable_written() != NULL)) {
       /* We did a whole-variable assignment.  So, any instruction in
        * the assignment list with the same LHS is dead.
        */

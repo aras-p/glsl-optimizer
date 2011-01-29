@@ -309,11 +309,8 @@ ir_copy_propagation_visitor::add_copy(ir_assignment *ir)
 {
    acp_entry *entry;
 
-   if (ir->condition) {
-      ir_constant *condition = ir->condition->as_constant();
-      if (!condition || !condition->value.b[0])
-	 return;
-   }
+   if (ir->condition)
+      return;
 
    ir_variable *lhs_var = ir->whole_variable_written();
    ir_variable *rhs_var = ir->rhs->whole_variable_referenced();

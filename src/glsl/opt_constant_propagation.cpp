@@ -400,11 +400,8 @@ ir_constant_propagation_visitor::add_constant(ir_assignment *ir)
 {
    acp_entry *entry;
 
-   if (ir->condition) {
-      ir_constant *condition = ir->condition->as_constant();
-      if (!condition || !condition->value.b[0])
-	 return;
-   }
+   if (ir->condition)
+      return;
 
    if (!ir->write_mask)
       return;
