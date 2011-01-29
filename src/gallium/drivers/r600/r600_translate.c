@@ -194,17 +194,27 @@ void r600_end_vertex_translate(struct r600_pipe_context *rctx)
 	rctx->nreal_vertex_buffers = rctx->nvertex_buffers;
 }
 
-/* XXX Use the uploader. */
 void r600_translate_index_buffer(struct r600_pipe_context *r600,
 				 struct pipe_resource **index_buffer,
 				 unsigned *index_size,
 				 unsigned *start, unsigned count)
 {
+	struct pipe_resource *out_buffer = NULL;
+	unsigned out_offset;
+	void *ptr;
+	boolean flushed;
+
 	switch (*index_size) {
 	case 1:
-		util_shorten_ubyte_elts(&r600->context, index_buffer, 0, *start, count);
+		u_upload_alloc(r600->upload_vb, 0, count * 2,
+			       &out_offset, &out_buffer, &flushed, &ptr);
+
+		util_shorten_ubyte_elts_to_userptr(
+				&r600->context, *index_buffer, 0, *start, count, ptr);
+
+		pipe_resource_reference(index_buffer, out_buffer);
 		*index_size = 2;
-		*start = 0;
+		*start = out_offset / 2;
 		break;
 	}
 }
