@@ -1000,7 +1000,7 @@ _mesa_GenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers)
  * internal formats is different.
  *
  * Note that even if a format is determined to be legal here, validation
- * of the FBO may fail if the format is not suppoted by the driver/GPU.
+ * of the FBO may fail if the format is not supported by the driver/GPU.
  *
  * \param internalFormat  as passed to glRenderbufferStorage()
  * \return the base internal format, or 0 if internalFormat is illegal
@@ -2276,7 +2276,8 @@ _mesa_GenerateMipmapEXT(GLenum target)
 #if FEATURE_EXT_framebuffer_blit
 
 static const struct gl_renderbuffer_attachment *
-find_attachment(const struct gl_framebuffer *fb, const struct gl_renderbuffer *rb)
+find_attachment(const struct gl_framebuffer *fb,
+                const struct gl_renderbuffer *rb)
 {
    GLuint i;
    for (i = 0; i < Elements(fb->Attachment); i++) {
