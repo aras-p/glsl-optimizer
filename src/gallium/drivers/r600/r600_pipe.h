@@ -251,7 +251,8 @@ unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
 					unsigned level, unsigned layer);
 
 /* r600_translate.c */
-void r600_begin_vertex_translate(struct r600_pipe_context *rctx);
+void r600_begin_vertex_translate(struct r600_pipe_context *rctx,
+                                 int min_index, int max_index);
 void r600_end_vertex_translate(struct r600_pipe_context *rctx);
 void r600_translate_index_buffer(struct r600_pipe_context *r600,
 				 struct pipe_resource **index_buffer,

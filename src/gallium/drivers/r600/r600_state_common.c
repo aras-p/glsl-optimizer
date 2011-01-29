@@ -497,7 +497,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	unsigned prim;
 
 	if (rctx->vertex_elements->incompatible_layout) {
-		r600_begin_vertex_translate(rctx);
+		r600_begin_vertex_translate(rctx, info->min_index, info->max_index);
 	}
 
 	if (rctx->any_user_vbs) {
