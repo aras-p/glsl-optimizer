@@ -222,9 +222,10 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
       ctx->vertices[i][0][3] = 1; /*v.w*/
 
    /* create the vertex buffer */
-   ctx->vbuf = pipe_buffer_create(ctx->base.pipe->screen,
-                                  PIPE_BIND_VERTEX_BUFFER,
-                                  sizeof(ctx->vertices));
+   ctx->vbuf = pipe_user_buffer_create(ctx->base.pipe->screen,
+                                       ctx->vertices,
+                                       sizeof(ctx->vertices),
+                                       PIPE_BIND_VERTEX_BUFFER);
 
    return &ctx->base;
 }
@@ -516,22 +517,6 @@ static void blitter_set_dst_dimensions(struct blitter_context_priv *ctx,
    ctx->dst_height = height;
 }
 
-static void blitter_draw_quad(struct blitter_context_priv *ctx)
-{
-   struct pipe_context *pipe = ctx->base.pipe;
-   struct pipe_box box;
-
-   /* write vertices and draw them */
-   u_box_1d(0, sizeof(ctx->vertices), &box);
-   pipe->transfer_inline_write(pipe, ctx->vbuf, 0,
-                               PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-                               &box, ctx->vertices, sizeof(ctx->vertices), 0);
-
-   util_draw_vertex_buffer(pipe, ctx->vbuf, 0, PIPE_PRIM_TRIANGLE_FAN,
-                           4,  /* verts */
-                           2); /* attribs/vert */
-}
-
 static INLINE
 void **blitter_get_sampler_state(struct blitter_context_priv *ctx,
                                  int miplevel, boolean normalized)
@@ -656,7 +641,8 @@ static void blitter_draw_rectangle(struct blitter_context *blitter,
    }
 
    blitter_set_rectangle(ctx, x1, y1, x2, y2, depth);
-   blitter_draw_quad(ctx);
+   util_draw_vertex_buffer(ctx->base.pipe, ctx->vbuf, 0,
+                           PIPE_PRIM_TRIANGLE_FAN, 4, 2);
 }
 
 static void util_blitter_clear_custom(struct blitter_context *blitter,
@@ -881,7 +867,8 @@ void util_blitter_copy_region(struct blitter_context *blitter,
 
          /* Draw. */
          blitter_set_rectangle(ctx, dstx, dsty, dstx+width, dsty+height, 0);
-         blitter_draw_quad(ctx);
+         util_draw_vertex_buffer(ctx->base.pipe, ctx->vbuf, 0,
+                                 PIPE_PRIM_TRIANGLE_FAN, 4, 2);
          break;
 
       default:
