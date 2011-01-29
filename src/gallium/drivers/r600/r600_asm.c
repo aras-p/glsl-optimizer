@@ -263,10 +263,10 @@ static void r600_bc_move_cf(struct r600_bc *bc, struct r600_bc_cf *cf, struct r6
 {
 	struct r600_bc_cf *prev = LIST_ENTRY(struct r600_bc_cf, next->list.prev, list);
 	unsigned old_id = cf->id;
-	unsigned new_id = prev->id + 2;
+	unsigned new_id = next->list.prev == &bc->cf ? 0 : prev->id + 2;
 	struct r600_bc_cf *other;
 
-	if (prev == cf)
+	if (prev == cf || next == cf)
 		return; /* position hasn't changed */
 
 	LIST_DEL(&cf->list);
@@ -1189,21 +1189,19 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 	if (!bc->cf_last->curr_bs_head) {
 		bc->cf_last->curr_bs_head = nalu;
 	}
-	/* replace special constants */
+	/* number of gpr == the last gpr used in any alu */
 	for (i = 0; i < 3; i++) {
+		if (nalu->src[i].sel >= bc->ngpr && nalu->src[i].sel < 128) {
+			bc->ngpr = nalu->src[i].sel + 1;
+		}
 		if (nalu->src[i].sel == V_SQ_ALU_SRC_LITERAL)
 			r600_bc_special_constants(
 				nalu->src[i].value[nalu->src[i].chan],
 				&nalu->src[i].sel, &nalu->src[i].neg);
-
-		if (nalu->src[i].sel >= bc->ngpr && nalu->src[i].sel < 128) {
-			bc->ngpr = nalu->src[i].sel + 1;
-		}
 	}
 	if (nalu->dst.sel >= bc->ngpr) {
 		bc->ngpr = nalu->dst.sel + 1;
 	}
-
 	LIST_ADDTAIL(&nalu->list, &bc->cf_last->alu);
 	/* each alu use 2 dwords */
 	bc->cf_last->ndw += 2;
@@ -1474,8 +1472,8 @@ enum cf_class
 	CF_CLASS_EXPORT,
 	CF_CLASS_OTHER
 };
-
-static enum cf_class get_cf_class(struct r600_bc_cf *cf)
+ 
+static enum cf_class r600_bc_cf_class(struct r600_bc_cf *cf)
 {
 	switch (cf->inst) {
 	case (V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3):
@@ -1493,6 +1491,8 @@ static enum cf_class get_cf_class(struct r600_bc_cf *cf)
 
 	case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
 	case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
+	case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
+	case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
 		return CF_CLASS_EXPORT;
 
 	case V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
@@ -1518,7 +1518,7 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 	unsigned id = cf->id;
 	unsigned end_of_program = bc->cf.prev == &cf->list;
 
-	switch (get_cf_class(cf)) {
+	switch (r600_bc_cf_class(cf)) {
 	case CF_CLASS_ALU:
 		assert(!end_of_program);
 		bc->bytecode[id++] = S_SQ_CF_ALU_WORD0_ADDR(cf->addr >> 1) |
@@ -1574,81 +1574,103 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 
 struct gpr_usage_range {
 	int	replacement;
-	int32_t	start;
-	int32_t	end;
+	int	rel_block;
+	int	start;
+	int	end;
 };
 
 struct gpr_usage {
 	unsigned		channels:4;
-	int32_t			first_write;
-	int32_t			last_write[4];
+	int			first_write;
+	int			last_write[4];
 	unsigned	        nranges;
 	struct gpr_usage_range  *ranges;
 };
 
+static struct gpr_usage_range* last_gpr_usage_range(struct gpr_usage *usage)
+{
+	if (usage->nranges)
+		return usage->ranges + usage->nranges - 1;
+	else
+		return NULL;
+}
+
 static struct gpr_usage_range* add_gpr_usage_range(struct gpr_usage *usage)
 {
+	struct gpr_usage_range *range;
+
 	usage->nranges++;
 	usage->ranges = realloc(usage->ranges, usage->nranges * sizeof(struct gpr_usage_range));
 	if (!usage->ranges)
 		return NULL;
-	return &usage->ranges[usage->nranges-1];
+
+	range = last_gpr_usage_range(usage);
+	range->replacement = -1; /* no prefered replacement */
+	range->rel_block = -1;
+	range->start = -1;
+	range->end = -1;
+
+	return range;
 }
 
-static void notice_gpr_read(struct gpr_usage *usage, int32_t id, unsigned chan)
+static void notice_gpr_read(struct gpr_usage *usage, int id, unsigned chan)
 {
+	struct gpr_usage_range* range;
+
         usage->channels |= 1 << chan;
         usage->first_write = -1;
         if (!usage->nranges) {
-        	struct gpr_usage_range* range = add_gpr_usage_range(usage);
-        	range->replacement = -1;
-                range->start = -1;
-                range->end = -1;
-        }
-        if (usage->ranges[usage->nranges-1].end < id)
-		usage->ranges[usage->nranges-1].end = id;
+        	range = add_gpr_usage_range(usage);
+        } else
+		range = last_gpr_usage_range(usage);
+
+        if (range && range->end < id)
+		range->end = id;
 }
 
-static void notice_gpr_rel_read(struct gpr_usage usage[128], int32_t id, unsigned chan)
+static void notice_gpr_rel_read(struct r600_bc *bc, struct gpr_usage usage[128],
+				int id, unsigned gpr, unsigned chan)
 {
 	unsigned i;
-	for (i = 0; i < 128; ++i)
+	for (i = gpr; i < bc->ngpr; ++i)
 		notice_gpr_read(&usage[i], id, chan);
+
+	last_gpr_usage_range(&usage[gpr])->rel_block = bc->ngpr - gpr;
 }
 
-static void notice_gpr_last_write(struct gpr_usage *usage, int32_t id, unsigned chan)
+static void notice_gpr_last_write(struct gpr_usage *usage, int id, unsigned chan)
 {
         usage->last_write[chan] = id;
 }
 
-static void notice_gpr_write(struct gpr_usage *usage, int32_t id, unsigned chan,
+static void notice_gpr_write(struct gpr_usage *usage, int id, unsigned chan,
 				int predicate, int prefered_replacement)
 {
-	int32_t start = usage->first_write != -1 ? usage->first_write : id;
+	struct gpr_usage_range* last_range = last_gpr_usage_range(usage);
+	int start = usage->first_write != -1 ? usage->first_write : id;
 	usage->channels &= ~(1 << chan);
 	if (usage->channels) {
 		if (usage->first_write == -1)
 			usage->first_write = id;
-	} else if (!usage->nranges || (usage->ranges[usage->nranges-1].start != start && !predicate)) {
+	} else if (!last_range || (last_range->start != start && !predicate)) {
 		usage->first_write = start;
 		struct gpr_usage_range* range = add_gpr_usage_range(usage);
 		range->replacement = prefered_replacement;
                 range->start = start;
-                range->end = -1;
-        } else if (usage->ranges[usage->nranges-1].start == start && prefered_replacement != -1) {
-        	usage->ranges[usage->nranges-1].replacement = prefered_replacement;
+        } else if (last_range->start == start && prefered_replacement != -1) {
+        	last_range->replacement = prefered_replacement;
         }
         notice_gpr_last_write(usage, id, chan);
 }
 
-static void notice_gpr_rel_last_write(struct gpr_usage usage[128], int32_t id, unsigned chan)
+static void notice_gpr_rel_last_write(struct gpr_usage usage[128], int id, unsigned chan)
 {
 	unsigned i;
 	for (i = 0; i < 128; ++i)
 		notice_gpr_last_write(&usage[i], id, chan);
 }
 
-static void notice_gpr_rel_write(struct gpr_usage usage[128], int32_t id, unsigned chan)
+static void notice_gpr_rel_write(struct gpr_usage usage[128], int id, unsigned chan)
 {
 	unsigned i;
 	for (i = 0; i < 128; ++i)
@@ -1656,7 +1678,7 @@ static void notice_gpr_rel_write(struct gpr_usage usage[128], int32_t id, unsign
 }
 
 static void notice_alu_src_gprs(struct r600_bc *bc, struct r600_bc_alu *alu,
-                                struct gpr_usage usage[128], int32_t id)
+                                struct gpr_usage usage[128], int id)
 {
 	unsigned src, num_src;
 
@@ -1667,14 +1689,14 @@ static void notice_alu_src_gprs(struct r600_bc *bc, struct r600_bc_alu *alu,
 			continue;
 
 		if (alu->src[src].rel)
-			notice_gpr_rel_read(usage, id, alu->src[src].chan);
+			notice_gpr_rel_read(bc, usage, id, alu->src[src].sel, alu->src[src].chan);
 		else
 			notice_gpr_read(&usage[alu->src[src].sel], id, alu->src[src].chan);
 	}
 }
 
 static void notice_alu_dst_gprs(struct r600_bc_alu *alu_first, struct gpr_usage usage[128],
-				int32_t id, int predicate)
+				int id, int predicate)
 {
 	struct r600_bc_alu *alu;
 	for (alu = alu_first; alu; alu = LIST_ENTRY(struct r600_bc_alu, alu->list.next, list)) {
@@ -1693,18 +1715,19 @@ static void notice_alu_dst_gprs(struct r600_bc_alu *alu_first, struct gpr_usage 
 	}
 }
 
-static void notice_tex_gprs(struct r600_bc_tex *tex, struct gpr_usage usage[128],
-				int32_t id, int predicate)
+static void notice_tex_gprs(struct r600_bc *bc, struct r600_bc_tex *tex,
+				struct gpr_usage usage[128],
+				int id, int predicate)
 {
 	if (tex->src_rel) {
                 if (tex->src_sel_x < 4)
-			notice_gpr_rel_read(usage, id, tex->src_sel_x);
+			notice_gpr_rel_read(bc, usage, id, tex->src_gpr, tex->src_sel_x);
 		if (tex->src_sel_y < 4)
-			notice_gpr_rel_read(usage, id, tex->src_sel_y);
+			notice_gpr_rel_read(bc, usage, id, tex->src_gpr, tex->src_sel_y);
 		if (tex->src_sel_z < 4)
-			notice_gpr_rel_read(usage, id, tex->src_sel_z);
+			notice_gpr_rel_read(bc, usage, id, tex->src_gpr, tex->src_sel_z);
 		if (tex->src_sel_w < 4)
-			notice_gpr_rel_read(usage, id, tex->src_sel_w);
+			notice_gpr_rel_read(bc, usage, id, tex->src_gpr, tex->src_sel_w);
         } else {
 		if (tex->src_sel_x < 4)
 			notice_gpr_read(&usage[tex->src_gpr], id, tex->src_sel_x);
@@ -1737,7 +1760,7 @@ static void notice_tex_gprs(struct r600_bc_tex *tex, struct gpr_usage usage[128]
 }
 
 static void notice_vtx_gprs(struct r600_bc_vtx *vtx, struct gpr_usage usage[128],
-				int32_t id, int predicate)
+				int id, int predicate)
 {
 	notice_gpr_read(&usage[vtx->src_gpr], id, vtx->src_sel_x);
 
@@ -1752,11 +1775,14 @@ static void notice_vtx_gprs(struct r600_bc_vtx *vtx, struct gpr_usage usage[128]
 }
 
 static void notice_export_gprs(struct r600_bc_cf *cf, struct gpr_usage usage[128],
-				struct r600_bc_cf *export_cf[128], int32_t export_remap[128])
+				struct r600_bc_cf *export_cf[128], int export_remap[128])
 {
 	//TODO handle other memory operations
 	struct gpr_usage *output = &usage[cf->output.gpr];
-	int32_t id = (output->last_write[0] + 0x100) & ~0xFF;
+	int id = MAX4(output->last_write[0], output->last_write[1],
+		output->last_write[2], output->last_write[3]);
+	id += 0x100;
+	id &= ~0xFF;
 
 	export_cf[cf->output.gpr] = cf;
 	export_remap[cf->output.gpr] = id;
@@ -1770,7 +1796,7 @@ static void notice_export_gprs(struct r600_bc_cf *cf, struct gpr_usage usage[128
 		notice_gpr_read(output, id, cf->output.swizzle_w);
 }
 
-static struct gpr_usage_range *find_src_range(struct gpr_usage *usage, int32_t id)
+static struct gpr_usage_range *find_src_range(struct gpr_usage *usage, int id)
 {
 	unsigned i;
 	for (i = 0; i < usage->nranges; ++i) {
@@ -1782,21 +1808,20 @@ static struct gpr_usage_range *find_src_range(struct gpr_usage *usage, int32_t i
 	return NULL;
 }
 
-static struct gpr_usage_range *find_dst_range(struct gpr_usage *usage, int32_t id)
+static struct gpr_usage_range *find_dst_range(struct gpr_usage *usage, int id)
 {
 	unsigned i;
 	for (i = 0; i < usage->nranges; ++i) {
 		struct gpr_usage_range* range = &usage->ranges[i];
-		int32_t end = range->end;
+		int end = range->end;
 
 		if (range->start <= id && (id < end || end == -1))
 			return range;
 	}
-	assert(0); /* should not happen */
 	return NULL;
 }
 
-static int is_barrier_needed(struct gpr_usage *usage, int32_t id, unsigned chan, int32_t last_barrier)
+static int is_barrier_needed(struct gpr_usage *usage, int id, unsigned chan, int last_barrier)
 {
 	if (usage->last_write[chan] != (id & ~0xFF))
 		return usage->last_write[chan] >= last_barrier;
@@ -1809,32 +1834,46 @@ static int is_intersection(struct gpr_usage_range* a, struct gpr_usage_range* b)
 	return a->start <= b->end && b->start < a->end;
 }
 
-static int rate_replacement(struct gpr_usage *usage, struct gpr_usage_range* range)
+static int rate_replacement(struct gpr_usage usage[128], unsigned current, unsigned gpr,
+				struct gpr_usage_range* range)
 {
+	int max_gpr = gpr + MAX2(range->rel_block, 1);
+	int best_start = 0x3FFFFFFF, best_end = 0x3FFFFFFF;
 	unsigned i;
-	int32_t best_start = 0x3FFFFFFF, best_end = 0x3FFFFFFF;
 
-	for (i = 0; i < usage->nranges; ++i) {
-		if (usage->ranges[i].replacement != -1)
-			continue; /* ignore already remapped ranges */
+	for (; gpr < max_gpr; ++gpr) {
 
-		if (is_intersection(&usage->ranges[i], range))
-			return -1; /* forget it if usages overlap */
+		if (gpr >= 128) /* relative gpr block won't fit into clause temporaries */
+			return -1; /* forget it */
 
-		if (range->start >= usage->ranges[i].end)
-			best_start = MIN2(best_start, range->start - usage->ranges[i].end);
+		if (gpr == current) /* ignore ranges of to be replaced register */
+			continue;
 
-		if (range->end != -1 && range->end <= usage->ranges[i].start)
-			best_end = MIN2(best_end, usage->ranges[i].start - range->end);
+		for (i = 0; i < usage[gpr].nranges; ++i) {
+			if (usage[gpr].ranges[i].replacement < gpr)
+				continue; /* ignore already remapped ranges */
+
+			if (is_intersection(&usage[gpr].ranges[i], range))
+				return -1; /* forget it if usages overlap */
+
+			if (range->start >= usage[gpr].ranges[i].end)
+				best_start = MIN2(best_start, range->start - usage[gpr].ranges[i].end);
+
+			if (range->end != -1 && range->end <= usage[gpr].ranges[i].start)
+				best_end = MIN2(best_end, usage[gpr].ranges[i].start - range->end);
+		}
 	}
 	return best_start + best_end;
 }
 
 static void find_replacement(struct gpr_usage usage[128], unsigned current,
-				struct gpr_usage_range *range, int is_export)
+				struct gpr_usage_range *range)
 {
-	unsigned i;
+	unsigned i, j;
 	int best_gpr = -1, best_rate = 0x7FFFFFFF;
+
+	if (range->replacement == current) 
+		return; /* register prefers to be not remapped */
 
 	if (range->replacement != -1 && range->replacement <= current) {
 		struct gpr_usage_range *other = find_src_range(&usage[range->replacement], range->start);
@@ -1843,7 +1882,7 @@ static void find_replacement(struct gpr_usage usage[128], unsigned current,
 	}
 
 	if (range->replacement != -1 && range->replacement < current) {
-		int rate = rate_replacement(&usage[range->replacement], range);
+		int rate = rate_replacement(usage, current, range->replacement, range);
 
 		/* check if prefered replacement can be used */
 		if (rate != -1) {
@@ -1854,27 +1893,9 @@ static void find_replacement(struct gpr_usage usage[128], unsigned current,
 
 	if (best_gpr == -1 && (range->start & ~0xFF) == (range->end & ~0xFF)) {
 		/* register is just used inside one ALU clause */
-		/* try to use clause temporaryis for it */
+		/* try to use clause temporaries for it */
 		for (i = 127; i > 123; --i) {
-			int rate = rate_replacement(&usage[i], range);
-
-			if (rate == -1) /* can't be used because ranges overlap */
-				continue;
-
-			if (rate < best_rate) {
-				best_rate = rate;
-				best_gpr = i;
-
-				/* can't get better than this */
-				if (rate == 0 || is_export)
-					break;
-			}
-		}
-	}
-
-	if (best_gpr == -1) {
-		for (i = 0; i < current; ++i) {
-			int rate = rate_replacement(&usage[i], range);
+			int rate = rate_replacement(usage, current, i, range);
 
 			if (rate == -1) /* can't be used because ranges overlap */
 				continue;
@@ -1890,33 +1911,48 @@ static void find_replacement(struct gpr_usage usage[128], unsigned current,
 		}
 	}
 
-	range->replacement = best_gpr;
+	if (best_gpr == -1) {
+		for (i = 0; i < current; ++i) {
+			int rate = rate_replacement(usage, current, i, range);
+
+			if (rate == -1) /* can't be used because ranges overlap */
+				continue;
+
+			if (rate < best_rate) {
+				best_rate = rate;
+				best_gpr = i;
+
+				/* can't get better than this */
+				if (rate == 0)
+					break;
+			}
+		}
+	}
+
 	if (best_gpr != -1) {
 		struct gpr_usage_range *reservation = add_gpr_usage_range(&usage[best_gpr]);
-		reservation->replacement = -1;
+		reservation->replacement = best_gpr;
+		reservation->rel_block = -1;
 		reservation->start = range->start;
 		reservation->end = range->end;
+	} else
+		best_gpr = current;
+
+	range->replacement = best_gpr;
+	if (range->rel_block == -1)
+		return; /* no relative block to handle we are done here */
+
+	/* set prefered register for the whole relative register block */
+	for (i = current + 1, ++best_gpr; i < current + range->rel_block; ++i, ++best_gpr) {
+		for (j = 0; j < usage[i].nranges; ++j) {
+			if (is_intersection(&usage[i].ranges[j], range))
+				usage[i].ranges[j].replacement = best_gpr;
+		}
 	}
 }
 
-static void find_export_replacement(struct gpr_usage usage[128],
-				struct gpr_usage_range *range, struct r600_bc_cf *current,
-				struct r600_bc_cf *next, int32_t next_id)
-{
-	if (!next || next_id <= range->start || next_id > range->end)
-		return;
-
-	if (current->output.type != next->output.type)
-		return;
-
-	if ((current->output.array_base + 1) != next->output.array_base)
-		return;
-
-	find_src_range(&usage[next->output.gpr], next_id)->replacement = range->replacement + 1;
-}
-
 static void replace_alu_gprs(struct r600_bc *bc, struct r600_bc_alu *alu, struct gpr_usage usage[128],
-				int32_t id, int32_t last_barrier, unsigned *barrier)
+				int id, int last_barrier, unsigned *barrier)
 {
 	struct gpr_usage *cur_usage;
 	struct gpr_usage_range *range;
@@ -1930,8 +1966,7 @@ static void replace_alu_gprs(struct r600_bc *bc, struct r600_bc_alu *alu, struct
 
 		cur_usage = &usage[alu->src[src].sel];
 		range = find_src_range(cur_usage, id);
-		if (range->replacement != -1)
-			alu->src[src].sel = range->replacement;
+		alu->src[src].sel = range->replacement;
 
 		*barrier |= is_barrier_needed(cur_usage, id, alu->src[src].chan, last_barrier);
 	}
@@ -1939,15 +1974,18 @@ static void replace_alu_gprs(struct r600_bc *bc, struct r600_bc_alu *alu, struct
 	if (alu->dst.write) {
 		cur_usage = &usage[alu->dst.sel];
 		range = find_dst_range(cur_usage, id);
-		if (range->replacement == alu->dst.sel) {
+		if (!range || range->replacement == -1) {
 			if (!alu->is_op3)
 				alu->dst.write = 0;
 			else
 				/*TODO: really check that register 123 is useable */
 				alu->dst.sel = 123;
-		} else if (range->replacement != -1) {
+		} else {
 			alu->dst.sel = range->replacement;
+			*barrier |= is_barrier_needed(cur_usage, id, alu->dst.chan, last_barrier);
 		}
+	}
+	if (alu->dst.write) {
 		if (alu->dst.rel)
 			notice_gpr_rel_last_write(usage, id, alu->dst.chan);
 		else
@@ -1956,7 +1994,7 @@ static void replace_alu_gprs(struct r600_bc *bc, struct r600_bc_alu *alu, struct
 }
 
 static void replace_tex_gprs(struct r600_bc_tex *tex, struct gpr_usage usage[128],
-				int32_t id, int32_t last_barrier, unsigned *barrier)
+				int id, int last_barrier, unsigned *barrier)
 {
 	struct gpr_usage *cur_usage = &usage[tex->src_gpr];
 	struct gpr_usage_range *range = find_src_range(cur_usage, id);
@@ -1973,64 +2011,68 @@ static void replace_tex_gprs(struct r600_bc_tex *tex, struct gpr_usage usage[128
 		if (tex->src_sel_w < 4)
 			*barrier |= is_barrier_needed(cur_usage, id, tex->src_sel_w, last_barrier);
 	}
-
-	if (range->replacement != -1)
-		tex->src_gpr = range->replacement;
+	tex->src_gpr = range->replacement;
 
 	cur_usage = &usage[tex->dst_gpr];
+
 	range = find_dst_range(cur_usage, id);
-	if (range->replacement != -1)
+	if (range) {
 		tex->dst_gpr = range->replacement;
 
-	if (tex->dst_rel) {
-		if (tex->dst_sel_x != 7)
-			notice_gpr_rel_last_write(usage, id, tex->dst_sel_x);
-		if (tex->dst_sel_y != 7)
-			notice_gpr_rel_last_write(usage, id, tex->dst_sel_y);
-		if (tex->dst_sel_z != 7)
-			notice_gpr_rel_last_write(usage, id, tex->dst_sel_z);
-		if (tex->dst_sel_w != 7)
-			notice_gpr_rel_last_write(usage, id, tex->dst_sel_w);
+		if (tex->dst_rel) {
+			if (tex->dst_sel_x != 7)
+				notice_gpr_rel_last_write(usage, id, tex->dst_sel_x);
+			if (tex->dst_sel_y != 7)
+				notice_gpr_rel_last_write(usage, id, tex->dst_sel_y);
+			if (tex->dst_sel_z != 7)
+				notice_gpr_rel_last_write(usage, id, tex->dst_sel_z);
+			if (tex->dst_sel_w != 7)
+				notice_gpr_rel_last_write(usage, id, tex->dst_sel_w);
+		} else {
+			if (tex->dst_sel_x != 7)
+				notice_gpr_last_write(cur_usage, id, tex->dst_sel_x);
+			if (tex->dst_sel_y != 7)
+				notice_gpr_last_write(cur_usage, id, tex->dst_sel_y);
+			if (tex->dst_sel_z != 7)
+				notice_gpr_last_write(cur_usage, id, tex->dst_sel_z);
+			if (tex->dst_sel_w != 7)
+				notice_gpr_last_write(cur_usage, id, tex->dst_sel_w);
+		}
 	} else {
-		if (tex->dst_sel_x != 7)
-			notice_gpr_last_write(cur_usage, id, tex->dst_sel_x);
-		if (tex->dst_sel_y != 7)
-			notice_gpr_last_write(cur_usage, id, tex->dst_sel_y);
-		if (tex->dst_sel_z != 7)
-			notice_gpr_last_write(cur_usage, id, tex->dst_sel_z);
-		if (tex->dst_sel_w != 7)
-			notice_gpr_last_write(cur_usage, id, tex->dst_sel_w);
+		tex->dst_gpr = 123;
 	}
 }
 
 static void replace_vtx_gprs(struct r600_bc_vtx *vtx, struct gpr_usage usage[128],
-				int32_t id, int32_t last_barrier, unsigned *barrier)
+				int id, int last_barrier, unsigned *barrier)
 {
 	struct gpr_usage *cur_usage = &usage[vtx->src_gpr];
 	struct gpr_usage_range *range = find_src_range(cur_usage, id);
 
 	*barrier |= is_barrier_needed(cur_usage, id, vtx->src_sel_x, last_barrier);
 
-	if (range->replacement != -1)
-		vtx->src_gpr = range->replacement;
+	vtx->src_gpr = range->replacement;
 
 	cur_usage = &usage[vtx->dst_gpr];
 	range = find_dst_range(cur_usage, id);
-	if (range->replacement != -1)
+	if (range) {
 		vtx->dst_gpr = range->replacement;
 
-	if (vtx->dst_sel_x != 7)
-		notice_gpr_last_write(cur_usage, id, vtx->dst_sel_x);
-	if (vtx->dst_sel_y != 7)
-		notice_gpr_last_write(cur_usage, id, vtx->dst_sel_y);
-	if (vtx->dst_sel_z != 7)
-		notice_gpr_last_write(cur_usage, id, vtx->dst_sel_z);
-	if (vtx->dst_sel_w != 7)
-		notice_gpr_last_write(cur_usage, id, vtx->dst_sel_w);
+		if (vtx->dst_sel_x != 7)
+			notice_gpr_last_write(cur_usage, id, vtx->dst_sel_x);
+		if (vtx->dst_sel_y != 7)
+			notice_gpr_last_write(cur_usage, id, vtx->dst_sel_y);
+		if (vtx->dst_sel_z != 7)
+			notice_gpr_last_write(cur_usage, id, vtx->dst_sel_z);
+		if (vtx->dst_sel_w != 7)
+			notice_gpr_last_write(cur_usage, id, vtx->dst_sel_w);
+	} else {
+		vtx->dst_gpr = 123;
+	}
 }
 
 static void replace_export_gprs(struct r600_bc_cf *cf, struct gpr_usage usage[128],
-				int32_t id, int32_t last_barrier)
+				int id, int last_barrier)
 {
 	//TODO handle other memory operations
 	struct gpr_usage *cur_usage = &usage[cf->output.gpr];
@@ -2046,8 +2088,7 @@ static void replace_export_gprs(struct r600_bc_cf *cf, struct gpr_usage usage[12
 	if (cf->output.swizzle_w < 4)
 		cf->barrier |= is_barrier_needed(cur_usage, -1, cf->output.swizzle_w, last_barrier);
 
-	if (range->replacement != -1)
-		cf->output.gpr = range->replacement;
+	cf->output.gpr = range->replacement;
 }
 
 static void optimize_alu_inst(struct r600_bc *bc, struct r600_bc_cf *cf, struct r600_bc_alu *alu)
@@ -2138,9 +2179,9 @@ static void r600_bc_optimize(struct r600_bc *bc)
 
 	/* assume that each gpr is exported only once */
 	struct r600_bc_cf *export_cf[128] = { NULL };
-	int32_t export_remap[128];
+	int export_remap[128];
 
-	int32_t id, barrier[bc->nstack];
+	int id, cond_start, barrier[bc->nstack];
 	unsigned i, j, stack, predicate, old_stack;
 
 	memset(&usage, 0, sizeof(usage));
@@ -2155,7 +2196,11 @@ static void r600_bc_optimize(struct r600_bc *bc)
 	/* first gather some informations about the gpr usage */
 	id = 0; stack = 0;
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
-		switch (get_cf_class(cf)) {
+		old_stack = stack;
+		if (stack == 0)
+			cond_start = stack;
+
+		switch (r600_bc_cf_class(cf)) {
 		case CF_CLASS_ALU:
 			predicate = 0;
 			first = NULL;
@@ -2180,7 +2225,7 @@ static void r600_bc_optimize(struct r600_bc *bc)
 			break;
 		case CF_CLASS_TEXTURE:
 			LIST_FOR_EACH_ENTRY(tex, &cf->tex, list) {
-				notice_tex_gprs(tex, usage, id++, stack > 0);
+				notice_tex_gprs(bc, tex, usage, id++, stack > 0);
 			}
 			break;
 		case CF_CLASS_VERTEX:
@@ -2207,6 +2252,14 @@ static void r600_bc_optimize(struct r600_bc *bc)
 				goto out;
 			}
 		}
+
+		/* extend last_write after conditional block */
+		if (stack == 0 && old_stack != 0)
+			for (i = 0; i < 128; ++i)
+				for (j = 0; j < 4; ++j)
+					if (usage[i].last_write[j] >= cond_start)
+						usage[i].last_write[j] = id;
+
 		id += 0x100;
 	        id &= ~0xFF;
 	}
@@ -2216,26 +2269,19 @@ static void r600_bc_optimize(struct r600_bc *bc)
 	for (i = 0; i < 124; ++i) {
 		for (j = 0; j < usage[i].nranges; ++j) {
 			struct gpr_usage_range *range = &usage[i].ranges[j];
-			int is_export = export_cf[i] && export_cf[i + 1] &&
-				range->start < export_remap[i] &&
-				export_remap[i] <= range->end;
-
 			if (range->start == -1)
-				range->replacement = -1;
-			else if (range->end == -1)
+				/* can't rearange shader inputs */
 				range->replacement = i;
+			else if (range->end == -1)
+				/* gpr isn't used any more after this instruction */
+				range->replacement = -1;
 			else
-				find_replacement(usage, i, range, is_export);
+				find_replacement(usage, i, range);
 
-			if (range->replacement == -1)
+			if (range->replacement == i)
 				bc->ngpr = i;
 			else if (range->replacement < i && range->replacement > bc->ngpr)
 				bc->ngpr = range->replacement;
-
-			if (is_export && range->replacement != -1) {
-				find_export_replacement(usage, range, export_cf[i],
-							export_cf[i + 1], export_remap[i + 1]);
-			}
 		}
 	}
 	bc->ngpr++;
@@ -2251,7 +2297,7 @@ static void r600_bc_optimize(struct r600_bc *bc)
 	id = 0; stack = 0;
 	LIST_FOR_EACH_ENTRY_SAFE(cf, next_cf, &bc->cf, list) {
 		old_stack = stack;
-		switch (get_cf_class(cf)) {
+		switch (r600_bc_cf_class(cf)) {
 		case CF_CLASS_ALU:
 			predicate = 0;
 			first = NULL;
@@ -2308,7 +2354,7 @@ static void r600_bc_optimize(struct r600_bc *bc)
 			barrier[i] = barrier[old_stack];
 
 		id += 0x100;
-		if (stack != 0) /* ensue exports are placed outside of conditional blocks */
+		if (stack != 0) /* ensure exports are placed outside of conditional blocks */
 			continue;
 
 		for (i = 0; i < 128; ++i) {
@@ -2350,13 +2396,13 @@ int r600_bc_build(struct r600_bc *bc)
 		bc->nstack = 1;
 	}
 
-	r600_bc_optimize(bc);
+	//r600_bc_optimize(bc);
 
 	/* first path compute addr of each CF block */
 	/* addr start after all the CF instructions */
 	addr = LIST_ENTRY(struct r600_bc_cf, bc->cf.prev, list)->id + 2;
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
-		switch (get_cf_class(cf)) {
+		switch (r600_bc_cf_class(cf)) {
 		case CF_CLASS_ALU:
 			break;
 		case CF_CLASS_TEXTURE:
@@ -2364,7 +2410,6 @@ int r600_bc_build(struct r600_bc *bc)
 			/* fetch node need to be 16 bytes aligned*/
 			addr += 3;
 			addr &= 0xFFFFFFFCUL;
-			break;
 			break;
 		case CF_CLASS_EXPORT:
 			if (cf->inst == BC_INST(bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT))
@@ -2400,7 +2445,7 @@ int r600_bc_build(struct r600_bc *bc)
 			r = r600_bc_cf_build(bc, cf);
 		if (r)
 			return r;
-		switch (get_cf_class(cf)) {
+		switch (r600_bc_cf_class(cf)) {
 		case CF_CLASS_ALU:
 			nliteral = 0;
 			memset(literal, 0, sizeof(literal));
@@ -2526,7 +2571,7 @@ void r600_bc_dump(struct r600_bc *bc)
 	LIST_FOR_EACH_ENTRY(cf, &bc->cf, list) {
 		id = cf->id;
 
-		switch (get_cf_class(cf)) {
+		switch (r600_bc_cf_class(cf)) {
 		case CF_CLASS_ALU:
 			fprintf(stderr, "%04d %08X ALU ", id, bc->bytecode[id]);
 			fprintf(stderr, "ADDR:%04d ", cf->addr);
@@ -2563,7 +2608,6 @@ void r600_bc_dump(struct r600_bc *bc)
 			fprintf(stderr, "SWIZ_X:%X ", cf->output.swizzle_x);
 			fprintf(stderr, "SWIZ_Y:%X ", cf->output.swizzle_y);
 			fprintf(stderr, "SWIZ_Z:%X ", cf->output.swizzle_z);
-			fprintf(stderr, "SWIZ_W:%X ", cf->output.swizzle_w);
 			fprintf(stderr, "SWIZ_W:%X ", cf->output.swizzle_w);
 			fprintf(stderr, "BARRIER:%d ", cf->barrier);
 			fprintf(stderr, "INST:%d ", cf->inst);
@@ -2649,21 +2693,21 @@ void r600_cf_vtx(struct r600_vertex_element *ve, u32 *bytecode, unsigned count)
 	if (count > 8) {
 		bytecode[i++] = S_SQ_CF_WORD0_ADDR(8 >> 1);
 		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX) |
-						S_SQ_CF_WORD1_BARRIER(0) |
+						S_SQ_CF_WORD1_BARRIER(1) |
 						S_SQ_CF_WORD1_COUNT(8 - 1);
 		bytecode[i++] = S_SQ_CF_WORD0_ADDR(40 >> 1);
 		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX) |
-						S_SQ_CF_WORD1_BARRIER(0) |
+						S_SQ_CF_WORD1_BARRIER(1) |
 						S_SQ_CF_WORD1_COUNT(count - 8 - 1);
 	} else {
 		bytecode[i++] = S_SQ_CF_WORD0_ADDR(8 >> 1);
 		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX) |
-						S_SQ_CF_WORD1_BARRIER(0) |
+						S_SQ_CF_WORD1_BARRIER(1) |
 						S_SQ_CF_WORD1_COUNT(count - 1);
 	}
 	bytecode[i++] = S_SQ_CF_WORD0_ADDR(0);
 	bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_RETURN) |
-			S_SQ_CF_WORD1_BARRIER(0);
+			S_SQ_CF_WORD1_BARRIER(1);
 
 	rstate = &ve->rstate;
 	rstate->id = R600_PIPE_STATE_FETCH_SHADER;
@@ -2685,21 +2729,21 @@ void r600_cf_vtx_tc(struct r600_vertex_element *ve, u32 *bytecode, unsigned coun
 	if (count > 8) {
 		bytecode[i++] = S_SQ_CF_WORD0_ADDR(8 >> 1);
 		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC) |
-						S_SQ_CF_WORD1_BARRIER(0) |
+						S_SQ_CF_WORD1_BARRIER(1) |
 						S_SQ_CF_WORD1_COUNT(8 - 1);
 		bytecode[i++] = S_SQ_CF_WORD0_ADDR(40 >> 1);
 		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC) |
-						S_SQ_CF_WORD1_BARRIER(0) |
+						S_SQ_CF_WORD1_BARRIER(1) |
 						S_SQ_CF_WORD1_COUNT((count - 8) - 1);
 	} else {
 		bytecode[i++] = S_SQ_CF_WORD0_ADDR(8 >> 1);
 		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC) |
-						S_SQ_CF_WORD1_BARRIER(0) |
+						S_SQ_CF_WORD1_BARRIER(1) |
 						S_SQ_CF_WORD1_COUNT(count - 1);
 	}
 	bytecode[i++] = S_SQ_CF_WORD0_ADDR(0);
 	bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_RETURN) |
-			S_SQ_CF_WORD1_BARRIER(0);
+			S_SQ_CF_WORD1_BARRIER(1);
 
 	rstate = &ve->rstate;
 	rstate->id = R600_PIPE_STATE_FETCH_SHADER;
