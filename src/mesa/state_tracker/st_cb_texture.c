@@ -275,6 +275,7 @@ guess_and_alloc_texture(struct st_context *st,
    const GLuint dims = get_texture_dims(stObj->base.Target);
    GLuint level, lastLevel, width, height, depth;
    GLuint bindings;
+   GLuint ptWidth, ptHeight, ptDepth, ptLayers;
    enum pipe_format fmt;
 
    DBG("%s\n", __FUNCTION__);
@@ -352,14 +353,18 @@ guess_and_alloc_texture(struct st_context *st,
 
    bindings = default_bindings(st, fmt);
 
+   st_gl_texture_dims_to_pipe_dims(stObj->base.Target,
+                                   width, height, depth,
+                                   &ptWidth, &ptHeight, &ptDepth, &ptLayers);
+
    stObj->pt = st_texture_create(st,
                                  gl_target_to_pipe(stObj->base.Target),
                                  fmt,
                                  lastLevel,
-                                 width,
-                                 height,
-                                 depth,
-                                 1,
+                                 ptWidth,
+                                 ptHeight,
+                                 ptDepth,
+                                 ptLayers,
                                  bindings);
 
    DBG("%s returning %d\n", __FUNCTION__, (stObj->pt != NULL));
@@ -1838,6 +1843,7 @@ st_finalize_texture(struct gl_context *ctx,
    GLuint face;
    struct st_texture_image *firstImage;
    enum pipe_format firstImageFormat;
+   GLuint ptWidth, ptHeight, ptDepth, ptLayers;
 
    if (stObj->base._Complete) {
       /* The texture is complete and we know exactly how many mipmap levels
@@ -1870,6 +1876,9 @@ st_finalize_texture(struct gl_context *ctx,
 
    /* Find gallium format for the Mesa texture */
    firstImageFormat = st_mesa_format_to_pipe_format(firstImage->base.TexFormat);
+   st_gl_texture_dims_to_pipe_dims(stObj->base.Target, stObj->width0,
+                                   stObj->height0, stObj->depth0,
+                                   &ptWidth, &ptHeight, &ptDepth, &ptLayers);
 
    /* If we already have a gallium texture, check that it matches the texture
     * object's format, target, size, num_levels, etc.
@@ -1878,9 +1887,10 @@ st_finalize_texture(struct gl_context *ctx,
       if (stObj->pt->target != gl_target_to_pipe(stObj->base.Target) ||
           !st_sampler_compat_formats(stObj->pt->format, firstImageFormat) ||
           stObj->pt->last_level < stObj->lastLevel ||
-          stObj->pt->width0 != stObj->width0 ||
-          stObj->pt->height0 != stObj->height0 ||
-          stObj->pt->depth0 != stObj->depth0)
+          stObj->pt->width0 != ptWidth ||
+          stObj->pt->height0 != ptHeight ||
+          stObj->pt->depth0 != ptDepth ||
+          stObj->pt->array_size != ptLayers)
       {
          /* The gallium texture does not match the Mesa texture so delete the
           * gallium texture now.  We'll make a new one below.
@@ -1900,10 +1910,10 @@ st_finalize_texture(struct gl_context *ctx,
                                     gl_target_to_pipe(stObj->base.Target),
                                     firstImageFormat,
                                     stObj->lastLevel,
-                                    stObj->width0,
-                                    stObj->height0,
-                                    stObj->depth0,
-                                    1,
+                                    ptWidth,
+                                    ptHeight,
+                                    ptDepth,
+                                    ptLayers,
                                     bindings);
 
       if (!stObj->pt) {
