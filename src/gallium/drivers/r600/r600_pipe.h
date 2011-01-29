@@ -277,6 +277,8 @@ void r600_bind_ps_shader(struct pipe_context *ctx, void *state);
 void r600_bind_vs_shader(struct pipe_context *ctx, void *state);
 void r600_delete_ps_shader(struct pipe_context *ctx, void *state);
 void r600_delete_vs_shader(struct pipe_context *ctx, void *state);
+void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
+			      struct pipe_resource *buffer);
 void r600_vertex_buffer_update(struct r600_pipe_context *rctx);
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
 

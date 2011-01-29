@@ -837,54 +837,6 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	}
 }
 
-static void evergreen_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
-					struct pipe_resource *buffer)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_resource_buffer *rbuffer = r600_buffer(buffer);
-	uint32_t offset;
-
-	/* Note that the state tracker can unbind constant buffers by
-	 * passing NULL here.
-	 */
-	if (buffer == NULL) {
-		return;
-	}
-
-	r600_upload_const_buffer(rctx, &rbuffer, &offset);
-
-	switch (shader) {
-	case PIPE_SHADER_VERTEX:
-		rctx->vs_const_buffer.nregs = 0;
-		r600_pipe_state_add_reg(&rctx->vs_const_buffer,
-					R_028180_ALU_CONST_BUFFER_SIZE_VS_0,
-					ALIGN_DIVUP(buffer->width0 >> 4, 16),
-					0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(&rctx->vs_const_buffer,
-					R_028980_ALU_CONST_CACHE_VS_0,
-					(r600_bo_offset(rbuffer->r.bo) + offset) >> 8, 0xFFFFFFFF, rbuffer->r.bo);
-		r600_context_pipe_state_set(&rctx->ctx, &rctx->vs_const_buffer);
-		break;
-	case PIPE_SHADER_FRAGMENT:
-		rctx->ps_const_buffer.nregs = 0;
-		r600_pipe_state_add_reg(&rctx->ps_const_buffer,
-					R_028140_ALU_CONST_BUFFER_SIZE_PS_0,
-					ALIGN_DIVUP(buffer->width0 >> 4, 16),
-					0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(&rctx->ps_const_buffer,
-					R_028940_ALU_CONST_CACHE_PS_0,
-					(r600_bo_offset(rbuffer->r.bo) + offset) >> 8, 0xFFFFFFFF, rbuffer->r.bo);
-		r600_context_pipe_state_set(&rctx->ctx, &rctx->ps_const_buffer);
-		break;
-	default:
-		R600_ERR("unsupported %d\n", shader);
-		return;
-	}
-
-	if (!rbuffer->user_buffer)
-		pipe_resource_reference((struct pipe_resource**)&rbuffer, NULL);
-}
-
 void evergreen_init_state_functions(struct r600_pipe_context *rctx)
 {
 	rctx->context.create_blend_state = evergreen_create_blend_state;
@@ -912,7 +864,7 @@ void evergreen_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.delete_vs_state = r600_delete_vs_shader;
 	rctx->context.set_blend_color = evergreen_set_blend_color;
 	rctx->context.set_clip_state = evergreen_set_clip_state;
-	rctx->context.set_constant_buffer = evergreen_set_constant_buffer;
+	rctx->context.set_constant_buffer = r600_set_constant_buffer;
 	rctx->context.set_fragment_sampler_views = evergreen_set_ps_sampler_view;
 	rctx->context.set_framebuffer_state = evergreen_set_framebuffer_state;
 	rctx->context.set_polygon_stipple = evergreen_set_polygon_stipple;
