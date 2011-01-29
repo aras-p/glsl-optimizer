@@ -930,6 +930,9 @@
 #define     V_030000_SQ_TEX_DIM_2D_ARRAY               0x00000005
 #define     V_030000_SQ_TEX_DIM_2D_MSAA                0x00000006
 #define     V_030000_SQ_TEX_DIM_2D_ARRAY_MSAA          0x00000007
+#define   S_030000_NON_DISP_TILING_ORDER(x)            (((x) & 0x1) << 5)
+#define   G_030000_NON_DISP_TILING_ORDER(x)            (((x) >> 5) & 0x1)
+#define   C_030000_NON_DISP_TILING_ORDER               0xFFFFFFDF
 #define   S_030000_PITCH(x)                            (((x) & 0xFFF) << 6)
 #define   G_030000_PITCH(x)                            (((x) >> 6) & 0xFFF)
 #define   C_030000_PITCH                               0xFFFC003F

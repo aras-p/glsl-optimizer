@@ -78,20 +78,8 @@ static int radeon_get_device(struct radeon *radeon)
 	return r;
 }
 
-static int radeon_drm_get_tiling(struct radeon *radeon)
+static int r600_interpret_tiling(struct radeon *radeon, uint32_t tiling_config)
 {
-	struct drm_radeon_info info;
-	int r;
-	uint32_t tiling_config = 0;
-
-	info.request = RADEON_INFO_TILING_CONFIG;
-	info.value = (uintptr_t)&tiling_config;
-	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
-				sizeof(struct drm_radeon_info));
-
-	if (r)
-		return 0;
-
 	switch ((tiling_config & 0xe) >> 1) {
 	case 0:
 		radeon->tiling_info.num_channels = 1;
@@ -131,6 +119,62 @@ static int radeon_drm_get_tiling(struct radeon *radeon)
 		return -EINVAL;
 	}
 	return 0;
+}
+
+static int eg_interpret_tiling(struct radeon *radeon, uint32_t tiling_config)
+{
+	switch (tiling_config & 0xf) {
+	case 0:
+		radeon->tiling_info.num_channels = 1;
+		break;
+	case 1:
+		radeon->tiling_info.num_channels = 2;
+		break;
+	case 2:
+		radeon->tiling_info.num_channels = 4;
+		break;
+	case 3:
+		radeon->tiling_info.num_channels = 8;
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	radeon->tiling_info.num_banks = (tiling_config & 0xf0) >> 4;
+
+	switch ((tiling_config & 0xf00) >> 8) {
+	case 0:
+		radeon->tiling_info.group_bytes = 256;
+		break;
+	case 1:
+		radeon->tiling_info.group_bytes = 512;
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
+
+static int radeon_drm_get_tiling(struct radeon *radeon)
+{
+	struct drm_radeon_info info;
+	int r;
+	uint32_t tiling_config = 0;
+
+	info.request = RADEON_INFO_TILING_CONFIG;
+	info.value = (uintptr_t)&tiling_config;
+	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
+				sizeof(struct drm_radeon_info));
+
+	if (r)
+		return 0;
+
+	if (radeon->chip_class == R600 || radeon->chip_class == R700) {
+		r = r600_interpret_tiling(radeon, tiling_config);
+	} else {
+		r = eg_interpret_tiling(radeon, tiling_config);
+	}
+	return r;
 }
 
 static int radeon_get_clock_crystal_freq(struct radeon *radeon)
@@ -228,10 +272,9 @@ static struct radeon *radeon_new(int fd, unsigned device)
 		break;
 	}
 
-	if (radeon->chip_class == R600 || radeon->chip_class == R700) {
-		if (radeon_drm_get_tiling(radeon))
-			return NULL;
-	}
+	if (radeon_drm_get_tiling(radeon))
+		return NULL;
+
 	/* get the GPU counter frequency, failure is non fatal */
 	radeon_get_clock_crystal_freq(radeon);
 

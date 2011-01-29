@@ -351,7 +351,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	struct r600_resource *rbuffer;
 	unsigned format;
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
-	unsigned char swizzle[4];
+	unsigned char swizzle[4], array_mode = 0, tile_type = 0;
 	struct r600_bo *bo[2];
 
 	if (resource == NULL)
@@ -390,15 +390,21 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	bo[1] = rbuffer->bo;
 
 	pitch = align(tmp->pitch_in_pixels[0], 8);
+	if (tmp->tiled) {
+		array_mode = tmp->array_mode[0];
+		tile_type = tmp->tile_type;
+	}
 
 	/* FIXME properly handle first level != 0 */
 	r600_pipe_state_add_reg(rstate, R_030000_RESOURCE0_WORD0,
 				S_030000_DIM(r600_tex_dim(texture->target)) |
 				S_030000_PITCH((pitch / 8) - 1) |
+				S_030000_NON_DISP_TILING_ORDER(tile_type) |
 				S_030000_TEX_WIDTH(texture->width0 - 1), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_030004_RESOURCE0_WORD1,
 				S_030004_TEX_HEIGHT(texture->height0 - 1) |
-				S_030004_TEX_DEPTH(texture->depth0 - 1),
+				S_030004_TEX_DEPTH(texture->depth0 - 1) |
+				S_030004_ARRAY_MODE(array_mode),
 				0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_030008_RESOURCE0_WORD2,
 				(tmp->offset[0] + r600_bo_offset(bo[0])) >> 8, 0xFFFFFFFF, bo[0]);
@@ -635,6 +641,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	unsigned color_info;
 	unsigned format, swap, ntype;
 	unsigned offset;
+	unsigned tile_type;
 	const struct util_format_description *desc;
 	struct r600_bo *bo[3];
 
@@ -659,10 +666,16 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	swap = r600_translate_colorswap(rtex->resource.base.b.format);
 	color_info = S_028C70_FORMAT(format) |
 		S_028C70_COMP_SWAP(swap) |
+		S_028C70_ARRAY_MODE(rtex->array_mode[level]) |
 		S_028C70_BLEND_CLAMP(1) |
 		S_028C70_NUMBER_TYPE(ntype);
 	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
 		color_info |= S_028C70_SOURCE_FORMAT(1);
+
+	if (rtex->tiled) {
+		tile_type = rtex->tile_type;
+	} else /* workaround for linear buffers */
+		tile_type = 1;
 
 	/* FIXME handle enabling of CB beyond BASE8 which has different offset */
 	r600_pipe_state_add_reg(rstate,
@@ -687,7 +700,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 				0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
 				R_028C74_CB_COLOR0_ATTRIB + cb * 0x3C,
-				S_028C74_NON_DISP_TILING_ORDER(1),
+				S_028C74_NON_DISP_TILING_ORDER(tile_type),
 				0xFFFFFFFF, bo[0]);
 }
 
