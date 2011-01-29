@@ -365,8 +365,8 @@ static int merge_presub_sources(
 		for(arg = 0; arg < info->NumSrcRegs; arg++) {
 			/*If this arg does not read from an rgb source,
 			 * do nothing. */
-			if (!(rc_source_type_swz(dst_full->RGB.Arg[arg].Swizzle,
-								3) & type)) {
+			if (!(rc_source_type_swz(dst_full->RGB.Arg[arg].Swizzle)
+								& type)) {
 				continue;
 			}
 
@@ -423,11 +423,11 @@ static int destructive_merge_instructions(
 		unsigned int index = 0;
 		int source;
 
-		if (alpha->Alpha.Arg[arg].Swizzle < 3) {
+		if (GET_SWZ(alpha->Alpha.Arg[arg].Swizzle, 0) < 3) {
 			srcrgb = 1;
 			file = alpha->RGB.Src[oldsrc].File;
 			index = alpha->RGB.Src[oldsrc].Index;
-		} else if (alpha->Alpha.Arg[arg].Swizzle < 4) {
+		} else if (GET_SWZ(alpha->Alpha.Arg[arg].Swizzle, 0) < 4) {
 			srcalpha = 1;
 			file = alpha->Alpha.Src[oldsrc].File;
 			index = alpha->Alpha.Src[oldsrc].Index;
@@ -728,7 +728,8 @@ static int convert_rgb_to_alpha(
 		for (j = 0; j < 3; j++) {
 			unsigned int swz = get_swz(pair_inst->Alpha.Arg[i].Swizzle, j);
 			if (swz != RC_SWIZZLE_UNUSED) {
-				pair_inst->Alpha.Arg[i].Swizzle = swz;
+				pair_inst->Alpha.Arg[i].Swizzle =
+							rc_init_swizzle(swz, 1);
 				break;
 			}
 		}

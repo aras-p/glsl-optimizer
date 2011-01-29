@@ -170,7 +170,7 @@ static unsigned int translate_arg_rgb(struct rc_pair_instruction *inst, int arg)
 static unsigned int translate_arg_alpha(struct rc_pair_instruction *inst, int i)
 {
 	unsigned int t = inst->Alpha.Arg[i].Source;
-	t |= fix_hw_swizzle(inst->Alpha.Arg[i].Swizzle) << 2;
+	t |= fix_hw_swizzle(GET_SWZ(inst->Alpha.Arg[i].Swizzle, 0)) << 2;
 	t |= inst->Alpha.Arg[i].Negate << 5;
 	t |= inst->Alpha.Arg[i].Abs << 6;
 	return t;

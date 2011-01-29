@@ -222,13 +222,14 @@ unsigned int r300FPTranslateRGBSwizzle(unsigned int src, unsigned int swizzle)
  */
 unsigned int r300FPTranslateAlphaSwizzle(unsigned int src, unsigned int swizzle)
 {
+	unsigned int swz = GET_SWZ(swizzle, 0);
 	if (src == RC_PAIR_PRESUB_SRC) {
-		return R300_ALU_ARGA_SRCP_X + swizzle;
+		return R300_ALU_ARGA_SRCP_X + swz;
 	}
-	if (swizzle < 3)
-		return swizzle + 3*src;
+	if (swz < 3)
+		return swz + 3*src;
 
-	switch(swizzle) {
+	switch(swz) {
 	case RC_SWIZZLE_W: return R300_ALU_ARGA_SRC0A + src;
 	case RC_SWIZZLE_ONE: return R300_ALU_ARGA_ONE;
 	case RC_SWIZZLE_ZERO: return R300_ALU_ARGA_ZERO;

@@ -63,7 +63,7 @@ struct rc_pair_instruction_source {
 
 struct rc_pair_instruction_arg {
 	unsigned int Source:2;
-	unsigned int Swizzle:9;
+	unsigned int Swizzle:12;
 	unsigned int Abs:1;
 	unsigned int Negate:1;
 };

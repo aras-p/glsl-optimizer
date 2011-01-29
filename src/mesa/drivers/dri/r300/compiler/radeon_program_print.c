@@ -379,7 +379,7 @@ static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst
 			else
 				fprintf(f,"%d", inst->Alpha.Arg[arg].Source);
 			fprintf(f,".%c%s",
-				rc_swizzle_char(inst->Alpha.Arg[arg].Swizzle), abs);
+				rc_swizzle_char(GET_SWZ(inst->Alpha.Arg[arg].Swizzle, 0)), abs);
 		}
 		fprintf(f, "\n");
 	}

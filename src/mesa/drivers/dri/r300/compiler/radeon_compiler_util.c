@@ -55,6 +55,24 @@ rc_swizzle get_swz(unsigned int swz, rc_swizzle idx)
 	return GET_SWZ(swz, idx);
 }
 
+/**
+ * The purpose of this function is to standardize the number channels used by
+ * swizzles.  All swizzles regardless of what instruction they are a part of
+ * should have 4 channels initialized with values.
+ * @param channels The number of channels in initial_value that have a
+ * meaningful value.
+ * @return An initialized swizzle that has all of the unused channels set to
+ * RC_SWIZZLE_UNUSED.
+ */
+unsigned int rc_init_swizzle(unsigned int initial_value, unsigned int channels)
+{
+	unsigned int i;
+	for (i = channels; i < 4; i++) {
+		SET_SWZ(initial_value, i, RC_SWIZZLE_UNUSED);
+	}
+	return initial_value;
+}
+
 unsigned int combine_swizzles4(unsigned int src,
 		rc_swizzle swz_x, rc_swizzle swz_y, rc_swizzle swz_z, rc_swizzle swz_w)
 {
@@ -147,13 +165,17 @@ unsigned int rc_src_reads_dst_mask(
 	return dst_mask & rc_swizzle_to_writemask(src_swz);
 }
 
-unsigned int rc_source_type_swz(unsigned int swizzle, unsigned int channels)
+/**
+ * @return A bit mask specifying whether this swizzle will select from an RGB
+ * source, an Alpha source, or both.
+ */
+unsigned int rc_source_type_swz(unsigned int swizzle)
 {
 	unsigned int chan;
 	unsigned int swz = RC_SWIZZLE_UNUSED;
 	unsigned int ret = RC_SOURCE_NONE;
 
-	for(chan = 0; chan < channels; chan++) {
+	for(chan = 0; chan < 4; chan++) {
 		swz = GET_SWZ(swizzle, chan);
 		if (swz == RC_SWIZZLE_W) {
 			ret |= RC_SOURCE_ALPHA;
@@ -202,7 +224,7 @@ static void can_use_presub_read_cb(
 		if (d->RemoveSrcs[i].File == file
 		    && d->RemoveSrcs[i].Index == index) {
 			src_type &=
-				~rc_source_type_swz(d->RemoveSrcs[i].Swizzle, 4);
+				~rc_source_type_swz(d->RemoveSrcs[i].Swizzle);
 		}
 	}
 
