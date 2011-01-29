@@ -390,11 +390,11 @@ struct pipe_stream_output_state
 struct pipe_transfer
 {
    struct pipe_resource *resource; /**< resource to transfer to/from  */
-   unsigned level;
+   unsigned level;                 /**< texture mipmap level */
    enum pipe_transfer_usage usage;
-   struct pipe_box box;
-   unsigned stride;
-   unsigned layer_stride;
+   struct pipe_box box;            /**< region of the resource to access */
+   unsigned stride;                /**< row stride in bytes */
+   unsigned layer_stride;          /**< image/layer stride in bytes */
    void *data;
 };
 
