@@ -205,34 +205,59 @@ void r300_end_vertex_translate(struct r300_context *r300)
     r300->real_vertex_buffer_count = r300->vertex_buffer_count;
 }
 
-/* XXX Use the uploader. */
 void r300_translate_index_buffer(struct r300_context *r300,
                                  struct pipe_resource **index_buffer,
                                  unsigned *index_size, unsigned index_offset,
                                  unsigned *start, unsigned count)
 {
+    struct pipe_resource *out_buffer = NULL;
+    unsigned out_offset;
+    void *ptr;
+    boolean flushed;
+
     switch (*index_size) {
-        case 1:
-            util_shorten_ubyte_elts(&r300->context, index_buffer, index_offset, *start, count);
-            *index_size = 2;
-            *start = 0;
+    case 1:
+        u_upload_alloc(r300->upload_ib, 0, count * 2,
+                       &out_offset, &out_buffer, &flushed, &ptr);
+
+        util_shorten_ubyte_elts_to_userptr(
+                &r300->context, *index_buffer, index_offset,
+                *start, count, ptr);
+
+        pipe_resource_reference(index_buffer, out_buffer);
+        *index_size = 2;
+        *start = out_offset / 2;
+        r300->validate_buffers = TRUE;
+        break;
+
+    case 2:
+        if (index_offset) {
+            u_upload_alloc(r300->upload_ib, 0, count * 2,
+                           &out_offset, &out_buffer, &flushed, &ptr);
+
+            util_rebuild_ushort_elts_to_userptr(&r300->context, *index_buffer,
+                                                index_offset, *start,
+                                                count, ptr);
+
+            pipe_resource_reference(index_buffer, out_buffer);
+            *start = out_offset / 2;
             r300->validate_buffers = TRUE;
-            break;
+        }
+        break;
 
-        case 2:
-            if (index_offset) {
-                util_rebuild_ushort_elts(&r300->context, index_buffer, index_offset, *start, count);
-                *start = 0;
-                r300->validate_buffers = TRUE;
-            }
-            break;
+    case 4:
+        if (index_offset) {
+            u_upload_alloc(r300->upload_ib, 0, count * 4,
+                           &out_offset, &out_buffer, &flushed, &ptr);
 
-        case 4:
-            if (index_offset) {
-                util_rebuild_uint_elts(&r300->context, index_buffer, index_offset, *start, count);
-                *start = 0;
-                r300->validate_buffers = TRUE;
-            }
-            break;
+            util_rebuild_uint_elts_to_userptr(&r300->context, *index_buffer,
+                                              index_offset, *start,
+                                              count, ptr);
+
+            pipe_resource_reference(index_buffer, out_buffer);
+            *start = out_offset / 4;
+            r300->validate_buffers = TRUE;
+        }
+        break;
     }
 }
