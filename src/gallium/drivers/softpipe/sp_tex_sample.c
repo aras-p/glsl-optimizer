@@ -774,6 +774,43 @@ get_texel_3d(const struct sp_sampler_variant *samp,
 }
 
 
+/* Get texel pointer for 1D array texture */
+static INLINE const float *
+get_texel_1d_array(const struct sp_sampler_variant *samp,
+                   union tex_tile_address addr, int x, int y)
+{
+   const struct pipe_resource *texture = samp->view->texture;
+   unsigned level = addr.bits.level;
+
+   if (x < 0 || x >= (int) u_minify(texture->width0, level)) {
+      return samp->sampler->border_color;
+   }
+   else {
+      return get_texel_2d_no_border(samp, addr, x, y);
+   }
+}
+
+
+/* Get texel pointer for 2D array texture */
+static INLINE const float *
+get_texel_2d_array(const struct sp_sampler_variant *samp,
+                   union tex_tile_address addr, int x, int y, int layer)
+{
+   const struct pipe_resource *texture = samp->view->texture;
+   unsigned level = addr.bits.level;
+
+   assert(layer < texture->array_size);
+
+   if (x < 0 || x >= (int) u_minify(texture->width0, level) ||
+       y < 0 || y >= (int) u_minify(texture->height0, level)) {
+      return samp->sampler->border_color;
+   }
+   else {
+      return get_texel_3d_no_border(samp, addr, x, y, layer);
+   }
+}
+
+
 /**
  * Given the logbase2 of a mipmap's base level size and a mipmap level,
  * return the size (in texels) of that mipmap level.
@@ -1027,10 +1064,10 @@ img_filter_1d_array_nearest(struct tgsi_sampler *tgsi_sampler,
    addr.bits.level = samp->level;
 
    samp->nearest_texcoord_s(s, width, x);
-   wrap_array_layer(t, texture->height0, layer);
+   wrap_array_layer(t, texture->array_size, layer);
 
    for (j = 0; j < QUAD_SIZE; j++) {
-      const float *out = get_texel_2d(samp, addr, x[j], layer[j]);
+      const float *out = get_texel_1d_array(samp, addr, x[j], layer[j]);
       int c;
       for (c = 0; c < 4; c++) {
          rgba[c][j] = out[c];
@@ -1115,10 +1152,10 @@ img_filter_2d_array_nearest(struct tgsi_sampler *tgsi_sampler,
 
    samp->nearest_texcoord_s(s, width, x);
    samp->nearest_texcoord_t(t, height, y);
-   wrap_array_layer(p, texture->depth0, layer);
+   wrap_array_layer(p, texture->array_size, layer);
 
    for (j = 0; j < QUAD_SIZE; j++) {
-      const float *out = get_texel_3d(samp, addr, x[j], y[j], layer[j]);
+      const float *out = get_texel_2d_array(samp, addr, x[j], y[j], layer[j]);
       int c;
       for (c = 0; c < 4; c++) {
          rgba[c][j] = out[c];
@@ -1291,11 +1328,11 @@ img_filter_1d_array_linear(struct tgsi_sampler *tgsi_sampler,
    addr.bits.level = samp->level;
 
    samp->linear_texcoord_s(s, width, x0, x1, xw);
-   wrap_array_layer(t, texture->height0, layer);
+   wrap_array_layer(t, texture->array_size, layer);
 
    for (j = 0; j < QUAD_SIZE; j++) {
-      const float *tx0 = get_texel_2d(samp, addr, x0[j], layer[j]);
-      const float *tx1 = get_texel_2d(samp, addr, x1[j], layer[j]);
+      const float *tx0 = get_texel_1d_array(samp, addr, x0[j], layer[j]);
+      const float *tx1 = get_texel_1d_array(samp, addr, x1[j], layer[j]);
       int c;
 
       /* interpolate R, G, B, A */
@@ -1382,13 +1419,13 @@ img_filter_2d_array_linear(struct tgsi_sampler *tgsi_sampler,
 
    samp->linear_texcoord_s(s, width,  x0, x1, xw);
    samp->linear_texcoord_t(t, height, y0, y1, yw);
-   wrap_array_layer(p, texture->depth0, layer);
+   wrap_array_layer(p, texture->array_size, layer);
 
    for (j = 0; j < QUAD_SIZE; j++) {
-      const float *tx0 = get_texel_3d(samp, addr, x0[j], y0[j], layer[j]);
-      const float *tx1 = get_texel_3d(samp, addr, x1[j], y0[j], layer[j]);
-      const float *tx2 = get_texel_3d(samp, addr, x0[j], y1[j], layer[j]);
-      const float *tx3 = get_texel_3d(samp, addr, x1[j], y1[j], layer[j]);
+      const float *tx0 = get_texel_2d_array(samp, addr, x0[j], y0[j], layer[j]);
+      const float *tx1 = get_texel_2d_array(samp, addr, x1[j], y0[j], layer[j]);
+      const float *tx2 = get_texel_2d_array(samp, addr, x0[j], y1[j], layer[j]);
+      const float *tx3 = get_texel_2d_array(samp, addr, x1[j], y1[j], layer[j]);
       int c;
 
       /* interpolate R, G, B, A */

@@ -251,6 +251,7 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
           tc->tex_level != addr.bits.level ||
           tc->tex_z != addr.bits.z) {
          /* get new transfer (view into texture) */
+         unsigned width, height, layer;
 
          if (tc->tex_trans) {
             if (tc->tex_trans_map) {
@@ -262,14 +263,22 @@ sp_find_cached_tile_tex(struct softpipe_tex_tile_cache *tc,
             tc->tex_trans = NULL;
          }
 
+         width = u_minify(tc->texture->width0, addr.bits.level);
+         if (tc->texture->target == PIPE_TEXTURE_1D_ARRAY) {
+            height = tc->texture->array_size;
+            layer = 0;
+         }
+         else {
+            height = u_minify(tc->texture->height0, addr.bits.level);
+            layer = addr.bits.face + addr.bits.z;
+         }
+
          tc->tex_trans = 
             pipe_get_transfer(tc->pipe, tc->texture,
                               addr.bits.level,
-                              addr.bits.face + addr.bits.z,
+                              layer,
                               PIPE_TRANSFER_READ | PIPE_TRANSFER_UNSYNCHRONIZED,
-                              0, 0,
-                              u_minify(tc->texture->width0, addr.bits.level),
-                              u_minify(tc->texture->height0, addr.bits.level));
+                              0, 0, width, height);
 
          tc->tex_trans_map = tc->pipe->transfer_map(tc->pipe, tc->tex_trans);
 
