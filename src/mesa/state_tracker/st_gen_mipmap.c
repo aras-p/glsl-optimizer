@@ -352,6 +352,7 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
                                     oldTex->width0,
                                     oldTex->height0,
                                     oldTex->depth0,
+                                    oldTex->array_size,
                                     oldTex->bind);
 
       /* The texture isn't in a "complete" state yet so set the expected

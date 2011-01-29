@@ -359,6 +359,7 @@ guess_and_alloc_texture(struct st_context *st,
                                  width,
                                  height,
                                  depth,
+                                 1,
                                  bindings);
 
    DBG("%s returning %d\n", __FUNCTION__, (stObj->pt != NULL));
@@ -1902,6 +1903,7 @@ st_finalize_texture(struct gl_context *ctx,
                                     stObj->width0,
                                     stObj->height0,
                                     stObj->depth0,
+                                    1,
                                     bindings);
 
       if (!stObj->pt) {
