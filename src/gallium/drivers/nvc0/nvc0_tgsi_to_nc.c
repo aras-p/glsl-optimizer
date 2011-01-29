@@ -1198,11 +1198,6 @@ describe_texture_target(unsigned target, int *dim,
       *dim = 2;
       *cube = 1;
       break;
-      /*
-   case TGSI_TEXTURE_CUBE_ARRAY:
-      *dim = 2;
-      *cube = *array = 1;
-      break;
    case TGSI_TEXTURE_1D_ARRAY:
       *dim = *array = 1;
       break;
@@ -1210,6 +1205,7 @@ describe_texture_target(unsigned target, int *dim,
       *dim = 2;
       *array = 1;
       break;
+      /*
    case TGSI_TEXTURE_SHADOW1D_ARRAY:
       *dim = *array = *shadow = 1;
       break;
@@ -1219,7 +1215,7 @@ describe_texture_target(unsigned target, int *dim,
       break;
    case TGSI_TEXTURE_CUBE_ARRAY:
       *dim = 2;
-      *array = *cube = 1;
+      *cube = *array = 1;
       break;
       */
    default:
@@ -1382,6 +1378,7 @@ emit_tex(struct bld_context *bld, uint opcode, int tic, int tsc,
    nvi->tex_dim = dim;
    nvi->tex_cube = cube;
    nvi->tex_shadow = shadow;
+   nvi->tex_array = array;
    nvi->tex_live = 0;
 
    return nvi;
@@ -1402,7 +1399,7 @@ bld_tex(struct bld_context *bld, struct nv_value *dst0[4],
 
    assert(dim + array + shadow + lodbias <= 5);
 
-   if (!cube && insn->Instruction.Opcode == TGSI_OPCODE_TXP)
+   if (!cube && !array && insn->Instruction.Opcode == TGSI_OPCODE_TXP)
       load_proj_tex_coords(bld, t, dim, shadow, insn);
    else {
       for (c = 0; c < dim + cube + array; ++c)

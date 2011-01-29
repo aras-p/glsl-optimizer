@@ -393,6 +393,8 @@ emit_tex(struct nv_pc *pc, struct nv_instruction *i)
 {
    int src1 = i->tex_array + i->tex_dim + i->tex_cube;
 
+   assert(src1 < 6);
+
    pc->emit[0] = 0x00000086;
    pc->emit[1] = 0x80000000;
 
