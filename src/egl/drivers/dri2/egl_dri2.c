@@ -62,6 +62,7 @@ struct dri2_egl_driver
 {
    _EGLDriver base;
 
+   void *handle;
    _EGLProc (*get_proc_address)(const char *procname);
    void (*glFlush)(void);
 };
@@ -2337,6 +2338,9 @@ static void
 dri2_unload(_EGLDriver *drv)
 {
    struct dri2_egl_driver *dri2_drv = dri2_egl_driver(drv);
+
+   if (dri2_drv->handle)
+      dlclose(dri2_drv->handle);
    free(dri2_drv);
 }
 
@@ -2344,23 +2348,30 @@ static EGLBoolean
 dri2_load(_EGLDriver *drv)
 {
    struct dri2_egl_driver *dri2_drv = dri2_egl_driver(drv);
+#ifdef HAVE_SHARED_GLAPI
+   const char *libname = "libglapi.so.0";
+#else
+   /*
+    * Both libGL.so and libglapi.so are glapi providers.  There is no way to
+    * tell which one to load.
+    */
+   const char *libname = NULL;
+#endif
    void *handle;
 
-   handle = dlopen(NULL, RTLD_LAZY | RTLD_GLOBAL);
+   /* RTLD_GLOBAL to make sure glapi symbols are visible to DRI drivers */
+   handle = dlopen(libname, RTLD_LAZY | RTLD_GLOBAL);
    if (handle) {
       dri2_drv->get_proc_address = (_EGLProc (*)(const char *))
          dlsym(handle, "_glapi_get_proc_address");
-      /* no need to keep a reference */
-      dlclose(handle);
+      if (!dri2_drv->get_proc_address || !libname) {
+         /* no need to keep a reference */
+         dlclose(handle);
+         handle = NULL;
+      }
    }
 
-   /*
-    * If glapi is not available, loading DRI drivers will fail.  Ideally, we
-    * should load one of libGL, libGLESv1_CM, or libGLESv2 and go on.  But if
-    * the app has loaded another one of them with RTLD_LOCAL, there may be
-    * unexpected behaviors later because there will be two copies of glapi
-    * (with global variables of the same names!) in the memory.
-    */
+   /* if glapi is not available, loading DRI drivers will fail */
    if (!dri2_drv->get_proc_address) {
       _eglLog(_EGL_WARNING, "DRI2: failed to find _glapi_get_proc_address");
       return EGL_FALSE;
@@ -2368,6 +2379,8 @@ dri2_load(_EGLDriver *drv)
 
    dri2_drv->glFlush = (void (*)(void))
       dri2_drv->get_proc_address("glFlush");
+
+   dri2_drv->handle = handle;
 
    return EGL_TRUE;
 }

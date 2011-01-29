@@ -20,4 +20,8 @@ EGL_LIBS = $(XCB_DRI2_LIBS) $(LIBUDEV_LIBS) $(DLOPEN_LIBS) $(LIBDRM_LIB)
 EGL_CFLAGS = -D_EGL_MAIN=_eglBuiltInDriverDRI2
 EGL_BUILTIN = true
 
+ifeq ($(SHARED_GLAPI),1)
+EGL_CFLAGS += -DHAVE_SHARED_GLAPI
+endif
+
 include ../Makefile.template
