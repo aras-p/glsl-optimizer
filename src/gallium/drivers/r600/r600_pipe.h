@@ -125,6 +125,7 @@ struct r600_translate_context {
 	struct translate_cache		*translate_cache;
 	/* The vertex buffer slot containing the translated buffer. */
 	unsigned			vb_slot;
+	void				*saved_velems;
 	void				*new_velems;
 };
 
@@ -145,7 +146,8 @@ struct r600_pipe_context {
 	struct pipe_index_buffer	index_buffer;
 	struct pipe_vertex_buffer	vertex_buffer[PIPE_MAX_ATTRIBS];
 	struct pipe_resource		*real_vertex_buffer[PIPE_MAX_ATTRIBS];
-	unsigned			nvertex_buffer;
+	unsigned			nvertex_buffers;
+	unsigned			nreal_vertex_buffers; /* with the translated vertex buffer */
 	unsigned			cb_target_mask;
 	/* for saving when using blitter */
 	struct pipe_stencil_ref		stencil_ref;

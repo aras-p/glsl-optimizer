@@ -205,7 +205,7 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 		}
 	}
 
-	for (; i < rctx->nvertex_buffer; i++) {
+	for (; i < rctx->nreal_vertex_buffers; i++) {
 		pipe_resource_reference(&rctx->vertex_buffer[i].buffer, NULL);
 		pipe_resource_reference(&rctx->real_vertex_buffer[i], NULL);
 
@@ -219,7 +219,8 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 
 	memcpy(rctx->vertex_buffer, buffers, sizeof(struct pipe_vertex_buffer) * count);
 
-	rctx->nvertex_buffer = count;
+	rctx->nvertex_buffers = count;
+	rctx->nreal_vertex_buffers = count;
 	rctx->vb_max_index = max_index;
 }
 
@@ -252,6 +253,28 @@ void *r600_create_vertex_elements(struct pipe_context *ctx,
 		FORMAT_REPLACE(R64G64_FLOAT,        R32G32_FLOAT);
 		FORMAT_REPLACE(R64G64B64_FLOAT,     R32G32B32_FLOAT);
 		FORMAT_REPLACE(R64G64B64A64_FLOAT,  R32G32B32A32_FLOAT);
+
+		/* r600 doesn't seem to support 32_*SCALED, these formats
+		 * aren't in D3D10 either. */
+		FORMAT_REPLACE(R32_UNORM,           R32_FLOAT);
+		FORMAT_REPLACE(R32G32_UNORM,        R32G32_FLOAT);
+		FORMAT_REPLACE(R32G32B32_UNORM,     R32G32B32_FLOAT);
+		FORMAT_REPLACE(R32G32B32A32_UNORM,  R32G32B32A32_FLOAT);
+
+		FORMAT_REPLACE(R32_USCALED,         R32_FLOAT);
+		FORMAT_REPLACE(R32G32_USCALED,      R32G32_FLOAT);
+		FORMAT_REPLACE(R32G32B32_USCALED,   R32G32B32_FLOAT);
+		FORMAT_REPLACE(R32G32B32A32_USCALED,R32G32B32A32_FLOAT);
+
+		FORMAT_REPLACE(R32_SNORM,           R32_FLOAT);
+		FORMAT_REPLACE(R32G32_SNORM,        R32G32_FLOAT);
+		FORMAT_REPLACE(R32G32B32_SNORM,     R32G32B32_FLOAT);
+		FORMAT_REPLACE(R32G32B32A32_SNORM,  R32G32B32A32_FLOAT);
+
+		FORMAT_REPLACE(R32_SSCALED,         R32_FLOAT);
+		FORMAT_REPLACE(R32G32_SSCALED,      R32G32_FLOAT);
+		FORMAT_REPLACE(R32G32B32_SSCALED,   R32G32B32_FLOAT);
+		FORMAT_REPLACE(R32G32B32A32_SSCALED,R32G32B32A32_FLOAT);
 		default:;
 		}
 		v->incompatible_layout =
@@ -426,7 +449,7 @@ static void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 		rctx->nvs_resource = rctx->vertex_elements->count;
 	} else {
 		/* bind vertex buffer once */
-		rctx->nvs_resource = rctx->nvertex_buffer;
+		rctx->nvs_resource = rctx->nreal_vertex_buffers;
 	}
 
 	for (i = 0 ; i < rctx->nvs_resource; i++) {

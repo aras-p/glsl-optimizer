@@ -98,14 +98,14 @@ void r600_begin_vertex_translate(struct r600_pipe_context *rctx)
 	tr = translate_cache_find(rctx->tran.translate_cache, &key);
 
 	/* Map buffers we want to translate. */
-	for (i = 0; i < rctx->nvertex_buffer; i++) {
+	for (i = 0; i < rctx->nvertex_buffers; i++) {
 		if (vb_translated[i]) {
 			struct pipe_vertex_buffer *vb = &rctx->vertex_buffer[i];
 
 			vb_map[i] = pipe_buffer_map(pipe, vb->buffer,
 						    PIPE_TRANSFER_READ, &vb_transfer[i]);
 
-			tr->set_buffer(tr, i, vb_map[i], vb->stride, vb->max_index);
+			tr->set_buffer(tr, i, vb_map[i], vb->stride, ~0);
 		}
 	}
 
@@ -123,7 +123,7 @@ void r600_begin_vertex_translate(struct r600_pipe_context *rctx)
 	tr->run(tr, 0, num_verts, 0, out_map);
 
 	/* Unmap all buffers. */
-	for (i = 0; i < rctx->nvertex_buffer; i++) {
+	for (i = 0; i < rctx->nvertex_buffers; i++) {
 		if (vb_translated[i]) {
 			pipe_buffer_unmap(pipe, vb_transfer[i]);
 		}
@@ -136,11 +136,14 @@ void r600_begin_vertex_translate(struct r600_pipe_context *rctx)
 		struct pipe_vertex_buffer *vb = &rctx->vertex_buffer[i];
 
 		if (!vb->buffer) {
-			pipe_resource_reference(&vb->buffer, out_buffer);
+			pipe_resource_reference(&rctx->real_vertex_buffer[i], out_buffer);
 			vb->buffer_offset = 0;
-			vb->max_index = num_verts - 1;
 			vb->stride = key.output_stride;
 			rctx->tran.vb_slot = i;
+
+			if (i >= rctx->nvertex_buffers) {
+				rctx->nreal_vertex_buffers = i+1;
+			}
 			break;
 		}
 	}
@@ -159,6 +162,7 @@ void r600_begin_vertex_translate(struct r600_pipe_context *rctx)
 		}
 	}
 
+	rctx->tran.saved_velems = rctx->vertex_elements;
 	tmp = pipe->create_vertex_elements_state(pipe, ve->count, new_velems);
 	pipe->bind_vertex_elements_state(pipe, tmp);
 	rctx->tran.new_velems = tmp;
@@ -174,11 +178,14 @@ void r600_end_vertex_translate(struct r600_pipe_context *rctx)
 		return;
 	}
 	/* Restore vertex elements. */
+	pipe->bind_vertex_elements_state(pipe, rctx->tran.saved_velems);
+	rctx->tran.saved_velems = NULL;
 	pipe->delete_vertex_elements_state(pipe, rctx->tran.new_velems);
 	rctx->tran.new_velems = NULL;
 
 	/* Delete the now-unused VBO. */
-	pipe_resource_reference(&rctx->vertex_buffer[rctx->tran.vb_slot].buffer, NULL);
+	pipe_resource_reference(&rctx->real_vertex_buffer[rctx->tran.vb_slot], NULL);
+	rctx->nreal_vertex_buffers = rctx->nvertex_buffers;
 }
 
 void r600_translate_index_buffer(struct r600_pipe_context *r600,
@@ -191,9 +198,6 @@ void r600_translate_index_buffer(struct r600_pipe_context *r600,
 		util_shorten_ubyte_elts(&r600->context, index_buffer, 0, *start, count);
 		*index_size = 2;
 		*start = 0;
-		break;
-	case 2:
-	case 4:
 		break;
 	}
 }

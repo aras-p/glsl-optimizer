@@ -53,7 +53,7 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 	if (rctx->states[R600_PIPE_STATE_CLIP]) {
 		util_blitter_save_clip(rctx->blitter, &rctx->clip);
 	}
-	util_blitter_save_vertex_buffers(rctx->blitter, rctx->nvertex_buffer, rctx->vertex_buffer);
+	util_blitter_save_vertex_buffers(rctx->blitter, rctx->nvertex_buffers, rctx->vertex_buffer);
 
 	rctx->vertex_elements = NULL;
 

@@ -1889,7 +1889,7 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 	}
 
 	switch (desc->channel[i].type) {
-		/* Half-floats, floats, doubles */
+	/* Half-floats, floats, ints */
 	case UTIL_FORMAT_TYPE_FLOAT:
 		switch (desc->channel[i].size) {
 		case 16:
@@ -1901,8 +1901,6 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 				*format = FMT_16_16_FLOAT;
 				break;
 			case 3:
-				*format = FMT_16_16_16_FLOAT;
-				break;
 			case 4:
 				*format = FMT_16_16_16_16_FLOAT;
 				break;
@@ -1942,8 +1940,6 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 				*format = FMT_8_8;
 				break;
 			case 3:
-			//	*format = FMT_8_8_8; /* fails piglit draw-vertices test */
-			//	break;
 			case 4:
 				*format = FMT_8_8_8_8;
 				break;
@@ -1958,8 +1954,6 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 				*format = FMT_16_16;
 				break;
 			case 3:
-			//	*format = FMT_16_16_16; /* fails piglit draw-vertices test */
-			//	break;
 			case 4:
 				*format = FMT_16_16_16_16;
 				break;
