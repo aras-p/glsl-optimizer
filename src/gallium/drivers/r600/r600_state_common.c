@@ -130,11 +130,7 @@ void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
 	if (v) {
 		rctx->states[v->rstate.id] = &v->rstate;
 		r600_context_pipe_state_set(&rctx->ctx, &v->rstate);
-		if (rctx->family >= CHIP_CEDAR) {
-			evergreen_vertex_buffer_update(rctx);
-		} else {
-			r600_vertex_buffer_update(rctx);
-		}
+		r600_vertex_buffer_update(rctx);
 	}
 
 	if (v) {
@@ -216,11 +212,8 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 	}
 	rctx->nvertex_buffer = count;
 	rctx->vb_max_index = max_index;
-	if (rctx->family >= CHIP_CEDAR) {
-		evergreen_vertex_buffer_update(rctx);
-	} else {
-		r600_vertex_buffer_update(rctx);
-	}
+
+	r600_vertex_buffer_update(rctx);
 }
 
 
@@ -364,6 +357,72 @@ void r600_spi_update(struct r600_pipe_context *rctx)
 		r600_pipe_state_add_reg(&rstate, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4, tmp, 0xFFFFFFFF, NULL);
 	}
 	r600_context_pipe_state_set(&rctx->ctx, &rstate);
+}
+
+void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
+{
+	struct r600_pipe_state *rstate;
+	struct r600_resource *rbuffer;
+	struct pipe_vertex_buffer *vertex_buffer;
+	unsigned i, offset;
+
+	/* we don't update until we know vertex elements */
+	if (rctx->vertex_elements == NULL || !rctx->nvertex_buffer)
+		return;
+
+	if (rctx->vertex_elements->incompatible_layout) {
+		/* translate rebind new vertex elements so
+		 * return once translated
+		 */
+		r600_begin_vertex_translate(rctx);
+		return;
+	}
+
+	if (rctx->any_user_vbs) {
+		r600_upload_user_buffers(rctx);
+		rctx->any_user_vbs = FALSE;
+	}
+
+	if (rctx->vertex_elements->vbuffer_need_offset) {
+		/* one resource per vertex elements */
+		rctx->nvs_resource = rctx->vertex_elements->count;
+	} else {
+		/* bind vertex buffer once */
+		rctx->nvs_resource = rctx->nvertex_buffer;
+	}
+
+	for (i = 0 ; i < rctx->nvs_resource; i++) {
+		rstate = &rctx->vs_resource[i];
+		rstate->id = R600_PIPE_STATE_RESOURCE;
+		rstate->nregs = 0;
+
+		if (rctx->vertex_elements->vbuffer_need_offset) {
+			/* one resource per vertex elements */
+			unsigned vbuffer_index;
+			vbuffer_index = rctx->vertex_elements->elements[i].vertex_buffer_index;
+			vertex_buffer = &rctx->vertex_buffer[vbuffer_index];
+			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
+			offset = rctx->vertex_elements->vbuffer_offset[i];
+		} else {
+			/* bind vertex buffer once */
+			vertex_buffer = &rctx->vertex_buffer[i];
+			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
+			offset = 0;
+		}
+		if (vertex_buffer == NULL || rbuffer == NULL)
+			continue;
+		offset += vertex_buffer->buffer_offset + r600_bo_offset(rbuffer->bo);
+
+		if (rctx->family >= CHIP_CEDAR) {
+			evergreen_pipe_add_vertex_attrib(rctx, rstate, i,
+							 rbuffer, offset,
+							 vertex_buffer->stride);
+		} else {
+			r600_pipe_add_vertex_attrib(rctx, rstate, i,
+						    rbuffer, offset,
+						    vertex_buffer->stride);
+		}
+	}
 }
 
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)

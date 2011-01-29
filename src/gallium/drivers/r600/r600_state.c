@@ -94,79 +94,6 @@ void r600_polygon_offset_update(struct r600_pipe_context *rctx)
 	}
 }
 
-void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
-{
-	struct r600_pipe_state *rstate;
-	struct r600_resource *rbuffer;
-	struct pipe_vertex_buffer *vertex_buffer;
-	unsigned i, offset;
-
-	/* we don't update until we know vertex elements */
-	if (rctx->vertex_elements == NULL || !rctx->nvertex_buffer)
-		return;
-
-	if (rctx->vertex_elements->incompatible_layout) {
-		/* translate rebind new vertex elements so
-		 * return once translated
-		 */
-		r600_begin_vertex_translate(rctx);
-		return;
-	}
-
-	if (rctx->any_user_vbs) {
-		r600_upload_user_buffers(rctx);
-		rctx->any_user_vbs = FALSE;
-	}
-
-	if (rctx->vertex_elements->vbuffer_need_offset) {
-		/* one resource per vertex elements */
-		rctx->nvs_resource = rctx->vertex_elements->count;
-	} else {
-		/* bind vertex buffer once */
-		rctx->nvs_resource = rctx->nvertex_buffer;
-	}
-
-	for (i = 0 ; i < rctx->nvs_resource; i++) {
-		rstate = &rctx->vs_resource[i];
-		rstate->id = R600_PIPE_STATE_RESOURCE;
-		rstate->nregs = 0;
-
-		if (rctx->vertex_elements->vbuffer_need_offset) {
-			/* one resource per vertex elements */
-			unsigned vbuffer_index;
-			vbuffer_index = rctx->vertex_elements->elements[i].vertex_buffer_index;
-			vertex_buffer = &rctx->vertex_buffer[vbuffer_index];
-			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
-			offset = rctx->vertex_elements->vbuffer_offset[i];
-		} else {
-			/* bind vertex buffer once */
-			vertex_buffer = &rctx->vertex_buffer[i];
-			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
-			offset = 0;
-		}
-		if (vertex_buffer == NULL || rbuffer == NULL)
-			continue;
-		offset += vertex_buffer->buffer_offset + r600_bo_offset(rbuffer->bo);
-
-		r600_pipe_state_add_reg(rstate, R_038000_RESOURCE0_WORD0,
-					offset, 0xFFFFFFFF, rbuffer->bo);
-		r600_pipe_state_add_reg(rstate, R_038004_RESOURCE0_WORD1,
-					rbuffer->bo_size - offset - 1, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_038008_RESOURCE0_WORD2,
-					S_038008_STRIDE(vertex_buffer->stride),
-					0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_03800C_RESOURCE0_WORD3,
-					0x00000000, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_038010_RESOURCE0_WORD4,
-					0x00000000, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_038014_RESOURCE0_WORD5,
-					0x00000000, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_038018_RESOURCE0_WORD6,
-					0xC0000000, 0xFFFFFFFF, NULL);
-		r600_context_pipe_state_set_fs_resource(&rctx->ctx, rstate, i);
-	}
-}
-
 static void r600_set_blend_color(struct pipe_context *ctx,
 					const struct pipe_blend_color *state)
 {
@@ -1338,4 +1265,28 @@ void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx)
 				S_028D0C_STENCIL_COPY_ENABLE(1) |
 				S_028D0C_COPY_CENTROID(1), NULL);
 	return rstate;
+}
+
+void r600_pipe_add_vertex_attrib(struct r600_pipe_context *rctx,
+				 struct r600_pipe_state *rstate,
+				 unsigned index,
+				 struct r600_resource *rbuffer,
+				 unsigned offset, unsigned stride)
+{
+	r600_pipe_state_add_reg(rstate, R_038000_RESOURCE0_WORD0,
+				offset, 0xFFFFFFFF, rbuffer->bo);
+	r600_pipe_state_add_reg(rstate, R_038004_RESOURCE0_WORD1,
+				rbuffer->bo_size - offset - 1, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_038008_RESOURCE0_WORD2,
+				S_038008_STRIDE(stride),
+				0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_03800C_RESOURCE0_WORD3,
+				0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_038010_RESOURCE0_WORD4,
+				0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_038014_RESOURCE0_WORD5,
+				0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_038018_RESOURCE0_WORD6,
+				0xC0000000, 0xFFFFFFFF, NULL);
+	r600_context_pipe_state_set_fs_resource(&rctx->ctx, rstate, index);
 }
