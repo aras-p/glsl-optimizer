@@ -847,7 +847,7 @@ static void r300_update_vertex_arrays_cb(struct r300_context *r300, unsigned pac
 void r300_emit_vertex_arrays(struct r300_context* r300, int offset, boolean indexed)
 {
     struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
-    struct pipe_resource **valid_vbuf = r300->valid_vertex_buffer;
+    struct pipe_resource **valid_vbuf = r300->real_vertex_buffer;
     struct pipe_vertex_element *velem = r300->velems->velem;
     struct r300_buffer *buf;
     int i;
@@ -1227,9 +1227,9 @@ validate:
                                 r300_buffer(r300->vbo)->domain, 0);
     /* ...vertex buffers for HWTCL path... */
     if (do_validate_vertex_buffers) {
-        struct pipe_resource **buf = r300->valid_vertex_buffer;
-        struct pipe_resource **last = r300->valid_vertex_buffer +
-                                      r300->vertex_buffer_count;
+        struct pipe_resource **buf = r300->real_vertex_buffer;
+        struct pipe_resource **last = r300->real_vertex_buffer +
+                                      r300->real_vertex_buffer_count;
         for (; buf != last; buf++) {
             if (!*buf)
                 continue;

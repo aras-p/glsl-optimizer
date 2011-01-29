@@ -1560,21 +1560,22 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
         /* Reference our buffer. */
         pipe_resource_reference(&r300->vertex_buffer[i].buffer, vbo->buffer);
         if (vbo->buffer && r300_is_user_buffer(vbo->buffer)) {
-            pipe_resource_reference(&r300->valid_vertex_buffer[i], NULL);
+            pipe_resource_reference(&r300->real_vertex_buffer[i], NULL);
         } else {
-            pipe_resource_reference(&r300->valid_vertex_buffer[i], vbo->buffer);
+            pipe_resource_reference(&r300->real_vertex_buffer[i], vbo->buffer);
         }
     }
-    for (; i < r300->vertex_buffer_count; i++) {
+    for (; i < r300->real_vertex_buffer_count; i++) {
         /* Dereference any old buffers. */
         pipe_resource_reference(&r300->vertex_buffer[i].buffer, NULL);
-        pipe_resource_reference(&r300->valid_vertex_buffer[i], NULL);
+        pipe_resource_reference(&r300->real_vertex_buffer[i], NULL);
     }
 
     memcpy(r300->vertex_buffer, buffers,
            sizeof(struct pipe_vertex_buffer) * count);
 
     r300->vertex_buffer_count = count;
+    r300->real_vertex_buffer_count = count;
 }
 
 static void r300_set_index_buffer(struct pipe_context* pipe,

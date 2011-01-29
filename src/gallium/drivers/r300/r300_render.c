@@ -325,7 +325,7 @@ static boolean immd_is_good_idea(struct r300_context *r300,
         vbi = velem->vertex_buffer_index;
 
         if (!checked[vbi]) {
-            buf = r300->valid_vertex_buffer[vbi];
+            buf = r300->real_vertex_buffer[vbi];
 
             if (!(r300_buffer(buf)->domain & R300_DOMAIN_GTT)) {
                 return FALSE;
@@ -390,7 +390,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
         /* Map the buffer. */
         if (!transfer[vbi]) {
             map[vbi] = (uint32_t*)pipe_buffer_map(&r300->context,
-                                                  r300->valid_vertex_buffer[vbi],
+                                                  r300->real_vertex_buffer[vbi],
                                                   PIPE_TRANSFER_READ,
 						  &transfer[vbi]);
             map[vbi] += (vbuf->buffer_offset / 4) + stride[i] * start;
@@ -787,7 +787,7 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
             (indexed ? PREP_INDEXED : 0),
             indexed ? 256 : 6);
 
-    for (i = 0; i < r300->vertex_buffer_count; i++) {
+    for (i = 0; i < r300->real_vertex_buffer_count; i++) {
         if (r300->vertex_buffer[i].buffer) {
             void *buf = pipe_buffer_map(pipe,
                                   r300->vertex_buffer[i].buffer,
@@ -810,7 +810,7 @@ static void r300_swtcl_draw_vbo(struct pipe_context* pipe,
     draw_flush(r300->draw);
     r300->draw_vbo_locked = FALSE;
 
-    for (i = 0; i < r300->vertex_buffer_count; i++) {
+    for (i = 0; i < r300->real_vertex_buffer_count; i++) {
         if (r300->vertex_buffer[i].buffer) {
             pipe_buffer_unmap(pipe, vb_transfer[i]);
             draw_set_mapped_vertex_buffer(r300->draw, i, NULL);

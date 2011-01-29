@@ -445,6 +445,7 @@ struct r300_translate_context {
 
     /* Saved and new vertex element state. */
     void *saved_velems, *new_velems;
+    unsigned vb_slot;
 };
 
 struct r300_context {
@@ -560,8 +561,9 @@ struct r300_context {
     /* May contain user buffers. */
     struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
     /* Contains only non-user buffers. */
-    struct pipe_resource *valid_vertex_buffer[PIPE_MAX_ATTRIBS];
+    struct pipe_resource *real_vertex_buffer[PIPE_MAX_ATTRIBS];
     int vertex_buffer_count;
+    int real_vertex_buffer_count; /* with the translated buffer. */
     int vertex_buffer_max_index;
     boolean any_user_vbs;
     /* Vertex elements for Gallium. */

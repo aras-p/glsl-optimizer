@@ -84,9 +84,9 @@ static void r300_release_referenced_objects(struct r300_context *r300)
     pipe_resource_reference(&r300->vbo, NULL);
 
     /* Vertex buffers. */
-    for (i = 0; i < r300->vertex_buffer_count; i++) {
+    for (i = 0; i < r300->real_vertex_buffer_count; i++) {
         pipe_resource_reference(&r300->vertex_buffer[i].buffer, NULL);
-        pipe_resource_reference(&r300->valid_vertex_buffer[i], NULL);
+        pipe_resource_reference(&r300->real_vertex_buffer[i], NULL);
     }
 
     /* If there are any queries pending or not destroyed, remove them now. */

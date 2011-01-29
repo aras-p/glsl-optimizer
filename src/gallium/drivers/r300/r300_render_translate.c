@@ -30,9 +30,8 @@
 #include "r300_context.h"
 #include "translate/translate.h"
 #include "util/u_index_modify.h"
+#include "util/u_upload_mgr.h"
 
-/* XXX Optimization: use min_index and translate only that range. */
-/* XXX Use the uploader. */
 void r300_begin_vertex_translate(struct r300_context *r300,
                                  int min_index, int max_index)
 {
@@ -43,11 +42,12 @@ void r300_begin_vertex_translate(struct r300_context *r300,
     struct translate *tr;
     struct r300_vertex_element_state *ve = r300->velems;
     boolean vb_translated[PIPE_MAX_ATTRIBS] = {0};
-    void *vb_map[PIPE_MAX_ATTRIBS] = {0}, *out_map;
-    struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {0}, *out_transfer;
-    struct pipe_resource *out_buffer;
-    unsigned i, num_verts;
-    unsigned slot;
+    uint8_t *vb_map[PIPE_MAX_ATTRIBS] = {0}, *out_map;
+    struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS] = {0};
+    struct pipe_resource *out_buffer = NULL;
+    unsigned i, num_verts, out_offset;
+    struct pipe_vertex_element new_velems[PIPE_MAX_ATTRIBS];
+    boolean flushed;
 
     /* Initialize the translate key, i.e. the recipe how vertices should be
      * translated. */
@@ -59,6 +59,7 @@ void r300_begin_vertex_translate(struct r300_context *r300,
 
         /* Check for support. */
         if (ve->velem[i].src_format == ve->hw_format[i] &&
+            /* These two are r300-specific.  */
             (vb->buffer_offset + ve->velem[i].src_offset) % 4 == 0 &&
             vb->stride % 4 == 0) {
             continue;
@@ -66,23 +67,23 @@ void r300_begin_vertex_translate(struct r300_context *r300,
 
         /* Workaround for translate: output floats instead of halfs. */
         switch (output_format) {
-            case PIPE_FORMAT_R16_FLOAT:
-                output_format = PIPE_FORMAT_R32_FLOAT;
-                output_format_size = 4;
-                break;
-            case PIPE_FORMAT_R16G16_FLOAT:
-                output_format = PIPE_FORMAT_R32G32_FLOAT;
-                output_format_size = 8;
-                break;
-            case PIPE_FORMAT_R16G16B16_FLOAT:
-                output_format = PIPE_FORMAT_R32G32B32_FLOAT;
-                output_format_size = 12;
-                break;
-            case PIPE_FORMAT_R16G16B16A16_FLOAT:
-                output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-                output_format_size = 16;
-                break;
-            default:;
+        case PIPE_FORMAT_R16_FLOAT:
+            output_format = PIPE_FORMAT_R32_FLOAT;
+            output_format_size = 4;
+            break;
+        case PIPE_FORMAT_R16G16_FLOAT:
+            output_format = PIPE_FORMAT_R32G32_FLOAT;
+            output_format_size = 8;
+            break;
+        case PIPE_FORMAT_R16G16B16_FLOAT:
+            output_format = PIPE_FORMAT_R32G32B32_FLOAT;
+            output_format_size = 12;
+            break;
+        case PIPE_FORMAT_R16G16B16A16_FLOAT:
+            output_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+            output_format_size = 16;
+            break;
+        default:;
         }
 
         /* Add this vertex element. */
@@ -91,7 +92,7 @@ void r300_begin_vertex_translate(struct r300_context *r300,
         te->instance_divisor;*/
         te->input_buffer = ve->velem[i].vertex_buffer_index;
         te->input_format = ve->velem[i].src_format;
-        te->input_offset = vb->buffer_offset + ve->velem[i].src_offset;
+        te->input_offset = ve->velem[i].src_offset;
         te->output_format = output_format;
         te->output_offset = key.output_stride;
 
@@ -112,19 +113,22 @@ void r300_begin_vertex_translate(struct r300_context *r300,
             vb_map[i] = pipe_buffer_map(pipe, vb->buffer,
                                         PIPE_TRANSFER_READ, &vb_transfer[i]);
 
-            tr->set_buffer(tr, i, vb_map[i], vb->stride, max_index);
+            tr->set_buffer(tr, i,
+                           vb_map[i] + vb->buffer_offset + vb->stride * min_index,
+                           vb->stride, ~0);
         }
     }
 
     /* Create and map the output buffer. */
-    num_verts = max_index + 1;
+    num_verts = max_index + 1 - min_index;
 
-    out_buffer = pipe_buffer_create(&r300->screen->screen,
-                                    PIPE_BIND_VERTEX_BUFFER,
-                                    key.output_stride * num_verts);
+    u_upload_alloc(r300->upload_vb,
+                   key.output_stride * min_index,
+                   key.output_stride * num_verts,
+                   &out_offset, &out_buffer, &flushed,
+                   (void**)&out_map);
 
-    out_map = pipe_buffer_map(pipe, out_buffer, PIPE_TRANSFER_WRITE,
-                              &out_transfer);
+    out_offset -= key.output_stride * min_index;
 
     /* Translate. */
     tr->run(tr, 0, num_verts, 0, out_map);
@@ -136,48 +140,46 @@ void r300_begin_vertex_translate(struct r300_context *r300,
         }
     }
 
-    pipe_buffer_unmap(pipe, out_transfer);
-
     /* Setup the new vertex buffer in the first free slot. */
-    slot = ~0;
+    r300->tran.vb_slot = ~0;
     for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
-        struct pipe_vertex_buffer *vb = &r300->vertex_buffer[i];
+        if (!r300->vertex_buffer[i].buffer) {
+            r300->tran.vb_slot = i;
 
-        if (!vb->buffer) {
-            pipe_resource_reference(&r300->valid_vertex_buffer[i], out_buffer);
-            vb->buffer_offset = 0;
-            vb->stride = key.output_stride;
-            slot = i;
-            /* XXX probably need to preserve the real count for u_blitter_save_*. */
-            r300->vertex_buffer_count = MAX2(r300->vertex_buffer_count, i+1);
+            if (i >= r300->vertex_buffer_count) {
+                r300->real_vertex_buffer_count = i+1;
+            }
+
+            /* r300-specific: */
             r300->validate_buffers = TRUE;
+            r300->vertex_arrays_dirty = TRUE;
             break;
         }
     }
-    /* XXX This may fail. */
-    assert(slot != ~0);
 
-    /* Save and replace vertex elements. */
-    {
-        struct pipe_vertex_element new_velems[PIPE_MAX_ATTRIBS];
+    if (r300->tran.vb_slot != ~0) {
+		/* Setup the new vertex buffer. */
+		pipe_resource_reference(&r300->real_vertex_buffer[r300->tran.vb_slot], out_buffer);
+		r300->vertex_buffer[r300->tran.vb_slot].buffer_offset = out_offset;
+		r300->vertex_buffer[r300->tran.vb_slot].stride = key.output_stride;
 
-        r300->tran.saved_velems = r300->velems;
-
+        /* Setup new vertex elements. */
         for (i = 0; i < ve->count; i++) {
             if (vb_translated[ve->velem[i].vertex_buffer_index]) {
                 te = &key.element[tr_elem_index[i]];
                 new_velems[i].instance_divisor = ve->velem[i].instance_divisor;
                 new_velems[i].src_format = te->output_format;
                 new_velems[i].src_offset = te->output_offset;
-                new_velems[i].vertex_buffer_index = slot;
+                new_velems[i].vertex_buffer_index = r300->tran.vb_slot;
             } else {
                 memcpy(&new_velems[i], &ve->velem[i],
                        sizeof(struct pipe_vertex_element));
             }
         }
 
+        r300->tran.saved_velems = r300->velems;
         r300->tran.new_velems =
-            pipe->create_vertex_elements_state(pipe, ve->count, new_velems);
+                pipe->create_vertex_elements_state(pipe, ve->count, new_velems);
         pipe->bind_vertex_elements_state(pipe, r300->tran.new_velems);
     }
 
@@ -188,9 +190,19 @@ void r300_end_vertex_translate(struct r300_context *r300)
 {
     struct pipe_context *pipe = &r300->context;
 
+    if (r300->tran.new_velems == NULL) {
+        return;
+    }
+
     /* Restore vertex elements. */
     pipe->bind_vertex_elements_state(pipe, r300->tran.saved_velems);
+    r300->tran.saved_velems = NULL;
     pipe->delete_vertex_elements_state(pipe, r300->tran.new_velems);
+    r300->tran.new_velems = NULL;
+
+    /* Delete the now-unused VBO. */
+    pipe_resource_reference(&r300->real_vertex_buffer[r300->tran.vb_slot], NULL);
+    r300->real_vertex_buffer_count = r300->vertex_buffer_count;
 }
 
 /* XXX Use the uploader. */

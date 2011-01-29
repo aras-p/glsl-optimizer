@@ -87,7 +87,7 @@ void r300_upload_user_buffers(struct r300_context *r300,
     int i, nr = r300->velems->count;
     unsigned count = max_index + 1 - min_index;
     boolean flushed;
-    boolean uploaded[16] = {0};
+    boolean uploaded[32] = {0};
 
     for (i = 0; i < nr; i++) {
         unsigned index = r300->velems->velem[i].vertex_buffer_index;
@@ -105,16 +105,10 @@ void r300_upload_user_buffers(struct r300_context *r300,
                 size = r300->velems->hw_format_size[i];
             }
 
-            DBG(r300, DBG_UPLOAD,
-                "Uploading %i bytes, index: %i, buffer: %p, userptr: %p "
-                "offset: %i, stride: %i.\n",
-                size, index, userbuf, userbuf->user_buffer,
-                vb->buffer_offset, vb->stride);
-
             u_upload_data(r300->upload_vb, first, size,
                           userbuf->user_buffer + first,
                           &vb->buffer_offset,
-                          &r300->valid_vertex_buffer[index],
+                          &r300->real_vertex_buffer[index],
                           &flushed);
 
             vb->buffer_offset -= first;
@@ -127,10 +121,9 @@ void r300_upload_user_buffers(struct r300_context *r300,
             }
             uploaded[index] = TRUE;
         } else {
-            assert(r300->valid_vertex_buffer[index]);
+            assert(r300->real_vertex_buffer[index]);
         }
     }
-    DBG(r300, DBG_UPLOAD, "-------\n");
 }
 
 static void r300_buffer_destroy(struct pipe_screen *screen,
