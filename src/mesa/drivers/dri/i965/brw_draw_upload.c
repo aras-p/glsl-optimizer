@@ -681,29 +681,18 @@ static void brw_emit_index_buffer(struct brw_context *brw)
    if (index_buffer == NULL)
       return;
 
-   /* Emit the indexbuffer packet:
-    */
-   {
-      struct brw_indexbuffer ib;
-
-      memset(&ib, 0, sizeof(ib));
-
-      ib.header.bits.opcode = CMD_INDEX_BUFFER;
-      ib.header.bits.length = sizeof(ib)/4 - 2;
-      ib.header.bits.index_format = get_index_type(index_buffer->type);
-      ib.header.bits.cut_index_enable = 0;
-
-      BEGIN_BATCH(4);
-      OUT_BATCH( ib.header.dword );
-      OUT_RELOC(brw->ib.bo,
-		I915_GEM_DOMAIN_VERTEX, 0,
-		brw->ib.offset);
-      OUT_RELOC(brw->ib.bo,
-		I915_GEM_DOMAIN_VERTEX, 0,
-		brw->ib.offset + brw->ib.size - 1);
-      OUT_BATCH( 0 );
-      ADVANCE_BATCH();
-   }
+   BEGIN_BATCH(3);
+   OUT_BATCH(CMD_INDEX_BUFFER << 16 |
+             /* cut index enable << 10 */
+             get_index_type(index_buffer->type) << 8 |
+             1);
+   OUT_RELOC(brw->ib.bo,
+             I915_GEM_DOMAIN_VERTEX, 0,
+             brw->ib.offset);
+   OUT_RELOC(brw->ib.bo,
+             I915_GEM_DOMAIN_VERTEX, 0,
+             brw->ib.offset + brw->ib.size - 1);
+   ADVANCE_BATCH();
 }
 
 const struct brw_tracked_state brw_index_buffer = {
