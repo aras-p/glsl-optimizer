@@ -142,7 +142,8 @@ C_SOURCES = \
 	util/u_tile.c \
 	util/u_transfer.c \
 	util/u_resource.c \
-	util/u_upload_mgr.c
+	util/u_upload_mgr.c \
+	util/u_vbuf_mgr.c
 
 	# Disabling until pipe-video branch gets merged in
 	#vl/vl_bitstream_parser.c \
