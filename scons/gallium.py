@@ -551,6 +551,10 @@ def generate(env):
     env.Append(LINKFLAGS = linkflags)
     env.Append(SHLINKFLAGS = shlinkflags)
 
+    # We have C++ in several libraries, so always link with the C++ compiler
+    if env['gcc']:
+        env['LINK'] = env['CXX']
+
     # Default libs
     env.Append(LIBS = [])
 
