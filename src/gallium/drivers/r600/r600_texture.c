@@ -302,6 +302,9 @@ r600_texture_create_object(struct pipe_screen *screen,
 	resource->bo = bo;
 	rtex->pitch_override = pitch_in_bytes_override;
 
+	if (util_format_is_depth_or_stencil(base->format))
+		rtex->depth = 1;
+
 	if (array_mode)
 		rtex->tiled = 1;
 	r600_setup_miptree(screen, rtex, array_mode);
@@ -632,16 +635,12 @@ void r600_texture_transfer_destroy(struct pipe_context *ctx,
 				   struct pipe_transfer *transfer)
 {
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
-	struct r600_resource_texture *rtex = (struct r600_resource_texture*)transfer->resource;
 
 	if (rtransfer->staging_texture) {
 		if (transfer->usage & PIPE_TRANSFER_WRITE) {
 			r600_copy_from_staging_texture(ctx, rtransfer);
 		}
 		pipe_resource_reference(&rtransfer->staging_texture, NULL);
-	}
-	if (rtex->flushed_depth_texture) {
-		pipe_resource_reference((struct pipe_resource **)&rtex->flushed_depth_texture, NULL);
 	}
 	pipe_resource_reference(&transfer->resource, NULL);
 	FREE(transfer);

@@ -63,6 +63,7 @@ struct r600_resource_texture {
 	unsigned			depth;
 	unsigned			dirty;
 	struct r600_resource_texture	*flushed_depth_texture;
+	bool				flushed;
 };
 
 #define R600_BUFFER_MAGIC 0xabcd1600

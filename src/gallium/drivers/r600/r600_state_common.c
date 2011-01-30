@@ -496,6 +496,8 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	struct r600_drawl draw = {};
 	unsigned prim;
 
+	r600_flush_depth_textures(rctx);
+
 	if (rctx->vertex_elements->incompatible_layout) {
 		r600_begin_vertex_translate(rctx, info->min_index, info->max_index);
 	}
@@ -595,6 +597,12 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		evergreen_context_draw(&rctx->ctx, &rdraw);
 	} else {
 		r600_context_draw(&rctx->ctx, &rdraw);
+	}
+
+	if (rctx->framebuffer.zsbuf)
+	{
+		struct pipe_resource *tex = rctx->framebuffer.zsbuf->texture;
+		((struct r600_resource_texture *)tex)->flushed = false;
 	}
 
 	pipe_resource_reference(&draw.index_buffer, NULL);

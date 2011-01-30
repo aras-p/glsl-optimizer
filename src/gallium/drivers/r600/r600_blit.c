@@ -36,6 +36,7 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 
+	rctx->blit = true;
 	r600_context_queries_suspend(&rctx->ctx);
 
 	util_blitter_save_blend(rctx->blitter, rctx->states[R600_PIPE_STATE_BLEND]);
@@ -74,6 +75,7 @@ static void r600_blitter_end(struct pipe_context *ctx)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	r600_context_queries_resume(&rctx->ctx);
+	rctx->blit = false;
 }
 
 void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture)
@@ -82,6 +84,9 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_t
 	struct pipe_surface *zsurf, *cbsurf, surf_tmpl;
 	int level = 0;
 	float depth = 1.0f;
+
+	if (texture->flushed) return;
+
 	surf_tmpl.format = texture->resource.base.b.format;
 	surf_tmpl.u.tex.level = level;
 	surf_tmpl.u.tex.first_layer = 0;
@@ -102,9 +107,32 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_t
 	r600_blitter_begin(ctx, R600_CLEAR_SURFACE);
 	util_blitter_custom_depth_stencil(rctx->blitter, zsurf, cbsurf, rctx->custom_dsa_flush, depth);
 	r600_blitter_end(ctx);
+	texture->flushed = true;
 
 	pipe_surface_reference(&zsurf, NULL);
 	pipe_surface_reference(&cbsurf, NULL);
+}
+
+void r600_flush_depth_textures(struct r600_pipe_context *rctx)
+{
+	unsigned int i;
+
+	if (rctx->blit) return;
+
+	/* FIXME: This handles fragment shader textures only. */
+
+	for (i = 0; i < rctx->ps_samplers.n_views; ++i) {
+		struct r600_pipe_sampler_view *view;
+		struct r600_resource_texture *tex;
+
+		view = rctx->ps_samplers.views[i];
+		if (!view) continue;
+
+		tex = (struct r600_resource_texture *)view->base.texture;
+		if (!tex->depth) continue;
+
+		r600_blit_uncompress_depth(&rctx->context, tex);
+	}
 }
 
 static void r600_clear(struct pipe_context *ctx, unsigned buffers,
