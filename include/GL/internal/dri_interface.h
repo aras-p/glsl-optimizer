@@ -657,7 +657,7 @@ struct __DRIlegacyExtensionRec {
  * conjunction with the core extension.
  */
 #define __DRI_SWRAST "DRI_SWRast"
-#define __DRI_SWRAST_VERSION 1
+#define __DRI_SWRAST_VERSION 2
 
 struct __DRIswrastExtensionRec {
     __DRIextension base;
@@ -670,6 +670,13 @@ struct __DRIswrastExtensionRec {
     __DRIdrawable *(*createNewDrawable)(__DRIscreen *screen,
 					const __DRIconfig *config,
 					void *loaderPrivate);
+
+   /* Since version 2 */
+   __DRIcontext *(*createNewContextForAPI)(__DRIscreen *screen,
+                                           int api,
+                                           const __DRIconfig *config,
+                                           __DRIcontext *shared,
+                                           void *data);
 };
 
 /**

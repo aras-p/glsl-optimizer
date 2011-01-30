@@ -121,6 +121,48 @@ driCreateNewContext(__DRIscreen *psp, const __DRIconfig *config,
     return pcp;
 }
 
+static __DRIcontext *
+driCreateNewContextForAPI(__DRIscreen *psp, int api,
+                          const __DRIconfig *config,
+                          __DRIcontext *shared, void *data)
+{
+    __DRIcontext *pcp;
+    void * const shareCtx = (shared != NULL) ? shared->driverPrivate : NULL;
+    gl_api mesa_api;
+
+    switch (api) {
+    case __DRI_API_OPENGL:
+            mesa_api = API_OPENGL;
+            break;
+    case __DRI_API_GLES:
+            mesa_api = API_OPENGLES;
+            break;
+    case __DRI_API_GLES2:
+            mesa_api = API_OPENGLES2;
+            break;
+    default:
+            return NULL;
+    }
+
+    pcp = CALLOC_STRUCT(__DRIcontextRec);
+    if (!pcp)
+        return NULL;
+
+    pcp->loaderPrivate = data;
+
+    pcp->driScreenPriv = psp;
+    pcp->driDrawablePriv = NULL;
+    pcp->driReadablePriv = NULL;
+
+    if (!driDriverAPI.CreateContext(mesa_api,
+                            &config->modes, pcp, shareCtx)) {
+        FREE(pcp);
+        return NULL;
+    }
+
+    return pcp;
+}
+
 static void
 driDestroyContext(__DRIcontext *pcp)
 {
@@ -269,5 +311,6 @@ const __DRIcoreExtension driCoreExtension = {
 const __DRIswrastExtension driSWRastExtension = {
     { __DRI_SWRAST, __DRI_SWRAST_VERSION },
     driCreateNewScreen,
-    driCreateNewDrawable
+    driCreateNewDrawable,
+    driCreateNewContextForAPI
 };
