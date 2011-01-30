@@ -294,7 +294,7 @@ void vegaConvolve(VGImage dst, VGImage src,
    struct vg_image *d, *s;
    VGint kernel_size = kernelWidth * kernelHeight;
    struct filter_info info;
-   const VGint max_kernel_size = vgGeti(VG_MAX_KERNEL_SIZE);
+   const VGint max_kernel_size = vegaGeti(VG_MAX_KERNEL_SIZE);
 
    if (dst == VG_INVALID_HANDLE || src == VG_INVALID_HANDLE) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
@@ -396,7 +396,7 @@ void vegaSeparableConvolve(VGImage dst, VGImage src,
    struct vg_context *ctx = vg_current_context();
    VGshort *kernel;
    VGint i, j, idx = 0;
-   const VGint max_kernel_size = vgGeti(VG_MAX_SEPARABLE_KERNEL_SIZE);
+   const VGint max_kernel_size = vegaGeti(VG_MAX_SEPARABLE_KERNEL_SIZE);
 
    if (dst == VG_INVALID_HANDLE || src == VG_INVALID_HANDLE) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
@@ -426,8 +426,8 @@ void vegaSeparableConvolve(VGImage dst, VGImage src,
          ++idx;
       }
    }
-   vgConvolve(dst, src, kernelWidth, kernelHeight, shiftX, shiftY,
-              kernel, scale, bias, tilingMode);
+   vegaConvolve(dst, src, kernelWidth, kernelHeight, shiftX, shiftY,
+                kernel, scale, bias, tilingMode);
    free(kernel);
 }
 

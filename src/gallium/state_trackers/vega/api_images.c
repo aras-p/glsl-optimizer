@@ -106,12 +106,12 @@ VGImage vegaCreateImage(VGImageFormat format,
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return VG_INVALID_HANDLE;
    }
-   if (width > vgGeti(VG_MAX_IMAGE_WIDTH) ||
-       height > vgGeti(VG_MAX_IMAGE_HEIGHT)) {
+   if (width > vegaGeti(VG_MAX_IMAGE_WIDTH) ||
+       height > vegaGeti(VG_MAX_IMAGE_HEIGHT)) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return VG_INVALID_HANDLE;
    }
-   if (width * height > vgGeti(VG_MAX_IMAGE_PIXELS)) {
+   if (width * height > vegaGeti(VG_MAX_IMAGE_PIXELS)) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return VG_INVALID_HANDLE;
    }
@@ -488,7 +488,7 @@ void vegaCopyPixels(VGint dx, VGint dy,
 
    vg_validate_state(ctx);
    /* make sure rendering has completed */
-   vgFinish();
+   vegaFinish();
 
    vg_copy_surface(ctx, strb->surface, dx, dy,
                    strb->surface, sx, sy, width, height);

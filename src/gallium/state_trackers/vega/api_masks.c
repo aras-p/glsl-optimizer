@@ -139,8 +139,8 @@ VGMaskLayer vegaCreateMaskLayer(VGint width, VGint height)
    struct vg_context *ctx = vg_current_context();
 
    if (width <= 0 || height <= 0 ||
-       width > vgGeti(VG_MAX_IMAGE_WIDTH) ||
-       height > vgGeti(VG_MAX_IMAGE_HEIGHT)) {
+       width > vegaGeti(VG_MAX_IMAGE_WIDTH) ||
+       height > vegaGeti(VG_MAX_IMAGE_HEIGHT)) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return VG_INVALID_HANDLE;
    }
