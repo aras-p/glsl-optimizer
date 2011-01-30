@@ -55,8 +55,6 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 	}
 	util_blitter_save_vertex_buffers(rctx->blitter, rctx->nvertex_buffers, rctx->vertex_buffer);
 
-	rctx->vertex_elements = NULL;
-
 	if (op & (R600_CLEAR_SURFACE | R600_COPY))
 		util_blitter_save_framebuffer(rctx->blitter, &rctx->framebuffer);
 
