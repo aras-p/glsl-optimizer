@@ -81,10 +81,12 @@ enum dirty_state {
    BLEND_DIRTY         = 1 << 0,
    FRAMEBUFFER_DIRTY   = 1 << 1,
    DEPTH_STENCIL_DIRTY = 1 << 2,
+   PAINT_DIRTY         = 1 << 3,
 
    ALL_DIRTY           = BLEND_DIRTY |
                          FRAMEBUFFER_DIRTY |
-                         DEPTH_STENCIL_DIRTY
+                         DEPTH_STENCIL_DIRTY |
+                         PAINT_DIRTY
 };
 
 struct vg_context

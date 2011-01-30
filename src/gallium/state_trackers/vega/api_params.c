@@ -1135,6 +1135,9 @@ void vegaSetParameterfv(VGHandle object,
       else {
          struct vg_paint *paint = handle_to_paint(object);
          paint_set_color(paint, values);
+         if (ctx->state.vg.fill_paint == paint ||
+             ctx->state.vg.stroke_paint == paint)
+            ctx->state.dirty |= PAINT_DIRTY;
       }
    }
       break;
@@ -1248,6 +1251,9 @@ void vegaSetParameteriv(VGHandle object,
       else {
          struct vg_paint *paint = handle_to_paint(object);
          paint_set_coloriv(paint, values);
+         if (ctx->state.vg.fill_paint == paint ||
+             ctx->state.vg.stroke_paint == paint)
+            ctx->state.dirty |= PAINT_DIRTY;
       }
    }
       break;

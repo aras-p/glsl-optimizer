@@ -118,5 +118,6 @@ void paint_fill_constant_buffer(struct vg_paint *paint,
                                 const struct matrix *mat,
                                 void *buffer);
 
+VGboolean paint_is_opaque(struct vg_paint *paint);
 
 #endif

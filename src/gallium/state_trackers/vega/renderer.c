@@ -28,6 +28,7 @@
 #include "renderer.h"
 
 #include "vg_context.h"
+#include "paint.h" /* for paint_is_opaque */
 
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
@@ -1289,7 +1290,11 @@ static void renderer_validate_blend(struct renderer *renderer,
       blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
       break;
    case VG_BLEND_SRC_OVER:
-      if (!util_format_has_alpha(fb_format)) {
+      if (paint_is_opaque(state->fill_paint) &&
+          paint_is_opaque(state->stroke_paint)) {
+         /* no blending */
+      }
+      else if (!util_format_has_alpha(fb_format)) {
          blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_SRC_ALPHA;
          blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
          blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_INV_SRC_ALPHA;

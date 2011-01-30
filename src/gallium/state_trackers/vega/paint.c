@@ -748,3 +748,10 @@ void paint_fill_constant_buffer(struct vg_paint *paint,
       abort();
    }
 }
+
+VGboolean paint_is_opaque(struct vg_paint *paint)
+{
+   /* TODO add other paint types and make sure PAINT_DIRTY gets set */
+   return (paint->type == VG_PAINT_TYPE_COLOR &&
+           floatsEqual(paint->solid.color[3], 1.0f));
+}

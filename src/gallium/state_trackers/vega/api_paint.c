@@ -72,6 +72,8 @@ void vegaSetPaint(VGPaint paint, VGbitfield paintModes)
    if (paintModes & VG_STROKE_PATH) {
       ctx->state.vg.stroke_paint = handle_to_paint(paint);
    }
+
+   ctx->state.dirty |= PAINT_DIRTY;
 }
 
 VGPaint vegaGetPaint(VGPaintMode paintMode)
@@ -98,6 +100,7 @@ VGPaint vegaGetPaint(VGPaintMode paintMode)
 void vegaSetColor(VGPaint paint, VGuint rgba)
 {
    struct vg_context *ctx = vg_current_context();
+   struct vg_paint *p;
 
    if (paint == VG_INVALID_HANDLE) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
@@ -109,7 +112,12 @@ void vegaSetColor(VGPaint paint, VGuint rgba)
       return;
    }
 
-   paint_set_colori(handle_to_paint(paint), rgba);
+   p = handle_to_paint(paint);
+   paint_set_colori(p, rgba);
+
+   if (ctx->state.vg.fill_paint == p ||
+       ctx->state.vg.stroke_paint == p)
+      ctx->state.dirty |= PAINT_DIRTY;
 }
 
 VGuint vegaGetColor(VGPaint paint)
