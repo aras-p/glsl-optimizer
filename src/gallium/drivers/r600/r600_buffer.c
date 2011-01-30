@@ -236,7 +236,7 @@ void r600_upload_user_buffers(struct r600_pipe_context *rctx,
 			}
 
 			u_upload_data(rctx->upload_vb, first, size,
-				      userbuf->user_buffer + first,
+				      (uint8_t*)userbuf->user_buffer + first,
 				      &vb->buffer_offset,
 				      &rctx->real_vertex_buffer[index],
 				      &flushed);
