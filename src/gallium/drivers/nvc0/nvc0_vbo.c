@@ -54,7 +54,7 @@ nvc0_vertex_state_create(struct pipe_context *pipe,
     assert(num_elements);
 
     so = MALLOC(sizeof(*so) +
-                (num_elements - 1) * sizeof(struct nvc0_vertex_element));
+                num_elements * sizeof(struct nvc0_vertex_element));
     if (!so)
         return NULL;
     so->num_elements = num_elements;
@@ -350,55 +350,6 @@ nvc0_draw_vbo_flush_notify(struct nouveau_channel *chan)
 
    nvc0_bufctx_emit_relocs(nvc0);
 }
-
-#if 0
-static struct nouveau_bo *
-nvc0_tfb_setup(struct nvc0_context *nvc0)
-{
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
-   struct nouveau_bo *tfb = NULL;
-   int ret, i;
-
-   ret = nouveau_bo_new(nvc0->screen->base.device,
-                        NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0, 4096, &tfb);
-   if (ret)
-      return NULL;
-
-   ret = nouveau_bo_map(tfb, NOUVEAU_BO_WR);
-   if (ret)
-      return NULL;
-   memset(tfb->map, 0xee, 8 * 4 * 3);
-   nouveau_bo_unmap(tfb);
-
-   BEGIN_RING(chan, RING_3D(TFB_ENABLE), 1);
-   OUT_RING  (chan, 1);
-   BEGIN_RING(chan, RING_3D(TFB_BUFFER_ENABLE(0)), 5);
-   OUT_RING  (chan, 1);
-   OUT_RELOCh(chan, tfb, 0, NOUVEAU_BO_GART | NOUVEAU_BO_WR);
-   OUT_RELOCl(chan, tfb, 0, NOUVEAU_BO_GART | NOUVEAU_BO_WR);
-   OUT_RING  (chan, tfb->size);
-   OUT_RING  (chan, 0); /* TFB_PRIMITIVE_ID(0) */
-   BEGIN_RING(chan, RING_3D(TFB_UNK0700(0)), 3);
-   OUT_RING  (chan, 0);
-   OUT_RING  (chan, 8); /* TFB_VARYING_COUNT(0) */
-   OUT_RING  (chan, 32); /* TFB_BUFFER_STRIDE(0) */
-   BEGIN_RING(chan, RING_3D(TFB_VARYING_LOCS(0)), 2);
-   OUT_RING  (chan, 0x1f1e1d1c);
-   OUT_RING  (chan, 0xa3a2a1a0);
-   for (i = 1; i < 4; ++i) {
-      BEGIN_RING(chan, RING_3D(TFB_BUFFER_ENABLE(i)), 1);
-      OUT_RING  (chan, 0);
-   }
-   BEGIN_RING(chan, RING_3D(TFB_ENABLE), 1);
-   OUT_RING  (chan, 1);
-   BEGIN_RING(chan, RING_3D_(0x135c), 1);
-   OUT_RING  (chan, 1);
-   BEGIN_RING(chan, RING_3D_(0x135c), 1);
-   OUT_RING  (chan, 0);
-
-   return tfb;
-}
-#endif
 
 static void
 nvc0_draw_arrays(struct nvc0_context *nvc0,

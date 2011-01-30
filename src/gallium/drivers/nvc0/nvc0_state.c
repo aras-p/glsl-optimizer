@@ -808,6 +808,74 @@ nvc0_vertex_state_bind(struct pipe_context *pipe, void *hwcso)
     nvc0->dirty |= NVC0_NEW_VERTEX;
 }
 
+static void *
+nvc0_tfb_state_create(struct pipe_context *pipe,
+                      const struct pipe_stream_output_state *pso)
+{
+   struct nvc0_transform_feedback_state *so;
+   int n = 0;
+   int i, c, b;
+
+   so = MALLOC(sizeof(*so) + pso->num_outputs * 4 * sizeof(uint8_t));
+   if (!so)
+      return NULL;
+
+   for (b = 0; b < 4; ++b) {
+      for (i = 0; i < pso->num_outputs; ++i) {
+         if (pso->output_buffer[i] != b)
+            continue;
+         for (c = 0; c < 4; ++c) {
+            if (!(pso->register_mask[i] & (1 << c)))
+               continue;
+            so->varying_count[b]++;
+            so->varying_index[n++] = (pso->register_index[i] << 2) | c;
+         }
+      }
+      so->stride[b] = so->varying_count[b] * 4;
+   }
+   if (pso->stride)
+      so->stride[0] = pso->stride;
+
+   return so;
+}
+
+static void
+nvc0_tfb_state_delete(struct pipe_context *pipe, void *hwcso)
+{
+   FREE(hwcso);
+}
+
+static void
+nvc0_tfb_state_bind(struct pipe_context *pipe, void *hwcso)
+{
+   nvc0_context(pipe)->tfb = hwcso;
+   nvc0_context(pipe)->dirty |= NVC0_NEW_TFB;
+}
+
+static void
+nvc0_set_transform_feedback_buffers(struct pipe_context *pipe,
+                                    struct pipe_resource **buffers,
+                                    int *offsets,
+                                    int num_buffers)
+{
+   struct nvc0_context *nvc0 = nvc0_context(pipe);
+   int i;
+
+   assert(num_buffers >= 0 && num_buffers <= 4); /* why signed ? */
+
+   for (i = 0; i < num_buffers; ++i) {
+       assert(offsets[i] >= 0);
+       nvc0->tfb_offset[i] = offsets[i];
+       pipe_resource_reference(&nvc0->tfbbuf[i], buffers[i]);
+   }
+   for (; i < nvc0->num_tfbbufs; ++i)
+      pipe_resource_reference(&nvc0->tfbbuf[i], NULL);
+
+   nvc0->num_tfbbufs = num_buffers;
+
+   nvc0->dirty |= NVC0_NEW_TFB_BUFFERS;
+}
+
 void
 nvc0_init_state_functions(struct nvc0_context *nvc0)
 {
@@ -861,5 +929,10 @@ nvc0_init_state_functions(struct nvc0_context *nvc0)
 
     nvc0->pipe.set_vertex_buffers = nvc0_set_vertex_buffers;
     nvc0->pipe.set_index_buffer = nvc0_set_index_buffer;
+
+    nvc0->pipe.create_stream_output_state = nvc0_tfb_state_create;
+    nvc0->pipe.delete_stream_output_state = nvc0_tfb_state_delete;
+    nvc0->pipe.bind_stream_output_state = nvc0_tfb_state_bind;
+    nvc0->pipe.set_stream_output_buffers = nvc0_set_transform_feedback_buffers;
 }
 

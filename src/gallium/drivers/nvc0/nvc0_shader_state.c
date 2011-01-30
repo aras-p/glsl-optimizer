@@ -55,7 +55,7 @@ nvc0_program_validate(struct nvc0_context *nvc0, struct nvc0_program *prog)
                          prog->code_base + NVC0_SHADER_HEADER_SIZE,
                          prog->code_size, prog->code);
 
-   BEGIN_RING(nvc0->screen->base.channel, RING_3D_(0x021c), 1);
+   BEGIN_RING(nvc0->screen->base.channel, RING_3D(MEM_BARRIER), 1);
    OUT_RING  (nvc0->screen->base.channel, 0x1111);
 
    return TRUE;
@@ -177,4 +177,60 @@ nvc0_gmtyprog_validate(struct nvc0_context *nvc0)
    OUT_RING  (chan, gp->code_base);
    BEGIN_RING(chan, RING_3D(SP_GPR_ALLOC(4)), 1);
    OUT_RING  (chan, gp->max_gpr);   
+}
+
+/* It's *is* kind of shader related. We need to inspect the program
+ * to get the output locations right.
+ */
+void
+nvc0_tfb_validate(struct nvc0_context *nvc0)
+{
+   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nvc0_program *vp;
+   struct nvc0_transform_feedback_state *tfb = nvc0->tfb;
+   int b;
+
+   BEGIN_RING(chan, RING_3D(TFB_ENABLE), 1);
+   if (!tfb) {
+      OUT_RING(chan, 0);
+      return;
+   }
+   OUT_RING(chan, 1);
+
+   vp = nvc0->vertprog ? nvc0->vertprog : nvc0->gmtyprog;
+
+   for (b = 0; b < nvc0->num_tfbbufs; ++b) {
+      uint8_t idx, var[128];
+      int i, n;
+      struct nvc0_resource *buf = nvc0_resource(nvc0->tfbbuf[b]);
+
+      BEGIN_RING(chan, RING_3D(TFB_BUFFER_ENABLE(b)), 5);
+      OUT_RING  (chan, 1);
+      OUT_RESRCh(chan, buf, nvc0->tfb_offset[b], NOUVEAU_BO_WR);
+      OUT_RESRCl(chan, buf, nvc0->tfb_offset[b], NOUVEAU_BO_WR);
+      OUT_RING  (chan, buf->base.width0 - nvc0->tfb_offset[b]);
+      OUT_RING  (chan, 0); /* TFB_PRIMITIVE_ID <- offset ? */
+
+      if (!(nvc0->dirty & NVC0_NEW_TFB))
+         continue;
+
+      BEGIN_RING(chan, RING_3D(TFB_UNK07X0(b)), 3);
+      OUT_RING  (chan, 0);
+      OUT_RING  (chan, tfb->varying_count[b]);
+      OUT_RING  (chan, tfb->stride[b]);
+
+      n = b ? tfb->varying_count[b - 1] : 0;
+      i = 0;
+      for (; i < tfb->varying_count[b]; ++i) {
+         idx = tfb->varying_index[n + i];
+         var[i] = vp->vp.out_pos[idx >> 2] + (idx & 3);
+      }
+      for (; i & 3; ++i)
+         var[i] = 0;
+
+      BEGIN_RING(chan, RING_3D(TFB_VARYING_LOCS(b, 0)), i / 4);
+      OUT_RINGp (chan, var, i / 4);
+   }
+   for (; b < 4; ++b)
+      IMMED_RING(chan, RING_3D(TFB_BUFFER_ENABLE(b)), 0);
 }
