@@ -93,7 +93,7 @@ struct u_resource_vtbl {
 
 struct u_resource {
    struct pipe_resource b;
-   struct u_resource_vtbl *vtbl;
+   const struct u_resource_vtbl *vtbl;
 };
 
 
