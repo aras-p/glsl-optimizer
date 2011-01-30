@@ -81,12 +81,6 @@ create_handle(void *object)
 {
    VGHandle h = next_handle++;
    util_hash_table_set(handle_hash, intptr_to_pointer(h), object);
-#if DEBUG
-   {
-      void *v = handle_to_object(h);
-      assert(v == object);
-   }
-#endif
    return h;
 }
 
