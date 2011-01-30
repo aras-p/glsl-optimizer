@@ -94,6 +94,9 @@ struct rc_reader_data {
 	unsigned int ReadersReserved;
 	struct rc_reader * Readers;
 
+	/* If this flag is enabled, rc_get_readers will exit as soon possbile
+	 * after the Abort flag is set.*/
+	unsigned int ExitOnAbort;
 	void * CbData;
 };
 

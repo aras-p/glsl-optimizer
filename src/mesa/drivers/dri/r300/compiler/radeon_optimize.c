@@ -144,6 +144,7 @@ static void copy_propagate(struct radeon_compiler * c, struct rc_instruction * i
 		return;
 
 	/* Get a list of all the readers of this MOV instruction. */
+	reader_data.ExitOnAbort = 1;
 	rc_get_readers(c, inst_mov, &reader_data,
 		       copy_propagate_scan_read, NULL,
 		       is_src_clobbered_scan_write);
@@ -453,6 +454,7 @@ static int presub_helper(
 	rc_presubtract_op cb_op = presub_opcode;
 
 	reader_data.CbData = &cb_op;
+	reader_data.ExitOnAbort = 1;
 	rc_get_readers(c, inst_add, &reader_data, presub_scan_read, NULL,
 						is_src_clobbered_scan_write);
 

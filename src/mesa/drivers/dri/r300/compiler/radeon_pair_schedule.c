@@ -952,6 +952,7 @@ static void schedule_block(struct r300_fragment_program_compiler * c,
 			instruction_ready(&s, s.Current);
 
 		/* Get global readers for possible RGB->Alpha conversion. */
+		s.Current->GlobalReaders.ExitOnAbort = 1;
 		rc_get_readers(s.C, inst, &s.Current->GlobalReaders,
 				is_rgb_to_alpha_possible_normal,
 				is_rgb_to_alpha_possible, NULL);

@@ -592,7 +592,7 @@ static void get_readers_pair_read_callback(
 	if (d->ReadPairCB)
 		d->ReadPairCB(d->ReaderData, inst, arg, src);
 
-	if (d->ReaderData->Abort)
+	if (d->ReaderData->ExitOnAbort && d->ReaderData->Abort)
 		return;
 
 	add_reader_pair(&d->C->Pool, d->ReaderData, inst, shared_mask, arg, src);
@@ -620,7 +620,7 @@ static void get_readers_normal_read_callback(
 	if (d->ReadNormalCB)
 		d->ReadNormalCB(d->ReaderData, inst, src);
 
-	if (d->ReaderData->Abort)
+	if (d->ReaderData->ExitOnAbort && d->ReaderData->Abort)
 		return;
 
 	add_reader_normal(&d->C->Pool, d->ReaderData, inst, shared_mask, src);
@@ -767,7 +767,7 @@ static void get_readers_for_single_write(
 		}
 		rc_for_all_writes_mask(tmp, get_readers_write_callback, d);
 
-		if (d->ReaderData->Abort)
+		if (d->ReaderData->ExitOnAbort && d->ReaderData->Abort)
 			return;
 
 		if (branch_depth == 0 && !d->AliveWriteMask)

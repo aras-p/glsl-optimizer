@@ -71,6 +71,7 @@ void rc_rename_regs(struct radeon_compiler *c, void *user)
 		if (inst->U.I.DstReg.File != RC_FILE_TEMPORARY)
 			continue;
 
+		reader_data.ExitOnAbort = 1;
 		rc_get_readers(c, inst, &reader_data, NULL, NULL, NULL);
 
 		if (reader_data.Abort || reader_data.ReaderCount == 0)
