@@ -223,7 +223,7 @@ match_function_by_name(exec_list *instructions, const char *name,
 
       const char *prefix = "candidates are: ";
 
-      for (int i = -1; i < state->num_builtins_to_link; i++) {
+      for (int i = -1; i < (int) state->num_builtins_to_link; i++) {
 	 glsl_symbol_table *syms = i >= 0 ? state->builtins_to_link[i]->symbols
 					  : state->symbols;
 	 f = syms->get_function(name);
