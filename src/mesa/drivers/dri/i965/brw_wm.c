@@ -431,7 +431,8 @@ static void brw_wm_populate_key( struct brw_context *brw,
       key->render_to_fbo = ctx->DrawBuffer->Name != 0;
    }
 
-   key->nr_color_regions = brw->state.nr_color_regions;
+   /* _NEW_BUFFERS */
+   key->nr_color_regions = ctx->DrawBuffer->_NumColorDrawBuffers;
 
    /* CACHE_NEW_VS_PROG */
    key->vp_outputs_written = brw->vs.prog_data->outputs_written;

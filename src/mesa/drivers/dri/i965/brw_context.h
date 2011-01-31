@@ -461,8 +461,6 @@ struct brw_context
    struct {
       struct brw_state_flags dirty;
 
-      GLuint nr_color_regions;
-      struct intel_region *color_regions[MAX_DRAW_BUFFERS];
       struct intel_region *depth_region;
 
       /**
