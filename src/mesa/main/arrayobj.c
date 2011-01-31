@@ -234,7 +234,7 @@ _mesa_initialize_array_object( struct gl_context *ctx,
    init_array(ctx, &obj->Weight, 1, GL_FLOAT);
    init_array(ctx, &obj->Normal, 3, GL_FLOAT);
    init_array(ctx, &obj->Color, 4, GL_FLOAT);
-   init_array(ctx, &obj->SecondaryColor, 4, GL_FLOAT);
+   init_array(ctx, &obj->SecondaryColor, 3, GL_FLOAT);
    init_array(ctx, &obj->FogCoord, 1, GL_FLOAT);
    init_array(ctx, &obj->Index, 1, GL_FLOAT);
    for (i = 0; i < Elements(obj->TexCoord); i++) {
