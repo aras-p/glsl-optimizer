@@ -804,6 +804,8 @@ dri2CreateScreen(int screen, struct glx_display * priv)
       return NULL;
 
    memset(psc, 0, sizeof *psc);
+   psc->fd = -1;
+
    if (!glx_screen_init(&psc->base, screen, priv)) {
       Xfree(psc);
       return NULL;
@@ -921,7 +923,7 @@ dri2CreateScreen(int screen, struct glx_display * priv)
    return &psc->base;
 
 handle_error:
-   if (psc->fd)
+   if (psc->fd >= 0)
       close(psc->fd);
    if (psc->driver)
       dlclose(psc->driver);
