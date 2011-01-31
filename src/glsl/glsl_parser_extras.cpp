@@ -79,6 +79,38 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *ctx,
    this->Const.MaxFragmentUniformComponents = ctx->Const.FragmentProgram.MaxUniformComponents;
 
    this->Const.MaxDrawBuffers = ctx->Const.MaxDrawBuffers;
+
+   /* Note: Once the OpenGL 3.0 'forward compatible' context or the OpenGL 3.2
+    * Core context is supported, this logic will need change.  Older versions of
+    * GLSL are no longer supported outside the compatibility contexts of 3.x.
+    */
+   this->Const.GLSL_100ES = (ctx->API == API_OPENGLES2)
+      || ctx->Extensions.ARB_ES2_compatibility;
+   this->Const.GLSL_110 = (ctx->API == API_OPENGL);
+   this->Const.GLSL_120 = (ctx->API == API_OPENGL)
+      && (ctx->Const.GLSLVersion >= 120);
+   this->Const.GLSL_130 = (ctx->API == API_OPENGL)
+      && (ctx->Const.GLSLVersion >= 130);
+
+   const unsigned lowest_version =
+      (ctx->API == API_OPENGLES2) || ctx->Extensions.ARB_ES2_compatibility
+      ? 100 : 110;
+   const unsigned highest_version =
+      (ctx->API == API_OPENGL) ? ctx->Const.GLSLVersion : 100;
+   char *supported = (char *) ralloc_context(this);
+
+   for (unsigned ver = lowest_version; ver <= highest_version; ver += 10) {
+      const char *const prefix = (ver == lowest_version)
+	 ? ""
+	 : ((ver == highest_version) ? ", and " : ", ");
+
+      ralloc_asprintf_append(& supported, "%s%d.%02d%s",
+			     prefix,
+			     ver / 100, ver % 100,
+			     (ver == 100) ? " ES" : "");
+   }
+
+   this->supported_version_string = supported;
 }
 
 const char *

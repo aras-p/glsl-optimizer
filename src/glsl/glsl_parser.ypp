@@ -220,24 +220,39 @@ version_statement:
 	/* blank - no #version specified: defaults are already set */
 	| VERSION INTCONSTANT EOL
 	{
+	   bool supported = false;
+
 	   switch ($2) {
 	   case 100:
 	      state->es_shader = true;
+	      supported = state->Const.GLSL_100ES;
+	      break;
 	   case 110:
+	      supported = state->Const.GLSL_110;
+	      break;
 	   case 120:
+	      supported = state->Const.GLSL_120;
+	      break;
 	   case 130:
-	      /* FINISHME: Check against implementation support versions. */
-	      state->language_version = $2;
-	      state->version_string =
-		 ralloc_asprintf(state, "GLSL%s %d.%02d",
-				 state->es_shader ? " ES" : "",
-				 state->language_version / 100,
-				 state->language_version % 100);
+	      supported = state->Const.GLSL_130;
 	      break;
 	   default:
-	      _mesa_glsl_error(& @2, state, "Shading language version"
-			       "%u is not supported\n", $2);
+	      supported = false;
 	      break;
+	   }
+
+	   state->language_version = $2;
+	   state->version_string =
+	      ralloc_asprintf(state, "GLSL%s %d.%02d",
+			      state->es_shader ? " ES" : "",
+			      state->language_version / 100,
+			      state->language_version % 100);
+
+	   if (!supported) {
+	      _mesa_glsl_error(& @2, state, "%s is not supported. "
+			       "Supported versions are: %s\n",
+			       state->version_string,
+			       state->supported_version_string);
 	   }
 	}
 	;
