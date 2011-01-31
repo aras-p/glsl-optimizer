@@ -97,7 +97,7 @@ void ir_print_visitor::visit(ir_variable *ir)
    const char *const cent = (ir->centroid) ? "centroid " : "";
    const char *const inv = (ir->invariant) ? "invariant " : "";
    const char *const mode[] = { "", "uniform ", "in ", "out ", "inout ",
-			        "temporary " };
+			        "sys ", "temporary " };
    const char *const interp[] = { "", "flat", "noperspective" };
 
    printf("(%s%s%s%s) ",
