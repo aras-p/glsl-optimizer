@@ -355,6 +355,20 @@ static int is_alu_reduction_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 	}
 }
 
+static int is_alu_cube_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
+{
+	switch (bc->chiprev) {
+	case CHIPREV_R600:
+	case CHIPREV_R700:
+		return !alu->is_op3 &&
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE;
+	case CHIPREV_EVERGREEN:
+	default:
+		return !alu->is_op3 &&
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE;
+	}
+}
+
 static int is_alu_mova_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 {
 	switch (bc->chiprev) {
@@ -722,7 +736,8 @@ static int replace_gpr_with_pv_ps(struct r600_bc *bc,
 	for (i = 0; i < 5; ++i) {
 		if(prev[i] && prev[i]->dst.write && !prev[i]->dst.rel) {
 			gpr[i] = prev[i]->dst.sel;
-			if (is_alu_reduction_inst(bc, prev[i]))
+			/* cube writes more than PV.X */
+			if (!is_alu_cube_inst(bc, prev[i]) && is_alu_reduction_inst(bc, prev[i]))
 				chan[i] = 0;
 			else
 				chan[i] = prev[i]->dst.chan;

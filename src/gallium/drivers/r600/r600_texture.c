@@ -923,7 +923,7 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 			    desc->channel[1].size == 10 &&
 			    desc->channel[2].size == 10 &&
 			    desc->channel[3].size == 2) {
-				result = FMT_10_10_10_2;
+				result = FMT_2_10_10_10;
 				goto out_word4;
 			}
 			goto out_unknown;
