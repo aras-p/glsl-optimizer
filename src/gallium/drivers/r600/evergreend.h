@@ -430,9 +430,6 @@
 #define   S_028808_FOG_ENABLE(x)                       (((x) & 0x1) << 0)
 #define   G_028808_FOG_ENABLE(x)                       (((x) >> 0) & 0x1)
 #define   C_028808_FOG_ENABLE                          0xFFFFFFFE
-#define   S_028808_MULTIWRITE_ENABLE(x)                (((x) & 0x1) << 1)
-#define   G_028808_MULTIWRITE_ENABLE(x)                (((x) >> 1) & 0x1)
-#define   C_028808_MULTIWRITE_ENABLE                   0xFFFFFFFD
 #define   S_028808_DITHER_ENABLE(x)                    (((x) & 0x1) << 2)
 #define   G_028808_DITHER_ENABLE(x)                    (((x) >> 2) & 0x1)
 #define   C_028808_DITHER_ENABLE                       0xFFFFFFFB

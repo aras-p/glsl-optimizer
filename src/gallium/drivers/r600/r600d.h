@@ -2332,31 +2332,6 @@
 #define R_0280D4_CB_COLOR5_TILE                      0x0280D4
 #define R_0280D8_CB_COLOR6_TILE                      0x0280D8
 #define R_0280DC_CB_COLOR7_TILE                      0x0280DC
-#define R_028808_CB_COLOR_CONTROL                    0x028808
-#define   S_028808_FOG_ENABLE(x)                       (((x) & 0x1) << 0)
-#define   G_028808_FOG_ENABLE(x)                       (((x) >> 0) & 0x1)
-#define   C_028808_FOG_ENABLE                          0xFFFFFFFE
-#define   S_028808_MULTIWRITE_ENABLE(x)                (((x) & 0x1) << 1)
-#define   G_028808_MULTIWRITE_ENABLE(x)                (((x) >> 1) & 0x1)
-#define   C_028808_MULTIWRITE_ENABLE                   0xFFFFFFFD
-#define   S_028808_DITHER_ENABLE(x)                    (((x) & 0x1) << 2)
-#define   G_028808_DITHER_ENABLE(x)                    (((x) >> 2) & 0x1)
-#define   C_028808_DITHER_ENABLE                       0xFFFFFFFB
-#define   S_028808_DEGAMMA_ENABLE(x)                   (((x) & 0x1) << 3)
-#define   G_028808_DEGAMMA_ENABLE(x)                   (((x) >> 3) & 0x1)
-#define   C_028808_DEGAMMA_ENABLE                      0xFFFFFFF7
-#define   S_028808_SPECIAL_OP(x)                       (((x) & 0x7) << 4)
-#define   G_028808_SPECIAL_OP(x)                       (((x) >> 4) & 0x7)
-#define   C_028808_SPECIAL_OP                          0xFFFFFF8F
-#define   S_028808_PER_MRT_BLEND(x)                    (((x) & 0x1) << 7)
-#define   G_028808_PER_MRT_BLEND(x)                    (((x) >> 7) & 0x1)
-#define   C_028808_PER_MRT_BLEND                       0xFFFFFF7F
-#define   S_028808_TARGET_BLEND_ENABLE(x)              (((x) & 0xFF) << 8)
-#define   G_028808_TARGET_BLEND_ENABLE(x)              (((x) >> 8) & 0xFF)
-#define   C_028808_TARGET_BLEND_ENABLE                 0xFFFF00FF
-#define   S_028808_ROP3(x)                             (((x) & 0xFF) << 16)
-#define   G_028808_ROP3(x)                             (((x) >> 16) & 0xFF)
-#define   C_028808_ROP3                                0xFF00FFFF
 #define R_028614_SPI_VS_OUT_ID_0                     0x028614
 #define   S_028614_SEMANTIC_0(x)                       (((x) & 0xFF) << 0)
 #define   G_028614_SEMANTIC_0(x)                       (((x) >> 0) & 0xFF)

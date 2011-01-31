@@ -175,6 +175,13 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 				R_0288CC_SQ_PGM_CF_OFFSET_PS,
 				0x00000000, 0xFFFFFFFF, NULL);
 
+	if (rshader->fs_write_all) {
+		r600_pipe_state_add_reg(rstate, R_028808_CB_COLOR_CONTROL,
+					S_028808_MULTIWRITE_ENABLE(1),
+					S_028808_MULTIWRITE_ENABLE(1),
+					NULL);
+	}
+
 	if (rshader->uses_kill) {
 		/* only set some bits here, the other bits are set in the dsa state */
 		r600_pipe_state_add_reg(rstate,
@@ -495,6 +502,7 @@ static int evergreen_gpr_count(struct r600_shader_ctx *ctx)
 int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *shader, u32 **literals)
 {
 	struct tgsi_full_immediate *immediate;
+	struct tgsi_full_property *property;
 	struct r600_shader_ctx ctx;
 	struct r600_bc_output output[32];
 	unsigned output_done, noutput;
@@ -563,7 +571,7 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 
 	ctx.nliterals = 0;
 	ctx.literals = NULL;
-
+	shader->fs_write_all = FALSE;
 	while (!tgsi_parse_end_of_tokens(&ctx.parse)) {
 		tgsi_parse_token(&ctx.parse);
 		switch (ctx.parse.FullToken.Token.Type) {
@@ -602,6 +610,11 @@ int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *s
 				goto out_err;
 			break;
 		case TGSI_TOKEN_TYPE_PROPERTY:
+			property = &ctx.parse.FullToken.FullProperty;
+			if (property->Property.PropertyName == TGSI_PROPERTY_FS_COLOR0_WRITES_ALL_CBUFS) {
+				if (property->u[0].Data == 1)
+					shader->fs_write_all = TRUE;
+			}
 			break;
 		default:
 			R600_ERR("unsupported token type %d\n", ctx.parse.FullToken.Token.Type);
