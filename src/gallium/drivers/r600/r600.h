@@ -250,6 +250,7 @@ struct r600_context {
 	struct list_head	query_list;
 	unsigned		num_query_running;
 	struct list_head	fenced_bo;
+	unsigned                num_db; /* for OQ */
 };
 
 struct r600_draw {

@@ -751,6 +751,10 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 
 	/* init dirty list */
 	LIST_INITHEAD(&ctx->dirty);
+
+	/* TODO update this value correctly */
+	ctx->num_db = 4;
+
 	return 0;
 out_err:
 	r600_context_fini(ctx);
@@ -1252,6 +1256,7 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 	u64 start, end;
 	u32 *results;
 	int i;
+	int size;
 
 	if (wait)
 		results = r600_bo_map(ctx->radeon, query->buffer, PB_USAGE_CPU_READ, NULL);
@@ -1260,7 +1265,8 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 	if (!results)
 		return FALSE;
 
-	for (i = 0; i < query->num_results; i += 4) {
+	size = query->num_results * (query->type == PIPE_QUERY_OCCLUSION_COUNTER ? ctx->num_db : 1);
+	for (i = 0; i < size; i += 4) {
 		start = (u64)results[i] | (u64)results[i + 1] << 32;
 		end = (u64)results[i + 2] | (u64)results[i + 3] << 32;
 		if (((start & 0x8000000000000000UL) && (end & 0x8000000000000000UL))
@@ -1338,7 +1344,7 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], query->buffer);
 
-	query->num_results += 4;
+	query->num_results += 4 * (query->type == PIPE_QUERY_OCCLUSION_COUNTER ? ctx->num_db : 1);
 	query->state ^= R600_QUERY_STATE_STARTED;
 	query->state |= R600_QUERY_STATE_ENDED;
 	ctx->num_query_running--;
