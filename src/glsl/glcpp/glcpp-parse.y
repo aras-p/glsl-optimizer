@@ -824,7 +824,7 @@ _token_list_trim_trailing_space (token_list_t *list)
 	}
 }
 
-int
+static int
 _token_list_is_empty_ignoring_space (token_list_t *l)
 {
 	token_node_t *n;
