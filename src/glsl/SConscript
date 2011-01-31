@@ -7,6 +7,7 @@ from sys import executable as python_cmd
 env = env.Clone()
 
 env.Prepend(CPPPATH = [
+    '#include',
     '#src/mapi',
     '#src/mesa',
     '#src/glsl',
