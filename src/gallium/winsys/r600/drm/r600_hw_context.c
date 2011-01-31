@@ -752,11 +752,7 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 	/* init dirty list */
 	LIST_INITHEAD(&ctx->dirty);
 
-	/* TODO update this value correctly */
-	if (radeon->family >= CHIP_CEDAR)
-		ctx->max_db = 8;
-	else
-		ctx->max_db = 4;
+	ctx->max_db = 4;
 
 	return 0;
 out_err:

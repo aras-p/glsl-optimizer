@@ -621,6 +621,8 @@ int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon)
 	/* save 16dwords space for fence mecanism */
 	ctx->pm4_ndwords -= 16;
 
+	ctx->max_db = 8;
+
 	LIST_INITHEAD(&ctx->fenced_bo);
 
 	/* init dirty list */
