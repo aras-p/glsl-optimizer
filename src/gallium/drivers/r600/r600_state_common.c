@@ -433,7 +433,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 		return;
 	}
 
-	if (!rbuffer->user_buffer)
+	if (buffer != &rbuffer->r.base.b)
 		pipe_resource_reference((struct pipe_resource**)&rbuffer, NULL);
 }
 
