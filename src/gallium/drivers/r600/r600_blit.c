@@ -129,7 +129,11 @@ void r600_flush_depth_textures(struct r600_pipe_context *rctx)
 		if (!view) continue;
 
 		tex = (struct r600_resource_texture *)view->base.texture;
-		if (!tex->depth) continue;
+		if (!tex->depth)
+			continue;
+
+		if (tex->tile_type == 0)
+			continue;
 
 		r600_blit_uncompress_depth(&rctx->context, tex);
 	}

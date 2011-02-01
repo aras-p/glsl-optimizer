@@ -574,7 +574,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	trans->transfer.level = level;
 	trans->transfer.usage = usage;
 	trans->transfer.box = *box;
-	if (rtex->depth) {
+	if (rtex->depth && rtex->tile_type == 1) {
 		/* XXX: only readback the rectangle which is being mapped?
 		*/
 		/* XXX: when discard is true, no need to read back from depth texture

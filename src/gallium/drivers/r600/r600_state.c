@@ -429,7 +429,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 		R600_ERR("unknow format %d\n", state->format);
 	}
 	tmp = (struct r600_resource_texture *)texture;
-	if (tmp->depth) {
+	if (tmp->depth && tmp->tile_type == 1) {
 		r600_texture_depth_flush(ctx, texture);
 		tmp = tmp->flushed_depth_texture;
 	}
