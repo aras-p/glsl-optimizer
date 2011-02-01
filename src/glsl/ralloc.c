@@ -392,7 +392,15 @@ printf_length(const char *fmt, va_list untouched_args)
    va_list args;
    va_copy(args, untouched_args);
 
+#ifdef _MSC_VER
+   /* We need to use _vcsprintf to calculate the size as vsnprintf returns -1
+    * if the number of characters to write is greater than count.
+    */
+   size = _vscprintf(fmt, args);
+   (void)junk;
+#else
    size = vsnprintf(&junk, 1, fmt, args);
+#endif
    assert(size >= 0);
 
    return size;
