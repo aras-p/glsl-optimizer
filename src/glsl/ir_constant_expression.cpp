@@ -314,9 +314,13 @@ ir_expression::constant_expression_value()
       break;
 
    case ir_unop_rsq:
+      /* FINISHME: Emit warning when division-by-zero is detected. */
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
-	 data.f[c] = 1.0F / sqrtf(op[0]->value.f[c]);
+	 float s = sqrtf(op[0]->value.f[c]);
+	 if (s == 0)
+	    return NULL;
+	 data.f[c] = 1.0F / s;
       }
       break;
 
@@ -511,6 +515,7 @@ ir_expression::constant_expression_value()
 
       break;
    case ir_binop_div:
+      /* FINISHME: Emit warning when division-by-zero is detected. */
       assert(op[0]->type == op[1]->type || op0_scalar || op1_scalar);
       for (unsigned c = 0, c0 = 0, c1 = 0;
 	   c < components;
@@ -518,12 +523,18 @@ ir_expression::constant_expression_value()
 
 	 switch (op[0]->type->base_type) {
 	 case GLSL_TYPE_UINT:
+	    if (op[1]->value.u[c1] == 0)
+	       return NULL;
 	    data.u[c] = op[0]->value.u[c0] / op[1]->value.u[c1];
 	    break;
 	 case GLSL_TYPE_INT:
+	    if (op[1]->value.i[c1] == 0)
+	       return NULL;
 	    data.i[c] = op[0]->value.i[c0] / op[1]->value.i[c1];
 	    break;
 	 case GLSL_TYPE_FLOAT:
+	    if (op[1]->value.f[c1] == 0)
+	       return NULL;
 	    data.f[c] = op[0]->value.f[c0] / op[1]->value.f[c1];
 	    break;
 	 default:
@@ -533,6 +544,7 @@ ir_expression::constant_expression_value()
 
       break;
    case ir_binop_mod:
+      /* FINISHME: Emit warning when division-by-zero is detected. */
       assert(op[0]->type == op[1]->type || op0_scalar || op1_scalar);
       for (unsigned c = 0, c0 = 0, c1 = 0;
 	   c < components;
@@ -540,12 +552,18 @@ ir_expression::constant_expression_value()
 
 	 switch (op[0]->type->base_type) {
 	 case GLSL_TYPE_UINT:
+	    if (op[1]->value.u[c1] == 0)
+	       return NULL;
 	    data.u[c] = op[0]->value.u[c0] % op[1]->value.u[c1];
 	    break;
 	 case GLSL_TYPE_INT:
+	    if (op[1]->value.i[c1] == 0)
+	       return NULL;
 	    data.i[c] = op[0]->value.i[c0] % op[1]->value.i[c1];
 	    break;
 	 case GLSL_TYPE_FLOAT:
+	    if (op[1]->value.f[c1] == 0)
+	       return NULL;
 	    /* We don't use fmod because it rounds toward zero; GLSL specifies
 	     * the use of floor.
 	     */
