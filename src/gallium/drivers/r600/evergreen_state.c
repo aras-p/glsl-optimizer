@@ -380,18 +380,15 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	if (desc == NULL) {
 		R600_ERR("unknow format %d\n", state->format);
 	}
-	tmp = (struct r600_resource_texture*)texture;
+	tmp = (struct r600_resource_texture *)texture;
+	if (tmp->depth) {
+		r600_texture_depth_flush(ctx, texture);
+		tmp = tmp->flushed_depth_texture;
+	}
 	rbuffer = &tmp->resource;
 	bo[0] = rbuffer->bo;
 	bo[1] = rbuffer->bo;
-	/* FIXME depth texture decompression */
-	if (tmp->depth) {
-		r600_texture_depth_flush(ctx, texture);
-		tmp = (struct r600_resource_texture*)texture;
-		rbuffer = &tmp->flushed_depth_texture->resource;
-		bo[0] = rbuffer->bo;
-		bo[1] = rbuffer->bo;
-	}
+
 	pitch = align(tmp->pitch_in_pixels[0], 8);
 
 	/* FIXME properly handle first level != 0 */
