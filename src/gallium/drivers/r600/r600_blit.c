@@ -208,15 +208,8 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 				      unsigned src_level,
 				      const struct pipe_box *src_box)
 {
-	boolean is_depth;
-	/* there is something wrong with depth resource copies at the moment so avoid them for now */
-	is_depth = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 0) != 0;
-	if (is_depth)
-		util_resource_copy_region(ctx, dst, dst_level, dstx, dsty, dstz,
-					  src, src_level, src_box);
-	else
-		r600_hw_copy_region(ctx, dst, dst_level, dstx, dsty, dstz,
-				    src, src_level, src_box);
+	r600_hw_copy_region(ctx, dst, dst_level, dstx, dsty, dstz,
+			    src, src_level, src_box);
 }
 
 void r600_init_blit_functions(struct r600_pipe_context *rctx)
