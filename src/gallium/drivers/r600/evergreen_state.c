@@ -721,10 +721,7 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 
 	surf = (struct r600_surface *)state->zsbuf;
 	rtex = (struct r600_resource_texture*)state->zsbuf->texture;
-	rtex->tiled = 1;
-	rtex->array_mode[level] = 2;
 	rtex->tile_type = 1;
-	rtex->depth = 1;
 	rbuffer = &rtex->resource;
 
 	/* XXX quite sure for dx10+ hw don't need any offset hacks */
