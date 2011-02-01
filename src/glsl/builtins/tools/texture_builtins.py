@@ -430,4 +430,4 @@ if __name__ == "__main__":
     fs = {}
     generate_texture_functions(fs);
     for k, v in fs.iteritems():
-	print v
+        print v
