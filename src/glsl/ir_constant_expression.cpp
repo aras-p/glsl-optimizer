@@ -288,20 +288,24 @@ ir_expression::constant_expression_value()
       break;
 
    case ir_unop_rcp:
+      /* FINISHME: Emit warning when division-by-zero is detected. */
       assert(op[0]->type->base_type == GLSL_TYPE_FLOAT);
       for (unsigned c = 0; c < op[0]->type->components(); c++) {
 	 switch (this->type->base_type) {
 	 case GLSL_TYPE_UINT:
-	    if (op[0]->value.u[c] != 0.0)
-	       data.u[c] = 1 / op[0]->value.u[c];
+	    if (op[0]->value.u[c] == 0.0)
+	       return NULL;
+	    data.u[c] = 1 / op[0]->value.u[c];
 	    break;
 	 case GLSL_TYPE_INT:
-	    if (op[0]->value.i[c] != 0.0)
-	       data.i[c] = 1 / op[0]->value.i[c];
+	    if (op[0]->value.i[c] == 0.0)
+	       return NULL;
+	    data.i[c] = 1 / op[0]->value.i[c];
 	    break;
 	 case GLSL_TYPE_FLOAT:
-	    if (op[0]->value.f[c] != 0.0)
-	       data.f[c] = 1.0F / op[0]->value.f[c];
+	    if (op[0]->value.f[c] == 0.0)
+	       return NULL;
+	    data.f[c] = 1.0F / op[0]->value.f[c];
 	    break;
 	 default:
 	    assert(0);
