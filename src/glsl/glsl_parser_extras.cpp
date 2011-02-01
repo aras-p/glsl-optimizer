@@ -97,7 +97,7 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *ctx,
       ? 100 : 110;
    const unsigned highest_version =
       (ctx->API == API_OPENGL) ? ctx->Const.GLSLVersion : 100;
-   char *supported = (char *) ralloc_context(this);
+   char *supported = ralloc_strdup(this, "");
 
    for (unsigned ver = lowest_version; ver <= highest_version; ver += 10) {
       const char *const prefix = (ver == lowest_version)
