@@ -246,6 +246,37 @@ int r600_bc_add_output(struct r600_bc *bc, const struct r600_bc_output *output)
 {
 	int r;
 
+	if (bc->cf_last && (bc->cf_last->inst == output->inst ||
+		(bc->cf_last->inst == BC_INST(bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT) &&
+		output->inst == BC_INST(bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE))) &&
+		output->type == bc->cf_last->output.type &&
+		output->elem_size == bc->cf_last->output.elem_size &&
+		output->swizzle_x == bc->cf_last->output.swizzle_x &&
+		output->swizzle_y == bc->cf_last->output.swizzle_y &&
+		output->swizzle_z == bc->cf_last->output.swizzle_z &&
+		output->swizzle_w == bc->cf_last->output.swizzle_w &&
+		(output->burst_count + bc->cf_last->output.burst_count) <= 16) {
+
+		if ((output->gpr + output->burst_count) == bc->cf_last->output.gpr &&
+			(output->array_base + output->burst_count) == bc->cf_last->output.array_base) {
+
+			bc->cf_last->output.end_of_program |= output->end_of_program;
+			bc->cf_last->output.inst = output->inst;
+			bc->cf_last->output.gpr = output->gpr;
+			bc->cf_last->output.array_base = output->array_base;
+			bc->cf_last->output.burst_count += output->burst_count;
+			return 0;
+
+		} else if (output->gpr == (bc->cf_last->output.gpr + bc->cf_last->output.burst_count) &&
+			output->array_base == (bc->cf_last->output.array_base + bc->cf_last->output.burst_count)) {
+
+			bc->cf_last->output.end_of_program |= output->end_of_program;
+			bc->cf_last->output.inst = output->inst;
+			bc->cf_last->output.burst_count += output->burst_count;
+			return 0;
+		}
+	}
+
 	r = r600_bc_add_cf(bc);
 	if (r)
 		return r;
@@ -1443,7 +1474,8 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 			S_SQ_CF_ALLOC_EXPORT_WORD0_ELEM_SIZE(cf->output.elem_size) |
 			S_SQ_CF_ALLOC_EXPORT_WORD0_ARRAY_BASE(cf->output.array_base) |
 			S_SQ_CF_ALLOC_EXPORT_WORD0_TYPE(cf->output.type);
-		bc->bytecode[id++] = S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_X(cf->output.swizzle_x) |
+		bc->bytecode[id++] = S_SQ_CF_ALLOC_EXPORT_WORD1_BURST_COUNT(cf->output.burst_count - 1) |
+			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_X(cf->output.swizzle_x) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_Y(cf->output.swizzle_y) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_Z(cf->output.swizzle_z) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_W(cf->output.swizzle_w) |
@@ -1725,9 +1757,9 @@ void r600_bc_dump(struct r600_bc *bc)
 			fprintf(stderr, "SWIZ_Y:%X ", cf->output.swizzle_y);
 			fprintf(stderr, "SWIZ_Z:%X ", cf->output.swizzle_z);
 			fprintf(stderr, "SWIZ_W:%X ", cf->output.swizzle_w);
-			fprintf(stderr, "SWIZ_W:%X ", cf->output.swizzle_w);
 			fprintf(stderr, "BARRIER:%X ", cf->output.barrier);
 			fprintf(stderr, "INST:%d ", cf->output.inst);
+			fprintf(stderr, "BURST_COUNT:%d ", cf->output.burst_count);
 			fprintf(stderr, "EOP:%X\n", cf->output.end_of_program);
 			break;
 		case V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
