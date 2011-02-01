@@ -95,11 +95,10 @@ struct r600_bo *r600_bo_handle(struct radeon *radeon,
 	radeon_bo_get_tiling_flags(radeon, rbo, &bo->tiling_flags, &bo->kernel_pitch);
 	if (array_mode) {
 		if (bo->tiling_flags) {
-			if (bo->tiling_flags & RADEON_TILING_MICRO)
-				*array_mode = V_0280A0_ARRAY_1D_TILED_THIN1;
-			if ((bo->tiling_flags & (RADEON_TILING_MICRO | RADEON_TILING_MACRO)) ==
-			    (RADEON_TILING_MICRO | RADEON_TILING_MACRO))
+			if (bo->tiling_flags & RADEON_TILING_MACRO)
 				*array_mode = V_0280A0_ARRAY_2D_TILED_THIN1;
+			else if (bo->tiling_flags & RADEON_TILING_MICRO)
+				*array_mode = V_0280A0_ARRAY_1D_TILED_THIN1;
 		} else {
 			*array_mode = 0;
 		}
