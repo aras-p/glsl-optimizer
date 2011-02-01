@@ -607,25 +607,83 @@ constant_operand(struct nv_pc *pc,
    }
 }
 
+static void
+handle_min_max(struct nv_pass *ctx, struct nv_instruction *nvi)
+{
+   struct nv_value *src0 = nvi->src[0]->value;
+   struct nv_value *src1 = nvi->src[1]->value;
+
+   if (src0 != src1 || (nvi->src[0]->mod | nvi->src[1]->mod))
+      return;
+   if (src0->reg.file != NV_FILE_GPR)
+      return;
+   nvc0_pc_replace_value(ctx->pc, nvi->def[0], src0);
+   nvc0_insn_delete(nvi);
+}
+
+/* check if we can MUL + ADD -> MAD/FMA */
+static void
+handle_add_mul(struct nv_pass *ctx, struct nv_instruction *nvi)
+{
+   struct nv_value *src0 = nvi->src[0]->value;
+   struct nv_value *src1 = nvi->src[1]->value;
+   struct nv_value *src;
+   int s;
+   uint8_t mod[4];
+
+   if (SRC_IS_MUL(src0) && src0->refc == 1) s = 0;
+   else
+   if (SRC_IS_MUL(src1) && src1->refc == 1) s = 1;
+   else
+      return;
+
+   if ((src0->insn && src0->insn->bb != nvi->bb) ||
+       (src1->insn && src1->insn->bb != nvi->bb))
+      return;
+
+   /* check for immediates from prior constant folding */
+   if (src0->reg.file != NV_FILE_GPR || src1->reg.file != NV_FILE_GPR)
+      return;
+   src = nvi->src[s]->value;
+
+   mod[0] = nvi->src[0]->mod;
+   mod[1] = nvi->src[1]->mod;
+   mod[2] = src->insn->src[0]->mod;
+   mod[3] = src->insn->src[1]->mod;
+
+   if ((mod[0] | mod[1] | mod[2] | mod[3]) & ~NV_MOD_NEG)
+      return;
+
+   nvi->opcode = NV_OP_MAD_F32;
+
+   nv_reference(ctx->pc, nvi, s, NULL);
+   nvi->src[2] = nvi->src[!s];
+   nvi->src[!s] = NULL;
+
+   nv_reference(ctx->pc, nvi, 0, src->insn->src[0]->value);
+   nvi->src[0]->mod = mod[2] ^ mod[s];
+   nv_reference(ctx->pc, nvi, 1, src->insn->src[1]->value);
+   nvi->src[1]->mod = mod[3];
+}
+
 static int
-nv_pass_lower_arith(struct nv_pass *ctx, struct nv_basic_block *b)
+nv_pass_algebraic_opt(struct nv_pass *ctx, struct nv_basic_block *b)
 {
    struct nv_instruction *nvi, *next;
    int j;
 
    for (nvi = b->entry; nvi; nvi = next) {
-      struct nv_value *src0, *src1, *src;
-      int s;
-      uint8_t mod[4];
+      struct nv_value *src0, *src1;
+      uint baseop = NV_BASEOP(nvi->opcode);
 
       next = nvi->next;
 
       src0 = nvc0_pc_find_immediate(nvi->src[0]);
       src1 = nvc0_pc_find_immediate(nvi->src[1]);
 
-      if (src0 && src1)
+      if (src0 && src1) {
          constant_expression(ctx->pc, nvi, src0, src1);
-      else {
+      } else {
          if (src0)
             constant_operand(ctx->pc, nvi, src0, 0);
          else
@@ -633,44 +691,13 @@ nv_pass_lower_arith(struct nv_pass *ctx, struct nv_basic_block *b)
             constant_operand(ctx->pc, nvi, src1, 1);
       }
 
-      /* check if we can MUL + ADD -> MAD/FMA */
-      if (nvi->opcode != NV_OP_ADD)
-         continue;
-
-      src0 = nvi->src[0]->value;
-      src1 = nvi->src[1]->value;
-
-      if (SRC_IS_MUL(src0) && src0->refc == 1)
-         src = src0;
+      if (baseop == NV_OP_MIN || baseop == NV_OP_MAX)
+         handle_min_max(ctx, nvi);
       else
-      if (SRC_IS_MUL(src1) && src1->refc == 1)
-         src = src1;
-      else
-         continue;
-
-      /* could have an immediate from above constant_*  */
-      if (src0->reg.file != NV_FILE_GPR || src1->reg.file != NV_FILE_GPR)
-         continue;
-      s = (src == src0) ? 0 : 1;
-
-      mod[0] = nvi->src[0]->mod;
-      mod[1] = nvi->src[1]->mod;
-      mod[2] = src->insn->src[0]->mod;
-      mod[3] = src->insn->src[0]->mod;
-
-      if ((mod[0] | mod[1] | mod[2] | mod[3]) & ~NV_MOD_NEG)
-         continue;
-
-      nvi->opcode = NV_OP_MAD;
-      nv_reference(ctx->pc, nvi, s, NULL);
-      nvi->src[2] = nvi->src[!s];
-
-      nvi->src[0] = new_ref(ctx->pc, src->insn->src[0]->value);
-      nvi->src[1] = new_ref(ctx->pc, src->insn->src[1]->value);
-      nvi->src[0]->mod = mod[2] ^ mod[s];
-      nvi->src[1]->mod = mod[3];
+      if (nvi->opcode == NV_OP_ADD_F32)
+         handle_add_mul(ctx, nvi);
    }
-   DESCEND_ARBITRARY(j, nv_pass_lower_arith);
+   DESCEND_ARBITRARY(j, nv_pass_algebraic_opt);
 
    return 0;
 }
@@ -1158,11 +1185,17 @@ nv_pc_pass0(struct nv_pc *pc, struct nv_basic_block *root)
    pass.n = 0;
    pass.pc = pc;
 
+   /* Do CSE so we can just compare values by pointer in subsequent passes. */
+   pc->pass_seq++;
+   ret = nv_pass_cse(&pass, root);
+   if (ret)
+      return ret;
+
    /* Do this first, so we don't have to pay attention
     * to whether sources are supported memory loads.
     */
    pc->pass_seq++;
-   ret = nv_pass_lower_arith(&pass, root);
+   ret = nv_pass_algebraic_opt(&pass, root);
    if (ret)
       return ret;
 
@@ -1190,11 +1223,9 @@ nv_pc_pass0(struct nv_pc *pc, struct nv_basic_block *root)
       reldelim->pc = pc;
    }
 
-   pc->pass_seq++;
-   ret = nv_pass_cse(&pass, root);
-   if (ret)
-      return ret;
-
+   /* May run DCE before load-combining since that pass will clean up
+    * after itself.
+    */
    dce.pc = pc;
    do {
       dce.removed = 0;
