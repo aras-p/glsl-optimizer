@@ -241,7 +241,6 @@ void r300_parse_chipset(struct r300_capabilities* caps)
         case 0x5A42:
             caps->family = CHIP_FAMILY_RS400;
             caps->has_tcl = FALSE;
-            caps->zmask_ram = RV3xx_ZMASK_SIZE;
             break;
 
         case 0x5A61:
