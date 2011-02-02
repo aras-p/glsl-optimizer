@@ -75,7 +75,7 @@ prototype_string(const glsl_type *return_type, const char *name,
    char *str = NULL;
 
    if (return_type != NULL)
-      ralloc_asprintf(&str, "%s ", return_type->name);
+      str = ralloc_asprintf(NULL, "%s ", return_type->name);
 
    ralloc_asprintf_append(&str, "%s(", name);
 
