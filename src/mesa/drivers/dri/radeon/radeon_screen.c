@@ -628,7 +628,6 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
       break;
 
    case PCI_CHIP_R200_BB:
-   case PCI_CHIP_R200_BC:
    case PCI_CHIP_R200_QH:
    case PCI_CHIP_R200_QL:
    case PCI_CHIP_R200_QM:
