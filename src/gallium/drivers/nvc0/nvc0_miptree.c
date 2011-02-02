@@ -143,8 +143,7 @@ nvc0_miptree_create(struct pipe_screen *pscreen,
    switch (pt->format) {
    case PIPE_FORMAT_Z16_UNORM:
       tile_flags = 0x0700; /* COMPRESSED */
-      tile_flags = 0x0200; /* NORMAL ? */
-      tile_flags = 0x0100; /* NORMAL ? */
+      tile_flags = 0x0100; /* NORMAL */
       break;
    case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
       tile_flags = 0x5300; /* MSAA 4, COMPRESSED */
@@ -170,6 +169,7 @@ nvc0_miptree_create(struct pipe_screen *pscreen,
       break;
    case PIPE_FORMAT_R16G16B16A16_UNORM:
       tile_flags = 0xe900; /* COMPRESSED */
+      tile_flags = 0xfe00; /* NORMAL */
       break;
    default:
       tile_flags = 0xe000; /* MSAA 4, COMPRESSED 32 BIT */
