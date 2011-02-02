@@ -388,7 +388,12 @@ expression:
 		$$ = $1 + $3;
 	}
 |	expression '%' expression {
-		$$ = $1 % $3;
+		if ($3 == 0) {
+			yyerror (& @1, parser,
+				 "zero modulus in preprocessor directive");
+		} else {
+			$$ = $1 % $3;
+		}
 	}
 |	expression '/' expression {
 		if ($3 == 0) {
