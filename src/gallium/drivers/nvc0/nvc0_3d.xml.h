@@ -158,29 +158,29 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NVC0_3D_RT__ESIZE					0x00000020
 #define NVC0_3D_RT__LEN						0x00000008
 
-#define NVC0_3D_RT_ADDRESS_HIGH(i0)			       (0x00000800 + 0x20*(i0))
+#define NVC0_3D_RT_ADDRESS_HIGH(i0)			       (0x00000800 + 0x40*(i0))
 
-#define NVC0_3D_RT_ADDRESS_LOW(i0)			       (0x00000804 + 0x20*(i0))
+#define NVC0_3D_RT_ADDRESS_LOW(i0)			       (0x00000804 + 0x40*(i0))
 
-#define NVC0_3D_RT_HORIZ(i0)				       (0x00000808 + 0x20*(i0))
+#define NVC0_3D_RT_HORIZ(i0)				       (0x00000808 + 0x40*(i0))
 
-#define NVC0_3D_RT_VERT(i0)				       (0x0000080c + 0x20*(i0))
+#define NVC0_3D_RT_VERT(i0)				       (0x0000080c + 0x40*(i0))
 
-#define NVC0_3D_RT_FORMAT(i0)				       (0x00000810 + 0x20*(i0))
+#define NVC0_3D_RT_FORMAT(i0)				       (0x00000810 + 0x40*(i0))
 
-#define NVC0_3D_RT_TILE_MODE(i0)			       (0x00000814 + 0x20*(i0))
+#define NVC0_3D_RT_TILE_MODE(i0)			       (0x00000814 + 0x40*(i0))
 #define NVC0_3D_RT_TILE_MODE_UNK0				0x00000001
 #define NVC0_3D_RT_TILE_MODE_Y__MASK				0x00000070
 #define NVC0_3D_RT_TILE_MODE_Y__SHIFT				4
 #define NVC0_3D_RT_TILE_MODE_Z__MASK				0x00000700
 #define NVC0_3D_RT_TILE_MODE_Z__SHIFT				8
 
-#define NVC0_3D_RT_ARRAY_MODE(i0)			       (0x00000818 + 0x20*(i0))
+#define NVC0_3D_RT_ARRAY_MODE(i0)			       (0x00000818 + 0x40*(i0))
 #define NVC0_3D_RT_ARRAY_MODE_LAYERS__MASK			0x0000ffff
 #define NVC0_3D_RT_ARRAY_MODE_LAYERS__SHIFT			0
 #define NVC0_3D_RT_ARRAY_MODE_VOLUME				0x00010000
 
-#define NVC0_3D_RT_LAYER_STRIDE(i0)			       (0x0000081c + 0x20*(i0))
+#define NVC0_3D_RT_LAYER_STRIDE(i0)			       (0x0000081c + 0x40*(i0))
 
 #define NVC0_3D_VIEWPORT_SCALE_X(i0)			       (0x00000a00 + 0x20*(i0))
 #define NVC0_3D_VIEWPORT_SCALE_X__ESIZE				0x00000020
