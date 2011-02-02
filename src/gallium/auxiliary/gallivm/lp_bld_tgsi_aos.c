@@ -189,7 +189,7 @@ emit_fetch(
           * NOTE: constants array is always assumed to be RGBA
           */
 
-         swizzle = lp_build_const_int32(bld->base.gallivm, chan);
+         swizzle = lp_build_const_int32(bld->base.gallivm, bld->swizzles[chan]);
 
          res = LLVMBuildInsertElement(builder, res, scalar, swizzle, "");
       }
