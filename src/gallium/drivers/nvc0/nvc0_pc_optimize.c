@@ -849,6 +849,11 @@ nv_pass_mem_opt(struct pass_reld_elim *ctx, struct nv_basic_block *b)
       }
    }
 
+   ctx->alloc = 0;
+   ctx->mem_a = ctx->mem_v = ctx->mem_l = NULL;
+   for (s = 0; s < 16; ++s)
+      ctx->mem_c[s] = NULL;
+
    DESCEND_ARBITRARY(s, nv_pass_mem_opt);
    return 0;
 }
