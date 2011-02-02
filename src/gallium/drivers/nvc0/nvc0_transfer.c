@@ -318,6 +318,7 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
    tx->rect[1].domain = NOUVEAU_BO_GART;
 
    if (usage & PIPE_TRANSFER_READ) {
+      unsigned base = tx->rect[0].base;
       unsigned i;
       for (i = 0; i < tx->nlayers; ++i) {
          nvc0_m2mf_transfer_rect(pscreen, &tx->rect[1], &tx->rect[0],
@@ -328,9 +329,10 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
             tx->rect[0].base += mt->layer_stride;
          tx->rect[1].base += size;
       }
+      tx->rect[0].z = z;
+      tx->rect[0].base = base;
+      tx->rect[1].base = 0;
    }
-   tx->rect[0].z = z;
-   tx->rect[1].base = 0;
 
    return &tx->base;
 }
