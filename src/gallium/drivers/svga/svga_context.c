@@ -207,11 +207,6 @@ void svga_context_flush( struct svga_context *svga,
 
    svga->curr.nr_fbs = 0;
 
-   /* Unmap upload manager buffers: 
-    */
-   u_upload_flush(svga->upload_vb);
-   u_upload_flush(svga->upload_ib);
-
    /* Ensure that texture dma uploads are processed
     * before submitting commands.
     */
