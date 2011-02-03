@@ -248,6 +248,7 @@ svga_buffer_upload_flush(struct svga_context *svga,
 {
    SVGA3dCopyBox *boxes;
    unsigned i;
+   struct pipe_resource *dummy;
 
    assert(sbuf->handle); 
    assert(sbuf->hwbuf);
@@ -289,9 +290,9 @@ svga_buffer_upload_flush(struct svga_context *svga,
    sbuf->dma.svga = NULL;
    sbuf->dma.boxes = NULL;
 
-   /* Decrement reference count */
-   pipe_reference(&(sbuf->b.b.reference), NULL);
-   sbuf = NULL;
+   /* Decrement reference count (and potentially destroy) */
+   dummy = &sbuf->b.b;
+   pipe_resource_reference(&dummy, NULL);
 }
 
 
