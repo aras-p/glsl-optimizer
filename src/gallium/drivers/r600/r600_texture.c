@@ -488,7 +488,7 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 }
 
 int r600_texture_depth_flush(struct pipe_context *ctx,
-			     struct pipe_resource *texture)
+			     struct pipe_resource *texture, boolean just_create)
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
 	struct pipe_resource resource;
@@ -517,6 +517,9 @@ int r600_texture_depth_flush(struct pipe_context *ctx,
 
 	((struct r600_resource_texture *)rtex->flushed_depth_texture)->is_flushing_texture = TRUE;
 out:
+	if (just_create)
+		return 0;
+
 	/* XXX: only do this if the depth texture has actually changed:
 	 */
 	r600_blit_uncompress_depth(ctx, rtex);
@@ -582,7 +585,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		*/
 		/* XXX: when discard is true, no need to read back from depth texture
 		*/
-		r = r600_texture_depth_flush(ctx, texture);
+		r = r600_texture_depth_flush(ctx, texture, FALSE);
 		if (r < 0) {
 			R600_ERR("failed to create temporary texture to hold untiled copy\n");
 			pipe_resource_reference(&trans->transfer.resource, NULL);

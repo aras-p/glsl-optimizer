@@ -430,7 +430,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	}
 	tmp = (struct r600_resource_texture *)texture;
 	if (tmp->depth && !tmp->is_flushing_texture) {
-		r600_texture_depth_flush(ctx, texture);
+	        r600_texture_depth_flush(ctx, texture, TRUE);
 		tmp = tmp->flushed_depth_texture;
 	}
 	rbuffer = &tmp->resource;
@@ -692,6 +692,12 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 
 	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
+
+	if (rtex->depth && !rtex->is_flushing_texture) {
+	        r600_texture_depth_flush(&rctx->context, state->cbufs[cb]->texture, TRUE);
+		rtex = rtex->flushed_depth_texture;
+	}
+
 	rbuffer = &rtex->resource;
 	bo[0] = rbuffer->bo;
 	bo[1] = rbuffer->bo;

@@ -382,7 +382,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	}
 	tmp = (struct r600_resource_texture *)texture;
 	if (tmp->depth && tmp->tile_type == 1) {
-		r600_texture_depth_flush(ctx, texture);
+		r600_texture_depth_flush(ctx, texture, TRUE);
 		tmp = tmp->flushed_depth_texture;
 	}
 	rbuffer = &tmp->resource;

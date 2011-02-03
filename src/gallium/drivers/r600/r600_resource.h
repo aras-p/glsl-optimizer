@@ -103,7 +103,7 @@ static INLINE boolean r600_is_user_buffer(struct pipe_resource *buffer)
 	return r600_buffer(buffer)->user_buffer ? TRUE : FALSE;
 }
 
-int r600_texture_depth_flush(struct pipe_context *ctx, struct pipe_resource *texture);
+int r600_texture_depth_flush(struct pipe_context *ctx, struct pipe_resource *texture, boolean just_create);
 
 /* r600_texture.c texture transfer functions. */
 struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
