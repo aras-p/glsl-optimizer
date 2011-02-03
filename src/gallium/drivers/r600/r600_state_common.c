@@ -602,7 +602,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	if (rctx->framebuffer.zsbuf)
 	{
 		struct pipe_resource *tex = rctx->framebuffer.zsbuf->texture;
-		((struct r600_resource_texture *)tex)->flushed = false;
+		((struct r600_resource_texture *)tex)->dirty_db = TRUE;
 	}
 
 	pipe_resource_reference(&draw.index_buffer, NULL);

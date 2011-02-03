@@ -513,6 +513,7 @@ int r600_texture_depth_flush(struct pipe_context *ctx,
 		return -ENOMEM;
 	}
 
+	((struct r600_resource_texture *)rtex->flushed_depth_texture)->is_flushing_texture = TRUE;
 out:
 	/* XXX: only do this if the depth texture has actually changed:
 	 */
@@ -574,7 +575,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	trans->transfer.level = level;
 	trans->transfer.usage = usage;
 	trans->transfer.box = *box;
-	if (rtex->depth && rtex->tile_type == 1) {
+	if (rtex->depth) {
 		/* XXX: only readback the rectangle which is being mapped?
 		*/
 		/* XXX: when discard is true, no need to read back from depth texture

@@ -429,7 +429,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 		R600_ERR("unknow format %d\n", state->format);
 	}
 	tmp = (struct r600_resource_texture *)texture;
-	if (tmp->depth && tmp->tile_type == 1) {
+	if (tmp->depth && !tmp->is_flushing_texture) {
 		r600_texture_depth_flush(ctx, texture);
 		tmp = tmp->flushed_depth_texture;
 	}
@@ -759,8 +759,6 @@ static void r600_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 
 	surf = (struct r600_surface *)state->zsbuf;
 	rtex = (struct r600_resource_texture*)state->zsbuf->texture;
-
-	rtex->tile_type = 1;
 
 	rbuffer = &rtex->resource;
 

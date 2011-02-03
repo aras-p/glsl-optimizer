@@ -85,7 +85,8 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_t
 	int level = 0;
 	float depth = 1.0f;
 
-	if (texture->flushed) return;
+	if (!texture->dirty_db)
+		return;
 
 	surf_tmpl.format = texture->resource.base.b.format;
 	surf_tmpl.u.tex.level = level;
@@ -107,10 +108,11 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_t
 	r600_blitter_begin(ctx, R600_CLEAR_SURFACE);
 	util_blitter_custom_depth_stencil(rctx->blitter, zsurf, cbsurf, rctx->custom_dsa_flush, depth);
 	r600_blitter_end(ctx);
-	texture->flushed = true;
 
 	pipe_surface_reference(&zsurf, NULL);
 	pipe_surface_reference(&cbsurf, NULL);
+
+	texture->dirty_db = FALSE;
 }
 
 void r600_flush_depth_textures(struct r600_pipe_context *rctx)
@@ -130,9 +132,6 @@ void r600_flush_depth_textures(struct r600_pipe_context *rctx)
 
 		tex = (struct r600_resource_texture *)view->base.texture;
 		if (!tex->depth)
-			continue;
-
-		if (tex->tile_type == 0)
 			continue;
 
 		r600_blit_uncompress_depth(&rctx->context, tex);

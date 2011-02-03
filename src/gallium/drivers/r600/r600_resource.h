@@ -61,9 +61,9 @@ struct r600_resource_texture {
 	unsigned			tiled;
 	unsigned			tile_type;
 	unsigned			depth;
-	unsigned			dirty;
+	unsigned			dirty_db;
 	struct r600_resource_texture	*flushed_depth_texture;
-	bool				flushed;
+	boolean				is_flushing_texture;
 };
 
 #define R600_BUFFER_MAGIC 0xabcd1600
