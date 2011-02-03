@@ -38,8 +38,6 @@
 #include "r600d.h"
 #include "r600_formats.h"
 
-extern struct u_resource_vtbl r600_texture_vtbl;
-
 /* Copy from a full GPU texture to a transfer's staging one. */
 static void r600_copy_to_staging_texture(struct pipe_context *ctx, struct r600_transfer *rtransfer)
 {
@@ -308,6 +306,55 @@ static boolean permit_hardware_blit(struct pipe_screen *screen,
 	return TRUE;
 }
 
+static boolean r600_texture_get_handle(struct pipe_screen* screen,
+					struct pipe_resource *ptex,
+					struct winsys_handle *whandle)
+{
+	struct r600_resource_texture *rtex = (struct r600_resource_texture*)ptex;
+	struct r600_resource *resource = &rtex->resource;
+	struct radeon *radeon = (struct radeon *)screen->winsys;
+
+	return r600_bo_get_winsys_handle(radeon, resource->bo,
+			rtex->pitch_in_bytes[0], whandle);
+}
+
+static void r600_texture_destroy(struct pipe_screen *screen,
+				 struct pipe_resource *ptex)
+{
+	struct r600_resource_texture *rtex = (struct r600_resource_texture*)ptex;
+	struct r600_resource *resource = &rtex->resource;
+	struct radeon *radeon = (struct radeon *)screen->winsys;
+
+	if (rtex->flushed_depth_texture)
+		pipe_resource_reference((struct pipe_resource **)&rtex->flushed_depth_texture, NULL);
+
+	if (resource->bo) {
+		r600_bo_reference(radeon, &resource->bo, NULL);
+	}
+	FREE(rtex);
+}
+
+static unsigned int r600_texture_is_referenced(struct pipe_context *context,
+						struct pipe_resource *texture,
+						unsigned level, int layer)
+{
+	/* FIXME */
+	return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+}
+
+static const struct u_resource_vtbl r600_texture_vtbl =
+{
+	r600_texture_get_handle,	/* get_handle */
+	r600_texture_destroy,		/* resource_destroy */
+	r600_texture_is_referenced,	/* is_resource_referenced */
+	r600_texture_get_transfer,	/* get_transfer */
+	r600_texture_transfer_destroy,	/* transfer_destroy */
+	r600_texture_transfer_map,	/* transfer_map */
+	u_default_transfer_flush_region,/* transfer_flush_region */
+	r600_texture_transfer_unmap,	/* transfer_unmap */
+	u_default_transfer_inline_write	/* transfer_inline_write */
+};
+
 static struct r600_resource_texture *
 r600_texture_create_object(struct pipe_screen *screen,
 			   const struct pipe_resource *base,
@@ -377,34 +424,6 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 
 }
 
-static void r600_texture_destroy(struct pipe_screen *screen,
-				 struct pipe_resource *ptex)
-{
-	struct r600_resource_texture *rtex = (struct r600_resource_texture*)ptex;
-	struct r600_resource *resource = &rtex->resource;
-	struct radeon *radeon = (struct radeon *)screen->winsys;
-
-	if (rtex->flushed_depth_texture)
-		pipe_resource_reference((struct pipe_resource **)&rtex->flushed_depth_texture, NULL);
-
-	if (resource->bo) {
-		r600_bo_reference(radeon, &resource->bo, NULL);
-	}
-	FREE(rtex);
-}
-
-static boolean r600_texture_get_handle(struct pipe_screen* screen,
-					struct pipe_resource *ptex,
-					struct winsys_handle *whandle)
-{
-	struct r600_resource_texture *rtex = (struct r600_resource_texture*)ptex;
-	struct r600_resource *resource = &rtex->resource;
-	struct radeon *radeon = (struct radeon *)screen->winsys;
-
-	return r600_bo_get_winsys_handle(radeon, resource->bo,
-			rtex->pitch_in_bytes[0], whandle);
-}
-
 static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
 						struct pipe_resource *texture,
 						const struct pipe_surface *surf_tmpl)
@@ -466,14 +485,6 @@ struct pipe_resource *r600_texture_from_handle(struct pipe_screen *screen,
 								  whandle->stride,
 								  0,
 								  bo);
-}
-
-static unsigned int r600_texture_is_referenced(struct pipe_context *context,
-						struct pipe_resource *texture,
-						unsigned level, int layer)
-{
-	/* FIXME */
-	return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 }
 
 int r600_texture_depth_flush(struct pipe_context *ctx,
@@ -725,19 +736,6 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 	}
 	r600_bo_unmap(radeon, bo);
 }
-
-struct u_resource_vtbl r600_texture_vtbl =
-{
-	r600_texture_get_handle,	/* get_handle */
-	r600_texture_destroy,		/* resource_destroy */
-	r600_texture_is_referenced,	/* is_resource_referenced */
-	r600_texture_get_transfer,	/* get_transfer */
-	r600_texture_transfer_destroy,	/* transfer_destroy */
-	r600_texture_transfer_map,	/* transfer_map */
-	u_default_transfer_flush_region,/* transfer_flush_region */
-	r600_texture_transfer_unmap,	/* transfer_unmap */
-	u_default_transfer_inline_write	/* transfer_inline_write */
-};
 
 void r600_init_surface_functions(struct r600_pipe_context *r600)
 {

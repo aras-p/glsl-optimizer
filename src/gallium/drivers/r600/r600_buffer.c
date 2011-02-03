@@ -39,7 +39,71 @@
 #include "r600.h"
 #include "r600_pipe.h"
 
-extern struct u_resource_vtbl r600_buffer_vtbl;
+static void r600_buffer_destroy(struct pipe_screen *screen,
+				struct pipe_resource *buf)
+{
+	struct r600_resource_buffer *rbuffer = r600_buffer(buf);
+
+	if (rbuffer->r.bo) {
+		r600_bo_reference((struct radeon*)screen->winsys, &rbuffer->r.bo, NULL);
+	}
+	rbuffer->r.bo = NULL;
+	FREE(rbuffer);
+}
+
+static void *r600_buffer_transfer_map(struct pipe_context *pipe,
+				      struct pipe_transfer *transfer)
+{
+	struct r600_resource_buffer *rbuffer = r600_buffer(transfer->resource);
+	int write = 0;
+	uint8_t *data;
+
+	if (rbuffer->user_buffer)
+		return (uint8_t*)rbuffer->user_buffer + transfer->box.x;
+
+	if (transfer->usage & PIPE_TRANSFER_DONTBLOCK) {
+		/* FIXME */
+	}
+	if (transfer->usage & PIPE_TRANSFER_WRITE) {
+		write = 1;
+	}
+	data = r600_bo_map((struct radeon*)pipe->winsys, rbuffer->r.bo, transfer->usage, pipe);
+	if (!data)
+		return NULL;
+
+	return (uint8_t*)data + transfer->box.x;
+}
+
+static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
+					struct pipe_transfer *transfer)
+{
+	struct r600_resource_buffer *rbuffer = r600_buffer(transfer->resource);
+
+	if (rbuffer->user_buffer)
+		return;
+
+	if (rbuffer->r.bo)
+		r600_bo_unmap((struct radeon*)pipe->winsys, rbuffer->r.bo);
+}
+
+static void r600_buffer_transfer_flush_region(struct pipe_context *pipe,
+						struct pipe_transfer *transfer,
+						const struct pipe_box *box)
+{
+}
+
+static const struct u_resource_vtbl r600_buffer_vtbl =
+{
+	u_default_resource_get_handle,		/* get_handle */
+	r600_buffer_destroy,			/* resource_destroy */
+	r600_buffer_is_referenced_by_cs,	/* is_buffer_referenced */
+	u_default_get_transfer,			/* get_transfer */
+	u_default_transfer_destroy,		/* transfer_destroy */
+	r600_buffer_transfer_map,		/* transfer_map */
+	r600_buffer_transfer_flush_region,	/* transfer_flush_region */
+	r600_buffer_transfer_unmap,		/* transfer_unmap */
+	u_default_transfer_inline_write		/* transfer_inline_write */
+};
 
 struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ)
@@ -99,59 +163,6 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 	return &rbuffer->r.base.b;
 }
 
-static void r600_buffer_destroy(struct pipe_screen *screen,
-				struct pipe_resource *buf)
-{
-	struct r600_resource_buffer *rbuffer = r600_buffer(buf);
-
-	if (rbuffer->r.bo) {
-		r600_bo_reference((struct radeon*)screen->winsys, &rbuffer->r.bo, NULL);
-	}
-	rbuffer->r.bo = NULL;
-	FREE(rbuffer);
-}
-
-static void *r600_buffer_transfer_map(struct pipe_context *pipe,
-				      struct pipe_transfer *transfer)
-{
-	struct r600_resource_buffer *rbuffer = r600_buffer(transfer->resource);
-	int write = 0;
-	uint8_t *data;
-
-	if (rbuffer->user_buffer)
-		return (uint8_t*)rbuffer->user_buffer + transfer->box.x;
-
-	if (transfer->usage & PIPE_TRANSFER_DONTBLOCK) {
-		/* FIXME */
-	}
-	if (transfer->usage & PIPE_TRANSFER_WRITE) {
-		write = 1;
-	}
-	data = r600_bo_map((struct radeon*)pipe->winsys, rbuffer->r.bo, transfer->usage, pipe);
-	if (!data)
-		return NULL;
-
-	return (uint8_t*)data + transfer->box.x;
-}
-
-static void r600_buffer_transfer_unmap(struct pipe_context *pipe,
-					struct pipe_transfer *transfer)
-{
-	struct r600_resource_buffer *rbuffer = r600_buffer(transfer->resource);
-
-	if (rbuffer->user_buffer)
-		return;
-
-	if (rbuffer->r.bo)
-		r600_bo_unmap((struct radeon*)pipe->winsys, rbuffer->r.bo);
-}
-
-static void r600_buffer_transfer_flush_region(struct pipe_context *pipe,
-						struct pipe_transfer *transfer,
-						const struct pipe_box *box)
-{
-}
-
 unsigned r600_buffer_is_referenced_by_cs(struct pipe_context *context,
 					 struct pipe_resource *buf,
 					 unsigned level, int layer)
@@ -185,19 +196,6 @@ struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,
 	rbuffer->bo = bo;
 	return &rbuffer->base.b;
 }
-
-struct u_resource_vtbl r600_buffer_vtbl =
-{
-	u_default_resource_get_handle,		/* get_handle */
-	r600_buffer_destroy,			/* resource_destroy */
-	r600_buffer_is_referenced_by_cs,	/* is_buffer_referenced */
-	u_default_get_transfer,			/* get_transfer */
-	u_default_transfer_destroy,		/* transfer_destroy */
-	r600_buffer_transfer_map,		/* transfer_map */
-	r600_buffer_transfer_flush_region,	/* transfer_flush_region */
-	r600_buffer_transfer_unmap,		/* transfer_unmap */
-	u_default_transfer_inline_write		/* transfer_inline_write */
-};
 
 void r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *draw)
 {
