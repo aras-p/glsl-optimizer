@@ -170,6 +170,72 @@ static const struct brw_tracked_state *gen6_atoms[] =
    &brw_vertices,
 };
 
+const struct brw_tracked_state *gen7_atoms[] =
+{
+   &brw_check_fallback,
+
+   &brw_wm_input_sizes,
+   &brw_vs_prog,
+   &brw_gs_prog,
+   &brw_wm_prog,
+
+   &gen6_clip_vp,
+   &gen6_sf_vp,
+
+   /* Command packets: */
+   &brw_invarient_state,
+
+   /* must do before binding table pointers, cc state ptrs */
+   &brw_state_base_address,
+
+   &brw_cc_vp,
+   &gen6_viewport_state,	/* must do after *_vp stages */
+
+   &gen6_urb,
+   &gen6_blend_state,		/* must do before cc unit */
+   &gen6_color_calc_state,	/* must do before cc unit */
+   &gen6_depth_stencil_state,	/* must do before cc unit */
+   &gen6_cc_state_pointers,
+
+   &brw_vs_constants, /* Before vs_surfaces and constant_buffer */
+   &brw_wm_constants, /* Before wm_surfaces and constant_buffer */
+   &gen6_vs_constants, /* Before vs_state */
+   &gen6_wm_constants, /* Before wm_state */
+
+   &brw_vs_surfaces,		/* must do before unit */
+   &brw_wm_constant_surface,	/* must do before wm surfaces/bind bo */
+   &brw_wm_surfaces,		/* must do before samplers and unit */
+   &brw_wm_binding_table,
+
+   &brw_wm_samplers,
+   &gen6_sampler_state,
+
+   &gen6_vs_state,
+   &gen6_gs_state,
+   &gen6_clip_state,
+   &gen6_sf_state,
+   &gen6_wm_state,
+
+   &gen6_scissor_state,
+
+   &gen6_binding_table_pointers,
+
+   &brw_depthbuffer,
+
+   &brw_polygon_stipple,
+   &brw_polygon_stipple_offset,
+
+   &brw_line_stipple,
+   &brw_aa_line_parameters,
+
+   &brw_drawing_rect,
+
+   &brw_indices,
+   &brw_index_buffer,
+   &brw_vertices,
+};
+
+
 void brw_init_state( struct brw_context *brw )
 {
    const struct brw_tracked_state **atoms;
@@ -177,7 +243,10 @@ void brw_init_state( struct brw_context *brw )
 
    brw_init_caches(brw);
 
-   if (brw->intel.gen >= 6) {
+   if (brw->intel.gen >= 7) {
+      atoms = gen7_atoms;
+      num_atoms = ARRAY_SIZE(gen7_atoms);
+   } else if (brw->intel.gen == 6) {
       atoms = gen6_atoms;
       num_atoms = ARRAY_SIZE(gen6_atoms);
    } else {
