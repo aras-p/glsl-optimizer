@@ -501,7 +501,7 @@ int r600_texture_depth_flush(struct pipe_context *ctx,
 	resource.width0 = texture->width0;
 	resource.height0 = texture->height0;
 	resource.depth0 = 1;
-	resource.last_level = 0;
+	resource.last_level = texture->last_level;
 	resource.nr_samples = 0;
 	resource.usage = PIPE_USAGE_DYNAMIC;
 	resource.bind = 0;
