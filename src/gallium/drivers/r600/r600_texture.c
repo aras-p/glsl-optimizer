@@ -586,6 +586,9 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 			FREE(trans);
 			return NULL;
 		}
+		trans->transfer.stride = rtex->flushed_depth_texture->pitch_in_bytes[level];
+		trans->offset = r600_texture_get_offset(rtex->flushed_depth_texture, level, box->z);
+		return &trans->transfer;
 	} else if (use_staging_texture) {
 		resource.target = PIPE_TEXTURE_2D;
 		resource.format = texture->format;
