@@ -545,7 +545,7 @@ struct alu_bank_swizzle {
 	int	hw_cfile_elem[4];
 };
 
-const unsigned cycle_for_bank_swizzle_vec[][3] = {
+static const unsigned cycle_for_bank_swizzle_vec[][3] = {
 	[SQ_ALU_VEC_012] = { 0, 1, 2 },
 	[SQ_ALU_VEC_021] = { 0, 2, 1 },
 	[SQ_ALU_VEC_120] = { 1, 2, 0 },
@@ -554,7 +554,7 @@ const unsigned cycle_for_bank_swizzle_vec[][3] = {
 	[SQ_ALU_VEC_210] = { 2, 1, 0 }
 };
 
-const unsigned cycle_for_bank_swizzle_scl[][3] = {
+static const unsigned cycle_for_bank_swizzle_scl[][3] = {
 	[SQ_ALU_SCL_210] = { 2, 1, 0 },
 	[SQ_ALU_SCL_122] = { 1, 2, 2 },
 	[SQ_ALU_SCL_212] = { 2, 1, 2 },
@@ -1841,7 +1841,7 @@ void r600_bc_dump(struct r600_bc *bc)
 	fprintf(stderr, "--------------------------------------\n");
 }
 
-void r600_cf_vtx(struct r600_vertex_element *ve, u32 *bytecode, unsigned count)
+static void r600_cf_vtx(struct r600_vertex_element *ve, u32 *bytecode, unsigned count)
 {
 	struct r600_pipe_state *rstate;
 	unsigned i = 0;

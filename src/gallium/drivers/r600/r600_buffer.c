@@ -51,6 +51,14 @@ static void r600_buffer_destroy(struct pipe_screen *screen,
 	FREE(rbuffer);
 }
 
+static unsigned r600_buffer_is_referenced_by_cs(struct pipe_context *context,
+						struct pipe_resource *buf,
+						unsigned level, int layer)
+{
+	/* FIXME */
+	return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+}
+
 static void *r600_buffer_transfer_map(struct pipe_context *pipe,
 				      struct pipe_transfer *transfer)
 {
@@ -161,14 +169,6 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 	rbuffer->r.bo_size = 0;
 	rbuffer->user_buffer = ptr;
 	return &rbuffer->r.base.b;
-}
-
-unsigned r600_buffer_is_referenced_by_cs(struct pipe_context *context,
-					 struct pipe_resource *buf,
-					 unsigned level, int layer)
-{
-	/* FIXME */
-	return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 }
 
 struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,

@@ -207,9 +207,6 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 					      void *ptr, unsigned bytes,
 					      unsigned bind);
-unsigned r600_buffer_is_referenced_by_cs(struct pipe_context *context,
-					 struct pipe_resource *buf,
-					 unsigned level, int layer);
 struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,
 					      struct winsys_handle *whandle);
 void r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *draw);
@@ -223,7 +220,6 @@ void r600_init_query_functions(struct r600_pipe_context *rctx);
 void r600_init_context_resource_functions(struct r600_pipe_context *r600);
 
 /* r600_shader.c */
-int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens);
 void r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 int r600_find_vs_semantic_index(struct r600_shader *vs,

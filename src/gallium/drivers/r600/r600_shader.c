@@ -194,7 +194,7 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 				0xFFFFFFFF, NULL);
 }
 
-int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_shader *rshader = &shader->shader;
