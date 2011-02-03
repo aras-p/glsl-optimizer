@@ -219,3 +219,23 @@ void r600_init_blit_functions(struct r600_pipe_context *rctx)
 	rctx->context.clear_depth_stencil = r600_clear_depth_stencil;
 	rctx->context.resource_copy_region = r600_resource_copy_region;
 }
+
+void r600_blit_push_depth(struct pipe_context *ctx, struct r600_resource_texture *texture)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct pipe_surface *zsurf, *cbsurf, surf_tmpl;
+	int level = 0;
+	float depth = 1.0f;
+	struct pipe_box sbox;
+
+	sbox.x = sbox.y = sbox.z = 0;
+	sbox.width = texture->resource.base.b.width0;
+	sbox.height = texture->resource.base.b.height0;
+	/* XXX that might be wrong */
+	sbox.depth = 1;
+
+	r600_hw_copy_region(ctx, (struct pipe_resource *)texture, 0,
+			    0, 0, 0,
+			    (struct pipe_resource *)texture->flushed_depth_texture, 0,
+			    &sbox);
+}

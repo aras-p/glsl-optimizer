@@ -198,6 +198,7 @@ void evergreen_pipe_add_vertex_attrib(struct r600_pipe_context *rctx,
 /* r600_blit.c */
 void r600_init_blit_functions(struct r600_pipe_context *rctx);
 void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture);
+void r600_blit_push_depth(struct pipe_context *ctx, struct r600_resource_texture *texture);
 void r600_flush_depth_textures(struct r600_pipe_context *rctx);
 
 /* r600_buffer.c */

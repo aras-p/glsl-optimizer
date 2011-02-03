@@ -630,6 +630,8 @@ void r600_texture_transfer_destroy(struct pipe_context *ctx,
 				   struct pipe_transfer *transfer)
 {
 	struct r600_transfer *rtransfer = (struct r600_transfer*)transfer;
+	struct pipe_resource *texture = transfer->resource;
+	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
 
 	if (rtransfer->staging_texture) {
 		if (transfer->usage & PIPE_TRANSFER_WRITE) {
@@ -637,6 +639,12 @@ void r600_texture_transfer_destroy(struct pipe_context *ctx,
 		}
 		pipe_resource_reference(&rtransfer->staging_texture, NULL);
 	}
+
+	if (rtex->depth && !rtex->is_flushing_texture) {
+		if ((transfer->usage & PIPE_TRANSFER_WRITE) && rtex->flushed_depth_texture)
+			r600_blit_push_depth(ctx, rtex);
+	}
+
 	pipe_resource_reference(&transfer->resource, NULL);
 	FREE(transfer);
 }
