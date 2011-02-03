@@ -52,21 +52,21 @@ struct cso_context {
    struct cso_cache *cache;
 
    struct {
-      void *samplers[PIPE_MAX_SAMPLERS];
-      unsigned nr_samplers;
+      void *fragment_samplers[PIPE_MAX_SAMPLERS];
+      unsigned nr_fragment_samplers;
 
       void *vertex_samplers[PIPE_MAX_VERTEX_SAMPLERS];
       unsigned nr_vertex_samplers;
    } hw;
 
-   void *samplers[PIPE_MAX_SAMPLERS];
-   unsigned nr_samplers;
+   void *fragment_samplers[PIPE_MAX_SAMPLERS];
+   unsigned nr_fragment_samplers;
 
    void *vertex_samplers[PIPE_MAX_VERTEX_SAMPLERS];
    unsigned nr_vertex_samplers;
 
-   unsigned nr_samplers_saved;
-   void *samplers_saved[PIPE_MAX_SAMPLERS];
+   unsigned nr_fragment_samplers_saved;
+   void *fragment_samplers_saved[PIPE_MAX_SAMPLERS];
 
    unsigned nr_vertex_samplers_saved;
    void *vertex_samplers_saved[PIPE_MAX_VERTEX_SAMPLERS];
@@ -431,7 +431,7 @@ enum pipe_error cso_single_sampler(struct cso_context *ctx,
       }
    }
 
-   ctx->samplers[idx] = handle;
+   ctx->fragment_samplers[idx] = handle;
    return PIPE_OK;
 }
 
@@ -482,21 +482,24 @@ void cso_single_sampler_done( struct cso_context *ctx )
 
    /* find highest non-null sampler */
    for (i = PIPE_MAX_SAMPLERS; i > 0; i--) {
-      if (ctx->samplers[i - 1] != NULL)
+      if (ctx->fragment_samplers[i - 1] != NULL)
          break;
    }
 
-   ctx->nr_samplers = i;
+   ctx->nr_fragment_samplers = i;
 
-   if (ctx->hw.nr_samplers != ctx->nr_samplers ||
-       memcmp(ctx->hw.samplers,
-              ctx->samplers,
-              ctx->nr_samplers * sizeof(void *)) != 0) 
+   if (ctx->hw.nr_fragment_samplers != ctx->nr_fragment_samplers ||
+       memcmp(ctx->hw.fragment_samplers,
+              ctx->fragment_samplers,
+              ctx->nr_fragment_samplers * sizeof(void *)) != 0) 
    {
-      memcpy(ctx->hw.samplers, ctx->samplers, ctx->nr_samplers * sizeof(void *));
-      ctx->hw.nr_samplers = ctx->nr_samplers;
+      memcpy(ctx->hw.fragment_samplers, ctx->fragment_samplers,
+             ctx->nr_fragment_samplers * sizeof(void *));
+      ctx->hw.nr_fragment_samplers = ctx->nr_fragment_samplers;
 
-      ctx->pipe->bind_fragment_sampler_states(ctx->pipe, ctx->nr_samplers, ctx->samplers);
+      ctx->pipe->bind_fragment_sampler_states(ctx->pipe,
+                                              ctx->nr_fragment_samplers,
+                                              ctx->fragment_samplers);
    }
 }
 
@@ -550,7 +553,7 @@ enum pipe_error cso_set_samplers( struct cso_context *ctx,
          error = temp;
    }
 
-   for ( ; i < ctx->nr_samplers; i++) {
+   for ( ; i < ctx->nr_fragment_samplers; i++) {
       temp = cso_single_sampler( ctx, i, NULL );
       if (temp != PIPE_OK)
          error = temp;
@@ -563,14 +566,16 @@ enum pipe_error cso_set_samplers( struct cso_context *ctx,
 
 void cso_save_samplers(struct cso_context *ctx)
 {
-   ctx->nr_samplers_saved = ctx->nr_samplers;
-   memcpy(ctx->samplers_saved, ctx->samplers, sizeof(ctx->samplers));
+   ctx->nr_fragment_samplers_saved = ctx->nr_fragment_samplers;
+   memcpy(ctx->fragment_samplers_saved, ctx->fragment_samplers,
+          sizeof(ctx->fragment_samplers));
 }
 
 void cso_restore_samplers(struct cso_context *ctx)
 {
-   ctx->nr_samplers = ctx->nr_samplers_saved;
-   memcpy(ctx->samplers, ctx->samplers_saved, sizeof(ctx->samplers));
+   ctx->nr_fragment_samplers = ctx->nr_fragment_samplers_saved;
+   memcpy(ctx->fragment_samplers, ctx->fragment_samplers_saved,
+          sizeof(ctx->fragment_samplers));
    cso_single_sampler_done( ctx );
 }
 
