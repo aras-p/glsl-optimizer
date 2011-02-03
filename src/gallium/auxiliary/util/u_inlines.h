@@ -235,6 +235,7 @@ pipe_buffer_map_range(struct pipe_context *pipe,
    map = pipe->transfer_map( pipe, *transfer );
    if (map == NULL) {
       pipe->transfer_destroy( pipe, *transfer );
+      *transfer = NULL;
       return NULL;
    }
 
