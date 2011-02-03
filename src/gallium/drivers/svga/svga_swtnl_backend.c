@@ -90,6 +90,7 @@ svga_vbuf_render_allocate_vertices( struct vbuf_render *render,
                                              svga_render->vbuf_size);
       if(!svga_render->vbuf) {
          svga_context_flush(svga, NULL);
+         assert(!svga_render->vbuf);
          svga_render->vbuf = pipe_buffer_create(screen,
                                                 PIPE_BIND_VERTEX_BUFFER,
                                                 svga_render->vbuf_size);
