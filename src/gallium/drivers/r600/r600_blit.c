@@ -136,6 +136,17 @@ void r600_flush_depth_textures(struct r600_pipe_context *rctx)
 
 		r600_blit_uncompress_depth(&rctx->context, tex);
 	}
+
+	/* also check CB here */
+	for (i = 0; i < rctx->framebuffer.nr_cbufs; i++) {
+		struct r600_resource_texture *tex;
+		tex = (struct r600_resource_texture *)rctx->framebuffer.cbufs[i]->texture;
+
+		if (!tex->depth)
+			continue;
+
+		r600_blit_uncompress_depth(&rctx->context, tex);
+	}
 }
 
 static void r600_clear(struct pipe_context *ctx, unsigned buffers,
