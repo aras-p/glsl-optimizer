@@ -3,8 +3,12 @@
 Context
 =======
 
-The context object represents the purest, most directly accessible, abilities
-of the device's 3D rendering pipeline.
+A Gallium rendering context encapsulates the state which effects 3D
+rendering such as blend state, depth/stencil state, texture samplers,
+etc.
+
+Note that resource/texture allocation is not per-context but per-screen.
+
 
 Methods
 -------
@@ -12,20 +16,23 @@ Methods
 CSO State
 ^^^^^^^^^
 
-All CSO state is created, bound, and destroyed, with triplets of methods that
-all follow a specific naming scheme. For example, ``create_blend_state``,
-``bind_blend_state``, and ``destroy_blend_state``.
+All Constant State Object (CSO) state is created, bound, and destroyed,
+with triplets of methods that all follow a specific naming scheme.
+For example, ``create_blend_state``, ``bind_blend_state``, and
+``destroy_blend_state``.
 
 CSO objects handled by the context object:
 
 * :ref:`Blend`: ``*_blend_state``
-* :ref:`Sampler`: These are special; they can be bound to either vertex or
-  fragment samplers, and they are bound in groups.
-  ``bind_fragment_sampler_states``, ``bind_vertex_sampler_states``
+* :ref:`Sampler`: Texture sampler states are bound separately for fragment,
+  vertex and geometry samplers.  Note that sampler states are set en masse.
+  If M is the max number of sampler units supported by the driver and N
+  samplers are bound with ``bind_fragment_sampler_states`` then sampler
+  units N..M-1 are considered disabled/NULL.
 * :ref:`Rasterizer`: ``*_rasterizer_state``
 * :ref:`Depth, Stencil, & Alpha`: ``*_depth_stencil_alpha_state``
-* :ref:`Shader`: These have two sets of methods. ``*_fs_state`` is for
-  fragment shaders, and ``*_vs_state`` is for vertex shaders.
+* :ref:`Shader`: These are create, bind and destroy methods for vertex,
+  fragment and geometry shaders.
 * :ref:`Vertex Elements`: ``*_vertex_elements_state``
 
 
@@ -46,6 +53,9 @@ buffers, surfaces) are bound to the driver.
 * ``set_vertex_buffers``
 
 * ``set_index_buffer``
+
+* ``set_stream_output_buffers``
+
 
 Non-CSO State
 ^^^^^^^^^^^^^
@@ -96,7 +106,9 @@ to the array index which is used for sampling.
 * ``set_fragment_sampler_views`` binds an array of sampler views to
   fragment shader stage. Every binding point acquires a reference
   to a respective sampler view and releases a reference to the previous
-  sampler view.
+  sampler view.  If M is the maximum number of sampler units and N units
+  is passed to set_fragment_sampler_views, the driver should unbind the
+  sampler views for units N..M-1.
 
 * ``set_vertex_sampler_views`` binds an array of sampler views to vertex
   shader stage. Every binding point acquires a reference to a respective
