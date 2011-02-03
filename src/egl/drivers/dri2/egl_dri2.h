@@ -1,0 +1,135 @@
+/*
+ * Copyright © 2011 Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+ * NONINFRINGEMENT.  IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
+ * HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
+ * WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ *
+ * Authors:
+ *    Kristian Høgsberg <krh@bitplanet.net>
+ */
+
+#ifndef EGL_DRI2_INCLUDED
+#define EGL_DRI2_INCLUDED
+
+#include <xcb/xcb.h>
+#include <xcb/dri2.h>
+#include <xcb/xfixes.h>
+#include <X11/Xlib-xcb.h>
+
+#include <GL/gl.h>
+#include <GL/internal/dri_interface.h>
+
+#include "eglconfig.h"
+#include "eglcontext.h"
+#include "egldisplay.h"
+#include "egldriver.h"
+#include "eglcurrent.h"
+#include "egllog.h"
+#include "eglsurface.h"
+#include "eglimage.h"
+
+#define ARRAY_SIZE(a) (sizeof(a) / sizeof((a)[0]))
+
+struct dri2_egl_driver
+{
+   _EGLDriver base;
+
+   void *handle;
+   _EGLProc (*get_proc_address)(const char *procname);
+   void (*glFlush)(void);
+};
+
+struct dri2_egl_display
+{
+   xcb_connection_t         *conn;
+   int                       dri2_major;
+   int                       dri2_minor;
+   __DRIscreen              *dri_screen;
+   const __DRIconfig       **driver_configs;
+   void                     *driver;
+   __DRIcoreExtension       *core;
+   __DRIdri2Extension       *dri2;
+   __DRI2flushExtension     *flush;
+   __DRItexBufferExtension  *tex_buffer;
+   __DRIimageExtension      *image;
+   int                       fd;
+
+   char                     *device_name;
+   char                     *driver_name;
+
+   __DRIdri2LoaderExtension  loader_extension;
+   const __DRIextension     *extensions[3];
+};
+
+struct dri2_egl_context
+{
+   _EGLContext   base;
+   __DRIcontext *dri_context;
+};
+
+struct dri2_egl_surface
+{
+   _EGLSurface          base;
+   __DRIdrawable       *dri_drawable;
+   xcb_drawable_t       drawable;
+   __DRIbuffer          buffers[5];
+   int                  buffer_count;
+   xcb_xfixes_region_t  region;
+   int                  have_fake_front;
+   int                  swap_interval;
+};
+
+struct dri2_egl_config
+{
+   _EGLConfig         base;
+   const __DRIconfig *dri_config;
+};
+
+struct dri2_egl_image
+{
+   _EGLImage   base;
+   __DRIimage *dri_image;
+};
+
+/* standard typecasts */
+_EGL_DRIVER_STANDARD_TYPECASTS(dri2_egl)
+_EGL_DRIVER_TYPECAST(dri2_egl_image, _EGLImage, obj)
+
+extern const __DRIimageLookupExtension image_lookup_extension;
+
+EGLBoolean
+dri2_load_driver(_EGLDisplay *disp);
+
+EGLBoolean
+dri2_create_screen(_EGLDisplay *disp);
+
+struct dri2_egl_config *
+dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
+		int depth, EGLint surface_type);
+
+_EGLImage *
+dri2_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
+		      _EGLContext *ctx, EGLenum target,
+		      EGLClientBuffer buffer, const EGLint *attr_list);
+
+EGLBoolean
+dri2_initialize_x11(_EGLDriver *drv, _EGLDisplay *disp);
+
+#endif /* EGL_DRI2_INCLUDED */
