@@ -89,6 +89,9 @@ VG_LIB_GLOB = $(VG_LIB_NAME)*
 GLAPI_LIB_GLOB = $(GLAPI_LIB_NAME)*
 WAYLAND_EGL_LIB_GLOB = $(WAYLAND_EGL_LIB_NAME)*
 
+DRI_CFLAGS = $(CFLAGS)
+DRI_CXXFLAGS = $(CXXFLAGS)
+
 # Optional assembly language optimization files for libGL
 MESA_ASM_SOURCES = 
 

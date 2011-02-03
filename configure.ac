@@ -151,9 +151,13 @@ if test "x$GCC" = xyes; then
     # Enable -fvisibility=hidden if using a gcc that supports it
     save_CFLAGS="$CFLAGS"
     AC_MSG_CHECKING([whether $CC supports -fvisibility=hidden])
-    CFLAGS="$CFLAGS -fvisibility=hidden"
+    VISIBILITY_CFLAGS="-fvisibility=hidden"
+    CFLAGS="$CFLAGS $VISIBILITY_CFLAGS"
     AC_LINK_IFELSE([AC_LANG_PROGRAM()], AC_MSG_RESULT([yes]),
-		   [CFLAGS="$save_CFLAGS" ; AC_MSG_RESULT([no])]);
+		   [VISIBILITY_CFLAGS=""; AC_MSG_RESULT([no])]);
+
+    # Restore CFLAGS; VISIBILITY_CFLAGS are added to it where needed.
+    CFLAGS=$save_CFLAGS
 
     # Work around aliasing bugs - developers should comment this out
     CFLAGS="$CFLAGS -fno-strict-aliasing"
@@ -164,13 +168,20 @@ if test "x$GXX" = xyes; then
     # Enable -fvisibility=hidden if using a gcc that supports it
     save_CXXFLAGS="$CXXFLAGS"
     AC_MSG_CHECKING([whether $CXX supports -fvisibility=hidden])
-    CXXFLAGS="$CXXFLAGS -fvisibility=hidden"
+    VISIBILITY_CXXFLAGS="-fvisibility=hidden"
+    CXXFLAGS="$CXXFLAGS $VISIBILITY_CXXFLAGS"
     AC_LINK_IFELSE([AC_LANG_PROGRAM()], AC_MSG_RESULT([yes]),
-		   [CXXFLAGS="$save_CXXFLAGS" ; AC_MSG_RESULT([no])]);
+		   [VISIBILITY_CXXFLAGS="" ; AC_MSG_RESULT([no])]);
+
+    # Restore CXXFLAGS; VISIBILITY_CXXFLAGS are added to it where needed.
+    CXXFLAGS=$save_CXXFLAGS
 
     # Work around aliasing bugs - developers should comment this out
     CXXFLAGS="$CXXFLAGS -fno-strict-aliasing"
 fi
+
+AC_SUBST([VISIBILITY_CFLAGS])
+AC_SUBST([VISIBILITY_CXXFLAGS])
 
 dnl These should be unnecessary, but let the user set them if they want
 AC_ARG_VAR([OPT_FLAGS], [Additional optimization flags for the compiler.
@@ -819,6 +830,41 @@ AC_SUBST([GLESv2_PC_LIB_PRIV])
 GLAPI_LIB_DEPS="-lpthread"
 AC_SUBST([GLAPI_LIB_DEPS])
 
+
+dnl Setup default DRI CFLAGS
+DRI_CFLAGS='$(CFLAGS)'
+DRI_CXXFLAGS='$(CXXFLAGS)'
+DRI_LIB_DEPS='$(TOP)/src/mesa/libmesa.a'
+MESA_MODULES='$(TOP)/src/mesa/libmesa.a'
+
+AC_ARG_ENABLE([shared-dricore],
+    [AS_HELP_STRING([--enable-shared-dricore],
+        [link DRI modules with shared core DRI routines @<:@default=disabled@:>@])],
+    [enable_dricore="$enableval"],
+    [enable_dricore=no])
+if test "$mesa_driver" = dri ; then
+   if test "$enable_dricore" = yes ; then
+      if test "$GCC$GXX" != yesyes ; then
+      	 AC_MSG_WARN([Shared dricore requires GCC-compatible rpath handling.  Disabling shared dricore])
+	 enable_dricore=no
+      else
+	 DRICORE_GLSL_LIBS='$(TOP)/$(LIB_DIR)/libglsl.so'
+	 DRICORE_LIBS='$(TOP)/$(LIB_DIR)/libdricore.so'
+	 DRICORE_LIB_DEPS='-L$(TOP)/$(LIB_DIR) -Wl,-R$(DRI_DRIVER_INSTALL_DIR) -lglsl'
+      	 DRI_LIB_DEPS='-L$(TOP)/$(LIB_DIR) -Wl,-R$(DRI_DRIVER_INSTALL_DIR) -ldricore -lglsl'
+      	 DRI_CFLAGS='$(CFLAGS_NOVISIBILITY) -DUSE_DRICORE'
+      	 DRI_CXXFLAGS='$(CXXFLAGS_NOVISIBILITY) -DUSE_DRICORE'
+      	 MESA_MODULES='$(DRICORE_LIBS) $(DRICORE_GLSL_LIBS)'
+      fi
+   fi
+fi
+AC_SUBST([DRICORE_LIBS])
+AC_SUBST([DRICORE_GLSL_LIBS])
+AC_SUBST([DRICORE_LIB_DEPS])
+AC_SUBST([DRI_CXXFLAGS])
+AC_SUBST([DRI_CFLAGS])
+AC_SUBST([MESA_MODULES])
+
 AC_SUBST([HAVE_XF86VIDMODE])
 
 PKG_CHECK_MODULES([LIBDRM_RADEON],
@@ -989,8 +1035,8 @@ if test "$mesa_driver" = dri -o "$mesa_driver" = no; then
             [AC_MSG_ERROR([Expat required for DRI.])])
     fi
 
-    # put all the necessary libs together
-    DRI_LIB_DEPS="$SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIB -lm -lpthread $DLOPEN_LIBS"
+    # put all the necessary libs together, including possibly libdricore
+    DRI_LIB_DEPS="$DRI_LIB_DEPS $SELINUX_LIBS $LIBDRM_LIBS $EXPAT_LIB -lm -lpthread $DLOPEN_LIBS"
 fi
 AC_SUBST([DRI_DIRS])
 AC_SUBST([EXPAT_INCLUDES])
@@ -1794,6 +1840,7 @@ if test "$mesa_driver" != no; then
         fi
         echo "        DRI driver dir:  $DRI_DRIVER_INSTALL_DIR"
         echo "        Use XCB:         $enable_xcb"
+        echo "        Shared dricore:  $enable_dricore"
     fi
 fi
 echo ""
