@@ -1146,18 +1146,19 @@ set_sampler_views(struct cso_context *ctx,
 {
    uint i;
 
+   /* reference new views */
    for (i = 0; i < count; i++) {
       pipe_sampler_view_reference(&info->views[i], views[i]);
    }
+   /* unref extra old views, if any */
    for (; i < info->nr_views; i++) {
       pipe_sampler_view_reference(&info->views[i], NULL);
    }
 
-   set_views(ctx->pipe,
-             MAX2(count, info->nr_views),
-             info->views);
-
    info->nr_views = count;
+
+   /* bind the new sampler views */
+   set_views(ctx->pipe, count, info->views);
 }
 
 void
@@ -1226,9 +1227,8 @@ restore_sampler_views(struct cso_context *ctx,
       pipe_sampler_view_reference(&info->views[i], NULL);
    }
 
-   set_views(ctx->pipe,
-             MAX2(info->nr_views, info->nr_views_saved),
-             info->views);
+   /* bind the old/saved sampler views */
+   set_views(ctx->pipe, info->nr_views_saved, info->views);
 
    info->nr_views = info->nr_views_saved;
    info->nr_views_saved = 0;
