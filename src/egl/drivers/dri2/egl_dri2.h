@@ -113,6 +113,7 @@ _EGL_DRIVER_STANDARD_TYPECASTS(dri2_egl)
 _EGL_DRIVER_TYPECAST(dri2_egl_image, _EGLImage, obj)
 
 extern const __DRIimageLookupExtension image_lookup_extension;
+extern const __DRIuseInvalidateExtension use_invalidate;
 
 EGLBoolean
 dri2_load_driver(_EGLDisplay *disp);
@@ -131,5 +132,8 @@ dri2_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
 
 EGLBoolean
 dri2_initialize_x11(_EGLDriver *drv, _EGLDisplay *disp);
+
+EGLBoolean
+dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp);
 
 #endif /* EGL_DRI2_INCLUDED */
