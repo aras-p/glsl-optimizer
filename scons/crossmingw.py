@@ -194,5 +194,8 @@ def generate(env):
     env.AppendUnique(SHLINKFLAGS = ['-Wl,--enable-stdcall-fixup'])
     #env.AppendUnique(SHLINKFLAGS = ['-Wl,--kill-at'])
 
+    # Avoid depending on gcc runtime DLLs
+    env.AppendUnique(LINKFLAGS = ['-static-libgcc'])
+
 def exists(env):
     return find(env)
