@@ -763,7 +763,7 @@ static boolean r300_texture_get_handle(struct pipe_screen* screen,
                                   tex->desc.stride_in_bytes[0], whandle);
 }
 
-struct u_resource_vtbl r300_texture_vtbl =
+static const struct u_resource_vtbl r300_texture_vtbl =
 {
    r300_texture_get_handle,	      /* get_handle */
    r300_texture_destroy,	      /* resource_destroy */
