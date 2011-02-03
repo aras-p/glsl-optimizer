@@ -704,7 +704,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	bo[2] = rbuffer->bo;
 
 	/* XXX quite sure for dx10+ hw don't need any offset hacks */
-	offset = r600_texture_get_offset((struct r600_resource_texture *)state->cbufs[cb]->texture,
+	offset = r600_texture_get_offset(rtex,
 					 level, state->cbufs[cb]->u.tex.first_layer);
 	pitch = rtex->pitch_in_pixels[level] / 8 - 1;
 	slice = rtex->pitch_in_pixels[level] * surf->aligned_height / 64 - 1;
