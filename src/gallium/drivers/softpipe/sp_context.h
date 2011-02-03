@@ -91,8 +91,8 @@ struct softpipe_context {
    } so_target;
    struct pipe_query_data_so_statistics so_stats;
 
-   unsigned num_samplers;
-   unsigned num_sampler_views;
+   unsigned num_fragment_samplers;
+   unsigned num_fragment_sampler_views;
    unsigned num_vertex_samplers;
    unsigned num_vertex_sampler_views;
    unsigned num_geometry_samplers;

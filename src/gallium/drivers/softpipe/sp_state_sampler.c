@@ -76,7 +76,7 @@ softpipe_bind_fragment_sampler_states(struct pipe_context *pipe,
    assert(num <= PIPE_MAX_SAMPLERS);
 
    /* Check for no-op */
-   if (num == softpipe->num_samplers &&
+   if (num == softpipe->num_fragment_samplers &&
        !memcmp(softpipe->sampler, sampler, num * sizeof(void *)))
       return;
 
@@ -87,7 +87,7 @@ softpipe_bind_fragment_sampler_states(struct pipe_context *pipe,
    for (i = num; i < PIPE_MAX_SAMPLERS; ++i)
       softpipe->sampler[i] = NULL;
 
-   softpipe->num_samplers = num;
+   softpipe->num_fragment_samplers = num;
 
    softpipe->dirty |= SP_NEW_SAMPLER;
 }
@@ -191,7 +191,7 @@ softpipe_set_fragment_sampler_views(struct pipe_context *pipe,
    assert(num <= PIPE_MAX_SAMPLERS);
 
    /* Check for no-op */
-   if (num == softpipe->num_sampler_views &&
+   if (num == softpipe->num_fragment_sampler_views &&
        !memcmp(softpipe->fragment_sampler_views, views,
                num * sizeof(struct pipe_sampler_view *)))
       return;
@@ -205,7 +205,7 @@ softpipe_set_fragment_sampler_views(struct pipe_context *pipe,
       sp_tex_tile_cache_set_sampler_view(softpipe->fragment_tex_cache[i], view);
    }
 
-   softpipe->num_sampler_views = num;
+   softpipe->num_fragment_sampler_views = num;
 
    softpipe->dirty |= SP_NEW_TEXTURE;
 }
