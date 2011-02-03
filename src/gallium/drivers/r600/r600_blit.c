@@ -208,8 +208,14 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 				      unsigned src_level,
 				      const struct pipe_box *src_box)
 {
+	struct r600_resource_texture *rsrc = (struct r600_resource_texture*)src;
+
+	if (rsrc->depth && !rsrc->is_flushing_texture)
+		r600_texture_depth_flush(ctx, src);
+
 	r600_hw_copy_region(ctx, dst, dst_level, dstx, dsty, dstz,
 			    src, src_level, src_box);
+
 }
 
 void r600_init_blit_functions(struct r600_pipe_context *rctx)
