@@ -224,6 +224,13 @@ svga_hwtnl_flush( struct svga_hwtnl *hwtnl )
       hwtnl->cmd.prim_count = 0;
    }
 
+   /*
+    * FIXME:  Somehow we are accumulating too many buffer uploads without
+    * flushing, so temporarily disable buffer upload coalescing to prevent OOM
+    * crashes (at expense of less performance).
+    */
+   svga_context_flush_buffers(svga);
+
    return PIPE_OK;
 }
 
