@@ -204,7 +204,7 @@ svga_transfer_dma_band(struct svga_context *svga,
 
    ret = SVGA3D_SurfaceDMA(svga->swc, st, transfer, &box, 1);
    if(ret != PIPE_OK) {
-      svga->swc->flush(svga->swc, NULL);
+      svga_context_flush(svga, NULL);
       ret = SVGA3D_SurfaceDMA(svga->swc, st, transfer, &box, 1);
       assert(ret == PIPE_OK);
    }
