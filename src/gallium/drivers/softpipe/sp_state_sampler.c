@@ -77,15 +77,15 @@ softpipe_bind_fragment_sampler_states(struct pipe_context *pipe,
 
    /* Check for no-op */
    if (num == softpipe->num_fragment_samplers &&
-       !memcmp(softpipe->sampler, sampler, num * sizeof(void *)))
+       !memcmp(softpipe->fragment_samplers, sampler, num * sizeof(void *)))
       return;
 
    draw_flush(softpipe->draw);
 
    for (i = 0; i < num; ++i)
-      softpipe->sampler[i] = sampler[i];
+      softpipe->fragment_samplers[i] = sampler[i];
    for (i = num; i < PIPE_MAX_SAMPLERS; ++i)
-      softpipe->sampler[i] = NULL;
+      softpipe->fragment_samplers[i] = NULL;
 
    softpipe->num_fragment_samplers = num;
 
@@ -374,10 +374,10 @@ softpipe_reset_sampler_variants(struct softpipe_context *softpipe)
    }
 
    for (i = 0; i <= softpipe->fs->info.file_max[TGSI_FILE_SAMPLER]; i++) {
-      if (softpipe->sampler[i]) {
+      if (softpipe->fragment_samplers[i]) {
          softpipe->tgsi.frag_samplers_list[i] =
             get_sampler_variant( i,
-                                 sp_sampler(softpipe->sampler[i]),
+                                 sp_sampler(softpipe->fragment_samplers[i]),
                                  softpipe->fragment_sampler_views[i],
                                  TGSI_PROCESSOR_FRAGMENT );
 

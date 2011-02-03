@@ -58,7 +58,7 @@ struct softpipe_context {
 
    /** Constant state objects */
    struct pipe_blend_state *blend;
-   struct pipe_sampler_state *sampler[PIPE_MAX_SAMPLERS];
+   struct pipe_sampler_state *fragment_samplers[PIPE_MAX_SAMPLERS];
    struct pipe_sampler_state *vertex_samplers[PIPE_MAX_VERTEX_SAMPLERS];
    struct pipe_sampler_state *geometry_samplers[PIPE_MAX_GEOMETRY_SAMPLERS];
    struct pipe_depth_stencil_alpha_state *depth_stencil;
