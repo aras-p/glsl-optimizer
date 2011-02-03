@@ -647,6 +647,12 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 
 	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
+
+	if (rtex->depth && !rtex->is_flushing_texture) {
+	        r600_texture_depth_flush(&rctx->context, state->cbufs[cb]->texture, TRUE);
+		rtex = rtex->flushed_depth_texture;
+	}
+
 	rbuffer = &rtex->resource;
 	bo[0] = rbuffer->bo;
 	bo[1] = rbuffer->bo;
