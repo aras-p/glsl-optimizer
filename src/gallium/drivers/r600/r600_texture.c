@@ -278,52 +278,6 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 	rtex->size = offset;
 }
 
-static struct r600_resource_texture *
-r600_texture_create_object(struct pipe_screen *screen,
-			   const struct pipe_resource *base,
-			   unsigned array_mode,
-			   unsigned pitch_in_bytes_override,
-			   unsigned max_buffer_size,
-			   struct r600_bo *bo)
-{
-	struct r600_resource_texture *rtex;
-	struct r600_resource *resource;
-	struct radeon *radeon = (struct radeon *)screen->winsys;
-
-	rtex = CALLOC_STRUCT(r600_resource_texture);
-	if (rtex == NULL)
-		return NULL;
-
-	resource = &rtex->resource;
-	resource->base.b = *base;
-	resource->base.vtbl = &r600_texture_vtbl;
-	pipe_reference_init(&resource->base.b.reference, 1);
-	resource->base.b.screen = screen;
-	resource->bo = bo;
-	rtex->pitch_override = pitch_in_bytes_override;
-
-	if (util_format_is_depth_or_stencil(base->format))
-		rtex->depth = 1;
-
-	if (array_mode)
-		rtex->tiled = 1;
-	r600_setup_miptree(screen, rtex, array_mode);
-
-	resource->size = rtex->size;
-
-	if (!resource->bo) {
-		struct pipe_resource *ptex = &rtex->resource.base.b;
-		int base_align = r600_get_base_alignment(screen, ptex->format, array_mode);
-
-		resource->bo = r600_bo(radeon, rtex->size, base_align, base->bind, base->usage);
-		if (!resource->bo) {
-			FREE(rtex);
-			return NULL;
-		}
-	}
-	return rtex;
-}
-
 /* Figure out whether u_blitter will fallback to a transfer operation.
  * If so, don't use a staging resource.
  */
@@ -361,6 +315,52 @@ static boolean permit_hardware_blit(struct pipe_screen *screen,
 		return FALSE;
 
 	return TRUE;
+}
+
+static struct r600_resource_texture *
+r600_texture_create_object(struct pipe_screen *screen,
+			   const struct pipe_resource *base,
+			   unsigned array_mode,
+			   unsigned pitch_in_bytes_override,
+			   unsigned max_buffer_size,
+			   struct r600_bo *bo)
+{
+	struct r600_resource_texture *rtex;
+	struct r600_resource *resource;
+	struct radeon *radeon = (struct radeon *)screen->winsys;
+
+	rtex = CALLOC_STRUCT(r600_resource_texture);
+	if (rtex == NULL)
+		return NULL;
+
+	resource = &rtex->resource;
+	resource->base.b = *base;
+	resource->base.vtbl = &r600_texture_vtbl;
+	pipe_reference_init(&resource->base.b.reference, 1);
+	resource->base.b.screen = screen;
+	resource->bo = bo;
+	rtex->pitch_override = pitch_in_bytes_override;
+	/* only mark depth textures the HW can hit as depth textures */
+	if (util_format_is_depth_or_stencil(base->format) && permit_hardware_blit(screen, base))
+		rtex->depth = 1;
+
+	if (array_mode)
+		rtex->tiled = 1;
+	r600_setup_miptree(screen, rtex, array_mode);
+
+	resource->size = rtex->size;
+
+	if (!resource->bo) {
+		struct pipe_resource *ptex = &rtex->resource.base.b;
+		int base_align = r600_get_base_alignment(screen, ptex->format, array_mode);
+
+		resource->bo = r600_bo(radeon, rtex->size, base_align, base->bind, base->usage);
+		if (!resource->bo) {
+			FREE(rtex);
+			return NULL;
+		}
+	}
+	return rtex;
 }
 
 struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
