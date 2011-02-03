@@ -134,6 +134,9 @@ void r600_flush_depth_textures(struct r600_pipe_context *rctx)
 		if (!tex->depth)
 			continue;
 
+		if (tex->is_flushing_texture)
+			continue;
+
 		r600_blit_uncompress_depth(&rctx->context, tex);
 	}
 
@@ -143,6 +146,9 @@ void r600_flush_depth_textures(struct r600_pipe_context *rctx)
 		tex = (struct r600_resource_texture *)rctx->framebuffer.cbufs[i]->texture;
 
 		if (!tex->depth)
+			continue;
+
+		if (tex->is_flushing_texture)
 			continue;
 
 		r600_blit_uncompress_depth(&rctx->context, tex);
