@@ -595,7 +595,7 @@ enum pipe_error cso_set_vertex_samplers(struct cso_context *ctx,
          error = temp;
    }
 
-   for ( ; i < ctx->nr_samplers; i++) {
+   for ( ; i < ctx->nr_vertex_samplers; i++) {
       temp = cso_single_vertex_sampler( ctx, i, NULL );
       if (temp != PIPE_OK)
          error = temp;
