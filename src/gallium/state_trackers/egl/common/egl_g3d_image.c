@@ -135,7 +135,7 @@ egl_g3d_reference_drm_buffer(_EGLDisplay *dpy, EGLint name,
    _EGLImageAttribs attrs;
    EGLint format;
 
-   if (dpy->Platform != _EGL_PLATFORM_DRM)
+   if (!dpy->Extensions.MESA_drm_image)
       return NULL;
 
    if (_eglParseImageAttribList(&attrs, dpy, attribs) != EGL_SUCCESS)
@@ -295,7 +295,7 @@ egl_g3d_export_drm_image(_EGLDriver *drv, _EGLDisplay *dpy, _EGLImage *img,
    struct egl_g3d_image *gimg = egl_g3d_image(img);
    struct winsys_handle wsh;
 
-   if (dpy->Platform != _EGL_PLATFORM_DRM)
+   if (!dpy->Extensions.MESA_drm_image)
       return EGL_FALSE;
 
    /* get shared handle */
