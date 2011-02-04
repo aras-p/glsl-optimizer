@@ -408,6 +408,12 @@ dri2_initialize(_EGLDriver *drv, _EGLDisplay *disp)
       if (disp->Options.TestOnly)
          return EGL_TRUE;
       return dri2_initialize_drm(drv, disp);
+#ifdef HAVE_WAYLAND_PLATFORM
+   case _EGL_PLATFORM_WAYLAND:
+      if (disp->Options.TestOnly)
+         return EGL_TRUE;
+      return dri2_initialize_wayland(drv, disp);
+#endif
 #endif
 
    default:

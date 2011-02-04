@@ -33,6 +33,11 @@
 #include <xcb/xfixes.h>
 #include <X11/Xlib-xcb.h>
 
+#ifdef HAVE_WAYLAND_PLATFORM
+#include <wayland-client.h>
+#include "wayland-egl-priv.h"
+#endif
+
 #include <GL/gl.h>
 #include <GL/internal/dri_interface.h>
 
@@ -76,12 +81,31 @@ struct dri2_egl_display
 
    __DRIdri2LoaderExtension  loader_extension;
    const __DRIextension     *extensions[3];
+#ifdef HAVE_WAYLAND_PLATFORM
+   struct wl_egl_display    *wl_dpy;
+#endif
 };
 
 struct dri2_egl_context
 {
    _EGLContext   base;
    __DRIcontext *dri_context;
+};
+
+#ifdef HAVE_WAYLAND_PLATFORM
+enum wayland_buffer_type {
+   WL_BUFFER_FRONT,
+   WL_BUFFER_BACK,
+   WL_BUFFER_COUNT
+};
+
+#define __DRI_BUFFER_COUNT 10
+#endif
+
+enum dri2_surface_type {
+   DRI2_WINDOW_SURFACE,
+   DRI2_PIXMAP_SURFACE,
+   DRI2_PBUFFER_SURFACE
 };
 
 struct dri2_egl_surface
@@ -94,7 +118,23 @@ struct dri2_egl_surface
    xcb_xfixes_region_t  region;
    int                  have_fake_front;
    int                  swap_interval;
+   enum dri2_surface_type type;
+#ifdef HAVE_WAYLAND_PLATFORM
+   struct wl_egl_window  *wl_win;
+   struct wl_egl_pixmap  *wl_pix;
+   struct wl_buffer      *wl_drm_buffer[WL_BUFFER_COUNT];
+   int                    dx;
+   int                    dy;
+   __DRIbuffer           *dri_buffers[__DRI_BUFFER_COUNT];
+   EGLBoolean             block_swap_buffers;
+#endif
 };
+
+struct dri2_egl_buffer {
+   __DRIbuffer *dri_buffer;
+   struct dri2_egl_display *dri2_dpy;
+};
+
 
 struct dri2_egl_config
 {
@@ -135,6 +175,9 @@ dri2_initialize_x11(_EGLDriver *drv, _EGLDisplay *disp);
 
 EGLBoolean
 dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp);
+
+EGLBoolean
+dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp);
 
 char *
 dri2_get_driver_for_fd(int fd);

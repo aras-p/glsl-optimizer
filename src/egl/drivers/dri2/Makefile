@@ -24,4 +24,11 @@ ifeq ($(SHARED_GLAPI),1)
 EGL_CFLAGS += -DHAVE_SHARED_GLAPI
 endif
 
+ifneq ($(findstring wayland, $(EGL_PLATFORMS)),)
+EGL_SOURCES += platform_wayland.c
+EGL_INCLUDES += -DHAVE_WAYLAND_PLATFORM $(WAYLAND_CFLAGS) \
+		-I$(TOP)/src/egl/wayland
+EGL_LIBS += $(WAYLAND_LIBS)
+endif
+
 include ../Makefile.template
