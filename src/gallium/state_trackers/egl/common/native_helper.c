@@ -143,6 +143,14 @@ resource_surface_add_resources(struct resource_surface *rsurf,
    return ((rsurf->resource_mask & resource_mask) == resource_mask);
 }
 
+void
+resource_surface_import_resource(struct resource_surface *rsurf,
+                                 enum native_attachment which,
+                                 struct pipe_resource *pres)
+{
+	pipe_resource_reference(&rsurf->resources[which], pres);
+	rsurf->resource_mask |= 1 << which;
+}
 
 void
 resource_surface_get_resources(struct resource_surface *rsurf,
