@@ -1536,6 +1536,10 @@ yes)
         if test "$plat" = "fbdev"; then
                 GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/fbdev"
         fi
+	if test "$plat" = "wayland"; then
+		PKG_CHECK_MODULES([WAYLAND], [wayland-client],, \
+				  [AC_MSG_ERROR([cannot find libwayland-client])])
+	fi
     done
     EGL_PLATFORMS="$egl_platforms"
     ;;
