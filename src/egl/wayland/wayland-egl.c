@@ -102,6 +102,7 @@ wl_egl_display_create(struct wl_display *display)
 
 	egl_display->display = display;
 	egl_display->drm = NULL;
+	egl_display->fd = -1;
 	egl_display->device_name = NULL;
 	egl_display->authenticated = false;
 

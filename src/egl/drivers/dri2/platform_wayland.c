@@ -504,6 +504,24 @@ dri2_terminate(_EGLDriver *drv, _EGLDisplay *disp)
    return EGL_TRUE;
 }
 
+static void
+sync_callback(void *data)
+{
+   int *done = data;
+
+   *done = 1;
+}
+
+static void
+force_roundtrip(struct wl_display *display)
+{
+   int done = 0;
+
+   wl_display_sync_callback(display, sync_callback, &done);
+   wl_display_iterate(display, WL_DISPLAY_WRITABLE);
+   while (!done)
+      wl_display_iterate(display, WL_DISPLAY_READABLE);
+}
 
 EGLBoolean
 dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
@@ -525,15 +543,21 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    disp->DriverData = (void *) dri2_dpy;
    dri2_dpy->wl_dpy = disp->PlatformDisplay;
 
+   if (dri2_dpy->wl_dpy->fd == -1)
+      force_roundtrip(dri2_dpy->wl_dpy->display);
+   if (dri2_dpy->wl_dpy->fd == -1)
+      goto cleanup_dpy;
+
    dri2_dpy->fd = dup(dri2_dpy->wl_dpy->fd);
    if (dri2_dpy->fd < 0) {
       _eglError(EGL_BAD_ALLOC, "DRI2: failed to dup fd");
       goto cleanup_dpy;
    }
-   
-   wl_display_iterate(dri2_dpy->wl_dpy->display, WL_DISPLAY_WRITABLE);
-   while (!dri2_dpy->wl_dpy->authenticated)
-      wl_display_iterate(dri2_dpy->wl_dpy->display, WL_DISPLAY_READABLE);
+
+   if (!dri2_dpy->wl_dpy->authenticated)
+      force_roundtrip(dri2_dpy->wl_dpy->display);
+   if (!dri2_dpy->wl_dpy->authenticated)
+      goto cleanup_dpy;
 
    dri2_dpy->driver_name = dri2_get_driver_for_fd(dri2_dpy->fd);
    if (dri2_dpy->driver_name == NULL) {
