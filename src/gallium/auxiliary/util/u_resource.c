@@ -35,7 +35,7 @@ unsigned u_is_resource_referenced_vtbl( struct pipe_context *pipe,
 struct pipe_transfer *u_get_transfer_vtbl(struct pipe_context *context,
                                           struct pipe_resource *resource,
                                           unsigned level,
-                                          enum pipe_transfer_usage usage,
+                                          unsigned usage,
                                           const struct pipe_box *box)
 {
    struct u_resource *ur = u_resource(resource);
