@@ -403,6 +403,8 @@ printf_length(const char *fmt, va_list untouched_args)
 #endif
    assert(size >= 0);
 
+   va_end(args);
+
    return size;
 }
 
