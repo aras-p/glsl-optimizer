@@ -567,7 +567,7 @@ const struct dri2_driver_map driver_map[] = {
    { 0x1002, "r600", r600_chip_ids, ARRAY_SIZE(r600_chip_ids) },
 };
 
-static char *
+char *
 dri2_get_driver_for_fd(int fd)
 {
    struct udev *udev;

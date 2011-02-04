@@ -136,4 +136,7 @@ dri2_initialize_x11(_EGLDriver *drv, _EGLDisplay *disp);
 EGLBoolean
 dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp);
 
+char *
+dri2_get_driver_for_fd(int fd);
+
 #endif /* EGL_DRI2_INCLUDED */
