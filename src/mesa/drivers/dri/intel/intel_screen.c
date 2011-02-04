@@ -634,6 +634,51 @@ __DRIconfig **intelInitScreen2(__DRIscreen *psp)
    return (const __DRIconfig **)configs;
 }
 
+struct intel_buffer {
+   __DRIbuffer base;
+   struct intel_region *region;
+};
+
+static __DRIbuffer *
+intelAllocateBuffer(__DRIscreen *screen,
+		    unsigned attachment, unsigned format,
+		    int width, int height)
+{
+   struct intel_buffer *intelBuffer;
+   struct intel_screen *intelScreen = screen->private;
+
+   intelBuffer = CALLOC(sizeof *intelBuffer);
+   if (intelBuffer == NULL)
+      return NULL;
+
+   intelBuffer->region = intel_region_alloc(intelScreen, I915_TILING_NONE,
+					    format / 8, width, height, GL_TRUE);
+   
+   if (intelBuffer->region == NULL) {
+	   FREE(intelBuffer);
+	   return NULL;
+   }
+   
+   intel_region_flink(intelBuffer->region, &intelBuffer->base.name);
+
+   intelBuffer->base.attachment = attachment;
+   intelBuffer->base.cpp = intelBuffer->region->cpp;
+   intelBuffer->base.pitch =
+         intelBuffer->region->pitch * intelBuffer->region->cpp;
+
+   return &intelBuffer->base;
+}
+
+static void
+intelReleaseBuffer(__DRIscreen *screen, __DRIbuffer *buffer)
+{
+   struct intel_buffer *intelBuffer = (struct intel_buffer *) buffer;
+
+   intel_region_release(&intelBuffer->region);
+   free(intelBuffer);
+}
+
+
 const struct __DriverAPIRec driDriverAPI = {
    .DestroyScreen	 = intelDestroyScreen,
    .CreateContext	 = intelCreateContext,
@@ -643,6 +688,8 @@ const struct __DriverAPIRec driDriverAPI = {
    .MakeCurrent		 = intelMakeCurrent,
    .UnbindContext	 = intelUnbindContext,
    .InitScreen2		 = intelInitScreen2,
+   .AllocateBuffer       = intelAllocateBuffer,
+   .ReleaseBuffer        = intelReleaseBuffer
 };
 
 /* This is the table of extensions that the loader will dlsym() for. */
