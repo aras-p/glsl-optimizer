@@ -223,6 +223,12 @@ struct __DriverAPIRec {
 
     /* DRI2 Entry point */
     const __DRIconfig **(*InitScreen2) (__DRIscreen * priv);
+
+    __DRIbuffer *(*AllocateBuffer) (__DRIscreen *screenPrivate,
+				    unsigned int attachment,
+				    unsigned int format,
+				    int width, int height);
+    void (*ReleaseBuffer) (__DRIscreen *screenPrivate, __DRIbuffer *buffer);
 };
 
 extern const struct __DriverAPIRec driDriverAPI;

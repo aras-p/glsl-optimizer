@@ -786,6 +786,14 @@ struct __DRIdri2ExtensionRec {
 					   const __DRIconfig *config,
 					   __DRIcontext *shared,
 					   void *data);
+
+   __DRIbuffer *(*allocateBuffer)(__DRIscreen *screen,
+				  unsigned int attachment,
+				  unsigned int format,
+				  int width,
+				  int height);
+   void (*releaseBuffer)(__DRIscreen *screen,
+			 __DRIbuffer *buffer);
 };
 
 
