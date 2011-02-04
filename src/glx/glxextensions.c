@@ -90,6 +90,7 @@ static const struct extension_info known_glx_extensions[] = {
    { GLX(MESA_agp_offset),             VER(0,0), N, N, N, Y }, /* Deprecated */
    { GLX(MESA_copy_sub_buffer),        VER(0,0), Y, N, N, N },
 #endif
+   { GLX(MESA_multithread_makecurrent),VER(0,0), Y, N, Y, N },
    { GLX(MESA_pixmap_colormap),        VER(0,0), N, N, N, N }, /* Deprecated */
    { GLX(MESA_release_buffers),        VER(0,0), N, N, N, N }, /* Deprecated */
 #ifdef GLX_USE_APPLEGL
