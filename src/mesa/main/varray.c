@@ -508,7 +508,7 @@ get_vertex_array_attrib(struct gl_context *ctx, GLuint index, GLenum pname,
 {
    const struct gl_client_array *array;
 
-   if (index >= MAX_VERTEX_GENERIC_ATTRIBS) {
+   if (index >= ctx->Const.VertexProgram.MaxAttribs) {
       _mesa_error(ctx, GL_INVALID_VALUE, "%s(index=%u)", caller, index);
       return 0;
    }
@@ -550,6 +550,25 @@ error:
 }
 
 
+static const GLfloat *
+get_current_attrib(struct gl_context *ctx, GLuint index, const char *function)
+{
+   if (index == 0) {
+      if (ctx->API != API_OPENGLES2) {
+	 _mesa_error(ctx, GL_INVALID_OPERATION, "%s(index==0)", function);
+	 return NULL;
+      }
+   }
+   else if (index >= ctx->Const.VertexProgram.MaxAttribs) {
+      _mesa_error(ctx, GL_INVALID_VALUE,
+		  "%s(index>=GL_MAX_VERTEX_ATTRIBS)", function);
+      return NULL;
+   }
+
+   FLUSH_CURRENT(ctx, 0);
+   return ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index];
+}
+
 void GLAPIENTRY
 _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
 {
@@ -557,13 +576,8 @@ _mesa_GetVertexAttribfvARB(GLuint index, GLenum pname, GLfloat *params)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
-      if (index == 0) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glGetVertexAttribfv(index==0)");
-      }
-      else {
-         const GLfloat *v = ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index];
-         FLUSH_CURRENT(ctx, 0);
+      const GLfloat *v = get_current_attrib(ctx, index, "glGetVertexAttribfv");
+      if (v != NULL) {
          COPY_4V(params, v);
       }
    }
@@ -581,13 +595,8 @@ _mesa_GetVertexAttribdvARB(GLuint index, GLenum pname, GLdouble *params)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
-      if (index == 0) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glGetVertexAttribdv(index==0)");
-      }
-      else {
-         const GLfloat *v = ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index];
-         FLUSH_CURRENT(ctx, 0);
+      const GLfloat *v = get_current_attrib(ctx, index, "glGetVertexAttribdv");
+      if (v != NULL) {
          params[0] = (GLdouble) v[0];
          params[1] = (GLdouble) v[1];
          params[2] = (GLdouble) v[2];
@@ -608,13 +617,8 @@ _mesa_GetVertexAttribivARB(GLuint index, GLenum pname, GLint *params)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
-      if (index == 0) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glGetVertexAttribiv(index==0)");
-      }
-      else {
-         const GLfloat *v = ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index];
-         FLUSH_CURRENT(ctx, 0);
+      const GLfloat *v = get_current_attrib(ctx, index, "glGetVertexAttribiv");
+      if (v != NULL) {
          /* XXX should floats in[0,1] be scaled to full int range? */
          params[0] = (GLint) v[0];
          params[1] = (GLint) v[1];
@@ -637,13 +641,9 @@ _mesa_GetVertexAttribIiv(GLuint index, GLenum pname, GLint *params)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
-      if (index == 0) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glGetVertexAttribIiv(index==0)");
-      }
-      else {
-         const GLfloat *v = ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index];
-         FLUSH_CURRENT(ctx, 0);
+      const GLfloat *v =
+	 get_current_attrib(ctx, index, "glGetVertexAttribIiv");
+      if (v != NULL) {
          /* XXX we don't have true integer-valued vertex attribs yet */
          params[0] = (GLint) v[0];
          params[1] = (GLint) v[1];
@@ -666,13 +666,9 @@ _mesa_GetVertexAttribIuiv(GLuint index, GLenum pname, GLuint *params)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (pname == GL_CURRENT_VERTEX_ATTRIB_ARB) {
-      if (index == 0) {
-         _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glGetVertexAttribIuiv(index==0)");
-      }
-      else {
-         const GLfloat *v = ctx->Current.Attrib[VERT_ATTRIB_GENERIC0 + index];
-         FLUSH_CURRENT(ctx, 0);
+      const GLfloat *v =
+	 get_current_attrib(ctx, index, "glGetVertexAttribIuiv");
+      if (v != NULL) {
          /* XXX we don't have true integer-valued vertex attribs yet */
          params[0] = (GLuint) v[0];
          params[1] = (GLuint) v[1];
