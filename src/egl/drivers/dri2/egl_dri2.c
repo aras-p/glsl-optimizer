@@ -173,7 +173,8 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
    base.NativeRenderable = EGL_TRUE;
 
    base.SurfaceType = surface_type;
-   if (surface_type & (EGL_PIXMAP_BIT | EGL_PBUFFER_BIT)) {
+   if (surface_type & (EGL_PBUFFER_BIT |
+       (disp->Extensions.NOK_texture_from_pixmap ? EGL_PIXMAP_BIT : 0))) {
       base.BindToTextureRGB = bind_to_texture_rgb;
       if (base.AlphaSize > 0)
          base.BindToTextureRGBA = bind_to_texture_rgba;
