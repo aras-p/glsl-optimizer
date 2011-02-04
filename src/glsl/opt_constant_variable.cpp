@@ -37,6 +37,9 @@
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
+using std::calloc;
+using std::free;
+
 struct assignment_entry {
    exec_node link;
    int assignment_count;

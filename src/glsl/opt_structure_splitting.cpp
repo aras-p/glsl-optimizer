@@ -38,6 +38,9 @@
 #include "ir_rvalue_visitor.h"
 #include "glsl_types.h"
 
+using std::printf;
+using std::strcmp;
+
 static bool debug = false;
 
 // XXX using variable_entry2 here to avoid collision (MSVC multiply-defined

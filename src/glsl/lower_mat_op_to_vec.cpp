@@ -35,6 +35,9 @@
 #include "ir_expression_flattening.h"
 #include "glsl_types.h"
 
+using std::abort;
+using std::printf;
+
 class ir_mat_op_to_vec_visitor : public ir_hierarchical_visitor {
 public:
    ir_mat_op_to_vec_visitor()

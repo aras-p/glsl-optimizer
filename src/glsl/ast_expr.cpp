@@ -24,6 +24,8 @@
 #include <cassert>
 #include "ast.h"
 
+using std::printf;
+
 const char *
 ast_expression::operator_string(enum ast_operators op)
 {

@@ -27,6 +27,8 @@ extern "C" {
 #include "program/symbol_table.h"
 }
 
+using std::printf;
+
 void
 ast_type_specifier::print(void) const
 {

@@ -32,6 +32,8 @@
 #include "ir_variable_refcount.h"
 #include "glsl_types.h"
 
+using std::printf;
+
 static bool debug = false;
 
 /**

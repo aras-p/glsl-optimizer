@@ -38,6 +38,8 @@
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
+using std::printf;
+
 static bool debug = false;
 
 class assignment_entry : public exec_node
