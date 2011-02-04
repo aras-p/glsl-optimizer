@@ -46,6 +46,9 @@ ifneq ($(findstring x11, $(EGL_PLATFORMS)),)
 egl_SYS += -lX11 -lXext -lXfixes $(LIBDRM_LIB)
 egl_LIBS += $(TOP)/src/gallium/winsys/sw/xlib/libws_xlib.a
 endif
+ifneq ($(findstring wayland, $(EGL_PLATFORMS)),)
+egl_SYS += $(WAYLAND_LIBS) $(LIBDRM_LIB)
+endif
 ifneq ($(findstring drm, $(EGL_PLATFORMS)),)
 egl_SYS += $(LIBDRM_LIB)
 endif
