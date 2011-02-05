@@ -34,6 +34,7 @@
 #include "main/framebuffer.h"
 #include "main/renderbuffer.h"
 #include "main/context.h"
+#include "main/teximage.h"
 #include "main/texrender.h"
 #include "drivers/common/meta.h"
 
@@ -647,6 +648,84 @@ intel_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
    }
 }
 
+/**
+ * Try to do a glBlitFramebuffer using glCopyTexSubImage2D
+ * We can do this when the dst renderbuffer is actually a texture and
+ * there is no scaling, mirroring or scissoring.
+ *
+ * \return new buffer mask indicating the buffers left to blit using the
+ *         normal path.
+ */
+static GLbitfield
+intel_blit_framebuffer_copy_tex_sub_image(struct gl_context *ctx,
+                                          GLint srcX0, GLint srcY0,
+                                          GLint srcX1, GLint srcY1,
+                                          GLint dstX0, GLint dstY0,
+                                          GLint dstX1, GLint dstY1,
+                                          GLbitfield mask, GLenum filter)
+{
+   if (mask & GL_COLOR_BUFFER_BIT) {
+      const struct gl_framebuffer *drawFb = ctx->DrawBuffer;
+      const struct gl_framebuffer *readFb = ctx->ReadBuffer;
+      const struct gl_renderbuffer_attachment *drawAtt =
+         &drawFb->Attachment[drawFb->_ColorDrawBufferIndexes[0]];
+
+      /* If the source and destination are the same size with no
+         mirroring, the rectangles are within the size of the
+         texture and there is no scissor then we can use
+         glCopyTexSubimage2D to implement the blit. This will end
+         up as a fast hardware blit on some drivers */
+      if (drawAtt && drawAtt->Texture &&
+          srcX0 - srcX1 == dstX0 - dstX1 &&
+          srcY0 - srcY1 == dstY0 - dstY1 &&
+          srcX1 >= srcX0 &&
+          srcY1 >= srcY0 &&
+          srcX0 >= 0 && srcX1 <= readFb->Width &&
+          srcY0 >= 0 && srcY1 <= readFb->Height &&
+          dstX0 >= 0 && dstX1 <= drawFb->Width &&
+          dstY0 >= 0 && dstY1 <= drawFb->Height &&
+          !ctx->Scissor.Enabled) {
+         const struct gl_texture_object *texObj = drawAtt->Texture;
+         const GLuint dstLevel = drawAtt->TextureLevel;
+         const GLenum target = texObj->Target;
+
+         struct gl_texture_image *texImage =
+            _mesa_select_tex_image(ctx, texObj, target, dstLevel);
+         GLenum internalFormat = texImage->InternalFormat;
+
+         if (intel_copy_texsubimage(intel_context(ctx), target,
+                                    intel_texture_image(texImage),
+                                    internalFormat,
+                                    dstX0, dstY0,
+                                    srcX0, srcY0,
+                                    srcX1 - srcX0, /* width */
+                                    srcY1 - srcY0))
+            mask &= ~GL_COLOR_BUFFER_BIT;
+      }
+   }
+
+   return mask;
+}
+
+static void
+intel_blit_framebuffer(struct gl_context *ctx,
+                       GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
+                       GLint dstX0, GLint dstY0, GLint dstX1, GLint dstY1,
+                       GLbitfield mask, GLenum filter)
+{
+   /* Try faster, glCopyTexSubImage2D approach first which uses the BLT. */
+   mask = intel_blit_framebuffer_copy_tex_sub_image(ctx,
+                                                    srcX0, srcY0, srcX1, srcY1,
+                                                    dstX0, dstY0, dstX1, dstY1,
+                                                    mask, filter);
+   if (mask == 0x0)
+      return;
+
+   _mesa_meta_BlitFramebuffer(ctx,
+                              srcX0, srcY0, srcX1, srcY1,
+                              dstX0, dstY0, dstX1, dstY1,
+                              mask, filter);
+}
 
 /**
  * Do one-time context initializations related to GL_EXT_framebuffer_object.
@@ -663,7 +742,7 @@ intel_fbo_init(struct intel_context *intel)
    intel->ctx.Driver.FinishRenderTexture = intel_finish_render_texture;
    intel->ctx.Driver.ResizeBuffers = intel_resize_buffers;
    intel->ctx.Driver.ValidateFramebuffer = intel_validate_framebuffer;
-   intel->ctx.Driver.BlitFramebuffer = _mesa_meta_BlitFramebuffer;
+   intel->ctx.Driver.BlitFramebuffer = intel_blit_framebuffer;
 
 #if FEATURE_OES_EGL_image
    intel->ctx.Driver.EGLImageTargetRenderbufferStorage =
