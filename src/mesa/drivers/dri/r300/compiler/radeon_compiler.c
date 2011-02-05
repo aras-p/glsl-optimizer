@@ -373,9 +373,11 @@ void rc_get_stats(struct radeon_compiler *c, struct rc_program_stats *s)
 		const struct rc_opcode_info * info;
 		rc_for_all_reads_mask(tmp, reg_count_callback, &max_reg);
 		if (tmp->Type == RC_INSTRUCTION_NORMAL) {
+			info = rc_get_opcode_info(tmp->U.I.Opcode);
+			if (info->Opcode == RC_OPCODE_BEGIN_TEX)
+				continue;
 			if (tmp->U.I.PreSub.Opcode != RC_PRESUB_NONE)
 				s->num_presub_ops++;
-			info = rc_get_opcode_info(tmp->U.I.Opcode);
 		} else {
 			if (tmp->U.P.RGB.Src[RC_PAIR_PRESUB_SRC].Used)
 				s->num_presub_ops++;
