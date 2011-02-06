@@ -40,9 +40,6 @@ static void r300_flush(struct pipe_context* pipe,
     struct r300_atom *atom;
     struct r300_fence **rfence = (struct r300_fence**)fence;
 
-    u_upload_flush(r300->upload_vb);
-    u_upload_flush(r300->upload_ib);
-
     if (r300->draw && !r300->draw_vbo_locked)
 	r300_draw_flush_vbuf(r300);
 
