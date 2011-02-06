@@ -664,12 +664,12 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	pitch = rtex->pitch_in_pixels[level] / 8 - 1;
 	slice = rtex->pitch_in_pixels[level] * surf->aligned_height / 64 - 1;
 	ntype = 0;
-	desc = util_format_description(rtex->resource.base.b.format);
+	desc = util_format_description(surf->base.format);
 	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
 		ntype = V_028C70_NUMBER_SRGB;
 
-	format = r600_translate_colorformat(rtex->resource.base.b.format);
-	swap = r600_translate_colorswap(rtex->resource.base.b.format);
+	format = r600_translate_colorformat(surf->base.format);
+	swap = r600_translate_colorswap(surf->base.format);
 	color_info = S_028C70_FORMAT(format) |
 		S_028C70_COMP_SWAP(swap) |
 		S_028C70_ARRAY_MODE(rtex->array_mode[level]) |
