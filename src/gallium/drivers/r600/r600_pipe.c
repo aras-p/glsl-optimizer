@@ -68,9 +68,6 @@ static void r600_flush(struct pipe_context *ctx, unsigned flags,
 	dc++;
 #endif
 	r600_context_flush(&rctx->ctx);
-
-	u_upload_flush(rctx->upload_vb);
-	u_upload_flush(rctx->upload_const);
 }
 
 static void r600_destroy_context(struct pipe_context *context)
