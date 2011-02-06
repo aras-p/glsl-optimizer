@@ -390,7 +390,7 @@ st_render_texture(struct gl_context *ctx,
 
    /* new surface for rendering into the texture */
    memset(&surf_tmpl, 0, sizeof(surf_tmpl));
-   surf_tmpl.format = util_format_linear(strb->texture->format);
+   surf_tmpl.format = ctx->Color.sRGBEnabled ? strb->texture->format : util_format_linear(strb->texture->format);
    surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
    surf_tmpl.u.tex.level = strb->rtt_level;
    surf_tmpl.u.tex.first_layer = strb->rtt_face + strb->rtt_slice;

@@ -390,6 +390,15 @@ void st_init_extensions(struct st_context *st)
                                    PIPE_BIND_SAMPLER_VIEW, 0)) {
       ctx->Extensions.EXT_texture_sRGB = GL_TRUE;
       ctx->Extensions.EXT_texture_sRGB_decode = GL_TRUE;
+      if (screen->is_format_supported(screen, PIPE_FORMAT_A8B8G8R8_SRGB,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_RENDER_TARGET, 0) ||
+          screen->is_format_supported(screen, PIPE_FORMAT_B8G8R8A8_SRGB,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_RENDER_TARGET, 0)) {
+         ctx->Extensions.EXT_framebuffer_sRGB = GL_TRUE;
+         ctx->Const.sRGBCapable = GL_TRUE;
+      }
    }
 
    if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8_UNORM,

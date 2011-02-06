@@ -39,7 +39,7 @@
 #include "cso_cache/cso_context.h"
 #include "util/u_math.h"
 #include "util/u_inlines.h"
-
+#include "util/u_format.h"
 
 
 /**
@@ -55,8 +55,10 @@ update_renderbuffer_surface(struct st_context *st,
    struct pipe_resource *resource = strb->rtt->pt;
    int rtt_width = strb->Base.Width;
    int rtt_height = strb->Base.Height;
+   enum pipe_format format = st->ctx->Color.sRGBEnabled ? resource->format : util_format_linear(resource->format);
 
    if (!strb->surface ||
+       strb->surface->format != format ||
        strb->surface->texture != resource ||
        strb->surface->width != rtt_width ||
        strb->surface->height != rtt_height) {
@@ -67,7 +69,7 @@ update_renderbuffer_surface(struct st_context *st,
              u_minify(resource->height0, level) == rtt_height) {
             struct pipe_surface surf_tmpl;
             memset(&surf_tmpl, 0, sizeof(surf_tmpl));
-            surf_tmpl.format = resource->format;
+            surf_tmpl.format = format;
             surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
             surf_tmpl.u.tex.level = level;
             surf_tmpl.u.tex.first_layer = strb->rtt_face + strb->rtt_slice;
