@@ -1693,9 +1693,11 @@ bld_instruction(struct bld_context *bld,
    {
       struct nv_basic_block *bb = bld->loop_bb[bld->loop_lvl - 1];
 
-      bld_flow(bld, NV_OP_BRA, NULL, bb, FALSE);
+      if (bld->out_kind != CFG_EDGE_FAKE) { /* else we already had BRK/CONT */
+         bld_flow(bld, NV_OP_BRA, NULL, bb, FALSE);
 
-      nvc0_bblock_attach(bld->pc->current_block, bb, CFG_EDGE_BACK);
+         nvc0_bblock_attach(bld->pc->current_block, bb, CFG_EDGE_BACK);
+      }
 
       bld_loop_end(bld, bb); /* replace loop-side operand of the phis */
 
