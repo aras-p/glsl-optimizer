@@ -518,6 +518,8 @@ nvc0_insn_insert_after(struct nv_instruction *at, struct nv_instruction *ni)
    ni->prev = at;
    ni->next->prev = ni;
    ni->prev->next = ni;
+   ni->bb = at->bb;
+   ni->bb->num_instructions++;
 }
 
 void
