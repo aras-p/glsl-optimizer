@@ -280,8 +280,8 @@ struct nv_op_info nvc0_op_info_table[NV_OP_COUNT + 1] =
    { NV_OP_SELECT, "select", NV_TYPE_ANY, 0, /* fcvpoi */ 0, 0, 0, 0, 1, 0, 0 },
    { NV_OP_NOP,    "nop",    NV_TYPE_ANY, 0, /* fcvpoi */ 0, 0, 0, 0, 0, 0, 0 },
 
-   { NV_OP_LD,  "ld",  NV_TYPE_ANY, 0, 0, 0, 0, 0, 0, 0, 0 },
-   { NV_OP_ST,  "st",  NV_TYPE_ANY, 0, 0, 0, 0, 0, 0, 0, 0 },
+   { NV_OP_LD,  "ld",  NV_TYPE_ANY, 0, 0, 0, 0, 1, 0, 0, 0 },
+   { NV_OP_ST,  "st",  NV_TYPE_ANY, 0, 0, 0, 0, 1, 0, 0, 0 },
    { NV_OP_MOV, "mov", NV_TYPE_ANY, 0, 0, 0, 0, 1, 0, 1, 0 },
    { NV_OP_AND, "and", NV_TYPE_U32, NV_MOD_NOT, 0, 1, 0, 1, 0, 6, 0 },
    { NV_OP_OR,  "or",  NV_TYPE_U32, NV_MOD_NOT, 0, 1, 0, 1, 0, 6, 0 },

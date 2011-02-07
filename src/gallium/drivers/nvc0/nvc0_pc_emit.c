@@ -804,11 +804,8 @@ emit_ldst_size(struct nv_pc *pc, struct nv_instruction *i)
 }
 
 static void
-emit_ld_const(struct nv_pc *pc, struct nv_instruction *i)
+emit_ld_common(struct nv_pc *pc, struct nv_instruction *i)
 {
-   pc->emit[0] = 0x00000006;
-   pc->emit[1] = 0x14000000 | (const_space_index(i, 0) << 10);
-
    emit_ldst_size(pc, i);
 
    set_pred(pc, i);
@@ -816,6 +813,15 @@ emit_ld_const(struct nv_pc *pc, struct nv_instruction *i)
 
    SID(pc, (i->indirect >= 0) ? i->src[i->indirect] : NULL, 20);
    DID(pc, i->def[0], 14);
+}
+
+static void
+emit_ld_const(struct nv_pc *pc, struct nv_instruction *i)
+{
+   pc->emit[0] = 0x00000006;
+   pc->emit[1] = 0x14000000 | (const_space_index(i, 0) << 10);
+
+   emit_ld_common(pc, i);
 }
 
 static void
@@ -829,6 +835,12 @@ emit_ld(struct nv_pc *pc, struct nv_instruction *i)
       } else {
          emit_ld_const(pc, i);
       }
+   } else
+   if (SFILE(i, 0) == NV_FILE_MEM_L) {
+      pc->emit[0] = 0x00000005;
+      pc->emit[1] = 0xc0000000;
+
+      emit_ld_common(pc, i);
    } else {
       NOUVEAU_ERR("emit_ld(%u): not handled yet\n", SFILE(i, 0));
       abort();
@@ -838,8 +850,19 @@ emit_ld(struct nv_pc *pc, struct nv_instruction *i)
 static void
 emit_st(struct nv_pc *pc, struct nv_instruction *i)
 {
-   NOUVEAU_ERR("emit_st: not handled yet\n");
-   abort();
+   if (SFILE(i, 0) != NV_FILE_MEM_L)
+      NOUVEAU_ERR("emit_st(%u): file not handled yet\n", SFILE(i, 0));
+
+   pc->emit[0] = 0x00000005 | (0 << 8); /* write-back caching */
+   pc->emit[1] = 0xc8000000;
+
+   emit_ldst_size(pc, i);
+
+   set_pred(pc, i);
+   set_address_16(pc, i->src[0]);
+
+   SID(pc, (i->indirect >= 0) ? i->src[i->indirect] : NULL, 20);
+   DID(pc, i->src[1]->value, 14);
 }
 
 void

@@ -569,11 +569,12 @@ bld_lmem_store(struct bld_context *bld, struct nv_value *ptr, int ofst,
 
    loc = new_value(bld->pc, NV_FILE_MEM_L, nv_type_sizeof(NV_TYPE_U32));
 
-   loc->reg.id = ofst * 4;
+   loc->reg.address = ofst * 4;
 
    nv_reference(bld->pc, insn, 0, loc);
-   nv_reference(bld->pc, insn, 1, ptr);
-   nv_reference(bld->pc, insn, 2, val);
+   nv_reference(bld->pc, insn, 1, val);
+   if (ptr)
+      bld_src_pointer(bld, insn, 2, ptr);
 }
 
 static struct nv_value *
@@ -585,7 +586,9 @@ bld_lmem_load(struct bld_context *bld, struct nv_value *ptr, int ofst)
 
    loc->reg.address = ofst * 4;
 
-   val = bld_insn_2(bld, NV_OP_LD, loc, ptr);
+   val = bld_insn_1(bld, NV_OP_LD, loc);
+   if (ptr)
+      bld_src_pointer(bld, val->insn, 1, ptr);
 
    return val;
 }
