@@ -317,6 +317,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_resource_buffer *rbuffer = r600_buffer(buffer);
+	struct r600_pipe_state *rstate;
 	uint32_t offset;
 
 	/* Note that the state tracker can unbind constant buffers by
@@ -327,6 +328,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 	}
 
 	r600_upload_const_buffer(rctx, &rbuffer, &offset);
+	offset += r600_bo_offset(rbuffer->r.bo);
 
 	switch (shader) {
 	case PIPE_SHADER_VERTEX:
@@ -337,8 +339,19 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 					0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(&rctx->vs_const_buffer,
 					R_028980_ALU_CONST_CACHE_VS_0,
-					(r600_bo_offset(rbuffer->r.bo) + offset) >> 8, 0xFFFFFFFF, rbuffer->r.bo);
+					offset >> 8, 0xFFFFFFFF, rbuffer->r.bo);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->vs_const_buffer);
+
+		rstate = &rctx->vs_const_buffer_resource[index];
+		rstate->id = R600_PIPE_STATE_RESOURCE;
+		rstate->nregs = 0;
+		if (rctx->family >= CHIP_CEDAR) {
+			evergreen_pipe_set_buffer_resource(rctx, rstate, &rbuffer->r, offset, 16);
+			evergreen_context_pipe_state_set_vs_resource(&rctx->ctx, rstate, index);
+		} else {
+			r600_pipe_set_buffer_resource(rctx, rstate, &rbuffer->r, offset, 16);
+			r600_context_pipe_state_set_vs_resource(&rctx->ctx, rstate, index);
+		}
 		break;
 	case PIPE_SHADER_FRAGMENT:
 		rctx->ps_const_buffer.nregs = 0;
@@ -348,8 +361,19 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 					0xFFFFFFFF, NULL);
 		r600_pipe_state_add_reg(&rctx->ps_const_buffer,
 					R_028940_ALU_CONST_CACHE_PS_0,
-					(r600_bo_offset(rbuffer->r.bo) + offset) >> 8, 0xFFFFFFFF, rbuffer->r.bo);
+					offset >> 8, 0xFFFFFFFF, rbuffer->r.bo);
 		r600_context_pipe_state_set(&rctx->ctx, &rctx->ps_const_buffer);
+
+		rstate = &rctx->ps_const_buffer_resource[index];
+		rstate->id = R600_PIPE_STATE_RESOURCE;
+		rstate->nregs = 0;
+		if (rctx->family >= CHIP_CEDAR) {
+			evergreen_pipe_set_buffer_resource(rctx, rstate, &rbuffer->r, offset, 16);
+			evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, rstate, index);
+		} else {
+			r600_pipe_set_buffer_resource(rctx, rstate, &rbuffer->r, offset, 16);
+			r600_context_pipe_state_set_ps_resource(&rctx->ctx, rstate, index);
+		}
 		break;
 	default:
 		R600_ERR("unsupported %d\n", shader);

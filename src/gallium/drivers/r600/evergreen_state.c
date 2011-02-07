@@ -434,7 +434,8 @@ static void evergreen_set_vs_sampler_view(struct pipe_context *ctx, unsigned cou
 
 	for (int i = 0; i < count; i++) {
 		if (resource[i]) {
-			evergreen_context_pipe_state_set_vs_resource(&rctx->ctx, &resource[i]->state, i);
+			evergreen_context_pipe_state_set_vs_resource(&rctx->ctx, &resource[i]->state,
+								     i + R600_MAX_CONST_BUFFERS);
 		}
 	}
 }
@@ -449,9 +450,11 @@ static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned cou
 	for (i = 0; i < count; i++) {
 		if (&rctx->ps_samplers.views[i]->base != views[i]) {
 			if (resource[i])
-				evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, &resource[i]->state, i);
+				evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, &resource[i]->state,
+									     i + R600_MAX_CONST_BUFFERS);
 			else
-				evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, NULL, i);
+				evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, NULL,
+									     i + R600_MAX_CONST_BUFFERS);
 
 			pipe_sampler_view_reference(
 				(struct pipe_sampler_view **)&rctx->ps_samplers.views[i],
@@ -460,7 +463,8 @@ static void evergreen_set_ps_sampler_view(struct pipe_context *ctx, unsigned cou
 	}
 	for (i = count; i < NUM_TEX_UNITS; i++) {
 		if (rctx->ps_samplers.views[i]) {
-			evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, NULL, i);
+			evergreen_context_pipe_state_set_ps_resource(&rctx->ctx, NULL,
+								     i + R600_MAX_CONST_BUFFERS);
 			pipe_sampler_view_reference((struct pipe_sampler_view **)&rctx->ps_samplers.views[i], NULL);
 		}
 	}

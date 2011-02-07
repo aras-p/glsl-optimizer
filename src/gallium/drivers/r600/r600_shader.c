@@ -28,6 +28,7 @@
 #include "r600_pipe.h"
 #include "r600_asm.h"
 #include "r600_sq.h"
+#include "r600_formats.h"
 #include "r600_opcodes.h"
 #include "r600d.h"
 #include <stdio.h>
@@ -296,6 +297,7 @@ struct r600_shader_ctx {
 	unsigned				type;
 	unsigned				file_offset[TGSI_FILE_COUNT];
 	unsigned				temp_reg;
+	unsigned				ar_reg;
 	struct r600_shader_tgsi_instruction	*inst_info;
 	struct r600_bc				*bc;
 	struct r600_shader			*shader;
@@ -541,6 +543,55 @@ static void tgsi_src(struct r600_shader_ctx *ctx,
 	}
 }
 
+static int tgsi_fetch_rel_const(struct r600_shader_ctx *ctx, unsigned int offset, unsigned int dst_reg)
+{
+	struct r600_bc_vtx vtx;
+	unsigned int ar_reg;
+	int r;
+
+	if (offset) {
+		struct r600_bc_alu alu;
+
+		memset(&alu, 0, sizeof(alu));
+
+		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD_INT);
+		alu.src[0].sel = ctx->ar_reg;
+
+		alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
+		alu.src[1].value = offset;
+
+		alu.dst.sel = dst_reg;
+		alu.dst.write = 1;
+		alu.last = 1;
+
+		if ((r = r600_bc_add_alu(ctx->bc, &alu)))
+			return r;
+
+		ar_reg = dst_reg;
+	} else {
+		ar_reg = ctx->ar_reg;
+	}
+
+	memset(&vtx, 0, sizeof(vtx));
+	vtx.fetch_type = 2;		/* VTX_FETCH_NO_INDEX_OFFSET */
+	vtx.src_gpr = ar_reg;
+	vtx.mega_fetch_count = 16;
+	vtx.dst_gpr = dst_reg;
+	vtx.dst_sel_x = 0;		/* SEL_X */
+	vtx.dst_sel_y = 1;		/* SEL_Y */
+	vtx.dst_sel_z = 2;		/* SEL_Z */
+	vtx.dst_sel_w = 3;		/* SEL_W */
+	vtx.data_format = FMT_32_32_32_32_FLOAT;
+	vtx.num_format_all = 2;		/* NUM_FORMAT_SCALED */
+	vtx.format_comp_all = 1;	/* FORMAT_COMP_SIGNED */
+	vtx.srf_mode_all = 1;		/* SRF_MODE_NO_ZERO */
+
+	if ((r = r600_bc_add_vtx(ctx->bc, &vtx)))
+		return r;
+
+	return 0;
+}
+
 static int tgsi_split_constant(struct r600_shader_ctx *ctx)
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
@@ -554,7 +605,19 @@ static int tgsi_split_constant(struct r600_shader_ctx *ctx)
 		tgsi_src(ctx, &inst->Src[i], &ctx->src[i]);
 	}
 	for (i = 0, j = nconst - 1; i < inst->Instruction.NumSrcRegs; i++) {
-		if (j > 0 && inst->Src[i].Register.File == TGSI_FILE_CONSTANT) {
+		if (inst->Src[i].Register.File != TGSI_FILE_CONSTANT) {
+			continue;
+		}
+
+		if (ctx->src[i].rel) {
+			int treg = r600_get_temp(ctx);
+			if ((r = tgsi_fetch_rel_const(ctx, ctx->src[i].sel - 512, treg)))
+				return r;
+
+			ctx->src[i].sel = treg;
+			ctx->src[i].rel = 0;
+			j--;
+		} else if (j > 0) {
 			int treg = r600_get_temp(ctx);
 			for (k = 0; k < 4; k++) {
 				memset(&alu, 0, sizeof(struct r600_bc_alu));
@@ -683,8 +746,9 @@ static int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_sh
 	ctx.file_offset[TGSI_FILE_CONSTANT] = 512;
 
 	ctx.file_offset[TGSI_FILE_IMMEDIATE] = V_SQ_ALU_SRC_LITERAL;
-	ctx.temp_reg = ctx.file_offset[TGSI_FILE_TEMPORARY] +
+	ctx.ar_reg = ctx.file_offset[TGSI_FILE_TEMPORARY] +
 			ctx.info.file_count[TGSI_FILE_TEMPORARY];
+	ctx.temp_reg = ctx.ar_reg + 1;
 
 	ctx.nliterals = 0;
 	ctx.literals = NULL;
@@ -1760,7 +1824,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	memset(&tex, 0, sizeof(struct r600_bc_tex));
 	tex.inst = opcode;
 	tex.sampler_id = ctx->file_offset[inst->Src[1].Register.File] + inst->Src[1].Register.Index;
-	tex.resource_id = tex.sampler_id;
+	tex.resource_id = tex.sampler_id + R600_MAX_CONST_BUFFERS;
 	tex.src_gpr = src_gpr;
 	tex.dst_gpr = ctx->file_offset[inst->Dst[0].Register.File] + inst->Dst[0].Register.Index;
 	tex.dst_sel_x = (inst->Dst[0].Register.WriteMask & 1) ? 0 : 7;
@@ -2302,15 +2366,21 @@ static int tgsi_eg_arl(struct r600_shader_ctx *ctx)
 
 	r600_bc_src(&alu.src[0], &ctx->src[0], 0);
 	alu.last = 1;
-	alu.dst.chan = 0;
-	alu.dst.sel = ctx->temp_reg;
+	alu.dst.sel = ctx->ar_reg;
 	alu.dst.write = 1;
 	r = r600_bc_add_alu(ctx->bc, &alu);
 	if (r)
 		return r;
+
+	/* TODO: Note that the MOVA can be avoided if we never use AR for
+	 * indexing non-CB registers in the current ALU clause. Similarly, we
+	 * need to load AR from ar_reg again if we started a new clause
+	 * between ARL and AR usage. The easy way to do that is to remove
+	 * the MOVA here, and load it for the first AR access after ar_reg
+	 * has been modified in each clause. */
 	memset(&alu, 0, sizeof(struct r600_bc_alu));
 	alu.inst = EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT;
-	alu.src[0].sel = ctx->temp_reg;
+	alu.src[0].sel = ctx->ar_reg;
 	alu.src[0].chan = 0;
 	alu.last = 1;
 	r = r600_bc_add_alu(ctx->bc, &alu);
@@ -2325,22 +2395,47 @@ static int tgsi_r600_arl(struct r600_shader_ctx *ctx)
 	struct r600_bc_alu alu;
 	int r;
 
-	memset(&alu, 0, sizeof(struct r600_bc_alu));
-
 	switch (inst->Instruction.Opcode) {
 	case TGSI_OPCODE_ARL:
-		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_FLOOR;
+		memset(&alu, 0, sizeof(alu));
+		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLOOR;
+		r600_bc_src(&alu.src[0], &ctx->src[0], 0);
+		alu.dst.sel = ctx->ar_reg;
+		alu.dst.write = 1;
+		alu.last = 1;
+
+		if ((r = r600_bc_add_alu(ctx->bc, &alu)))
+			return r;
+
+		memset(&alu, 0, sizeof(alu));
+		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT;
+		alu.src[0].sel = ctx->ar_reg;
+		alu.dst.sel = ctx->ar_reg;
+		alu.dst.write = 1;
+		alu.last = 1;
+
+		if ((r = r600_bc_add_alu(ctx->bc, &alu)))
+			return r;
 		break;
 	case TGSI_OPCODE_ARR:
-		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA;
+		memset(&alu, 0, sizeof(alu));
+		alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT;
+		r600_bc_src(&alu.src[0], &ctx->src[0], 0);
+		alu.dst.sel = ctx->ar_reg;
+		alu.dst.write = 1;
+		alu.last = 1;
+
+		if ((r = r600_bc_add_alu(ctx->bc, &alu)))
+			return r;
 		break;
 	default:
 		assert(0);
 		return -1;
 	}
 
-	r600_bc_src(&alu.src[0], &ctx->src[0], 0);
-
+	memset(&alu, 0, sizeof(alu));
+	alu.inst = V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOVA_INT;
+	alu.src[0].sel = ctx->ar_reg;
 	alu.last = 1;
 
 	r = r600_bc_add_alu(ctx->bc, &alu);

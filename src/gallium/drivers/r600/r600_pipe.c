@@ -370,7 +370,7 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	case PIPE_SHADER_CAP_MAX_CONSTS:
 		return 256; //max native parameters
 	case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
-		return 1;
+		return R600_MAX_CONST_BUFFERS;
 	case PIPE_SHADER_CAP_MAX_PREDS:
 		return 0; /* FIXME */
 	case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:

@@ -495,9 +495,11 @@ static void r600_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
 	for (i = 0; i < count; i++) {
 		if (&rctx->ps_samplers.views[i]->base != views[i]) {
 			if (resource[i])
-				r600_context_pipe_state_set_ps_resource(&rctx->ctx, &resource[i]->state, i);
+				r600_context_pipe_state_set_ps_resource(&rctx->ctx, &resource[i]->state,
+									i + R600_MAX_CONST_BUFFERS);
 			else
-				r600_context_pipe_state_set_ps_resource(&rctx->ctx, NULL, i);
+				r600_context_pipe_state_set_ps_resource(&rctx->ctx, NULL,
+									i + R600_MAX_CONST_BUFFERS);
 
 			pipe_sampler_view_reference(
 				(struct pipe_sampler_view **)&rctx->ps_samplers.views[i],
@@ -507,7 +509,8 @@ static void r600_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
 	}
 	for (i = count; i < NUM_TEX_UNITS; i++) {
 		if (rctx->ps_samplers.views[i]) {
-			r600_context_pipe_state_set_ps_resource(&rctx->ctx, NULL, i);
+			r600_context_pipe_state_set_ps_resource(&rctx->ctx, NULL,
+								i + R600_MAX_CONST_BUFFERS);
 			pipe_sampler_view_reference((struct pipe_sampler_view **)&rctx->ps_samplers.views[i], NULL);
 		}
 	}
