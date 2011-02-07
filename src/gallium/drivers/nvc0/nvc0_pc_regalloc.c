@@ -477,7 +477,7 @@ pass_join_values(struct nv_pc_pass *ctx, int iter)
          break;
       case NV_OP_MOV:
          if ((iter == 2) && i->src[0]->value->insn &&
-             !nv_is_texture_op(i->src[0]->value->join->insn->opcode))
+             !nv_is_vector_op(i->src[0]->value->join->insn->opcode))
             try_join_values(ctx, i->def[0], i->src[0]->value);
          break;
       case NV_OP_SELECT:
@@ -488,18 +488,16 @@ pass_join_values(struct nv_pc_pass *ctx, int iter)
             do_join_values(ctx, i->def[0], i->src[c]->value);
          }
          break;
-      case NV_OP_TEX:
-      case NV_OP_TXB:
-      case NV_OP_TXL:
-      case NV_OP_TXQ:
-         /* on nvc0, TEX src and dst can differ */
-         break;
       case NV_OP_BIND:
          if (iter)
             break;
-         for (c = 0; c < 6 && i->src[c]; ++c)
+         for (c = 0; c < 4 && i->src[c]; ++c)
             do_join_values(ctx, i->def[c], i->src[c]->value);
          break;
+      case NV_OP_TEX:
+      case NV_OP_TXB:
+      case NV_OP_TXL:
+      case NV_OP_TXQ: /* on nvc0, TEX src and dst can differ */
       default:
          break;
       }
@@ -730,6 +728,21 @@ nvc0_ctor_register_set(struct nv_pc *pc, struct register_set *set)
    set->pc = pc;
 }
 
+/* We allocate registers for all defs of a vector instruction at once.
+ * Since we'll encounter all of them in the allocation loop, do the allocation
+ * when we're at the one with the live range that starts latest.
+ */
+static boolean
+is_best_representative(struct nv_value *val)
+{
+   struct nv_instruction *nvi = val->insn;
+   int i;
+   for (i = 0; i < 4 && val->insn->def[i]; ++i)
+      if (nvi->def[i]->livei && nvi->def[i]->livei->bgn > val->livei->bgn)
+         return FALSE;
+   return TRUE;
+}
+
 static void
 insert_ordered_tail(struct nv_value *list, struct nv_value *nval)
 {
@@ -821,11 +834,13 @@ pass_linear_scan(struct nv_pc_pass *ctx, int iter)
          boolean mem = FALSE;
          int v = nvi_vector_size(cur->insn);
 
-         if (v > 1)
-            mem = !reg_assign(&f, &cur->insn->def[0], v);
-         else
+         if (v > 1) {
+            if (is_best_representative(cur))
+               mem = !reg_assign(&f, &cur->insn->def[0], v);
+         } else {
          if (iter)
             mem = !reg_assign(&f, &cur, 1);
+         }
 
          if (mem) {
             NOUVEAU_ERR("out of registers\n");

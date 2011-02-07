@@ -1333,10 +1333,6 @@ emit_tex(struct bld_context *bld, uint opcode, int tic, int tsc,
    if (array)
       arg[dim] = bld_cvt(bld, NV_TYPE_U32, NV_TYPE_F32, arg[dim]);
 
-   /* ensure that all inputs reside in a GPR */
-   for (c = 0; c < dim + array + cube + shadow; ++c)
-      (src[c] = bld_insn_1(bld, NV_OP_MOV, arg[c]))->insn->fixed = 1;
-
    /* bind { layer x y z } and { lod/bias shadow } to adjacent regs */
 
    bnd = new_instruction(bld->pc, NV_OP_BIND);
@@ -1878,10 +1874,10 @@ bld_instruction(struct bld_context *bld,
       }
 
       for (c = 0; c < 4; ++c)
-         if ((mask & (1 << c)) &&
-             ((dst0[c]->reg.file == NV_FILE_IMM) ||
-              (dst0[c]->reg.id == 63 && dst0[c]->reg.file == NV_FILE_GPR)))
-            dst0[c] = bld_insn_1(bld, NV_OP_MOV, dst0[c]);
+         if (mask & (1 << c))
+            if ((dst0[c]->reg.file == NV_FILE_IMM) ||
+                (dst0[c]->reg.file == NV_FILE_GPR && dst0[c]->reg.id == 63))
+               dst0[c] = bld_insn_1(bld, NV_OP_MOV, dst0[c]);
 
       c = 0;
       if ((mask & 0x3) == 0x3) {

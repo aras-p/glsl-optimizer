@@ -53,7 +53,8 @@
 
 /**
  * BIND forces source operand i into the same register as destination operand i,
- *  and the operands will be assigned consecutive registers (needed for TEX)
+ *  and the operands will be assigned consecutive registers (needed for TEX).
+ *  Beware conflicts !
  * SELECT forces its multiple source operands and its destination operand into
  *  one and the same register.
  */
