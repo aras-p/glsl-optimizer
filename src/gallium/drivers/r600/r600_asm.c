@@ -848,7 +848,7 @@ static int r600_bc_alu_nliterals(struct r600_bc *bc, struct r600_bc_alu *alu,
 
 	for (i = 0; i < num_src; ++i) {
 		if (alu->src[i].sel == V_SQ_ALU_SRC_LITERAL) {
-			uint32_t value = alu->src[i].value[alu->src[i].chan];
+			uint32_t value = alu->src[i].value;
 			unsigned found = 0;
 			for (j = 0; j < *nliteral; ++j) {
 				if (literal[j] == value) {
@@ -875,7 +875,7 @@ static void r600_bc_alu_adjust_literals(struct r600_bc *bc,
 
 	for (i = 0; i < num_src; ++i) {
 		if (alu->src[i].sel == V_SQ_ALU_SRC_LITERAL) {
-			uint32_t value = alu->src[i].value[alu->src[i].chan];
+			uint32_t value = alu->src[i].value;
 			for (j = 0; j < nliteral; ++j) {
 				if (literal[j] == value) {
 					alu->src[i].chan = j;
@@ -1178,8 +1178,7 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 			bc->ngpr = nalu->src[i].sel + 1;
 		}
 		if (nalu->src[i].sel == V_SQ_ALU_SRC_LITERAL)
-			r600_bc_special_constants(
-				nalu->src[i].value[nalu->src[i].chan],
+			r600_bc_special_constants(nalu->src[i].value,
 				&nalu->src[i].sel, &nalu->src[i].neg);
 	}
 	if (nalu->dst.sel >= bc->ngpr) {
