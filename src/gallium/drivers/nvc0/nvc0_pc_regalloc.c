@@ -360,20 +360,32 @@ need_new_else_block(struct nv_basic_block *b, struct nv_basic_block *p)
    return (b->num_in > 1) && (n == 2);
 }
 
+/* Look for the @phi's operand whose definition reaches @b. */
 static int
 phi_opnd_for_bb(struct nv_instruction *phi, struct nv_basic_block *b,
                 struct nv_basic_block *tb)
 {
+   struct nv_ref *srci, *srcj;
    int i, j;
 
    for (j = -1, i = 0; i < 6 && phi->src[i]; ++i) {
-      if (!nvc0_bblock_reachable_by(b, phi->src[i]->value->insn->bb, tb))
+      srci = phi->src[i];
+      /* if already replaced, check with original source first */
+      if (srci->flags & NV_REF_FLAG_REGALLOC_PRIV)
+         srci = srci->value->insn->src[0];
+      if (!nvc0_bblock_reachable_by(b, srci->value->insn->bb, NULL))
          continue;
       /* NOTE: back-edges are ignored by the reachable-by check */
-      if (j < 0 || !nvc0_bblock_reachable_by(phi->src[j]->value->insn->bb,
-                                             phi->src[i]->value->insn->bb, tb))
+      if (j < 0 || !nvc0_bblock_reachable_by(srcj->value->insn->bb,
+                                             srci->value->insn->bb, NULL)) {
          j = i;
+         srcj = srci;
+      }
    }
+   if (j >= 0 && nvc0_bblock_reachable_by(b, phi->def[0]->insn->bb, NULL))
+      if (!nvc0_bblock_reachable_by(srcj->value->insn->bb,
+                                    phi->def[0]->insn->bb, NULL))
+         j = -1;
    return j;
 }
 
@@ -420,21 +432,23 @@ pass_generate_phi_movs(struct nv_pc_pass *ctx, struct nv_basic_block *b)
       ctx->pc->current_block = pn;
 
       for (i = b->phi; i && i->opcode == NV_OP_PHI; i = i->next) {
-         if ((j = phi_opnd_for_bb(i, p, b)) < 0)
-            continue;
-         val = i->src[j]->value;
+         j = phi_opnd_for_bb(i, p, b);
 
-         if (i->src[j]->flags) {
-            /* value already encountered from a different in-block */
-            val = val->insn->src[0]->value;
-            while (j < 6 && i->src[j])
-               ++j;
-            assert(j < 6);
+         if (j < 0) {
+            val = i->def[0];
+         } else {
+            val = i->src[j]->value;
+            if (i->src[j]->flags & NV_REF_FLAG_REGALLOC_PRIV) {
+               j = -1;
+               /* use original value, we already encountered & replaced it */
+               val = val->insn->src[0]->value;
+            }
          }
+         if (j < 0) /* need an additional source ? */
+            for (j = 0; j < 6 && i->src[j] && i->src[j]->value != val; ++j);
+         assert(j < 6); /* XXX: really ugly shaders */
 
          ni = new_instruction(ctx->pc, NV_OP_MOV);
-
-         /* TODO: insert instruction at correct position in the first place */
          if (ni->prev && ni->prev->target)
             nvc0_insns_permute(ni->prev, ni);
 
@@ -442,7 +456,7 @@ pass_generate_phi_movs(struct nv_pc_pass *ctx, struct nv_basic_block *b)
          ni->def[0]->insn = ni;
          nv_reference(ctx->pc, ni, 0, val);
          nv_reference(ctx->pc, i, j, ni->def[0]); /* new phi source = MOV def */
-         i->src[j]->flags = 1;
+         i->src[j]->flags |= NV_REF_FLAG_REGALLOC_PRIV;
       }
 
       if (pn != p && pn->exit) {
@@ -619,15 +633,16 @@ static void collect_live_values(struct nv_basic_block *b, const int n)
 {
    int i;
 
-   if (b->out[0]) {
-      if (b->out[1]) { /* what to do about back-edges ? */
+   /* XXX: what to do about back/fake-edges (used to include both here) ? */
+   if (b->out[0] && b->out_kind[0] != CFG_EDGE_FAKE) {
+      if (b->out[1] && b->out_kind[1] != CFG_EDGE_FAKE) {
          for (i = 0; i < n; ++i)
             b->live_set[i] = b->out[0]->live_set[i] | b->out[1]->live_set[i];
       } else {
          memcpy(b->live_set, b->out[0]->live_set, n * sizeof(uint32_t));
       }
    } else
-   if (b->out[1]) {
+   if (b->out[1] && b->out_kind[1] != CFG_EDGE_FAKE) {
       memcpy(b->live_set, b->out[1]->live_set, n * sizeof(uint32_t));
    } else {
       memset(b->live_set, 0, n * sizeof(uint32_t));
@@ -876,6 +891,10 @@ nv_pc_pass1(struct nv_pc *pc, struct nv_basic_block *root)
    pc->pass_seq++;
    ret = pass_generate_phi_movs(ctx, root);
    assert(!ret);
+
+#ifdef NVC0_RA_DEBUG_LIVEI
+   nvc0_print_function(root);
+#endif
 
    for (i = 0; i < pc->loop_nesting_bound; ++i) {
       pc->pass_seq++;

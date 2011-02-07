@@ -345,6 +345,8 @@ struct nv_ref {
    uint8_t flags;
 };
 
+#define NV_REF_FLAG_REGALLOC_PRIV (1 << 0)
+
 struct nv_basic_block;
 
 struct nv_instruction {
