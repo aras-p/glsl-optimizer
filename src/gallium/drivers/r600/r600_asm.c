@@ -47,6 +47,7 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc *bc, struct r
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP:
 			return 0;
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD_INT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE:
@@ -94,6 +95,7 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc *bc, struct r
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP:
 			return 0;
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD_INT:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE:
