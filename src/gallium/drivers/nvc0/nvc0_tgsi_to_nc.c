@@ -984,14 +984,6 @@ bld_new_block(struct bld_context *bld, struct nv_basic_block *b)
 }
 
 static struct nv_value *
-bld_get_saved_input(struct bld_context *bld, unsigned i, unsigned c)
-{
-   if (bld->saved_inputs[i][c])
-      return bld->saved_inputs[i][c];
-   return NULL;
-}
-
-static struct nv_value *
 bld_interp(struct bld_context *bld, unsigned mode, struct nv_value *val)
 {
    unsigned cent = mode & NVC0_INTERP_CENTROID;
@@ -1058,9 +1050,9 @@ emit_fetch(struct bld_context *bld, const struct tgsi_full_instruction *insn,
    case TGSI_FILE_INPUT:
       assert(!src->Register.Dimension);
       if (!ptr) {
-         res = bld_get_saved_input(bld, idx, swz);
+         res = bld->saved_inputs[idx][swz];
          if (res)
-            return res;
+            break;
       }
       res = new_value(bld->pc, bld->ti->input_file, 4);
       if (ptr)

@@ -1130,7 +1130,7 @@ emit_fetch(struct bld_context *bld, const struct tgsi_full_instruction *insn,
    case TGSI_FILE_INPUT:
       res = bld_saved_input(bld, idx, swz);
       if (res && (insn->Instruction.Opcode != TGSI_OPCODE_TXP))
-         return res;
+         break;
 
       res = new_value(bld->pc, bld->ti->input_file, type);
       res->reg.id = bld->ti->input_map[idx][swz];
