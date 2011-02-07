@@ -1218,11 +1218,10 @@ void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx)
 	return rstate;
 }
 
-void r600_pipe_add_vertex_attrib(struct r600_pipe_context *rctx,
-				 struct r600_pipe_state *rstate,
-				 unsigned index,
-				 struct r600_resource *rbuffer,
-				 unsigned offset, unsigned stride)
+void r600_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
+				   struct r600_pipe_state *rstate,
+				   struct r600_resource *rbuffer,
+				   unsigned offset, unsigned stride)
 {
 	r600_pipe_state_add_reg(rstate, R_038000_RESOURCE0_WORD0,
 				offset, 0xFFFFFFFF, rbuffer->bo);
@@ -1239,5 +1238,4 @@ void r600_pipe_add_vertex_attrib(struct r600_pipe_context *rctx,
 				0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038018_RESOURCE0_WORD6,
 				0xC0000000, 0xFFFFFFFF, NULL);
-	r600_context_pipe_state_set_fs_resource(&rctx->ctx, rstate, index);
 }

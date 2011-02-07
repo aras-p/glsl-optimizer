@@ -398,13 +398,11 @@ static void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 		offset += vertex_buffer->buffer_offset + r600_bo_offset(rbuffer->bo);
 
 		if (rctx->family >= CHIP_CEDAR) {
-			evergreen_pipe_add_vertex_attrib(rctx, rstate, i,
-							 rbuffer, offset,
-							 vertex_buffer->stride);
+			evergreen_pipe_set_buffer_resource(rctx, rstate, rbuffer, offset, vertex_buffer->stride);
+			evergreen_context_pipe_state_set_fs_resource(&rctx->ctx, rstate, i);
 		} else {
-			r600_pipe_add_vertex_attrib(rctx, rstate, i,
-						    rbuffer, offset,
-						    vertex_buffer->stride);
+			r600_pipe_set_buffer_resource(rctx, rstate, rbuffer, offset, vertex_buffer->stride);
+			r600_context_pipe_state_set_fs_resource(&rctx->ctx, rstate, i);
 		}
 	}
 }

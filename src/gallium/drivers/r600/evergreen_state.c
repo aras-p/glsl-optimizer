@@ -1492,11 +1492,10 @@ void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx)
 	return rstate;
 }
 
-void evergreen_pipe_add_vertex_attrib(struct r600_pipe_context *rctx,
-				      struct r600_pipe_state *rstate,
-				      unsigned index,
-				      struct r600_resource *rbuffer,
-				      unsigned offset, unsigned stride)
+void evergreen_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
+					struct r600_pipe_state *rstate,
+					struct r600_resource *rbuffer,
+					unsigned offset, unsigned stride)
 {
 	r600_pipe_state_add_reg(rstate, R_030000_RESOURCE0_WORD0,
 				offset, 0xFFFFFFFF, rbuffer->bo);
@@ -1519,5 +1518,4 @@ void evergreen_pipe_add_vertex_attrib(struct r600_pipe_context *rctx,
 				0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_03001C_RESOURCE0_WORD7,
 				0xC0000000, 0xFFFFFFFF, NULL);
-	evergreen_context_pipe_state_set_fs_resource(&rctx->ctx, rstate, index);
 }

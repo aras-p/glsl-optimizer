@@ -168,11 +168,10 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx);
 void evergreen_polygon_offset_update(struct r600_pipe_context *rctx);
-void evergreen_pipe_add_vertex_attrib(struct r600_pipe_context *rctx,
-				      struct r600_pipe_state *rstate,
-				      unsigned index,
-				      struct r600_resource *rbuffer,
-				      unsigned offset, unsigned stride);
+void evergreen_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
+					struct r600_pipe_state *rstate,
+					struct r600_resource *rbuffer,
+					unsigned offset, unsigned stride);
 
 /* r600_blit.c */
 void r600_init_blit_functions(struct r600_pipe_context *rctx);
@@ -208,11 +207,10 @@ void r600_spi_update(struct r600_pipe_context *rctx);
 void r600_init_config(struct r600_pipe_context *rctx);
 void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx);
 void r600_polygon_offset_update(struct r600_pipe_context *rctx);
-void r600_pipe_add_vertex_attrib(struct r600_pipe_context *rctx,
-				 struct r600_pipe_state *rstate,
-				 unsigned index,
-				 struct r600_resource *rbuffer,
-				 unsigned offset, unsigned stride);
+void r600_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
+				   struct r600_pipe_state *rstate,
+				   struct r600_resource *rbuffer,
+				   unsigned offset, unsigned stride);
 
 /* r600_helper.h */
 int r600_conv_pipe_prim(unsigned pprim, unsigned *prim);
