@@ -63,7 +63,13 @@ bld_register_access(struct bld_register *reg, unsigned i)
 static INLINE void
 bld_register_add_val(struct bld_register *reg, struct nv_value *val)
 {
-   util_dynarray_append(&reg->vals, struct nv_value *, val);
+   struct nv_basic_block *bb = val->insn->bb;
+
+   if (reg->vals.size &&
+       (util_dynarray_top(&reg->vals, struct nv_value *))->insn->bb == bb)
+      *(util_dynarray_top_ptr(&reg->vals, struct nv_value *)) = val;
+   else
+      util_dynarray_append(&reg->vals, struct nv_value *, val);
 }
 
 static INLINE boolean
