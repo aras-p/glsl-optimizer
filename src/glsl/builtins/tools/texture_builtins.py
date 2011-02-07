@@ -6,6 +6,7 @@ import StringIO
 # Bitfield constants for the 'variant' argument to generate_sigs
 Proj = 1
 Offset = 2
+Single = 4
 
 def vec_type(g, size):
     if size == 1:
@@ -49,7 +50,11 @@ def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
     offset_dim = get_sampler_dim(sampler_type)
 
     # Print parameters
-    print "   (signature " + g + "vec4"
+    print "   (signature",
+    if variant & Single:
+        print "float"
+    else:
+        print g + "vec4"
     print "     (parameters"
     print "       (declare (in) " + g + "sampler" + sampler_type + " sampler)"
     print "       (declare (in) " + vec_type("i" if tex_inst == "txf" else "", coord_dim + extra_dim) + " P)",
@@ -131,6 +136,11 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("tex", "Cube")
     generate_fiu_sigs("tex", "1DArray")
     generate_fiu_sigs("tex", "2DArray")
+    generate_sigs("", "tex", "1DShadow", Single, 1);
+    generate_sigs("", "tex", "2DShadow", Single);
+    generate_sigs("", "tex", "CubeShadow", Single);
+    generate_sigs("", "tex", "1DArrayShadow", Single);
+    generate_sigs("", "tex", "2DArrayShadow", Single);
 
     generate_fiu_sigs("txb", "1D")
     generate_fiu_sigs("txb", "2D")
@@ -138,6 +148,11 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("txb", "Cube")
     generate_fiu_sigs("txb", "1DArray")
     generate_fiu_sigs("txb", "2DArray")
+    generate_sigs("", "txb", "1DShadow", Single, 1);
+    generate_sigs("", "txb", "2DShadow", Single);
+    generate_sigs("", "txb", "CubeShadow", Single);
+    generate_sigs("", "txb", "1DArrayShadow", Single);
+    generate_sigs("", "txb", "2DArrayShadow", Single);
     end_function(fs, "texture")
 
     start_function("textureProj")
@@ -146,12 +161,16 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("tex", "2D", Proj)
     generate_fiu_sigs("tex", "2D", Proj, 1)
     generate_fiu_sigs("tex", "3D", Proj)
+    generate_sigs("", "tex", "1DShadow", Proj | Single, 1);
+    generate_sigs("", "tex", "2DShadow", Proj | Single);
 
     generate_fiu_sigs("txb", "1D", Proj)
     generate_fiu_sigs("txb", "1D", Proj, 2)
     generate_fiu_sigs("txb", "2D", Proj)
     generate_fiu_sigs("txb", "2D", Proj, 1)
     generate_fiu_sigs("txb", "3D", Proj)
+    generate_sigs("", "txb", "1DShadow", Proj | Single, 1);
+    generate_sigs("", "txb", "2DShadow", Proj | Single);
     end_function(fs, "textureProj")
 
     start_function("textureLod")
@@ -161,6 +180,9 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("txl", "Cube")
     generate_fiu_sigs("txl", "1DArray")
     generate_fiu_sigs("txl", "2DArray")
+    generate_sigs("", "txl", "1DShadow", Single, 1);
+    generate_sigs("", "txl", "2DShadow", Single);
+    generate_sigs("", "txl", "1DArrayShadow", Single);
     end_function(fs, "textureLod")
 
     start_function("textureLodOffset")
@@ -169,6 +191,9 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("txl", "3D", Offset)
     generate_fiu_sigs("txl", "1DArray", Offset)
     generate_fiu_sigs("txl", "2DArray", Offset)
+    generate_sigs("", "txl", "1DShadow", Offset | Single, 1);
+    generate_sigs("", "txl", "2DShadow", Offset | Single);
+    generate_sigs("", "txl", "1DArrayShadow", Offset | Single);
     end_function(fs, "textureLodOffset")
 
     start_function("textureOffset")
@@ -177,12 +202,18 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("tex", "3D", Offset)
     generate_fiu_sigs("tex", "1DArray", Offset)
     generate_fiu_sigs("tex", "2DArray", Offset)
+    generate_sigs("", "tex", "1DShadow", Offset | Single, 1);
+    generate_sigs("", "tex", "2DShadow", Offset | Single);
+    generate_sigs("", "tex", "1DArrayShadow", Offset | Single);
 
     generate_fiu_sigs("txb", "1D", Offset)
     generate_fiu_sigs("txb", "2D", Offset)
     generate_fiu_sigs("txb", "3D", Offset)
     generate_fiu_sigs("txb", "1DArray", Offset)
     generate_fiu_sigs("txb", "2DArray", Offset)
+    generate_sigs("", "txb", "1DShadow", Offset | Single, 1);
+    generate_sigs("", "txb", "2DShadow", Offset | Single);
+    generate_sigs("", "txb", "1DArrayShadow", Offset | Single);
     end_function(fs, "textureOffset")
 
     start_function("texelFetch")
@@ -207,12 +238,16 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("tex", "2D", Proj | Offset)
     generate_fiu_sigs("tex", "2D", Proj | Offset, 1)
     generate_fiu_sigs("tex", "3D", Proj | Offset)
+    generate_sigs("", "tex", "1DShadow", Proj | Offset | Single, 1);
+    generate_sigs("", "tex", "2DShadow", Proj | Offset | Single);
 
     generate_fiu_sigs("txb", "1D", Proj | Offset)
     generate_fiu_sigs("txb", "1D", Proj | Offset, 2)
     generate_fiu_sigs("txb", "2D", Proj | Offset)
     generate_fiu_sigs("txb", "2D", Proj | Offset, 1)
     generate_fiu_sigs("txb", "3D", Proj | Offset)
+    generate_sigs("", "txb", "1DShadow", Proj | Offset | Single, 1);
+    generate_sigs("", "txb", "2DShadow", Proj | Offset | Single);
     end_function(fs, "textureProjOffset")
 
     start_function("textureProjLod")
@@ -221,6 +256,8 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("txl", "2D", Proj)
     generate_fiu_sigs("txl", "2D", Proj, 1)
     generate_fiu_sigs("txl", "3D", Proj)
+    generate_sigs("", "txl", "1DShadow", Proj | Single, 1);
+    generate_sigs("", "txl", "2DShadow", Proj | Single);
     end_function(fs, "textureProjLod")
 
     start_function("textureProjLodOffset")
@@ -229,6 +266,8 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("txl", "2D", Proj | Offset)
     generate_fiu_sigs("txl", "2D", Proj | Offset, 1)
     generate_fiu_sigs("txl", "3D", Proj | Offset)
+    generate_sigs("", "txl", "1DShadow", Proj | Offset | Single, 1);
+    generate_sigs("", "txl", "2DShadow", Proj | Offset | Single);
     end_function(fs, "textureProjLodOffset")
 
     start_function("textureGrad")
@@ -238,6 +277,11 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("txd", "Cube")
     generate_fiu_sigs("txd", "1DArray")
     generate_fiu_sigs("txd", "2DArray")
+    generate_sigs("", "txd", "1DShadow", Single, 1);
+    generate_sigs("", "txd", "2DShadow", Single);
+    generate_sigs("", "txd", "CubeShadow", Single);
+    generate_sigs("", "txd", "1DArrayShadow", Single);
+    generate_sigs("", "txd", "2DArrayShadow", Single);
     end_function(fs, "textureGrad")
 
     start_function("textureGradOffset")
@@ -247,6 +291,10 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("txd", "Cube", Offset)
     generate_fiu_sigs("txd", "1DArray", Offset)
     generate_fiu_sigs("txd", "2DArray", Offset)
+    generate_sigs("", "txd", "1DShadow", Offset | Single, 1);
+    generate_sigs("", "txd", "2DShadow", Offset | Single);
+    generate_sigs("", "txd", "1DArrayShadow", Offset | Single);
+    generate_sigs("", "txd", "2DArrayShadow", Offset | Single);
     end_function(fs, "textureGradOffset")
 
     start_function("textureProjGrad")
@@ -255,6 +303,8 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("txd", "2D", Proj)
     generate_fiu_sigs("txd", "2D", Proj, 1)
     generate_fiu_sigs("txd", "3D", Proj)
+    generate_sigs("", "txd", "1DShadow", Proj | Single, 1);
+    generate_sigs("", "txd", "2DShadow", Proj | Single);
     end_function(fs, "textureProjGrad")
 
     start_function("textureProjGradOffset")
@@ -263,6 +313,8 @@ def generate_texture_functions(fs):
     generate_fiu_sigs("txd", "2D", Proj | Offset)
     generate_fiu_sigs("txd", "2D", Proj | Offset, 1)
     generate_fiu_sigs("txd", "3D", Proj | Offset)
+    generate_sigs("", "txd", "1DShadow", Proj | Offset | Single, 1);
+    generate_sigs("", "txd", "2DShadow", Proj | Offset | Single);
     end_function(fs, "textureProjGradOffset")
 
 
