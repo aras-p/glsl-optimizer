@@ -123,6 +123,9 @@ void r600_bind_vertex_elements(struct pipe_context *ctx, void *state)
 
 	rctx->vertex_elements = v;
 	if (v) {
+		u_vbuf_mgr_bind_vertex_elements(rctx->vbuf_mgr, state,
+						v->vmgr_elements);
+
 		rctx->states[v->rstate.id] = &v->rstate;
 		r600_context_pipe_state_set(&rctx->ctx, &v->rstate);
 	}
@@ -140,6 +143,7 @@ void r600_delete_vertex_element(struct pipe_context *ctx, void *state)
 		rctx->vertex_elements = NULL;
 
 	r600_bo_reference(rctx->radeon, &v->fetch_shader, NULL);
+	u_vbuf_mgr_destroy_vertex_elements(rctx->vbuf_mgr, v->vmgr_elements);
 	FREE(state);
 }
 
@@ -164,52 +168,19 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 			     const struct pipe_vertex_buffer *buffers)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct pipe_vertex_buffer *vbo;
-	unsigned max_index = ~0;
 	int i;
 
+	/* Zero states. */
 	for (i = 0; i < count; i++) {
-		vbo = (struct pipe_vertex_buffer*)&buffers[i];
-
-		pipe_resource_reference(&rctx->vertex_buffer[i].buffer, vbo->buffer);
-		pipe_resource_reference(&rctx->real_vertex_buffer[i], NULL);
-
-		if (!vbo->buffer) {
-			/* Zero states. */
+		if (!buffers[i].buffer) {
 			if (rctx->family >= CHIP_CEDAR) {
 				evergreen_context_pipe_state_set_fs_resource(&rctx->ctx, NULL, i);
 			} else {
 				r600_context_pipe_state_set_fs_resource(&rctx->ctx, NULL, i);
 			}
-			continue;
-		}
-
-		if (r600_is_user_buffer(vbo->buffer)) {
-			rctx->any_user_vbs = TRUE;
-			continue;
-		}
-
-		pipe_resource_reference(&rctx->real_vertex_buffer[i], vbo->buffer);
-
-		/* The stride of zero means we will be fetching only the first
-		 * vertex, so don't care about max_index. */
-		if (!vbo->stride) {
-			continue;
-		}
-
-		/* Update the maximum index. */
-		{
-		    unsigned vbo_max_index =
-			  (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
-		    max_index = MIN2(max_index, vbo_max_index);
 		}
 	}
-
-	for (; i < rctx->nreal_vertex_buffers; i++) {
-		pipe_resource_reference(&rctx->vertex_buffer[i].buffer, NULL);
-		pipe_resource_reference(&rctx->real_vertex_buffer[i], NULL);
-
-		/* Zero states. */
+	for (; i < rctx->vbuf_mgr->nr_real_vertex_buffers; i++) {
 		if (rctx->family >= CHIP_CEDAR) {
 			evergreen_context_pipe_state_set_fs_resource(&rctx->ctx, NULL, i);
 		} else {
@@ -217,16 +188,8 @@ void r600_set_vertex_buffers(struct pipe_context *ctx, unsigned count,
 		}
 	}
 
-	memcpy(rctx->vertex_buffer, buffers, sizeof(struct pipe_vertex_buffer) * count);
-
-	rctx->nvertex_buffers = count;
-	rctx->nreal_vertex_buffers = count;
-	rctx->vb_max_index = max_index;
+	u_vbuf_mgr_set_vertex_buffers(rctx->vbuf_mgr, count, buffers);
 }
-
-
-#define FORMAT_REPLACE(what, withwhat) \
-	case PIPE_FORMAT_##what: *format = PIPE_FORMAT_##withwhat; break
 
 void *r600_create_vertex_elements(struct pipe_context *ctx,
 				  unsigned count,
@@ -234,55 +197,15 @@ void *r600_create_vertex_elements(struct pipe_context *ctx,
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_vertex_element *v = CALLOC_STRUCT(r600_vertex_element);
-	enum pipe_format *format;
-	int i;
 
 	assert(count < 32);
 	if (!v)
 		return NULL;
 
 	v->count = count;
-	memcpy(v->elements, elements, count * sizeof(struct pipe_vertex_element));
-
-	for (i = 0; i < count; i++) {
-		v->hw_format[i] = v->elements[i].src_format;
-		format = &v->hw_format[i];
-
-		switch (*format) {
-		FORMAT_REPLACE(R64_FLOAT,           R32_FLOAT);
-		FORMAT_REPLACE(R64G64_FLOAT,        R32G32_FLOAT);
-		FORMAT_REPLACE(R64G64B64_FLOAT,     R32G32B32_FLOAT);
-		FORMAT_REPLACE(R64G64B64A64_FLOAT,  R32G32B32A32_FLOAT);
-
-		/* r600 doesn't seem to support 32_*SCALED, these formats
-		 * aren't in D3D10 either. */
-		FORMAT_REPLACE(R32_UNORM,           R32_FLOAT);
-		FORMAT_REPLACE(R32G32_UNORM,        R32G32_FLOAT);
-		FORMAT_REPLACE(R32G32B32_UNORM,     R32G32B32_FLOAT);
-		FORMAT_REPLACE(R32G32B32A32_UNORM,  R32G32B32A32_FLOAT);
-
-		FORMAT_REPLACE(R32_USCALED,         R32_FLOAT);
-		FORMAT_REPLACE(R32G32_USCALED,      R32G32_FLOAT);
-		FORMAT_REPLACE(R32G32B32_USCALED,   R32G32B32_FLOAT);
-		FORMAT_REPLACE(R32G32B32A32_USCALED,R32G32B32A32_FLOAT);
-
-		FORMAT_REPLACE(R32_SNORM,           R32_FLOAT);
-		FORMAT_REPLACE(R32G32_SNORM,        R32G32_FLOAT);
-		FORMAT_REPLACE(R32G32B32_SNORM,     R32G32B32_FLOAT);
-		FORMAT_REPLACE(R32G32B32A32_SNORM,  R32G32B32A32_FLOAT);
-
-		FORMAT_REPLACE(R32_SSCALED,         R32_FLOAT);
-		FORMAT_REPLACE(R32G32_SSCALED,      R32G32_FLOAT);
-		FORMAT_REPLACE(R32G32B32_SSCALED,   R32G32B32_FLOAT);
-		FORMAT_REPLACE(R32G32B32A32_SSCALED,R32G32B32A32_FLOAT);
-		default:;
-		}
-		v->incompatible_layout =
-			v->incompatible_layout ||
-			v->elements[i].src_format != v->hw_format[i];
-
-		v->hw_format_size[i] = align(util_format_get_blocksize(v->hw_format[i]), 4);
-	}
+	v->vmgr_elements =
+		u_vbuf_mgr_create_vertex_elements(rctx->vbuf_mgr, count,
+						  elements, v->elements);
 
 	if (r600_vertex_elements_build_fetch_shader(rctx, v)) {
 		FREE(v);
@@ -433,7 +356,7 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 		return;
 	}
 
-	if (buffer != &rbuffer->r.base.b)
+	if (buffer != &rbuffer->r.b.b.b)
 		pipe_resource_reference((struct pipe_resource**)&rbuffer, NULL);
 }
 
@@ -449,7 +372,7 @@ static void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 		rctx->nvs_resource = rctx->vertex_elements->count;
 	} else {
 		/* bind vertex buffer once */
-		rctx->nvs_resource = rctx->nreal_vertex_buffers;
+		rctx->nvs_resource = rctx->vbuf_mgr->nr_real_vertex_buffers;
 	}
 
 	for (i = 0 ; i < rctx->nvs_resource; i++) {
@@ -461,13 +384,13 @@ static void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 			/* one resource per vertex elements */
 			unsigned vbuffer_index;
 			vbuffer_index = rctx->vertex_elements->elements[i].vertex_buffer_index;
-			vertex_buffer = &rctx->vertex_buffer[vbuffer_index];
-			rbuffer = (struct r600_resource*)rctx->real_vertex_buffer[vbuffer_index];
+			vertex_buffer = &rctx->vbuf_mgr->vertex_buffer[vbuffer_index];
+			rbuffer = (struct r600_resource*)rctx->vbuf_mgr->real_vertex_buffer[vbuffer_index];
 			offset = rctx->vertex_elements->vbuffer_offset[i];
 		} else {
 			/* bind vertex buffer once */
-			vertex_buffer = &rctx->vertex_buffer[i];
-			rbuffer = (struct r600_resource*)rctx->real_vertex_buffer[i];
+			vertex_buffer = &rctx->vbuf_mgr->vertex_buffer[i];
+			rbuffer = (struct r600_resource*)rctx->vbuf_mgr->real_vertex_buffer[i];
 			offset = 0;
 		}
 		if (vertex_buffer == NULL || rbuffer == NULL)
@@ -497,15 +420,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	unsigned prim;
 
 	r600_flush_depth_textures(rctx);
-
-	if (rctx->vertex_elements->incompatible_layout) {
-		r600_begin_vertex_translate(rctx, info->min_index, info->max_index);
-	}
-
-	if (rctx->any_user_vbs) {
-		r600_upload_user_buffers(rctx, info->min_index, info->max_index);
-	}
-
+	u_vbuf_mgr_draw_begin(rctx->vbuf_mgr, info, NULL, NULL);
 	r600_vertex_buffer_update(rctx);
 
 	draw.info = *info;
@@ -523,7 +438,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		draw.index_buffer_offset = draw.info.start * draw.index_size;
 		draw.info.start = 0;
 
-		if (r600_is_user_buffer(draw.index_buffer)) {
+		if (u_vbuf_resource(draw.index_buffer)->user_ptr) {
 			r600_upload_index_buffer(rctx, &draw);
 		}
 	} else {
@@ -607,8 +522,5 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 	pipe_resource_reference(&draw.index_buffer, NULL);
 
-	/* delete previous translated vertex elements */
-	if (rctx->tran.new_velems) {
-		r600_end_vertex_translate(rctx);
-	}
+	u_vbuf_mgr_draw_end(rctx->vbuf_mgr);
 }

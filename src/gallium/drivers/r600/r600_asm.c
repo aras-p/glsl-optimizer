@@ -2052,10 +2052,10 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 
 	for (i = 0; i < ve->count; i++) {
 		unsigned vbuffer_index;
-		r600_vertex_data_type(ve->hw_format[i], &format, &num_format, &format_comp);
-		desc = util_format_description(ve->hw_format[i]);
+		r600_vertex_data_type(ve->elements[i].src_format, &format, &num_format, &format_comp);
+		desc = util_format_description(ve->elements[i].src_format);
 		if (desc == NULL) {
-			R600_ERR("unknown format %d\n", ve->hw_format[i]);
+			R600_ERR("unknown format %d\n", ve->elements[i].src_format);
 			r600_bo_reference(rctx->radeon, &ve->fetch_shader, NULL);
 			return -EINVAL;
 		}

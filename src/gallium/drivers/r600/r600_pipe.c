@@ -76,8 +76,6 @@ static void r600_destroy_context(struct pipe_context *context)
 
 	rctx->context.delete_depth_stencil_alpha_state(&rctx->context, rctx->custom_dsa_flush);
 
-	r600_end_vertex_translate(rctx);
-
 	r600_context_fini(&rctx->ctx);
 
 	util_blitter_destroy(rctx->blitter);
@@ -86,11 +84,9 @@ static void r600_destroy_context(struct pipe_context *context)
 		free(rctx->states[i]);
 	}
 
-	u_upload_destroy(rctx->upload_vb);
+	u_upload_destroy(rctx->upload_ib);
 	u_upload_destroy(rctx->upload_const);
-
-	if (rctx->tran.translate_cache)
-		translate_cache_destroy(rctx->tran.translate_cache);
+	u_vbuf_mgr_destroy(rctx->vbuf_mgr);
 
 	FREE(rctx->ps_resource);
 	FREE(rctx->vs_resource);
@@ -164,10 +160,16 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		return NULL;
 	}
 
-	rctx->upload_vb = u_upload_create(&rctx->context, 1024 * 1024, 16,
-					  PIPE_BIND_VERTEX_BUFFER |
+	rctx->vbuf_mgr = u_vbuf_mgr_create(&rctx->context, 1024 * 1024, 16,
+					   U_VERTEX_FETCH_BYTE_ALIGNED);
+	if (!rctx->vbuf_mgr) {
+		r600_destroy_context(&rctx->context);
+		return NULL;
+	}
+
+	rctx->upload_ib = u_upload_create(&rctx->context, 128 * 1024, 16,
 					  PIPE_BIND_INDEX_BUFFER);
-	if (rctx->upload_vb == NULL) {
+	if (rctx->upload_ib == NULL) {
 		r600_destroy_context(&rctx->context);
 		return NULL;
 	}
@@ -181,12 +183,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 
 	rctx->blitter = util_blitter_create(&rctx->context);
 	if (rctx->blitter == NULL) {
-		FREE(rctx);
-		return NULL;
-	}
-
-	rctx->tran.translate_cache = translate_cache_create();
-	if (rctx->tran.translate_cache == NULL) {
 		FREE(rctx);
 		return NULL;
 	}

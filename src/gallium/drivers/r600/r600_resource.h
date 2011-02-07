@@ -24,6 +24,7 @@
 #define R600_RESOURCE_H
 
 #include "util/u_transfer.h"
+#include "util/u_vbuf_mgr.h"
 
 /* flag to indicate a resource is to be used as a transfer so should not be tiled */
 #define R600_RESOURCE_FLAG_TRANSFER     PIPE_RESOURCE_FLAG_DRV_PRIV
@@ -43,7 +44,7 @@ struct r600_transfer {
  * underlying implementations.
  */
 struct r600_resource {
-	struct u_resource		base;
+	struct u_vbuf_resource		b;
 	struct r600_bo			*bo;
 	u32				size;
 	unsigned			bo_size;
@@ -68,10 +69,10 @@ struct r600_resource_texture {
 
 #define R600_BUFFER_MAGIC 0xabcd1600
 
+/* XXX this could be removed */
 struct r600_resource_buffer {
 	struct r600_resource		r;
 	uint32_t			magic;
-	void				*user_buffer;
 };
 
 struct r600_surface {
@@ -96,11 +97,6 @@ static INLINE struct r600_resource_buffer *r600_buffer(struct pipe_resource *buf
 		return (struct r600_resource_buffer *)buffer;
 	}
 	return NULL;
-}
-
-static INLINE boolean r600_is_user_buffer(struct pipe_resource *buffer)
-{
-	return r600_buffer(buffer)->user_buffer ? TRUE : FALSE;
 }
 
 int r600_texture_depth_flush(struct pipe_context *ctx, struct pipe_resource *texture, boolean just_create);

@@ -75,7 +75,7 @@ unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
 {
 	unsigned offset = rtex->offset[level];
 
-	switch (rtex->resource.base.b.target) {
+	switch (rtex->resource.b.b.b.target) {
 	case PIPE_TEXTURE_3D:
 	case PIPE_TEXTURE_CUBE:
 		return offset + layer * rtex->layer_size[level];
@@ -167,7 +167,7 @@ static unsigned r600_texture_get_stride(struct pipe_screen *screen,
 					struct r600_resource_texture *rtex,
 					unsigned level)
 {
-	struct pipe_resource *ptex = &rtex->resource.base.b;
+	struct pipe_resource *ptex = &rtex->resource.b.b.b;
 	unsigned width, stride, tile_width;
 
 	if (rtex->pitch_override)
@@ -188,7 +188,7 @@ static unsigned r600_texture_get_nblocksy(struct pipe_screen *screen,
 					  struct r600_resource_texture *rtex,
 					  unsigned level)
 {
-	struct pipe_resource *ptex = &rtex->resource.base.b;
+	struct pipe_resource *ptex = &rtex->resource.b.b.b;
 	unsigned height, tile_height;
 
 	height = mip_minify(ptex->height0, level);
@@ -211,7 +211,7 @@ static void r600_texture_set_array_mode(struct pipe_screen *screen,
 					struct r600_resource_texture *rtex,
 					unsigned level, unsigned array_mode)
 {
-	struct pipe_resource *ptex = &rtex->resource.base.b;
+	struct pipe_resource *ptex = &rtex->resource.b.b.b;
 
 	switch (array_mode) {
 	case V_0280A0_ARRAY_LINEAR_GENERAL:
@@ -242,7 +242,7 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 			       struct r600_resource_texture *rtex,
 			       unsigned array_mode)
 {
-	struct pipe_resource *ptex = &rtex->resource.base.b;
+	struct pipe_resource *ptex = &rtex->resource.b.b.b;
 	struct radeon *radeon = (struct radeon *)screen->winsys;
 	enum chip_class chipc = r600_get_family_class(radeon);
 	unsigned pitch, size, layer_size, i, offset;
@@ -372,10 +372,10 @@ r600_texture_create_object(struct pipe_screen *screen,
 		return NULL;
 
 	resource = &rtex->resource;
-	resource->base.b = *base;
-	resource->base.vtbl = &r600_texture_vtbl;
-	pipe_reference_init(&resource->base.b.reference, 1);
-	resource->base.b.screen = screen;
+	resource->b.b.b = *base;
+	resource->b.b.vtbl = &r600_texture_vtbl;
+	pipe_reference_init(&resource->b.b.b.reference, 1);
+	resource->b.b.b.screen = screen;
 	resource->bo = bo;
 	rtex->pitch_override = pitch_in_bytes_override;
 	/* only mark depth textures the HW can hit as depth textures */
@@ -389,7 +389,7 @@ r600_texture_create_object(struct pipe_screen *screen,
 	resource->size = rtex->size;
 
 	if (!resource->bo) {
-		struct pipe_resource *ptex = &rtex->resource.base.b;
+		struct pipe_resource *ptex = &rtex->resource.b.b.b;
 		int base_align = r600_get_base_alignment(screen, ptex->format, array_mode);
 
 		resource->bo = r600_bo(radeon, rtex->size, base_align, base->bind, base->usage);

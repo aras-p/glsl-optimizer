@@ -30,7 +30,7 @@
 #include <pipe/p_screen.h>
 #include <pipe/p_context.h>
 #include <util/u_math.h>
-#include "translate/translate_cache.h"
+#include "util/u_vbuf_mgr.h"
 #include "r600.h"
 #include "r600_public.h"
 #include "r600_shader.h"
@@ -86,9 +86,7 @@ struct r600_vertex_element
 {
 	unsigned			count;
 	struct pipe_vertex_element	elements[PIPE_MAX_ATTRIBS];
-	enum pipe_format		hw_format[PIPE_MAX_ATTRIBS];
-	unsigned			hw_format_size[PIPE_MAX_ATTRIBS];
-	boolean				incompatible_layout;
+	struct u_vbuf_mgr_elements	*vmgr_elements;
 	struct r600_bo			*fetch_shader;
 	unsigned			fs_size;
 	struct r600_pipe_state		rstate;
@@ -117,18 +115,6 @@ struct r600_textures_info {
 	unsigned			n_samplers;
 };
 
-/* vertex buffer translation context, used to translate vertex input that
- * hw doesn't natively support, so far only FLOAT64 is unsupported.
- */
-struct r600_translate_context {
-	/* Translate cache for incompatible vertex offset/stride/format fallback. */
-	struct translate_cache		*translate_cache;
-	/* The vertex buffer slot containing the translated buffer. */
-	unsigned			vb_slot;
-	void				*saved_velems;
-	void				*new_velems;
-};
-
 #define R600_CONSTANT_ARRAY_SIZE 256
 #define R600_RESOURCE_ARRAY_SIZE 160
 
@@ -144,10 +130,6 @@ struct r600_pipe_context {
 	struct r600_vertex_element	*vertex_elements;
 	struct pipe_framebuffer_state	framebuffer;
 	struct pipe_index_buffer	index_buffer;
-	struct pipe_vertex_buffer	vertex_buffer[PIPE_MAX_ATTRIBS];
-	struct pipe_resource		*real_vertex_buffer[PIPE_MAX_ATTRIBS];
-	unsigned			nvertex_buffers;
-	unsigned			nreal_vertex_buffers; /* with the translated vertex buffer */
 	unsigned			cb_target_mask;
 	/* for saving when using blitter */
 	struct pipe_stencil_ref		stencil_ref;
@@ -165,11 +147,10 @@ struct r600_pipe_context {
 	/* shader information */
 	unsigned			sprite_coord_enable;
 	bool				flatshade;
-	struct u_upload_mgr		*upload_vb;
-	unsigned			any_user_vbs;
 	struct r600_textures_info	ps_samplers;
-	unsigned			vb_max_index;
-	struct r600_translate_context	tran;
+
+        struct u_vbuf_mgr		*vbuf_mgr;
+	struct u_upload_mgr		*upload_ib;
 	struct u_upload_mgr		*upload_const;
 	bool				blit;
 };
@@ -210,8 +191,6 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,
 					      struct winsys_handle *whandle);
 void r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *draw);
-void r600_upload_user_buffers(struct r600_pipe_context *rctx,
-			      int min_index, int max_index);
 
 /* r600_query.c */
 void r600_init_query_functions(struct r600_pipe_context *rctx);
@@ -250,9 +229,6 @@ unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
 					unsigned level, unsigned layer);
 
 /* r600_translate.c */
-void r600_begin_vertex_translate(struct r600_pipe_context *rctx,
-                                 int min_index, int max_index);
-void r600_end_vertex_translate(struct r600_pipe_context *rctx);
 void r600_translate_index_buffer(struct r600_pipe_context *r600,
 				 struct pipe_resource **index_buffer,
 				 unsigned *index_size,
