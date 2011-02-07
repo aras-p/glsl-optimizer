@@ -365,18 +365,18 @@ static void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
 	struct r600_pipe_state *rstate;
 	struct r600_resource *rbuffer;
 	struct pipe_vertex_buffer *vertex_buffer;
-	unsigned i, offset;
+	unsigned i, count, offset;
 
 	if (rctx->vertex_elements->vbuffer_need_offset) {
 		/* one resource per vertex elements */
-		rctx->nvs_resource = rctx->vertex_elements->count;
+		count = rctx->vertex_elements->count;
 	} else {
 		/* bind vertex buffer once */
-		rctx->nvs_resource = rctx->vbuf_mgr->nr_real_vertex_buffers;
+		count = rctx->vbuf_mgr->nr_real_vertex_buffers;
 	}
 
-	for (i = 0 ; i < rctx->nvs_resource; i++) {
-		rstate = &rctx->vs_resource[i];
+	for (i = 0 ; i < count; i++) {
+		rstate = &rctx->fs_resource[i];
 		rstate->id = R600_PIPE_STATE_RESOURCE;
 		rstate->nregs = 0;
 

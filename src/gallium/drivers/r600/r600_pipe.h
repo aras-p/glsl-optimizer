@@ -128,6 +128,7 @@ struct r600_pipe_context {
 	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
 	struct r600_context		ctx;
 	struct r600_vertex_element	*vertex_elements;
+	struct r600_pipe_state		fs_resource[PIPE_MAX_ATTRIBS];
 	struct pipe_framebuffer_state	framebuffer;
 	struct pipe_index_buffer	index_buffer;
 	unsigned			cb_target_mask;
@@ -135,9 +136,6 @@ struct r600_pipe_context {
 	struct pipe_stencil_ref		stencil_ref;
 	struct pipe_viewport_state	viewport;
 	struct pipe_clip_state		clip;
-	unsigned			nvs_resource;
-	struct r600_pipe_state		*vs_resource;
-	struct r600_pipe_state		*ps_resource;
 	struct r600_pipe_state		config;
 	struct r600_pipe_shader 	*ps_shader;
 	struct r600_pipe_shader 	*vs_shader;
