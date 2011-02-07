@@ -34,7 +34,7 @@ struct r600_bc_alu_src {
 	unsigned			neg;
 	unsigned			abs;
 	unsigned			rel;
-	u32				*value;
+	uint32_t			value[4];
 };
 
 struct r600_bc_alu_dst {

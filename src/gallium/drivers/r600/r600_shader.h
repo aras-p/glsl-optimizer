@@ -48,6 +48,4 @@ struct r600_shader {
 	boolean			fs_write_all;
 };
 
-int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *shader, u32 **literals);
-
 #endif
