@@ -495,9 +495,37 @@ static INLINE boolean r600_is_zs_format_supported(enum pipe_format format)
 	return r600_translate_dbformat(format) != ~0;
 }
 
-static INLINE boolean r600_is_vertex_format_supported(enum pipe_format format)
+static INLINE boolean r600_is_vertex_format_supported(enum pipe_format format,
+						      enum radeon_family family)
 {
-	return r600_translate_colorformat(format) != ~0;
+	unsigned i;
+	const struct util_format_description *desc = util_format_description(format);
+	if (!desc)
+		return FALSE;
+
+	/* Find the first non-VOID channel. */
+	for (i = 0; i < 4; i++) {
+		if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
+			break;
+		}
+	}
+	if (i == 4)
+		return FALSE;
+
+	/* No fixed, no double. */
+	if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN ||
+	    desc->channel[i].type == UTIL_FORMAT_TYPE_FIXED ||
+	    (desc->channel[i].size == 64 &&
+	     desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT))
+		return FALSE;
+
+	/* No scaled/norm formats with 32 bits per channel. */
+	if (desc->channel[i].size == 32 &&
+	    (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED ||
+	     desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED))
+		return FALSE;
+
+	return TRUE;
 }
 
 #endif

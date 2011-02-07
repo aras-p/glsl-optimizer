@@ -440,9 +440,14 @@ static boolean r600_is_format_supported(struct pipe_screen* screen,
 		retval |= PIPE_BIND_DEPTH_STENCIL;
 	}
 
-	if ((usage & PIPE_BIND_VERTEX_BUFFER) &&
-	    r600_is_vertex_format_supported(format))
-		retval |= PIPE_BIND_VERTEX_BUFFER;
+	if (usage & PIPE_BIND_VERTEX_BUFFER) {
+		struct r600_screen *rscreen = (struct r600_screen *)screen;
+		enum radeon_family family = r600_get_family(rscreen->radeon);
+
+		if (r600_is_vertex_format_supported(format, family)) {
+			retval |= PIPE_BIND_VERTEX_BUFFER;
+		}
+	}
 
 	if (usage & PIPE_BIND_TRANSFER_READ)
 		retval |= PIPE_BIND_TRANSFER_READ;

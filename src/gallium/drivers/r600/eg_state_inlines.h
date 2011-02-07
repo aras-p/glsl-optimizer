@@ -501,9 +501,4 @@ static INLINE boolean r600_is_zs_format_supported(enum pipe_format format)
 	return r600_translate_dbformat(format) != ~0;
 }
 
-static INLINE boolean r600_is_vertex_format_supported(enum pipe_format format)
-{
-	return r600_translate_colorformat(format) != ~0;
-}
-
 #endif
