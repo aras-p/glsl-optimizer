@@ -261,6 +261,7 @@ st_feedback_draw_vbo(struct gl_context *ctx,
          pipe_buffer_unmap(pipe, vb_transfer[i]);
          pipe_resource_reference(&draw->pt.vertex_buffer[i].buffer, NULL);
          draw_set_mapped_vertex_buffer(draw, i, NULL);
+         pipe_resource_reference(&vbuffers[i].buffer, NULL);
       }
    }
 
