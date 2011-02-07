@@ -812,9 +812,9 @@ void r300_emit_textures_state(struct r300_context *r300,
 
 static void r300_update_vertex_arrays_cb(struct r300_context *r300, unsigned packet_size)
 {
-    struct pipe_vertex_buffer *vb1, *vb2, *vbuf = r300->vertex_buffer;
+    struct pipe_vertex_buffer *vb1, *vb2, *vbuf = r300->vbuf_mgr->vertex_buffer;
     struct pipe_vertex_element *velem = r300->velems->velem;
-    unsigned *hw_format_size = r300->velems->hw_format_size;
+    unsigned *hw_format_size = r300->velems->format_size;
     unsigned size1, size2, vertex_array_count = r300->velems->count;
     int i;
     CB_LOCALS;
@@ -846,8 +846,8 @@ static void r300_update_vertex_arrays_cb(struct r300_context *r300, unsigned pac
 
 void r300_emit_vertex_arrays(struct r300_context* r300, int offset, boolean indexed)
 {
-    struct pipe_vertex_buffer *vbuf = r300->vertex_buffer;
-    struct pipe_resource **valid_vbuf = r300->real_vertex_buffer;
+    struct pipe_vertex_buffer *vbuf = r300->vbuf_mgr->vertex_buffer;
+    struct pipe_resource **valid_vbuf = r300->vbuf_mgr->real_vertex_buffer;
     struct pipe_vertex_element *velem = r300->velems->velem;
     struct r300_buffer *buf;
     int i;
@@ -866,7 +866,7 @@ void r300_emit_vertex_arrays(struct r300_context* r300, int offset, boolean inde
         OUT_CS_TABLE(r300->vertex_arrays_cb, packet_size);
     } else {
         struct pipe_vertex_buffer *vb1, *vb2;
-        unsigned *hw_format_size = r300->velems->hw_format_size;
+        unsigned *hw_format_size = r300->velems->format_size;
         unsigned size1, size2;
 
         for (i = 0; i < vertex_array_count - 1; i += 2) {
@@ -892,7 +892,7 @@ void r300_emit_vertex_arrays(struct r300_context* r300, int offset, boolean inde
 
     for (i = 0; i < vertex_array_count; i++) {
         buf = r300_buffer(valid_vbuf[velem[i].vertex_buffer_index]);
-        OUT_CS_BUF_RELOC_NO_OFFSET(&buf->b.b);
+        OUT_CS_BUF_RELOC_NO_OFFSET(&buf->b.b.b);
     }
     END_CS;
 }
@@ -1227,9 +1227,9 @@ validate:
                                 r300_buffer(r300->vbo)->domain, 0);
     /* ...vertex buffers for HWTCL path... */
     if (do_validate_vertex_buffers) {
-        struct pipe_resource **buf = r300->real_vertex_buffer;
-        struct pipe_resource **last = r300->real_vertex_buffer +
-                                      r300->real_vertex_buffer_count;
+        struct pipe_resource **buf = r300->vbuf_mgr->real_vertex_buffer;
+        struct pipe_resource **last = r300->vbuf_mgr->real_vertex_buffer +
+                                      r300->vbuf_mgr->nr_real_vertex_buffers;
         for (; buf != last; buf++) {
             if (!*buf)
                 continue;

@@ -1478,10 +1478,7 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
                                     const struct pipe_vertex_buffer* buffers)
 {
     struct r300_context* r300 = r300_context(pipe);
-    const struct pipe_vertex_buffer *vbo;
-    unsigned i, max_index = (1 << 24) - 1;
-    boolean any_user_buffer = FALSE;
-    boolean any_nonuser_buffer = FALSE;
+    unsigned i;
     struct pipe_vertex_buffer dummy_vb = {0};
 
     /* There must be at least one vertex buffer set, otherwise it locks up. */
@@ -1491,91 +1488,21 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
         count = 1;
     }
 
-    if (count == r300->vertex_buffer_count &&
-        memcmp(r300->vertex_buffer, buffers,
-            sizeof(struct pipe_vertex_buffer) * count) == 0) {
-        return;
-    }
+    u_vbuf_mgr_set_vertex_buffers(r300->vbuf_mgr, count, buffers);
 
     if (r300->screen->caps.has_tcl) {
         /* HW TCL. */
-        r300->incompatible_vb_layout = FALSE;
-
-        /* Check if the strides and offsets are aligned to the size of DWORD. */
         for (i = 0; i < count; i++) {
-            if (buffers[i].buffer) {
-                if (buffers[i].stride % 4 != 0 ||
-                    buffers[i].buffer_offset % 4 != 0) {
-                    r300->incompatible_vb_layout = TRUE;
-                    break;
-                }
+            if (buffers[i].buffer &&
+		!r300_buffer(buffers[i].buffer)->b.user_ptr) {
+                r300->validate_buffers = TRUE;
             }
         }
-
-        for (i = 0; i < count; i++) {
-            vbo = &buffers[i];
-
-            /* Skip NULL buffers */
-            if (!vbo->buffer) {
-                continue;
-            }
-
-            /* User buffers have no info about maximum index,
-             * we will have to compute it in draw_vbo. */
-            if (r300_is_user_buffer(vbo->buffer)) {
-                any_user_buffer = TRUE;
-                continue;
-            }
-            any_nonuser_buffer = TRUE;
-
-            /* The stride of zero means we will be fetching only the first
-             * vertex, so don't care about max_index. */
-            if (!vbo->stride)
-                continue;
-
-            /* Update the maximum index. */
-            {
-                unsigned vbo_max_index =
-                      (vbo->buffer->width0 - vbo->buffer_offset) / vbo->stride;
-                max_index = MIN2(max_index, vbo_max_index);
-            }
-        }
-
-        r300->any_user_vbs = any_user_buffer;
-        r300->vertex_buffer_max_index = max_index;
         r300->vertex_arrays_dirty = TRUE;
-        if (any_nonuser_buffer)
-            r300->validate_buffers = TRUE;
-        if (!any_user_buffer)
-            r300->upload_vb_validated = FALSE;
     } else {
         /* SW TCL. */
         draw_set_vertex_buffers(r300->draw, count, buffers);
     }
-
-    /* Common code. */
-    for (i = 0; i < count; i++) {
-        vbo = &buffers[i];
-
-        /* Reference our buffer. */
-        pipe_resource_reference(&r300->vertex_buffer[i].buffer, vbo->buffer);
-        if (vbo->buffer && r300_is_user_buffer(vbo->buffer)) {
-            pipe_resource_reference(&r300->real_vertex_buffer[i], NULL);
-        } else {
-            pipe_resource_reference(&r300->real_vertex_buffer[i], vbo->buffer);
-        }
-    }
-    for (; i < r300->real_vertex_buffer_count; i++) {
-        /* Dereference any old buffers. */
-        pipe_resource_reference(&r300->vertex_buffer[i].buffer, NULL);
-        pipe_resource_reference(&r300->real_vertex_buffer[i], NULL);
-    }
-
-    memcpy(r300->vertex_buffer, buffers,
-           sizeof(struct pipe_vertex_buffer) * count);
-
-    r300->vertex_buffer_count = count;
-    r300->real_vertex_buffer_count = count;
 }
 
 static void r300_set_index_buffer(struct pipe_context* pipe,
@@ -1588,7 +1515,7 @@ static void r300_set_index_buffer(struct pipe_context* pipe,
         memcpy(&r300->index_buffer, ib, sizeof(r300->index_buffer));
 
         if (r300->screen->caps.has_tcl &&
-            !r300_is_user_buffer(ib->buffer)) {
+            !r300_buffer(ib->buffer)->b.user_ptr) {
             r300->validate_buffers = TRUE;
             r300->upload_ib_validated = FALSE;
         }
@@ -1621,7 +1548,7 @@ static void r300_vertex_psc(struct r300_vertex_element_state *velems)
      * so PSC should just route stuff based on the vertex elements,
      * and not on attrib information. */
     for (i = 0; i < velems->count; i++) {
-        format = velems->hw_format[i];
+        format = velems->velem[i].src_format;
 
         type = r300_translate_vertex_data_type(format);
         if (type == R300_INVALID_FORMAT) {
@@ -1653,16 +1580,13 @@ static void r300_vertex_psc(struct r300_vertex_element_state *velems)
     vstream->count = (i >> 1) + 1;
 }
 
-#define FORMAT_REPLACE(what, withwhat) \
-    case PIPE_FORMAT_##what: *format = PIPE_FORMAT_##withwhat; break
-
 static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
                                                unsigned count,
                                                const struct pipe_vertex_element* attribs)
 {
+    struct r300_context *r300 = r300_context(pipe);
     struct r300_vertex_element_state *velems;
     unsigned i;
-    enum pipe_format *format;
     struct pipe_vertex_element dummy_attrib = {0};
 
     /* R300 Programmable Stream Control (PSC) doesn't support 0 vertex elements. */
@@ -1674,77 +1598,26 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
 
     assert(count <= PIPE_MAX_ATTRIBS);
     velems = CALLOC_STRUCT(r300_vertex_element_state);
-    if (velems != NULL) {
-        velems->count = count;
-        memcpy(velems->velem, attribs, sizeof(struct pipe_vertex_element) * count);
+    if (!velems)
+        return NULL;
 
-        if (r300_screen(pipe->screen)->caps.has_tcl) {
-            /* Set the best hw format in case the original format is not
-             * supported by hw. */
-            for (i = 0; i < count; i++) {
-                velems->hw_format[i] = velems->velem[i].src_format;
-                format = &velems->hw_format[i];
+    velems->count = count;
+    velems->vmgr_elements =
+        u_vbuf_mgr_create_vertex_elements(r300->vbuf_mgr, count, attribs,
+                                          velems->velem);
 
-                /* This is basically the list of unsupported formats.
-                 * For now we don't care about the alignment, that's going to
-                 * be sorted out after the PSC setup. */
-                switch (*format) {
-                    FORMAT_REPLACE(R64_FLOAT,           R32_FLOAT);
-                    FORMAT_REPLACE(R64G64_FLOAT,        R32G32_FLOAT);
-                    FORMAT_REPLACE(R64G64B64_FLOAT,     R32G32B32_FLOAT);
-                    FORMAT_REPLACE(R64G64B64A64_FLOAT,  R32G32B32A32_FLOAT);
+    if (r300_screen(pipe->screen)->caps.has_tcl) {
+        /* Setup PSC.
+         * The unused components will be replaced by (..., 0, 1). */
+        r300_vertex_psc(velems);
 
-                    FORMAT_REPLACE(R32_UNORM,           R32_FLOAT);
-                    FORMAT_REPLACE(R32G32_UNORM,        R32G32_FLOAT);
-                    FORMAT_REPLACE(R32G32B32_UNORM,     R32G32B32_FLOAT);
-                    FORMAT_REPLACE(R32G32B32A32_UNORM,  R32G32B32A32_FLOAT);
-
-                    FORMAT_REPLACE(R32_USCALED,         R32_FLOAT);
-                    FORMAT_REPLACE(R32G32_USCALED,      R32G32_FLOAT);
-                    FORMAT_REPLACE(R32G32B32_USCALED,   R32G32B32_FLOAT);
-                    FORMAT_REPLACE(R32G32B32A32_USCALED,R32G32B32A32_FLOAT);
-
-                    FORMAT_REPLACE(R32_SNORM,           R32_FLOAT);
-                    FORMAT_REPLACE(R32G32_SNORM,        R32G32_FLOAT);
-                    FORMAT_REPLACE(R32G32B32_SNORM,     R32G32B32_FLOAT);
-                    FORMAT_REPLACE(R32G32B32A32_SNORM,  R32G32B32A32_FLOAT);
-
-                    FORMAT_REPLACE(R32_SSCALED,         R32_FLOAT);
-                    FORMAT_REPLACE(R32G32_SSCALED,      R32G32_FLOAT);
-                    FORMAT_REPLACE(R32G32B32_SSCALED,   R32G32B32_FLOAT);
-                    FORMAT_REPLACE(R32G32B32A32_SSCALED,R32G32B32A32_FLOAT);
-
-                    FORMAT_REPLACE(R32_FIXED,           R32_FLOAT);
-                    FORMAT_REPLACE(R32G32_FIXED,        R32G32_FLOAT);
-                    FORMAT_REPLACE(R32G32B32_FIXED,     R32G32B32_FLOAT);
-                    FORMAT_REPLACE(R32G32B32A32_FIXED,  R32G32B32A32_FLOAT);
-
-                    default:;
-                }
-
-                velems->incompatible_layout =
-                        velems->incompatible_layout ||
-                        velems->velem[i].src_format != velems->hw_format[i] ||
-                        velems->velem[i].src_offset % 4 != 0;
-            }
-
-            /* Now setup PSC.
-             * The unused components will be replaced by (..., 0, 1). */
-            r300_vertex_psc(velems);
-
-            /* Align the formats to the size of DWORD.
-             * We only care about the blocksizes of the formats since
-             * swizzles are already set up.
-             * Also compute the vertex size. */
-            for (i = 0; i < count; i++) {
-                /* This is OK because we check for aligned strides too
-                 * elsewhere. */
-                velems->hw_format_size[i] =
-                    align(util_format_get_blocksize(velems->hw_format[i]), 4);
-                velems->vertex_size_dwords += velems->hw_format_size[i] / 4;
-            }
+        for (i = 0; i < count; i++) {
+            velems->format_size[i] =
+                align(util_format_get_blocksize(velems->velem[i].src_format), 4);
+            velems->vertex_size_dwords += velems->format_size[i] / 4;
         }
     }
+
     return velems;
 }
 
@@ -1760,6 +1633,8 @@ static void r300_bind_vertex_elements_state(struct pipe_context *pipe,
 
     r300->velems = velems;
 
+    u_vbuf_mgr_bind_vertex_elements(r300->vbuf_mgr, state, velems->vmgr_elements);
+
     if (r300->draw) {
         draw_set_vertex_elements(r300->draw, velems->count, velems->velem);
         return;
@@ -1772,7 +1647,11 @@ static void r300_bind_vertex_elements_state(struct pipe_context *pipe,
 
 static void r300_delete_vertex_elements_state(struct pipe_context *pipe, void *state)
 {
-   FREE(state);
+    struct r300_context *r300 = r300_context(pipe);
+    struct r300_vertex_element_state *velems = state;
+
+    u_vbuf_mgr_destroy_vertex_elements(r300->vbuf_mgr, velems->vmgr_elements);
+    FREE(state);
 }
 
 static void* r300_create_vs_state(struct pipe_context* pipe,
@@ -1876,8 +1755,8 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
     if (buf == NULL || buf->width0 == 0)
         return;
 
-    if (rbuf->user_buffer)
-        mapped = (uint32_t*)rbuf->user_buffer;
+    if (rbuf->b.user_ptr)
+        mapped = (uint32_t*)rbuf->b.user_ptr;
     else if (rbuf->constant_buffer)
         mapped = (uint32_t*)rbuf->constant_buffer;
     else

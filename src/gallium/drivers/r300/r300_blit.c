@@ -55,8 +55,8 @@ static void r300_blitter_begin(struct r300_context* r300, enum r300_blitter_op o
     util_blitter_save_viewport(r300->blitter, &r300->viewport);
     util_blitter_save_clip(r300->blitter, (struct pipe_clip_state*)r300->clip_state.state);
     util_blitter_save_vertex_elements(r300->blitter, r300->velems);
-    util_blitter_save_vertex_buffers(r300->blitter, r300->vertex_buffer_count,
-                                     r300->vertex_buffer);
+    util_blitter_save_vertex_buffers(r300->blitter, r300->vbuf_mgr->nr_vertex_buffers,
+                                     r300->vbuf_mgr->vertex_buffer);
 
     if (op & (R300_CLEAR_SURFACE | R300_COPY)) {
         util_blitter_save_framebuffer(r300->blitter, r300->fb_state.state);

@@ -40,7 +40,7 @@ unsigned r300_buffer_is_referenced(struct pipe_context *context,
     struct r300_context *r300 = r300_context(context);
     struct r300_buffer *rbuf = r300_buffer(buf);
 
-    if (r300_is_user_buffer(buf))
+    if (rbuf->b.user_ptr)
  	return PIPE_UNREFERENCED;
 
     if (r300->rws->cs_is_buffer_referenced(r300->cs, rbuf->cs_buf, domain))
@@ -62,7 +62,7 @@ void r300_upload_index_buffer(struct r300_context *r300,
 			      unsigned count)
 {
     unsigned index_offset;
-    uint8_t *ptr = r300_buffer(*index_buffer)->user_buffer;
+    uint8_t *ptr = r300_buffer(*index_buffer)->b.user_ptr;
     boolean flushed;
 
     *index_buffer = NULL;
@@ -78,51 +78,6 @@ void r300_upload_index_buffer(struct r300_context *r300,
     if (flushed || !r300->upload_ib_validated) {
         r300->upload_ib_validated = FALSE;
         r300->validate_buffers = TRUE;
-    }
-}
-
-void r300_upload_user_buffers(struct r300_context *r300,
-                              int min_index, int max_index)
-{
-    int i, nr = r300->velems->count;
-    unsigned count = max_index + 1 - min_index;
-    boolean flushed;
-    boolean uploaded[32] = {0};
-
-    for (i = 0; i < nr; i++) {
-        unsigned index = r300->velems->velem[i].vertex_buffer_index;
-        struct pipe_vertex_buffer *vb = &r300->vertex_buffer[index];
-        struct r300_buffer *userbuf = r300_buffer(vb->buffer);
-
-        if (userbuf && userbuf->user_buffer && !uploaded[index]) {
-            unsigned first, size;
-
-            if (vb->stride) {
-                first = vb->stride * min_index;
-                size = vb->stride * count;
-            } else {
-                first = 0;
-                size = r300->velems->hw_format_size[i];
-            }
-
-            u_upload_data(r300->upload_vb, first, size,
-                          userbuf->user_buffer + first,
-                          &vb->buffer_offset,
-                          &r300->real_vertex_buffer[index],
-                          &flushed);
-
-            vb->buffer_offset -= first;
-
-            r300->vertex_arrays_dirty = TRUE;
-
-            if (flushed || !r300->upload_vb_validated) {
-                r300->upload_vb_validated = FALSE;
-                r300->validate_buffers = TRUE;
-            }
-            uploaded[index] = TRUE;
-        } else {
-            assert(r300->real_vertex_buffer[index]);
-        }
     }
 }
 
@@ -184,8 +139,8 @@ r300_buffer_transfer_map( struct pipe_context *pipe,
     struct r300_buffer *rbuf = r300_buffer(transfer->resource);
     uint8_t *map;
 
-    if (rbuf->user_buffer)
-        return (uint8_t *) rbuf->user_buffer + transfer->box.x;
+    if (rbuf->b.user_ptr)
+        return (uint8_t *) rbuf->b.user_ptr + transfer->box.x;
     if (rbuf->constant_buffer)
         return (uint8_t *) rbuf->constant_buffer + transfer->box.x;
 
@@ -234,7 +189,7 @@ static void r300_buffer_transfer_inline_write(struct pipe_context *pipe,
         memcpy(rbuf->constant_buffer + box->x, data, box->width);
         return;
     }
-    assert(rbuf->user_buffer == NULL);
+    assert(rbuf->b.user_ptr == NULL);
 
     map = rws->buffer_map(rws, rbuf->buf, r300->cs,
                           PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD | usage);
@@ -268,25 +223,25 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
 
     rbuf->magic = R300_BUFFER_MAGIC;
 
-    rbuf->b.b = *templ;
-    rbuf->b.vtbl = &r300_buffer_vtbl;
-    pipe_reference_init(&rbuf->b.b.reference, 1);
-    rbuf->b.b.screen = screen;
+    rbuf->b.b.b = *templ;
+    rbuf->b.b.vtbl = &r300_buffer_vtbl;
+    pipe_reference_init(&rbuf->b.b.b.reference, 1);
+    rbuf->b.b.b.screen = screen;
+    rbuf->b.user_ptr = NULL;
     rbuf->domain = R300_DOMAIN_GTT;
     rbuf->buf = NULL;
     rbuf->constant_buffer = NULL;
-    rbuf->user_buffer = NULL;
 
     /* Alloc constant buffers in RAM. */
     if (templ->bind & PIPE_BIND_CONSTANT_BUFFER) {
         rbuf->constant_buffer = MALLOC(templ->width0);
-        return &rbuf->b.b;
+        return &rbuf->b.b.b;
     }
 
     rbuf->buf =
         r300screen->rws->buffer_create(r300screen->rws,
-                                       rbuf->b.b.width0, alignment,
-                                       rbuf->b.b.bind, rbuf->b.b.usage,
+                                       rbuf->b.b.b.width0, alignment,
+                                       rbuf->b.b.b.bind, rbuf->b.b.b.usage,
                                        rbuf->domain);
     rbuf->cs_buf =
         r300screen->rws->buffer_get_cs_handle(r300screen->rws, rbuf->buf);
@@ -296,7 +251,7 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
         return NULL;
     }
 
-    return &rbuf->b.b;
+    return &rbuf->b.b.b;
 }
 
 struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
@@ -310,21 +265,21 @@ struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
 
     rbuf->magic = R300_BUFFER_MAGIC;
 
-    pipe_reference_init(&rbuf->b.b.reference, 1);
-    rbuf->b.vtbl = &r300_buffer_vtbl;
-    rbuf->b.b.screen = screen;
-    rbuf->b.b.target = PIPE_BUFFER;
-    rbuf->b.b.format = PIPE_FORMAT_R8_UNORM;
-    rbuf->b.b.usage = PIPE_USAGE_IMMUTABLE;
-    rbuf->b.b.bind = bind;
-    rbuf->b.b.width0 = ~0;
-    rbuf->b.b.height0 = 1;
-    rbuf->b.b.depth0 = 1;
-    rbuf->b.b.array_size = 1;
-    rbuf->b.b.flags = 0;
+    pipe_reference_init(&rbuf->b.b.b.reference, 1);
+    rbuf->b.b.b.screen = screen;
+    rbuf->b.b.b.target = PIPE_BUFFER;
+    rbuf->b.b.b.format = PIPE_FORMAT_R8_UNORM;
+    rbuf->b.b.b.usage = PIPE_USAGE_IMMUTABLE;
+    rbuf->b.b.b.bind = bind;
+    rbuf->b.b.b.width0 = ~0;
+    rbuf->b.b.b.height0 = 1;
+    rbuf->b.b.b.depth0 = 1;
+    rbuf->b.b.b.array_size = 1;
+    rbuf->b.b.b.flags = 0;
+    rbuf->b.b.vtbl = &r300_buffer_vtbl;
+    rbuf->b.user_ptr = ptr;
     rbuf->domain = R300_DOMAIN_GTT;
     rbuf->buf = NULL;
     rbuf->constant_buffer = NULL;
-    rbuf->user_buffer = ptr;
-    return &rbuf->b.b;
+    return &rbuf->b.b.b;
 }

@@ -83,12 +83,6 @@ static void r300_release_referenced_objects(struct r300_context *r300)
     /* The SWTCL VBO. */
     pipe_resource_reference(&r300->vbo, NULL);
 
-    /* Vertex buffers. */
-    for (i = 0; i < r300->real_vertex_buffer_count; i++) {
-        pipe_resource_reference(&r300->vertex_buffer[i].buffer, NULL);
-        pipe_resource_reference(&r300->real_vertex_buffer[i], NULL);
-    }
-
     /* If there are any queries pending or not destroyed, remove them now. */
     foreach_s(query, temp, &r300->query_list) {
         remove_from_list(query);
@@ -108,13 +102,10 @@ static void r300_destroy_context(struct pipe_context* context)
     if (r300->draw)
         draw_destroy(r300->draw);
 
-    if (r300->upload_vb)
-        u_upload_destroy(r300->upload_vb);
+    if (r300->vbuf_mgr)
+        u_vbuf_mgr_destroy(r300->vbuf_mgr);
     if (r300->upload_ib)
         u_upload_destroy(r300->upload_ib);
-
-    if (r300->tran.translate_cache)
-        translate_cache_destroy(r300->tran.translate_cache);
 
     /* XXX: This function assumes r300->query_list was initialized */
     r300_release_referenced_objects(r300);
@@ -442,6 +433,11 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300_init_state_functions(r300);
     r300_init_resource_functions(r300);
 
+    r300->vbuf_mgr = u_vbuf_mgr_create(&r300->context, 1024 * 1024, 16,
+				       U_VERTEX_FETCH_DWORD_ALIGNED);
+    if (!r300->vbuf_mgr)
+        goto fail;
+
     r300->blitter = util_blitter_create(&r300->context);
     if (r300->blitter == NULL)
         goto fail;
@@ -461,16 +457,6 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 				      PIPE_BIND_INDEX_BUFFER);
 
     if (r300->upload_ib == NULL)
-        goto fail;
-
-    r300->upload_vb = u_upload_create(&r300->context,
-				      1024 * 1024, 16,
-				      PIPE_BIND_VERTEX_BUFFER);
-    if (r300->upload_vb == NULL)
-        goto fail;
-
-    r300->tran.translate_cache = translate_cache_create();
-    if (r300->tran.translate_cache == NULL)
         goto fail;
 
     r300_init_states(&r300->context);

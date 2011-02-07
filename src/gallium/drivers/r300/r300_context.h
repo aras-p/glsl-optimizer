@@ -30,8 +30,7 @@
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
 #include "util/u_transfer.h"
-
-#include "translate/translate_cache.h"
+#include "util/u_vbuf_mgr.h"
 
 #include "r300_defines.h"
 #include "r300_screen.h"
@@ -421,31 +420,14 @@ struct r300_texture {
 struct r300_vertex_element_state {
     unsigned count;
     struct pipe_vertex_element velem[PIPE_MAX_ATTRIBS];
+    unsigned format_size[PIPE_MAX_ATTRIBS];
 
-    /* If (velem[i].src_format != hw_format[i]), the vertex buffer
-     * referenced by this vertex element cannot be used for rendering and
-     * its vertex data must be translated to hw_format[i]. */
-    enum pipe_format hw_format[PIPE_MAX_ATTRIBS];
-    unsigned hw_format_size[PIPE_MAX_ATTRIBS];
+    struct u_vbuf_mgr_elements *vmgr_elements;
 
     /* The size of the vertex, in dwords. */
     unsigned vertex_size_dwords;
 
-    /* This might mean two things:
-     * - src_format != hw_format, as discussed above.
-     * - src_offset % 4 != 0. */
-    boolean incompatible_layout;
-
     struct r300_vertex_stream_state vertex_stream;
-};
-
-struct r300_translate_context {
-    /* Translate cache for incompatible vertex offset/stride/format fallback. */
-    struct translate_cache *translate_cache;
-
-    /* Saved and new vertex element state. */
-    void *saved_velems, *new_velems;
-    unsigned vb_slot;
 };
 
 struct r300_context {
@@ -474,8 +456,6 @@ struct r300_context {
     struct blitter_context* blitter;
     /* Stencil two-sided reference value fallback. */
     struct r300_stencilref_context *stencilref_fallback;
-    /* For translating vertex buffers having incompatible vertex layout. */
-    struct r300_translate_context tran;
 
     /* The KIL opcode needs the first texture unit to be enabled
      * on r3xx-r4xx. In order to calm down the CS checker, we bind this
@@ -557,15 +537,6 @@ struct r300_context {
     /* The pointers to the first and the last atom. */
     struct r300_atom *first_dirty, *last_dirty;
 
-    /* Vertex buffers for Gallium. */
-    /* May contain user buffers. */
-    struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
-    /* Contains only non-user buffers. */
-    struct pipe_resource *real_vertex_buffer[PIPE_MAX_ATTRIBS];
-    int vertex_buffer_count;
-    int real_vertex_buffer_count; /* with the translated buffer. */
-    int vertex_buffer_max_index;
-    boolean any_user_vbs;
     /* Vertex elements for Gallium. */
     struct r300_vertex_element_state *velems;
 
@@ -592,8 +563,6 @@ struct r300_context {
     int sprite_coord_enable;
     /* Whether two-sided color selection is enabled (AKA light_twoside). */
     boolean two_sided_color;
-    /* Incompatible vertex buffer layout? (misaligned stride or buffer_offset) */
-    boolean incompatible_vb_layout;
 
     boolean cbzb_clear;
     /* Whether ZMASK is enabled. */
@@ -610,9 +579,10 @@ struct r300_context {
     /* two mem block managers for hiz/zmask ram space */
     struct mem_block *hiz_mm;
 
-    /* upload managers */
-    struct u_upload_mgr *upload_vb;
+    /* upload manager */
     struct u_upload_mgr *upload_ib;
+
+    struct u_vbuf_mgr *vbuf_mgr;
 
     struct util_slab_mempool pool_transfers;
 
@@ -708,9 +678,6 @@ void r300_resume_query(struct r300_context *r300,
 void r300_stop_query(struct r300_context *r300);
 
 /* r300_render_translate.c */
-void r300_begin_vertex_translate(struct r300_context *r300,
-                                 int min_index, int max_index);
-void r300_end_vertex_translate(struct r300_context *r300);
 void r300_translate_index_buffer(struct r300_context *r300,
                                  struct pipe_resource **index_buffer,
                                  unsigned *index_size, unsigned index_offset,

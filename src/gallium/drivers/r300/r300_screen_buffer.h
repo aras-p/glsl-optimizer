@@ -46,7 +46,7 @@ struct r300_buffer_range {
 /* Vertex buffer. */
 struct r300_buffer
 {
-    struct u_resource b;
+    struct u_vbuf_resource b;
 
     uint32_t magic;
 
@@ -55,14 +55,10 @@ struct r300_buffer
 
     enum r300_buffer_domain domain;
 
-    uint8_t *user_buffer;
     uint8_t *constant_buffer;
 };
 
 /* Functions. */
-
-void r300_upload_user_buffers(struct r300_context *r300,
-			      int min_index, int max_index);
 
 void r300_upload_index_buffer(struct r300_context *r300,
 			      struct pipe_resource **index_buffer,
@@ -85,11 +81,6 @@ unsigned r300_buffer_is_referenced(struct pipe_context *context,
 static INLINE struct r300_buffer *r300_buffer(struct pipe_resource *buffer)
 {
     return (struct r300_buffer *)buffer;
-}
-
-static INLINE boolean r300_is_user_buffer(struct pipe_resource *buffer)
-{
-    return r300_buffer(buffer)->user_buffer ? true : false;
 }
 
 #endif
