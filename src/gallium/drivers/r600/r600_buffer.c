@@ -144,7 +144,7 @@ static void r600_buffer_transfer_inline_write(struct pipe_context *pipe,
 	struct r600_resource_buffer *rbuffer = r600_buffer(resource);
 	uint8_t *map = NULL;
 
-	assert(rbuffer->b.user_ptr == NULL);
+	assert(rbuffer->r.b.user_ptr == NULL);
 
 	map = r600_bo_map(ws, rbuffer->r.bo,
 			  PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD | usage,
