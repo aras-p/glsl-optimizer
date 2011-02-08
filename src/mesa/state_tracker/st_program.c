@@ -108,6 +108,8 @@ delete_fp_variant(struct st_context *st, struct st_fp_variant *fpv)
 {
    if (fpv->driver_shader) 
       cso_delete_fragment_shader(st->cso_context, fpv->driver_shader);
+   if (fpv->parameters)
+      _mesa_free_parameter_list(fpv->parameters);
       
    FREE(fpv);
 }
