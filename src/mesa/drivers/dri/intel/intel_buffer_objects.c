@@ -162,11 +162,15 @@ intel_bufferobj_data(struct gl_context * ctx,
    intel_obj->sys_buffer = NULL;
 
    if (size != 0) {
+      if (usage == GL_DYNAMIC_DRAW
 #ifdef I915
-      /* On pre-965, stick VBOs in system memory, as we're always doing swtnl
-       * with their contents anyway.
-       */
-      if (target == GL_ARRAY_BUFFER || target == GL_ELEMENT_ARRAY_BUFFER) {
+	  /* On pre-965, stick VBOs in system memory, as we're always doing
+	   * swtnl with their contents anyway.
+	   */
+	  || target == GL_ARRAY_BUFFER || target == GL_ELEMENT_ARRAY_BUFFER
+#endif
+	 )
+      {
 	 intel_obj->sys_buffer = malloc(size);
 	 if (intel_obj->sys_buffer != NULL) {
 	    if (data != NULL)
@@ -174,7 +178,6 @@ intel_bufferobj_data(struct gl_context * ctx,
 	    return GL_TRUE;
 	 }
       }
-#endif
       intel_bufferobj_alloc_buffer(intel, intel_obj);
       if (!intel_obj->buffer)
          return GL_FALSE;
@@ -211,9 +214,13 @@ intel_bufferobj_subdata(struct gl_context * ctx,
    if (intel_obj->region)
       intel_bufferobj_cow(intel, intel_obj);
 
-   if (intel_obj->sys_buffer)
+   if (intel_obj->sys_buffer) {
+      if (intel_obj->buffer) {
+	 drm_intel_bo_unreference(intel_obj->buffer);
+	 intel_obj->buffer = NULL;
+      }
       memcpy((char *)intel_obj->sys_buffer + offset, data, size);
-   else {
+   } else {
       /* Flush any existing batchbuffer that might reference this data. */
       if (intel->gen < 6) {
 	 if (drm_intel_bo_busy(intel_obj->buffer) ||
@@ -280,6 +287,10 @@ intel_bufferobj_map(struct gl_context * ctx,
    assert(intel_obj);
 
    if (intel_obj->sys_buffer) {
+      if (!read_only && intel_obj->buffer) {
+	 drm_intel_bo_unreference(intel_obj->buffer);
+	 intel_obj->buffer = NULL;
+      }
       obj->Pointer = intel_obj->sys_buffer;
       obj->Length = obj->Size;
       obj->Offset = 0;
@@ -347,6 +358,10 @@ intel_bufferobj_map_range(struct gl_context * ctx,
    obj->AccessFlags = access;
 
    if (intel_obj->sys_buffer) {
+      if (access != GL_READ_ONLY_ARB && intel_obj->buffer) {
+	 drm_intel_bo_unreference(intel_obj->buffer);
+	 intel_obj->buffer = NULL;
+      }
       obj->Pointer = intel_obj->sys_buffer + offset;
       return obj->Pointer;
    }
@@ -525,20 +540,16 @@ intel_bufferobj_buffer(struct intel_context *intel,
    }
 
    if (intel_obj->buffer == NULL) {
-      void *sys_buffer = intel_obj->sys_buffer;
-
-      /* only one of buffer and sys_buffer could be non-NULL */
+      /* XXX suballocate for DYNAMIC READ */
       intel_bufferobj_alloc_buffer(intel, intel_obj);
-      intel_obj->sys_buffer = NULL;
+      drm_intel_bo_subdata(intel_obj->buffer,
+			   0, intel_obj->Base.Size,
+			   intel_obj->sys_buffer);
 
-      intel_bufferobj_subdata(&intel->ctx,
-			      GL_ARRAY_BUFFER_ARB,
-			      0,
-			      intel_obj->Base.Size,
-			      sys_buffer,
-			      &intel_obj->Base);
-      free(sys_buffer);
-      intel_obj->sys_buffer = NULL;
+      if (flag != INTEL_READ) {
+	 free(intel_obj->sys_buffer);
+	 intel_obj->sys_buffer = NULL;
+      }
    }
 
    return intel_obj->buffer;
