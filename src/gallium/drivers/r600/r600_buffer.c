@@ -42,13 +42,14 @@
 static void r600_buffer_destroy(struct pipe_screen *screen,
 				struct pipe_resource *buf)
 {
+	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	struct r600_resource_buffer *rbuffer = r600_buffer(buf);
 
 	if (rbuffer->r.bo) {
 		r600_bo_reference((struct radeon*)screen->winsys, &rbuffer->r.bo, NULL);
 	}
 	rbuffer->r.bo = NULL;
-	FREE(rbuffer);
+	util_slab_free(&rscreen->pool_buffers, rbuffer);
 }
 
 static unsigned r600_buffer_is_referenced_by_cs(struct pipe_context *context,
@@ -57,6 +58,29 @@ static unsigned r600_buffer_is_referenced_by_cs(struct pipe_context *context,
 {
 	/* FIXME */
 	return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+}
+
+static struct pipe_transfer *r600_get_transfer(struct pipe_context *ctx,
+					       struct pipe_resource *resource,
+					       unsigned level,
+					       unsigned usage,
+					       const struct pipe_box *box)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context*)ctx;
+	struct pipe_transfer *transfer = util_slab_alloc(&rctx->pool_transfers);
+
+	transfer->resource = resource;
+	transfer->level = level;
+	transfer->usage = usage;
+	transfer->box = *box;
+	transfer->stride = 0;
+	transfer->layer_stride = 0;
+	transfer->data = NULL;
+
+	/* Note strides are zero, this is ok for buffers, but not for
+	 * textures 2d & higher at least.
+	 */
+	return transfer;
 }
 
 static void *r600_buffer_transfer_map(struct pipe_context *pipe,
@@ -100,13 +124,21 @@ static void r600_buffer_transfer_flush_region(struct pipe_context *pipe,
 {
 }
 
+static void r600_transfer_destroy(struct pipe_context *ctx,
+				  struct pipe_transfer *transfer)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context*)ctx;
+	util_slab_free(&rctx->pool_transfers, transfer);
+}
+
+
 static const struct u_resource_vtbl r600_buffer_vtbl =
 {
 	u_default_resource_get_handle,		/* get_handle */
 	r600_buffer_destroy,			/* resource_destroy */
 	r600_buffer_is_referenced_by_cs,	/* is_buffer_referenced */
-	u_default_get_transfer,			/* get_transfer */
-	u_default_transfer_destroy,		/* transfer_destroy */
+	r600_get_transfer,			/* get_transfer */
+	r600_transfer_destroy,			/* transfer_destroy */
 	r600_buffer_transfer_map,		/* transfer_map */
 	r600_buffer_transfer_flush_region,	/* transfer_flush_region */
 	r600_buffer_transfer_unmap,		/* transfer_unmap */
@@ -116,14 +148,13 @@ static const struct u_resource_vtbl r600_buffer_vtbl =
 struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ)
 {
+	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	struct r600_resource_buffer *rbuffer;
 	struct r600_bo *bo;
 	/* XXX We probably want a different alignment for buffers and textures. */
 	unsigned alignment = 4096;
 
-	rbuffer = CALLOC_STRUCT(r600_resource_buffer);
-	if (rbuffer == NULL)
-		return NULL;
+	rbuffer = util_slab_alloc(&rscreen->pool_buffers);
 
 	rbuffer->magic = R600_BUFFER_MAGIC;
 	rbuffer->r.b.b.b = *templ;
@@ -151,11 +182,10 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 					      void *ptr, unsigned bytes,
 					      unsigned bind)
 {
+	struct r600_screen *rscreen = (struct r600_screen*)screen;
 	struct r600_resource_buffer *rbuffer;
 
-	rbuffer = CALLOC_STRUCT(r600_resource_buffer);
-	if (rbuffer == NULL)
-		return NULL;
+	rbuffer = util_slab_alloc(&rscreen->pool_buffers);
 
 	rbuffer->magic = R600_BUFFER_MAGIC;
 	pipe_reference_init(&rbuffer->r.b.b.b.reference, 1);

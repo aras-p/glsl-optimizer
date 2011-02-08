@@ -75,6 +75,26 @@ static void r600_flush(struct pipe_context *ctx, unsigned flags,
 	u_upload_flush(rctx->vbuf_mgr->uploader);
 }
 
+static void r600_update_num_contexts(struct r600_screen *rscreen,
+                                     int diff)
+{
+	pipe_mutex_lock(rscreen->mutex_num_contexts);
+	if (diff > 0) {
+		rscreen->num_contexts++;
+
+		if (rscreen->num_contexts > 1)
+			util_slab_set_thread_safety(&rscreen->pool_buffers,
+						    UTIL_SLAB_MULTITHREADED);
+	} else {
+		rscreen->num_contexts--;
+
+		if (rscreen->num_contexts <= 1)
+			util_slab_set_thread_safety(&rscreen->pool_buffers,
+						    UTIL_SLAB_SINGLETHREADED);
+	}
+	pipe_mutex_unlock(rscreen->mutex_num_contexts);
+}
+
 static void r600_destroy_context(struct pipe_context *context)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)context;
@@ -90,6 +110,9 @@ static void r600_destroy_context(struct pipe_context *context)
 	}
 
 	u_vbuf_mgr_destroy(rctx->vbuf_mgr);
+	util_slab_destroy(&rctx->pool_transfers);
+
+	r600_update_num_contexts(rctx->screen, -1);
 
 	FREE(rctx);
 }
@@ -102,6 +125,9 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 
 	if (rctx == NULL)
 		return NULL;
+
+	r600_update_num_contexts(rscreen, 1);
+
 	rctx->context.winsys = rscreen->screen.winsys;
 	rctx->context.screen = screen;
 	rctx->context.priv = priv;
@@ -161,6 +187,10 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		return NULL;
 	}
 
+	util_slab_create(&rctx->pool_transfers,
+			 sizeof(struct pipe_transfer), 64,
+			 UTIL_SLAB_SINGLETHREADED);
+
 	rctx->vbuf_mgr = u_vbuf_mgr_create(&rctx->context, 1024 * 1024, 256,
 					   PIPE_BIND_VERTEX_BUFFER |
 					   PIPE_BIND_INDEX_BUFFER |
@@ -173,7 +203,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 
 	rctx->blitter = util_blitter_create(&rctx->context);
 	if (rctx->blitter == NULL) {
-		FREE(rctx);
+		r600_destroy_context(&rctx->context);
 		return NULL;
 	}
 
@@ -444,6 +474,8 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 
 	radeon_decref(rscreen->radeon);
 
+	util_slab_destroy(&rscreen->pool_buffers);
+	pipe_mutex_destroy(rscreen->mutex_num_contexts);
 	FREE(rscreen);
 }
 
@@ -470,6 +502,12 @@ struct pipe_screen *r600_screen_create(struct radeon *radeon)
 	r600_init_screen_resource_functions(&rscreen->screen);
 
 	rscreen->tiling_info = r600_get_tiling_info(radeon);
+
+	util_slab_create(&rscreen->pool_buffers,
+			 sizeof(struct r600_resource_buffer), 64,
+			 UTIL_SLAB_SINGLETHREADED);
+
+	pipe_mutex_init(rscreen->mutex_num_contexts);
 
 	return &rscreen->screen;
 }

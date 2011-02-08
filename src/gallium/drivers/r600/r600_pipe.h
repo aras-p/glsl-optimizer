@@ -30,6 +30,7 @@
 #include <pipe/p_screen.h>
 #include <pipe/p_context.h>
 #include <util/u_math.h>
+#include "util/u_slab.h"
 #include "util/u_vbuf_mgr.h"
 #include "r600.h"
 #include "r600_public.h"
@@ -64,6 +65,11 @@ struct r600_screen {
 	struct pipe_screen		screen;
 	struct radeon			*radeon;
 	struct r600_tiling_info		*tiling_info;
+	struct util_slab_mempool	pool_buffers;
+	unsigned			num_contexts;
+
+	/* for thread-safe write accessing to num_contexts */
+	pipe_mutex			mutex_num_contexts;
 };
 
 struct r600_pipe_sampler_view {
@@ -152,6 +158,7 @@ struct r600_pipe_context {
 	struct r600_textures_info	ps_samplers;
 
 	struct u_vbuf_mgr		*vbuf_mgr;
+	struct util_slab_mempool	pool_transfers;
 	bool				blit;
 };
 
