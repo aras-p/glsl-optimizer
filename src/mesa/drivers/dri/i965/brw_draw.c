@@ -471,11 +471,6 @@ void brw_draw_destroy( struct brw_context *brw )
 {
    int i;
 
-   if (brw->vb.upload.bo != NULL) {
-      drm_intel_bo_unreference(brw->vb.upload.bo);
-      brw->vb.upload.bo = NULL;
-   }
-
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
       drm_intel_bo_unreference(brw->vb.inputs[i].bo);
       brw->vb.inputs[i].bo = NULL;

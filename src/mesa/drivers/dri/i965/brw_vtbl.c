@@ -163,15 +163,6 @@ static void brw_new_batch( struct intel_context *intel )
    brw->state.dirty.mesa |= ~0;
    brw->state.dirty.brw |= ~0;
    brw->state.dirty.cache |= ~0;
-
-   /* Move to the end of the current upload buffer so that we'll force choosing
-    * a new buffer next time.
-    */
-   if (brw->vb.upload.bo != NULL) {
-      drm_intel_bo_unreference(brw->vb.upload.bo);
-      brw->vb.upload.bo = NULL;
-      brw->vb.upload.offset = 0;
-   }
 }
 
 static void brw_invalidate_state( struct intel_context *intel, GLuint new_state )

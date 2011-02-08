@@ -70,7 +70,17 @@ drm_intel_bo *intel_bufferobj_source(struct intel_context *intel,
 				     struct intel_buffer_object *obj,
 				     GLuint *offset);
 
-/* Hook the bufferobject implementation into mesa: 
+void intel_upload_data(struct intel_context *intel,
+		       const void *ptr, GLuint size,
+		       drm_intel_bo **return_bo,
+		       GLuint *return_offset);
+
+void *intel_upload_map(struct intel_context *intel,
+		       GLuint size,
+		       drm_intel_bo **return_bo,
+		       GLuint *return_offset);
+
+/* Hook the bufferobject implementation into mesa:
  */
 void intelInitBufferObjectFuncs(struct dd_function_table *functions);
 

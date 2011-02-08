@@ -157,6 +157,7 @@ intel_bufferobj_data(struct gl_context * ctx,
    if (intel_obj->buffer != NULL) {
       drm_intel_bo_unreference(intel_obj->buffer);
       intel_obj->buffer = NULL;
+      intel_obj->source = 0;
    }
    free(intel_obj->sys_buffer);
    intel_obj->sys_buffer = NULL;
@@ -218,6 +219,7 @@ intel_bufferobj_subdata(struct gl_context * ctx,
       if (intel_obj->buffer) {
 	 drm_intel_bo_unreference(intel_obj->buffer);
 	 intel_obj->buffer = NULL;
+	 intel_obj->source = 0;
       }
       memcpy((char *)intel_obj->sys_buffer + offset, data, size);
    } else {
@@ -290,6 +292,7 @@ intel_bufferobj_map(struct gl_context * ctx,
       if (!read_only && intel_obj->buffer) {
 	 drm_intel_bo_unreference(intel_obj->buffer);
 	 intel_obj->buffer = NULL;
+	 intel_obj->source = 0;
       }
       obj->Pointer = intel_obj->sys_buffer;
       obj->Length = obj->Size;
@@ -361,6 +364,7 @@ intel_bufferobj_map_range(struct gl_context * ctx,
       if (access != GL_READ_ONLY_ARB && intel_obj->buffer) {
 	 drm_intel_bo_unreference(intel_obj->buffer);
 	 intel_obj->buffer = NULL;
+	 intel_obj->source = 0;
       }
       obj->Pointer = intel_obj->sys_buffer + offset;
       return obj->Pointer;
@@ -574,28 +578,61 @@ static void wrap_buffers(struct intel_context *intel, GLuint size)
    intel->upload.offset = 0;
 }
 
+void intel_upload_data(struct intel_context *intel,
+		       const void *ptr, GLuint size,
+		       drm_intel_bo **return_bo,
+		       GLuint *return_offset)
+{
+   if (intel->upload.bo == NULL ||
+       intel->upload.offset + size > intel->upload.bo->size) {
+      wrap_buffers(intel, size);
+   }
+
+   drm_intel_bo_reference(intel->upload.bo);
+   *return_bo = intel->upload.bo;
+   *return_offset = intel->upload.offset;
+
+   drm_intel_bo_subdata(intel->upload.bo,
+			intel->upload.offset,
+			size, ptr);
+
+   intel->upload.offset += ALIGN(size, 64);
+}
+
+void *intel_upload_map(struct intel_context *intel,
+		       GLuint size,
+		       drm_intel_bo **return_bo,
+		       GLuint *return_offset)
+{
+   char *ptr;
+
+   if (intel->upload.bo == NULL ||
+       intel->upload.offset + size > intel->upload.bo->size) {
+      wrap_buffers(intel, size);
+   }
+
+   drm_intel_bo_reference(intel->upload.bo);
+   *return_bo = intel->upload.bo;
+   *return_offset = intel->upload.offset;
+
+   drm_intel_gem_bo_map_gtt(intel->upload.bo);
+   ptr = intel->upload.bo->virtual;
+   ptr += intel->upload.offset;
+   intel->upload.offset += ALIGN(size, 64);
+
+   return ptr;
+}
+
 drm_intel_bo *
 intel_bufferobj_source(struct intel_context *intel,
                        struct intel_buffer_object *intel_obj,
 		       GLuint *offset)
 {
    if (intel_obj->buffer == NULL) {
-      GLuint size = ALIGN(intel_obj->Base.Size, 64);
-
-      if (intel->upload.bo == NULL ||
-	  intel->upload.offset + size > intel->upload.bo->size) {
-	 wrap_buffers(intel, size);
-      }
-
-      drm_intel_bo_reference(intel->upload.bo);
-      intel_obj->buffer = intel->upload.bo;
-      intel_obj->offset = intel->upload.offset;
+      intel_upload_data(intel,
+			intel_obj->sys_buffer, intel_obj->Base.Size,
+			&intel_obj->buffer, &intel_obj->offset);
       intel_obj->source = 1;
-      intel->upload.offset += size;
-
-      drm_intel_bo_subdata(intel_obj->buffer,
-			   intel_obj->offset, intel_obj->Base.Size,
-			   intel_obj->sys_buffer);
    }
 
    *offset = intel_obj->offset;

@@ -238,47 +238,12 @@ static GLuint get_index_type(GLenum type)
    }
 }
 
-static void wrap_buffers( struct brw_context *brw,
-			  GLuint size )
-{
-   if (size < BRW_UPLOAD_INIT_SIZE)
-      size = BRW_UPLOAD_INIT_SIZE;
-
-   brw->vb.upload.offset = 0;
-
-   if (brw->vb.upload.bo != NULL)
-      drm_intel_bo_unreference(brw->vb.upload.bo);
-   brw->vb.upload.bo = drm_intel_bo_alloc(brw->intel.bufmgr, "temporary VBO",
-					  size, 1);
-}
-
-static void get_space( struct brw_context *brw,
-		       GLuint size,
-		       drm_intel_bo **bo_return,
-		       GLuint *offset_return )
-{
-   size = ALIGN(size, 64);
-
-   if (brw->vb.upload.bo == NULL ||
-       brw->vb.upload.offset + size > brw->vb.upload.bo->size) {
-      wrap_buffers(brw, size);
-   }
-
-   assert(*bo_return == NULL);
-   drm_intel_bo_reference(brw->vb.upload.bo);
-   *bo_return = brw->vb.upload.bo;
-   *offset_return = brw->vb.upload.offset;
-   brw->vb.upload.offset += size;
-}
-
 static void
 copy_array_to_vbo_array( struct brw_context *brw,
 			 struct brw_vertex_element *element,
 			 GLuint dst_stride)
 {
    GLuint size = element->count * dst_stride;
-
-   get_space(brw, size, &element->bo, &element->offset);
 
    if (element->glarray->StrideB == 0) {
       assert(element->count == 1);
@@ -288,26 +253,19 @@ copy_array_to_vbo_array( struct brw_context *brw,
    }
 
    if (dst_stride == element->glarray->StrideB) {
-      drm_intel_gem_bo_map_gtt(element->bo);
-      memcpy((char *)element->bo->virtual + element->offset,
-	     element->glarray->Ptr, size);
-      drm_intel_gem_bo_unmap_gtt(element->bo);
+      intel_upload_data(&brw->intel, element->glarray->Ptr, size,
+			&element->bo, &element->offset);
    } else {
-      char *dest;
       const unsigned char *src = element->glarray->Ptr;
+      char *dst = intel_upload_map(&brw->intel, size,
+				   &element->bo, &element->offset);
       int i;
 
-      drm_intel_gem_bo_map_gtt(element->bo);
-      dest = element->bo->virtual;
-      dest += element->offset;
-
       for (i = 0; i < element->count; i++) {
-	 memcpy(dest, src, dst_stride);
+	 memcpy(dst, src, dst_stride);
 	 src += element->glarray->StrideB;
-	 dest += dst_stride;
+	 dst += dst_stride;
       }
-
-      drm_intel_gem_bo_unmap_gtt(element->bo);
    }
 }
 
@@ -606,13 +564,7 @@ static void brw_prepare_indices(struct brw_context *brw)
 
       /* Get new bufferobj, offset:
        */
-      get_space(brw, ib_size, &bo, &offset);
-
-      /* Straight upload
-       */
-      drm_intel_gem_bo_map_gtt(bo);
-      memcpy((char *)bo->virtual + offset, index_buffer->ptr, ib_size);
-      drm_intel_gem_bo_unmap_gtt(bo);
+      intel_upload_data(&brw->intel, index_buffer->ptr, ib_size, &bo, &offset);
    } else {
       offset = (GLuint) (unsigned long) index_buffer->ptr;
       brw->ib.start_vertex_offset = 0;
@@ -627,9 +579,7 @@ static void brw_prepare_indices(struct brw_context *brw)
                                                 bufferobj);
            map += offset;
 
-	   get_space(brw, ib_size, &bo, &offset);
-
-	   drm_intel_bo_subdata(bo, offset, ib_size, map);
+	   intel_upload_data(&brw->intel, map, ib_size, &bo, &offset);
 
            ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB, bufferobj);
        } else {
@@ -641,7 +591,6 @@ static void brw_prepare_indices(struct brw_context *brw)
 
 	  bo = intel_bufferobj_source(intel, intel_buffer_object(bufferobj),
 				      &offset);
-	  drm_intel_bo_reference(bo);
 
 	  ib_size = bo->size;
        }

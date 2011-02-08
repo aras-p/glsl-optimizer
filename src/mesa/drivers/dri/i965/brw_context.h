@@ -487,14 +487,6 @@ struct brw_context
       struct brw_vertex_element *enabled[VERT_ATTRIB_MAX];
       GLuint nr_enabled;
 
-#define BRW_NR_UPLOAD_BUFS 17
-#define BRW_UPLOAD_INIT_SIZE (128*1024)
-
-      struct {
-	 drm_intel_bo *bo;
-	 GLuint offset;
-      } upload;
-
       /* Summary of size and varying of active arrays, so we can check
        * for changes to this state:
        */
