@@ -72,7 +72,7 @@ static void r600_flush(struct pipe_context *ctx, unsigned flags,
 	/* XXX These shouldn't be really necessary, but removing them breaks some tests.
 	 * Needless buffer reallocations may significantly increase memory consumption,
 	 * so getting rid of these 3 calls is important. */
-	u_vbuf_mgr_flush_uploader(rctx->vbuf_mgr);
+	u_upload_flush(rctx->vbuf_mgr->uploader);
 	u_upload_flush(rctx->upload_ib);
 	u_upload_flush(rctx->upload_const);
 }

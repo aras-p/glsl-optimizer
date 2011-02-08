@@ -54,6 +54,15 @@ struct u_vbuf_mgr {
 
    /* Precomputed max_index for hardware vertex buffers. */
    int max_index;
+
+   /* This uploader can optionally be used by the driver.
+    *
+    * Allowed functions:
+    * - u_upload_alloc
+    * - u_upload_data
+    * - u_upload_buffer
+    * - u_upload_flush */
+   struct u_upload_mgr *uploader;
 };
 
 struct u_vbuf_resource {
@@ -101,8 +110,6 @@ void u_vbuf_mgr_draw_begin(struct u_vbuf_mgr *mgr,
                            boolean *uploader_flushed);
 
 void u_vbuf_mgr_draw_end(struct u_vbuf_mgr *mgr);
-
-void u_vbuf_mgr_flush_uploader(struct u_vbuf_mgr *mgr);
 
 
 static INLINE struct u_vbuf_resource *u_vbuf_resource(struct pipe_resource *r)

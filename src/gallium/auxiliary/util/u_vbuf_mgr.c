@@ -73,8 +73,6 @@ struct u_vbuf_mgr_priv {
    struct translate_cache *translate_cache;
    unsigned translate_vb_slot;
 
-   struct u_upload_mgr *uploader;
-
    struct u_vbuf_mgr_elements *ve;
    void *saved_ve, *fallback_ve;
    boolean ve_binding_lock;
@@ -123,9 +121,9 @@ u_vbuf_mgr_create(struct pipe_context *pipe,
    mgr->pipe = pipe;
    mgr->translate_cache = translate_cache_create();
 
-   mgr->uploader = u_upload_create(pipe, upload_buffer_size,
-                                   upload_buffer_alignment,
-                                   PIPE_BIND_VERTEX_BUFFER);
+   mgr->b.uploader = u_upload_create(pipe, upload_buffer_size,
+                                     upload_buffer_alignment,
+                                     PIPE_BIND_VERTEX_BUFFER);
 
    mgr->caps.fetch_dword_unaligned =
          fetch_alignment == U_VERTEX_FETCH_BYTE_ALIGNED;
@@ -146,7 +144,7 @@ void u_vbuf_mgr_destroy(struct u_vbuf_mgr *mgrb)
    }
 
    translate_cache_destroy(mgr->translate_cache);
-   u_upload_destroy(mgr->uploader);
+   u_upload_destroy(mgr->b.uploader);
    FREE(mgr);
 }
 
@@ -240,7 +238,7 @@ static void u_vbuf_translate_begin(struct u_vbuf_mgr_priv *mgr,
    /* Create and map the output buffer. */
    num_verts = max_index + 1 - min_index;
 
-   u_upload_alloc(mgr->uploader,
+   u_upload_alloc(mgr->b.uploader,
                   key.output_stride * min_index,
                   key.output_stride * num_verts,
                   &out_offset, &out_buffer, upload_flushed,
@@ -537,7 +535,7 @@ static void u_vbuf_upload_buffers(struct u_vbuf_mgr_priv *mgr,
             size = mgr->ve->native_format_size[i];
          }
 
-         u_upload_data(mgr->uploader, first, size,
+         u_upload_data(mgr->b.uploader, first, size,
                        u_vbuf_resource(vb->buffer)->user_ptr + first,
                        &vb->buffer_offset,
                        &mgr->b.real_vertex_buffer[index],
@@ -596,11 +594,4 @@ void u_vbuf_mgr_draw_end(struct u_vbuf_mgr *mgrb)
    if (mgr->fallback_ve) {
       u_vbuf_translate_end(mgr);
    }
-}
-
-void u_vbuf_mgr_flush_uploader(struct u_vbuf_mgr *mgrb)
-{
-   struct u_vbuf_mgr_priv *mgr = (struct u_vbuf_mgr_priv*)mgrb;
-
-   u_upload_flush(mgr->uploader);
 }
