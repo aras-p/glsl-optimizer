@@ -1088,7 +1088,7 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 
 void r600_context_flush(struct r600_context *ctx)
 {
-	struct drm_radeon_cs drmib;
+	struct drm_radeon_cs drmib = {};
 	struct drm_radeon_cs_chunk chunks[2];
 	uint64_t chunk_array[2];
 	unsigned fence;

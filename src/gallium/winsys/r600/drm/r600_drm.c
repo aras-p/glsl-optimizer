@@ -67,7 +67,7 @@ unsigned r600_get_clock_crystal_freq(struct radeon *radeon)
 
 static int radeon_get_device(struct radeon *radeon)
 {
-	struct drm_radeon_info info;
+	struct drm_radeon_info info = {};
 	int r;
 
 	radeon->device = 0;
