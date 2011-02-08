@@ -413,7 +413,7 @@ st_translate_fragment_program(struct st_context *st,
 #if FEATURE_drawpix
    if (key->bitmap) {
       /* glBitmap drawing */
-      struct gl_fragment_program *fp;
+      struct gl_fragment_program *fp; /* we free this temp program below */
 
       st_make_bitmap_fragment_program(st, &stfp->Base,
                                       &fp, &variant->bitmap_sampler);
@@ -423,7 +423,7 @@ st_translate_fragment_program(struct st_context *st,
    }
    else if (key->drawpixels) {
       /* glDrawPixels drawing */
-      struct gl_fragment_program *fp;
+      struct gl_fragment_program *fp; /* we free this temp program below */
 
       if (key->drawpixels_z || key->drawpixels_stencil) {
          fp = st_make_drawpix_z_stencil_program(st, key->drawpixels_z,
@@ -629,6 +629,14 @@ st_translate_fragment_program(struct st_context *st,
       tgsi_dump( stfp->tgsi.tokens, 0/*TGSI_DUMP_VERBOSE*/ );
       debug_printf("\n");
    }
+
+#if FEATURE_drawpix
+   if (key->bitmap || key->drawpixels) {
+      /* Free the temporary program made above */
+      struct gl_fragment_program *fp = &stfp->Base;
+      _mesa_reference_fragprog(st->ctx, &fp, NULL);
+   }
+#endif
 
    return variant;
 }
