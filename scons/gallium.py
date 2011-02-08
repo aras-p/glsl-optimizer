@@ -402,12 +402,18 @@ def generate(env):
               '/Od', # disable optimizations
               '/Oi', # enable intrinsic functions
               '/Oy-', # disable frame pointer omission
-              '/GL-', # disable whole program optimization
             ]
         else:
             ccflags += [
                 '/O2', # optimize for speed
+            ]
+        if env['build'] == 'release':
+            ccflags += [
                 '/GL', # enable whole program optimization
+            ]
+        else:
+            ccflags += [
+                '/GL-', # disable whole program optimization
             ]
         ccflags += [
             '/fp:fast', # fast floating point 
@@ -498,7 +504,7 @@ def generate(env):
         else:
             env['_LIBFLAGS'] = '-Wl,--start-group ' + env['_LIBFLAGS'] + ' -Wl,--end-group'
     if msvc:
-        if env['build'] != 'debug':
+        if env['build'] == 'release':
             # enable Link-time Code Generation
             linkflags += ['/LTCG']
             env.Append(ARFLAGS = ['/LTCG'])
