@@ -187,6 +187,11 @@ struct intel_context
       unsigned int count;	/**< Number of vertices in current primitive */
    } prim;
 
+   struct {
+      drm_intel_bo *bo;
+      GLuint offset;
+   } upload;
+
    GLuint stats_wm;
 
    /* Offsets of fields within the current vertex:

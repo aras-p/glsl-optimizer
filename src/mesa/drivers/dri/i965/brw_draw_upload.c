@@ -359,13 +359,13 @@ static void brw_prepare_vertices(struct brw_context *brw)
       if (_mesa_is_bufferobj(input->glarray->BufferObj)) {
 	 struct intel_buffer_object *intel_buffer =
 	    intel_buffer_object(input->glarray->BufferObj);
+	 GLuint offset;
 
 	 /* Named buffer object: Just reference its contents directly. */
 	 drm_intel_bo_unreference(input->bo);
-	 input->bo = intel_bufferobj_buffer(intel, intel_buffer,
-					    INTEL_READ);
+	 input->bo = intel_bufferobj_source(intel, intel_buffer, &offset);
 	 drm_intel_bo_reference(input->bo);
-	 input->offset = (unsigned long)input->glarray->Ptr;
+	 input->offset = offset + (unsigned long)input->glarray->Ptr;
 	 input->stride = input->glarray->StrideB;
 	 input->count = input->glarray->_MaxElement;
 
@@ -633,16 +633,16 @@ static void brw_prepare_indices(struct brw_context *brw)
 
            ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB, bufferobj);
        } else {
-	  bo = intel_bufferobj_buffer(intel, intel_buffer_object(bufferobj),
-				      INTEL_READ);
-	  drm_intel_bo_reference(bo);
-
 	  /* Use CMD_3D_PRIM's start_vertex_offset to avoid re-uploading
 	   * the index buffer state when we're just moving the start index
 	   * of our drawing.
 	   */
 	  brw->ib.start_vertex_offset = offset / ib_type_size;
-	  offset = 0;
+
+	  bo = intel_bufferobj_source(intel, intel_buffer_object(bufferobj),
+				      &offset);
+	  drm_intel_bo_reference(bo);
+
 	  ib_size = bo->size;
        }
    }

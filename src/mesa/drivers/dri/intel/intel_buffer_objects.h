@@ -42,6 +42,8 @@ struct intel_buffer_object
 {
    struct gl_buffer_object Base;
    drm_intel_bo *buffer;     /* the low-level buffer manager's buffer handle */
+   GLuint offset;            /* any offset into that buffer */
+
    /** System memory buffer data, if not using a BO to store the data. */
    void *sys_buffer;
 
@@ -55,6 +57,7 @@ struct intel_buffer_object
    GLsizei range_map_size;
 
    GLboolean mapped_gtt;
+   GLboolean source;
 };
 
 
@@ -63,6 +66,9 @@ struct intel_buffer_object
 drm_intel_bo *intel_bufferobj_buffer(struct intel_context *intel,
 				     struct intel_buffer_object *obj,
 				     GLuint flag);
+drm_intel_bo *intel_bufferobj_source(struct intel_context *intel,
+				     struct intel_buffer_object *obj,
+				     GLuint *offset);
 
 /* Hook the bufferobject implementation into mesa: 
  */

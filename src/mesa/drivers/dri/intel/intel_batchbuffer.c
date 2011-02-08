@@ -175,6 +175,12 @@ _intel_batchbuffer_flush(struct intel_batchbuffer *batch, const char *file,
    if (intel->vtbl.finish_batch)
       intel->vtbl.finish_batch(intel);
 
+   if (intel->upload.bo) {
+      drm_intel_bo_unreference(intel->upload.bo);
+      intel->upload.bo = NULL;
+      intel->upload.offset = 0;
+   }
+
    /* Check that we didn't just wrap our batchbuffer at a bad time. */
    assert(!intel->no_batch_wrap);
 

@@ -235,11 +235,13 @@ try_pbo_upload(struct intel_context *intel,
       intel_flush(&intel->ctx);
 
    {
-      drm_intel_bo *src_buffer = intel_bufferobj_buffer(intel, pbo, INTEL_READ);
+      GLuint offset;
+      drm_intel_bo *src_buffer = intel_bufferobj_source(intel, pbo, &offset);
 
       if (!intelEmitCopyBlit(intel,
 			     intelImage->mt->cpp,
-			     src_stride, src_buffer, src_offset, GL_FALSE,
+			     src_stride, src_buffer,
+			     src_offset + offset, GL_FALSE,
 			     dst_stride, dst_buffer, 0,
 			     intelImage->mt->region->tiling,
 			     0, 0, dst_x, dst_y, width, height,

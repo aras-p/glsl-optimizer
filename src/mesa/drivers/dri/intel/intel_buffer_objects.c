@@ -528,7 +528,8 @@ intel_bufferobj_unmap(struct gl_context * ctx,
 
 drm_intel_bo *
 intel_bufferobj_buffer(struct intel_context *intel,
-                       struct intel_buffer_object *intel_obj, GLuint flag)
+                       struct intel_buffer_object *intel_obj,
+		       GLuint flag)
 {
    if (intel_obj->region) {
       if (flag == INTEL_WRITE_PART)
@@ -539,19 +540,65 @@ intel_bufferobj_buffer(struct intel_context *intel,
       }
    }
 
+   if (intel_obj->source) {
+      drm_intel_bo_unreference(intel_obj->buffer);
+      intel_obj->buffer = NULL;
+      intel_obj->source = 0;
+   }
+
    if (intel_obj->buffer == NULL) {
-      /* XXX suballocate for DYNAMIC READ */
       intel_bufferobj_alloc_buffer(intel, intel_obj);
       drm_intel_bo_subdata(intel_obj->buffer,
 			   0, intel_obj->Base.Size,
 			   intel_obj->sys_buffer);
 
-      if (flag != INTEL_READ) {
-	 free(intel_obj->sys_buffer);
-	 intel_obj->sys_buffer = NULL;
-      }
+      free(intel_obj->sys_buffer);
+      intel_obj->sys_buffer = NULL;
+      intel_obj->offset = 0;
    }
 
+   return intel_obj->buffer;
+}
+
+#define INTEL_UPLOAD_SIZE (64*1024)
+
+static void wrap_buffers(struct intel_context *intel, GLuint size)
+{
+   if (size < INTEL_UPLOAD_SIZE)
+      size = INTEL_UPLOAD_SIZE;
+
+   if (intel->upload.bo != NULL)
+      drm_intel_bo_unreference(intel->upload.bo);
+
+   intel->upload.bo = drm_intel_bo_alloc(intel->bufmgr, "upload", size, 0);
+   intel->upload.offset = 0;
+}
+
+drm_intel_bo *
+intel_bufferobj_source(struct intel_context *intel,
+                       struct intel_buffer_object *intel_obj,
+		       GLuint *offset)
+{
+   if (intel_obj->buffer == NULL) {
+      GLuint size = ALIGN(intel_obj->Base.Size, 64);
+
+      if (intel->upload.bo == NULL ||
+	  intel->upload.offset + size > intel->upload.bo->size) {
+	 wrap_buffers(intel, size);
+      }
+
+      drm_intel_bo_reference(intel->upload.bo);
+      intel_obj->buffer = intel->upload.bo;
+      intel_obj->offset = intel->upload.offset;
+      intel_obj->source = 1;
+      intel->upload.offset += size;
+
+      drm_intel_bo_subdata(intel_obj->buffer,
+			   intel_obj->offset, intel_obj->Base.Size,
+			   intel_obj->sys_buffer);
+   }
+
+   *offset = intel_obj->offset;
    return intel_obj->buffer;
 }
 
@@ -566,6 +613,7 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
    struct intel_buffer_object *intel_src = intel_buffer_object(src);
    struct intel_buffer_object *intel_dst = intel_buffer_object(dst);
    drm_intel_bo *src_bo, *dst_bo;
+   GLuint src_offset;
 
    if (size == 0)
       return;
@@ -600,11 +648,11 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
    /* Otherwise, we have real BOs, so blit them. */
 
    dst_bo = intel_bufferobj_buffer(intel, intel_dst, INTEL_WRITE_PART);
-   src_bo = intel_bufferobj_buffer(intel, intel_src, INTEL_READ);
+   src_bo = intel_bufferobj_source(intel, intel_src, &src_offset);
 
    intel_emit_linear_blit(intel,
 			  dst_bo, write_offset,
-			  src_bo, read_offset, size);
+			  src_bo, read_offset + src_offset, size);
 
    /* Since we've emitted some blits to buffers that will (likely) be used
     * in rendering operations in other cache domains in this batch, emit a
