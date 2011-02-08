@@ -131,6 +131,30 @@ static void r600_transfer_destroy(struct pipe_context *ctx,
 	util_slab_free(&rctx->pool_transfers, transfer);
 }
 
+static void r600_buffer_transfer_inline_write(struct pipe_context *pipe,
+                                              struct pipe_resource *resource,
+                                              unsigned level,
+                                              unsigned usage,
+                                              const struct pipe_box *box,
+                                              const void *data,
+                                              unsigned stride,
+                                              unsigned layer_stride)
+{
+	struct radeon *ws = (struct radeon*)pipe->winsys;
+	struct r600_resource_buffer *rbuffer = r600_buffer(resource);
+	uint8_t *map = NULL;
+
+	assert(rbuffer->b.user_ptr == NULL);
+
+	map = r600_bo_map(ws, rbuffer->r.bo,
+			  PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD | usage,
+			  pipe);
+
+	memcpy(map + box->x, data, box->width);
+
+	if (rbuffer->r.bo)
+		r600_bo_unmap(ws, rbuffer->r.bo);
+}
 
 static const struct u_resource_vtbl r600_buffer_vtbl =
 {
@@ -142,7 +166,7 @@ static const struct u_resource_vtbl r600_buffer_vtbl =
 	r600_buffer_transfer_map,		/* transfer_map */
 	r600_buffer_transfer_flush_region,	/* transfer_flush_region */
 	r600_buffer_transfer_unmap,		/* transfer_unmap */
-	u_default_transfer_inline_write		/* transfer_inline_write */
+	r600_buffer_transfer_inline_write	/* transfer_inline_write */
 };
 
 struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
