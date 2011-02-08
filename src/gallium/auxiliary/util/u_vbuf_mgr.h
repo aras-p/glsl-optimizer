@@ -83,6 +83,7 @@ struct u_vbuf_mgr *
 u_vbuf_mgr_create(struct pipe_context *pipe,
                   unsigned upload_buffer_size,
                   unsigned upload_buffer_alignment,
+                  unsigned upload_buffer_bind,
                   enum u_fetch_alignment fetch_alignment);
 
 void u_vbuf_mgr_destroy(struct u_vbuf_mgr *mgr);

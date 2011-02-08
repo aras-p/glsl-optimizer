@@ -434,6 +434,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300_init_resource_functions(r300);
 
     r300->vbuf_mgr = u_vbuf_mgr_create(&r300->context, 1024 * 1024, 16,
+				       PIPE_BIND_VERTEX_BUFFER,
 				       U_VERTEX_FETCH_DWORD_ALIGNED);
     if (!r300->vbuf_mgr)
         goto fail;

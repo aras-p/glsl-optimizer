@@ -166,6 +166,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	}
 
 	rctx->vbuf_mgr = u_vbuf_mgr_create(&rctx->context, 1024 * 1024, 16,
+					   PIPE_BIND_VERTEX_BUFFER,
 					   U_VERTEX_FETCH_BYTE_ALIGNED);
 	if (!rctx->vbuf_mgr) {
 		r600_destroy_context(&rctx->context);

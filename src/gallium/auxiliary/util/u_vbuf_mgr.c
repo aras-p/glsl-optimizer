@@ -114,6 +114,7 @@ struct u_vbuf_mgr *
 u_vbuf_mgr_create(struct pipe_context *pipe,
                   unsigned upload_buffer_size,
                   unsigned upload_buffer_alignment,
+                  unsigned upload_buffer_bind,
                   enum u_fetch_alignment fetch_alignment)
 {
    struct u_vbuf_mgr_priv *mgr = CALLOC_STRUCT(u_vbuf_mgr_priv);
@@ -123,7 +124,7 @@ u_vbuf_mgr_create(struct pipe_context *pipe,
 
    mgr->b.uploader = u_upload_create(pipe, upload_buffer_size,
                                      upload_buffer_alignment,
-                                     PIPE_BIND_VERTEX_BUFFER);
+                                     upload_buffer_bind);
 
    mgr->caps.fetch_dword_unaligned =
          fetch_alignment == U_VERTEX_FETCH_BYTE_ALIGNED;
