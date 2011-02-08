@@ -55,15 +55,11 @@ nvc0_insn_can_load(struct nv_instruction *nvi, int s,
 boolean
 nvc0_insn_is_predicateable(struct nv_instruction *nvi)
 {
-   int s;
-
-   if (!nv_op_predicateable(nvi->opcode))
+   if (nvi->predicate >= 0) /* already predicated */
       return FALSE;
-   if (nvi->predicate >= 0)
+   if (!nvc0_op_info_table[nvi->opcode].predicate &&
+       !nvc0_op_info_table[nvi->opcode].pseudo)
       return FALSE;
-   for (s = 0; s < 4 && nvi->src[s]; ++s)
-      if (nvi->src[s]->value->reg.file == NV_FILE_IMM)
-         return FALSE;
    return TRUE;
 }
 
@@ -505,6 +501,9 @@ nvc0_insn_append(struct nv_basic_block *b, struct nv_instruction *i)
 
    i->bb = b;
    b->num_instructions++;
+
+   if (i->prev && i->prev->terminator)
+      nvc0_insns_permute(i->prev, i);
 }
 
 void

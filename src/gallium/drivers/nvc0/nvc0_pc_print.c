@@ -225,7 +225,7 @@ nvc0_print_instruction(struct nv_instruction *i)
 
    PRINT("%s", gree);
    if (NV_BASEOP(i->opcode) == NV_OP_SET)
-      PRINT("set %s", nv_cond_name(i->set_cond));
+      PRINT("%s %s", nvc0_opcode_name(i->opcode), nv_cond_name(i->set_cond));
    else
    if (i->saturate)
       PRINT("sat %s", nvc0_opcode_name(i->opcode));
@@ -278,7 +278,7 @@ struct nv_op_info nvc0_op_info_table[NV_OP_COUNT + 1] =
    { NV_OP_MERGE,  "merge",  NV_TYPE_ANY, 0, /* fcvpoi */ 0, 0, 1, 0, 1, 0, 0 },
    { NV_OP_PHI,    "phi",    NV_TYPE_ANY, 0, /* fcvpoi */ 0, 0, 0, 0, 1, 0, 0 },
    { NV_OP_SELECT, "select", NV_TYPE_ANY, 0, /* fcvpoi */ 0, 0, 0, 0, 1, 0, 0 },
-   { NV_OP_NOP,    "nop",    NV_TYPE_ANY, 0, /* fcvpoi */ 0, 0, 0, 0, 0, 0, 0 },
+   { NV_OP_NOP,    "nop",    NV_TYPE_ANY, 0, /* fcvpoi */ 0, 0, 0, 1, 0, 0, 0 },
 
    { NV_OP_LD,  "ld",  NV_TYPE_ANY, 0, 0, 0, 0, 1, 0, 0, 0 },
    { NV_OP_ST,  "st",  NV_TYPE_ANY, 0, 0, 0, 0, 1, 0, 0, 0 },
@@ -343,18 +343,18 @@ struct nv_op_info nvc0_op_info_table[NV_OP_COUNT + 1] =
    { NV_OP_MIN, "max", NV_TYPE_U32, 0, 0, 1, 0, 1, 0, 0, 0 },
    { NV_OP_MAX, "min", NV_TYPE_S32, 0, 0, 1, 0, 1, 0, 0, 0 },
    { NV_OP_MIN, "min", NV_TYPE_U32, 0, 0, 1, 0, 1, 0, 0, 0 },
-   { NV_OP_SET, "set", NV_TYPE_F32, NV_MOD_SGN, 0, 0, 0, 1, 0, 0, 2 },
-   { NV_OP_SET, "set", NV_TYPE_S32, 0, 0, 0, 0, 1, 0, 0, 0 },
-   { NV_OP_SET, "set", NV_TYPE_U32, 0, 0, 0, 0, 1, 0, 0, 0 },
+   { NV_OP_SET, "set", NV_TYPE_F32, NV_MOD_SGN, 0, 0, 0, 1, 0, 2, 2 },
+   { NV_OP_SET, "set", NV_TYPE_S32, 0, 0, 0, 0, 1, 0, 2, 2 },
+   { NV_OP_SET, "set", NV_TYPE_U32, 0, 0, 0, 0, 1, 0, 2, 2 },
    { NV_OP_SHR, "sar", NV_TYPE_S32, 0, 0, 0, 0, 1, 0, 1, 0 },
-   { NV_OP_RCP, "rcp", NV_TYPE_F32, NV_MOD_SGN, 0, 0, 0, 0, 0, 0, 0 },
-   { NV_OP_RSQ, "rsqrt", NV_TYPE_F32, NV_MOD_SGN, 0, 0, 0, 0, 0, 0, 0 },
-   { NV_OP_LG2, "lg2", NV_TYPE_F32, NV_MOD_SGN, 0, 0, 0, 0, 0, 0, 0 },
-   { NV_OP_SIN, "sin", NV_TYPE_F32, 0, 0, 0, 0, 0, 0, 0, 0 },
-   { NV_OP_COS, "cos", NV_TYPE_F32, 0, 0, 0, 0, 0, 0, 0, 0 },
-   { NV_OP_EX2, "ex2", NV_TYPE_F32, 0, 0, 0, 0, 0, 0, 0, 0 },
-   { NV_OP_PRESIN, "presin", NV_TYPE_F32, NV_MOD_SGN, 0, 0, 0, 0, 0, 0, 0 },
-   { NV_OP_PREEX2, "preex2", NV_TYPE_F32, NV_MOD_SGN, 0, 0, 0, 0, 0, 0, 0 },
+   { NV_OP_RCP, "rcp", NV_TYPE_F32, NV_MOD_SGN, 0, 0, 0, 1, 0, 0, 0 },
+   { NV_OP_RSQ, "rsqrt", NV_TYPE_F32, NV_MOD_SGN, 0, 0, 0, 1, 0, 0, 0 },
+   { NV_OP_LG2, "lg2", NV_TYPE_F32, NV_MOD_SGN, 0, 0, 0, 1, 0, 0, 0 },
+   { NV_OP_SIN, "sin", NV_TYPE_F32, 0, 0, 0, 0, 1, 0, 0, 0 },
+   { NV_OP_COS, "cos", NV_TYPE_F32, 0, 0, 0, 0, 1, 0, 0, 0 },
+   { NV_OP_EX2, "ex2", NV_TYPE_F32, 0, 0, 0, 0, 1, 0, 0, 0 },
+   { NV_OP_PRESIN, "presin", NV_TYPE_F32, NV_MOD_SGN, 0, 0, 0, 1, 0, 0, 0 },
+   { NV_OP_PREEX2, "preex2", NV_TYPE_F32, NV_MOD_SGN, 0, 0, 0, 1, 0, 0, 0 },
    { NV_OP_SAT, "sat", NV_TYPE_F32, 0, 0, 0, 0, 1, 0, 0, 0 },
 
    { NV_OP_SET_F32_AND, "and set", NV_TYPE_F32, 0, 0, 0, 0, 1, 0, 0, 0 },
@@ -369,7 +369,7 @@ struct nv_op_info nvc0_op_info_table[NV_OP_COUNT + 1] =
 
    { NV_OP_ADD, "sub", NV_TYPE_F32, 0, 0, 0, 0, 1, 0, 1, 0 },
 
-   { NV_OP_SET, "fset", NV_TYPE_F32, NV_MOD_SGN, 0, 0, 0, 1, 0, 0, 2 },
+   { NV_OP_SET, "fset", NV_TYPE_F32, NV_MOD_SGN, 0, 0, 0, 1, 0, 2, 2 },
 
    { NV_OP_TXG, "texgrad", NV_TYPE_F32, 0, 0, 0, 1, 1, 0, 0, 0 },
 

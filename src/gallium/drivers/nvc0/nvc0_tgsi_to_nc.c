@@ -659,7 +659,7 @@ bld_kil(struct bld_context *bld, struct nv_value *src)
 
 static void
 bld_flow(struct bld_context *bld, uint opcode,
-         struct nv_value *src, struct nv_basic_block *target,
+         struct nv_value *pred, uint8_t cc, struct nv_basic_block *target,
          boolean reconverge)
 {
    struct nv_instruction *nvi;
@@ -670,8 +670,10 @@ bld_flow(struct bld_context *bld, uint opcode,
    nvi = new_instruction(bld->pc, opcode);
    nvi->target = target;
    nvi->terminator = 1;
-   if (src)
-      bld_src_predicate(bld, nvi, 0, src);
+   if (pred) {
+      nvi->cc = cc;
+      bld_src_predicate(bld, nvi, 0, pred);
+   }
 }
 
 static ubyte
@@ -1584,6 +1586,7 @@ bld_instruction(struct bld_context *bld,
    case TGSI_OPCODE_IF:
    {
       struct nv_basic_block *b = new_basic_block(bld->pc);
+      struct nv_value *pred = emit_fetch(bld, insn, 0, 0);
 
       assert(bld->cond_lvl < BLD_MAX_COND_NESTING);
 
@@ -1592,10 +1595,19 @@ bld_instruction(struct bld_context *bld,
       bld->join_bb[bld->cond_lvl] = bld->pc->current_block;
       bld->cond_bb[bld->cond_lvl] = bld->pc->current_block;
 
-      src1 = bld_setp(bld, NV_OP_SET_U32, NV_CC_EQ,
-                      emit_fetch(bld, insn, 0, 0), bld->zero);
+      if (pred->insn && NV_BASEOP(pred->insn->opcode) == NV_OP_SET) {
+         pred = bld_clone(bld, pred->insn);
+         pred->reg.size = 1;
+         pred->reg.file = NV_FILE_PRED;
+         if (pred->insn->opcode == NV_OP_FSET_F32)
+            pred->insn->opcode = NV_OP_SET_F32;
+      } else {
+         pred = bld_setp(bld, NV_OP_SET_U32, NV_CC_NE | NV_CC_U,
+                         pred, bld->zero);
+      }
+      assert(!mask);
 
-      bld_flow(bld, NV_OP_BRA, src1, NULL, (bld->cond_lvl == 0));
+      bld_flow(bld, NV_OP_BRA, pred, NV_CC_NOT_P, NULL, (bld->cond_lvl == 0));
 
       ++bld->cond_lvl;
       bld_new_block(bld, b);
@@ -1661,7 +1673,7 @@ bld_instruction(struct bld_context *bld,
    {
       struct nv_basic_block *bb = bld->brkt_bb[bld->loop_lvl - 1];
 
-      bld_flow(bld, NV_OP_BRA, NULL, bb, FALSE);
+      bld_flow(bld, NV_OP_BRA, NULL, NV_CC_P, bb, FALSE);
 
       if (bld->out_kind == CFG_EDGE_FORWARD) /* else we already had BRK/CONT */
          nvc0_bblock_attach(bld->pc->current_block, bb, CFG_EDGE_LOOP_LEAVE);
@@ -1673,7 +1685,7 @@ bld_instruction(struct bld_context *bld,
    {
       struct nv_basic_block *bb = bld->loop_bb[bld->loop_lvl - 1];
 
-      bld_flow(bld, NV_OP_BRA, NULL, bb, FALSE);
+      bld_flow(bld, NV_OP_BRA, NULL, NV_CC_P, bb, FALSE);
 
       nvc0_bblock_attach(bld->pc->current_block, bb, CFG_EDGE_BACK);
 
@@ -1689,7 +1701,7 @@ bld_instruction(struct bld_context *bld,
       struct nv_basic_block *bb = bld->loop_bb[bld->loop_lvl - 1];
 
       if (bld->out_kind != CFG_EDGE_FAKE) { /* else we already had BRK/CONT */
-         bld_flow(bld, NV_OP_BRA, NULL, bb, FALSE);
+         bld_flow(bld, NV_OP_BRA, NULL, NV_CC_P, bb, FALSE);
 
          nvc0_bblock_attach(bld->pc->current_block, bb, CFG_EDGE_BACK);
       }

@@ -99,6 +99,7 @@ inst_removable(struct nv_instruction *nvi)
              nvc0_insn_refcount(nvi)));
 }
 
+/* Check if we do not actually have to emit this instruction. */
 static INLINE boolean
 inst_is_noop(struct nv_instruction *nvi)
 {
@@ -1043,7 +1044,6 @@ nv_pass_dce(struct nv_pass_dce *ctx, struct nv_basic_block *b)
    return 0;
 }
 
-#if 0
 /* Register allocation inserted ELSE blocks for all IF/ENDIF without ELSE.
  * Returns TRUE if @bb initiates an IF/ELSE/ENDIF clause, or is an IF with
  * BREAK and dummy ELSE block.
@@ -1064,24 +1064,92 @@ bb_is_if_else_endif(struct nv_basic_block *bb)
    }
 }
 
-/* predicate instructions and remove branch at the end */
+/* Predicate instructions and delete any branch at the end if it is
+ * not a break from a loop.
+ */
 static void
 predicate_instructions(struct nv_pc *pc, struct nv_basic_block *b,
-                       struct nv_value *p, ubyte cc)
+                       struct nv_value *pred, uint8_t cc)
 {
+   struct nv_instruction *nvi, *prev;
+   int s;
 
+   if (!b->entry)
+      return;
+   for (nvi = b->entry; nvi; nvi = nvi->next) {
+      prev = nvi;
+      if (inst_is_noop(nvi))
+         continue;
+      for (s = 0; nvi->src[s]; ++s);
+      assert(s < 6);
+      nvi->predicate = s;
+      nvi->cc = cc;
+      nv_reference(pc, nvi, nvi->predicate, pred);
+   }
+   if (prev->opcode == NV_OP_BRA &&
+       b->out_kind[0] != CFG_EDGE_LOOP_LEAVE &&
+       b->out_kind[1] != CFG_EDGE_LOOP_LEAVE)
+      nvc0_insn_delete(prev);
 }
-#endif
 
-/* NOTE: Run this after register allocation, we can just cut out the cflow
- * instructions and hook the predicates to the conditional OPs if they are
- * not using immediates; better than inserting SELECT to join definitions.
- *
- * NOTE: Should adapt prior optimization to make this possible more often.
+static INLINE boolean
+may_predicate_insn(struct nv_instruction *nvi, struct nv_value *pred)
+{
+   if (nvi->def[0] && values_equal(nvi->def[0], pred))
+      return FALSE;
+   return nvc0_insn_is_predicateable(nvi);
+}
+
+/* Transform IF/ELSE/ENDIF constructs into predicated instructions
+ * where feasible.
  */
 static int
 nv_pass_flatten(struct nv_pass *ctx, struct nv_basic_block *b)
 {
+   struct nv_instruction *nvi;
+   struct nv_value *pred;
+   int k;
+   int n0, n1; /* instruction counts of outgoing blocks */
+
+   if (bb_is_if_else_endif(b)) {
+      assert(b->exit && b->exit->opcode == NV_OP_BRA);
+
+      assert(b->exit->predicate >= 0);
+      pred = b->exit->src[b->exit->predicate]->value;
+
+      n1 = n0 = 0;
+      for (nvi = b->out[0]->entry; nvi; nvi = nvi->next, ++n0)
+         if (!may_predicate_insn(nvi, pred))
+            break;
+      if (!nvi) {
+         /* we're after register allocation, so there always is an ELSE block */
+         for (nvi = b->out[1]->entry; nvi; nvi = nvi->next, ++n1)
+            if (!may_predicate_insn(nvi, pred))
+               break;
+      }
+
+      /* 12 is an arbitrary limit */
+      if (!nvi && n0 < 12 && n1 < 12) {
+         predicate_instructions(ctx->pc, b->out[0], pred, !b->exit->cc);
+         predicate_instructions(ctx->pc, b->out[1], pred, b->exit->cc);
+
+         nvc0_insn_delete(b->exit); /* delete the branch */
+
+         /* and a potential joinat before it */
+         if (b->exit && b->exit->opcode == NV_OP_JOINAT)
+            nvc0_insn_delete(b->exit);
+
+         /* remove join operations at the end of the conditional */
+         k = (b->out[0]->out_kind[0] == CFG_EDGE_LOOP_LEAVE) ? 1 : 0;
+         if ((nvi = b->out[0]->out[k]->entry)) {
+            nvi->join = 0;
+            if (nvi->opcode == NV_OP_JOIN)
+               nvc0_insn_delete(nvi);
+         }
+      }
+   }
+   DESCEND_ARBITRARY(k, nv_pass_flatten);
+
    return 0;
 }
 

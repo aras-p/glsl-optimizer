@@ -205,6 +205,10 @@
 #define NV_CC_C  0x11
 #define NV_CC_A  0x12
 #define NV_CC_S  0x13
+#define NV_CC_INVERSE(cc) ((cc) ^ 0x7)
+/* for 1 bit predicates: */
+#define NV_CC_P     0
+#define NV_CC_NOT_P 1
 
 #define NV_PC_MAX_INSTRUCTIONS 2048
 #define NV_PC_MAX_VALUES (NV_PC_MAX_INSTRUCTIONS * 4)
@@ -258,12 +262,6 @@ static INLINE uint8_t
 nv_op_supported_src_mods(uint opcode)
 {
    return nvc0_op_info_table[opcode].mods;
-}
-
-static INLINE boolean
-nv_op_predicateable(uint opcode)
-{
-   return nvc0_op_info_table[opcode].predicate ? TRUE : FALSE;
 }
 
 static INLINE uint
@@ -488,7 +486,7 @@ nv_alloc_instruction(struct nv_pc *pc, uint opcode)
    assert(pc->num_instructions < NV_PC_MAX_INSTRUCTIONS);
 
    insn->opcode = opcode;
-   insn->cc = 0;
+   insn->cc = NV_CC_P;
    insn->indirect = -1;
    insn->predicate = -1;
 
