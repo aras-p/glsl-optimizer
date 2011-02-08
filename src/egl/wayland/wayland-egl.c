@@ -138,7 +138,8 @@ wl_egl_window_resize(struct wl_egl_window *egl_window,
 }
 
 WL_EGL_EXPORT struct wl_egl_window *
-wl_egl_window_create(struct wl_surface *surface,
+wl_egl_window_create(struct wl_egl_display *egl_display,
+		     struct wl_surface *surface,
 		     int width, int height,
 		     struct wl_visual *visual)
 {
