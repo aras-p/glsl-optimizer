@@ -112,9 +112,9 @@ static void u_vbuf_mgr_init_format_caps(struct u_vbuf_mgr_priv *mgr)
 
 struct u_vbuf_mgr *
 u_vbuf_mgr_create(struct pipe_context *pipe,
-		  unsigned upload_buffer_size,
-		  unsigned upload_buffer_alignment,
-		  enum u_fetch_alignment fetch_alignment)
+                  unsigned upload_buffer_size,
+                  unsigned upload_buffer_alignment,
+                  enum u_fetch_alignment fetch_alignment)
 {
    struct u_vbuf_mgr_priv *mgr = CALLOC_STRUCT(u_vbuf_mgr_priv);
 
@@ -150,8 +150,8 @@ void u_vbuf_mgr_destroy(struct u_vbuf_mgr *mgrb)
 
 
 static void u_vbuf_translate_begin(struct u_vbuf_mgr_priv *mgr,
-				   int min_index, int max_index,
-				   boolean *upload_flushed)
+                                   int min_index, int max_index,
+                                   boolean *upload_flushed)
 {
    struct translate_key key = {0};
    struct translate_element *te;
@@ -326,9 +326,9 @@ static void u_vbuf_translate_end(struct u_vbuf_mgr_priv *mgr)
 
 struct u_vbuf_mgr_elements *
 u_vbuf_mgr_create_vertex_elements(struct u_vbuf_mgr *mgrb,
-				  unsigned count,
-				  const struct pipe_vertex_element *attribs,
-				  struct pipe_vertex_element *native_attribs)
+                                  unsigned count,
+                                  const struct pipe_vertex_element *attribs,
+                                  struct pipe_vertex_element *native_attribs)
 {
    struct u_vbuf_mgr_priv *mgr = (struct u_vbuf_mgr_priv*)mgrb;
    unsigned i;
@@ -427,8 +427,8 @@ u_vbuf_mgr_create_vertex_elements(struct u_vbuf_mgr *mgrb,
 }
 
 void u_vbuf_mgr_bind_vertex_elements(struct u_vbuf_mgr *mgrb,
-				     void *cso,
-				     struct u_vbuf_mgr_elements *ve)
+                                     void *cso,
+                                     struct u_vbuf_mgr_elements *ve)
 {
    struct u_vbuf_mgr_priv *mgr = (struct u_vbuf_mgr_priv*)mgrb;
 
@@ -443,14 +443,14 @@ void u_vbuf_mgr_bind_vertex_elements(struct u_vbuf_mgr *mgrb,
 }
 
 void u_vbuf_mgr_destroy_vertex_elements(struct u_vbuf_mgr *mgr,
-					struct u_vbuf_mgr_elements *ve)
+                                        struct u_vbuf_mgr_elements *ve)
 {
    FREE(ve);
 }
 
 void u_vbuf_mgr_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
-				   unsigned count,
-				   const struct pipe_vertex_buffer *bufs)
+                                   unsigned count,
+                                   const struct pipe_vertex_buffer *bufs)
 {
    struct u_vbuf_mgr_priv *mgr = (struct u_vbuf_mgr_priv*)mgrb;
    unsigned i;
@@ -510,8 +510,8 @@ void u_vbuf_mgr_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
 }
 
 static void u_vbuf_upload_buffers(struct u_vbuf_mgr_priv *mgr,
-				  int min_index, int max_index,
-				  boolean *upload_flushed)
+                                  int min_index, int max_index,
+                                  boolean *upload_flushed)
 {
    int i, nr = mgr->ve->count;
    unsigned count = max_index + 1 - min_index;
@@ -552,9 +552,9 @@ static void u_vbuf_upload_buffers(struct u_vbuf_mgr_priv *mgr,
 }
 
 void u_vbuf_mgr_draw_begin(struct u_vbuf_mgr *mgrb,
-			   const struct pipe_draw_info *info,
-			   boolean *buffers_updated,
-			   boolean *uploader_flushed)
+                           const struct pipe_draw_info *info,
+                           boolean *buffers_updated,
+                           boolean *uploader_flushed)
 {
    struct u_vbuf_mgr_priv *mgr = (struct u_vbuf_mgr_priv*)mgrb;
    boolean bufs_updated, upload_flushed = FALSE;
