@@ -102,6 +102,7 @@ egl_g3d_get_platform(_EGLDriver *drv, _EGLPlatformType plat)
 #ifdef HAVE_X11_BACKEND
          nplat = native_get_x11_platform();
 #endif
+	 break;
       case _EGL_PLATFORM_WAYLAND:
          plat_name = "wayland";
 #ifdef HAVE_WAYLAND_BACKEND
