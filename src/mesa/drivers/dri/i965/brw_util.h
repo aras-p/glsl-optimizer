@@ -35,7 +35,14 @@
 
 #include "main/mtypes.h"
 
-extern GLuint brw_count_bits(uint64_t val);
+#ifdef __GNUC__
+#define brw_count_bits(v) __builtin_popcount(v)
+#else
+static inline GLuint brw_count_bits(uint64_t v)
+{
+	return _mesa_popcount(v>>32) + _mesa_popcount(v&0xffffffff);
+}
+#endif
 extern GLuint brw_parameter_list_state_flags(struct gl_program_parameter_list *paramList);
 extern GLuint brw_translate_blend_factor( GLenum factor );
 extern GLuint brw_translate_blend_equation( GLenum mode );

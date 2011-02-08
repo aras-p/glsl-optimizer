@@ -453,6 +453,7 @@ _mesa_inv_sqrtf(float n)
 #endif
 }
 
+#ifndef __GNUC__
 /**
  * Find the first bit set in a word.
  */
@@ -496,9 +497,6 @@ _mesa_ffs(int32_t i)
 int
 _mesa_ffsll(int64_t val)
 {
-#ifdef ffsll
-   return ffsll(val);
-#else
    int bit;
 
    assert(sizeof(val) == 8);
@@ -512,27 +510,24 @@ _mesa_ffsll(int64_t val)
       return 32 + bit;
 
    return 0;
-#endif
 }
 
 
+#if ((_GNUC__ == 3 && __GNUC_MINOR__ < 4) || __GNUC__ < 4)
 /**
  * Return number of bits set in given GLuint.
  */
 unsigned int
 _mesa_bitcount(unsigned int n)
 {
-#if defined(__GNUC__) && \
-	((_GNUC__ == 3 && __GNUC_MINOR__ >= 4) || __GNUC__ >= 4)
-   return __builtin_popcount(n);
-#else
    unsigned int bits;
    for (bits = 0; n > 0; n = n >> 1) {
       bits += (n & 1);
    }
    return bits;
-#endif
 }
+#endif
+#endif
 
 
 /**
