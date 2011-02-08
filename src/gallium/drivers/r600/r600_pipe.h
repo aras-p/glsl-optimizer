@@ -151,9 +151,7 @@ struct r600_pipe_context {
 	bool				flatshade;
 	struct r600_textures_info	ps_samplers;
 
-        struct u_vbuf_mgr		*vbuf_mgr;
-	struct u_upload_mgr		*upload_ib;
-	struct u_upload_mgr		*upload_const;
+	struct u_vbuf_mgr		*vbuf_mgr;
 	bool				blit;
 };
 

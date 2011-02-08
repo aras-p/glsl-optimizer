@@ -69,12 +69,10 @@ static void r600_flush(struct pipe_context *ctx, unsigned flags,
 #endif
 	r600_context_flush(&rctx->ctx);
 
-	/* XXX These shouldn't be really necessary, but removing them breaks some tests.
+	/* XXX This shouldn't be really necessary, but removing it breaks some tests.
 	 * Needless buffer reallocations may significantly increase memory consumption,
-	 * so getting rid of these 3 calls is important. */
+	 * so getting rid of this call is important. */
 	u_upload_flush(rctx->vbuf_mgr->uploader);
-	u_upload_flush(rctx->upload_ib);
-	u_upload_flush(rctx->upload_const);
 }
 
 static void r600_destroy_context(struct pipe_context *context)
@@ -91,8 +89,6 @@ static void r600_destroy_context(struct pipe_context *context)
 		free(rctx->states[i]);
 	}
 
-	u_upload_destroy(rctx->upload_ib);
-	u_upload_destroy(rctx->upload_const);
 	u_vbuf_mgr_destroy(rctx->vbuf_mgr);
 
 	FREE(rctx);
@@ -165,24 +161,12 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		return NULL;
 	}
 
-	rctx->vbuf_mgr = u_vbuf_mgr_create(&rctx->context, 1024 * 1024, 16,
-					   PIPE_BIND_VERTEX_BUFFER,
+	rctx->vbuf_mgr = u_vbuf_mgr_create(&rctx->context, 1024 * 1024, 256,
+					   PIPE_BIND_VERTEX_BUFFER |
+					   PIPE_BIND_INDEX_BUFFER |
+					   PIPE_BIND_CONSTANT_BUFFER,
 					   U_VERTEX_FETCH_BYTE_ALIGNED);
 	if (!rctx->vbuf_mgr) {
-		r600_destroy_context(&rctx->context);
-		return NULL;
-	}
-
-	rctx->upload_ib = u_upload_create(&rctx->context, 128 * 1024, 16,
-					  PIPE_BIND_INDEX_BUFFER);
-	if (rctx->upload_ib == NULL) {
-		r600_destroy_context(&rctx->context);
-		return NULL;
-	}
-
-	rctx->upload_const = u_upload_create(&rctx->context, 1024 * 1024, 256,
-					     PIPE_BIND_CONSTANT_BUFFER);
-	if (rctx->upload_const == NULL) {
 		r600_destroy_context(&rctx->context);
 		return NULL;
 	}

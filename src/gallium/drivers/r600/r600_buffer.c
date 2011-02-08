@@ -207,7 +207,7 @@ void r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl 
 	struct r600_resource_buffer *rbuffer = r600_buffer(draw->index_buffer);
 	boolean flushed;
 
-	u_upload_data(rctx->upload_ib, 0,
+	u_upload_data(rctx->vbuf_mgr->uploader, 0,
 		      draw->info.count * draw->index_size,
 		      rbuffer->r.b.user_ptr,
 		      &draw->index_buffer_offset,
@@ -224,7 +224,7 @@ void r600_upload_const_buffer(struct r600_pipe_context *rctx, struct r600_resour
 
 		*rbuffer = NULL;
 
-		u_upload_data(rctx->upload_const, 0, size, ptr, const_offset,
+		u_upload_data(rctx->vbuf_mgr->uploader, 0, size, ptr, const_offset,
 			      (struct pipe_resource**)rbuffer, &flushed);
 	} else {
 		*const_offset = 0;
