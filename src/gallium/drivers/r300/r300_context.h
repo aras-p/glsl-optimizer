@@ -579,9 +579,6 @@ struct r300_context {
     /* two mem block managers for hiz/zmask ram space */
     struct mem_block *hiz_mm;
 
-    /* upload manager */
-    struct u_upload_mgr *upload_ib;
-
     struct u_vbuf_mgr *vbuf_mgr;
 
     struct util_slab_mempool pool_transfers;

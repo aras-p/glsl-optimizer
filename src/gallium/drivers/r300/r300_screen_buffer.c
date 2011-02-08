@@ -67,7 +67,7 @@ void r300_upload_index_buffer(struct r300_context *r300,
 
     *index_buffer = NULL;
 
-    u_upload_data(r300->upload_ib,
+    u_upload_data(r300->vbuf_mgr->uploader,
                   0, count * index_size,
                   ptr + (*start * index_size),
                   &index_offset,

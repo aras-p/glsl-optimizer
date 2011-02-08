@@ -104,8 +104,6 @@ static void r300_destroy_context(struct pipe_context* context)
 
     if (r300->vbuf_mgr)
         u_vbuf_mgr_destroy(r300->vbuf_mgr);
-    if (r300->upload_ib)
-        u_upload_destroy(r300->upload_ib);
 
     /* XXX: This function assumes r300->query_list was initialized */
     r300_release_referenced_objects(r300);
@@ -434,8 +432,9 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300_init_resource_functions(r300);
 
     r300->vbuf_mgr = u_vbuf_mgr_create(&r300->context, 1024 * 1024, 16,
-				       PIPE_BIND_VERTEX_BUFFER,
-				       U_VERTEX_FETCH_DWORD_ALIGNED);
+                                       PIPE_BIND_VERTEX_BUFFER |
+                                       PIPE_BIND_INDEX_BUFFER,
+                                       U_VERTEX_FETCH_DWORD_ALIGNED);
     if (!r300->vbuf_mgr)
         goto fail;
 
@@ -452,13 +451,6 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     if (r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
         if (!r300_hyperz_init_mm(r300))
             goto fail;
-
-    r300->upload_ib = u_upload_create(&r300->context,
-				      64 * 1024, 16,
-				      PIPE_BIND_INDEX_BUFFER);
-
-    if (r300->upload_ib == NULL)
-        goto fail;
 
     r300_init_states(&r300->context);
 
