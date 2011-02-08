@@ -68,6 +68,13 @@ static void r600_flush(struct pipe_context *ctx, unsigned flags,
 	dc++;
 #endif
 	r600_context_flush(&rctx->ctx);
+
+	/* XXX These shouldn't be really necessary, but removing them breaks some tests.
+	 * Needless buffer reallocations may significantly increase memory consumption,
+	 * so getting rid of these 3 calls is important. */
+	u_vbuf_mgr_flush_uploader(rctx->vbuf_mgr);
+	u_upload_flush(rctx->upload_ib);
+	u_upload_flush(rctx->upload_const);
 }
 
 static void r600_destroy_context(struct pipe_context *context)
