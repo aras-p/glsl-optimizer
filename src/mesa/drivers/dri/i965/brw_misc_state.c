@@ -74,7 +74,7 @@ static void upload_binding_table_pointers(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
 
    BEGIN_BATCH(6);
-   OUT_BATCH(CMD_BINDING_TABLE_PTRS << 16 | (6 - 2));
+   OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS << 16 | (6 - 2));
    OUT_BATCH(brw->vs.bind_bo_offset);
    OUT_BATCH(0); /* gs */
    OUT_BATCH(0); /* clip */
@@ -104,7 +104,7 @@ static void upload_gen6_binding_table_pointers(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
 
    BEGIN_BATCH(4);
-   OUT_BATCH(CMD_BINDING_TABLE_PTRS << 16 |
+   OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS << 16 |
 	     GEN6_BINDING_TABLE_MODIFY_VS |
 	     GEN6_BINDING_TABLE_MODIFY_GS |
 	     GEN6_BINDING_TABLE_MODIFY_PS |
@@ -142,7 +142,7 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
    }
 
    BEGIN_BATCH(7);
-   OUT_BATCH(CMD_PIPELINED_STATE_POINTERS << 16 | (7 - 2));
+   OUT_BATCH(_3DSTATE_PIPELINED_POINTERS << 16 | (7 - 2));
    OUT_RELOC(brw->vs.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
    if (brw->gs.prog_active)
       OUT_RELOC(brw->gs.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
