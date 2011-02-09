@@ -1155,6 +1155,7 @@ OSMesaCreateContextExt( GLenum format, GLint depthBits, GLint stencilBits,
       functions.GetBufferSize = NULL;
 
       if (!_mesa_initialize_context(&osmesa->mesa,
+                                    API_OPENGL,
                                     osmesa->gl_visual,
                                     sharelist ? &sharelist->mesa
                                               : (struct gl_context *) NULL,

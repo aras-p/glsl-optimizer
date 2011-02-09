@@ -886,12 +886,12 @@ _mesa_alloc_dispatch_table(int size)
  * \param driverContext pointer to driver-specific context data
  */
 GLboolean
-_mesa_initialize_context_for_api(struct gl_context *ctx,
-				 gl_api api,
-				 const struct gl_config *visual,
-				 struct gl_context *share_list,
-				 const struct dd_function_table *driverFunctions,
-				 void *driverContext)
+_mesa_initialize_context(struct gl_context *ctx,
+                         gl_api api,
+                         const struct gl_config *visual,
+                         struct gl_context *share_list,
+                         const struct dd_function_table *driverFunctions,
+                         void *driverContext)
 {
    struct gl_shared_state *shared;
    int i;
@@ -1029,25 +1029,6 @@ _mesa_initialize_context_for_api(struct gl_context *ctx,
 
 
 /**
- * Initialize an OpenGL context.
- */
-GLboolean
-_mesa_initialize_context(struct gl_context *ctx,
-                         const struct gl_config *visual,
-                         struct gl_context *share_list,
-                         const struct dd_function_table *driverFunctions,
-                         void *driverContext)
-{
-   return _mesa_initialize_context_for_api(ctx,
-					   API_OPENGL,
-					   visual,
-					   share_list,
-					   driverFunctions,
-					   driverContext);
-}
-
-
-/**
  * Allocate and initialize a struct gl_context structure.
  * Note that the driver needs to pass in its dd_function_table here since
  * we need to at least call driverFunctions->NewTextureObject to initialize
@@ -1078,8 +1059,8 @@ _mesa_create_context_for_api(gl_api api,
    if (!ctx)
       return NULL;
 
-   if (_mesa_initialize_context_for_api(ctx, api, visual, share_list,
-					driverFunctions, driverContext)) {
+   if (_mesa_initialize_context(ctx, api, visual, share_list,
+                                driverFunctions, driverContext)) {
       return ctx;
    }
    else {

@@ -722,7 +722,7 @@ glFBDevCreateContext( const GLFBDevVisualPtr visual, GLFBDevContextPtr share )
    functions.GetBufferSize = get_buffer_size;
    functions.Viewport = viewport;
 
-   if (!_mesa_initialize_context(&ctx->glcontext, &visual->glvisual,
+   if (!_mesa_initialize_context(&ctx->glcontext, API_OPENGL, &visual->glvisual,
                                  share ? &share->glcontext : NULL,
                                  &functions, (void *) ctx)) {
       free(ctx);

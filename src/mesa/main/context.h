@@ -107,6 +107,7 @@ _mesa_create_context( const struct gl_config *visual,
 
 extern GLboolean
 _mesa_initialize_context( struct gl_context *ctx,
+                          gl_api api,
                           const struct gl_config *visual,
                           struct gl_context *share_list,
                           const struct dd_function_table *driverFunctions,
@@ -118,14 +119,6 @@ _mesa_create_context_for_api(gl_api api,
 			     struct gl_context *share_list,
 			     const struct dd_function_table *driverFunctions,
 			     void *driverContext);
-
-extern GLboolean
-_mesa_initialize_context_for_api(struct gl_context *ctx,
-				 gl_api api,
-				 const struct gl_config *visual,
-				 struct gl_context *share_list,
-				 const struct dd_function_table *driverFunctions,
-				 void *driverContext);
 
 extern void
 _mesa_free_context_data( struct gl_context *ctx );

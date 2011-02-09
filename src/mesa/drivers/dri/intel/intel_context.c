@@ -644,8 +644,8 @@ intelInitContext(struct intel_context *intel,
       mesaVis = &visual;
    }
 
-   if (!_mesa_initialize_context_for_api(&intel->ctx, api, mesaVis, shareCtx,
-					 functions, (void *) intel)) {
+   if (!_mesa_initialize_context(&intel->ctx, api, mesaVis, shareCtx,
+                                 functions, (void *) intel)) {
       printf("%s: failed to init mesa context\n", __FUNCTION__);
       return GL_FALSE;
    }

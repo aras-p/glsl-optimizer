@@ -651,7 +651,7 @@ dri_create_context(gl_api api,
     mesaCtx = &ctx->Base;
 
     /* basic context setup */
-    if (!_mesa_initialize_context_for_api(mesaCtx, api, visual, sharedCtx, &functions, (void *) cPriv)) {
+    if (!_mesa_initialize_context(mesaCtx, api, visual, sharedCtx, &functions, (void *) cPriv)) {
 	goto context_fail;
     }
 
