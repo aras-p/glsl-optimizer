@@ -1155,6 +1155,28 @@ struct gen6_sf_viewport {
    GLfloat m32;
 };
 
+struct gen7_sf_clip_viewport {
+   struct {
+      GLfloat m00;
+      GLfloat m11;
+      GLfloat m22;
+      GLfloat m30;
+      GLfloat m31;
+      GLfloat m32;
+   } viewport;
+
+   GLuint pad0[2];
+
+   struct {
+      GLfloat xmin;
+      GLfloat xmax;
+      GLfloat ymin;
+      GLfloat ymax;
+   } guardband;
+
+   GLfloat pad1[4];
+};
+
 /* Documented in the subsystem/shared-functions/sampler chapter...
  */
 struct brw_surface_state

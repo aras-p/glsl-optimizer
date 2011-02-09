@@ -179,9 +179,6 @@ const struct brw_tracked_state *gen7_atoms[] =
    &brw_gs_prog,
    &brw_wm_prog,
 
-   &gen6_clip_vp,
-   &gen6_sf_vp,
-
    /* Command packets: */
    &brw_invarient_state,
 
@@ -189,7 +186,8 @@ const struct brw_tracked_state *gen7_atoms[] =
    &brw_state_base_address,
 
    &brw_cc_vp,
-   &gen6_viewport_state,	/* must do after *_vp stages */
+   &gen7_cc_viewport_state_pointer, /* must do after brw_cc_vp */
+   &gen7_sf_clip_viewport,
 
    &gen7_urb,
    &gen6_blend_state,		/* must do before cc unit */
