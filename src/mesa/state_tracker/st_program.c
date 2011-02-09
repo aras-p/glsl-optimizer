@@ -406,6 +406,7 @@ st_translate_fragment_program(struct st_context *st,
 {
    struct pipe_context *pipe = st->pipe;
    struct st_fp_variant *variant = CALLOC_STRUCT(st_fp_variant);
+   GLboolean deleteFP = GL_FALSE;
 
    if (!variant)
       return NULL;
@@ -422,6 +423,7 @@ st_translate_fragment_program(struct st_context *st,
 
       variant->parameters = _mesa_clone_parameter_list(fp->Base.Parameters);
       stfp = st_fragment_program(fp);
+      deleteFP = GL_TRUE;
    }
    else if (key->drawpixels) {
       /* glDrawPixels drawing */
@@ -435,6 +437,7 @@ st_translate_fragment_program(struct st_context *st,
          /* RGBA */
          st_make_drawpix_fragment_program(st, &stfp->Base, &fp);
          variant->parameters = _mesa_clone_parameter_list(fp->Base.Parameters);
+         deleteFP = GL_TRUE;
       }
       stfp = st_fragment_program(fp);
    }
@@ -632,13 +635,11 @@ st_translate_fragment_program(struct st_context *st,
       debug_printf("\n");
    }
 
-#if FEATURE_drawpix
-   if (key->bitmap || key->drawpixels) {
+   if (deleteFP) {
       /* Free the temporary program made above */
       struct gl_fragment_program *fp = &stfp->Base;
       _mesa_reference_fragprog(st->ctx, &fp, NULL);
    }
-#endif
 
    return variant;
 }
