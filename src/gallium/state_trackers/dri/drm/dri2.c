@@ -459,7 +459,7 @@ static __DRIimage *
 dri2_create_image_from_renderbuffer(__DRIcontext *context,
 				    int renderbuffer, void *loaderPrivate)
 {
-   struct dri_context *ctx = dri_context(context->driverPrivate);
+   struct dri_context *ctx = dri_context(context);
 
    if (!ctx->st->get_resource_for_egl_image)
       return NULL;
