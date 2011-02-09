@@ -77,7 +77,6 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
    /* point_quad_rasterization - ? */
    /* point_size_per_vertex  - ? */
    /* sprite_coord_mode      - ??? */
-   /* bypass_vs_viewport_and_clip        - handled by viewport setup */
    /* flatshade_first        - handled by index translation */
    /* gl_rasterization_rules - XXX - viewport code */
    /* line_width             - draw module */
@@ -219,9 +218,6 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
 
       rast->hw_unfilled = fill;
    }
-
-
-
 
    if (rast->need_pipeline & SVGA_PIPELINE_FLAG_TRIS) {
       /* Turn off stuff which will get done in the draw module:
