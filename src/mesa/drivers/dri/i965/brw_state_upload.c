@@ -195,7 +195,9 @@ const struct brw_tracked_state *gen7_atoms[] =
    &gen6_blend_state,		/* must do before cc unit */
    &gen6_color_calc_state,	/* must do before cc unit */
    &gen6_depth_stencil_state,	/* must do before cc unit */
-   &gen6_cc_state_pointers,
+   &gen7_blend_state_pointer,
+   &gen7_cc_state_pointer,
+   &gen7_depth_stencil_state_pointer,
 
    &brw_vs_constants, /* Before vs_surfaces and constant_buffer */
    &brw_wm_constants, /* Before wm_surfaces and constant_buffer */
