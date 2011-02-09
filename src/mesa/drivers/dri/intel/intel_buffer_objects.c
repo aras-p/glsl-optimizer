@@ -223,10 +223,17 @@ intel_bufferobj_subdata(struct gl_context * ctx,
       }
       memcpy((char *)intel_obj->sys_buffer + offset, data, size);
    } else {
-      /* Flush any existing batchbuffer that might reference this data. */
-      if (intel->gen < 6) {
-	 if (drm_intel_bo_busy(intel_obj->buffer) ||
-	     drm_intel_bo_references(intel->batch->buf, intel_obj->buffer)) {
+      bool busy =
+	 drm_intel_bo_busy(intel_obj->buffer) ||
+	 drm_intel_bo_references(intel->batch->buf, intel_obj->buffer);
+
+      /* replace the current busy bo with fresh data */
+      if (busy && size == intel_obj->Base.Size) {
+	 drm_intel_bo_unreference(intel_obj->buffer);
+	 intel_bufferobj_alloc_buffer(intel, intel_obj);
+	 drm_intel_bo_subdata(intel_obj->buffer, 0, size, data);
+      } else if (intel->gen < 6) {
+	 if (busy) {
 	    drm_intel_bo *temp_bo;
 
 	    temp_bo = drm_intel_bo_alloc(intel->bufmgr, "subdata temp", size, 64);
@@ -243,6 +250,7 @@ intel_bufferobj_subdata(struct gl_context * ctx,
 	    drm_intel_bo_subdata(intel_obj->buffer, offset, size, data);
 	 }
       } else {
+	 /* Can't use the blit to modify the buffer in the middle of batch. */
 	 if (drm_intel_bo_references(intel->batch->buf, intel_obj->buffer)) {
 	    intel_batchbuffer_flush(intel->batch);
 	 }
@@ -393,8 +401,7 @@ intel_bufferobj_map_range(struct gl_context * ctx,
        (access & GL_MAP_INVALIDATE_BUFFER_BIT) &&
        drm_intel_bo_busy(intel_obj->buffer)) {
       drm_intel_bo_unreference(intel_obj->buffer);
-      intel_obj->buffer = drm_intel_bo_alloc(intel->bufmgr, "bufferobj",
-					     intel_obj->Base.Size, 64);
+      intel_bufferobj_alloc_buffer(intel, intel_obj);
    }
 
    /* If the user is mapping a range of an active buffer object but
