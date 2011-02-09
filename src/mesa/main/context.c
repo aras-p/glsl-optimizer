@@ -1044,11 +1044,11 @@ _mesa_initialize_context(struct gl_context *ctx,
  * \return pointer to a new __struct gl_contextRec or NULL if error.
  */
 struct gl_context *
-_mesa_create_context_for_api(gl_api api,
-			     const struct gl_config *visual,
-			     struct gl_context *share_list,
-			     const struct dd_function_table *driverFunctions,
-			     void *driverContext)
+_mesa_create_context(gl_api api,
+                     const struct gl_config *visual,
+                     struct gl_context *share_list,
+                     const struct dd_function_table *driverFunctions,
+                     void *driverContext)
 {
    struct gl_context *ctx;
 
@@ -1067,22 +1067,6 @@ _mesa_create_context_for_api(gl_api api,
       free(ctx);
       return NULL;
    }
-}
-
-
-/**
- * Create an OpenGL context.
- */
-struct gl_context *
-_mesa_create_context(const struct gl_config *visual,
-		     struct gl_context *share_list,
-		     const struct dd_function_table *driverFunctions,
-		     void *driverContext)
-{
-   return _mesa_create_context_for_api(API_OPENGL, visual,
-				       share_list,
-				       driverFunctions,
-				       driverContext);
 }
 
 

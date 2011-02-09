@@ -314,7 +314,7 @@ savageCreateContext( gl_api api,
       shareCtx = ((savageContextPtr) sharedContextPrivate)->glCtx;
    else 
       shareCtx = NULL;
-   ctx = _mesa_create_context(mesaVis, shareCtx, &functions, imesa);
+   ctx = _mesa_create_context(api, mesaVis, shareCtx, &functions, imesa);
    if (!ctx) {
       free(imesa);
       return GL_FALSE;

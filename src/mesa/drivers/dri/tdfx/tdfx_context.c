@@ -194,7 +194,7 @@ GLboolean tdfxCreateContext( gl_api api,
    else 
       shareCtx = NULL;
 
-   fxMesa->glCtx = _mesa_create_context(mesaVis, shareCtx,
+   fxMesa->glCtx = _mesa_create_context(api, mesaVis, shareCtx,
                                         &functions, (void *) fxMesa);
    if (!fxMesa->glCtx) {
       FREE(fxMesa);

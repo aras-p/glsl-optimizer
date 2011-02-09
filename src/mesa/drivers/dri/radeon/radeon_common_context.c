@@ -204,7 +204,7 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 		shareCtx = ((radeonContextPtr)sharedContextPrivate)->glCtx;
 	else
 		shareCtx = NULL;
-	radeon->glCtx = _mesa_create_context(glVisual, shareCtx,
+	radeon->glCtx = _mesa_create_context(API_OPENGL, glVisual, shareCtx,
 					    functions, (void *)radeon);
 	if (!radeon->glCtx)
 		return GL_FALSE;

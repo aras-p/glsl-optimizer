@@ -204,7 +204,7 @@ i810CreateContext( gl_api api,
       shareCtx = ((i810ContextPtr) sharedContextPrivate)->glCtx;
    else
       shareCtx = NULL;
-   imesa->glCtx = _mesa_create_context(mesaVis, shareCtx,
+   imesa->glCtx = _mesa_create_context(API_OPENGL, mesaVis, shareCtx,
                                        &functions, (void*) imesa);
    if (!imesa->glCtx) {
       FREE(imesa);
