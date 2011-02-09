@@ -84,23 +84,8 @@
 /*@{*/
 typedef GLuint64 GLbitfield64;
 
-#define BITFIELD64_ONE         1ULL
-#define BITFIELD64_ALLONES     ~0ULL
-
 /** Set a single bit */
-#define BITFIELD64_BIT(b)      (BITFIELD64_ONE << (b))
-
-/** Set a mask of the least significant \c b bits */
-#define BITFIELD64_MASK(b)     (((b) >= 64) ? BITFIELD64_ALLONES : \
-				(BITFIELD64_BIT(b) - 1))
-
-/**
- * Set all bits from l (low bit) to h (high bit), inclusive.
- *
- * \note \C BITFIELD_64_RANGE(0, 63) return 64 set bits.
- */
-#define BITFIELD64_RANGE(l, h) (BITFIELD64_MASK((h) + 1) & ~BITFIELD64_MASK(l))
-/*@}*/
+#define BITFIELD64_BIT(b)      (1ULL << (b))
 
 
 /**
