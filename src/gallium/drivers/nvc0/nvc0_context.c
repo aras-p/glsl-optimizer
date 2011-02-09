@@ -41,6 +41,10 @@ nvc0_flush(struct pipe_context *pipe, unsigned flags,
       OUT_RING  (chan, 0);
       BEGIN_RING(chan, RING_3D(TEX_CACHE_CTL), 1);
       OUT_RING  (chan, 0x00);
+   } else
+   if ((flags & PIPE_FLUSH_RENDER_CACHE) && !(flags & PIPE_FLUSH_FRAME)) {
+      BEGIN_RING(chan, RING_3D(SERIALIZE), 1);
+      OUT_RING  (chan, 0);
    }
 
    if (fence) {
