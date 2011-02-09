@@ -160,6 +160,12 @@ upload_ps_state(struct brw_context *brw)
    OUT_BATCH(brw->wm.bind_bo_offset);
    ADVANCE_BATCH();
 
+   /* CACHE_NEW_SAMPLER */
+   BEGIN_BATCH(2);
+   OUT_BATCH(_3DSTATE_SAMPLER_STATE_POINTERS_PS << 16 | (2 - 2));
+   OUT_BATCH(brw->wm.sampler_offset);
+   ADVANCE_BATCH();
+
    /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->nr_params == 0) {
       /* Disable the push constant buffers. */
