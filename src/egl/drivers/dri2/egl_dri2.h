@@ -79,7 +79,7 @@ struct dri2_egl_display
    char                     *device_name;
    char                     *driver_name;
 
-   __DRIdri2LoaderExtension  loader_extension;
+   __DRIdri2LoaderExtension  dri2_loader_extension;
    const __DRIextension     *extensions[3];
 #ifdef HAVE_WAYLAND_PLATFORM
    struct wl_egl_display    *wl_dpy;

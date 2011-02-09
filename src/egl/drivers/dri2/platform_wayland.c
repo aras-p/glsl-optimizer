@@ -627,14 +627,14 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    if (!dri2_load_driver(disp))
       goto cleanup_driver_name;
 
-   dri2_dpy->loader_extension.base.name = __DRI_DRI2_LOADER;
-   dri2_dpy->loader_extension.base.version = 3;
-   dri2_dpy->loader_extension.getBuffers = dri2_get_buffers;
-   dri2_dpy->loader_extension.flushFrontBuffer = dri2_flush_front_buffer;
-   dri2_dpy->loader_extension.getBuffersWithFormat =
+   dri2_dpy->dri2_loader_extension.base.name = __DRI_DRI2_LOADER;
+   dri2_dpy->dri2_loader_extension.base.version = 3;
+   dri2_dpy->dri2_loader_extension.getBuffers = dri2_get_buffers;
+   dri2_dpy->dri2_loader_extension.flushFrontBuffer = dri2_flush_front_buffer;
+   dri2_dpy->dri2_loader_extension.getBuffersWithFormat =
       dri2_get_buffers_with_format;
       
-   dri2_dpy->extensions[0] = &dri2_dpy->loader_extension.base;
+   dri2_dpy->extensions[0] = &dri2_dpy->dri2_loader_extension.base;
    dri2_dpy->extensions[1] = &image_lookup_extension.base;
    dri2_dpy->extensions[2] = NULL;
 
