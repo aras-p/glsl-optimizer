@@ -169,6 +169,11 @@ dri_make_current(__DRIcontext * cPriv,
 
    ++ctx->bind_count;
 
+   if (!driDrawPriv && !driReadPriv)
+      return ctx->stapi->make_current(ctx->stapi, ctx->st, NULL, NULL);
+   else if (!driDrawPriv || !driReadPriv)
+      return GL_FALSE;
+
    if (ctx->dPriv != driDrawPriv) {
       ctx->dPriv = driDrawPriv;
       draw->texture_stamp = driDrawPriv->lastStamp - 1;
@@ -178,8 +183,7 @@ dri_make_current(__DRIcontext * cPriv,
       read->texture_stamp = driReadPriv->lastStamp - 1;
    }
 
-   ctx->stapi->make_current(ctx->stapi, ctx->st,
-         (draw) ? &draw->base : NULL, (read) ? &read->base : NULL);
+   ctx->stapi->make_current(ctx->stapi, ctx->st, &draw->base, &read->base);
 
    return GL_TRUE;
 }
