@@ -145,7 +145,7 @@ struct brw_context;
 #define BRW_NEW_NR_VS_SURFACES		0x80000
 #define BRW_NEW_INDEX_BUFFER		0x100000
 #define BRW_NEW_VS_CONSTBUF		0x200000
-#define BRW_NEW_WM_CONSTBUF		0x200000
+#define BRW_NEW_WM_CONSTBUF		0x400000
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
