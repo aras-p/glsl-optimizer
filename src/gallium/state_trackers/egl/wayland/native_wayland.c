@@ -84,7 +84,7 @@ wayland_display_get_configs (struct native_display *ndpy, int *num_configs)
          (1 << NATIVE_ATTACHMENT_FRONT_LEFT) |
          (1 << NATIVE_ATTACHMENT_BACK_LEFT);
 
-      format = PIPE_FORMAT_B8G8R8X8_UNORM;
+      format = PIPE_FORMAT_B8G8R8A8_UNORM;
 
       nconf->color_format = format;
       nconf->window_bit = TRUE;
@@ -378,13 +378,14 @@ wayland_create_pixmap_surface(struct native_display *ndpy,
       return NULL;
 
    surface->display = display;
-   if (config)
-      surface->color_format = config->base.color_format;
-   else
-      surface->color_format = PIPE_FORMAT_B8G8R8X8_UNORM;
 
    surface->type = WL_PIXMAP_SURFACE;
    surface->pix = egl_pixmap;
+
+   if (surface->pix->visual == wl_display_get_rgb_visual(display->dpy->display))
+      surface->color_format = PIPE_FORMAT_B8G8R8X8_UNORM;
+   else
+      surface->color_format = PIPE_FORMAT_B8G8R8A8_UNORM;
 
    surface->attachment_mask = (1 << NATIVE_ATTACHMENT_FRONT_LEFT);
    
