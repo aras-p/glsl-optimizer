@@ -98,13 +98,16 @@ EGLint dri2_to_egl_attribute_map[] = {
 
 struct dri2_egl_config *
 dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
-		int depth, EGLint surface_type)
+		int depth, EGLint surface_type, const EGLint *attr_list)
 {
    struct dri2_egl_config *conf;
    struct dri2_egl_display *dri2_dpy;
    _EGLConfig base;
    unsigned int attrib, value, double_buffer;
    EGLint key, bind_to_texture_rgb, bind_to_texture_rgba;
+   _EGLConfig *matching_config;
+   EGLint num_configs = 0;
+   EGLint config_id;
    int i;
 
    dri2_dpy = disp->DriverData;
@@ -157,15 +160,9 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
       }
    }
 
-   /* In EGL, double buffer or not isn't a config attribute.  Pixmaps
-    * surfaces are always single buffered, pbuffer surfaces are always
-    * back buffers and windows can be either, selected by passing an
-    * attribute at window surface construction time.  To support this
-    * we ignore all double buffer configs and manipulate the buffer we
-    * return in the getBuffer callback to get the behaviour we want. */
-
-   if (double_buffer)
-      return NULL;
+   if (attr_list)
+      for (i = 0; attr_list[i] != EGL_NONE; i += 2)
+         _eglSetConfigKey(&base, attr_list[i], attr_list[i+1]);
 
    if (depth > 0 && depth != base.BufferSize)
       return NULL;
@@ -188,12 +185,47 @@ dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
       return NULL;
    }
 
-   conf = malloc(sizeof *conf);
-   if (conf != NULL) {
+   config_id = base.ConfigID;
+   base.ConfigID    = EGL_DONT_CARE;
+   base.SurfaceType = EGL_DONT_CARE;
+   num_configs = _eglFilterArray(disp->Configs, (void **) &matching_config, 1,
+                                 (_EGLArrayForEach) _eglMatchConfig, &base);
+
+   if (num_configs == 1) {
+      conf = (struct dri2_egl_config *) matching_config;
+
+      if (double_buffer && !conf->dri_double_config)
+         conf->dri_double_config = dri_config;
+      else if (!double_buffer && !conf->dri_single_config)
+         conf->dri_single_config = dri_config;
+      else
+         /* a similar config type is already added
+          * => attach it as new config
+          */
+         num_configs = 0;
+   }
+
+   if (num_configs == 0) {
+      conf = malloc(sizeof *conf);
+      if (conf == NULL)
+         return NULL;
+
       memcpy(&conf->base, &base, sizeof base);
-      conf->dri_config = dri_config;
+      if (double_buffer) {
+         conf->dri_double_config = dri_config;
+         conf->dri_single_config = NULL;
+      } else {
+         conf->dri_single_config = dri_config;
+         conf->dri_double_config = NULL;
+      }
+      conf->base.SurfaceType = 0;
+      conf->base.ConfigID = config_id;
+
       _eglLinkConfig(&conf->base);
    }
+
+   conf->base.SurfaceType |= surface_type & (!double_buffer ? EGL_PIXMAP_BIT:
+         (EGL_WINDOW_BIT | EGL_PBUFFER_BIT | EGL_SWAP_BEHAVIOR_PRESERVED_BIT));
 
    return conf;
 }
@@ -491,8 +523,19 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
       return NULL;
    }
 
-   if (conf != NULL)
-      dri_config = dri2_config->dri_config;
+   if (conf != NULL) {
+      /* The config chosen here isn't necessarily
+       * used for surfaces later.
+       * A pixmap surface will use the single config.
+       * This opportunity depends on disabling the
+       * doubleBufferMode check in
+       * src/mesa/main/context.c:check_compatible()
+       */
+      if (dri2_config->dri_double_config)
+         dri_config = dri2_config->dri_double_config;
+      else
+         dri_config = dri2_config->dri_single_config;
+   }
    else
       dri_config = NULL;
 
@@ -507,7 +550,7 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
    } else if (api == __DRI_API_OPENGL) {
       dri2_ctx->dri_context =
 	 dri2_dpy->dri2->createNewContext(dri2_dpy->dri_screen,
-					  dri2_config->dri_config,
+					  dri_config,
 					  dri2_ctx_shared ? 
 					  dri2_ctx_shared->dri_context : NULL,
 					  dri2_ctx);

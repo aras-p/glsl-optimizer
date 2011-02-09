@@ -139,7 +139,8 @@ struct dri2_egl_buffer {
 struct dri2_egl_config
 {
    _EGLConfig         base;
-   const __DRIconfig *dri_config;
+   const __DRIconfig *dri_single_config;
+   const __DRIconfig *dri_double_config;
 };
 
 struct dri2_egl_image
@@ -163,7 +164,7 @@ dri2_create_screen(_EGLDisplay *disp);
 
 struct dri2_egl_config *
 dri2_add_config(_EGLDisplay *disp, const __DRIconfig *dri_config, int id,
-		int depth, EGLint surface_type);
+		int depth, EGLint surface_type, const EGLint *attr_list);
 
 _EGLImage *
 dri2_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,

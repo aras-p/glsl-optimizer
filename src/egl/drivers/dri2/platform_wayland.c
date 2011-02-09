@@ -94,7 +94,10 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
 
    dri2_surf->dri_drawable = 
       (*dri2_dpy->dri2->createNewDrawable) (dri2_dpy->dri_screen,
-					    dri2_conf->dri_config, dri2_surf);
+					    type == EGL_WINDOW_BIT ?
+					    dri2_conf->dri_double_config : 
+					    dri2_conf->dri_single_config,
+					    dri2_surf);
    if (dri2_surf->dri_drawable == NULL) {
       _eglError(EGL_BAD_ALLOC, "dri2->createNewDrawable");
       goto cleanup_dri_drawable;
@@ -181,20 +184,34 @@ dri2_wl_egl_pixmap_destroy(struct wl_egl_pixmap *egl_pixmap)
 }
 
 static void
+dri2_process_back_buffer(struct dri2_egl_surface *dri2_surf, unsigned format)
+{
+   struct dri2_egl_display *dri2_dpy =
+      dri2_egl_display(dri2_surf->base.Resource.Display);
+
+   (void) format;
+
+   switch (dri2_surf->type) {
+   case DRI2_WINDOW_SURFACE:
+      /* allocate a front buffer for our double-buffered window*/
+      dri2_surf->dri_buffers[__DRI_BUFFER_FRONT_LEFT] = 
+         dri2_dpy->dri2->allocateBuffer(dri2_dpy->dri_screen,
+               __DRI_BUFFER_FRONT_LEFT, format,
+               dri2_surf->base.Width, dri2_surf->base.Height);
+      break;
+   default:
+      break;
+   }
+}
+
+static void
 dri2_process_front_buffer(struct dri2_egl_surface *dri2_surf, unsigned format)
 {
    struct dri2_egl_display *dri2_dpy =
       dri2_egl_display(dri2_surf->base.Resource.Display);
    struct dri2_egl_buffer *dri2_buf;
 
-   /* allocate a back buffer for our double-buffered window*/
    switch (dri2_surf->type) {
-   case DRI2_WINDOW_SURFACE:
-      dri2_surf->dri_buffers[__DRI_BUFFER_BACK_LEFT] = 
-         dri2_dpy->dri2->allocateBuffer(dri2_dpy->dri_screen,
-               __DRI_BUFFER_BACK_LEFT, format,
-               dri2_surf->base.Width, dri2_surf->base.Height);
-      break;
    case DRI2_PIXMAP_SURFACE:
       dri2_buf = malloc(sizeof *dri2_buf);
       if (!dri2_buf)
@@ -264,6 +281,8 @@ dri2_get_buffers_with_format(__DRIdrawable * driDrawable,
 
          if (attachments[i] == __DRI_BUFFER_FRONT_LEFT)
             dri2_process_front_buffer(dri2_surf, attachments[i+1]);
+         else if (attachments[i] == __DRI_BUFFER_BACK_LEFT)
+            dri2_process_back_buffer(dri2_surf, attachments[i+1]);
       }
 
       memcpy(&dri2_surf->buffers[dri2_surf->buffer_count],
@@ -396,7 +415,7 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
       if (!dri2_surf->wl_drm_buffer[WL_BUFFER_FRONT])
 	 dri2_surf->wl_drm_buffer[WL_BUFFER_FRONT] =
 	    wayland_create_buffer(dri2_surf,
-		  dri2_surf->dri_buffers[__DRI_BUFFER_BACK_LEFT]);
+		  dri2_surf->dri_buffers[__DRI_BUFFER_FRONT_LEFT]);
 
       wl_surface_attach(dri2_surf->wl_win->surface,
 	    dri2_surf->wl_drm_buffer[WL_BUFFER_FRONT],
@@ -584,7 +603,7 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
 
    for (i = 0; dri2_dpy->driver_configs[i]; i++)
       dri2_add_config(disp, dri2_dpy->driver_configs[i], i + 1, 0,
-		      EGL_WINDOW_BIT | EGL_PIXMAP_BIT);
+		      EGL_WINDOW_BIT | EGL_PIXMAP_BIT, NULL);
 
 
    disp->Extensions.MESA_drm_image = EGL_TRUE;

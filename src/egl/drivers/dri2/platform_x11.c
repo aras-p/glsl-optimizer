@@ -79,7 +79,10 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
 
    dri2_surf->dri_drawable = 
       (*dri2_dpy->dri2->createNewDrawable) (dri2_dpy->dri_screen,
-					    dri2_conf->dri_config, dri2_surf);
+					    type == EGL_WINDOW_BIT ?
+					    dri2_conf->dri_double_config : 
+					    dri2_conf->dri_single_config,
+					    dri2_surf);
    if (dri2_surf->dri_drawable == NULL) {
       _eglError(EGL_BAD_ALLOC, "dri2->createNewDrawable");
       goto cleanup_pixmap;
@@ -428,8 +431,12 @@ dri2_add_configs_for_visuals(struct dri2_egl_display *dri2_dpy,
    xcb_depth_iterator_t d;
    xcb_visualtype_t *visuals;
    int i, j, id;
-   struct dri2_egl_config *conf;
    EGLint surface_type;
+   EGLint config_attrs[] = {
+	   EGL_NATIVE_VISUAL_ID,   0,
+	   EGL_NATIVE_VISUAL_TYPE, 0,
+	   EGL_NONE
+   };
 
    s = xcb_setup_roots_iterator(xcb_get_setup(dri2_dpy->conn));
    d = xcb_screen_allowed_depths_iterator(s.data);
@@ -451,14 +458,11 @@ dri2_add_configs_for_visuals(struct dri2_egl_display *dri2_dpy,
 
 	 class_added[visuals[i]._class] = EGL_TRUE;
 	 for (j = 0; dri2_dpy->driver_configs[j]; j++) {
-	    conf = dri2_add_config(disp, dri2_dpy->driver_configs[j],
-				   id++, d.data->depth, surface_type);
-	    if (conf == NULL)
-	       continue;
-	    _eglSetConfigKey(&conf->base,
-			     EGL_NATIVE_VISUAL_ID, visuals[i].visual_id);
-	    _eglSetConfigKey(&conf->base,
-			     EGL_NATIVE_VISUAL_TYPE, visuals[i]._class);
+            config_attrs[1] = visuals[i].visual_id;
+            config_attrs[3] = visuals[i]._class;
+
+	    dri2_add_config(disp, dri2_dpy->driver_configs[j], id++,
+			    d.data->depth, surface_type, config_attrs);
 	 }
       }
 
@@ -481,6 +485,7 @@ dri2_copy_region(_EGLDriver *drv, _EGLDisplay *disp,
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    struct dri2_egl_surface *dri2_surf = dri2_egl_surface(draw);
    _EGLContext *ctx;
+   enum xcb_dri2_attachment_t render_attachment;
    xcb_dri2_copy_region_cookie_t cookie;
 
    if (dri2_drv->glFlush) {
@@ -502,14 +507,16 @@ dri2_copy_region(_EGLDriver *drv, _EGLDisplay *disp,
 #endif
 #endif
 
-   if (!dri2_surf->have_fake_front)
-      return EGL_TRUE;
+   if (dri2_surf->have_fake_front)
+      render_attachment = XCB_DRI2_ATTACHMENT_BUFFER_FAKE_FRONT_LEFT;
+   else
+      render_attachment = XCB_DRI2_ATTACHMENT_BUFFER_BACK_LEFT;
 
    cookie = xcb_dri2_copy_region_unchecked(dri2_dpy->conn,
 					   dri2_surf->drawable,
 					   region,
 					   XCB_DRI2_ATTACHMENT_BUFFER_FRONT_LEFT,
-					   XCB_DRI2_ATTACHMENT_BUFFER_FAKE_FRONT_LEFT);
+					   render_attachment);
    free(xcb_dri2_copy_region_reply(dri2_dpy->conn, cookie, NULL));
 
    return EGL_TRUE;
