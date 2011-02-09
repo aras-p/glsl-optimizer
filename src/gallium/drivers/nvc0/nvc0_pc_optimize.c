@@ -1153,40 +1153,98 @@ nv_pass_flatten(struct nv_pass *ctx, struct nv_basic_block *b)
    return 0;
 }
 
+/* Tests instructions for equality, but independently of sources. */
+static boolean
+is_operation_equal(struct nv_instruction *a, struct nv_instruction *b)
+{
+   if (a->opcode != b->opcode)
+      return FALSE;
+   if (nv_is_texture_op(a->opcode)) {
+      if (a->ext.tex.t != b->ext.tex.t ||
+          a->ext.tex.s != b->ext.tex.s)
+         return FALSE;
+      if (a->tex_dim != b->tex_dim ||
+          a->tex_array != b->tex_array ||
+          a->tex_cube != b->tex_cube ||
+          a->tex_shadow != b->tex_shadow ||
+          a->tex_live != b->tex_live)
+         return FALSE;
+   } else
+   if (a->opcode == NV_OP_CVT) {
+      if (a->ext.cvt.s != b->ext.cvt.s ||
+          a->ext.cvt.d != b->ext.cvt.d)
+         return FALSE;
+   } else
+   if (NV_BASEOP(a->opcode) == NV_OP_SET ||
+       NV_BASEOP(a->opcode) == NV_OP_SLCT) {
+      if (a->set_cond != b->set_cond)
+         return FALSE;
+   } else
+   if (a->opcode == NV_OP_LINTERP ||
+       a->opcode == NV_OP_PINTERP) {
+      if (a->centroid != b->centroid ||
+          a->flat != b->flat)
+         return FALSE;
+   }
+   if (a->cc != b->cc)
+      return FALSE;
+   if (a->lanes != b->lanes ||
+       a->patch != b->patch ||
+       a->saturate != b->saturate)
+      return FALSE;
+   if (a->opcode == NV_OP_QUADOP) /* beware quadon ! */
+      return FALSE;
+   return TRUE;
+}
+
 /* local common subexpression elimination, stupid O(n^2) implementation */
 static int
 nv_pass_cse(struct nv_pass *ctx, struct nv_basic_block *b)
 {
    struct nv_instruction *ir, *ik, *next;
    struct nv_instruction *entry = b->phi ? b->phi : b->entry;
-   int s;
+   int s, d;
    unsigned int reps;
 
    do {
       reps = 0;
       for (ir = entry; ir; ir = next) {
          next = ir->next;
+         if (ir->fixed)
+            continue;
          for (ik = entry; ik != ir; ik = ik->next) {
-            if (ir->opcode != ik->opcode || ir->fixed)
+            if (!is_operation_equal(ir, ik))
                continue;
-
-            if (!ir->def[0] || !ik->def[0] || ir->def[1] || ik->def[1])
+            if (!ir->def[0] || !ik->def[0])
                continue;
 
             if (ik->indirect != ir->indirect || ik->predicate != ir->predicate)
                continue;
 
-            if (!values_equal(ik->def[0], ir->def[0]))
+            for (d = 0; d < 4; ++d) {
+               if ((ir->def[d] ? 1 : 0) != (ik->def[d] ? 1 : 0))
+                  break;
+               if (ir->def[d]) {
+                  if (!values_equal(ik->def[0], ir->def[0]))
+                     break;
+               } else {
+                  d = 4;
+                  break;
+               }
+            }
+            if (d != 4)
                continue;
 
-            for (s = 0; s < 3; ++s) {
+            for (s = 0; s < 5; ++s) {
                struct nv_value *a, *b;
 
-               if (!ik->src[s]) {
-                  if (ir->src[s])
-                     break;
-                  continue;
+               if ((ir->src[s] ? 1 : 0) != (ik->src[s] ? 1 : 0))
+                  break;
+               if (!ir->src[s]) {
+                  s = 5;
+                  break;
                }
+
                if (ik->src[s]->mod != ir->src[s]->mod)
                   break;
                a = ik->src[s]->value;
@@ -1194,14 +1252,15 @@ nv_pass_cse(struct nv_pass *ctx, struct nv_basic_block *b)
                if (a == b)
                   continue;
                if (a->reg.file != b->reg.file ||
-                   a->reg.id < 0 ||
+                   a->reg.id < 0 || /* this excludes memory loads/stores */
                    a->reg.id != b->reg.id)
                   break;
             }
-            if (s == 3) {
+            if (s == 5) {
                nvc0_insn_delete(ir);
+               for (d = 0; d < 4 && ir->def[d]; ++d)
+                  nvc0_pc_replace_value(ctx->pc, ir->def[d], ik->def[d]);
                ++reps;
-               nvc0_pc_replace_value(ctx->pc, ir->def[0], ik->def[0]);
                break;
             }
          }
