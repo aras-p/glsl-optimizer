@@ -461,7 +461,7 @@ aaline_create_texture(struct aaline_stage *aaline)
                d = 200; /* tuneable */
             }
             else if (i == 0 || j == 0 || i == size - 1 || j == size - 1) {
-               d = 0;
+               d = 35;  /* edge texel */
             }
             else {
                d = 255;
