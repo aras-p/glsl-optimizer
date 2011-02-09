@@ -597,19 +597,20 @@ dri2_make_current(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *dsurf,
    rdraw = (dri2_rsurf) ? dri2_rsurf->dri_drawable : NULL;
    cctx = (dri2_ctx) ? dri2_ctx->dri_context : NULL;
 
+   if (old_ctx) {
+      __DRIcontext *old_cctx = dri2_egl_context(old_ctx)->dri_context;
+      dri2_dpy->core->unbindContext(old_cctx);
+   }
+
    if ((cctx == NULL && ddraw == NULL && rdraw == NULL) ||
        dri2_dpy->core->bindContext(cctx, ddraw, rdraw)) {
-      drv->API.DestroySurface(drv, disp, old_dsurf);
-      drv->API.DestroySurface(drv, disp, old_rsurf);
-      if (old_ctx) {
-         /* unbind the old context only when there is no new context bound */
-         if (!ctx) {
-            __DRIcontext *old_cctx = dri2_egl_context(old_ctx)->dri_context;
-            dri2_dpy->core->unbindContext(old_cctx);
-         }
-         /* no destroy? */
+      if (old_dsurf)
+         drv->API.DestroySurface(drv, disp, old_dsurf);
+      if (old_rsurf)
+         drv->API.DestroySurface(drv, disp, old_rsurf);
+      /* no destroy? */
+      if (old_ctx)
          _eglPutContext(old_ctx);
-      }
 
       return EGL_TRUE;
    } else {
