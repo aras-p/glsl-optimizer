@@ -273,7 +273,7 @@ Modern APIs allow using buffers as shader resources.
 **depth0** the depth of the base mip level of the texture
 (1 for everything else).
 
-**array_size the array size for 1D and 2D array textures.
+**array_size** the array size for 1D and 2D array textures.
 For cube maps this must be 6, for other textures 1.
 
 **last_level** the last mip map level present.
