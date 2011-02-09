@@ -905,6 +905,7 @@ void evergreen_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.set_vertex_sampler_views = evergreen_set_vs_sampler_view;
 	rctx->context.set_viewport_state = evergreen_set_viewport_state;
 	rctx->context.sampler_view_destroy = r600_sampler_view_destroy;
+	rctx->context.redefine_user_buffer = u_default_redefine_user_buffer;
 }
 
 void evergreen_init_config(struct r600_pipe_context *rctx)

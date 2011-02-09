@@ -27,6 +27,7 @@
 #include "pipe/p_defines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_transfer.h"
 #include "tgsi/tgsi_parse.h"
 
 #include "svga_screen.h"
@@ -131,6 +132,7 @@ void svga_init_vertex_functions( struct svga_context *svga )
    svga->pipe.create_vertex_elements_state = svga_create_vertex_elements_state;
    svga->pipe.bind_vertex_elements_state = svga_bind_vertex_elements_state;
    svga->pipe.delete_vertex_elements_state = svga_delete_vertex_elements_state;
+   svga->pipe.redefine_user_buffer = u_default_redefine_user_buffer;
 }
 
 

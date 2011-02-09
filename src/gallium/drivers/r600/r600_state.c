@@ -37,6 +37,7 @@
 #include <util/u_memory.h>
 #include <util/u_inlines.h>
 #include <util/u_framebuffer.h>
+#include "util/u_transfer.h"
 #include <pipebuffer/pb_buffer.h>
 #include "r600.h"
 #include "r600d.h"
@@ -941,6 +942,7 @@ void r600_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.set_vertex_sampler_views = r600_set_vs_sampler_view;
 	rctx->context.set_viewport_state = r600_set_viewport_state;
 	rctx->context.sampler_view_destroy = r600_sampler_view_destroy;
+	rctx->context.redefine_user_buffer = u_default_redefine_user_buffer;
 }
 
 void r600_init_config(struct r600_pipe_context *rctx)

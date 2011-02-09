@@ -23,6 +23,7 @@
 #include "pipe/p_state.h"
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
+#include "util/u_transfer.h"
 
 #include "tgsi/tgsi_parse.h"
 
@@ -886,5 +887,6 @@ nv50_init_state_functions(struct nv50_context *nv50)
 
 	nv50->pipe.set_vertex_buffers = nv50_set_vertex_buffers;
 	nv50->pipe.set_index_buffer = nv50_set_index_buffer;
+	nv50->pipe.redefine_user_buffer = u_default_redefine_user_buffer;
 }
 

@@ -33,6 +33,7 @@
 #include "cell_state.h"
 
 #include "util/u_memory.h"
+#include "util/u_transfer.h"
 #include "draw/draw_context.h"
 
 
@@ -115,4 +116,5 @@ cell_init_vertex_functions(struct cell_context *cell)
    cell->pipe.create_vertex_elements_state = cell_create_vertex_elements_state;
    cell->pipe.bind_vertex_elements_state = cell_bind_vertex_elements_state;
    cell->pipe.delete_vertex_elements_state = cell_delete_vertex_elements_state;
+   cell->pipe.redefine_user_buffer = u_default_redefine_user_buffer;
 }

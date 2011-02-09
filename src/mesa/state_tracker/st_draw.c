@@ -330,6 +330,11 @@ setup_interleaved_attribs(struct gl_context *ctx,
                                        stride * (max_index + 1),
 				       PIPE_BIND_VERTEX_BUFFER);
             vbuffer->buffer_offset = 0;
+
+            /* Track user vertex buffers. */
+            pipe_resource_reference(&st->user_vb[0], vbuffer->buffer);
+            st->user_vb_stride[0] = stride;
+            st->num_user_vbs = 1;
          }
          vbuffer->stride = stride; /* in bytes */
       }
@@ -405,6 +410,11 @@ setup_non_interleaved_attribs(struct gl_context *ctx,
          }
 
          vbuffer[attr].buffer_offset = 0;
+
+         /* Track user vertex buffers. */
+         pipe_resource_reference(&st->user_vb[attr], vbuffer->buffer);
+         st->user_vb_stride[attr] = stride;
+         st->num_user_vbs = MAX2(st->num_user_vbs, attr+1);
       }
 
       /* common-case setup */
@@ -538,12 +548,20 @@ st_validate_varrays(struct gl_context *ctx,
    struct pipe_vertex_element velements[PIPE_MAX_ATTRIBS];
    unsigned num_vbuffers, num_velements;
    GLuint attr;
+   unsigned i;
 
    /* must get these after state validation! */
    vp = st->vp;
    vpv = st->vp_variant;
 
    memset(velements, 0, sizeof(struct pipe_vertex_element) * vpv->num_inputs);
+
+   /* Unreference any user vertex buffers. */
+   for (i = 0; i < st->num_user_vbs; i++) {
+      pipe_resource_reference(&st->user_vb[i], NULL);
+   }
+   st->num_user_vbs = 0;
+
    /*
     * Setup the vbuffer[] and velements[] arrays.
     */
@@ -644,6 +662,26 @@ st_draw_vbo(struct gl_context *ctx,
 #else
       (void) check_uniforms;
 #endif
+   }
+
+   /* Notify the driver that the content of user buffers may have been
+    * changed. */
+   if (!new_array && st->num_user_vbs) {
+      for (i = 0; i < st->num_user_vbs; i++) {
+         if (st->user_vb[i]) {
+            unsigned stride = st->user_vb_stride[i];
+
+            if (stride) {
+               pipe->redefine_user_buffer(pipe, st->user_vb[i],
+                                          min_index * stride,
+                                          (max_index + 1 - min_index) * stride);
+            } else {
+               /* stride == 0 */
+               pipe->redefine_user_buffer(pipe, st->user_vb[i],
+                                          0, st->user_vb[i]->width0);
+            }
+         }
+      }
    }
 
    setup_index_buffer(ctx, ib, &ibuffer);

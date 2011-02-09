@@ -962,6 +962,19 @@ galahad_context_transfer_inline_write(struct pipe_context *_context,
 }
 
 
+static void galahad_redefine_user_buffer(struct pipe_context *_context,
+                                         struct pipe_resource *_resource,
+                                         unsigned offset, unsigned size)
+{
+   struct galahad_context *glhd_context = galahad_context(_context);
+   struct galahad_resource *glhd_resource = galahad_resource(_resource);
+   struct pipe_context *context = glhd_context->pipe;
+   struct pipe_resource *resource = glhd_resource->resource;
+
+   context->redefine_user_buffer(context, resource, offset, size);
+}
+
+
 struct pipe_context *
 galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
 {
@@ -1036,6 +1049,7 @@ galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    glhd_pipe->base.transfer_unmap = galahad_context_transfer_unmap;
    glhd_pipe->base.transfer_flush_region = galahad_context_transfer_flush_region;
    glhd_pipe->base.transfer_inline_write = galahad_context_transfer_inline_write;
+   glhd_pipe->base.redefine_user_buffer = galahad_redefine_user_buffer;
 
    glhd_pipe->pipe = pipe;
 

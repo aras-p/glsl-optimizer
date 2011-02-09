@@ -22,6 +22,7 @@
 
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
+#include "util/u_transfer.h"
 
 #include "tgsi/tgsi_parse.h"
 
@@ -934,5 +935,7 @@ nvc0_init_state_functions(struct nvc0_context *nvc0)
     nvc0->pipe.delete_stream_output_state = nvc0_tfb_state_delete;
     nvc0->pipe.bind_stream_output_state = nvc0_tfb_state_bind;
     nvc0->pipe.set_stream_output_buffers = nvc0_set_transform_feedback_buffers;
+
+    nvc0->pipe.redefine_user_buffer = u_default_redefine_user_buffer;
 }
 

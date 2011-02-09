@@ -392,6 +392,22 @@ be flushed on write or unmap. Flushes must be requested with
 ``transfer_flush_region``. Flush ranges are relative to the mapped range, not
 the beginning of the resource.
 
+
+
+.. _redefine_user_buffer:
+
+redefine_user_buffer
+%%%%%%%%%%%%%%%%%%%%
+
+This function notifies a driver that the user buffer content has been changed.
+The updated region starts at ``offset`` and is ``size`` bytes large.
+The ``offset`` is relative to the pointer specified in ``user_buffer_create``.
+While uploading the user buffer, the driver is allowed not to upload
+the memory outside of this region.
+The width0 is redefined to ``MAX2(width0, offset+size)``.
+
+
+
 .. _pipe_transfer:
 
 PIPE_TRANSFER

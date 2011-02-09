@@ -136,11 +136,9 @@ void u_transfer_inline_write_vtbl( struct pipe_context *rm_ctx,
                                    unsigned stride,
                                    unsigned layer_stride);
 
-
-
-
-
-
-
+void u_default_redefine_user_buffer(struct pipe_context *ctx,
+                                    struct pipe_resource *resource,
+                                    unsigned offset,
+                                    unsigned size);
 
 #endif

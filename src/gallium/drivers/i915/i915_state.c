@@ -33,6 +33,7 @@
 #include "util/u_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_transfer.h"
 #include "tgsi/tgsi_parse.h"
 
 #include "i915_context.h"
@@ -895,4 +896,5 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->base.set_viewport_state = i915_set_viewport_state;
    i915->base.set_vertex_buffers = i915_set_vertex_buffers;
    i915->base.set_index_buffer = i915_set_index_buffer;
+   i915->base.redefine_user_buffer = u_default_redefine_user_buffer;
 }
