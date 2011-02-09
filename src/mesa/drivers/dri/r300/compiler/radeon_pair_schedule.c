@@ -544,18 +544,12 @@ static void rgb_to_alpha_remap (
 {
 	int new_src_index;
 	unsigned int i;
-	struct rc_pair_instruction_source * old_src =
-					rc_pair_get_src(&inst->U.P, arg);
-	if (!old_src) {
-		return;
-	}
 
 	for (i = 0; i < 3; i++) {
 		if (get_swz(arg->Swizzle, i) == old_swz) {
 			SET_SWZ(arg->Swizzle, i, RC_SWIZZLE_W);
 		}
 	}
-	memset(old_src, 0, sizeof(struct rc_pair_instruction_source));
 	new_src_index = rc_pair_alloc_source(&inst->U.P, 0, 1,
 							old_file, new_index);
 	/* This conversion is not possible, we must have made a mistake in
