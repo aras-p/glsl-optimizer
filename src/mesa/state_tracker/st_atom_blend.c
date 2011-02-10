@@ -191,7 +191,7 @@ update_blend( struct st_context *st )
 {
    struct pipe_blend_state *blend = &st->state.blend;
    unsigned num_state = 1;
-   unsigned i;
+   unsigned i, j;
 
    memset(blend, 0, sizeof(*blend));
 
@@ -214,12 +214,15 @@ update_blend( struct st_context *st )
    }
    else if (st->ctx->Color.BlendEnabled) {
       /* blending enabled */
-      for (i = 0; i < num_state; i++) {
+      for (i = 0, j = 0; i < num_state; i++) {
 
          blend->rt[i].blend_enable = (st->ctx->Color.BlendEnabled >> i) & 0x1;
 
+         if (st->ctx->Extensions.ARB_draw_buffers_blend)
+            j = i;
+
          blend->rt[i].rgb_func =
-            translate_blend(st->ctx->Color.Blend[i].EquationRGB);
+            translate_blend(st->ctx->Color.Blend[j].EquationRGB);
 
          if (st->ctx->Color.Blend[i].EquationRGB == GL_MIN ||
              st->ctx->Color.Blend[i].EquationRGB == GL_MAX) {
@@ -229,13 +232,13 @@ update_blend( struct st_context *st )
          }
          else {
             blend->rt[i].rgb_src_factor =
-               translate_blend(st->ctx->Color.Blend[i].SrcRGB);
+               translate_blend(st->ctx->Color.Blend[j].SrcRGB);
             blend->rt[i].rgb_dst_factor =
-               translate_blend(st->ctx->Color.Blend[i].DstRGB);
+               translate_blend(st->ctx->Color.Blend[j].DstRGB);
          }
 
          blend->rt[i].alpha_func =
-            translate_blend(st->ctx->Color.Blend[i].EquationA);
+            translate_blend(st->ctx->Color.Blend[j].EquationA);
 
          if (st->ctx->Color.Blend[i].EquationA == GL_MIN ||
              st->ctx->Color.Blend[i].EquationA == GL_MAX) {
@@ -245,9 +248,9 @@ update_blend( struct st_context *st )
          }
          else {
             blend->rt[i].alpha_src_factor =
-               translate_blend(st->ctx->Color.Blend[i].SrcA);
+               translate_blend(st->ctx->Color.Blend[j].SrcA);
             blend->rt[i].alpha_dst_factor =
-               translate_blend(st->ctx->Color.Blend[i].DstA);
+               translate_blend(st->ctx->Color.Blend[j].DstA);
          }
       }
    }
