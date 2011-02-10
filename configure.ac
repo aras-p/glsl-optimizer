@@ -1538,7 +1538,7 @@ yes)
     egl_platforms=`IFS=', '; echo $with_egl_platforms`
     for plat in $egl_platforms; do
         test -d "$srcdir/src/gallium/state_trackers/egl/$plat" || \
-            AC_MSG_ERROR([EGL platform '$plat' does't exist])
+            AC_MSG_ERROR([EGL platform '$plat' doesn't exist])
         if test "$plat" = "fbdev"; then
                 GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/fbdev"
         fi
