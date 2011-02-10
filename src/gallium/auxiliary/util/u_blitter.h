@@ -79,6 +79,9 @@ struct blitter_context
                           enum blitter_attrib_type type,
                           const float attrib[4]);
 
+   /* Whether the blitter is running. */
+   boolean running;
+
    /* Private members, really. */
    struct pipe_context *pipe; /**< pipe context */
 
