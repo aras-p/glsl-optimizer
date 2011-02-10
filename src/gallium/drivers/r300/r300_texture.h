@@ -46,9 +46,10 @@ uint32_t r300_translate_texformat(enum pipe_format format,
 
 uint32_t r500_tx_format_msb_bit(enum pipe_format format);
 
-void r300_texture_reinterpret_format(struct pipe_screen *screen,
+boolean r300_resource_set_properties(struct pipe_screen *screen,
                                      struct pipe_resource *tex,
-                                     enum pipe_format new_format);
+                                     unsigned offset,
+                                     const struct pipe_resource *new_properties);
 
 boolean r300_is_colorbuffer_format_supported(enum pipe_format format);
 

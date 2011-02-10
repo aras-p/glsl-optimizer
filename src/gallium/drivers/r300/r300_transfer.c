@@ -116,6 +116,11 @@ r300_texture_get_transfer(struct pipe_context *ctx,
          * Also make write transfers pipelined. */
         if (tex->tex.microtile || tex->tex.macrotile[level] ||
             ((referenced_hw & !(usage & PIPE_TRANSFER_READ)) && blittable)) {
+            if (r300->blitter->running) {
+                fprintf(stderr, "r300: ERROR: Blitter recursion in texture_get_transfer.\n");
+                os_break();
+            }
+
             base.target = PIPE_TEXTURE_2D;
             base.format = texture->format;
             base.width0 = box->width;

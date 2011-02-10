@@ -679,18 +679,27 @@ static void r300_texture_setup_fb_state(struct r300_surface *surf)
     }
 }
 
-void r300_texture_reinterpret_format(struct pipe_screen *screen,
+boolean r300_resource_set_properties(struct pipe_screen *screen,
                                      struct pipe_resource *tex,
-                                     enum pipe_format new_format)
+                                     unsigned offset,
+                                     const struct pipe_resource *new_properties)
 {
-    struct r300_screen *r300screen = r300_screen(screen);
+    struct r300_screen *rscreen = r300_screen(screen);
+    struct r300_resource *res = r300_resource(tex);
 
-    SCREEN_DBG(r300screen, DBG_TEX,
-        "r300: texture_reinterpret_format: %s -> %s\n",
+    SCREEN_DBG(rscreen, DBG_TEX,
+        "r300: texture_set_properties: %s -> %s\n",
         util_format_short_name(tex->format),
-        util_format_short_name(new_format));
+        util_format_short_name(new_properties->format));
 
-    tex->format = new_format;
+    if (!r300_texture_desc_init(rscreen, res, new_properties)) {
+        fprintf(stderr, "r300: ERROR: Cannot set texture properties.\n");
+        return FALSE;
+    }
+    res->tex_offset = offset;
+    r300_texture_setup_format_state(rscreen, res, 0, &res->tx_format);
+
+    return TRUE;
 }
 
 static void r300_texture_destroy(struct pipe_screen *screen,
@@ -755,28 +764,30 @@ r300_texture_create_object(struct r300_screen *rscreen,
         return NULL;
     }
 
-    /* Initialize the descriptor. */
-    if (!r300_texture_desc_init(rscreen, tex, base,
-                                microtile, macrotile,
-                                stride_in_bytes_override,
-                                max_buffer_size)) {
+    pipe_reference_init(&tex->b.b.b.reference, 1);
+    tex->b.b.b.screen = &rscreen->screen;
+    tex->b.b.b.usage = base->usage;
+    tex->b.b.b.bind = base->bind;
+    tex->b.b.b.flags = base->flags;
+    tex->b.b.vtbl = &r300_texture_vtbl;
+    tex->tex.microtile = microtile;
+    tex->tex.macrotile[0] = macrotile;
+    tex->tex.stride_in_bytes_override = stride_in_bytes_override;
+    tex->domain = base->flags & R300_RESOURCE_FLAG_TRANSFER ?
+                  R300_DOMAIN_GTT :
+                  R300_DOMAIN_VRAM | R300_DOMAIN_GTT;
+    tex->buf_size = max_buffer_size;
+
+    if (!r300_resource_set_properties(&rscreen->screen, &tex->b.b.b, 0, base)) {
         if (buffer)
             rws->buffer_reference(rws, &buffer, NULL);
         FREE(tex);
         return NULL;
     }
-    /* Initialize the hardware state. */
-    r300_texture_setup_format_state(rscreen, tex, 0, &tex->tx_format);
-
-    tex->b.b.vtbl = &r300_texture_vtbl;
-    pipe_reference_init(&tex->b.b.b.reference, 1);
-    tex->domain = base->flags & R300_RESOURCE_FLAG_TRANSFER ?
-                  R300_DOMAIN_GTT :
-                  R300_DOMAIN_VRAM | R300_DOMAIN_GTT;
-    tex->buf = buffer;
 
     /* Create the backing buffer if needed. */
-    if (!tex->buf) {
+    if (!buffer) {
+        tex->buf_size = tex->tex.size_in_bytes;
         tex->buf = rws->buffer_create(rws, tex->tex.size_in_bytes, 2048,
                                          base->bind, base->usage, tex->domain);
 
@@ -784,6 +795,8 @@ r300_texture_create_object(struct r300_screen *rscreen,
             FREE(tex);
             return NULL;
         }
+    } else {
+        tex->buf = buffer;
     }
 
     tex->cs_buf = rws->buffer_get_cs_handle(rws, tex->buf);

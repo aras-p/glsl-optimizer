@@ -733,13 +733,18 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                 /* Even though we do not implement mipmapping for NPOT
                  * textures, we should at least honor the minimum level
                  * which is allowed to be displayed. We do this by setting up
-                 * an i-th mipmap level as the zero level. */
+                 * the i-th mipmap level as the zero level. */
+                unsigned offset = tex->tex_offset +
+                                  tex->tex.offset_in_bytes[min_level];
+
                 r300_texture_setup_format_state(r300->screen, tex,
                                                 min_level,
                                                 &texstate->format);
-                texstate->format.tile_config |=
-                        tex->tex.offset_in_bytes[min_level] & 0xffffffe0;
-                assert((tex->tex.offset_in_bytes[min_level] & 0x1f) == 0);
+                texstate->format.tile_config |= offset & 0xffffffe0;
+                assert((offset & 0x1f) == 0);
+            } else {
+                texstate->format.tile_config |= tex->tex_offset & 0xffffffe0;
+                assert((tex->tex_offset & 0x1f) == 0);
             }
 
             /* Assign a texture cache region. */

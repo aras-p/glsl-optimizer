@@ -392,6 +392,7 @@ struct r300_resource
     struct r300_winsys_buffer *buf;
     struct r300_winsys_cs_buffer *cs_buf;
     enum r300_buffer_domain domain;
+    unsigned buf_size;
 
     /* Constant buffers are in user memory. */
     uint8_t *constant_buffer;
@@ -402,6 +403,9 @@ struct r300_resource
     /* Registers carrying texture format data. */
     /* Only format-independent bits should be filled in. */
     struct r300_texture_format_state tx_format;
+
+    /* Where the texture starts in the buffer. */
+    unsigned tex_offset;
 
     /* HiZ memory allocations. */
     struct mem_block *hiz_mem[R300_MAX_TEXTURE_LEVELS];

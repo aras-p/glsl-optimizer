@@ -412,9 +412,12 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
     struct r300_context *r300 = r300_context(pipe);
     struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
-    enum pipe_format old_format = dst->format;
-    enum pipe_format new_format = old_format;
-    const struct util_format_description *desc = util_format_description(old_format);
+    struct pipe_resource old_src = *src;
+    struct pipe_resource old_dst = *dst;
+    struct pipe_resource new_src = old_src;
+    struct pipe_resource new_dst = old_dst;
+    const struct util_format_description *desc =
+            util_format_description(dst->format);
 
     if (r300->zmask_in_use && !r300->zmask_locked) {
         if (fb->zsbuf->texture == src ||
@@ -429,46 +432,46 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
     if (desc->layout == UTIL_FORMAT_LAYOUT_PLAIN &&
         (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB ||
          !pipe->screen->is_format_supported(pipe->screen,
-                                            old_format, src->target,
+                                            src->format, src->target,
                                             src->nr_samples,
-                                            PIPE_BIND_RENDER_TARGET |
-                                            PIPE_BIND_SAMPLER_VIEW, 0))) {
-        switch (util_format_get_blocksize(old_format)) {
+                                            PIPE_BIND_SAMPLER_VIEW, 0) ||
+         !pipe->screen->is_format_supported(pipe->screen,
+                                            dst->format, dst->target,
+                                            dst->nr_samples,
+                                            PIPE_BIND_RENDER_TARGET, 0))) {
+        switch (util_format_get_blocksize(old_dst.format)) {
             case 1:
-                new_format = PIPE_FORMAT_I8_UNORM;
+                new_dst.format = PIPE_FORMAT_I8_UNORM;
                 break;
             case 2:
-                new_format = PIPE_FORMAT_B4G4R4A4_UNORM;
+                new_dst.format = PIPE_FORMAT_B4G4R4A4_UNORM;
                 break;
             case 4:
-                new_format = PIPE_FORMAT_B8G8R8A8_UNORM;
+                new_dst.format = PIPE_FORMAT_B8G8R8A8_UNORM;
                 break;
             case 8:
-                new_format = PIPE_FORMAT_R16G16B16A16_UNORM;
+                new_dst.format = PIPE_FORMAT_R16G16B16A16_UNORM;
                 break;
             default:
                 debug_printf("r300: surface_copy: Unhandled format: %s. Falling back to software.\n"
                              "r300: surface_copy: Software fallback doesn't work for tiled textures.\n",
-                             util_format_short_name(old_format));
+                             util_format_short_name(dst->format));
         }
+        new_src.format = new_dst.format;
     }
 
-    if (old_format != new_format) {
-        r300_texture_reinterpret_format(pipe->screen,
-                                        dst, new_format);
-        r300_texture_reinterpret_format(pipe->screen,
-                                        src, new_format);
-    }
+    if (old_src.format != new_src.format)
+        r300_resource_set_properties(pipe->screen, src, 0, &new_src);
+    if (old_dst.format != new_dst.format)
+        r300_resource_set_properties(pipe->screen, dst, 0, &new_dst);
 
     r300_hw_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
                         src, src_level, src_box);
 
-    if (old_format != new_format) {
-        r300_texture_reinterpret_format(pipe->screen,
-                                        dst, old_format);
-        r300_texture_reinterpret_format(pipe->screen,
-                                        src, old_format);
-    }
+    if (old_src.format != new_src.format)
+        r300_resource_set_properties(pipe->screen, src, 0, &old_src);
+    if (old_dst.format != new_dst.format)
+        r300_resource_set_properties(pipe->screen, dst, 0, &old_dst);
 
     if (r300->zmask_locked) {
         r300->zmask_locked = FALSE;

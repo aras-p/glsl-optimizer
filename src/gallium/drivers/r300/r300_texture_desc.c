@@ -401,6 +401,9 @@ static void r300_setup_tiling(struct r300_screen *screen,
     boolean is_zb = util_format_is_depth_or_stencil(format);
     boolean dbg_no_tiling = SCREEN_DBG_ON(screen, DBG_NO_TILING);
 
+    tex->tex.microtile = R300_BUFFER_LINEAR;
+    tex->tex.macrotile[0] = R300_BUFFER_LINEAR;
+
     if (!util_format_is_plain(format)) {
         return;
     }
@@ -453,15 +456,16 @@ static void r300_tex_print_info(struct r300_resource *tex,
 
 boolean r300_texture_desc_init(struct r300_screen *rscreen,
                                struct r300_resource *tex,
-                               const struct pipe_resource *base,
-                               enum r300_buffer_tiling microtile,
-                               enum r300_buffer_tiling macrotile,
-                               unsigned stride_in_bytes_override,
-                               unsigned max_buffer_size)
+                               const struct pipe_resource *base)
 {
-    tex->b.b.b = *base;
-    tex->b.b.b.screen = &rscreen->screen;
-    tex->tex.stride_in_bytes_override = stride_in_bytes_override;
+    tex->b.b.b.target = base->target;
+    tex->b.b.b.format = base->format;
+    tex->b.b.b.width0 = base->width0;
+    tex->b.b.b.height0 = base->height0;
+    tex->b.b.b.depth0 = base->depth0;
+    tex->b.b.b.array_size = base->array_size;
+    tex->b.b.b.last_level = base->last_level;
+    tex->b.b.b.nr_samples = base->nr_samples;
     tex->tex.width0 = base->width0;
     tex->tex.height0 = base->height0;
     tex->tex.depth0 = base->depth0;
@@ -476,13 +480,8 @@ boolean r300_texture_desc_init(struct r300_screen *rscreen,
     }
 
     /* Setup tiling. */
-    if (microtile == R300_BUFFER_SELECT_LAYOUT ||
-        macrotile == R300_BUFFER_SELECT_LAYOUT) {
+    if (tex->tex.microtile == R300_BUFFER_SELECT_LAYOUT) {
         r300_setup_tiling(rscreen, tex);
-    } else {
-        tex->tex.microtile = microtile;
-        tex->tex.macrotile[0] = macrotile;
-        assert(tex->b.b.b.last_level == 0);
     }
 
     r300_setup_cbzb_flags(rscreen, tex);
@@ -491,24 +490,24 @@ boolean r300_texture_desc_init(struct r300_screen *rscreen,
     r300_setup_miptree(rscreen, tex, TRUE);
     /* If the required buffer size is larger the given max size,
      * try again without the alignment for the CBZB clear. */
-    if (max_buffer_size && tex->tex.size_in_bytes > max_buffer_size) {
+    if (tex->buf_size && tex->tex.size_in_bytes > tex->buf_size) {
         r300_setup_miptree(rscreen, tex, FALSE);
     }
 
     r300_texture_3d_fix_mipmapping(rscreen, tex);
     r300_setup_zmask_flags(rscreen, tex);
 
-    if (max_buffer_size) {
+    if (tex->buf_size) {
         /* Make sure the buffer we got is large enough. */
-        if (tex->tex.size_in_bytes > max_buffer_size) {
+        if (tex->tex.size_in_bytes > tex->buf_size) {
             fprintf(stderr, "r300: texture_desc_init: The buffer is not "
                             "large enough. Got: %i, Need: %i, Info:\n",
-                            max_buffer_size, tex->tex.size_in_bytes);
+                            tex->buf_size, tex->tex.size_in_bytes);
             r300_tex_print_info(tex, "texture_desc_init");
             return FALSE;
         }
 
-        tex->tex.buffer_size_in_bytes = max_buffer_size;
+        tex->tex.buffer_size_in_bytes = tex->buf_size;
     } else {
         tex->tex.buffer_size_in_bytes = tex->tex.size_in_bytes;
     }
