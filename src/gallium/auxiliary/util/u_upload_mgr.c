@@ -85,6 +85,10 @@ void u_upload_flush( struct u_upload_mgr *upload )
 {
    /* Unmap and unreference the upload buffer. */
    if (upload->transfer) {
+      if (upload->size) {
+         pipe_buffer_flush_mapped_range(upload->pipe, upload->transfer,
+                                        0, upload->size);
+      }
       pipe_transfer_unmap(upload->pipe, upload->transfer);
       pipe_transfer_destroy(upload->pipe, upload->transfer);
       upload->transfer = NULL;
@@ -122,8 +126,11 @@ u_upload_alloc_buffer( struct u_upload_mgr *upload,
       goto fail;
 
    /* Map the new buffer. */
-   upload->map = pipe_buffer_map(upload->pipe, upload->buffer,
-                                 PIPE_TRANSFER_WRITE, &upload->transfer);
+   upload->map = pipe_buffer_map_range(upload->pipe, upload->buffer,
+                                       0, size,
+                                       PIPE_TRANSFER_WRITE |
+                                       PIPE_TRANSFER_FLUSH_EXPLICIT,
+                                       &upload->transfer);
    
    upload->size = size;
 
