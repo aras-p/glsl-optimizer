@@ -35,6 +35,7 @@
 #include "brw_defines.h"
 #include "brw_util.h"
 #include "main/macros.h"
+#include "intel_batchbuffer.h"
 
 void
 brw_update_cc_vp(struct brw_context *brw)
@@ -94,8 +95,7 @@ static void upload_cc_unit(struct brw_context *brw)
    struct gl_context *ctx = &brw->intel.ctx;
    struct brw_cc_unit_state *cc;
 
-   cc = brw_state_batch(brw, sizeof(*cc), 64,
-			&brw->cc.state_bo, &brw->cc.state_offset);
+   cc = brw_state_batch(brw, sizeof(*cc), 64, &brw->cc.state_offset);
    memset(cc, 0, sizeof(*cc));
 
    /* _NEW_STENCIL */
@@ -214,7 +214,7 @@ static void upload_cc_unit(struct brw_context *brw)
    brw->state.dirty.cache |= CACHE_NEW_CC_UNIT;
 
    /* Emit CC viewport relocation */
-   drm_intel_bo_emit_reloc(brw->cc.state_bo,
+   drm_intel_bo_emit_reloc(brw->intel.batch->buf,
 			   (brw->cc.state_offset +
 			    offsetof(struct brw_cc_unit_state, cc4)),
 			   brw->cc.vp_bo, 0,

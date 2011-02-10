@@ -176,14 +176,12 @@ void brw_clear_batch_cache( struct brw_context *brw );
 void *brw_state_batch(struct brw_context *brw,
 		      int size,
 		      int alignment,
-		      drm_intel_bo **out_bo,
 		      uint32_t *out_offset);
 
 /* brw_wm_surface_state.c */
 void brw_create_constant_surface(struct brw_context *brw,
 				 drm_intel_bo *bo,
 				 int width,
-				 drm_intel_bo **out_bo,
 				 uint32_t *out_offset);
 
 #endif

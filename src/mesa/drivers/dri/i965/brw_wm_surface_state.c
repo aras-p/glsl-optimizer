@@ -191,7 +191,6 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    struct brw_surface_state *surf;
 
    surf = brw_state_batch(brw, sizeof(*surf), 32,
-			 &brw->wm.surf_bo[surf_index],
 			 &brw->wm.surf_offset[surf_index]);
    memset(surf, 0, sizeof(*surf));
 
@@ -225,7 +224,7 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    }
 
    /* Emit relocation to surface contents */
-   drm_intel_bo_emit_reloc(brw->wm.surf_bo[surf_index],
+   drm_intel_bo_emit_reloc(brw->intel.batch->buf,
 			   brw->wm.surf_offset[surf_index] +
 			   offsetof(struct brw_surface_state, ss1),
 			   intelObj->mt->region->buffer, 0,
@@ -240,14 +239,13 @@ void
 brw_create_constant_surface(struct brw_context *brw,
 			    drm_intel_bo *bo,
 			    int width,
-			    drm_intel_bo **out_bo,
 			    uint32_t *out_offset)
 {
    struct intel_context *intel = &brw->intel;
    const GLint w = width - 1;
    struct brw_surface_state *surf;
 
-   surf = brw_state_batch(brw, sizeof(*surf), 32, out_bo, out_offset);
+   surf = brw_state_batch(brw, sizeof(*surf), 32, out_offset);
    memset(surf, 0, sizeof(*surf));
 
    surf->ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
@@ -270,8 +268,9 @@ brw_create_constant_surface(struct brw_context *brw,
     * bspec ("Data Cache") says that the data cache does not exist as
     * a separate cache and is just the sampler cache.
     */
-   drm_intel_bo_emit_reloc(*out_bo, (*out_offset +
-				     offsetof(struct brw_surface_state, ss1)),
+   drm_intel_bo_emit_reloc(brw->intel.batch->buf,
+			   (*out_offset +
+			    offsetof(struct brw_surface_state, ss1)),
 			   bo, 0,
 			   I915_GEM_DOMAIN_SAMPLER, 0);
 }
@@ -350,16 +349,14 @@ static void upload_wm_constant_surface(struct brw_context *brw )
     * it.
     */
    if (brw->wm.const_bo == 0) {
-      if (brw->wm.surf_bo[surf] != NULL) {
-	 drm_intel_bo_unreference(brw->wm.surf_bo[surf]);
-	 brw->wm.surf_bo[surf] = NULL;
+      if (brw->wm.surf_offset[surf]) {
 	 brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
+	 brw->wm.surf_offset[surf] = 0;
       }
       return;
    }
 
    brw_create_constant_surface(brw, brw->wm.const_bo, params->NumParameters,
-			       &brw->wm.surf_bo[surf],
 			       &brw->wm.surf_offset[surf]);
    brw->state.dirty.brw |= BRW_NEW_WM_SURFACES;
 }
@@ -381,7 +378,6 @@ brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
    struct brw_surface_state *surf;
 
    surf = brw_state_batch(brw, sizeof(*surf), 32,
-			 &brw->wm.surf_bo[unit],
 			 &brw->wm.surf_offset[unit]);
    memset(surf, 0, sizeof(*surf));
 
@@ -412,10 +408,11 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
    struct gl_context *ctx = &intel->ctx;
    struct intel_renderbuffer *irb = intel_renderbuffer(rb);
    struct intel_region *region = irb->region;
-   struct brw_surface_state surf;
-   void *map;
+   struct brw_surface_state *surf;
 
-   memset(&surf, 0, sizeof(surf));
+   surf = brw_state_batch(brw, sizeof(*surf), 32,
+			  &brw->wm.surf_offset[unit]);
+   memset(surf, 0, sizeof(*surf));
 
    switch (irb->Base.Format) {
    case MESA_FORMAT_XRGB8888:
@@ -426,24 +423,24 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
        * cases where GL_DST_ALPHA (or GL_ONE_MINUS_DST_ALPHA) is
        * used.
        */
-      surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+      surf->ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
       break;
    case MESA_FORMAT_SARGB8:
       /* without GL_EXT_framebuffer_sRGB we shouldn't bind sRGB
 	 surfaces to the blend/update as sRGB */
       if (ctx->Color.sRGBEnabled)
-	 surf.ss0.surface_format = brw_format_for_mesa_format[irb->Base.Format];
+	 surf->ss0.surface_format = brw_format_for_mesa_format[irb->Base.Format];
       else
-	 surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
+	 surf->ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
       break;
    default:
-      surf.ss0.surface_format = brw_format_for_mesa_format[irb->Base.Format];
-      assert(surf.ss0.surface_format != 0);
+      surf->ss0.surface_format = brw_format_for_mesa_format[irb->Base.Format];
+      assert(surf->ss0.surface_format != 0);
    }
 
-   surf.ss0.surface_type = BRW_SURFACE_2D;
+   surf->ss0.surface_type = BRW_SURFACE_2D;
    if (region->tiling == I915_TILING_NONE) {
-      surf.ss1.base_addr = (region->draw_x +
+      surf->ss1.base_addr = (region->draw_x +
 			    region->draw_y * region->pitch) * region->cpp;
    } else {
       uint32_t tile_base, tile_x, tile_y;
@@ -467,43 +464,38 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
       /* Note that the low bits of these fields are missing, so
        * there's the possibility of getting in trouble.
        */
-      surf.ss1.base_addr = tile_base;
-      surf.ss5.x_offset = tile_x / 4;
-      surf.ss5.y_offset = tile_y / 2;
+      surf->ss1.base_addr = tile_base;
+      surf->ss5.x_offset = tile_x / 4;
+      surf->ss5.y_offset = tile_y / 2;
    }
-   surf.ss1.base_addr += region->buffer->offset; /* reloc */
+   surf->ss1.base_addr += region->buffer->offset; /* reloc */
 
-   surf.ss2.width = rb->Width - 1;
-   surf.ss2.height = rb->Height - 1;
-   brw_set_surface_tiling(&surf, region->tiling);
-   surf.ss3.pitch = (region->pitch * region->cpp) - 1;
+   surf->ss2.width = rb->Width - 1;
+   surf->ss2.height = rb->Height - 1;
+   brw_set_surface_tiling(surf, region->tiling);
+   surf->ss3.pitch = (region->pitch * region->cpp) - 1;
 
    if (intel->gen < 6) {
       /* _NEW_COLOR */
-      surf.ss0.color_blend = (!ctx->Color._LogicOpEnabled &&
+      surf->ss0.color_blend = (!ctx->Color._LogicOpEnabled &&
 			      (ctx->Color.BlendEnabled & (1 << unit)));
-      surf.ss0.writedisable_red =   !ctx->Color.ColorMask[unit][0];
-      surf.ss0.writedisable_green = !ctx->Color.ColorMask[unit][1];
-      surf.ss0.writedisable_blue =  !ctx->Color.ColorMask[unit][2];
+      surf->ss0.writedisable_red =   !ctx->Color.ColorMask[unit][0];
+      surf->ss0.writedisable_green = !ctx->Color.ColorMask[unit][1];
+      surf->ss0.writedisable_blue =  !ctx->Color.ColorMask[unit][2];
       /* As mentioned above, disable writes to the alpha component when the
        * renderbuffer is XRGB.
        */
       if (ctx->DrawBuffer->Visual.alphaBits == 0)
-	 surf.ss0.writedisable_alpha = 1;
+	 surf->ss0.writedisable_alpha = 1;
       else
-	 surf.ss0.writedisable_alpha = !ctx->Color.ColorMask[unit][3];
+	 surf->ss0.writedisable_alpha = !ctx->Color.ColorMask[unit][3];
    }
 
-   map = brw_state_batch(brw, sizeof(surf), 32,
-			 &brw->wm.surf_bo[unit],
-			 &brw->wm.surf_offset[unit]);
-   memcpy(map, &surf, sizeof(surf));
-
-   drm_intel_bo_emit_reloc(brw->wm.surf_bo[unit],
+   drm_intel_bo_emit_reloc(brw->intel.batch->buf,
 			   brw->wm.surf_offset[unit] +
 			   offsetof(struct brw_surface_state, ss1),
 			   region->buffer,
-			   surf.ss1.base_addr - region->buffer->offset,
+			   surf->ss1.base_addr - region->buffer->offset,
 			   I915_GEM_DOMAIN_RENDER,
 			   I915_GEM_DOMAIN_RENDER);
 }
@@ -591,8 +583,7 @@ upload_wm_surfaces(struct brw_context *brw)
       if (texUnit->_ReallyEnabled) {
 	 brw_update_texture_surface(ctx, i);
       } else {
-         drm_intel_bo_unreference(brw->wm.surf_bo[surf]);
-         brw->wm.surf_bo[surf] = NULL;
+         brw->wm.surf_offset[surf] = 0;
       }
    }
 
@@ -625,16 +616,11 @@ brw_wm_upload_binding_table(struct brw_context *brw)
     * space for the binding table.
     */
    bind = brw_state_batch(brw, sizeof(uint32_t) * BRW_WM_MAX_SURF,
-			  32, &brw->wm.bind_bo, &brw->wm.bind_bo_offset);
+			  32, &brw->wm.bind_bo_offset);
 
    for (i = 0; i < BRW_WM_MAX_SURF; i++) {
       /* BRW_NEW_WM_SURFACES */
       bind[i] = brw->wm.surf_offset[i];
-      if (brw->wm.surf_bo[i]) {
-	 bind[i] = brw->wm.surf_offset[i];
-      } else {
-	 bind[i] = 0;
-      }
    }
 
    brw->state.dirty.brw |= BRW_NEW_BINDING_TABLE;

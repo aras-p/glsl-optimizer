@@ -26,6 +26,7 @@
  */
 
 #include "main/mtypes.h"
+#include "intel_batchbuffer.h"
 
 #include "brw_context.h"
 #include "brw_defines.h"
@@ -54,7 +55,8 @@ state_out(const char *name, void *data, uint32_t hw_offset, int index,
 
 /** Generic, undecoded state buffer debug printout */
 static void
-state_struct_out(const char *name, drm_intel_bo *buffer, unsigned int state_size)
+state_struct_out(const char *name, drm_intel_bo *buffer,
+		 unsigned int offset, unsigned int size)
 {
    int i;
 
@@ -62,8 +64,8 @@ state_struct_out(const char *name, drm_intel_bo *buffer, unsigned int state_size
       return;
 
    drm_intel_bo_map(buffer, GL_FALSE);
-   for (i = 0; i < state_size / 4; i++) {
-      state_out(name, buffer->virtual, buffer->offset, i,
+   for (i = 0; i < size / 4; i++) {
+      state_out(name, buffer->virtual + offset, buffer->offset + offset, i,
 		"dword %d\n", i);
    }
    drm_intel_bo_unmap(buffer);
@@ -98,21 +100,25 @@ get_965_surface_format(unsigned int surface_format)
 
 static void dump_wm_surface_state(struct brw_context *brw)
 {
+   dri_bo *bo;
+   GLubyte *base;
    int i;
 
+   bo = brw->intel.batch->buf;
+   drm_intel_bo_map(bo, GL_FALSE);
+   base = bo->virtual;
+
    for (i = 0; i < brw->wm.nr_surfaces; i++) {
-      drm_intel_bo *surf_bo = brw->wm.surf_bo[i];
       unsigned int surfoff;
       struct brw_surface_state *surf;
       char name[20];
 
-      if (surf_bo == NULL) {
+      if (brw->wm.surf_offset[i] == 0) {
 	 fprintf(stderr, "WM SURF%d: NULL\n", i);
 	 continue;
       }
-      drm_intel_bo_map(surf_bo, GL_FALSE);
-      surfoff = surf_bo->offset + brw->wm.surf_offset[i];
-      surf = (struct brw_surface_state *)(surf_bo->virtual + brw->wm.surf_offset[i]);
+      surfoff = bo->offset + brw->wm.surf_offset[i];
+      surf = (struct brw_surface_state *)(base + brw->wm.surf_offset[i]);
 
       sprintf(name, "WM SURF%d", i);
       state_out(name, surf, surfoff, 0, "%s %s\n",
@@ -127,9 +133,8 @@ static void dump_wm_surface_state(struct brw_context *brw)
 		surf->ss4.min_lod);
       state_out(name, surf, surfoff, 5, "x,y offset: %d,%d\n",
 		surf->ss5.x_offset, surf->ss5.y_offset);
-
-      drm_intel_bo_unmap(surf_bo);
    }
+   drm_intel_bo_unmap(bo);
 }
 
 
@@ -280,13 +285,14 @@ static void dump_cc_state(struct brw_context *brw)
    const char *name = "CC";
    struct gen6_color_calc_state *cc;
    uint32_t cc_off;
+   dri_bo *bo = brw->intel.batch->buf;
 
-   if (brw->cc.state_bo == NULL)
+   if (brw->cc.state_offset == 0)
 	return;
 
-   drm_intel_bo_map(brw->cc.state_bo, GL_FALSE);
-   cc = brw->cc.state_bo->virtual;
-   cc_off = brw->cc.state_bo->offset;
+   drm_intel_bo_map(bo, GL_FALSE);
+   cc = bo->virtual;
+   cc_off = bo->offset;
 
    state_out(name, cc, cc_off, 0, "alpha test format %s, round disable %d, stencil ref %d,"
 		"bf stencil ref %d\n",
@@ -300,7 +306,7 @@ static void dump_cc_state(struct brw_context *brw)
    state_out(name, cc, cc_off, 4, "constant blue %f\n", cc->constant_b);
    state_out(name, cc, cc_off, 5, "constant alpha %f\n", cc->constant_a);
    
-   drm_intel_bo_unmap(brw->cc.state_bo);
+   drm_intel_bo_unmap(bo);
 
 }
 
@@ -369,26 +375,29 @@ void brw_debug_batch(struct intel_context *intel)
 {
    struct brw_context *brw = brw_context(&intel->ctx);
 
-   state_struct_out("WM bind", brw->wm.bind_bo, 4 * brw->wm.nr_surfaces);
+   state_struct_out("WM bind",
+		    brw->intel.batch->buf,
+		    brw->wm.bind_bo_offset,
+		    4 * brw->wm.nr_surfaces);
    dump_wm_surface_state(brw);
    dump_wm_sampler_state(brw);
 
    if (intel->gen < 6)
-       state_struct_out("VS", brw->vs.state_bo, sizeof(struct brw_vs_unit_state));
+       state_struct_out("VS", brw->vs.state_bo, 0, sizeof(struct brw_vs_unit_state));
    brw_debug_prog("VS prog", brw->vs.prog_bo);
 
    if (intel->gen < 6)
-       state_struct_out("GS", brw->gs.state_bo, sizeof(struct brw_gs_unit_state));
+       state_struct_out("GS", brw->gs.state_bo, 0, sizeof(struct brw_gs_unit_state));
    brw_debug_prog("GS prog", brw->gs.prog_bo);
 
    if (intel->gen < 6) {
-       state_struct_out("SF", brw->sf.state_bo, sizeof(struct brw_sf_unit_state));
+       state_struct_out("SF", brw->sf.state_bo, 0, sizeof(struct brw_sf_unit_state));
        brw_debug_prog("SF prog", brw->sf.prog_bo);
    }
    dump_sf_viewport_state(brw);
 
    if (intel->gen < 6)
-       state_struct_out("WM", brw->wm.state_bo, sizeof(struct brw_wm_unit_state));
+       state_struct_out("WM", brw->wm.state_bo, 0, sizeof(struct brw_wm_unit_state));
    brw_debug_prog("WM prog", brw->wm.prog_bo);
 
    if (intel->gen >= 6) {

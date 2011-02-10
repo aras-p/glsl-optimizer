@@ -78,7 +78,6 @@ static void brw_destroy_context( struct intel_context *intel )
    dri_bo_release(&brw->curbe.curbe_bo);
    dri_bo_release(&brw->vs.prog_bo);
    dri_bo_release(&brw->vs.state_bo);
-   dri_bo_release(&brw->vs.bind_bo);
    dri_bo_release(&brw->vs.const_bo);
    dri_bo_release(&brw->gs.prog_bo);
    dri_bo_release(&brw->gs.state_bo);
@@ -90,16 +89,12 @@ static void brw_destroy_context( struct intel_context *intel )
    dri_bo_release(&brw->sf.vp_bo);
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++)
       dri_bo_release(&brw->wm.sdc_bo[i]);
-   dri_bo_release(&brw->wm.bind_bo);
-   for (i = 0; i < BRW_WM_MAX_SURF; i++)
-      dri_bo_release(&brw->wm.surf_bo[i]);
    dri_bo_release(&brw->wm.sampler_bo);
    dri_bo_release(&brw->wm.prog_bo);
    dri_bo_release(&brw->wm.state_bo);
    dri_bo_release(&brw->wm.const_bo);
    dri_bo_release(&brw->wm.push_const_bo);
    dri_bo_release(&brw->cc.prog_bo);
-   dri_bo_release(&brw->cc.state_bo);
    dri_bo_release(&brw->cc.vp_bo);
    dri_bo_release(&brw->cc.blend_state_bo);
    dri_bo_release(&brw->cc.depth_stencil_state_bo);

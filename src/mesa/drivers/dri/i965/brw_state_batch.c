@@ -116,7 +116,6 @@ void *
 brw_state_batch(struct brw_context *brw,
 		int size,
 		int alignment,
-		drm_intel_bo **out_bo,
 		uint32_t *out_offset)
 {
    struct intel_batchbuffer *batch = brw->intel.batch;
@@ -136,12 +135,6 @@ brw_state_batch(struct brw_context *brw,
    }
 
    batch->state_batch_offset = offset;
-
-   if (*out_bo != batch->buf) {
-      drm_intel_bo_unreference(*out_bo);
-      drm_intel_bo_reference(batch->buf);
-      *out_bo = batch->buf;
-   }
 
    *out_offset = offset;
    return batch->map + offset;

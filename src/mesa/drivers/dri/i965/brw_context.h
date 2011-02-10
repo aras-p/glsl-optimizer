@@ -602,9 +602,7 @@ struct brw_context
       drm_intel_bo *const_bo;
 
       /** Binding table of pointers to surf_bo entries */
-      drm_intel_bo *bind_bo;
       uint32_t bind_bo_offset;
-      drm_intel_bo *surf_bo[BRW_VS_MAX_SURF];
       uint32_t surf_offset[BRW_VS_MAX_SURF];
       GLuint nr_surfaces;      
    } vs;
@@ -656,9 +654,7 @@ struct brw_context
       drm_intel_bo *sampler_bo;
 
       /** Binding table of pointers to surf_bo entries */
-      drm_intel_bo *bind_bo;
       uint32_t bind_bo_offset;
-      drm_intel_bo *surf_bo[BRW_WM_MAX_SURF];
       uint32_t surf_offset[BRW_WM_MAX_SURF];
 
       drm_intel_bo *prog_bo;
@@ -683,7 +679,6 @@ struct brw_context
       drm_intel_bo *depth_stencil_state_bo;
       drm_intel_bo *color_calc_state_bo;
 
-      drm_intel_bo *state_bo;
       uint32_t state_offset;
    } cc;
 
