@@ -190,6 +190,9 @@ struct intel_context
    struct {
       drm_intel_bo *bo;
       GLuint offset;
+      uint16_t buffer_len;
+      uint16_t buffer_offset;
+      char buffer[4096];
    } upload;
 
    GLuint stats_wm;

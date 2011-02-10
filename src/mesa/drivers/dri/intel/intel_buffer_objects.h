@@ -80,6 +80,8 @@ void *intel_upload_map(struct intel_context *intel,
 		       drm_intel_bo **return_bo,
 		       GLuint *return_offset);
 
+void intel_upload_finish(struct intel_context *intel);
+
 /* Hook the bufferobject implementation into mesa:
  */
 void intelInitBufferObjectFuncs(struct dd_function_table *functions);

@@ -555,7 +555,7 @@ static void brw_prepare_indices(struct brw_context *brw)
 
    ib_type_size = get_size(index_buffer->type);
    ib_size = ib_type_size * index_buffer->count;
-   bufferobj = index_buffer->obj;;
+   bufferobj = index_buffer->obj;
 
    /* Turn into a proper VBO:
     */
