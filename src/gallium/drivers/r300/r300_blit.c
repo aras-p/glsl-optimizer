@@ -418,6 +418,7 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
     struct pipe_resource new_dst = old_dst;
     const struct util_format_description *desc =
             util_format_description(dst->format);
+    struct pipe_box box;
 
     if (r300->zmask_in_use && !r300->zmask_locked) {
         if (fb->zsbuf->texture == src ||
@@ -429,6 +430,7 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
         }
     }
 
+    /* Handle non-renderable plain formats. */
     if (desc->layout == UTIL_FORMAT_LAYOUT_PLAIN &&
         (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB ||
          !pipe->screen->is_format_supported(pipe->screen,
@@ -458,6 +460,33 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
                              util_format_short_name(dst->format));
         }
         new_src.format = new_dst.format;
+    }
+
+    /* Handle compressed formats. */
+    if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
+        switch (util_format_get_blocksize(old_dst.format)) {
+        case 8:
+            /* 1 pixel = 4 bits,
+             * we set 1 pixel = 2 bytes ===> 4 times larger pixels. */
+            new_dst.format = PIPE_FORMAT_B4G4R4A4_UNORM;
+            break;
+        case 16:
+            /* 1 pixel = 8 bits,
+             * we set 1 pixel = 4 bytes ===> 4 times larger pixels. */
+            new_dst.format = PIPE_FORMAT_B8G8R8A8_UNORM;
+            break;
+        }
+
+        /* Since the pixels are 4 times larger, we must decrease
+         * the image size and the coordinates 4 times. */
+        new_src.format = new_dst.format;
+        new_dst.height0 /= 4;
+        new_src.height0 /= 4;
+        dsty /= 4;
+        box = *src_box;
+        box.y /= 4;
+        box.height /= 4;
+        src_box = &box;
     }
 
     if (old_src.format != new_src.format)
