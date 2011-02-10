@@ -188,44 +188,41 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct gl_texture_image *firstImage = tObj->Image[0][tObj->BaseLevel];
    const GLuint surf_index = SURF_INDEX_TEXTURE(unit);
-   struct brw_surface_state surf;
-   void *map;
+   struct brw_surface_state *surf;
 
-   memset(&surf, 0, sizeof(surf));
+   surf = brw_state_batch(brw, sizeof(*surf), 32,
+			 &brw->wm.surf_bo[surf_index],
+			 &brw->wm.surf_offset[surf_index]);
+   memset(surf, 0, sizeof(*surf));
 
-   surf.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
-   surf.ss0.surface_type = translate_tex_target(tObj->Target);
-   surf.ss0.surface_format = translate_tex_format(firstImage->TexFormat,
+   surf->ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
+   surf->ss0.surface_type = translate_tex_target(tObj->Target);
+   surf->ss0.surface_format = translate_tex_format(firstImage->TexFormat,
 						  firstImage->InternalFormat,
 						  tObj->DepthMode, tObj->sRGBDecode);
 
    /* This is ok for all textures with channel width 8bit or less:
     */
-/*    surf.ss0.data_return_format = BRW_SURFACERETURNFORMAT_S1; */
-   surf.ss1.base_addr = intelObj->mt->region->buffer->offset; /* reloc */
+/*    surf->ss0.data_return_format = BRW_SURFACERETURNFORMAT_S1; */
+   surf->ss1.base_addr = intelObj->mt->region->buffer->offset; /* reloc */
 
-   surf.ss2.mip_count = intelObj->_MaxLevel - tObj->BaseLevel;
-   surf.ss2.width = firstImage->Width - 1;
-   surf.ss2.height = firstImage->Height - 1;
-   brw_set_surface_tiling(&surf, intelObj->mt->region->tiling);
-   surf.ss3.pitch = (intelObj->mt->region->pitch * intelObj->mt->cpp) - 1;
-   surf.ss3.depth = firstImage->Depth - 1;
+   surf->ss2.mip_count = intelObj->_MaxLevel - tObj->BaseLevel;
+   surf->ss2.width = firstImage->Width - 1;
+   surf->ss2.height = firstImage->Height - 1;
+   brw_set_surface_tiling(surf, intelObj->mt->region->tiling);
+   surf->ss3.pitch = (intelObj->mt->region->pitch * intelObj->mt->cpp) - 1;
+   surf->ss3.depth = firstImage->Depth - 1;
 
-   surf.ss4.min_lod = 0;
+   surf->ss4.min_lod = 0;
  
    if (tObj->Target == GL_TEXTURE_CUBE_MAP) {
-      surf.ss0.cube_pos_x = 1;
-      surf.ss0.cube_pos_y = 1;
-      surf.ss0.cube_pos_z = 1;
-      surf.ss0.cube_neg_x = 1;
-      surf.ss0.cube_neg_y = 1;
-      surf.ss0.cube_neg_z = 1;
+      surf->ss0.cube_pos_x = 1;
+      surf->ss0.cube_pos_y = 1;
+      surf->ss0.cube_pos_z = 1;
+      surf->ss0.cube_neg_x = 1;
+      surf->ss0.cube_neg_y = 1;
+      surf->ss0.cube_neg_z = 1;
    }
-
-   map = brw_state_batch(brw, sizeof(surf), 32,
-			 &brw->wm.surf_bo[surf_index],
-			 &brw->wm.surf_offset[surf_index]);
-   memcpy(map, &surf, sizeof(surf));
 
    /* Emit relocation to surface contents */
    drm_intel_bo_emit_reloc(brw->wm.surf_bo[surf_index],
@@ -248,29 +245,26 @@ brw_create_constant_surface(struct brw_context *brw,
 {
    struct intel_context *intel = &brw->intel;
    const GLint w = width - 1;
-   struct brw_surface_state surf;
-   void *map;
+   struct brw_surface_state *surf;
 
-   memset(&surf, 0, sizeof(surf));
+   surf = brw_state_batch(brw, sizeof(*surf), 32, out_bo, out_offset);
+   memset(surf, 0, sizeof(*surf));
 
-   surf.ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
-   surf.ss0.surface_type = BRW_SURFACE_BUFFER;
-   surf.ss0.surface_format = BRW_SURFACEFORMAT_R32G32B32A32_FLOAT;
+   surf->ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
+   surf->ss0.surface_type = BRW_SURFACE_BUFFER;
+   surf->ss0.surface_format = BRW_SURFACEFORMAT_R32G32B32A32_FLOAT;
 
    if (intel->gen >= 6)
-      surf.ss0.render_cache_read_write = 1;
+      surf->ss0.render_cache_read_write = 1;
 
    assert(bo);
-   surf.ss1.base_addr = bo->offset; /* reloc */
+   surf->ss1.base_addr = bo->offset; /* reloc */
 
-   surf.ss2.width = w & 0x7f;            /* bits 6:0 of size or width */
-   surf.ss2.height = (w >> 7) & 0x1fff;  /* bits 19:7 of size or width */
-   surf.ss3.depth = (w >> 20) & 0x7f;    /* bits 26:20 of size or width */
-   surf.ss3.pitch = (width * 16) - 1; /* ignored?? */
-   brw_set_surface_tiling(&surf, I915_TILING_NONE); /* tiling now allowed */
-
-   map = brw_state_batch(brw, sizeof(surf), 32, out_bo, out_offset);
-   memcpy(map, &surf, sizeof(surf));
+   surf->ss2.width = w & 0x7f;            /* bits 6:0 of size or width */
+   surf->ss2.height = (w >> 7) & 0x1fff;  /* bits 19:7 of size or width */
+   surf->ss3.depth = (w >> 20) & 0x7f;    /* bits 26:20 of size or width */
+   surf->ss3.pitch = (width * 16) - 1; /* ignored?? */
+   brw_set_surface_tiling(surf, I915_TILING_NONE); /* tiling now allowed */
 
    /* Emit relocation to surface contents.  Section 5.1.1 of the gen4
     * bspec ("Data Cache") says that the data cache does not exist as
@@ -384,33 +378,24 @@ static void
 brw_update_null_renderbuffer_surface(struct brw_context *brw, unsigned int unit)
 {
    struct intel_context *intel = &brw->intel;
-   struct brw_surface_state surf;
-   void *map;
+   struct brw_surface_state *surf;
 
-   memset(&surf, 0, sizeof(surf));
+   surf = brw_state_batch(brw, sizeof(*surf), 32,
+			 &brw->wm.surf_bo[unit],
+			 &brw->wm.surf_offset[unit]);
+   memset(surf, 0, sizeof(*surf));
 
-   surf.ss0.surface_type = BRW_SURFACE_NULL;
-   surf.ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
-   surf.ss1.base_addr = 0;
-
-   surf.ss2.width = 0;
-   surf.ss2.height = 0;
-   brw_set_surface_tiling(&surf, I915_TILING_NONE);
-   surf.ss3.pitch = 0;
+   surf->ss0.surface_type = BRW_SURFACE_NULL;
+   surf->ss0.surface_format = BRW_SURFACEFORMAT_B8G8R8A8_UNORM;
 
    if (intel->gen < 6) {
       /* _NEW_COLOR */
-      surf.ss0.color_blend = 0;
-      surf.ss0.writedisable_red =   1;
-      surf.ss0.writedisable_green = 1;
-      surf.ss0.writedisable_blue =  1;
-      surf.ss0.writedisable_alpha = 1;
+      surf->ss0.color_blend = 0;
+      surf->ss0.writedisable_red =   1;
+      surf->ss0.writedisable_green = 1;
+      surf->ss0.writedisable_blue =  1;
+      surf->ss0.writedisable_alpha = 1;
    }
-
-   map = brw_state_batch(brw, sizeof(surf), 32,
-			 &brw->wm.surf_bo[unit],
-			 &brw->wm.surf_offset[unit]);
-   memcpy(map, &surf, sizeof(surf));
 }
 
 /**
