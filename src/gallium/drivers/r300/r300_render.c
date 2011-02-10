@@ -531,17 +531,12 @@ static void r300_emit_draw_elements(struct r300_context *r300,
                (alt_num_verts ? R500_VAP_VF_CNTL__USE_ALT_NUM_VERTS : 0));
     }
 
-    /* INDX_BUFFER is a truly special packet3.
-     * Unlike most other packet3, where the offset is after the count,
-     * the order is reversed, so the relocation ends up carrying the
-     * size of the indexbuf instead of the offset.
-     */
     OUT_CS_PKT3(R300_PACKET3_INDX_BUFFER, 2);
     OUT_CS(R300_INDX_BUFFER_ONE_REG_WR | (R300_VAP_PORT_IDX0 >> 2) |
            (0 << R300_INDX_BUFFER_SKIP_SHIFT));
     OUT_CS(offset_dwords << 2);
-    OUT_CS_BUF_RELOC(indexBuffer, count_dwords);
-
+    OUT_CS(count_dwords);
+    OUT_CS_RELOC(r300_buffer(indexBuffer));
     END_CS;
 }
 

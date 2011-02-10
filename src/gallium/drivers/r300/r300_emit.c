@@ -352,11 +352,11 @@ void r300_emit_aa_state(struct r300_context *r300, unsigned size, void *state)
     OUT_CS_REG(R300_GB_AA_CONFIG, aa->aa_config);
 
     if (aa->dest) {
-        OUT_CS_REG_SEQ(R300_RB3D_AARESOLVE_OFFSET, 1);
-        OUT_CS_RELOC(aa->dest->cs_buffer, aa->dest->offset);
+        OUT_CS_REG(R300_RB3D_AARESOLVE_OFFSET, aa->dest->offset);
+        OUT_CS_RELOC(aa->dest);
 
-        OUT_CS_REG_SEQ(R300_RB3D_AARESOLVE_PITCH, 1);
-        OUT_CS_RELOC(aa->dest->cs_buffer, aa->dest->pitch);
+        OUT_CS_REG(R300_RB3D_AARESOLVE_PITCH, aa->dest->pitch);
+        OUT_CS_RELOC(aa->dest);
     }
 
     OUT_CS_REG(R300_RB3D_AARESOLVE_CTL, aa->aaresolve_ctl);
@@ -391,11 +391,11 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
     for (i = 0; i < fb->nr_cbufs; i++) {
         surf = r300_surface(fb->cbufs[i]);
 
-        OUT_CS_REG_SEQ(R300_RB3D_COLOROFFSET0 + (4 * i), 1);
-        OUT_CS_RELOC(surf->cs_buffer, surf->offset);
+        OUT_CS_REG(R300_RB3D_COLOROFFSET0 + (4 * i), surf->offset);
+        OUT_CS_RELOC(surf);
 
-        OUT_CS_REG_SEQ(R300_RB3D_COLORPITCH0 + (4 * i), 1);
-        OUT_CS_RELOC(surf->cs_buffer, surf->pitch);
+        OUT_CS_REG(R300_RB3D_COLORPITCH0 + (4 * i), surf->pitch);
+        OUT_CS_RELOC(surf);
     }
 
     /* Set up the ZB part of the CBZB clear. */
@@ -404,11 +404,11 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
 
         OUT_CS_REG(R300_ZB_FORMAT, surf->cbzb_format);
 
-        OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
-        OUT_CS_RELOC(surf->cs_buffer, surf->cbzb_midpoint_offset);
+        OUT_CS_REG(R300_ZB_DEPTHOFFSET, surf->cbzb_midpoint_offset);
+        OUT_CS_RELOC(surf);
 
-        OUT_CS_REG_SEQ(R300_ZB_DEPTHPITCH, 1);
-        OUT_CS_RELOC(surf->cs_buffer, surf->cbzb_pitch);
+        OUT_CS_REG(R300_ZB_DEPTHPITCH, surf->cbzb_pitch);
+        OUT_CS_RELOC(surf);
 
         DBG(r300, DBG_CBZB,
             "CBZB clearing cbuf %08x %08x\n", surf->cbzb_format,
@@ -420,11 +420,11 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
 
         OUT_CS_REG(R300_ZB_FORMAT, surf->format);
 
-        OUT_CS_REG_SEQ(R300_ZB_DEPTHOFFSET, 1);
-        OUT_CS_RELOC(surf->cs_buffer, surf->offset);
+        OUT_CS_REG(R300_ZB_DEPTHOFFSET, surf->offset);
+        OUT_CS_RELOC(surf);
 
-        OUT_CS_REG_SEQ(R300_ZB_DEPTHPITCH, 1);
-        OUT_CS_RELOC(surf->cs_buffer, surf->pitch);
+        OUT_CS_REG(R300_ZB_DEPTHPITCH, surf->pitch);
+        OUT_CS_RELOC(surf);
 
         if (can_hyperz) {
             uint32_t surf_pitch;
@@ -568,7 +568,6 @@ static void r300_emit_query_end_frag_pipes(struct r300_context *r300,
                                            struct r300_query *query)
 {
     struct r300_capabilities* caps = &r300->screen->caps;
-    struct r300_winsys_cs_buffer *buf = r300->query_current->cs_buffer;
     CS_LOCALS(r300);
 
     assert(caps->num_frag_pipes);
@@ -586,25 +585,25 @@ static void r300_emit_query_end_frag_pipes(struct r300_context *r300,
         case 4:
             /* pipe 3 only */
             OUT_CS_REG(R300_SU_REG_DEST, 1 << 3);
-            OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-            OUT_CS_RELOC(buf, (query->num_results + 3) * 4);
+            OUT_CS_REG(R300_ZB_ZPASS_ADDR, (query->num_results + 3) * 4);
+            OUT_CS_RELOC(r300->query_current);
         case 3:
             /* pipe 2 only */
             OUT_CS_REG(R300_SU_REG_DEST, 1 << 2);
-            OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-            OUT_CS_RELOC(buf, (query->num_results + 2) * 4);
+            OUT_CS_REG(R300_ZB_ZPASS_ADDR, (query->num_results + 2) * 4);
+            OUT_CS_RELOC(r300->query_current);
         case 2:
             /* pipe 1 only */
             /* As mentioned above, accomodate RV380 and older. */
             OUT_CS_REG(R300_SU_REG_DEST,
                     1 << (caps->high_second_pipe ? 3 : 1));
-            OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-            OUT_CS_RELOC(buf, (query->num_results + 1) * 4);
+            OUT_CS_REG(R300_ZB_ZPASS_ADDR, (query->num_results + 1) * 4);
+            OUT_CS_RELOC(r300->query_current);
         case 1:
             /* pipe 0 only */
             OUT_CS_REG(R300_SU_REG_DEST, 1 << 0);
-            OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-            OUT_CS_RELOC(buf, (query->num_results + 0) * 4);
+            OUT_CS_REG(R300_ZB_ZPASS_ADDR, (query->num_results + 0) * 4);
+            OUT_CS_RELOC(r300->query_current);
             break;
         default:
             fprintf(stderr, "r300: Implementation error: Chipset reports %d"
@@ -620,13 +619,12 @@ static void r300_emit_query_end_frag_pipes(struct r300_context *r300,
 static void rv530_emit_query_end_single_z(struct r300_context *r300,
                                           struct r300_query *query)
 {
-    struct r300_winsys_cs_buffer *buf = r300->query_current->cs_buffer;
     CS_LOCALS(r300);
 
     BEGIN_CS(8);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_0);
-    OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-    OUT_CS_RELOC(buf, query->num_results * 4);
+    OUT_CS_REG(R300_ZB_ZPASS_ADDR, query->num_results * 4);
+    OUT_CS_RELOC(r300->query_current);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL);
     END_CS;
 }
@@ -634,16 +632,15 @@ static void rv530_emit_query_end_single_z(struct r300_context *r300,
 static void rv530_emit_query_end_double_z(struct r300_context *r300,
                                           struct r300_query *query)
 {
-    struct r300_winsys_cs_buffer *buf = r300->query_current->cs_buffer;
     CS_LOCALS(r300);
 
     BEGIN_CS(14);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_0);
-    OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-    OUT_CS_RELOC(buf, (query->num_results + 0) * 4);
+    OUT_CS_REG(R300_ZB_ZPASS_ADDR, (query->num_results + 0) * 4);
+    OUT_CS_RELOC(r300->query_current);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_1);
-    OUT_CS_REG_SEQ(R300_ZB_ZPASS_ADDR, 1);
-    OUT_CS_RELOC(buf, (query->num_results + 1) * 4);
+    OUT_CS_REG(R300_ZB_ZPASS_ADDR, (query->num_results + 1) * 4);
+    OUT_CS_RELOC(r300->query_current);
     OUT_CS_REG(RV530_FG_ZBREG_DEST, RV530_FG_ZBREG_DEST_PIPE_SELECT_ALL);
     END_CS;
 }
@@ -803,8 +800,8 @@ void r300_emit_textures_state(struct r300_context *r300,
             OUT_CS_REG(R300_TX_FORMAT1_0 + (i * 4), texstate->format.format1);
             OUT_CS_REG(R300_TX_FORMAT2_0 + (i * 4), texstate->format.format2);
 
-            OUT_CS_REG_SEQ(R300_TX_OFFSET_0 + (i * 4), 1);
-            OUT_CS_TEX_RELOC(tex, texstate->format.tile_config);
+            OUT_CS_REG(R300_TX_OFFSET_0 + (i * 4), texstate->format.tile_config);
+            OUT_CS_RELOC(tex);
         }
     }
     END_CS;
@@ -892,7 +889,7 @@ void r300_emit_vertex_arrays(struct r300_context* r300, int offset, boolean inde
 
     for (i = 0; i < vertex_array_count; i++) {
         buf = r300_buffer(valid_vbuf[velem[i].vertex_buffer_index]);
-        OUT_CS_BUF_RELOC_NO_OFFSET(&buf->b.b.b);
+        OUT_CS_RELOC(buf);
     }
     END_CS;
 }
@@ -917,7 +914,8 @@ void r300_emit_vertex_arrays_swtcl(struct r300_context *r300, boolean indexed)
     OUT_CS(r300->vertex_info.size |
             (r300->vertex_info.size << 8));
     OUT_CS(r300->draw_vbo_offset);
-    OUT_CS_BUF_RELOC(r300->vbo, 0);
+    OUT_CS(0);
+    OUT_CS_RELOC(r300_buffer(r300->vbo));
     END_CS;
 }
 
@@ -1194,15 +1192,15 @@ validate:
         /* Color buffers... */
         for (i = 0; i < fb->nr_cbufs; i++) {
             tex = r300_texture(fb->cbufs[i]->texture);
-            assert(tex && tex->buffer && "cbuf is marked, but NULL!");
-            r300->rws->cs_add_reloc(r300->cs, tex->cs_buffer, 0,
+            assert(tex && tex->buf && "cbuf is marked, but NULL!");
+            r300->rws->cs_add_reloc(r300->cs, tex->cs_buf, 0,
                                     r300_surface(fb->cbufs[i])->domain);
         }
         /* ...depth buffer... */
         if (fb->zsbuf) {
             tex = r300_texture(fb->zsbuf->texture);
-            assert(tex && tex->buffer && "zsbuf is marked, but NULL!");
-            r300->rws->cs_add_reloc(r300->cs, tex->cs_buffer, 0,
+            assert(tex && tex->buf && "zsbuf is marked, but NULL!");
+            r300->rws->cs_add_reloc(r300->cs, tex->cs_buf, 0,
                                     r300_surface(fb->zsbuf)->domain);
         }
     }
@@ -1214,12 +1212,12 @@ validate:
             }
 
             tex = r300_texture(texstate->sampler_views[i]->base.texture);
-            r300->rws->cs_add_reloc(r300->cs, tex->cs_buffer, tex->domain, 0);
+            r300->rws->cs_add_reloc(r300->cs, tex->cs_buf, tex->domain, 0);
         }
     }
     /* ...occlusion query buffer... */
     if (r300->query_current)
-        r300->rws->cs_add_reloc(r300->cs, r300->query_current->cs_buffer,
+        r300->rws->cs_add_reloc(r300->cs, r300->query_current->cs_buf,
                                 0, r300->query_current->domain);
     /* ...vertex buffer for SWTCL path... */
     if (r300->vbo)

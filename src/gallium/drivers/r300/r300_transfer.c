@@ -90,13 +90,13 @@ r300_texture_get_transfer(struct pipe_context *ctx,
 
     referenced_cs =
         r300->rws->cs_is_buffer_referenced(r300->cs,
-                                           tex->cs_buffer, R300_REF_CS);
+                                           tex->cs_buf, R300_REF_CS);
     if (referenced_cs) {
         referenced_hw = TRUE;
     } else {
         referenced_hw =
             r300->rws->cs_is_buffer_referenced(r300->cs,
-                                               tex->cs_buffer, R300_REF_HW);
+                                               tex->cs_buf, R300_REF_HW);
     }
 
     blittable = ctx->screen->is_format_supported(
@@ -235,12 +235,12 @@ void* r300_texture_transfer_map(struct pipe_context *ctx,
         /* The detiled texture is of the same size as the region being mapped
          * (no offset needed). */
         return rws->buffer_map(rws,
-                               r300transfer->linear_texture->buffer,
+                               r300transfer->linear_texture->buf,
                                r300->cs,
                                transfer->usage);
     } else {
         /* Tiling is disabled. */
-        map = rws->buffer_map(rws, tex->buffer, r300->cs,
+        map = rws->buffer_map(rws, tex->buf, r300->cs,
                               transfer->usage);
 
         if (!map) {
@@ -261,8 +261,8 @@ void r300_texture_transfer_unmap(struct pipe_context *ctx,
     struct r300_texture *tex = r300_texture(transfer->resource);
 
     if (r300transfer->linear_texture) {
-        rws->buffer_unmap(rws, r300transfer->linear_texture->buffer);
+        rws->buffer_unmap(rws, r300transfer->linear_texture->buf);
     } else {
-        rws->buffer_unmap(rws, tex->buffer);
+        rws->buffer_unmap(rws, tex->buf);
     }
 }

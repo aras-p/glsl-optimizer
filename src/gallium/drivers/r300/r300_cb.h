@@ -61,39 +61,51 @@
  * that they neatly hide away, and don't have the cost of function setup, so
  * we're going to use them. */
 
-#ifdef DEBUG
-#define CB_DEBUG(x) x
-#else
-#define CB_DEBUG(x)
-#endif
-
-
 /**
  * Command buffer setup.
  */
 
-#define CB_LOCALS \
-    CB_DEBUG(int cs_count = 0;) \
-    uint32_t *cs_ptr = NULL; \
-    CB_DEBUG((void) cs_count;) (void) cs_ptr;
+#ifdef DEBUG
 
-#define NEW_CB(ptr, size) do { \
-    assert(sizeof(*ptr) == sizeof(uint32_t)); \
-    cs_ptr = (ptr) = (uint32_t*)malloc((size) * sizeof(uint32_t)); \
-    CB_DEBUG(cs_count = size;) \
-} while (0)
+#define CB_LOCALS \
+    int cs_count = 0; \
+    uint32_t *cs_ptr = NULL; \
+    (void) cs_count; (void) cs_ptr
 
 #define BEGIN_CB(ptr, size) do { \
-    assert(sizeof(*ptr) == sizeof(uint32_t)); \
-    cs_ptr = ptr; \
-    CB_DEBUG(cs_count = size;) \
+    assert(sizeof(*(ptr)) == sizeof(uint32_t)); \
+    cs_count = (size); \
+    cs_ptr = (ptr); \
+} while (0)
+
+#define NEW_CB(ptr, size) \
+    do { \
+    assert(sizeof(*(ptr)) == sizeof(uint32_t)); \
+    cs_count = (size); \
+    cs_ptr = (ptr) = (uint32_t*)malloc((size) * sizeof(uint32_t)); \
 } while (0)
 
 #define END_CB do { \
-    CB_DEBUG(if (cs_count != 0) \
+    if (cs_count != 0) \
         debug_printf("r300: Warning: cs_count off by %d at (%s, %s:%i)\n", \
-                     cs_count, __FUNCTION__, __FILE__, __LINE__);) \
+                     cs_count, __FUNCTION__, __FILE__, __LINE__); \
 } while (0)
+
+#define CB_USED_DW(x) cs_count -= x
+
+#else
+
+#define CB_LOCALS \
+    uint32_t *cs_ptr = NULL; (void) cs_ptr
+
+#define NEW_CB(ptr, size) \
+    cs_ptr = (ptr) = (uint32_t*)malloc((size) * sizeof(uint32_t))
+
+#define BEGIN_CB(ptr, size) cs_ptr = (ptr)
+#define END_CB
+#define CB_USED_DW(x)
+
+#endif
 
 
 /**
@@ -103,13 +115,13 @@
 #define OUT_CB(value) do { \
     *cs_ptr = (value); \
     cs_ptr++; \
-    CB_DEBUG(cs_count--;) \
+    CB_USED_DW(1); \
 } while (0)
 
 #define OUT_CB_TABLE(values, count) do { \
     memcpy(cs_ptr, values, count * sizeof(uint32_t)); \
     cs_ptr += count; \
-    CB_DEBUG(cs_count -= count;) \
+    CB_USED_DW(count); \
 } while (0)
 
 #define OUT_CB_32F(value) \

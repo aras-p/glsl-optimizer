@@ -700,7 +700,7 @@ static unsigned r300_texture_is_referenced(struct pipe_context *context,
     struct r300_texture *rtex = (struct r300_texture *)texture;
 
     if (r300->rws->cs_is_buffer_referenced(r300->cs,
-                                           rtex->cs_buffer, R300_REF_CS))
+                                           rtex->cs_buf, R300_REF_CS))
         return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
 
     return PIPE_UNREFERENCED;
@@ -713,7 +713,7 @@ static void r300_texture_destroy(struct pipe_screen *screen,
     struct r300_winsys_screen *rws = (struct r300_winsys_screen *)texture->screen->winsys;
     int i;
 
-    rws->buffer_reference(rws, &tex->buffer, NULL);
+    rws->buffer_reference(rws, &tex->buf, NULL);
     for (i = 0; i < R300_MAX_TEXTURE_LEVELS; i++) {
         if (tex->hiz_mem[i])
             u_mmFreeMem(tex->hiz_mem[i]);
@@ -733,7 +733,7 @@ static boolean r300_texture_get_handle(struct pipe_screen* screen,
         return FALSE;
     }
 
-    return rws->buffer_get_handle(rws, tex->buffer,
+    return rws->buffer_get_handle(rws, tex->buf,
                                   tex->desc.stride_in_bytes[0], whandle);
 }
 
@@ -786,22 +786,22 @@ r300_texture_create_object(struct r300_screen *rscreen,
     tex->domain = base->flags & R300_RESOURCE_FLAG_TRANSFER ?
                   R300_DOMAIN_GTT :
                   R300_DOMAIN_VRAM | R300_DOMAIN_GTT;
-    tex->buffer = buffer;
+    tex->buf = buffer;
 
     /* Create the backing buffer if needed. */
-    if (!tex->buffer) {
-        tex->buffer = rws->buffer_create(rws, tex->desc.size_in_bytes, 2048,
+    if (!tex->buf) {
+        tex->buf = rws->buffer_create(rws, tex->desc.size_in_bytes, 2048,
                                          base->bind, base->usage, tex->domain);
 
-        if (!tex->buffer) {
+        if (!tex->buf) {
             FREE(tex);
             return NULL;
         }
     }
 
-    tex->cs_buffer = rws->buffer_get_cs_handle(rws, tex->buffer);
+    tex->cs_buf = rws->buffer_get_cs_handle(rws, tex->buf);
 
-    rws->buffer_set_tiling(rws, tex->buffer,
+    rws->buffer_set_tiling(rws, tex->buf,
             tex->desc.microtile, tex->desc.macrotile[0],
             tex->desc.stride_in_bytes[0]);
 
@@ -899,8 +899,8 @@ struct pipe_surface* r300_create_surface(struct pipe_context * ctx,
         surface->base.u.tex.first_layer = surf_tmpl->u.tex.first_layer;
         surface->base.u.tex.last_layer = surf_tmpl->u.tex.last_layer;
 
-        surface->buffer = tex->buffer;
-        surface->cs_buffer = tex->cs_buffer;
+        surface->buf = tex->buf;
+        surface->cs_buf = tex->cs_buf;
 
         /* Prefer VRAM if there are multiple domains to choose from. */
         surface->domain = tex->domain;
