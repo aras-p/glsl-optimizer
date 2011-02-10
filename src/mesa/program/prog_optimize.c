@@ -1358,6 +1358,8 @@ _mesa_optimize_program(struct gl_context *ctx, struct gl_program *program)
          any_change = GL_TRUE;
       if (_mesa_remove_dead_code_local(program))
          any_change = GL_TRUE;
+
+      any_change = _mesa_constant_fold(program) || any_change;
       _mesa_reallocate_registers(program);
    } while (any_change);
 }

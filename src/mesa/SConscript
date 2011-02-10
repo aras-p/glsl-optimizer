@@ -293,6 +293,7 @@ program_sources = [
     'program/prog_instruction.c',
     'program/prog_noise.c',
     'program/prog_optimize.c',
+    'program/prog_opt_constant_fold.c',
     'program/prog_parameter.c',
     'program/prog_parameter_layout.c',
     'program/prog_print.c',
