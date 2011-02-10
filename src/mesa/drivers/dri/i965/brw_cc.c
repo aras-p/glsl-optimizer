@@ -92,54 +92,55 @@ static void upload_cc_unit(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &brw->intel.ctx;
-   struct brw_cc_unit_state cc;
-   void *map;
+   struct brw_cc_unit_state *cc;
 
-   memset(&cc, 0, sizeof(cc));
+   cc = brw_state_batch(brw, sizeof(*cc), 64,
+			&brw->cc.state_bo, &brw->cc.state_offset);
+   memset(cc, 0, sizeof(*cc));
 
    /* _NEW_STENCIL */
    if (ctx->Stencil._Enabled) {
       const unsigned back = ctx->Stencil._BackFace;
 
-      cc.cc0.stencil_enable = 1;
-      cc.cc0.stencil_func =
+      cc->cc0.stencil_enable = 1;
+      cc->cc0.stencil_func =
 	 intel_translate_compare_func(ctx->Stencil.Function[0]);
-      cc.cc0.stencil_fail_op =
+      cc->cc0.stencil_fail_op =
 	 intel_translate_stencil_op(ctx->Stencil.FailFunc[0]);
-      cc.cc0.stencil_pass_depth_fail_op =
+      cc->cc0.stencil_pass_depth_fail_op =
 	 intel_translate_stencil_op(ctx->Stencil.ZFailFunc[0]);
-      cc.cc0.stencil_pass_depth_pass_op =
+      cc->cc0.stencil_pass_depth_pass_op =
 	 intel_translate_stencil_op(ctx->Stencil.ZPassFunc[0]);
-      cc.cc1.stencil_ref = ctx->Stencil.Ref[0];
-      cc.cc1.stencil_write_mask = ctx->Stencil.WriteMask[0];
-      cc.cc1.stencil_test_mask = ctx->Stencil.ValueMask[0];
+      cc->cc1.stencil_ref = ctx->Stencil.Ref[0];
+      cc->cc1.stencil_write_mask = ctx->Stencil.WriteMask[0];
+      cc->cc1.stencil_test_mask = ctx->Stencil.ValueMask[0];
 
       if (ctx->Stencil._TestTwoSide) {
-	 cc.cc0.bf_stencil_enable = 1;
-	 cc.cc0.bf_stencil_func =
+	 cc->cc0.bf_stencil_enable = 1;
+	 cc->cc0.bf_stencil_func =
 	    intel_translate_compare_func(ctx->Stencil.Function[back]);
-	 cc.cc0.bf_stencil_fail_op =
+	 cc->cc0.bf_stencil_fail_op =
 	    intel_translate_stencil_op(ctx->Stencil.FailFunc[back]);
-	 cc.cc0.bf_stencil_pass_depth_fail_op =
+	 cc->cc0.bf_stencil_pass_depth_fail_op =
 	    intel_translate_stencil_op(ctx->Stencil.ZFailFunc[back]);
-	 cc.cc0.bf_stencil_pass_depth_pass_op =
+	 cc->cc0.bf_stencil_pass_depth_pass_op =
 	    intel_translate_stencil_op(ctx->Stencil.ZPassFunc[back]);
-	 cc.cc1.bf_stencil_ref = ctx->Stencil.Ref[back];
-	 cc.cc2.bf_stencil_write_mask = ctx->Stencil.WriteMask[back];
-	 cc.cc2.bf_stencil_test_mask = ctx->Stencil.ValueMask[back];
+	 cc->cc1.bf_stencil_ref = ctx->Stencil.Ref[back];
+	 cc->cc2.bf_stencil_write_mask = ctx->Stencil.WriteMask[back];
+	 cc->cc2.bf_stencil_test_mask = ctx->Stencil.ValueMask[back];
       }
 
       /* Not really sure about this:
        */
       if (ctx->Stencil.WriteMask[0] ||
 	  (ctx->Stencil._TestTwoSide && ctx->Stencil.WriteMask[back]))
-	 cc.cc0.stencil_write_enable = 1;
+	 cc->cc0.stencil_write_enable = 1;
    }
 
    /* _NEW_COLOR */
    if (ctx->Color._LogicOpEnabled && ctx->Color.LogicOp != GL_COPY) {
-      cc.cc2.logicop_enable = 1;
-      cc.cc5.logicop_func = intel_translate_logic_op(ctx->Color.LogicOp);
+      cc->cc2.logicop_enable = 1;
+      cc->cc5.logicop_func = intel_translate_logic_op(ctx->Color.LogicOp);
    } else if (ctx->Color.BlendEnabled) {
       GLenum eqRGB = ctx->Color.Blend[0].EquationRGB;
       GLenum eqA = ctx->Color.Blend[0].EquationA;
@@ -167,58 +168,55 @@ static void upload_cc_unit(struct brw_context *brw)
 	 srcA = dstA = GL_ONE;
       }
 
-      cc.cc6.dest_blend_factor = brw_translate_blend_factor(dstRGB);
-      cc.cc6.src_blend_factor = brw_translate_blend_factor(srcRGB);
-      cc.cc6.blend_function = brw_translate_blend_equation(eqRGB);
+      cc->cc6.dest_blend_factor = brw_translate_blend_factor(dstRGB);
+      cc->cc6.src_blend_factor = brw_translate_blend_factor(srcRGB);
+      cc->cc6.blend_function = brw_translate_blend_equation(eqRGB);
 
-      cc.cc5.ia_dest_blend_factor = brw_translate_blend_factor(dstA);
-      cc.cc5.ia_src_blend_factor = brw_translate_blend_factor(srcA);
-      cc.cc5.ia_blend_function = brw_translate_blend_equation(eqA);
+      cc->cc5.ia_dest_blend_factor = brw_translate_blend_factor(dstA);
+      cc->cc5.ia_src_blend_factor = brw_translate_blend_factor(srcA);
+      cc->cc5.ia_blend_function = brw_translate_blend_equation(eqA);
 
-      cc.cc3.blend_enable = 1;
-      cc.cc3.ia_blend_enable = (srcA != srcRGB ||
+      cc->cc3.blend_enable = 1;
+      cc->cc3.ia_blend_enable = (srcA != srcRGB ||
 				dstA != dstRGB ||
 				eqA != eqRGB);
    }
 
    if (ctx->Color.AlphaEnabled) {
-      cc.cc3.alpha_test = 1;
-      cc.cc3.alpha_test_func =
+      cc->cc3.alpha_test = 1;
+      cc->cc3.alpha_test_func =
 	 intel_translate_compare_func(ctx->Color.AlphaFunc);
-      cc.cc3.alpha_test_format = BRW_ALPHATEST_FORMAT_UNORM8;
+      cc->cc3.alpha_test_format = BRW_ALPHATEST_FORMAT_UNORM8;
 
-      UNCLAMPED_FLOAT_TO_UBYTE(cc.cc7.alpha_ref.ub[0], ctx->Color.AlphaRef);
+      UNCLAMPED_FLOAT_TO_UBYTE(cc->cc7.alpha_ref.ub[0], ctx->Color.AlphaRef);
    }
 
    if (ctx->Color.DitherFlag) {
-      cc.cc5.dither_enable = 1;
-      cc.cc6.y_dither_offset = 0;
-      cc.cc6.x_dither_offset = 0;
+      cc->cc5.dither_enable = 1;
+      cc->cc6.y_dither_offset = 0;
+      cc->cc6.x_dither_offset = 0;
    }
 
    /* _NEW_DEPTH */
    if (ctx->Depth.Test) {
-      cc.cc2.depth_test = 1;
-      cc.cc2.depth_test_function =
+      cc->cc2.depth_test = 1;
+      cc->cc2.depth_test_function =
 	 intel_translate_compare_func(ctx->Depth.Func);
-      cc.cc2.depth_write_enable = ctx->Depth.Mask;
+      cc->cc2.depth_write_enable = ctx->Depth.Mask;
    }
 
    if (intel->stats_wm || unlikely(INTEL_DEBUG & DEBUG_STATS))
-      cc.cc5.statistics_enable = 1;
+      cc->cc5.statistics_enable = 1;
 
    /* CACHE_NEW_CC_VP */
-   cc.cc4.cc_viewport_state_offset = brw->cc.vp_bo->offset >> 5; /* reloc */
+   cc->cc4.cc_viewport_state_offset = brw->cc.vp_bo->offset >> 5; /* reloc */
 
-   map = brw_state_batch(brw, sizeof(cc), 64,
-			 &brw->cc.state_bo, &brw->cc.state_offset);
-   memcpy(map, &cc, sizeof(cc));
    brw->state.dirty.cache |= CACHE_NEW_CC_UNIT;
 
    /* Emit CC viewport relocation */
-   drm_intel_bo_emit_reloc(brw->cc.state_bo, (brw->cc.state_offset +
-					      offsetof(struct brw_cc_unit_state,
-						       cc4)),
+   drm_intel_bo_emit_reloc(brw->cc.state_bo,
+			   (brw->cc.state_offset +
+			    offsetof(struct brw_cc_unit_state, cc4)),
 			   brw->cc.vp_bo, 0,
 			   I915_GEM_DOMAIN_INSTRUCTION, 0);
 }
