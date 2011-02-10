@@ -7,71 +7,37 @@
 #include "intel_bufmgr.h"
 #include "intel_reg.h"
 
-#define BATCH_SZ 16384
 #define BATCH_RESERVED 16
 
+void intel_batchbuffer_reset(struct intel_context *intel);
+void intel_batchbuffer_free(struct intel_context *intel);
 
-struct intel_batchbuffer
-{
-   struct intel_context *intel;
-
-   drm_intel_bo *buf;
-
-   GLubyte *map;
-   GLubyte *ptr;
-
-   GLuint size;
-   uint32_t state_batch_offset;
-
-#ifdef DEBUG
-   /** Tracking of BEGIN_BATCH()/OUT_BATCH()/ADVANCE_BATCH() debugging */
-   struct {
-      GLuint total;
-      GLubyte *start_ptr;
-   } emit;
-#endif
-
-   bool is_blit;
-   GLuint dirty_state;
-   GLuint reserved_space;
-};
-
-struct intel_batchbuffer *intel_batchbuffer_alloc(struct intel_context
-                                                  *intel);
-
-void intel_batchbuffer_free(struct intel_batchbuffer *batch);
-
-
-void _intel_batchbuffer_flush(struct intel_batchbuffer *batch,
+void _intel_batchbuffer_flush(struct intel_context *intel,
 			      const char *file, int line);
 
-#define intel_batchbuffer_flush(batch) \
-	_intel_batchbuffer_flush(batch, __FILE__, __LINE__)
+#define intel_batchbuffer_flush(intel) \
+	_intel_batchbuffer_flush(intel, __FILE__, __LINE__)
 
-void intel_batchbuffer_reset(struct intel_batchbuffer *batch);
 
 
 /* Unlike bmBufferData, this currently requires the buffer be mapped.
  * Consider it a convenience function wrapping multple
  * intel_buffer_dword() calls.
  */
-void intel_batchbuffer_data(struct intel_batchbuffer *batch,
+void intel_batchbuffer_data(struct intel_context *intel,
                             const void *data, GLuint bytes, bool is_blit);
 
-void intel_batchbuffer_release_space(struct intel_batchbuffer *batch,
-                                     GLuint bytes);
-
-GLboolean intel_batchbuffer_emit_reloc(struct intel_batchbuffer *batch,
+GLboolean intel_batchbuffer_emit_reloc(struct intel_context *intel,
                                        drm_intel_bo *buffer,
 				       uint32_t read_domains,
 				       uint32_t write_domain,
 				       uint32_t offset);
-GLboolean intel_batchbuffer_emit_reloc_fenced(struct intel_batchbuffer *batch,
+GLboolean intel_batchbuffer_emit_reloc_fenced(struct intel_context *intel,
 					      drm_intel_bo *buffer,
 					      uint32_t read_domains,
 					      uint32_t write_domain,
 					      uint32_t offset);
-void intel_batchbuffer_emit_mi_flush(struct intel_batchbuffer *batch);
+void intel_batchbuffer_emit_mi_flush(struct intel_context *intel);
 
 static INLINE uint32_t float_as_int(float f)
 {
@@ -90,73 +56,70 @@ static INLINE uint32_t float_as_int(float f)
  * work...
  */
 static INLINE GLint
-intel_batchbuffer_space(struct intel_batchbuffer *batch)
+intel_batchbuffer_space(struct intel_context *intel)
 {
-   return (batch->state_batch_offset - batch->reserved_space) -
-      (batch->ptr - batch->map);
+   return (intel->batch.state_batch_offset - intel->batch.reserved_space) - intel->batch.used*4;
 }
 
 
 static INLINE void
-intel_batchbuffer_emit_dword(struct intel_batchbuffer *batch, GLuint dword)
+intel_batchbuffer_emit_dword(struct intel_context *intel, GLuint dword)
 {
 #ifdef DEBUG
-   assert(intel_batchbuffer_space(batch) >= 4);
+   assert(intel_batchbuffer_space(intel) >= 4);
 #endif
-   *(GLuint *) (batch->ptr) = dword;
-   batch->ptr += 4;
+   intel->batch.map[intel->batch.used++] = dword;
 }
 
 static INLINE void
-intel_batchbuffer_emit_float(struct intel_batchbuffer *batch, float f)
+intel_batchbuffer_emit_float(struct intel_context *intel, float f)
 {
-   intel_batchbuffer_emit_dword(batch, float_as_int(f));
+   intel_batchbuffer_emit_dword(intel, float_as_int(f));
 }
 
 static INLINE void
-intel_batchbuffer_require_space(struct intel_batchbuffer *batch,
+intel_batchbuffer_require_space(struct intel_context *intel,
                                 GLuint sz, int is_blit)
 {
 
-   if (batch->intel->gen >= 6 && batch->is_blit != is_blit &&
-       batch->ptr != batch->map) {
-      intel_batchbuffer_flush(batch);
+   if (intel->gen >= 6 &&
+       intel->batch.is_blit != is_blit && intel->batch.used) {
+      intel_batchbuffer_flush(intel);
    }
 
-   batch->is_blit = is_blit;
+   intel->batch.is_blit = is_blit;
 
 #ifdef DEBUG
-   assert(sz < batch->size - 8);
+   assert(sz < sizeof(intel->batch.map) - BATCH_RESERVED);
 #endif
-   if (intel_batchbuffer_space(batch) < sz)
-      intel_batchbuffer_flush(batch);
+   if (intel_batchbuffer_space(intel) < sz)
+      intel_batchbuffer_flush(intel);
 }
 
 static INLINE void
-intel_batchbuffer_begin(struct intel_batchbuffer *batch, int n, bool is_blit)
+intel_batchbuffer_begin(struct intel_context *intel, int n, bool is_blit)
 {
-   intel_batchbuffer_require_space(batch, n * 4, is_blit);
+   intel_batchbuffer_require_space(intel, n * 4, is_blit);
 
 #ifdef DEBUG
-   assert(batch->map);
-   assert(batch->emit.start_ptr == NULL);
-   batch->emit.total = n * 4;
-   batch->emit.start_ptr = batch->ptr;
+   intel->batch.emit.total = n;
+   intel->batch.emit.start_ptr = intel->batch.used;
 #endif
 }
 
 static INLINE void
-intel_batchbuffer_advance(struct intel_batchbuffer *batch)
+intel_batchbuffer_advance(struct intel_context *intel)
 {
 #ifdef DEBUG
-   unsigned int _n = batch->ptr - batch->emit.start_ptr;
-   assert(batch->emit.start_ptr != NULL);
-   if (_n != batch->emit.total) {
+   struct intel_batchbuffer *batch = &intel->batch;
+   unsigned int _n = batch->used - batch->emit;
+   assert(batch->total != 0);
+   if (_n != batch->total) {
       fprintf(stderr, "ADVANCE_BATCH: %d of %d dwords emitted\n",
-	      _n, batch->emit.total);
+	      _n, batch->total);
       abort();
    }
-   batch->emit.start_ptr = NULL;
+   batch->total = 0;
 #endif
 }
 
@@ -164,19 +127,19 @@ intel_batchbuffer_advance(struct intel_batchbuffer *batch)
  */
 #define BATCH_LOCALS
 
-#define BEGIN_BATCH(n) intel_batchbuffer_begin(intel->batch, n, false)
-#define BEGIN_BATCH_BLT(n) intel_batchbuffer_begin(intel->batch, n, true)
-#define OUT_BATCH(d) intel_batchbuffer_emit_dword(intel->batch, d)
-#define OUT_BATCH_F(f) intel_batchbuffer_emit_float(intel->batch,f)
+#define BEGIN_BATCH(n) intel_batchbuffer_begin(intel, n, false)
+#define BEGIN_BATCH_BLT(n) intel_batchbuffer_begin(intel, n, true)
+#define OUT_BATCH(d) intel_batchbuffer_emit_dword(intel, d)
+#define OUT_BATCH_F(f) intel_batchbuffer_emit_float(intel,f)
 #define OUT_RELOC(buf, read_domains, write_domain, delta) do {		\
-   intel_batchbuffer_emit_reloc(intel->batch, buf,			\
+   intel_batchbuffer_emit_reloc(intel, buf,			\
 				read_domains, write_domain, delta);	\
 } while (0)
 #define OUT_RELOC_FENCED(buf, read_domains, write_domain, delta) do {	\
-   intel_batchbuffer_emit_reloc_fenced(intel->batch, buf,		\
+   intel_batchbuffer_emit_reloc_fenced(intel, buf,		\
 				       read_domains, write_domain, delta); \
 } while (0)
 
-#define ADVANCE_BATCH() intel_batchbuffer_advance(intel->batch);
+#define ADVANCE_BATCH() intel_batchbuffer_advance(intel);
 
 #endif

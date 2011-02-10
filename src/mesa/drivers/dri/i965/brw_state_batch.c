@@ -48,7 +48,7 @@ GLboolean brw_cached_batch_struct( struct brw_context *brw,
    struct header *newheader = (struct header *)data;
 
    if (brw->emit_state_always) {
-      intel_batchbuffer_data(brw->intel.batch, data, sz, false);
+      intel_batchbuffer_data(&brw->intel, data, sz, false);
       return GL_TRUE;
    }
 
@@ -75,7 +75,7 @@ GLboolean brw_cached_batch_struct( struct brw_context *brw,
 
  emit:
    memcpy(item->header, newheader, sz);
-   intel_batchbuffer_data(brw->intel.batch, data, sz, false);
+   intel_batchbuffer_data(&brw->intel, data, sz, false);
    return GL_TRUE;
 }
 
@@ -118,10 +118,10 @@ brw_state_batch(struct brw_context *brw,
 		int alignment,
 		uint32_t *out_offset)
 {
-   struct intel_batchbuffer *batch = brw->intel.batch;
+   struct intel_batchbuffer *batch = &brw->intel.batch;
    uint32_t offset;
 
-   assert(size < batch->buf->size);
+   assert(size < batch->bo->size);
    offset = ROUND_DOWN_TO(batch->state_batch_offset - size, alignment);
 
    /* If allocating from the top would wrap below the batchbuffer, or
@@ -129,13 +129,13 @@ brw_state_batch(struct brw_context *brw,
     * space, then flush and try again.
     */
    if (batch->state_batch_offset < size ||
-       offset < batch->ptr - batch->map + batch->reserved_space) {
-      intel_batchbuffer_flush(batch);
+       offset < 4*batch->used + batch->reserved_space) {
+      intel_batchbuffer_flush(&brw->intel);
       offset = ROUND_DOWN_TO(batch->state_batch_offset - size, alignment);
    }
 
    batch->state_batch_offset = offset;
 
    *out_offset = offset;
-   return batch->map + offset;
+   return batch->map + (offset>>2);
 }

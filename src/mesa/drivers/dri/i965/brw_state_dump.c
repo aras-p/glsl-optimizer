@@ -104,7 +104,7 @@ static void dump_wm_surface_state(struct brw_context *brw)
    GLubyte *base;
    int i;
 
-   bo = brw->intel.batch->buf;
+   bo = brw->intel.batch.bo;
    drm_intel_bo_map(bo, GL_FALSE);
    base = bo->virtual;
 
@@ -285,7 +285,7 @@ static void dump_cc_state(struct brw_context *brw)
    const char *name = "CC";
    struct gen6_color_calc_state *cc;
    uint32_t cc_off;
-   dri_bo *bo = brw->intel.batch->buf;
+   dri_bo *bo = brw->intel.batch.bo;
 
    if (brw->cc.state_offset == 0)
 	return;
@@ -376,7 +376,7 @@ void brw_debug_batch(struct intel_context *intel)
    struct brw_context *brw = brw_context(&intel->ctx);
 
    state_struct_out("WM bind",
-		    brw->intel.batch->buf,
+		    brw->intel.batch.bo,
 		    brw->wm.bind_bo_offset,
 		    4 * brw->wm.nr_surfaces);
    dump_wm_surface_state(brw);

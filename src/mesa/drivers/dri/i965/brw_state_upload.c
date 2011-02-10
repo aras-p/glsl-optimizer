@@ -352,7 +352,7 @@ void brw_validate_state( struct brw_context *brw )
    state->mesa |= brw->intel.NewGLState;
    brw->intel.NewGLState = 0;
 
-   brw_add_validated_bo(brw, intel->batch->buf);
+   brw_add_validated_bo(brw, intel->batch.bo);
 
    if (intel->gen >= 6) {
       atoms = gen6_atoms;

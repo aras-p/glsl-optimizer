@@ -111,8 +111,8 @@ intelDRI2Flush(__DRIdrawable *drawable)
 
    intel->need_throttle = GL_TRUE;
 
-   if (intel->batch->map != intel->batch->ptr)
-      intel_batchbuffer_flush(intel->batch);
+   if (intel->batch.used)
+      intel_batchbuffer_flush(intel);
 }
 
 static const struct __DRI2flushExtensionRec intelFlushExtension = {

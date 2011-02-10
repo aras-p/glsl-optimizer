@@ -123,12 +123,12 @@ intelEmitCopyBlit(struct intel_context *intel,
 
    /* do space check before going any further */
    do {
-       aper_array[0] = intel->batch->buf;
+       aper_array[0] = intel->batch.bo;
        aper_array[1] = dst_buffer;
        aper_array[2] = src_buffer;
 
        if (dri_bufmgr_check_aperture_space(aper_array, 3) != 0) {
-           intel_batchbuffer_flush(intel->batch);
+           intel_batchbuffer_flush(intel);
            pass++;
        } else
            break;
@@ -137,7 +137,7 @@ intelEmitCopyBlit(struct intel_context *intel,
    if (pass >= 2)
       return GL_FALSE;
 
-   intel_batchbuffer_require_space(intel->batch, 8 * 4, true);
+   intel_batchbuffer_require_space(intel, 8 * 4, true);
    DBG("%s src:buf(%p)/%d+%d %d,%d dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
        __FUNCTION__,
        src_buffer, src_pitch, src_offset, src_x, src_y,
@@ -193,7 +193,7 @@ intelEmitCopyBlit(struct intel_context *intel,
 		    src_offset);
    ADVANCE_BATCH();
 
-   intel_batchbuffer_emit_mi_flush(intel->batch);
+   intel_batchbuffer_emit_mi_flush(intel);
 
    return GL_TRUE;
 }
@@ -343,12 +343,12 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
       assert(y1 < y2);
 
       /* do space check before going any further */
-      aper_array[0] = intel->batch->buf;
+      aper_array[0] = intel->batch.bo;
       aper_array[1] = write_buffer;
 
       if (drm_intel_bufmgr_check_aperture_space(aper_array,
 						ARRAY_SIZE(aper_array)) != 0) {
-	 intel_batchbuffer_flush(intel->batch);
+	 intel_batchbuffer_flush(intel);
       }
 
       BEGIN_BATCH_BLT(6);
@@ -363,7 +363,7 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
       ADVANCE_BATCH();
 
       if (intel->always_flush_cache)
-	 intel_batchbuffer_emit_mi_flush(intel->batch);
+	 intel_batchbuffer_emit_mi_flush(intel);
 
       if (buf == BUFFER_DEPTH || buf == BUFFER_STENCIL)
 	 mask &= ~(BUFFER_BIT_DEPTH | BUFFER_BIT_STENCIL);
@@ -410,10 +410,10 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
        __FUNCTION__,
        dst_buffer, dst_pitch, dst_offset, x, y, w, h, src_size, dwords);
 
-   intel_batchbuffer_require_space( intel->batch,
-				    (8 * 4) +
-				    (3 * 4) +
-				    dwords * 4, true);
+   intel_batchbuffer_require_space(intel,
+				   (8 * 4) +
+				   (3 * 4) +
+				   dwords * 4, true);
 
    opcode = XY_SETUP_BLT_CMD;
    if (cpp == 4)
@@ -449,11 +449,9 @@ intelEmitImmediateColorExpandBlit(struct intel_context *intel,
    OUT_BATCH(((y + h) << 16) | (x + w));
    ADVANCE_BATCH();
 
-   intel_batchbuffer_data(intel->batch,
-			  src_bits,
-			  dwords * 4, true);
+   intel_batchbuffer_data(intel, src_bits, dwords * 4, true);
 
-   intel_batchbuffer_emit_mi_flush(intel->batch);
+   intel_batchbuffer_emit_mi_flush(intel);
 
    return GL_TRUE;
 }
@@ -543,10 +541,10 @@ intel_set_teximage_alpha_to_one(struct gl_context *ctx,
 
    DBG("%s dst:buf(%p)/%d %d,%d sz:%dx%d\n",
        __FUNCTION__,
-       intel_image->mt->region->buffer, (pitch * region->cpp),
+       intel_image->mt->region->buffer, (pitch * cpp),
        x1, y1, x2 - x1, y2 - y1);
 
-   BR13 = br13_for_cpp(region->cpp) | 0xf0 << 16;
+   BR13 = br13_for_cpp(cpp) | 0xf0 << 16;
    CMD = XY_COLOR_BLT_CMD;
    CMD |= XY_BLT_WRITE_ALPHA;
 
@@ -558,15 +556,15 @@ intel_set_teximage_alpha_to_one(struct gl_context *ctx,
       pitch /= 4;
    }
 #endif
-   BR13 |= (pitch * region->cpp);
+   BR13 |= (pitch * cpp);
 
    /* do space check before going any further */
-   aper_array[0] = intel->batch->buf;
+   aper_array[0] = intel->batch.bo;
    aper_array[1] = region->buffer;
 
    if (drm_intel_bufmgr_check_aperture_space(aper_array,
 					     ARRAY_SIZE(aper_array)) != 0) {
-      intel_batchbuffer_flush(intel->batch);
+      intel_batchbuffer_flush(intel);
    }
 
    BEGIN_BATCH_BLT(6);
@@ -580,5 +578,5 @@ intel_set_teximage_alpha_to_one(struct gl_context *ctx,
    OUT_BATCH(0xffffffff); /* white, but only alpha gets written */
    ADVANCE_BATCH();
 
-   intel_batchbuffer_emit_mi_flush(intel->batch);
+   intel_batchbuffer_emit_mi_flush(intel);
 }

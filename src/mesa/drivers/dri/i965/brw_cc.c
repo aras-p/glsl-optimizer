@@ -214,7 +214,7 @@ static void upload_cc_unit(struct brw_context *brw)
    brw->state.dirty.cache |= CACHE_NEW_CC_UNIT;
 
    /* Emit CC viewport relocation */
-   drm_intel_bo_emit_reloc(brw->intel.batch->buf,
+   drm_intel_bo_emit_reloc(brw->intel.batch.bo,
 			   (brw->cc.state_offset +
 			    offsetof(struct brw_cc_unit_state, cc4)),
 			   brw->cc.vp_bo, 0,

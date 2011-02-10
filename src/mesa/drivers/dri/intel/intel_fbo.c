@@ -580,7 +580,7 @@ intel_finish_render_texture(struct gl_context * ctx,
     * batch.  Once again, we wish for a domain tracker in libdrm to cover
     * usage inside of a batchbuffer like GEM does in the kernel.
     */
-   intel_batchbuffer_emit_mi_flush(intel->batch);
+   intel_batchbuffer_emit_mi_flush(intel);
 }
 
 /**

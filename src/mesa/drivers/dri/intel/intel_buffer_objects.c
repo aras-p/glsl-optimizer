@@ -225,7 +225,7 @@ intel_bufferobj_subdata(struct gl_context * ctx,
    } else {
       bool busy =
 	 drm_intel_bo_busy(intel_obj->buffer) ||
-	 drm_intel_bo_references(intel->batch->buf, intel_obj->buffer);
+	 drm_intel_bo_references(intel->batch.bo, intel_obj->buffer);
 
       /* replace the current busy bo with fresh data */
       if (busy && size == intel_obj->Base.Size) {
@@ -251,8 +251,8 @@ intel_bufferobj_subdata(struct gl_context * ctx,
 	 }
       } else {
 	 /* Can't use the blit to modify the buffer in the middle of batch. */
-	 if (drm_intel_bo_references(intel->batch->buf, intel_obj->buffer)) {
-	    intel_batchbuffer_flush(intel->batch);
+	 if (drm_intel_bo_references(intel->batch.bo, intel_obj->buffer)) {
+	    intel_batchbuffer_flush(intel);
 	 }
 	 drm_intel_bo_subdata(intel_obj->buffer, offset, size, data);
       }
@@ -309,7 +309,7 @@ intel_bufferobj_map(struct gl_context * ctx,
    }
 
    /* Flush any existing batchbuffer that might reference this data. */
-   if (drm_intel_bo_references(intel->batch->buf, intel_obj->buffer))
+   if (drm_intel_bo_references(intel->batch.bo, intel_obj->buffer))
       intel_flush(ctx);
 
    if (intel_obj->region)
@@ -386,7 +386,7 @@ intel_bufferobj_map_range(struct gl_context * ctx,
     * syncing.
     */
    if (!(access & GL_MAP_UNSYNCHRONIZED_BIT) &&
-       drm_intel_bo_references(intel->batch->buf, intel_obj->buffer))
+       drm_intel_bo_references(intel->batch.bo, intel_obj->buffer))
       intel_flush(ctx);
 
    if (intel_obj->buffer == NULL) {
@@ -499,7 +499,7 @@ intel_bufferobj_unmap(struct gl_context * ctx,
        * flush.  Once again, we wish for a domain tracker in libdrm to cover
        * usage inside of a batchbuffer.
        */
-      intel_batchbuffer_emit_mi_flush(intel->batch);
+      intel_batchbuffer_emit_mi_flush(intel);
       free(intel_obj->range_map_buffer);
       intel_obj->range_map_buffer = NULL;
    } else if (intel_obj->range_map_bo != NULL) {
@@ -519,7 +519,7 @@ intel_bufferobj_unmap(struct gl_context * ctx,
        * flush.  Once again, we wish for a domain tracker in libdrm to cover
        * usage inside of a batchbuffer.
        */
-      intel_batchbuffer_emit_mi_flush(intel->batch);
+      intel_batchbuffer_emit_mi_flush(intel);
 
       drm_intel_bo_unreference(intel_obj->range_map_bo);
       intel_obj->range_map_bo = NULL;
@@ -766,7 +766,7 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
     * flush.  Once again, we wish for a domain tracker in libdrm to cover
     * usage inside of a batchbuffer.
     */
-   intel_batchbuffer_emit_mi_flush(intel->batch);
+   intel_batchbuffer_emit_mi_flush(intel);
 }
 
 #if FEATURE_APPLE_object_purgeable

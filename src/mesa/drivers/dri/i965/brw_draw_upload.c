@@ -25,6 +25,7 @@
  * 
  **************************************************************************/
 
+#undef NDEBUG
 
 #include "main/glheader.h"
 #include "main/bufferobj.h"
@@ -298,6 +299,9 @@ static void brw_prepare_vertices(struct brw_context *brw)
       brw->vb.enabled[brw->vb.nr_enabled++] = input;
    }
 
+   if (brw->vb.nr_enabled == 0)
+      return;
+
    /* XXX: In the rare cases where this happens we fallback all
     * the way to software rasterization, although a tnl fallback
     * would be sufficient.  I don't know of *any* real world
@@ -480,6 +484,7 @@ static void brw_emit_vertices(struct brw_context *brw)
       OUT_BATCH(0); /* Instance data step rate */
    }
    ADVANCE_BATCH();
+
 
    BEGIN_BATCH(1 + brw->vb.nr_enabled * 2);
    OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | ((1 + brw->vb.nr_enabled * 2) - 2));

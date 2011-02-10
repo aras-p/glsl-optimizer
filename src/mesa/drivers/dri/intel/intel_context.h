@@ -169,7 +169,27 @@ struct intel_context
 
    int urb_size;
 
-   struct intel_batchbuffer *batch;
+   struct intel_batchbuffer {
+      drm_intel_bo *bo;
+
+      uint16_t used;
+      uint16_t reserved_space;
+      uint32_t map[8192];
+#define BATCH_SZ (8192*sizeof(uint32_t))
+
+      uint32_t state_batch_offset;
+
+#ifdef DEBUG
+      /** Tracking of BEGIN_BATCH()/OUT_BATCH()/ADVANCE_BATCH() debugging */
+      struct {
+	 uint16_t total;
+	 uint16_t start_ptr;
+      } emit;
+#endif
+
+      bool is_blit;
+   } batch;
+
    drm_intel_bo *first_post_swapbuffers_batch;
    GLboolean need_throttle;
    GLboolean no_batch_wrap;
@@ -177,9 +197,9 @@ struct intel_context
    struct
    {
       GLuint id;
+      uint32_t start_ptr; /**< for i8xx */
       uint32_t primitive;	/**< Current hardware primitive type */
       void (*flush) (struct intel_context *);
-      GLubyte *start_ptr; /**< for i8xx */
       drm_intel_bo *vb_bo;
       uint8_t *vb;
       unsigned int start_offset; /**< Byte offset of primitive sequence */

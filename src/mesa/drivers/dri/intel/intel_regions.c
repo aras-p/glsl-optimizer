@@ -491,7 +491,7 @@ intel_region_cow(struct intel_context *intel, struct intel_region *region)
 
    assert(region->cpp * region->pitch * region->height == pbo->Base.Size);
 
-   _DBG("%s %p (%d bytes)\n", __FUNCTION__, region, pbo->Base.Size);
+   _DBG("%s %p (%d bytes)\n", __FUNCTION__, region, (int)pbo->Base.Size);
 
    /* Now blit from the texture buffer to the new buffer: 
     */

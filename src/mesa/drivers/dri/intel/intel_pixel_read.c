@@ -78,7 +78,6 @@ do_blit_readpixels(struct gl_context * ctx,
    GLuint dst_offset;
    GLuint rowLength;
    drm_intel_bo *dst_buffer;
-   GLuint offset;
    GLboolean all;
    GLint dst_x, dst_y;
 
@@ -148,7 +147,7 @@ do_blit_readpixels(struct gl_context * ctx,
    if (!intelEmitCopyBlit(intel,
 			  src->cpp,
 			  src->pitch, src->buffer, 0, src->tiling,
-			  rowLength, dst_buffer, dst_offset + offset, GL_FALSE,
+			  rowLength, dst_buffer, dst_offset, GL_FALSE,
 			  x, y,
 			  dst_x, dst_y,
 			  width, height,

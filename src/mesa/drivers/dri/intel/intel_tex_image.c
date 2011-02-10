@@ -231,7 +231,7 @@ try_pbo_upload(struct intel_context *intel,
 
    dst_stride = intelImage->mt->region->pitch;
 
-   if (drm_intel_bo_references(intel->batch->buf, dst_buffer))
+   if (drm_intel_bo_references(intel->batch.bo, dst_buffer))
       intel_flush(&intel->ctx);
 
    {
@@ -431,7 +431,7 @@ intelTexImage(struct gl_context * ctx,
    if (intelImage->mt) {
       if (pixels != NULL) {
 	 /* Flush any queued rendering with the texture before mapping. */
-	 if (drm_intel_bo_references(intel->batch->buf,
+	 if (drm_intel_bo_references(intel->batch.bo,
 				     intelImage->mt->region->buffer)) {
 	    intel_flush(ctx);
 	 }

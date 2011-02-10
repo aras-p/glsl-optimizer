@@ -62,22 +62,22 @@ static void intelRasterPrimitive(struct gl_context * ctx, GLenum rprim,
 static void
 intel_flush_inline_primitive(struct intel_context *intel)
 {
-   GLuint used = intel->batch->ptr - intel->prim.start_ptr;
+   GLuint used = intel->batch.used - intel->prim.start_ptr;
 
    assert(intel->prim.primitive != ~0);
 
 /*    printf("/\n"); */
 
-   if (used < 8)
+   if (used < 2)
       goto do_discard;
 
-   *(int *) intel->prim.start_ptr = (_3DPRIMITIVE |
-                                     intel->prim.primitive | (used / 4 - 2));
+   intel->batch.map[intel->prim.start_ptr] =
+      _3DPRIMITIVE | intel->prim.primitive | (used - 2);
 
    goto finished;
 
  do_discard:
-   intel->batch->ptr -= used;
+   intel->batch.used = intel->prim.start_ptr;
 
  finished:
    intel->prim.primitive = ~0;
@@ -100,9 +100,7 @@ static void intel_start_inline(struct intel_context *intel, uint32_t prim)
     */
    BEGIN_BATCH(1);
 
-   assert((intel->batch->dirty_state & (1<<1)) == 0);
-
-   intel->prim.start_ptr = intel->batch->ptr;
+   intel->prim.start_ptr = intel->batch.used;
    intel->prim.primitive = prim;
    intel->prim.flush = intel_flush_inline_primitive;
 
@@ -118,26 +116,25 @@ static void intel_wrap_inline(struct intel_context *intel)
    GLuint prim = intel->prim.primitive;
 
    intel_flush_inline_primitive(intel);
-   intel_batchbuffer_flush(intel->batch);
+   intel_batchbuffer_flush(intel);
    intel_start_inline(intel, prim);  /* ??? */
 }
 
 static GLuint *intel_extend_inline(struct intel_context *intel, GLuint dwords)
 {
-   GLuint sz = dwords * sizeof(GLuint);
    GLuint *ptr;
 
    assert(intel->prim.flush == intel_flush_inline_primitive);
 
-   if (intel_batchbuffer_space(intel->batch) < sz)
+   if (intel_batchbuffer_space(intel) < dwords * sizeof(GLuint))
       intel_wrap_inline(intel);
 
 /*    printf("."); */
 
    intel->vtbl.assert_not_dirty(intel);
 
-   ptr = (GLuint *) intel->batch->ptr;
-   intel->batch->ptr += sz;
+   ptr = intel->batch.map + intel->batch.used;
+   intel->batch.used += dwords;
 
    return ptr;
 }
@@ -223,10 +220,10 @@ void intel_flush_prim(struct intel_context *intel)
 
    intel->vtbl.emit_state(intel);
 
-   aper_array[0] = intel->batch->buf;
+   aper_array[0] = intel->batch.bo;
    aper_array[1] = vb_bo;
    if (dri_bufmgr_check_aperture_space(aper_array, 2)) {
-      intel_batchbuffer_flush(intel->batch);
+      intel_batchbuffer_flush(intel);
       intel->vtbl.emit_state(intel);
    }
 
@@ -235,11 +232,6 @@ void intel_flush_prim(struct intel_context *intel)
     * have the space for this.
     */
    intel->no_batch_wrap = GL_TRUE;
-
-   /* Check that we actually emitted the state into this batch, using the
-    * UPLOAD_CTX bit as the signal.
-    */
-   assert((intel->batch->dirty_state & (1<<1)) == 0);
 
 #if 0
    printf("emitting %d..%d=%d vertices size %d\n", offset,

@@ -224,7 +224,7 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    }
 
    /* Emit relocation to surface contents */
-   drm_intel_bo_emit_reloc(brw->intel.batch->buf,
+   drm_intel_bo_emit_reloc(brw->intel.batch.bo,
 			   brw->wm.surf_offset[surf_index] +
 			   offsetof(struct brw_surface_state, ss1),
 			   intelObj->mt->region->buffer, 0,
@@ -268,7 +268,7 @@ brw_create_constant_surface(struct brw_context *brw,
     * bspec ("Data Cache") says that the data cache does not exist as
     * a separate cache and is just the sampler cache.
     */
-   drm_intel_bo_emit_reloc(brw->intel.batch->buf,
+   drm_intel_bo_emit_reloc(brw->intel.batch.bo,
 			   (*out_offset +
 			    offsetof(struct brw_surface_state, ss1)),
 			   bo, 0,
@@ -491,7 +491,7 @@ brw_update_renderbuffer_surface(struct brw_context *brw,
 	 surf->ss0.writedisable_alpha = !ctx->Color.ColorMask[unit][3];
    }
 
-   drm_intel_bo_emit_reloc(brw->intel.batch->buf,
+   drm_intel_bo_emit_reloc(brw->intel.batch.bo,
 			   brw->wm.surf_offset[unit] +
 			   offsetof(struct brw_surface_state, ss1),
 			   region->buffer,

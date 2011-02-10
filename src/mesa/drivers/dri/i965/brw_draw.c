@@ -155,14 +155,14 @@ static void brw_emit_prim(struct brw_context *brw,
     * the besides the draw code.
     */
    if (intel->always_flush_cache) {
-      intel_batchbuffer_emit_mi_flush(intel->batch);
+      intel_batchbuffer_emit_mi_flush(intel);
    }
    if (prim_packet.verts_per_instance) {
-      intel_batchbuffer_data( brw->intel.batch, &prim_packet,
+      intel_batchbuffer_data(&brw->intel, &prim_packet,
 			      sizeof(prim_packet), false);
    }
    if (intel->always_flush_cache) {
-      intel_batchbuffer_emit_mi_flush(intel->batch);
+      intel_batchbuffer_emit_mi_flush(intel);
    }
 }
 
@@ -303,7 +303,6 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
    struct brw_context *brw = brw_context(ctx);
    GLboolean retval = GL_FALSE;
    GLboolean warn = GL_FALSE;
-   GLboolean first_time = GL_TRUE;
    GLuint i;
 
    if (ctx->NewState)
@@ -351,14 +350,10 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
        * an upper bound of how much we might emit in a single
        * brw_try_draw_prims().
        */
-      intel_batchbuffer_require_space(intel->batch, intel->batch->size / 4,
-				      false);
+      intel_batchbuffer_require_space(intel, 1024, false);
 
       hw_prim = brw_set_prim(brw, &prim[i]);
-
-      if (first_time || (brw->state.dirty.brw & BRW_NEW_PRIMITIVE)) {
-	 first_time = GL_FALSE;
-
+      if (brw->state.dirty.brw) {
 	 brw_validate_state(brw);
 
 	 /* Various fallback checks:  */
@@ -371,7 +366,7 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
 	 if (dri_bufmgr_check_aperture_space(brw->state.validated_bos,
 					     brw->state.validated_bo_count)) {
 	    static GLboolean warned;
-	    intel_batchbuffer_flush(intel->batch);
+	    intel_batchbuffer_flush(intel);
 
 	    /* Validate the state after we flushed the batch (which would have
 	     * changed the set of dirty state).  If we still fail to
@@ -400,7 +395,7 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
    }
 
    if (intel->always_flush_batch)
-      intel_batchbuffer_flush(intel->batch);
+      intel_batchbuffer_flush(intel);
  out:
 
    brw_state_cache_check_size(brw);
