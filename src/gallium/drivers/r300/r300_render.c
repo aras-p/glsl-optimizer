@@ -250,7 +250,7 @@ static boolean r300_emit_states(struct r300_context *r300,
                 if (user_buffers)
                     r300->upload_vb_validated = TRUE;
                 if (r300->index_buffer.buffer &&
-                    r300_buffer(r300->index_buffer.buffer)->b.user_ptr) {
+                    r300_resource(r300->index_buffer.buffer)->b.user_ptr) {
                     r300->upload_ib_validated = TRUE;
                 }
             }
@@ -330,7 +330,7 @@ static boolean immd_is_good_idea(struct r300_context *r300,
         if (!checked[vbi]) {
             buf = r300->vbuf_mgr->real_vertex_buffer[vbi];
 
-            if (!(r300_buffer(buf)->domain & R300_DOMAIN_GTT)) {
+            if (!(r300_resource(buf)->domain & R300_DOMAIN_GTT)) {
                 return FALSE;
             }
 
@@ -536,7 +536,7 @@ static void r300_emit_draw_elements(struct r300_context *r300,
            (0 << R300_INDX_BUFFER_SKIP_SHIFT));
     OUT_CS(offset_dwords << 2);
     OUT_CS(count_dwords);
-    OUT_CS_RELOC(r300_buffer(indexBuffer));
+    OUT_CS_RELOC(r300_resource(indexBuffer));
     END_CS;
 }
 
@@ -570,7 +570,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
 
     /* Fallback for misaligned ushort indices. */
     if (indexSize == 2 && (start & 1) &&
-        !r300_buffer(indexBuffer)->b.user_ptr) {
+        !r300_resource(indexBuffer)->b.user_ptr) {
         struct pipe_transfer *transfer;
         struct pipe_resource *userbuf;
 
@@ -592,7 +592,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
         }
         pipe_buffer_unmap(pipe, transfer);
     } else {
-        if (r300_buffer(indexBuffer)->b.user_ptr)
+        if (r300_resource(indexBuffer)->b.user_ptr)
             r300_upload_index_buffer(r300, &indexBuffer, indexSize, &start, count);
     }
 

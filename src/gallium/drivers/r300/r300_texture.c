@@ -609,11 +609,12 @@ boolean r300_is_sampler_format_supported(enum pipe_format format)
 }
 
 void r300_texture_setup_format_state(struct r300_screen *screen,
-                                     struct r300_texture_desc *desc,
+                                     struct r300_resource *tex,
                                      unsigned level,
                                      struct r300_texture_format_state *out)
 {
-    struct pipe_resource *pt = &desc->b.b;
+    struct pipe_resource *pt = &tex->b.b.b;
+    struct r300_texture_desc *desc = &tex->tex;
     boolean is_r500 = screen->caps.is_r500;
 
     /* Mask out all the fields we change. */
@@ -658,22 +659,22 @@ void r300_texture_setup_format_state(struct r300_screen *screen,
 
 static void r300_texture_setup_fb_state(struct r300_surface *surf)
 {
-    struct r300_texture *tex = r300_texture(surf->base.texture);
+    struct r300_resource *tex = r300_resource(surf->base.texture);
     unsigned level = surf->base.u.tex.level;
 
     /* Set framebuffer state. */
     if (util_format_is_depth_or_stencil(surf->base.format)) {
         surf->pitch =
-                tex->desc.stride_in_pixels[level] |
-                R300_DEPTHMACROTILE(tex->desc.macrotile[level]) |
-                R300_DEPTHMICROTILE(tex->desc.microtile);
+                tex->tex.stride_in_pixels[level] |
+                R300_DEPTHMACROTILE(tex->tex.macrotile[level]) |
+                R300_DEPTHMICROTILE(tex->tex.microtile);
         surf->format = r300_translate_zsformat(surf->base.format);
     } else {
         surf->pitch =
-                tex->desc.stride_in_pixels[level] |
+                tex->tex.stride_in_pixels[level] |
                 r300_translate_colorformat(surf->base.format) |
-                R300_COLOR_TILE(tex->desc.macrotile[level]) |
-                R300_COLOR_MICROTILE(tex->desc.microtile);
+                R300_COLOR_TILE(tex->tex.macrotile[level]) |
+                R300_COLOR_MICROTILE(tex->tex.microtile);
         surf->format = r300_translate_out_fmt(surf->base.format);
     }
 }
@@ -692,24 +693,10 @@ void r300_texture_reinterpret_format(struct pipe_screen *screen,
     tex->format = new_format;
 }
 
-static unsigned r300_texture_is_referenced(struct pipe_context *context,
-                                           struct pipe_resource *texture,
-                                           unsigned level, int layer)
-{
-    struct r300_context *r300 = r300_context(context);
-    struct r300_texture *rtex = (struct r300_texture *)texture;
-
-    if (r300->rws->cs_is_buffer_referenced(r300->cs,
-                                           rtex->cs_buf, R300_REF_CS))
-        return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-
-    return PIPE_UNREFERENCED;
-}
-
 static void r300_texture_destroy(struct pipe_screen *screen,
                                  struct pipe_resource* texture)
 {
-    struct r300_texture* tex = (struct r300_texture*)texture;
+    struct r300_resource* tex = (struct r300_resource*)texture;
     struct r300_winsys_screen *rws = (struct r300_winsys_screen *)texture->screen->winsys;
     int i;
 
@@ -722,36 +709,36 @@ static void r300_texture_destroy(struct pipe_screen *screen,
     FREE(tex);
 }
 
-static boolean r300_texture_get_handle(struct pipe_screen* screen,
-                                       struct pipe_resource *texture,
-                                       struct winsys_handle *whandle)
+boolean r300_resource_get_handle(struct pipe_screen* screen,
+                                 struct pipe_resource *texture,
+                                 struct winsys_handle *whandle)
 {
     struct r300_winsys_screen *rws = (struct r300_winsys_screen *)screen->winsys;
-    struct r300_texture* tex = (struct r300_texture*)texture;
+    struct r300_resource* tex = (struct r300_resource*)texture;
 
     if (!tex) {
         return FALSE;
     }
 
     return rws->buffer_get_handle(rws, tex->buf,
-                                  tex->desc.stride_in_bytes[0], whandle);
+                                  tex->tex.stride_in_bytes[0], whandle);
 }
 
 static const struct u_resource_vtbl r300_texture_vtbl =
 {
-   r300_texture_get_handle,	      /* get_handle */
-   r300_texture_destroy,	      /* resource_destroy */
-   r300_texture_is_referenced,	      /* is_resource_referenced */
-   r300_texture_get_transfer,	      /* get_transfer */
-   r300_texture_transfer_destroy,     /* transfer_destroy */
-   r300_texture_transfer_map,	      /* transfer_map */
-   u_default_transfer_flush_region,   /* transfer_flush_region */
-   r300_texture_transfer_unmap,	      /* transfer_unmap */
-   u_default_transfer_inline_write    /* transfer_inline_write */
+    NULL,                           /* get_handle */
+    r300_texture_destroy,           /* resource_destroy */
+    NULL,                           /* is_resource_referenced */
+    r300_texture_get_transfer,      /* get_transfer */
+    r300_texture_transfer_destroy,  /* transfer_destroy */
+    r300_texture_transfer_map,      /* transfer_map */
+    NULL,                           /* transfer_flush_region */
+    r300_texture_transfer_unmap,    /* transfer_unmap */
+    u_default_transfer_inline_write /* transfer_inline_write */
 };
 
 /* The common texture constructor. */
-static struct r300_texture*
+static struct r300_resource*
 r300_texture_create_object(struct r300_screen *rscreen,
                            const struct pipe_resource *base,
                            enum r300_buffer_tiling microtile,
@@ -761,7 +748,7 @@ r300_texture_create_object(struct r300_screen *rscreen,
                            struct r300_winsys_buffer *buffer)
 {
     struct r300_winsys_screen *rws = rscreen->rws;
-    struct r300_texture *tex = CALLOC_STRUCT(r300_texture);
+    struct r300_resource *tex = CALLOC_STRUCT(r300_resource);
     if (!tex) {
         if (buffer)
             rws->buffer_reference(rws, &buffer, NULL);
@@ -769,7 +756,7 @@ r300_texture_create_object(struct r300_screen *rscreen,
     }
 
     /* Initialize the descriptor. */
-    if (!r300_texture_desc_init(rscreen, &tex->desc, base,
+    if (!r300_texture_desc_init(rscreen, tex, base,
                                 microtile, macrotile,
                                 stride_in_bytes_override,
                                 max_buffer_size)) {
@@ -779,10 +766,10 @@ r300_texture_create_object(struct r300_screen *rscreen,
         return NULL;
     }
     /* Initialize the hardware state. */
-    r300_texture_setup_format_state(rscreen, &tex->desc, 0, &tex->tx_format);
+    r300_texture_setup_format_state(rscreen, tex, 0, &tex->tx_format);
 
-    tex->desc.b.vtbl = &r300_texture_vtbl;
-    pipe_reference_init(&tex->desc.b.b.reference, 1);
+    tex->b.b.vtbl = &r300_texture_vtbl;
+    pipe_reference_init(&tex->b.b.b.reference, 1);
     tex->domain = base->flags & R300_RESOURCE_FLAG_TRANSFER ?
                   R300_DOMAIN_GTT :
                   R300_DOMAIN_VRAM | R300_DOMAIN_GTT;
@@ -790,7 +777,7 @@ r300_texture_create_object(struct r300_screen *rscreen,
 
     /* Create the backing buffer if needed. */
     if (!tex->buf) {
-        tex->buf = rws->buffer_create(rws, tex->desc.size_in_bytes, 2048,
+        tex->buf = rws->buffer_create(rws, tex->tex.size_in_bytes, 2048,
                                          base->bind, base->usage, tex->domain);
 
         if (!tex->buf) {
@@ -802,8 +789,8 @@ r300_texture_create_object(struct r300_screen *rscreen,
     tex->cs_buf = rws->buffer_get_cs_handle(rws, tex->buf);
 
     rws->buffer_set_tiling(rws, tex->buf,
-            tex->desc.microtile, tex->desc.macrotile[0],
-            tex->desc.stride_in_bytes[0]);
+            tex->tex.microtile, tex->tex.macrotile[0],
+            tex->tex.stride_in_bytes[0]);
 
     return tex;
 }
@@ -879,7 +866,7 @@ struct pipe_surface* r300_create_surface(struct pipe_context * ctx,
                                          struct pipe_resource* texture,
                                          const struct pipe_surface *surf_tmpl)
 {
-    struct r300_texture* tex = r300_texture(texture);
+    struct r300_resource* tex = r300_resource(texture);
     struct r300_surface* surface = CALLOC_STRUCT(r300_surface);
     unsigned level = surf_tmpl->u.tex.level;
 
@@ -907,19 +894,19 @@ struct pipe_surface* r300_create_surface(struct pipe_context * ctx,
         if (surface->domain & R300_DOMAIN_VRAM)
             surface->domain &= ~R300_DOMAIN_GTT;
 
-        surface->offset = r300_texture_get_offset(&tex->desc, level,
+        surface->offset = r300_texture_get_offset(tex, level,
                                                   surf_tmpl->u.tex.first_layer);
         r300_texture_setup_fb_state(surface);
 
         /* Parameters for the CBZB clear. */
-        surface->cbzb_allowed = tex->desc.cbzb_allowed[level];
+        surface->cbzb_allowed = tex->tex.cbzb_allowed[level];
         surface->cbzb_width = align(surface->base.width, 64);
 
         /* Height must be aligned to the size of a tile. */
-        tile_height = r300_get_pixel_alignment(tex->desc.b.b.format,
-                                               tex->desc.b.b.nr_samples,
-                                               tex->desc.microtile,
-                                               tex->desc.macrotile[level],
+        tile_height = r300_get_pixel_alignment(tex->b.b.b.format,
+                                               tex->b.b.b.nr_samples,
+                                               tex->tex.microtile,
+                                               tex->tex.macrotile[level],
                                                DIM_HEIGHT, 0);
 
         surface->cbzb_height = align((surface->base.height + 1) / 2,
@@ -928,7 +915,7 @@ struct pipe_surface* r300_create_surface(struct pipe_context * ctx,
         /* Offset must be aligned to 2K and must point at the beginning
          * of a scanline. */
         offset = surface->offset +
-                 tex->desc.stride_in_bytes[level] * surface->cbzb_height;
+                 tex->tex.stride_in_bytes[level] * surface->cbzb_height;
         surface->cbzb_midpoint_offset = offset & ~2047;
 
         surface->cbzb_pitch = surface->pitch & 0x1ffffc;
@@ -943,8 +930,8 @@ struct pipe_surface* r300_create_surface(struct pipe_context * ctx,
             surface->cbzb_allowed ? "YES" : " NO",
             surface->cbzb_width, surface->cbzb_height,
             offset & 2047,
-            tex->desc.microtile ? "YES" : " NO",
-            tex->desc.macrotile[level] ? "YES" : " NO");
+            tex->tex.microtile ? "YES" : " NO",
+            tex->tex.macrotile[level] ? "YES" : " NO");
     }
 
     return &surface->base;

@@ -35,29 +35,6 @@
 #include "r300_winsys.h"
 #include "r300_context.h"
 
-#define R300_BUFFER_MAGIC 0xabcd1234
-#define R300_BUFFER_MAX_RANGES 32
-
-struct r300_buffer_range {
-    uint32_t start;
-    uint32_t end;
-};
-
-/* Vertex buffer. */
-struct r300_buffer
-{
-    struct u_vbuf_resource b;
-
-    uint32_t magic;
-
-    struct r300_winsys_buffer *buf;
-    struct r300_winsys_cs_buffer *cs_buf;
-
-    enum r300_buffer_domain domain;
-
-    uint8_t *constant_buffer;
-};
-
 /* Functions. */
 
 void r300_upload_index_buffer(struct r300_context *r300,

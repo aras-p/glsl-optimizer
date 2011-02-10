@@ -691,7 +691,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
     struct r300_texture_sampler_state *texstate;
     struct r300_sampler_state *sampler;
     struct r300_sampler_view *view;
-    struct r300_texture *tex;
+    struct r300_resource *tex;
     unsigned min_level, max_level, i, j, size;
     unsigned count = MIN2(state->sampler_view_count,
                           state->sampler_state_count);
@@ -709,7 +709,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             state->tx_enable |= 1 << i;
 
             view = state->sampler_views[i];
-            tex = r300_texture(view->base.texture);
+            tex = r300_resource(view->base.texture);
             sampler = state->sampler_states[i];
 
             texstate = &state->regs[i];
@@ -725,32 +725,32 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
 
             /* determine min/max levels */
             max_level = MIN3(sampler->max_lod + view->base.u.tex.first_level,
-                             tex->desc.b.b.last_level, view->base.u.tex.last_level);
+                             tex->b.b.b.last_level, view->base.u.tex.last_level);
             min_level = MIN2(sampler->min_lod + view->base.u.tex.first_level,
                              max_level);
 
-            if (tex->desc.is_npot && min_level > 0) {
+            if (tex->tex.is_npot && min_level > 0) {
                 /* Even though we do not implement mipmapping for NPOT
                  * textures, we should at least honor the minimum level
                  * which is allowed to be displayed. We do this by setting up
                  * an i-th mipmap level as the zero level. */
-                r300_texture_setup_format_state(r300->screen, &tex->desc,
+                r300_texture_setup_format_state(r300->screen, tex,
                                                 min_level,
                                                 &texstate->format);
                 texstate->format.tile_config |=
-                        tex->desc.offset_in_bytes[min_level] & 0xffffffe0;
-                assert((tex->desc.offset_in_bytes[min_level] & 0x1f) == 0);
+                        tex->tex.offset_in_bytes[min_level] & 0xffffffe0;
+                assert((tex->tex.offset_in_bytes[min_level] & 0x1f) == 0);
             }
 
             /* Assign a texture cache region. */
             texstate->format.format1 |= view->texcache_region;
 
             /* Depth textures are kinda special. */
-            if (util_format_is_depth_or_stencil(tex->desc.b.b.format)) {
+            if (util_format_is_depth_or_stencil(tex->b.b.b.format)) {
                 unsigned char depth_swizzle[4];
 
                 if (!r300->screen->caps.is_r500 &&
-                    util_format_get_blocksizebits(tex->desc.b.b.format) == 32) {
+                    util_format_get_blocksizebits(tex->b.b.b.format) == 32) {
                     /* X24x8 is sampled as Y16X16 on r3xx-r4xx.
                      * The depth here is at the Y component. */
                     for (j = 0; j < 4; j++)
@@ -775,17 +775,17 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             }
 
             if (r300->screen->caps.dxtc_swizzle &&
-                util_format_is_compressed(tex->desc.b.b.format)) {
+                util_format_is_compressed(tex->b.b.b.format)) {
                 texstate->filter1 |= R400_DXTC_SWIZZLE_ENABLE;
             }
 
             /* to emulate 1D textures through 2D ones correctly */
-            if (tex->desc.b.b.target == PIPE_TEXTURE_1D) {
+            if (tex->b.b.b.target == PIPE_TEXTURE_1D) {
                 texstate->filter0 &= ~R300_TX_WRAP_T_MASK;
                 texstate->filter0 |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
             }
 
-            if (tex->desc.is_npot) {
+            if (tex->tex.is_npot) {
                 /* NPOT textures don't support mip filter, unfortunately.
                  * This prevents incorrect rendering. */
                 texstate->filter0 &= ~R300_TX_MIN_FILTER_MIP_MASK;

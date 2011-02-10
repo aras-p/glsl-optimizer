@@ -114,7 +114,7 @@ static boolean r300_fast_zclear_allowed(struct r300_context *r300)
     struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
 
-    return r300_texture(fb->zsbuf->texture)->desc.zmask_dwords[fb->zsbuf->u.tex.level];
+    return r300_resource(fb->zsbuf->texture)->tex.zmask_dwords[fb->zsbuf->u.tex.level];
 }
 
 static uint32_t r300_depth_clear_value(enum pipe_format format,
@@ -190,8 +190,8 @@ static void r300_clear(struct pipe_context* pipe,
         (struct pipe_framebuffer_state*)r300->fb_state.state;
     struct r300_hyperz_state *hyperz =
         (struct r300_hyperz_state*)r300->hyperz_state.state;
-    struct r300_texture *zstex =
-            fb->zsbuf ? r300_texture(fb->zsbuf->texture) : NULL;
+    struct r300_resource *zstex =
+            fb->zsbuf ? r300_resource(fb->zsbuf->texture) : NULL;
     uint32_t width = fb->width;
     uint32_t height = fb->height;
     boolean can_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);

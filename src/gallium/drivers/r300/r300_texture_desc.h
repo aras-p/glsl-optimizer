@@ -30,7 +30,7 @@
 struct pipe_resource;
 struct r300_screen;
 struct r300_texture_desc;
-struct r300_texture;
+struct r300_resource;
 
 enum r300_dim {
     DIM_WIDTH  = 0,
@@ -44,14 +44,14 @@ unsigned r300_get_pixel_alignment(enum pipe_format format,
                                   enum r300_dim dim, boolean is_rs690);
 
 boolean r300_texture_desc_init(struct r300_screen *rscreen,
-                               struct r300_texture_desc *desc,
+                               struct r300_resource *tex,
                                const struct pipe_resource *base,
                                enum r300_buffer_tiling microtile,
                                enum r300_buffer_tiling macrotile,
                                unsigned stride_in_bytes_override,
                                unsigned max_buffer_size);
 
-unsigned r300_texture_get_offset(struct r300_texture_desc *desc,
+unsigned r300_texture_get_offset(struct r300_resource *tex,
                                  unsigned level, unsigned layer);
 
 #endif

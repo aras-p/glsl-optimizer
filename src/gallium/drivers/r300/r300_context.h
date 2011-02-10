@@ -323,13 +323,9 @@ struct r300_surface {
 
     /* Whether the CBZB clear is allowed on the surface. */
     boolean cbzb_allowed;
-
 };
 
 struct r300_texture_desc {
-    /* Parent class. */
-    struct u_resource b;
-
     /* Width, height, and depth.
      * Most of the time, these are equal to pipe_texture::width0, height0,
      * and depth0. However, NPOT 3D textures must have dimensions aligned
@@ -388,20 +384,26 @@ struct r300_texture_desc {
     unsigned zmask_dwords[R300_MAX_TEXTURE_LEVELS];
 };
 
-struct r300_texture {
-    struct r300_texture_desc desc;
+struct r300_resource
+{
+    struct u_vbuf_resource b;
 
-    enum r300_buffer_domain domain;
-
-    /* Pipe buffer backing this texture. */
+    /* Winsys buffer backing this resource. */
     struct r300_winsys_buffer *buf;
     struct r300_winsys_cs_buffer *cs_buf;
+    enum r300_buffer_domain domain;
+
+    /* Constant buffers are in user memory. */
+    uint8_t *constant_buffer;
+
+    /* Texture description (addressing, layout, special features). */
+    struct r300_texture_desc tex;
 
     /* Registers carrying texture format data. */
     /* Only format-independent bits should be filled in. */
     struct r300_texture_format_state tx_format;
 
-    /* hyper-z memory allocs */
+    /* HiZ memory allocations. */
     struct mem_block *hiz_mem[R300_MAX_TEXTURE_LEVELS];
     boolean hiz_in_use[R300_MAX_TEXTURE_LEVELS];
 
@@ -611,9 +613,9 @@ static INLINE struct r300_surface* r300_surface(struct pipe_surface* surf)
     return (struct r300_surface*)surf;
 }
 
-static INLINE struct r300_texture* r300_texture(struct pipe_resource* tex)
+static INLINE struct r300_resource* r300_resource(struct pipe_resource* tex)
 {
-    return (struct r300_texture*)tex;
+    return (struct r300_resource*)tex;
 }
 
 static INLINE struct r300_context* r300_context(struct pipe_context* context)

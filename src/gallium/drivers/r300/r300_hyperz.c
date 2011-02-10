@@ -137,8 +137,8 @@ static void r300_update_hyperz(struct r300_context* r300)
         (struct r300_hyperz_state*)r300->hyperz_state.state;
     struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
-    struct r300_texture *zstex =
-            fb->zsbuf ? r300_texture(fb->zsbuf->texture) : NULL;
+    struct r300_resource *zstex =
+            fb->zsbuf ? r300_resource(fb->zsbuf->texture) : NULL;
     boolean hiz_in_use = FALSE;
 
     z->gb_z_peq_config = 0;
@@ -170,7 +170,7 @@ static void r300_update_hyperz(struct r300_context* r300)
         }
     }
 
-    if (zstex->desc.zcomp8x8[fb->zsbuf->u.tex.level]) {
+    if (zstex->tex.zcomp8x8[fb->zsbuf->u.tex.level]) {
         z->gb_z_peq_config |= R300_GB_Z_PEQ_CONFIG_Z_PEQ_SIZE_8_8;
     }
 
@@ -309,17 +309,17 @@ void r300_update_hyperz_state(struct r300_context* r300)
 
 void r300_hiz_alloc_block(struct r300_context *r300, struct r300_surface *surf)
 {
-    struct r300_texture *tex;
+    struct r300_resource *tex;
     uint32_t zsize, ndw;
     int level = surf->base.u.tex.level;
 
-    tex = r300_texture(surf->base.texture);
+    tex = r300_resource(surf->base.texture);
 
     if (tex->hiz_mem[level])
         return;
 
-    zsize = tex->desc.layer_size_in_bytes[level];
-    zsize /= util_format_get_blocksize(tex->desc.b.b.format);
+    zsize = tex->tex.layer_size_in_bytes[level];
+    zsize /= util_format_get_blocksize(tex->b.b.b.format);
     ndw = ALIGN_DIVUP(zsize, 64);
 
     tex->hiz_mem[level] = u_mmAllocMem(r300->hiz_mm, ndw, 0, 0);

@@ -152,13 +152,13 @@ static void get_external_state(
     for (i = 0; i < texstate->sampler_state_count; i++) {
         struct r300_sampler_state *s = texstate->sampler_states[i];
         struct r300_sampler_view *v = texstate->sampler_views[i];
-        struct r300_texture *t;
+        struct r300_resource *t;
 
         if (!s || !v) {
             continue;
         }
 
-        t = r300_texture(texstate->sampler_views[i]->base.texture);
+        t = r300_resource(texstate->sampler_views[i]->base.texture);
 
         if (s->state.compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
             state->unit[i].compare_mode_enabled = 1;
@@ -181,7 +181,7 @@ static void get_external_state(
         state->unit[i].non_normalized_coords = !s->state.normalized_coords;
 
         /* XXX this should probably take into account STR, not just S. */
-        if (t->desc.is_npot) {
+        if (t->tex.is_npot) {
             switch (s->state.wrap_s) {
             case PIPE_TEX_WRAP_REPEAT:
                 state->unit[i].wrap_mode = RC_WRAP_REPEAT;
@@ -201,7 +201,7 @@ static void get_external_state(
                 state->unit[i].wrap_mode = RC_WRAP_NONE;
             }
 
-            if (t->desc.b.b.target == PIPE_TEXTURE_3D)
+            if (t->b.b.b.target == PIPE_TEXTURE_3D)
                 state->unit[i].clamp_and_scale_before_fetch = TRUE;
         }
     }

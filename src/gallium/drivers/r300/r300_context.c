@@ -549,13 +549,13 @@ void r300_finish(struct r300_context *r300)
         for (i = 0; i < fb->nr_cbufs; i++) {
             if (fb->cbufs[i]->texture) {
                 r300->rws->buffer_wait(r300->rws,
-                    r300_texture(fb->cbufs[i]->texture)->buf);
+                    r300_resource(fb->cbufs[i]->texture)->buf);
                 return;
             }
         }
         if (fb->zsbuf && fb->zsbuf->texture) {
             r300->rws->buffer_wait(r300->rws,
-                r300_texture(fb->zsbuf->texture)->buf);
+                r300_resource(fb->zsbuf->texture)->buf);
         }
     }
 }

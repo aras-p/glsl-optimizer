@@ -90,19 +90,19 @@ unsigned r300_get_pixel_alignment(enum pipe_format format,
 }
 
 /* Return true if macrotiling should be enabled on the miplevel. */
-static boolean r300_texture_macro_switch(struct r300_texture_desc *desc,
+static boolean r300_texture_macro_switch(struct r300_resource *tex,
                                          unsigned level,
                                          boolean rv350_mode,
                                          enum r300_dim dim)
 {
     unsigned tile, texdim;
 
-    tile = r300_get_pixel_alignment(desc->b.b.format, desc->b.b.nr_samples,
-                                    desc->microtile, R300_BUFFER_TILED, dim, 0);
+    tile = r300_get_pixel_alignment(tex->b.b.b.format, tex->b.b.b.nr_samples,
+                                    tex->tex.microtile, R300_BUFFER_TILED, dim, 0);
     if (dim == DIM_WIDTH) {
-        texdim = u_minify(desc->width0, level);
+        texdim = u_minify(tex->tex.width0, level);
     } else {
-        texdim = u_minify(desc->height0, level);
+        texdim = u_minify(tex->tex.height0, level);
     }
 
     /* See TX_FILTER1_n.MACRO_SWITCH. */
@@ -118,7 +118,7 @@ static boolean r300_texture_macro_switch(struct r300_texture_desc *desc,
  * at the given level.
  */
 static unsigned r300_texture_get_stride(struct r300_screen *screen,
-                                        struct r300_texture_desc *desc,
+                                        struct r300_resource *tex,
                                         unsigned level)
 {
     unsigned tile_width, width, stride;
@@ -126,62 +126,62 @@ static unsigned r300_texture_get_stride(struct r300_screen *screen,
                         screen->caps.family == CHIP_FAMILY_RS690 ||
                         screen->caps.family == CHIP_FAMILY_RS740);
 
-    if (desc->stride_in_bytes_override)
-        return desc->stride_in_bytes_override;
+    if (tex->tex.stride_in_bytes_override)
+        return tex->tex.stride_in_bytes_override;
 
     /* Check the level. */
-    if (level > desc->b.b.last_level) {
+    if (level > tex->b.b.b.last_level) {
         SCREEN_DBG(screen, DBG_TEX, "%s: level (%u) > last_level (%u)\n",
-                   __FUNCTION__, level, desc->b.b.last_level);
+                   __FUNCTION__, level, tex->b.b.b.last_level);
         return 0;
     }
 
-    width = u_minify(desc->width0, level);
+    width = u_minify(tex->tex.width0, level);
 
-    if (util_format_is_plain(desc->b.b.format)) {
-        tile_width = r300_get_pixel_alignment(desc->b.b.format,
-                                              desc->b.b.nr_samples,
-                                              desc->microtile,
-                                              desc->macrotile[level],
+    if (util_format_is_plain(tex->b.b.b.format)) {
+        tile_width = r300_get_pixel_alignment(tex->b.b.b.format,
+                                              tex->b.b.b.nr_samples,
+                                              tex->tex.microtile,
+                                              tex->tex.macrotile[level],
                                               DIM_WIDTH, is_rs690);
         width = align(width, tile_width);
 
-        stride = util_format_get_stride(desc->b.b.format, width);
+        stride = util_format_get_stride(tex->b.b.b.format, width);
         /* The alignment to 32 bytes is sort of implied by the layout... */
         return stride;
     } else {
-        return align(util_format_get_stride(desc->b.b.format, width), is_rs690 ? 64 : 32);
+        return align(util_format_get_stride(tex->b.b.b.format, width), is_rs690 ? 64 : 32);
     }
 }
 
-static unsigned r300_texture_get_nblocksy(struct r300_texture_desc *desc,
+static unsigned r300_texture_get_nblocksy(struct r300_resource *tex,
                                           unsigned level,
                                           boolean *out_aligned_for_cbzb)
 {
     unsigned height, tile_height;
 
-    height = u_minify(desc->height0, level);
+    height = u_minify(tex->tex.height0, level);
 
-    if (util_format_is_plain(desc->b.b.format)) {
-        tile_height = r300_get_pixel_alignment(desc->b.b.format,
-                                               desc->b.b.nr_samples,
-                                               desc->microtile,
-                                               desc->macrotile[level],
+    if (util_format_is_plain(tex->b.b.b.format)) {
+        tile_height = r300_get_pixel_alignment(tex->b.b.b.format,
+                                               tex->b.b.b.nr_samples,
+                                               tex->tex.microtile,
+                                               tex->tex.macrotile[level],
                                                DIM_HEIGHT, 0);
         height = align(height, tile_height);
 
         /* This is needed for the kernel checker, unfortunately. */
-        if ((desc->b.b.target != PIPE_TEXTURE_1D &&
-             desc->b.b.target != PIPE_TEXTURE_2D &&
-             desc->b.b.target != PIPE_TEXTURE_RECT) ||
-            desc->b.b.last_level != 0) {
+        if ((tex->b.b.b.target != PIPE_TEXTURE_1D &&
+             tex->b.b.b.target != PIPE_TEXTURE_2D &&
+             tex->b.b.b.target != PIPE_TEXTURE_RECT) ||
+            tex->b.b.b.last_level != 0) {
             height = util_next_power_of_two(height);
         }
 
         /* See if the CBZB clear can be used on the buffer,
          * taking the texture size into account. */
         if (out_aligned_for_cbzb) {
-            if (desc->macrotile[level]) {
+            if (tex->tex.macrotile[level]) {
                 /* When clearing, the layer (width*height) is horizontally split
                  * into two, and the upper and lower halves are cleared by the CB
                  * and ZB units, respectively. Therefore, the number of macrotiles
@@ -189,10 +189,10 @@ static unsigned r300_texture_get_nblocksy(struct r300_texture_desc *desc,
 
                 /* Align the height so that there is an even number of macrotiles.
                  * Do so for 3 or more macrotiles in the Y direction. */
-                if (level == 0 && desc->b.b.last_level == 0 &&
-                    (desc->b.b.target == PIPE_TEXTURE_1D ||
-                     desc->b.b.target == PIPE_TEXTURE_2D ||
-                     desc->b.b.target == PIPE_TEXTURE_RECT) &&
+                if (level == 0 && tex->b.b.b.last_level == 0 &&
+                    (tex->b.b.b.target == PIPE_TEXTURE_1D ||
+                     tex->b.b.b.target == PIPE_TEXTURE_2D ||
+                     tex->b.b.b.target == PIPE_TEXTURE_RECT) &&
                     height >= tile_height * 3) {
                     height = align(height, tile_height * 2);
                 }
@@ -204,11 +204,11 @@ static unsigned r300_texture_get_nblocksy(struct r300_texture_desc *desc,
         }
     }
 
-    return util_format_get_nblocksy(desc->b.b.format, height);
+    return util_format_get_nblocksy(tex->b.b.b.format, height);
 }
 
 static void r300_texture_3d_fix_mipmapping(struct r300_screen *screen,
-                                           struct r300_texture_desc *desc)
+                                           struct r300_resource *tex)
 {
     /* The kernels <= 2.6.34-rc4 compute the size of mipmapped 3D textures
      * incorrectly. This is a workaround to prevent CS from being rejected. */
@@ -216,17 +216,17 @@ static void r300_texture_3d_fix_mipmapping(struct r300_screen *screen,
     unsigned i, size;
 
     if (!screen->rws->get_value(screen->rws, R300_VID_DRM_2_3_0) &&
-        desc->b.b.target == PIPE_TEXTURE_3D &&
-        desc->b.b.last_level > 0) {
+        tex->b.b.b.target == PIPE_TEXTURE_3D &&
+        tex->b.b.b.last_level > 0) {
         size = 0;
 
-        for (i = 0; i <= desc->b.b.last_level; i++) {
-            size += desc->stride_in_bytes[i] *
-                    r300_texture_get_nblocksy(desc, i, FALSE);
+        for (i = 0; i <= tex->b.b.b.last_level; i++) {
+            size += tex->tex.stride_in_bytes[i] *
+                    r300_texture_get_nblocksy(tex, i, FALSE);
         }
 
-        size *= desc->depth0;
-        desc->size_in_bytes = size;
+        size *= tex->tex.depth0;
+        tex->tex.size_in_bytes = size;
     }
 }
 
@@ -239,15 +239,15 @@ static unsigned stride_to_width(enum pipe_format format,
 }
 
 static void r300_setup_miptree(struct r300_screen *screen,
-                               struct r300_texture_desc *desc,
+                               struct r300_resource *tex,
                                boolean align_for_cbzb)
 {
-    struct pipe_resource *base = &desc->b.b;
+    struct pipe_resource *base = &tex->b.b.b;
     unsigned stride, size, layer_size, nblocksy, i;
     boolean rv350_mode = screen->caps.family >= CHIP_FAMILY_R350;
     boolean aligned_for_cbzb;
 
-    desc->size_in_bytes = 0;
+    tex->tex.size_in_bytes = 0;
 
     SCREEN_DBG(screen, DBG_TEXALLOC,
         "r300: Making miptree for texture, format %s\n",
@@ -255,21 +255,21 @@ static void r300_setup_miptree(struct r300_screen *screen,
 
     for (i = 0; i <= base->last_level; i++) {
         /* Let's see if this miplevel can be macrotiled. */
-        desc->macrotile[i] =
-            (desc->macrotile[0] == R300_BUFFER_TILED &&
-             r300_texture_macro_switch(desc, i, rv350_mode, DIM_WIDTH) &&
-             r300_texture_macro_switch(desc, i, rv350_mode, DIM_HEIGHT)) ?
+        tex->tex.macrotile[i] =
+            (tex->tex.macrotile[0] == R300_BUFFER_TILED &&
+             r300_texture_macro_switch(tex, i, rv350_mode, DIM_WIDTH) &&
+             r300_texture_macro_switch(tex, i, rv350_mode, DIM_HEIGHT)) ?
              R300_BUFFER_TILED : R300_BUFFER_LINEAR;
 
-        stride = r300_texture_get_stride(screen, desc, i);
+        stride = r300_texture_get_stride(screen, tex, i);
 
         /* Compute the number of blocks in Y, see if the CBZB clear can be
          * used on the texture. */
         aligned_for_cbzb = FALSE;
-        if (align_for_cbzb && desc->cbzb_allowed[i])
-            nblocksy = r300_texture_get_nblocksy(desc, i, &aligned_for_cbzb);
+        if (align_for_cbzb && tex->tex.cbzb_allowed[i])
+            nblocksy = r300_texture_get_nblocksy(tex, i, &aligned_for_cbzb);
         else
-            nblocksy = r300_texture_get_nblocksy(desc, i, NULL);
+            nblocksy = r300_texture_get_nblocksy(tex, i, NULL);
 
         layer_size = stride * nblocksy;
 
@@ -280,64 +280,64 @@ static void r300_setup_miptree(struct r300_screen *screen,
         if (base->target == PIPE_TEXTURE_CUBE)
             size = layer_size * 6;
         else
-            size = layer_size * u_minify(desc->depth0, i);
+            size = layer_size * u_minify(tex->tex.depth0, i);
 
-        desc->offset_in_bytes[i] = desc->size_in_bytes;
-        desc->size_in_bytes = desc->offset_in_bytes[i] + size;
-        desc->layer_size_in_bytes[i] = layer_size;
-        desc->stride_in_bytes[i] = stride;
-        desc->stride_in_pixels[i] = stride_to_width(desc->b.b.format, stride);
-        desc->cbzb_allowed[i] = desc->cbzb_allowed[i] && aligned_for_cbzb;
+        tex->tex.offset_in_bytes[i] = tex->tex.size_in_bytes;
+        tex->tex.size_in_bytes = tex->tex.offset_in_bytes[i] + size;
+        tex->tex.layer_size_in_bytes[i] = layer_size;
+        tex->tex.stride_in_bytes[i] = stride;
+        tex->tex.stride_in_pixels[i] = stride_to_width(tex->b.b.b.format, stride);
+        tex->tex.cbzb_allowed[i] = tex->tex.cbzb_allowed[i] && aligned_for_cbzb;
 
         SCREEN_DBG(screen, DBG_TEXALLOC, "r300: Texture miptree: Level %d "
                 "(%dx%dx%d px, pitch %d bytes) %d bytes total, macrotiled %s\n",
-                i, u_minify(desc->width0, i), u_minify(desc->height0, i),
-                u_minify(desc->depth0, i), stride, desc->size_in_bytes,
-                desc->macrotile[i] ? "TRUE" : "FALSE");
+                i, u_minify(tex->tex.width0, i), u_minify(tex->tex.height0, i),
+                u_minify(tex->tex.depth0, i), stride, tex->tex.size_in_bytes,
+                tex->tex.macrotile[i] ? "TRUE" : "FALSE");
     }
 }
 
-static void r300_setup_flags(struct r300_texture_desc *desc)
+static void r300_setup_flags(struct r300_resource *tex)
 {
-    desc->uses_stride_addressing =
-        !util_is_power_of_two(desc->b.b.width0) ||
-        (desc->stride_in_bytes_override &&
-         stride_to_width(desc->b.b.format,
-                         desc->stride_in_bytes_override) != desc->b.b.width0);
+    tex->tex.uses_stride_addressing =
+        !util_is_power_of_two(tex->b.b.b.width0) ||
+        (tex->tex.stride_in_bytes_override &&
+         stride_to_width(tex->b.b.b.format,
+                         tex->tex.stride_in_bytes_override) != tex->b.b.b.width0);
 
-    desc->is_npot =
-        desc->uses_stride_addressing ||
-        !util_is_power_of_two(desc->b.b.height0) ||
-        !util_is_power_of_two(desc->b.b.depth0);
+    tex->tex.is_npot =
+        tex->tex.uses_stride_addressing ||
+        !util_is_power_of_two(tex->b.b.b.height0) ||
+        !util_is_power_of_two(tex->b.b.b.depth0);
 }
 
 static void r300_setup_cbzb_flags(struct r300_screen *rscreen,
-                                  struct r300_texture_desc *desc)
+                                  struct r300_resource *tex)
 {
     unsigned i, bpp;
     boolean first_level_valid;
 
-    bpp = util_format_get_blocksizebits(desc->b.b.format);
+    bpp = util_format_get_blocksizebits(tex->b.b.b.format);
 
     /* 1) The texture must be point-sampled,
      * 2) The depth must be 16 or 32 bits.
      * 3) If the midpoint ZB offset is not aligned to 2048, it returns garbage
      *    with certain texture sizes. Macrotiling ensures the alignment. */
-    first_level_valid = desc->b.b.nr_samples <= 1 &&
+    first_level_valid = tex->b.b.b.nr_samples <= 1 &&
                        (bpp == 16 || bpp == 32) &&
-                       desc->macrotile[0];
+                       tex->tex.macrotile[0];
 
     if (SCREEN_DBG_ON(rscreen, DBG_NO_CBZB))
         first_level_valid = FALSE;
 
-    for (i = 0; i <= desc->b.b.last_level; i++)
-        desc->cbzb_allowed[i] = first_level_valid && desc->macrotile[i];
+    for (i = 0; i <= tex->b.b.b.last_level; i++)
+        tex->tex.cbzb_allowed[i] = first_level_valid && tex->tex.macrotile[i];
 }
 
 #define ALIGN_DIVUP(x, y) (((x) + (y) - 1) / (y))
 
 static void r300_setup_zmask_flags(struct r300_screen *screen,
-                                   struct r300_texture_desc *desc)
+                                   struct r300_resource *tex)
 {
     /* The tile size of 1 DWORD is:
      *
@@ -351,9 +351,9 @@ static void r300_setup_zmask_flags(struct r300_screen *screen,
     static unsigned num_blocks_x_per_dw[4] = {4, 8, 12, 8};
     static unsigned num_blocks_y_per_dw[4] = {4, 4,  4, 8};
 
-    if (util_format_is_depth_or_stencil(desc->b.b.format) &&
-        util_format_get_blocksizebits(desc->b.b.format) == 32 &&
-        desc->microtile) {
+    if (util_format_is_depth_or_stencil(tex->b.b.b.format) &&
+        util_format_get_blocksizebits(tex->b.b.b.format) == 32 &&
+        tex->tex.microtile) {
         unsigned i, pipes;
 
         if (screen->caps.family == CHIP_FAMILY_RV530) {
@@ -362,18 +362,18 @@ static void r300_setup_zmask_flags(struct r300_screen *screen,
             pipes = screen->caps.num_frag_pipes;
         }
 
-        for (i = 0; i <= desc->b.b.last_level; i++) {
+        for (i = 0; i <= tex->b.b.b.last_level; i++) {
             unsigned numdw, compsize;
 
             /* The 8x8 compression mode needs macrotiling. */
             compsize = screen->caps.z_compress == R300_ZCOMP_8X8 &&
-                       desc->macrotile[i] &&
-                       desc->b.b.nr_samples <= 1 ? 8 : 4;
+                       tex->tex.macrotile[i] &&
+                       tex->b.b.b.nr_samples <= 1 ? 8 : 4;
 
             /* Get the zbuffer size (with the aligned width and height). */
-            numdw = align(desc->stride_in_pixels[i],
+            numdw = align(tex->tex.stride_in_pixels[i],
                           num_blocks_x_per_dw[pipes-1] * compsize) *
-                    align(u_minify(desc->b.b.height0, i),
+                    align(u_minify(tex->b.b.b.height0, i),
                           num_blocks_y_per_dw[pipes-1] * compsize);
 
             /* Convert pixels -> dwords. */
@@ -382,21 +382,21 @@ static void r300_setup_zmask_flags(struct r300_screen *screen,
 
             /* Check that we have enough ZMASK memory. */
             if (numdw <= screen->caps.zmask_ram * pipes) {
-                desc->zmask_dwords[i] = numdw;
-                desc->zcomp8x8[i] = compsize == 8;
+                tex->tex.zmask_dwords[i] = numdw;
+                tex->tex.zcomp8x8[i] = compsize == 8;
             } else {
-                desc->zmask_dwords[i] = 0;
-                desc->zcomp8x8[i] = FALSE;
+                tex->tex.zmask_dwords[i] = 0;
+                tex->tex.zcomp8x8[i] = FALSE;
             }
         }
     }
 }
 
 static void r300_setup_tiling(struct r300_screen *screen,
-                              struct r300_texture_desc *desc)
+                              struct r300_resource *tex)
 {
     struct r300_winsys_screen *rws = screen->rws;
-    enum pipe_format format = desc->b.b.format;
+    enum pipe_format format = tex->b.b.b.format;
     boolean rv350_mode = screen->caps.family >= CHIP_FAMILY_R350;
     boolean is_zb = util_format_is_depth_or_stencil(format);
     boolean dbg_no_tiling = SCREEN_DBG_ON(screen, DBG_NO_TILING);
@@ -406,7 +406,7 @@ static void r300_setup_tiling(struct r300_screen *screen,
     }
 
     /* If height == 1, disable microtiling except for zbuffer. */
-    if (!is_zb && (desc->b.b.height0 == 1 || dbg_no_tiling)) {
+    if (!is_zb && (tex->b.b.b.height0 == 1 || dbg_no_tiling)) {
         return;
     }
 
@@ -415,12 +415,12 @@ static void r300_setup_tiling(struct r300_screen *screen,
         case 1:
         case 4:
         case 8:
-            desc->microtile = R300_BUFFER_TILED;
+            tex->tex.microtile = R300_BUFFER_TILED;
             break;
 
         case 2:
             if (rws->get_value(rws, R300_VID_DRM_2_1_0)) {
-                desc->microtile = R300_BUFFER_SQUARETILED;
+                tex->tex.microtile = R300_BUFFER_SQUARETILED;
             }
             break;
     }
@@ -430,105 +430,104 @@ static void r300_setup_tiling(struct r300_screen *screen,
     }
 
     /* Set macrotiling. */
-    if (r300_texture_macro_switch(desc, 0, rv350_mode, DIM_WIDTH) &&
-        r300_texture_macro_switch(desc, 0, rv350_mode, DIM_HEIGHT)) {
-        desc->macrotile[0] = R300_BUFFER_TILED;
+    if (r300_texture_macro_switch(tex, 0, rv350_mode, DIM_WIDTH) &&
+        r300_texture_macro_switch(tex, 0, rv350_mode, DIM_HEIGHT)) {
+        tex->tex.macrotile[0] = R300_BUFFER_TILED;
     }
 }
 
-static void r300_tex_print_info(struct r300_screen *rscreen,
-                                struct r300_texture_desc *desc,
+static void r300_tex_print_info(struct r300_resource *tex,
                                 const char *func)
 {
     fprintf(stderr,
             "r300: %s: Macro: %s, Micro: %s, Pitch: %i, Dim: %ix%ix%i, "
             "LastLevel: %i, Size: %i, Format: %s\n",
             func,
-            desc->macrotile[0] ? "YES" : " NO",
-            desc->microtile ? "YES" : " NO",
-            desc->stride_in_pixels[0],
-            desc->b.b.width0, desc->b.b.height0, desc->b.b.depth0,
-            desc->b.b.last_level, desc->size_in_bytes,
-            util_format_short_name(desc->b.b.format));
+            tex->tex.macrotile[0] ? "YES" : " NO",
+            tex->tex.microtile ? "YES" : " NO",
+            tex->tex.stride_in_pixels[0],
+            tex->b.b.b.width0, tex->b.b.b.height0, tex->b.b.b.depth0,
+            tex->b.b.b.last_level, tex->tex.size_in_bytes,
+            util_format_short_name(tex->b.b.b.format));
 }
 
 boolean r300_texture_desc_init(struct r300_screen *rscreen,
-                               struct r300_texture_desc *desc,
+                               struct r300_resource *tex,
                                const struct pipe_resource *base,
                                enum r300_buffer_tiling microtile,
                                enum r300_buffer_tiling macrotile,
                                unsigned stride_in_bytes_override,
                                unsigned max_buffer_size)
 {
-    desc->b.b = *base;
-    desc->b.b.screen = &rscreen->screen;
-    desc->stride_in_bytes_override = stride_in_bytes_override;
-    desc->width0 = base->width0;
-    desc->height0 = base->height0;
-    desc->depth0 = base->depth0;
+    tex->b.b.b = *base;
+    tex->b.b.b.screen = &rscreen->screen;
+    tex->tex.stride_in_bytes_override = stride_in_bytes_override;
+    tex->tex.width0 = base->width0;
+    tex->tex.height0 = base->height0;
+    tex->tex.depth0 = base->depth0;
 
-    r300_setup_flags(desc);
+    r300_setup_flags(tex);
 
     /* Align a 3D NPOT texture to POT. */
-    if (base->target == PIPE_TEXTURE_3D && desc->is_npot) {
-        desc->width0 = util_next_power_of_two(desc->width0);
-        desc->height0 = util_next_power_of_two(desc->height0);
-        desc->depth0 = util_next_power_of_two(desc->depth0);
+    if (base->target == PIPE_TEXTURE_3D && tex->tex.is_npot) {
+        tex->tex.width0 = util_next_power_of_two(tex->tex.width0);
+        tex->tex.height0 = util_next_power_of_two(tex->tex.height0);
+        tex->tex.depth0 = util_next_power_of_two(tex->tex.depth0);
     }
 
     /* Setup tiling. */
     if (microtile == R300_BUFFER_SELECT_LAYOUT ||
         macrotile == R300_BUFFER_SELECT_LAYOUT) {
-        r300_setup_tiling(rscreen, desc);
+        r300_setup_tiling(rscreen, tex);
     } else {
-        desc->microtile = microtile;
-        desc->macrotile[0] = macrotile;
-        assert(desc->b.b.last_level == 0);
+        tex->tex.microtile = microtile;
+        tex->tex.macrotile[0] = macrotile;
+        assert(tex->b.b.b.last_level == 0);
     }
 
-    r300_setup_cbzb_flags(rscreen, desc);
+    r300_setup_cbzb_flags(rscreen, tex);
 
     /* Setup the miptree description. */
-    r300_setup_miptree(rscreen, desc, TRUE);
+    r300_setup_miptree(rscreen, tex, TRUE);
     /* If the required buffer size is larger the given max size,
      * try again without the alignment for the CBZB clear. */
-    if (max_buffer_size && desc->size_in_bytes > max_buffer_size) {
-        r300_setup_miptree(rscreen, desc, FALSE);
+    if (max_buffer_size && tex->tex.size_in_bytes > max_buffer_size) {
+        r300_setup_miptree(rscreen, tex, FALSE);
     }
 
-    r300_texture_3d_fix_mipmapping(rscreen, desc);
-    r300_setup_zmask_flags(rscreen, desc);
+    r300_texture_3d_fix_mipmapping(rscreen, tex);
+    r300_setup_zmask_flags(rscreen, tex);
 
     if (max_buffer_size) {
         /* Make sure the buffer we got is large enough. */
-        if (desc->size_in_bytes > max_buffer_size) {
+        if (tex->tex.size_in_bytes > max_buffer_size) {
             fprintf(stderr, "r300: texture_desc_init: The buffer is not "
                             "large enough. Got: %i, Need: %i, Info:\n",
-                            max_buffer_size, desc->size_in_bytes);
-            r300_tex_print_info(rscreen, desc, "texture_desc_init");
+                            max_buffer_size, tex->tex.size_in_bytes);
+            r300_tex_print_info(tex, "texture_desc_init");
             return FALSE;
         }
 
-        desc->buffer_size_in_bytes = max_buffer_size;
+        tex->tex.buffer_size_in_bytes = max_buffer_size;
     } else {
-        desc->buffer_size_in_bytes = desc->size_in_bytes;
+        tex->tex.buffer_size_in_bytes = tex->tex.size_in_bytes;
     }
 
     if (SCREEN_DBG_ON(rscreen, DBG_TEX))
-        r300_tex_print_info(rscreen, desc, "texture_desc_init");
+        r300_tex_print_info(tex, "texture_desc_init");
 
     return TRUE;
 }
 
-unsigned r300_texture_get_offset(struct r300_texture_desc *desc,
+unsigned r300_texture_get_offset(struct r300_resource *tex,
                                  unsigned level, unsigned layer)
 {
-    unsigned offset = desc->offset_in_bytes[level];
+    unsigned offset = tex->tex.offset_in_bytes[level];
 
-    switch (desc->b.b.target) {
+    switch (tex->b.b.b.target) {
         case PIPE_TEXTURE_3D:
         case PIPE_TEXTURE_CUBE:
-            return offset + layer * desc->layer_size_in_bytes[level];
+            return offset + layer * tex->tex.layer_size_in_bytes[level];
 
         default:
             assert(layer == 0);

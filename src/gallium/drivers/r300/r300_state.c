@@ -616,12 +616,12 @@ static void r300_set_stencil_ref(struct pipe_context* pipe,
 }
 
 static void r300_tex_set_tiling_flags(struct r300_context *r300,
-                                      struct r300_texture *tex, unsigned level)
+                                      struct r300_resource *tex, unsigned level)
 {
     /* Check if the macrotile flag needs to be changed.
      * Skip changing the flags otherwise. */
-    if (tex->desc.macrotile[tex->surface_level] !=
-        tex->desc.macrotile[level]) {
+    if (tex->tex.macrotile[tex->surface_level] !=
+        tex->tex.macrotile[level]) {
         /* Tiling determines how DRM treats the buffer data.
          * We must flush CS when changing it if the buffer is referenced. */
         if (r300->rws->cs_is_buffer_referenced(r300->cs,
@@ -629,8 +629,8 @@ static void r300_tex_set_tiling_flags(struct r300_context *r300,
             r300->context.flush(&r300->context, 0, NULL);
 
         r300->rws->buffer_set_tiling(r300->rws, tex->buf,
-                tex->desc.microtile, tex->desc.macrotile[level],
-                tex->desc.stride_in_bytes[0]);
+                tex->tex.microtile, tex->tex.macrotile[level],
+                tex->tex.stride_in_bytes[0]);
 
         tex->surface_level = level;
     }
@@ -645,12 +645,12 @@ static void r300_fb_set_tiling_flags(struct r300_context *r300,
     /* Set tiling flags for new surfaces. */
     for (i = 0; i < state->nr_cbufs; i++) {
         r300_tex_set_tiling_flags(r300,
-                                  r300_texture(state->cbufs[i]->texture),
+                                  r300_resource(state->cbufs[i]->texture),
                                   state->cbufs[i]->u.tex.level);
     }
     if (state->zsbuf) {
         r300_tex_set_tiling_flags(r300,
-                                  r300_texture(state->zsbuf->texture),
+                                  r300_resource(state->zsbuf->texture),
                                   state->zsbuf->u.tex.level);
     }
 }
@@ -659,7 +659,7 @@ static void r300_print_fb_surf_info(struct pipe_surface *surf, unsigned index,
                                     const char *binding)
 {
     struct pipe_resource *tex = surf->texture;
-    struct r300_texture *rtex = r300_texture(tex);
+    struct r300_resource *rtex = r300_resource(tex);
 
     fprintf(stderr,
             "r300:   %s[%i] Dim: %ix%i, Firstlayer: %i, "
@@ -672,9 +672,9 @@ static void r300_print_fb_surf_info(struct pipe_surface *surf, unsigned index,
             surf->u.tex.first_layer, surf->u.tex.last_layer, surf->u.tex.level,
             util_format_short_name(surf->format),
 
-            rtex->desc.macrotile[0] ? "YES" : " NO",
-            rtex->desc.microtile ? "YES" : " NO",
-            rtex->desc.stride_in_pixels[0],
+            rtex->tex.macrotile[0] ? "YES" : " NO",
+            rtex->tex.microtile ? "YES" : " NO",
+            rtex->tex.stride_in_pixels[0],
             tex->width0, tex->height0, tex->depth0,
             tex->last_level, util_format_short_name(tex->format));
 }
@@ -802,7 +802,7 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
         /* Setup Hyper-Z. */
         if (can_hyperz) {
             struct r300_surface *zs_surf = r300_surface(state->zsbuf);
-            struct r300_texture *tex = r300_texture(zs_surf->base.texture);
+            struct r300_resource *tex = r300_resource(zs_surf->base.texture);
             int level = zs_surf->base.u.tex.level;
 
             /* work out whether we can support hiz on this buffer */
@@ -1313,7 +1313,7 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct r300_textures_state* state =
         (struct r300_textures_state*)r300->textures_state.state;
-    struct r300_texture *texture;
+    struct r300_resource *texture;
     unsigned i, real_num_views = 0, view_index = 0;
     unsigned tex_units = r300->screen->caps.num_tex_units;
     boolean dirty_tex = FALSE;
@@ -1342,8 +1342,8 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
 
         /* Set the texrect factor in the fragment shader.
              * Needed for RECT and NPOT fallback. */
-        texture = r300_texture(views[i]->texture);
-        if (texture->desc.is_npot) {
+        texture = r300_resource(views[i]->texture);
+        if (texture->tex.is_npot) {
             r300_mark_atom_dirty(r300, &r300->fs_rc_constant_state);
         }
 
@@ -1376,7 +1376,7 @@ r300_create_sampler_view(struct pipe_context *pipe,
                          const struct pipe_sampler_view *templ)
 {
     struct r300_sampler_view *view = CALLOC_STRUCT(r300_sampler_view);
-    struct r300_texture *tex = r300_texture(texture);
+    struct r300_resource *tex = r300_resource(texture);
     boolean is_r500 = r300_screen(pipe->screen)->caps.is_r500;
     boolean dxtc_swizzle = r300_screen(pipe->screen)->caps.dxtc_swizzle;
 
@@ -1494,7 +1494,7 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
         /* HW TCL. */
         for (i = 0; i < count; i++) {
             if (buffers[i].buffer &&
-		!r300_buffer(buffers[i].buffer)->b.user_ptr) {
+		!r300_resource(buffers[i].buffer)->b.user_ptr) {
                 r300->validate_buffers = TRUE;
             }
         }
@@ -1515,7 +1515,7 @@ static void r300_set_index_buffer(struct pipe_context* pipe,
         memcpy(&r300->index_buffer, ib, sizeof(r300->index_buffer));
 
         if (r300->screen->caps.has_tcl &&
-            !r300_buffer(ib->buffer)->b.user_ptr) {
+            !r300_resource(ib->buffer)->b.user_ptr) {
             r300->validate_buffers = TRUE;
             r300->upload_ib_validated = FALSE;
         }
@@ -1738,7 +1738,7 @@ static void r300_set_constant_buffer(struct pipe_context *pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_constant_buffer *cbuf;
-    struct r300_buffer *rbuf = r300_buffer(buf);
+    struct r300_resource *rbuf = r300_resource(buf);
     uint32_t *mapped;
 
     switch (shader) {

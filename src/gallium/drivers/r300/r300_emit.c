@@ -89,7 +89,7 @@ static void get_rc_constant_state(
     struct rc_constant * constant)
 {
     struct r300_textures_state* texstate = r300->textures_state.state;
-    struct r300_texture *tex;
+    struct r300_resource *tex;
 
     assert(constant->Type == RC_CONSTANT_STATE);
 
@@ -101,19 +101,19 @@ static void get_rc_constant_state(
         /* Factor for converting rectangle coords to
          * normalized coords. Should only show up on non-r500. */
         case RC_STATE_R300_TEXRECT_FACTOR:
-            tex = r300_texture(texstate->sampler_views[constant->u.State[1]]->base.texture);
-            vec[0] = 1.0 / tex->desc.width0;
-            vec[1] = 1.0 / tex->desc.height0;
+            tex = r300_resource(texstate->sampler_views[constant->u.State[1]]->base.texture);
+            vec[0] = 1.0 / tex->tex.width0;
+            vec[1] = 1.0 / tex->tex.height0;
             vec[2] = 0;
             vec[3] = 1;
             break;
 
         case RC_STATE_R300_TEXSCALE_FACTOR:
-            tex = r300_texture(texstate->sampler_views[constant->u.State[1]]->base.texture);
+            tex = r300_resource(texstate->sampler_views[constant->u.State[1]]->base.texture);
             /* Add a small number to the texture size to work around rounding errors in hw. */
-            vec[0] = tex->desc.b.b.width0  / (tex->desc.width0  + 0.001f);
-            vec[1] = tex->desc.b.b.height0 / (tex->desc.height0 + 0.001f);
-            vec[2] = tex->desc.b.b.depth0  / (tex->desc.depth0  + 0.001f);
+            vec[0] = tex->b.b.b.width0  / (tex->tex.width0  + 0.001f);
+            vec[1] = tex->b.b.b.height0 / (tex->tex.height0 + 0.001f);
+            vec[2] = tex->b.b.b.depth0  / (tex->tex.depth0  + 0.001f);
             vec[3] = 1;
             break;
 
@@ -428,9 +428,9 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
 
         if (can_hyperz) {
             uint32_t surf_pitch;
-            struct r300_texture *tex;
+            struct r300_resource *tex;
             int level = surf->base.u.tex.level;
-            tex = r300_texture(surf->base.texture);
+            tex = r300_resource(surf->base.texture);
 
             surf_pitch = surf->pitch & R300_DEPTHPITCH_MASK;
 
@@ -779,7 +779,7 @@ void r300_emit_textures_state(struct r300_context *r300,
 {
     struct r300_textures_state *allstate = (struct r300_textures_state*)state;
     struct r300_texture_sampler_state *texstate;
-    struct r300_texture *tex;
+    struct r300_resource *tex;
     unsigned i;
     CS_LOCALS(r300);
 
@@ -789,7 +789,7 @@ void r300_emit_textures_state(struct r300_context *r300,
     for (i = 0; i < allstate->count; i++) {
         if ((1 << i) & allstate->tx_enable) {
             texstate = &allstate->regs[i];
-            tex = r300_texture(allstate->sampler_views[i]->base.texture);
+            tex = r300_resource(allstate->sampler_views[i]->base.texture);
 
             OUT_CS_REG(R300_TX_FILTER0_0 + (i * 4), texstate->filter0);
             OUT_CS_REG(R300_TX_FILTER1_0 + (i * 4), texstate->filter1);
@@ -846,7 +846,7 @@ void r300_emit_vertex_arrays(struct r300_context* r300, int offset, boolean inde
     struct pipe_vertex_buffer *vbuf = r300->vbuf_mgr->vertex_buffer;
     struct pipe_resource **valid_vbuf = r300->vbuf_mgr->real_vertex_buffer;
     struct pipe_vertex_element *velem = r300->velems->velem;
-    struct r300_buffer *buf;
+    struct r300_resource *buf;
     int i;
     unsigned vertex_array_count = r300->velems->count;
     unsigned packet_size = (vertex_array_count * 3 + 1) / 2;
@@ -888,7 +888,7 @@ void r300_emit_vertex_arrays(struct r300_context* r300, int offset, boolean inde
     }
 
     for (i = 0; i < vertex_array_count; i++) {
-        buf = r300_buffer(valid_vbuf[velem[i].vertex_buffer_index]);
+        buf = r300_resource(valid_vbuf[velem[i].vertex_buffer_index]);
         OUT_CS_RELOC(buf);
     }
     END_CS;
@@ -915,7 +915,7 @@ void r300_emit_vertex_arrays_swtcl(struct r300_context *r300, boolean indexed)
             (r300->vertex_info.size << 8));
     OUT_CS(r300->draw_vbo_offset);
     OUT_CS(0);
-    OUT_CS_RELOC(r300_buffer(r300->vbo));
+    OUT_CS_RELOC(r300_resource(r300->vbo));
     END_CS;
 }
 
@@ -1103,13 +1103,13 @@ void r300_emit_hiz_clear(struct r300_context *r300, unsigned size, void *state)
         (struct r300_hyperz_state*)r300->hyperz_state.state;
     struct r300_screen* r300screen = r300->screen;
     uint32_t stride, offset = 0, height, offset_shift;
-    struct r300_texture* tex;
+    struct r300_resource* tex;
     int i;
 
-    tex = r300_texture(fb->zsbuf->texture);
+    tex = r300_resource(fb->zsbuf->texture);
 
     offset = tex->hiz_mem[fb->zsbuf->u.tex.level]->ofs;
-    stride = tex->desc.stride_in_pixels[fb->zsbuf->u.tex.level];
+    stride = tex->tex.stride_in_pixels[fb->zsbuf->u.tex.level];
 
     /* convert from pixels to 4x4 blocks */
     stride = ALIGN_DIVUP(stride, 4);
@@ -1138,15 +1138,15 @@ void r300_emit_zmask_clear(struct r300_context *r300, unsigned size, void *state
 {
     struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
-    struct r300_texture *tex;
+    struct r300_resource *tex;
     CS_LOCALS(r300);
 
-    tex = r300_texture(fb->zsbuf->texture);
+    tex = r300_resource(fb->zsbuf->texture);
 
     BEGIN_CS(size);
     OUT_CS_PKT3(R300_PACKET3_3D_CLEAR_ZMASK, 2);
     OUT_CS(0);
-    OUT_CS(tex->desc.zmask_dwords[fb->zsbuf->u.tex.level]);
+    OUT_CS(tex->tex.zmask_dwords[fb->zsbuf->u.tex.level]);
     OUT_CS(0);
     END_CS;
 
@@ -1183,7 +1183,7 @@ boolean r300_emit_buffer_validate(struct r300_context *r300,
         (struct pipe_framebuffer_state*)r300->fb_state.state;
     struct r300_textures_state *texstate =
         (struct r300_textures_state*)r300->textures_state.state;
-    struct r300_texture *tex;
+    struct r300_resource *tex;
     unsigned i;
     boolean flushed = FALSE;
 
@@ -1191,14 +1191,14 @@ validate:
     if (r300->fb_state.dirty) {
         /* Color buffers... */
         for (i = 0; i < fb->nr_cbufs; i++) {
-            tex = r300_texture(fb->cbufs[i]->texture);
+            tex = r300_resource(fb->cbufs[i]->texture);
             assert(tex && tex->buf && "cbuf is marked, but NULL!");
             r300->rws->cs_add_reloc(r300->cs, tex->cs_buf, 0,
                                     r300_surface(fb->cbufs[i])->domain);
         }
         /* ...depth buffer... */
         if (fb->zsbuf) {
-            tex = r300_texture(fb->zsbuf->texture);
+            tex = r300_resource(fb->zsbuf->texture);
             assert(tex && tex->buf && "zsbuf is marked, but NULL!");
             r300->rws->cs_add_reloc(r300->cs, tex->cs_buf, 0,
                                     r300_surface(fb->zsbuf)->domain);
@@ -1211,7 +1211,7 @@ validate:
                 continue;
             }
 
-            tex = r300_texture(texstate->sampler_views[i]->base.texture);
+            tex = r300_resource(texstate->sampler_views[i]->base.texture);
             r300->rws->cs_add_reloc(r300->cs, tex->cs_buf, tex->domain, 0);
         }
     }
@@ -1221,8 +1221,8 @@ validate:
                                 0, r300->query_current->domain);
     /* ...vertex buffer for SWTCL path... */
     if (r300->vbo)
-        r300->rws->cs_add_reloc(r300->cs, r300_buffer(r300->vbo)->cs_buf,
-                                r300_buffer(r300->vbo)->domain, 0);
+        r300->rws->cs_add_reloc(r300->cs, r300_resource(r300->vbo)->cs_buf,
+                                r300_resource(r300->vbo)->domain, 0);
     /* ...vertex buffers for HWTCL path... */
     if (do_validate_vertex_buffers) {
         struct pipe_resource **buf = r300->vbuf_mgr->real_vertex_buffer;
@@ -1232,14 +1232,14 @@ validate:
             if (!*buf)
                 continue;
 
-            r300->rws->cs_add_reloc(r300->cs, r300_buffer(*buf)->cs_buf,
-                                    r300_buffer(*buf)->domain, 0);
+            r300->rws->cs_add_reloc(r300->cs, r300_resource(*buf)->cs_buf,
+                                    r300_resource(*buf)->domain, 0);
         }
     }
     /* ...and index buffer for HWTCL path. */
     if (index_buffer)
-        r300->rws->cs_add_reloc(r300->cs, r300_buffer(index_buffer)->cs_buf,
-                                r300_buffer(index_buffer)->domain, 0);
+        r300->rws->cs_add_reloc(r300->cs, r300_resource(index_buffer)->cs_buf,
+                                r300_resource(index_buffer)->domain, 0);
 
     /* Now do the validation. */
     if (!r300->rws->cs_validate(r300->cs)) {

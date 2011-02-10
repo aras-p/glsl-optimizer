@@ -38,26 +38,22 @@ r300_resource_create(struct pipe_screen *screen,
 
 }
 
-static struct pipe_resource *
-r300_resource_from_handle(struct pipe_screen * screen,
-			 const struct pipe_resource *templ,
-			 struct winsys_handle *whandle)
+static unsigned r300_resource_is_referenced_by_cs(struct pipe_context *context,
+                                                  struct pipe_resource *buf,
+                                                  unsigned level, int layer)
 {
-   if (templ->target == PIPE_BUFFER)
-      return NULL;
-   else
-      return r300_texture_from_handle(screen, templ, whandle);
+    return r300_buffer_is_referenced(context, buf, R300_REF_CS);
 }
 
 void r300_init_resource_functions(struct r300_context *r300)
 {
    r300->context.get_transfer = u_get_transfer_vtbl;
    r300->context.transfer_map = u_transfer_map_vtbl;
-   r300->context.transfer_flush_region = u_transfer_flush_region_vtbl;
+   r300->context.transfer_flush_region = u_default_transfer_flush_region;
    r300->context.transfer_unmap = u_transfer_unmap_vtbl;
    r300->context.transfer_destroy = u_transfer_destroy_vtbl;
    r300->context.transfer_inline_write = u_transfer_inline_write_vtbl;
-   r300->context.is_resource_referenced = u_is_resource_referenced_vtbl;
+   r300->context.is_resource_referenced = r300_resource_is_referenced_by_cs;
    r300->context.create_surface = r300_create_surface;
    r300->context.surface_destroy = r300_surface_destroy;
 }
@@ -65,8 +61,8 @@ void r300_init_resource_functions(struct r300_context *r300)
 void r300_init_screen_resource_functions(struct r300_screen *r300screen)
 {
    r300screen->screen.resource_create = r300_resource_create;
-   r300screen->screen.resource_from_handle = r300_resource_from_handle;
-   r300screen->screen.resource_get_handle = u_resource_get_handle_vtbl;
+   r300screen->screen.resource_from_handle = r300_texture_from_handle;
+   r300screen->screen.resource_get_handle = r300_resource_get_handle;
    r300screen->screen.resource_destroy = u_resource_destroy_vtbl;
    r300screen->screen.user_buffer_create = r300_user_buffer_create;
 }
