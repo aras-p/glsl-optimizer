@@ -656,29 +656,25 @@ void r300_texture_setup_format_state(struct r300_screen *screen,
                        R300_TXO_MICRO_TILE(desc->microtile);
 }
 
-static void r300_texture_setup_fb_state(struct r300_screen* screen,
-                                        struct r300_texture* tex)
+static void r300_texture_setup_fb_state(struct r300_surface *surf)
 {
-    unsigned i;
+    struct r300_texture *tex = r300_texture(surf->base.texture);
+    unsigned level = surf->base.u.tex.level;
 
     /* Set framebuffer state. */
-    if (util_format_is_depth_or_stencil(tex->desc.b.b.format)) {
-        for (i = 0; i <= tex->desc.b.b.last_level; i++) {
-            tex->fb_state.pitch[i] =
-                tex->desc.stride_in_pixels[i] |
-                R300_DEPTHMACROTILE(tex->desc.macrotile[i]) |
+    if (util_format_is_depth_or_stencil(surf->base.format)) {
+        surf->pitch =
+                tex->desc.stride_in_pixels[level] |
+                R300_DEPTHMACROTILE(tex->desc.macrotile[level]) |
                 R300_DEPTHMICROTILE(tex->desc.microtile);
-        }
-        tex->fb_state.format = r300_translate_zsformat(tex->desc.b.b.format);
+        surf->format = r300_translate_zsformat(surf->base.format);
     } else {
-        for (i = 0; i <= tex->desc.b.b.last_level; i++) {
-            tex->fb_state.pitch[i] =
-                tex->desc.stride_in_pixels[i] |
-                r300_translate_colorformat(tex->desc.b.b.format) |
-                R300_COLOR_TILE(tex->desc.macrotile[i]) |
+        surf->pitch =
+                tex->desc.stride_in_pixels[level] |
+                r300_translate_colorformat(surf->base.format) |
+                R300_COLOR_TILE(tex->desc.macrotile[level]) |
                 R300_COLOR_MICROTILE(tex->desc.microtile);
-        }
-        tex->fb_state.format = r300_translate_out_fmt(tex->desc.b.b.format);
+        surf->format = r300_translate_out_fmt(surf->base.format);
     }
 }
 
@@ -694,8 +690,6 @@ void r300_texture_reinterpret_format(struct pipe_screen *screen,
         util_format_short_name(new_format));
 
     tex->format = new_format;
-
-    r300_texture_setup_fb_state(r300_screen(screen), r300_texture(tex));
 }
 
 static unsigned r300_texture_is_referenced(struct pipe_context *context,
@@ -786,7 +780,6 @@ r300_texture_create_object(struct r300_screen *rscreen,
     }
     /* Initialize the hardware state. */
     r300_texture_setup_format_state(rscreen, &tex->desc, 0, &tex->tx_format);
-    r300_texture_setup_fb_state(rscreen, tex);
 
     tex->desc.b.vtbl = &r300_texture_vtbl;
     pipe_reference_init(&tex->desc.b.b.reference, 1);
@@ -916,8 +909,7 @@ struct pipe_surface* r300_create_surface(struct pipe_context * ctx,
 
         surface->offset = r300_texture_get_offset(&tex->desc, level,
                                                   surf_tmpl->u.tex.first_layer);
-        surface->pitch = tex->fb_state.pitch[level];
-        surface->format = tex->fb_state.format;
+        r300_texture_setup_fb_state(surface);
 
         /* Parameters for the CBZB clear. */
         surface->cbzb_allowed = tex->desc.cbzb_allowed[level];

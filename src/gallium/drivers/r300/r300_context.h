@@ -188,11 +188,6 @@ struct r300_sampler_view {
     uint32_t texcache_region;
 };
 
-struct r300_texture_fb_state {
-    uint32_t pitch[R300_MAX_TEXTURE_LEVELS]; /* COLORPITCH or DEPTHPITCH. */
-    uint32_t format; /* US_OUT_FMT or R300_ZB_FORMAT */
-};
-
 struct r300_texture_sampler_state {
     struct r300_texture_format_state format;
     uint32_t filter0;      /* R300_TX_FILTER0: 0x4400 */
@@ -405,8 +400,6 @@ struct r300_texture {
     /* Registers carrying texture format data. */
     /* Only format-independent bits should be filled in. */
     struct r300_texture_format_state tx_format;
-    /* All bits should be filled in. */
-    struct r300_texture_fb_state fb_state;
 
     /* hyper-z memory allocs */
     struct mem_block *hiz_mem[R300_MAX_TEXTURE_LEVELS];
