@@ -809,18 +809,18 @@ upload_program(struct i915_fragment_program *p)
 	 flags = get_result_flags(inst);
 	 dst = get_result_vector(p, inst);
 
-	 /* dst = src1 >= src2 */
+	 /* tmp = src1 >= src2 */
 	 i915_emit_arith(p,
 			 A0_SGE,
-			 dst,
+			 tmp,
 			 flags, 0,
 			 src_vector(p, &inst->SrcReg[0], program),
 			 src_vector(p, &inst->SrcReg[1], program),
 			 0);
-	 /* tmp = src1 <= src2 */
+	 /* dst = src1 <= src2 */
 	 i915_emit_arith(p,
 			 A0_SGE,
-			 tmp,
+			 dst,
 			 flags, 0,
 			 negate(src_vector(p, &inst->SrcReg[0], program),
 				1, 1, 1, 1),
@@ -958,18 +958,18 @@ upload_program(struct i915_fragment_program *p)
 	 flags = get_result_flags(inst);
 	 dst = get_result_vector(p, inst);
 
-	 /* dst = src1 < src2 */
+	 /* tmp = src1 < src2 */
 	 i915_emit_arith(p,
 			 A0_SLT,
-			 dst,
+			 tmp,
 			 flags, 0,
 			 src_vector(p, &inst->SrcReg[0], program),
 			 src_vector(p, &inst->SrcReg[1], program),
 			 0);
-	 /* tmp = src1 > src2 */
+	 /* dst = src1 > src2 */
 	 i915_emit_arith(p,
 			 A0_SLT,
-			 tmp,
+			 dst,
 			 flags, 0,
 			 negate(src_vector(p, &inst->SrcReg[0], program),
 				1, 1, 1, 1),
