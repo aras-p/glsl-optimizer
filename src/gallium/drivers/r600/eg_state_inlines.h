@@ -362,14 +362,13 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 		/* 64-bit buffers. */
 	case PIPE_FORMAT_R16G16B16A16_UNORM:
 	case PIPE_FORMAT_R16G16B16A16_SNORM:
-		//		return V_028C70_COLOR_16_16_16_16;
 	case PIPE_FORMAT_R16G16B16A16_FLOAT:
-		//		return V_028C70_COLOR_16_16_16_16_FLOAT;
 
 		/* 128-bit buffers. */
 	case PIPE_FORMAT_R32G32B32A32_FLOAT:
-		//		return V_028C70_COLOR_32_32_32_32_FLOAT;
-		return 0;
+	case PIPE_FORMAT_R32G32B32A32_SNORM:
+	case PIPE_FORMAT_R32G32B32A32_UNORM:
+		return V_028C70_SWAP_STD;
 	default:
 		R600_ERR("unsupported colorswap format %d\n", format);
 		return ~0;
@@ -471,6 +470,9 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 		return V_028C70_COLOR_32_32;
 
 		/* 128-bit buffers. */
+	case PIPE_FORMAT_R32G32B32A32_SNORM:
+	case PIPE_FORMAT_R32G32B32A32_UNORM:
+		return V_028C70_COLOR_32_32_32_32;
 	case PIPE_FORMAT_R32G32B32_FLOAT:
 	  	return V_028C70_COLOR_32_32_32_FLOAT;
 	case PIPE_FORMAT_R32G32B32A32_FLOAT:

@@ -648,6 +648,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	unsigned tile_type;
 	const struct util_format_description *desc;
 	struct r600_bo *bo[3];
+	int i;
 
 	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
@@ -679,8 +680,19 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 		S_028C70_ARRAY_MODE(rtex->array_mode[level]) |
 		S_028C70_BLEND_CLAMP(1) |
 		S_028C70_NUMBER_TYPE(ntype);
-	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
-		color_info |= S_028C70_SOURCE_FORMAT(1);
+
+	for (i = 0; i < 4; i++) {
+		if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
+			break;
+		}
+	}
+
+	/* we can only set the export size if any thing is snorm/unorm component is > 11 bits,
+	   if we aren't a float, sint or uint */
+	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS &&
+	    desc->channel[i].size < 12 && desc->channel[i].type != UTIL_FORMAT_TYPE_FLOAT &&
+	    ntype != 4 && ntype != 5)
+		color_info |= S_028C70_SOURCE_FORMAT(V_028C70_EXPORT_4C_16BPC);
 
 	if (rtex->tiled) {
 		tile_type = rtex->tile_type;

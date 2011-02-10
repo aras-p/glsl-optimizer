@@ -327,6 +327,9 @@
 #define   S_028C70_SOURCE_FORMAT(x)                    (((x) & 0x3) << 24)
 #define   G_028C70_SOURCE_FORMAT(x)                    (((x) >> 24) & 0x3)
 #define   C_028C70_SOURCE_FORMAT                       0xFCFFFFFF
+#define     V_028C70_EXPORT_4C_32BPC                   0x0
+#define     V_028C70_EXPORT_4C_16BPC                   0x1
+#define     V_028C70_EXPORT_2C_32BPC                   0x2 /* Do not use */
 #define   S_028C70_RAT(x)                              (((x) & 0x1) << 26)
 #define   G_028C70_RAT(x)                              (((x) >> 26) & 0x1)
 #define   C_028C70_RAT                                 0xFBFFFFFF

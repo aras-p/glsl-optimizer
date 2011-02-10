@@ -248,6 +248,8 @@
 #define   S_0280A0_SOURCE_FORMAT(x)                    (((x) & 0x1) << 27)
 #define   G_0280A0_SOURCE_FORMAT(x)                    (((x) >> 27) & 0x1)
 #define   C_0280A0_SOURCE_FORMAT                       0xF7FFFFFF
+#define     V_0280A0_EXPORT_FULL                       0
+#define     V_0280A0_EXPORT_NORM                       1
 #define R_028060_CB_COLOR0_SIZE                      0x028060
 #define   S_028060_PITCH_TILE_MAX(x)                   (((x) & 0x3FF) << 0)
 #define   G_028060_PITCH_TILE_MAX(x)                   (((x) >> 0) & 0x3FF)

@@ -692,6 +692,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	unsigned offset;
 	const struct util_format_description *desc;
 	struct r600_bo *bo[3];
+	int i;
 
 	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
@@ -716,6 +717,12 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
 		ntype = V_0280A0_NUMBER_SRGB;
 
+	for (i = 0; i < 4; i++) {
+		if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
+			break;
+		}
+	}
+
 	format = r600_translate_colorformat(surf->base.format);
 	swap = r600_translate_colorswap(surf->base.format);
 	color_info = S_0280A0_FORMAT(format) |
@@ -723,8 +730,12 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 		S_0280A0_ARRAY_MODE(rtex->array_mode[level]) |
 		S_0280A0_BLEND_CLAMP(1) |
 		S_0280A0_NUMBER_TYPE(ntype);
-	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
-		color_info |= S_0280A0_SOURCE_FORMAT(1);
+
+	/* on R600 this can't be set if BLEND_CLAMP isn't set,
+	   if BLEND_FLOAT32 is set of > 11 bits in a UNORM or SNORM */
+	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS &&
+	    desc->channel[i].size < 12)
+		color_info |= S_0280A0_SOURCE_FORMAT(V_0280A0_EXPORT_NORM);
 
 	r600_pipe_state_add_reg(rstate,
 				R_028040_CB_COLOR0_BASE + cb * 4,

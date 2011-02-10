@@ -990,6 +990,19 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 				result = FMT_16_16_16_16;
 				goto out_word4;
 			}
+			goto out_unknown;
+		case 32:
+			switch (desc->nr_channels) {
+			case 1:
+				result = FMT_32;
+				goto out_word4;
+			case 2:
+				result = FMT_32_32;
+				goto out_word4;
+			case 4:
+				result = FMT_32_32_32_32;
+				goto out_word4;
+			}
 		}
 		goto out_unknown;
 
