@@ -20,11 +20,8 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#include <cstdio>
-#include <cassert>
+#include <assert.h>
 #include "ast.h"
-
-using std::printf;
 
 const char *
 ast_expression::operator_string(enum ast_operators op)

@@ -54,8 +54,6 @@
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
-using std::printf;
-
 static bool debug = false;
 
 class ir_tree_grafting_visitor : public ir_hierarchical_visitor {

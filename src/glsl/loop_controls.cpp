@@ -21,7 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <climits>
+#include <limits.h>
 #include "main/compiler.h"
 #include "glsl_types.h"
 #include "loop_analysis.h"

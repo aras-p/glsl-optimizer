@@ -21,13 +21,10 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <cstdio>
 #include "ast.h"
 extern "C" {
 #include "program/symbol_table.h"
 }
-
-using std::printf;
 
 void
 ast_type_specifier::print(void) const

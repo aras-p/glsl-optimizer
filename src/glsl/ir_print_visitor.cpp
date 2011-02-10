@@ -25,9 +25,6 @@
 #include "glsl_types.h"
 #include "glsl_parser_extras.h"
 
-using std::printf;
-using std::strncmp;
-
 static void print_type(const glsl_type *t);
 
 void

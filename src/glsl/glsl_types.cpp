@@ -21,7 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <cstdio>
+#include <stdio.h>
 #include <stdlib.h>
 #include "main/core.h" /* for Elements */
 #include "glsl_symbol_table.h"

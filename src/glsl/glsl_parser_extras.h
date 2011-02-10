@@ -31,7 +31,7 @@
 #ifdef __cplusplus
 
 
-#include <cstdlib>
+#include <stdlib.h>
 #include "glsl_symbol_table.h"
 
 enum _mesa_glsl_parser_targets {

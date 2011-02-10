@@ -32,8 +32,6 @@
  #include "ir_expression_flattening.h"
  #include "glsl_types.h"
 
- using std::strcmp;
-
  class signature_entry : public exec_node
  {
  public:

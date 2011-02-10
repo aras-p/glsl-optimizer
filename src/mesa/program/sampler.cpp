@@ -23,7 +23,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <cstdio>
 #include "ir.h"
 #include "glsl_types.h"
 #include "ir_visitor.h"

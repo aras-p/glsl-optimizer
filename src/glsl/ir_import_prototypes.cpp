@@ -27,7 +27,6 @@
  *
  * \author Ian Romanick
  */
-#include <cstdio>
 #include "ir.h"
 #include "glsl_symbol_table.h"
 

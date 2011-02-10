@@ -26,8 +26,8 @@
 #ifndef GLSL_TYPES_H
 #define GLSL_TYPES_H
 
-#include <cstring>
-#include <cassert>
+#include <string.h>
+#include <assert.h>
 
 extern "C" {
 #include "GL/gl.h"

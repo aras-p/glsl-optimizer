@@ -26,8 +26,8 @@
 #ifndef IR_H
 #define IR_H
 
-#include <cstdio>
-#include <cstdlib>
+#include <stdio.h>
+#include <stdlib.h>
 
 #include "ralloc.h"
 #include "glsl_types.h"

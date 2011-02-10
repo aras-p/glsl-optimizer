@@ -27,8 +27,6 @@
 #include "ast.h"
 #include "glsl_types.h"
 
-using std::strcmp;
-
 ir_rvalue *
 _mesa_ast_field_selection_to_hir(const ast_expression *expr,
 				 exec_list *instructions,

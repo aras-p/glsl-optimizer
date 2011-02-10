@@ -41,8 +41,6 @@
 #include "ir_optimization.h"
 #include "glsl_types.h"
 
-using std::memset;
-
 class acp_entry : public exec_node
 {
 public:

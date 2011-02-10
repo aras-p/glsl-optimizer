@@ -39,9 +39,6 @@
 #include "program/hash_table.h"
 #include "glsl_types.h"
 
-using std::abort;
-using std::printf;
-
 class ir_validate : public ir_hierarchical_visitor {
 public:
    ir_validate()
