@@ -242,24 +242,19 @@ static GLuint get_index_type(GLenum type)
 static void
 copy_array_to_vbo_array( struct brw_context *brw,
 			 struct brw_vertex_element *element,
+			 struct brw_vertex_buffer *buffer,
 			 GLuint dst_stride)
 {
    GLuint size = element->count * dst_stride;
 
-   if (element->glarray->StrideB == 0) {
-      assert(element->count == 1);
-      element->stride = 0;
-   } else {
-      element->stride = dst_stride;
-   }
-
+   buffer->stride = dst_stride;
    if (dst_stride == element->glarray->StrideB) {
       intel_upload_data(&brw->intel, element->glarray->Ptr, size,
-			&element->bo, &element->offset);
+			&buffer->bo, &buffer->offset);
    } else {
       const unsigned char *src = element->glarray->Ptr;
       char *dst = intel_upload_map(&brw->intel, size,
-				   &element->bo, &element->offset);
+				   &buffer->bo, &buffer->offset);
       int i;
 
       for (i = 0; i < element->count; i++) {
@@ -275,7 +270,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
    struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = intel_context(ctx);
    GLbitfield vs_inputs = brw->vs.prog_data->inputs_read; 
-   GLuint i;
+   GLuint i, j;
    const unsigned char *ptr = NULL;
    GLuint interleave = 0;
    unsigned int min_index = brw->vb.min_index;
@@ -302,6 +297,9 @@ static void brw_prepare_vertices(struct brw_context *brw)
    if (brw->vb.nr_enabled == 0)
       return;
 
+   if (brw->vb.nr_buffers)
+      goto validate;
+
    /* XXX: In the rare cases where this happens we fallback all
     * the way to software rasterization, although a tnl fallback
     * would be sufficient.  I don't know of *any* real world
@@ -313,7 +311,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
       return;
    }
 
-   for (i = 0; i < brw->vb.nr_enabled; i++) {
+   for (i = j = 0; i < brw->vb.nr_enabled; i++) {
       struct brw_vertex_element *input = brw->vb.enabled[i];
 
       input->element_size = get_size(input->glarray->Type) * input->glarray->Size;
@@ -321,15 +319,18 @@ static void brw_prepare_vertices(struct brw_context *brw)
       if (_mesa_is_bufferobj(input->glarray->BufferObj)) {
 	 struct intel_buffer_object *intel_buffer =
 	    intel_buffer_object(input->glarray->BufferObj);
-	 GLuint offset;
+	 struct brw_vertex_buffer *buffer = &brw->vb.buffers[j];
 
 	 /* Named buffer object: Just reference its contents directly. */
-	 drm_intel_bo_unreference(input->bo);
-	 input->bo = intel_bufferobj_source(intel, intel_buffer, &offset);
-	 drm_intel_bo_reference(input->bo);
-	 input->offset = offset + (unsigned long)input->glarray->Ptr;
-	 input->stride = input->glarray->StrideB;
+	 buffer->bo = intel_bufferobj_source(intel, intel_buffer,
+					     &buffer->offset);
+	 drm_intel_bo_reference(buffer->bo);
+	 buffer->offset += (unsigned long)input->glarray->Ptr;
+	 buffer->stride = input->glarray->StrideB;
+
 	 input->count = input->glarray->_MaxElement;
+	 input->offset = 0;
+	 input->buffer = j++;
 
 	 /* This is a common place to reach if the user mistakenly supplies
 	  * a pointer in place of a VBO offset.  If we just let it go through,
@@ -343,16 +344,9 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	  * probably a service to the poor programmer to do so rather than
 	  * trying to just not render.
 	  */
-	 assert(input->offset < input->bo->size);
+	 assert(input->offset < brw->vb.buffers[input->buffer].bo->size);
       } else {
 	 input->count = input->glarray->StrideB ? max_index + 1 : 1;
-	 if (input->bo != NULL) {
-	    /* Already-uploaded vertex data is present from a previous
-	     * prepare_vertices, but we had to re-validate state due to
-	     * check_aperture failing and a new batch being produced.
-	     */
-	    continue;
-	 }
 
 	 /* Queue the buffer object up to be uploaded in the next pass,
 	  * when we've decided if we're doing interleaved or not.
@@ -369,8 +363,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    ptr = input->glarray->Ptr;
 	 }
 	 else if (interleave != input->glarray->StrideB ||
-		  (const unsigned char *)input->glarray->Ptr - ptr < 0 ||
-		  (const unsigned char *)input->glarray->Ptr - ptr > interleave)
+		  (GLuint)(input->glarray->Ptr - ptr) > interleave)
 	 {
 	    interleave = 0;
 	 }
@@ -384,30 +377,33 @@ static void brw_prepare_vertices(struct brw_context *brw)
       /* All uploads are interleaved, so upload the arrays together as
        * interleaved.  First, upload the contents and set up upload[0].
        */
-      copy_array_to_vbo_array(brw, upload[0], interleave);
+      copy_array_to_vbo_array(brw,
+			      upload[0], &brw->vb.buffers[j],
+			      interleave);
 
-      for (i = 1; i < nr_uploads; i++) {
+      for (i = 0; i < nr_uploads; i++) {
 	 /* Then, just point upload[i] at upload[0]'s buffer. */
-	 upload[i]->stride = interleave;
-	 upload[i]->offset = upload[0]->offset +
-	    ((const unsigned char *)upload[i]->glarray->Ptr - ptr);
-	 upload[i]->bo = upload[0]->bo;
-	 drm_intel_bo_reference(upload[i]->bo);
+	 upload[i]->offset =
+	    ((const unsigned char *)upload[i]->glarray->Ptr - upload[0]->glarray->Ptr);
+	 upload[i]->buffer = j;
       }
+      j++;
    }
    else {
       /* Upload non-interleaved arrays */
       for (i = 0; i < nr_uploads; i++) {
-          copy_array_to_vbo_array(brw, upload[i], upload[i]->element_size);
+          copy_array_to_vbo_array(brw,
+				  upload[i], &brw->vb.buffers[j],
+				  upload[i]->element_size);
+	  upload[i]->buffer = j++;
       }
    }
+   brw->vb.nr_buffers = j;
 
+validate:
    brw_prepare_query_begin(brw);
-
-   for (i = 0; i < brw->vb.nr_enabled; i++) {
-      struct brw_vertex_element *input = brw->vb.enabled[i];
-
-      brw_add_validated_bo(brw, input->bo);
+   for (i = 0; i < brw->vb.nr_buffers; i++) {
+      brw_add_validated_bo(brw, brw->vb.buffers[i].bo);
    }
 }
 
@@ -449,44 +445,32 @@ static void brw_emit_vertices(struct brw_context *brw)
    }
 
    /* Now emit VB and VEP state packets.
-    *
-    * This still defines a hardware VB for each input, even if they
-    * are interleaved or from the same VBO.  TBD if this makes a
-    * performance difference.
     */
-   BEGIN_BATCH(1 + brw->vb.nr_enabled * 4);
-   OUT_BATCH((CMD_VERTEX_BUFFER << 16) |
-	     ((1 + brw->vb.nr_enabled * 4) - 2));
 
-   for (i = 0; i < brw->vb.nr_enabled; i++) {
-      struct brw_vertex_element *input = brw->vb.enabled[i];
+   BEGIN_BATCH(1 + 4*brw->vb.nr_buffers);
+   OUT_BATCH((CMD_VERTEX_BUFFER << 16) | (4*brw->vb.nr_buffers - 1));
+   for (i = 0; i < brw->vb.nr_buffers; i++) {
+      struct brw_vertex_buffer *buffer = &brw->vb.buffers[i];
       uint32_t dw0;
 
       if (intel->gen >= 6) {
-	 dw0 = GEN6_VB0_ACCESS_VERTEXDATA |
-	    (i << GEN6_VB0_INDEX_SHIFT);
+	 dw0 = GEN6_VB0_ACCESS_VERTEXDATA | (i << GEN6_VB0_INDEX_SHIFT);
       } else {
-	 dw0 = BRW_VB0_ACCESS_VERTEXDATA |
-	    (i << BRW_VB0_INDEX_SHIFT);
+	 dw0 = BRW_VB0_ACCESS_VERTEXDATA | (i << BRW_VB0_INDEX_SHIFT);
       }
 
-      OUT_BATCH(dw0 |
-		(input->stride << BRW_VB0_PITCH_SHIFT));
-      OUT_RELOC(input->bo,
-		I915_GEM_DOMAIN_VERTEX, 0,
-		input->offset);
+      OUT_BATCH(dw0 | (buffer->stride << BRW_VB0_PITCH_SHIFT));
+      OUT_RELOC(buffer->bo, I915_GEM_DOMAIN_VERTEX, 0, buffer->offset);
       if (intel->gen >= 5) {
-	 OUT_RELOC(input->bo,
-		   I915_GEM_DOMAIN_VERTEX, 0,
-		   input->bo->size - 1);
+	 OUT_RELOC(buffer->bo, I915_GEM_DOMAIN_VERTEX, 0, buffer->bo->size - 1);
       } else
-          OUT_BATCH(input->stride ? input->count : 0);
+          OUT_BATCH(0);
       OUT_BATCH(0); /* Instance data step rate */
    }
    ADVANCE_BATCH();
 
    BEGIN_BATCH(1 + brw->vb.nr_enabled * 2);
-   OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | ((1 + brw->vb.nr_enabled * 2) - 2));
+   OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | (2*brw->vb.nr_enabled - 1));
    for (i = 0; i < brw->vb.nr_enabled; i++) {
       struct brw_vertex_element *input = brw->vb.enabled[i];
       uint32_t format = get_surface_type(input->glarray->Type,
@@ -507,15 +491,15 @@ static void brw_emit_vertices(struct brw_context *brw)
       }
 
       if (intel->gen >= 6) {
-	 OUT_BATCH((i << GEN6_VE0_INDEX_SHIFT) |
+	 OUT_BATCH((input->buffer << GEN6_VE0_INDEX_SHIFT) |
 		   GEN6_VE0_VALID |
 		   (format << BRW_VE0_FORMAT_SHIFT) |
-		   (0 << BRW_VE0_SRC_OFFSET_SHIFT));
+		   (input->offset << BRW_VE0_SRC_OFFSET_SHIFT));
       } else {
-	 OUT_BATCH((i << BRW_VE0_INDEX_SHIFT) |
+	 OUT_BATCH((input->buffer << BRW_VE0_INDEX_SHIFT) |
 		   BRW_VE0_VALID |
 		   (format << BRW_VE0_FORMAT_SHIFT) |
-		   (0 << BRW_VE0_SRC_OFFSET_SHIFT));
+		   (input->offset << BRW_VE0_SRC_OFFSET_SHIFT));
       }
 
       if (intel->gen >= 5)

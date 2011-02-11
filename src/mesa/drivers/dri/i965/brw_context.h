@@ -408,8 +408,17 @@ struct brw_cached_batch_item {
  */
 #define ATTRIB_BIT_DWORDS  ((VERT_ATTRIB_MAX+31)/32)
 
+struct brw_vertex_buffer {
+   /** Buffer object containing the uploaded vertex data */
+   drm_intel_bo *bo;
+   uint32_t offset;
+   /** Byte stride between elements in the uploaded array */
+   GLuint stride;
+};
 struct brw_vertex_element {
    const struct gl_client_array *glarray;
+
+   int buffer;
 
    /** The corresponding Mesa vertex attribute */
    gl_vert_attrib attrib;
@@ -417,12 +426,8 @@ struct brw_vertex_element {
    GLuint element_size;
    /** Number of uploaded elements for this input. */
    GLuint count;
-   /** Byte stride between elements in the uploaded array */
-   GLuint stride;
    /** Offset of the first element within the buffer object */
    unsigned int offset;
-   /** Buffer object containing the uploaded vertex data */
-   drm_intel_bo *bo;
 };
 
 
@@ -483,9 +488,11 @@ struct brw_context
 
    struct {
       struct brw_vertex_element inputs[VERT_ATTRIB_MAX];
+      struct brw_vertex_buffer buffers[VERT_ATTRIB_MAX];
 
       struct brw_vertex_element *enabled[VERT_ATTRIB_MAX];
       GLuint nr_enabled;
+      GLuint nr_buffers;
 
       /* Summary of size and varying of active arrays, so we can check
        * for changes to this state:

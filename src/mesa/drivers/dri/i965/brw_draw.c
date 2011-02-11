@@ -172,13 +172,16 @@ static void brw_merge_inputs( struct brw_context *brw,
    struct brw_vertex_info old = brw->vb.info;
    GLuint i;
 
-   for (i = 0; i < VERT_ATTRIB_MAX; i++)
-      drm_intel_bo_unreference(brw->vb.inputs[i].bo);
+   for (i = 0; i < brw->vb.nr_buffers; i++) {
+      drm_intel_bo_unreference(brw->vb.buffers[i].bo);
+      brw->vb.buffers[i].bo = NULL;
+   }
+   brw->vb.nr_buffers = 0;
 
-   memset(&brw->vb.inputs, 0, sizeof(brw->vb.inputs));
    memset(&brw->vb.info, 0, sizeof(brw->vb.info));
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+      brw->vb.inputs[i].buffer = -1;
       brw->vb.inputs[i].glarray = arrays[i];
       brw->vb.inputs[i].attrib = (gl_vert_attrib) i;
 
@@ -456,20 +459,32 @@ void brw_draw_init( struct brw_context *brw )
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct vbo_context *vbo = vbo_context(ctx);
+   int i;
 
    /* Register our drawing function: 
     */
    vbo->draw_prims = brw_draw_prims;
+
+   for (i = 0; i < VERT_ATTRIB_MAX; i++)
+      brw->vb.inputs[i].buffer = -1;
+   brw->vb.nr_buffers = 0;
+   brw->vb.nr_enabled = 0;
 }
 
 void brw_draw_destroy( struct brw_context *brw )
 {
    int i;
 
-   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
-      drm_intel_bo_unreference(brw->vb.inputs[i].bo);
-      brw->vb.inputs[i].bo = NULL;
+   for (i = 0; i < brw->vb.nr_buffers; i++) {
+      drm_intel_bo_unreference(brw->vb.buffers[i].bo);
+      brw->vb.buffers[i].bo = NULL;
    }
+   brw->vb.nr_buffers = 0;
+
+   for (i = 0; i < brw->vb.nr_enabled; i++) {
+      brw->vb.enabled[i]->buffer = -1;
+   }
+   brw->vb.nr_enabled = 0;
 
    drm_intel_bo_unreference(brw->ib.bo);
    brw->ib.bo = NULL;
