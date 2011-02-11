@@ -314,24 +314,24 @@ static void brw_prepare_vertices(struct brw_context *brw)
 
    for (i = j = 0; i < brw->vb.nr_enabled; i++) {
       struct brw_vertex_element *input = brw->vb.enabled[i];
-      int type_size = get_size(input->glarray->Type);
+      const struct gl_client_array *glarray = input->glarray;
+      int type_size = get_size(glarray->Type);
 
-      input->element_size = type_size * input->glarray->Size;
+      input->element_size = type_size * glarray->Size;
 
-      if (_mesa_is_bufferobj(input->glarray->BufferObj)) {
+      if (_mesa_is_bufferobj(glarray->BufferObj)) {
 	 struct intel_buffer_object *intel_buffer =
-	    intel_buffer_object(input->glarray->BufferObj);
+	    intel_buffer_object(glarray->BufferObj);
 	 int k;
 
 	 for (k = 0; k < i; k++) {
-	    struct brw_vertex_element *other = brw->vb.enabled[k];
-	    if (input->glarray->BufferObj == other->glarray->BufferObj &&
-		input->glarray->StrideB == other->glarray->StrideB &&
-		(uintptr_t)(input->glarray->Ptr - other->glarray->Ptr) <
-		input->glarray->StrideB)
+	    const struct gl_client_array *other = brw->vb.enabled[k]->glarray;
+	    if (glarray->BufferObj == other->BufferObj &&
+		glarray->StrideB == other->StrideB &&
+		(uintptr_t)(glarray->Ptr - other->Ptr) < glarray->StrideB)
 	    {
-	       input->buffer = other->buffer;
-	       input->offset = input->glarray->Ptr - other->glarray->Ptr;
+	       input->buffer = brw->vb.enabled[k]->buffer;
+	       input->offset = glarray->Ptr - other->Ptr;
 	       break;
 	    }
 	 }
@@ -341,13 +341,13 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    buffer->bo = intel_bufferobj_source(intel, intel_buffer,
 						&buffer->offset);
 	    drm_intel_bo_reference(buffer->bo);
-	    buffer->offset += (uintptr_t)input->glarray->Ptr;
-	    buffer->stride = input->glarray->StrideB;
+	    buffer->offset += (uintptr_t)glarray->Ptr;
+	    buffer->stride = glarray->StrideB;
 
 	    input->buffer = j++;
 	    input->offset = 0;
 	 }
-	 input->count = input->glarray->_MaxElement;
+	 input->count = glarray->_MaxElement;
 
 	 /* This is a common place to reach if the user mistakenly supplies
 	  * a pointer in place of a VBO offset.  If we just let it go through,
@@ -363,7 +363,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	  */
 	 assert(input->offset < brw->vb.buffers[input->buffer].bo->size);
       } else {
-	 input->count = input->glarray->StrideB ? max_index + 1 : 1;
+	 input->count = glarray->StrideB ? max_index + 1 : 1;
 
 	 /* Queue the buffer object up to be uploaded in the next pass,
 	  * when we've decided if we're doing interleaved or not.
@@ -371,17 +371,16 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 if (nr_uploads == 0) {
 	    /* Position array not properly enabled:
 	     */
-	    if (input->attrib == VERT_ATTRIB_POS &&
-		input->glarray->StrideB == 0) {
+	    if (input->attrib == VERT_ATTRIB_POS && glarray->StrideB == 0) {
                intel->Fallback = GL_TRUE; /* boolean, not bitfield */
                return;
             }
 
-	    interleaved = input->glarray->StrideB;
-	    ptr = input->glarray->Ptr;
+	    interleaved = glarray->StrideB;
+	    ptr = glarray->Ptr;
 	 }
-	 else if (interleaved != input->glarray->StrideB ||
-		  (uintptr_t)(input->glarray->Ptr - ptr) > interleaved)
+	 else if (interleaved != glarray->StrideB ||
+		  (uintptr_t)(glarray->Ptr - ptr) > interleaved)
 	 {
 	    interleaved = 0;
 	 }
