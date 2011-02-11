@@ -390,11 +390,15 @@ svga_texture_get_transfer(struct pipe_context *pipe,
    if(st->hw_nblocksy < nblocksy) {
       /* We couldn't allocate a hardware buffer big enough for the transfer, 
        * so allocate regular malloc memory instead */
-      debug_printf("%s: failed to allocate %u KB of DMA, splitting into %u x %u KB DMA transfers\n",
-                   __FUNCTION__,
-                   (nblocksy*st->base.stride + 1023)/1024,
-                   (nblocksy + st->hw_nblocksy - 1)/st->hw_nblocksy,
-                   (st->hw_nblocksy*st->base.stride + 1023)/1024);
+      if (0) {
+         debug_printf("%s: failed to allocate %u KB of DMA, "
+                      "splitting into %u x %u KB DMA transfers\n",
+                      __FUNCTION__,
+                      (nblocksy*st->base.stride + 1023)/1024,
+                      (nblocksy + st->hw_nblocksy - 1)/st->hw_nblocksy,
+                      (st->hw_nblocksy*st->base.stride + 1023)/1024);
+      }
+
       st->swbuf = MALLOC(nblocksy*st->base.stride);
       if(!st->swbuf)
          goto no_swbuf;
