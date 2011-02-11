@@ -35,6 +35,7 @@ import os
 import os.path
 import re
 import subprocess
+import platform as _platform
 
 import SCons.Action
 import SCons.Builder
@@ -190,6 +191,23 @@ def generate(env):
     ppc = env['machine'] == 'ppc'
     gcc = env['gcc']
     msvc = env['msvc']
+
+    # Determine whether we are cross compiling; in particular, whether we need
+    # to compile code generators with a different compiler as the target code.
+    host_platform = _platform.system().lower()
+    host_machine = os.environ.get('PROCESSOR_ARCHITECTURE', _platform.machine())
+    host_machine = {
+        'x86': 'x86',
+        'i386': 'x86',
+        'i486': 'x86',
+        'i586': 'x86',
+        'i686': 'x86',
+        'ppc' : 'ppc',
+        'x86_64': 'x86_64',
+    }.get(host_machine, 'generic')
+    env['crosscompile'] = platform != host_platform
+    if machine == 'x86_64' and host_machine != 'x86_64':
+        env['crosscompile'] = True
 
     # Backwards compatability with the debug= profile= options
     if env['build'] == 'debug':

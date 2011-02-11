@@ -82,7 +82,7 @@ sources = [
 ] 
 
 
-if env['platform'] == common.host_platform:
+if not env['crosscompile'] or env['platform'] == 'embedded':
     if env['msvc']:
         env.Prepend(CPPPATH = ['#/src/getopt'])
         env.PrependUnique(LIBS = [getopt])
@@ -104,9 +104,6 @@ if env['platform'] == common.host_platform:
     env.Depends(builtin_glsl_function, ['builtins/tools/generate_builtins.py', 'builtins/tools/texture_builtins.py'] + Glob('builtins/ir/*'))
 
     Export('builtin_glsl_function')
-
-    if common.cross_compiling:
-        Return()
 
 sources += builtin_glsl_function
 

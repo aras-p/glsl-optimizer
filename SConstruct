@@ -132,7 +132,7 @@ Export('env')
 #
 
 # Create host environent
-if env['platform'] != common.host_platform:
+if env['crosscompile'] and env['platform'] != 'embedded':
     host_env = Environment(
         options = opts,
         # no tool used
