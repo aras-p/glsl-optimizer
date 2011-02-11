@@ -121,8 +121,6 @@ if env['platform'] in ('posix', 'linux', 'freebsd', 'darwin'):
 # for debugging
 #print env.Dump()
 
-Export('env')
-
 
 #######################################################################
 # Invoke host SConscripts 
@@ -149,13 +147,18 @@ if env['crosscompile'] and env['platform'] != 'embedded':
 
     host_env.Tool('gallium')
 
+    host_env['hostonly'] = True
+    assert host_env['crosscompile'] == False
+
+    Export(env = host_env)
+
     SConscript(
-        'src/glsl/SConscript',
+        'src/SConscript',
         variant_dir = host_env['build_dir'],
         duplicate = 0, # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
-        exports={'env':host_env},
     )
 
+Export('env')
 
 #######################################################################
 # Invoke SConscripts

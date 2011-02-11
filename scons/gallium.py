@@ -208,6 +208,7 @@ def generate(env):
     env['crosscompile'] = platform != host_platform
     if machine == 'x86_64' and host_machine != 'x86_64':
         env['crosscompile'] = True
+    env['hostonly'] = False
 
     # Backwards compatability with the debug= profile= options
     if env['build'] == 'debug':
