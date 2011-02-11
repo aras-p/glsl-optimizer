@@ -61,7 +61,6 @@
 #include "swrast/s_depth.h"
 #include "swrast/s_lines.h"
 #include "swrast/s_triangle.h"
-#include "swrast/s_trispan.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
