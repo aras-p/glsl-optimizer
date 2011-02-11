@@ -76,9 +76,11 @@ void intel_upload_data(struct intel_context *intel,
 		       GLuint *return_offset);
 
 void *intel_upload_map(struct intel_context *intel,
-		       GLuint size,
-		       drm_intel_bo **return_bo,
-		       GLuint *return_offset);
+		       GLuint size);
+void intel_upload_unmap(struct intel_context *intel,
+			const void *ptr, GLuint size,
+			drm_intel_bo **return_bo,
+			GLuint *return_offset);
 
 void intel_upload_finish(struct intel_context *intel);
 

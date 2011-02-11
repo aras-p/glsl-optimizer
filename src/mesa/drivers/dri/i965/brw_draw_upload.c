@@ -253,8 +253,7 @@ copy_array_to_vbo_array( struct brw_context *brw,
 			&buffer->bo, &buffer->offset);
    } else {
       const unsigned char *src = element->glarray->Ptr;
-      char *dst = intel_upload_map(&brw->intel, size,
-				   &buffer->bo, &buffer->offset);
+      char *dst = intel_upload_map(&brw->intel, size);
       int i;
 
       for (i = 0; i < element->count; i++) {
@@ -262,6 +261,8 @@ copy_array_to_vbo_array( struct brw_context *brw,
 	 src += element->glarray->StrideB;
 	 dst += dst_stride;
       }
+      intel_upload_unmap(&brw->intel, dst, size,
+			 &buffer->bo, &buffer->offset);
    }
 }
 
@@ -421,9 +422,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 int count = upload[0]->count, offset;
 	 char *map;
 
-	 map = intel_upload_map(&brw->intel, total_size * count,
-				&buffer->bo, &buffer->offset);
-
+	 map = intel_upload_map(&brw->intel, total_size * count);
 	 for (i = offset = 0; i < nr_uploads; i++) {
 	    const unsigned char *src = upload[i]->glarray->Ptr;
 	    int size = upload[i]->element_size;
@@ -442,6 +441,8 @@ static void brw_prepare_vertices(struct brw_context *brw)
 
 	    offset += size;
 	 }
+	 intel_upload_unmap(&brw->intel, map, total_size * count,
+			    &buffer->bo, &buffer->offset);
 	 buffer->stride = offset;
 	 j++;
 

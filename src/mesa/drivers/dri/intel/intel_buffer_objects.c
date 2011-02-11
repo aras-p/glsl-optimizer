@@ -619,7 +619,7 @@ void intel_upload_data(struct intel_context *intel,
    *return_offset = intel->upload.offset;
 
    if (intel->upload.buffer_len &&
-       intel->upload.buffer_len + asize > sizeof(intel->upload.buffer))
+       intel->upload.buffer_len + size > sizeof(intel->upload.buffer))
    {
       drm_intel_bo_subdata(intel->upload.bo,
 			   intel->upload.buffer_offset,
@@ -646,25 +646,12 @@ void intel_upload_data(struct intel_context *intel,
    intel->upload.offset += asize;
 }
 
-void *intel_upload_map(struct intel_context *intel,
-		       GLuint size,
-		       drm_intel_bo **return_bo,
-		       GLuint *return_offset)
+void *intel_upload_map(struct intel_context *intel, GLuint size)
 {
-   GLuint asize = ALIGN(size, 64);
    char *ptr;
 
-   if (intel->upload.bo == NULL ||
-       intel->upload.offset + size > intel->upload.bo->size) {
-      wrap_buffers(intel, size);
-   }
-
-   drm_intel_bo_reference(intel->upload.bo);
-   *return_bo = intel->upload.bo;
-   *return_offset = intel->upload.offset;
-
    if (intel->upload.buffer_len &&
-       intel->upload.buffer_len + asize > sizeof(intel->upload.buffer))
+       intel->upload.buffer_len + size > sizeof(intel->upload.buffer))
    {
       drm_intel_bo_subdata(intel->upload.bo,
 			   intel->upload.buffer_offset,
@@ -673,24 +660,23 @@ void *intel_upload_map(struct intel_context *intel,
       intel->upload.buffer_len = 0;
    }
 
-   if (size < sizeof(intel->upload.buffer))
-   {
-      if (intel->upload.buffer_len == 0)
-	 intel->upload.buffer_offset = intel->upload.offset;
-
+   if (size <= sizeof(intel->upload.buffer))
       ptr = intel->upload.buffer + intel->upload.buffer_len;
-      intel->upload.buffer_len += asize;
-   }
    else
-   {
-      drm_intel_gem_bo_map_gtt(intel->upload.bo);
-      ptr = intel->upload.bo->virtual;
-      ptr += intel->upload.offset;
-   }
-
-   intel->upload.offset += asize;
+      ptr = malloc(size);
 
    return ptr;
+}
+
+void intel_upload_unmap(struct intel_context *intel,
+			const void *ptr, GLuint size,
+			drm_intel_bo **return_bo,
+			GLuint *return_offset)
+{
+   intel_upload_data(intel, ptr, size, return_bo, return_offset);
+
+   if (size > sizeof(intel->upload.buffer))
+      free((void*)ptr);
 }
 
 drm_intel_bo *
