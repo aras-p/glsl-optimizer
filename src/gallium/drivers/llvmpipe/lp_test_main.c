@@ -35,22 +35,11 @@
 
 
 #include "util/u_cpu_detect.h"
+#include "util/u_math.h"
 
 #include "gallivm/lp_bld_const.h"
 #include "gallivm/lp_bld_init.h"
 #include "lp_test.h"
-
-
-#ifdef PIPE_CC_MSVC
-static INLINE double
-round(double x)
-{
-   if (x >= 0.0)
-      return floor(x + 0.5);
-   else
-      return ceil(x - 0.5);
-}
-#endif
 
 
 void
