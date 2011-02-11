@@ -30,6 +30,7 @@
 #include <tgsi/tgsi_util.h>
 #include <util/u_blitter.h>
 #include <util/u_double_list.h>
+#include <util/u_format_s3tc.h>
 #include <util/u_transfer.h>
 #include <util/u_surface.h>
 #include <util/u_pack_color.h>
@@ -502,6 +503,7 @@ struct pipe_screen *r600_screen_create(struct radeon *radeon)
 	r600_init_screen_resource_functions(&rscreen->screen);
 
 	rscreen->tiling_info = r600_get_tiling_info(radeon);
+	util_format_s3tc_init();
 
 	util_slab_create(&rscreen->pool_buffers,
 			 sizeof(struct r600_resource_buffer), 64,

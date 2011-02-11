@@ -27,6 +27,7 @@
 #include <errno.h>
 #include <pipe/p_screen.h>
 #include <util/u_format.h>
+#include <util/u_format_s3tc.h>
 #include <util/u_math.h>
 #include <util/u_inlines.h>
 #include <util/u_memory.h>
@@ -289,6 +290,10 @@ static boolean permit_hardware_blit(struct pipe_screen *screen,
 	else
 		bind = PIPE_BIND_RENDER_TARGET;
 
+	/* hackaround for S3TC */
+	if (util_format_is_s3tc(res->format))
+		return TRUE;
+	    
 	if (!screen->is_format_supported(screen,
 				res->format,
 				res->target,
@@ -416,6 +421,10 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 			array_mode = V_038000_ARRAY_2D_TILED_THIN1;
 		}
 	}
+
+	if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
+	    util_format_is_s3tc(templ->format))
+		array_mode = V_038000_ARRAY_1D_TILED_THIN1;
 
 	return (struct pipe_resource *)r600_texture_create_object(screen, templ, array_mode,
 								  0, 0, NULL);
@@ -868,6 +877,10 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 
 		if (!r600_enable_s3tc)
 			goto out_unknown;
+
+		if (!util_format_s3tc_enabled) {
+			goto out_unknown;
+		}
 
 		switch (format) {
 		case PIPE_FORMAT_DXT1_RGB:
