@@ -36,6 +36,7 @@ struct radeon_drm_winsys {
     struct r300_winsys_screen base;
 
     int fd; /* DRM file descriptor */
+    int num_cs; /* The number of command streams created. */
 
     struct pb_manager *kman;
     struct pb_manager *cman;

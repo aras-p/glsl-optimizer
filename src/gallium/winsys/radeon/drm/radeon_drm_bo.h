@@ -44,13 +44,17 @@ struct radeon_bomgr;
 struct radeon_bo {
     struct pb_buffer base;
     struct radeon_bomgr *mgr;
+    struct radeon_drm_winsys *rws;
 
     void *ptr;
     uint32_t size;
     uint32_t handle;
     uint32_t name;
 
-    int cref;
+    int ref_count;
+
+    /* how many command streams is this bo referenced in? */
+    int num_cs_references;
 
     boolean flinked;
     uint32_t flink;
@@ -64,7 +68,7 @@ void radeon_bo_unref(struct radeon_bo *buf);
 
 static INLINE void radeon_bo_ref(struct radeon_bo *bo)
 {
-    p_atomic_inc(&bo->cref);
+    p_atomic_inc(&bo->ref_count);
 }
 
 static INLINE struct pb_buffer *

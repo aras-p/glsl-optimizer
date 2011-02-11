@@ -106,6 +106,7 @@ static struct r300_winsys_cs *radeon_drm_cs_create(struct r300_winsys_screen *rw
     cs->chunks[1].chunk_id = RADEON_CHUNK_ID_RELOCS;
     cs->chunks[1].length_dw = 0;
     cs->chunks[1].chunk_data = (uint64_t)(uintptr_t)cs->relocs;
+    p_atomic_inc(&ws->num_cs);
     return &cs->base;
 }
 
@@ -215,6 +216,7 @@ static void radeon_add_reloc(struct radeon_drm_cs *cs,
 
     /* Initialize the new relocation. */
     radeon_bo_ref(bo);
+    p_atomic_inc(&bo->num_cs_references);
     cs->relocs_bo[cs->crelocs] = bo;
     reloc = &cs->relocs[cs->crelocs];
     reloc->handle = bo->handle;
@@ -315,6 +317,7 @@ static void radeon_drm_cs_emit(struct r300_winsys_cs *rcs)
     /* Unreference buffers, cleanup. */
     for (i = 0; i < cs->crelocs; i++) {
         radeon_bo_unref(cs->relocs_bo[i]);
+        p_atomic_dec(&cs->relocs_bo[i]->num_cs_references);
         cs->relocs_bo[i] = NULL;
     }
 
@@ -330,6 +333,7 @@ static void radeon_drm_cs_emit(struct r300_winsys_cs *rcs)
 static void radeon_drm_cs_destroy(struct r300_winsys_cs *rcs)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
+    p_atomic_dec(&cs->ws->num_cs);
     FREE(cs->relocs_bo);
     FREE(cs->relocs);
     FREE(cs);

@@ -91,7 +91,7 @@ void radeon_bo_unref(struct radeon_bo *bo)
 {
     struct drm_gem_close args = {};
 
-    if (!p_atomic_dec_zero(&bo->cref))
+    if (!p_atomic_dec_zero(&bo->ref_count))
         return;
 
     if (bo->name) {
@@ -106,7 +106,7 @@ void radeon_bo_unref(struct radeon_bo *bo)
 
     /* Close object. */
     args.handle = bo->handle;
-    drmIoctl(bo->mgr->rws->fd, DRM_IOCTL_GEM_CLOSE, &args);
+    drmIoctl(bo->rws->fd, DRM_IOCTL_GEM_CLOSE, &args);
     FREE(bo);
 }
 
@@ -116,7 +116,7 @@ static void radeon_bo_wait(struct r300_winsys_bo *_buf)
     struct drm_radeon_gem_wait_idle args = {};
 
     args.handle = bo->handle;
-    while (drmCommandWriteRead(bo->mgr->rws->fd, DRM_RADEON_GEM_WAIT_IDLE,
+    while (drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_WAIT_IDLE,
                                &args, sizeof(args)) == -EBUSY);
 }
 
@@ -126,7 +126,7 @@ static boolean radeon_bo_is_busy(struct r300_winsys_bo *_buf)
     struct drm_radeon_gem_busy args = {};
 
     args.handle = bo->handle;
-    return drmCommandWriteRead(bo->mgr->rws->fd, DRM_RADEON_GEM_BUSY,
+    return drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_BUSY,
                                &args, sizeof(args)) != 0;
 }
 
@@ -202,7 +202,7 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
         args.handle = bo->handle;
         args.offset = 0;
         args.size = (uint64_t)bo->size;
-        if (drmCommandWriteRead(bo->mgr->rws->fd,
+        if (drmCommandWriteRead(bo->rws->fd,
                                 DRM_RADEON_GEM_MMAP,
                                 &args,
                                 sizeof(args))) {
@@ -211,7 +211,7 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
             return NULL;
         }
         ptr = mmap(0, args.size, PROT_READ|PROT_WRITE, MAP_SHARED,
-                   bo->mgr->rws->fd, args.addr_ptr);
+                   bo->rws->fd, args.addr_ptr);
         if (ptr == MAP_FAILED) {
             fprintf(stderr, "radeon: mmap failed, errno: %i\n", errno);
             return NULL;
@@ -293,6 +293,7 @@ static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
     bo->base.base.size = size;
     bo->base.vtbl = &radeon_bo_vtbl;
     bo->mgr = mgr;
+    bo->rws = mgr->rws;
     bo->handle = args.handle;
     bo->size = size;
 
@@ -359,7 +360,7 @@ static void radeon_bo_get_tiling(struct r300_winsys_bo *_buf,
 
     args.handle = bo->handle;
 
-    drmCommandWriteRead(bo->mgr->rws->fd,
+    drmCommandWriteRead(bo->rws->fd,
                         DRM_RADEON_GEM_GET_TILING,
                         &args,
                         sizeof(args));
@@ -392,7 +393,7 @@ static void radeon_bo_set_tiling(struct r300_winsys_bo *_buf,
     args.handle = bo->handle;
     args.pitch = pitch;
 
-    drmCommandWriteRead(bo->mgr->rws->fd,
+    drmCommandWriteRead(bo->rws->fd,
                         DRM_RADEON_GEM_SET_TILING,
                         &args,
                         sizeof(args));
@@ -504,6 +505,7 @@ static struct r300_winsys_bo *radeon_winsys_bo_from_handle(struct r300_winsys_sc
     bo->base.base.size = bo->size;
     bo->base.vtbl = &radeon_bo_vtbl;
     bo->mgr = mgr;
+    bo->rws = mgr->rws;
 
     util_hash_table_set(mgr->bo_handles, (void*)(uintptr_t)whandle->handle, bo);
 
@@ -528,14 +530,12 @@ static boolean radeon_winsys_bo_get_handle(struct r300_winsys_bo *buffer,
 {
     struct drm_gem_flink flink = {};
     struct radeon_bo *bo = get_radeon_bo(pb_buffer(buffer));
-    whandle->stride = stride;
-
 
     if (whandle->type == DRM_API_HANDLE_TYPE_SHARED) {
         if (!bo->flinked) {
             flink.handle = bo->handle;
 
-            if (ioctl(bo->mgr->rws->fd, DRM_IOCTL_GEM_FLINK, &flink)) {
+            if (ioctl(bo->rws->fd, DRM_IOCTL_GEM_FLINK, &flink)) {
                 return FALSE;
             }
 
@@ -546,6 +546,8 @@ static boolean radeon_winsys_bo_get_handle(struct r300_winsys_bo *buffer,
     } else if (whandle->type == DRM_API_HANDLE_TYPE_KMS) {
         whandle->handle = bo->handle;
     }
+
+    whandle->stride = stride;
     return TRUE;
 }
 
