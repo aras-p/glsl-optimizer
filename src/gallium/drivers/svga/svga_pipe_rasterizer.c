@@ -127,6 +127,11 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
       rast->need_pipeline_points_str = "smooth points";
    }
 
+   if (templ->line_smooth) {
+      rast->need_pipeline |= SVGA_PIPELINE_FLAG_LINES;
+      rast->need_pipeline_lines_str = "smooth lines";
+   }
+
    {
       int fill_front = templ->fill_front;
       int fill_back = templ->fill_back;
