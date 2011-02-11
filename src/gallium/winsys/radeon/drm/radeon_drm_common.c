@@ -1,5 +1,6 @@
 /*
  * Copyright © 2009 Corbin Simpson
+ * Copyright © 2011 Marek Olšák <maraeo@gmail.com>
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -27,6 +28,7 @@
  * Authors:
  *      Corbin Simpson <MostAwesomeDude@gmail.com>
  *      Joakim Sindholt <opensource@zhasha.com>
+ *      Marek Olšák <maraeo@gmail.com>
  */
 
 #include "radeon_winsys.h"

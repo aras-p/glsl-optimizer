@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008 Jérôme Glisse
+ * Copyright © 2011 Marek Olšák <maraeo@gmail.com>
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -26,6 +27,7 @@
 /*
  * Authors:
  *      Jérôme Glisse <glisse@freedesktop.org>
+ *      Marek Olšák <maraeo@gmail.com>
  */
 #ifndef RADEON_DRM_BUFFER_H
 #define RADEON_DRM_BUFFER_H
@@ -55,10 +57,6 @@ struct radeon_bo {
 };
 
 struct pb_manager *radeon_bomgr_create(struct radeon_drm_winsys *rws);
-struct pb_buffer *radeon_bomgr_create_bo_from_handle(struct pb_manager *_mgr,
-							      uint32_t handle);
-boolean radeon_bomgr_get_handle(struct pb_buffer *_buf,
-				     struct winsys_handle *whandle);
 void radeon_bomgr_init_functions(struct radeon_drm_winsys *ws);
 
 void radeon_bo_unref(struct radeon_bo *buf);
