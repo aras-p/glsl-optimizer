@@ -13,6 +13,7 @@ LIBGLCPP_SOURCES = \
 
 GLCPP_SOURCES = \
 	$(LIBGLCPP_SOURCES) \
+	ralloc.c \
 	glcpp/glcpp.c
 
 C_SOURCES = \
@@ -154,7 +155,7 @@ glsl_compiler: $(GLSL2_OBJECTS) libglsl.a builtin_stubs.o
 
 glcpp: glcpp/glcpp
 glcpp/glcpp: $(GLCPP_OBJECTS)
-	$(APP_CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(GLCPP_OBJECTS) $(LIBS) -o $@
+	$(APP_CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(GLCPP_OBJECTS) -o $@
 
 .cpp.o:
 	$(CXX) -c $(INCLUDES) $(CXXFLAGS) $(DEFINES) $< -o $@
