@@ -126,6 +126,7 @@ struct dri2_egl_surface
    int                    dx;
    int                    dy;
    __DRIbuffer           *dri_buffers[__DRI_BUFFER_COUNT];
+   __DRIbuffer           *pending_buffer;
    EGLBoolean             block_swap_buffers;
 #endif
 };

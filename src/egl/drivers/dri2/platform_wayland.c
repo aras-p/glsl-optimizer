@@ -35,6 +35,26 @@
 
 #include "egl_dri2.h"
 
+static void
+sync_callback(void *data)
+{
+   int *done = data;
+
+   *done = 1;
+}
+
+static void
+force_roundtrip(struct wl_display *display)
+{
+   int done = 0;
+
+   wl_display_sync_callback(display, sync_callback, &done);
+   wl_display_iterate(display, WL_DISPLAY_WRITABLE);
+   while (!done)
+      wl_display_iterate(display, WL_DISPLAY_READABLE);
+}
+
+
 /**
  * Called via eglCreateWindowSurface(), drv->API.CreateWindowSurface().
  */
@@ -66,6 +86,7 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
    for (i = 0; i < __DRI_BUFFER_COUNT; ++i)
       dri2_surf->dri_buffers[i] = NULL;
 
+   dri2_surf->pending_buffer = NULL;
    dri2_surf->block_swap_buffers = EGL_FALSE;
 
    switch (type) {
@@ -230,6 +251,49 @@ dri2_process_front_buffer(struct dri2_egl_surface *dri2_surf, unsigned format)
    }
 }
 
+static void
+dri2_release_pending_buffer(void *data)
+{
+   struct dri2_egl_surface *dri2_surf = data;
+   struct dri2_egl_display *dri2_dpy =
+      dri2_egl_display(dri2_surf->base.Resource.Display);
+
+   /* FIXME: print internal error */
+   if (!dri2_surf->pending_buffer)
+      return;
+   
+   dri2_dpy->dri2->releaseBuffer(dri2_dpy->dri_screen,
+                                 dri2_surf->pending_buffer);
+   dri2_surf->pending_buffer = NULL;
+}
+
+static void
+dri2_release_buffers(struct dri2_egl_surface *dri2_surf)
+{
+   struct dri2_egl_display *dri2_dpy =
+      dri2_egl_display(dri2_surf->base.Resource.Display);
+   int i;
+
+   for (i = 0; i < __DRI_BUFFER_COUNT; ++i) {
+      if (dri2_surf->dri_buffers[i]) {
+         switch (i) {
+         case __DRI_BUFFER_FRONT_LEFT:
+            if (dri2_surf->pending_buffer)
+               force_roundtrip(dri2_dpy->wl_dpy->display);
+            dri2_surf->pending_buffer = dri2_surf->dri_buffers[i];
+            wl_display_sync_callback(dri2_dpy->wl_dpy->display,
+                                     dri2_release_pending_buffer, dri2_surf);
+            break;
+         default:
+            dri2_dpy->dri2->releaseBuffer(dri2_dpy->dri_screen,
+                                          dri2_surf->dri_buffers[i]);
+            break;
+         }
+         dri2_surf->dri_buffers[i] = NULL;
+      }
+   }
+}
+
 static __DRIbuffer *
 dri2_get_buffers_with_format(__DRIdrawable * driDrawable,
 			     int *width, int *height,
@@ -244,13 +308,8 @@ dri2_get_buffers_with_format(__DRIdrawable * driDrawable,
    if (dri2_surf->type == DRI2_WINDOW_SURFACE &&
        (dri2_surf->base.Width != dri2_surf->wl_win->width || 
         dri2_surf->base.Height != dri2_surf->wl_win->height)) {
-      for (i = 0; i < __DRI_BUFFER_COUNT; ++i) {
-         if (dri2_surf->dri_buffers[i]) {
-            dri2_dpy->dri2->releaseBuffer(dri2_dpy->dri_screen,
-					  dri2_surf->dri_buffers[i]);
-            dri2_surf->dri_buffers[i] = NULL;
-         }
-      }
+
+      dri2_release_buffers(dri2_surf);
 
       dri2_surf->base.Width  = dri2_surf->wl_win->width;
       dri2_surf->base.Height = dri2_surf->wl_win->height;
@@ -521,25 +580,6 @@ dri2_terminate(_EGLDriver *drv, _EGLDisplay *disp)
    disp->DriverData = NULL;
 
    return EGL_TRUE;
-}
-
-static void
-sync_callback(void *data)
-{
-   int *done = data;
-
-   *done = 1;
-}
-
-static void
-force_roundtrip(struct wl_display *display)
-{
-   int done = 0;
-
-   wl_display_sync_callback(display, sync_callback, &done);
-   wl_display_iterate(display, WL_DISPLAY_WRITABLE);
-   while (!done)
-      wl_display_iterate(display, WL_DISPLAY_READABLE);
 }
 
 EGLBoolean
