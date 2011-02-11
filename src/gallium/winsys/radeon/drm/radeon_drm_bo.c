@@ -463,6 +463,7 @@ static struct r300_winsys_bo *radeon_winsys_bo_from_handle(struct r300_winsys_sc
     /* Open the BO. */
     open_arg.name = whandle->handle;
     if (drmIoctl(ws->fd, DRM_IOCTL_GEM_OPEN, &open_arg)) {
+        FREE(bo);
         goto fail;
     }
     bo->handle = open_arg.handle;
