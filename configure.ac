@@ -1693,20 +1693,12 @@ AC_ARG_ENABLE([gallium-radeon],
     [enable_gallium_radeon="$enableval"],
     [enable_gallium_radeon=auto])
 if test "x$enable_gallium_radeon" = xauto; then
-    if test "x$HAVE_LIBDRM_RADEON" = xyes; then
-	GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
-	gallium_check_st "radeon/drm" "dri-r300"
-    else
-	AC_MSG_WARN([libdrm_radeon is missing, not building gallium-radeon (r300)])
-    fi
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
+    gallium_check_st "radeon/drm" "dri-r300"
 fi
 if test "x$enable_gallium_radeon" = xyes; then
-    if test "x$HAVE_LIBDRM_RADEON" = xyes; then
-	GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
-	gallium_check_st "radeon/drm" "dri-r300" "xorg-radeon"
-    else
-	AC_MSG_ERROR([libdrm_radeon is missing, cannot build gallium-radeon (r300)])
-    fi
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
+    gallium_check_st "radeon/drm" "dri-r300" "xorg-radeon"
 fi
 
 dnl
@@ -1718,12 +1710,8 @@ AC_ARG_ENABLE([gallium-r600],
     [enable_gallium_r600="$enableval"],
     [enable_gallium_r600=auto])
 if test "x$enable_gallium_r600" = xyes; then
-    if test "x$HAVE_LIBDRM_RADEON" = xyes; then
-	GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r600"
-	gallium_check_st "r600/drm" "dri-r600"
-    else
-	AC_MSG_ERROR([libdrm_radeon is missing, cannot build gallium-r600])
-    fi
+    GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r600"
+    gallium_check_st "r600/drm" "dri-r600"
 fi
 
 dnl
