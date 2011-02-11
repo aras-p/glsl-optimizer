@@ -458,7 +458,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	r600_pipe_state_add_reg(rstate, R_03800C_RESOURCE0_WORD3,
 				(tmp->offset[1] + r600_bo_offset(bo[1])) >> 8, 0xFFFFFFFF, bo[1]);
 	r600_pipe_state_add_reg(rstate, R_038010_RESOURCE0_WORD4,
-				word4 | S_038010_NUM_FORMAT_ALL(V_038010_SQ_NUM_FORMAT_NORM) |
+				word4 |
 				S_038010_SRF_MODE_ALL(V_038010_SRF_MODE_NO_ZERO) |
 				S_038010_REQUEST_SIZE(1) |
 				S_038010_BASE_LEVEL(state->u.tex.first_level), 0xFFFFFFFF, NULL);

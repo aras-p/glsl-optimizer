@@ -411,7 +411,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	r600_pipe_state_add_reg(rstate, R_03000C_RESOURCE0_WORD3,
 				(tmp->offset[1] + r600_bo_offset(bo[1])) >> 8, 0xFFFFFFFF, bo[1]);
 	r600_pipe_state_add_reg(rstate, R_030010_RESOURCE0_WORD4,
-				word4 | S_030010_NUM_FORMAT_ALL(V_030010_SQ_NUM_FORMAT_NORM) |
+				word4 |
 				S_030010_SRF_MODE_ALL(V_030010_SRF_MODE_NO_ZERO) |
 				S_030010_BASE_LEVEL(state->u.tex.first_level), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_030014_RESOURCE0_WORD5,
