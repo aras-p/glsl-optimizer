@@ -226,13 +226,13 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
                                        rbuf->b.b.b.width0, alignment,
                                        rbuf->b.b.b.bind, rbuf->b.b.b.usage,
                                        rbuf->domain);
-    rbuf->cs_buf =
-        r300screen->rws->buffer_get_cs_handle(rbuf->buf);
-
     if (!rbuf->buf) {
         util_slab_free(&r300screen->pool_buffers, rbuf);
         return NULL;
     }
+
+    rbuf->cs_buf =
+        r300screen->rws->buffer_get_cs_handle(rbuf->buf);
 
     return &rbuf->b.b.b;
 }
