@@ -100,8 +100,7 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
       rast->need_pipeline_tris_str = "poly stipple";
    }
 
-   if (templ->line_width != 1.0 &&
-       templ->line_width != 0.0 &&
+   if (templ->line_width >= 1.5f &&
        !svga->debug.no_line_width) {
       rast->need_pipeline |= SVGA_PIPELINE_FLAG_LINES;
       rast->need_pipeline_lines_str = "line width";
