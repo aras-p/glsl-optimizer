@@ -141,6 +141,10 @@ def pkg_config_modules(env, name, modules):
 def generate(env):
     """Common environment generation code"""
 
+    # Tell tools which machine to compile for
+    env['TARGET_ARCH'] = env['machine']
+    env['MSVS_ARCH'] = env['machine']
+
     # Toolchain
     platform = env['platform']
     if env['toolchain'] == 'default':
@@ -174,6 +178,10 @@ def generate(env):
 
     env['gcc'] = 'gcc' in os.path.basename(env['CC']).split('-')
     env['msvc'] = env['CC'] == 'cl'
+
+    if env['msvc'] and env['toolchain'] == 'default' and env['machine'] == 'x86_64':
+        # MSVC x64 support is broken in earlier versions of scons
+        env.EnsurePythonVersion(2, 0)
 
     # shortcuts
     machine = env['machine']
