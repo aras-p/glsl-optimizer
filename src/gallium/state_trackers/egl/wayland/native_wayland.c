@@ -203,18 +203,47 @@ wayland_pixmap_surface_intialize(struct wayland_surface *surface)
 }
 
 static void
+wayland_release_pending_resource(void *data)
+{
+   struct wayland_surface *surface = data;
+
+   /* FIXME: print internal error */
+   if (!surface->pending_resource)
+      return;
+
+   pipe_resource_reference(&surface->pending_resource, NULL);
+}
+
+static void
 wayland_window_surface_handle_resize(struct wayland_surface *surface)
 {
+   struct wayland_display *display = surface->display;
+   struct pipe_resource *front_resource;
+   const enum native_attachment front_natt = NATIVE_ATTACHMENT_FRONT_LEFT;
    int i;
-
+   
+   front_resource = resource_surface_get_single_resource(surface->rsurf,
+                                                         front_natt);
    if (resource_surface_set_size(surface->rsurf,
        surface->win->width, surface->win->height)) {
+
+      if (surface->pending_resource)
+         force_roundtrip(display->dpy->display);
+
+      if (front_resource) {
+         surface->pending_resource = front_resource;
+         front_resource = NULL;
+         wl_display_sync_callback(display->dpy->display,
+                                  wayland_release_pending_resource, surface);
+      }
+
       for (i = 0; i < WL_BUFFER_COUNT; ++i) {
          if (surface->buffer[i])
             wl_buffer_destroy(surface->buffer[i]);
          surface->buffer[i] = NULL;
       }
    }
+   pipe_resource_reference(&front_resource, NULL);
 
    surface->dx = surface->win->dx;
    surface->dy = surface->win->dy;
@@ -379,6 +408,7 @@ wayland_create_pixmap_surface(struct native_display *ndpy,
 
    surface->display = display;
 
+   surface->pending_resource = NULL;
    surface->type = WL_PIXMAP_SURFACE;
    surface->pix = egl_pixmap;
 
@@ -433,6 +463,7 @@ wayland_create_window_surface(struct native_display *ndpy,
 
    surface->win = (struct wl_egl_window *) win;
 
+   surface->pending_resource = NULL;
    surface->block_swap_buffers = FALSE;
    surface->type = WL_WINDOW_SURFACE;
 

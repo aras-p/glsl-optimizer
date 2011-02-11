@@ -62,6 +62,7 @@ struct wayland_surface {
    enum wayland_surface_type type;
    int dx, dy;
    struct resource_surface *rsurf;
+   struct pipe_resource *pending_resource;
    enum pipe_format color_format;
 
    unsigned int sequence_number;
