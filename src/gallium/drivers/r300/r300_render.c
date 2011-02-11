@@ -944,7 +944,7 @@ static void r300_render_draw_arrays(struct vbuf_render* render,
     if (r300->draw_first_emitted) {
         if (!r300_prepare_for_rendering(r300,
                 PREP_FIRST_DRAW | PREP_EMIT_AOS_SWTCL,
-                NULL, 6, 0, 0, FALSE))
+                NULL, dwords, 0, 0, FALSE))
             return;
     } else {
         if (!r300_emit_states(r300,
