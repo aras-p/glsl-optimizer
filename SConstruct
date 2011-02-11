@@ -150,6 +150,9 @@ if env['crosscompile'] and env['platform'] != 'embedded':
     host_env['hostonly'] = True
     assert host_env['crosscompile'] == False
 
+    if host_env['msvc']:
+        host_env.Append(CPPPATH = ['#include/c99'])
+
     Export(env = host_env)
 
     SConscript(
