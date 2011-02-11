@@ -61,7 +61,7 @@ static void set_draw_viewport( struct svga_context *svga )
        * going to be drawn with triangles, but we're not catching all
        * cases where that will happen.
        */
-      if (svga->curr.rast->templ.line_width > 1.0) 
+      if (svga->curr.rast->need_pipeline & SVGA_PIPELINE_FLAG_LINES)
       {
          adjx = SVGA_LINE_ADJ_X + 0.175;
          adjy = SVGA_LINE_ADJ_Y - 0.175;

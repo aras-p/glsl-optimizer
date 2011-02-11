@@ -108,7 +108,8 @@ svga_create_rasterizer_state(struct pipe_context *pipe,
    }
 
    if (templ->line_stipple_enable) {
-      /* LinePattern not implemented on all backends. 
+      /* XXX: LinePattern not implemented on all backends, and there is no
+       * mechanism to query it.
        */
       if (!svga->debug.force_hw_line_stipple) {
          SVGA3dLinePattern lp;
