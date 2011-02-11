@@ -35,6 +35,11 @@
 /***********************************************************************
  */
 
+
+/**
+ * Given a gallium vertex element format, return the corresponding SVGA3D
+ * format.  Return SVGA3D_DECLTYPE_MAX for unsupported gallium formats.
+ */
 static INLINE SVGA3dDeclType 
 svga_translate_vertex_format(enum pipe_format format)
 {
@@ -80,6 +85,7 @@ static int update_need_swvfetch( struct svga_context *svga,
    for (i = 0; i < svga->curr.velems->count; i++) {
       svga->state.sw.ve_format[i] = svga_translate_vertex_format(svga->curr.velems->velem[i].src_format);
       if (svga->state.sw.ve_format[i] == SVGA3D_DECLTYPE_MAX) {
+         /* Unsupported format - use software fetch */
          need_swvfetch = TRUE;
          break;
       }
@@ -144,6 +150,10 @@ static int update_need_pipeline( struct svga_context *svga,
       svga->state.sw.need_pipeline = need_pipeline;
       svga->dirty |= SVGA_NEW_NEED_PIPELINE;
    }
+
+   /* DEBUG */
+   if (0 && svga->state.sw.need_pipeline)
+      debug_printf("sw.need_pipeline = %d\n", svga->state.sw.need_pipeline);
 
    return 0;
 }
