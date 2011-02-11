@@ -2754,6 +2754,9 @@ ir_to_mesa_visitor::copy_propagate(void)
 	     */
 	    for (int r = 0; r < this->next_temp; r++) {
 	       for (int c = 0; c < 4; c++) {
+		  if (!acp[4 * r + c])
+		     continue;
+
 		  if (acp[4 * r + c]->src_reg[0].file == PROGRAM_OUTPUT)
 		     acp[4 * r + c] = NULL;
 	       }
