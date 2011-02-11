@@ -410,7 +410,7 @@ void
 draw_wide_line_threshold(struct draw_context *draw, float threshold)
 {
    draw_do_flush( draw, DRAW_FLUSH_STATE_CHANGE );
-   draw->pipeline.wide_line_threshold = threshold;
+   draw->pipeline.wide_line_threshold = roundf(threshold);
 }
 
 
