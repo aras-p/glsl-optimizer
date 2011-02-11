@@ -319,18 +319,33 @@ static void brw_prepare_vertices(struct brw_context *brw)
       if (_mesa_is_bufferobj(input->glarray->BufferObj)) {
 	 struct intel_buffer_object *intel_buffer =
 	    intel_buffer_object(input->glarray->BufferObj);
-	 struct brw_vertex_buffer *buffer = &brw->vb.buffers[j];
+	 int k;
 
-	 /* Named buffer object: Just reference its contents directly. */
-	 buffer->bo = intel_bufferobj_source(intel, intel_buffer,
-					     &buffer->offset);
-	 drm_intel_bo_reference(buffer->bo);
-	 buffer->offset += (unsigned long)input->glarray->Ptr;
-	 buffer->stride = input->glarray->StrideB;
+	 for (k = 0; k < i; k++) {
+	    struct brw_vertex_element *other = brw->vb.enabled[k];
+	    if (input->glarray->BufferObj == other->glarray->BufferObj &&
+		input->glarray->StrideB == other->glarray->StrideB &&
+		(uintptr_t)(input->glarray->Ptr - other->glarray->Ptr) <
+		input->glarray->StrideB)
+	    {
+	       input->buffer = other->buffer;
+	       input->offset = input->glarray->Ptr - other->glarray->Ptr;
+	       break;
+	    }
+	 }
+	 if (k == i) {
+	    struct brw_vertex_buffer *buffer = &brw->vb.buffers[j];
+	    /* Named buffer object: Just reference its contents directly. */
+	    buffer->bo = intel_bufferobj_source(intel, intel_buffer,
+						&buffer->offset);
+	    drm_intel_bo_reference(buffer->bo);
+	    buffer->offset += (uintptr_t)input->glarray->Ptr;
+	    buffer->stride = input->glarray->StrideB;
 
+	    input->buffer = j++;
+	    input->offset = 0;
+	 }
 	 input->count = input->glarray->_MaxElement;
-	 input->offset = 0;
-	 input->buffer = j++;
 
 	 /* This is a common place to reach if the user mistakenly supplies
 	  * a pointer in place of a VBO offset.  If we just let it go through,
@@ -363,7 +378,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    ptr = input->glarray->Ptr;
 	 }
 	 else if (interleave != input->glarray->StrideB ||
-		  (GLuint)(input->glarray->Ptr - ptr) > interleave)
+		  (uintptr_t)(input->glarray->Ptr - ptr) > interleave)
 	 {
 	    interleave = 0;
 	 }
