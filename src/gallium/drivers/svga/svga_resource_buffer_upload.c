@@ -40,6 +40,9 @@
 #include "svga_debug.h"
 
 
+#define MAX_DMA_SIZE (8 * 1024 * 1024)
+
+
 /**
  * Allocate a winsys_buffer (ie. DMA, aka GMR memory).
  *
@@ -57,6 +60,13 @@ svga_winsys_buffer_create( struct svga_context *svga,
    struct svga_winsys_screen *sws = svgascreen->sws;
    struct svga_winsys_buffer *buf;
    
+   /* XXX this shouldn't be a hard-coded number; it should be queried
+    * somehow.
+    */
+   if (size > MAX_DMA_SIZE) {
+      return NULL;
+   }
+
    /* Just try */
    buf = sws->buffer_create(sws, alignment, usage, size);
    if(!buf) {
