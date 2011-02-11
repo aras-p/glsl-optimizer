@@ -272,7 +272,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
    GLbitfield vs_inputs = brw->vs.prog_data->inputs_read; 
    GLuint i, j;
    const unsigned char *ptr = NULL;
-   GLuint interleave = 0;
+   GLuint interleaved = 0, total_size = 0;
    unsigned int min_index = brw->vb.min_index;
    unsigned int max_index = brw->vb.max_index;
 
@@ -313,8 +313,9 @@ static void brw_prepare_vertices(struct brw_context *brw)
 
    for (i = j = 0; i < brw->vb.nr_enabled; i++) {
       struct brw_vertex_element *input = brw->vb.enabled[i];
+      int type_size = get_size(input->glarray->Type);
 
-      input->element_size = get_size(input->glarray->Type) * input->glarray->Size;
+      input->element_size = type_size * input->glarray->Size;
 
       if (_mesa_is_bufferobj(input->glarray->BufferObj)) {
 	 struct intel_buffer_object *intel_buffer =
@@ -366,52 +367,93 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 /* Queue the buffer object up to be uploaded in the next pass,
 	  * when we've decided if we're doing interleaved or not.
 	  */
-	 if (input->attrib == VERT_ATTRIB_POS) {
+	 if (nr_uploads == 0) {
 	    /* Position array not properly enabled:
 	     */
-            if (input->glarray->StrideB == 0) {
+	    if (input->attrib == VERT_ATTRIB_POS &&
+		input->glarray->StrideB == 0) {
                intel->Fallback = GL_TRUE; /* boolean, not bitfield */
                return;
             }
 
-	    interleave = input->glarray->StrideB;
+	    interleaved = input->glarray->StrideB;
 	    ptr = input->glarray->Ptr;
 	 }
-	 else if (interleave != input->glarray->StrideB ||
-		  (uintptr_t)(input->glarray->Ptr - ptr) > interleave)
+	 else if (interleaved != input->glarray->StrideB ||
+		  (uintptr_t)(input->glarray->Ptr - ptr) > interleaved)
 	 {
-	    interleave = 0;
+	    interleaved = 0;
+	 }
+	 else if (total_size & (type_size -1))
+	 {
+	    /* enforce natural alignment (for doubles) */
+	    interleaved = 0;
 	 }
 
 	 upload[nr_uploads++] = input;
+	 total_size += input->element_size;
       }
    }
 
    /* Handle any arrays to be uploaded. */
-   if (nr_uploads > 1 && interleave && interleave <= 256) {
-      /* All uploads are interleaved, so upload the arrays together as
-       * interleaved.  First, upload the contents and set up upload[0].
-       */
-      copy_array_to_vbo_array(brw,
-			      upload[0], &brw->vb.buffers[j],
-			      interleave);
+   if (nr_uploads > 1) {
+      if (interleaved && interleaved <= 2*total_size) {
+	 /* All uploads are interleaved, so upload the arrays together as
+	  * interleaved.  First, upload the contents and set up upload[0].
+	  */
+	 copy_array_to_vbo_array(brw,
+				 upload[0], &brw->vb.buffers[j],
+				 interleaved);
 
-      for (i = 0; i < nr_uploads; i++) {
-	 /* Then, just point upload[i] at upload[0]'s buffer. */
-	 upload[i]->offset =
-	    ((const unsigned char *)upload[i]->glarray->Ptr - upload[0]->glarray->Ptr);
-	 upload[i]->buffer = j;
+	 for (i = 0; i < nr_uploads; i++) {
+	    /* Then, just point upload[i] at upload[0]'s buffer. */
+	    upload[i]->offset =
+	       ((const unsigned char *)upload[i]->glarray->Ptr - ptr);
+	    upload[i]->buffer = j;
+	 }
+	 j++;
+
+	 nr_uploads = 0;
       }
-      j++;
+      else if (total_size < 2048) {
+	 /* Upload non-interleaved arrays into a single interleaved array */
+	 struct brw_vertex_buffer *buffer = &brw->vb.buffers[j];
+	 int count = upload[0]->count, offset;
+	 char *map;
+
+	 map = intel_upload_map(&brw->intel, total_size * count,
+				&buffer->bo, &buffer->offset);
+
+	 for (i = offset = 0; i < nr_uploads; i++) {
+	    const unsigned char *src = upload[i]->glarray->Ptr;
+	    int size = upload[i]->element_size;
+	    int stride = upload[i]->glarray->StrideB;
+	    char *dst = map + offset;
+	    int n;
+
+	    for (n = 0; n < count; n++) {
+	       memcpy(dst, src, size);
+	       src += stride;
+	       dst += total_size;
+	    }
+
+	    upload[i]->offset = offset;
+	    upload[i]->buffer = j;
+
+	    offset += size;
+	 }
+	 buffer->stride = offset;
+	 j++;
+
+	 nr_uploads = 0;
+      }
    }
-   else {
-      /* Upload non-interleaved arrays */
-      for (i = 0; i < nr_uploads; i++) {
-          copy_array_to_vbo_array(brw,
-				  upload[i], &brw->vb.buffers[j],
-				  upload[i]->element_size);
-	  upload[i]->buffer = j++;
-      }
+   /* Upload non-interleaved arrays */
+   for (i = 0; i < nr_uploads; i++) {
+      copy_array_to_vbo_array(brw,
+			      upload[i], &brw->vb.buffers[j],
+			      upload[i]->element_size);
+      upload[i]->buffer = j++;
    }
    brw->vb.nr_buffers = j;
 
