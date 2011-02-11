@@ -115,12 +115,6 @@ static unsigned get_pb_usage_from_transfer_flags(enum pipe_transfer_usage usage)
 {
     unsigned res = 0;
 
-    if (usage & PIPE_TRANSFER_READ)
-        res |= PB_USAGE_CPU_READ;
-
-    if (usage & PIPE_TRANSFER_WRITE)
-        res |= PB_USAGE_CPU_WRITE;
-
     if (usage & PIPE_TRANSFER_DONTBLOCK)
         res |= PB_USAGE_DONTBLOCK;
 
