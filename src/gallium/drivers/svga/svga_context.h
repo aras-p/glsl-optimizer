@@ -147,8 +147,11 @@ struct svga_rasterizer_state {
    float pointsize;
    
    unsigned hw_unfilled:16;         /* PIPE_POLYGON_MODE_x */
-   unsigned need_pipeline:16;    /* which prims do we need help for? */
 
+   /** Which prims do we need help for?  Bitmask of (1 << PIPE_PRIM_x) flags */
+   unsigned need_pipeline:16;
+
+   /** For debugging: */
    const char* need_pipeline_tris_str;
    const char* need_pipeline_lines_str;
    const char* need_pipeline_points_str;
