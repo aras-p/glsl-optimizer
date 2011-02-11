@@ -564,14 +564,14 @@ static void brw_prepare_indices(struct brw_context *brw)
    /* Turn into a proper VBO:
     */
    if (!_mesa_is_bufferobj(bufferobj)) {
-      brw->ib.start_vertex_offset = 0;
 
       /* Get new bufferobj, offset:
        */
       intel_upload_data(&brw->intel, index_buffer->ptr, ib_size, &bo, &offset);
+      brw->ib.start_vertex_offset = offset / ib_type_size;
+      offset = 0;
    } else {
       offset = (GLuint) (unsigned long) index_buffer->ptr;
-      brw->ib.start_vertex_offset = 0;
 
       /* If the index buffer isn't aligned to its element size, we have to
        * rebase it into a temporary.
@@ -584,6 +584,8 @@ static void brw_prepare_indices(struct brw_context *brw)
            map += offset;
 
 	   intel_upload_data(&brw->intel, map, ib_size, &bo, &offset);
+	   brw->ib.start_vertex_offset = offset / ib_type_size;
+	   offset = 0;
 
            ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB, bufferobj);
        } else {
@@ -595,26 +597,20 @@ static void brw_prepare_indices(struct brw_context *brw)
 
 	  bo = intel_bufferobj_source(intel, intel_buffer_object(bufferobj),
 				      &offset);
-
-	  ib_size = bo->size;
+	  drm_intel_bo_reference(bo);
        }
    }
 
-   if (brw->ib.bo != bo ||
-       brw->ib.offset != offset ||
-       brw->ib.size != ib_size)
-   {
+   if (brw->ib.bo != bo || brw->ib.offset != offset) {
       drm_intel_bo_unreference(brw->ib.bo);
       brw->ib.bo = bo;
       brw->ib.offset = offset;
-      brw->ib.size = ib_size;
 
+      brw_add_validated_bo(brw, brw->ib.bo);
       brw->state.dirty.brw |= BRW_NEW_INDEX_BUFFER;
    } else {
       drm_intel_bo_unreference(bo);
    }
-
-   brw_add_validated_bo(brw, brw->ib.bo);
 }
 
 const struct brw_tracked_state brw_indices = {
@@ -644,7 +640,7 @@ static void brw_emit_index_buffer(struct brw_context *brw)
              brw->ib.offset);
    OUT_RELOC(brw->ib.bo,
              I915_GEM_DOMAIN_VERTEX, 0,
-             brw->ib.offset + brw->ib.size - 1);
+	     brw->ib.bo->size - 1);
    ADVANCE_BATCH();
 }
 
