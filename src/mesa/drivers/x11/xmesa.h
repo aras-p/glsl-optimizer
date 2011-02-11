@@ -324,7 +324,7 @@ extern const char *XMesaGetString( XMesaContext c, int name );
  *
  * New in Mesa 2.3.
  */
-extern void XMesaGarbageCollect( void );
+extern void XMesaGarbageCollect( XMesaDisplay* dpy );
 
 
 

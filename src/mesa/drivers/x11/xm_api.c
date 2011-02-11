@@ -2064,12 +2064,12 @@ void xmesa_destroy_buffers_on_display(XMesaDisplay *dpy)
  * Look for XMesaBuffers whose X window has been destroyed.
  * Deallocate any such XMesaBuffers.
  */
-void XMesaGarbageCollect( void )
+void XMesaGarbageCollect( XMesaDisplay* dpy )
 {
    XMesaBuffer b, next;
    for (b=XMesaBufferList; b; b=next) {
       next = b->Next;
-      if (b->display && b->frontxrb->drawable && b->type == WINDOW) {
+      if (b->display && b->display == dpy && b->frontxrb->drawable && b->type == WINDOW) {
          XSync(b->display, False);
          if (!window_exists( b->display, b->frontxrb->drawable )) {
             /* found a dead window, free the ancillary info */
