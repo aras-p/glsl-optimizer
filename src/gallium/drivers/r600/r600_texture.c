@@ -430,7 +430,6 @@ static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
 {
 	struct r600_resource_texture *rtex = (struct r600_resource_texture*)texture;
 	struct r600_surface *surface = CALLOC_STRUCT(r600_surface);
-	unsigned tile_height;
 	unsigned level = surf_tmpl->u.tex.level;
 
 	assert(surf_tmpl->u.tex.first_layer == surf_tmpl->u.tex.last_layer);
@@ -450,8 +449,8 @@ static struct pipe_surface *r600_create_surface(struct pipe_context *pipe,
 	surface->base.u.tex.last_layer = surf_tmpl->u.tex.last_layer;
 	surface->base.u.tex.level = level;
 
-	tile_height = r600_get_height_alignment(pipe->screen, rtex->array_mode[level]);
-	surface->aligned_height = align(surface->base.height, tile_height);
+	surface->aligned_height = r600_texture_get_nblocksy(pipe->screen,
+							    rtex, level);
 	return &surface->base;
 }
 
