@@ -64,6 +64,7 @@ svga_surface_needs_propagation(struct pipe_surface *surf);
 struct svga_winsys_surface *
 svga_texture_view_surface(struct pipe_context *pipe,
                           struct svga_texture *tex,
+                          SVGA3dSurfaceFlags flags,
                           SVGA3dSurfaceFormat format,
                           unsigned start_mip,
                           unsigned num_mip,

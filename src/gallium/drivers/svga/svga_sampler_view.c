@@ -49,6 +49,7 @@ svga_get_tex_sampler_view(struct pipe_context *pipe,
    struct svga_screen *ss = svga_screen(pt->screen);
    struct svga_texture *tex = svga_texture(pt); 
    struct svga_sampler_view *sv = NULL;
+   SVGA3dSurfaceFlags flags = SVGA3D_SURFACE_HINT_TEXTURE;
    SVGA3dSurfaceFormat format = svga_translate_format(pt->format);
    boolean view = TRUE;
 
@@ -126,7 +127,7 @@ svga_get_tex_sampler_view(struct pipe_context *pipe,
             pt->last_level);
 
    sv->age = tex->age;
-   sv->handle = svga_texture_view_surface(pipe, tex, format,
+   sv->handle = svga_texture_view_surface(pipe, tex, flags, format,
                                           min_lod,
                                           max_lod - min_lod + 1,
                                           -1, -1,

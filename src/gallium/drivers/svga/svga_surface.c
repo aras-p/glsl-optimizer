@@ -102,6 +102,7 @@ svga_texture_copy_handle(struct svga_context *svga,
 struct svga_winsys_surface *
 svga_texture_view_surface(struct pipe_context *pipe,
                           struct svga_texture *tex,
+                          SVGA3dSurfaceFlags flags,
                           SVGA3dSurfaceFormat format,
                           unsigned start_mip,
                           unsigned num_mip,
@@ -118,7 +119,7 @@ svga_texture_view_surface(struct pipe_context *pipe,
             "svga: Create surface view: face %d zslice %d mips %d..%d\n",
             face_pick, zslice_pick, start_mip, start_mip+num_mip-1);
 
-   key->flags = 0;
+   key->flags = flags;
    key->format = format;
    key->numMipLevels = num_mip;
    key->size.width = u_minify(tex->b.b.width0, start_mip);
@@ -191,6 +192,7 @@ svga_create_surface(struct pipe_context *pipe,
    boolean render = (surf_tmpl->usage & (PIPE_BIND_RENDER_TARGET |
                                          PIPE_BIND_DEPTH_STENCIL)) ? TRUE : FALSE;
    boolean view = FALSE;
+   SVGA3dSurfaceFlags flags;
    SVGA3dSurfaceFormat format;
 
    assert(surf_tmpl->u.tex.first_layer == surf_tmpl->u.tex.last_layer);
@@ -219,10 +221,18 @@ svga_create_surface(struct pipe_context *pipe,
    s->base.u.tex.first_layer = surf_tmpl->u.tex.first_layer;
    s->base.u.tex.last_layer = surf_tmpl->u.tex.last_layer;
 
-   if (!render)
+   if (!render) {
+      flags = SVGA3D_SURFACE_HINT_TEXTURE;
       format = svga_translate_format(surf_tmpl->format);
-   else
+   } else {
+      if (surf_tmpl->usage & PIPE_BIND_RENDER_TARGET) {
+         flags = SVGA3D_SURFACE_HINT_RENDERTARGET;
+      }
+      if (surf_tmpl->usage & PIPE_BIND_DEPTH_STENCIL) {
+         flags = SVGA3D_SURFACE_HINT_DEPTHSTENCIL;
+      }
       format = svga_translate_format_render(surf_tmpl->format);
+   }
 
    assert(format != SVGA3D_FORMAT_INVALID);
 
@@ -249,7 +259,8 @@ svga_create_surface(struct pipe_context *pipe,
       SVGA_DBG(DEBUG_VIEWS, "svga: Surface view: yes %p, level %u face %u z %u, %p\n",
                pt, surf_tmpl->u.tex.level, face, zslice, s);
 
-      s->handle = svga_texture_view_surface(NULL, tex, format, surf_tmpl->u.tex.level,
+      s->handle = svga_texture_view_surface(NULL, tex, flags, format,
+                                            surf_tmpl->u.tex.level,
 	                                    1, face, zslice, &s->key);
       s->real_face = 0;
       s->real_level = 0;
