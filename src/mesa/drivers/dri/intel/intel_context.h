@@ -32,7 +32,6 @@
 #include <stdbool.h>
 #include "main/mtypes.h"
 #include "main/mm.h"
-#include "dri_metaops.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -151,8 +150,6 @@ struct intel_context
       void (*debug_batch)(struct intel_context *intel);
       bool (*render_target_supported)(gl_format format);
    } vtbl;
-
-   struct dri_metaops meta;
 
    GLbitfield Fallback;  /**< mask of INTEL_FALLBACK_x bits */
    GLuint NewGLState;

@@ -487,7 +487,7 @@ intel_viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
     if (intel->saved_viewport)
 	intel->saved_viewport(ctx, x, y, w, h);
 
-    if (!intel->meta.internal_viewport_call && ctx->DrawBuffer->Name == 0) {
+    if (ctx->DrawBuffer->Name == 0) {
        dri2InvalidateDrawable(driContext->driDrawablePriv);
        dri2InvalidateDrawable(driContext->driReadablePriv);
     }
@@ -805,7 +805,6 @@ intelInitContext(struct intel_context *intel,
     */
    _mesa_init_point(ctx);
 
-   meta_init_metaops(ctx, &intel->meta);
    if (intel->gen >= 4) {
       ctx->Const.sRGBCapable = GL_TRUE;
       if (MAX_WIDTH > 8192)
@@ -911,8 +910,6 @@ intelDestroyContext(__DRIcontext * driContextPriv)
       INTEL_FIREVERTICES(intel);
 
       _mesa_meta_free(&intel->ctx);
-
-      meta_destroy_metaops(&intel->meta);
 
       intel->vtbl.destroy(intel);
 
