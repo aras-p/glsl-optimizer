@@ -633,7 +633,7 @@ nvc0_prog_scan(struct nvc0_translation_info *ti)
       if (ti->scan.writes_z)
          prog->flags[0] = 0x11; /* ? */
       else
-      if (!ti->global_stores)
+      if (!ti->scan.uses_kill && !ti->global_stores)
          prog->fp.early_z = 1;
 
       ret = nvc0_fp_gen_header(prog, ti);
