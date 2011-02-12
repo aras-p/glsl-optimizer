@@ -67,6 +67,7 @@ struct nvc0_vertex_stateobj {
    unsigned num_elements;
    uint32_t instance_elts;
    uint32_t instance_bufs;
+   boolean need_conversion; /* e.g. VFETCH cannot convert f64 to f32 */
    unsigned vtx_size;
    unsigned vtx_per_packet_max;
    struct nvc0_vertex_element element[0];

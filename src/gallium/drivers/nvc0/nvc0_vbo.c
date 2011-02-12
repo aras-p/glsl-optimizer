@@ -60,6 +60,7 @@ nvc0_vertex_state_create(struct pipe_context *pipe,
     so->num_elements = num_elements;
     so->instance_elts = 0;
     so->instance_bufs = 0;
+    so->need_conversion = FALSE;
 
     transkey.nr_elements = 0;
     transkey.output_stride = 0;
@@ -83,6 +84,7 @@ nvc0_vertex_state_create(struct pipe_context *pipe,
                 return NULL;
             }
             so->element[i].state = nvc0_format_table[fmt].vtx;
+            so->need_conversion = TRUE;
         }
         so->element[i].state |= i;
 
@@ -263,7 +265,12 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
    struct nvc0_vertex_element *ve;
    unsigned i;
 
-   nvc0_prevalidate_vbufs(nvc0);
+   if (unlikely(vertex->need_conversion)) {
+      nvc0->vbo_fifo = ~0;
+      nvc0->vbo_user = 0;
+   } else {
+      nvc0_prevalidate_vbufs(nvc0);
+   }
 
    BEGIN_RING(chan, RING_3D(VERTEX_ATTRIB_FORMAT(0)), vertex->num_elements);
    for (i = 0; i < vertex->num_elements; ++i) {
