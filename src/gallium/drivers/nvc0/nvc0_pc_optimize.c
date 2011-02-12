@@ -732,7 +732,8 @@ struct pass_reld_elim {
  * The two loads may not overlap but reference adjacent memory locations.
  */
 static void
-combine_load(struct mem_record *rec, struct nv_instruction *ld)
+combine_load(struct nv_pc *pc, struct mem_record *rec,
+             struct nv_instruction *ld)
 {
    struct nv_instruction *fv = rec->insn;
    struct nv_value *mem = ld->src[0]->value;
@@ -760,6 +761,8 @@ combine_load(struct mem_record *rec, struct nv_instruction *ld)
       fv->def[d++]->insn = fv;
    }
 
+   if (fv->src[0]->value->refc > 1)
+      nv_reference(pc, fv, 0, new_value_like(pc, fv->src[0]->value));
    fv->src[0]->value->reg.address = rec->ofst;
    fv->src[0]->value->reg.size = rec->size = size;
 
@@ -841,7 +844,7 @@ nv_pass_mem_opt(struct pass_reld_elim *ctx, struct nv_basic_block *b)
          switch (ld->opcode) {
          case NV_OP_EXPORT: combine_export(it, ld); break;
          default:
-            combine_load(it, ld);
+            combine_load(ctx->pc, it, ld);
             break;
          }
       } else
