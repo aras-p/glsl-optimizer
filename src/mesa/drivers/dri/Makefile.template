@@ -9,8 +9,7 @@ COMMON_GALLIUM_SOURCES = \
 COMMON_SOURCES = $(COMMON_GALLIUM_SOURCES) \
         ../../common/driverfuncs.c \
         ../common/texmem.c \
-        ../common/drirenderbuffer.c \
-	../common/dri_metaops.c
+        ../common/drirenderbuffer.c
 
 INCLUDES = $(SHARED_INCLUDES) $(EXPAT_INCLUDES)
 
