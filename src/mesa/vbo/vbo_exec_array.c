@@ -502,8 +502,13 @@ recalculate_input_bindings(struct gl_context *ctx)
 static void
 bind_arrays(struct gl_context *ctx)
 {
+   if (!ctx->Array.RebindArrays) {
+      return;
+   }
+
    bind_array_obj(ctx);
    recalculate_input_bindings(ctx);
+   ctx->Array.RebindArrays = GL_FALSE;
 }
 
 
