@@ -283,7 +283,7 @@ nvc0_miptree_surface_new(struct pipe_context *pipe,
    pipe_reference_init(&ps->reference, 1);
    pipe_resource_reference(&ps->texture, pt);
    ps->context = pipe;
-   ps->format = pt->format;
+   ps->format = templ->format;
    ps->usage = templ->usage;
    ps->u.tex.level = templ->u.tex.level;
    ps->u.tex.first_layer = templ->u.tex.first_layer;
