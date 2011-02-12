@@ -489,7 +489,8 @@ static void r300_update_rs_block(struct r300_context *r300)
     for (; i < ATTR_GENERIC_COUNT; i++) {
         if (fs_inputs->generic[i] != ATTR_UNUSED) {
             fprintf(stderr, "r300: ERROR: FS input generic %i unassigned, "
-                    "not enough hardware slots.\n", i);
+                    "not enough hardware slots (it's not a bug, do not "
+                    "report it).\n", i);
         }
     }
 
@@ -524,7 +525,8 @@ static void r300_update_rs_block(struct r300_context *r300)
                 DBG(r300, DBG_RS, "r300: FS input fog unassigned.\n");
             } else {
                 fprintf(stderr, "r300: ERROR: FS input fog unassigned, "
-                        "not enough hardware slots.\n");
+                        "not enough hardware slots. (it's not a bug, "
+                        "do not report it)\n");
             }
         }
     }
@@ -551,7 +553,8 @@ static void r300_update_rs_block(struct r300_context *r300)
     } else {
         if (fs_inputs->wpos != ATTR_UNUSED && tex_count >= 8) {
             fprintf(stderr, "r300: ERROR: FS input WPOS unassigned, "
-                    "not enough hardware slots.\n");
+                    "not enough hardware slots. (it's not a bug, do not "
+                    "report it)\n");
         }
     }
 
