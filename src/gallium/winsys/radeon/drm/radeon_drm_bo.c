@@ -314,14 +314,16 @@ static void radeon_bomgr_destroy(struct pb_manager *_mgr)
     FREE(mgr);
 }
 
+#define PTR_TO_UINT(x) ((unsigned)((intptr_t)(x) & 0xffffffff))
+
 static unsigned handle_hash(void *key)
 {
-    return (unsigned)key;
+    return PTR_TO_UINT(key);
 }
 
 static int handle_compare(void *key1, void *key2)
 {
-    return !((int)key1 == (int)key2);
+    return PTR_TO_UINT(key1) == PTR_TO_UINT(key2);
 }
 
 struct pb_manager *radeon_bomgr_create(struct radeon_drm_winsys *rws)
