@@ -420,6 +420,12 @@ LIB_FILES = \
 	$(GLW_FILES)
 
 
+parsers: configure
+	-@touch $(TOP)/configs/current
+	$(MAKE) -C src/glsl glsl_parser.cpp glsl_parser.h glsl_lexer.cpp
+	$(MAKE) -C src/glsl/glcpp glcpp-lex.c glcpp-parse.c glcpp-parse.h
+	$(MAKE) -C src/mesa/program lex.yy.c program_parse.tab.c program_parse.tab.h
+
 # Everything for new a Mesa release:
 ARCHIVES = $(LIB_NAME).tar.gz \
 	$(LIB_NAME).tar.bz2 \
@@ -428,7 +434,7 @@ ARCHIVES = $(LIB_NAME).tar.gz \
 	$(GLUT_NAME).tar.bz2 \
 	$(GLUT_NAME).zip
 
-tarballs: rm_depend configure aclocal.m4 md5
+tarballs: md5
 	rm -f ../$(LIB_NAME).tar
 
 # Helper for autoconf builds
@@ -438,7 +444,7 @@ AUTOCONF = autoconf
 AC_FLAGS =
 aclocal.m4: configure.ac acinclude.m4
 	$(ACLOCAL) $(ACLOCAL_FLAGS)
-configure: configure.ac aclocal.m4 acinclude.m4
+configure: rm_depend configure.ac aclocal.m4 acinclude.m4
 	$(AUTOCONF) $(AC_FLAGS)
 
 rm_depend:
@@ -447,7 +453,7 @@ rm_depend:
 		touch $$dep ; \
 	done
 
-rm_config:
+rm_config: parsers
 	rm -f configs/current
 	rm -f configs/autoconf
 
@@ -457,7 +463,7 @@ $(LIB_NAME).tar: rm_config
 $(LIB_NAME).tar.gz: $(LIB_NAME).tar
 	gzip --stdout --best $(LIB_NAME).tar > $(LIB_NAME).tar.gz
 
-$(GLUT_NAME).tar:
+$(GLUT_NAME).tar: rm_depend
 	cd .. ; tar -cf $(DIRECTORY)/$(GLUT_NAME).tar $(GLUT_FILES)
 
 $(GLUT_NAME).tar.gz: $(GLUT_NAME).tar
