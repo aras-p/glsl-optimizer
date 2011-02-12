@@ -212,8 +212,6 @@ GLboolean radeonInitContext(radeonContextPtr radeon,
 	ctx = radeon->glCtx;
 	driContextPriv->driverPrivate = radeon;
 
-	meta_init_metaops(ctx, &radeon->meta);
-
 	_mesa_meta_init(ctx);
 
 	/* DRI fields */
@@ -320,7 +318,6 @@ void radeonDestroyContext(__DRIcontext *driContextPriv )
 
 	radeonFreeDmaRegions(radeon);
 	radeonReleaseArrays(radeon->glCtx, ~0);
-	meta_destroy_metaops(&radeon->meta);
 	if (radeon->vtbl.free_context)
 		radeon->vtbl.free_context(radeon->glCtx);
 	_swsetup_DestroyContext( radeon->glCtx );

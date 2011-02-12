@@ -905,7 +905,7 @@ void radeon_viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei width, GL
 	if (!driContext->driScreenPriv->dri2.enabled)
 		return;
 
-	if (!radeon->meta.internal_viewport_call && ctx->DrawBuffer->Name == 0) {
+	if (ctx->DrawBuffer->Name == 0) {
 		if (radeon->is_front_buffer_rendering) {
 			ctx->Driver.Flush(ctx);
 		}
