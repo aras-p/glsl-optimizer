@@ -209,7 +209,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/docs/README.*					\
 	$(DIRECTORY)/docs/RELNOTES*					\
 	$(DIRECTORY)/docs/*.spec					\
-	$(DIRECTORY)/include/GL/internal/glcore.h			\
 	$(DIRECTORY)/include/GL/gl.h					\
 	$(DIRECTORY)/include/GL/glext.h					\
 	$(DIRECTORY)/include/GL/gl_mangle.h				\
@@ -308,8 +307,7 @@ MAPI_FILES = \
 	$(DIRECTORY)/src/mapi/mapi/*.[ch]				\
 	$(DIRECTORY)/src/mapi/vgapi/Makefile				\
 	$(DIRECTORY)/src/mapi/vgapi/vgapi.csv				\
-	$(DIRECTORY)/src/mapi/vgapi/vg.pc.in				\
-	$(DIRECTORY)/src/mapi/vgapi/*.h
+	$(DIRECTORY)/src/mapi/vgapi/vg.pc.in
 
 EGL_FILES = \
 	$(DIRECTORY)/include/KHR/*.h					\
