@@ -421,9 +421,15 @@ LIB_FILES = \
 
 
 # Everything for new a Mesa release:
-tarballs: rm_depend configure aclocal.m4 lib_gz glut_gz \
-	lib_bz2 glut_bz2 lib_zip glut_zip md5
+ARCHIVES = $(LIB_NAME).tar.gz \
+	$(LIB_NAME).tar.bz2 \
+	$(LIB_NAME).zip \
+	$(GLUT_NAME).tar.gz \
+	$(GLUT_NAME).tar.bz2 \
+	$(GLUT_NAME).zip
 
+tarballs: rm_depend configure aclocal.m4 md5
+	rm -f ../$(LIB_NAME).tar
 
 # Helper for autoconf builds
 ACLOCAL = aclocal
@@ -445,43 +451,37 @@ rm_config:
 	rm -f configs/current
 	rm -f configs/autoconf
 
-lib_gz: rm_config
-	cd .. ; \
-	tar -cf $(LIB_NAME).tar $(LIB_FILES) ; \
-	gzip $(LIB_NAME).tar ; \
-	mv $(LIB_NAME).tar.gz $(DIRECTORY)
+$(LIB_NAME).tar: rm_config
+	cd .. ; tar -cf $(DIRECTORY)/$(LIB_NAME).tar $(LIB_FILES)
 
-glut_gz:
-	cd .. ; \
-	tar -cf $(GLUT_NAME).tar $(GLUT_FILES) ; \
-	gzip $(GLUT_NAME).tar ; \
-	mv $(GLUT_NAME).tar.gz $(DIRECTORY)
+$(LIB_NAME).tar.gz: $(LIB_NAME).tar
+	gzip --stdout --best $(LIB_NAME).tar > $(LIB_NAME).tar.gz
 
-lib_bz2: rm_config
-	cd .. ; \
-	tar -cf $(LIB_NAME).tar $(LIB_FILES) ; \
-	bzip2 $(LIB_NAME).tar ; \
-	mv $(LIB_NAME).tar.bz2 $(DIRECTORY)
+$(GLUT_NAME).tar:
+	cd .. ; tar -cf $(DIRECTORY)/$(GLUT_NAME).tar $(GLUT_FILES)
 
-glut_bz2:
-	cd .. ; \
-	tar -cf $(GLUT_NAME).tar $(GLUT_FILES) ; \
-	bzip2 $(GLUT_NAME).tar ; \
-	mv $(GLUT_NAME).tar.bz2 $(DIRECTORY)
+$(GLUT_NAME).tar.gz: $(GLUT_NAME).tar
+	gzip --stdout --best $(GLUT_NAME).tar > $(GLUT_NAME).tar.gz
 
-lib_zip: rm_config
+$(LIB_NAME).tar.bz2: $(LIB_NAME).tar
+	bzip2 --stdout --best $(LIB_NAME).tar > $(LIB_NAME).tar.bz2
+
+$(GLUT_NAME).tar.bz2: $(GLUT_NAME).tar
+	bzip2 --stdout --best $(GLUT_NAME).tar > $(GLUT_NAME).tar.bz2
+
+$(LIB_NAME).zip: rm_config
 	rm -f $(LIB_NAME).zip ; \
 	cd .. ; \
 	zip -qr $(LIB_NAME).zip $(LIB_FILES) ; \
 	mv $(LIB_NAME).zip $(DIRECTORY)
 
-glut_zip:
+$(GLUT_NAME).zip:
 	rm -f $(GLUT_NAME).zip ; \
 	cd .. ; \
 	zip -qr $(GLUT_NAME).zip $(GLUT_FILES) ; \
 	mv $(GLUT_NAME).zip $(DIRECTORY)
 
-md5:
+md5: $(ARCHIVES)
 	@-md5sum $(LIB_NAME).tar.gz
 	@-md5sum $(LIB_NAME).tar.bz2
 	@-md5sum $(LIB_NAME).zip
@@ -489,7 +489,4 @@ md5:
 	@-md5sum $(GLUT_NAME).tar.bz2
 	@-md5sum $(GLUT_NAME).zip
 
-.PHONY: tarballs rm_depend rm_config md5 \
-	lib_gz glut_gz \
-	lib_bz2 glut_bz2 \
-	lib_zip glut_zip
+.PHONY: tarballs rm_depend rm_config md5
