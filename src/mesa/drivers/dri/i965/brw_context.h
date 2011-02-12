@@ -535,11 +535,6 @@ struct brw_context
    const struct gl_vertex_program *vertex_program;
    const struct gl_fragment_program *fragment_program;
 
-
-   /* For populating the gtt:
-    */
-   GLuint next_free_page;
-
    /* hw-dependent 3DSTATE_VF_STATISTICS opcode */
    uint32_t CMD_VF_STATISTICS;
    /* hw-dependent 3DSTATE_PIPELINE_SELECT opcode */
