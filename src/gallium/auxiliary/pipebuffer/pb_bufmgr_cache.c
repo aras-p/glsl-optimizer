@@ -227,8 +227,6 @@ pb_cache_is_buffer_compat(struct pb_cache_buffer *buf,
                           pb_size size,
                           const struct pb_desc *desc)
 {
-   void *map;
-
    if(buf->base.base.size < size)
       return 0;
 
@@ -242,13 +240,18 @@ pb_cache_is_buffer_compat(struct pb_cache_buffer *buf,
    if(!pb_check_usage(desc->usage, buf->base.base.usage))
       return 0;
 
-   map = pb_map(buf->buffer, PB_USAGE_DONTBLOCK, NULL);
-   if (!map) {
-      return -1;
+   if (buf->mgr->provider->is_buffer_busy) {
+      if (buf->mgr->provider->is_buffer_busy(buf->mgr->provider, buf->buffer))
+         return -1;
+   } else {
+      void *ptr = pb_map(buf->buffer, PB_USAGE_DONTBLOCK, NULL);
+
+      if (!ptr)
+         return -1;
+
+      pb_unmap(buf->buffer);
    }
 
-   pb_unmap(buf->buffer);
-   
    return 1;
 }
 
