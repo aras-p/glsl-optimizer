@@ -354,9 +354,7 @@ void r300_emit_aa_state(struct r300_context *r300, unsigned size, void *state)
     if (aa->dest) {
         OUT_CS_REG(R300_RB3D_AARESOLVE_OFFSET, aa->dest->offset);
         OUT_CS_RELOC(aa->dest);
-
         OUT_CS_REG(R300_RB3D_AARESOLVE_PITCH, aa->dest->pitch);
-        OUT_CS_RELOC(aa->dest);
     }
 
     OUT_CS_REG(R300_RB3D_AARESOLVE_CTL, aa->aaresolve_ctl);

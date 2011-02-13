@@ -1215,7 +1215,7 @@ static void r300_resource_resolve(struct pipe_context* pipe,
     aa->aaresolve_ctl =
         R300_RB3D_AARESOLVE_CTL_AARESOLVE_MODE_RESOLVE |
         R300_RB3D_AARESOLVE_CTL_AARESOLVE_ALPHA_AVERAGE;
-    r300->aa_state.size = 12;
+    r300->aa_state.size = 10;
     r300_mark_atom_dirty(r300, &r300->aa_state);
 
     /* Resolve the surface. */
