@@ -45,7 +45,7 @@ nv50_query_create(struct pipe_context *pipe, unsigned type)
 	struct nv50_query *q = CALLOC_STRUCT(nv50_query);
 	int ret;
 
-	assert (q->type == PIPE_QUERY_OCCLUSION_COUNTER);
+	assert (type == PIPE_QUERY_OCCLUSION_COUNTER);
 	q->type = type;
 
 	ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 256,
