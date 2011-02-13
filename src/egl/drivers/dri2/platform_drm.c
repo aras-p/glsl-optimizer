@@ -565,6 +565,7 @@ const struct dri2_driver_map driver_map[] = {
    { 0x1002, "r200", r200_chip_ids, ARRAY_SIZE(r200_chip_ids) },
    { 0x1002, "r300", r300_chip_ids, ARRAY_SIZE(r300_chip_ids) },
    { 0x1002, "r600", r600_chip_ids, ARRAY_SIZE(r600_chip_ids) },
+   { 0x10de, "nouveau", NULL, -1 },
 };
 
 char *
@@ -605,6 +606,13 @@ dri2_get_driver_for_fd(int fd)
    for (i = 0; i < ARRAY_SIZE(driver_map); i++) {
       if (vendor_id != driver_map[i].vendor_id)
 	 continue;
+      if (driver_map[i].num_chips_ids == -1) {
+	    driver = strdup(driver_map[i].driver);
+	    _eglLog(_EGL_DEBUG, "pci id for %d: %04x:%04x, driver %s",
+		    fd, vendor_id, chip_id, driver);
+	    goto out;
+      }
+
       for (j = 0; j < driver_map[i].num_chips_ids; j++)
 	 if (driver_map[i].chip_ids[j] == chip_id) {
 	    driver = strdup(driver_map[i].driver);
