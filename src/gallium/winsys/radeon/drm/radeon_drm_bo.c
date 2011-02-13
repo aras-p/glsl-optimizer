@@ -156,38 +156,25 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
     struct radeon_bo *bo = radeon_bo(_buf);
     struct radeon_drm_cs *cs = flush_ctx;
     struct drm_radeon_gem_mmap args = {};
+    /* prevents a call to radeon_bo_wait if (usage & DONTBLOCK) and
+     * radeon_is_busy returns FALSE. */
+    boolean may_be_busy = TRUE;
 
     if (flags & PB_USAGE_DONTBLOCK) {
-        /* Note how we use radeon_bo_is_referenced_by_cs here. There are
-         * basically two places this map function can be called from:
-         * - pb_map
-         * - create_buffer (in the buffer reuse case)
-         *
-         * Since pb managers are per-winsys managers, not per-context managers,
-         * and we shouldn't reuse buffers if they are in-use in any context,
-         * we simply ask: is this buffer referenced by *any* CS?
-         *
-         * The problem with buffer_create is that it comes from pipe_screen,
-         * so we have no CS to look at, though luckily the following code
-         * is sufficient to tell whether the buffer is in use. */
-        if (_buf->base.usage & RADEON_PB_USAGE_CACHE) {
-            if (radeon_bo_is_referenced_by_any_cs(bo))
-		return NULL;
-	}
-
-        if (cs && radeon_bo_is_referenced_by_cs(cs, bo)) {
-            cs->flush_cs(cs->flush_data);
-            return NULL; /* It's very unlikely that the buffer is not busy. */
+        if (radeon_bo_is_referenced_by_cs(cs, bo)) {
+            return NULL;
         }
 
         if (radeon_bo_is_busy((struct r300_winsys_bo*)bo)) {
             return NULL;
         }
+
+        may_be_busy = FALSE;
     }
 
     /* If it's not unsynchronized bo_map, flush CS if needed and then wait. */
-    if (!(flags & PB_USAGE_UNSYNCHRONIZED)) {
-        if (cs && radeon_bo_is_referenced_by_cs(cs, bo)) {
+    if (may_be_busy && !(flags & PB_USAGE_UNSYNCHRONIZED)) {
+        if (radeon_bo_is_referenced_by_cs(cs, bo)) {
             cs->flush_cs(cs->flush_data);
         }
 
@@ -306,6 +293,23 @@ static void radeon_bomgr_flush(struct pb_manager *mgr)
     /* NOP */
 }
 
+/* This is for the cache bufmgr. */
+static boolean radeon_bomgr_is_buffer_busy(struct pb_manager *_mgr,
+                                           struct pb_buffer *_buf)
+{
+   struct radeon_bo *bo = radeon_bo(_buf);
+
+   if (radeon_bo_is_referenced_by_any_cs(bo)) {
+       return FALSE;
+   }
+
+   if (radeon_bo_is_busy((struct r300_winsys_bo*)bo)) {
+       return FALSE;
+   }
+
+   return TRUE;
+}
+
 static void radeon_bomgr_destroy(struct pb_manager *_mgr)
 {
     struct radeon_bomgr *mgr = radeon_bomgr(_mgr);
@@ -337,6 +341,7 @@ struct pb_manager *radeon_bomgr_create(struct radeon_drm_winsys *rws)
     mgr->base.destroy = radeon_bomgr_destroy;
     mgr->base.create_buffer = radeon_bomgr_create_bo;
     mgr->base.flush = radeon_bomgr_flush;
+    mgr->base.is_buffer_busy = radeon_bomgr_is_buffer_busy;
 
     mgr->rws = rws;
     mgr->bo_handles = util_hash_table_create(handle_hash, handle_compare);
