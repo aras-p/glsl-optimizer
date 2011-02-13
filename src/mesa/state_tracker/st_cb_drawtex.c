@@ -139,6 +139,7 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
 
    /* create the vertex buffer */
    vbuffer = pipe_buffer_create(pipe->screen, PIPE_BIND_VERTEX_BUFFER,
+                                PIPE_USAGE_STREAM,
                                 numAttribs * 4 * 4 * sizeof(GLfloat));
 
    /* load vertex buffer */

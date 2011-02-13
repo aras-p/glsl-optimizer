@@ -522,6 +522,7 @@ draw_quad(struct gl_context *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       /* allocate/load buffer object with vertex data */
       buf = pipe_buffer_create(pipe->screen,
 			       PIPE_BIND_VERTEX_BUFFER,
+			       PIPE_USAGE_STATIC,
                                sizeof(verts));
       pipe_buffer_write(st->pipe, buf, 0, sizeof(verts), verts);
 

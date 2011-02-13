@@ -138,6 +138,7 @@ draw_quad(struct st_context *st,
    if (!st->clear.vbuf) {
       st->clear.vbuf = pipe_buffer_create(pipe->screen,
                                           PIPE_BIND_VERTEX_BUFFER,
+                                          PIPE_USAGE_STREAM,
                                           max_slots * sizeof(st->clear.vertices));
    }
 

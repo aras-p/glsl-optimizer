@@ -794,7 +794,8 @@ struct dxgi_blitter
 		const unsigned semantic_indices[] = { 0, 0 };
 		vs = util_make_vertex_passthrough_shader(pipe, 2, semantic_names, semantic_indices);
 
-		vbuf.buffer = pipe_buffer_create(pipe->screen, PIPE_BIND_VERTEX_BUFFER, sizeof(quad_data));
+		vbuf.buffer = pipe_buffer_create(pipe->screen, PIPE_BIND_VERTEX_BUFFER,
+						 PIPE_USAGE_STREAM, sizeof(quad_data));
 		vbuf.buffer_offset = 0;
 		vbuf.stride = 4 * sizeof(float);
 		pipe_buffer_write(pipe, vbuf.buffer, 0, sizeof(quad_data), quad_data);

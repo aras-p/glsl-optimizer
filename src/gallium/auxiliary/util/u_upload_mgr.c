@@ -121,6 +121,7 @@ u_upload_alloc_buffer( struct u_upload_mgr *upload,
 
    upload->buffer = pipe_buffer_create( upload->pipe->screen,
                                         upload->bind,
+                                        PIPE_USAGE_STREAM,
                                         size );
    if (upload->buffer == NULL) 
       goto fail;

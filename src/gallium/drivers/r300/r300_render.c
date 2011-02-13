@@ -931,6 +931,7 @@ static boolean r300_render_allocate_vertices(struct vbuf_render* render,
 	pipe_resource_reference(&r300->vbo, NULL);
         r300->vbo = pipe_buffer_create(screen,
 				       PIPE_BIND_VERTEX_BUFFER,
+				       PIPE_USAGE_STREAM,
 				       R300_MAX_DRAW_VBO_SIZE);
         r300->draw_vbo_offset = 0;
         r300->draw_vbo_size = R300_MAX_DRAW_VBO_SIZE;

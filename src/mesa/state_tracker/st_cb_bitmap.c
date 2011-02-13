@@ -349,6 +349,7 @@ setup_bitmap_vertex_data(struct st_context *st, bool normalized,
    if (!st->bitmap.vbuf) {
       st->bitmap.vbuf = pipe_buffer_create(pipe->screen, 
                                            PIPE_BIND_VERTEX_BUFFER,
+                                           PIPE_USAGE_STREAM,
                                            max_slots *
                                            sizeof(st->bitmap.vertices));
    }

@@ -174,6 +174,7 @@ static void renderer_set_mvp(struct renderer *renderer,
    pipe_resource_reference(&cbuf, NULL);
    cbuf = pipe_buffer_create(renderer->pipe->screen,
                              PIPE_BIND_CONSTANT_BUFFER,
+                             PIPE_USAGE_STATIC,
                              sizeof(consts));
    if (cbuf) {
       pipe_buffer_write(renderer->pipe, cbuf,
@@ -474,7 +475,8 @@ static void renderer_set_custom_fs(struct renderer *renderer,
          pipe_resource_reference(&cbuf, NULL);
 
          cbuf = pipe_buffer_create(renderer->pipe->screen,
-               PIPE_BIND_CONSTANT_BUFFER, const_buffer_len);
+               PIPE_BIND_CONSTANT_BUFFER, PIPE_USAGE_STATIC,
+               const_buffer_len);
          pipe_buffer_write(renderer->pipe, cbuf, 0,
                const_buffer_len, const_buffer);
          renderer->pipe->set_constant_buffer(renderer->pipe,

@@ -429,6 +429,7 @@ void renderer_set_constants(struct xorg_renderer *r,
    pipe_resource_reference(cbuf, NULL);
    *cbuf = pipe_buffer_create(r->pipe->screen,
                               PIPE_BIND_CONSTANT_BUFFER,
+                              PIPE_USAGE_STATIC,
                               param_bytes);
 
    if (*cbuf) {

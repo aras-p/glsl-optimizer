@@ -182,6 +182,7 @@ pipe_surface_equal(struct pipe_surface *s1, struct pipe_surface *s2)
 static INLINE struct pipe_resource *
 pipe_buffer_create( struct pipe_screen *screen,
 		    unsigned bind,
+		    unsigned usage,
 		    unsigned size )
 {
    struct pipe_resource buffer;
@@ -189,7 +190,7 @@ pipe_buffer_create( struct pipe_screen *screen,
    buffer.target = PIPE_BUFFER;
    buffer.format = PIPE_FORMAT_R8_UNORM; /* want TYPELESS or similar */
    buffer.bind = bind;
-   buffer.usage = PIPE_USAGE_DEFAULT;
+   buffer.usage = usage;
    buffer.flags = 0;
    buffer.width0 = size;
    buffer.height0 = 1;
