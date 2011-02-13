@@ -87,6 +87,8 @@ r300_texture_get_transfer(struct pipe_context *ctx,
     struct r300_transfer *trans;
     struct pipe_resource base;
     boolean referenced_cs, referenced_hw, blittable;
+    const struct util_format_description *desc =
+        util_format_description(texture->format);
 
     referenced_cs =
         r300->rws->cs_is_buffer_referenced(r300->cs, tex->cs_buf);
@@ -97,9 +99,8 @@ r300_texture_get_transfer(struct pipe_context *ctx,
             r300->rws->buffer_is_busy(tex->buf);
     }
 
-    blittable = ctx->screen->is_format_supported(
-            ctx->screen, texture->format, texture->target, 0,
-            PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET, 0);
+    blittable = desc->layout == UTIL_FORMAT_LAYOUT_PLAIN ||
+                desc->layout == UTIL_FORMAT_LAYOUT_S3TC;
 
     trans = CALLOC_STRUCT(r300_transfer);
     if (trans) {
@@ -113,7 +114,7 @@ r300_texture_get_transfer(struct pipe_context *ctx,
          * for this transfer.
          * Also make write transfers pipelined. */
         if (tex->tex.microtile || tex->tex.macrotile[level] ||
-            ((referenced_hw & !(usage & PIPE_TRANSFER_READ)) && blittable)) {
+            (referenced_hw && blittable && !(usage & PIPE_TRANSFER_READ))) {
             if (r300->blitter->running) {
                 fprintf(stderr, "r300: ERROR: Blitter recursion in texture_get_transfer.\n");
                 os_break();
