@@ -59,6 +59,7 @@ static void r300_flush(struct pipe_context* pipe,
                 r300_mark_atom_dirty(r300, atom);
             }
         }
+        r300->vertex_arrays_dirty = TRUE;
 
         /* Unmark HWTCL state for SWTCL. */
         if (!r300->screen->caps.has_tcl) {

@@ -264,8 +264,16 @@ static boolean r300_emit_states(struct r300_context *r300,
                 r500_emit_index_bias(r300, 0);
         }
 
-        if (emit_vertex_arrays)
+        if (emit_vertex_arrays &&
+            (r300->vertex_arrays_dirty ||
+             r300->vertex_arrays_indexed != indexed ||
+             r300->vertex_arrays_offset != buffer_offset)) {
             r300_emit_vertex_arrays(r300, buffer_offset, indexed);
+
+            r300->vertex_arrays_dirty = FALSE;
+            r300->vertex_arrays_indexed = indexed;
+            r300->vertex_arrays_offset = buffer_offset;
+        }
 
         if (emit_vertex_arrays_swtcl)
             r300_emit_vertex_arrays_swtcl(r300, indexed);

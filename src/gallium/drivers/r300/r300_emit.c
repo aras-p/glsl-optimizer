@@ -805,40 +805,6 @@ void r300_emit_textures_state(struct r300_context *r300,
     END_CS;
 }
 
-static void r300_update_vertex_arrays_cb(struct r300_context *r300, unsigned packet_size)
-{
-    struct pipe_vertex_buffer *vb1, *vb2, *vbuf = r300->vbuf_mgr->vertex_buffer;
-    struct pipe_vertex_element *velem = r300->velems->velem;
-    unsigned *hw_format_size = r300->velems->format_size;
-    unsigned size1, size2, vertex_array_count = r300->velems->count;
-    int i;
-    CB_LOCALS;
-
-    BEGIN_CB(r300->vertex_arrays_cb, packet_size);
-    for (i = 0; i < vertex_array_count - 1; i += 2) {
-        vb1 = &vbuf[velem[i].vertex_buffer_index];
-        vb2 = &vbuf[velem[i+1].vertex_buffer_index];
-        size1 = hw_format_size[i];
-        size2 = hw_format_size[i+1];
-
-        OUT_CB(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(vb1->stride) |
-               R300_VBPNTR_SIZE1(size2) | R300_VBPNTR_STRIDE1(vb2->stride));
-        OUT_CB(vb1->buffer_offset + velem[i].src_offset);
-        OUT_CB(vb2->buffer_offset + velem[i+1].src_offset);
-    }
-
-    if (vertex_array_count & 1) {
-        vb1 = &vbuf[velem[i].vertex_buffer_index];
-        size1 = hw_format_size[i];
-
-        OUT_CB(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(vb1->stride));
-        OUT_CB(vb1->buffer_offset + velem[i].src_offset);
-    }
-    END_CB;
-
-    r300->vertex_arrays_dirty = FALSE;
-}
-
 void r300_emit_vertex_arrays(struct r300_context* r300, int offset, boolean indexed)
 {
     struct pipe_vertex_buffer *vbuf = r300->vbuf_mgr->vertex_buffer;
@@ -854,35 +820,28 @@ void r300_emit_vertex_arrays(struct r300_context* r300, int offset, boolean inde
     OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, packet_size);
     OUT_CS(vertex_array_count | (!indexed ? R300_VC_FORCE_PREFETCH : 0));
 
-    if (!offset) {
-        if (r300->vertex_arrays_dirty) {
-            r300_update_vertex_arrays_cb(r300, packet_size);
-        }
-        OUT_CS_TABLE(r300->vertex_arrays_cb, packet_size);
-    } else {
-        struct pipe_vertex_buffer *vb1, *vb2;
-        unsigned *hw_format_size = r300->velems->format_size;
-        unsigned size1, size2;
+    struct pipe_vertex_buffer *vb1, *vb2;
+    unsigned *hw_format_size = r300->velems->format_size;
+    unsigned size1, size2;
 
-        for (i = 0; i < vertex_array_count - 1; i += 2) {
-            vb1 = &vbuf[velem[i].vertex_buffer_index];
-            vb2 = &vbuf[velem[i+1].vertex_buffer_index];
-            size1 = hw_format_size[i];
-            size2 = hw_format_size[i+1];
+    for (i = 0; i < vertex_array_count - 1; i += 2) {
+        vb1 = &vbuf[velem[i].vertex_buffer_index];
+        vb2 = &vbuf[velem[i+1].vertex_buffer_index];
+        size1 = hw_format_size[i];
+        size2 = hw_format_size[i+1];
 
-            OUT_CS(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(vb1->stride) |
-                   R300_VBPNTR_SIZE1(size2) | R300_VBPNTR_STRIDE1(vb2->stride));
-            OUT_CS(vb1->buffer_offset + velem[i].src_offset   + offset * vb1->stride);
-            OUT_CS(vb2->buffer_offset + velem[i+1].src_offset + offset * vb2->stride);
-        }
+        OUT_CS(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(vb1->stride) |
+               R300_VBPNTR_SIZE1(size2) | R300_VBPNTR_STRIDE1(vb2->stride));
+        OUT_CS(vb1->buffer_offset + velem[i].src_offset   + offset * vb1->stride);
+        OUT_CS(vb2->buffer_offset + velem[i+1].src_offset + offset * vb2->stride);
+    }
 
-        if (vertex_array_count & 1) {
-            vb1 = &vbuf[velem[i].vertex_buffer_index];
-            size1 = hw_format_size[i];
+    if (vertex_array_count & 1) {
+        vb1 = &vbuf[velem[i].vertex_buffer_index];
+        size1 = hw_format_size[i];
 
-            OUT_CS(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(vb1->stride));
-            OUT_CS(vb1->buffer_offset + velem[i].src_offset + offset * vb1->stride);
-        }
+        OUT_CS(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(vb1->stride));
+        OUT_CS(vb1->buffer_offset + velem[i].src_offset + offset * vb1->stride);
     }
 
     for (i = 0; i < vertex_array_count; i++) {
