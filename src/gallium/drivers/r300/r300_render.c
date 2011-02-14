@@ -127,6 +127,20 @@ void r500_emit_index_bias(struct r300_context *r300, int index_bias)
     END_CS;
 }
 
+static void r300_emit_draw_init(struct r300_context *r300, unsigned mode,
+                                unsigned min_index, unsigned max_index)
+{
+    CS_LOCALS(r300);
+
+    BEGIN_CS(5);
+    OUT_CS_REG(R300_GA_COLOR_CONTROL,
+            r300_provoking_vertex_fixes(r300, mode));
+    OUT_CS_REG_SEQ(R300_VAP_VF_MAX_VTX_INDX, 2);
+    OUT_CS(max_index);
+    OUT_CS(min_index);
+    END_CS;
+}
+
 /* This function splits the index bias value into two parts:
  * - buffer_offset: the value that can be safely added to buffer offsets
  *   in r300_emit_vertex_arrays (it must yield a positive offset when added to
@@ -366,7 +380,7 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
     unsigned vertex_size = r300->velems->vertex_size_dwords;
 
     /* The number of dwords for this draw operation. */
-    unsigned dwords = 9 + count * vertex_size;
+    unsigned dwords = 4 + count * vertex_size;
 
     /* Size of the vertex element, in dwords. */
     unsigned size[PIPE_MAX_ATTRIBS];
@@ -406,13 +420,10 @@ static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
         mapelem[i] = map[vbi] + (velem->src_offset / 4);
     }
 
+    r300_emit_draw_init(r300, mode, 0, count-1);
+
     BEGIN_CS(dwords);
-    OUT_CS_REG(R300_GA_COLOR_CONTROL,
-            r300_provoking_vertex_fixes(r300, mode));
     OUT_CS_REG(R300_VAP_VTX_SIZE, vertex_size);
-    OUT_CS_REG_SEQ(R300_VAP_VF_MAX_VTX_INDX, 2);
-    OUT_CS(count - 1);
-    OUT_CS(0);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_IMMD_2, count * vertex_size);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_EMBEDDED | (count << 16) |
             r300_translate_primitive(mode));
@@ -449,15 +460,12 @@ static void r300_emit_draw_arrays(struct r300_context *r300,
         return;
     }
 
-    BEGIN_CS(7 + (alt_num_verts ? 2 : 0));
+    r300_emit_draw_init(r300, mode, 0, count-1);
+
+    BEGIN_CS(2 + (alt_num_verts ? 2 : 0));
     if (alt_num_verts) {
         OUT_CS_REG(R500_VAP_ALT_NUM_VERTICES, count);
     }
-    OUT_CS_REG(R300_GA_COLOR_CONTROL,
-            r300_provoking_vertex_fixes(r300, mode));
-    OUT_CS_REG_SEQ(R300_VAP_VF_MAX_VTX_INDX, 2);
-    OUT_CS(count - 1);
-    OUT_CS(0);
     OUT_CS_PKT3(R300_PACKET3_3D_DRAW_VBUF_2, 0);
     OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_VERTEX_LIST | (count << 16) |
            r300_translate_primitive(mode) |
@@ -479,22 +487,16 @@ static void r300_emit_draw_elements(struct r300_context *r300,
     boolean alt_num_verts = count > 65535;
     CS_LOCALS(r300);
 
-    if (count >= (1 << 24)) {
+    if (count >= (1 << 24) || maxIndex >= (1 << 24)) {
         fprintf(stderr, "r300: Got a huge number of vertices: %i, "
-                "refusing to render.\n", count);
+                "refusing to render (maxIndex: %i).\n", count, maxIndex);
         return;
     }
 
     DBG(r300, DBG_DRAW, "r300: Indexbuf of %u indices, min %u max %u\n",
         count, minIndex, maxIndex);
 
-    BEGIN_CS(5);
-    OUT_CS_REG(R300_GA_COLOR_CONTROL,
-            r300_provoking_vertex_fixes(r300, mode));
-    OUT_CS_REG_SEQ(R300_VAP_VF_MAX_VTX_INDX, 2);
-    OUT_CS(maxIndex);
-    OUT_CS(minIndex);
-    END_CS;
+    r300_emit_draw_init(r300, mode, minIndex, maxIndex);
 
     /* If start is odd, render the first triangle with indices embedded
      * in the command stream. This will increase start by 3 and make it
