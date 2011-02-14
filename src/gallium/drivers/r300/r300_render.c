@@ -615,7 +615,11 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
 				minIndex, maxIndex, mode, start, count, indices3);
     } else {
         do {
-            short_count = MIN2(count, 65534);
+            if (indexSize == 2 && (start & 1))
+                short_count = MIN2(count, 65535);
+            else
+                short_count = MIN2(count, 65534);
+
             r300_emit_draw_elements(r300, indexBuffer, indexSize,
                                      minIndex, maxIndex,
                                      mode, start, short_count, indices3);
