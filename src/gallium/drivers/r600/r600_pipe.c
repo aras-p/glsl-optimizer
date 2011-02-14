@@ -196,7 +196,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 					   PIPE_BIND_VERTEX_BUFFER |
 					   PIPE_BIND_INDEX_BUFFER |
 					   PIPE_BIND_CONSTANT_BUFFER,
-					   U_VERTEX_FETCH_BYTE_ALIGNED);
+					   U_VERTEX_FETCH_DWORD_ALIGNED);
 	if (!rctx->vbuf_mgr) {
 		r600_destroy_context(&rctx->context);
 		return NULL;
