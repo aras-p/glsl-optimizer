@@ -162,6 +162,7 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
 
     if (flags & PB_USAGE_DONTBLOCK) {
         if (radeon_bo_is_referenced_by_cs(cs, bo)) {
+            cs->flush_cs(cs->flush_data);
             return NULL;
         }
 
