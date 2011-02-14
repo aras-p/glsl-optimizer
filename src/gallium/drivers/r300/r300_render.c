@@ -366,10 +366,9 @@ static boolean immd_is_good_idea(struct r300_context *r300,
  * The HWTCL draw functions.                                                 *
  ****************************************************************************/
 
-static void r300_emit_draw_arrays_immediate(struct r300_context *r300,
-                                            unsigned mode,
-                                            unsigned start,
-                                            unsigned count)
+static void r300_draw_arrays_immediate(struct r300_context *r300,
+                                       unsigned mode, unsigned start,
+                                       unsigned count)
 {
     struct pipe_vertex_element* velem;
     struct pipe_vertex_buffer* vbuf;
@@ -546,17 +545,11 @@ static void r300_emit_draw_elements(struct r300_context *r300,
     END_CS;
 }
 
-/* This is the fast-path drawing & emission for HW TCL. */
-static void r300_draw_range_elements(struct pipe_context* pipe,
-                                     int indexBias,
-                                     unsigned minIndex,
-                                     unsigned maxIndex,
-                                     unsigned mode,
-                                     unsigned start,
-                                     unsigned count,
-                                     boolean user_buffers)
+static void r300_draw_elements(struct r300_context *r300, int indexBias,
+                               unsigned minIndex, unsigned maxIndex,
+                               unsigned mode, unsigned start, unsigned count,
+                               boolean user_buffers)
 {
-    struct r300_context* r300 = r300_context(pipe);
     struct pipe_resource *indexBuffer = r300->index_buffer.buffer;
     unsigned indexSize = r300->index_buffer.index_size;
     struct pipe_resource* orgIndexBuffer = indexBuffer;
@@ -579,7 +572,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
         !r300_resource(indexBuffer)->b.user_ptr) {
         struct pipe_transfer *transfer;
 
-        uint16_t *ptr = pipe_buffer_map(pipe, indexBuffer,
+        uint16_t *ptr = pipe_buffer_map(&r300->context, indexBuffer,
                                         PIPE_TRANSFER_READ |
                                         PIPE_TRANSFER_UNSYNCHRONIZED,
                                         &transfer);
@@ -593,7 +586,7 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
             r300_upload_index_buffer(r300, &indexBuffer, indexSize, &start,
                                      count, (uint8_t*)ptr);
         }
-        pipe_buffer_unmap(pipe, transfer);
+        pipe_buffer_unmap(&r300->context, transfer);
     } else {
         if (r300_resource(indexBuffer)->b.user_ptr)
             r300_upload_index_buffer(r300, &indexBuffer, indexSize,
@@ -604,7 +597,8 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
     /* 19 dwords for emit_draw_elements. Give up if the function fails. */
     if (!r300_prepare_for_rendering(r300,
             PREP_FIRST_DRAW | PREP_VALIDATE_VBOS | PREP_EMIT_AOS |
-            PREP_INDEXED, indexBuffer, 19, buffer_offset, indexBias, user_buffers))
+            PREP_INDEXED, indexBuffer, 19, buffer_offset, indexBias,
+            user_buffers))
         goto done;
 
     if (alt_num_verts || count <= 65535) {
@@ -640,44 +634,39 @@ done:
     }
 }
 
-static void r300_draw_arrays(struct pipe_context* pipe, unsigned mode,
+static void r300_draw_arrays(struct r300_context *r300, unsigned mode,
                              unsigned start, unsigned count,
                              boolean user_buffers)
 {
-    struct r300_context* r300 = r300_context(pipe);
     boolean alt_num_verts = r300->screen->caps.is_r500 &&
                             count > 65536 &&
                             r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0);
     unsigned short_count;
 
-    if (immd_is_good_idea(r300, count)) {
-        r300_emit_draw_arrays_immediate(r300, mode, start, count);
+    /* 9 spare dwords for emit_draw_arrays. Give up if the function fails. */
+    if (!r300_prepare_for_rendering(r300,
+                                    PREP_FIRST_DRAW | PREP_VALIDATE_VBOS | PREP_EMIT_AOS,
+                                    NULL, 9, start, 0, user_buffers))
+        return;
+
+    if (alt_num_verts || count <= 65535) {
+        r300_emit_draw_arrays(r300, mode, count);
     } else {
-        /* 9 spare dwords for emit_draw_arrays. Give up if the function fails. */
-        if (!r300_prepare_for_rendering(r300,
-                PREP_FIRST_DRAW | PREP_VALIDATE_VBOS | PREP_EMIT_AOS,
-                NULL, 9, start, 0, user_buffers))
-            return;
+        do {
+            short_count = MIN2(count, 65535);
+            r300_emit_draw_arrays(r300, mode, short_count);
 
-        if (alt_num_verts || count <= 65535) {
-            r300_emit_draw_arrays(r300, mode, count);
-        } else {
-            do {
-                short_count = MIN2(count, 65535);
-                r300_emit_draw_arrays(r300, mode, short_count);
+            start += short_count;
+            count -= short_count;
 
-                start += short_count;
-                count -= short_count;
-
-                /* 9 spare dwords for emit_draw_arrays. Give up if the function fails. */
-                if (count) {
-                    if (!r300_prepare_for_rendering(r300,
-                            PREP_VALIDATE_VBOS | PREP_EMIT_AOS, NULL, 9,
-                            start, 0, user_buffers))
-                        return;
-                }
-            } while (count);
-        }
+            /* 9 spare dwords for emit_draw_arrays. Give up if the function fails. */
+            if (count) {
+                if (!r300_prepare_for_rendering(r300,
+                                                PREP_VALIDATE_VBOS | PREP_EMIT_AOS, NULL, 9,
+                                                start, 0, user_buffers))
+                    return;
+            }
+        } while (count);
     }
 }
 
@@ -688,18 +677,17 @@ static void r300_draw_vbo(struct pipe_context* pipe,
     unsigned count = info->count;
     boolean buffers_updated, uploader_flushed;
     boolean indexed = info->indexed && r300->index_buffer.buffer;
+    unsigned start_indexed = info->start + r300->index_buffer.offset;
+    int max_index = MIN2(r300->vbuf_mgr->max_index, info->max_index);
 
-    if (r300->skip_rendering) {
+    if (r300->skip_rendering ||
+        !u_trim_pipe_prim(info->mode, &count)) {
         return;
     }
 
-    if (!u_trim_pipe_prim(info->mode, &count)) {
-        return;
-    }
-
+    /* Start the vbuf manager and update buffers if needed. */
     u_vbuf_mgr_draw_begin(r300->vbuf_mgr, info,
                           &buffers_updated, &uploader_flushed);
-
     if (buffers_updated) {
         r300->vertex_arrays_dirty = TRUE;
 
@@ -711,34 +699,20 @@ static void r300_draw_vbo(struct pipe_context* pipe,
         r300->upload_vb_validated = FALSE;
     }
 
+    /* Draw. */
+    r300_update_derived_state(r300);
+
     if (indexed) {
-        /* Compute the start for draw_elements, taking the offset into account. */
-        unsigned start_indexed =
-            info->start +
-            (r300->index_buffer.offset / r300->index_buffer.index_size);
-        int max_index = MIN2(r300->vbuf_mgr->max_index, info->max_index);
-
-        assert(r300->index_buffer.offset % r300->index_buffer.index_size == 0);
-
-        /* Index buffer range checking. */
-        if ((start_indexed + count) * r300->index_buffer.index_size >
-            r300->index_buffer.buffer->width0) {
-            fprintf(stderr, "r300: Invalid index buffer range. Skipping rendering.\n");
-            return;
-        }
-
-        if (max_index >= (1 << 24) - 1) {
-            fprintf(stderr, "r300: Invalid max_index: %i. Skipping rendering...\n", max_index);
-            return;
-        }
-
-        r300_update_derived_state(r300);
-        r300_draw_range_elements(pipe, info->index_bias, info->min_index,
-                                 max_index, info->mode, start_indexed, count,
-                                 buffers_updated);
+        r300_draw_elements(r300, info->index_bias, info->min_index,
+                           max_index, info->mode, start_indexed, count,
+                           buffers_updated);
     } else {
-        r300_update_derived_state(r300);
-        r300_draw_arrays(pipe, info->mode, info->start, count, buffers_updated);
+        if (immd_is_good_idea(r300, count)) {
+            r300_draw_arrays_immediate(r300, info->mode, info->start, count);
+        } else {
+            r300_draw_arrays(r300, info->mode, info->start, count,
+                             buffers_updated);
+        }
     }
 
     u_vbuf_mgr_draw_end(r300->vbuf_mgr);
