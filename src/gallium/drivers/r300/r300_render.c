@@ -545,6 +545,94 @@ static void r300_emit_draw_elements(struct r300_context *r300,
     END_CS;
 }
 
+static void r300_draw_elements_immediate(struct r300_context *r300,
+                                         int indexBias, unsigned minIndex,
+                                         unsigned maxIndex, unsigned mode,
+                                         unsigned start, unsigned count,
+                                         boolean user_buffers)
+{
+    uint8_t *ptr1;
+    uint16_t *ptr2;
+    uint32_t *ptr4;
+    unsigned index_size = r300->index_buffer.index_size;
+    unsigned i, count_dwords = index_size == 4 ? count : (count + 1) / 2;
+    CS_LOCALS(r300);
+
+    /* 19 dwords for r300_draw_elements_immediate. Give up if the function fails. */
+    if (!r300_prepare_for_rendering(r300,
+            PREP_FIRST_DRAW | PREP_VALIDATE_VBOS | PREP_EMIT_AOS |
+            PREP_INDEXED, NULL, 2+count_dwords, 0, indexBias,
+            user_buffers))
+        return;
+
+    r300_emit_draw_init(r300, mode, minIndex, maxIndex);
+
+    BEGIN_CS(2 + count_dwords);
+    OUT_CS_PKT3(R300_PACKET3_3D_DRAW_INDX_2, count_dwords);
+
+    switch (index_size) {
+    case 1:
+        ptr1 = r300_resource(r300->index_buffer.buffer)->b.user_ptr;
+        ptr1 += start;
+
+        OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
+               r300_translate_primitive(mode));
+
+        if (indexBias && !r300->screen->caps.index_bias_supported) {
+            for (i = 0; i < count-1; i += 2)
+                OUT_CS(((ptr1[i+1] + indexBias) << 16) |
+                        (ptr1[i]   + indexBias));
+
+            if (count & 1)
+                OUT_CS(ptr1[i] + indexBias);
+        } else {
+            for (i = 0; i < count-1; i += 2)
+                OUT_CS(((ptr1[i+1]) << 16) |
+                        (ptr1[i]  ));
+
+            if (count & 1)
+                OUT_CS(ptr1[i]);
+        }
+        break;
+
+    case 2:
+        ptr2 = (uint16_t*)r300_resource(r300->index_buffer.buffer)->b.user_ptr;
+        ptr2 += start;
+
+        OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
+               r300_translate_primitive(mode));
+
+        if (indexBias && !r300->screen->caps.index_bias_supported) {
+            for (i = 0; i < count-1; i += 2)
+                OUT_CS(((ptr2[i+1] + indexBias) << 16) |
+                        (ptr2[i]   + indexBias));
+
+            if (count & 1)
+                OUT_CS(ptr2[i] + indexBias);
+        } else {
+            OUT_CS_TABLE(ptr2, count_dwords);
+        }
+        break;
+
+    case 4:
+        ptr4 = (uint32_t*)r300_resource(r300->index_buffer.buffer)->b.user_ptr;
+        ptr4 += start;
+
+        OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
+               R300_VAP_VF_CNTL__INDEX_SIZE_32bit |
+               r300_translate_primitive(mode));
+
+        if (indexBias && !r300->screen->caps.index_bias_supported) {
+            for (i = 0; i < count; i++)
+                OUT_CS(ptr4[i] + indexBias);
+        } else {
+            OUT_CS_TABLE(ptr4, count_dwords);
+        }
+        break;
+    }
+    END_CS;
+}
+
 static void r300_draw_elements(struct r300_context *r300, int indexBias,
                                unsigned minIndex, unsigned maxIndex,
                                unsigned mode, unsigned start, unsigned count,
@@ -703,9 +791,17 @@ static void r300_draw_vbo(struct pipe_context* pipe,
     r300_update_derived_state(r300);
 
     if (indexed) {
-        r300_draw_elements(r300, info->index_bias, info->min_index,
-                           max_index, info->mode, start_indexed, count,
-                           buffers_updated);
+        if (count <= 8 &&
+            r300_resource(r300->index_buffer.buffer)->b.user_ptr) {
+            r300_draw_elements_immediate(r300, info->index_bias,
+                                         info->min_index, max_index,
+                                         info->mode, start_indexed, count,
+                                         buffers_updated);
+        } else {
+            r300_draw_elements(r300, info->index_bias, info->min_index,
+                               max_index, info->mode, start_indexed, count,
+                               buffers_updated);
+        }
     } else {
         if (immd_is_good_idea(r300, count)) {
             r300_draw_arrays_immediate(r300, info->mode, info->start, count);
