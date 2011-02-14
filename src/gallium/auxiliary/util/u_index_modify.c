@@ -38,7 +38,10 @@ void util_shorten_ubyte_elts_to_userptr(struct pipe_context *context,
     unsigned short *out_map = out;
     unsigned i;
 
-    in_map = pipe_buffer_map(context, elts, PIPE_TRANSFER_READ, &src_transfer);
+    in_map = pipe_buffer_map(context, elts,
+                             PIPE_TRANSFER_READ |
+                             PIPE_TRANSFER_UNSYNCHRONIZED,
+                             &src_transfer);
     in_map += start;
 
     for (i = 0; i < count; i++) {
@@ -87,7 +90,10 @@ void util_rebuild_ushort_elts_to_userptr(struct pipe_context *context,
     unsigned short *out_map = out;
     unsigned i;
 
-    in_map = pipe_buffer_map(context, elts, PIPE_TRANSFER_READ, &in_transfer);
+    in_map = pipe_buffer_map(context, elts,
+                             PIPE_TRANSFER_READ |
+                             PIPE_TRANSFER_UNSYNCHRONIZED,
+                             &in_transfer);
     in_map += start;
 
     for (i = 0; i < count; i++) {
@@ -135,7 +141,10 @@ void util_rebuild_uint_elts_to_userptr(struct pipe_context *context,
     unsigned int *out_map = out;
     unsigned i;
 
-    in_map = pipe_buffer_map(context, elts, PIPE_TRANSFER_READ, &in_transfer);
+    in_map = pipe_buffer_map(context, elts,
+                             PIPE_TRANSFER_READ |
+                             PIPE_TRANSFER_UNSYNCHRONIZED,
+                             &in_transfer);
     in_map += start;
 
     for (i = 0; i < count; i++) {
