@@ -449,14 +449,14 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	draw.ctx = ctx;
 	if (info->indexed && rctx->index_buffer.buffer) {
 		draw.info.start += rctx->index_buffer.offset / rctx->index_buffer.index_size;
+		pipe_resource_reference(&draw.index_buffer, rctx->index_buffer.buffer);
 
-		r600_translate_index_buffer(rctx, &rctx->index_buffer.buffer,
+		r600_translate_index_buffer(rctx, &draw.index_buffer,
 					    &rctx->index_buffer.index_size,
 					    &draw.info.start,
 					    info->count);
 
 		draw.index_size = rctx->index_buffer.index_size;
-		pipe_resource_reference(&draw.index_buffer, rctx->index_buffer.buffer);
 		draw.index_buffer_offset = draw.info.start * draw.index_size;
 		draw.info.start = 0;
 
