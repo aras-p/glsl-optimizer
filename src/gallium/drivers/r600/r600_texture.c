@@ -103,6 +103,9 @@ static unsigned r600_get_pixel_alignment(struct pipe_screen *screen,
 			       (((rscreen->tiling_info->group_bytes / 8 / pixsize)) *
 				rscreen->tiling_info->num_banks)) * 8;
 		break;
+	case V_038000_ARRAY_LINEAR_ALIGNED:
+		p_align = MAX2(64, rscreen->tiling_info->group_bytes / pixsize);
+		break;
 	case V_038000_ARRAY_LINEAR_GENERAL:
 	default:
 		p_align = rscreen->tiling_info->group_bytes / pixsize;
@@ -122,6 +125,7 @@ static unsigned r600_get_height_alignment(struct pipe_screen *screen,
 		h_align = rscreen->tiling_info->num_channels * 8;
 		break;
 	case V_038000_ARRAY_1D_TILED_THIN1:
+	case V_038000_ARRAY_LINEAR_ALIGNED:
 		h_align = 8;
 		break;
 	default:
@@ -147,6 +151,8 @@ static unsigned r600_get_base_alignment(struct pipe_screen *screen,
 			       p_align * pixsize * h_align);
 		break;
 	case V_038000_ARRAY_1D_TILED_THIN1:
+	case V_038000_ARRAY_LINEAR_ALIGNED:
+	case V_038000_ARRAY_LINEAR_GENERAL:
 	default:
 		b_align = rscreen->tiling_info->group_bytes;
 		break;
