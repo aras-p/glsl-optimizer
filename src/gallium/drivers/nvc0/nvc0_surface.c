@@ -243,14 +243,15 @@ nvc0_clear_render_target(struct pipe_context *pipe,
 	OUT_RING  (chan, 1);
 	OUT_RING  (chan, 0);
 
-	/* NOTE: only works with D3D clear flag (5097/0x143c bit 4) */
-
-	BEGIN_RING(chan, RING_3D(VIEWPORT_HORIZ(0)), 2);
-	OUT_RING  (chan, (width << 16) | dstx);
-	OUT_RING  (chan, (height << 16) | dsty);
+	BEGIN_RING(chan, RING_3D(CLIP_RECT_HORIZ(0)), 2);
+	OUT_RING  (chan, ((dstx + width) << 16) | dstx);
+	OUT_RING  (chan, ((dsty + height) << 16) | dsty);
+	IMMED_RING(chan, RING_3D(CLIP_RECTS_EN), 1);
 
 	BEGIN_RING(chan, RING_3D(CLEAR_BUFFERS), 1);
 	OUT_RING  (chan, 0x3c);
+
+	IMMED_RING(chan, RING_3D(CLIP_RECTS_EN), 0);
 
 	nv50->dirty |= NVC0_NEW_FRAMEBUFFER;
 }
@@ -300,12 +301,15 @@ nvc0_clear_depth_stencil(struct pipe_context *pipe,
 	OUT_RING  (chan, sf->height);
 	OUT_RING  (chan, (1 << 16) | 1);
 
-	BEGIN_RING(chan, RING_3D(VIEWPORT_HORIZ(0)), 2);
-	OUT_RING  (chan, (width << 16) | dstx);
-	OUT_RING  (chan, (height << 16) | dsty);
+	BEGIN_RING(chan, RING_3D(CLIP_RECT_HORIZ(0)), 2);
+	OUT_RING  (chan, ((dstx + width) << 16) | dstx);
+	OUT_RING  (chan, ((dsty + height) << 16) | dsty);
+	IMMED_RING(chan, RING_3D(CLIP_RECTS_EN), 1);
 
 	BEGIN_RING(chan, RING_3D(CLEAR_BUFFERS), 1);
 	OUT_RING  (chan, mode);
+
+	IMMED_RING(chan, RING_3D(CLIP_RECTS_EN), 0);
 
 	nv50->dirty |= NVC0_NEW_FRAMEBUFFER;
 }

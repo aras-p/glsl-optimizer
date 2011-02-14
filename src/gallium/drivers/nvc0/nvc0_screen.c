@@ -283,9 +283,6 @@ nvc0_magic_3d_init(struct nouveau_channel *chan)
    BEGIN_RING(chan, RING_3D_(0x074c), 1);
    OUT_RING  (chan, 0x3f);
 
-   BEGIN_RING(chan, RING_3D_(0x10f8), 1);
-   OUT_RING  (chan, 0x0101);
-
    BEGIN_RING(chan, RING_3D_(0x16a8), 1);
    OUT_RING  (chan, (3 << 16) | 3);
    BEGIN_RING(chan, RING_3D_(0x1794), 1);
@@ -534,9 +531,18 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    BEGIN_RING(chan, RING_3D_(0x1590), 1); /* deactivate ZCULL */
    OUT_RING  (chan, 0x3f);
 
-   BEGIN_RING(chan, RING_3D(VIEWPORT_CLIP_RECTS_EN), 1);
+   BEGIN_RING(chan, RING_3D(CLIP_RECTS_MODE), 1);
+   OUT_RING  (chan, NVC0_3D_CLIP_RECTS_MODE_INSIDE_ANY);
+   BEGIN_RING(chan, RING_3D(CLIP_RECT_HORIZ(0)), 8 * 2);
+   for (i = 0; i < 8 * 2; ++i)
+      OUT_RING(chan, 0);
+   BEGIN_RING(chan, RING_3D(CLIP_RECTS_EN), 1);
    OUT_RING  (chan, 0);
    BEGIN_RING(chan, RING_3D(CLIPID_ENABLE), 1);
+   OUT_RING  (chan, 0);
+
+   /* neither scissors, viewport nor stencil mask should affect clears */
+   BEGIN_RING(chan, RING_3D(CLEAR_FLAGS), 1);
    OUT_RING  (chan, 0);
 
    BEGIN_RING(chan, RING_3D(VIEWPORT_TRANSFORM_EN), 1);
