@@ -814,15 +814,16 @@ void r300_emit_vertex_arrays(struct r300_context* r300, int offset, boolean inde
     int i;
     unsigned vertex_array_count = r300->velems->count;
     unsigned packet_size = (vertex_array_count * 3 + 1) / 2;
+    struct pipe_vertex_buffer *vb1, *vb2;
+    unsigned *hw_format_size = r300->velems->format_size;
+    unsigned size1, size2;
     CS_LOCALS(r300);
 
     BEGIN_CS(2 + packet_size + vertex_array_count * 2);
     OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, packet_size);
     OUT_CS(vertex_array_count | (!indexed ? R300_VC_FORCE_PREFETCH : 0));
 
-    struct pipe_vertex_buffer *vb1, *vb2;
-    unsigned *hw_format_size = r300->velems->format_size;
-    unsigned size1, size2;
+    hw_format_size = r300->velems->format_size;
 
     for (i = 0; i < vertex_array_count - 1; i += 2) {
         vb1 = &vbuf[velem[i].vertex_buffer_index];
