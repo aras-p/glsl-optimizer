@@ -390,10 +390,8 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	bo[1] = rbuffer->bo;
 
 	pitch = align(tmp->pitch_in_pixels[0], 8);
-	if (tmp->tiled) {
-		array_mode = tmp->array_mode[0];
-		tile_type = tmp->tile_type;
-	}
+	array_mode = tmp->array_mode[0];
+	tile_type = tmp->tile_type;
 
 	/* FIXME properly handle first level != 0 */
 	r600_pipe_state_add_reg(rstate, R_030000_RESOURCE0_WORD0,
@@ -694,7 +692,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	    ntype != 4 && ntype != 5)
 		color_info |= S_028C70_SOURCE_FORMAT(V_028C70_EXPORT_4C_16BPC);
 
-	if (rtex->tiled) {
+	if (rtex->array_mode[level] > V_028C70_ARRAY_LINEAR_ALIGNED) {
 		tile_type = rtex->tile_type;
 	} else /* workaround for linear buffers */
 		tile_type = 1;

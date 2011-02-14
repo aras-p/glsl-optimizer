@@ -438,10 +438,8 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	bo[0] = rbuffer->bo;
 	bo[1] = rbuffer->bo;
 	pitch = align(tmp->pitch_in_pixels[0], 8);
-	if (tmp->tiled) {
-		array_mode = tmp->array_mode[0];
-		tile_type = tmp->tile_type;
-	}
+	array_mode = tmp->array_mode[0];
+	tile_type = tmp->tile_type;
 
 	/* FIXME properly handle first level != 0 */
 	r600_pipe_state_add_reg(rstate, R_038000_RESOURCE0_WORD0,

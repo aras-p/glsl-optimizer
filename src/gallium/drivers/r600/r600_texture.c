@@ -388,8 +388,6 @@ r600_texture_create_object(struct pipe_screen *screen,
 	if (util_format_is_depth_or_stencil(base->format) && permit_hardware_blit(screen, base))
 		rtex->depth = 1;
 
-	if (array_mode)
-		rtex->tiled = 1;
 	r600_setup_miptree(screen, rtex, array_mode);
 
 	resource->size = rtex->size;
@@ -557,7 +555,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 	 * the CPU is much happier reading out of cached system memory
 	 * than uncached VRAM.
 	 */
-	if (rtex->tiled)
+	if (R600_TEX_IS_TILED(rtex, level))
 		use_staging_texture = TRUE;
 
 	if ((usage & PIPE_TRANSFER_READ) && u_box_volume(box) > 1024)

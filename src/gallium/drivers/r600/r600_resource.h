@@ -59,13 +59,14 @@ struct r600_resource_texture {
 	unsigned			array_mode[PIPE_MAX_TEXTURE_LEVELS];
 	unsigned			pitch_override;
 	unsigned			size;
-	unsigned			tiled;
 	unsigned			tile_type;
 	unsigned			depth;
 	unsigned			dirty_db;
 	struct r600_resource_texture	*flushed_depth_texture;
 	boolean				is_flushing_texture;
 };
+
+#define R600_TEX_IS_TILED(tex, level) ((tex)->array_mode[level] != V_038000_ARRAY_LINEAR_GENERAL && (tex)->array_mode[level] != V_038000_ARRAY_LINEAR_ALIGNED)
 
 #define R600_BUFFER_MAGIC 0xabcd1600
 
