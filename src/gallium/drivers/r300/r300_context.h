@@ -268,8 +268,6 @@ struct r300_query {
     /* How many results have been written, in dwords. It's incremented
      * after end_query and flush. */
     unsigned num_results;
-    /* if we've flushed the query */
-    boolean flushed;
     /* if begin has been emitted */
     boolean begin_emitted;
 

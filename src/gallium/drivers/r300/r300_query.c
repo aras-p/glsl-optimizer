@@ -127,16 +127,12 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
     struct r300_query *q = r300_query(query);
-    unsigned flags, i;
+    unsigned i;
     uint32_t temp, *map;
-    uint64_t *result = (uint64_t*)vresult;
 
-    if (!q->flushed)
-        pipe->flush(pipe, 0, NULL);
-
-    flags = PIPE_TRANSFER_READ | (!wait ? PIPE_TRANSFER_DONTBLOCK : 0);
-
-    map = r300->rws->buffer_map(q->buf, r300->cs, flags);
+    map = r300->rws->buffer_map(q->buf, r300->cs,
+                                PIPE_TRANSFER_READ |
+                                (!wait ? PIPE_TRANSFER_DONTBLOCK : 0));
     if (!map)
         return FALSE;
 
@@ -149,7 +145,7 @@ static boolean r300_get_query_result(struct pipe_context* pipe,
 
     r300->rws->buffer_unmap(q->buf);
 
-    *result = temp;
+    *((uint64_t*)vresult) = temp;
     return TRUE;
 }
 

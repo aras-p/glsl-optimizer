@@ -559,7 +559,6 @@ void r300_emit_query_start(struct r300_context *r300, unsigned size, void*state)
     OUT_CS_REG(R300_ZB_ZPASS_DATA, 0);
     END_CS;
     query->begin_emitted = TRUE;
-    query->flushed = FALSE;
 }
 
 static void r300_emit_query_end_frag_pipes(struct r300_context *r300,

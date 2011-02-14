@@ -36,7 +36,6 @@ static void r300_flush(struct pipe_context* pipe,
                        struct pipe_fence_handle** fence)
 {
     struct r300_context *r300 = r300_context(pipe);
-    struct r300_query *query;
     struct r300_atom *atom;
     struct r300_fence **rfence = (struct r300_fence**)fence;
 
@@ -74,11 +73,6 @@ static void r300_flush(struct pipe_context* pipe,
         /* Even if hw is not dirty, we should at least reset the CS in case
          * the space checking failed for the first draw operation. */
         r300->rws->cs_flush(r300->cs);
-    }
-
-    /* reset flushed query */
-    foreach(query, &r300->query_list) {
-        query->flushed = TRUE;
     }
 
     /* Create a new fence. */
