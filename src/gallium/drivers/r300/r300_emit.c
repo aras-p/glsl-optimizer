@@ -815,7 +815,7 @@ void r300_emit_vertex_arrays(struct r300_context* r300, int offset, boolean inde
     unsigned vertex_array_count = r300->velems->count;
     unsigned packet_size = (vertex_array_count * 3 + 1) / 2;
     struct pipe_vertex_buffer *vb1, *vb2;
-    unsigned *hw_format_size = r300->velems->format_size;
+    unsigned *hw_format_size;
     unsigned size1, size2;
     CS_LOCALS(r300);
 
