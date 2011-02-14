@@ -33,7 +33,7 @@ Transform feedback (GL_EXT_transform_feedback)        ~50% done
    glBindFragDataLocation, glGetFragDataLocation,
    glBindBufferRange, glBindBufferBase commands
 Vertex array objects (GL_APPLE_vertex_array_object)   DONE
-sRGB framebuffer format (GL_EXT_framebuffer_sRGB)     core GL done (i965, galliuum), GLX todo
+sRGB framebuffer format (GL_EXT_framebuffer_sRGB)     core GL done (i965, gallium), GLX todo
 glClearBuffer commands                                DONE
 glGetStringi command                                  DONE
 glTexParameterI, glGetTexParameterI commands          DONE
