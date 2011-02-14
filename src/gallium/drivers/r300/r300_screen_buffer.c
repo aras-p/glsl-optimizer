@@ -51,10 +51,9 @@ unsigned r300_buffer_is_referenced(struct pipe_context *context,
 void r300_upload_index_buffer(struct r300_context *r300,
 			      struct pipe_resource **index_buffer,
 			      unsigned index_size, unsigned *start,
-			      unsigned count)
+			      unsigned count, uint8_t *ptr)
 {
     unsigned index_offset;
-    uint8_t *ptr = r300_resource(*index_buffer)->b.user_ptr;
     boolean flushed;
 
     *index_buffer = NULL;

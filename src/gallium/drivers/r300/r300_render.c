@@ -578,7 +578,6 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
     if (indexSize == 2 && (start & 1) &&
         !r300_resource(indexBuffer)->b.user_ptr) {
         struct pipe_transfer *transfer;
-        struct pipe_resource *userbuf;
 
         uint16_t *ptr = pipe_buffer_map(pipe, indexBuffer,
                                         PIPE_TRANSFER_READ |
@@ -590,18 +589,16 @@ static void r300_draw_range_elements(struct pipe_context* pipe,
         } else {
             /* Copy the mapped index buffer directly to the upload buffer.
              * The start index will be aligned simply from the fact that
-             * every sub-buffer in u_upload_mgr is aligned. */
-            userbuf = pipe->screen->user_buffer_create(pipe->screen,
-                                                       ptr, 0,
-                                                       PIPE_BIND_INDEX_BUFFER);
-            indexBuffer = userbuf;
-            r300_upload_index_buffer(r300, &indexBuffer, indexSize, &start, count);
-            pipe_resource_reference(&userbuf, NULL);
+             * every sub-buffer in the upload buffer is aligned. */
+            r300_upload_index_buffer(r300, &indexBuffer, indexSize, &start,
+                                     count, (uint8_t*)ptr);
         }
         pipe_buffer_unmap(pipe, transfer);
     } else {
         if (r300_resource(indexBuffer)->b.user_ptr)
-            r300_upload_index_buffer(r300, &indexBuffer, indexSize, &start, count);
+            r300_upload_index_buffer(r300, &indexBuffer, indexSize,
+                                     &start, count,
+                                     r300_resource(indexBuffer)->b.user_ptr);
     }
 
     /* 19 dwords for emit_draw_elements. Give up if the function fails. */

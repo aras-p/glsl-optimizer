@@ -40,7 +40,7 @@
 void r300_upload_index_buffer(struct r300_context *r300,
 			      struct pipe_resource **index_buffer,
 			      unsigned index_size, unsigned *start,
-			      unsigned count);
+			      unsigned count, uint8_t *ptr);
 
 struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
 					 const struct pipe_resource *templ);
