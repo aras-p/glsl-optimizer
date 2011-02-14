@@ -55,9 +55,16 @@
 
 
 /**
- * Max texture level for the alpha texture used for antialiasing
+ * Size for the alpha texture used for antialiasing
  */
-#define MAX_TEXTURE_LEVEL  5   /* 32 x 32 */
+#define TEXTURE_SIZE_LOG2  5   /* 32 x 32 */
+
+/**
+ * Max texture level for the alpha texture used for antialiasing
+ *
+ * Don't use the 1x1 and 2x2 mipmap levels.
+ */
+#define MAX_TEXTURE_LEVEL  (TEXTURE_SIZE_LOG2 - 2)
 
 
 /**
@@ -403,8 +410,8 @@ aaline_create_texture(struct aaline_stage *aaline)
    texTemp.target = PIPE_TEXTURE_2D;
    texTemp.format = PIPE_FORMAT_A8_UNORM; /* XXX verify supported by driver! */
    texTemp.last_level = MAX_TEXTURE_LEVEL;
-   texTemp.width0 = 1 << MAX_TEXTURE_LEVEL;
-   texTemp.height0 = 1 << MAX_TEXTURE_LEVEL;
+   texTemp.width0 = 1 << TEXTURE_SIZE_LOG2;
+   texTemp.height0 = 1 << TEXTURE_SIZE_LOG2;
    texTemp.depth0 = 1;
    texTemp.array_size = 1;
    texTemp.bind = PIPE_BIND_SAMPLER_VIEW;
@@ -498,8 +505,7 @@ aaline_create_sampler(struct aaline_stage *aaline)
    sampler.mag_img_filter = PIPE_TEX_FILTER_LINEAR;
    sampler.normalized_coords = 1;
    sampler.min_lod = 0.0f;
-   /* avoid using the 1x1 and 2x2 mipmap levels */
-   sampler.max_lod = MAX_TEXTURE_LEVEL - 2;
+   sampler.max_lod = MAX_TEXTURE_LEVEL;
 
    aaline->sampler_cso = pipe->create_sampler_state(pipe, &sampler);
    if (aaline->sampler_cso == NULL)
