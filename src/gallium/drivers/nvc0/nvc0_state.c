@@ -284,20 +284,21 @@ nvc0_zsa_state_create(struct pipe_context *pipe,
    }
 
    if (cso->stencil[0].enabled) {
-      SB_BEGIN_3D(so, STENCIL_FRONT_ENABLE, 5);
+      SB_BEGIN_3D(so, STENCIL_ENABLE, 5);
       SB_DATA    (so, 1);
       SB_DATA    (so, nvgl_stencil_op(cso->stencil[0].fail_op));
       SB_DATA    (so, nvgl_stencil_op(cso->stencil[0].zfail_op));
       SB_DATA    (so, nvgl_stencil_op(cso->stencil[0].zpass_op));
       SB_DATA    (so, nvgl_comparison_op(cso->stencil[0].func));
-      SB_BEGIN_3D(so, STENCIL_FRONT_MASK, 2);
-      SB_DATA    (so, cso->stencil[0].writemask);
+      SB_BEGIN_3D(so, STENCIL_FRONT_FUNC_MASK, 2);
       SB_DATA    (so, cso->stencil[0].valuemask);
+      SB_DATA    (so, cso->stencil[0].writemask);
    } else {
-      SB_IMMED_3D(so, STENCIL_FRONT_ENABLE, 0);
+      SB_IMMED_3D(so, STENCIL_ENABLE, 0);
    }
 
    if (cso->stencil[1].enabled) {
+      assert(cso->stencil[0].enabled);
       SB_BEGIN_3D(so, STENCIL_TWO_SIDE_ENABLE, 5);
       SB_DATA    (so, 1);
       SB_DATA    (so, nvgl_stencil_op(cso->stencil[1].fail_op));
@@ -307,7 +308,8 @@ nvc0_zsa_state_create(struct pipe_context *pipe,
       SB_BEGIN_3D(so, STENCIL_BACK_MASK, 2);
       SB_DATA    (so, cso->stencil[1].writemask);
       SB_DATA    (so, cso->stencil[1].valuemask);
-   } else {
+   } else
+   if (cso->stencil[0].enabled) {
       SB_IMMED_3D(so, STENCIL_TWO_SIDE_ENABLE, 0);
    }
     
