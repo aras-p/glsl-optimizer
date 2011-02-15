@@ -112,6 +112,8 @@ static void update_raster_state( struct st_context *st )
       raster->light_twoside = 1;
    }
 
+   raster->clamp_vertex_color = ctx->Light._ClampVertexColor;
+
    /* _NEW_POLYGON
     */
    if (ctx->Polygon.CullFlag) {
@@ -252,6 +254,9 @@ static void update_raster_state( struct st_context *st )
    if (ctx->Scissor.Enabled)
       raster->scissor = 1;
 
+   /* _NEW_FRAG_CLAMP */
+   raster->clamp_fragment_color = ctx->Color._ClampFragmentColor;
+
    raster->gl_rasterization_rules = 1;
 
    cso_set_rasterizer(st->cso_context, raster);
@@ -267,7 +272,8 @@ const struct st_tracked_state st_update_rasterizer = {
        _NEW_POINT |
        _NEW_POLYGON |
        _NEW_PROGRAM |
-       _NEW_SCISSOR),      /* mesa state dependencies*/
+       _NEW_SCISSOR |
+       _NEW_FRAG_CLAMP),      /* mesa state dependencies*/
       ST_NEW_VERTEX_PROGRAM,  /* state tracker dependencies */
    },
    update_raster_state     /* update function */

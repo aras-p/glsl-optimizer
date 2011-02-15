@@ -508,6 +508,13 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_depth_clamp = GL_TRUE;
    }
 
+   /* this extension does not actually require support of floating point
+    * render targets, just clamping controls
+    */
+   if(screen->get_param(screen, PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL) &&
+      screen->get_param(screen, PIPE_CAP_VERTEX_COLOR_CLAMP_CONTROL))
+      ctx->Extensions.ARB_color_buffer_float = GL_TRUE;
+
    if (screen->get_param(screen, PIPE_CAP_SHADER_STENCIL_EXPORT)) {
       ctx->Extensions.ARB_shader_stencil_export = GL_TRUE;
    }
