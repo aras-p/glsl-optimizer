@@ -389,7 +389,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	bo[0] = rbuffer->bo;
 	bo[1] = rbuffer->bo;
 
-	pitch = align(tmp->pitch_in_pixels[0], 8);
+	pitch = align(tmp->pitch_in_blocks[0] * util_format_get_blockwidth(state->format), 8);
 	array_mode = tmp->array_mode[0];
 	tile_type = tmp->tile_type;
 
@@ -664,8 +664,8 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	/* XXX quite sure for dx10+ hw don't need any offset hacks */
 	offset = r600_texture_get_offset((struct r600_resource_texture *)state->cbufs[cb]->texture,
 					 level, state->cbufs[cb]->u.tex.first_layer);
-	pitch = rtex->pitch_in_pixels[level] / 8 - 1;
-	slice = rtex->pitch_in_pixels[level] * surf->aligned_height / 64 - 1;
+	pitch = rtex->pitch_in_blocks[level] / 8 - 1;
+	slice = rtex->pitch_in_blocks[level] * surf->aligned_height / 64 - 1;
 	ntype = 0;
 	desc = util_format_description(surf->base.format);
 	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
@@ -747,8 +747,8 @@ static void evergreen_db(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	/* XXX quite sure for dx10+ hw don't need any offset hacks */
 	offset = r600_texture_get_offset((struct r600_resource_texture *)state->zsbuf->texture,
 					 level, state->zsbuf->u.tex.first_layer);
-	pitch = rtex->pitch_in_pixels[level] / 8 - 1;
-	slice = rtex->pitch_in_pixels[level] * surf->aligned_height / 64 - 1;
+	pitch = rtex->pitch_in_blocks[level] / 8 - 1;
+	slice = rtex->pitch_in_blocks[level] * surf->aligned_height / 64 - 1;
 	format = r600_translate_dbformat(state->zsbuf->texture->format);
 	stencil_format = r600_translate_stencilformat(state->zsbuf->texture->format);
 

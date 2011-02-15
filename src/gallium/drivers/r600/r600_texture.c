@@ -85,7 +85,7 @@ unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
 	}
 }
 
-static unsigned r600_get_pixel_alignment(struct pipe_screen *screen,
+static unsigned r600_get_block_alignment(struct pipe_screen *screen,
 					 enum pipe_format format,
 					 unsigned array_mode)
 {
@@ -128,6 +128,7 @@ static unsigned r600_get_height_alignment(struct pipe_screen *screen,
 	case V_038000_ARRAY_LINEAR_ALIGNED:
 		h_align = 8;
 		break;
+	case V_038000_ARRAY_LINEAR_GENERAL:
 	default:
 		h_align = 1;
 		break;
@@ -141,7 +142,7 @@ static unsigned r600_get_base_alignment(struct pipe_screen *screen,
 {
 	struct r600_screen* rscreen = (struct r600_screen *)screen;
 	unsigned pixsize = util_format_get_blocksize(format);
-	int p_align = r600_get_pixel_alignment(screen, format, array_mode);
+	int p_align = r600_get_block_alignment(screen, format, array_mode);
 	int h_align = r600_get_height_alignment(screen, array_mode);
 	int b_align;
 
@@ -169,25 +170,24 @@ static unsigned mip_minify(unsigned size, unsigned level)
 	return val;
 }
 
-static unsigned r600_texture_get_stride(struct pipe_screen *screen,
-					struct r600_resource_texture *rtex,
-					unsigned level)
+static unsigned r600_texture_get_nblocksx(struct pipe_screen *screen,
+					  struct r600_resource_texture *rtex,
+					  unsigned level)
 {
 	struct pipe_resource *ptex = &rtex->resource.b.b.b;
-	unsigned width, stride, tile_width;
+	unsigned nblocksx, block_align, width;
+	unsigned blocksize = util_format_get_blocksize(ptex->format);
 
 	if (rtex->pitch_override)
-		return rtex->pitch_override;
+		return rtex->pitch_override / blocksize;
 
 	width = mip_minify(ptex->width0, level);
-	if (util_format_is_plain(ptex->format)) {
-		tile_width = r600_get_pixel_alignment(screen, ptex->format,
-						      rtex->array_mode[level]);
-		width = align(width, tile_width);
-	}
-	stride = util_format_get_stride(ptex->format, width);
+	nblocksx = util_format_get_nblocksx(ptex->format, width);
 
-	return stride;
+	block_align = r600_get_block_alignment(screen, ptex->format,
+					      rtex->array_mode[level]);
+	nblocksx = align(nblocksx, block_align);
+	return nblocksx;
 }
 
 static unsigned r600_texture_get_nblocksy(struct pipe_screen *screen,
@@ -198,19 +198,11 @@ static unsigned r600_texture_get_nblocksy(struct pipe_screen *screen,
 	unsigned height, tile_height;
 
 	height = mip_minify(ptex->height0, level);
-	if (util_format_is_plain(ptex->format)) {
-		tile_height = r600_get_height_alignment(screen,
-							rtex->array_mode[level]);
-		height = align(height, tile_height);
-	}
-	return util_format_get_nblocksy(ptex->format, height);
-}
-
-/* Get a width in pixels from a stride in bytes. */
-static unsigned pitch_to_width(enum pipe_format format, unsigned pitch_in_bytes)
-{
-	return (pitch_in_bytes / util_format_get_blocksize(format)) *
-		util_format_get_blockwidth(format);
+	height = util_format_get_nblocksy(ptex->format, height);
+	tile_height = r600_get_height_alignment(screen,
+						rtex->array_mode[level]);
+	height = align(height, tile_height);
+	return height;
 }
 
 static void r600_texture_set_array_mode(struct pipe_screen *screen,
@@ -231,7 +223,7 @@ static void r600_texture_set_array_mode(struct pipe_screen *screen,
 		unsigned w, h, tile_height, tile_width;
 
 		tile_height = r600_get_height_alignment(screen, array_mode);
-		tile_width = r600_get_pixel_alignment(screen, ptex->format, array_mode);
+		tile_width = r600_get_block_alignment(screen, ptex->format, array_mode);
 
 		w = mip_minify(ptex->width0, level);
 		h = mip_minify(ptex->height0, level);
@@ -251,17 +243,18 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 	struct pipe_resource *ptex = &rtex->resource.b.b.b;
 	struct radeon *radeon = (struct radeon *)screen->winsys;
 	enum chip_class chipc = r600_get_family_class(radeon);
-	unsigned pitch, size, layer_size, i, offset;
-	unsigned nblocksy;
+	unsigned size, layer_size, i, offset;
+	unsigned nblocksx, nblocksy;
 
 	for (i = 0, offset = 0; i <= ptex->last_level; i++) {
+		unsigned blocksize = util_format_get_blocksize(ptex->format);
+
 		r600_texture_set_array_mode(screen, rtex, i, array_mode);
 
-		pitch = r600_texture_get_stride(screen, rtex, i);
+		nblocksx = r600_texture_get_nblocksx(screen, rtex, i);
 		nblocksy = r600_texture_get_nblocksy(screen, rtex, i);
 
-		layer_size = pitch * nblocksy;
-
+		layer_size = nblocksx * nblocksy * blocksize;
 		if (ptex->target == PIPE_TEXTURE_CUBE) {
 			if (chipc >= R700)
 				size = layer_size * 8;
@@ -275,8 +268,9 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 			offset = align(offset, r600_get_base_alignment(screen, ptex->format, array_mode));
 		rtex->offset[i] = offset;
 		rtex->layer_size[i] = layer_size;
-		rtex->pitch_in_bytes[i] = pitch;
-		rtex->pitch_in_pixels[i] = pitch_to_width(ptex->format, pitch);
+		rtex->pitch_in_blocks[i] = nblocksx; /* CB talks in elements */
+		rtex->pitch_in_bytes[i] = nblocksx * blocksize;
+
 		offset += size;
 	}
 	rtex->size = offset;

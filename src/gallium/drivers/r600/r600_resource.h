@@ -53,8 +53,8 @@ struct r600_resource {
 struct r600_resource_texture {
 	struct r600_resource		resource;
 	unsigned			offset[PIPE_MAX_TEXTURE_LEVELS];
-	unsigned			pitch_in_bytes[PIPE_MAX_TEXTURE_LEVELS];
-	unsigned			pitch_in_pixels[PIPE_MAX_TEXTURE_LEVELS];
+	unsigned			pitch_in_bytes[PIPE_MAX_TEXTURE_LEVELS];  /* transfer */
+	unsigned			pitch_in_blocks[PIPE_MAX_TEXTURE_LEVELS]; /* texture resource */
 	unsigned			layer_size[PIPE_MAX_TEXTURE_LEVELS];
 	unsigned			array_mode[PIPE_MAX_TEXTURE_LEVELS];
 	unsigned			pitch_override;
