@@ -128,9 +128,11 @@ nvc0_resource_validate(struct nvc0_resource *res, uint32_t flags)
 {
    struct nvc0_screen *screen = nvc0_screen(res->base.screen);
 
-   nouveau_bo_validate(screen->base.channel, res->bo, flags);
+   if (likely(res->bo)) {
+      nouveau_bo_validate(screen->base.channel, res->bo, flags);
 
-   nvc0_resource_fence(res, flags);
+      nvc0_resource_fence(res, flags);
+   }
 }
 
 

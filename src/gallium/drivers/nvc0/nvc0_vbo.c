@@ -171,12 +171,15 @@ nvc0_prevalidate_vbufs(struct nvc0_context *nvc0)
 
    nvc0->vbo_fifo = nvc0->vbo_user = 0;
 
+   nvc0_bufctx_reset(nvc0, NVC0_BUFCTX_VERTEX);
+
    for (i = 0; i < nvc0->num_vtxbufs; ++i) {
       vb = &nvc0->vtxbuf[i];
       if (!vb->stride)
          continue;
       buf = nvc0_resource(vb->buffer);
 
+      /* NOTE: user buffers with temporary storage count as mapped by GPU */
       if (!nvc0_resource_mapped_by_gpu(vb->buffer)) {
          if (nvc0->vbo_push_hint) {
             nvc0->vbo_fifo = ~0;
@@ -230,12 +233,25 @@ nvc0_update_user_vbufs(struct nvc0_context *nvc0)
       MARK_RING (chan, 6, 4);
       BEGIN_RING_1I(chan, RING_3D(VERTEX_ARRAY_SELECT), 5);
       OUT_RING  (chan, i);
-      OUT_RESRCh(chan, buf, size - 1, NOUVEAU_BO_RD);
-      OUT_RESRCl(chan, buf, size - 1, NOUVEAU_BO_RD);
+      OUT_RESRCh(chan, buf, base + size - 1, NOUVEAU_BO_RD);
+      OUT_RESRCl(chan, buf, base + size - 1, NOUVEAU_BO_RD);
       OUT_RESRCh(chan, buf, offset, NOUVEAU_BO_RD);
       OUT_RESRCl(chan, buf, offset, NOUVEAU_BO_RD);
    }
    nvc0->vbo_dirty = TRUE;
+}
+
+static INLINE void
+nvc0_release_user_vbufs(struct nvc0_context *nvc0)
+{
+   uint32_t vbo_user = nvc0->vbo_user;
+
+   while (vbo_user) {
+      int i = ffs(vbo_user) - 1;
+      vbo_user &= ~(1 << i);
+
+      nvc0_buffer_release_gpu_storage(nvc0_resource(nvc0->vtxbuf[i].buffer));
+   }
 }
 
 void
@@ -564,6 +580,9 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    nvc0->vbo_min_index = info->min_index;
    nvc0->vbo_max_index = info->max_index;
 
+   if (nvc0->vbo_push_hint != !!nvc0->vbo_fifo)
+      nvc0->dirty |= NVC0_NEW_ARRAYS;
+
    if (nvc0->vbo_user && !(nvc0->dirty & (NVC0_NEW_VERTEX | NVC0_NEW_ARRAYS)))
       nvc0_update_user_vbufs(nvc0);
 
@@ -621,4 +640,6 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
                          info->mode, info->start, info->count,
                          info->instance_count, info->index_bias);
    }
+
+   nvc0_release_user_vbufs(nvc0);
 }

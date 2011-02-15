@@ -59,14 +59,22 @@ release_allocation(struct nvc0_mm_allocation **mm, struct nvc0_fence *fence)
    (*mm) = NULL;
 }
 
-static INLINE boolean
-nvc0_buffer_reallocate(struct nvc0_screen *screen, struct nvc0_resource *buf,
-                       unsigned domain)
+INLINE void
+nvc0_buffer_release_gpu_storage(struct nvc0_resource *buf)
 {
    nouveau_bo_ref(NULL, &buf->bo);
 
    if (buf->mm)
       release_allocation(&buf->mm, buf->fence);
+
+   buf->domain = 0;
+}
+
+static INLINE boolean
+nvc0_buffer_reallocate(struct nvc0_screen *screen, struct nvc0_resource *buf,
+                       unsigned domain)
+{
+   nvc0_buffer_release_gpu_storage(buf);
 
    return nvc0_buffer_allocate(screen, buf, domain);
 }
@@ -77,10 +85,7 @@ nvc0_buffer_destroy(struct pipe_screen *pscreen,
 {
    struct nvc0_resource *res = nvc0_resource(presource);
 
-   nouveau_bo_ref(NULL, &res->bo);
-
-   if (res->mm)
-      release_allocation(&res->mm, res->fence);
+   nvc0_buffer_release_gpu_storage(res);
 
    if (res->data && !(res->status & NVC0_BUFFER_STATUS_USER_MEMORY))
       FREE(res->data);

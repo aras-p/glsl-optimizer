@@ -51,6 +51,9 @@ struct nvc0_resource {
    struct nvc0_mm_allocation *mm;
 };
 
+void
+nvc0_buffer_release_gpu_storage(struct nvc0_resource *);
+
 boolean
 nvc0_buffer_download(struct nvc0_context *, struct nvc0_resource *,
                      unsigned start, unsigned size);
