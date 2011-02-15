@@ -203,6 +203,7 @@ def generate(env):
         'i586': 'x86',
         'i686': 'x86',
         'ppc' : 'ppc',
+        'AMD64': 'x86_64',
         'x86_64': 'x86_64',
     }.get(host_machine, 'generic')
     env['crosscompile'] = platform != host_platform
