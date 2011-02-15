@@ -162,6 +162,7 @@ struct draw_llvm_variant_key
 {
    unsigned nr_vertex_elements:8;
    unsigned nr_samplers:8;
+   unsigned clamp_vertex_color:1;
    unsigned clip_xy:1;
    unsigned clip_z:1;
    unsigned clip_user:1;
@@ -169,7 +170,7 @@ struct draw_llvm_variant_key
    unsigned bypass_viewport:1;
    unsigned need_edgeflags:1;
    unsigned nr_planes:4;
-   unsigned pad:6;
+   unsigned pad:5;
 
    /* Variable number of vertex elements:
     */

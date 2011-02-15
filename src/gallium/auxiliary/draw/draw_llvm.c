@@ -438,7 +438,8 @@ generate_vs(struct draw_llvm *llvm,
             const LLVMValueRef (*inputs)[NUM_CHANNELS],
             LLVMValueRef system_values_array,
             LLVMValueRef context_ptr,
-            struct lp_build_sampler_soa *draw_sampler)
+            struct lp_build_sampler_soa *draw_sampler,
+            boolean clamp_vertex_color)
 {
    const struct tgsi_token *tokens = llvm->draw->vs.vertex_shader->state.tokens;
    struct lp_type vs_type;
@@ -474,6 +475,30 @@ generate_vs(struct draw_llvm *llvm,
                      outputs,
                      sampler,
                      &llvm->draw->vs.vertex_shader->info);
+
+   if(clamp_vertex_color)
+   {
+      LLVMValueRef out;
+      unsigned chan, attrib;
+      struct lp_build_context bld;
+      struct tgsi_shader_info* info = &llvm->draw->vs.vertex_shader->info;
+      lp_build_context_init(&bld, llvm->gallivm, vs_type);
+
+      for (attrib = 0; attrib < info->num_outputs; ++attrib) {
+         for(chan = 0; chan < NUM_CHANNELS; ++chan) {
+            if(outputs[attrib][chan]) {
+               switch (info->output_semantic_name[attrib]) {
+               case TGSI_SEMANTIC_COLOR:
+               case TGSI_SEMANTIC_BCOLOR:
+                  out = LLVMBuildLoad(builder, outputs[attrib][chan], "");
+                  out = lp_build_clamp(&bld, out, bld.zero, bld.one);
+                  LLVMBuildStore(builder, out, outputs[attrib][chan]);
+                  break;
+               }
+            }
+         }
+      }
+   }
 }
 
 #if DEBUG_STORE
@@ -1235,7 +1260,8 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
                   ptr_aos,
                   system_values_array,
                   context_ptr,
-                  sampler);
+                  sampler,
+                  variant->key.clamp_vertex_color);
 
       /* store original positions in clip before further manipulation */
       store_clip(gallivm, io, outputs);
@@ -1446,7 +1472,8 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
                   ptr_aos,
                   system_values_array,
                   context_ptr,
-                  sampler);
+                  sampler,
+                  variant->key.clamp_vertex_color);
 
       /* store original positions in clip before further manipulation */
       store_clip(gallivm, io, outputs);
@@ -1523,6 +1550,8 @@ draw_llvm_make_variant_key(struct draw_llvm *llvm, char *store)
    struct lp_sampler_static_state *sampler;
 
    key = (struct draw_llvm_variant_key *)store;
+
+   key->clamp_vertex_color = llvm->draw->rasterizer->clamp_vertex_color; /**/
 
    /* Presumably all variants of the shader should have the same
     * number of vertex elements - ie the number of shader inputs.
