@@ -8597,6 +8597,21 @@ __indirect_glDrawBuffersARB(GLsizei n, const GLenum * bufs)
     }
 }
 
+#define X_GLrop_ClampColorARB 234
+void
+__indirect_glClampColorARB(GLenum target, GLenum clamp)
+{
+    struct glx_context *const gc = __glXGetCurrentContext();
+    const GLuint cmdlen = 12;
+    emit_header(gc->pc, X_GLrop_ClampColorARB, cmdlen);
+    (void) memcpy((void *) (gc->pc + 4), (void *) (&target), 4);
+    (void) memcpy((void *) (gc->pc + 8), (void *) (&clamp), 4);
+    gc->pc += cmdlen;
+    if (__builtin_expect(gc->pc > gc->limit, 0)) {
+        (void) __glXFlushRenderBuffer(gc, gc->pc);
+    }
+}
+
 #define X_GLrop_RenderbufferStorageMultisample 4331
 void
 __indirect_glRenderbufferStorageMultisample(GLenum target, GLsizei samples,
