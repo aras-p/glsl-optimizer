@@ -885,12 +885,16 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 		switch (format) {
 		case PIPE_FORMAT_DXT1_RGB:
 		case PIPE_FORMAT_DXT1_RGBA:
+		case PIPE_FORMAT_DXT1_SRGB:
+		case PIPE_FORMAT_DXT1_SRGBA:
 			result = FMT_BC1;
 			goto out_word4;
 		case PIPE_FORMAT_DXT3_RGBA:
+		case PIPE_FORMAT_DXT3_SRGBA:
 			result = FMT_BC2;
 			goto out_word4;
 		case PIPE_FORMAT_DXT5_RGBA:
+		case PIPE_FORMAT_DXT5_SRGBA:
 			result = FMT_BC3;
 			goto out_word4;
 		default:
