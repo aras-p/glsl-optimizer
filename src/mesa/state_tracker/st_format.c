@@ -214,6 +214,39 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
    case MESA_FORMAT_SARGB8:
       return PIPE_FORMAT_B8G8R8A8_SRGB;
 #endif
+   case MESA_FORMAT_RGBA_FLOAT32:
+      return PIPE_FORMAT_R32G32B32A32_FLOAT;
+   case MESA_FORMAT_RGBA_FLOAT16:
+      return PIPE_FORMAT_R16G16B16A16_FLOAT;
+   case MESA_FORMAT_RGB_FLOAT32:
+      return PIPE_FORMAT_R32G32B32_FLOAT;
+   case MESA_FORMAT_RGB_FLOAT16:
+      return PIPE_FORMAT_R16G16B16_FLOAT;
+   case MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32:
+      return PIPE_FORMAT_L32A32_FLOAT;
+   case MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16:
+      return PIPE_FORMAT_L16A16_FLOAT;
+   case MESA_FORMAT_LUMINANCE_FLOAT32:
+      return PIPE_FORMAT_L32_FLOAT;
+   case MESA_FORMAT_LUMINANCE_FLOAT16:
+      return PIPE_FORMAT_L16_FLOAT;
+   case MESA_FORMAT_ALPHA_FLOAT32:
+      return PIPE_FORMAT_A32_FLOAT;
+   case MESA_FORMAT_ALPHA_FLOAT16:
+      return PIPE_FORMAT_A16_FLOAT;
+   case MESA_FORMAT_INTENSITY_FLOAT32:
+      return PIPE_FORMAT_I32_FLOAT;
+   case MESA_FORMAT_INTENSITY_FLOAT16:
+      return PIPE_FORMAT_I16_FLOAT;
+   case MESA_FORMAT_R_FLOAT32:
+      return PIPE_FORMAT_R32_FLOAT;
+   case MESA_FORMAT_R_FLOAT16:
+      return PIPE_FORMAT_R16_FLOAT;
+   case MESA_FORMAT_RG_FLOAT32:
+      return PIPE_FORMAT_R32G32_FLOAT;
+   case MESA_FORMAT_RG_FLOAT16:
+      return PIPE_FORMAT_R16G16_FLOAT;
+
    case MESA_FORMAT_R8:
       return PIPE_FORMAT_R8_UNORM;
    case MESA_FORMAT_R16:
@@ -403,6 +436,38 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
    case PIPE_FORMAT_B8G8R8A8_SRGB:
       return MESA_FORMAT_SARGB8;
 #endif
+   case PIPE_FORMAT_R32G32B32A32_FLOAT:
+      return MESA_FORMAT_RGBA_FLOAT32;
+   case PIPE_FORMAT_R16G16B16A16_FLOAT:
+      return MESA_FORMAT_RGBA_FLOAT16;
+   case PIPE_FORMAT_R32G32B32_FLOAT:
+      return MESA_FORMAT_RGB_FLOAT32;
+   case PIPE_FORMAT_R16G16B16_FLOAT:
+      return MESA_FORMAT_RGB_FLOAT16;
+   case PIPE_FORMAT_L32A32_FLOAT:
+      return MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32;
+   case PIPE_FORMAT_L16A16_FLOAT:
+      return MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16;
+   case PIPE_FORMAT_L32_FLOAT:
+      return MESA_FORMAT_LUMINANCE_FLOAT32;
+   case PIPE_FORMAT_L16_FLOAT:
+      return MESA_FORMAT_LUMINANCE_FLOAT16;
+   case PIPE_FORMAT_A32_FLOAT:
+      return MESA_FORMAT_ALPHA_FLOAT32;
+   case PIPE_FORMAT_A16_FLOAT:
+      return MESA_FORMAT_ALPHA_FLOAT16;
+   case PIPE_FORMAT_I32_FLOAT:
+      return MESA_FORMAT_INTENSITY_FLOAT32;
+   case PIPE_FORMAT_I16_FLOAT:
+      return MESA_FORMAT_INTENSITY_FLOAT16;
+   case PIPE_FORMAT_R32_FLOAT:
+      return MESA_FORMAT_R_FLOAT32;
+   case PIPE_FORMAT_R16_FLOAT:
+      return MESA_FORMAT_R_FLOAT16;
+   case PIPE_FORMAT_R32G32_FLOAT:
+      return MESA_FORMAT_RG_FLOAT32;
+   case PIPE_FORMAT_R16G16_FLOAT:
+      return MESA_FORMAT_RG_FLOAT16;
 
    case PIPE_FORMAT_R8_UNORM:
       return MESA_FORMAT_R8;
@@ -886,6 +951,178 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
                                       sample_count, bindings))
          return PIPE_FORMAT_L8_SRGB;
       return default_srgba_format( screen, target, sample_count, bindings);
+
+   /* prefer formats in order of data size, choosing 16-bit ones if equal sized */
+   case GL_RGBA16F_ARB:
+   case GL_RGB16F_ARB:
+      {
+         static const enum pipe_format formats[] = {
+               PIPE_FORMAT_R16G16B16A16_FLOAT,
+               PIPE_FORMAT_R32G32B32A32_FLOAT
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+               target, sample_count, bindings);
+      }
+   case GL_LUMINANCE_ALPHA16F_ARB:
+      {
+         static const enum pipe_format formats[] = {
+               PIPE_FORMAT_L16A16_FLOAT,
+               PIPE_FORMAT_R16G16B16A16_FLOAT,
+               PIPE_FORMAT_L32A32_FLOAT,
+               PIPE_FORMAT_R32G32B32A32_FLOAT
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+               target, sample_count, bindings);
+      }
+   case GL_ALPHA16F_ARB:
+      {
+         static const enum pipe_format formats[] = {
+               PIPE_FORMAT_A16_FLOAT,
+               PIPE_FORMAT_L16A16_FLOAT,
+               PIPE_FORMAT_A32_FLOAT,
+               PIPE_FORMAT_R16G16B16A16_FLOAT,
+               PIPE_FORMAT_L32A32_FLOAT,
+               PIPE_FORMAT_R32G32B32A32_FLOAT
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+               target, sample_count, bindings);
+      }
+   case GL_INTENSITY16F_ARB:
+      {
+         static const enum pipe_format formats[] = {
+               PIPE_FORMAT_I16_FLOAT,
+               PIPE_FORMAT_L16A16_FLOAT,
+               PIPE_FORMAT_I32_FLOAT,
+               PIPE_FORMAT_R16G16B16A16_FLOAT,
+               PIPE_FORMAT_L32A32_FLOAT,
+               PIPE_FORMAT_R32G32B32A32_FLOAT
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+               target, sample_count, bindings);
+      }
+   case GL_LUMINANCE16F_ARB:
+      {
+         static const enum pipe_format formats[] = {
+               PIPE_FORMAT_L16_FLOAT,
+               PIPE_FORMAT_L16A16_FLOAT,
+               PIPE_FORMAT_L32_FLOAT,
+               PIPE_FORMAT_R16G16B16A16_FLOAT,
+               PIPE_FORMAT_L32A32_FLOAT,
+               PIPE_FORMAT_R32G32B32A32_FLOAT
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+               target, sample_count, bindings);
+      }
+   case GL_R16F:
+      {
+         static const enum pipe_format formats[] = {
+               PIPE_FORMAT_R16_FLOAT,
+               PIPE_FORMAT_R16G16_FLOAT,
+               PIPE_FORMAT_R32_FLOAT,
+               PIPE_FORMAT_R16G16B16A16_FLOAT,
+               PIPE_FORMAT_R32G32_FLOAT,
+               PIPE_FORMAT_R32G32B32A32_FLOAT
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+               target, sample_count, bindings);
+      }
+   case GL_RG16F:
+      {
+         static const enum pipe_format formats[] = {
+               PIPE_FORMAT_R16G16_FLOAT,
+               PIPE_FORMAT_R16G16B16A16_FLOAT,
+               PIPE_FORMAT_R32G32_FLOAT,
+               PIPE_FORMAT_R32G32B32A32_FLOAT
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+               target, sample_count, bindings);
+      }
+
+   /* try a 32-bit format if available, otherwise fallback to a 16-bit one */
+   case GL_RGBA32F_ARB:
+   case GL_RGB32F_ARB:
+      {
+         static const enum pipe_format formats[] = {
+               PIPE_FORMAT_R32G32B32A32_FLOAT,
+               PIPE_FORMAT_R16G16B16A16_FLOAT
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+               target, sample_count, bindings);
+      }
+   case GL_LUMINANCE_ALPHA32F_ARB:
+      {
+         static const enum pipe_format formats[] = {
+               PIPE_FORMAT_L32A32_FLOAT,
+               PIPE_FORMAT_R32G32B32A32_FLOAT,
+               PIPE_FORMAT_L16A16_FLOAT,
+               PIPE_FORMAT_R16G16B16A16_FLOAT
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+               target, sample_count, bindings);
+      }
+   case GL_ALPHA32F_ARB:
+      {
+         static const enum pipe_format formats[] = {
+               PIPE_FORMAT_A32_FLOAT,
+               PIPE_FORMAT_L32A32_FLOAT,
+               PIPE_FORMAT_R32G32B32A32_FLOAT,
+               PIPE_FORMAT_A16_FLOAT,
+               PIPE_FORMAT_L16A16_FLOAT,
+               PIPE_FORMAT_R16G16B16A16_FLOAT
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+               target, sample_count, bindings);
+      }
+   case GL_INTENSITY32F_ARB:
+      {
+         static const enum pipe_format formats[] = {
+               PIPE_FORMAT_I32_FLOAT,
+               PIPE_FORMAT_L32A32_FLOAT,
+               PIPE_FORMAT_R32G32B32A32_FLOAT,
+               PIPE_FORMAT_I16_FLOAT,
+               PIPE_FORMAT_L16A16_FLOAT,
+               PIPE_FORMAT_R16G16B16A16_FLOAT
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+               target, sample_count, bindings);
+      }
+   case GL_LUMINANCE32F_ARB:
+      {
+         static const enum pipe_format formats[] = {
+               PIPE_FORMAT_L32_FLOAT,
+               PIPE_FORMAT_L32A32_FLOAT,
+               PIPE_FORMAT_R32G32B32A32_FLOAT,
+               PIPE_FORMAT_L16_FLOAT,
+               PIPE_FORMAT_L16A16_FLOAT,
+               PIPE_FORMAT_R16G16B16A16_FLOAT
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+               target, sample_count, bindings);
+      }
+   case GL_R32F:
+      {
+         static const enum pipe_format formats[] = {
+               PIPE_FORMAT_R32_FLOAT,
+               PIPE_FORMAT_R32G32_FLOAT,
+               PIPE_FORMAT_R32G32B32A32_FLOAT,
+               PIPE_FORMAT_R16_FLOAT,
+               PIPE_FORMAT_R16G16_FLOAT,
+               PIPE_FORMAT_R16G16B16A16_FLOAT
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+               target, sample_count, bindings);
+      }
+   case GL_RG32F:
+      {
+         static const enum pipe_format formats[] = {
+               PIPE_FORMAT_R32G32_FLOAT,
+               PIPE_FORMAT_R32G32B32A32_FLOAT,
+               PIPE_FORMAT_R16G16_FLOAT,
+               PIPE_FORMAT_R16G16B16A16_FLOAT
+         };
+         return find_supported_format(screen, formats, Elements(formats),
+               target, sample_count, bindings);
+      }
 
    case GL_RED:
    case GL_R8:

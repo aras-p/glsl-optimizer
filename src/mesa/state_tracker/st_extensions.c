@@ -382,6 +382,18 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.EXT_packed_depth_stencil = GL_TRUE;
    }
 
+   /* float support - assume nothing exclusively supports 64-bit floats */
+   if (screen->is_format_supported(screen, PIPE_FORMAT_R32G32B32A32_FLOAT,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW |
+                                   PIPE_BIND_RENDER_TARGET) &&
+      screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_FLOAT,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW |
+                                   PIPE_BIND_RENDER_TARGET)) {
+      ctx->Extensions.ARB_texture_float = GL_TRUE;
+   }
+
    /* sRGB support */
    if (screen->is_format_supported(screen, PIPE_FORMAT_A8B8G8R8_SRGB,
                                    PIPE_TEXTURE_2D, 0,
