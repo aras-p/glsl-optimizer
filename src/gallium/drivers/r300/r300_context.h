@@ -136,7 +136,7 @@ struct r300_gpu_flush {
     uint32_t cb_flush_clean[6];
 };
 
-#define RS_STATE_MAIN_SIZE 23
+#define RS_STATE_MAIN_SIZE 25
 
 struct r300_rs_state {
     /* Original rasterizer state. */
@@ -235,7 +235,7 @@ struct r300_vertex_stream_state {
 };
 
 struct r300_invariant_state {
-    uint32_t cb[26];
+    uint32_t cb[24];
 };
 
 struct r300_vap_invariant_state {

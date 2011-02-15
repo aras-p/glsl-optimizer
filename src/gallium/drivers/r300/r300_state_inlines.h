@@ -38,23 +38,24 @@ static INLINE int pack_float_16_6x(float f) {
 
 /* Blend state. */
 
-static INLINE uint32_t r300_translate_blend_function(int blend_func)
+static INLINE uint32_t r300_translate_blend_function(int blend_func,
+                                                     boolean clamp)
 {
     switch (blend_func) {
-        case PIPE_BLEND_ADD:
-            return R300_COMB_FCN_ADD_CLAMP;
-        case PIPE_BLEND_SUBTRACT:
-            return R300_COMB_FCN_SUB_CLAMP;
-        case PIPE_BLEND_REVERSE_SUBTRACT:
-            return R300_COMB_FCN_RSUB_CLAMP;
-        case PIPE_BLEND_MIN:
-            return R300_COMB_FCN_MIN;
-        case PIPE_BLEND_MAX:
-            return R300_COMB_FCN_MAX;
-        default:
-            fprintf(stderr, "r300: Unknown blend function %d\n", blend_func);
-            assert(0);
-            break;
+    case PIPE_BLEND_ADD:
+        return clamp ? R300_COMB_FCN_ADD_CLAMP : R300_COMB_FCN_ADD_NOCLAMP;
+    case PIPE_BLEND_SUBTRACT:
+        return clamp ? R300_COMB_FCN_SUB_CLAMP : R300_COMB_FCN_SUB_NOCLAMP;
+    case PIPE_BLEND_REVERSE_SUBTRACT:
+        return clamp ? R300_COMB_FCN_RSUB_CLAMP : R300_COMB_FCN_RSUB_NOCLAMP;
+    case PIPE_BLEND_MIN:
+        return R300_COMB_FCN_MIN;
+    case PIPE_BLEND_MAX:
+        return R300_COMB_FCN_MAX;
+    default:
+        fprintf(stderr, "r300: Unknown blend function %d\n", blend_func);
+        assert(0);
+        break;
     }
     return 0;
 }

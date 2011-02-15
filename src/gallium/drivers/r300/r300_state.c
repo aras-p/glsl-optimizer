@@ -192,6 +192,7 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
     uint32_t color_channel_mask = 0;  /* R300_RB3D_COLOR_CHANNEL_MASK: 0x4e0c */
     uint32_t rop = 0;                 /* R300_RB3D_ROPCNTL: 0x4e18 */
     uint32_t dither = 0;              /* R300_RB3D_DITHER_CTL: 0x4e50 */
+    boolean clamp = TRUE;
     CB_LOCALS;
 
     if (state->rt[0].blend_enable)
@@ -207,7 +208,7 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
         /* despite the name, ALPHA_BLEND_ENABLE has nothing to do with alpha,
          * this is just the crappy D3D naming */
         blend_control = R300_ALPHA_BLEND_ENABLE |
-            r300_translate_blend_function(eqRGB) |
+            r300_translate_blend_function(eqRGB, clamp) |
             ( r300_translate_blend_factor(srcRGB) << R300_SRC_BLEND_SHIFT) |
             ( r300_translate_blend_factor(dstRGB) << R300_DST_BLEND_SHIFT);
 
@@ -268,7 +269,8 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
          *
          * Equations other than ADD are rarely used and therefore won't be
          * optimized. */
-        if ((eqRGB == PIPE_BLEND_ADD || eqRGB == PIPE_BLEND_REVERSE_SUBTRACT) &&
+        if (clamp &&
+            (eqRGB == PIPE_BLEND_ADD || eqRGB == PIPE_BLEND_REVERSE_SUBTRACT) &&
             (eqA == PIPE_BLEND_ADD || eqA == PIPE_BLEND_REVERSE_SUBTRACT)) {
             /* ADD: X+Y
              * REVERSE_SUBTRACT: Y-X
@@ -307,7 +309,7 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
         if (srcA != srcRGB || dstA != dstRGB || eqA != eqRGB) {
             blend_control |= R300_SEPARATE_ALPHA_ENABLE;
             alpha_blend_control =
-                r300_translate_blend_function(eqA) |
+                r300_translate_blend_function(eqA, clamp) |
                 (r300_translate_blend_factor(srcA) << R300_SRC_BLEND_SHIFT) |
                 (r300_translate_blend_factor(dstA) << R300_DST_BLEND_SHIFT);
         }
@@ -1014,12 +1016,14 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     uint32_t line_stipple_value;    /* R300_GA_LINE_STIPPLE_VALUE: 0x4260 */
     uint32_t polygon_mode;          /* R300_GA_POLY_MODE: 0x4288 */
     uint32_t clip_rule;             /* R300_SC_CLIP_RULE: 0x43D0 */
+    uint32_t round_mode;            /* R300_GA_ROUND_MODE: 0x428c */
 
     /* Point sprites texture coordinates, 0: lower left, 1: upper right */
     float point_texcoord_left = 0;  /* R300_GA_POINT_S0: 0x4200 */
     float point_texcoord_bottom = 0;/* R300_GA_POINT_T0: 0x4204 */
     float point_texcoord_right = 1; /* R300_GA_POINT_S1: 0x4208 */
     float point_texcoord_top = 0;   /* R300_GA_POINT_T1: 0x420c */
+    boolean vclamp = TRUE;
     CB_LOCALS;
 
     /* Copy rasterizer state. */
@@ -1142,6 +1146,12 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
         }
     }
 
+    /* Vertex color clamping. FP20 means no clamping. */
+    round_mode =
+      R300_GA_ROUND_MODE_GEOMETRY_ROUND_NEAREST |
+      (!vclamp ? (R300_GA_ROUND_MODE_RGB_CLAMP_FP20 |
+                  R300_GA_ROUND_MODE_ALPHA_CLAMP_FP20) : 0);
+
     /* Build the main command buffer. */
     BEGIN_CB(rs->cb_main, RS_STATE_MAIN_SIZE);
     OUT_CB_REG(R300_VAP_CNTL_STATUS, vap_control_status);
@@ -1156,6 +1166,7 @@ static void* r300_create_rs_state(struct pipe_context* pipe,
     OUT_CB_REG(R300_GA_LINE_STIPPLE_CONFIG, line_stipple_config);
     OUT_CB_REG(R300_GA_LINE_STIPPLE_VALUE, line_stipple_value);
     OUT_CB_REG(R300_GA_POLY_MODE, polygon_mode);
+    OUT_CB_REG(R300_GA_ROUND_MODE, round_mode);
     OUT_CB_REG(R300_SC_CLIP_RULE, clip_rule);
     OUT_CB_REG_SEQ(R300_GA_POINT_S0, 4);
     OUT_CB_32F(point_texcoord_left);

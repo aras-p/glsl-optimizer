@@ -201,7 +201,7 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     /* SC. */
     R300_INIT_ATOM(scissor_state, 3);
     /* GB, FG, GA, SU, SC, RB3D. */
-    R300_INIT_ATOM(invariant_state, 18 + (is_rv350 ? 4 : 0) + (is_r500 ? 4 : 0));
+    R300_INIT_ATOM(invariant_state, 16 + (is_rv350 ? 4 : 0) + (is_r500 ? 4 : 0));
     /* VAP. */
     R300_INIT_ATOM(viewport_state, 9);
     R300_INIT_ATOM(pvs_flush, 2);
@@ -349,7 +349,6 @@ static void r300_init_states(struct pipe_context *pipe)
         BEGIN_CB(invariant->cb, r300->invariant_state.size);
         OUT_CB_REG(R300_GB_SELECT, 0);
         OUT_CB_REG(R300_FG_FOG_BLEND, 0);
-        OUT_CB_REG(R300_GA_ROUND_MODE, 1);
         OUT_CB_REG(R300_GA_OFFSET, 0);
         OUT_CB_REG(R300_SU_TEX_WRAP, 0);
         OUT_CB_REG(R300_SU_DEPTH_SCALE, 0x4B7FFFFF);
