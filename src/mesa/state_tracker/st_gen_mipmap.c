@@ -105,13 +105,12 @@ st_render_mipmap(struct st_context *st,
 static void
 decompress_image(enum pipe_format format,
                  const uint8_t *src, uint8_t *dst,
-                 unsigned width, unsigned height)
+                 unsigned width, unsigned height, unsigned src_stride)
 {
    const struct util_format_description *desc = util_format_description(format);
    const uint bw = util_format_get_blockwidth(format);
    const uint bh = util_format_get_blockheight(format);
    const uint dst_stride = 4 * MAX2(width, bw);
-   const uint src_stride = util_format_get_stride(format, width);
 
    desc->unpack_rgba_8unorm(dst, dst_stride, src, src_stride, width, height);
 
@@ -144,10 +143,9 @@ decompress_image(enum pipe_format format,
 static void
 compress_image(enum pipe_format format,
                const uint8_t *src, uint8_t *dst,
-               unsigned width, unsigned height)
+               unsigned width, unsigned height, unsigned dst_stride)
 {
    const struct util_format_description *desc = util_format_description(format);
-   const uint dst_stride = util_format_get_stride(format, width);
    const uint src_stride = 4 * width;
 
    desc->pack_rgba_8unorm(dst, dst_stride, src, src_stride, width, height);
@@ -236,7 +234,7 @@ fallback_generate_mipmap(struct gl_context *ctx, GLenum target,
          dstTemp = malloc(dstWidth2 * dstHeight2 * comps + 000);
 
          /* decompress the src image: srcData -> srcTemp */
-         decompress_image(format, srcData, srcTemp, srcWidth, srcHeight);
+         decompress_image(format, srcData, srcTemp, srcWidth, srcHeight, srcTrans->stride);
 
          _mesa_generate_mipmap_level(target, datatype, comps,
                                      0 /*border*/,
@@ -248,7 +246,7 @@ fallback_generate_mipmap(struct gl_context *ctx, GLenum target,
                                      dstWidth2); /* stride in texels */
 
          /* compress the new image: dstTemp -> dstData */
-         compress_image(format, dstTemp, dstData, dstWidth, dstHeight);
+         compress_image(format, dstTemp, dstData, dstWidth, dstHeight, dstTrans->stride);
 
          free(srcTemp);
          free(dstTemp);
