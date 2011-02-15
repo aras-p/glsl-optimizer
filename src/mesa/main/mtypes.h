@@ -691,7 +691,8 @@ struct gl_accum_attrib
 struct gl_colorbuffer_attrib
 {
    GLuint ClearIndex;			/**< Index to use for glClear */
-   GLclampf ClearColor[4];		/**< Color to use for glClear */
+   GLfloat ClearColorUnclamped[4];              /**< Color to use for glClear*/
+   GLclampf ClearColor[4];               /**< Color to use for glClear */
 
    GLuint IndexMask;			/**< Color index write mask */
    GLubyte ColorMask[MAX_DRAW_BUFFERS][4];/**< Each flag is 0xff or 0x0 */
@@ -704,6 +705,7 @@ struct gl_colorbuffer_attrib
    /*@{*/
    GLboolean AlphaEnabled;		/**< Alpha test enabled flag */
    GLenum AlphaFunc;			/**< Alpha test function */
+   GLfloat AlphaRefUnclamped;
    GLclampf AlphaRef;			/**< Alpha reference value */
    /*@}*/
 
@@ -712,7 +714,14 @@ struct gl_colorbuffer_attrib
     */
    /*@{*/
    GLbitfield BlendEnabled;		/**< Per-buffer blend enable flags */
+
+   /* NOTE: this does _not_ depend on fragment clamping or any other clamping control,
+    * only on the fixed-pointness of the render target.
+    * The query does however depend on fragment color clamping.
+    */
+   GLfloat BlendColorUnclamped[4];               /**< Blending color */
    GLfloat BlendColor[4];		/**< Blending color */
+
    struct
    {
       GLenum SrcRGB;             /**< RGB blend source term */
@@ -741,7 +750,9 @@ struct gl_colorbuffer_attrib
    GLboolean DitherFlag;		/**< Dither enable flag */
 
    GLenum ClampFragmentColor; /**< GL_TRUE, GL_FALSE or GL_FIXED_ONLY_ARB */
+   GLboolean _ClampFragmentColor; /** < with GL_FIXED_ONLY_ARB resolved */
    GLenum ClampReadColor;     /**< GL_TRUE, GL_FALSE or GL_FIXED_ONLY_ARB */
+   GLboolean _ClampReadColor;     /** < with GL_FIXED_ONLY_ARB resolved */
 
    GLboolean sRGBEnabled;	/**< Framebuffer sRGB blending/updating requested */
 };
@@ -840,6 +851,7 @@ struct gl_eval_attrib
 struct gl_fog_attrib
 {
    GLboolean Enabled;		/**< Fog enabled flag */
+   GLfloat ColorUnclamped[4];            /**< Fog color */
    GLfloat Color[4];		/**< Fog color */
    GLfloat Density;		/**< Density >= 0.0 */
    GLfloat Start;		/**< Start distance in eye coords */
@@ -921,6 +933,7 @@ struct gl_light_attrib
    GLbitfield ColorMaterialBitmask;	/**< bitmask formed from Face and Mode */
    GLboolean ColorMaterialEnabled;
    GLenum ClampVertexColor;
+   GLboolean _ClampVertexColor;
 
    struct gl_light EnabledList;         /**< List sentinel */
 
@@ -1396,7 +1409,8 @@ struct gl_texture_unit
    GLbitfield _ReallyEnabled;   /**< 0 or exactly one of TEXTURE_*_BIT flags */
 
    GLenum EnvMode;              /**< GL_MODULATE, GL_DECAL, GL_BLEND, etc. */
-   GLfloat EnvColor[4];
+   GLclampf EnvColor[4];
+   GLfloat EnvColorUnclamped[4];
 
    struct gl_texgen GenS;
    struct gl_texgen GenT;
@@ -2704,6 +2718,7 @@ struct gl_extensions
    GLboolean dummy_false; /* Set false by _mesa_init_extensions(). */
    GLboolean ARB_ES2_compatibility;
    GLboolean ARB_blend_func_extended;
+   GLboolean ARB_color_buffer_float;
    GLboolean ARB_copy_buffer;
    GLboolean ARB_depth_buffer_float;
    GLboolean ARB_depth_clamp;
@@ -2933,6 +2948,7 @@ struct gl_matrix_stack
 #define _NEW_PROGRAM           (1 << 26)  /**< New program/shader state */
 #define _NEW_PROGRAM_CONSTANTS (1 << 27)
 #define _NEW_BUFFER_OBJECT     (1 << 28)
+#define _NEW_FRAG_CLAMP        (1 << 29)
 #define _NEW_ALL ~0
 /*@}*/
 

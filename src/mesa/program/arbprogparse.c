@@ -144,7 +144,10 @@ _mesa_parse_arb_fragment_program(struct gl_context* ctx, GLenum target,
     * from the fragment shader.
     */
    if (program->FogOption != GL_NONE) {
-      _mesa_append_fog_code(ctx, program);
+      /* XXX: we should somehow recompile this to remove clamping if disabled
+       * On the ATI driver, this is unclampled if fragment clamping is disabled
+       */
+      _mesa_append_fog_code(ctx, program, GL_TRUE);
       program->FogOption = GL_NONE;
    }
 

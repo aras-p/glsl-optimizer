@@ -726,7 +726,7 @@ static struct ureg register_input( struct texenv_fragment_program *p, GLuint inp
    }
    else {
       GLuint idx = frag_to_vert_attrib( input );
-      return register_param3( p, STATE_INTERNAL, STATE_CURRENT_ATTRIB, idx );
+      return register_param3( p, STATE_INTERNAL, STATE_CURRENT_ATTRIB_MAYBE_VP_CLAMPED, idx );
    }
 }
 
@@ -1563,7 +1563,7 @@ create_new_program(struct gl_context *ctx, struct state_key *key,
                            p.program->Base.NumInstructions);
 
    if (key->num_draw_buffers && p.program->FogOption) {
-      _mesa_append_fog_code(ctx, p.program);
+      _mesa_append_fog_code(ctx, p.program, GL_FALSE);
       p.program->FogOption = GL_NONE;
    }
 

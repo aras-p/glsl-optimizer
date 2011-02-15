@@ -516,6 +516,7 @@ _mesa_GetColorTable( GLenum target, GLenum format,
    struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
    struct gl_color_table *table = NULL;
    GLfloat rgba[MAX_COLOR_TABLE_SIZE][4];
+   GLbitfield transferOps = 0;
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    if (ctx->NewState) {
@@ -618,8 +619,12 @@ _mesa_GetColorTable( GLenum target, GLenum format,
    if (!data)
       return;
 
+   /* TODO: is this correct? */
+   if(ctx->Color._ClampReadColor)
+      transferOps |= IMAGE_CLAMP_BIT;
+
    _mesa_pack_rgba_span_float(ctx, table->Size, rgba,
-                              format, type, data, &ctx->Pack, 0x0);
+                              format, type, data, &ctx->Pack, transferOps);
 
    _mesa_unmap_pbo_dest(ctx, &ctx->Pack);
 }

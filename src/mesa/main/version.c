@@ -89,6 +89,8 @@ compute_version(struct gl_context *ctx)
                               ctx->Extensions.EXT_pixel_buffer_object &&
                               ctx->Extensions.EXT_texture_sRGB);
    const GLboolean ver_3_0 = (ver_2_1 &&
+                              ctx->Extensions.ARB_color_buffer_float &&
+                              ctx->Extensions.ARB_depth_buffer_float &&
                               ctx->Extensions.ARB_half_float_pixel &&
                               ctx->Extensions.ARB_map_buffer_range &&
                               ctx->Extensions.ARB_texture_float &&

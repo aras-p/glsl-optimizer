@@ -131,6 +131,7 @@ enum value_extra {
    EXTRA_VERSION_32,
    EXTRA_VERSION_ES2,
    EXTRA_NEW_BUFFERS, 
+   EXTRA_NEW_FRAG_CLAMP,
    EXTRA_VALID_DRAW_BUFFER,
    EXTRA_VALID_TEXTURE_UNIT,
    EXTRA_FLUSH_CURRENT,
@@ -220,6 +221,11 @@ union value {
 
 static const int extra_new_buffers[] = {
    EXTRA_NEW_BUFFERS,
+   EXTRA_END
+};
+
+static const int extra_new_frag_clamp[] = {
+   EXTRA_NEW_FRAG_CLAMP,
    EXTRA_END
 };
 
@@ -374,7 +380,7 @@ static const struct value_desc values[] = {
    { GL_BLEND, CONTEXT_BIT0(Color.BlendEnabled), NO_EXTRA },
    { GL_BLEND_SRC, CONTEXT_ENUM(Color.Blend[0].SrcRGB), NO_EXTRA },
    { GL_BLUE_BITS, BUFFER_INT(Visual.blueBits), extra_new_buffers },
-   { GL_COLOR_CLEAR_VALUE, CONTEXT_FIELD(Color.ClearColor[0], TYPE_FLOATN_4), NO_EXTRA },
+   { GL_COLOR_CLEAR_VALUE, LOC_CUSTOM, TYPE_FLOATN_4, 0, extra_new_frag_clamp },
    { GL_COLOR_WRITEMASK, LOC_CUSTOM, TYPE_INT_4, 0, NO_EXTRA },
    { GL_CULL_FACE, CONTEXT_BOOL(Polygon.CullFlag), NO_EXTRA },
    { GL_CULL_FACE_MODE, CONTEXT_ENUM(Polygon.CullFaceMode), NO_EXTRA },
@@ -511,7 +517,7 @@ static const struct value_desc values[] = {
    { GL_LIGHT_MODEL_TWO_SIDE, CONTEXT_BOOL(Light.Model.TwoSide), NO_EXTRA },
    { GL_ALPHA_TEST, CONTEXT_BOOL(Color.AlphaEnabled), NO_EXTRA },
    { GL_ALPHA_TEST_FUNC, CONTEXT_ENUM(Color.AlphaFunc), NO_EXTRA },
-   { GL_ALPHA_TEST_REF, CONTEXT_FIELD(Color.AlphaRef, TYPE_FLOATN), NO_EXTRA },
+   { GL_ALPHA_TEST_REF, LOC_CUSTOM, TYPE_FLOATN, 0, extra_new_frag_clamp },
    { GL_BLEND_DST, CONTEXT_ENUM(Color.Blend[0].DstRGB), NO_EXTRA },
    { GL_CLIP_PLANE0, CONTEXT_BIT0(Transform.ClipPlanesEnabled), NO_EXTRA },
    { GL_CLIP_PLANE1, CONTEXT_BIT1(Transform.ClipPlanesEnabled), NO_EXTRA },
@@ -530,7 +536,7 @@ static const struct value_desc values[] = {
      extra_flush_current_valid_texture_unit },
    { GL_DISTANCE_ATTENUATION_EXT, CONTEXT_FLOAT3(Point.Params[0]), NO_EXTRA },
    { GL_FOG, CONTEXT_BOOL(Fog.Enabled), NO_EXTRA },
-   { GL_FOG_COLOR, CONTEXT_FIELD(Fog.Color[0], TYPE_FLOATN_4), NO_EXTRA },
+   { GL_FOG_COLOR, LOC_CUSTOM, TYPE_FLOATN_4, 0, extra_new_frag_clamp },
    { GL_FOG_DENSITY, CONTEXT_FLOAT(Fog.Density), NO_EXTRA },
    { GL_FOG_END, CONTEXT_FLOAT(Fog.End), NO_EXTRA },
    { GL_FOG_HINT, CONTEXT_ENUM(Hint.Fog), NO_EXTRA },
@@ -674,7 +680,7 @@ static const struct value_desc values[] = {
    /* GL_ARB_draw_buffers */
    { GL_MAX_DRAW_BUFFERS_ARB, CONTEXT_INT(Const.MaxDrawBuffers), NO_EXTRA },
 
-   { GL_BLEND_COLOR_EXT, CONTEXT_FIELD(Color.BlendColor[0], TYPE_FLOATN_4), NO_EXTRA },
+   { GL_BLEND_COLOR_EXT, LOC_CUSTOM, TYPE_FLOATN_4, 0, extra_new_frag_clamp },
    /* GL_ARB_fragment_program */
    { GL_MAX_TEXTURE_IMAGE_UNITS_ARB, /* == GL_MAX_TEXTURE_IMAGE_UNITS_NV */
      CONTEXT_INT(Const.MaxTextureImageUnits),
@@ -1219,6 +1225,9 @@ static const struct value_desc values[] = {
      CONTEXT_INT(Const.MaxVertexVaryingComponents),
      extra_ARB_geometry_shader4 },
 
+   /* GL_ARB_color_buffer_float */
+   { GL_RGBA_FLOAT_MODE_ARB, BUFFER_FIELD(Visual.floatMode, TYPE_BOOLEAN), 0 },
+
    /* GL_EXT_gpu_shader4 / GL 3.0 */
    { GL_MIN_PROGRAM_TEXEL_OFFSET,
      CONTEXT_INT(Const.MinProgramTexelOffset),
@@ -1633,6 +1642,30 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
       v->value_int = ctx->Array.ArrayObj->PointSize.BufferObj->Name;
       break;
 
+   case GL_FOG_COLOR:
+      if(ctx->Color._ClampFragmentColor)
+         COPY_4FV(v->value_float_4, ctx->Fog.Color);
+      else
+         COPY_4FV(v->value_float_4, ctx->Fog.ColorUnclamped);
+      break;
+   case GL_COLOR_CLEAR_VALUE:
+      if(ctx->Color._ClampFragmentColor)
+         COPY_4FV(v->value_float_4, ctx->Color.ClearColor);
+      else
+         COPY_4FV(v->value_float_4, ctx->Color.ClearColorUnclamped);
+      break;
+   case GL_BLEND_COLOR_EXT:
+      if(ctx->Color._ClampFragmentColor)
+         COPY_4FV(v->value_float_4, ctx->Color.BlendColor);
+      else
+         COPY_4FV(v->value_float_4, ctx->Color.BlendColorUnclamped);
+      break;
+   case GL_ALPHA_TEST_REF:
+      if(ctx->Color._ClampFragmentColor)
+         v->value_float = ctx->Color.AlphaRef;
+      else
+         v->value_float = ctx->Color.AlphaRefUnclamped;
+      break;
    case GL_MAX_VERTEX_UNIFORM_VECTORS:
       v->value_int = ctx->Const.VertexProgram.MaxUniformComponents / 4;
       break;
@@ -1687,6 +1720,10 @@ check_extra(struct gl_context *ctx, const char *func, const struct value_desc *d
 	    enabled++;
 	 }
 	 break;
+      case EXTRA_NEW_FRAG_CLAMP:
+         if (ctx->NewState & (_NEW_BUFFERS | _NEW_FRAG_CLAMP))
+            _mesa_update_state(ctx);
+         break;
       case EXTRA_VERSION_ES2:
 	 if (ctx->API == API_OPENGLES2) {
 	    total++;

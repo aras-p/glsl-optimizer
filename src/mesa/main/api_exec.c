@@ -691,6 +691,8 @@ _mesa_create_exec_table(void)
    SET_FramebufferTextureFaceARB(exec, _mesa_FramebufferTextureFaceARB);
 #endif
 
+   SET_ClampColorARB(exec, _mesa_ClampColorARB);
+
    /* GL_EXT_texture_integer */
    SET_ClearColorIiEXT(exec, _mesa_ClearColorIiEXT);
    SET_ClearColorIuiEXT(exec, _mesa_ClearColorIuiEXT);

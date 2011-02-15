@@ -388,6 +388,9 @@ typedef enum
    OPCODE_UNIFORM_3UIV,
    OPCODE_UNIFORM_4UIV,
 
+   /* GL_ARB_color_buffer_float */
+   OPCODE_CLAMP_COLOR,
+
    /* GL_EXT_framebuffer_blit */
    OPCODE_BLIT_FRAMEBUFFER,
 
@@ -6887,6 +6890,22 @@ save_UniformMatrix4x3fv(GLint location, GLsizei count, GLboolean transpose,
 }
 
 static void GLAPIENTRY
+save_ClampColorARB(GLenum target, GLenum clamp)
+{
+   GET_CURRENT_CONTEXT(ctx);
+   Node *n;
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_CLAMP_COLOR, 2);
+   if (n) {
+      n[1].e = target;
+      n[2].e = clamp;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_ClampColorARB(ctx->Exec, (target, clamp));
+   }
+}
+
+static void GLAPIENTRY
 save_UseShaderProgramEXT(GLenum type, GLuint program)
 {
    GET_CURRENT_CONTEXT(ctx);
@@ -8070,6 +8089,10 @@ execute_list(struct gl_context *ctx, GLuint list)
 	    CALL_UniformMatrix4x3fv(ctx->Exec,
                                     (n[1].i, n[2].i, n[3].b, n[4].data));
 	    break;
+
+         case OPCODE_CLAMP_COLOR:
+            CALL_ClampColorARB(ctx->Exec, (n[1].e, n[2].e));
+            break;
 
          case OPCODE_TEX_BUMP_PARAMETER_ATI:
             {
@@ -9867,6 +9890,10 @@ _mesa_create_save_table(void)
    /* 377. GL_EXT_separate_shader_objects */
    SET_UseShaderProgramEXT(table, save_UseShaderProgramEXT);
    SET_ActiveProgramEXT(table, save_ActiveProgramEXT);
+
+   /* GL_ARB_color_buffer_float */
+   SET_ClampColorARB(table, save_ClampColorARB);
+   SET_ClampColor(table, save_ClampColorARB);
 
    /* GL 3.0 */
 #if 0

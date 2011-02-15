@@ -38,6 +38,7 @@
 #include "main/macros.h"
 #include "main/mfeatures.h"
 #include "main/mtypes.h"
+#include "main/state.h"
 #include "main/texcompress.h"
 #include "main/texparam.h"
 #include "main/teximage.h"
@@ -1107,10 +1108,22 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
          *params = ENUM_TO_FLOAT(obj->WrapR);
          break;
       case GL_TEXTURE_BORDER_COLOR:
-         params[0] = CLAMP(obj->BorderColor.f[0], 0.0F, 1.0F);
-         params[1] = CLAMP(obj->BorderColor.f[1], 0.0F, 1.0F);
-         params[2] = CLAMP(obj->BorderColor.f[2], 0.0F, 1.0F);
-         params[3] = CLAMP(obj->BorderColor.f[3], 0.0F, 1.0F);
+         if(ctx->NewState & (_NEW_BUFFERS | _NEW_FRAG_CLAMP))
+            _mesa_update_state_locked(ctx);
+         if(ctx->Color._ClampFragmentColor)
+         {
+            params[0] = CLAMP(obj->BorderColor.f[0], 0.0F, 1.0F);
+            params[1] = CLAMP(obj->BorderColor.f[1], 0.0F, 1.0F);
+            params[2] = CLAMP(obj->BorderColor.f[2], 0.0F, 1.0F);
+            params[3] = CLAMP(obj->BorderColor.f[3], 0.0F, 1.0F);
+         }
+         else
+         {
+            params[0] = obj->BorderColor.f[0];
+            params[1] = obj->BorderColor.f[1];
+            params[2] = obj->BorderColor.f[2];
+            params[3] = obj->BorderColor.f[3];
+         }
          break;
       case GL_TEXTURE_RESIDENT:
          {

@@ -35,6 +35,7 @@
 #include "main/enums.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
+#include "main/state.h"
 #include "main/texenv.h"
 #include "main/texstate.h"
 
@@ -94,15 +95,14 @@ set_env_color(struct gl_context *ctx,
               struct gl_texture_unit *texUnit,
               const GLfloat *color)
 {
-   GLfloat tmp[4];
-   tmp[0] = CLAMP(color[0], 0.0F, 1.0F);
-   tmp[1] = CLAMP(color[1], 0.0F, 1.0F);
-   tmp[2] = CLAMP(color[2], 0.0F, 1.0F);
-   tmp[3] = CLAMP(color[3], 0.0F, 1.0F);
-   if (TEST_EQ_4V(tmp, texUnit->EnvColor))
+   if (TEST_EQ_4V(color, texUnit->EnvColorUnclamped))
       return;
    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-   COPY_4FV(texUnit->EnvColor, tmp);
+   COPY_4FV(texUnit->EnvColorUnclamped, color);
+   texUnit->EnvColor[0] = CLAMP(color[0], 0.0F, 1.0F);
+   texUnit->EnvColor[1] = CLAMP(color[1], 0.0F, 1.0F);
+   texUnit->EnvColor[2] = CLAMP(color[2], 0.0F, 1.0F);
+   texUnit->EnvColor[3] = CLAMP(color[3], 0.0F, 1.0F);
 }
 
 
@@ -758,7 +758,12 @@ _mesa_GetTexEnvfv( GLenum target, GLenum pname, GLfloat *params )
 
    if (target == GL_TEXTURE_ENV) {
       if (pname == GL_TEXTURE_ENV_COLOR) {
-         COPY_4FV( params, texUnit->EnvColor );
+         if(ctx->NewState & (_NEW_BUFFERS | _NEW_FRAG_CLAMP))
+            _mesa_update_state(ctx);
+         if(ctx->Color._ClampFragmentColor)
+            COPY_4FV( params, texUnit->EnvColor );
+         else
+            COPY_4FV( params, texUnit->EnvColorUnclamped );
       }
       else {
          GLint val = get_texenvi(ctx, texUnit, pname);

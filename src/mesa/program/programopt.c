@@ -238,7 +238,7 @@ _mesa_insert_mvp_code(struct gl_context *ctx, struct gl_vertex_program *vprog)
  * to vertex programs too.
  */
 void
-_mesa_append_fog_code(struct gl_context *ctx, struct gl_fragment_program *fprog)
+_mesa_append_fog_code(struct gl_context *ctx, struct gl_fragment_program *fprog, GLboolean saturate)
 {
    static const gl_state_index fogPStateOpt[STATE_LENGTH]
       = { STATE_INTERNAL, STATE_FOG_PARAMS_OPTIMIZED, 0, 0, 0 };
@@ -290,7 +290,7 @@ _mesa_append_fog_code(struct gl_context *ctx, struct gl_fragment_program *fprog)
          /* change the instruction to write to colorTemp w/ clamping */
          inst->DstReg.File = PROGRAM_TEMPORARY;
          inst->DstReg.Index = colorTemp;
-         inst->SaturateMode = SATURATE_ZERO_ONE;
+         inst->SaturateMode = saturate;
          /* don't break (may be several writes to result.color) */
       }
       inst++;
@@ -300,6 +300,7 @@ _mesa_append_fog_code(struct gl_context *ctx, struct gl_fragment_program *fprog)
    _mesa_init_instructions(inst, 5);
 
    /* emit instructions to compute fog blending factor */
+   /* this is always clamped to [0, 1] regardless of fragment clamping */
    if (fprog->FogOption == GL_LINEAR) {
       /* MAD fogFactorTemp.x, fragment.fogcoord.x, fogPRefOpt.x, fogPRefOpt.y; */
       inst->Opcode = OPCODE_MAD;
