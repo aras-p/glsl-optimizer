@@ -179,15 +179,15 @@ static int update_need_swtnl( struct svga_context *svga,
    boolean need_swtnl;
 
    if (svga->debug.no_swtnl) {
-      svga->state.sw.need_swvfetch = 0;
-      svga->state.sw.need_pipeline = 0;
+      svga->state.sw.need_swvfetch = FALSE;
+      svga->state.sw.need_pipeline = FALSE;
    }
 
    need_swtnl = (svga->state.sw.need_swvfetch ||
                  svga->state.sw.need_pipeline);
 
    if (svga->debug.force_swtnl) {
-      need_swtnl = 1;
+      need_swtnl = TRUE;
    }
 
    /*
@@ -196,7 +196,7 @@ static int update_need_swtnl( struct svga_context *svga,
     * the wrong buffers and vertex formats. Try trivial/line-wide.
     */
    if (svga->state.sw.in_swtnl_draw)
-      need_swtnl = 1;
+      need_swtnl = TRUE;
 
    if (need_swtnl != svga->state.sw.need_swtnl) {
       SVGA_DBG(DEBUG_SWTNL|DEBUG_PERF,
