@@ -544,6 +544,7 @@ constant_operand(struct nv_pc *pc,
          nv_reference(pc, nvi, s, nvi->src[t]->value);
          nvi->src[s]->mod = nvi->src[t]->mod;
       }
+      break;
    case NV_OP_ADD_F32:
       if (u.u32 == 0) {
          switch (nvi->src[t]->mod) {
@@ -563,6 +564,7 @@ constant_operand(struct nv_pc *pc,
          if (nvi->opcode != NV_OP_CVT)
             nvi->src[0]->mod = 0;
       }
+      break;
    case NV_OP_ADD_B32:
       if (u.u32 == 0) {
          assert(nvi->src[t]->mod == 0);
