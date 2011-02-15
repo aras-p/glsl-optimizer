@@ -1511,9 +1511,9 @@ static void r300_set_index_buffer(struct pipe_context* pipe,
 {
     struct r300_context* r300 = r300_context(pipe);
 
-    assert(ib->offset % ib->index_size == 0);
-
     if (ib && ib->buffer) {
+        assert(ib->offset % ib->index_size == 0);
+
         pipe_resource_reference(&r300->index_buffer.buffer, ib->buffer);
         memcpy(&r300->index_buffer, ib, sizeof(r300->index_buffer));
         r300->index_buffer.offset /= r300->index_buffer.index_size;
