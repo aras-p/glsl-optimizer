@@ -304,14 +304,14 @@ static boolean radeon_bomgr_is_buffer_busy(struct pb_manager *_mgr,
    struct radeon_bo *bo = radeon_bo(_buf);
 
    if (radeon_bo_is_referenced_by_any_cs(bo)) {
-       return FALSE;
+       return TRUE;
    }
 
    if (radeon_bo_is_busy((struct r300_winsys_bo*)bo)) {
-       return FALSE;
+       return TRUE;
    }
 
-   return TRUE;
+   return FALSE;
 }
 
 static void radeon_bomgr_destroy(struct pb_manager *_mgr)
