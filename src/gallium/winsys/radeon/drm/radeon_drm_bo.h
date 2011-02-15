@@ -34,6 +34,7 @@
 
 #include "radeon_winsys.h"
 #include "pipebuffer/pb_bufmgr.h"
+#include "os/os_thread.h"
 
 #define RADEON_PB_USAGE_CACHE       (1 << 28)
 #define RADEON_PB_USAGE_DOMAIN_GTT  (1 << 29)
@@ -47,6 +48,8 @@ struct radeon_bo {
     struct radeon_drm_winsys *rws;
 
     void *ptr;
+    pipe_mutex map_mutex;
+
     uint32_t size;
     uint32_t handle;
     uint32_t name;

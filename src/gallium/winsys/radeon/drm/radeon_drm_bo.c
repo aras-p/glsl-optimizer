@@ -107,6 +107,7 @@ void radeon_bo_unref(struct radeon_bo *bo)
     /* Close object. */
     args.handle = bo->handle;
     drmIoctl(bo->rws->fd, DRM_IOCTL_GEM_CLOSE, &args);
+    pipe_mutex_destroy(bo->map_mutex);
     FREE(bo);
 }
 
@@ -156,6 +157,7 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
     struct radeon_bo *bo = radeon_bo(_buf);
     struct radeon_drm_cs *cs = flush_ctx;
     struct drm_radeon_gem_mmap args = {};
+    void *ptr;
     /* prevents a call to radeon_bo_wait if (usage & DONTBLOCK) and
      * radeon_is_busy returns FALSE. */
     boolean may_be_busy = TRUE;
@@ -182,30 +184,34 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
         radeon_bo_wait((struct r300_winsys_bo*)bo);
     }
 
-    /* Map buffer if it's not already mapped. */
-    /* XXX We may get a race in bo->ptr. */
-    if (!bo->ptr) {
-        void *ptr;
+    /* Return the pointer if it's already mapped. */
+    if (bo->ptr)
+        return bo->ptr;
 
-        args.handle = bo->handle;
-        args.offset = 0;
-        args.size = (uint64_t)bo->size;
-        if (drmCommandWriteRead(bo->rws->fd,
-                                DRM_RADEON_GEM_MMAP,
-                                &args,
-                                sizeof(args))) {
-            fprintf(stderr, "radeon: gem_mmap failed: %p 0x%08X\n",
-                    bo, bo->handle);
-            return NULL;
-        }
-        ptr = mmap(0, args.size, PROT_READ|PROT_WRITE, MAP_SHARED,
-                   bo->rws->fd, args.addr_ptr);
-        if (ptr == MAP_FAILED) {
-            fprintf(stderr, "radeon: mmap failed, errno: %i\n", errno);
-            return NULL;
-        }
-        bo->ptr = ptr;
+    /* Map the buffer. */
+    pipe_mutex_lock(bo->map_mutex);
+    args.handle = bo->handle;
+    args.offset = 0;
+    args.size = (uint64_t)bo->size;
+    if (drmCommandWriteRead(bo->rws->fd,
+                            DRM_RADEON_GEM_MMAP,
+                            &args,
+                            sizeof(args))) {
+        pipe_mutex_unlock(bo->map_mutex);
+        fprintf(stderr, "radeon: gem_mmap failed: %p 0x%08X\n",
+                bo, bo->handle);
+        return NULL;
     }
+
+    ptr = mmap(0, args.size, PROT_READ|PROT_WRITE, MAP_SHARED,
+               bo->rws->fd, args.addr_ptr);
+    if (ptr == MAP_FAILED) {
+        pipe_mutex_unlock(bo->map_mutex);
+        fprintf(stderr, "radeon: mmap failed, errno: %i\n", errno);
+        return NULL;
+    }
+    bo->ptr = ptr;
+    pipe_mutex_unlock(bo->map_mutex);
 
     return bo->ptr;
 }
@@ -284,6 +290,7 @@ static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
     bo->rws = mgr->rws;
     bo->handle = args.handle;
     bo->size = size;
+    pipe_mutex_init(bo->map_mutex);
 
     radeon_bo_ref(bo);
     return &bo->base;
@@ -514,6 +521,7 @@ static struct r300_winsys_bo *radeon_winsys_bo_from_handle(struct r300_winsys_sc
     bo->base.vtbl = &radeon_bo_vtbl;
     bo->mgr = mgr;
     bo->rws = mgr->rws;
+    pipe_mutex_init(bo->map_mutex);
 
     util_hash_table_set(mgr->bo_handles, (void*)(uintptr_t)whandle->handle, bo);
 
