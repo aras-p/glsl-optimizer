@@ -94,6 +94,10 @@ static void r300_flush(struct pipe_context* pipe,
             r300->rws->cs_flush(r300->cs);
         }
     }
+
+    if (flags & PIPE_FLUSH_FRAME) {
+        r300->rws->cs_sync_flush(r300->cs);
+    }
 }
 
 void r300_init_flush_functions(struct r300_context* r300)

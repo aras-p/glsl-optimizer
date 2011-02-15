@@ -45,8 +45,8 @@ struct r300_winsys_screen;
 struct r300_winsys_cs_handle;   /* for write_reloc etc. */
 
 struct r300_winsys_cs {
-    unsigned cdw;                           /* Number of used dwords. */
-    uint32_t buf[R300_MAX_CMDBUF_DWORDS];   /* The command buffer. */
+    unsigned cdw;  /* Number of used dwords. */
+    uint32_t *buf; /* The command buffer. */
 };
 
 enum r300_value_id {
@@ -267,6 +267,13 @@ struct r300_winsys_screen {
      * \param cs        A command stream to flush.
      */
     void (*cs_flush)(struct r300_winsys_cs *cs);
+
+    /**
+     * Wait until the last flush is completed.
+     *
+     * \param cs        A command stream.
+     */
+    void (*cs_sync_flush)(struct r300_winsys_cs *cs);
 
     /**
      * Set a flush callback which is called from winsys when flush is

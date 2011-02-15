@@ -59,6 +59,10 @@ struct radeon_bo {
     /* how many command streams is this bo referenced in? */
     int num_cs_references;
 
+    /* how many command streams, which are being emitted in a separate
+     * thread, is this bo referenced in? */
+    int num_active_ioctls;
+
     boolean flinked;
     uint32_t flink;
 };

@@ -116,6 +116,10 @@ static void radeon_bo_wait(struct r300_winsys_bo *_buf)
     struct radeon_bo *bo = get_radeon_bo(pb_buffer(_buf));
     struct drm_radeon_gem_wait_idle args = {};
 
+    while (p_atomic_read(&bo->num_active_ioctls)) {
+        sched_yield();
+    }
+
     args.handle = bo->handle;
     while (drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_WAIT_IDLE,
                                &args, sizeof(args)) == -EBUSY);
@@ -125,6 +129,10 @@ static boolean radeon_bo_is_busy(struct r300_winsys_bo *_buf)
 {
     struct radeon_bo *bo = get_radeon_bo(pb_buffer(_buf));
     struct drm_radeon_gem_busy args = {};
+
+    if (p_atomic_read(&bo->num_active_ioctls)) {
+        return TRUE;
+    }
 
     args.handle = bo->handle;
     return drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_BUSY,
