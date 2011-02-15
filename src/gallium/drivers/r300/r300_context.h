@@ -580,6 +580,8 @@ struct r300_context {
     int sprite_coord_enable;
     /* Whether two-sided color selection is enabled (AKA light_twoside). */
     boolean two_sided_color;
+    /* Whether fragment color clamping is enabled. */
+    boolean frag_clamp;
     /* Whether fast color clear is enabled. */
     boolean cbzb_clear;
     /* Whether ZMASK is enabled. */
