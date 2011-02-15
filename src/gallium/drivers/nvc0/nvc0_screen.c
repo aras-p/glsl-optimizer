@@ -550,6 +550,8 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    BEGIN_RING(chan, RING_3D(DEPTH_RANGE_NEAR(0)), 2);
    OUT_RINGf (chan, 0.0f);
    OUT_RINGf (chan, 1.0f);
+   BEGIN_RING(chan, RING_3D(VIEW_VOLUME_CLIP_CTRL), 1);
+   OUT_RING  (chan, NVC0_3D_VIEW_VOLUME_CLIP_CTRL_UNK1_UNK1);
 
    /* We use scissors instead of exact view volume clipping,
     * so they're always enabled.
