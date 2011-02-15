@@ -677,7 +677,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    {
       MESA_FORMAT_LUMINANCE_FLOAT32,
       "MESA_FORMAT_LUMINANCE_FLOAT32",
-      GL_ALPHA,
+      GL_LUMINANCE,
       GL_FLOAT,
       0, 0, 0, 0,
       32, 0, 0, 0, 0,
@@ -686,7 +686,7 @@ static struct gl_format_info format_info[MESA_FORMAT_COUNT] =
    {
       MESA_FORMAT_LUMINANCE_FLOAT16,
       "MESA_FORMAT_LUMINANCE_FLOAT16",
-      GL_ALPHA,
+      GL_LUMINANCE,
       GL_FLOAT,
       0, 0, 0, 0,
       16, 0, 0, 0, 0,
