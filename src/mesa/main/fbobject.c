@@ -1145,7 +1145,37 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_INTENSITY16_SNORM:
       return ctx->Extensions.EXT_texture_snorm &&
              ctx->Extensions.ARB_framebuffer_object ? GL_INTENSITY : 0;
-   /* XXX add floating point and integer formats eventually */
+   case GL_R16F:
+   case GL_R32F:
+      return ctx->Extensions.ARB_texture_rg &&
+             ctx->Extensions.ARB_texture_float ? GL_RED : 0;
+   case GL_RG16F:
+   case GL_RG32F:
+      return ctx->Extensions.ARB_texture_rg &&
+             ctx->Extensions.ARB_texture_float ? GL_RG : 0;
+   case GL_RGB16F:
+   case GL_RGB32F:
+      return ctx->Extensions.ARB_texture_float ? GL_RGB : 0;
+   case GL_RGBA16F:
+   case GL_RGBA32F:
+      return ctx->Extensions.ARB_texture_float ? GL_RGBA : 0;
+   case GL_ALPHA16F_ARB:
+   case GL_ALPHA32F_ARB:
+      return ctx->Extensions.ARB_texture_float &&
+             ctx->Extensions.ARB_framebuffer_object ? GL_ALPHA : 0;
+   case GL_LUMINANCE16F_ARB:
+   case GL_LUMINANCE32F_ARB:
+      return ctx->Extensions.ARB_texture_float &&
+             ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE : 0;
+   case GL_LUMINANCE_ALPHA16F_ARB:
+   case GL_LUMINANCE_ALPHA32F_ARB:
+      return ctx->Extensions.ARB_texture_float &&
+             ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE_ALPHA : 0;
+   case GL_INTENSITY16F_ARB:
+   case GL_INTENSITY32F_ARB:
+      return ctx->Extensions.ARB_texture_float &&
+             ctx->Extensions.ARB_framebuffer_object ? GL_INTENSITY : 0;
+   /* XXX add integer formats eventually */
    default:
       return 0;
    }
