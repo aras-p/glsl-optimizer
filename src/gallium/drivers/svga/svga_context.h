@@ -246,7 +246,7 @@ struct svga_prescale {
 };
 
 
-/* Updated by calling svga_update_state( SVGA_STATE_HW_VIEWPORT )
+/* Updated by calling svga_update_state( SVGA_STATE_HW_CLEAR )
  */
 struct svga_hw_clear_state
 {
