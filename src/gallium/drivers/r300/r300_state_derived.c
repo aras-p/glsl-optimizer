@@ -687,6 +687,25 @@ static uint32_t r300_get_border_color(enum pipe_format format,
     return uc.ui;
 }
 
+static boolean util_format_is_float(enum pipe_format format)
+{
+    const struct util_format_description *desc = util_format_description(format);
+    unsigned i;
+
+    if (!format)
+       return FALSE;
+
+    /* Find the first non-void channel. */
+    for (i = 0; i < 4; i++)
+        if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID)
+            break;
+
+    if (i == 4)
+        return FALSE;
+
+    return desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT ? TRUE : FALSE;
+}
+
 static void r300_merge_textures_and_samplers(struct r300_context* r300)
 {
     struct r300_textures_state *state =
@@ -820,6 +839,32 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                 /* the MAX_MIP level is the largest (finest) one */
                 texstate->format.format0 |= R300_TX_NUM_LEVELS(max_level);
                 texstate->filter0 |= R300_TX_MAX_MIP_LEVEL(min_level);
+            }
+
+            /* Float textures only support nearest and mip-nearest filtering. */
+            if (util_format_is_float(tex->b.b.b.format)) {
+                /* No MAG linear filtering. */
+                if ((texstate->filter0 & R300_TX_MAG_FILTER_MASK) ==
+                    R300_TX_MAG_FILTER_LINEAR) {
+                    texstate->filter0 &= ~R300_TX_MAG_FILTER_MASK;
+                    texstate->filter0 |= R300_TX_MAG_FILTER_NEAREST;
+                }
+                /* No MIN linear filtering. */
+                if ((texstate->filter0 & R300_TX_MIN_FILTER_MASK) ==
+                    R300_TX_MIN_FILTER_LINEAR) {
+                    texstate->filter0 &= ~R300_TX_MIN_FILTER_MASK;
+                    texstate->filter0 |= R300_TX_MIN_FILTER_NEAREST;
+                }
+                /* No mipmap linear filtering. */
+                if ((texstate->filter0 & R300_TX_MIN_FILTER_MIP_MASK) ==
+                    R300_TX_MIN_FILTER_MIP_LINEAR) {
+                    texstate->filter0 &= ~R300_TX_MIN_FILTER_MIP_MASK;
+                    texstate->filter0 |= R300_TX_MIN_FILTER_MIP_NEAREST;
+                }
+                /* No anisotropic filtering. */
+                texstate->filter0 &= ~R300_TX_MAX_ANISO_MASK;
+                texstate->filter1 &= ~R500_TX_MAX_ANISO_MASK;
+                texstate->filter1 &= ~R500_TX_ANISO_HIGH_QUALITY;
             }
 
             texstate->filter0 |= i << 28;
