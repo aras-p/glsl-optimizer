@@ -220,6 +220,15 @@ enum pipe_format {
    PIPE_FORMAT_L16A16_SNORM            = 153,
    PIPE_FORMAT_I16_SNORM               = 154,
 
+   PIPE_FORMAT_A16_FLOAT               = 155,
+   PIPE_FORMAT_L16_FLOAT               = 156,
+   PIPE_FORMAT_L16A16_FLOAT            = 157,
+   PIPE_FORMAT_I16_FLOAT               = 158,
+   PIPE_FORMAT_A32_FLOAT               = 159,
+   PIPE_FORMAT_L32_FLOAT               = 160,
+   PIPE_FORMAT_L32A32_FLOAT            = 161,
+   PIPE_FORMAT_I32_FLOAT               = 162,
+
    PIPE_FORMAT_COUNT
 };
 

@@ -96,6 +96,14 @@ PIPE_FORMAT_A16_SNORM             , plain, 1, 1, sn16,     ,     ,     , 000x, r
 PIPE_FORMAT_L16_SNORM             , plain, 1, 1, sn16,     ,     ,     , xxx1, rgb
 PIPE_FORMAT_L16A16_SNORM          , plain, 1, 1, sn16, sn16,     ,     , xxxy, rgb
 PIPE_FORMAT_I16_SNORM             , plain, 1, 1, sn16,     ,     ,     , xxxx, rgb
+PIPE_FORMAT_A16_FLOAT             , plain, 1, 1, f16 ,     ,     ,     , 000x, rgb
+PIPE_FORMAT_L16_FLOAT             , plain, 1, 1, f16 ,     ,     ,     , xxx1, rgb
+PIPE_FORMAT_L16A16_FLOAT          , plain, 1, 1, f16 , f16 ,     ,     , xxxy, rgb
+PIPE_FORMAT_I16_FLOAT             , plain, 1, 1, f16 ,     ,     ,     , xxxx, rgb
+PIPE_FORMAT_A32_FLOAT             , plain, 1, 1, f32 ,     ,     ,     , 000x, rgb
+PIPE_FORMAT_L32_FLOAT             , plain, 1, 1, f32 ,     ,     ,     , xxx1, rgb
+PIPE_FORMAT_L32A32_FLOAT          , plain, 1, 1, f32 , f32 ,     ,     , xxxy, rgb
+PIPE_FORMAT_I32_FLOAT             , plain, 1, 1, f32 ,     ,     ,     , xxxx, rgb
 
 # SRGB formats
 PIPE_FORMAT_L8_SRGB               , plain, 1, 1, un8 ,     ,     ,     , xxx1, srgb 
