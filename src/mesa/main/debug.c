@@ -306,8 +306,8 @@ write_texture_image(struct gl_texture_object *texObj,
 /**
  * Write renderbuffer image to a ppm file.
  */
-static void
-write_renderbuffer_image(const struct gl_renderbuffer *rb)
+void
+_mesa_write_renderbuffer_image(const struct gl_renderbuffer *rb)
 {
    GET_CURRENT_CONTEXT(ctx);
    GLubyte *buffer;
@@ -324,6 +324,10 @@ write_renderbuffer_image(const struct gl_renderbuffer *rb)
       type = GL_UNSIGNED_INT_24_8;
    }
    else {
+      _mesa_debug(NULL,
+                  "Unsupported BaseFormat 0x%x in "
+                  "_mesa_write_renderbuffer_image()\n",
+                  rb->_BaseFormat);
       return;
    }
 
@@ -334,8 +338,12 @@ write_renderbuffer_image(const struct gl_renderbuffer *rb)
 
    /* make filename */
    _mesa_snprintf(s, sizeof(s), "/tmp/renderbuffer%u.ppm", rb->Name);
+   _mesa_snprintf(s, sizeof(s), "C:\\renderbuffer%u.ppm", rb->Name);
 
    printf("  Writing renderbuffer image to %s\n", s);
+
+   _mesa_debug(NULL, "  Writing renderbuffer image to %s\n", s);
+
    write_ppm(s, buffer, rb->Width, rb->Height, 4, 0, 1, 2, GL_TRUE);
 
    free(buffer);
@@ -422,7 +430,7 @@ dump_renderbuffer(const struct gl_renderbuffer *rb, GLboolean writeImage)
 	  rb->Name, rb->Width, rb->Height,
 	  _mesa_lookup_enum_by_nr(rb->InternalFormat));
    if (writeImage) {
-      write_renderbuffer_image(rb);
+      _mesa_write_renderbuffer_image(rb);
    }
 }
 

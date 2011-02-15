@@ -64,6 +64,9 @@ extern void _mesa_init_debug( struct gl_context *ctx );
 #endif
 
 extern void
+_mesa_write_renderbuffer_image(const struct gl_renderbuffer *rb);
+
+extern void
 _mesa_dump_texture(GLuint texture, GLuint writeImages);
 
 extern void
