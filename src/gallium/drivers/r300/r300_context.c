@@ -532,28 +532,3 @@ fail:
     r300_destroy_context(&r300->context);
     return NULL;
 }
-
-void r300_finish(struct r300_context *r300)
-{
-    struct pipe_framebuffer_state *fb;
-    unsigned i;
-
-    /* This is a preliminary implementation of glFinish.
-     *
-     * The ideal implementation should use something like EmitIrqLocked and
-     * WaitIrq, or better, real fences.
-     */
-    if (r300->fb_state.state) {
-        fb = r300->fb_state.state;
-
-        for (i = 0; i < fb->nr_cbufs; i++) {
-            if (fb->cbufs[i]->texture) {
-                r300->rws->buffer_wait(r300_resource(fb->cbufs[i]->texture)->buf);
-                return;
-            }
-        }
-        if (fb->zsbuf && fb->zsbuf->texture) {
-            r300->rws->buffer_wait(r300_resource(fb->zsbuf->texture)->buf);
-        }
-    }
-}

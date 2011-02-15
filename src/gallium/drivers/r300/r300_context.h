@@ -284,22 +284,6 @@ struct r300_query {
     struct r300_query* next;
 };
 
-/* Fence object.
- *
- * This is a fake fence. Instead of syncing with the fence, we sync
- * with the context, which is inefficient but compliant.
- *
- * This is not a subclass of pipe_fence_handle because pipe_fence_handle is
- * never actually fully defined. So, rather than have it as a member, and do
- * subclass-style casting, we treat pipe_fence_handle as an opaque, and just
- * trust that our state tracker does not ever mess up fence objects.
- */
-struct r300_fence {
-    struct pipe_reference reference;
-    struct r300_context *ctx;
-    boolean signalled;
-};
-
 struct r300_surface {
     struct pipe_surface base;
 
@@ -651,7 +635,6 @@ static INLINE void r300_mark_atom_dirty(struct r300_context *r300,
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                          void *priv);
 
-void r300_finish(struct r300_context *r300);
 void r300_flush_cb(void *data);
 
 /* Context initialization. */
