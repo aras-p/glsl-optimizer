@@ -631,6 +631,34 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       fetch_texel_3d_f_intensity_f16,
       store_texel_intensity_f16
    },
+   {
+      MESA_FORMAT_R_FLOAT32,
+      fetch_texel_1d_f_r_f32,
+      fetch_texel_2d_f_r_f32,
+      fetch_texel_3d_f_r_f32,
+      store_texel_r_f32
+   },
+   {
+      MESA_FORMAT_R_FLOAT16,
+      fetch_texel_1d_f_r_f16,
+      fetch_texel_2d_f_r_f16,
+      fetch_texel_3d_f_r_f16,
+      store_texel_r_f16
+   },
+   {
+      MESA_FORMAT_RG_FLOAT32,
+      fetch_texel_1d_f_rg_f32,
+      fetch_texel_2d_f_rg_f32,
+      fetch_texel_3d_f_rg_f32,
+      store_texel_rg_f32
+   },
+   {
+      MESA_FORMAT_RG_FLOAT16,
+      fetch_texel_1d_f_rg_f16,
+      fetch_texel_2d_f_rg_f16,
+      fetch_texel_3d_f_rg_f16,
+      store_texel_rg_f16
+   },
 
    /* non-normalized, signed int */
    {

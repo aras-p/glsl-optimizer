@@ -628,6 +628,22 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
       }
    }
 
+   if (ctx->Extensions.ARB_texture_rg && ctx->Extensions.ARB_texture_float) {
+      switch (internalFormat) {
+      case GL_R16F:
+	 return MESA_FORMAT_R_FLOAT16;
+      case GL_R32F:
+         return MESA_FORMAT_R_FLOAT32;
+      case GL_RG16F:
+	 return MESA_FORMAT_RG_FLOAT16;
+      case GL_RG32F:
+         return MESA_FORMAT_RG_FLOAT32;
+
+      default:
+         ; /* fallthrough */
+      }
+   }
+
    if (ctx->Extensions.EXT_texture_format_BGRA8888) {
       switch (internalFormat) {
       case GL_BGRA:

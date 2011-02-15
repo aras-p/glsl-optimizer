@@ -3535,13 +3535,17 @@ _mesa_texstore_rgba_float32(TEXSTORE_PARAMS)
           dstFormat == MESA_FORMAT_ALPHA_FLOAT32 ||
           dstFormat == MESA_FORMAT_LUMINANCE_FLOAT32 ||
           dstFormat == MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32 ||
-          dstFormat == MESA_FORMAT_INTENSITY_FLOAT32);
+          dstFormat == MESA_FORMAT_INTENSITY_FLOAT32 ||
+          dstFormat == MESA_FORMAT_R_FLOAT32 ||
+          dstFormat == MESA_FORMAT_RG_FLOAT32);
    ASSERT(baseInternalFormat == GL_RGBA ||
           baseInternalFormat == GL_RGB ||
           baseInternalFormat == GL_ALPHA ||
           baseInternalFormat == GL_LUMINANCE ||
           baseInternalFormat == GL_LUMINANCE_ALPHA ||
-          baseInternalFormat == GL_INTENSITY);
+          baseInternalFormat == GL_INTENSITY ||
+          baseInternalFormat == GL_RED ||
+          baseInternalFormat == GL_RG);
    ASSERT(texelBytes == components * sizeof(GLfloat));
 
    if (!ctx->_ImageTransferState &&
@@ -3605,13 +3609,17 @@ _mesa_texstore_rgba_float16(TEXSTORE_PARAMS)
           dstFormat == MESA_FORMAT_ALPHA_FLOAT16 ||
           dstFormat == MESA_FORMAT_LUMINANCE_FLOAT16 ||
           dstFormat == MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16 ||
-          dstFormat == MESA_FORMAT_INTENSITY_FLOAT16);
+          dstFormat == MESA_FORMAT_INTENSITY_FLOAT16 ||
+          dstFormat == MESA_FORMAT_R_FLOAT16 ||
+          dstFormat == MESA_FORMAT_RG_FLOAT16);
    ASSERT(baseInternalFormat == GL_RGBA ||
           baseInternalFormat == GL_RGB ||
           baseInternalFormat == GL_ALPHA ||
           baseInternalFormat == GL_LUMINANCE ||
           baseInternalFormat == GL_LUMINANCE_ALPHA ||
-          baseInternalFormat == GL_INTENSITY);
+          baseInternalFormat == GL_INTENSITY ||
+          baseInternalFormat == GL_RED ||
+          baseInternalFormat == GL_RG);
    ASSERT(texelBytes == components * sizeof(GLhalfARB));
 
    if (!ctx->_ImageTransferState &&
@@ -4252,6 +4260,10 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16, _mesa_texstore_rgba_float16 },
    { MESA_FORMAT_INTENSITY_FLOAT32, _mesa_texstore_rgba_float32 },
    { MESA_FORMAT_INTENSITY_FLOAT16, _mesa_texstore_rgba_float16 },
+   { MESA_FORMAT_R_FLOAT32, _mesa_texstore_rgba_float32 },
+   { MESA_FORMAT_R_FLOAT16, _mesa_texstore_rgba_float16 },
+   { MESA_FORMAT_RG_FLOAT32, _mesa_texstore_rgba_float32 },
+   { MESA_FORMAT_RG_FLOAT16, _mesa_texstore_rgba_float16 },
 
    { MESA_FORMAT_RGBA_INT8, _mesa_texstore_rgba_int8 },
    { MESA_FORMAT_RGBA_INT16, _mesa_texstore_rgba_int16 },
