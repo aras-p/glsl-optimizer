@@ -1832,11 +1832,66 @@ void r600_bc_dump(struct r600_bc *bc)
 		}
 
 		LIST_FOR_EACH_ENTRY(tex, &cf->tex, list) {
-			//TODO
+			fprintf(stderr, "%04d %08X   ", id, bc->bytecode[id]);
+			fprintf(stderr, "INST:%d ", tex->inst);
+			fprintf(stderr, "RESOURCE_ID:%d ", tex->resource_id);
+			fprintf(stderr, "SRC(GPR:%d ", tex->src_gpr);
+			fprintf(stderr, "REL:%d)\n", tex->src_rel);
+			id++;
+			fprintf(stderr, "%04d %08X   ", id, bc->bytecode[id]);
+			fprintf(stderr, "DST(GPR:%d ", tex->dst_gpr);
+			fprintf(stderr, "REL:%d ", tex->dst_rel);
+			fprintf(stderr, "SEL_X:%d ", tex->dst_sel_x);
+			fprintf(stderr, "SEL_Y:%d ", tex->dst_sel_y);
+			fprintf(stderr, "SEL_Z:%d ", tex->dst_sel_z);
+			fprintf(stderr, "SEL_W:%d) ", tex->dst_sel_w);
+			fprintf(stderr, "LOD_BIAS:%d ", tex->lod_bias);
+			fprintf(stderr, "COORD_TYPE_X:%d ", tex->coord_type_x);
+			fprintf(stderr, "COORD_TYPE_Y:%d ", tex->coord_type_y);
+			fprintf(stderr, "COORD_TYPE_Z:%d ", tex->coord_type_z);
+			fprintf(stderr, "COORD_TYPE_W:%d\n", tex->coord_type_w);
+			id++;
+			fprintf(stderr, "%04d %08X   ", id, bc->bytecode[id]);
+			fprintf(stderr, "OFFSET_X:%d ", tex->offset_x);
+			fprintf(stderr, "OFFSET_Y:%d ", tex->offset_y);
+			fprintf(stderr, "OFFSET_Z:%d ", tex->offset_z);
+			fprintf(stderr, "SAMPLER_ID:%d ", tex->sampler_id);
+			fprintf(stderr, "SRC(SEL_X:%d ", tex->src_sel_x);
+			fprintf(stderr, "SEL_Y:%d ", tex->src_sel_y);
+			fprintf(stderr, "SEL_Z:%d ", tex->src_sel_z);
+			fprintf(stderr, "SEL_W:%d)\n", tex->src_sel_w);
+			id++;
+			fprintf(stderr, "%04d %08X   \n", id, bc->bytecode[id]);
+			id++;
 		}
 
 		LIST_FOR_EACH_ENTRY(vtx, &cf->vtx, list) {
+			fprintf(stderr, "%04d %08X   ", id, bc->bytecode[id]);
+			fprintf(stderr, "INST:%d ", vtx->inst);
+			fprintf(stderr, "FETCH_TYPE:%d ", vtx->fetch_type);
+			fprintf(stderr, "BUFFER_ID:%d\n", vtx->buffer_id);
+			id++;
+			/* This assumes that no semantic fetches exist */
+			fprintf(stderr, "%04d %08X   ", id, bc->bytecode[id]);
+			fprintf(stderr, "SRC(GPR:%d ", vtx->src_gpr);
+			fprintf(stderr, "SEL_X:%d) ", vtx->src_sel_x);
+			fprintf(stderr, "MEGA_FETCH_COUNT:%d ", vtx->mega_fetch_count);
+			fprintf(stderr, "DST(GPR:%d ", vtx->dst_gpr);
+			fprintf(stderr, "SEL_X:%d ", vtx->dst_sel_x);
+			fprintf(stderr, "SEL_Y:%d ", vtx->dst_sel_y);
+			fprintf(stderr, "SEL_Z:%d ", vtx->dst_sel_z);
+			fprintf(stderr, "SEL_W:%d) ", vtx->dst_sel_w);
+			fprintf(stderr, "USE_CONST_FIELDS:%d ", vtx->use_const_fields);
+			fprintf(stderr, "DATA_FORMAT:%d ", vtx->data_format);
+			fprintf(stderr, "NUM_FORMAT_ALL:%d ", vtx->num_format_all);
+			fprintf(stderr, "FORMAT_COMP_ALL:%d ", vtx->format_comp_all);
+			fprintf(stderr, "SRF_MODE_ALL:%d\n", vtx->srf_mode_all);
+			id++;
+			fprintf(stderr, "%04d %08X   \n", id, bc->bytecode[id]);
 			//TODO
+			id++;
+			fprintf(stderr, "%04d %08X   \n", id, bc->bytecode[id]);
+			id++;
 		}
 	}
 
