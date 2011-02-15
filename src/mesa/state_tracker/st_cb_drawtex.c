@@ -265,7 +265,7 @@ st_DrawTex(struct gl_context *ctx, GLfloat x, GLfloat y, GLfloat z,
    }
 
 
-   util_draw_vertex_buffer(pipe, vbuffer,
+   util_draw_vertex_buffer(pipe, cso, vbuffer,
                            0,  /* offset */
                            PIPE_PRIM_TRIANGLE_FAN,
                            4,  /* verts */
