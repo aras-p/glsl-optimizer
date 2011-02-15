@@ -389,9 +389,8 @@ static void r300_draw_arrays_immediate(struct r300_context *r300,
     unsigned stride[PIPE_MAX_ATTRIBS];
 
     /* Mapped vertex buffers. */
-    uint32_t* map[PIPE_MAX_ATTRIBS];
+    uint32_t* map[PIPE_MAX_ATTRIBS] = {0};
     uint32_t* mapelem[PIPE_MAX_ATTRIBS];
-    struct pipe_transfer* transfer[PIPE_MAX_ATTRIBS] = {0};
 
     CS_LOCALS(r300);
 
@@ -408,12 +407,10 @@ static void r300_draw_arrays_immediate(struct r300_context *r300,
         stride[i] = vbuf->stride / 4;
 
         /* Map the buffer. */
-        if (!transfer[vbi]) {
-            map[vbi] = (uint32_t*)pipe_buffer_map(&r300->context,
-                                                  r300->vbuf_mgr->real_vertex_buffer[vbi],
-                                                  PIPE_TRANSFER_READ |
-                                                  PIPE_TRANSFER_UNSYNCHRONIZED,
-						  &transfer[vbi]);
+        if (!map[vbi]) {
+            map[vbi] = (uint32_t*)r300->rws->buffer_map(
+                r300_resource(r300->vbuf_mgr->real_vertex_buffer[vbi])->buf,
+                r300->cs, PIPE_TRANSFER_READ | PIPE_TRANSFER_UNSYNCHRONIZED);
             map[vbi] += (vbuf->buffer_offset / 4) + stride[i] * start;
         }
         mapelem[i] = map[vbi] + (velem->src_offset / 4);
@@ -439,9 +436,9 @@ static void r300_draw_arrays_immediate(struct r300_context *r300,
     for (i = 0; i < vertex_element_count; i++) {
         vbi = r300->velems->velem[i].vertex_buffer_index;
 
-        if (transfer[vbi]) {
-            pipe_buffer_unmap(&r300->context, transfer[vbi]);
-            transfer[vbi] = NULL;
+        if (map[vbi]) {
+            r300->rws->buffer_unmap(r300_resource(r300->vbuf_mgr->real_vertex_buffer[vbi])->buf);
+            map[vbi] = NULL;
         }
     }
 }
@@ -658,12 +655,11 @@ static void r300_draw_elements(struct r300_context *r300, int indexBias,
     /* Fallback for misaligned ushort indices. */
     if (indexSize == 2 && (start & 1) &&
         !r300_resource(indexBuffer)->b.user_ptr) {
-        struct pipe_transfer *transfer;
-
-        uint16_t *ptr = pipe_buffer_map(&r300->context, indexBuffer,
-                                        PIPE_TRANSFER_READ |
-                                        PIPE_TRANSFER_UNSYNCHRONIZED,
-                                        &transfer);
+        /* If we got here, then orgIndexBuffer == indexBuffer. */
+        uint16_t *ptr = r300->rws->buffer_map(r300_resource(orgIndexBuffer)->buf,
+                                              r300->cs,
+                                              PIPE_TRANSFER_READ |
+                                              PIPE_TRANSFER_UNSYNCHRONIZED);
 
         if (mode == PIPE_PRIM_TRIANGLES) {
            memcpy(indices3, ptr + start, 6);
@@ -674,7 +670,7 @@ static void r300_draw_elements(struct r300_context *r300, int indexBias,
             r300_upload_index_buffer(r300, &indexBuffer, indexSize, &start,
                                      count, (uint8_t*)ptr);
         }
-        pipe_buffer_unmap(&r300->context, transfer);
+        r300->rws->buffer_unmap(r300_resource(orgIndexBuffer)->buf);
     } else {
         if (r300_resource(indexBuffer)->b.user_ptr)
             r300_upload_index_buffer(r300, &indexBuffer, indexSize,
