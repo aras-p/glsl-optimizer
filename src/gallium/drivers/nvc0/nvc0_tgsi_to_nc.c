@@ -1175,7 +1175,7 @@ static INLINE void
 describe_texture_target(unsigned target, int *dim,
                         int *array, int *cube, int *shadow)
 {
-   *array = *cube = *shadow = 0;
+   *dim = *array = *cube = *shadow = 0;
 
    switch (target) {
    case TGSI_TEXTURE_1D:
