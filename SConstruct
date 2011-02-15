@@ -153,13 +153,17 @@ if env['crosscompile'] and env['platform'] != 'embedded':
     if host_env['msvc']:
         host_env.Append(CPPPATH = ['#include/c99'])
 
-    Export(env = host_env)
+    target_env = env
+    env = host_env
+    Export('env')
 
     SConscript(
         'src/SConscript',
         variant_dir = host_env['build_dir'],
         duplicate = 0, # http://www.scons.org/doc/0.97/HTML/scons-user/x2261.html
     )
+
+    env = target_env
 
 Export('env')
 
