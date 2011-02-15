@@ -35,6 +35,8 @@
 
 #include "tgsi/tgsi_scan.h"
 
+#include "svga_state.h"
+
 
 #define SVGA_TEX_UNITS 8
 #define SVGA_MAX_POINTSIZE 80.0
@@ -342,7 +344,7 @@ struct svga_context
    struct util_bitmask *vs_bm;
 
    struct {
-      unsigned dirty[4];
+      unsigned dirty[SVGA_STATE_MAX];
 
       unsigned texture_timestamp;
 
