@@ -158,30 +158,26 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
     struct radeon_drm_cs *cs = flush_ctx;
     struct drm_radeon_gem_mmap args = {};
     void *ptr;
-    /* prevents a call to radeon_bo_wait if (usage & DONTBLOCK) and
-     * radeon_is_busy returns FALSE. */
-    boolean may_be_busy = TRUE;
-
-    if (flags & PB_USAGE_DONTBLOCK) {
-        if (radeon_bo_is_referenced_by_cs(cs, bo)) {
-            cs->flush_cs(cs->flush_data);
-            return NULL;
-        }
-
-        if (radeon_bo_is_busy((struct r300_winsys_bo*)bo)) {
-            return NULL;
-        }
-
-        may_be_busy = FALSE;
-    }
 
     /* If it's not unsynchronized bo_map, flush CS if needed and then wait. */
-    if (may_be_busy && !(flags & PB_USAGE_UNSYNCHRONIZED)) {
-        if (radeon_bo_is_referenced_by_cs(cs, bo)) {
-            cs->flush_cs(cs->flush_data);
-        }
+    if (!(flags & PB_USAGE_UNSYNCHRONIZED)) {
+        /* DONTBLOCK doesn't make sense with UNSYNCHRONIZED. */
+        if (flags & PB_USAGE_DONTBLOCK) {
+            if (radeon_bo_is_referenced_by_cs(cs, bo)) {
+                cs->flush_cs(cs->flush_data);
+                return NULL;
+            }
 
-        radeon_bo_wait((struct r300_winsys_bo*)bo);
+            if (radeon_bo_is_busy((struct r300_winsys_bo*)bo)) {
+                return NULL;
+            }
+        } else {
+            if (radeon_bo_is_referenced_by_cs(cs, bo)) {
+                cs->flush_cs(cs->flush_data);
+            }
+
+            radeon_bo_wait((struct r300_winsys_bo*)bo);
+        }
     }
 
     /* Return the pointer if it's already mapped. */
