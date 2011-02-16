@@ -859,8 +859,6 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 
 	case UTIL_FORMAT_COLORSPACE_SRGB:
 		word4 |= S_038010_FORCE_DEGAMMA(1);
-		if (format == PIPE_FORMAT_L8A8_SRGB || format == PIPE_FORMAT_L8_SRGB)
-			goto out_unknown; /* fails for some reason - TODO */
 		break;
 
 	default:
