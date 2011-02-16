@@ -367,6 +367,9 @@ struct svga_context
 
    /** List of buffers with queued transfers */
    struct list_head dirty_buffers;
+
+   /** Was the previous draw done with the SW path? */
+   boolean prev_draw_swtnl;
 };
 
 /* A flag for each state_tracker state object:
