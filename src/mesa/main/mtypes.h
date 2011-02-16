@@ -1240,7 +1240,7 @@ struct gl_texture_image
 				 *   GL_DEPTH_COMPONENT or GL_DEPTH_STENCIL_EXT
                                  *   only. Used for choosing TexEnv arithmetic.
 				 */
-   GLuint TexFormat;            /**< The actual format: MESA_FORMAT_x */
+   gl_format TexFormat;         /**< The actual texture memory format */
 
    GLuint Border;		/**< 0 or 1 */
    GLuint Width;		/**< = 2^WidthLog2 + 2*Border */
@@ -2380,7 +2380,7 @@ struct gl_renderbuffer
    GLenum InternalFormat; /**< The user-specified format */
    GLenum _BaseFormat;    /**< Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or
                                GL_STENCIL_INDEX. */
-   GLuint Format;         /**< The actual format: MESA_FORMAT_x */
+   gl_format Format;      /**< The actual renderbuffer memory format */
 
    GLubyte NumSamples;
 
