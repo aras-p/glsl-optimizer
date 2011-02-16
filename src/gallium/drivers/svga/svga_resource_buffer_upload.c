@@ -649,3 +649,54 @@ svga_context_flush_buffers(struct svga_context *svga)
       next = curr->next;
    }
 }
+
+
+void
+svga_redefine_user_buffer(struct pipe_context *pipe,
+                          struct pipe_resource *resource,
+                          unsigned offset,
+                          unsigned size)
+{
+   struct svga_screen *ss = svga_screen(pipe->screen);
+   struct svga_context *svga = svga_context(pipe);
+   struct svga_buffer *sbuf = svga_buffer(resource);
+
+   assert(sbuf->user);
+
+   /*
+    * Release any uploaded user buffer.
+    *
+    * TODO: As an optimization, we could try to update the uploaded buffer
+    * instead.
+    */
+
+   pipe_resource_reference(&sbuf->uploaded.buffer, NULL);
+
+   pipe_mutex_lock(ss->swc_mutex);
+
+   if (offset + size > resource->width0) {
+      /*
+       * User buffers shouldn't have DMA directly, unless
+       * SVGA_COMBINE_USERBUFFERS is not set.
+       */
+
+      if (sbuf->dma.pending) {
+         svga_buffer_upload_flush(svga, sbuf);
+      }
+
+      if (sbuf->handle) {
+         svga_buffer_destroy_host_surface(ss, sbuf);
+      }
+
+      if (sbuf->hwbuf) {
+         svga_buffer_destroy_hw_storage(ss, sbuf);
+      }
+
+      sbuf->key.size.width = sbuf->b.b.width0 = offset + size;
+   }
+
+   pipe_mutex_unlock(ss->swc_mutex);
+
+   svga->curr.any_user_vertex_buffers = TRUE;
+   svga->dirty |= SVGA_NEW_VBUFFER | SVGA_NEW_VELEMENT;
+}

@@ -243,4 +243,10 @@ svga_winsys_buffer_create(struct svga_context *svga,
                           unsigned usage,
                           unsigned size);
 
+void
+svga_redefine_user_buffer(struct pipe_context *ctx,
+                          struct pipe_resource *resource,
+                          unsigned offset,
+                          unsigned size);
+
 #endif /* SVGA_BUFFER_H */
