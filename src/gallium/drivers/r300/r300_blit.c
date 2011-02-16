@@ -480,12 +480,12 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
         /* Since the pixels are 4 times larger, we must decrease
          * the image size and the coordinates 4 times. */
         new_src.format = new_dst.format;
-        new_dst.height0 /= 4;
-        new_src.height0 /= 4;
+        new_dst.height0 = (new_dst.height0 + 3) / 4;
+        new_src.height0 = (new_src.height0 + 3) / 4;
         dsty /= 4;
         box = *src_box;
         box.y /= 4;
-        box.height /= 4;
+        box.height = (box.height + 3) / 4;
         src_box = &box;
     }
 

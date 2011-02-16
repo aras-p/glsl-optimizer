@@ -162,6 +162,14 @@ static unsigned r300_texture_get_nblocksy(struct r300_resource *tex,
 
     height = u_minify(tex->tex.height0, level);
 
+    /* Mipmapped and 3D textures must have their height aligned to POT. */
+    if ((tex->b.b.b.target != PIPE_TEXTURE_1D &&
+         tex->b.b.b.target != PIPE_TEXTURE_2D &&
+         tex->b.b.b.target != PIPE_TEXTURE_RECT) ||
+        tex->b.b.b.last_level != 0) {
+        height = util_next_power_of_two(height);
+    }
+
     if (util_format_is_plain(tex->b.b.b.format)) {
         tile_height = r300_get_pixel_alignment(tex->b.b.b.format,
                                                tex->b.b.b.nr_samples,
@@ -169,14 +177,6 @@ static unsigned r300_texture_get_nblocksy(struct r300_resource *tex,
                                                tex->tex.macrotile[level],
                                                DIM_HEIGHT, 0);
         height = align(height, tile_height);
-
-        /* This is needed for the kernel checker, unfortunately. */
-        if ((tex->b.b.b.target != PIPE_TEXTURE_1D &&
-             tex->b.b.b.target != PIPE_TEXTURE_2D &&
-             tex->b.b.b.target != PIPE_TEXTURE_RECT) ||
-            tex->b.b.b.last_level != 0) {
-            height = util_next_power_of_two(height);
-        }
 
         /* See if the CBZB clear can be used on the buffer,
          * taking the texture size into account. */
