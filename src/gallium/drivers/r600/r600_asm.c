@@ -1282,6 +1282,18 @@ int r600_bc_add_tex(struct r600_bc *bc, const struct r600_bc_tex *tex)
 		return -ENOMEM;
 	memcpy(ntex, tex, sizeof(struct r600_bc_tex));
 
+	/* we can't fetch data und use it as texture lookup address in the same TEX clause */
+	if (bc->cf_last != NULL &&
+		bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_TEX) {
+		struct r600_bc_tex *ttex;
+		LIST_FOR_EACH_ENTRY(ttex, &bc->cf_last->tex, list) {
+			if (ttex->dst_gpr == ntex->src_gpr) {
+				bc->force_add_cf = 1;
+				break;
+			}
+		}
+	}
+
 	/* cf can contains only alu or only vtx or only tex */
 	if (bc->cf_last == NULL ||
 		bc->cf_last->inst != V_SQ_CF_WORD1_SQ_CF_INST_TEX ||
