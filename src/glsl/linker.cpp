@@ -926,7 +926,7 @@ link_intrastage_shaders(void *mem_ctx,
 	    if (var->type->is_array() && (var->type->length == 0)) {
 	       const glsl_type *type =
 		  glsl_type::get_array_instance(var->type->fields.array,
-						var->max_array_access);
+						var->max_array_access + 1);
 
 	       assert(type != NULL);
 	       var->type = type;
