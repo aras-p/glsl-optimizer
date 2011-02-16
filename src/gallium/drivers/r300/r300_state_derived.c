@@ -677,7 +677,20 @@ static uint32_t r300_get_border_color(enum pipe_format format,
         case 16:
             if (desc->nr_channels <= 2) {
                 border_swizzled[0] = border_swizzled[2];
-                util_pack_color(border_swizzled, PIPE_FORMAT_R16G16_UNORM, &uc);
+                if (desc->channel[0].type == UTIL_FORMAT_TYPE_FLOAT) {
+                    util_pack_color(border_swizzled, PIPE_FORMAT_R16G16_FLOAT, &uc);
+                } else {
+                    util_pack_color(border_swizzled, PIPE_FORMAT_R16G16_UNORM, &uc);
+                }
+            } else {
+                util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
+            }
+            break;
+
+        case 32:
+            if (desc->nr_channels == 1) {
+                border_swizzled[0] = border_swizzled[2];
+                util_pack_color(border_swizzled, PIPE_FORMAT_R32_FLOAT, &uc);
             } else {
                 util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
             }
