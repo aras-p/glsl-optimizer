@@ -614,7 +614,7 @@ GALLIUM_DRIVERS_DIRS="softpipe failover galahad trace rbug noop identity"
 GALLIUM_STATE_TRACKERS_DIRS=""
 
 # build shared-glapi if enabled for OpenGL or if OpenGL ES is enabled
-case "x$enabled_shared_glapi$enable_gles1$enable_gles2" in
+case "x$enable_shared_glapi$enable_gles1$enable_gles2" in
 x*yes*)
     CORE_DIRS="$CORE_DIRS mapi/shared-glapi"
     ;;
