@@ -350,6 +350,7 @@ struct st_context {
 
       vbuf = pipe_buffer_create(screen,
                                 PIPE_BIND_VERTEX_BUFFER, 
+                                PIPE_USAGE_STATIC,
                                 size);
       if(!vbuf)
          goto error1;
