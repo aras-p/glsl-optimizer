@@ -805,8 +805,8 @@ _mesa_GetTexImage( GLenum target, GLint level, GLenum format,
  * \return GL_TRUE if any error, GL_FALSE if no errors.
  */
 static GLboolean
-getcompressedteximage_error_check(struct gl_context *ctx, GLenum target, GLint level,
-                                  GLvoid *img)
+getcompressedteximage_error_check(struct gl_context *ctx, GLenum target,
+                                  GLint level, GLvoid *img)
 {
    struct gl_texture_object *texObj;
    struct gl_texture_image *texImage;
