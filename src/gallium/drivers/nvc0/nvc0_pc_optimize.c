@@ -245,6 +245,9 @@ check_swap_src_0_1(struct nv_instruction *nvi)
       return;
    assert(src0 && src1 && src0->value && src1->value);
 
+   if (src1->value->reg.file != NV_FILE_GPR)
+      return;
+
    if (is_cspace_load(src0->value->insn)) {
       if (!is_cspace_load(src1->value->insn)) {
          nvi->src[0] = src1;
