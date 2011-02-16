@@ -2132,7 +2132,8 @@ struct x86_reg x86_fn_arg( struct x86_function *p,
       return x86_make_disp(x86_make_reg(file_REG32, reg_SP),
 			p->stack_offset + arg * 4);	/* ??? */
    default:
-      abort();
+      assert(0 && "Unexpected x86 target ABI in x86_fn_arg");
+      return x86_make_reg(file_REG32, reg_CX); /* not used / silence warning */
    }
 }
 
