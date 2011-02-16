@@ -394,12 +394,25 @@ static void radeon_bo_get_tiling(struct r300_winsys_bo *_buf,
 }
 
 static void radeon_bo_set_tiling(struct r300_winsys_bo *_buf,
+                                 struct r300_winsys_cs *rcs,
                                  enum r300_buffer_tiling microtiled,
                                  enum r300_buffer_tiling macrotiled,
                                  uint32_t pitch)
 {
     struct radeon_bo *bo = get_radeon_bo(pb_buffer(_buf));
+    struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     struct drm_radeon_gem_set_tiling args = {};
+
+    /* Tiling determines how DRM treats the buffer data.
+     * We must flush CS when changing it if the buffer is referenced. */
+    if (cs && radeon_bo_is_referenced_by_cs(cs, bo)) {
+        radeon_drm_cs_flush(rcs);
+        radeon_drm_cs_sync_flush(rcs);
+    }
+
+    while (p_atomic_read(&bo->num_active_ioctls)) {
+        sched_yield();
+    }
 
     if (microtiled == R300_BUFFER_TILED)
         args.tiling_flags |= RADEON_BO_FLAGS_MICRO_TILE;

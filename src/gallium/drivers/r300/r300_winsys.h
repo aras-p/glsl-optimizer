@@ -168,6 +168,7 @@ struct r300_winsys_screen {
      * Set tiling flags describing a memory layout of a buffer object.
      *
      * \param buf       A winsys buffer object to set the flags for.
+     * \param cs        A command stream to flush if the buffer is referenced by it.
      * \param macrotile A macrotile flag.
      * \param microtile A microtile flag.
      * \param stride    A stride of the buffer in bytes, for texturing.
@@ -175,6 +176,7 @@ struct r300_winsys_screen {
      * \note microtile and macrotile are not bitmasks!
      */
     void (*buffer_set_tiling)(struct r300_winsys_bo *buf,
+                              struct r300_winsys_cs *cs,
                               enum r300_buffer_tiling microtile,
                               enum r300_buffer_tiling macrotile,
                               unsigned stride);

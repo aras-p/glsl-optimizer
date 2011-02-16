@@ -330,7 +330,7 @@ static void radeon_drm_cs_write_reloc(struct r300_winsys_cs *rcs,
     OUT_CS(&cs->base, index * RELOC_DWORDS);
 }
 
-static PIPE_THREAD_ROUTINE(radeon_drm_cs_emit_async, param)
+static PIPE_THREAD_ROUTINE(radeon_drm_cs_emit_ioctl, param)
 {
     struct radeon_cs_context *csc = (struct radeon_cs_context*)param;
     unsigned i;
@@ -355,7 +355,7 @@ static PIPE_THREAD_ROUTINE(radeon_drm_cs_emit_async, param)
     return NULL;
 }
 
-static void radeon_drm_cs_sync_flush(struct r300_winsys_cs *rcs)
+void radeon_drm_cs_sync_flush(struct r300_winsys_cs *rcs)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
 
@@ -368,7 +368,7 @@ static void radeon_drm_cs_sync_flush(struct r300_winsys_cs *rcs)
 
 DEBUG_GET_ONCE_BOOL_OPTION(thread, "RADEON_THREAD", TRUE)
 
-static void radeon_drm_cs_emit(struct r300_winsys_cs *rcs)
+void radeon_drm_cs_flush(struct r300_winsys_cs *rcs)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     struct radeon_cs_context *tmp;
@@ -385,10 +385,10 @@ static void radeon_drm_cs_emit(struct r300_winsys_cs *rcs)
             p_atomic_inc(&cs->csc->relocs_bo[i]->num_active_ioctls);
 
         if (debug_get_option_thread()) {
-            cs->thread = pipe_thread_create(radeon_drm_cs_emit_async, cs->csc);
+            cs->thread = pipe_thread_create(radeon_drm_cs_emit_ioctl, cs->csc);
             assert(cs->thread);
         } else {
-            radeon_drm_cs_emit_async(cs->csc);
+            radeon_drm_cs_emit_ioctl(cs->csc);
         }
     }
 
@@ -440,7 +440,7 @@ void radeon_drm_cs_init_functions(struct radeon_drm_winsys *ws)
     ws->base.cs_add_reloc = radeon_drm_cs_add_reloc;
     ws->base.cs_validate = radeon_drm_cs_validate;
     ws->base.cs_write_reloc = radeon_drm_cs_write_reloc;
-    ws->base.cs_flush = radeon_drm_cs_emit;
+    ws->base.cs_flush = radeon_drm_cs_flush;
     ws->base.cs_sync_flush = radeon_drm_cs_sync_flush;
     ws->base.cs_set_flush = radeon_drm_cs_set_flush;
     ws->base.cs_is_buffer_referenced = radeon_bo_is_referenced;

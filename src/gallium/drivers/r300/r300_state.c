@@ -624,12 +624,7 @@ static void r300_tex_set_tiling_flags(struct r300_context *r300,
      * Skip changing the flags otherwise. */
     if (tex->tex.macrotile[tex->surface_level] !=
         tex->tex.macrotile[level]) {
-        /* Tiling determines how DRM treats the buffer data.
-         * We must flush CS when changing it if the buffer is referenced. */
-        if (r300->rws->cs_is_buffer_referenced(r300->cs, tex->cs_buf))
-            r300->context.flush(&r300->context, 0, NULL);
-
-        r300->rws->buffer_set_tiling(tex->buf,
+        r300->rws->buffer_set_tiling(tex->buf, r300->cs,
                 tex->tex.microtile, tex->tex.macrotile[level],
                 tex->tex.stride_in_bytes[0]);
 

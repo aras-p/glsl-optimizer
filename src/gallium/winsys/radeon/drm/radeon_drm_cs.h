@@ -96,6 +96,8 @@ static INLINE boolean radeon_bo_is_referenced_by_any_cs(struct radeon_bo *bo)
     return bo->num_cs_references;
 }
 
+void radeon_drm_cs_flush(struct r300_winsys_cs *rcs);
+void radeon_drm_cs_sync_flush(struct r300_winsys_cs *rcs);
 void radeon_drm_cs_init_functions(struct radeon_drm_winsys *ws);
 
 #endif
