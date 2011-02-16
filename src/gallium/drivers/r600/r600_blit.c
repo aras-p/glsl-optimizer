@@ -285,6 +285,9 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 	if (util_format_is_s3tc(dst->format)) {
 		r600_s3tc_to_blittable(dst, dst_level, &orig_info[1]);
 		restore_orig[1] = TRUE;
+		/* translate the dst box as well */
+		dstx = util_format_get_nblocksx(orig_info[1].format, dstx);
+		dsty = util_format_get_nblocksx(orig_info[1].format, dsty);
 	}
 
 	r600_hw_copy_region(ctx, dst, dst_level, dstx, dsty, dstz,
