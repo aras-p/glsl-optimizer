@@ -287,7 +287,7 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 		restore_orig[1] = TRUE;
 		/* translate the dst box as well */
 		dstx = util_format_get_nblocksx(orig_info[1].format, dstx);
-		dsty = util_format_get_nblocksx(orig_info[1].format, dsty);
+		dsty = util_format_get_nblocksy(orig_info[1].format, dsty);
 	}
 
 	r600_hw_copy_region(ctx, dst, dst_level, dstx, dsty, dstz,
