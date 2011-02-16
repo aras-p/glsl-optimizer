@@ -35,6 +35,9 @@
 
 #include <GL/gl.h>
 
+/* OpenGL doesn't have GL_UNSIGNED_BYTE_4_4, so we must define our own type
+ * for GL_LUMINANCE4_ALPHA4. */
+#define MESA_UNSIGNED_BYTE_4_4 (GL_UNSIGNED_BYTE<<1)
 
 
 /**

@@ -68,6 +68,7 @@ _mesa_type_is_packed(GLenum type)
    switch (type) {
    case GL_UNSIGNED_BYTE_3_3_2:
    case GL_UNSIGNED_BYTE_2_3_3_REV:
+   case MESA_UNSIGNED_BYTE_4_4:
    case GL_UNSIGNED_SHORT_5_6_5:
    case GL_UNSIGNED_SHORT_5_6_5_REV:
    case GL_UNSIGNED_SHORT_4_4_4_4:
@@ -193,6 +194,8 @@ _mesa_sizeof_packed_type( GLenum type )
       case GL_UNSIGNED_BYTE_3_3_2:
          return sizeof(GLubyte);
       case GL_UNSIGNED_BYTE_2_3_3_REV:
+         return sizeof(GLubyte);
+      case MESA_UNSIGNED_BYTE_4_4:
          return sizeof(GLubyte);
       case GL_UNSIGNED_SHORT_5_6_5:
          return sizeof(GLushort);

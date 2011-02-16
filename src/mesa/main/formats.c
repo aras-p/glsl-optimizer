@@ -1372,7 +1372,11 @@ _mesa_format_to_type_and_comps(gl_format format,
       *comps = 4;
       return;
 
-   case MESA_FORMAT_AL44: /* XXX this isn't plain GL_UNSIGNED_BYTE */
+   case MESA_FORMAT_AL44:
+      *datatype = MESA_UNSIGNED_BYTE_4_4;
+      *comps = 2;
+      return;
+
    case MESA_FORMAT_AL88:
    case MESA_FORMAT_AL88_REV:
    case MESA_FORMAT_RG88:
