@@ -416,20 +416,8 @@ util_format_dxt1_rgba_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride,
          uint8_t tmp[4][4][4];  /* [bh][bw][comps] */
          for(j = 0; j < bh; ++j) {
             for(i = 0; i < bw; ++i) {
-               const uint8_t *srcp = &src[(y + j)*src_stride/sizeof(*src) + (x + i)*comps];
-               /* Workaround for a bug in libtxc_dxtn.
-                * If the color is (0,0,0,0), it is compressed as (0,0,0,1),
-                * which is incorrect. Any other (x,y,z,0) color is compressed
-                * correctly as (0,0,0,0), so let's use (1,0,0,0). */
-               if (srcp[0] == 0 && srcp[1] == 0 && srcp[2] == 0 && srcp[3] == 0) {
-                  tmp[j][i][0] = 255;
-                  tmp[j][i][1] = 0;
-                  tmp[j][i][2] = 0;
-                  tmp[j][i][3] = 0;
-               } else {
-                  for(k = 0; k < comps; ++k) {
-                     tmp[j][i][k] = srcp[k];
-                  }
+               for(k = 0; k < comps; ++k) {
+                  tmp[j][i][k] = src[(y + j)*src_stride/sizeof(*src) + (x + i)*comps + k];
                }
             }
          }
