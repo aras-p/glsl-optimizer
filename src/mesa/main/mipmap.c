@@ -1100,7 +1100,7 @@ do_row_3D(GLenum datatype, GLuint comps, GLint srcWidth,
       }
    }
    else if ((datatype == GL_UNSIGNED_BYTE_3_3_2) && (comps == 3)) {
-      DECLARE_ROW_POINTERS0(GLushort);
+      DECLARE_ROW_POINTERS0(GLubyte);
 
       for (i = j = 0, k = k0; i < (GLuint) dstWidth;
            i++, j += colStride, k += colStride) {
@@ -1138,7 +1138,7 @@ do_row_3D(GLenum datatype, GLuint comps, GLint srcWidth,
       }
    }
    else if (datatype == MESA_UNSIGNED_BYTE_4_4 && comps == 2) {
-      DECLARE_ROW_POINTERS0(GLushort);
+      DECLARE_ROW_POINTERS0(GLubyte);
 
       for (i = j = 0, k = k0; i < (GLuint) dstWidth;
            i++, j += colStride, k += colStride) {
