@@ -479,6 +479,7 @@ emit_ddx(struct nv_pc *pc, struct nv_instruction *i)
 {
    i->quadop = 0x99;
    i->lanes = 4;
+   i->src[1] = i->src[0];
    emit_quadop(pc, i);
 }
 
@@ -487,6 +488,7 @@ emit_ddy(struct nv_pc *pc, struct nv_instruction *i)
 {
    i->quadop = 0xa5;
    i->lanes = 5;
+   i->src[1] = i->src[0];
    emit_quadop(pc, i);
 }
 
