@@ -613,8 +613,10 @@ st_draw_vbo(struct gl_context *ctx,
    struct pipe_index_buffer ibuffer;
    struct pipe_draw_info info;
    unsigned i;
+   GLboolean new_array = GL_TRUE;
+   /* Fix this (Bug 34378):
    GLboolean new_array =
-         st->dirty.st && (st->dirty.mesa & (_NEW_ARRAY | _NEW_PROGRAM)) != 0;
+         st->dirty.st && (st->dirty.mesa & (_NEW_ARRAY | _NEW_PROGRAM)) != 0;*/
 
    /* Mesa core state should have been validated already */
    assert(ctx->NewState == 0x0);
