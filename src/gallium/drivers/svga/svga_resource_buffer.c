@@ -311,6 +311,9 @@ svga_buffer_create(struct pipe_screen *screen,
          goto error2;
    }
       
+   debug_reference(&sbuf->b.b.reference,
+                   (debug_reference_descriptor)debug_describe_resource, 0);
+
    return &sbuf->b.b; 
 
 error2:
@@ -344,6 +347,9 @@ svga_user_buffer_create(struct pipe_screen *screen,
 
    sbuf->swbuf = ptr;
    sbuf->user = TRUE;
+
+   debug_reference(&sbuf->b.b.reference,
+                   (debug_reference_descriptor)debug_describe_resource, 0);
    
    return &sbuf->b.b; 
 

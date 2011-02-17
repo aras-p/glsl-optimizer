@@ -565,6 +565,9 @@ svga_texture_create(struct pipe_screen *screen,
    if (tex->handle)
       SVGA_DBG(DEBUG_DMA, "  --> got sid %p (texture)\n", tex->handle);
 
+   debug_reference(&tex->b.b.reference,
+                   (debug_reference_descriptor)debug_describe_resource, 0);
+
    return &tex->b.b;
 
 error2:
