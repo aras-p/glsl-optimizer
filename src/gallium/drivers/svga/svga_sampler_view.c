@@ -32,6 +32,7 @@
 #include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_string.h"
 
 #include "svga_screen.h"
 #include "svga_context.h"
@@ -40,6 +41,14 @@
 #include "svga_debug.h"
 #include "svga_surface.h"
 
+
+void
+svga_debug_describe_sampler_view(char *buf, const struct svga_sampler_view *sv)
+{
+   char res[128];
+   debug_describe_resource(res, sv->texture);
+   util_sprintf(buf, "svga_sampler_view<%s,[%u,%u]>", res, sv->min_lod, sv->max_lod);
+}
 
 struct svga_sampler_view *
 svga_get_tex_sampler_view(struct pipe_context *pipe,
@@ -114,6 +123,8 @@ svga_get_tex_sampler_view(struct pipe_context *pipe,
                pt->last_level);
       sv->key.cachable = 0;
       sv->handle = tex->handle;
+      debug_reference(&sv->reference,
+                      (debug_reference_descriptor)svga_debug_describe_sampler_view, 0);
       return sv;
    }
 
@@ -137,12 +148,17 @@ svga_get_tex_sampler_view(struct pipe_context *pipe,
       assert(0);
       sv->key.cachable = 0;
       sv->handle = tex->handle;
+      debug_reference(&sv->reference,
+                      (debug_reference_descriptor)svga_debug_describe_sampler_view, 0);
       return sv;
    }
 
    pipe_mutex_lock(ss->tex_mutex);
    svga_sampler_view_reference(&tex->cached_view, sv);
    pipe_mutex_unlock(ss->tex_mutex);
+
+   debug_reference(&sv->reference,
+                   (debug_reference_descriptor)svga_debug_describe_sampler_view, 0);
 
    return sv;
 }
