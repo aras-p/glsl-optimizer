@@ -196,7 +196,7 @@ debug_symbol_print(const void *addr)
 }
 
 struct util_hash_table* symbols_hash;
-pipe_mutex symbols_mutex;
+pipe_static_mutex(symbols_mutex);
 
 static unsigned hash_ptr(void* p)
 {
@@ -217,6 +217,15 @@ const char*
 debug_symbol_name_cached(const void *addr)
 {
    const char* name;
+#ifdef PIPE_SUBSYSTEM_WINDOWS_USER
+   static boolean first = TRUE;
+
+   if (first) {
+      pipe_mutex_init(symbols_mutex);
+      first = FALSE;
+   }
+#endif
+
    pipe_mutex_lock(symbols_mutex);
    if(!symbols_hash)
       symbols_hash = util_hash_table_create(hash_ptr, compare_ptr);
