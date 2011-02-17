@@ -154,7 +154,7 @@ static void u_vbuf_translate_begin(struct u_vbuf_mgr_priv *mgr,
                                    int min_index, int max_index,
                                    boolean *upload_flushed)
 {
-   struct translate_key key = {0};
+   struct translate_key key;
    struct translate_element *te;
    unsigned tr_elem_index[PIPE_MAX_ATTRIBS] = {0};
    struct translate *tr;
@@ -164,6 +164,8 @@ static void u_vbuf_translate_begin(struct u_vbuf_mgr_priv *mgr,
    struct pipe_resource *out_buffer = NULL;
    unsigned i, num_verts, out_offset;
    struct pipe_vertex_element new_velems[PIPE_MAX_ATTRIBS];
+
+   memset(&key, 0, sizeof(key));
 
    /* Initialize the translate key, i.e. the recipe how vertices should be
      * translated. */
