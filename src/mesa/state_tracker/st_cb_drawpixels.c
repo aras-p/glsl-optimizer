@@ -1271,7 +1271,7 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
    if (srcFormat == texFormat) {
       struct pipe_box src_box;
       u_box_2d(readX, readY, readW, readH, &src_box);
-    /* copy source framebuffer surface into mipmap/texture */
+      /* copy source framebuffer surface into mipmap/texture */
       pipe->resource_copy_region(pipe,
                                  pt,                                /* dest tex */
                                  0,
