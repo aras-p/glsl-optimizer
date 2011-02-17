@@ -229,6 +229,7 @@ static void r600_s3tc_to_blittable(struct pipe_resource *tex,
 				   unsigned level,
 				   struct texture_orig_info *orig)
 {
+	struct r600_resource_texture *rtex = (struct r600_resource_texture*)tex;
 	unsigned pixsize = util_format_get_blocksize(tex->format);
 	int new_format;
 	int new_height, new_width;
@@ -245,6 +246,7 @@ static void r600_s3tc_to_blittable(struct pipe_resource *tex,
 	new_width = util_format_get_nblocksx(tex->format, orig->width0);
 	new_height = util_format_get_nblocksy(tex->format, orig->height0);
 
+	rtex->force_int_type = true;
 	tex->width0 = new_width;
 	tex->height0 = new_height;
 	tex->format = new_format;
@@ -255,6 +257,9 @@ static void r600_reset_blittable_to_s3tc(struct pipe_resource *tex,
 					 unsigned level,
 					 struct texture_orig_info *orig)
 {
+	struct r600_resource_texture *rtex = (struct r600_resource_texture*)tex;
+	rtex->force_int_type = false;
+
 	tex->format = orig->format;
 	tex->width0 = orig->width0;
 	tex->height0 = orig->height0;

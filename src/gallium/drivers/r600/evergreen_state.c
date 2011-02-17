@@ -385,6 +385,12 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 		r600_texture_depth_flush(ctx, texture, TRUE);
 		tmp = tmp->flushed_depth_texture;
 	}
+
+	if (tmp->force_int_type) {
+		word4 &= C_030010_NUM_FORMAT_ALL;
+		word4 |= S_030010_NUM_FORMAT_ALL(V_030010_SQ_NUM_FORMAT_INT);
+	}
+
 	rbuffer = &tmp->resource;
 	bo[0] = rbuffer->bo;
 	bo[1] = rbuffer->bo;
@@ -673,6 +679,11 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 
 	format = r600_translate_colorformat(surf->base.format);
 	swap = r600_translate_colorswap(surf->base.format);
+
+	/* disable when gallium grows int textures */
+	if ((format == FMT_32_32_32_32 || format == FMT_16_16_16_16) && rtex->force_int_type)
+		ntype = 4;
+
 	color_info = S_028C70_FORMAT(format) |
 		S_028C70_COMP_SWAP(swap) |
 		S_028C70_ARRAY_MODE(rtex->array_mode[level]) |

@@ -64,6 +64,10 @@ struct r600_resource_texture {
 	unsigned			dirty_db;
 	struct r600_resource_texture	*flushed_depth_texture;
 	boolean				is_flushing_texture;
+
+	/* on some cards we have to use integer 64/128-bit types
+	   for s3tc blits, do this until gallium grows int formats */
+	boolean force_int_type;
 };
 
 #define R600_TEX_IS_TILED(tex, level) ((tex)->array_mode[level] != V_038000_ARRAY_LINEAR_GENERAL && (tex)->array_mode[level] != V_038000_ARRAY_LINEAR_ALIGNED)

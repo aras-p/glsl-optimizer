@@ -434,6 +434,11 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	        r600_texture_depth_flush(ctx, texture, TRUE);
 		tmp = tmp->flushed_depth_texture;
 	}
+
+	if (tmp->force_int_type) {
+		word4 &= C_038010_NUM_FORMAT_ALL;
+		word4 |= S_038010_NUM_FORMAT_ALL(V_038010_SQ_NUM_FORMAT_INT);
+	}
 	rbuffer = &tmp->resource;
 	bo[0] = rbuffer->bo;
 	bo[1] = rbuffer->bo;
@@ -724,6 +729,11 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 
 	format = r600_translate_colorformat(surf->base.format);
 	swap = r600_translate_colorswap(surf->base.format);
+
+	/* disable when gallium grows int textures */
+	if ((format == FMT_32_32_32_32 || format == FMT_16_16_16_16) && rtex->force_int_type)
+		ntype = 4;
+
 	color_info = S_0280A0_FORMAT(format) |
 		S_0280A0_COMP_SWAP(swap) |
 		S_0280A0_ARRAY_MODE(rtex->array_mode[level]) |
