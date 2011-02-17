@@ -71,6 +71,7 @@ struct dri2_egl_display
    void                     *driver;
    __DRIcoreExtension       *core;
    __DRIdri2Extension       *dri2;
+   __DRIswrastExtension     *swrast;
    __DRI2flushExtension     *flush;
    __DRItexBufferExtension  *tex_buffer;
    __DRIimageExtension      *image;
@@ -79,7 +80,8 @@ struct dri2_egl_display
    char                     *device_name;
    char                     *driver_name;
 
-   __DRIdri2LoaderExtension  dri2_loader_extension;
+   __DRIdri2LoaderExtension    dri2_loader_extension;
+   __DRIswrastLoaderExtension  swrast_loader_extension;
    const __DRIextension     *extensions[3];
 #ifdef HAVE_WAYLAND_PLATFORM
    struct wl_egl_display    *wl_dpy;
@@ -118,6 +120,12 @@ struct dri2_egl_surface
    xcb_xfixes_region_t  region;
    int                  have_fake_front;
    int                  swap_interval;
+
+   int                  depth;
+   int                  bytes_per_pixel;
+   xcb_gcontext_t       gc;
+   xcb_gcontext_t       swapgc;
+
    enum dri2_surface_type type;
 #ifdef HAVE_WAYLAND_PLATFORM
    struct wl_egl_window  *wl_win;

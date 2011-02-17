@@ -599,6 +599,8 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    if (!dri2_dpy)
       return _eglError(EGL_BAD_ALLOC, "eglInitialize");
 
+   memset(dri2_dpy, 0, sizeof *dri2_dpy);
+
    disp->DriverData = (void *) dri2_dpy;
    dri2_dpy->wl_dpy = disp->PlatformDisplay;
 

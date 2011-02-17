@@ -276,6 +276,17 @@ static struct dri2_extension_match dri2_core_extensions[] = {
    { NULL, 0, 0 }
 };
 
+static struct dri2_extension_match swrast_driver_extensions[] = {
+   { __DRI_CORE, 1, offsetof(struct dri2_egl_display, core) },
+   { __DRI_SWRAST, 2, offsetof(struct dri2_egl_display, swrast) },
+   { NULL }
+};
+
+static struct dri2_extension_match swrast_core_extensions[] = {
+   { __DRI_TEX_BUFFER, 2, offsetof(struct dri2_egl_display, tex_buffer) },
+   { NULL }
+};
+
 static EGLBoolean
 dri2_bind_extensions(struct dri2_egl_display *dri2_dpy,
 		     struct dri2_extension_match *matches,
@@ -363,10 +374,17 @@ dri2_load_driver(_EGLDisplay *disp)
       return EGL_FALSE;
    }
 
-   if (!dri2_bind_extensions(dri2_dpy, dri2_driver_extensions, extensions)) {
-      dlclose(dri2_dpy->driver);
-      return EGL_FALSE;
-   }
+   if (strcmp(dri2_dpy->driver_name, "swrast") == 0) {
+      if (!dri2_bind_extensions(dri2_dpy, swrast_driver_extensions, extensions)) {
+         dlclose(dri2_dpy->driver);
+         return EGL_FALSE;
+      }
+   } else {
+      if (!dri2_bind_extensions(dri2_dpy, dri2_driver_extensions, extensions)) {
+         dlclose(dri2_dpy->driver);
+         return EGL_FALSE;
+      }
+   } 
 
    return EGL_TRUE;
 }
@@ -379,9 +397,17 @@ dri2_create_screen(_EGLDisplay *disp)
    unsigned int api_mask;
 
    dri2_dpy = disp->DriverData;
-   dri2_dpy->dri_screen =
-      dri2_dpy->dri2->createNewScreen(0, dri2_dpy->fd, dri2_dpy->extensions,
-				      &dri2_dpy->driver_configs, disp);
+
+   if (dri2_dpy->dri2) {
+      dri2_dpy->dri_screen =
+         dri2_dpy->dri2->createNewScreen(0, dri2_dpy->fd, dri2_dpy->extensions,
+				         &dri2_dpy->driver_configs, disp);
+   } else {
+      assert(dri2_dpy->swrast);
+      dri2_dpy->dri_screen =
+         dri2_dpy->swrast->createNewScreen(0, dri2_dpy->extensions,
+                                           &dri2_dpy->driver_configs, disp);
+   }
 
    if (dri2_dpy->dri_screen == NULL) {
       _eglLog(_EGL_WARNING, "DRI2: failed to create dri screen");
@@ -389,13 +415,28 @@ dri2_create_screen(_EGLDisplay *disp)
    }
 
    extensions = dri2_dpy->core->getExtensions(dri2_dpy->dri_screen);
-   if (!dri2_bind_extensions(dri2_dpy, dri2_core_extensions, extensions))
-      goto cleanup_dri_screen;
+   
+   if (dri2_dpy->dri2) {
+      if (!dri2_bind_extensions(dri2_dpy, dri2_core_extensions, extensions))
+         goto cleanup_dri_screen;
+   } else {
+      assert(dri2_dpy->swrast);
+      if (!dri2_bind_extensions(dri2_dpy, swrast_core_extensions, extensions))
+         goto cleanup_dri_screen;
+   }
 
-   if (dri2_dpy->dri2->base.version >= 2)
-      api_mask = dri2_dpy->dri2->getAPIMask(dri2_dpy->dri_screen);
-   else
-      api_mask = 1 << __DRI_API_OPENGL;
+   if (dri2_dpy->dri2) {
+      if (dri2_dpy->dri2->base.version >= 2)
+         api_mask = dri2_dpy->dri2->getAPIMask(dri2_dpy->dri_screen);
+      else
+         api_mask = 1 << __DRI_API_OPENGL;
+   } else {
+      assert(dri2_dpy->swrast);
+      if (dri2_dpy->swrast->base.version >= 2)
+         api_mask = 1 << __DRI_API_OPENGL | 1 << __DRI_API_GLES | 1 << __DRI_API_GLES2;
+      else
+         api_mask = 1 << __DRI_API_OPENGL;
+   }
 
    disp->ClientAPIs = 0;
    if (api_mask & (1 <<__DRI_API_OPENGL))
@@ -405,10 +446,19 @@ dri2_create_screen(_EGLDisplay *disp)
    if (api_mask & (1 << __DRI_API_GLES2))
       disp->ClientAPIs |= EGL_OPENGL_ES2_BIT;
 
-   if (dri2_dpy->dri2->base.version >= 2) {
-      disp->Extensions.KHR_surfaceless_gles1 = EGL_TRUE;
-      disp->Extensions.KHR_surfaceless_gles2 = EGL_TRUE;
-      disp->Extensions.KHR_surfaceless_opengl = EGL_TRUE;
+   if (dri2_dpy->dri2) {
+      if (dri2_dpy->dri2->base.version >= 2) {
+         disp->Extensions.KHR_surfaceless_gles1 = EGL_TRUE;
+         disp->Extensions.KHR_surfaceless_gles2 = EGL_TRUE;
+         disp->Extensions.KHR_surfaceless_opengl = EGL_TRUE;
+      }
+   } else {
+      assert(dri2_dpy->swrast);
+      if (dri2_dpy->swrast->base.version >= 2) {
+         disp->Extensions.KHR_surfaceless_gles1 = EGL_TRUE;
+         disp->Extensions.KHR_surfaceless_gles2 = EGL_TRUE;
+         disp->Extensions.KHR_surfaceless_opengl = EGL_TRUE;
+      }
    }
 
    return EGL_TRUE;
@@ -465,7 +515,8 @@ dri2_terminate(_EGLDriver *drv, _EGLDisplay *disp)
    _eglCleanupDisplay(disp);
 
    dri2_dpy->core->destroyScreen(dri2_dpy->dri_screen);
-   close(dri2_dpy->fd);
+   if (dri2_dpy->fd)
+      close(dri2_dpy->fd);
    dlclose(dri2_dpy->driver);
    if (disp->PlatformDisplay == NULL)
       xcb_disconnect(dri2_dpy->conn);
@@ -539,23 +590,45 @@ dri2_create_context(_EGLDriver *drv, _EGLDisplay *disp, _EGLConfig *conf,
    else
       dri_config = NULL;
 
-   if (dri2_dpy->dri2->base.version >= 2) {
-      dri2_ctx->dri_context =
-	 dri2_dpy->dri2->createNewContextForAPI(dri2_dpy->dri_screen,
-						api,
-						dri_config,
-						dri2_ctx_shared ? 
-						dri2_ctx_shared->dri_context : NULL,
-						dri2_ctx);
-   } else if (api == __DRI_API_OPENGL) {
-      dri2_ctx->dri_context =
-	 dri2_dpy->dri2->createNewContext(dri2_dpy->dri_screen,
-					  dri_config,
-					  dri2_ctx_shared ? 
-					  dri2_ctx_shared->dri_context : NULL,
-					  dri2_ctx);
+   if (dri2_dpy->dri2) {
+      if (dri2_dpy->dri2->base.version >= 2) {
+	 dri2_ctx->dri_context =
+	    dri2_dpy->dri2->createNewContextForAPI(dri2_dpy->dri_screen,
+						   api,
+						   dri_config,
+						   dri2_ctx_shared ? 
+						   dri2_ctx_shared->dri_context : NULL,
+						   dri2_ctx);
+      } else if (api == __DRI_API_OPENGL) {
+	 dri2_ctx->dri_context =
+	    dri2_dpy->dri2->createNewContext(dri2_dpy->dri_screen,
+					     dri_config,
+					     dri2_ctx_shared ? 
+					     dri2_ctx_shared->dri_context : NULL,
+					     dri2_ctx);
+      } else {
+	 /* fail */
+      }
    } else {
-      /* fail */
+      assert(dri2_dpy->swrast);
+      if (dri2_dpy->swrast->base.version >= 2) {
+	 dri2_ctx->dri_context =
+	    dri2_dpy->swrast->createNewContextForAPI(dri2_dpy->dri_screen,
+						     api,
+						     dri_config,
+						     dri2_ctx_shared ? 
+						     dri2_ctx_shared->dri_context : NULL,
+						     dri2_ctx);
+      } else if (api == __DRI_API_OPENGL) {
+	 dri2_ctx->dri_context =
+	    dri2_dpy->core->createNewContext(dri2_dpy->dri_screen,
+					     dri_config,
+					     dri2_ctx_shared ?
+					     dri2_ctx_shared->dri_context : NULL,
+					     dri2_ctx);
+      } else {
+	 /* fail */
+      }
    }
 
    if (!dri2_ctx->dri_context)
