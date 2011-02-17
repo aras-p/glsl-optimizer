@@ -2670,6 +2670,8 @@ ir_to_mesa_visitor::copy_propagate(void)
    ir_to_mesa_instruction **acp = rzalloc_array(mem_ctx,
 						    ir_to_mesa_instruction *,
 						    this->next_temp * 4);
+   int *acp_level = rzalloc_array(mem_ctx, int, this->next_temp * 4);
+   int level = 0;
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       ir_to_mesa_instruction *inst = (ir_to_mesa_instruction *)iter.get();
@@ -2699,6 +2701,8 @@ ir_to_mesa_visitor::copy_propagate(void)
 	       good = false;
 	       break;
 	    }
+
+	    assert(acp_level[acp_base + src_chan] <= level);
 
 	    if (!first) {
 	       first = copy_chan;
@@ -2732,10 +2736,30 @@ ir_to_mesa_visitor::copy_propagate(void)
       switch (inst->op) {
       case OPCODE_BGNLOOP:
       case OPCODE_ENDLOOP:
-      case OPCODE_ELSE:
-      case OPCODE_ENDIF:
 	 /* End of a basic block, clear the ACP entirely. */
 	 memset(acp, 0, sizeof(*acp) * this->next_temp * 4);
+	 break;
+
+      case OPCODE_IF:
+	 ++level;
+	 break;
+
+      case OPCODE_ENDIF:
+      case OPCODE_ELSE:
+	 /* Clear all channels written inside the block from the ACP, but
+	  * leaving those that were not touched.
+	  */
+	 for (int r = 0; r < this->next_temp; r++) {
+	    for (int c = 0; c < 4; c++) {
+	       if (!acp[4 * r + c])
+		  continue;
+
+	       if (acp_level[4 * r + c] >= level)
+		  acp[4 * r + c] = NULL;
+	    }
+	 }
+	 if (inst->op == OPCODE_ENDIF)
+	    --level;
 	 break;
 
       default:
@@ -2802,11 +2826,13 @@ ir_to_mesa_visitor::copy_propagate(void)
 	 for (int i = 0; i < 4; i++) {
 	    if (inst->dst_reg.writemask & (1 << i)) {
 	       acp[4 * inst->dst_reg.index + i] = inst;
+	       acp_level[4 * inst->dst_reg.index + i] = level;
 	    }
 	 }
       }
    }
 
+   ralloc_free(acp_level);
    ralloc_free(acp);
 }
 
