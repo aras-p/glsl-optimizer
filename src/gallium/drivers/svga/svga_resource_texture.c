@@ -521,7 +521,8 @@ svga_texture_create(struct pipe_screen *screen,
       tex->key.numFaces = 1;
    }
 
-   tex->key.cachable = 1;
+   /* XXX: Disabled for now */
+   tex->key.cachable = 0;
 
    if (template->bind & PIPE_BIND_SAMPLER_VIEW)
       tex->key.flags |= SVGA3D_SURFACE_HINT_TEXTURE;
