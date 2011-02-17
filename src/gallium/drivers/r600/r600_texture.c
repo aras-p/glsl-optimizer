@@ -79,10 +79,8 @@ unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
 	switch (rtex->resource.b.b.b.target) {
 	case PIPE_TEXTURE_3D:
 	case PIPE_TEXTURE_CUBE:
-		return offset + layer * rtex->layer_size[level];
 	default:
-		assert(layer == 0);
-		return offset;
+		return offset + layer * rtex->layer_size[level];
 	}
 }
 
@@ -262,8 +260,11 @@ static void r600_setup_miptree(struct pipe_screen *screen,
 			else
 				size = layer_size * 6;
 		}
-		else
+		else if (ptex->target == PIPE_TEXTURE_3D)
 			size = layer_size * u_minify(ptex->depth0, i);
+		else
+			size = layer_size * ptex->array_size;
+
 		/* align base image and start of miptree */
 		if ((i == 0) || (i == 1))
 			offset = align(offset, r600_get_base_alignment(screen, ptex->format, array_mode));
@@ -507,6 +508,7 @@ int r600_texture_depth_flush(struct pipe_context *ctx,
 	resource.width0 = texture->width0;
 	resource.height0 = texture->height0;
 	resource.depth0 = 1;
+	resource.array_size = 1;
 	resource.last_level = texture->last_level;
 	resource.nr_samples = 0;
 	resource.usage = PIPE_USAGE_DYNAMIC;
@@ -642,6 +644,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		return &trans->transfer;
 	}
 	trans->transfer.stride = rtex->pitch_in_bytes[level];
+	trans->transfer.layer_stride = rtex->layer_size[level];
 	trans->offset = r600_texture_get_offset(rtex, level, box->z);
 	return &trans->transfer;
 }

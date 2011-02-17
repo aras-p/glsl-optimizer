@@ -402,6 +402,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
 	unsigned char swizzle[4], array_mode = 0, tile_type = 0;
 	struct r600_bo *bo[2];
+	unsigned height, depth;
 
 	if (resource == NULL)
 		return NULL;
@@ -446,6 +447,15 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	array_mode = tmp->array_mode[0];
 	tile_type = tmp->tile_type;
 
+	height = texture->height0;
+	depth = texture->depth0;
+	if (texture->target == PIPE_TEXTURE_1D_ARRAY) {
+	        height = 1;
+		depth = texture->array_size;
+	} else if (texture->target == PIPE_TEXTURE_2D_ARRAY) {
+		depth = texture->array_size;
+	}
+
 	/* FIXME properly handle first level != 0 */
 	r600_pipe_state_add_reg(rstate, R_038000_RESOURCE0_WORD0,
 				S_038000_DIM(r600_tex_dim(texture->target)) |
@@ -454,8 +464,8 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 				S_038000_PITCH((pitch / 8) - 1) |
 				S_038000_TEX_WIDTH(texture->width0 - 1), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038004_RESOURCE0_WORD1,
-				S_038004_TEX_HEIGHT(texture->height0 - 1) |
-				S_038004_TEX_DEPTH(texture->depth0 - 1) |
+				S_038004_TEX_HEIGHT(height - 1) |
+				S_038004_TEX_DEPTH(depth - 1) |
 				S_038004_DATA_FORMAT(format), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038008_RESOURCE0_WORD2,
 				(tmp->offset[0] + r600_bo_offset(bo[0])) >> 8, 0xFFFFFFFF, bo[0]);
@@ -468,8 +478,8 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 				S_038010_BASE_LEVEL(state->u.tex.first_level), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038014_RESOURCE0_WORD5,
 				S_038014_LAST_LEVEL(state->u.tex.last_level) |
-				S_038014_BASE_ARRAY(0) |
-				S_038014_LAST_ARRAY(0), 0xFFFFFFFF, NULL);
+				S_038014_BASE_ARRAY(state->u.tex.first_layer) |
+				S_038014_LAST_ARRAY(state->u.tex.last_layer), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038018_RESOURCE0_WORD6,
 				S_038018_TYPE(V_038010_SQ_TEX_VTX_VALID_TEXTURE), 0xFFFFFFFF, NULL);
 

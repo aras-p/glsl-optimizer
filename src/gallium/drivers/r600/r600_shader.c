@@ -1850,6 +1850,12 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		tex.coord_type_w = 1;
 	}
 
+	if (inst->Texture.Texture == TGSI_TEXTURE_1D_ARRAY) {
+		tex.coord_type_z = 0;
+		tex.src_sel_z = 1;
+	} else if (inst->Texture.Texture == TGSI_TEXTURE_2D_ARRAY)
+		tex.coord_type_z = 0;
+
 	if (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D || inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D)
 		tex.src_sel_w = 2;
 
