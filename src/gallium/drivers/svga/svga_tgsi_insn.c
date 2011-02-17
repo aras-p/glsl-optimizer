@@ -746,7 +746,7 @@ static boolean emit_fake_arl(struct svga_shader_emitter *emit,
 static boolean emit_if(struct svga_shader_emitter *emit,
                        const struct tgsi_full_instruction *insn)
 {
-   const struct src_register src = translate_src_register(
+   struct src_register src0 = translate_src_register(
       emit, &insn->Src[0] );
    struct src_register zero = get_zero_immediate( emit );
    SVGA3dShaderInstToken if_token = inst_token( SVGA3DOP_IFC );
@@ -754,10 +754,23 @@ static boolean emit_if(struct svga_shader_emitter *emit,
    if_token.control = SVGA3DOPCOMPC_NE;
    zero = scalar(zero, TGSI_SWIZZLE_X);
 
+   if (SVGA3dShaderGetRegType(src0.base.value) == SVGA3DREG_CONST) {
+      /*
+       * Max different constant registers readable per IFC instruction is 1.
+       */
+
+      SVGA3dShaderDestToken tmp = get_temp( emit );
+
+      if (!submit_op1(emit, inst_token( SVGA3DOP_MOV ), tmp, src0))
+         return FALSE;
+
+      src0 = scalar(src( tmp ), TGSI_SWIZZLE_X);
+   }
+
    emit->dynamic_branching_level++;
 
    return (emit_instruction( emit, if_token ) &&
-           emit_src( emit, src ) &&
+           emit_src( emit, src0 ) &&
            emit_src( emit, zero ) );
 }
 
