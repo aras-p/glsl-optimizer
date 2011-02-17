@@ -428,7 +428,6 @@ st_TexImage(struct gl_context * ctx,
             GLsizei imageSize, GLboolean compressed_src)
 {
    struct st_context *st = st_context(ctx);
-   struct pipe_screen *screen = st->pipe->screen;
    struct st_texture_object *stObj = st_texture_object(texObj);
    struct st_texture_image *stImage = st_texture_image(texImage);
    GLuint dstRowStride = 0;
@@ -943,7 +942,6 @@ st_TexSubimage(struct gl_context *ctx, GLint dims, GLenum target, GLint level,
                struct gl_texture_image *texImage)
 {
    struct st_context *st = st_context(ctx);
-   struct pipe_screen *screen = st->pipe->screen;
    struct st_texture_image *stImage = st_texture_image(texImage);
    GLuint dstRowStride;
    const GLuint srcImageStride =
