@@ -895,6 +895,14 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 		case PIPE_FORMAT_DXT5_SRGBA:
 			result = FMT_BC3;
 			goto out_word4;
+		case PIPE_FORMAT_RGTC1_UNORM:
+		case PIPE_FORMAT_RGTC1_SNORM:
+			result = FMT_BC4;
+			goto out_word4;
+		case PIPE_FORMAT_RGTC2_UNORM:
+		case PIPE_FORMAT_RGTC2_SNORM:
+			result = FMT_BC5;
+			goto out_word4;
 		default:
 			goto out_unknown;
 		}
