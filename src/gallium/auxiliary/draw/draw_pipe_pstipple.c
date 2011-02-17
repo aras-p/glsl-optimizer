@@ -27,8 +27,9 @@
 
 /**
  * Polygon stipple stage:  implement polygon stipple with texture map and
- * fragment program.  The fragment program samples the texture and does
- * a fragment kill for the stipple-failing fragments.
+ * fragment program.  The fragment program samples the texture using the
+ * fragment window coordinate register and does a fragment kill for the
+ * stipple-failing fragments.
  *
  * Authors:  Brian Paul
  */
@@ -114,7 +115,8 @@ struct pstip_stage
 
 /**
  * Subclass of tgsi_transform_context, used for transforming the
- * user's fragment shader to add the special AA instructions.
+ * user's fragment shader to add the extra texture sample and fragment kill
+ * instructions.
  */
 struct pstip_transform_context {
    struct tgsi_transform_context base;
@@ -658,16 +660,16 @@ pstip_create_fs_state(struct pipe_context *pipe,
                        const struct pipe_shader_state *fs)
 {
    struct pstip_stage *pstip = pstip_stage_from_pipe(pipe);
-   struct pstip_fragment_shader *aafs = CALLOC_STRUCT(pstip_fragment_shader);
+   struct pstip_fragment_shader *pstipfs = CALLOC_STRUCT(pstip_fragment_shader);
 
-   if (aafs) {
-      aafs->state = *fs;
+   if (pstipfs) {
+      pstipfs->state = *fs;
 
       /* pass-through */
-      aafs->driver_fs = pstip->driver_create_fs_state(pstip->pipe, fs);
+      pstipfs->driver_fs = pstip->driver_create_fs_state(pstip->pipe, fs);
    }
 
-   return aafs;
+   return pstipfs;
 }
 
 
@@ -675,12 +677,12 @@ static void
 pstip_bind_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct pstip_stage *pstip = pstip_stage_from_pipe(pipe);
-   struct pstip_fragment_shader *aafs = (struct pstip_fragment_shader *) fs;
+   struct pstip_fragment_shader *pstipfs = (struct pstip_fragment_shader *) fs;
    /* save current */
-   pstip->fs = aafs;
+   pstip->fs = pstipfs;
    /* pass-through */
    pstip->driver_bind_fs_state(pstip->pipe,
-                               (aafs ? aafs->driver_fs : NULL));
+                               (pstipfs ? pstipfs->driver_fs : NULL));
 }
 
 
@@ -688,14 +690,14 @@ static void
 pstip_delete_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct pstip_stage *pstip = pstip_stage_from_pipe(pipe);
-   struct pstip_fragment_shader *aafs = (struct pstip_fragment_shader *) fs;
+   struct pstip_fragment_shader *pstipfs = (struct pstip_fragment_shader *) fs;
    /* pass-through */
-   pstip->driver_delete_fs_state(pstip->pipe, aafs->driver_fs);
+   pstip->driver_delete_fs_state(pstip->pipe, pstipfs->driver_fs);
 
-   if (aafs->pstip_fs)
-      pstip->driver_delete_fs_state(pstip->pipe, aafs->pstip_fs);
+   if (pstipfs->pstip_fs)
+      pstip->driver_delete_fs_state(pstip->pipe, pstipfs->pstip_fs);
 
-   FREE(aafs);
+   FREE(pstipfs);
 }
 
 
