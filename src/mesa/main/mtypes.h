@@ -3295,9 +3295,6 @@ struct gl_context
    GLboolean FirstTimeCurrent;
    /*@}*/
 
-   /** Dither disable via MESA_NO_DITHER env var */
-   GLboolean NoDither;
-
    /** software compression/decompression supported or not */
    GLboolean Mesa_DXTn;
 

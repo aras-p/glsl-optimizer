@@ -352,9 +352,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          ctx->Depth.Test = state;
          break;
       case GL_DITHER:
-         if (ctx->NoDither) {
-            state = GL_FALSE; /* MESA_NO_DITHER env var */
-         }
          if (ctx->Color.DitherFlag == state)
             return;
          FLUSH_VERTICES(ctx, _NEW_COLOR);

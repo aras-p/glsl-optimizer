@@ -213,16 +213,6 @@ void
 _mesa_init_debug( struct gl_context *ctx )
 {
    char *c;
-
-   /* Dither disable */
-   ctx->NoDither = _mesa_getenv("MESA_NO_DITHER") ? GL_TRUE : GL_FALSE;
-   if (ctx->NoDither) {
-      if (_mesa_getenv("MESA_DEBUG")) {
-         _mesa_debug(ctx, "MESA_NO_DITHER set - dithering disabled\n");
-      }
-      ctx->Color.DitherFlag = GL_FALSE;
-   }
-
    c = _mesa_getenv("MESA_DEBUG");
    if (c)
       add_debug_flags(c);
