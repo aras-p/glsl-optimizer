@@ -536,6 +536,11 @@ prepare_wm_surfaces(struct brw_context *brw)
 	 struct intel_renderbuffer *irb = intel_renderbuffer(rb);
 	 struct intel_region *region = irb ? irb->region : NULL;
 
+	 if (region == NULL || region->buffer == NULL) {
+	    brw->intel.Fallback = GL_TRUE; /* boolean, not bitfield */
+	    return;
+	 }
+
 	 brw_add_validated_bo(brw, region->buffer);
 	 nr_surfaces = SURF_INDEX_DRAW(i) + 1;
       }
