@@ -48,7 +48,6 @@ void r300_translate_index_buffer(struct r300_context *r300,
         pipe_resource_reference(index_buffer, out_buffer);
         *index_size = 2;
         *start = out_offset / 2;
-        r300->validate_buffers = TRUE;
         break;
 
     case 2:
@@ -63,7 +62,6 @@ void r300_translate_index_buffer(struct r300_context *r300,
 	    *index_buffer = NULL;
             pipe_resource_reference(index_buffer, out_buffer);
             *start = out_offset / 2;
-            r300->validate_buffers = TRUE;
         }
         break;
 
@@ -79,7 +77,6 @@ void r300_translate_index_buffer(struct r300_context *r300,
 	    *index_buffer = NULL;
             pipe_resource_reference(index_buffer, out_buffer);
             *start = out_offset / 4;
-            r300->validate_buffers = TRUE;
         }
         break;
     }

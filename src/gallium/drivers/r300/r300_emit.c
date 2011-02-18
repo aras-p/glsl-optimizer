@@ -1181,7 +1181,7 @@ validate:
         r300->rws->cs_add_reloc(r300->cs, r300_resource(r300->vbo)->cs_buf,
                                 r300_resource(r300->vbo)->domain, 0);
     /* ...vertex buffers for HWTCL path... */
-    if (do_validate_vertex_buffers) {
+    if (do_validate_vertex_buffers && r300->vertex_arrays_dirty) {
         struct pipe_resource **buf = r300->vbuf_mgr->real_vertex_buffer;
         struct pipe_resource **last = r300->vbuf_mgr->real_vertex_buffer +
                                       r300->vbuf_mgr->nr_real_vertex_buffers;

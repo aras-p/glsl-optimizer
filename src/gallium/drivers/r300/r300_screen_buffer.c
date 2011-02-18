@@ -65,11 +65,6 @@ void r300_upload_index_buffer(struct r300_context *r300,
                   index_buffer, &flushed);
 
     *start = index_offset / index_size;
-
-    if (flushed || !r300->upload_ib_validated) {
-        r300->upload_ib_validated = FALSE;
-        r300->validate_buffers = TRUE;
-    }
 }
 
 static void r300_buffer_destroy(struct pipe_screen *screen,

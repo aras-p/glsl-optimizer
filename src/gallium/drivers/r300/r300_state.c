@@ -783,7 +783,6 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
     }
 
     r300_mark_fb_state_dirty(r300, R300_CHANGED_FB_STATE);
-    r300->validate_buffers = TRUE;
 
     if (state->zsbuf) {
         switch (util_format_get_blocksize(state->zsbuf->texture->format)) {
@@ -1359,7 +1358,6 @@ static void r300_set_fragment_sampler_views(struct pipe_context* pipe,
     state->sampler_view_count = count;
 
     r300_mark_atom_dirty(r300, &r300->textures_state);
-    r300->validate_buffers = TRUE;
 
     if (dirty_tex) {
         r300_mark_atom_dirty(r300, &r300->texture_cache_inval);
@@ -1491,7 +1489,6 @@ static void r300_set_vertex_buffers(struct pipe_context* pipe,
         for (i = 0; i < count; i++) {
             if (buffers[i].buffer &&
 		!r300_resource(buffers[i].buffer)->b.user_ptr) {
-                r300->validate_buffers = TRUE;
             }
         }
         r300->vertex_arrays_dirty = TRUE;
@@ -1512,12 +1509,6 @@ static void r300_set_index_buffer(struct pipe_context* pipe,
         pipe_resource_reference(&r300->index_buffer.buffer, ib->buffer);
         memcpy(&r300->index_buffer, ib, sizeof(r300->index_buffer));
         r300->index_buffer.offset /= r300->index_buffer.index_size;
-
-        if (r300->screen->caps.has_tcl &&
-            !r300_resource(ib->buffer)->b.user_ptr) {
-            r300->validate_buffers = TRUE;
-            r300->upload_ib_validated = FALSE;
-        }
     }
     else {
         pipe_resource_reference(&r300->index_buffer.buffer, NULL);

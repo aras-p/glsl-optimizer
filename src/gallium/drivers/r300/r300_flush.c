@@ -77,10 +77,6 @@ static void r300_flush(struct pipe_context* pipe,
             r300->vs_state.dirty = FALSE;
             r300->vs_constants.dirty = FALSE;
         }
-
-        r300->validate_buffers = TRUE;
-        r300->upload_vb_validated = FALSE;
-        r300->upload_ib_validated = FALSE;
     } else {
         if (rfence) {
             /* We have to create a fence object, but the command stream is empty
