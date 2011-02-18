@@ -26,6 +26,7 @@
 #include "imports.h"
 #include "bufferobj.h"
 #include "context.h"
+#include "enums.h"
 #include "readpix.h"
 #include "framebuffer.h"
 #include "formats.h"
@@ -172,6 +173,13 @@ _mesa_ReadPixels( GLint x, GLint y, GLsizei width, GLsizei height,
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    FLUSH_CURRENT(ctx, 0);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glReadPixels(%d, %d, %s, %s, %p)\n",
+                  width, height,
+                  _mesa_lookup_enum_by_nr(format),
+                  _mesa_lookup_enum_by_nr(type),
+                  pixels);
 
    if (width < 0 || height < 0) {
       _mesa_error( ctx, GL_INVALID_VALUE,
