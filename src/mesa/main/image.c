@@ -1584,8 +1584,8 @@ _mesa_clip_drawpixels(const struct gl_context *ctx,
  * scissor box is ignored, and we use the bounds of the current readbuffer
  * surface.
  *
- * \return  GL_TRUE if image is ready for drawing or
- *          GL_FALSE if image was completely clipped away (draw nothing)
+ * \return  GL_TRUE if region to read is in bounds
+ *          GL_FALSE if region is completely out of bounds (nothing to read)
  */
 GLboolean
 _mesa_clip_readpixels(const struct gl_context *ctx,
