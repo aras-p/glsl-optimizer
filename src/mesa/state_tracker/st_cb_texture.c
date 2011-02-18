@@ -579,6 +579,12 @@ st_TexImage(struct gl_context * ctx,
 					   pixels, unpack, "glTexImage");
    }
 
+   /* for a 1D array upload the image as a series of layer with height = 1 */
+   if (target == GL_TEXTURE_1D_ARRAY) {
+      depth = height;
+      height = 1;
+   }
+
    /*
     * Prepare to store the texture data.  Either map the gallium texture buffer
     * memory or malloc space for it.
@@ -985,6 +991,12 @@ st_TexSubimage(struct gl_context *ctx, GLint dims, GLenum target, GLint level,
                                   type, pixels, packing, "glTexSubImage2D");
    if (!pixels)
       return;
+
+   /* for a 1D array upload the image as a series of layer with height = 1 */
+   if (target == GL_TEXTURE_1D_ARRAY) {
+      depth = height;
+      height = 1;
+   }
 
    /* Map buffer if necessary.  Need to lock to prevent other contexts
     * from uploading the buffer under us.
