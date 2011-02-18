@@ -340,7 +340,7 @@ void svga_mark_surfaces_dirty(struct svga_context *svga)
  * pipe is optional context to inline the blit command in.
  */
 void
-svga_propagate_surface(struct pipe_context *pipe, struct pipe_surface *surf)
+svga_propagate_surface(struct svga_context *svga, struct pipe_surface *surf)
 {
    struct svga_surface *s = svga_surface(surf);
    struct svga_texture *tex = svga_texture(surf->texture);
@@ -365,7 +365,7 @@ svga_propagate_surface(struct pipe_context *pipe, struct pipe_surface *surf)
 
    if (s->handle != tex->handle) {
       SVGA_DBG(DEBUG_VIEWS, "svga: Surface propagate: tex %p, level %u, from %p\n", tex, surf->u.tex.level, surf);
-      svga_texture_copy_handle(svga_context(pipe),
+      svga_texture_copy_handle(svga,
                                s->handle, 0, 0, 0, s->real_level, s->real_face,
                                tex->handle, 0, 0, zslice, surf->u.tex.level, face,
                                u_minify(tex->b.b.width0, surf->u.tex.level),

@@ -36,20 +36,10 @@ static void svga_flush( struct pipe_context *pipe,
                         struct pipe_fence_handle **fence )
 {
    struct svga_context *svga = svga_context(pipe);
-   int i;
 
-   /* Emit buffered drawing commands.
+   /* Emit buffered drawing commands, and any back copies.
     */
-   svga_hwtnl_flush_retry( svga );
-
-   /* Emit back-copy from render target view to texture.
-    */
-   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
-      if (svga->curr.framebuffer.cbufs[i])
-         svga_propagate_surface(pipe, svga->curr.framebuffer.cbufs[i]);
-   }
-   if (svga->curr.framebuffer.zsbuf)
-      svga_propagate_surface(pipe, svga->curr.framebuffer.zsbuf);
+   svga_surfaces_flush( svga );
 
    /* Flush command queue.
     */

@@ -56,7 +56,7 @@ struct svga_surface
 
 
 extern void
-svga_propagate_surface(struct pipe_context *pipe, struct pipe_surface *surf);
+svga_propagate_surface(struct svga_context *svga, struct pipe_surface *surf);
 
 extern boolean
 svga_surface_needs_propagation(struct pipe_surface *surf);

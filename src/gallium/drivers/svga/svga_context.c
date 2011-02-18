@@ -34,6 +34,7 @@
 
 #include "svga_context.h"
 #include "svga_screen.h"
+#include "svga_surface.h"
 #include "svga_resource_texture.h"
 #include "svga_resource_buffer.h"
 #include "svga_resource.h"
@@ -246,6 +247,30 @@ void svga_hwtnl_flush_retry( struct svga_context *svga )
 
    assert(ret == 0);
 }
+
+
+/* Emit all operations pending on host surfaces.
+ */ 
+void svga_surfaces_flush(struct svga_context *svga)
+{
+   unsigned i;
+
+   /* Emit buffered drawing commands.
+    */
+   svga_hwtnl_flush_retry( svga );
+
+   /* Emit back-copy from render target view to texture.
+    */
+   for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
+      if (svga->curr.framebuffer.cbufs[i])
+         svga_propagate_surface(svga, svga->curr.framebuffer.cbufs[i]);
+   }
+
+   if (svga->curr.framebuffer.zsbuf)
+      svga_propagate_surface(svga, svga->curr.framebuffer.zsbuf);
+
+}
+
 
 struct svga_winsys_context *
 svga_winsys_context( struct pipe_context *pipe )

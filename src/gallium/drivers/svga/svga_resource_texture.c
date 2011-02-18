@@ -215,6 +215,10 @@ svga_transfer_dma(struct svga_context *svga,
       SVGA_DBG(DEBUG_PERF, "%s: readback transfer\n", __FUNCTION__);
    }
 
+   /* Ensure any pending operations on host surfaces are queued on the command
+    * buffer first.
+    */
+   svga_surfaces_flush( svga );
 
    if(!st->swbuf) {
       /* Do the DMA transfer in a single go */
