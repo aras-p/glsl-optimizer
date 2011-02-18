@@ -84,6 +84,7 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
    strb->Base.Width  = width;
    strb->Base.Height = height;
    strb->Base.Format = st_pipe_format_to_mesa_format(format);
+   strb->Base._BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
    strb->Base.DataType = st_format_datatype(format);
 
    strb->defined = GL_FALSE;  /* undefined contents now */
@@ -234,6 +235,7 @@ st_new_renderbuffer_fb(enum pipe_format format, int samples, boolean sw)
    strb->Base.ClassID = 0x4242; /* just a unique value */
    strb->Base.NumSamples = samples;
    strb->Base.Format = st_pipe_format_to_mesa_format(format);
+   strb->Base._BaseFormat = _mesa_get_format_base_format(strb->Base.Format);
    strb->Base.DataType = st_format_datatype(format);
    strb->format = format;
    strb->software = sw;
