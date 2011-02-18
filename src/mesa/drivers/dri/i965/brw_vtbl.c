@@ -158,6 +158,8 @@ static void brw_new_batch( struct intel_context *intel )
    brw->state.dirty.mesa |= ~0;
    brw->state.dirty.brw |= ~0;
    brw->state.dirty.cache |= ~0;
+
+   brw->vb.nr_current_buffers = 0;
 }
 
 static void brw_invalidate_state( struct intel_context *intel, GLuint new_state )

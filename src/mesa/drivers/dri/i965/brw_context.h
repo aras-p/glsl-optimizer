@@ -489,16 +489,26 @@ struct brw_context
    struct {
       struct brw_vertex_element inputs[VERT_ATTRIB_MAX];
       struct brw_vertex_buffer buffers[VERT_ATTRIB_MAX];
+      struct {
+	      uint32_t handle;
+	      uint32_t offset;
+	      uint32_t stride;
+      } current_buffers[VERT_ATTRIB_MAX];
 
       struct brw_vertex_element *enabled[VERT_ATTRIB_MAX];
       GLuint nr_enabled;
-      GLuint nr_buffers;
+      GLuint nr_buffers, nr_current_buffers;
 
       /* Summary of size and varying of active arrays, so we can check
        * for changes to this state:
        */
       struct brw_vertex_info info;
       unsigned int min_index, max_index;
+
+      /* Offset from start of vertex buffer so we can avoid redefining
+       * the same VB packed over and over again.
+       */
+      unsigned int start_vertex_bias;
    } vb;
 
    struct {
@@ -512,6 +522,7 @@ struct brw_context
       /* Updates to these fields are signaled by BRW_NEW_INDEX_BUFFER. */
       drm_intel_bo *bo;
       unsigned int offset;
+
       /* Offset to index buffer index to use in CMD_3D_PRIM so that we can
        * avoid re-uploading the IB packet over and over if we're actually
        * referencing the same index buffer.
@@ -832,4 +843,3 @@ float convert_param(enum param_conversion conversion, float param)
 GLboolean brw_do_cubemap_normalize(struct exec_list *instructions);
 
 #endif
-

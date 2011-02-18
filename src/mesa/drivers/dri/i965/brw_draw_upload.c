@@ -271,11 +271,11 @@ static void brw_prepare_vertices(struct brw_context *brw)
    struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = intel_context(ctx);
    GLbitfield vs_inputs = brw->vs.prog_data->inputs_read; 
-   GLuint i, j;
    const unsigned char *ptr = NULL;
    GLuint interleaved = 0, total_size = 0;
    unsigned int min_index = brw->vb.min_index;
    unsigned int max_index = brw->vb.max_index;
+   int i, j;
 
    struct brw_vertex_element *upload[VERT_ATTRIB_MAX];
    GLuint nr_uploads = 0;
@@ -455,6 +455,33 @@ static void brw_prepare_vertices(struct brw_context *brw)
 			      upload[i]->element_size);
       upload[i]->buffer = j++;
    }
+
+   /* can we simply extend the current vb? */
+   brw->vb.start_vertex_bias = 0;
+   if (j == brw->vb.nr_current_buffers) {
+      int delta = 0;
+      for (i = 0; i < j; i++) {
+	 int d;
+
+	 if (brw->vb.current_buffers[i].handle != brw->vb.buffers[i].bo->handle ||
+	     brw->vb.current_buffers[i].stride != brw->vb.buffers[i].stride)
+	    break;
+
+	 d = brw->vb.buffers[i].offset - brw->vb.current_buffers[i].offset;
+	 if (delta == 0)
+	    delta = d / brw->vb.current_buffers[i].stride;
+	 else if (delta * brw->vb.current_buffers[i].stride != d)
+	    break;
+      }
+
+      if (i == j) {
+	 brw->vb.start_vertex_bias = delta;
+	 while (--j >= 0)
+	    drm_intel_bo_unreference(brw->vb.buffers[j].bo);
+	 j = 0;
+      }
+   }
+
    brw->vb.nr_buffers = j;
 
 validate:
@@ -504,25 +531,33 @@ static void brw_emit_vertices(struct brw_context *brw)
    /* Now emit VB and VEP state packets.
     */
 
-   BEGIN_BATCH(1 + 4*brw->vb.nr_buffers);
-   OUT_BATCH((CMD_VERTEX_BUFFER << 16) | (4*brw->vb.nr_buffers - 1));
-   for (i = 0; i < brw->vb.nr_buffers; i++) {
-      struct brw_vertex_buffer *buffer = &brw->vb.buffers[i];
-      uint32_t dw0;
+   if (brw->vb.nr_buffers) {
+      BEGIN_BATCH(1 + 4*brw->vb.nr_buffers);
+      OUT_BATCH((CMD_VERTEX_BUFFER << 16) | (4*brw->vb.nr_buffers - 1));
+      for (i = 0; i < brw->vb.nr_buffers; i++) {
+	 struct brw_vertex_buffer *buffer = &brw->vb.buffers[i];
+	 uint32_t dw0;
 
-      if (intel->gen >= 6) {
-	 dw0 = GEN6_VB0_ACCESS_VERTEXDATA | (i << GEN6_VB0_INDEX_SHIFT);
-      } else {
-	 dw0 = BRW_VB0_ACCESS_VERTEXDATA | (i << BRW_VB0_INDEX_SHIFT);
+	 if (intel->gen >= 6) {
+	    dw0 = GEN6_VB0_ACCESS_VERTEXDATA | (i << GEN6_VB0_INDEX_SHIFT);
+	 } else {
+	    dw0 = BRW_VB0_ACCESS_VERTEXDATA | (i << BRW_VB0_INDEX_SHIFT);
+	 }
+
+	 OUT_BATCH(dw0 | (buffer->stride << BRW_VB0_PITCH_SHIFT));
+	 OUT_RELOC(buffer->bo, I915_GEM_DOMAIN_VERTEX, 0, buffer->offset);
+	 if (intel->gen >= 5) {
+	    OUT_RELOC(buffer->bo, I915_GEM_DOMAIN_VERTEX, 0, buffer->bo->size - 1);
+	 } else
+	    OUT_BATCH(0);
+	 OUT_BATCH(0); /* Instance data step rate */
+
+	 brw->vb.current_buffers[i].handle = buffer->bo->handle;
+	 brw->vb.current_buffers[i].offset = buffer->offset;
+	 brw->vb.current_buffers[i].stride = buffer->stride;
       }
-
-      OUT_BATCH(dw0 | (buffer->stride << BRW_VB0_PITCH_SHIFT));
-      OUT_RELOC(buffer->bo, I915_GEM_DOMAIN_VERTEX, 0, buffer->offset);
-      if (intel->gen >= 5) {
-	 OUT_RELOC(buffer->bo, I915_GEM_DOMAIN_VERTEX, 0, buffer->bo->size - 1);
-      } else
-          OUT_BATCH(0);
-      OUT_BATCH(0); /* Instance data step rate */
+      brw->vb.nr_current_buffers = i;
+      ADVANCE_BATCH();
    }
    ADVANCE_BATCH();
 

@@ -120,10 +120,8 @@ intel_bufferobj_free(struct gl_context * ctx, struct gl_buffer_object *obj)
    if (intel_obj->region) {
       intel_bufferobj_release_region(intel, intel_obj);
    }
-   else if (intel_obj->buffer) {
-      drm_intel_bo_unreference(intel_obj->buffer);
-   }
 
+   drm_intel_bo_unreference(intel_obj->buffer);
    free(intel_obj);
 }
 

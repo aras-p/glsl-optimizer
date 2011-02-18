@@ -145,9 +145,14 @@ static void brw_emit_prim(struct brw_context *brw,
    prim_packet.start_vert_location = prim->start;
    if (prim->indexed)
       prim_packet.start_vert_location += brw->ib.start_vertex_offset;
+   else
+      prim_packet.start_vert_location += brw->vb.start_vertex_bias;
    prim_packet.instance_count = 1;
    prim_packet.start_instance_location = 0;
    prim_packet.base_vert_location = prim->basevertex;
+   if (prim->indexed)
+      prim_packet.base_vert_location += brw->vb.start_vertex_bias;
+
 
    /* If we're set to always flush, do it before and after the primitive emit.
     * We want to catch both missed flushes that hurt instruction/state cache
