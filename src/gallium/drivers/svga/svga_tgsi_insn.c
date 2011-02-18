@@ -528,6 +528,55 @@ static boolean submit_op4( struct svga_shader_emitter *emit,
 }
 
 
+static boolean alias_src_dst( struct src_register src,
+                              SVGA3dShaderDestToken dst )
+{
+   if (src.base.num != dst.num)
+      return FALSE;
+
+   if (SVGA3dShaderGetRegType(dst.value) !=
+       SVGA3dShaderGetRegType(src.base.value))
+      return FALSE;
+
+   return TRUE;
+}
+
+
+static boolean submit_lrp(struct svga_shader_emitter *emit,
+                          SVGA3dShaderDestToken dst,
+                          struct src_register src0,
+                          struct src_register src1,
+                          struct src_register src2)
+{
+   SVGA3dShaderDestToken tmp;
+   boolean need_dst_tmp = FALSE;
+
+   /* The dst reg must be a temporary, and not be the same as src0 or src2 */
+   if (SVGA3dShaderGetRegType(dst.value) != SVGA3DREG_TEMP ||
+       alias_src_dst(src0, dst) ||
+       alias_src_dst(src2, dst))
+      need_dst_tmp = TRUE;
+
+   if (need_dst_tmp) {
+      tmp = get_temp( emit );
+      tmp.mask = dst.mask;
+   }
+   else {
+      tmp = dst;
+   }
+
+   if (!submit_op3(emit, inst_token( SVGA3DOP_LRP ), tmp, src0, src1, src2))
+      return FALSE;
+
+   if (need_dst_tmp) {
+      if (!submit_op1(emit, inst_token( SVGA3DOP_MOV ), dst, src( tmp )))
+         return FALSE;
+   }
+
+   return TRUE;
+}
+
+
 static boolean emit_def_const( struct svga_shader_emitter *emit,
                                SVGA3dShaderConstType type,
                                unsigned idx,
@@ -864,7 +913,7 @@ static boolean emit_cmp(struct svga_shader_emitter *emit,
        */
       if (!submit_op2(emit, inst_token(SVGA3DOP_SLT), temp, src0, zero))
          return FALSE;
-      return submit_op3(emit, inst_token(SVGA3DOP_LRP), dst, src(temp), src1, src2);
+      return submit_lrp(emit, dst, src(temp), src1, src2);
    }
 
    /* CMP  DST, SRC0, SRC2, SRC1 */
@@ -1691,19 +1740,6 @@ static boolean emit_arl(struct svga_shader_emitter *emit,
    }
 }
 
-static boolean alias_src_dst( struct src_register src,
-                              SVGA3dShaderDestToken dst )
-{
-   if (src.base.num != dst.num)
-      return FALSE;
-
-   if (SVGA3dShaderGetRegType(dst.value) != 
-       SVGA3dShaderGetRegType(src.base.value))
-      return FALSE;
-
-   return TRUE;
-}
-
 static boolean emit_pow(struct svga_shader_emitter *emit,
                         const struct tgsi_full_instruction *insn)
 {
@@ -1796,37 +1832,14 @@ static boolean emit_lrp(struct svga_shader_emitter *emit,
                         const struct tgsi_full_instruction *insn)
 {
    SVGA3dShaderDestToken dst = translate_dst_register( emit, insn, 0 );
-   SVGA3dShaderDestToken tmp;
    const struct src_register src0 = translate_src_register(
       emit, &insn->Src[0] );
    const struct src_register src1 = translate_src_register(
       emit, &insn->Src[1] );
    const struct src_register src2 = translate_src_register(
       emit, &insn->Src[2] );
-   boolean need_dst_tmp = FALSE;
 
-   /* The dst reg must not be the same as src0 or src2 */
-   if (alias_src_dst(src0, dst) ||
-       alias_src_dst(src2, dst))
-      need_dst_tmp = TRUE;
-
-   if (need_dst_tmp) {
-      tmp = get_temp( emit );
-      tmp.mask = dst.mask;
-   }
-   else {
-      tmp = dst;
-   }
-
-   if (!submit_op3(emit, inst_token( SVGA3DOP_LRP ), tmp, src0, src1, src2))
-      return FALSE;
-
-   if (need_dst_tmp) {
-      if (!submit_op1(emit, inst_token( SVGA3DOP_MOV ), dst, src( tmp )))
-         return FALSE;      
-   } 
-
-   return TRUE;
+   return submit_lrp(emit, dst, src0, src1, src2);
 }
 
 
