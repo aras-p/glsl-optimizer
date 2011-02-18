@@ -1704,6 +1704,10 @@ static boolean emit_deriv(struct svga_shader_emitter *emit,
    }
    else {
       unsigned opcode;
+      const struct tgsi_full_src_register *reg = &insn->Src[0];
+      SVGA3dShaderInstToken inst;
+      SVGA3dShaderDestToken dst;
+      struct src_register src0;
 
       switch (insn->Instruction.Opcode) {
       case TGSI_OPCODE_DDX:
@@ -1716,7 +1720,21 @@ static boolean emit_deriv(struct svga_shader_emitter *emit,
          return FALSE;
       }
 
-      return emit_simple_instruction( emit, opcode, insn );
+      inst = inst_token( opcode );
+      dst = translate_dst_register( emit, insn, 0 );
+      src0 = translate_src_register( emit, reg );
+
+      /* We cannot use negate or abs on source to dsx/dsy instruction.
+       */
+      if (reg->Register.Absolute ||
+          reg->Register.Negate) {
+         SVGA3dShaderDestToken temp = get_temp( emit );
+
+         if (!emit_repl( emit, temp, &src0 ))
+            return FALSE;
+      }
+
+      return submit_op1( emit, inst, dst, src0 );
    }
 }
 
