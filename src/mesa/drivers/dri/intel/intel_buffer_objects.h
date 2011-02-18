@@ -71,14 +71,14 @@ drm_intel_bo *intel_bufferobj_source(struct intel_context *intel,
 				     GLuint *offset);
 
 void intel_upload_data(struct intel_context *intel,
-		       const void *ptr, GLuint size,
+		       const void *ptr, GLuint size, GLuint align,
 		       drm_intel_bo **return_bo,
 		       GLuint *return_offset);
 
 void *intel_upload_map(struct intel_context *intel,
-		       GLuint size);
+		       GLuint size, GLuint align);
 void intel_upload_unmap(struct intel_context *intel,
-			const void *ptr, GLuint size,
+			const void *ptr, GLuint size, GLuint align,
 			drm_intel_bo **return_bo,
 			GLuint *return_offset);
 

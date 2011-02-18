@@ -249,11 +249,11 @@ copy_array_to_vbo_array( struct brw_context *brw,
 
    buffer->stride = dst_stride;
    if (dst_stride == element->glarray->StrideB) {
-      intel_upload_data(&brw->intel, element->glarray->Ptr, size,
+      intel_upload_data(&brw->intel, element->glarray->Ptr, size, dst_stride,
 			&buffer->bo, &buffer->offset);
    } else {
       const unsigned char *src = element->glarray->Ptr;
-      char *dst = intel_upload_map(&brw->intel, size);
+      char *dst = intel_upload_map(&brw->intel, size, dst_stride);
       int i;
 
       for (i = 0; i < element->count; i++) {
@@ -261,7 +261,7 @@ copy_array_to_vbo_array( struct brw_context *brw,
 	 src += element->glarray->StrideB;
 	 dst += dst_stride;
       }
-      intel_upload_unmap(&brw->intel, dst, size,
+      intel_upload_unmap(&brw->intel, dst, size, dst_stride,
 			 &buffer->bo, &buffer->offset);
    }
 }
@@ -421,7 +421,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 int count = upload[0]->count, offset;
 	 char *map;
 
-	 map = intel_upload_map(&brw->intel, total_size * count);
+	 map = intel_upload_map(&brw->intel, total_size * count, total_size);
 	 for (i = offset = 0; i < nr_uploads; i++) {
 	    const unsigned char *src = upload[i]->glarray->Ptr;
 	    int size = upload[i]->element_size;
@@ -440,7 +440,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 
 	    offset += size;
 	 }
-	 intel_upload_unmap(&brw->intel, map, total_size * count,
+	 intel_upload_unmap(&brw->intel, map, total_size * count, total_size,
 			    &buffer->bo, &buffer->offset);
 	 buffer->stride = offset;
 	 j++;
@@ -608,7 +608,8 @@ static void brw_prepare_indices(struct brw_context *brw)
 
       /* Get new bufferobj, offset:
        */
-      intel_upload_data(&brw->intel, index_buffer->ptr, ib_size, &bo, &offset);
+      intel_upload_data(&brw->intel, index_buffer->ptr, ib_size, ib_type_size,
+			&bo, &offset);
       brw->ib.start_vertex_offset = offset / ib_type_size;
       offset = 0;
    } else {
@@ -624,7 +625,8 @@ static void brw_prepare_indices(struct brw_context *brw)
                                                 bufferobj);
            map += offset;
 
-	   intel_upload_data(&brw->intel, map, ib_size, &bo, &offset);
+	   intel_upload_data(&brw->intel, map, ib_size, ib_type_size,
+			     &bo, &offset);
 	   brw->ib.start_vertex_offset = offset / ib_type_size;
 	   offset = 0;
 

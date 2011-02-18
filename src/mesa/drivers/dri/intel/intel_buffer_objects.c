@@ -603,23 +603,25 @@ static void wrap_buffers(struct intel_context *intel, GLuint size)
 }
 
 void intel_upload_data(struct intel_context *intel,
-		       const void *ptr, GLuint size,
+		       const void *ptr, GLuint size, GLuint align,
 		       drm_intel_bo **return_bo,
 		       GLuint *return_offset)
 {
-   GLuint asize = ALIGN(size, 64);
+   GLuint base, delta;
 
-   if (intel->upload.bo == NULL ||
-       intel->upload.offset + size > intel->upload.bo->size) {
+   base = (intel->upload.offset + align - 1) / align * align;
+   if (intel->upload.bo == NULL || base + size > intel->upload.bo->size) {
       wrap_buffers(intel, size);
+      base = 0;
    }
 
    drm_intel_bo_reference(intel->upload.bo);
    *return_bo = intel->upload.bo;
-   *return_offset = intel->upload.offset;
+   *return_offset = base;
 
+   delta = base - intel->upload.offset;
    if (intel->upload.buffer_len &&
-       intel->upload.buffer_len + size > sizeof(intel->upload.buffer))
+       intel->upload.buffer_len + delta + size > sizeof(intel->upload.buffer))
    {
       drm_intel_bo_subdata(intel->upload.bo,
 			   intel->upload.buffer_offset,
@@ -631,27 +633,35 @@ void intel_upload_data(struct intel_context *intel,
    if (size < sizeof(intel->upload.buffer))
    {
       if (intel->upload.buffer_len == 0)
-	 intel->upload.buffer_offset = intel->upload.offset;
+	 intel->upload.buffer_offset = base;
+      else
+	 intel->upload.buffer_len += delta;
 
       memcpy(intel->upload.buffer + intel->upload.buffer_len, ptr, size);
-      intel->upload.buffer_len += asize;
+      intel->upload.buffer_len += size;
    }
    else
    {
-      drm_intel_bo_subdata(intel->upload.bo,
-			   intel->upload.offset,
-			   size, ptr);
+      drm_intel_bo_subdata(intel->upload.bo, base, size, ptr);
    }
 
-   intel->upload.offset += asize;
+   intel->upload.offset = base + size;
 }
 
-void *intel_upload_map(struct intel_context *intel, GLuint size)
+void *intel_upload_map(struct intel_context *intel, GLuint size, GLuint align)
 {
+   GLuint base, delta;
    char *ptr;
 
+   base = (intel->upload.offset + align - 1) / align * align;
+   if (intel->upload.bo == NULL || base + size > intel->upload.bo->size) {
+      wrap_buffers(intel, size);
+      base = 0;
+   }
+
+   delta = base - intel->upload.offset;
    if (intel->upload.buffer_len &&
-       intel->upload.buffer_len + size > sizeof(intel->upload.buffer))
+       intel->upload.buffer_len + delta + size > sizeof(intel->upload.buffer))
    {
       drm_intel_bo_subdata(intel->upload.bo,
 			   intel->upload.buffer_offset,
@@ -660,23 +670,38 @@ void *intel_upload_map(struct intel_context *intel, GLuint size)
       intel->upload.buffer_len = 0;
    }
 
-   if (size <= sizeof(intel->upload.buffer))
+   if (size <= sizeof(intel->upload.buffer)) {
+      if (intel->upload.buffer_len == 0)
+	 intel->upload.buffer_offset = base;
+      else
+	 intel->upload.buffer_len += delta;
+
       ptr = intel->upload.buffer + intel->upload.buffer_len;
-   else
+      intel->upload.buffer_len += size;
+   } else
       ptr = malloc(size);
 
    return ptr;
 }
 
 void intel_upload_unmap(struct intel_context *intel,
-			const void *ptr, GLuint size,
+			const void *ptr, GLuint size, GLuint align,
 			drm_intel_bo **return_bo,
 			GLuint *return_offset)
 {
-   intel_upload_data(intel, ptr, size, return_bo, return_offset);
+   GLuint base;
 
-   if (size > sizeof(intel->upload.buffer))
+   base = (intel->upload.offset + align - 1) / align * align;
+   if (size > sizeof(intel->upload.buffer)) {
+      drm_intel_bo_subdata(intel->upload.bo, base, size, ptr);
       free((void*)ptr);
+   }
+
+   drm_intel_bo_reference(intel->upload.bo);
+   *return_bo = intel->upload.bo;
+   *return_offset = base;
+
+   intel->upload.offset = base + size;
 }
 
 drm_intel_bo *
@@ -686,7 +711,7 @@ intel_bufferobj_source(struct intel_context *intel,
 {
    if (intel_obj->buffer == NULL) {
       intel_upload_data(intel,
-			intel_obj->sys_buffer, intel_obj->Base.Size,
+			intel_obj->sys_buffer, intel_obj->Base.Size, 64,
 			&intel_obj->buffer, &intel_obj->offset);
       intel_obj->source = 1;
    }
