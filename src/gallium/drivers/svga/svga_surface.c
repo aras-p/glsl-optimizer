@@ -100,7 +100,7 @@ svga_texture_copy_handle(struct svga_context *svga,
 
 
 struct svga_winsys_surface *
-svga_texture_view_surface(struct pipe_context *pipe,
+svga_texture_view_surface(struct svga_context *svga,
                           struct svga_texture *tex,
                           SVGA3dSurfaceFlags flags,
                           SVGA3dSurfaceFormat format,
@@ -110,7 +110,7 @@ svga_texture_view_surface(struct pipe_context *pipe,
                           int zslice_pick,
                           struct svga_host_surface_cache_key *key) /* OUT */
 {
-   struct svga_screen *ss = svga_screen(pipe->screen);
+   struct svga_screen *ss = svga_screen(svga->pipe.screen);
    struct svga_winsys_surface *handle;
    uint32_t i, j;
    unsigned z_offset = 0;
@@ -162,7 +162,7 @@ svga_texture_view_surface(struct pipe_context *pipe,
                               u_minify(tex->b.b.depth0, i + start_mip) :
                               1);
 
-            svga_texture_copy_handle(svga_context(pipe),
+            svga_texture_copy_handle(svga,
                                      tex->handle, 
                                      0, 0, z_offset, 
                                      i + start_mip, 
@@ -184,6 +184,7 @@ svga_create_surface(struct pipe_context *pipe,
                     struct pipe_resource *pt,
                     const struct pipe_surface *surf_tmpl)
 {
+   struct svga_context *svga = svga_context(pipe);
    struct svga_texture *tex = svga_texture(pt);
    struct pipe_screen *screen = pipe->screen;
    struct svga_surface *s;
@@ -259,7 +260,7 @@ svga_create_surface(struct pipe_context *pipe,
       SVGA_DBG(DEBUG_VIEWS, "svga: Surface view: yes %p, level %u face %u z %u, %p\n",
                pt, surf_tmpl->u.tex.level, face, zslice, s);
 
-      s->handle = svga_texture_view_surface(NULL, tex, flags, format,
+      s->handle = svga_texture_view_surface(svga, tex, flags, format,
                                             surf_tmpl->u.tex.level,
 	                                    1, face, zslice, &s->key);
       s->real_face = 0;
