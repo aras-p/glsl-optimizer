@@ -808,6 +808,8 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 	uint32_t result = 0, word4 = 0, yuv_format = 0;
 	const struct util_format_description *desc;
 	boolean uniform = TRUE;
+	static int r600_enable_s3tc = -1;
+
 	int i;
 	const uint32_t sign_bit[4] = {
 		S_038010_FORMAT_COMP_X(V_038010_SQ_FORMAT_COMP_SIGNED),
@@ -865,13 +867,28 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 		break;
 	}
 
-	/* S3TC formats. TODO */
-	if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
-		static int r600_enable_s3tc = -1;
+	if (r600_enable_s3tc == -1)
+		r600_enable_s3tc = debug_get_bool_option("R600_ENABLE_S3TC", FALSE);
 
-		if (r600_enable_s3tc == -1)
-			r600_enable_s3tc =
-				debug_get_bool_option("R600_ENABLE_S3TC", FALSE);
+	if (desc->layout == UTIL_FORMAT_LAYOUT_RGTC) {
+		if (!r600_enable_s3tc)
+			goto out_unknown;
+
+		switch (format) {
+		case PIPE_FORMAT_RGTC1_UNORM:
+		case PIPE_FORMAT_RGTC1_SNORM:
+			result = FMT_BC4;
+			goto out_word4;
+		case PIPE_FORMAT_RGTC2_UNORM:
+		case PIPE_FORMAT_RGTC2_SNORM:
+			result = FMT_BC5;
+			goto out_word4;
+		default:
+			goto out_unknown;
+		}
+	}
+
+	if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
 
 		if (!r600_enable_s3tc)
 			goto out_unknown;
@@ -895,14 +912,6 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 		case PIPE_FORMAT_DXT5_SRGBA:
 			result = FMT_BC3;
 			goto out_word4;
-		case PIPE_FORMAT_RGTC1_UNORM:
-		case PIPE_FORMAT_RGTC1_SNORM:
-			result = FMT_BC4;
-			goto out_word4;
-		case PIPE_FORMAT_RGTC2_UNORM:
-		case PIPE_FORMAT_RGTC2_SNORM:
-			result = FMT_BC5;
-			goto out_word4;
 		default:
 			goto out_unknown;
 		}
@@ -916,8 +925,6 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 	}
 
 	/* R8G8Bx_SNORM - TODO CxV8U8 */
-
-	/* RGTC - TODO */
 
 	/* See whether the components are of the same size. */
 	for (i = 1; i < desc->nr_channels; i++) {
