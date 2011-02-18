@@ -1188,6 +1188,7 @@ blit_copy_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
        !ctx->FragmentProgram.Enabled &&
        !ctx->VertexProgram.Enabled &&
        !ctx->Shader.CurrentFragmentProgram &&
+       st_fb_orientation(ctx->ReadBuffer) == st_fb_orientation(ctx->DrawBuffer) &&
        ctx->DrawBuffer->_NumColorDrawBuffers == 1) {
       struct st_renderbuffer *rbRead, *rbDraw;
       GLint drawX, drawY;
@@ -1226,11 +1227,11 @@ blit_copy_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
          struct pipe_box srcBox;
 
          /* flip src/dst position if needed */
-         if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP)
+         if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
+            /* both buffers will have the same orientation */
             readY = ctx->ReadBuffer->Height - readY - readH;
-
-         if (st_fb_orientation(ctx->DrawBuffer) == Y_0_TOP)
             drawY = ctx->DrawBuffer->Height - drawY - readH;
+         }
 
          u_box_2d(readX, readY, readW, readH, &srcBox);
 
