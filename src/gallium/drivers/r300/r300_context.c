@@ -38,19 +38,21 @@
 static void r300_update_num_contexts(struct r300_screen *r300screen,
                                      int diff)
 {
+    pipe_mutex_lock(r300screen->num_contexts_mutex);
     if (diff > 0) {
-        p_atomic_inc(&r300screen->num_contexts);
+        r300screen->num_contexts++;
 
         if (r300screen->num_contexts > 1)
             util_slab_set_thread_safety(&r300screen->pool_buffers,
                                         UTIL_SLAB_MULTITHREADED);
     } else {
-        p_atomic_dec(&r300screen->num_contexts);
+        r300screen->num_contexts--;
 
         if (r300screen->num_contexts <= 1)
             util_slab_set_thread_safety(&r300screen->pool_buffers,
                                         UTIL_SLAB_SINGLETHREADED);
     }
+    pipe_mutex_unlock(r300screen->num_contexts_mutex);
 }
 
 static void r300_release_referenced_objects(struct r300_context *r300)

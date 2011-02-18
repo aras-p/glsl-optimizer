@@ -398,6 +398,7 @@ static void r300_destroy_screen(struct pipe_screen* pscreen)
     struct r300_winsys_screen *rws = r300_winsys_screen(pscreen);
 
     util_slab_destroy(&r300screen->pool_buffers);
+    pipe_mutex_destroy(r300screen->num_contexts_mutex);
 
     if (rws)
       rws->destroy(rws);
@@ -458,6 +459,8 @@ struct pipe_screen* r300_screen_create(struct r300_winsys_screen *rws)
     r300screen->caps.index_bias_supported =
             r300screen->caps.is_r500 &&
             rws->get_value(rws, R300_VID_DRM_2_3_0);
+
+    pipe_mutex_init(r300screen->num_contexts_mutex);
 
     util_slab_create(&r300screen->pool_buffers,
                      sizeof(struct r300_resource), 64,

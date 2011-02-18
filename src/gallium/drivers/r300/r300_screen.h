@@ -52,6 +52,7 @@ struct r300_screen {
     /* The number of created contexts to know whether we have multiple
      * contexts or not. */
     int num_contexts;
+    pipe_mutex num_contexts_mutex;
 };
 
 
