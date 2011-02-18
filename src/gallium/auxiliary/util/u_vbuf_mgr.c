@@ -560,7 +560,7 @@ void u_vbuf_mgr_draw_begin(struct u_vbuf_mgr *mgrb,
                            boolean *uploader_flushed)
 {
    struct u_vbuf_mgr_priv *mgr = (struct u_vbuf_mgr_priv*)mgrb;
-   boolean bufs_updated, upload_flushed = FALSE;
+   boolean bufs_updated = FALSE, upload_flushed = FALSE;
    int min_index, max_index;
 
    min_index = info->min_index - info->index_bias;
