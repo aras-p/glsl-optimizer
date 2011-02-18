@@ -126,9 +126,6 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen,
    svga->debug.no_line_width = debug_get_option_no_line_width();
    svga->debug.force_hw_line_stipple = debug_get_option_force_hw_line_stipple();
 
-   if (!svga_init_swtnl(svga))
-      goto no_swtnl;
-
    svga->fs_bm = util_bitmask_create();
    if (svga->fs_bm == NULL)
       goto no_fs_bm;
@@ -157,6 +154,8 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen,
    if (svga->hwtnl == NULL)
       goto no_hwtnl;
 
+   if (!svga_init_swtnl(svga))
+      goto no_swtnl;
 
    ret = svga_emit_initial_state( svga );
    if (ret)
@@ -179,6 +178,8 @@ struct pipe_context *svga_context_create( struct pipe_screen *screen,
    return &svga->pipe;
 
 no_state:
+   svga_destroy_swtnl(svga);
+no_swtnl:
    svga_hwtnl_destroy( svga->hwtnl );
 no_hwtnl:
    u_upload_destroy( svga->upload_vb );
@@ -189,8 +190,6 @@ no_upload_ib:
 no_vs_bm:
    util_bitmask_destroy( svga->fs_bm );
 no_fs_bm:
-   svga_destroy_swtnl(svga);
-no_swtnl:
    svga->swc->destroy(svga->swc);
 no_swc:
    FREE(svga);
