@@ -110,8 +110,8 @@ static void radeon_cs_context_cleanup(struct radeon_cs_context *csc)
     unsigned i;
 
     for (i = 0; i < csc->crelocs; i++) {
-        radeon_bo_unref(csc->relocs_bo[i]);
         p_atomic_dec(&csc->relocs_bo[i]->num_cs_references);
+        radeon_bo_unref(csc->relocs_bo[i]);
         csc->relocs_bo[i] = NULL;
     }
 
