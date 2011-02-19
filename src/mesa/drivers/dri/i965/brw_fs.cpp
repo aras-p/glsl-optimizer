@@ -661,14 +661,18 @@ fs_visitor::emit_math(fs_opcodes opcode, fs_reg dst, fs_reg src0, fs_reg src1)
    assert(opcode == FS_OPCODE_POW);
 
    if (intel->gen >= 6) {
-      /* Can't do hstride == 0 args to gen6 math, so expand it out. */
-      if (src0.file == UNIFORM) {
+      /* Can't do hstride == 0 args to gen6 math, so expand it out.
+       *
+       * The hardware ignores source modifiers (negate and abs) on math
+       * instructions, so we also move to a temp to set those up.
+       */
+      if (src0.file == UNIFORM || src0.abs || src0.negate) {
 	 fs_reg expanded = fs_reg(this, glsl_type::float_type);
 	 emit(fs_inst(BRW_OPCODE_MOV, expanded, src0));
 	 src0 = expanded;
       }
 
-      if (src1.file == UNIFORM) {
+      if (src1.file == UNIFORM || src1.abs || src1.negate) {
 	 fs_reg expanded = fs_reg(this, glsl_type::float_type);
 	 emit(fs_inst(BRW_OPCODE_MOV, expanded, src1));
 	 src1 = expanded;
