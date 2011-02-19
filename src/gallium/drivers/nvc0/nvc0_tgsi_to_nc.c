@@ -465,6 +465,7 @@ bld_loop_end(struct bld_context *bld, struct nv_basic_block *bb)
       reg = (struct bld_register *)phi->target;
       phi->target = NULL;
 
+      /* start with s == 1, src[0] is from outside the loop */
       for (s = 1, n = 0; n < bb->num_in; ++n) {
          if (bb->in_kind[n] != CFG_EDGE_BACK)
             continue;
@@ -476,8 +477,11 @@ bld_loop_end(struct bld_context *bld, struct nv_basic_block *bb)
          for (i = 0; i < 4; ++i)
             if (phi->src[i] && phi->src[i]->value == val)
                break;
-         if (i == 4)
+         if (i == 4) {
+            /* skip values we do not want to replace */
+            for (; phi->src[s] && phi->src[s]->value != phi->def[0]; ++s);
             nv_reference(bld->pc, phi, s++, val);
+         }
       }
       bld->pc->current_block = save;
 
