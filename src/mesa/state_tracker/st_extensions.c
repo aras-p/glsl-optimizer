@@ -535,6 +535,33 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_ES2_compatibility = GL_TRUE;
    }
 
+   if (screen->is_format_supported(screen, PIPE_FORMAT_R10G10B10A2_UNORM,
+                                   PIPE_BUFFER, 0,
+                                   PIPE_BIND_VERTEX_BUFFER) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_B10G10R10A2_UNORM,
+                                   PIPE_BUFFER, 0,
+                                   PIPE_BIND_VERTEX_BUFFER) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_R10G10B10A2_SNORM,
+                                   PIPE_BUFFER, 0,
+                                   PIPE_BIND_VERTEX_BUFFER) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_B10G10R10A2_SNORM,
+                                   PIPE_BUFFER, 0,
+                                   PIPE_BIND_VERTEX_BUFFER) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_R10G10B10A2_USCALED,
+                                   PIPE_BUFFER, 0,
+                                   PIPE_BIND_VERTEX_BUFFER) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_B10G10R10A2_USCALED,
+                                   PIPE_BUFFER, 0,
+                                   PIPE_BIND_VERTEX_BUFFER) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_R10G10B10A2_SSCALED,
+                                   PIPE_BUFFER, 0,
+                                   PIPE_BIND_VERTEX_BUFFER) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_B10G10R10A2_SSCALED,
+                                   PIPE_BUFFER, 0,
+                                   PIPE_BIND_VERTEX_BUFFER)) {
+      ctx->Extensions.ARB_vertex_type_2_10_10_10_rev = GL_TRUE;
+   }
+
    if (screen->get_shader_param(screen, PIPE_SHADER_GEOMETRY, PIPE_SHADER_CAP_MAX_INSTRUCTIONS) > 0) {
 #if 0 /* XXX re-enable when GLSL compiler again supports geometry shaders */
       ctx->Extensions.ARB_geometry_shader4 = GL_TRUE;

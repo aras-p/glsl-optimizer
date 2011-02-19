@@ -187,10 +187,43 @@ st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
                       GLboolean normalized)
 {
    assert((type >= GL_BYTE && type <= GL_DOUBLE) ||
-          type == GL_FIXED || type == GL_HALF_FLOAT);
+          type == GL_FIXED || type == GL_HALF_FLOAT ||
+          type == GL_INT_2_10_10_10_REV ||
+          type == GL_UNSIGNED_INT_2_10_10_10_REV);
    assert(size >= 1);
    assert(size <= 4);
    assert(format == GL_RGBA || format == GL_BGRA);
+
+   if (type == GL_INT_2_10_10_10_REV ||
+       type == GL_UNSIGNED_INT_2_10_10_10_REV) {
+      assert(size == 4);
+
+      if (format == GL_BGRA) {
+         if (type == GL_INT_2_10_10_10_REV) {
+            if (normalized)
+               return PIPE_FORMAT_B10G10R10A2_SNORM;
+            else
+               return PIPE_FORMAT_B10G10R10A2_SSCALED;
+         } else {
+            if (normalized)
+               return PIPE_FORMAT_B10G10R10A2_UNORM;
+            else
+               return PIPE_FORMAT_B10G10R10A2_USCALED;
+         }
+      } else {
+         if (type == GL_INT_2_10_10_10_REV) {
+            if (normalized)
+               return PIPE_FORMAT_R10G10B10A2_SNORM;
+            else
+               return PIPE_FORMAT_R10G10B10A2_SSCALED;
+         } else {
+            if (normalized)
+               return PIPE_FORMAT_R10G10B10A2_UNORM;
+            else
+               return PIPE_FORMAT_R10G10B10A2_USCALED;
+         }
+      }
+   }
 
    if (format == GL_BGRA) {
       /* this is an odd-ball case */
