@@ -231,44 +231,53 @@ lp_build_unsigned_norm_to_float(struct gallivm_state *gallivm,
 
    assert(dst_type.floating);
 
-   /* Special-case int8->float, though most cases could be handled
-    * this way:
-    */
-   if (src_width == 8) {
-      scale = 1.0/255.0;
+   mantissa = lp_mantissa(dst_type);
+
+   if (src_width <= (mantissa + 1)) {
+      /*
+       * The source width matches fits what can be represented in floating
+       * point (i.e., mantissa + 1 bits). So do a straight multiplication
+       * followed by casting. No further rounding is necessary.
+       */
+
+      scale = 1.0/(double)((1ULL << src_width) - 1);
       res = LLVMBuildSIToFP(builder, src, vec_type, "");
       res = LLVMBuildFMul(builder, res,
                           lp_build_const_vec(gallivm, dst_type, scale), "");
       return res;
    }
+   else {
+      /*
+       * The source width exceeds what can be represented in floating
+       * point. So truncate the incoming values.
+       */
 
-   mantissa = lp_mantissa(dst_type);
+      n = MIN2(mantissa, src_width);
 
-   n = MIN2(mantissa, src_width);
+      ubound = ((unsigned long long)1 << n);
+      mask = ubound - 1;
+      scale = (double)ubound/mask;
+      bias = (double)((unsigned long long)1 << (mantissa - n));
 
-   ubound = ((unsigned long long)1 << n);
-   mask = ubound - 1;
-   scale = (double)ubound/mask;
-   bias = (double)((unsigned long long)1 << (mantissa - n));
+      res = src;
 
-   res = src;
+      if (src_width > mantissa) {
+         int shift = src_width - mantissa;
+         res = LLVMBuildLShr(builder, res,
+                             lp_build_const_int_vec(gallivm, dst_type, shift), "");
+      }
 
-   if(src_width > mantissa) {
-      int shift = src_width - mantissa;
-      res = LLVMBuildLShr(builder, res,
-                          lp_build_const_int_vec(gallivm, dst_type, shift), "");
+      bias_ = lp_build_const_vec(gallivm, dst_type, bias);
+
+      res = LLVMBuildOr(builder,
+                        res,
+                        LLVMBuildBitCast(builder, bias_, int_vec_type, ""), "");
+
+      res = LLVMBuildBitCast(builder, res, vec_type, "");
+
+      res = LLVMBuildFSub(builder, res, bias_, "");
+      res = LLVMBuildFMul(builder, res, lp_build_const_vec(gallivm, dst_type, scale), "");
    }
-
-   bias_ = lp_build_const_vec(gallivm, dst_type, bias);
-
-   res = LLVMBuildOr(builder,
-                     res,
-                     LLVMBuildBitCast(builder, bias_, int_vec_type, ""), "");
-
-   res = LLVMBuildBitCast(builder, res, vec_type, "");
-
-   res = LLVMBuildFSub(builder, res, bias_, "");
-   res = LLVMBuildFMul(builder, res, lp_build_const_vec(gallivm, dst_type, scale), "");
 
    return res;
 }
