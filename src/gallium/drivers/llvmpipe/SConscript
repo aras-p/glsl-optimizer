@@ -96,10 +96,15 @@ if env['platform'] != 'embedded':
         tests.append('round')
 
     for test in tests:
+        testname = 'lp_test_' + test
         target = env.Program(
-            target = 'lp_test_' + test,
-            source = ['lp_test_' + test + '.c', 'lp_test_main.c'],
+            target = testname,
+            source = [testname + '.c', 'lp_test_main.c'],
         )
         env.InstallProgram(target)
+        
+        # http://www.scons.org/wiki/UnitTests
+        alias = env.Alias(testname, [target], target[0].abspath)
+        AlwaysBuild(alias)
 
 Export('llvmpipe')
