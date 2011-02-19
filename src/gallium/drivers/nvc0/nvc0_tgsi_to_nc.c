@@ -1825,11 +1825,11 @@ bld_instruction(struct bld_context *bld,
    case TGSI_OPCODE_SSG:
       FOR_EACH_DST0_ENABLED_CHANNEL(c, insn) { /* XXX: set lt, set gt, sub */
          src0 = emit_fetch(bld, insn, 0, c);
-         src1 = bld_setp(bld, NV_OP_SET_F32, NV_CC_EQ, src0, bld->zero);
-         temp = bld_insn_2(bld, NV_OP_AND, src0, bld_imm_u32(bld, 0x80000000));
-         temp = bld_insn_2(bld, NV_OP_OR,  temp, bld_imm_f32(bld, 1.0f));
-         dst0[c] = bld_insn_1(bld, NV_OP_MOV, temp);
-         bld_src_predicate(bld, dst0[c]->insn, 1, src1);
+         src1 = bld_insn_2(bld, NV_OP_FSET_F32, src0, bld->zero);
+         src2 = bld_insn_2(bld, NV_OP_FSET_F32, src0, bld->zero);
+         src1->insn->set_cond = NV_CC_GT;
+         src2->insn->set_cond = NV_CC_LT;
+         dst0[c] = bld_insn_2(bld, NV_OP_SUB_F32, src1, src2);
       }
       break;
    case TGSI_OPCODE_SUB:
