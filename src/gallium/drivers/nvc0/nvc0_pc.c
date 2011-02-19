@@ -189,7 +189,10 @@ nvc0_pc_pass_in_order(struct nv_basic_block *root, nv_pc_pass_func f,
             bb[p++] = b->out[j];
             break;
          case CFG_EDGE_LOOP_LEAVE:
-            bbb[pp++] = b->out[j];
+            if (!b->out[j]->priv) {
+               bbb[pp++] = b->out[j];
+               b->out[j]->priv = 1;
+            }
             break;
          default:
             assert(0);
