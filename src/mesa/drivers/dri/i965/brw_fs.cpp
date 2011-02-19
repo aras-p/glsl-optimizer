@@ -3059,6 +3059,8 @@ fs_visitor::register_coalesce()
 	  inst->dst.type != inst->src[0].type)
 	 continue;
 
+      bool has_source_modifiers = inst->src[0].abs || inst->src[0].negate;
+
       /* Found a move of a GRF to a GRF.  Let's see if we can coalesce
        * them: check for no writes to either one until the exit of the
        * program.
@@ -3082,6 +3084,14 @@ fs_visitor::register_coalesce()
 	       interfered = true;
 	       break;
 	    }
+	 }
+
+	 /* The gen6 MATH instruction can't handle source modifiers, so avoid
+	  * coalescing those for now.  We should do something more specific.
+	  */
+	 if (intel->gen == 6 && scan_inst->is_math() && has_source_modifiers) {
+	    interfered = true;
+	    break;
 	 }
       }
       if (interfered) {
