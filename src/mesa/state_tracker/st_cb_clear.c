@@ -300,9 +300,11 @@ clear_with_quad(struct gl_context *ctx,
    cso_set_fragment_shader_handle(st->cso_context, st->clear.fs);
    cso_set_vertex_shader_handle(st->cso_context, st->clear.vs);
 
-   st_translate_color(ctx->Color.ClearColor,
-                      ctx->DrawBuffer->_ColorDrawBuffers[0]->_BaseFormat,
-                      clearColor);
+   if (ctx->DrawBuffer->_ColorDrawBuffers[0]) {
+      st_translate_color(ctx->Color.ClearColor,
+                         ctx->DrawBuffer->_ColorDrawBuffers[0]->_BaseFormat,
+                         clearColor);
+   }
 
    /* draw quad matching scissor rect */
    draw_quad(st, x0, y0, x1, y1, (GLfloat) ctx->Depth.Clear, clearColor);
@@ -555,9 +557,11 @@ st_Clear(struct gl_context *ctx, GLbitfield mask)
            ctx->DrawBuffer->Visual.stencilBits == 0))
          clear_buffers |= PIPE_CLEAR_DEPTHSTENCIL;
 
-      st_translate_color(ctx->Color.ClearColor,
-                         ctx->DrawBuffer->_ColorDrawBuffers[0]->_BaseFormat,
-                         clearColor);
+      if (ctx->DrawBuffer->_ColorDrawBuffers[0]) {
+         st_translate_color(ctx->Color.ClearColor,
+                            ctx->DrawBuffer->_ColorDrawBuffers[0]->_BaseFormat,
+                            clearColor);
+      }
 
       st->pipe->clear(st->pipe, clear_buffers, ctx->Color.ClearColor,
                       ctx->Depth.Clear, ctx->Stencil.Clear);
