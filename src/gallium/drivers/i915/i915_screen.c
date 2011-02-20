@@ -100,6 +100,8 @@ i915_get_name(struct pipe_screen *screen)
 static int
 i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
 {
+   struct i915_screen *is = i915_screen(screen);
+
    switch (cap) {
    /* Supported features (boolean caps). */
    case PIPE_CAP_ANISOTROPIC_FILTER:
@@ -123,13 +125,16 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_INDEP_BLEND_ENABLE:
    case PIPE_CAP_INDEP_BLEND_FUNC:
    case PIPE_CAP_INSTANCED_DRAWING: /* draw module? */
-   case PIPE_CAP_OCCLUSION_QUERY:
    case PIPE_CAP_POINT_SPRITE:
    case PIPE_CAP_SHADER_STENCIL_EXPORT:
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
    case PIPE_CAP_TEXTURE_SWIZZLE:
    case PIPE_CAP_TIMER_QUERY:
       return 0;
+
+   /* Features we can lie about (boolean caps). */
+   case PIPE_CAP_OCCLUSION_QUERY:
+      return is->debug.lie ? 1 : 0;
 
    /* Texturing. */
    case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
