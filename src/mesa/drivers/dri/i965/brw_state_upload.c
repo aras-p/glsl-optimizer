@@ -181,11 +181,11 @@ void brw_destroy_state( struct brw_context *brw )
 /***********************************************************************
  */
 
-static GLboolean check_state( const struct brw_state_flags *a,
-			      const struct brw_state_flags *b )
+static GLuint check_state( const struct brw_state_flags *a,
+			   const struct brw_state_flags *b )
 {
-   return ((a->mesa & b->mesa) ||
-	   (a->brw & b->brw) ||
+   return ((a->mesa & b->mesa) |
+	   (a->brw & b->brw) |
 	   (a->cache & b->cache));
 }
 
@@ -377,9 +377,7 @@ void brw_validate_state( struct brw_context *brw )
       brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
    }
 
-   if (state->mesa == 0 &&
-       state->cache == 0 &&
-       state->brw == 0)
+   if ((state->mesa | state->cache | state->brw) == 0)
       return;
 
    brw->intel.Fallback = GL_FALSE; /* boolean, not bitfield */
