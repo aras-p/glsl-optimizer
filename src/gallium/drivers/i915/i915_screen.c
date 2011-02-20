@@ -98,59 +98,72 @@ i915_get_name(struct pipe_screen *screen)
 }
 
 static int
-i915_get_param(struct pipe_screen *screen, enum pipe_cap param)
+i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
 {
-   switch (param) {
+   switch (cap) {
+   /* Supported features (boolean caps). */
+   case PIPE_CAP_NPOT_TEXTURES:
+   case PIPE_CAP_PRIMITIVE_RESTART: /* draw module */
+   case PIPE_CAP_TEXTURE_SHADOW_MAP:
+   case PIPE_CAP_TWO_SIDED_STENCIL:
+      return 1;
+
+   /* Unsupported features (boolean caps). */
+   case PIPE_CAP_ANISOTROPIC_FILTER:
+   case PIPE_CAP_ARRAY_TEXTURES:
+   case PIPE_CAP_BLEND_EQUATION_SEPARATE:
+   case PIPE_CAP_DEPTH_CLAMP:
+   case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE: /* disable for now */
+   case PIPE_CAP_GLSL:
+   case PIPE_CAP_INDEP_BLEND_ENABLE:
+   case PIPE_CAP_INDEP_BLEND_FUNC:
+   case PIPE_CAP_INSTANCED_DRAWING: /* draw module? */
+   case PIPE_CAP_OCCLUSION_QUERY:
+   case PIPE_CAP_POINT_SPRITE:
+   case PIPE_CAP_SHADER_STENCIL_EXPORT:
+   case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
+   case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
+   case PIPE_CAP_TEXTURE_SWIZZLE:
+   case PIPE_CAP_TIMER_QUERY:
+      return 0;
+
+   /* Texturing. */
    case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
+   case PIPE_CAP_MAX_COMBINED_SAMPLERS:
       return 8;
    case PIPE_CAP_MAX_VERTEX_TEXTURE_UNITS:
       return 0;
-   case PIPE_CAP_MAX_COMBINED_SAMPLERS:
-      return 8;
-   case PIPE_CAP_NPOT_TEXTURES:
-      return 1;
-   case PIPE_CAP_TWO_SIDED_STENCIL:
-      return 1;
-   case PIPE_CAP_GLSL:
-      return 0;
-   case PIPE_CAP_ANISOTROPIC_FILTER:
-      return 0;
-   case PIPE_CAP_POINT_SPRITE:
-      return 0;
-   case PIPE_CAP_MAX_RENDER_TARGETS:
-      return 1;
-   case PIPE_CAP_OCCLUSION_QUERY:
-      return 0;
-   case PIPE_CAP_TIMER_QUERY:
-      return 0;
-   case PIPE_CAP_TEXTURE_SHADOW_MAP:
-      return 1;
    case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
       return I915_MAX_TEXTURE_2D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_3D_LEVELS:
       return I915_MAX_TEXTURE_3D_LEVELS;
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
       return I915_MAX_TEXTURE_2D_LEVELS;
+
+   /* Render targets. */
+   case PIPE_CAP_MAX_RENDER_TARGETS:
+      return 1;
+
+   /* Fragment coordinate conventions. */
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
       return 1;
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
       return 0;
-   case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
-      /* disable for now */
-      return 0;
+
    default:
+      debug_printf("%s: Unkown cap %u.\n", __FUNCTION__, cap);
       return 0;
    }
 }
 
 static int
-i915_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_shader_cap param)
+i915_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_shader_cap cap)
 {
    switch(shader) {
    case PIPE_SHADER_VERTEX:
-      return draw_get_shader_param(shader, param);
+      return draw_get_shader_param(shader, cap);
    case PIPE_SHADER_FRAGMENT:
       break;
    default:
@@ -158,7 +171,7 @@ i915_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_sha
    }
 
    /* XXX: these are just shader model 2.0 values, fix this! */
-   switch(param) {
+   switch(cap) {
       case PIPE_SHADER_CAP_MAX_INSTRUCTIONS:
          return 96;
       case PIPE_SHADER_CAP_MAX_ALU_INSTRUCTIONS:
@@ -191,15 +204,15 @@ i915_get_shader_param(struct pipe_screen *screen, unsigned shader, enum pipe_sha
       case PIPE_SHADER_CAP_SUBROUTINES:
          return 0;
       default:
-         assert(0);
+         debug_printf("%s: Unkown cap %u.\n", __FUNCTION__, cap);
          return 0;
    }
 }
 
 static float
-i915_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
+i915_get_paramf(struct pipe_screen *screen, enum pipe_cap cap)
 {
-   switch (param) {
+   switch(cap) {
    case PIPE_CAP_MAX_LINE_WIDTH:
       /* fall-through */
    case PIPE_CAP_MAX_LINE_WIDTH_AA:
@@ -217,6 +230,7 @@ i915_get_paramf(struct pipe_screen *screen, enum pipe_cap param)
       return 16.0;
 
    default:
+      debug_printf("%s: Unkown cap %u.\n", __FUNCTION__, cap);
       return 0;
    }
 }
