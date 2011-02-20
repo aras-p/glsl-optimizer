@@ -444,7 +444,7 @@ static void brw_emit_vertices(struct brw_context *brw)
 		(BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_1_SHIFT) |
 		(BRW_VE1_COMPONENT_STORE_0 << BRW_VE1_COMPONENT_2_SHIFT) |
 		(BRW_VE1_COMPONENT_STORE_1_FLT << BRW_VE1_COMPONENT_3_SHIFT));
-      ADVANCE_BATCH();
+      CACHED_BATCH();
       return;
    }
 
@@ -484,7 +484,6 @@ static void brw_emit_vertices(struct brw_context *brw)
       OUT_BATCH(0); /* Instance data step rate */
    }
    ADVANCE_BATCH();
-
 
    BEGIN_BATCH(1 + brw->vb.nr_enabled * 2);
    OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | ((1 + brw->vb.nr_enabled * 2) - 2));
@@ -531,7 +530,7 @@ static void brw_emit_vertices(struct brw_context *brw)
                     (comp3 << BRW_VE1_COMPONENT_3_SHIFT) |
                     ((i * 4) << BRW_VE1_DST_OFFSET_SHIFT));
    }
-   ADVANCE_BATCH();
+   CACHED_BATCH();
 }
 
 const struct brw_tracked_state brw_vertices = {
