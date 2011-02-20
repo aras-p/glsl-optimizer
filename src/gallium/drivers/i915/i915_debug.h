@@ -46,7 +46,6 @@ struct i915_winsys_batchbuffer;
 #define DBG_CONSTANTS 0x20
 
 extern unsigned i915_debug;
-extern boolean i915_tiling;
 
 #ifdef DEBUG
 static INLINE boolean

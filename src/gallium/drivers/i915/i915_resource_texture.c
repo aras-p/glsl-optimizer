@@ -174,7 +174,7 @@ i915_texture_set_image_offset(struct i915_texture *tex,
 static enum i915_winsys_buffer_tile
 i915_texture_tiling(struct i915_screen *is, struct i915_texture *tex)
 {
-   if (!i915_tiling)
+   if (!is->debug.tiling)
       return I915_TILE_NONE;
 
    if (tex->b.b.target == PIPE_TEXTURE_1D)

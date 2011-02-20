@@ -51,10 +51,10 @@ boolean i915_tiling = TRUE;
 DEBUG_GET_ONCE_FLAGS_OPTION(i915_debug, "I915_DEBUG", debug_options, 0);
 DEBUG_GET_ONCE_BOOL_OPTION(i915_no_tiling, "I915_NO_TILING", FALSE);
 
-void i915_debug_init(struct i915_screen *screen)
+void i915_debug_init(struct i915_screen *is)
 {
    i915_debug = debug_get_option_i915_debug();
-   i915_tiling = !debug_get_option_i915_no_tiling();
+   is->debug.tiling = !debug_get_option_i915_no_tiling();
 }
 
 
