@@ -108,10 +108,15 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_TWO_SIDED_STENCIL:
       return 1;
 
+   /* Features that should be supported (boolean caps). */
+   /* XXX: Just test the code */
+   case PIPE_CAP_BLEND_EQUATION_SEPARATE:
+   case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
+      return 0;
+
    /* Unsupported features (boolean caps). */
    case PIPE_CAP_ANISOTROPIC_FILTER:
    case PIPE_CAP_ARRAY_TEXTURES:
-   case PIPE_CAP_BLEND_EQUATION_SEPARATE:
    case PIPE_CAP_DEPTH_CLAMP:
    case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE: /* disable for now */
    case PIPE_CAP_GLSL:
@@ -122,7 +127,6 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_POINT_SPRITE:
    case PIPE_CAP_SHADER_STENCIL_EXPORT:
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
-   case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
    case PIPE_CAP_TEXTURE_SWIZZLE:
    case PIPE_CAP_TIMER_QUERY:
       return 0;

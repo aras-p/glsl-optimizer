@@ -1,5 +1,8 @@
 Random list of problems with i915g:
 
+- Check if PIPE_CAP_BLEND_EQUATION_SEPARATE and PIPE_CAP_TEXTURE_MIRROR_REPEAT
+  work, the code is there. If not fix it! A simple task, good for beginners.
+
 - Dies with BadDrawable on GLXFBconfig changes/destruction. Makes piglit totally
   unusable :( Upgrading xserver helped here, it doesn't crash anymore. Still
   broken, it doesn't update the viewport/get new buffers.
