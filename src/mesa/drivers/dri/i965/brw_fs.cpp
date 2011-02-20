@@ -494,7 +494,7 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
    wpos.reg_offset++;
 
    /* gl_FragCoord.w: Already set up in emit_interpolation */
-   emit(fs_inst(BRW_OPCODE_MOV, wpos, this->wpos_w));
+   emit(fs_inst(BRW_OPCODE_MOV, wpos, this->pixel_w));
 
    return reg;
 }
