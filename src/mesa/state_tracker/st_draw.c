@@ -249,6 +249,7 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
    const struct gl_buffer_object *firstBufObj = NULL;
    GLint firstStride = -1;
    const GLubyte *client_addr = NULL;
+   GLboolean user_memory;
 
    for (attr = 0; attr < vpv->num_inputs; attr++) {
       const GLuint mesaAttr = vp->index_to_input[attr];
@@ -257,6 +258,7 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
 
       if (firstStride < 0) {
          firstStride = stride;
+         user_memory = !bufObj || !bufObj->Name;
       }
       else if (firstStride != stride) {
          return GL_FALSE;
@@ -266,6 +268,9 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
          /* Try to detect if the client-space arrays are
           * "close" to each other.
           */
+         if (!user_memory) {
+            return GL_FALSE;
+         }
          if (!client_addr) {
             client_addr = arrays[mesaAttr]->Ptr;
          }
@@ -275,6 +280,9 @@ is_interleaved_arrays(const struct st_vertex_program *vp,
          }
       }
       else if (!firstBufObj) {
+         if (user_memory) {
+            return GL_FALSE;
+         }
          firstBufObj = bufObj;
       }
       else if (bufObj != firstBufObj) {
