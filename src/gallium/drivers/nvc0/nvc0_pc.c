@@ -44,6 +44,11 @@ nvc0_insn_can_load(struct nv_instruction *nvi, int s,
    if (ld->indirect >= 0)
       return FALSE;
 
+   /* a few ops can use g[] sources directly, but we don't support g[] yet */
+   if (ld->src[0]->value->reg.file == NV_FILE_MEM_L ||
+       ld->src[0]->value->reg.file == NV_FILE_MEM_G)
+      return FALSE;
+
    for (i = 0; i < 3 && nvi->src[i]; ++i)
       if (nvi->src[i]->value->reg.file == NV_FILE_IMM)
          return FALSE;
