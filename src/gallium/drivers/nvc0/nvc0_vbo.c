@@ -371,6 +371,8 @@ nvc0_draw_vbo_flush_notify(struct nouveau_channel *chan)
 {
    struct nvc0_context *nvc0 = chan->user_private;
 
+   nvc0_screen_fence_update(nvc0->screen, TRUE);
+
    nvc0_bufctx_emit_relocs(nvc0);
 }
 
@@ -398,7 +400,7 @@ nvc0_draw_arrays(struct nvc0_context *nvc0,
       prim |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
    }
 
-   chan->flush_notify = NULL;
+   chan->flush_notify = nvc0_default_flush_notify;
 }
 
 static void
@@ -568,7 +570,7 @@ nvc0_draw_elements(struct nvc0_context *nvc0, boolean shorten,
       }
    }
 
-   chan->flush_notify = NULL;
+   chan->flush_notify = nvc0_default_flush_notify;
 }
 
 void

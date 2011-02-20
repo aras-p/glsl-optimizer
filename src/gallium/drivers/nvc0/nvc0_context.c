@@ -47,15 +47,12 @@ nvc0_flush(struct pipe_context *pipe, unsigned flags,
       OUT_RING  (chan, 0);
    }
 
-   if (fence) {
-      nvc0_screen_fence_new(nvc0->screen, (struct nvc0_fence **)fence, TRUE);
-   }
+   if (fence)
+      nvc0_fence_reference((struct nvc0_fence **)fence,
+                           nvc0->screen->fence.current);
 
-   if (flags & (PIPE_FLUSH_SWAPBUFFERS | PIPE_FLUSH_FRAME)) {
+   if (flags & (PIPE_FLUSH_SWAPBUFFERS | PIPE_FLUSH_FRAME))
       FIRE_RING(chan);
-
-      nvc0_screen_fence_next(nvc0->screen);
-   }
 }
 
 static void
@@ -69,6 +66,16 @@ nvc0_destroy(struct pipe_context *pipe)
       nvc0->screen->cur_ctx = NULL;
 
    FREE(nvc0);
+}
+
+void
+nvc0_default_flush_notify(struct nouveau_channel *chan)
+{
+   struct nvc0_context *nvc0 = chan->user_private;
+
+   nvc0_screen_fence_update(nvc0->screen, TRUE);
+
+   nvc0_screen_fence_next(nvc0->screen);
 }
 
 struct pipe_context *
@@ -95,6 +102,7 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
    nvc0->pipe.flush = nvc0_flush;
 
    screen->base.channel->user_private = nvc0;
+   screen->base.channel->flush_notify = nvc0_default_flush_notify;
 
    nvc0_init_query_functions(nvc0);
    nvc0_init_surface_functions(nvc0);

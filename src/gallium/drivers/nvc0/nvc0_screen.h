@@ -138,9 +138,10 @@ nvc0_resource_validate(struct nvc0_resource *res, uint32_t flags)
 
 boolean
 nvc0_screen_fence_new(struct nvc0_screen *, struct nvc0_fence **, boolean emit);
-
 void
 nvc0_screen_fence_next(struct nvc0_screen *);
+void
+nvc0_screen_fence_update(struct nvc0_screen *, boolean flushed);
 
 static INLINE boolean
 nvc0_screen_fence_emit(struct nvc0_screen *screen)
