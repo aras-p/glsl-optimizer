@@ -782,6 +782,7 @@ dri2_create_image_khr_pixmap(_EGLDisplay *disp, _EGLContext *ctx,
       _eglError(EGL_BAD_ALLOC, "xcb_get_geometry");
       free(error);
       free(buffers_reply);
+      return NULL;
    }
 
    switch (geometry_reply->depth) {
