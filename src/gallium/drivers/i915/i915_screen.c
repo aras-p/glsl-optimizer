@@ -321,6 +321,20 @@ i915_fence_finish(struct pipe_screen *screen,
 
 
 static void
+i915_flush_frontbuffer(struct pipe_screen *screen,
+                       struct pipe_resource *resource,
+                       unsigned level, unsigned layer,
+                       void *winsys_drawable_handle)
+{
+   /* XXX: Dummy right now. */
+   (void)screen;
+   (void)resource;
+   (void)level;
+   (void)layer;
+   (void)winsys_drawable_handle;
+}
+
+static void
 i915_destroy_screen(struct pipe_screen *screen)
 {
    struct i915_screen *is = i915_screen(screen);
@@ -371,6 +385,7 @@ i915_screen_create(struct i915_winsys *iws)
    is->base.winsys = NULL;
 
    is->base.destroy = i915_destroy_screen;
+   is->base.flush_frontbuffer = i915_flush_frontbuffer;
 
    is->base.get_name = i915_get_name;
    is->base.get_vendor = i915_get_vendor;
