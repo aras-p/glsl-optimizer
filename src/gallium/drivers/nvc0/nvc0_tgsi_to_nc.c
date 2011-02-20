@@ -133,13 +133,10 @@ struct bld_context {
 static INLINE ubyte
 bld_register_file(struct bld_context *bld, struct bld_register *reg)
 {
-   if (reg < &bld->avs[0][0]) return NV_FILE_GPR;
-   else
-   if (reg < &bld->pvs[0][0]) return NV_FILE_GPR;
-   else
-   if (reg < &bld->ovs[0][0]) return NV_FILE_PRED;
-   else
-      return NV_FILE_MEM_V;
+   if (reg >= &bld->pvs[0][0] &&
+       reg <  &bld->ovs[0][0])
+      return NV_FILE_PRED;
+   return NV_FILE_GPR;
 }
 
 static INLINE struct nv_value *
