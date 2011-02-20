@@ -33,6 +33,25 @@
 #include "intel_bufmgr.h"
 #include "intel_buffers.h"
 
+struct cached_batch_item {
+   struct cached_batch_item *next;
+   uint16_t header;
+   uint16_t size;
+};
+
+static void clear_cache( struct intel_context *intel )
+{
+   struct cached_batch_item *item = intel->batch.cached_items;
+
+   while (item) {
+      struct cached_batch_item *next = item->next;
+      free(item);
+      item = next;
+   }
+
+   intel->batch.cached_items = NULL;
+}
+
 void
 intel_batchbuffer_reset(struct intel_context *intel)
 {
@@ -40,6 +59,7 @@ intel_batchbuffer_reset(struct intel_context *intel)
       drm_intel_bo_unreference(intel->batch.bo);
       intel->batch.bo = NULL;
    }
+   clear_cache(intel);
 
    intel->batch.bo = drm_intel_bo_alloc(intel->bufmgr, "batchbuffer",
 					intel->maxBatchSize, 4096);
@@ -53,6 +73,7 @@ void
 intel_batchbuffer_free(struct intel_context *intel)
 {
    drm_intel_bo_unreference(intel->batch.bo);
+   clear_cache(intel);
 }
 
 
@@ -165,7 +186,8 @@ intel_batchbuffer_emit_reloc(struct intel_context *intel,
    ret = drm_intel_bo_emit_reloc(intel->batch.bo, 4*intel->batch.used,
 				 buffer, delta,
 				 read_domains, write_domain);
-   assert (ret == 0);
+   assert(ret == 0);
+   (void)ret;
 
    /*
     * Using the old buffer offset, write in what the right data would be, in case
@@ -191,7 +213,8 @@ intel_batchbuffer_emit_reloc_fenced(struct intel_context *intel,
    ret = drm_intel_bo_emit_reloc_fence(intel->batch.bo, 4*intel->batch.used,
 				       buffer, delta,
 				       read_domains, write_domain);
-   assert (ret == 0);
+   assert(ret == 0);
+   (void)ret;
 
    /*
     * Using the old buffer offset, write in what the right data would
@@ -211,6 +234,47 @@ intel_batchbuffer_data(struct intel_context *intel,
    intel_batchbuffer_require_space(intel, bytes, is_blit);
    __memcpy(intel->batch.map + intel->batch.used, data, bytes);
    intel->batch.used += bytes >> 2;
+}
+
+void
+intel_batchbuffer_cached_advance(struct intel_context *intel)
+{
+   struct cached_batch_item **prev = &intel->batch.cached_items, *item;
+   uint32_t sz = (intel->batch.used - intel->batch.emit) * sizeof(uint32_t);
+   uint32_t *start = intel->batch.map + intel->batch.emit;
+   uint16_t op = *start >> 16;
+
+   while (*prev) {
+      uint32_t *old;
+
+      item = *prev;
+      old = intel->batch.map + item->header;
+      if (op == *old >> 16) {
+	 if (item->size == sz && memcmp(old, start, sz) == 0) {
+	    if (prev != &intel->batch.cached_items) {
+	       *prev = item->next;
+	       item->next = intel->batch.cached_items;
+	       intel->batch.cached_items = item;
+	    }
+	    intel->batch.used = intel->batch.emit;
+	    return;
+	 }
+
+	 goto emit;
+      }
+      prev = &item->next;
+   }
+
+   item = malloc(sizeof(struct cached_batch_item));
+   if (item == NULL)
+      return;
+
+   item->next = intel->batch.cached_items;
+   intel->batch.cached_items = item;
+
+emit:
+   item->size = sz;
+   item->header = intel->batch.emit;
 }
 
 /* Emit a pipelined flush to either flush render and texture cache for

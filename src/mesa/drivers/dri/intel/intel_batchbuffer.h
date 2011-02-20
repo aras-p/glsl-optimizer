@@ -101,9 +101,9 @@ intel_batchbuffer_begin(struct intel_context *intel, int n, bool is_blit)
 {
    intel_batchbuffer_require_space(intel, n * 4, is_blit);
 
+   intel->batch.emit = intel->batch.used;
 #ifdef DEBUG
-   intel->batch.emit.total = n;
-   intel->batch.emit.start_ptr = intel->batch.used;
+   intel->batch.total = n;
 #endif
 }
 
@@ -123,6 +123,8 @@ intel_batchbuffer_advance(struct intel_context *intel)
 #endif
 }
 
+void intel_batchbuffer_cached_advance(struct intel_context *intel);
+
 /* Here are the crusty old macros, to be removed:
  */
 #define BATCH_LOCALS
@@ -141,5 +143,6 @@ intel_batchbuffer_advance(struct intel_context *intel)
 } while (0)
 
 #define ADVANCE_BATCH() intel_batchbuffer_advance(intel);
+#define CACHED_BATCH() intel_batchbuffer_cached_advance(intel);
 
 #endif

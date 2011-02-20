@@ -29,74 +29,9 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
      
-
-
 #include "brw_state.h"
 #include "intel_batchbuffer.h"
 #include "main/imports.h"
-
-
-
-/* A facility similar to the data caching code above, which aims to
- * prevent identical commands being issued repeatedly.
- */
-GLboolean brw_cached_batch_struct( struct brw_context *brw,
-				   const void *data,
-				   GLuint sz )
-{
-   struct brw_cached_batch_item *item = brw->cached_batch_items;
-   struct header *newheader = (struct header *)data;
-
-   if (brw->emit_state_always) {
-      intel_batchbuffer_data(&brw->intel, data, sz, false);
-      return GL_TRUE;
-   }
-
-   while (item) {
-      if (item->header->opcode == newheader->opcode) {
-	 if (item->sz == sz && memcmp(item->header, newheader, sz) == 0)
-	    return GL_FALSE;
-	 if (item->sz != sz) {
-	    free(item->header);
-	    item->header = malloc(sz);
-	    item->sz = sz;
-	 }
-	 goto emit;
-      }
-      item = item->next;
-   }
-
-   assert(!item);
-   item = CALLOC_STRUCT(brw_cached_batch_item);
-   item->header = malloc(sz);
-   item->sz = sz;
-   item->next = brw->cached_batch_items;
-   brw->cached_batch_items = item;
-
- emit:
-   memcpy(item->header, newheader, sz);
-   intel_batchbuffer_data(&brw->intel, data, sz, false);
-   return GL_TRUE;
-}
-
-void brw_clear_batch_cache( struct brw_context *brw )
-{
-   struct brw_cached_batch_item *item = brw->cached_batch_items;
-
-   while (item) {
-      struct brw_cached_batch_item *next = item->next;
-      free((void *)item->header);
-      free(item);
-      item = next;
-   }
-
-   brw->cached_batch_items = NULL;
-}
-
-void brw_destroy_batch_cache( struct brw_context *brw )
-{
-   brw_clear_batch_cache(brw);
-}
 
 /**
  * Allocates a block of space in the batchbuffer for indirect state.

@@ -176,7 +176,6 @@ void brw_init_state( struct brw_context *brw )
 void brw_destroy_state( struct brw_context *brw )
 {
    brw_destroy_caches(brw);
-   brw_destroy_batch_cache(brw);
 }
 
 /***********************************************************************
@@ -382,9 +381,6 @@ void brw_validate_state( struct brw_context *brw )
        state->cache == 0 &&
        state->brw == 0)
       return;
-
-   if (brw->state.dirty.brw & BRW_NEW_CONTEXT)
-      brw_clear_batch_cache(brw);
 
    brw->intel.Fallback = GL_FALSE; /* boolean, not bitfield */
 

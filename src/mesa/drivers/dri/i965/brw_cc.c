@@ -233,18 +233,16 @@ const struct brw_tracked_state brw_cc_unit = {
 
 static void upload_blend_constant_color(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
-   struct brw_blend_constant_color bcc;
+   struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
 
-   memset(&bcc, 0, sizeof(bcc));
-   bcc.header.opcode = _3DSTATE_BLEND_CONSTANT_COLOR;
-   bcc.header.length = sizeof(bcc)/4-2;
-   bcc.blend_constant_color[0] = ctx->Color.BlendColor[0];
-   bcc.blend_constant_color[1] = ctx->Color.BlendColor[1];
-   bcc.blend_constant_color[2] = ctx->Color.BlendColor[2];
-   bcc.blend_constant_color[3] = ctx->Color.BlendColor[3];
-
-   BRW_CACHED_BATCH_STRUCT(brw, &bcc);
+   BEGIN_BATCH(5);
+   OUT_BATCH(_3DSTATE_BLEND_CONSTANT_COLOR << 16 | (5-2));
+   OUT_BATCH(ctx->Color.BlendColor[0]);
+   OUT_BATCH(ctx->Color.BlendColor[1]);
+   OUT_BATCH(ctx->Color.BlendColor[2]);
+   OUT_BATCH(ctx->Color.BlendColor[3]);
+   CACHED_BATCH();
 }
 
 const struct brw_tracked_state brw_blend_constant_color = {

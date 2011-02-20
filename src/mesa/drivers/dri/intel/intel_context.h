@@ -171,22 +171,14 @@ struct intel_context
 
    struct intel_batchbuffer {
       drm_intel_bo *bo;
+      struct cached_batch_item *cached_items;
 
-      uint16_t used;
-      uint16_t reserved_space;
+      uint16_t emit, total;
+      uint16_t used, reserved_space;
       uint32_t map[8192];
 #define BATCH_SZ (8192*sizeof(uint32_t))
 
       uint32_t state_batch_offset;
-
-#ifdef DEBUG
-      /** Tracking of BEGIN_BATCH()/OUT_BATCH()/ADVANCE_BATCH() debugging */
-      struct {
-	 uint16_t total;
-	 uint16_t start_ptr;
-      } emit;
-#endif
-
       bool is_blit;
    } batch;
 
