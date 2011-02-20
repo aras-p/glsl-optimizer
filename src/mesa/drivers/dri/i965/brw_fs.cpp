@@ -3410,20 +3410,25 @@ void
 fs_visitor::generate_code()
 {
    int last_native_inst = 0;
-   struct brw_instruction *if_stack[16], *loop_stack[16];
-   int if_stack_depth = 0, loop_stack_depth = 0;
-   int if_depth_in_loop[16];
    const char *last_annotation_string = NULL;
    ir_instruction *last_annotation_ir = NULL;
+
+   int if_stack_array_size = 16;
+   int loop_stack_array_size = 16;
+   int if_stack_depth = 0, loop_stack_depth = 0;
+   brw_instruction **if_stack =
+      rzalloc_array(this->mem_ctx, brw_instruction *, if_stack_array_size);
+   brw_instruction **loop_stack =
+      rzalloc_array(this->mem_ctx, brw_instruction *, loop_stack_array_size);
+   int *if_depth_in_loop =
+      rzalloc_array(this->mem_ctx, int, loop_stack_array_size);
+
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       printf("Native code for fragment shader %d:\n",
 	     ctx->Shader.CurrentFragmentProgram->Name);
    }
 
-   if_depth_in_loop[loop_stack_depth] = 0;
-
-   memset(&if_stack, 0, sizeof(if_stack));
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
       struct brw_reg src[3], dst;
@@ -3507,7 +3512,6 @@ fs_visitor::generate_code()
 	 break;
 
       case BRW_OPCODE_IF:
-	 assert(if_stack_depth < 16);
 	 if (inst->src[0].file != BAD_FILE) {
 	    assert(intel->gen >= 6);
 	    if_stack[if_stack_depth] = brw_IF_gen6(p, inst->conditional_mod, src[0], src[1]);
@@ -3516,6 +3520,11 @@ fs_visitor::generate_code()
 	 }
 	 if_depth_in_loop[loop_stack_depth]++;
 	 if_stack_depth++;
+	 if (if_stack_array_size <= if_stack_depth) {
+	    if_stack_array_size *= 2;
+	    if_stack = reralloc(this->mem_ctx, if_stack, brw_instruction *,
+			        if_stack_array_size);
+	 }
 	 break;
 
       case BRW_OPCODE_ELSE:
@@ -3530,6 +3539,13 @@ fs_visitor::generate_code()
 
       case BRW_OPCODE_DO:
 	 loop_stack[loop_stack_depth++] = brw_DO(p, BRW_EXECUTE_8);
+	 if (loop_stack_array_size <= loop_stack_depth) {
+	    loop_stack_array_size *= 2;
+	    loop_stack = reralloc(this->mem_ctx, loop_stack, brw_instruction *,
+				  loop_stack_array_size);
+	    if_depth_in_loop = reralloc(this->mem_ctx, if_depth_in_loop, int,
+				        loop_stack_array_size);
+	 }
 	 if_depth_in_loop[loop_stack_depth] = 0;
 	 break;
 
@@ -3647,6 +3663,10 @@ fs_visitor::generate_code()
 
       last_native_inst = p->nr_insn;
    }
+
+   ralloc_free(if_stack);
+   ralloc_free(loop_stack);
+   ralloc_free(if_depth_in_loop);
 
    brw_set_uip_jip(p);
 
