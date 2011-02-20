@@ -39,6 +39,9 @@
 #include "pipe/p_screen.h"
 
 
+DEBUG_GET_ONCE_BOOL_OPTION(i915_no_vbuf, "I915_NO_VBUF", FALSE);
+
+
 /*
  * Draw functions
  */
@@ -144,7 +147,7 @@ i915_create_context(struct pipe_screen *screen, void *priv)
     */
    i915->draw = draw_create(&i915->base);
    assert(i915->draw);
-   if (!debug_get_bool_option("I915_NO_VBUF", FALSE)) {
+   if (!debug_get_option_i915_no_vbuf()) {
       draw_set_rasterize_stage(i915->draw, i915_draw_vbuf_stage(i915));
    } else {
       draw_set_rasterize_stage(i915->draw, i915_draw_render_stage(i915));
