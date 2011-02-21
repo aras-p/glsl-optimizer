@@ -253,6 +253,9 @@ vbo_exec_bind_arrays( struct gl_context *ctx )
 }
 
 
+/**
+ * Unmap the VBO.  This is called before drawing.
+ */
 static void
 vbo_exec_vtx_unmap( struct vbo_exec_context *exec )
 {
@@ -285,6 +288,9 @@ vbo_exec_vtx_unmap( struct vbo_exec_context *exec )
 }
 
 
+/**
+ * Map the vertex buffer to begin storing glVertex, glColor, etc data.
+ */
 void
 vbo_exec_vtx_map( struct vbo_exec_context *exec )
 {
@@ -306,6 +312,7 @@ vbo_exec_vtx_map( struct vbo_exec_context *exec )
 
    if (VBO_VERT_BUFFER_SIZE > exec->vtx.buffer_used + 1024 &&
        ctx->Driver.MapBufferRange) {
+      /* The VBO exists and there's room for more */
       exec->vtx.buffer_map = 
          (GLfloat *)ctx->Driver.MapBufferRange(ctx, 
                                                target, 
@@ -318,6 +325,7 @@ vbo_exec_vtx_map( struct vbo_exec_context *exec )
    }
    
    if (!exec->vtx.buffer_map) {
+      /* Need to allocate a new VBO */
       exec->vtx.buffer_used = 0;
 
       ctx->Driver.BufferData(ctx, target, 
