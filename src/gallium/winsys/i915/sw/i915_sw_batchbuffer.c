@@ -124,7 +124,7 @@ i915_sw_batchbuffer_flush(struct i915_winsys_batchbuffer *ibatch,
    if (i915_sw_winsys(ibatch->iws)->dump_cmd) {
       unsigned *ptr = (unsigned *)batch->base.map;
 
-      debug_printf("%s:\n", __func__);
+      debug_printf("%s:\n", __FUNCTION__);
       for (i = 0; i < used / 4; i++, ptr++) {
          debug_printf("\t%08x:    %08x\n", i*4, *ptr);
       }
