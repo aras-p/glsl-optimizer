@@ -559,7 +559,6 @@ static void brw_emit_vertices(struct brw_context *brw)
       brw->vb.nr_current_buffers = i;
       ADVANCE_BATCH();
    }
-   ADVANCE_BATCH();
 
    BEGIN_BATCH(1 + brw->vb.nr_enabled * 2);
    OUT_BATCH((CMD_VERTEX_ELEMENT << 16) | (2*brw->vb.nr_enabled - 1));
