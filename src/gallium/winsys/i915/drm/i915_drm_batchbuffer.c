@@ -4,6 +4,7 @@
 
 #include "i915_drm.h"
 #include "i915/i915_debug.h"
+#include <xf86drm.h>
 
 #define BATCH_RESERVED 16
 
@@ -132,6 +133,12 @@ i915_drm_batchbuffer_reloc(struct i915_winsys_batchbuffer *ibatch,
    return ret;
 }
 
+static void 
+i915_drm_throttle(struct i915_drm_winsys *idws)
+{
+   drmIoctl(idws->fd, DRM_IOCTL_I915_GEM_THROTTLE, NULL);
+}
+
 static void
 i915_drm_batchbuffer_flush(struct i915_winsys_batchbuffer *ibatch,
                             struct pipe_fence_handle **fence)
@@ -154,6 +161,8 @@ i915_drm_batchbuffer_flush(struct i915_winsys_batchbuffer *ibatch,
    ret = drm_intel_bo_subdata(batch->bo, 0, used, batch->base.map);
    if (ret == 0 && i915_drm_winsys(ibatch->iws)->send_cmd)
       ret = drm_intel_bo_exec(batch->bo, used, NULL, 0, 0);
+
+   i915_drm_throttle(i915_drm_winsys(ibatch->iws));
 
    if (ret != 0 || i915_drm_winsys(ibatch->iws)->dump_cmd) {
       i915_dump_batchbuffer(ibatch);
