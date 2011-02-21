@@ -376,7 +376,7 @@ static void vbo_exec_fixup_vertex( struct gl_context *ctx,
 do {								\
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;	\
 									\
-   if (unlikely(!(exec->ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT))) \
+   if (unlikely(!(ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT)))	\
       ctx->Driver.BeginVertices( ctx );                                 \
    if (unlikely(exec->vtx.active_sz[A] != N))				\
       vbo_exec_fixup_vertex(ctx, A, N);					\
@@ -395,8 +395,8 @@ do {								\
       for (i = 0; i < exec->vtx.vertex_size; i++)		\
 	 exec->vtx.buffer_ptr[i] = exec->vtx.vertex[i];		\
 								\
-      exec->vtx.buffer_ptr += exec->vtx.vertex_size;			\
-      exec->ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;	\
+      exec->vtx.buffer_ptr += exec->vtx.vertex_size;		\
+      ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;		\
 								\
       if (++exec->vtx.vert_count >= exec->vtx.max_vert)		\
 	 vbo_exec_vtx_wrap( exec );				\
