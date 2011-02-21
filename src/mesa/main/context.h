@@ -192,41 +192,41 @@ _mesa_Flush( void );
 
 /**
  * Flush vertices.
- *
- * \param ctx GL context.
- * \param newstate new state.
+ * \param newstate  bitmask of _NEW_x flags
  *
  * Checks if dd_function_table::NeedFlush is marked to flush stored vertices,
  * and calls dd_function_table::FlushVertices if so. Marks
  * __struct gl_contextRec::NewState with \p newstate.
  */
-#define FLUSH_VERTICES(ctx, newstate)				\
-do {								\
-   if (MESA_VERBOSE & VERBOSE_STATE)				\
-      _mesa_debug(ctx, "FLUSH_VERTICES in %s\n", MESA_FUNCTION);\
-   if (ctx->Driver.NeedFlush & FLUSH_STORED_VERTICES)		\
-      ctx->Driver.FlushVertices(ctx, FLUSH_STORED_VERTICES);	\
-   ctx->NewState |= newstate;					\
-} while (0)
+static INLINE void
+FLUSH_VERTICES(struct gl_context *ctx, GLbitfield newstate)
+{
+   if (MESA_VERBOSE & VERBOSE_STATE)
+      _mesa_debug(ctx, "FLUSH_VERTICES in %s\n", MESA_FUNCTION);
+   if (ctx->Driver.NeedFlush & FLUSH_STORED_VERTICES)
+      ctx->Driver.FlushVertices(ctx, FLUSH_STORED_VERTICES);
+   ctx->NewState |= newstate;
+}
+
 
 /**
  * Flush current state.
- *
- * \param ctx GL context.
- * \param newstate new state.
+ * \param newstate  bitmask of _NEW_x flags
  *
  * Checks if dd_function_table::NeedFlush is marked to flush current state,
  * and calls dd_function_table::FlushVertices if so. Marks
  * __struct gl_contextRec::NewState with \p newstate.
  */
-#define FLUSH_CURRENT(ctx, newstate)				\
-do {								\
-   if (MESA_VERBOSE & VERBOSE_STATE)				\
-      _mesa_debug(ctx, "FLUSH_CURRENT in %s\n", MESA_FUNCTION);	\
-   if (ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT)		\
-      ctx->Driver.FlushVertices(ctx, FLUSH_UPDATE_CURRENT);	\
-   ctx->NewState |= newstate;					\
-} while (0)
+static INLINE void
+FLUSH_CURRENT(struct gl_context *ctx, GLbitfield newstate)
+{
+   if (MESA_VERBOSE & VERBOSE_STATE)
+      _mesa_debug(ctx, "FLUSH_CURRENT in %s\n", MESA_FUNCTION);
+   if (ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT)
+      ctx->Driver.FlushVertices(ctx, FLUSH_UPDATE_CURRENT);
+   ctx->NewState |= newstate;
+}
+
 
 /**
  * Macro to assert that the API call was made outside the
