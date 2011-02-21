@@ -36,14 +36,6 @@
 #include "util/u_memory.h"
 
 
-/* All state expressable with the LOAD_STATE_IMMEDIATE_1 packet.
- * Would like to opportunistically recombine all these fragments into
- * a single packet containing only what has changed, but for now emit
- * as multiple packets.
- */
-
-
-
 
 /***********************************************************************
  * S0,S1: Vertex buffer state.
