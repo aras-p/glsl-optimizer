@@ -1746,9 +1746,24 @@ st_finalize_texture(struct gl_context *ctx,
 
    /* Find gallium format for the Mesa texture */
    firstImageFormat = st_mesa_format_to_pipe_format(firstImage->base.TexFormat);
-   st_gl_texture_dims_to_pipe_dims(stObj->base.Target, stObj->width0,
-                                   stObj->height0, stObj->depth0,
-                                   &ptWidth, &ptHeight, &ptDepth, &ptLayers);
+
+   /* Find size of level=0 Gallium mipmap image, plus number of texture layers */
+   {
+      GLuint width, height, depth;
+      if (!guess_base_level_size(stObj->base.Target,
+                                 firstImage->base.Width2,
+                                 firstImage->base.Height2,
+                                 firstImage->base.Depth2,
+                                 stObj->base.BaseLevel,
+                                 &width, &height, &depth)) {
+         width = stObj->width0;
+         height = stObj->height0;
+         depth = stObj->depth0;
+      }
+      /* convert GL dims to Gallium dims */
+      st_gl_texture_dims_to_pipe_dims(stObj->base.Target, width, height, depth,
+                                      &ptWidth, &ptHeight, &ptDepth, &ptLayers);
+   }
 
    /* If we already have a gallium texture, check that it matches the texture
     * object's format, target, size, num_levels, etc.
