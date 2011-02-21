@@ -113,12 +113,9 @@ st_format_datatype(enum pipe_format format)
       return GL_UNSIGNED_SHORT;
    }
    else {
-      /* compressed format? */
-      assert(0);
+      /* probably a compressed format, unsupported anyway */
+      return GL_NONE;
    }
-
-   assert(0);
-   return GL_NONE;
 }
 
 
