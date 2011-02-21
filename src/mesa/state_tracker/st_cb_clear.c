@@ -42,6 +42,7 @@
 #include "st_cb_accum.h"
 #include "st_cb_clear.h"
 #include "st_cb_fbo.h"
+#include "st_format.h"
 #include "st_program.h"
 
 #include "pipe/p_context.h"
@@ -204,6 +205,7 @@ clear_with_quad(struct gl_context *ctx,
    const GLfloat x1 = (GLfloat) ctx->DrawBuffer->_Xmax / fb_width * 2.0f - 1.0f;
    const GLfloat y0 = (GLfloat) ctx->DrawBuffer->_Ymin / fb_height * 2.0f - 1.0f;
    const GLfloat y1 = (GLfloat) ctx->DrawBuffer->_Ymax / fb_height * 2.0f - 1.0f;
+   float clearColor[4];
 
    /*
    printf("%s %s%s%s %f,%f %f,%f\n", __FUNCTION__, 
@@ -298,9 +300,12 @@ clear_with_quad(struct gl_context *ctx,
    cso_set_fragment_shader_handle(st->cso_context, st->clear.fs);
    cso_set_vertex_shader_handle(st->cso_context, st->clear.vs);
 
-   /* draw quad matching scissor rect (XXX verify coord round-off) */
-   draw_quad(st, x0, y0, x1, y1,
-             (GLfloat) ctx->Depth.Clear, ctx->Color.ClearColor);
+   st_translate_color(ctx->Color.ClearColor,
+                      ctx->DrawBuffer->_ColorDrawBuffers[0]->_BaseFormat,
+                      clearColor);
+
+   /* draw quad matching scissor rect */
+   draw_quad(st, x0, y0, x1, y1, (GLfloat) ctx->Depth.Clear, clearColor);
 
    /* Restore pipe state */
    cso_restore_blend(st->cso_context);
@@ -541,12 +546,19 @@ st_Clear(struct gl_context *ctx, GLbitfield mask)
        * required from the visual. Hence fix this up to avoid potential
        * read-modify-write in the driver.
        */
+      float clearColor[4];
+
       if ((clear_buffers & PIPE_CLEAR_DEPTHSTENCIL) &&
           ((clear_buffers & PIPE_CLEAR_DEPTHSTENCIL) != PIPE_CLEAR_DEPTHSTENCIL) &&
           (depthRb == stencilRb) &&
           (ctx->DrawBuffer->Visual.depthBits == 0 ||
            ctx->DrawBuffer->Visual.stencilBits == 0))
          clear_buffers |= PIPE_CLEAR_DEPTHSTENCIL;
+
+      st_translate_color(ctx->Color.ClearColor,
+                         ctx->DrawBuffer->_ColorDrawBuffers[0]->_BaseFormat,
+                         clearColor);
+
       st->pipe->clear(st->pipe, clear_buffers, ctx->Color.ClearColor,
                       ctx->Depth.Clear, ctx->Stencil.Clear);
    }

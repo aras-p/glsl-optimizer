@@ -1095,3 +1095,55 @@ st_sampler_compat_formats(enum pipe_format format1, enum pipe_format format2)
 
    return GL_FALSE;
 }
+
+
+
+/**
+ * This is used for translating texture border color and the clear
+ * color.  For example, the clear color is interpreted according to
+ * the renderbuffer's base format.  For example, if clearing a
+ * GL_LUMINANCE buffer, ClearColor[0] = luminance and ClearColor[1] =
+ * alpha.  Similarly for texture border colors.
+ */
+void
+st_translate_color(const GLfloat colorIn[4], GLenum baseFormat,
+                   GLfloat colorOut[4])
+{
+   switch (baseFormat) {
+   case GL_RED:
+      colorOut[0] = colorIn[0];
+      colorOut[1] = 0.0F;
+      colorOut[2] = 0.0F;
+      colorOut[3] = 1.0F;
+      break;
+   case GL_RG:
+      colorOut[0] = colorIn[0];
+      colorOut[1] = colorIn[1];
+      colorOut[2] = 0.0F;
+      colorOut[3] = 1.0F;
+      break;
+   case GL_RGB:
+      colorOut[0] = colorIn[0];
+      colorOut[1] = colorIn[1];
+      colorOut[2] = colorIn[2];
+      colorOut[3] = 1.0F;
+      break;
+   case GL_ALPHA:
+      colorOut[0] = colorOut[1] = colorOut[2] = 0.0;
+      colorOut[3] = colorIn[3];
+      break;
+   case GL_LUMINANCE:
+      colorOut[0] = colorOut[1] = colorOut[2] = colorIn[0];
+      colorOut[3] = 1.0;
+      break;
+   case GL_LUMINANCE_ALPHA:
+      colorOut[0] = colorOut[1] = colorOut[2] = colorIn[0];
+      colorOut[3] = colorIn[3];
+      break;
+   case GL_INTENSITY:
+      colorOut[0] = colorOut[1] = colorOut[2] = colorOut[3] = colorIn[0];
+      break;
+   default:
+      COPY_4V(colorOut, colorIn);
+   }
+}
