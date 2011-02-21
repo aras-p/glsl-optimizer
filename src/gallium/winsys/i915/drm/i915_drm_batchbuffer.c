@@ -34,7 +34,6 @@ static void
 i915_drm_batchbuffer_reset(struct i915_drm_batchbuffer *batch)
 {
    struct i915_drm_winsys *idws = i915_drm_winsys(batch->base.iws);
-   int ret;
 
    if (batch->bo)
       drm_intel_bo_unreference(batch->bo);
