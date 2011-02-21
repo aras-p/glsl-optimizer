@@ -301,11 +301,8 @@ vbo_exec_vtx_map( struct vbo_exec_context *exec )
    if (!_mesa_is_bufferobj(exec->vtx.bufferobj))
       return;
 
-   if (exec->vtx.buffer_map != NULL) {
-      assert(0);
-      exec->vtx.buffer_map = NULL;
-      exec->vtx.buffer_ptr = NULL;
-   }
+   assert(!exec->vtx.buffer_map);
+   assert(!exec->vtx.buffer_ptr);
 
    if (VBO_VERT_BUFFER_SIZE > exec->vtx.buffer_used + 1024 &&
        ctx->Driver.MapBufferRange) {
