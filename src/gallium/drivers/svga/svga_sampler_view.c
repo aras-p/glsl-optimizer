@@ -79,10 +79,6 @@ svga_get_tex_sampler_view(struct pipe_context *pipe,
       if (min_lod == 0 && max_lod >= pt->last_level)
          view = FALSE;
 
-      if (util_format_is_s3tc(pt->format) && view) {
-         format = svga_translate_format_render(pt->format);
-      }
-
       if (ss->debug.no_sampler_view)
          view = FALSE;
 
