@@ -260,6 +260,55 @@ get_texture_dims(GLenum target)
 
 
 /**
+ * Given the size of a mipmap image, try to compute the size of the level=0
+ * mipmap image.
+ *
+ * Note that this isn't always accurate for odd-sized, non-POW textures.
+ * For example, if level=1 and width=40 then the level=0 width may be 80 or 81.
+ *
+ * \return GL_TRUE for success, GL_FALSE for failure
+ */
+static GLboolean
+guess_base_level_size(GLenum target,
+                      GLuint width, GLuint height, GLuint depth, GLuint level,
+                      GLuint *width0, GLuint *height0, GLuint *depth0)
+{ 
+   const GLuint dims = get_texture_dims(target);
+
+   assert(width >= 1);
+   assert(height >= 1);
+   assert(depth >= 1);
+
+   if (level > 0) {
+      /* Depending on the image's size, we can't always make a guess here */
+      if ((dims >= 1 && width == 1) ||
+          (dims >= 2 && height == 1) ||
+          (dims >= 3 && depth == 1)) {
+         /* we can't determine the image size at level=0 */
+         return GL_FALSE;
+      }
+
+      /* grow the image size until we hit level = 0 */
+      while (level > 0) {
+         if (width > 1)
+            width <<= 1;
+         if (height > 1)
+            height <<= 1;
+         if (depth > 1)
+            depth <<= 1;
+         level--;
+      }
+   }      
+
+   *width0 = width;
+   *height0 = height;
+   *depth0 = depth;
+
+   return GL_TRUE;
+}
+
+
+/**
  * Try to allocate a pipe_resource object for the given st_texture_object.
  *
  * We use the given st_texture_image as a clue to determine the size of the
@@ -272,8 +321,7 @@ guess_and_alloc_texture(struct st_context *st,
 			struct st_texture_object *stObj,
 			const struct st_texture_image *stImage)
 {
-   const GLuint dims = get_texture_dims(stObj->base.Target);
-   GLuint level, lastLevel, width, height, depth;
+   GLuint lastLevel, width, height, depth;
    GLuint bindings;
    GLuint ptWidth, ptHeight, ptDepth, ptLayers;
    enum pipe_format fmt;
@@ -282,40 +330,17 @@ guess_and_alloc_texture(struct st_context *st,
 
    assert(!stObj->pt);
 
-   level = stImage->level;
-   width = stImage->base.Width2;  /* size w/out border */
-   height = stImage->base.Height2;
-   depth = stImage->base.Depth2;
-
-   assert(width > 0);
-   assert(height > 0);
-   assert(depth > 0);
-
-   /* Depending on the image's size, we can't always make a guess here.
-    */
-   if (level > 0) {
-      if ( (dims >= 1 && width == 1) ||
-           (dims >= 2 && height == 1) ||
-           (dims >= 3 && depth == 1) ) {
-         /* we can't determine the image size at level=0 */
-         stObj->width0 = stObj->height0 = stObj->depth0 = 0;
-         /* this is not an out of memory error */
-         return GL_TRUE;
-      }
+   if (!guess_base_level_size(stObj->base.Target,
+                              stImage->base.Width2,
+                              stImage->base.Height2,
+                              stImage->base.Depth2,
+                              stImage->level,
+                              &width, &height, &depth)) {
+      /* we can't determine the image size at level=0 */
+      stObj->width0 = stObj->height0 = stObj->depth0 = 0;
+      /* this is not an out of memory error */
+      return GL_TRUE;
    }
-
-   /* grow the image size until we hit level = 0 */
-   while (level > 0) {
-      if (width != 1)
-         width <<= 1;
-      if (height != 1)
-         height <<= 1;
-      if (depth != 1)
-         depth <<= 1;
-      level--;
-   }      
-
-   assert(level == 0);
 
    /* At this point, (width x height x depth) is the expected size of
     * the level=0 mipmap image.
