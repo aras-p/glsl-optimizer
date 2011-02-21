@@ -12,10 +12,10 @@
 #include <dlfcn.h>
 
 #include <wayland-client.h>
-#include <xf86drm.h>
-
 #include "wayland-egl.h"
 #include "wayland-egl-priv.h"
+#include "wayland-drm-client-protocol.h"
+#include <xf86drm.h>
 
 static void
 drm_handle_device(void *data, struct wl_drm *drm, const char *device)

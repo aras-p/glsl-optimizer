@@ -568,6 +568,39 @@ const struct dri2_driver_map driver_map[] = {
    { 0x10de, "nouveau", NULL, -1 },
 };
 
+static char *
+dri2_get_device_name(int fd)
+{
+   struct udev *udev;
+   struct udev_device *device;
+   struct stat buf;
+   char *device_name;
+
+   udev = udev_new();
+   if (fstat(fd, &buf) < 0) {
+      _eglLog(_EGL_WARNING, "EGL-DRI2: failed to stat fd %d", fd);
+      goto out;
+   }
+
+   device = udev_device_new_from_devnum(udev, 'c', buf.st_rdev);
+   if (device == NULL) {
+      _eglLog(_EGL_WARNING,
+	      "EGL-DRI2: could not create udev device for fd %d", fd);
+      goto out;
+   }
+
+   device_name = udev_device_get_devnode(device);
+   if (!device_name)
+	   goto out;
+   device_name = strdup(device_name);
+
+ out:
+   udev_device_unref(device);
+   udev_unref(udev);
+
+   return device_name;
+}
+
 char *
 dri2_get_driver_for_fd(int fd)
 {
@@ -629,6 +662,14 @@ dri2_get_driver_for_fd(int fd)
    return driver;
 }
 
+static int
+dri2_drm_authenticate(_EGLDisplay *disp, uint32_t id)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+
+   return drmAuthMagic(dri2_dpy->fd, id);
+}
+
 EGLBoolean
 dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
 {
@@ -648,8 +689,14 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
    if (dri2_dpy->driver_name == NULL)
       return _eglError(EGL_BAD_ALLOC, "DRI2: failed to get driver name");
 
-   if (!dri2_load_driver(disp))
+   dri2_dpy->device_name = dri2_get_device_name(dri2_dpy->fd);
+   if (dri2_dpy->device_name == NULL) {
+      _eglError(EGL_BAD_ALLOC, "DRI2: failed to get device name");
       goto cleanup_driver_name;
+   }
+
+   if (!dri2_load_driver(disp))
+      goto cleanup_device_name;
 
    dri2_dpy->extensions[0] = &image_lookup_extension.base;
    dri2_dpy->extensions[1] = &use_invalidate.base;
@@ -666,6 +713,11 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
    disp->Extensions.KHR_gl_renderbuffer_image = EGL_TRUE;
    disp->Extensions.KHR_gl_texture_2D_image = EGL_TRUE;
 
+#ifdef HAVE_WAYLAND_PLATFORM
+   disp->Extensions.WL_bind_wayland_display = EGL_TRUE;
+#endif
+   dri2_dpy->authenticate = dri2_drm_authenticate;
+   
    /* we're supporting EGL 1.4 */
    disp->VersionMajor = 1;
    disp->VersionMinor = 4;
@@ -674,6 +726,8 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
 
  cleanup_driver:
    dlclose(dri2_dpy->driver);
+ cleanup_device_name:
+   free(dri2_dpy->device_name);
  cleanup_driver_name:
    free(dri2_dpy->driver_name);
 

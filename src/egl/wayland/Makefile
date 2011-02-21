@@ -1,4 +1,4 @@
-# src/egl/main/Makefile
+# src/egl/wayland/Makefile
 
 TOP = ../../..
 include $(TOP)/configs/current
@@ -10,14 +10,20 @@ SOURCES = wayland-egl.c
 
 OBJECTS = $(SOURCES:.c=.o)
 
-LOCAL_CFLAGS = -I$(TOP)/include/EGL $(LIBDRM_CFLAGS) $(WAYLAND_CFLAGS)
+LOCAL_CFLAGS = -I$(TOP)/include/EGL \
+	       -I$(TOP)/src/egl/wayland/wayland-drm \
+	       $(LIBDRM_CFLAGS) \
+	       $(WAYLAND_CFLAGS)
+
 LOCAL_LIBS =
+
+SUBDIRS = wayland-drm
 
 .c.o:
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $(LOCAL_CFLAGS) $< -o $@
 
 
-default: depend library
+default: depend subdirs library
 
 # wayland-egl Library
 library: $(TOP)/$(LIB_DIR)/$(WAYLAND_EGL_LIB_NAME)
@@ -54,6 +60,12 @@ clean:
 	-rm -f *.o
 	-rm -f depend depend.bak
 
+subdirs:
+	@for dir in $(SUBDIRS) ; do \
+		if [ -d $$dir ] ; then \
+			(cd $$dir && $(MAKE)) || exit 1 ; \
+		fi \
+	done
 
 depend: $(SOURCES) $(HEADERS)
 	@ echo "running $(MKDEP)"

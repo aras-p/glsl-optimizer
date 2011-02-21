@@ -41,6 +41,7 @@
 #include "radeon/drm/radeon_drm_public.h"
 
 #include <wayland-client.h>
+#include "wayland-drm-client-protocol.h"
 #include "wayland-egl-priv.h"
 
 #include <xf86drm.h>

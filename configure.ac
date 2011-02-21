@@ -1587,7 +1587,7 @@ yes)
                 GALLIUM_WINSYS_DIRS="$GALLIUM_WINSYS_DIRS sw/fbdev"
         fi
 	if test "$plat" = "wayland"; then
-		PKG_CHECK_MODULES([WAYLAND], [wayland-client],, \
+		PKG_CHECK_MODULES([WAYLAND], [wayland-client wayland-server],, \
 				  [AC_MSG_ERROR([cannot find libwayland-client])])
 		WAYLAND_EGL_LIB_DEPS="$WAYLAND_LIBS $LIBDRM_LIBS"
 	fi
