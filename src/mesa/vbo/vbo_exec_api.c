@@ -913,16 +913,22 @@ void vbo_exec_vtx_destroy( struct vbo_exec_context *exec )
    _mesa_reference_buffer_object(ctx, &exec->vtx.bufferobj, NULL);
 }
 
+
 void vbo_exec_BeginVertices( struct gl_context *ctx )
 {
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
-   if (0) printf("%s\n", __FUNCTION__);
+
    vbo_exec_vtx_map( exec );
 
    assert((exec->ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT) == 0);
    exec->ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;
 }
 
+
+/**
+ * Flush (draw) vertices.
+ * \param  unmap - leave VBO unmapped after flushing?
+ */
 void vbo_exec_FlushVertices_internal( struct gl_context *ctx, GLboolean unmap )
 {
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
@@ -951,10 +957,7 @@ void vbo_exec_FlushVertices( struct gl_context *ctx, GLuint flags )
    assert(exec->flush_call_depth == 1);
 #endif
 
-   if (0) printf("%s\n", __FUNCTION__);
-
    if (exec->ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {
-      if (0) printf("%s - inside begin/end\n", __FUNCTION__);
 #ifdef DEBUG
       exec->flush_call_depth--;
       assert(exec->flush_call_depth == 0);
@@ -962,6 +965,7 @@ void vbo_exec_FlushVertices( struct gl_context *ctx, GLuint flags )
       return;
    }
 
+   /* Flush (draw), and make sure VBO is left unmapped when done */
    vbo_exec_FlushVertices_internal( ctx, GL_TRUE );
 
    /* Need to do this to ensure BeginVertices gets called again:
