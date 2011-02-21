@@ -102,6 +102,7 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
 {
    switch (cap) {
    /* Supported features (boolean caps). */
+   case PIPE_CAP_ANISOTROPIC_FILTER:
    case PIPE_CAP_NPOT_TEXTURES:
    case PIPE_CAP_PRIMITIVE_RESTART: /* draw module */
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
@@ -115,7 +116,6 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
       return 0;
 
    /* Unsupported features (boolean caps). */
-   case PIPE_CAP_ANISOTROPIC_FILTER:
    case PIPE_CAP_ARRAY_TEXTURES:
    case PIPE_CAP_DEPTH_CLAMP:
    case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE: /* disable for now */
