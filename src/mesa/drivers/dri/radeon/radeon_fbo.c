@@ -485,6 +485,8 @@ radeon_update_wrapper(struct gl_context *ctx, struct radeon_renderbuffer *rrb,
 		case MESA_FORMAT_S8_Z24:
 			rrb->base.DataType = GL_UNSIGNED_INT_24_8_EXT;
 			break;
+		default:
+			_mesa_problem(ctx, "Unexpected texture format in radeon_update_wrapper()");
 	}
 		
 	rrb->cpp = _mesa_get_format_bytes(texImage->TexFormat);
