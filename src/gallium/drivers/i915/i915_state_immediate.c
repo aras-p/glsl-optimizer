@@ -50,7 +50,6 @@ static void upload_S0S1(struct i915_context *i915)
 
    /* I915_NEW_VERTEX_SIZE
     */
-   /* XXX do this where the vertex size is calculated! */
    {
       unsigned vertex_size = i915->current.vertex_info.size;
 
@@ -90,9 +89,6 @@ static void upload_S2S4(struct i915_context *i915)
    {
       LIS2 = i915->current.vertex_info.hwfmt[1];
       LIS4 = i915->current.vertex_info.hwfmt[0];
-      /*
-      debug_printf("LIS2: 0x%x  LIS4: 0x%x\n", LIS2, LIS4);
-      */
       assert(LIS4); /* should never be zero? */
    }
 
@@ -179,7 +175,7 @@ static void upload_S6(struct i915_context *i915)
 }
 
 const struct i915_tracked_state i915_upload_S6 = {
-   "imm s6",
+   "imm S6",
    upload_S6,
    I915_NEW_BLEND | I915_NEW_DEPTH_STENCIL | I915_NEW_FRAMEBUFFER
 };
