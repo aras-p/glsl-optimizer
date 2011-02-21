@@ -36,6 +36,22 @@
 #include "util/u_memory.h"
 
 
+/* Convinience function to check immediate state.
+ */
+
+static INLINE void set_immediate(struct i915_context *i915,
+                                 unsigned offset,
+                                 const unsigned state)
+{
+   if (i915->current.immediate[offset] == state)
+      return;
+
+   i915->current.immediate[offset] = state;
+   i915->immediate_dirty |= 1 << offset;
+   i915->hardware_dirty |= I915_HW_IMMEDIATE;
+}
+
+
 
 /***********************************************************************
  * S0,S1: Vertex buffer state.
@@ -48,6 +64,12 @@ static void upload_S0S1(struct i915_context *i915)
     */
    LIS0 = i915->vbo_offset;
 
+   /* Need to force this */
+   if (i915->dirty & I915_NEW_VBO) {
+      i915->immediate_dirty |= 1 << I915_IMMEDIATE_S0;
+      i915->hardware_dirty |= I915_HW_IMMEDIATE;
+   }
+
    /* I915_NEW_VERTEX_SIZE
     */
    {
@@ -57,16 +79,8 @@ static void upload_S0S1(struct i915_context *i915)
               (vertex_size << 16));
    }
 
-   /* I915_NEW_VBO
-    */
-   if (1 ||
-       i915->current.immediate[I915_IMMEDIATE_S0] != LIS0 ||
-       i915->current.immediate[I915_IMMEDIATE_S1] != LIS1)
-   {
-      i915->current.immediate[I915_IMMEDIATE_S0] = LIS0;
-      i915->current.immediate[I915_IMMEDIATE_S1] = LIS1;
-      i915->hardware_dirty |= I915_HW_IMMEDIATE;
-   }
+   set_immediate(i915, I915_IMMEDIATE_S0, LIS0);
+   set_immediate(i915, I915_IMMEDIATE_S1, LIS1);
 }
 
 const struct i915_tracked_state i915_upload_S0S1 = {
@@ -94,13 +108,8 @@ static void upload_S2S4(struct i915_context *i915)
 
    LIS4 |= i915->rasterizer->LIS4;
 
-   if (LIS2 != i915->current.immediate[I915_IMMEDIATE_S2] ||
-       LIS4 != i915->current.immediate[I915_IMMEDIATE_S4]) {
-
-      i915->current.immediate[I915_IMMEDIATE_S2] = LIS2;
-      i915->current.immediate[I915_IMMEDIATE_S4] = LIS4;
-      i915->hardware_dirty |= I915_HW_IMMEDIATE;
-   }
+   set_immediate(i915, I915_IMMEDIATE_S2, LIS2);
+   set_immediate(i915, I915_IMMEDIATE_S4, LIS4);
 }
 
 const struct i915_tracked_state i915_upload_S2S4 = {
@@ -135,10 +144,7 @@ static void upload_S5(struct i915_context *i915)
    }
 #endif
 
-   if (LIS5 != i915->current.immediate[I915_IMMEDIATE_S5]) {
-      i915->current.immediate[I915_IMMEDIATE_S5] = LIS5;
-      i915->hardware_dirty |= I915_HW_IMMEDIATE;
-   }
+   set_immediate(i915, I915_IMMEDIATE_S5, LIS5);
 }
 
 const struct i915_tracked_state i915_upload_S5 = {
@@ -168,10 +174,7 @@ static void upload_S6(struct i915_context *i915)
     */
    LIS6 |= i915->depth_stencil->depth_LIS6;
 
-   if (LIS6 != i915->current.immediate[I915_IMMEDIATE_S6]) {
-      i915->current.immediate[I915_IMMEDIATE_S6] = LIS6;
-      i915->hardware_dirty |= I915_HW_IMMEDIATE;
-   }
+   set_immediate(i915, I915_IMMEDIATE_S6, LIS6);
 }
 
 const struct i915_tracked_state i915_upload_S6 = {
@@ -193,10 +196,7 @@ static void upload_S7(struct i915_context *i915)
    LIS7 = i915->rasterizer->LIS7;
 
 #if 0
-   if (LIS7 != i915->current.immediate[I915_IMMEDIATE_S7]) {
-      i915->current.immediate[I915_IMMEDIATE_S7] = LIS7;
-      i915->hardware_dirty |= I915_HW_IMMEDIATE;
-   }
+   set_immediate(i915, I915_IMMEDIATE_S7, LIS7);
 #endif
 }
 
