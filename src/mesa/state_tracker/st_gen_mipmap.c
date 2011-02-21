@@ -336,6 +336,11 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
    if (lastLevel == 0)
       return;
 
+   /* The texture isn't in a "complete" state yet so set the expected
+    * lastLevel here, since it won't get done in st_finalize_texture().
+    */
+   stObj->lastLevel = lastLevel;
+
    if (pt->last_level < lastLevel) {
       /* The current gallium texture doesn't have space for all the
        * mipmap levels we need to generate.  So allocate a new texture.
@@ -353,11 +358,6 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
                                     oldTex->array_size,
                                     oldTex->bind);
 
-      /* The texture isn't in a "complete" state yet so set the expected
-       * lastLevel here, since it won't get done in st_finalize_texture().
-       */
-      stObj->lastLevel = lastLevel;
-
       /* This will copy the old texture's base image into the new texture
        * which we just allocated.
        */
@@ -366,8 +366,6 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
       /* release the old tex (will likely be freed too) */
       pipe_resource_reference(&oldTex, NULL);
       pipe_sampler_view_reference(&stObj->sampler_view, NULL);
-
-      pt = stObj->pt;
    }
    else {
       /* Make sure that the base texture image data is present in the
@@ -375,6 +373,8 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
        */
       st_finalize_texture(ctx, st->pipe, texObj);
    }
+
+   pt = stObj->pt;
 
    assert(pt->last_level >= lastLevel);
 
