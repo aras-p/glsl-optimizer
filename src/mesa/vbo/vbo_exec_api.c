@@ -533,6 +533,24 @@ static void GLAPIENTRY vbo_exec_EvalPoint2( GLint i, GLint j )
 
 
 /**
+ * Flush (draw) vertices.
+ * \param  unmap - leave VBO unmapped after flushing?
+ */
+static void
+vbo_exec_FlushVertices_internal(struct vbo_exec_context *exec, GLboolean unmap)
+{
+   if (exec->vtx.vert_count || unmap) {
+      vbo_exec_vtx_flush( exec, unmap );
+   }
+
+   if (exec->vtx.vertex_size) {
+      vbo_exec_copy_to_current( exec );
+      reset_attrfv( exec );
+   }
+}
+
+
+/**
  * Called via glBegin.
  */
 static void GLAPIENTRY vbo_exec_Begin( GLenum mode )
@@ -558,7 +576,7 @@ static void GLAPIENTRY vbo_exec_Begin( GLenum mode )
        * begin/end pairs.
        */
       if (exec->vtx.vertex_size && !exec->vtx.attrsz[0]) 
-	 vbo_exec_FlushVertices_internal( ctx, GL_FALSE );
+	 vbo_exec_FlushVertices_internal(exec, GL_FALSE);
 
       i = exec->vtx.prim_count++;
       exec->vtx.prim[i].mode = mode;
@@ -926,25 +944,6 @@ void vbo_exec_BeginVertices( struct gl_context *ctx )
 
 
 /**
- * Flush (draw) vertices.
- * \param  unmap - leave VBO unmapped after flushing?
- */
-void vbo_exec_FlushVertices_internal( struct gl_context *ctx, GLboolean unmap )
-{
-   struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
-
-   if (exec->vtx.vert_count || unmap) {
-      vbo_exec_vtx_flush( exec, unmap );
-   }
-
-   if (exec->vtx.vertex_size) {
-      vbo_exec_copy_to_current( exec );
-      reset_attrfv( exec );
-   }
-}
-
-
-/**
  * \param flags  bitmask of FLUSH_STORED_VERTICES, FLUSH_UPDATE_CURRENT
  */
 void vbo_exec_FlushVertices( struct gl_context *ctx, GLuint flags )
@@ -966,7 +965,7 @@ void vbo_exec_FlushVertices( struct gl_context *ctx, GLuint flags )
    }
 
    /* Flush (draw), and make sure VBO is left unmapped when done */
-   vbo_exec_FlushVertices_internal( ctx, GL_TRUE );
+   vbo_exec_FlushVertices_internal(exec, GL_TRUE);
 
    /* Need to do this to ensure BeginVertices gets called again:
     */

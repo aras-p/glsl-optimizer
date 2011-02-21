@@ -152,7 +152,6 @@ struct vbo_exec_context
 void vbo_exec_init( struct gl_context *ctx );
 void vbo_exec_destroy( struct gl_context *ctx );
 void vbo_exec_invalidate_state( struct gl_context *ctx, GLuint new_state );
-void vbo_exec_FlushVertices_internal( struct gl_context *ctx, GLboolean unmap );
 
 void vbo_exec_BeginVertices( struct gl_context *ctx );
 void vbo_exec_FlushVertices( struct gl_context *ctx, GLuint flags );
