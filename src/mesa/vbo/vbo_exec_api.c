@@ -932,6 +932,9 @@ void vbo_exec_vtx_destroy( struct vbo_exec_context *exec )
 }
 
 
+/**
+ * Called upon first glVertex, glColor, glTexCoord, etc.
+ */
 void vbo_exec_BeginVertices( struct gl_context *ctx )
 {
    struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
@@ -944,6 +947,7 @@ void vbo_exec_BeginVertices( struct gl_context *ctx )
 
 
 /**
+ * Called via ctx->Driver.FlushVertices()
  * \param flags  bitmask of FLUSH_STORED_VERTICES, FLUSH_UPDATE_CURRENT
  */
 void vbo_exec_FlushVertices( struct gl_context *ctx, GLuint flags )
@@ -957,6 +961,7 @@ void vbo_exec_FlushVertices( struct gl_context *ctx, GLuint flags )
 #endif
 
    if (exec->ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {
+      /* We've had glBegin but not glEnd! */
 #ifdef DEBUG
       exec->flush_call_depth--;
       assert(exec->flush_call_depth == 0);
