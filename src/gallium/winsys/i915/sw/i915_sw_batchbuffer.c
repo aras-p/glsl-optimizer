@@ -61,7 +61,7 @@ static int
 i915_sw_batchbuffer_reloc(struct i915_winsys_batchbuffer *ibatch,
                           struct i915_winsys_buffer *buffer,
                           enum i915_winsys_buffer_usage usage,
-                          unsigned pre_add, bool fenced)
+                          unsigned pre_add, boolean fenced)
 {
    struct i915_sw_batchbuffer *batch = i915_sw_batchbuffer(ibatch);
    int ret = 0;

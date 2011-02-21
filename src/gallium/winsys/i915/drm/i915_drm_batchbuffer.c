@@ -74,7 +74,7 @@ static int
 i915_drm_batchbuffer_reloc(struct i915_winsys_batchbuffer *ibatch,
                             struct i915_winsys_buffer *buffer,
                             enum i915_winsys_buffer_usage usage,
-                            unsigned pre_add, bool fenced)
+                            unsigned pre_add, boolean fenced)
 {
    struct i915_drm_batchbuffer *batch = i915_drm_batchbuffer(ibatch);
    unsigned write_domain = 0;
