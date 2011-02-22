@@ -87,6 +87,9 @@ add_range_ex(struct nv_value *val, int bgn, int end, struct nv_range *new_range)
 {
    struct nv_range *range, **nextp = &val->livei;
 
+   if (bgn == end) /* [a, a) is invalid / empty */
+      return TRUE;
+
    for (range = val->livei; range; range = range->next) {
       if (end < range->bgn)
          break; /* insert before */
