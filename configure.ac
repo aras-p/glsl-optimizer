@@ -890,6 +890,9 @@ AC_ARG_ENABLE([glx-tls],
     [GLX_USE_TLS=no])
 AC_SUBST(GLX_TLS, ${GLX_USE_TLS})
 
+AS_IF([test "x$GLX_USE_TLS" = xyes],
+      [DEFINES="${DEFINES} -DGLX_USE_TLS -DPTHREADS"])
+
 dnl
 dnl More DRI setup
 dnl
@@ -945,11 +948,6 @@ esac
 
 dnl Set DRI_DIRS, DEFINES and LIB_DEPS
 if test "$mesa_driver" = dri -o "$mesa_driver" = no; then
-    # Use TLS in GLX?
-    if test "x$GLX_USE_TLS" = xyes; then
-        DEFINES="$DEFINES -DGLX_USE_TLS -DPTHREADS"
-    fi
-
     # Platform specific settings and drivers to build
     case "$host_os" in
     linux*)
