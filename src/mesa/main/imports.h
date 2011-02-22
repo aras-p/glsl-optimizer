@@ -540,6 +540,12 @@ extern void
 _mesa_init_sqrt_table(void);
 
 #ifdef __GNUC__
+
+#ifdef __MINGW32__
+#define ffs __builtin_ffs
+#define ffsll __builtin_ffsll
+#endif
+
 #define _mesa_ffs(i)  ffs(i)
 #define _mesa_ffsll(i)  ffsll(i)
 
