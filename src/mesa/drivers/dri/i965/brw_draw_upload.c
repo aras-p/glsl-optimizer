@@ -550,7 +550,7 @@ static void brw_emit_vertices(struct brw_context *brw)
 	 if (intel->gen >= 5) {
 	    OUT_RELOC(buffer->bo, I915_GEM_DOMAIN_VERTEX, 0, buffer->bo->size - 1);
 	 } else
-	    OUT_BATCH(0);
+	    OUT_BATCH(buffer->bo->size / buffer->stride);
 	 OUT_BATCH(0); /* Instance data step rate */
 
 	 brw->vb.current_buffers[i].handle = buffer->bo->handle;
