@@ -974,10 +974,7 @@ void vbo_exec_FlushVertices( struct gl_context *ctx, GLuint flags )
 
    /* Need to do this to ensure BeginVertices gets called again:
     */
-   if (ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT)
-      ctx->Driver.NeedFlush &= ~FLUSH_UPDATE_CURRENT;
-
-   ctx->Driver.NeedFlush &= ~flags;
+   ctx->Driver.NeedFlush &= ~(FLUSH_UPDATE_CURRENT | flags);
 
 #ifdef DEBUG
    exec->flush_call_depth--;
