@@ -272,7 +272,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
    struct intel_context *intel = intel_context(ctx);
    GLbitfield vs_inputs = brw->vs.prog_data->inputs_read; 
    const unsigned char *ptr = NULL;
-   GLuint interleaved = 0, total_size = 0;
+   GLuint interleaved = 0, total_size = 0, count = -1;
    unsigned int min_index = brw->vb.min_index;
    unsigned int max_index = brw->vb.max_index;
    int i, j;
@@ -390,6 +390,9 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    interleaved = 0;
 	 }
 
+	 if (count > input->count)
+	    count = input->count;
+
 	 upload[nr_uploads++] = input;
 	 total_size += input->element_size;
       }
@@ -401,6 +404,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 /* All uploads are interleaved, so upload the arrays together as
 	  * interleaved.  First, upload the contents and set up upload[0].
 	  */
+	 upload[0]->count = count; /* trim the upload over all arrays */
 	 copy_array_to_vbo_array(brw,
 				 upload[0], &brw->vb.buffers[j],
 				 interleaved);
