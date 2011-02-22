@@ -664,7 +664,7 @@ brw_wm_upload_binding_table(struct brw_context *brw)
       bind[i] = brw->wm.surf_offset[i];
    }
 
-   brw->state.dirty.brw |= BRW_NEW_BINDING_TABLE;
+   brw->state.dirty.brw |= BRW_NEW_PS_BINDING_TABLE;
 }
 
 const struct brw_tracked_state brw_wm_binding_table = {

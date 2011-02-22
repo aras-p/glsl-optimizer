@@ -86,7 +86,10 @@ static void upload_binding_table_pointers(struct brw_context *brw)
 const struct brw_tracked_state brw_binding_table_pointers = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_BATCH | BRW_NEW_BINDING_TABLE,
+      .brw = BRW_NEW_BATCH
+	   | BRW_NEW_VS_BINDING_TABLE
+	   | BRW_NEW_GS_BINDING_TABLE
+	   | BRW_NEW_PS_BINDING_TABLE,
       .cache = 0,
    },
    .emit = upload_binding_table_pointers,
@@ -118,7 +121,10 @@ static void upload_gen6_binding_table_pointers(struct brw_context *brw)
 const struct brw_tracked_state gen6_binding_table_pointers = {
    .dirty = {
       .mesa = 0,
-      .brw = BRW_NEW_BATCH | BRW_NEW_BINDING_TABLE,
+      .brw = BRW_NEW_BATCH
+	   | BRW_NEW_VS_BINDING_TABLE
+	   | BRW_NEW_GS_BINDING_TABLE
+	   | BRW_NEW_PS_BINDING_TABLE,
       .cache = 0,
    },
    .emit = upload_gen6_binding_table_pointers,
