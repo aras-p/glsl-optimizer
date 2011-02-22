@@ -78,6 +78,7 @@ MAIN_SOURCES = \
 	main/stencil.c \
 	main/syncobj.c \
 	main/texcompress.c \
+	main/texcompress_rgtc.c \
 	main/texcompress_s3tc.c \
 	main/texcompress_fxt1.c \
 	main/texenv.c \

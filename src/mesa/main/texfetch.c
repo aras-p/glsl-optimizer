@@ -38,6 +38,7 @@
 #include "texcompress.h"
 #include "texcompress_fxt1.h"
 #include "texcompress_s3tc.h"
+#include "texcompress_rgtc.h"
 #include "texfetch.h"
 #include "teximage.h"
 
@@ -756,7 +757,35 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       fetch_texel_2d_rgba_16,
       fetch_texel_3d_rgba_16,
       store_texel_rgba_16
-   }
+   },
+   {
+      MESA_FORMAT_RED_RGTC1,
+      NULL,
+      _mesa_fetch_texel_2d_f_red_rgtc1,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_SIGNED_RED_RGTC1,
+      NULL,
+      _mesa_fetch_texel_2d_f_signed_red_rgtc1,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_RG_RGTC2,
+      NULL,
+      _mesa_fetch_texel_2d_f_rg_rgtc2,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_SIGNED_RG_RGTC2,
+      NULL,
+      _mesa_fetch_texel_2d_f_signed_rg_rgtc2,
+      NULL,
+      NULL
+   },
 };
 
 

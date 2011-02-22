@@ -65,6 +65,7 @@
 #include "pack.h"
 #include "texcompress.h"
 #include "texcompress_fxt1.h"
+#include "texcompress_rgtc.h"
 #include "texcompress_s3tc.h"
 #include "teximage.h"
 #include "texstore.h"
@@ -4128,7 +4129,12 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_SIGNED_RG_16, _mesa_texstore_signed_rgba_16 },
    { MESA_FORMAT_SIGNED_RGB_16, _mesa_texstore_signed_rgba_16 },
    { MESA_FORMAT_SIGNED_RGBA_16, _mesa_texstore_signed_rgba_16 },
-   { MESA_FORMAT_RGBA_16, _mesa_texstore_rgba_16 }
+   { MESA_FORMAT_RGBA_16, _mesa_texstore_rgba_16 },
+
+   { MESA_FORMAT_RED_RGTC1, _mesa_texstore_red_rgtc1 },
+   { MESA_FORMAT_SIGNED_RED_RGTC1, _mesa_texstore_signed_red_rgtc1 },
+   { MESA_FORMAT_RG_RGTC2, _mesa_texstore_rg_rgtc2 },
+   { MESA_FORMAT_SIGNED_RG_RGTC2, _mesa_texstore_signed_rg_rgtc2 }
 };
 
 

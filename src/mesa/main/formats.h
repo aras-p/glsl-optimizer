@@ -179,6 +179,12 @@ typedef enum
    MESA_FORMAT_RGBA_16,           /* ... */
    /*@}*/
 
+   /*@{*/
+   MESA_FORMAT_RED_RGTC1,
+   MESA_FORMAT_SIGNED_RED_RGTC1,
+   MESA_FORMAT_RG_RGTC2,
+   MESA_FORMAT_SIGNED_RG_RGTC2,
+   /*@}*/
    MESA_FORMAT_COUNT
 } gl_format;
 
