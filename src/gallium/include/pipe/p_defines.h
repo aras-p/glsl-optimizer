@@ -225,7 +225,7 @@ enum pipe_transfer_usage {
    /**
     * Discards the memory within the mapped region.
     *
-    * It should not be used with PIPE_TRANSFER_CPU_READ.
+    * It should not be used with PIPE_TRANSFER_READ.
     *
     * See also:
     * - OpenGL's ARB_map_buffer_range extension, MAP_INVALIDATE_RANGE_BIT flag.
@@ -246,7 +246,7 @@ enum pipe_transfer_usage {
    /**
     * Do not attempt to synchronize pending operations on the resource when mapping.
     *
-    * It should not be used with PIPE_TRANSFER_CPU_READ.
+    * It should not be used with PIPE_TRANSFER_READ.
     *
     * See also:
     * - OpenGL's ARB_map_buffer_range extension, MAP_UNSYNCHRONIZED_BIT flag.
@@ -260,7 +260,7 @@ enum pipe_transfer_usage {
     * Written ranges will be notified later with
     * pipe_context::transfer_flush_region.
     *
-    * It should not be used with PIPE_TRANSFER_CPU_READ.
+    * It should not be used with PIPE_TRANSFER_READ.
     *
     * See also:
     * - pipe_context::transfer_flush_region
@@ -271,7 +271,7 @@ enum pipe_transfer_usage {
    /**
     * Discards all memory backing the resource.
     *
-    * It should not be used with PIPE_TRANSFER_CPU_READ.
+    * It should not be used with PIPE_TRANSFER_READ.
     *
     * This is equivalent to:
     * - OpenGL's ARB_map_buffer_range extension, MAP_INVALIDATE_BUFFER_BIT
