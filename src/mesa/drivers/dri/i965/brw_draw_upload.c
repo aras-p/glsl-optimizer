@@ -454,6 +454,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 			      upload[i], &brw->vb.buffers[j],
 			      upload[i]->element_size);
       upload[i]->buffer = j++;
+      upload[i]->offset = 0;
    }
 
    /* can we simply extend the current vb? */
