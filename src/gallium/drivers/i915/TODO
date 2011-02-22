@@ -6,6 +6,8 @@ Random list of problems with i915g:
 - Add support for PIPE_CAP_POINT_SPRITE either via the draw module or directly
   via the hardware, look at the classic driver, more advanced.
 
+- What does this button do? Figure out LIS7 with regards to depth offset.
+
 - Dies with BadDrawable on GLXFBconfig changes/destruction. Makes piglit totally
   unusable :( Upgrading xserver helped here, it doesn't crash anymore. Still
   broken, it doesn't update the viewport/get new buffers.

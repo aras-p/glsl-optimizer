@@ -130,7 +130,7 @@ static void upload_S5(struct i915_context *i915)
 #if 0
    /* I915_NEW_RASTERIZER
     */
-   if (i915->state.Polygon->OffsetFill) {
+   if (i915->rasterizer->LIS7) {
       LIS5 |= S5_GLOBAL_DEPTH_OFFSET_ENABLE;
    }
 #endif
@@ -192,10 +192,12 @@ static void upload_S7(struct i915_context *i915)
     */
    LIS7 = i915->rasterizer->LIS7;
 
+#if 0
    if (LIS7 != i915->current.immediate[I915_IMMEDIATE_S7]) {
       i915->current.immediate[I915_IMMEDIATE_S7] = LIS7;
       i915->hardware_dirty |= I915_HW_IMMEDIATE;
    }
+#endif
 }
 
 const struct i915_tracked_state i915_upload_S7 = {
