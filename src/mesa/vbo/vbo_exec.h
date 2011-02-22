@@ -40,13 +40,16 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "vbo_attrib.h"
 
 
+/**
+ * Max number of primitives (number of glBegin/End pairs) per VBO.
+ */
 #define VBO_MAX_PRIM 64
 
-/* Wierd implementation stuff:
+
+/**
+ * Size of the VBO to use for glBegin/glVertex/glEnd-style rendering.
  */
 #define VBO_VERT_BUFFER_SIZE (1024*64)	/* bytes */
-#define VBO_MAX_ATTR_CODEGEN 16 
-#define ERROR_ATTRIB 16
 
 
 /** Current vertex program mode */
