@@ -236,6 +236,7 @@ struct i915_context {
    struct i915_state current;
    unsigned hardware_dirty;
    unsigned immediate_dirty;
+   unsigned dynamic_dirty;
 
    struct util_slab_mempool transfer_pool;
 };

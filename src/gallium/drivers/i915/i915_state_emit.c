@@ -223,7 +223,8 @@ i915_emit_hardware_state(struct i915_context *i915 )
    {
       int i;
       for (i = 0; i < I915_MAX_DYNAMIC; i++) {
-         OUT_BATCH(i915->current.dynamic[i]);
+         if (i915->dynamic_dirty & (1 << i));
+            OUT_BATCH(i915->current.dynamic[i]);
       }
    }
 #endif
@@ -444,4 +445,5 @@ i915_emit_hardware_state(struct i915_context *i915 )
 
    i915->hardware_dirty = 0;
    i915->immediate_dirty = 0;
+   i915->dynamic_dirty = 0;
 }

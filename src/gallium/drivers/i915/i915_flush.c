@@ -95,4 +95,5 @@ void i915_flush(struct i915_context *i915, struct pipe_fence_handle **fence)
    i915->vbo_flushed = 1;
    i915->hardware_dirty = ~0;
    i915->immediate_dirty = ~0;
+   i915->dynamic_dirty = ~0;
 }

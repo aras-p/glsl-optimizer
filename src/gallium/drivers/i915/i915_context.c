@@ -164,6 +164,7 @@ i915_create_context(struct pipe_screen *screen, void *priv)
    i915->dirty = ~0;
    i915->hardware_dirty = ~0;
    i915->immediate_dirty = ~0;
+   i915->dynamic_dirty = ~0;
 
    /* Batch stream debugging is a bit hacked up at the moment:
     */
