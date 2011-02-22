@@ -415,16 +415,32 @@ PIPE_TRANSFER
 
 These flags control the behavior of a transfer object.
 
-* ``READ``: resource contents are read at transfer create time.
-* ``WRITE``: resource contents will be written back at transfer destroy time.
-* ``MAP_DIRECTLY``: a transfer should directly map the resource. May return
-  NULL if not supported.
-* ``DISCARD``: The memory within the mapped region is discarded.
-  Cannot be used with ``READ``.
-* ``DONTBLOCK``: Fail if the resource cannot be mapped immediately.
-* ``UNSYNCHRONIZED``: Do not synchronize pending operations on the resource
-  when mapping. The interaction of any writes to the map and any
-  operations pending on the resource are undefined. Cannot be used with
-  ``READ``.
-* ``FLUSH_EXPLICIT``: Written ranges will be notified later with
-  :ref:`transfer_flush_region`. Cannot be used with ``READ``.
+``PIPE_TRANSFER_READ``
+  Resource contents read back (or accessed directly) at transfer create time.
+
+``PIPE_TRANSFER_WRITE``
+  Resource contents will be written back at transfer_destroy time (or modified
+  as a result of being accessed directly).
+
+``PIPE_TRANSFER_MAP_DIRECTLY``
+  a transfer should directly map the resource. May return NULL if not supported.
+
+``PIPE_TRANSFER_DISCARD_RANGE``
+  The memory within the mapped region is discarded.  Cannot be used with
+  ``PIPE_TRANSFER_READ``.
+
+``PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE``
+  Discards all memory backing the resource.  It should not be used with
+  ``PIPE_TRANSFER_READ``.
+
+``PIPE_TRANSFER_DONTBLOCK``
+  Fail if the resource cannot be mapped immediately.
+
+``PIPE_TRANSFER_UNSYNCHRONIZED``
+  Do not synchronize pending operations on the resource when mapping. The
+  interaction of any writes to the map and any operations pending on the
+  resource are undefined. Cannot be used with ``PIPE_TRANSFER_READ``.
+
+``PIPE_TRANSFER_FLUSH_EXPLICIT``
+  Written ranges will be notified later with :ref:`transfer_flush_region`.
+  Cannot be used with ``PIPE_TRANSFER_READ``.
