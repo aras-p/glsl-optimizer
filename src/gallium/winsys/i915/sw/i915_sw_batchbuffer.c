@@ -1,6 +1,7 @@
 
 #include "i915_sw_winsys.h"
 #include "i915/i915_batchbuffer.h"
+#include "i915/i915_debug.h"
 #include "util/u_memory.h"
 
 #define BATCH_RESERVED 16
@@ -98,7 +99,6 @@ i915_sw_batchbuffer_flush(struct i915_winsys_batchbuffer *ibatch,
 {
    struct i915_sw_batchbuffer *batch = i915_sw_batchbuffer(ibatch);
    unsigned used = 0;
-   int i;
 
    assert(i915_winsys_batchbuffer_space(ibatch) >= 0);
 
@@ -122,12 +122,7 @@ i915_sw_batchbuffer_flush(struct i915_winsys_batchbuffer *ibatch,
    assert((used & 4) == 0);
 
    if (i915_sw_winsys(ibatch->iws)->dump_cmd) {
-      unsigned *ptr = (unsigned *)batch->base.map;
-
-      debug_printf("%s:\n", __FUNCTION__);
-      for (i = 0; i < used / 4; i++, ptr++) {
-         debug_printf("\t%08x:    %08x\n", i*4, *ptr);
-      }
+      i915_dump_batchbuffer(ibatch);
    }
 
    if (fence) {
