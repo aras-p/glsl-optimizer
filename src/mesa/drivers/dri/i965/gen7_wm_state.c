@@ -155,6 +155,11 @@ upload_ps_state(struct brw_context *brw)
    struct intel_context *intel = &brw->intel;
    uint32_t dw2, dw4, dw5;
 
+   BEGIN_BATCH(2);
+   OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS_PS << 16 | (2 - 2));
+   OUT_BATCH(brw->wm.bind_bo_offset);
+   ADVANCE_BATCH();
+
    /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->nr_params == 0) {
       /* Disable the push constant buffers. */
@@ -234,6 +239,7 @@ const struct brw_tracked_state gen7_ps_state = {
       .brw   = (BRW_NEW_CURBE_OFFSETS |
 		BRW_NEW_FRAGMENT_PROGRAM |
                 BRW_NEW_NR_WM_SURFACES |
+		BRW_NEW_PS_BINDING_TABLE |
 		BRW_NEW_URB_FENCE |
 		BRW_NEW_BATCH),
       .cache = (CACHE_NEW_SAMPLER |

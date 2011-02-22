@@ -220,8 +220,6 @@ const struct brw_tracked_state *gen7_atoms[] =
 
    &gen6_scissor_state,
 
-   &gen6_binding_table_pointers,
-
    &brw_depthbuffer,
 
    &brw_polygon_stipple,
