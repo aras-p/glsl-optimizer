@@ -378,7 +378,7 @@ vbo_exec_fixup_vertex(struct gl_context *ctx, GLuint attr, GLuint newSize)
     * afterwards).
     */
    if (attr == 0) 
-      exec->ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
+      ctx->Driver.NeedFlush |= FLUSH_STORED_VERTICES;
 }
 
 
@@ -862,7 +862,7 @@ void vbo_exec_vtx_init( struct vbo_exec_context *exec )
 
    /* Hook our functions into the dispatch table.
     */
-   _mesa_install_exec_vtxfmt( exec->ctx, &exec->vtxfmt );
+   _mesa_install_exec_vtxfmt( ctx, &exec->vtxfmt );
 
    for (i = 0 ; i < VBO_ATTRIB_MAX ; i++) {
       ASSERT(i < Elements(exec->vtx.attrsz));
@@ -941,8 +941,8 @@ void vbo_exec_BeginVertices( struct gl_context *ctx )
 
    vbo_exec_vtx_map( exec );
 
-   assert((exec->ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT) == 0);
-   exec->ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;
+   assert((ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT) == 0);
+   ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;
 }
 
 
@@ -960,7 +960,7 @@ void vbo_exec_FlushVertices( struct gl_context *ctx, GLuint flags )
    assert(exec->flush_call_depth == 1);
 #endif
 
-   if (exec->ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {
+   if (ctx->Driver.CurrentExecPrimitive != PRIM_OUTSIDE_BEGIN_END) {
       /* We've had glBegin but not glEnd! */
 #ifdef DEBUG
       exec->flush_call_depth--;
@@ -974,10 +974,10 @@ void vbo_exec_FlushVertices( struct gl_context *ctx, GLuint flags )
 
    /* Need to do this to ensure BeginVertices gets called again:
     */
-   if (exec->ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT)
-      exec->ctx->Driver.NeedFlush &= ~FLUSH_UPDATE_CURRENT;
+   if (ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT)
+      ctx->Driver.NeedFlush &= ~FLUSH_UPDATE_CURRENT;
 
-   exec->ctx->Driver.NeedFlush &= ~flags;
+   ctx->Driver.NeedFlush &= ~flags;
 
 #ifdef DEBUG
    exec->flush_call_depth--;
