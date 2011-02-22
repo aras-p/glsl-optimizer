@@ -470,7 +470,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 d = brw->vb.buffers[i].offset - brw->vb.current_buffers[i].offset;
 	 if (delta == 0)
 	    delta = d / brw->vb.current_buffers[i].stride;
-	 else if (delta * brw->vb.current_buffers[i].stride != d)
+	 if (delta * brw->vb.current_buffers[i].stride != d)
 	    break;
       }
 
