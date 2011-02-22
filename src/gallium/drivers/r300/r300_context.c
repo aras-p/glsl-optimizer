@@ -482,7 +482,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     }
 
     {
-        struct pipe_resource vb = {};
+        struct pipe_resource vb;
+        memset(&vb, 0, sizeof(vb));
         vb.target = PIPE_BUFFER;
         vb.format = PIPE_FORMAT_R8_UNORM;
         vb.bind = PIPE_BIND_VERTEX_BUFFER;
@@ -495,7 +496,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     }
 
     {
-        struct pipe_depth_stencil_alpha_state dsa = {};
+        struct pipe_depth_stencil_alpha_state dsa;
+        memset(&dsa, 0, sizeof(dsa));
         dsa.depth.writemask = 1;
 
         r300->dsa_decompress_zmask =
