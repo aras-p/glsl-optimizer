@@ -59,6 +59,23 @@ check_buffers_are_unmapped(const struct gl_client_array **inputs)
 
 
 /**
+ * A debug function that may be called from other parts of Mesa as
+ * needed during debugging.
+ */
+void
+vbo_check_buffers_are_unmapped(struct gl_context *ctx)
+{
+   struct vbo_context *vbo = vbo_context(ctx);
+   struct vbo_exec_context *exec = &vbo->exec;
+   /* check the current vertex arrays */
+   check_buffers_are_unmapped(exec->array.inputs);
+   /* check the current glBegin/glVertex/glEnd-style VBO */
+   assert(!_mesa_bufferobj_mapped(exec->vtx.bufferobj));
+}
+
+
+
+/**
  * Compute min and max elements by scanning the index buffer for
  * glDraw[Range]Elements() calls.
  * If primitive restart is enabled, we need to ignore restart
