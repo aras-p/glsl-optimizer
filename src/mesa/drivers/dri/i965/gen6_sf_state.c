@@ -54,6 +54,8 @@ get_attr_override(struct brw_context *brw, int fs_attr, int two_side_color)
     * be FRAG_ATTRIB_*.
     */
    for (i = 1; i < vs_attr; i++) {
+      if (i == VERT_RESULT_PSIZ)
+	 continue;
       if (brw->vs.prog_data->outputs_written & BITFIELD64_BIT(i))
 	 attr_index++;
    }
