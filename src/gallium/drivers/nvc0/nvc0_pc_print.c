@@ -363,9 +363,9 @@ struct nv_op_info nvc0_op_info_table[NV_OP_COUNT + 1] =
 
    { NV_OP_SELP, "selp", NV_TYPE_U32, 0, 0, 0, 0, 1, 0, 0, 0 },
 
-   { NV_OP_SLCT_F32, "slct", NV_TYPE_F32, 0, 0, 0, 0, 1, 0, 0, 0 },
-   { NV_OP_SLCT_F32, "slct", NV_TYPE_S32, 0, 0, 0, 0, 1, 0, 0, 0 },
-   { NV_OP_SLCT_F32, "slct", NV_TYPE_U32, 0, 0, 0, 0, 1, 0, 0, 0 },
+   { NV_OP_SLCT, "slct", NV_TYPE_F32, 0, 0, 0, 0, 1, 0, 2, 2 },
+   { NV_OP_SLCT, "slct", NV_TYPE_S32, 0, 0, 0, 0, 1, 0, 2, 2 },
+   { NV_OP_SLCT, "slct", NV_TYPE_U32, 0, 0, 0, 0, 1, 0, 2, 2 },
 
    { NV_OP_ADD, "sub", NV_TYPE_F32, 0, 0, 0, 0, 1, 0, 1, 0 },
 

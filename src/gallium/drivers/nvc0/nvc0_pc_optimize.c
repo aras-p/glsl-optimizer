@@ -245,7 +245,9 @@ check_swap_src_0_1(struct nv_instruction *nvi)
    struct nv_ref *src0 = nvi->src[0];
    struct nv_ref *src1 = nvi->src[1];
 
-   if (!nv_op_commutative(nvi->opcode) && NV_BASEOP(nvi->opcode) != NV_OP_SET)
+   if (!nv_op_commutative(nvi->opcode) &&
+       NV_BASEOP(nvi->opcode) != NV_OP_SET &&
+       NV_BASEOP(nvi->opcode) != NV_OP_SLCT)
       return;
    assert(src0 && src1 && src0->value && src1->value);
 
@@ -266,8 +268,13 @@ check_swap_src_0_1(struct nv_instruction *nvi)
       }
    }
 
-   if (nvi->src[0] != src0 && NV_BASEOP(nvi->opcode) == NV_OP_SET)
-      nvi->set_cond = (nvi->set_cond & ~7) | cc_swapped[nvi->set_cond & 7];
+   if (nvi->src[0] != src0) {
+      if (NV_BASEOP(nvi->opcode) == NV_OP_SET)
+         nvi->set_cond = (nvi->set_cond & ~7) | cc_swapped[nvi->set_cond & 7];
+      else
+      if (NV_BASEOP(nvi->opcode) == NV_OP_SLCT)
+         nvi->set_cond = NV_CC_INVERSE(nvi->set_cond);
+   }
 }
 
 static void

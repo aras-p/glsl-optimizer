@@ -1493,10 +1493,10 @@ bld_instruction(struct bld_context *bld,
    case TGSI_OPCODE_CMP:
       FOR_EACH_DST0_ENABLED_CHANNEL(c, insn) {
          src0 = emit_fetch(bld, insn, 0, c);
-         src0 = bld_setp(bld, NV_OP_SET_F32, NV_CC_LT, src0, bld->zero);
          src1 = emit_fetch(bld, insn, 1, c);
          src2 = emit_fetch(bld, insn, 2, c);
-         dst0[c] = bld_insn_3(bld, NV_OP_SELP, src1, src2, src0);
+         dst0[c] = bld_insn_3(bld, NV_OP_SLCT_F32, src1, src2, src0);
+         dst0[c]->insn->set_cond = NV_CC_LT;
       }
       break;
    case TGSI_OPCODE_COS:
