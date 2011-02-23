@@ -1,7 +1,7 @@
 Random list of problems with i915g:
 
-- Check if PIPE_CAP_BLEND_EQUATION_SEPARATE and PIPE_CAP_TEXTURE_MIRROR_REPEAT
-  work, the code is there. If not fix it! A simple task, good for beginners.
+- Check if PIPE_CAP_BLEND_EQUATION_SEPARATE work, the code is there.
+  If not fix it! A simple task, good for beginners.
 
 - Add support for PIPE_CAP_POINT_SPRITE either via the draw module or directly
   via the hardware, look at the classic driver, more advanced.
