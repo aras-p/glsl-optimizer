@@ -49,6 +49,8 @@ struct svga_screen
    struct pipe_screen screen;
    struct svga_winsys_screen *sws;
 
+   SVGA3dHardwareVersion hw_version;
+
    unsigned use_ps30;
    unsigned use_vs30;
    

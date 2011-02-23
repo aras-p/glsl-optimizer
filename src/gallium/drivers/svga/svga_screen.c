@@ -499,6 +499,12 @@ svga_screen_create(struct svga_winsys_screen *sws)
 
    svga_init_screen_resource_functions(svgascreen);
 
+   if (sws->get_hw_version) {
+      svgascreen->hw_version = sws->get_hw_version(sws);
+   } else {
+      svgascreen->hw_version = SVGA3D_HWVERSION_WS65_B1;
+   }
+
    svgascreen->use_ps30 =
       sws->get_cap(sws, SVGA3D_DEVCAP_FRAGMENT_SHADER_VERSION, &result) &&
       result.u >= SVGA3DPSVERSION_30 ? TRUE : FALSE;
