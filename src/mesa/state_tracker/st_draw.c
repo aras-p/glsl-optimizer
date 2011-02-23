@@ -315,10 +315,13 @@ setup_interleaved_attribs(struct gl_context *ctx,
    const GLubyte *low_addr = NULL;
 
    /* Find the lowest address. */
-   for (attr = 0; attr < vpv->num_inputs; attr++) {
-      const GLubyte *start = arrays[vp->index_to_input[attr]]->Ptr;
+   if(vpv->num_inputs) {
+      low_addr = arrays[vp->index_to_input[0]]->Ptr;
 
-      low_addr = !low_addr ? start : MIN2(low_addr, start);
+      for (attr = 1; attr < vpv->num_inputs; attr++) {
+         const GLubyte *start = arrays[vp->index_to_input[attr]]->Ptr;
+         low_addr = MIN2(low_addr, start);
+      }
    }
 
    for (attr = 0; attr < vpv->num_inputs; attr++) {
