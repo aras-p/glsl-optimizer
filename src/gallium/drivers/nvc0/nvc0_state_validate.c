@@ -302,14 +302,12 @@ nvc0_validate_sprite_coords(struct nvc0_context *nvc0)
 
    if (nvc0->rast->pipe.point_quad_rasterization) {
       uint32_t en = nvc0->rast->pipe.sprite_coord_enable;
-      int i;
-      struct nvc0_program *prog = nvc0->fragprog;
 
       while (en) {
-         i = ffs(en) - 1;
+         int i = ffs(en) - 1;
          en &= ~(1 << i);
-         if (prog->fp.in_pos[i] >= 0xc0 && prog->fp.in_pos[i] < 0xe0)
-            reg |= 8 << ((prog->fp.in_pos[i] - 0xc0) / 4);
+         if (i >= 0 && i < 8)
+            reg |= 8 << i;
       }
    }
 
