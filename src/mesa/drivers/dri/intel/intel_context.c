@@ -746,7 +746,7 @@ intelInitContext(struct intel_context *intel,
 
    driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
                        sPriv->myNum, (intel->gen >= 4) ? "i965" : "i915");
-   if (intelScreen->deviceID == PCI_CHIP_I865_G)
+   if (intel->gen < 4)
       intel->maxBatchSize = 4096;
    else
       intel->maxBatchSize = sizeof(intel->batch.map);
