@@ -510,9 +510,6 @@ dump_SVGA3dCmdSetShader(const SVGA3dCmdSetShader *cmd)
 {
    _debug_printf("\t\t.cid = %u\n", (*cmd).cid);
    switch((*cmd).type) {
-   case SVGA3D_SHADERTYPE_COMPILED_DX8:
-      _debug_printf("\t\t.type = SVGA3D_SHADERTYPE_COMPILED_DX8\n");
-      break;
    case SVGA3D_SHADERTYPE_VS:
       _debug_printf("\t\t.type = SVGA3D_SHADERTYPE_VS\n");
       break;
@@ -915,9 +912,6 @@ dump_SVGA3dCmdDefineShader(const SVGA3dCmdDefineShader *cmd)
    _debug_printf("\t\t.cid = %u\n", (*cmd).cid);
    _debug_printf("\t\t.shid = %u\n", (*cmd).shid);
    switch((*cmd).type) {
-   case SVGA3D_SHADERTYPE_COMPILED_DX8:
-      _debug_printf("\t\t.type = SVGA3D_SHADERTYPE_COMPILED_DX8\n");
-      break;
    case SVGA3D_SHADERTYPE_VS:
       _debug_printf("\t\t.type = SVGA3D_SHADERTYPE_VS\n");
       break;
@@ -934,14 +928,14 @@ dump_SVGA3dCmdDefineShader(const SVGA3dCmdDefineShader *cmd)
 }
 
 static void
-dump_SVGA3dCmdSetShaderConst(const SVGA3dCmdSetShaderConst *cmd)
+dump_SVGA3dCmdSetShaderConst(const SVGA3dCmdSetShaderConst *cmd, uint32 numConsts)
 {
+   uint32 i;
+   const float (*fvalues)[4];
+   const int32 (*ivalues)[4];
    _debug_printf("\t\t.cid = %u\n", (*cmd).cid);
    _debug_printf("\t\t.reg = %u\n", (*cmd).reg);
    switch((*cmd).type) {
-   case SVGA3D_SHADERTYPE_COMPILED_DX8:
-      _debug_printf("\t\t.type = SVGA3D_SHADERTYPE_COMPILED_DX8\n");
-      break;
    case SVGA3D_SHADERTYPE_VS:
       _debug_printf("\t\t.type = SVGA3D_SHADERTYPE_VS\n");
       break;
@@ -958,31 +952,51 @@ dump_SVGA3dCmdSetShaderConst(const SVGA3dCmdSetShaderConst *cmd)
    switch((*cmd).ctype) {
    case SVGA3D_CONST_TYPE_FLOAT:
       _debug_printf("\t\t.ctype = SVGA3D_CONST_TYPE_FLOAT\n");
-      _debug_printf("\t\t.values[0] = %f\n", *(const float *)&(*cmd).values[0]);
-      _debug_printf("\t\t.values[1] = %f\n", *(const float *)&(*cmd).values[1]);
-      _debug_printf("\t\t.values[2] = %f\n", *(const float *)&(*cmd).values[2]);
-      _debug_printf("\t\t.values[3] = %f\n", *(const float *)&(*cmd).values[3]);
+      fvalues = (const float (*)[4])cmd->values;
+      for (i = 0; i < numConsts; ++i) {
+         _debug_printf("\t\t.values[%u] = {%f, %f, %f, %f}\n",
+                       cmd->reg + i, 
+                       fvalues[i][0],
+                       fvalues[i][1],
+                       fvalues[i][2],
+                       fvalues[i][3]);
+      }
       break;
    case SVGA3D_CONST_TYPE_INT:
       _debug_printf("\t\t.ctype = SVGA3D_CONST_TYPE_INT\n");
-      _debug_printf("\t\t.values[0] = %u\n", (*cmd).values[0]);
-      _debug_printf("\t\t.values[1] = %u\n", (*cmd).values[1]);
-      _debug_printf("\t\t.values[2] = %u\n", (*cmd).values[2]);
-      _debug_printf("\t\t.values[3] = %u\n", (*cmd).values[3]);
+      ivalues = (const int32 (*)[4])cmd->values;
+      for (i = 0; i < numConsts; ++i) {
+         _debug_printf("\t\t.values[%u] = {%i, %i, %i, %i}\n",
+                       cmd->reg + i,
+                       ivalues[i][0],
+                       ivalues[i][1],
+                       ivalues[i][2],
+                       ivalues[i][3]);
+      }
       break;
    case SVGA3D_CONST_TYPE_BOOL:
       _debug_printf("\t\t.ctype = SVGA3D_CONST_TYPE_BOOL\n");
-      _debug_printf("\t\t.values[0] = %u\n", (*cmd).values[0]);
-      _debug_printf("\t\t.values[1] = %u\n", (*cmd).values[1]);
-      _debug_printf("\t\t.values[2] = %u\n", (*cmd).values[2]);
-      _debug_printf("\t\t.values[3] = %u\n", (*cmd).values[3]);
+      ivalues = (const int32 (*)[4])cmd->values;
+      for (i = 0; i < numConsts; ++i) {
+         _debug_printf("\t\t.values[%u] = {%i, %i, %i, %i}\n",
+                       cmd->reg + i,
+                       ivalues[i][0],
+                       ivalues[i][1],
+                       ivalues[i][2],
+                       ivalues[i][3]);
+      }
       break;
    default:
       _debug_printf("\t\t.ctype = %i\n", (*cmd).ctype);
-      _debug_printf("\t\t.values[0] = %u\n", (*cmd).values[0]);
-      _debug_printf("\t\t.values[1] = %u\n", (*cmd).values[1]);
-      _debug_printf("\t\t.values[2] = %u\n", (*cmd).values[2]);
-      _debug_printf("\t\t.values[3] = %u\n", (*cmd).values[3]);
+      ivalues = (const int32 (*)[4])cmd->values;
+      for (i = 0; i < numConsts; ++i) {
+         _debug_printf("\t\t.values[%u] = {%i, %i, %i, %i}\n",
+                       cmd->reg + i,
+                       ivalues[i][0],
+                       ivalues[i][1],
+                       ivalues[i][2],
+                       ivalues[i][3]);
+      }
       break;
    }
 }
@@ -1212,9 +1226,6 @@ dump_SVGA3dCmdDestroyShader(const SVGA3dCmdDestroyShader *cmd)
    _debug_printf("\t\t.cid = %u\n", (*cmd).cid);
    _debug_printf("\t\t.shid = %u\n", (*cmd).shid);
    switch((*cmd).type) {
-   case SVGA3D_SHADERTYPE_COMPILED_DX8:
-      _debug_printf("\t\t.type = SVGA3D_SHADERTYPE_COMPILED_DX8\n");
-      break;
    case SVGA3D_SHADERTYPE_VS:
       _debug_printf("\t\t.type = SVGA3D_SHADERTYPE_VS\n");
       break;
@@ -1401,8 +1412,23 @@ dump_SVGA3dCmdDefineSurface(const SVGA3dCmdDefineSurface *cmd)
    case SVGA3D_Z_D24X8:
       _debug_printf("\t\t.format = SVGA3D_Z_D24X8\n");
       break;
-   case SVGA3D_FORMAT_MAX:
-      _debug_printf("\t\t.format = SVGA3D_FORMAT_MAX\n");
+   case SVGA3D_G16R16:
+      _debug_printf("\t\t.format = SVGA3D_G16R16\n");
+      break;
+   case SVGA3D_A16B16G16R16:
+      _debug_printf("\t\t.format = SVGA3D_A16B16G16R16\n");
+      break;
+   case SVGA3D_UYVY:
+      _debug_printf("\t\t.format = SVGA3D_UYVY\n");
+      break;
+   case SVGA3D_YUY2:
+      _debug_printf("\t\t.format = SVGA3D_YUY2\n");
+      break;
+   case SVGA3D_NV12:
+      _debug_printf("\t\t.format = SVGA3D_NV12\n");
+      break;
+   case SVGA3D_AYUV:
+      _debug_printf("\t\t.format = SVGA3D_AYUV\n");
       break;
    default:
       _debug_printf("\t\t.format = %i\n", (*cmd).format);
@@ -1666,8 +1692,9 @@ svga_dump_command(uint32_t cmd_id, const void *data, uint32_t size)
       _debug_printf("\tSVGA_3D_CMD_SET_SHADER_CONST\n");
       {
          const SVGA3dCmdSetShaderConst *cmd = (const SVGA3dCmdSetShaderConst *)body;
-         dump_SVGA3dCmdSetShaderConst(cmd);
-         body = (const uint8_t *)&cmd[1];
+         uint32 numConsts = 1 + (size - sizeof *cmd) / (4 * sizeof(uint32));
+         dump_SVGA3dCmdSetShaderConst(cmd, numConsts);
+         body = next;
       }
       break;
    case SVGA_3D_CMD_DRAW_PRIMITIVES:
