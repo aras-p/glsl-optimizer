@@ -52,6 +52,16 @@ void svga_cleanup_tss_binding(struct svga_context *svga)
 }
 
 
+struct bind_queue {
+   struct {
+      unsigned unit;
+      struct svga_hw_view_state *view;
+   } bind[PIPE_MAX_SAMPLERS];
+
+   unsigned bind_count;
+};
+
+
 static int
 update_tss_binding(struct svga_context *svga, 
                    unsigned dirty )
@@ -63,15 +73,7 @@ update_tss_binding(struct svga_context *svga,
    unsigned min_lod;
    unsigned max_lod;
 
-
-   struct {
-      struct {
-         unsigned unit;
-         struct svga_hw_view_state *view;
-      } bind[PIPE_MAX_SAMPLERS];
-
-      unsigned bind_count;
-   } queue;
+   struct bind_queue queue;
 
    queue.bind_count = 0;
    
@@ -161,6 +163,64 @@ update_tss_binding(struct svga_context *svga,
 
 fail:
    return PIPE_ERROR_OUT_OF_MEMORY;
+}
+
+
+/*
+ * Rebind textures.
+ *
+ * Similar to update_tss_binding, but without any state checking/update.
+ *
+ * Called at the beginning of every new command buffer to ensure that
+ * non-dirty textures are properly paged-in.
+ */
+enum pipe_error
+svga_reemit_tss_bindings(struct svga_context *svga)
+{
+   unsigned i;
+   enum pipe_error ret;
+   struct bind_queue queue;
+
+   queue.bind_count = 0;
+
+   for (i = 0; i < svga->state.hw_draw.num_views; i++) {
+      struct svga_hw_view_state *view = &svga->state.hw_draw.views[i];
+
+      if (view->v) {
+         queue.bind[queue.bind_count].unit = i;
+         queue.bind[queue.bind_count].view = view;
+         queue.bind_count++;
+      }
+   }
+
+   if (queue.bind_count) {
+      SVGA3dTextureState *ts;
+
+      ret = SVGA3D_BeginSetTextureState(svga->swc,
+                                        &ts,
+                                        queue.bind_count);
+      if (ret != PIPE_OK) {
+         return ret;
+      }
+
+      for (i = 0; i < queue.bind_count; i++) {
+         struct svga_winsys_surface *handle;
+
+         ts[i].stage = queue.bind[i].unit;
+         ts[i].name = SVGA3D_TS_BIND_TEXTURE;
+
+         assert(queue.bind[i].view->v);
+         handle = queue.bind[i].view->v->handle;
+         svga->swc->surface_relocation(svga->swc,
+                                       &ts[i].value,
+                                       handle,
+                                       SVGA_RELOC_READ);
+      }
+
+      SVGA_FIFOCommitAll(svga->swc);
+   }
+
+   return PIPE_OK;
 }
 
 

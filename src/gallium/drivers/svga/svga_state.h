@@ -92,4 +92,8 @@ void svga_update_state_retry( struct svga_context *svga,
 
 enum pipe_error svga_emit_initial_state( struct svga_context *svga );
 
+enum pipe_error svga_reemit_framebuffer_bindings( struct svga_context *svga );
+
+enum pipe_error svga_reemit_tss_bindings( struct svga_context *svga );
+
 #endif
