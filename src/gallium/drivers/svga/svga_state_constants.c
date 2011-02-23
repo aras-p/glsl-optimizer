@@ -26,6 +26,7 @@
 #include "util/u_inlines.h"
 #include "pipe/p_defines.h"
 
+#include "svga_screen.h"
 #include "svga_context.h"
 #include "svga_state.h"
 #include "svga_cmd.h"
@@ -33,6 +34,13 @@
 #include "svga_debug.h"
 
 #include "svga_hw_reg.h"
+
+
+/*
+ * Don't try to send more than 4k of successive constants.
+ */
+#define MAX_CONST_REG_COUNT 256 /* 4k */
+
 
 /***********************************************************************
  * Hardware update 
@@ -48,13 +56,17 @@ static int svga_shader_type( int shader )
    return shader + 1;
 }
 
-
+/*
+ * Check and emit one shader constant register.
+ */
 static int emit_const( struct svga_context *svga,
                        int unit,
                        int i,
                        const float *value )
 {
    int ret = PIPE_OK;
+
+   assert(i < CB_MAX);
 
    if (memcmp(svga->state.hw_draw.cb[unit][i], value, 4 * sizeof(float)) != 0) {
       if (SVGA_DEBUG & DEBUG_CONSTS)
@@ -81,10 +93,103 @@ static int emit_const( struct svga_context *svga,
    return ret;
 }
 
+/*
+ * Check and emit a range of shader constant registers, trying to coalesce
+ * successive shader constant updates in a single command in order to save
+ * space on the command buffer.  This is a HWv8 feature.
+ */
+static enum pipe_error emit_const_range( struct svga_context *svga,
+                                         unsigned unit,
+                                         unsigned offset,
+                                         unsigned count,
+                                         const float (*values)[4] )
+{
+   unsigned i, j;
+   enum pipe_error ret;
+
+   assert(offset + count < CB_MAX);
+
+   i = 0;
+   while (i < count) {
+      if (memcmp(svga->state.hw_draw.cb[unit][offset + i],
+                 values[i],
+                 4 * sizeof(float)) != 0) {
+
+         /*
+          * Found one dirty constant
+          */
+
+         if (SVGA_DEBUG & DEBUG_CONSTS)
+            debug_printf("%s %s %d: %f %f %f %f\n",
+                         __FUNCTION__,
+                         unit == PIPE_SHADER_VERTEX ? "VERT" : "FRAG",
+                         offset + i,
+                         values[i][0],
+                         values[i][1],
+                         values[i][2],
+                         values[i][3]);
+
+         /*
+          * Look for more consecutive dirty constants.
+          */
+
+         j = i + 1;
+         while (j < count &&
+                j < i + MAX_CONST_REG_COUNT &&
+                memcmp(svga->state.hw_draw.cb[unit][offset + j],
+                       values[j],
+                       4 * sizeof(float)) != 0) {
+
+            if (SVGA_DEBUG & DEBUG_CONSTS)
+               debug_printf("%s %s %d: %f %f %f %f\n",
+                            __FUNCTION__,
+                            unit == PIPE_SHADER_VERTEX ? "VERT" : "FRAG",
+                            offset + j,
+                            values[j][0],
+                            values[j][1],
+                            values[j][2],
+                            values[j][3]);
+
+            ++j;
+         }
+
+         assert(j >= i + 1);
+
+         /*
+          * Send them all together.
+          */
+
+         ret = SVGA3D_SetShaderConsts(svga->swc,
+                                      offset + i, j - i,
+                                      svga_shader_type(unit),
+                                      SVGA3D_CONST_TYPE_FLOAT,
+                                      values + i);
+         if (ret != PIPE_OK) {
+            return ret;
+         }
+
+         /*
+          * Local copy of the hardware state.
+          */
+
+         memcpy(svga->state.hw_draw.cb[unit][offset + i],
+                values[i],
+                (j - i) * 4 * sizeof(float));
+
+         i = j + 1;
+      } else {
+         ++i;
+      }
+   }
+
+   return PIPE_OK;
+}
+
 static int emit_consts( struct svga_context *svga,
                         int offset,
                         int unit )
 {
+   struct svga_screen *ss = svga_screen(svga->pipe.screen);
    struct pipe_transfer *transfer = NULL;
    unsigned count;
    const float (*data)[4] = NULL;
@@ -105,10 +210,18 @@ static int emit_consts( struct svga_context *svga,
       goto done;
    }
 
-   for (i = 0; i < count; i++) {
-      ret = emit_const( svga, unit, offset + i, data[i] );
-      if (ret)
+   if (ss->hw_version >= SVGA3D_HWVERSION_WS8_B1) {
+      ret = emit_const_range( svga, unit, offset, count, data );
+      if (ret != PIPE_OK) {
          goto done;
+      }
+   } else {
+      for (i = 0; i < count; i++) {
+         ret = emit_const( svga, unit, offset + i, data[i] );
+         if (ret != PIPE_OK) {
+            goto done;
+         }
+      }
    }
 
 done:

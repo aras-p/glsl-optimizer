@@ -758,6 +758,59 @@ SVGA3D_SetShaderConst(struct svga_winsys_context *swc,
 }
 
 
+/*
+ *----------------------------------------------------------------------
+ *
+ * SVGA3D_SetShaderConsts --
+ *
+ *      Set the value of successive shader constants.
+ *
+ *      Shader constants are analogous to uniform variables in GLSL,
+ *      except that they belong to the render context rather than to
+ *      an individual shader.
+ *
+ *      Constants may have one of three types: A 4-vector of floats,
+ *      a 4-vector of integers, or a single boolean flag.
+ *
+ * Results:
+ *      None.
+ *
+ * Side effects:
+ *      None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+enum pipe_error
+SVGA3D_SetShaderConsts(struct svga_winsys_context *swc,
+                        uint32 reg,                   // IN
+                        uint32 numRegs,               // IN
+                        SVGA3dShaderType type,        // IN
+                        SVGA3dShaderConstType ctype,  // IN
+                        const void *values)           // IN
+{
+   SVGA3dCmdSetShaderConst *cmd;
+
+   cmd = SVGA3D_FIFOReserve(swc,
+                            SVGA_3D_CMD_SET_SHADER_CONST,
+                            sizeof *cmd + (numRegs - 1) * sizeof cmd->values,
+                            0);
+   if(!cmd)
+      return PIPE_ERROR_OUT_OF_MEMORY;
+
+   cmd->cid = swc->cid;
+   cmd->reg = reg;
+   cmd->type = type;
+   cmd->ctype = ctype;
+
+   memcpy(&cmd->values, values, numRegs * sizeof cmd->values);
+
+   swc->commit(swc);
+
+   return PIPE_OK;
+}
+
+
 
 
 

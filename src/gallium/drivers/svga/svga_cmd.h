@@ -211,6 +211,14 @@ SVGA3D_SetShaderConst(struct svga_winsys_context *swc,
                       SVGA3dShaderConstType ctype, const void *value);
 
 enum pipe_error
+SVGA3D_SetShaderConsts(struct svga_winsys_context *swc,
+                       uint32 reg,
+                       uint32 numRegs,
+                       SVGA3dShaderType type,
+                       SVGA3dShaderConstType ctype,
+                       const void *values);
+
+enum pipe_error
 SVGA3D_SetShader(struct svga_winsys_context *swc,
                  SVGA3dShaderType type, uint32 shid);
 
