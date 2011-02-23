@@ -535,8 +535,11 @@ nvc0_fp_gen_header(struct nvc0_program *fp, struct nvc0_translation_info *ti)
          a = ti->input_loc[i][c] / 2;
          if (ti->input_loc[i][c] >= 0x2c0)
             a -= 32;
-         if ((a & ~7) == 0x70/2)
-            fp->hdr[5] |= 1 << (28 + (a & 7) / 2); /* FRAG_COORD_UMASK */
+         if (ti->input_loc[i][0] == 0x70)
+            fp->hdr[5] |= 1 << (28 + c); /* FRAG_COORD_UMASK */
+         else
+         if (ti->input_loc[i][0] == 0x2e0)
+            fp->hdr[14] |= 1 << (24 + c); /* POINT_COORD */
          else
             fp->hdr[4 + a / 32] |= m << (a % 32);
       }
