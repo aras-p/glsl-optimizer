@@ -98,6 +98,7 @@ i915_update_stencil(struct gl_context * ctx)
    dw &= ~(mask); \
    dw |= (set); \
    dirty |= dw != i915->state.Ctx[reg]; \
+   i915->state.Ctx[reg] = dw; \
 } while(0)
 
    /* Set front state. */
