@@ -240,12 +240,13 @@ static GLuint get_index_type(GLenum type)
 }
 
 static void
-copy_array_to_vbo_array( struct brw_context *brw,
-			 struct brw_vertex_element *element,
-			 struct brw_vertex_buffer *buffer,
-			 GLuint dst_stride)
+copy_array_to_vbo_array(struct brw_context *brw,
+			struct brw_vertex_element *element,
+			int count,
+			struct brw_vertex_buffer *buffer,
+			GLuint dst_stride)
 {
-   GLuint size = element->count * dst_stride;
+   GLuint size = count * dst_stride;
 
    buffer->stride = dst_stride;
    if (dst_stride == element->glarray->StrideB) {
@@ -257,7 +258,7 @@ copy_array_to_vbo_array( struct brw_context *brw,
       char *dst = map;
       int i;
 
-      for (i = 0; i < element->count; i++) {
+      for (i = 0; i < count; i++) {
 	 memcpy(dst, src, dst_stride);
 	 src += element->glarray->StrideB;
 	 dst += dst_stride;
@@ -271,9 +272,9 @@ static void brw_prepare_vertices(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = intel_context(ctx);
-   GLbitfield vs_inputs = brw->vs.prog_data->inputs_read; 
+   GLbitfield vs_inputs = brw->vs.prog_data->inputs_read;
    const unsigned char *ptr = NULL;
-   GLuint interleaved = 0, total_size = 0, count = -1;
+   GLuint interleaved = 0, total_size = 0;
    unsigned int min_index = brw->vb.min_index;
    unsigned int max_index = brw->vb.max_index;
    int i, j;
@@ -349,7 +350,6 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    input->buffer = j++;
 	    input->offset = 0;
 	 }
-	 input->count = glarray->_MaxElement;
 
 	 /* This is a common place to reach if the user mistakenly supplies
 	  * a pointer in place of a VBO offset.  If we just let it go through,
@@ -365,8 +365,6 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	  */
 	 assert(input->offset < brw->vb.buffers[input->buffer].bo->size);
       } else {
-	 input->count = glarray->StrideB ? max_index + 1 : 1;
-
 	 /* Queue the buffer object up to be uploaded in the next pass,
 	  * when we've decided if we're doing interleaved or not.
 	  */
@@ -386,18 +384,27 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 {
 	    interleaved = 0;
 	 }
-	 else if (total_size & (type_size -1))
+	 else if ((uintptr_t)(glarray->Ptr - ptr) & (type_size -1))
 	 {
 	    /* enforce natural alignment (for doubles) */
 	    interleaved = 0;
 	 }
 
-	 if (count > input->count)
-	    count = input->count;
-
 	 upload[nr_uploads++] = input;
+	 total_size = ALIGN(total_size, type_size);
 	 total_size += input->element_size;
       }
+   }
+
+   /* If we need to upload all the arrays, then we can trim those arrays to
+    * only the used elements [min_index, max_index] so long as we adjust all
+    * the values used in the 3DPRIMITIVE i.e. by setting the vertex bias.
+    */
+   if (nr_uploads == brw->vb.nr_enabled) {
+      brw->vb.start_vertex_bias = min_index;
+   } else {
+      brw->vb.start_vertex_bias = 0;
+      min_index = 0;
    }
 
    /* Handle any arrays to be uploaded. */
@@ -406,10 +413,8 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 /* All uploads are interleaved, so upload the arrays together as
 	  * interleaved.  First, upload the contents and set up upload[0].
 	  */
-	 upload[0]->count = count; /* trim the upload over all arrays */
-	 copy_array_to_vbo_array(brw,
-				 upload[0], &brw->vb.buffers[j],
-				 interleaved);
+	 copy_array_to_vbo_array(brw, upload[0], max_index - min_index + 1,
+				 &brw->vb.buffers[j], interleaved);
 
 	 for (i = 0; i < nr_uploads; i++) {
 	    /* Then, just point upload[i] at upload[0]'s buffer. */
@@ -423,8 +428,9 @@ static void brw_prepare_vertices(struct brw_context *brw)
       }
       else if (total_size < 2048) {
 	 /* Upload non-interleaved arrays into a single interleaved array */
-	 struct brw_vertex_buffer *buffer = &brw->vb.buffers[j];
-	 int count = upload[0]->count, offset;
+	 struct brw_vertex_buffer *buffer;
+	 int count = max_index - min_index + 1;
+	 int offset;
 	 char *map;
 
 	 map = intel_upload_map(&brw->intel, total_size * count, total_size);
@@ -432,8 +438,12 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    const unsigned char *src = upload[i]->glarray->Ptr;
 	    int size = upload[i]->element_size;
 	    int stride = upload[i]->glarray->StrideB;
-	    char *dst = map + offset;
+	    char *dst;
 	    int n;
+
+	    offset = ALIGN(offset, get_size(upload[i]->glarray->Type));
+	    dst = map + offset;
+	    src += min_index * size;
 
 	    for (n = 0; n < count; n++) {
 	       memcpy(dst, src, size);
@@ -446,25 +456,24 @@ static void brw_prepare_vertices(struct brw_context *brw)
 
 	    offset += size;
 	 }
-	 intel_upload_unmap(&brw->intel, map, total_size * count, total_size,
+	 assert(offset == total_size);
+	 buffer = &brw->vb.buffers[j++];
+	 intel_upload_unmap(&brw->intel, map, offset * count, offset,
 			    &buffer->bo, &buffer->offset);
 	 buffer->stride = offset;
-	 j++;
 
 	 nr_uploads = 0;
       }
    }
    /* Upload non-interleaved arrays */
    for (i = 0; i < nr_uploads; i++) {
-      copy_array_to_vbo_array(brw,
-			      upload[i], &brw->vb.buffers[j],
-			      upload[i]->element_size);
+      copy_array_to_vbo_array(brw, upload[i], max_index - min_index + 1,
+			      &brw->vb.buffers[j], upload[i]->element_size);
       upload[i]->buffer = j++;
       upload[i]->offset = 0;
    }
 
    /* can we simply extend the current vb? */
-   brw->vb.start_vertex_bias = 0;
    if (j == brw->vb.nr_current_buffers) {
       int delta = 0;
       for (i = 0; i < j; i++) {
@@ -482,7 +491,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
       }
 
       if (i == j) {
-	 brw->vb.start_vertex_bias = delta;
+	 brw->vb.start_vertex_bias += delta;
 	 while (--j >= 0)
 	    drm_intel_bo_unreference(brw->vb.buffers[j].bo);
 	 j = 0;

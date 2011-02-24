@@ -424,8 +424,6 @@ struct brw_vertex_element {
    gl_vert_attrib attrib;
    /** Size of a complete element */
    GLuint element_size;
-   /** Number of uploaded elements for this input. */
-   GLuint count;
    /** Offset of the first element within the buffer object */
    unsigned int offset;
 };
