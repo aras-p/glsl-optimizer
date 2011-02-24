@@ -640,6 +640,7 @@ egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
    _EGLContext *ctx = _eglGetCurrentContext();
    struct native_surface *nsurf;
    struct pipe_resource *ptex;
+   struct pipe_context *pipe;
 
    if (!gsurf->render_texture)
       return EGL_TRUE;
@@ -655,22 +656,18 @@ egl_g3d_copy_buffers(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSurface *surf,
             PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, NULL);
    }
 
-   /* create a pipe context to copy surfaces */
-   if (!gdpy->pipe) {
-      gdpy->pipe =
-         gdpy->native->screen->context_create(gdpy->native->screen, NULL);
-      if (!gdpy->pipe)
-         return EGL_FALSE;
-   }
+   pipe = ndpy_get_copy_context(gdpy->native);
+   if (!pipe)
+      return EGL_FALSE;
 
    ptex = get_pipe_resource(gdpy->native, nsurf, NATIVE_ATTACHMENT_FRONT_LEFT);
    if (ptex) {
       struct pipe_box src_box;
 
       u_box_origin_2d(ptex->width0, ptex->height0, &src_box);
-      gdpy->pipe->resource_copy_region(gdpy->pipe, ptex, 0, 0, 0, 0,
+      pipe->resource_copy_region(pipe, ptex, 0, 0, 0, 0,
             gsurf->render_texture, 0, &src_box);
-      gdpy->pipe->flush(gdpy->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
+      pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
       nsurf->present(nsurf, NATIVE_ATTACHMENT_FRONT_LEFT, FALSE, 0);
 
       pipe_resource_reference(&ptex, NULL);

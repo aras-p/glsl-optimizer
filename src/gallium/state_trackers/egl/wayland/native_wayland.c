@@ -137,8 +137,7 @@ wayland_display_destroy(struct native_display *ndpy)
    if (display->config)
       FREE(display->config);
 
-   if (display->base.screen)
-      display->base.screen->destroy(display->base.screen);
+   ndpy_uninit(ndpy);
 
    FREE(display);
 }

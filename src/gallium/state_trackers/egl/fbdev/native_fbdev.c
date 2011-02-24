@@ -320,7 +320,7 @@ fbdev_display_destroy(struct native_display *ndpy)
 {
    struct fbdev_display *fbdpy = fbdev_display(ndpy);
 
-   fbdpy->base.screen->destroy(fbdpy->base.screen);
+   ndpy_uninit(&fbdpy->base);
    close(fbdpy->fd);
    FREE(fbdpy);
 }

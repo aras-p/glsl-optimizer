@@ -142,6 +142,11 @@ struct native_display {
    struct pipe_screen *screen;
 
    /**
+    * Context used for copy operations.
+    */
+   struct pipe_context *pipe;
+
+   /**
     * Available for caller's use.
     */
    void *user_data;
@@ -221,6 +226,29 @@ static INLINE boolean
 native_attachment_mask_test(uint mask, enum native_attachment att)
 {
    return !!(mask & (1 << att));
+}
+
+/**
+ * Get the display copy context
+ */
+static INLINE struct pipe_context *
+ndpy_get_copy_context(struct native_display *ndpy)
+{
+   if (!ndpy->pipe)
+      ndpy->pipe = ndpy->screen->context_create(ndpy->screen, NULL);
+   return ndpy->pipe;
+}
+
+/**
+ * Free display screen and context resources
+ */
+static INLINE void
+ndpy_uninit(struct native_display *ndpy)
+{
+   if (ndpy->pipe)
+      ndpy->pipe->destroy(ndpy->pipe);
+   if (ndpy->screen)
+      ndpy->screen->destroy(ndpy->screen);
 }
 
 struct native_platform {
