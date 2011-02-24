@@ -225,7 +225,7 @@ struct texture_orig_info {
 	unsigned height0;
 };
 
-static void r600_s3tc_to_blittable(struct pipe_resource *tex,
+static void r600_compressed_to_blittable(struct pipe_resource *tex,
 				   unsigned level,
 				   struct texture_orig_info *orig)
 {
@@ -253,7 +253,7 @@ static void r600_s3tc_to_blittable(struct pipe_resource *tex,
 
 }
 
-static void r600_reset_blittable_to_s3tc(struct pipe_resource *tex,
+static void r600_reset_blittable_to_compressed(struct pipe_resource *tex,
 					 unsigned level,
 					 struct texture_orig_info *orig)
 {
@@ -282,13 +282,13 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 
 	restore_orig[0] = restore_orig[1] = FALSE;
 
-	if (util_format_is_s3tc(src->format)) {
-		r600_s3tc_to_blittable(src, src_level, &orig_info[0]);
+	if (util_format_is_compressed(src->format)) {
+		r600_compressed_to_blittable(src, src_level, &orig_info[0]);
 		restore_orig[0] = TRUE;
 	}
 
-	if (util_format_is_s3tc(dst->format)) {
-		r600_s3tc_to_blittable(dst, dst_level, &orig_info[1]);
+	if (util_format_is_compressed(dst->format)) {
+		r600_compressed_to_blittable(dst, dst_level, &orig_info[1]);
 		restore_orig[1] = TRUE;
 		/* translate the dst box as well */
 		dstx = util_format_get_nblocksx(orig_info[1].format, dstx);
@@ -299,10 +299,10 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 			    src, src_level, src_box);
 
 	if (restore_orig[0])
-		r600_reset_blittable_to_s3tc(src, src_level, &orig_info[0]);
+		r600_reset_blittable_to_compressed(src, src_level, &orig_info[0]);
 
 	if (restore_orig[1])
-		r600_reset_blittable_to_s3tc(dst, dst_level, &orig_info[1]);
+		r600_reset_blittable_to_compressed(dst, dst_level, &orig_info[1]);
 }
 
 void r600_init_blit_functions(struct r600_pipe_context *rctx)

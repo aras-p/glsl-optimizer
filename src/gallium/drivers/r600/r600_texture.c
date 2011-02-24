@@ -292,7 +292,7 @@ static boolean permit_hardware_blit(struct pipe_screen *screen,
 		bind = PIPE_BIND_RENDER_TARGET;
 
 	/* hackaround for S3TC */
-	if (util_format_is_s3tc(res->format))
+	if (util_format_is_compressed(res->format))
 		return TRUE;
 	    
 	if (!screen->is_format_supported(screen,
@@ -424,7 +424,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 	}
 
 	if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
-	    util_format_is_s3tc(templ->format))
+	    util_format_is_compressed(templ->format))
 		array_mode = V_038000_ARRAY_1D_TILED_THIN1;
 
 	return (struct pipe_resource *)r600_texture_create_object(screen, templ, array_mode,
