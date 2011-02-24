@@ -91,6 +91,8 @@ struct drm_surface {
 
    boolean is_shown;
    struct drm_crtc current_crtc;
+
+   boolean have_pageflip;
 };
 
 struct drm_connector {
