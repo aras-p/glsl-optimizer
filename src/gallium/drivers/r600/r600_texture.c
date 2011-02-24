@@ -309,7 +309,16 @@ static boolean permit_hardware_blit(struct pipe_screen *screen,
 				PIPE_BIND_SAMPLER_VIEW, 0))
 		return FALSE;
 
-	return TRUE;
+        switch (res->usage) {
+        case PIPE_USAGE_STREAM:
+        case PIPE_USAGE_STAGING:
+        case PIPE_USAGE_STATIC:
+        case PIPE_USAGE_IMMUTABLE:
+                return FALSE;
+
+        default:
+                return TRUE;
+        }
 }
 
 static boolean r600_texture_get_handle(struct pipe_screen* screen,
