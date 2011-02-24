@@ -156,7 +156,7 @@ static void u_vbuf_translate_begin(struct u_vbuf_mgr_priv *mgr,
 {
    struct translate_key key;
    struct translate_element *te;
-   unsigned tr_elem_index[PIPE_MAX_ATTRIBS] = {0};
+   unsigned tr_elem_index[PIPE_MAX_ATTRIBS];
    struct translate *tr;
    boolean vb_translated[PIPE_MAX_ATTRIBS] = {0};
    uint8_t *vb_map[PIPE_MAX_ATTRIBS] = {0}, *out_map;
@@ -166,6 +166,7 @@ static void u_vbuf_translate_begin(struct u_vbuf_mgr_priv *mgr,
    struct pipe_vertex_element new_velems[PIPE_MAX_ATTRIBS];
 
    memset(&key, 0, sizeof(key));
+   memset(tr_elem_index, 0xff, sizeof(tr_elem_index));
 
    /* Initialize the translate key, i.e. the recipe how vertices should be
      * translated. */
@@ -281,7 +282,7 @@ static void u_vbuf_translate_begin(struct u_vbuf_mgr_priv *mgr,
 
       /* Setup new vertex elements. */
       for (i = 0; i < mgr->ve->count; i++) {
-         if (vb_translated[mgr->ve->ve[i].vertex_buffer_index]) {
+         if (tr_elem_index[i] < key.nr_elements) {
             te = &key.element[tr_elem_index[i]];
             new_velems[i].instance_divisor = mgr->ve->ve[i].instance_divisor;
             new_velems[i].src_format = te->output_format;
