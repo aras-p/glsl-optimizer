@@ -353,8 +353,8 @@ struct nv_op_info nvc0_op_info_table[NV_OP_COUNT + 1] =
    { NV_OP_SIN, "sin", NV_TYPE_F32, 0, 0, 0, 0, 1, 0, 0, 0 },
    { NV_OP_COS, "cos", NV_TYPE_F32, 0, 0, 0, 0, 1, 0, 0, 0 },
    { NV_OP_EX2, "ex2", NV_TYPE_F32, 0, 0, 0, 0, 1, 0, 0, 0 },
-   { NV_OP_PRESIN, "presin", NV_TYPE_F32, NV_MOD_SGN, 0, 0, 0, 1, 0, 0, 0 },
-   { NV_OP_PREEX2, "preex2", NV_TYPE_F32, NV_MOD_SGN, 0, 0, 0, 1, 0, 0, 0 },
+   { NV_OP_PRESIN, "presin", NV_TYPE_F32, NV_MOD_SGN, 0, 0, 0, 1, 0, 0, 1 },
+   { NV_OP_PREEX2, "preex2", NV_TYPE_F32, NV_MOD_SGN, 0, 0, 0, 1, 0, 0, 1 },
    { NV_OP_SAT, "sat", NV_TYPE_F32, 0, 0, 0, 0, 1, 0, 0, 0 },
 
    { NV_OP_SET_F32_AND, "and set", NV_TYPE_F32, 0, 0, 0, 0, 1, 0, 0, 0 },
