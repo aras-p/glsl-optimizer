@@ -301,9 +301,11 @@ prog_decl(struct nvc0_translation_info *ti,
       ti->sysval_loc[i] = nvc0_system_value_location(sn, si, &ti->sysval_in[i]);
       assert(first == last);
       break;
+   case TGSI_FILE_TEMPORARY:
+      ti->temp128_nr = MAX2(ti->temp128_nr, last + 1);
+      break;
    case TGSI_FILE_NULL:
    case TGSI_FILE_CONSTANT:
-   case TGSI_FILE_TEMPORARY:
    case TGSI_FILE_SAMPLER:
    case TGSI_FILE_ADDRESS:
    case TGSI_FILE_IMMEDIATE:
@@ -642,6 +644,11 @@ nvc0_prog_scan(struct nvc0_translation_info *ti)
       assert(!"unsupported program type");
       ret = -1;
       break;
+   }
+
+   if (ti->require_stores) {
+      prog->hdr[0] |= 1 << 26;
+      prog->hdr[1] |= ti->temp128_nr * 16; /* l[] size */
    }
 
    assert(!ret);

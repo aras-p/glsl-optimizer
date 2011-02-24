@@ -81,6 +81,7 @@ struct nvc0_context {
       uint8_t num_vtxelts;
       uint8_t num_textures[5];
       uint8_t num_samplers[5];
+      uint8_t tls_required; /* bitmask of shader types using l[] */
       uint16_t scissor;
       uint32_t uniform_buffer_bound[5];
    } state;

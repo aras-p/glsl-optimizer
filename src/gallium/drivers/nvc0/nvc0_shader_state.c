@@ -27,6 +27,16 @@
 
 #include "nvc0_context.h"
 
+static INLINE void
+nvc0_program_update_context_state(struct nvc0_context *nvc0,
+                                  struct nvc0_program *prog, int stage)
+{
+   if (prog->hdr[1])
+      nvc0->state.tls_required |= 1 << stage;
+   else
+      nvc0->state.tls_required &= ~(1 << stage);
+}
+
 static boolean
 nvc0_program_validate(struct nvc0_context *nvc0, struct nvc0_program *prog)
 {
@@ -77,6 +87,7 @@ nvc0_vertprog_validate(struct nvc0_context *nvc0)
 
    if (!nvc0_program_validate(nvc0, vp))
          return;
+   nvc0_program_update_context_state(nvc0, vp, 0);
 
    BEGIN_RING(chan, RING_3D(SP_SELECT(1)), 2);
    OUT_RING  (chan, 0x11);
@@ -98,6 +109,7 @@ nvc0_fragprog_validate(struct nvc0_context *nvc0)
 
    if (!nvc0_program_validate(nvc0, fp))
          return;
+   nvc0_program_update_context_state(nvc0, fp, 4);
 
    BEGIN_RING(chan, RING_3D(EARLY_FRAGMENT_TESTS), 1);
    OUT_RING  (chan, fp->fp.early_z);
@@ -127,6 +139,7 @@ nvc0_tctlprog_validate(struct nvc0_context *nvc0)
    }
    if (!nvc0_program_validate(nvc0, tp))
          return;
+   nvc0_program_update_context_state(nvc0, tp, 1);
 
    BEGIN_RING(chan, RING_3D(SP_SELECT(2)), 2);
    OUT_RING  (chan, 0x21);
@@ -148,6 +161,7 @@ nvc0_tevlprog_validate(struct nvc0_context *nvc0)
    }
    if (!nvc0_program_validate(nvc0, tp))
          return;
+   nvc0_program_update_context_state(nvc0, tp, 2);
 
    BEGIN_RING(chan, RING_3D(TEP_SELECT), 1);
    OUT_RING  (chan, 0x31);
@@ -170,6 +184,7 @@ nvc0_gmtyprog_validate(struct nvc0_context *nvc0)
    }
    if (!nvc0_program_validate(nvc0, gp))
          return;
+   nvc0_program_update_context_state(nvc0, gp, 3);
 
    BEGIN_RING(chan, RING_3D(GP_SELECT), 1);
    OUT_RING  (chan, 0x41);

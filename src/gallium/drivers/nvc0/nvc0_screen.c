@@ -475,7 +475,7 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
       OUT_RING  (chan, (15 << 4) | 1);
    }
 
-   screen->tls_size = 4 * 4 * 32 * 128 * 4;
+   screen->tls_size = (16 * 32) * (NVC0_CAP_MAX_PROGRAM_TEMPS * 16);
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 17,
                         screen->tls_size, &screen->tls);
    if (ret)
@@ -489,6 +489,8 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    OUT_RELOCl(chan, screen->tls, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
    OUT_RING  (chan, screen->tls_size >> 32);
    OUT_RING  (chan, screen->tls_size);
+   BEGIN_RING(chan, RING_3D_(0x07a0), 1);
+   OUT_RING  (chan, 0);
    BEGIN_RING(chan, RING_3D(LOCAL_BASE), 1);
    OUT_RING  (chan, 0);
 
@@ -642,8 +644,10 @@ nvc0_screen_make_buffers_resident(struct nvc0_screen *screen)
    nouveau_bo_validate(chan, screen->text, flags);
    nouveau_bo_validate(chan, screen->uniforms, flags);
    nouveau_bo_validate(chan, screen->txc, flags);
-   nouveau_bo_validate(chan, screen->tls, flags);
    nouveau_bo_validate(chan, screen->mp_stack_bo, flags);
+
+   if (screen->cur_ctx && screen->cur_ctx->state.tls_required)
+      nouveau_bo_validate(chan, screen->tls, flags);
 }
 
 int

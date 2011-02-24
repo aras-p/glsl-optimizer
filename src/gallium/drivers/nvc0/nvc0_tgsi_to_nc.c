@@ -364,6 +364,9 @@ bld_loop_phi(struct bld_context *bld, struct bld_register *reg,
    struct nv_basic_block *bb = bld->pc->current_block;
    struct nv_value *val = NULL;
 
+   if (bld->ti->require_stores) /* XXX: actually only for INDEXABLE_TEMP */
+      return NULL;
+
    if (bld->loop_lvl > 1) {
       --bld->loop_lvl;
       if (!((reg->loop_def | reg->loop_use) & (1 << bld->loop_lvl)))

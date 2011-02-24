@@ -76,6 +76,7 @@ struct nvc0_translation_info {
    uint32_t *immd32;
    ubyte *immd32_ty;
    unsigned immd32_nr;
+   unsigned temp128_nr;
    ubyte edgeflag_out;
    struct nvc0_subroutine *subr;
    unsigned num_subrs;
