@@ -253,7 +253,8 @@ copy_array_to_vbo_array( struct brw_context *brw,
 			&buffer->bo, &buffer->offset);
    } else {
       const unsigned char *src = element->glarray->Ptr;
-      char *dst = intel_upload_map(&brw->intel, size, dst_stride);
+      char *map = intel_upload_map(&brw->intel, size, dst_stride);
+      char *dst = map;
       int i;
 
       for (i = 0; i < element->count; i++) {
@@ -261,7 +262,7 @@ copy_array_to_vbo_array( struct brw_context *brw,
 	 src += element->glarray->StrideB;
 	 dst += dst_stride;
       }
-      intel_upload_unmap(&brw->intel, dst, size, dst_stride,
+      intel_upload_unmap(&brw->intel, map, size, dst_stride,
 			 &buffer->bo, &buffer->offset);
    }
 }
