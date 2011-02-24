@@ -81,7 +81,7 @@ def AddOptions(opts):
 	opts.Add(EnumOption('machine', 'use machine-specific assembly code', default_machine,
 											 allowed_values=('generic', 'ppc', 'x86', 'x86_64')))
 	opts.Add(EnumOption('platform', 'target platform', host_platform,
-											 allowed_values=('linux', 'cell', 'windows', 'winddk', 'wince', 'darwin', 'embedded', 'cygwin', 'sunos5', 'freebsd8')))
+											 allowed_values=('linux', 'cell', 'windows', 'winddk', 'wince', 'darwin', 'embedded', 'cygwin_nt-5.1', 'cygwin_nt-6.1', 'sunos5', 'freebsd8')))
 	opts.Add('toolchain', 'compiler toolchain', default_toolchain)
 	opts.Add(BoolOption('gles', 'EXPERIMENTAL: enable OpenGL ES support', 'no'))
 	opts.Add(BoolOption('llvm', 'use LLVM', default_llvm))
