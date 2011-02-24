@@ -26,10 +26,10 @@
 #include <assert.h>
 
 extern "C" {
-#include <talloc.h>
 #include "main/core.h" /* for struct gl_context */
 }
 
+#include "ralloc.h"
 #include "ast.h"
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
@@ -48,7 +48,7 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *ctx,
    this->scanner = NULL;
    this->translation_unit.make_empty();
    this->symbols = new(mem_ctx) glsl_symbol_table;
-   this->info_log = talloc_strdup(mem_ctx, "");
+   this->info_log = ralloc_strdup(mem_ctx, "");
    this->error = false;
    this->loop_or_switch_nesting = NULL;
 
@@ -79,6 +79,38 @@ _mesa_glsl_parse_state::_mesa_glsl_parse_state(struct gl_context *ctx,
    this->Const.MaxFragmentUniformComponents = ctx->Const.FragmentProgram.MaxUniformComponents;
 
    this->Const.MaxDrawBuffers = ctx->Const.MaxDrawBuffers;
+
+   /* Note: Once the OpenGL 3.0 'forward compatible' context or the OpenGL 3.2
+    * Core context is supported, this logic will need change.  Older versions of
+    * GLSL are no longer supported outside the compatibility contexts of 3.x.
+    */
+   this->Const.GLSL_100ES = (ctx->API == API_OPENGLES2)
+      || ctx->Extensions.ARB_ES2_compatibility;
+   this->Const.GLSL_110 = (ctx->API == API_OPENGL);
+   this->Const.GLSL_120 = (ctx->API == API_OPENGL)
+      && (ctx->Const.GLSLVersion >= 120);
+   this->Const.GLSL_130 = (ctx->API == API_OPENGL)
+      && (ctx->Const.GLSLVersion >= 130);
+
+   const unsigned lowest_version =
+      (ctx->API == API_OPENGLES2) || ctx->Extensions.ARB_ES2_compatibility
+      ? 100 : 110;
+   const unsigned highest_version =
+      (ctx->API == API_OPENGL) ? ctx->Const.GLSLVersion : 100;
+   char *supported = ralloc_strdup(this, "");
+
+   for (unsigned ver = lowest_version; ver <= highest_version; ver += 10) {
+      const char *const prefix = (ver == lowest_version)
+	 ? ""
+	 : ((ver == highest_version) ? ", and " : ", ");
+
+      ralloc_asprintf_append(& supported, "%s%d.%02d%s",
+			     prefix,
+			     ver / 100, ver % 100,
+			     (ver == 100) ? " ES" : "");
+   }
+
+   this->supported_version_string = supported;
 }
 
 const char *
@@ -104,15 +136,14 @@ _mesa_glsl_error(YYLTYPE *locp, _mesa_glsl_parse_state *state,
    state->error = true;
 
    assert(state->info_log != NULL);
-   state->info_log = talloc_asprintf_append(state->info_log,
-					    "%u:%u(%u): error: ",
+   ralloc_asprintf_append(&state->info_log, "%u:%u(%u): error: ",
 					    locp->source,
 					    locp->first_line,
 					    locp->first_column);
    va_start(ap, fmt);
-   state->info_log = talloc_vasprintf_append(state->info_log, fmt, ap);
+   ralloc_vasprintf_append(&state->info_log, fmt, ap);
    va_end(ap);
-   state->info_log = talloc_strdup_append(state->info_log, "\n");
+   ralloc_strcat(&state->info_log, "\n");
 }
 
 
@@ -123,15 +154,14 @@ _mesa_glsl_warning(const YYLTYPE *locp, _mesa_glsl_parse_state *state,
    va_list ap;
 
    assert(state->info_log != NULL);
-   state->info_log = talloc_asprintf_append(state->info_log,
-					    "%u:%u(%u): warning: ",
+   ralloc_asprintf_append(&state->info_log, "%u:%u(%u): warning: ",
 					    locp->source,
 					    locp->first_line,
 					    locp->first_column);
    va_start(ap, fmt);
-   state->info_log = talloc_vasprintf_append(state->info_log, fmt, ap);
+   ralloc_vasprintf_append(&state->info_log, fmt, ap);
    va_end(ap);
-   state->info_log = talloc_strdup_append(state->info_log, "\n");
+   ralloc_strcat(&state->info_log, "\n");
 }
 
 
@@ -219,6 +249,13 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 	 state->ARB_shader_stencil_export_warn = (ext_mode == extension_warn);
 	 unsupported = !state->extensions->ARB_shader_stencil_export;
       }
+   } else if (strcmp(name, "GL_AMD_conservative_depth") == 0) {
+      /* The AMD_conservative spec does not forbid requiring the extension in
+       * the vertex shader.
+       */
+      state->AMD_conservative_depth_enable = (ext_mode != extension_disable);
+      state->AMD_conservative_depth_warn = (ext_mode == extension_warn);
+      unsupported = !state->extensions->AMD_conservative_depth;
    } else {
       unsupported = true;
    }
@@ -705,7 +742,7 @@ ast_struct_specifier::ast_struct_specifier(char *identifier,
 {
    if (identifier == NULL) {
       static unsigned anon_count = 1;
-      identifier = talloc_asprintf(this, "#anon_struct_%04x", anon_count);
+      identifier = ralloc_asprintf(this, "#anon_struct_%04x", anon_count);
       anon_count++;
    }
    name = identifier;
@@ -727,6 +764,7 @@ do_common_optimization(exec_list *ir, bool linked, unsigned max_unroll_iteration
    progress = do_if_simplification(ir) || progress;
    progress = do_discard_simplification(ir) || progress;
    progress = do_copy_propagation(ir) || progress;
+   /*progress = do_copy_propagation_elements(ir) || progress;*/
    if (linked)
       progress = do_dead_code(ir) || progress;
    else

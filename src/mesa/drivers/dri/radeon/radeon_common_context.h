@@ -14,7 +14,6 @@
 #include "dri_util.h"
 #include "tnl/t_vertex.h"
 
-#include "dri_metaops.h"
 struct radeon_context;
 
 #include "radeon_bocs_wrapper.h"
@@ -508,8 +507,6 @@ struct radeon_context {
     * either way.
     */
    GLboolean is_front_buffer_reading;
-
-   struct dri_metaops meta;
 
    struct {
 	struct radeon_query_object *current;

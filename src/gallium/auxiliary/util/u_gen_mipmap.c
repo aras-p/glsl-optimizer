@@ -1350,6 +1350,7 @@ get_next_slot(struct gen_mipmap_state *ctx)
    if (!ctx->vbuf) {
       ctx->vbuf = pipe_buffer_create(ctx->pipe->screen,
                                      PIPE_BIND_VERTEX_BUFFER,
+                                     PIPE_USAGE_STREAM,
                                      max_slots * sizeof ctx->vertices);
    }
    
@@ -1616,7 +1617,8 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
                                   face,
                                   rcoord);
 
-         util_draw_vertex_buffer(ctx->pipe, 
+         util_draw_vertex_buffer(ctx->pipe,
+                                 ctx->cso,
                                  ctx->vbuf,
                                  offset,
                                  PIPE_PRIM_TRIANGLE_FAN,

@@ -50,6 +50,7 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc *bc, struct r
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP:
 			return 0;
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD_INT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE:
@@ -97,6 +98,7 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc *bc, struct r
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_NOP:
 			return 0;
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD_INT:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLE:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGT:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE:
@@ -288,6 +290,31 @@ int r600_bc_add_output(struct r600_bc *bc, const struct r600_bc_output *output)
 {
 	int r;
 
+	if (bc->cf_last && bc->cf_last->inst == BC_INST(bc, V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT) &&
+		output->type == bc->cf_last->output.type &&
+		output->elem_size == bc->cf_last->output.elem_size &&
+		output->swizzle_x == bc->cf_last->output.swizzle_x &&
+		output->swizzle_y == bc->cf_last->output.swizzle_y &&
+		output->swizzle_z == bc->cf_last->output.swizzle_z &&
+		output->swizzle_w == bc->cf_last->output.swizzle_w &&
+		(output->burst_count + bc->cf_last->output.burst_count) <= 16) {
+
+		if ((output->gpr + output->burst_count) == bc->cf_last->output.gpr &&
+			(output->array_base + output->burst_count) == bc->cf_last->output.array_base) {
+
+			bc->cf_last->output.gpr = output->gpr;
+			bc->cf_last->output.array_base = output->array_base;
+			bc->cf_last->output.burst_count += output->burst_count;
+			return 0;
+
+		} else if (output->gpr == (bc->cf_last->output.gpr + bc->cf_last->output.burst_count) &&
+			output->array_base == (bc->cf_last->output.array_base + bc->cf_last->output.burst_count)) {
+
+			bc->cf_last->output.burst_count += output->burst_count;
+			return 0;
+		}
+	}
+
 	r = r600_bc_add_cf(bc);
 	if (r)
 		return r;
@@ -418,6 +445,20 @@ static int is_alu_reduction_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 	}
 }
 
+static int is_alu_cube_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
+{
+	switch (bc->chiprev) {
+	case CHIPREV_R600:
+	case CHIPREV_R700:
+		return !alu->is_op3 &&
+			alu->inst == V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE;
+	case CHIPREV_EVERGREEN:
+	default:
+		return !alu->is_op3 &&
+			alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE;
+	}
+}
+
 static int is_alu_mova_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 {
 	switch (bc->chiprev) {
@@ -480,9 +521,9 @@ static int is_alu_trans_unit_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 	case CHIPREV_EVERGREEN:
 	default:
 		if (!alu->is_op3)
+			/* Note that FLT_TO_INT* instructions are vector instructions
+			 * on Evergreen, despite what the documentation says. */
 			return alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ASHR_INT ||
-				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT ||
-				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT_FLOOR ||
 				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT ||
 				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHL_INT ||
 				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHR_INT ||
@@ -563,7 +604,7 @@ struct alu_bank_swizzle {
 	int	hw_cfile_elem[4];
 };
 
-const unsigned cycle_for_bank_swizzle_vec[][3] = {
+static const unsigned cycle_for_bank_swizzle_vec[][3] = {
 	[SQ_ALU_VEC_012] = { 0, 1, 2 },
 	[SQ_ALU_VEC_021] = { 0, 2, 1 },
 	[SQ_ALU_VEC_120] = { 1, 2, 0 },
@@ -572,7 +613,7 @@ const unsigned cycle_for_bank_swizzle_vec[][3] = {
 	[SQ_ALU_VEC_210] = { 2, 1, 0 }
 };
 
-const unsigned cycle_for_bank_swizzle_scl[][3] = {
+static const unsigned cycle_for_bank_swizzle_scl[][3] = {
 	[SQ_ALU_SCL_210] = { 2, 1, 0 },
 	[SQ_ALU_SCL_122] = { 1, 2, 2 },
 	[SQ_ALU_SCL_212] = { 2, 1, 2 },
@@ -785,7 +826,8 @@ static int replace_gpr_with_pv_ps(struct r600_bc *bc,
 	for (i = 0; i < 5; ++i) {
 		if(prev[i] && prev[i]->dst.write && !prev[i]->dst.rel) {
 			gpr[i] = prev[i]->dst.sel;
-			if (is_alu_reduction_inst(bc, prev[i]))
+			/* cube writes more than PV.X */
+			if (!is_alu_cube_inst(bc, prev[i]) && is_alu_reduction_inst(bc, prev[i]))
 				chan[i] = 0;
 			else
 				chan[i] = prev[i]->dst.chan;
@@ -865,7 +907,7 @@ static int r600_bc_alu_nliterals(struct r600_bc *bc, struct r600_bc_alu *alu,
 
 	for (i = 0; i < num_src; ++i) {
 		if (alu->src[i].sel == V_SQ_ALU_SRC_LITERAL) {
-			uint32_t value = alu->src[i].value[alu->src[i].chan];
+			uint32_t value = alu->src[i].value;
 			unsigned found = 0;
 			for (j = 0; j < *nliteral; ++j) {
 				if (literal[j] == value) {
@@ -892,7 +934,7 @@ static void r600_bc_alu_adjust_literals(struct r600_bc *bc,
 
 	for (i = 0; i < num_src; ++i) {
 		if (alu->src[i].sel == V_SQ_ALU_SRC_LITERAL) {
-			uint32_t value = alu->src[i].value[alu->src[i].chan];
+			uint32_t value = alu->src[i].value;
 			for (j = 0; j < nliteral; ++j) {
 				if (literal[j] == value) {
 					alu->src[i].chan = j;
@@ -1195,8 +1237,7 @@ int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int 
 			bc->ngpr = nalu->src[i].sel + 1;
 		}
 		if (nalu->src[i].sel == V_SQ_ALU_SRC_LITERAL)
-			r600_bc_special_constants(
-				nalu->src[i].value[nalu->src[i].chan],
+			r600_bc_special_constants(nalu->src[i].value,
 				&nalu->src[i].sel, &nalu->src[i].neg);
 	}
 	if (nalu->dst.sel >= bc->ngpr) {
@@ -1308,6 +1349,18 @@ int r600_bc_add_tex(struct r600_bc *bc, const struct r600_bc_tex *tex)
 		return -ENOMEM;
 	memcpy(ntex, tex, sizeof(struct r600_bc_tex));
 
+	/* we can't fetch data und use it as texture lookup address in the same TEX clause */
+	if (bc->cf_last != NULL &&
+		bc->cf_last->inst == V_SQ_CF_WORD1_SQ_CF_INST_TEX) {
+		struct r600_bc_tex *ttex;
+		LIST_FOR_EACH_ENTRY(ttex, &bc->cf_last->tex, list) {
+			if (ttex->dst_gpr == ntex->src_gpr) {
+				bc->force_add_cf = 1;
+				break;
+			}
+		}
+	}
+
 	/* cf can contains only alu or only vtx or only tex */
 	if (bc->cf_last == NULL ||
 		bc->cf_last->inst != V_SQ_CF_WORD1_SQ_CF_INST_TEX ||
@@ -1374,6 +1427,7 @@ static int r600_bc_vtx_build(struct r600_bc *bc, struct r600_bc_vtx *vtx, unsign
 		}
 	}
 	bc->bytecode[id++] = S_SQ_VTX_WORD0_BUFFER_ID(vtx->buffer_id + fetch_resource_start) |
+			S_SQ_VTX_WORD0_FETCH_TYPE(vtx->fetch_type) |
 			S_SQ_VTX_WORD0_SRC_GPR(vtx->src_gpr) |
 			S_SQ_VTX_WORD0_SRC_SEL_X(vtx->src_sel_x) |
 			S_SQ_VTX_WORD0_MEGA_FETCH_COUNT(vtx->mega_fetch_count);
@@ -2674,18 +2728,73 @@ void r600_bc_dump(struct r600_bc *bc)
 		}
 
 		LIST_FOR_EACH_ENTRY(tex, &cf->tex, list) {
-			//TODO
+			fprintf(stderr, "%04d %08X   ", id, bc->bytecode[id]);
+			fprintf(stderr, "INST:%d ", tex->inst);
+			fprintf(stderr, "RESOURCE_ID:%d ", tex->resource_id);
+			fprintf(stderr, "SRC(GPR:%d ", tex->src_gpr);
+			fprintf(stderr, "REL:%d)\n", tex->src_rel);
+			id++;
+			fprintf(stderr, "%04d %08X   ", id, bc->bytecode[id]);
+			fprintf(stderr, "DST(GPR:%d ", tex->dst_gpr);
+			fprintf(stderr, "REL:%d ", tex->dst_rel);
+			fprintf(stderr, "SEL_X:%d ", tex->dst_sel_x);
+			fprintf(stderr, "SEL_Y:%d ", tex->dst_sel_y);
+			fprintf(stderr, "SEL_Z:%d ", tex->dst_sel_z);
+			fprintf(stderr, "SEL_W:%d) ", tex->dst_sel_w);
+			fprintf(stderr, "LOD_BIAS:%d ", tex->lod_bias);
+			fprintf(stderr, "COORD_TYPE_X:%d ", tex->coord_type_x);
+			fprintf(stderr, "COORD_TYPE_Y:%d ", tex->coord_type_y);
+			fprintf(stderr, "COORD_TYPE_Z:%d ", tex->coord_type_z);
+			fprintf(stderr, "COORD_TYPE_W:%d\n", tex->coord_type_w);
+			id++;
+			fprintf(stderr, "%04d %08X   ", id, bc->bytecode[id]);
+			fprintf(stderr, "OFFSET_X:%d ", tex->offset_x);
+			fprintf(stderr, "OFFSET_Y:%d ", tex->offset_y);
+			fprintf(stderr, "OFFSET_Z:%d ", tex->offset_z);
+			fprintf(stderr, "SAMPLER_ID:%d ", tex->sampler_id);
+			fprintf(stderr, "SRC(SEL_X:%d ", tex->src_sel_x);
+			fprintf(stderr, "SEL_Y:%d ", tex->src_sel_y);
+			fprintf(stderr, "SEL_Z:%d ", tex->src_sel_z);
+			fprintf(stderr, "SEL_W:%d)\n", tex->src_sel_w);
+			id++;
+			fprintf(stderr, "%04d %08X   \n", id, bc->bytecode[id]);
+			id++;
 		}
 
 		LIST_FOR_EACH_ENTRY(vtx, &cf->vtx, list) {
+			fprintf(stderr, "%04d %08X   ", id, bc->bytecode[id]);
+			fprintf(stderr, "INST:%d ", vtx->inst);
+			fprintf(stderr, "FETCH_TYPE:%d ", vtx->fetch_type);
+			fprintf(stderr, "BUFFER_ID:%d\n", vtx->buffer_id);
+			id++;
+			/* This assumes that no semantic fetches exist */
+			fprintf(stderr, "%04d %08X   ", id, bc->bytecode[id]);
+			fprintf(stderr, "SRC(GPR:%d ", vtx->src_gpr);
+			fprintf(stderr, "SEL_X:%d) ", vtx->src_sel_x);
+			fprintf(stderr, "MEGA_FETCH_COUNT:%d ", vtx->mega_fetch_count);
+			fprintf(stderr, "DST(GPR:%d ", vtx->dst_gpr);
+			fprintf(stderr, "SEL_X:%d ", vtx->dst_sel_x);
+			fprintf(stderr, "SEL_Y:%d ", vtx->dst_sel_y);
+			fprintf(stderr, "SEL_Z:%d ", vtx->dst_sel_z);
+			fprintf(stderr, "SEL_W:%d) ", vtx->dst_sel_w);
+			fprintf(stderr, "USE_CONST_FIELDS:%d ", vtx->use_const_fields);
+			fprintf(stderr, "DATA_FORMAT:%d ", vtx->data_format);
+			fprintf(stderr, "NUM_FORMAT_ALL:%d ", vtx->num_format_all);
+			fprintf(stderr, "FORMAT_COMP_ALL:%d ", vtx->format_comp_all);
+			fprintf(stderr, "SRF_MODE_ALL:%d\n", vtx->srf_mode_all);
+			id++;
+			fprintf(stderr, "%04d %08X   \n", id, bc->bytecode[id]);
 			//TODO
+			id++;
+			fprintf(stderr, "%04d %08X   \n", id, bc->bytecode[id]);
+			id++;
 		}
 	}
 
 	fprintf(stderr, "--------------------------------------\n");
 }
 
-void r600_cf_vtx(struct r600_vertex_element *ve, u32 *bytecode, unsigned count)
+static void r600_cf_vtx(struct r600_vertex_element *ve, u32 *bytecode, unsigned count)
 {
 	struct r600_pipe_state *rstate;
 	unsigned i = 0;
@@ -2702,42 +2811,6 @@ void r600_cf_vtx(struct r600_vertex_element *ve, u32 *bytecode, unsigned count)
 	} else {
 		bytecode[i++] = S_SQ_CF_WORD0_ADDR(8 >> 1);
 		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX) |
-						S_SQ_CF_WORD1_BARRIER(1) |
-						S_SQ_CF_WORD1_COUNT(count - 1);
-	}
-	bytecode[i++] = S_SQ_CF_WORD0_ADDR(0);
-	bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_RETURN) |
-			S_SQ_CF_WORD1_BARRIER(1);
-
-	rstate = &ve->rstate;
-	rstate->id = R600_PIPE_STATE_FETCH_SHADER;
-	rstate->nregs = 0;
-	r600_pipe_state_add_reg(rstate, R_0288A4_SQ_PGM_RESOURCES_FS,
-				0x00000000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_0288DC_SQ_PGM_CF_OFFSET_FS,
-				0x00000000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_028894_SQ_PGM_START_FS,
-				r600_bo_offset(ve->fetch_shader) >> 8,
-				0xFFFFFFFF, ve->fetch_shader);
-}
-
-void r600_cf_vtx_tc(struct r600_vertex_element *ve, u32 *bytecode, unsigned count)
-{
-	struct r600_pipe_state *rstate;
-	unsigned i = 0;
-
-	if (count > 8) {
-		bytecode[i++] = S_SQ_CF_WORD0_ADDR(8 >> 1);
-		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC) |
-						S_SQ_CF_WORD1_BARRIER(1) |
-						S_SQ_CF_WORD1_COUNT(8 - 1);
-		bytecode[i++] = S_SQ_CF_WORD0_ADDR(40 >> 1);
-		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC) |
-						S_SQ_CF_WORD1_BARRIER(1) |
-						S_SQ_CF_WORD1_COUNT((count - 8) - 1);
-	} else {
-		bytecode[i++] = S_SQ_CF_WORD0_ADDR(8 >> 1);
-		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC) |
 						S_SQ_CF_WORD1_BARRIER(1) |
 						S_SQ_CF_WORD1_COUNT(count - 1);
 	}
@@ -2780,7 +2853,7 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 	}
 
 	switch (desc->channel[i].type) {
-		/* Half-floats, floats, doubles */
+	/* Half-floats, floats, ints */
 	case UTIL_FORMAT_TYPE_FLOAT:
 		switch (desc->channel[i].size) {
 		case 16:
@@ -2792,8 +2865,6 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 				*format = FMT_16_16_FLOAT;
 				break;
 			case 3:
-				*format = FMT_16_16_16_FLOAT;
-				break;
 			case 4:
 				*format = FMT_16_16_16_16_FLOAT;
 				break;
@@ -2833,8 +2904,6 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 				*format = FMT_8_8;
 				break;
 			case 3:
-			//	*format = FMT_8_8_8; /* fails piglit draw-vertices test */
-			//	break;
 			case 4:
 				*format = FMT_8_8_8_8;
 				break;
@@ -2849,8 +2918,6 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 				*format = FMT_16_16;
 				break;
 			case 3:
-			//	*format = FMT_16_16_16; /* fails piglit draw-vertices test */
-			//	break;
 			case 4:
 				*format = FMT_16_16_16_16;
 				break;
@@ -2938,10 +3005,10 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 
 	for (i = 0; i < ve->count; i++) {
 		unsigned vbuffer_index;
-		r600_vertex_data_type(ve->hw_format[i], &format, &num_format, &format_comp);
-		desc = util_format_description(ve->hw_format[i]);
+		r600_vertex_data_type(ve->elements[i].src_format, &format, &num_format, &format_comp);
+		desc = util_format_description(ve->elements[i].src_format);
 		if (desc == NULL) {
-			R600_ERR("unknown format %d\n", ve->hw_format[i]);
+			R600_ERR("unknown format %d\n", ve->elements[i].src_format);
 			r600_bo_reference(rctx->radeon, &ve->fetch_shader, NULL);
 			return -EINVAL;
 		}

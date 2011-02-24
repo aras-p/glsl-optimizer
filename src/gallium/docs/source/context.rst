@@ -3,8 +3,12 @@
 Context
 =======
 
-The context object represents the purest, most directly accessible, abilities
-of the device's 3D rendering pipeline.
+A Gallium rendering context encapsulates the state which effects 3D
+rendering such as blend state, depth/stencil state, texture samplers,
+etc.
+
+Note that resource/texture allocation is not per-context but per-screen.
+
 
 Methods
 -------
@@ -12,20 +16,23 @@ Methods
 CSO State
 ^^^^^^^^^
 
-All CSO state is created, bound, and destroyed, with triplets of methods that
-all follow a specific naming scheme. For example, ``create_blend_state``,
-``bind_blend_state``, and ``destroy_blend_state``.
+All Constant State Object (CSO) state is created, bound, and destroyed,
+with triplets of methods that all follow a specific naming scheme.
+For example, ``create_blend_state``, ``bind_blend_state``, and
+``destroy_blend_state``.
 
 CSO objects handled by the context object:
 
 * :ref:`Blend`: ``*_blend_state``
-* :ref:`Sampler`: These are special; they can be bound to either vertex or
-  fragment samplers, and they are bound in groups.
-  ``bind_fragment_sampler_states``, ``bind_vertex_sampler_states``
+* :ref:`Sampler`: Texture sampler states are bound separately for fragment,
+  vertex and geometry samplers.  Note that sampler states are set en masse.
+  If M is the max number of sampler units supported by the driver and N
+  samplers are bound with ``bind_fragment_sampler_states`` then sampler
+  units N..M-1 are considered disabled/NULL.
 * :ref:`Rasterizer`: ``*_rasterizer_state``
 * :ref:`Depth, Stencil, & Alpha`: ``*_depth_stencil_alpha_state``
-* :ref:`Shader`: These have two sets of methods. ``*_fs_state`` is for
-  fragment shaders, and ``*_vs_state`` is for vertex shaders.
+* :ref:`Shader`: These are create, bind and destroy methods for vertex,
+  fragment and geometry shaders.
 * :ref:`Vertex Elements`: ``*_vertex_elements_state``
 
 
@@ -46,6 +53,9 @@ buffers, surfaces) are bound to the driver.
 * ``set_vertex_buffers``
 
 * ``set_index_buffer``
+
+* ``set_stream_output_buffers``
+
 
 Non-CSO State
 ^^^^^^^^^^^^^
@@ -96,7 +106,9 @@ to the array index which is used for sampling.
 * ``set_fragment_sampler_views`` binds an array of sampler views to
   fragment shader stage. Every binding point acquires a reference
   to a respective sampler view and releases a reference to the previous
-  sampler view.
+  sampler view.  If M is the maximum number of sampler units and N units
+  is passed to set_fragment_sampler_views, the driver should unbind the
+  sampler views for units N..M-1.
 
 * ``set_vertex_sampler_views`` binds an array of sampler views to vertex
   shader stage. Every binding point acquires a reference to a respective
@@ -233,6 +245,11 @@ The most common type of query is the occlusion query,
 are written to the framebuffer without being culled by
 :ref:`Depth, Stencil, & Alpha` testing or shader KILL instructions.
 The result is an unsigned 64-bit integer.
+In cases where a boolean result of an occlusion query is enough,
+``PIPE_QUERY_OCCLUSION_PREDICATE`` should be used. It is just like
+``PIPE_QUERY_OCCLUSION_COUNTER`` except that the result is a boolean
+value of FALSE for cases where COUNTER would result in 0 and TRUE
+for all other cases.
 
 Another type of query, ``PIPE_QUERY_TIME_ELAPSED``, returns the amount of
 time, in nanoseconds, the context takes to perform operations.
@@ -349,6 +366,22 @@ Any pointers into the map should be considered invalid and discarded.
 Basically get_transfer, transfer_map, data write, transfer_unmap, and
 transfer_destroy all in one.
 
+
+The box parameter to some of these functions defines a 1D, 2D or 3D
+region of pixels.  This is self-explanatory for 1D, 2D and 3D texture
+targets.
+
+For PIPE_TEXTURE_1D_ARRAY, the box::y and box::height fields refer to the
+array dimension of the texture.
+
+For PIPE_TEXTURE_2D_ARRAY, the box::z and box::depth fields refer to the
+array dimension of the texture.
+
+For PIPE_TEXTURE_CUBE, the box:z and box::depth fields refer to the
+faces of the cube map (z + depth <= 6).
+
+
+
 .. _transfer_flush_region:
 
 transfer_flush_region
@@ -359,6 +392,22 @@ be flushed on write or unmap. Flushes must be requested with
 ``transfer_flush_region``. Flush ranges are relative to the mapped range, not
 the beginning of the resource.
 
+
+
+.. _redefine_user_buffer:
+
+redefine_user_buffer
+%%%%%%%%%%%%%%%%%%%%
+
+This function notifies a driver that the user buffer content has been changed.
+The updated region starts at ``offset`` and is ``size`` bytes large.
+The ``offset`` is relative to the pointer specified in ``user_buffer_create``.
+While uploading the user buffer, the driver is allowed not to upload
+the memory outside of this region.
+The width0 is redefined to ``MAX2(width0, offset+size)``.
+
+
+
 .. _pipe_transfer:
 
 PIPE_TRANSFER
@@ -366,16 +415,32 @@ PIPE_TRANSFER
 
 These flags control the behavior of a transfer object.
 
-* ``READ``: resource contents are read at transfer create time.
-* ``WRITE``: resource contents will be written back at transfer destroy time.
-* ``MAP_DIRECTLY``: a transfer should directly map the resource. May return
-  NULL if not supported.
-* ``DISCARD``: The memory within the mapped region is discarded.
-  Cannot be used with ``READ``.
-* ``DONTBLOCK``: Fail if the resource cannot be mapped immediately.
-* ``UNSYNCHRONIZED``: Do not synchronize pending operations on the resource
-  when mapping. The interaction of any writes to the map and any
-  operations pending on the resource are undefined. Cannot be used with
-  ``READ``.
-* ``FLUSH_EXPLICIT``: Written ranges will be notified later with
-  :ref:`transfer_flush_region`. Cannot be used with ``READ``.
+``PIPE_TRANSFER_READ``
+  Resource contents read back (or accessed directly) at transfer create time.
+
+``PIPE_TRANSFER_WRITE``
+  Resource contents will be written back at transfer_destroy time (or modified
+  as a result of being accessed directly).
+
+``PIPE_TRANSFER_MAP_DIRECTLY``
+  a transfer should directly map the resource. May return NULL if not supported.
+
+``PIPE_TRANSFER_DISCARD_RANGE``
+  The memory within the mapped region is discarded.  Cannot be used with
+  ``PIPE_TRANSFER_READ``.
+
+``PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE``
+  Discards all memory backing the resource.  It should not be used with
+  ``PIPE_TRANSFER_READ``.
+
+``PIPE_TRANSFER_DONTBLOCK``
+  Fail if the resource cannot be mapped immediately.
+
+``PIPE_TRANSFER_UNSYNCHRONIZED``
+  Do not synchronize pending operations on the resource when mapping. The
+  interaction of any writes to the map and any operations pending on the
+  resource are undefined. Cannot be used with ``PIPE_TRANSFER_READ``.
+
+``PIPE_TRANSFER_FLUSH_EXPLICIT``
+  Written ranges will be notified later with :ref:`transfer_flush_region`.
+  Cannot be used with ``PIPE_TRANSFER_READ``.

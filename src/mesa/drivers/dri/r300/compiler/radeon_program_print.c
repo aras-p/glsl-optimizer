@@ -110,7 +110,7 @@ static void rc_print_mask(FILE * f, unsigned int mask)
 
 static void rc_print_dst_register(FILE * f, struct rc_dst_register dst)
 {
-	rc_print_register(f, dst.File, dst.Index, dst.RelAddr);
+	rc_print_register(f, dst.File, dst.Index, 0);
 	if (dst.WriteMask != RC_MASK_XYZW) {
 		fprintf(f, ".");
 		rc_print_mask(f, dst.WriteMask);
@@ -379,7 +379,7 @@ static void rc_print_pair_instruction(FILE * f, struct rc_instruction * fullinst
 			else
 				fprintf(f,"%d", inst->Alpha.Arg[arg].Source);
 			fprintf(f,".%c%s",
-				rc_swizzle_char(inst->Alpha.Arg[arg].Swizzle), abs);
+				rc_swizzle_char(GET_SWZ(inst->Alpha.Arg[arg].Swizzle, 0)), abs);
 		}
 		fprintf(f, "\n");
 	}

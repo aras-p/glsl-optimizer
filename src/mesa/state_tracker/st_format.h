@@ -77,4 +77,10 @@ st_equal_formats(enum pipe_format pFormat, GLenum format, GLenum type);
 extern GLboolean
 st_sampler_compat_formats(enum pipe_format format1, enum pipe_format format2);
 
+
+extern void
+st_translate_color(const GLfloat colorIn[4], GLenum baseFormat,
+                   GLfloat colorOut[4]);
+
+
 #endif /* ST_FORMAT_H */

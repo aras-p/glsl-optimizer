@@ -35,6 +35,8 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 
+#include "util/u_math.h"
+
 static unsigned translate_format( enum pipe_format format )
 {
    switch (format) {
@@ -178,11 +180,6 @@ i915_emit_hardware_state(struct i915_context *i915 )
                 ENABLE_TEXKILL_3D_4D | 
                 TEXKILL_4D);
 
-      /* Need to initialize this to zero.
-       */
-      OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 | I1_LOAD_S(3) | (0));
-      OUT_BATCH(0);
-
       OUT_BATCH(_3DSTATE_DEPTH_SUBRECT_DISABLE);
 
       /* disable indirect state for now
@@ -194,27 +191,30 @@ i915_emit_hardware_state(struct i915_context *i915 )
    /* 7 dwords, 1 relocs */
    if (i915->hardware_dirty & I915_HW_IMMEDIATE)
    {
-      OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 | 
-                I1_LOAD_S(0) |
-                I1_LOAD_S(1) |
-                I1_LOAD_S(2) |
-                I1_LOAD_S(4) |
-                I1_LOAD_S(5) |
-                I1_LOAD_S(6) | 
-                (5));
-      
-      if(i915->vbo)
-         OUT_RELOC(i915->vbo,
-                   I915_USAGE_VERTEX,
-                   i915->current.immediate[I915_IMMEDIATE_S0]);
-      else
-         /* FIXME: we should not do this */
-         OUT_BATCH(0);
-      OUT_BATCH(i915->current.immediate[I915_IMMEDIATE_S1]);
-      OUT_BATCH(i915->current.immediate[I915_IMMEDIATE_S2]);
-      OUT_BATCH(i915->current.immediate[I915_IMMEDIATE_S4]);
-      OUT_BATCH(i915->current.immediate[I915_IMMEDIATE_S5]);
-      OUT_BATCH(i915->current.immediate[I915_IMMEDIATE_S6]);
+      /* remove unwatned bits and S7 */
+      unsigned dirty = (1 << I915_IMMEDIATE_S0 | 1 << I915_IMMEDIATE_S1 |
+                        1 << I915_IMMEDIATE_S2 | 1 << I915_IMMEDIATE_S3 |
+                        1 << I915_IMMEDIATE_S3 | 1 << I915_IMMEDIATE_S4 |
+                        1 << I915_IMMEDIATE_S5 | 1 << I915_IMMEDIATE_S6) &
+                       i915->immediate_dirty;
+      int i, num = util_bitcount(dirty);
+      assert(num && num <= I915_MAX_IMMEDIATE);
+
+      OUT_BATCH(_3DSTATE_LOAD_STATE_IMMEDIATE_1 |
+                dirty << 4 | (num - 1));
+
+      if (i915->immediate_dirty & (1 << I915_IMMEDIATE_S0)) {
+         if (i915->vbo)
+            OUT_RELOC(i915->vbo, I915_USAGE_VERTEX,
+                      i915->current.immediate[I915_IMMEDIATE_S0]);
+         else
+            OUT_BATCH(0);
+      }
+
+      for (i = 1; i < I915_MAX_IMMEDIATE; i++) {
+         if (dirty & (1 << i))
+            OUT_BATCH(i915->current.immediate[i]);
+      }
    } 
 
 #if 01
@@ -223,7 +223,8 @@ i915_emit_hardware_state(struct i915_context *i915 )
    {
       int i;
       for (i = 0; i < I915_MAX_DYNAMIC; i++) {
-         OUT_BATCH(i915->current.dynamic[i]);
+         if (i915->dynamic_dirty & (1 << i));
+            OUT_BATCH(i915->current.dynamic[i]);
       }
    }
 #endif
@@ -443,4 +444,6 @@ i915_emit_hardware_state(struct i915_context *i915 )
             i915->batch->relocs - save_relocs);
 
    i915->hardware_dirty = 0;
+   i915->immediate_dirty = 0;
+   i915->dynamic_dirty = 0;
 }

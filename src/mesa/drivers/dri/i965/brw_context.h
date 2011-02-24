@@ -145,7 +145,7 @@ struct brw_context;
 #define BRW_NEW_NR_VS_SURFACES		0x80000
 #define BRW_NEW_INDEX_BUFFER		0x100000
 #define BRW_NEW_VS_CONSTBUF		0x200000
-#define BRW_NEW_WM_CONSTBUF		0x200000
+#define BRW_NEW_WM_CONSTBUF		0x400000
 
 struct brw_state_flags {
    /** State update flags signalled by mesa internals */
@@ -408,8 +408,17 @@ struct brw_cached_batch_item {
  */
 #define ATTRIB_BIT_DWORDS  ((VERT_ATTRIB_MAX+31)/32)
 
+struct brw_vertex_buffer {
+   /** Buffer object containing the uploaded vertex data */
+   drm_intel_bo *bo;
+   uint32_t offset;
+   /** Byte stride between elements in the uploaded array */
+   GLuint stride;
+};
 struct brw_vertex_element {
    const struct gl_client_array *glarray;
+
+   int buffer;
 
    /** The corresponding Mesa vertex attribute */
    gl_vert_attrib attrib;
@@ -417,12 +426,8 @@ struct brw_vertex_element {
    GLuint element_size;
    /** Number of uploaded elements for this input. */
    GLuint count;
-   /** Byte stride between elements in the uploaded array */
-   GLuint stride;
    /** Offset of the first element within the buffer object */
    unsigned int offset;
-   /** Buffer object containing the uploaded vertex data */
-   drm_intel_bo *bo;
 };
 
 
@@ -461,8 +466,6 @@ struct brw_context
    struct {
       struct brw_state_flags dirty;
 
-      GLuint nr_color_regions;
-      struct intel_region *color_regions[MAX_DRAW_BUFFERS];
       struct intel_region *depth_region;
 
       /**
@@ -485,23 +488,27 @@ struct brw_context
 
    struct {
       struct brw_vertex_element inputs[VERT_ATTRIB_MAX];
+      struct brw_vertex_buffer buffers[VERT_ATTRIB_MAX];
+      struct {
+	      uint32_t handle;
+	      uint32_t offset;
+	      uint32_t stride;
+      } current_buffers[VERT_ATTRIB_MAX];
 
       struct brw_vertex_element *enabled[VERT_ATTRIB_MAX];
       GLuint nr_enabled;
-
-#define BRW_NR_UPLOAD_BUFS 17
-#define BRW_UPLOAD_INIT_SIZE (128*1024)
-
-      struct {
-	 drm_intel_bo *bo;
-	 GLuint offset;
-      } upload;
+      GLuint nr_buffers, nr_current_buffers;
 
       /* Summary of size and varying of active arrays, so we can check
        * for changes to this state:
        */
       struct brw_vertex_info info;
       unsigned int min_index, max_index;
+
+      /* Offset from start of vertex buffer so we can avoid redefining
+       * the same VB packed over and over again.
+       */
+      unsigned int start_vertex_bias;
    } vb;
 
    struct {
@@ -515,7 +522,7 @@ struct brw_context
       /* Updates to these fields are signaled by BRW_NEW_INDEX_BUFFER. */
       drm_intel_bo *bo;
       unsigned int offset;
-      unsigned int size;
+
       /* Offset to index buffer index to use in CMD_3D_PRIM so that we can
        * avoid re-uploading the IB packet over and over if we're actually
        * referencing the same index buffer.
@@ -527,11 +534,6 @@ struct brw_context
     */
    const struct gl_vertex_program *vertex_program;
    const struct gl_fragment_program *fragment_program;
-
-
-   /* For populating the gtt:
-    */
-   GLuint next_free_page;
 
    /* hw-dependent 3DSTATE_VF_STATISTICS opcode */
    uint32_t CMD_VF_STATISTICS;
@@ -612,9 +614,7 @@ struct brw_context
       drm_intel_bo *const_bo;
 
       /** Binding table of pointers to surf_bo entries */
-      drm_intel_bo *bind_bo;
       uint32_t bind_bo_offset;
-      drm_intel_bo *surf_bo[BRW_VS_MAX_SURF];
       uint32_t surf_offset[BRW_VS_MAX_SURF];
       GLuint nr_surfaces;      
    } vs;
@@ -666,9 +666,7 @@ struct brw_context
       drm_intel_bo *sampler_bo;
 
       /** Binding table of pointers to surf_bo entries */
-      drm_intel_bo *bind_bo;
       uint32_t bind_bo_offset;
-      drm_intel_bo *surf_bo[BRW_WM_MAX_SURF];
       uint32_t surf_offset[BRW_WM_MAX_SURF];
 
       drm_intel_bo *prog_bo;
@@ -693,7 +691,6 @@ struct brw_context
       drm_intel_bo *depth_stencil_state_bo;
       drm_intel_bo *color_calc_state_bo;
 
-      drm_intel_bo *state_bo;
       uint32_t state_offset;
    } cc;
 
@@ -841,4 +838,3 @@ float convert_param(enum param_conversion conversion, float param)
 GLboolean brw_do_cubemap_normalize(struct exec_list *instructions);
 
 #endif
-

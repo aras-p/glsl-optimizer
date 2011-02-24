@@ -47,7 +47,6 @@ struct brw_wm_unit_key {
    unsigned int dispatch_grf_start_reg;
 
    unsigned int curbe_offset;
-   unsigned int urb_size;
 
    unsigned int nr_surfaces, sampler_count;
    GLboolean uses_depth, computes_depth, uses_kill, is_glsl;
@@ -97,9 +96,6 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
    key->curb_entry_read_length = brw->wm.prog_data->curb_read_length;
    key->dispatch_grf_start_reg = brw->wm.prog_data->first_curbe_grf;
    key->total_scratch = brw->wm.prog_data->total_scratch;
-
-   /* BRW_NEW_URB_FENCE */
-   key->urb_size = brw->urb.vsize;
 
    /* BRW_NEW_CURBE_OFFSETS */
    key->curbe_offset = brw->curbe.wm_start;

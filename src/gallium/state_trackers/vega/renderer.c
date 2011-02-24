@@ -28,6 +28,7 @@
 #include "renderer.h"
 
 #include "vg_context.h"
+#include "paint.h" /* for paint_is_opaque */
 
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
@@ -173,6 +174,7 @@ static void renderer_set_mvp(struct renderer *renderer,
    pipe_resource_reference(&cbuf, NULL);
    cbuf = pipe_buffer_create(renderer->pipe->screen,
                              PIPE_BIND_CONSTANT_BUFFER,
+                             PIPE_USAGE_STATIC,
                              sizeof(consts));
    if (cbuf) {
       pipe_buffer_write(renderer->pipe, cbuf,
@@ -473,7 +475,8 @@ static void renderer_set_custom_fs(struct renderer *renderer,
          pipe_resource_reference(&cbuf, NULL);
 
          cbuf = pipe_buffer_create(renderer->pipe->screen,
-               PIPE_BIND_CONSTANT_BUFFER, const_buffer_len);
+               PIPE_BIND_CONSTANT_BUFFER, PIPE_USAGE_STATIC,
+               const_buffer_len);
          pipe_buffer_write(renderer->pipe, cbuf, 0,
                const_buffer_len, const_buffer);
          renderer->pipe->set_constant_buffer(renderer->pipe,
@@ -571,7 +574,7 @@ static void renderer_quad_draw(struct renderer *r)
                                  sizeof(r->vertices),
                                  PIPE_BIND_VERTEX_BUFFER);
    if (buf) {
-      util_draw_vertex_buffer(r->pipe, buf, 0,
+      util_draw_vertex_buffer(r->pipe, r->cso, buf, 0,
                               PIPE_PRIM_TRIANGLE_FAN,
                               Elements(r->vertices),     /* verts */
                               Elements(r->vertices[0])); /* attribs/vert */
@@ -1049,7 +1052,7 @@ void renderer_polygon_stencil(struct renderer *renderer,
 {
    assert(renderer->state == RENDERER_STATE_POLYGON_STENCIL);
 
-   renderer->pipe->set_vertex_buffers(renderer->pipe, 1, vbuf);
+   cso_set_vertex_buffers(renderer->cso, 1, vbuf);
 
    if (!renderer->u.polygon_stencil.manual_two_sides) {
       util_draw_arrays(renderer->pipe, mode, start, count);
@@ -1289,7 +1292,11 @@ static void renderer_validate_blend(struct renderer *renderer,
       blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
       break;
    case VG_BLEND_SRC_OVER:
-      if (!util_format_has_alpha(fb_format)) {
+      if (paint_is_opaque(state->fill_paint) &&
+          paint_is_opaque(state->stroke_paint)) {
+         /* no blending */
+      }
+      else if (!util_format_has_alpha(fb_format)) {
          blend.rt[0].rgb_src_factor   = PIPE_BLENDFACTOR_SRC_ALPHA;
          blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
          blend.rt[0].rgb_dst_factor   = PIPE_BLENDFACTOR_INV_SRC_ALPHA;

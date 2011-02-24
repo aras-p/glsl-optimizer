@@ -48,7 +48,7 @@
 #include "program/program.h"
 #include "program/prog_parameter.h"
 #include "program/prog_uniform.h"
-#include "talloc.h"
+#include "ralloc.h"
 #include <stdbool.h>
 #include "../glsl/glsl_parser_extras.h"
 
@@ -1137,9 +1137,9 @@ validate_program(struct gl_context *ctx, GLuint program)
    if (!shProg->Validated) {
       /* update info log */
       if (shProg->InfoLog) {
-         talloc_free(shProg->InfoLog);
+         ralloc_free(shProg->InfoLog);
       }
-      shProg->InfoLog = talloc_strdup(shProg, errMsg);
+      shProg->InfoLog = ralloc_strdup(shProg, errMsg);
    }
 }
 
@@ -1184,6 +1184,8 @@ void GLAPIENTRY
 _mesa_CompileShaderARB(GLhandleARB shaderObj)
 {
    GET_CURRENT_CONTEXT(ctx);
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glCompileShader %u\n", shaderObj);
    compile_shader(ctx, shaderObj);
 }
 
@@ -1192,6 +1194,8 @@ GLuint GLAPIENTRY
 _mesa_CreateShader(GLenum type)
 {
    GET_CURRENT_CONTEXT(ctx);
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glCreateShader %s\n", _mesa_lookup_enum_by_nr(type));
    return create_shader(ctx, type);
 }
 
@@ -1208,6 +1212,8 @@ GLuint GLAPIENTRY
 _mesa_CreateProgram(void)
 {
    GET_CURRENT_CONTEXT(ctx);
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glCreateProgram\n");
    return create_shader_program(ctx);
 }
 
@@ -1223,6 +1229,11 @@ _mesa_CreateProgramObjectARB(void)
 void GLAPIENTRY
 _mesa_DeleteObjectARB(GLhandleARB obj)
 {
+   if (MESA_VERBOSE & VERBOSE_API) {
+      GET_CURRENT_CONTEXT(ctx);
+      _mesa_debug(ctx, "glDeleteObjectARB(%u)\n", obj);
+   }
+
    if (obj) {
       GET_CURRENT_CONTEXT(ctx);
       if (is_program(ctx, obj)) {
@@ -1855,7 +1866,7 @@ _mesa_CreateShaderProgramEXT(GLenum type, const GLchar *string)
 #endif
 	 }
 
-	 shProg->InfoLog = talloc_strdup_append(shProg->InfoLog, sh->InfoLog);
+	 ralloc_strcat(&shProg->InfoLog, sh->InfoLog);
       }
 
       delete_shader(ctx, shader);

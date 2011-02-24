@@ -144,8 +144,9 @@ svga_create_sampler_state(struct pipe_context *pipe,
    return cso;
 }
 
-static void svga_bind_sampler_states(struct pipe_context *pipe,
-                                     unsigned num, void **sampler)
+static void
+svga_bind_fragment_sampler_states(struct pipe_context *pipe,
+                                  unsigned num, void **sampler)
 {
    struct svga_context *svga = svga_context(pipe);
    unsigned i;
@@ -203,9 +204,10 @@ svga_sampler_view_destroy(struct pipe_context *pipe,
    FREE(view);
 }
 
-static void svga_set_sampler_views(struct pipe_context *pipe,
-                                   unsigned num,
-                                   struct pipe_sampler_view **views)
+static void
+svga_set_fragment_sampler_views(struct pipe_context *pipe,
+                                unsigned num,
+                                struct pipe_sampler_view **views)
 {
    struct svga_context *svga = svga_context(pipe);
    unsigned flag_1d = 0;
@@ -256,9 +258,9 @@ static void svga_set_sampler_views(struct pipe_context *pipe,
 void svga_init_sampler_functions( struct svga_context *svga )
 {
    svga->pipe.create_sampler_state = svga_create_sampler_state;
-   svga->pipe.bind_fragment_sampler_states = svga_bind_sampler_states;
+   svga->pipe.bind_fragment_sampler_states = svga_bind_fragment_sampler_states;
    svga->pipe.delete_sampler_state = svga_delete_sampler_state;
-   svga->pipe.set_fragment_sampler_views = svga_set_sampler_views;
+   svga->pipe.set_fragment_sampler_views = svga_set_fragment_sampler_views;
    svga->pipe.create_sampler_view = svga_create_sampler_view;
    svga->pipe.sampler_view_destroy = svga_sampler_view_destroy;
 }

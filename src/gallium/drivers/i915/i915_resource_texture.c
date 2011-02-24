@@ -172,15 +172,15 @@ i915_texture_set_image_offset(struct i915_texture *tex,
 }
 
 static enum i915_winsys_buffer_tile
-i915_texture_tiling(struct pipe_resource *pt)
+i915_texture_tiling(struct i915_screen *is, struct i915_texture *tex)
 {
-   if (!i915_tiling)
+   if (!is->debug.tiling)
       return I915_TILE_NONE;
 
-   if (pt->target == PIPE_TEXTURE_1D)
+   if (tex->b.b.target == PIPE_TEXTURE_1D)
       return I915_TILE_NONE;
 
-   if (util_format_is_s3tc(pt->format))
+   if (util_format_is_s3tc(tex->b.b.format))
       /* XXX X-tiling might make sense */
       return I915_TILE_NONE;
 
@@ -401,11 +401,7 @@ i915_texture_layout_3d(struct i915_texture *tex)
 static boolean
 i915_texture_layout(struct i915_texture * tex)
 {
-   struct pipe_resource *pt = &tex->b.b;
-
-   tex->tiling = i915_texture_tiling(pt);
-
-   switch (pt->target) {
+   switch (tex->b.b.target) {
    case PIPE_TEXTURE_1D:
    case PIPE_TEXTURE_2D:
    case PIPE_TEXTURE_RECT:
@@ -649,11 +645,7 @@ i945_texture_layout_cube(struct i915_texture *tex)
 static boolean
 i945_texture_layout(struct i915_texture * tex)
 {
-   struct pipe_resource *pt = &tex->b.b;
-
-   tex->tiling = i915_texture_tiling(pt);
-
-   switch (pt->target) {
+   switch (tex->b.b.target) {
    case PIPE_TEXTURE_1D:
    case PIPE_TEXTURE_2D:
    case PIPE_TEXTURE_RECT:
@@ -664,7 +656,7 @@ i945_texture_layout(struct i915_texture * tex)
       i945_texture_layout_3d(tex);
       break;
    case PIPE_TEXTURE_CUBE:
-      if (!util_format_is_s3tc(pt->format))
+      if (!util_format_is_s3tc(tex->b.b.format))
          i9x5_texture_layout_cube(tex);
       else
          i945_texture_layout_cube(tex);
@@ -817,6 +809,8 @@ i915_texture_create(struct pipe_screen *screen,
    tex->b.vtbl = &i915_texture_vtbl;
    pipe_reference_init(&tex->b.b.reference, 1);
    tex->b.b.screen = screen;
+
+   tex->tiling = i915_texture_tiling(is, tex);
 
    if (is->is_i945) {
       if (!i945_texture_layout(tex))

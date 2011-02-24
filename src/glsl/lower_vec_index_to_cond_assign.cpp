@@ -82,7 +82,7 @@ ir_vec_index_to_cond_assign_visitor::convert_vec_index_to_cond_assign(ir_rvalue 
        orig_deref->array->type->is_array())
       return ir;
 
-   void *mem_ctx = talloc_parent(ir);
+   void *mem_ctx = ralloc_parent(ir);
 
    assert(orig_deref->array_index->type->base_type == GLSL_TYPE_INT);
 
@@ -167,7 +167,7 @@ ir_vec_index_to_cond_assign_visitor::visit_leave(ir_assignment *ir)
        orig_deref->array->type->is_array())
       return visit_continue;
 
-   void *mem_ctx = talloc_parent(ir);
+   void *mem_ctx = ralloc_parent(ir);
 
    assert(orig_deref->array_index->type->base_type == GLSL_TYPE_INT);
 

@@ -33,6 +33,7 @@
 #include "util/u_inlines.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
+#include "util/u_transfer.h"
 #include "tgsi/tgsi_parse.h"
 
 #include "i915_context.h"
@@ -57,10 +58,8 @@ translate_wrap_mode(unsigned wrap)
       return TEXCOORDMODE_CLAMP_EDGE;
    case PIPE_TEX_WRAP_CLAMP_TO_BORDER:
       return TEXCOORDMODE_CLAMP_BORDER;
-   /*         
-   case PIPE_TEX_WRAP_MIRRORED_REPEAT:
+   case PIPE_TEX_WRAP_MIRROR_REPEAT:
       return TEXCOORDMODE_MIRROR;
-    */
    default:
       return TEXCOORDMODE_WRAP;
    }
@@ -535,21 +534,31 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
 
    /* if we have a new buffer compare it with the old one */
    if (buf) {
-      struct i915_buffer *ir = i915_buffer(buf);
+      struct i915_buffer *ibuf = i915_buffer(buf);
       struct pipe_resource *old_buf = i915->constants[shader];
       struct i915_buffer *old = old_buf ? i915_buffer(old_buf) : NULL;
+      unsigned old_num = i915->current.num_user_constants[shader];
 
-      new_num = ir->b.b.width0 / 4 * sizeof(float);
+      new_num = ibuf->b.b.width0 / 4 * sizeof(float);
 
-      if (old && new_num != i915->current.num_user_constants[shader])
-         diff = memcmp(old->data, ir->data, ir->b.b.width0);
+      if (old_num == new_num) {
+         if (old_num == 0)
+            diff = FALSE;
+#if 0
+         /* XXX no point in running this code since st/mesa only uses user buffers */
+         /* Can't compare the buffer data since they are userbuffers */
+         else if (old && old->free_on_destroy)
+            diff = memcmp(old->data, ibuf->data, ibuf->b.b.width0);
+#else
+         (void)old;
+#endif
+      }
    } else {
       diff = i915->current.num_user_constants[shader] != 0;
    }
 
    /*
     * flush before updateing the state.
-    * XXX: looks like its okay to skip the flush for vertex cbufs
     */
    if (diff && shader == PIPE_SHADER_FRAGMENT)
       draw_flush(i915->draw);
@@ -766,17 +775,25 @@ static void i915_set_vertex_buffers(struct pipe_context *pipe,
                                     const struct pipe_vertex_buffer *buffers)
 {
    struct i915_context *i915 = i915_context(pipe);
-   /* Because we change state before the draw_set_vertex_buffers call
-    * we need a flush here, just to be sure.
-    */
-   draw_flush(i915->draw);
+   struct draw_context *draw = i915->draw;
+   int i;
 
-   util_copy_vertex_buffers(i915->vertex_buffer,
-                            &i915->num_vertex_buffers,
-                            buffers, count);
+#if 0
+   /* XXX doesn't look like this is needed */
+   /* unmap old */
+   for (i = 0; i < i915->num_vertex_buffers; i++) {
+      draw_set_mapped_vertex_buffer(draw, i, NULL);
+   }
+#endif
 
    /* pass-through to draw module */
-   draw_set_vertex_buffers(i915->draw, count, buffers);
+   draw_set_vertex_buffers(draw, count, buffers);
+
+   /* map new */
+   for (i = 0; i < count; i++) {
+      void *buf = i915_buffer(buffers[i].buffer)->data;
+      draw_set_mapped_vertex_buffer(draw, i, buf);
+   }
 }
 
 static void *
@@ -800,11 +817,6 @@ i915_bind_vertex_elements_state(struct pipe_context *pipe,
 {
    struct i915_context *i915 = i915_context(pipe);
    struct i915_velems_state *i915_velems = (struct i915_velems_state *) velems;
-
-   /* Because we change state before the draw_set_vertex_buffers call
-    * we need a flush here, just to be sure.
-    */
-   draw_flush(i915->draw);
 
    /* pass-through to draw module */
    if (i915_velems) {
@@ -882,4 +894,5 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->base.set_viewport_state = i915_set_viewport_state;
    i915->base.set_vertex_buffers = i915_set_vertex_buffers;
    i915->base.set_index_buffer = i915_set_index_buffer;
+   i915->base.redefine_user_buffer = u_default_redefine_user_buffer;
 }

@@ -247,13 +247,13 @@ init_buffers(struct vl_compositor *c)
     * Create our vertex buffer and vertex buffer elements
     */
    c->vertex_buf.stride = sizeof(struct vertex4f);
-   c->vertex_buf.max_index = (VL_COMPOSITOR_MAX_LAYERS + 2) * 6 - 1;
    c->vertex_buf.buffer_offset = 0;
    /* XXX: Create with DYNAMIC or STREAM */
    c->vertex_buf.buffer = pipe_buffer_create
    (
       c->pipe->screen,
       PIPE_BIND_VERTEX_BUFFER,
+      PIPE_USAGE_STATIC,
       sizeof(struct vertex4f) * (VL_COMPOSITOR_MAX_LAYERS + 2) * 6
    );
 
@@ -276,6 +276,7 @@ init_buffers(struct vl_compositor *c)
    (
       c->pipe->screen,
       PIPE_BIND_CONSTANT_BUFFER,
+      PIPE_USAGE_STATIC,
       sizeof(struct fragment_shader_consts)
    );
 

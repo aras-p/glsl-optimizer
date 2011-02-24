@@ -146,16 +146,6 @@ svga_translate_format_render(enum pipe_format format)
    case PIPE_FORMAT_L8_UNORM:
       return svga_translate_format(format);
 
-#if 1
-   /* For on host conversion */
-   case PIPE_FORMAT_DXT1_RGB:
-      return SVGA3D_X8R8G8B8;
-   case PIPE_FORMAT_DXT1_RGBA:
-   case PIPE_FORMAT_DXT3_RGBA:
-   case PIPE_FORMAT_DXT5_RGBA:
-      return SVGA3D_A8R8G8B8;
-#endif
-
    default:
       return SVGA3D_FORMAT_INVALID;
    }
@@ -204,7 +194,7 @@ svga_transfer_dma_band(struct svga_context *svga,
 
    ret = SVGA3D_SurfaceDMA(svga->swc, st, transfer, &box, 1);
    if(ret != PIPE_OK) {
-      svga->swc->flush(svga->swc, NULL);
+      svga_context_flush(svga, NULL);
       ret = SVGA3D_SurfaceDMA(svga->swc, st, transfer, &box, 1);
       assert(ret == PIPE_OK);
    }
@@ -225,6 +215,10 @@ svga_transfer_dma(struct svga_context *svga,
       SVGA_DBG(DEBUG_PERF, "%s: readback transfer\n", __FUNCTION__);
    }
 
+   /* Ensure any pending operations on host surfaces are queued on the command
+    * buffer first.
+    */
+   svga_surfaces_flush( svga );
 
    if(!st->swbuf) {
       /* Do the DMA transfer in a single go */
@@ -390,11 +384,15 @@ svga_texture_get_transfer(struct pipe_context *pipe,
    if(st->hw_nblocksy < nblocksy) {
       /* We couldn't allocate a hardware buffer big enough for the transfer, 
        * so allocate regular malloc memory instead */
-      debug_printf("%s: failed to allocate %u KB of DMA, splitting into %u x %u KB DMA transfers\n",
-                   __FUNCTION__,
-                   (nblocksy*st->base.stride + 1023)/1024,
-                   (nblocksy + st->hw_nblocksy - 1)/st->hw_nblocksy,
-                   (st->hw_nblocksy*st->base.stride + 1023)/1024);
+      if (0) {
+         debug_printf("%s: failed to allocate %u KB of DMA, "
+                      "splitting into %u x %u KB DMA transfers\n",
+                      __FUNCTION__,
+                      (nblocksy*st->base.stride + 1023)/1024,
+                      (nblocksy + st->hw_nblocksy - 1)/st->hw_nblocksy,
+                      (st->hw_nblocksy*st->base.stride + 1023)/1024);
+      }
+
       st->swbuf = MALLOC(nblocksy*st->base.stride);
       if(!st->swbuf)
          goto no_swbuf;
@@ -527,7 +525,8 @@ svga_texture_create(struct pipe_screen *screen,
       tex->key.numFaces = 1;
    }
 
-   tex->key.cachable = 1;
+   /* XXX: Disabled for now */
+   tex->key.cachable = 0;
 
    if (template->bind & PIPE_BIND_SAMPLER_VIEW)
       tex->key.flags |= SVGA3D_SURFACE_HINT_TEXTURE;
@@ -570,6 +569,9 @@ svga_texture_create(struct pipe_screen *screen,
    tex->handle = svga_screen_surface_create(svgascreen, &tex->key);
    if (tex->handle)
       SVGA_DBG(DEBUG_DMA, "  --> got sid %p (texture)\n", tex->handle);
+
+   debug_reference(&tex->b.b.reference,
+                   (debug_reference_descriptor)debug_describe_resource, 0);
 
    return &tex->b.b;
 

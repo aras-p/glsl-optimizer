@@ -136,7 +136,7 @@ static struct sh_opcode_info opcode_info[] =
    { "dsy",          1, 1, 0, 0, SVGA3DOP_INVALID,     },
    { "texldd",       1, 4, 0, 0, SVGA3DOP_INVALID,     },
    { "setp",         1, 2, 0, 0, SVGA3DOP_SETP,        },
-   { "texldl",       1, 2, 0, 0, SVGA3DOP_INVALID,     },
+   { "texldl",       1, 2, 0, 0, SVGA3DOP_TEXLDL,      },
    { "breakp",       0, 1, 0, 0, SVGA3DOP_INVALID,     },
 };
 
@@ -156,6 +156,8 @@ const struct sh_opcode_info *svga_opcode_info( uint op )
    if (info->svga_opcode == SVGA3DOP_INVALID) {
       /* No valid information. Please provide number of dst/src registers.
        */
+      _debug_printf("Missing information for opcode %u, '%s'\n", op,
+                    opcode_info[op].mnemonic);
       assert( 0 );
       return NULL;
    }

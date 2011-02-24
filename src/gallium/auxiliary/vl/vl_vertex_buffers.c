@@ -53,12 +53,12 @@ vl_vb_upload_quads(struct pipe_context *pipe, unsigned max_blocks)
 
    /* create buffer */
    quad.stride = sizeof(struct vertex2f);
-   quad.max_index = 4 * max_blocks - 1;
    quad.buffer_offset = 0;
    quad.buffer = pipe_buffer_create
    (
       pipe->screen,
       PIPE_BIND_VERTEX_BUFFER,
+      PIPE_USAGE_STATIC,
       sizeof(struct vertex2f) * 4 * max_blocks
    );
 
@@ -100,7 +100,7 @@ unsigned
 vl_vb_element_helper(struct pipe_vertex_element* elements, unsigned num_elements,
                               unsigned vertex_buffer_index)
 {
-   unsigned i, size, offset = 0;
+   unsigned i, offset = 0;
 
    assert(elements && num_elements);
 
@@ -126,12 +126,12 @@ vl_vb_init(struct vl_vertex_buffer *buffer, struct pipe_context *pipe,
    buffer->stride = stride;
 
    buf.stride = stride;
-   buf.max_index = 4 * max_blocks - 1;
    buf.buffer_offset = 0;
    buf.buffer = pipe_buffer_create
    (
       pipe->screen,
       PIPE_BIND_VERTEX_BUFFER,
+      PIPE_USAGE_STREAM,
       stride * 4 * max_blocks
    );
 

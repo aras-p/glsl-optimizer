@@ -312,6 +312,7 @@ nvc0_render_condition(struct pipe_context *pipe,
 
    if (mode == PIPE_RENDER_COND_WAIT ||
        mode == PIPE_RENDER_COND_BY_REGION_WAIT) {
+      MARK_RING (chan, 5, 2);
       BEGIN_RING(chan, RING_3D_(NV84_SUBCHAN_QUERY_ADDRESS_HIGH), 4);
       OUT_RELOCh(chan, q->bo, q->offset, NOUVEAU_BO_GART | NOUVEAU_BO_RD);
       OUT_RELOCl(chan, q->bo, q->offset, NOUVEAU_BO_GART | NOUVEAU_BO_RD);
@@ -319,6 +320,7 @@ nvc0_render_condition(struct pipe_context *pipe,
       OUT_RING  (chan, 0x00001001);
    }
 
+   MARK_RING (chan, 4, 2);
    BEGIN_RING(chan, RING_3D(COND_ADDRESS_HIGH), 3);
    OUT_RELOCh(chan, q->bo, q->offset, NOUVEAU_BO_GART | NOUVEAU_BO_RD);
    OUT_RELOCl(chan, q->bo, q->offset, NOUVEAU_BO_GART | NOUVEAU_BO_RD);

@@ -53,6 +53,7 @@ static enum pipe_error generate_indices( struct svga_hwtnl *hwtnl,
 
    dst = pipe_buffer_create( pipe->screen, 
 			     PIPE_BIND_INDEX_BUFFER, 
+			     PIPE_USAGE_STATIC,
 			     size );
    if (dst == NULL)
       goto fail;

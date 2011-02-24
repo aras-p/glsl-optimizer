@@ -25,6 +25,7 @@ nvc0_validate_zcull(struct nvc0_context *nvc0)
     else
        width = fb->width;
 
+    MARK_RING (chan, 23, 4);
     BEGIN_RING(chan, RING_3D_(0x1590), 1); /* ZCULL_REGION_INDEX (bits 0x3f) */
     OUT_RING  (chan, 0);
     BEGIN_RING(chan, RING_3D_(0x07e8), 2); /* ZCULL_ADDRESS_A_HIGH */
@@ -57,6 +58,7 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
     struct nouveau_channel *chan = nvc0->screen->base.channel;
     struct pipe_framebuffer_state *fb = &nvc0->framebuffer;
     unsigned i;
+    boolean serialize = FALSE;
 
     nvc0_bufctx_reset(nvc0, NVC0_BUFCTX_FRAME);
 
@@ -66,12 +68,14 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
     OUT_RING  (chan, fb->width << 16);
     OUT_RING  (chan, fb->height << 16);
 
+    MARK_RING(chan, 9 * fb->nr_cbufs, 2 * fb->nr_cbufs);
+
     for (i = 0; i < fb->nr_cbufs; ++i) {
         struct nvc0_miptree *mt = nvc0_miptree(fb->cbufs[i]->texture);
         struct nvc0_surface *sf = nvc0_surface(fb->cbufs[i]);
         struct nouveau_bo *bo = mt->base.bo;
         uint32_t offset = sf->offset;
-        
+
         BEGIN_RING(chan, RING_3D(RT_ADDRESS_HIGH(i)), 8);
         OUT_RELOCh(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
         OUT_RELOCl(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
@@ -83,6 +87,11 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         OUT_RING  (chan, sf->depth);
         OUT_RING  (chan, mt->layer_stride >> 2);
 
+        if (mt->base.status & NVC0_BUFFER_STATUS_GPU_READING)
+           serialize = TRUE;
+        mt->base.status |=  NVC0_BUFFER_STATUS_GPU_WRITING;
+        mt->base.status &= ~NVC0_BUFFER_STATUS_GPU_READING;
+
         nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_FRAME, &mt->base,
                                  NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
     }
@@ -93,7 +102,8 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         struct nouveau_bo *bo = mt->base.bo;
         int unk = mt->base.base.target == PIPE_TEXTURE_2D;
         uint32_t offset = sf->offset;
-        
+
+        MARK_RING (chan, 12, 2);
         BEGIN_RING(chan, RING_3D(ZETA_ADDRESS_HIGH), 5);
         OUT_RELOCh(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
         OUT_RELOCl(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
@@ -107,6 +117,11 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         OUT_RING  (chan, sf->height);
         OUT_RING  (chan, (unk << 16) | sf->depth);
 
+        if (mt->base.status & NVC0_BUFFER_STATUS_GPU_READING)
+           serialize = TRUE;
+        mt->base.status |=  NVC0_BUFFER_STATUS_GPU_WRITING;
+        mt->base.status &= ~NVC0_BUFFER_STATUS_GPU_READING;
+
         nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_FRAME, &mt->base,
                                  NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
     } else {
@@ -114,11 +129,10 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         OUT_RING  (chan, 0);
     }
 
-#ifndef NVC0_SCISSORS_CLIPPING
-    BEGIN_RING(chan, RING_3D(VIEWPORT_HORIZ(0)), 2);
-    OUT_RING  (chan, fb->width << 16);
-    OUT_RING  (chan, fb->height << 16);
-#endif
+    if (serialize) {
+       BEGIN_RING(chan, RING_3D(SERIALIZE), 1);
+       OUT_RING  (chan, 0);
+    }
 }
 
 static void
@@ -160,65 +174,54 @@ nvc0_validate_scissor(struct nvc0_context *nvc0)
 {
     struct nouveau_channel *chan = nvc0->screen->base.channel;
     struct pipe_scissor_state *s = &nvc0->scissor;
-#ifdef NVC0_SCISSORS_CLIPPING
-    struct pipe_viewport_state *vp = &nvc0->viewport;
-    int minx, maxx, miny, maxy;
 
-    if (!(nvc0->dirty &
-          (NVC0_NEW_SCISSOR | NVC0_NEW_VIEWPORT | NVC0_NEW_FRAMEBUFFER)) &&
-        nvc0->state.scissor == nvc0->rast->pipe.scissor)
+    if (!(nvc0->dirty & NVC0_NEW_SCISSOR) &&
+        nvc0->rast->pipe.scissor == nvc0->state.scissor)
        return;
     nvc0->state.scissor = nvc0->rast->pipe.scissor;
 
-    if (nvc0->state.scissor) {
-       minx = s->minx;
-       maxx = s->maxx;
-       miny = s->miny;
-       maxy = s->maxy;
+    BEGIN_RING(chan, RING_3D(SCISSOR_HORIZ(0)), 2);
+    if (nvc0->rast->pipe.scissor) {
+       OUT_RING(chan, (s->maxx << 16) | s->minx);
+       OUT_RING(chan, (s->maxy << 16) | s->miny);
     } else {
-       minx = 0;
-       maxx = nvc0->framebuffer.width;
-       miny = 0;
-       maxy = nvc0->framebuffer.height;
+       OUT_RING(chan, (0xffff << 16) | 0);
+       OUT_RING(chan, (0xffff << 16) | 0);
     }
-
-    minx = MAX2(minx, (int)(vp->translate[0] - fabsf(vp->scale[0])));
-    maxx = MIN2(maxx, (int)(vp->translate[0] + fabsf(vp->scale[0])));
-    miny = MAX2(miny, (int)(vp->translate[1] - fabsf(vp->scale[1])));
-    maxy = MIN2(maxy, (int)(vp->translate[1] + fabsf(vp->scale[1])));
-
-    BEGIN_RING(chan, RING_3D(SCISSOR_HORIZ(0)), 2);
-    OUT_RING  (chan, (maxx << 16) | minx);
-    OUT_RING  (chan, (maxy << 16) | miny);
-    BEGIN_RING(chan, RING_3D(VIEWPORT_HORIZ(0)), 2);
-    OUT_RING  (chan, ((maxx - minx) << 16) | minx);
-    OUT_RING  (chan, ((maxy - miny) << 16) | miny);
-#else
-    BEGIN_RING(chan, RING_3D(SCISSOR_HORIZ(0)), 2);
-    OUT_RING  (chan, (s->maxx << 16) | s->minx);
-    OUT_RING  (chan, (s->maxy << 16) | s->miny);
-#endif
 }
 
 static void
 nvc0_validate_viewport(struct nvc0_context *nvc0)
 {
     struct nouveau_channel *chan = nvc0->screen->base.channel;
+    struct pipe_viewport_state *vp = &nvc0->viewport;
+    int x, y, w, h;
+    float zmin, zmax;
 
     BEGIN_RING(chan, RING_3D(VIEWPORT_TRANSLATE_X(0)), 3);
-    OUT_RINGf (chan, nvc0->viewport.translate[0]);
-    OUT_RINGf (chan, nvc0->viewport.translate[1]);
-    OUT_RINGf (chan, nvc0->viewport.translate[2]);
+    OUT_RINGf (chan, vp->translate[0]);
+    OUT_RINGf (chan, vp->translate[1]);
+    OUT_RINGf (chan, vp->translate[2]);
     BEGIN_RING(chan, RING_3D(VIEWPORT_SCALE_X(0)), 3);
-    OUT_RINGf (chan, nvc0->viewport.scale[0]);
-    OUT_RINGf (chan, nvc0->viewport.scale[1]);
-    OUT_RINGf (chan, nvc0->viewport.scale[2]);
+    OUT_RINGf (chan, vp->scale[0]);
+    OUT_RINGf (chan, vp->scale[1]);
+    OUT_RINGf (chan, vp->scale[2]);
 
-#ifdef NVC0_SCISSORS_CLIPPING
+    /* now set the viewport rectangle to viewport dimensions for clipping */
+
+    x = (int)(vp->translate[0] - fabsf(vp->scale[0]));
+    y = (int)(vp->translate[1] - fabsf(vp->scale[1]));
+    w = (int)fabsf(2.0f * vp->scale[0]);
+    h = (int)fabsf(2.0f * vp->scale[1]);
+    zmin = vp->translate[2] - fabsf(vp->scale[2]);
+    zmax = vp->translate[2] + fabsf(vp->scale[2]);
+
+    BEGIN_RING(chan, RING_3D(VIEWPORT_HORIZ(0)), 2);
+    OUT_RING  (chan, (w << 16) | x);
+    OUT_RING  (chan, (h << 16) | y);
     BEGIN_RING(chan, RING_3D(DEPTH_RANGE_NEAR(0)), 2);
-    OUT_RINGf (chan, nvc0->viewport.translate[2] - nvc0->viewport.scale[2]);
-    OUT_RINGf (chan, nvc0->viewport.translate[2] + nvc0->viewport.scale[2]);
-#endif
+    OUT_RINGf (chan, zmin);
+    OUT_RINGf (chan, zmax);
 }
 
 static void
@@ -227,10 +230,15 @@ nvc0_validate_clip(struct nvc0_context *nvc0)
    struct nouveau_channel *chan = nvc0->screen->base.channel;
    uint32_t clip;
 
-   clip = nvc0->clip.depth_clamp ? 0x201a : 0x0002;
-#ifndef NVC0_SCISSORS_CLIPPING
-   clip |= 0x1080;
-#endif
+   if (nvc0->clip.depth_clamp) {
+      clip =
+         NVC0_3D_VIEW_VOLUME_CLIP_CTRL_UNK1_UNK1 |
+         NVC0_3D_VIEW_VOLUME_CLIP_CTRL_DEPTH_CLAMP_NEAR |
+         NVC0_3D_VIEW_VOLUME_CLIP_CTRL_DEPTH_CLAMP_FAR |
+         NVC0_3D_VIEW_VOLUME_CLIP_CTRL_UNK12_UNK2;
+   } else {
+      clip = NVC0_3D_VIEW_VOLUME_CLIP_CTRL_UNK1_UNK1;
+   }
 
    BEGIN_RING(chan, RING_3D(VIEW_VOLUME_CLIP_CTRL), 1);
    OUT_RING  (chan, clip);
@@ -238,6 +246,7 @@ nvc0_validate_clip(struct nvc0_context *nvc0)
    if (nvc0->clip.nr) {
       struct nouveau_bo *bo = nvc0->screen->uniforms;
 
+      MARK_RING (chan, 6 + nvc0->clip.nr * 4, 2);
       BEGIN_RING(chan, RING_3D(CB_SIZE), 3);
       OUT_RING  (chan, 256);
       OUT_RELOCh(chan, bo, 5 << 16, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
@@ -278,6 +287,32 @@ nvc0_validate_rasterizer(struct nvc0_context *nvc0)
 
    WAIT_RING(chan, nvc0->rast->size);
    OUT_RINGp(chan, nvc0->rast->state, nvc0->rast->size);
+}
+
+static void
+nvc0_validate_sprite_coords(struct nvc0_context *nvc0)
+{
+   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   uint32_t reg;
+
+   if (nvc0->rast->pipe.sprite_coord_mode == PIPE_SPRITE_COORD_UPPER_LEFT)
+      reg = NVC0_3D_POINT_COORD_REPLACE_COORD_ORIGIN_UPPER_LEFT;
+   else
+      reg = NVC0_3D_POINT_COORD_REPLACE_COORD_ORIGIN_LOWER_LEFT;
+
+   if (nvc0->rast->pipe.point_quad_rasterization) {
+      uint32_t en = nvc0->rast->pipe.sprite_coord_enable;
+
+      while (en) {
+         int i = ffs(en) - 1;
+         en &= ~(1 << i);
+         if (i >= 0 && i < 8)
+            reg |= 8 << i;
+      }
+   }
+
+   BEGIN_RING(chan, RING_3D(POINT_COORD_REPLACE), 1);
+   OUT_RING  (chan, reg);
 }
 
 static void
@@ -340,6 +375,7 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
                                      NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 
          if (rebind) {
+            MARK_RING (chan, 4, 2);
             BEGIN_RING(chan, RING_3D(CB_SIZE), 3);
             OUT_RING  (chan, align(res->base.width0, 0x100));
             OUT_RELOCh(chan, bo, base, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
@@ -357,6 +393,7 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
             }
             nr = MIN2(MIN2(nr - 6, words), NV04_PFIFO_MAX_PACKET_LEN - 1);
 
+            MARK_RING (chan, nr + 5, 2);
             BEGIN_RING(chan, RING_3D(CB_SIZE), 3);
             OUT_RING  (chan, align(res->base.width0, 0x100));
             OUT_RELOCh(chan, bo, base, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
@@ -383,13 +420,7 @@ static struct state_validate {
     { nvc0_validate_blend_colour,  NVC0_NEW_BLEND_COLOUR },
     { nvc0_validate_stencil_ref,   NVC0_NEW_STENCIL_REF },
     { nvc0_validate_stipple,       NVC0_NEW_STIPPLE },
-#ifdef NVC0_SCISSORS_CLIPPING
-    { nvc0_validate_scissor,       NVC0_NEW_SCISSOR | NVC0_NEW_VIEWPORT |
-                                   NVC0_NEW_RASTERIZER |
-                                   NVC0_NEW_FRAMEBUFFER },
-#else
-    { nvc0_validate_scissor,       NVC0_NEW_SCISSOR },
-#endif
+    { nvc0_validate_scissor,       NVC0_NEW_SCISSOR | NVC0_NEW_RASTERIZER },
     { nvc0_validate_viewport,      NVC0_NEW_VIEWPORT },
     { nvc0_validate_clip,          NVC0_NEW_CLIP },
     { nvc0_vertprog_validate,      NVC0_NEW_VERTPROG },
@@ -397,10 +428,12 @@ static struct state_validate {
     { nvc0_tevlprog_validate,      NVC0_NEW_TEVLPROG },
     { nvc0_gmtyprog_validate,      NVC0_NEW_GMTYPROG },
     { nvc0_fragprog_validate,      NVC0_NEW_FRAGPROG },
+    { nvc0_validate_sprite_coords, NVC0_NEW_RASTERIZER | NVC0_NEW_FRAGPROG },
     { nvc0_constbufs_validate,     NVC0_NEW_CONSTBUF },
     { nvc0_validate_textures,      NVC0_NEW_TEXTURES },
     { nvc0_validate_samplers,      NVC0_NEW_SAMPLERS },
-    { nvc0_vertex_arrays_validate, NVC0_NEW_VERTEX | NVC0_NEW_ARRAYS }
+    { nvc0_vertex_arrays_validate, NVC0_NEW_VERTEX | NVC0_NEW_ARRAYS },
+    { nvc0_tfb_validate,           NVC0_NEW_TFB | NVC0_NEW_TFB_BUFFERS }
 };
 #define validate_list_len (sizeof(validate_list) / sizeof(validate_list[0]))
 

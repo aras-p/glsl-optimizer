@@ -41,6 +41,10 @@
 #define RADEON_INFO_TILING_CONFIG 0x6
 #endif
 
+#ifndef RADEON_INFO_CLOCK_CRYSTAL_FREQ
+#define RADEON_INFO_CLOCK_CRYSTAL_FREQ 0x9
+#endif
+
 enum radeon_family r600_get_family(struct radeon *r600)
 {
 	return r600->family;
@@ -56,9 +60,14 @@ struct r600_tiling_info *r600_get_tiling_info(struct radeon *radeon)
 	return &radeon->tiling_info;
 }
 
+unsigned r600_get_clock_crystal_freq(struct radeon *radeon)
+{
+	return radeon->clock_crystal_freq;
+}
+
 static int radeon_get_device(struct radeon *radeon)
 {
-	struct drm_radeon_info info;
+	struct drm_radeon_info info = {};
 	int r;
 
 	radeon->device = 0;
@@ -69,20 +78,8 @@ static int radeon_get_device(struct radeon *radeon)
 	return r;
 }
 
-static int radeon_drm_get_tiling(struct radeon *radeon)
+static int r600_interpret_tiling(struct radeon *radeon, uint32_t tiling_config)
 {
-	struct drm_radeon_info info;
-	int r;
-	uint32_t tiling_config;
-
-	info.request = RADEON_INFO_TILING_CONFIG;
-	info.value = (uintptr_t)&tiling_config;
-	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
-				sizeof(struct drm_radeon_info));
-
-	if (r)
-		return 0;
-
 	switch ((tiling_config & 0xe) >> 1) {
 	case 0:
 		radeon->tiling_info.num_channels = 1;
@@ -121,6 +118,80 @@ static int radeon_drm_get_tiling(struct radeon *radeon)
 	default:
 		return -EINVAL;
 	}
+	return 0;
+}
+
+static int eg_interpret_tiling(struct radeon *radeon, uint32_t tiling_config)
+{
+	switch (tiling_config & 0xf) {
+	case 0:
+		radeon->tiling_info.num_channels = 1;
+		break;
+	case 1:
+		radeon->tiling_info.num_channels = 2;
+		break;
+	case 2:
+		radeon->tiling_info.num_channels = 4;
+		break;
+	case 3:
+		radeon->tiling_info.num_channels = 8;
+		break;
+	default:
+		return -EINVAL;
+	}
+
+	radeon->tiling_info.num_banks = (tiling_config & 0xf0) >> 4;
+
+	switch ((tiling_config & 0xf00) >> 8) {
+	case 0:
+		radeon->tiling_info.group_bytes = 256;
+		break;
+	case 1:
+		radeon->tiling_info.group_bytes = 512;
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
+
+static int radeon_drm_get_tiling(struct radeon *radeon)
+{
+	struct drm_radeon_info info;
+	int r;
+	uint32_t tiling_config = 0;
+
+	info.request = RADEON_INFO_TILING_CONFIG;
+	info.value = (uintptr_t)&tiling_config;
+	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
+				sizeof(struct drm_radeon_info));
+
+	if (r)
+		return 0;
+
+	if (radeon->chip_class == R600 || radeon->chip_class == R700) {
+		r = r600_interpret_tiling(radeon, tiling_config);
+	} else {
+		r = eg_interpret_tiling(radeon, tiling_config);
+	}
+	return r;
+}
+
+static int radeon_get_clock_crystal_freq(struct radeon *radeon)
+{
+	struct drm_radeon_info info;
+	uint32_t clock_crystal_freq;
+	int r;
+
+	radeon->device = 0;
+	info.request = RADEON_INFO_CLOCK_CRYSTAL_FREQ;
+	info.value = (uintptr_t)&clock_crystal_freq;
+	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
+			sizeof(struct drm_radeon_info));
+	if (r)
+		return r;
+
+	radeon->clock_crystal_freq = clock_crystal_freq;
 	return 0;
 }
 
@@ -201,10 +272,12 @@ static struct radeon *radeon_new(int fd, unsigned device)
 		break;
 	}
 
-	if (radeon->chip_class == R600 || radeon->chip_class == R700) {
-		if (radeon_drm_get_tiling(radeon))
-			return NULL;
-	}
+	if (radeon_drm_get_tiling(radeon))
+		return NULL;
+
+	/* get the GPU counter frequency, failure is non fatal */
+	radeon_get_clock_crystal_freq(radeon);
+
 	radeon->bomgr = r600_bomgr_create(radeon, 1000000);
 	if (radeon->bomgr == NULL) {
 		return NULL;

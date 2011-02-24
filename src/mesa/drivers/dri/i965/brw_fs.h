@@ -41,7 +41,6 @@ extern "C" {
 #include "brw_context.h"
 #include "brw_eu.h"
 #include "brw_wm.h"
-#include "talloc.h"
 }
 #include "../glsl/glsl_types.h"
 #include "../glsl/ir.h"
@@ -83,13 +82,13 @@ enum fs_opcodes {
 
 class fs_reg {
 public:
-   /* Callers of this talloc-based new need not call delete. It's
-    * easier to just talloc_free 'ctx' (or any of its ancestors). */
+   /* Callers of this ralloc-based new need not call delete. It's
+    * easier to just ralloc_free 'ctx' (or any of its ancestors). */
    static void* operator new(size_t size, void *ctx)
    {
       void *node;
 
-      node = talloc_size(ctx, size);
+      node = ralloc_size(ctx, size);
       assert(node != NULL);
 
       return node;
@@ -193,13 +192,13 @@ static const fs_reg reg_null_d(ARF, BRW_ARF_NULL, BRW_REGISTER_TYPE_D);
 
 class fs_inst : public exec_node {
 public:
-   /* Callers of this talloc-based new need not call delete. It's
-    * easier to just talloc_free 'ctx' (or any of its ancestors). */
+   /* Callers of this ralloc-based new need not call delete. It's
+    * easier to just ralloc_free 'ctx' (or any of its ancestors). */
    static void* operator new(size_t size, void *ctx)
    {
       void *node;
 
-      node = talloc_zero_size(ctx, size);
+      node = rzalloc_size(ctx, size);
       assert(node != NULL);
 
       return node;
@@ -361,7 +360,7 @@ public:
       this->fp = brw->fragment_program;
       this->intel = &brw->intel;
       this->ctx = &intel->ctx;
-      this->mem_ctx = talloc_new(NULL);
+      this->mem_ctx = ralloc_context(NULL);
       this->shader = shader;
       this->fail = false;
       this->variable_ht = hash_table_ctor(0,
@@ -405,7 +404,7 @@ public:
 
    ~fs_visitor()
    {
-      talloc_free(this->mem_ctx);
+      ralloc_free(this->mem_ctx);
       hash_table_dtor(this->variable_ht);
    }
 
@@ -454,7 +453,7 @@ public:
    void generate_fb_write(fs_inst *inst);
    void generate_linterp(fs_inst *inst, struct brw_reg dst,
 			 struct brw_reg *src);
-   void generate_tex(fs_inst *inst, struct brw_reg dst);
+   void generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src);
    void generate_math(fs_inst *inst, struct brw_reg dst, struct brw_reg *src);
    void generate_discard_not(fs_inst *inst, struct brw_reg temp);
    void generate_discard_and(fs_inst *inst, struct brw_reg temp);

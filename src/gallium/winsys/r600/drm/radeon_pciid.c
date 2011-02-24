@@ -32,7 +32,7 @@ struct pci_id {
 	unsigned	family;
 };
 
-struct pci_id radeon_pci_id[] = {
+static const struct pci_id radeon_pci_id[] = {
 	{0x1002, 0x3150, CHIP_RV380},
 	{0x1002, 0x3152, CHIP_RV380},
 	{0x1002, 0x3154, CHIP_RV380},

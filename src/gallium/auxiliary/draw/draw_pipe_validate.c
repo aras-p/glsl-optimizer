@@ -29,6 +29,7 @@
  */
 
 #include "util/u_memory.h"
+#include "util/u_math.h"
 #include "pipe/p_defines.h"
 #include "draw_private.h"
 #include "draw_pipe.h"
@@ -86,7 +87,7 @@ draw_need_pipeline(const struct draw_context *draw,
          return TRUE;
 
       /* wide lines */
-      if (rasterizer->line_width > draw->pipeline.wide_line_threshold)
+      if (roundf(rasterizer->line_width) > draw->pipeline.wide_line_threshold)
          return TRUE;
 
       /* AA lines */
@@ -169,7 +170,7 @@ static struct draw_stage *validate_pipeline( struct draw_stage *stage )
    stage->next = next;
 
    /* drawing wide lines? */
-   wide_lines = (rast->line_width > draw->pipeline.wide_line_threshold
+   wide_lines = (roundf(rast->line_width) > draw->pipeline.wide_line_threshold
                  && !rast->line_smooth);
 
    /* drawing large/sprite points (but not AA points)? */

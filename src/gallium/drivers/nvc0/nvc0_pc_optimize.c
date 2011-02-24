@@ -99,6 +99,7 @@ inst_removable(struct nv_instruction *nvi)
              nvc0_insn_refcount(nvi)));
 }
 
+/* Check if we do not actually have to emit this instruction. */
 static INLINE boolean
 inst_is_noop(struct nv_instruction *nvi)
 {
@@ -141,9 +142,10 @@ nv_pc_pass_pre_emission(void *priv, struct nv_basic_block *b)
    struct nv_instruction *nvi, *next;
    int j;
 
+   /* find first non-empty block emitted before b */
    for (j = pc->num_blocks - 1; j >= 0 && !pc->bb_list[j]->emit_size; --j);
 
-   if (j >= 0) {
+   for (; j >= 0; --j) {
       in = pc->bb_list[j];
 
       /* check for no-op branches (BRA $PC+8) */
@@ -157,6 +159,9 @@ nv_pc_pass_pre_emission(void *priv, struct nv_basic_block *b)
          nvc0_insn_delete(in->exit);
       }
       b->emit_pos = in->emit_pos + in->emit_size;
+
+      if (in->emit_size) /* no more no-op branches to b */
+         break;
    }
 
    pc->bb_list[pc->num_blocks++] = b;
@@ -240,9 +245,14 @@ check_swap_src_0_1(struct nv_instruction *nvi)
    struct nv_ref *src0 = nvi->src[0];
    struct nv_ref *src1 = nvi->src[1];
 
-   if (!nv_op_commutative(nvi->opcode))
+   if (!nv_op_commutative(nvi->opcode) &&
+       NV_BASEOP(nvi->opcode) != NV_OP_SET &&
+       NV_BASEOP(nvi->opcode) != NV_OP_SLCT)
       return;
    assert(src0 && src1 && src0->value && src1->value);
+
+   if (src1->value->reg.file != NV_FILE_GPR)
+      return;
 
    if (is_cspace_load(src0->value->insn)) {
       if (!is_cspace_load(src1->value->insn)) {
@@ -258,8 +268,13 @@ check_swap_src_0_1(struct nv_instruction *nvi)
       }
    }
 
-   if (nvi->src[0] != src0 && nvi->opcode == NV_OP_SET)
-      nvi->set_cond = cc_swapped[nvi->set_cond];
+   if (nvi->src[0] != src0) {
+      if (NV_BASEOP(nvi->opcode) == NV_OP_SET)
+         nvi->set_cond = (nvi->set_cond & ~7) | cc_swapped[nvi->set_cond & 7];
+      else
+      if (NV_BASEOP(nvi->opcode) == NV_OP_SLCT)
+         nvi->set_cond = NV_CC_INVERSE(nvi->set_cond);
+   }
 }
 
 static void
@@ -543,6 +558,7 @@ constant_operand(struct nv_pc *pc,
          nv_reference(pc, nvi, s, nvi->src[t]->value);
          nvi->src[s]->mod = nvi->src[t]->mod;
       }
+      break;
    case NV_OP_ADD_F32:
       if (u.u32 == 0) {
          switch (nvi->src[t]->mod) {
@@ -562,6 +578,7 @@ constant_operand(struct nv_pc *pc,
          if (nvi->opcode != NV_OP_CVT)
             nvi->src[0]->mod = 0;
       }
+      break;
    case NV_OP_ADD_B32:
       if (u.u32 == 0) {
          assert(nvi->src[t]->mod == 0);
@@ -582,7 +599,7 @@ constant_operand(struct nv_pc *pc,
       } else
       if (u.s32 > 0 && u.s32 == (1 << shift)) {
          nvi->opcode = NV_OP_SHL;
-         (val = new_value(pc, NV_FILE_IMM, NV_TYPE_U32))->reg.imm.s32 = shift;
+         (val = new_value(pc, NV_FILE_IMM, 4))->reg.imm.s32 = shift;
          nv_reference(pc, nvi, 0, nvi->src[t]->value);
          nv_reference(pc, nvi, 1, val);
          break;
@@ -590,14 +607,14 @@ constant_operand(struct nv_pc *pc,
       break;
    case NV_OP_RCP:
       u.f32 = 1.0f / u.f32;
-      (val = new_value(pc, NV_FILE_IMM, NV_TYPE_F32))->reg.imm.f32 = u.f32;
+      (val = new_value(pc, NV_FILE_IMM, 4))->reg.imm.f32 = u.f32;
       nvi->opcode = NV_OP_MOV;
       assert(s == 0);
       nv_reference(pc, nvi, 0, val);
       break;
    case NV_OP_RSQ:
       u.f32 = 1.0f / sqrtf(u.f32);
-      (val = new_value(pc, NV_FILE_IMM, NV_TYPE_F32))->reg.imm.f32 = u.f32;
+      (val = new_value(pc, NV_FILE_IMM, 4))->reg.imm.f32 = u.f32;
       nvi->opcode = NV_OP_MOV;
       assert(s == 0);
       nv_reference(pc, nvi, 0, val);
@@ -607,25 +624,83 @@ constant_operand(struct nv_pc *pc,
    }
 }
 
+static void
+handle_min_max(struct nv_pass *ctx, struct nv_instruction *nvi)
+{
+   struct nv_value *src0 = nvi->src[0]->value;
+   struct nv_value *src1 = nvi->src[1]->value;
+
+   if (src0 != src1 || (nvi->src[0]->mod | nvi->src[1]->mod))
+      return;
+   if (src0->reg.file != NV_FILE_GPR)
+      return;
+   nvc0_pc_replace_value(ctx->pc, nvi->def[0], src0);
+   nvc0_insn_delete(nvi);
+}
+
+/* check if we can MUL + ADD -> MAD/FMA */
+static void
+handle_add_mul(struct nv_pass *ctx, struct nv_instruction *nvi)
+{
+   struct nv_value *src0 = nvi->src[0]->value;
+   struct nv_value *src1 = nvi->src[1]->value;
+   struct nv_value *src;
+   int s;
+   uint8_t mod[4];
+
+   if (SRC_IS_MUL(src0) && src0->refc == 1) s = 0;
+   else
+   if (SRC_IS_MUL(src1) && src1->refc == 1) s = 1;
+   else
+      return;
+
+   if ((src0->insn && src0->insn->bb != nvi->bb) ||
+       (src1->insn && src1->insn->bb != nvi->bb))
+      return;
+
+   /* check for immediates from prior constant folding */
+   if (src0->reg.file != NV_FILE_GPR || src1->reg.file != NV_FILE_GPR)
+      return;
+   src = nvi->src[s]->value;
+
+   mod[0] = nvi->src[0]->mod;
+   mod[1] = nvi->src[1]->mod;
+   mod[2] = src->insn->src[0]->mod;
+   mod[3] = src->insn->src[1]->mod;
+
+   if ((mod[0] | mod[1] | mod[2] | mod[3]) & ~NV_MOD_NEG)
+      return;
+
+   nvi->opcode = NV_OP_MAD_F32;
+
+   nv_reference(ctx->pc, nvi, s, NULL);
+   nvi->src[2] = nvi->src[!s];
+   nvi->src[!s] = NULL;
+
+   nv_reference(ctx->pc, nvi, 0, src->insn->src[0]->value);
+   nvi->src[0]->mod = mod[2] ^ mod[s];
+   nv_reference(ctx->pc, nvi, 1, src->insn->src[1]->value);
+   nvi->src[1]->mod = mod[3];
+}
+
 static int
-nv_pass_lower_arith(struct nv_pass *ctx, struct nv_basic_block *b)
+nv_pass_algebraic_opt(struct nv_pass *ctx, struct nv_basic_block *b)
 {
    struct nv_instruction *nvi, *next;
    int j;
 
    for (nvi = b->entry; nvi; nvi = next) {
-      struct nv_value *src0, *src1, *src;
-      int s;
-      uint8_t mod[4];
+      struct nv_value *src0, *src1;
+      uint baseop = NV_BASEOP(nvi->opcode);
 
       next = nvi->next;
 
       src0 = nvc0_pc_find_immediate(nvi->src[0]);
       src1 = nvc0_pc_find_immediate(nvi->src[1]);
 
-      if (src0 && src1)
+      if (src0 && src1) {
          constant_expression(ctx->pc, nvi, src0, src1);
-      else {
+      } else {
          if (src0)
             constant_operand(ctx->pc, nvi, src0, 0);
          else
@@ -633,44 +708,13 @@ nv_pass_lower_arith(struct nv_pass *ctx, struct nv_basic_block *b)
             constant_operand(ctx->pc, nvi, src1, 1);
       }
 
-      /* check if we can MUL + ADD -> MAD/FMA */
-      if (nvi->opcode != NV_OP_ADD)
-         continue;
-
-      src0 = nvi->src[0]->value;
-      src1 = nvi->src[1]->value;
-
-      if (SRC_IS_MUL(src0) && src0->refc == 1)
-         src = src0;
+      if (baseop == NV_OP_MIN || baseop == NV_OP_MAX)
+         handle_min_max(ctx, nvi);
       else
-      if (SRC_IS_MUL(src1) && src1->refc == 1)
-         src = src1;
-      else
-         continue;
-
-      /* could have an immediate from above constant_*  */
-      if (src0->reg.file != NV_FILE_GPR || src1->reg.file != NV_FILE_GPR)
-         continue;
-      s = (src == src0) ? 0 : 1;
-
-      mod[0] = nvi->src[0]->mod;
-      mod[1] = nvi->src[1]->mod;
-      mod[2] = src->insn->src[0]->mod;
-      mod[3] = src->insn->src[0]->mod;
-
-      if ((mod[0] | mod[1] | mod[2] | mod[3]) & ~NV_MOD_NEG)
-         continue;
-
-      nvi->opcode = NV_OP_MAD;
-      nv_reference(ctx->pc, nvi, s, NULL);
-      nvi->src[2] = nvi->src[!s];
-
-      nvi->src[0] = new_ref(ctx->pc, src->insn->src[0]->value);
-      nvi->src[1] = new_ref(ctx->pc, src->insn->src[1]->value);
-      nvi->src[0]->mod = mod[2] ^ mod[s];
-      nvi->src[1]->mod = mod[3];
+      if (nvi->opcode == NV_OP_ADD_F32)
+         handle_add_mul(ctx, nvi);
    }
-   DESCEND_ARBITRARY(j, nv_pass_lower_arith);
+   DESCEND_ARBITRARY(j, nv_pass_algebraic_opt);
 
    return 0;
 }
@@ -700,8 +744,12 @@ struct pass_reld_elim {
    int alloc;
 };
 
+/* Extend the load operation in @rec to also cover the data loaded by @ld.
+ * The two loads may not overlap but reference adjacent memory locations.
+ */
 static void
-combine_load(struct mem_record *rec, struct nv_instruction *ld)
+combine_load(struct nv_pc *pc, struct mem_record *rec,
+             struct nv_instruction *ld)
 {
    struct nv_instruction *fv = rec->insn;
    struct nv_value *mem = ld->src[0]->value;
@@ -716,7 +764,7 @@ combine_load(struct mem_record *rec, struct nv_instruction *ld)
          return;
       rec->ofst = mem->reg.address;
       for (j = 0; j < d; ++j)
-         fv->def[d + j] = fv->def[j];
+         fv->def[mem->reg.size / 4 + j] = fv->def[j];
       d = 0;
    } else
    if ((size == 8 && rec->ofst & 3) ||
@@ -729,6 +777,9 @@ combine_load(struct mem_record *rec, struct nv_instruction *ld)
       fv->def[d++]->insn = fv;
    }
 
+   if (fv->src[0]->value->refc > 1)
+      nv_reference(pc, fv, 0, new_value_like(pc, fv->src[0]->value));
+   fv->src[0]->value->reg.address = rec->ofst;
    fv->src[0]->value->reg.size = rec->size = size;
 
    nvc0_insn_delete(ld);
@@ -793,6 +844,7 @@ nv_pass_mem_opt(struct pass_reld_elim *ctx, struct nv_basic_block *b)
              ((it->ofst >> 4) == (ofst >> 4)) &&
              ((it->ofst + it->size == ofst) ||
               (it->ofst - mem->reg.size == ofst))) {
+            /* only NV_OP_VFETCH can load exactly 12 bytes */
             if (ld->opcode == NV_OP_LD && it->size + mem->reg.size == 12)
                continue;
             if (it->ofst < ofst) {
@@ -808,7 +860,7 @@ nv_pass_mem_opt(struct pass_reld_elim *ctx, struct nv_basic_block *b)
          switch (ld->opcode) {
          case NV_OP_EXPORT: combine_export(it, ld); break;
          default:
-            combine_load(it, ld);
+            combine_load(ctx->pc, it, ld);
             break;
          }
       } else
@@ -816,6 +868,11 @@ nv_pass_mem_opt(struct pass_reld_elim *ctx, struct nv_basic_block *b)
          add_mem_record(ctx, rec, base, ofst, ld);
       }
    }
+
+   ctx->alloc = 0;
+   ctx->mem_a = ctx->mem_v = ctx->mem_l = NULL;
+   for (s = 0; s < 16; ++s)
+      ctx->mem_c[s] = NULL;
 
    DESCEND_ARBITRARY(s, nv_pass_mem_opt);
    return 0;
@@ -1006,7 +1063,6 @@ nv_pass_dce(struct nv_pass_dce *ctx, struct nv_basic_block *b)
    return 0;
 }
 
-#if 0
 /* Register allocation inserted ELSE blocks for all IF/ENDIF without ELSE.
  * Returns TRUE if @bb initiates an IF/ELSE/ENDIF clause, or is an IF with
  * BREAK and dummy ELSE block.
@@ -1027,25 +1083,137 @@ bb_is_if_else_endif(struct nv_basic_block *bb)
    }
 }
 
-/* predicate instructions and remove branch at the end */
+/* Predicate instructions and delete any branch at the end if it is
+ * not a break from a loop.
+ */
 static void
 predicate_instructions(struct nv_pc *pc, struct nv_basic_block *b,
-                       struct nv_value *p, ubyte cc)
+                       struct nv_value *pred, uint8_t cc)
 {
+   struct nv_instruction *nvi, *prev;
+   int s;
 
+   if (!b->entry)
+      return;
+   for (nvi = b->entry; nvi; nvi = nvi->next) {
+      prev = nvi;
+      if (inst_is_noop(nvi))
+         continue;
+      for (s = 0; nvi->src[s]; ++s);
+      assert(s < 6);
+      nvi->predicate = s;
+      nvi->cc = cc;
+      nv_reference(pc, nvi, nvi->predicate, pred);
+   }
+   if (prev->opcode == NV_OP_BRA &&
+       b->out_kind[0] != CFG_EDGE_LOOP_LEAVE &&
+       b->out_kind[1] != CFG_EDGE_LOOP_LEAVE)
+      nvc0_insn_delete(prev);
 }
-#endif
 
-/* NOTE: Run this after register allocation, we can just cut out the cflow
- * instructions and hook the predicates to the conditional OPs if they are
- * not using immediates; better than inserting SELECT to join definitions.
- *
- * NOTE: Should adapt prior optimization to make this possible more often.
+static INLINE boolean
+may_predicate_insn(struct nv_instruction *nvi, struct nv_value *pred)
+{
+   if (nvi->def[0] && values_equal(nvi->def[0], pred))
+      return FALSE;
+   return nvc0_insn_is_predicateable(nvi);
+}
+
+/* Transform IF/ELSE/ENDIF constructs into predicated instructions
+ * where feasible.
  */
 static int
 nv_pass_flatten(struct nv_pass *ctx, struct nv_basic_block *b)
 {
+   struct nv_instruction *nvi;
+   struct nv_value *pred;
+   int k;
+   int n0, n1; /* instruction counts of outgoing blocks */
+
+   if (bb_is_if_else_endif(b)) {
+      assert(b->exit && b->exit->opcode == NV_OP_BRA);
+
+      assert(b->exit->predicate >= 0);
+      pred = b->exit->src[b->exit->predicate]->value;
+
+      n1 = n0 = 0;
+      for (nvi = b->out[0]->entry; nvi; nvi = nvi->next, ++n0)
+         if (!may_predicate_insn(nvi, pred))
+            break;
+      if (!nvi) {
+         /* we're after register allocation, so there always is an ELSE block */
+         for (nvi = b->out[1]->entry; nvi; nvi = nvi->next, ++n1)
+            if (!may_predicate_insn(nvi, pred))
+               break;
+      }
+
+      /* 12 is an arbitrary limit */
+      if (!nvi && n0 < 12 && n1 < 12) {
+         predicate_instructions(ctx->pc, b->out[0], pred, !b->exit->cc);
+         predicate_instructions(ctx->pc, b->out[1], pred, b->exit->cc);
+
+         nvc0_insn_delete(b->exit); /* delete the branch */
+
+         /* and a potential joinat before it */
+         if (b->exit && b->exit->opcode == NV_OP_JOINAT)
+            nvc0_insn_delete(b->exit);
+
+         /* remove join operations at the end of the conditional */
+         k = (b->out[0]->out_kind[0] == CFG_EDGE_LOOP_LEAVE) ? 1 : 0;
+         if ((nvi = b->out[0]->out[k]->entry)) {
+            nvi->join = 0;
+            if (nvi->opcode == NV_OP_JOIN)
+               nvc0_insn_delete(nvi);
+         }
+      }
+   }
+   DESCEND_ARBITRARY(k, nv_pass_flatten);
+
    return 0;
+}
+
+/* Tests instructions for equality, but independently of sources. */
+static boolean
+is_operation_equal(struct nv_instruction *a, struct nv_instruction *b)
+{
+   if (a->opcode != b->opcode)
+      return FALSE;
+   if (nv_is_texture_op(a->opcode)) {
+      if (a->ext.tex.t != b->ext.tex.t ||
+          a->ext.tex.s != b->ext.tex.s)
+         return FALSE;
+      if (a->tex_dim != b->tex_dim ||
+          a->tex_array != b->tex_array ||
+          a->tex_cube != b->tex_cube ||
+          a->tex_shadow != b->tex_shadow ||
+          a->tex_live != b->tex_live)
+         return FALSE;
+   } else
+   if (a->opcode == NV_OP_CVT) {
+      if (a->ext.cvt.s != b->ext.cvt.s ||
+          a->ext.cvt.d != b->ext.cvt.d)
+         return FALSE;
+   } else
+   if (NV_BASEOP(a->opcode) == NV_OP_SET ||
+       NV_BASEOP(a->opcode) == NV_OP_SLCT) {
+      if (a->set_cond != b->set_cond)
+         return FALSE;
+   } else
+   if (a->opcode == NV_OP_LINTERP ||
+       a->opcode == NV_OP_PINTERP) {
+      if (a->centroid != b->centroid ||
+          a->flat != b->flat)
+         return FALSE;
+   }
+   if (a->cc != b->cc)
+      return FALSE;
+   if (a->lanes != b->lanes ||
+       a->patch != b->patch ||
+       a->saturate != b->saturate)
+      return FALSE;
+   if (a->opcode == NV_OP_QUADOP) /* beware quadon ! */
+      return FALSE;
+   return TRUE;
 }
 
 /* local common subexpression elimination, stupid O(n^2) implementation */
@@ -1054,34 +1222,48 @@ nv_pass_cse(struct nv_pass *ctx, struct nv_basic_block *b)
 {
    struct nv_instruction *ir, *ik, *next;
    struct nv_instruction *entry = b->phi ? b->phi : b->entry;
-   int s;
+   int s, d;
    unsigned int reps;
 
    do {
       reps = 0;
       for (ir = entry; ir; ir = next) {
          next = ir->next;
+         if (ir->fixed)
+            continue;
          for (ik = entry; ik != ir; ik = ik->next) {
-            if (ir->opcode != ik->opcode || ir->fixed)
+            if (!is_operation_equal(ir, ik))
                continue;
-
-            if (!ir->def[0] || !ik->def[0] || ir->def[1] || ik->def[1])
+            if (!ir->def[0] || !ik->def[0])
                continue;
 
             if (ik->indirect != ir->indirect || ik->predicate != ir->predicate)
                continue;
 
-            if (!values_equal(ik->def[0], ir->def[0]))
+            for (d = 0; d < 4; ++d) {
+               if ((ir->def[d] ? 1 : 0) != (ik->def[d] ? 1 : 0))
+                  break;
+               if (ir->def[d]) {
+                  if (!values_equal(ik->def[0], ir->def[0]))
+                     break;
+               } else {
+                  d = 4;
+                  break;
+               }
+            }
+            if (d != 4)
                continue;
 
-            for (s = 0; s < 3; ++s) {
+            for (s = 0; s < 5; ++s) {
                struct nv_value *a, *b;
 
-               if (!ik->src[s]) {
-                  if (ir->src[s])
-                     break;
-                  continue;
+               if ((ir->src[s] ? 1 : 0) != (ik->src[s] ? 1 : 0))
+                  break;
+               if (!ir->src[s]) {
+                  s = 5;
+                  break;
                }
+
                if (ik->src[s]->mod != ir->src[s]->mod)
                   break;
                a = ik->src[s]->value;
@@ -1089,14 +1271,15 @@ nv_pass_cse(struct nv_pass *ctx, struct nv_basic_block *b)
                if (a == b)
                   continue;
                if (a->reg.file != b->reg.file ||
-                   a->reg.id < 0 ||
+                   a->reg.id < 0 || /* this excludes memory loads/stores */
                    a->reg.id != b->reg.id)
                   break;
             }
-            if (s == 3) {
+            if (s == 5) {
                nvc0_insn_delete(ir);
+               for (d = 0; d < 4 && ir->def[d]; ++d)
+                  nvc0_pc_replace_value(ctx->pc, ir->def[d], ik->def[d]);
                ++reps;
-               nvc0_pc_replace_value(ctx->pc, ir->def[0], ik->def[0]);
                break;
             }
          }
@@ -1110,13 +1293,15 @@ nv_pass_cse(struct nv_pass *ctx, struct nv_basic_block *b)
 
 /* Make sure all sources of an NV_OP_BIND are distinct, they need to occupy
  * neighbouring registers. CSE might have messed this up.
+ * Just generate a MOV for each source to avoid conflicts if they're used in
+ * multiple NV_OP_BIND at different positions.
  */
 static int
 nv_pass_fix_bind(struct nv_pass *ctx, struct nv_basic_block *b)
 {
    struct nv_value *val;
    struct nv_instruction *bnd, *nvi, *next;
-   int s, t;
+   int s;
 
    for (bnd = b->entry; bnd; bnd = next) {
       next = bnd->next;
@@ -1124,20 +1309,17 @@ nv_pass_fix_bind(struct nv_pass *ctx, struct nv_basic_block *b)
          continue;
       for (s = 0; s < 4 && bnd->src[s]; ++s) {
          val = bnd->src[s]->value;
-         for (t = s + 1; t < 4 && bnd->src[t]; ++t) {
-            if (bnd->src[t]->value != val)
-               continue;
-            nvi = nv_alloc_instruction(ctx->pc, NV_OP_MOV);
-            nvi->def[0] = new_value_like(ctx->pc, val);
-            nvi->def[0]->insn = nvi;
-            nv_reference(ctx->pc, nvi, 0, val);
-            nvc0_insn_insert_before(bnd, nvi);
 
-            nv_reference(ctx->pc, bnd, t, nvi->def[0]);
-         }
+         nvi = nv_alloc_instruction(ctx->pc, NV_OP_MOV);
+         nvi->def[0] = new_value_like(ctx->pc, val);
+         nvi->def[0]->insn = nvi;
+         nv_reference(ctx->pc, nvi, 0, val);
+         nv_reference(ctx->pc, bnd, s, nvi->def[0]);
+
+         nvc0_insn_insert_before(bnd, nvi);
       }
    }
-   DESCEND_ARBITRARY(t, nv_pass_fix_bind);
+   DESCEND_ARBITRARY(s, nv_pass_fix_bind);
 
    return 0;
 }
@@ -1153,11 +1335,17 @@ nv_pc_pass0(struct nv_pc *pc, struct nv_basic_block *root)
    pass.n = 0;
    pass.pc = pc;
 
+   /* Do CSE so we can just compare values by pointer in subsequent passes. */
+   pc->pass_seq++;
+   ret = nv_pass_cse(&pass, root);
+   if (ret)
+      return ret;
+
    /* Do this first, so we don't have to pay attention
     * to whether sources are supported memory loads.
     */
    pc->pass_seq++;
-   ret = nv_pass_lower_arith(&pass, root);
+   ret = nv_pass_algebraic_opt(&pass, root);
    if (ret)
       return ret;
 
@@ -1185,11 +1373,9 @@ nv_pc_pass0(struct nv_pc *pc, struct nv_basic_block *root)
       reldelim->pc = pc;
    }
 
-   pc->pass_seq++;
-   ret = nv_pass_cse(&pass, root);
-   if (ret)
-      return ret;
-
+   /* May run DCE before load-combining since that pass will clean up
+    * after itself.
+    */
    dce.pc = pc;
    do {
       dce.removed = 0;

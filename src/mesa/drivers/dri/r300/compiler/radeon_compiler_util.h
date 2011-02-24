@@ -10,6 +10,8 @@ unsigned int rc_swizzle_to_writemask(unsigned int swz);
 
 rc_swizzle get_swz(unsigned int swz, rc_swizzle idx);
 
+unsigned int rc_init_swizzle(unsigned int initial_value, unsigned int channels);
+
 unsigned int combine_swizzles4(unsigned int src,
 			       rc_swizzle swz_x, rc_swizzle swz_y,
 			       rc_swizzle swz_z, rc_swizzle swz_w);
@@ -32,7 +34,7 @@ unsigned int rc_src_reads_dst_mask(
 		unsigned int dst_idx,
 		unsigned int dst_mask);
 
-unsigned int rc_source_type_swz(unsigned int swizzle, unsigned int channels);
+unsigned int rc_source_type_swz(unsigned int swizzle);
 
 unsigned int rc_source_type_mask(unsigned int mask);
 

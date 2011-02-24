@@ -48,10 +48,15 @@ static const struct debug_named_value debug_options[] = {
 unsigned i915_debug = 0;
 boolean i915_tiling = TRUE;
 
-void i915_debug_init(struct i915_screen *screen)
+DEBUG_GET_ONCE_FLAGS_OPTION(i915_debug, "I915_DEBUG", debug_options, 0)
+DEBUG_GET_ONCE_BOOL_OPTION(i915_no_tiling, "I915_NO_TILING", FALSE)
+DEBUG_GET_ONCE_BOOL_OPTION(i915_lie, "I915_LIE", FALSE)
+
+void i915_debug_init(struct i915_screen *is)
 {
-   i915_debug = debug_get_flags_option("I915_DEBUG", debug_options, 0);
-   i915_tiling = !debug_get_bool_option("I915_NO_TILING", FALSE);
+   i915_debug = debug_get_option_i915_debug();
+   is->debug.tiling = !debug_get_option_i915_no_tiling();
+   is->debug.lie = debug_get_option_i915_lie();
 }
 
 

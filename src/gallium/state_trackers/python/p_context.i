@@ -268,7 +268,6 @@ struct st_context {
 
    void set_vertex_buffer(unsigned index,
                           unsigned stride, 
-                          unsigned max_index,
                           unsigned buffer_offset,
                           struct pipe_resource *buffer)
    {
@@ -277,7 +276,6 @@ struct st_context {
       
       memset(&state, 0, sizeof(state));
       state.stride = stride;
-      state.max_index = max_index;
       state.buffer_offset = buffer_offset;
       state.buffer = buffer;
 
@@ -352,6 +350,7 @@ struct st_context {
 
       vbuf = pipe_buffer_create(screen,
                                 PIPE_BIND_VERTEX_BUFFER, 
+                                PIPE_USAGE_STATIC,
                                 size);
       if(!vbuf)
          goto error1;
@@ -378,7 +377,6 @@ struct st_context {
       vbuffer.buffer = vbuf;
       vbuffer.stride = num_attribs * 4 * sizeof(float);  /* vertex size */
       vbuffer.buffer_offset = 0;
-      vbuffer.max_index = num_verts - 1;
       pipe->set_vertex_buffers(pipe, 1, &vbuffer);
 
       /* draw */

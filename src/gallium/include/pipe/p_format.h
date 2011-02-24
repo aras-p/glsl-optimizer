@@ -33,6 +33,16 @@
 extern "C" {
 #endif
 
+
+enum pipe_type {
+   PIPE_TYPE_UNORM = 0,
+   PIPE_TYPE_SNORM,
+   PIPE_TYPE_SINT,
+   PIPE_TYPE_UINT,
+   PIPE_TYPE_FLOAT,
+   PIPE_TYPE_COUNT
+};
+
 /**
  * Texture/surface image formats (preliminary)
  */

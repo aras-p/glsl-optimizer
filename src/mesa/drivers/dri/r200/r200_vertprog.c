@@ -438,7 +438,7 @@ static GLboolean r200_translate_vertex_program(struct gl_context *ctx, struct r2
       (1 << VERT_RESULT_TEX5) | (1 << VERT_RESULT_PSIZ))) != 0) {
       if (R200_DEBUG & RADEON_FALLBACKS) {
 	 fprintf(stderr, "can't handle vert prog outputs 0x%llx\n",
-	    mesa_vp->Base.OutputsWritten);
+                 (unsigned long long) mesa_vp->Base.OutputsWritten);
       }
       return GL_FALSE;
    }

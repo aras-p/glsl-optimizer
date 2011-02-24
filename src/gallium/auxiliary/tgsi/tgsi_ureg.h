@@ -270,6 +270,15 @@ struct ureg_src
 ureg_DECL_sampler( struct ureg_program *,
                    unsigned index );
 
+struct ureg_src
+ureg_DECL_resource(struct ureg_program *,
+                   unsigned index,
+                   unsigned target,
+                   unsigned return_type_x,
+                   unsigned return_type_y,
+                   unsigned return_type_z,
+                   unsigned return_type_w );
+
 
 static INLINE struct ureg_src
 ureg_imm4f( struct ureg_program *ureg,
@@ -730,6 +739,66 @@ static INLINE void ureg_##op( struct ureg_program *ureg,                \
    ureg_emit_src( ureg, src2 );                                         \
    ureg_emit_src( ureg, src3 );                                         \
    ureg_fixup_insn_size( ureg, insn.insn_token );                       \
+}
+
+
+#define OP14( op )                                                      \
+static INLINE void ureg_##op( struct ureg_program *ureg,                \
+                              struct ureg_dst dst,                      \
+                              struct ureg_src src0,                     \
+                              struct ureg_src src1,                     \
+                              struct ureg_src src2,                     \
+                              struct ureg_src src3 )                    \
+{                                                                       \
+   unsigned opcode = TGSI_OPCODE_##op;                                  \
+   unsigned insn = ureg_emit_insn(ureg,                                 \
+                                  opcode,                               \
+                                  dst.Saturate,                         \
+                                  dst.Predicate,                        \
+                                  dst.PredNegate,                       \
+                                  dst.PredSwizzleX,                     \
+                                  dst.PredSwizzleY,                     \
+                                  dst.PredSwizzleZ,                     \
+                                  dst.PredSwizzleW,                     \
+                                  1,                                    \
+                                  4).insn_token;                        \
+   ureg_emit_dst( ureg, dst );                                          \
+   ureg_emit_src( ureg, src0 );                                         \
+   ureg_emit_src( ureg, src1 );                                         \
+   ureg_emit_src( ureg, src2 );                                         \
+   ureg_emit_src( ureg, src3 );                                         \
+   ureg_fixup_insn_size( ureg, insn );                                  \
+}
+
+
+#define OP15( op )                                                      \
+static INLINE void ureg_##op( struct ureg_program *ureg,                \
+                              struct ureg_dst dst,                      \
+                              struct ureg_src src0,                     \
+                              struct ureg_src src1,                     \
+                              struct ureg_src src2,                     \
+                              struct ureg_src src3,                     \
+                              struct ureg_src src4 )                    \
+{                                                                       \
+   unsigned opcode = TGSI_OPCODE_##op;                                  \
+   unsigned insn = ureg_emit_insn(ureg,                                 \
+                                  opcode,                               \
+                                  dst.Saturate,                         \
+                                  dst.Predicate,                        \
+                                  dst.PredNegate,                       \
+                                  dst.PredSwizzleX,                     \
+                                  dst.PredSwizzleY,                     \
+                                  dst.PredSwizzleZ,                     \
+                                  dst.PredSwizzleW,                     \
+                                  1,                                    \
+                                  5).insn_token;                        \
+   ureg_emit_dst( ureg, dst );                                          \
+   ureg_emit_src( ureg, src0 );                                         \
+   ureg_emit_src( ureg, src1 );                                         \
+   ureg_emit_src( ureg, src2 );                                         \
+   ureg_emit_src( ureg, src3 );                                         \
+   ureg_emit_src( ureg, src4 );                                         \
+   ureg_fixup_insn_size( ureg, insn );                                  \
 }
 
 

@@ -14,7 +14,7 @@
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -176,6 +176,7 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
       template.height0 = util_next_power_of_two(height);
    }
    template.depth0 = 1;
+   template.array_size = 1;
    template.usage = PIPE_USAGE_DYNAMIC;
    template.bind = PIPE_BIND_SAMPLER_VIEW;
    template.flags = 0;
@@ -222,7 +223,7 @@ Status XvMCClearSubpicture(Display *dpy, XvMCSubpicture *subpicture, short x, sh
 
    if (!subpicture)
       return XvMCBadSubpicture;
-	  	
+
    /* Convert color to float */
    util_format_read_4f(PIPE_FORMAT_B8G8R8A8_UNORM,
                     color_f, 1,

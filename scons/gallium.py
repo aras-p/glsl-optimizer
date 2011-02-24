@@ -35,6 +35,7 @@ import os
 import os.path
 import re
 import subprocess
+import platform as _platform
 
 import SCons.Action
 import SCons.Builder
@@ -141,6 +142,10 @@ def pkg_config_modules(env, name, modules):
 def generate(env):
     """Common environment generation code"""
 
+    # Tell tools which machine to compile for
+    env['TARGET_ARCH'] = env['machine']
+    env['MSVS_ARCH'] = env['machine']
+
     # Toolchain
     platform = env['platform']
     if env['toolchain'] == 'default':
@@ -175,6 +180,10 @@ def generate(env):
     env['gcc'] = 'gcc' in os.path.basename(env['CC']).split('-')
     env['msvc'] = env['CC'] == 'cl'
 
+    if env['msvc'] and env['toolchain'] == 'default' and env['machine'] == 'x86_64':
+        # MSVC x64 support is broken in earlier versions of scons
+        env.EnsurePythonVersion(2, 0)
+
     # shortcuts
     machine = env['machine']
     platform = env['platform']
@@ -182,6 +191,25 @@ def generate(env):
     ppc = env['machine'] == 'ppc'
     gcc = env['gcc']
     msvc = env['msvc']
+
+    # Determine whether we are cross compiling; in particular, whether we need
+    # to compile code generators with a different compiler as the target code.
+    host_platform = _platform.system().lower()
+    host_machine = os.environ.get('PROCESSOR_ARCHITEW6432', os.environ.get('PROCESSOR_ARCHITECTURE', _platform.machine()))
+    host_machine = {
+        'x86': 'x86',
+        'i386': 'x86',
+        'i486': 'x86',
+        'i586': 'x86',
+        'i686': 'x86',
+        'ppc' : 'ppc',
+        'AMD64': 'x86_64',
+        'x86_64': 'x86_64',
+    }.get(host_machine, 'generic')
+    env['crosscompile'] = platform != host_platform
+    if machine == 'x86_64' and host_machine != 'x86_64':
+        env['crosscompile'] = True
+    env['hostonly'] = False
 
     # Backwards compatability with the debug= profile= options
     if env['build'] == 'debug':
@@ -349,11 +377,14 @@ def generate(env):
                 '-m32',
                 #'-march=pentium4',
             ]
-            if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2'):
+            if distutils.version.LooseVersion(ccversion) >= distutils.version.LooseVersion('4.2') \
+               and (platform != 'windows' or env['build'] == 'debug' or True):
                 # NOTE: We need to ensure stack is realigned given that we
                 # produce shared objects, and have no control over the stack
                 # alignment policy of the application. Therefore we need
                 # -mstackrealign ore -mincoming-stack-boundary=2.
+                #
+                # XXX: -O and -mstackrealign causes stack corruption on MinGW
                 #
                 # XXX: We could have SSE without -mstackrealign if we always used
                 # __attribute__((force_align_arg_pointer)), but that's not
@@ -402,12 +433,18 @@ def generate(env):
               '/Od', # disable optimizations
               '/Oi', # enable intrinsic functions
               '/Oy-', # disable frame pointer omission
-              '/GL-', # disable whole program optimization
             ]
         else:
             ccflags += [
                 '/O2', # optimize for speed
+            ]
+        if env['build'] == 'release':
+            ccflags += [
                 '/GL', # enable whole program optimization
+            ]
+        else:
+            ccflags += [
+                '/GL-', # disable whole program optimization
             ]
         ccflags += [
             '/fp:fast', # fast floating point 
@@ -498,7 +535,7 @@ def generate(env):
         else:
             env['_LIBFLAGS'] = '-Wl,--start-group ' + env['_LIBFLAGS'] + ' -Wl,--end-group'
     if msvc:
-        if env['build'] != 'debug':
+        if env['build'] == 'release':
             # enable Link-time Code Generation
             linkflags += ['/LTCG']
             env.Append(ARFLAGS = ['/LTCG'])
@@ -550,6 +587,10 @@ def generate(env):
         ]
     env.Append(LINKFLAGS = linkflags)
     env.Append(SHLINKFLAGS = shlinkflags)
+
+    # We have C++ in several libraries, so always link with the C++ compiler
+    if env['gcc']:
+        env['LINK'] = env['CXX']
 
     # Default libs
     env.Append(LIBS = [])

@@ -27,6 +27,8 @@
 #include "glsl_parser_extras.h"
 #include "glsl_parser.h"
 
+static int classify_identifier(struct _mesa_glsl_parse_state *, const char *);
+
 #define YY_USER_ACTION						\
    do {								\
       yylloc->source = 0;					\
@@ -62,7 +64,7 @@
 	 return ERROR_TOK;						\
       } else {								\
 	 yylval->identifier = strdup(yytext);				\
-	 return IDENTIFIER;						\
+	 return classify_identifier(yyextra, yytext);			\
       }									\
    } while (0)
 
@@ -252,8 +254,9 @@ void		return VOID_TOK;
 
 layout		{
 		  if ((yyextra->language_version >= 140)
+		      || yyextra->AMD_conservative_depth_enable
 		      || yyextra->ARB_explicit_attrib_location_enable
-		      || (yyextra->ARB_fragment_coord_conventions_enable)){
+		      || yyextra->ARB_fragment_coord_conventions_enable) {
 		      return LAYOUT_TOK;
 		   } else {
 		      yylval->identifier = strdup(yytext);
@@ -417,13 +420,24 @@ row_major	KEYWORD(130, 999, ROW_MAJOR);
 [_a-zA-Z][_a-zA-Z0-9]*	{
 			    struct _mesa_glsl_parse_state *state = yyextra;
 			    void *ctx = state;	
-			    yylval->identifier = talloc_strdup(ctx, yytext);
-			    return IDENTIFIER;
+			    yylval->identifier = ralloc_strdup(ctx, yytext);
+			    return classify_identifier(state, yytext);
 			}
 
 .			{ return yytext[0]; }
 
 %%
+
+int
+classify_identifier(struct _mesa_glsl_parse_state *state, const char *name)
+{
+   if (state->symbols->get_variable(name) || state->symbols->get_function(name))
+      return IDENTIFIER;
+   else if (state->symbols->get_type(name))
+      return TYPE_IDENTIFIER;
+   else
+      return NEW_IDENTIFIER;
+}
 
 void
 _mesa_glsl_lexer_ctor(struct _mesa_glsl_parse_state *state, const char *string)

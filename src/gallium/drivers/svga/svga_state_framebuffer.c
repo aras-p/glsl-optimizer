@@ -93,6 +93,55 @@ static int emit_framebuffer( struct svga_context *svga,
 }
 
 
+/*
+ * Rebind rendertargets.
+ *
+ * Similar to emit_framebuffer, but without any state checking/update.
+ *
+ * Called at the beginning of every new command buffer to ensure that
+ * non-dirty rendertargets are properly paged-in.
+ */
+enum pipe_error
+svga_reemit_framebuffer_bindings(struct svga_context *svga)
+{
+   struct pipe_framebuffer_state *hw = &svga->state.hw_clear.framebuffer;
+   unsigned i;
+   enum pipe_error ret;
+
+   for (i = 0; i < MIN2(PIPE_MAX_COLOR_BUFS, 8); ++i) {
+      if (hw->cbufs[i]) {
+         ret = SVGA3D_SetRenderTarget(svga->swc, SVGA3D_RT_COLOR0 + i, hw->cbufs[i]);
+         if (ret != PIPE_OK) {
+            return ret;
+         }
+      }
+   }
+
+   if (hw->zsbuf) {
+      ret = SVGA3D_SetRenderTarget(svga->swc, SVGA3D_RT_DEPTH, hw->zsbuf);
+      if (ret != PIPE_OK) {
+         return ret;
+      }
+
+      if (hw->zsbuf &&
+          hw->zsbuf->format == PIPE_FORMAT_S8_USCALED_Z24_UNORM) {
+         ret = SVGA3D_SetRenderTarget(svga->swc, SVGA3D_RT_STENCIL, hw->zsbuf);
+         if (ret != PIPE_OK) {
+            return ret;
+         }
+      }
+      else {
+         ret = SVGA3D_SetRenderTarget(svga->swc, SVGA3D_RT_STENCIL, NULL);
+         if (ret != PIPE_OK) {
+            return ret;
+         }
+      }
+   }
+
+   return PIPE_OK;
+}
+
+
 struct svga_tracked_state svga_hw_framebuffer = 
 {
    "hw framebuffer state",

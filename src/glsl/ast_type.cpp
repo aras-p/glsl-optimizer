@@ -21,7 +21,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <cstdio>
 #include "ast.h"
 extern "C" {
 #include "program/symbol_table.h"

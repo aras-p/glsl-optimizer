@@ -836,26 +836,24 @@ driCreateScreen(int screen, struct glx_display *priv)
       return NULL;
 
    memset(psc, 0, sizeof *psc);
-   if (!glx_screen_init(&psc->base, screen, priv))
-       return NULL;
-
-   if (!driGetDriverName(priv->dpy, screen, &driverName)) {
+   if (!glx_screen_init(&psc->base, screen, priv)) {
       Xfree(psc);
       return NULL;
+   }
+
+   if (!driGetDriverName(priv->dpy, screen, &driverName)) {
+      goto cleanup;
    }
 
    psc->driver = driOpenDriver(driverName);
    Xfree(driverName);
-   if (psc->driver == NULL) {
-      Xfree(psc);
-      return NULL;
-   }
+   if (psc->driver == NULL)
+      goto cleanup;
 
    extensions = dlsym(psc->driver, __DRI_DRIVER_EXTENSIONS);
    if (extensions == NULL) {
       ErrorMessageF("driver exports no extensions (%s)\n", dlerror());
-      Xfree(psc);
-      return NULL;
+      goto cleanup;
    }
 
    for (i = 0; extensions[i]; i++) {
@@ -865,19 +863,14 @@ driCreateScreen(int screen, struct glx_display *priv)
 	 psc->legacy = (__DRIlegacyExtension *) extensions[i];
    }
 
-   if (psc->core == NULL || psc->legacy == NULL) {
-      Xfree(psc);
-      return NULL;
-   }
+   if (psc->core == NULL || psc->legacy == NULL)
+      goto cleanup;
 
    pdp = (struct dri_display *) priv->driDisplay;
    psc->driScreen =
       CallCreateNewScreen(psc->base.dpy, screen, psc, pdp);
-   if (psc->driScreen == NULL) {
-      dlclose(psc->driver);
-      Xfree(psc);
-      return NULL;
-   }
+   if (psc->driScreen == NULL)
+      goto cleanup;
 
    extensions = psc->core->getExtensions(psc->driScreen);
    driBindExtensions(psc, extensions);
@@ -902,6 +895,14 @@ driCreateScreen(int screen, struct glx_display *priv)
    psp->getSwapInterval = driGetSwapInterval;
 
    return &psc->base;
+
+cleanup:
+   if (psc->driver)
+      dlclose(psc->driver);
+   glx_screen_cleanup(&psc->base);
+   Xfree(psc);
+
+   return NULL;
 }
 
 /* Called from __glXFreeDisplayPrivate.

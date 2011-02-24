@@ -28,6 +28,7 @@
 #include <pipe/p_screen.h>
 #include <util/u_memory.h>
 #include <util/u_inlines.h>
+#include "util/u_transfer.h"
 
 static void noop_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
@@ -287,4 +288,5 @@ void noop_init_state_functions(struct pipe_context *ctx)
 	ctx->sampler_view_destroy = noop_sampler_view_destroy;
 	ctx->surface_destroy = noop_surface_destroy;
 	ctx->draw_vbo = noop_draw_vbo;
+	ctx->redefine_user_buffer = u_default_redefine_user_buffer;
 }

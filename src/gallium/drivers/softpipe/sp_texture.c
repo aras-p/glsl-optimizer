@@ -62,13 +62,21 @@ softpipe_resource_layout(struct pipe_screen *screen,
    unsigned buffer_size = 0;
 
    for (level = 0; level <= pt->last_level; level++) {
+      unsigned slices;
+
+      if (pt->target == PIPE_TEXTURE_CUBE)
+         slices = 6;
+      else if (pt->target == PIPE_TEXTURE_3D)
+         slices = depth;
+      else
+         slices = pt->array_size;
+
       spr->stride[level] = util_format_get_stride(pt->format, width);
 
       spr->level_offset[level] = buffer_size;
 
       buffer_size += (util_format_get_nblocksy(pt->format, height) *
-                      ((pt->target == PIPE_TEXTURE_CUBE) ? 6 : depth) *
-                      spr->stride[level]);
+                      slices * spr->stride[level]);
 
       width  = u_minify(width, 1);
       height = u_minify(height, 1);
@@ -227,8 +235,12 @@ sp_get_tex_image_offset(const struct softpipe_resource *spr,
    unsigned offset = spr->level_offset[level];
 
    if (spr->base.target == PIPE_TEXTURE_CUBE ||
-       spr->base.target == PIPE_TEXTURE_3D) {
+       spr->base.target == PIPE_TEXTURE_3D ||
+       spr->base.target == PIPE_TEXTURE_2D_ARRAY) {
       offset += layer * nblocksy * spr->stride[level];
+   }
+   else if (spr->base.target == PIPE_TEXTURE_1D_ARRAY) {
+      offset += layer * spr->stride[level];
    }
    else {
       assert(layer == 0);
@@ -292,7 +304,7 @@ softpipe_surface_destroy(struct pipe_context *pipe,
  * a resource object.
  * \param pipe  rendering context
  * \param resource  the resource to transfer in/out of
- * \param sr  indicates cube face or 3D texture slice
+ * \param level  which mipmap level
  * \param usage  bitmask of PIPE_TRANSFER_x flags
  * \param box  the 1D/2D/3D region of interest
  */
@@ -311,8 +323,21 @@ softpipe_get_transfer(struct pipe_context *pipe,
 
    /* make sure the requested region is in the image bounds */
    assert(box->x + box->width <= u_minify(resource->width0, level));
-   assert(box->y + box->height <= u_minify(resource->height0, level));
-   assert(box->z + box->depth <= (u_minify(resource->depth0, level) + resource->array_size - 1));
+   if (resource->target == PIPE_TEXTURE_1D_ARRAY) {
+      assert(box->y + box->height <= resource->array_size);
+   }
+   else {
+      assert(box->y + box->height <= u_minify(resource->height0, level));
+      if (resource->target == PIPE_TEXTURE_2D_ARRAY) {
+         assert(box->z + box->depth <= resource->array_size);
+      }
+      else if (resource->target == PIPE_TEXTURE_CUBE) {
+         assert(box->z < 6);
+      }
+      else {
+         assert(box->z + box->depth <= (u_minify(resource->depth0, level)));
+      }
+   }
 
    /*
     * Transfers, like other pipe operations, must happen in order, so flush the

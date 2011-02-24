@@ -171,7 +171,7 @@ st_bufferobj_data(struct gl_context *ctx,
    struct st_context *st = st_context(ctx);
    struct pipe_context *pipe = st->pipe;
    struct st_buffer_object *st_obj = st_buffer_object(obj);
-   unsigned buffer_usage;
+   unsigned bind, pipe_usage;
 
    st_obj->Base.Size = size;
    st_obj->Base.Usage = usage;
@@ -179,22 +179,43 @@ st_bufferobj_data(struct gl_context *ctx,
    switch(target) {
    case GL_PIXEL_PACK_BUFFER_ARB:
    case GL_PIXEL_UNPACK_BUFFER_ARB:
-      buffer_usage = PIPE_BIND_RENDER_TARGET;
+      bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
       break;
    case GL_ARRAY_BUFFER_ARB:
-      buffer_usage = PIPE_BIND_VERTEX_BUFFER;
+      bind = PIPE_BIND_VERTEX_BUFFER;
       break;
    case GL_ELEMENT_ARRAY_BUFFER_ARB:
-      buffer_usage = PIPE_BIND_INDEX_BUFFER;
+      bind = PIPE_BIND_INDEX_BUFFER;
       break;
    default:
-      buffer_usage = 0;
+      bind = 0;
+   }
+
+   switch (usage) {
+   case GL_STATIC_DRAW:
+   case GL_STATIC_READ:
+   case GL_STATIC_COPY:
+      pipe_usage = PIPE_USAGE_STATIC;
+      break;
+   case GL_DYNAMIC_DRAW:
+   case GL_DYNAMIC_READ:
+   case GL_DYNAMIC_COPY:
+      pipe_usage = PIPE_USAGE_DYNAMIC;
+      break;
+   case GL_STREAM_DRAW:
+   case GL_STREAM_READ:
+   case GL_STREAM_COPY:
+      pipe_usage = PIPE_USAGE_STREAM;
+      break;
+   default:
+      pipe_usage = PIPE_USAGE_DEFAULT;
    }
 
    pipe_resource_reference( &st_obj->buffer, NULL );
 
    if (size != 0) {
-      st_obj->buffer = pipe_buffer_create(pipe->screen, buffer_usage, size);
+      st_obj->buffer = pipe_buffer_create(pipe->screen, bind,
+                                          pipe_usage, size);
 
       if (!st_obj->buffer) {
          return GL_FALSE;

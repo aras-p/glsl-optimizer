@@ -27,6 +27,7 @@ _eglGetNativePlatformFromEnv(void)
    } egl_platforms[_EGL_NUM_PLATFORMS] = {
       { _EGL_PLATFORM_WINDOWS, "gdi" },
       { _EGL_PLATFORM_X11, "x11" },
+      { _EGL_PLATFORM_WAYLAND, "wayland" },
       { _EGL_PLATFORM_DRM, "drm" },
       { _EGL_PLATFORM_FBDEV, "fbdev" }
    };

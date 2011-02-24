@@ -41,7 +41,6 @@ extern "C" {
 #include "brw_context.h"
 #include "brw_eu.h"
 #include "brw_wm.h"
-#include "talloc.h"
 }
 #include "brw_fs.h"
 #include "../glsl/glsl_types.h"
@@ -56,7 +55,7 @@ brw_new_shader(struct gl_context *ctx, GLuint name, GLuint type)
 {
    struct brw_shader *shader;
 
-   shader = talloc_zero(NULL, struct brw_shader);
+   shader = rzalloc(NULL, struct brw_shader);
    if (shader) {
       shader->base.Type = type;
       shader->base.Name = name;
@@ -70,7 +69,7 @@ struct gl_shader_program *
 brw_new_shader_program(struct gl_context *ctx, GLuint name)
 {
    struct brw_shader_program *prog;
-   prog = talloc_zero(NULL, struct brw_shader_program);
+   prog = rzalloc(NULL, struct brw_shader_program);
    if (prog) {
       prog->base.Name = name;
       _mesa_init_shader_program(ctx, &prog->base);
@@ -96,11 +95,11 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
    struct brw_shader *shader =
       (struct brw_shader *)prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
    if (shader != NULL) {
-      void *mem_ctx = talloc_new(NULL);
+      void *mem_ctx = ralloc_context(NULL);
       bool progress;
 
       if (shader->ir)
-	 talloc_free(shader->ir);
+	 ralloc_free(shader->ir);
       shader->ir = new(shader) exec_list;
       clone_ir_list(mem_ctx, shader->ir, shader->base.ir);
 
@@ -150,7 +149,7 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       validate_ir_tree(shader->ir);
 
       reparent_ir(shader->ir, shader->ir);
-      talloc_free(mem_ctx);
+      ralloc_free(mem_ctx);
    }
 
    if (!_mesa_ir_link_shader(ctx, prog))
@@ -237,8 +236,8 @@ fs_visitor::virtual_grf_alloc(int size)
 	 virtual_grf_array_size = 16;
       else
 	 virtual_grf_array_size *= 2;
-      virtual_grf_sizes = talloc_realloc(mem_ctx, virtual_grf_sizes,
-					 int, virtual_grf_array_size);
+      virtual_grf_sizes = reralloc(mem_ctx, virtual_grf_sizes, int,
+				   virtual_grf_array_size);
 
       /* This slot is always unused. */
       virtual_grf_sizes[0] = 0;
@@ -495,7 +494,7 @@ fs_visitor::emit_fragcoord_interpolation(ir_variable *ir)
    wpos.reg_offset++;
 
    /* gl_FragCoord.w: Already set up in emit_interpolation */
-   emit(fs_inst(BRW_OPCODE_MOV, wpos, this->wpos_w));
+   emit(fs_inst(BRW_OPCODE_MOV, wpos, this->pixel_w));
 
    return reg;
 }
@@ -662,14 +661,18 @@ fs_visitor::emit_math(fs_opcodes opcode, fs_reg dst, fs_reg src0, fs_reg src1)
    assert(opcode == FS_OPCODE_POW);
 
    if (intel->gen >= 6) {
-      /* Can't do hstride == 0 args to gen6 math, so expand it out. */
-      if (src0.file == UNIFORM) {
+      /* Can't do hstride == 0 args to gen6 math, so expand it out.
+       *
+       * The hardware ignores source modifiers (negate and abs) on math
+       * instructions, so we also move to a temp to set those up.
+       */
+      if (src0.file == UNIFORM || src0.abs || src0.negate) {
 	 fs_reg expanded = fs_reg(this, glsl_type::float_type);
 	 emit(fs_inst(BRW_OPCODE_MOV, expanded, src0));
 	 src0 = expanded;
       }
 
-      if (src1.file == UNIFORM) {
+      if (src1.file == UNIFORM || src1.abs || src1.negate) {
 	 fs_reg expanded = fs_reg(this, glsl_type::float_type);
 	 emit(fs_inst(BRW_OPCODE_MOV, expanded, src1));
 	 src1 = expanded;
@@ -1338,6 +1341,37 @@ fs_visitor::visit(ir_texture *ir)
    ir->coordinate->accept(this);
    fs_reg coordinate = this->result;
 
+   if (ir->offset != NULL) {
+      ir_constant *offset = ir->offset->as_constant();
+      assert(offset != NULL);
+
+      signed char offsets[3];
+      for (unsigned i = 0; i < ir->offset->type->vector_elements; i++)
+	 offsets[i] = (signed char) offset->value.i[i];
+
+      /* Combine all three offsets into a single unsigned dword:
+       *
+       *    bits 11:8 - U Offset (X component)
+       *    bits  7:4 - V Offset (Y component)
+       *    bits  3:0 - R Offset (Z component)
+       */
+      unsigned offset_bits = 0;
+      for (unsigned i = 0; i < ir->offset->type->vector_elements; i++) {
+	 const unsigned shift = 4 * (2 - i);
+	 offset_bits |= (offsets[i] << shift) & (0xF << shift);
+      }
+
+      /* Explicitly set up the message header by copying g0 to msg reg m1. */
+      emit(fs_inst(BRW_OPCODE_MOV, fs_reg(MRF, 1, BRW_REGISTER_TYPE_UD),
+				   fs_reg(GRF, 0, BRW_REGISTER_TYPE_UD)));
+
+      /* Then set the offset bits in DWord 2 of the message header. */
+      emit(fs_inst(BRW_OPCODE_MOV,
+		   fs_reg(retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE, 1, 2),
+				 BRW_REGISTER_TYPE_UD)),
+		   fs_reg(brw_imm_uw(offset_bits))));
+   }
+
    /* Should be lowered by do_lower_texture_projection */
    assert(!ir->projector);
 
@@ -1397,6 +1431,14 @@ fs_visitor::visit(ir_texture *ir)
    } else {
       inst = emit_texture_gen5(ir, dst, coordinate);
    }
+
+   /* If there's an offset, we already set up m1.  To avoid the implied move,
+    * use the null register.  Otherwise, we want an implied move from g0.
+    */
+   if (ir->offset != NULL)
+      inst->src[0] = fs_reg(brw_null_reg());
+   else
+      inst->src[0] = fs_reg(retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW));
 
    inst->sampler = sampler;
 
@@ -2066,7 +2108,7 @@ fs_visitor::emit_fb_writes()
    }
 
    for (int target = 0; target < c->key.nr_color_regions; target++) {
-      this->current_annotation = talloc_asprintf(this->mem_ctx,
+      this->current_annotation = ralloc_asprintf(this->mem_ctx,
 						 "FB write target %d",
 						 target);
       if (this->frag_color || this->frag_data) {
@@ -2244,7 +2286,7 @@ fs_visitor::generate_math(fs_inst *inst,
 }
 
 void
-fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst)
+fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 {
    int msg_type = -1;
    int rlen = 4;
@@ -2302,7 +2344,7 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst)
    brw_SAMPLE(p,
 	      retype(dst, BRW_REGISTER_TYPE_UW),
 	      inst->base_mrf,
-	      retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW),
+	      src,
               SURF_INDEX_TEXTURE(inst->sampler),
 	      inst->sampler,
 	      WRITEMASK_XYZW,
@@ -2756,8 +2798,8 @@ void
 fs_visitor::calculate_live_intervals()
 {
    int num_vars = this->virtual_grf_next;
-   int *def = talloc_array(mem_ctx, int, num_vars);
-   int *use = talloc_array(mem_ctx, int, num_vars);
+   int *def = ralloc_array(mem_ctx, int, num_vars);
+   int *use = ralloc_array(mem_ctx, int, num_vars);
    int loop_depth = 0;
    int loop_start = 0;
    int bb_header_ip = 0;
@@ -2840,8 +2882,8 @@ fs_visitor::calculate_live_intervals()
       }
    }
 
-   talloc_free(this->virtual_grf_def);
-   talloc_free(this->virtual_grf_use);
+   ralloc_free(this->virtual_grf_def);
+   ralloc_free(this->virtual_grf_use);
    this->virtual_grf_def = def;
    this->virtual_grf_use = use;
 
@@ -3017,6 +3059,8 @@ fs_visitor::register_coalesce()
 	  inst->dst.type != inst->src[0].type)
 	 continue;
 
+      bool has_source_modifiers = inst->src[0].abs || inst->src[0].negate;
+
       /* Found a move of a GRF to a GRF.  Let's see if we can coalesce
        * them: check for no writes to either one until the exit of the
        * program.
@@ -3040,6 +3084,14 @@ fs_visitor::register_coalesce()
 	       interfered = true;
 	       break;
 	    }
+	 }
+
+	 /* The gen6 MATH instruction can't handle source modifiers, so avoid
+	  * coalescing those for now.  We should do something more specific.
+	  */
+	 if (intel->gen == 6 && scan_inst->is_math() && has_source_modifiers) {
+	    interfered = true;
+	    break;
 	 }
       }
       if (interfered) {
@@ -3358,20 +3410,25 @@ void
 fs_visitor::generate_code()
 {
    int last_native_inst = 0;
-   struct brw_instruction *if_stack[16], *loop_stack[16];
-   int if_stack_depth = 0, loop_stack_depth = 0;
-   int if_depth_in_loop[16];
    const char *last_annotation_string = NULL;
    ir_instruction *last_annotation_ir = NULL;
+
+   int if_stack_array_size = 16;
+   int loop_stack_array_size = 16;
+   int if_stack_depth = 0, loop_stack_depth = 0;
+   brw_instruction **if_stack =
+      rzalloc_array(this->mem_ctx, brw_instruction *, if_stack_array_size);
+   brw_instruction **loop_stack =
+      rzalloc_array(this->mem_ctx, brw_instruction *, loop_stack_array_size);
+   int *if_depth_in_loop =
+      rzalloc_array(this->mem_ctx, int, loop_stack_array_size);
+
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       printf("Native code for fragment shader %d:\n",
 	     ctx->Shader.CurrentFragmentProgram->Name);
    }
 
-   if_depth_in_loop[loop_stack_depth] = 0;
-
-   memset(&if_stack, 0, sizeof(if_stack));
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
       struct brw_reg src[3], dst;
@@ -3455,7 +3512,6 @@ fs_visitor::generate_code()
 	 break;
 
       case BRW_OPCODE_IF:
-	 assert(if_stack_depth < 16);
 	 if (inst->src[0].file != BAD_FILE) {
 	    assert(intel->gen >= 6);
 	    if_stack[if_stack_depth] = brw_IF_gen6(p, inst->conditional_mod, src[0], src[1]);
@@ -3464,6 +3520,11 @@ fs_visitor::generate_code()
 	 }
 	 if_depth_in_loop[loop_stack_depth]++;
 	 if_stack_depth++;
+	 if (if_stack_array_size <= if_stack_depth) {
+	    if_stack_array_size *= 2;
+	    if_stack = reralloc(this->mem_ctx, if_stack, brw_instruction *,
+			        if_stack_array_size);
+	 }
 	 break;
 
       case BRW_OPCODE_ELSE:
@@ -3478,6 +3539,13 @@ fs_visitor::generate_code()
 
       case BRW_OPCODE_DO:
 	 loop_stack[loop_stack_depth++] = brw_DO(p, BRW_EXECUTE_8);
+	 if (loop_stack_array_size <= loop_stack_depth) {
+	    loop_stack_array_size *= 2;
+	    loop_stack = reralloc(this->mem_ctx, loop_stack, brw_instruction *,
+				  loop_stack_array_size);
+	    if_depth_in_loop = reralloc(this->mem_ctx, if_depth_in_loop, int,
+				        loop_stack_array_size);
+	 }
 	 if_depth_in_loop[loop_stack_depth] = 0;
 	 break;
 
@@ -3540,7 +3608,7 @@ fs_visitor::generate_code()
       case FS_OPCODE_TEX:
       case FS_OPCODE_TXB:
       case FS_OPCODE_TXL:
-	 generate_tex(inst, dst);
+	 generate_tex(inst, dst, src[0]);
 	 break;
       case FS_OPCODE_DISCARD_NOT:
 	 generate_discard_not(inst, dst);
@@ -3595,6 +3663,10 @@ fs_visitor::generate_code()
 
       last_native_inst = p->nr_insn;
    }
+
+   ralloc_free(if_stack);
+   ralloc_free(loop_stack);
+   ralloc_free(if_depth_in_loop);
 
    brw_set_uip_jip(p);
 

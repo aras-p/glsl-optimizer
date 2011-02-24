@@ -164,26 +164,18 @@ void brw_destroy_caches( struct brw_context *brw );
 /***********************************************************************
  * brw_state_batch.c
  */
-#define BRW_BATCH_STRUCT(brw, s) intel_batchbuffer_data(brw->intel.batch, (s), \
+#define BRW_BATCH_STRUCT(brw, s) intel_batchbuffer_data(&brw->intel, (s), \
 							sizeof(*(s)), false)
-#define BRW_CACHED_BATCH_STRUCT(brw, s) brw_cached_batch_struct( brw, (s), sizeof(*(s)) )
 
-GLboolean brw_cached_batch_struct( struct brw_context *brw,
-				   const void *data,
-				   GLuint sz );
-void brw_destroy_batch_cache( struct brw_context *brw );
-void brw_clear_batch_cache( struct brw_context *brw );
 void *brw_state_batch(struct brw_context *brw,
 		      int size,
 		      int alignment,
-		      drm_intel_bo **out_bo,
 		      uint32_t *out_offset);
 
 /* brw_wm_surface_state.c */
 void brw_create_constant_surface(struct brw_context *brw,
 				 drm_intel_bo *bo,
 				 int width,
-				 drm_intel_bo **out_bo,
 				 uint32_t *out_offset);
 
 #endif

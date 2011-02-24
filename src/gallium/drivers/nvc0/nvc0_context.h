@@ -54,6 +54,8 @@
 #define NVC0_NEW_CONSTBUF     (1 << 18)
 #define NVC0_NEW_TEXTURES     (1 << 19)
 #define NVC0_NEW_SAMPLERS     (1 << 20)
+#define NVC0_NEW_TFB          (1 << 21)
+#define NVC0_NEW_TFB_BUFFERS  (1 << 22)
 
 #define NVC0_BUFCTX_CONSTANT 0
 #define NVC0_BUFCTX_FRAME    1
@@ -79,6 +81,7 @@ struct nvc0_context {
       uint8_t num_vtxelts;
       uint8_t num_textures[5];
       uint8_t num_samplers[5];
+      uint8_t tls_required; /* bitmask of shader types using l[] */
       uint16_t scissor;
       uint32_t uniform_buffer_bound[5];
    } state;
@@ -123,6 +126,11 @@ struct nvc0_context {
    boolean vbo_dirty;
    boolean vbo_push_hint;
 
+   struct nvc0_transform_feedback_state *tfb;
+   struct pipe_resource *tfbbuf[4];
+   unsigned num_tfbbufs;
+   unsigned tfb_offset[4];
+
    struct draw_context *draw;
 };
 
@@ -148,6 +156,8 @@ nvc0_surface(struct pipe_surface *ps)
 
 /* nvc0_context.c */
 struct pipe_context *nvc0_create(struct pipe_screen *, void *);
+
+void nvc0_default_flush_notify(struct nouveau_channel *);
 
 void nvc0_bufctx_emit_relocs(struct nvc0_context *);
 void nvc0_bufctx_add_resident(struct nvc0_context *, int ctx,
@@ -176,6 +186,8 @@ void nvc0_tctlprog_validate(struct nvc0_context *);
 void nvc0_tevlprog_validate(struct nvc0_context *);
 void nvc0_gmtyprog_validate(struct nvc0_context *);
 void nvc0_fragprog_validate(struct nvc0_context *);
+
+void nvc0_tfb_validate(struct nvc0_context *);
 
 /* nvc0_state.c */
 extern void nvc0_init_state_functions(struct nvc0_context *);

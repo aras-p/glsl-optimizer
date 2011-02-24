@@ -428,7 +428,6 @@ init_textures(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    /* create textures */
    memset(&template, 0, sizeof(struct pipe_resource));
    template.last_level = 0;
-   template.depth0 = 1;
    template.bind = PIPE_BIND_SAMPLER_VIEW;
    template.flags = 0;
 
@@ -437,6 +436,7 @@ init_textures(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    template.width0 = idct->buffer_width / 4;
    template.height0 = idct->buffer_height;
    template.depth0 = 1;
+   template.array_size = 1;
    template.usage = PIPE_USAGE_STREAM;
    buffer->textures.individual.source = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
 
@@ -478,7 +478,6 @@ init_vertex_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    assert(idct && buffer);
 
    buffer->vertex_bufs.individual.quad.stride = idct->quad.stride;
-   buffer->vertex_bufs.individual.quad.max_index = idct->quad.max_index;
    buffer->vertex_bufs.individual.quad.buffer_offset = idct->quad.buffer_offset;
    pipe_resource_reference(&buffer->vertex_bufs.individual.quad.buffer, idct->quad.buffer);
 
@@ -526,6 +525,7 @@ vl_idct_upload_matrix(struct pipe_context *pipe)
    template.width0 = 2;
    template.height0 = 8;
    template.depth0 = 1;
+   template.array_size = 1;
    template.usage = PIPE_USAGE_IMMUTABLE;
    template.bind = PIPE_BIND_SAMPLER_VIEW;
    template.flags = 0;

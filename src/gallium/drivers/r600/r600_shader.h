@@ -45,8 +45,7 @@ struct r600_shader {
 	struct r600_shader_io	output[32];
 	enum radeon_family	family;
 	boolean			uses_kill;
+	boolean			fs_write_all;
 };
-
-int r600_shader_from_tgsi(const struct tgsi_token *tokens, struct r600_shader *shader, u32 **literals);
 
 #endif

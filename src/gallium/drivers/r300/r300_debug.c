@@ -27,6 +27,7 @@
 #include <stdio.h>
 
 static const struct debug_named_value debug_options[] = {
+    { "info", DBG_INFO, "Print hardware info"},
     { "fp", DBG_FP, "Log fragment program compilation" },
     { "vp", DBG_VP, "Log vertex program compilation" },
     { "pstat", DBG_P_STAT, "Log vertex/fragment program stats" },
@@ -49,6 +50,8 @@ static const struct debug_named_value debug_options[] = {
     { "noimmd", DBG_NO_IMMD, "Disable immediate mode" },
     { "noopt", DBG_NO_OPT, "Disable shader optimizations" },
     { "nocbzb", DBG_NO_CBZB, "Disable fast color clear" },
+    { "nozmask", DBG_NO_ZMASK, "Disable zbuffer compression" },
+    { "nohiz", DBG_NO_HIZ, "Disable hierarchical zbuffer" },
 
     /* must be last */
     DEBUG_NAMED_VALUE_END

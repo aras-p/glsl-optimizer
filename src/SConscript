@@ -1,13 +1,21 @@
 Import('*')
 
+
 if env['platform'] == 'windows':
     SConscript('getopt/SConscript')
-    SConscript('talloc/SConscript')
-else:
-    talloc = 'talloc'
-    Export('talloc')
 
 SConscript('glsl/SConscript')
+
+if env['hostonly']:
+    # We are just compiling the things necessary on the host for cross
+    # compilation
+    Return()
+
+
+# When env['gles'] is set, the targets defined in mapi/glapi/SConscript are not
+# used.  libgl-xlib and libgl-gdi adapt themselves to use the targets defined
+# in mapi/glapi-shared/SConscript.  mesa/SConscript also adapts itself to
+# enable OpenGL ES support.
 SConscript('mapi/glapi/SConscript')
 SConscript('mesa/SConscript')
 
@@ -16,6 +24,9 @@ SConscript('mapi/vgapi/SConscript')
 if env['platform'] != 'embedded':
     SConscript('egl/main/SConscript')
     SConscript('glut/glx/SConscript')
+
+    if env['gles']:
+        SConscript('mapi/shared-glapi/SConscript')
 
 SConscript('gallium/SConscript')
 

@@ -185,8 +185,17 @@ nvc0_varying_location(unsigned sn, unsigned si)
       return 0x2e0;
       */
    case TGSI_SEMANTIC_GENERIC:
+      /* We'd really like to distinguish between TEXCOORD and GENERIC here,
+       * since only 0x300 to 0x37c can be replaced by sprite coordinates.
+       * Also, gl_PointCoord should be a system value and must be assigned to
+       * address 0x2e0. For now, let's cheat:
+       */
       assert(si < 31);
-      return 0x80 + (si * 16);
+      if (si <= 7)
+         return 0x300 + si * 16;
+      if (si == 9)
+         return 0x2e0;
+      return 0x80 + ((si - 8) * 16);
    case TGSI_SEMANTIC_NORMAL:
       return 0x360;
    case TGSI_SEMANTIC_PRIMID:
@@ -256,12 +265,14 @@ prog_decl(struct nvc0_translation_info *ti,
    case TGSI_FILE_INPUT:
       for (i = first; i <= last; ++i) {
          if (ti->prog->type == PIPE_SHADER_VERTEX) {
-            sn = TGSI_SEMANTIC_GENERIC;
-            si = i;
+            for (c = 0; c < 4; ++c)
+               ti->input_loc[i][c] = 0x80 + i * 16 + c * 4;
+         } else {
+            for (c = 0; c < 4; ++c)
+               ti->input_loc[i][c] = nvc0_varying_location(sn, si) + c * 4;
+            /* for sprite coordinates: */
+            ti->prog->fp.in_pos[i] = ti->input_loc[i][0] / 4;
          }
-         for (c = 0; c < 4; ++c)
-            ti->input_loc[i][c] = nvc0_varying_location(sn, si) + c * 4;
-
          if (ti->prog->type == PIPE_SHADER_FRAGMENT)
             ti->interp_mode[i] = nvc0_interp_mode(decl);
       }
@@ -281,6 +292,8 @@ prog_decl(struct nvc0_translation_info *ti,
          } else {
             for (c = 0; c < 4; ++c)
                ti->output_loc[i][c] = nvc0_varying_location(sn, si) + c * 4;
+            /* for TFB_VARYING_LOCS: */
+            ti->prog->vp.out_pos[i] = ti->output_loc[i][0] / 4;
          }
       }
       break;
@@ -288,9 +301,11 @@ prog_decl(struct nvc0_translation_info *ti,
       ti->sysval_loc[i] = nvc0_system_value_location(sn, si, &ti->sysval_in[i]);
       assert(first == last);
       break;
+   case TGSI_FILE_TEMPORARY:
+      ti->temp128_nr = MAX2(ti->temp128_nr, last + 1);
+      break;
    case TGSI_FILE_NULL:
    case TGSI_FILE_CONSTANT:
-   case TGSI_FILE_TEMPORARY:
    case TGSI_FILE_SAMPLER:
    case TGSI_FILE_ADDRESS:
    case TGSI_FILE_IMMEDIATE:
@@ -518,8 +533,13 @@ nvc0_fp_gen_header(struct nvc0_program *fp, struct nvc0_translation_info *ti)
          if (!ti->input_access[i][c])
             continue;
          a = ti->input_loc[i][c] / 2;
-         if ((a & ~7) == 0x70/2)
-            fp->hdr[5] |= 1 << (28 + (a & 7) / 2); /* FRAG_COORD_UMASK */
+         if (ti->input_loc[i][c] >= 0x2c0)
+            a -= 32;
+         if (ti->input_loc[i][0] == 0x70)
+            fp->hdr[5] |= 1 << (28 + c); /* FRAG_COORD_UMASK */
+         else
+         if (ti->input_loc[i][0] == 0x2e0)
+            fp->hdr[14] |= 1 << (24 + c); /* POINT_COORD */
          else
             fp->hdr[4 + a / 32] |= m << (a % 32);
       }
@@ -618,7 +638,7 @@ nvc0_prog_scan(struct nvc0_translation_info *ti)
       if (ti->scan.writes_z)
          prog->flags[0] = 0x11; /* ? */
       else
-      if (!ti->global_stores)
+      if (!ti->scan.uses_kill && !ti->global_stores)
          prog->fp.early_z = 1;
 
       ret = nvc0_fp_gen_header(prog, ti);
@@ -627,6 +647,11 @@ nvc0_prog_scan(struct nvc0_translation_info *ti)
       assert(!"unsupported program type");
       ret = -1;
       break;
+   }
+
+   if (ti->require_stores) {
+      prog->hdr[0] |= 1 << 26;
+      prog->hdr[1] |= ti->temp128_nr * 16; /* l[] size */
    }
 
    assert(!ret);

@@ -128,7 +128,7 @@ GLboolean r128CreateContext( gl_api api,
       shareCtx = ((r128ContextPtr) sharedContextPrivate)->glCtx;
    else 
       shareCtx = NULL;
-   rmesa->glCtx = _mesa_create_context(glVisual, shareCtx,
+   rmesa->glCtx = _mesa_create_context(API_OPENGL, glVisual, shareCtx,
                                        &functions, (void *) rmesa);
    if (!rmesa->glCtx) {
       FREE(rmesa);

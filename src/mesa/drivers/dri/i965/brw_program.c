@@ -36,7 +36,7 @@
 #include "program/program.h"
 #include "program/programopt.h"
 #include "tnl/tnl.h"
-#include "talloc.h"
+#include "../glsl/ralloc.h"
 
 #include "brw_context.h"
 #include "brw_wm.h"
@@ -115,7 +115,7 @@ shader_error(struct gl_context *ctx, struct gl_program *prog, const char *msg)
    shader = _mesa_lookup_shader_program(ctx, prog->Id);
 
    if (shader) {
-      shader->InfoLog = talloc_strdup_append(shader->InfoLog, msg);
+      ralloc_strcat(&shader->InfoLog, msg);
       shader->LinkStatus = GL_FALSE;
    }
 }

@@ -13,7 +13,12 @@ r600_sources = [
     'r600_bomgr.c',
 ]
 
-env.ParseConfig('pkg-config --cflags libdrm_radeon')
+try:
+    env.ParseConfig('pkg-config --cflags libdrm_radeon')
+except OSError:
+    print 'warning: not building r600g'
+    Return()
+
 env.Append(CPPPATH = '#/src/gallium/drivers/r600')
 
 r600winsys = env.ConvenienceLibrary(

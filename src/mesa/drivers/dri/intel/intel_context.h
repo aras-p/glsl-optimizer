@@ -32,7 +32,6 @@
 #include <stdbool.h>
 #include "main/mtypes.h"
 #include "main/mm.h"
-#include "dri_metaops.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -152,8 +151,6 @@ struct intel_context
       bool (*render_target_supported)(gl_format format);
    } vtbl;
 
-   struct dri_metaops meta;
-
    GLbitfield Fallback;  /**< mask of INTEL_FALLBACK_x bits */
    GLuint NewGLState;
 
@@ -172,23 +169,42 @@ struct intel_context
 
    int urb_size;
 
-   struct intel_batchbuffer *batch;
-   drm_intel_bo *first_post_swapbuffers_batch;
+   struct intel_batchbuffer {
+      drm_intel_bo *bo;
+      struct cached_batch_item *cached_items;
+
+      uint16_t emit, total;
+      uint16_t used, reserved_space;
+      uint32_t map[8192];
+#define BATCH_SZ (8192*sizeof(uint32_t))
+
+      uint32_t state_batch_offset;
+      bool is_blit;
+   } batch;
+
    GLboolean need_throttle;
    GLboolean no_batch_wrap;
 
    struct
    {
       GLuint id;
+      uint32_t start_ptr; /**< for i8xx */
       uint32_t primitive;	/**< Current hardware primitive type */
       void (*flush) (struct intel_context *);
-      GLubyte *start_ptr; /**< for i8xx */
       drm_intel_bo *vb_bo;
       uint8_t *vb;
       unsigned int start_offset; /**< Byte offset of primitive sequence */
       unsigned int current_offset; /**< Byte offset of next vertex */
       unsigned int count;	/**< Number of vertices in current primitive */
    } prim;
+
+   struct {
+      drm_intel_bo *bo;
+      GLuint offset;
+      uint32_t buffer_len;
+      uint32_t buffer_offset;
+      char buffer[4096];
+   } upload;
 
    GLuint stats_wm;
 

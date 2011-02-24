@@ -349,6 +349,8 @@ void image_destroy(struct vg_image *img)
       array_destroy(img->children_array);
    }
 
+   vg_free_object(&img->base);
+
    pipe_sampler_view_reference(&img->sampler_view, NULL);
    FREE(img);
 }

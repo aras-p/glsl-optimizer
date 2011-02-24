@@ -50,7 +50,9 @@ static void svga_surface_copy(struct pipe_context *pipe,
    struct pipe_surface *srcsurf, *dstsurf;*/
    unsigned dst_face, dst_z, src_face, src_z;
 
-   svga_hwtnl_flush_retry( svga );
+   /* Emit buffered drawing commands, and any back copies.
+    */
+   svga_surfaces_flush( svga );
 
 #if 0
    srcsurf = screen->get_tex_surface(screen, src_tex,

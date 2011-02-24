@@ -4,6 +4,7 @@
 
 #include "util/u_memory.h"
 #include "util/u_format.h"
+#include "util/u_transfer.h"
 
 
 static unsigned brw_translate_surface_format( unsigned id )
@@ -302,6 +303,7 @@ brw_pipe_vertex_init( struct brw_context *brw )
    brw->base.create_vertex_elements_state = brw_create_vertex_elements_state;
    brw->base.bind_vertex_elements_state = brw_bind_vertex_elements_state;
    brw->base.delete_vertex_elements_state = brw_delete_vertex_elements_state;
+   brw->base.redefine_user_buffer = u_default_redefine_user_buffer;
 }
 
 

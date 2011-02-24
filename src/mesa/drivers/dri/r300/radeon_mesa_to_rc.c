@@ -128,7 +128,6 @@ static void translate_dstreg(struct rc_dst_register * dest, struct prog_dst_regi
 {
 	dest->File = translate_register_file(src->File);
 	dest->Index = src->Index;
-	dest->RelAddr = src->RelAddr;
 	dest->WriteMask = src->WriteMask;
 }
 

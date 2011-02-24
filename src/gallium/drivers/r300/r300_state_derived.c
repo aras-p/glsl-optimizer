@@ -489,7 +489,8 @@ static void r300_update_rs_block(struct r300_context *r300)
     for (; i < ATTR_GENERIC_COUNT; i++) {
         if (fs_inputs->generic[i] != ATTR_UNUSED) {
             fprintf(stderr, "r300: ERROR: FS input generic %i unassigned, "
-                    "not enough hardware slots.\n", i);
+                    "not enough hardware slots (it's not a bug, do not "
+                    "report it).\n", i);
         }
     }
 
@@ -524,7 +525,8 @@ static void r300_update_rs_block(struct r300_context *r300)
                 DBG(r300, DBG_RS, "r300: FS input fog unassigned.\n");
             } else {
                 fprintf(stderr, "r300: ERROR: FS input fog unassigned, "
-                        "not enough hardware slots.\n");
+                        "not enough hardware slots. (it's not a bug, "
+                        "do not report it)\n");
             }
         }
     }
@@ -551,7 +553,8 @@ static void r300_update_rs_block(struct r300_context *r300)
     } else {
         if (fs_inputs->wpos != ATTR_UNUSED && tex_count >= 8) {
             fprintf(stderr, "r300: ERROR: FS input WPOS unassigned, "
-                    "not enough hardware slots.\n");
+                    "not enough hardware slots. (it's not a bug, do not "
+                    "report it)\n");
         }
     }
 
@@ -674,7 +677,20 @@ static uint32_t r300_get_border_color(enum pipe_format format,
         case 16:
             if (desc->nr_channels <= 2) {
                 border_swizzled[0] = border_swizzled[2];
-                util_pack_color(border_swizzled, PIPE_FORMAT_R16G16_UNORM, &uc);
+                if (desc->channel[0].type == UTIL_FORMAT_TYPE_FLOAT) {
+                    util_pack_color(border_swizzled, PIPE_FORMAT_R16G16_FLOAT, &uc);
+                } else {
+                    util_pack_color(border_swizzled, PIPE_FORMAT_R16G16_UNORM, &uc);
+                }
+            } else {
+                util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
+            }
+            break;
+
+        case 32:
+            if (desc->nr_channels == 1) {
+                border_swizzled[0] = border_swizzled[2];
+                util_pack_color(border_swizzled, PIPE_FORMAT_R32_FLOAT, &uc);
             } else {
                 util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
             }
@@ -684,6 +700,25 @@ static uint32_t r300_get_border_color(enum pipe_format format,
     return uc.ui;
 }
 
+static boolean util_format_is_float(enum pipe_format format)
+{
+    const struct util_format_description *desc = util_format_description(format);
+    unsigned i;
+
+    if (!format)
+       return FALSE;
+
+    /* Find the first non-void channel. */
+    for (i = 0; i < 4; i++)
+        if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID)
+            break;
+
+    if (i == 4)
+        return FALSE;
+
+    return desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT ? TRUE : FALSE;
+}
+
 static void r300_merge_textures_and_samplers(struct r300_context* r300)
 {
     struct r300_textures_state *state =
@@ -691,7 +726,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
     struct r300_texture_sampler_state *texstate;
     struct r300_sampler_state *sampler;
     struct r300_sampler_view *view;
-    struct r300_texture *tex;
+    struct r300_resource *tex;
     unsigned min_level, max_level, i, j, size;
     unsigned count = MIN2(state->sampler_view_count,
                           state->sampler_state_count);
@@ -709,7 +744,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             state->tx_enable |= 1 << i;
 
             view = state->sampler_views[i];
-            tex = r300_texture(view->base.texture);
+            tex = r300_resource(view->base.texture);
             sampler = state->sampler_states[i];
 
             texstate = &state->regs[i];
@@ -725,32 +760,37 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
 
             /* determine min/max levels */
             max_level = MIN3(sampler->max_lod + view->base.u.tex.first_level,
-                             tex->desc.b.b.last_level, view->base.u.tex.last_level);
+                             tex->b.b.b.last_level, view->base.u.tex.last_level);
             min_level = MIN2(sampler->min_lod + view->base.u.tex.first_level,
                              max_level);
 
-            if (tex->desc.is_npot && min_level > 0) {
+            if (tex->tex.is_npot && min_level > 0) {
                 /* Even though we do not implement mipmapping for NPOT
                  * textures, we should at least honor the minimum level
                  * which is allowed to be displayed. We do this by setting up
-                 * an i-th mipmap level as the zero level. */
-                r300_texture_setup_format_state(r300->screen, &tex->desc,
+                 * the i-th mipmap level as the zero level. */
+                unsigned offset = tex->tex_offset +
+                                  tex->tex.offset_in_bytes[min_level];
+
+                r300_texture_setup_format_state(r300->screen, tex,
                                                 min_level,
                                                 &texstate->format);
-                texstate->format.tile_config |=
-                        tex->desc.offset_in_bytes[min_level] & 0xffffffe0;
-                assert((tex->desc.offset_in_bytes[min_level] & 0x1f) == 0);
+                texstate->format.tile_config |= offset & 0xffffffe0;
+                assert((offset & 0x1f) == 0);
+            } else {
+                texstate->format.tile_config |= tex->tex_offset & 0xffffffe0;
+                assert((tex->tex_offset & 0x1f) == 0);
             }
 
             /* Assign a texture cache region. */
             texstate->format.format1 |= view->texcache_region;
 
             /* Depth textures are kinda special. */
-            if (util_format_is_depth_or_stencil(tex->desc.b.b.format)) {
+            if (util_format_is_depth_or_stencil(tex->b.b.b.format)) {
                 unsigned char depth_swizzle[4];
 
                 if (!r300->screen->caps.is_r500 &&
-                    util_format_get_blocksizebits(tex->desc.b.b.format) == 32) {
+                    util_format_get_blocksizebits(tex->b.b.b.format) == 32) {
                     /* X24x8 is sampled as Y16X16 on r3xx-r4xx.
                      * The depth here is at the Y component. */
                     for (j = 0; j < 4; j++)
@@ -775,17 +815,17 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
             }
 
             if (r300->screen->caps.dxtc_swizzle &&
-                util_format_is_compressed(tex->desc.b.b.format)) {
+                util_format_is_compressed(tex->b.b.b.format)) {
                 texstate->filter1 |= R400_DXTC_SWIZZLE_ENABLE;
             }
 
             /* to emulate 1D textures through 2D ones correctly */
-            if (tex->desc.b.b.target == PIPE_TEXTURE_1D) {
+            if (tex->b.b.b.target == PIPE_TEXTURE_1D) {
                 texstate->filter0 &= ~R300_TX_WRAP_T_MASK;
                 texstate->filter0 |= R300_TX_WRAP_T(R300_TX_CLAMP_TO_EDGE);
             }
 
-            if (tex->desc.is_npot) {
+            if (tex->tex.is_npot) {
                 /* NPOT textures don't support mip filter, unfortunately.
                  * This prevents incorrect rendering. */
                 texstate->filter0 &= ~R300_TX_MIN_FILTER_MIP_MASK;
@@ -812,6 +852,32 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                 /* the MAX_MIP level is the largest (finest) one */
                 texstate->format.format0 |= R300_TX_NUM_LEVELS(max_level);
                 texstate->filter0 |= R300_TX_MAX_MIP_LEVEL(min_level);
+            }
+
+            /* Float textures only support nearest and mip-nearest filtering. */
+            if (util_format_is_float(tex->b.b.b.format)) {
+                /* No MAG linear filtering. */
+                if ((texstate->filter0 & R300_TX_MAG_FILTER_MASK) ==
+                    R300_TX_MAG_FILTER_LINEAR) {
+                    texstate->filter0 &= ~R300_TX_MAG_FILTER_MASK;
+                    texstate->filter0 |= R300_TX_MAG_FILTER_NEAREST;
+                }
+                /* No MIN linear filtering. */
+                if ((texstate->filter0 & R300_TX_MIN_FILTER_MASK) ==
+                    R300_TX_MIN_FILTER_LINEAR) {
+                    texstate->filter0 &= ~R300_TX_MIN_FILTER_MASK;
+                    texstate->filter0 |= R300_TX_MIN_FILTER_NEAREST;
+                }
+                /* No mipmap linear filtering. */
+                if ((texstate->filter0 & R300_TX_MIN_FILTER_MIP_MASK) ==
+                    R300_TX_MIN_FILTER_MIP_LINEAR) {
+                    texstate->filter0 &= ~R300_TX_MIN_FILTER_MIP_MASK;
+                    texstate->filter0 |= R300_TX_MIN_FILTER_MIP_NEAREST;
+                }
+                /* No anisotropic filtering. */
+                texstate->filter0 &= ~R300_TX_MAX_ANISO_MASK;
+                texstate->filter1 &= ~R500_TX_MAX_ANISO_MASK;
+                texstate->filter1 &= ~R500_TX_ANISO_HIGH_QUALITY;
             }
 
             texstate->filter0 |= i << 28;
@@ -862,11 +928,35 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
     }
 }
 
+static void r300_decompress_depth_textures(struct r300_context *r300)
+{
+    struct r300_textures_state *state =
+        (struct r300_textures_state*)r300->textures_state.state;
+    struct pipe_resource *tex;
+    unsigned count = MIN2(state->sampler_view_count,
+                          state->sampler_state_count);
+    unsigned i;
+
+    if (!r300->zmask_locked || !r300->locked_zbuffer) {
+        return;
+    }
+
+    for (i = 0; i < count; i++) {
+        if (state->sampler_views[i] && state->sampler_states[i]) {
+            tex = state->sampler_views[i]->base.texture;
+
+            if (tex == r300->locked_zbuffer->texture) {
+                r300_decompress_zmask_locked(r300);
+                return;
+            }
+        }
+    }
+}
+
 void r300_update_derived_state(struct r300_context* r300)
 {
-    r300_flush_depth_textures(r300);
-
     if (r300->textures_state.dirty) {
+        r300_decompress_depth_textures(r300);
         r300_merge_textures_and_samplers(r300);
     }
 

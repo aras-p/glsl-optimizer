@@ -53,7 +53,8 @@
 
 /**
  * BIND forces source operand i into the same register as destination operand i,
- *  and the operands will be assigned consecutive registers (needed for TEX)
+ *  and the operands will be assigned consecutive registers (needed for TEX).
+ *  Beware conflicts !
  * SELECT forces its multiple source operands and its destination operand into
  *  one and the same register.
  */
@@ -204,6 +205,10 @@
 #define NV_CC_C  0x11
 #define NV_CC_A  0x12
 #define NV_CC_S  0x13
+#define NV_CC_INVERSE(cc) ((cc) ^ 0x7)
+/* for 1 bit predicates: */
+#define NV_CC_P     0
+#define NV_CC_NOT_P 1
 
 #define NV_PC_MAX_INSTRUCTIONS 2048
 #define NV_PC_MAX_VALUES (NV_PC_MAX_INSTRUCTIONS * 4)
@@ -259,12 +264,6 @@ nv_op_supported_src_mods(uint opcode)
    return nvc0_op_info_table[opcode].mods;
 }
 
-static INLINE boolean
-nv_op_predicateable(uint opcode)
-{
-   return nvc0_op_info_table[opcode].predicate ? TRUE : FALSE;
-}
-
 static INLINE uint
 nv_type_order(ubyte type)
 {
@@ -310,7 +309,7 @@ struct nv_reg {
       int32_t s32;
       int64_t s64;
       uint64_t u64;
-      uint32_t u32;
+      uint32_t u32; /* expected to be 0 for $r63 */
       float f32;
       double f64;
    } imm;
@@ -343,6 +342,8 @@ struct nv_ref {
    uint8_t mod;
    uint8_t flags;
 };
+
+#define NV_REF_FLAG_REGALLOC_PRIV (1 << 0)
 
 struct nv_basic_block;
 
@@ -485,7 +486,7 @@ nv_alloc_instruction(struct nv_pc *pc, uint opcode)
    assert(pc->num_instructions < NV_PC_MAX_INSTRUCTIONS);
 
    insn->opcode = opcode;
-   insn->cc = 0;
+   insn->cc = NV_CC_P;
    insn->indirect = -1;
    insn->predicate = -1;
 

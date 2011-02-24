@@ -30,11 +30,14 @@
 #include <pipe/p_screen.h>
 #include <pipe/p_context.h>
 #include <util/u_math.h>
-#include "translate/translate_cache.h"
+#include "util/u_slab.h"
+#include "util/u_vbuf_mgr.h"
 #include "r600.h"
 #include "r600_public.h"
 #include "r600_shader.h"
 #include "r600_resource.h"
+
+#define R600_MAX_CONST_BUFFERS 1
 
 enum r600_pipe_state_id {
 	R600_PIPE_STATE_BLEND = 0,
@@ -62,6 +65,11 @@ struct r600_screen {
 	struct pipe_screen		screen;
 	struct radeon			*radeon;
 	struct r600_tiling_info		*tiling_info;
+	struct util_slab_mempool	pool_buffers;
+	unsigned			num_contexts;
+
+	/* for thread-safe write accessing to num_contexts */
+	pipe_mutex			mutex_num_contexts;
 };
 
 struct r600_pipe_sampler_view {
@@ -86,9 +94,7 @@ struct r600_vertex_element
 {
 	unsigned			count;
 	struct pipe_vertex_element	elements[PIPE_MAX_ATTRIBS];
-	enum pipe_format		hw_format[PIPE_MAX_ATTRIBS];
-	unsigned			hw_format_size[PIPE_MAX_ATTRIBS];
-	boolean				incompatible_layout;
+	struct u_vbuf_mgr_elements	*vmgr_elements;
 	struct r600_bo			*fetch_shader;
 	unsigned			fs_size;
 	struct r600_pipe_state		rstate;
@@ -117,21 +123,8 @@ struct r600_textures_info {
 	unsigned			n_samplers;
 };
 
-/* vertex buffer translation context, used to translate vertex input that
- * hw doesn't natively support, so far only FLOAT64 is unsupported.
- */
-struct r600_translate_context {
-	/* Translate cache for incompatible vertex offset/stride/format fallback. */
-	struct translate_cache		*translate_cache;
-	/* The vertex buffer slot containing the translated buffer. */
-	unsigned			vb_slot;
-	void				*new_velems;
-};
-
 #define R600_CONSTANT_ARRAY_SIZE 256
 #define R600_RESOURCE_ARRAY_SIZE 160
-
-struct r600_upload;
 
 struct r600_pipe_context {
 	struct pipe_context		context;
@@ -143,43 +136,35 @@ struct r600_pipe_context {
 	struct r600_pipe_state		*states[R600_PIPE_NSTATES];
 	struct r600_context		ctx;
 	struct r600_vertex_element	*vertex_elements;
+	struct r600_pipe_state		fs_resource[PIPE_MAX_ATTRIBS];
 	struct pipe_framebuffer_state	framebuffer;
 	struct pipe_index_buffer	index_buffer;
-	struct pipe_vertex_buffer	vertex_buffer[PIPE_MAX_ATTRIBS];
-	unsigned			nvertex_buffer;
 	unsigned			cb_target_mask;
 	/* for saving when using blitter */
 	struct pipe_stencil_ref		stencil_ref;
 	struct pipe_viewport_state	viewport;
 	struct pipe_clip_state		clip;
-	unsigned			nvs_resource;
-	struct r600_pipe_state		*vs_resource;
-	struct r600_pipe_state		*ps_resource;
 	struct r600_pipe_state		config;
 	struct r600_pipe_shader 	*ps_shader;
 	struct r600_pipe_shader 	*vs_shader;
 	struct r600_pipe_state		vs_const_buffer;
+	struct r600_pipe_state		vs_const_buffer_resource[R600_MAX_CONST_BUFFERS];
 	struct r600_pipe_state		ps_const_buffer;
+	struct r600_pipe_state		ps_const_buffer_resource[R600_MAX_CONST_BUFFERS];
 	struct r600_pipe_rasterizer	*rasterizer;
 	/* shader information */
 	unsigned			sprite_coord_enable;
 	bool				flatshade;
-	struct r600_upload		*rupload_vb;
-	unsigned			any_user_vbs;
 	struct r600_textures_info	ps_samplers;
-	unsigned			vb_max_index;
-	struct r600_translate_context	tran;
-	struct r600_upload		*rupload_const;
+
+	struct u_vbuf_mgr		*vbuf_mgr;
+	struct util_slab_mempool	pool_transfers;
+	bool				blit;
 };
 
 struct r600_drawl {
+	struct pipe_draw_info	info;
 	struct pipe_context	*ctx;
-	unsigned		mode;
-	unsigned		min_index;
-	unsigned		max_index;
-	unsigned		index_bias;
-	unsigned		start;
-	unsigned		count;
 	unsigned		index_size;
 	unsigned		index_buffer_offset;
 	struct pipe_resource	*index_buffer;
@@ -188,16 +173,20 @@ struct r600_drawl {
 /* evergreen_state.c */
 void evergreen_init_state_functions(struct r600_pipe_context *rctx);
 void evergreen_init_config(struct r600_pipe_context *rctx);
-void evergreen_draw(struct pipe_context *ctx, const struct pipe_draw_info *info);
 void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx);
 void evergreen_polygon_offset_update(struct r600_pipe_context *rctx);
-void evergreen_vertex_buffer_update(struct r600_pipe_context *rctx);
+void evergreen_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
+					struct r600_pipe_state *rstate,
+					struct r600_resource *rbuffer,
+					unsigned offset, unsigned stride);
 
 /* r600_blit.c */
 void r600_init_blit_functions(struct r600_pipe_context *rctx);
 void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture);
+void r600_blit_push_depth(struct pipe_context *ctx, struct r600_resource_texture *texture);
+void r600_flush_depth_textures(struct r600_pipe_context *rctx);
 
 /* r600_buffer.c */
 struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
@@ -205,13 +194,9 @@ struct pipe_resource *r600_buffer_create(struct pipe_screen *screen,
 struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 					      void *ptr, unsigned bytes,
 					      unsigned bind);
-unsigned r600_buffer_is_referenced_by_cs(struct pipe_context *context,
-					 struct pipe_resource *buf,
-					 unsigned level, int layer);
 struct pipe_resource *r600_buffer_from_handle(struct pipe_screen *screen,
 					      struct winsys_handle *whandle);
-int r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *draw);
-int r600_upload_user_buffers(struct r600_pipe_context *rctx);
+void r600_upload_index_buffer(struct r600_pipe_context *rctx, struct r600_drawl *draw);
 
 /* r600_query.c */
 void r600_init_query_functions(struct r600_pipe_context *rctx);
@@ -220,7 +205,6 @@ void r600_init_query_functions(struct r600_pipe_context *rctx);
 void r600_init_context_resource_functions(struct r600_pipe_context *r600);
 
 /* r600_shader.c */
-int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *shader, const struct tgsi_token *tokens);
 void r600_pipe_shader_destroy(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 int r600_find_vs_semantic_index(struct r600_shader *vs,
@@ -228,11 +212,14 @@ int r600_find_vs_semantic_index(struct r600_shader *vs,
 
 /* r600_state.c */
 void r600_init_state_functions(struct r600_pipe_context *rctx);
-void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
+void r600_spi_update(struct r600_pipe_context *rctx);
 void r600_init_config(struct r600_pipe_context *rctx);
 void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx);
 void r600_polygon_offset_update(struct r600_pipe_context *rctx);
-void r600_vertex_buffer_update(struct r600_pipe_context *rctx);
+void r600_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
+				   struct r600_pipe_state *rstate,
+				   struct r600_resource *rbuffer,
+				   unsigned offset, unsigned stride);
 
 /* r600_helper.h */
 int r600_conv_pipe_prim(unsigned pprim, unsigned *prim);
@@ -247,8 +234,6 @@ unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
 					unsigned level, unsigned layer);
 
 /* r600_translate.c */
-void r600_begin_vertex_translate(struct r600_pipe_context *rctx);
-void r600_end_vertex_translate(struct r600_pipe_context *rctx);
 void r600_translate_index_buffer(struct r600_pipe_context *r600,
 				 struct pipe_resource **index_buffer,
 				 unsigned *index_size,
@@ -277,6 +262,9 @@ void r600_bind_ps_shader(struct pipe_context *ctx, void *state);
 void r600_bind_vs_shader(struct pipe_context *ctx, void *state);
 void r600_delete_ps_shader(struct pipe_context *ctx, void *state);
 void r600_delete_vs_shader(struct pipe_context *ctx, void *state);
+void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
+			      struct pipe_resource *buffer);
+void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
 
 /*
  * common helpers

@@ -102,6 +102,12 @@ egl_g3d_get_platform(_EGLDriver *drv, _EGLPlatformType plat)
 #ifdef HAVE_X11_BACKEND
          nplat = native_get_x11_platform();
 #endif
+	 break;
+      case _EGL_PLATFORM_WAYLAND:
+         plat_name = "wayland";
+#ifdef HAVE_WAYLAND_BACKEND
+         nplat = native_get_wayland_platform();
+#endif
          break;
       case _EGL_PLATFORM_DRM:
          plat_name = "DRM";
@@ -545,6 +551,9 @@ egl_g3d_initialize(_EGLDriver *drv, _EGLDisplay *dpy)
       if (gdpy->native->buffer)
          dpy->Extensions.MESA_drm_image = EGL_TRUE;
    }
+
+   if (dpy->Platform == _EGL_PLATFORM_WAYLAND && gdpy->native->buffer)
+      dpy->Extensions.MESA_drm_image = EGL_TRUE;
 
    if (egl_g3d_add_configs(drv, dpy, 1) == 1) {
       _eglError(EGL_NOT_INITIALIZED, "eglInitialize(unable to add configs)");

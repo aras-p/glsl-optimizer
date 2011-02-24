@@ -186,7 +186,7 @@ sisCreateContext( gl_api api,
       shareCtx = ((sisContextPtr)sharedContextPrivate)->glCtx;
    else 
       shareCtx = NULL;
-   smesa->glCtx = _mesa_create_context( glVisual, shareCtx,
+   smesa->glCtx = _mesa_create_context( API_OPENGL, glVisual, shareCtx,
                                         &functions, (void *) smesa);
    if (!smesa->glCtx) {
       FREE(smesa);

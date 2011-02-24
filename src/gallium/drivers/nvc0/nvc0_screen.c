@@ -75,6 +75,8 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return 10;
    case PIPE_CAP_MAX_TEXTURE_CUBE_LEVELS:
       return 13;
+   case PIPE_CAP_ARRAY_TEXTURES:
+      return 1;
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
    case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
    case PIPE_CAP_TEXTURE_SWIZZLE:
@@ -281,9 +283,6 @@ nvc0_magic_3d_init(struct nouveau_channel *chan)
    BEGIN_RING(chan, RING_3D_(0x074c), 1);
    OUT_RING  (chan, 0x3f);
 
-   BEGIN_RING(chan, RING_3D_(0x10f8), 1);
-   OUT_RING  (chan, 0x0101);
-
    BEGIN_RING(chan, RING_3D_(0x16a8), 1);
    OUT_RING  (chan, (3 << 16) | 3);
    BEGIN_RING(chan, RING_3D_(0x1794), 1);
@@ -476,7 +475,7 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
       OUT_RING  (chan, (15 << 4) | 1);
    }
 
-   screen->tls_size = 4 * 4 * 32 * 128 * 4;
+   screen->tls_size = (16 * 32) * (NVC0_CAP_MAX_PROGRAM_TEMPS * 16);
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 17,
                         screen->tls_size, &screen->tls);
    if (ret)
@@ -490,6 +489,8 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    OUT_RELOCl(chan, screen->tls, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
    OUT_RING  (chan, screen->tls_size >> 32);
    OUT_RING  (chan, screen->tls_size);
+   BEGIN_RING(chan, RING_3D_(0x07a0), 1);
+   OUT_RING  (chan, 0);
    BEGIN_RING(chan, RING_3D(LOCAL_BASE), 1);
    OUT_RING  (chan, 0);
 
@@ -532,9 +533,18 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    BEGIN_RING(chan, RING_3D_(0x1590), 1); /* deactivate ZCULL */
    OUT_RING  (chan, 0x3f);
 
-   BEGIN_RING(chan, RING_3D(VIEWPORT_CLIP_RECTS_EN), 1);
+   BEGIN_RING(chan, RING_3D(CLIP_RECTS_MODE), 1);
+   OUT_RING  (chan, NVC0_3D_CLIP_RECTS_MODE_INSIDE_ANY);
+   BEGIN_RING(chan, RING_3D(CLIP_RECT_HORIZ(0)), 8 * 2);
+   for (i = 0; i < 8 * 2; ++i)
+      OUT_RING(chan, 0);
+   BEGIN_RING(chan, RING_3D(CLIP_RECTS_EN), 1);
    OUT_RING  (chan, 0);
    BEGIN_RING(chan, RING_3D(CLIPID_ENABLE), 1);
+   OUT_RING  (chan, 0);
+
+   /* neither scissors, viewport nor stencil mask should affect clears */
+   BEGIN_RING(chan, RING_3D(CLEAR_FLAGS), 1);
    OUT_RING  (chan, 0);
 
    BEGIN_RING(chan, RING_3D(VIEWPORT_TRANSFORM_EN), 1);
@@ -542,6 +552,8 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    BEGIN_RING(chan, RING_3D(DEPTH_RANGE_NEAR(0)), 2);
    OUT_RINGf (chan, 0.0f);
    OUT_RINGf (chan, 1.0f);
+   BEGIN_RING(chan, RING_3D(VIEW_VOLUME_CLIP_CTRL), 1);
+   OUT_RING  (chan, NVC0_3D_VIEW_VOLUME_CLIP_CTRL_UNK1_UNK1);
 
    /* We use scissors instead of exact view volume clipping,
     * so they're always enabled.
@@ -628,11 +640,14 @@ nvc0_screen_make_buffers_resident(struct nvc0_screen *screen)
 
    const unsigned flags = NOUVEAU_BO_VRAM | NOUVEAU_BO_RD;
 
+   MARK_RING(chan, 5, 5);
    nouveau_bo_validate(chan, screen->text, flags);
    nouveau_bo_validate(chan, screen->uniforms, flags);
    nouveau_bo_validate(chan, screen->txc, flags);
-   nouveau_bo_validate(chan, screen->tls, flags);
    nouveau_bo_validate(chan, screen->mp_stack_bo, flags);
+
+   if (screen->cur_ctx && screen->cur_ctx->state.tls_required)
+      nouveau_bo_validate(chan, screen->tls, flags);
 }
 
 int

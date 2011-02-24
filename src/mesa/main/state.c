@@ -662,6 +662,8 @@ _mesa_update_state_locked( struct gl_context *ctx )
    ctx->NewState = 0;
    ctx->Driver.UpdateState(ctx, new_state);
    ctx->Array.NewState = 0;
+   if (!ctx->Array.RebindArrays)
+      ctx->Array.RebindArrays = (new_state & (_NEW_ARRAY | _NEW_PROGRAM)) != 0;
 }
 
 

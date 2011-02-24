@@ -135,14 +135,12 @@ crtc_set_mode_major(xf86CrtcPtr crtc, DisplayModePtr mode,
 
     /* Only set gamma when needed, to avoid unneeded delays. */
 #if defined(XF86_CRTC_VERSION) && XF86_CRTC_VERSION >= 3
-    if (!crtc->active)
-#endif
+    if (!crtc->active && crtc->version >= 3)
 	crtc->funcs->gamma_set(crtc, crtc->gamma_red, crtc->gamma_green,
 			       crtc->gamma_blue, crtc->gamma_size);
-
-#if defined(XF86_CRTC_VERSION) && XF86_CRTC_VERSION >= 3
     crtc->active = TRUE;
 #endif
+
     crtc->x = x;
     crtc->y = y;
     crtc->mode = *mode;

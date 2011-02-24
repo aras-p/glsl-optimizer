@@ -58,10 +58,18 @@ if env['platform'] == 'windows':
     env.Prepend(LIBS = [
         ws_gdi,
     ])
-else:
-    # OpenGL
-    env.Append(CPPDEFINES = ['FEATURE_GL=1'])
-    env.Prepend(LIBS = ['GL', 'talloc', glsl, mesa])
+
+# OpenGL ES and OpenGL
+if env['gles']:
+    env.Append(CPPDEFINES = [
+        'FEATURE_GL=1',
+        'FEATURE_ES1=1',
+        'FEATURE_ES2=1'
+    ])
+    env.Prepend(LIBPATH = [shared_glapi.dir])
+    # manually add LIBPREFIX on windows
+    glapi_name = 'glapi' if env['platform'] != 'windows' else 'libglapi'
+    env.Prepend(LIBS = [glapi_name, glsl, mesa])
 
 # OpenVG
 if True:
@@ -96,7 +104,6 @@ if env['drm']:
         ])
 
     if env['drm_radeon']:
-        env.ParseConfig('pkg-config --cflags --libs libdrm_radeon')
         env.Append(CPPDEFINES = ['_EGL_PIPE_R300', '_EGL_PIPE_R600'])
         env.Prepend(LIBS = [
             radeonwinsys,

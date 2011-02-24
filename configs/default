@@ -60,6 +60,7 @@ GLESv1_CM_LIB = GLESv1_CM
 GLESv2_LIB = GLESv2
 VG_LIB = OpenVG
 GLAPI_LIB = glapi
+WAYLAND_EGL_LIB = wayland-egl
 
 
 # Library names (actual file names)
@@ -73,6 +74,7 @@ GLESv1_CM_LIB_NAME = lib$(GLESv1_CM_LIB).so
 GLESv2_LIB_NAME = lib$(GLESv2_LIB).so
 VG_LIB_NAME = lib$(VG_LIB).so
 GLAPI_LIB_NAME = lib$(GLAPI_LIB).so
+WAYLAND_EGL_LIB_NAME = lib$(WAYLAND_EGL_LIB).so
 
 # globs used to install the lib and all symlinks
 GL_LIB_GLOB = $(GL_LIB_NAME)*
@@ -85,9 +87,10 @@ GLESv1_CM_LIB_GLOB = $(GLESv1_CM_LIB_NAME)*
 GLESv2_LIB_GLOB = $(GLESv2_LIB_NAME)*
 VG_LIB_GLOB = $(VG_LIB_NAME)*
 GLAPI_LIB_GLOB = $(GLAPI_LIB_NAME)*
+WAYLAND_EGL_LIB_GLOB = $(WAYLAND_EGL_LIB_NAME)*
 
-TALLOC_LIBS = `pkg-config --libs talloc`
-TALLOC_CFLAGS = `pkg-config --cflags talloc`
+DRI_CFLAGS = $(CFLAGS)
+DRI_CXXFLAGS = $(CXXFLAGS)
 
 # Optional assembly language optimization files for libGL
 MESA_ASM_SOURCES = 
@@ -123,7 +126,7 @@ EGL_CLIENT_APIS = $(GL_LIB)
 
 # Library dependencies
 #EXTRA_LIB_PATH ?=
-GL_LIB_DEPS     = $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread $(TALLOC_LIBS)
+GL_LIB_DEPS     = $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread
 EGL_LIB_DEPS    = $(EXTRA_LIB_PATH) -ldl -lpthread
 OSMESA_LIB_DEPS = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GL_LIB)
 GLU_LIB_DEPS    = $(EXTRA_LIB_PATH) -L$(TOP)/$(LIB_DIR) -l$(GL_LIB) -lm
@@ -134,6 +137,7 @@ GLESv1_CM_LIB_DEPS = $(EXTRA_LIB_PATH) -lpthread
 GLESv2_LIB_DEPS = $(EXTRA_LIB_PATH) -lpthread
 VG_LIB_DEPS    = $(EXTRA_LIB_PATH) -lpthread
 GLAPI_LIB_DEPS = $(EXTRA_LIB_PATH) -lpthread
+WAYLAND_EGL_LIB_DEPS = $(EXTRA_LIB_PATH) -lwayland-client -ldrm
 
 # Program dependencies - specific GL/glut libraries added in Makefiles
 APP_LIB_DEPS = -lm
@@ -182,3 +186,6 @@ GLESv2_PC_CFLAGS =
 VG_PC_REQ_PRIV =
 VG_PC_LIB_PRIV =
 VG_PC_CFLAGS =
+WAYLAND_EGL_PC_REQ_PRIV =
+WAYLAND_EGL_PC_LIB_PRIV =
+WAYLAND_EGL_PC_CFLAGS =

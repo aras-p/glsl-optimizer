@@ -22,6 +22,7 @@
 
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"
+#include "util/u_transfer.h"
 
 #include "tgsi/tgsi_parse.h"
 
@@ -50,40 +51,35 @@ nvc0_colormask(unsigned mask)
     return ret;
 }
 
+#define NVC0_BLEND_FACTOR_CASE(a, b) \
+   case PIPE_BLENDFACTOR_##a: return NV50_3D_BLEND_FACTOR_##b
+
 static INLINE uint32_t
 nvc0_blend_fac(unsigned factor)
 {
-    static const uint16_t bf[] = {
-        NV50_3D_BLEND_FACTOR_ZERO, /* 0x00 */
-        NV50_3D_BLEND_FACTOR_ONE,
-        NV50_3D_BLEND_FACTOR_SRC_COLOR,
-        NV50_3D_BLEND_FACTOR_SRC_ALPHA,
-        NV50_3D_BLEND_FACTOR_DST_ALPHA,
-        NV50_3D_BLEND_FACTOR_DST_COLOR,
-        NV50_3D_BLEND_FACTOR_SRC_ALPHA_SATURATE,
-        NV50_3D_BLEND_FACTOR_CONSTANT_COLOR,
-        NV50_3D_BLEND_FACTOR_CONSTANT_ALPHA,
-        NV50_3D_BLEND_FACTOR_SRC1_COLOR,
-        NV50_3D_BLEND_FACTOR_SRC1_ALPHA,
-        NV50_3D_BLEND_FACTOR_ZERO, /* 0x0b */
-        NV50_3D_BLEND_FACTOR_ZERO, /* 0x0c */
-        NV50_3D_BLEND_FACTOR_ZERO, /* 0x0d */
-        NV50_3D_BLEND_FACTOR_ZERO, /* 0x0e */
-        NV50_3D_BLEND_FACTOR_ZERO, /* 0x0f */
-        NV50_3D_BLEND_FACTOR_ZERO, /* 0x10 */
-        NV50_3D_BLEND_FACTOR_ZERO, /* 0x11 */
-        NV50_3D_BLEND_FACTOR_ONE_MINUS_SRC_COLOR,
-        NV50_3D_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-        NV50_3D_BLEND_FACTOR_ONE_MINUS_DST_ALPHA,
-        NV50_3D_BLEND_FACTOR_ONE_MINUS_DST_COLOR,
-        NV50_3D_BLEND_FACTOR_ONE_MINUS_CONSTANT_COLOR,
-        NV50_3D_BLEND_FACTOR_ONE_MINUS_CONSTANT_ALPHA,
-        NV50_3D_BLEND_FACTOR_ONE_MINUS_SRC1_COLOR,
-        NV50_3D_BLEND_FACTOR_ONE_MINUS_SRC1_ALPHA
-    };
-
-    assert(factor < (sizeof(bf) / sizeof(bf[0])));
-    return bf[factor];
+   switch (factor) {
+   NVC0_BLEND_FACTOR_CASE(ONE, ONE);
+   NVC0_BLEND_FACTOR_CASE(SRC_COLOR, SRC_COLOR);
+   NVC0_BLEND_FACTOR_CASE(SRC_ALPHA, SRC_ALPHA);
+   NVC0_BLEND_FACTOR_CASE(DST_ALPHA, DST_ALPHA);
+   NVC0_BLEND_FACTOR_CASE(DST_COLOR, DST_COLOR);
+   NVC0_BLEND_FACTOR_CASE(SRC_ALPHA_SATURATE, SRC_ALPHA_SATURATE);
+   NVC0_BLEND_FACTOR_CASE(CONST_COLOR, CONSTANT_COLOR);
+   NVC0_BLEND_FACTOR_CASE(CONST_ALPHA, CONSTANT_ALPHA);
+   NVC0_BLEND_FACTOR_CASE(SRC1_COLOR, SRC1_COLOR);
+   NVC0_BLEND_FACTOR_CASE(SRC1_ALPHA, SRC1_ALPHA);
+   NVC0_BLEND_FACTOR_CASE(ZERO, ZERO);
+   NVC0_BLEND_FACTOR_CASE(INV_SRC_COLOR, ONE_MINUS_SRC_COLOR);
+   NVC0_BLEND_FACTOR_CASE(INV_SRC_ALPHA, ONE_MINUS_SRC_ALPHA);
+   NVC0_BLEND_FACTOR_CASE(INV_DST_ALPHA, ONE_MINUS_DST_ALPHA);
+   NVC0_BLEND_FACTOR_CASE(INV_DST_COLOR, ONE_MINUS_DST_COLOR);
+   NVC0_BLEND_FACTOR_CASE(INV_CONST_COLOR, ONE_MINUS_CONSTANT_COLOR);
+   NVC0_BLEND_FACTOR_CASE(INV_CONST_ALPHA, ONE_MINUS_CONSTANT_ALPHA);
+   NVC0_BLEND_FACTOR_CASE(INV_SRC1_COLOR, ONE_MINUS_SRC1_COLOR);
+   NVC0_BLEND_FACTOR_CASE(INV_SRC1_ALPHA, ONE_MINUS_SRC1_ALPHA);
+   default:
+      return NV50_3D_BLEND_FACTOR_ZERO;
+   }
 }
 
 static void *
@@ -176,9 +172,9 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
         return NULL;
     so->pipe = *cso;
 
-#ifndef NVC0_SCISSORS_CLIPPING
-    SB_IMMED_3D(so, SCISSOR_ENABLE(0), cso->scissor);
-#endif
+    /* Scissor enables are handled in scissor state, we will not want to
+     * always emit 16 commands, one for each scissor rectangle, here.
+     */
     
     SB_BEGIN_3D(so, SHADE_MODEL, 1);
     SB_DATA    (so, cso->flatshade ? NVC0_3D_SHADE_MODEL_FLAT :
@@ -242,7 +238,7 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
         SB_BEGIN_3D(so, POLYGON_OFFSET_FACTOR, 1);
         SB_DATA    (so, fui(cso->offset_scale));
         SB_BEGIN_3D(so, POLYGON_OFFSET_UNITS, 1);
-        SB_DATA    (so, fui(cso->offset_units)); /* XXX: multiply by 2 ? */
+        SB_DATA    (so, fui(cso->offset_units * 2.0f));
     }
 
     assert(so->size < (sizeof(so->state) / sizeof(so->state[0])));
@@ -283,20 +279,21 @@ nvc0_zsa_state_create(struct pipe_context *pipe,
    }
 
    if (cso->stencil[0].enabled) {
-      SB_BEGIN_3D(so, STENCIL_FRONT_ENABLE, 5);
+      SB_BEGIN_3D(so, STENCIL_ENABLE, 5);
       SB_DATA    (so, 1);
       SB_DATA    (so, nvgl_stencil_op(cso->stencil[0].fail_op));
       SB_DATA    (so, nvgl_stencil_op(cso->stencil[0].zfail_op));
       SB_DATA    (so, nvgl_stencil_op(cso->stencil[0].zpass_op));
       SB_DATA    (so, nvgl_comparison_op(cso->stencil[0].func));
-      SB_BEGIN_3D(so, STENCIL_FRONT_MASK, 2);
-      SB_DATA    (so, cso->stencil[0].writemask);
+      SB_BEGIN_3D(so, STENCIL_FRONT_FUNC_MASK, 2);
       SB_DATA    (so, cso->stencil[0].valuemask);
+      SB_DATA    (so, cso->stencil[0].writemask);
    } else {
-      SB_IMMED_3D(so, STENCIL_FRONT_ENABLE, 0);
+      SB_IMMED_3D(so, STENCIL_ENABLE, 0);
    }
 
    if (cso->stencil[1].enabled) {
+      assert(cso->stencil[0].enabled);
       SB_BEGIN_3D(so, STENCIL_TWO_SIDE_ENABLE, 5);
       SB_DATA    (so, 1);
       SB_DATA    (so, nvgl_stencil_op(cso->stencil[1].fail_op));
@@ -306,7 +303,8 @@ nvc0_zsa_state_create(struct pipe_context *pipe,
       SB_BEGIN_3D(so, STENCIL_BACK_MASK, 2);
       SB_DATA    (so, cso->stencil[1].writemask);
       SB_DATA    (so, cso->stencil[1].valuemask);
-   } else {
+   } else
+   if (cso->stencil[0].enabled) {
       SB_IMMED_3D(so, STENCIL_TWO_SIDE_ENABLE, 0);
    }
     
@@ -808,6 +806,74 @@ nvc0_vertex_state_bind(struct pipe_context *pipe, void *hwcso)
     nvc0->dirty |= NVC0_NEW_VERTEX;
 }
 
+static void *
+nvc0_tfb_state_create(struct pipe_context *pipe,
+                      const struct pipe_stream_output_state *pso)
+{
+   struct nvc0_transform_feedback_state *so;
+   int n = 0;
+   int i, c, b;
+
+   so = MALLOC(sizeof(*so) + pso->num_outputs * 4 * sizeof(uint8_t));
+   if (!so)
+      return NULL;
+
+   for (b = 0; b < 4; ++b) {
+      for (i = 0; i < pso->num_outputs; ++i) {
+         if (pso->output_buffer[i] != b)
+            continue;
+         for (c = 0; c < 4; ++c) {
+            if (!(pso->register_mask[i] & (1 << c)))
+               continue;
+            so->varying_count[b]++;
+            so->varying_index[n++] = (pso->register_index[i] << 2) | c;
+         }
+      }
+      so->stride[b] = so->varying_count[b] * 4;
+   }
+   if (pso->stride)
+      so->stride[0] = pso->stride;
+
+   return so;
+}
+
+static void
+nvc0_tfb_state_delete(struct pipe_context *pipe, void *hwcso)
+{
+   FREE(hwcso);
+}
+
+static void
+nvc0_tfb_state_bind(struct pipe_context *pipe, void *hwcso)
+{
+   nvc0_context(pipe)->tfb = hwcso;
+   nvc0_context(pipe)->dirty |= NVC0_NEW_TFB;
+}
+
+static void
+nvc0_set_transform_feedback_buffers(struct pipe_context *pipe,
+                                    struct pipe_resource **buffers,
+                                    int *offsets,
+                                    int num_buffers)
+{
+   struct nvc0_context *nvc0 = nvc0_context(pipe);
+   int i;
+
+   assert(num_buffers >= 0 && num_buffers <= 4); /* why signed ? */
+
+   for (i = 0; i < num_buffers; ++i) {
+       assert(offsets[i] >= 0);
+       nvc0->tfb_offset[i] = offsets[i];
+       pipe_resource_reference(&nvc0->tfbbuf[i], buffers[i]);
+   }
+   for (; i < nvc0->num_tfbbufs; ++i)
+      pipe_resource_reference(&nvc0->tfbbuf[i], NULL);
+
+   nvc0->num_tfbbufs = num_buffers;
+
+   nvc0->dirty |= NVC0_NEW_TFB_BUFFERS;
+}
+
 void
 nvc0_init_state_functions(struct nvc0_context *nvc0)
 {
@@ -861,5 +927,12 @@ nvc0_init_state_functions(struct nvc0_context *nvc0)
 
     nvc0->pipe.set_vertex_buffers = nvc0_set_vertex_buffers;
     nvc0->pipe.set_index_buffer = nvc0_set_index_buffer;
+
+    nvc0->pipe.create_stream_output_state = nvc0_tfb_state_create;
+    nvc0->pipe.delete_stream_output_state = nvc0_tfb_state_delete;
+    nvc0->pipe.bind_stream_output_state = nvc0_tfb_state_bind;
+    nvc0->pipe.set_stream_output_buffers = nvc0_set_transform_feedback_buffers;
+
+    nvc0->pipe.redefine_user_buffer = u_default_redefine_user_buffer;
 }
 

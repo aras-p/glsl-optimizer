@@ -112,3 +112,10 @@ void u_default_transfer_destroy(struct pipe_context *pipe,
    FREE(transfer);
 }
 
+void u_default_redefine_user_buffer(struct pipe_context *ctx,
+                                    struct pipe_resource *resource,
+                                    unsigned offset,
+                                    unsigned size)
+{
+   resource->width0 = MAX2(resource->width0, offset + size);
+}

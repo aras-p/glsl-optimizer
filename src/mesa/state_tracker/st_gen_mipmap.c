@@ -105,13 +105,12 @@ st_render_mipmap(struct st_context *st,
 static void
 decompress_image(enum pipe_format format,
                  const uint8_t *src, uint8_t *dst,
-                 unsigned width, unsigned height)
+                 unsigned width, unsigned height, unsigned src_stride)
 {
    const struct util_format_description *desc = util_format_description(format);
    const uint bw = util_format_get_blockwidth(format);
    const uint bh = util_format_get_blockheight(format);
    const uint dst_stride = 4 * MAX2(width, bw);
-   const uint src_stride = util_format_get_stride(format, width);
 
    desc->unpack_rgba_8unorm(dst, dst_stride, src, src_stride, width, height);
 
@@ -144,10 +143,9 @@ decompress_image(enum pipe_format format,
 static void
 compress_image(enum pipe_format format,
                const uint8_t *src, uint8_t *dst,
-               unsigned width, unsigned height)
+               unsigned width, unsigned height, unsigned dst_stride)
 {
    const struct util_format_description *desc = util_format_description(format);
-   const uint dst_stride = util_format_get_stride(format, width);
    const uint src_stride = 4 * width;
 
    desc->pack_rgba_8unorm(dst, dst_stride, src, src_stride, width, height);
@@ -236,7 +234,7 @@ fallback_generate_mipmap(struct gl_context *ctx, GLenum target,
          dstTemp = malloc(dstWidth2 * dstHeight2 * comps + 000);
 
          /* decompress the src image: srcData -> srcTemp */
-         decompress_image(format, srcData, srcTemp, srcWidth, srcHeight);
+         decompress_image(format, srcData, srcTemp, srcWidth, srcHeight, srcTrans->stride);
 
          _mesa_generate_mipmap_level(target, datatype, comps,
                                      0 /*border*/,
@@ -248,7 +246,7 @@ fallback_generate_mipmap(struct gl_context *ctx, GLenum target,
                                      dstWidth2); /* stride in texels */
 
          /* compress the new image: dstTemp -> dstData */
-         compress_image(format, dstTemp, dstData, dstWidth, dstHeight);
+         compress_image(format, dstTemp, dstData, dstWidth, dstHeight, dstTrans->stride);
 
          free(srcTemp);
          free(dstTemp);
@@ -338,6 +336,11 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
    if (lastLevel == 0)
       return;
 
+   /* The texture isn't in a "complete" state yet so set the expected
+    * lastLevel here, since it won't get done in st_finalize_texture().
+    */
+   stObj->lastLevel = lastLevel;
+
    if (pt->last_level < lastLevel) {
       /* The current gallium texture doesn't have space for all the
        * mipmap levels we need to generate.  So allocate a new texture.
@@ -352,12 +355,8 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
                                     oldTex->width0,
                                     oldTex->height0,
                                     oldTex->depth0,
+                                    oldTex->array_size,
                                     oldTex->bind);
-
-      /* The texture isn't in a "complete" state yet so set the expected
-       * lastLevel here, since it won't get done in st_finalize_texture().
-       */
-      stObj->lastLevel = lastLevel;
 
       /* This will copy the old texture's base image into the new texture
        * which we just allocated.
@@ -367,8 +366,6 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
       /* release the old tex (will likely be freed too) */
       pipe_resource_reference(&oldTex, NULL);
       pipe_sampler_view_reference(&stObj->sampler_view, NULL);
-
-      pt = stObj->pt;
    }
    else {
       /* Make sure that the base texture image data is present in the
@@ -376,6 +373,8 @@ st_generate_mipmap(struct gl_context *ctx, GLenum target,
        */
       st_finalize_texture(ctx, st->pipe, texObj);
    }
+
+   pt = stObj->pt;
 
    assert(pt->last_level >= lastLevel);
 

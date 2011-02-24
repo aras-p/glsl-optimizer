@@ -122,6 +122,7 @@ CreateOrResizeBackBuffer(struct vl_context *vctx, unsigned int width, unsigned i
    template.width0 = width;
    template.height0 = height;
    template.depth0 = 1;
+   template.array_size = 1;
    template.usage = PIPE_USAGE_DEFAULT;
    template.bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_DISPLAY_TARGET | PIPE_BIND_BLIT_SOURCE;
    template.flags = 0;
@@ -240,6 +241,7 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
       template.height0 = util_next_power_of_two(context->height);
    }
    template.depth0 = 1;
+   template.array_size = 1;
    template.usage = PIPE_USAGE_DEFAULT;
    template.bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
    template.flags = 0;

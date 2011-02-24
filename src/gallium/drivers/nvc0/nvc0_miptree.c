@@ -143,8 +143,7 @@ nvc0_miptree_create(struct pipe_screen *pscreen,
    switch (pt->format) {
    case PIPE_FORMAT_Z16_UNORM:
       tile_flags = 0x0700; /* COMPRESSED */
-      tile_flags = 0x0200; /* NORMAL ? */
-      tile_flags = 0x0100; /* NORMAL ? */
+      tile_flags = 0x0100; /* NORMAL */
       break;
    case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
       tile_flags = 0x5300; /* MSAA 4, COMPRESSED */
@@ -170,6 +169,7 @@ nvc0_miptree_create(struct pipe_screen *pscreen,
       break;
    case PIPE_FORMAT_R16G16B16A16_UNORM:
       tile_flags = 0xe900; /* COMPRESSED */
+      tile_flags = 0xfe00; /* NORMAL */
       break;
    default:
       tile_flags = 0xe000; /* MSAA 4, COMPRESSED 32 BIT */
@@ -283,7 +283,7 @@ nvc0_miptree_surface_new(struct pipe_context *pipe,
    pipe_reference_init(&ps->reference, 1);
    pipe_resource_reference(&ps->texture, pt);
    ps->context = pipe;
-   ps->format = pt->format;
+   ps->format = templ->format;
    ps->usage = templ->usage;
    ps->u.tex.level = templ->u.tex.level;
    ps->u.tex.first_layer = templ->u.tex.first_layer;

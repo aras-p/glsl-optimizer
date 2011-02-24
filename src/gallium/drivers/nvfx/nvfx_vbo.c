@@ -2,6 +2,7 @@
 #include "pipe/p_state.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
+#include "util/u_transfer.h"
 #include "translate/translate.h"
 
 #include "nvfx_context.h"
@@ -631,4 +632,6 @@ nvfx_init_vbo_functions(struct nvfx_context *nvfx)
 	nvfx->pipe.create_vertex_elements_state = nvfx_vtxelts_state_create;
 	nvfx->pipe.delete_vertex_elements_state = nvfx_vtxelts_state_delete;
 	nvfx->pipe.bind_vertex_elements_state = nvfx_vtxelts_state_bind;
+
+	nvfx->pipe.redefine_user_buffer = u_default_redefine_user_buffer;
 }

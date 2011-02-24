@@ -177,7 +177,7 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
 	  ADVANCE_BATCH();
       }
 
-      intel_batchbuffer_flush(intel->batch);
+      intel_batchbuffer_flush(intel);
    } else {
       /* Flush the batchbuffer in case it has writes to our query BO.
        * Have later queries write to a new query BO so that further rendering
@@ -185,7 +185,7 @@ brw_end_query(struct gl_context *ctx, struct gl_query_object *q)
        */
       if (query->bo) {
 	 brw_emit_query_end(brw);
-	 intel_batchbuffer_flush(intel->batch);
+	 intel_batchbuffer_flush(intel);
 
 	 drm_intel_bo_unreference(brw->query.bo);
 	 brw->query.bo = NULL;

@@ -63,7 +63,13 @@ bld_register_access(struct bld_register *reg, unsigned i)
 static INLINE void
 bld_register_add_val(struct bld_register *reg, struct nv_value *val)
 {
-   util_dynarray_append(&reg->vals, struct nv_value *, val);
+   struct nv_basic_block *bb = val->insn->bb;
+
+   if (reg->vals.size &&
+       (util_dynarray_top(&reg->vals, struct nv_value *))->insn->bb == bb)
+      *(util_dynarray_top_ptr(&reg->vals, struct nv_value *)) = val;
+   else
+      util_dynarray_append(&reg->vals, struct nv_value *, val);
 }
 
 static INLINE boolean
@@ -127,13 +133,10 @@ struct bld_context {
 static INLINE ubyte
 bld_register_file(struct bld_context *bld, struct bld_register *reg)
 {
-   if (reg < &bld->avs[0][0]) return NV_FILE_GPR;
-   else
-   if (reg < &bld->pvs[0][0]) return NV_FILE_GPR;
-   else
-   if (reg < &bld->ovs[0][0]) return NV_FILE_PRED;
-   else
-      return NV_FILE_MEM_V;
+   if (reg >= &bld->pvs[0][0] &&
+       reg <  &bld->ovs[0][0])
+      return NV_FILE_PRED;
+   return NV_FILE_GPR;
 }
 
 static INLINE struct nv_value *
@@ -361,6 +364,9 @@ bld_loop_phi(struct bld_context *bld, struct bld_register *reg,
    struct nv_basic_block *bb = bld->pc->current_block;
    struct nv_value *val = NULL;
 
+   if (bld->ti->require_stores) /* XXX: actually only for INDEXABLE_TEMP */
+      return NULL;
+
    if (bld->loop_lvl > 1) {
       --bld->loop_lvl;
       if (!((reg->loop_def | reg->loop_use) & (1 << bld->loop_lvl)))
@@ -459,6 +465,7 @@ bld_loop_end(struct bld_context *bld, struct nv_basic_block *bb)
       reg = (struct bld_register *)phi->target;
       phi->target = NULL;
 
+      /* start with s == 1, src[0] is from outside the loop */
       for (s = 1, n = 0; n < bb->num_in; ++n) {
          if (bb->in_kind[n] != CFG_EDGE_BACK)
             continue;
@@ -470,8 +477,11 @@ bld_loop_end(struct bld_context *bld, struct nv_basic_block *bb)
          for (i = 0; i < 4; ++i)
             if (phi->src[i] && phi->src[i]->value == val)
                break;
-         if (i == 4)
+         if (i == 4) {
+            /* skip values we do not want to replace */
+            for (; phi->src[s] && phi->src[s]->value != phi->def[0]; ++s);
             nv_reference(bld->pc, phi, s++, val);
+         }
       }
       bld->pc->current_block = save;
 
@@ -563,11 +573,12 @@ bld_lmem_store(struct bld_context *bld, struct nv_value *ptr, int ofst,
 
    loc = new_value(bld->pc, NV_FILE_MEM_L, nv_type_sizeof(NV_TYPE_U32));
 
-   loc->reg.id = ofst * 4;
+   loc->reg.address = ofst * 4;
 
    nv_reference(bld->pc, insn, 0, loc);
-   nv_reference(bld->pc, insn, 1, ptr);
-   nv_reference(bld->pc, insn, 2, val);
+   nv_reference(bld->pc, insn, 1, val);
+   if (ptr)
+      bld_src_pointer(bld, insn, 2, ptr);
 }
 
 static struct nv_value *
@@ -579,7 +590,9 @@ bld_lmem_load(struct bld_context *bld, struct nv_value *ptr, int ofst)
 
    loc->reg.address = ofst * 4;
 
-   val = bld_insn_2(bld, NV_OP_LD, loc, ptr);
+   val = bld_insn_1(bld, NV_OP_LD, loc);
+   if (ptr)
+      bld_src_pointer(bld, val->insn, 1, ptr);
 
    return val;
 }
@@ -650,7 +663,7 @@ bld_kil(struct bld_context *bld, struct nv_value *src)
 
 static void
 bld_flow(struct bld_context *bld, uint opcode,
-         struct nv_value *src, struct nv_basic_block *target,
+         struct nv_value *pred, uint8_t cc, struct nv_basic_block *target,
          boolean reconverge)
 {
    struct nv_instruction *nvi;
@@ -661,8 +674,10 @@ bld_flow(struct bld_context *bld, uint opcode,
    nvi = new_instruction(bld->pc, opcode);
    nvi->target = target;
    nvi->terminator = 1;
-   if (src)
-      bld_src_predicate(bld, nvi, 0, src);
+   if (pred) {
+      nvi->cc = cc;
+      bld_src_predicate(bld, nvi, 0, pred);
+   }
 }
 
 static ubyte
@@ -878,11 +893,10 @@ emit_store(struct bld_context *bld, const struct tgsi_full_instruction *inst,
       break;
    case TGSI_FILE_TEMPORARY:
       assert(idx < BLD_MAX_TEMPS);
-      if (!res->insn)
+      if (!res->insn || res->insn->bb != bld->pc->current_block)
          res = bld_insn_1(bld, NV_OP_MOV, res);
 
       assert(res->reg.file == NV_FILE_GPR);
-      assert(res->insn->bb = bld->pc->current_block);
 
       if (bld->ti->require_stores)
          bld_lmem_store(bld, ptr, idx * 4 + chan, res);
@@ -979,14 +993,6 @@ bld_new_block(struct bld_context *bld, struct nv_basic_block *b)
 }
 
 static struct nv_value *
-bld_get_saved_input(struct bld_context *bld, unsigned i, unsigned c)
-{
-   if (bld->saved_inputs[i][c])
-      return bld->saved_inputs[i][c];
-   return NULL;
-}
-
-static struct nv_value *
 bld_interp(struct bld_context *bld, unsigned mode, struct nv_value *val)
 {
    unsigned cent = mode & NVC0_INTERP_CENTROID;
@@ -1053,9 +1059,9 @@ emit_fetch(struct bld_context *bld, const struct tgsi_full_instruction *insn,
    case TGSI_FILE_INPUT:
       assert(!src->Register.Dimension);
       if (!ptr) {
-         res = bld_get_saved_input(bld, idx, swz);
+         res = bld->saved_inputs[idx][swz];
          if (res)
-            return res;
+            break;
       }
       res = new_value(bld->pc, bld->ti->input_file, 4);
       if (ptr)
@@ -1173,7 +1179,7 @@ static INLINE void
 describe_texture_target(unsigned target, int *dim,
                         int *array, int *cube, int *shadow)
 {
-   *array = *cube = *shadow = 0;
+   *dim = *array = *cube = *shadow = 0;
 
    switch (target) {
    case TGSI_TEXTURE_1D:
@@ -1199,11 +1205,6 @@ describe_texture_target(unsigned target, int *dim,
       *dim = 2;
       *cube = 1;
       break;
-      /*
-   case TGSI_TEXTURE_CUBE_ARRAY:
-      *dim = 2;
-      *cube = *array = 1;
-      break;
    case TGSI_TEXTURE_1D_ARRAY:
       *dim = *array = 1;
       break;
@@ -1211,6 +1212,7 @@ describe_texture_target(unsigned target, int *dim,
       *dim = 2;
       *array = 1;
       break;
+      /*
    case TGSI_TEXTURE_SHADOW1D_ARRAY:
       *dim = *array = *shadow = 1;
       break;
@@ -1220,7 +1222,7 @@ describe_texture_target(unsigned target, int *dim,
       break;
    case TGSI_TEXTURE_CUBE_ARRAY:
       *dim = 2;
-      *array = *cube = 1;
+      *cube = *array = 1;
       break;
       */
    default:
@@ -1338,10 +1340,6 @@ emit_tex(struct bld_context *bld, uint opcode, int tic, int tsc,
    if (array)
       arg[dim] = bld_cvt(bld, NV_TYPE_U32, NV_TYPE_F32, arg[dim]);
 
-   /* ensure that all inputs reside in a GPR */
-   for (c = 0; c < dim + array + cube + shadow; ++c)
-      (src[c] = bld_insn_1(bld, NV_OP_MOV, arg[c]))->insn->fixed = 1;
-
    /* bind { layer x y z } and { lod/bias shadow } to adjacent regs */
 
    bnd = new_instruction(bld->pc, NV_OP_BIND);
@@ -1383,20 +1381,11 @@ emit_tex(struct bld_context *bld, uint opcode, int tic, int tsc,
    nvi->tex_dim = dim;
    nvi->tex_cube = cube;
    nvi->tex_shadow = shadow;
+   nvi->tex_array = array;
    nvi->tex_live = 0;
 
    return nvi;
 }
-
-/*
-static boolean
-bld_is_constant(struct nv_value *val)
-{
-   if (val->reg.file == NV_FILE_IMM)
-      return TRUE;
-   return val->insn && nvCG_find_constant(val->insn->src[0]);
-}
-*/
 
 static void
 bld_tex(struct bld_context *bld, struct nv_value *dst0[4],
@@ -1413,7 +1402,7 @@ bld_tex(struct bld_context *bld, struct nv_value *dst0[4],
 
    assert(dim + array + shadow + lodbias <= 5);
 
-   if (!cube && insn->Instruction.Opcode == TGSI_OPCODE_TXP)
+   if (!cube && !array && insn->Instruction.Opcode == TGSI_OPCODE_TXP)
       load_proj_tex_coords(bld, t, dim, shadow, insn);
    else {
       for (c = 0; c < dim + cube + array; ++c)
@@ -1504,10 +1493,10 @@ bld_instruction(struct bld_context *bld,
    case TGSI_OPCODE_CMP:
       FOR_EACH_DST0_ENABLED_CHANNEL(c, insn) {
          src0 = emit_fetch(bld, insn, 0, c);
-         src0 = bld_setp(bld, NV_OP_SET_F32, NV_CC_LT, src0, bld->zero);
          src1 = emit_fetch(bld, insn, 1, c);
          src2 = emit_fetch(bld, insn, 2, c);
-         dst0[c] = bld_insn_3(bld, NV_OP_SELP, src1, src2, src0);
+         dst0[c] = bld_insn_3(bld, NV_OP_SLCT_F32, src1, src2, src0);
+         dst0[c]->insn->set_cond = NV_CC_LT;
       }
       break;
    case TGSI_OPCODE_COS:
@@ -1601,6 +1590,7 @@ bld_instruction(struct bld_context *bld,
    case TGSI_OPCODE_IF:
    {
       struct nv_basic_block *b = new_basic_block(bld->pc);
+      struct nv_value *pred = emit_fetch(bld, insn, 0, 0);
 
       assert(bld->cond_lvl < BLD_MAX_COND_NESTING);
 
@@ -1609,10 +1599,19 @@ bld_instruction(struct bld_context *bld,
       bld->join_bb[bld->cond_lvl] = bld->pc->current_block;
       bld->cond_bb[bld->cond_lvl] = bld->pc->current_block;
 
-      src1 = bld_setp(bld, NV_OP_SET_U32, NV_CC_EQ,
-                      emit_fetch(bld, insn, 0, 0), bld->zero);
+      if (pred->insn && NV_BASEOP(pred->insn->opcode) == NV_OP_SET) {
+         pred = bld_clone(bld, pred->insn);
+         pred->reg.size = 1;
+         pred->reg.file = NV_FILE_PRED;
+         if (pred->insn->opcode == NV_OP_FSET_F32)
+            pred->insn->opcode = NV_OP_SET_F32;
+      } else {
+         pred = bld_setp(bld, NV_OP_SET_U32, NV_CC_NE | NV_CC_U,
+                         pred, bld->zero);
+      }
+      assert(!mask);
 
-      bld_flow(bld, NV_OP_BRA, src1, NULL, (bld->cond_lvl == 0));
+      bld_flow(bld, NV_OP_BRA, pred, NV_CC_NOT_P, NULL, (bld->cond_lvl == 0));
 
       ++bld->cond_lvl;
       bld_new_block(bld, b);
@@ -1637,6 +1636,10 @@ bld_instruction(struct bld_context *bld,
    case TGSI_OPCODE_ENDIF:
    {
       struct nv_basic_block *b = new_basic_block(bld->pc);
+
+      if (bld->pc->current_block->exit &&
+          !bld->pc->current_block->exit->terminator)
+         bld_flow(bld, NV_OP_BRA, NULL, NV_CC_P, b, FALSE);
 
       --bld->cond_lvl;
       nvc0_bblock_attach(bld->pc->current_block, b, bld->out_kind);
@@ -1678,7 +1681,7 @@ bld_instruction(struct bld_context *bld,
    {
       struct nv_basic_block *bb = bld->brkt_bb[bld->loop_lvl - 1];
 
-      bld_flow(bld, NV_OP_BRA, NULL, bb, FALSE);
+      bld_flow(bld, NV_OP_BRA, NULL, NV_CC_P, bb, FALSE);
 
       if (bld->out_kind == CFG_EDGE_FORWARD) /* else we already had BRK/CONT */
          nvc0_bblock_attach(bld->pc->current_block, bb, CFG_EDGE_LOOP_LEAVE);
@@ -1690,7 +1693,7 @@ bld_instruction(struct bld_context *bld,
    {
       struct nv_basic_block *bb = bld->loop_bb[bld->loop_lvl - 1];
 
-      bld_flow(bld, NV_OP_BRA, NULL, bb, FALSE);
+      bld_flow(bld, NV_OP_BRA, NULL, NV_CC_P, bb, FALSE);
 
       nvc0_bblock_attach(bld->pc->current_block, bb, CFG_EDGE_BACK);
 
@@ -1705,9 +1708,11 @@ bld_instruction(struct bld_context *bld,
    {
       struct nv_basic_block *bb = bld->loop_bb[bld->loop_lvl - 1];
 
-      bld_flow(bld, NV_OP_BRA, NULL, bb, FALSE);
+      if (bld->out_kind != CFG_EDGE_FAKE) { /* else we already had BRK/CONT */
+         bld_flow(bld, NV_OP_BRA, NULL, NV_CC_P, bb, FALSE);
 
-      nvc0_bblock_attach(bld->pc->current_block, bb, CFG_EDGE_BACK);
+         nvc0_bblock_attach(bld->pc->current_block, bb, CFG_EDGE_BACK);
+      }
 
       bld_loop_end(bld, bb); /* replace loop-side operand of the phis */
 
@@ -1824,11 +1829,11 @@ bld_instruction(struct bld_context *bld,
    case TGSI_OPCODE_SSG:
       FOR_EACH_DST0_ENABLED_CHANNEL(c, insn) { /* XXX: set lt, set gt, sub */
          src0 = emit_fetch(bld, insn, 0, c);
-         src1 = bld_setp(bld, NV_OP_SET_F32, NV_CC_EQ, src0, bld->zero);
-         temp = bld_insn_2(bld, NV_OP_AND, src0, bld_imm_u32(bld, 0x80000000));
-         temp = bld_insn_2(bld, NV_OP_OR,  temp, bld_imm_f32(bld, 1.0f));
-         dst0[c] = bld_insn_1(bld, NV_OP_MOV, temp);
-         bld_src_predicate(bld, dst0[c]->insn, 1, src1);
+         src1 = bld_insn_2(bld, NV_OP_FSET_F32, src0, bld->zero);
+         src2 = bld_insn_2(bld, NV_OP_FSET_F32, src0, bld->zero);
+         src1->insn->set_cond = NV_CC_GT;
+         src2->insn->set_cond = NV_CC_LT;
+         dst0[c] = bld_insn_2(bld, NV_OP_SUB_F32, src1, src2);
       }
       break;
    case TGSI_OPCODE_SUB:
@@ -1892,10 +1897,10 @@ bld_instruction(struct bld_context *bld,
       }
 
       for (c = 0; c < 4; ++c)
-         if ((mask & (1 << c)) &&
-             ((dst0[c]->reg.file == NV_FILE_IMM) ||
-              (dst0[c]->reg.id == 63 && dst0[c]->reg.file == NV_FILE_GPR)))
-            dst0[c] = bld_insn_1(bld, NV_OP_MOV, dst0[c]);
+         if (mask & (1 << c))
+            if ((dst0[c]->reg.file == NV_FILE_IMM) ||
+                (dst0[c]->reg.file == NV_FILE_GPR && dst0[c]->reg.id == 63))
+               dst0[c] = bld_insn_1(bld, NV_OP_MOV, dst0[c]);
 
       c = 0;
       if ((mask & 0x3) == 0x3) {

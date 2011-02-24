@@ -134,7 +134,7 @@ struct st_device {
    }
 
    struct pipe_resource *
-   buffer_create(unsigned size, unsigned bind = 0) {
-      return pipe_buffer_create($self->screen, bind, size);
+   buffer_create(unsigned size, unsigned usage, unsigned bind = 0) {
+      return pipe_buffer_create($self->screen, bind, usage, size);
    }
 };

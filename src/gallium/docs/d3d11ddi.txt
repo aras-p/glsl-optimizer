@@ -337,7 +337,6 @@ IaSetTopology
 	+ Gallium supports line loops, triangle fans, quads, quad strips and polygons
 
 IaSetVertexBuffers -> set_vertex_buffers
-	+ Gallium allows to specify a max_index here
 	- Gallium only allows setting all vertex buffers at once, while D3D11 supports setting a subset
 
 OpenResource -> texture_from_handle

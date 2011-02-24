@@ -499,6 +499,7 @@ struct __DRIuseInvalidateExtensionRec {
 #define __DRI_ATTRIB_BIND_TO_MIPMAP_TEXTURE	45
 #define __DRI_ATTRIB_BIND_TO_TEXTURE_TARGETS	46
 #define __DRI_ATTRIB_YINVERTED			47
+#define __DRI_ATTRIB_FRAMEBUFFER_SRGB_CAPABLE	48
 
 /* __DRI_ATTRIB_RENDER_TYPE */
 #define __DRI_ATTRIB_RGBA_BIT			0x01	
@@ -656,7 +657,7 @@ struct __DRIlegacyExtensionRec {
  * conjunction with the core extension.
  */
 #define __DRI_SWRAST "DRI_SWRast"
-#define __DRI_SWRAST_VERSION 1
+#define __DRI_SWRAST_VERSION 2
 
 struct __DRIswrastExtensionRec {
     __DRIextension base;
@@ -669,6 +670,13 @@ struct __DRIswrastExtensionRec {
     __DRIdrawable *(*createNewDrawable)(__DRIscreen *screen,
 					const __DRIconfig *config,
 					void *loaderPrivate);
+
+   /* Since version 2 */
+   __DRIcontext *(*createNewContextForAPI)(__DRIscreen *screen,
+                                           int api,
+                                           const __DRIconfig *config,
+                                           __DRIcontext *shared,
+                                           void *data);
 };
 
 /**
@@ -778,6 +786,14 @@ struct __DRIdri2ExtensionRec {
 					   const __DRIconfig *config,
 					   __DRIcontext *shared,
 					   void *data);
+
+   __DRIbuffer *(*allocateBuffer)(__DRIscreen *screen,
+				  unsigned int attachment,
+				  unsigned int format,
+				  int width,
+				  int height);
+   void (*releaseBuffer)(__DRIscreen *screen,
+			 __DRIbuffer *buffer);
 };
 
 

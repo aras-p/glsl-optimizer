@@ -43,7 +43,8 @@ int debug_refcnt_state;
 struct os_stream* stream;
 
 /* TODO: maybe move this serial machinery to a stand-alone module and expose it? */
-static pipe_mutex serials_mutex;
+pipe_static_mutex(serials_mutex);
+
 static struct util_hash_table* serials_hash;
 static unsigned serials_last;
 
@@ -66,6 +67,15 @@ static boolean debug_serial(void* p, unsigned* pserial)
 {
    unsigned serial;
    boolean found = TRUE;
+#ifdef PIPE_SUBSYSTEM_WINDOWS_USER
+   static boolean first = TRUE;
+
+   if (first) {
+      pipe_mutex_init(serials_mutex);
+      first = FALSE;
+   }
+#endif
+
    pipe_mutex_lock(serials_mutex);
    if(!serials_hash)
       serials_hash = util_hash_table_create(hash_ptr, compare_ptr);

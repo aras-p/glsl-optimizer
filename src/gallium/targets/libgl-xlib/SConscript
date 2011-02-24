@@ -16,6 +16,12 @@ env.Append(CPPDEFINES = ['USE_XSHM'])
 
 env.Prepend(LIBS = env['X11_LIBS'])
 
+# when GLES is enabled, gl* and _glapi_* belong to bridge_glapi and
+# shared_glapi respectively
+if env['gles']:
+    env.Prepend(LIBPATH = [shared_glapi.dir])
+    glapi = [bridge_glapi, 'glapi']
+
 env.Prepend(LIBS = [
     st_xlib,
     ws_xlib,
@@ -23,7 +29,6 @@ env.Prepend(LIBS = [
     mesa,
     glsl,
     gallium,
-    'talloc'
 ])
 
 sources = [

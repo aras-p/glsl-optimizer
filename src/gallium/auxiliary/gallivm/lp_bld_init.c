@@ -222,10 +222,11 @@ free_gallivm_state(struct gallivm_state *gallivm)
 static boolean
 init_gallivm_state(struct gallivm_state *gallivm)
 {
-   assert(gallivm_initialized);
    assert(!gallivm->context);
    assert(!gallivm->module);
    assert(!gallivm->provider);
+
+   lp_build_init();
 
    gallivm->context = LLVMContextCreate();
    if (!gallivm->context)
@@ -387,6 +388,9 @@ gallivm_garbage_collect(struct gallivm_state *gallivm)
 void
 lp_build_init(void)
 {
+   if (gallivm_initialized)
+      return;
+
 #ifdef DEBUG
    gallivm_debug = debug_get_option_gallivm_debug();
 #endif

@@ -42,6 +42,7 @@ if env['drm']:
     #     SConscript([
     #         'drivers/nouveau/SConscript', 
     #         'drivers/nv50/SConscript', 
+    #         'drivers/nvc0/SConscript', 
     #         'drivers/nvfx/SConscript',
     #     ])
 

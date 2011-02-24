@@ -108,6 +108,8 @@ delete_fp_variant(struct st_context *st, struct st_fp_variant *fpv)
 {
    if (fpv->driver_shader) 
       cso_delete_fragment_shader(st->cso_context, fpv->driver_shader);
+   if (fpv->parameters)
+      _mesa_free_parameter_list(fpv->parameters);
       
    FREE(fpv);
 }
@@ -404,6 +406,7 @@ st_translate_fragment_program(struct st_context *st,
 {
    struct pipe_context *pipe = st->pipe;
    struct st_fp_variant *variant = CALLOC_STRUCT(st_fp_variant);
+   GLboolean deleteFP = GL_FALSE;
 
    if (!variant)
       return NULL;
@@ -413,17 +416,18 @@ st_translate_fragment_program(struct st_context *st,
 #if FEATURE_drawpix
    if (key->bitmap) {
       /* glBitmap drawing */
-      struct gl_fragment_program *fp;
+      struct gl_fragment_program *fp; /* we free this temp program below */
 
       st_make_bitmap_fragment_program(st, &stfp->Base,
                                       &fp, &variant->bitmap_sampler);
 
       variant->parameters = _mesa_clone_parameter_list(fp->Base.Parameters);
       stfp = st_fragment_program(fp);
+      deleteFP = GL_TRUE;
    }
    else if (key->drawpixels) {
       /* glDrawPixels drawing */
-      struct gl_fragment_program *fp;
+      struct gl_fragment_program *fp; /* we free this temp program below */
 
       if (key->drawpixels_z || key->drawpixels_stencil) {
          fp = st_make_drawpix_z_stencil_program(st, key->drawpixels_z,
@@ -433,6 +437,7 @@ st_translate_fragment_program(struct st_context *st,
          /* RGBA */
          st_make_drawpix_fragment_program(st, &stfp->Base, &fp);
          variant->parameters = _mesa_clone_parameter_list(fp->Base.Parameters);
+         deleteFP = GL_TRUE;
       }
       stfp = st_fragment_program(fp);
    }
@@ -628,6 +633,12 @@ st_translate_fragment_program(struct st_context *st,
    if (ST_DEBUG & DEBUG_TGSI) {
       tgsi_dump( stfp->tgsi.tokens, 0/*TGSI_DUMP_VERBOSE*/ );
       debug_printf("\n");
+   }
+
+   if (deleteFP) {
+      /* Free the temporary program made above */
+      struct gl_fragment_program *fp = &stfp->Base;
+      _mesa_reference_fragprog(st->ctx, &fp, NULL);
    }
 
    return variant;

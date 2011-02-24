@@ -646,11 +646,11 @@ static void _save_reset_vertex( struct gl_context *ctx )
 do {								\
    struct vbo_save_context *save = &vbo_context(ctx)->save;	\
 								\
-   if (save->active_sz[A] != N)				\
+   if (save->active_sz[A] != N)					\
       save_fixup_vertex(ctx, A, N);				\
 								\
    {								\
-      GLfloat *dest = save->attrptr[A];			\
+      GLfloat *dest = save->attrptr[A];				\
       if (N>0) dest[0] = V0;					\
       if (N>1) dest[1] = V1;					\
       if (N>2) dest[2] = V2;					\
@@ -663,7 +663,7 @@ do {								\
       for (i = 0; i < save->vertex_size; i++)			\
 	 save->buffer_ptr[i] = save->vertex[i];			\
 								\
-      save->buffer_ptr += save->vertex_size;				\
+      save->buffer_ptr += save->vertex_size;			\
 								\
       if (++save->vert_count >= save->max_vert)			\
 	 _save_wrap_filled_vertex( ctx );			\

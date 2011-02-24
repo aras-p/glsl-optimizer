@@ -98,7 +98,7 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 		bo->size = open_arg.size;
 		bo->shared = TRUE;
 	} else {
-		struct drm_radeon_gem_create args;
+		struct drm_radeon_gem_create args = {};
 
 		args.size = size;
 		args.alignment = alignment;
@@ -204,7 +204,7 @@ int radeon_bo_get_tiling_flags(struct radeon *radeon,
 			       uint32_t *tiling_flags,
 			       uint32_t *pitch)
 {
-	struct drm_radeon_gem_get_tiling args;
+	struct drm_radeon_gem_get_tiling args = {};
 	int ret;
 
 	args.handle = bo->handle;

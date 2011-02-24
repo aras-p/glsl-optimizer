@@ -62,6 +62,7 @@ extern "C" {
 #define PIPE_MAX_GEOMETRY_SAMPLERS  16
 #define PIPE_MAX_SHADER_INPUTS    32
 #define PIPE_MAX_SHADER_OUTPUTS   32
+#define PIPE_MAX_SHADER_RESOURCES 32
 #define PIPE_MAX_TEXTURE_LEVELS   16
 #define PIPE_MAX_SO_BUFFERS        4
 
@@ -389,11 +390,11 @@ struct pipe_stream_output_state
 struct pipe_transfer
 {
    struct pipe_resource *resource; /**< resource to transfer to/from  */
-   unsigned level;
+   unsigned level;                 /**< texture mipmap level */
    enum pipe_transfer_usage usage;
-   struct pipe_box box;
-   unsigned stride;
-   unsigned layer_stride;
+   struct pipe_box box;            /**< region of the resource to access */
+   unsigned stride;                /**< row stride in bytes */
+   unsigned layer_stride;          /**< image/layer stride in bytes */
    void *data;
 };
 
@@ -407,7 +408,6 @@ struct pipe_transfer
 struct pipe_vertex_buffer
 {
    unsigned stride;    /**< stride to same attrib in next vertex, in bytes */
-   unsigned max_index;   /**< number of vertices in this buffer */
    unsigned buffer_offset;  /**< offset to start of data in buffer, in bytes */
    struct pipe_resource *buffer;  /**< the actual buffer */
 };

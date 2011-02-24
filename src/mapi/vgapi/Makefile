@@ -81,11 +81,14 @@ install: default install-headers install-pc
 	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(VG_LIB_GLOB) \
 		$(DESTDIR)$(INSTALL_LIB_DIR)
 
+# due to a bug in makedepend, cannot pass VGAPI_CPPFLAGS to it
+$(VGAPI_OBJECTS): vgapi_tmp.h
+
 depend: $(VGAPI_SOURCES)
 	@echo "running $(MKDEP)"
 	@touch depend
 	@$(MKDEP) $(MKDEP_OPTIONS) -f- $(DEFINES) $(INCLUDE_DIRS) \
-		$(VGAPI_CPPFLAGS) $(VGAPI_SOURCES) 2>/dev/null | \
+		$(VGAPI_SOURCES) 2>/dev/null | \
 		sed -e 's,^$(MAPI)/,,' > depend
 
 -include depend

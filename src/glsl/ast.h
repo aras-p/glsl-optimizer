@@ -49,23 +49,23 @@ struct YYLTYPE;
  */
 class ast_node {
 public:
-   /* Callers of this talloc-based new need not call delete. It's
-    * easier to just talloc_free 'ctx' (or any of its ancestors). */
+   /* Callers of this ralloc-based new need not call delete. It's
+    * easier to just ralloc_free 'ctx' (or any of its ancestors). */
    static void* operator new(size_t size, void *ctx)
    {
       void *node;
 
-      node = talloc_zero_size(ctx, size);
+      node = rzalloc_size(ctx, size);
       assert(node != NULL);
 
       return node;
    }
 
    /* If the user *does* call delete, that's OK, we will just
-    * talloc_free in that case. */
+    * ralloc_free in that case. */
    static void operator delete(void *table)
    {
-      talloc_free(table);
+      ralloc_free(table);
    }
 
    /**
@@ -350,6 +350,14 @@ struct ast_type_qualifier {
 	  * qualifier is used.
 	  */
 	 unsigned explicit_location:1;
+
+         /** \name Layout qualifiers for GL_AMD_conservative_depth */
+         /** \{ */
+         unsigned depth_any:1;
+         unsigned depth_greater:1;
+         unsigned depth_less:1;
+         unsigned depth_unchanged:1;
+         /** \} */
       }
       /** \brief Set of flags, accessed by name. */
       q;
@@ -603,25 +611,6 @@ private:
    class ir_function_signature *signature;
 
    friend class ast_function_definition;
-};
-
-
-class ast_declaration_statement : public ast_node {
-public:
-   ast_declaration_statement(void);
-
-   enum {
-      ast_function,
-      ast_declaration,
-      ast_precision
-   } mode;
-
-   union {
-      class ast_function *function;
-      ast_declarator_list *declarator;
-      ast_type_specifier *type;
-      ast_node *node;
-   } declaration;
 };
 
 

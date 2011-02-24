@@ -426,18 +426,12 @@ st_framebuffer_create(struct st_framebuffer_iface *stfbi)
    struct gl_config mode;
    gl_buffer_index idx;
 
+   if (!stfbi)
+      return NULL;
+
    stfb = CALLOC_STRUCT(st_framebuffer);
    if (!stfb)
       return NULL;
-
-   /* for FBO-only context */
-   if (!stfbi) {
-      struct gl_framebuffer *base = _mesa_get_incomplete_framebuffer();
-
-      stfb->Base = *base;
-
-      return stfb;
-   }
 
    st_visual_to_context_mode(stfbi->visual, &mode);
    _mesa_initialize_window_framebuffer(&stfb->Base, &mode);
@@ -764,7 +758,8 @@ st_api_make_current(struct st_api *stapi, struct st_context_iface *stctxi,
          ret = _mesa_make_current(st->ctx, &stdraw->Base, &stread->Base);
       }
       else {
-         ret = FALSE;
+         struct gl_framebuffer *incomplete = _mesa_get_incomplete_framebuffer();
+         ret = _mesa_make_current(st->ctx, incomplete, incomplete);
       }
 
       st_framebuffer_reference(&stdraw, NULL);

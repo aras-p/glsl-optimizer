@@ -46,18 +46,34 @@
  * (active) state every time a 4kb boundary is crossed.
  */
 
-static INLINE void set_dynamic_indirect(struct i915_context *i915,
-                                        unsigned offset,
-                                        const unsigned *src,
-                                        unsigned dwords)
+static INLINE void set_dynamic(struct i915_context *i915,
+                               unsigned offset,
+                               const unsigned state)
+{
+   if (i915->current.dynamic[offset] == state)
+      return;
+
+   i915->current.dynamic[offset] = state;
+   i915->dynamic_dirty |= 1 << offset;
+   i915->hardware_dirty |= I915_HW_DYNAMIC;
+}
+
+
+
+static INLINE void set_dynamic_array(struct i915_context *i915,
+                                     unsigned offset,
+                                     const unsigned *src,
+                                     unsigned dwords)
 {
    unsigned i;
 
    if (!memcmp(src, &i915->current.dynamic[offset], dwords * 4))
       return;
 
-   for (i = 0; i < dwords; i++)
+   for (i = 0; i < dwords; i++) {
       i915->current.dynamic[offset + i] = src[i];
+      i915->dynamic_dirty |= 1 << (offset + i);
+   }
 
    i915->hardware_dirty |= I915_HW_DYNAMIC;
 }
@@ -79,12 +95,7 @@ static void upload_MODES4(struct i915_context *i915)
      */
    modes4 |= i915->blend->modes4;
 
-   /* Always, so that we know when state is in-active:
-    */
-   set_dynamic_indirect(i915,
-                        I915_DYNAMIC_MODES4,
-                        &modes4,
-                        1);
+   set_dynamic(i915, I915_DYNAMIC_MODES4, modes4);
 }
 
 const struct i915_tracked_state i915_upload_MODES4 = {
@@ -107,10 +118,7 @@ static void upload_BFO(struct i915_context *i915)
       bfo[0] |= i915->stencil_ref.ref_value[1] << BFO_STENCIL_REF_SHIFT;
    }
 
-   set_dynamic_indirect(i915,
-                        I915_DYNAMIC_BFO_0,
-                        &(bfo[0]),
-                        2);
+   set_dynamic_array(i915, I915_DYNAMIC_BFO_0, bfo, 2);
 }
 
 const struct i915_tracked_state i915_upload_BFO = {
@@ -141,10 +149,7 @@ static void upload_BLENDCOLOR(struct i915_context *i915)
                                color[3]);
    }
 
-   set_dynamic_indirect(i915,
-                        I915_DYNAMIC_BC_0,
-                        bc,
-                        2);
+   set_dynamic_array(i915, I915_DYNAMIC_BC_0, bc, 2);
 }
 
 const struct i915_tracked_state i915_upload_BLENDCOLOR = {
@@ -161,10 +166,7 @@ static void upload_IAB(struct i915_context *i915)
 {
    unsigned iab = i915->blend->iab;
 
-   set_dynamic_indirect(i915,
-                        I915_DYNAMIC_IAB,
-                        &iab,
-                        1);
+   set_dynamic(i915, I915_DYNAMIC_IAB, iab);
 }
 
 const struct i915_tracked_state i915_upload_IAB = {
@@ -179,10 +181,8 @@ const struct i915_tracked_state i915_upload_IAB = {
  */
 static void upload_DEPTHSCALE(struct i915_context *i915)
 {
-   set_dynamic_indirect(i915,
-                        I915_DYNAMIC_DEPTHSCALE_0,
-                        &(i915->rasterizer->ds[0].u),
-                        2);
+   set_dynamic_array(i915, I915_DYNAMIC_DEPTHSCALE_0,
+                     &i915->rasterizer->ds[0].u, 2);
 }
 
 const struct i915_tracked_state i915_upload_DEPTHSCALE = {
@@ -234,10 +234,7 @@ static void upload_STIPPLE(struct i915_context *i915)
                 (p[3] << 12));
    }
 
-   set_dynamic_indirect(i915,
-                        I915_DYNAMIC_STP_0,
-                        &st[0],
-                        2);
+   set_dynamic_array(i915, I915_DYNAMIC_STP_0, st, 2);
 }
 
 const struct i915_tracked_state i915_upload_STIPPLE = {
@@ -253,10 +250,7 @@ const struct i915_tracked_state i915_upload_STIPPLE = {
  */
 static void upload_SCISSOR_ENABLE( struct i915_context *i915 )
 {
-   set_dynamic_indirect(i915,
-                        I915_DYNAMIC_SC_ENA_0,
-                        &(i915->rasterizer->sc[0]),
-                        1);
+   set_dynamic(i915, I915_DYNAMIC_SC_ENA_0, i915->rasterizer->sc[0]);
 }
 
 const struct i915_tracked_state i915_upload_SCISSOR_ENABLE = {
@@ -282,10 +276,7 @@ static void upload_SCISSOR_RECT(struct i915_context *i915)
    sc[1] = (y1 << 16) | (x1 & 0xffff);
    sc[2] = (y2 << 16) | (x2 & 0xffff);
 
-   set_dynamic_indirect(i915,
-                        I915_DYNAMIC_SC_RECT_0,
-                        &sc[0],
-                        3);
+   set_dynamic_array(i915, I915_DYNAMIC_SC_RECT_0, sc, 3);
 }
 
 const struct i915_tracked_state i915_upload_SCISSOR_RECT = {

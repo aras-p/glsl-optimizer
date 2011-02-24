@@ -76,18 +76,18 @@ softpipe_bind_fragment_sampler_states(struct pipe_context *pipe,
    assert(num <= PIPE_MAX_SAMPLERS);
 
    /* Check for no-op */
-   if (num == softpipe->num_samplers &&
-       !memcmp(softpipe->sampler, sampler, num * sizeof(void *)))
+   if (num == softpipe->num_fragment_samplers &&
+       !memcmp(softpipe->fragment_samplers, sampler, num * sizeof(void *)))
       return;
 
    draw_flush(softpipe->draw);
 
    for (i = 0; i < num; ++i)
-      softpipe->sampler[i] = sampler[i];
+      softpipe->fragment_samplers[i] = sampler[i];
    for (i = num; i < PIPE_MAX_SAMPLERS; ++i)
-      softpipe->sampler[i] = NULL;
+      softpipe->fragment_samplers[i] = NULL;
 
-   softpipe->num_samplers = num;
+   softpipe->num_fragment_samplers = num;
 
    softpipe->dirty |= SP_NEW_SAMPLER;
 }
@@ -191,7 +191,7 @@ softpipe_set_fragment_sampler_views(struct pipe_context *pipe,
    assert(num <= PIPE_MAX_SAMPLERS);
 
    /* Check for no-op */
-   if (num == softpipe->num_sampler_views &&
+   if (num == softpipe->num_fragment_sampler_views &&
        !memcmp(softpipe->fragment_sampler_views, views,
                num * sizeof(struct pipe_sampler_view *)))
       return;
@@ -205,7 +205,7 @@ softpipe_set_fragment_sampler_views(struct pipe_context *pipe,
       sp_tex_tile_cache_set_sampler_view(softpipe->fragment_tex_cache[i], view);
    }
 
-   softpipe->num_sampler_views = num;
+   softpipe->num_fragment_sampler_views = num;
 
    softpipe->dirty |= SP_NEW_TEXTURE;
 }
@@ -374,10 +374,10 @@ softpipe_reset_sampler_variants(struct softpipe_context *softpipe)
    }
 
    for (i = 0; i <= softpipe->fs->info.file_max[TGSI_FILE_SAMPLER]; i++) {
-      if (softpipe->sampler[i]) {
+      if (softpipe->fragment_samplers[i]) {
          softpipe->tgsi.frag_samplers_list[i] =
             get_sampler_variant( i,
-                                 sp_sampler(softpipe->sampler[i]),
+                                 sp_sampler(softpipe->fragment_samplers[i]),
                                  softpipe->fragment_sampler_views[i],
                                  TGSI_PROCESSOR_FRAGMENT );
 

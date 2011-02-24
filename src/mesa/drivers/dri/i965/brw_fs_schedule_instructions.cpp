@@ -39,7 +39,6 @@ extern "C" {
 #include "brw_context.h"
 #include "brw_eu.h"
 #include "brw_wm.h"
-#include "talloc.h"
 }
 #include "brw_fs.h"
 #include "../glsl/glsl_types.h"
@@ -129,7 +128,7 @@ public:
    instruction_scheduler(fs_visitor *v, void *mem_ctx, int virtual_grf_count)
    {
       this->v = v;
-      this->mem_ctx = talloc_new(mem_ctx);
+      this->mem_ctx = ralloc_context(mem_ctx);
       this->virtual_grf_count = virtual_grf_count;
       this->instructions.make_empty();
       this->instructions_to_schedule = 0;
@@ -137,7 +136,7 @@ public:
 
    ~instruction_scheduler()
    {
-      talloc_free(this->mem_ctx);
+      ralloc_free(this->mem_ctx);
    }
    void add_barrier_deps(schedule_node *n);
    void add_dep(schedule_node *before, schedule_node *after, int latency);
@@ -196,11 +195,11 @@ instruction_scheduler::add_dep(schedule_node *before, schedule_node *after,
       else
 	 before->child_array_size *= 2;
 
-      before->children = talloc_realloc(mem_ctx, before->children,
-					schedule_node *,
-					before->child_array_size);
-      before->child_latency = talloc_realloc(mem_ctx, before->child_latency,
-					     int, before->child_array_size);
+      before->children = reralloc(mem_ctx, before->children,
+				  schedule_node *,
+				  before->child_array_size);
+      before->child_latency = reralloc(mem_ctx, before->child_latency,
+				       int, before->child_array_size);
    }
 
    before->children[before->child_count] = after;

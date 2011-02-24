@@ -855,6 +855,19 @@ identity_context_transfer_inline_write(struct pipe_context *_context,
 }
 
 
+static void identity_redefine_user_buffer(struct pipe_context *_context,
+                                          struct pipe_resource *_resource,
+                                          unsigned offset, unsigned size)
+{
+   struct identity_context *id_context = identity_context(_context);
+   struct identity_resource *id_resource = identity_resource(_resource);
+   struct pipe_context *context = id_context->pipe;
+   struct pipe_resource *resource = id_resource->resource;
+
+   context->redefine_user_buffer(context, resource, offset, size);
+}
+
+
 struct pipe_context *
 identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
 {
@@ -929,6 +942,7 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.transfer_unmap = identity_context_transfer_unmap;
    id_pipe->base.transfer_flush_region = identity_context_transfer_flush_region;
    id_pipe->base.transfer_inline_write = identity_context_transfer_inline_write;
+   id_pipe->base.redefine_user_buffer = identity_redefine_user_buffer;
 
    id_pipe->pipe = pipe;
 

@@ -217,6 +217,7 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
    struct push_context ctx;
    unsigned i, index_size;
    unsigned inst = info->instance_count;
+   boolean apply_bias = info->indexed && info->index_bias;
 
    ctx.chan = nvc0->screen->base.channel;
    ctx.translate = nvc0->vertex->translate;
@@ -230,7 +231,8 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
 
       data = nvc0_resource_map_offset(nvc0, res,
                                       vb->buffer_offset, NOUVEAU_BO_RD);
-      if (info->indexed)
+
+      if (apply_bias && likely(!(nvc0->vertex->instance_bufs & (1 << i))))
          data += info->index_bias * vb->stride;
 
       ctx.translate->set_buffer(ctx.translate, i, data, vb->stride, ~0);

@@ -457,7 +457,7 @@ mgaCreateContext( gl_api api,
       shareCtx = ((mgaContextPtr) sharedContextPrivate)->glCtx;
    else 
       shareCtx = NULL;
-   mmesa->glCtx = _mesa_create_context(mesaVis, shareCtx,
+   mmesa->glCtx = _mesa_create_context(API_OPENGL, mesaVis, shareCtx,
                                        &functions, (void *) mmesa);
    if (!mmesa->glCtx) {
       FREE(mmesa);

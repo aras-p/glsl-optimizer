@@ -81,10 +81,12 @@ enum dirty_state {
    BLEND_DIRTY         = 1 << 0,
    FRAMEBUFFER_DIRTY   = 1 << 1,
    DEPTH_STENCIL_DIRTY = 1 << 2,
+   PAINT_DIRTY         = 1 << 3,
 
    ALL_DIRTY           = BLEND_DIRTY |
                          FRAMEBUFFER_DIRTY |
-                         DEPTH_STENCIL_DIRTY
+                         DEPTH_STENCIL_DIRTY |
+                         PAINT_DIRTY
 };
 
 struct vg_context
@@ -129,12 +131,21 @@ struct vg_context
    struct blit_state *blit;
 };
 
+
+/**
+ *  Base class for VG objects like paths, images, fonts.
+ */
 struct vg_object {
    enum vg_object_type type;
+   VGHandle handle;
    struct vg_context *ctx;
 };
+
+
 void vg_init_object(struct vg_object *obj, struct vg_context *ctx, enum vg_object_type type);
-VGboolean vg_object_is_valid(void *ptr, enum vg_object_type type);
+void vg_free_object(struct vg_object *obj);
+
+VGboolean vg_object_is_valid(VGHandle object, enum vg_object_type type);
 
 struct vg_context *vg_create_context(struct pipe_context *pipe,
                                      const void *visual,
@@ -145,7 +156,7 @@ void vg_set_current_context(struct vg_context *ctx);
 
 VGboolean vg_context_is_object_valid(struct vg_context *ctx,
                                      enum vg_object_type type,
-                                     void *ptr);
+                                     VGHandle object);
 void vg_context_add_object(struct vg_context *ctx,
                            enum vg_object_type type,
                            void *ptr);

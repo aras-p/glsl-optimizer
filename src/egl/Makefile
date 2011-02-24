@@ -5,6 +5,10 @@ include $(TOP)/configs/current
 
 SUBDIRS = drivers main
 
+ifneq ($(findstring wayland, $(EGL_PLATFORMS)),)
+SUBDIRS += wayland
+endif
+
 
 default: subdirs
 

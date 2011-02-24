@@ -39,6 +39,43 @@
 
 
 /**
+ * All vertex buffers should be in an unmapped state when we're about
+ * to draw.  This debug function checks that.
+ */
+static void
+check_buffers_are_unmapped(const struct gl_client_array **inputs)
+{
+#ifdef DEBUG
+   GLuint i;
+
+   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+      if (inputs[i]) {
+         struct gl_buffer_object *obj = inputs[i]->BufferObj;
+         assert(!_mesa_bufferobj_mapped(obj));
+      }
+   }
+#endif
+}
+
+
+/**
+ * A debug function that may be called from other parts of Mesa as
+ * needed during debugging.
+ */
+void
+vbo_check_buffers_are_unmapped(struct gl_context *ctx)
+{
+   struct vbo_context *vbo = vbo_context(ctx);
+   struct vbo_exec_context *exec = &vbo->exec;
+   /* check the current vertex arrays */
+   check_buffers_are_unmapped(exec->array.inputs);
+   /* check the current glBegin/glVertex/glEnd-style VBO */
+   assert(!_mesa_bufferobj_mapped(exec->vtx.bufferobj));
+}
+
+
+
+/**
  * Compute min and max elements by scanning the index buffer for
  * glDraw[Range]Elements() calls.
  * If primitive restart is enabled, we need to ignore restart
@@ -502,8 +539,13 @@ recalculate_input_bindings(struct gl_context *ctx)
 static void
 bind_arrays(struct gl_context *ctx)
 {
+   if (!ctx->Array.RebindArrays) {
+      return;
+   }
+
    bind_array_obj(ctx);
    recalculate_input_bindings(ctx);
+   ctx->Array.RebindArrays = GL_FALSE;
 }
 
 
@@ -576,6 +618,7 @@ vbo_draw_arrays(struct gl_context *ctx, GLenum mode, GLint start,
 
       if (primCount > 0) {
          /* draw one or two prims */
+         check_buffers_are_unmapped(exec->array.inputs);
          vbo->draw_prims(ctx, exec->array.inputs, prim, primCount, NULL,
                          GL_TRUE, start, start + count - 1);
       }
@@ -585,6 +628,7 @@ vbo_draw_arrays(struct gl_context *ctx, GLenum mode, GLint start,
       prim[0].start = start;
       prim[0].count = count;
 
+      check_buffers_are_unmapped(exec->array.inputs);
       vbo->draw_prims(ctx, exec->array.inputs, prim, 1, NULL,
                       GL_TRUE, start, start + count - 1);
    }
@@ -790,6 +834,7 @@ vbo_validated_drawrangeelements(struct gl_context *ctx, GLenum mode,
     * for the latter case elsewhere.
     */
 
+   check_buffers_are_unmapped(exec->array.inputs);
    vbo->draw_prims( ctx, exec->array.inputs, prim, 1, &ib,
 		    index_bounds_valid, start, end );
 }
@@ -1106,6 +1151,7 @@ vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
 	    prim[i].basevertex = 0;
       }
 
+      check_buffers_are_unmapped(exec->array.inputs);
       vbo->draw_prims(ctx, exec->array.inputs, prim, primcount, &ib,
 		      GL_FALSE, ~0, ~0);
    } else {
@@ -1130,6 +1176,7 @@ vbo_validated_multidrawelements(struct gl_context *ctx, GLenum mode,
 	 else
 	    prim[0].basevertex = 0;
 
+         check_buffers_are_unmapped(exec->array.inputs);
          vbo->draw_prims(ctx, exec->array.inputs, prim, 1, &ib,
                          GL_FALSE, ~0, ~0);
       }

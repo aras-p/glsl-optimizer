@@ -44,6 +44,11 @@ nvc0_insn_can_load(struct nv_instruction *nvi, int s,
    if (ld->indirect >= 0)
       return FALSE;
 
+   /* a few ops can use g[] sources directly, but we don't support g[] yet */
+   if (ld->src[0]->value->reg.file == NV_FILE_MEM_L ||
+       ld->src[0]->value->reg.file == NV_FILE_MEM_G)
+      return FALSE;
+
    for (i = 0; i < 3 && nvi->src[i]; ++i)
       if (nvi->src[i]->value->reg.file == NV_FILE_IMM)
          return FALSE;
@@ -55,15 +60,11 @@ nvc0_insn_can_load(struct nv_instruction *nvi, int s,
 boolean
 nvc0_insn_is_predicateable(struct nv_instruction *nvi)
 {
-   int s;
-
-   if (!nv_op_predicateable(nvi->opcode))
+   if (nvi->predicate >= 0) /* already predicated */
       return FALSE;
-   if (nvi->predicate >= 0)
+   if (!nvc0_op_info_table[nvi->opcode].predicate &&
+       !nvc0_op_info_table[nvi->opcode].pseudo)
       return FALSE;
-   for (s = 0; s < 4 && nvi->src[s]; ++s)
-      if (nvi->src[s]->value->reg.file == NV_FILE_IMM)
-         return FALSE;
    return TRUE;
 }
 
@@ -103,6 +104,12 @@ nvc0_pc_replace_value(struct nv_pc *pc,
    return n;
 }
 
+static INLINE boolean
+is_gpr63(struct nv_value *val)
+{
+   return (val->reg.file == NV_FILE_GPR && val->reg.id == 63);
+}
+
 struct nv_value *
 nvc0_pc_find_constant(struct nv_ref *ref)
 {
@@ -116,7 +123,7 @@ nvc0_pc_find_constant(struct nv_ref *ref)
       assert(!src->insn->src[0]->mod);
       src = src->insn->src[0]->value;
    }
-   if ((src->reg.file == NV_FILE_IMM) ||
+   if ((src->reg.file == NV_FILE_IMM) || is_gpr63(src) ||
        (src->insn &&
         src->insn->opcode == NV_OP_LD &&
         src->insn->src[0]->value->reg.file >= NV_FILE_MEM_C(0) &&
@@ -130,7 +137,7 @@ nvc0_pc_find_immediate(struct nv_ref *ref)
 {
    struct nv_value *src = nvc0_pc_find_constant(ref);
 
-   return (src && src->reg.file == NV_FILE_IMM) ? src : NULL;
+   return (src && (src->reg.file == NV_FILE_IMM || is_gpr63(src))) ? src : NULL;
 }
 
 static void
@@ -187,7 +194,10 @@ nvc0_pc_pass_in_order(struct nv_basic_block *root, nv_pc_pass_func f,
             bb[p++] = b->out[j];
             break;
          case CFG_EDGE_LOOP_LEAVE:
-            bbb[pp++] = b->out[j];
+            if (!b->out[j]->priv) {
+               bbb[pp++] = b->out[j];
+               b->out[j]->priv = 1;
+            }
             break;
          default:
             assert(0);
@@ -499,6 +509,9 @@ nvc0_insn_append(struct nv_basic_block *b, struct nv_instruction *i)
 
    i->bb = b;
    b->num_instructions++;
+
+   if (i->prev && i->prev->terminator)
+      nvc0_insns_permute(i->prev, i);
 }
 
 void
@@ -512,6 +525,8 @@ nvc0_insn_insert_after(struct nv_instruction *at, struct nv_instruction *ni)
    ni->prev = at;
    ni->next->prev = ni;
    ni->prev->next = ni;
+   ni->bb = at->bb;
+   ni->bb->num_instructions++;
 }
 
 void

@@ -124,7 +124,7 @@ static INLINE GLuint intel_get_vb_max(struct intel_context *intel)
    GLuint ret;
 
    if (intel->intelScreen->no_vbo)
-      ret = intel->batch->size - 1500;
+      ret = sizeof(intel->batch.map) - 1500;
    else
       ret = INTEL_VB_SIZE;
    ret /= (intel->vertex_size * 4);

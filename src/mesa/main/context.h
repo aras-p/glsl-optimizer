@@ -99,33 +99,20 @@ _mesa_destroy_visual( struct gl_config *vis );
 /** \name Context-related functions */
 /*@{*/
 
-extern struct gl_context *
-_mesa_create_context( const struct gl_config *visual,
-                      struct gl_context *share_list,
-                      const struct dd_function_table *driverFunctions,
-                      void *driverContext );
-
 extern GLboolean
 _mesa_initialize_context( struct gl_context *ctx,
+                          gl_api api,
                           const struct gl_config *visual,
                           struct gl_context *share_list,
                           const struct dd_function_table *driverFunctions,
                           void *driverContext );
 
 extern struct gl_context *
-_mesa_create_context_for_api(gl_api api,
-			     const struct gl_config *visual,
-			     struct gl_context *share_list,
-			     const struct dd_function_table *driverFunctions,
-			     void *driverContext);
-
-extern GLboolean
-_mesa_initialize_context_for_api(struct gl_context *ctx,
-				 gl_api api,
-				 const struct gl_config *visual,
-				 struct gl_context *share_list,
-				 const struct dd_function_table *driverFunctions,
-				 void *driverContext);
+_mesa_create_context(gl_api api,
+                     const struct gl_config *visual,
+                     struct gl_context *share_list,
+                     const struct dd_function_table *driverFunctions,
+                     void *driverContext);
 
 extern void
 _mesa_free_context_data( struct gl_context *ctx );

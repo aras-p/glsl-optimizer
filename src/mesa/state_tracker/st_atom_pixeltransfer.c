@@ -99,7 +99,7 @@ create_color_map_texture(struct gl_context *ctx)
 
    /* create texture for color map/table */
    pt = st_texture_create(st, PIPE_TEXTURE_2D, format, 0,
-                          texSize, texSize, 1, PIPE_BIND_SAMPLER_VIEW);
+                          texSize, texSize, 1, 1, PIPE_BIND_SAMPLER_VIEW);
    return pt;
 }
 

@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008 Jérôme Glisse
+ * Copyright © 2011 Marek Olšák <maraeo@gmail.com>
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -26,28 +27,61 @@
 /*
  * Authors:
  *      Jérôme Glisse <glisse@freedesktop.org>
+ *      Marek Olšák <maraeo@gmail.com>
  */
 #ifndef RADEON_DRM_BUFFER_H
 #define RADEON_DRM_BUFFER_H
 
 #include "radeon_winsys.h"
+#include "pipebuffer/pb_bufmgr.h"
+#include "os/os_thread.h"
 
-#define RADEON_PB_USAGE_VERTEX      (1 << 28)
+#define RADEON_PB_USAGE_CACHE       (1 << 28)
 #define RADEON_PB_USAGE_DOMAIN_GTT  (1 << 29)
 #define RADEON_PB_USAGE_DOMAIN_VRAM (1 << 30)
 
+struct radeon_bomgr;
+
+struct radeon_bo {
+    struct pb_buffer base;
+    struct radeon_bomgr *mgr;
+    struct radeon_drm_winsys *rws;
+
+    void *ptr;
+    pipe_mutex map_mutex;
+
+    uint32_t size;
+    uint32_t handle;
+    uint32_t name;
+
+    int ref_count;
+
+    /* how many command streams is this bo referenced in? */
+    int num_cs_references;
+
+    /* how many command streams, which are being emitted in a separate
+     * thread, is this bo referenced in? */
+    int num_active_ioctls;
+
+    boolean flinked;
+    uint32_t flink;
+};
+
+struct pb_manager *radeon_bomgr_create(struct radeon_drm_winsys *rws);
+void radeon_bomgr_init_functions(struct radeon_drm_winsys *ws);
+
+void radeon_bo_unref(struct radeon_bo *buf);
+
+
+static INLINE void radeon_bo_ref(struct radeon_bo *bo)
+{
+    p_atomic_inc(&bo->ref_count);
+}
+
 static INLINE struct pb_buffer *
-radeon_pb_buffer(struct r300_winsys_buffer *buffer)
+pb_buffer(struct r300_winsys_bo *buffer)
 {
     return (struct pb_buffer *)buffer;
 }
-
-struct pb_manager *radeon_drm_bufmgr_create(struct radeon_drm_winsys *rws);
-struct pb_buffer *radeon_drm_bufmgr_create_buffer_from_handle(struct pb_manager *_mgr,
-							      uint32_t handle);
-void radeon_drm_bufmgr_flush_maps(struct pb_manager *_mgr);
-boolean radeon_drm_bufmgr_get_handle(struct pb_buffer *_buf,
-				     struct winsys_handle *whandle);
-void radeon_drm_bufmgr_init_functions(struct radeon_drm_winsys *ws);
 
 #endif

@@ -41,17 +41,18 @@ nvc0_flush(struct pipe_context *pipe, unsigned flags,
       OUT_RING  (chan, 0);
       BEGIN_RING(chan, RING_3D(TEX_CACHE_CTL), 1);
       OUT_RING  (chan, 0x00);
+   } else
+   if ((flags & PIPE_FLUSH_RENDER_CACHE) && !(flags & PIPE_FLUSH_FRAME)) {
+      BEGIN_RING(chan, RING_3D(SERIALIZE), 1);
+      OUT_RING  (chan, 0);
    }
 
-   if (fence) {
-      nvc0_screen_fence_new(nvc0->screen, (struct nvc0_fence **)fence, TRUE);
-   }
+   if (fence)
+      nvc0_fence_reference((struct nvc0_fence **)fence,
+                           nvc0->screen->fence.current);
 
-   if (flags & (PIPE_FLUSH_SWAPBUFFERS | PIPE_FLUSH_FRAME)) {
+   if (flags & (PIPE_FLUSH_SWAPBUFFERS | PIPE_FLUSH_FRAME))
       FIRE_RING(chan);
-
-      nvc0_screen_fence_next(nvc0->screen);
-   }
 }
 
 static void
@@ -65,6 +66,16 @@ nvc0_destroy(struct pipe_context *pipe)
       nvc0->screen->cur_ctx = NULL;
 
    FREE(nvc0);
+}
+
+void
+nvc0_default_flush_notify(struct nouveau_channel *chan)
+{
+   struct nvc0_context *nvc0 = chan->user_private;
+
+   nvc0_screen_fence_update(nvc0->screen, TRUE);
+
+   nvc0_screen_fence_next(nvc0->screen);
 }
 
 struct pipe_context *
@@ -91,6 +102,7 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
    nvc0->pipe.flush = nvc0_flush;
 
    screen->base.channel->user_private = nvc0;
+   screen->base.channel->flush_notify = nvc0_default_flush_notify;
 
    nvc0_init_query_functions(nvc0);
    nvc0_init_surface_functions(nvc0);
@@ -148,12 +160,14 @@ nvc0_bufctx_emit_relocs(struct nvc0_context *nvc0)
 {
    struct resident *rsd;
    struct util_dynarray *array;
-   unsigned ctx, i;
+   unsigned ctx, i, n;
 
    for (ctx = 0; ctx < NVC0_BUFCTX_COUNT; ++ctx) {
       array = &nvc0->residents[ctx];
 
-      for (i = 0; i < array->size / sizeof(struct resident); ++i) {
+      n = array->size / sizeof(struct resident);
+      MARK_RING(nvc0->screen->base.channel, n, n);
+      for (i = 0; i < n; ++i) {
          rsd = util_dynarray_element(array, struct resident, i);
 
          nvc0_resource_validate(rsd->res, rsd->flags);

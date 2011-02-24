@@ -225,13 +225,13 @@ enum pipe_transfer_usage {
    /**
     * Discards the memory within the mapped region.
     *
-    * It should not be used with PIPE_TRANSFER_CPU_READ.
+    * It should not be used with PIPE_TRANSFER_READ.
     *
     * See also:
     * - OpenGL's ARB_map_buffer_range extension, MAP_INVALIDATE_RANGE_BIT flag.
-    * - Direct3D's D3DLOCK_DISCARD flag.
     */
-   PIPE_TRANSFER_DISCARD = (1 << 8),
+   PIPE_TRANSFER_DISCARD = (1 << 8), /* DEPRECATED */
+   PIPE_TRANSFER_DISCARD_RANGE = (1 << 8),
 
    /**
     * Fail if the resource cannot be mapped immediately.
@@ -246,7 +246,7 @@ enum pipe_transfer_usage {
    /**
     * Do not attempt to synchronize pending operations on the resource when mapping.
     *
-    * It should not be used with PIPE_TRANSFER_CPU_READ.
+    * It should not be used with PIPE_TRANSFER_READ.
     *
     * See also:
     * - OpenGL's ARB_map_buffer_range extension, MAP_UNSYNCHRONIZED_BIT flag.
@@ -260,13 +260,28 @@ enum pipe_transfer_usage {
     * Written ranges will be notified later with
     * pipe_context::transfer_flush_region.
     *
-    * It should not be used with PIPE_TRANSFER_CPU_READ.
+    * It should not be used with PIPE_TRANSFER_READ.
     *
     * See also:
     * - pipe_context::transfer_flush_region
     * - OpenGL's ARB_map_buffer_range extension, MAP_FLUSH_EXPLICIT_BIT flag.
     */
-   PIPE_TRANSFER_FLUSH_EXPLICIT = (1 << 11)
+   PIPE_TRANSFER_FLUSH_EXPLICIT = (1 << 11),
+
+   /**
+    * Discards all memory backing the resource.
+    *
+    * It should not be used with PIPE_TRANSFER_READ.
+    *
+    * This is equivalent to:
+    * - OpenGL's ARB_map_buffer_range extension, MAP_INVALIDATE_BUFFER_BIT
+    * - BufferData(NULL) on a GL buffer
+    * - Direct3D's D3DLOCK_DISCARD flag.
+    * - WDDM's D3DDDICB_LOCKFLAGS.Discard flag.
+    * - D3D10 DDI's D3D10_DDI_MAP_WRITE_DISCARD flag
+    * - D3D10's D3D10_MAP_WRITE_DISCARD flag.
+    */
+   PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE = (1 << 12)
 
 };
 
@@ -380,7 +395,8 @@ enum pipe_transfer_usage {
 #define PIPE_QUERY_SO_STATISTICS         5
 #define PIPE_QUERY_GPU_FINISHED          6
 #define PIPE_QUERY_TIMESTAMP_DISJOINT    7
-#define PIPE_QUERY_TYPES                 8
+#define PIPE_QUERY_OCCLUSION_PREDICATE   8
+#define PIPE_QUERY_TYPES                 9
 
 
 /**

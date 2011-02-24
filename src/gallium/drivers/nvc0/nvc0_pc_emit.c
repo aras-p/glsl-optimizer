@@ -236,7 +236,7 @@ emit_flow(struct nv_pc *pc, struct nv_instruction *i, uint8_t op)
       */
 
       pc->emit[0] |= (pcrel & 0x3f) << 26;
-      pc->emit[1] |= (pcrel >> 6) & 0x1ffff;
+      pc->emit[1] |= (pcrel >> 6) & 0x3ffff;
    }
 }
 
@@ -393,6 +393,8 @@ emit_tex(struct nv_pc *pc, struct nv_instruction *i)
 {
    int src1 = i->tex_array + i->tex_dim + i->tex_cube;
 
+   assert(src1 < 6);
+
    pc->emit[0] = 0x00000086;
    pc->emit[1] = 0x80000000;
 
@@ -446,7 +448,7 @@ emit_flop(struct nv_pc *pc, struct nv_instruction *i, ubyte op)
 
    pc->emit[0] |= op << 26;
 
-   if (op >= 4) {
+   if (op >= 3) {
       if (i->src[0]->mod & NV_MOD_NEG) pc->emit[0] |= 1 << 9;
       if (i->src[0]->mod & NV_MOD_ABS) pc->emit[0] |= 1 << 7;
    } else {
@@ -477,6 +479,7 @@ emit_ddx(struct nv_pc *pc, struct nv_instruction *i)
 {
    i->quadop = 0x99;
    i->lanes = 4;
+   i->src[1] = i->src[0];
    emit_quadop(pc, i);
 }
 
@@ -485,6 +488,7 @@ emit_ddy(struct nv_pc *pc, struct nv_instruction *i)
 {
    i->quadop = 0xa5;
    i->lanes = 5;
+   i->src[1] = i->src[0];
    emit_quadop(pc, i);
 }
 
@@ -629,25 +633,28 @@ emit_slct(struct nv_pc *pc, struct nv_instruction *i)
 static void
 emit_cvt(struct nv_pc *pc, struct nv_instruction *i)
 {
+   uint32_t rint;
+
    pc->emit[0] = 0x00000004;
    pc->emit[1] = 0x10000000;
 
-   if (i->opcode != NV_OP_CVT)
+   /* if no type conversion specified, get type from opcode */
+   if (i->opcode != NV_OP_CVT && i->ext.cvt.d == i->ext.cvt.s)
       i->ext.cvt.d = i->ext.cvt.s = NV_OPTYPE(i->opcode);
 
    switch (i->ext.cvt.d) {
    case NV_TYPE_F32:
       switch (i->ext.cvt.s) {
       case NV_TYPE_F32: pc->emit[1] = 0x10000000; break;
-      case NV_TYPE_S32: pc->emit[0] |= 0x200;
+      case NV_TYPE_S32: pc->emit[0] |= 0x200; /* fall through */
       case NV_TYPE_U32: pc->emit[1] = 0x18000000; break;
       }
       break;
-   case NV_TYPE_S32: pc->emit[0] |= 0x80;
+   case NV_TYPE_S32: pc->emit[0] |= 0x80; /* fall through */
    case NV_TYPE_U32:
       switch (i->ext.cvt.s) {
       case NV_TYPE_F32: pc->emit[1] = 0x14000000; break;
-      case NV_TYPE_S32: pc->emit[0] |= 0x200;
+      case NV_TYPE_S32: pc->emit[0] |= 0x200; /* fall through */
       case NV_TYPE_U32: pc->emit[1] = 0x1c000000; break;
       }
       break;
@@ -656,14 +663,20 @@ emit_cvt(struct nv_pc *pc, struct nv_instruction *i)
       break;
    }
 
-   if (i->opcode == NV_OP_FLOOR)
-      pc->emit[1] |= 0x00020000;
-   else
-   if (i->opcode == NV_OP_CEIL)
-      pc->emit[1] |= 0x00040000;
-   else
-   if (i->opcode == NV_OP_TRUNC)
-      pc->emit[1] |= 0x00060000;
+   rint = (i->ext.cvt.d == NV_TYPE_F32) ? 1 << 7 : 0;
+
+   if (i->opcode == NV_OP_FLOOR) {
+      pc->emit[0] |= rint;
+      pc->emit[1] |= 2 << 16;
+   } else
+   if (i->opcode == NV_OP_CEIL) {
+      pc->emit[0] |= rint;
+      pc->emit[1] |= 4 << 16;
+   } else
+   if (i->opcode == NV_OP_TRUNC) {
+      pc->emit[0] |= rint;
+      pc->emit[1] |= 6 << 16;
+   }
 
    if (i->saturate || i->opcode == NV_OP_SAT)
       pc->emit[0] |= 0x20;
@@ -793,11 +806,8 @@ emit_ldst_size(struct nv_pc *pc, struct nv_instruction *i)
 }
 
 static void
-emit_ld_const(struct nv_pc *pc, struct nv_instruction *i)
+emit_ld_common(struct nv_pc *pc, struct nv_instruction *i)
 {
-   pc->emit[0] = 0x00000006;
-   pc->emit[1] = 0x14000000 | (const_space_index(i, 0) << 10);
-
    emit_ldst_size(pc, i);
 
    set_pred(pc, i);
@@ -805,6 +815,15 @@ emit_ld_const(struct nv_pc *pc, struct nv_instruction *i)
 
    SID(pc, (i->indirect >= 0) ? i->src[i->indirect] : NULL, 20);
    DID(pc, i->def[0], 14);
+}
+
+static void
+emit_ld_const(struct nv_pc *pc, struct nv_instruction *i)
+{
+   pc->emit[0] = 0x00000006;
+   pc->emit[1] = 0x14000000 | (const_space_index(i, 0) << 10);
+
+   emit_ld_common(pc, i);
 }
 
 static void
@@ -818,6 +837,12 @@ emit_ld(struct nv_pc *pc, struct nv_instruction *i)
       } else {
          emit_ld_const(pc, i);
       }
+   } else
+   if (SFILE(i, 0) == NV_FILE_MEM_L) {
+      pc->emit[0] = 0x00000005;
+      pc->emit[1] = 0xc0000000;
+
+      emit_ld_common(pc, i);
    } else {
       NOUVEAU_ERR("emit_ld(%u): not handled yet\n", SFILE(i, 0));
       abort();
@@ -827,8 +852,19 @@ emit_ld(struct nv_pc *pc, struct nv_instruction *i)
 static void
 emit_st(struct nv_pc *pc, struct nv_instruction *i)
 {
-   NOUVEAU_ERR("emit_st: not handled yet\n");
-   abort();
+   if (SFILE(i, 0) != NV_FILE_MEM_L)
+      NOUVEAU_ERR("emit_st(%u): file not handled yet\n", SFILE(i, 0));
+
+   pc->emit[0] = 0x00000005 | (0 << 8); /* write-back caching */
+   pc->emit[1] = 0xc8000000;
+
+   emit_ldst_size(pc, i);
+
+   set_pred(pc, i);
+   set_address_16(pc, i->src[0]);
+
+   SID(pc, (i->indirect >= 0) ? i->src[i->indirect] : NULL, 20);
+   DID(pc, i->src[1]->value, 14);
 }
 
 void

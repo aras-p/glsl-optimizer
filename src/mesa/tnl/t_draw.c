@@ -125,6 +125,43 @@ convert_half_to_float(const struct gl_client_array *input,
    }
 }
 
+/**
+ * \brief Convert fixed-point to floating-point.
+ *
+ * In OpenGL, a fixed-point number is a "signed 2's complement 16.16 scaled
+ * integer" (Table 2.2 of the OpenGL ES 2.0 spec).
+ *
+ * If the buffer has the \c normalized flag set, the formula
+ *     \code normalize(x) := (2*x + 1) / (2^16 - 1) \endcode
+ * is used to map the fixed-point numbers into the range [-1, 1].
+ */
+static void
+convert_fixed_to_float(const struct gl_client_array *input,
+                       const GLubyte *ptr, GLfloat *fptr,
+                       GLuint count)
+{
+   GLuint i, j;
+   const GLint size = input->Size;
+
+   if (input->Normalized) {
+      for (i = 0; i < count; ++i) {
+         const GLfixed *in = (GLfixed *) ptr;
+         for (j = 0; j < size; ++j) {
+            *fptr++ = (GLfloat) (2 * in[j] + 1) / (GLfloat) ((1 << 16) - 1);
+         }
+         ptr += input->StrideB;
+      }
+   } else {
+      for (i = 0; i < count; ++i) {
+         const GLfixed *in = (GLfixed *) ptr;
+         for (j = 0; j < size; ++j) {
+            *fptr++ = in[j] / (GLfloat) (1 << 16);
+         }
+         ptr += input->StrideB;
+      }
+   }
+}
+
 /* Adjust pointer to point at first requested element, convert to
  * floating point, populate VB->AttribPtr[].
  */
@@ -174,6 +211,9 @@ static void _tnl_import_array( struct gl_context *ctx,
       case GL_HALF_FLOAT:
 	 convert_half_to_float(input, ptr, fptr, count, sz);
 	 break;
+      case GL_FIXED:
+         convert_fixed_to_float(input, ptr, fptr, count);
+         break;
       default:
 	 assert(0);
 	 break;

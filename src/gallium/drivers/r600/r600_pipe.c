@@ -30,11 +30,13 @@
 #include <tgsi/tgsi_util.h>
 #include <util/u_blitter.h>
 #include <util/u_double_list.h>
+#include <util/u_format_s3tc.h>
 #include <util/u_transfer.h>
 #include <util/u_surface.h>
 #include <util/u_pack_color.h>
 #include <util/u_memory.h>
 #include <util/u_inlines.h>
+#include "util/u_upload_mgr.h"
 #include <pipebuffer/pb_buffer.h>
 #include "r600.h"
 #include "r600d.h"
@@ -69,8 +71,30 @@ static void r600_flush(struct pipe_context *ctx, unsigned flags,
 #endif
 	r600_context_flush(&rctx->ctx);
 
-	r600_upload_flush(rctx->rupload_vb);
-	r600_upload_flush(rctx->rupload_const);
+	/* XXX This shouldn't be really necessary, but removing it breaks some tests.
+	 * Needless buffer reallocations may significantly increase memory consumption,
+	 * so getting rid of this call is important. */
+	u_upload_flush(rctx->vbuf_mgr->uploader);
+}
+
+static void r600_update_num_contexts(struct r600_screen *rscreen,
+                                     int diff)
+{
+	pipe_mutex_lock(rscreen->mutex_num_contexts);
+	if (diff > 0) {
+		rscreen->num_contexts++;
+
+		if (rscreen->num_contexts > 1)
+			util_slab_set_thread_safety(&rscreen->pool_buffers,
+						    UTIL_SLAB_MULTITHREADED);
+	} else {
+		rscreen->num_contexts--;
+
+		if (rscreen->num_contexts <= 1)
+			util_slab_set_thread_safety(&rscreen->pool_buffers,
+						    UTIL_SLAB_SINGLETHREADED);
+	}
+	pipe_mutex_unlock(rscreen->mutex_num_contexts);
 }
 
 static void r600_destroy_context(struct pipe_context *context)
@@ -78,8 +102,6 @@ static void r600_destroy_context(struct pipe_context *context)
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)context;
 
 	rctx->context.delete_depth_stencil_alpha_state(&rctx->context, rctx->custom_dsa_flush);
-
-	r600_end_vertex_translate(rctx);
 
 	r600_context_fini(&rctx->ctx);
 
@@ -89,14 +111,11 @@ static void r600_destroy_context(struct pipe_context *context)
 		free(rctx->states[i]);
 	}
 
-	r600_upload_destroy(rctx->rupload_vb);
-	r600_upload_destroy(rctx->rupload_const);
+	u_vbuf_mgr_destroy(rctx->vbuf_mgr);
+	util_slab_destroy(&rctx->pool_transfers);
 
-	if (rctx->tran.translate_cache)
-		translate_cache_destroy(rctx->tran.translate_cache);
+	r600_update_num_contexts(rctx->screen, -1);
 
-	FREE(rctx->ps_resource);
-	FREE(rctx->vs_resource);
 	FREE(rctx);
 }
 
@@ -108,6 +127,9 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 
 	if (rctx == NULL)
 		return NULL;
+
+	r600_update_num_contexts(rscreen, 1);
+
 	rctx->context.winsys = rscreen->screen.winsys;
 	rctx->context.screen = screen;
 	rctx->context.priv = priv;
@@ -123,6 +145,7 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	r600_init_query_functions(rctx);
 	r600_init_context_resource_functions(rctx);
 	r600_init_surface_functions(rctx);
+	rctx->context.draw_vbo = r600_draw_vbo;
 
 	switch (r600_get_family(rctx->radeon)) {
 	case CHIP_R600:
@@ -137,7 +160,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	case CHIP_RV730:
 	case CHIP_RV710:
 	case CHIP_RV740:
-		rctx->context.draw_vbo = r600_draw_vbo;
 		r600_init_state_functions(rctx);
 		if (r600_context_init(&rctx->ctx, rctx->radeon)) {
 			r600_destroy_context(&rctx->context);
@@ -154,7 +176,6 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	case CHIP_BARTS:
 	case CHIP_TURKS:
 	case CHIP_CAICOS:
-		rctx->context.draw_vbo = evergreen_draw;
 		evergreen_init_state_functions(rctx);
 		if (evergreen_context_init(&rctx->ctx, rctx->radeon)) {
 			r600_destroy_context(&rctx->context);
@@ -168,39 +189,23 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 		return NULL;
 	}
 
-	rctx->rupload_vb = r600_upload_create(rctx, 128 * 1024, 16);
-	if (rctx->rupload_vb == NULL) {
-		r600_destroy_context(&rctx->context);
-		return NULL;
-	}
+	util_slab_create(&rctx->pool_transfers,
+			 sizeof(struct pipe_transfer), 64,
+			 UTIL_SLAB_SINGLETHREADED);
 
-	rctx->rupload_const = r600_upload_create(rctx, 128 * 1024, 256);
-	if (rctx->rupload_const == NULL) {
+	rctx->vbuf_mgr = u_vbuf_mgr_create(&rctx->context, 1024 * 1024, 256,
+					   PIPE_BIND_VERTEX_BUFFER |
+					   PIPE_BIND_INDEX_BUFFER |
+					   PIPE_BIND_CONSTANT_BUFFER,
+					   U_VERTEX_FETCH_DWORD_ALIGNED);
+	if (!rctx->vbuf_mgr) {
 		r600_destroy_context(&rctx->context);
 		return NULL;
 	}
 
 	rctx->blitter = util_blitter_create(&rctx->context);
 	if (rctx->blitter == NULL) {
-		FREE(rctx);
-		return NULL;
-	}
-
-	rctx->tran.translate_cache = translate_cache_create();
-	if (rctx->tran.translate_cache == NULL) {
-		FREE(rctx);
-		return NULL;
-	}
-
-	rctx->vs_resource = CALLOC(R600_RESOURCE_ARRAY_SIZE, sizeof(struct r600_pipe_state));
-	if (!rctx->vs_resource) {
-		FREE(rctx);
-		return NULL;
-	}
-
-	rctx->ps_resource = CALLOC(R600_RESOURCE_ARRAY_SIZE, sizeof(struct r600_pipe_state));
-	if (!rctx->ps_resource) {
-		FREE(rctx);
+		r600_destroy_context(&rctx->context);
 		return NULL;
 	}
 
@@ -284,12 +289,15 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 		return 1;
 
 	/* Unsupported features (boolean caps). */
-	case PIPE_CAP_TIMER_QUERY:
 	case PIPE_CAP_STREAM_OUTPUT:
 	case PIPE_CAP_PRIMITIVE_RESTART:
 	case PIPE_CAP_INDEP_BLEND_FUNC: /* FIXME allow this */
 	case PIPE_CAP_INSTANCED_DRAWING:
 		return 0;
+
+	case PIPE_CAP_ARRAY_TEXTURES:
+		/* fix once the CS checker upstream is fixed */
+		return debug_get_bool_option("R600_ARRAY_TEXTURE", FALSE);
 
 	/* Texturing. */
 	case PIPE_CAP_MAX_TEXTURE_2D_LEVELS:
@@ -318,6 +326,10 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TGSI_FS_COORD_ORIGIN_LOWER_LEFT:
 	case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER:
 		return 0;
+
+	/* Timer queries, present when the clock frequency is non zero. */
+	case PIPE_CAP_TIMER_QUERY:
+		return r600_get_clock_crystal_freq(rscreen->radeon) != 0;
 
 	default:
 		R600_ERR("r600: unknown param %d\n", param);
@@ -385,7 +397,7 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	case PIPE_SHADER_CAP_MAX_CONSTS:
 		return 256; //max native parameters
 	case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
-		return 1;
+		return R600_MAX_CONST_BUFFERS;
 	case PIPE_SHADER_CAP_MAX_PREDS:
 		return 0; /* FIXME */
 	case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
@@ -441,9 +453,14 @@ static boolean r600_is_format_supported(struct pipe_screen* screen,
 		retval |= PIPE_BIND_DEPTH_STENCIL;
 	}
 
-	if ((usage & PIPE_BIND_VERTEX_BUFFER) &&
-	    r600_is_vertex_format_supported(format))
-		retval |= PIPE_BIND_VERTEX_BUFFER;
+	if (usage & PIPE_BIND_VERTEX_BUFFER) {
+		struct r600_screen *rscreen = (struct r600_screen *)screen;
+		enum radeon_family family = r600_get_family(rscreen->radeon);
+
+		if (r600_is_vertex_format_supported(format, family)) {
+			retval |= PIPE_BIND_VERTEX_BUFFER;
+		}
+	}
 
 	if (usage & PIPE_BIND_TRANSFER_READ)
 		retval |= PIPE_BIND_TRANSFER_READ;
@@ -462,6 +479,8 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 
 	radeon_decref(rscreen->radeon);
 
+	util_slab_destroy(&rscreen->pool_buffers);
+	pipe_mutex_destroy(rscreen->mutex_num_contexts);
 	FREE(rscreen);
 }
 
@@ -489,6 +508,13 @@ struct pipe_screen *r600_screen_create(struct radeon *radeon)
 	r600_init_screen_resource_functions(&rscreen->screen);
 
 	rscreen->tiling_info = r600_get_tiling_info(radeon);
+	util_format_s3tc_init();
+
+	util_slab_create(&rscreen->pool_buffers,
+			 sizeof(struct r600_resource_buffer), 64,
+			 UTIL_SLAB_SINGLETHREADED);
+
+	pipe_mutex_init(rscreen->mutex_num_contexts);
 
 	return &rscreen->screen;
 }

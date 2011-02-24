@@ -22,15 +22,12 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include <assert.h>
 #include "s_expression.h"
 
 s_symbol::s_symbol(const char *tmp, size_t n)
 {
-   this->str = talloc_strndup (this, tmp, n);
+   this->str = ralloc_strndup (this, tmp, n);
    assert(this->str != NULL);
 }
 

@@ -970,6 +970,10 @@ _mesa_BindBufferARB(GLenum target, GLuint buffer)
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glBindBuffer(%s, %u)\n",
+                  _mesa_lookup_enum_by_nr(target), buffer);
+
    bind_buffer_object(ctx, target, buffer);
 }
 
@@ -1064,6 +1068,9 @@ _mesa_GenBuffersARB(GLsizei n, GLuint *buffer)
    GLint i;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glGenBuffers(%d)\n", n);
+
    if (n < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glGenBuffersARB");
       return;
@@ -1120,6 +1127,12 @@ _mesa_BufferDataARB(GLenum target, GLsizeiptrARB size,
    GET_CURRENT_CONTEXT(ctx);
    struct gl_buffer_object *bufObj;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glBufferData(%s, %ld, %p, %s)\n",
+                  _mesa_lookup_enum_by_nr(target),
+                  (long int) size, data,
+                  _mesa_lookup_enum_by_nr(usage));
 
    if (size < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glBufferDataARB(size < 0)");

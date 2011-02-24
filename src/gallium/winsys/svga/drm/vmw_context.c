@@ -320,7 +320,7 @@ vmw_swc_region_relocation(struct svga_winsys_context *swc,
     * to the FIFO won't cause flushing in the host.
     */
    vswc->seen_regions += reloc->buffer->base.size;
-   if(vswc->seen_regions >= VMW_GMR_POOL_SIZE/2)
+   if(vswc->seen_regions >= VMW_GMR_POOL_SIZE/3)
       vswc->preemptive_flush = TRUE;
 }
 

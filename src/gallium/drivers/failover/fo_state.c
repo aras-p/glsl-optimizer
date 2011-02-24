@@ -30,6 +30,7 @@
 
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
+#include "util/u_transfer.h"
 
 #include "fo_context.h"
 
@@ -656,4 +657,5 @@ failover_init_state_functions( struct failover_context *failover )
    failover->pipe.set_constant_buffer = failover_set_constant_buffer;
    failover->pipe.create_sampler_view = failover_create_sampler_view;
    failover->pipe.sampler_view_destroy = failover_sampler_view_destroy;
+   failover->pipe.redefine_user_buffer = u_default_redefine_user_buffer;
 }

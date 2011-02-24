@@ -34,7 +34,7 @@ struct r600_bc_alu_src {
 	unsigned			neg;
 	unsigned			abs;
 	unsigned			rel;
-	u32				*value;
+	uint32_t			value;
 };
 
 struct r600_bc_alu_dst {
@@ -201,8 +201,6 @@ int r600_bc_add_cfinst(struct r600_bc *bc, int inst);
 int r600_bc_add_alu_type(struct r600_bc *bc, const struct r600_bc_alu *alu, int type);
 void r600_bc_special_constants(u32 value, unsigned *sel, unsigned *neg);
 void r600_bc_dump(struct r600_bc *bc);
-void r600_cf_vtx(struct r600_vertex_element *ve, u32 *bytecode, unsigned count);
-void r600_cf_vtx_tc(struct r600_vertex_element *ve, u32 *bytecode, unsigned count);
 
 int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, struct r600_vertex_element *ve);
 

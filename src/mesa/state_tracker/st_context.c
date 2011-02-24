@@ -178,7 +178,7 @@ struct st_context *st_create_context(gl_api api, struct pipe_context *pipe,
    memset(&funcs, 0, sizeof(funcs));
    st_init_driver_functions(&funcs);
 
-   ctx = _mesa_create_context_for_api(api, visual, shareCtx, &funcs, NULL);
+   ctx = _mesa_create_context(api, visual, shareCtx, &funcs, NULL);
 
    /* XXX: need a capability bit in gallium to query if the pipe
     * driver prefers DP4 or MUL/MAD for vertex transformation.
@@ -202,6 +202,11 @@ static void st_destroy_context_priv( struct st_context *st )
    st_destroy_bitmap(st);
    st_destroy_drawpix(st);
    st_destroy_drawtex(st);
+
+   /* Unreference any user vertex buffers. */
+   for (i = 0; i < st->num_user_vbs; i++) {
+      pipe_resource_reference(&st->user_vb[i], NULL);
+   }
 
    for (i = 0; i < Elements(st->state.sampler_views); i++) {
       pipe_sampler_view_reference(&st->state.sampler_views[i], NULL);

@@ -24,6 +24,7 @@ progs = [
     'gs-test',
     'shader-leak',
     'tri-gs',
+    'quad-sample',
 ]
 
 for name in progs:

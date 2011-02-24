@@ -52,6 +52,7 @@ struct r300_screen {
     /* The number of created contexts to know whether we have multiple
      * contexts or not. */
     int num_contexts;
+    pipe_mutex num_contexts_mutex;
 };
 
 
@@ -94,6 +95,7 @@ r300_winsys_screen(struct pipe_screen *screen) {
 #define DBG_HYPERZ      (1 << 12)
 #define DBG_SCISSOR     (1 << 13)
 #define DBG_UPLOAD      (1 << 14)
+#define DBG_INFO        (1 << 15)
 /* Features. */
 #define DBG_ANISOHQ     (1 << 16)
 #define DBG_NO_TILING   (1 << 17)
@@ -101,6 +103,8 @@ r300_winsys_screen(struct pipe_screen *screen) {
 #define DBG_FAKE_OCC    (1 << 19)
 #define DBG_NO_OPT      (1 << 20)
 #define DBG_NO_CBZB     (1 << 21)
+#define DBG_NO_ZMASK    (1 << 22)
+#define DBG_NO_HIZ      (1 << 23)
 /* Statistics. */
 #define DBG_P_STAT      (1 << 25)
 /*@}*/

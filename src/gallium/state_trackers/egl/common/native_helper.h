@@ -51,6 +51,11 @@ resource_surface_add_resources(struct resource_surface *rsurf,
                                uint resource_mask);
 
 void
+resource_surface_import_resource(struct resource_surface *rsurf,
+                                 enum native_attachment which,
+                                 struct pipe_resource *pres);
+
+void
 resource_surface_get_resources(struct resource_surface *rsurf,
                                struct pipe_resource **resources,
                                uint resource_mask);

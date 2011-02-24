@@ -33,6 +33,7 @@
 #include "vg_manager.h"
 #include "api.h"
 #include "mask.h"
+#include "handle.h"
 
 #include "pipe/p_context.h"
 #include "util/u_inlines.h"
@@ -182,17 +183,26 @@ void vg_init_object(struct vg_object *obj, struct vg_context *ctx, enum vg_objec
 {
    obj->type = type;
    obj->ctx = ctx;
+   obj->handle = create_handle(obj);
+}
+
+/** free object resources, but not the object itself */
+void vg_free_object(struct vg_object *obj)
+{
+   obj->type = 0;
+   obj->ctx = NULL;
+   destroy_handle(obj->handle);
 }
 
 VGboolean vg_context_is_object_valid(struct vg_context *ctx,
                                 enum vg_object_type type,
-                                void *ptr)
+                                VGHandle object)
 {
     if (ctx) {
        struct cso_hash *hash = ctx->owned_objects[type];
        if (!hash)
           return VG_FALSE;
-       return cso_hash_contains(hash, (unsigned)(long)ptr);
+       return cso_hash_contains(hash, (unsigned)(long)object);
     }
     return VG_FALSE;
 }
@@ -398,8 +408,9 @@ void vg_validate_state(struct vg_context *ctx)
    if (vg_context_update_depth_stencil_rb(ctx, stfb->width, stfb->height))
       ctx->state.dirty |= DEPTH_STENCIL_DIRTY;
 
-   /* blend state depends on fb format */
-   if (ctx->state.dirty & FRAMEBUFFER_DIRTY)
+   /* blend state depends on fb format and paint color */
+   if ((ctx->state.dirty & FRAMEBUFFER_DIRTY) ||
+       (ctx->state.dirty & PAINT_DIRTY))
       ctx->state.dirty |= BLEND_DIRTY;
 
    renderer_validate(ctx->renderer, ctx->state.dirty,
@@ -412,10 +423,10 @@ void vg_validate_state(struct vg_context *ctx)
    shader_set_color_transform(ctx->shader, ctx->state.vg.color_transform);
 }
 
-VGboolean vg_object_is_valid(void *ptr, enum vg_object_type type)
+VGboolean vg_object_is_valid(VGHandle object, enum vg_object_type type)
 {
-   struct vg_object *obj = ptr;
-   if (ptr && is_aligned(obj) && obj->type == type)
+   struct vg_object *obj = handle_to_object(object);
+   if (obj && is_aligned(obj) && obj->type == type)
       return VG_TRUE;
    else
       return VG_FALSE;

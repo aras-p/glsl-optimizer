@@ -681,7 +681,6 @@ util_dump_vertex_buffer(struct os_stream *stream, const struct pipe_vertex_buffe
    util_dump_struct_begin(stream, "pipe_vertex_buffer");
 
    util_dump_member(stream, uint, state, stride);
-   util_dump_member(stream, uint, state, max_index);
    util_dump_member(stream, uint, state, buffer_offset);
    util_dump_member(stream, ptr, state, buffer);
 

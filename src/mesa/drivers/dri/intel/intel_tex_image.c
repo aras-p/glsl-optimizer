@@ -231,15 +231,17 @@ try_pbo_upload(struct intel_context *intel,
 
    dst_stride = intelImage->mt->region->pitch;
 
-   if (drm_intel_bo_references(intel->batch->buf, dst_buffer))
+   if (drm_intel_bo_references(intel->batch.bo, dst_buffer))
       intel_flush(&intel->ctx);
 
    {
-      drm_intel_bo *src_buffer = intel_bufferobj_buffer(intel, pbo, INTEL_READ);
+      GLuint offset;
+      drm_intel_bo *src_buffer = intel_bufferobj_source(intel, pbo, &offset);
 
       if (!intelEmitCopyBlit(intel,
 			     intelImage->mt->cpp,
-			     src_stride, src_buffer, src_offset, GL_FALSE,
+			     src_stride, src_buffer,
+			     src_offset + offset, GL_FALSE,
 			     dst_stride, dst_buffer, 0,
 			     intelImage->mt->region->tiling,
 			     0, 0, dst_x, dst_y, width, height,
@@ -429,7 +431,7 @@ intelTexImage(struct gl_context * ctx,
    if (intelImage->mt) {
       if (pixels != NULL) {
 	 /* Flush any queued rendering with the texture before mapping. */
-	 if (drm_intel_bo_references(intel->batch->buf,
+	 if (drm_intel_bo_references(intel->batch.bo,
 				     intelImage->mt->region->buffer)) {
 	    intel_flush(ctx);
 	 }

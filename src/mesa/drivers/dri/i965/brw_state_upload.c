@@ -176,17 +176,16 @@ void brw_init_state( struct brw_context *brw )
 void brw_destroy_state( struct brw_context *brw )
 {
    brw_destroy_caches(brw);
-   brw_destroy_batch_cache(brw);
 }
 
 /***********************************************************************
  */
 
-static GLboolean check_state( const struct brw_state_flags *a,
-			      const struct brw_state_flags *b )
+static GLuint check_state( const struct brw_state_flags *a,
+			   const struct brw_state_flags *b )
 {
-   return ((a->mesa & b->mesa) ||
-	   (a->brw & b->brw) ||
+   return ((a->mesa & b->mesa) |
+	   (a->brw & b->brw) |
 	   (a->cache & b->cache));
 }
 
@@ -233,7 +232,6 @@ static struct dirty_bit_map mesa_bits[] = {
    DEFINE_BIT(_NEW_MODELVIEW),
    DEFINE_BIT(_NEW_PROJECTION),
    DEFINE_BIT(_NEW_TEXTURE_MATRIX),
-   DEFINE_BIT(_NEW_ACCUM),
    DEFINE_BIT(_NEW_COLOR),
    DEFINE_BIT(_NEW_DEPTH),
    DEFINE_BIT(_NEW_EVAL),
@@ -279,6 +277,10 @@ static struct dirty_bit_map brw_bits[] = {
    DEFINE_BIT(BRW_NEW_VERTICES),
    DEFINE_BIT(BRW_NEW_BATCH),
    DEFINE_BIT(BRW_NEW_DEPTH_BUFFER),
+   DEFINE_BIT(BRW_NEW_NR_WM_SURFACES),
+   DEFINE_BIT(BRW_NEW_NR_VS_SURFACES),
+   DEFINE_BIT(BRW_NEW_VS_CONSTBUF),
+   DEFINE_BIT(BRW_NEW_WM_CONSTBUF),
    {0, 0, 0}
 };
 
@@ -349,7 +351,7 @@ void brw_validate_state( struct brw_context *brw )
    state->mesa |= brw->intel.NewGLState;
    brw->intel.NewGLState = 0;
 
-   brw_add_validated_bo(brw, intel->batch->buf);
+   brw_add_validated_bo(brw, intel->batch.bo);
 
    if (intel->gen >= 6) {
       atoms = gen6_atoms;
@@ -375,13 +377,8 @@ void brw_validate_state( struct brw_context *brw )
       brw->state.dirty.brw |= BRW_NEW_VERTEX_PROGRAM;
    }
 
-   if (state->mesa == 0 &&
-       state->cache == 0 &&
-       state->brw == 0)
+   if ((state->mesa | state->cache | state->brw) == 0)
       return;
-
-   if (brw->state.dirty.brw & BRW_NEW_CONTEXT)
-      brw_clear_batch_cache(brw);
 
    brw->intel.Fallback = GL_FALSE; /* boolean, not bitfield */
 

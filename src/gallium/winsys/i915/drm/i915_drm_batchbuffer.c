@@ -4,6 +4,7 @@
 
 #include "i915_drm.h"
 #include "i915/i915_debug.h"
+#include <xf86drm.h>
 
 #define BATCH_RESERVED 16
 
@@ -34,7 +35,6 @@ static void
 i915_drm_batchbuffer_reset(struct i915_drm_batchbuffer *batch)
 {
    struct i915_drm_winsys *idws = i915_drm_winsys(batch->base.iws);
-   int ret;
 
    if (batch->bo)
       drm_intel_bo_unreference(batch->bo);
@@ -42,18 +42,6 @@ i915_drm_batchbuffer_reset(struct i915_drm_batchbuffer *batch)
                                   "gallium3d_batchbuffer",
                                   batch->actual_size,
                                   4096);
-
-#ifdef INTEL_MAP_BATCHBUFFER
-#ifdef INTEL_MAP_GTT
-   ret = drm_intel_gem_bo_map_gtt(batch->bo);
-#else
-   ret = drm_intel_bo_map(batch->bo, TRUE);
-#endif
-   assert(ret == 0);
-   batch->base.map = batch->bo->virtual;
-#else
-   (void)ret;
-#endif
 
    memset(batch->base.map, 0, batch->actual_size);
    batch->base.ptr = batch->base.map;
@@ -87,7 +75,7 @@ static int
 i915_drm_batchbuffer_reloc(struct i915_winsys_batchbuffer *ibatch,
                             struct i915_winsys_buffer *buffer,
                             enum i915_winsys_buffer_usage usage,
-                            unsigned pre_add, bool fenced)
+                            unsigned pre_add, boolean fenced)
 {
    struct i915_drm_batchbuffer *batch = i915_drm_batchbuffer(ibatch);
    unsigned write_domain = 0;
@@ -145,6 +133,12 @@ i915_drm_batchbuffer_reloc(struct i915_winsys_batchbuffer *ibatch,
    return ret;
 }
 
+static void 
+i915_drm_throttle(struct i915_drm_winsys *idws)
+{
+   drmIoctl(idws->fd, DRM_IOCTL_I915_GEM_THROTTLE, NULL);
+}
+
 static void
 i915_drm_batchbuffer_flush(struct i915_winsys_batchbuffer *ibatch,
                             struct pipe_fence_handle **fence)
@@ -167,6 +161,8 @@ i915_drm_batchbuffer_flush(struct i915_winsys_batchbuffer *ibatch,
    ret = drm_intel_bo_subdata(batch->bo, 0, used, batch->base.map);
    if (ret == 0 && i915_drm_winsys(ibatch->iws)->send_cmd)
       ret = drm_intel_bo_exec(batch->bo, used, NULL, 0, 0);
+
+   i915_drm_throttle(i915_drm_winsys(ibatch->iws));
 
    if (ret != 0 || i915_drm_winsys(ibatch->iws)->dump_cmd) {
       i915_dump_batchbuffer(ibatch);

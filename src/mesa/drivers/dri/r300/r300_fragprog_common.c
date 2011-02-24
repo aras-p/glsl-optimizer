@@ -226,6 +226,7 @@ static void translate_fragment_program(struct gl_context *ctx, struct r300_fragm
 	compiler.Base.max_temp_regs = (compiler.Base.is_r500) ? 128 : 32;
 	compiler.Base.max_constants = compiler.Base.is_r500 ? 256 : 32;
 	compiler.Base.max_alu_insts = compiler.Base.is_r500 ? 512 : 64;
+	compiler.Base.max_tex_insts = compiler.Base.is_r500 ? 512 : 32;
 	compiler.OutputDepth = FRAG_RESULT_DEPTH;
 	memset(compiler.OutputColor, 0, 4 * sizeof(unsigned));
 	compiler.OutputColor[0] = FRAG_RESULT_COLOR;

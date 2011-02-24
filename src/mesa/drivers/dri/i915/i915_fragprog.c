@@ -306,6 +306,7 @@ static void calc_live_regs( struct i915_fragment_program *p )
 {
     const struct gl_fragment_program *program = p->ctx->FragmentProgram._Current;
     GLuint regsUsed = 0xffff0000;
+    uint8_t live_components[16] = { 0, };
     GLint i;
    
     for (i = program->Base.NumInstructions - 1; i >= 0; i--) {
@@ -314,13 +315,26 @@ static void calc_live_regs( struct i915_fragment_program *p )
         int a;
 
         /* Register is written to: unmark as live for this and preceeding ops */ 
-        if (inst->DstReg.File == PROGRAM_TEMPORARY)
-            regsUsed &= ~(1 << inst->DstReg.Index);
+        if (inst->DstReg.File == PROGRAM_TEMPORARY) {
+            live_components[inst->DstReg.Index] &= ~inst->DstReg.WriteMask;
+            if (live_components[inst->DstReg.Index] == 0)
+                regsUsed &= ~(1 << inst->DstReg.Index);
+        }
 
         for (a = 0; a < opArgs; a++) {
             /* Register is read from: mark as live for this and preceeding ops */ 
-            if (inst->SrcReg[a].File == PROGRAM_TEMPORARY)
+            if (inst->SrcReg[a].File == PROGRAM_TEMPORARY) {
+                unsigned c;
+
                 regsUsed |= 1 << inst->SrcReg[a].Index;
+
+                for (c = 0; c < 4; c++) {
+                    const unsigned field = GET_SWZ(inst->SrcReg[a].Swizzle, c);
+
+                    if (field <= SWIZZLE_W)
+                        live_components[inst->SrcReg[a].Index] |= (1U << field);
+                }
+            }
         }
 
         p->usedRegs[i] = regsUsed;
@@ -795,18 +809,18 @@ upload_program(struct i915_fragment_program *p)
 	 flags = get_result_flags(inst);
 	 dst = get_result_vector(p, inst);
 
-	 /* dst = src1 >= src2 */
+	 /* tmp = src1 >= src2 */
 	 i915_emit_arith(p,
 			 A0_SGE,
-			 dst,
+			 tmp,
 			 flags, 0,
 			 src_vector(p, &inst->SrcReg[0], program),
 			 src_vector(p, &inst->SrcReg[1], program),
 			 0);
-	 /* tmp = src1 <= src2 */
+	 /* dst = src1 <= src2 */
 	 i915_emit_arith(p,
 			 A0_SGE,
-			 tmp,
+			 dst,
 			 flags, 0,
 			 negate(src_vector(p, &inst->SrcReg[0], program),
 				1, 1, 1, 1),
@@ -944,18 +958,18 @@ upload_program(struct i915_fragment_program *p)
 	 flags = get_result_flags(inst);
 	 dst = get_result_vector(p, inst);
 
-	 /* dst = src1 < src2 */
+	 /* tmp = src1 < src2 */
 	 i915_emit_arith(p,
 			 A0_SLT,
-			 dst,
+			 tmp,
 			 flags, 0,
 			 src_vector(p, &inst->SrcReg[0], program),
 			 src_vector(p, &inst->SrcReg[1], program),
 			 0);
-	 /* tmp = src1 > src2 */
+	 /* dst = src1 > src2 */
 	 i915_emit_arith(p,
 			 A0_SLT,
-			 tmp,
+			 dst,
 			 flags, 0,
 			 negate(src_vector(p, &inst->SrcReg[0], program),
 				1, 1, 1, 1),
@@ -1407,6 +1421,10 @@ i915ValidateFragmentProgram(struct i915_context *i915)
                                               intel->vertex_attrs,
                                               intel->vertex_attr_count,
                                               intel->ViewportMatrix.m, 0);
+
+      assert(intel->prim.current_offset == intel->prim.start_offset);
+      intel->prim.start_offset = (intel->prim.current_offset + intel->vertex_size-1) / intel->vertex_size * intel->vertex_size;
+      intel->prim.current_offset = intel->prim.start_offset;
 
       intel->vertex_size >>= 2;
 

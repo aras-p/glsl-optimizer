@@ -1,7 +1,5 @@
 # -*-makefile-*-
 
-MESA_MODULES = $(TOP)/src/mesa/libmesa.a
-
 COMMON_GALLIUM_SOURCES = \
         ../common/utils.c \
         ../common/vblank.c \
@@ -11,8 +9,7 @@ COMMON_GALLIUM_SOURCES = \
 COMMON_SOURCES = $(COMMON_GALLIUM_SOURCES) \
         ../../common/driverfuncs.c \
         ../common/texmem.c \
-        ../common/drirenderbuffer.c \
-	../common/dri_metaops.c
+        ../common/drirenderbuffer.c
 
 INCLUDES = $(SHARED_INCLUDES) $(EXPAT_INCLUDES)
 
@@ -39,13 +36,13 @@ CXXFLAGS += $(API_DEFINES)
 ##### RULES #####
 
 .c.o:
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DRIVER_DEFINES) $< -o $@
+	$(CC) -c $(INCLUDES) $(DRI_CFLAGS) $(DRIVER_DEFINES) $< -o $@
 
 .cpp.o:
-	$(CC) -c $(INCLUDES) $(CXXFLAGS) $(DRIVER_DEFINES) $< -o $@
+	$(CC) -c $(INCLUDES) $(DRI_CXXFLAGS) $(DRIVER_DEFINES) $< -o $@
 
 .S.o:
-	$(CC) -c $(INCLUDES) $(CFLAGS) $(DRIVER_DEFINES) $< -o $@
+	$(CC) -c $(INCLUDES) $(DRI_CFLAGS) $(DRIVER_DEFINES) $< -o $@
 
 
 ##### TARGETS #####
@@ -57,10 +54,10 @@ default: subdirs lib
 lib: symlinks subdirs depend
 	@$(MAKE) $(LIBNAME) $(TOP)/$(LIB_DIR)/$(LIBNAME)
 
-$(LIBNAME): $(OBJECTS) $(MESA_MODULES) $(EXTRA_MODULES) Makefile \
+$(LIBNAME): $(OBJECTS) $(EXTRA_MODULES) $(MESA_MODULES) Makefile \
 		$(TOP)/src/mesa/drivers/dri/Makefile.template $(TOP)/src/mesa/drivers/dri/common/dri_test.o
 	$(MKLIB) -o $@.tmp -noprefix -linker '$(CXX)' -ldflags '$(LDFLAGS)' \
-		$(OBJECTS) $(MESA_MODULES) $(EXTRA_MODULES) $(DRI_LIB_DEPS)
+		$(OBJECTS) $(EXTRA_MODULES) $(DRI_LIB_DEPS)
 	$(CXX) $(CFLAGS) -o $@.test $(TOP)/src/mesa/drivers/dri/common/dri_test.o $@.tmp $(DRI_LIB_DEPS)
 	@rm -f $@.test
 	mv -f $@.tmp $@

@@ -14,13 +14,7 @@ import SCons.Script.SConscript
 #######################################################################
 # Defaults
 
-_platform_map = {
-	'linux2': 'linux',
-	'win32': 'windows',
-}
-
-host_platform = sys.platform
-host_platform = _platform_map.get(host_platform, host_platform)
+host_platform = _platform.system().lower()
 
 # Search sys.argv[] for a "platform=foo" argument since we don't have
 # an 'env' variable at this point.
@@ -29,8 +23,6 @@ if 'platform' in SCons.Script.ARGUMENTS:
 else:
     target_platform = host_platform
 
-cross_compiling = target_platform != host_platform
-
 _machine_map = {
 	'x86': 'x86',
 	'i386': 'x86',
@@ -38,6 +30,7 @@ _machine_map = {
 	'i586': 'x86',
 	'i686': 'x86',
 	'ppc' : 'ppc',
+	'AMD64': 'x86_64',
 	'x86_64': 'x86_64',
 }
 
@@ -52,7 +45,7 @@ host_machine = _machine_map.get(host_machine, 'generic')
 default_machine = host_machine
 default_toolchain = 'default'
 
-if target_platform == 'windows' and cross_compiling:
+if target_platform == 'windows' and host_platform != 'windows':
     default_machine = 'x86'
     default_toolchain = 'crossmingw'
 
@@ -88,8 +81,9 @@ def AddOptions(opts):
 	opts.Add(EnumOption('machine', 'use machine-specific assembly code', default_machine,
 											 allowed_values=('generic', 'ppc', 'x86', 'x86_64')))
 	opts.Add(EnumOption('platform', 'target platform', host_platform,
-											 allowed_values=('linux', 'cell', 'windows', 'winddk', 'wince', 'darwin', 'embedded', 'cygwin', 'sunos5', 'freebsd8')))
+											 allowed_values=('linux', 'cell', 'windows', 'winddk', 'wince', 'darwin', 'embedded', 'cygwin_nt-5.1', 'cygwin_nt-6.1', 'sunos5', 'freebsd8')))
 	opts.Add('toolchain', 'compiler toolchain', default_toolchain)
+	opts.Add(BoolOption('gles', 'EXPERIMENTAL: enable OpenGL ES support', 'no'))
 	opts.Add(BoolOption('llvm', 'use LLVM', default_llvm))
 	opts.Add(BoolOption('debug', 'DEPRECATED: debug build', 'yes'))
 	opts.Add(BoolOption('profile', 'DEPRECATED: profile build', 'no'))

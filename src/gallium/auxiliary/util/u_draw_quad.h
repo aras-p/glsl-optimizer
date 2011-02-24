@@ -38,17 +38,18 @@ extern "C" {
 #endif
 
 struct pipe_resource;
+struct cso_context;
 
 #include "util/u_draw.h"
 
 extern void 
-util_draw_vertex_buffer(struct pipe_context *pipe,
+util_draw_vertex_buffer(struct pipe_context *pipe, struct cso_context *cso,
                         struct pipe_resource *vbuf, uint offset,
                         uint num_attribs, uint num_verts, uint prim_type);
 
 
 extern void 
-util_draw_texquad(struct pipe_context *pipe,
+util_draw_texquad(struct pipe_context *pipe, struct cso_context *cso,
                   float x0, float y0, float x1, float y1, float z);
 
 

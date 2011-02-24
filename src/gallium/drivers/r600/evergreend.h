@@ -327,6 +327,9 @@
 #define   S_028C70_SOURCE_FORMAT(x)                    (((x) & 0x3) << 24)
 #define   G_028C70_SOURCE_FORMAT(x)                    (((x) >> 24) & 0x3)
 #define   C_028C70_SOURCE_FORMAT                       0xFCFFFFFF
+#define     V_028C70_EXPORT_4C_32BPC                   0x0
+#define     V_028C70_EXPORT_4C_16BPC                   0x1
+#define     V_028C70_EXPORT_2C_32BPC                   0x2 /* Do not use */
 #define   S_028C70_RAT(x)                              (((x) & 0x1) << 26)
 #define   G_028C70_RAT(x)                              (((x) >> 26) & 0x1)
 #define   C_028C70_RAT                                 0xFBFFFFFF
@@ -427,15 +430,6 @@
 #define   C_028800_STENCILZFAIL_BF                     0x1FFFFFFF
 
 #define R_028808_CB_COLOR_CONTROL                    0x028808
-#define   S_028808_FOG_ENABLE(x)                       (((x) & 0x1) << 0)
-#define   G_028808_FOG_ENABLE(x)                       (((x) >> 0) & 0x1)
-#define   C_028808_FOG_ENABLE                          0xFFFFFFFE
-#define   S_028808_MULTIWRITE_ENABLE(x)                (((x) & 0x1) << 1)
-#define   G_028808_MULTIWRITE_ENABLE(x)                (((x) >> 1) & 0x1)
-#define   C_028808_MULTIWRITE_ENABLE                   0xFFFFFFFD
-#define   S_028808_DITHER_ENABLE(x)                    (((x) & 0x1) << 2)
-#define   G_028808_DITHER_ENABLE(x)                    (((x) >> 2) & 0x1)
-#define   C_028808_DITHER_ENABLE                       0xFFFFFFFB
 #define   S_028808_DEGAMMA_ENABLE(x)                   (((x) & 0x1) << 3)
 #define   G_028808_DEGAMMA_ENABLE(x)                   (((x) >> 3) & 0x1)
 #define   C_028808_DEGAMMA_ENABLE                      0xFFFFFFF7
@@ -939,6 +933,9 @@
 #define     V_030000_SQ_TEX_DIM_2D_ARRAY               0x00000005
 #define     V_030000_SQ_TEX_DIM_2D_MSAA                0x00000006
 #define     V_030000_SQ_TEX_DIM_2D_ARRAY_MSAA          0x00000007
+#define   S_030000_NON_DISP_TILING_ORDER(x)            (((x) & 0x1) << 5)
+#define   G_030000_NON_DISP_TILING_ORDER(x)            (((x) >> 5) & 0x1)
+#define   C_030000_NON_DISP_TILING_ORDER               0xFFFFFFDF
 #define   S_030000_PITCH(x)                            (((x) & 0xFFF) << 6)
 #define   G_030000_PITCH(x)                            (((x) >> 6) & 0xFFF)
 #define   C_030000_PITCH                               0xFFFC003F

@@ -55,6 +55,7 @@ nvc0_fence_emit(struct nvc0_fence *fence)
 
    assert(fence->state == NVC0_FENCE_STATE_AVAILABLE);
 
+   MARK_RING (chan, 5, 2);
    BEGIN_RING(chan, RING_3D(QUERY_ADDRESS_HIGH), 4);
    OUT_RELOCh(chan, screen->fence.bo, 0, NOUVEAU_BO_WR);
    OUT_RELOCl(chan, screen->fence.bo, 0, NOUVEAU_BO_WR);
@@ -83,7 +84,8 @@ nvc0_fence_del(struct nvc0_fence *fence)
    struct nvc0_fence *it;
    struct nvc0_screen *screen = fence->screen;
 
-   if (fence->state == NVC0_FENCE_STATE_EMITTED) {
+   if (fence->state == NVC0_FENCE_STATE_EMITTED ||
+       fence->state == NVC0_FENCE_STATE_FLUSHED) {
       if (fence == screen->fence.head) {
          screen->fence.head = fence->next;
          if (!screen->fence.head)
@@ -118,8 +120,8 @@ nvc0_fence_trigger_release_buffers(struct nvc0_fence *fence)
    fence->buffers = NULL;
 }
 
-static void
-nvc0_screen_fence_update(struct nvc0_screen *screen)
+void
+nvc0_screen_fence_update(struct nvc0_screen *screen, boolean flushed)
 {
    struct nvc0_fence *fence;
    struct nvc0_fence *next = NULL;
@@ -146,38 +148,43 @@ nvc0_screen_fence_update(struct nvc0_screen *screen)
    screen->fence.head = next;
    if (!next)
       screen->fence.tail = NULL;
-}
 
-#define NVC0_FENCE_MAX_SPINS (1 << 17)
+   if (flushed) {
+      for (fence = next; fence; fence = fence->next)
+         fence->state = NVC0_FENCE_STATE_FLUSHED;
+   }
+}
 
 boolean
 nvc0_fence_signalled(struct nvc0_fence *fence)
 {
    struct nvc0_screen *screen = fence->screen;
 
-   if (fence->state == NVC0_FENCE_STATE_EMITTED)
-      nvc0_screen_fence_update(screen);
+   if (fence->state >= NVC0_FENCE_STATE_EMITTED)
+      nvc0_screen_fence_update(screen, FALSE);
 
    return fence->state == NVC0_FENCE_STATE_SIGNALLED;
 }
+
+#define NVC0_FENCE_MAX_SPINS (1 << 31)
 
 boolean
 nvc0_fence_wait(struct nvc0_fence *fence)
 {
    struct nvc0_screen *screen = fence->screen;
-   int spins = 0;
+   uint32_t spins = 0;
 
-   if (fence->state == NVC0_FENCE_STATE_AVAILABLE) {
+   if (fence->state < NVC0_FENCE_STATE_EMITTED) {
       nvc0_fence_emit(fence);
-
-      FIRE_RING(screen->base.channel);
 
       if (fence == screen->fence.current)
          nvc0_screen_fence_new(screen, &screen->fence.current, FALSE);
    }
+   if (fence->state < NVC0_FENCE_STATE_FLUSHED)
+      FIRE_RING(screen->base.channel);
 
    do {
-      nvc0_screen_fence_update(screen);
+      nvc0_screen_fence_update(screen, FALSE);
 
       if (fence->state == NVC0_FENCE_STATE_SIGNALLED)
          return TRUE;
@@ -188,8 +195,9 @@ nvc0_fence_wait(struct nvc0_fence *fence)
 #endif
    } while (spins < NVC0_FENCE_MAX_SPINS);
 
-   if (spins > 9000)
-      NOUVEAU_ERR("fence %x: been spinning too long\n", fence->sequence);
+   debug_printf("Wait on fence %u (ack = %u, next = %u) timed out !\n",
+                fence->sequence,
+                screen->fence.sequence_ack, screen->fence.sequence);
 
    return FALSE;
 }
@@ -199,5 +207,4 @@ nvc0_screen_fence_next(struct nvc0_screen *screen)
 {
    nvc0_fence_emit(screen->fence.current);
    nvc0_screen_fence_new(screen, &screen->fence.current, FALSE);
-   nvc0_screen_fence_update(screen);
 }

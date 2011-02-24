@@ -35,26 +35,24 @@
 #include "r300_screen_buffer.h"
 #include "r300_winsys.h"
 
-#ifdef HAVE_LLVM
-#include "gallivm/lp_bld_init.h"
-#endif
-
 static void r300_update_num_contexts(struct r300_screen *r300screen,
                                      int diff)
 {
+    pipe_mutex_lock(r300screen->num_contexts_mutex);
     if (diff > 0) {
-        p_atomic_inc(&r300screen->num_contexts);
+        r300screen->num_contexts++;
 
         if (r300screen->num_contexts > 1)
             util_slab_set_thread_safety(&r300screen->pool_buffers,
                                         UTIL_SLAB_MULTITHREADED);
     } else {
-        p_atomic_dec(&r300screen->num_contexts);
+        r300screen->num_contexts--;
 
         if (r300screen->num_contexts <= 1)
             util_slab_set_thread_safety(&r300screen->pool_buffers,
                                         UTIL_SLAB_SINGLETHREADED);
     }
+    pipe_mutex_unlock(r300screen->num_contexts_mutex);
 }
 
 static void r300_release_referenced_objects(struct r300_context *r300)
@@ -87,17 +85,14 @@ static void r300_release_referenced_objects(struct r300_context *r300)
     /* The SWTCL VBO. */
     pipe_resource_reference(&r300->vbo, NULL);
 
-    /* Vertex buffers. */
-    for (i = 0; i < r300->vertex_buffer_count; i++) {
-        pipe_resource_reference(&r300->vertex_buffer[i].buffer, NULL);
-        pipe_resource_reference(&r300->valid_vertex_buffer[i], NULL);
-    }
-
     /* If there are any queries pending or not destroyed, remove them now. */
     foreach_s(query, temp, &r300->query_list) {
         remove_from_list(query);
         FREE(query);
     }
+
+    r300->context.delete_depth_stencil_alpha_state(&r300->context,
+                                                   r300->dsa_decompress_zmask);
 }
 
 static void r300_destroy_context(struct pipe_context* context)
@@ -106,27 +101,14 @@ static void r300_destroy_context(struct pipe_context* context)
 
     if (r300->blitter)
         util_blitter_destroy(r300->blitter);
-    if (r300->draw) {
+    if (r300->draw)
         draw_destroy(r300->draw);
 
-#ifdef HAVE_LLVM
-        gallivm_destroy(r300->gallivm);
-#endif
-    }
-
-    if (r300->upload_vb)
-        u_upload_destroy(r300->upload_vb);
-    if (r300->upload_ib)
-        u_upload_destroy(r300->upload_ib);
-
-    if (r300->tran.translate_cache)
-        translate_cache_destroy(r300->tran.translate_cache);
+    if (r300->vbuf_mgr)
+        u_vbuf_mgr_destroy(r300->vbuf_mgr);
 
     /* XXX: This function assumes r300->query_list was initialized */
     r300_release_referenced_objects(r300);
-
-    if (r300->zmask_mm)
-        r300_hyperz_destroy_mm(r300);
 
     if (r300->cs)
         r300->rws->cs_destroy(r300->cs);
@@ -247,7 +229,7 @@ static boolean r300_setup_atoms(struct r300_context* r300)
         if (has_hiz_ram)
             R300_INIT_ATOM(hiz_clear, 0);
         /* zmask clear */
-        R300_INIT_ATOM(zmask_clear, 0);
+        R300_INIT_ATOM(zmask_clear, 4);
     }
     /* ZB (unpipelined), SU. */
     R300_INIT_ATOM(query_start, 4);
@@ -432,12 +414,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     if (!r300screen->caps.has_tcl) {
         /* Create a Draw. This is used for SW TCL. */
-#ifdef HAVE_LLVM
-        r300->gallivm = gallivm_create();
-        r300->draw = draw_create_gallivm(&r300->context, r300->gallivm);
-#else
         r300->draw = draw_create(&r300->context);
-#endif
         if (r300->draw == NULL)
             goto fail;
         /* Enable our renderer. */
@@ -456,6 +433,13 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300_init_state_functions(r300);
     r300_init_resource_functions(r300);
 
+    r300->vbuf_mgr = u_vbuf_mgr_create(&r300->context, 1024 * 1024, 16,
+                                       PIPE_BIND_VERTEX_BUFFER |
+                                       PIPE_BIND_INDEX_BUFFER,
+                                       U_VERTEX_FETCH_DWORD_ALIGNED);
+    if (!r300->vbuf_mgr)
+        goto fail;
+
     r300->blitter = util_blitter_create(&r300->context);
     if (r300->blitter == NULL)
         goto fail;
@@ -469,23 +453,6 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     if (r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
         if (!r300_hyperz_init_mm(r300))
             goto fail;
-
-    r300->upload_ib = u_upload_create(&r300->context,
-				      64 * 1024, 16,
-				      PIPE_BIND_INDEX_BUFFER);
-
-    if (r300->upload_ib == NULL)
-        goto fail;
-
-    r300->upload_vb = u_upload_create(&r300->context,
-				      1024 * 1024, 16,
-				      PIPE_BIND_VERTEX_BUFFER);
-    if (r300->upload_vb == NULL)
-        goto fail;
-
-    r300->tran.translate_cache = translate_cache_create();
-    if (r300->tran.translate_cache == NULL)
-        goto fail;
 
     r300_init_states(&r300->context);
 
@@ -515,7 +482,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     }
 
     {
-        struct pipe_resource vb = {};
+        struct pipe_resource vb;
+        memset(&vb, 0, sizeof(vb));
         vb.target = PIPE_BUFFER;
         vb.format = PIPE_FORMAT_R8_UNORM;
         vb.bind = PIPE_BIND_VERTEX_BUFFER;
@@ -527,36 +495,44 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
         r300->dummy_vb = screen->resource_create(screen, &vb);
     }
 
+    {
+        struct pipe_depth_stencil_alpha_state dsa;
+        memset(&dsa, 0, sizeof(dsa));
+        dsa.depth.writemask = 1;
+
+        r300->dsa_decompress_zmask =
+            r300->context.create_depth_stencil_alpha_state(&r300->context,
+                                                           &dsa);
+    }
+
+    /* Print driver info. */
+#ifdef NDEBUG
+    if (DBG_ON(r300, DBG_INFO)) {
+#else
+    {
+#endif
+        fprintf(stderr,
+                "r300: DRM version: %d.%d.%d, Name: %s, ID: 0x%04x, GB: %d, Z: %d\n"
+                "r300: GART size: %d MB, VRAM size: %d MB\n"
+                "r300: AA compression: %s, Z compression: %s, HiZ: %s\n",
+                rws->get_value(rws, R300_VID_DRM_MAJOR),
+                rws->get_value(rws, R300_VID_DRM_MINOR),
+                rws->get_value(rws, R300_VID_DRM_PATCHLEVEL),
+                screen->get_name(screen),
+                rws->get_value(rws, R300_VID_PCI_ID),
+                rws->get_value(rws, R300_VID_GB_PIPES),
+                rws->get_value(rws, R300_VID_Z_PIPES),
+                rws->get_value(rws, R300_VID_GART_SIZE) >> 20,
+                rws->get_value(rws, R300_VID_VRAM_SIZE) >> 20,
+                rws->get_value(rws, R300_CAN_AACOMPRESS) ? "YES" : "NO",
+                rws->get_value(rws, R300_CAN_HYPERZ) ? "YES" : "NO",
+                rws->get_value(rws, R300_CAN_HYPERZ) &&
+                r300->screen->caps.hiz_ram ? "YES" : "NO");
+    }
+
     return &r300->context;
 
- fail:
+fail:
     r300_destroy_context(&r300->context);
     return NULL;
-}
-
-void r300_finish(struct r300_context *r300)
-{
-    struct pipe_framebuffer_state *fb;
-    unsigned i;
-
-    /* This is a preliminary implementation of glFinish.
-     *
-     * The ideal implementation should use something like EmitIrqLocked and
-     * WaitIrq, or better, real fences.
-     */
-    if (r300->fb_state.state) {
-        fb = r300->fb_state.state;
-
-        for (i = 0; i < fb->nr_cbufs; i++) {
-            if (fb->cbufs[i]->texture) {
-                r300->rws->buffer_wait(r300->rws,
-                    r300_texture(fb->cbufs[i]->texture)->buffer);
-                return;
-            }
-        }
-        if (fb->zsbuf && fb->zsbuf->texture) {
-            r300->rws->buffer_wait(r300->rws,
-                r300_texture(fb->zsbuf->texture)->buffer);
-        }
-    }
 }

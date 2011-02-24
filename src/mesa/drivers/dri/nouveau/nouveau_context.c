@@ -115,7 +115,8 @@ nouveau_context_init(struct gl_context *ctx, struct nouveau_screen *screen,
 	nouveau_fbo_functions_init(&functions);
 
 	/* Initialize the mesa context. */
-	_mesa_initialize_context(ctx, visual, share_ctx, &functions, NULL);
+	_mesa_initialize_context(ctx, API_OPENGL, visual,
+                                 share_ctx, &functions, NULL);
 
 	nouveau_state_init(ctx);
 	nouveau_bo_state_init(ctx);

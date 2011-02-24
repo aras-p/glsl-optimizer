@@ -54,6 +54,8 @@ get_attr_override(struct brw_context *brw, int fs_attr, int two_side_color)
     * be FRAG_ATTRIB_*.
     */
    for (i = 1; i < vs_attr; i++) {
+      if (i == VERT_RESULT_PSIZ)
+	 continue;
       if (brw->vs.prog_data->outputs_written & BITFIELD64_BIT(i))
 	 attr_index++;
    }
@@ -207,7 +209,7 @@ upload_sf_state(struct brw_context *brw)
 	 ctx->Point._Attenuated))
       dw4 |= GEN6_SF_USE_STATE_POINT_WIDTH;
 
-   dw4 |= U_FIXED(CLAMP(ctx->Point.Size, 0.125, 225.875), 3) <<
+   dw4 |= U_FIXED(CLAMP(ctx->Point.Size, 0.125, 255.875), 3) <<
       GEN6_SF_POINT_WIDTH_SHIFT;
    if (ctx->Point.SpriteOrigin == GL_LOWER_LEFT)
       dw1 |= GEN6_SF_POINT_SPRITE_LOWERLEFT;

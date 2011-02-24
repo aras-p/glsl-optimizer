@@ -303,7 +303,6 @@ void polygon_fill(struct polygon *poly, struct vg_context *ctx)
    vbuffer.buffer = poly->vbuf;
    vbuffer.stride = COMPONENTS * sizeof(float);  /* vertex size */
    vbuffer.buffer_offset = 0;
-   vbuffer.max_index = poly->num_verts - 1;
 
    renderer_polygon_stencil_begin(ctx->renderer,
          &velement, ctx->state.vg.fill_rule, VG_FALSE);
@@ -354,7 +353,6 @@ void polygon_array_fill(struct polygon_array *polyarray, struct vg_context *ctx)
 
       polygon_prepare_buffer(ctx, poly);
       vbuffer.buffer = poly->vbuf;
-      vbuffer.max_index = poly->num_verts - 1;
 
       renderer_polygon_stencil(ctx->renderer, &vbuffer,
             PIPE_PRIM_TRIANGLE_FAN, 0, (VGuint) poly->num_verts);

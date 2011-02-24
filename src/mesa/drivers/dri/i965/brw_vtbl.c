@@ -73,15 +73,11 @@ static void brw_destroy_context( struct intel_context *intel )
       free(brw->wm.compile_data);
    }
 
-   for (i = 0; i < brw->state.nr_color_regions; i++)
-      intel_region_release(&brw->state.color_regions[i]);
-   brw->state.nr_color_regions = 0;
    intel_region_release(&brw->state.depth_region);
 
    dri_bo_release(&brw->curbe.curbe_bo);
    dri_bo_release(&brw->vs.prog_bo);
    dri_bo_release(&brw->vs.state_bo);
-   dri_bo_release(&brw->vs.bind_bo);
    dri_bo_release(&brw->vs.const_bo);
    dri_bo_release(&brw->gs.prog_bo);
    dri_bo_release(&brw->gs.state_bo);
@@ -93,16 +89,12 @@ static void brw_destroy_context( struct intel_context *intel )
    dri_bo_release(&brw->sf.vp_bo);
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++)
       dri_bo_release(&brw->wm.sdc_bo[i]);
-   dri_bo_release(&brw->wm.bind_bo);
-   for (i = 0; i < BRW_WM_MAX_SURF; i++)
-      dri_bo_release(&brw->wm.surf_bo[i]);
    dri_bo_release(&brw->wm.sampler_bo);
    dri_bo_release(&brw->wm.prog_bo);
    dri_bo_release(&brw->wm.state_bo);
    dri_bo_release(&brw->wm.const_bo);
    dri_bo_release(&brw->wm.push_const_bo);
    dri_bo_release(&brw->cc.prog_bo);
-   dri_bo_release(&brw->cc.state_bo);
    dri_bo_release(&brw->cc.vp_bo);
    dri_bo_release(&brw->cc.blend_state_bo);
    dri_bo_release(&brw->cc.depth_stencil_state_bo);
@@ -122,20 +114,14 @@ static void brw_set_draw_region( struct intel_context *intel,
                                  GLuint num_color_regions)
 {
    struct brw_context *brw = brw_context(&intel->ctx);
-   GLuint i;
 
    /* release old color/depth regions */
    if (brw->state.depth_region != depth_region)
       brw->state.dirty.brw |= BRW_NEW_DEPTH_BUFFER;
-   for (i = 0; i < brw->state.nr_color_regions; i++)
-       intel_region_release(&brw->state.color_regions[i]);
    intel_region_release(&brw->state.depth_region);
 
    /* reference new color/depth regions */
-   for (i = 0; i < num_color_regions; i++)
-       intel_region_reference(&brw->state.color_regions[i], color_regions[i]);
    intel_region_reference(&brw->state.depth_region, depth_region);
-   brw->state.nr_color_regions = num_color_regions;
 }
 
 
@@ -173,14 +159,7 @@ static void brw_new_batch( struct intel_context *intel )
    brw->state.dirty.brw |= ~0;
    brw->state.dirty.cache |= ~0;
 
-   /* Move to the end of the current upload buffer so that we'll force choosing
-    * a new buffer next time.
-    */
-   if (brw->vb.upload.bo != NULL) {
-      drm_intel_bo_unreference(brw->vb.upload.bo);
-      brw->vb.upload.bo = NULL;
-      brw->vb.upload.offset = 0;
-   }
+   brw->vb.nr_current_buffers = 0;
 }
 
 static void brw_invalidate_state( struct intel_context *intel, GLuint new_state )

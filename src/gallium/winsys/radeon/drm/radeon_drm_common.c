@@ -1,5 +1,6 @@
 /*
  * Copyright © 2009 Corbin Simpson
+ * Copyright © 2011 Marek Olšák <maraeo@gmail.com>
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining
@@ -27,38 +28,35 @@
  * Authors:
  *      Corbin Simpson <MostAwesomeDude@gmail.com>
  *      Joakim Sindholt <opensource@zhasha.com>
+ *      Marek Olšák <maraeo@gmail.com>
  */
 
 #include "radeon_winsys.h"
-#include "radeon_drm_buffer.h"
+#include "radeon_drm_bo.h"
 #include "radeon_drm_cs.h"
 #include "radeon_drm_public.h"
 
 #include "pipebuffer/pb_bufmgr.h"
 #include "util/u_memory.h"
 
-#include <radeon_drm.h>
-#include <radeon_bo_gem.h>
-#include <radeon_cs_gem.h>
 #include <xf86drm.h>
 #include <stdio.h>
 
-
-/* Enable/disable Hyper-Z access. Return TRUE on success. */
-static boolean radeon_set_hyperz_access(int fd, boolean enable)
-{
 #ifndef RADEON_INFO_WANT_HYPERZ
 #define RADEON_INFO_WANT_HYPERZ 7
 #endif
+#ifndef RADEON_INFO_WANT_CMASK
+#define RADEON_INFO_WANT_CMASK 8
+#endif
 
+/* Enable/disable feature access. Return TRUE on success. */
+static boolean radeon_set_fd_access(int fd, unsigned request, boolean enable)
+{
     struct drm_radeon_info info = {0};
     unsigned value = enable ? 1 : 0;
 
-    if (!debug_get_bool_option("RADEON_HYPERZ", FALSE))
-        return FALSE;
-
     info.value = (unsigned long)&value;
-    info.request = RADEON_INFO_WANT_HYPERZ;
+    info.request = request;
 
     if (drmCommandWriteRead(fd, DRM_RADEON_INFO, &info, sizeof(info)) != 0)
         return FALSE;
@@ -107,23 +105,9 @@ static void do_ioctls(struct radeon_drm_winsys *winsys)
         exit(1);
     }
 
-/* XXX Remove this ifdef when libdrm version 2.4.19 becomes mandatory. */
-#ifdef RADEON_BO_FLAGS_MICRO_TILE_SQUARE
-    // Supported since 2.1.0.
-    winsys->squaretiling = version->version_major > 2 ||
-                           version->version_minor >= 1;
-#endif
-
-    winsys->drm_2_3_0 = version->version_major > 2 ||
-                        version->version_minor >= 3;
-
-    winsys->drm_2_6_0 = version->version_major > 2 ||
-                        (version->version_major == 2 &&
-                         version->version_minor >= 6);
-
-    winsys->drm_2_8_0 = version->version_major > 2 ||
-                        (version->version_major == 2 &&
-                         version->version_minor >= 8);
+    winsys->drm_major = version->version_major;
+    winsys->drm_minor = version->version_minor;
+    winsys->drm_patchlevel = version->version_patchlevel;
 
     info.request = RADEON_INFO_DEVICE_ID;
     retval = drmCommandWriteRead(winsys->fd, DRM_RADEON_INFO, &info, sizeof(info));
@@ -152,7 +136,15 @@ static void do_ioctls(struct radeon_drm_winsys *winsys)
     }
     winsys->z_pipes = target;
 
-    winsys->hyperz = radeon_set_hyperz_access(winsys->fd, TRUE);
+    if (debug_get_bool_option("RADEON_HYPERZ", FALSE)) {
+        winsys->hyperz = radeon_set_fd_access(winsys->fd,
+                                              RADEON_INFO_WANT_HYPERZ, TRUE);
+    }
+
+    if (debug_get_bool_option("RADEON_CMASK", FALSE)) {
+        winsys->aacompress = radeon_set_fd_access(winsys->fd,
+                                                  RADEON_INFO_WANT_CMASK, TRUE);
+    }
 
     retval = drmCommandWriteRead(winsys->fd, DRM_RADEON_GEM_INFO,
             &gem_info, sizeof(gem_info));
@@ -164,17 +156,6 @@ static void do_ioctls(struct radeon_drm_winsys *winsys)
     winsys->gart_size = gem_info.gart_size;
     winsys->vram_size = gem_info.vram_size;
 
-    debug_printf("radeon: Successfully grabbed chipset info from kernel!\n"
-                 "radeon: DRM version: %d.%d.%d ID: 0x%04x GB: %d Z: %d\n"
-                 "radeon: GART size: %d MB VRAM size: %d MB\n"
-                 "radeon: HyperZ: %s\n",
-                 version->version_major, version->version_minor,
-                 version->version_patchlevel, winsys->pci_id,
-                 winsys->gb_pipes, winsys->z_pipes,
-                 winsys->gart_size / 1024 / 1024,
-                 winsys->vram_size / 1024 / 1024,
-                 winsys->hyperz ? "YES" : "NO");
-
     drmFreeVersion(version);
 }
 
@@ -184,9 +165,45 @@ static void radeon_winsys_destroy(struct r300_winsys_screen *rws)
 
     ws->cman->destroy(ws->cman);
     ws->kman->destroy(ws->kman);
-
-    radeon_bo_manager_gem_dtor(ws->bom);
     FREE(rws);
+}
+
+static uint32_t radeon_get_value(struct r300_winsys_screen *rws,
+                                 enum r300_value_id id)
+{
+    struct radeon_drm_winsys *ws = (struct radeon_drm_winsys *)rws;
+
+    switch(id) {
+    case R300_VID_PCI_ID:
+	return ws->pci_id;
+    case R300_VID_GB_PIPES:
+	return ws->gb_pipes;
+    case R300_VID_Z_PIPES:
+	return ws->z_pipes;
+    case R300_VID_GART_SIZE:
+        return ws->gart_size;
+    case R300_VID_VRAM_SIZE:
+        return ws->vram_size;
+    case R300_VID_DRM_MAJOR:
+        return ws->drm_major;
+    case R300_VID_DRM_MINOR:
+        return ws->drm_minor;
+    case R300_VID_DRM_PATCHLEVEL:
+        return ws->drm_patchlevel;
+    case R300_VID_DRM_2_1_0:
+        return ws->drm_major*100 + ws->drm_minor >= 201;
+    case R300_VID_DRM_2_3_0:
+        return ws->drm_major*100 + ws->drm_minor >= 203;
+    case R300_VID_DRM_2_6_0:
+        return ws->drm_major*100 + ws->drm_minor >= 206;
+    case R300_VID_DRM_2_8_0:
+        return ws->drm_major*100 + ws->drm_minor >= 208;
+    case R300_CAN_HYPERZ:
+        return ws->hyperz;
+    case R300_CAN_AACOMPRESS:
+        return ws->aacompress;
+    }
+    return 0;
 }
 
 struct r300_winsys_screen *r300_drm_winsys_screen_create(int fd)
@@ -204,10 +221,7 @@ struct r300_winsys_screen *r300_drm_winsys_screen_create(int fd)
     }
 
     /* Create managers. */
-    ws->bom = radeon_bo_manager_gem_ctor(fd);
-    if (!ws->bom)
-	goto fail;
-    ws->kman = radeon_drm_bufmgr_create(ws);
+    ws->kman = radeon_bomgr_create(ws);
     if (!ws->kman)
 	goto fail;
     ws->cman = pb_cache_manager_create(ws->kman, 1000000);
@@ -216,22 +230,18 @@ struct r300_winsys_screen *r300_drm_winsys_screen_create(int fd)
 
     /* Set functions. */
     ws->base.destroy = radeon_winsys_destroy;
+    ws->base.get_value = radeon_get_value;
 
-    radeon_drm_bufmgr_init_functions(ws);
+    radeon_bomgr_init_functions(ws);
     radeon_drm_cs_init_functions(ws);
-    radeon_winsys_init_functions(ws);
 
     return &ws->base;
 
 fail:
-    if (ws->bom)
-	radeon_bo_manager_gem_dtor(ws->bom);
-
     if (ws->cman)
 	ws->cman->destroy(ws->cman);
     if (ws->kman)
 	ws->kman->destroy(ws->kman);
-
     FREE(ws);
     return NULL;
 }

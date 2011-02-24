@@ -139,7 +139,7 @@ void draw_pt_fetch_run( struct pt_fetch *fetch,
 			    ((char *)draw->pt.user.vbuffer[i] + 
 			     draw->pt.vertex_buffer[i].buffer_offset),
 			    draw->pt.vertex_buffer[i].stride,
-			    draw->pt.vertex_buffer[i].max_index);
+			    draw->pt.user.max_index);
    }
 
    translate->run_elts( translate,
@@ -166,7 +166,7 @@ void draw_pt_fetch_run_linear( struct pt_fetch *fetch,
 			    ((char *)draw->pt.user.vbuffer[i] +
 			     draw->pt.vertex_buffer[i].buffer_offset),
 			    draw->pt.vertex_buffer[i].stride,
-			    draw->pt.vertex_buffer[i].max_index);
+			    draw->pt.user.max_index);
    }
 
    translate->run( translate,

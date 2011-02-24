@@ -141,12 +141,18 @@ GLboolean
 dri_unbind_context(__DRIcontext * cPriv)
 {
    /* dri_util.c ensures cPriv is not null */
+   struct dri_screen *screen = dri_screen(cPriv->driScreenPriv);
    struct dri_context *ctx = dri_context(cPriv);
+   struct dri_drawable *draw = dri_drawable(ctx->dPriv);
+   struct dri_drawable *read = dri_drawable(ctx->rPriv);
+   struct st_api *stapi = screen->st_api;
 
    if (--ctx->bind_count == 0) {
       if (ctx->st == ctx->stapi->get_current(ctx->stapi)) {
          ctx->st->flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
-         ctx->stapi->make_current(ctx->stapi, NULL, NULL, NULL);
+         stapi->make_current(stapi, NULL, NULL, NULL);
+         draw->context = NULL;
+         read->context = NULL;
       }
    }
 
@@ -169,17 +175,23 @@ dri_make_current(__DRIcontext * cPriv,
 
    ++ctx->bind_count;
 
+   if (!driDrawPriv && !driReadPriv)
+      return ctx->stapi->make_current(ctx->stapi, ctx->st, NULL, NULL);
+   else if (!driDrawPriv || !driReadPriv)
+      return GL_FALSE;
+
+   draw->context = ctx;
    if (ctx->dPriv != driDrawPriv) {
       ctx->dPriv = driDrawPriv;
       draw->texture_stamp = driDrawPriv->lastStamp - 1;
    }
+   read->context = ctx;
    if (ctx->rPriv != driReadPriv) {
       ctx->rPriv = driReadPriv;
       read->texture_stamp = driReadPriv->lastStamp - 1;
    }
 
-   ctx->stapi->make_current(ctx->stapi, ctx->st,
-         (draw) ? &draw->base : NULL, (read) ? &read->base : NULL);
+   ctx->stapi->make_current(ctx->stapi, ctx->st, &draw->base, &read->base);
 
    return GL_TRUE;
 }

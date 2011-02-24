@@ -299,7 +299,7 @@ check_swap_src_0_1(struct nv_instruction *nvi)
    }
 
    if (nvi->opcode == NV_OP_SET && nvi->src[0] != src0)
-      nvi->set_cond = cc_swapped[nvi->set_cond];
+      nvi->set_cond = (nvi->set_cond & ~7) | cc_swapped[nvi->set_cond & 7];
 }
 
 static int

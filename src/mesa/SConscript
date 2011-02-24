@@ -12,12 +12,18 @@ env.Append(CPPPATH = [
     '#/src/mesa',
 ])
 
+env.Append(CPPDEFINES = [
+    'FEATURE_GL=1',
+])
+
 if env['platform'] == 'windows':
     env.Append(CPPDEFINES = [
         '_GDI32_', # prevent gl* being declared __declspec(dllimport) in MS headers
         'BUILD_GL32', # declare gl* as __declspec(dllexport) in Mesa headers
     ])
-    env.Prepend(CPPPATH = ['#src/talloc'])
+    if not env['gles']:
+        # prevent _glapi_* from being declared __declspec(dllimport)
+        env.Append(CPPDEFINES = ['_GLAPI_NO_EXPORTS'])
 else:
     env.Append(CPPDEFINES = [
         'IN_DRI_DRIVER', # enable the remap table (for DRI drivers)
@@ -239,6 +245,61 @@ mesa_sources = (
     vf_sources +
     statetracker_sources
 )
+
+if env['gles']:
+    from sys import executable as python_cmd
+
+    env.Append(CPPDEFINES = ['FEATURE_ES1=1', 'FEATURE_ES2=1'])
+
+    # generate GLES sources
+    gles_sources = []
+    gles_sources += env.CodeGenerate(
+        target = 'main/api_exec_es1.c',
+        script = 'main/es_generator.py',
+        source = 'main/APIspec.xml',
+        command = python_cmd + ' $SCRIPT -S $SOURCE -V GLES1.1 > $TARGET'
+    )
+    gles_sources += env.CodeGenerate(
+        target = 'main/api_exec_es2.c',
+        script = 'main/es_generator.py',
+        source = 'main/APIspec.xml',
+        command = python_cmd + ' $SCRIPT -S $SOURCE -V GLES2.0 > $TARGET'
+    )
+
+    # generate GLES headers
+    GLAPI = '#src/mapi/glapi/'
+    gles_headers = []
+    gles_headers += env.CodeGenerate(
+        target = 'es1api/main/glapidispatch.h',
+        script = GLAPI + 'gen/gl_table.py',
+        source = GLAPI + 'gen-es/es1_API.xml',
+        command = python_cmd + ' $SCRIPT -c -m remap_table -f $SOURCE > $TARGET',
+    )
+    gles_headers += env.CodeGenerate(
+        target = 'es1api/main/remap_helper.h',
+        script = GLAPI + 'gen/remap_helper.py',
+        source = GLAPI + 'gen-es/es1_API.xml',
+        command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET',
+    )
+    gles_headers += env.CodeGenerate(
+        target = 'es2api/main/glapidispatch.h',
+        script = GLAPI + 'gen/gl_table.py',
+        source = GLAPI + 'gen-es/es2_API.xml',
+        command = python_cmd + ' $SCRIPT -c -m remap_table -f $SOURCE > $TARGET',
+    )
+    gles_headers += env.CodeGenerate(
+        target = 'es2api/main/remap_helper.h',
+        script = GLAPI + 'gen/remap_helper.py',
+        source = GLAPI + 'gen-es/es2_API.xml',
+        command = python_cmd + ' $SCRIPT -f $SOURCE > $TARGET',
+    )
+
+    env.Depends(gles_sources, gles_headers)
+
+    # gles_sources #include gles_headers with full path
+    env.Append(CPPPATH = [gles_headers[0].dir.up().up()])
+
+    mesa_sources += gles_sources
 
 #
 # Assembly sources

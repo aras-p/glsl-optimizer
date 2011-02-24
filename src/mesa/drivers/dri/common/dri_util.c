@@ -481,6 +481,22 @@ dri2CreateNewDrawable(__DRIscreen *screen,
     return pdraw;
 }
 
+static __DRIbuffer *
+dri2AllocateBuffer(__DRIscreen *screen,
+		   unsigned int attachment, unsigned int format,
+		   int width, int height)
+{
+    return (*screen->DriverAPI.AllocateBuffer)(screen, attachment, format,
+					       width, height);
+}
+
+static void
+dri2ReleaseBuffer(__DRIscreen *screen, __DRIbuffer *buffer)
+{
+   (*screen->DriverAPI.ReleaseBuffer)(screen, buffer);
+}
+
+
 static int
 dri2ConfigQueryb(__DRIscreen *screen, const char *var, GLboolean *val)
 {
@@ -930,7 +946,9 @@ const __DRIdri2Extension driDRI2Extension = {
     dri2CreateNewDrawable,
     dri2CreateNewContext,
     dri2GetAPIMask,
-    dri2CreateNewContextForAPI
+    dri2CreateNewContextForAPI,
+    dri2AllocateBuffer,
+    dri2ReleaseBuffer
 };
 
 const __DRI2configQueryExtension dri2ConfigQueryExtension = {

@@ -1414,7 +1414,7 @@ SkipPrimaryCreate:
 	}
 
 #ifdef _USE_GLD3_WGL
-	lpCtx->glCtx = _mesa_create_context(lpCtx->glVis, NULL, (void *)lpCtx, GL_TRUE);
+	lpCtx->glCtx = _mesa_create_context(API_OPENGL, lpCtx->glVis, NULL, (void *)lpCtx, GL_TRUE);
 #else
 	// Create the Mesa context
 	lpCtx->glCtx = (*mesaFuncs.gl_create_context)(

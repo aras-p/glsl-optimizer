@@ -100,8 +100,9 @@ svga_texture_copy_handle(struct svga_context *svga,
 
 
 struct svga_winsys_surface *
-svga_texture_view_surface(struct pipe_context *pipe,
+svga_texture_view_surface(struct svga_context *svga,
                           struct svga_texture *tex,
+                          SVGA3dSurfaceFlags flags,
                           SVGA3dSurfaceFormat format,
                           unsigned start_mip,
                           unsigned num_mip,
@@ -109,7 +110,7 @@ svga_texture_view_surface(struct pipe_context *pipe,
                           int zslice_pick,
                           struct svga_host_surface_cache_key *key) /* OUT */
 {
-   struct svga_screen *ss = svga_screen(pipe->screen);
+   struct svga_screen *ss = svga_screen(svga->pipe.screen);
    struct svga_winsys_surface *handle;
    uint32_t i, j;
    unsigned z_offset = 0;
@@ -118,7 +119,7 @@ svga_texture_view_surface(struct pipe_context *pipe,
             "svga: Create surface view: face %d zslice %d mips %d..%d\n",
             face_pick, zslice_pick, start_mip, start_mip+num_mip-1);
 
-   key->flags = 0;
+   key->flags = flags;
    key->format = format;
    key->numMipLevels = num_mip;
    key->size.width = u_minify(tex->b.b.width0, start_mip);
@@ -161,7 +162,7 @@ svga_texture_view_surface(struct pipe_context *pipe,
                               u_minify(tex->b.b.depth0, i + start_mip) :
                               1);
 
-            svga_texture_copy_handle(svga_context(pipe),
+            svga_texture_copy_handle(svga,
                                      tex->handle, 
                                      0, 0, z_offset, 
                                      i + start_mip, 
@@ -183,6 +184,7 @@ svga_create_surface(struct pipe_context *pipe,
                     struct pipe_resource *pt,
                     const struct pipe_surface *surf_tmpl)
 {
+   struct svga_context *svga = svga_context(pipe);
    struct svga_texture *tex = svga_texture(pt);
    struct pipe_screen *screen = pipe->screen;
    struct svga_surface *s;
@@ -191,6 +193,7 @@ svga_create_surface(struct pipe_context *pipe,
    boolean render = (surf_tmpl->usage & (PIPE_BIND_RENDER_TARGET |
                                          PIPE_BIND_DEPTH_STENCIL)) ? TRUE : FALSE;
    boolean view = FALSE;
+   SVGA3dSurfaceFlags flags;
    SVGA3dSurfaceFormat format;
 
    assert(surf_tmpl->u.tex.first_layer == surf_tmpl->u.tex.last_layer);
@@ -219,10 +222,18 @@ svga_create_surface(struct pipe_context *pipe,
    s->base.u.tex.first_layer = surf_tmpl->u.tex.first_layer;
    s->base.u.tex.last_layer = surf_tmpl->u.tex.last_layer;
 
-   if (!render)
+   if (!render) {
+      flags = SVGA3D_SURFACE_HINT_TEXTURE;
       format = svga_translate_format(surf_tmpl->format);
-   else
+   } else {
+      if (surf_tmpl->usage & PIPE_BIND_RENDER_TARGET) {
+         flags = SVGA3D_SURFACE_HINT_RENDERTARGET;
+      }
+      if (surf_tmpl->usage & PIPE_BIND_DEPTH_STENCIL) {
+         flags = SVGA3D_SURFACE_HINT_DEPTHSTENCIL;
+      }
       format = svga_translate_format_render(surf_tmpl->format);
+   }
 
    assert(format != SVGA3D_FORMAT_INVALID);
 
@@ -249,7 +260,8 @@ svga_create_surface(struct pipe_context *pipe,
       SVGA_DBG(DEBUG_VIEWS, "svga: Surface view: yes %p, level %u face %u z %u, %p\n",
                pt, surf_tmpl->u.tex.level, face, zslice, s);
 
-      s->handle = svga_texture_view_surface(NULL, tex, format, surf_tmpl->u.tex.level,
+      s->handle = svga_texture_view_surface(svga, tex, flags, format,
+                                            surf_tmpl->u.tex.level,
 	                                    1, face, zslice, &s->key);
       s->real_face = 0;
       s->real_level = 0;
@@ -329,7 +341,7 @@ void svga_mark_surfaces_dirty(struct svga_context *svga)
  * pipe is optional context to inline the blit command in.
  */
 void
-svga_propagate_surface(struct pipe_context *pipe, struct pipe_surface *surf)
+svga_propagate_surface(struct svga_context *svga, struct pipe_surface *surf)
 {
    struct svga_surface *s = svga_surface(surf);
    struct svga_texture *tex = svga_texture(surf->texture);
@@ -354,7 +366,7 @@ svga_propagate_surface(struct pipe_context *pipe, struct pipe_surface *surf)
 
    if (s->handle != tex->handle) {
       SVGA_DBG(DEBUG_VIEWS, "svga: Surface propagate: tex %p, level %u, from %p\n", tex, surf->u.tex.level, surf);
-      svga_texture_copy_handle(svga_context(pipe),
+      svga_texture_copy_handle(svga,
                                s->handle, 0, 0, 0, s->real_level, s->real_face,
                                tex->handle, 0, 0, zslice, surf->u.tex.level, face,
                                u_minify(tex->b.b.width0, surf->u.tex.level),

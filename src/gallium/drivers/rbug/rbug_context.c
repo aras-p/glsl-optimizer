@@ -987,6 +987,19 @@ rbug_context_transfer_inline_write(struct pipe_context *_context,
 }
 
 
+static void rbug_redefine_user_buffer(struct pipe_context *_context,
+                                      struct pipe_resource *_resource,
+                                      unsigned offset, unsigned size)
+{
+   struct rbug_context *rb_pipe = rbug_context(_context);
+   struct rbug_resource *rb_resource = rbug_resource(_resource);
+   struct pipe_context *context = rb_pipe->pipe;
+   struct pipe_resource *resource = rb_resource->resource;
+
+   context->redefine_user_buffer(context, resource, offset, size);
+}
+
+
 struct pipe_context *
 rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
 {
@@ -1072,6 +1085,7 @@ rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    rb_pipe->base.transfer_unmap = rbug_context_transfer_unmap;
    rb_pipe->base.transfer_flush_region = rbug_context_transfer_flush_region;
    rb_pipe->base.transfer_inline_write = rbug_context_transfer_inline_write;
+   rb_pipe->base.redefine_user_buffer = rbug_redefine_user_buffer;
 
    rb_pipe->pipe = pipe;
 

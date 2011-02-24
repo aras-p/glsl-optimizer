@@ -26,6 +26,7 @@
  **************************************************************************/
 
 #include "util/u_debug.h"
+#include "pipe/p_format.h"
 #include "pipe/p_shader_tokens.h"
 #include "tgsi_build.h"
 #include "tgsi_parse.h"
@@ -226,6 +227,45 @@ tgsi_build_declaration_semantic(
    return ds;
 }
 
+
+static struct tgsi_declaration_resource
+tgsi_default_declaration_resource(void)
+{
+   struct tgsi_declaration_resource declaration_resource;
+
+   declaration_resource.Resource = TGSI_TEXTURE_UNKNOWN;
+   declaration_resource.ReturnTypeX = PIPE_TYPE_UNORM;
+   declaration_resource.ReturnTypeY = PIPE_TYPE_UNORM;
+   declaration_resource.ReturnTypeZ = PIPE_TYPE_UNORM;
+   declaration_resource.ReturnTypeW = PIPE_TYPE_UNORM;
+
+   return declaration_resource;
+}
+
+static struct tgsi_declaration_resource
+tgsi_build_declaration_resource(unsigned texture,
+                                unsigned return_type_x,
+                                unsigned return_type_y,
+                                unsigned return_type_z,
+                                unsigned return_type_w,
+                                struct tgsi_declaration *declaration,
+                                struct tgsi_header *header)
+{
+   struct tgsi_declaration_resource declaration_resource;
+
+   declaration_resource = tgsi_default_declaration_resource();
+   declaration_resource.Resource = texture;
+   declaration_resource.ReturnTypeX = return_type_x;
+   declaration_resource.ReturnTypeY = return_type_y;
+   declaration_resource.ReturnTypeZ = return_type_z;
+   declaration_resource.ReturnTypeW = return_type_w;
+
+   declaration_grow(declaration, header);
+
+   return declaration_resource;
+}
+
+
 struct tgsi_full_declaration
 tgsi_default_full_declaration( void )
 {
@@ -235,6 +275,7 @@ tgsi_default_full_declaration( void )
    full_declaration.Range = tgsi_default_declaration_range();
    full_declaration.Semantic = tgsi_default_declaration_semantic();
    full_declaration.ImmediateData.u = NULL;
+   full_declaration.Resource = tgsi_default_declaration_resource();
 
    return full_declaration;
 }
@@ -322,6 +363,24 @@ tgsi_build_full_declaration(
             declaration_grow( declaration, header );
          }
       }
+   }
+
+   if (full_decl->Declaration.File == TGSI_FILE_RESOURCE) {
+      struct tgsi_declaration_resource *dr;
+
+      if (maxsize <= size) {
+         return  0;
+      }
+      dr = (struct tgsi_declaration_resource *)&tokens[size];
+      size++;
+
+      *dr = tgsi_build_declaration_resource(full_decl->Resource.Resource,
+                                            full_decl->Resource.ReturnTypeX,
+                                            full_decl->Resource.ReturnTypeY,
+                                            full_decl->Resource.ReturnTypeZ,
+                                            full_decl->Resource.ReturnTypeW,
+                                            declaration,
+                                            header);
    }
 
    return size;

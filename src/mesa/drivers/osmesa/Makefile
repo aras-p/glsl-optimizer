@@ -40,7 +40,7 @@ $(TOP)/$(LIB_DIR)/$(OSMESA_LIB_NAME): $(OBJECTS) $(CORE_MESA)
 		-major $(MESA_MAJOR) -minor $(MESA_MINOR) -patch $(MESA_TINY) \
 		-install $(TOP)/$(LIB_DIR) -cplusplus $(MKLIB_OPTIONS) \
 		-id $(INSTALL_LIB_DIR)/lib$(OSMESA_LIB).$(MESA_MAJOR).dylib \
-		$(OSMESA_LIB_DEPS) $(OBJECTS) $(CORE_MESA) $(TALLOC_LIBS)
+		$(OSMESA_LIB_DEPS) $(OBJECTS) $(CORE_MESA)
 
 
 

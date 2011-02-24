@@ -33,25 +33,15 @@
 
 #include "nv50_defs.xml.h"
 
+#define NVC0_ENG2D_SUPPORTED_FORMATS 0xff9ccfe1cce3ccc9ULL
+
 /* return TRUE for formats that can be converted among each other by NVC0_2D */
 static INLINE boolean
 nvc0_2d_format_faithful(enum pipe_format format)
 {
-   switch (format) {
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
-   case PIPE_FORMAT_B8G8R8X8_UNORM:
-   case PIPE_FORMAT_B8G8R8A8_SRGB:
-   case PIPE_FORMAT_B8G8R8X8_SRGB:
-   case PIPE_FORMAT_B5G6R5_UNORM:
-   case PIPE_FORMAT_B5G5R5A1_UNORM:
-   case PIPE_FORMAT_B10G10R10A2_UNORM:
-   case PIPE_FORMAT_R8_UNORM:
-   case PIPE_FORMAT_R32G32B32A32_FLOAT:
-   case PIPE_FORMAT_R32G32B32_FLOAT:
-      return TRUE;
-   default:
-      return FALSE;
-   }
+   uint8_t id = nvc0_format_table[format].rt;
+
+   return (id >= 0xc0) && (NVC0_ENG2D_SUPPORTED_FORMATS & (1ULL << (id - 0xc0)));
 }
 
 static INLINE uint8_t
@@ -62,7 +52,7 @@ nvc0_2d_format(enum pipe_format format)
    /* Hardware values for color formats range from 0xc0 to 0xff,
     * but the 2D engine doesn't support all of them.
     */
-   if ((id >= 0xc0) && (0xff0843e080608409ULL & (1ULL << (id - 0xc0))))
+   if (nvc0_2d_format_faithful(format))
       return id;
 
    switch (util_format_get_blocksize(format)) {
@@ -72,6 +62,10 @@ nvc0_2d_format(enum pipe_format format)
       return NV50_SURFACE_FORMAT_R16_UNORM;
    case 4:
       return NV50_SURFACE_FORMAT_A8R8G8B8_UNORM;
+   case 8:
+      return NV50_SURFACE_FORMAT_R16G16B16A16_UNORM;
+   case 16:
+      return NV50_SURFACE_FORMAT_R32G32B32A32_FLOAT;
    default:
       return 0;
    }
@@ -249,14 +243,15 @@ nvc0_clear_render_target(struct pipe_context *pipe,
 	OUT_RING  (chan, 1);
 	OUT_RING  (chan, 0);
 
-	/* NOTE: only works with D3D clear flag (5097/0x143c bit 4) */
-
-	BEGIN_RING(chan, RING_3D(VIEWPORT_HORIZ(0)), 2);
-	OUT_RING  (chan, (width << 16) | dstx);
-	OUT_RING  (chan, (height << 16) | dsty);
+	BEGIN_RING(chan, RING_3D(CLIP_RECT_HORIZ(0)), 2);
+	OUT_RING  (chan, ((dstx + width) << 16) | dstx);
+	OUT_RING  (chan, ((dsty + height) << 16) | dsty);
+	IMMED_RING(chan, RING_3D(CLIP_RECTS_EN), 1);
 
 	BEGIN_RING(chan, RING_3D(CLEAR_BUFFERS), 1);
 	OUT_RING  (chan, 0x3c);
+
+	IMMED_RING(chan, RING_3D(CLIP_RECTS_EN), 0);
 
 	nv50->dirty |= NVC0_NEW_FRAMEBUFFER;
 }
@@ -306,12 +301,15 @@ nvc0_clear_depth_stencil(struct pipe_context *pipe,
 	OUT_RING  (chan, sf->height);
 	OUT_RING  (chan, (1 << 16) | 1);
 
-	BEGIN_RING(chan, RING_3D(VIEWPORT_HORIZ(0)), 2);
-	OUT_RING  (chan, (width << 16) | dstx);
-	OUT_RING  (chan, (height << 16) | dsty);
+	BEGIN_RING(chan, RING_3D(CLIP_RECT_HORIZ(0)), 2);
+	OUT_RING  (chan, ((dstx + width) << 16) | dstx);
+	OUT_RING  (chan, ((dsty + height) << 16) | dsty);
+	IMMED_RING(chan, RING_3D(CLIP_RECTS_EN), 1);
 
 	BEGIN_RING(chan, RING_3D(CLEAR_BUFFERS), 1);
 	OUT_RING  (chan, mode);
+
+	IMMED_RING(chan, RING_3D(CLIP_RECTS_EN), 0);
 
 	nv50->dirty |= NVC0_NEW_FRAMEBUFFER;
 }

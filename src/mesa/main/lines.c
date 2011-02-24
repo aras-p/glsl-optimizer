@@ -43,6 +43,9 @@ _mesa_LineWidth( GLfloat width )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glLineWidth %f\n", width);
+
    if (width<=0.0) {
       _mesa_error( ctx, GL_INVALID_VALUE, "glLineWidth" );
       return;
@@ -76,6 +79,9 @@ _mesa_LineStipple( GLint factor, GLushort pattern )
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glLineStipple %d %u\n", factor, pattern);
 
    factor = CLAMP( factor, 1, 256 );
 

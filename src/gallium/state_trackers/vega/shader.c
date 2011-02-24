@@ -134,6 +134,8 @@ static VGboolean blend_use_shader(struct vg_context *ctx)
    switch (ctx->state.vg.blend_mode) {
    case VG_BLEND_SRC_OVER:
       advanced_blending =
+         (!paint_is_opaque(ctx->state.vg.fill_paint) ||
+          !paint_is_opaque(ctx->state.vg.stroke_paint)) &&
          util_format_has_alpha(ctx->draw_buffer->strb->format);
       break;
    case VG_BLEND_DST_OVER:

@@ -254,14 +254,14 @@ prepare_color_calc_state(struct brw_context *brw)
 
    color_calc_state_populate_key(brw, &key);
 
-   drm_intel_bo_unreference(brw->cc.state_bo);
-   brw->cc.state_bo = brw_search_cache(&brw->cache, BRW_COLOR_CALC_STATE,
+   drm_intel_bo_unreference(brw->cc.color_calc_state_bo);
+   brw->cc.color_calc_state_bo = brw_search_cache(&brw->cache, BRW_COLOR_CALC_STATE,
 				       &key, sizeof(key),
 				       NULL, 0,
 				       NULL);
 
-   if (brw->cc.state_bo == NULL)
-      brw->cc.state_bo = color_calc_state_create_from_key(brw, &key);
+   if (brw->cc.color_calc_state_bo == NULL)
+      brw->cc.color_calc_state_bo = color_calc_state_create_from_key(brw, &key);
 }
 
 const struct brw_tracked_state gen6_color_calc_state = {
@@ -281,14 +281,14 @@ static void upload_cc_state_pointers(struct brw_context *brw)
    OUT_BATCH(_3DSTATE_CC_STATE_POINTERS << 16 | (4 - 2));
    OUT_RELOC(brw->cc.blend_state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
    OUT_RELOC(brw->cc.depth_stencil_state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
-   OUT_RELOC(brw->cc.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
+   OUT_RELOC(brw->cc.color_calc_state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
    ADVANCE_BATCH();
 }
 
 
 static void prepare_cc_state_pointers(struct brw_context *brw)
 {
-   brw_add_validated_bo(brw, brw->cc.state_bo);
+   brw_add_validated_bo(brw, brw->cc.color_calc_state_bo);
    brw_add_validated_bo(brw, brw->cc.blend_state_bo);
    brw_add_validated_bo(brw, brw->cc.depth_stencil_state_bo);
 }

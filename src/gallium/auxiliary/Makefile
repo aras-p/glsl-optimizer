@@ -143,6 +143,7 @@ C_SOURCES = \
 	util/u_transfer.c \
 	util/u_resource.c \
 	util/u_upload_mgr.c \
+	util/u_vbuf_mgr.c \
 	vl/vl_bitstream_parser.c \
 	vl/vl_mpeg12_mc_renderer.c \
 	vl/vl_compositor.c \

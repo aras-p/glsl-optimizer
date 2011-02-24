@@ -84,23 +84,8 @@
 /*@{*/
 typedef GLuint64 GLbitfield64;
 
-#define BITFIELD64_ONE         1ULL
-#define BITFIELD64_ALLONES     ~0ULL
-
 /** Set a single bit */
-#define BITFIELD64_BIT(b)      (BITFIELD64_ONE << (b))
-
-/** Set a mask of the least significant \c b bits */
-#define BITFIELD64_MASK(b)     (((b) >= 64) ? BITFIELD64_ALLONES : \
-				(BITFIELD64_BIT(b) - 1))
-
-/**
- * Set all bits from l (low bit) to h (high bit), inclusive.
- *
- * \note \C BITFIELD_64_RANGE(0, 63) return 64 set bits.
- */
-#define BITFIELD64_RANGE(l, h) (BITFIELD64_MASK((h) + 1) & ~BITFIELD64_MASK(l))
-/*@}*/
+#define BITFIELD64_BIT(b)      (1ULL << (b))
 
 
 /**
@@ -867,6 +852,23 @@ struct gl_fog_attrib
 };
 
 
+/**
+ * \brief Layout qualifiers for gl_FragDepth.
+ *
+ * Extension AMD_conservative_depth allows gl_FragDepth to be redeclared with
+ * a layout qualifier.
+ *
+ * \see enum ir_depth_layout
+ */
+enum gl_frag_depth_layout {
+    FRAG_DEPTH_LAYOUT_NONE, /**< No layout is specified. */
+    FRAG_DEPTH_LAYOUT_ANY,
+    FRAG_DEPTH_LAYOUT_GREATER,
+    FRAG_DEPTH_LAYOUT_LESS,
+    FRAG_DEPTH_LAYOUT_UNCHANGED
+};
+
+
 /** 
  * Hint attribute group (GL_HINT_BIT).
  * 
@@ -1238,7 +1240,7 @@ struct gl_texture_image
 				 *   GL_DEPTH_COMPONENT or GL_DEPTH_STENCIL_EXT
                                  *   only. Used for choosing TexEnv arithmetic.
 				 */
-   GLuint TexFormat;            /**< The actual format: MESA_FORMAT_x */
+   gl_format TexFormat;         /**< The actual texture memory format */
 
    GLuint Border;		/**< 0 or 1 */
    GLuint Width;		/**< = 2^WidthLog2 + 2*Border */
@@ -1641,6 +1643,7 @@ struct gl_array_attrib
    GLuint RestartIndex;
 
    GLbitfield NewState;		/**< mask of _NEW_ARRAY_* values */
+   GLboolean RebindArrays; /**< whether the VBO module should rebind arrays */
 
    /* GL_ARB_vertex_buffer_object */
    struct gl_buffer_object *ArrayBufferObj;
@@ -1889,6 +1892,7 @@ struct gl_fragment_program
    GLboolean UsesKill;          /**< shader uses KIL instruction */
    GLboolean OriginUpperLeft;
    GLboolean PixelCenterInteger;
+   enum gl_frag_depth_layout FragDepthLayout;
 };
 
 
@@ -2100,8 +2104,6 @@ struct gl_shader
    GLint RefCount;  /**< Reference count */
    GLboolean DeletePending;
    GLboolean CompileStatus;
-   GLboolean Main;  /**< shader defines main() */
-   GLboolean UnresolvedRefs;
    const GLchar *Source;  /**< Source code string */
    GLuint SourceChecksum;       /**< for debug/logging purposes */
    struct gl_program *Program;  /**< Post-compile assembly code */
@@ -2378,7 +2380,7 @@ struct gl_renderbuffer
    GLenum InternalFormat; /**< The user-specified format */
    GLenum _BaseFormat;    /**< Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or
                                GL_STENCIL_INDEX. */
-   GLuint Format;         /**< The actual format: MESA_FORMAT_x */
+   gl_format Format;      /**< The actual renderbuffer memory format */
 
    GLubyte NumSamples;
 
@@ -2692,6 +2694,9 @@ struct gl_constants
 
    /** GL_EXT_gpu_shader4 */
    GLint MinProgramTexelOffset, MaxProgramTexelOffset;
+
+   /* GL_EXT_framebuffer_sRGB */
+   GLboolean sRGBCapable; /* can enable sRGB blend/update on FBOs */
 };
 
 
@@ -2824,6 +2829,7 @@ struct gl_extensions
    GLboolean EXT_vertex_array_set;
    GLboolean OES_standard_derivatives;
    /* vendor extensions */
+   GLboolean AMD_conservative_depth;
    GLboolean APPLE_client_storage;
    GLboolean APPLE_packed_pixels;
    GLboolean APPLE_vertex_array_object;
@@ -2901,40 +2907,37 @@ struct gl_matrix_stack
 
 /**
  * \name Bits to indicate what state has changed.  
- *
- * 4 unused flags.
  */
 /*@{*/
-#define _NEW_MODELVIEW		0x1        /**< __struct gl_contextRec::ModelView */
-#define _NEW_PROJECTION		0x2        /**< __struct gl_contextRec::Projection */
-#define _NEW_TEXTURE_MATRIX	0x4        /**< __struct gl_contextRec::TextureMatrix */
-#define _NEW_ACCUM		0x10       /**< __struct gl_contextRec::Accum */
-#define _NEW_COLOR		0x20       /**< __struct gl_contextRec::Color */
-#define _NEW_DEPTH		0x40       /**< __struct gl_contextRec::Depth */
-#define _NEW_EVAL		0x80       /**< __struct gl_contextRec::Eval, __struct gl_contextRec::EvalMap */
-#define _NEW_FOG		0x100      /**< __struct gl_contextRec::Fog */
-#define _NEW_HINT		0x200      /**< __struct gl_contextRec::Hint */
-#define _NEW_LIGHT		0x400      /**< __struct gl_contextRec::Light */
-#define _NEW_LINE		0x800      /**< __struct gl_contextRec::Line */
-#define _NEW_PIXEL		0x1000     /**< __struct gl_contextRec::Pixel */
-#define _NEW_POINT		0x2000     /**< __struct gl_contextRec::Point */
-#define _NEW_POLYGON		0x4000     /**< __struct gl_contextRec::Polygon */
-#define _NEW_POLYGONSTIPPLE	0x8000     /**< __struct gl_contextRec::PolygonStipple */
-#define _NEW_SCISSOR		0x10000    /**< __struct gl_contextRec::Scissor */
-#define _NEW_STENCIL		0x20000    /**< __struct gl_contextRec::Stencil */
-#define _NEW_TEXTURE		0x40000    /**< __struct gl_contextRec::Texture */
-#define _NEW_TRANSFORM		0x80000    /**< __struct gl_contextRec::Transform */
-#define _NEW_VIEWPORT		0x100000   /**< __struct gl_contextRec::Viewport */
-#define _NEW_PACKUNPACK		0x200000   /**< __struct gl_contextRec::Pack, __struct gl_contextRec::Unpack */
-#define _NEW_ARRAY	        0x400000   /**< __struct gl_contextRec::Array */
-#define _NEW_RENDERMODE		0x800000   /**< __struct gl_contextRec::RenderMode, __struct gl_contextRec::Feedback, __struct gl_contextRec::Select */
-#define _NEW_BUFFERS            0x1000000  /**< __struct gl_contextRec::Visual, __struct gl_contextRec::DrawBuffer, */
-#define _NEW_MULTISAMPLE        0x2000000  /**< __struct gl_contextRec::Multisample */
-#define _NEW_TRACK_MATRIX       0x4000000  /**< __struct gl_contextRec::VertexProgram */
-#define _NEW_PROGRAM            0x8000000  /**< __struct gl_contextRec::VertexProgram */
-#define _NEW_CURRENT_ATTRIB     0x10000000  /**< __struct gl_contextRec::Current */
-#define _NEW_PROGRAM_CONSTANTS  0x20000000
-#define _NEW_BUFFER_OBJECT      0x40000000
+#define _NEW_MODELVIEW         (1 << 0)   /**< gl_context::ModelView */
+#define _NEW_PROJECTION        (1 << 1)   /**< gl_context::Projection */
+#define _NEW_TEXTURE_MATRIX    (1 << 2)   /**< gl_context::TextureMatrix */
+#define _NEW_COLOR             (1 << 3)   /**< gl_context::Color */
+#define _NEW_DEPTH             (1 << 4)   /**< gl_context::Depth */
+#define _NEW_EVAL              (1 << 5)   /**< gl_context::Eval, EvalMap */
+#define _NEW_FOG               (1 << 6)   /**< gl_context::Fog */
+#define _NEW_HINT              (1 << 7)   /**< gl_context::Hint */
+#define _NEW_LIGHT             (1 << 8)   /**< gl_context::Light */
+#define _NEW_LINE              (1 << 9)   /**< gl_context::Line */
+#define _NEW_PIXEL             (1 << 10)  /**< gl_context::Pixel */
+#define _NEW_POINT             (1 << 11)  /**< gl_context::Point */
+#define _NEW_POLYGON           (1 << 12)  /**< gl_context::Polygon */
+#define _NEW_POLYGONSTIPPLE    (1 << 13)  /**< gl_context::PolygonStipple */
+#define _NEW_SCISSOR           (1 << 14)  /**< gl_context::Scissor */
+#define _NEW_STENCIL           (1 << 15)  /**< gl_context::Stencil */
+#define _NEW_TEXTURE           (1 << 16)  /**< gl_context::Texture */
+#define _NEW_TRANSFORM         (1 << 17)  /**< gl_context::Transform */
+#define _NEW_VIEWPORT          (1 << 18)  /**< gl_context::Viewport */
+#define _NEW_PACKUNPACK        (1 << 19)  /**< gl_context::Pack, Unpack */
+#define _NEW_ARRAY             (1 << 20)  /**< gl_context::Array */
+#define _NEW_RENDERMODE        (1 << 21)  /**< gl_context::RenderMode, etc */
+#define _NEW_BUFFERS           (1 << 22)  /**< gl_context::Visual, DrawBuffer, */
+#define _NEW_CURRENT_ATTRIB    (1 << 23)  /**< gl_context::Current */
+#define _NEW_MULTISAMPLE       (1 << 24)  /**< gl_context::Multisample */
+#define _NEW_TRACK_MATRIX      (1 << 25)  /**< gl_context::VertexProgram */
+#define _NEW_PROGRAM           (1 << 26)  /**< New program/shader state */
+#define _NEW_PROGRAM_CONSTANTS (1 << 27)
+#define _NEW_BUFFER_OBJECT     (1 << 28)
 #define _NEW_ALL ~0
 /*@}*/
 
@@ -3291,9 +3294,6 @@ struct gl_context
    /*@{*/
    GLboolean FirstTimeCurrent;
    /*@}*/
-
-   /** Dither disable via MESA_NO_DITHER env var */
-   GLboolean NoDither;
 
    /** software compression/decompression supported or not */
    GLboolean Mesa_DXTn;

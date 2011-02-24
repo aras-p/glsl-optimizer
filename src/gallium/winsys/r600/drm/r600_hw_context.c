@@ -637,7 +637,8 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 		ctx->range[i].end_offset = ((i + 1) << ctx->hash_shift) - 1;
 		ctx->range[i].blocks = calloc(1 << ctx->hash_shift, sizeof(void*));
 		if (ctx->range[i].blocks == NULL) {
-			return -ENOMEM;
+			r = -ENOMEM;
+			goto out_err;
 		}
 	}
 
@@ -750,6 +751,9 @@ int r600_context_init(struct r600_context *ctx, struct radeon *radeon)
 
 	/* init dirty list */
 	LIST_INITHEAD(&ctx->dirty);
+
+	ctx->max_db = 4;
+
 	return 0;
 out_err:
 	r600_context_fini(ctx);
@@ -1084,7 +1088,7 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 
 void r600_context_flush(struct r600_context *ctx)
 {
-	struct drm_radeon_cs drmib;
+	struct drm_radeon_cs drmib = {};
 	struct drm_radeon_cs_chunk chunks[2];
 	uint64_t chunk_array[2];
 	unsigned fence;
@@ -1246,43 +1250,70 @@ out_err:
 	bof_decref(root);
 }
 
-static void r600_query_result(struct r600_context *ctx, struct r600_query *query)
+static boolean r600_query_result(struct r600_context *ctx, struct r600_query *query, boolean wait)
 {
 	u64 start, end;
 	u32 *results;
 	int i;
+	int size;
 
-	results = r600_bo_map(ctx->radeon, query->buffer, 0, NULL);
-	for (i = 0; i < query->num_results; i += 4) {
+	if (wait)
+		results = r600_bo_map(ctx->radeon, query->buffer, PB_USAGE_CPU_READ, NULL);
+	else
+		results = r600_bo_map(ctx->radeon, query->buffer, PB_USAGE_DONTBLOCK | PB_USAGE_CPU_READ, NULL);
+	if (!results)
+		return FALSE;
+
+	size = query->num_results * (query->type == PIPE_QUERY_OCCLUSION_COUNTER ? ctx->max_db : 1);
+	for (i = 0; i < size; i += 4) {
 		start = (u64)results[i] | (u64)results[i + 1] << 32;
 		end = (u64)results[i + 2] | (u64)results[i + 3] << 32;
-		if ((start & 0x8000000000000000UL) && (end & 0x8000000000000000UL)) {
+		if (((start & 0x8000000000000000UL) && (end & 0x8000000000000000UL))
+                    || query->type == PIPE_QUERY_TIME_ELAPSED) {
 			query->result += end - start;
 		}
 	}
 	r600_bo_unmap(ctx->radeon, query->buffer);
 	query->num_results = 0;
+
+	return TRUE;
 }
 
 void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 {
-	/* query request needs 6 dwords for begin + 6 dwords for end */
-	if ((12 + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
+	unsigned required_space;
+
+	/* query request needs 6/8 dwords for begin + 6/8 dwords for end */
+	if (query->type == PIPE_QUERY_TIME_ELAPSED)
+		required_space = 16;
+	else
+		required_space = 12;
+
+	if ((required_space + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
 		/* need to flush */
 		r600_context_flush(ctx);
 	}
 
 	/* if query buffer is full force a flush */
-	if (query->num_results >= ((query->buffer_size >> 2) - 2)) {
+	if (query->num_results*4 >= query->buffer_size - 16) {
 		r600_context_flush(ctx);
-		r600_query_result(ctx, query);
+		r600_query_result(ctx, query, TRUE);
 	}
 
 	/* emit begin query */
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
-	ctx->pm4[ctx->pm4_cdwords++] = query->num_results + r600_bo_offset(query->buffer);
-	ctx->pm4[ctx->pm4_cdwords++] = 0;
+	if (query->type == PIPE_QUERY_TIME_ELAPSED) {
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4);
+		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
+		ctx->pm4[ctx->pm4_cdwords++] = query->num_results*4 + r600_bo_offset(query->buffer);
+		ctx->pm4[ctx->pm4_cdwords++] = (3 << 29);
+		ctx->pm4[ctx->pm4_cdwords++] = 0;
+		ctx->pm4[ctx->pm4_cdwords++] = 0;
+	} else {
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2);
+		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
+		ctx->pm4[ctx->pm4_cdwords++] = query->num_results*4 + r600_bo_offset(query->buffer);
+		ctx->pm4[ctx->pm4_cdwords++] = 0;
+	}
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], query->buffer);
@@ -1295,15 +1326,24 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 {
 	/* emit begin query */
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
-	ctx->pm4[ctx->pm4_cdwords++] = query->num_results + 8 + r600_bo_offset(query->buffer);
-	ctx->pm4[ctx->pm4_cdwords++] = 0;
+	if (query->type == PIPE_QUERY_TIME_ELAPSED) {
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4);
+		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
+		ctx->pm4[ctx->pm4_cdwords++] = query->num_results*4 + 8 + r600_bo_offset(query->buffer);
+		ctx->pm4[ctx->pm4_cdwords++] = (3 << 29);
+		ctx->pm4[ctx->pm4_cdwords++] = 0;
+		ctx->pm4[ctx->pm4_cdwords++] = 0;
+	} else {
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2);
+		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
+		ctx->pm4[ctx->pm4_cdwords++] = query->num_results*4 + 8 + r600_bo_offset(query->buffer);
+		ctx->pm4[ctx->pm4_cdwords++] = 0;
+	}
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], query->buffer);
 
-	query->num_results += 16;
+	query->num_results += 4 * (query->type == PIPE_QUERY_OCCLUSION_COUNTER ? ctx->max_db : 1);
 	query->state ^= R600_QUERY_STATE_STARTED;
 	query->state |= R600_QUERY_STATE_ENDED;
 	ctx->num_query_running--;
@@ -1313,7 +1353,7 @@ struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned 
 {
 	struct r600_query *query;
 
-	if (query_type != PIPE_QUERY_OCCLUSION_COUNTER)
+	if (query_type != PIPE_QUERY_OCCLUSION_COUNTER && query_type != PIPE_QUERY_TIME_ELAPSED)
 		return NULL;
 
 	query = calloc(1, sizeof(struct r600_query));
@@ -1355,8 +1395,12 @@ boolean r600_context_query_result(struct r600_context *ctx,
 	if (query->num_results) {
 		r600_context_flush(ctx);
 	}
-	r600_query_result(ctx, query);
-	*result = query->result;
+	if (!r600_query_result(ctx, query, wait))
+		return FALSE;
+	if (query->type == PIPE_QUERY_TIME_ELAPSED)
+		*result = (1000000*query->result)/r600_get_clock_crystal_freq(ctx->radeon);
+	else
+		*result = query->result;
 	query->result = 0;
 	return TRUE;
 }

@@ -123,6 +123,7 @@ parameter_lists_match(const exec_list *list_a, const exec_list *list_b)
 	 assert(0);
 	 return -1;
 
+      case ir_var_const_in:
       case ir_var_in:
 	 score = type_compare(param->type, actual->type);
 	 break;

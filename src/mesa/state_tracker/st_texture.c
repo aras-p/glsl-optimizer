@@ -59,6 +59,7 @@ st_texture_create(struct st_context *st,
 		  GLuint width0,
 		  GLuint height0,
 		  GLuint depth0,
+                  GLuint layers,
                   GLuint bind )
 {
    struct pipe_resource pt, *newtex;
@@ -68,6 +69,8 @@ st_texture_create(struct st_context *st,
    assert(width0 > 0);
    assert(height0 > 0);
    assert(depth0 > 0);
+   if (target == PIPE_TEXTURE_CUBE)
+      assert(layers == 6);
 
    DBG("%s target %s format %s last_level %d\n", __FUNCTION__,
        _mesa_lookup_enum_by_nr(target),
@@ -84,7 +87,7 @@ st_texture_create(struct st_context *st,
    pt.width0 = width0;
    pt.height0 = height0;
    pt.depth0 = depth0;
-   pt.array_size = (target == PIPE_TEXTURE_CUBE ? 6 : 1);
+   pt.array_size = (target == PIPE_TEXTURE_CUBE ? 6 : layers);
    pt.usage = PIPE_USAGE_DEFAULT;
    pt.bind = bind;
    pt.flags = 0;
@@ -98,6 +101,72 @@ st_texture_create(struct st_context *st,
 
 
 /**
+ * In OpenGL the number of 1D array texture layers is the "height" and
+ * the number of 2D array texture layers is the "depth".  In Gallium the
+ * number of layers in an array texture is a separate 'array_size' field.
+ * This function converts dimensions from the former to the later.
+ */
+void
+st_gl_texture_dims_to_pipe_dims(GLenum texture,
+                                GLuint widthIn,
+                                GLuint heightIn,
+                                GLuint depthIn,
+                                GLuint *widthOut,
+                                GLuint *heightOut,
+                                GLuint *depthOut,
+                                GLuint *layersOut)
+{
+   switch (texture) {
+   case GL_TEXTURE_1D:
+      assert(heightIn == 1);
+      assert(depthIn == 1);
+      *widthOut = widthIn;
+      *heightOut = 1;
+      *depthOut = 1;
+      *layersOut = 1;
+      break;
+   case GL_TEXTURE_1D_ARRAY:
+      assert(depthIn == 1);
+      *widthOut = widthIn;
+      *heightOut = 1;
+      *depthOut = 1;
+      *layersOut = heightIn;
+      break;
+   case GL_TEXTURE_2D:
+   case GL_TEXTURE_RECTANGLE:
+      assert(depthIn == 1);
+      *widthOut = widthIn;
+      *heightOut = heightIn;
+      *depthOut = 1;
+      *layersOut = 1;
+      break;
+   case GL_TEXTURE_CUBE_MAP:
+      assert(depthIn == 1);
+      *widthOut = widthIn;
+      *heightOut = heightIn;
+      *depthOut = 1;
+      *layersOut = 6;
+      break;
+   case GL_TEXTURE_2D_ARRAY:
+      *widthOut = widthIn;
+      *heightOut = heightIn;
+      *depthOut = 1;
+      *layersOut = depthIn;
+      break;
+   default:
+      assert(0 && "Unexpected texture in st_gl_texture_dims_to_pipe_dims()");
+      /* fall-through */
+   case GL_TEXTURE_3D:
+      *widthOut = widthIn;
+      *heightOut = heightIn;
+      *depthOut = depthIn;
+      *layersOut = 1;
+      break;
+   }
+}
+
+
+/**
  * Check if a texture image can be pulled into a unified mipmap texture.
  */
 GLboolean
@@ -105,6 +174,8 @@ st_texture_match_image(const struct pipe_resource *pt,
                        const struct gl_texture_image *image,
                        GLuint face, GLuint level)
 {
+   GLuint ptWidth, ptHeight, ptDepth, ptLayers;
+
    /* Images with borders are never pulled into mipmap textures. 
     */
    if (image->Border) 
@@ -115,12 +186,17 @@ st_texture_match_image(const struct pipe_resource *pt,
    if (st_mesa_format_to_pipe_format(image->TexFormat) != pt->format)
       return GL_FALSE;
 
+   st_gl_texture_dims_to_pipe_dims(image->TexObject->Target,
+                                   image->Width, image->Height, image->Depth,
+                                   &ptWidth, &ptHeight, &ptDepth, &ptLayers);
+
    /* Test if this image's size matches what's expected in the
     * established texture.
     */
-   if (image->Width != u_minify(pt->width0, level) ||
-       image->Height != u_minify(pt->height0, level) ||
-       image->Depth != u_minify(pt->depth0, level))
+   if (ptWidth != u_minify(pt->width0, level) ||
+       ptHeight != u_minify(pt->height0, level) ||
+       ptDepth != u_minify(pt->depth0, level) ||
+       ptLayers != pt->array_size)
       return GL_FALSE;
 
    return GL_TRUE;
@@ -212,14 +288,20 @@ st_texture_image_data(struct st_context *st,
                       GLuint src_row_stride, GLuint src_image_stride)
 {
    struct pipe_context *pipe = st->pipe;
-   GLuint depth = u_minify(dst->depth0, level);
    GLuint i;
    const GLubyte *srcUB = src;
    struct pipe_transfer *dst_transfer;
+   GLuint layers;
+
+   if (dst->target == PIPE_TEXTURE_1D_ARRAY ||
+       dst->target == PIPE_TEXTURE_2D_ARRAY)
+      layers = dst->array_size;
+   else
+      layers = u_minify(dst->depth0, level);
 
    DBG("%s\n", __FUNCTION__);
 
-   for (i = 0; i < depth; i++) {
+   for (i = 0; i < layers; i++) {
       dst_transfer = pipe_get_transfer(st->pipe, dst, level, face + i,
                                        PIPE_TRANSFER_WRITE, 0, 0,
                                        u_minify(dst->width0, level),

@@ -145,9 +145,14 @@ static void brw_emit_prim(struct brw_context *brw,
    prim_packet.start_vert_location = prim->start;
    if (prim->indexed)
       prim_packet.start_vert_location += brw->ib.start_vertex_offset;
+   else
+      prim_packet.start_vert_location += brw->vb.start_vertex_bias;
    prim_packet.instance_count = 1;
    prim_packet.start_instance_location = 0;
    prim_packet.base_vert_location = prim->basevertex;
+   if (prim->indexed)
+      prim_packet.base_vert_location += brw->vb.start_vertex_bias;
+
 
    /* If we're set to always flush, do it before and after the primitive emit.
     * We want to catch both missed flushes that hurt instruction/state cache
@@ -155,14 +160,14 @@ static void brw_emit_prim(struct brw_context *brw,
     * the besides the draw code.
     */
    if (intel->always_flush_cache) {
-      intel_batchbuffer_emit_mi_flush(intel->batch);
+      intel_batchbuffer_emit_mi_flush(intel);
    }
    if (prim_packet.verts_per_instance) {
-      intel_batchbuffer_data( brw->intel.batch, &prim_packet,
+      intel_batchbuffer_data(&brw->intel, &prim_packet,
 			      sizeof(prim_packet), false);
    }
    if (intel->always_flush_cache) {
-      intel_batchbuffer_emit_mi_flush(intel->batch);
+      intel_batchbuffer_emit_mi_flush(intel);
    }
 }
 
@@ -172,13 +177,16 @@ static void brw_merge_inputs( struct brw_context *brw,
    struct brw_vertex_info old = brw->vb.info;
    GLuint i;
 
-   for (i = 0; i < VERT_ATTRIB_MAX; i++)
-      drm_intel_bo_unreference(brw->vb.inputs[i].bo);
+   for (i = 0; i < brw->vb.nr_buffers; i++) {
+      drm_intel_bo_unreference(brw->vb.buffers[i].bo);
+      brw->vb.buffers[i].bo = NULL;
+   }
+   brw->vb.nr_buffers = 0;
 
-   memset(&brw->vb.inputs, 0, sizeof(brw->vb.inputs));
    memset(&brw->vb.info, 0, sizeof(brw->vb.info));
 
    for (i = 0; i < VERT_ATTRIB_MAX; i++) {
+      brw->vb.inputs[i].buffer = -1;
       brw->vb.inputs[i].glarray = arrays[i];
       brw->vb.inputs[i].attrib = (gl_vert_attrib) i;
 
@@ -303,7 +311,6 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
    struct brw_context *brw = brw_context(ctx);
    GLboolean retval = GL_FALSE;
    GLboolean warn = GL_FALSE;
-   GLboolean first_time = GL_TRUE;
    GLuint i;
 
    if (ctx->NewState)
@@ -351,14 +358,10 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
        * an upper bound of how much we might emit in a single
        * brw_try_draw_prims().
        */
-      intel_batchbuffer_require_space(intel->batch, intel->batch->size / 4,
-				      false);
+      intel_batchbuffer_require_space(intel, 1024, false);
 
       hw_prim = brw_set_prim(brw, &prim[i]);
-
-      if (first_time || (brw->state.dirty.brw & BRW_NEW_PRIMITIVE)) {
-	 first_time = GL_FALSE;
-
+      if (brw->state.dirty.brw) {
 	 brw_validate_state(brw);
 
 	 /* Various fallback checks:  */
@@ -371,7 +374,7 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
 	 if (dri_bufmgr_check_aperture_space(brw->state.validated_bos,
 					     brw->state.validated_bo_count)) {
 	    static GLboolean warned;
-	    intel_batchbuffer_flush(intel->batch);
+	    intel_batchbuffer_flush(intel);
 
 	    /* Validate the state after we flushed the batch (which would have
 	     * changed the set of dirty state).  If we still fail to
@@ -400,7 +403,7 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
    }
 
    if (intel->always_flush_batch)
-      intel_batchbuffer_flush(intel->batch);
+      intel_batchbuffer_flush(intel);
  out:
 
    brw_state_cache_check_size(brw);
@@ -461,25 +464,32 @@ void brw_draw_init( struct brw_context *brw )
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct vbo_context *vbo = vbo_context(ctx);
+   int i;
 
    /* Register our drawing function: 
     */
    vbo->draw_prims = brw_draw_prims;
+
+   for (i = 0; i < VERT_ATTRIB_MAX; i++)
+      brw->vb.inputs[i].buffer = -1;
+   brw->vb.nr_buffers = 0;
+   brw->vb.nr_enabled = 0;
 }
 
 void brw_draw_destroy( struct brw_context *brw )
 {
    int i;
 
-   if (brw->vb.upload.bo != NULL) {
-      drm_intel_bo_unreference(brw->vb.upload.bo);
-      brw->vb.upload.bo = NULL;
+   for (i = 0; i < brw->vb.nr_buffers; i++) {
+      drm_intel_bo_unreference(brw->vb.buffers[i].bo);
+      brw->vb.buffers[i].bo = NULL;
    }
+   brw->vb.nr_buffers = 0;
 
-   for (i = 0; i < VERT_ATTRIB_MAX; i++) {
-      drm_intel_bo_unreference(brw->vb.inputs[i].bo);
-      brw->vb.inputs[i].bo = NULL;
+   for (i = 0; i < brw->vb.nr_enabled; i++) {
+      brw->vb.enabled[i]->buffer = -1;
    }
+   brw->vb.nr_enabled = 0;
 
    drm_intel_bo_unreference(brw->ib.bo);
    brw->ib.bo = NULL;

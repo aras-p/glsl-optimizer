@@ -285,7 +285,7 @@ do_blit_bitmap( struct gl_context *ctx,
 out:
 
    if (unlikely(INTEL_DEBUG & DEBUG_SYNC))
-      intel_batchbuffer_flush(intel->batch);
+      intel_batchbuffer_flush(intel);
 
    if (_mesa_is_bufferobj(unpack->BufferObj)) {
       /* done with PBO so unmap it now */

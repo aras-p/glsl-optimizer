@@ -94,7 +94,7 @@ static void svga_set_framebuffer_state(struct pipe_context *pipe,
    
       for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++)
          if (dst->cbufs[i] && dst->cbufs[i] != fb->cbufs[i])
-            svga_propagate_surface(pipe, dst->cbufs[i]);
+            svga_propagate_surface(svga, dst->cbufs[i]);
    }
 
    /* XXX: Actually the virtual hardware may support rendertargets with

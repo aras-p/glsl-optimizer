@@ -29,24 +29,24 @@
 #include "vg_context.h"
 #include "paint.h"
 #include "api.h"
+#include "handle.h"
+
 
 VGPaint vegaCreatePaint(void)
 {
-   return (VGPaint) paint_create(vg_current_context());
+   return paint_to_handle(paint_create(vg_current_context()));
 }
 
 void vegaDestroyPaint(VGPaint p)
 {
    struct vg_context *ctx = vg_current_context();
-   struct vg_paint *paint;
 
    if (p == VG_INVALID_HANDLE) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
 
-   paint = (struct vg_paint *)p;
-   paint_destroy(paint);
+   paint_destroy(handle_to_paint(p));
 }
 
 void vegaSetPaint(VGPaint paint, VGbitfield paintModes)
@@ -55,8 +55,8 @@ void vegaSetPaint(VGPaint paint, VGbitfield paintModes)
 
    if (paint == VG_INVALID_HANDLE) {
       /* restore the default */
-      paint = (VGPaint)ctx->default_paint;
-   } else if (!vg_object_is_valid((void*)paint, VG_OBJECT_PAINT)) {
+      paint = paint_to_handle(ctx->default_paint);
+   } else if (!vg_object_is_valid(paint, VG_OBJECT_PAINT)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
@@ -67,11 +67,13 @@ void vegaSetPaint(VGPaint paint, VGbitfield paintModes)
    }
 
    if (paintModes & VG_FILL_PATH) {
-      ctx->state.vg.fill_paint = (struct vg_paint *)paint;
+      ctx->state.vg.fill_paint = handle_to_paint(paint);
    }
    if (paintModes & VG_STROKE_PATH) {
-      ctx->state.vg.stroke_paint = (struct vg_paint *)paint;
+      ctx->state.vg.stroke_paint = handle_to_paint(paint);
    }
+
+   ctx->state.dirty |= PAINT_DIRTY;
 }
 
 VGPaint vegaGetPaint(VGPaintMode paintMode)
@@ -85,11 +87,11 @@ VGPaint vegaGetPaint(VGPaintMode paintMode)
    }
 
    if (paintMode == VG_FILL_PATH)
-      paint = (VGPaint)ctx->state.vg.fill_paint;
+      paint = paint_to_handle(ctx->state.vg.fill_paint);
    else if (paintMode == VG_STROKE_PATH)
-      paint = (VGPaint)ctx->state.vg.stroke_paint;
+      paint = paint_to_handle(ctx->state.vg.stroke_paint);
 
-   if (paint == (VGPaint)ctx->default_paint)
+   if (paint == paint_to_handle(ctx->default_paint))
       paint = VG_INVALID_HANDLE;
 
    return paint;
@@ -98,20 +100,24 @@ VGPaint vegaGetPaint(VGPaintMode paintMode)
 void vegaSetColor(VGPaint paint, VGuint rgba)
 {
    struct vg_context *ctx = vg_current_context();
+   struct vg_paint *p;
 
    if (paint == VG_INVALID_HANDLE) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
 
-   if (!vg_object_is_valid((void*)paint, VG_OBJECT_PAINT)) {
+   if (!vg_object_is_valid(paint, VG_OBJECT_PAINT)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
-   {
-      struct vg_paint *p = (struct vg_paint *)paint;
-      paint_set_colori(p, rgba);
-   }
+
+   p = handle_to_paint(paint);
+   paint_set_colori(p, rgba);
+
+   if (ctx->state.vg.fill_paint == p ||
+       ctx->state.vg.stroke_paint == p)
+      ctx->state.dirty |= PAINT_DIRTY;
 }
 
 VGuint vegaGetColor(VGPaint paint)
@@ -125,11 +131,11 @@ VGuint vegaGetColor(VGPaint paint)
       return rgba;
    }
 
-   if (!vg_object_is_valid((void*)paint, VG_OBJECT_PAINT)) {
+   if (!vg_object_is_valid(paint, VG_OBJECT_PAINT)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return rgba;
    }
-   p = (struct vg_paint *)paint;
+   p = handle_to_paint(paint);
 
    return paint_colori(p);
 }
@@ -139,28 +145,28 @@ void vegaPaintPattern(VGPaint paint, VGImage pattern)
    struct vg_context *ctx = vg_current_context();
 
    if (paint == VG_INVALID_HANDLE ||
-       !vg_context_is_object_valid(ctx, VG_OBJECT_PAINT, (void *)paint)) {
+       !vg_context_is_object_valid(ctx, VG_OBJECT_PAINT, paint)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
 
    if (pattern == VG_INVALID_HANDLE) {
-      paint_set_type((struct vg_paint*)paint, VG_PAINT_TYPE_COLOR);
+      paint_set_type(handle_to_paint(paint), VG_PAINT_TYPE_COLOR);
       return;
    }
 
-   if (!vg_context_is_object_valid(ctx, VG_OBJECT_IMAGE, (void *)pattern)) {
+   if (!vg_context_is_object_valid(ctx, VG_OBJECT_IMAGE, pattern)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
 
 
-   if (!vg_object_is_valid((void*)paint, VG_OBJECT_PAINT) ||
-       !vg_object_is_valid((void*)pattern, VG_OBJECT_IMAGE)) {
+   if (!vg_object_is_valid(paint, VG_OBJECT_PAINT) ||
+       !vg_object_is_valid(pattern, VG_OBJECT_IMAGE)) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
       return;
    }
-   paint_set_pattern((struct vg_paint*)paint,
-                     (struct vg_image*)pattern);
+   paint_set_pattern(handle_to_paint(paint),
+                     handle_to_image(pattern));
 }
 

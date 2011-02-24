@@ -51,7 +51,6 @@ _mesa_ClearAccum( GLfloat red, GLfloat green, GLfloat blue, GLfloat alpha )
    if (TEST_EQ_4V(tmp, ctx->Accum.ClearColor))
       return;
 
-   FLUSH_VERTICES(ctx, _NEW_ACCUM);
    COPY_4FV( ctx->Accum.ClearColor, tmp );
 }
 

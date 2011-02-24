@@ -29,74 +29,9 @@
   *   Keith Whitwell <keith@tungstengraphics.com>
   */
      
-
-
 #include "brw_state.h"
 #include "intel_batchbuffer.h"
 #include "main/imports.h"
-
-
-
-/* A facility similar to the data caching code above, which aims to
- * prevent identical commands being issued repeatedly.
- */
-GLboolean brw_cached_batch_struct( struct brw_context *brw,
-				   const void *data,
-				   GLuint sz )
-{
-   struct brw_cached_batch_item *item = brw->cached_batch_items;
-   struct header *newheader = (struct header *)data;
-
-   if (brw->emit_state_always) {
-      intel_batchbuffer_data(brw->intel.batch, data, sz, false);
-      return GL_TRUE;
-   }
-
-   while (item) {
-      if (item->header->opcode == newheader->opcode) {
-	 if (item->sz == sz && memcmp(item->header, newheader, sz) == 0)
-	    return GL_FALSE;
-	 if (item->sz != sz) {
-	    free(item->header);
-	    item->header = malloc(sz);
-	    item->sz = sz;
-	 }
-	 goto emit;
-      }
-      item = item->next;
-   }
-
-   assert(!item);
-   item = CALLOC_STRUCT(brw_cached_batch_item);
-   item->header = malloc(sz);
-   item->sz = sz;
-   item->next = brw->cached_batch_items;
-   brw->cached_batch_items = item;
-
- emit:
-   memcpy(item->header, newheader, sz);
-   intel_batchbuffer_data(brw->intel.batch, data, sz, false);
-   return GL_TRUE;
-}
-
-void brw_clear_batch_cache( struct brw_context *brw )
-{
-   struct brw_cached_batch_item *item = brw->cached_batch_items;
-
-   while (item) {
-      struct brw_cached_batch_item *next = item->next;
-      free((void *)item->header);
-      free(item);
-      item = next;
-   }
-
-   brw->cached_batch_items = NULL;
-}
-
-void brw_destroy_batch_cache( struct brw_context *brw )
-{
-   brw_clear_batch_cache(brw);
-}
 
 /**
  * Allocates a block of space in the batchbuffer for indirect state.
@@ -116,13 +51,12 @@ void *
 brw_state_batch(struct brw_context *brw,
 		int size,
 		int alignment,
-		drm_intel_bo **out_bo,
 		uint32_t *out_offset)
 {
-   struct intel_batchbuffer *batch = brw->intel.batch;
+   struct intel_batchbuffer *batch = &brw->intel.batch;
    uint32_t offset;
 
-   assert(size < batch->buf->size);
+   assert(size < batch->bo->size);
    offset = ROUND_DOWN_TO(batch->state_batch_offset - size, alignment);
 
    /* If allocating from the top would wrap below the batchbuffer, or
@@ -130,19 +64,13 @@ brw_state_batch(struct brw_context *brw,
     * space, then flush and try again.
     */
    if (batch->state_batch_offset < size ||
-       offset < batch->ptr - batch->map + batch->reserved_space) {
-      intel_batchbuffer_flush(batch);
+       offset < 4*batch->used + batch->reserved_space) {
+      intel_batchbuffer_flush(&brw->intel);
       offset = ROUND_DOWN_TO(batch->state_batch_offset - size, alignment);
    }
 
    batch->state_batch_offset = offset;
 
-   if (*out_bo != batch->buf) {
-      drm_intel_bo_unreference(*out_bo);
-      drm_intel_bo_reference(batch->buf);
-      *out_bo = batch->buf;
-   }
-
    *out_offset = offset;
-   return batch->map + offset;
+   return batch->map + (offset>>2);
 }

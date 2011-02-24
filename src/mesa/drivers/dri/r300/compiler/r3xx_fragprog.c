@@ -124,7 +124,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		/* This pass makes it easier for the scheduler to group TEX
 		 * instructions and reduces the chances of creating too
 		 * many texture indirections.*/
-		{"register rename",		1, !is_r500 || opt, rc_rename_regs,		NULL},
+		{"register rename",		1, !is_r500,	rc_rename_regs,			NULL},
 		{"pair translate",		1, 1,		rc_pair_translate,		NULL},
 		{"pair scheduling",		1, 1,		rc_pair_schedule,		NULL},
 		{"register allocation",		1, opt,		rc_pair_regalloc,		NULL},

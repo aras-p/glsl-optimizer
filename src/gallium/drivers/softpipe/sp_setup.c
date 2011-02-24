@@ -575,7 +575,7 @@ setup_fragcoord_coeff(struct setup_context *setup, uint slot)
    setup->coef[slot].dady[0] = 0.0;
    /*Y*/
    setup->coef[slot].a0[1] =
-		   (spfs->origin_lower_left ? setup->softpipe->framebuffer.height : 0)
+		   (spfs->origin_lower_left ? setup->softpipe->framebuffer.height-1 : 0)
 		   + (spfs->pixel_center_integer ? 0.0 : 0.5);
    setup->coef[slot].dadx[1] = 0.0;
    setup->coef[slot].dady[1] = spfs->origin_lower_left ? -1.0 : 1.0;

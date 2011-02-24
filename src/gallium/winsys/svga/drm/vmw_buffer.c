@@ -120,7 +120,8 @@ vmw_gmr_buffer_destroy(struct pb_buffer *_buf)
 
 static void *
 vmw_gmr_buffer_map(struct pb_buffer *_buf,
-               unsigned flags)
+                   unsigned flags,
+                   void *flush_ctx)
 {
    struct vmw_gmr_buffer *buf = vmw_gmr_buffer(_buf);
    return buf->map;

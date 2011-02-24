@@ -51,10 +51,15 @@ install:
 	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(GLAPI_LIB_GLOB) \
 		$(DESTDIR)$(INSTALL_LIB_DIR)
 
+# workaround a bug in makedepend
+makedepend_CPPFLAGS := \
+	$(filter-out -DMAPI_ABI_HEADER=%, $(glapi_CPPFLAGS))
+$(glapi_OBJECTS): glapi_mapi_tmp.h
+
 depend: $(glapi_SOURCES)
 	@echo "running $(MKDEP)"
 	@touch depend
-	@$(MKDEP) $(MKDEP_OPTIONS) -f- $(DEFINES) $(glapi_CPPFLAGS) \
+	@$(MKDEP) $(MKDEP_OPTIONS) -f- $(DEFINES) $(makedepend_CPPFLAGS) \
 		$(glapi_SOURCES) 2>/dev/null | sed -e 's,^$(MAPI)/,,' \
 		> depend
 

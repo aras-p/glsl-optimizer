@@ -175,7 +175,20 @@ static const struct tgsi_opcode_info opcode_info[TGSI_OPCODE_LAST] =
    { 0, 1, 0, 0, 0, 0, "SWITCH", TGSI_OPCODE_SWITCH },
    { 0, 1, 0, 0, 0, 0, "CASE", TGSI_OPCODE_CASE },
    { 0, 0, 0, 0, 0, 0, "DEFAULT", TGSI_OPCODE_DEFAULT },
-   { 0, 0, 0, 0, 0, 0, "ENDSWITCH", TGSI_OPCODE_ENDSWITCH }
+   { 0, 0, 0, 0, 0, 0, "ENDSWITCH", TGSI_OPCODE_ENDSWITCH },
+
+   { 1, 2, 0, 0, 0, 0, "LOAD",        TGSI_OPCODE_LOAD },
+   { 1, 2, 0, 0, 0, 0, "LOAD_MS",     TGSI_OPCODE_LOAD_MS },
+   { 1, 3, 0, 0, 0, 0, "SAMPLE",      TGSI_OPCODE_SAMPLE },
+   { 1, 4, 0, 0, 0, 0, "SAMPLE_B",    TGSI_OPCODE_SAMPLE_B },
+   { 1, 4, 0, 0, 0, 0, "SAMPLE_C",    TGSI_OPCODE_SAMPLE_C },
+   { 1, 4, 0, 0, 0, 0, "SAMPLE_C_LZ", TGSI_OPCODE_SAMPLE_C_LZ },
+   { 1, 5, 0, 0, 0, 0, "SAMPLE_D",    TGSI_OPCODE_SAMPLE_D },
+   { 1, 3, 0, 0, 0, 0, "SAMPLE_L",    TGSI_OPCODE_SAMPLE_L },
+   { 1, 3, 0, 0, 0, 0, "GATHER4",     TGSI_OPCODE_GATHER4 },
+   { 1, 2, 0, 0, 0, 0, "RESINFO",     TGSI_OPCODE_RESINFO },
+   { 1, 2, 0, 0, 0, 0, "SAMPLE_POS",  TGSI_OPCODE_SAMPLE_POS },
+   { 1, 2, 0, 0, 0, 0, "SAMPLE_INFO", TGSI_OPCODE_SAMPLE_INFO },
 };
 
 const struct tgsi_opcode_info *

@@ -42,7 +42,8 @@ MESA_ASM_SOURCES =
 # Library/program dependencies
 EXTRA_LIB_PATH=-L/usr/X11R6/lib
 
-DRI_LIB_DEPS  = $(EXTRA_LIB_PATH) -lm -lpthread -lexpat -ldl
+MESA_MODULES  = $(TOP)/src/mesa/libmesa.a
+DRI_LIB_DEPS  = $(MESA_MODULES) $(EXTRA_LIB_PATH) -lm -lpthread -lexpat -ldl
 GL_LIB_DEPS   = $(EXTRA_LIB_PATH) -lX11 -lXext -lXxf86vm -lm -lpthread -ldl
 
 

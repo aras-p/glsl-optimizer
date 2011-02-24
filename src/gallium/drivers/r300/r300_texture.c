@@ -370,14 +370,18 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
     switch (format) {
         /* 8-bit buffers. */
         case PIPE_FORMAT_A8_UNORM:
+        /*case PIPE_FORMAT_A8_SNORM:*/
         case PIPE_FORMAT_I8_UNORM:
+        /*case PIPE_FORMAT_I8_SNORM:*/
         case PIPE_FORMAT_L8_UNORM:
+        /*case PIPE_FORMAT_L8_SNORM:*/
         case PIPE_FORMAT_R8_UNORM:
         case PIPE_FORMAT_R8_SNORM:
             return R300_COLOR_FORMAT_I8;
 
         /* 16-bit buffers. */
         case PIPE_FORMAT_L8A8_UNORM:
+        /*case PIPE_FORMAT_L8A8_SNORM:*/
         case PIPE_FORMAT_R8G8_UNORM:
         case PIPE_FORMAT_R8G8_SNORM:
             return R300_COLOR_FORMAT_UV88;
@@ -395,13 +399,21 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
 
         /* 32-bit buffers. */
         case PIPE_FORMAT_B8G8R8A8_UNORM:
+        /*case PIPE_FORMAT_B8G8R8A8_SNORM:*/
         case PIPE_FORMAT_B8G8R8X8_UNORM:
+        /*case PIPE_FORMAT_B8G8R8X8_SNORM:*/
         case PIPE_FORMAT_A8R8G8B8_UNORM:
+        /*case PIPE_FORMAT_A8R8G8B8_SNORM:*/
         case PIPE_FORMAT_X8R8G8B8_UNORM:
+        /*case PIPE_FORMAT_X8R8G8B8_SNORM:*/
         case PIPE_FORMAT_A8B8G8R8_UNORM:
+        /*case PIPE_FORMAT_A8B8G8R8_SNORM:*/
+        case PIPE_FORMAT_R8G8B8A8_UNORM:
         case PIPE_FORMAT_R8G8B8A8_SNORM:
         case PIPE_FORMAT_X8B8G8R8_UNORM:
+        /*case PIPE_FORMAT_X8B8G8R8_SNORM:*/
         case PIPE_FORMAT_R8G8B8X8_UNORM:
+        /*case PIPE_FORMAT_R8G8B8X8_SNORM:*/
         case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
             return R300_COLOR_FORMAT_ARGB8888;
 
@@ -506,9 +518,12 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         /* 8-bit outputs, one channel.
          * COLORFORMAT_I8 stores the C2 component. */
         case PIPE_FORMAT_A8_UNORM:
+        /*case PIPE_FORMAT_A8_SNORM:*/
             return modifier | R300_C2_SEL_A;
         case PIPE_FORMAT_I8_UNORM:
+        /*case PIPE_FORMAT_I8_SNORM:*/
         case PIPE_FORMAT_L8_UNORM:
+        /*case PIPE_FORMAT_L8_SNORM:*/
         case PIPE_FORMAT_R8_UNORM:
         case PIPE_FORMAT_R8_SNORM:
             return modifier | R300_C2_SEL_R;
@@ -516,6 +531,7 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         /* 16-bit outputs, two channels.
          * COLORFORMAT_UV88 stores C2 and C0. */
         case PIPE_FORMAT_L8A8_UNORM:
+        /*case PIPE_FORMAT_L8A8_SNORM:*/
             return modifier | R300_C0_SEL_A | R300_C2_SEL_R;
         case PIPE_FORMAT_R8G8_UNORM:
         case PIPE_FORMAT_R8G8_SNORM:
@@ -528,7 +544,9 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         case PIPE_FORMAT_B4G4R4A4_UNORM:
         case PIPE_FORMAT_B4G4R4X4_UNORM:
         case PIPE_FORMAT_B8G8R8A8_UNORM:
+        /*case PIPE_FORMAT_B8G8R8A8_SNORM:*/
         case PIPE_FORMAT_B8G8R8X8_UNORM:
+        /*case PIPE_FORMAT_B8G8R8X8_SNORM:*/
         case PIPE_FORMAT_B10G10R10A2_UNORM:
             return modifier |
                 R300_C0_SEL_B | R300_C1_SEL_G |
@@ -536,20 +554,26 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
 
         /* ARGB outputs. */
         case PIPE_FORMAT_A8R8G8B8_UNORM:
+        /*case PIPE_FORMAT_A8R8G8B8_SNORM:*/
         case PIPE_FORMAT_X8R8G8B8_UNORM:
+        /*case PIPE_FORMAT_X8R8G8B8_SNORM:*/
             return modifier |
                 R300_C0_SEL_A | R300_C1_SEL_R |
                 R300_C2_SEL_G | R300_C3_SEL_B;
 
         /* ABGR outputs. */
         case PIPE_FORMAT_A8B8G8R8_UNORM:
+        /*case PIPE_FORMAT_A8B8G8R8_SNORM:*/
         case PIPE_FORMAT_X8B8G8R8_UNORM:
+        /*case PIPE_FORMAT_X8B8G8R8_SNORM:*/
             return modifier |
                 R300_C0_SEL_A | R300_C1_SEL_B |
                 R300_C2_SEL_G | R300_C3_SEL_R;
 
         /* RGBA outputs. */
         case PIPE_FORMAT_R8G8B8X8_UNORM:
+        /*case PIPE_FORMAT_R8G8B8X8_SNORM:*/
+        case PIPE_FORMAT_R8G8B8A8_UNORM:
         case PIPE_FORMAT_R8G8B8A8_SNORM:
         case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
         case PIPE_FORMAT_R10G10B10A2_UNORM:
@@ -585,11 +609,12 @@ boolean r300_is_sampler_format_supported(enum pipe_format format)
 }
 
 void r300_texture_setup_format_state(struct r300_screen *screen,
-                                     struct r300_texture_desc *desc,
+                                     struct r300_resource *tex,
                                      unsigned level,
                                      struct r300_texture_format_state *out)
 {
-    struct pipe_resource *pt = &desc->b.b;
+    struct pipe_resource *pt = &tex->b.b.b;
+    struct r300_texture_desc *desc = &tex->tex;
     boolean is_r500 = screen->caps.is_r500;
 
     /* Mask out all the fields we change. */
@@ -632,163 +657,152 @@ void r300_texture_setup_format_state(struct r300_screen *screen,
                        R300_TXO_MICRO_TILE(desc->microtile);
 }
 
-static void r300_texture_setup_fb_state(struct r300_screen* screen,
-                                        struct r300_texture* tex)
+static void r300_texture_setup_fb_state(struct r300_surface *surf)
 {
-    unsigned i;
+    struct r300_resource *tex = r300_resource(surf->base.texture);
+    unsigned level = surf->base.u.tex.level;
 
     /* Set framebuffer state. */
-    if (util_format_is_depth_or_stencil(tex->desc.b.b.format)) {
-        for (i = 0; i <= tex->desc.b.b.last_level; i++) {
-            tex->fb_state.pitch[i] =
-                tex->desc.stride_in_pixels[i] |
-                R300_DEPTHMACROTILE(tex->desc.macrotile[i]) |
-                R300_DEPTHMICROTILE(tex->desc.microtile);
-        }
-        tex->fb_state.format = r300_translate_zsformat(tex->desc.b.b.format);
+    if (util_format_is_depth_or_stencil(surf->base.format)) {
+        surf->pitch =
+                tex->tex.stride_in_pixels[level] |
+                R300_DEPTHMACROTILE(tex->tex.macrotile[level]) |
+                R300_DEPTHMICROTILE(tex->tex.microtile);
+        surf->format = r300_translate_zsformat(surf->base.format);
     } else {
-        for (i = 0; i <= tex->desc.b.b.last_level; i++) {
-            tex->fb_state.pitch[i] =
-                tex->desc.stride_in_pixels[i] |
-                r300_translate_colorformat(tex->desc.b.b.format) |
-                R300_COLOR_TILE(tex->desc.macrotile[i]) |
-                R300_COLOR_MICROTILE(tex->desc.microtile);
-        }
-        tex->fb_state.format = r300_translate_out_fmt(tex->desc.b.b.format);
+        surf->pitch =
+                tex->tex.stride_in_pixels[level] |
+                r300_translate_colorformat(surf->base.format) |
+                R300_COLOR_TILE(tex->tex.macrotile[level]) |
+                R300_COLOR_MICROTILE(tex->tex.microtile);
+        surf->format = r300_translate_out_fmt(surf->base.format);
     }
 }
 
-void r300_texture_reinterpret_format(struct pipe_screen *screen,
+boolean r300_resource_set_properties(struct pipe_screen *screen,
                                      struct pipe_resource *tex,
-                                     enum pipe_format new_format)
+                                     unsigned offset,
+                                     const struct pipe_resource *new_properties)
 {
-    struct r300_screen *r300screen = r300_screen(screen);
+    struct r300_screen *rscreen = r300_screen(screen);
+    struct r300_resource *res = r300_resource(tex);
 
-    SCREEN_DBG(r300screen, DBG_TEX,
-        "r300: texture_reinterpret_format: %s -> %s\n",
+    SCREEN_DBG(rscreen, DBG_TEX,
+        "r300: texture_set_properties: %s -> %s\n",
         util_format_short_name(tex->format),
-        util_format_short_name(new_format));
+        util_format_short_name(new_properties->format));
 
-    tex->format = new_format;
+    if (!r300_texture_desc_init(rscreen, res, new_properties)) {
+        fprintf(stderr, "r300: ERROR: Cannot set texture properties.\n");
+        return FALSE;
+    }
+    res->tex_offset = offset;
+    r300_texture_setup_format_state(rscreen, res, 0, &res->tx_format);
 
-    r300_texture_setup_fb_state(r300_screen(screen), r300_texture(tex));
-}
-
-static unsigned r300_texture_is_referenced(struct pipe_context *context,
-                                           struct pipe_resource *texture,
-                                           unsigned level, int layer)
-{
-    struct r300_context *r300 = r300_context(context);
-    struct r300_texture *rtex = (struct r300_texture *)texture;
-
-    if (r300->rws->cs_is_buffer_referenced(r300->cs,
-                                           rtex->cs_buffer, R300_REF_CS))
-        return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-
-    return PIPE_UNREFERENCED;
+    return TRUE;
 }
 
 static void r300_texture_destroy(struct pipe_screen *screen,
                                  struct pipe_resource* texture)
 {
-    struct r300_texture* tex = (struct r300_texture*)texture;
-    struct r300_winsys_screen *rws = (struct r300_winsys_screen *)texture->screen->winsys;
+    struct r300_resource* tex = (struct r300_resource*)texture;
     int i;
 
-    rws->buffer_reference(rws, &tex->buffer, NULL);
+    r300_winsys_bo_reference(&tex->buf, NULL);
     for (i = 0; i < R300_MAX_TEXTURE_LEVELS; i++) {
         if (tex->hiz_mem[i])
             u_mmFreeMem(tex->hiz_mem[i]);
-        if (tex->zmask_mem[i])
-            u_mmFreeMem(tex->zmask_mem[i]);
     }
 
     FREE(tex);
 }
 
-static boolean r300_texture_get_handle(struct pipe_screen* screen,
-                                       struct pipe_resource *texture,
-                                       struct winsys_handle *whandle)
+boolean r300_resource_get_handle(struct pipe_screen* screen,
+                                 struct pipe_resource *texture,
+                                 struct winsys_handle *whandle)
 {
     struct r300_winsys_screen *rws = (struct r300_winsys_screen *)screen->winsys;
-    struct r300_texture* tex = (struct r300_texture*)texture;
+    struct r300_resource* tex = (struct r300_resource*)texture;
 
     if (!tex) {
         return FALSE;
     }
 
-    return rws->buffer_get_handle(rws, tex->buffer,
-                                  tex->desc.stride_in_bytes[0], whandle);
+    return rws->buffer_get_handle(tex->buf,
+                                  tex->tex.stride_in_bytes[0], whandle);
 }
 
-struct u_resource_vtbl r300_texture_vtbl =
+static const struct u_resource_vtbl r300_texture_vtbl =
 {
-   r300_texture_get_handle,	      /* get_handle */
-   r300_texture_destroy,	      /* resource_destroy */
-   r300_texture_is_referenced,	      /* is_resource_referenced */
-   r300_texture_get_transfer,	      /* get_transfer */
-   r300_texture_transfer_destroy,     /* transfer_destroy */
-   r300_texture_transfer_map,	      /* transfer_map */
-   u_default_transfer_flush_region,   /* transfer_flush_region */
-   r300_texture_transfer_unmap,	      /* transfer_unmap */
-   u_default_transfer_inline_write    /* transfer_inline_write */
+    NULL,                           /* get_handle */
+    r300_texture_destroy,           /* resource_destroy */
+    NULL,                           /* is_resource_referenced */
+    r300_texture_get_transfer,      /* get_transfer */
+    r300_texture_transfer_destroy,  /* transfer_destroy */
+    r300_texture_transfer_map,      /* transfer_map */
+    NULL,                           /* transfer_flush_region */
+    r300_texture_transfer_unmap,    /* transfer_unmap */
+    u_default_transfer_inline_write /* transfer_inline_write */
 };
 
 /* The common texture constructor. */
-static struct r300_texture*
+static struct r300_resource*
 r300_texture_create_object(struct r300_screen *rscreen,
                            const struct pipe_resource *base,
                            enum r300_buffer_tiling microtile,
                            enum r300_buffer_tiling macrotile,
                            unsigned stride_in_bytes_override,
                            unsigned max_buffer_size,
-                           struct r300_winsys_buffer *buffer)
+                           struct r300_winsys_bo *buffer)
 {
     struct r300_winsys_screen *rws = rscreen->rws;
-    struct r300_texture *tex = CALLOC_STRUCT(r300_texture);
+    struct r300_resource *tex = CALLOC_STRUCT(r300_resource);
     if (!tex) {
         if (buffer)
-            rws->buffer_reference(rws, &buffer, NULL);
+            r300_winsys_bo_reference(&buffer, NULL);
         return NULL;
     }
 
-    /* Initialize the descriptor. */
-    if (!r300_texture_desc_init(rscreen, &tex->desc, base,
-                                microtile, macrotile,
-                                stride_in_bytes_override,
-                                max_buffer_size)) {
-        if (buffer)
-            rws->buffer_reference(rws, &buffer, NULL);
-        FREE(tex);
-        return NULL;
-    }
-    /* Initialize the hardware state. */
-    r300_texture_setup_format_state(rscreen, &tex->desc, 0, &tex->tx_format);
-    r300_texture_setup_fb_state(rscreen, tex);
-
-    tex->desc.b.vtbl = &r300_texture_vtbl;
-    pipe_reference_init(&tex->desc.b.b.reference, 1);
+    pipe_reference_init(&tex->b.b.b.reference, 1);
+    tex->b.b.b.screen = &rscreen->screen;
+    tex->b.b.b.usage = base->usage;
+    tex->b.b.b.bind = base->bind;
+    tex->b.b.b.flags = base->flags;
+    tex->b.b.vtbl = &r300_texture_vtbl;
+    tex->tex.microtile = microtile;
+    tex->tex.macrotile[0] = macrotile;
+    tex->tex.stride_in_bytes_override = stride_in_bytes_override;
     tex->domain = base->flags & R300_RESOURCE_FLAG_TRANSFER ?
                   R300_DOMAIN_GTT :
                   R300_DOMAIN_VRAM | R300_DOMAIN_GTT;
-    tex->buffer = buffer;
+    tex->buf_size = max_buffer_size;
+
+    if (!r300_resource_set_properties(&rscreen->screen, &tex->b.b.b, 0, base)) {
+        if (buffer)
+            r300_winsys_bo_reference(&buffer, NULL);
+        FREE(tex);
+        return NULL;
+    }
 
     /* Create the backing buffer if needed. */
-    if (!tex->buffer) {
-        tex->buffer = rws->buffer_create(rws, tex->desc.size_in_bytes, 2048,
+    if (!buffer) {
+        tex->buf_size = tex->tex.size_in_bytes;
+        tex->buf = rws->buffer_create(rws, tex->tex.size_in_bytes, 2048,
                                          base->bind, base->usage, tex->domain);
 
-        if (!tex->buffer) {
+        if (!tex->buf) {
             FREE(tex);
             return NULL;
         }
+    } else {
+        tex->buf = buffer;
     }
 
-    tex->cs_buffer = rws->buffer_get_cs_handle(rws, tex->buffer);
+    tex->cs_buf = rws->buffer_get_cs_handle(tex->buf);
 
-    rws->buffer_set_tiling(rws, tex->buffer,
-            tex->desc.microtile, tex->desc.macrotile[0],
-            tex->desc.stride_in_bytes[0]);
+    rws->buffer_set_tiling(tex->buf, NULL,
+            tex->tex.microtile, tex->tex.macrotile[0],
+            tex->tex.stride_in_bytes[0]);
 
     return tex;
 }
@@ -820,7 +834,7 @@ struct pipe_resource *r300_texture_from_handle(struct pipe_screen *screen,
 {
     struct r300_winsys_screen *rws = (struct r300_winsys_screen*)screen->winsys;
     struct r300_screen *rscreen = r300_screen(screen);
-    struct r300_winsys_buffer *buffer;
+    struct r300_winsys_bo *buffer;
     enum r300_buffer_tiling microtile, macrotile;
     unsigned stride, size;
 
@@ -836,7 +850,7 @@ struct pipe_resource *r300_texture_from_handle(struct pipe_screen *screen,
     if (!buffer)
         return NULL;
 
-    rws->buffer_get_tiling(rws, buffer, &microtile, &macrotile);
+    rws->buffer_get_tiling(buffer, &microtile, &macrotile);
 
     /* Enforce a microtiled zbuffer. */
     if (util_format_is_depth_or_stencil(base->format) &&
@@ -847,7 +861,7 @@ struct pipe_resource *r300_texture_from_handle(struct pipe_screen *screen,
                 break;
 
             case 2:
-                if (rws->get_value(rws, R300_VID_SQUARE_TILING_SUPPORT))
+                if (rws->get_value(rws, R300_VID_DRM_2_1_0))
                     microtile = R300_BUFFER_SQUARETILED;
                 break;
         }
@@ -864,7 +878,7 @@ struct pipe_surface* r300_create_surface(struct pipe_context * ctx,
                                          struct pipe_resource* texture,
                                          const struct pipe_surface *surf_tmpl)
 {
-    struct r300_texture* tex = r300_texture(texture);
+    struct r300_resource* tex = r300_resource(texture);
     struct r300_surface* surface = CALLOC_STRUCT(r300_surface);
     unsigned level = surf_tmpl->u.tex.level;
 
@@ -884,28 +898,27 @@ struct pipe_surface* r300_create_surface(struct pipe_context * ctx,
         surface->base.u.tex.first_layer = surf_tmpl->u.tex.first_layer;
         surface->base.u.tex.last_layer = surf_tmpl->u.tex.last_layer;
 
-        surface->buffer = tex->buffer;
-        surface->cs_buffer = tex->cs_buffer;
+        surface->buf = tex->buf;
+        surface->cs_buf = tex->cs_buf;
 
         /* Prefer VRAM if there are multiple domains to choose from. */
         surface->domain = tex->domain;
         if (surface->domain & R300_DOMAIN_VRAM)
             surface->domain &= ~R300_DOMAIN_GTT;
 
-        surface->offset = r300_texture_get_offset(&tex->desc, level,
+        surface->offset = r300_texture_get_offset(tex, level,
                                                   surf_tmpl->u.tex.first_layer);
-        surface->pitch = tex->fb_state.pitch[level];
-        surface->format = tex->fb_state.format;
+        r300_texture_setup_fb_state(surface);
 
         /* Parameters for the CBZB clear. */
-        surface->cbzb_allowed = tex->desc.cbzb_allowed[level];
+        surface->cbzb_allowed = tex->tex.cbzb_allowed[level];
         surface->cbzb_width = align(surface->base.width, 64);
 
         /* Height must be aligned to the size of a tile. */
-        tile_height = r300_get_pixel_alignment(tex->desc.b.b.format,
-                                               tex->desc.b.b.nr_samples,
-                                               tex->desc.microtile,
-                                               tex->desc.macrotile[level],
+        tile_height = r300_get_pixel_alignment(tex->b.b.b.format,
+                                               tex->b.b.b.nr_samples,
+                                               tex->tex.microtile,
+                                               tex->tex.macrotile[level],
                                                DIM_HEIGHT, 0);
 
         surface->cbzb_height = align((surface->base.height + 1) / 2,
@@ -914,7 +927,7 @@ struct pipe_surface* r300_create_surface(struct pipe_context * ctx,
         /* Offset must be aligned to 2K and must point at the beginning
          * of a scanline. */
         offset = surface->offset +
-                 tex->desc.stride_in_bytes[level] * surface->cbzb_height;
+                 tex->tex.stride_in_bytes[level] * surface->cbzb_height;
         surface->cbzb_midpoint_offset = offset & ~2047;
 
         surface->cbzb_pitch = surface->pitch & 0x1ffffc;
@@ -929,8 +942,8 @@ struct pipe_surface* r300_create_surface(struct pipe_context * ctx,
             surface->cbzb_allowed ? "YES" : " NO",
             surface->cbzb_width, surface->cbzb_height,
             offset & 2047,
-            tex->desc.microtile ? "YES" : " NO",
-            tex->desc.macrotile[level] ? "YES" : " NO");
+            tex->tex.microtile ? "YES" : " NO",
+            tex->tex.macrotile[level] ? "YES" : " NO");
     }
 
     return &surface->base;

@@ -74,7 +74,6 @@ static void i915_flush_pipe( struct pipe_context *pipe,
    /* If there are no flags, just flush pending commands to hardware:
     */
    FLUSH_BATCH(fence);
-   i915->vbo_flushed = 1;
 
    I915_DBG(DBG_FLUSH, "%s: #####\n", __FUNCTION__);
 }
@@ -93,5 +92,8 @@ void i915_flush(struct i915_context *i915, struct pipe_fence_handle **fence)
    struct i915_winsys_batchbuffer *batch = i915->batch;
 
    batch->iws->batchbuffer_flush(batch, fence);
+   i915->vbo_flushed = 1;
    i915->hardware_dirty = ~0;
+   i915->immediate_dirty = ~0;
+   i915->dynamic_dirty = ~0;
 }

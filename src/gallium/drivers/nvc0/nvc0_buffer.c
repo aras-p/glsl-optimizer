@@ -59,14 +59,22 @@ release_allocation(struct nvc0_mm_allocation **mm, struct nvc0_fence *fence)
    (*mm) = NULL;
 }
 
-static INLINE boolean
-nvc0_buffer_reallocate(struct nvc0_screen *screen, struct nvc0_resource *buf,
-                       unsigned domain)
+INLINE void
+nvc0_buffer_release_gpu_storage(struct nvc0_resource *buf)
 {
    nouveau_bo_ref(NULL, &buf->bo);
 
    if (buf->mm)
       release_allocation(&buf->mm, buf->fence);
+
+   buf->domain = 0;
+}
+
+static INLINE boolean
+nvc0_buffer_reallocate(struct nvc0_screen *screen, struct nvc0_resource *buf,
+                       unsigned domain)
+{
+   nvc0_buffer_release_gpu_storage(buf);
 
    return nvc0_buffer_allocate(screen, buf, domain);
 }
@@ -77,10 +85,7 @@ nvc0_buffer_destroy(struct pipe_screen *pscreen,
 {
    struct nvc0_resource *res = nvc0_resource(presource);
 
-   nouveau_bo_ref(NULL, &res->bo);
-
-   if (res->mm)
-      release_allocation(&res->mm, res->fence);
+   nvc0_buffer_release_gpu_storage(res);
 
    if (res->data && !(res->status & NVC0_BUFFER_STATUS_USER_MEMORY))
       FREE(res->data);
@@ -112,7 +117,7 @@ nvc0_buffer_download(struct nvc0_context *nvc0, struct nvc0_resource *buf,
    memcpy(buf->data + start, bounce->map, size);
    nouveau_bo_unmap(bounce);
 
-   buf->status &= ~NVC0_BUFFER_STATUS_DIRTY;
+   buf->status &= ~NVC0_BUFFER_STATUS_GPU_WRITING;
 
    nouveau_bo_ref(NULL, &bounce);
    if (mm)
@@ -151,7 +156,7 @@ nvc0_buffer_upload(struct nvc0_context *nvc0, struct nvc0_resource *buf,
       release_allocation(&mm, nvc0->screen->fence.current);
 
    if (start == 0 && size == buf->base.width0)
-      buf->status &= ~NVC0_BUFFER_STATUS_DIRTY;
+      buf->status &= ~NVC0_BUFFER_STATUS_GPU_WRITING;
    return TRUE;
 }
 
@@ -174,7 +179,7 @@ nvc0_buffer_transfer_get(struct pipe_context *pipe,
 
    if (buf->domain == NOUVEAU_BO_VRAM) {
       if (usage & PIPE_TRANSFER_READ) {
-         if (buf->status & NVC0_BUFFER_STATUS_DIRTY)
+         if (buf->status & NVC0_BUFFER_STATUS_GPU_WRITING)
             nvc0_buffer_download(nvc0_context(pipe), buf, 0, buf->base.width0);
       }
    }

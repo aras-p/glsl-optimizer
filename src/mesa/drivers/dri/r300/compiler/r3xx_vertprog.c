@@ -490,13 +490,6 @@ static void translate_vertex_program(struct radeon_compiler *c, void *user)
 			continue;
 
 		if (info->HasDstReg) {
-			/* Relative addressing of destination operands is not supported yet. */
-			if (vpi->DstReg.RelAddr) {
-				rc_error(&compiler->Base, "Vertex program does not support relative "
-					 "addressing of destination operands (yet).\n");
-				return;
-			}
-
 			/* Neither is Saturate. */
 			if (vpi->SaturateMode != RC_SATURATE_NONE) {
 				rc_error(&compiler->Base, "Vertex program does not support the Saturate "
@@ -668,7 +661,6 @@ static void allocate_temporary_registers(struct radeon_compiler *c, void *user)
 	char hwtemps[RC_REGISTER_MAX_INDEX];
 	struct temporary_allocation * ta;
 	unsigned int i, j;
-	struct rc_instruction *last_inst_src_reladdr = NULL;
 
 	memset(hwtemps, 0, sizeof(hwtemps));
 
@@ -693,28 +685,11 @@ static void allocate_temporary_registers(struct radeon_compiler *c, void *user)
 		}
 	}
 
-	/* Pass 2: If there is relative addressing of dst temporaries, we cannot change register indices. Give up.
-	 * For src temporaries, save the last instruction which uses relative addressing. */
-	for (inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
-		const struct rc_opcode_info *opcode = rc_get_opcode_info(inst->U.I.Opcode);
-
-		if (opcode->HasDstReg)
-			if (inst->U.I.DstReg.RelAddr)
-				return;
-
-		for (i = 0; i < opcode->NumSrcRegs; ++i) {
-			if (inst->U.I.SrcReg[i].File == RC_FILE_TEMPORARY &&
-			    inst->U.I.SrcReg[i].RelAddr) {
-				last_inst_src_reladdr = inst;
-			}
-		}
-	}
-
 	ta = (struct temporary_allocation*)memory_pool_malloc(&compiler->Base.Pool,
 			sizeof(struct temporary_allocation) * num_orig_temps);
 	memset(ta, 0, sizeof(struct temporary_allocation) * num_orig_temps);
 
-	/* Pass 3: Determine original temporary lifetimes */
+	/* Pass 2: Determine original temporary lifetimes */
 	for(inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 		/* Instructions inside of loops need to use the ENDLOOP
@@ -744,41 +719,22 @@ static void allocate_temporary_registers(struct radeon_compiler *c, void *user)
 
 		for (i = 0; i < opcode->NumSrcRegs; ++i) {
 			if (inst->U.I.SrcReg[i].File == RC_FILE_TEMPORARY) {
-				struct rc_instruction *last_read;
-
-				/* From "last_inst_src_reladdr", "end_loop", and "inst",
-				 * select the instruction with the highest instruction index (IP).
-				 * Note that "end_loop", if available, has always a higher index than "inst". */
-				if (last_inst_src_reladdr) {
-					if (end_loop) {
-						last_read = last_inst_src_reladdr->IP > end_loop->IP ?
-							    last_inst_src_reladdr : end_loop;
-					} else {
-						last_read = last_inst_src_reladdr->IP > inst->IP ?
-							    last_inst_src_reladdr : inst;
-					}
-				} else {
-					last_read = end_loop ? end_loop : inst;
-				}
-
-				ta[inst->U.I.SrcReg[i].Index].LastRead = last_read;
+				ta[inst->U.I.SrcReg[i].Index].LastRead = end_loop ? end_loop : inst;
 			}
 		}
 	}
 
-	/* Pass 4: Register allocation */
+	/* Pass 3: Register allocation */
 	for(inst = compiler->Base.Program.Instructions.Next; inst != &compiler->Base.Program.Instructions; inst = inst->Next) {
 		const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->U.I.Opcode);
 
-		if (!last_inst_src_reladdr || last_inst_src_reladdr->IP < inst->IP) {
-			for (i = 0; i < opcode->NumSrcRegs; ++i) {
-				if (inst->U.I.SrcReg[i].File == RC_FILE_TEMPORARY) {
-					unsigned int orig = inst->U.I.SrcReg[i].Index;
-					inst->U.I.SrcReg[i].Index = ta[orig].HwTemp;
+		for (i = 0; i < opcode->NumSrcRegs; ++i) {
+			if (inst->U.I.SrcReg[i].File == RC_FILE_TEMPORARY) {
+				unsigned int orig = inst->U.I.SrcReg[i].Index;
+				inst->U.I.SrcReg[i].Index = ta[orig].HwTemp;
 
-					if (ta[orig].Allocated && inst == ta[orig].LastRead)
-						hwtemps[ta[orig].HwTemp] = 0;
-				}
+				if (ta[orig].Allocated && inst == ta[orig].LastRead)
+					hwtemps[ta[orig].HwTemp] = 0;
 			}
 		}
 
@@ -792,12 +748,7 @@ static void allocate_temporary_registers(struct radeon_compiler *c, void *user)
 							break;
 					}
 					ta[orig].Allocated = 1;
-					if (last_inst_src_reladdr &&
-					    last_inst_src_reladdr->IP > inst->IP) {
-						ta[orig].HwTemp = orig;
-					} else {
-						ta[orig].HwTemp = j;
-					}
+					ta[orig].HwTemp = j;
 					hwtemps[ta[orig].HwTemp] = 1;
 				}
 

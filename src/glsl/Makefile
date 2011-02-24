@@ -1,3 +1,4 @@
+
 #src/glsl/pp/Makefile
 
 TOP = ../..
@@ -13,10 +14,12 @@ LIBGLCPP_SOURCES = \
 
 GLCPP_SOURCES = \
 	$(LIBGLCPP_SOURCES) \
+	ralloc.c \
 	glcpp/glcpp.c
 
 C_SOURCES = \
 	strtod.c \
+	ralloc.c \
 	$(LIBGLCPP_SOURCES)
 
 CXX_SOURCES = \
@@ -68,6 +71,7 @@ CXX_SOURCES = \
 	opt_constant_propagation.cpp \
 	opt_constant_variable.cpp \
 	opt_copy_propagation.cpp \
+	opt_copy_propagation_elements.cpp \
 	opt_dead_code.cpp \
 	opt_dead_code_local.cpp \
 	opt_dead_functions.cpp \
@@ -82,8 +86,7 @@ CXX_SOURCES = \
 	s_expression.cpp
 
 LIBS = \
-	$(TOP)/src/glsl/libglsl.a \
-	$(TALLOC_LIBS)
+	$(TOP)/src/glsl/libglsl.a
 
 APPS = glsl_compiler glcpp/glcpp
 
@@ -111,8 +114,10 @@ OBJECTS = \
 	$(C_SOURCES:.c=.o) \
 	$(CXX_SOURCES:.cpp=.o)
 
+DRICORE_OBJ_DIR = obj-visible
+OBJECTS_DRICORE = $(addprefix $(DRICORE_OBJ_DIR)/,$(OBJECTS))
+
 INCLUDES = \
-	$(TALLOC_CFLAGS) \
 	-I. \
 	-I../mesa \
 	-I../mapi \
@@ -127,7 +132,13 @@ ALL_SOURCES = \
 
 ##### TARGETS #####
 
-default: depend lib$(LIBNAME).a $(APPS)
+default: depend lib$(LIBNAME).a $(APPS) $(DRICORE_GLSL_LIBS)
+
+$(TOP)/$(LIB_DIR)/libglsl.so: $(OBJECTS_DRICORE) builtin_function.o Makefile $(TOP)/src/glsl/Makefile.template
+	$(MKLIB) -o $@ -linker '$(CXX)' -ldflags '$(LDFLAGS)' \
+		-cplusplus -noprefix \
+		-install $(TOP)/$(LIB_DIR) -id $(INSTALL_LIB_DIR)/$@.dylib \
+		$(OBJECTS_DRICORE) builtin_function.o
 
 lib$(LIBNAME).a: $(OBJECTS) builtin_function.o Makefile $(TOP)/src/glsl/Makefile.template
 	$(MKLIB) -cplusplus -o $(LIBNAME) -static $(OBJECTS) builtin_function.o
@@ -138,28 +149,47 @@ depend: $(ALL_SOURCES) Makefile
 	$(MKDEP) $(MKDEP_OPTIONS) $(INCLUDES) $(ALL_SOURCES) 2> /dev/null
 
 # Remove .o and backup files
-clean:
+clean: clean-dricore
 	rm -f $(GLCPP_OBJECTS) $(GLSL2_OBJECTS) $(OBJECTS) lib$(LIBNAME).a depend depend.bak builtin_function.cpp builtin_function.o builtin_stubs.o builtin_compiler
 	-rm -f $(APPS)
 
+clean-dricore:
+	-rm -f $(DRICORE_OBJ_DIR) $(TOP)/$(LIB_DIR)/libglsl.so libglsl.so
+
+ifneq (,$(DRICORE_GLSL_LIBS))
+DRICORE_INSTALL_TARGET = install-dricore
+endif
+
 # Dummy target
-install:
+install: $(DRICORE_INSTALL_TARGET)
 	@echo -n ""
 
+install-dricore: default
+	$(INSTALL) -d $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
+	$(INSTALL) -m 755 $(DRICORE_GLSL_LIBS) $(DESTDIR)$(DRI_DRIVER_INSTALL_DIR)
 
 ##### RULES #####
 
-glsl_compiler: $(GLSL2_OBJECTS) libglsl.a
-	$(APP_CXX) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(GLSL2_OBJECTS) $(LIBS) -o $@
+glsl_compiler: $(GLSL2_OBJECTS) libglsl.a builtin_stubs.o
+	$(APP_CXX) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(GLSL2_OBJECTS) builtin_stubs.o $(LIBS) -o $@
 
-glcpp/glcpp: $(GLCPP_OBJECTS) libglsl.a
-	$(APP_CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(GLCPP_OBJECTS) $(LIBS) -o $@
+glcpp: glcpp/glcpp
+glcpp/glcpp: $(GLCPP_OBJECTS)
+	$(APP_CC) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(GLCPP_OBJECTS) -o $@
 
 .cpp.o:
 	$(CXX) -c $(INCLUDES) $(CXXFLAGS) $(DEFINES) $< -o $@
 
 .c.o:
 	$(CC) -c $(INCLUDES) $(CFLAGS) $(DEFINES) $< -o $@
+
+$(DRICORE_OBJ_DIR)/%.o : %.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) -c $(INCLUDES) $(DRI_CXXFLAGS) $(DEFINES) $< -o $@
+
+$(DRICORE_OBJ_DIR)/%.o : %.c
+	@mkdir -p $(dir $@)
+	$(CC) -c $(INCLUDES) $(DRI_CFLAGS) $(DEFINES) $< -o $@
 
 glsl_lexer.cpp: glsl_lexer.lpp
 	flex --nounistd -o$@  $<
@@ -174,10 +204,10 @@ glcpp/glcpp-parse.c: glcpp/glcpp-parse.y
 	bison -v -o "$@" --defines=glcpp/glcpp-parse.h $<
 
 builtin_compiler: $(GLSL2_OBJECTS) $(OBJECTS) builtin_stubs.o
-	$(APP_CXX) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(OBJECTS) $(GLSL2_OBJECTS) builtin_stubs.o $(TALLOC_LIBS) -o $@
+	$(APP_CXX) $(INCLUDES) $(CFLAGS) $(LDFLAGS) $(OBJECTS) $(GLSL2_OBJECTS) builtin_stubs.o -o $@
 
 builtin_function.cpp: builtins/profiles/* builtins/ir/* builtins/tools/generate_builtins.py builtins/tools/texture_builtins.py builtin_compiler
 	@echo Regenerating builtin_function.cpp...
-	$(PYTHON2) $(PYTHON_FLAGS) builtins/tools/generate_builtins.py $(PWD)/builtin_compiler > builtin_function.cpp
+	$(PYTHON2) $(PYTHON_FLAGS) builtins/tools/generate_builtins.py ./builtin_compiler > builtin_function.cpp
 
 -include depend

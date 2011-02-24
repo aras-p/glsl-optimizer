@@ -40,6 +40,10 @@ struct translate_cache {
 struct translate_cache * translate_cache_create( void )
 {
    struct translate_cache *cache = MALLOC_STRUCT(translate_cache);
+   if (cache == NULL) {
+      return NULL;
+   }
+
    cache->hash = cso_hash_create();
    return cache;
 }

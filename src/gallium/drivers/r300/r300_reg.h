@@ -2162,14 +2162,11 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 /* R4xx extended fragment shader registers. */
 #define R400_US_ALU_EXT_ADDR_0              0x4ac0 /* up to 63 (0x4bbc) */
-#   define R400_ADDR0_EXT_RGB_MSB_BIT       0x01
-#   define R400_ADDR1_EXT_RGB_MSB_BIT       0x02
-#   define R400_ADDR2_EXT_RGB_MSB_BIT       0x04
+#   define R400_ADDR_EXT_RGB_MSB_BIT(x)     (1 << (x))
 #   define R400_ADDRD_EXT_RGB_MSB_BIT       0x08
-#   define R400_ADDR0_EXT_A_MSB_BIT         0x10
-#   define R400_ADDR1_EXT_A_MSB_BIT         0x20
-#   define R400_ADDR2_EXT_A_MSB_BIT         0x40
+#   define R400_ADDR_EXT_A_MSB_BIT(x)       (1 << ((x) + 4))
 #   define R400_ADDRD_EXT_A_MSB_BIT         0x80
+
 #define R400_US_CODE_BANK                   0x46b8
 #   define R400_BANK_SHIFT                  0
 #   define R400_BANK_MASK                   0xf

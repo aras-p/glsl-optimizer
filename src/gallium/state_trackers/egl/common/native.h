@@ -239,6 +239,9 @@ const struct native_platform *
 native_get_x11_platform(void);
 
 const struct native_platform *
+native_get_wayland_platform(void);
+
+const struct native_platform *
 native_get_drm_platform(void);
 
 const struct native_platform *

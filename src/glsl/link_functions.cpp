@@ -21,14 +21,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <cstdlib>
-#include <cstdio>
-#include <cstdarg>
-
-extern "C" {
-#include <talloc.h>
-}
-
 #include "main/core.h"
 #include "glsl_symbol_table.h"
 #include "glsl_parser_extras.h"
@@ -185,6 +177,18 @@ public:
 	    var = ir->var->clone(linked, NULL);
 	    linked->symbols->add_variable(var);
 	    linked->ir->push_head(var);
+	 } else if (var->type->is_array()) {
+	    /* It is possible to have a global array declared in multiple
+	     * shaders without a size.  The array is implicitly sized by the
+	     * maximal access to it in *any* shader.  Because of this, we
+	     * need to track the maximal access to the array as linking pulls
+	     * more functions in that access the array.
+	     */
+	    var->max_array_access =
+	       MAX2(var->max_array_access, ir->var->max_array_access);
+
+	    if (var->type->length == 0 && ir->var->type->length != 0)
+	       var->type = ir->var->type;
 	 }
 
 	 ir->var = var;

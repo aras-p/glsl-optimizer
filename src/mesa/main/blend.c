@@ -317,7 +317,7 @@ _mesa_BlendEquation( GLenum mode )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glBlendEquation %s\n",
+      _mesa_debug(ctx, "glBlendEquation(%s)\n",
                   _mesa_lookup_enum_by_nr(mode));
 
    if (!legal_blend_equation(ctx, mode, GL_FALSE)) {
@@ -398,7 +398,7 @@ _mesa_BlendEquationSeparateEXT( GLenum modeRGB, GLenum modeA )
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glBlendEquationSeparateEXT %s %s\n",
+      _mesa_debug(ctx, "glBlendEquationSeparateEXT(%s %s)\n",
                   _mesa_lookup_enum_by_nr(modeRGB),
                   _mesa_lookup_enum_by_nr(modeA));
 
@@ -454,7 +454,7 @@ _mesa_BlendEquationSeparatei(GLuint buf, GLenum modeRGB, GLenum modeA)
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glBlendEquationSeparatei %u, %s %s\n", buf,
+      _mesa_debug(ctx, "glBlendEquationSeparatei(%u, %s %s)\n", buf,
                   _mesa_lookup_enum_by_nr(modeRGB),
                   _mesa_lookup_enum_by_nr(modeA));
 
@@ -545,6 +545,10 @@ _mesa_AlphaFunc( GLenum func, GLclampf ref )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glAlphaFunc(%s, %f)\n",
+                  _mesa_lookup_enum_by_nr(func), ref);
+
    switch (func) {
    case GL_NEVER:
    case GL_LESS:
@@ -589,6 +593,9 @@ _mesa_LogicOp( GLenum opcode )
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx, "glLogicOp(%s)\n", _mesa_lookup_enum_by_nr(opcode));
 
    switch (opcode) {
       case GL_CLEAR:
@@ -664,7 +671,8 @@ _mesa_ColorMask( GLboolean red, GLboolean green,
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & VERBOSE_API)
-      _mesa_debug(ctx, "glColorMask %d %d %d %d\n", red, green, blue, alpha);
+      _mesa_debug(ctx, "glColorMask(%d, %d, %d, %d)\n",
+                  red, green, blue, alpha);
 
    /* Shouldn't have any information about channel depth in core mesa
     * -- should probably store these as the native booleans:

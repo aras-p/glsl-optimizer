@@ -176,12 +176,24 @@ static INLINE float logf( float f )
 
 #define isfinite(x) _finite((double)(x))
 #define isnan(x) _isnan((double)(x))
-#endif
+#endif /* _MSC_VER < 1400 && !defined(__cplusplus) */
 
 static INLINE double log2( double x )
 {
    const double invln2 = 1.442695041;
    return log( x ) * invln2;
+}
+
+static INLINE double
+round(double x)
+{
+   return x >= 0.0 ? floor(x + 0.5) : ceil(x - 0.5);
+}
+
+static INLINE float
+roundf(float x)
+{
+   return x >= 0.0f ? floorf(x + 0.5f) : ceilf(x - 0.5f);
 }
 
 #endif /* _MSC_VER */

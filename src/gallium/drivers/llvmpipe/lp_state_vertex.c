@@ -34,6 +34,7 @@
 
 #include "draw/draw_context.h"
 #include "util/u_inlines.h"
+#include "util/u_transfer.h"
 
 
 static void *
@@ -114,4 +115,6 @@ llvmpipe_init_vertex_funcs(struct llvmpipe_context *llvmpipe)
 
    llvmpipe->pipe.set_vertex_buffers = llvmpipe_set_vertex_buffers;
    llvmpipe->pipe.set_index_buffer = llvmpipe_set_index_buffer;
+
+   llvmpipe->pipe.redefine_user_buffer = u_default_redefine_user_buffer;
 }

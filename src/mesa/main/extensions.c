@@ -89,6 +89,7 @@ static const struct extension extension_table[] = {
    { "GL_ARB_fragment_program_shadow",             o(ARB_fragment_program_shadow),             GL             },
    { "GL_ARB_fragment_shader",                     o(ARB_fragment_shader),                     GL             },
    { "GL_ARB_framebuffer_object",                  o(ARB_framebuffer_object),                  GL             },
+   { "GL_ARB_framebuffer_sRGB",                    o(EXT_framebuffer_sRGB),                    GL             },
    { "GL_ARB_half_float_pixel",                    o(ARB_half_float_pixel),                    GL             },
    { "GL_ARB_half_float_vertex",                   o(ARB_half_float_vertex),                   GL             },
    { "GL_ARB_instanced_arrays",                    o(ARB_instanced_arrays),                    GL             },
@@ -249,6 +250,7 @@ static const struct extension extension_table[] = {
 
    /* Vendor extensions */
    { "GL_3DFX_texture_compression_FXT1",           o(TDFX_texture_compression_FXT1),           GL             },
+   { "GL_AMD_conservative_depth",                  o(AMD_conservative_depth),                  GL             },
    { "GL_APPLE_client_storage",                    o(APPLE_client_storage),                    GL             },
    { "GL_APPLE_object_purgeable",                  o(APPLE_object_purgeable),                  GL             },
    { "GL_APPLE_packed_pixels",                     o(APPLE_packed_pixels),                     GL             },
@@ -729,78 +731,67 @@ _mesa_extension_is_enabled( struct gl_context *ctx, const char *name )
 
 
 /**
- * Append string 'b' onto string 'a'.  Free 'a' and return new string.
- */
-static char *
-append(const char *a, const char *b)
-{
-   const GLuint aLen = a ? strlen(a) : 0;
-   const GLuint bLen = b ? strlen(b) : 0;
-   char *s = calloc(1, aLen + bLen + 1);
-   if (s) {
-      if (a)
-         memcpy(s, a, aLen);
-      if (b)
-         memcpy(s + aLen, b, bLen);
-      s[aLen + bLen] = '\0';
-   }
-   if (a)
-      free((void *) a);
-   return s;
-}
-
-
-/**
- * Check the MESA_EXTENSION_OVERRIDE env var.
- * For extension names that are recognized, turn them on.  For extension
- * names that are recognized and prefixed with '-', turn them off.
- * Return a string of the unknown/leftover names.
+ * \brief Apply the \c MESA_EXTENSION_OVERRIDE environment variable.
  *
- * Returnd string needs to be freed.
+ * \c MESA_EXTENSION_OVERRIDE is a space-separated list of extensions to
+ * enable or disable. The list is processed thus:
+ *    - Enable recognized extension names that are prefixed with '+'.
+ *    - Disable recognized extension names that are prefixed with '-'.
+ *    - Enable recognized extension names that are not prefixed.
+ *    - Collect unrecognized extension names in a new string.
+ *
+ * \return Space-separated list of unrecognized extension names (which must
+ *    be freed). Does not return \c NULL.
  */
 static char *
 get_extension_override( struct gl_context *ctx )
 {
-   const char *envExt = _mesa_getenv("MESA_EXTENSION_OVERRIDE");
-   char *extraExt = NULL;
-   char ext[1000];
-   GLuint extLen = 0;
-   GLuint i;
-   GLboolean disableExt = GL_FALSE;
+   const char *env_const= _mesa_getenv("MESA_EXTENSION_OVERRIDE");
+   char *env;
+   char *ext;
+   char *extra_exts;
+   int len;
 
-   if (!envExt)
-      return NULL;
+   if (env_const == NULL) {
+      /* Return the empty string rather than NULL. This simplifies the logic
+       * of client functions. */
+      return calloc(1, sizeof(char));
+   }
 
-   for (i = 0; ; i++) {
-      if (envExt[i] == '\0' || envExt[i] == ' ') {
-         /* terminate/process 'ext' if extLen > 0 */
-         if (extLen > 0) {
-            assert(extLen < sizeof(ext));
-            /* enable extension named by 'ext' */
-            ext[extLen] = 0;
-            if (!set_extension(ctx, ext, !disableExt)) {
-               /* unknown extension name, append it to extraExt */
-               if (extraExt) {
-                  extraExt = append(extraExt, " ");
-               }
-               extraExt = append(extraExt, ext);
-            }
-            extLen = 0;
-            disableExt = GL_FALSE;
-         }
-         if (envExt[i] == '\0')
-            break;
+   /* extra_exts: List of unrecognized extensions. */
+   extra_exts = calloc(strlen(env_const), sizeof(char));
+
+   /* Copy env_const because strtok() is destructive. */
+   env = strdup(env_const);
+   for (ext = strtok(env, " "); ext != NULL; ext = strtok(NULL, " ")) {
+      int enable;
+      int recognized;
+      switch (ext[0]) {
+      case '+':
+         enable = 1;
+         ++ext;
+         break;
+      case '-':
+         enable = 0;
+         ++ext;
+         break;
+      default:
+         enable = 1;
+         break;
       }
-      else if (envExt[i] == '-') {
-         disableExt = GL_TRUE;
-      }
-      else {
-         /* accumulate this non-space character */
-         ext[extLen++] = envExt[i];
+      recognized = set_extension(ctx, ext, enable);
+      if (!recognized) {
+         strcat(extra_exts, ext);
+         strcat(extra_exts, " ");
       }
    }
 
-   return extraExt;
+   /* Remove trailing space. */
+   len  = strlen(extra_exts);
+   if (extra_exts[len - 1] == ' ')
+      extra_exts[len - 1] = '\0';
+
+   return extra_exts;
 }
 
 

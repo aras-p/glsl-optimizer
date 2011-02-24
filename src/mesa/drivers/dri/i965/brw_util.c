@@ -37,16 +37,6 @@
 #include "brw_util.h"
 #include "brw_defines.h"
 
-GLuint brw_count_bits(uint64_t val)
-{
-   GLuint i;
-   for (i = 0; val ; val >>= 1)
-      if (val & 1)
-	 i++;
-   return i;
-}
-
-
 GLuint brw_translate_blend_equation( GLenum mode )
 {
    switch (mode) {

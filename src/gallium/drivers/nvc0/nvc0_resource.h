@@ -24,7 +24,8 @@ struct nvc0_context;
  * USER_MEMORY: resource->data is a pointer to client memory and may change
  *  between GL calls
  */
-#define NVC0_BUFFER_STATUS_DIRTY       (1 << 0)
+#define NVC0_BUFFER_STATUS_GPU_READING (1 << 0)
+#define NVC0_BUFFER_STATUS_GPU_WRITING (1 << 1)
 #define NVC0_BUFFER_STATUS_USER_MEMORY (1 << 7)
 
 /* Resources, if mapped into the GPU's address space, are guaranteed to
@@ -50,6 +51,9 @@ struct nvc0_resource {
 
    struct nvc0_mm_allocation *mm;
 };
+
+void
+nvc0_buffer_release_gpu_storage(struct nvc0_resource *);
 
 boolean
 nvc0_buffer_download(struct nvc0_context *, struct nvc0_resource *,
@@ -87,7 +91,7 @@ nvc0_resource_map_offset(struct nvc0_context *nvc0,
    nvc0_buffer_adjust_score(nvc0, res, -250);
 
    if ((res->domain == NOUVEAU_BO_VRAM) &&
-       (res->status & NVC0_BUFFER_STATUS_DIRTY))
+       (res->status & NVC0_BUFFER_STATUS_GPU_WRITING))
       nvc0_buffer_download(nvc0, res, 0, res->base.width0);
 
    if ((res->domain != NOUVEAU_BO_GART) ||

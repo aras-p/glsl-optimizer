@@ -86,7 +86,6 @@ struct blitter_context_priv
    void *dsa_write_depth_keep_stencil;
    void *dsa_keep_depth_stencil;
    void *dsa_keep_depth_write_stencil;
-   void *dsa_flush_depth_stencil;
 
    void *velem_state;
 
@@ -156,10 +155,6 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
    ctx->dsa_keep_depth_stencil =
       pipe->create_depth_stencil_alpha_state(pipe, &dsa);
 
-   dsa.depth.writemask = 1;
-   ctx->dsa_flush_depth_stencil =
-      pipe->create_depth_stencil_alpha_state(pipe, &dsa);
-
    dsa.depth.enabled = 1;
    dsa.depth.writemask = 1;
    dsa.depth.func = PIPE_FUNC_ALWAYS;
@@ -225,9 +220,10 @@ struct blitter_context *util_blitter_create(struct pipe_context *pipe)
       ctx->vertices[i][0][3] = 1; /*v.w*/
 
    /* create the vertex buffer */
-   ctx->vbuf = pipe_buffer_create(ctx->base.pipe->screen,
-                                  PIPE_BIND_VERTEX_BUFFER,
-                                  sizeof(ctx->vertices));
+   ctx->vbuf = pipe_user_buffer_create(ctx->base.pipe->screen,
+                                       ctx->vertices,
+                                       sizeof(ctx->vertices),
+                                       PIPE_BIND_VERTEX_BUFFER);
 
    return &ctx->base;
 }
@@ -245,7 +241,6 @@ void util_blitter_destroy(struct blitter_context *blitter)
                                           ctx->dsa_write_depth_keep_stencil);
    pipe->delete_depth_stencil_alpha_state(pipe, ctx->dsa_write_depth_stencil);
    pipe->delete_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_write_stencil);
-   pipe->delete_depth_stencil_alpha_state(pipe, ctx->dsa_flush_depth_stencil);
 
    pipe->delete_rasterizer_state(pipe, ctx->rs_state);
    pipe->delete_vs_state(pipe, ctx->vs);
@@ -272,6 +267,12 @@ void util_blitter_destroy(struct blitter_context *blitter)
 
 static void blitter_check_saved_CSOs(struct blitter_context_priv *ctx)
 {
+   if (ctx->base.running) {
+      _debug_printf("u_blitter: Caught recursion on save. "
+                    "This is a driver bug.\n");
+   }
+   ctx->base.running = TRUE;
+
    /* make sure these CSOs have been saved */
    assert(ctx->base.saved_blend_state != INVALID_PTR &&
           ctx->base.saved_dsa_state != INVALID_PTR &&
@@ -302,7 +303,6 @@ static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
    ctx->base.saved_velem_state = INVALID_PTR;
 
    pipe->set_stencil_ref(pipe, &ctx->base.saved_stencil_ref);
-
    pipe->set_viewport_state(pipe, &ctx->base.saved_viewport);
    pipe->set_clip_state(pipe, &ctx->base.saved_clip);
 
@@ -346,6 +346,12 @@ static void blitter_restore_CSOs(struct blitter_context_priv *ctx)
       }
       ctx->base.saved_num_vertex_buffers = ~0;
    }
+
+   if (!ctx->base.running) {
+      _debug_printf("u_blitter: Caught recursion on restore. "
+                    "This is a driver bug.\n");
+   }
+   ctx->base.running = FALSE;
 }
 
 static void blitter_set_rectangle(struct blitter_context_priv *ctx,
@@ -509,22 +515,6 @@ static void blitter_set_dst_dimensions(struct blitter_context_priv *ctx,
    ctx->dst_height = height;
 }
 
-static void blitter_draw_quad(struct blitter_context_priv *ctx)
-{
-   struct pipe_context *pipe = ctx->base.pipe;
-   struct pipe_box box;
-
-   /* write vertices and draw them */
-   u_box_1d(0, sizeof(ctx->vertices), &box);
-   pipe->transfer_inline_write(pipe, ctx->vbuf, 0,
-                               PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-                               &box, ctx->vertices, sizeof(ctx->vertices), 0);
-
-   util_draw_vertex_buffer(pipe, ctx->vbuf, 0, PIPE_PRIM_TRIANGLE_FAN,
-                           4,  /* verts */
-                           2); /* attribs/vert */
-}
-
 static INLINE
 void **blitter_get_sampler_state(struct blitter_context_priv *ctx,
                                  int miplevel, boolean normalized)
@@ -649,15 +639,19 @@ static void blitter_draw_rectangle(struct blitter_context *blitter,
    }
 
    blitter_set_rectangle(ctx, x1, y1, x2, y2, depth);
-   blitter_draw_quad(ctx);
+   ctx->base.pipe->redefine_user_buffer(ctx->base.pipe, ctx->vbuf,
+                                        0, ctx->vbuf->width0);
+   util_draw_vertex_buffer(ctx->base.pipe, NULL, ctx->vbuf, 0,
+                           PIPE_PRIM_TRIANGLE_FAN, 4, 2);
 }
 
-void util_blitter_clear(struct blitter_context *blitter,
-                        unsigned width, unsigned height,
-                        unsigned num_cbufs,
-                        unsigned clear_buffers,
-                        const float *rgba,
-                        double depth, unsigned stencil)
+static void util_blitter_clear_custom(struct blitter_context *blitter,
+                                      unsigned width, unsigned height,
+                                      unsigned num_cbufs,
+                                      unsigned clear_buffers,
+                                      const float *rgba,
+                                      double depth, unsigned stencil,
+                                      void *custom_blend, void *custom_dsa)
 {
    struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
    struct pipe_context *pipe = ctx->base.pipe;
@@ -668,26 +662,28 @@ void util_blitter_clear(struct blitter_context *blitter,
    blitter_check_saved_CSOs(ctx);
 
    /* bind CSOs */
-   if (clear_buffers & PIPE_CLEAR_COLOR)
+   if (custom_blend) {
+      pipe->bind_blend_state(pipe, custom_blend);
+   } else if (clear_buffers & PIPE_CLEAR_COLOR) {
       pipe->bind_blend_state(pipe, ctx->blend_write_color);
-   else
+   } else {
       pipe->bind_blend_state(pipe, ctx->blend_keep_color);
+   }
 
-   if ((clear_buffers & PIPE_CLEAR_DEPTHSTENCIL) == PIPE_CLEAR_DEPTHSTENCIL) {
-      sr.ref_value[0] = stencil & 0xff;
+   if (custom_dsa) {
+      pipe->bind_depth_stencil_alpha_state(pipe, custom_dsa);
+   } else if ((clear_buffers & PIPE_CLEAR_DEPTHSTENCIL) == PIPE_CLEAR_DEPTHSTENCIL) {
       pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_write_depth_stencil);
-      pipe->set_stencil_ref(pipe, &sr);
-   }
-   else if (clear_buffers & PIPE_CLEAR_DEPTH) {
+   } else if (clear_buffers & PIPE_CLEAR_DEPTH) {
       pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_write_depth_keep_stencil);
-   }
-   else if (clear_buffers & PIPE_CLEAR_STENCIL) {
-      sr.ref_value[0] = stencil & 0xff;
+   } else if (clear_buffers & PIPE_CLEAR_STENCIL) {
       pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_write_stencil);
-      pipe->set_stencil_ref(pipe, &sr);
-   }
-   else
+   } else {
       pipe->bind_depth_stencil_alpha_state(pipe, ctx->dsa_keep_depth_stencil);
+   }
+
+   sr.ref_value[0] = stencil & 0xff;
+   pipe->set_stencil_ref(pipe, &sr);
 
    pipe->bind_rasterizer_state(pipe, ctx->rs_state);
    pipe->bind_vertex_elements_state(pipe, ctx->velem_state);
@@ -698,6 +694,27 @@ void util_blitter_clear(struct blitter_context *blitter,
    blitter->draw_rectangle(blitter, 0, 0, width, height, depth,
                            UTIL_BLITTER_ATTRIB_COLOR, rgba);
    blitter_restore_CSOs(ctx);
+}
+
+void util_blitter_clear(struct blitter_context *blitter,
+                        unsigned width, unsigned height,
+                        unsigned num_cbufs,
+                        unsigned clear_buffers,
+                        const float *rgba,
+                        double depth, unsigned stencil)
+{
+   util_blitter_clear_custom(blitter, width, height, num_cbufs,
+                             clear_buffers, rgba, depth, stencil,
+                             NULL, NULL);
+}
+
+void util_blitter_clear_depth_custom(struct blitter_context *blitter,
+                                     unsigned width, unsigned height,
+                                     double depth, void *custom_dsa)
+{
+    const float rgba[4] = {0, 0, 0, 0};
+    util_blitter_clear_custom(blitter, width, height, 0,
+                              0, rgba, depth, 0, NULL, custom_dsa);
 }
 
 static
@@ -737,9 +754,6 @@ void util_blitter_copy_region(struct blitter_context *blitter,
    if (dst == src) {
       assert(!is_overlap(srcbox->x, srcbox->x + width, srcbox->y, srcbox->y + height,
                          dstx, dstx + width, dsty, dsty + height));
-   } else {
-      assert(util_is_format_compatible(util_format_description(src->format),
-                                       util_format_description(dst->format)));
    }
    assert(src->target < PIPE_MAX_TEXTURE_TYPES);
    /* XXX should handle 3d regions */
@@ -761,8 +775,10 @@ void util_blitter_copy_region(struct blitter_context *blitter,
                                     dst->nr_samples, bind, 0) ||
        !screen->is_format_supported(screen, src->format, src->target,
                                     src->nr_samples, PIPE_BIND_SAMPLER_VIEW, 0)) {
+      ctx->base.running = TRUE;
       util_resource_copy_region(pipe, dst, dstlevel, dstx, dsty, dstz,
                                 src, srclevel, srcbox);
+      ctx->base.running = FALSE;
       return;
    }
 
@@ -853,7 +869,10 @@ void util_blitter_copy_region(struct blitter_context *blitter,
 
          /* Draw. */
          blitter_set_rectangle(ctx, dstx, dsty, dstx+width, dsty+height, 0);
-         blitter_draw_quad(ctx);
+         ctx->base.pipe->redefine_user_buffer(ctx->base.pipe, ctx->vbuf,
+                                              0, ctx->vbuf->width0);
+         util_draw_vertex_buffer(ctx->base.pipe, NULL, ctx->vbuf, 0,
+                                 PIPE_PRIM_TRIANGLE_FAN, 4, 2);
          break;
 
       default:
@@ -1013,13 +1032,4 @@ void util_blitter_custom_depth_stencil(struct blitter_context *blitter,
    blitter->draw_rectangle(blitter, 0, 0, zsurf->width, zsurf->height, depth,
                            UTIL_BLITTER_ATTRIB_NONE, NULL);
    blitter_restore_CSOs(ctx);
-}
-
-/* flush a region of a depth stencil surface for r300g */
-void util_blitter_flush_depth_stencil(struct blitter_context *blitter,
-                                      struct pipe_surface *dstsurf)
-{
-	struct blitter_context_priv *ctx = (struct blitter_context_priv*)blitter;
-	util_blitter_custom_depth_stencil(blitter, dstsurf, NULL,
-					  ctx->dsa_flush_depth_stencil, 0.0f);
 }

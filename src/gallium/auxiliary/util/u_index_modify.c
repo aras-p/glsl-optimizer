@@ -38,7 +38,10 @@ void util_shorten_ubyte_elts_to_userptr(struct pipe_context *context,
     unsigned short *out_map = out;
     unsigned i;
 
-    in_map = pipe_buffer_map(context, elts, PIPE_TRANSFER_READ, &src_transfer);
+    in_map = pipe_buffer_map(context, elts,
+                             PIPE_TRANSFER_READ |
+                             PIPE_TRANSFER_UNSYNCHRONIZED,
+                             &src_transfer);
     in_map += start;
 
     for (i = 0; i < count; i++) {
@@ -62,6 +65,7 @@ void util_shorten_ubyte_elts(struct pipe_context *context,
 
     new_elts = pipe_buffer_create(context->screen,
                                   PIPE_BIND_INDEX_BUFFER,
+                                  PIPE_USAGE_STATIC,
                                   2 * count);
 
     out_map = pipe_buffer_map(context, new_elts, PIPE_TRANSFER_WRITE,
@@ -87,7 +91,10 @@ void util_rebuild_ushort_elts_to_userptr(struct pipe_context *context,
     unsigned short *out_map = out;
     unsigned i;
 
-    in_map = pipe_buffer_map(context, elts, PIPE_TRANSFER_READ, &in_transfer);
+    in_map = pipe_buffer_map(context, elts,
+                             PIPE_TRANSFER_READ |
+                             PIPE_TRANSFER_UNSYNCHRONIZED,
+                             &in_transfer);
     in_map += start;
 
     for (i = 0; i < count; i++) {
@@ -110,6 +117,7 @@ void util_rebuild_ushort_elts(struct pipe_context *context,
 
     new_elts = pipe_buffer_create(context->screen,
                                   PIPE_BIND_INDEX_BUFFER,
+                                  PIPE_USAGE_STATIC,
                                   2 * count);
 
     out_map = pipe_buffer_map(context, new_elts,
@@ -135,7 +143,10 @@ void util_rebuild_uint_elts_to_userptr(struct pipe_context *context,
     unsigned int *out_map = out;
     unsigned i;
 
-    in_map = pipe_buffer_map(context, elts, PIPE_TRANSFER_READ, &in_transfer);
+    in_map = pipe_buffer_map(context, elts,
+                             PIPE_TRANSFER_READ |
+                             PIPE_TRANSFER_UNSYNCHRONIZED,
+                             &in_transfer);
     in_map += start;
 
     for (i = 0; i < count; i++) {
@@ -158,6 +169,7 @@ void util_rebuild_uint_elts(struct pipe_context *context,
 
     new_elts = pipe_buffer_create(context->screen,
                                   PIPE_BIND_INDEX_BUFFER,
+                                  PIPE_USAGE_STATIC,
                                   2 * count);
 
     out_map = pipe_buffer_map(context, new_elts,

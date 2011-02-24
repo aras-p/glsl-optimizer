@@ -25,13 +25,9 @@
 #define R300_STATE_INLINES_H
 
 #include "draw/draw_vertex.h"
-
 #include "pipe/p_format.h"
-
 #include "util/u_format.h"
-
 #include "r300_reg.h"
-
 #include <stdio.h>
 
 /* Some maths. These should probably find their way to u_math, if needed. */
@@ -340,24 +336,6 @@ static INLINE uint32_t r500_anisotropy(unsigned max_aniso)
     return R500_TX_MAX_ANISO(MIN2((unsigned)(max_aniso*4.2001), 63)) |
            R500_TX_ANISO_HIGH_QUALITY;
 }
-
-/* Non-CSO state. (For now.) */
-
-static INLINE uint32_t r300_translate_gb_pipes(int pipe_count)
-{
-    switch (pipe_count) {
-        case 1:
-            return R300_GB_TILE_PIPE_COUNT_RV300;
-        case 2:
-            return R300_GB_TILE_PIPE_COUNT_R300;
-        case 3:
-            return R300_GB_TILE_PIPE_COUNT_R420_3P;
-        case 4:
-            return R300_GB_TILE_PIPE_COUNT_R420;
-    }
-    return 0;
-}
-
 
 /* Translate pipe_formats into PSC vertex types. */
 static INLINE uint16_t

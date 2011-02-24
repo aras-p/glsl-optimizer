@@ -251,13 +251,11 @@ static void set_vertices( void )
    vbuf.stride = sizeof( struct vertex );
    vbuf.buffer_offset = 0;
    if (draw_strip) {
-      vbuf.max_index = sizeof(vertices_strip) / vbuf.stride;
       vbuf.buffer = screen->user_buffer_create(screen,
                                                vertices_strip,
                                                sizeof(vertices_strip),
                                                PIPE_BIND_VERTEX_BUFFER);
    } else {
-      vbuf.max_index = sizeof(vertices) / vbuf.stride;
       vbuf.buffer = screen->user_buffer_create(screen,
                                                vertices,
                                                sizeof(vertices),

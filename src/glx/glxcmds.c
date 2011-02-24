@@ -215,10 +215,14 @@ CreateContext(Display * dpy, int generic_id,
               Bool allowDirect,
 	      unsigned code, int renderType, int screen)
 {
-   struct glx_context *gc = NULL;
-   struct glx_screen *const psc = GetGLXScreenConfigs(dpy, screen);
+   struct glx_context *gc;
+   struct glx_screen *psc;
    struct glx_context *shareList = (struct glx_context *) shareList_user;
    if (dpy == NULL)
+      return NULL;
+
+   psc = GetGLXScreenConfigs(dpy, screen);
+   if (psc == NULL)
       return NULL;
 
    if (generic_id == None)

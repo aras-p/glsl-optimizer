@@ -24,6 +24,7 @@
 #define R600_RESOURCE_H
 
 #include "util/u_transfer.h"
+#include "util/u_vbuf_mgr.h"
 
 /* flag to indicate a resource is to be used as a transfer so should not be tiled */
 #define R600_RESOURCE_FLAG_TRANSFER     PIPE_RESOURCE_FLAG_DRV_PRIV
@@ -43,7 +44,7 @@ struct r600_transfer {
  * underlying implementations.
  */
 struct r600_resource {
-	struct u_resource		base;
+	struct u_vbuf_resource		b;
 	struct r600_bo			*bo;
 	u32				size;
 	unsigned			bo_size;
@@ -52,26 +53,31 @@ struct r600_resource {
 struct r600_resource_texture {
 	struct r600_resource		resource;
 	unsigned			offset[PIPE_MAX_TEXTURE_LEVELS];
-	unsigned			pitch_in_bytes[PIPE_MAX_TEXTURE_LEVELS];
-	unsigned			pitch_in_pixels[PIPE_MAX_TEXTURE_LEVELS];
+	unsigned			pitch_in_bytes[PIPE_MAX_TEXTURE_LEVELS];  /* transfer */
+	unsigned			pitch_in_blocks[PIPE_MAX_TEXTURE_LEVELS]; /* texture resource */
 	unsigned			layer_size[PIPE_MAX_TEXTURE_LEVELS];
 	unsigned			array_mode[PIPE_MAX_TEXTURE_LEVELS];
 	unsigned			pitch_override;
 	unsigned			size;
-	unsigned			tiled;
 	unsigned			tile_type;
 	unsigned			depth;
-	unsigned			dirty;
+	unsigned			dirty_db;
 	struct r600_resource_texture	*flushed_depth_texture;
+	boolean				is_flushing_texture;
+
+	/* on some cards we have to use integer 64/128-bit types
+	   for s3tc blits, do this until gallium grows int formats */
+	boolean force_int_type;
 };
+
+#define R600_TEX_IS_TILED(tex, level) ((tex)->array_mode[level] != V_038000_ARRAY_LINEAR_GENERAL && (tex)->array_mode[level] != V_038000_ARRAY_LINEAR_ALIGNED)
 
 #define R600_BUFFER_MAGIC 0xabcd1600
 
+/* XXX this could be removed */
 struct r600_resource_buffer {
 	struct r600_resource		r;
 	uint32_t			magic;
-	void				*user_buffer;
-	bool				uploaded;
 };
 
 struct r600_surface {
@@ -98,14 +104,7 @@ static INLINE struct r600_resource_buffer *r600_buffer(struct pipe_resource *buf
 	return NULL;
 }
 
-static INLINE boolean r600_buffer_is_user_buffer(struct pipe_resource *buffer)
-{
-	if (r600_buffer(buffer)->uploaded)
-		return FALSE;
-	return r600_buffer(buffer)->user_buffer ? TRUE : FALSE;
-}
-
-int r600_texture_depth_flush(struct pipe_context *ctx, struct pipe_resource *texture);
+int r600_texture_depth_flush(struct pipe_context *ctx, struct pipe_resource *texture, boolean just_create);
 
 /* r600_texture.c texture transfer functions. */
 struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
@@ -121,15 +120,7 @@ void r600_texture_transfer_unmap(struct pipe_context *ctx,
 				 struct pipe_transfer* transfer);
 
 struct r600_pipe_context;
-struct r600_upload *r600_upload_create(struct r600_pipe_context *rctx,
-					unsigned default_size,
-					unsigned alignment);
-void r600_upload_flush(struct r600_upload *upload);
-void r600_upload_destroy(struct r600_upload *upload);
-int r600_upload_buffer(struct r600_upload *upload, unsigned offset,
-			unsigned size, struct r600_resource_buffer *in_buffer,
-			unsigned *out_offset, unsigned *out_size,
-			struct r600_bo **out_buffer);
 
-int r600_upload_const_buffer(struct r600_pipe_context *rctx, struct pipe_resource *cbuffer, uint32_t *offset);
+void r600_upload_const_buffer(struct r600_pipe_context *rctx, struct r600_resource_buffer **rbuffer, uint32_t *offset);
+
 #endif

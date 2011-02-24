@@ -230,7 +230,7 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->use_sse = FALSE;
 #endif
 
-   softpipe->dump_fs = debug_get_bool_option( "GALLIUM_DUMP_FS", FALSE );
+   softpipe->dump_fs = debug_get_bool_option( "SOFTPIPE_DUMP_FS", FALSE );
    softpipe->dump_gs = debug_get_bool_option( "SOFTPIPE_DUMP_GS", FALSE );
 
    softpipe->pipe.winsys = NULL;
@@ -315,7 +315,7 @@ softpipe_create_context( struct pipe_screen *screen,
                          (struct tgsi_sampler **)
                             softpipe->tgsi.geom_samplers_list);
 
-   if (debug_get_bool_option( "SP_NO_RAST", FALSE ))
+   if (debug_get_bool_option( "SOFTPIPE_NO_RAST", FALSE ))
       softpipe->no_rast = TRUE;
 
    softpipe->vbuf_backend = sp_create_vbuf_backend(softpipe);

@@ -470,11 +470,9 @@ intel_prepare_render(struct intel_context *intel)
     * the swap, and getting our hands on that doesn't seem worth it,
     * so we just us the first batch we emitted after the last swap.
     */
-   if (intel->need_throttle && intel->first_post_swapbuffers_batch) {
-      drm_intel_bo_wait_rendering(intel->first_post_swapbuffers_batch);
-      drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
-      intel->first_post_swapbuffers_batch = NULL;
-      intel->need_throttle = GL_FALSE;
+   if (intel->need_throttle) {
+       drmCommandNone(intel->driFd, DRM_I915_GEM_THROTTLE);
+       intel->need_throttle = GL_FALSE;
    }
 }
 
@@ -487,7 +485,7 @@ intel_viewport(struct gl_context *ctx, GLint x, GLint y, GLsizei w, GLsizei h)
     if (intel->saved_viewport)
 	intel->saved_viewport(ctx, x, y, w, h);
 
-    if (!intel->meta.internal_viewport_call && ctx->DrawBuffer->Name == 0) {
+    if (ctx->DrawBuffer->Name == 0) {
        dri2InvalidateDrawable(driContext->driDrawablePriv);
        dri2InvalidateDrawable(driContext->driReadablePriv);
     }
@@ -554,8 +552,8 @@ intel_flush(struct gl_context *ctx)
    if (intel->gen < 4)
       INTEL_FIREVERTICES(intel);
 
-   if (intel->batch->map != intel->batch->ptr)
-      intel_batchbuffer_flush(intel->batch);
+   if (intel->batch.used)
+      intel_batchbuffer_flush(intel);
 }
 
 static void
@@ -583,7 +581,7 @@ intelFinish(struct gl_context * ctx)
 
        irb = intel_renderbuffer(fb->_ColorDrawBuffers[i]);
 
-       if (irb && irb->region)
+       if (irb && irb->region && irb->region->buffer)
 	  drm_intel_bo_wait_rendering(irb->region->buffer);
    }
    if (fb->_DepthBuffer) {
@@ -644,8 +642,8 @@ intelInitContext(struct intel_context *intel,
       mesaVis = &visual;
    }
 
-   if (!_mesa_initialize_context_for_api(&intel->ctx, api, mesaVis, shareCtx,
-					 functions, (void *) intel)) {
+   if (!_mesa_initialize_context(&intel->ctx, api, mesaVis, shareCtx,
+                                 functions, (void *) intel)) {
       printf("%s: failed to init mesa context\n", __FUNCTION__);
       return GL_FALSE;
    }
@@ -748,10 +746,10 @@ intelInitContext(struct intel_context *intel,
 
    driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
                        sPriv->myNum, (intel->gen >= 4) ? "i965" : "i915");
-   if (intelScreen->deviceID == PCI_CHIP_I865_G)
+   if (intel->gen < 4)
       intel->maxBatchSize = 4096;
    else
-      intel->maxBatchSize = BATCH_SZ;
+      intel->maxBatchSize = sizeof(intel->batch.map);
 
    intel->bufmgr = intelScreen->bufmgr;
 
@@ -805,8 +803,8 @@ intelInitContext(struct intel_context *intel,
     */
    _mesa_init_point(ctx);
 
-   meta_init_metaops(ctx, &intel->meta);
    if (intel->gen >= 4) {
+      ctx->Const.sRGBCapable = GL_TRUE;
       if (MAX_WIDTH > 8192)
 	 ctx->Const.MaxRenderbufferSize = 8192;
    } else {
@@ -863,7 +861,7 @@ intelInitContext(struct intel_context *intel,
    if (INTEL_DEBUG & DEBUG_BUFMGR)
       dri_bufmgr_set_debug(intel->bufmgr, GL_TRUE);
 
-   intel->batch = intel_batchbuffer_alloc(intel);
+   intel_batchbuffer_reset(intel);
 
    intel_fbo_init(intel);
 
@@ -911,8 +909,6 @@ intelDestroyContext(__DRIcontext * driContextPriv)
 
       _mesa_meta_free(&intel->ctx);
 
-      meta_destroy_metaops(&intel->meta);
-
       intel->vtbl.destroy(intel);
 
       _swsetup_DestroyContext(&intel->ctx);
@@ -922,15 +918,12 @@ intelDestroyContext(__DRIcontext * driContextPriv)
       _swrast_DestroyContext(&intel->ctx);
       intel->Fallback = 0x0;      /* don't call _swrast_Flush later */
 
-      intel_batchbuffer_free(intel->batch);
-      intel->batch = NULL;
+      intel_batchbuffer_free(intel);
 
       free(intel->prim.vb);
       intel->prim.vb = NULL;
       drm_intel_bo_unreference(intel->prim.vb_bo);
       intel->prim.vb_bo = NULL;
-      drm_intel_bo_unreference(intel->first_post_swapbuffers_batch);
-      intel->first_post_swapbuffers_batch = NULL;
 
       driDestroyOptionCache(&intel->optionCache);
 

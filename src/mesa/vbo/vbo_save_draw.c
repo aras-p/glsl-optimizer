@@ -202,6 +202,7 @@ static void vbo_bind_vertex_list(struct gl_context *ctx,
 
 	 buffer_offset += node->attrsz[src] * sizeof(GLfloat);
          varying_inputs |= 1<<attr;
+         ctx->NewState |= _NEW_ARRAY;
       }
    }
 

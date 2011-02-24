@@ -225,13 +225,18 @@ static int svga_get_shader_param(struct pipe_screen *screen, unsigned shader, en
             return svgascreen->use_ps30 ? 32 : 12;
          return result.u;
       case PIPE_SHADER_CAP_MAX_ADDRS:
-         return svgascreen->use_ps30 ? 1 : 0;
+      case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
+	 /* 
+	  * Although PS 3.0 has some addressing abilities it can only represent
+	  * loops that can be statically determined and unrolled. Given we can
+	  * only handle a subset of the cases that the state tracker already
+	  * does it is better to defer loop unrolling to the state tracker.
+	  */
+         return 0;
       case PIPE_SHADER_CAP_MAX_PREDS:
          return svgascreen->use_ps30 ? 1 : 0;
       case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
          return 1;
-      case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
-         return svgascreen->use_ps30 ? 1 : 0;
       case PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR:
       case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
       case PIPE_SHADER_CAP_INDIRECT_CONST_ADDR:
@@ -360,13 +365,6 @@ svga_is_format_supported( struct pipe_screen *screen,
       case PIPE_FORMAT_B5G5R5A1_UNORM:
          return FALSE;
          
-      /* Simulate ability to render into compressed textures */
-      case PIPE_FORMAT_DXT1_RGB:
-      case PIPE_FORMAT_DXT1_RGBA:
-      case PIPE_FORMAT_DXT3_RGBA:
-      case PIPE_FORMAT_DXT5_RGBA:
-         return TRUE;
-
       default:
          break;
       }

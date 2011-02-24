@@ -71,7 +71,10 @@ struct st_texture_object
     */
    GLuint lastLevel;
 
-   /** The size of the level=0 mipmap image */
+   /** The size of the level=0 mipmap image.
+    * Note that the number of 1D array layers will be in height0 and the
+    * number of 2D array layers will be in depth0, as in GL.
+    */
    GLuint width0, height0, depth0;
 
    /* On validation any active images held in main memory or in other
@@ -168,8 +171,19 @@ st_texture_create(struct st_context *st,
                   GLuint width0,
                   GLuint height0,
                   GLuint depth0,
+                  GLuint layers,
                   GLuint tex_usage );
 
+
+extern void
+st_gl_texture_dims_to_pipe_dims(GLenum texture,
+                                GLuint widthIn,
+                                GLuint heightIn,
+                                GLuint depthIn,
+                                GLuint *widthOut,
+                                GLuint *heightOut,
+                                GLuint *depthOut,
+                                GLuint *layersOut);
 
 /* Check if an image fits into an existing texture object.
  */

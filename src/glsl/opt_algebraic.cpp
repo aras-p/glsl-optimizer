@@ -191,7 +191,7 @@ ir_algebraic_visitor::handle_expression(ir_expression *ir)
    }
 
    if (this->mem_ctx == NULL)
-      this->mem_ctx = talloc_parent(ir);
+      this->mem_ctx = ralloc_parent(ir);
 
    switch (ir->operation) {
    case ir_unop_logic_not: {

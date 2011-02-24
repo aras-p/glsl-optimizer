@@ -4,8 +4,6 @@
 
 #include "pipe/p_state.h"
 
-#define NVC0_SCISSORS_CLIPPING
-
 #define SB_BEGIN_3D(so, m, s)                                                  \
    (so)->state[(so)->size++] =                                                 \
       (0x2 << 28) | ((s) << 16) | (NVC0_SUBCH_3D << 13) | ((NVC0_3D_##m) >> 2)
@@ -67,16 +65,17 @@ struct nvc0_vertex_stateobj {
    unsigned num_elements;
    uint32_t instance_elts;
    uint32_t instance_bufs;
+   boolean need_conversion; /* e.g. VFETCH cannot convert f64 to f32 */
    unsigned vtx_size;
    unsigned vtx_per_packet_max;
-   struct nvc0_vertex_element element[1];
+   struct nvc0_vertex_element element[0];
 };
 
 /* will have to lookup index -> location qualifier from nvc0_program */
-struct nvc0_tfb_state {
-   uint8_t varying_count[4];
+struct nvc0_transform_feedback_state {
    uint32_t stride[4];
-   uint8_t varying_indices[1];
+   uint8_t varying_count[4];
+   uint8_t varying_index[0];
 };
 
 #endif

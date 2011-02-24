@@ -40,6 +40,7 @@ svga_init_resource_functions(struct svga_context *svga)
    svga->pipe.transfer_unmap = u_transfer_unmap_vtbl;
    svga->pipe.transfer_destroy = u_transfer_destroy_vtbl;
    svga->pipe.transfer_inline_write = u_transfer_inline_write_vtbl;
+   svga->pipe.redefine_user_buffer = svga_redefine_user_buffer;
 }
 
 void

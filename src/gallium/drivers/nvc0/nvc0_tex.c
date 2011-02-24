@@ -196,8 +196,15 @@ nvc0_validate_tic(struct nvc0_context *nvc0, int s)
          OUT_RINGp (chan, &tic->tic[3], 5);
 
          need_flush = TRUE;
+      } else
+      if (res->status & NVC0_BUFFER_STATUS_GPU_WRITING) {
+         BEGIN_RING(chan, RING_3D(TEX_CACHE_CTL), 1);
+         OUT_RING  (chan, (tic->id << 4) | 1);
       }
       nvc0->screen->tic.lock[tic->id / 32] |= 1 << (tic->id % 32);
+
+      res->status &= ~NVC0_BUFFER_STATUS_GPU_WRITING;
+      res->status |=  NVC0_BUFFER_STATUS_GPU_READING;
 
       nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_TEXTURES, res,
                                NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);

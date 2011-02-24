@@ -399,6 +399,14 @@ struct pipe_context {
                                   unsigned stride,
                                   unsigned layer_stride);
 
+
+   /* Notify a driver that a content of a user buffer has been changed.
+    * The changed range is [offset, offset+size-1].
+    * The new width0 of the buffer is offset+size. */
+   void (*redefine_user_buffer)(struct pipe_context *,
+                                struct pipe_resource *,
+                                unsigned offset,
+                                unsigned size);
 };
 
 

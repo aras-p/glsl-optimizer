@@ -50,7 +50,6 @@ extern "C" {
 #include "swrast/s_depth.h"
 #include "swrast/s_lines.h"
 #include "swrast/s_triangle.h"
-#include "swrast/s_trispan.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 #include "tnl/t_pipeline.h"
@@ -319,7 +318,8 @@ BGLView::BGLView(BRect rect, char *name,
         functions.Viewport      = md->Viewport;
 
 	// create core context
-	struct gl_context *ctx = _mesa_create_context(visual, NULL, &functions, md);
+	struct gl_context *ctx = _mesa_create_context(API_OPENGL, visual,
+                                                      NULL, &functions, md);
 	if (! ctx) {
          _mesa_destroy_visual(visual);
          delete md;

@@ -124,6 +124,7 @@ svga_swtnl_draw_vbo(struct svga_context *svga,
 
    /* Now safe to remove the need_swtnl flag in any update_state call */
    svga->state.sw.in_swtnl_draw = FALSE;
+   svga->dirty |= SVGA_NEW_NEED_PIPELINE | SVGA_NEW_NEED_SWVFETCH;
 
    return ret;
 }

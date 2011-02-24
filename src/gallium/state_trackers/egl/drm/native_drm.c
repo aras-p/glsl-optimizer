@@ -178,7 +178,7 @@ drm_display_init_screen(struct native_display *ndpy)
    drmFreeVersion(version);
 
    if (!drmdpy->base.screen) {
-      _eglLog(_EGL_WARNING, "failed to create DRM screen");
+      _eglLog(_EGL_DEBUG, "failed to create DRM screen");
       return FALSE;
    }
 

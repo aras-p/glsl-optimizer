@@ -132,7 +132,6 @@ static void set_vertices( void )
 
    /* vertex data */
    vbuf[0].stride = sizeof( struct vertex );
-   vbuf[0].max_index = sizeof(vertices) / vbuf[0].stride;
    vbuf[0].buffer_offset = 0;
    vbuf[0].buffer = screen->user_buffer_create(screen,
                                                vertices,
@@ -141,7 +140,6 @@ static void set_vertices( void )
 
    /* instance data */
    vbuf[1].stride = sizeof( inst_data[0] );
-   vbuf[1].max_index = sizeof(inst_data) / vbuf[1].stride;
    vbuf[1].buffer_offset = 0;
    vbuf[1].buffer = screen->user_buffer_create(screen,
                                                inst_data,

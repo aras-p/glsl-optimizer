@@ -152,6 +152,8 @@ read_builtins(GLenum target, const char *protos, const char **functions, unsigne
 {
    struct gl_context fakeCtx;
    fakeCtx.API = API_OPENGL;
+   fakeCtx.Const.GLSLVersion = 130;
+   fakeCtx.Extensions.ARB_ES2_compatibility = true;
    gl_shader *sh = _mesa_new_shader(NULL, 0, target);
    struct _mesa_glsl_parse_state *st =
       new(sh) _mesa_glsl_parse_state(&fakeCtx, target, sh);
@@ -178,7 +180,7 @@ read_builtins(GLenum target, const char *protos, const char **functions, unsigne
       if (st->error) {
          printf("error reading builtin: %.35s ...\\n", functions[i]);
          printf("Info log:\\n%s\\n", st->info_log);
-         talloc_free(sh);
+         ralloc_free(sh);
          return NULL;
       }
    }
@@ -203,7 +205,7 @@ void *builtin_mem_ctx = NULL;
 void
 _mesa_glsl_release_functions(void)
 {
-   talloc_free(builtin_mem_ctx);
+   ralloc_free(builtin_mem_ctx);
    builtin_mem_ctx = NULL;
    memset(builtin_profiles, 0, sizeof(builtin_profiles));
 }
@@ -219,7 +221,7 @@ _mesa_read_profile(struct _mesa_glsl_parse_state *state,
 
    if (sh == NULL) {
       sh = read_builtins(GL_VERTEX_SHADER, prototypes, functions, count);
-      talloc_steal(builtin_mem_ctx, sh);
+      ralloc_steal(builtin_mem_ctx, sh);
       builtin_profiles[profile_index] = sh;
    }
 
@@ -231,7 +233,7 @@ void
 _mesa_glsl_initialize_functions(struct _mesa_glsl_parse_state *state)
 {
    if (builtin_mem_ctx == NULL) {
-      builtin_mem_ctx = talloc_init("GLSL built-in functions");
+      builtin_mem_ctx = ralloc_context(NULL); // "GLSL built-in functions"
       memset(&builtin_profiles, 0, sizeof(builtin_profiles));
    }
 

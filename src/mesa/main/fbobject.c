@@ -373,6 +373,37 @@ _mesa_framebuffer_renderbuffer(struct gl_context *ctx,
 
 
 /**
+ * Fallback for ctx->Driver.ValidateFramebuffer()
+ * Check if the renderbuffer's formats are supported by the software
+ * renderer.
+ * Drivers should probably override this.
+ */
+void
+_mesa_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
+{
+   gl_buffer_index buf;
+   for (buf = 0; buf < BUFFER_COUNT; buf++) {
+      const struct gl_renderbuffer *rb = fb->Attachment[buf].Renderbuffer;
+      if (rb) {
+         switch (rb->_BaseFormat) {
+         case GL_ALPHA:
+         case GL_LUMINANCE_ALPHA:
+         case GL_LUMINANCE:
+         case GL_INTENSITY:
+         case GL_RED:
+         case GL_RG:
+            fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED;
+            return;
+         default:
+            /* render buffer format is supported by software rendering */
+            ;
+         }
+      }
+   }
+}
+
+
+/**
  * For debug only.
  */
 static void
@@ -960,42 +991,104 @@ _mesa_GenRenderbuffersEXT(GLsizei n, GLuint *renderbuffers)
 
 
 /**
- * Given an internal format token for a renderbuffer, return the
- * corresponding base format.
+ * Given an internal format token for a render buffer, return the
+ * corresponding base format (one of GL_RGB, GL_RGBA, GL_STENCIL_INDEX,
+ * GL_DEPTH_COMPONENT, GL_DEPTH_STENCIL_EXT, GL_ALPHA, GL_LUMINANCE,
+ * GL_LUMINANCE_ALPHA, GL_INTENSITY, etc).
+ *
+ * This is similar to _mesa_base_tex_format() but the set of valid
+ * internal formats is different.
+ *
+ * Note that even if a format is determined to be legal here, validation
+ * of the FBO may fail if the format is not supported by the driver/GPU.
+ *
+ * \param internalFormat  as passed to glRenderbufferStorage()
+ * \return the base internal format, or 0 if internalFormat is illegal
  */
 GLenum
 _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
 {
-   GLenum baseFormat;
-
+   /*
+    * Notes: some formats such as alpha, luminance, etc. were added
+    * with GL_ARB_framebuffer_object.
+    */
    switch (internalFormat) {
+   case GL_ALPHA:
+   case GL_ALPHA4:
+   case GL_ALPHA8:
+   case GL_ALPHA12:
+   case GL_ALPHA16:
+      return ctx->Extensions.ARB_framebuffer_object ? GL_ALPHA : 0;
+   case GL_LUMINANCE:
+   case GL_LUMINANCE4:
+   case GL_LUMINANCE8:
+   case GL_LUMINANCE12:
+   case GL_LUMINANCE16:
+      return ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE : 0;
+   case GL_LUMINANCE_ALPHA:
+   case GL_LUMINANCE4_ALPHA4:
+   case GL_LUMINANCE6_ALPHA2:
+   case GL_LUMINANCE8_ALPHA8:
+   case GL_LUMINANCE12_ALPHA4:
+   case GL_LUMINANCE12_ALPHA12:
+   case GL_LUMINANCE16_ALPHA16:
+      return ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE_ALPHA : 0;
+   case GL_INTENSITY:
+   case GL_INTENSITY4:
+   case GL_INTENSITY8:
+   case GL_INTENSITY12:
+   case GL_INTENSITY16:
+      return ctx->Extensions.ARB_framebuffer_object ? GL_INTENSITY : 0;
+   case GL_RGB:
+   case GL_R3_G3_B2:
+   case GL_RGB4:
+   case GL_RGB5:
+   case GL_RGB8:
+   case GL_RGB10:
+   case GL_RGB12:
+   case GL_RGB16:
+   case GL_SRGB8_EXT:
+      return GL_RGB;
+   case GL_RGBA:
+   case GL_RGBA2:
+   case GL_RGBA4:
+   case GL_RGB5_A1:
+   case GL_RGBA8:
+   case GL_RGB10_A2:
+   case GL_RGBA12:
+   case GL_RGBA16:
    case GL_RGBA16_SNORM:
-      /* This is used internally by Mesa for accum buffers. */
+   case GL_SRGB8_ALPHA8_EXT:
       return GL_RGBA;
    case GL_STENCIL_INDEX:
    case GL_STENCIL_INDEX1_EXT:
    case GL_STENCIL_INDEX4_EXT:
    case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
-      /* This is not a valid texture internalFormat, but valid for
-       * renderbuffers.
-       */
       return GL_STENCIL_INDEX;
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT16:
    case GL_DEPTH_COMPONENT24:
    case GL_DEPTH_COMPONENT32:
-      /* This is an override of _mesa_base_tex_format's check that
-       * ARB_depth_texture is present.  We allow depth RBs without it.
-       */
       return GL_DEPTH_COMPONENT;
-   }
-
-   baseFormat = _mesa_base_tex_format(ctx, internalFormat);
-   if (baseFormat < 0)
+   case GL_DEPTH_STENCIL_EXT:
+   case GL_DEPTH24_STENCIL8_EXT:
+      if (ctx->Extensions.EXT_packed_depth_stencil)
+         return GL_DEPTH_STENCIL_EXT;
+      else
+         return 0;
+   case GL_RED:
+   case GL_R8:
+   case GL_R16:
+      return ctx->Extensions.ARB_texture_rg ? GL_RED : 0;
+   case GL_RG:
+   case GL_RG8:
+   case GL_RG16:
+      return ctx->Extensions.ARB_texture_rg ? GL_RG : 0;
+   /* XXX add floating point and integer formats eventually */
+   default:
       return 0;
-
-   return baseFormat;
+   }
 }
 
 
@@ -1027,14 +1120,6 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
 
    baseFormat = _mesa_base_fbo_format(ctx, internalFormat);
    if (baseFormat == 0) {
-      _mesa_error(ctx, GL_INVALID_ENUM, "%s(internalFormat)", func);
-      return;
-   }
-
-   if (baseFormat != GL_DEPTH_COMPONENT &&
-       baseFormat != GL_STENCIL_INDEX &&
-       baseFormat != GL_DEPTH_STENCIL &&
-       !_mesa_is_legal_color_format(ctx, baseFormat)) {
       _mesa_error(ctx, GL_INVALID_ENUM, "%s(internalFormat)", func);
       return;
    }
@@ -2072,7 +2157,14 @@ _mesa_GetFramebufferAttachmentParameterivEXT(GLenum target, GLenum attachment,
                      "glGetFramebufferAttachmentParameterivEXT(pname)");
       }
       else {
-         *params = _mesa_get_format_color_encoding(att->Renderbuffer->Format);
+         if (ctx->Extensions.EXT_framebuffer_sRGB && ctx->Const.sRGBCapable) {
+            *params = _mesa_get_format_color_encoding(att->Renderbuffer->Format);
+         }
+         else {
+            /* According to ARB_framebuffer_sRGB, we should return LINEAR
+             * if the sRGB conversion is unsupported. */
+            *params = GL_LINEAR;
+         }
       }
       return;
    case GL_FRAMEBUFFER_ATTACHMENT_COMPONENT_TYPE:
@@ -2184,7 +2276,8 @@ _mesa_GenerateMipmapEXT(GLenum target)
 #if FEATURE_EXT_framebuffer_blit
 
 static const struct gl_renderbuffer_attachment *
-find_attachment(const struct gl_framebuffer *fb, const struct gl_renderbuffer *rb)
+find_attachment(const struct gl_framebuffer *fb,
+                const struct gl_renderbuffer *rb)
 {
    GLuint i;
    for (i = 0; i < Elements(fb->Attachment); i++) {
@@ -2216,6 +2309,13 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
 
    ASSERT_OUTSIDE_BEGIN_END(ctx);
    FLUSH_VERTICES(ctx, _NEW_BUFFERS);
+
+   if (MESA_VERBOSE & VERBOSE_API)
+      _mesa_debug(ctx,
+                  "glBlitFramebuffer(%d, %d, %d, %d,  %d, %d, %d, %d, 0x%x, %s)\n",
+                  srcX0, srcY0, srcX1, srcY1,
+                  dstX0, dstY0, dstX1, dstY1,
+                  mask, _mesa_lookup_enum_by_nr(filter));
 
    if (ctx->NewState) {
       _mesa_update_state(ctx);

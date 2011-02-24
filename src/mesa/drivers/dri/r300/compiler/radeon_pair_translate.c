@@ -28,6 +28,7 @@
 #include "radeon_program_pair.h"
 
 #include "radeon_compiler.h"
+#include "radeon_compiler_util.h"
 
 
 /**
@@ -232,7 +233,8 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 				return;
 			}
 			pair->RGB.Arg[i].Source = source;
-			pair->RGB.Arg[i].Swizzle = inst->SrcReg[i].Swizzle & 0x1ff;
+			pair->RGB.Arg[i].Swizzle =
+				rc_init_swizzle(inst->SrcReg[i].Swizzle, 3);
 			pair->RGB.Arg[i].Abs = inst->SrcReg[i].Abs;
 			pair->RGB.Arg[i].Negate = !!(inst->SrcReg[i].Negate & (RC_MASK_X | RC_MASK_Y | RC_MASK_Z));
 		}
@@ -252,7 +254,7 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 				return;
 			}
 			pair->Alpha.Arg[i].Source = source;
-			pair->Alpha.Arg[i].Swizzle = swz;
+			pair->Alpha.Arg[i].Swizzle = rc_init_swizzle(swz, 1);
 			pair->Alpha.Arg[i].Abs = inst->SrcReg[i].Abs;
 			pair->Alpha.Arg[i].Negate = !!(inst->SrcReg[i].Negate & RC_MASK_W);
 		}
@@ -302,12 +304,6 @@ static void check_opcode_support(struct r300_fragment_program_compiler *c,
 	const struct rc_opcode_info * opcode = rc_get_opcode_info(inst->Opcode);
 
 	if (opcode->HasDstReg) {
-		if (inst->DstReg.RelAddr) {
-			rc_error(&c->Base, "Fragment program does not support relative addressing "
-				 "of destination operands.\n");
-			return;
-		}
-
 		if (inst->SaturateMode == RC_SATURATE_MINUS_PLUS_ONE) {
 			rc_error(&c->Base, "Fragment program does not support signed Saturate.\n");
 			return;

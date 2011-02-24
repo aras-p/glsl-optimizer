@@ -132,6 +132,7 @@ dri_create_buffer(__DRIscreen * sPriv,
    drawable->base.validate = dri_st_framebuffer_validate;
    drawable->base.st_manager_private = (void *) drawable;
 
+   drawable->screen = screen;
    drawable->sPriv = sPriv;
    drawable->dPriv = dPriv;
    dPriv->driverPrivate = (void *)drawable;

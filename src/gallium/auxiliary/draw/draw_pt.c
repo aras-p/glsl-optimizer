@@ -459,10 +459,9 @@ draw_vbo(struct draw_context *draw,
       }
       debug_printf("Buffers:\n");
       for (i = 0; i < draw->pt.nr_vertex_buffers; i++) {
-         debug_printf("  %u: stride=%u maxindex=%u offset=%u ptr=%p\n",
+         debug_printf("  %u: stride=%u offset=%u ptr=%p\n",
                       i,
                       draw->pt.vertex_buffer[i].stride,
-                      draw->pt.vertex_buffer[i].max_index,
                       draw->pt.vertex_buffer[i].buffer_offset,
                       draw->pt.user.vbuffer[i]);
       }

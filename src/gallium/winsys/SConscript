@@ -13,6 +13,10 @@ SConscript([
     'sw/gdi/SConscript',
 ])
 
+SConscript([
+    'i915/sw/SConscript',
+])
+
 if env['dri']:
     SConscript([
         'sw/dri/SConscript',

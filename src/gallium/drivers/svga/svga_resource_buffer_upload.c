@@ -40,6 +40,9 @@
 #include "svga_debug.h"
 
 
+#define MAX_DMA_SIZE (8 * 1024 * 1024)
+
+
 /**
  * Allocate a winsys_buffer (ie. DMA, aka GMR memory).
  *
@@ -57,6 +60,13 @@ svga_winsys_buffer_create( struct svga_context *svga,
    struct svga_winsys_screen *sws = svgascreen->sws;
    struct svga_winsys_buffer *buf;
    
+   /* XXX this shouldn't be a hard-coded number; it should be queried
+    * somehow.
+    */
+   if (size > MAX_DMA_SIZE) {
+      return NULL;
+   }
+
    /* Just try */
    buf = sws->buffer_create(sws, alignment, usage, size);
    if(!buf) {
@@ -248,6 +258,7 @@ svga_buffer_upload_flush(struct svga_context *svga,
 {
    SVGA3dCopyBox *boxes;
    unsigned i;
+   struct pipe_resource *dummy;
 
    assert(sbuf->handle); 
    assert(sbuf->hwbuf);
@@ -289,9 +300,9 @@ svga_buffer_upload_flush(struct svga_context *svga,
    sbuf->dma.svga = NULL;
    sbuf->dma.boxes = NULL;
 
-   /* Decrement reference count */
-   pipe_reference(&(sbuf->b.b.reference), NULL);
-   sbuf = NULL;
+   /* Decrement reference count (and potentially destroy) */
+   dummy = &sbuf->b.b;
+   pipe_resource_reference(&dummy, NULL);
 }
 
 
@@ -637,4 +648,55 @@ svga_context_flush_buffers(struct svga_context *svga)
       curr = next; 
       next = curr->next;
    }
+}
+
+
+void
+svga_redefine_user_buffer(struct pipe_context *pipe,
+                          struct pipe_resource *resource,
+                          unsigned offset,
+                          unsigned size)
+{
+   struct svga_screen *ss = svga_screen(pipe->screen);
+   struct svga_context *svga = svga_context(pipe);
+   struct svga_buffer *sbuf = svga_buffer(resource);
+
+   assert(sbuf->user);
+
+   /*
+    * Release any uploaded user buffer.
+    *
+    * TODO: As an optimization, we could try to update the uploaded buffer
+    * instead.
+    */
+
+   pipe_resource_reference(&sbuf->uploaded.buffer, NULL);
+
+   pipe_mutex_lock(ss->swc_mutex);
+
+   if (offset + size > resource->width0) {
+      /*
+       * User buffers shouldn't have DMA directly, unless
+       * SVGA_COMBINE_USERBUFFERS is not set.
+       */
+
+      if (sbuf->dma.pending) {
+         svga_buffer_upload_flush(svga, sbuf);
+      }
+
+      if (sbuf->handle) {
+         svga_buffer_destroy_host_surface(ss, sbuf);
+      }
+
+      if (sbuf->hwbuf) {
+         svga_buffer_destroy_hw_storage(ss, sbuf);
+      }
+
+      sbuf->key.size.width = sbuf->b.b.width0 = offset + size;
+   }
+
+   pipe_mutex_unlock(ss->swc_mutex);
+
+   svga->curr.any_user_vertex_buffers = TRUE;
+   svga->dirty |= SVGA_NEW_VBUFFER | SVGA_NEW_VELEMENT;
 }

@@ -80,6 +80,7 @@ do_blit_readpixels(struct gl_context * ctx,
    drm_intel_bo *dst_buffer;
    GLboolean all;
    GLint dst_x, dst_y;
+   GLuint dirty;
 
    DBG("%s\n", __FUNCTION__);
 
@@ -129,7 +130,9 @@ do_blit_readpixels(struct gl_context * ctx,
       return GL_TRUE;
    }
 
+   dirty = intel->front_buffer_dirty;
    intel_prepare_render(intel);
+   intel->front_buffer_dirty = dirty;
 
    all = (width * height * src->cpp == dst->Base.Size &&
 	  x == 0 && dst_offset == 0);
@@ -138,8 +141,8 @@ do_blit_readpixels(struct gl_context * ctx,
    dst_y = 0;
 
    dst_buffer = intel_bufferobj_buffer(intel, dst,
-					       all ? INTEL_WRITE_FULL :
-					       INTEL_WRITE_PART);
+				       all ? INTEL_WRITE_FULL :
+				       INTEL_WRITE_PART);
 
    if (ctx->ReadBuffer->Name == 0)
       y = ctx->ReadBuffer->Height - (y + height);
@@ -171,6 +174,10 @@ intelReadPixels(struct gl_context * ctx,
 
    DBG("%s\n", __FUNCTION__);
 
+   if (do_blit_readpixels
+       (ctx, x, y, width, height, format, type, pack, pixels))
+      return;
+
    intel_flush(ctx);
 
    /* glReadPixels() wont dirty the front buffer, so reset the dirty
@@ -178,10 +185,6 @@ intelReadPixels(struct gl_context * ctx,
    dirty = intel->front_buffer_dirty;
    intel_prepare_render(intel);
    intel->front_buffer_dirty = dirty;
-
-   if (do_blit_readpixels
-       (ctx, x, y, width, height, format, type, pack, pixels))
-      return;
 
    fallback_debug("%s: fallback to swrast\n", __FUNCTION__);
 

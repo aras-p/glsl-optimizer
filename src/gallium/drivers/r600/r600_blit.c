@@ -36,6 +36,7 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 
+	rctx->blit = true;
 	r600_context_queries_suspend(&rctx->ctx);
 
 	util_blitter_save_blend(rctx->blitter, rctx->states[R600_PIPE_STATE_BLEND]);
@@ -53,9 +54,9 @@ static void r600_blitter_begin(struct pipe_context *ctx, enum r600_blitter_op op
 	if (rctx->states[R600_PIPE_STATE_CLIP]) {
 		util_blitter_save_clip(rctx->blitter, &rctx->clip);
 	}
-	util_blitter_save_vertex_buffers(rctx->blitter, rctx->nvertex_buffer, rctx->vertex_buffer);
-
-	rctx->vertex_elements = NULL;
+	util_blitter_save_vertex_buffers(rctx->blitter,
+					 rctx->vbuf_mgr->nr_vertex_buffers,
+					 rctx->vbuf_mgr->vertex_buffer);
 
 	if (op & (R600_CLEAR_SURFACE | R600_COPY))
 		util_blitter_save_framebuffer(rctx->blitter, &rctx->framebuffer);
@@ -76,6 +77,7 @@ static void r600_blitter_end(struct pipe_context *ctx)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	r600_context_queries_resume(&rctx->ctx);
+	rctx->blit = false;
 }
 
 void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_texture *texture)
@@ -84,13 +86,17 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_t
 	struct pipe_surface *zsurf, *cbsurf, surf_tmpl;
 	int level = 0;
 	float depth = 1.0f;
-	surf_tmpl.format = texture->resource.base.b.format;
+
+	if (!texture->dirty_db)
+		return;
+
+	surf_tmpl.format = texture->resource.b.b.b.format;
 	surf_tmpl.u.tex.level = level;
 	surf_tmpl.u.tex.first_layer = 0;
 	surf_tmpl.u.tex.last_layer = 0;
 	surf_tmpl.usage = PIPE_BIND_DEPTH_STENCIL;
 
-	zsurf = ctx->create_surface(ctx, &texture->resource.base.b, &surf_tmpl);
+	zsurf = ctx->create_surface(ctx, &texture->resource.b.b.b, &surf_tmpl);
 
 	surf_tmpl.format = ((struct pipe_resource*)texture->flushed_depth_texture)->format;
 	surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
@@ -107,6 +113,48 @@ void r600_blit_uncompress_depth(struct pipe_context *ctx, struct r600_resource_t
 
 	pipe_surface_reference(&zsurf, NULL);
 	pipe_surface_reference(&cbsurf, NULL);
+
+	texture->dirty_db = FALSE;
+}
+
+void r600_flush_depth_textures(struct r600_pipe_context *rctx)
+{
+	unsigned int i;
+
+	if (rctx->blit) return;
+
+	/* FIXME: This handles fragment shader textures only. */
+
+	for (i = 0; i < rctx->ps_samplers.n_views; ++i) {
+		struct r600_pipe_sampler_view *view;
+		struct r600_resource_texture *tex;
+
+		view = rctx->ps_samplers.views[i];
+		if (!view) continue;
+
+		tex = (struct r600_resource_texture *)view->base.texture;
+		if (!tex->depth)
+			continue;
+
+		if (tex->is_flushing_texture)
+			continue;
+
+		r600_blit_uncompress_depth(&rctx->context, tex);
+	}
+
+	/* also check CB here */
+	for (i = 0; i < rctx->framebuffer.nr_cbufs; i++) {
+		struct r600_resource_texture *tex;
+		tex = (struct r600_resource_texture *)rctx->framebuffer.cbufs[i]->texture;
+
+		if (!tex->depth)
+			continue;
+
+		if (tex->is_flushing_texture)
+			continue;
+
+		r600_blit_uncompress_depth(&rctx->context, tex);
+	}
 }
 
 static void r600_clear(struct pipe_context *ctx, unsigned buffers,
@@ -171,6 +219,52 @@ static void r600_hw_copy_region(struct pipe_context *ctx,
 	r600_blitter_end(ctx);
 }
 
+struct texture_orig_info {
+	unsigned format;
+	unsigned width0;
+	unsigned height0;
+};
+
+static void r600_s3tc_to_blittable(struct pipe_resource *tex,
+				   unsigned level,
+				   struct texture_orig_info *orig)
+{
+	struct r600_resource_texture *rtex = (struct r600_resource_texture*)tex;
+	unsigned pixsize = util_format_get_blocksize(tex->format);
+	int new_format;
+	int new_height, new_width;
+
+	orig->format = tex->format;
+	orig->width0 = tex->width0;
+	orig->height0 = tex->height0;
+
+	if (pixsize == 8)
+		new_format = PIPE_FORMAT_R16G16B16A16_UNORM; /* 64-bit block */
+	else
+		new_format = PIPE_FORMAT_R32G32B32A32_UNORM; /* 128-bit block */
+
+	new_width = util_format_get_nblocksx(tex->format, orig->width0);
+	new_height = util_format_get_nblocksy(tex->format, orig->height0);
+
+	rtex->force_int_type = true;
+	tex->width0 = new_width;
+	tex->height0 = new_height;
+	tex->format = new_format;
+
+}
+
+static void r600_reset_blittable_to_s3tc(struct pipe_resource *tex,
+					 unsigned level,
+					 struct texture_orig_info *orig)
+{
+	struct r600_resource_texture *rtex = (struct r600_resource_texture*)tex;
+	rtex->force_int_type = false;
+
+	tex->format = orig->format;
+	tex->width0 = orig->width0;
+	tex->height0 = orig->height0;
+}
+
 static void r600_resource_copy_region(struct pipe_context *ctx,
 				      struct pipe_resource *dst,
 				      unsigned dst_level,
@@ -179,15 +273,36 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 				      unsigned src_level,
 				      const struct pipe_box *src_box)
 {
-	boolean is_depth;
-	/* there is something wrong with depth resource copies at the moment so avoid them for now */
-	is_depth = util_format_get_component_bits(src->format, UTIL_FORMAT_COLORSPACE_ZS, 0) != 0;
-	if (is_depth)
-		util_resource_copy_region(ctx, dst, dst_level, dstx, dsty, dstz,
-					  src, src_level, src_box);
-	else
-		r600_hw_copy_region(ctx, dst, dst_level, dstx, dsty, dstz,
-				    src, src_level, src_box);
+	struct r600_resource_texture *rsrc = (struct r600_resource_texture*)src;
+	struct texture_orig_info orig_info[2];
+	boolean restore_orig[2];
+
+	if (rsrc->depth && !rsrc->is_flushing_texture)
+		r600_texture_depth_flush(ctx, src, FALSE);
+
+	restore_orig[0] = restore_orig[1] = FALSE;
+
+	if (util_format_is_s3tc(src->format)) {
+		r600_s3tc_to_blittable(src, src_level, &orig_info[0]);
+		restore_orig[0] = TRUE;
+	}
+
+	if (util_format_is_s3tc(dst->format)) {
+		r600_s3tc_to_blittable(dst, dst_level, &orig_info[1]);
+		restore_orig[1] = TRUE;
+		/* translate the dst box as well */
+		dstx = util_format_get_nblocksx(orig_info[1].format, dstx);
+		dsty = util_format_get_nblocksy(orig_info[1].format, dsty);
+	}
+
+	r600_hw_copy_region(ctx, dst, dst_level, dstx, dsty, dstz,
+			    src, src_level, src_box);
+
+	if (restore_orig[0])
+		r600_reset_blittable_to_s3tc(src, src_level, &orig_info[0]);
+
+	if (restore_orig[1])
+		r600_reset_blittable_to_s3tc(dst, dst_level, &orig_info[1]);
 }
 
 void r600_init_blit_functions(struct r600_pipe_context *rctx)
@@ -196,4 +311,20 @@ void r600_init_blit_functions(struct r600_pipe_context *rctx)
 	rctx->context.clear_render_target = r600_clear_render_target;
 	rctx->context.clear_depth_stencil = r600_clear_depth_stencil;
 	rctx->context.resource_copy_region = r600_resource_copy_region;
+}
+
+void r600_blit_push_depth(struct pipe_context *ctx, struct r600_resource_texture *texture)
+{
+	struct pipe_box sbox;
+
+	sbox.x = sbox.y = sbox.z = 0;
+	sbox.width = texture->resource.b.b.b.width0;
+	sbox.height = texture->resource.b.b.b.height0;
+	/* XXX that might be wrong */
+	sbox.depth = 1;
+
+	r600_hw_copy_region(ctx, (struct pipe_resource *)texture, 0,
+			    0, 0, 0,
+			    (struct pipe_resource *)texture->flushed_depth_texture, 0,
+			    &sbox);
 }

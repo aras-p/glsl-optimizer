@@ -105,13 +105,13 @@ extern ir_to_mesa_src_reg ir_to_mesa_undef;
 
 class ir_to_mesa_instruction : public exec_node {
 public:
-   /* Callers of this talloc-based new need not call delete. It's
-    * easier to just talloc_free 'ctx' (or any of its ancestors). */
+   /* Callers of this ralloc-based new need not call delete. It's
+    * easier to just ralloc_free 'ctx' (or any of its ancestors). */
    static void* operator new(size_t size, void *ctx)
    {
       void *node;
 
-      node = talloc_zero_size(ctx, size);
+      node = rzalloc_size(ctx, size);
       assert(node != NULL);
 
       return node;
@@ -318,7 +318,7 @@ fail_link(struct gl_shader_program *prog, const char *fmt, ...)
 {
    va_list args;
    va_start(args, fmt);
-   prog->InfoLog = talloc_vasprintf_append(prog->InfoLog, fmt, args);
+   ralloc_vasprintf_append(&prog->InfoLog, fmt, args);
    va_end(args);
 
    prog->LinkStatus = GL_FALSE;
@@ -651,6 +651,7 @@ type_size(const struct glsl_type *type)
 	 return 1;
       }
    case GLSL_TYPE_ARRAY:
+      assert(type->length > 0);
       return type_size(type->fields.array) * type->length;
    case GLSL_TYPE_STRUCT:
       size = 0;
@@ -726,6 +727,29 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 
       fp->OriginUpperLeft = ir->origin_upper_left;
       fp->PixelCenterInteger = ir->pixel_center_integer;
+
+   } else if (strcmp(ir->name, "gl_FragDepth") == 0) {
+      struct gl_fragment_program *fp = (struct gl_fragment_program *)this->prog;
+      switch (ir->depth_layout) {
+      case ir_depth_layout_none:
+	 fp->FragDepthLayout = FRAG_DEPTH_LAYOUT_NONE;
+	 break;
+      case ir_depth_layout_any:
+	 fp->FragDepthLayout = FRAG_DEPTH_LAYOUT_ANY;
+	 break;
+      case ir_depth_layout_greater:
+	 fp->FragDepthLayout = FRAG_DEPTH_LAYOUT_GREATER;
+	 break;
+      case ir_depth_layout_less:
+	 fp->FragDepthLayout = FRAG_DEPTH_LAYOUT_LESS;
+	 break;
+      case ir_depth_layout_unchanged:
+	 fp->FragDepthLayout = FRAG_DEPTH_LAYOUT_UNCHANGED;
+	 break;
+      default:
+	 assert(0);
+	 break;
+      }
    }
 
    if (ir->mode == ir_var_uniform && strncmp(ir->name, "gl_", 3) == 0) {
@@ -1451,18 +1475,17 @@ void
 ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 {
    variable_storage *entry = find_variable_storage(ir->var);
+   ir_variable *var = ir->var;
 
    if (!entry) {
-      switch (ir->var->mode) {
+      switch (var->mode) {
       case ir_var_uniform:
-	 entry = new(mem_ctx) variable_storage(ir->var, PROGRAM_UNIFORM,
-					       ir->var->location);
+	 entry = new(mem_ctx) variable_storage(var, PROGRAM_UNIFORM,
+					       var->location);
 	 this->variables.push_tail(entry);
 	 break;
       case ir_var_in:
-      case ir_var_out:
       case ir_var_inout:
-      case ir_var_system_value:
 	 /* The linker assigns locations for varyings and attributes,
 	  * including deprecated builtins (like gl_Color), user-assign
 	  * generic attributes (glBindVertexLocation), and
@@ -1470,49 +1493,47 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
 	  *
 	  * FINISHME: We would hit this path for function arguments.  Fix!
 	  */
-	 assert(ir->var->location != -1);
-	 if (ir->var->mode == ir_var_in ||
-	     ir->var->mode == ir_var_inout) {
-	    entry = new(mem_ctx) variable_storage(ir->var,
-						  PROGRAM_INPUT,
-						  ir->var->location);
-
-	    if (this->prog->Target == GL_VERTEX_PROGRAM_ARB &&
-		ir->var->location >= VERT_ATTRIB_GENERIC0) {
-	       _mesa_add_attribute(prog->Attributes,
-				   ir->var->name,
-				   _mesa_sizeof_glsl_type(ir->var->type->gl_type),
-				   ir->var->type->gl_type,
-				   ir->var->location - VERT_ATTRIB_GENERIC0);
-	    }
-         } else if (ir->var->mode == ir_var_system_value) {
-	    entry = new(mem_ctx) variable_storage(ir->var,
-						  PROGRAM_SYSTEM_VALUE,
-						  ir->var->location);
-	 } else {
-	    entry = new(mem_ctx) variable_storage(ir->var,
-						  PROGRAM_OUTPUT,
-						  ir->var->location);
-	 }
-
+	 assert(var->location != -1);
+         entry = new(mem_ctx) variable_storage(var,
+                                               PROGRAM_INPUT,
+                                               var->location);
+         if (this->prog->Target == GL_VERTEX_PROGRAM_ARB &&
+             var->location >= VERT_ATTRIB_GENERIC0) {
+            _mesa_add_attribute(this->prog->Attributes,
+                                var->name,
+                                _mesa_sizeof_glsl_type(var->type->gl_type),
+                                var->type->gl_type,
+                                var->location - VERT_ATTRIB_GENERIC0);
+         }
+         break;
+      case ir_var_out:
+	 assert(var->location != -1);
+         entry = new(mem_ctx) variable_storage(var,
+                                               PROGRAM_OUTPUT,
+                                               var->location);
 	 break;
+      case ir_var_system_value:
+         entry = new(mem_ctx) variable_storage(var,
+                                               PROGRAM_SYSTEM_VALUE,
+                                               var->location);
+         break;
       case ir_var_auto:
       case ir_var_temporary:
-	 entry = new(mem_ctx) variable_storage(ir->var, PROGRAM_TEMPORARY,
+	 entry = new(mem_ctx) variable_storage(var, PROGRAM_TEMPORARY,
 					       this->next_temp);
 	 this->variables.push_tail(entry);
 
-	 next_temp += type_size(ir->var->type);
+	 next_temp += type_size(var->type);
 	 break;
       }
 
       if (!entry) {
-	 printf("Failed to make storage for %s\n", ir->var->name);
+	 printf("Failed to make storage for %s\n", var->name);
 	 exit(1);
       }
    }
 
-   this->result = ir_to_mesa_src_reg(entry->file, entry->index, ir->var->type);
+   this->result = ir_to_mesa_src_reg(entry->file, entry->index, var->type);
 }
 
 void
@@ -1549,7 +1570,7 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 			     this->result, src_reg_for_float(element_size));
       }
 
-      src_reg.reladdr = talloc(mem_ctx, ir_to_mesa_src_reg);
+      src_reg.reladdr = ralloc(mem_ctx, ir_to_mesa_src_reg);
       memcpy(src_reg.reladdr, &index_reg, sizeof(index_reg));
    }
 
@@ -1906,7 +1927,7 @@ ir_to_mesa_visitor::get_function_signature(ir_function_signature *sig)
 	 return entry;
    }
 
-   entry = talloc(mem_ctx, function_entry);
+   entry = ralloc(mem_ctx, function_entry);
    entry->sig = sig;
    entry->sig_id = this->next_signature_id++;
    entry->bgn_inst = NULL;
@@ -2243,12 +2264,12 @@ ir_to_mesa_visitor::ir_to_mesa_visitor()
    next_temp = 1;
    next_signature_id = 1;
    current_function = NULL;
-   mem_ctx = talloc_new(NULL);
+   mem_ctx = ralloc_context(NULL);
 }
 
 ir_to_mesa_visitor::~ir_to_mesa_visitor()
 {
-   talloc_free(mem_ctx);
+   ralloc_free(mem_ctx);
 }
 
 static struct prog_src_register
@@ -2297,8 +2318,8 @@ set_branchtargets(ir_to_mesa_visitor *v,
       }
    }
 
-   if_stack = talloc_zero_array(v->mem_ctx, int, if_count);
-   loop_stack = talloc_zero_array(v->mem_ctx, int, loop_count);
+   if_stack = rzalloc_array(v->mem_ctx, int, if_count);
+   loop_stack = rzalloc_array(v->mem_ctx, int, loop_count);
 
    for (i = 0; i < num_instructions; i++) {
       switch (mesa_instructions[i].Opcode) {
@@ -2441,7 +2462,7 @@ add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
    unsigned int next_sampler = 0, num_uniforms = 0;
    struct uniform_sort *sorted_uniforms;
 
-   sorted_uniforms = talloc_array(NULL, struct uniform_sort,
+   sorted_uniforms = ralloc_array(NULL, struct uniform_sort,
 				  shader_program->Uniforms->NumUniforms);
 
    for (i = 0; i < shader_program->Uniforms->NumUniforms; i++) {
@@ -2520,7 +2541,7 @@ add_uniforms_to_parameters_list(struct gl_shader_program *shader_program,
       }
    }
 
-   talloc_free(sorted_uniforms);
+   ralloc_free(sorted_uniforms);
 }
 
 static void
@@ -2536,7 +2557,7 @@ set_uniform_initializer(struct gl_context *ctx, void *mem_ctx,
 
       for (unsigned int i = 0; i < type->length; i++) {
 	 const glsl_type *field_type = type->fields.structure[i].type;
-	 const char *field_name = talloc_asprintf(mem_ctx, "%s.%s", name,
+	 const char *field_name = ralloc_asprintf(mem_ctx, "%s.%s", name,
 					    type->fields.structure[i].name);
 	 set_uniform_initializer(ctx, mem_ctx, shader_program, field_name,
 				 field_type, field_constant);
@@ -2567,7 +2588,7 @@ set_uniform_initializer(struct gl_context *ctx, void *mem_ctx,
       void *values;
 
       if (element_type->base_type == GLSL_TYPE_BOOL) {
-	 int *conv = talloc_array(mem_ctx, int, element_type->components());
+	 int *conv = ralloc_array(mem_ctx, int, element_type->components());
 	 for (unsigned int j = 0; j < element_type->components(); j++) {
 	    conv[j] = element->value.b[j];
 	 }
@@ -2613,14 +2634,14 @@ set_uniform_initializers(struct gl_context *ctx,
 	    continue;
 
 	 if (!mem_ctx)
-	    mem_ctx = talloc_new(NULL);
+	    mem_ctx = ralloc_context(NULL);
 
 	 set_uniform_initializer(ctx, mem_ctx, shader_program, var->name,
 				 var->type, var->constant_value);
       }
    }
 
-   talloc_free(mem_ctx);
+   ralloc_free(mem_ctx);
 }
 
 /*
@@ -2646,12 +2667,17 @@ set_uniform_initializers(struct gl_context *ctx,
 void
 ir_to_mesa_visitor::copy_propagate(void)
 {
-   ir_to_mesa_instruction **acp = talloc_zero_array(mem_ctx,
+   ir_to_mesa_instruction **acp = rzalloc_array(mem_ctx,
 						    ir_to_mesa_instruction *,
 						    this->next_temp * 4);
+   int *acp_level = rzalloc_array(mem_ctx, int, this->next_temp * 4);
+   int level = 0;
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       ir_to_mesa_instruction *inst = (ir_to_mesa_instruction *)iter.get();
+
+      assert(inst->dst_reg.file != PROGRAM_TEMPORARY
+	     || inst->dst_reg.index < this->next_temp);
 
       /* First, do any copy propagation possible into the src regs. */
       for (int r = 0; r < 3; r++) {
@@ -2675,6 +2701,8 @@ ir_to_mesa_visitor::copy_propagate(void)
 	       good = false;
 	       break;
 	    }
+
+	    assert(acp_level[acp_base + src_chan] <= level);
 
 	    if (!first) {
 	       first = copy_chan;
@@ -2708,23 +2736,79 @@ ir_to_mesa_visitor::copy_propagate(void)
       switch (inst->op) {
       case OPCODE_BGNLOOP:
       case OPCODE_ENDLOOP:
-      case OPCODE_ELSE:
-      case OPCODE_ENDIF:
 	 /* End of a basic block, clear the ACP entirely. */
 	 memset(acp, 0, sizeof(*acp) * this->next_temp * 4);
+	 break;
+
+      case OPCODE_IF:
+	 ++level;
+	 break;
+
+      case OPCODE_ENDIF:
+      case OPCODE_ELSE:
+	 /* Clear all channels written inside the block from the ACP, but
+	  * leaving those that were not touched.
+	  */
+	 for (int r = 0; r < this->next_temp; r++) {
+	    for (int c = 0; c < 4; c++) {
+	       if (!acp[4 * r + c])
+		  continue;
+
+	       if (acp_level[4 * r + c] >= level)
+		  acp[4 * r + c] = NULL;
+	    }
+	 }
+	 if (inst->op == OPCODE_ENDIF)
+	    --level;
 	 break;
 
       default:
 	 /* Continuing the block, clear any written channels from
 	  * the ACP.
 	  */
-	 if (inst->dst_reg.file == PROGRAM_TEMPORARY) {
-	    if (inst->dst_reg.reladdr) {
-	       memset(acp, 0, sizeof(*acp) * this->next_temp * 4);
-	    } else {
-	       for (int i = 0; i < 4; i++) {
-		  if (inst->dst_reg.writemask & (1 << i)) {
-		     acp[4 * inst->dst_reg.index + i] = NULL;
+	 if (inst->dst_reg.file == PROGRAM_TEMPORARY && inst->dst_reg.reladdr) {
+	    /* Any temporary might be written, so no copy propagation
+	     * across this instruction.
+	     */
+	    memset(acp, 0, sizeof(*acp) * this->next_temp * 4);
+	 } else if (inst->dst_reg.file == PROGRAM_OUTPUT &&
+		    inst->dst_reg.reladdr) {
+	    /* Any output might be written, so no copy propagation
+	     * from outputs across this instruction.
+	     */
+	    for (int r = 0; r < this->next_temp; r++) {
+	       for (int c = 0; c < 4; c++) {
+		  if (!acp[4 * r + c])
+		     continue;
+
+		  if (acp[4 * r + c]->src_reg[0].file == PROGRAM_OUTPUT)
+		     acp[4 * r + c] = NULL;
+	       }
+	    }
+	 } else if (inst->dst_reg.file == PROGRAM_TEMPORARY ||
+		    inst->dst_reg.file == PROGRAM_OUTPUT) {
+	    /* Clear where it's used as dst. */
+	    if (inst->dst_reg.file == PROGRAM_TEMPORARY) {
+	       for (int c = 0; c < 4; c++) {
+		  if (inst->dst_reg.writemask & (1 << c)) {
+		     acp[4 * inst->dst_reg.index + c] = NULL;
+		  }
+	       }
+	    }
+
+	    /* Clear where it's used as src. */
+	    for (int r = 0; r < this->next_temp; r++) {
+	       for (int c = 0; c < 4; c++) {
+		  if (!acp[4 * r + c])
+		     continue;
+
+		  int src_chan = GET_SWZ(acp[4 * r + c]->src_reg[0].swizzle, c);
+
+		  if (acp[4 * r + c]->src_reg[0].file == inst->dst_reg.file &&
+		      acp[4 * r + c]->src_reg[0].index == inst->dst_reg.index &&
+		      inst->dst_reg.writemask & (1 << src_chan))
+		  {
+		     acp[4 * r + c] = NULL;
 		  }
 	       }
 	    }
@@ -2742,12 +2826,14 @@ ir_to_mesa_visitor::copy_propagate(void)
 	 for (int i = 0; i < 4; i++) {
 	    if (inst->dst_reg.writemask & (1 << i)) {
 	       acp[4 * inst->dst_reg.index + i] = inst;
+	       acp_level[4 * inst->dst_reg.index + i] = level;
 	    }
 	 }
       }
    }
 
-   talloc_free(acp);
+   ralloc_free(acp_level);
+   ralloc_free(acp);
 }
 
 
@@ -2846,7 +2932,7 @@ get_mesa_program(struct gl_context *ctx,
    mesa_instructions =
       (struct prog_instruction *)calloc(num_instructions,
 					sizeof(*mesa_instructions));
-   mesa_instruction_annotation = talloc_array(v.mem_ctx, ir_instruction *,
+   mesa_instruction_annotation = ralloc_array(v.mem_ctx, ir_instruction *,
 					      num_instructions);
 
    v.copy_propagate();
@@ -3103,7 +3189,7 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
      _mesa_glsl_lexer_dtor(state);
    }
 
-   talloc_free(shader->ir);
+   ralloc_free(shader->ir);
    shader->ir = new(shader) exec_list;
    if (!state->error && !state->translation_unit.is_empty())
       _mesa_ast_to_hir(shader->ir, state);
@@ -3150,7 +3236,7 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
    /* Retain any live IR, but trash the rest. */
    reparent_ir(shader->ir, shader->ir);
 
-   talloc_free(state);
+   ralloc_free(state);
 
    if (shader->CompileStatus) {
       if (!ctx->Driver.CompileShader(ctx, shader))

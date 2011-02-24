@@ -140,14 +140,8 @@ static void pair_sub_for_all_args(
 
 	for(i = 0; i < info->NumSrcRegs; i++) {
 		unsigned int src_type;
-		unsigned int channels = 0;
-		if (&fullinst->U.P.RGB == sub)
-			channels = 3;
-		else if (&fullinst->U.P.Alpha == sub)
-			channels = 1;
 
-		assert(channels > 0);
-		src_type = rc_source_type_swz(sub->Arg[i].Swizzle, channels);
+		src_type = rc_source_type_swz(sub->Arg[i].Swizzle);
 
 		if (src_type == RC_SOURCE_NONE)
 			continue;

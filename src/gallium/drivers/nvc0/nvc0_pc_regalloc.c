@@ -39,6 +39,30 @@ struct register_set {
    struct nv_pc *pc;
 };
 
+/* aliasing is allowed */
+static void
+intersect_register_sets(struct register_set *dst,
+                        struct register_set *src1, struct register_set *src2)
+{
+   int i;
+
+   for (i = 0; i < NVC0_NUM_REGISTER_FILES; ++i) {
+      dst->bits[i][0] = src1->bits[i][0] | src2->bits[i][0];
+      dst->bits[i][1] = src1->bits[i][1] | src2->bits[i][1];
+   }
+}
+
+static void
+mask_register_set(struct register_set *set, uint32_t mask, uint32_t umask)
+{
+   int i;
+
+   for (i = 0; i < NVC0_NUM_REGISTER_FILES; ++i) {
+      set->bits[i][0] = (set->bits[i][0] | mask) & umask;
+      set->bits[i][1] = (set->bits[i][1] | mask) & umask;
+   }
+}
+
 struct nv_pc_pass {
    struct nv_pc *pc;
    struct nv_instruction **insns;
@@ -62,6 +86,9 @@ static boolean
 add_range_ex(struct nv_value *val, int bgn, int end, struct nv_range *new_range)
 {
    struct nv_range *range, **nextp = &val->livei;
+
+   if (bgn == end) /* [a, a) is invalid / empty */
+      return TRUE;
 
    for (range = val->livei; range; range = range->next) {
       if (end < range->bgn)
@@ -327,14 +354,14 @@ do_join_values(struct nv_pc_pass *ctx, struct nv_value *a, struct nv_value *b)
    assert(b->join == a->join);
 }
 
-static INLINE void
+static INLINE boolean
 try_join_values(struct nv_pc_pass *ctx, struct nv_value *a, struct nv_value *b)
 {
    if (!join_allowed(ctx, a, b)) {
 #ifdef NVC0_RA_DEBUG_JOIN
       debug_printf("cannot join %i to %i: not allowed\n", b->n, a->n);
 #endif
-      return;
+      return FALSE;
    }
    if (livei_have_overlap(a->join, b->join)) {
 #ifdef NVC0_RA_DEBUG_JOIN
@@ -342,10 +369,27 @@ try_join_values(struct nv_pc_pass *ctx, struct nv_value *a, struct nv_value *b)
       livei_print(a);
       livei_print(b);
 #endif
-      return;
+      return FALSE;
    }
 
    do_join_values(ctx, a, b);
+
+   return TRUE;
+}
+
+static void
+join_values_nofail(struct nv_pc_pass *ctx,
+                   struct nv_value *a, struct nv_value *b, boolean type_only)
+{
+   if (type_only) {
+      assert(join_allowed(ctx, a, b));
+      do_join_values(ctx, a, b);
+   } else {
+      boolean ok = try_join_values(ctx, a, b);
+      if (!ok) {
+         NOUVEAU_ERR("failed to coalesce values\n");
+      }
+   }
 }
 
 static INLINE boolean
@@ -360,20 +404,32 @@ need_new_else_block(struct nv_basic_block *b, struct nv_basic_block *p)
    return (b->num_in > 1) && (n == 2);
 }
 
+/* Look for the @phi's operand whose definition reaches @b. */
 static int
 phi_opnd_for_bb(struct nv_instruction *phi, struct nv_basic_block *b,
                 struct nv_basic_block *tb)
 {
+   struct nv_ref *srci, *srcj;
    int i, j;
 
    for (j = -1, i = 0; i < 6 && phi->src[i]; ++i) {
-      if (!nvc0_bblock_reachable_by(b, phi->src[i]->value->insn->bb, tb))
+      srci = phi->src[i];
+      /* if already replaced, check with original source first */
+      if (srci->flags & NV_REF_FLAG_REGALLOC_PRIV)
+         srci = srci->value->insn->src[0];
+      if (!nvc0_bblock_reachable_by(b, srci->value->insn->bb, NULL))
          continue;
       /* NOTE: back-edges are ignored by the reachable-by check */
-      if (j < 0 || !nvc0_bblock_reachable_by(phi->src[j]->value->insn->bb,
-                                             phi->src[i]->value->insn->bb, tb))
+      if (j < 0 || !nvc0_bblock_reachable_by(srcj->value->insn->bb,
+                                             srci->value->insn->bb, NULL)) {
          j = i;
+         srcj = srci;
+      }
    }
+   if (j >= 0 && nvc0_bblock_reachable_by(b, phi->def[0]->insn->bb, NULL))
+      if (!nvc0_bblock_reachable_by(srcj->value->insn->bb,
+                                    phi->def[0]->insn->bb, NULL))
+         j = -1;
    return j;
 }
 
@@ -420,21 +476,23 @@ pass_generate_phi_movs(struct nv_pc_pass *ctx, struct nv_basic_block *b)
       ctx->pc->current_block = pn;
 
       for (i = b->phi; i && i->opcode == NV_OP_PHI; i = i->next) {
-         if ((j = phi_opnd_for_bb(i, p, b)) < 0)
-            continue;
-         val = i->src[j]->value;
+         j = phi_opnd_for_bb(i, p, b);
 
-         if (i->src[j]->flags) {
-            /* value already encountered from a different in-block */
-            val = val->insn->src[0]->value;
-            while (j < 6 && i->src[j])
-               ++j;
-            assert(j < 6);
+         if (j < 0) {
+            val = i->def[0];
+         } else {
+            val = i->src[j]->value;
+            if (i->src[j]->flags & NV_REF_FLAG_REGALLOC_PRIV) {
+               j = -1;
+               /* use original value, we already encountered & replaced it */
+               val = val->insn->src[0]->value;
+            }
          }
+         if (j < 0) /* need an additional source ? */
+            for (j = 0; j < 6 && i->src[j] && i->src[j]->value != val; ++j);
+         assert(j < 6); /* XXX: really ugly shaders */
 
          ni = new_instruction(ctx->pc, NV_OP_MOV);
-
-         /* TODO: insert instruction at correct position in the first place */
          if (ni->prev && ni->prev->target)
             nvc0_insns_permute(ni->prev, ni);
 
@@ -442,7 +500,7 @@ pass_generate_phi_movs(struct nv_pc_pass *ctx, struct nv_basic_block *b)
          ni->def[0]->insn = ni;
          nv_reference(ctx->pc, ni, 0, val);
          nv_reference(ctx->pc, i, j, ni->def[0]); /* new phi source = MOV def */
-         i->src[j]->flags = 1;
+         i->src[j]->flags |= NV_REF_FLAG_REGALLOC_PRIV;
       }
 
       if (pn != p && pn->exit) {
@@ -460,8 +518,13 @@ pass_generate_phi_movs(struct nv_pc_pass *ctx, struct nv_basic_block *b)
    return 0;
 }
 
+#define JOIN_MASK_PHI    (1 << 0)
+#define JOIN_MASK_SELECT (1 << 1)
+#define JOIN_MASK_MOV    (1 << 2)
+#define JOIN_MASK_BIND   (1 << 3)
+
 static int
-pass_join_values(struct nv_pc_pass *ctx, int iter)
+pass_join_values(struct nv_pc_pass *ctx, unsigned mask)
 {
    int c, n;
 
@@ -470,36 +533,33 @@ pass_join_values(struct nv_pc_pass *ctx, int iter)
 
       switch (i->opcode) {
       case NV_OP_PHI:
-         if (iter != 2)
+         if (!(mask & JOIN_MASK_PHI))
             break;
          for (c = 0; c < 6 && i->src[c]; ++c)
-            try_join_values(ctx, i->def[0], i->src[c]->value);
+            join_values_nofail(ctx, i->def[0], i->src[c]->value, FALSE);
          break;
       case NV_OP_MOV:
-         if ((iter == 2) && i->src[0]->value->insn &&
-             !nv_is_texture_op(i->src[0]->value->join->insn->opcode))
+         if (!(mask & JOIN_MASK_MOV))
+            break;
+         if (i->src[0]->value->insn && !i->src[0]->value->insn->def[1])
             try_join_values(ctx, i->def[0], i->src[0]->value);
          break;
       case NV_OP_SELECT:
-         if (iter != 1)
+         if (!(mask & JOIN_MASK_SELECT))
             break;
-         for (c = 0; c < 6 && i->src[c]; ++c) {
-            assert(join_allowed(ctx, i->def[0], i->src[c]->value));
-            do_join_values(ctx, i->def[0], i->src[c]->value);
-         }
+         for (c = 0; c < 6 && i->src[c]; ++c)
+            join_values_nofail(ctx, i->def[0], i->src[c]->value, TRUE);
+         break;
+      case NV_OP_BIND:
+         if (!(mask & JOIN_MASK_BIND))
+            break;
+         for (c = 0; c < 4 && i->src[c]; ++c)
+            join_values_nofail(ctx, i->def[c], i->src[c]->value, TRUE);
          break;
       case NV_OP_TEX:
       case NV_OP_TXB:
       case NV_OP_TXL:
-      case NV_OP_TXQ:
-         /* on nvc0, TEX src and dst can differ */
-         break;
-      case NV_OP_BIND:
-         if (iter)
-            break;
-         for (c = 0; c < 6 && i->src[c]; ++c)
-            do_join_values(ctx, i->def[c], i->src[c]->value);
-         break;
+      case NV_OP_TXQ: /* on nvc0, TEX src and dst can differ */
       default:
          break;
       }
@@ -621,15 +681,16 @@ static void collect_live_values(struct nv_basic_block *b, const int n)
 {
    int i;
 
-   if (b->out[0]) {
-      if (b->out[1]) { /* what to do about back-edges ? */
+   /* XXX: what to do about back/fake-edges (used to include both here) ? */
+   if (b->out[0] && b->out_kind[0] != CFG_EDGE_FAKE) {
+      if (b->out[1] && b->out_kind[1] != CFG_EDGE_FAKE) {
          for (i = 0; i < n; ++i)
             b->live_set[i] = b->out[0]->live_set[i] | b->out[1]->live_set[i];
       } else {
          memcpy(b->live_set, b->out[0]->live_set, n * sizeof(uint32_t));
       }
    } else
-   if (b->out[1]) {
+   if (b->out[1] && b->out_kind[1] != CFG_EDGE_FAKE) {
       memcpy(b->live_set, b->out[1]->live_set, n * sizeof(uint32_t));
    } else {
       memset(b->live_set, 0, n * sizeof(uint32_t));
@@ -746,42 +807,46 @@ insert_ordered_tail(struct nv_value *list, struct nv_value *nval)
    elem->next = nval;
 }
 
-static int
-pass_linear_scan(struct nv_pc_pass *ctx, int iter)
+static void
+collect_register_values(struct nv_pc_pass *ctx, struct nv_value *head,
+                        boolean assigned_only)
 {
-   struct nv_instruction *i;
-   struct register_set f, free;
+   struct nv_value *val;
    int k, n;
+
+   make_empty_list(head);
+
+   for (n = 0; n < ctx->num_insns; ++n) {
+      struct nv_instruction *i = ctx->insns[n];
+
+      /* for joined values, only the representative will have livei != NULL */
+      for (k = 0; k < 5; ++k) {
+         if (i->def[k] && i->def[k]->livei)
+            if (!assigned_only || i->def[k]->reg.id >= 0)
+               insert_ordered_tail(head, i->def[k]);
+      }
+   }
+
+   for (val = head->next; val != head->prev; val = val->next) {
+      assert(val->join == val);
+      assert(val->livei->bgn <= val->next->livei->bgn);
+   }
+}
+
+static int
+pass_linear_scan(struct nv_pc_pass *ctx)
+{
+   struct register_set f, free;
    struct nv_value *cur, *val, *tmp[2];
    struct nv_value active, inactive, handled, unhandled;
 
    make_empty_list(&active);
    make_empty_list(&inactive);
    make_empty_list(&handled);
-   make_empty_list(&unhandled);
 
    nvc0_ctor_register_set(ctx->pc, &free);
 
-   /* joined values should have range = NULL and thus not be added;
-    * also, fixed memory values won't be added because they're not
-    * def'd, just used
-    */
-   for (n = 0; n < ctx->num_insns; ++n) {
-      i = ctx->insns[n];
-
-      for (k = 0; k < 5; ++k) {
-         if (i->def[k] && i->def[k]->livei)
-            insert_ordered_tail(&unhandled, i->def[k]);
-         else
-         if (0 && i->def[k])
-            debug_printf("skipping def'd value %i: no livei\n", i->def[k]->n);
-      }
-   }
-
-   for (val = unhandled.next; val != unhandled.prev; val = val->next) {
-      assert(val->join == val);
-      assert(val->livei->bgn <= val->next->livei->bgn);
-   }
+   collect_register_values(ctx, &unhandled, FALSE);
 
    foreach_s(cur, tmp[0], &unhandled) {
       remove_from_list(cur);
@@ -818,14 +883,7 @@ pass_linear_scan(struct nv_pc_pass *ctx, int iter)
             reg_occupy(&f, val);
 
       if (cur->reg.id < 0) {
-         boolean mem = FALSE;
-         int v = nvi_vector_size(cur->insn);
-
-         if (v > 1)
-            mem = !reg_assign(&f, &cur->insn->def[0], v);
-         else
-         if (iter)
-            mem = !reg_assign(&f, &cur, 1);
+         boolean mem = !reg_assign(&f, &cur, 1);
 
          if (mem) {
             NOUVEAU_ERR("out of registers\n");
@@ -836,6 +894,68 @@ pass_linear_scan(struct nv_pc_pass *ctx, int iter)
       reg_occupy(&free, cur);
    }
 
+   return 0;
+}
+
+/* Allocate values defined by instructions such as TEX, which have to be
+ * assigned to consecutive registers.
+ * Linear scan doesn't really work here since the values can have different
+ * live intervals.
+ */
+static int
+pass_allocate_constrained_values(struct nv_pc_pass *ctx)
+{
+   struct nv_value regvals, *val;
+   struct nv_instruction *i;
+   struct nv_value *defs[4];
+   struct register_set regs[4];
+   int n, vsize, c;
+   uint32_t mask;
+   boolean mem;
+
+   collect_register_values(ctx, &regvals, TRUE);
+
+   for (n = 0; n < ctx->num_insns; ++n) {
+      i = ctx->insns[n];
+      vsize = nvi_vector_size(i);
+      if (!(vsize > 1))
+         continue;
+      assert(vsize <= 4);
+
+      for (c = 0; c < vsize; ++c)
+         defs[c] = i->def[c]->join;
+
+      if (defs[0]->reg.id >= 0) {
+         for (c = 1; c < vsize; ++c)
+            assert(defs[c]->reg.id >= 0);
+         continue;
+      }
+
+      for (c = 0; c < vsize; ++c) {
+         nvc0_ctor_register_set(ctx->pc, &regs[c]);
+
+         foreach(val, &regvals) {
+            if (val->reg.id >= 0 && livei_have_overlap(val, defs[c]))
+               reg_occupy(&regs[c], val);
+         }
+         mask = 0x11111111;
+         if (vsize == 2) /* granularity is 2 and not 4 */
+            mask |= 0x11111111 << 2;
+         mask_register_set(&regs[c], 0, mask << c);
+
+         if (defs[c]->livei)
+            insert_ordered_tail(&regvals, defs[c]);
+      }
+      for (c = 1; c < vsize; ++c)
+         intersect_register_sets(&regs[0], &regs[0], &regs[c]);
+
+      mem = !reg_assign(&regs[0], &defs[0], vsize);
+
+      if (mem) {
+         NOUVEAU_ERR("out of registers\n");
+         abort();
+      }
+   }
    return 0;
 }
 
@@ -861,6 +981,10 @@ nv_pc_pass1(struct nv_pc *pc, struct nv_basic_block *root)
    pc->pass_seq++;
    ret = pass_generate_phi_movs(ctx, root);
    assert(!ret);
+
+#ifdef NVC0_RA_DEBUG_LIVEI
+   nvc0_print_function(root);
+#endif
 
    for (i = 0; i < pc->loop_nesting_bound; ++i) {
       pc->pass_seq++;
@@ -888,19 +1012,19 @@ nv_pc_pass1(struct nv_pc *pc, struct nv_basic_block *root)
       livei_print(&pc->values[i]);
 #endif
 
-   ret = pass_join_values(ctx, 0);
+   ret = pass_join_values(ctx, JOIN_MASK_PHI);
    if (ret)
       goto out;
-   ret = pass_linear_scan(ctx, 0);
+   ret = pass_join_values(ctx, JOIN_MASK_SELECT | JOIN_MASK_BIND);
    if (ret)
       goto out;
-   ret = pass_join_values(ctx, 1);
+   ret = pass_join_values(ctx, JOIN_MASK_MOV);
    if (ret)
       goto out;
-   ret = pass_join_values(ctx, 2);
+   ret = pass_allocate_constrained_values(ctx);
    if (ret)
       goto out;
-   ret = pass_linear_scan(ctx, 1);
+   ret = pass_linear_scan(ctx);
    if (ret)
       goto out;
 

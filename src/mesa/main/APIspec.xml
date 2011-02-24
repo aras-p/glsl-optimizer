@@ -379,15 +379,68 @@
 		<value name="GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_OES" category="OES_texture_cube_map"/>
 	</desc>
 
-	<desc name="internalFormat" error="GL_INVALID_VALUE">
+	<desc name="internalFormat">
 		<value name="GL_ALPHA"/>
+
+		<desc name="format" error="GL_INVALID_VALUE">
+			<value name="GL_ALPHA"/>
+		</desc>
+	</desc>
+
+	<desc name="internalFormat">
 		<value name="GL_RGB"/>
+
+		<desc name="format" error="GL_INVALID_VALUE">
+			<value name="GL_RGB"/>
+		</desc>
+	</desc>
+
+	<desc name="internalFormat">
 		<value name="GL_RGBA"/>
-		<value name="GL_BGRA_EXT"/>
+
+		<desc name="format" error="GL_INVALID_VALUE">
+			<value name="GL_RGBA"/>
+		</desc>
+	</desc>
+
+	<desc name="internalFormat">
 		<value name="GL_LUMINANCE"/>
+
+		<desc name="format" error="GL_INVALID_VALUE">
+			<value name="GL_LUMINANCE"/>
+		</desc>
+	</desc>
+
+	<desc name="internalFormat">
 		<value name="GL_LUMINANCE_ALPHA"/>
-		<value name="GL_DEPTH_COMPONENT" category="OES_depth_texture"/>
-		<value name="GL_DEPTH_STENCIL_OES" category="OES_packed_depth_stencil"/>
+
+		<desc name="format" error="GL_INVALID_VALUE">
+			<value name="GL_LUMINANCE_ALPHA"/>
+		</desc>
+	</desc>
+
+	<desc name="internalFormat" category="OES_depth_texture">
+		<value name="GL_DEPTH_COMPONENT"/>
+
+		<desc name="format" error="GL_INVALID_VALUE">
+			<value name="GL_DEPTH_COMPONENT"/>
+		</desc>
+	</desc>
+
+	<desc name="internalFormat" category="OES_packed_depth_stencil">
+		<value name="GL_DEPTH_STENCIL_OES"/>
+
+		<desc name="format" error="GL_INVALID_VALUE">
+			<value name="GL_DEPTH_STENCIL_OES"/>
+		</desc>
+	</desc>
+
+	<desc name="internalFormat" category="EXT_texture_format_BGRA8888">
+		<value name="GL_BGRA_EXT"/>
+
+		<desc name="format" error="GL_INVALID_VALUE">
+			<value name="GL_BGRA_EXT"/>
+		</desc>
 	</desc>
 
 	<desc name="border" error="GL_INVALID_VALUE">

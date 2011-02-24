@@ -34,10 +34,6 @@
 
 #include "draw/draw_context.h"
 
-#ifdef HAVE_LLVM
-#include "gallivm/lp_bld_init.h"
-#endif
-
 /* Return the identifier behind whom the brave coders responsible for this
  * amalgamation of code, sweat, and duct tape, routinely obscure their names.
  *
@@ -87,11 +83,7 @@ static const char* r300_get_name(struct pipe_screen* pscreen)
 static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 {
     struct r300_screen* r300screen = r300_screen(pscreen);
-    boolean is_r400 = r300screen->caps.is_r400;
     boolean is_r500 = r300screen->caps.is_r500;
-
-    /* XXX extended shader capabilities of r400 unimplemented */
-    is_r400 = FALSE;
 
     switch (param) {
         /* Supported features (boolean caps). */
@@ -129,11 +121,13 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_DUAL_SOURCE_BLEND:
         case PIPE_CAP_INDEP_BLEND_ENABLE:
         case PIPE_CAP_INDEP_BLEND_FUNC:
-        case PIPE_CAP_DEPTH_CLAMP: /* XXX implemented, but breaks Regnum Online */
+        case PIPE_CAP_DEPTH_CLAMP:
         case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
         case PIPE_CAP_SHADER_STENCIL_EXPORT:
         case PIPE_CAP_STREAM_OUTPUT:
         case PIPE_CAP_PRIMITIVE_RESTART:
+        case PIPE_CAP_INSTANCED_DRAWING:
+        case PIPE_CAP_ARRAY_TEXTURES:
             return 0;
 
         /* Texturing. */
@@ -174,9 +168,6 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
    struct r300_screen* r300screen = r300_screen(pscreen);
    boolean is_r400 = r300screen->caps.is_r400;
    boolean is_r500 = r300screen->caps.is_r500;
-
-   /* XXX extended shader capabilities of r400 unimplemented */
-   is_r400 = FALSE;
 
    switch (shader)
     {
@@ -407,6 +398,7 @@ static void r300_destroy_screen(struct pipe_screen* pscreen)
     struct r300_winsys_screen *rws = r300_winsys_screen(pscreen);
 
     util_slab_destroy(&r300screen->pool_buffers);
+    pipe_mutex_destroy(r300screen->num_contexts_mutex);
 
     if (rws)
       rws->destroy(rws);
@@ -418,32 +410,28 @@ static void r300_fence_reference(struct pipe_screen *screen,
                                  struct pipe_fence_handle **ptr,
                                  struct pipe_fence_handle *fence)
 {
-    struct r300_fence **oldf = (struct r300_fence**)ptr;
-    struct r300_fence *newf = (struct r300_fence*)fence;
-
-    if (pipe_reference(&(*oldf)->reference, &newf->reference))
-        FREE(*oldf);
-
-    *ptr = fence;
+    r300_winsys_bo_reference((struct r300_winsys_bo**)ptr,
+                             (struct r300_winsys_bo*)fence);
 }
 
 static int r300_fence_signalled(struct pipe_screen *screen,
                                 struct pipe_fence_handle *fence,
                                 unsigned flags)
 {
-    struct r300_fence *rfence = (struct r300_fence*)fence;
+    struct r300_winsys_screen *rws = r300_screen(screen)->rws;
+    struct r300_winsys_bo *rfence = (struct r300_winsys_bo*)fence;
 
-    return rfence->signalled ? 0 : 1; /* 0 == success */
+    return !rws->buffer_is_busy(rfence) ? 0 : 1; /* 0 == success */
 }
 
 static int r300_fence_finish(struct pipe_screen *screen,
                              struct pipe_fence_handle *fence,
                              unsigned flags)
 {
-    struct r300_fence *rfence = (struct r300_fence*)fence;
+    struct r300_winsys_screen *rws = r300_screen(screen)->rws;
+    struct r300_winsys_bo *rfence = (struct r300_winsys_bo*)fence;
 
-    r300_finish(rfence->ctx);
-    rfence->signalled = TRUE;
+    rws->buffer_wait(rfence);
     return 0; /* 0 == success */
 }
 
@@ -463,12 +451,19 @@ struct pipe_screen* r300_screen_create(struct r300_winsys_screen *rws)
     r300_init_debug(r300screen);
     r300_parse_chipset(&r300screen->caps);
 
+    if (SCREEN_DBG_ON(r300screen, DBG_NO_ZMASK))
+        r300screen->caps.zmask_ram = 0;
+    if (SCREEN_DBG_ON(r300screen, DBG_NO_HIZ))
+        r300screen->caps.hiz_ram = 0;
+
     r300screen->caps.index_bias_supported =
             r300screen->caps.is_r500 &&
             rws->get_value(rws, R300_VID_DRM_2_3_0);
 
+    pipe_mutex_init(r300screen->num_contexts_mutex);
+
     util_slab_create(&r300screen->pool_buffers,
-                     sizeof(struct r300_buffer), 64,
+                     sizeof(struct r300_resource), 64,
                      UTIL_SLAB_SINGLETHREADED);
 
     r300screen->rws = rws;
@@ -489,10 +484,6 @@ struct pipe_screen* r300_screen_create(struct r300_winsys_screen *rws)
     r300_init_screen_resource_functions(r300screen);
 
     util_format_s3tc_init();
-
-#ifdef HAVE_LLVM
-    lp_build_init();
-#endif
 
     return &r300screen->screen;
 }

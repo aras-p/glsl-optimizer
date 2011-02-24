@@ -84,7 +84,7 @@ i915_sw_buffer_write(struct i915_winsys *iws,
 {
    struct i915_sw_buffer *buf = i915_sw_buffer(buffer);
 
-   memcpy(buf->ptr + offset, data, size);
+   memcpy((char*)buf->ptr + offset, data, size);
    return 0;
 }
 

@@ -373,9 +373,11 @@ void rc_get_stats(struct radeon_compiler *c, struct rc_program_stats *s)
 		const struct rc_opcode_info * info;
 		rc_for_all_reads_mask(tmp, reg_count_callback, &max_reg);
 		if (tmp->Type == RC_INSTRUCTION_NORMAL) {
+			info = rc_get_opcode_info(tmp->U.I.Opcode);
+			if (info->Opcode == RC_OPCODE_BEGIN_TEX)
+				continue;
 			if (tmp->U.I.PreSub.Opcode != RC_PRESUB_NONE)
 				s->num_presub_ops++;
-			info = rc_get_opcode_info(tmp->U.I.Opcode);
 		} else {
 			if (tmp->U.P.RGB.Src[RC_PAIR_PRESUB_SRC].Used)
 				s->num_presub_ops++;
@@ -402,10 +404,10 @@ static void print_stats(struct radeon_compiler * c)
 {
 	struct rc_program_stats s;
 
-	rc_get_stats(c, &s);
-
-	if (s.num_insts < 4)
+	if (c->initial_num_insts <= 5)
 		return;
+
+	rc_get_stats(c, &s);
 
 	switch (c->type) {
 	case RC_VERTEX_PROGRAM:
@@ -461,6 +463,11 @@ void rc_run_compiler_passes(struct radeon_compiler *c, struct radeon_compiler_pa
 /* Executes a list of compiler passes given in the parameter 'list'. */
 void rc_run_compiler(struct radeon_compiler *c, struct radeon_compiler_pass *list)
 {
+	struct rc_program_stats s;
+
+	rc_get_stats(c, &s);
+	c->initial_num_insts = s.num_insts;
+
 	if (c->Debug & RC_DBG_LOG) {
 		fprintf(stderr, "%s: before compilation\n", shader_name[c->type]);
 		rc_print_program(&c->Program);

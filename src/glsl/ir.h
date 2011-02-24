@@ -26,13 +26,10 @@
 #ifndef IR_H
 #define IR_H
 
-#include <cstdio>
-#include <cstdlib>
+#include <stdio.h>
+#include <stdlib.h>
 
-extern "C" {
-#include <talloc.h>
-}
-
+#include "ralloc.h"
 #include "glsl_types.h"
 #include "list.h"
 #include "ir_visitor.h"
@@ -225,6 +222,7 @@ enum ir_variable_mode {
    ir_var_in,
    ir_var_out,
    ir_var_inout,
+   ir_var_const_in,	/**< "in" param that must be a constant expression */
    ir_var_system_value, /**< Ex: front-face, instance-id, etc. */
    ir_var_temporary	/**< Temporary variable generated during compilation. */
 };
@@ -235,6 +233,25 @@ enum ir_variable_interpolation {
    ir_var_noperspective
 };
 
+/**
+ * \brief Layout qualifiers for gl_FragDepth.
+ *
+ * The AMD_conservative_depth extension allows gl_FragDepth to be redeclared
+ * with a layout qualifier.
+ */
+enum ir_depth_layout {
+    ir_depth_layout_none, /**< No depth layout is specified. */
+    ir_depth_layout_any,
+    ir_depth_layout_greater,
+    ir_depth_layout_less,
+    ir_depth_layout_unchanged
+};
+
+/**
+ * \brief Convert depth layout qualifier to string.
+ */
+const char*
+depth_layout_string(ir_depth_layout layout);
 
 class ir_variable : public ir_instruction {
 public:
@@ -333,6 +350,14 @@ public:
    unsigned origin_upper_left:1;
    unsigned pixel_center_integer:1;
    /*@}*/
+
+   /**
+    * \brief Layout qualifier for gl_FragDepth.
+    *
+    * This is not equal to \c ir_depth_layout_none if and only if this
+    * variable is \c gl_FragDepth and a layout qualifier is specified.
+    */
+   ir_depth_layout depth_layout;
 
    /**
     * Was the location explicitly set in the shader?
@@ -959,7 +984,7 @@ public:
    /**
     * Get a generic ir_call object when an error occurs
     *
-    * Any allocation will be performed with 'ctx' as talloc owner.
+    * Any allocation will be performed with 'ctx' as ralloc owner.
     */
    static ir_call *get_error_instruction(void *ctx);
 
@@ -1166,21 +1191,21 @@ enum ir_texture_opcode {
  * selected from \c ir_texture_opcodes.  In the printed IR, these will
  * appear as:
  *
- *                              Texel offset
- *                              |       Projection divisor
- *                              |       |   Shadow comparitor
- *                              |       |   |
- *                              v       v   v
- * (tex (sampler) (coordinate) (0 0 0) (1) ( ))
- * (txb (sampler) (coordinate) (0 0 0) (1) ( ) (bias))
- * (txl (sampler) (coordinate) (0 0 0) (1) ( ) (lod))
- * (txd (sampler) (coordinate) (0 0 0) (1) ( ) (dPdx dPdy))
- * (txf (sampler) (coordinate) (0 0 0)         (lod))
+ *                             Texel offset (0 or an expression)
+ *                             | Projection divisor
+ *                             | |  Shadow comparitor
+ *                             | |  |
+ *                             v v  v
+ * (tex <sampler> <coordinate> 0 1 ( ))
+ * (txb <sampler> <coordinate> 0 1 ( ) <bias>)
+ * (txl <sampler> <coordinate> 0 1 ( ) <lod>)
+ * (txd <sampler> <coordinate> 0 1 ( ) (dPdx dPdy))
+ * (txf <sampler> <coordinate> 0       <lod>)
  */
 class ir_texture : public ir_rvalue {
 public:
    ir_texture(enum ir_texture_opcode op)
-      : op(op), projector(NULL), shadow_comparitor(NULL)
+      : op(op), projector(NULL), shadow_comparitor(NULL), offset(NULL)
    {
       this->ir_type = ir_type_texture;
    }
@@ -1234,8 +1259,8 @@ public:
     */
    ir_rvalue *shadow_comparitor;
 
-   /** Explicit texel offsets. */
-   signed char offsets[3];
+   /** Texel offset. */
+   ir_rvalue *offset;
 
    union {
       ir_rvalue *lod;		/**< Floating point LOD */

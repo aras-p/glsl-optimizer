@@ -31,7 +31,7 @@
 #ifdef __cplusplus
 
 
-#include <cstdlib>
+#include <stdlib.h>
 #include "glsl_symbol_table.h"
 
 enum _mesa_glsl_parser_targets {
@@ -46,21 +46,21 @@ struct _mesa_glsl_parse_state {
    _mesa_glsl_parse_state(struct gl_context *ctx, GLenum target,
 			  void *mem_ctx);
 
-   /* Callers of this talloc-based new need not call delete. It's
-    * easier to just talloc_free 'ctx' (or any of its ancestors). */
+   /* Callers of this ralloc-based new need not call delete. It's
+    * easier to just ralloc_free 'ctx' (or any of its ancestors). */
    static void* operator new(size_t size, void *ctx)
    {
-      void *mem = talloc_zero_size(ctx, size);
+      void *mem = rzalloc_size(ctx, size);
       assert(mem != NULL);
 
       return mem;
    }
 
    /* If the user *does* call delete, that's OK, we will just
-    * talloc_free in that case. */
+    * ralloc_free in that case. */
    static void operator delete(void *mem)
    {
-      talloc_free(mem);
+      ralloc_free(mem);
    }
 
    void *scanner;
@@ -71,6 +71,16 @@ struct _mesa_glsl_parse_state {
    unsigned language_version;
    const char *version_string;
    enum _mesa_glsl_parser_targets target;
+
+   /**
+    * Printable list of GLSL versions supported by the current context
+    *
+    * \note
+    * This string should probably be generated per-context instead of per
+    * invokation of the compiler.  This should be changed when the method of
+    * tracking supported GLSL versions changes.
+    */
+   const char *supported_version_string;
 
    /**
     * Implementation defined limits that affect built-in variables, etc.
@@ -93,6 +103,22 @@ struct _mesa_glsl_parse_state {
 
       /* ARB_draw_buffers */
       unsigned MaxDrawBuffers;
+
+      /**
+       * Set of GLSL versions supported by the current context
+       *
+       * Knowing that version X is supported doesn't mean that versions before
+       * X are also supported.  Version 1.00 is only supported in an ES2
+       * context or when GL_ARB_ES2_compatibility is supported.  In an OpenGL
+       * 3.0 "forward compatible" context, GLSL 1.10 and 1.20 are \b not
+       * supported.
+       */
+      /*@{*/
+      unsigned GLSL_100ES:1;
+      unsigned GLSL_110:1;
+      unsigned GLSL_120:1;
+      unsigned GLSL_130:1;
+      /*@}*/
    } Const;
 
    /**
@@ -144,6 +170,8 @@ struct _mesa_glsl_parse_state {
    unsigned EXT_texture_array_warn:1;
    unsigned ARB_shader_stencil_export_enable:1;
    unsigned ARB_shader_stencil_export_warn:1;
+   unsigned AMD_conservative_depth_enable:1;
+   unsigned AMD_conservative_depth_warn:1;
    /*@}*/
 
    /** Extensions supported by the OpenGL implementation. */

@@ -72,9 +72,9 @@ intel_fence_sync(struct gl_context *ctx, struct gl_sync_object *s,
    struct intel_sync_object *sync = (struct intel_sync_object *)s;
 
    assert(condition == GL_SYNC_GPU_COMMANDS_COMPLETE);
-   intel_batchbuffer_emit_mi_flush(intel->batch);
+   intel_batchbuffer_emit_mi_flush(intel);
 
-   sync->bo = intel->batch->buf;
+   sync->bo = intel->batch.bo;
    drm_intel_bo_reference(sync->bo);
 
    intel_flush(ctx);

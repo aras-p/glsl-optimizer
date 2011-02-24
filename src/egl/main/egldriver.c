@@ -437,6 +437,7 @@ _eglAddUserDriver(void)
 {
    const char *search_path = _eglGetSearchPath();
    char *env;
+   size_t name_len = 0;
 
    env = getenv("EGL_DRIVER");
 #if defined(_EGL_OS_UNIX)
@@ -448,21 +449,39 @@ _eglAddUserDriver(void)
          env = NULL;
       }
    }
+   else if (env) {
+      char *suffix = strchr(env, '.');
+      name_len = (suffix) ? suffix - env : strlen(env);
+   }
+#else
+   if (env)
+      name_len = strlen(env);
 #endif /* _EGL_OS_UNIX */
-   if (env) {
+
+   /*
+    * Try built-in drivers first if we know the driver name.  This makes sure
+    * we do not load the outdated external driver that is still on the
+    * filesystem.
+    */
+   if (name_len) {
       _EGLModule *mod;
       EGLint i;
 
-      /* env can be a path */
-      _eglPreloadForEach(search_path, _eglLoaderFile, (void *) env);
-      /* or the name of a built-in driver */
       for (i = 0; _eglBuiltInDrivers[i].name; i++) {
-         if (!strcmp(_eglBuiltInDrivers[i].name, env)) {
+         if (strlen(_eglBuiltInDrivers[i].name) == name_len &&
+             !strncmp(_eglBuiltInDrivers[i].name, env, name_len)) {
             mod = _eglAddModule(env);
             if (mod)
                mod->BuiltIn = _eglBuiltInDrivers[i].main;
+
+            return EGL_TRUE;
          }
       }
+   }
+
+   /* otherwise, treat env as a path */
+   if (env) {
+      _eglPreloadForEach(search_path, _eglLoaderFile, (void *) env);
 
       return EGL_TRUE;
    }

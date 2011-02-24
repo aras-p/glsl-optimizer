@@ -1514,6 +1514,7 @@ emit_tex( struct x86_function *func,
       break;
    case TGSI_TEXTURE_2D:
    case TGSI_TEXTURE_RECT:
+   case TGSI_TEXTURE_1D_ARRAY:
       count = 2;
       break;
    case TGSI_TEXTURE_SHADOW1D:
@@ -1521,6 +1522,7 @@ emit_tex( struct x86_function *func,
    case TGSI_TEXTURE_SHADOWRECT:
    case TGSI_TEXTURE_3D:
    case TGSI_TEXTURE_CUBE:
+   case TGSI_TEXTURE_2D_ARRAY:
       count = 3;
       break;
    default:

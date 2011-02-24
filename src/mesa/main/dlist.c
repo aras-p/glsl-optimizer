@@ -8419,8 +8419,6 @@ _mesa_CallList(GLuint list)
    GLboolean save_compile_flag;
    GET_CURRENT_CONTEXT(ctx);
    FLUSH_CURRENT(ctx, 0);
-   /* VERY IMPORTANT:  Save the CompileFlag status, turn it off, */
-   /* execute the display list, and restore the CompileFlag. */
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glCallList %d\n", list);
@@ -8430,8 +8428,12 @@ _mesa_CallList(GLuint list)
       return;
    }
 
-/*     mesa_print_display_list( list ); */
+   if (0)
+      mesa_print_display_list( list );
 
+   /* VERY IMPORTANT:  Save the CompileFlag status, turn it off,
+    * execute the display list, and restore the CompileFlag.
+    */
    save_compile_flag = ctx->CompileFlag;
    if (save_compile_flag) {
       ctx->CompileFlag = GL_FALSE;

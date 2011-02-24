@@ -47,6 +47,9 @@ struct tgsi_to_rc {
     /* Vertex shaders have no half swizzles, and no way to handle them, so
      * until rc grows proper support, indicate if they're safe to use. */
     boolean use_half_swizzles;
+
+    /* If an error occured. */
+    boolean error;
 };
 
 void r300_tgsi_to_rc(struct tgsi_to_rc * ttr, const struct tgsi_token * tokens);

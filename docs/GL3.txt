@@ -15,10 +15,13 @@ GL 3.0:
 GLSL changes (GL_EXT_gpu_shader4, etc)                not started
 Conditional rendering (GL_NV_conditional_render)      DONE (swrast & softpipe)
 Map buffer subranges (GL_ARB_map_buffer_range)        DONE
-Float textures, renderbuffers                         some infrastructure done
- (incl. GL_EXT_packed_float, GL_EXT_shared_exponent)
+Clamping controls (GL_ARB_color_buffer_float)         BRANCH ~mareko/mesa floating2
+Float textures, renderbuffers (GL_ARB_texture_float)  BRANCH ~mareko/mesa floating2
+GL_EXT_packed_float                                   not started
+GL_EXT_texture_shared_exponent                        not started
+Float depth buffers (GL_ARB_depth_buffer_float)       not started
 Framebuffer objects (GL_EXT_framebuffer_object)       DONE
-Half-float                                            some infrastructure done
+Half-float                                            DONE
 Multisample blit                                      DONE
 Non-normalized Integer texture/framebuffer formats    ~50% done
 1D/2D Texture arrays                                  core Mesa, swrast done
@@ -30,7 +33,7 @@ Transform feedback (GL_EXT_transform_feedback)        ~50% done
    glBindFragDataLocation, glGetFragDataLocation,
    glBindBufferRange, glBindBufferBase commands
 Vertex array objects (GL_APPLE_vertex_array_object)   DONE
-sRGB framebuffer format (GL_EXT_framebuffer_sRGB)     not started
+sRGB framebuffer format (GL_EXT_framebuffer_sRGB)     core GL done (i965, gallium), GLX todo
 glClearBuffer commands                                DONE
 glGetStringi command                                  DONE
 glTexParameterI, glGetTexParameterI commands          DONE
@@ -48,7 +51,7 @@ Primitive restart (GL_NV_primitive_restart)           DONE (gallium)
 Texture buffer objs (GL_ARB_texture_buffer_object)    not started
 Rectangular textures (GL_ARB_texture_rectangle)       DONE
 Uniform buffer objs (GL_ARB_uniform_buffer_object)    not started
-Signed normalized texture formats                     ~50% done
+Signed normalized textures (GL_EXT_texture_snorm)     ~50% done
 
 
 GL 3.2:

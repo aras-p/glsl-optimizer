@@ -435,6 +435,13 @@ modulus_result_type(const struct glsl_type *type_a,
 		    const struct glsl_type *type_b,
 		    struct _mesa_glsl_parse_state *state, YYLTYPE *loc)
 {
+   if (state->language_version < 130) {
+      _mesa_glsl_error(loc, state,
+                       "operator '%%' is reserved in %s",
+                       state->version_string);
+      return glsl_type::error_type;
+   }
+
    /* From GLSL 1.50 spec, page 56:
     *    "The operator modulus (%) operates on signed or unsigned integers or
     *    integer vectors. The operand types must both be signed or both be
@@ -639,7 +646,14 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
    bool error_emitted = (lhs->type->is_error() || rhs->type->is_error());
 
    if (!error_emitted) {
-      if (!lhs->is_lvalue()) {
+      if (lhs->variable_referenced() != NULL
+          && lhs->variable_referenced()->read_only) {
+         _mesa_glsl_error(&lhs_loc, state,
+                          "assignment to read-only variable '%s'",
+                          lhs->variable_referenced()->name);
+         error_emitted = true;
+
+      } else if (!lhs->is_lvalue()) {
 	 _mesa_glsl_error(& lhs_loc, state, "non-lvalue in assignment");
 	 error_emitted = true;
       }
@@ -712,7 +726,7 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
 static ir_rvalue *
 get_lvalue_copy(exec_list *instructions, ir_rvalue *lvalue)
 {
-   void *ctx = talloc_parent(lvalue);
+   void *ctx = ralloc_parent(lvalue);
    ir_variable *var;
 
    var = new(ctx) ir_variable(lvalue->type, "_post_incdec_tmp",
@@ -1809,7 +1823,6 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
       }
    }
 
-   /* FINISHME: Mark 'in' variables at global scope as read-only. */
    if (qual->flags.q.constant || qual->flags.q.attribute
        || qual->flags.q.uniform
        || (qual->flags.q.varying && (state->target == fragment_shader)))
@@ -2002,6 +2015,40 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
 			  "`attribute' or `varying'");
       }
    }
+
+   /* Layout qualifiers for gl_FragDepth, which are enabled by extension
+    * AMD_conservative_depth.
+    */
+   int depth_layout_count = qual->flags.q.depth_any
+      + qual->flags.q.depth_greater
+      + qual->flags.q.depth_less
+      + qual->flags.q.depth_unchanged;
+   if (depth_layout_count > 0
+       && !state->AMD_conservative_depth_enable) {
+       _mesa_glsl_error(loc, state,
+                        "extension GL_AMD_conservative_depth must be enabled "
+			"to use depth layout qualifiers");
+   } else if (depth_layout_count > 0
+              && strcmp(var->name, "gl_FragDepth") != 0) {
+       _mesa_glsl_error(loc, state,
+                        "depth layout qualifiers can be applied only to "
+                        "gl_FragDepth");
+   } else if (depth_layout_count > 1
+              && strcmp(var->name, "gl_FragDepth") == 0) {
+      _mesa_glsl_error(loc, state,
+                       "at most one depth layout qualifier can be applied to "
+                       "gl_FragDepth");
+   }
+   if (qual->flags.q.depth_any)
+      var->depth_layout = ir_depth_layout_any;
+   else if (qual->flags.q.depth_greater)
+      var->depth_layout = ir_depth_layout_greater;
+   else if (qual->flags.q.depth_less)
+      var->depth_layout = ir_depth_layout_less;
+   else if (qual->flags.q.depth_unchanged)
+       var->depth_layout = ir_depth_layout_unchanged;
+   else
+       var->depth_layout = ir_depth_layout_none;
 
    if (var->type->is_array() && state->language_version != 110) {
       var->array_lvalue = true;
@@ -2206,6 +2253,8 @@ ast_declarator_list::hir(exec_list *instructions,
 			     mode, var->name, extra);
 	 }
       } else if (var->mode == ir_var_in) {
+         var->read_only = true;
+
 	 if (state->target == vertex_shader) {
 	    bool error_emitted = false;
 
@@ -2591,6 +2640,36 @@ ast_declarator_list::hir(exec_list *instructions,
 	            && earlier->type == var->type
 	            && earlier->mode == var->mode) {
 	    earlier->interpolation = var->interpolation;
+
+         /* Layout qualifiers for gl_FragDepth. */
+         } else if (state->AMD_conservative_depth_enable
+                    && strcmp(var->name, "gl_FragDepth") == 0
+                    && earlier->type == var->type
+                    && earlier->mode == var->mode) {
+
+            /** From the AMD_conservative_depth spec:
+             *     Within any shader, the first redeclarations of gl_FragDepth
+             *     must appear before any use of gl_FragDepth.
+             */
+            if (earlier->used) {
+               _mesa_glsl_error(&loc, state,
+                                "the first redeclaration of gl_FragDepth "
+                                "must appear before any use of gl_FragDepth");
+            }
+
+            /* Prevent inconsistent redeclaration of depth layout qualifier. */
+            if (earlier->depth_layout != ir_depth_layout_none
+                && earlier->depth_layout != var->depth_layout) {
+               _mesa_glsl_error(&loc, state,
+                                "gl_FragDepth: depth layout is declared here "
+                                "as '%s, but it was previously declared as "
+                                "'%s'",
+                                depth_layout_string(var->depth_layout),
+                                depth_layout_string(earlier->depth_layout));
+            }
+
+            earlier->depth_layout = var->depth_layout;
+
 	 } else {
 	    YYLTYPE loc = this->get_location();
 	    _mesa_glsl_error(&loc, state, "`%s' redeclared", decl->identifier);
@@ -3002,27 +3081,26 @@ ast_jump_statement::hir(exec_list *instructions,
       assert(state->current_function);
 
       if (opt_return_value) {
-	 if (state->current_function->return_type->base_type ==
-	     GLSL_TYPE_VOID) {
-	    YYLTYPE loc = this->get_location();
-
-	    _mesa_glsl_error(& loc, state,
-			     "`return` with a value, in function `%s' "
-			     "returning void",
-			     state->current_function->function_name());
-	 }
-
 	 ir_rvalue *const ret = opt_return_value->hir(instructions, state);
-	 assert(ret != NULL);
+
+	 /* The value of the return type can be NULL if the shader says
+	  * 'return foo();' and foo() is a function that returns void.
+	  *
+	  * NOTE: The GLSL spec doesn't say that this is an error.  The type
+	  * of the return value is void.  If the return type of the function is
+	  * also void, then this should compile without error.  Seriously.
+	  */
+	 const glsl_type *const ret_type =
+	    (ret == NULL) ? glsl_type::void_type : ret->type;
 
 	 /* Implicit conversions are not allowed for return values. */
-	 if (state->current_function->return_type != ret->type) {
+	 if (state->current_function->return_type != ret_type) {
 	    YYLTYPE loc = this->get_location();
 
 	    _mesa_glsl_error(& loc, state,
 			     "`return' with wrong type %s, in function `%s' "
 			     "returning %s",
-			     ret->type->name,
+			     ret_type->name,
 			     state->current_function->function_name(),
 			     state->current_function->return_type->name);
 	 }
@@ -3321,7 +3399,7 @@ ast_struct_specifier::hir(exec_list *instructions,
     * the types to HIR.  This ensures that structure definitions embedded in
     * other structure definitions are processed.
     */
-   glsl_struct_field *const fields = talloc_array(state, glsl_struct_field,
+   glsl_struct_field *const fields = ralloc_array(state, glsl_struct_field,
 						  decl_count);
 
    unsigned i = 0;

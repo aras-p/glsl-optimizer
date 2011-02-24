@@ -35,6 +35,8 @@
 
 #include "tgsi/tgsi_scan.h"
 
+#include "svga_state.h"
+
 
 #define SVGA_TEX_UNITS 8
 #define SVGA_MAX_POINTSIZE 80.0
@@ -147,7 +149,14 @@ struct svga_rasterizer_state {
    float pointsize;
    
    unsigned hw_unfilled:16;         /* PIPE_POLYGON_MODE_x */
-   unsigned need_pipeline:16;    /* which prims do we need help for? */
+
+   /** Which prims do we need help for?  Bitmask of (1 << PIPE_PRIM_x) flags */
+   unsigned need_pipeline:16;
+
+   /** For debugging: */
+   const char* need_pipeline_tris_str;
+   const char* need_pipeline_lines_str;
+   const char* need_pipeline_points_str;
 };
 
 struct svga_sampler_state {
@@ -237,7 +246,7 @@ struct svga_prescale {
 };
 
 
-/* Updated by calling svga_update_state( SVGA_STATE_HW_VIEWPORT )
+/* Updated by calling svga_update_state( SVGA_STATE_HW_CLEAR )
  */
 struct svga_hw_clear_state
 {
@@ -317,6 +326,9 @@ struct svga_context
       unsigned shader_id;
 
       unsigned disable_shader;
+
+      boolean no_line_width;
+      boolean force_hw_line_stipple;
    } debug;
 
    struct {
@@ -332,7 +344,7 @@ struct svga_context
    struct util_bitmask *vs_bm;
 
    struct {
-      unsigned dirty[4];
+      unsigned dirty[SVGA_STATE_MAX];
 
       unsigned texture_timestamp;
 
@@ -355,6 +367,9 @@ struct svga_context
 
    /** List of buffers with queued transfers */
    struct list_head dirty_buffers;
+
+   /** Was the previous draw done with the SW path? */
+   boolean prev_draw_swtnl;
 };
 
 /* A flag for each state_tracker state object:
@@ -437,6 +452,8 @@ void svga_context_flush( struct svga_context *svga,
                          struct pipe_fence_handle **pfence );
 
 void svga_hwtnl_flush_retry( struct svga_context *svga );
+
+void svga_surfaces_flush(struct svga_context *svga);
 
 struct pipe_context *
 svga_context_create(struct pipe_screen *screen,

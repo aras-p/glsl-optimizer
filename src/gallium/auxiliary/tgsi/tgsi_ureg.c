@@ -1,6 +1,6 @@
 /**************************************************************************
  * 
- * Copyright 2009 VMware, Inc.
+ * Copyright 2009-2010 VMware, Inc.
  * All Rights Reserved.
  * 
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -47,6 +47,7 @@ union tgsi_any_token {
    struct tgsi_declaration_range decl_range;
    struct tgsi_declaration_dimension decl_dim;
    struct tgsi_declaration_semantic decl_semantic;
+   struct tgsi_declaration_resource decl_resource;
    struct tgsi_immediate imm;
    union  tgsi_immediate_data imm_data;
    struct tgsi_instruction insn;
@@ -136,6 +137,16 @@ struct ureg_program
 
    struct ureg_src sampler[PIPE_MAX_SAMPLERS];
    unsigned nr_samplers;
+
+   struct {
+      unsigned index;
+      unsigned target;
+      unsigned return_type_x;
+      unsigned return_type_y;
+      unsigned return_type_z;
+      unsigned return_type_w;
+   } resource[PIPE_MAX_SHADER_RESOURCES];
+   unsigned nr_resources;
 
    unsigned temps_active[UREG_MAX_TEMP / 32];
    unsigned nr_temps;
@@ -578,6 +589,41 @@ struct ureg_src ureg_DECL_sampler( struct ureg_program *ureg,
    return ureg->sampler[0];
 }
 
+/*
+ * Allocate a new shader resource.
+ */
+struct ureg_src
+ureg_DECL_resource(struct ureg_program *ureg,
+                   unsigned index,
+                   unsigned target,
+                   unsigned return_type_x,
+                   unsigned return_type_y,
+                   unsigned return_type_z,
+                   unsigned return_type_w)
+{
+   struct ureg_src reg = ureg_src_register(TGSI_FILE_RESOURCE, index);
+   uint i;
+
+   for (i = 0; i < ureg->nr_resources; i++) {
+      if (ureg->resource[i].index == index) {
+         return reg;
+      }
+   }
+
+   if (i < PIPE_MAX_SHADER_RESOURCES) {
+      ureg->resource[i].index = index;
+      ureg->resource[i].target = target;
+      ureg->resource[i].return_type_x = return_type_x;
+      ureg->resource[i].return_type_y = return_type_y;
+      ureg->resource[i].return_type_z = return_type_z;
+      ureg->resource[i].return_type_w = return_type_w;
+      ureg->nr_resources++;
+      return reg;
+   }
+
+   assert(0);
+   return reg;
+}
 
 static int
 match_or_expand_immediate( const unsigned *v,
@@ -821,9 +867,10 @@ ureg_emit_dst( struct ureg_program *ureg,
    assert(dst.File != TGSI_FILE_CONSTANT);
    assert(dst.File != TGSI_FILE_INPUT);
    assert(dst.File != TGSI_FILE_SAMPLER);
+   assert(dst.File != TGSI_FILE_RESOURCE);
    assert(dst.File != TGSI_FILE_IMMEDIATE);
    assert(dst.File < TGSI_FILE_COUNT);
-   
+
    out[n].value = 0;
    out[n].dst.File = dst.File;
    out[n].dst.WriteMask = dst.WriteMask;
@@ -1206,6 +1253,36 @@ emit_decl_range2D(struct ureg_program *ureg,
 }
 
 static void
+emit_decl_resource(struct ureg_program *ureg,
+                   unsigned index,
+                   unsigned target,
+                   unsigned return_type_x,
+                   unsigned return_type_y,
+                   unsigned return_type_z,
+                   unsigned return_type_w )
+{
+   union tgsi_any_token *out = get_tokens(ureg, DOMAIN_DECL, 3);
+
+   out[0].value = 0;
+   out[0].decl.Type = TGSI_TOKEN_TYPE_DECLARATION;
+   out[0].decl.NrTokens = 3;
+   out[0].decl.File = TGSI_FILE_RESOURCE;
+   out[0].decl.UsageMask = 0xf;
+   out[0].decl.Interpolate = TGSI_INTERPOLATE_CONSTANT;
+
+   out[1].value = 0;
+   out[1].decl_range.First = index;
+   out[1].decl_range.Last = index;
+
+   out[2].value = 0;
+   out[2].decl_resource.Resource    = target;
+   out[2].decl_resource.ReturnTypeX = return_type_x;
+   out[2].decl_resource.ReturnTypeY = return_type_y;
+   out[2].decl_resource.ReturnTypeZ = return_type_z;
+   out[2].decl_resource.ReturnTypeW = return_type_w;
+}
+
+static void
 emit_immediate( struct ureg_program *ureg,
                 const unsigned *v,
                 unsigned type )
@@ -1339,6 +1416,16 @@ static void emit_decls( struct ureg_program *ureg )
       emit_decl_range( ureg, 
                        TGSI_FILE_SAMPLER,
                        ureg->sampler[i].Index, 1 );
+   }
+
+   for (i = 0; i < ureg->nr_resources; i++) {
+      emit_decl_resource(ureg,
+                         ureg->resource[i].index,
+                         ureg->resource[i].target,
+                         ureg->resource[i].return_type_x,
+                         ureg->resource[i].return_type_y,
+                         ureg->resource[i].return_type_z,
+                         ureg->resource[i].return_type_w);
    }
 
    if (ureg->const_decls.nr_constant_ranges) {

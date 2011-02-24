@@ -31,6 +31,7 @@
 #include "util/u_inlines.h"
 #include "util/u_draw_quad.h"
 #include "util/u_memory.h"
+#include "cso_cache/cso_context.h"
 
 
 /**
@@ -39,6 +40,7 @@
  */
 void 
 util_draw_vertex_buffer(struct pipe_context *pipe,
+                        struct cso_context *cso,
                         struct pipe_resource *vbuf,
                         uint offset,
                         uint prim_type,
@@ -54,8 +56,12 @@ util_draw_vertex_buffer(struct pipe_context *pipe,
    vbuffer.buffer = vbuf;
    vbuffer.stride = num_attribs * 4 * sizeof(float);  /* vertex size */
    vbuffer.buffer_offset = offset;
-   vbuffer.max_index = num_verts - 1;
-   pipe->set_vertex_buffers(pipe, 1, &vbuffer);
+
+   if (cso) {
+      cso_set_vertex_buffers(cso, 1, &vbuffer);
+   } else {
+      pipe->set_vertex_buffers(pipe, 1, &vbuffer);
+   }
 
    /* note: vertex elements already set by caller */
 
@@ -70,7 +76,7 @@ util_draw_vertex_buffer(struct pipe_context *pipe,
  * Note: this isn't especially efficient.
  */
 void 
-util_draw_texquad(struct pipe_context *pipe,
+util_draw_texquad(struct pipe_context *pipe, struct cso_context *cso,
                   float x0, float y0, float x1, float y1, float z)
 {
    uint numAttribs = 2, i, j;
@@ -118,7 +124,7 @@ util_draw_texquad(struct pipe_context *pipe,
    if (!vbuf) 
       goto out;
 
-   util_draw_vertex_buffer(pipe, vbuf, 0, PIPE_PRIM_TRIANGLE_FAN, 4, 2);
+   util_draw_vertex_buffer(pipe, cso, vbuf, 0, PIPE_PRIM_TRIANGLE_FAN, 4, 2);
 
 out:
    if (vbuf)

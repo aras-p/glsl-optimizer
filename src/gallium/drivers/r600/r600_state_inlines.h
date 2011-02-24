@@ -253,9 +253,13 @@ static inline unsigned r600_tex_dim(unsigned dim)
 	default:
 	case PIPE_TEXTURE_1D:
 		return V_038000_SQ_TEX_DIM_1D;
+	case PIPE_TEXTURE_1D_ARRAY:
+		return V_038000_SQ_TEX_DIM_1D_ARRAY;
 	case PIPE_TEXTURE_2D:
 	case PIPE_TEXTURE_RECT:
 		return V_038000_SQ_TEX_DIM_2D;
+	case PIPE_TEXTURE_2D_ARRAY:
+		return V_038000_SQ_TEX_DIM_2D_ARRAY;
 	case PIPE_TEXTURE_3D:
 		return V_038000_SQ_TEX_DIM_3D;
 	case PIPE_TEXTURE_CUBE:
@@ -285,9 +289,13 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 		return V_0280A0_SWAP_ALT_REV;
 	case PIPE_FORMAT_I8_UNORM:
 	case PIPE_FORMAT_L8_UNORM:
+	case PIPE_FORMAT_L8_SRGB:
 	case PIPE_FORMAT_R8_UNORM:
 	case PIPE_FORMAT_R8_SNORM:
 		return V_0280A0_SWAP_STD;
+
+	case PIPE_FORMAT_L4A4_UNORM:
+		return V_0280A0_SWAP_ALT;
 
 		/* 16-bit buffers. */
 	case PIPE_FORMAT_B5G6R5_UNORM:
@@ -305,6 +313,7 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 		return V_0280A0_SWAP_STD;
 
 	case PIPE_FORMAT_L8A8_UNORM:
+	case PIPE_FORMAT_L8A8_SRGB:
 		return V_0280A0_SWAP_ALT;
 	case PIPE_FORMAT_R8G8_UNORM:
 		return V_0280A0_SWAP_STD;
@@ -328,6 +337,7 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 	case PIPE_FORMAT_X8R8G8B8_UNORM:
 		return V_0280A0_SWAP_ALT_REV;
 	case PIPE_FORMAT_R8G8B8A8_SNORM:
+	case PIPE_FORMAT_R8G8B8A8_UNORM:
 	case PIPE_FORMAT_R8G8B8X8_UNORM:
 		return V_0280A0_SWAP_STD;
 
@@ -346,9 +356,11 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 
 	case PIPE_FORMAT_R10G10B10A2_UNORM:
 	case PIPE_FORMAT_R10G10B10X2_SNORM:
-	case PIPE_FORMAT_B10G10R10A2_UNORM:
 	case PIPE_FORMAT_R10SG10SB10SA2U_NORM:
-		return V_0280A0_SWAP_STD_REV;
+		return V_0280A0_SWAP_STD;
+
+	case PIPE_FORMAT_B10G10R10A2_UNORM:
+		return V_0280A0_SWAP_ALT;
 
 	case PIPE_FORMAT_R16G16_UNORM:
 		return V_0280A0_SWAP_STD;
@@ -356,14 +368,13 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 		/* 64-bit buffers. */
 	case PIPE_FORMAT_R16G16B16A16_UNORM:
 	case PIPE_FORMAT_R16G16B16A16_SNORM:
-		//		return FMT_16_16_16_16;
 	case PIPE_FORMAT_R16G16B16A16_FLOAT:
-		//		return FMT_16_16_16_16_FLOAT;
 
 		/* 128-bit buffers. */
-	//case PIPE_FORMAT_R32G32B32A32_FLOAT:
-		//		return FMT_32_32_32_32_FLOAT;
-		return 0;
+	case PIPE_FORMAT_R32G32B32A32_FLOAT:
+	case PIPE_FORMAT_R32G32B32A32_SNORM:
+	case PIPE_FORMAT_R32G32B32A32_UNORM:
+		return V_0280A0_SWAP_STD;
 	default:
 		R600_ERR("unsupported colorswap format %d\n", format);
 		return ~0;
@@ -374,10 +385,14 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 {
 	switch (format) {
+	case PIPE_FORMAT_L4A4_UNORM:
+		return V_0280A0_COLOR_4_4;
+
 		/* 8-bit buffers. */
 	case PIPE_FORMAT_A8_UNORM:
 	case PIPE_FORMAT_I8_UNORM:
 	case PIPE_FORMAT_L8_UNORM:
+	case PIPE_FORMAT_L8_SRGB:
 	case PIPE_FORMAT_R8_UNORM:
 	case PIPE_FORMAT_R8_SNORM:
 		return V_0280A0_COLOR_8;
@@ -398,6 +413,7 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 		return V_0280A0_COLOR_16;
 
 	case PIPE_FORMAT_L8A8_UNORM:
+	case PIPE_FORMAT_L8A8_SRGB:
 	case PIPE_FORMAT_R8G8_UNORM:
 		return V_0280A0_COLOR_8_8;
 
@@ -425,7 +441,7 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 	case PIPE_FORMAT_R10G10B10X2_SNORM:
 	case PIPE_FORMAT_B10G10R10A2_UNORM:
 	case PIPE_FORMAT_R10SG10SB10SA2U_NORM:
-		return V_0280A0_COLOR_10_10_10_2;
+		return V_0280A0_COLOR_2_10_10_10;
 
 	case PIPE_FORMAT_Z24X8_UNORM:
 	case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
@@ -467,10 +483,13 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 		return V_0280A0_COLOR_32_32;
 
 		/* 128-bit buffers. */
-	//case PIPE_FORMAT_R32G32B32_FLOAT:
-	//  	return V_0280A0_COLOR_32_32_32_FLOAT;
-	//case PIPE_FORMAT_R32G32B32A32_FLOAT:
-	//	return V_0280A0_COLOR_32_32_32_32_FLOAT;
+	case PIPE_FORMAT_R32G32B32_FLOAT:
+	  	return V_0280A0_COLOR_32_32_32_FLOAT;
+	case PIPE_FORMAT_R32G32B32A32_FLOAT:
+		return V_0280A0_COLOR_32_32_32_32_FLOAT;
+	case PIPE_FORMAT_R32G32B32A32_SNORM:
+	case PIPE_FORMAT_R32G32B32A32_UNORM:
+		return V_0280A0_COLOR_32_32_32_32;
 
 		/* YUV buffers. */
 	case PIPE_FORMAT_UYVY:
@@ -497,9 +516,37 @@ static INLINE boolean r600_is_zs_format_supported(enum pipe_format format)
 	return r600_translate_dbformat(format) != ~0;
 }
 
-static INLINE boolean r600_is_vertex_format_supported(enum pipe_format format)
+static INLINE boolean r600_is_vertex_format_supported(enum pipe_format format,
+						      enum radeon_family family)
 {
-	return r600_translate_colorformat(format) != ~0;
+	unsigned i;
+	const struct util_format_description *desc = util_format_description(format);
+	if (!desc)
+		return FALSE;
+
+	/* Find the first non-VOID channel. */
+	for (i = 0; i < 4; i++) {
+		if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
+			break;
+		}
+	}
+	if (i == 4)
+		return FALSE;
+
+	/* No fixed, no double. */
+	if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN ||
+	    desc->channel[i].type == UTIL_FORMAT_TYPE_FIXED ||
+	    (desc->channel[i].size == 64 &&
+	     desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT))
+		return FALSE;
+
+	/* No scaled/norm formats with 32 bits per channel. */
+	if (desc->channel[i].size == 32 &&
+	    (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED ||
+	     desc->channel[i].type == UTIL_FORMAT_TYPE_UNSIGNED))
+		return FALSE;
+
+	return TRUE;
 }
 
 #endif

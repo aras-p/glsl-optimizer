@@ -29,6 +29,7 @@
 #include "vg_context.h"
 #include "image.h"
 #include "api.h"
+#include "handle.h"
 #include "renderer.h"
 #include "shaders_cache.h"
 
@@ -251,8 +252,8 @@ void vegaColorMatrix(VGImage dst, VGImage src,
       return;
    }
 
-   d = (struct vg_image*)dst;
-   s = (struct vg_image*)src;
+   d = handle_to_image(dst);
+   s = handle_to_image(src);
 
    if (vg_image_overlaps(d, s)) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
@@ -293,7 +294,7 @@ void vegaConvolve(VGImage dst, VGImage src,
    struct vg_image *d, *s;
    VGint kernel_size = kernelWidth * kernelHeight;
    struct filter_info info;
-   const VGint max_kernel_size = vgGeti(VG_MAX_KERNEL_SIZE);
+   const VGint max_kernel_size = vegaGeti(VG_MAX_KERNEL_SIZE);
 
    if (dst == VG_INVALID_HANDLE || src == VG_INVALID_HANDLE) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
@@ -317,8 +318,8 @@ void vegaConvolve(VGImage dst, VGImage src,
       return;
    }
 
-   d = (struct vg_image*)dst;
-   s = (struct vg_image*)src;
+   d = handle_to_image(dst);
+   s = handle_to_image(src);
 
    if (vg_image_overlaps(d, s)) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
@@ -395,7 +396,7 @@ void vegaSeparableConvolve(VGImage dst, VGImage src,
    struct vg_context *ctx = vg_current_context();
    VGshort *kernel;
    VGint i, j, idx = 0;
-   const VGint max_kernel_size = vgGeti(VG_MAX_SEPARABLE_KERNEL_SIZE);
+   const VGint max_kernel_size = vegaGeti(VG_MAX_SEPARABLE_KERNEL_SIZE);
 
    if (dst == VG_INVALID_HANDLE || src == VG_INVALID_HANDLE) {
       vg_set_error(ctx, VG_BAD_HANDLE_ERROR);
@@ -425,8 +426,8 @@ void vegaSeparableConvolve(VGImage dst, VGImage src,
          ++idx;
       }
    }
-   vgConvolve(dst, src, kernelWidth, kernelHeight, shiftX, shiftY,
-              kernel, scale, bias, tilingMode);
+   vegaConvolve(dst, src, kernelWidth, kernelHeight, shiftX, shiftY,
+                kernel, scale, bias, tilingMode);
    free(kernel);
 }
 
@@ -502,8 +503,8 @@ void vegaGaussianBlur(VGImage dst, VGImage src,
       return;
    }
 
-   d = (struct vg_image*)dst;
-   s = (struct vg_image*)src;
+   d = handle_to_image(dst);
+   s = handle_to_image(src);
 
    if (vg_image_overlaps(d, s)) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
@@ -599,8 +600,8 @@ void vegaLookup(VGImage dst, VGImage src,
       return;
    }
 
-   d = (struct vg_image*)dst;
-   s = (struct vg_image*)src;
+   d = handle_to_image(dst);
+   s = handle_to_image(src);
 
    if (vg_image_overlaps(d, s)) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
@@ -662,8 +663,8 @@ void vegaLookupSingle(VGImage dst, VGImage src,
       return;
    }
 
-   d = (struct vg_image*)dst;
-   s = (struct vg_image*)src;
+   d = handle_to_image(dst);
+   s = handle_to_image(src);
 
    if (vg_image_overlaps(d, s)) {
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);

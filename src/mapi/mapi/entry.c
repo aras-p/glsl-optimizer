@@ -37,7 +37,7 @@
 #ifdef MAPI_MODE_BRIDGE
 #define ENTRY_CURRENT_TABLE_GET "_glapi_get_dispatch"
 #else
-#define ENTRY_CURRENT_TABLE_GET "u_current_get_internal"
+#define ENTRY_CURRENT_TABLE_GET U_STRINGIFY(u_current_get_internal)
 #endif
 
 #if defined(USE_X86_ASM) && defined(__GNUC__)

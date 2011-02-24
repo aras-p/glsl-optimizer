@@ -343,7 +343,7 @@ alloc_texture(struct st_context *st, GLsizei width, GLsizei height,
    struct pipe_resource *pt;
 
    pt = st_texture_create(st, st->internal_target, texFormat, 0,
-                          width, height, 1, PIPE_BIND_SAMPLER_VIEW);
+                          width, height, 1, 1, PIPE_BIND_SAMPLER_VIEW);
 
    return pt;
 }
@@ -522,10 +522,11 @@ draw_quad(struct gl_context *ctx, GLfloat x0, GLfloat y0, GLfloat z,
       /* allocate/load buffer object with vertex data */
       buf = pipe_buffer_create(pipe->screen,
 			       PIPE_BIND_VERTEX_BUFFER,
+			       PIPE_USAGE_STATIC,
                                sizeof(verts));
       pipe_buffer_write(st->pipe, buf, 0, sizeof(verts), verts);
 
-      util_draw_vertex_buffer(pipe, buf, 0,
+      util_draw_vertex_buffer(pipe, st->cso_context, buf, 0,
                               PIPE_PRIM_QUADS,
                               4,  /* verts */
                               3); /* attribs/vert */
@@ -570,6 +571,7 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_save_fragment_shader(cso);
    cso_save_vertex_shader(cso);
    cso_save_vertex_elements(cso);
+   cso_save_vertex_buffers(cso);
    if (write_stencil) {
       cso_save_depth_stencil_alpha(cso);
       cso_save_blend(cso);
@@ -686,6 +688,7 @@ draw_textured_quad(struct gl_context *ctx, GLint x, GLint y, GLfloat z,
    cso_restore_fragment_shader(cso);
    cso_restore_vertex_shader(cso);
    cso_restore_vertex_elements(cso);
+   cso_restore_vertex_buffers(cso);
    if (write_stencil) {
       cso_restore_depth_stencil_alpha(cso);
       cso_restore_blend(cso);
@@ -1139,6 +1142,110 @@ copy_stencil_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
 }
 
 
+/** Do the src/dest regions overlap? */
+static GLboolean
+regions_overlap(GLint srcX, GLint srcY, GLint dstX, GLint dstY,
+                GLsizei width, GLsizei height)
+{
+   if (srcX + width <= dstX ||
+       dstX + width <= srcX ||
+       srcY + height <= dstY ||
+       dstY + height <= srcY)
+      return GL_FALSE;
+   else
+      return GL_TRUE;
+}
+
+
+/**
+ * Try to do a glCopyPixels for simple cases with a blit by calling
+ * pipe->resource_copy_region().
+ *
+ * We can do this when we're copying color pixels (depth/stencil
+ * eventually) with no pixel zoom, no pixel transfer ops, no
+ * per-fragment ops, the src/dest regions don't overlap and the
+ * src/dest pixel formats are the same.
+ */
+static GLboolean
+blit_copy_pixels(struct gl_context *ctx, GLint srcx, GLint srcy,
+                 GLsizei width, GLsizei height,
+                 GLint dstx, GLint dsty, GLenum type)
+{
+   struct st_context *st = st_context(ctx);
+   struct pipe_context *pipe = st->pipe;
+   struct gl_pixelstore_attrib pack, unpack;
+   GLint readX, readY, readW, readH;
+
+   if (type == GL_COLOR &&
+       ctx->Pixel.ZoomX == 1.0 &&
+       ctx->Pixel.ZoomY == 1.0 &&
+       ctx->_ImageTransferState == 0x0 &&
+       !ctx->Color.BlendEnabled &&
+       !ctx->Color.AlphaEnabled &&
+       !ctx->Depth.Test &&
+       !ctx->Fog.Enabled &&
+       !ctx->Stencil.Enabled &&
+       !ctx->FragmentProgram.Enabled &&
+       !ctx->VertexProgram.Enabled &&
+       !ctx->Shader.CurrentFragmentProgram &&
+       st_fb_orientation(ctx->ReadBuffer) == st_fb_orientation(ctx->DrawBuffer) &&
+       ctx->DrawBuffer->_NumColorDrawBuffers == 1) {
+      struct st_renderbuffer *rbRead, *rbDraw;
+      GLint drawX, drawY;
+
+      /*
+       * Clip the read region against the src buffer bounds.
+       * We'll still allocate a temporary buffer/texture for the original
+       * src region size but we'll only read the region which is on-screen.
+       * This may mean that we draw garbage pixels into the dest region, but
+       * that's expected.
+       */
+      readX = srcx;
+      readY = srcy;
+      readW = width;
+      readH = height;
+      pack = ctx->DefaultPacking;
+      if (!_mesa_clip_readpixels(ctx, &readX, &readY, &readW, &readH, &pack))
+         return GL_TRUE; /* all done */
+
+      /* clip against dest buffer bounds and scissor box */
+      drawX = dstx + pack.SkipPixels;
+      drawY = dsty + pack.SkipRows;
+      unpack = pack;
+      if (!_mesa_clip_drawpixels(ctx, &drawX, &drawY, &readW, &readH, &unpack))
+         return GL_TRUE; /* all done */
+
+      readX = readX - pack.SkipPixels + unpack.SkipPixels;
+      readY = readY - pack.SkipRows + unpack.SkipRows;
+
+      rbRead = st_get_color_read_renderbuffer(ctx);
+      rbDraw = st_renderbuffer(ctx->DrawBuffer->_ColorDrawBuffers[0]);
+
+      if ((rbRead != rbDraw ||
+           !regions_overlap(readX, readY, drawX, drawY, readW, readH)) &&
+          rbRead->Base.Format == rbDraw->Base.Format) {
+         struct pipe_box srcBox;
+
+         /* flip src/dst position if needed */
+         if (st_fb_orientation(ctx->ReadBuffer) == Y_0_TOP) {
+            /* both buffers will have the same orientation */
+            readY = ctx->ReadBuffer->Height - readY - readH;
+            drawY = ctx->DrawBuffer->Height - drawY - readH;
+         }
+
+         u_box_2d(readX, readY, readW, readH, &srcBox);
+
+         pipe->resource_copy_region(pipe,
+                                    rbDraw->texture, 0, drawX, drawY, 0,
+                                    rbRead->texture, 0, &srcBox);
+         return GL_TRUE;
+      }
+   }
+
+   return GL_FALSE;
+}
+
+
 static void
 st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
               GLsizei width, GLsizei height,
@@ -1167,6 +1274,17 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       copy_stencil_pixels(ctx, srcx, srcy, width, height, dstx, dsty);
       return;
    }
+
+   if (blit_copy_pixels(ctx, srcx, srcy, width, height, dstx, dsty, type))
+      return;
+
+   /*
+    * The subsequent code implements glCopyPixels by copying the source
+    * pixels into a temporary texture that's then applied to a textured quad.
+    * When we draw the textured quad, all the usual per-fragment operations
+    * are handled.
+    */
+
 
    /*
     * Get vertex/fragment shaders
@@ -1268,7 +1386,7 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
    if (srcFormat == texFormat) {
       struct pipe_box src_box;
       u_box_2d(readX, readY, readW, readH, &src_box);
-    /* copy source framebuffer surface into mipmap/texture */
+      /* copy source framebuffer surface into mipmap/texture */
       pipe->resource_copy_region(pipe,
                                  pt,                                /* dest tex */
                                  0,
@@ -1281,7 +1399,8 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
    else {
       /* CPU-based fallback/conversion */
       struct pipe_transfer *ptRead =
-         pipe_get_transfer(st->pipe, rbRead->texture, 0, 0,
+         pipe_get_transfer(st->pipe, rbRead->texture,
+                           0, 0, /* level, layer */
                            PIPE_TRANSFER_READ,
                            readX, readY, readW, readH);
       struct pipe_transfer *ptTex;
@@ -1302,15 +1421,19 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
       if (type == GL_COLOR) {
          /* alternate path using get/put_tile() */
          GLfloat *buf = (GLfloat *) malloc(width * height * 4 * sizeof(GLfloat));
-         pipe_get_tile_rgba(pipe, ptRead, readX, readY, readW, readH, buf);
-         pipe_put_tile_rgba(pipe, ptTex, pack.SkipPixels, pack.SkipRows,
-                            readW, readH, buf);
+         enum pipe_format readFormat, drawFormat;
+         readFormat = util_format_linear(rbRead->texture->format);
+         drawFormat = util_format_linear(pt->format);
+         pipe_get_tile_rgba_format(pipe, ptRead, 0, 0, readW, readH,
+                                   readFormat, buf);
+         pipe_put_tile_rgba_format(pipe, ptTex, pack.SkipPixels, pack.SkipRows,
+                                   readW, readH, drawFormat, buf);
          free(buf);
       }
       else {
          /* GL_DEPTH */
          GLuint *buf = (GLuint *) malloc(width * height * sizeof(GLuint));
-         pipe_get_tile_z(pipe, ptRead, readX, readY, readW, readH, buf);
+         pipe_get_tile_z(pipe, ptRead, 0, 0, readW, readH, buf);
          pipe_put_tile_z(pipe, ptTex, pack.SkipPixels, pack.SkipRows,
                          readW, readH, buf);
          free(buf);

@@ -591,6 +591,17 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
       }
    }
 
+   if (ctx->Extensions.EXT_texture_format_BGRA8888) {
+      switch (internalFormat) {
+      case GL_BGRA:
+	 RETURN_IF_SUPPORTED(MESA_FORMAT_ARGB8888);
+	 break;
+
+      default:
+         ; /* fallthrough */
+      }
+   }
+
    _mesa_problem(ctx, "unexpected format in _mesa_choose_tex_format()");
    return MESA_FORMAT_NONE;
 }

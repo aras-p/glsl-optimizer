@@ -542,7 +542,7 @@ viaCreateContext(gl_api api,
     else
         shareCtx = NULL;
 
-    vmesa->glCtx = _mesa_create_context(visual, shareCtx, &functions,
+    vmesa->glCtx = _mesa_create_context(API_OPENGL, visual, shareCtx, &functions,
 					(void*) vmesa);
     
     vmesa->shareCtx = shareCtx;

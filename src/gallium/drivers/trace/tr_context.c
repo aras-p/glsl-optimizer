@@ -1419,6 +1419,28 @@ trace_context_transfer_inline_write(struct pipe_context *_context,
 }
 
 
+static void trace_redefine_user_buffer(struct pipe_context *_context,
+                                       struct pipe_resource *_resource,
+                                       unsigned offset, unsigned size)
+{
+   struct trace_context *tr_context = trace_context(_context);
+   struct trace_resource *tr_tex = trace_resource(_resource);
+   struct pipe_context *context = tr_context->pipe;
+   struct pipe_resource *resource = tr_tex->resource;
+
+   assert(resource->screen == context->screen);
+
+   trace_dump_call_begin("pipe_context", "redefine_user_buffer");
+
+   trace_dump_arg(ptr, context);
+   trace_dump_arg(ptr, resource);
+   trace_dump_arg(uint, offset);
+   trace_dump_arg(uint, size);
+
+   trace_dump_call_end();
+
+   context->redefine_user_buffer(context, resource, offset, size);
+}
 
 
 static const struct debug_named_value rbug_blocker_flags[] = {
@@ -1506,6 +1528,7 @@ trace_context_create(struct trace_screen *tr_scr,
    tr_ctx->base.transfer_unmap = trace_context_transfer_unmap;
    tr_ctx->base.transfer_flush_region = trace_context_transfer_flush_region;
    tr_ctx->base.transfer_inline_write = trace_context_transfer_inline_write;
+   tr_ctx->base.redefine_user_buffer = trace_redefine_user_buffer;
 
    tr_ctx->pipe = pipe;
 

@@ -21,10 +21,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-extern "C" {
-#include <talloc.h>
-}
-
 #include "ir_reader.h"
 #include "glsl_parser_extras.h"
 #include "glsl_types.h"
@@ -96,7 +92,7 @@ ir_reader::read(exec_list *instructions, const char *src, bool scan_for_protos)
    }
 
    read_instructions(instructions, expr, NULL);
-   talloc_free(expr);
+   ralloc_free(expr);
 
    if (debug)
       validate_ir_tree(instructions);
@@ -110,21 +106,19 @@ ir_reader::ir_read_error(s_expression *expr, const char *fmt, ...)
    state->error = true;
 
    if (state->current_function != NULL)
-      state->info_log = talloc_asprintf_append(state->info_log,
-			   "In function %s:\n",
-			   state->current_function->function_name());
-   state->info_log = talloc_strdup_append(state->info_log, "error: ");
+      ralloc_asprintf_append(&state->info_log, "In function %s:\n",
+			     state->current_function->function_name());
+   ralloc_strcat(&state->info_log, "error: ");
 
    va_start(ap, fmt);
-   state->info_log = talloc_vasprintf_append(state->info_log, fmt, ap);
+   ralloc_vasprintf_append(&state->info_log, fmt, ap);
    va_end(ap);
-   state->info_log = talloc_strdup_append(state->info_log, "\n");
+   ralloc_strcat(&state->info_log, "\n");
 
    if (expr != NULL) {
-      state->info_log = talloc_strdup_append(state->info_log,
-					     "...in this context:\n   ");
+      ralloc_strcat(&state->info_log, "...in this context:\n   ");
       expr->print();
-      state->info_log = talloc_strdup_append(state->info_log, "\n\n");
+      ralloc_strcat(&state->info_log, "\n\n");
    }
 }
 
@@ -403,6 +397,8 @@ ir_reader::read_declaration(s_expression *expr)
 	 var->mode = ir_var_auto;
       } else if (strcmp(qualifier->value(), "in") == 0) {
 	 var->mode = ir_var_in;
+      } else if (strcmp(qualifier->value(), "const_in") == 0) {
+	 var->mode = ir_var_const_in;
       } else if (strcmp(qualifier->value(), "out") == 0) {
 	 var->mode = ir_var_out;
       } else if (strcmp(qualifier->value(), "inout") == 0) {
@@ -875,12 +871,12 @@ ir_reader::read_texture(s_expression *expr)
    s_symbol *tag = NULL;
    s_expression *s_sampler = NULL;
    s_expression *s_coord = NULL;
-   s_list *s_offset = NULL;
+   s_expression *s_offset = NULL;
    s_expression *s_proj = NULL;
    s_list *s_shadow = NULL;
    s_expression *s_lod = NULL;
 
-   ir_texture_opcode op;
+   ir_texture_opcode op = ir_tex; /* silence warning */
 
    s_pattern tex_pattern[] =
       { "tex", s_sampler, s_coord, s_offset, s_proj, s_shadow };
@@ -897,6 +893,9 @@ ir_reader::read_texture(s_expression *expr)
       op = ir_texture::get_opcode(tag->value());
       if (op == -1)
 	 return NULL;
+   } else {
+      ir_read_error(NULL, "unexpected texture pattern");
+      return NULL;
    }
 
    ir_texture *tex = new(mem_ctx) ir_texture(op);
@@ -918,18 +917,15 @@ ir_reader::read_texture(s_expression *expr)
       return NULL;
    }
 
-   // Read texel offset, i.e. (0 0 0)
-   s_int *offset_x;
-   s_int *offset_y;
-   s_int *offset_z;
-   s_pattern offset_pat[] = { offset_x, offset_y, offset_z };
-   if (!MATCH(s_offset, offset_pat)) {
-      ir_read_error(s_offset, "expected (<int> <int> <int>)");
-      return NULL;
+   // Read texel offset - either 0 or an rvalue.
+   s_int *si_offset = SX_AS_INT(s_offset);
+   if (si_offset == NULL || si_offset->value() != 0) {
+      tex->offset = read_rvalue(s_offset);
+      if (tex->offset == NULL) {
+	 ir_read_error(s_offset, "expected 0 or an expression");
+	 return NULL;
+      }
    }
-   tex->offsets[0] = offset_x->value();
-   tex->offsets[1] = offset_y->value();
-   tex->offsets[2] = offset_z->value();
 
    if (op != ir_txf) {
       s_int *proj_as_int = SX_AS_INT(s_proj);

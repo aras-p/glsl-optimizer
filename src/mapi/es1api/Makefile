@@ -124,10 +124,15 @@ install: default install-headers install-pc
 	$(MINSTALL) $(TOP)/$(LIB_DIR)/$(esapi_LIB_GLOB) \
 		$(DESTDIR)$(INSTALL_LIB_DIR)
 
+# workaround a bug in makedepend
+makedepend_CPPFLAGS := \
+	$(filter-out -DMAPI_ABI_HEADER=%, $(esapi_CPPFLAGS))
+$(esapi_OBJECTS): glapi_mapi_tmp.h
+
 depend: $(esapi_SOURCES)
 	@echo "running $(MKDEP)"
 	@touch depend
-	@$(MKDEP) $(MKDEP_OPTIONS) -f- $(DEFINES) $(esapi_CPPFLAGS) \
+	@$(MKDEP) $(MKDEP_OPTIONS) -f- $(DEFINES) $(makedepend_CPPFLAGS) \
 		$(esapi_SOURCES) 2>/dev/null | \
 		sed -e 's,^$(GLAPI)/,,' -e 's,^$(MAPI)/,,' > depend
 

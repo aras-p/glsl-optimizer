@@ -179,7 +179,6 @@ st_feedback_draw_vbo(struct gl_context *ctx,
 
       /* common-case setup */
       vbuffers[attr].stride = arrays[mesaAttr]->StrideB; /* in bytes */
-      vbuffers[attr].max_index = max_index;
       velements[attr].instance_divisor = 0;
       velements[attr].vertex_buffer_index = attr;
       velements[attr].src_format = 
@@ -220,7 +219,7 @@ st_feedback_draw_vbo(struct gl_context *ctx,
          break;
       default:
          assert(0);
-	 return;
+	 goto out_unref_vertex;
       }
 
       if (bufobj && bufobj->Name) {
@@ -256,14 +255,6 @@ st_feedback_draw_vbo(struct gl_context *ctx,
    /*
     * unmap vertex/index buffers
     */
-   for (i = 0; i < PIPE_MAX_ATTRIBS; i++) {
-      if (draw->pt.vertex_buffer[i].buffer) {
-         pipe_buffer_unmap(pipe, vb_transfer[i]);
-         pipe_resource_reference(&draw->pt.vertex_buffer[i].buffer, NULL);
-         draw_set_mapped_vertex_buffer(draw, i, NULL);
-      }
-   }
-
    if (ib) {
       draw_set_mapped_index_buffer(draw, NULL);
       draw_set_index_buffer(draw, NULL);
@@ -272,6 +263,14 @@ st_feedback_draw_vbo(struct gl_context *ctx,
          pipe_buffer_unmap(pipe, ib_transfer);
       pipe_resource_reference(&ibuffer.buffer, NULL);
    }
+
+ out_unref_vertex:
+   for (attr = 0; attr < vp->num_inputs; attr++) {
+      pipe_buffer_unmap(pipe, vb_transfer[attr]);
+      draw_set_mapped_vertex_buffer(draw, attr, NULL);
+      pipe_resource_reference(&vbuffers[attr].buffer, NULL);
+   }
+   draw_set_vertex_buffers(draw, 0, NULL);
 }
 
 #endif /* FEATURE_feedback || FEATURE_rastpos */

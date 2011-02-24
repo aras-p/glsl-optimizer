@@ -89,7 +89,7 @@ do_function_inlining(exec_list *instructions)
 static void
 replace_return_with_assignment(ir_instruction *ir, void *data)
 {
-   void *ctx = talloc_parent(ir);
+   void *ctx = ralloc_parent(ir);
    ir_variable *retval = (ir_variable *)data;
    ir_return *ret = ir->as_return();
 
@@ -110,7 +110,7 @@ replace_return_with_assignment(ir_instruction *ir, void *data)
 ir_rvalue *
 ir_call::generate_inline(ir_instruction *next_ir)
 {
-   void *ctx = talloc_parent(this);
+   void *ctx = ralloc_parent(this);
    ir_variable **parameters;
    int num_parameters;
    int i;
@@ -165,6 +165,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
 
       /* Move the actual param into our param variable if it's an 'in' type. */
       if (parameters[i] && (sig_param->mode == ir_var_in ||
+			    sig_param->mode == ir_var_const_in ||
 			    sig_param->mode == ir_var_inout)) {
 	 ir_assignment *assign;
 
@@ -357,7 +358,7 @@ ir_sampler_replacement_visitor::replace_deref(ir_dereference **deref)
 {
    ir_dereference_variable *deref_var = (*deref)->as_dereference_variable();
    if (deref_var && deref_var->var == this->sampler) {
-      *deref = this->deref->clone(talloc_parent(*deref), NULL);
+      *deref = this->deref->clone(ralloc_parent(*deref), NULL);
    }
 }
 

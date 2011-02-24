@@ -38,6 +38,7 @@
 #include "dri_screen.h"
 #include "dri_context.h"
 #include "dri_drawable.h"
+#include "dri2_buffer.h"
 
 /**
  * DRI2 flush extension.
@@ -51,7 +52,7 @@ static void
 dri2_invalidate_drawable(__DRIdrawable *dPriv)
 {
    struct dri_drawable *drawable = dri_drawable(dPriv);
-   struct dri_context *ctx = dri_context(dPriv->driContextPriv);
+   struct dri_context *ctx = drawable->context;
 
    dri2InvalidateDrawable(dPriv);
    drawable->dPriv->lastStamp = *drawable->dPriv->pStamp;
@@ -259,6 +260,91 @@ dri2_drawable_process_buffers(struct dri_drawable *drawable,
    memcpy(drawable->old, buffers, sizeof(__DRIbuffer) * count);
 }
 
+static __DRIbuffer *
+dri2_allocate_buffer(__DRIscreen *sPriv,
+                     unsigned attachment, unsigned format,
+                     int width, int height)
+{
+   struct dri_screen *screen = dri_screen(sPriv);
+   struct dri2_buffer *buffer;
+   struct pipe_resource templ;
+   enum st_attachment_type statt;
+   enum pipe_format pf;
+   unsigned bind;
+   struct winsys_handle whandle;
+
+   switch (attachment) {
+      case __DRI_BUFFER_FRONT_LEFT:
+      case __DRI_BUFFER_FAKE_FRONT_LEFT:
+         statt = ST_ATTACHMENT_FRONT_LEFT;
+         bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
+         break;
+      case __DRI_BUFFER_BACK_LEFT:
+         statt = ST_ATTACHMENT_BACK_LEFT;
+         bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_SAMPLER_VIEW;
+         break;
+      case __DRI_BUFFER_DEPTH:
+      case __DRI_BUFFER_DEPTH_STENCIL:
+      case __DRI_BUFFER_STENCIL:
+            statt = ST_ATTACHMENT_DEPTH_STENCIL;
+            bind = PIPE_BIND_DEPTH_STENCIL; /* XXX sampler? */
+         break;
+      default:
+         statt = ST_ATTACHMENT_INVALID;
+         break;
+   }
+
+   switch (format) {
+      case 32:
+         pf = PIPE_FORMAT_B8G8R8X8_UNORM;
+         break;
+      case 16:
+         pf = PIPE_FORMAT_Z16_UNORM;
+         break;
+      default:
+         return NULL;
+   }
+
+   buffer = CALLOC_STRUCT(dri2_buffer);
+   if (!buffer)
+      return NULL;
+
+   memset(&templ, 0, sizeof(templ));
+   templ.bind = bind;
+   templ.format = pf;
+   templ.target = PIPE_TEXTURE_2D;
+   templ.last_level = 0;
+   templ.width0 = width;
+   templ.height0 = height;
+   templ.depth0 = 1;
+
+   buffer->resource =
+      screen->base.screen->resource_create(screen->base.screen, &templ);
+   if (!buffer->resource)
+      return NULL;
+
+   memset(&whandle, 0, sizeof(whandle));
+   whandle.type = DRM_API_HANDLE_TYPE_SHARED;
+   screen->base.screen->resource_get_handle(screen->base.screen,
+         buffer->resource, &whandle);
+
+   buffer->base.attachment = attachment;
+   buffer->base.name = whandle.handle;
+   buffer->base.cpp = util_format_get_blocksize(pf);
+   buffer->base.pitch = whandle.stride;
+
+   return &buffer->base;
+}
+
+static void
+dri2_release_buffer(__DRIscreen *sPriv, __DRIbuffer *bPriv)
+{
+   struct dri2_buffer *buffer = dri2_buffer(bPriv);
+
+   pipe_resource_reference(&buffer->resource, NULL);
+   FREE(buffer);
+}
+
 /*
  * Backend functions for st_framebuffer interface.
  */
@@ -373,7 +459,7 @@ static __DRIimage *
 dri2_create_image_from_renderbuffer(__DRIcontext *context,
 				    int renderbuffer, void *loaderPrivate)
 {
-   struct dri_context *ctx = dri_context(context->driverPrivate);
+   struct dri_context *ctx = dri_context(context);
 
    if (!ctx->st->get_resource_for_egl_image)
       return NULL;
@@ -601,6 +687,9 @@ const struct __DriverAPIRec driDriverAPI = {
 
    .SwapBuffers = NULL,
    .CopySubBuffer = NULL,
+
+   .AllocateBuffer = dri2_allocate_buffer,
+   .ReleaseBuffer  = dri2_release_buffer,
 };
 
 /* This is the table of extensions that the loader will dlsym() for. */

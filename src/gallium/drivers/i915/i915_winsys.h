@@ -103,11 +103,12 @@ struct i915_winsys {
     * @usage how is the hardware going to use the buffer.
     * @offset add this to the reloc buffers address
     * @target buffer where to write the address, null for batchbuffer.
+    * @fenced relocation needs a fence.
     */
    int (*batchbuffer_reloc)(struct i915_winsys_batchbuffer *batch,
                             struct i915_winsys_buffer *reloc,
                             enum i915_winsys_buffer_usage usage,
-                            unsigned offset, bool fenced);
+                            unsigned offset, boolean fenced);
 
    /**
     * Flush a bufferbatch.

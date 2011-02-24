@@ -24,23 +24,25 @@ C_SOURCES = \
            api_path.c      \
            api_text.c      \
            api_transform.c \
-           vgu.c        \
+           arc.c \
+           bezier.c \
+           handle.c \
+           image.c \
+           mask.c \
+           paint.c \
+           path.c \
+           polygon.c \
+           renderer.c \
+           shader.c \
+           shaders_cache.c \
+           stroker.c \
+           text.c \
            vg_context.c \
            vg_manager.c \
-           vg_state.c   \
+           vg_state.c \
            vg_translate.c \
-           polygon.c    \
-           bezier.c     \
-           path.c       \
-           paint.c      \
-           arc.c \
-           image.c \
-           renderer.c \
-           stroker.c \
-           mask.c \
-           text.c \
-           shader.c \
-           shaders_cache.c
+           vgu.c
+
 
 GENERATED_SOURCES := api_tmp.h
 

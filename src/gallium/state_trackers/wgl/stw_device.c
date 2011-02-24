@@ -170,7 +170,10 @@ stw_cleanup(void)
 
    _glthread_DESTROY_MUTEX(OneTimeLock);
 
+   /* glapi is statically linked: we can call the local destroy function. */
+#ifdef _GLAPI_NO_EXPORTS
    _glapi_destroy_multithread();
+#endif
 
 #ifdef DEBUG
    debug_memory_end(stw_dev->memdbg_no);

@@ -56,8 +56,7 @@ i915_update_stencil(struct gl_context * ctx)
    GLenum front_func, front_fail, front_pass_z_fail, front_pass_z_pass;
    GLuint back_ref, back_writemask, back_mask;
    GLenum back_func, back_fail, back_pass_z_fail, back_pass_z_pass;
-
-   I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+   GLuint dirty = 0;
 
    /* The 915 considers CW to be "front" for two-sided stencil, so choose
     * appropriately.
@@ -94,56 +93,68 @@ i915_update_stencil(struct gl_context * ctx)
       back_pass_z_fail = ctx->Stencil.ZFailFunc[0];
       back_pass_z_pass = ctx->Stencil.ZPassFunc[0];
    }
+#define set_ctx_bits(reg, mask, set) do{ \
+   GLuint dw = i915->state.Ctx[reg]; \
+   dw &= ~(mask); \
+   dw |= (set); \
+   dirty |= dw != i915->state.Ctx[reg]; \
+   i915->state.Ctx[reg] = dw; \
+} while(0)
 
    /* Set front state. */
-   i915->state.Ctx[I915_CTXREG_STATE4] &= ~(MODE4_ENABLE_STENCIL_TEST_MASK |
-					    MODE4_ENABLE_STENCIL_WRITE_MASK);
-   i915->state.Ctx[I915_CTXREG_STATE4] |= (ENABLE_STENCIL_TEST_MASK |
-					   ENABLE_STENCIL_WRITE_MASK |
-					   STENCIL_TEST_MASK(front_mask) |
-					   STENCIL_WRITE_MASK(front_writemask));
+   set_ctx_bits(I915_CTXREG_STATE4,
+                MODE4_ENABLE_STENCIL_TEST_MASK |
+                MODE4_ENABLE_STENCIL_WRITE_MASK,
+                ENABLE_STENCIL_TEST_MASK |
+                ENABLE_STENCIL_WRITE_MASK |
+                STENCIL_TEST_MASK(front_mask) |
+                STENCIL_WRITE_MASK(front_writemask));
 
-   i915->state.Ctx[I915_CTXREG_LIS5] &= ~(S5_STENCIL_REF_MASK |
-					  S5_STENCIL_TEST_FUNC_MASK |
-					  S5_STENCIL_FAIL_MASK |
-					  S5_STENCIL_PASS_Z_FAIL_MASK |
-					  S5_STENCIL_PASS_Z_PASS_MASK);
-
-   i915->state.Ctx[I915_CTXREG_LIS5] |=
-      (front_ref << S5_STENCIL_REF_SHIFT) |
-      (intel_translate_compare_func(front_func) << S5_STENCIL_TEST_FUNC_SHIFT) |
-      (intel_translate_stencil_op(front_fail) << S5_STENCIL_FAIL_SHIFT) |
-      (intel_translate_stencil_op(front_pass_z_fail) <<
-       S5_STENCIL_PASS_Z_FAIL_SHIFT) |
-      (intel_translate_stencil_op(front_pass_z_pass) <<
-       S5_STENCIL_PASS_Z_PASS_SHIFT);
+   set_ctx_bits(I915_CTXREG_LIS5,
+                S5_STENCIL_REF_MASK |
+                S5_STENCIL_TEST_FUNC_MASK |
+                S5_STENCIL_FAIL_MASK |
+                S5_STENCIL_PASS_Z_FAIL_MASK |
+                S5_STENCIL_PASS_Z_PASS_MASK,
+                (front_ref << S5_STENCIL_REF_SHIFT) |
+                (intel_translate_compare_func(front_func) << S5_STENCIL_TEST_FUNC_SHIFT) |
+                (intel_translate_stencil_op(front_fail) << S5_STENCIL_FAIL_SHIFT) |
+                (intel_translate_stencil_op(front_pass_z_fail) <<
+                 S5_STENCIL_PASS_Z_FAIL_SHIFT) |
+                (intel_translate_stencil_op(front_pass_z_pass) <<
+                 S5_STENCIL_PASS_Z_PASS_SHIFT));
 
    /* Set back state if different from front. */
    if (ctx->Stencil._TestTwoSide) {
-      i915->state.Ctx[I915_CTXREG_BF_STENCIL_OPS] &=
-	 ~(BFO_STENCIL_REF_MASK |
-	   BFO_STENCIL_TEST_MASK |
-	   BFO_STENCIL_FAIL_MASK |
-	   BFO_STENCIL_PASS_Z_FAIL_MASK |
-	   BFO_STENCIL_PASS_Z_PASS_MASK);
-      i915->state.Ctx[I915_CTXREG_BF_STENCIL_OPS] |= BFO_STENCIL_TWO_SIDE |
-	 (back_ref << BFO_STENCIL_REF_SHIFT) |
-	 (intel_translate_compare_func(back_func) << BFO_STENCIL_TEST_SHIFT) |
-	 (intel_translate_stencil_op(back_fail) << BFO_STENCIL_FAIL_SHIFT) |
-	 (intel_translate_stencil_op(back_pass_z_fail) <<
-	  BFO_STENCIL_PASS_Z_FAIL_SHIFT) |
-	 (intel_translate_stencil_op(back_pass_z_pass) <<
-	  BFO_STENCIL_PASS_Z_PASS_SHIFT);
+      set_ctx_bits(I915_CTXREG_BF_STENCIL_OPS,
+                   BFO_STENCIL_REF_MASK |
+                   BFO_STENCIL_TEST_MASK |
+                   BFO_STENCIL_FAIL_MASK |
+                   BFO_STENCIL_PASS_Z_FAIL_MASK |
+                   BFO_STENCIL_PASS_Z_PASS_MASK,
+                   BFO_STENCIL_TWO_SIDE |
+                   (back_ref << BFO_STENCIL_REF_SHIFT) |
+                   (intel_translate_compare_func(back_func) << BFO_STENCIL_TEST_SHIFT) |
+                   (intel_translate_stencil_op(back_fail) << BFO_STENCIL_FAIL_SHIFT) |
+                   (intel_translate_stencil_op(back_pass_z_fail) <<
+                    BFO_STENCIL_PASS_Z_FAIL_SHIFT) |
+                   (intel_translate_stencil_op(back_pass_z_pass) <<
+                    BFO_STENCIL_PASS_Z_PASS_SHIFT));
 
-      i915->state.Ctx[I915_CTXREG_BF_STENCIL_MASKS] &=
-	 ~(BFM_STENCIL_TEST_MASK_MASK |
-	   BFM_STENCIL_WRITE_MASK_MASK);
-      i915->state.Ctx[I915_CTXREG_BF_STENCIL_MASKS] |=
-	 BFM_STENCIL_TEST_MASK(back_mask) |
-	 BFM_STENCIL_WRITE_MASK(back_writemask);
+      set_ctx_bits(I915_CTXREG_BF_STENCIL_MASKS,
+                   BFM_STENCIL_TEST_MASK_MASK |
+                   BFM_STENCIL_WRITE_MASK_MASK,
+                   BFM_STENCIL_TEST_MASK(back_mask) |
+                   BFM_STENCIL_WRITE_MASK(back_writemask));
    } else {
-      i915->state.Ctx[I915_CTXREG_BF_STENCIL_OPS] &= ~BFO_STENCIL_TWO_SIDE;
+      set_ctx_bits(I915_CTXREG_BF_STENCIL_OPS,
+                   BFO_STENCIL_TWO_SIDE, 0);
    }
+
+#undef set_ctx_bits
+
+   if (dirty)
+      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
 }
 
 static void
@@ -169,15 +180,18 @@ i915AlphaFunc(struct gl_context * ctx, GLenum func, GLfloat ref)
    struct i915_context *i915 = I915_CONTEXT(ctx);
    int test = intel_translate_compare_func(func);
    GLubyte refByte;
+   GLuint dw;
 
    UNCLAMPED_FLOAT_TO_UBYTE(refByte, ref);
 
-   I915_STATECHANGE(i915, I915_UPLOAD_CTX);
-   i915->state.Ctx[I915_CTXREG_LIS6] &= ~(S6_ALPHA_TEST_FUNC_MASK |
-                                          S6_ALPHA_REF_MASK);
-   i915->state.Ctx[I915_CTXREG_LIS6] |= ((test << S6_ALPHA_TEST_FUNC_SHIFT) |
-                                         (((GLuint) refByte) <<
-                                          S6_ALPHA_REF_SHIFT));
+   dw = i915->state.Ctx[I915_CTXREG_LIS6];
+   dw &= ~(S6_ALPHA_TEST_FUNC_MASK | S6_ALPHA_REF_MASK);
+   dw |= ((test << S6_ALPHA_TEST_FUNC_SHIFT) |
+	  (((GLuint) refByte) << S6_ALPHA_REF_SHIFT));
+   if (dw != i915->state.Ctx[I915_CTXREG_LIS6]) {
+      i915->state.Ctx[I915_CTXREG_LIS6] = dw;
+      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+   }
 }
 
 /* This function makes sure that the proper enables are
@@ -190,22 +204,31 @@ static void
 i915EvalLogicOpBlendState(struct gl_context * ctx)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
+   GLuint dw0, dw1;
 
-   I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+   dw0 = i915->state.Ctx[I915_CTXREG_LIS5];
+   dw1 = i915->state.Ctx[I915_CTXREG_LIS6];
 
    if (RGBA_LOGICOP_ENABLED(ctx)) {
-      i915->state.Ctx[I915_CTXREG_LIS5] |= S5_LOGICOP_ENABLE;
-      i915->state.Ctx[I915_CTXREG_LIS6] &= ~S6_CBUF_BLEND_ENABLE;
+      dw0 |= S5_LOGICOP_ENABLE;
+      dw1 &= ~S6_CBUF_BLEND_ENABLE;
    }
    else {
-      i915->state.Ctx[I915_CTXREG_LIS5] &= ~S5_LOGICOP_ENABLE;
+      dw0 &= ~S5_LOGICOP_ENABLE;
 
       if (ctx->Color.BlendEnabled) {
-         i915->state.Ctx[I915_CTXREG_LIS6] |= S6_CBUF_BLEND_ENABLE;
+         dw1 |= S6_CBUF_BLEND_ENABLE;
       }
       else {
-         i915->state.Ctx[I915_CTXREG_LIS6] &= ~S6_CBUF_BLEND_ENABLE;
+         dw1 &= ~S6_CBUF_BLEND_ENABLE;
       }
+   }
+   if (dw0 != i915->state.Ctx[I915_CTXREG_LIS5] ||
+       dw1 != i915->state.Ctx[I915_CTXREG_LIS6]) {
+      i915->state.Ctx[I915_CTXREG_LIS5] = dw0;
+      i915->state.Ctx[I915_CTXREG_LIS6] = dw1;
+
+      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
    }
 }
 
@@ -214,6 +237,7 @@ i915BlendColor(struct gl_context * ctx, const GLfloat color[4])
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
    GLubyte r, g, b, a;
+   GLuint dw;
 
    DBG("%s\n", __FUNCTION__);
    
@@ -222,9 +246,11 @@ i915BlendColor(struct gl_context * ctx, const GLfloat color[4])
    UNCLAMPED_FLOAT_TO_UBYTE(b, color[BCOMP]);
    UNCLAMPED_FLOAT_TO_UBYTE(a, color[ACOMP]);
 
-   I915_STATECHANGE(i915, I915_UPLOAD_CTX);
-   i915->state.Ctx[I915_CTXREG_BLENDCOLOR1] =
-      (a << 24) | (r << 16) | (g << 8) | b;
+   dw = (a << 24) | (r << 16) | (g << 8) | b;
+   if (dw != i915->state.Blend[I915_BLENDREG_BLENDCOLOR1]) {
+      i915->state.Blend[I915_BLENDREG_BLENDCOLOR1] = dw;
+      I915_STATECHANGE(i915, I915_UPLOAD_BLEND);
+   }
 }
 
 
@@ -258,7 +284,7 @@ static void
 i915UpdateBlendState(struct gl_context * ctx)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
-   GLuint iab = (i915->state.Ctx[I915_CTXREG_IAB] &
+   GLuint iab = (i915->state.Blend[I915_BLENDREG_IAB] &
                  ~(IAB_SRC_FACTOR_MASK |
                    IAB_DST_FACTOR_MASK |
                    (BLENDFUNC_MASK << IAB_FUNC_SHIFT) | IAB_ENABLE));
@@ -293,11 +319,13 @@ i915UpdateBlendState(struct gl_context * ctx)
    if (srcA != srcRGB || dstA != dstRGB || eqA != eqRGB)
       iab |= IAB_ENABLE;
 
-   if (iab != i915->state.Ctx[I915_CTXREG_IAB] ||
-       lis6 != i915->state.Ctx[I915_CTXREG_LIS6]) {
-      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
-      i915->state.Ctx[I915_CTXREG_IAB] = iab;
+   if (iab != i915->state.Blend[I915_BLENDREG_IAB]) {
+      i915->state.Blend[I915_BLENDREG_IAB] = iab;
+      I915_STATECHANGE(i915, I915_UPLOAD_BLEND);
+   }
+   if (lis6 != i915->state.Ctx[I915_CTXREG_LIS6]) {
       i915->state.Ctx[I915_CTXREG_LIS6] = lis6;
+      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
    }
 
    /* This will catch a logicop blend equation */
@@ -325,27 +353,36 @@ i915DepthFunc(struct gl_context * ctx, GLenum func)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
    int test = intel_translate_compare_func(func);
+   GLuint dw;
 
    DBG("%s\n", __FUNCTION__);
    
-   I915_STATECHANGE(i915, I915_UPLOAD_CTX);
-   i915->state.Ctx[I915_CTXREG_LIS6] &= ~S6_DEPTH_TEST_FUNC_MASK;
-   i915->state.Ctx[I915_CTXREG_LIS6] |= test << S6_DEPTH_TEST_FUNC_SHIFT;
+   dw = i915->state.Ctx[I915_CTXREG_LIS6];
+   dw &= ~S6_DEPTH_TEST_FUNC_MASK;
+   dw |= test << S6_DEPTH_TEST_FUNC_SHIFT;
+   if (dw != i915->state.Ctx[I915_CTXREG_LIS6]) {
+      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+      i915->state.Ctx[I915_CTXREG_LIS6] = dw;
+   }
 }
 
 static void
 i915DepthMask(struct gl_context * ctx, GLboolean flag)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
+   GLuint dw;
 
    DBG("%s flag (%d)\n", __FUNCTION__, flag);
-   
-   I915_STATECHANGE(i915, I915_UPLOAD_CTX);
 
+   dw = i915->state.Ctx[I915_CTXREG_LIS6];
    if (flag && ctx->Depth.Test)
-      i915->state.Ctx[I915_CTXREG_LIS6] |= S6_DEPTH_WRITE_ENABLE;
+      dw |= S6_DEPTH_WRITE_ENABLE;
    else
-      i915->state.Ctx[I915_CTXREG_LIS6] &= ~S6_DEPTH_WRITE_ENABLE;
+      dw &= ~S6_DEPTH_WRITE_ENABLE;
+   if (dw != i915->state.Ctx[I915_CTXREG_LIS6]) {
+      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+      i915->state.Ctx[I915_CTXREG_LIS6] = dw;
+   }
 }
 
 
@@ -532,7 +569,7 @@ static void
 i915CullFaceFrontFace(struct gl_context * ctx, GLenum unused)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
-   GLuint mode;
+   GLuint mode, dw;
 
    DBG("%s %d\n", __FUNCTION__,
        ctx->DrawBuffer ? ctx->DrawBuffer->Name : 0);
@@ -554,9 +591,13 @@ i915CullFaceFrontFace(struct gl_context * ctx, GLenum unused)
       mode = S4_CULLMODE_BOTH;
    }
 
-   I915_STATECHANGE(i915, I915_UPLOAD_CTX);
-   i915->state.Ctx[I915_CTXREG_LIS4] &= ~S4_CULLMODE_MASK;
-   i915->state.Ctx[I915_CTXREG_LIS4] |= mode;
+   dw = i915->state.Ctx[I915_CTXREG_LIS4];
+   dw &= ~S4_CULLMODE_MASK;
+   dw |= mode;
+   if (dw != i915->state.Ctx[I915_CTXREG_LIS4]) {
+      i915->state.Ctx[I915_CTXREG_LIS4] = dw;
+      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+   }
 }
 
 static void
@@ -690,6 +731,7 @@ i915_update_fog(struct gl_context * ctx)
    GLenum mode;
    GLboolean enabled;
    GLboolean try_pixel_fog;
+   GLuint dw;
 
    if (ctx->FragmentProgram._Current) {
       /* Pull in static fog state from program */
@@ -765,12 +807,16 @@ i915_update_fog(struct gl_context * ctx)
       i915->vertex_fog = I915_FOG_VERTEX;
    }
 
-   I915_STATECHANGE(i915, I915_UPLOAD_CTX);
    I915_ACTIVESTATE(i915, I915_UPLOAD_FOG, enabled);
+   dw = i915->state.Ctx[I915_CTXREG_LIS5];
    if (enabled)
-      i915->state.Ctx[I915_CTXREG_LIS5] |= S5_FOG_ENABLE;
+      dw |= S5_FOG_ENABLE;
    else
-      i915->state.Ctx[I915_CTXREG_LIS5] &= ~S5_FOG_ENABLE;
+      dw &= ~S5_FOG_ENABLE;
+   if (dw != i915->state.Ctx[I915_CTXREG_LIS5]) {
+      i915->state.Ctx[I915_CTXREG_LIS5] = dw;
+      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+   }
 
    /* Always enable pixel fog.  Vertex fog using fog coord will conflict
     * with fog code appended onto fragment program.
@@ -837,6 +883,7 @@ static void
 i915Enable(struct gl_context * ctx, GLenum cap, GLboolean state)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
+   GLuint dw;
 
    switch (cap) {
    case GL_TEXTURE_2D:
@@ -848,11 +895,15 @@ i915Enable(struct gl_context * ctx, GLenum cap, GLboolean state)
       break;
 
    case GL_ALPHA_TEST:
-      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+      dw = i915->state.Ctx[I915_CTXREG_LIS6];
       if (state)
-         i915->state.Ctx[I915_CTXREG_LIS6] |= S6_ALPHA_TEST_ENABLE;
+         dw |= S6_ALPHA_TEST_ENABLE;
       else
-         i915->state.Ctx[I915_CTXREG_LIS6] &= ~S6_ALPHA_TEST_ENABLE;
+         dw &= ~S6_ALPHA_TEST_ENABLE;
+      if (dw != i915->state.Ctx[I915_CTXREG_LIS6]) {
+	 i915->state.Ctx[I915_CTXREG_LIS6] = dw;
+	 I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+      }
       break;
 
    case GL_BLEND:
@@ -872,19 +923,27 @@ i915Enable(struct gl_context * ctx, GLenum cap, GLboolean state)
       break;
 
    case GL_DITHER:
-      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+      dw = i915->state.Ctx[I915_CTXREG_LIS5];
       if (state)
-         i915->state.Ctx[I915_CTXREG_LIS5] |= S5_COLOR_DITHER_ENABLE;
+         dw |= S5_COLOR_DITHER_ENABLE;
       else
-         i915->state.Ctx[I915_CTXREG_LIS5] &= ~S5_COLOR_DITHER_ENABLE;
+         dw &= ~S5_COLOR_DITHER_ENABLE;
+      if (dw != i915->state.Ctx[I915_CTXREG_LIS5]) {
+	 i915->state.Ctx[I915_CTXREG_LIS5] = dw;
+	 I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+      }
       break;
 
    case GL_DEPTH_TEST:
-      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+      dw = i915->state.Ctx[I915_CTXREG_LIS6];
       if (state)
-         i915->state.Ctx[I915_CTXREG_LIS6] |= S6_DEPTH_TEST_ENABLE;
+         dw |= S6_DEPTH_TEST_ENABLE;
       else
-         i915->state.Ctx[I915_CTXREG_LIS6] &= ~S6_DEPTH_TEST_ENABLE;
+         dw &= ~S6_DEPTH_TEST_ENABLE;
+      if (dw != i915->state.Ctx[I915_CTXREG_LIS6]) {
+	 i915->state.Ctx[I915_CTXREG_LIS6] = dw;
+	 I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+      }
 
       i915DepthMask(ctx, ctx->Depth.Mask);
       break;
@@ -900,11 +959,15 @@ i915Enable(struct gl_context * ctx, GLenum cap, GLboolean state)
       break;
 
    case GL_LINE_SMOOTH:
-      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+      dw = i915->state.Ctx[I915_CTXREG_LIS4];
       if (state)
-         i915->state.Ctx[I915_CTXREG_LIS4] |= S4_LINE_ANTIALIAS_ENABLE;
+         dw |= S4_LINE_ANTIALIAS_ENABLE;
       else
-         i915->state.Ctx[I915_CTXREG_LIS4] &= ~S4_LINE_ANTIALIAS_ENABLE;
+         dw &= ~S4_LINE_ANTIALIAS_ENABLE;
+      if (dw != i915->state.Ctx[I915_CTXREG_LIS4]) {
+	 i915->state.Ctx[I915_CTXREG_LIS4] = dw;
+	 I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+      }
       break;
 
    case GL_FOG:
@@ -923,13 +986,15 @@ i915Enable(struct gl_context * ctx, GLenum cap, GLboolean state)
             hw_stencil = (irbStencil && irbStencil->region);
          }
          if (hw_stencil) {
-            I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+	    dw = i915->state.Ctx[I915_CTXREG_LIS5];
             if (state)
-               i915->state.Ctx[I915_CTXREG_LIS5] |= (S5_STENCIL_TEST_ENABLE |
-                                                     S5_STENCIL_WRITE_ENABLE);
+               dw |= (S5_STENCIL_TEST_ENABLE | S5_STENCIL_WRITE_ENABLE);
             else
-               i915->state.Ctx[I915_CTXREG_LIS5] &= ~(S5_STENCIL_TEST_ENABLE |
-                                                      S5_STENCIL_WRITE_ENABLE);
+               dw &= ~(S5_STENCIL_TEST_ENABLE | S5_STENCIL_WRITE_ENABLE);
+	    if (dw != i915->state.Ctx[I915_CTXREG_LIS5]) {
+	       i915->state.Ctx[I915_CTXREG_LIS5] = dw;
+	       I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+	    }
          }
          else {
             FALLBACK(&i915->intel, I915_FALLBACK_STENCIL, state);
@@ -959,11 +1024,15 @@ i915Enable(struct gl_context * ctx, GLenum cap, GLboolean state)
       /* This state change is handled in i915_reduced_primitive_state because
        * the hardware bit should only be set when rendering points.
        */
-      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+	 dw = i915->state.Ctx[I915_CTXREG_LIS4];
       if (state)
-	 i915->state.Ctx[I915_CTXREG_LIS4] |= S4_SPRITE_POINT_ENABLE;
+	 dw |= S4_SPRITE_POINT_ENABLE;
       else
-	 i915->state.Ctx[I915_CTXREG_LIS4] &= ~S4_SPRITE_POINT_ENABLE;
+	 dw &= ~S4_SPRITE_POINT_ENABLE;
+      if (dw != i915->state.Ctx[I915_CTXREG_LIS4]) {
+	 i915->state.Ctx[I915_CTXREG_LIS4] = dw;
+	 I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+      }
       break;
 
    case GL_POINT_SMOOTH:
@@ -984,6 +1053,7 @@ i915_init_packets(struct i915_context *i915)
 
    {
       I915_STATECHANGE(i915, I915_UPLOAD_CTX);
+      I915_STATECHANGE(i915, I915_UPLOAD_BLEND);
       /* Probably don't want to upload all this stuff every time one 
        * piece changes.
        */
@@ -1010,13 +1080,13 @@ i915_init_packets(struct i915_context *i915)
                                              ENABLE_STENCIL_WRITE_MASK |
                                              STENCIL_WRITE_MASK(0xff));
 
-      i915->state.Ctx[I915_CTXREG_IAB] =
+      i915->state.Blend[I915_BLENDREG_IAB] =
          (_3DSTATE_INDEPENDENT_ALPHA_BLEND_CMD | IAB_MODIFY_ENABLE |
           IAB_MODIFY_FUNC | IAB_MODIFY_SRC_FACTOR | IAB_MODIFY_DST_FACTOR);
 
-      i915->state.Ctx[I915_CTXREG_BLENDCOLOR0] =
+      i915->state.Blend[I915_BLENDREG_BLENDCOLOR0] =
          _3DSTATE_CONST_BLEND_COLOR_CMD;
-      i915->state.Ctx[I915_CTXREG_BLENDCOLOR1] = 0;
+      i915->state.Blend[I915_BLENDREG_BLENDCOLOR1] = 0;
 
       i915->state.Ctx[I915_CTXREG_BF_STENCIL_MASKS] =
 	 _3DSTATE_BACKFACE_STENCIL_MASKS |
@@ -1087,6 +1157,7 @@ i915_init_packets(struct i915_context *i915)
    i915->state.active = (I915_UPLOAD_PROGRAM |
                          I915_UPLOAD_STIPPLE |
                          I915_UPLOAD_CTX |
+                         I915_UPLOAD_BLEND |
                          I915_UPLOAD_BUFFERS |
 			 I915_UPLOAD_INVARIENT |
 			 I915_UPLOAD_RASTER_RULES);

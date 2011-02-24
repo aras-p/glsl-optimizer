@@ -37,6 +37,7 @@
 #include <util/u_memory.h>
 #include <util/u_inlines.h>
 #include <util/u_framebuffer.h>
+#include "util/u_transfer.h"
 #include <pipebuffer/pb_buffer.h>
 #include "r600.h"
 #include "r600d.h"
@@ -92,221 +93,6 @@ void r600_polygon_offset_update(struct r600_pipe_context *rctx)
 				offset_db_fmt_cntl, 0xFFFFFFFF, NULL);
 		r600_context_pipe_state_set(&rctx->ctx, &state);
 	}
-}
-
-/* FIXME optimize away spi update when it's not needed */
-static void r600_spi_update(struct r600_pipe_context *rctx)
-{
-	struct r600_pipe_shader *shader = rctx->ps_shader;
-	struct r600_pipe_state rstate;
-	struct r600_shader *rshader = &shader->shader;
-	unsigned i, tmp;
-
-	rstate.nregs = 0;
-	for (i = 0; i < rshader->ninput; i++) {
-		tmp = S_028644_SEMANTIC(r600_find_vs_semantic_index(&rctx->vs_shader->shader, rshader, i));
-		if (rshader->input[i].centroid)
-			tmp |= S_028644_SEL_CENTROID(1);
-		if (rshader->input[i].interpolate == TGSI_INTERPOLATE_LINEAR)
-			tmp |= S_028644_SEL_LINEAR(1);
-
-		if (rshader->input[i].name == TGSI_SEMANTIC_COLOR ||
-		    rshader->input[i].name == TGSI_SEMANTIC_BCOLOR ||
-		    rshader->input[i].name == TGSI_SEMANTIC_POSITION) {
-			tmp |= S_028644_FLAT_SHADE(rctx->flatshade);
-		}
-		if (rshader->input[i].name == TGSI_SEMANTIC_GENERIC &&
-			rctx->sprite_coord_enable & (1 << rshader->input[i].sid)) {
-			tmp |= S_028644_PT_SPRITE_TEX(1);
-		}
-		r600_pipe_state_add_reg(&rstate, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4, tmp, 0xFFFFFFFF, NULL);
-	}
-	r600_context_pipe_state_set(&rctx->ctx, &rstate);
-}
-
-void r600_vertex_buffer_update(struct r600_pipe_context *rctx)
-{
-	struct r600_pipe_state *rstate;
-	struct r600_resource *rbuffer;
-	struct pipe_vertex_buffer *vertex_buffer;
-	unsigned i, offset;
-
-	/* we don't update until we know vertex elements */
-	if (rctx->vertex_elements == NULL || !rctx->nvertex_buffer)
-		return;
-
-	if (rctx->vertex_elements->incompatible_layout) {
-		/* translate rebind new vertex elements so
-		 * return once translated
-		 */
-		r600_begin_vertex_translate(rctx);
-		return;
-	}
-
-	if (rctx->any_user_vbs) {
-		r600_upload_user_buffers(rctx);
-		rctx->any_user_vbs = FALSE;
-	}
-
-	if (rctx->vertex_elements->vbuffer_need_offset) {
-		/* one resource per vertex elements */
-		rctx->nvs_resource = rctx->vertex_elements->count;
-	} else {
-		/* bind vertex buffer once */
-		rctx->nvs_resource = rctx->nvertex_buffer;
-	}
-
-	for (i = 0 ; i < rctx->nvs_resource; i++) {
-		rstate = &rctx->vs_resource[i];
-		rstate->id = R600_PIPE_STATE_RESOURCE;
-		rstate->nregs = 0;
-
-		if (rctx->vertex_elements->vbuffer_need_offset) {
-			/* one resource per vertex elements */
-			unsigned vbuffer_index;
-			vbuffer_index = rctx->vertex_elements->elements[i].vertex_buffer_index;
-			vertex_buffer = &rctx->vertex_buffer[vbuffer_index];
-			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
-			offset = rctx->vertex_elements->vbuffer_offset[i];
-		} else {
-			/* bind vertex buffer once */
-			vertex_buffer = &rctx->vertex_buffer[i];
-			rbuffer = (struct r600_resource*)vertex_buffer->buffer;
-			offset = 0;
-		}
-		if (vertex_buffer == NULL || rbuffer == NULL)
-			continue;
-		offset += vertex_buffer->buffer_offset + r600_bo_offset(rbuffer->bo);
-
-		r600_pipe_state_add_reg(rstate, R_038000_RESOURCE0_WORD0,
-					offset, 0xFFFFFFFF, rbuffer->bo);
-		r600_pipe_state_add_reg(rstate, R_038004_RESOURCE0_WORD1,
-					rbuffer->bo_size - offset - 1, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_038008_RESOURCE0_WORD2,
-					S_038008_STRIDE(vertex_buffer->stride),
-					0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_03800C_RESOURCE0_WORD3,
-					0x00000000, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_038010_RESOURCE0_WORD4,
-					0x00000000, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_038014_RESOURCE0_WORD5,
-					0x00000000, 0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(rstate, R_038018_RESOURCE0_WORD6,
-					0xC0000000, 0xFFFFFFFF, NULL);
-		r600_context_pipe_state_set_fs_resource(&rctx->ctx, rstate, i);
-	}
-}
-
-static void r600_draw_common(struct r600_drawl *draw)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)draw->ctx;
-	struct r600_resource *rbuffer;
-	unsigned prim;
-	u32 vgt_dma_index_type, vgt_draw_initiator, mask;
-	struct r600_draw rdraw;
-	struct r600_pipe_state vgt;
-
-	switch (draw->index_size) {
-	case 2:
-		vgt_draw_initiator = 0;
-		vgt_dma_index_type = 0;
-		break;
-	case 4:
-		vgt_draw_initiator = 0;
-		vgt_dma_index_type = 1;
-		break;
-	case 0:
-		vgt_draw_initiator = 2;
-		vgt_dma_index_type = 0;
-		break;
-	default:
-		R600_ERR("unsupported index size %d\n", draw->index_size);
-		return;
-	}
-	if (r600_conv_pipe_prim(draw->mode, &prim))
-		return;
-	if (unlikely(rctx->ps_shader == NULL)) {
-		R600_ERR("missing vertex shader\n");
-		return;
-	}
-	if (unlikely(rctx->vs_shader == NULL)) {
-		R600_ERR("missing vertex shader\n");
-		return;
-	}
-	/* there should be enough input */
-	if (rctx->vertex_elements->count < rctx->vs_shader->shader.bc.nresource) {
-		R600_ERR("%d resources provided, expecting %d\n",
-			rctx->vertex_elements->count, rctx->vs_shader->shader.bc.nresource);
-		return;
-	}
-
-	r600_spi_update(rctx);
-
-	mask = 0;
-	for (int i = 0; i < rctx->framebuffer.nr_cbufs; i++) {
-		mask |= (0xF << (i * 4));
-	}
-
-	vgt.id = R600_PIPE_STATE_VGT;
-	vgt.nregs = 0;
-	r600_pipe_state_add_reg(&vgt, R_008958_VGT_PRIMITIVE_TYPE, prim, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(&vgt, R_028408_VGT_INDX_OFFSET, draw->index_bias, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(&vgt, R_028400_VGT_MAX_VTX_INDX, draw->max_index, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(&vgt, R_028404_VGT_MIN_VTX_INDX, draw->min_index, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(&vgt, R_028238_CB_TARGET_MASK, rctx->cb_target_mask & mask, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(&vgt, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(&vgt, R_03CFF4_SQ_VTX_START_INST_LOC, 0, 0xFFFFFFFF, NULL);
-	r600_context_pipe_state_set(&rctx->ctx, &vgt);
-
-	rdraw.vgt_num_indices = draw->count;
-	rdraw.vgt_num_instances = 1;
-	rdraw.vgt_index_type = vgt_dma_index_type;
-	rdraw.vgt_draw_initiator = vgt_draw_initiator;
-	rdraw.indices = NULL;
-	if (draw->index_buffer) {
-		rbuffer = (struct r600_resource*)draw->index_buffer;
-		rdraw.indices = rbuffer->bo;
-		rdraw.indices_bo_offset = draw->index_buffer_offset;
-	}
-	r600_context_draw(&rctx->ctx, &rdraw);
-}
-
-void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_drawl draw;
-
-	memset(&draw, 0, sizeof(struct r600_drawl));
-	draw.ctx = ctx;
-	draw.mode = info->mode;
-	draw.start = info->start;
-	draw.count = info->count;
-	if (info->indexed && rctx->index_buffer.buffer) {
-		draw.start += rctx->index_buffer.offset / rctx->index_buffer.index_size;
-		draw.min_index = info->min_index;
-		draw.max_index = info->max_index;
-		draw.index_bias = info->index_bias;
-
-		r600_translate_index_buffer(rctx, &rctx->index_buffer.buffer,
-					    &rctx->index_buffer.index_size,
-					    &draw.start,
-					    info->count);
-
-		draw.index_size = rctx->index_buffer.index_size;
-		pipe_resource_reference(&draw.index_buffer, rctx->index_buffer.buffer);
-		draw.index_buffer_offset = draw.start * draw.index_size;
-		draw.start = 0;
-		r600_upload_index_buffer(rctx, &draw);
-	} else {
-		draw.index_size = 0;
-		draw.index_buffer = NULL;
-		draw.min_index = info->min_index;
-		draw.max_index = info->max_index;
-		draw.index_bias = info->start;
-	}
-	r600_draw_common(&draw);
-
-	pipe_resource_reference(&draw.index_buffer, NULL);
 }
 
 static void r600_set_blend_color(struct pipe_context *ctx,
@@ -616,6 +402,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
 	unsigned char swizzle[4], array_mode = 0, tile_type = 0;
 	struct r600_bo *bo[2];
+	unsigned height, depth;
 
 	if (resource == NULL)
 		return NULL;
@@ -643,22 +430,30 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	if (desc == NULL) {
 		R600_ERR("unknow format %d\n", state->format);
 	}
-	tmp = (struct r600_resource_texture*)texture;
+	tmp = (struct r600_resource_texture *)texture;
+	if (tmp->depth && !tmp->is_flushing_texture) {
+	        r600_texture_depth_flush(ctx, texture, TRUE);
+		tmp = tmp->flushed_depth_texture;
+	}
+
+	if (tmp->force_int_type) {
+		word4 &= C_038010_NUM_FORMAT_ALL;
+		word4 |= S_038010_NUM_FORMAT_ALL(V_038010_SQ_NUM_FORMAT_INT);
+	}
 	rbuffer = &tmp->resource;
 	bo[0] = rbuffer->bo;
 	bo[1] = rbuffer->bo;
-	/* FIXME depth texture decompression */
-	if (tmp->depth) {
-		r600_texture_depth_flush(ctx, texture);
-		tmp = (struct r600_resource_texture*)texture;
-		rbuffer = &tmp->flushed_depth_texture->resource;
-		bo[0] = rbuffer->bo;
-		bo[1] = rbuffer->bo;
-	}
-	pitch = align(tmp->pitch_in_pixels[0], 8);
-	if (tmp->tiled) {
-		array_mode = tmp->array_mode[0];
-		tile_type = tmp->tile_type;
+	pitch = align(tmp->pitch_in_blocks[0] * util_format_get_blockwidth(state->format), 8);
+	array_mode = tmp->array_mode[0];
+	tile_type = tmp->tile_type;
+
+	height = texture->height0;
+	depth = texture->depth0;
+	if (texture->target == PIPE_TEXTURE_1D_ARRAY) {
+	        height = 1;
+		depth = texture->array_size;
+	} else if (texture->target == PIPE_TEXTURE_2D_ARRAY) {
+		depth = texture->array_size;
 	}
 
 	/* FIXME properly handle first level != 0 */
@@ -669,22 +464,22 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 				S_038000_PITCH((pitch / 8) - 1) |
 				S_038000_TEX_WIDTH(texture->width0 - 1), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038004_RESOURCE0_WORD1,
-				S_038004_TEX_HEIGHT(texture->height0 - 1) |
-				S_038004_TEX_DEPTH(texture->depth0 - 1) |
+				S_038004_TEX_HEIGHT(height - 1) |
+				S_038004_TEX_DEPTH(depth - 1) |
 				S_038004_DATA_FORMAT(format), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038008_RESOURCE0_WORD2,
 				(tmp->offset[0] + r600_bo_offset(bo[0])) >> 8, 0xFFFFFFFF, bo[0]);
 	r600_pipe_state_add_reg(rstate, R_03800C_RESOURCE0_WORD3,
 				(tmp->offset[1] + r600_bo_offset(bo[1])) >> 8, 0xFFFFFFFF, bo[1]);
 	r600_pipe_state_add_reg(rstate, R_038010_RESOURCE0_WORD4,
-				word4 | S_038010_NUM_FORMAT_ALL(V_038010_SQ_NUM_FORMAT_NORM) |
+				word4 |
 				S_038010_SRF_MODE_ALL(V_038010_SRF_MODE_NO_ZERO) |
 				S_038010_REQUEST_SIZE(1) |
 				S_038010_BASE_LEVEL(state->u.tex.first_level), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038014_RESOURCE0_WORD5,
 				S_038014_LAST_LEVEL(state->u.tex.last_level) |
-				S_038014_BASE_ARRAY(0) |
-				S_038014_LAST_ARRAY(0), 0xFFFFFFFF, NULL);
+				S_038014_BASE_ARRAY(state->u.tex.first_layer) |
+				S_038014_LAST_ARRAY(state->u.tex.last_layer), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038018_RESOURCE0_WORD6,
 				S_038018_TYPE(V_038010_SQ_TEX_VTX_VALID_TEXTURE), 0xFFFFFFFF, NULL);
 
@@ -714,9 +509,11 @@ static void r600_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
 	for (i = 0; i < count; i++) {
 		if (&rctx->ps_samplers.views[i]->base != views[i]) {
 			if (resource[i])
-				r600_context_pipe_state_set_ps_resource(&rctx->ctx, &resource[i]->state, i);
+				r600_context_pipe_state_set_ps_resource(&rctx->ctx, &resource[i]->state,
+									i + R600_MAX_CONST_BUFFERS);
 			else
-				r600_context_pipe_state_set_ps_resource(&rctx->ctx, NULL, i);
+				r600_context_pipe_state_set_ps_resource(&rctx->ctx, NULL,
+									i + R600_MAX_CONST_BUFFERS);
 
 			pipe_sampler_view_reference(
 				(struct pipe_sampler_view **)&rctx->ps_samplers.views[i],
@@ -726,7 +523,8 @@ static void r600_set_ps_sampler_view(struct pipe_context *ctx, unsigned count,
 	}
 	for (i = count; i < NUM_TEX_UNITS; i++) {
 		if (rctx->ps_samplers.views[i]) {
-			r600_context_pipe_state_set_ps_resource(&rctx->ctx, NULL, i);
+			r600_context_pipe_state_set_ps_resource(&rctx->ctx, NULL,
+								i + R600_MAX_CONST_BUFFERS);
 			pipe_sampler_view_reference((struct pipe_sampler_view **)&rctx->ps_samplers.views[i], NULL);
 		}
 	}
@@ -908,21 +706,28 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	unsigned offset;
 	const struct util_format_description *desc;
 	struct r600_bo *bo[3];
+	int i;
 
 	surf = (struct r600_surface *)state->cbufs[cb];
 	rtex = (struct r600_resource_texture*)state->cbufs[cb]->texture;
+
+	if (rtex->depth && !rtex->is_flushing_texture) {
+	        r600_texture_depth_flush(&rctx->context, state->cbufs[cb]->texture, TRUE);
+		rtex = rtex->flushed_depth_texture;
+	}
+
 	rbuffer = &rtex->resource;
 	bo[0] = rbuffer->bo;
 	bo[1] = rbuffer->bo;
 	bo[2] = rbuffer->bo;
 
 	/* XXX quite sure for dx10+ hw don't need any offset hacks */
-	offset = r600_texture_get_offset((struct r600_resource_texture *)state->cbufs[cb]->texture,
+	offset = r600_texture_get_offset(rtex,
 					 level, state->cbufs[cb]->u.tex.first_layer);
-	pitch = rtex->pitch_in_pixels[level] / 8 - 1;
-	slice = rtex->pitch_in_pixels[level] * surf->aligned_height / 64 - 1;
+	pitch = rtex->pitch_in_blocks[level] / 8 - 1;
+	slice = rtex->pitch_in_blocks[level] * surf->aligned_height / 64 - 1;
 	ntype = 0;
-	desc = util_format_description(rtex->resource.base.b.format);
+	desc = util_format_description(surf->base.format);
 	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
 		ntype = V_0280A0_NUMBER_SRGB;
         else if (desc->layout == UTIL_FORMAT_LAYOUT_PLAIN) {
@@ -937,15 +742,30 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 		}
 	}
 
-	format = r600_translate_colorformat(rtex->resource.base.b.format);
-	swap = r600_translate_colorswap(rtex->resource.base.b.format);
+	for (i = 0; i < 4; i++) {
+		if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
+			break;
+		}
+	}
+
+	format = r600_translate_colorformat(surf->base.format);
+	swap = r600_translate_colorswap(surf->base.format);
+
+	/* disable when gallium grows int textures */
+	if ((format == FMT_32_32_32_32 || format == FMT_16_16_16_16) && rtex->force_int_type)
+		ntype = 4;
+
 	color_info = S_0280A0_FORMAT(format) |
 		S_0280A0_COMP_SWAP(swap) |
 		S_0280A0_ARRAY_MODE(rtex->array_mode[level]) |
 		S_0280A0_BLEND_CLAMP(1) |
 		S_0280A0_NUMBER_TYPE(ntype);
-	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS)
-		color_info |= S_0280A0_SOURCE_FORMAT(1);
+
+	/* on R600 this can't be set if BLEND_CLAMP isn't set,
+	   if BLEND_FLOAT32 is set of > 11 bits in a UNORM or SNORM */
+	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS &&
+	    desc->channel[i].size < 12)
+		color_info |= S_0280A0_SOURCE_FORMAT(V_0280A0_EXPORT_NORM);
 
 	r600_pipe_state_add_reg(rstate,
 				R_028040_CB_COLOR0_BASE + cb * 4,
@@ -989,17 +809,14 @@ static void r600_db(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 
 	surf = (struct r600_surface *)state->zsbuf;
 	rtex = (struct r600_resource_texture*)state->zsbuf->texture;
-	rtex->tiled = 1;
-	rtex->array_mode[level] = 2;
-	rtex->tile_type = 1;
-	rtex->depth = 1;
+
 	rbuffer = &rtex->resource;
 
 	/* XXX quite sure for dx10+ hw don't need any offset hacks */
 	offset = r600_texture_get_offset((struct r600_resource_texture *)state->zsbuf->texture,
 					 level, state->zsbuf->u.tex.first_layer);
-	pitch = rtex->pitch_in_pixels[level] / 8 - 1;
-	slice = rtex->pitch_in_pixels[level] * surf->aligned_height / 64 - 1;
+	pitch = rtex->pitch_in_blocks[level] / 8 - 1;
+	slice = rtex->pitch_in_blocks[level] * surf->aligned_height / 64 - 1;
 	format = r600_translate_dbformat(state->zsbuf->texture->format);
 
 	r600_pipe_state_add_reg(rstate, R_02800C_DB_DEPTH_BASE,
@@ -1115,51 +932,6 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	}
 }
 
-static void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
-					struct pipe_resource *buffer)
-{
-	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
-	struct r600_resource *rbuffer = (struct r600_resource*)buffer;
-	uint32_t offset;
-
-	/* Note that the state tracker can unbind constant buffers by
-	 * passing NULL here.
-	 */
-	if (buffer == NULL) {
-		return;
-	}
-
-	r600_upload_const_buffer(rctx, buffer, &offset);
-
-	switch (shader) {
-	case PIPE_SHADER_VERTEX:
-		rctx->vs_const_buffer.nregs = 0;
-		r600_pipe_state_add_reg(&rctx->vs_const_buffer,
-					R_028180_ALU_CONST_BUFFER_SIZE_VS_0,
-					ALIGN_DIVUP(buffer->width0 >> 4, 16),
-					0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(&rctx->vs_const_buffer,
-					R_028980_ALU_CONST_CACHE_VS_0,
-					(r600_bo_offset(rbuffer->bo) + offset) >> 8, 0xFFFFFFFF, rbuffer->bo);
-		r600_context_pipe_state_set(&rctx->ctx, &rctx->vs_const_buffer);
-		break;
-	case PIPE_SHADER_FRAGMENT:
-		rctx->ps_const_buffer.nregs = 0;
-		r600_pipe_state_add_reg(&rctx->ps_const_buffer,
-					R_028140_ALU_CONST_BUFFER_SIZE_PS_0,
-					ALIGN_DIVUP(buffer->width0 >> 4, 16),
-					0xFFFFFFFF, NULL);
-		r600_pipe_state_add_reg(&rctx->ps_const_buffer,
-					R_028940_ALU_CONST_CACHE_PS_0,
-					(r600_bo_offset(rbuffer->bo) + offset) >> 8, 0xFFFFFFFF, rbuffer->bo);
-		r600_context_pipe_state_set(&rctx->ctx, &rctx->ps_const_buffer);
-		break;
-	default:
-		R600_ERR("unsupported %d\n", shader);
-		return;
-	}
-}
-
 void r600_init_state_functions(struct r600_pipe_context *rctx)
 {
 	rctx->context.create_blend_state = r600_create_blend_state;
@@ -1199,6 +971,7 @@ void r600_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.set_vertex_sampler_views = r600_set_vs_sampler_view;
 	rctx->context.set_viewport_state = r600_set_viewport_state;
 	rctx->context.sampler_view_destroy = r600_sampler_view_destroy;
+	rctx->context.redefine_user_buffer = u_default_redefine_user_buffer;
 }
 
 void r600_init_config(struct r600_pipe_context *rctx)
@@ -1488,4 +1261,26 @@ void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx)
 				S_028D0C_STENCIL_COPY_ENABLE(1) |
 				S_028D0C_COPY_CENTROID(1), NULL);
 	return rstate;
+}
+
+void r600_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
+				   struct r600_pipe_state *rstate,
+				   struct r600_resource *rbuffer,
+				   unsigned offset, unsigned stride)
+{
+	r600_pipe_state_add_reg(rstate, R_038000_RESOURCE0_WORD0,
+				offset, 0xFFFFFFFF, rbuffer->bo);
+	r600_pipe_state_add_reg(rstate, R_038004_RESOURCE0_WORD1,
+				rbuffer->bo_size - offset - 1, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_038008_RESOURCE0_WORD2,
+				S_038008_STRIDE(stride),
+				0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_03800C_RESOURCE0_WORD3,
+				0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_038010_RESOURCE0_WORD4,
+				0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_038014_RESOURCE0_WORD5,
+				0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_038018_RESOURCE0_WORD6,
+				0xC0000000, 0xFFFFFFFF, NULL);
 }

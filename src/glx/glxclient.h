@@ -585,6 +585,8 @@ struct glx_display
 extern int
 glx_screen_init(struct glx_screen *psc,
 		int screen, struct glx_display * priv);
+extern void
+glx_screen_cleanup(struct glx_screen *psc);
 
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
 extern __GLXDRIdrawable *

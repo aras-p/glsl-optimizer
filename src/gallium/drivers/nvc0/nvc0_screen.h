@@ -128,17 +128,25 @@ nvc0_resource_validate(struct nvc0_resource *res, uint32_t flags)
 {
    struct nvc0_screen *screen = nvc0_screen(res->base.screen);
 
-   nouveau_bo_validate(screen->base.channel, res->bo, flags);
+   if (likely(res->bo)) {
+      nouveau_bo_validate(screen->base.channel, res->bo, flags);
 
-   nvc0_resource_fence(res, flags);
+      if (flags & NOUVEAU_BO_WR)
+         res->status |= NVC0_BUFFER_STATUS_GPU_WRITING;
+      if (flags & NOUVEAU_BO_RD)
+         res->status |= NVC0_BUFFER_STATUS_GPU_READING;
+
+      nvc0_resource_fence(res, flags);
+   }
 }
 
 
 boolean
 nvc0_screen_fence_new(struct nvc0_screen *, struct nvc0_fence **, boolean emit);
-
 void
 nvc0_screen_fence_next(struct nvc0_screen *);
+void
+nvc0_screen_fence_update(struct nvc0_screen *, boolean flushed);
 
 static INLINE boolean
 nvc0_screen_fence_emit(struct nvc0_screen *screen)

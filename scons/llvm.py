@@ -147,8 +147,6 @@ def generate(env):
         except OSError:
             print 'scons: llvm-config version %s failed' % llvm_version
             return
-        else:
-            env['LINK'] = env['CXX']
 
     assert llvm_version is not None
     env['llvm'] = True

@@ -120,7 +120,7 @@ GLboolean mach64CreateContext( gl_api api,
       shareCtx = ((mach64ContextPtr) sharedContextPrivate)->glCtx;
    else 
       shareCtx = NULL;
-   mmesa->glCtx = _mesa_create_context(glVisual, shareCtx, 
+   mmesa->glCtx = _mesa_create_context(API_OPENGL, glVisual, shareCtx, 
 					&functions, (void *)mmesa);
    if (!mmesa->glCtx) {
       FREE(mmesa);

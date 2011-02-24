@@ -97,7 +97,7 @@ void ir_print_visitor::visit(ir_variable *ir)
    const char *const cent = (ir->centroid) ? "centroid " : "";
    const char *const inv = (ir->invariant) ? "invariant " : "";
    const char *const mode[] = { "", "uniform ", "in ", "out ", "inout ",
-			        "temporary " };
+			        "const_in ", "sys ", "temporary " };
    const char *const interp[] = { "", "flat", "noperspective" };
 
    printf("(%s%s%s%s) ",
@@ -192,7 +192,15 @@ void ir_print_visitor::visit(ir_texture *ir)
 
    ir->coordinate->accept(this);
 
-   printf(" (%d %d %d) ", ir->offsets[0], ir->offsets[1], ir->offsets[2]);
+   printf(" ");
+
+   if (ir->offset != NULL) {
+      ir->offset->accept(this);
+   } else {
+      printf("0");
+   }
+
+   printf(" ");
 
    if (ir->op != ir_txf) {
       if (ir->projector)

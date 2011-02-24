@@ -782,7 +782,7 @@ dri2_display_init_screen(struct native_display *ndpy)
       dri2dpy->event_handler->new_drm_screen(&dri2dpy->base,
             dri2dpy->dri_driver, fd);
    if (!dri2dpy->base.screen) {
-      _eglLog(_EGL_WARNING, "failed to create DRM screen");
+      _eglLog(_EGL_DEBUG, "failed to create DRM screen");
       return FALSE;
    }
 

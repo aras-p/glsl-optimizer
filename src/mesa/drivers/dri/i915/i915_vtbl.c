@@ -217,7 +217,7 @@ i915_emit_invarient_state(struct intel_context *intel)
 
 
 #define emit(intel, state, size )		     \
-   intel_batchbuffer_data(intel->batch, state, size, false)
+   intel_batchbuffer_data(intel, state, size, false)
 
 static GLuint
 get_dirty(struct i915_hw_state *state)
@@ -250,6 +250,9 @@ get_state_size(struct i915_hw_state *state)
 
    if (dirty & I915_UPLOAD_CTX)
       sz += sizeof(state->Ctx);
+
+   if (dirty & I915_UPLOAD_BLEND)
+      sz += sizeof(state->Blend);
 
    if (dirty & I915_UPLOAD_BUFFERS)
       sz += sizeof(state->Buffer);
@@ -299,7 +302,7 @@ i915_emit_state(struct intel_context *intel)
     * scheduling is allowed, rather than assume that it is whenever a
     * batchbuffer fills up.
     */
-   intel_batchbuffer_require_space(intel->batch,
+   intel_batchbuffer_require_space(intel,
 				   get_state_size(state) + INTEL_PRIM_EMIT_SIZE,
 				   false);
    count = 0;
@@ -307,7 +310,7 @@ i915_emit_state(struct intel_context *intel)
    aper_count = 0;
    dirty = get_dirty(state);
 
-   aper_array[aper_count++] = intel->batch->buf;
+   aper_array[aper_count++] = intel->batch.bo;
    if (dirty & I915_UPLOAD_BUFFERS) {
       aper_array[aper_count++] = state->draw_region->buffer;
       if (state->depth_region)
@@ -327,7 +330,7 @@ i915_emit_state(struct intel_context *intel)
    if (dri_bufmgr_check_aperture_space(aper_array, aper_count)) {
        if (count == 0) {
 	   count++;
-	   intel_batchbuffer_flush(intel->batch);
+	   intel_batchbuffer_flush(intel);
 	   goto again;
        } else {
 	   _mesa_error(ctx, GL_OUT_OF_MEMORY, "i915 emit state");
@@ -364,6 +367,13 @@ i915_emit_state(struct intel_context *intel)
          fprintf(stderr, "I915_UPLOAD_CTX:\n");
 
       emit(intel, state->Ctx, sizeof(state->Ctx));
+   }
+
+   if (dirty & I915_UPLOAD_BLEND) {
+      if (INTEL_DEBUG & DEBUG_STATE)
+         fprintf(stderr, "I915_UPLOAD_BLEND:\n");
+
+      emit(intel, state->Blend, sizeof(state->Blend));
    }
 
    if (dirty & I915_UPLOAD_BUFFERS) {
@@ -426,6 +436,7 @@ i915_emit_state(struct intel_context *intel)
     */
    if (dirty & I915_UPLOAD_TEX_ALL) {
       int nr = 0;
+      GLuint unwind;
 
       for (i = 0; i < I915_TEX_UNITS; i++)
          if (dirty & I915_UPLOAD_TEX(i))
@@ -445,6 +456,7 @@ i915_emit_state(struct intel_context *intel)
          }
       ADVANCE_BATCH();
 
+      unwind = intel->batch.used;
       BEGIN_BATCH(2 + nr * 3);
       OUT_BATCH(_3DSTATE_SAMPLER_STATE | (3 * nr));
       OUT_BATCH((dirty & I915_UPLOAD_TEX_ALL) >> I915_UPLOAD_TEX_0_SHIFT);
@@ -455,6 +467,13 @@ i915_emit_state(struct intel_context *intel)
             OUT_BATCH(state->Tex[i][I915_TEXREG_SS4]);
          }
       ADVANCE_BATCH();
+      if (i915->last_sampler &&
+	  memcmp(intel->batch.map + i915->last_sampler,
+		 intel->batch.map + unwind,
+		 (2 + nr*3)*sizeof(int)) == 0)
+	  intel->batch.used = unwind;
+      else
+	  i915->last_sampler = unwind;
    }
 
    if (dirty & I915_UPLOAD_CONSTANTS) {
@@ -476,9 +495,7 @@ i915_emit_state(struct intel_context *intel)
       }
    }
 
-   intel->batch->dirty_state &= ~dirty;
    assert(get_dirty(state) == 0);
-   assert((intel->batch->dirty_state & (1<<1)) == 0);
 }
 
 static void
@@ -660,6 +677,10 @@ i915_new_batch(struct intel_context *intel)
     */
    i915->state.emitted = 0;
    i915->last_draw_offset = 0;
+   i915->last_sampler = 0;
+
+   i915->current_vb_bo = NULL;
+   i915->current_vertex_size = 0;
 }
 
 static void 

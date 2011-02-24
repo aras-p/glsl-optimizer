@@ -98,8 +98,9 @@ rbug_surface_create(struct rbug_context *rb_context,
 
    pipe_reference_init(&rb_surface->base.reference, 1);
    rb_surface->base.texture = NULL;
+   rb_surface->base.context = &rb_context->base;
+   rb_surface->surface = surface; /* we own the surface already */
    pipe_resource_reference(&rb_surface->base.texture, &rb_resource->base);
-   rb_surface->surface = surface;
 
    return &rb_surface->base;
 
@@ -113,8 +114,7 @@ rbug_surface_destroy(struct rbug_context *rb_context,
                      struct rbug_surface *rb_surface)
 {
    pipe_resource_reference(&rb_surface->base.texture, NULL);
-   rb_context->pipe->surface_destroy(rb_context->pipe,
-                                     rb_surface->surface);
+   pipe_surface_reference(&rb_surface->surface, NULL);
    FREE(rb_surface);
 }
 
