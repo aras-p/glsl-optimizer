@@ -310,15 +310,15 @@ compute_component_mapping(GLenum inFormat, GLenum outFormat,
  * \param srcPacking  source image pixel packing
  * \return resulting image with format = textureBaseFormat and type = GLfloat.
  */
-static GLfloat *
-make_temp_float_image(struct gl_context *ctx, GLuint dims,
-                      GLenum logicalBaseFormat,
-                      GLenum textureBaseFormat,
-                      GLint srcWidth, GLint srcHeight, GLint srcDepth,
-                      GLenum srcFormat, GLenum srcType,
-                      const GLvoid *srcAddr,
-                      const struct gl_pixelstore_attrib *srcPacking,
-                      GLbitfield transferOps)
+GLfloat *
+_mesa_make_temp_float_image(struct gl_context *ctx, GLuint dims,
+			    GLenum logicalBaseFormat,
+			    GLenum textureBaseFormat,
+			    GLint srcWidth, GLint srcHeight, GLint srcDepth,
+			    GLenum srcFormat, GLenum srcType,
+			    const GLvoid *srcAddr,
+			    const struct gl_pixelstore_attrib *srcPacking,
+			    GLbitfield transferOps)
 {
    GLfloat *tempImage;
    const GLint components = _mesa_components_in_format(logicalBaseFormat);
@@ -2065,7 +2065,7 @@ _mesa_texstore_argb2101010(TEXSTORE_PARAMS)
    }
    else {
       /* general path */
-      const GLfloat *tempImage = make_temp_float_image(ctx, dims,
+      const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
                                                  baseInternalFormat,
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
@@ -2317,7 +2317,7 @@ _mesa_texstore_unorm1616(TEXSTORE_PARAMS)
    }
    else {
       /* general path */
-      const GLfloat *tempImage = make_temp_float_image(ctx, dims,
+      const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
                                                  baseInternalFormat,
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
@@ -2394,7 +2394,7 @@ _mesa_texstore_unorm16(TEXSTORE_PARAMS)
    }
    else {
       /* general path */
-      const GLfloat *tempImage = make_temp_float_image(ctx, dims,
+      const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
                                                  baseInternalFormat,
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
@@ -2452,7 +2452,7 @@ _mesa_texstore_rgba_16(TEXSTORE_PARAMS)
    }
    else {
       /* general path */
-      const GLfloat *tempImage = make_temp_float_image(ctx, dims,
+      const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
                                                  baseInternalFormat,
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
@@ -2519,7 +2519,7 @@ _mesa_texstore_signed_rgba_16(TEXSTORE_PARAMS)
    }
    else {
       /* general path */
-      const GLfloat *tempImage = make_temp_float_image(ctx, dims,
+      const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
                                                  baseInternalFormat,
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
@@ -2901,7 +2901,7 @@ _mesa_texstore_signed_r8(TEXSTORE_PARAMS)
    /* XXX look at adding optimized paths */
    {
       /* general path */
-      const GLfloat *tempImage = make_temp_float_image(ctx, dims,
+      const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
                                                  baseInternalFormat,
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
@@ -2946,7 +2946,7 @@ _mesa_texstore_signed_rg88(TEXSTORE_PARAMS)
    /* XXX look at adding optimized paths */
    {
       /* general path */
-      const GLfloat *tempImage = make_temp_float_image(ctx, dims,
+      const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
                                                  baseInternalFormat,
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
@@ -2991,7 +2991,7 @@ _mesa_texstore_signed_rgbx8888(TEXSTORE_PARAMS)
 
    {
       /* general path */
-      const GLfloat *tempImage = make_temp_float_image(ctx, dims,
+      const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
                                                  baseInternalFormat,
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
@@ -3104,7 +3104,7 @@ _mesa_texstore_signed_rgba8888(TEXSTORE_PARAMS)
    }
    else {
       /* general path */
-      const GLfloat *tempImage = make_temp_float_image(ctx, dims,
+      const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
                                                  baseInternalFormat,
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
@@ -3413,7 +3413,7 @@ _mesa_texstore_rgba_float32(TEXSTORE_PARAMS)
    }
    else {
       /* general path */
-      const GLfloat *tempImage = make_temp_float_image(ctx, dims,
+      const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
                                                  baseInternalFormat,
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
@@ -3483,7 +3483,7 @@ _mesa_texstore_rgba_float16(TEXSTORE_PARAMS)
    }
    else {
       /* general path */
-      const GLfloat *tempImage = make_temp_float_image(ctx, dims,
+      const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
                                                  baseInternalFormat,
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
@@ -3549,7 +3549,7 @@ _mesa_texstore_rgba_int8(TEXSTORE_PARAMS)
    }
    else {
       /* general path */
-      const GLfloat *tempImage = make_temp_float_image(ctx, dims,
+      const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
                                                  baseInternalFormat,
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
@@ -3614,7 +3614,7 @@ _mesa_texstore_rgba_int16(TEXSTORE_PARAMS)
    }
    else {
       /* general path */
-      const GLfloat *tempImage = make_temp_float_image(ctx, dims,
+      const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
                                                  baseInternalFormat,
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
@@ -3679,7 +3679,7 @@ _mesa_texstore_rgba_int32(TEXSTORE_PARAMS)
    }
    else {
       /* general path */
-      const GLfloat *tempImage = make_temp_float_image(ctx, dims,
+      const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
                                                  baseInternalFormat,
                                                  baseFormat,
                                                  srcWidth, srcHeight, srcDepth,
