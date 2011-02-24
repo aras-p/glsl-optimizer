@@ -61,19 +61,37 @@ New Tokens
 
     None.
 
+Changes to Chapter 2 of the GLX 1.3 Specification (Functions and Errors)
+
+    Replace the following sentence from section 2.2 Rendering Contexts:
+	In addition, a rendering context can be current for only one
+	thread at a time.
+    with:
+	In addition, an indirect rendering context can be current for
+	only one thread at a time.  A direct rendering context may be
+	current to multiple threads, with synchronization of access to
+	the context thruogh the GL managed by the application through
+	mutexes.
+
 Changes to Chapter 3 of the GLX 1.3 Specification (Functions and Errors)
 
-    Remove the following sentence from section 3.3.7 Rendering Contexts:
+    Replace the following sentence from section 3.3.7 Rendering Contexts:
 	If ctx is current to some other thread, then
 	glXMakeContextCurrent will generate a BadAccess error.
+    with:
+	If ctx is an indirect context current to some other thread,
+	then glXMakeContextCurrent will generate a BadAccess error.
 
-    Remove the following sentence from section 3.5 Rendering Contexts:
+    Replace the following sentence from section 3.5 Rendering Contexts:
 	If ctx is current to some other thread, then
 	glXMakeCurrent will generate a BadAccess error.
+    with:
+	If ctx is an indirect context current to some other thread,
+	then glXMakeCurrent will generate a BadAccess error.
 
 GLX Protocol
 
-    None.  The GLX extension is client-side.
+    None.  The GLX extension only extends to direct rendering contexts.
 
 Errors
 
@@ -124,6 +142,11 @@ Issues
     doing multithread_makecurrent to require that other libraries
     share in synchronization for binding of their own contexts, so the
     refcounting of the contexts is required to be threadsafe.
+
+    (6) Does this apply to indirect contexts?
+
+    This was ignored in the initial revision of the spec.  Behavior
+    for indirect contexts is left as-is.
 
 Revision History
 
