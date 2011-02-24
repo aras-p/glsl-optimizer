@@ -58,6 +58,7 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
     struct nouveau_channel *chan = nvc0->screen->base.channel;
     struct pipe_framebuffer_state *fb = &nvc0->framebuffer;
     unsigned i;
+    boolean serialize = FALSE;
 
     nvc0_bufctx_reset(nvc0, NVC0_BUFCTX_FRAME);
 
@@ -86,6 +87,11 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         OUT_RING  (chan, sf->depth);
         OUT_RING  (chan, mt->layer_stride >> 2);
 
+        if (mt->base.status & NVC0_BUFFER_STATUS_GPU_READING)
+           serialize = TRUE;
+        mt->base.status |=  NVC0_BUFFER_STATUS_GPU_WRITING;
+        mt->base.status &= ~NVC0_BUFFER_STATUS_GPU_READING;
+
         nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_FRAME, &mt->base,
                                  NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
     }
@@ -111,11 +117,21 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         OUT_RING  (chan, sf->height);
         OUT_RING  (chan, (unk << 16) | sf->depth);
 
+        if (mt->base.status & NVC0_BUFFER_STATUS_GPU_READING)
+           serialize = TRUE;
+        mt->base.status |=  NVC0_BUFFER_STATUS_GPU_WRITING;
+        mt->base.status &= ~NVC0_BUFFER_STATUS_GPU_READING;
+
         nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_FRAME, &mt->base,
                                  NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
     } else {
         BEGIN_RING(chan, RING_3D(ZETA_ENABLE), 1);
         OUT_RING  (chan, 0);
+    }
+
+    if (serialize) {
+       BEGIN_RING(chan, RING_3D(SERIALIZE), 1);
+       OUT_RING  (chan, 0);
     }
 }
 

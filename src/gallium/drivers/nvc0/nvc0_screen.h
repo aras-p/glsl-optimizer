@@ -131,6 +131,11 @@ nvc0_resource_validate(struct nvc0_resource *res, uint32_t flags)
    if (likely(res->bo)) {
       nouveau_bo_validate(screen->base.channel, res->bo, flags);
 
+      if (flags & NOUVEAU_BO_WR)
+         res->status |= NVC0_BUFFER_STATUS_GPU_WRITING;
+      if (flags & NOUVEAU_BO_RD)
+         res->status |= NVC0_BUFFER_STATUS_GPU_READING;
+
       nvc0_resource_fence(res, flags);
    }
 }
