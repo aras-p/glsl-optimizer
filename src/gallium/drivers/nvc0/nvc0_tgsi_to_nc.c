@@ -1634,6 +1634,10 @@ bld_instruction(struct bld_context *bld,
    {
       struct nv_basic_block *b = new_basic_block(bld->pc);
 
+      if (bld->pc->current_block->exit &&
+          !bld->pc->current_block->exit->terminator)
+         bld_flow(bld, NV_OP_BRA, NULL, NV_CC_P, b, FALSE);
+
       --bld->cond_lvl;
       nvc0_bblock_attach(bld->pc->current_block, b, bld->out_kind);
       nvc0_bblock_attach(bld->cond_bb[bld->cond_lvl], b, CFG_EDGE_FORWARD);
