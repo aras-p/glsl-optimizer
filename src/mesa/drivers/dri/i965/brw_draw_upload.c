@@ -338,6 +338,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 }
 	 if (k == i) {
 	    struct brw_vertex_buffer *buffer = &brw->vb.buffers[j];
+
 	    /* Named buffer object: Just reference its contents directly. */
 	    buffer->bo = intel_bufferobj_source(intel, intel_buffer,
 						&buffer->offset);

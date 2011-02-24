@@ -53,6 +53,15 @@ intel_bufferobj_alloc_buffer(struct intel_context *intel,
 					  intel_obj->Base.Size, 64);
 }
 
+static void
+release_buffer(struct intel_buffer_object *intel_obj)
+{
+   drm_intel_bo_unreference(intel_obj->buffer);
+   intel_obj->buffer = NULL;
+   intel_obj->offset = 0;
+   intel_obj->source = 0;
+}
+
 /**
  * There is some duplication between mesa's bufferobjects and our
  * bufmgr buffers.  Both have an integer handle and a hashtable to
@@ -81,8 +90,7 @@ intel_bufferobj_release_region(struct intel_context *intel,
    intel_obj->region->pbo = NULL;
    intel_obj->region = NULL;
 
-   drm_intel_bo_unreference(intel_obj->buffer);
-   intel_obj->buffer = NULL;
+   release_buffer(intel_obj);
 }
 
 /* Break the COW tie to the region.  Both the pbo and the region end
@@ -152,11 +160,9 @@ intel_bufferobj_data(struct gl_context * ctx,
    if (intel_obj->region)
       intel_bufferobj_release_region(intel, intel_obj);
 
-   if (intel_obj->buffer != NULL) {
-      drm_intel_bo_unreference(intel_obj->buffer);
-      intel_obj->buffer = NULL;
-      intel_obj->source = 0;
-   }
+   if (intel_obj->buffer != NULL)
+      release_buffer(intel_obj);
+
    free(intel_obj->sys_buffer);
    intel_obj->sys_buffer = NULL;
 
@@ -204,6 +210,7 @@ intel_bufferobj_subdata(struct gl_context * ctx,
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
+   bool busy;
 
    if (size == 0)
       return;
@@ -213,47 +220,53 @@ intel_bufferobj_subdata(struct gl_context * ctx,
    if (intel_obj->region)
       intel_bufferobj_cow(intel, intel_obj);
 
+   /* If we have a single copy in system memory, update that */
    if (intel_obj->sys_buffer) {
-      if (intel_obj->buffer) {
-	 drm_intel_bo_unreference(intel_obj->buffer);
-	 intel_obj->buffer = NULL;
-	 intel_obj->source = 0;
+      if (intel_obj->source)
+	 release_buffer(intel_obj);
+
+      if (intel_obj->buffer == NULL) {
+	 memcpy((char *)intel_obj->sys_buffer + offset, data, size);
+	 return;
       }
-      memcpy((char *)intel_obj->sys_buffer + offset, data, size);
-   } else {
-      bool busy =
-	 drm_intel_bo_busy(intel_obj->buffer) ||
-	 drm_intel_bo_references(intel->batch.bo, intel_obj->buffer);
 
-      /* replace the current busy bo with fresh data */
-      if (busy && size == intel_obj->Base.Size) {
-	 drm_intel_bo_unreference(intel_obj->buffer);
-	 intel_bufferobj_alloc_buffer(intel, intel_obj);
-	 drm_intel_bo_subdata(intel_obj->buffer, 0, size, data);
-      } else if (intel->gen < 6) {
-	 if (busy) {
-	    drm_intel_bo *temp_bo;
+      free(intel_obj->sys_buffer);
+      intel_obj->sys_buffer = NULL;
+   }
 
-	    temp_bo = drm_intel_bo_alloc(intel->bufmgr, "subdata temp", size, 64);
+   /* Otherwise we need to update the copy in video memory. */
+   busy =
+      drm_intel_bo_busy(intel_obj->buffer) ||
+      drm_intel_bo_references(intel->batch.bo, intel_obj->buffer);
 
-	    drm_intel_bo_subdata(temp_bo, 0, size, data);
+   /* replace the current busy bo with fresh data */
+   if (busy && size == intel_obj->Base.Size) {
+      drm_intel_bo_unreference(intel_obj->buffer);
+      intel_bufferobj_alloc_buffer(intel, intel_obj);
+      drm_intel_bo_subdata(intel_obj->buffer, 0, size, data);
+   } else if (intel->gen < 6) {
+      if (busy) {
+	 drm_intel_bo *temp_bo;
 
-	    intel_emit_linear_blit(intel,
-				   intel_obj->buffer, offset,
-				   temp_bo, 0,
-				   size);
+	 temp_bo = drm_intel_bo_alloc(intel->bufmgr, "subdata temp", size, 64);
 
-	    drm_intel_bo_unreference(temp_bo);
-	 } else {
-	    drm_intel_bo_subdata(intel_obj->buffer, offset, size, data);
-	 }
+	 drm_intel_bo_subdata(temp_bo, 0, size, data);
+
+	 intel_emit_linear_blit(intel,
+				intel_obj->buffer, offset,
+				temp_bo, 0,
+				size);
+
+	 drm_intel_bo_unreference(temp_bo);
       } else {
-	 /* Can't use the blit to modify the buffer in the middle of batch. */
-	 if (drm_intel_bo_references(intel->batch.bo, intel_obj->buffer)) {
-	    intel_batchbuffer_flush(intel);
-	 }
 	 drm_intel_bo_subdata(intel_obj->buffer, offset, size, data);
       }
+   } else {
+      /* Can't use the blit to modify the buffer in the middle of batch. */
+      if (drm_intel_bo_references(intel->batch.bo, intel_obj->buffer)) {
+	 intel_batchbuffer_flush(intel);
+      }
+      drm_intel_bo_subdata(intel_obj->buffer, offset, size, data);
    }
 }
 
@@ -295,15 +308,19 @@ intel_bufferobj_map(struct gl_context * ctx,
    assert(intel_obj);
 
    if (intel_obj->sys_buffer) {
-      if (!read_only && intel_obj->buffer) {
-	 drm_intel_bo_unreference(intel_obj->buffer);
-	 intel_obj->buffer = NULL;
-	 intel_obj->source = 0;
+      if (!read_only && intel_obj->source) {
+	 release_buffer(intel_obj);
       }
-      obj->Pointer = intel_obj->sys_buffer;
-      obj->Length = obj->Size;
-      obj->Offset = 0;
-      return obj->Pointer;
+
+      if (!intel_obj->buffer || intel_obj->source) {
+	 obj->Pointer = intel_obj->sys_buffer;
+	 obj->Length = obj->Size;
+	 obj->Offset = 0;
+	 return obj->Pointer;
+      }
+
+      free(intel_obj->sys_buffer);
+      intel_obj->sys_buffer = NULL;
    }
 
    /* Flush any existing batchbuffer that might reference this data. */
@@ -356,6 +373,7 @@ intel_bufferobj_map_range(struct gl_context * ctx,
 {
    struct intel_context *intel = intel_context(ctx);
    struct intel_buffer_object *intel_obj = intel_buffer_object(obj);
+   GLboolean read_only = (access == GL_READ_ONLY_ARB);
 
    assert(intel_obj);
 
@@ -367,13 +385,16 @@ intel_bufferobj_map_range(struct gl_context * ctx,
    obj->AccessFlags = access;
 
    if (intel_obj->sys_buffer) {
-      if (access != GL_READ_ONLY_ARB && intel_obj->buffer) {
-	 drm_intel_bo_unreference(intel_obj->buffer);
-	 intel_obj->buffer = NULL;
-	 intel_obj->source = 0;
+      if (!read_only && intel_obj->source)
+	 release_buffer(intel_obj);
+
+      if (!intel_obj->buffer || intel_obj->source) {
+	 obj->Pointer = intel_obj->sys_buffer + offset;
+	 return obj->Pointer;
       }
-      obj->Pointer = intel_obj->sys_buffer + offset;
-      return obj->Pointer;
+
+      free(intel_obj->sys_buffer);
+      intel_obj->sys_buffer = NULL;
    }
 
    if (intel_obj->region)
@@ -549,11 +570,8 @@ intel_bufferobj_buffer(struct intel_context *intel,
       }
    }
 
-   if (intel_obj->source) {
-      drm_intel_bo_unreference(intel_obj->buffer);
-      intel_obj->buffer = NULL;
-      intel_obj->source = 0;
-   }
+   if (intel_obj->source)
+      release_buffer(intel_obj);
 
    if (intel_obj->buffer == NULL) {
       intel_bufferobj_alloc_buffer(intel, intel_obj);
@@ -742,7 +760,7 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
       if (src == dst) {
 	 char *ptr = intel_bufferobj_map(ctx, GL_COPY_WRITE_BUFFER,
 					 GL_READ_WRITE, dst);
-	 memcpy(ptr + write_offset, ptr + read_offset, size);
+	 memmove(ptr + write_offset, ptr + read_offset, size);
 	 intel_bufferobj_unmap(ctx, GL_COPY_WRITE_BUFFER, dst);
       } else {
 	 const char *src_ptr;
