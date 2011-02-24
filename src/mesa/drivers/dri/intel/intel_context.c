@@ -581,7 +581,7 @@ intelFinish(struct gl_context * ctx)
 
        irb = intel_renderbuffer(fb->_ColorDrawBuffers[i]);
 
-       if (irb && irb->region)
+       if (irb && irb->region && irb->region->buffer)
 	  drm_intel_bo_wait_rendering(irb->region->buffer);
    }
    if (fb->_DepthBuffer) {
