@@ -241,6 +241,14 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
    case MESA_FORMAT_RGBA_UINT32:
       return PIPE_FORMAT_R32G32B32A32_USCALED;
 
+   case MESA_FORMAT_RED_RGTC1:
+      return PIPE_FORMAT_RGTC1_UNORM;
+   case MESA_FORMAT_SIGNED_RED_RGTC1:
+      return PIPE_FORMAT_RGTC1_SNORM;
+   case MESA_FORMAT_RG_RGTC2:
+      return PIPE_FORMAT_RGTC2_UNORM;
+   case MESA_FORMAT_SIGNED_RG_RGTC2:
+      return PIPE_FORMAT_RGTC2_SNORM;
    default:
       assert(0);
       return PIPE_FORMAT_NONE;
@@ -379,6 +387,15 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
       return MESA_FORMAT_RGBA_UINT16;
    case PIPE_FORMAT_R32G32B32A32_USCALED:
       return MESA_FORMAT_RGBA_UINT32;
+
+   case PIPE_FORMAT_RGTC1_UNORM:
+      return MESA_FORMAT_RED_RGTC1;
+   case PIPE_FORMAT_RGTC1_SNORM:
+      return MESA_FORMAT_SIGNED_RED_RGTC1;
+   case PIPE_FORMAT_RGTC2_UNORM:
+      return MESA_FORMAT_RG_RGTC2;
+   case PIPE_FORMAT_RGTC2_SNORM:
+      return MESA_FORMAT_SIGNED_RG_RGTC2;
 
    default:
       assert(0);
