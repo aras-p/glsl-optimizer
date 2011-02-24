@@ -225,3 +225,44 @@ resource_surface_present(struct resource_surface *rsurf,
 
    return TRUE;
 }
+
+/**
+ * Schedule a copy swap from the back to the front buffer using the
+ * native display's copy context.
+ */
+boolean
+resource_surface_copy_swap(struct resource_surface *rsurf,
+			   struct native_display *ndpy)
+{
+   struct pipe_resource *ftex;
+   struct pipe_resource *btex;
+   struct pipe_context *pipe;
+   struct pipe_box src_box;
+   boolean ret = FALSE;
+
+   pipe = ndpy_get_copy_context(ndpy);
+   if (!pipe)
+      return FALSE;
+
+   ftex = resource_surface_get_single_resource(rsurf,
+					       NATIVE_ATTACHMENT_FRONT_LEFT);
+   if (!ftex)
+      goto out_no_ftex;
+   btex = resource_surface_get_single_resource(rsurf,
+					       NATIVE_ATTACHMENT_BACK_LEFT);
+   if (!btex)
+      goto out_no_btex;
+
+   u_box_origin_2d(ftex->width0, ftex->height0, &src_box);
+   pipe->resource_copy_region(pipe, ftex, 0, 0, 0, 0,
+			      btex, 0, &src_box);
+   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
+   ret = TRUE;
+
+ out_no_ftex:
+   pipe_resource_reference(&btex, NULL);
+ out_no_btex:
+   pipe_resource_reference(&ftex, NULL);
+
+   return ret;
+}

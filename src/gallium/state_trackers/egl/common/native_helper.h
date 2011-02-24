@@ -74,3 +74,7 @@ boolean
 resource_surface_present(struct resource_surface *rsurf,
                          enum native_attachment which,
                          void *winsys_drawable_handle);
+
+boolean
+resource_surface_copy_swap(struct resource_surface *rsurf,
+			   struct native_display *ndpy);
