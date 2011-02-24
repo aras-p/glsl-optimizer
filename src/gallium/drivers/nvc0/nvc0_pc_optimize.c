@@ -592,7 +592,7 @@ constant_operand(struct nv_pc *pc,
       } else
       if (u.s32 > 0 && u.s32 == (1 << shift)) {
          nvi->opcode = NV_OP_SHL;
-         (val = new_value(pc, NV_FILE_IMM, NV_TYPE_U32))->reg.imm.s32 = shift;
+         (val = new_value(pc, NV_FILE_IMM, 4))->reg.imm.s32 = shift;
          nv_reference(pc, nvi, 0, nvi->src[t]->value);
          nv_reference(pc, nvi, 1, val);
          break;
@@ -600,14 +600,14 @@ constant_operand(struct nv_pc *pc,
       break;
    case NV_OP_RCP:
       u.f32 = 1.0f / u.f32;
-      (val = new_value(pc, NV_FILE_IMM, NV_TYPE_F32))->reg.imm.f32 = u.f32;
+      (val = new_value(pc, NV_FILE_IMM, 4))->reg.imm.f32 = u.f32;
       nvi->opcode = NV_OP_MOV;
       assert(s == 0);
       nv_reference(pc, nvi, 0, val);
       break;
    case NV_OP_RSQ:
       u.f32 = 1.0f / sqrtf(u.f32);
-      (val = new_value(pc, NV_FILE_IMM, NV_TYPE_F32))->reg.imm.f32 = u.f32;
+      (val = new_value(pc, NV_FILE_IMM, 4))->reg.imm.f32 = u.f32;
       nvi->opcode = NV_OP_MOV;
       assert(s == 0);
       nv_reference(pc, nvi, 0, val);
