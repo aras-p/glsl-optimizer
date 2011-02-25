@@ -1150,22 +1150,18 @@ ir_texture::get_opcode(const char *str)
 
 
 void
-ir_texture::set_sampler(ir_dereference *sampler)
+ir_texture::set_sampler(ir_dereference *sampler, const glsl_type *type)
 {
    assert(sampler != NULL);
+   assert(type != NULL);
    this->sampler = sampler;
+   this->type = type;
 
-   switch (sampler->type->sampler_type) {
-   case GLSL_TYPE_FLOAT:
-      this->type = glsl_type::vec4_type;
-      break;
-   case GLSL_TYPE_INT:
-      this->type = glsl_type::ivec4_type;
-      break;
-   case GLSL_TYPE_UINT:
-      this->type = glsl_type::uvec4_type;
-      break;
-   }
+   assert(sampler->type->sampler_type == type->base_type);
+   if (sampler->type->sampler_shadow)
+      assert(type->vector_elements == 4 || type->vector_elements == 1);
+   else
+      assert(type->vector_elements == 4);
 }
 
 

@@ -869,6 +869,7 @@ ir_texture *
 ir_reader::read_texture(s_expression *expr)
 {
    s_symbol *tag = NULL;
+   s_expression *s_type = NULL;
    s_expression *s_sampler = NULL;
    s_expression *s_coord = NULL;
    s_expression *s_offset = NULL;
@@ -879,11 +880,11 @@ ir_reader::read_texture(s_expression *expr)
    ir_texture_opcode op = ir_tex; /* silence warning */
 
    s_pattern tex_pattern[] =
-      { "tex", s_sampler, s_coord, s_offset, s_proj, s_shadow };
+      { "tex", s_type, s_sampler, s_coord, s_offset, s_proj, s_shadow };
    s_pattern txf_pattern[] =
-      { "txf", s_sampler, s_coord, s_offset, s_lod };
+      { "txf", s_type, s_sampler, s_coord, s_offset, s_lod };
    s_pattern other_pattern[] =
-      { tag, s_sampler, s_coord, s_offset, s_proj, s_shadow, s_lod };
+      { tag, s_type, s_sampler, s_coord, s_offset, s_proj, s_shadow, s_lod };
 
    if (MATCH(expr, tex_pattern)) {
       op = ir_tex;
@@ -900,6 +901,14 @@ ir_reader::read_texture(s_expression *expr)
 
    ir_texture *tex = new(mem_ctx) ir_texture(op);
 
+   // Read return type
+   const glsl_type *type = read_type(s_type);
+   if (type == NULL) {
+      ir_read_error(NULL, "when reading type in (%s ...)",
+		    tex->opcode_string());
+      return NULL;
+   }
+
    // Read sampler (must be a deref)
    ir_dereference *sampler = read_dereference(s_sampler);
    if (sampler == NULL) {
@@ -907,7 +916,7 @@ ir_reader::read_texture(s_expression *expr)
 		    tex->opcode_string());
       return NULL;
    }
-   tex->set_sampler(sampler);
+   tex->set_sampler(sampler, type);
 
    // Read coordinate (any rvalue)
    tex->coordinate = read_rvalue(s_coord);

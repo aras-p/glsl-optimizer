@@ -49,12 +49,13 @@ def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
     extra_dim = get_extra_dim(sampler_type, variant & Proj, unused_fields)
     offset_dim = get_sampler_dim(sampler_type)
 
-    # Print parameters
-    print "   (signature",
     if variant & Single:
-        print "float"
+        return_type = "float"
     else:
-        print g + "vec4"
+        return_type = g + "vec4"
+
+    # Print parameters
+    print "   (signature", return_type
     print "     (parameters"
     print "       (declare (in) " + g + "sampler" + sampler_type + " sampler)"
     print "       (declare (in) " + vec_type("i" if tex_inst == "txf" else "", coord_dim + extra_dim) + " P)",
@@ -72,7 +73,7 @@ def generate_sigs(g, tex_inst, sampler_type, variant = 0, unused_fields = 0):
     if tex_inst == "txb":
         print "\n       (declare (in) float bias)",
 
-    print ")\n     ((return (" + tex_inst + " (var_ref sampler)",
+    print ")\n     ((return (" + tex_inst, return_type, "(var_ref sampler)",
 
     # Coordinate
     if extra_dim > 0:
