@@ -465,7 +465,6 @@ bvec4 not(bvec4 x);
  * 8.7 - Texture Lookup Functions
  */
 
-#if 0
 /* textureSize */
 int   textureSize( sampler1D sampler, int lod);
 int   textureSize(isampler1D sampler, int lod);
@@ -496,7 +495,6 @@ ivec3 textureSize(usampler2DArray sampler, int lod);
 
 ivec2 textureSize(sampler1DArrayShadow sampler, int lod);
 ivec3 textureSize(sampler2DArrayShadow sampler, int lod);
-#endif
 
 /* texture - no bias */
  vec4 texture( sampler1D sampler, float P);
