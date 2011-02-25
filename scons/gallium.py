@@ -195,6 +195,8 @@ def generate(env):
     # Determine whether we are cross compiling; in particular, whether we need
     # to compile code generators with a different compiler as the target code.
     host_platform = _platform.system().lower()
+    if host_platform.startswith('cygwin'):
+        host_platform = 'cygwin'
     host_machine = os.environ.get('PROCESSOR_ARCHITEW6432', os.environ.get('PROCESSOR_ARCHITECTURE', _platform.machine()))
     host_machine = {
         'x86': 'x86',
