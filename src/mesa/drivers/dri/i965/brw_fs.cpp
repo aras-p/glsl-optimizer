@@ -213,6 +213,7 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
       return 2;
    case FS_OPCODE_TEX:
    case FS_OPCODE_TXB:
+   case FS_OPCODE_TXD:
    case FS_OPCODE_TXL:
       return 1;
    case FS_OPCODE_FB_WRITE:
@@ -1200,6 +1201,8 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate)
       }
       /* gen4's SIMD8 sampler always has the slots for u,v,r present. */
       mlen += 3;
+   } else if (ir->op == ir_txd) {
+      assert(!"TXD isn't supported on gen4 yet.");
    } else {
       /* Oh joy.  gen4 doesn't have SIMD8 non-shadow-compare bias/lod
        * instructions.  We'll need to do SIMD16 here.
@@ -1253,6 +1256,8 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate)
       inst = emit(fs_inst(FS_OPCODE_TXL, dst));
       break;
    case ir_txd:
+      inst = emit(fs_inst(FS_OPCODE_TXD, dst));
+      break;
    case ir_txf:
       assert(!"GLSL 1.30 features unsupported");
       break;
@@ -2315,6 +2320,9 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	    msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_LOD_GEN5;
 	 }
 	 break;
+      case FS_OPCODE_TXD:
+	 assert(!"TXD isn't supported on gen5+ yet.");
+	 break;
       }
    } else {
       switch (inst->opcode) {
@@ -2348,6 +2356,9 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
 	    msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_LOD;
 	    simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
 	 }
+	 break;
+      case FS_OPCODE_TXD:
+	 assert(!"TXD isn't supported on gen4 yet.");
 	 break;
       }
    }
@@ -3624,6 +3635,7 @@ fs_visitor::generate_code()
 	 break;
       case FS_OPCODE_TEX:
       case FS_OPCODE_TXB:
+      case FS_OPCODE_TXD:
       case FS_OPCODE_TXL:
 	 generate_tex(inst, dst, src[0]);
 	 break;
