@@ -42,9 +42,24 @@ struct i915_tracked_hw_state {
    const char *name;
    void (*validate)(struct i915_context *);
    void (*emit)(struct i915_context *);
-   unsigned dirty;
+   unsigned dirty, batch_space;
 };
 
+
+static void
+emit_flush(struct i915_context *i915)
+{
+   /* Cache handling is very cheap atm. State handling can request to flushes:
+    * - I915_FLUSH_CACHE which is a flush everything request and
+    * - I915_PIPELINE_FLUSH which is specifically for the draw_offset flush.
+    * Because the cache handling is so dumb, no explicit "invalidate map cache".
+    * Also, the first is a strict superset of the latter, so the following logic
+    * works. */
+   if (i915->flush_dirty & I915_FLUSH_CACHE)
+      OUT_BATCH(MI_FLUSH | FLUSH_MAP_CACHE);
+   else if (i915->flush_dirty & I915_PIPELINE_FLUSH)
+      OUT_BATCH(MI_FLUSH | INHIBIT_FLUSH_RENDER_CACHE);
+}
 
 static void
 validate_immediate(struct i915_context *i915)
@@ -82,21 +97,25 @@ validate_map(struct i915_context *i915)
 }
 
 const static struct i915_tracked_hw_state hw_atoms[] = {
+   { "flush", NULL, emit_flush, I915_HW_FLUSH, 1 },
    { "immediate", validate_immediate, NULL, I915_HW_IMMEDIATE },
    { "static", validate_static, NULL, I915_HW_STATIC },
    { "map", validate_map, NULL, I915_HW_MAP }
 };
 
 static boolean
-i915_validate_state(struct i915_context *i915)
+i915_validate_state(struct i915_context *i915, unsigned *batch_space)
 {
    int i;
 
    i915->num_validation_buffers = 0;
+   *batch_space = 0;
 
    for (i = 0; i < Elements(hw_atoms); i++)
-      if ((i915->hardware_dirty & hw_atoms[i].dirty) && hw_atoms[i].validate)
+      if ((i915->hardware_dirty & hw_atoms[i].dirty) && hw_atoms[i].validate) {
 	 hw_atoms[i].validate(i915);
+	 *batch_space += hw_atoms[i].batch_space;
+      }
 
    if (i915->num_validation_buffers == 0)
       return TRUE;
@@ -108,11 +127,22 @@ i915_validate_state(struct i915_context *i915)
    return TRUE;
 }
 
+static void
+emit_state(struct i915_context *i915)
+{
+   int i;
+
+   for (i = 0; i < Elements(hw_atoms); i++)
+      if ((i915->hardware_dirty & hw_atoms[i].dirty) && hw_atoms[i].emit)
+	 hw_atoms[i].emit(i915);
+}
+
 /* Push the state into the sarea and/or texture memory.
  */
 void
 i915_emit_hardware_state(struct i915_context *i915 )
 {
+   unsigned batch_space;
    /* XXX: there must be an easier way */
    const unsigned dwords = ( 14 + 
                              7 + 
@@ -138,20 +168,21 @@ i915_emit_hardware_state(struct i915_context *i915 )
    if (I915_DBG_ON(DBG_ATOMS))
       i915_dump_hardware_dirty(i915, __FUNCTION__);
 
-   if (!i915_validate_state(i915)) {
+   if (!i915_validate_state(i915, &batch_space)) {
       FLUSH_BATCH(NULL);
-      assert(i915_validate_state(i915));
+      assert(i915_validate_state(i915, &batch_space));
    }
 
-   if(!BEGIN_BATCH(dwords, relocs)) {
+   if(!BEGIN_BATCH(batch_space + dwords, relocs)) {
       FLUSH_BATCH(NULL);
-      assert(i915_validate_state(i915));
-      assert(BEGIN_BATCH(dwords, relocs));
+      assert(i915_validate_state(i915, &batch_space));
+      assert(BEGIN_BATCH(batch_space + dwords, relocs));
    }
 
    save_ptr = (uintptr_t)i915->batch->ptr;
    save_relocs = i915->batch->relocs;
 
+   emit_state(i915);
    /* 14 dwords, 0 relocs */
    if (i915->hardware_dirty & I915_HW_INVARIANT)
    {

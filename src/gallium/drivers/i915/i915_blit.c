@@ -81,6 +81,8 @@ i915_fill_blit(struct i915_context *i915,
    OUT_BATCH(((y + h) << 16) | (x + w));
    OUT_RELOC_FENCED(dst_buffer, I915_USAGE_2D_TARGET, dst_offset);
    OUT_BATCH(color);
+
+   i915_set_flush_dirty(i915, I915_FLUSH_CACHE);
 }
 
 void
@@ -153,4 +155,6 @@ i915_copy_blit(struct i915_context *i915,
    OUT_BATCH((src_y << 16) | src_x);
    OUT_BATCH(((int) src_pitch & 0xffff));
    OUT_RELOC_FENCED(src_buffer, I915_USAGE_2D_SOURCE, src_offset);
+
+   i915_set_flush_dirty(i915, I915_FLUSH_CACHE);
 }

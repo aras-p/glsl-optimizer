@@ -246,6 +246,7 @@ struct i915_context {
    unsigned hardware_dirty;
    unsigned immediate_dirty;
    unsigned dynamic_dirty;
+   unsigned flush_dirty;
 
    struct i915_winsys_buffer *validation_buffers[2 + 1 + I915_TEX_UNITS];
    int num_validation_buffers;
@@ -289,6 +290,18 @@ struct i915_context {
 #define I915_HW_CONSTANTS         (1<<I915_CACHE_CONSTANTS)
 #define I915_HW_IMMEDIATE         (1<<(I915_MAX_CACHE+0))
 #define I915_HW_INVARIANT         (1<<(I915_MAX_CACHE+1))
+#define I915_HW_FLUSH             (1<<(I915_MAX_CACHE+1))
+
+/* hw flush handling */
+#define I915_FLUSH_CACHE		1
+#define I915_PIPELINE_FLUSH		2
+
+static INLINE
+void i915_set_flush_dirty(struct i915_context *i915, unsigned flush)
+{
+   i915->hardware_dirty |= I915_HW_FLUSH;
+   i915->flush_dirty |= flush;
+}
 
 
 /***********************************************************************

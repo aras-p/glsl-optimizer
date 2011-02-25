@@ -169,6 +169,9 @@ static void update_framebuffer(struct i915_context *i915)
    i915->current.draw_size = (w - 1 + x) | ((h - 1 + y) << 16);
 
    i915->hardware_dirty |= I915_HW_STATIC;
+
+   /* flush the cache in case we sample from the old renderbuffers */
+   i915_set_flush_dirty(i915, I915_FLUSH_CACHE);
 }
 
 struct i915_tracked_state i915_hw_framebuffer = {
