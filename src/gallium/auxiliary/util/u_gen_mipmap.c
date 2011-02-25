@@ -1321,10 +1321,12 @@ util_create_gen_mipmap(struct pipe_context *pipe,
                                                TGSI_INTERPOLATE_LINEAR);
    ctx->fsCube = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_CUBE,
                                                TGSI_INTERPOLATE_LINEAR);
-   ctx->fs1da = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_1D_ARRAY,
-                                               TGSI_INTERPOLATE_LINEAR);
-   ctx->fs2da = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D_ARRAY,
-                                               TGSI_INTERPOLATE_LINEAR);
+   if (pipe->screen->get_param(pipe->screen, PIPE_CAP_ARRAY_TEXTURES)) {
+      ctx->fs1da = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_1D_ARRAY,
+                                                 TGSI_INTERPOLATE_LINEAR);
+      ctx->fs2da = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D_ARRAY,
+                                                 TGSI_INTERPOLATE_LINEAR);
+   }
 
 
    /* vertex data that doesn't change */
