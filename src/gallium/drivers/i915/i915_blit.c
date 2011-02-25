@@ -49,6 +49,11 @@ i915_fill_blit(struct i915_context *i915,
    I915_DBG(DBG_BLIT, "%s dst:buf(%p)/%d+%d %d,%d sz:%dx%d\n",
             __FUNCTION__, dst_buffer, dst_pitch, dst_offset, x, y, w, h);
 
+   if(!i915_winsys_validate_buffers(i915->batch, &dst_buffer, 1)) {
+      FLUSH_BATCH(NULL);
+      assert(i915_winsys_validate_buffers(i915->batch, &dst_buffer, 1));
+   }
+
    switch (cpp) {
    case 1:
    case 2:
@@ -94,6 +99,7 @@ i915_copy_blit(struct i915_context *i915,
    unsigned CMD, BR13;
    int dst_y2 = dst_y + h;
    int dst_x2 = dst_x + w;
+   struct i915_winsys_buffer *buffers[2] = {src_buffer, dst_buffer};
 
 
    I915_DBG(DBG_BLIT,
@@ -101,6 +107,11 @@ i915_copy_blit(struct i915_context *i915,
             __FUNCTION__,
             src_buffer, src_pitch, src_offset, src_x, src_y,
             dst_buffer, dst_pitch, dst_offset, dst_x, dst_y, w, h);
+
+   if(!i915_winsys_validate_buffers(i915->batch, buffers, 2)) {
+      FLUSH_BATCH(NULL);
+      assert(i915_winsys_validate_buffers(i915->batch, buffers, 2));
+   }
 
    switch (cpp) {
    case 1:
