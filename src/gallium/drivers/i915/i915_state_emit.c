@@ -413,7 +413,6 @@ i915_emit_hardware_state(struct i915_context *i915 )
    {
       uint w, h;
       struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
-      struct i915_texture *tex = i915_texture(cbuf_surface->texture);
       unsigned x, y;
       int layer;
       uint32_t draw_offset;
@@ -422,10 +421,15 @@ i915_emit_hardware_state(struct i915_context *i915 )
       ret = framebuffer_size(&i915->framebuffer, &w, &h);
       assert(ret);
 
-      layer = cbuf_surface->u.tex.first_layer;
+      if (cbuf_surface) {
+	 struct i915_texture *tex = i915_texture(cbuf_surface->texture);
+	 layer = cbuf_surface->u.tex.first_layer;
 
-      x = tex->image_offset[cbuf_surface->u.tex.level][layer].nblocksx;
-      y = tex->image_offset[cbuf_surface->u.tex.level][layer].nblocksy;
+	 x = tex->image_offset[cbuf_surface->u.tex.level][layer].nblocksx;
+	 y = tex->image_offset[cbuf_surface->u.tex.level][layer].nblocksy;
+
+      } else
+	 x = y = 0;
 
       draw_offset = x | (y << 16);
 
