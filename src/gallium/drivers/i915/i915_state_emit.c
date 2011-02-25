@@ -362,7 +362,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
          uint i;
 
          OUT_BATCH( _3DSTATE_PIXEL_SHADER_CONSTANTS | (nr * 4) );
-         OUT_BATCH( (1 << (nr - 1)) | ((1 << (nr - 1)) - 1) );
+	 OUT_BATCH((1 << nr) - 1);
 
          for (i = 0; i < nr; i++) {
             const uint *c;
