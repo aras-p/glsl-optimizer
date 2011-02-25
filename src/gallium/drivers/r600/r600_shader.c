@@ -1014,6 +1014,8 @@ static int tgsi_op2_s(struct r600_shader_ctx *ctx, int swap)
 			break;
 		case TGSI_OPCODE_ABS:
 			alu.src[0].abs = 1;
+			/* negation is performed after absolute value is taken */
+			alu.src[0].neg = 0;
 			break;
 		default:
 			break;
