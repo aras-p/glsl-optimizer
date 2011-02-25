@@ -224,9 +224,9 @@ src_register( struct st_translate *t,
 
    case PROGRAM_TEMPORARY:
       assert(index >= 0);
+      assert(index < Elements(t->temps));
       if (ureg_dst_is_undef(t->temps[index]))
          t->temps[index] = ureg_DECL_temporary( t->ureg );
-      assert(index < Elements(t->temps));
       return ureg_src(t->temps[index]);
 
    case PROGRAM_NAMED_PARAM:
