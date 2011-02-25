@@ -43,24 +43,24 @@ struct ureg_program;
  */
 struct ureg_src
 {
-   unsigned File        : 4;  /* TGSI_FILE_ */
-   unsigned SwizzleX    : 2;  /* TGSI_SWIZZLE_ */
-   unsigned SwizzleY    : 2;  /* TGSI_SWIZZLE_ */
-   unsigned SwizzleZ    : 2;  /* TGSI_SWIZZLE_ */
-   unsigned SwizzleW    : 2;  /* TGSI_SWIZZLE_ */
-   unsigned Indirect    : 1;  /* BOOL */
-   unsigned DimIndirect : 1;  /* BOOL */
-   unsigned Dimension   : 1;  /* BOOL */
-   unsigned Absolute    : 1;  /* BOOL */
-   unsigned Negate      : 1;  /* BOOL */
-   int      Index       : 16; /* SINT */
+   unsigned File             : 4;  /* TGSI_FILE_ */
+   unsigned SwizzleX         : 2;  /* TGSI_SWIZZLE_ */
+   unsigned SwizzleY         : 2;  /* TGSI_SWIZZLE_ */
+   unsigned SwizzleZ         : 2;  /* TGSI_SWIZZLE_ */
+   unsigned SwizzleW         : 2;  /* TGSI_SWIZZLE_ */
+   unsigned Indirect         : 1;  /* BOOL */
+   unsigned DimIndirect      : 1;  /* BOOL */
+   unsigned Dimension        : 1;  /* BOOL */
+   unsigned Absolute         : 1;  /* BOOL */
+   unsigned Negate           : 1;  /* BOOL */
    unsigned IndirectFile     : 4;  /* TGSI_FILE_ */
-   int      IndirectIndex    : 16; /* SINT */
    unsigned IndirectSwizzle  : 2;  /* TGSI_SWIZZLE_ */
-   int      DimensionIndex   : 16; /* SINT */
    unsigned DimIndFile       : 4;  /* TGSI_FILE_ */
-   int      DimIndIndex      : 16; /* SINT */
    unsigned DimIndSwizzle    : 2;  /* TGSI_SWIZZLE_ */
+   int      Index            : 16; /* SINT */
+   int      IndirectIndex    : 16; /* SINT */
+   int      DimensionIndex   : 16; /* SINT */
+   int      DimIndIndex      : 16; /* SINT */
 };
 
 /* Very similar to a tgsi_dst_register, removing unsupported fields
