@@ -3,6 +3,7 @@
  * Version:  7.9
  *
  * Copyright (C) 2010 LunarG Inc.
+ * Copyright (C) 2011 VMware Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,6 +25,7 @@
  *
  * Authors:
  *    Chia-I Wu <olv@lunarg.com>
+ *    Thomas Hellstrom <thellstrom@vmware.com>
  */
 
 #include "util/u_memory.h"
@@ -136,8 +138,12 @@ drm_surface_copy_swap(struct native_surface *nsurf)
    struct drm_surface *drmsurf = drm_surface(nsurf);
    struct drm_display *drmdpy = drmsurf->drmdpy;
 
-   if (!resource_surface_copy_swap(drmsurf->rsurf, &drmdpy->base) ||
-       !drm_surface_flush_frontbuffer(nsurf))
+   (void) resource_surface_throttle(drmsurf->rsurf);
+   if (!resource_surface_copy_swap(drmsurf->rsurf, &drmdpy->base))
+      return FALSE;
+
+   (void) resource_surface_flush(drmsurf->rsurf, &drmdpy->base);
+   if (!drm_surface_flush_frontbuffer(nsurf))
       return FALSE;
 
    drmsurf->sequence_number++;
@@ -218,7 +224,9 @@ drm_surface_present(struct native_surface *nsurf,
 static void
 drm_surface_wait(struct native_surface *nsurf)
 {
-   /* no-op */
+   struct drm_surface *drmsurf = drm_surface(nsurf);
+
+   resource_surface_wait(drmsurf->rsurf);
 }
 
 static void
@@ -226,6 +234,7 @@ drm_surface_destroy(struct native_surface *nsurf)
 {
    struct drm_surface *drmsurf = drm_surface(nsurf);
 
+   resource_surface_wait(drmsurf->rsurf);
    if (drmsurf->current_crtc.crtc)
          drmModeFreeCrtc(drmsurf->current_crtc.crtc);
 
