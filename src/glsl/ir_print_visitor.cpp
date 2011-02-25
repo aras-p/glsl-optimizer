@@ -244,19 +244,21 @@ void ir_print_visitor::visit(ir_texture *ir)
    ir->sampler->accept(this);
    printf(" ");
 
-   ir->coordinate->accept(this);
+   if (ir->op != ir_txs) {
+      ir->coordinate->accept(this);
 
-   printf(" ");
+      printf(" ");
 
-   if (ir->offset != NULL) {
-      ir->offset->accept(this);
-   } else {
-      printf("0");
+      if (ir->offset != NULL) {
+	 ir->offset->accept(this);
+      } else {
+	 printf("0");
+      }
+
+      printf(" ");
    }
 
-   printf(" ");
-
-   if (ir->op != ir_txf) {
+   if (ir->op != ir_txf && ir->op != ir_txs) {
       if (ir->projector)
 	 ir->projector->accept(this);
       else
@@ -280,6 +282,7 @@ void ir_print_visitor::visit(ir_texture *ir)
       break;
    case ir_txl:
    case ir_txf:
+   case ir_txs:
       ir->lod_info.lod->accept(this);
       break;
    case ir_txd:

@@ -2148,6 +2148,7 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
       dy = this->result;
       break;
    case ir_txf:
+   case ir_txs:
       assert(!"GLSL 1.30 features unsupported");
       break;
    }

@@ -171,9 +171,11 @@ ir_texture::accept(ir_hierarchical_visitor *v)
    if (s != visit_continue)
       return (s == visit_continue_with_parent) ? visit_continue : s;
 
-   s = this->coordinate->accept(v);
-   if (s != visit_continue)
-      return (s == visit_continue_with_parent) ? visit_continue : s;
+   if (this->coordinate) {
+      s = this->coordinate->accept(v);
+      if (s != visit_continue)
+	 return (s == visit_continue_with_parent) ? visit_continue : s;
+   }
 
    if (this->projector) {
       s = this->projector->accept(v);
@@ -203,6 +205,7 @@ ir_texture::accept(ir_hierarchical_visitor *v)
       break;
    case ir_txl:
    case ir_txf:
+   case ir_txs:
       s = this->lod_info.lod->accept(v);
       if (s != visit_continue)
 	 return (s == visit_continue_with_parent) ? visit_continue : s;

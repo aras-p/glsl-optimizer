@@ -2469,6 +2469,7 @@ glsl_to_tgsi_visitor::visit(ir_texture *ir)
       ir->lod_info.grad.dPdy->accept(this);
       dy = this->result;
       break;
+   case ir_txs:
    case ir_txf: /* TODO: use TGSI_OPCODE_TXF here */
       assert(!"GLSL 1.30 features unsupported");
       break;

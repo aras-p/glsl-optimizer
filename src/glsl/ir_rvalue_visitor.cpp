@@ -63,6 +63,7 @@ ir_rvalue_visitor::visit_leave(ir_texture *ir)
       break;
    case ir_txf:
    case ir_txl:
+   case ir_txs:
       handle_rvalue(&ir->lod_info.lod);
       break;
    case ir_txd:

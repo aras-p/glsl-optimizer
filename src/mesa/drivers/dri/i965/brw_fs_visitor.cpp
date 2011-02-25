@@ -716,6 +716,7 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       inst = emit(FS_OPCODE_TXD, dst);
       break;
    case ir_txf:
+   case ir_txs:
       assert(!"GLSL 1.30 features unsupported");
       break;
    }
@@ -837,6 +838,7 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       break;
    }
    case ir_txf:
+   case ir_txs:
       assert(!"GLSL 1.30 features unsupported");
       break;
    }
@@ -926,6 +928,7 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
       break;
    }
    case ir_txf:
+   case ir_txs:
       assert(!"GLSL 1.30 features unsupported");
       break;
    }
@@ -949,7 +952,8 @@ fs_visitor::emit_texture_gen7(ir_texture *ir, fs_reg dst, fs_reg coordinate,
    case ir_txb: inst = emit(FS_OPCODE_TXB, dst); break;
    case ir_txl: inst = emit(FS_OPCODE_TXL, dst); break;
    case ir_txd: inst = emit(FS_OPCODE_TXD, dst); break;
-   case ir_txf: assert(!"TXF unsupported.");
+   case ir_txf: assert(!"TXF unsupported."); break;
+   case ir_txs: assert(!"TXS unsupported."); break;
    }
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
