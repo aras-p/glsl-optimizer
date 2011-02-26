@@ -107,16 +107,16 @@ i915_sw_batchbuffer_flush(struct i915_winsys_batchbuffer *ibatch,
 
 #ifdef INTEL_ALWAYS_FLUSH
    /* MI_FLUSH | FLUSH_MAP_CACHE */
-   i915_winsys_batchbuffer_dword(ibatch, (0x4<<23)|(1<<0));
+   i915_winsys_batchbuffer_dword_unchecked(ibatch, (0x4<<23)|(1<<0));
    used += 4;
 #endif
 
    if ((used & 4) == 0) {
       /* MI_NOOP */
-      i915_winsys_batchbuffer_dword(ibatch, 0);
+      i915_winsys_batchbuffer_dword_unchecked(ibatch, 0);
    }
    /* MI_BATCH_BUFFER_END */
-   i915_winsys_batchbuffer_dword(ibatch, (0xA<<23));
+   i915_winsys_batchbuffer_dword_unchecked(ibatch, (0xA<<23));
 
    used = batch->base.ptr - batch->base.map;
    assert((used & 4) == 0);
