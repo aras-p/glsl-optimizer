@@ -131,6 +131,7 @@ glsl_type::generate_110_types(glsl_symbol_table *symtab)
    add_types_to_symbol_table(symtab, builtin_110_types,
 			     Elements(builtin_110_types),
 			     false);
+   add_types_to_symbol_table(symtab, &_sampler3D_type, 1, false);
    add_types_to_symbol_table(symtab, builtin_110_deprecated_structure_types,
 			     Elements(builtin_110_deprecated_structure_types),
 			     false);
@@ -179,6 +180,13 @@ glsl_type::generate_EXT_texture_array_types(glsl_symbol_table *symtab,
 
 
 void
+glsl_type::generate_OES_texture_3D_types(glsl_symbol_table *symtab, bool warn)
+{
+   add_types_to_symbol_table(symtab, &_sampler3D_type, 1, warn);
+}
+
+
+void
 _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
 {
    switch (state->language_version) {
@@ -203,6 +211,10 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
    if (state->ARB_texture_rectangle_enable) {
       glsl_type::generate_ARB_texture_rectangle_types(state->symbols,
 					   state->ARB_texture_rectangle_warn);
+   }
+   if (state->OES_texture_3D_enable && state->language_version == 100) {
+      glsl_type::generate_OES_texture_3D_types(state->symbols,
+					       state->OES_texture_3D_warn);
    }
 
    if (state->EXT_texture_array_enable && state->language_version < 130) {

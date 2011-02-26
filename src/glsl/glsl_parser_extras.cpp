@@ -256,6 +256,11 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
       state->AMD_conservative_depth_enable = (ext_mode != extension_disable);
       state->AMD_conservative_depth_warn = (ext_mode == extension_warn);
       unsupported = !state->extensions->AMD_conservative_depth;
+   } else if (strcmp(name, "GL_OES_texture_3D") == 0 && state->es_shader) {
+      state->OES_texture_3D_enable = (ext_mode != extension_disable);
+      state->OES_texture_3D_warn = (ext_mode == extension_warn);
+
+      unsupported = !state->extensions->EXT_texture3D;
    } else {
       unsupported = true;
    }

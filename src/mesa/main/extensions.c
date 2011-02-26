@@ -241,8 +241,7 @@ static const struct extension extension_table[] = {
    { "GL_OES_stencil4",                            o(dummy_false),                     DISABLE                },
    { "GL_OES_stencil8",                            o(EXT_framebuffer_object),                       ES1 | ES2 },
    { "GL_OES_stencil_wrap",                        o(EXT_stencil_wrap),                             ES1       },
-   /* GL_OES_texture_3D is disabled due to missing GLSL support. */
-   { "GL_OES_texture_3D",                          o(EXT_texture3D),                   DISABLE                },
+   { "GL_OES_texture_3D",                          o(EXT_texture3D),                                      ES2 },
    { "GL_OES_texture_cube_map",                    o(ARB_texture_cube_map),                         ES1       },
    { "GL_OES_texture_env_crossbar",                o(ARB_texture_env_crossbar),                     ES1       },
    { "GL_OES_texture_mirrored_repeat",             o(ARB_texture_mirrored_repeat),                  ES1       },
