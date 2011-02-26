@@ -73,10 +73,13 @@ i915_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    draw_set_mapped_index_buffer(draw, mapped_indices);
 
    if (cbuf_dirty) {
-      draw_set_mapped_constant_buffer(draw, PIPE_SHADER_VERTEX, 0,
-                                      i915_buffer(i915->constants[PIPE_SHADER_VERTEX])->data,
-                                      (i915->current.num_user_constants[PIPE_SHADER_VERTEX] * 
+      if (i915->constants[PIPE_SHADER_VERTEX])
+         draw_set_mapped_constant_buffer(draw, PIPE_SHADER_VERTEX, 0,
+                                         i915_buffer(i915->constants[PIPE_SHADER_VERTEX])->data,
+                                         (i915->current.num_user_constants[PIPE_SHADER_VERTEX] * 
                                          4 * sizeof(float)));
+      else
+         draw_set_mapped_constant_buffer(draw, PIPE_SHADER_VERTEX, 0, NULL, 0);
    }
 
    /*
