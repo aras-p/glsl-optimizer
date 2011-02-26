@@ -78,15 +78,6 @@ brw_new_shader_program(struct gl_context *ctx, GLuint name)
 }
 
 GLboolean
-brw_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
-{
-   if (!_mesa_ir_compile_shader(ctx, shader))
-      return GL_FALSE;
-
-   return GL_TRUE;
-}
-
-GLboolean
 brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    struct brw_context *brw = brw_context(ctx);

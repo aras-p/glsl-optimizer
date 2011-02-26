@@ -3094,21 +3094,6 @@ get_mesa_program(struct gl_context *ctx,
 extern "C" {
 
 /**
- * Called via ctx->Driver.CompilerShader().
- * This is a no-op.
- * XXX can we remove the ctx->Driver.CompileShader() hook?
- */
-GLboolean
-_mesa_ir_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
-{
-   assert(shader->CompileStatus);
-   (void) ctx;
-
-   return GL_TRUE;
-}
-
-
-/**
  * Link a shader.
  * Called via ctx->Driver.LinkShader()
  * This actually involves converting GLSL IR into Mesa gl_programs with
@@ -3293,11 +3278,6 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
    reparent_ir(shader->ir, shader->ir);
 
    ralloc_free(state);
-
-   if (shader->CompileStatus) {
-      if (!ctx->Driver.CompileShader(ctx, shader))
-	 shader->CompileStatus = GL_FALSE;
-   }
 }
 
 
