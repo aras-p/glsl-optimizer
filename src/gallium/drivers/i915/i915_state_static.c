@@ -78,11 +78,38 @@ buf_3d_tiling_bits(enum i915_winsys_buffer_tile tiling)
    return tiling_bits;
 }
 
+/**
+ * Examine framebuffer state to determine width, height.
+ */
+static boolean
+framebuffer_size(const struct pipe_framebuffer_state *fb,
+                 uint *width, uint *height)
+{
+   if (fb->cbufs[0]) {
+      *width = fb->cbufs[0]->width;
+      *height = fb->cbufs[0]->height;
+      return TRUE;
+   }
+   else if (fb->zsbuf) {
+      *width = fb->zsbuf->width;
+      *height = fb->zsbuf->height;
+      return TRUE;
+   }
+   else {
+      *width = *height = 0;
+      return FALSE;
+   }
+}
+
 static void update_framebuffer(struct i915_context *i915)
 {
    struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
    struct pipe_surface *depth_surface = i915->framebuffer.zsbuf;
    unsigned cformat, zformat;
+   unsigned x, y, w, h;
+   int layer;
+   uint32_t draw_offset;
+   boolean ret;
 
    if (cbuf_surface) {
       struct i915_texture *tex = i915_texture(cbuf_surface->texture);
@@ -93,9 +120,15 @@ static void update_framebuffer(struct i915_context *i915)
                                  BUF_3D_PITCH(tex->stride) |  /* pitch in bytes */
                                  buf_3d_tiling_bits(tex->tiling);
       cformat = cbuf_surface->format;
+
+      layer = cbuf_surface->u.tex.first_layer;
+
+      x = tex->image_offset[cbuf_surface->u.tex.level][layer].nblocksx;
+      y = tex->image_offset[cbuf_surface->u.tex.level][layer].nblocksy;
    } else {
       i915->current.cbuf_bo = NULL;
       cformat = PIPE_FORMAT_B8G8R8A8_UNORM; /* arbitrary */
+      x = y = 0;
    }
    cformat = translate_format(cformat);
 
@@ -124,6 +157,16 @@ static void update_framebuffer(struct i915_context *i915)
                                 TEX_DEFAULT_COLOR_OGL |
                                 cformat |
                                 zformat;
+
+   /* drawing rect calculations */
+   draw_offset = x | (y << 16);
+   ret = framebuffer_size(&i915->framebuffer, &w, &h);
+   assert(ret);
+   if (i915->current.draw_offset != draw_offset) {
+      i915->current.draw_offset = draw_offset;
+      /* XXX: only emit flush on change and not always in emit */
+   }
+   i915->current.draw_size = (w - 1 + x) | ((h - 1 + y) << 16);
 
    i915->hardware_dirty |= I915_HW_STATIC;
 }

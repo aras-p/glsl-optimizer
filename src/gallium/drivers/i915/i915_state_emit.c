@@ -37,29 +37,6 @@
 
 #include "util/u_math.h"
 
-/**
- * Examine framebuffer state to determine width, height.
- */
-static boolean
-framebuffer_size(const struct pipe_framebuffer_state *fb,
-                 uint *width, uint *height)
-{
-   if (fb->cbufs[0]) {
-      *width = fb->cbufs[0]->width;
-      *height = fb->cbufs[0]->height;
-      return TRUE;
-   }
-   else if (fb->zsbuf) {
-      *width = fb->zsbuf->width;
-      *height = fb->zsbuf->height;
-      return TRUE;
-   }
-   else {
-      *width = *height = 0;
-      return FALSE;
-   }
-}
-
 
 /* Push the state into the sarea and/or texture memory.
  */
@@ -330,35 +307,13 @@ i915_emit_hardware_state(struct i915_context *i915 )
    /* 6 dwords, 0 relocs */
    if (i915->hardware_dirty & I915_HW_STATIC)
    {
-      uint w, h;
-      struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
-      unsigned x, y;
-      int layer;
-      uint32_t draw_offset;
-      boolean ret;
-
-      ret = framebuffer_size(&i915->framebuffer, &w, &h);
-      assert(ret);
-
-      if (cbuf_surface) {
-	 struct i915_texture *tex = i915_texture(cbuf_surface->texture);
-	 layer = cbuf_surface->u.tex.first_layer;
-
-	 x = tex->image_offset[cbuf_surface->u.tex.level][layer].nblocksx;
-	 y = tex->image_offset[cbuf_surface->u.tex.level][layer].nblocksy;
-
-      } else
-	 x = y = 0;
-
-      draw_offset = x | (y << 16);
-
       /* XXX flush only required when the draw_offset changes! */
       OUT_BATCH(MI_FLUSH | INHIBIT_FLUSH_RENDER_CACHE);
       OUT_BATCH(_3DSTATE_DRAW_RECT_CMD);
       OUT_BATCH(DRAW_RECT_DIS_DEPTH_OFS);
-      OUT_BATCH(draw_offset);
-      OUT_BATCH((w - 1 + x) | ((h - 1 + y) << 16));
-      OUT_BATCH(draw_offset);
+      OUT_BATCH(i915->current.draw_offset);
+      OUT_BATCH(i915->current.draw_size);
+      OUT_BATCH(i915->current.draw_offset);
    }
 #endif
 

@@ -156,6 +156,8 @@ struct i915_state
    struct i915_winsys_buffer *depth_bo;
    unsigned depth_flags;
    unsigned dst_buf_vars;
+   uint32_t draw_offset;
+   uint32_t draw_size;
 
    unsigned id;			/* track lost context events */
 };
