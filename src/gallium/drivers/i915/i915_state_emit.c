@@ -404,20 +404,6 @@ i915_emit_hardware_state(struct i915_context *i915 )
 {
    unsigned batch_space;
    /* XXX: there must be an easier way */
-   const unsigned dwords = ( 14 + 
-                             7 + 
-                             I915_MAX_DYNAMIC + 
-                             8 + 
-                             2 + I915_TEX_UNITS*3 + 
-                             2 + I915_TEX_UNITS*3 +
-                             2 + I915_MAX_CONSTANT*4 + 
-#if 0
-                             i915->current.program_len + 
-#else
-                             i915->fs->program_len + 
-#endif
-                             6 
-                           ) * 3/2; /* plus 50% margin */
    const unsigned relocs = ( I915_TEX_UNITS +
                              3
                            ) * 3/2; /* plus 50% margin */
@@ -433,10 +419,10 @@ i915_emit_hardware_state(struct i915_context *i915 )
       assert(i915_validate_state(i915, &batch_space));
    }
 
-   if(!BEGIN_BATCH(batch_space + dwords, relocs)) {
+   if(!BEGIN_BATCH(batch_space, relocs)) {
       FLUSH_BATCH(NULL);
       assert(i915_validate_state(i915, &batch_space));
-      assert(BEGIN_BATCH(batch_space + dwords, relocs));
+      assert(BEGIN_BATCH(batch_space, relocs));
    }
 
    save_ptr = (uintptr_t)i915->batch->ptr;
@@ -457,9 +443,10 @@ i915_emit_hardware_state(struct i915_context *i915 )
    EMIT_ATOM(draw_rect, I915_HW_STATIC);
 #undef EMIT_ATOM
 
-   I915_DBG(DBG_EMIT, "%s: used %d dwords, %d relocs\n", __FUNCTION__,
+   I915_DBG(DBG_EMIT, "%s: used %d dwords, %d dwords reserved\n", __FUNCTION__,
             ((uintptr_t)i915->batch->ptr - save_ptr) / 4,
-            i915->batch->relocs - save_relocs);
+            batch_space);
+   assert(((uintptr_t)i915->batch->ptr - save_ptr) / 4 == batch_space);
 
    i915->hardware_dirty = 0;
    i915->immediate_dirty = 0;
