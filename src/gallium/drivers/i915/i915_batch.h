@@ -31,8 +31,8 @@
 #include "i915_batchbuffer.h"
 
 
-#define BEGIN_BATCH(dwords, relocs) \
-   (i915_winsys_batchbuffer_check(i915->batch, dwords, relocs))
+#define BEGIN_BATCH(dwords) \
+   (i915_winsys_batchbuffer_check(i915->batch, dwords))
 
 #define OUT_BATCH(dword) \
    i915_winsys_batchbuffer_dword(i915->batch, dword)

@@ -41,11 +41,9 @@ i915_winsys_batchbuffer_space(struct i915_winsys_batchbuffer *batch)
 
 static INLINE boolean
 i915_winsys_batchbuffer_check(struct i915_winsys_batchbuffer *batch,
-                              size_t dwords,
-                              size_t relocs)
+                              size_t dwords)
 {
-   return dwords * 4 <= i915_winsys_batchbuffer_space(batch) &&
-          relocs <= (batch->max_relocs - batch->relocs);
+   return dwords * 4 <= i915_winsys_batchbuffer_space(batch);
 }
 
 static INLINE void

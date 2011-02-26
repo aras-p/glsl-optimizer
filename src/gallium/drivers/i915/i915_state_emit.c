@@ -403,13 +403,7 @@ void
 i915_emit_hardware_state(struct i915_context *i915 )
 {
    unsigned batch_space;
-   /* XXX: there must be an easier way */
-   const unsigned relocs = ( I915_TEX_UNITS +
-                             3
-                           ) * 3/2; /* plus 50% margin */
-
    uintptr_t save_ptr;
-   size_t save_relocs;
 
    if (I915_DBG_ON(DBG_ATOMS))
       i915_dump_hardware_dirty(i915, __FUNCTION__);
@@ -419,14 +413,13 @@ i915_emit_hardware_state(struct i915_context *i915 )
       assert(i915_validate_state(i915, &batch_space));
    }
 
-   if(!BEGIN_BATCH(batch_space, relocs)) {
+   if(!BEGIN_BATCH(batch_space)) {
       FLUSH_BATCH(NULL);
       assert(i915_validate_state(i915, &batch_space));
-      assert(BEGIN_BATCH(batch_space, relocs));
+      assert(BEGIN_BATCH(batch_space));
    }
 
    save_ptr = (uintptr_t)i915->batch->ptr;
-   save_relocs = i915->batch->relocs;
 
 #define EMIT_ATOM(atom, hw_dirty) \
    if (i915->hardware_dirty & hw_dirty) \

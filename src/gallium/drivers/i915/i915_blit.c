@@ -71,9 +71,9 @@ i915_fill_blit(struct i915_context *i915,
       return;
    }
 
-   if (!BEGIN_BATCH(6, 1)) {
+   if (!BEGIN_BATCH(6)) {
       FLUSH_BATCH(NULL);
-      assert(BEGIN_BATCH(6, 1));
+      assert(BEGIN_BATCH(6));
    }
    OUT_BATCH(CMD);
    OUT_BATCH(BR13);
@@ -143,9 +143,9 @@ i915_copy_blit(struct i915_context *i915,
     */
    assert (dst_pitch > 0 && src_pitch > 0);
 
-   if (!BEGIN_BATCH(8, 2)) {
+   if (!BEGIN_BATCH(8)) {
       FLUSH_BATCH(NULL);
-      assert(BEGIN_BATCH(8, 2));
+      assert(BEGIN_BATCH(8));
    }
    OUT_BATCH(CMD);
    OUT_BATCH(BR13);
