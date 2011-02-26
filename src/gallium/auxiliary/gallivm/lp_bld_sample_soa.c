@@ -832,14 +832,14 @@ lp_build_sample_mipmap(struct lp_build_sample_context *bld,
                        LLVMValueRef *colors_out)
 {
    LLVMBuilderRef builder = bld->gallivm->builder;
-   LLVMValueRef size0;
-   LLVMValueRef size1;
-   LLVMValueRef row_stride0_vec;
-   LLVMValueRef row_stride1_vec;
-   LLVMValueRef img_stride0_vec;
-   LLVMValueRef img_stride1_vec;
-   LLVMValueRef data_ptr0;
-   LLVMValueRef data_ptr1;
+   LLVMValueRef size0 = NULL;
+   LLVMValueRef size1 = NULL;
+   LLVMValueRef row_stride0_vec = NULL;
+   LLVMValueRef row_stride1_vec = NULL;
+   LLVMValueRef img_stride0_vec = NULL;
+   LLVMValueRef img_stride1_vec = NULL;
+   LLVMValueRef data_ptr0 = NULL;
+   LLVMValueRef data_ptr1 = NULL;
    LLVMValueRef colors0[4], colors1[4];
    unsigned chan;
 
