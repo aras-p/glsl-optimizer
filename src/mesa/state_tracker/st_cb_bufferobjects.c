@@ -301,11 +301,15 @@ st_bufferobj_map_range(struct gl_context *ctx, GLenum target,
    if (access & GL_MAP_FLUSH_EXPLICIT_BIT)
       flags |= PIPE_TRANSFER_FLUSH_EXPLICIT;
 
-   if (access & GL_MAP_INVALIDATE_RANGE_BIT)
-      flags |= PIPE_TRANSFER_DISCARD;
-
-   if (access & GL_MAP_INVALIDATE_BUFFER_BIT)
-      flags |= PIPE_TRANSFER_DISCARD;
+   if (access & GL_MAP_INVALIDATE_BUFFER_BIT) {
+      flags |= PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE;
+   }
+   else if (access & GL_MAP_INVALIDATE_RANGE_BIT) {
+      if (offset == 0 && length == obj->Size)
+         flags |= PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE;
+      else
+         flags |= PIPE_TRANSFER_DISCARD_RANGE;
+   }
    
    if (access & GL_MAP_UNSYNCHRONIZED_BIT)
       flags |= PIPE_TRANSFER_UNSYNCHRONIZED;
