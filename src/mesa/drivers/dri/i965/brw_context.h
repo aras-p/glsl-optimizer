@@ -365,6 +365,7 @@ struct brw_cache_item {
    /** 32-bit hash of the key data */
    GLuint hash;
    GLuint key_size;		/* for variable-sized keys */
+   GLuint aux_size;
    const void *key;
 
    uint32_t offset;

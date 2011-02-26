@@ -187,6 +187,77 @@ brw_cache_new_bo(struct brw_cache *cache, uint32_t new_size)
    brw->state.dirty.brw |= BRW_NEW_PROGRAM_CACHE;
 }
 
+/**
+ * Attempts to find an item in the cache with identical data and aux
+ * data to use
+ */
+static bool
+brw_try_upload_using_copy(struct brw_cache *cache,
+			  struct brw_cache_item *result_item,
+			  const void *data,
+			  const void *aux)
+{
+   int i;
+   struct brw_cache_item *item;
+
+   for (i = 0; i < cache->size; i++) {
+      for (item = cache->items[i]; item; item = item->next) {
+	 const void *item_aux = item->key + item->key_size;
+	 int ret;
+
+	 if (item->cache_id != result_item->cache_id ||
+	     item->size != result_item->size ||
+	     item->aux_size != result_item->aux_size) {
+	    continue;
+	 }
+
+	 if (memcmp(item_aux, aux, item->aux_size) != 0) {
+	    continue;
+	 }
+
+	 drm_intel_bo_map(cache->bo, false);
+	 ret = memcmp(cache->bo->virtual + item->offset, data, item->size);
+	 drm_intel_bo_unmap(cache->bo);
+	 if (ret)
+	    continue;
+
+	 result_item->offset = item->offset;
+
+	 return true;
+      }
+   }
+
+   return false;
+}
+
+static void
+brw_upload_item_data(struct brw_cache *cache,
+		     struct brw_cache_item *item,
+		     const void *data)
+{
+   /* Allocate space in the cache BO for our new program. */
+   if (cache->next_offset + item->size > cache->bo->size) {
+      uint32_t new_size = cache->bo->size * 2;
+
+      while (cache->next_offset + item->size > new_size)
+	 new_size *= 2;
+
+      brw_cache_new_bo(cache, new_size);
+   }
+
+   /* If we would block on writing to an in-use program BO, just
+    * recreate it.
+    */
+   if (cache->bo_used_by_gpu) {
+      brw_cache_new_bo(cache, cache->bo->size);
+   }
+
+   item->offset = cache->next_offset;
+
+   /* Programs are always 64-byte aligned, so set up the next one now */
+   cache->next_offset = ALIGN(item->offset + item->size, 64);
+}
+
 void
 brw_upload_cache(struct brw_cache *cache,
 		 enum brw_cache_id cache_id,
@@ -204,33 +275,23 @@ brw_upload_cache(struct brw_cache *cache,
    void *tmp;
 
    item->cache_id = cache_id;
+   item->size = data_size;
    item->key = key;
    item->key_size = key_size;
+   item->aux_size = aux_size;
    hash = hash_key(item);
    item->hash = hash;
 
-   /* Allocate space in the cache BO for our new program. */
-   if (cache->next_offset + data_size > cache->bo->size) {
-      uint32_t new_size = cache->bo->size * 2;
-
-      while (cache->next_offset + data_size > new_size)
-	 new_size *= 2;
-
-      brw_cache_new_bo(cache, new_size);
-   }
-
-   /* If we would block on writing to an in-use program BO, just
-    * recreate it.
+   /* If we can find a matching prog/prog_data combo in the cache
+    * already, then reuse the existing stuff.  This will mean not
+    * flagging CACHE_NEW_* when transitioning between the two
+    * equivalent hash keys.  This is notably useful for programs
+    * generating shaders at runtime, where multiple shaders may
+    * compile to the thing in our backend.
     */
-   if (cache->bo_used_by_gpu) {
-      brw_cache_new_bo(cache, cache->bo->size);
+   if (!brw_try_upload_using_copy(cache, item, data, aux)) {
+      brw_upload_item_data(cache, item, data);
    }
-
-   item->offset = cache->next_offset;
-   item->size = data_size;
-
-   /* Programs are always 64-byte aligned, so set up the next one now */
-   cache->next_offset = ALIGN(item->offset + data_size, 64);
 
    /* Set up the memory containing the key and aux_data */
    tmp = malloc(key_size + aux_size);
