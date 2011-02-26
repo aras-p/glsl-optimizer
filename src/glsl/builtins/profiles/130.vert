@@ -493,8 +493,8 @@ ivec2 textureSize( sampler1DArray sampler, int lod);
 ivec2 textureSize(isampler1DArray sampler, int lod);
 ivec2 textureSize(usampler1DArray sampler, int lod);
 ivec3 textureSize( sampler2DArray sampler, int lod);
-ivec2 textureSize(isampler2DArray sampler, int lod);
-ivec2 textureSize(usampler2DArray sampler, int lod);
+ivec3 textureSize(isampler2DArray sampler, int lod);
+ivec3 textureSize(usampler2DArray sampler, int lod);
 
 ivec2 textureSize(sampler1DArrayShadow sampler, int lod);
 ivec3 textureSize(sampler2DArrayShadow sampler, int lod);
