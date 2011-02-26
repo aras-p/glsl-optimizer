@@ -1451,8 +1451,10 @@ util_destroy_gen_mipmap(struct gen_mipmap_state *ctx)
 {
    struct pipe_context *pipe = ctx->pipe;
 
-   pipe->delete_fs_state(pipe, ctx->fs2da);
-   pipe->delete_fs_state(pipe, ctx->fs1da);
+   if (ctx->fs2da)
+      pipe->delete_fs_state(pipe, ctx->fs2da);
+   if (ctx->fs1da)
+      pipe->delete_fs_state(pipe, ctx->fs1da);
    pipe->delete_fs_state(pipe, ctx->fsCube);
    pipe->delete_fs_state(pipe, ctx->fs3d);
    pipe->delete_fs_state(pipe, ctx->fs2d);
