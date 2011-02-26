@@ -150,6 +150,13 @@ struct i915_state
    /** Describes the current hardware vertex layout */
    struct vertex_info vertex_info;
 
+   /* static state (dst/depth buffer state) */
+   struct i915_winsys_buffer *cbuf_bo;
+   unsigned cbuf_flags;
+   struct i915_winsys_buffer *depth_bo;
+   unsigned depth_flags;
+   unsigned dst_buf_vars;
+
    unsigned id;			/* track lost context events */
 };
 

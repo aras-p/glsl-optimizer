@@ -27,16 +27,104 @@
 #include "i915_reg.h"
 #include "i915_context.h"
 #include "i915_state.h"
+#include "i915_resource.h"
 
 
 
 /***********************************************************************
  * Update framebuffer state
  */
+static unsigned translate_format(enum pipe_format format)
+{
+   switch (format) {
+   case PIPE_FORMAT_B8G8R8A8_UNORM:
+      return COLOR_BUF_ARGB8888;
+   case PIPE_FORMAT_B5G6R5_UNORM:
+      return COLOR_BUF_RGB565;
+   default:
+      assert(0);
+      return 0;
+   }
+}
+
+static unsigned translate_depth_format(enum pipe_format zformat)
+{
+   switch (zformat) {
+   case PIPE_FORMAT_Z24X8_UNORM:
+   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
+      return DEPTH_FRMT_24_FIXED_8_OTHER;
+   case PIPE_FORMAT_Z16_UNORM:
+      return DEPTH_FRMT_16_FIXED;
+   default:
+      assert(0);
+      return 0;
+   }
+}
+
+static inline uint32_t
+buf_3d_tiling_bits(enum i915_winsys_buffer_tile tiling)
+{
+   uint32_t tiling_bits = 0;
+
+   switch (tiling) {
+   case I915_TILE_Y:
+      tiling_bits |= BUF_3D_TILE_WALK_Y;
+   case I915_TILE_X:
+      tiling_bits |= BUF_3D_TILED_SURFACE;
+   case I915_TILE_NONE:
+      break;
+   }
+
+   return tiling_bits;
+}
+
 static void update_framebuffer(struct i915_context *i915)
 {
-   /* HW emit currently references framebuffer state directly:
+   struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
+   struct pipe_surface *depth_surface = i915->framebuffer.zsbuf;
+   unsigned cformat, zformat;
+
+   if (cbuf_surface) {
+      struct i915_texture *tex = i915_texture(cbuf_surface->texture);
+      assert(tex);
+
+      i915->current.cbuf_bo = tex->buffer;
+      i915->current.cbuf_flags = BUF_3D_ID_COLOR_BACK |
+                                 BUF_3D_PITCH(tex->stride) |  /* pitch in bytes */
+                                 buf_3d_tiling_bits(tex->tiling);
+      cformat = cbuf_surface->format;
+   } else {
+      i915->current.cbuf_bo = NULL;
+      cformat = PIPE_FORMAT_B8G8R8A8_UNORM; /* arbitrary */
+   }
+   cformat = translate_format(cformat);
+
+   /* What happens if no zbuf??
     */
+   if (depth_surface) {
+      struct i915_texture *tex = i915_texture(depth_surface->texture);
+      unsigned offset = i915_texture_offset(tex, depth_surface->u.tex.level,
+                                            depth_surface->u.tex.first_layer);
+      assert(tex);
+      assert(offset == 0);
+
+      i915->current.depth_bo = tex->buffer;
+      i915->current.depth_flags = BUF_3D_ID_DEPTH |
+                                  BUF_3D_PITCH(tex->stride) |  /* pitch in bytes */
+                                  buf_3d_tiling_bits(tex->tiling);
+      zformat = translate_depth_format(depth_surface->format);
+   } else {
+      i915->current.depth_bo = NULL;
+      zformat = 0;
+   }
+
+   i915->current.dst_buf_vars = DSTORG_HORT_BIAS(0x8) | /* .5 */
+                                DSTORG_VERT_BIAS(0x8) | /* .5 */
+                                LOD_PRECLAMP_OGL |
+                                TEX_DEFAULT_COLOR_OGL |
+                                cformat |
+                                zformat;
+
    i915->hardware_dirty |= I915_HW_STATIC;
 }
 

@@ -37,34 +37,6 @@
 
 #include "util/u_math.h"
 
-static unsigned translate_format( enum pipe_format format )
-{
-   switch (format) {
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
-      return COLOR_BUF_ARGB8888;
-   case PIPE_FORMAT_B5G6R5_UNORM:
-      return COLOR_BUF_RGB565;
-   default:
-      assert(0);
-      return 0;
-   }
-}
-
-static unsigned translate_depth_format( enum pipe_format zformat )
-{
-   switch (zformat) {
-   case PIPE_FORMAT_Z24X8_UNORM:
-   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
-      return DEPTH_FRMT_24_FIXED_8_OTHER;
-   case PIPE_FORMAT_Z16_UNORM:
-      return DEPTH_FRMT_16_FIXED;
-   default:
-      assert(0);
-      return 0;
-   }
-}
-
-
 /**
  * Examine framebuffer state to determine width, height.
  */
@@ -88,22 +60,6 @@ framebuffer_size(const struct pipe_framebuffer_state *fb,
    }
 }
 
-static inline uint32_t
-buf_3d_tiling_bits(enum i915_winsys_buffer_tile tiling)
-{
-         uint32_t tiling_bits = 0;
-
-         switch (tiling) {
-         case I915_TILE_Y:
-            tiling_bits |= BUF_3D_TILE_WALK_Y;
-         case I915_TILE_X:
-            tiling_bits |= BUF_3D_TILED_SURFACE;
-         case I915_TILE_NONE:
-            break;
-         }
-
-         return tiling_bits;
-}
 
 /* Push the state into the sarea and/or texture memory.
  */
@@ -233,64 +189,27 @@ i915_emit_hardware_state(struct i915_context *i915 )
    /* 8 dwords, 2 relocs */
    if (i915->hardware_dirty & I915_HW_STATIC)
    {
-      struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
-      struct pipe_surface *depth_surface = i915->framebuffer.zsbuf;
-
-      if (cbuf_surface) {
-         struct i915_texture *tex = i915_texture(cbuf_surface->texture);
-         assert(tex);
-
+      if (i915->current.cbuf_bo) {
          OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
-
-         OUT_BATCH(BUF_3D_ID_COLOR_BACK |
-                   BUF_3D_PITCH(tex->stride) |  /* pitch in bytes */
-                   buf_3d_tiling_bits(tex->tiling));
-
-         OUT_RELOC(tex->buffer,
+         OUT_BATCH(i915->current.cbuf_flags);
+         OUT_RELOC(i915->current.cbuf_bo,
                    I915_USAGE_RENDER,
                    0);
       }
 
       /* What happens if no zbuf??
        */
-      if (depth_surface) {
-         struct i915_texture *tex = i915_texture(depth_surface->texture);
-         unsigned offset = i915_texture_offset(tex, depth_surface->u.tex.level,
-                                               depth_surface->u.tex.first_layer);
-         assert(tex);
-         assert(offset == 0);
-
+      if (i915->current.depth_bo) {
          OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
-
-         assert(tex);
-         OUT_BATCH(BUF_3D_ID_DEPTH |
-                   BUF_3D_PITCH(tex->stride) |  /* pitch in bytes */
-                   buf_3d_tiling_bits(tex->tiling));
-
-         OUT_RELOC(tex->buffer,
+         OUT_BATCH(i915->current.depth_flags);
+         OUT_RELOC(i915->current.depth_bo,
                    I915_USAGE_RENDER,
                    0);
       }
 
       {
-         unsigned cformat, zformat = 0;
-
-         if (cbuf_surface)
-            cformat = cbuf_surface->format;
-         else
-            cformat = PIPE_FORMAT_B8G8R8A8_UNORM; /* arbitrary */
-         cformat = translate_format(cformat);
-
-         if (depth_surface) 
-            zformat = translate_depth_format( i915->framebuffer.zsbuf->format );
-
          OUT_BATCH(_3DSTATE_DST_BUF_VARS_CMD);
-         OUT_BATCH(DSTORG_HORT_BIAS(0x8) | /* .5 */
-                   DSTORG_VERT_BIAS(0x8) | /* .5 */
-                   LOD_PRECLAMP_OGL |
-                   TEX_DEFAULT_COLOR_OGL |
-                   cformat |
-                   zformat );
+         OUT_BATCH(i915->current.dst_buf_vars);
       }
    }
 #endif
