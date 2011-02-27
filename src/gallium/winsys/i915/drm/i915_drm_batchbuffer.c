@@ -5,6 +5,7 @@
 #include "i915_drm.h"
 #include "i915/i915_debug.h"
 #include <xf86drm.h>
+#include <stdio.h>
 
 #define BATCH_RESERVED 16
 
@@ -167,6 +168,14 @@ i915_drm_batchbuffer_flush(struct i915_winsys_batchbuffer *ibatch,
    if (ret != 0 || i915_drm_winsys(ibatch->iws)->dump_cmd) {
       i915_dump_batchbuffer(ibatch);
       assert(ret == 0);
+   }
+
+   if (i915_drm_winsys(ibatch->iws)->dump_raw_file) {
+      FILE *file = fopen(i915_drm_winsys(ibatch->iws)->dump_raw_file, "a");
+      if (file) {
+	 fwrite(batch->base.map, used, 1, file);
+	 fclose(file);
+      }
    }
 
 #ifdef INTEL_RUN_SYNC

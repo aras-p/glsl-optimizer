@@ -72,6 +72,7 @@ i915_drm_winsys_create(int drmFD)
    drm_intel_bufmgr_gem_enable_fenced_relocs(idws->gem_manager);
 
    idws->dump_cmd = debug_get_bool_option("I915_DUMP_CMD", FALSE);
+   idws->dump_raw_file = debug_get_option("I915_DUMP_RAW_FILE", NULL);
    idws->send_cmd = !debug_get_bool_option("I915_NO_HW", FALSE);
 
    return &idws->base;
