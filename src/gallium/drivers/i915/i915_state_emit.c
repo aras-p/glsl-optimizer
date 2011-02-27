@@ -36,7 +36,77 @@
 #include "pipe/p_defines.h"
 
 #include "util/u_math.h"
+#include "util/u_memory.h"
 
+struct i915_tracked_hw_state {
+   const char *name;
+   void (*validate)(struct i915_context *);
+   void (*emit)(struct i915_context *);
+   unsigned dirty;
+};
+
+
+static void
+validate_immediate(struct i915_context *i915)
+{
+   if (i915->immediate_dirty & (1 << I915_IMMEDIATE_S0))
+      i915->validation_buffers[i915->num_validation_buffers++] = i915->vbo;
+}
+
+static void
+validate_static(struct i915_context *i915)
+{
+   if (i915->current.cbuf_bo)
+      i915->validation_buffers[i915->num_validation_buffers++]
+         = i915->current.cbuf_bo;
+
+   if (i915->current.depth_bo)
+      i915->validation_buffers[i915->num_validation_buffers++]
+         = i915->current.depth_bo;
+}
+
+static void
+validate_map(struct i915_context *i915)
+{
+   const uint enabled = i915->current.sampler_enable_flags;
+   uint unit;
+   struct i915_texture *tex;
+
+
+   for (unit = 0; unit < I915_TEX_UNITS; unit++) {
+      if (enabled & (1 << unit)) {
+	 tex = i915_texture(i915->fragment_sampler_views[unit]->texture);
+	 i915->validation_buffers[i915->num_validation_buffers++] = tex->buffer;
+      }
+   }
+}
+
+const static struct i915_tracked_hw_state hw_atoms[] = {
+   { "immediate", validate_immediate, NULL, I915_HW_IMMEDIATE },
+   { "static", validate_static, NULL, I915_HW_STATIC },
+   { "map", validate_map, NULL, I915_HW_MAP }
+};
+
+static boolean
+i915_validate_state(struct i915_context *i915)
+{
+   int i;
+
+   i915->num_validation_buffers = 0;
+
+   for (i = 0; i < Elements(hw_atoms); i++)
+      if ((i915->hardware_dirty & hw_atoms[i].dirty) && hw_atoms[i].validate)
+	 hw_atoms[i].validate(i915);
+
+   if (i915->num_validation_buffers == 0)
+      return TRUE;
+
+   if (!i915_winsys_validate_buffers(i915->batch, i915->validation_buffers,
+				     i915->num_validation_buffers))
+      return FALSE;
+
+   return TRUE;
+}
 
 /* Push the state into the sarea and/or texture memory.
  */
@@ -68,8 +138,14 @@ i915_emit_hardware_state(struct i915_context *i915 )
    if (I915_DBG_ON(DBG_ATOMS))
       i915_dump_hardware_dirty(i915, __FUNCTION__);
 
+   if (!i915_validate_state(i915)) {
+      FLUSH_BATCH(NULL);
+      assert(i915_validate_state(i915));
+   }
+
    if(!BEGIN_BATCH(dwords, relocs)) {
       FLUSH_BATCH(NULL);
+      assert(i915_validate_state(i915));
       assert(BEGIN_BATCH(dwords, relocs));
    }
 

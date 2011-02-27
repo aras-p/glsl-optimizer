@@ -247,6 +247,9 @@ struct i915_context {
    unsigned immediate_dirty;
    unsigned dynamic_dirty;
 
+   struct i915_winsys_buffer *validation_buffers[2 + 1 + I915_TEX_UNITS];
+   int num_validation_buffers;
+
    struct util_slab_mempool transfer_pool;
 };
 
