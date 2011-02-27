@@ -58,6 +58,14 @@ i915_sw_batchbuffer_create(struct i915_winsys *iws)
    return &batch->base;
 }
 
+static boolean
+i915_sw_batchbuffer_validate_buffers(struct i915_winsys_batchbuffer *batch,
+				     struct i915_winsys_buffer **buffer,
+				     int num_of_buffers)
+{
+   return TRUE;
+}
+
 static int
 i915_sw_batchbuffer_reloc(struct i915_winsys_batchbuffer *ibatch,
                           struct i915_winsys_buffer *buffer,
@@ -146,6 +154,7 @@ i915_sw_batchbuffer_destroy(struct i915_winsys_batchbuffer *ibatch)
 void i915_sw_winsys_init_batchbuffer_functions(struct i915_sw_winsys *isws)
 {
    isws->base.batchbuffer_create = i915_sw_batchbuffer_create;
+   isws->base.validate_buffers = i915_sw_batchbuffer_validate_buffers;
    isws->base.batchbuffer_reloc = i915_sw_batchbuffer_reloc;
    isws->base.batchbuffer_flush = i915_sw_batchbuffer_flush;
    isws->base.batchbuffer_destroy = i915_sw_batchbuffer_destroy;
