@@ -101,7 +101,7 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 {
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
-	unsigned i, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1;
+	unsigned i, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1, db_shader_control;
 	int pos_index = -1, face_index = -1;
 
 	rstate->nregs = 0;
@@ -113,18 +113,15 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 			face_index = i;
 	}
 
+	db_shader_control = 0;
 	for (i = 0; i < rshader->noutput; i++) {
 		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
-			r600_pipe_state_add_reg(rstate,
-						R_02880C_DB_SHADER_CONTROL,
-						S_02880C_Z_EXPORT_ENABLE(1),
-						S_02880C_Z_EXPORT_ENABLE(1), NULL);
+			db_shader_control |= S_02880C_Z_EXPORT_ENABLE(1);
 		if (rshader->output[i].name == TGSI_SEMANTIC_STENCIL)
-			r600_pipe_state_add_reg(rstate,
-						R_02880C_DB_SHADER_CONTROL,
-						S_02880C_STENCIL_REF_EXPORT_ENABLE(1),
-						S_02880C_STENCIL_REF_EXPORT_ENABLE(1), NULL);
+			db_shader_control |= S_02880C_STENCIL_REF_EXPORT_ENABLE(1);
 	}
+	if (rshader->uses_kill)
+		db_shader_control |= S_02880C_KILL_ENABLE(1);
 
 	exports_ps = 0;
 	num_cout = 0;
@@ -182,14 +179,14 @@ static void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shade
 					S_028808_MULTIWRITE_ENABLE(1),
 					NULL);
 	}
+	/* only set some bits here, the other bits are set in the dsa state */
+	r600_pipe_state_add_reg(rstate, R_02880C_DB_SHADER_CONTROL,
+				db_shader_control,
+				S_02880C_Z_EXPORT_ENABLE(1) |
+				S_02880C_STENCIL_REF_EXPORT_ENABLE(1) |
+				S_02880C_KILL_ENABLE(1),
+				NULL);
 
-	if (rshader->uses_kill) {
-		/* only set some bits here, the other bits are set in the dsa state */
-		r600_pipe_state_add_reg(rstate,
-					R_02880C_DB_SHADER_CONTROL,
-					S_02880C_KILL_ENABLE(1),
-					S_02880C_KILL_ENABLE(1), NULL);
-	}
 	r600_pipe_state_add_reg(rstate,
 				R_03E200_SQ_LOOP_CONST_0, 0x01000FFF,
 				0xFFFFFFFF, NULL);
