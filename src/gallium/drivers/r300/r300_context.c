@@ -519,7 +519,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
                 rws->get_value(rws, R300_VID_GART_SIZE) >> 20,
                 rws->get_value(rws, R300_VID_VRAM_SIZE) >> 20,
                 rws->get_value(rws, R300_CAN_AACOMPRESS) ? "YES" : "NO",
-                rws->get_value(rws, R300_CAN_HYPERZ) ? "YES" : "NO",
+                rws->get_value(rws, R300_CAN_HYPERZ) &&
+                r300->screen->caps.zmask_ram ? "YES" : "NO",
                 rws->get_value(rws, R300_CAN_HYPERZ) &&
                 r300->screen->caps.hiz_ram ? "YES" : "NO");
     }
