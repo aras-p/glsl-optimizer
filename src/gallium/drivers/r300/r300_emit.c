@@ -1028,8 +1028,6 @@ void r300_emit_hiz_clear(struct r300_context *r300, unsigned size, void *state)
 {
     struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
-    struct r300_hyperz_state *z =
-        (struct r300_hyperz_state*)r300->hyperz_state.state;
     struct r300_resource* tex;
     CS_LOCALS(r300);
 
@@ -1042,10 +1040,9 @@ void r300_emit_hiz_clear(struct r300_context *r300, unsigned size, void *state)
     OUT_CS(0xffffffff);
     END_CS;
 
-    z->current_func = -1;
-
     /* Mark the current zbuffer's hiz ram as in use. */
     r300->hiz_in_use = TRUE;
+    r300->hiz_func = HIZ_FUNC_NONE;
     r300_mark_atom_dirty(r300, &r300->hyperz_state);
 }
 

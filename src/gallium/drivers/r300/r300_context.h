@@ -102,7 +102,6 @@ struct r300_dsa_state {
 };
 
 struct r300_hyperz_state {
-    int current_func; /* -1 after a clear before first op */
     int flush;
     /* This is actually a command buffer with named dwords. */
     uint32_t cb_flush_begin;
@@ -414,6 +413,21 @@ struct r300_vertex_element_state {
     struct r300_vertex_stream_state vertex_stream;
 };
 
+enum r300_hiz_func {
+    HIZ_FUNC_NONE,
+
+    /* The function, when determined, is set in stone
+     * until the next HiZ clear. */
+
+    /* MAX is written to the HiZ buffer.
+     * Used for LESS, LEQUAL. */
+    HIZ_FUNC_MAX,
+
+    /* MIN is written to the HiZ buffer.
+     * Used for GREATER, GEQUAL. */
+    HIZ_FUNC_MIN,
+};
+
 struct r300_context {
     /* Parent class */
     struct pipe_context context;
@@ -559,6 +573,8 @@ struct r300_context {
     struct pipe_surface *locked_zbuffer;
     /* Whether HIZ is enabled. */
     boolean hiz_in_use;
+    /* HiZ function. Can be either MIN or MAX. */
+    enum r300_hiz_func hiz_func;
 
     void *dsa_decompress_zmask;
 
