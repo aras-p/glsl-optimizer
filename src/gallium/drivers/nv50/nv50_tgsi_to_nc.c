@@ -476,6 +476,7 @@ bld_loop_end(struct bld_context *bld, struct nv_basic_block *bb)
       stk = (struct bld_value_stack *)phi->target;
       phi->target = NULL;
 
+      /* start with s == 1, src[0] is from outside the loop */
       for (s = 1, n = 0; n < bb->num_in; ++n) {
          if (bb->in_kind[n] != CFG_EDGE_BACK)
             continue;
@@ -487,8 +488,11 @@ bld_loop_end(struct bld_context *bld, struct nv_basic_block *bb)
          for (i = 0; i < 4; ++i)
             if (phi->src[i] && phi->src[i]->value == val)
                break;
-         if (i == 4)
+         if (i == 4) {
+            /* skip values we do not want to replace */
+            for (; phi->src[s] && phi->src[s]->value != phi->def[0]; ++s);
             nv_reference(bld->pc, &phi->src[s++], val);
+         }
       }
       bld->pc->current_block = save;
 
@@ -1102,9 +1106,8 @@ emit_fetch(struct bld_context *bld, const struct tgsi_full_instruction *insn,
 
    switch (src->Register.File) {
    case TGSI_FILE_CONSTANT:
-      dim_idx = src->Dimension.Index ? src->Dimension.Index + 2 : 1;
-      assert(dim_idx < 14);
-      assert(dim_idx == 1); /* for now */
+      dim_idx = src->Dimension.Index;
+      assert(dim_idx < 15);
 
       res = new_value(bld->pc, NV_FILE_MEM_C(dim_idx), type);
       SET_TYPE(res, type);
@@ -1468,7 +1471,7 @@ bld_tex(struct bld_context *bld, struct nv_value *dst0[4],
    uint opcode = translate_opcode(insn->Instruction.Opcode);
    int arg, dim, c;
    const int tic = insn->Src[1].Register.Index;
-   const int tsc = 0;
+   const int tsc = tic;
    const int cube = (insn->Texture.Texture  == TGSI_TEXTURE_CUBE) ? 1 : 0;
 
    get_tex_dim(insn, &dim, &arg);
@@ -1717,6 +1720,10 @@ bld_instruction(struct bld_context *bld,
    {
       struct nv_basic_block *b = new_basic_block(bld->pc);
 
+      if (bld->pc->current_block->exit &&
+          !bld->pc->current_block->exit->is_terminator)
+         bld_flow(bld, NV_OP_BRA, NV_CC_TR, NULL, b, FALSE);
+
       --bld->cond_lvl;
       nvbb_attach_block(bld->pc->current_block, b, bld->out_kind);
       nvbb_attach_block(bld->cond_bb[bld->cond_lvl], b, CFG_EDGE_FORWARD);
@@ -1923,6 +1930,7 @@ bld_instruction(struct bld_context *bld,
          dst0[c] = bld_insn_2(bld, NV_OP_XOR, temp, temp);
          dst0[c]->insn->cc = NV_CC_EQ;
          nv_reference(bld->pc, &dst0[c]->insn->flags_src, src1);
+         dst0[c] = bld_insn_2(bld, NV_OP_SELECT, dst0[c], temp);
       }
       break;
    case TGSI_OPCODE_SUB:

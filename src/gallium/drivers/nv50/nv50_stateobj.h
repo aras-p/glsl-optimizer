@@ -1,0 +1,72 @@
+
+#ifndef __NV50_STATEOBJ_H__
+#define __NV50_STATEOBJ_H__
+
+#include "pipe/p_state.h"
+
+#define NV50_SCISSORS_CLIPPING
+
+#define SB_BEGIN_3D(so, m, s)                                                  \
+   (so)->state[(so)->size++] =                                                 \
+      ((s) << 18) | (NV50_SUBCH_3D << 13) | NV50_3D_##m
+
+#define SB_DATA(so, u) (so)->state[(so)->size++] = (u)
+
+struct nv50_blend_stateobj {
+   struct pipe_blend_state pipe;
+   int size;
+   uint32_t state[29];
+};
+
+struct nv50_tsc_entry {
+   int id;
+   uint32_t tsc[8];
+};
+
+static INLINE struct nv50_tsc_entry *
+nv50_tsc_entry(void *hwcso)
+{
+   return (struct nv50_tsc_entry *)hwcso;
+}
+
+struct nv50_tic_entry {
+   struct pipe_sampler_view pipe;
+   int id;
+   uint32_t tic[8];
+};
+
+static INLINE struct nv50_tic_entry *
+nv50_tic_entry(struct pipe_sampler_view *view)
+{
+   return (struct nv50_tic_entry *)view;
+}
+
+struct nv50_rasterizer_stateobj {
+   struct pipe_rasterizer_state pipe;
+   int size;
+   uint32_t state[40];
+};
+
+struct nv50_zsa_stateobj {
+   struct pipe_depth_stencil_alpha_state pipe;
+   int size;
+   uint32_t state[29];
+};
+
+struct nv50_vertex_element {
+   struct pipe_vertex_element pipe;
+   uint32_t state;
+};
+
+struct nv50_vertex_stateobj {
+   struct translate *translate;
+   unsigned num_elements;
+   uint32_t instance_elts;
+   uint32_t instance_bufs;
+   boolean need_conversion;
+   unsigned vertex_size;
+   unsigned packet_vertex_limit;
+   struct nv50_vertex_element element[1];
+};
+
+#endif

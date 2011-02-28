@@ -1,362 +1,292 @@
+
 #include "pipe/p_context.h"
 #include "pipe/p_state.h"
 #include "util/u_inlines.h"
 #include "util/u_format.h"
-#include "util/u_split_prim.h"
+#include "translate/translate.h"
 
 #include "nv50_context.h"
 #include "nv50_resource.h"
 
-struct push_context {
-   struct nv50_context *nv50;
+#include "nv50_3d.xml.h"
 
-   unsigned vtx_size;
+struct push_context {
+   struct nouveau_channel *chan;
 
    void *idxbuf;
-   int32_t idxbias;
-   unsigned idxsize;
 
    float edgeflag;
    int edgeflag_attr;
 
-   struct {
-      void *map;
-      unsigned stride;
-      unsigned divisor;
-      unsigned step;
-      void (*push)(struct nouveau_channel *, void *);
-   } attr[16];
-   unsigned attr_nr;
+   uint32_t vertex_words;
+   uint32_t packet_vertex_limit;
+
+   struct translate *translate;
+
+   boolean primitive_restart;
+   uint32_t prim;
+   uint32_t restart_index;
+   uint32_t instance_id;
 };
 
-static void
-emit_b32_1(struct nouveau_channel *chan, void *data)
+static INLINE unsigned
+prim_restart_search_i08(uint8_t *elts, unsigned push, uint8_t index)
 {
-   uint32_t *v = data;
+   unsigned i;
+   for (i = 0; i < push; ++i)
+      if (elts[i] == index)
+         break;
+   return i;
+}
 
-   OUT_RING(chan, v[0]);
+static INLINE unsigned
+prim_restart_search_i16(uint16_t *elts, unsigned push, uint16_t index)
+{
+   unsigned i;
+   for (i = 0; i < push; ++i)
+      if (elts[i] == index)
+         break;
+   return i;
+}
+
+static INLINE unsigned
+prim_restart_search_i32(uint32_t *elts, unsigned push, uint32_t index)
+{
+   unsigned i;
+   for (i = 0; i < push; ++i)
+      if (elts[i] == index)
+         break;
+   return i;
 }
 
 static void
-emit_b32_2(struct nouveau_channel *chan, void *data)
+emit_vertices_i08(struct push_context *ctx, unsigned start, unsigned count)
 {
-   uint32_t *v = data;
+   uint8_t *elts = (uint8_t *)ctx->idxbuf + start;
 
-   OUT_RING(chan, v[0]);
-   OUT_RING(chan, v[1]);
-}
+   while (count) {
+      unsigned push = MIN2(count, ctx->packet_vertex_limit);
+      unsigned size, nr;
 
-static void
-emit_b32_3(struct nouveau_channel *chan, void *data)
-{
-   uint32_t *v = data;
+      nr = push;
+      if (ctx->primitive_restart)
+         nr = prim_restart_search_i08(elts, push, ctx->restart_index);
 
-   OUT_RING(chan, v[0]);
-   OUT_RING(chan, v[1]);
-   OUT_RING(chan, v[2]);
-}
+      size = ctx->vertex_words * nr;
 
-static void
-emit_b32_4(struct nouveau_channel *chan, void *data)
-{
-   uint32_t *v = data;
+      BEGIN_RING_NI(ctx->chan, RING_3D(VERTEX_DATA), size);
 
-   OUT_RING(chan, v[0]);
-   OUT_RING(chan, v[1]);
-   OUT_RING(chan, v[2]);
-   OUT_RING(chan, v[3]);
-}
+      ctx->translate->run_elts8(ctx->translate, elts, nr, ctx->instance_id,
+                                ctx->chan->cur);
 
-static void
-emit_b16_1(struct nouveau_channel *chan, void *data)
-{
-   uint16_t *v = data;
+      ctx->chan->cur += size;
+      count -= nr;
+      elts += nr;
 
-   OUT_RING(chan, v[0]);
-}
-
-static void
-emit_b16_3(struct nouveau_channel *chan, void *data)
-{
-   uint16_t *v = data;
-
-   OUT_RING(chan, (v[1] << 16) | v[0]);
-   OUT_RING(chan, v[2]);
-}
-
-static void
-emit_b08_1(struct nouveau_channel *chan, void *data)
-{
-   uint8_t *v = data;
-
-   OUT_RING(chan, v[0]);
-}
-
-static void
-emit_b08_3(struct nouveau_channel *chan, void *data)
-{
-   uint8_t *v = data;
-
-   OUT_RING(chan, (v[2] << 16) | (v[1] << 8) | v[0]);
-}
-
-static INLINE void
-emit_vertex(struct push_context *ctx, unsigned n)
-{
-   struct nouveau_grobj *tesla = ctx->nv50->screen->tesla;
-   struct nouveau_channel *chan = tesla->channel;
-   int i;
-
-   if (ctx->edgeflag_attr < 16) {
-      float *edgeflag = (float *)
-         ((uint8_t *)ctx->attr[ctx->edgeflag_attr].map +
-          ctx->attr[ctx->edgeflag_attr].stride * n);
-
-      if (*edgeflag != ctx->edgeflag) {
-         BEGIN_RING(chan, tesla, NV50TCL_EDGEFLAG_ENABLE, 1);
-         OUT_RING  (chan, *edgeflag ? 1 : 0);
-         ctx->edgeflag = *edgeflag;
+      if (nr != push) {
+         count--;
+         elts++;
+         BEGIN_RING(ctx->chan, RING_3D(VERTEX_END_GL), 2);
+         OUT_RING  (ctx->chan, 0);
+         OUT_RING  (ctx->chan, NVA0_3D_VERTEX_BEGIN_GL_INSTANCE_CONT |
+                    (ctx->prim & ~NV50_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT));
       }
    }
-
-   BEGIN_RING_NI(chan, tesla, NV50TCL_VERTEX_DATA, ctx->vtx_size);
-   for (i = 0; i < ctx->attr_nr; i++)
-      ctx->attr[i].push(chan,
-			(uint8_t *)ctx->attr[i].map + ctx->attr[i].stride * n);
 }
 
 static void
-emit_edgeflag(void *priv, boolean enabled)
+emit_vertices_i16(struct push_context *ctx, unsigned start, unsigned count)
 {
-   struct push_context *ctx = priv;
-   struct nouveau_grobj *tesla = ctx->nv50->screen->tesla;
-   struct nouveau_channel *chan = tesla->channel;
+   uint16_t *elts = (uint16_t *)ctx->idxbuf + start;
 
-   BEGIN_RING(chan, tesla, NV50TCL_EDGEFLAG_ENABLE, 1);
-   OUT_RING  (chan, enabled ? 1 : 0);
+   while (count) {
+      unsigned push = MIN2(count, ctx->packet_vertex_limit);
+      unsigned size, nr;
+
+      nr = push;
+      if (ctx->primitive_restart)
+         nr = prim_restart_search_i16(elts, push, ctx->restart_index);
+
+      size = ctx->vertex_words * nr;
+
+      BEGIN_RING_NI(ctx->chan, RING_3D(VERTEX_DATA), size);
+
+      ctx->translate->run_elts16(ctx->translate, elts, nr, ctx->instance_id,
+                                 ctx->chan->cur);
+
+      ctx->chan->cur += size;
+      count -= nr;
+      elts += nr;
+
+      if (nr != push) {
+         count--;
+         elts++;
+         BEGIN_RING(ctx->chan, RING_3D(VERTEX_END_GL), 2);
+         OUT_RING  (ctx->chan, 0);
+         OUT_RING  (ctx->chan, NVA0_3D_VERTEX_BEGIN_GL_INSTANCE_CONT |
+                    (ctx->prim & ~NV50_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT));
+      }
+   }
 }
 
 static void
-emit_elt08(void *priv, unsigned start, unsigned count)
+emit_vertices_i32(struct push_context *ctx, unsigned start, unsigned count)
 {
-   struct push_context *ctx = priv;
-   uint8_t *idxbuf = ctx->idxbuf;
+   uint32_t *elts = (uint32_t *)ctx->idxbuf + start;
 
-   while (count--)
-      emit_vertex(ctx, idxbuf[start++]);
+   while (count) {
+      unsigned push = MIN2(count, ctx->packet_vertex_limit);
+      unsigned size, nr;
+
+      nr = push;
+      if (ctx->primitive_restart)
+         nr = prim_restart_search_i32(elts, push, ctx->restart_index);
+
+      size = ctx->vertex_words * nr;
+
+      BEGIN_RING_NI(ctx->chan, RING_3D(VERTEX_DATA), size);
+
+      ctx->translate->run_elts(ctx->translate, elts, nr, ctx->instance_id,
+                               ctx->chan->cur);
+
+      ctx->chan->cur += size;
+      count -= nr;
+      elts += nr;
+
+      if (nr != push) {
+         count--;
+         elts++;
+         BEGIN_RING(ctx->chan, RING_3D(VERTEX_END_GL), 2);
+         OUT_RING  (ctx->chan, 0);
+         OUT_RING  (ctx->chan, NVA0_3D_VERTEX_BEGIN_GL_INSTANCE_CONT |
+                    (ctx->prim & ~NV50_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT));
+      }
+   }
 }
 
 static void
-emit_elt08_biased(void *priv, unsigned start, unsigned count)
+emit_vertices_seq(struct push_context *ctx, unsigned start, unsigned count)
 {
-   struct push_context *ctx = priv;
-   uint8_t *idxbuf = ctx->idxbuf;
+   while (count) {
+      unsigned push = MIN2(count, ctx->packet_vertex_limit);
+      unsigned size = ctx->vertex_words * push;
 
-   while (count--)
-      emit_vertex(ctx, idxbuf[start++] + ctx->idxbias);
+      BEGIN_RING_NI(ctx->chan, RING_3D(VERTEX_DATA), size);
+
+      ctx->translate->run(ctx->translate, start, push, ctx->instance_id,
+                          ctx->chan->cur);
+      ctx->chan->cur += size;
+      count -= push;
+      start += push;
+   }
 }
 
-static void
-emit_elt16(void *priv, unsigned start, unsigned count)
+
+#define NV50_PRIM_GL_CASE(n) \
+   case PIPE_PRIM_##n: return NV50_3D_VERTEX_BEGIN_GL_PRIMITIVE_##n
+
+static INLINE unsigned
+nv50_prim_gl(unsigned prim)
 {
-   struct push_context *ctx = priv;
-   uint16_t *idxbuf = ctx->idxbuf;
-
-   while (count--)
-      emit_vertex(ctx, idxbuf[start++]);
-}
-
-static void
-emit_elt16_biased(void *priv, unsigned start, unsigned count)
-{
-   struct push_context *ctx = priv;
-   uint16_t *idxbuf = ctx->idxbuf;
-
-   while (count--)
-      emit_vertex(ctx, idxbuf[start++] + ctx->idxbias);
-}
-
-static void
-emit_elt32(void *priv, unsigned start, unsigned count)
-{
-   struct push_context *ctx = priv;
-   uint32_t *idxbuf = ctx->idxbuf;
-
-   while (count--)
-      emit_vertex(ctx, idxbuf[start++]);
-}
-
-static void
-emit_elt32_biased(void *priv, unsigned start, unsigned count)
-{
-   struct push_context *ctx = priv;
-   uint32_t *idxbuf = ctx->idxbuf;
-
-   while (count--)
-      emit_vertex(ctx, idxbuf[start++] + ctx->idxbias);
-}
-
-static void
-emit_verts(void *priv, unsigned start, unsigned count)
-{
-   while (count--)
-      emit_vertex(priv, start++);
+   switch (prim) {
+   NV50_PRIM_GL_CASE(POINTS);
+   NV50_PRIM_GL_CASE(LINES);
+   NV50_PRIM_GL_CASE(LINE_LOOP);
+   NV50_PRIM_GL_CASE(LINE_STRIP);
+   NV50_PRIM_GL_CASE(TRIANGLES);
+   NV50_PRIM_GL_CASE(TRIANGLE_STRIP);
+   NV50_PRIM_GL_CASE(TRIANGLE_FAN);
+   NV50_PRIM_GL_CASE(QUADS);
+   NV50_PRIM_GL_CASE(QUAD_STRIP);
+   NV50_PRIM_GL_CASE(POLYGON);
+   NV50_PRIM_GL_CASE(LINES_ADJACENCY);
+   NV50_PRIM_GL_CASE(LINE_STRIP_ADJACENCY);
+   NV50_PRIM_GL_CASE(TRIANGLES_ADJACENCY);
+   NV50_PRIM_GL_CASE(TRIANGLE_STRIP_ADJACENCY);
+   /*
+   NV50_PRIM_GL_CASE(PATCHES); */
+   default:
+      return NV50_3D_VERTEX_BEGIN_GL_PRIMITIVE_POINTS;
+      break;
+   }
 }
 
 void
-nv50_push_elements_instanced(struct pipe_context *pipe,
-                             struct pipe_resource *idxbuf,
-                             unsigned idxsize, int idxbias,
-                             unsigned mode, unsigned start, unsigned count,
-                             unsigned i_start, unsigned i_count)
+nv50_push_vbo(struct nv50_context *nv50, const struct pipe_draw_info *info)
 {
-   struct nv50_context *nv50 = nv50_context(pipe);
-   struct nouveau_grobj *tesla = nv50->screen->tesla;
-   struct nouveau_channel *chan = tesla->channel;
    struct push_context ctx;
-   const unsigned p_overhead = 4 + /* begin/end */
-                               4; /* potential edgeflag enable/disable */
-   const unsigned v_overhead = 1 + /* VERTEX_DATA packet header */
-                               2; /* potential edgeflag modification */
-   struct util_split_prim s;
-   unsigned vtx_size;
-   boolean nzi = FALSE;
-   int i;
+   unsigned i, index_size;
+   unsigned inst = info->instance_count;
+   boolean apply_bias = info->indexed && info->index_bias;
 
-   ctx.nv50 = nv50;
-   ctx.attr_nr = 0;
-   ctx.idxbuf = NULL;
-   ctx.vtx_size = 0;
-   ctx.edgeflag = 0.5f;
-   ctx.edgeflag_attr = nv50->vertprog->vp.edgeflag;
+   ctx.chan = nv50->screen->base.channel;
+   ctx.translate = nv50->vertex->translate;
+   ctx.packet_vertex_limit = nv50->vertex->packet_vertex_limit;
+   ctx.vertex_words = nv50->vertex->vertex_size;
 
-   /* map vertex buffers, determine vertex size */
-   for (i = 0; i < nv50->vtxelt->num_elements; i++) {
-      struct pipe_vertex_element *ve = &nv50->vtxelt->pipe[i];
-      struct pipe_vertex_buffer *vb = &nv50->vtxbuf[ve->vertex_buffer_index];
-      struct nouveau_bo *bo = nv50_resource(vb->buffer)->bo;
-      unsigned size, nr_components, n;
+   for (i = 0; i < nv50->num_vtxbufs; ++i) {
+      uint8_t *data;
+      struct pipe_vertex_buffer *vb = &nv50->vtxbuf[i];
+      struct nv50_resource *res = nv50_resource(vb->buffer);
 
-      if (!(nv50->vbo_fifo & (1 << i)))
-         continue;
-      n = ctx.attr_nr++;
+      data = nv50_resource_map_offset(nv50, res,
+                                      vb->buffer_offset, NOUVEAU_BO_RD);
 
-      if (nouveau_bo_map(bo, NOUVEAU_BO_RD)) {
-         assert(bo->map);
+      if (apply_bias && likely(!(nv50->vertex->instance_bufs & (1 << i))))
+         data += info->index_bias * vb->stride;
+
+      ctx.translate->set_buffer(ctx.translate, i, data, vb->stride, ~0);
+   }
+
+   if (info->indexed) {
+      ctx.idxbuf = nv50_resource_map_offset(nv50,
+                                            nv50_resource(nv50->idxbuf.buffer),
+                                            nv50->idxbuf.offset, NOUVEAU_BO_RD);
+      if (!ctx.idxbuf)
          return;
-      }
-      ctx.attr[n].map = (uint8_t *)bo->map + vb->buffer_offset + ve->src_offset;
-      nouveau_bo_unmap(bo);
+      index_size = nv50->idxbuf.index_size;
+      ctx.primitive_restart = info->primitive_restart;
+      ctx.restart_index = info->restart_index;
+   } else {
+      ctx.idxbuf = NULL;
+      index_size = 0;
+      ctx.primitive_restart = FALSE;
+      ctx.restart_index = 0;
+   }
 
-      ctx.attr[n].stride = vb->stride;
-      ctx.attr[n].divisor = ve->instance_divisor;
-      if (ctx.attr[n].divisor) {
-         ctx.attr[n].step = i_start % ve->instance_divisor;
-         ctx.attr[n].map = (uint8_t *)ctx.attr[n].map + i_start * vb->stride;
-      }
+   ctx.instance_id = info->start_instance;
+   ctx.prim = nv50_prim_gl(info->mode);
 
-      size = util_format_get_component_bits(ve->src_format,
-                                            UTIL_FORMAT_COLORSPACE_RGB, 0);
-      nr_components = util_format_get_nr_components(ve->src_format);
-      switch (size) {
-      case 8:
-         switch (nr_components) {
-         case 1: ctx.attr[n].push = emit_b08_1; break;
-         case 2: ctx.attr[n].push = emit_b16_1; break;
-         case 3: ctx.attr[n].push = emit_b08_3; break;
-         case 4: ctx.attr[n].push = emit_b32_1; break;
-         }
-         ctx.vtx_size++;
+   while (inst--) {
+      BEGIN_RING(ctx.chan, RING_3D(VERTEX_BEGIN_GL), 1);
+      OUT_RING  (ctx.chan, ctx.prim);
+      switch (index_size) {
+      case 0:
+         emit_vertices_seq(&ctx, info->start, info->count);
          break;
-      case 16:
-         switch (nr_components) {
-         case 1: ctx.attr[n].push = emit_b16_1; break;
-         case 2: ctx.attr[n].push = emit_b32_1; break;
-         case 3: ctx.attr[n].push = emit_b16_3; break;
-         case 4: ctx.attr[n].push = emit_b32_2; break;
-         }
-         ctx.vtx_size += (nr_components + 1) >> 1;
+      case 1:
+         emit_vertices_i08(&ctx, info->start, info->count);
          break;
-      case 32:
-         switch (nr_components) {
-         case 1: ctx.attr[n].push = emit_b32_1; break;
-         case 2: ctx.attr[n].push = emit_b32_2; break;
-         case 3: ctx.attr[n].push = emit_b32_3; break;
-         case 4: ctx.attr[n].push = emit_b32_4; break;
-         }
-         ctx.vtx_size += nr_components;
+      case 2:
+         emit_vertices_i16(&ctx, info->start, info->count);
+         break;
+      case 4:
+         emit_vertices_i32(&ctx, info->start, info->count);
          break;
       default:
          assert(0);
-         return;
+         break;
       }
-   }
-   vtx_size = ctx.vtx_size + v_overhead;
+      BEGIN_RING(ctx.chan, RING_3D(VERTEX_END_GL), 1);
+      OUT_RING  (ctx.chan, 0);
 
-   /* map index buffer, if present */
-   if (idxbuf) {
-      struct nouveau_bo *bo = nv50_resource(idxbuf)->bo;
-
-      if (nouveau_bo_map(bo, NOUVEAU_BO_RD)) {
-         assert(bo->map);
-         return;
-      }
-      ctx.idxbuf = bo->map;
-      ctx.idxbias = idxbias;
-      ctx.idxsize = idxsize;
-      nouveau_bo_unmap(bo);
+      ctx.instance_id++;
+      ctx.prim |= NV50_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
    }
 
-   s.priv = &ctx;
-   s.edge = emit_edgeflag;
-   if (idxbuf) {
-      if (idxsize == 1)
-         s.emit = idxbias ? emit_elt08_biased : emit_elt08;
-      else
-      if (idxsize == 2)
-         s.emit = idxbias ? emit_elt16_biased : emit_elt16;
-      else
-         s.emit = idxbias ? emit_elt32_biased : emit_elt32;
-   } else
-      s.emit = emit_verts;
+   if (info->indexed)
+      nv50_resource_unmap(nv50_resource(nv50->idxbuf.buffer));
 
-   /* per-instance loop */
-   BEGIN_RING(chan, tesla, NV50TCL_CB_ADDR, 2);
-   OUT_RING  (chan, NV50_CB_AUX | (24 << 8));
-   OUT_RING  (chan, i_start);
-   while (i_count--) {
-      unsigned max_verts;
-      boolean done;
-
-      for (i = 0; i < ctx.attr_nr; i++) {
-         if (!ctx.attr[i].divisor ||
-              ctx.attr[i].divisor != ++ctx.attr[i].step)
-            continue;
-         ctx.attr[i].step = 0;
-         ctx.attr[i].map = (uint8_t *)ctx.attr[i].map + ctx.attr[i].stride;
-      }
-
-      util_split_prim_init(&s, mode, start, count);
-      do {
-         if (AVAIL_RING(chan) < p_overhead + (6 * vtx_size)) {
-            FIRE_RING(chan);
-            if (!nv50_state_validate(nv50, p_overhead + (6 * vtx_size))) {
-               assert(0);
-               return;
-            }
-         }
-
-         max_verts  = AVAIL_RING(chan);
-         max_verts -= p_overhead;
-         max_verts /= vtx_size;
-
-         BEGIN_RING(chan, tesla, NV50TCL_VERTEX_BEGIN, 1);
-         OUT_RING  (chan, nv50_prim(s.mode) | (nzi ? (1 << 28) : 0));
-         done = util_split_prim_next(&s, max_verts);
-         BEGIN_RING(chan, tesla, NV50TCL_VERTEX_END, 1);
-         OUT_RING  (chan, 0);
-      } while (!done);
-
-      nzi = TRUE;
-   }
+   for (i = 0; i < nv50->num_vtxbufs; ++i)
+      nv50_resource_unmap(nv50_resource(nv50->vtxbuf[i].buffer));
 }

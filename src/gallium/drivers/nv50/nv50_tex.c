@@ -21,217 +21,273 @@
  */
 
 #include "nv50_context.h"
-#include "nv50_texture.h"
 #include "nv50_resource.h"
-
-#include "nouveau/nouveau_stateobj.h"
-#include "nouveau/nouveau_reloc.h"
+#include "nv50_texture.xml.h"
+#include "nv50_defs.xml.h"
 
 #include "util/u_format.h"
 
 static INLINE uint32_t
 nv50_tic_swizzle(uint32_t tc, unsigned swz)
 {
-	switch (swz) {
-	case PIPE_SWIZZLE_RED:
-		return (tc & NV50TIC_0_0_MAPR_MASK) >> NV50TIC_0_0_MAPR_SHIFT;
-	case PIPE_SWIZZLE_GREEN:
-		return (tc & NV50TIC_0_0_MAPG_MASK) >> NV50TIC_0_0_MAPG_SHIFT;
-	case PIPE_SWIZZLE_BLUE:
-		return (tc & NV50TIC_0_0_MAPB_MASK) >> NV50TIC_0_0_MAPB_SHIFT;
-	case PIPE_SWIZZLE_ALPHA:
-		return (tc & NV50TIC_0_0_MAPA_MASK) >> NV50TIC_0_0_MAPA_SHIFT;
-	case PIPE_SWIZZLE_ONE:
-		return 7;
-	case PIPE_SWIZZLE_ZERO:
-	default:
-		return 0;
-	}
+   switch (swz) {
+   case PIPE_SWIZZLE_RED:
+      return (tc & NV50_TIC_0_MAPR__MASK) >> NV50_TIC_0_MAPR__SHIFT;
+   case PIPE_SWIZZLE_GREEN:
+      return (tc & NV50_TIC_0_MAPG__MASK) >> NV50_TIC_0_MAPG__SHIFT;
+   case PIPE_SWIZZLE_BLUE:
+      return (tc & NV50_TIC_0_MAPB__MASK) >> NV50_TIC_0_MAPB__SHIFT;
+   case PIPE_SWIZZLE_ALPHA:
+      return (tc & NV50_TIC_0_MAPA__MASK) >> NV50_TIC_0_MAPA__SHIFT;
+   case PIPE_SWIZZLE_ONE:
+      return NV50_TIC_MAP_ONE;
+   case PIPE_SWIZZLE_ZERO:
+   default:
+      return NV50_TIC_MAP_ZERO;
+   }
 }
 
-boolean
-nv50_tex_construct(struct nv50_sampler_view *view)
+struct pipe_sampler_view *
+nv50_create_sampler_view(struct pipe_context *pipe,
+                         struct pipe_resource *texture,
+                         const struct pipe_sampler_view *templ)
 {
-	const struct util_format_description *desc;
-	struct nv50_miptree *mt = nv50_miptree(view->pipe.texture);
-	uint32_t swz[4], *tic = view->tic;
+   const struct util_format_description *desc;
+   uint32_t *tic;
+   uint32_t swz[4];
+   uint32_t depth;
+   struct nv50_tic_entry *view;
+   struct nv50_miptree *mt = nv50_miptree(texture);
 
-	tic[0] = nv50_format_table[view->pipe.format].tic;
+   view = MALLOC_STRUCT(nv50_tic_entry);
+   if (!view)
+      return NULL;
 
-	swz[0] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_r);
-	swz[1] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_g);
-	swz[2] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_b);
-	swz[3] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_a);
-	view->tic[0] = (tic[0] &  ~NV50TIC_0_0_SWIZZLE_MASK) |
-		(swz[0] << NV50TIC_0_0_MAPR_SHIFT) |
-		(swz[1] << NV50TIC_0_0_MAPG_SHIFT) |
-		(swz[2] << NV50TIC_0_0_MAPB_SHIFT) |
-		(swz[3] << NV50TIC_0_0_MAPA_SHIFT);
+   view->pipe = *templ;
+   view->pipe.reference.count = 1;
+   view->pipe.texture = NULL;
+   view->pipe.context = pipe;
 
-	tic[2] = 0x50001000;
-	tic[2] |= ((mt->base.bo->tile_mode & 0x0f) << 22) |
-		  ((mt->base.bo->tile_mode & 0xf0) << 21);
+   view->id = -1;
 
-	desc = util_format_description(mt->base.base.format);
-	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
-		tic[2] |= NV50TIC_0_2_COLORSPACE_SRGB;
+   pipe_resource_reference(&view->pipe.texture, texture);
 
-	switch (mt->base.base.target) {
-	case PIPE_TEXTURE_1D:
-		tic[2] |= NV50TIC_0_2_TARGET_1D;
-		break;
-	case PIPE_TEXTURE_2D:
-		tic[2] |= NV50TIC_0_2_TARGET_2D;
-		break;
-	case PIPE_TEXTURE_RECT:
-		tic[2] |= NV50TIC_0_2_TARGET_RECT;
-		break;
-	case PIPE_TEXTURE_3D:
-		tic[2] |= NV50TIC_0_2_TARGET_3D;
-		break;
-	case PIPE_TEXTURE_CUBE:
-		tic[2] |= NV50TIC_0_2_TARGET_CUBE;
-		break;
-	default:
-		NOUVEAU_ERR("invalid texture target: %d\n",
-			    mt->base.base.target);
-		return FALSE;
-	}
+   tic = &view->tic[0];
 
-	tic[3] = 0x00300000;
+   desc = util_format_description(mt->base.base.format);
 
-	tic[4] = (1 << 31) | mt->base.base.width0;
-	tic[5] = (mt->base.base.last_level << 28) |
-		(mt->base.base.depth0 << 16) | mt->base.base.height0;
+   /* TIC[0] */
 
-	tic[6] = 0x03000000;
+   tic[0] = nv50_format_table[view->pipe.format].tic;
 
-	tic[7] = (view->pipe.u.tex.last_level << 4) | view->pipe.u.tex.first_level;
+   swz[0] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_r);
+   swz[1] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_g);
+   swz[2] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_b);
+   swz[3] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_a);
+   tic[0] = (tic[0] & ~NV50_TIC_0_SWIZZLE__MASK) |
+      (swz[0] << NV50_TIC_0_MAPR__SHIFT) |
+      (swz[1] << NV50_TIC_0_MAPG__SHIFT) |
+      (swz[2] << NV50_TIC_0_MAPB__SHIFT) |
+      (swz[3] << NV50_TIC_0_MAPA__SHIFT);
 
-	return TRUE;
+   /* tic[1] = mt->base.bo->offset; */
+   tic[2] = /* mt->base.bo->offset >> 32 */ 0;
+
+   tic[2] |= 0x10001000 | /* NV50_TIC_2_NO_BORDER */ 0x40000000;
+
+   if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
+      tic[2] |= NV50_TIC_2_COLORSPACE_SRGB;
+
+   if (mt->base.base.target != PIPE_TEXTURE_RECT)
+      tic[2] |= NV50_TIC_2_NORMALIZED_COORDS;
+
+   tic[2] |=
+      ((mt->base.bo->tile_mode & 0x0f) << (22 - 0)) |
+      ((mt->base.bo->tile_mode & 0xf0) << (25 - 4));
+
+   depth = MAX2(mt->base.base.array_size, mt->base.base.depth0);
+
+   switch (mt->base.base.target) {
+   case PIPE_TEXTURE_1D:
+      tic[2] |= NV50_TIC_2_TARGET_1D;
+      break;
+   case PIPE_TEXTURE_2D:
+      tic[2] |= NV50_TIC_2_TARGET_2D;
+      break;
+   case PIPE_TEXTURE_RECT:
+      tic[2] |= NV50_TIC_2_TARGET_RECT;
+      break;
+   case PIPE_TEXTURE_3D:
+      tic[2] |= NV50_TIC_2_TARGET_3D;
+      break;
+   case PIPE_TEXTURE_CUBE:
+      depth /= 6;
+      if (depth > 1)
+         tic[2] |= NV50_TIC_2_TARGET_CUBE_ARRAY;
+      else
+         tic[2] |= NV50_TIC_2_TARGET_CUBE;
+      break;
+   case PIPE_TEXTURE_1D_ARRAY:
+      tic[2] |= NV50_TIC_2_TARGET_1D_ARRAY;
+      break;
+   case PIPE_TEXTURE_2D_ARRAY:
+      tic[2] |= NV50_TIC_2_TARGET_2D_ARRAY;
+      break;
+   case PIPE_BUFFER:
+      tic[2] |= NV50_TIC_2_TARGET_BUFFER | /* NV50_TIC_2_LINEAR */ (1 << 18);
+   default:
+      NOUVEAU_ERR("invalid texture target: %d\n", mt->base.base.target);
+      return FALSE;
+   }
+
+   if (mt->base.base.target == PIPE_BUFFER)
+      tic[3] = mt->base.base.width0;
+   else
+      tic[3] = 0x00300000;
+
+   tic[4] = (1 << 31) | mt->base.base.width0;
+
+   tic[5] = mt->base.base.height0 & 0xffff;
+   tic[5] |= depth << 16;
+   tic[5] |= mt->base.base.last_level << 28;
+
+   tic[6] = 0x03000000;
+
+   tic[7] = (view->pipe.u.tex.last_level << 4) | view->pipe.u.tex.first_level;
+
+   return &view->pipe;
 }
 
-static int
-nv50_validate_textures(struct nv50_context *nv50, struct nouveau_stateobj *so,
-		       unsigned p)
+static boolean
+nv50_validate_tic(struct nv50_context *nv50, int s)
 {
-	struct nouveau_grobj *eng2d = nv50->screen->eng2d;
-	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	unsigned unit, j;
+   struct nouveau_channel *chan = nv50->screen->base.channel;
+   struct nouveau_bo *txc = nv50->screen->txc;
+   unsigned i;
+   boolean need_flush = FALSE;
 
-	const unsigned rll = NOUVEAU_BO_VRAM | NOUVEAU_BO_RD | NOUVEAU_BO_LOW;
-	const unsigned rlh = NOUVEAU_BO_VRAM | NOUVEAU_BO_RD | NOUVEAU_BO_HIGH
-		| NOUVEAU_BO_OR;
+   for (i = 0; i < nv50->num_textures[s]; ++i) {
+      struct nv50_tic_entry *tic = nv50_tic_entry(nv50->textures[s][i]);
+      struct nv50_resource *res;
 
-	nv50_so_init_sifc(nv50, so, nv50->screen->tic, NOUVEAU_BO_VRAM,
-			  p * (32 * 8 * 4), nv50->sampler_view_nr[p] * 8 * 4);
+      if (!tic) {
+         BEGIN_RING(chan, RING_3D(BIND_TIC(s)), 1);
+         OUT_RING  (chan, (i << 1) | 0);
+         continue;
+      }
+      res = &nv50_miptree(tic->pipe.texture)->base;
 
-	for (unit = 0; unit < nv50->sampler_view_nr[p]; ++unit) {
-		struct nv50_sampler_view *view =
-			nv50_sampler_view(nv50->sampler_views[p][unit]);
+      if (tic->id < 0) {
+         tic->id = nv50_screen_tic_alloc(nv50->screen, tic);
 
-		so_method(so, eng2d, NV50_2D_SIFC_DATA | (2 << 29), 8);
-		if (view) {
-			uint32_t tic2 = view->tic[2];
-			struct nv50_miptree *mt =
-				nv50_miptree(view->pipe.texture);
+         MARK_RING (chan, 24 + 8, 4);
+         BEGIN_RING(chan, RING_2D(DST_FORMAT), 2);
+         OUT_RING  (chan, NV50_SURFACE_FORMAT_R8_UNORM);
+         OUT_RING  (chan, 1);
+         BEGIN_RING(chan, RING_2D(DST_PITCH), 5);
+         OUT_RING  (chan, 262144);
+         OUT_RING  (chan, 65536);
+         OUT_RING  (chan, 1);
+         OUT_RELOCh(chan, txc, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+         OUT_RELOCl(chan, txc, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
+         BEGIN_RING(chan, RING_2D(SIFC_BITMAP_ENABLE), 2);
+         OUT_RING  (chan, 0);
+         OUT_RING  (chan, NV50_SURFACE_FORMAT_R8_UNORM);
+         BEGIN_RING(chan, RING_2D(SIFC_WIDTH), 10);
+         OUT_RING  (chan, 32);
+         OUT_RING  (chan, 1);
+         OUT_RING  (chan, 0);
+         OUT_RING  (chan, 1);
+         OUT_RING  (chan, 0);
+         OUT_RING  (chan, 1);
+         OUT_RING  (chan, 0);
+         OUT_RING  (chan, tic->id * 32);
+         OUT_RING  (chan, 0);
+         OUT_RING  (chan, 0);
+         BEGIN_RING_NI(chan, RING_2D(SIFC_DATA), 8);
+         OUT_RING  (chan, tic->tic[0]);
+         OUT_RELOCl(chan, res->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+         OUT_RELOC (chan, res->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
+                    NOUVEAU_BO_HIGH | NOUVEAU_BO_OR, tic->tic[2], tic->tic[2]);
+         OUT_RINGp (chan, &tic->tic[3], 5);
 
-			tic2 &= ~NV50TIC_0_2_NORMALIZED_COORDS;
-			if (nv50->sampler[p][unit]->normalized)
-				tic2 |= NV50TIC_0_2_NORMALIZED_COORDS;
-			view->tic[2] = tic2;
+         need_flush = TRUE;
+      }
+      nv50->screen->tic.lock[tic->id / 32] |= 1 << (tic->id % 32);
 
-			so_data  (so, view->tic[0]);
-			so_reloc (so, mt->base.bo, 0, rll, 0, 0);
-			so_reloc (so, mt->base.bo, 0, rlh, tic2, tic2);
-			so_datap (so, &view->tic[3], 5);
+      nv50_bufctx_add_resident(nv50, NV50_BUFCTX_TEXTURES, res,
+                               NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 
-			/* Set TEX insn $t src binding $unit in program type p
-			 * to TIC, TSC entry (32 * p + unit), mark valid (1).
-			 */
-			so_method(so, tesla, NV50TCL_BIND_TIC(p), 1);
-			so_data  (so, ((32 * p + unit) << 9) | (unit << 1) | 1);
-		} else {
-			for (j = 0; j < 8; ++j)
-				so_data(so, 0);
-			so_method(so, tesla, NV50TCL_BIND_TIC(p), 1);
-			so_data  (so, (unit << 1) | 0);
-		}
-	}
+      BEGIN_RING(chan, RING_3D(BIND_TIC(s)), 1);
+      OUT_RING  (chan, (tic->id << 9) | (i << 1) | 1);
+   }
+   for (; i < nv50->state.num_textures[s]; ++i) {
+      BEGIN_RING(chan, RING_3D(BIND_TIC(s)), 1);
+      OUT_RING  (chan, (i << 1) | 0);
+   }
+   nv50->state.num_textures[s] = nv50->num_textures[s];
 
-	for (; unit < nv50->state.sampler_view_nr[p]; unit++) {
-		/* Make other bindings invalid. */
-		so_method(so, tesla, NV50TCL_BIND_TIC(p), 1);
-		so_data  (so, (unit << 1) | 0);
-	}
-
-	nv50->state.sampler_view_nr[p] = nv50->sampler_view_nr[p];
-	return TRUE;
+   return need_flush;
 }
 
-static void
-nv50_emit_texture_relocs(struct nv50_context *nv50, int prog)
+void nv50_validate_textures(struct nv50_context *nv50)
 {
-	struct nouveau_channel *chan = nv50->screen->base.channel;
-	struct nouveau_bo *tic = nv50->screen->tic;
-	int unit;
+   boolean need_flush;
 
-	for (unit = 0; unit < nv50->sampler_view_nr[prog]; unit++) {
-		struct nv50_sampler_view *view;
-		struct nv50_miptree *mt;
-		const unsigned base = ((prog * 32) + unit) * 32;
+   need_flush  = nv50_validate_tic(nv50, 0);
+   need_flush |= nv50_validate_tic(nv50, 2);
 
-		view = nv50_sampler_view(nv50->sampler_views[prog][unit]);
-		if (!view)
-			continue;
-		mt = nv50_miptree(view->pipe.texture);
-
-		nouveau_reloc_emit(chan, tic, base + 4, NULL, mt->base.bo, 0, 0,
-				   NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
-				   NOUVEAU_BO_LOW, 0, 0);
-		nouveau_reloc_emit(chan, tic, base + 8, NULL, mt->base.bo, 0, 0,
-				   NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
-				   NOUVEAU_BO_HIGH, view->tic[2], view->tic[2]);
-	}
+   if (need_flush) {
+      BEGIN_RING(nv50->screen->base.channel, RING_3D(TIC_FLUSH), 1);
+      OUT_RING  (nv50->screen->base.channel, 0);
+   }
 }
 
-void
-nv50_tex_relocs(struct nv50_context *nv50)
+static boolean
+nv50_validate_tsc(struct nv50_context *nv50, int s)
 {
-	nv50_emit_texture_relocs(nv50, 2); /* FP */
-	nv50_emit_texture_relocs(nv50, 0); /* VP */
+   struct nouveau_channel *chan = nv50->screen->base.channel;
+   unsigned i;
+   boolean need_flush = FALSE;
+
+   for (i = 0; i < nv50->num_samplers[s]; ++i) {
+      struct nv50_tsc_entry *tsc = nv50_tsc_entry(nv50->samplers[s][i]);
+
+      if (!tsc) {
+         BEGIN_RING(chan, RING_3D(BIND_TSC(s)), 1);
+         OUT_RING  (chan, (i << 4) | 0);
+         continue;
+      }
+      if (tsc->id < 0) {
+         tsc->id = nv50_screen_tsc_alloc(nv50->screen, tsc);
+
+         nv50_sifc_linear_u8(nv50, nv50->screen->txc, NOUVEAU_BO_VRAM,
+                             65536 + tsc->id * 32, 32, tsc->tsc);
+         need_flush = TRUE;
+      }
+      nv50->screen->tsc.lock[tsc->id / 32] |= 1 << (tsc->id % 32);
+
+      BEGIN_RING(chan, RING_3D(BIND_TSC(s)), 1);
+      OUT_RING  (chan, (tsc->id << 12) | (i << 4) | 1);
+   }
+   for (; i < nv50->state.num_samplers[s]; ++i) {
+      BEGIN_RING(chan, RING_3D(BIND_TSC(s)), 1);
+      OUT_RING  (chan, (i << 4) | 0);
+   }
+   nv50->state.num_samplers[s] = nv50->num_samplers[s];
+
+   return need_flush;
 }
 
-struct nouveau_stateobj *
-nv50_tex_validate(struct nv50_context *nv50)
+void nv50_validate_samplers(struct nv50_context *nv50)
 {
-	struct nouveau_stateobj *so;
-	struct nouveau_grobj *tesla = nv50->screen->tesla;
-	unsigned p, m = 0, d = 0, r = 0;
+   boolean need_flush;
 
-	for (p = 0; p < 3; ++p) {
-		unsigned nr = MAX2(nv50->sampler_view_nr[p],
-				   nv50->state.sampler_view_nr[p]);
-		m += nr;
-		d += nr;
-		r += nv50->sampler_view_nr[p];
-	}
-	m = m * 2 + 3 * 4 + 1;
-	d = d * 9 + 3 * 19 + 1;
-	r = r * 2 + 3 * 2;
+   need_flush  = nv50_validate_tsc(nv50, 0);
+   need_flush |= nv50_validate_tsc(nv50, 2);
 
-	so = so_new(m, d, r);
-
-	if (nv50_validate_textures(nv50, so, 0) == FALSE ||
-	    nv50_validate_textures(nv50, so, 2) == FALSE) {
-		so_ref(NULL, &so);
-
-		NOUVEAU_ERR("failed tex validate\n");
-		return NULL;
-	}
-
-	so_method(so, tesla, 0x1330, 1); /* flush TIC */
-	so_data  (so, 0);
-
-	return so;
+   if (need_flush) {
+      BEGIN_RING(nv50->screen->base.channel, RING_3D(TSC_FLUSH), 1);
+      OUT_RING  (nv50->screen->base.channel, 0);
+   }
 }

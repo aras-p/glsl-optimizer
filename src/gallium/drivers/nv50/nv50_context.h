@@ -5,265 +5,227 @@
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
-#include "pipe/p_compiler.h"
 
 #include "util/u_memory.h"
 #include "util/u_math.h"
 #include "util/u_inlines.h"
+#include "util/u_dynarray.h"
 
 #include "draw/draw_vertex.h"
 
-#include "nouveau/nouveau_winsys.h"
-#include "nouveau/nouveau_gldefs.h"
-#include "nouveau/nouveau_stateobj.h"
-#include "nv50_reg.h"
-
+#include "nv50_winsys.h"
+#include "nv50_stateobj.h"
 #include "nv50_screen.h"
 #include "nv50_program.h"
+#include "nv50_resource.h"
+
+#include "nouveau/nv_object.xml.h"
+#include "nouveau/nv_m2mf.xml.h"
+#include "nv50_3ddefs.xml.h"
+#include "nv50_3d.xml.h"
+#include "nv50_2d.xml.h"
 
 #define NOUVEAU_ERR(fmt, args...) \
-	fprintf(stderr, "%s:%d -  "fmt, __FUNCTION__, __LINE__, ##args);
-#define NOUVEAU_MSG(fmt, args...) \
-	fprintf(stderr, "nouveau: "fmt, ##args);
+   fprintf(stderr, "%s:%d -  "fmt, __FUNCTION__, __LINE__, ##args);
 
-#define nouveau_bo_tile_layout(nvbo) \
-	((nvbo)->tile_flags & NOUVEAU_BO_TILE_LAYOUT_MASK)
+#ifdef NOUVEAU_DEBUG
+# define NOUVEAU_DBG(args...) printf(args);
+#else
+# define NOUVEAU_DBG(args...)
+#endif
 
-/* Constant buffer assignment */
-#define NV50_CB_PMISC		0
-#define NV50_CB_PVP		1
-#define NV50_CB_PFP		2
-#define NV50_CB_PGP		3
-#define NV50_CB_AUX		4
+#define NV50_NEW_BLEND        (1 << 0)
+#define NV50_NEW_RASTERIZER   (1 << 1)
+#define NV50_NEW_ZSA          (1 << 2)
+#define NV50_NEW_VERTPROG     (1 << 3)
+#define NV50_NEW_GMTYPROG     (1 << 6)
+#define NV50_NEW_FRAGPROG     (1 << 7)
+#define NV50_NEW_BLEND_COLOUR (1 << 8)
+#define NV50_NEW_STENCIL_REF  (1 << 9)
+#define NV50_NEW_CLIP         (1 << 10)
+#define NV50_NEW_SAMPLE_MASK  (1 << 11)
+#define NV50_NEW_FRAMEBUFFER  (1 << 12)
+#define NV50_NEW_STIPPLE      (1 << 13)
+#define NV50_NEW_SCISSOR      (1 << 14)
+#define NV50_NEW_VIEWPORT     (1 << 15)
+#define NV50_NEW_ARRAYS       (1 << 16)
+#define NV50_NEW_VERTEX       (1 << 17)
+#define NV50_NEW_CONSTBUF     (1 << 18)
+#define NV50_NEW_TEXTURES     (1 << 19)
+#define NV50_NEW_SAMPLERS     (1 << 20)
 
-#define NV50_NEW_BLEND		(1 << 0)
-#define NV50_NEW_ZSA		(1 << 1)
-#define NV50_NEW_BLEND_COLOUR	(1 << 2)
-#define NV50_NEW_STIPPLE	(1 << 3)
-#define NV50_NEW_SCISSOR	(1 << 4)
-#define NV50_NEW_VIEWPORT	(1 << 5)
-#define NV50_NEW_RASTERIZER	(1 << 6)
-#define NV50_NEW_FRAMEBUFFER	(1 << 7)
-#define NV50_NEW_VERTPROG	(1 << 8)
-#define NV50_NEW_VERTPROG_CB	(1 << 9)
-#define NV50_NEW_FRAGPROG	(1 << 10)
-#define NV50_NEW_FRAGPROG_CB	(1 << 11)
-#define NV50_NEW_GEOMPROG	(1 << 12)
-#define NV50_NEW_GEOMPROG_CB	(1 << 13)
-#define NV50_NEW_ARRAYS		(1 << 14)
-#define NV50_NEW_SAMPLER	(1 << 15)
-#define NV50_NEW_TEXTURE	(1 << 16)
-#define NV50_NEW_STENCIL_REF	(1 << 17)
-#define NV50_NEW_CLIP		(1 << 18)
+#define NV50_BUFCTX_CONSTANT 0
+#define NV50_BUFCTX_FRAME    1
+#define NV50_BUFCTX_VERTEX   2
+#define NV50_BUFCTX_TEXTURES 3
+#define NV50_BUFCTX_COUNT    4
 
-struct nv50_blend_stateobj {
-	struct pipe_blend_state pipe;
-	struct nouveau_stateobj *so;
-};
-
-struct nv50_zsa_stateobj {
-	struct pipe_depth_stencil_alpha_state pipe;
-	struct nouveau_stateobj *so;
-};
-
-struct nv50_rasterizer_stateobj {
-	struct pipe_rasterizer_state pipe;
-	struct nouveau_stateobj *so;
-};
-
-struct nv50_sampler_stateobj {
-	boolean normalized;
-	unsigned tsc[8];
-};
-
-struct nv50_sampler_view {
-	struct pipe_sampler_view pipe;
-	uint32_t tic[8];
-};
-
-struct nv50_vtxelt_stateobj {
-	struct pipe_vertex_element pipe[16];
-	unsigned num_elements;
-	uint32_t hw[16];
-};
-
-static INLINE struct nv50_sampler_view *
-nv50_sampler_view(struct pipe_sampler_view *view)
-{
-	return (struct nv50_sampler_view *)view;
-}
-
-static INLINE unsigned
-get_tile_height(uint32_t tile_mode)
-{
-        return 1 << ((tile_mode & 0xf) + 2);
-}
-
-static INLINE unsigned
-get_tile_depth(uint32_t tile_mode)
-{
-        return 1 << (tile_mode >> 4);
-}
-
-
-struct nv50_surface {
-	struct pipe_surface base;
-	unsigned offset;
-};
-
-static INLINE struct nv50_surface *
-nv50_surface(struct pipe_surface *pt)
-{
-	return (struct nv50_surface *)pt;
-}
-
-struct nv50_state {
-	struct nouveau_stateobj *hw[64];
-	uint64_t hw_dirty;
-
-	unsigned sampler_view_nr[3];
-	struct nouveau_stateobj *vtxbuf;
-	struct nouveau_stateobj *vtxattr;
-	unsigned vtxelt_nr;
-};
+/* fixed constant buffer binding points - low indices for user's constbufs */
+#define NV50_CB_PVP 124
+#define NV50_CB_PGP 126
+#define NV50_CB_PFP 125
+#define NV50_CB_AUX 127
 
 struct nv50_context {
-	struct pipe_context pipe;
+   struct pipe_context pipe;
 
-	struct nv50_screen *screen;
+   struct nv50_screen *screen;
 
-	struct draw_context *draw;
+   struct util_dynarray residents[NV50_BUFCTX_COUNT];
 
-	struct nv50_state state;
+   uint32_t dirty;
 
-	unsigned dirty;
-	struct nv50_blend_stateobj *blend;
-	struct nv50_zsa_stateobj *zsa;
-	struct nv50_rasterizer_stateobj *rasterizer;
-	struct pipe_blend_color blend_colour;
-	struct pipe_stencil_ref stencil_ref;
-	struct pipe_poly_stipple stipple;
-	struct pipe_scissor_state scissor;
-	struct pipe_viewport_state viewport;
-	struct pipe_framebuffer_state framebuffer;
-	struct pipe_clip_state clip;
-	struct nv50_program *vertprog;
-	struct nv50_program *fragprog;
-	struct nv50_program *geomprog;
-	struct pipe_resource *constbuf[PIPE_SHADER_TYPES];
-	struct pipe_vertex_buffer vtxbuf[PIPE_MAX_ATTRIBS];
-	unsigned vtxbuf_nr;
-	struct pipe_index_buffer idxbuf;
-	struct nv50_vtxelt_stateobj *vtxelt;
-	struct nv50_sampler_stateobj *sampler[3][PIPE_MAX_SAMPLERS];
-	unsigned sampler_nr[3];
-	struct pipe_sampler_view *sampler_views[3][PIPE_MAX_SAMPLERS];
-	unsigned sampler_view_nr[3];
+   struct {
+      uint32_t instance_elts; /* bitmask of per-instance elements */
+      uint32_t instance_base;
+      int32_t index_bias;
+      boolean prim_restart;
+      uint8_t num_vtxbufs;
+      uint8_t num_vtxelts;
+      uint8_t num_textures[3];
+      uint8_t num_samplers[3];
+      uint16_t scissor;
+   } state;
 
-	unsigned vbo_fifo;
-	unsigned req_lmem;
+   struct nv50_blend_stateobj *blend;
+   struct nv50_rasterizer_stateobj *rast;
+   struct nv50_zsa_stateobj *zsa;
+   struct nv50_vertex_stateobj *vertex;
+
+   struct nv50_program *vertprog;
+   struct nv50_program *gmtyprog;
+   struct nv50_program *fragprog;
+
+   struct pipe_resource *constbuf[3][16];
+   uint16_t constbuf_dirty[3];
+
+   struct pipe_vertex_buffer vtxbuf[PIPE_MAX_ATTRIBS];
+   unsigned num_vtxbufs;
+   struct pipe_index_buffer idxbuf;
+   uint32_t vbo_fifo; /* bitmask of vertex elements to be pushed to FIFO */
+   uint32_t vbo_user; /* bitmask of vertex buffers pointing to user memory */
+   unsigned vbo_min_index; /* from pipe_draw_info, for vertex upload */
+   unsigned vbo_max_index;
+
+   struct pipe_sampler_view *textures[3][PIPE_MAX_SAMPLERS];
+   unsigned num_textures[3];
+   struct nv50_tsc_entry *samplers[3][PIPE_MAX_SAMPLERS];
+   unsigned num_samplers[3];
+
+   struct pipe_framebuffer_state framebuffer;
+   struct pipe_blend_color blend_colour;
+   struct pipe_stencil_ref stencil_ref;
+   struct pipe_poly_stipple stipple;
+   struct pipe_scissor_state scissor;
+   struct pipe_viewport_state viewport;
+   struct pipe_clip_state clip;
+
+   unsigned sample_mask;
+
+   boolean vbo_dirty;
+   boolean vbo_push_hint;
+
+   struct draw_context *draw;
 };
 
 static INLINE struct nv50_context *
 nv50_context(struct pipe_context *pipe)
 {
-	return (struct nv50_context *)pipe;
+   return (struct nv50_context *)pipe;
 }
 
-extern void nv50_init_surface_functions(struct nv50_context *nv50);
-extern void nv50_init_state_functions(struct nv50_context *nv50);
-extern void nv50_init_query_functions(struct nv50_context *nv50);
-extern void nv50_init_transfer_functions(struct nv50_context *nv50);
+struct nv50_surface {
+   struct pipe_surface base;
+   uint32_t offset;
+   uint32_t width;
+   uint16_t height;
+   uint16_t depth;
+};
 
-extern void nv50_screen_init_miptree_functions(struct pipe_screen *pscreen);
-
-extern int
-nv50_surface_do_copy(struct nv50_screen *screen, struct pipe_surface *dst,
-		     int dx, int dy, struct pipe_surface *src, int sx, int sy,
-		     int w, int h);
-
-/* nv50_draw.c */
-extern struct draw_stage *nv50_draw_render_stage(struct nv50_context *nv50);
-
-/* nv50_vbo.c */
-extern void nv50_draw_vbo(struct pipe_context *pipe,
-                          const struct pipe_draw_info *info);
-extern void nv50_vtxelt_construct(struct nv50_vtxelt_stateobj *cso);
-extern struct nouveau_stateobj *nv50_vbo_validate(struct nv50_context *nv50);
-
-/* nv50_push.c */
-extern void
-nv50_push_elements_instanced(struct pipe_context *, struct pipe_resource *,
-			     unsigned idxsize, int idxbias,
-                             unsigned mode, unsigned start,
-			     unsigned count, unsigned i_start,
-			     unsigned i_count);
-
-/* nv50_clear.c */
-extern void nv50_clear(struct pipe_context *pipe, unsigned buffers,
-		       const float *rgba, double depth, unsigned stencil);
-
-/* nv50_program.c */
-extern struct nouveau_stateobj *
-nv50_vertprog_validate(struct nv50_context *nv50);
-extern struct nouveau_stateobj *
-nv50_fragprog_validate(struct nv50_context *nv50);
-extern struct nouveau_stateobj *
-nv50_geomprog_validate(struct nv50_context *nv50);
-extern struct nouveau_stateobj *
-nv50_fp_linkage_validate(struct nv50_context *nv50);
-extern struct nouveau_stateobj *
-nv50_gp_linkage_validate(struct nv50_context *nv50);
-extern void nv50_program_destroy(struct nv50_context *nv50,
-				 struct nv50_program *p);
-
-/* nv50_state_validate.c */
-extern boolean nv50_state_validate(struct nv50_context *nv50, unsigned dwords);
-
-extern void nv50_so_init_sifc(struct nv50_context *nv50,
-			      struct nouveau_stateobj *so,
-			      struct nouveau_bo *bo, unsigned reloc,
-			      unsigned offset, unsigned size);
-
-/* nv50_tex.c */
-extern boolean nv50_tex_construct(struct nv50_sampler_view *view);
-extern void nv50_tex_relocs(struct nv50_context *);
-extern struct nouveau_stateobj *nv50_tex_validate(struct nv50_context *);
-
+static INLINE struct nv50_surface *
+nv50_surface(struct pipe_surface *ps)
+{
+   return (struct nv50_surface *)ps;
+}
 
 /* nv50_context.c */
-struct pipe_context *
-nv50_create(struct pipe_screen *pscreen, void *priv);
+struct pipe_context *nv50_create(struct pipe_screen *, void *);
 
-static INLINE unsigned
-nv50_prim(unsigned mode)
+void nv50_default_flush_notify(struct nouveau_channel *);
+
+void nv50_bufctx_emit_relocs(struct nv50_context *);
+void nv50_bufctx_add_resident(struct nv50_context *, int ctx,
+                              struct nv50_resource *, uint32_t flags);
+void nv50_bufctx_del_resident(struct nv50_context *, int ctx,
+                              struct nv50_resource *);
+static INLINE void
+nv50_bufctx_reset(struct nv50_context *nv50, int ctx)
 {
-	switch (mode) {
-	case PIPE_PRIM_POINTS: return NV50TCL_VERTEX_BEGIN_POINTS;
-	case PIPE_PRIM_LINES: return NV50TCL_VERTEX_BEGIN_LINES;
-	case PIPE_PRIM_LINE_LOOP: return NV50TCL_VERTEX_BEGIN_LINE_LOOP;
-	case PIPE_PRIM_LINE_STRIP: return NV50TCL_VERTEX_BEGIN_LINE_STRIP;
-	case PIPE_PRIM_TRIANGLES: return NV50TCL_VERTEX_BEGIN_TRIANGLES;
-	case PIPE_PRIM_TRIANGLE_STRIP:
-		return NV50TCL_VERTEX_BEGIN_TRIANGLE_STRIP;
-	case PIPE_PRIM_TRIANGLE_FAN: return NV50TCL_VERTEX_BEGIN_TRIANGLE_FAN;
-	case PIPE_PRIM_QUADS: return NV50TCL_VERTEX_BEGIN_QUADS;
-	case PIPE_PRIM_QUAD_STRIP: return NV50TCL_VERTEX_BEGIN_QUAD_STRIP;
-	case PIPE_PRIM_POLYGON: return NV50TCL_VERTEX_BEGIN_POLYGON;
-	case PIPE_PRIM_LINES_ADJACENCY:
-		return NV50TCL_VERTEX_BEGIN_LINES_ADJACENCY;
-	case PIPE_PRIM_LINE_STRIP_ADJACENCY:
-		return NV50TCL_VERTEX_BEGIN_LINE_STRIP_ADJACENCY;
-	case PIPE_PRIM_TRIANGLES_ADJACENCY:
-		return NV50TCL_VERTEX_BEGIN_TRIANGLES_ADJACENCY;
-	case PIPE_PRIM_TRIANGLE_STRIP_ADJACENCY:
-		return NV50TCL_VERTEX_BEGIN_TRIANGLE_STRIP_ADJACENCY;
-	default:
-		break;
-	}
-
-	NOUVEAU_ERR("invalid primitive type %d\n", mode);
-	return NV50TCL_VERTEX_BEGIN_POINTS;
+   util_dynarray_resize(&nv50->residents[ctx], 0);
 }
+
+/* nv50_draw.c */
+extern struct draw_stage *nv50_draw_render_stage(struct nv50_context *);
+
+/* nv50_program.c */
+boolean nv50_program_translate(struct nv50_program *);
+void nv50_program_destroy(struct nv50_context *, struct nv50_program *);
+
+/* nv50_query.c */
+void nv50_init_query_functions(struct nv50_context *);
+
+/* nv50_shader_state.c */
+void nv50_vertprog_validate(struct nv50_context *);
+void nv50_gmtyprog_validate(struct nv50_context *);
+void nv50_fragprog_validate(struct nv50_context *);
+void nv50_fp_linkage_validate(struct nv50_context *);
+void nv50_gp_linkage_validate(struct nv50_context *);
+void nv50_constbufs_validate(struct nv50_context *);
+
+/* nv50_state.c */
+extern void nv50_init_state_functions(struct nv50_context *);
+
+/* nv50_state_validate.c */
+extern boolean nv50_state_validate(struct nv50_context *);
+
+/* nv50_surface.c */
+extern void nv50_clear(struct pipe_context *, unsigned buffers,
+                       const float *rgba, double depth, unsigned stencil);
+extern void nv50_init_surface_functions(struct nv50_context *);
+
+/* nv50_tex.c */
+void nv50_validate_textures(struct nv50_context *);
+void nv50_validate_samplers(struct nv50_context *);
+
+struct pipe_sampler_view *
+nv50_create_sampler_view(struct pipe_context *,
+                         struct pipe_resource *,
+                         const struct pipe_sampler_view *);
+
+/* nv50_transfer.c */
+void
+nv50_sifc_linear_u8(struct nv50_context *nv50,
+                    struct nouveau_bo *dst, unsigned domain, int offset,
+                    unsigned size, void *data);
+void
+nv50_m2mf_copy_linear(struct nv50_context *nv50,
+                      struct nouveau_bo *dst, unsigned dstoff, unsigned dstdom,
+                      struct nouveau_bo *src, unsigned srcoff, unsigned srcdom,
+                      unsigned size);
+
+/* nv50_vbo.c */
+void nv50_draw_vbo(struct pipe_context *, const struct pipe_draw_info *);
+
+void *
+nv50_vertex_state_create(struct pipe_context *pipe,
+                         unsigned num_elements,
+                         const struct pipe_vertex_element *elements);
+void
+nv50_vertex_state_delete(struct pipe_context *pipe, void *hwcso);
+
+void nv50_vertex_arrays_validate(struct nv50_context *nv50);
+
+/* nv50_push.c */
+void nv50_push_vbo(struct nv50_context *, const struct pipe_draw_info *);
 
 #endif
