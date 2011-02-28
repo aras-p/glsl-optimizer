@@ -88,7 +88,7 @@ _mesa_texstore_red_rgtc1(TEXSTORE_PARAMS)
    const GLchan *tempImage = NULL;
    int i, j;
    int numxpixels, numypixels;
-   const void *srcaddr;
+   const GLchan *srcaddr;
    GLubyte srcpixels[4][4];
    GLubyte *blkaddr;
    GLint dstRowDiff;
@@ -197,7 +197,7 @@ _mesa_texstore_rg_rgtc2(TEXSTORE_PARAMS)
    const GLchan *tempImage = NULL;
    int i, j;
    int numxpixels, numypixels;
-   const void *srcaddr;
+   const GLchan *srcaddr;
    GLubyte srcpixels[4][4];
    GLubyte *blkaddr;
    GLint dstRowDiff;
