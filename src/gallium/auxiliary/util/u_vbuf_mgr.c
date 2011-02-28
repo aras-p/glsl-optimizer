@@ -515,6 +515,7 @@ void u_vbuf_mgr_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
 
 static void u_vbuf_upload_buffers(struct u_vbuf_mgr_priv *mgr,
                                   int min_index, int max_index,
+                                  unsigned instance_count,
                                   boolean *upload_flushed)
 {
    int i, nr = mgr->ve->count;
@@ -530,10 +531,12 @@ static void u_vbuf_upload_buffers(struct u_vbuf_mgr_priv *mgr,
           !uploaded[index]) {
          unsigned first, size;
          boolean flushed;
+         unsigned instance_div = mgr->ve->ve[i].instance_divisor;
 
-         if (mgr->ve->ve[i].instance_divisor) {
+         if (instance_div) {
             first = 0;
-            size = vb->buffer->width0;
+            size = vb->stride *
+                   ((instance_count + instance_div - 1) / instance_div);
          } else if (vb->stride) {
             first = vb->stride * min_index;
             size = vb->stride * count;
@@ -581,7 +584,8 @@ void u_vbuf_mgr_draw_begin(struct u_vbuf_mgr *mgrb,
 
    /* Upload user buffers. */
    if (mgr->any_user_vbs) {
-      u_vbuf_upload_buffers(mgr, min_index, max_index, &upload_flushed);
+      u_vbuf_upload_buffers(mgr, min_index, max_index, info->instance_count,
+                            &upload_flushed);
       bufs_updated = TRUE;
    }
 
