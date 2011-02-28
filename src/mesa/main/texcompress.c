@@ -64,6 +64,7 @@ _mesa_get_compressed_formats(struct gl_context *ctx, GLint *formats, GLboolean a
          n += 2;
       }
    }
+   /* don't return RGTC - ARB_texture_compression_rgtc query 19 */
    if (ctx->Extensions.EXT_texture_compression_s3tc) {
       if (formats) {
          formats[n++] = GL_COMPRESSED_RGB_S3TC_DXT1_EXT;
@@ -163,6 +164,15 @@ _mesa_glenum_to_compressed_format(GLenum format)
    case GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT:
       return MESA_FORMAT_SRGBA_DXT5;
 
+   case GL_COMPRESSED_RED_RGTC1:
+      return MESA_FORMAT_RED_RGTC1;
+   case GL_COMPRESSED_SIGNED_RED_RGTC1:
+      return MESA_FORMAT_SIGNED_RED_RGTC1;
+   case GL_COMPRESSED_RG_RGTC2:
+      return MESA_FORMAT_RG_RGTC2;
+   case GL_COMPRESSED_SIGNED_RG_RGTC2:
+      return MESA_FORMAT_SIGNED_RG_RGTC2;
+
    default:
       return MESA_FORMAT_NONE;
    }
@@ -209,6 +219,16 @@ _mesa_compressed_format_to_glenum(struct gl_context *ctx, GLuint mesaFormat)
       return GL_COMPRESSED_SRGB_ALPHA_S3TC_DXT5_EXT;
 #endif
 #endif
+
+   case MESA_FORMAT_RED_RGTC1:
+      return GL_COMPRESSED_RED_RGTC1;
+   case MESA_FORMAT_SIGNED_RED_RGTC1:
+      return GL_COMPRESSED_SIGNED_RED_RGTC1;
+   case MESA_FORMAT_RG_RGTC2:
+      return GL_COMPRESSED_RG_RGTC2;
+   case MESA_FORMAT_SIGNED_RG_RGTC2:
+      return GL_COMPRESSED_SIGNED_RG_RGTC2;
+
    default:
       _mesa_problem(ctx, "Unexpected mesa texture format in"
                     " _mesa_compressed_format_to_glenum()");

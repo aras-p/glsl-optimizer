@@ -43,6 +43,7 @@ enum
    MESA_agp_offset_bit,
    MESA_copy_sub_buffer_bit,
    MESA_depth_float_bit,
+   MESA_multithread_makecurrent_bit,
    MESA_pixmap_colormap_bit,
    MESA_release_buffers_bit,
    MESA_swap_control_bit,

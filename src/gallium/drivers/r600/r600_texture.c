@@ -292,7 +292,7 @@ static boolean permit_hardware_blit(struct pipe_screen *screen,
 		bind = PIPE_BIND_RENDER_TARGET;
 
 	/* hackaround for S3TC */
-	if (util_format_is_s3tc(res->format))
+	if (util_format_is_compressed(res->format))
 		return TRUE;
 
 	if (!screen->is_format_supported(screen,
@@ -433,7 +433,7 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 	}
 
 	if (!(templ->flags & R600_RESOURCE_FLAG_TRANSFER) &&
-	    util_format_is_s3tc(templ->format))
+	    util_format_is_compressed(templ->format))
 		array_mode = V_038000_ARRAY_1D_TILED_THIN1;
 
 	return (struct pipe_resource *)r600_texture_create_object(screen, templ, array_mode,
@@ -887,12 +887,14 @@ uint32_t r600_translate_texformat(enum pipe_format format,
 			goto out_unknown;
 
 		switch (format) {
-		case PIPE_FORMAT_RGTC1_UNORM:
 		case PIPE_FORMAT_RGTC1_SNORM:
+			word4 |= sign_bit[0];
+		case PIPE_FORMAT_RGTC1_UNORM:
 			result = FMT_BC4;
 			goto out_word4;
-		case PIPE_FORMAT_RGTC2_UNORM:
 		case PIPE_FORMAT_RGTC2_SNORM:
+			word4 |= sign_bit[0] | sign_bit[1];
+		case PIPE_FORMAT_RGTC2_UNORM:
 			result = FMT_BC5;
 			goto out_word4;
 		default:

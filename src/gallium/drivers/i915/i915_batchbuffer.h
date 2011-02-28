@@ -75,6 +75,14 @@ i915_winsys_batchbuffer_write(struct i915_winsys_batchbuffer *batch,
    batch->ptr += size;
 }
 
+static INLINE boolean
+i915_winsys_validate_buffers(struct i915_winsys_batchbuffer *batch,
+			     struct i915_winsys_buffer **buffers,
+			     int num_of_buffers)
+{
+   return batch->iws->validate_buffers(batch, buffers, num_of_buffers);
+}
+
 static INLINE int
 i915_winsys_batchbuffer_reloc(struct i915_winsys_batchbuffer *batch,
                               struct i915_winsys_buffer *buffer,

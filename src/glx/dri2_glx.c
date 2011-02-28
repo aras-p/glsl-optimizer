@@ -535,8 +535,13 @@ dri2SwapBuffers(__GLXDRIdrawable *pdraw, int64_t target_msc, int64_t divisor,
     CARD64 ret = 0;
 
 #ifdef __DRI2_FLUSH
-    if (psc->f)
-    	(*psc->f->flush)(priv->driDrawable);
+    if (psc->f) {
+       struct glx_context *gc = __glXGetCurrentContext();
+
+       if (gc) {
+	  (*psc->f->flush)(priv->driDrawable);
+       }
+    }
 #endif
 
     /* Old servers don't send invalidate events */

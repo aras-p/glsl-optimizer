@@ -132,13 +132,13 @@ static void r600_transfer_destroy(struct pipe_context *ctx,
 }
 
 static void r600_buffer_transfer_inline_write(struct pipe_context *pipe,
-                                              struct pipe_resource *resource,
-                                              unsigned level,
-                                              unsigned usage,
-                                              const struct pipe_box *box,
-                                              const void *data,
-                                              unsigned stride,
-                                              unsigned layer_stride)
+						struct pipe_resource *resource,
+						unsigned level,
+						unsigned usage,
+						const struct pipe_box *box,
+						const void *data,
+						unsigned stride,
+						unsigned layer_stride)
 {
 	struct radeon *ws = (struct radeon*)pipe->winsys;
 	struct r600_resource_buffer *rbuffer = r600_buffer(resource);
@@ -224,7 +224,7 @@ struct pipe_resource *r600_user_buffer_create(struct pipe_screen *screen,
 	rbuffer->r.b.b.b.depth0 = 1;
 	rbuffer->r.b.b.b.array_size = 1;
 	rbuffer->r.b.b.b.flags = 0;
-        rbuffer->r.b.user_ptr = ptr;
+	rbuffer->r.b.user_ptr = ptr;
 	rbuffer->r.bo = NULL;
 	rbuffer->r.bo_size = 0;
 	return &rbuffer->r.b.b.b;

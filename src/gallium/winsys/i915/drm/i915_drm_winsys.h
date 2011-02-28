@@ -18,6 +18,7 @@ struct i915_drm_winsys
    struct i915_winsys base;
 
    boolean dump_cmd;
+   char *dump_raw_file;
    boolean send_cmd;
 
    int fd; /**< Drm file discriptor */

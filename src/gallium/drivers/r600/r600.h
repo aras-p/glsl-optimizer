@@ -118,10 +118,10 @@ unsigned r600_get_clock_crystal_freq(struct radeon *radeon);
 /* r600_bo.c */
 struct r600_bo;
 struct r600_bo *r600_bo(struct radeon *radeon,
-                        unsigned size, unsigned alignment,
-                        unsigned binding, unsigned usage);
+			unsigned size, unsigned alignment,
+			unsigned binding, unsigned usage);
 struct r600_bo *r600_bo_handle(struct radeon *radeon,
-			       unsigned handle, unsigned *array_mode);
+				unsigned handle, unsigned *array_mode);
 void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, void *ctx);
 void r600_bo_unmap(struct radeon *radeon, struct r600_bo *bo);
 void r600_bo_reference(struct radeon *radeon, struct r600_bo **dst,

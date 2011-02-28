@@ -71,6 +71,7 @@ enum fs_opcodes {
    FS_OPCODE_LINTERP,
    FS_OPCODE_TEX,
    FS_OPCODE_TXB,
+   FS_OPCODE_TXD,
    FS_OPCODE_TXL,
    FS_OPCODE_DISCARD_NOT,
    FS_OPCODE_DISCARD_AND,
@@ -309,6 +310,7 @@ public:
    {
       return (opcode == FS_OPCODE_TEX ||
 	      opcode == FS_OPCODE_TXB ||
+	      opcode == FS_OPCODE_TXD ||
 	      opcode == FS_OPCODE_TXL);
    }
 

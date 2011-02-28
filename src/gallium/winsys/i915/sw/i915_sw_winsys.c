@@ -50,7 +50,7 @@ i915_sw_winsys_create()
    isws->base.pci_id = deviceID;
    isws->max_batch_size = 16 * 4096;
 
-   isws->dump_cmd = debug_get_bool_option("INTEL_DUMP_CMD", FALSE);
+   isws->dump_cmd = debug_get_bool_option("I915_DUMP_CMD", FALSE);
 
    return &isws->base;
 }

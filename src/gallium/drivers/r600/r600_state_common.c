@@ -299,13 +299,13 @@ void r600_spi_update(struct r600_pipe_context *rctx)
 			tmp |= S_028644_PT_SPRITE_TEX(1);
 		}
 
-                if (rctx->family < CHIP_CEDAR) {
-                    if (rshader->input[i].centroid)
-                            tmp |= S_028644_SEL_CENTROID(1);
+		if (rctx->family < CHIP_CEDAR) {
+			if (rshader->input[i].centroid)
+				tmp |= S_028644_SEL_CENTROID(1);
 
-                    if (rshader->input[i].interpolate == TGSI_INTERPOLATE_LINEAR)
-                            tmp |= S_028644_SEL_LINEAR(1);
-                }
+			if (rshader->input[i].interpolate == TGSI_INTERPOLATE_LINEAR)
+				tmp |= S_028644_SEL_LINEAR(1);
+		}
 
 		r600_pipe_state_add_reg(&rstate, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4, tmp, 0xFFFFFFFF, NULL);
 	}
@@ -520,7 +520,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	r600_context_pipe_state_set(&rctx->ctx, &vgt);
 
 	rdraw.vgt_num_indices = draw.info.count;
-	rdraw.vgt_num_instances = 1;
+	rdraw.vgt_num_instances = draw.info.instance_count;
 	rdraw.vgt_index_type = vgt_dma_index_type;
 	rdraw.vgt_draw_initiator = vgt_draw_initiator;
 	rdraw.indices = NULL;

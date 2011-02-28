@@ -3445,11 +3445,9 @@ ast_struct_specifier::hir(exec_list *instructions,
    if (!state->symbols->add_type(name, t)) {
       _mesa_glsl_error(& loc, state, "struct `%s' previously defined", name);
    } else {
-
-      const glsl_type **s = (const glsl_type **)
-	 realloc(state->user_structures,
-		 sizeof(state->user_structures[0]) *
-		 (state->num_user_structures + 1));
+      const glsl_type **s = reralloc(state, state->user_structures,
+				     const glsl_type *,
+				     state->num_user_structures + 1);
       if (s != NULL) {
 	 s[state->num_user_structures] = t;
 	 state->user_structures = s;

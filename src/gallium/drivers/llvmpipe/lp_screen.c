@@ -278,6 +278,11 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
       return util_format_s3tc_enabled;
    }
 
+   /* u_format doesn't support RGTC yet */
+   if (format_desc->layout == UTIL_FORMAT_LAYOUT_RGTC) {
+      return FALSE;
+   }
+
    /*
     * Everything else should be supported by u_format.
     */

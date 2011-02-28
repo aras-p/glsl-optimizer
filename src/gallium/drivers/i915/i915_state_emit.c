@@ -36,73 +36,105 @@
 #include "pipe/p_defines.h"
 
 #include "util/u_math.h"
+#include "util/u_memory.h"
 
-static unsigned translate_format( enum pipe_format format )
+struct i915_tracked_hw_state {
+   const char *name;
+   void (*validate)(struct i915_context *);
+   void (*emit)(struct i915_context *);
+   unsigned dirty, batch_space;
+};
+
+
+static void
+emit_flush(struct i915_context *i915)
 {
-   switch (format) {
-   case PIPE_FORMAT_B8G8R8A8_UNORM:
-      return COLOR_BUF_ARGB8888;
-   case PIPE_FORMAT_B5G6R5_UNORM:
-      return COLOR_BUF_RGB565;
-   default:
-      assert(0);
-      return 0;
+   /* Cache handling is very cheap atm. State handling can request to flushes:
+    * - I915_FLUSH_CACHE which is a flush everything request and
+    * - I915_PIPELINE_FLUSH which is specifically for the draw_offset flush.
+    * Because the cache handling is so dumb, no explicit "invalidate map cache".
+    * Also, the first is a strict superset of the latter, so the following logic
+    * works. */
+   if (i915->flush_dirty & I915_FLUSH_CACHE)
+      OUT_BATCH(MI_FLUSH | FLUSH_MAP_CACHE);
+   else if (i915->flush_dirty & I915_PIPELINE_FLUSH)
+      OUT_BATCH(MI_FLUSH | INHIBIT_FLUSH_RENDER_CACHE);
+}
+
+static void
+validate_immediate(struct i915_context *i915)
+{
+   if (i915->immediate_dirty & (1 << I915_IMMEDIATE_S0))
+      i915->validation_buffers[i915->num_validation_buffers++] = i915->vbo;
+}
+
+static void
+validate_static(struct i915_context *i915)
+{
+   if (i915->current.cbuf_bo)
+      i915->validation_buffers[i915->num_validation_buffers++]
+         = i915->current.cbuf_bo;
+
+   if (i915->current.depth_bo)
+      i915->validation_buffers[i915->num_validation_buffers++]
+         = i915->current.depth_bo;
+}
+
+static void
+validate_map(struct i915_context *i915)
+{
+   const uint enabled = i915->current.sampler_enable_flags;
+   uint unit;
+   struct i915_texture *tex;
+
+
+   for (unit = 0; unit < I915_TEX_UNITS; unit++) {
+      if (enabled & (1 << unit)) {
+	 tex = i915_texture(i915->fragment_sampler_views[unit]->texture);
+	 i915->validation_buffers[i915->num_validation_buffers++] = tex->buffer;
+      }
    }
 }
 
-static unsigned translate_depth_format( enum pipe_format zformat )
-{
-   switch (zformat) {
-   case PIPE_FORMAT_Z24X8_UNORM:
-   case PIPE_FORMAT_Z24_UNORM_S8_USCALED:
-      return DEPTH_FRMT_24_FIXED_8_OTHER;
-   case PIPE_FORMAT_Z16_UNORM:
-      return DEPTH_FRMT_16_FIXED;
-   default:
-      assert(0);
-      return 0;
-   }
-}
+const static struct i915_tracked_hw_state hw_atoms[] = {
+   { "flush", NULL, emit_flush, I915_HW_FLUSH, 1 },
+   { "immediate", validate_immediate, NULL, I915_HW_IMMEDIATE },
+   { "static", validate_static, NULL, I915_HW_STATIC },
+   { "map", validate_map, NULL, I915_HW_MAP }
+};
 
-
-/**
- * Examine framebuffer state to determine width, height.
- */
 static boolean
-framebuffer_size(const struct pipe_framebuffer_state *fb,
-                 uint *width, uint *height)
+i915_validate_state(struct i915_context *i915, unsigned *batch_space)
 {
-   if (fb->cbufs[0]) {
-      *width = fb->cbufs[0]->width;
-      *height = fb->cbufs[0]->height;
+   int i;
+
+   i915->num_validation_buffers = 0;
+   *batch_space = 0;
+
+   for (i = 0; i < Elements(hw_atoms); i++)
+      if ((i915->hardware_dirty & hw_atoms[i].dirty) && hw_atoms[i].validate) {
+	 hw_atoms[i].validate(i915);
+	 *batch_space += hw_atoms[i].batch_space;
+      }
+
+   if (i915->num_validation_buffers == 0)
       return TRUE;
-   }
-   else if (fb->zsbuf) {
-      *width = fb->zsbuf->width;
-      *height = fb->zsbuf->height;
-      return TRUE;
-   }
-   else {
-      *width = *height = 0;
+
+   if (!i915_winsys_validate_buffers(i915->batch, i915->validation_buffers,
+				     i915->num_validation_buffers))
       return FALSE;
-   }
+
+   return TRUE;
 }
 
-static inline uint32_t
-buf_3d_tiling_bits(enum i915_winsys_buffer_tile tiling)
+static void
+emit_state(struct i915_context *i915)
 {
-         uint32_t tiling_bits = 0;
+   int i;
 
-         switch (tiling) {
-         case I915_TILE_Y:
-            tiling_bits |= BUF_3D_TILE_WALK_Y;
-         case I915_TILE_X:
-            tiling_bits |= BUF_3D_TILED_SURFACE;
-         case I915_TILE_NONE:
-            break;
-         }
-
-         return tiling_bits;
+   for (i = 0; i < Elements(hw_atoms); i++)
+      if ((i915->hardware_dirty & hw_atoms[i].dirty) && hw_atoms[i].emit)
+	 hw_atoms[i].emit(i915);
 }
 
 /* Push the state into the sarea and/or texture memory.
@@ -110,6 +142,7 @@ buf_3d_tiling_bits(enum i915_winsys_buffer_tile tiling)
 void
 i915_emit_hardware_state(struct i915_context *i915 )
 {
+   unsigned batch_space;
    /* XXX: there must be an easier way */
    const unsigned dwords = ( 14 + 
                              7 + 
@@ -135,14 +168,21 @@ i915_emit_hardware_state(struct i915_context *i915 )
    if (I915_DBG_ON(DBG_ATOMS))
       i915_dump_hardware_dirty(i915, __FUNCTION__);
 
-   if(!BEGIN_BATCH(dwords, relocs)) {
+   if (!i915_validate_state(i915, &batch_space)) {
       FLUSH_BATCH(NULL);
-      assert(BEGIN_BATCH(dwords, relocs));
+      assert(i915_validate_state(i915, &batch_space));
+   }
+
+   if(!BEGIN_BATCH(batch_space + dwords, relocs)) {
+      FLUSH_BATCH(NULL);
+      assert(i915_validate_state(i915, &batch_space));
+      assert(BEGIN_BATCH(batch_space + dwords, relocs));
    }
 
    save_ptr = (uintptr_t)i915->batch->ptr;
    save_relocs = i915->batch->relocs;
 
+   emit_state(i915);
    /* 14 dwords, 0 relocs */
    if (i915->hardware_dirty & I915_HW_INVARIANT)
    {
@@ -223,7 +263,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
    {
       int i;
       for (i = 0; i < I915_MAX_DYNAMIC; i++) {
-         if (i915->dynamic_dirty & (1 << i));
+         if (i915->dynamic_dirty & (1 << i))
             OUT_BATCH(i915->current.dynamic[i]);
       }
    }
@@ -233,64 +273,27 @@ i915_emit_hardware_state(struct i915_context *i915 )
    /* 8 dwords, 2 relocs */
    if (i915->hardware_dirty & I915_HW_STATIC)
    {
-      struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
-      struct pipe_surface *depth_surface = i915->framebuffer.zsbuf;
-
-      if (cbuf_surface) {
-         struct i915_texture *tex = i915_texture(cbuf_surface->texture);
-         assert(tex);
-
+      if (i915->current.cbuf_bo) {
          OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
-
-         OUT_BATCH(BUF_3D_ID_COLOR_BACK |
-                   BUF_3D_PITCH(tex->stride) |  /* pitch in bytes */
-                   buf_3d_tiling_bits(tex->tiling));
-
-         OUT_RELOC(tex->buffer,
+         OUT_BATCH(i915->current.cbuf_flags);
+         OUT_RELOC(i915->current.cbuf_bo,
                    I915_USAGE_RENDER,
                    0);
       }
 
       /* What happens if no zbuf??
        */
-      if (depth_surface) {
-         struct i915_texture *tex = i915_texture(depth_surface->texture);
-         unsigned offset = i915_texture_offset(tex, depth_surface->u.tex.level,
-                                               depth_surface->u.tex.first_layer);
-         assert(tex);
-         assert(offset == 0);
-
+      if (i915->current.depth_bo) {
          OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
-
-         assert(tex);
-         OUT_BATCH(BUF_3D_ID_DEPTH |
-                   BUF_3D_PITCH(tex->stride) |  /* pitch in bytes */
-                   buf_3d_tiling_bits(tex->tiling));
-
-         OUT_RELOC(tex->buffer,
+         OUT_BATCH(i915->current.depth_flags);
+         OUT_RELOC(i915->current.depth_bo,
                    I915_USAGE_RENDER,
                    0);
       }
 
       {
-         unsigned cformat, zformat = 0;
-
-         if (cbuf_surface)
-            cformat = cbuf_surface->format;
-         else
-            cformat = PIPE_FORMAT_B8G8R8A8_UNORM; /* arbitrary */
-         cformat = translate_format(cformat);
-
-         if (depth_surface) 
-            zformat = translate_depth_format( i915->framebuffer.zsbuf->format );
-
          OUT_BATCH(_3DSTATE_DST_BUF_VARS_CMD);
-         OUT_BATCH(DSTORG_HORT_BIAS(0x8) | /* .5 */
-                   DSTORG_VERT_BIAS(0x8) | /* .5 */
-                   LOD_PRECLAMP_OGL |
-                   TEX_DEFAULT_COLOR_OGL |
-                   cformat |
-                   zformat );
+         OUT_BATCH(i915->current.dst_buf_vars);
       }
    }
 #endif
@@ -362,7 +365,7 @@ i915_emit_hardware_state(struct i915_context *i915 )
          uint i;
 
          OUT_BATCH( _3DSTATE_PIXEL_SHADER_CONSTANTS | (nr * 4) );
-         OUT_BATCH( (1 << (nr - 1)) | ((1 << (nr - 1)) - 1) );
+	 OUT_BATCH((1 << nr) - 1);
 
          for (i = 0; i < nr; i++) {
             const uint *c;
@@ -411,31 +414,13 @@ i915_emit_hardware_state(struct i915_context *i915 )
    /* 6 dwords, 0 relocs */
    if (i915->hardware_dirty & I915_HW_STATIC)
    {
-      uint w, h;
-      struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
-      struct i915_texture *tex = i915_texture(cbuf_surface->texture);
-      unsigned x, y;
-      int layer;
-      uint32_t draw_offset;
-      boolean ret;
-
-      ret = framebuffer_size(&i915->framebuffer, &w, &h);
-      assert(ret);
-
-      layer = cbuf_surface->u.tex.first_layer;
-
-      x = tex->image_offset[cbuf_surface->u.tex.level][layer].nblocksx;
-      y = tex->image_offset[cbuf_surface->u.tex.level][layer].nblocksy;
-
-      draw_offset = x | (y << 16);
-
       /* XXX flush only required when the draw_offset changes! */
       OUT_BATCH(MI_FLUSH | INHIBIT_FLUSH_RENDER_CACHE);
       OUT_BATCH(_3DSTATE_DRAW_RECT_CMD);
       OUT_BATCH(DRAW_RECT_DIS_DEPTH_OFS);
-      OUT_BATCH(draw_offset);
-      OUT_BATCH((w - 1 + x) | ((h - 1 + y) << 16));
-      OUT_BATCH(draw_offset);
+      OUT_BATCH(i915->current.draw_offset);
+      OUT_BATCH(i915->current.draw_size);
+      OUT_BATCH(i915->current.draw_offset);
    }
 #endif
 

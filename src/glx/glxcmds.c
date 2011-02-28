@@ -727,11 +727,16 @@ glXSwapBuffers(Display * dpy, GLXDrawable drawable)
    xGLXSwapBuffersReq *req;
 #endif
 
+   gc = __glXGetCurrentContext();
+
 #if defined(GLX_DIRECT_RENDERING) && !defined(GLX_USE_APPLEGL)
    __GLXDRIdrawable *pdraw = GetGLXDRIDrawable(dpy, drawable);
 
    if (pdraw != NULL) {
-      glFlush();
+      if (gc && drawable == gc->currentDrawable) {
+	 glFlush();
+      }
+
       (*pdraw->psc->driScreen->swapBuffers)(pdraw, 0, 0, 0);
       return;
    }
@@ -746,7 +751,6 @@ glXSwapBuffers(Display * dpy, GLXDrawable drawable)
     ** The calling thread may or may not have a current context.  If it
     ** does, send the context tag so the server can do a flush.
     */
-   gc = __glXGetCurrentContext();
    if ((gc != NULL) && (dpy == gc->currentDpy) &&
        ((drawable == gc->currentDrawable)
         || (drawable == gc->currentReadable))) {

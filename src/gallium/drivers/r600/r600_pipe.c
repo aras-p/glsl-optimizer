@@ -77,8 +77,7 @@ static void r600_flush(struct pipe_context *ctx, unsigned flags,
 	u_upload_flush(rctx->vbuf_mgr->uploader);
 }
 
-static void r600_update_num_contexts(struct r600_screen *rscreen,
-                                     int diff)
+static void r600_update_num_contexts(struct r600_screen *rscreen, int diff)
 {
 	pipe_mutex_lock(rscreen->mutex_num_contexts);
 	if (diff > 0) {
@@ -286,13 +285,13 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
 	case PIPE_CAP_DEPTH_CLAMP:
 	case PIPE_CAP_SHADER_STENCIL_EXPORT:
+	case PIPE_CAP_INSTANCED_DRAWING:
 		return 1;
 
 	/* Unsupported features (boolean caps). */
 	case PIPE_CAP_STREAM_OUTPUT:
 	case PIPE_CAP_PRIMITIVE_RESTART:
 	case PIPE_CAP_INDEP_BLEND_FUNC: /* FIXME allow this */
-	case PIPE_CAP_INSTANCED_DRAWING:
 		return 0;
 
 	case PIPE_CAP_ARRAY_TEXTURES:

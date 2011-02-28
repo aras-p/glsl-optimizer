@@ -419,9 +419,9 @@ struct glx_context
    /*@} */
 
    /**
-    * Thread ID we're currently current in. Zero if none.
+    * Number of threads we're currently current in.
     */
-   unsigned long thread_id;
+   unsigned long thread_refcount;
 
    char gl_extension_bits[__GL_EXT_BYTES];
 };

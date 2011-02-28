@@ -47,6 +47,9 @@ lp_fence_create(unsigned rank)
    static int fence_id;
    struct lp_fence *fence = CALLOC_STRUCT(lp_fence);
 
+   if (!fence)
+      return NULL;
+
    pipe_reference_init(&fence->reference, 1);
 
    pipe_mutex_init(fence->mutex);

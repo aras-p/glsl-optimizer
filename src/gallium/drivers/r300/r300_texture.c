@@ -214,11 +214,18 @@ uint32_t r300_translate_texformat(enum pipe_format format,
     /* RGTC formats. */
     if (desc->layout == UTIL_FORMAT_LAYOUT_RGTC) {
         switch (format) {
-            case PIPE_FORMAT_RGTC1_UNORM:
             case PIPE_FORMAT_RGTC1_SNORM:
+                result |= sign_bit[0];
+            case PIPE_FORMAT_RGTC1_UNORM:
+                result &= ~(0xfff << 9); /* mask off swizzle */
+                result |= R300_TX_FORMAT_Y << R300_TX_FORMAT_R_SHIFT;
                 return R500_TX_FORMAT_ATI1N | result;
-            case PIPE_FORMAT_RGTC2_UNORM:
             case PIPE_FORMAT_RGTC2_SNORM:
+                result |= sign_bit[0] | sign_bit[1];
+            case PIPE_FORMAT_RGTC2_UNORM:
+                result &= ~(0xfff << 9); /* mask off swizzle */
+                result |= R300_TX_FORMAT_Y << R300_TX_FORMAT_R_SHIFT |
+                          R300_TX_FORMAT_X << R300_TX_FORMAT_G_SHIFT;
                 return R400_TX_FORMAT_ATI2N | result;
             default:
                 return ~0; /* Unsupported/unknown. */

@@ -602,6 +602,25 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
       }
    }
 
+   if (ctx->Extensions.ARB_texture_compression_rgtc) {
+      switch (internalFormat) {
+         case GL_COMPRESSED_RED_RGTC1:
+	    RETURN_IF_SUPPORTED(MESA_FORMAT_RED_RGTC1);
+	    break;
+         case GL_COMPRESSED_SIGNED_RED_RGTC1:
+	    RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_RED_RGTC1);
+	    break;
+         case GL_COMPRESSED_RG_RGTC2:
+	    RETURN_IF_SUPPORTED(MESA_FORMAT_RG_RGTC2);
+	    break;
+         case GL_COMPRESSED_SIGNED_RG_RGTC2:
+	    RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_RG_RGTC2);
+	    break;
+         default:
+            ; /* fallthrough */
+      }
+   }
+
    _mesa_problem(ctx, "unexpected format in _mesa_choose_tex_format()");
    return MESA_FORMAT_NONE;
 }

@@ -67,7 +67,7 @@ struct gen_mipmap_state
    struct pipe_vertex_element velem[2];
 
    void *vs;
-   void *fs1d, *fs2d, *fs3d, *fsCube;
+   void *fs1d, *fs2d, *fs3d, *fsCube, *fs1da, *fs2da;
 
    struct pipe_resource *vbuf;  /**< quad vertices */
    unsigned vbuf_slot;
@@ -1321,6 +1321,13 @@ util_create_gen_mipmap(struct pipe_context *pipe,
                                                TGSI_INTERPOLATE_LINEAR);
    ctx->fsCube = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_CUBE,
                                                TGSI_INTERPOLATE_LINEAR);
+   if (pipe->screen->get_param(pipe->screen, PIPE_CAP_ARRAY_TEXTURES)) {
+      ctx->fs1da = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_1D_ARRAY,
+                                                 TGSI_INTERPOLATE_LINEAR);
+      ctx->fs2da = util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D_ARRAY,
+                                                 TGSI_INTERPOLATE_LINEAR);
+   }
+
 
    /* vertex data that doesn't change */
    for (i = 0; i < 4; i++) {
@@ -1390,8 +1397,25 @@ set_vertex_data(struct gen_mipmap_state *ctx,
       util_map_texcoords2d_onto_cubemap(layer, &st[0][0], 2,
                                         &ctx->vertices[0][1][0], 8);
    }
-   else {
-      /* 1D/2D/3D */
+   else if (tex_target == PIPE_TEXTURE_1D_ARRAY) {
+      /* 1D texture array  */
+      ctx->vertices[0][1][0] = 0.0f; /*s*/
+      ctx->vertices[0][1][1] = r; /*t*/
+      ctx->vertices[0][1][2] = 0.0f;    /*r*/
+
+      ctx->vertices[1][1][0] = 1.0f;
+      ctx->vertices[1][1][1] = r;
+      ctx->vertices[1][1][2] = 0.0f;
+
+      ctx->vertices[2][1][0] = 1.0f;
+      ctx->vertices[2][1][1] = r;
+      ctx->vertices[2][1][2] = 0.0f;
+
+      ctx->vertices[3][1][0] = 0.0f;
+      ctx->vertices[3][1][1] = r;
+      ctx->vertices[3][1][2] = 0.0f;
+   } else {
+      /* 1D/2D/3D/2D array */
       ctx->vertices[0][1][0] = 0.0f; /*s*/
       ctx->vertices[0][1][1] = 0.0f; /*t*/
       ctx->vertices[0][1][2] = r;    /*r*/
@@ -1427,6 +1451,10 @@ util_destroy_gen_mipmap(struct gen_mipmap_state *ctx)
 {
    struct pipe_context *pipe = ctx->pipe;
 
+   if (ctx->fs2da)
+      pipe->delete_fs_state(pipe, ctx->fs2da);
+   if (ctx->fs1da)
+      pipe->delete_fs_state(pipe, ctx->fs1da);
    pipe->delete_fs_state(pipe, ctx->fsCube);
    pipe->delete_fs_state(pipe, ctx->fs3d);
    pipe->delete_fs_state(pipe, ctx->fs2d);
@@ -1499,7 +1527,11 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
       fs = ctx->fsCube;
       break;
    case PIPE_TEXTURE_1D_ARRAY:
+      fs = ctx->fs1da;
+      break;
    case PIPE_TEXTURE_2D_ARRAY:
+      fs = ctx->fs2da;
+      break;
    default:
       assert(0);
       fs = ctx->fs2d;
@@ -1555,6 +1587,8 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
 
       if (pt->target == PIPE_TEXTURE_3D)
          nr_layers = u_minify(pt->depth0, dstLevel);
+      else if (pt->target == PIPE_TEXTURE_2D_ARRAY || pt->target == PIPE_TEXTURE_1D_ARRAY)
+	 nr_layers = pt->array_size;
       else
          nr_layers = 1;
 
@@ -1564,11 +1598,12 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
             /* in theory with geom shaders and driver with full layer support
                could do that in one go. */
             layer = i;
-            offset = 1.0f / (float)(nr_layers * 2);
             /* XXX hmm really? */
             rcoord = (float)layer / (float)nr_layers + 1.0f / (float)(nr_layers * 2);
-         }
-         else
+         } else if (pt->target == PIPE_TEXTURE_2D_ARRAY || pt->target == PIPE_TEXTURE_1D_ARRAY) {
+	    layer = i;
+	    rcoord = (float)layer;
+	 } else
             layer = face;
 
          memset(&surf_templ, 0, sizeof(surf_templ));

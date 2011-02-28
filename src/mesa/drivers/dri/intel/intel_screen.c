@@ -104,7 +104,8 @@ static const __DRItexBufferExtension intelTexBufferExtension = {
 static void
 intelDRI2Flush(__DRIdrawable *drawable)
 {
-   struct intel_context *intel = drawable->driContextPriv->driverPrivate;
+   GET_CURRENT_CONTEXT(ctx);
+   struct intel_context *intel = intel_context(ctx);
 
    if (intel->gen < 4)
       INTEL_FIREVERTICES(intel);

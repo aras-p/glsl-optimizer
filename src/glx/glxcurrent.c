@@ -216,6 +216,16 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
    struct glx_context *oldGC = __glXGetCurrentContext();
    int ret = Success;
 
+   /* XXX: If this is left out, then libGL ends up not having this
+    * symbol, and drivers using it fail to load.  Compare the
+    * implementation of this symbol to _glapi_noop_enable_warnings(),
+    * though, which gets into the library despite no callers, the same
+    * prototypes, and the same compile flags to the files containing
+    * them.  Moving the definition to glapi_nop.c gets it into the
+    * library, though.
+    */
+   (void)_glthread_GetID();
+
    /* Make sure that the new context has a nonzero ID.  In the request,
     * a zero context ID is used only to mean that we bind to no current
     * context.
@@ -236,41 +246,42 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
 
    _glapi_check_multithread();
 
-   if (gc != NULL && gc->thread_id != 0 && gc->thread_id != _glthread_GetID()) {
-      __glXGenerateError(dpy, gc, gc->xid,
-                         BadAccess, X_GLXMakeContextCurrent);
-      return False;
+   __glXLock();
+   if (oldGC == gc &&
+       gc->currentDrawable == draw && gc->currentReadable == read) {
+      __glXUnlock();
+      return True;
    }
 
-   if (oldGC == gc &&
-       gc->currentDrawable == draw && gc->currentReadable == read)
-      return True;
-
    if (oldGC != &dummyContext) {
-      oldGC->vtable->unbind(oldGC, gc);
-      oldGC->currentDpy = 0;
-      oldGC->currentDrawable = None;
-      oldGC->currentReadable = None;
-      oldGC->thread_id = 0;
+      if (--oldGC->thread_refcount == 0) {
+	 oldGC->vtable->unbind(oldGC, gc);
+	 oldGC->currentDpy = 0;
+	 oldGC->currentDrawable = None;
+	 oldGC->currentReadable = None;
+
+	 if (oldGC->xid == None && oldGC != gc) {
+	    /* We are switching away from a context that was
+	     * previously destroyed, so we need to free the memory
+	     * for the old handle. */
+	    oldGC->vtable->destroy(oldGC);
+	 }
+      }
    }
 
    if (gc) {
-      gc->currentDpy = dpy;
-      gc->currentDrawable = draw;
-      gc->currentReadable = read;
-      gc->thread_id = _glthread_GetID();
+      if (gc->thread_refcount++ == 0) {
+	 gc->currentDpy = dpy;
+	 gc->currentDrawable = draw;
+	 gc->currentReadable = read;
+      }
       __glXSetCurrentContext(gc);
       ret = gc->vtable->bind(gc, oldGC, draw, read);
    } else {
       __glXSetCurrentContextNull();
    }
 
-   if (oldGC != &dummyContext && oldGC->xid == None && oldGC != gc) {
-      /* We are switching away from a context that was
-       * previously destroyed, so we need to free the memory
-       * for the old handle. */
-      oldGC->vtable->destroy(oldGC);
-   }
+   __glXUnlock();
 
    if (ret) {
       __glXGenerateError(dpy, gc, None, ret, X_GLXMakeContextCurrent);
