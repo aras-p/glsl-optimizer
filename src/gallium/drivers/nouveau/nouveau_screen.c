@@ -14,6 +14,7 @@
 #include "nouveau/nouveau_bo.h"
 #include "nouveau_winsys.h"
 #include "nouveau_screen.h"
+#include "nouveau_fence.h"
 
 /* XXX this should go away */
 #include "state_tracker/drm_driver.h"
@@ -150,7 +151,7 @@ nouveau_screen_fence_ref(struct pipe_screen *pscreen,
 			 struct pipe_fence_handle **ptr,
 			 struct pipe_fence_handle *pfence)
 {
-	*ptr = pfence;
+	nouveau_fence_ref(nouveau_fence(pfence), (struct nouveau_fence **)ptr);
 }
 
 static int
@@ -158,7 +159,7 @@ nouveau_screen_fence_signalled(struct pipe_screen *screen,
 			       struct pipe_fence_handle *pfence,
 			       unsigned flags)
 {
-	return 0;
+	return !nouveau_fence_signalled(nouveau_fence(pfence));
 }
 
 static int
@@ -166,7 +167,7 @@ nouveau_screen_fence_finish(struct pipe_screen *screen,
 			    struct pipe_fence_handle *pfence,
 			    unsigned flags)
 {
-	return 0;
+	return !nouveau_fence_wait(nouveau_fence(pfence));
 }
 
 
