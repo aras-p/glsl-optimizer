@@ -2070,7 +2070,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 	unsigned fetch_resource_start = rctx->family >= CHIP_CEDAR ? 0 : 160;
 	unsigned format, num_format, format_comp;
 	u32 *bytecode;
-        int i, r;
+	int i, r;
 
 	/* vertex elements offset need special handling, if offset is bigger
 	+ * than what we can put in fetch instruction then we need to alterate
@@ -2090,23 +2090,23 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 		return r;
 
 	for (i = 0; i < ve->count; i++) {
-	        if (elements[i].instance_divisor > 1) {
+		if (elements[i].instance_divisor > 1) {
 			struct r600_bc_alu alu;
 
 			memset(&alu, 0, sizeof(alu));
-                        alu.inst = BC_INST(&bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT);
-                        alu.src[0].sel = 0;
-                        alu.src[0].chan = 3;
+			alu.inst = BC_INST(&bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT);
+			alu.src[0].sel = 0;
+			alu.src[0].chan = 3;
 
 			alu.dst.sel = i + 1;
 			alu.dst.chan = 3;
 			alu.dst.write = 1;
 			alu.last = 1;
 
-                        if ((r = r600_bc_add_alu(&bc, &alu))) {
+			if ((r = r600_bc_add_alu(&bc, &alu))) {
 				r600_bc_clear(&bc);
-                                return r;
-                        }
+				return r;
+			}
 
 			memset(&alu, 0, sizeof(alu));
 			alu.inst = BC_INST(&bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL);
@@ -2121,10 +2121,10 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 			alu.dst.write = 1;
 			alu.last = 1;
 
-                        if ((r = r600_bc_add_alu(&bc, &alu))) {
+			if ((r = r600_bc_add_alu(&bc, &alu))) {
 				r600_bc_clear(&bc);
-                                return r;
-                        }
+				return r;
+			}
 
 			memset(&alu, 0, sizeof(alu));
 			alu.inst = BC_INST(&bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_TRUNC);
@@ -2136,26 +2136,26 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 			alu.dst.write = 1;
 			alu.last = 1;
 
-                        if ((r = r600_bc_add_alu(&bc, &alu))) {
+			if ((r = r600_bc_add_alu(&bc, &alu))) {
 				r600_bc_clear(&bc);
-                                return r;
-                        }
+				return r;
+			}
 
 			memset(&alu, 0, sizeof(alu));
-                        alu.inst = BC_INST(&bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT);
-                        alu.src[0].sel = i + 1;
-                        alu.src[0].chan = 3;
+			alu.inst = BC_INST(&bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT);
+			alu.src[0].sel = i + 1;
+			alu.src[0].chan = 3;
 
 			alu.dst.sel = i + 1;
 			alu.dst.chan = 3;
 			alu.dst.write = 1;
 			alu.last = 1;
 
-                        if ((r = r600_bc_add_alu(&bc, &alu))) {
+			if ((r = r600_bc_add_alu(&bc, &alu))) {
 				r600_bc_clear(&bc);
-                                return r;
-                        }
-	        }
+				return r;
+			}
+		}
 	}
 
 	for (i = 0; i < ve->count; i++) {
@@ -2202,14 +2202,14 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 		return -ENOMEM;
 	}
 
-        ve->fs_size = bc.ndw*4;
+	ve->fs_size = bc.ndw*4;
 	if ((r = r600_bc_build(&bc))) {
 		r600_bc_clear(&bc);
 		return r;
 	}
 
-        if (dump_shaders == -1)
-                dump_shaders = debug_get_bool_option("R600_DUMP_SHADERS", FALSE);
+	if (dump_shaders == -1)
+		dump_shaders = debug_get_bool_option("R600_DUMP_SHADERS", FALSE);
 
 	if (dump_shaders) {
 		fprintf(stderr, "--------------------------------------------------------------\n");

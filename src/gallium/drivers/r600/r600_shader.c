@@ -241,10 +241,10 @@ int r600_pipe_shader_create(struct pipe_context *ctx, struct r600_pipe_shader *s
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	int r;
 
-        /* Would like some magic "get_bool_option_once" routine.
-         */
-        if (dump_shaders == -1)
-                dump_shaders = debug_get_bool_option("R600_DUMP_SHADERS", FALSE);
+	/* Would like some magic "get_bool_option_once" routine.
+	*/
+	if (dump_shaders == -1)
+		dump_shaders = debug_get_bool_option("R600_DUMP_SHADERS", FALSE);
 
 	if (dump_shaders) {
 		fprintf(stderr, "--------------------------------------------------------------\n");
@@ -453,24 +453,24 @@ static int tgsi_declaration(struct r600_shader_ctx *ctx)
 	case TGSI_FILE_ADDRESS:
 		break;
 
-        case TGSI_FILE_SYSTEM_VALUE:
-                if (d->Semantic.Name == TGSI_SEMANTIC_INSTANCEID) {
-                        struct r600_bc_alu alu;
-                        memset(&alu, 0, sizeof(struct r600_bc_alu));
+	case TGSI_FILE_SYSTEM_VALUE:
+		if (d->Semantic.Name == TGSI_SEMANTIC_INSTANCEID) {
+			struct r600_bc_alu alu;
+			memset(&alu, 0, sizeof(struct r600_bc_alu));
 
-                        alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT);
-                        alu.src[0].sel = 0;
-                        alu.src[0].chan = 3;
+			alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT);
+			alu.src[0].sel = 0;
+			alu.src[0].chan = 3;
 
 			alu.dst.sel = 0;
 			alu.dst.chan = 3;
 			alu.dst.write = 1;
-                        alu.last = 1;
+			alu.last = 1;
 
-                        if ((r = r600_bc_add_alu(ctx->bc, &alu)))
-                                return r;
-                        break;
-                }
+			if ((r = r600_bc_add_alu(ctx->bc, &alu)))
+				return r;
+			break;
+		}
 
 	default:
 		R600_ERR("unsupported file %d declaration\n", d->Declaration.File);
@@ -558,13 +558,13 @@ static void tgsi_src(struct r600_shader_ctx *ctx,
 		r600_src->sel = V_SQ_ALU_SRC_LITERAL;
 		memcpy(r600_src->value, ctx->literals + index * 4, sizeof(r600_src->value));
 	} else if (tgsi_src->Register.File == TGSI_FILE_SYSTEM_VALUE) {
-                /* assume we wan't TGSI_SEMANTIC_INSTANCEID here */
-                r600_src->swizzle[0] = 3;
-                r600_src->swizzle[1] = 3;
-                r600_src->swizzle[2] = 3;
-                r600_src->swizzle[3] = 3;
-                r600_src->sel = 0;
-        } else {
+		/* assume we wan't TGSI_SEMANTIC_INSTANCEID here */
+		r600_src->swizzle[0] = 3;
+		r600_src->swizzle[1] = 3;
+		r600_src->swizzle[2] = 3;
+		r600_src->swizzle[3] = 3;
+		r600_src->sel = 0;
+	} else {
 		if (tgsi_src->Register.Indirect)
 			r600_src->rel = V_SQ_REL_RELATIVE;
 		r600_src->sel = tgsi_src->Register.Index;

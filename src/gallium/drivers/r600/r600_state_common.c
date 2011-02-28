@@ -299,13 +299,13 @@ void r600_spi_update(struct r600_pipe_context *rctx)
 			tmp |= S_028644_PT_SPRITE_TEX(1);
 		}
 
-                if (rctx->family < CHIP_CEDAR) {
-                    if (rshader->input[i].centroid)
-                            tmp |= S_028644_SEL_CENTROID(1);
+		if (rctx->family < CHIP_CEDAR) {
+			if (rshader->input[i].centroid)
+				tmp |= S_028644_SEL_CENTROID(1);
 
-                    if (rshader->input[i].interpolate == TGSI_INTERPOLATE_LINEAR)
-                            tmp |= S_028644_SEL_LINEAR(1);
-                }
+			if (rshader->input[i].interpolate == TGSI_INTERPOLATE_LINEAR)
+				tmp |= S_028644_SEL_LINEAR(1);
+		}
 
 		r600_pipe_state_add_reg(&rstate, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4, tmp, 0xFFFFFFFF, NULL);
 	}

@@ -76,8 +76,7 @@ static void r600_flush(struct pipe_context *ctx, unsigned flags,
 	u_upload_flush(rctx->vbuf_mgr->uploader);
 }
 
-static void r600_update_num_contexts(struct r600_screen *rscreen,
-                                     int diff)
+static void r600_update_num_contexts(struct r600_screen *rscreen, int diff)
 {
 	pipe_mutex_lock(rscreen->mutex_num_contexts);
 	if (diff > 0) {
