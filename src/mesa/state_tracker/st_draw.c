@@ -579,6 +579,7 @@ st_validate_varrays(struct gl_context *ctx,
    if (is_interleaved_arrays(vp, vpv, arrays)) {
       setup_interleaved_attribs(ctx, vp, vpv, arrays, vbuffer, velements,
                                 max_index);
+
       num_vbuffers = 1;
       num_velements = vpv->num_inputs;
       if (num_velements == 0)
@@ -645,6 +646,7 @@ st_draw_vbo(struct gl_context *ctx,
       for (i = 0; i < nr_prims; i++) {
          min_index = MIN2(min_index, prims[i].start);
          max_index = MAX2(max_index, prims[i].start + prims[i].count - 1);
+         max_index = MAX2(max_index, prims[i].num_instances);
       }
    }
 

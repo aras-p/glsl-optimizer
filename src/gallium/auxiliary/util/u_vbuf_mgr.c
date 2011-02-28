@@ -531,7 +531,10 @@ static void u_vbuf_upload_buffers(struct u_vbuf_mgr_priv *mgr,
          unsigned first, size;
          boolean flushed;
 
-         if (vb->stride) {
+         if (mgr->ve->ve[i].instance_divisor) {
+            first = 0;
+            size = vb->buffer->width0;
+         } else if (vb->stride) {
             first = vb->stride * min_index;
             size = vb->stride * count;
          } else {
