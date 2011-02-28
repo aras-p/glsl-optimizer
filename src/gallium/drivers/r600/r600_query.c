@@ -21,6 +21,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
 #include "r600_pipe.h"
+#include "r600d.h"
 
 static struct pipe_query *r600_create_query(struct pipe_context *ctx, unsigned query_type)
 {
@@ -66,6 +67,30 @@ static boolean r600_get_query_result(struct pipe_context *ctx,
 	return r600_context_query_result(&rctx->ctx, (struct r600_query *)query, wait, vresult);
 }
 
+static void r600_render_condition(struct pipe_context *ctx,
+				  struct pipe_query *query,
+				  uint mode)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_query *rquery = (struct r600_query *)query;
+	int wait_flag = 0;
+
+	if (!query) {
+		rctx->ctx.predicate_drawing = false;
+		r600_query_predication(&rctx->ctx, NULL, PREDICATION_OP_CLEAR, 1);
+		return;
+	}
+
+	if (mode == PIPE_RENDER_COND_WAIT ||
+	    mode == PIPE_RENDER_COND_BY_REGION_WAIT) {
+		wait_flag = 1;
+	}
+
+	rctx->ctx.predicate_drawing = true;
+	r600_query_predication(&rctx->ctx, rquery, PREDICATION_OP_ZPASS, wait_flag);
+	
+}
+
 void r600_init_query_functions(struct r600_pipe_context *rctx)
 {
 	rctx->context.create_query = r600_create_query;
@@ -73,4 +98,7 @@ void r600_init_query_functions(struct r600_pipe_context *rctx)
 	rctx->context.begin_query = r600_begin_query;
 	rctx->context.end_query = r600_end_query;
 	rctx->context.get_query_result = r600_get_query_result;
+
+	if (r600_get_num_backends(rctx->screen->radeon) > 0)
+	    rctx->context.render_condition = r600_render_condition;
 }

@@ -253,6 +253,7 @@ struct r600_context {
 	unsigned		num_query_running;
 	struct list_head	fenced_bo;
 	unsigned                max_db; /* for OQ */
+	boolean                 predicate_drawing;
 };
 
 struct r600_draw {
@@ -285,6 +286,8 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query);
 void r600_query_end(struct r600_context *ctx, struct r600_query *query);
 void r600_context_queries_suspend(struct r600_context *ctx);
 void r600_context_queries_resume(struct r600_context *ctx);
+void r600_query_predication(struct r600_context *ctx, struct r600_query *query, int operation,
+			    int flag_wait);
 
 int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon);
 void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw);

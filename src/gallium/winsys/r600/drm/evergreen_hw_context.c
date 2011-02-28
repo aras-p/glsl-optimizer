@@ -834,25 +834,25 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 	}
 
 	/* draw packet */
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_INDEX_TYPE, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_INDEX_TYPE, 0, ctx->predicate_drawing);
 	ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_index_type;
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NUM_INSTANCES, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NUM_INSTANCES, 0, ctx->predicate_drawing);
 	ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_num_instances;
 	if (draw->indices) {
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_DRAW_INDEX, 3);
+	        ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_DRAW_INDEX, 3, ctx->predicate_drawing);
 		ctx->pm4[ctx->pm4_cdwords++] = draw->indices_bo_offset + r600_bo_offset(draw->indices);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_num_indices;
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_draw_initiator;
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 		r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], draw->indices);
 	} else {
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_DRAW_INDEX_AUTO, 1);
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_DRAW_INDEX_AUTO, 1, ctx->predicate_drawing);
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_num_indices;
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_draw_initiator;
 	}
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, ctx->predicate_drawing);
 	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
 
 	/* flush color buffer */
