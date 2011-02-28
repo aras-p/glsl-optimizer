@@ -748,6 +748,8 @@ static void r300_draw_vbo(struct pipe_context* pipe,
         return;
     }
 
+    r300_update_derived_state(r300);
+
     /* Start the vbuf manager and update buffers if needed. */
     u_vbuf_mgr_draw_begin(r300->vbuf_mgr, info,
                           &buffers_updated, &uploader_flushed);
@@ -756,8 +758,6 @@ static void r300_draw_vbo(struct pipe_context* pipe,
     }
 
     /* Draw. */
-    r300_update_derived_state(r300);
-
     if (indexed) {
         if (count <= 8 &&
             r300_resource(r300->index_buffer.buffer)->b.user_ptr) {
