@@ -255,8 +255,6 @@ void r300_parse_chipset(struct r300_capabilities* caps)
             caps->family = CHIP_FAMILY_RS690;
             caps->has_tcl = FALSE;
             caps->is_r400 = TRUE;
-            caps->hiz_ram = R300_HIZ_LIMIT;
-            caps->zmask_ram = PIPE_ZMASK_SIZE;
             break;
 
         case 0x793F:
@@ -265,8 +263,6 @@ void r300_parse_chipset(struct r300_capabilities* caps)
             caps->family = CHIP_FAMILY_RS600;
             caps->has_tcl = FALSE;
             caps->is_r400 = TRUE;
-            caps->hiz_ram = R300_HIZ_LIMIT;
-            caps->zmask_ram = PIPE_ZMASK_SIZE;
             break;
 
         case 0x796C:
@@ -276,8 +272,6 @@ void r300_parse_chipset(struct r300_capabilities* caps)
             caps->family = CHIP_FAMILY_RS740;
             caps->has_tcl = FALSE;
             caps->is_r400 = TRUE;
-            caps->hiz_ram = R300_HIZ_LIMIT;
-            caps->zmask_ram = PIPE_ZMASK_SIZE;
             break;
 
         case 0x7100:
