@@ -520,7 +520,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	r600_context_pipe_state_set(&rctx->ctx, &vgt);
 
 	rdraw.vgt_num_indices = draw.info.count;
-	rdraw.vgt_num_instances = 1;
+	rdraw.vgt_num_instances = draw.info.instance_count;
 	rdraw.vgt_index_type = vgt_dma_index_type;
 	rdraw.vgt_draw_initiator = vgt_draw_initiator;
 	rdraw.indices = NULL;

@@ -83,6 +83,7 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc *bc, struct r
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_CLAMPED:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_IEEE:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS:
 			return 1;
@@ -1374,7 +1375,8 @@ static int r600_bc_vtx_build(struct r600_bc *bc, struct r600_bc_vtx *vtx, unsign
 				S_SQ_VTX_WORD1_FORMAT_COMP_ALL(vtx->format_comp_all) |
 				S_SQ_VTX_WORD1_SRF_MODE_ALL(vtx->srf_mode_all) |
 				S_SQ_VTX_WORD1_GPR_DST_GPR(vtx->dst_gpr);
-	bc->bytecode[id++] = S_SQ_VTX_WORD2_MEGA_FETCH(1);
+	bc->bytecode[id++] = S_SQ_VTX_WORD2_OFFSET(vtx->offset) |
+				S_SQ_VTX_WORD2_MEGA_FETCH(1);
 	bc->bytecode[id++] = 0;
 	return 0;
 }
@@ -1894,12 +1896,13 @@ void r600_bc_dump(struct r600_bc *bc)
 			fprintf(stderr, "SEL_Z:%d ", vtx->dst_sel_z);
 			fprintf(stderr, "SEL_W:%d) ", vtx->dst_sel_w);
 			fprintf(stderr, "USE_CONST_FIELDS:%d ", vtx->use_const_fields);
-			fprintf(stderr, "DATA_FORMAT:%d ", vtx->data_format);
-			fprintf(stderr, "NUM_FORMAT_ALL:%d ", vtx->num_format_all);
-			fprintf(stderr, "FORMAT_COMP_ALL:%d ", vtx->format_comp_all);
-			fprintf(stderr, "SRF_MODE_ALL:%d\n", vtx->srf_mode_all);
+			fprintf(stderr, "FORMAT(DATA:%d ", vtx->data_format);
+			fprintf(stderr, "NUM:%d ", vtx->num_format_all);
+			fprintf(stderr, "COMP:%d ", vtx->format_comp_all);
+			fprintf(stderr, "MODE:%d)\n", vtx->srf_mode_all);
 			id++;
-			fprintf(stderr, "%04d %08X   \n", id, bc->bytecode[id]);
+			fprintf(stderr, "%04d %08X   ", id, bc->bytecode[id]);
+			fprintf(stderr, "OFFSET:%d\n", vtx->offset);
 			//TODO
 			id++;
 			fprintf(stderr, "%04d %08X   \n", id, bc->bytecode[id]);
@@ -1910,29 +1913,9 @@ void r600_bc_dump(struct r600_bc *bc)
 	fprintf(stderr, "--------------------------------------\n");
 }
 
-static void r600_cf_vtx(struct r600_vertex_element *ve, u32 *bytecode, unsigned count)
+static void r600_cf_vtx(struct r600_vertex_element *ve)
 {
 	struct r600_pipe_state *rstate;
-	unsigned i = 0;
-
-	if (count > 8) {
-		bytecode[i++] = S_SQ_CF_WORD0_ADDR(8 >> 1);
-		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX) |
-						S_SQ_CF_WORD1_BARRIER(1) |
-						S_SQ_CF_WORD1_COUNT(8 - 1);
-		bytecode[i++] = S_SQ_CF_WORD0_ADDR(40 >> 1);
-		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX) |
-						S_SQ_CF_WORD1_BARRIER(1) |
-						S_SQ_CF_WORD1_COUNT(count - 8 - 1);
-	} else {
-		bytecode[i++] = S_SQ_CF_WORD0_ADDR(8 >> 1);
-		bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_VTX) |
-						S_SQ_CF_WORD1_BARRIER(1) |
-						S_SQ_CF_WORD1_COUNT(count - 1);
-	}
-	bytecode[i++] = S_SQ_CF_WORD0_ADDR(0);
-	bytecode[i++] = S_SQ_CF_WORD1_CF_INST(V_SQ_CF_WORD1_SQ_CF_INST_RETURN) |
-			S_SQ_CF_WORD1_BARRIER(1);
 
 	rstate = &ve->rstate;
 	rstate->id = R600_PIPE_STATE_FETCH_SHADER;
@@ -2078,37 +2061,19 @@ out_unknown:
 
 int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, struct r600_vertex_element *ve)
 {
-	unsigned ndw, i;
-	u32 *bytecode;
-	unsigned fetch_resource_start = 0, format, num_format, format_comp;
+	static int dump_shaders = -1;
+
+	struct r600_bc bc;
+	struct r600_bc_vtx vtx;
 	struct pipe_vertex_element *elements = ve->elements;
 	const struct util_format_description *desc;
-
-	/* 2 dwords for cf aligned to 4 + 4 dwords per input */
-	ndw = 8 + ve->count * 4;
-	ve->fs_size = ndw * 4;
-
-	/* use PIPE_BIND_VERTEX_BUFFER so we use the cache buffer manager */
-	ve->fetch_shader = r600_bo(rctx->radeon, ndw*4, 256, PIPE_BIND_VERTEX_BUFFER, 0);
-	if (ve->fetch_shader == NULL) {
-		return -ENOMEM;
-	}
-
-	bytecode = r600_bo_map(rctx->radeon, ve->fetch_shader, 0, NULL);
-	if (bytecode == NULL) {
-		r600_bo_reference(rctx->radeon, &ve->fetch_shader, NULL);
-		return -ENOMEM;
-	}
-
-	if (rctx->family >= CHIP_CEDAR) {
-		eg_cf_vtx(ve, &bytecode[0], (ndw - 8) / 4);
-	} else {
-		r600_cf_vtx(ve, &bytecode[0], (ndw - 8) / 4);
-		fetch_resource_start = 160;
-	}
+	unsigned fetch_resource_start = rctx->family >= CHIP_CEDAR ? 0 : 160;
+	unsigned format, num_format, format_comp;
+	u32 *bytecode;
+        int i, r;
 
 	/* vertex elements offset need special handling, if offset is bigger
-	 * than what we can put in fetch instruction then we need to alterate
+	+ * than what we can put in fetch instruction then we need to alterate
 	 * the vertex resource offset. In such case in order to simplify code
 	 * we will bound one resource per elements. It's a worst case scenario.
 	 */
@@ -2119,40 +2084,155 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 		}
 	}
 
+	memset(&bc, 0, sizeof(bc));
+	r = r600_bc_init(&bc, r600_get_family(rctx->radeon));
+	if (r)
+		return r;
+
+	for (i = 0; i < ve->count; i++) {
+	        if (elements[i].instance_divisor > 1) {
+			struct r600_bc_alu alu;
+
+			memset(&alu, 0, sizeof(alu));
+                        alu.inst = BC_INST(&bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT);
+                        alu.src[0].sel = 0;
+                        alu.src[0].chan = 3;
+
+			alu.dst.sel = i + 1;
+			alu.dst.chan = 3;
+			alu.dst.write = 1;
+			alu.last = 1;
+
+                        if ((r = r600_bc_add_alu(&bc, &alu))) {
+				r600_bc_clear(&bc);
+                                return r;
+                        }
+
+			memset(&alu, 0, sizeof(alu));
+			alu.inst = BC_INST(&bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL);
+			alu.src[0].sel = i + 1;
+			alu.src[0].chan = 3;
+
+			alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
+			alu.src[1].value = fui(1.0f / (float)elements[i].instance_divisor);
+
+			alu.dst.sel = i + 1;
+			alu.dst.chan = 3;
+			alu.dst.write = 1;
+			alu.last = 1;
+
+                        if ((r = r600_bc_add_alu(&bc, &alu))) {
+				r600_bc_clear(&bc);
+                                return r;
+                        }
+
+			memset(&alu, 0, sizeof(alu));
+			alu.inst = BC_INST(&bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_TRUNC);
+			alu.src[0].sel = i + 1;
+			alu.src[0].chan = 3;
+
+			alu.dst.sel = i + 1;
+			alu.dst.chan = 3;
+			alu.dst.write = 1;
+			alu.last = 1;
+
+                        if ((r = r600_bc_add_alu(&bc, &alu))) {
+				r600_bc_clear(&bc);
+                                return r;
+                        }
+
+			memset(&alu, 0, sizeof(alu));
+                        alu.inst = BC_INST(&bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT);
+                        alu.src[0].sel = i + 1;
+                        alu.src[0].chan = 3;
+
+			alu.dst.sel = i + 1;
+			alu.dst.chan = 3;
+			alu.dst.write = 1;
+			alu.last = 1;
+
+                        if ((r = r600_bc_add_alu(&bc, &alu))) {
+				r600_bc_clear(&bc);
+                                return r;
+                        }
+	        }
+	}
+
 	for (i = 0; i < ve->count; i++) {
 		unsigned vbuffer_index;
 		r600_vertex_data_type(ve->elements[i].src_format, &format, &num_format, &format_comp);
 		desc = util_format_description(ve->elements[i].src_format);
 		if (desc == NULL) {
+			r600_bc_clear(&bc);
 			R600_ERR("unknown format %d\n", ve->elements[i].src_format);
-			r600_bo_reference(rctx->radeon, &ve->fetch_shader, NULL);
 			return -EINVAL;
 		}
 
 		/* see above for vbuffer_need_offset explanation */
 		vbuffer_index = elements[i].vertex_buffer_index;
-		if (ve->vbuffer_need_offset) {
-			bytecode[8 + i * 4 + 0] = S_SQ_VTX_WORD0_BUFFER_ID(i + fetch_resource_start);
-		} else {
-			bytecode[8 + i * 4 + 0] = S_SQ_VTX_WORD0_BUFFER_ID(vbuffer_index + fetch_resource_start);
+		memset(&vtx, 0, sizeof(vtx));
+		vtx.buffer_id = (ve->vbuffer_need_offset ? i : vbuffer_index) + fetch_resource_start;
+		vtx.fetch_type = elements[i].instance_divisor ? 1 : 0;
+		vtx.src_gpr = elements[i].instance_divisor > 1 ? i + 1 : 0;
+		vtx.src_sel_x = elements[i].instance_divisor ? 3 : 0;
+		vtx.mega_fetch_count = 16;
+		vtx.dst_gpr = i + 1;
+		vtx.dst_sel_x = desc->swizzle[0];
+		vtx.dst_sel_y = desc->swizzle[1];
+		vtx.dst_sel_z = desc->swizzle[2];
+		vtx.dst_sel_w = desc->swizzle[3];
+		vtx.data_format = format;
+		vtx.num_format_all = num_format;
+		vtx.format_comp_all = format_comp;
+		vtx.srf_mode_all = 1;
+		vtx.offset = elements[i].src_offset;
+
+		if ((r = r600_bc_add_vtx(&bc, &vtx))) {
+			r600_bc_clear(&bc);
+			return r;
 		}
-		bytecode[8 + i * 4 + 0] |= S_SQ_VTX_WORD0_SRC_GPR(0) |
-					S_SQ_VTX_WORD0_SRC_SEL_X(0) |
-					S_SQ_VTX_WORD0_MEGA_FETCH_COUNT(0x1F);
-		bytecode[8 + i * 4 + 1] = S_SQ_VTX_WORD1_DST_SEL_X(desc->swizzle[0]) |
-					S_SQ_VTX_WORD1_DST_SEL_Y(desc->swizzle[1]) |
-					S_SQ_VTX_WORD1_DST_SEL_Z(desc->swizzle[2]) |
-					S_SQ_VTX_WORD1_DST_SEL_W(desc->swizzle[3]) |
-					S_SQ_VTX_WORD1_USE_CONST_FIELDS(0) |
-					S_SQ_VTX_WORD1_DATA_FORMAT(format) |
-					S_SQ_VTX_WORD1_NUM_FORMAT_ALL(num_format) |
-					S_SQ_VTX_WORD1_FORMAT_COMP_ALL(format_comp) |
-					S_SQ_VTX_WORD1_SRF_MODE_ALL(1) |
-					S_SQ_VTX_WORD1_GPR_DST_GPR(i + 1);
-		bytecode[8 + i * 4 + 2] = S_SQ_VTX_WORD2_OFFSET(elements[i].src_offset) |
-					S_SQ_VTX_WORD2_MEGA_FETCH(1);
-		bytecode[8 + i * 4 + 3] = 0;
 	}
+
+	r600_bc_add_cfinst(&bc, BC_INST(&bc, V_SQ_CF_WORD1_SQ_CF_INST_RETURN));
+
+	/* use PIPE_BIND_VERTEX_BUFFER so we use the cache buffer manager */
+	ve->fetch_shader = r600_bo(rctx->radeon, bc.ndw*4, 256, PIPE_BIND_VERTEX_BUFFER, 0);
+	if (ve->fetch_shader == NULL) {
+		r600_bc_clear(&bc);
+		return -ENOMEM;
+	}
+
+        ve->fs_size = bc.ndw*4;
+	if ((r = r600_bc_build(&bc))) {
+		r600_bc_clear(&bc);
+		return r;
+	}
+
+        if (dump_shaders == -1)
+                dump_shaders = debug_get_bool_option("R600_DUMP_SHADERS", FALSE);
+
+	if (dump_shaders) {
+		fprintf(stderr, "--------------------------------------------------------------\n");
+		r600_bc_dump(&bc);
+		fprintf(stderr, "______________________________________________________________\n");
+	}
+
+	bytecode = r600_bo_map(rctx->radeon, ve->fetch_shader, 0, NULL);
+	if (bytecode == NULL) {
+		r600_bc_clear(&bc);
+		r600_bo_reference(rctx->radeon, &ve->fetch_shader, NULL);
+		return -ENOMEM;
+	}
+
+	memcpy(bytecode, bc.bytecode, ve->fs_size);
+
 	r600_bo_unmap(rctx->radeon, ve->fetch_shader);
+	r600_bc_clear(&bc);
+
+	if (rctx->family >= CHIP_CEDAR)
+		eg_cf_vtx(ve);
+	else
+		r600_cf_vtx(ve);
+
 	return 0;
 }
