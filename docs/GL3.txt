@@ -27,7 +27,7 @@ Non-normalized Integer texture/framebuffer formats    ~50% done
 1D/2D Texture arrays                                  core Mesa, swrast done
 Packed depth/stencil formats                          DONE
 Per-buffer blend and masks (GL_EXT_draw_buffers2)     DONE
-GL_EXT_texture_compression_rgtc                       not started
+GL_EXT_texture_compression_rgtc                       DONE (swrast, gallium r600)
 Red and red/green texture formats                     DONE (swrast, i965, gallium)
 Transform feedback (GL_EXT_transform_feedback)        ~50% done
    glBindFragDataLocation, glGetFragDataLocation,
