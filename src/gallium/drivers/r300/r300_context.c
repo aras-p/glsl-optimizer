@@ -30,7 +30,6 @@
 #include "r300_cb.h"
 #include "r300_context.h"
 #include "r300_emit.h"
-#include "r300_hyperz.h"
 #include "r300_screen.h"
 #include "r300_screen_buffer.h"
 #include "r300_winsys.h"
@@ -227,7 +226,7 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     if (can_hyperz) {
         /* HiZ Clear */
         if (has_hiz_ram)
-            R300_INIT_ATOM(hiz_clear, 0);
+            R300_INIT_ATOM(hiz_clear, 4);
         /* zmask clear */
         R300_INIT_ATOM(zmask_clear, 4);
     }
@@ -447,15 +446,9 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     /* Render functions must be initialized after blitter. */
     r300_init_render_functions(r300);
+    r300_init_states(&r300->context);
 
     rws->cs_set_flush(r300->cs, r300_flush_cb, r300);
-
-    /* setup hyper-z mm */
-    if (r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
-        if (!r300_hyperz_init_mm(r300))
-            goto fail;
-
-    r300_init_states(&r300->context);
 
     /* The KIL opcode needs the first texture unit to be enabled
      * on r3xx-r4xx. In order to calm down the CS checker, we bind this
@@ -507,10 +500,10 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     }
 
     /* Print driver info. */
-#ifdef NDEBUG
-    if (DBG_ON(r300, DBG_INFO)) {
-#else
+#ifdef DEBUG
     {
+#else
+    if (DBG_ON(r300, DBG_INFO)) {
 #endif
         fprintf(stderr,
                 "r300: DRM version: %d.%d.%d, Name: %s, ID: 0x%04x, GB: %d, Z: %d\n"

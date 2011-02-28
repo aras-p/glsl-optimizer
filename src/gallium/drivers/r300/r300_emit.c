@@ -425,27 +425,12 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
         OUT_CS_RELOC(surf);
 
         if (can_hyperz) {
-            uint32_t surf_pitch;
-            struct r300_resource *tex;
-            int level = surf->base.u.tex.level;
-            tex = r300_resource(surf->base.texture);
-
-            surf_pitch = surf->pitch & R300_DEPTHPITCH_MASK;
-
             /* HiZ RAM. */
-            if (r300->screen->caps.hiz_ram) {
-                if (tex->hiz_mem[level]) {
-                    OUT_CS_REG(R300_ZB_HIZ_OFFSET, tex->hiz_mem[level]->ofs << 2);
-                    OUT_CS_REG(R300_ZB_HIZ_PITCH, surf_pitch);
-                } else {
-                    OUT_CS_REG(R300_ZB_HIZ_OFFSET, 0);
-                    OUT_CS_REG(R300_ZB_HIZ_PITCH, 0);
-                }
-            }
-
+            OUT_CS_REG(R300_ZB_HIZ_OFFSET, 0);
+            OUT_CS_REG(R300_ZB_HIZ_PITCH, surf->pitch_hiz);
             /* Z Mask RAM. (compressed zbuffer) */
             OUT_CS_REG(R300_ZB_ZMASK_OFFSET, 0);
-            OUT_CS_REG(R300_ZB_ZMASK_PITCH, surf_pitch);
+            OUT_CS_REG(R300_ZB_ZMASK_PITCH, surf->pitch_zmask);
         }
     }
 
@@ -1039,56 +1024,29 @@ void r300_emit_viewport_state(struct r300_context* r300,
     END_CS;
 }
 
-static void r300_emit_hiz_line_clear(struct r300_context *r300, int start, uint16_t count, uint32_t val)
-{
-    CS_LOCALS(r300);
-    BEGIN_CS(4);
-    OUT_CS_PKT3(R300_PACKET3_3D_CLEAR_HIZ, 2);
-    OUT_CS(start);
-    OUT_CS(count);
-    OUT_CS(val);
-    END_CS;
-}
-
-#define ALIGN_DIVUP(x, y) (((x) + (y) - 1) / (y))
-
 void r300_emit_hiz_clear(struct r300_context *r300, unsigned size, void *state)
 {
     struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
     struct r300_hyperz_state *z =
         (struct r300_hyperz_state*)r300->hyperz_state.state;
-    struct r300_screen* r300screen = r300->screen;
-    uint32_t stride, offset = 0, height, offset_shift;
     struct r300_resource* tex;
-    int i;
+    CS_LOCALS(r300);
 
     tex = r300_resource(fb->zsbuf->texture);
 
-    offset = tex->hiz_mem[fb->zsbuf->u.tex.level]->ofs;
-    stride = tex->tex.stride_in_pixels[fb->zsbuf->u.tex.level];
+    BEGIN_CS(size);
+    OUT_CS_PKT3(R300_PACKET3_3D_CLEAR_HIZ, 2);
+    OUT_CS(0);
+    OUT_CS(tex->tex.hiz_dwords[fb->zsbuf->u.tex.level]);
+    OUT_CS(0xffffffff);
+    END_CS;
 
-    /* convert from pixels to 4x4 blocks */
-    stride = ALIGN_DIVUP(stride, 4);
-
-    stride = ALIGN_DIVUP(stride, r300screen->caps.num_frag_pipes);    
-    /* there are 4 blocks per dwords */
-    stride = ALIGN_DIVUP(stride, 4);
-
-    height = ALIGN_DIVUP(fb->zsbuf->height, 4);
-
-    offset_shift = 2;
-    offset_shift += (r300screen->caps.num_frag_pipes / 2);
-
-    for (i = 0; i < height; i++) {
-        offset = i * stride;
-        offset <<= offset_shift;
-        r300_emit_hiz_line_clear(r300, offset, stride, 0xffffffff);
-    }
     z->current_func = -1;
 
     /* Mark the current zbuffer's hiz ram as in use. */
-    tex->hiz_in_use[fb->zsbuf->u.tex.level] = TRUE;
+    r300->hiz_in_use = TRUE;
+    r300_mark_atom_dirty(r300, &r300->hyperz_state);
 }
 
 void r300_emit_zmask_clear(struct r300_context *r300, unsigned size, void *state)

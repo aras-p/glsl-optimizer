@@ -295,6 +295,8 @@ struct r300_surface {
 
     uint32_t offset;    /* COLOROFFSET or DEPTHOFFSET. */
     uint32_t pitch;     /* COLORPITCH or DEPTHPITCH. */
+    uint32_t pitch_zmask; /* ZMASK_PITCH */
+    uint32_t pitch_hiz;   /* HIZ_PITCH */
     uint32_t format;    /* US_OUT_FMT or ZB_FORMAT. */
 
     /* Parameters dedicated to the CBZB clear. */
@@ -363,8 +365,12 @@ struct r300_texture_desc {
 
     /* Zbuffer compression info for each miplevel. */
     boolean zcomp8x8[R300_MAX_TEXTURE_LEVELS];
-    /* If zero, then disable compression. */
+    /* If zero, then disable Z compression/HiZ. */
     unsigned zmask_dwords[R300_MAX_TEXTURE_LEVELS];
+    unsigned hiz_dwords[R300_MAX_TEXTURE_LEVELS];
+    /* Zmask/HiZ strides for each miplevel. */
+    unsigned zmask_stride_in_pixels[R300_MAX_TEXTURE_LEVELS];
+    unsigned hiz_stride_in_pixels[R300_MAX_TEXTURE_LEVELS];
 };
 
 struct r300_resource
@@ -389,10 +395,6 @@ struct r300_resource
 
     /* Where the texture starts in the buffer. */
     unsigned tex_offset;
-
-    /* HiZ memory allocations. */
-    struct mem_block *hiz_mem[R300_MAX_TEXTURE_LEVELS];
-    boolean hiz_in_use[R300_MAX_TEXTURE_LEVELS];
 
     /* This is the level tiling flags were last time set for.
      * It's used to prevent redundant tiling-flags changes from happening.*/
@@ -545,21 +547,20 @@ struct r300_context {
     int sprite_coord_enable;
     /* Whether two-sided color selection is enabled (AKA light_twoside). */
     boolean two_sided_color;
-
+    /* Whether fast color clear is enabled. */
     boolean cbzb_clear;
     /* Whether ZMASK is enabled. */
     boolean zmask_in_use;
     /* Whether ZMASK is being decompressed. */
     boolean zmask_decompress;
-    /* Whether ZMASK is locked, i.e. should be disabled and cannot be taken over. */
-    boolean zmask_locked;
+    /* Whether ZMASK/HIZ is locked, i.e. should be disabled and cannot be taken over. */
+    boolean hyperz_locked;
     /* The zbuffer the ZMASK of which is locked. */
     struct pipe_surface *locked_zbuffer;
+    /* Whether HIZ is enabled. */
+    boolean hiz_in_use;
 
     void *dsa_decompress_zmask;
-
-    /* two mem block managers for hiz/zmask ram space */
-    struct mem_block *hiz_mm;
 
     struct u_vbuf_mgr *vbuf_mgr;
 
@@ -643,6 +644,9 @@ void r300_init_resource_functions(struct r300_context* r300);
 void r300_decompress_zmask(struct r300_context *r300);
 void r300_decompress_zmask_locked_unsafe(struct r300_context *r300);
 void r300_decompress_zmask_locked(struct r300_context *r300);
+
+/* r300_hyperz.c */
+void r300_update_hyperz_state(struct r300_context* r300);
 
 /* r300_query.c */
 void r300_resume_query(struct r300_context *r300,

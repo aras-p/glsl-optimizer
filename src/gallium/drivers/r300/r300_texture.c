@@ -676,6 +676,8 @@ static void r300_texture_setup_fb_state(struct r300_surface *surf)
                 R300_DEPTHMACROTILE(tex->tex.macrotile[level]) |
                 R300_DEPTHMICROTILE(tex->tex.microtile);
         surf->format = r300_translate_zsformat(surf->base.format);
+        surf->pitch_zmask = tex->tex.zmask_stride_in_pixels[level];
+        surf->pitch_hiz = tex->tex.hiz_stride_in_pixels[level];
     } else {
         surf->pitch =
                 tex->tex.stride_in_pixels[level] |
@@ -713,14 +715,8 @@ static void r300_texture_destroy(struct pipe_screen *screen,
                                  struct pipe_resource* texture)
 {
     struct r300_resource* tex = (struct r300_resource*)texture;
-    int i;
 
     r300_winsys_bo_reference(&tex->buf, NULL);
-    for (i = 0; i < R300_MAX_TEXTURE_LEVELS; i++) {
-        if (tex->hiz_mem[i])
-            u_mmFreeMem(tex->hiz_mem[i]);
-    }
-
     FREE(tex);
 }
 

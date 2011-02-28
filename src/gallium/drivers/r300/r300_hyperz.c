@@ -22,7 +22,6 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 #include "r300_context.h"
-#include "r300_hyperz.h"
 #include "r300_reg.h"
 #include "r300_fs.h"
 #include "r300_winsys.h"
@@ -100,6 +99,7 @@ static boolean r300_can_hiz(struct r300_context *r300)
 
     if (r300->query_current)
         return FALSE;
+
     /* if stencil fail/zfail op is not KEEP */
     if (r300_dsa_stencil_op_not_keep(&dsa->stencil[0]) ||
         r300_dsa_stencil_op_not_keep(&dsa->stencil[1]))
@@ -139,7 +139,6 @@ static void r300_update_hyperz(struct r300_context* r300)
         (struct pipe_framebuffer_state*)r300->fb_state.state;
     struct r300_resource *zstex =
             fb->zsbuf ? r300_resource(fb->zsbuf->texture) : NULL;
-    boolean hiz_in_use = FALSE;
 
     z->gb_z_peq_config = 0;
     z->zb_bw_cntl = 0;
@@ -157,10 +156,8 @@ static void r300_update_hyperz(struct r300_context* r300)
     if (!r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
         return;
 
-    hiz_in_use = zstex->hiz_in_use[fb->zsbuf->u.tex.level];
-
     /* Zbuffer compression. */
-    if (r300->zmask_in_use && !r300->zmask_locked) {
+    if (r300->zmask_in_use && !r300->hyperz_locked) {
         z->zb_bw_cntl |= R300_FAST_FILL_ENABLE |
                          /*R300_FORCE_COMPRESSED_STENCIL_VALUE_ENABLE |*/
                          R300_RD_COMP_ENABLE;
@@ -174,7 +171,8 @@ static void r300_update_hyperz(struct r300_context* r300)
         z->gb_z_peq_config |= R300_GB_Z_PEQ_CONFIG_Z_PEQ_SIZE_8_8;
     }
 
-    if (hiz_in_use && r300_can_hiz(r300)) {
+    /* XXX Use can_hiz to disable hyperz for good, instead of turning it off/on. */
+    if (r300->hiz_in_use && !r300->hyperz_locked && r300_can_hiz(r300)) {
         z->zb_bw_cntl |= R300_HIZ_ENABLE |
                          r300_get_hiz_min(r300);
 
@@ -282,70 +280,11 @@ static void r300_update_ztop(struct r300_context* r300)
         r300_mark_atom_dirty(r300, &r300->ztop_state);
 }
 
-#define ALIGN_DIVUP(x, y) (((x) + (y) - 1) / (y))
-
-static void r300_update_hiz_clear(struct r300_context *r300)
-{
-    struct pipe_framebuffer_state *fb =
-        (struct pipe_framebuffer_state*)r300->fb_state.state;
-    uint32_t height;
-
-    height = ALIGN_DIVUP(fb->zsbuf->height, 4);
-    r300->hiz_clear.size = height * 4;
-}
-
 void r300_update_hyperz_state(struct r300_context* r300)
 {
     r300_update_ztop(r300);
 
     if (r300->hyperz_state.dirty) {
         r300_update_hyperz(r300);
-    }
-
-    if (r300->hiz_clear.dirty) {
-       r300_update_hiz_clear(r300);
-    }
-}
-
-void r300_hiz_alloc_block(struct r300_context *r300, struct r300_surface *surf)
-{
-    struct r300_resource *tex;
-    uint32_t zsize, ndw;
-    int level = surf->base.u.tex.level;
-
-    tex = r300_resource(surf->base.texture);
-
-    if (tex->hiz_mem[level])
-        return;
-
-    zsize = tex->tex.layer_size_in_bytes[level];
-    zsize /= util_format_get_blocksize(tex->b.b.b.format);
-    ndw = ALIGN_DIVUP(zsize, 64);
-
-    tex->hiz_mem[level] = u_mmAllocMem(r300->hiz_mm, ndw, 0, 0);
-}
-
-boolean r300_hyperz_init_mm(struct r300_context *r300)
-{
-    struct r300_screen* r300screen = r300->screen;
-    int frag_pipes = r300screen->caps.num_frag_pipes;
-
-    if (r300screen->caps.hiz_ram) {
-      r300->hiz_mm = u_mmInit(0, r300screen->caps.hiz_ram * frag_pipes);
-      if (!r300->hiz_mm) {
-        return FALSE;
-      }
-    }
-
-    return TRUE;
-}
-
-void r300_hyperz_destroy_mm(struct r300_context *r300)
-{
-    struct r300_screen* r300screen = r300->screen;
-
-    if (r300screen->caps.hiz_ram) {
-      u_mmDestroy(r300->hiz_mm);
-      r300->hiz_mm = NULL;
     }
 }
