@@ -133,6 +133,7 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc *bc, struct r
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_IEEE:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT_FLOOR:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SIN:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_COS:
 			return 1;
