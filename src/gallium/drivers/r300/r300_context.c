@@ -203,7 +203,7 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     /* SC. */
     R300_INIT_ATOM(scissor_state, 3);
     /* GB, FG, GA, SU, SC, RB3D. */
-    R300_INIT_ATOM(invariant_state, 16 + (is_rv350 ? 4 : 0));
+    R300_INIT_ATOM(invariant_state, 18 + (is_rv350 ? 4 : 0));
     /* VAP. */
     R300_INIT_ATOM(viewport_state, 9);
     R300_INIT_ATOM(pvs_flush, 2);
@@ -353,6 +353,7 @@ static void r300_init_states(struct pipe_context *pipe)
         OUT_CB_REG(R300_SU_DEPTH_SCALE, 0x4B7FFFFF);
         OUT_CB_REG(R300_SU_DEPTH_OFFSET, 0);
         OUT_CB_REG(R300_SC_EDGERULE, 0x2DA49525);
+        OUT_CB_REG(R300_SC_SCREENDOOR, 0xffffff);
 
         if (r300->screen->caps.is_rv350) {
             OUT_CB_REG(R500_RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD, 0x01010101);

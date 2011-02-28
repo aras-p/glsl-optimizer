@@ -220,7 +220,7 @@ struct r300_vertex_stream_state {
 };
 
 struct r300_invariant_state {
-    uint32_t cb[20];
+    uint32_t cb[22];
 };
 
 struct r300_vap_invariant_state {
