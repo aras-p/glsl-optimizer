@@ -39,12 +39,13 @@ boolean nouveau_fence_signalled(struct nouveau_fence *);
 static INLINE void
 nouveau_fence_ref(struct nouveau_fence *fence, struct nouveau_fence **ref)
 {
+   if (fence)
+      ++fence->ref;
+
    if (*ref) {
       if (--(*ref)->ref == 0)
          nouveau_fence_del(*ref);
    }
-   if (fence)
-      ++fence->ref;
 
    *ref = fence;
 }
