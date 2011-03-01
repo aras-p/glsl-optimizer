@@ -57,7 +57,7 @@ void glcpp_set_column (int  column_no , yyscan_t yyscanner);
 %option stack
 %option never-interactive
 
-%x DONE COMMENT UNREACHABLE
+%x DONE COMMENT UNREACHABLE SKIP
 
 SPACE		[[:space:]]
 NONSPACE	[^[:space:]]
@@ -74,6 +74,17 @@ OCTAL_INTEGER		0[0-7]*[uU]?
 HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 
 %%
+	/* Implicitly switch between SKIP and INITIAL (non-skipping);
+	 * don't switch if some other state was explicitly set.
+	 */
+	glcpp_parser_t *parser = yyextra;
+	if (YY_START == 0 || YY_START == SKIP) {
+		if (parser->lexing_if || parser->skip_stack == NULL || parser->skip_stack->type == SKIP_NO_SKIP) {
+			BEGIN 0;
+		} else {
+			BEGIN SKIP;
+		}
+	}
 
 	/* Single-line comments */
 "//"[^\n]* {
@@ -137,6 +148,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	yylineno = strtol(ptr, &ptr, 0) - 1;
 }
 
+<SKIP,INITIAL>{
 {HASH}ifdef/.*\n {
 	yyextra->lexing_if = 1;
 	yyextra->space_tokens = 0;
@@ -170,26 +182,9 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	yyextra->space_tokens = 0;
 	return HASH_ENDIF;
 }
-
-	/* When skipping (due to an #if 0 or similar) consume anything
-	 * up to a newline. We do this with less priority than any
-	 * #if-related directive (#if, #elif, #else, #endif), but with
-	 * more priority than any other directive or token to avoid
-	 * any side-effects from skipped content.
-	 *
-	 * We use the lexing_if flag to avoid skipping any part of an
-	 * if conditional expression. */
-[^\n]+/\n {
-	/* Since this rule always matches, YY_USER_ACTION gets called for it,
-	 * wrongly incrementing yycolumn.  We undo that effect here. */
-	yycolumn -= yyleng;
-	if (yyextra->lexing_if ||
-	    yyextra->skip_stack == NULL ||
-	    yyextra->skip_stack->type == SKIP_NO_SKIP)
-	{
-		REJECT;
-	}
 }
+
+<SKIP>[^\n] ;
 
 {HASH}error.* {
 	char *p;
@@ -293,7 +288,7 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 	}
 }
 
-\n {
+<SKIP,INITIAL>\n {
 	yyextra->lexing_if = 0;
 	yylineno++;
 	yycolumn = 0;
