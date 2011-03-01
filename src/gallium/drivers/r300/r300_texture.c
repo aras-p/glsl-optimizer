@@ -171,8 +171,16 @@ uint32_t r300_translate_texformat(enum pipe_format format,
             }
     }
 
-    result |= r300_get_swizzle_combined(desc->swizzle, swizzle_view,
-                    util_format_is_compressed(format) && dxtc_swizzle);
+    if (util_format_is_compressed(format) &&
+        dxtc_swizzle &&
+        format != PIPE_FORMAT_RGTC2_UNORM &&
+        format != PIPE_FORMAT_RGTC2_SNORM) {
+        result |= r300_get_swizzle_combined(desc->swizzle, swizzle_view,
+                                            dxtc_swizzle);
+    } else {
+        result |= r300_get_swizzle_combined(desc->swizzle, swizzle_view,
+                                            FALSE);
+    }
 
     /* S3TC formats. */
     if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
@@ -215,17 +223,12 @@ uint32_t r300_translate_texformat(enum pipe_format format,
     if (desc->layout == UTIL_FORMAT_LAYOUT_RGTC) {
         switch (format) {
             case PIPE_FORMAT_RGTC1_SNORM:
-                result |= sign_bit[0];
+                result |= sign_bit[1];
             case PIPE_FORMAT_RGTC1_UNORM:
-                result &= ~(0xfff << 9); /* mask off swizzle */
-                result |= R300_TX_FORMAT_Y << R300_TX_FORMAT_R_SHIFT;
                 return R500_TX_FORMAT_ATI1N | result;
             case PIPE_FORMAT_RGTC2_SNORM:
                 result |= sign_bit[0] | sign_bit[1];
             case PIPE_FORMAT_RGTC2_UNORM:
-                result &= ~(0xfff << 9); /* mask off swizzle */
-                result |= R300_TX_FORMAT_Y << R300_TX_FORMAT_R_SHIFT |
-                          R300_TX_FORMAT_X << R300_TX_FORMAT_G_SHIFT;
                 return R400_TX_FORMAT_ATI2N | result;
             default:
                 return ~0; /* Unsupported/unknown. */
