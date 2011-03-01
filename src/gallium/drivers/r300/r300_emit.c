@@ -1037,7 +1037,7 @@ void r300_emit_hiz_clear(struct r300_context *r300, unsigned size, void *state)
     OUT_CS_PKT3(R300_PACKET3_3D_CLEAR_HIZ, 2);
     OUT_CS(0);
     OUT_CS(tex->tex.hiz_dwords[fb->zsbuf->u.tex.level]);
-    OUT_CS(0xffffffff);
+    OUT_CS(r300->hiz_clear_value);
     END_CS;
 
     /* Mark the current zbuffer's hiz ram as in use. */

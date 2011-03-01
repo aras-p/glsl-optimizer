@@ -575,6 +575,8 @@ struct r300_context {
     boolean hiz_in_use;
     /* HiZ function. Can be either MIN or MAX. */
     enum r300_hiz_func hiz_func;
+    /* HiZ clear value. */
+    uint32_t hiz_clear_value;
 
     void *dsa_decompress_zmask;
 

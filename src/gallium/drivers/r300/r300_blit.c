@@ -141,6 +141,13 @@ static uint32_t r300_depth_clear_value(enum pipe_format format,
     }
 }
 
+static uint32_t r300_hiz_clear_value(double depth)
+{
+    uint32_t r = (uint32_t)(CLAMP(depth, 0, 1) * 255.5);
+    assert(r <= 255);
+    return r | (r << 8) | (r << 16) | (r << 24);
+}
+
 /* Clear currently bound buffers. */
 static void r300_clear(struct pipe_context* pipe,
                        unsigned buffers,
@@ -214,6 +221,7 @@ static void r300_clear(struct pipe_context* pipe,
         }
 
         if (r300_hiz_clear_allowed(r300)) {
+            r300->hiz_clear_value = r300_hiz_clear_value(depth);
             r300_mark_atom_dirty(r300, &r300->hiz_clear);
         }
     }

@@ -187,8 +187,7 @@ static void r300_update_hyperz(struct r300_context* r300)
                             r300_get_sc_hz_max(r300);
 
             if (r300->screen->caps.is_r500) {
-                z->zb_bw_cntl |= R500_HIZ_FP_EXP_BITS_3 |
-                                 R500_HIZ_EQUAL_REJECT_ENABLE;
+                z->zb_bw_cntl |= R500_HIZ_EQUAL_REJECT_ENABLE;
             }
         }
     }
