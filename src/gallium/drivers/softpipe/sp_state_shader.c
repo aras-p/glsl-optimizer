@@ -91,8 +91,6 @@ softpipe_bind_fs_state(struct pipe_context *pipe, void *fs)
 {
    struct softpipe_context *softpipe = softpipe_context(pipe);
 
-   draw_flush(softpipe->draw);
-
    if (softpipe->fs == fs)
       return;
 
