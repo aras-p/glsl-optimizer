@@ -628,28 +628,10 @@ _mesa_GetColorTable( GLenum target, GLenum format,
 static void GLAPIENTRY
 _mesa_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 {
-   GLfloat *scale, *bias;
+   /* no extensions use this function */
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
-
-   switch (target) {
-   default:
-      _mesa_error(ctx, GL_INVALID_ENUM, "glColorTableParameter(target)");
-      return;
-   }
-
-   if (pname == GL_COLOR_TABLE_SCALE_SGI) {
-      COPY_4V(scale, params);
-   }
-   else if (pname == GL_COLOR_TABLE_BIAS_SGI) {
-      COPY_4V(bias, params);
-   }
-   else {
-      _mesa_error(ctx, GL_INVALID_ENUM, "glColorTableParameterfv(pname)");
-      return;
-   }
-
-   ctx->NewState |= _NEW_PIXEL;
+   _mesa_error(ctx, GL_INVALID_ENUM, "glColorTableParameterfv(target)");
 }
 
 
@@ -657,9 +639,10 @@ _mesa_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
 static void GLAPIENTRY
 _mesa_ColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
 {
-   GLfloat fparams[4];
-   fparams[0] = (GLfloat) params[0];
-   _mesa_ColorTableParameterfv(target, pname, fparams);
+   /* no extensions use this function */
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+   _mesa_error(ctx, GL_INVALID_ENUM, "glColorTableParameteriv(target)");
 }
 
 
