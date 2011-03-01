@@ -874,6 +874,8 @@ draw_install_aapoint_stage(struct draw_context *draw,
 {
    struct aapoint_stage *aapoint;
 
+   pipe->draw = (void *) draw;
+
    /*
     * Create / install AA point drawing / prim stage
     */
