@@ -364,9 +364,9 @@ static void _fetch_texel_rgtc_s(GLint srcRowStride, const GLbyte *pixdata,
    else if (code < 6)
       decode = ((alpha0 * (6 - code) + (alpha1 * (code - 1))) / 5);
    else if (code == 6)
-      decode = -128;
+      decode = -127;
    else
-      decode = 127;
+      decode = 128;
 
    *value = decode;
 }
