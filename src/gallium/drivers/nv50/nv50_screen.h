@@ -3,6 +3,7 @@
 
 #define NOUVEAU_NVC0
 #include "nouveau/nouveau_screen.h"
+#include "nouveau/nouveau_fence.h"
 #undef NOUVEAU_NVC0
 #include "nv50_winsys.h"
 #include "nv50_stateobj.h"
@@ -12,7 +13,6 @@
 
 struct nv50_mman;
 struct nv50_context;
-struct nv50_fence;
 
 #define NV50_SCRATCH_SIZE (2 << 20)
 #define NV50_SCRATCH_NR_BUFFERS 2
@@ -49,11 +49,6 @@ struct nv50_screen {
 
    struct {
       uint32_t *map;
-      struct nv50_fence *head;
-      struct nv50_fence *tail;
-      struct nv50_fence *current;
-      uint32_t sequence;
-      uint32_t sequence_ack;
       struct nouveau_bo *bo;
    } fence;
 
@@ -83,13 +78,6 @@ struct nv50_mm_allocation {
    uint32_t offset;
 };
 
-static INLINE void
-nv50_fence_sched_release(struct nv50_fence *nf, struct nv50_mm_allocation *mm)
-{
-   mm->next = nf->buffers;
-   nf->buffers = mm;
-}
-
 extern struct nv50_mman *
 nv50_mm_create(struct nouveau_device *, uint32_t domain, uint32_t storage_type);
 
@@ -113,10 +101,10 @@ nv50_resource_fence(struct nv50_resource *res, uint32_t flags)
    struct nv50_screen *screen = nv50_screen(res->base.screen);
 
    if (res->mm) {
-      nv50_fence_reference(&res->fence, screen->fence.current);
+      nouveau_fence_ref(screen->base.fence.current, &res->fence);
 
       if (flags & NOUVEAU_BO_WR)
-         nv50_fence_reference(&res->fence_wr, screen->fence.current);
+         nouveau_fence_ref(screen->base.fence.current, &res->fence_wr);
    }
 }
 
@@ -130,23 +118,6 @@ nv50_resource_validate(struct nv50_resource *res, uint32_t flags)
 
       nv50_resource_fence(res, flags);
    }
-}
-
-
-boolean
-nv50_screen_fence_new(struct nv50_screen *, struct nv50_fence **, boolean emit);
-
-void
-nv50_screen_fence_next(struct nv50_screen *);
-void
-nv50_screen_fence_update(struct nv50_screen *, boolean flushed);
-
-static INLINE boolean
-nv50_screen_fence_emit(struct nv50_screen *screen)
-{
-   nv50_fence_emit(screen->fence.current);
-
-   return nv50_screen_fence_new(screen, &screen->fence.current, FALSE);
 }
 
 struct nv50_format {

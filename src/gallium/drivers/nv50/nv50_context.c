@@ -44,8 +44,8 @@ nv50_flush(struct pipe_context *pipe, unsigned flags,
    }
 
    if (fence)
-      nv50_fence_reference((struct nv50_fence **)fence,
-                           nv50->screen->fence.current);
+      nouveau_fence_ref(nv50->screen->base.fence.current,
+                        (struct nouveau_fence **)fence);
 
    if (flags & (PIPE_FLUSH_SWAPBUFFERS | PIPE_FLUSH_FRAME))
       FIRE_RING(chan);
@@ -59,9 +59,8 @@ nv50_default_flush_notify(struct nouveau_channel *chan)
    if (!nv50)
       return;
 
-   nv50_screen_fence_update(nv50->screen, TRUE);
-
-   nv50_screen_fence_next(nv50->screen);
+   nouveau_fence_update(&nv50->screen->base, TRUE);
+   nouveau_fence_next(&nv50->screen->base);
 }
 
 static void

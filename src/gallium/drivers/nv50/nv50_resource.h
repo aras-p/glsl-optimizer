@@ -8,8 +8,6 @@
 #include "nouveau/nouveau_winsys.h"
 #undef NOUVEAU_NVC0
 
-#include "nv50_fence.h"
-
 struct pipe_resource;
 struct nouveau_bo;
 struct nv50_context;
@@ -45,8 +43,8 @@ struct nv50_resource {
 
    int16_t score; /* low if mapped very often, if high can move to VRAM */
 
-   struct nv50_fence *fence;
-   struct nv50_fence *fence_wr;
+   struct nouveau_fence *fence;
+   struct nouveau_fence *fence_wr;
 
    struct nv50_mm_allocation *mm;
 };

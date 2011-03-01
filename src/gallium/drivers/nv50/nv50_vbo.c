@@ -393,7 +393,7 @@ nv50_draw_vbo_flush_notify(struct nouveau_channel *chan)
 {
    struct nv50_context *nv50 = chan->user_private;
 
-   nv50_screen_fence_update(nv50->screen, TRUE);
+   nouveau_fence_update(&nv50->screen->base, TRUE);
 
    nv50_bufctx_emit_relocs(nv50);
 }

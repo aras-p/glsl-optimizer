@@ -49,13 +49,9 @@ nv50_buffer_allocate(struct nv50_screen *screen, struct nv50_resource *buf,
 }
 
 static INLINE void
-release_allocation(struct nv50_mm_allocation **mm, struct nv50_fence *fence)
+release_allocation(struct nv50_mm_allocation **mm, struct nouveau_fence *fence)
 {
-   if (fence && fence->state != NV50_FENCE_STATE_SIGNALLED) {
-      nv50_fence_sched_release(fence, *mm);
-   } else {
-      nv50_mm_free(*mm);
-   }
+   nouveau_fence_work(fence, nv50_mm_free, *mm);
    (*mm) = NULL;
 }
 
@@ -153,7 +149,7 @@ nv50_buffer_upload(struct nv50_context *nv50, struct nv50_resource *buf,
 
    nouveau_bo_ref(NULL, &bounce);
    if (mm)
-      release_allocation(&mm, nv50->screen->fence.current);
+      release_allocation(&mm, nv50->screen->base.fence.current);
 
    if (start == 0 && size == buf->base.width0)
       buf->status &= ~NV50_BUFFER_STATUS_DIRTY;
@@ -217,17 +213,17 @@ nv50_buffer_sync(struct nv50_resource *buf, unsigned rw)
    if (rw == PIPE_TRANSFER_READ) {
       if (!buf->fence_wr)
          return TRUE;
-      if (!nv50_fence_wait(buf->fence_wr))
+      if (!nouveau_fence_wait(buf->fence_wr))
          return FALSE;
    } else {
       if (!buf->fence)
          return TRUE;
-      if (!nv50_fence_wait(buf->fence))
+      if (!nouveau_fence_wait(buf->fence))
          return FALSE;
 
-      nv50_fence_reference(&buf->fence, NULL);
+      nouveau_fence_ref(NULL, &buf->fence);
    }
-   nv50_fence_reference(&buf->fence_wr, NULL);
+   nouveau_fence_ref(NULL, &buf->fence_wr);
 
    return TRUE;
 }
@@ -236,9 +232,9 @@ static INLINE boolean
 nv50_buffer_busy(struct nv50_resource *buf, unsigned rw)
 {
    if (rw == PIPE_TRANSFER_READ)
-      return (buf->fence_wr && !nv50_fence_signalled(buf->fence_wr));
+      return (buf->fence_wr && !nouveau_fence_signalled(buf->fence_wr));
    else
-      return (buf->fence && !nv50_fence_signalled(buf->fence));
+      return (buf->fence && !nouveau_fence_signalled(buf->fence));
 }
 
 static void *
@@ -453,7 +449,7 @@ nv50_buffer_migrate(struct nv50_context *nv50,
 
       nouveau_bo_ref(NULL, &bo);
       if (mm)
-         release_allocation(&mm, screen->fence.current);
+         release_allocation(&mm, screen->base.fence.current);
    } else
    if (new_domain == NOUVEAU_BO_VRAM && old_domain == 0) {
       if (!nv50_buffer_allocate(screen, buf, NOUVEAU_BO_VRAM))

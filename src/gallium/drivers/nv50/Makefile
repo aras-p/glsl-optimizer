@@ -26,7 +26,6 @@ C_SOURCES = \
 	nv50_pc_optimize.c \
 	nv50_pc_regalloc.c \
 	nv50_push.c \
-	nv50_fence.c \
 	nv50_mm.c \
 	nv50_query.c
 

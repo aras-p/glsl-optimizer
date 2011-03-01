@@ -23,7 +23,6 @@
 #include "util/u_format_s3tc.h"
 #include "pipe/p_screen.h"
 
-#include "nv50_fence.h"
 #include "nv50_context.h"
 #include "nv50_screen.h"
 
@@ -211,9 +210,9 @@ nv50_screen_destroy(struct pipe_screen *pscreen)
 {
    struct nv50_screen *screen = nv50_screen(pscreen);
 
-   if (screen->fence.current) {
-      nv50_fence_wait(screen->fence.current);
-      nv50_fence_reference(&screen->fence.current, NULL);
+   if (screen->base.fence.current) {
+      nouveau_fence_wait(screen->base.fence.current);
+      nouveau_fence_ref (NULL, &screen->base.fence.current);
    }
 
    nouveau_bo_ref(NULL, &screen->code);
@@ -246,27 +245,29 @@ nv50_screen_destroy(struct pipe_screen *pscreen)
 }
 
 static void
-nv50_screen_fence_reference(struct pipe_screen *pscreen,
-                            struct pipe_fence_handle **ptr,
-                            struct pipe_fence_handle *fence)
+nv50_screen_fence_emit(struct pipe_screen *pscreen, u32 sequence)
 {
-   nv50_fence_reference((struct nv50_fence **)ptr, nv50_fence(fence));
+   struct nv50_screen *screen = nv50_screen(pscreen);
+   struct nouveau_channel *chan = screen->base.channel;
+
+   MARK_RING (chan, 5, 2);
+   BEGIN_RING(chan, RING_3D(QUERY_ADDRESS_HIGH), 4);
+   OUT_RELOCh(chan, screen->fence.bo, 0, NOUVEAU_BO_WR);
+   OUT_RELOCl(chan, screen->fence.bo, 0, NOUVEAU_BO_WR);
+   OUT_RING  (chan, sequence);
+   OUT_RING  (chan, NV50_3D_QUERY_GET_MODE_WRITE_UNK0 |
+                    NV50_3D_QUERY_GET_UNK4 |
+                    NV50_3D_QUERY_GET_UNIT_CROP |
+                    NV50_3D_QUERY_GET_TYPE_QUERY |
+                    NV50_3D_QUERY_GET_QUERY_SELECT_ZERO |
+                    NV50_3D_QUERY_GET_SHORT);
 }
 
-static int
-nv50_screen_fence_signalled(struct pipe_screen *pscreen,
-                            struct pipe_fence_handle *fence,
-                            unsigned flags)
+static u32
+nv50_screen_fence_update(struct pipe_screen *pscreen)
 {
-   return !(nv50_fence_signalled(nv50_fence(fence)));
-}
-
-static int
-nv50_screen_fence_finish(struct pipe_screen *pscreen,
-                         struct pipe_fence_handle *fence,
-                         unsigned flags)
-{
-   return nv50_fence_wait((struct nv50_fence *)fence) != TRUE;
+   struct nv50_screen *screen = nv50_screen(pscreen);
+   return screen->fence.map[0];
 }
 
 #define FAIL_SCREEN_INIT(str, err)                    \
@@ -306,9 +307,6 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    pscreen->get_param = nv50_screen_get_param;
    pscreen->get_shader_param = nv50_screen_get_shader_param;
    pscreen->get_paramf = nv50_screen_get_paramf;
-   pscreen->fence_reference = nv50_screen_fence_reference;
-   pscreen->fence_signalled = nv50_screen_fence_signalled;
-   pscreen->fence_finish = nv50_screen_fence_finish;
 
    nv50_screen_init_resource_functions(pscreen);
 
@@ -322,6 +320,8 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    nouveau_bo_map(screen->fence.bo, NOUVEAU_BO_RDWR);
    screen->fence.map = screen->fence.bo->map;
    nouveau_bo_unmap(screen->fence.bo);
+   screen->base.fence.emit = nv50_screen_fence_emit;
+   screen->base.fence.update = nv50_screen_fence_update;
 
    ret = nouveau_notifier_alloc(chan, 0xbeef0301, 1, &screen->sync);
    if (ret)
@@ -591,7 +591,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    screen->mm_VRAM = nv50_mm_create(dev, NOUVEAU_BO_VRAM, 0x000);
    screen->mm_VRAM_fe0 = nv50_mm_create(dev, NOUVEAU_BO_VRAM, 0xfe0);
 
-   nv50_screen_fence_new(screen, &screen->fence.current, FALSE);
+   nouveau_fence_new(&screen->base, &screen->base.fence.current, FALSE);
 
    return pscreen;
 
