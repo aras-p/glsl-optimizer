@@ -430,7 +430,7 @@ static boolean r600_is_format_supported(struct pipe_screen* screen,
 		return FALSE;
 
 	if ((usage & PIPE_BIND_SAMPLER_VIEW) &&
-	    r600_is_sampler_format_supported(format)) {
+	    r600_is_sampler_format_supported(screen, format)) {
 		retval |= PIPE_BIND_SAMPLER_VIEW;
 	}
 

@@ -427,7 +427,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	swizzle[1] = state->swizzle_g;
 	swizzle[2] = state->swizzle_b;
 	swizzle[3] = state->swizzle_a;
-	format = r600_translate_texformat(state->format,
+	format = r600_translate_texformat(ctx->screen, state->format,
 					  swizzle,
 					  &word4, &yuv_format);
 	if (format == ~0) {

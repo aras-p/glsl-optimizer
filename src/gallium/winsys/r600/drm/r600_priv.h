@@ -50,6 +50,8 @@ struct radeon {
 	unsigned			*cfence;
 	struct r600_bo			*fence_bo;
 	unsigned			clock_crystal_freq;
+	unsigned			num_backends;
+	unsigned                        minor_version;
 };
 
 struct r600_reg {
