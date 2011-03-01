@@ -111,6 +111,7 @@ egl_g3d_create_drm_buffer(_EGLDisplay *dpy, _EGLImage *img,
    templ.width0 = attrs.Width;
    templ.height0 = attrs.Height;
    templ.depth0 = 1;
+   templ.array_size = 1;
 
    /*
     * XXX fix apps (e.g. wayland) and pipe drivers (e.g. i915) and remove the
