@@ -234,11 +234,9 @@ STATETRACKER_SOURCES = \
 PROGRAM_SOURCES = \
 	program/arbprogparse.c \
 	program/hash_table.c \
-	program/lex.yy.c \
 	program/nvfragparse.c \
 	program/nvvertparse.c \
 	program/program.c \
-	program/program_parse.tab.c \
 	program/program_parse_extra.c \
 	program/prog_cache.c \
 	program/prog_execute.c \
@@ -253,6 +251,10 @@ PROGRAM_SOURCES = \
 	program/programopt.c \
 	program/register_allocate.c \
 	program/symbol_table.c
+
+PROGRAM_GENERATED_SOURCES = \
+	program/lex.yy.c \
+	program/program_parse.tab.c
 
 SHADER_CXX_SOURCES = \
 	program/ir_to_mesa.cpp \
@@ -301,7 +303,7 @@ COMMON_DRIVER_SOURCES =			\
 
 
 # Sources for building non-Gallium drivers
-MESA_SOURCES = \
+MESA_SOURCES_FOR_DEPEND = \
 	$(MAIN_SOURCES)		\
 	$(MATH_SOURCES)		\
 	$(MATH_XFORM_SOURCES)	\
@@ -312,6 +314,10 @@ MESA_SOURCES = \
 	$(SWRAST_SETUP_SOURCES)	\
 	$(COMMON_DRIVER_SOURCES)\
 	$(ASM_C_SOURCES)
+
+MESA_SOURCES = \
+	$(MESA_SOURCES_FOR_DEPEND) \
+	$(PROGRAM_GENERATED_SOURCES)
 
 MESA_CXX_SOURCES = \
 	 $(SHADER_CXX_SOURCES)
@@ -331,7 +337,7 @@ MESA_GALLIUM_CXX_SOURCES = \
 
 # All the core C sources, for dependency checking
 ALL_SOURCES = \
-	$(MESA_SOURCES)		\
+	$(MESA_SOURCES_FOR_DEPEND)	\
 	$(MESA_CXX_SOURCES)	\
 	$(MESA_ASM_SOURCES)	\
 	$(STATETRACKER_SOURCES)
