@@ -77,6 +77,7 @@ intel_copy_texsubimage(struct intel_context *intel,
 {
    struct gl_context *ctx = &intel->ctx;
    struct intel_renderbuffer *irb;
+   bool copy_supported = false;
    bool copy_supported_with_alpha_override = false;
 
    intel_prepare_render(intel);
@@ -89,13 +90,21 @@ intel_copy_texsubimage(struct intel_context *intel,
       return GL_FALSE;
    }
 
+   copy_supported = intelImage->base.TexFormat == irb->Base.Format;
+
+   /* Converting ARGB8888 to XRGB8888 is trivial: ignore the alpha bits */
+   if (irb->Base.Format == MESA_FORMAT_ARGB8888 &&
+       intelImage->base.TexFormat == MESA_FORMAT_XRGB8888) {
+      copy_supported = true;
+   }
+
+   /* Converting XRGB8888 to ARGB8888 requires setting the alpha bits to 1.0 */
    if (irb->Base.Format == MESA_FORMAT_XRGB8888 &&
        intelImage->base.TexFormat == MESA_FORMAT_ARGB8888) {
       copy_supported_with_alpha_override = true;
    }
 
-   if (intelImage->base.TexFormat != irb->Base.Format &&
-       !copy_supported_with_alpha_override) {
+   if (!copy_supported && !copy_supported_with_alpha_override) {
       if (unlikely(INTEL_DEBUG & DEBUG_FALLBACKS))
 	 fprintf(stderr, "%s mismatched formats %s, %s\n",
 		 __FUNCTION__,
