@@ -11,18 +11,29 @@ env.Prepend(CPPPATH = [
     '#src/mapi',
     '#src/mesa',
     '#src/glsl',
+    '#src/glsl/glcpp',
 ])
 
+env.Append(YACCFLAGS = '-d')
+
+parser_env = env.Clone();
+parser_env.Append(YACCFLAGS = ['--defines=src/glsl/glsl_parser.h', '-p', '_mesa_glsl_'])
+
+glcpp_lexer = env.CFile('glcpp/glcpp-lex.c', 'glcpp/glcpp-lex.l')
+glcpp_parser = env.CFile('glcpp/glcpp-parse.c', 'glcpp/glcpp-parse.y')
+glsl_lexer = parser_env.CXXFile('glsl_lexer.cpp', 'glsl_lexer.ll')
+glsl_parser = parser_env.CXXFile('glsl_parser.cpp', 'glsl_parser.yy')
+
 sources = [
-    'glcpp/glcpp-lex.c',
-    'glcpp/glcpp-parse.c',
+    glcpp_lexer,
+    glcpp_parser[0],
     'glcpp/pp.c',
     'ast_expr.cpp',
     'ast_function.cpp',
     'ast_to_hir.cpp',
     'ast_type.cpp',
-    'glsl_lexer.cpp',
-    'glsl_parser.cpp',
+    glsl_lexer,
+    glsl_parser[0],
     'glsl_parser_extras.cpp',
     'glsl_types.cpp',
     'glsl_symbol_table.cpp',
