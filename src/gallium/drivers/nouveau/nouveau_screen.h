@@ -24,6 +24,9 @@ struct nouveau_screen {
 		void (*emit)(struct pipe_screen *, u32 sequence);
 		u32  (*update)(struct pipe_screen *);
 	} fence;
+
+	struct nouveau_mman *mm_VRAM;
+	struct nouveau_mman *mm_GART;
 };
 
 static INLINE struct nouveau_screen *

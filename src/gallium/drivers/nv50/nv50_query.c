@@ -68,7 +68,7 @@ nv50_query_allocate(struct nv50_context *nv50, struct nv50_query *q, int size)
       }
    }
    if (size) {
-      q->mm = nouveau_mm_allocate(screen->mm_GART, size, &q->bo, &q->base);
+      q->mm = nouveau_mm_allocate(screen->base.mm_GART, size, &q->bo, &q->base);
       if (!q->bo)
          return FALSE;
       q->offset = q->base;

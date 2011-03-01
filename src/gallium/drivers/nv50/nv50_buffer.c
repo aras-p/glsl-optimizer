@@ -27,14 +27,14 @@ nv50_buffer_allocate(struct nv50_screen *screen, struct nv50_resource *buf,
                      unsigned domain)
 {
    if (domain == NOUVEAU_BO_VRAM) {
-      buf->mm = nouveau_mm_allocate(screen->mm_VRAM, buf->base.width0, &buf->bo,
-                                    &buf->offset);
+      buf->mm = nouveau_mm_allocate(screen->base.mm_VRAM, buf->base.width0,
+                                    &buf->bo, &buf->offset);
       if (!buf->bo)
          return nv50_buffer_allocate(screen, buf, NOUVEAU_BO_GART);
    } else
    if (domain == NOUVEAU_BO_GART) {
-      buf->mm = nouveau_mm_allocate(screen->mm_GART, buf->base.width0, &buf->bo,
-                                    &buf->offset);
+      buf->mm = nouveau_mm_allocate(screen->base.mm_GART, buf->base.width0,
+                                    &buf->bo, &buf->offset);
       if (!buf->bo)
          return FALSE;
    }
@@ -101,7 +101,7 @@ nv50_buffer_download(struct nv50_context *nv50, struct nv50_resource *buf,
 
    assert(buf->domain == NOUVEAU_BO_VRAM);
 
-   mm = nouveau_mm_allocate(nv50->screen->mm_GART, size, &bounce, &offset);
+   mm = nouveau_mm_allocate(nv50->screen->base.mm_GART, size, &bounce, &offset);
    if (!bounce)
       return FALSE;
 
@@ -136,7 +136,7 @@ nv50_buffer_upload(struct nv50_context *nv50, struct nv50_resource *buf,
       return TRUE;
    }
 
-   mm = nouveau_mm_allocate(nv50->screen->mm_GART, size, &bounce, &offset);
+   mm = nouveau_mm_allocate(nv50->screen->base.mm_GART, size, &bounce, &offset);
    if (!bounce)
       return FALSE;
 

@@ -251,6 +251,10 @@ nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)
 
 	util_format_s3tc_init();
 
+	screen->mm_GART = nouveau_mm_create(dev,
+					    NOUVEAU_BO_GART | NOUVEAU_BO_MAP,
+					    0x000);
+	screen->mm_VRAM = nouveau_mm_create(dev, NOUVEAU_BO_VRAM, 0x000);
 	return 0;
 }
 
@@ -258,7 +262,12 @@ void
 nouveau_screen_fini(struct nouveau_screen *screen)
 {
 	struct pipe_winsys *ws = screen->base.winsys;
+
+	nouveau_mm_destroy(screen->mm_GART);
+	nouveau_mm_destroy(screen->mm_VRAM);
+
 	nouveau_channel_free(&screen->channel);
+
 	if (ws)
 		ws->destroy(ws);
 }

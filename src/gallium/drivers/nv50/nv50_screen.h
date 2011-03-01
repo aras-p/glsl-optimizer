@@ -54,8 +54,6 @@ struct nv50_screen {
 
    struct nouveau_notifier *sync;
 
-   struct nouveau_mman *mm_GART;
-   struct nouveau_mman *mm_VRAM;
    struct nouveau_mman *mm_VRAM_fe0;
 
    struct nouveau_grobj *tesla;
