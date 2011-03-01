@@ -474,7 +474,8 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
     }
 
     /* Handle compressed formats. */
-    if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
+    if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC ||
+        desc->layout == UTIL_FORMAT_LAYOUT_RGTC) {
         switch (util_format_get_blocksize(old_dst.format)) {
         case 8:
             /* 1 pixel = 4 bits,
