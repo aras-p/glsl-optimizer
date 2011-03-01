@@ -101,6 +101,8 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
 
    nvc0->pipe.flush = nvc0_flush;
 
+   if (!screen->cur_ctx)
+      screen->cur_ctx = nvc0;
    screen->base.channel->user_private = nvc0;
    screen->base.channel->flush_notify = nvc0_default_flush_notify;
 

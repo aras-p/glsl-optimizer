@@ -102,6 +102,8 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
 
    nv50->pipe.flush = nv50_flush;
 
+   if (!screen->cur_ctx)
+      screen->cur_ctx = nv50;
    screen->base.channel->user_private = nv50;
    screen->base.channel->flush_notify = nv50_default_flush_notify;
 
