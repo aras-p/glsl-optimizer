@@ -234,7 +234,7 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
       SB_BEGIN_3D(so, POLYGON_OFFSET_FACTOR, 1);
       SB_DATA    (so, fui(cso->offset_scale));
       SB_BEGIN_3D(so, POLYGON_OFFSET_UNITS, 1);
-      SB_DATA    (so, fui(cso->offset_units)); /* XXX: multiply by 2 ? */
+      SB_DATA    (so, fui(cso->offset_units * 2.0f));
    }
 
    assert(so->size < (sizeof(so->state) / sizeof(so->state[0])));
