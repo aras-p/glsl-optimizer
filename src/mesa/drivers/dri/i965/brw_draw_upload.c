@@ -242,30 +242,31 @@ static GLuint get_index_type(GLenum type)
 static void
 copy_array_to_vbo_array(struct brw_context *brw,
 			struct brw_vertex_element *element,
-			int count,
+			int min, int max,
 			struct brw_vertex_buffer *buffer,
 			GLuint dst_stride)
 {
+   int src_stride = element->glarray->StrideB;
+   const unsigned char *src = element->glarray->Ptr + min * src_stride;
+   int count = max - min + 1;
    GLuint size = count * dst_stride;
 
-   buffer->stride = dst_stride;
-   if (dst_stride == element->glarray->StrideB) {
-      intel_upload_data(&brw->intel, element->glarray->Ptr, size, dst_stride,
+   if (dst_stride == src_stride) {
+      intel_upload_data(&brw->intel, src, size, dst_stride,
 			&buffer->bo, &buffer->offset);
    } else {
-      const unsigned char *src = element->glarray->Ptr;
-      char *map = intel_upload_map(&brw->intel, size, dst_stride);
+      char * const map = intel_upload_map(&brw->intel, size, dst_stride);
       char *dst = map;
-      int i;
 
-      for (i = 0; i < count; i++) {
+      while (count--) {
 	 memcpy(dst, src, dst_stride);
-	 src += element->glarray->StrideB;
+	 src += src_stride;
 	 dst += dst_stride;
       }
       intel_upload_unmap(&brw->intel, map, size, dst_stride,
 			 &buffer->bo, &buffer->offset);
    }
+   buffer->stride = dst_stride;
 }
 
 static void brw_prepare_vertices(struct brw_context *brw)
@@ -413,7 +414,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 /* All uploads are interleaved, so upload the arrays together as
 	  * interleaved.  First, upload the contents and set up upload[0].
 	  */
-	 copy_array_to_vbo_array(brw, upload[0], max_index - min_index + 1,
+	 copy_array_to_vbo_array(brw, upload[0], min_index, max_index,
 				 &brw->vb.buffers[j], interleaved);
 
 	 for (i = 0; i < nr_uploads; i++) {
@@ -443,7 +444,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 
 	    offset = ALIGN(offset, get_size(upload[i]->glarray->Type));
 	    dst = map + offset;
-	    src += min_index * size;
+	    src += min_index * stride;
 
 	    for (n = 0; n < count; n++) {
 	       memcpy(dst, src, size);
@@ -467,7 +468,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
    }
    /* Upload non-interleaved arrays */
    for (i = 0; i < nr_uploads; i++) {
-      copy_array_to_vbo_array(brw, upload[i], max_index - min_index + 1,
+      copy_array_to_vbo_array(brw, upload[i], min_index, max_index,
 			      &brw->vb.buffers[j], upload[i]->element_size);
       upload[i]->buffer = j++;
       upload[i]->offset = 0;
