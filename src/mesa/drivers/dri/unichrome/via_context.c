@@ -65,8 +65,6 @@
 #define need_GL_EXT_secondary_color
 #include "main/remap_helper.h"
 
-#define DRIVER_DATE	"20060710"
-
 #include "vblank.h"
 #include "utils.h"
 
@@ -100,7 +98,7 @@ static const GLubyte *viaGetString(struct gl_context *ctx, GLenum name)
 
       offset = driGetRendererString( buffer, 
 				     chipset_names[(id > VIA_PM800) ? 0 : id],
-				     DRIVER_DATE, 0 );
+				     0 );
       return (GLubyte *)buffer;
    }
 

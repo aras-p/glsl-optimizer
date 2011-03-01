@@ -38,8 +38,6 @@
 #include "utils.h"
 
 
-#define DRIVER_DATE "20061110"
-
 /***************************************
  * Mesa's Driver Functions
  ***************************************/
@@ -71,7 +69,7 @@ static const GLubyte *savageDDGetString( struct gl_context *ctx, GLenum name )
    case GL_VENDOR:
       return (GLubyte *)"S3 Graphics Inc.";
    case GL_RENDERER:
-      offset = driGetRendererString( buffer, cardNames[chipset], DRIVER_DATE,
+      offset = driGetRendererString( buffer, cardNames[chipset],
 				     screen->agpMode );
       return (GLubyte *)buffer;
    default:

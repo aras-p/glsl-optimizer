@@ -76,8 +76,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "main/remap_helper.h"
 
-#define DRIVER_DATE	"20060602"
-
 #include "utils.h"
 #include "xmlpool.h" /* for symbolic values of enum-type options */
 
@@ -96,8 +94,7 @@ static const GLubyte *r200GetString( struct gl_context *ctx, GLenum name )
       return (GLubyte *)"Tungsten Graphics, Inc.";
 
    case GL_RENDERER:
-      offset = driGetRendererString( buffer, "R200", DRIVER_DATE,
-				     agp_mode );
+      offset = driGetRendererString( buffer, "R200", agp_mode );
 
       sprintf( & buffer[ offset ], " %sTCL",
 	       !(rmesa->radeon.TclFallback & R200_TCL_FALLBACK_TCL_DISABLE)

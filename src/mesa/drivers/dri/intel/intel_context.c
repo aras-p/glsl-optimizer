@@ -62,10 +62,6 @@ int INTEL_DEBUG = (0);
 #endif
 
 
-#define DRIVER_DATE                     "20100330 DEVELOPMENT"
-#define DRIVER_DATE_GEM                 "GEM " DRIVER_DATE
-
-
 static const GLubyte *
 intelGetString(struct gl_context * ctx, GLenum name)
 {
@@ -182,7 +178,7 @@ intelGetString(struct gl_context * ctx, GLenum name)
          break;
       }
 
-      (void) driGetRendererString(buffer, chipset, DRIVER_DATE_GEM, 0);
+      (void) driGetRendererString(buffer, chipset, 0);
       return (GLubyte *) buffer;
 
    default:

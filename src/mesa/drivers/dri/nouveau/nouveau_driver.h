@@ -48,7 +48,6 @@
 #include "nouveau_surface.h"
 #include "nv04_pushbuf.h"
 
-#define DRIVER_DATE	"20091015"
 #define DRIVER_AUTHOR	"Nouveau"
 
 struct nouveau_driver {

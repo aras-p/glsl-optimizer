@@ -67,8 +67,6 @@ int I810_DEBUG = (0);
 PUBLIC const char __driConfigOptions[] = { 0 };
 const GLuint __driNConfigOptions = 0;
 
-#define DRIVER_DATE                     "20050821"
-
 static const GLubyte *i810GetString( struct gl_context *ctx, GLenum name )
 {
    static char buffer[128];
@@ -88,7 +86,7 @@ static const GLubyte *i810GetString( struct gl_context *ctx, GLenum name )
       default:                  chipset = "Unknown i810-class Chipset"; break;
       }
 
-      (void) driGetRendererString( buffer, chipset, DRIVER_DATE, 0 );
+      (void) driGetRendererString( buffer, chipset, 0 );
       return (GLubyte *) buffer;
    }
    default:

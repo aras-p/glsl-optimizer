@@ -96,7 +96,6 @@ driParseDebugString( const char * debug,
  * 
  * \param buffer         Buffer to hold the \c GL_RENDERER string.
  * \param hardware_name  Name of the hardware.
- * \param driver_date    Driver date.
  * \param agp_mode       AGP mode (speed).
  * 
  * \returns
@@ -105,12 +104,12 @@ driParseDebugString( const char * debug,
  */
 unsigned
 driGetRendererString( char * buffer, const char * hardware_name,
-		      const char * driver_date, GLuint agp_mode )
+		      GLuint agp_mode )
 {
    unsigned offset;
    char *cpu;
 
-   offset = sprintf( buffer, "Mesa DRI %s %s", hardware_name, driver_date );
+   offset = sprintf( buffer, "Mesa DRI %s", hardware_name );
 
    /* Append any AGP-specific information.
     */

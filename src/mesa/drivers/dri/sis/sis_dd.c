@@ -45,8 +45,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "utils.h"
 
-#define DRIVER_DATE	"20060710"
-
 /* Return the width and height of the given buffer.
  */
 static void
@@ -78,7 +76,7 @@ sisGetString( struct gl_context *ctx, GLenum name )
       return (GLubyte *)"Eric Anholt";
 
    case GL_RENDERER:
-      offset = driGetRendererString( buffer, "SiS", DRIVER_DATE, agp_mode );
+      offset = driGetRendererString( buffer, "SiS", agp_mode );
 
       return (GLubyte *)buffer;
 
