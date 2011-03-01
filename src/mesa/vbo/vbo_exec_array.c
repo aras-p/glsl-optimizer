@@ -52,6 +52,7 @@ check_buffers_are_unmapped(const struct gl_client_array **inputs)
       if (inputs[i]) {
          struct gl_buffer_object *obj = inputs[i]->BufferObj;
          assert(!_mesa_bufferobj_mapped(obj));
+         (void) obj;
       }
    }
 #endif
