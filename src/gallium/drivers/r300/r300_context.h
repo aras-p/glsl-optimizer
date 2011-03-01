@@ -219,11 +219,11 @@ struct r300_vertex_stream_state {
 };
 
 struct r300_invariant_state {
-    uint32_t cb[22];
+    uint32_t cb[26];
 };
 
 struct r300_vap_invariant_state {
-    uint32_t cb[9];
+    uint32_t cb[11];
 };
 
 struct r300_viewport_state {

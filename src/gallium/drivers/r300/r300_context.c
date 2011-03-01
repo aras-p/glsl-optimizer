@@ -202,11 +202,11 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     /* SC. */
     R300_INIT_ATOM(scissor_state, 3);
     /* GB, FG, GA, SU, SC, RB3D. */
-    R300_INIT_ATOM(invariant_state, 18 + (is_rv350 ? 4 : 0));
+    R300_INIT_ATOM(invariant_state, 18 + (is_rv350 ? 4 : 0) + (is_r500 ? 4 : 0));
     /* VAP. */
     R300_INIT_ATOM(viewport_state, 9);
     R300_INIT_ATOM(pvs_flush, 2);
-    R300_INIT_ATOM(vap_invariant_state, 9);
+    R300_INIT_ATOM(vap_invariant_state, is_r500 ? 11 : 9);
     R300_INIT_ATOM(vertex_stream_state, 0);
     R300_INIT_ATOM(vs_state, 0);
     R300_INIT_ATOM(vs_constants, 0);
@@ -330,7 +330,7 @@ static void r300_init_states(struct pipe_context *pipe)
 
     /* Initialize the VAP invariant state. */
     {
-        BEGIN_CB(vap_invariant->cb, 9);
+        BEGIN_CB(vap_invariant->cb, r300->vap_invariant_state.size);
         OUT_CB_REG(VAP_PVS_VTX_TIMEOUT_REG, 0xffff);
         OUT_CB_REG_SEQ(R300_VAP_GB_VERT_CLIP_ADJ, 4);
         OUT_CB_32F(1.0);
@@ -338,6 +338,10 @@ static void r300_init_states(struct pipe_context *pipe)
         OUT_CB_32F(1.0);
         OUT_CB_32F(1.0);
         OUT_CB_REG(R300_VAP_PSC_SGN_NORM_CNTL, R300_SGN_NORM_NO_ZERO);
+
+        if (r300->screen->caps.is_r500) {
+            OUT_CB_REG(R500_VAP_TEX_TO_COLOR_CNTL, 0);
+        }
         END_CB;
     }
 
@@ -357,6 +361,11 @@ static void r300_init_states(struct pipe_context *pipe)
         if (r300->screen->caps.is_rv350) {
             OUT_CB_REG(R500_RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD, 0x01010101);
             OUT_CB_REG(R500_RB3D_DISCARD_SRC_PIXEL_GTE_THRESHOLD, 0xFEFEFEFE);
+        }
+
+        if (r300->screen->caps.is_r500) {
+            OUT_CB_REG(R500_GA_COLOR_CONTROL_PS3, 0);
+            OUT_CB_REG(R500_SU_TEX_WRAP_PS3, 0);
         }
         END_CB;
     }
