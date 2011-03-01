@@ -32,6 +32,7 @@
 #include "formats.h"
 #include "image.h"
 #include "mtypes.h"
+#include "pbo.h"
 #include "state.h"
 
 

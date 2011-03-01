@@ -7,6 +7,7 @@
 #include "main/bufferobj.h"
 #include "main/context.h"
 #include "main/formats.h"
+#include "main/pbo.h"
 #include "main/texcompress.h"
 #include "main/texstore.h"
 #include "main/texgetimage.h"

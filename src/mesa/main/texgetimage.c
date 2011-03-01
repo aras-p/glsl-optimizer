@@ -38,6 +38,7 @@
 #include "mfeatures.h"
 #include "mtypes.h"
 #include "pack.h"
+#include "pbo.h"
 #include "texgetimage.h"
 #include "teximage.h"
 

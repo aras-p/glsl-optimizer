@@ -30,11 +30,11 @@
 
 #include "glheader.h"
 #include "imports.h"
-#include "bufferobj.h"
 #include "context.h"
 #include "image.h"
 #include "enums.h"
 #include "pack.h"
+#include "pbo.h"
 #include "polygon.h"
 #include "mtypes.h"
 

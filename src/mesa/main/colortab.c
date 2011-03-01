@@ -32,6 +32,7 @@
 #include "mfeatures.h"
 #include "mtypes.h"
 #include "pack.h"
+#include "pbo.h"
 #include "state.h"
 #include "teximage.h"
 #include "texstate.h"

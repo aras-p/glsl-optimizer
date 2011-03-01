@@ -35,6 +35,7 @@
 #include "macros.h"
 #include "mfeatures.h"
 #include "pixel.h"
+#include "pbo.h"
 #include "mtypes.h"
 #include "main/dispatch.h"
 

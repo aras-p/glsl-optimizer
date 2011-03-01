@@ -206,22 +206,4 @@ _mesa_store_compressed_texsubimage3d(struct gl_context *ctx, GLenum target,
                                 struct gl_texture_image *texImage);
 
 
-extern const GLvoid *
-_mesa_validate_pbo_teximage(struct gl_context *ctx, GLuint dimensions,
-			    GLsizei width, GLsizei height, GLsizei depth,
-			    GLenum format, GLenum type, const GLvoid *pixels,
-			    const struct gl_pixelstore_attrib *unpack,
-			    const char *funcName);
-
-extern const GLvoid *
-_mesa_validate_pbo_compressed_teximage(struct gl_context *ctx,
-                                    GLsizei imageSize, const GLvoid *pixels,
-                                    const struct gl_pixelstore_attrib *packing,
-                                    const char *funcName);
-
-extern void
-_mesa_unmap_teximage_pbo(struct gl_context *ctx,
-                         const struct gl_pixelstore_attrib *unpack);
-
-
 #endif

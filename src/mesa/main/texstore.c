@@ -61,6 +61,7 @@
 #include "mfeatures.h"
 #include "mtypes.h"
 #include "pack.h"
+#include "pbo.h"
 #include "imports.h"
 #include "pack.h"
 #include "texcompress.h"
@@ -4197,94 +4198,6 @@ _mesa_texstore(TEXSTORE_PARAMS)
                         srcWidth, srcHeight, srcDepth,
                         srcFormat, srcType, srcAddr, srcPacking);
    return success;
-}
-
-
-/**
- * Check if an unpack PBO is active prior to fetching a texture image.
- * If so, do bounds checking and map the buffer into main memory.
- * Any errors detected will be recorded.
- * The caller _must_ call _mesa_unmap_teximage_pbo() too!
- */
-const GLvoid *
-_mesa_validate_pbo_teximage(struct gl_context *ctx, GLuint dimensions,
-			    GLsizei width, GLsizei height, GLsizei depth,
-			    GLenum format, GLenum type, const GLvoid *pixels,
-			    const struct gl_pixelstore_attrib *unpack,
-			    const char *funcName)
-{
-   GLubyte *buf;
-
-   if (!_mesa_is_bufferobj(unpack->BufferObj)) {
-      /* no PBO */
-      return pixels;
-   }
-   if (!_mesa_validate_pbo_access(dimensions, unpack, width, height, depth,
-                                  format, type, pixels)) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, funcName, "(invalid PBO access)");
-      return NULL;
-   }
-
-   buf = (GLubyte *) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                                          GL_READ_ONLY_ARB, unpack->BufferObj);
-   if (!buf) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, funcName, "(PBO is mapped)");
-      return NULL;
-   }
-
-   return ADD_POINTERS(buf, pixels);
-}
-
-
-/**
- * Check if an unpack PBO is active prior to fetching a compressed texture
- * image.
- * If so, do bounds checking and map the buffer into main memory.
- * Any errors detected will be recorded.
- * The caller _must_ call _mesa_unmap_teximage_pbo() too!
- */
-const GLvoid *
-_mesa_validate_pbo_compressed_teximage(struct gl_context *ctx,
-                                 GLsizei imageSize, const GLvoid *pixels,
-                                 const struct gl_pixelstore_attrib *packing,
-                                 const char *funcName)
-{
-   GLubyte *buf;
-
-   if (!_mesa_is_bufferobj(packing->BufferObj)) {
-      /* not using a PBO - return pointer unchanged */
-      return pixels;
-   }
-   if ((const GLubyte *) pixels + imageSize >
-       ((const GLubyte *) 0) + packing->BufferObj->Size) {
-      /* out of bounds read! */
-      _mesa_error(ctx, GL_INVALID_OPERATION, funcName, "(invalid PBO access)");
-      return NULL;
-   }
-
-   buf = (GLubyte*) ctx->Driver.MapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                                         GL_READ_ONLY_ARB, packing->BufferObj);
-   if (!buf) {
-      _mesa_error(ctx, GL_INVALID_OPERATION, funcName, "(PBO is mapped");
-      return NULL;
-   }
-
-   return ADD_POINTERS(buf, pixels);
-}
-
-
-/**
- * This function must be called after either of the validate_pbo_*_teximage()
- * functions.  It unmaps the PBO buffer if it was mapped earlier.
- */
-void
-_mesa_unmap_teximage_pbo(struct gl_context *ctx,
-                         const struct gl_pixelstore_attrib *unpack)
-{
-   if (_mesa_is_bufferobj(unpack->BufferObj)) {
-      ctx->Driver.UnmapBuffer(ctx, GL_PIXEL_UNPACK_BUFFER_EXT,
-                              unpack->BufferObj);
-   }
 }
 
 

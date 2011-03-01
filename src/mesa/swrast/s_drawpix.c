@@ -31,6 +31,7 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/pack.h"
+#include "main/pbo.h"
 #include "main/pixeltransfer.h"
 #include "main/state.h"
 

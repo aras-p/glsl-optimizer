@@ -59,6 +59,7 @@ MAIN_SOURCES = \
 	main/multisample.c \
 	main/nvprogram.c \
 	main/pack.c \
+	main/pbo.c \
 	main/pixel.c \
 	main/pixelstore.c \
 	main/pixeltransfer.c \

@@ -27,6 +27,7 @@
  **************************************************************************/
 
 #include "main/mtypes.h"
+#include "main/pbo.h"
 #include "main/texobj.h"
 #include "main/texstore.h"
 #include "main/texcompress.h"

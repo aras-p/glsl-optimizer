@@ -38,6 +38,7 @@
 #include "main/context.h"
 #include "main/image.h"
 #include "main/pack.h"
+#include "main/pbo.h"
 
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"

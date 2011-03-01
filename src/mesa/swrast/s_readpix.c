@@ -24,7 +24,6 @@
 
 
 #include "main/glheader.h"
-#include "main/bufferobj.h"
 #include "main/colormac.h"
 #include "main/feedback.h"
 #include "main/formats.h"
@@ -32,6 +31,7 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/pack.h"
+#include "main/pbo.h"
 #include "main/state.h"
 
 #include "s_context.h"
