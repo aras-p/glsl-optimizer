@@ -650,6 +650,9 @@ static uint32_t r300_get_border_color(enum pipe_format format,
             util_pack_color(border_swizzled, PIPE_FORMAT_B4G4R4A4_UNORM, &uc);
             return uc.ui;
         case PIPE_FORMAT_RGTC2_SNORM:
+            border_swizzled[0] = border_swizzled[2];
+            util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_SNORM, &uc);
+            return uc.ui;
         case PIPE_FORMAT_RGTC2_UNORM:
             util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
             return uc.ui;

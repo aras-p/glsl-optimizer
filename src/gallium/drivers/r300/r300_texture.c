@@ -213,7 +213,7 @@ uint32_t r300_translate_texformat(enum pipe_format format,
             case PIPE_FORMAT_RGTC1_UNORM:
                 return R500_TX_FORMAT_ATI1N | result;
             case PIPE_FORMAT_RGTC2_SNORM:
-                result |= sign_bit[0] | sign_bit[1];
+                result |= sign_bit[2] | sign_bit[3];
             case PIPE_FORMAT_RGTC2_UNORM:
                 return R400_TX_FORMAT_ATI2N | result;
             default:
