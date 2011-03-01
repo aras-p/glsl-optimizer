@@ -71,7 +71,7 @@ i915_winsys_batchbuffer_write(struct i915_winsys_batchbuffer *batch,
 {
    assert (i915_winsys_batchbuffer_space(batch) >= size);
 
-   memcpy(data, batch->ptr, size);
+   memcpy(batch->ptr, data, size);
    batch->ptr += size;
 }
 
