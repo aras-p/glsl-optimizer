@@ -227,10 +227,10 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
    for (i = 0; i < nvc0->num_vtxbufs; ++i) {
       uint8_t *data;
       struct pipe_vertex_buffer *vb = &nvc0->vtxbuf[i];
-      struct nvc0_resource *res = nvc0_resource(vb->buffer);
+      struct nv04_resource *res = nv04_resource(vb->buffer);
 
-      data = nvc0_resource_map_offset(nvc0, res,
-                                      vb->buffer_offset, NOUVEAU_BO_RD);
+      data = nouveau_resource_map_offset(&nvc0->pipe, res,
+                                         vb->buffer_offset, NOUVEAU_BO_RD);
 
       if (apply_bias && likely(!(nvc0->vertex->instance_bufs & (1 << i))))
          data += info->index_bias * vb->stride;
@@ -239,9 +239,9 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
    }
 
    if (info->indexed) {
-      ctx.idxbuf = nvc0_resource_map_offset(nvc0,
-                                            nvc0_resource(nvc0->idxbuf.buffer),
-                                            nvc0->idxbuf.offset, NOUVEAU_BO_RD);
+      ctx.idxbuf = nouveau_resource_map_offset(&nvc0->pipe,
+                                               nv04_resource(nvc0->idxbuf.buffer),
+                                               nvc0->idxbuf.offset, NOUVEAU_BO_RD);
       if (!ctx.idxbuf)
          return;
       index_size = nvc0->idxbuf.index_size;
@@ -284,8 +284,8 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
    }
 
    if (info->indexed)
-      nvc0_resource_unmap(nvc0_resource(nvc0->idxbuf.buffer));
+      nouveau_resource_unmap(nv04_resource(nvc0->idxbuf.buffer));
 
    for (i = 0; i < nvc0->num_vtxbufs; ++i)
-      nvc0_resource_unmap(nvc0_resource(nvc0->vtxbuf[i].buffer));
+      nouveau_resource_unmap(nv04_resource(nvc0->vtxbuf[i].buffer));
 }

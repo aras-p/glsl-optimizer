@@ -167,7 +167,7 @@ nvc0_validate_tic(struct nvc0_context *nvc0, int s)
 
    for (i = 0; i < nvc0->num_textures[s]; ++i) {
       struct nvc0_tic_entry *tic = nvc0_tic_entry(nvc0->textures[s][i]);
-      struct nvc0_resource *res;
+      struct nv04_resource *res;
 
       if (!tic) {
          BEGIN_RING(chan, RING_3D(BIND_TIC(s)), 1);
@@ -197,14 +197,14 @@ nvc0_validate_tic(struct nvc0_context *nvc0, int s)
 
          need_flush = TRUE;
       } else
-      if (res->status & NVC0_BUFFER_STATUS_GPU_WRITING) {
+      if (res->status & NOUVEAU_BUFFER_STATUS_GPU_WRITING) {
          BEGIN_RING(chan, RING_3D(TEX_CACHE_CTL), 1);
          OUT_RING  (chan, (tic->id << 4) | 1);
       }
       nvc0->screen->tic.lock[tic->id / 32] |= 1 << (tic->id % 32);
 
-      res->status &= ~NVC0_BUFFER_STATUS_GPU_WRITING;
-      res->status |=  NVC0_BUFFER_STATUS_GPU_READING;
+      res->status &= ~NOUVEAU_BUFFER_STATUS_GPU_WRITING;
+      res->status |=  NOUVEAU_BUFFER_STATUS_GPU_READING;
 
       nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_TEXTURES, res,
                                NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
@@ -252,8 +252,9 @@ nvc0_validate_tsc(struct nvc0_context *nvc0, int s)
       if (tsc->id < 0) {
          tsc->id = nvc0_screen_tsc_alloc(nvc0->screen, tsc);
 
-         nvc0_m2mf_push_linear(nvc0, nvc0->screen->txc, NOUVEAU_BO_VRAM,
-                               65536 + tsc->id * 32, 32, tsc->tsc);
+         nvc0_m2mf_push_linear(&nvc0->pipe, nvc0->screen->txc,
+                               65536 + tsc->id * 32, NOUVEAU_BO_VRAM,
+                               32, tsc->tsc);
          need_flush = TRUE;
       }
       nvc0->screen->tsc.lock[tsc->id / 32] |= 1 << (tsc->id % 32);

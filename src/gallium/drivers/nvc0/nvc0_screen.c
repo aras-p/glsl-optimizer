@@ -23,7 +23,6 @@
 #include "util/u_format_s3tc.h"
 #include "pipe/p_screen.h"
 
-#include "nvc0_fence.h"
 #include "nvc0_context.h"
 #include "nvc0_screen.h"
 
@@ -200,8 +199,8 @@ nvc0_screen_destroy(struct pipe_screen *pscreen)
 {
    struct nvc0_screen *screen = nvc0_screen(pscreen);
 
-   nvc0_fence_wait(screen->fence.current);
-   nvc0_fence_reference(&screen->fence.current, NULL);
+   nouveau_fence_wait(screen->base.fence.current);
+   nouveau_fence_ref(NULL, &screen->base.fence.current);
 
    nouveau_bo_ref(NULL, &screen->text);
    nouveau_bo_ref(NULL, &screen->tls);
@@ -214,9 +213,7 @@ nvc0_screen_destroy(struct pipe_screen *pscreen)
    if (screen->tic.entries)
       FREE(screen->tic.entries);
 
-   nvc0_mm_destroy(screen->mm_GART);
-   nvc0_mm_destroy(screen->mm_VRAM);
-   nvc0_mm_destroy(screen->mm_VRAM_fe0);
+   nouveau_mm_destroy(screen->mm_VRAM_fe0);
 
    nouveau_grobj_free(&screen->fermi);
    nouveau_grobj_free(&screen->eng2d);
@@ -243,30 +240,6 @@ nvc0_graph_set_macro(struct nvc0_screen *screen, uint32_t m, unsigned pos,
    OUT_RINGp (chan, data, size);
 
    return pos + size;
-}
-
-static void
-nvc0_screen_fence_reference(struct pipe_screen *pscreen,
-                            struct pipe_fence_handle **ptr,
-                            struct pipe_fence_handle *fence)
-{
-   nvc0_fence_reference((struct nvc0_fence **)ptr, nvc0_fence(fence));
-}
-
-static int
-nvc0_screen_fence_signalled(struct pipe_screen *pscreen,
-                            struct pipe_fence_handle *fence,
-                            unsigned flags)
-{
-   return !(nvc0_fence_signalled(nvc0_fence(fence)));
-}
-
-static int
-nvc0_screen_fence_finish(struct pipe_screen *pscreen,
-                         struct pipe_fence_handle *fence,
-                         unsigned flags)
-{
-   return nvc0_fence_wait((struct nvc0_fence *)fence) != TRUE;
 }
 
 static void
@@ -342,6 +315,28 @@ nvc0_magic_3d_init(struct nouveau_channel *chan)
    OUT_RING  (chan, 0);
 }
 
+static void
+nvc0_screen_fence_emit(struct pipe_screen *pscreen, u32 sequence)
+{
+   struct nvc0_screen *screen = nvc0_screen(pscreen);
+   struct nouveau_channel *chan = screen->base.channel;
+
+   MARK_RING (chan, 5, 2);
+   BEGIN_RING(chan, RING_3D(QUERY_ADDRESS_HIGH), 4);
+   OUT_RELOCh(chan, screen->fence.bo, 0, NOUVEAU_BO_WR);
+   OUT_RELOCl(chan, screen->fence.bo, 0, NOUVEAU_BO_WR);
+   OUT_RING  (chan, sequence);
+   OUT_RING  (chan, NVC0_3D_QUERY_GET_FENCE | NVC0_3D_QUERY_GET_SHORT |
+              (0xf << NVC0_3D_QUERY_GET_UNIT__SHIFT));
+}
+
+static u32
+nvc0_screen_fence_update(struct pipe_screen *pscreen)
+{
+   struct nvc0_screen *screen = nvc0_screen(pscreen);
+   return screen->fence.map[0];
+}
+
 #define FAIL_SCREEN_INIT(str, err)                    \
    do {                                               \
       NOUVEAU_ERR(str, err);                          \
@@ -377,14 +372,13 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    pscreen->get_param = nvc0_screen_get_param;
    pscreen->get_shader_param = nvc0_screen_get_shader_param;
    pscreen->get_paramf = nvc0_screen_get_paramf;
-   pscreen->fence_reference = nvc0_screen_fence_reference;
-   pscreen->fence_signalled = nvc0_screen_fence_signalled;
-   pscreen->fence_finish = nvc0_screen_fence_finish;
 
    nvc0_screen_init_resource_functions(pscreen);
 
    screen->base.vertex_buffer_flags = NOUVEAU_BO_GART;
    screen->base.index_buffer_flags = 0;
+   screen->base.copy_data = nvc0_m2mf_copy_linear;
+   screen->base.push_data = nvc0_m2mf_push_linear;
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0, 4096,
                         &screen->fence.bo);
@@ -393,6 +387,8 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    nouveau_bo_map(screen->fence.bo, NOUVEAU_BO_RDWR);
    screen->fence.map = screen->fence.bo->map;
    nouveau_bo_unmap(screen->fence.bo);
+   screen->base.fence.emit = nvc0_screen_fence_emit;
+   screen->base.fence.update = nvc0_screen_fence_update;
 
    for (i = 0; i < NVC0_SCRATCH_NR_BUFFERS; ++i) {
       ret = nouveau_bo_new(dev, NOUVEAU_BO_GART, 0, NVC0_SCRATCH_SIZE,
@@ -619,12 +615,9 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    screen->tic.entries = CALLOC(4096, sizeof(void *));
    screen->tsc.entries = screen->tic.entries + 2048;
 
-   screen->mm_GART = nvc0_mm_create(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP,
-                                    0x000);
-   screen->mm_VRAM = nvc0_mm_create(dev, NOUVEAU_BO_VRAM, 0x000);
-   screen->mm_VRAM_fe0 = nvc0_mm_create(dev, NOUVEAU_BO_VRAM, 0xfe0);
+   screen->mm_VRAM_fe0 = nouveau_mm_create(dev, NOUVEAU_BO_VRAM, 0xfe0);
 
-   nvc0_screen_fence_new(screen, &screen->fence.current, FALSE);
+   nouveau_fence_new(&screen->base, &screen->base.fence.current, FALSE);
 
    return pscreen;
 

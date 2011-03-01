@@ -131,13 +131,13 @@ nvc0_emit_vtxattr(struct nvc0_context *nvc0, struct pipe_vertex_buffer *vb,
 {
    const void *data;
    struct nouveau_channel *chan = nvc0->screen->base.channel;
-   struct nvc0_resource *res = nvc0_resource(vb->buffer);
+   struct nv04_resource *res = nv04_resource(vb->buffer);
    float v[4];
    int i;
    const unsigned nc = util_format_get_nr_components(ve->src_format);
 
-   data = nvc0_resource_map_offset(nvc0, res, vb->buffer_offset +
-                                   ve->src_offset, NOUVEAU_BO_RD);
+   data = nouveau_resource_map_offset(&nvc0->pipe, res, vb->buffer_offset +
+                                      ve->src_offset, NOUVEAU_BO_RD);
 
    util_format_read_4f(ve->src_format, v, 0, data, 0, 0, 0, 1, 1);
 
@@ -167,7 +167,7 @@ static void
 nvc0_prevalidate_vbufs(struct nvc0_context *nvc0)
 {
    struct pipe_vertex_buffer *vb;
-   struct nvc0_resource *buf;
+   struct nv04_resource *buf;
    int i;
    uint32_t base, size;
 
@@ -179,27 +179,27 @@ nvc0_prevalidate_vbufs(struct nvc0_context *nvc0)
       vb = &nvc0->vtxbuf[i];
       if (!vb->stride)
          continue;
-      buf = nvc0_resource(vb->buffer);
+      buf = nv04_resource(vb->buffer);
 
       /* NOTE: user buffers with temporary storage count as mapped by GPU */
-      if (!nvc0_resource_mapped_by_gpu(vb->buffer)) {
+      if (!nouveau_resource_mapped_by_gpu(vb->buffer)) {
          if (nvc0->vbo_push_hint) {
             nvc0->vbo_fifo = ~0;
             continue;
          } else {
-            if (buf->status & NVC0_BUFFER_STATUS_USER_MEMORY) {
+            if (buf->status & NOUVEAU_BUFFER_STATUS_USER_MEMORY) {
                nvc0->vbo_user |= 1 << i;
                assert(vb->stride > vb->buffer_offset);
                nvc0_vbuf_range(nvc0, i, &base, &size);
-               nvc0_user_buffer_upload(buf, base, size);
+               nouveau_user_buffer_upload(buf, base, size);
             } else {
-               nvc0_buffer_migrate(nvc0, buf, NOUVEAU_BO_GART);
+               nouveau_buffer_migrate(&nvc0->pipe, buf, NOUVEAU_BO_GART);
             }
             nvc0->vbo_dirty = TRUE;
          }
       }
       nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_VERTEX, buf, NOUVEAU_BO_RD);
-      nvc0_buffer_adjust_score(nvc0, buf, 1);
+      nouveau_buffer_adjust_score(&nvc0->pipe, buf, 1);
    }
 }
 
@@ -215,7 +215,7 @@ nvc0_update_user_vbufs(struct nvc0_context *nvc0)
       struct pipe_vertex_element *ve = &nvc0->vertex->element[i].pipe;
       const int b = ve->vertex_buffer_index;
       struct pipe_vertex_buffer *vb = &nvc0->vtxbuf[b];
-      struct nvc0_resource *buf = nvc0_resource(vb->buffer);
+      struct nv04_resource *buf = nv04_resource(vb->buffer);
 
       if (!(nvc0->vbo_user & (1 << b)))
          continue;
@@ -228,7 +228,7 @@ nvc0_update_user_vbufs(struct nvc0_context *nvc0)
 
       if (!(written & (1 << b))) {
          written |= 1 << b;
-         nvc0_user_buffer_upload(buf, base, size);
+         nouveau_user_buffer_upload(buf, base, size);
       }
       offset = vb->buffer_offset + ve->src_offset;
 
@@ -252,7 +252,7 @@ nvc0_release_user_vbufs(struct nvc0_context *nvc0)
       int i = ffs(vbo_user) - 1;
       vbo_user &= ~(1 << i);
 
-      nvc0_buffer_release_gpu_storage(nvc0_resource(nvc0->vtxbuf[i].buffer));
+      nouveau_buffer_release_gpu_storage(nv04_resource(nvc0->vtxbuf[i].buffer));
    }
 }
 
@@ -286,7 +286,7 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
    }
 
    for (i = 0; i < vertex->num_elements; ++i) {
-      struct nvc0_resource *res;
+      struct nv04_resource *res;
       unsigned size, offset;
       
       ve = &vertex->element[i];
@@ -303,7 +303,7 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
          IMMED_RING(chan, RING_3D(VERTEX_ARRAY_PER_INSTANCE(i)), 0);
       }
 
-      res = nvc0_resource(vb->buffer);
+      res = nv04_resource(vb->buffer);
 
       if (nvc0->vbo_fifo || unlikely(vb->stride == 0)) {
          if (!nvc0->vbo_fifo)
@@ -371,7 +371,7 @@ nvc0_draw_vbo_flush_notify(struct nouveau_channel *chan)
 {
    struct nvc0_context *nvc0 = chan->user_private;
 
-   nvc0_screen_fence_update(nvc0->screen, TRUE);
+   nouveau_fence_update(&nvc0->screen->base, TRUE);
 
    nvc0_bufctx_emit_relocs(nvc0);
 }
@@ -513,12 +513,12 @@ nvc0_draw_elements(struct nvc0_context *nvc0, boolean shorten,
       nvc0->state.index_bias = index_bias;
    }
 
-   if (nvc0_resource_mapped_by_gpu(nvc0->idxbuf.buffer)) {
-      struct nvc0_resource *res = nvc0_resource(nvc0->idxbuf.buffer);
+   if (nouveau_resource_mapped_by_gpu(nvc0->idxbuf.buffer)) {
+      struct nv04_resource *res = nv04_resource(nvc0->idxbuf.buffer);
       unsigned offset = nvc0->idxbuf.offset;
       unsigned limit = nvc0->idxbuf.buffer->width0 - 1;
 
-      nvc0_buffer_adjust_score(nvc0, res, 1);
+      nouveau_buffer_adjust_score(&nvc0->pipe, res, 1);
 
       while (instance_count--) {
          MARK_RING (chan, 11, 4);
@@ -539,8 +539,9 @@ nvc0_draw_elements(struct nvc0_context *nvc0, boolean shorten,
          mode |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
       }
    } else {
-      data = nvc0_resource_map_offset(nvc0, nvc0_resource(nvc0->idxbuf.buffer),
-                                      nvc0->idxbuf.offset, NOUVEAU_BO_RD);
+      data = nouveau_resource_map_offset(&nvc0->pipe,
+                                         nv04_resource(nvc0->idxbuf.buffer),
+                                         nvc0->idxbuf.offset, NOUVEAU_BO_RD);
       if (!data)
          return;
 

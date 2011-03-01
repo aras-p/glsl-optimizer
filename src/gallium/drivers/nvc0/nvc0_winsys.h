@@ -84,18 +84,18 @@ IMMED_RING(struct nouveau_channel *chan, uint32_t mthd, unsigned data)
 }
 
 static INLINE int
-OUT_RESRCh(struct nouveau_channel *chan, struct nvc0_resource *res,
+OUT_RESRCh(struct nouveau_channel *chan, struct nv04_resource *res,
            unsigned delta, unsigned flags)
 {
    return OUT_RELOCh(chan, res->bo, res->offset + delta, res->domain | flags);
 }
 
 static INLINE int
-OUT_RESRCl(struct nouveau_channel *chan, struct nvc0_resource *res,
+OUT_RESRCl(struct nouveau_channel *chan, struct nv04_resource *res,
            unsigned delta, unsigned flags)
 {
    if (flags & NOUVEAU_BO_WR)
-      res->status |= NVC0_BUFFER_STATUS_GPU_WRITING;
+      res->status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
    return OUT_RELOCl(chan, res->bo, res->offset + delta, res->domain | flags);
 }
 

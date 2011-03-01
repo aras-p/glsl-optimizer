@@ -3,6 +3,7 @@
 
 #define NOUVEAU_NVC0
 #include "nouveau/nouveau_screen.h"
+#include "nouveau/nouveau_mm.h"
 #undef NOUVEAU_NVC0
 #include "nvc0_winsys.h"
 #include "nvc0_stateobj.h"
@@ -10,9 +11,7 @@
 #define NVC0_TIC_MAX_ENTRIES 2048
 #define NVC0_TSC_MAX_ENTRIES 2048
 
-struct nvc0_mman;
 struct nvc0_context;
-struct nvc0_fence;
 
 #define NVC0_SCRATCH_SIZE (2 << 20)
 #define NVC0_SCRATCH_NR_BUFFERS 2
@@ -53,18 +52,11 @@ struct nvc0_screen {
    } tsc;
 
    struct {
-      uint32_t *map;
-      struct nvc0_fence *head;
-      struct nvc0_fence *tail;
-      struct nvc0_fence *current;
-      uint32_t sequence;
-      uint32_t sequence_ack;
       struct nouveau_bo *bo;
+      uint32_t *map;
    } fence;
 
-   struct nvc0_mman *mm_GART;
-   struct nvc0_mman *mm_VRAM;
-   struct nvc0_mman *mm_VRAM_fe0;
+   struct nouveau_mman *mm_VRAM_fe0;
 
    struct nouveau_grobj *fermi;
    struct nouveau_grobj *eng2d;
@@ -77,54 +69,26 @@ nvc0_screen(struct pipe_screen *screen)
    return (struct nvc0_screen *)screen;
 }
 
-/* Since a resource can be migrated, we need to decouple allocations from
- * them. This struct is linked with fences for delayed freeing of allocs.
- */
-struct nvc0_mm_allocation {
-   struct nvc0_mm_allocation *next;
-   void *priv;
-   uint32_t offset;
-};
-
-static INLINE void
-nvc0_fence_sched_release(struct nvc0_fence *nf, struct nvc0_mm_allocation *mm)
-{
-   mm->next = nf->buffers;
-   nf->buffers = mm;
-}
-
-extern struct nvc0_mman *
-nvc0_mm_create(struct nouveau_device *, uint32_t domain, uint32_t storage_type);
-
-extern void
-nvc0_mm_destroy(struct nvc0_mman *);
-
-extern struct nvc0_mm_allocation *
-nvc0_mm_allocate(struct nvc0_mman *,
-                 uint32_t size, struct nouveau_bo **, uint32_t *offset);
-extern void
-nvc0_mm_free(struct nvc0_mm_allocation *);
-
 void nvc0_screen_make_buffers_resident(struct nvc0_screen *);
 
 int nvc0_screen_tic_alloc(struct nvc0_screen *, void *);
 int nvc0_screen_tsc_alloc(struct nvc0_screen *, void *);
 
 static INLINE void
-nvc0_resource_fence(struct nvc0_resource *res, uint32_t flags)
+nvc0_resource_fence(struct nv04_resource *res, uint32_t flags)
 {
    struct nvc0_screen *screen = nvc0_screen(res->base.screen);
 
    if (res->mm) {
-      nvc0_fence_reference(&res->fence, screen->fence.current);
+      nouveau_fence_ref(screen->base.fence.current, &res->fence);
 
       if (flags & NOUVEAU_BO_WR)
-         nvc0_fence_reference(&res->fence_wr, screen->fence.current);
+         nouveau_fence_ref(screen->base.fence.current, &res->fence_wr);
    }
 }
 
 static INLINE void
-nvc0_resource_validate(struct nvc0_resource *res, uint32_t flags)
+nvc0_resource_validate(struct nv04_resource *res, uint32_t flags)
 {
    struct nvc0_screen *screen = nvc0_screen(res->base.screen);
 
@@ -132,28 +96,12 @@ nvc0_resource_validate(struct nvc0_resource *res, uint32_t flags)
       nouveau_bo_validate(screen->base.channel, res->bo, flags);
 
       if (flags & NOUVEAU_BO_WR)
-         res->status |= NVC0_BUFFER_STATUS_GPU_WRITING;
+         res->status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
       if (flags & NOUVEAU_BO_RD)
-         res->status |= NVC0_BUFFER_STATUS_GPU_READING;
+         res->status |= NOUVEAU_BUFFER_STATUS_GPU_READING;
 
       nvc0_resource_fence(res, flags);
    }
-}
-
-
-boolean
-nvc0_screen_fence_new(struct nvc0_screen *, struct nvc0_fence **, boolean emit);
-void
-nvc0_screen_fence_next(struct nvc0_screen *);
-void
-nvc0_screen_fence_update(struct nvc0_screen *, boolean flushed);
-
-static INLINE boolean
-nvc0_screen_fence_emit(struct nvc0_screen *screen)
-{
-   nvc0_fence_emit(screen->fence.current);
-
-   return nvc0_screen_fence_new(screen, &screen->fence.current, FALSE);
 }
 
 struct nvc0_format {

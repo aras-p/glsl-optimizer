@@ -48,8 +48,8 @@ nvc0_flush(struct pipe_context *pipe, unsigned flags,
    }
 
    if (fence)
-      nvc0_fence_reference((struct nvc0_fence **)fence,
-                           nvc0->screen->fence.current);
+      nouveau_fence_ref(nvc0->screen->base.fence.current,
+                        (struct nouveau_fence **)fence);
 
    if (flags & (PIPE_FLUSH_SWAPBUFFERS | PIPE_FLUSH_FRAME))
       FIRE_RING(chan);
@@ -73,9 +73,9 @@ nvc0_default_flush_notify(struct nouveau_channel *chan)
 {
    struct nvc0_context *nvc0 = chan->user_private;
 
-   nvc0_screen_fence_update(nvc0->screen, TRUE);
+   nouveau_fence_update(&nvc0->screen->base, TRUE);
 
-   nvc0_screen_fence_next(nvc0->screen);
+   nouveau_fence_next(&nvc0->screen->base);
 }
 
 struct pipe_context *
@@ -119,13 +119,13 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
 }
 
 struct resident {
-   struct nvc0_resource *res;
+   struct nv04_resource *res;
    uint32_t flags;
 };
 
 void
 nvc0_bufctx_add_resident(struct nvc0_context *nvc0, int ctx,
-                         struct nvc0_resource *resource, uint32_t flags)
+                         struct nv04_resource *resource, uint32_t flags)
 {
    struct resident rsd = { resource, flags };
 
@@ -140,7 +140,7 @@ nvc0_bufctx_add_resident(struct nvc0_context *nvc0, int ctx,
 
 void
 nvc0_bufctx_del_resident(struct nvc0_context *nvc0, int ctx,
-                         struct nvc0_resource *resource)
+                         struct nv04_resource *resource)
 {
    struct resident *rsd, *top;
    unsigned i;

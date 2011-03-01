@@ -161,9 +161,9 @@ void nvc0_default_flush_notify(struct nouveau_channel *);
 
 void nvc0_bufctx_emit_relocs(struct nvc0_context *);
 void nvc0_bufctx_add_resident(struct nvc0_context *, int ctx,
-                              struct nvc0_resource *, uint32_t flags);
+                              struct nv04_resource *, uint32_t flags);
 void nvc0_bufctx_del_resident(struct nvc0_context *, int ctx,
-                              struct nvc0_resource *);
+                              struct nv04_resource *);
 static INLINE void
 nvc0_bufctx_reset(struct nvc0_context *nvc0, int ctx)
 {
@@ -211,11 +211,11 @@ nvc0_create_sampler_view(struct pipe_context *,
 
 /* nvc0_transfer.c */
 void
-nvc0_m2mf_push_linear(struct nvc0_context *nvc0,
-		      struct nouveau_bo *dst, unsigned domain, int offset,
+nvc0_m2mf_push_linear(struct pipe_context *pipe,
+		      struct nouveau_bo *dst, unsigned offset, unsigned domain,
 		      unsigned size, void *data);
 void
-nvc0_m2mf_copy_linear(struct nvc0_context *nvc0,
+nvc0_m2mf_copy_linear(struct pipe_context *pipe,
 		      struct nouveau_bo *dst, unsigned dstoff, unsigned dstdom,
 		      struct nouveau_bo *src, unsigned srcoff, unsigned srcdom,
 		      unsigned size);

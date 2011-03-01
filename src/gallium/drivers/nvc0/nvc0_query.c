@@ -41,7 +41,7 @@ struct nvc0_query {
    uint32_t offset; /* base + i * 16 */
    boolean ready;
    boolean is64bit;
-   struct nvc0_mm_allocation *mm;
+   struct nouveau_mm_allocation *mm;
 };
 
 #define NVC0_QUERY_ALLOC_SPACE 128
@@ -62,13 +62,13 @@ nvc0_query_allocate(struct nvc0_context *nvc0, struct nvc0_query *q, int size)
       nouveau_bo_ref(NULL, &q->bo);
       if (q->mm) {
          if (q->ready)
-            nvc0_mm_free(q->mm);
+            nouveau_mm_free(q->mm);
          else
-            nvc0_fence_sched_release(screen->fence.current, q->mm);
+            nouveau_fence_work(screen->base.fence.current, nouveau_mm_free_work, q->mm);
       }
    }
    if (size) {
-      q->mm = nvc0_mm_allocate(screen->mm_GART, size, &q->bo, &q->base);
+      q->mm = nouveau_mm_allocate(screen->base.mm_GART, size, &q->bo, &q->base);
       if (!q->bo)
          return FALSE;
       q->offset = q->base;
