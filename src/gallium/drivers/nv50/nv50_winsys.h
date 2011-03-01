@@ -81,7 +81,7 @@ OUT_RESRCl(struct nouveau_channel *chan, struct nv04_resource *res,
            unsigned delta, unsigned flags)
 {
    if (flags & NOUVEAU_BO_WR)
-      res->status |= NOUVEAU_BUFFER_STATUS_DIRTY;
+      res->status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
    return OUT_RELOCl(chan, res->bo, res->offset + delta, res->domain | flags);
 }
 

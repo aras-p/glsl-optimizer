@@ -112,7 +112,7 @@ nouveau_buffer_download(struct pipe_context *pipe, struct nv04_resource *buf,
    memcpy(buf->data + start, bounce->map, size);
    nouveau_bo_unmap(bounce);
 
-   buf->status &= ~NOUVEAU_BUFFER_STATUS_DIRTY;
+   buf->status &= ~NOUVEAU_BUFFER_STATUS_GPU_WRITING;
 
    nouveau_bo_ref(NULL, &bounce);
    if (mm)
@@ -152,7 +152,7 @@ nouveau_buffer_upload(struct pipe_context *pipe, struct nv04_resource *buf,
       release_allocation(&mm, screen->fence.current);
 
    if (start == 0 && size == buf->base.width0)
-      buf->status &= ~NOUVEAU_BUFFER_STATUS_DIRTY;
+      buf->status &= ~NOUVEAU_BUFFER_STATUS_GPU_WRITING;
    return TRUE;
 }
 
@@ -174,7 +174,7 @@ nouveau_buffer_transfer_get(struct pipe_context *pipe,
 
    if (buf->domain == NOUVEAU_BO_VRAM) {
       if (usage & PIPE_TRANSFER_READ) {
-         if (buf->status & NOUVEAU_BUFFER_STATUS_DIRTY)
+         if (buf->status & NOUVEAU_BUFFER_STATUS_GPU_WRITING)
             nouveau_buffer_download(pipe, buf, 0, buf->base.width0);
       }
    }

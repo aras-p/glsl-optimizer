@@ -212,8 +212,16 @@ nv50_validate_tic(struct nv50_context *nv50, int s)
          OUT_RINGp (chan, &tic->tic[3], 5);
 
          need_flush = TRUE;
+      } else
+      if (res->status & NOUVEAU_BUFFER_STATUS_GPU_WRITING) {
+         BEGIN_RING(chan, RING_3D(TEX_CACHE_CTL), 1);
+         OUT_RING  (chan, 0x20); //(tic->id << 4) | 1);
       }
+
       nv50->screen->tic.lock[tic->id / 32] |= 1 << (tic->id % 32);
+
+      res->status &= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
+      res->status |= NOUVEAU_BUFFER_STATUS_GPU_READING;
 
       nv50_bufctx_add_resident(nv50, NV50_BUFCTX_TEXTURES, res,
                                NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
