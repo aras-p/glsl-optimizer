@@ -1031,10 +1031,6 @@ struct gl_pixel_attrib
 
    /** glPixelZoom */
    GLfloat ZoomX, ZoomY;
-
-   /** GL_SGI_texture_color_table */
-   GLfloat TextureColorTableScale[4]; /**< RGBA */
-   GLfloat TextureColorTableBias[4];  /**< RGBA */
 };
 
 
@@ -1435,13 +1431,6 @@ struct gl_texture_unit
 
    /** Points to highest priority, complete and enabled texture object */
    struct gl_texture_object *_Current;
-
-   /** GL_SGI_texture_color_table */
-   /*@{*/
-   struct gl_color_table ColorTable;
-   struct gl_color_table ProxyColorTable;
-   GLboolean ColorTableEnabled;
-   /*@}*/
 };
 
 
@@ -2859,7 +2848,6 @@ struct gl_extensions
    GLboolean NV_vertex_program;
    GLboolean NV_vertex_program1_1;
    GLboolean OES_read_format;
-   GLboolean SGI_texture_color_table;
    GLboolean SGIS_generate_mipmap;
    GLboolean SGIS_texture_edge_clamp;
    GLboolean SGIS_texture_lod;

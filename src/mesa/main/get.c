@@ -290,7 +290,6 @@ EXTRA_EXT(NV_fragment_program);
 EXTRA_EXT(NV_texture_rectangle);
 EXTRA_EXT(EXT_stencil_two_side);
 EXTRA_EXT(NV_light_max_exponent);
-EXTRA_EXT(SGI_texture_color_table);
 EXTRA_EXT(EXT_depth_bounds_test);
 EXTRA_EXT(ARB_depth_clamp);
 EXTRA_EXT(ATI_fragment_shader);
@@ -910,11 +909,6 @@ static const struct value_desc values[] = {
    { GL_TRANSPOSE_PROJECTION_MATRIX_ARB,
      CONTEXT_MATRIX_T(ProjectionMatrixStack.Top), NO_EXTRA },
    { GL_TRANSPOSE_TEXTURE_MATRIX_ARB, CONTEXT_MATRIX_T(TextureMatrixStack), NO_EXTRA },
-
-   /* GL_SGI_texture_color_table */
-   { GL_TEXTURE_COLOR_TABLE_SGI, LOC_TEXUNIT, TYPE_BOOLEAN,
-     offsetof(struct gl_texture_unit, ColorTableEnabled),
-     extra_SGI_texture_color_table },
 
    /* GL_EXT_secondary_color */
    { GL_COLOR_SUM_EXT, CONTEXT_BOOL(Fog.ColorSumEnabled),

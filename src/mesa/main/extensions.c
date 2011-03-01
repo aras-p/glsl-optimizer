@@ -290,7 +290,6 @@ static const struct extension extension_table[] = {
    { "GL_SGIS_texture_border_clamp",               o(ARB_texture_border_clamp),                GL             },
    { "GL_SGIS_texture_edge_clamp",                 o(SGIS_texture_edge_clamp),                 GL             },
    { "GL_SGIS_texture_lod",                        o(SGIS_texture_lod),                        GL             },
-   { "GL_SGI_texture_color_table",                 o(SGI_texture_color_table),                 GL             },
    { "GL_SUN_multi_draw_arrays",                   o(EXT_multi_draw_arrays),                   GL             },
 
    { 0, 0, 0 },
@@ -520,7 +519,6 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
 #if FEATURE_NV_fragment_program && FEATURE_ARB_fragment_program
    ctx->Extensions.NV_fragment_program_option = GL_TRUE;
 #endif
-   ctx->Extensions.SGI_texture_color_table = GL_TRUE;
    /*ctx->Extensions.SGIS_generate_mipmap = GL_TRUE;*/
    ctx->Extensions.SGIS_texture_edge_clamp = GL_TRUE;
 #if FEATURE_ARB_vertex_program || FEATURE_ARB_fragment_program

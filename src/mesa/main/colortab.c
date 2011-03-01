@@ -300,23 +300,6 @@ _mesa_ColorTable( GLenum target, GLenum internalFormat,
       case GL_SHARED_TEXTURE_PALETTE_EXT:
          table = &ctx->Texture.Palette;
          break;
-      case GL_TEXTURE_COLOR_TABLE_SGI:
-         if (!ctx->Extensions.SGI_texture_color_table) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glColorTable(target)");
-            return;
-         }
-         table = &(texUnit->ColorTable);
-         scale = ctx->Pixel.TextureColorTableScale;
-         bias = ctx->Pixel.TextureColorTableBias;
-         break;
-      case GL_PROXY_TEXTURE_COLOR_TABLE_SGI:
-         if (!ctx->Extensions.SGI_texture_color_table) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glColorTable(target)");
-            return;
-         }
-         table = &(texUnit->ProxyColorTable);
-         proxy = GL_TRUE;
-         break;
       default:
          /* try texture targets */
          {
@@ -435,15 +418,6 @@ _mesa_ColorSubTable( GLenum target, GLsizei start,
       case GL_SHARED_TEXTURE_PALETTE_EXT:
          table = &ctx->Texture.Palette;
          break;
-      case GL_TEXTURE_COLOR_TABLE_SGI:
-         if (!ctx->Extensions.SGI_texture_color_table) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glColorSubTable(target)");
-            return;
-         }
-         table = &(texUnit->ColorTable);
-         scale = ctx->Pixel.TextureColorTableScale;
-         bias = ctx->Pixel.TextureColorTableBias;
-         break;
       default:
          /* try texture targets */
          texObj = _mesa_select_tex_object(ctx, texUnit, target);
@@ -550,13 +524,6 @@ _mesa_GetColorTable( GLenum target, GLenum format,
    switch (target) {
       case GL_SHARED_TEXTURE_PALETTE_EXT:
          table = &ctx->Texture.Palette;
-         break;
-      case GL_TEXTURE_COLOR_TABLE_SGI:
-         if (!ctx->Extensions.SGI_texture_color_table) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetColorTable(target)");
-            return;
-         }
-         table = &(texUnit->ColorTable);
          break;
       default:
          /* try texture targets */
@@ -666,10 +633,6 @@ _mesa_ColorTableParameterfv(GLenum target, GLenum pname, const GLfloat *params)
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
    switch (target) {
-   case GL_TEXTURE_COLOR_TABLE_SGI:
-      scale = ctx->Pixel.TextureColorTableScale;
-      bias  = ctx->Pixel.TextureColorTableBias;
-      break;
    default:
       _mesa_error(ctx, GL_INVALID_ENUM, "glColorTableParameter(target)");
       return;
@@ -695,17 +658,7 @@ static void GLAPIENTRY
 _mesa_ColorTableParameteriv(GLenum target, GLenum pname, const GLint *params)
 {
    GLfloat fparams[4];
-   if (pname == GL_TEXTURE_COLOR_TABLE_SGI) {
-      /* four values */
-      fparams[0] = (GLfloat) params[0];
-      fparams[1] = (GLfloat) params[1];
-      fparams[2] = (GLfloat) params[2];
-      fparams[3] = (GLfloat) params[3];
-   }
-   else {
-      /* one values */
-      fparams[0] = (GLfloat) params[0];
-   }
+   fparams[0] = (GLfloat) params[0];
    _mesa_ColorTableParameterfv(target, pname, fparams);
 }
 
@@ -722,28 +675,6 @@ _mesa_GetColorTableParameterfv( GLenum target, GLenum pname, GLfloat *params )
    switch (target) {
       case GL_SHARED_TEXTURE_PALETTE_EXT:
          table = &ctx->Texture.Palette;
-         break;
-      case GL_TEXTURE_COLOR_TABLE_SGI:
-         if (!ctx->Extensions.SGI_texture_color_table) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameter(target)");
-            return;
-         }
-         table = &(texUnit->ColorTable);
-         if (pname == GL_COLOR_TABLE_SCALE_SGI) {
-            COPY_4V(params, ctx->Pixel.TextureColorTableScale);
-            return;
-         }
-         else if (pname == GL_COLOR_TABLE_BIAS_SGI) {
-            COPY_4V(params, ctx->Pixel.TextureColorTableBias);
-            return;
-         }
-         break;
-      case GL_PROXY_TEXTURE_COLOR_TABLE_SGI:
-         if (!ctx->Extensions.SGI_texture_color_table) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameter(target)");
-            return;
-         }
-         table = &(texUnit->ProxyColorTable);
          break;
       default:
          /* try texture targets */
@@ -807,34 +738,6 @@ _mesa_GetColorTableParameteriv( GLenum target, GLenum pname, GLint *params )
    switch (target) {
       case GL_SHARED_TEXTURE_PALETTE_EXT:
          table = &ctx->Texture.Palette;
-         break;
-      case GL_TEXTURE_COLOR_TABLE_SGI:
-         if (!ctx->Extensions.SGI_texture_color_table) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameter(target)");
-            return;
-         }
-         table = &(texUnit->ColorTable);
-         if (pname == GL_COLOR_TABLE_SCALE_SGI) {
-            params[0] = (GLint) ctx->Pixel.TextureColorTableScale[0];
-            params[1] = (GLint) ctx->Pixel.TextureColorTableScale[1];
-            params[2] = (GLint) ctx->Pixel.TextureColorTableScale[2];
-            params[3] = (GLint) ctx->Pixel.TextureColorTableScale[3];
-            return;
-         }
-         else if (pname == GL_COLOR_TABLE_BIAS_SGI) {
-            params[0] = (GLint) ctx->Pixel.TextureColorTableBias[0];
-            params[1] = (GLint) ctx->Pixel.TextureColorTableBias[1];
-            params[2] = (GLint) ctx->Pixel.TextureColorTableBias[2];
-            params[3] = (GLint) ctx->Pixel.TextureColorTableBias[3];
-            return;
-         }
-         break;
-      case GL_PROXY_TEXTURE_COLOR_TABLE_SGI:
-         if (!ctx->Extensions.SGI_texture_color_table) {
-            _mesa_error(ctx, GL_INVALID_ENUM, "glGetColorTableParameter(target)");
-            return;
-         }
-         table = &(texUnit->ProxyColorTable);
          break;
       default:
          /* Try texture targets */

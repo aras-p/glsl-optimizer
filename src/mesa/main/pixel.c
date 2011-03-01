@@ -685,9 +685,6 @@ _mesa_init_pixel( struct gl_context *ctx )
    init_pixelmap(&ctx->PixelMaps.GtoG);
    init_pixelmap(&ctx->PixelMaps.BtoB);
    init_pixelmap(&ctx->PixelMaps.AtoA);
-   /* GL_SGI_texture_color_table */
-   ASSIGN_4V(ctx->Pixel.TextureColorTableScale, 1.0, 1.0, 1.0, 1.0);
-   ASSIGN_4V(ctx->Pixel.TextureColorTableBias, 0.0, 0.0, 0.0, 0.0);
 
    if (ctx->Visual.doubleBufferMode) {
       ctx->Pixel.ReadBuffer = GL_BACK;
