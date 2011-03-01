@@ -674,8 +674,6 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
       }
       return PIPE_FORMAT_NONE;
 
-   case GL_COMPRESSED_RED:
-   case GL_COMPRESSED_RG:
    case GL_COMPRESSED_RGB:
       /* can only sample from compressed formats */
       if (bindings & ~PIPE_BIND_SAMPLER_VIEW)
@@ -871,10 +869,14 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
 	      return PIPE_FORMAT_R16G16_UNORM;
       return PIPE_FORMAT_NONE;
 
+   case GL_COMPRESSED_RED:
    case GL_COMPRESSED_RED_RGTC1:
       if (screen->is_format_supported(screen, PIPE_FORMAT_RGTC1_UNORM, target,
 				      sample_count, bindings, geom_flags))
 	      return PIPE_FORMAT_RGTC1_UNORM;
+      if (screen->is_format_supported(screen, PIPE_FORMAT_R8_UNORM, target,
+				      sample_count, bindings, geom_flags))
+	      return PIPE_FORMAT_R8_UNORM;
       return PIPE_FORMAT_NONE;
 
    case GL_COMPRESSED_SIGNED_RED_RGTC1:
@@ -883,10 +885,14 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
 	      return PIPE_FORMAT_RGTC1_SNORM;
       return PIPE_FORMAT_NONE;
 
+   case GL_COMPRESSED_RG:
    case GL_COMPRESSED_RG_RGTC2:
       if (screen->is_format_supported(screen, PIPE_FORMAT_RGTC2_UNORM, target,
 				      sample_count, bindings, geom_flags))
 	      return PIPE_FORMAT_RGTC2_UNORM;
+      if (screen->is_format_supported(screen, PIPE_FORMAT_R8G8_UNORM, target,
+				      sample_count, bindings, geom_flags))
+	      return PIPE_FORMAT_R8G8_UNORM;
       return PIPE_FORMAT_NONE;
 
    case GL_COMPRESSED_SIGNED_RG_RGTC2:
