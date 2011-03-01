@@ -229,9 +229,9 @@ nv50_screen_destroy(struct pipe_screen *pscreen)
    if (screen->tic.entries)
       FREE(screen->tic.entries);
 
-   nv50_mm_destroy(screen->mm_GART);
-   nv50_mm_destroy(screen->mm_VRAM);
-   nv50_mm_destroy(screen->mm_VRAM_fe0);
+   nouveau_mm_destroy(screen->mm_GART);
+   nouveau_mm_destroy(screen->mm_VRAM);
+   nouveau_mm_destroy(screen->mm_VRAM_fe0);
 
    nouveau_grobj_free(&screen->tesla);
    nouveau_grobj_free(&screen->eng2d);
@@ -586,10 +586,10 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    screen->tic.entries = CALLOC(4096, sizeof(void *));
    screen->tsc.entries = screen->tic.entries + 2048;
 
-   screen->mm_GART = nv50_mm_create(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP,
-                                    0x000);
-   screen->mm_VRAM = nv50_mm_create(dev, NOUVEAU_BO_VRAM, 0x000);
-   screen->mm_VRAM_fe0 = nv50_mm_create(dev, NOUVEAU_BO_VRAM, 0xfe0);
+   screen->mm_GART = nouveau_mm_create(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP,
+                                       0x000);
+   screen->mm_VRAM = nouveau_mm_create(dev, NOUVEAU_BO_VRAM, 0x000);
+   screen->mm_VRAM_fe0 = nouveau_mm_create(dev, NOUVEAU_BO_VRAM, 0xfe0);
 
    nouveau_fence_new(&screen->base, &screen->base.fence.current, FALSE);
 

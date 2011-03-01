@@ -4,6 +4,7 @@
 #define NOUVEAU_NVC0
 #include "nouveau/nouveau_screen.h"
 #include "nouveau/nouveau_fence.h"
+#include "nouveau/nouveau_mm.h"
 #undef NOUVEAU_NVC0
 #include "nv50_winsys.h"
 #include "nv50_stateobj.h"
@@ -11,7 +12,6 @@
 #define NV50_TIC_MAX_ENTRIES 2048
 #define NV50_TSC_MAX_ENTRIES 2048
 
-struct nv50_mman;
 struct nv50_context;
 
 #define NV50_SCRATCH_SIZE (2 << 20)
@@ -54,9 +54,9 @@ struct nv50_screen {
 
    struct nouveau_notifier *sync;
 
-   struct nv50_mman *mm_GART;
-   struct nv50_mman *mm_VRAM;
-   struct nv50_mman *mm_VRAM_fe0;
+   struct nouveau_mman *mm_GART;
+   struct nouveau_mman *mm_VRAM;
+   struct nouveau_mman *mm_VRAM_fe0;
 
    struct nouveau_grobj *tesla;
    struct nouveau_grobj *eng2d;
@@ -68,27 +68,6 @@ nv50_screen(struct pipe_screen *screen)
 {
    return (struct nv50_screen *)screen;
 }
-
-/* Since a resource can be migrated, we need to decouple allocations from
- * them. This struct is linked with fences for delayed freeing of allocs.
- */
-struct nv50_mm_allocation {
-   struct nv50_mm_allocation *next;
-   void *priv;
-   uint32_t offset;
-};
-
-extern struct nv50_mman *
-nv50_mm_create(struct nouveau_device *, uint32_t domain, uint32_t storage_type);
-
-extern void
-nv50_mm_destroy(struct nv50_mman *);
-
-extern struct nv50_mm_allocation *
-nv50_mm_allocate(struct nv50_mman *,
-                 uint32_t size, struct nouveau_bo **, uint32_t *offset);
-extern void
-nv50_mm_free(struct nv50_mm_allocation *);
 
 void nv50_screen_make_buffers_resident(struct nv50_screen *);
 

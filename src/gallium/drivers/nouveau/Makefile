@@ -8,6 +8,7 @@ LIBRARY_INCLUDES = \
 	-I$(TOP)/src/gallium/drivers/nouveau/include
 
 C_SOURCES = nouveau_screen.c \
-            nouveau_fence.c
+            nouveau_fence.c \
+            nouveau_mm.c
 
 include ../../Makefile.template

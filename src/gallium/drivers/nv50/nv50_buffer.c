@@ -6,6 +6,7 @@
 #define NOUVEAU_NVC0
 #include "nouveau/nouveau_screen.h"
 #include "nouveau/nouveau_winsys.h"
+#include "nouveau/nouveau_mm.h"
 #undef NOUVEAU_NVC0
 
 #include "nv50_context.h"
@@ -26,14 +27,14 @@ nv50_buffer_allocate(struct nv50_screen *screen, struct nv50_resource *buf,
                      unsigned domain)
 {
    if (domain == NOUVEAU_BO_VRAM) {
-      buf->mm = nv50_mm_allocate(screen->mm_VRAM, buf->base.width0, &buf->bo,
-                                 &buf->offset);
+      buf->mm = nouveau_mm_allocate(screen->mm_VRAM, buf->base.width0, &buf->bo,
+                                    &buf->offset);
       if (!buf->bo)
          return nv50_buffer_allocate(screen, buf, NOUVEAU_BO_GART);
    } else
    if (domain == NOUVEAU_BO_GART) {
-      buf->mm = nv50_mm_allocate(screen->mm_GART, buf->base.width0, &buf->bo,
-                                 &buf->offset);
+      buf->mm = nouveau_mm_allocate(screen->mm_GART, buf->base.width0, &buf->bo,
+                                    &buf->offset);
       if (!buf->bo)
          return FALSE;
    }
@@ -49,9 +50,9 @@ nv50_buffer_allocate(struct nv50_screen *screen, struct nv50_resource *buf,
 }
 
 static INLINE void
-release_allocation(struct nv50_mm_allocation **mm, struct nouveau_fence *fence)
+release_allocation(struct nouveau_mm_allocation **mm, struct nouveau_fence *fence)
 {
-   nouveau_fence_work(fence, nv50_mm_free, *mm);
+   nouveau_fence_work(fence, nouveau_mm_free, *mm);
    (*mm) = NULL;
 }
 
@@ -94,13 +95,13 @@ boolean
 nv50_buffer_download(struct nv50_context *nv50, struct nv50_resource *buf,
                      unsigned start, unsigned size)
 {
-   struct nv50_mm_allocation *mm;
+   struct nouveau_mm_allocation *mm;
    struct nouveau_bo *bounce = NULL;
    uint32_t offset;
 
    assert(buf->domain == NOUVEAU_BO_VRAM);
 
-   mm = nv50_mm_allocate(nv50->screen->mm_GART, size, &bounce, &offset);
+   mm = nouveau_mm_allocate(nv50->screen->mm_GART, size, &bounce, &offset);
    if (!bounce)
       return FALSE;
 
@@ -117,7 +118,7 @@ nv50_buffer_download(struct nv50_context *nv50, struct nv50_resource *buf,
 
    nouveau_bo_ref(NULL, &bounce);
    if (mm)
-      nv50_mm_free(mm);
+      nouveau_mm_free(mm);
    return TRUE;
 }
 
@@ -125,7 +126,7 @@ static boolean
 nv50_buffer_upload(struct nv50_context *nv50, struct nv50_resource *buf,
                    unsigned start, unsigned size)
 {
-   struct nv50_mm_allocation *mm;
+   struct nouveau_mm_allocation *mm;
    struct nouveau_bo *bounce = NULL;
    uint32_t offset;
 
@@ -135,7 +136,7 @@ nv50_buffer_upload(struct nv50_context *nv50, struct nv50_resource *buf,
       return TRUE;
    }
 
-   mm = nv50_mm_allocate(nv50->screen->mm_GART, size, &bounce, &offset);
+   mm = nouveau_mm_allocate(nv50->screen->mm_GART, size, &bounce, &offset);
    if (!bounce)
       return FALSE;
 
@@ -429,7 +430,7 @@ nv50_buffer_migrate(struct nv50_context *nv50,
       FREE(buf->data);
    } else
    if (old_domain != 0 && new_domain != 0) {
-      struct nv50_mm_allocation *mm = buf->mm;
+      struct nouveau_mm_allocation *mm = buf->mm;
 
       if (new_domain == NOUVEAU_BO_VRAM) {
          /* keep a system memory copy of our data in case we hit a fallback */

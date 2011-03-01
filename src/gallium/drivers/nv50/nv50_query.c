@@ -41,7 +41,7 @@ struct nv50_query {
    uint32_t offset; /* base + i * 16 */
    boolean ready;
    boolean is64bit;
-   struct nv50_mm_allocation *mm;
+   struct nouveau_mm_allocation *mm;
 };
 
 #define NV50_QUERY_ALLOC_SPACE 128
@@ -62,13 +62,13 @@ nv50_query_allocate(struct nv50_context *nv50, struct nv50_query *q, int size)
       nouveau_bo_ref(NULL, &q->bo);
       if (q->mm) {
          if (q->ready)
-            nv50_mm_free(q->mm);
+            nouveau_mm_free(q->mm);
          else
-            nouveau_fence_work(screen->base.fence.current, nv50_mm_free, q->mm);
+            nouveau_fence_work(screen->base.fence.current, nouveau_mm_free, q->mm);
       }
    }
    if (size) {
-      q->mm = nv50_mm_allocate(screen->mm_GART, size, &q->bo, &q->base);
+      q->mm = nouveau_mm_allocate(screen->mm_GART, size, &q->bo, &q->base);
       if (!q->bo)
          return FALSE;
       q->offset = q->base;

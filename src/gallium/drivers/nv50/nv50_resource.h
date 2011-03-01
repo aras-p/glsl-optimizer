@@ -46,7 +46,7 @@ struct nv50_resource {
    struct nouveau_fence *fence;
    struct nouveau_fence *fence_wr;
 
-   struct nv50_mm_allocation *mm;
+   struct nouveau_mm_allocation *mm;
 };
 
 void
