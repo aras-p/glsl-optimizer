@@ -511,6 +511,7 @@ dri2_create_image(__DRIscreen *_screen,
    templ.width0 = width;
    templ.height0 = height;
    templ.depth0 = 1;
+   templ.array_size = 1;
 
    img->texture = screen->base.screen->resource_create(screen->base.screen, &templ);
    if (!img->texture) {
