@@ -309,6 +309,13 @@ intel_get_param(__DRIscreen *psp, int param, int *value)
    return GL_TRUE;
 }
 
+static GLboolean
+intel_get_boolean(__DRIscreen *psp, int param)
+{
+   int value = 0;
+   return intel_get_param(psp, param, &value) && value;
+}
+
 static void
 nop_callback(GLuint key, void *data, void *userData)
 {
@@ -481,6 +488,10 @@ intel_init_bufmgr(struct intel_screen *intelScreen)
    drm_intel_bufmgr_gem_enable_fenced_relocs(intelScreen->bufmgr);
 
    intelScreen->named_regions = _mesa_NewHashTable();
+
+   intelScreen->relaxed_relocations = 0;
+   intelScreen->relaxed_relocations |=
+      intel_get_boolean(spriv, I915_PARAM_HAS_RELAXED_DELTA) << 0;
 
    return GL_TRUE;
 }

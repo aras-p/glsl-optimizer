@@ -460,7 +460,7 @@ struct brw_context
    GLboolean has_negative_rhw_bug;
    GLboolean has_aa_line_parameters;
    GLboolean has_pln;
-;
+
    struct {
       struct brw_state_flags dirty;
 

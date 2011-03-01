@@ -278,7 +278,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
    GLuint interleaved = 0, total_size = 0;
    unsigned int min_index = brw->vb.min_index;
    unsigned int max_index = brw->vb.max_index;
-   int i, j;
+   int delta, i, j;
 
    struct brw_vertex_element *upload[VERT_ATTRIB_MAX];
    GLuint nr_uploads = 0;
@@ -401,21 +401,25 @@ static void brw_prepare_vertices(struct brw_context *brw)
     * only the used elements [min_index, max_index] so long as we adjust all
     * the values used in the 3DPRIMITIVE i.e. by setting the vertex bias.
     */
+   brw->vb.start_vertex_bias = 0;
+   delta = min_index;
    if (nr_uploads == brw->vb.nr_enabled) {
-      brw->vb.start_vertex_bias = min_index;
-   } else {
-      brw->vb.start_vertex_bias = 0;
-      min_index = 0;
+      brw->vb.start_vertex_bias = -delta;
+      delta = 0;
    }
+   if (delta && !brw->intel.intelScreen->relaxed_relocations)
+      min_index = delta = 0;
 
    /* Handle any arrays to be uploaded. */
    if (nr_uploads > 1) {
       if (interleaved && interleaved <= 2*total_size) {
+	 struct brw_vertex_buffer *buffer = &brw->vb.buffers[j];
 	 /* All uploads are interleaved, so upload the arrays together as
 	  * interleaved.  First, upload the contents and set up upload[0].
 	  */
 	 copy_array_to_vbo_array(brw, upload[0], min_index, max_index,
-				 &brw->vb.buffers[j], interleaved);
+				 buffer, interleaved);
+	 buffer->offset -= delta * interleaved;
 
 	 for (i = 0; i < nr_uploads; i++) {
 	    /* Then, just point upload[i] at upload[0]'s buffer. */
@@ -462,14 +466,17 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	 intel_upload_unmap(&brw->intel, map, offset * count, offset,
 			    &buffer->bo, &buffer->offset);
 	 buffer->stride = offset;
+	 buffer->offset -= delta * offset;
 
 	 nr_uploads = 0;
       }
    }
    /* Upload non-interleaved arrays */
    for (i = 0; i < nr_uploads; i++) {
+      struct brw_vertex_buffer *buffer = &brw->vb.buffers[j];
       copy_array_to_vbo_array(brw, upload[i], min_index, max_index,
-			      &brw->vb.buffers[j], upload[i]->element_size);
+			      buffer, upload[i]->element_size);
+      buffer->offset -= delta * buffer->stride;
       upload[i]->buffer = j++;
       upload[i]->offset = 0;
    }
