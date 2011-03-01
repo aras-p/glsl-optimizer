@@ -1755,8 +1755,13 @@ _mesa_generate_mipmap(struct gl_context *ctx, GLenum target,
       if (srcImage->_BaseFormat == GL_RGB) {
          convertFormat = MESA_FORMAT_RGB888;
          components = 3;
-      }
-      else if (srcImage->_BaseFormat == GL_RGBA) {
+      } else if (srcImage->_BaseFormat == GL_RED) {
+         convertFormat = MESA_FORMAT_R8;
+         components = 1;
+      } else if (srcImage->_BaseFormat == GL_RG) {
+         convertFormat = MESA_FORMAT_RG88;
+         components = 2;
+      } else if (srcImage->_BaseFormat == GL_RGBA) {
          convertFormat = MESA_FORMAT_RGBA8888;
          components = 4;
       }
