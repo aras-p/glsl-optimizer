@@ -475,7 +475,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
    }
 
    /* can we simply extend the current vb? */
-   if (j == brw->vb.nr_current_buffers) {
+   if (0 && j == brw->vb.nr_current_buffers) {
       int delta = 0;
       for (i = 0; i < j; i++) {
 	 int d;
