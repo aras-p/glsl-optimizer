@@ -62,8 +62,10 @@ nvc0_destroy(struct pipe_context *pipe)
 
    draw_destroy(nvc0->draw);
 
-   if (nvc0->screen->cur_ctx == nvc0)
+   if (nvc0->screen->cur_ctx == nvc0) {
+      nvc0->screen->base.channel->user_private = NULL;
       nvc0->screen->cur_ctx = NULL;
+   }
 
    FREE(nvc0);
 }
@@ -73,8 +75,10 @@ nvc0_default_flush_notify(struct nouveau_channel *chan)
 {
    struct nvc0_context *nvc0 = chan->user_private;
 
-   nouveau_fence_update(&nvc0->screen->base, TRUE);
+   if (!nvc0)
+      return;
 
+   nouveau_fence_update(&nvc0->screen->base, TRUE);
    nouveau_fence_next(&nvc0->screen->base);
 }
 
