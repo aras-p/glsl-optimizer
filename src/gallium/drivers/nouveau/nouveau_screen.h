@@ -5,6 +5,8 @@
 #include "util/u_memory.h"
 typedef uint32_t u32;
 
+struct nouveau_bo;
+
 struct nouveau_screen {
 	struct pipe_screen base;
 	struct nouveau_device *device;
@@ -27,6 +29,13 @@ struct nouveau_screen {
 
 	struct nouveau_mman *mm_VRAM;
 	struct nouveau_mman *mm_GART;
+	void (*copy_data)(struct pipe_context *,
+			  struct nouveau_bo *dst, unsigned, unsigned,
+			  struct nouveau_bo *src, unsigned, unsigned,
+			  unsigned);
+	void (*push_data)(struct pipe_context *,
+			  struct nouveau_bo *dst, unsigned, unsigned,
+			  unsigned, void *);
 };
 
 static INLINE struct nouveau_screen *

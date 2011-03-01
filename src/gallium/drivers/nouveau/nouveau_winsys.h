@@ -9,7 +9,6 @@
 #include "nouveau/nouveau_device.h"
 #include "nouveau/nouveau_grobj.h"
 #include "nouveau/nouveau_notifier.h"
-#include "nouveau/nouveau_resource.h"
 #ifndef NOUVEAU_NVC0
 #include "nouveau/nv04_pushbuf.h"
 #endif

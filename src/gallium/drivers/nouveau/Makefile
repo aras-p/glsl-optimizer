@@ -9,6 +9,7 @@ LIBRARY_INCLUDES = \
 
 C_SOURCES = nouveau_screen.c \
             nouveau_fence.c \
-            nouveau_mm.c
+            nouveau_mm.c \
+            nouveau_buffer.c
 
 include ../../Makefile.template
