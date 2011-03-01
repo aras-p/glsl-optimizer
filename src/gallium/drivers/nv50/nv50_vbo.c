@@ -131,7 +131,7 @@ nv50_emit_vtxattr(struct nv50_context *nv50, struct pipe_vertex_buffer *vb,
    float v[4];
    const unsigned nc = util_format_get_nr_components(ve->src_format);
 
-   data = nouveau_resource_map_offset(&nv50->pipe, res, vb->buffer_offset +
+   data = nouveau_resource_map_offset(&nv50->base, res, vb->buffer_offset +
                                       ve->src_offset, NOUVEAU_BO_RD);
 
    util_format_read_4f(ve->src_format, v, 0, data, 0, 0, 0, 1, 1);
@@ -215,13 +215,13 @@ nv50_prevalidate_vbufs(struct nv50_context *nv50)
                nv50_vbuf_range(nv50, i, &base, &size);
                nouveau_user_buffer_upload(buf, base, size);
             } else {
-               nouveau_buffer_migrate(&nv50->pipe, buf, NOUVEAU_BO_GART);
+               nouveau_buffer_migrate(&nv50->base, buf, NOUVEAU_BO_GART);
             }
-            nv50->vbo_dirty = TRUE;
+            nv50->base.vbo_dirty = TRUE;
          }
       }
       nv50_bufctx_add_resident(nv50, NV50_BUFCTX_VERTEX, buf, NOUVEAU_BO_RD);
-      nouveau_buffer_adjust_score(&nv50->pipe, buf, 1);
+      nouveau_buffer_adjust_score(&nv50->base, buf, 1);
    }
 }
 
@@ -262,7 +262,7 @@ nv50_update_user_vbufs(struct nv50_context *nv50)
       OUT_RESRCh(chan, buf, offset, NOUVEAU_BO_RD);
       OUT_RESRCl(chan, buf, offset, NOUVEAU_BO_RD);
    }
-   nv50->vbo_dirty = TRUE;
+   nv50->base.vbo_dirty = TRUE;
 }
 
 static INLINE void
@@ -540,7 +540,7 @@ nv50_draw_elements(struct nv50_context *nv50, boolean shorten,
       struct nv04_resource *res = nv04_resource(nv50->idxbuf.buffer);
       unsigned offset = res->offset + nv50->idxbuf.offset;
 
-      nouveau_buffer_adjust_score(&nv50->pipe, res, 1);
+      nouveau_buffer_adjust_score(&nv50->base, res, 1);
 
       while (instance_count--) {
          BEGIN_RING(chan, RING_3D(VERTEX_BEGIN_GL), 1);
@@ -597,7 +597,7 @@ nv50_draw_elements(struct nv50_context *nv50, boolean shorten,
          mode |= NV50_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
       }
    } else {
-      data = nouveau_resource_map_offset(&nv50->pipe,
+      data = nouveau_resource_map_offset(&nv50->base,
                                          nv04_resource(nv50->idxbuf.buffer),
                                          nv50->idxbuf.offset, NOUVEAU_BO_RD);
       if (!data)
@@ -669,10 +669,10 @@ nv50_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       OUT_RING  (chan, info->start_instance);
    }
 
-   if (nv50->vbo_dirty) {
+   if (nv50->base.vbo_dirty) {
       BEGIN_RING(chan, RING_3D(VERTEX_ARRAY_FLUSH), 1);
       OUT_RING  (chan, 0);
-      nv50->vbo_dirty = FALSE;
+      nv50->base.vbo_dirty = FALSE;
    }
 
    if (!info->indexed) {

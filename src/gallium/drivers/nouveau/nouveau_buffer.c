@@ -4,6 +4,7 @@
 #include "util/u_math.h"
 
 #include "nouveau_screen.h"
+#include "nouveau_context.h"
 #include "nouveau_winsys.h"
 #include "nouveau_fence.h"
 #include "nouveau_buffer.h"
@@ -90,22 +91,21 @@ nouveau_buffer_destroy(struct pipe_screen *pscreen,
 
 /* Maybe just migrate to GART right away if we actually need to do this. */
 boolean
-nouveau_buffer_download(struct pipe_context *pipe, struct nv04_resource *buf,
+nouveau_buffer_download(struct nouveau_context *nv, struct nv04_resource *buf,
                         unsigned start, unsigned size)
 {
-   struct nouveau_screen *screen = nouveau_screen(pipe->screen);
    struct nouveau_mm_allocation *mm;
    struct nouveau_bo *bounce = NULL;
    uint32_t offset;
 
    assert(buf->domain == NOUVEAU_BO_VRAM);
 
-   mm = nouveau_mm_allocate(screen->mm_GART, size, &bounce, &offset);
+   mm = nouveau_mm_allocate(nv->screen->mm_GART, size, &bounce, &offset);
    if (!bounce)
       return FALSE;
 
-   screen->copy_data(pipe, bounce, offset, NOUVEAU_BO_GART,
-                     buf->bo, buf->offset + start, NOUVEAU_BO_VRAM, size);
+   nv->copy_data(nv, bounce, offset, NOUVEAU_BO_GART,
+                 buf->bo, buf->offset + start, NOUVEAU_BO_VRAM, size);
 
    if (nouveau_bo_map_range(bounce, offset, size, NOUVEAU_BO_RD))
       return FALSE;
@@ -121,21 +121,20 @@ nouveau_buffer_download(struct pipe_context *pipe, struct nv04_resource *buf,
 }
 
 static boolean
-nouveau_buffer_upload(struct pipe_context *pipe, struct nv04_resource *buf,
+nouveau_buffer_upload(struct nouveau_context *nv, struct nv04_resource *buf,
                       unsigned start, unsigned size)
 {
-   struct nouveau_screen *screen = nouveau_screen(pipe->screen);
    struct nouveau_mm_allocation *mm;
    struct nouveau_bo *bounce = NULL;
    uint32_t offset;
 
    if (size <= 192) {
-      screen->push_data(pipe, buf->bo, buf->offset + start, buf->domain,
-                        size, buf->data + start);
+      nv->push_data(nv, buf->bo, buf->offset + start, buf->domain,
+                    size, buf->data + start);
       return TRUE;
    }
 
-   mm = nouveau_mm_allocate(screen->mm_GART, size, &bounce, &offset);
+   mm = nouveau_mm_allocate(nv->screen->mm_GART, size, &bounce, &offset);
    if (!bounce)
       return FALSE;
 
@@ -144,12 +143,12 @@ nouveau_buffer_upload(struct pipe_context *pipe, struct nv04_resource *buf,
    memcpy(bounce->map, buf->data + start, size);
    nouveau_bo_unmap(bounce);
 
-   screen->copy_data(pipe, buf->bo, buf->offset + start, NOUVEAU_BO_VRAM, 
-                     bounce, offset, NOUVEAU_BO_GART, size);
+   nv->copy_data(nv, buf->bo, buf->offset + start, NOUVEAU_BO_VRAM,
+                 bounce, offset, NOUVEAU_BO_GART, size);
 
    nouveau_bo_ref(NULL, &bounce);
    if (mm)
-      release_allocation(&mm, screen->fence.current);
+      release_allocation(&mm, nv->screen->fence.current);
 
    if (start == 0 && size == buf->base.width0)
       buf->status &= ~NOUVEAU_BUFFER_STATUS_GPU_WRITING;
@@ -163,6 +162,7 @@ nouveau_buffer_transfer_get(struct pipe_context *pipe,
                             const struct pipe_box *box)
 {
    struct nv04_resource *buf = nv04_resource(resource);
+   struct nouveau_context *nv = nouveau_context(pipe);
    struct nouveau_transfer *xfr = CALLOC_STRUCT(nouveau_transfer);
    if (!xfr)
       return NULL;
@@ -175,7 +175,7 @@ nouveau_buffer_transfer_get(struct pipe_context *pipe,
    if (buf->domain == NOUVEAU_BO_VRAM) {
       if (usage & PIPE_TRANSFER_READ) {
          if (buf->status & NOUVEAU_BUFFER_STATUS_GPU_WRITING)
-            nouveau_buffer_download(pipe, buf, 0, buf->base.width0);
+            nouveau_buffer_download(nv, buf, 0, buf->base.width0);
       }
    }
 
@@ -188,20 +188,19 @@ nouveau_buffer_transfer_destroy(struct pipe_context *pipe,
 {
    struct nv04_resource *buf = nv04_resource(transfer->resource);
    struct nouveau_transfer *xfr = nouveau_transfer(transfer);
+   struct nouveau_context *nv = nouveau_context(pipe);
 
    if (xfr->base.usage & PIPE_TRANSFER_WRITE) {
       /* writing is worse */
-      nouveau_buffer_adjust_score(pipe, buf, -5000);
+      nouveau_buffer_adjust_score(nv, buf, -5000);
 
       if (buf->domain == NOUVEAU_BO_VRAM) {
-         nouveau_buffer_upload(pipe, buf, transfer->box.x, transfer->box.width);
+         nouveau_buffer_upload(nv, buf, transfer->box.x, transfer->box.width);
       }
 
-#if 0
       if (buf->domain != 0 && (buf->base.bind & (PIPE_BIND_VERTEX_BUFFER |
                                                  PIPE_BIND_INDEX_BUFFER)))
          nouveau_context(pipe)->vbo_dirty = TRUE;
-#endif
    }
 
    FREE(xfr);
@@ -249,7 +248,7 @@ nouveau_buffer_transfer_map(struct pipe_context *pipe,
    uint32_t offset = xfr->base.box.x;
    uint32_t flags;
 
-   nouveau_buffer_adjust_score(pipe, buf, -250);
+   nouveau_buffer_adjust_score(nouveau_context(pipe), buf, -250);
 
    if (buf->domain != NOUVEAU_BO_GART)
       return buf->data + offset;
@@ -403,10 +402,10 @@ nouveau_buffer_data_fetch(struct nv04_resource *buf, struct nouveau_bo *bo,
 
 /* Migrate a linear buffer (vertex, index, constants) USER -> GART -> VRAM. */
 boolean
-nouveau_buffer_migrate(struct pipe_context *pipe,
+nouveau_buffer_migrate(struct nouveau_context *nv,
                        struct nv04_resource *buf, const unsigned new_domain)
 {
-   struct nouveau_screen *screen = nouveau_screen(pipe->screen);
+   struct nouveau_screen *screen = nv->screen;
    struct nouveau_bo *bo;
    const unsigned old_domain = buf->domain;
    unsigned size = buf->base.width0;
@@ -442,8 +441,8 @@ nouveau_buffer_migrate(struct pipe_context *pipe,
       buf->mm = NULL;
       nouveau_buffer_allocate(screen, buf, new_domain);
 
-      screen->copy_data(pipe, buf->bo, buf->offset, new_domain,
-                        bo, offset, old_domain, buf->base.width0);
+      nv->copy_data(nv, buf->bo, buf->offset, new_domain,
+                    bo, offset, old_domain, buf->base.width0);
 
       nouveau_bo_ref(NULL, &bo);
       if (mm)
@@ -452,7 +451,7 @@ nouveau_buffer_migrate(struct pipe_context *pipe,
    if (new_domain == NOUVEAU_BO_VRAM && old_domain == 0) {
       if (!nouveau_buffer_allocate(screen, buf, NOUVEAU_BO_VRAM))
          return FALSE;
-      if (!nouveau_buffer_upload(pipe, buf, 0, buf->base.width0))
+      if (!nouveau_buffer_upload(nv, buf, 0, buf->base.width0))
          return FALSE;
    } else
       return FALSE;

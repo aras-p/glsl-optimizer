@@ -84,22 +84,28 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
    struct pipe_winsys *pipe_winsys = pscreen->winsys;
    struct nv50_screen *screen = nv50_screen(pscreen);
    struct nv50_context *nv50;
+   struct pipe_context *pipe;
 
    nv50 = CALLOC_STRUCT(nv50_context);
    if (!nv50)
       return NULL;
+   pipe = &nv50->base.pipe;
+
    nv50->screen = screen;
+   nv50->base.screen    = &screen->base;
+   nv50->base.copy_data = nv50_m2mf_copy_linear;
+   nv50->base.push_data = nv50_sifc_linear_u8;
 
-   nv50->pipe.winsys = pipe_winsys;
-   nv50->pipe.screen = pscreen;
-   nv50->pipe.priv = priv;
+   pipe->winsys = pipe_winsys;
+   pipe->screen = pscreen;
+   pipe->priv = priv;
 
-   nv50->pipe.destroy = nv50_destroy;
+   pipe->destroy = nv50_destroy;
 
-   nv50->pipe.draw_vbo = nv50_draw_vbo;
-   nv50->pipe.clear = nv50_clear;
+   pipe->draw_vbo = nv50_draw_vbo;
+   pipe->clear = nv50_clear;
 
-   nv50->pipe.flush = nv50_flush;
+   pipe->flush = nv50_flush;
 
    if (!screen->cur_ctx)
       screen->cur_ctx = nv50;
@@ -109,13 +115,13 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
    nv50_init_query_functions(nv50);
    nv50_init_surface_functions(nv50);
    nv50_init_state_functions(nv50);
-   nv50_init_resource_functions(&nv50->pipe);
+   nv50_init_resource_functions(pipe);
 
-   nv50->draw = draw_create(&nv50->pipe);
+   nv50->draw = draw_create(pipe);
    assert(nv50->draw);
    draw_set_rasterize_stage(nv50->draw, nv50_draw_render_stage(nv50));
 
-   return &nv50->pipe;
+   return pipe;
 }
 
 struct resident {

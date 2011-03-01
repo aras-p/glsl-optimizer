@@ -371,9 +371,11 @@ nv50_clear(struct pipe_context *pipe, unsigned buffers,
 void
 nv50_init_surface_functions(struct nv50_context *nv50)
 {
-   nv50->pipe.resource_copy_region = nv50_resource_copy_region;
-   nv50->pipe.clear_render_target = nv50_clear_render_target;
-   nv50->pipe.clear_depth_stencil = nv50_clear_depth_stencil;
+   struct pipe_context *pipe = &nv50->base.pipe;
+
+   pipe->resource_copy_region = nv50_resource_copy_region;
+   pipe->clear_render_target = nv50_clear_render_target;
+   pipe->clear_depth_stencil = nv50_clear_depth_stencil;
 }
 
 

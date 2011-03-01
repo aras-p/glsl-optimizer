@@ -102,12 +102,11 @@ nv50_m2mf_transfer_rect(struct pipe_screen *pscreen,
 }
 
 void
-nv50_sifc_linear_u8(struct pipe_context *pipe,
+nv50_sifc_linear_u8(struct nouveau_context *nv,
                     struct nouveau_bo *dst, unsigned offset, unsigned domain,
                     unsigned size, void *data)
 {
-   struct nv50_context *nv50 = nv50_context(pipe);
-   struct nouveau_channel *chan = nv50->screen->base.channel;
+   struct nouveau_channel *chan = nv->screen->channel;
    uint32_t *src = (uint32_t *)data;
    unsigned count = (size + 3) / 4;
    unsigned xcoord = offset & 0xff;
@@ -159,13 +158,12 @@ nv50_sifc_linear_u8(struct pipe_context *pipe,
 }
 
 void
-nv50_m2mf_copy_linear(struct pipe_context *pipe,
+nv50_m2mf_copy_linear(struct nouveau_context *nv,
                       struct nouveau_bo *dst, unsigned dstoff, unsigned dstdom,
                       struct nouveau_bo *src, unsigned srcoff, unsigned srcdom,
                       unsigned size)
 {
-   struct nv50_context *nv50 = nv50_context(pipe);
-   struct nouveau_channel *chan = nv50->screen->base.channel;
+   struct nouveau_channel *chan = nv->screen->channel;
 
    BEGIN_RING(chan, RING_MF(LINEAR_IN), 1);
    OUT_RING  (chan, 1);

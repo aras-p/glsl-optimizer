@@ -330,10 +330,12 @@ nvc0_render_condition(struct pipe_context *pipe,
 void
 nvc0_init_query_functions(struct nvc0_context *nvc0)
 {
-   nvc0->pipe.create_query = nvc0_query_create;
-   nvc0->pipe.destroy_query = nvc0_query_destroy;
-   nvc0->pipe.begin_query = nvc0_query_begin;
-   nvc0->pipe.end_query = nvc0_query_end;
-   nvc0->pipe.get_query_result = nvc0_query_result;
-   nvc0->pipe.render_condition = nvc0_render_condition;
+   struct pipe_context *pipe = &nvc0->base.pipe;
+
+   pipe->create_query = nvc0_query_create;
+   pipe->destroy_query = nvc0_query_destroy;
+   pipe->begin_query = nvc0_query_begin;
+   pipe->end_query = nvc0_query_end;
+   pipe->get_query_result = nvc0_query_result;
+   pipe->render_condition = nvc0_render_condition;
 }

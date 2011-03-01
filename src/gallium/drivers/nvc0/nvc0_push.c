@@ -229,7 +229,7 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
       struct pipe_vertex_buffer *vb = &nvc0->vtxbuf[i];
       struct nv04_resource *res = nv04_resource(vb->buffer);
 
-      data = nouveau_resource_map_offset(&nvc0->pipe, res,
+      data = nouveau_resource_map_offset(&nvc0->base, res,
                                          vb->buffer_offset, NOUVEAU_BO_RD);
 
       if (apply_bias && likely(!(nvc0->vertex->instance_bufs & (1 << i))))
@@ -239,7 +239,7 @@ nvc0_push_vbo(struct nvc0_context *nvc0, const struct pipe_draw_info *info)
    }
 
    if (info->indexed) {
-      ctx.idxbuf = nouveau_resource_map_offset(&nvc0->pipe,
+      ctx.idxbuf = nouveau_resource_map_offset(&nvc0->base,
                                                nv04_resource(nvc0->idxbuf.buffer),
                                                nvc0->idxbuf.offset, NOUVEAU_BO_RD);
       if (!ctx.idxbuf)

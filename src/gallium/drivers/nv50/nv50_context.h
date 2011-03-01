@@ -19,6 +19,7 @@
 #include "nv50_program.h"
 #include "nv50_resource.h"
 
+#include "nouveau/nouveau_context.h"
 #include "nouveau/nv_object.xml.h"
 #include "nouveau/nv_m2mf.xml.h"
 #include "nv50_3ddefs.xml.h"
@@ -67,7 +68,7 @@
 #define NV50_CB_AUX 127
 
 struct nv50_context {
-   struct pipe_context pipe;
+   struct nouveau_context base;
 
    struct nv50_screen *screen;
 
@@ -122,7 +123,6 @@ struct nv50_context {
 
    unsigned sample_mask;
 
-   boolean vbo_dirty;
    boolean vbo_push_hint;
 
    struct draw_context *draw;
@@ -204,11 +204,11 @@ nv50_create_sampler_view(struct pipe_context *,
 
 /* nv50_transfer.c */
 void
-nv50_sifc_linear_u8(struct pipe_context *pipe,
+nv50_sifc_linear_u8(struct nouveau_context *pipe,
                     struct nouveau_bo *dst, unsigned offset, unsigned domain,
                     unsigned size, void *data);
 void
-nv50_m2mf_copy_linear(struct pipe_context *pipe,
+nv50_m2mf_copy_linear(struct nouveau_context *pipe,
                       struct nouveau_bo *dst, unsigned dstoff, unsigned dstdom,
                       struct nouveau_bo *src, unsigned srcoff, unsigned srcdom,
                       unsigned size);

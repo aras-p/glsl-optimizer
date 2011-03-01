@@ -59,9 +59,9 @@ nvc0_program_validate(struct nvc0_context *nvc0, struct nvc0_program *prog)
 
    prog->code_base = prog->res->start;
 
-   nvc0_m2mf_push_linear(&nvc0->pipe, nvc0->screen->text, prog->code_base,
+   nvc0_m2mf_push_linear(&nvc0->base, nvc0->screen->text, prog->code_base,
                          NOUVEAU_BO_VRAM, NVC0_SHADER_HEADER_SIZE, prog->hdr);
-   nvc0_m2mf_push_linear(&nvc0->pipe, nvc0->screen->text,
+   nvc0_m2mf_push_linear(&nvc0->base, nvc0->screen->text,
                          prog->code_base + NVC0_SHADER_HEADER_SIZE,
                          NOUVEAU_BO_VRAM, prog->code_size, prog->code);
 

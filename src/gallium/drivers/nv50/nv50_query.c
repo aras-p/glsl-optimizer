@@ -326,10 +326,12 @@ nv50_render_condition(struct pipe_context *pipe,
 void
 nv50_init_query_functions(struct nv50_context *nv50)
 {
-   nv50->pipe.create_query = nv50_query_create;
-   nv50->pipe.destroy_query = nv50_query_destroy;
-   nv50->pipe.begin_query = nv50_query_begin;
-   nv50->pipe.end_query = nv50_query_end;
-   nv50->pipe.get_query_result = nv50_query_result;
-   nv50->pipe.render_condition = nv50_render_condition;
+   struct pipe_context *pipe = &nv50->base.pipe;
+
+   pipe->create_query = nv50_query_create;
+   pipe->destroy_query = nv50_query_destroy;
+   pipe->begin_query = nv50_query_begin;
+   pipe->end_query = nv50_query_end;
+   pipe->get_query_result = nv50_query_result;
+   pipe->render_condition = nv50_render_condition;
 }

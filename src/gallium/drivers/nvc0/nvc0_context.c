@@ -84,22 +84,28 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
    struct pipe_winsys *pipe_winsys = pscreen->winsys;
    struct nvc0_screen *screen = nvc0_screen(pscreen);
    struct nvc0_context *nvc0;
+   struct pipe_context *pipe;
 
    nvc0 = CALLOC_STRUCT(nvc0_context);
    if (!nvc0)
       return NULL;
+   pipe = &nvc0->base.pipe;
+
    nvc0->screen = screen;
+   nvc0->base.screen    = &screen->base;
+   nvc0->base.copy_data = nvc0_m2mf_copy_linear;
+   nvc0->base.push_data = nvc0_m2mf_push_linear;
 
-   nvc0->pipe.winsys = pipe_winsys;
-   nvc0->pipe.screen = pscreen;
-   nvc0->pipe.priv = priv;
+   pipe->winsys = pipe_winsys;
+   pipe->screen = pscreen;
+   pipe->priv = priv;
 
-   nvc0->pipe.destroy = nvc0_destroy;
+   pipe->destroy = nvc0_destroy;
 
-   nvc0->pipe.draw_vbo = nvc0_draw_vbo;
-   nvc0->pipe.clear = nvc0_clear;
+   pipe->draw_vbo = nvc0_draw_vbo;
+   pipe->clear = nvc0_clear;
 
-   nvc0->pipe.flush = nvc0_flush;
+   pipe->flush = nvc0_flush;
 
    if (!screen->cur_ctx)
       screen->cur_ctx = nvc0;
@@ -109,13 +115,13 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
    nvc0_init_query_functions(nvc0);
    nvc0_init_surface_functions(nvc0);
    nvc0_init_state_functions(nvc0);
-   nvc0_init_resource_functions(&nvc0->pipe);
+   nvc0_init_resource_functions(pipe);
 
-   nvc0->draw = draw_create(&nvc0->pipe);
+   nvc0->draw = draw_create(pipe);
    assert(nvc0->draw);
    draw_set_rasterize_stage(nvc0->draw, nvc0_draw_render_stage(nvc0));
 
-   return &nvc0->pipe;
+   return pipe;
 }
 
 struct resident {

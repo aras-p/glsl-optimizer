@@ -136,7 +136,7 @@ nvc0_emit_vtxattr(struct nvc0_context *nvc0, struct pipe_vertex_buffer *vb,
    int i;
    const unsigned nc = util_format_get_nr_components(ve->src_format);
 
-   data = nouveau_resource_map_offset(&nvc0->pipe, res, vb->buffer_offset +
+   data = nouveau_resource_map_offset(&nvc0->base, res, vb->buffer_offset +
                                       ve->src_offset, NOUVEAU_BO_RD);
 
    util_format_read_4f(ve->src_format, v, 0, data, 0, 0, 0, 1, 1);
@@ -193,13 +193,13 @@ nvc0_prevalidate_vbufs(struct nvc0_context *nvc0)
                nvc0_vbuf_range(nvc0, i, &base, &size);
                nouveau_user_buffer_upload(buf, base, size);
             } else {
-               nouveau_buffer_migrate(&nvc0->pipe, buf, NOUVEAU_BO_GART);
+               nouveau_buffer_migrate(&nvc0->base, buf, NOUVEAU_BO_GART);
             }
-            nvc0->vbo_dirty = TRUE;
+            nvc0->base.vbo_dirty = TRUE;
          }
       }
       nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_VERTEX, buf, NOUVEAU_BO_RD);
-      nouveau_buffer_adjust_score(&nvc0->pipe, buf, 1);
+      nouveau_buffer_adjust_score(&nvc0->base, buf, 1);
    }
 }
 
@@ -240,7 +240,7 @@ nvc0_update_user_vbufs(struct nvc0_context *nvc0)
       OUT_RESRCh(chan, buf, offset, NOUVEAU_BO_RD);
       OUT_RESRCl(chan, buf, offset, NOUVEAU_BO_RD);
    }
-   nvc0->vbo_dirty = TRUE;
+   nvc0->base.vbo_dirty = TRUE;
 }
 
 static INLINE void
@@ -518,7 +518,7 @@ nvc0_draw_elements(struct nvc0_context *nvc0, boolean shorten,
       unsigned offset = nvc0->idxbuf.offset;
       unsigned limit = nvc0->idxbuf.buffer->width0 - 1;
 
-      nouveau_buffer_adjust_score(&nvc0->pipe, res, 1);
+      nouveau_buffer_adjust_score(&nvc0->base, res, 1);
 
       while (instance_count--) {
          MARK_RING (chan, 11, 4);
@@ -539,7 +539,7 @@ nvc0_draw_elements(struct nvc0_context *nvc0, boolean shorten,
          mode |= NVC0_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
       }
    } else {
-      data = nouveau_resource_map_offset(&nvc0->pipe,
+      data = nouveau_resource_map_offset(&nvc0->base,
                                          nv04_resource(nvc0->idxbuf.buffer),
                                          nvc0->idxbuf.offset, NOUVEAU_BO_RD);
       if (!data)
@@ -610,10 +610,10 @@ nvc0_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       OUT_RING  (chan, info->start_instance);
    }
 
-   if (nvc0->vbo_dirty) {
+   if (nvc0->base.vbo_dirty) {
       BEGIN_RING(chan, RING_3D(VERTEX_ARRAY_FLUSH), 1);
       OUT_RING  (chan, 0);
-      nvc0->vbo_dirty = FALSE;
+      nvc0->base.vbo_dirty = FALSE;
    }
 
    if (!info->indexed) {

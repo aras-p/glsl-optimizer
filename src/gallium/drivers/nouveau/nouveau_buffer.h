@@ -5,6 +5,7 @@
 #include "util/u_double_list.h"
 
 struct pipe_resource;
+struct nouveau_context;
 struct nouveau_bo;
 
 #define NOUVEAU_BUFFER_SCORE_MIN -25000
@@ -50,15 +51,15 @@ void
 nouveau_buffer_release_gpu_storage(struct nv04_resource *);
 
 boolean
-nouveau_buffer_download(struct pipe_context *, struct nv04_resource *,
+nouveau_buffer_download(struct nouveau_context *, struct nv04_resource *,
                         unsigned start, unsigned size);
 
 boolean
-nouveau_buffer_migrate(struct pipe_context *,
+nouveau_buffer_migrate(struct nouveau_context *,
                        struct nv04_resource *, unsigned domain);
 
 static INLINE void
-nouveau_buffer_adjust_score(struct pipe_context *pipe,
+nouveau_buffer_adjust_score(struct nouveau_context *pipe,
                             struct nv04_resource *res, int16_t score)
 {
    if (score < 0) {
@@ -76,7 +77,7 @@ nouveau_buffer_adjust_score(struct pipe_context *pipe,
 
 /* XXX: wait for fence (atm only using this for vertex push) */
 static INLINE void *
-nouveau_resource_map_offset(struct pipe_context *pipe,
+nouveau_resource_map_offset(struct nouveau_context *pipe,
                             struct nv04_resource *res, uint32_t offset,
                             uint32_t flags)
 {

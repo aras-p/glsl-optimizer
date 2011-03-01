@@ -793,55 +793,57 @@ nv50_vertex_state_bind(struct pipe_context *pipe, void *hwcso)
 void
 nv50_init_state_functions(struct nv50_context *nv50)
 {
-   nv50->pipe.create_blend_state = nv50_blend_state_create;
-   nv50->pipe.bind_blend_state = nv50_blend_state_bind;
-   nv50->pipe.delete_blend_state = nv50_blend_state_delete;
+   struct pipe_context *pipe = &nv50->base.pipe;
 
-   nv50->pipe.create_rasterizer_state = nv50_rasterizer_state_create;
-   nv50->pipe.bind_rasterizer_state = nv50_rasterizer_state_bind;
-   nv50->pipe.delete_rasterizer_state = nv50_rasterizer_state_delete;
+   pipe->create_blend_state = nv50_blend_state_create;
+   pipe->bind_blend_state = nv50_blend_state_bind;
+   pipe->delete_blend_state = nv50_blend_state_delete;
 
-   nv50->pipe.create_depth_stencil_alpha_state = nv50_zsa_state_create;
-   nv50->pipe.bind_depth_stencil_alpha_state = nv50_zsa_state_bind;
-   nv50->pipe.delete_depth_stencil_alpha_state = nv50_zsa_state_delete;
+   pipe->create_rasterizer_state = nv50_rasterizer_state_create;
+   pipe->bind_rasterizer_state = nv50_rasterizer_state_bind;
+   pipe->delete_rasterizer_state = nv50_rasterizer_state_delete;
 
-   nv50->pipe.create_sampler_state = nv50_sampler_state_create;
-   nv50->pipe.delete_sampler_state = nv50_sampler_state_delete;
-   nv50->pipe.bind_vertex_sampler_states   = nv50_vp_sampler_states_bind;
-   nv50->pipe.bind_fragment_sampler_states = nv50_fp_sampler_states_bind;
-   nv50->pipe.bind_geometry_sampler_states = nv50_gp_sampler_states_bind;
+   pipe->create_depth_stencil_alpha_state = nv50_zsa_state_create;
+   pipe->bind_depth_stencil_alpha_state = nv50_zsa_state_bind;
+   pipe->delete_depth_stencil_alpha_state = nv50_zsa_state_delete;
 
-   nv50->pipe.create_sampler_view = nv50_create_sampler_view;
-   nv50->pipe.sampler_view_destroy = nv50_sampler_view_destroy;
-   nv50->pipe.set_vertex_sampler_views   = nv50_vp_set_sampler_views;
-   nv50->pipe.set_fragment_sampler_views = nv50_fp_set_sampler_views;
-   nv50->pipe.set_geometry_sampler_views = nv50_gp_set_sampler_views;
+   pipe->create_sampler_state = nv50_sampler_state_create;
+   pipe->delete_sampler_state = nv50_sampler_state_delete;
+   pipe->bind_vertex_sampler_states   = nv50_vp_sampler_states_bind;
+   pipe->bind_fragment_sampler_states = nv50_fp_sampler_states_bind;
+   pipe->bind_geometry_sampler_states = nv50_gp_sampler_states_bind;
+
+   pipe->create_sampler_view = nv50_create_sampler_view;
+   pipe->sampler_view_destroy = nv50_sampler_view_destroy;
+   pipe->set_vertex_sampler_views   = nv50_vp_set_sampler_views;
+   pipe->set_fragment_sampler_views = nv50_fp_set_sampler_views;
+   pipe->set_geometry_sampler_views = nv50_gp_set_sampler_views;
  
-   nv50->pipe.create_vs_state = nv50_vp_state_create;
-   nv50->pipe.create_fs_state = nv50_fp_state_create;
-   nv50->pipe.create_gs_state = nv50_gp_state_create;
-   nv50->pipe.bind_vs_state = nv50_vp_state_bind;
-   nv50->pipe.bind_fs_state = nv50_fp_state_bind;
-   nv50->pipe.bind_gs_state = nv50_gp_state_bind;
-   nv50->pipe.delete_vs_state = nv50_sp_state_delete;
-   nv50->pipe.delete_fs_state = nv50_sp_state_delete;
-   nv50->pipe.delete_gs_state = nv50_sp_state_delete;
+   pipe->create_vs_state = nv50_vp_state_create;
+   pipe->create_fs_state = nv50_fp_state_create;
+   pipe->create_gs_state = nv50_gp_state_create;
+   pipe->bind_vs_state = nv50_vp_state_bind;
+   pipe->bind_fs_state = nv50_fp_state_bind;
+   pipe->bind_gs_state = nv50_gp_state_bind;
+   pipe->delete_vs_state = nv50_sp_state_delete;
+   pipe->delete_fs_state = nv50_sp_state_delete;
+   pipe->delete_gs_state = nv50_sp_state_delete;
 
-   nv50->pipe.set_blend_color = nv50_set_blend_color;
-   nv50->pipe.set_stencil_ref = nv50_set_stencil_ref;
-   nv50->pipe.set_clip_state = nv50_set_clip_state;
-   nv50->pipe.set_sample_mask = nv50_set_sample_mask;
-   nv50->pipe.set_constant_buffer = nv50_set_constant_buffer;
-   nv50->pipe.set_framebuffer_state = nv50_set_framebuffer_state;
-   nv50->pipe.set_polygon_stipple = nv50_set_polygon_stipple;
-   nv50->pipe.set_scissor_state = nv50_set_scissor_state;
-   nv50->pipe.set_viewport_state = nv50_set_viewport_state;
+   pipe->set_blend_color = nv50_set_blend_color;
+   pipe->set_stencil_ref = nv50_set_stencil_ref;
+   pipe->set_clip_state = nv50_set_clip_state;
+   pipe->set_sample_mask = nv50_set_sample_mask;
+   pipe->set_constant_buffer = nv50_set_constant_buffer;
+   pipe->set_framebuffer_state = nv50_set_framebuffer_state;
+   pipe->set_polygon_stipple = nv50_set_polygon_stipple;
+   pipe->set_scissor_state = nv50_set_scissor_state;
+   pipe->set_viewport_state = nv50_set_viewport_state;
 
-   nv50->pipe.create_vertex_elements_state = nv50_vertex_state_create;
-   nv50->pipe.delete_vertex_elements_state = nv50_vertex_state_delete;
-   nv50->pipe.bind_vertex_elements_state = nv50_vertex_state_bind;
+   pipe->create_vertex_elements_state = nv50_vertex_state_create;
+   pipe->delete_vertex_elements_state = nv50_vertex_state_delete;
+   pipe->bind_vertex_elements_state = nv50_vertex_state_bind;
 
-   nv50->pipe.set_vertex_buffers = nv50_set_vertex_buffers;
-   nv50->pipe.set_index_buffer = nv50_set_index_buffer;
+   pipe->set_vertex_buffers = nv50_set_vertex_buffers;
+   pipe->set_index_buffer = nv50_set_index_buffer;
 }
 
