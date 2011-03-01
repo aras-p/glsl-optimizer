@@ -226,7 +226,7 @@ static void r600_texture_set_array_mode(struct pipe_screen *screen,
 
 		w = mip_minify(ptex->width0, level);
 		h = mip_minify(ptex->height0, level);
-		if (w < tile_width || h < tile_height)
+		if (w <= tile_width || h <= tile_height)
 			rtex->array_mode[level] = V_0280A0_ARRAY_1D_TILED_THIN1;
 		else
 			rtex->array_mode[level] = array_mode;
