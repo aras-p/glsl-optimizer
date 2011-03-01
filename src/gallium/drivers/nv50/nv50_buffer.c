@@ -52,7 +52,7 @@ nv50_buffer_allocate(struct nv50_screen *screen, struct nv50_resource *buf,
 static INLINE void
 release_allocation(struct nouveau_mm_allocation **mm, struct nouveau_fence *fence)
 {
-   nouveau_fence_work(fence, nouveau_mm_free, *mm);
+   nouveau_fence_work(fence, nouveau_mm_free_work, *mm);
    (*mm) = NULL;
 }
 

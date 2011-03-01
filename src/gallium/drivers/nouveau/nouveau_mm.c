@@ -222,6 +222,12 @@ nouveau_mm_free(struct nouveau_mm_allocation *alloc)
    FREE(alloc);
 }
 
+void
+nouveau_mm_free_work(void *data)
+{
+   nouveau_mm_free(data);
+}
+
 struct nouveau_mman *
 nouveau_mm_create(struct nouveau_device *dev, uint32_t domain,
                uint32_t storage_type)

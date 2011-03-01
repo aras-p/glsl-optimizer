@@ -64,7 +64,7 @@ nv50_query_allocate(struct nv50_context *nv50, struct nv50_query *q, int size)
          if (q->ready)
             nouveau_mm_free(q->mm);
          else
-            nouveau_fence_work(screen->base.fence.current, nouveau_mm_free, q->mm);
+            nouveau_fence_work(screen->base.fence.current, nouveau_mm_free_work, q->mm);
       }
    }
    if (size) {

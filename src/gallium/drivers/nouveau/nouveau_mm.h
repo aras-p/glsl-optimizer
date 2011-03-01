@@ -26,4 +26,7 @@ nouveau_mm_allocate(struct nouveau_mman *, uint32_t size,
 extern void
 nouveau_mm_free(struct nouveau_mm_allocation *);
 
+extern void
+nouveau_mm_free_work(void *);
+
 #endif // __NOUVEAU_MM_H__
