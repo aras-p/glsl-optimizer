@@ -205,20 +205,6 @@ uint32_t r300_translate_texformat(enum pipe_format format,
         }
     }
 
-    /* Add sign. */
-    for (i = 0; i < desc->nr_channels; i++) {
-        if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
-            result |= sign_bit[i];
-        }
-    }
-
-    /* This is truly a special format.
-     * It stores R8G8 and B is computed using sqrt(1 - R^2 - G^2)
-     * in the sampler unit. Also known as D3DFMT_CxV8U8. */
-    if (format == PIPE_FORMAT_R8G8Bx_SNORM) {
-        return R300_TX_FORMAT_CxV8U8 | result;
-    }
-
     /* RGTC formats. */
     if (desc->layout == UTIL_FORMAT_LAYOUT_RGTC) {
         switch (format) {
@@ -232,6 +218,20 @@ uint32_t r300_translate_texformat(enum pipe_format format,
                 return R400_TX_FORMAT_ATI2N | result;
             default:
                 return ~0; /* Unsupported/unknown. */
+        }
+    }
+
+    /* This is truly a special format.
+     * It stores R8G8 and B is computed using sqrt(1 - R^2 - G^2)
+     * in the sampler unit. Also known as D3DFMT_CxV8U8. */
+    if (format == PIPE_FORMAT_R8G8Bx_SNORM) {
+        return R300_TX_FORMAT_CxV8U8 | result;
+    }
+
+    /* Add sign. */
+    for (i = 0; i < desc->nr_channels; i++) {
+        if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
+            result |= sign_bit[i];
         }
     }
 
