@@ -282,5 +282,7 @@ nouveau_mm_destroy(struct nouveau_mman *cache)
       nouveau_mm_free_slabs(&cache->bucket[i].used);
       nouveau_mm_free_slabs(&cache->bucket[i].full);
    }
+
+   FREE(cache);
 }
 
