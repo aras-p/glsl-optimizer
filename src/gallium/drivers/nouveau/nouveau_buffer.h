@@ -1,5 +1,5 @@
-#ifndef __NOUVEAU_RESOURCE_H__
-#define __NOUVEAU_RESOURCE_H__
+#ifndef __NOUVEAU_BUFFER_H__
+#define __NOUVEAU_BUFFER_H__
 
 #include "util/u_transfer.h"
 #include "util/u_double_list.h"

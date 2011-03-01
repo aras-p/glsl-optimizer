@@ -310,6 +310,8 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
 
    screen->base.vertex_buffer_flags = screen->base.index_buffer_flags =
       NOUVEAU_BO_GART;
+   screen->base.copy_data = nv50_m2mf_copy_linear;
+   screen->base.push_data = nv50_sifc_linear_u8;
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0, 4096,
                         &screen->fence.bo);

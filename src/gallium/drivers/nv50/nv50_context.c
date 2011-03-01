@@ -119,13 +119,13 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
 }
 
 struct resident {
-   struct nv50_resource *res;
+   struct nv04_resource *res;
    uint32_t flags;
 };
 
 void
 nv50_bufctx_add_resident(struct nv50_context *nv50, int ctx,
-                         struct nv50_resource *resource, uint32_t flags)
+                         struct nv04_resource *resource, uint32_t flags)
 {
    struct resident rsd = { resource, flags };
 
@@ -140,7 +140,7 @@ nv50_bufctx_add_resident(struct nv50_context *nv50, int ctx,
 
 void
 nv50_bufctx_del_resident(struct nv50_context *nv50, int ctx,
-                         struct nv50_resource *resource)
+                         struct nv04_resource *resource)
 {
    struct resident *rsd, *top;
    unsigned i;

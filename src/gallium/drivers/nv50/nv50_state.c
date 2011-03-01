@@ -651,8 +651,7 @@ nv50_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 
    if (nv50->constbuf[shader][index])
       nv50_bufctx_del_resident(nv50, NV50_BUFCTX_CONSTANT,
-			       nv50_resource(
-				       nv50->constbuf[shader][index]));
+			       nv04_resource(nv50->constbuf[shader][index]));
 
    pipe_resource_reference(&nv50->constbuf[shader][index], res);
 

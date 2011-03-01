@@ -73,7 +73,7 @@ int nv50_screen_tic_alloc(struct nv50_screen *, void *);
 int nv50_screen_tsc_alloc(struct nv50_screen *, void *);
 
 static INLINE void
-nv50_resource_fence(struct nv50_resource *res, uint32_t flags)
+nv50_resource_fence(struct nv04_resource *res, uint32_t flags)
 {
    struct nv50_screen *screen = nv50_screen(res->base.screen);
 
@@ -86,7 +86,7 @@ nv50_resource_fence(struct nv50_resource *res, uint32_t flags)
 }
 
 static INLINE void
-nv50_resource_validate(struct nv50_resource *res, uint32_t flags)
+nv50_resource_validate(struct nv04_resource *res, uint32_t flags)
 {
    struct nv50_screen *screen = nv50_screen(res->base.screen);
 

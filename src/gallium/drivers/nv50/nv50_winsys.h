@@ -4,6 +4,7 @@
 
 #include <stdint.h>
 #include <unistd.h>
+
 #include "pipe/p_defines.h"
 
 #include "nouveau/nouveau_bo.h"
@@ -13,8 +14,9 @@
 #include "nouveau/nouveau_resource.h"
 #include "nouveau/nouveau_pushbuf.h"
 #include "nouveau/nouveau_reloc.h"
+#include "nouveau/nouveau_notifier.h"
 
-#include "nv50_resource.h" /* OUT_RESRC */
+#include "nouveau/nouveau_buffer.h"
 
 #ifndef NV04_PFIFO_MAX_PACKET_LEN
 #define NV04_PFIFO_MAX_PACKET_LEN 2047
@@ -68,18 +70,18 @@ BEGIN_RING_NI(struct nouveau_channel *chan, uint32_t mthd, unsigned size)
 }
 
 static INLINE int
-OUT_RESRCh(struct nouveau_channel *chan, struct nv50_resource *res,
+OUT_RESRCh(struct nouveau_channel *chan, struct nv04_resource *res,
            unsigned delta, unsigned flags)
 {
    return OUT_RELOCh(chan, res->bo, res->offset + delta, res->domain | flags);
 }
 
 static INLINE int
-OUT_RESRCl(struct nouveau_channel *chan, struct nv50_resource *res,
+OUT_RESRCl(struct nouveau_channel *chan, struct nv04_resource *res,
            unsigned delta, unsigned flags)
 {
    if (flags & NOUVEAU_BO_WR)
-      res->status |= NV50_BUFFER_STATUS_DIRTY;
+      res->status |= NOUVEAU_BUFFER_STATUS_DIRTY;
    return OUT_RELOCl(chan, res->bo, res->offset + delta, res->domain | flags);
 }
 

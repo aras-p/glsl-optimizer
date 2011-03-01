@@ -127,12 +127,12 @@ nv50_emit_vtxattr(struct nv50_context *nv50, struct pipe_vertex_buffer *vb,
 {
    const void *data;
    struct nouveau_channel *chan = nv50->screen->base.channel;
-   struct nv50_resource *res = nv50_resource(vb->buffer);
+   struct nv04_resource *res = nv04_resource(vb->buffer);
    float v[4];
    const unsigned nc = util_format_get_nr_components(ve->src_format);
 
-   data = nv50_resource_map_offset(nv50, res, vb->buffer_offset +
-                                   ve->src_offset, NOUVEAU_BO_RD);
+   data = nouveau_resource_map_offset(&nv50->pipe, res, vb->buffer_offset +
+                                      ve->src_offset, NOUVEAU_BO_RD);
 
    util_format_read_4f(ve->src_format, v, 0, data, 0, 0, 0, 1, 1);
 
@@ -189,7 +189,7 @@ static void
 nv50_prevalidate_vbufs(struct nv50_context *nv50)
 {
    struct pipe_vertex_buffer *vb;
-   struct nv50_resource *buf;
+   struct nv04_resource *buf;
    int i;
    uint32_t base, size;
 
@@ -201,27 +201,27 @@ nv50_prevalidate_vbufs(struct nv50_context *nv50)
       vb = &nv50->vtxbuf[i];
       if (!vb->stride)
          continue;
-      buf = nv50_resource(vb->buffer);
+      buf = nv04_resource(vb->buffer);
 
       /* NOTE: user buffers with temporary storage count as mapped by GPU */
-      if (!nv50_resource_mapped_by_gpu(vb->buffer)) {
+      if (!nouveau_resource_mapped_by_gpu(vb->buffer)) {
          if (nv50->vbo_push_hint) {
             nv50->vbo_fifo = ~0;
             continue;
          } else {
-            if (buf->status & NV50_BUFFER_STATUS_USER_MEMORY) {
+            if (buf->status & NOUVEAU_BUFFER_STATUS_USER_MEMORY) {
                nv50->vbo_user |= 1 << i;
                assert(vb->stride > vb->buffer_offset);
                nv50_vbuf_range(nv50, i, &base, &size);
-               nv50_user_buffer_upload(buf, base, size);
+               nouveau_user_buffer_upload(buf, base, size);
             } else {
-               nv50_buffer_migrate(nv50, buf, NOUVEAU_BO_GART);
+               nouveau_buffer_migrate(&nv50->pipe, buf, NOUVEAU_BO_GART);
             }
             nv50->vbo_dirty = TRUE;
          }
       }
       nv50_bufctx_add_resident(nv50, NV50_BUFCTX_VERTEX, buf, NOUVEAU_BO_RD);
-      nv50_buffer_adjust_score(nv50, buf, 1);
+      nouveau_buffer_adjust_score(&nv50->pipe, buf, 1);
    }
 }
 
@@ -237,7 +237,7 @@ nv50_update_user_vbufs(struct nv50_context *nv50)
       struct pipe_vertex_element *ve = &nv50->vertex->element[i].pipe;
       const int b = ve->vertex_buffer_index;
       struct pipe_vertex_buffer *vb = &nv50->vtxbuf[b];
-      struct nv50_resource *buf = nv50_resource(vb->buffer);
+      struct nv04_resource *buf = nv04_resource(vb->buffer);
 
       if (!(nv50->vbo_user & (1 << b)))
          continue;
@@ -250,7 +250,7 @@ nv50_update_user_vbufs(struct nv50_context *nv50)
 
       if (!(written & (1 << b))) {
          written |= 1 << b;
-         nv50_user_buffer_upload(buf, base, size);
+         nouveau_user_buffer_upload(buf, base, size);
       }
       offset = vb->buffer_offset + ve->src_offset;
 
@@ -274,7 +274,7 @@ nv50_release_user_vbufs(struct nv50_context *nv50)
       int i = ffs(vbo_user) - 1;
       vbo_user &= ~(1 << i);
 
-      nv50_buffer_release_gpu_storage(nv50_resource(nv50->vtxbuf[i].buffer));
+      nouveau_buffer_release_gpu_storage(nv04_resource(nv50->vtxbuf[i].buffer));
    }
 }
 
@@ -308,7 +308,7 @@ nv50_vertex_arrays_validate(struct nv50_context *nv50)
    }
 
    for (i = 0; i < vertex->num_elements; ++i) {
-      struct nv50_resource *res;
+      struct nv04_resource *res;
       unsigned size, offset;
       
       ve = &vertex->element[i];
@@ -327,7 +327,7 @@ nv50_vertex_arrays_validate(struct nv50_context *nv50)
          OUT_RING  (chan, 0);
       }
 
-      res = nv50_resource(vb->buffer);
+      res = nv04_resource(vb->buffer);
 
       if (nv50->vbo_fifo || unlikely(vb->stride == 0)) {
          if (!nv50->vbo_fifo)
@@ -536,11 +536,11 @@ nv50_draw_elements(struct nv50_context *nv50, boolean shorten,
       nv50->state.index_bias = index_bias;
    }
 
-   if (nv50_resource_mapped_by_gpu(nv50->idxbuf.buffer) && 0) {
-      struct nv50_resource *res = nv50_resource(nv50->idxbuf.buffer);
+   if (nouveau_resource_mapped_by_gpu(nv50->idxbuf.buffer) && 0) {
+      struct nv04_resource *res = nv04_resource(nv50->idxbuf.buffer);
       unsigned offset = res->offset + nv50->idxbuf.offset;
 
-      nv50_buffer_adjust_score(nv50, res, 1);
+      nouveau_buffer_adjust_score(&nv50->pipe, res, 1);
 
       while (instance_count--) {
          BEGIN_RING(chan, RING_3D(VERTEX_BEGIN_GL), 1);
@@ -597,8 +597,9 @@ nv50_draw_elements(struct nv50_context *nv50, boolean shorten,
          mode |= NV50_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT;
       }
    } else {
-      data = nv50_resource_map_offset(nv50, nv50_resource(nv50->idxbuf.buffer),
-                                      nv50->idxbuf.offset, NOUVEAU_BO_RD);
+      data = nouveau_resource_map_offset(&nv50->pipe,
+                                         nv04_resource(nv50->idxbuf.buffer),
+                                         nv50->idxbuf.offset, NOUVEAU_BO_RD);
       if (!data)
          return;
 

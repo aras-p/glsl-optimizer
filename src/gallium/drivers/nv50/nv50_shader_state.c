@@ -35,7 +35,7 @@ nv50_constbufs_validate(struct nv50_context *nv50)
    unsigned s;
 
    for (s = 0; s < 3; ++s) {
-      struct nv50_resource *res;
+      struct nv04_resource *res;
       int i;
       unsigned p, b;
 
@@ -55,7 +55,7 @@ nv50_constbufs_validate(struct nv50_context *nv50)
          i = ffs(nv50->constbuf_dirty[s]) - 1;
          nv50->constbuf_dirty[s] &= ~(1 << i);
 
-         res = nv50_resource(nv50->constbuf[s][i]);
+         res = nv04_resource(nv50->constbuf[s][i]);
          if (!res) {
             if (i != 0) {
                BEGIN_RING(chan, RING_3D(SET_PROGRAM_CB), 1);
@@ -75,8 +75,8 @@ nv50_constbufs_validate(struct nv50_context *nv50)
 
             assert(0);
 
-            if (!nv50_resource_mapped_by_gpu(&res->base)) {
-               nv50_buffer_migrate(nv50, res, NOUVEAU_BO_VRAM);
+            if (!nouveau_resource_mapped_by_gpu(&res->base)) {
+               nouveau_buffer_migrate(&nv50->pipe, res, NOUVEAU_BO_VRAM);
 
                BEGIN_RING(chan, RING_3D(CODE_CB_FLUSH), 1);
                OUT_RING  (chan, 0);
@@ -149,9 +149,9 @@ nv50_program_validate(struct nv50_context *nv50, struct nv50_program *prog)
       return FALSE;
    prog->code_base = prog->res->start;
 
-   nv50_sifc_linear_u8(nv50, nv50->screen->code, NOUVEAU_BO_VRAM,
-                       (prog->type << 16) + prog->code_base, prog->code_size,
-                       prog->code);
+   nv50_sifc_linear_u8(&nv50->pipe, nv50->screen->code,
+                       (prog->type << 16) + prog->code_base,
+                       NOUVEAU_BO_VRAM, prog->code_size, prog->code);
 
    BEGIN_RING(nv50->screen->base.channel, RING_3D(CODE_CB_FLUSH), 1);
    OUT_RING  (nv50->screen->base.channel, 0);

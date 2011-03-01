@@ -8,7 +8,7 @@ nv50_resource_is_referenced(struct pipe_context *pipe,
                             struct pipe_resource *resource,
                             unsigned face, int layer)
 {
-   struct nv50_resource *res = nv50_resource(resource);
+   struct nv04_resource *res = nv04_resource(resource);
    unsigned flags = 0;
    unsigned bo_flags = nouveau_bo_pending(res->bo);
 
@@ -26,7 +26,7 @@ nv50_resource_create(struct pipe_screen *screen,
 {
    switch (templ->target) {
    case PIPE_BUFFER:
-      return nv50_buffer_create(screen, templ);
+      return nouveau_buffer_create(screen, templ);
    default:
       return nv50_miptree_create(screen, templ);
    }
@@ -64,5 +64,5 @@ nv50_screen_init_resource_functions(struct pipe_screen *pscreen)
    pscreen->resource_from_handle = nv50_resource_from_handle;
    pscreen->resource_get_handle = u_resource_get_handle_vtbl;
    pscreen->resource_destroy = u_resource_destroy_vtbl;
-   pscreen->user_buffer_create = nv50_user_buffer_create;
+   pscreen->user_buffer_create = nouveau_user_buffer_create;
 }

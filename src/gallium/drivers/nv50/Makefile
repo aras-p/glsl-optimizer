@@ -4,7 +4,6 @@ include $(TOP)/configs/current
 LIBNAME = nv50
 
 C_SOURCES = \
-	nv50_buffer.c \
 	nv50_context.c \
 	nv50_draw.c \
 	nv50_formats.c \

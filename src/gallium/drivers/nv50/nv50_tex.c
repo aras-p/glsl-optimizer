@@ -168,7 +168,7 @@ nv50_validate_tic(struct nv50_context *nv50, int s)
 
    for (i = 0; i < nv50->num_textures[s]; ++i) {
       struct nv50_tic_entry *tic = nv50_tic_entry(nv50->textures[s][i]);
-      struct nv50_resource *res;
+      struct nv04_resource *res;
 
       if (!tic) {
          BEGIN_RING(chan, RING_3D(BIND_TIC(s)), 1);
@@ -261,8 +261,9 @@ nv50_validate_tsc(struct nv50_context *nv50, int s)
       if (tsc->id < 0) {
          tsc->id = nv50_screen_tsc_alloc(nv50->screen, tsc);
 
-         nv50_sifc_linear_u8(nv50, nv50->screen->txc, NOUVEAU_BO_VRAM,
-                             65536 + tsc->id * 32, 32, tsc->tsc);
+         nv50_sifc_linear_u8(&nv50->pipe, nv50->screen->txc,
+                             65536 + tsc->id * 32,
+                             NOUVEAU_BO_VRAM, 32, tsc->tsc);
          need_flush = TRUE;
       }
       nv50->screen->tsc.lock[tsc->id / 32] |= 1 << (tsc->id % 32);
