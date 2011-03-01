@@ -652,7 +652,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
    for (i = -2; i < (GLint) ctx->Const.MaxColorAttachments; i++) {
       struct gl_renderbuffer_attachment *att;
       GLenum f;
-      gl_format mesaFormat;
+      gl_format attFormat;
 
       /*
        * XXX for ARB_fbo, only check color buffers that are named by
@@ -699,7 +699,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
          minHeight = MIN2(minHeight, texImg->Height);
          maxHeight = MAX2(maxHeight, texImg->Height);
          f = texImg->_BaseFormat;
-         mesaFormat = texImg->TexFormat;
+         attFormat = texImg->TexFormat;
          numImages++;
          if (!_mesa_is_legal_color_format(ctx, f) &&
              !is_legal_depth_format(ctx, f)) {
@@ -714,7 +714,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
          minHeight = MIN2(minHeight, att->Renderbuffer->Height);
          maxHeight = MAX2(minHeight, att->Renderbuffer->Height);
          f = att->Renderbuffer->InternalFormat;
-         mesaFormat = att->Renderbuffer->Format;
+         attFormat = att->Renderbuffer->Format;
          numImages++;
       }
       else {
@@ -728,7 +728,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
       }
 
       /* check if integer color */
-      fb->_IntegerColor = _mesa_is_format_integer_color(mesaFormat);
+      fb->_IntegerColor = _mesa_is_format_integer_color(attFormat);
 
       /* Error-check width, height, format, samples
        */
