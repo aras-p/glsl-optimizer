@@ -88,7 +88,14 @@ nv50_blend_state_create(struct pipe_context *pipe,
 {
    struct nv50_blend_stateobj *so = CALLOC_STRUCT(nv50_blend_stateobj);
    int i;
-   boolean blend_enabled = cso->rt[0].blend_enable;
+   boolean emit_common_func = cso->rt[0].blend_enable;
+
+   const uint32_t chipset = nv50_context(pipe)->screen->base.device->chipset;
+
+   if (chipset >= 0xa3) {
+      SB_BEGIN_3D(so, BLEND_INDEPENDENT, 1);
+      SB_DATA    (so, cso->independent_blend_enable);
+   }
 
    so->pipe = *cso;
 
@@ -97,14 +104,30 @@ nv50_blend_state_create(struct pipe_context *pipe,
       for (i = 0; i < 8; ++i) {
          SB_DATA(so, cso->rt[i].blend_enable);
          if (cso->rt[i].blend_enable)
-            blend_enabled = TRUE;
+            emit_common_func = TRUE;
+      }
+
+      if (chipset >= 0xa3) {
+         emit_common_func = FALSE;
+
+         for (i = 0; i < 8; ++i) {
+            if (!cso->rt[i].blend_enable)
+               continue;
+            SB_BEGIN_3D_(so, NVA3_3D_IBLEND_EQUATION_RGB(i), 6);
+            SB_DATA     (so, nvgl_blend_eqn(cso->rt[i].rgb_func));
+            SB_DATA     (so, nv50_blend_fac(cso->rt[i].rgb_src_factor));
+            SB_DATA     (so, nv50_blend_fac(cso->rt[i].rgb_dst_factor));
+            SB_DATA     (so, nvgl_blend_eqn(cso->rt[i].alpha_func));
+            SB_DATA     (so, nv50_blend_fac(cso->rt[i].alpha_src_factor));
+            SB_DATA     (so, nv50_blend_fac(cso->rt[i].alpha_dst_factor));
+         }
       }
    } else {
       for (i = 0; i < 8; ++i)
-         SB_DATA(so, blend_enabled);
+         SB_DATA(so, cso->rt[0].blend_enable);
    }
 
-   if (blend_enabled) {
+   if (emit_common_func) {
       SB_BEGIN_3D(so, BLEND_EQUATION_RGB, 5);
       SB_DATA    (so, nvgl_blend_eqn(cso->rt[0].rgb_func));
       SB_DATA    (so, nv50_blend_fac(cso->rt[0].rgb_src_factor));

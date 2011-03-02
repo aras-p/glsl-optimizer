@@ -10,12 +10,16 @@
    (so)->state[(so)->size++] =                                                 \
       ((s) << 18) | (NV50_SUBCH_3D << 13) | NV50_3D_##m
 
+#define SB_BEGIN_3D_(so, m, s)                                                 \
+   (so)->state[(so)->size++] =                                                 \
+      ((s) << 18) | (NV50_SUBCH_3D << 13) | m
+
 #define SB_DATA(so, u) (so)->state[(so)->size++] = (u)
 
 struct nv50_blend_stateobj {
    struct pipe_blend_state pipe;
    int size;
-   uint32_t state[29];
+   uint32_t state[78];
 };
 
 struct nv50_tsc_entry {
