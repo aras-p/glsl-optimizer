@@ -157,6 +157,8 @@ static void do_ioctls(struct radeon_drm_winsys *winsys)
     winsys->vram_size = gem_info.vram_size;
 
     drmFreeVersion(version);
+
+    winsys->num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
 }
 
 static void radeon_winsys_destroy(struct r300_winsys_screen *rws)
