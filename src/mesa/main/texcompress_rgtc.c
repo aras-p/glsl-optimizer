@@ -321,7 +321,7 @@ static void _fetch_texel_rgtc_u(GLint srcRowStride, const GLubyte *pixdata,
    const GLubyte alpha1 = blksrc[1];
    const GLubyte bit_pos = ((j&3) * 4 + (i&3)) * 3;
    const GLubyte acodelow = blksrc[2 + bit_pos / 8];
-   const GLubyte acodehigh = blksrc[3 + bit_pos / 8];
+   const uint8_t acodehigh = (3 + bit_pos / 8) < 8 ? blksrc[3 + bit_pos / 8] : 0;
    const GLubyte code = (acodelow >> (bit_pos & 0x7) |
       (acodehigh  << (8 - (bit_pos & 0x7)))) & 0x7;
 
@@ -351,7 +351,7 @@ static void _fetch_texel_rgtc_s(GLint srcRowStride, const GLbyte *pixdata,
    const GLbyte alpha1 = blksrc[1];
    const GLbyte bit_pos = ((j&3) * 4 + (i&3)) * 3;
    const GLbyte acodelow = blksrc[2 + bit_pos / 8];
-   const GLbyte acodehigh = blksrc[3 + bit_pos / 8];
+   const uint8_t acodehigh = (3 + bit_pos / 8) < 8 ? blksrc[3 + bit_pos / 8] : 0;
    const GLbyte code = (acodelow >> (bit_pos & 0x7) |
       (acodehigh  << (8 - (bit_pos & 0x7)))) & 0x7;
 
