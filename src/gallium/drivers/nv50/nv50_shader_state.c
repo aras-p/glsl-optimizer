@@ -149,6 +149,8 @@ nv50_program_validate(struct nv50_context *nv50, struct nv50_program *prog)
       return FALSE;
    prog->code_base = prog->res->start;
 
+   nv50_relocate_program(prog, prog->code_base, 0);
+
    nv50_sifc_linear_u8(&nv50->base, nv50->screen->code,
                        (prog->type << 16) + prog->code_base,
                        NOUVEAU_BO_VRAM, prog->code_size, prog->code);
