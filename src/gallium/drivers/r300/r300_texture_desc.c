@@ -207,29 +207,6 @@ static unsigned r300_texture_get_nblocksy(struct r300_resource *tex,
     return util_format_get_nblocksy(tex->b.b.b.format, height);
 }
 
-static void r300_texture_3d_fix_mipmapping(struct r300_screen *screen,
-                                           struct r300_resource *tex)
-{
-    /* The kernels <= 2.6.34-rc4 compute the size of mipmapped 3D textures
-     * incorrectly. This is a workaround to prevent CS from being rejected. */
-
-    unsigned i, size;
-
-    if (!screen->rws->get_value(screen->rws, R300_VID_DRM_2_3_0) &&
-        tex->b.b.b.target == PIPE_TEXTURE_3D &&
-        tex->b.b.b.last_level > 0) {
-        size = 0;
-
-        for (i = 0; i <= tex->b.b.b.last_level; i++) {
-            size += tex->tex.stride_in_bytes[i] *
-                    r300_texture_get_nblocksy(tex, i, FALSE);
-        }
-
-        size *= tex->tex.depth0;
-        tex->tex.size_in_bytes = size;
-    }
-}
-
 /* Get a width in pixels from a stride in bytes. */
 static unsigned stride_to_width(enum pipe_format format,
                                 unsigned stride_in_bytes)
@@ -442,7 +419,6 @@ static void r300_setup_hyperz_properties(struct r300_screen *screen,
 static void r300_setup_tiling(struct r300_screen *screen,
                               struct r300_resource *tex)
 {
-    struct r300_winsys_screen *rws = screen->rws;
     enum pipe_format format = tex->b.b.b.format;
     boolean rv350_mode = screen->caps.family >= CHIP_FAMILY_R350;
     boolean is_zb = util_format_is_depth_or_stencil(format);
@@ -469,9 +445,7 @@ static void r300_setup_tiling(struct r300_screen *screen,
             break;
 
         case 2:
-            if (rws->get_value(rws, R300_VID_DRM_2_1_0)) {
-                tex->tex.microtile = R300_BUFFER_SQUARETILED;
-            }
+            tex->tex.microtile = R300_BUFFER_SQUARETILED;
             break;
     }
 
@@ -541,7 +515,6 @@ boolean r300_texture_desc_init(struct r300_screen *rscreen,
         r300_setup_miptree(rscreen, tex, FALSE);
     }
 
-    r300_texture_3d_fix_mipmapping(rscreen, tex);
     r300_setup_hyperz_properties(rscreen, tex);
 
     if (tex->buf_size) {

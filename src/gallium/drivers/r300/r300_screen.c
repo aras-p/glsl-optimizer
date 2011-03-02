@@ -456,10 +456,6 @@ struct pipe_screen* r300_screen_create(struct r300_winsys_screen *rws)
     if (SCREEN_DBG_ON(r300screen, DBG_NO_HIZ))
         r300screen->caps.hiz_ram = 0;
 
-    r300screen->caps.index_bias_supported =
-            r300screen->caps.is_r500 &&
-            rws->get_value(rws, R300_VID_DRM_2_3_0);
-
     pipe_mutex_init(r300screen->num_contexts_mutex);
 
     util_slab_create(&r300screen->pool_buffers,

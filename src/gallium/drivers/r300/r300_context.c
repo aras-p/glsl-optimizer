@@ -169,7 +169,6 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     boolean is_rv350 = r300->screen->caps.is_rv350;
     boolean is_r500 = r300->screen->caps.is_r500;
     boolean has_tcl = r300->screen->caps.has_tcl;
-    boolean drm_2_3_0 = r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0);
     boolean drm_2_6_0 = r300->rws->get_value(r300->rws, R300_VID_DRM_2_6_0);
     boolean can_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
     boolean has_hiz_ram = r300->screen->caps.hiz_ram > 0;
@@ -215,7 +214,7 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(rs_block_state, 0);
     R300_INIT_ATOM(rs_state, 0);
     /* SC, US. */
-    R300_INIT_ATOM(fb_state_pipelined, 5 + (drm_2_3_0 ? 3 : 0));
+    R300_INIT_ATOM(fb_state_pipelined, 8);
     /* US. */
     R300_INIT_ATOM(fs, 0);
     R300_INIT_ATOM(fs_rc_constant_state, 0);

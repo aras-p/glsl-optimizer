@@ -60,8 +60,6 @@ enum r300_value_id {
     R300_VID_DRM_PATCHLEVEL,
 
     /* These should probably go away: */
-    R300_VID_DRM_2_1_0,  /* Square tiling. */
-    R300_VID_DRM_2_3_0,  /* R500 VAP regs, MSPOS regs, fixed tex3D size checking */
     R300_VID_DRM_2_6_0,  /* Hyper-Z, GB_Z_PEQ_CONFIG on rv350->r4xx, R500 FG_ALPHA_VALUE */
     R300_VID_DRM_2_8_0,  /* R500 US_FORMAT regs, R500 ARGB2101010 colorbuffer, CMask, R16F/RG16F */
 

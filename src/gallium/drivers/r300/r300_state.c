@@ -804,27 +804,25 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
     }
 
     /* Set up AA config. */
-    if (r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0)) {
-        if (state->nr_cbufs && state->cbufs[0]->texture->nr_samples > 1) {
-            aa->aa_config = R300_GB_AA_CONFIG_AA_ENABLE;
+    if (state->nr_cbufs && state->cbufs[0]->texture->nr_samples > 1) {
+        aa->aa_config = R300_GB_AA_CONFIG_AA_ENABLE;
 
-            switch (state->cbufs[0]->texture->nr_samples) {
-                case 2:
-                    aa->aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_2;
-                    break;
-                case 3:
-                    aa->aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_3;
-                    break;
-                case 4:
-                    aa->aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_4;
-                    break;
-                case 6:
-                    aa->aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_6;
-                    break;
-            }
-        } else {
-            aa->aa_config = 0;
+        switch (state->cbufs[0]->texture->nr_samples) {
+        case 2:
+            aa->aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_2;
+            break;
+        case 3:
+            aa->aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_3;
+            break;
+        case 4:
+            aa->aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_4;
+            break;
+        case 6:
+            aa->aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_6;
+            break;
         }
+    } else {
+        aa->aa_config = 0;
     }
 
     if (DBG_ON(r300, DBG_FB)) {

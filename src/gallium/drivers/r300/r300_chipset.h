@@ -90,8 +90,6 @@ struct r300_capabilities {
     boolean high_second_pipe;
     /* DXTC texture swizzling. */
     boolean dxtc_swizzle;
-    /* Index bias (AKA index offset). */
-    boolean index_bias_supported;
 };
 
 /* Enumerations for legibility and telling which card we're running on. */

@@ -469,6 +469,7 @@ void r300_emit_fb_state_pipelined(struct r300_context *r300,
     struct pipe_framebuffer_state* fb =
             (struct pipe_framebuffer_state*)r300->fb_state.state;
     unsigned i, num_cbufs = fb->nr_cbufs;
+    unsigned mspos0, mspos1;
     CS_LOCALS(r300);
 
     /* If we use the multiwrite feature, the colorbuffers 2,3,4 must be
@@ -492,38 +493,36 @@ void r300_emit_fb_state_pipelined(struct r300_context *r300,
     /* Multisampling. Depends on framebuffer sample count.
      * These are pipelined regs and as such cannot be moved
      * to the AA state. */
-    if (r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0)) {
-        unsigned mspos0 = 0x66666666;
-        unsigned mspos1 = 0x6666666;
+    mspos0 = 0x66666666;
+    mspos1 = 0x6666666;
 
-        if (fb->nr_cbufs && fb->cbufs[0]->texture->nr_samples > 1) {
-            /* Subsample placement. These may not be optimal. */
-            switch (fb->cbufs[0]->texture->nr_samples) {
-                case 2:
-                    mspos0 = 0x33996633;
-                    mspos1 = 0x6666663;
-                    break;
-                case 3:
-                    mspos0 = 0x33936933;
-                    mspos1 = 0x6666663;
-                    break;
-                case 4:
-                    mspos0 = 0x33939933;
-                    mspos1 = 0x3966663;
-                    break;
-                case 6:
-                    mspos0 = 0x22a2aa22;
-                    mspos1 = 0x2a65672;
-                    break;
-                default:
-                    debug_printf("r300: Bad number of multisamples!\n");
-            }
+    if (fb->nr_cbufs && fb->cbufs[0]->texture->nr_samples > 1) {
+        /* Subsample placement. These may not be optimal. */
+        switch (fb->cbufs[0]->texture->nr_samples) {
+        case 2:
+            mspos0 = 0x33996633;
+            mspos1 = 0x6666663;
+            break;
+        case 3:
+            mspos0 = 0x33936933;
+            mspos1 = 0x6666663;
+            break;
+        case 4:
+            mspos0 = 0x33939933;
+            mspos1 = 0x3966663;
+            break;
+        case 6:
+            mspos0 = 0x22a2aa22;
+            mspos1 = 0x2a65672;
+            break;
+        default:
+            debug_printf("r300: Bad number of multisamples!\n");
         }
-
-        OUT_CS_REG_SEQ(R300_GB_MSPOS0, 2);
-        OUT_CS(mspos0);
-        OUT_CS(mspos1);
     }
+
+    OUT_CS_REG_SEQ(R300_GB_MSPOS0, 2);
+    OUT_CS(mspos0);
+    OUT_CS(mspos1);
     END_CS;
 }
 
@@ -1191,7 +1190,7 @@ unsigned r300_get_num_cs_end_dwords(struct r300_context *r300)
     /* Emitted in flush. */
     dwords += 26; /* emit_query_end */
     dwords += r300->hyperz_state.size + 2; /* emit_hyperz_end + zcache flush */
-    if (r300->screen->caps.index_bias_supported)
+    if (r300->screen->caps.is_r500)
         dwords += 2;
 
     return dwords;
