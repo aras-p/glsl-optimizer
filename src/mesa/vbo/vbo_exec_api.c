@@ -423,7 +423,7 @@ do {									\
 } while (0)
 
 
-#define ERROR() _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ )
+#define ERROR(err) _mesa_error( ctx, err, __FUNCTION__ )
 #define TAG(x) vbo_##x
 
 #include "vbo_attrib_tmp.h"
@@ -1045,7 +1045,7 @@ VertexAttrib4f_nopos(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR(VBO_ATTRIB_GENERIC0 + index, 4, x, y, z, w);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 void GLAPIENTRY
