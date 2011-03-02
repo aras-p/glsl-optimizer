@@ -86,10 +86,8 @@ emit_vertices_i08(struct push_context *ctx, unsigned start, unsigned count)
       if (nr != push) {
          count--;
          elts++;
-         BEGIN_RING(ctx->chan, RING_3D(VERTEX_END_GL), 2);
-         OUT_RING  (ctx->chan, 0);
-         OUT_RING  (ctx->chan, NVA0_3D_VERTEX_BEGIN_GL_INSTANCE_CONT |
-                    (ctx->prim & ~NV50_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT));
+         BEGIN_RING(ctx->chan, RING_3D(VB_ELEMENT_U32), 1);
+         OUT_RING  (ctx->chan, ctx->restart_index);
       }
    }
 }
@@ -121,10 +119,8 @@ emit_vertices_i16(struct push_context *ctx, unsigned start, unsigned count)
       if (nr != push) {
          count--;
          elts++;
-         BEGIN_RING(ctx->chan, RING_3D(VERTEX_END_GL), 2);
-         OUT_RING  (ctx->chan, 0);
-         OUT_RING  (ctx->chan, NVA0_3D_VERTEX_BEGIN_GL_INSTANCE_CONT |
-                    (ctx->prim & ~NV50_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT));
+         BEGIN_RING(ctx->chan, RING_3D(VB_ELEMENT_U32), 1);
+         OUT_RING  (ctx->chan, ctx->restart_index);
       }
    }
 }
@@ -156,10 +152,8 @@ emit_vertices_i32(struct push_context *ctx, unsigned start, unsigned count)
       if (nr != push) {
          count--;
          elts++;
-         BEGIN_RING(ctx->chan, RING_3D(VERTEX_END_GL), 2);
-         OUT_RING  (ctx->chan, 0);
-         OUT_RING  (ctx->chan, NVA0_3D_VERTEX_BEGIN_GL_INSTANCE_CONT |
-                    (ctx->prim & ~NV50_3D_VERTEX_BEGIN_GL_INSTANCE_NEXT));
+         BEGIN_RING(ctx->chan, RING_3D(VB_ELEMENT_U32), 1);
+         OUT_RING  (ctx->chan, ctx->restart_index);
       }
    }
 }
@@ -256,6 +250,17 @@ nv50_push_vbo(struct nv50_context *nv50, const struct pipe_draw_info *info)
 
    ctx.instance_id = info->start_instance;
    ctx.prim = nv50_prim_gl(info->mode);
+
+   if (info->primitive_restart) {
+      BEGIN_RING(ctx.chan, RING_3D(PRIM_RESTART_ENABLE), 2);
+      OUT_RING  (ctx.chan, 1);
+      OUT_RING  (ctx.chan, info->restart_index);
+   } else
+   if (nv50->state.prim_restart) {
+      BEGIN_RING(ctx.chan, RING_3D(PRIM_RESTART_ENABLE), 1);
+      OUT_RING  (ctx.chan, 0);
+   }
+   nv50->state.prim_restart = info->primitive_restart;
 
    while (inst--) {
       BEGIN_RING(ctx.chan, RING_3D(VERTEX_BEGIN_GL), 1);
