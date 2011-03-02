@@ -29,6 +29,35 @@
 
 /* included by texcompress_rgtc to define byte/ubyte compressors */
 
+static void TAG(fetch_texel_rgtc)(unsigned srcRowStride, const TYPE *pixdata,
+				  unsigned i, unsigned j, TYPE *value, unsigned comps)
+{
+   TYPE decode;
+   const TYPE *blksrc = (pixdata + ((srcRowStride + 3) / 4 * (j / 4) + (i / 4)) * 8 * comps);
+   const TYPE alpha0 = blksrc[0];
+   const TYPE alpha1 = blksrc[1];
+   const char bit_pos = ((j&3) * 4 + (i&3)) * 3;
+   const TYPE acodelow = blksrc[2 + bit_pos / 8];
+   const TYPE acodehigh = (3 + bit_pos / 8) < 8 ? blksrc[3 + bit_pos / 8] : 0;
+   const TYPE code = (acodelow >> (bit_pos & 0x7) |
+      (acodehigh  << (8 - (bit_pos & 0x7)))) & 0x7;
+
+   if (code == 0)
+      decode = alpha0;
+   else if (code == 1)
+      decode = alpha1;
+   else if (alpha0 > alpha1)
+      decode = ((alpha0 * (8 - code) + (alpha1 * (code - 1))) / 7);
+   else if (code < 6)
+      decode = ((alpha0 * (6 - code) + (alpha1 * (code - 1))) / 5);
+   else if (code == 6)
+      decode = T_MIN;
+   else
+      decode = T_MAX;
+
+   *value = decode;
+}
+
 static void TAG(write_rgtc_encoded_channel)(TYPE *blkaddr,
 					    TYPE alphabase1,
 					    TYPE alphabase2,
