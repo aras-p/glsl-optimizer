@@ -197,9 +197,19 @@ nv50_validate_clip(struct nv50_context *nv50)
    struct nouveau_channel *chan = nv50->screen->base.channel;
    uint32_t clip;
 
-   clip = nv50->clip.depth_clamp ? 0x0018 : 0x0000;
+   if (nv50->clip.depth_clamp) {
+      clip =
+         NV50_3D_VIEW_VOLUME_CLIP_CTRL_DEPTH_CLAMP_NEAR |
+         NV50_3D_VIEW_VOLUME_CLIP_CTRL_DEPTH_CLAMP_FAR |
+         NV50_3D_VIEW_VOLUME_CLIP_CTRL_UNK12_UNK1;
+   } else {
+      clip = 0;
+   }
+
 #ifndef NV50_SCISSORS_CLIPPING
-   clip |= 0x1080;
+   clip |=
+      NV50_3D_VIEW_VOLUME_CLIP_CTRL_UNK7 |
+      NV50_3D_VIEW_VOLUME_CLIP_CTRL_UNK12_UNK1;
 #endif
 
    BEGIN_RING(chan, RING_3D(VIEW_VOLUME_CLIP_CTRL), 1);
