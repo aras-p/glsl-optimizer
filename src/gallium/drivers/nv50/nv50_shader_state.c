@@ -234,7 +234,7 @@ nv50_sprite_coords_validate(struct nv50_context *nv50)
 
    if (!nv50->rast->pipe.point_quad_rasterization) {
       if (nv50->state.point_sprite) {
-         BEGIN_RING(chan, RING_3D(POINT_COORD_REPLACE_MAP(0)), 1);
+         BEGIN_RING(chan, RING_3D(POINT_COORD_REPLACE_MAP(0)), 8);
          for (i = 0; i < 8; ++i)
             OUT_RING(chan, 0);
 
@@ -275,7 +275,7 @@ nv50_sprite_coords_validate(struct nv50_context *nv50)
    BEGIN_RING(chan, RING_3D(POINT_SPRITE_CTRL), 1);
    OUT_RING  (chan, mode);
 
-   BEGIN_RING(chan, RING_3D(POINT_COORD_REPLACE_MAP(0)), 1);
+   BEGIN_RING(chan, RING_3D(POINT_COORD_REPLACE_MAP(0)), 8);
    OUT_RINGp (chan, pntc, 8);
 }
 
