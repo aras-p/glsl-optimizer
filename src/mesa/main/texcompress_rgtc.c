@@ -313,9 +313,9 @@ _mesa_texstore_signed_rg_rgtc2(TEXSTORE_PARAMS)
 }
 
 static void _fetch_texel_rgtc_u(GLint srcRowStride, const GLubyte *pixdata,
-				GLint i, GLint j, GLchan *value, int comps)
+				GLint i, GLint j, GLubyte *value, int comps)
 {
-   GLchan decode;
+   GLubyte decode;
    const GLubyte *blksrc = (pixdata + ((srcRowStride + 3) / 4 * (j / 4) + (i / 4)) * 8 * comps);
    const GLubyte alpha0 = blksrc[0];
    const GLubyte alpha1 = blksrc[1];
@@ -326,17 +326,17 @@ static void _fetch_texel_rgtc_u(GLint srcRowStride, const GLubyte *pixdata,
       (acodehigh  << (8 - (bit_pos & 0x7)))) & 0x7;
 
    if (code == 0)
-      decode = UBYTE_TO_CHAN( alpha0 );
+      decode =  alpha0;
    else if (code == 1)
-      decode = UBYTE_TO_CHAN( alpha1 );
+      decode =  alpha1;
    else if (alpha0 > alpha1)
-      decode = UBYTE_TO_CHAN( ((alpha0 * (8 - code) + (alpha1 * (code - 1))) / 7) );
+      decode =  ((alpha0 * (8 - code) + (alpha1 * (code - 1))) / 7);
    else if (code < 6)
-      decode = UBYTE_TO_CHAN( ((alpha0 * (6 - code) + (alpha1 * (code - 1))) / 5) );
+      decode =  ((alpha0 * (6 - code) + (alpha1 * (code - 1))) / 5);
    else if (code == 6)
       decode = 0;
    else
-      decode = CHAN_MAX;
+      decode = 255;
 
    *value = decode;
 }
@@ -366,7 +366,7 @@ static void _fetch_texel_rgtc_s(GLint srcRowStride, const GLbyte *pixdata,
    else if (code == 6)
       decode = -127;
    else
-      decode = 128;
+      decode = 127;
 
    *value = decode;
 }
@@ -375,10 +375,10 @@ void
 _mesa_fetch_texel_2d_f_red_rgtc1(const struct gl_texture_image *texImage,
 				 GLint i, GLint j, GLint k, GLfloat *texel)
 {
-   GLchan red;
+   GLubyte red;
    _fetch_texel_rgtc_u(texImage->RowStride, (GLubyte *)(texImage->Data),
 		       i, j, &red, 1);
-   texel[RCOMP] = CHAN_TO_FLOAT(red);
+   texel[RCOMP] = UBYTE_TO_FLOAT(red);
    texel[GCOMP] = 0.0;
    texel[BCOMP] = 0.0;
    texel[ACOMP] = 1.0;
@@ -401,13 +401,13 @@ void
 _mesa_fetch_texel_2d_f_rg_rgtc2(const struct gl_texture_image *texImage,
 				 GLint i, GLint j, GLint k, GLfloat *texel)
 {
-   GLchan red, green;
+   GLubyte red, green;
    _fetch_texel_rgtc_u(texImage->RowStride, (GLubyte *)(texImage->Data),
 		     i, j, &red, 2);
    _fetch_texel_rgtc_u(texImage->RowStride, (GLubyte *)(texImage->Data) + 8,
 		     i, j, &green, 2);
-   texel[RCOMP] = CHAN_TO_FLOAT(red);
-   texel[GCOMP] = CHAN_TO_FLOAT(green);
+   texel[RCOMP] = UBYTE_TO_FLOAT(red);
+   texel[GCOMP] = UBYTE_TO_FLOAT(green);
    texel[BCOMP] = 0.0;
    texel[ACOMP] = 1.0;
 }
