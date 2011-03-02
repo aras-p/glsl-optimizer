@@ -61,6 +61,10 @@ static enum r300_hiz_func r300_get_hiz_func(struct r300_context *r300)
     case PIPE_FUNC_GREATER:
     case PIPE_FUNC_GEQUAL:
         return HIZ_FUNC_MIN;
+
+    default:
+        assert(0);
+        return HIZ_FUNC_NONE;
     }
 }
 
