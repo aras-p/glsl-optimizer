@@ -79,8 +79,10 @@ struct nv50_context {
    struct {
       uint32_t instance_elts; /* bitmask of per-instance elements */
       uint32_t instance_base;
+      uint32_t interpolant_ctrl;
       int32_t index_bias;
       boolean prim_restart;
+      boolean point_sprite;
       uint8_t num_vtxbufs;
       uint8_t num_vtxelts;
       uint8_t num_textures[3];
@@ -181,6 +183,7 @@ void nv50_fragprog_validate(struct nv50_context *);
 void nv50_fp_linkage_validate(struct nv50_context *);
 void nv50_gp_linkage_validate(struct nv50_context *);
 void nv50_constbufs_validate(struct nv50_context *);
+void nv50_sprite_coords_validate(struct nv50_context *);
 
 /* nv50_state.c */
 extern void nv50_init_state_functions(struct nv50_context *);

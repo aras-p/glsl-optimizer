@@ -269,6 +269,8 @@ static struct state_validate {
     { nv50_fp_linkage_validate,    NV50_NEW_FRAGPROG | NV50_NEW_VERTPROG |
                                    NV50_NEW_GMTYPROG },
     { nv50_gp_linkage_validate,    NV50_NEW_GMTYPROG | NV50_NEW_VERTPROG },
+    { nv50_sprite_coords_validate, NV50_NEW_FRAGPROG | NV50_NEW_RASTERIZER |
+                                   NV50_NEW_VERTPROG | NV50_NEW_GMTYPROG },
     { nv50_constbufs_validate,     NV50_NEW_CONSTBUF },
     { nv50_validate_textures,      NV50_NEW_TEXTURES },
     { nv50_validate_samplers,      NV50_NEW_SAMPLERS },

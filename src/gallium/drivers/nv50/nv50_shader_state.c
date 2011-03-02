@@ -223,13 +223,29 @@ nv50_gmtyprog_validate(struct nv50_context *nv50)
    OUT_RING  (chan, gp->code_base);
 }
 
-static void
-nv50_pntc_replace(struct nv50_context *nv50, uint32_t pntc[8], unsigned m)
+void
+nv50_sprite_coords_validate(struct nv50_context *nv50)
 {
+   struct nouveau_channel *chan = nv50->screen->base.channel;
+   uint32_t pntc[8], mode;
    struct nv50_program *fp = nv50->fragprog;
    unsigned i, c;
+   unsigned m = (nv50->state.interpolant_ctrl >> 8) & 0xff;
 
-   memset(pntc, 0, 8 * sizeof(uint32_t));
+   if (!nv50->rast->pipe.point_quad_rasterization) {
+      if (nv50->state.point_sprite) {
+         BEGIN_RING(chan, RING_3D(POINT_COORD_REPLACE_MAP(0)), 1);
+         for (i = 0; i < 8; ++i)
+            OUT_RING(chan, 0);
+
+         nv50->state.point_sprite = FALSE;
+      }
+      return;
+   } else {
+      nv50->state.point_sprite = TRUE;
+   }
+
+   memset(pntc, 0, sizeof(pntc));
 
    for (i = 0; i < fp->in_nr; i++) {
       unsigned n = util_bitcount(fp->in[i].mask);
@@ -250,6 +266,17 @@ nv50_pntc_replace(struct nv50_context *nv50, uint32_t pntc[8], unsigned m)
          }
       }
    }
+
+   if (nv50->rast->pipe.sprite_coord_mode == PIPE_SPRITE_COORD_LOWER_LEFT)
+      mode = 0x00;
+   else
+      mode = 0x10;
+
+   BEGIN_RING(chan, RING_3D(POINT_SPRITE_CTRL), 1);
+   OUT_RING  (chan, mode);
+
+   BEGIN_RING(chan, RING_3D(POINT_COORD_REPLACE_MAP(0)), 1);
+   OUT_RINGp (chan, pntc, 8);
 }
 
 static int
@@ -291,7 +318,7 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
    uint32_t psiz = 0x000;
    uint32_t interp = fp->fp.interp;
    uint32_t colors = fp->fp.colors;
-   uint32_t lin[4], pntc[8];
+   uint32_t lin[4];
    uint8_t map[64];
 
    memset(lin, 0x00, sizeof(lin));
@@ -372,18 +399,10 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
    BEGIN_RING(chan, RING_3D(FP_INTERPOLANT_CTRL), 1);
    OUT_RING  (chan, interp);
 
+   nv50->state.interpolant_ctrl = interp;
+
    BEGIN_RING(chan, RING_3D(NOPERSPECTIVE_BITMAP(0)), 4);
    OUT_RINGp (chan, lin, 4);
-
-   if (nv50->rast->pipe.point_quad_rasterization) {
-      nv50_pntc_replace(nv50, pntc, (interp >> 8) & 0xff);
-
-      BEGIN_RING(chan, RING_3D(POINT_SPRITE_CTRL), 1);
-      OUT_RING  (chan, (nv50->rast->pipe.sprite_coord_mode ==
-                        PIPE_SPRITE_COORD_LOWER_LEFT) ? 0 : 0x10);
-      BEGIN_RING(chan, RING_3D(POINT_COORD_REPLACE_MAP(0)), 8);
-      OUT_RINGp (chan, pntc, 8);
-   }
 
    BEGIN_RING(chan, RING_3D(GP_ENABLE), 1);
    OUT_RING  (chan, nv50->gmtyprog ? 1 : 0);
