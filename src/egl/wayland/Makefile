@@ -23,7 +23,7 @@ SUBDIRS = wayland-drm
 	$(CC) -c $(INCLUDE_DIRS) $(CFLAGS) $(LOCAL_CFLAGS) $< -o $@
 
 
-default: depend subdirs library
+default: subdirs depend library
 
 # wayland-egl Library
 library: $(TOP)/$(LIB_DIR)/$(WAYLAND_EGL_LIB_NAME)
