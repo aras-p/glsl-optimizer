@@ -536,7 +536,7 @@ nv50_draw_elements(struct nv50_context *nv50, boolean shorten,
       nv50->state.index_bias = index_bias;
    }
 
-   if (nouveau_resource_mapped_by_gpu(nv50->idxbuf.buffer) && 0) {
+   if (nouveau_resource_mapped_by_gpu(nv50->idxbuf.buffer)) {
       struct nv04_resource *res = nv04_resource(nv50->idxbuf.buffer);
       unsigned offset = res->offset + nv50->idxbuf.offset;
 
