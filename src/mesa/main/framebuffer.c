@@ -799,7 +799,7 @@ update_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
       /* This is a user-created framebuffer.
        * Completeness only matters for user-created framebuffers.
        */
-      if (fb->_Status == 0) {
+      if (fb->_Status != GL_FRAMEBUFFER_COMPLETE) {
          _mesa_test_framebuffer_completeness(ctx, fb);
       }
    }
