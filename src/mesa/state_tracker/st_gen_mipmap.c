@@ -265,7 +265,7 @@ fallback_generate_mipmap(struct gl_context *ctx, GLenum target,
          dstTemp = malloc(dstWidth2 * dstHeight2 * comps * (datatype == GL_FLOAT ? 4 : 1));
 
          /* decompress the src image: srcData -> srcTemp */
-         decompress_image(format, datatype, srcData, srcTemp, srcWidth, srcHeight, srcTrans->stride);
+         decompress_image(format, datatype, srcData, srcTemp, srcWidth2, srcHeight2, srcTrans->stride);
 
          _mesa_generate_mipmap_level(target, datatype, comps,
                                      0 /*border*/,
@@ -277,7 +277,7 @@ fallback_generate_mipmap(struct gl_context *ctx, GLenum target,
                                      dstWidth2); /* stride in texels */
 
          /* compress the new image: dstTemp -> dstData */
-         compress_image(format, datatype, dstTemp, dstData, dstWidth, dstHeight, dstTrans->stride);
+         compress_image(format, datatype, dstTemp, dstData, dstWidth2, dstHeight2, dstTrans->stride);
 
          free(srcTemp);
          free(dstTemp);
