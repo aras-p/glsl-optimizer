@@ -21,7 +21,7 @@ nv50_screen_init_resource_functions(struct pipe_screen *pscreen);
 #define NV50_TILE_HEIGHT(m) ( 4 << NV50_TILE_DIM_SHIFT(m, 0))
 #define NV50_TILE_DEPTH(m)  ( 1 << NV50_TILE_DIM_SHIFT(m, 1))
 
-#define NV50_TILE_SIZE_2D(m) ((64 * 8) <<                     \
+#define NV50_TILE_SIZE_2D(m) ((64 * 4) <<                     \
                               NV50_TILE_DIM_SHIFT(m, 0))
 
 #define NV50_TILE_SIZE(m) (NV50_TILE_SIZE_2D(m) << NV50_TILE_DIM_SHIFT(m, 1))

@@ -61,7 +61,7 @@ static INLINE unsigned
 calc_zslice_offset(uint32_t tile_mode, unsigned z, unsigned pitch, unsigned nbh)
 {
    unsigned tile_h = NV50_TILE_HEIGHT(tile_mode);
-   unsigned tile_d_shift = NV50_TILE_DIM_SHIFT(tile_mode, 2);
+   unsigned tile_d_shift = NV50_TILE_DIM_SHIFT(tile_mode, 1);
    unsigned tile_d = 1 << tile_d_shift;
 
    /* stride_2d == to next slice within this volume tile */
