@@ -54,6 +54,7 @@
 #include "light.h"
 #include "macros.h"
 #include "pack.h"
+#include "pbo.h"
 #include "queryobj.h"
 #include "teximage.h"
 #include "mtypes.h"

@@ -111,6 +111,7 @@ C_SOURCES = \
 	util/u_format.c \
 	util/u_format_other.c \
 	util/u_format_s3tc.c \
+	util/u_format_rgtc.c \
 	util/u_format_srgb.c \
 	util/u_format_table.c \
 	util/u_format_tests.c \

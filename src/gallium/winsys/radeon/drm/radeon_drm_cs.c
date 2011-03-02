@@ -384,7 +384,7 @@ void radeon_drm_cs_flush(struct r300_winsys_cs *rcs)
         for (i = 0; i < crelocs; i++)
             p_atomic_inc(&cs->csc->relocs_bo[i]->num_active_ioctls);
 
-        if (debug_get_option_thread()) {
+        if (cs->ws->num_cpus > 1 && debug_get_option_thread()) {
             cs->thread = pipe_thread_create(radeon_drm_cs_emit_ioctl, cs->csc);
             assert(cs->thread);
         } else {

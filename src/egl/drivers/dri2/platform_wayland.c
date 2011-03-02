@@ -35,6 +35,9 @@
 
 #include "egl_dri2.h"
 
+#include <wayland-client.h>
+#include "wayland-drm-client-protocol.h"
+
 static void
 sync_callback(void *data)
 {
@@ -561,6 +564,26 @@ dri2_wayland_create_image_khr(_EGLDriver *drv, _EGLDisplay *disp,
    }
 }
 
+static int
+dri2_wayland_authenticate(_EGLDisplay *disp, uint32_t id)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
+   int ret = 0;
+
+   dri2_dpy->wl_dpy->authenticated = false;
+
+   wl_drm_authenticate(dri2_dpy->wl_dpy->drm, id);
+   force_roundtrip(dri2_dpy->wl_dpy->display);
+
+   if (!dri2_dpy->wl_dpy->authenticated)
+      ret = -1;
+
+   /* reset authenticated */
+   dri2_dpy->wl_dpy->authenticated = true;
+
+   return ret;
+}
+
 /**
  * Called via eglTerminate(), drv->API.Terminate().
  */
@@ -626,8 +649,14 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
       goto cleanup_fd;
    }
 
-   if (!dri2_load_driver(disp))
+   dri2_dpy->device_name = strdup(dri2_dpy->wl_dpy->device_name);
+   if (dri2_dpy->device_name == NULL) {
+      _eglError(EGL_BAD_ALLOC, "DRI2: failed to get device name");
       goto cleanup_driver_name;
+   }
+
+   if (!dri2_load_driver(disp))
+      goto cleanup_device_name;
 
    dri2_dpy->dri2_loader_extension.base.name = __DRI_DRI2_LOADER;
    dri2_dpy->dri2_loader_extension.base.version = 3;
@@ -654,6 +683,9 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    disp->Extensions.KHR_gl_renderbuffer_image = EGL_TRUE;
    disp->Extensions.KHR_gl_texture_2D_image = EGL_TRUE;
 
+   disp->Extensions.WL_bind_wayland_display = EGL_TRUE;
+   dri2_dpy->authenticate = dri2_wayland_authenticate;
+
    /* we're supporting EGL 1.4 */
    disp->VersionMajor = 1;
    disp->VersionMinor = 4;
@@ -662,6 +694,8 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
 
  cleanup_driver:
    dlclose(dri2_dpy->driver);
+ cleanup_device_name:
+   free(dri2_dpy->device_name);
  cleanup_driver_name:
    free(dri2_dpy->driver_name);
  cleanup_fd:

@@ -713,11 +713,6 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
          swrast->TextureSample[unit]( ctx, texUnit->_Current, span->end,
                                       texcoords, lambda, texels );
 
-         /* GL_SGI_texture_color_table */
-         if (texUnit->ColorTableEnabled) {
-            _mesa_lookup_rgba_float(&texUnit->ColorTable, span->end, texels);
-         }
-
          /* GL_EXT_texture_swizzle */
          if (curObj->_Swizzle != SWIZZLE_NOOP) {
             swizzle_texels(curObj->_Swizzle, span->end, texels);

@@ -228,8 +228,8 @@ struct tgsi_exec_machine
 
    float                         ImmArray[TGSI_EXEC_NUM_IMMEDIATES][4];
 
-   struct tgsi_exec_vector       Inputs[TGSI_MAX_PRIM_VERTICES * PIPE_MAX_ATTRIBS];
-   struct tgsi_exec_vector       Outputs[TGSI_MAX_TOTAL_VERTICES];
+   struct tgsi_exec_vector       *Inputs;
+   struct tgsi_exec_vector       *Outputs;
 
    /* System values */
    unsigned                      SysSemanticToIndex[TGSI_SEMANTIC_COUNT];
@@ -309,6 +309,8 @@ struct tgsi_exec_machine
    uint NumDeclarations;
 
    struct tgsi_declaration_resource Resources[PIPE_MAX_SHADER_RESOURCES];
+
+   boolean UsedGeometryShader;
 };
 
 struct tgsi_exec_machine *

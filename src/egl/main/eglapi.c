@@ -914,6 +914,10 @@ eglGetProcAddress(const char *procname)
       { "eglCreateDRMImageMESA", (_EGLProc) eglCreateDRMImageMESA },
       { "eglExportDRMImageMESA", (_EGLProc) eglExportDRMImageMESA },
 #endif
+#ifdef EGL_WL_bind_display
+      { "eglBindWaylandDisplayWL", (_EGLProc) eglBindWaylandDisplayWL },
+      { "eglUnbindWaylandDisplayWL", (_EGLProc) eglUnbindWaylandDisplayWL },
+#endif
       { NULL, NULL }
    };
    EGLint i;
@@ -1490,4 +1494,44 @@ eglExportDRMImageMESA(EGLDisplay dpy, EGLImageKHR image,
    RETURN_EGL_EVAL(disp, ret);
 }
 
+#endif
+
+#ifdef EGL_WL_bind_wayland_display
+struct wl_display;
+
+EGLBoolean EGLAPIENTRY
+eglBindWaylandDisplayWL(EGLDisplay dpy, struct wl_display *display)
+{
+   _EGLDisplay *disp = _eglLockDisplay(dpy);
+   _EGLDriver *drv;
+   EGLBoolean ret;
+
+   _EGL_CHECK_DISPLAY(disp, EGL_FALSE, drv);
+   assert(disp->Extensions.WL_bind_wayland_display);
+
+   if (!display)
+      RETURN_EGL_ERROR(disp, EGL_BAD_PARAMETER, EGL_FALSE);
+
+   ret = drv->API.BindWaylandDisplayWL(drv, disp, display);
+
+   RETURN_EGL_EVAL(disp, ret);
+}
+
+EGLBoolean EGLAPIENTRY
+eglUnbindWaylandDisplayWL(EGLDisplay dpy, struct wl_display *display)
+{
+   _EGLDisplay *disp = _eglLockDisplay(dpy);
+   _EGLDriver *drv;
+   EGLBoolean ret;
+
+   _EGL_CHECK_DISPLAY(disp, EGL_FALSE, drv);
+   assert(disp->Extensions.WL_bind_wayland_display);
+
+   if (!display)
+      RETURN_EGL_ERROR(disp, EGL_BAD_PARAMETER, EGL_FALSE);
+
+   ret = drv->API.UnbindWaylandDisplayWL(drv, disp, display);
+
+   RETURN_EGL_EVAL(disp, ret);
+}
 #endif

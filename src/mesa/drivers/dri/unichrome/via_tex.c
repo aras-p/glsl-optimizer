@@ -34,6 +34,7 @@
 #include "main/context.h"
 #include "main/mipmap.h"
 #include "main/mm.h"
+#include "main/pbo.h"
 #include "main/simple_list.h"
 #include "main/texobj.h"
 #include "main/texstore.h"

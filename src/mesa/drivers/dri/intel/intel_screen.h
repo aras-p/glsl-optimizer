@@ -43,6 +43,7 @@ struct intel_screen
    __DRIscreen *driScrnPriv;
 
    GLboolean no_hw;
+   GLuint relaxed_relocations;
 
    GLboolean no_vbo;
    dri_bufmgr *bufmgr;

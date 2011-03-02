@@ -794,9 +794,6 @@ update_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
          _mesa_drawbuffers(ctx, ctx->Const.MaxDrawBuffers,
                            ctx->Color.DrawBuffer, NULL);
       }
-      if (fb->ColorReadBuffer != ctx->Pixel.ReadBuffer) {
-         
-      }
    }
    else {
       /* This is a user-created framebuffer.

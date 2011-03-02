@@ -95,6 +95,12 @@ typedef _EGLImage *(*CreateDRMImageMESA_t)(_EGLDriver *drv, _EGLDisplay *disp, c
 typedef EGLBoolean (*ExportDRMImageMESA_t)(_EGLDriver *drv, _EGLDisplay *disp, _EGLImage *img, EGLint *name, EGLint *handle, EGLint *stride);
 #endif
 
+#ifdef EGL_WL_bind_wayland_display
+struct wl_display;
+typedef EGLBoolean (*BindWaylandDisplayWL_t)(_EGLDriver *drv, _EGLDisplay *disp, struct wl_display *display);
+typedef EGLBoolean (*UnbindWaylandDisplayWL_t)(_EGLDriver *drv, _EGLDisplay *disp, struct wl_display *display);
+#endif
+
 /**
  * The API dispatcher jumps through these functions
  */
@@ -168,6 +174,11 @@ struct _egl_api
 #ifdef EGL_MESA_drm_image
    CreateDRMImageMESA_t CreateDRMImageMESA;
    ExportDRMImageMESA_t ExportDRMImageMESA;
+#endif
+
+#ifdef EGL_WL_bind_wayland_display
+   BindWaylandDisplayWL_t BindWaylandDisplayWL;
+   UnbindWaylandDisplayWL_t UnbindWaylandDisplayWL;
 #endif
 };
 

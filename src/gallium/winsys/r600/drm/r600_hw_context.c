@@ -107,7 +107,7 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 
 		/* initialize block */
 		block->start_offset = reg[i].offset;
-		block->pm4[block->pm4_ndwords++] = PKT3(reg[i].opcode, n);
+		block->pm4[block->pm4_ndwords++] = PKT3(reg[i].opcode, n, 0);
 		block->pm4[block->pm4_ndwords++] = (block->start_offset - reg[i].offset_base) >> 2;
 		block->reg = &block->pm4[block->pm4_ndwords];
 		block->pm4_ndwords += n;
@@ -119,7 +119,7 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 				block->nbo++;
 				assert(block->nbo < R600_BLOCK_MAX_BO);
 				block->pm4_bo_index[j] = block->nbo;
-				block->pm4[block->pm4_ndwords++] = PKT3(PKT3_NOP, 0);
+				block->pm4[block->pm4_ndwords++] = PKT3(PKT3_NOP, 0, 0);
 				block->pm4[block->pm4_ndwords++] = 0x00000000;
 				block->reloc[block->nbo].flush_flags = reg[i+j].flush_flags;
 				block->reloc[block->nbo].flush_mask = reg[i+j].flush_mask;
@@ -771,12 +771,12 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 		bo->last_flush &= flush_mask;
 		return;
 	}
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3);
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
 	ctx->pm4[ctx->pm4_cdwords++] = flush_flags;
 	ctx->pm4[ctx->pm4_cdwords++] = (bo->size + 255) >> 8;
 	ctx->pm4[ctx->pm4_cdwords++] = 0x00000000;
 	ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
 	ctx->pm4[ctx->pm4_cdwords++] = bo->reloc_id;
 	bo->last_flush = (bo->last_flush | flush_flags) & flush_mask;
 }
@@ -1048,25 +1048,25 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	}
 
 	/* draw packet */
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_INDEX_TYPE, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_INDEX_TYPE, 0, ctx->predicate_drawing);
 	ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_index_type;
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NUM_INSTANCES, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NUM_INSTANCES, 0, ctx->predicate_drawing);
 	ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_num_instances;
 	if (draw->indices) {
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_DRAW_INDEX, 3);
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_DRAW_INDEX, 3, ctx->predicate_drawing);
 		ctx->pm4[ctx->pm4_cdwords++] = draw->indices_bo_offset + r600_bo_offset(draw->indices);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_num_indices;
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_draw_initiator;
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, ctx->predicate_drawing);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 		r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], draw->indices);
 	} else {
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_DRAW_INDEX_AUTO, 1);
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_DRAW_INDEX_AUTO, 1, ctx->predicate_drawing);
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_num_indices;
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_draw_initiator;
 	}
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, ctx->predicate_drawing);
 	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
 
 	/* flush color buffer */
@@ -1101,15 +1101,15 @@ void r600_context_flush(struct r600_context *ctx)
 	r600_context_queries_suspend(ctx);
 
 	/* emit fence */
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4);
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	ctx->pm4[ctx->pm4_cdwords++] = (1 << 29) | (0 << 24);
 	ctx->pm4[ctx->pm4_cdwords++] = ctx->radeon->fence;
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], ctx->radeon->fence_bo);
 
@@ -1282,6 +1282,7 @@ static boolean r600_query_result(struct r600_context *ctx, struct r600_query *qu
 void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 {
 	unsigned required_space;
+	int num_backends = r600_get_num_backends(ctx->radeon);
 
 	/* query request needs 6/8 dwords for begin + 6/8 dwords for end */
 	if (query->type == PIPE_QUERY_TIME_ELAPSED)
@@ -1300,21 +1301,39 @@ void r600_query_begin(struct r600_context *ctx, struct r600_query *query)
 		r600_query_result(ctx, query, TRUE);
 	}
 
+	if (query->type == PIPE_QUERY_OCCLUSION_COUNTER &&
+	    num_backends > 0 && num_backends < ctx->max_db) {
+		/* as per info on ZPASS the driver must set the unusued DB top bits */
+		u32 *results;
+		int i;
+
+		results = r600_bo_map(ctx->radeon, query->buffer, PB_USAGE_DONTBLOCK | PB_USAGE_CPU_WRITE, NULL);
+		if (results) {
+			memset(results + (query->num_results * 4), 0, ctx->max_db * 4 * 4);
+			
+			for (i = num_backends; i < ctx->max_db; i++) {
+				results[(i * 4)+1] = 0x80000000;
+				results[(i * 4)+3] = 0x80000000;
+			}
+			r600_bo_unmap(ctx->radeon, query->buffer);
+		}
+	}
+	
 	/* emit begin query */
 	if (query->type == PIPE_QUERY_TIME_ELAPSED) {
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4);
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
 		ctx->pm4[ctx->pm4_cdwords++] = query->num_results*4 + r600_bo_offset(query->buffer);
 		ctx->pm4[ctx->pm4_cdwords++] = (3 << 29);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 	} else {
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2);
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
 		ctx->pm4[ctx->pm4_cdwords++] = query->num_results*4 + r600_bo_offset(query->buffer);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 	}
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], query->buffer);
 
@@ -1327,19 +1346,19 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 {
 	/* emit begin query */
 	if (query->type == PIPE_QUERY_TIME_ELAPSED) {
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4);
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
 		ctx->pm4[ctx->pm4_cdwords++] = query->num_results*4 + 8 + r600_bo_offset(query->buffer);
 		ctx->pm4[ctx->pm4_cdwords++] = (3 << 29);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 	} else {
-		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2);
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 2, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_ZPASS_DONE) | EVENT_INDEX(1);
 		ctx->pm4[ctx->pm4_cdwords++] = query->num_results*4 + 8 + r600_bo_offset(query->buffer);
 		ctx->pm4[ctx->pm4_cdwords++] = 0;
 	}
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
 	r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], query->buffer);
 
@@ -1347,6 +1366,28 @@ void r600_query_end(struct r600_context *ctx, struct r600_query *query)
 	query->state ^= R600_QUERY_STATE_STARTED;
 	query->state |= R600_QUERY_STATE_ENDED;
 	ctx->num_query_running--;
+}
+
+void r600_query_predication(struct r600_context *ctx, struct r600_query *query, int operation,
+			    int flag_wait)
+{
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SET_PREDICATION, 1, 0);
+
+	if (operation == PREDICATION_OP_CLEAR) {
+		ctx->pm4[ctx->pm4_cdwords++] = 0;
+		ctx->pm4[ctx->pm4_cdwords++] = PRED_OP(PREDICATION_OP_CLEAR);
+	} else {
+		int results_base = query->num_results - (4 * ctx->max_db);
+
+		if (results_base < 0)
+			results_base = 0;
+
+		ctx->pm4[ctx->pm4_cdwords++] = results_base*4 + r600_bo_offset(query->buffer);
+		ctx->pm4[ctx->pm4_cdwords++] = PRED_OP(operation) | (flag_wait ? PREDICATION_HINT_WAIT : PREDICATION_HINT_NOWAIT_DRAW) | PREDICATION_DRAW_VISIBLE;
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
+		ctx->pm4[ctx->pm4_cdwords++] = 0;
+		r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], query->buffer);
+	}
 }
 
 struct r600_query *r600_context_query_create(struct r600_context *ctx, unsigned query_type)

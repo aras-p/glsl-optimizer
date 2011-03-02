@@ -108,8 +108,9 @@
 #define PKT3_IT_OPCODE_S(x)             (((x) & 0xFF) << 8)
 #define PKT3_IT_OPCODE_G(x)             (((x) >> 8) & 0xFF)
 #define PKT3_IT_OPCODE_C                0xFFFF00FF
+#define PKT3_PREDICATE(x)               (((x) >> 0) & 0x1)
 #define PKT0(index, count) (PKT_TYPE_S(0) | PKT0_BASE_INDEX_S(index) | PKT_COUNT_S(count))
-#define PKT3(op, count) (PKT_TYPE_S(3) | PKT3_IT_OPCODE_S(op) | PKT_COUNT_S(count))
+#define PKT3(op, count, predicate) (PKT_TYPE_S(3) | PKT3_IT_OPCODE_S(op) | PKT_COUNT_S(count) | PKT3_PREDICATE(predicate))
 
 /* Registers */
 #define R_008C00_SQ_CONFIG                           0x00008C00

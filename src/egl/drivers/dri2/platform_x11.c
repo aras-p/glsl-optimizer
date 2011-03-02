@@ -478,6 +478,7 @@ dri2_connect(struct dri2_egl_display *dri2_dpy)
    xcb_dri2_connect_cookie_t connect_cookie;
    xcb_generic_error_t *error;
    xcb_screen_iterator_t s;
+   char *driver_name, *device_name;
 
    xcb_prefetch_extension_data (dri2_dpy->conn, &xcb_xfixes_id);
    xcb_prefetch_extension_data (dri2_dpy->conn, &xcb_dri2_id);
@@ -524,13 +525,20 @@ dri2_connect(struct dri2_egl_display *dri2_dpy)
       return EGL_FALSE;
    }
 
-   dri2_dpy->device_name =
-      dri2_strndup(xcb_dri2_connect_device_name (connect),
-		   xcb_dri2_connect_device_name_length (connect));
-
+   driver_name = xcb_dri2_connect_driver_name (connect);
    dri2_dpy->driver_name =
-      dri2_strndup(xcb_dri2_connect_driver_name (connect),
+      dri2_strndup(driver_name,
 		   xcb_dri2_connect_driver_name_length (connect));
+
+#if XCB_DRI2_CONNECT_DEVICE_NAME_BROKEN
+   device_name = driver_name + ((connect->driver_name_length + 3) & ~3);
+#else
+   device_name = xcb_dri2_connect_device_name (connect);
+#endif
+
+   dri2_dpy->device_name =
+      dri2_strndup(device_name,
+		   xcb_dri2_connect_device_name_length (connect));
 
    if (dri2_dpy->device_name == NULL || dri2_dpy->driver_name == NULL) {
       free(dri2_dpy->device_name);
@@ -543,31 +551,45 @@ dri2_connect(struct dri2_egl_display *dri2_dpy)
    return EGL_TRUE;
 }
 
-static EGLBoolean
-dri2_authenticate(struct dri2_egl_display *dri2_dpy)
+static int
+dri2_x11_authenticate(_EGLDisplay *disp, uint32_t id)
 {
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    xcb_dri2_authenticate_reply_t *authenticate;
    xcb_dri2_authenticate_cookie_t authenticate_cookie;
    xcb_screen_iterator_t s;
+   int ret = 0;
+
+   s = xcb_setup_roots_iterator(xcb_get_setup(dri2_dpy->conn));
+   authenticate_cookie =
+      xcb_dri2_authenticate_unchecked(dri2_dpy->conn, s.data->root, id);
+   authenticate =
+      xcb_dri2_authenticate_reply(dri2_dpy->conn, authenticate_cookie, NULL);
+
+   if (authenticate == NULL || !authenticate->authenticated)
+      ret = -1;
+
+   if (authenticate)
+      free(authenticate);
+   
+   return ret;
+}
+
+static EGLBoolean
+dri2_authenticate(_EGLDisplay *disp)
+{
+   struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    drm_magic_t magic;
 
    if (drmGetMagic(dri2_dpy->fd, &magic)) {
       _eglLog(_EGL_WARNING, "DRI2: failed to get drm magic");
       return EGL_FALSE;
    }
-
-   s = xcb_setup_roots_iterator(xcb_get_setup(dri2_dpy->conn));
-   authenticate_cookie =
-      xcb_dri2_authenticate_unchecked(dri2_dpy->conn, s.data->root, magic);
-   authenticate =
-      xcb_dri2_authenticate_reply(dri2_dpy->conn, authenticate_cookie, NULL);
-   if (authenticate == NULL || !authenticate->authenticated) {
+   
+   if (dri2_x11_authenticate(disp, magic) < 0) {
       _eglLog(_EGL_WARNING, "DRI2: failed to authenticate");
-      free(authenticate);
       return EGL_FALSE;
    }
-
-   free(authenticate);
 
    return EGL_TRUE;
 }
@@ -977,7 +999,7 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
    }
 
    if (dri2_dpy->conn) {
-      if (!dri2_authenticate(dri2_dpy))
+      if (!dri2_authenticate(disp))
 	 goto cleanup_fd;
    }
 
@@ -1015,6 +1037,11 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
    disp->Extensions.KHR_gl_texture_2D_image = EGL_TRUE;
    disp->Extensions.NOK_swap_region = EGL_TRUE;
    disp->Extensions.NOK_texture_from_pixmap = EGL_TRUE;
+
+#ifdef HAVE_WAYLAND_PLATFORM
+   disp->Extensions.WL_bind_wayland_display = EGL_TRUE;
+#endif
+   dri2_dpy->authenticate = dri2_x11_authenticate;
 
    /* we're supporting EGL 1.4 */
    disp->VersionMajor = 1;

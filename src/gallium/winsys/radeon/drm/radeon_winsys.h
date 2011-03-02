@@ -46,6 +46,7 @@ struct radeon_drm_winsys {
     uint32_t z_pipes;       /* Z pipe count (rv530 only) */
     uint32_t gart_size;     /* GART size. */
     uint32_t vram_size;     /* VRAM size. */
+    uint32_t num_cpus;      /* Number of CPUs. */
 
     unsigned drm_major;
     unsigned drm_minor;

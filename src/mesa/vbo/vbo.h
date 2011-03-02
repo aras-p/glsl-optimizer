@@ -127,6 +127,7 @@ vbo_get_minmax_index(struct gl_context *ctx, const struct _mesa_prim *prim,
 
 void vbo_use_buffer_objects(struct gl_context *ctx);
 
+void vbo_always_unmap_buffers(struct gl_context *ctx);
 
 void vbo_set_draw_func(struct gl_context *ctx, vbo_draw_func func);
 

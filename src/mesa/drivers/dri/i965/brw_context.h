@@ -424,8 +424,6 @@ struct brw_vertex_element {
    gl_vert_attrib attrib;
    /** Size of a complete element */
    GLuint element_size;
-   /** Number of uploaded elements for this input. */
-   GLuint count;
    /** Offset of the first element within the buffer object */
    unsigned int offset;
 };
@@ -462,7 +460,7 @@ struct brw_context
    GLboolean has_negative_rhw_bug;
    GLboolean has_aa_line_parameters;
    GLboolean has_pln;
-;
+
    struct {
       struct brw_state_flags dirty;
 

@@ -59,6 +59,7 @@ MAIN_SOURCES = \
 	main/multisample.c \
 	main/nvprogram.c \
 	main/pack.c \
+	main/pbo.c \
 	main/pixel.c \
 	main/pixelstore.c \
 	main/pixeltransfer.c \
@@ -252,6 +253,7 @@ PROGRAM_SOURCES = \
 	program/programopt.c \
 	program/register_allocate.c \
 	program/symbol_table.c
+
 
 SHADER_CXX_SOURCES = \
 	program/ir_to_mesa.cpp \

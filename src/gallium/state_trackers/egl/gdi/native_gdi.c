@@ -363,7 +363,7 @@ gdi_display_destroy(struct native_display *ndpy)
    if (gdpy->configs)
       FREE(gdpy->configs);
 
-   gdpy->base.screen->destroy(gdpy->base.screen);
+   ndpy_uninit(ndpy);
 
    FREE(gdpy);
 }

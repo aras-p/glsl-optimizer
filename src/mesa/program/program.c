@@ -71,6 +71,9 @@ _mesa_init_program(struct gl_context *ctx)
    ASSERT(ctx->Const.VertexProgram.MaxUniformComponents <= 4 * MAX_UNIFORMS);
    ASSERT(ctx->Const.FragmentProgram.MaxUniformComponents <= 4 * MAX_UNIFORMS);
 
+   ASSERT(ctx->Const.VertexProgram.MaxAddressOffset <= (1 << INST_INDEX_BITS));
+   ASSERT(ctx->Const.FragmentProgram.MaxAddressOffset <= (1 << INST_INDEX_BITS));
+
    /* If this fails, increase prog_instruction::TexSrcUnit size */
    ASSERT(MAX_TEXTURE_UNITS < (1 << 5));
 

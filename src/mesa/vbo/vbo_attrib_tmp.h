@@ -341,7 +341,7 @@ TAG(VertexAttrib1fARB)(GLuint index, GLfloat x)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR1F(VBO_ATTRIB_GENERIC0 + index, x);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 static void GLAPIENTRY
@@ -353,7 +353,7 @@ TAG(VertexAttrib1fvARB)(GLuint index, const GLfloat * v)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR1FV(VBO_ATTRIB_GENERIC0 + index, v);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 static void GLAPIENTRY
@@ -365,7 +365,7 @@ TAG(VertexAttrib2fARB)(GLuint index, GLfloat x, GLfloat y)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR2F(VBO_ATTRIB_GENERIC0 + index, x, y);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 static void GLAPIENTRY
@@ -377,7 +377,7 @@ TAG(VertexAttrib2fvARB)(GLuint index, const GLfloat * v)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR2FV(VBO_ATTRIB_GENERIC0 + index, v);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 static void GLAPIENTRY
@@ -389,7 +389,7 @@ TAG(VertexAttrib3fARB)(GLuint index, GLfloat x, GLfloat y, GLfloat z)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR3F(VBO_ATTRIB_GENERIC0 + index, x, y, z);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 static void GLAPIENTRY
@@ -401,7 +401,7 @@ TAG(VertexAttrib3fvARB)(GLuint index, const GLfloat * v)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR3FV(VBO_ATTRIB_GENERIC0 + index, v);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 static void GLAPIENTRY
@@ -413,7 +413,7 @@ TAG(VertexAttrib4fARB)(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR4F(VBO_ATTRIB_GENERIC0 + index, x, y, z, w);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 static void GLAPIENTRY
@@ -425,7 +425,7 @@ TAG(VertexAttrib4fvARB)(GLuint index, const GLfloat * v)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR4FV(VBO_ATTRIB_GENERIC0 + index, v);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 
@@ -442,7 +442,7 @@ TAG(VertexAttribI1i)(GLuint index, GLint x)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR1I(VBO_ATTRIB_GENERIC0 + index, x);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 static void GLAPIENTRY
@@ -454,7 +454,7 @@ TAG(VertexAttribI2i)(GLuint index, GLint x, GLint y)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR2I(VBO_ATTRIB_GENERIC0 + index, x, y);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 static void GLAPIENTRY
@@ -466,7 +466,7 @@ TAG(VertexAttribI3i)(GLuint index, GLint x, GLint y, GLint z)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR3I(VBO_ATTRIB_GENERIC0 + index, x, y, z);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 static void GLAPIENTRY
@@ -478,7 +478,7 @@ TAG(VertexAttribI4i)(GLuint index, GLint x, GLint y, GLint z, GLint w)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR4I(VBO_ATTRIB_GENERIC0 + index, x, y, z, w);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 static void GLAPIENTRY
@@ -490,7 +490,7 @@ TAG(VertexAttribI2iv)(GLuint index, const GLint *v)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR2IV(VBO_ATTRIB_GENERIC0 + index, v);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 static void GLAPIENTRY
@@ -502,7 +502,7 @@ TAG(VertexAttribI3iv)(GLuint index, const GLint *v)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR3IV(VBO_ATTRIB_GENERIC0 + index, v);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 static void GLAPIENTRY
@@ -514,7 +514,7 @@ TAG(VertexAttribI4iv)(GLuint index, const GLint *v)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR4IV(VBO_ATTRIB_GENERIC0 + index, v);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 
@@ -531,7 +531,7 @@ TAG(VertexAttribI1ui)(GLuint index, GLuint x)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR1UI(VBO_ATTRIB_GENERIC0 + index, x);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 static void GLAPIENTRY
@@ -543,7 +543,7 @@ TAG(VertexAttribI2ui)(GLuint index, GLuint x, GLuint y)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR2UI(VBO_ATTRIB_GENERIC0 + index, x, y);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 static void GLAPIENTRY
@@ -555,7 +555,7 @@ TAG(VertexAttribI3ui)(GLuint index, GLuint x, GLuint y, GLuint z)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR3UI(VBO_ATTRIB_GENERIC0 + index, x, y, z);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 static void GLAPIENTRY
@@ -567,7 +567,7 @@ TAG(VertexAttribI4ui)(GLuint index, GLuint x, GLuint y, GLuint z, GLuint w)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR4UI(VBO_ATTRIB_GENERIC0 + index, x, y, z, w);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 static void GLAPIENTRY
@@ -579,7 +579,7 @@ TAG(VertexAttribI2uiv)(GLuint index, const GLuint *v)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR2UIV(VBO_ATTRIB_GENERIC0 + index, v);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 static void GLAPIENTRY
@@ -591,7 +591,7 @@ TAG(VertexAttribI3uiv)(GLuint index, const GLuint *v)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR3UIV(VBO_ATTRIB_GENERIC0 + index, v);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 static void GLAPIENTRY
@@ -603,7 +603,7 @@ TAG(VertexAttribI4uiv)(GLuint index, const GLuint *v)
    else if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR4UIV(VBO_ATTRIB_GENERIC0 + index, v);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 
@@ -720,7 +720,7 @@ TAG(Materialfv)(GLenum face, GLenum pname,
       MAT(VBO_ATTRIB_MAT_FRONT_DIFFUSE, 4, face, params);
       break;
    default:
-      ERROR();
+      ERROR(GL_INVALID_ENUM);
       return;
    }
 }

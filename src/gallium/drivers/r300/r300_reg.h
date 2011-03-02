@@ -467,6 +467,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  * See bug #9871. http://bugs.freedesktop.org/attachment.cgi?id=10672&action=view
  */
+#define R500_VAP_TEX_TO_COLOR_CNTL		0x2218
+
 #define R300_VAP_CLIP_CNTL                       0x221C
 #       define R300_VAP_UCP_ENABLE_0             (1 << 0)
 #       define R300_VAP_UCP_ENABLE_1             (1 << 1)
@@ -856,6 +858,8 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #	define R500_TX_PHASE_SHIFT               (23)
 #	define R500_TX_DIRECTION_HORIZONTAL	 (0<<27)
 #	define R500_TX_DIRECTION_VERITCAL	 (1<<27)
+
+#define R500_SU_TEX_WRAP_PS3		    0x4114
 
 /* S Texture Coordinate of Vertex 0 for Point texture stuffing (LLC) */
 #define R300_GA_POINT_S0                              0x4200

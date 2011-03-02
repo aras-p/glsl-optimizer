@@ -35,6 +35,7 @@
 #include "main/enums.h"
 #include "main/mfeatures.h"
 #include "main/mipmap.h"
+#include "main/pbo.h"
 #include "main/texcompress.h"
 #include "main/texstore.h"
 #include "main/teximage.h"

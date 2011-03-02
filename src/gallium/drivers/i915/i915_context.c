@@ -39,7 +39,7 @@
 #include "pipe/p_screen.h"
 
 
-DEBUG_GET_ONCE_BOOL_OPTION(i915_no_vbuf, "I915_NO_VBUF", FALSE);
+DEBUG_GET_ONCE_BOOL_OPTION(i915_no_vbuf, "I915_NO_VBUF", FALSE)
 
 
 /*

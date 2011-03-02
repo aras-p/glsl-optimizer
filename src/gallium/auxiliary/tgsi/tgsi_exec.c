@@ -672,6 +672,31 @@ tgsi_exec_machine_bind_shader(
    mach->Processor = parse.FullHeader.Processor.Processor;
    mach->ImmLimit = 0;
 
+   if (mach->Processor == TGSI_PROCESSOR_GEOMETRY &&
+       !mach->UsedGeometryShader) {
+      struct tgsi_exec_vector *inputs =
+         align_malloc(sizeof(struct tgsi_exec_vector) *
+                      TGSI_MAX_PRIM_VERTICES * PIPE_MAX_ATTRIBS,
+                      16);
+      struct tgsi_exec_vector *outputs =
+         align_malloc(sizeof(struct tgsi_exec_vector) *
+                      TGSI_MAX_TOTAL_VERTICES, 16);
+
+      if (!inputs)
+         return;
+      if (!outputs) {
+         align_free(inputs);
+         return;
+      }
+
+      align_free(mach->Inputs);
+      align_free(mach->Outputs);
+
+      mach->Inputs = inputs;
+      mach->Outputs = outputs;
+      mach->UsedGeometryShader = TRUE;
+   }
+
    declarations = (struct tgsi_full_declaration *)
       MALLOC( maxDeclarations * sizeof(struct tgsi_full_declaration) );
 
@@ -801,6 +826,11 @@ tgsi_exec_machine_create( void )
    mach->MaxGeometryShaderOutputs = TGSI_MAX_TOTAL_VERTICES;
    mach->Predicates = &mach->Temps[TGSI_EXEC_TEMP_P0];
 
+   mach->Inputs = align_malloc(sizeof(struct tgsi_exec_vector) * PIPE_MAX_ATTRIBS, 16);
+   mach->Outputs = align_malloc(sizeof(struct tgsi_exec_vector) * PIPE_MAX_ATTRIBS, 16);
+   if (!mach->Inputs || !mach->Outputs)
+      goto fail;
+
    /* Setup constants needed by the SSE2 executor. */
    for( i = 0; i < 4; i++ ) {
       mach->Temps[TGSI_EXEC_TEMP_00000000_I].xyzw[TGSI_EXEC_TEMP_00000000_C].u[i] = 0x00000000;
@@ -824,7 +854,11 @@ tgsi_exec_machine_create( void )
    return mach;
 
 fail:
-   align_free(mach);
+   if (mach) {
+      align_free(mach->Inputs);
+      align_free(mach->Outputs);
+      align_free(mach);
+   }
    return NULL;
 }
 
@@ -836,10 +870,13 @@ tgsi_exec_machine_destroy(struct tgsi_exec_machine *mach)
       if (mach->Instructions)
          FREE(mach->Instructions);
       if (mach->Declarations)
-      FREE(mach->Declarations);
-   }
+         FREE(mach->Declarations);
 
-   align_free(mach);
+      align_free(mach->Inputs);
+      align_free(mach->Outputs);
+
+      align_free(mach);
+   }
 }
 
 static void

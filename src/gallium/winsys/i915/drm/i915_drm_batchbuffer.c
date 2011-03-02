@@ -63,7 +63,6 @@ i915_drm_batchbuffer_create(struct i915_winsys *iws)
    batch->base.size = 0;
 
    batch->base.relocs = 0;
-   batch->base.max_relocs = 300;/*INTEL_DEFAULT_RELOCS;*/
 
    batch->base.iws = iws;
 
@@ -103,8 +102,6 @@ i915_drm_batchbuffer_reloc(struct i915_winsys_batchbuffer *ibatch,
    unsigned read_domain = 0;
    unsigned offset;
    int ret = 0;
-
-   assert(batch->base.relocs < batch->base.max_relocs);
 
    switch (usage) {
    case I915_USAGE_SAMPLER:

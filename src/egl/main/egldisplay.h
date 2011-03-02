@@ -58,6 +58,8 @@ struct _egl_extensions
    EGLBoolean MESA_drm_display;
    EGLBoolean MESA_drm_image;
 
+   EGLBoolean WL_bind_wayland_display;
+
    EGLBoolean KHR_image_base;
    EGLBoolean KHR_image_pixmap;
    EGLBoolean KHR_vg_parent_image;

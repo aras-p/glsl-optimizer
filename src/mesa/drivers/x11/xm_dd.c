@@ -41,6 +41,7 @@
 #include "main/image.h"
 #include "main/imports.h"
 #include "main/mtypes.h"
+#include "main/pbo.h"
 #include "main/state.h"
 #include "main/texobj.h"
 #include "main/teximage.h"

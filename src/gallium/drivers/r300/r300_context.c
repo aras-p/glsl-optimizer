@@ -30,7 +30,6 @@
 #include "r300_cb.h"
 #include "r300_context.h"
 #include "r300_emit.h"
-#include "r300_hyperz.h"
 #include "r300_screen.h"
 #include "r300_screen_buffer.h"
 #include "r300_winsys.h"
@@ -170,7 +169,6 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     boolean is_rv350 = r300->screen->caps.is_rv350;
     boolean is_r500 = r300->screen->caps.is_r500;
     boolean has_tcl = r300->screen->caps.has_tcl;
-    boolean drm_2_3_0 = r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0);
     boolean drm_2_6_0 = r300->rws->get_value(r300->rws, R300_VID_DRM_2_6_0);
     boolean can_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
     boolean has_hiz_ram = r300->screen->caps.hiz_ram > 0;
@@ -203,11 +201,11 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     /* SC. */
     R300_INIT_ATOM(scissor_state, 3);
     /* GB, FG, GA, SU, SC, RB3D. */
-    R300_INIT_ATOM(invariant_state, 18 + (is_rv350 ? 4 : 0));
+    R300_INIT_ATOM(invariant_state, 18 + (is_rv350 ? 4 : 0) + (is_r500 ? 4 : 0));
     /* VAP. */
     R300_INIT_ATOM(viewport_state, 9);
     R300_INIT_ATOM(pvs_flush, 2);
-    R300_INIT_ATOM(vap_invariant_state, 9);
+    R300_INIT_ATOM(vap_invariant_state, is_r500 ? 11 : 9);
     R300_INIT_ATOM(vertex_stream_state, 0);
     R300_INIT_ATOM(vs_state, 0);
     R300_INIT_ATOM(vs_constants, 0);
@@ -216,7 +214,7 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     R300_INIT_ATOM(rs_block_state, 0);
     R300_INIT_ATOM(rs_state, 0);
     /* SC, US. */
-    R300_INIT_ATOM(fb_state_pipelined, 5 + (drm_2_3_0 ? 3 : 0));
+    R300_INIT_ATOM(fb_state_pipelined, 8);
     /* US. */
     R300_INIT_ATOM(fs, 0);
     R300_INIT_ATOM(fs_rc_constant_state, 0);
@@ -227,7 +225,7 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     if (can_hyperz) {
         /* HiZ Clear */
         if (has_hiz_ram)
-            R300_INIT_ATOM(hiz_clear, 0);
+            R300_INIT_ATOM(hiz_clear, 4);
         /* zmask clear */
         R300_INIT_ATOM(zmask_clear, 4);
     }
@@ -331,7 +329,7 @@ static void r300_init_states(struct pipe_context *pipe)
 
     /* Initialize the VAP invariant state. */
     {
-        BEGIN_CB(vap_invariant->cb, 9);
+        BEGIN_CB(vap_invariant->cb, r300->vap_invariant_state.size);
         OUT_CB_REG(VAP_PVS_VTX_TIMEOUT_REG, 0xffff);
         OUT_CB_REG_SEQ(R300_VAP_GB_VERT_CLIP_ADJ, 4);
         OUT_CB_32F(1.0);
@@ -339,6 +337,10 @@ static void r300_init_states(struct pipe_context *pipe)
         OUT_CB_32F(1.0);
         OUT_CB_32F(1.0);
         OUT_CB_REG(R300_VAP_PSC_SGN_NORM_CNTL, R300_SGN_NORM_NO_ZERO);
+
+        if (r300->screen->caps.is_r500) {
+            OUT_CB_REG(R500_VAP_TEX_TO_COLOR_CNTL, 0);
+        }
         END_CB;
     }
 
@@ -358,6 +360,11 @@ static void r300_init_states(struct pipe_context *pipe)
         if (r300->screen->caps.is_rv350) {
             OUT_CB_REG(R500_RB3D_DISCARD_SRC_PIXEL_LTE_THRESHOLD, 0x01010101);
             OUT_CB_REG(R500_RB3D_DISCARD_SRC_PIXEL_GTE_THRESHOLD, 0xFEFEFEFE);
+        }
+
+        if (r300->screen->caps.is_r500) {
+            OUT_CB_REG(R500_GA_COLOR_CONTROL_PS3, 0);
+            OUT_CB_REG(R500_SU_TEX_WRAP_PS3, 0);
         }
         END_CB;
     }
@@ -447,15 +454,9 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 
     /* Render functions must be initialized after blitter. */
     r300_init_render_functions(r300);
+    r300_init_states(&r300->context);
 
     rws->cs_set_flush(r300->cs, r300_flush_cb, r300);
-
-    /* setup hyper-z mm */
-    if (r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
-        if (!r300_hyperz_init_mm(r300))
-            goto fail;
-
-    r300_init_states(&r300->context);
 
     /* The KIL opcode needs the first texture unit to be enabled
      * on r3xx-r4xx. In order to calm down the CS checker, we bind this
@@ -507,10 +508,10 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     }
 
     /* Print driver info. */
-#ifdef NDEBUG
-    if (DBG_ON(r300, DBG_INFO)) {
-#else
+#ifdef DEBUG
     {
+#else
+    if (DBG_ON(r300, DBG_INFO)) {
 #endif
         fprintf(stderr,
                 "r300: DRM version: %d.%d.%d, Name: %s, ID: 0x%04x, GB: %d, Z: %d\n"
@@ -526,7 +527,8 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
                 rws->get_value(rws, R300_VID_GART_SIZE) >> 20,
                 rws->get_value(rws, R300_VID_VRAM_SIZE) >> 20,
                 rws->get_value(rws, R300_CAN_AACOMPRESS) ? "YES" : "NO",
-                rws->get_value(rws, R300_CAN_HYPERZ) ? "YES" : "NO",
+                rws->get_value(rws, R300_CAN_HYPERZ) &&
+                r300->screen->caps.zmask_ram ? "YES" : "NO",
                 rws->get_value(rws, R300_CAN_HYPERZ) &&
                 r300->screen->caps.hiz_ram ? "YES" : "NO");
     }

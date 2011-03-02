@@ -48,6 +48,7 @@
 #include "main/macros.h"
 #include "main/matrix.h"
 #include "main/mipmap.h"
+#include "main/pbo.h"
 #include "main/polygon.h"
 #include "main/readpix.h"
 #include "main/scissor.h"

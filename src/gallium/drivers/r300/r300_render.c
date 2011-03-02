@@ -205,7 +205,7 @@ static boolean r300_reserve_cs_dwords(struct r300_context *r300,
     if (first_draw) {
         cs_dwords += r300_get_num_dirty_dwords(r300);
 
-        if (r300->screen->caps.index_bias_supported)
+        if (r300->screen->caps.is_r500)
             cs_dwords += 2; /* emit_index_offset */
 
         if (emit_vertex_arrays)
@@ -257,7 +257,7 @@ static boolean r300_emit_states(struct r300_context *r300,
         }
 
         r300_emit_dirty_state(r300);
-        if (r300->screen->caps.index_bias_supported) {
+        if (r300->screen->caps.is_r500) {
             if (r300->screen->caps.has_tcl)
                 r500_emit_index_bias(r300, index_bias);
             else
@@ -557,7 +557,7 @@ static void r300_draw_elements_immediate(struct r300_context *r300,
         OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
                r300_translate_primitive(mode));
 
-        if (indexBias && !r300->screen->caps.index_bias_supported) {
+        if (indexBias && !r300->screen->caps.is_r500) {
             for (i = 0; i < count-1; i += 2)
                 OUT_CS(((ptr1[i+1] + indexBias) << 16) |
                         (ptr1[i]   + indexBias));
@@ -581,7 +581,7 @@ static void r300_draw_elements_immediate(struct r300_context *r300,
         OUT_CS(R300_VAP_VF_CNTL__PRIM_WALK_INDICES | (count << 16) |
                r300_translate_primitive(mode));
 
-        if (indexBias && !r300->screen->caps.index_bias_supported) {
+        if (indexBias && !r300->screen->caps.is_r500) {
             for (i = 0; i < count-1; i += 2)
                 OUT_CS(((ptr2[i+1] + indexBias) << 16) |
                         (ptr2[i]   + indexBias));
@@ -601,7 +601,7 @@ static void r300_draw_elements_immediate(struct r300_context *r300,
                R300_VAP_VF_CNTL__INDEX_SIZE_32bit |
                r300_translate_primitive(mode));
 
-        if (indexBias && !r300->screen->caps.index_bias_supported) {
+        if (indexBias && !r300->screen->caps.is_r500) {
             for (i = 0; i < count; i++)
                 OUT_CS(ptr4[i] + indexBias);
         } else {
@@ -620,13 +620,12 @@ static void r300_draw_elements(struct r300_context *r300, int indexBias,
     unsigned indexSize = r300->index_buffer.index_size;
     struct pipe_resource* orgIndexBuffer = indexBuffer;
     boolean alt_num_verts = r300->screen->caps.is_r500 &&
-                            count > 65536 &&
-                            r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0);
+                            count > 65536;
     unsigned short_count;
     int buffer_offset = 0, index_offset = 0; /* for index bias emulation */
     uint16_t indices3[3];
 
-    if (indexBias && !r300->screen->caps.index_bias_supported) {
+    if (indexBias && !r300->screen->caps.is_r500) {
         r300_split_index_bias(r300, indexBias, &buffer_offset, &index_offset);
     }
 
@@ -702,8 +701,7 @@ static void r300_draw_arrays(struct r300_context *r300, unsigned mode,
                              unsigned start, unsigned count)
 {
     boolean alt_num_verts = r300->screen->caps.is_r500 &&
-                            count > 65536 &&
-                            r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0);
+                            count > 65536;
     unsigned short_count;
 
     /* 9 spare dwords for emit_draw_arrays. Give up if the function fails. */
@@ -748,6 +746,8 @@ static void r300_draw_vbo(struct pipe_context* pipe,
         return;
     }
 
+    r300_update_derived_state(r300);
+
     /* Start the vbuf manager and update buffers if needed. */
     u_vbuf_mgr_draw_begin(r300->vbuf_mgr, info,
                           &buffers_updated, &uploader_flushed);
@@ -756,8 +756,6 @@ static void r300_draw_vbo(struct pipe_context* pipe,
     }
 
     /* Draw. */
-    r300_update_derived_state(r300);
-
     if (indexed) {
         if (count <= 8 &&
             r300_resource(r300->index_buffer.buffer)->b.user_ptr) {

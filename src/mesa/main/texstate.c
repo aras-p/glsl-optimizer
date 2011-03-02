@@ -818,9 +818,6 @@ _mesa_free_texture_data(struct gl_context *ctx)
    /* Free proxy texture objects */
    for (tgt = 0; tgt < NUM_TEXTURE_TARGETS; tgt++)
       ctx->Driver.DeleteTexture(ctx, ctx->Texture.ProxyTex[tgt]);
-
-   for (u = 0; u < Elements(ctx->Texture.Unit); u++)
-      _mesa_free_colortable_data(&ctx->Texture.Unit[u].ColorTable);
 }
 
 

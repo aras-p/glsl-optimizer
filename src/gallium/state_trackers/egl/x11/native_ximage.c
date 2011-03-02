@@ -476,7 +476,7 @@ ximage_display_destroy(struct native_display *ndpy)
    if (xdpy->configs)
       FREE(xdpy->configs);
 
-   xdpy->base.screen->destroy(xdpy->base.screen);
+   ndpy_uninit(ndpy);
 
    x11_screen_destroy(xdpy->xscr);
    if (xdpy->own_dpy)

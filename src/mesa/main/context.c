@@ -487,6 +487,7 @@ init_program_limits(GLenum type, struct gl_program_constants *prog)
    prog->MaxEnvParams = MAX_PROGRAM_ENV_PARAMS;
    prog->MaxLocalParams = MAX_PROGRAM_LOCAL_PARAMS;
    prog->MaxUniformComponents = 4 * MAX_UNIFORMS;
+   prog->MaxAddressOffset = MAX_PROGRAM_LOCAL_PARAMS;
 
    switch (type) {
    case GL_VERTEX_PROGRAM_ARB:

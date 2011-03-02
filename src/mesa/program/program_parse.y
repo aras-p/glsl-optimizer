@@ -935,7 +935,7 @@ addrRegRelOffset:              { $$ = 0; }
 
 addrRegPosOffset: INTEGER
 	{
-	   if (($1 < 0) || ($1 > 4095)) {
+	   if (($1 < 0) || ($1 > (state->limits->MaxAddressOffset - 1))) {
               char s[100];
               _mesa_snprintf(s, sizeof(s),
                              "relative address offset too large (%d)", $1);
@@ -949,7 +949,7 @@ addrRegPosOffset: INTEGER
 
 addrRegNegOffset: INTEGER
 	{
-	   if (($1 < 0) || ($1 > 4096)) {
+	   if (($1 < 0) || ($1 > state->limits->MaxAddressOffset)) {
               char s[100];
               _mesa_snprintf(s, sizeof(s),
                              "relative address offset too large (%d)", $1);

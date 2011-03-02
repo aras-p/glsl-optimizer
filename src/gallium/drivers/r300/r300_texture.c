@@ -171,8 +171,16 @@ uint32_t r300_translate_texformat(enum pipe_format format,
             }
     }
 
-    result |= r300_get_swizzle_combined(desc->swizzle, swizzle_view,
-                    util_format_is_compressed(format) && dxtc_swizzle);
+    if (util_format_is_compressed(format) &&
+        dxtc_swizzle &&
+        format != PIPE_FORMAT_RGTC2_UNORM &&
+        format != PIPE_FORMAT_RGTC2_SNORM) {
+        result |= r300_get_swizzle_combined(desc->swizzle, swizzle_view,
+                                            dxtc_swizzle);
+    } else {
+        result |= r300_get_swizzle_combined(desc->swizzle, swizzle_view,
+                                            FALSE);
+    }
 
     /* S3TC formats. */
     if (desc->layout == UTIL_FORMAT_LAYOUT_S3TC) {
@@ -197,10 +205,19 @@ uint32_t r300_translate_texformat(enum pipe_format format,
         }
     }
 
-    /* Add sign. */
-    for (i = 0; i < desc->nr_channels; i++) {
-        if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
-            result |= sign_bit[i];
+    /* RGTC formats. */
+    if (desc->layout == UTIL_FORMAT_LAYOUT_RGTC) {
+        switch (format) {
+            case PIPE_FORMAT_RGTC1_SNORM:
+                result |= sign_bit[1];
+            case PIPE_FORMAT_RGTC1_UNORM:
+                return R500_TX_FORMAT_ATI1N | result;
+            case PIPE_FORMAT_RGTC2_SNORM:
+                result |= sign_bit[2] | sign_bit[3];
+            case PIPE_FORMAT_RGTC2_UNORM:
+                return R400_TX_FORMAT_ATI2N | result;
+            default:
+                return ~0; /* Unsupported/unknown. */
         }
     }
 
@@ -211,24 +228,10 @@ uint32_t r300_translate_texformat(enum pipe_format format,
         return R300_TX_FORMAT_CxV8U8 | result;
     }
 
-    /* RGTC formats. */
-    if (desc->layout == UTIL_FORMAT_LAYOUT_RGTC) {
-        switch (format) {
-            case PIPE_FORMAT_RGTC1_SNORM:
-                result |= sign_bit[0];
-            case PIPE_FORMAT_RGTC1_UNORM:
-                result &= ~(0xfff << 9); /* mask off swizzle */
-                result |= R300_TX_FORMAT_Y << R300_TX_FORMAT_R_SHIFT;
-                return R500_TX_FORMAT_ATI1N | result;
-            case PIPE_FORMAT_RGTC2_SNORM:
-                result |= sign_bit[0] | sign_bit[1];
-            case PIPE_FORMAT_RGTC2_UNORM:
-                result &= ~(0xfff << 9); /* mask off swizzle */
-                result |= R300_TX_FORMAT_Y << R300_TX_FORMAT_R_SHIFT |
-                          R300_TX_FORMAT_X << R300_TX_FORMAT_G_SHIFT;
-                return R400_TX_FORMAT_ATI2N | result;
-            default:
-                return ~0; /* Unsupported/unknown. */
+    /* Add sign. */
+    for (i = 0; i < desc->nr_channels; i++) {
+        if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
+            result |= sign_bit[i];
         }
     }
 
@@ -676,6 +679,8 @@ static void r300_texture_setup_fb_state(struct r300_surface *surf)
                 R300_DEPTHMACROTILE(tex->tex.macrotile[level]) |
                 R300_DEPTHMICROTILE(tex->tex.microtile);
         surf->format = r300_translate_zsformat(surf->base.format);
+        surf->pitch_zmask = tex->tex.zmask_stride_in_pixels[level];
+        surf->pitch_hiz = tex->tex.hiz_stride_in_pixels[level];
     } else {
         surf->pitch =
                 tex->tex.stride_in_pixels[level] |
@@ -713,14 +718,8 @@ static void r300_texture_destroy(struct pipe_screen *screen,
                                  struct pipe_resource* texture)
 {
     struct r300_resource* tex = (struct r300_resource*)texture;
-    int i;
 
     r300_winsys_bo_reference(&tex->buf, NULL);
-    for (i = 0; i < R300_MAX_TEXTURE_LEVELS; i++) {
-        if (tex->hiz_mem[i])
-            u_mmFreeMem(tex->hiz_mem[i]);
-    }
-
     FREE(tex);
 }
 
@@ -868,8 +867,7 @@ struct pipe_resource *r300_texture_from_handle(struct pipe_screen *screen,
                 break;
 
             case 2:
-                if (rws->get_value(rws, R300_VID_DRM_2_1_0))
-                    microtile = R300_BUFFER_SQUARETILED;
+                microtile = R300_BUFFER_SQUARETILED;
                 break;
         }
     }

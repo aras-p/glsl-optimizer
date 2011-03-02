@@ -56,7 +56,6 @@ struct egl_g3d_display {
 
    const struct egl_g3d_loader *loader;
    struct st_manager *smapi;
-   struct pipe_context *pipe;
 };
 
 struct egl_g3d_context {

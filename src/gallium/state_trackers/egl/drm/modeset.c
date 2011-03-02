@@ -3,6 +3,7 @@
  * Version:  7.9
  *
  * Copyright (C) 2010 LunarG Inc.
+ * Copyright (C) 2011 VMware Inc. All rights reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
@@ -24,6 +25,7 @@
  *
  * Authors:
  *    Chia-I Wu <olv@lunarg.com>
+ *    Thomas Hellstrom <thellstrom@vmware.com>
  */
 
 #include "util/u_memory.h"
@@ -131,6 +133,25 @@ drm_surface_flush_frontbuffer(struct native_surface *nsurf)
 }
 
 static boolean
+drm_surface_copy_swap(struct native_surface *nsurf)
+{
+   struct drm_surface *drmsurf = drm_surface(nsurf);
+   struct drm_display *drmdpy = drmsurf->drmdpy;
+
+   (void) resource_surface_throttle(drmsurf->rsurf);
+   if (!resource_surface_copy_swap(drmsurf->rsurf, &drmdpy->base))
+      return FALSE;
+
+   (void) resource_surface_flush(drmsurf->rsurf, &drmdpy->base);
+   if (!drm_surface_flush_frontbuffer(nsurf))
+      return FALSE;
+
+   drmsurf->sequence_number++;
+
+   return TRUE;
+}
+
+static boolean
 drm_surface_swap_buffers(struct native_surface *nsurf)
 {
    struct drm_surface *drmsurf = drm_surface(nsurf);
@@ -139,17 +160,21 @@ drm_surface_swap_buffers(struct native_surface *nsurf)
    struct drm_framebuffer tmp_fb;
    int err;
 
+   if (!drmsurf->have_pageflip)
+      return drm_surface_copy_swap(nsurf);
+
    if (!drmsurf->back_fb.buffer_id) {
       if (!drm_surface_init_framebuffers(&drmsurf->base, TRUE))
          return FALSE;
    }
 
    if (drmsurf->is_shown && drmcrtc->crtc) {
-      err = drmModeSetCrtc(drmdpy->fd, drmcrtc->crtc->crtc_id,
-            drmsurf->back_fb.buffer_id, drmcrtc->crtc->x, drmcrtc->crtc->y,
-            drmcrtc->connectors, drmcrtc->num_connectors, &drmcrtc->crtc->mode);
-      if (err)
-         return FALSE;
+      err = drmModePageFlip(drmdpy->fd, drmcrtc->crtc->crtc_id,
+			    drmsurf->back_fb.buffer_id, 0, NULL);
+      if (err) {
+	 drmsurf->have_pageflip = FALSE;
+         return drm_surface_copy_swap(nsurf);
+      }
    }
 
    /* swap the buffers */
@@ -175,7 +200,7 @@ drm_surface_present(struct native_surface *nsurf,
 {
    boolean ret;
 
-   if (preserve || swap_interval)
+   if (swap_interval)
       return FALSE;
 
    switch (natt) {
@@ -183,7 +208,10 @@ drm_surface_present(struct native_surface *nsurf,
       ret = drm_surface_flush_frontbuffer(nsurf);
       break;
    case NATIVE_ATTACHMENT_BACK_LEFT:
-      ret = drm_surface_swap_buffers(nsurf);
+      if (preserve)
+	 ret = drm_surface_copy_swap(nsurf);
+      else
+	 ret = drm_surface_swap_buffers(nsurf);
       break;
    default:
       ret = FALSE;
@@ -196,7 +224,9 @@ drm_surface_present(struct native_surface *nsurf,
 static void
 drm_surface_wait(struct native_surface *nsurf)
 {
-   /* no-op */
+   struct drm_surface *drmsurf = drm_surface(nsurf);
+
+   resource_surface_wait(drmsurf->rsurf);
 }
 
 static void
@@ -204,6 +234,7 @@ drm_surface_destroy(struct native_surface *nsurf)
 {
    struct drm_surface *drmsurf = drm_surface(nsurf);
 
+   resource_surface_wait(drmsurf->rsurf);
    if (drmsurf->current_crtc.crtc)
          drmModeFreeCrtc(drmsurf->current_crtc.crtc);
 
@@ -236,6 +267,7 @@ drm_display_create_surface(struct native_display *ndpy,
    drmsurf->color_format = drmconf->base.color_format;
    drmsurf->width = width;
    drmsurf->height = height;
+   drmsurf->have_pageflip = TRUE;
 
    drmsurf->rsurf = resource_surface_create(drmdpy->base.screen,
          drmsurf->color_format,

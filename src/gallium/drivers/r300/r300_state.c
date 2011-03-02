@@ -45,7 +45,6 @@
 #include "r300_texture.h"
 #include "r300_vs.h"
 #include "r300_winsys.h"
-#include "r300_hyperz.h"
 
 /* r300_state: Functions used to intialize state context by translating
  * Gallium state objects into semi-native r300 state objects. */
@@ -707,7 +706,7 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
     else if (state->zsbuf) {
         r300->fb_state.size += 10;
         if (can_hyperz)
-            r300->fb_state.size += r300->screen->caps.hiz_ram ? 8 : 4;
+            r300->fb_state.size += 8;
     }
 
     /* The size of the rest of atoms stays the same. */
@@ -720,7 +719,6 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
     struct r300_aa_state *aa = (struct r300_aa_state*)r300->aa_state.state;
     struct pipe_framebuffer_state *old_state = r300->fb_state.state;
-    boolean can_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
     unsigned max_width, max_height, i;
     uint32_t zbuffer_bpp = 0;
 
@@ -738,28 +736,30 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
         return;
     }
 
-    if (old_state->zsbuf && r300->zmask_in_use && !r300->zmask_locked) {
+    if (old_state->zsbuf && r300->zmask_in_use && !r300->hyperz_locked) {
         /* There is a zmask in use, what are we gonna do? */
         if (state->zsbuf) {
             if (!pipe_surface_equal(old_state->zsbuf, state->zsbuf)) {
                 /* Decompress the currently bound zbuffer before we bind another one. */
                 r300_decompress_zmask(r300);
+                r300->hiz_in_use = FALSE;
             }
         } else {
             /* We don't bind another zbuffer, so lock the current one. */
-            r300->zmask_locked = TRUE;
+            r300->hyperz_locked = TRUE;
             pipe_surface_reference(&r300->locked_zbuffer, old_state->zsbuf);
         }
-    } else if (r300->zmask_locked && r300->locked_zbuffer) {
+    } else if (r300->hyperz_locked && r300->locked_zbuffer) {
         /* We have a locked zbuffer now, what are we gonna do? */
         if (state->zsbuf) {
             if (!pipe_surface_equal(r300->locked_zbuffer, state->zsbuf)) {
                 /* We are binding some other zbuffer, so decompress the locked one,
                  * it gets unlocked automatically. */
                 r300_decompress_zmask_locked_unsafe(r300);
+                r300->hiz_in_use = FALSE;
             } else {
                 /* We are binding the locked zbuffer again, so unlock it. */
-                r300->zmask_locked = FALSE;
+                r300->hyperz_locked = FALSE;
             }
         }
     }
@@ -778,7 +778,7 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
 
     util_copy_framebuffer_state(r300->fb_state.state, state);
 
-    if (!r300->zmask_locked) {
+    if (!r300->hyperz_locked) {
         pipe_surface_reference(&r300->locked_zbuffer, NULL);
     }
 
@@ -794,20 +794,6 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
             break;
         }
 
-        /* Setup Hyper-Z. */
-        if (can_hyperz) {
-            struct r300_surface *zs_surf = r300_surface(state->zsbuf);
-            struct r300_resource *tex = r300_resource(zs_surf->base.texture);
-            int level = zs_surf->base.u.tex.level;
-
-            /* work out whether we can support hiz on this buffer */
-            r300_hiz_alloc_block(r300, zs_surf);
-
-            DBG(r300, DBG_HYPERZ,
-                "hyper-z features: hiz: %d @ %08x\n", tex->hiz_mem[level] ? 1 : 0,
-                tex->hiz_mem[level] ? tex->hiz_mem[level]->ofs : 0xdeadbeef);
-        }
-
         /* Polygon offset depends on the zbuffer bit depth. */
         if (r300->zbuffer_bpp != zbuffer_bpp) {
             r300->zbuffer_bpp = zbuffer_bpp;
@@ -818,27 +804,25 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
     }
 
     /* Set up AA config. */
-    if (r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0)) {
-        if (state->nr_cbufs && state->cbufs[0]->texture->nr_samples > 1) {
-            aa->aa_config = R300_GB_AA_CONFIG_AA_ENABLE;
+    if (state->nr_cbufs && state->cbufs[0]->texture->nr_samples > 1) {
+        aa->aa_config = R300_GB_AA_CONFIG_AA_ENABLE;
 
-            switch (state->cbufs[0]->texture->nr_samples) {
-                case 2:
-                    aa->aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_2;
-                    break;
-                case 3:
-                    aa->aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_3;
-                    break;
-                case 4:
-                    aa->aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_4;
-                    break;
-                case 6:
-                    aa->aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_6;
-                    break;
-            }
-        } else {
-            aa->aa_config = 0;
+        switch (state->cbufs[0]->texture->nr_samples) {
+        case 2:
+            aa->aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_2;
+            break;
+        case 3:
+            aa->aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_3;
+            break;
+        case 4:
+            aa->aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_4;
+            break;
+        case 6:
+            aa->aa_config |= R300_GB_AA_CONFIG_NUM_AA_SUBSAMPLES_6;
+            break;
         }
+    } else {
+        aa->aa_config = 0;
     }
 
     if (DBG_ON(r300, DBG_FB)) {

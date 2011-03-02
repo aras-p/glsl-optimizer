@@ -67,6 +67,10 @@
 #define PKT3_SET_CTL_CONST                     0x6F
 #define PKT3_SURFACE_BASE_UPDATE               0x73
 
+#define PREDICATION_OP_CLEAR 0x0
+#define PREDICATION_OP_ZPASS 0x1
+#define PREDICATION_OP_PRIMCOUNT 0x2
+
 #define PKT_TYPE_S(x)                   (((x) & 0x3) << 30)
 #define PKT_TYPE_G(x)                   (((x) >> 30) & 0x3)
 #define PKT_TYPE_C                      0x3FFFFFFF

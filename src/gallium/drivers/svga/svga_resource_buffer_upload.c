@@ -40,7 +40,7 @@
 #include "svga_debug.h"
 
 
-#define MAX_DMA_SIZE (8 * 1024 * 1024)
+#define MAX_DMA_SIZE (4 * 1024 * 1024)
 
 
 /**

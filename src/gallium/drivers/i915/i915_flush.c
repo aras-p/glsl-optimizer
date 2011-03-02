@@ -59,9 +59,9 @@ static void i915_flush_pipe( struct pipe_context *pipe,
       if (flags & PIPE_FLUSH_TEXTURE_CACHE)
 	 flush |= FLUSH_MAP_CACHE;
 
-      if (!BEGIN_BATCH(1, 0)) {
+      if (!BEGIN_BATCH(1)) {
 	 FLUSH_BATCH(NULL);
-	 assert(BEGIN_BATCH(1, 0));
+	 assert(BEGIN_BATCH(1));
       }
       OUT_BATCH( flush );
    }

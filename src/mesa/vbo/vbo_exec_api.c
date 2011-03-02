@@ -423,7 +423,7 @@ do {									\
 } while (0)
 
 
-#define ERROR() _mesa_error( ctx, GL_INVALID_ENUM, __FUNCTION__ )
+#define ERROR(err) _mesa_error( ctx, err, __FUNCTION__ )
 #define TAG(x) vbo_##x
 
 #include "vbo_attrib_tmp.h"
@@ -839,6 +839,19 @@ void vbo_use_buffer_objects(struct gl_context *ctx)
 }
 
 
+/**
+ * If this function is called, all VBO buffers will be unmapped when
+ * we flush.
+ * Otherwise, if a simple command like glColor3f() is called and we flush,
+ * the current VBO may be left mapped.
+ */
+void
+vbo_always_unmap_buffers(struct gl_context *ctx)
+{
+   struct vbo_exec_context *exec = &vbo_context(ctx)->exec;
+   exec->begin_vertices_flags |= FLUSH_STORED_VERTICES;
+}
+
 
 void vbo_exec_vtx_init( struct vbo_exec_context *exec )
 {
@@ -894,6 +907,8 @@ void vbo_exec_vtx_init( struct vbo_exec_context *exec )
    }
 
    exec->vtx.vertex_size = 0;
+
+   exec->begin_vertices_flags = FLUSH_UPDATE_CURRENT;
 }
 
 
@@ -942,7 +957,9 @@ void vbo_exec_BeginVertices( struct gl_context *ctx )
    vbo_exec_vtx_map( exec );
 
    assert((ctx->Driver.NeedFlush & FLUSH_UPDATE_CURRENT) == 0);
-   ctx->Driver.NeedFlush |= FLUSH_UPDATE_CURRENT;
+   assert(exec->begin_vertices_flags);
+
+   ctx->Driver.NeedFlush |= exec->begin_vertices_flags;
 }
 
 
@@ -1045,7 +1062,7 @@ VertexAttrib4f_nopos(GLuint index, GLfloat x, GLfloat y, GLfloat z, GLfloat w)
    if (index < MAX_VERTEX_GENERIC_ATTRIBS)
       ATTR(VBO_ATTRIB_GENERIC0 + index, 4, x, y, z, w);
    else
-      ERROR();
+      ERROR(GL_INVALID_VALUE);
 }
 
 void GLAPIENTRY

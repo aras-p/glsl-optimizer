@@ -125,9 +125,6 @@ struct gl_enable_attrib
    GLbitfield Texture[MAX_TEXTURE_UNITS];
    GLbitfield TexGen[MAX_TEXTURE_UNITS];
 
-   /* SGI_texture_color_table */
-   GLboolean TextureColorTable[MAX_TEXTURE_UNITS];
-
    /* GL_ARB_vertex_program / GL_NV_vertex_program */
    GLboolean VertexProgram;
    GLboolean VertexProgramPointSize;
@@ -311,7 +308,6 @@ _mesa_PushAttrib(GLbitfield mask)
       for (i = 0; i < ctx->Const.MaxTextureUnits; i++) {
          attr->Texture[i] = ctx->Texture.Unit[i].Enabled;
          attr->TexGen[i] = ctx->Texture.Unit[i].TexGenEnabled;
-         attr->TextureColorTable[i] = ctx->Texture.Unit[i].ColorTableEnabled;
       }
       /* GL_NV_vertex_program */
       attr->VertexProgram = ctx->VertexProgram.Enabled;
@@ -657,9 +653,6 @@ pop_enable_group(struct gl_context *ctx, const struct gl_enable_attrib *enable)
          _mesa_set_enable(ctx, GL_TEXTURE_GEN_Q,
                           (genEnabled & Q_BIT) ? GL_TRUE : GL_FALSE);
       }
-
-      /* GL_SGI_texture_color_table */
-      ctx->Texture.Unit[i].ColorTableEnabled = enable->TextureColorTable[i];
    }
 
    _mesa_ActiveTextureARB(GL_TEXTURE0 + curTexUnitSave);
@@ -702,10 +695,6 @@ pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
                  (unit->Enabled & TEXTURE_2D_ARRAY_BIT) ? GL_TRUE : GL_FALSE);
       }
 
-      if (ctx->Extensions.SGI_texture_color_table) {
-         _mesa_set_enable(ctx, GL_TEXTURE_COLOR_TABLE_SGI,
-                          unit->ColorTableEnabled);
-      }
       _mesa_TexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, unit->EnvMode);
       _mesa_TexEnvfv(GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, unit->EnvColor);
       _mesa_TexGeni(GL_S, GL_TEXTURE_GEN_MODE, unit->GenS.Mode);

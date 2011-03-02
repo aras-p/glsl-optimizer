@@ -209,7 +209,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/docs/README.*					\
 	$(DIRECTORY)/docs/RELNOTES*					\
 	$(DIRECTORY)/docs/*.spec					\
-	$(DIRECTORY)/include/GL/internal/glcore.h			\
 	$(DIRECTORY)/include/GL/gl.h					\
 	$(DIRECTORY)/include/GL/glext.h					\
 	$(DIRECTORY)/include/GL/gl_mangle.h				\
@@ -308,8 +307,7 @@ MAPI_FILES = \
 	$(DIRECTORY)/src/mapi/mapi/*.[ch]				\
 	$(DIRECTORY)/src/mapi/vgapi/Makefile				\
 	$(DIRECTORY)/src/mapi/vgapi/vgapi.csv				\
-	$(DIRECTORY)/src/mapi/vgapi/vg.pc.in				\
-	$(DIRECTORY)/src/mapi/vgapi/*.h
+	$(DIRECTORY)/src/mapi/vgapi/vg.pc.in
 
 EGL_FILES = \
 	$(DIRECTORY)/include/KHR/*.h					\
@@ -422,10 +420,22 @@ LIB_FILES = \
 	$(GLW_FILES)
 
 
-# Everything for new a Mesa release:
-tarballs: rm_depend configure aclocal.m4 lib_gz glut_gz \
-	lib_bz2 glut_bz2 lib_zip glut_zip md5
+parsers: configure
+	-@touch $(TOP)/configs/current
+	$(MAKE) -C src/glsl glsl_parser.cpp glsl_parser.h glsl_lexer.cpp
+	$(MAKE) -C src/glsl/glcpp glcpp-lex.c glcpp-parse.c glcpp-parse.h
+	$(MAKE) -C src/mesa/program lex.yy.c program_parse.tab.c program_parse.tab.h
 
+# Everything for new a Mesa release:
+ARCHIVES = $(LIB_NAME).tar.gz \
+	$(LIB_NAME).tar.bz2 \
+	$(LIB_NAME).zip \
+	$(GLUT_NAME).tar.gz \
+	$(GLUT_NAME).tar.bz2 \
+	$(GLUT_NAME).zip
+
+tarballs: md5
+	rm -f ../$(LIB_NAME).tar
 
 # Helper for autoconf builds
 ACLOCAL = aclocal
@@ -434,7 +444,7 @@ AUTOCONF = autoconf
 AC_FLAGS =
 aclocal.m4: configure.ac acinclude.m4
 	$(ACLOCAL) $(ACLOCAL_FLAGS)
-configure: configure.ac aclocal.m4 acinclude.m4
+configure: rm_depend configure.ac aclocal.m4 acinclude.m4
 	$(AUTOCONF) $(AC_FLAGS)
 
 rm_depend:
@@ -443,47 +453,41 @@ rm_depend:
 		touch $$dep ; \
 	done
 
-rm_config:
+rm_config: parsers
 	rm -f configs/current
 	rm -f configs/autoconf
 
-lib_gz: rm_config
-	cd .. ; \
-	tar -cf $(LIB_NAME).tar $(LIB_FILES) ; \
-	gzip $(LIB_NAME).tar ; \
-	mv $(LIB_NAME).tar.gz $(DIRECTORY)
+$(LIB_NAME).tar: rm_config
+	cd .. ; tar -cf $(DIRECTORY)/$(LIB_NAME).tar $(LIB_FILES)
 
-glut_gz:
-	cd .. ; \
-	tar -cf $(GLUT_NAME).tar $(GLUT_FILES) ; \
-	gzip $(GLUT_NAME).tar ; \
-	mv $(GLUT_NAME).tar.gz $(DIRECTORY)
+$(LIB_NAME).tar.gz: $(LIB_NAME).tar
+	gzip --stdout --best $(LIB_NAME).tar > $(LIB_NAME).tar.gz
 
-lib_bz2: rm_config
-	cd .. ; \
-	tar -cf $(LIB_NAME).tar $(LIB_FILES) ; \
-	bzip2 $(LIB_NAME).tar ; \
-	mv $(LIB_NAME).tar.bz2 $(DIRECTORY)
+$(GLUT_NAME).tar: rm_depend
+	cd .. ; tar -cf $(DIRECTORY)/$(GLUT_NAME).tar $(GLUT_FILES)
 
-glut_bz2:
-	cd .. ; \
-	tar -cf $(GLUT_NAME).tar $(GLUT_FILES) ; \
-	bzip2 $(GLUT_NAME).tar ; \
-	mv $(GLUT_NAME).tar.bz2 $(DIRECTORY)
+$(GLUT_NAME).tar.gz: $(GLUT_NAME).tar
+	gzip --stdout --best $(GLUT_NAME).tar > $(GLUT_NAME).tar.gz
 
-lib_zip: rm_config
+$(LIB_NAME).tar.bz2: $(LIB_NAME).tar
+	bzip2 --stdout --best $(LIB_NAME).tar > $(LIB_NAME).tar.bz2
+
+$(GLUT_NAME).tar.bz2: $(GLUT_NAME).tar
+	bzip2 --stdout --best $(GLUT_NAME).tar > $(GLUT_NAME).tar.bz2
+
+$(LIB_NAME).zip: rm_config
 	rm -f $(LIB_NAME).zip ; \
 	cd .. ; \
 	zip -qr $(LIB_NAME).zip $(LIB_FILES) ; \
 	mv $(LIB_NAME).zip $(DIRECTORY)
 
-glut_zip:
+$(GLUT_NAME).zip:
 	rm -f $(GLUT_NAME).zip ; \
 	cd .. ; \
 	zip -qr $(GLUT_NAME).zip $(GLUT_FILES) ; \
 	mv $(GLUT_NAME).zip $(DIRECTORY)
 
-md5:
+md5: $(ARCHIVES)
 	@-md5sum $(LIB_NAME).tar.gz
 	@-md5sum $(LIB_NAME).tar.bz2
 	@-md5sum $(LIB_NAME).zip
@@ -491,7 +495,4 @@ md5:
 	@-md5sum $(GLUT_NAME).tar.bz2
 	@-md5sum $(GLUT_NAME).zip
 
-.PHONY: tarballs rm_depend rm_config md5 \
-	lib_gz glut_gz \
-	lib_bz2 glut_bz2 \
-	lib_zip glut_zip
+.PHONY: tarballs rm_depend rm_config md5

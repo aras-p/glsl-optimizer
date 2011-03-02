@@ -76,7 +76,6 @@ struct i915_winsys_batchbuffer {
    size_t size;
 
    size_t relocs;
-   size_t max_relocs;
    /*@}*/
 };
 

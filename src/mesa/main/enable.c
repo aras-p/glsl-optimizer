@@ -703,15 +703,6 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          client_state( ctx, cap, state );
          return;
 
-      /* GL_SGI_texture_color_table */
-      case GL_TEXTURE_COLOR_TABLE_SGI:
-         CHECK_EXTENSION(SGI_texture_color_table, cap);
-         if (ctx->Texture.Unit[ctx->Texture.CurrentUnit].ColorTableEnabled == state)
-            return;
-         FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-         ctx->Texture.Unit[ctx->Texture.CurrentUnit].ColorTableEnabled = state;
-         break;
-
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:
          CHECK_EXTENSION(ARB_texture_cube_map, cap);
@@ -1307,11 +1298,6 @@ _mesa_IsEnabled( GLenum cap )
       case GL_POINT_SIZE_ARRAY_OES:
          return (ctx->Array.ArrayObj->PointSize.Enabled != 0);
 #endif
-
-      /* GL_SGI_texture_color_table */
-      case GL_TEXTURE_COLOR_TABLE_SGI:
-         CHECK_EXTENSION(SGI_texture_color_table);
-         return ctx->Texture.Unit[ctx->Texture.CurrentUnit].ColorTableEnabled;
 
       /* GL_ARB_texture_cube_map */
       case GL_TEXTURE_CUBE_MAP_ARB:

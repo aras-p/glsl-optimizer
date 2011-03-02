@@ -96,10 +96,13 @@ static void do_ioctls(struct radeon_drm_winsys *winsys)
      * we don't actually use the info for anything yet. */
 
     version = drmGetVersion(winsys->fd);
-    if (version->version_major != 2) {
+    if (version->version_major != 2 ||
+        version->version_minor < 3) {
         fprintf(stderr, "%s: DRM version is %d.%d.%d but this driver is "
-                "only compatible with 2.x.x\n", __FUNCTION__,
-                version->version_major, version->version_minor,
+                "only compatible with 2.3.x (kernel 2.6.34) and later.\n",
+                __FUNCTION__,
+                version->version_major,
+                version->version_minor,
                 version->version_patchlevel);
         drmFreeVersion(version);
         exit(1);
@@ -157,6 +160,8 @@ static void do_ioctls(struct radeon_drm_winsys *winsys)
     winsys->vram_size = gem_info.vram_size;
 
     drmFreeVersion(version);
+
+    winsys->num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
 }
 
 static void radeon_winsys_destroy(struct r300_winsys_screen *rws)
@@ -190,10 +195,6 @@ static uint32_t radeon_get_value(struct r300_winsys_screen *rws,
         return ws->drm_minor;
     case R300_VID_DRM_PATCHLEVEL:
         return ws->drm_patchlevel;
-    case R300_VID_DRM_2_1_0:
-        return ws->drm_major*100 + ws->drm_minor >= 201;
-    case R300_VID_DRM_2_3_0:
-        return ws->drm_major*100 + ws->drm_minor >= 203;
     case R300_VID_DRM_2_6_0:
         return ws->drm_major*100 + ws->drm_minor >= 206;
     case R300_VID_DRM_2_8_0:

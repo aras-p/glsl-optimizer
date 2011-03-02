@@ -164,7 +164,7 @@ static void update_framebuffer(struct i915_context *i915)
    assert(ret);
    if (i915->current.draw_offset != draw_offset) {
       i915->current.draw_offset = draw_offset;
-      /* XXX: only emit flush on change and not always in emit */
+      i915_set_flush_dirty(i915, I915_PIPELINE_FLUSH);
    }
    i915->current.draw_size = (w - 1 + x) | ((h - 1 + y) << 16);
 

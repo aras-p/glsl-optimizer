@@ -455,9 +455,6 @@ egl_g3d_terminate(_EGLDriver *drv, _EGLDisplay *dpy)
 
    _eglReleaseDisplayResources(drv, dpy);
 
-   if (gdpy->pipe)
-      gdpy->pipe->destroy(gdpy->pipe);
-
    if (dpy->Configs) {
       _eglDestroyArray(dpy->Configs, egl_g3d_free_config);
       dpy->Configs = NULL;

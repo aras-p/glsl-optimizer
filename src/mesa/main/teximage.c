@@ -1898,7 +1898,9 @@ copytexture_error_check( struct gl_context *ctx, GLuint dimensions,
 
    /* Check that the source buffer is complete */
    if (ctx->ReadBuffer->Name) {
-      _mesa_test_framebuffer_completeness(ctx, ctx->ReadBuffer);
+      if (ctx->ReadBuffer->_Status == 0) {
+         _mesa_test_framebuffer_completeness(ctx, ctx->ReadBuffer);
+      }
       if (ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
          _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
                      "glCopyTexImage%dD(invalid readbuffer)", dimensions);
@@ -2000,7 +2002,9 @@ copytexsubimage_error_check1( struct gl_context *ctx, GLuint dimensions,
 {
    /* Check that the source buffer is complete */
    if (ctx->ReadBuffer->Name) {
-      _mesa_test_framebuffer_completeness(ctx, ctx->ReadBuffer);
+      if (ctx->ReadBuffer->_Status == 0) {
+         _mesa_test_framebuffer_completeness(ctx, ctx->ReadBuffer);
+      }
       if (ctx->ReadBuffer->_Status != GL_FRAMEBUFFER_COMPLETE_EXT) {
          _mesa_error(ctx, GL_INVALID_FRAMEBUFFER_OPERATION_EXT,
                      "glCopyTexImage%dD(invalid readbuffer)", dimensions);

@@ -425,27 +425,12 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
         OUT_CS_RELOC(surf);
 
         if (can_hyperz) {
-            uint32_t surf_pitch;
-            struct r300_resource *tex;
-            int level = surf->base.u.tex.level;
-            tex = r300_resource(surf->base.texture);
-
-            surf_pitch = surf->pitch & R300_DEPTHPITCH_MASK;
-
             /* HiZ RAM. */
-            if (r300->screen->caps.hiz_ram) {
-                if (tex->hiz_mem[level]) {
-                    OUT_CS_REG(R300_ZB_HIZ_OFFSET, tex->hiz_mem[level]->ofs << 2);
-                    OUT_CS_REG(R300_ZB_HIZ_PITCH, surf_pitch);
-                } else {
-                    OUT_CS_REG(R300_ZB_HIZ_OFFSET, 0);
-                    OUT_CS_REG(R300_ZB_HIZ_PITCH, 0);
-                }
-            }
-
+            OUT_CS_REG(R300_ZB_HIZ_OFFSET, 0);
+            OUT_CS_REG(R300_ZB_HIZ_PITCH, surf->pitch_hiz);
             /* Z Mask RAM. (compressed zbuffer) */
             OUT_CS_REG(R300_ZB_ZMASK_OFFSET, 0);
-            OUT_CS_REG(R300_ZB_ZMASK_PITCH, surf_pitch);
+            OUT_CS_REG(R300_ZB_ZMASK_PITCH, surf->pitch_zmask);
         }
     }
 
@@ -484,6 +469,7 @@ void r300_emit_fb_state_pipelined(struct r300_context *r300,
     struct pipe_framebuffer_state* fb =
             (struct pipe_framebuffer_state*)r300->fb_state.state;
     unsigned i, num_cbufs = fb->nr_cbufs;
+    unsigned mspos0, mspos1;
     CS_LOCALS(r300);
 
     /* If we use the multiwrite feature, the colorbuffers 2,3,4 must be
@@ -507,38 +493,36 @@ void r300_emit_fb_state_pipelined(struct r300_context *r300,
     /* Multisampling. Depends on framebuffer sample count.
      * These are pipelined regs and as such cannot be moved
      * to the AA state. */
-    if (r300->rws->get_value(r300->rws, R300_VID_DRM_2_3_0)) {
-        unsigned mspos0 = 0x66666666;
-        unsigned mspos1 = 0x6666666;
+    mspos0 = 0x66666666;
+    mspos1 = 0x6666666;
 
-        if (fb->nr_cbufs && fb->cbufs[0]->texture->nr_samples > 1) {
-            /* Subsample placement. These may not be optimal. */
-            switch (fb->cbufs[0]->texture->nr_samples) {
-                case 2:
-                    mspos0 = 0x33996633;
-                    mspos1 = 0x6666663;
-                    break;
-                case 3:
-                    mspos0 = 0x33936933;
-                    mspos1 = 0x6666663;
-                    break;
-                case 4:
-                    mspos0 = 0x33939933;
-                    mspos1 = 0x3966663;
-                    break;
-                case 6:
-                    mspos0 = 0x22a2aa22;
-                    mspos1 = 0x2a65672;
-                    break;
-                default:
-                    debug_printf("r300: Bad number of multisamples!\n");
-            }
+    if (fb->nr_cbufs && fb->cbufs[0]->texture->nr_samples > 1) {
+        /* Subsample placement. These may not be optimal. */
+        switch (fb->cbufs[0]->texture->nr_samples) {
+        case 2:
+            mspos0 = 0x33996633;
+            mspos1 = 0x6666663;
+            break;
+        case 3:
+            mspos0 = 0x33936933;
+            mspos1 = 0x6666663;
+            break;
+        case 4:
+            mspos0 = 0x33939933;
+            mspos1 = 0x3966663;
+            break;
+        case 6:
+            mspos0 = 0x22a2aa22;
+            mspos1 = 0x2a65672;
+            break;
+        default:
+            debug_printf("r300: Bad number of multisamples!\n");
         }
-
-        OUT_CS_REG_SEQ(R300_GB_MSPOS0, 2);
-        OUT_CS(mspos0);
-        OUT_CS(mspos1);
     }
+
+    OUT_CS_REG_SEQ(R300_GB_MSPOS0, 2);
+    OUT_CS(mspos0);
+    OUT_CS(mspos1);
     END_CS;
 }
 
@@ -1039,56 +1023,26 @@ void r300_emit_viewport_state(struct r300_context* r300,
     END_CS;
 }
 
-static void r300_emit_hiz_line_clear(struct r300_context *r300, int start, uint16_t count, uint32_t val)
-{
-    CS_LOCALS(r300);
-    BEGIN_CS(4);
-    OUT_CS_PKT3(R300_PACKET3_3D_CLEAR_HIZ, 2);
-    OUT_CS(start);
-    OUT_CS(count);
-    OUT_CS(val);
-    END_CS;
-}
-
-#define ALIGN_DIVUP(x, y) (((x) + (y) - 1) / (y))
-
 void r300_emit_hiz_clear(struct r300_context *r300, unsigned size, void *state)
 {
     struct pipe_framebuffer_state *fb =
         (struct pipe_framebuffer_state*)r300->fb_state.state;
-    struct r300_hyperz_state *z =
-        (struct r300_hyperz_state*)r300->hyperz_state.state;
-    struct r300_screen* r300screen = r300->screen;
-    uint32_t stride, offset = 0, height, offset_shift;
     struct r300_resource* tex;
-    int i;
+    CS_LOCALS(r300);
 
     tex = r300_resource(fb->zsbuf->texture);
 
-    offset = tex->hiz_mem[fb->zsbuf->u.tex.level]->ofs;
-    stride = tex->tex.stride_in_pixels[fb->zsbuf->u.tex.level];
-
-    /* convert from pixels to 4x4 blocks */
-    stride = ALIGN_DIVUP(stride, 4);
-
-    stride = ALIGN_DIVUP(stride, r300screen->caps.num_frag_pipes);    
-    /* there are 4 blocks per dwords */
-    stride = ALIGN_DIVUP(stride, 4);
-
-    height = ALIGN_DIVUP(fb->zsbuf->height, 4);
-
-    offset_shift = 2;
-    offset_shift += (r300screen->caps.num_frag_pipes / 2);
-
-    for (i = 0; i < height; i++) {
-        offset = i * stride;
-        offset <<= offset_shift;
-        r300_emit_hiz_line_clear(r300, offset, stride, 0xffffffff);
-    }
-    z->current_func = -1;
+    BEGIN_CS(size);
+    OUT_CS_PKT3(R300_PACKET3_3D_CLEAR_HIZ, 2);
+    OUT_CS(0);
+    OUT_CS(tex->tex.hiz_dwords[fb->zsbuf->u.tex.level]);
+    OUT_CS(r300->hiz_clear_value);
+    END_CS;
 
     /* Mark the current zbuffer's hiz ram as in use. */
-    tex->hiz_in_use[fb->zsbuf->u.tex.level] = TRUE;
+    r300->hiz_in_use = TRUE;
+    r300->hiz_func = HIZ_FUNC_NONE;
+    r300_mark_atom_dirty(r300, &r300->hyperz_state);
 }
 
 void r300_emit_zmask_clear(struct r300_context *r300, unsigned size, void *state)
@@ -1236,7 +1190,7 @@ unsigned r300_get_num_cs_end_dwords(struct r300_context *r300)
     /* Emitted in flush. */
     dwords += 26; /* emit_query_end */
     dwords += r300->hyperz_state.size + 2; /* emit_hyperz_end + zcache flush */
-    if (r300->screen->caps.index_bias_supported)
+    if (r300->screen->caps.is_r500)
         dwords += 2;
 
     return dwords;

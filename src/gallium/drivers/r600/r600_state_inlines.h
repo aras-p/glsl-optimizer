@@ -500,9 +500,9 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 	}
 }
 
-static INLINE boolean r600_is_sampler_format_supported(enum pipe_format format)
+static INLINE boolean r600_is_sampler_format_supported(struct pipe_screen *screen, enum pipe_format format)
 {
-	return r600_translate_texformat(format, NULL, NULL, NULL) != ~0;
+	return r600_translate_texformat(screen, format, NULL, NULL, NULL) != ~0;
 }
 
 static INLINE boolean r600_is_colorbuffer_format_supported(enum pipe_format format)

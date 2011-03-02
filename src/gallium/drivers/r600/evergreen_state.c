@@ -305,10 +305,15 @@ static void *evergreen_create_sampler_state(struct pipe_context *ctx,
 {
 	struct r600_pipe_state *rstate = CALLOC_STRUCT(r600_pipe_state);
 	union util_color uc;
+	uint32_t coord_trunc = 0;
 
 	if (rstate == NULL) {
 		return NULL;
 	}
+
+	if ((state->mag_img_filter == PIPE_TEX_FILTER_NEAREST) ||
+	    (state->min_img_filter == PIPE_TEX_FILTER_NEAREST))
+		coord_trunc = 1;
 
 	rstate->id = R600_PIPE_STATE_SAMPLER;
 	util_pack_color(state->border_color, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
@@ -328,6 +333,7 @@ static void *evergreen_create_sampler_state(struct pipe_context *ctx,
 			0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_03C008_SQ_TEX_SAMPLER_WORD2_0,
 				S_03C008_LOD_BIAS(S_FIXED(CLAMP(state->lod_bias, -16, 16), 8)) |
+				S_03C008_MC_COORD_TRUNCATE(coord_trunc) |
 				S_03C008_TYPE(1),
 				0xFFFFFFFF, NULL);
 
@@ -370,7 +376,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	swizzle[1] = state->swizzle_g;
 	swizzle[2] = state->swizzle_b;
 	swizzle[3] = state->swizzle_a;
-	format = r600_translate_texformat(state->format,
+	format = r600_translate_texformat(ctx->screen, state->format,
 					  swizzle,
 					  &word4, &yuv_format);
 	if (format == ~0) {

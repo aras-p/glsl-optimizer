@@ -143,6 +143,9 @@ struct vbo_exec_context
       const struct gl_client_array *inputs[VERT_ATTRIB_MAX];
    } array;
 
+   /* Which flags to set in vbo_exec_BeginVertices() */
+   GLbitfield begin_vertices_flags;
+
 #ifdef DEBUG
    GLint flush_call_depth;
 #endif

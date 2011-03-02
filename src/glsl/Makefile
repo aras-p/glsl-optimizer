@@ -191,10 +191,10 @@ $(DRICORE_OBJ_DIR)/%.o : %.c
 	@mkdir -p $(dir $@)
 	$(CC) -c $(INCLUDES) $(DRI_CFLAGS) $(DEFINES) $< -o $@
 
-glsl_lexer.cpp: glsl_lexer.lpp
+glsl_lexer.cpp: glsl_lexer.ll
 	flex --nounistd -o$@  $<
 
-glsl_parser.cpp: glsl_parser.ypp
+glsl_parser.cpp: glsl_parser.yy
 	bison -v -o "$@" -p "_mesa_glsl_" --defines=glsl_parser.h $<
 
 glcpp/glcpp-lex.c: glcpp/glcpp-lex.l

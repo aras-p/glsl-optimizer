@@ -31,6 +31,7 @@
 #include "main/colormac.h"
 #include "main/mtypes.h"
 #include "main/macros.h"
+#include "main/pbo.h"
 #include "main/bufferobj.h"
 #include "main/state.h"
 #include "main/texobj.h"

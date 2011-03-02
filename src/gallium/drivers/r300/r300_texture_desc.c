@@ -207,29 +207,6 @@ static unsigned r300_texture_get_nblocksy(struct r300_resource *tex,
     return util_format_get_nblocksy(tex->b.b.b.format, height);
 }
 
-static void r300_texture_3d_fix_mipmapping(struct r300_screen *screen,
-                                           struct r300_resource *tex)
-{
-    /* The kernels <= 2.6.34-rc4 compute the size of mipmapped 3D textures
-     * incorrectly. This is a workaround to prevent CS from being rejected. */
-
-    unsigned i, size;
-
-    if (!screen->rws->get_value(screen->rws, R300_VID_DRM_2_3_0) &&
-        tex->b.b.b.target == PIPE_TEXTURE_3D &&
-        tex->b.b.b.last_level > 0) {
-        size = 0;
-
-        for (i = 0; i <= tex->b.b.b.last_level; i++) {
-            size += tex->tex.stride_in_bytes[i] *
-                    r300_texture_get_nblocksy(tex, i, FALSE);
-        }
-
-        size *= tex->tex.depth0;
-        tex->tex.size_in_bytes = size;
-    }
-}
-
 /* Get a width in pixels from a stride in bytes. */
 static unsigned stride_to_width(enum pipe_format format,
                                 unsigned stride_in_bytes)
@@ -334,12 +311,17 @@ static void r300_setup_cbzb_flags(struct r300_screen *rscreen,
         tex->tex.cbzb_allowed[i] = first_level_valid && tex->tex.macrotile[i];
 }
 
-#define ALIGN_DIVUP(x, y) (((x) + (y) - 1) / (y))
-
-static void r300_setup_zmask_flags(struct r300_screen *screen,
-                                   struct r300_resource *tex)
+static unsigned r300_pixels_to_dwords(unsigned stride,
+                                      unsigned height,
+                                      unsigned xblock, unsigned yblock)
 {
-    /* The tile size of 1 DWORD is:
+    return (align(stride, xblock) * align(height, yblock)) / (xblock * yblock);
+}
+
+static void r300_setup_hyperz_properties(struct r300_screen *screen,
+                                         struct r300_resource *tex)
+{
+    /* The tile size of 1 DWORD in ZMASK RAM is:
      *
      * GPU    Pipes    4x4 mode   8x8 mode
      * ------------------------------------------
@@ -348,8 +330,31 @@ static void r300_setup_zmask_flags(struct r300_screen *screen,
      * RV530  1P/2Z    32x16      64x32
      *        1P/1Z    16x16      32x32
      */
-    static unsigned num_blocks_x_per_dw[4] = {4, 8, 12, 8};
-    static unsigned num_blocks_y_per_dw[4] = {4, 4,  4, 8};
+    static unsigned zmask_blocks_x_per_dw[4] = {4, 8, 12, 8};
+    static unsigned zmask_blocks_y_per_dw[4] = {4, 4,  4, 8};
+
+    /* In HIZ RAM, one dword is always 8x8 pixels (each byte is 4x4 pixels),
+     * but the blocks have very weird ordering.
+     *
+     * With 2 pipes and an image of size 8xY, where Y >= 1,
+     * clearing 4 dwords clears blocks like this:
+     *
+     *    01012323
+     *
+     * where numbers correspond to dword indices. The blocks are interleaved
+     * in the X direction, so the alignment must be 4x1 blocks (32x8 pixels).
+     *
+     * With 4 pipes and an image of size 8xY, where Y >= 4,
+     * clearing 8 dwords clears blocks like this:
+     *    01012323
+     *    45456767
+     *    01012323
+     *    45456767
+     * where numbers correspond to dword indices. The blocks are interleaved
+     * in both directions, so the alignment must be 4x4 blocks (32x32 pixels)
+     */
+    static unsigned hiz_align_x[4] = {8, 32, 48, 32};
+    static unsigned hiz_align_y[4] = {8, 8, 8, 32};
 
     if (util_format_is_depth_or_stencil(tex->b.b.b.format) &&
         util_format_get_blocksizebits(tex->b.b.b.format) == 32 &&
@@ -363,30 +368,49 @@ static void r300_setup_zmask_flags(struct r300_screen *screen,
         }
 
         for (i = 0; i <= tex->b.b.b.last_level; i++) {
-            unsigned numdw, compsize;
+            unsigned zcomp_numdw, zcompsize, hiz_numdw, stride, height;
+
+            stride = align(tex->tex.stride_in_pixels[i], 16);
+            height = u_minify(tex->b.b.b.height0, i);
 
             /* The 8x8 compression mode needs macrotiling. */
-            compsize = screen->caps.z_compress == R300_ZCOMP_8X8 &&
+            zcompsize = screen->caps.z_compress == R300_ZCOMP_8X8 &&
                        tex->tex.macrotile[i] &&
                        tex->b.b.b.nr_samples <= 1 ? 8 : 4;
 
-            /* Get the zbuffer size (with the aligned width and height). */
-            numdw = align(tex->tex.stride_in_pixels[i],
-                          num_blocks_x_per_dw[pipes-1] * compsize) *
-                    align(u_minify(tex->b.b.b.height0, i),
-                          num_blocks_y_per_dw[pipes-1] * compsize);
+            /* Get the ZMASK buffer size in dwords. */
+            zcomp_numdw = r300_pixels_to_dwords(stride, height,
+                                zmask_blocks_x_per_dw[pipes-1] * zcompsize,
+                                zmask_blocks_y_per_dw[pipes-1] * zcompsize);
 
-            /* Convert pixels -> dwords. */
-            numdw = ALIGN_DIVUP(numdw, num_blocks_x_per_dw[pipes-1] * compsize *
-                                       num_blocks_y_per_dw[pipes-1] * compsize);
+            /* Check whether we have enough ZMASK memory. */
+            if (util_format_get_blocksizebits(tex->b.b.b.format) == 32 &&
+                zcomp_numdw <= screen->caps.zmask_ram * pipes) {
+                tex->tex.zmask_dwords[i] = zcomp_numdw;
+                tex->tex.zcomp8x8[i] = zcompsize == 8;
 
-            /* Check that we have enough ZMASK memory. */
-            if (numdw <= screen->caps.zmask_ram * pipes) {
-                tex->tex.zmask_dwords[i] = numdw;
-                tex->tex.zcomp8x8[i] = compsize == 8;
+                tex->tex.zmask_stride_in_pixels[i] =
+                    align(stride, zmask_blocks_x_per_dw[pipes-1] * zcompsize);
             } else {
                 tex->tex.zmask_dwords[i] = 0;
                 tex->tex.zcomp8x8[i] = FALSE;
+                tex->tex.zmask_stride_in_pixels[i] = 0;
+            }
+
+            /* Now setup HIZ. */
+            stride = align(stride, hiz_align_x[pipes-1]);
+            height = align(height, hiz_align_y[pipes-1]);
+
+            /* Get the HIZ buffer size in dwords. */
+            hiz_numdw = (stride * height) / (8*8 * pipes);
+
+            /* Check whether we have enough HIZ memory. */
+            if (hiz_numdw <= screen->caps.hiz_ram * pipes) {
+                tex->tex.hiz_dwords[i] = hiz_numdw;
+                tex->tex.hiz_stride_in_pixels[i] = stride;
+            } else {
+                tex->tex.hiz_dwords[i] = 0;
+                tex->tex.hiz_stride_in_pixels[i] = 0;
             }
         }
     }
@@ -395,7 +419,6 @@ static void r300_setup_zmask_flags(struct r300_screen *screen,
 static void r300_setup_tiling(struct r300_screen *screen,
                               struct r300_resource *tex)
 {
-    struct r300_winsys_screen *rws = screen->rws;
     enum pipe_format format = tex->b.b.b.format;
     boolean rv350_mode = screen->caps.family >= CHIP_FAMILY_R350;
     boolean is_zb = util_format_is_depth_or_stencil(format);
@@ -422,9 +445,7 @@ static void r300_setup_tiling(struct r300_screen *screen,
             break;
 
         case 2:
-            if (rws->get_value(rws, R300_VID_DRM_2_1_0)) {
-                tex->tex.microtile = R300_BUFFER_SQUARETILED;
-            }
+            tex->tex.microtile = R300_BUFFER_SQUARETILED;
             break;
     }
 
@@ -494,8 +515,7 @@ boolean r300_texture_desc_init(struct r300_screen *rscreen,
         r300_setup_miptree(rscreen, tex, FALSE);
     }
 
-    r300_texture_3d_fix_mipmapping(rscreen, tex);
-    r300_setup_zmask_flags(rscreen, tex);
+    r300_setup_hyperz_properties(rscreen, tex);
 
     if (tex->buf_size) {
         /* Make sure the buffer we got is large enough. */

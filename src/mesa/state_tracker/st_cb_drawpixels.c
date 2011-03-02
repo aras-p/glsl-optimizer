@@ -37,6 +37,7 @@
 #include "main/mfeatures.h"
 #include "main/mtypes.h"
 #include "main/pack.h"
+#include "main/pbo.h"
 #include "main/texformat.h"
 #include "main/texstore.h"
 #include "program/program.h"

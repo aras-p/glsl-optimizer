@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<protocol name="drm">
+  <!-- drm support. This object is created by the server and published
+       using the display's global event. -->
+  <interface name="drm" version="1">
+    <!-- Call this request with the magic received from drmGetMagic().
+         It will be passed on to the drmAuthMagic() or
+         DRIAuthConnection() call.  This authentication must be
+         completed before create_buffer could be used. -->
+    <request name="authenticate">
+      <arg name="id" type="uint"/>
+    </request>
+
+    <!-- Create a wayland buffer for the named DRM buffer.  The DRM
+         surface must have a name using the flink ioctl -->
+    <request name="create_buffer">
+      <arg name="id" type="new_id" interface="buffer"/>
+      <arg name="name" type="uint"/>
+      <arg name="width" type="int"/>
+      <arg name="height" type="int"/>
+      <arg name="stride" type="uint"/>
+      <arg name="visual" type="object" interface="visual"/>
+    </request>
+
+    <!-- Notification of the path of the drm device which is used by
+         the server.  The client should use this device for creating
+         local buffers.  Only buffers created from this device should
+         be be passed to the server using this drm object's
+         create_buffer request. -->
+    <event name="device">
+      <arg name="name" type="string"/>
+    </event>
+
+    <!-- Raised if the authenticate request succeeded -->
+    <event name="authenticated"/>
+  </interface>
+
+</protocol>

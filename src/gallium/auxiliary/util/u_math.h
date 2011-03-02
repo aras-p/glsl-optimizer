@@ -475,6 +475,17 @@ float_to_ubyte(float f)
    }
 }
 
+static INLINE float
+byte_to_float_tex(int8_t b)
+{
+   return (b == -128) ? -1.0F : b * 1.0F / 127.0F;
+}
+
+static INLINE int8_t
+float_to_byte_tex(float f)
+{
+   return (int8_t) (127.0F * f);
+}
 
 /**
  * Calc log base 2
