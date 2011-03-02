@@ -34,19 +34,15 @@
 static void
 prepare_urb( struct brw_context *brw )
 {
-   brw->urb.nr_vs_entries = 24;
-   if (brw->gs.prog_bo)
-      brw->urb.nr_gs_entries = 4;
-   else
-      brw->urb.nr_gs_entries = 0;
+   brw->urb.nr_vs_entries = 256;
+   brw->urb.nr_gs_entries = 256;
+
    /* CACHE_NEW_VS_PROG */
    brw->urb.vs_size = MAX2(brw->vs.prog_data->urb_entry_size, 1);
 
-   /* Check that the number of URB rows (8 floats each) allocated is less
-    * than the URB space.
-    */
-   assert((brw->urb.nr_vs_entries +
-	   brw->urb.nr_gs_entries) * brw->urb.vs_size * 8 < 64 * 1024);
+   if (256 * brw->urb.vs_size > 64 * 1024)
+	   brw->urb.nr_vs_entries = brw->urb.nr_gs_entries = 
+		(64 * 1024 ) / brw->urb.vs_size;
 }
 
 static void
