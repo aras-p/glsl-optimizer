@@ -72,26 +72,26 @@ static void TAG(write_rgtc_encoded_channel)(TYPE *blkaddr,
    *blkaddr++ = (alphaenc[10] >> 2) | (alphaenc[11] << 1) | (alphaenc[12] << 4) | ((alphaenc[13] & 1) << 7);
    *blkaddr++ = (alphaenc[13] >> 1) | (alphaenc[14] << 2) | (alphaenc[15] << 5);
 }
+
 static void TAG(encode_rgtc_chan)(TYPE *blkaddr, TYPE srccolors[4][4],
-			     GLint numxpixels, GLint numypixels)
+			     int numxpixels, int numypixels)
 {
    TYPE alphabase[2], alphause[2];
-   GLshort alphatest[2] = { 0 };
-   GLuint alphablockerror1, alphablockerror2, alphablockerror3;
+   short alphatest[2] = { 0 };
+   unsigned int alphablockerror1, alphablockerror2, alphablockerror3;
    TYPE i, j, aindex, acutValues[7];
    TYPE alphaenc1[16], alphaenc2[16], alphaenc3[16];
-   GLboolean alphaabsmin = GL_FALSE;
-   GLboolean alphaabsmax = GL_FALSE;
-   GLshort alphadist;
+   int alphaabsmin = 0, alphaabsmax = 0;
+   short alphadist;
 
    /* find lowest and highest alpha value in block, alphabase[0] lowest, alphabase[1] highest */
    alphabase[0] = T_MAX; alphabase[1] = T_MIN;
    for (j = 0; j < numypixels; j++) {
       for (i = 0; i < numxpixels; i++) {
 	 if (srccolors[j][i] == T_MIN)
-            alphaabsmin = GL_TRUE;
+            alphaabsmin = 1;
          else if (srccolors[j][i] == T_MAX)
-            alphaabsmax = GL_TRUE;
+            alphaabsmax = 1;
          else {
             if (srccolors[j][i] > alphabase[1])
                alphabase[1] = srccolors[j][i];
@@ -248,8 +248,8 @@ static void TAG(encode_rgtc_chan)(TYPE *blkaddr, TYPE srccolors[4][4],
       /* skip this if the error is already very small
          this encoding is MUCH better on average than #2 though, but expensive! */
       if ((alphablockerror2 > 96) && (alphablockerror1 > 96)) {
-         GLshort blockerrlin1 = 0;
-         GLshort blockerrlin2 = 0;
+         short blockerrlin1 = 0;
+         short blockerrlin2 = 0;
          TYPE nralphainrangelow = 0;
          TYPE nralphainrangehigh = 0;
          alphatest[0] = T_MAX;
