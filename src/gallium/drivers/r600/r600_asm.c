@@ -1529,7 +1529,7 @@ enum cf_class
 	CF_CLASS_EXPORT,
 	CF_CLASS_OTHER
 };
- 
+
 static enum cf_class r600_bc_cf_class(struct r600_bc_cf *cf)
 {
 	switch (cf->inst) {
@@ -1561,6 +1561,7 @@ static enum cf_class r600_bc_cf_class(struct r600_bc_cf *cf)
 	case V_SQ_CF_WORD1_SQ_CF_INST_LOOP_BREAK:
 	case V_SQ_CF_WORD1_SQ_CF_INST_CALL_FS:
 	case V_SQ_CF_WORD1_SQ_CF_INST_RETURN:
+	case V_SQ_CF_WORD1_SQ_CF_INST_NOP:
 		return CF_CLASS_OTHER;
 
 	default:
@@ -1929,7 +1930,7 @@ static void find_replacement(struct gpr_usage usage[128], unsigned current,
 	unsigned i, j;
 	int best_gpr = -1, best_rate = 0x7FFFFFFF;
 
-	if (range->replacement == current) 
+	if (range->replacement == current)
 		return; /* register prefers to be not remapped */
 
 	if (range->replacement != -1 && range->replacement <= current) {
@@ -3079,6 +3080,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 	}
 
 	r600_bc_add_cfinst(&bc, BC_INST(&bc, V_SQ_CF_WORD1_SQ_CF_INST_RETURN));
+	r600_bc_add_cfinst(&bc, BC_INST(&bc, V_SQ_CF_WORD1_SQ_CF_INST_NOP));
 
 	/* use PIPE_BIND_VERTEX_BUFFER so we use the cache buffer manager */
 	ve->fetch_shader = r600_bo(rctx->radeon, bc.ndw*4, 256, PIPE_BIND_VERTEX_BUFFER, 0);
