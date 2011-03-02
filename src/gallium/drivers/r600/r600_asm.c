@@ -2176,7 +2176,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 		vtx.fetch_type = elements[i].instance_divisor ? 1 : 0;
 		vtx.src_gpr = elements[i].instance_divisor > 1 ? i + 1 : 0;
 		vtx.src_sel_x = elements[i].instance_divisor ? 3 : 0;
-		vtx.mega_fetch_count = 16;
+		vtx.mega_fetch_count = 0x1F;
 		vtx.dst_gpr = i + 1;
 		vtx.dst_sel_x = desc->swizzle[0];
 		vtx.dst_sel_y = desc->swizzle[1];
