@@ -364,7 +364,7 @@ static void _fetch_texel_rgtc_s(GLint srcRowStride, const GLbyte *pixdata,
    else if (code < 6)
       decode = ((alpha0 * (6 - code) + (alpha1 * (code - 1))) / 5);
    else if (code == 6)
-      decode = -127;
+      decode = -128;
    else
       decode = 127;
 
@@ -442,8 +442,8 @@ _mesa_fetch_texel_2d_f_signed_rg_rgtc2(const struct gl_texture_image *texImage,
 
 #define TAG(x) signed_##x
 #define TYPE GLbyte
-#define T_MIN (GLbyte)-127
-#define T_MAX (GLbyte)128
+#define T_MIN (GLbyte)-128
+#define T_MAX (GLbyte)127
 
 #include "texcompress_rgtc_tmp.h"
 

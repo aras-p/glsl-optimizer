@@ -73,9 +73,9 @@ static void TAG(encode_rgtc_chan)(TYPE *blkaddr, TYPE srccolors[4][4],
    }
 
 
-   if ((alphabase[0] > alphabase[1]) && !(alphaabsmin && alphaabsmax)) { /* one color, either max or min */
+   if (((alphabase[0] > alphabase[1]) && !(alphaabsmin && alphaabsmax))
+       || (alphabase[0] == alphabase[1] && !alphaabsmin && !alphaabsmax)) { /* one color, either max or min */
       /* shortcut here since it is a very common case (and also avoids later problems) */
-      /* || (alphabase[0] == alphabase[1] && !alphaabsmin && !alphaabsmax) */
       /* could also thest for alpha0 == alpha1 (and not min/max), but probably not common, so don't bother */
 
       *blkaddr++ = srccolors[0][0];
@@ -223,8 +223,8 @@ static void TAG(encode_rgtc_chan)(TYPE *blkaddr, TYPE srccolors[4][4],
          GLshort blockerrlin2 = 0;
          TYPE nralphainrangelow = 0;
          TYPE nralphainrangehigh = 0;
-         alphatest[0] = 0xff;
-         alphatest[1] = 0x0;
+         alphatest[0] = T_MAX;
+         alphatest[1] = T_MIN;
          /* if we have large range it's likely there are values close to 0/255, try to map them to 0/255 */
          for (j = 0; j < numypixels; j++) {
             for (i = 0; i < numxpixels; i++) {
@@ -236,8 +236,8 @@ static void TAG(encode_rgtc_chan)(TYPE *blkaddr, TYPE srccolors[4][4],
          }
           /* shouldn't happen too often, don't really care about those degenerated cases */
           if (alphatest[1] <= alphatest[0]) {
-             alphatest[0] = 1;
-             alphatest[1] = 254;
+             alphatest[0] = T_MIN+1;
+             alphatest[1] = T_MAX-1;
          }
          for (aindex = 0; aindex < 5; aindex++) {
          /* don't forget here is always rounded down */
@@ -305,7 +305,7 @@ static void TAG(encode_rgtc_chan)(TYPE *blkaddr, TYPE srccolors[4][4],
          }
          alphatest[1] = alphatest[1] + (blockerrlin2 / nralphainrangehigh);
          if (alphatest[1] > T_MAX) {
-            alphatest[1] = T_MIN;
+            alphatest[1] = T_MAX;
          }
 
          alphablockerror3 = 0;
@@ -354,23 +354,36 @@ static void TAG(encode_rgtc_chan)(TYPE *blkaddr, TYPE srccolors[4][4],
          }
       }
    }
+
   /* write the alpha values and encoding back. */
    if ((alphablockerror1 <= alphablockerror2) && (alphablockerror1 <= alphablockerror3)) {
 #if RGTC_DEBUG
       if (alphablockerror1 > 96) fprintf(stderr, "enc1 used, error %d\n", alphablockerror1);
+      fprintf(stderr,"w1: min %d max %d au0 %d au1 %d\n",
+	      T_MIN, T_MAX,
+	      alphause[1], alphause[0]);
 #endif
+
       TAG(write_rgtc_encoded_channel)( blkaddr, alphause[1], alphause[0], alphaenc1 );
    }
    else if (alphablockerror2 <= alphablockerror3) {
 #if RGTC_DEBUG
       if (alphablockerror2 > 96) fprintf(stderr, "enc2 used, error %d\n", alphablockerror2);
+      fprintf(stderr,"w2: min %d max %d au0 %d au1 %d\n",
+	      T_MIN, T_MAX,
+	      alphabase[0], alphabase[1]);
 #endif
+
       TAG(write_rgtc_encoded_channel)( blkaddr, alphabase[0], alphabase[1], alphaenc2 );
    }
    else {
 #if RGTC_DEBUG
       fprintf(stderr, "enc3 used, error %d\n", alphablockerror3);
+      fprintf(stderr,"w3: min %d max %d au0 %d au1 %d\n",
+	      T_MIN, T_MAX,
+	      alphatest[0], alphatest[1]);
 #endif
+
       TAG(write_rgtc_encoded_channel)( blkaddr, (TYPE)alphatest[0], (TYPE)alphatest[1], alphaenc3 );
    }
 }
