@@ -2573,6 +2573,7 @@ struct gl_program_constants
    GLuint MaxAttribs;
    GLuint MaxTemps;
    GLuint MaxAddressRegs;
+   GLuint MaxAddressOffset;  /**< [-MaxAddressOffset, MaxAddressOffset-1] */
    GLuint MaxParameters;
    GLuint MaxLocalParams;
    GLuint MaxEnvParams;
