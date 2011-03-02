@@ -538,7 +538,8 @@ nv50_draw_elements(struct nv50_context *nv50, boolean shorten,
 
    if (nouveau_resource_mapped_by_gpu(nv50->idxbuf.buffer)) {
       struct nv04_resource *res = nv04_resource(nv50->idxbuf.buffer);
-      unsigned offset = res->offset + nv50->idxbuf.offset;
+
+      start += nv50->idxbuf.offset >> (index_size >> 1);
 
       nouveau_buffer_adjust_score(&nv50->base, res, 1);
 
@@ -552,9 +553,8 @@ nv50_draw_elements(struct nv50_context *nv50, boolean shorten,
             WAIT_RING (chan, 2);
             BEGIN_RING(chan, RING_3D(VB_ELEMENT_U32) | 0x30000, 0);
             OUT_RING  (chan, count);
-            nouveau_pushbuf_submit(chan, res->bo,
-                                   (start << 2) + offset,
-                                   (count << 2));
+            nouveau_pushbuf_submit(chan, res->bo, res->offset + start * 4,
+                                   count * 4);
          }
             break;
          case 2:
@@ -564,10 +564,11 @@ nv50_draw_elements(struct nv50_context *nv50, boolean shorten,
 
             BEGIN_RING(chan, RING_3D(VB_ELEMENT_U16_SETUP), 1);
             OUT_RING  (chan, (start << 31) | count);
+            WAIT_RING (chan, 2);
             BEGIN_RING(chan, RING_3D(VB_ELEMENT_U16) | 0x30000, 0);
             OUT_RING  (chan, pb_words);
-            nouveau_pushbuf_submit(chan, res->bo,
-                                   (pb_start << 1) + offset, pb_words << 2);
+            nouveau_pushbuf_submit(chan, res->bo, res->offset + pb_start * 2,
+                                   pb_words * 4);
             BEGIN_RING(chan, RING_3D(VB_ELEMENT_U16_SETUP), 1);
             OUT_RING  (chan, 0);
             break;
@@ -579,10 +580,11 @@ nv50_draw_elements(struct nv50_context *nv50, boolean shorten,
 
             BEGIN_RING(chan, RING_3D(VB_ELEMENT_U8_SETUP), 1);
             OUT_RING  (chan, (start << 30) | count);
+            WAIT_RING (chan, 2);
             BEGIN_RING(chan, RING_3D(VB_ELEMENT_U8) | 0x30000, 0);
             OUT_RING  (chan, pb_words);
-            nouveau_pushbuf_submit(chan, res->bo,
-                                   pb_start + offset, pb_words << 2);
+            nouveau_pushbuf_submit(chan, res->bo, res->offset + pb_start,
+                                   pb_words * 4);
             BEGIN_RING(chan, RING_3D(VB_ELEMENT_U8_SETUP), 1);
             OUT_RING  (chan, 0);
             break;
@@ -591,6 +593,8 @@ nv50_draw_elements(struct nv50_context *nv50, boolean shorten,
             assert(0);
             return;
          }
+         BEGIN_RING(chan, RING_3D(VERTEX_END_GL), 1);
+         OUT_RING  (chan, 0);
 
          nv50_resource_fence(res, NOUVEAU_BO_RD);
 
