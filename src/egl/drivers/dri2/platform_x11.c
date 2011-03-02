@@ -478,6 +478,7 @@ dri2_connect(struct dri2_egl_display *dri2_dpy)
    xcb_dri2_connect_cookie_t connect_cookie;
    xcb_generic_error_t *error;
    xcb_screen_iterator_t s;
+   char *driver_name, *device_name;
 
    xcb_prefetch_extension_data (dri2_dpy->conn, &xcb_xfixes_id);
    xcb_prefetch_extension_data (dri2_dpy->conn, &xcb_dri2_id);
@@ -524,13 +525,20 @@ dri2_connect(struct dri2_egl_display *dri2_dpy)
       return EGL_FALSE;
    }
 
-   dri2_dpy->device_name =
-      dri2_strndup(xcb_dri2_connect_device_name (connect),
-		   xcb_dri2_connect_device_name_length (connect));
-
+   driver_name = xcb_dri2_connect_driver_name (connect);
    dri2_dpy->driver_name =
-      dri2_strndup(xcb_dri2_connect_driver_name (connect),
+      dri2_strndup(driver_name,
 		   xcb_dri2_connect_driver_name_length (connect));
+
+#if XCB_DRI2_CONNECT_DEVICE_NAME_BROKEN
+   device_name = driver_name + ((connect->driver_name_length + 3) & ~3);
+#else
+   device_name = xcb_dri2_connect_device_name (connect);
+#endif
+
+   dri2_dpy->device_name =
+      dri2_strndup(device_name,
+		   xcb_dri2_connect_device_name_length (connect));
 
    if (dri2_dpy->device_name == NULL || dri2_dpy->driver_name == NULL) {
       free(dri2_dpy->device_name);
