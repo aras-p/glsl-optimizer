@@ -158,9 +158,6 @@ nv50_miptree_create(struct pipe_screen *pscreen,
    case PIPE_FORMAT_Z32_FLOAT_S8X24_USCALED:
       tile_flags = 0x6000;
       break;
-   case PIPE_FORMAT_R16G16B16A16_UNORM:
-      tile_flags = 0xe900; /* COMPRESSED */
-      break;
    default:
       if ((pt->bind & PIPE_BIND_SCANOUT) &&
           util_format_get_blocksizebits(pt->format) == 32)
