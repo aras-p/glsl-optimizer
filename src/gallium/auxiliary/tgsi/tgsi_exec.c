@@ -1084,7 +1084,7 @@ fetch_src_file_channel(const struct tgsi_exec_machine *mach,
                          }*/
          int pos = index2D->i[i] * TGSI_EXEC_MAX_INPUT_ATTRIBS + index->i[i];
          assert(pos >= 0);
-         assert(pos < Elements(mach->Inputs));
+         assert(pos < TGSI_MAX_PRIM_VERTICES * PIPE_MAX_ATTRIBS);
          chan->u[i] = mach->Inputs[pos].xyzw[swizzle].u[i];
       }
       break;
