@@ -89,7 +89,7 @@ struct dri2_egl_display
    struct wl_drm            *wl_server_drm;
 #endif
 
-   int (*authenticate) (struct dri2_egl_display *dri_dpy, uint32_t id);
+   int (*authenticate) (_EGLDisplay *disp, uint32_t id);
 };
 
 struct dri2_egl_context
