@@ -70,7 +70,7 @@ struct glsl_type {
    GLenum gl_type;
    glsl_base_type base_type;
 
-   unsigned sampler_dimensionality:3;
+   unsigned sampler_dimensionality:3; /**< \see glsl_sampler_dim */
    unsigned sampler_shadow:1;
    unsigned sampler_array:1;
    unsigned sampler_type:2;    /**< Type of data returned using this sampler.
