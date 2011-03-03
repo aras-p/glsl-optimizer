@@ -90,9 +90,7 @@ nv50_blend_state_create(struct pipe_context *pipe,
    int i;
    boolean emit_common_func = cso->rt[0].blend_enable;
 
-   const uint32_t chipset = nv50_context(pipe)->screen->base.device->chipset;
-
-   if (chipset >= 0xa3) {
+   if (nv50_context(pipe)->screen->tesla->grclass >= NVA3_3D) {
       SB_BEGIN_3D(so, BLEND_INDEPENDENT, 1);
       SB_DATA    (so, cso->independent_blend_enable);
    }
@@ -107,7 +105,7 @@ nv50_blend_state_create(struct pipe_context *pipe,
             emit_common_func = TRUE;
       }
 
-      if (chipset >= 0xa3) {
+      if (nv50_context(pipe)->screen->tesla->grclass >= NVA3_3D) {
          emit_common_func = FALSE;
 
          for (i = 0; i < 8; ++i) {

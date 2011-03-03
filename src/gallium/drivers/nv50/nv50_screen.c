@@ -59,7 +59,7 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
 
    switch (format) {
    case PIPE_FORMAT_Z16_UNORM:
-      if ((nouveau_screen(pscreen)->device->chipset & 0xf0) != 0xa0)
+      if (nv50_screen(pscreen)->tesla->grclass < NVA0_3D)
          return FALSE;
       break;
    default:
@@ -117,7 +117,7 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_INDEP_BLEND_ENABLE:
       return 1;
    case PIPE_CAP_INDEP_BLEND_FUNC:
-      return nv50_screen(pscreen)->base.device->chipset >= 0xa3;
+      return nv50_screen(pscreen)->tesla->grclass >= NVA3_3D;
    case PIPE_CAP_TGSI_FS_COORD_ORIGIN_UPPER_LEFT:
    case PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_HALF_INTEGER:
       return 1;
