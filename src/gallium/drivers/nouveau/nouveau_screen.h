@@ -16,6 +16,7 @@ struct nouveau_screen {
 	 * these almost always should be set to the same value */
 	unsigned vertex_buffer_flags;
 	unsigned index_buffer_flags;
+	unsigned sysmem_bindings;
 
 	struct {
 		struct nouveau_fence *head;

@@ -358,6 +358,8 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
       return NULL;
    pscreen = &screen->base.base;
 
+   screen->base.sysmem_bindings = PIPE_BIND_CONSTANT_BUFFER;
+
    ret = nouveau_screen_init(&screen->base, dev);
    if (ret) {
       nvc0_screen_destroy(pscreen);
@@ -374,9 +376,6 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    pscreen->get_paramf = nvc0_screen_get_paramf;
 
    nvc0_screen_init_resource_functions(pscreen);
-
-   screen->base.vertex_buffer_flags = NOUVEAU_BO_GART;
-   screen->base.index_buffer_flags = 0;
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_GART | NOUVEAU_BO_MAP, 0, 4096,
                         &screen->fence.bo);

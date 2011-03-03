@@ -340,7 +340,7 @@ nouveau_buffer_create(struct pipe_screen *pscreen,
    pipe_reference_init(&buffer->base.reference, 1);
    buffer->base.screen = pscreen;
 
-   if (buffer->base.bind & PIPE_BIND_CONSTANT_BUFFER)
+   if ((buffer->base.bind & screen->sysmem_bindings) == screen->sysmem_bindings)
       ret = nouveau_buffer_allocate(screen, buffer, 0);
    else
       ret = nouveau_buffer_allocate(screen, buffer, NOUVEAU_BO_GART);
