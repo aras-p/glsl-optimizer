@@ -598,6 +598,8 @@ def generate(env):
     env.Append(LIBS = [])
 
     # Load tools
+    env.Tool('lex')
+    env.Tool('yacc')
     if env['llvm']:
         env.Tool('llvm')
         env.Tool('udis86')
