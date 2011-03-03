@@ -24,6 +24,9 @@ glcpp_parser = env.CFile('glcpp/glcpp-parse.c', 'glcpp/glcpp-parse.y')
 glsl_lexer = parser_env.CXXFile('glsl_lexer.cpp', 'glsl_lexer.ll')
 glsl_parser = parser_env.CXXFile('glsl_parser.cpp', 'glsl_parser.yy')
 
+# Make glcpp/glcpp-parse.h reacheable from the include path
+env.Append(CPPPATH = [glcpp_parser[0].dir.up()])
+
 sources = [
     glcpp_lexer,
     glcpp_parser[0],

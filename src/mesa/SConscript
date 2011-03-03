@@ -218,6 +218,10 @@ env.Append(YACCFLAGS = '-d')
 program_lex = env.CFile('program/lex.yy.c', 'program/program_lexer.l')
 program_parse = env.CFile('program/program_parse.tab.c',
                           'program/program_parse.y')
+
+# Make program/program_parse.tab.h reacheable from the include path
+env.Append(CPPPATH = [program_parse[0].dir.up()])
+
 program_sources = [
     'program/arbprogparse.c',
     'program/hash_table.c',
