@@ -149,36 +149,36 @@ HEXADECIMAL_INTEGER	0[xX][0-9a-fA-F]+[uU]?
 }
 
 <SKIP,INITIAL>{
-{HASH}ifdef/.*\n {
+{HASH}ifdef {
 	yyextra->lexing_if = 1;
 	yyextra->space_tokens = 0;
 	return HASH_IFDEF;
 }
 
-{HASH}ifndef/.*\n {
+{HASH}ifndef {
 	yyextra->lexing_if = 1;
 	yyextra->space_tokens = 0;
 	return HASH_IFNDEF;
 }
 
-{HASH}if/[^_a-zA-Z0-9].*\n {
+{HASH}if/[^_a-zA-Z0-9] {
 	yyextra->lexing_if = 1;
 	yyextra->space_tokens = 0;
 	return HASH_IF;
 }
 
-{HASH}elif/.*\n {
+{HASH}elif {
 	yyextra->lexing_if = 1;
 	yyextra->space_tokens = 0;
 	return HASH_ELIF;
 }
 
-{HASH}else/.*\n {
+{HASH}else {
 	yyextra->space_tokens = 0;
 	return HASH_ELSE;
 }
 
-{HASH}endif/.*\n {
+{HASH}endif {
 	yyextra->space_tokens = 0;
 	return HASH_ENDIF;
 }
