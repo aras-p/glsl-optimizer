@@ -286,7 +286,7 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    uint32_t tesla_class;
    unsigned stack_size, max_warps, tls_space;
    int ret;
-   unsigned i;
+   unsigned i, base;
 
    screen = CALLOC_STRUCT(nv50_screen);
    if (!screen)
@@ -425,25 +425,28 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    BEGIN_RING(chan, RING_3D(ZCULL_REGION), 1); /* deactivate ZCULL */
    OUT_RING  (chan, 0x3f);
 
-   ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 16, 3 << 16, &screen->code);
+   ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 16,
+                        3 << NV50_CODE_BO_SIZE_LOG2, &screen->code);
    if (ret)
       goto fail;
 
-   nouveau_resource_init(&screen->vp_code_heap, 0, 1 << 16);
-   nouveau_resource_init(&screen->gp_code_heap, 0, 1 << 16);
-   nouveau_resource_init(&screen->fp_code_heap, 0, 1 << 16);
+   nouveau_resource_init(&screen->vp_code_heap, 0, 1 << NV50_CODE_BO_SIZE_LOG2);
+   nouveau_resource_init(&screen->gp_code_heap, 0, 1 << NV50_CODE_BO_SIZE_LOG2);
+   nouveau_resource_init(&screen->fp_code_heap, 0, 1 << NV50_CODE_BO_SIZE_LOG2);
+
+   base = 1 << NV50_CODE_BO_SIZE_LOG2;
 
    BEGIN_RING(chan, RING_3D(VP_ADDRESS_HIGH), 2);
-   OUT_RELOCh(chan, screen->code, 0 << 16, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-   OUT_RELOCl(chan, screen->code, 0 << 16, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+   OUT_RELOCh(chan, screen->code, base * 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+   OUT_RELOCl(chan, screen->code, base * 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 
    BEGIN_RING(chan, RING_3D(FP_ADDRESS_HIGH), 2);
-   OUT_RELOCh(chan, screen->code, 1 << 16, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-   OUT_RELOCl(chan, screen->code, 1 << 16, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+   OUT_RELOCh(chan, screen->code, base * 1, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+   OUT_RELOCl(chan, screen->code, base * 1, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 
    BEGIN_RING(chan, RING_3D(GP_ADDRESS_HIGH), 2);
-   OUT_RELOCh(chan, screen->code, 2 << 16, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-   OUT_RELOCl(chan, screen->code, 2 << 16, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+   OUT_RELOCh(chan, screen->code, base * 2, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+   OUT_RELOCl(chan, screen->code, base * 2, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
 
    nouveau_device_get_param(dev, NOUVEAU_GETPARAM_GRAPH_UNITS, &value);
 

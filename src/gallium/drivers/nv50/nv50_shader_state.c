@@ -138,6 +138,7 @@ nv50_program_validate(struct nv50_context *nv50, struct nv50_program *prog)
       return FALSE;
 
    if (prog->type == PIPE_SHADER_FRAGMENT) heap = nv50->screen->fp_code_heap;
+   else
    if (prog->type == PIPE_SHADER_GEOMETRY) heap = nv50->screen->gp_code_heap;
    else
       heap = nv50->screen->vp_code_heap;
@@ -145,14 +146,16 @@ nv50_program_validate(struct nv50_context *nv50, struct nv50_program *prog)
    size = align(prog->code_size, 0x100);
 
    ret = nouveau_resource_alloc(heap, size, prog, &prog->res);
-   if (ret)
+   if (ret) {
+      NOUVEAU_ERR("out of code space for shader type %i\n", prog->type);
       return FALSE;
+   }
    prog->code_base = prog->res->start;
 
    nv50_relocate_program(prog, prog->code_base, 0);
 
    nv50_sifc_linear_u8(&nv50->base, nv50->screen->code,
-                       (prog->type << 16) + prog->code_base,
+                       (prog->type << NV50_CODE_BO_SIZE_LOG2) + prog->code_base,
                        NOUVEAU_BO_VRAM, prog->code_size, prog->code);
 
    BEGIN_RING(nv50->screen->base.channel, RING_3D(CODE_CB_FLUSH), 1);
