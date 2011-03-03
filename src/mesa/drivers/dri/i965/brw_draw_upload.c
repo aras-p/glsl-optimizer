@@ -343,7 +343,8 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    struct brw_vertex_buffer *buffer = &brw->vb.buffers[j];
 
 	    /* Named buffer object: Just reference its contents directly. */
-	    buffer->bo = intel_bufferobj_source(intel, intel_buffer,
+            buffer->bo = intel_bufferobj_source(intel,
+                                                intel_buffer, type_size,
 						&buffer->offset);
 	    drm_intel_bo_reference(buffer->bo);
 	    buffer->offset += (uintptr_t)glarray->Ptr;
@@ -670,7 +671,6 @@ static void brw_prepare_indices(struct brw_context *brw)
       intel_upload_data(&brw->intel, index_buffer->ptr, ib_size, ib_type_size,
 			&bo, &offset);
       brw->ib.start_vertex_offset = offset / ib_type_size;
-      offset = 0;
    } else {
       offset = (GLuint) (unsigned long) index_buffer->ptr;
 
@@ -687,7 +687,6 @@ static void brw_prepare_indices(struct brw_context *brw)
 	   intel_upload_data(&brw->intel, map, ib_size, ib_type_size,
 			     &bo, &offset);
 	   brw->ib.start_vertex_offset = offset / ib_type_size;
-	   offset = 0;
 
            ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB, bufferobj);
        } else {
@@ -697,21 +696,29 @@ static void brw_prepare_indices(struct brw_context *brw)
 	   */
 	  brw->ib.start_vertex_offset = offset / ib_type_size;
 
-	  bo = intel_bufferobj_source(intel, intel_buffer_object(bufferobj),
+	  bo = intel_bufferobj_source(intel,
+				      intel_buffer_object(bufferobj),
+				      ib_type_size,
 				      &offset);
 	  drm_intel_bo_reference(bo);
+
+	  brw->ib.start_vertex_offset += offset / ib_type_size;
        }
    }
 
-   if (brw->ib.bo != bo || brw->ib.offset != offset) {
+   if (brw->ib.bo != bo) {
       drm_intel_bo_unreference(brw->ib.bo);
       brw->ib.bo = bo;
-      brw->ib.offset = offset;
 
       brw_add_validated_bo(brw, brw->ib.bo);
       brw->state.dirty.brw |= BRW_NEW_INDEX_BUFFER;
    } else {
       drm_intel_bo_unreference(bo);
+   }
+
+   if (index_buffer->type != brw->ib.type) {
+      brw->ib.type = index_buffer->type;
+      brw->state.dirty.brw |= BRW_NEW_INDEX_BUFFER;
    }
 }
 
@@ -739,7 +746,7 @@ static void brw_emit_index_buffer(struct brw_context *brw)
              1);
    OUT_RELOC(brw->ib.bo,
              I915_GEM_DOMAIN_VERTEX, 0,
-             brw->ib.offset);
+             0);
    OUT_RELOC(brw->ib.bo,
              I915_GEM_DOMAIN_VERTEX, 0,
 	     brw->ib.bo->size - 1);

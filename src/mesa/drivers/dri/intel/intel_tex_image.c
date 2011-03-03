@@ -237,7 +237,8 @@ try_pbo_upload(struct intel_context *intel,
 
    {
       GLuint offset;
-      drm_intel_bo *src_buffer = intel_bufferobj_source(intel, pbo, &offset);
+      drm_intel_bo *src_buffer =
+	      intel_bufferobj_source(intel, pbo, 64, &offset);
 
       if (!intelEmitCopyBlit(intel,
 			     intelImage->mt->cpp,
