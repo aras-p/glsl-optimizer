@@ -133,6 +133,10 @@
 				 devid == PCI_CHIP_SANDYBRIDGE_M_GT2_PLUS || \
 				 devid == PCI_CHIP_SANDYBRIDGE_S)
 
+#define IS_GT1(devid)		(devid == PCI_CHIP_SANDYBRIDGE_GT1 || \
+				 devid == PCI_CHIP_SANDYBRIDGE_M_GT1 || \
+				 devid == PCI_CHIP_SANDYBRIDGE_S)
+
 #define IS_965(devid)		(IS_GEN4(devid) || \
 				 IS_G4X(devid) || \
 				 IS_GEN5(devid) || \
