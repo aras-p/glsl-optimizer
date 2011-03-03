@@ -248,5 +248,13 @@ void brw_upload_urb_fence(struct brw_context *brw)
    uf.bits1.sf_fence  = brw->urb.cs_start; 
    uf.bits1.cs_fence  = brw->urb.size;
 
+   /* erratum: URB_FENCE must not cross a 64byte cacheline */
+   if ((brw->intel.batch.used & 15) > 12) {
+      int pad = 16 - (brw->intel.batch.used & 15);
+      do
+	 brw->intel.batch.map[brw->intel.batch.used++] = MI_NOOP;
+      while (--pad);
+   }
+
    BRW_BATCH_STRUCT(brw, &uf);
 }
