@@ -14,18 +14,21 @@ env.Prepend(CPPPATH = [
     '#src/glsl/glcpp',
 ])
 
+# Make glcpp/glcpp-parse.h and glsl_parser.h reacheable from the include path
+env.Append(CPPPATH = [Dir('.').abspath])
+
 env.Append(YACCFLAGS = '-d')
 
-parser_env = env.Clone();
-parser_env.Append(YACCFLAGS = ['--defines=src/glsl/glsl_parser.h', '-p', '_mesa_glsl_'])
+parser_env = env.Clone()
+parser_env.Append(YACCFLAGS = [
+    '--defines=%s' % File('glsl_parser.h').abspath,
+    '-p', '_mesa_glsl_',
+])
 
 glcpp_lexer = env.CFile('glcpp/glcpp-lex.c', 'glcpp/glcpp-lex.l')
 glcpp_parser = env.CFile('glcpp/glcpp-parse.c', 'glcpp/glcpp-parse.y')
 glsl_lexer = parser_env.CXXFile('glsl_lexer.cpp', 'glsl_lexer.ll')
 glsl_parser = parser_env.CXXFile('glsl_parser.cpp', 'glsl_parser.yy')
-
-# Make glcpp/glcpp-parse.h reacheable from the include path
-env.Append(CPPPATH = [glcpp_parser[0].dir.up()])
 
 sources = [
     glcpp_lexer,
@@ -110,6 +113,10 @@ else:
                             '#src/mesa/program/symbol_table.c'],
     )
 
+    # SCons builtin dependency scanner doesn't detect that glsl_lexer.ll
+    # depends on glsl_parser.h
+    env.Depends(builtin_compiler, glsl_parser)
+
     builtin_glsl_function = env.CodeGenerate(
         target = 'builtin_function.cpp',
         script = 'builtins/tools/generate_builtins.py',
@@ -131,6 +138,10 @@ glsl = env.ConvenienceLibrary(
     target = 'glsl',
     source = sources,
 )
+
+# SCons builtin dependency scanner doesn't detect that glsl_lexer.ll depends on
+# glsl_parser.h
+env.Depends(glsl, glsl_parser)
 
 Export('glsl')
 

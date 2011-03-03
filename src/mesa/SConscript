@@ -220,7 +220,7 @@ program_parse = env.CFile('program/program_parse.tab.c',
                           'program/program_parse.y')
 
 # Make program/program_parse.tab.h reacheable from the include path
-env.Append(CPPPATH = [program_parse[0].dir.up()])
+env.Append(CPPPATH = [Dir('.').abspath])
 
 program_sources = [
     'program/arbprogparse.c',
