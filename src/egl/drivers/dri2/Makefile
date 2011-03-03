@@ -27,7 +27,7 @@ endif
 ifneq ($(findstring wayland, $(EGL_PLATFORMS)),)
 EGL_SOURCES += platform_wayland.c
 EGL_INCLUDES += -DHAVE_WAYLAND_PLATFORM $(WAYLAND_CFLAGS) \
-		-I$(TOP)/src/egl/wayland \
+		-I$(TOP)/src/egl/wayland/wayland-egl \
 		-I$(TOP)/src/egl/wayland/wayland-drm
 EGL_LIBS += $(WAYLAND_LIBS) \
 	    $(TOP)/src/egl/wayland/wayland-drm/libwayland-drm.a

@@ -25,7 +25,7 @@ x11_OBJECTS = $(x11_SOURCES:.c=.o)
 
 wayland_INCLUDES = \
 	-I$(TOP)/src/gallium/winsys \
-	-I$(TOP)/src/egl/wayland \
+	-I$(TOP)/src/egl/wayland/wayland-egl \
 	-I$(TOP)/src/egl/wayland/wayland-drm \
 	$(shell pkg-config --cflags-only-I libdrm wayland-client)
 
