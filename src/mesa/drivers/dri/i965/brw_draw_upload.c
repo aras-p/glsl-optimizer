@@ -208,7 +208,7 @@ static GLuint get_surface_type( GLenum type, GLuint size,
       case GL_UNSIGNED_SHORT: return ushort_types_scale[size];
       case GL_UNSIGNED_BYTE: return ubyte_types_scale[size];
       default: assert(0); return 0;
-      }      
+      }
    }
 }
 
@@ -225,11 +225,11 @@ static GLuint get_size( GLenum type )
    case GL_UNSIGNED_INT: return sizeof(GLuint);
    case GL_UNSIGNED_SHORT: return sizeof(GLushort);
    case GL_UNSIGNED_BYTE: return sizeof(GLubyte);
-   default: return 0;
-   }      
+   default: assert(0); return 0;
+   }
 }
 
-static GLuint get_index_type(GLenum type) 
+static GLuint get_index_type(GLenum type)
 {
    switch (type) {
    case GL_UNSIGNED_BYTE:  return BRW_INDEX_BYTE;
@@ -295,7 +295,8 @@ static void brw_prepare_vertices(struct brw_context *brw)
       struct brw_vertex_element *input = &brw->vb.inputs[i];
 
       vs_inputs &= ~(1 << i);
-      brw->vb.enabled[brw->vb.nr_enabled++] = input;
+      if (input->glarray->Size && get_size(input->glarray->Type))
+         brw->vb.enabled[brw->vb.nr_enabled++] = input;
    }
 
    if (brw->vb.nr_enabled == 0)
