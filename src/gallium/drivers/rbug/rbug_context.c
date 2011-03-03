@@ -544,6 +544,7 @@ rbug_set_framebuffer_state(struct pipe_context *_pipe,
 
    rb_pipe->curr.nr_cbufs = 0;
    memset(rb_pipe->curr.cbufs, 0, sizeof(rb_pipe->curr.cbufs));
+   rb_pipe->curr.zsbuf = NULL;
 
    /* unwrap the input state */
    if (_state) {
@@ -556,6 +557,8 @@ rbug_set_framebuffer_state(struct pipe_context *_pipe,
             rb_pipe->curr.cbufs[i] = rbug_resource(_state->cbufs[i]->texture);
       }
       unwrapped_state.zsbuf = rbug_surface_unwrap(_state->zsbuf);
+      if (_state->zsbuf)
+         rb_pipe->curr.zsbuf = rbug_resource(_state->zsbuf->texture);
       state = &unwrapped_state;
    }
 
