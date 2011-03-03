@@ -953,10 +953,17 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5],
 		} else
 			result[i] = slots[i];
 
-		// let's check source gprs
 		alu = slots[i];
 		num_once_inst += is_alu_once_inst(bc, alu);
 
+		// let's check dst gpr
+		if (alu->dst.rel) {
+			if (have_mova)
+				return 0;
+			have_rel = 1;
+		}
+
+		// let's check source gprs
 		num_src = r600_bc_get_num_operands(bc, alu);
 		for (src = 0; src < num_src; ++src) {
 			if (alu->src[src].rel) {
