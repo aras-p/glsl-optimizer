@@ -76,7 +76,7 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         struct nouveau_bo *bo = mt->base.bo;
         uint32_t offset = sf->offset;
 
-        BEGIN_RING(chan, RING_3D(RT_ADDRESS_HIGH(i)), 8);
+        BEGIN_RING(chan, RING_3D(RT_ADDRESS_HIGH(i)), 9);
         OUT_RELOCh(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
         OUT_RELOCl(chan, bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
         OUT_RING  (chan, sf->width);
@@ -84,8 +84,9 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         OUT_RING  (chan, nvc0_format_table[sf->base.format].rt);
         OUT_RING  (chan, (mt->layout_3d << 16) |
                    mt->level[sf->base.u.tex.level].tile_mode);
-        OUT_RING  (chan, sf->depth);
+        OUT_RING  (chan, sf->base.u.tex.first_layer + sf->depth);
         OUT_RING  (chan, mt->layer_stride >> 2);
+        OUT_RING  (chan, sf->base.u.tex.first_layer);
 
         if (mt->base.status & NOUVEAU_BUFFER_STATUS_GPU_READING)
            serialize = TRUE;
@@ -115,7 +116,10 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         BEGIN_RING(chan, RING_3D(ZETA_HORIZ), 3);
         OUT_RING  (chan, sf->width);
         OUT_RING  (chan, sf->height);
-        OUT_RING  (chan, (unk << 16) | sf->depth);
+        OUT_RING  (chan, (unk << 16) |
+                   (sf->base.u.tex.first_layer + sf->depth));
+        BEGIN_RING(chan, RING_3D(ZETA_BASE_LAYER), 1);
+        OUT_RING  (chan, sf->base.u.tex.first_layer);
 
         if (mt->base.status & NOUVEAU_BUFFER_STATUS_GPU_READING)
            serialize = TRUE;

@@ -34,7 +34,7 @@ nvc0_tsc_entry(void *hwcso)
 struct nvc0_tic_entry {
    struct pipe_sampler_view pipe;
    int id;
-   uint32_t tic[8];
+   uint32_t tic[8]; /* tic[1] (low 32 bit of address) is used for offset */
 };
 
 static INLINE struct nvc0_tic_entry *

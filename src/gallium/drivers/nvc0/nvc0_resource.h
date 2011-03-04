@@ -69,4 +69,7 @@ nvc0_miptree_surface_new(struct pipe_context *,
 void
 nvc0_miptree_surface_del(struct pipe_context *, struct pipe_surface *);
 
+uint32_t
+nvc0_miptree_zslice_offset(struct nvc0_miptree *, unsigned l, unsigned z);
+
 #endif

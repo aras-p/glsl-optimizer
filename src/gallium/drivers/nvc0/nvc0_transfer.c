@@ -243,35 +243,23 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
    struct nvc0_miptree_level *lvl = &mt->level[level];
    struct nvc0_transfer *tx;
    uint32_t size;
-   uint32_t w, h, d, z, layer, box_h, box_y;
+   uint32_t w, h, d, z, layer;
    int ret;
 
    tx = CALLOC_STRUCT(nvc0_transfer);
    if (!tx)
       return NULL;
 
-   box_y = box->y;
-   box_h = box->height;
-
    if (mt->layout_3d) {
       z = box->z;
       d = u_minify(res->depth0, level);
       layer = 0;
-      tx->nlayers = box->depth;
    } else {
       z = 0;
       d = 1;
-      if (res->target == PIPE_TEXTURE_1D ||
-          res->target == PIPE_TEXTURE_1D_ARRAY) {
-         box_y = 0;
-         box_h = 1;
-         layer = box->y;
-         tx->nlayers = box->height;
-      } else {
-         layer = box->z;
-         tx->nlayers = box->depth;
-      }
+      layer = box->z;
    }
+   tx->nlayers = box->depth;
 
    pipe_resource_reference(&tx->base.resource, res);
 
@@ -280,7 +268,7 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
    tx->base.box = *box;
 
    tx->nblocksx = util_format_get_nblocksx(res->format, box->width);
-   tx->nblocksy = util_format_get_nblocksy(res->format, box_h);
+   tx->nblocksy = util_format_get_nblocksy(res->format, box->height);
 
    tx->base.stride = tx->nblocksx * util_format_get_blocksize(res->format);
    tx->base.layer_stride = tx->nblocksy * tx->base.stride;
@@ -294,7 +282,7 @@ nvc0_miptree_transfer_new(struct pipe_context *pctx,
    tx->rect[0].base = lvl->offset + layer * mt->layer_stride;
    tx->rect[0].tile_mode = lvl->tile_mode;
    tx->rect[0].x = util_format_get_nblocksx(res->format, box->x);
-   tx->rect[0].y = util_format_get_nblocksy(res->format, box_y);
+   tx->rect[0].y = util_format_get_nblocksy(res->format, box->y);
    tx->rect[0].z = z;
    tx->rect[0].width = util_format_get_nblocksx(res->format, w);
    tx->rect[0].height = util_format_get_nblocksy(res->format, h);

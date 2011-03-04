@@ -57,17 +57,25 @@ get_tile_dims(unsigned nx, unsigned ny, unsigned nz)
    return tile_mode | 0x100;
 }
 
-static INLINE unsigned
-calc_zslice_offset(uint32_t tile_mode, unsigned z, unsigned pitch, unsigned nbh)
+uint32_t
+nvc0_miptree_zslice_offset(struct nvc0_miptree *mt, unsigned l, unsigned z)
 {
-   unsigned tile_h = NVC0_TILE_HEIGHT(tile_mode);
-   unsigned tile_d_shift = NVC0_TILE_DIM_SHIFT(tile_mode, 2);
+   unsigned nblocksy; /* height of texture level aligned to tile height */
+
+   unsigned stride_2d; /* to next slice within a 3D tile */
+   unsigned stride_3d; /* to slice in the next (in z direction !) 3D tile */
+
+   unsigned tile_d_shift = NVC0_TILE_DIM_SHIFT(mt->level[l].tile_mode, 2);
    unsigned tile_d = 1 << tile_d_shift;
 
-   /* stride_2d == to next slice within this volume tile */
-   /* stride_3d == size (in bytes) of a volume tile */
-   unsigned stride_2d = tile_h * NVC0_TILE_PITCH(tile_mode);
-   unsigned stride_3d = tile_d * align(nbh, tile_h) * pitch;
+   nblocksy = util_format_get_nblocksy(mt->base.base.format,
+                                       u_minify(mt->base.base.height0, l));
+
+   nblocksy = align(nblocksy, NVC0_TILE_HEIGHT(mt->level[l].tile_mode));
+
+   stride_2d = NVC0_TILE_SIZE_2D(mt->level[l].tile_mode);
+
+   stride_3d = (nblocksy * mt->level[l].pitch) << tile_d_shift;
 
    return (z & (tile_d - 1)) * stride_2d + (z >> tile_d_shift) * stride_3d;
 }
@@ -297,21 +305,6 @@ nvc0_miptree_surface_new(struct pipe_context *pipe,
    /* comment says there are going to be removed, but they're used by the st */
    ps->width = ns->width;
    ps->height = ns->height;
-
-   if (mt->layout_3d) {
-      unsigned zslice = ps->u.tex.first_layer;
-
-      /* TODO: re-layout the texture to use only depth 1 tiles in this case: */
-      if (ns->depth > 1 && (zslice & (NVC0_TILE_DEPTH(lvl->tile_mode) - 1)))
-         NOUVEAU_ERR("Creating unsupported 3D surface of slices [%u:%u].\n",
-                     zslice, ps->u.tex.last_layer);
-
-      ns->offset += calc_zslice_offset(lvl->tile_mode, zslice, lvl->pitch,
-                                       util_format_get_nblocksy(pt->format,
-                                                                ns->height));
-   } else {
-      ns->offset += mt->layer_stride * ps->u.tex.first_layer;
-   }
 
    return ps;
 }

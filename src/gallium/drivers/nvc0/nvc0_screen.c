@@ -582,7 +582,7 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    OUT_RING  (chan, 1);
    BEGIN_RING(chan, RING_3D(GP_SELECT), 1);
    OUT_RING  (chan, 0x40);
-   BEGIN_RING(chan, RING_3D(GP_BUILTIN_RESULT_EN), 1);
+   BEGIN_RING(chan, RING_3D(LAYER), 1);
    OUT_RING  (chan, 0);
    BEGIN_RING(chan, RING_3D(TEP_SELECT), 1);
    OUT_RING  (chan, 0x30);

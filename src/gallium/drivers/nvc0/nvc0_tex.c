@@ -89,7 +89,7 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
       (swz[2] << NV50_TIC_0_MAPB__SHIFT) |
       (swz[3] << NV50_TIC_0_MAPA__SHIFT);
 
-   /* tic[1] = mt->base.bo->offset; */
+   tic[1] = /* mt->base.bo->offset; */ 0;
    tic[2] = /* mt->base.bo->offset >> 32 */ 0;
 
    tic[2] |= 0x10001000 | /* NV50_TIC_2_NO_BORDER */ 0x40000000;
@@ -105,6 +105,13 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
       ((mt->base.bo->tile_mode & 0xf00) << (25 - 8));
 
    depth = MAX2(mt->base.base.array_size, mt->base.base.depth0);
+
+   if (mt->base.base.target == PIPE_TEXTURE_1D_ARRAY ||
+       mt->base.base.target == PIPE_TEXTURE_2D_ARRAY) {
+      /* there doesn't seem to be a base layer field in TIC */
+      tic[1] = view->pipe.u.tex.first_layer * mt->layer_stride;
+      depth = view->pipe.u.tex.last_layer - view->pipe.u.tex.first_layer + 1;
+   }
 
    switch (mt->base.base.target) {
    case PIPE_TEXTURE_1D:
@@ -177,6 +184,8 @@ nvc0_validate_tic(struct nvc0_context *nvc0, int s)
       res = &nvc0_miptree(tic->pipe.texture)->base;
 
       if (tic->id < 0) {
+         uint32_t offset = tic->tic[1];
+
          tic->id = nvc0_screen_tic_alloc(nvc0->screen, tic);
 
          MARK_RING (chan, 9 + 8, 4);
@@ -190,8 +199,8 @@ nvc0_validate_tic(struct nvc0_context *nvc0, int s)
          OUT_RING  (chan, 0x100111);
          BEGIN_RING_NI(chan, RING_MF(DATA), 8);
          OUT_RING  (chan, tic->tic[0]);
-         OUT_RELOCl(chan, res->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-         OUT_RELOC (chan, res->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
+         OUT_RELOCl(chan, res->bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+         OUT_RELOC (chan, res->bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
                     NOUVEAU_BO_HIGH | NOUVEAU_BO_OR, tic->tic[2], tic->tic[2]);
          OUT_RINGp (chan, &tic->tic[3], 5);
 

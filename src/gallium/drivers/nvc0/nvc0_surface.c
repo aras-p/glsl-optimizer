@@ -91,14 +91,18 @@ nvc0_2d_texture_set(struct nouveau_channel *chan, int dst,
 
    width = u_minify(mt->base.base.width0, level);
    height = u_minify(mt->base.base.height0, level);
+   depth = u_minify(mt->base.base.depth0, level);
 
-   offset = mt->level[level].offset;
+   /* layer has to be < depth, and depth > tile depth / 2 */
+
    if (!mt->layout_3d) {
       offset += mt->layer_stride * layer;
-      depth = 1;
       layer = 0;
-   } else {
-      depth = u_minify(mt->base.base.depth0, level);
+      depth = 1;
+   } else
+   if (!dst) {
+      offset += nvc0_miptree_zslice_offset(mt, level, layer);
+      layer = 0;
    }
 
    if (!(bo->tile_flags & NOUVEAU_BO_TILE_LAYOUT_MASK)) {
@@ -233,15 +237,17 @@ nvc0_clear_render_target(struct pipe_context *pipe,
 
 	BEGIN_RING(chan, RING_3D(RT_CONTROL), 1);
 	OUT_RING  (chan, 1);
-	BEGIN_RING(chan, RING_3D(RT_ADDRESS_HIGH(0)), 8);
+	BEGIN_RING(chan, RING_3D(RT_ADDRESS_HIGH(0)), 9);
 	OUT_RELOCh(chan, bo, sf->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	OUT_RELOCl(chan, bo, sf->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	OUT_RING  (chan, sf->width);
 	OUT_RING  (chan, sf->height);
 	OUT_RING  (chan, nvc0_format_table[dst->format].rt);
-	OUT_RING  (chan, mt->level[sf->base.u.tex.level].tile_mode);
-	OUT_RING  (chan, 1);
-	OUT_RING  (chan, 0);
+	OUT_RING  (chan, (mt->layout_3d << 16) |
+              mt->level[sf->base.u.tex.level].tile_mode);
+	OUT_RING  (chan, dst->u.tex.first_layer + sf->depth);
+	OUT_RING  (chan, mt->layer_stride >> 2);
+	OUT_RING  (chan, dst->u.tex.first_layer);
 
 	BEGIN_RING(chan, RING_3D(CLIP_RECT_HORIZ(0)), 2);
 	OUT_RING  (chan, ((dstx + width) << 16) | dstx);
@@ -272,6 +278,7 @@ nvc0_clear_depth_stencil(struct pipe_context *pipe,
 	struct nvc0_surface *sf = nvc0_surface(dst);
 	struct nouveau_bo *bo = mt->base.bo;
 	uint32_t mode = 0;
+	int unk = mt->base.base.target == PIPE_TEXTURE_2D;
 
 	if (clear_flags & PIPE_CLEAR_DEPTH) {
 		BEGIN_RING(chan, RING_3D(CLEAR_DEPTH), 1);
@@ -293,13 +300,15 @@ nvc0_clear_depth_stencil(struct pipe_context *pipe,
 	OUT_RELOCl(chan, bo, sf->offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
 	OUT_RING  (chan, nvc0_format_table[dst->format].rt);
 	OUT_RING  (chan, mt->level[sf->base.u.tex.level].tile_mode);
-	OUT_RING  (chan, 0);
+	OUT_RING  (chan, mt->layer_stride >> 2);
 	BEGIN_RING(chan, RING_3D(ZETA_ENABLE), 1);
 	OUT_RING  (chan, 1);
 	BEGIN_RING(chan, RING_3D(ZETA_HORIZ), 3);
 	OUT_RING  (chan, sf->width);
 	OUT_RING  (chan, sf->height);
-	OUT_RING  (chan, (1 << 16) | 1);
+	OUT_RING  (chan, (unk << 16) | (dst->u.tex.first_layer + sf->depth));
+	BEGIN_RING(chan, RING_3D(ZETA_BASE_LAYER), 1);
+	OUT_RING  (chan, dst->u.tex.first_layer);
 
 	BEGIN_RING(chan, RING_3D(CLIP_RECT_HORIZ(0)), 2);
 	OUT_RING  (chan, ((dstx + width) << 16) | dstx);
