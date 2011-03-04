@@ -79,7 +79,7 @@ nv50_create_sampler_view(struct pipe_context *pipe,
 
    tic = &view->tic[0];
 
-   desc = util_format_description(mt->base.base.format);
+   desc = util_format_description(view->pipe.format);
 
    /* TIC[0] */
 
