@@ -1174,14 +1174,26 @@ void
 i915_translate_fragment_program( struct i915_context *i915,
                                  struct i915_fragment_shader *fs)
 {
-   struct i915_fp_compile *p = i915_init_compile(i915, fs);
+   struct i915_fp_compile *p;
    const struct tgsi_token *tokens = fs->state.tokens;
-
-   i915_find_wpos_space(p);
+   struct tgsi_shader_info info;
 
 #if 0
    tgsi_dump(tokens, 0);
 #endif
+
+   tgsi_scan_shader(tokens, &info);
+
+   /* hw doesn't seem to like empty frag programs, even when the depth write
+    * fixup gets emitted below - may that one is fishy, too? */
+   if (info.num_instructions == 1) {
+      i915_use_passthrough_shader(fs);
+
+      return;
+   }
+
+   p = i915_init_compile(i915, fs);
+   i915_find_wpos_space(p);
 
    i915_translate_instructions(p, tokens);
    i915_fixup_depth_write(p);
