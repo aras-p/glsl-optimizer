@@ -77,9 +77,15 @@ void r300_emit_dsa_state(struct r300_context* r300, unsigned size, void* state)
     CS_LOCALS(r300);
 
     if (fb->zsbuf) {
-        WRITE_CS_TABLE(&dsa->cb_begin, size);
+        if (fb->nr_cbufs && fb->cbufs[0]->format == PIPE_FORMAT_R16G16B16A16_FLOAT)
+            WRITE_CS_TABLE(&dsa->cb_begin_fp16, size);
+        else
+            WRITE_CS_TABLE(&dsa->cb_begin, size);
     } else {
-        WRITE_CS_TABLE(dsa->cb_no_readwrite, size);
+        if (fb->nr_cbufs && fb->cbufs[0]->format == PIPE_FORMAT_R16G16B16A16_FLOAT)
+            WRITE_CS_TABLE(dsa->cb_fp16_zb_no_readwrite, size);
+        else
+            WRITE_CS_TABLE(dsa->cb_zb_no_readwrite, size);
     }
 }
 

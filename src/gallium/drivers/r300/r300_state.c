@@ -580,29 +580,54 @@ static void*
             r300_translate_alpha_function(state->alpha.func) |
             R300_FG_ALPHA_FUNC_ENABLE;
 
-        /* We could use 10bit alpha ref but who needs that? */
         dsa->alpha_function |= float_to_ubyte(state->alpha.ref_value);
+        dsa->alpha_value = util_float_to_half(state->alpha.ref_value);
 
-        if (caps->is_r500)
+        if (caps->is_r500) {
+            dsa->alpha_function_fp16 = dsa->alpha_function |
+                                       R500_FG_ALPHA_FUNC_FP16_ENABLE;
             dsa->alpha_function |= R500_FG_ALPHA_FUNC_8BIT;
+        }
     }
 
-    BEGIN_CB(&dsa->cb_begin, 8);
+    BEGIN_CB(&dsa->cb_begin, 10);
     OUT_CB_REG(R300_FG_ALPHA_FUNC, dsa->alpha_function);
     OUT_CB_REG_SEQ(R300_ZB_CNTL, 3);
     OUT_CB(dsa->z_buffer_control);
     OUT_CB(dsa->z_stencil_control);
     OUT_CB(dsa->stencil_ref_mask);
     OUT_CB_REG(R500_ZB_STENCILREFMASK_BF, dsa->stencil_ref_bf);
+    OUT_CB_REG(R500_FG_ALPHA_VALUE, dsa->alpha_value);
     END_CB;
 
-    BEGIN_CB(dsa->cb_no_readwrite, 8);
+    BEGIN_CB(&dsa->cb_begin_fp16, 10);
+    OUT_CB_REG(R300_FG_ALPHA_FUNC, dsa->alpha_function_fp16);
+    OUT_CB_REG_SEQ(R300_ZB_CNTL, 3);
+    OUT_CB(dsa->z_buffer_control);
+    OUT_CB(dsa->z_stencil_control);
+    OUT_CB(dsa->stencil_ref_mask);
+    OUT_CB_REG(R500_ZB_STENCILREFMASK_BF, dsa->stencil_ref_bf);
+    OUT_CB_REG(R500_FG_ALPHA_VALUE, dsa->alpha_value);
+    END_CB;
+
+    BEGIN_CB(dsa->cb_zb_no_readwrite, 10);
     OUT_CB_REG(R300_FG_ALPHA_FUNC, dsa->alpha_function);
     OUT_CB_REG_SEQ(R300_ZB_CNTL, 3);
     OUT_CB(0);
     OUT_CB(0);
     OUT_CB(0);
     OUT_CB_REG(R500_ZB_STENCILREFMASK_BF, 0);
+    OUT_CB_REG(R500_FG_ALPHA_VALUE, dsa->alpha_value);
+    END_CB;
+
+    BEGIN_CB(dsa->cb_fp16_zb_no_readwrite, 10);
+    OUT_CB_REG(R300_FG_ALPHA_FUNC, dsa->alpha_function_fp16);
+    OUT_CB_REG_SEQ(R300_ZB_CNTL, 3);
+    OUT_CB(0);
+    OUT_CB(0);
+    OUT_CB(0);
+    OUT_CB_REG(R500_ZB_STENCILREFMASK_BF, 0);
+    OUT_CB_REG(R500_FG_ALPHA_VALUE, dsa->alpha_value);
     END_CB;
 
     return (void*)dsa;
@@ -729,6 +754,7 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
     /* What is marked as dirty depends on the enum r300_fb_state_change. */
     if (change == R300_CHANGED_FB_STATE) {
         r300_mark_atom_dirty(r300, &r300->aa_state);
+        r300_mark_atom_dirty(r300, &r300->dsa_state); /* for AlphaRef */
         r300_set_blend_color(&r300->context, r300->blend_color_state.state);
     }
 

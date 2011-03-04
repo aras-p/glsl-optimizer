@@ -194,7 +194,7 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     /* ZB (unpipelined), SC. */
     R300_INIT_ATOM(ztop_state, 2);
     /* ZB, FG. */
-    R300_INIT_ATOM(dsa_state, is_r500 ? 8 : 6);
+    R300_INIT_ATOM(dsa_state, is_r500 ? (drm_2_6_0 ? 10 : 8) : 6);
     /* RB3D. */
     R300_INIT_ATOM(blend_state, 8);
     R300_INIT_ATOM(blend_color_state, is_r500 ? 3 : 2);
