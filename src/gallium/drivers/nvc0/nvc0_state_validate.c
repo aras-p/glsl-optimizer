@@ -87,10 +87,10 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         OUT_RING  (chan, sf->depth);
         OUT_RING  (chan, mt->layer_stride >> 2);
 
-        if (mt->base.status & NVC0_BUFFER_STATUS_GPU_READING)
+        if (mt->base.status & NOUVEAU_BUFFER_STATUS_GPU_READING)
            serialize = TRUE;
-        mt->base.status |=  NVC0_BUFFER_STATUS_GPU_WRITING;
-        mt->base.status &= ~NVC0_BUFFER_STATUS_GPU_READING;
+        mt->base.status |=  NOUVEAU_BUFFER_STATUS_GPU_WRITING;
+        mt->base.status &= ~NOUVEAU_BUFFER_STATUS_GPU_READING;
 
         nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_FRAME, &mt->base,
                                  NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
@@ -117,10 +117,10 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         OUT_RING  (chan, sf->height);
         OUT_RING  (chan, (unk << 16) | sf->depth);
 
-        if (mt->base.status & NVC0_BUFFER_STATUS_GPU_READING)
+        if (mt->base.status & NOUVEAU_BUFFER_STATUS_GPU_READING)
            serialize = TRUE;
-        mt->base.status |=  NVC0_BUFFER_STATUS_GPU_WRITING;
-        mt->base.status &= ~NVC0_BUFFER_STATUS_GPU_READING;
+        mt->base.status |=  NOUVEAU_BUFFER_STATUS_GPU_WRITING;
+        mt->base.status &= ~NOUVEAU_BUFFER_STATUS_GPU_READING;
 
         nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_FRAME, &mt->base,
                                  NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
@@ -323,7 +323,7 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
    unsigned s;
 
    for (s = 0; s < 5; ++s) {
-      struct nvc0_resource *res;
+      struct nv04_resource *res;
       int i;
 
       while (nvc0->constbuf_dirty[s]) {
@@ -334,7 +334,7 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
          i = ffs(nvc0->constbuf_dirty[s]) - 1;
          nvc0->constbuf_dirty[s] &= ~(1 << i);
 
-         res = nvc0_resource(nvc0->constbuf[s][i]);
+         res = nv04_resource(nvc0->constbuf[s][i]);
          if (!res) {
             BEGIN_RING(chan, RING_3D(CB_BIND(s)), 1);
             OUT_RING  (chan, (i << 4) | 0);
@@ -343,7 +343,7 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
             continue;
          }
 
-         if (!nvc0_resource_mapped_by_gpu(&res->base)) {
+         if (!nouveau_resource_mapped_by_gpu(&res->base)) {
             if (i == 0) {
                base = s << 16;
                bo = nvc0->screen->uniforms;

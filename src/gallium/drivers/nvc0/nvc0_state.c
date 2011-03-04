@@ -666,8 +666,7 @@ nvc0_set_constant_buffer(struct pipe_context *pipe, uint shader, uint index,
 
    if (nvc0->constbuf[shader][index])
       nvc0_bufctx_del_resident(nvc0, NVC0_BUFCTX_CONSTANT,
-			       nvc0_resource(
-				       nvc0->constbuf[shader][index]));
+			       nv04_resource(nvc0->constbuf[shader][index]));
 
    pipe_resource_reference(&nvc0->constbuf[shader][index], res);
 
@@ -877,62 +876,64 @@ nvc0_set_transform_feedback_buffers(struct pipe_context *pipe,
 void
 nvc0_init_state_functions(struct nvc0_context *nvc0)
 {
-    nvc0->pipe.create_blend_state = nvc0_blend_state_create;
-    nvc0->pipe.bind_blend_state = nvc0_blend_state_bind;
-    nvc0->pipe.delete_blend_state = nvc0_blend_state_delete;
+   struct pipe_context *pipe = &nvc0->base.pipe;
 
-    nvc0->pipe.create_rasterizer_state = nvc0_rasterizer_state_create;
-    nvc0->pipe.bind_rasterizer_state = nvc0_rasterizer_state_bind;
-    nvc0->pipe.delete_rasterizer_state = nvc0_rasterizer_state_delete;
+   pipe->create_blend_state = nvc0_blend_state_create;
+   pipe->bind_blend_state = nvc0_blend_state_bind;
+   pipe->delete_blend_state = nvc0_blend_state_delete;
 
-    nvc0->pipe.create_depth_stencil_alpha_state = nvc0_zsa_state_create;
-    nvc0->pipe.bind_depth_stencil_alpha_state = nvc0_zsa_state_bind;
-    nvc0->pipe.delete_depth_stencil_alpha_state = nvc0_zsa_state_delete;
+   pipe->create_rasterizer_state = nvc0_rasterizer_state_create;
+   pipe->bind_rasterizer_state = nvc0_rasterizer_state_bind;
+   pipe->delete_rasterizer_state = nvc0_rasterizer_state_delete;
 
-    nvc0->pipe.create_sampler_state = nvc0_sampler_state_create;
-    nvc0->pipe.delete_sampler_state = nvc0_sampler_state_delete;
-    nvc0->pipe.bind_vertex_sampler_states   = nvc0_vp_sampler_states_bind;
-    nvc0->pipe.bind_fragment_sampler_states = nvc0_fp_sampler_states_bind;
-    nvc0->pipe.bind_geometry_sampler_states = nvc0_gp_sampler_states_bind;
+   pipe->create_depth_stencil_alpha_state = nvc0_zsa_state_create;
+   pipe->bind_depth_stencil_alpha_state = nvc0_zsa_state_bind;
+   pipe->delete_depth_stencil_alpha_state = nvc0_zsa_state_delete;
 
-    nvc0->pipe.create_sampler_view = nvc0_create_sampler_view;
-    nvc0->pipe.sampler_view_destroy = nvc0_sampler_view_destroy;
-    nvc0->pipe.set_vertex_sampler_views   = nvc0_vp_set_sampler_views;
-    nvc0->pipe.set_fragment_sampler_views = nvc0_fp_set_sampler_views;
-    nvc0->pipe.set_geometry_sampler_views = nvc0_gp_set_sampler_views;
+   pipe->create_sampler_state = nvc0_sampler_state_create;
+   pipe->delete_sampler_state = nvc0_sampler_state_delete;
+   pipe->bind_vertex_sampler_states   = nvc0_vp_sampler_states_bind;
+   pipe->bind_fragment_sampler_states = nvc0_fp_sampler_states_bind;
+   pipe->bind_geometry_sampler_states = nvc0_gp_sampler_states_bind;
 
-    nvc0->pipe.create_vs_state = nvc0_vp_state_create;
-    nvc0->pipe.create_fs_state = nvc0_fp_state_create;
-    nvc0->pipe.create_gs_state = nvc0_gp_state_create;
-    nvc0->pipe.bind_vs_state = nvc0_vp_state_bind;
-    nvc0->pipe.bind_fs_state = nvc0_fp_state_bind;
-    nvc0->pipe.bind_gs_state = nvc0_gp_state_bind;
-    nvc0->pipe.delete_vs_state = nvc0_sp_state_delete;
-    nvc0->pipe.delete_fs_state = nvc0_sp_state_delete;
-    nvc0->pipe.delete_gs_state = nvc0_sp_state_delete;
+   pipe->create_sampler_view = nvc0_create_sampler_view;
+   pipe->sampler_view_destroy = nvc0_sampler_view_destroy;
+   pipe->set_vertex_sampler_views   = nvc0_vp_set_sampler_views;
+   pipe->set_fragment_sampler_views = nvc0_fp_set_sampler_views;
+   pipe->set_geometry_sampler_views = nvc0_gp_set_sampler_views;
 
-    nvc0->pipe.set_blend_color = nvc0_set_blend_color;
-    nvc0->pipe.set_stencil_ref = nvc0_set_stencil_ref;
-    nvc0->pipe.set_clip_state = nvc0_set_clip_state;
-    nvc0->pipe.set_sample_mask = nvc0_set_sample_mask;
-    nvc0->pipe.set_constant_buffer = nvc0_set_constant_buffer;
-    nvc0->pipe.set_framebuffer_state = nvc0_set_framebuffer_state;
-    nvc0->pipe.set_polygon_stipple = nvc0_set_polygon_stipple;
-    nvc0->pipe.set_scissor_state = nvc0_set_scissor_state;
-    nvc0->pipe.set_viewport_state = nvc0_set_viewport_state;
+   pipe->create_vs_state = nvc0_vp_state_create;
+   pipe->create_fs_state = nvc0_fp_state_create;
+   pipe->create_gs_state = nvc0_gp_state_create;
+   pipe->bind_vs_state = nvc0_vp_state_bind;
+   pipe->bind_fs_state = nvc0_fp_state_bind;
+   pipe->bind_gs_state = nvc0_gp_state_bind;
+   pipe->delete_vs_state = nvc0_sp_state_delete;
+   pipe->delete_fs_state = nvc0_sp_state_delete;
+   pipe->delete_gs_state = nvc0_sp_state_delete;
 
-    nvc0->pipe.create_vertex_elements_state = nvc0_vertex_state_create;
-    nvc0->pipe.delete_vertex_elements_state = nvc0_vertex_state_delete;
-    nvc0->pipe.bind_vertex_elements_state = nvc0_vertex_state_bind;
+   pipe->set_blend_color = nvc0_set_blend_color;
+   pipe->set_stencil_ref = nvc0_set_stencil_ref;
+   pipe->set_clip_state = nvc0_set_clip_state;
+   pipe->set_sample_mask = nvc0_set_sample_mask;
+   pipe->set_constant_buffer = nvc0_set_constant_buffer;
+   pipe->set_framebuffer_state = nvc0_set_framebuffer_state;
+   pipe->set_polygon_stipple = nvc0_set_polygon_stipple;
+   pipe->set_scissor_state = nvc0_set_scissor_state;
+   pipe->set_viewport_state = nvc0_set_viewport_state;
 
-    nvc0->pipe.set_vertex_buffers = nvc0_set_vertex_buffers;
-    nvc0->pipe.set_index_buffer = nvc0_set_index_buffer;
+   pipe->create_vertex_elements_state = nvc0_vertex_state_create;
+   pipe->delete_vertex_elements_state = nvc0_vertex_state_delete;
+   pipe->bind_vertex_elements_state = nvc0_vertex_state_bind;
 
-    nvc0->pipe.create_stream_output_state = nvc0_tfb_state_create;
-    nvc0->pipe.delete_stream_output_state = nvc0_tfb_state_delete;
-    nvc0->pipe.bind_stream_output_state = nvc0_tfb_state_bind;
-    nvc0->pipe.set_stream_output_buffers = nvc0_set_transform_feedback_buffers;
+   pipe->set_vertex_buffers = nvc0_set_vertex_buffers;
+   pipe->set_index_buffer = nvc0_set_index_buffer;
 
-    nvc0->pipe.redefine_user_buffer = u_default_redefine_user_buffer;
+   pipe->create_stream_output_state = nvc0_tfb_state_create;
+   pipe->delete_stream_output_state = nvc0_tfb_state_delete;
+   pipe->bind_stream_output_state = nvc0_tfb_state_bind;
+   pipe->set_stream_output_buffers = nvc0_set_transform_feedback_buffers;
+
+   pipe->redefine_user_buffer = u_default_redefine_user_buffer;
 }
 

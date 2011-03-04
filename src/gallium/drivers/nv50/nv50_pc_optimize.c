@@ -145,8 +145,9 @@ nv_pc_pass_pre_emission(void *priv, struct nv_basic_block *b)
    int j;
    uint size, n32 = 0;
 
+   /* find first non-empty block emitted before b */
    for (j = pc->num_blocks - 1; j >= 0 && !pc->bb_list[j]->bin_size; --j);
-   if (j >= 0) {
+   for (; j >= 0; --j) {
       in = pc->bb_list[j];
 
       /* check for no-op branches (BRA $PC+8) */
@@ -160,6 +161,9 @@ nv_pc_pass_pre_emission(void *priv, struct nv_basic_block *b)
          nv_nvi_delete(in->exit);
       }
       b->bin_pos = in->bin_pos + in->bin_size;
+
+      if (in->bin_size) /* no more no-op branches to b */
+         break;
    }
 
    pc->bb_list[pc->num_blocks++] = b;

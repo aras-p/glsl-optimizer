@@ -367,9 +367,11 @@ nvc0_clear(struct pipe_context *pipe, unsigned buffers,
 void
 nvc0_init_surface_functions(struct nvc0_context *nvc0)
 {
-	nvc0->pipe.resource_copy_region = nvc0_resource_copy_region;
-	nvc0->pipe.clear_render_target = nvc0_clear_render_target;
-	nvc0->pipe.clear_depth_stencil = nvc0_clear_depth_stencil;
+   struct pipe_context *pipe = &nvc0->base.pipe;
+
+   pipe->resource_copy_region = nvc0_resource_copy_region;
+   pipe->clear_render_target = nvc0_clear_render_target;
+   pipe->clear_depth_stencil = nvc0_clear_depth_stencil;
 }
 
 

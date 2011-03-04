@@ -19,6 +19,8 @@
 #include "nvc0_program.h"
 #include "nvc0_resource.h"
 
+#include "nouveau/nouveau_context.h"
+
 #include "nvc0_3ddefs.xml.h"
 #include "nvc0_3d.xml.h"
 #include "nvc0_2d.xml.h"
@@ -64,7 +66,7 @@
 #define NVC0_BUFCTX_COUNT    4
 
 struct nvc0_context {
-   struct pipe_context pipe;
+   struct nouveau_context base;
 
    struct nvc0_screen *screen;
 
@@ -123,7 +125,6 @@ struct nvc0_context {
 
    unsigned sample_mask;
 
-   boolean vbo_dirty;
    boolean vbo_push_hint;
 
    struct nvc0_transform_feedback_state *tfb;
@@ -161,9 +162,9 @@ void nvc0_default_flush_notify(struct nouveau_channel *);
 
 void nvc0_bufctx_emit_relocs(struct nvc0_context *);
 void nvc0_bufctx_add_resident(struct nvc0_context *, int ctx,
-                              struct nvc0_resource *, uint32_t flags);
+                              struct nv04_resource *, uint32_t flags);
 void nvc0_bufctx_del_resident(struct nvc0_context *, int ctx,
-                              struct nvc0_resource *);
+                              struct nv04_resource *);
 static INLINE void
 nvc0_bufctx_reset(struct nvc0_context *nvc0, int ctx)
 {
@@ -211,11 +212,11 @@ nvc0_create_sampler_view(struct pipe_context *,
 
 /* nvc0_transfer.c */
 void
-nvc0_m2mf_push_linear(struct nvc0_context *nvc0,
-		      struct nouveau_bo *dst, unsigned domain, int offset,
+nvc0_m2mf_push_linear(struct nouveau_context *nv,
+		      struct nouveau_bo *dst, unsigned offset, unsigned domain,
 		      unsigned size, void *data);
 void
-nvc0_m2mf_copy_linear(struct nvc0_context *nvc0,
+nvc0_m2mf_copy_linear(struct nouveau_context *nv,
 		      struct nouveau_bo *dst, unsigned dstoff, unsigned dstdom,
 		      struct nouveau_bo *src, unsigned srcoff, unsigned srcdom,
 		      unsigned size);

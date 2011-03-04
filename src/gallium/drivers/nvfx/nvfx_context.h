@@ -18,6 +18,7 @@
 
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_gldefs.h"
+#include "nouveau/nouveau_resource.h"
 #include "nv30-40_3d.xml.h"
 #include "nvfx_state.h"
 
