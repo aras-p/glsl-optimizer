@@ -29,6 +29,10 @@
 
 static int classify_identifier(struct _mesa_glsl_parse_state *, const char *);
 
+#ifdef _MSC_VER
+#define YY_NO_UNISTD_H
+#endif
+
 #define YY_USER_ACTION						\
    do {								\
       yylloc->source = 0;					\

@@ -34,6 +34,10 @@
 int glcpp_get_column  (yyscan_t yyscanner);
 void glcpp_set_column (int  column_no , yyscan_t yyscanner);
 
+#ifdef _MSC_VER
+#define YY_NO_UNISTD_H
+#endif
+
 #define YY_NO_INPUT
 
 #define YY_USER_ACTION                                          \
