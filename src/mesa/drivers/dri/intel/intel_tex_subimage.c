@@ -92,6 +92,7 @@ intelTexSubimage(struct gl_context * ctx,
       {
 	 unsigned long pitch;
 	 uint32_t tiling_mode = I915_TILING_NONE;
+
 	 temp_bo = drm_intel_bo_alloc_tiled(intel->bufmgr,
 					    "subimage blit bo",
 					    width, height,
@@ -99,7 +100,14 @@ intelTexSubimage(struct gl_context * ctx,
 					    &tiling_mode,
 					    &pitch,
 					    0);
-	 drm_intel_gem_bo_map_gtt(temp_bo);
+         if (temp_bo == NULL)
+            return;
+
+	 if (drm_intel_gem_bo_map_gtt(temp_bo)) {
+            drm_intel_bo_unreference(temp_bo);
+            return;
+         }
+
 	 texImage->Data = temp_bo->virtual;
 	 texImage->ImageOffsets[0] = 0;
 	 dstRowStride = pitch;
