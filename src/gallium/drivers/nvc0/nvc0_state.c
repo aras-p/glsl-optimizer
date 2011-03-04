@@ -30,7 +30,7 @@
 #include "nvc0_context.h"
 
 #include "nvc0_3d.xml.h"
-#include "nv50_texture.xml.h"
+#include "nv50/nv50_texture.xml.h"
 
 #include "nouveau/nouveau_gldefs.h"
 

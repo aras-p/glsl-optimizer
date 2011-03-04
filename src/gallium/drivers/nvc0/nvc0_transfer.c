@@ -4,7 +4,7 @@
 #include "nvc0_context.h"
 #include "nvc0_transfer.h"
 
-#include "nv50_defs.xml.h"
+#include "nv50/nv50_defs.xml.h"
 
 struct nvc0_transfer {
    struct pipe_transfer base;

@@ -32,7 +32,7 @@
 #include "nvc0_resource.h"
 #include "nvc0_transfer.h"
 
-#include "nv50_defs.xml.h"
+#include "nv50/nv50_defs.xml.h"
 
 #define NVC0_ENG2D_SUPPORTED_FORMATS 0xff9ccfe1cce3ccc9ULL
 
