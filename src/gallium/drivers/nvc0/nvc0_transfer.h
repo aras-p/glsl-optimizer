@@ -35,4 +35,10 @@ struct nvc0_m2mf_rect {
    uint16_t cpp;
 };
 
+void
+nvc0_m2mf_transfer_rect(struct pipe_screen *pscreen,
+                        const struct nvc0_m2mf_rect *dst,
+                        const struct nvc0_m2mf_rect *src,
+                        uint32_t nblocksx, uint32_t nblocksy);
+
 #endif

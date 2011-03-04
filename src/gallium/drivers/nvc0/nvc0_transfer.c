@@ -14,7 +14,7 @@ struct nvc0_transfer {
    uint16_t nlayers;
 };
 
-static void
+void
 nvc0_m2mf_transfer_rect(struct pipe_screen *pscreen,
                         const struct nvc0_m2mf_rect *dst,
                         const struct nvc0_m2mf_rect *src,

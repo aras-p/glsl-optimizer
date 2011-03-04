@@ -30,6 +30,7 @@
 
 #include "nvc0_context.h"
 #include "nvc0_resource.h"
+#include "nvc0_transfer.h"
 
 #include "nv50_defs.xml.h"
 
@@ -186,6 +187,43 @@ nvc0_2d_texture_do_copy(struct nouveau_channel *chan,
 }
 
 static void
+nvc0_setup_m2mf_rect(struct nvc0_m2mf_rect *rect,
+                     struct pipe_resource *restrict res, unsigned l,
+                     unsigned x, unsigned y, unsigned z)
+{
+   struct nvc0_miptree *mt = nvc0_miptree(res);
+   const unsigned w = u_minify(res->width0, l);
+   const unsigned h = u_minify(res->height0, l);
+
+   rect->bo = mt->base.bo;
+   rect->domain = mt->base.domain;
+   rect->base = mt->level[l].offset;
+   rect->pitch = mt->level[l].pitch;
+   if (util_format_is_plain(res->format)) {
+      rect->width = w;
+      rect->height = h;
+      rect->x = x;
+      rect->y = y;
+   } else {
+      rect->width = util_format_get_nblocksx(res->format, w);
+      rect->height = util_format_get_nblocksy(res->format, h);
+      rect->x = util_format_get_nblocksx(res->format, x);
+      rect->y = util_format_get_nblocksy(res->format, y);
+   }
+   rect->tile_mode = mt->level[l].tile_mode;
+   rect->cpp = util_format_get_blocksize(res->format);
+
+   if (mt->layout_3d) {
+      rect->z = z;
+      rect->depth = u_minify(res->depth0, l);
+   } else {
+      rect->base += z * mt->layer_stride;
+      rect->z = 0;
+      rect->depth = 1;
+   }
+}
+
+static void
 nvc0_resource_copy_region(struct pipe_context *pipe,
                           struct pipe_resource *dst, unsigned dst_level,
                           unsigned dstx, unsigned dsty, unsigned dstz,
@@ -196,9 +234,36 @@ nvc0_resource_copy_region(struct pipe_context *pipe,
    int ret;
    unsigned dst_layer = dstz, src_layer = src_box->z;
 
-   assert((src->format == dst->format) ||
-          (nvc0_2d_format_faithful(src->format) &&
-           nvc0_2d_format_faithful(dst->format)));
+   nv04_resource(dst)->status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
+
+   if (src->format == dst->format) {
+      struct nvc0_m2mf_rect drect, srect;
+      unsigned i;
+      unsigned nx = util_format_get_nblocksx(src->format, src_box->width);
+      unsigned ny = util_format_get_nblocksx(src->format, src_box->height);
+
+      nvc0_setup_m2mf_rect(&drect, dst, dst_level, dstx, dsty, dstz);
+      nvc0_setup_m2mf_rect(&srect, src, src_level,
+                           src_box->x, src_box->y, src_box->z);
+
+      for (i = 0; i < src_box->depth; ++i) {
+         nvc0_m2mf_transfer_rect(&screen->base.base, &drect, &srect, nx, ny);
+
+         if (nvc0_miptree(dst)->layout_3d)
+            drect.z++;
+         else
+            drect.base += nvc0_miptree(dst)->layer_stride;
+
+         if (nvc0_miptree(src)->layout_3d)
+            srect.z++;
+         else
+            srect.base += nvc0_miptree(src)->layer_stride;
+      }
+      return;
+   }
+
+   assert(nvc0_2d_format_faithful(src->format));
+   assert(nvc0_2d_format_faithful(dst->format));
 
    for (; dst_layer < dstz + src_box->depth; ++dst_layer, ++src_layer) {
       ret = nvc0_2d_texture_do_copy(screen->base.channel,
