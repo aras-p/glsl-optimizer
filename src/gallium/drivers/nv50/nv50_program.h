@@ -47,12 +47,9 @@ struct nv50_program {
    boolean translated;
    boolean uses_lmem;
 
-   struct nouveau_bo *bo;
-   struct nouveau_stateobj *so;
-
    uint32_t *code;
    unsigned code_size;
-   unsigned code_start; /* offset inside bo */
+   unsigned code_base;
    uint32_t *immd;
    unsigned immd_size;
    unsigned parm_size; /* size limit of uniform buffer */
@@ -89,6 +86,8 @@ struct nv50_program {
    /* relocation records */
    void *fixups;
    unsigned num_fixups;
+
+   struct nouveau_resource *res;
 };
 
 #define NV50_INTERP_LINEAR   (1 << 0)

@@ -424,10 +424,10 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 	 */
 	if (force_tiling == -1) {
 		struct r600_screen *rscreen = (struct r600_screen *)screen;
-		if (r600_get_minor_version(rscreen->radeon) >= 9)
-			force_tiling = debug_get_bool_option("R600_TILING", TRUE);
-		else
-			force_tiling = debug_get_bool_option("R600_TILING", FALSE);
+		/* reenable when 2D tiling is fixed better */
+		/*if (r600_get_minor_version(rscreen->radeon) >= 9)
+			force_tiling = debug_get_bool_option("R600_TILING", TRUE);*/
+		force_tiling = debug_get_bool_option("R600_TILING", FALSE);
 	}
 
 	if (force_tiling && permit_hardware_blit(screen, templ)) {

@@ -104,11 +104,11 @@ nvc0_m2mf_transfer_rect(struct pipe_screen *pscreen,
 }
 
 void
-nvc0_m2mf_push_linear(struct nvc0_context *nvc0,
-                      struct nouveau_bo *dst, unsigned domain, int offset,
+nvc0_m2mf_push_linear(struct nouveau_context *nv,
+                      struct nouveau_bo *dst, unsigned offset, unsigned domain,
                       unsigned size, void *data)
 {
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_channel *chan = nv->screen->channel;
    uint32_t *src = (uint32_t *)data;
    unsigned count = (size + 3) / 4;
 
@@ -143,12 +143,12 @@ nvc0_m2mf_push_linear(struct nvc0_context *nvc0,
 }
 
 void
-nvc0_m2mf_copy_linear(struct nvc0_context *nvc0,
+nvc0_m2mf_copy_linear(struct nouveau_context *nv,
                       struct nouveau_bo *dst, unsigned dstoff, unsigned dstdom,
                       struct nouveau_bo *src, unsigned srcoff, unsigned srcdom,
                       unsigned size)
 {
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   struct nouveau_channel *chan = nv->screen->channel;
 
    while (size) {
       unsigned bytes = MIN2(size, 1 << 17);

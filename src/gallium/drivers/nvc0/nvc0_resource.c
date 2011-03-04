@@ -8,7 +8,7 @@ nvc0_resource_is_referenced(struct pipe_context *pipe,
                             struct pipe_resource *resource,
                             unsigned face, int layer)
 {
-   struct nvc0_resource *res = nvc0_resource(resource);
+   struct nv04_resource *res = nv04_resource(resource);
    unsigned flags = 0;
 
 #ifdef NOUVEAU_USERSPACE_MM
@@ -29,7 +29,7 @@ nvc0_resource_create(struct pipe_screen *screen,
 {
    switch (templ->target) {
    case PIPE_BUFFER:
-      return nvc0_buffer_create(screen, templ);
+      return nouveau_buffer_create(screen, templ);
    default:
       return nvc0_miptree_create(screen, templ);
    }
@@ -67,5 +67,5 @@ nvc0_screen_init_resource_functions(struct pipe_screen *pscreen)
    pscreen->resource_from_handle = nvc0_resource_from_handle;
    pscreen->resource_get_handle = u_resource_get_handle_vtbl;
    pscreen->resource_destroy = u_resource_destroy_vtbl;
-   pscreen->user_buffer_create = nvc0_user_buffer_create;
+   pscreen->user_buffer_create = nouveau_user_buffer_create;
 }

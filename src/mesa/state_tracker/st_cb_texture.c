@@ -227,8 +227,15 @@ default_bindings(struct st_context *st, enum pipe_format format)
 
    if (screen->is_format_supported(screen, format, target, 0, bindings, geom))
       return bindings;
-   else
-      return PIPE_BIND_SAMPLER_VIEW;
+   else {
+      /* Try non-sRGB. */
+      format = util_format_linear(format);
+
+      if (screen->is_format_supported(screen, format, target, 0, bindings, geom))
+         return bindings;
+      else
+         return PIPE_BIND_SAMPLER_VIEW;
+   }
 }
 
 

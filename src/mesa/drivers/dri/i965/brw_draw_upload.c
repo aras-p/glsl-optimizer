@@ -208,7 +208,7 @@ static GLuint get_surface_type( GLenum type, GLuint size,
       case GL_UNSIGNED_SHORT: return ushort_types_scale[size];
       case GL_UNSIGNED_BYTE: return ubyte_types_scale[size];
       default: assert(0); return 0;
-      }      
+      }
    }
 }
 
@@ -225,11 +225,11 @@ static GLuint get_size( GLenum type )
    case GL_UNSIGNED_INT: return sizeof(GLuint);
    case GL_UNSIGNED_SHORT: return sizeof(GLushort);
    case GL_UNSIGNED_BYTE: return sizeof(GLubyte);
-   default: return 0;
-   }      
+   default: assert(0); return 0;
+   }
 }
 
-static GLuint get_index_type(GLenum type) 
+static GLuint get_index_type(GLenum type)
 {
    switch (type) {
    case GL_UNSIGNED_BYTE:  return BRW_INDEX_BYTE;
@@ -295,7 +295,8 @@ static void brw_prepare_vertices(struct brw_context *brw)
       struct brw_vertex_element *input = &brw->vb.inputs[i];
 
       vs_inputs &= ~(1 << i);
-      brw->vb.enabled[brw->vb.nr_enabled++] = input;
+      if (input->glarray->Size && get_size(input->glarray->Type))
+         brw->vb.enabled[brw->vb.nr_enabled++] = input;
    }
 
    if (brw->vb.nr_enabled == 0)
@@ -342,7 +343,8 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    struct brw_vertex_buffer *buffer = &brw->vb.buffers[j];
 
 	    /* Named buffer object: Just reference its contents directly. */
-	    buffer->bo = intel_bufferobj_source(intel, intel_buffer,
+            buffer->bo = intel_bufferobj_source(intel,
+                                                intel_buffer, type_size,
 						&buffer->offset);
 	    drm_intel_bo_reference(buffer->bo);
 	    buffer->offset += (uintptr_t)glarray->Ptr;
@@ -482,7 +484,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
    }
 
    /* can we simply extend the current vb? */
-   if (0 && j == brw->vb.nr_current_buffers) {
+   if (j == brw->vb.nr_current_buffers) {
       int delta = 0;
       for (i = 0; i < j; i++) {
 	 int d;
@@ -492,7 +494,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
 	    break;
 
 	 d = brw->vb.buffers[i].offset - brw->vb.current_buffers[i].offset;
-	 if (delta == 0)
+	 if (i == 0)
 	    delta = d / brw->vb.current_buffers[i].stride;
 	 if (delta * brw->vb.current_buffers[i].stride != d)
 	    break;
@@ -669,7 +671,6 @@ static void brw_prepare_indices(struct brw_context *brw)
       intel_upload_data(&brw->intel, index_buffer->ptr, ib_size, ib_type_size,
 			&bo, &offset);
       brw->ib.start_vertex_offset = offset / ib_type_size;
-      offset = 0;
    } else {
       offset = (GLuint) (unsigned long) index_buffer->ptr;
 
@@ -686,7 +687,6 @@ static void brw_prepare_indices(struct brw_context *brw)
 	   intel_upload_data(&brw->intel, map, ib_size, ib_type_size,
 			     &bo, &offset);
 	   brw->ib.start_vertex_offset = offset / ib_type_size;
-	   offset = 0;
 
            ctx->Driver.UnmapBuffer(ctx, GL_ELEMENT_ARRAY_BUFFER_ARB, bufferobj);
        } else {
@@ -696,21 +696,29 @@ static void brw_prepare_indices(struct brw_context *brw)
 	   */
 	  brw->ib.start_vertex_offset = offset / ib_type_size;
 
-	  bo = intel_bufferobj_source(intel, intel_buffer_object(bufferobj),
+	  bo = intel_bufferobj_source(intel,
+				      intel_buffer_object(bufferobj),
+				      ib_type_size,
 				      &offset);
 	  drm_intel_bo_reference(bo);
+
+	  brw->ib.start_vertex_offset += offset / ib_type_size;
        }
    }
 
-   if (brw->ib.bo != bo || brw->ib.offset != offset) {
+   if (brw->ib.bo != bo) {
       drm_intel_bo_unreference(brw->ib.bo);
       brw->ib.bo = bo;
-      brw->ib.offset = offset;
 
       brw_add_validated_bo(brw, brw->ib.bo);
       brw->state.dirty.brw |= BRW_NEW_INDEX_BUFFER;
    } else {
       drm_intel_bo_unreference(bo);
+   }
+
+   if (index_buffer->type != brw->ib.type) {
+      brw->ib.type = index_buffer->type;
+      brw->state.dirty.brw |= BRW_NEW_INDEX_BUFFER;
    }
 }
 
@@ -738,7 +746,7 @@ static void brw_emit_index_buffer(struct brw_context *brw)
              1);
    OUT_RELOC(brw->ib.bo,
              I915_GEM_DOMAIN_VERTEX, 0,
-             brw->ib.offset);
+             0);
    OUT_RELOC(brw->ib.bo,
              I915_GEM_DOMAIN_VERTEX, 0,
 	     brw->ib.bo->size - 1);

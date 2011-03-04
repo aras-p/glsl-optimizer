@@ -4,7 +4,6 @@ include $(TOP)/configs/current
 LIBNAME = nvc0
 
 C_SOURCES = \
-	nvc0_buffer.c \
 	nvc0_context.c \
 	nvc0_draw.c \
 	nvc0_formats.c \
@@ -27,8 +26,6 @@ C_SOURCES = \
 	nvc0_pc_regalloc.c \
 	nvc0_push.c \
 	nvc0_push2.c \
-	nvc0_fence.c \
-	nvc0_mm.c \
 	nvc0_query.c
 
 LIBRARY_INCLUDES = \

@@ -3,7 +3,10 @@
 #include "util/u_memory.h"
 #include "util/u_double_list.h"
 
-#include "nvc0_screen.h"
+#include "nouveau_screen.h"
+#include "nouveau_mm.h"
+
+#include "nouveau/nouveau_bo.h"
 
 #define MM_MIN_ORDER 7
 #define MM_MAX_ORDER 20
@@ -20,7 +23,7 @@ struct mm_bucket {
    int num_free;
 };
 
-struct nvc0_mman {
+struct nouveau_mman {
    struct nouveau_device *dev;
    struct mm_bucket bucket[MM_NUM_BUCKETS];
    uint32_t storage_type;
@@ -31,7 +34,7 @@ struct nvc0_mman {
 struct mm_slab {
    struct list_head head;
    struct nouveau_bo *bo;
-   struct nvc0_mman *cache;
+   struct nouveau_mman *cache;
    int order;
    int count;
    int free;
@@ -79,7 +82,7 @@ mm_get_order(uint32_t size)
 }
 
 static struct mm_bucket *
-mm_bucket_by_order(struct nvc0_mman *cache, int order)
+mm_bucket_by_order(struct nouveau_mman *cache, int order)
 {
    if (order > MM_MAX_ORDER)
       return NULL;
@@ -87,7 +90,7 @@ mm_bucket_by_order(struct nvc0_mman *cache, int order)
 }
 
 static struct mm_bucket *
-mm_bucket_by_size(struct nvc0_mman *cache, unsigned size)
+mm_bucket_by_size(struct nouveau_mman *cache, unsigned size)
 {
    return mm_bucket_by_order(cache, mm_get_order(size));
 }
@@ -107,7 +110,7 @@ mm_default_slab_size(unsigned chunk_order)
 }
 
 static int
-mm_slab_new(struct nvc0_mman *cache, int chunk_order)
+mm_slab_new(struct nouveau_mman *cache, int chunk_order)
 {
    struct mm_slab *slab;
    int words, ret;
@@ -147,13 +150,13 @@ mm_slab_new(struct nvc0_mman *cache, int chunk_order)
 }
 
 /* @return token to identify slab or NULL if we just allocated a new bo */
-struct nvc0_mm_allocation *
-nvc0_mm_allocate(struct nvc0_mman *cache,
+struct nouveau_mm_allocation *
+nouveau_mm_allocate(struct nouveau_mman *cache,
                  uint32_t size, struct nouveau_bo **bo, uint32_t *offset)
 {
    struct mm_bucket *bucket;
    struct mm_slab *slab;
-   struct nvc0_mm_allocation *alloc;
+   struct nouveau_mm_allocation *alloc;
    int ret;
 
    bucket = mm_bucket_by_size(cache, size);
@@ -181,7 +184,7 @@ nvc0_mm_allocate(struct nvc0_mman *cache,
 
    *offset = mm_slab_alloc(slab) << slab->order;
 
-   alloc = MALLOC_STRUCT(nvc0_mm_allocation);
+   alloc = MALLOC_STRUCT(nouveau_mm_allocation);
    if (!alloc)
       return NULL;
 
@@ -200,7 +203,7 @@ nvc0_mm_allocate(struct nvc0_mman *cache,
 }
 
 void
-nvc0_mm_free(struct nvc0_mm_allocation *alloc)
+nouveau_mm_free(struct nouveau_mm_allocation *alloc)
 {
    struct mm_slab *slab = (struct mm_slab *)alloc->priv;
    struct mm_bucket *bucket = mm_bucket_by_order(slab->cache, slab->order);
@@ -219,11 +222,17 @@ nvc0_mm_free(struct nvc0_mm_allocation *alloc)
    FREE(alloc);
 }
 
-struct nvc0_mman *
-nvc0_mm_create(struct nouveau_device *dev, uint32_t domain,
+void
+nouveau_mm_free_work(void *data)
+{
+   nouveau_mm_free(data);
+}
+
+struct nouveau_mman *
+nouveau_mm_create(struct nouveau_device *dev, uint32_t domain,
                uint32_t storage_type)
 {
-   struct nvc0_mman *cache = MALLOC_STRUCT(nvc0_mman);
+   struct nouveau_mman *cache = MALLOC_STRUCT(nouveau_mman);
    int i;
 
    if (!cache)
@@ -244,7 +253,7 @@ nvc0_mm_create(struct nouveau_device *dev, uint32_t domain,
 }
 
 static INLINE void
-nvc0_mm_free_slabs(struct list_head *head)
+nouveau_mm_free_slabs(struct list_head *head)
 {
    struct mm_slab *slab, *next;
 
@@ -256,9 +265,12 @@ nvc0_mm_free_slabs(struct list_head *head)
 }
 
 void
-nvc0_mm_destroy(struct nvc0_mman *cache)
+nouveau_mm_destroy(struct nouveau_mman *cache)
 {
    int i;
+
+   if (!cache)
+      return;
 
    for (i = 0; i < MM_NUM_BUCKETS; ++i) {
       if (!LIST_IS_EMPTY(&cache->bucket[i].used) ||
@@ -266,9 +278,11 @@ nvc0_mm_destroy(struct nvc0_mman *cache)
          debug_printf("WARNING: destroying GPU memory cache "
                       "with some buffers still in use\n");
 
-      nvc0_mm_free_slabs(&cache->bucket[i].free);
-      nvc0_mm_free_slabs(&cache->bucket[i].used);
-      nvc0_mm_free_slabs(&cache->bucket[i].full);
+      nouveau_mm_free_slabs(&cache->bucket[i].free);
+      nouveau_mm_free_slabs(&cache->bucket[i].used);
+      nouveau_mm_free_slabs(&cache->bucket[i].full);
    }
+
+   FREE(cache);
 }
 

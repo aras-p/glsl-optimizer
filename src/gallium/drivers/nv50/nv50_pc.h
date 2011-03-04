@@ -23,6 +23,8 @@
 #ifndef __NV50_COMPILER_H__
 #define __NV50_COMPILER_H__
 
+#define NV50PC_DEBUG
+
 #ifdef NV50PC_DEBUG
 # define NV50_DBGMSG(args...) debug_printf(args)
 #else

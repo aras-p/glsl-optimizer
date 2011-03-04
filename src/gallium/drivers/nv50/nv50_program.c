@@ -411,11 +411,11 @@ nv50_fragprog_prepare(struct nv50_translation_info *ti)
 
    if (ti->scan.writes_z) {
       p->fp.flags[1] = 0x11;
-      p->fp.flags[0] |= NV50TCL_FP_CONTROL_EXPORTS_Z;
+      p->fp.flags[0] |= NV50_3D_FP_CONTROL_EXPORTS_Z;
    }
 
    if (ti->scan.uses_kill)
-      p->fp.flags[0] |= NV50TCL_FP_CONTROL_USES_KIL;
+      p->fp.flags[0] |= NV50_3D_FP_CONTROL_USES_KIL;
 
    /* FP inputs */
 
@@ -490,13 +490,13 @@ nv50_fragprog_prepare(struct nv50_translation_info *ti)
    if (n < m)
       nvary -= p->in[n].hw;
 
-   p->fp.interp |= nvary << NV50TCL_FP_INTERPOLANT_CTRL_COUNT_NONFLAT_SHIFT;
-   p->fp.interp |= nintp << NV50TCL_FP_INTERPOLANT_CTRL_COUNT_SHIFT;
+   p->fp.interp |= nvary << NV50_3D_FP_INTERPOLANT_CTRL_COUNT_NONFLAT__SHIFT;
+   p->fp.interp |= nintp << NV50_3D_FP_INTERPOLANT_CTRL_COUNT__SHIFT;
 
    /* FP outputs */
 
    if (p->out_nr > (1 + (ti->scan.writes_z ? 1 : 0)))
-      p->fp.flags[0] |= NV50TCL_FP_CONTROL_MULTIPLE_RESULTS;
+      p->fp.flags[0] |= NV50_3D_FP_CONTROL_MULTIPLE_RESULTS;
 
    depr = p->out_nr;
    for (i = 0; i < p->out_nr; ++i) {
@@ -608,7 +608,7 @@ nv50_prog_scan(struct nv50_translation_info *ti)
 }
 
 boolean
-nv50_program_tx(struct nv50_program *p)
+nv50_program_translate(struct nv50_program *p)
 {
    struct nv50_translation_info *ti;
    int ret;
@@ -646,9 +646,8 @@ out:
 void
 nv50_program_destroy(struct nv50_context *nv50, struct nv50_program *p)
 {
-   nouveau_bo_ref(NULL, &p->bo);
-
-   so_ref(NULL, &p->so);
+   if (p->res)
+      nouveau_resource_free(&p->res);
 
    if (p->code)
       FREE(p->code);

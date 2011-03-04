@@ -68,6 +68,7 @@ drm_intel_bo *intel_bufferobj_buffer(struct intel_context *intel,
 				     GLuint flag);
 drm_intel_bo *intel_bufferobj_source(struct intel_context *intel,
 				     struct intel_buffer_object *obj,
+				     GLuint align,
 				     GLuint *offset);
 
 void intel_upload_data(struct intel_context *intel,

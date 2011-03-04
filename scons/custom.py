@@ -56,6 +56,8 @@ def quietCommandLines(env):
     env['SHLINKCOMSTR'] = "  Linking $TARGET ..."
     env['LDMODULECOMSTR'] = "  Linking $TARGET ..."
     env['SWIGCOMSTR'] = "  Generating $TARGET ..."
+    env['LEXCOMSTR'] = "  Generating $TARGET ..."
+    env['YACCCOMSTR'] = "  Generating $TARGET ..."
     env['CODEGENCOMSTR'] = "  Generating $TARGET ..."
 
 

@@ -1,62 +1,13 @@
 
-#ifndef NV50_RESOURCE_H
-#define NV50_RESOURCE_H
+#ifndef __NV50_RESOURCE_H__
+#define __NV50_RESOURCE_H__
 
 #include "util/u_transfer.h"
-
+#include "util/u_double_list.h"
+#define NOUVEAU_NVC0
 #include "nouveau/nouveau_winsys.h"
-
-struct pipe_resource;
-struct nouveau_bo;
-
-
-/* This gets further specialized into either buffer or texture
- * structures.  In the future we'll want to remove much of that
- * distinction, but for now try to keep as close to the existing code
- * as possible and use the vtbl struct to choose between the two
- * underlying implementations.
- */
-struct nv50_resource {
-	struct pipe_resource base;
-	const struct u_resource_vtbl *vtbl;
-	struct nouveau_bo *bo;
-};
-
-struct nv50_miptree_level {
-	int *image_offset;
-	unsigned pitch;
-	unsigned tile_mode;
-};
-
-#define NV50_MAX_TEXTURE_LEVELS 16
-
-struct nv50_miptree {
-	struct nv50_resource base;
-
-	struct nv50_miptree_level level[NV50_MAX_TEXTURE_LEVELS];
-	int image_nr;
-	int total_size;
-};
-
-static INLINE struct nv50_miptree *
-nv50_miptree(struct pipe_resource *pt)
-{
-	return (struct nv50_miptree *)pt;
-}
-
-
-static INLINE 
-struct nv50_resource *nv50_resource(struct pipe_resource *resource)
-{
-	return (struct nv50_resource *)resource;
-}
-
-/* is resource mapped into the GPU's address space (i.e. VRAM or GART) ? */
-static INLINE boolean
-nv50_resource_mapped_by_gpu(struct pipe_resource *resource)
-{
-   return nv50_resource(resource)->bo->handle;
-}
+#include "nouveau/nouveau_buffer.h"
+#undef NOUVEAU_NVC0
 
 void
 nv50_init_resource_functions(struct pipe_context *pcontext);
@@ -64,34 +15,56 @@ nv50_init_resource_functions(struct pipe_context *pcontext);
 void
 nv50_screen_init_resource_functions(struct pipe_screen *pscreen);
 
-/* Internal functions
+#define NV50_TILE_DIM_SHIFT(m, d) (((m) >> (d * 4)) & 0xf)
+
+#define NV50_TILE_PITCH(m)  (64 << 0)
+#define NV50_TILE_HEIGHT(m) ( 4 << NV50_TILE_DIM_SHIFT(m, 0))
+#define NV50_TILE_DEPTH(m)  ( 1 << NV50_TILE_DIM_SHIFT(m, 1))
+
+#define NV50_TILE_SIZE_2D(m) ((64 * 4) <<                     \
+                              NV50_TILE_DIM_SHIFT(m, 0))
+
+#define NV50_TILE_SIZE(m) (NV50_TILE_SIZE_2D(m) << NV50_TILE_DIM_SHIFT(m, 1))
+
+struct nv50_miptree_level {
+   uint32_t offset;
+   uint32_t pitch;
+   uint32_t tile_mode;
+};
+
+#define NV50_MAX_TEXTURE_LEVELS 16
+
+struct nv50_miptree {
+   struct nv04_resource base;
+   struct nv50_miptree_level level[NV50_MAX_TEXTURE_LEVELS];
+   uint32_t total_size;
+   uint32_t layer_stride;
+   boolean layout_3d; /* TRUE if layer count varies with mip level */
+};
+
+static INLINE struct nv50_miptree *
+nv50_miptree(struct pipe_resource *pt)
+{
+   return (struct nv50_miptree *)pt;
+}
+
+/* Internal functions:
  */
 struct pipe_resource *
 nv50_miptree_create(struct pipe_screen *pscreen,
-		    const struct pipe_resource *tmp);
+                    const struct pipe_resource *tmp);
 
 struct pipe_resource *
 nv50_miptree_from_handle(struct pipe_screen *pscreen,
-			 const struct pipe_resource *template,
-			 struct winsys_handle *whandle);
-
-struct pipe_resource *
-nv50_buffer_create(struct pipe_screen *pscreen,
-		   const struct pipe_resource *template);
-
-struct pipe_resource *
-nv50_user_buffer_create(struct pipe_screen *screen,
-			void *ptr,
-			unsigned bytes,
-			unsigned usage);
-
+                         const struct pipe_resource *template,
+                         struct winsys_handle *whandle);
 
 struct pipe_surface *
-nv50_miptree_surface_new(struct pipe_context *pipe, struct pipe_resource *pt,
-			 const struct pipe_surface *surf_tmpl);
+nv50_miptree_surface_new(struct pipe_context *,
+                         struct pipe_resource *,
+                         const struct pipe_surface *templ);
 
 void
-nv50_miptree_surface_del(struct pipe_context *pipe, struct pipe_surface *ps);
-
+nv50_miptree_surface_del(struct pipe_context *, struct pipe_surface *);
 
 #endif

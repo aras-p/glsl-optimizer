@@ -171,6 +171,18 @@ typedef unsigned char boolean;
 #  define __FUNCTION__ "<unknown>"
 # endif
 #endif
+#ifndef __func__
+#  if (__STDC_VERSION__ >= 199901L) || \
+      (defined(__SUNPRO_C) && defined(__C99FEATURES__))
+       /* __func__ is part of C99 */
+#  elif defined(_MSC_VER)
+#    if _MSC_VER >= 1300
+#      define __func__ __FUNCTION__
+#    else
+#      define __func__ "<unknown>"
+#    endif
+#  endif
+#endif
 
 
 

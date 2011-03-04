@@ -1,9 +1,10 @@
 
-#ifndef __NVC0_WINSYS_H__
-#define __NVC0_WINSYS_H__
+#ifndef __NV50_WINSYS_H__
+#define __NV50_WINSYS_H__
 
 #include <stdint.h>
 #include <unistd.h>
+
 #include "pipe/p_defines.h"
 
 #include "nouveau/nouveau_bo.h"
@@ -13,28 +14,29 @@
 #include "nouveau/nouveau_resource.h"
 #include "nouveau/nouveau_pushbuf.h"
 #include "nouveau/nouveau_reloc.h"
+#include "nouveau/nouveau_notifier.h"
 
-#include "nvc0_resource.h" /* OUT_RESRC */
+#include "nouveau/nouveau_buffer.h"
 
 #ifndef NV04_PFIFO_MAX_PACKET_LEN
 #define NV04_PFIFO_MAX_PACKET_LEN 2047
 #endif
 
-#define NVC0_SUBCH_3D 1
-#define NVC0_SUBCH_2D 2
-#define NVC0_SUBCH_MF 3
+#define NV50_SUBCH_3D 5
+#define NV50_SUBCH_2D 6
+#define NV50_SUBCH_MF 7
 
-#define NVC0_MF_(n) NVC0_M2MF_##n
+#define NV50_MF_(n) NV50_M2MF_##n
 
-#define RING_3D(n) ((NVC0_SUBCH_3D << 13) | (NVC0_3D_##n >> 2))
-#define RING_2D(n) ((NVC0_SUBCH_2D << 13) | (NVC0_2D_##n >> 2))
-#define RING_MF(n) ((NVC0_SUBCH_MF << 13) | (NVC0_MF_(n) >> 2))
+#define RING_3D(n) ((NV50_SUBCH_3D << 13) | NV50_3D_##n)
+#define RING_2D(n) ((NV50_SUBCH_2D << 13) | NV50_2D_##n)
+#define RING_MF(n) ((NV50_SUBCH_MF << 13) | NV50_MF_(n))
 
-#define RING_3D_(m) ((NVC0_SUBCH_3D << 13) | ((m) >> 2))
-#define RING_2D_(m) ((NVC0_SUBCH_2D << 13) | ((m) >> 2))
-#define RING_MF_(m) ((NVC0_SUBCH_MF << 13) | ((m) >> 2))
+#define RING_3D_(m) ((NV50_SUBCH_3D << 13) | (m))
+#define RING_2D_(m) ((NV50_SUBCH_2D << 13) | (m))
+#define RING_MF_(m) ((NV50_SUBCH_MF << 13) | (m))
 
-#define RING_GR(gr, m) (((gr)->subc << 13) | ((m) >> 2))
+#define RING_GR(gr, m) (((gr)->subc << 13) | (m))
 
 int nouveau_pushbuf_flush(struct nouveau_channel *, unsigned min);
 
@@ -56,7 +58,7 @@ static INLINE void
 BEGIN_RING(struct nouveau_channel *chan, uint32_t mthd, unsigned size)
 {
    WAIT_RING(chan, size + 1);
-   OUT_RING (chan, (0x2 << 28) | (size << 16) | mthd);
+   OUT_RING (chan, (size << 18) | mthd);
 }
 
 /* non-incremental */
@@ -64,23 +66,7 @@ static INLINE void
 BEGIN_RING_NI(struct nouveau_channel *chan, uint32_t mthd, unsigned size)
 {
    WAIT_RING(chan, size + 1);
-   OUT_RING (chan, (0x6 << 28) | (size << 16) | mthd);
-}
-
-/* increment-once */
-static INLINE void
-BEGIN_RING_1I(struct nouveau_channel *chan, uint32_t mthd, unsigned size)
-{
-   WAIT_RING(chan, size + 1);
-   OUT_RING (chan, (0xa << 28) | (size << 16) | mthd);
-}
-
-/* inline-data */
-static INLINE void
-IMMED_RING(struct nouveau_channel *chan, uint32_t mthd, unsigned data)
-{
-   WAIT_RING(chan, 1);
-   OUT_RING (chan, (0x8 << 28) | (data << 16) | mthd);
+   OUT_RING (chan, (0x2 << 29) | (size << 18) | mthd);
 }
 
 static INLINE int
@@ -114,7 +100,7 @@ BIND_RING(struct nouveau_channel *chan, struct nouveau_grobj *gr, unsigned s)
    subc->gr->bound = NOUVEAU_GROBJ_BOUND_EXPLICIT;
 
    BEGIN_RING(chan, RING_GR(gr, 0x0000), 1);
-   OUT_RING  (chan, gr->grclass);
+   OUT_RING  (chan, gr->handle);
 }
 
 #endif

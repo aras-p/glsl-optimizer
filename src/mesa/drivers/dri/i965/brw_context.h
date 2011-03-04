@@ -517,9 +517,9 @@ struct brw_context
        */
       const struct _mesa_index_buffer *ib;
 
-      /* Updates to these fields are signaled by BRW_NEW_INDEX_BUFFER. */
+      /* Updates are signaled by BRW_NEW_INDEX_BUFFER. */
       drm_intel_bo *bo;
-      unsigned int offset;
+      GLuint type;
 
       /* Offset to index buffer index to use in CMD_3D_PRIM so that we can
        * avoid re-uploading the IB packet over and over if we're actually

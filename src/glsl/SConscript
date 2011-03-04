@@ -14,17 +14,23 @@ env.Prepend(CPPPATH = [
     '#src/glsl/glcpp',
 ])
 
+# Make glcpp/glcpp-parse.h and glsl_parser.h reacheable from the include path
+env.Append(CPPPATH = [Dir('.').abspath])
+
 env.Append(YACCFLAGS = '-d')
 
-parser_env = env.Clone();
-parser_env.Append(YACCFLAGS = ['--defines=src/glsl/glsl_parser.h', '-p', '_mesa_glsl_'])
+parser_env = env.Clone()
+parser_env.Append(YACCFLAGS = [
+    '--defines=%s' % File('glsl_parser.h').abspath,
+    '-p', '_mesa_glsl_',
+])
 
 glcpp_lexer = env.CFile('glcpp/glcpp-lex.c', 'glcpp/glcpp-lex.l')
 glcpp_parser = env.CFile('glcpp/glcpp-parse.c', 'glcpp/glcpp-parse.y')
 glsl_lexer = parser_env.CXXFile('glsl_lexer.cpp', 'glsl_lexer.ll')
 glsl_parser = parser_env.CXXFile('glsl_parser.cpp', 'glsl_parser.yy')
 
-sources = [
+glsl_sources = [
     glcpp_lexer,
     glcpp_parser[0],
     'glcpp/pp.c',
@@ -92,20 +98,28 @@ sources = [
     'strtod.c',
 ] 
 
+if env['msvc']:
+    env.Prepend(CPPPATH = ['#/src/getopt'])
+    env.PrependUnique(LIBS = [getopt])
 
 if env['crosscompile'] and env['platform'] != 'embedded':
     Import('builtin_glsl_function')
 else:
-    if env['msvc']:
-        env.Prepend(CPPPATH = ['#/src/getopt'])
-        env.PrependUnique(LIBS = [getopt])
+    main_obj = env.StaticObject('main.cpp')
+
+    mesa_objs = env.StaticObject([
+        '#src/mesa/program/hash_table.c',
+        '#src/mesa/program/symbol_table.c',
+    ])
 
     builtin_compiler = env.Program(
         target = 'builtin_compiler',
-        source = sources + ['main.cpp', 'builtin_stubs.cpp',
-                            '#src/mesa/program/hash_table.c',
-                            '#src/mesa/program/symbol_table.c'],
+        source = main_obj + glsl_sources + ['builtin_stubs.cpp'] + mesa_objs,
     )
+
+    # SCons builtin dependency scanner doesn't detect that glsl_lexer.ll
+    # depends on glsl_parser.h
+    env.Depends(builtin_compiler, glsl_parser)
 
     builtin_glsl_function = env.CodeGenerate(
         target = 'builtin_function.cpp',
@@ -122,17 +136,23 @@ else:
         Return()
 
 
-sources += builtin_glsl_function
+glsl_sources += builtin_glsl_function
 
 glsl = env.ConvenienceLibrary(
     target = 'glsl',
-    source = sources,
+    source = glsl_sources,
 )
+
+# SCons builtin dependency scanner doesn't detect that glsl_lexer.ll depends on
+# glsl_parser.h
+env.Depends(glsl, glsl_parser)
 
 Export('glsl')
 
-# FIXME: We can't build the programs because there's a cyclic dependency between tis directory and src/mesa
-Return()
+# Skip building these programs as they will cause SCons error "Two environments
+# with different actions were specified for the same target"
+if env['crosscompile'] or env['platform'] == 'embedded':
+    Return()
 
 env = env.Clone()
 
@@ -143,14 +163,14 @@ if env['platform'] == 'windows':
 
 env.Prepend(LIBS = [glsl])
 
-env.Program(
+glsl2 = env.Program(
     target = 'glsl2',
-    source = [
-        'main.cpp',
-    ]
+    source = main_obj + mesa_objs,
 )
+env.Alias('glsl2', glsl2)
 
-env.Program(
-    target = 'glcpp',
-    source = ['glcpp/glcpp.c'],
+glcpp = env.Program(
+    target = 'glcpp/glcpp',
+    source = ['glcpp/glcpp.c'] + mesa_objs,
 )
+env.Alias('glcpp', glcpp)

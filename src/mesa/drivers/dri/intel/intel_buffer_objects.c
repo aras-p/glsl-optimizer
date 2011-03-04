@@ -723,11 +723,11 @@ void intel_upload_unmap(struct intel_context *intel,
 drm_intel_bo *
 intel_bufferobj_source(struct intel_context *intel,
                        struct intel_buffer_object *intel_obj,
-		       GLuint *offset)
+		       GLuint align, GLuint *offset)
 {
    if (intel_obj->buffer == NULL) {
       intel_upload_data(intel,
-			intel_obj->sys_buffer, intel_obj->Base.Size, 64,
+			intel_obj->sys_buffer, intel_obj->Base.Size, align,
 			&intel_obj->buffer, &intel_obj->offset);
       intel_obj->source = 1;
    }
@@ -782,7 +782,7 @@ intel_bufferobj_copy_subdata(struct gl_context *ctx,
    /* Otherwise, we have real BOs, so blit them. */
 
    dst_bo = intel_bufferobj_buffer(intel, intel_dst, INTEL_WRITE_PART);
-   src_bo = intel_bufferobj_source(intel, intel_src, &src_offset);
+   src_bo = intel_bufferobj_source(intel, intel_src, 64, &src_offset);
 
    intel_emit_linear_blit(intel,
 			  dst_bo, write_offset,
