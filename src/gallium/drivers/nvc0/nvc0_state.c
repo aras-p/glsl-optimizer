@@ -361,90 +361,6 @@ nv50_tsc_wrap_mode(unsigned wrap)
    }
 }
 
-static void *
-nvc0_sampler_state_create(struct pipe_context *pipe,
-                          const struct pipe_sampler_state *cso)
-{
-   struct nvc0_tsc_entry *so = CALLOC_STRUCT(nvc0_tsc_entry);
-   float f[2];
-
-   so->id = -1;
-
-   so->tsc[0] = (0x00026000 |
-                 (nv50_tsc_wrap_mode(cso->wrap_s) << 0) |
-                 (nv50_tsc_wrap_mode(cso->wrap_t) << 3) |
-                 (nv50_tsc_wrap_mode(cso->wrap_r) << 6));
-
-   switch (cso->mag_img_filter) {
-   case PIPE_TEX_FILTER_LINEAR:
-      so->tsc[1] |= NV50_TSC_1_MAGF_LINEAR;
-      break;
-   case PIPE_TEX_FILTER_NEAREST:
-   default:
-      so->tsc[1] |= NV50_TSC_1_MAGF_NEAREST;
-      break;
-   }
-
-   switch (cso->min_img_filter) {
-   case PIPE_TEX_FILTER_LINEAR:
-      so->tsc[1] |= NV50_TSC_1_MINF_LINEAR;
-      break;
-   case PIPE_TEX_FILTER_NEAREST:
-   default:
-      so->tsc[1] |= NV50_TSC_1_MINF_NEAREST;
-      break;
-   }
-
-   switch (cso->min_mip_filter) {
-   case PIPE_TEX_MIPFILTER_LINEAR:
-      so->tsc[1] |= NV50_TSC_1_MIPF_LINEAR;
-      break;
-   case PIPE_TEX_MIPFILTER_NEAREST:
-      so->tsc[1] |= NV50_TSC_1_MIPF_NEAREST;
-      break;
-   case PIPE_TEX_MIPFILTER_NONE:
-   default:
-      so->tsc[1] |= NV50_TSC_1_MIPF_NONE;
-      break;
-   }
-
-   if (cso->max_anisotropy >= 16)
-      so->tsc[0] |= (7 << 20);
-   else
-   if (cso->max_anisotropy >= 12)
-      so->tsc[0] |= (6 << 20);
-   else {
-      so->tsc[0] |= (cso->max_anisotropy >> 1) << 20;
-
-      if (cso->max_anisotropy >= 4)
-         so->tsc[1] |= NV50_TSC_1_UNKN_ANISO_35;
-      else
-      if (cso->max_anisotropy >= 2)
-         so->tsc[1] |= NV50_TSC_1_UNKN_ANISO_15;
-   }
-
-   if (cso->compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
-      /* NOTE: must be deactivated for non-shadow textures */
-      so->tsc[0] |= (1 << 9);
-      so->tsc[0] |= (nvgl_comparison_op(cso->compare_func) & 0x7) << 10;
-   }
-
-   f[0] = CLAMP(cso->lod_bias, -16.0f, 15.0f);
-   so->tsc[1] |= ((int)(f[0] * 256.0f) & 0x1fff) << 12;
-
-   f[0] = CLAMP(cso->min_lod, 0.0f, 15.0f);
-   f[1] = CLAMP(cso->max_lod, 0.0f, 15.0f);
-   so->tsc[2] |=
-      (((int)(f[1] * 256.0f) & 0xfff) << 12) | ((int)(f[0] * 256.0f) & 0xfff);
-
-   so->tsc[4] = fui(cso->border_color[0]);
-   so->tsc[5] = fui(cso->border_color[1]);
-   so->tsc[6] = fui(cso->border_color[2]);
-   so->tsc[7] = fui(cso->border_color[3]);
-
-   return (void *)so;
-}
-
 static void
 nvc0_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
 {
@@ -455,7 +371,7 @@ nvc0_sampler_state_delete(struct pipe_context *pipe, void *hwcso)
          if (nvc0_context(pipe)->samplers[s][i] == hwcso)
             nvc0_context(pipe)->samplers[s][i] = NULL;
 
-   nvc0_screen_tsc_free(nvc0_context(pipe)->screen, nvc0_tsc_entry(hwcso));
+   nvc0_screen_tsc_free(nvc0_context(pipe)->screen, nv50_tsc_entry(hwcso));
 
    FREE(hwcso);
 }
@@ -467,9 +383,9 @@ nvc0_stage_sampler_states_bind(struct nvc0_context *nvc0, int s,
    unsigned i;
 
    for (i = 0; i < nr; ++i) {
-      struct nvc0_tsc_entry *old = nvc0->samplers[s][i];
+      struct nv50_tsc_entry *old = nvc0->samplers[s][i];
 
-      nvc0->samplers[s][i] = nvc0_tsc_entry(hwcso[i]);
+      nvc0->samplers[s][i] = nv50_tsc_entry(hwcso[i]);
       if (old)
          nvc0_screen_tsc_unlock(nvc0->screen, old);
    }
@@ -507,9 +423,9 @@ nvc0_sampler_view_destroy(struct pipe_context *pipe,
 {
    pipe_resource_reference(&view->texture, NULL);
 
-   nvc0_screen_tic_free(nvc0_context(pipe)->screen, nvc0_tic_entry(view));
+   nvc0_screen_tic_free(nvc0_context(pipe)->screen, nv50_tic_entry(view));
 
-   FREE(nvc0_tic_entry(view));
+   FREE(nv50_tic_entry(view));
 }
 
 static INLINE void
@@ -520,7 +436,7 @@ nvc0_stage_set_sampler_views(struct nvc0_context *nvc0, int s,
    unsigned i;
 
    for (i = 0; i < nr; ++i) {
-      struct nvc0_tic_entry *old = nvc0_tic_entry(nvc0->textures[s][i]);
+      struct nv50_tic_entry *old = nv50_tic_entry(nvc0->textures[s][i]);
       if (old)
          nvc0_screen_tic_unlock(nvc0->screen, old);
 
@@ -528,7 +444,7 @@ nvc0_stage_set_sampler_views(struct nvc0_context *nvc0, int s,
    }
 
    for (i = nr; i < nvc0->num_textures[s]; ++i) {
-      struct nvc0_tic_entry *old = nvc0_tic_entry(nvc0->textures[s][i]);
+      struct nv50_tic_entry *old = nv50_tic_entry(nvc0->textures[s][i]);
       if (!old)
          continue;
       nvc0_screen_tic_unlock(nvc0->screen, old);
@@ -890,7 +806,7 @@ nvc0_init_state_functions(struct nvc0_context *nvc0)
    pipe->bind_depth_stencil_alpha_state = nvc0_zsa_state_bind;
    pipe->delete_depth_stencil_alpha_state = nvc0_zsa_state_delete;
 
-   pipe->create_sampler_state = nvc0_sampler_state_create;
+   pipe->create_sampler_state = nv50_sampler_state_create;
    pipe->delete_sampler_state = nvc0_sampler_state_delete;
    pipe->bind_vertex_sampler_states   = nvc0_vp_sampler_states_bind;
    pipe->bind_fragment_sampler_states = nvc0_fp_sampler_states_bind;

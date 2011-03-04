@@ -651,7 +651,7 @@ nvc0_screen_tic_alloc(struct nvc0_screen *screen, void *entry)
    screen->tic.next = (i + 1) & (NVC0_TIC_MAX_ENTRIES - 1);
 
    if (screen->tic.entries[i])
-      nvc0_tic_entry(screen->tic.entries[i])->id = -1;
+      nv50_tic_entry(screen->tic.entries[i])->id = -1;
 
    screen->tic.entries[i] = entry;
    return i;
@@ -668,7 +668,7 @@ nvc0_screen_tsc_alloc(struct nvc0_screen *screen, void *entry)
    screen->tsc.next = (i + 1) & (NVC0_TSC_MAX_ENTRIES - 1);
 
    if (screen->tsc.entries[i])
-      nvc0_tsc_entry(screen->tsc.entries[i])->id = -1;
+      nv50_tsc_entry(screen->tsc.entries[i])->id = -1;
 
    screen->tsc.entries[i] = entry;
    return i;

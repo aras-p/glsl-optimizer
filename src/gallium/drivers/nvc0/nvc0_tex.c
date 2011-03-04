@@ -59,11 +59,11 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
    uint32_t *tic;
    uint32_t swz[4];
    uint32_t depth;
-   struct nvc0_tic_entry *view;
+   struct nv50_tic_entry *view;
    struct nvc0_miptree *mt = nvc0_miptree(texture);
    boolean tex_int;
 
-   view = MALLOC_STRUCT(nvc0_tic_entry);
+   view = MALLOC_STRUCT(nv50_tic_entry);
    if (!view)
       return NULL;
 
@@ -148,6 +148,7 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
       break;
    case PIPE_BUFFER:
       tic[2] |= NV50_TIC_2_TARGET_BUFFER | NV50_TIC_2_LINEAR;
+      break;
    default:
       NOUVEAU_ERR("invalid texture target: %d\n", mt->base.base.target);
       return FALSE;
@@ -180,7 +181,7 @@ nvc0_validate_tic(struct nvc0_context *nvc0, int s)
    boolean need_flush = FALSE;
 
    for (i = 0; i < nvc0->num_textures[s]; ++i) {
-      struct nvc0_tic_entry *tic = nvc0_tic_entry(nvc0->textures[s][i]);
+      struct nv50_tic_entry *tic = nv50_tic_entry(nvc0->textures[s][i]);
       struct nv04_resource *res;
 
       if (!tic) {
@@ -258,7 +259,7 @@ nvc0_validate_tsc(struct nvc0_context *nvc0, int s)
    boolean need_flush = FALSE;
 
    for (i = 0; i < nvc0->num_samplers[s]; ++i) {
-      struct nvc0_tsc_entry *tsc = nvc0_tsc_entry(nvc0->samplers[s][i]);
+      struct nv50_tsc_entry *tsc = nv50_tsc_entry(nvc0->samplers[s][i]);
 
       if (!tsc) {
          BEGIN_RING(chan, RING_3D(BIND_TSC(s)), 1);

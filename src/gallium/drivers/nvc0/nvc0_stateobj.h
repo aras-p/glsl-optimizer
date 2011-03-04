@@ -14,34 +14,13 @@
 
 #define SB_DATA(so, u) (so)->state[(so)->size++] = (u)
 
+#include "nv50/nv50_stateobj_tex.h"
+
 struct nvc0_blend_stateobj {
    struct pipe_blend_state pipe;
    int size;
    uint32_t state[72];
 };
-
-struct nvc0_tsc_entry {
-   int id;
-   uint32_t tsc[8];
-};
-
-static INLINE struct nvc0_tsc_entry *
-nvc0_tsc_entry(void *hwcso)
-{
-   return (struct nvc0_tsc_entry *)hwcso;
-}
-
-struct nvc0_tic_entry {
-   struct pipe_sampler_view pipe;
-   int id;
-   uint32_t tic[8]; /* tic[1] (low 32 bit of address) is used for offset */
-};
-
-static INLINE struct nvc0_tic_entry *
-nvc0_tic_entry(struct pipe_sampler_view *view)
-{
-   return (struct nvc0_tic_entry *)view;
-}
 
 struct nvc0_rasterizer_stateobj {
    struct pipe_rasterizer_state pipe;

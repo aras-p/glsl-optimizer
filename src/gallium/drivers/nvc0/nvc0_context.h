@@ -112,7 +112,7 @@ struct nvc0_context {
 
    struct pipe_sampler_view *textures[5][PIPE_MAX_SAMPLERS];
    unsigned num_textures[5];
-   struct nvc0_tsc_entry *samplers[5][PIPE_MAX_SAMPLERS];
+   struct nv50_tsc_entry *samplers[5][PIPE_MAX_SAMPLERS];
    unsigned num_samplers[5];
 
    struct pipe_framebuffer_state framebuffer;

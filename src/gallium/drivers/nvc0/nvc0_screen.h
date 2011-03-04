@@ -114,21 +114,21 @@ struct nvc0_format {
 extern const struct nvc0_format nvc0_format_table[];
 
 static INLINE void
-nvc0_screen_tic_unlock(struct nvc0_screen *screen, struct nvc0_tic_entry *tic)
+nvc0_screen_tic_unlock(struct nvc0_screen *screen, struct nv50_tic_entry *tic)
 {
    if (tic->id >= 0)
       screen->tic.lock[tic->id / 32] &= ~(1 << (tic->id % 32));
 }
 
 static INLINE void
-nvc0_screen_tsc_unlock(struct nvc0_screen *screen, struct nvc0_tsc_entry *tsc)
+nvc0_screen_tsc_unlock(struct nvc0_screen *screen, struct nv50_tsc_entry *tsc)
 {
    if (tsc->id >= 0)
       screen->tsc.lock[tsc->id / 32] &= ~(1 << (tsc->id % 32));
 }
 
 static INLINE void
-nvc0_screen_tic_free(struct nvc0_screen *screen, struct nvc0_tic_entry *tic)
+nvc0_screen_tic_free(struct nvc0_screen *screen, struct nv50_tic_entry *tic)
 {
    if (tic->id >= 0) {
       screen->tic.entries[tic->id] = NULL;
@@ -137,7 +137,7 @@ nvc0_screen_tic_free(struct nvc0_screen *screen, struct nvc0_tic_entry *tic)
 }
 
 static INLINE void
-nvc0_screen_tsc_free(struct nvc0_screen *screen, struct nvc0_tsc_entry *tsc)
+nvc0_screen_tsc_free(struct nvc0_screen *screen, struct nv50_tsc_entry *tsc)
 {
    if (tsc->id >= 0) {
       screen->tsc.entries[tsc->id] = NULL;

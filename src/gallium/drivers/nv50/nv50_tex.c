@@ -148,6 +148,7 @@ nv50_create_sampler_view(struct pipe_context *pipe,
       break;
    case PIPE_BUFFER:
       tic[2] |= NV50_TIC_2_TARGET_BUFFER | NV50_TIC_2_LINEAR;
+      break;
    default:
       NOUVEAU_ERR("invalid texture target: %d\n", mt->base.base.target);
       return FALSE;
