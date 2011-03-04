@@ -2187,6 +2187,129 @@ get_variable_being_redeclared(ir_variable *var, ast_declaration *decl,
    return earlier;
 }
 
+/**
+ * Generate the IR for an initializer in a variable declaration
+ */
+ir_rvalue *
+process_initializer(ir_variable *var, ast_declaration *decl,
+		    ast_fully_specified_type *type,
+		    exec_list *initializer_instructions,
+		    struct _mesa_glsl_parse_state *state)
+{
+   ir_rvalue *result = NULL;
+
+   YYLTYPE initializer_loc = decl->initializer->get_location();
+
+   /* From page 24 (page 30 of the PDF) of the GLSL 1.10 spec:
+    *
+    *    "All uniform variables are read-only and are initialized either
+    *    directly by an application via API commands, or indirectly by
+    *    OpenGL."
+    */
+   if ((state->language_version <= 110)
+       && (var->mode == ir_var_uniform)) {
+      _mesa_glsl_error(& initializer_loc, state,
+		       "cannot initialize uniforms in GLSL 1.10");
+   }
+
+   if (var->type->is_sampler()) {
+      _mesa_glsl_error(& initializer_loc, state,
+		       "cannot initialize samplers");
+   }
+
+   if ((var->mode == ir_var_in) && (state->current_function == NULL)) {
+      _mesa_glsl_error(& initializer_loc, state,
+		       "cannot initialize %s shader input / %s",
+		       _mesa_glsl_shader_target_name(state->target),
+		       (state->target == vertex_shader)
+		       ? "attribute" : "varying");
+   }
+
+   ir_dereference *const lhs = new(state) ir_dereference_variable(var);
+   ir_rvalue *rhs = decl->initializer->hir(initializer_instructions,
+					   state);
+
+   /* Calculate the constant value if this is a const or uniform
+    * declaration.
+    */
+   if (type->qualifier.flags.q.constant
+       || type->qualifier.flags.q.uniform) {
+      ir_rvalue *new_rhs = validate_assignment(state, var->type, rhs);
+      if (new_rhs != NULL) {
+	 rhs = new_rhs;
+
+	 ir_constant *constant_value = rhs->constant_expression_value();
+	 if (!constant_value) {
+	    _mesa_glsl_error(& initializer_loc, state,
+			     "initializer of %s variable `%s' must be a "
+			     "constant expression",
+			     (type->qualifier.flags.q.constant)
+			     ? "const" : "uniform",
+			     decl->identifier);
+	    if (var->type->is_numeric()) {
+	       /* Reduce cascading errors. */
+	       var->constant_value = ir_constant::zero(state, var->type);
+	    }
+	 } else {
+	    rhs = constant_value;
+	    var->constant_value = constant_value;
+	 }
+      } else {
+	 _mesa_glsl_error(&initializer_loc, state,
+			  "initializer of type %s cannot be assigned to "
+			  "variable of type %s",
+			  rhs->type->name, var->type->name);
+	 if (var->type->is_numeric()) {
+	    /* Reduce cascading errors. */
+	    var->constant_value = ir_constant::zero(state, var->type);
+	 }
+      }
+   }
+
+   if (rhs && !rhs->type->is_error()) {
+      bool temp = var->read_only;
+      if (type->qualifier.flags.q.constant)
+	 var->read_only = false;
+
+      /* Never emit code to initialize a uniform.
+       */
+      const glsl_type *initializer_type;
+      if (!type->qualifier.flags.q.uniform) {
+	 result = do_assignment(initializer_instructions, state,
+				lhs, rhs,
+				type->get_location());
+	 initializer_type = result->type;
+      } else
+	 initializer_type = rhs->type;
+
+      /* If the declared variable is an unsized array, it must inherrit
+       * its full type from the initializer.  A declaration such as
+       *
+       *     uniform float a[] = float[](1.0, 2.0, 3.0, 3.0);
+       *
+       * becomes
+       *
+       *     uniform float a[4] = float[](1.0, 2.0, 3.0, 3.0);
+       *
+       * The assignment generated in the if-statement (below) will also
+       * automatically handle this case for non-uniforms.
+       *
+       * If the declared variable is not an array, the types must
+       * already match exactly.  As a result, the type assignment
+       * here can be done unconditionally.  For non-uniforms the call
+       * to do_assignment can change the type of the initializer (via
+       * the implicit conversion rules).  For uniforms the initializer
+       * must be a constant expression, and the type of that expression
+       * was validated above.
+       */
+      var->type = initializer_type;
+
+      var->read_only = temp;
+   }
+
+   return result;
+}
+
 ir_rvalue *
 ast_declarator_list::hir(exec_list *instructions,
 			 struct _mesa_glsl_parse_state *state)
@@ -2571,114 +2694,8 @@ ast_declarator_list::hir(exec_list *instructions,
        */
       exec_list initializer_instructions;
       if (decl->initializer != NULL) {
-	 YYLTYPE initializer_loc = decl->initializer->get_location();
-
-	 /* From page 24 (page 30 of the PDF) of the GLSL 1.10 spec:
-	  *
-	  *    "All uniform variables are read-only and are initialized either
-	  *    directly by an application via API commands, or indirectly by
-	  *    OpenGL."
-	  */
-	 if ((state->language_version <= 110)
-	     && (var->mode == ir_var_uniform)) {
-	    _mesa_glsl_error(& initializer_loc, state,
-			     "cannot initialize uniforms in GLSL 1.10");
-	 }
-
-	 if (var->type->is_sampler()) {
-	    _mesa_glsl_error(& initializer_loc, state,
-			     "cannot initialize samplers");
-	 }
-
-	 if ((var->mode == ir_var_in) && (state->current_function == NULL)) {
-	    _mesa_glsl_error(& initializer_loc, state,
-			     "cannot initialize %s shader input / %s",
-			     _mesa_glsl_shader_target_name(state->target),
-			     (state->target == vertex_shader)
-			     ? "attribute" : "varying");
-	 }
-
-	 ir_dereference *const lhs = new(ctx) ir_dereference_variable(var);
-	 ir_rvalue *rhs = decl->initializer->hir(&initializer_instructions,
-						 state);
-
-	 /* Calculate the constant value if this is a const or uniform
-	  * declaration.
-	  */
-	 if (this->type->qualifier.flags.q.constant
-	     || this->type->qualifier.flags.q.uniform) {
-	    ir_rvalue *new_rhs = validate_assignment(state, var->type, rhs);
-	    if (new_rhs != NULL) {
-	       rhs = new_rhs;
-
-	       ir_constant *constant_value = rhs->constant_expression_value();
-	       if (!constant_value) {
-		  _mesa_glsl_error(& initializer_loc, state,
-				   "initializer of %s variable `%s' must be a "
-				   "constant expression",
-				   (this->type->qualifier.flags.q.constant)
-				   ? "const" : "uniform",
-				   decl->identifier);
-		  if (var->type->is_numeric()) {
-		     /* Reduce cascading errors. */
-		     var->constant_value = ir_constant::zero(ctx, var->type);
-		  }
-	       } else {
-		  rhs = constant_value;
-		  var->constant_value = constant_value;
-	       }
-	    } else {
-	       _mesa_glsl_error(&initializer_loc, state,
-			        "initializer of type %s cannot be assigned to "
-				"variable of type %s",
-				rhs->type->name, var->type->name);
-	       if (var->type->is_numeric()) {
-		  /* Reduce cascading errors. */
-		  var->constant_value = ir_constant::zero(ctx, var->type);
-	       }
-	    }
-	 }
-
-	 if (rhs && !rhs->type->is_error()) {
-	    bool temp = var->read_only;
-	    if (this->type->qualifier.flags.q.constant)
-	       var->read_only = false;
-
-	    /* Never emit code to initialize a uniform.
-	     */
-	    const glsl_type *initializer_type;
-	    if (!this->type->qualifier.flags.q.uniform) {
-	       result = do_assignment(&initializer_instructions, state,
-				      lhs, rhs,
-				      this->get_location());
-	       initializer_type = result->type;
-	    } else
-	       initializer_type = rhs->type;
-
-	    /* If the declared variable is an unsized array, it must inherrit
-	     * its full type from the initializer.  A declaration such as
-	     *
-	     *     uniform float a[] = float[](1.0, 2.0, 3.0, 3.0);
-	     *
-	     * becomes
-	     *
-	     *     uniform float a[4] = float[](1.0, 2.0, 3.0, 3.0);
-	     *
-	     * The assignment generated in the if-statement (below) will also
-	     * automatically handle this case for non-uniforms.
-	     *
-	     * If the declared variable is not an array, the types must
-	     * already match exactly.  As a result, the type assignment
-	     * here can be done unconditionally.  For non-uniforms the call
-	     * to do_assignment can change the type of the initializer (via
-	     * the implicit conversion rules).  For uniforms the initializer
-	     * must be a constant expression, and the type of that expression
-	     * was validated above.
-	     */
-	    var->type = initializer_type;
-
-	    var->read_only = temp;
-	 }
+	 result = process_initializer(var, decl, this->type,
+				      &initializer_instructions, state);
       }
 
       /* From page 23 (page 29 of the PDF) of the GLSL 1.10 spec:
