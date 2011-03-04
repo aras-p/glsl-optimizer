@@ -24,6 +24,7 @@
 #include "draw/draw_context.h"
 
 #include "util/u_framebuffer.h"
+#include "util/u_half.h"
 #include "util/u_math.h"
 #include "util/u_mm.h"
 #include "util/u_memory.h"
@@ -395,22 +396,64 @@ static void r300_set_blend_color(struct pipe_context* pipe,
                                  const struct pipe_blend_color* color)
 {
     struct r300_context* r300 = r300_context(pipe);
-    struct r300_blend_color_state* state =
+    struct pipe_framebuffer_state *fb = r300->fb_state.state;
+    struct r300_blend_color_state *state =
         (struct r300_blend_color_state*)r300->blend_color_state.state;
+    struct pipe_blend_color c;
+    enum pipe_format format = fb->nr_cbufs ? fb->cbufs[0]->format : 0;
     CB_LOCALS;
 
+    state->state = *color; /* Save it, so that we can reuse it in set_fb_state */
+    c = *color;
+
+    /* The blend color is dependent on the colorbuffer format. */
+    if (fb->nr_cbufs) {
+        switch (format) {
+        case PIPE_FORMAT_R8_UNORM:
+        case PIPE_FORMAT_L8_UNORM:
+        case PIPE_FORMAT_I8_UNORM:
+            c.color[1] = c.color[0];
+            break;
+
+        case PIPE_FORMAT_A8_UNORM:
+            c.color[1] = c.color[3];
+            break;
+
+        case PIPE_FORMAT_R8G8_UNORM:
+            c.color[2] = c.color[1];
+            break;
+
+        case PIPE_FORMAT_L8A8_UNORM:
+            c.color[2] = c.color[3];
+            break;
+
+        default:;
+        }
+    }
+
     if (r300->screen->caps.is_r500) {
-        /* XXX if FP16 blending is enabled, we should use the FP16 format */
         BEGIN_CB(state->cb, 3);
         OUT_CB_REG_SEQ(R500_RB3D_CONSTANT_COLOR_AR, 2);
-        OUT_CB(float_to_fixed10(color->color[0]) |
-               (float_to_fixed10(color->color[3]) << 16));
-        OUT_CB(float_to_fixed10(color->color[2]) |
-               (float_to_fixed10(color->color[1]) << 16));
+
+        switch (format) {
+        case PIPE_FORMAT_R16G16B16A16_FLOAT:
+            OUT_CB(util_float_to_half(c.color[2]) |
+                   (util_float_to_half(c.color[3]) << 16));
+            OUT_CB(util_float_to_half(c.color[0]) |
+                   (util_float_to_half(c.color[1]) << 16));
+            break;
+
+        default:
+            OUT_CB(float_to_fixed10(c.color[0]) |
+                   (float_to_fixed10(c.color[3]) << 16));
+            OUT_CB(float_to_fixed10(c.color[2]) |
+                   (float_to_fixed10(c.color[1]) << 16));
+        }
+
         END_CB;
     } else {
         union util_color uc;
-        util_pack_color(color->color, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
+        util_pack_color(c.color, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
 
         BEGIN_CB(state->cb, 2);
         OUT_CB_REG(R300_RB3D_BLEND_COLOR, uc.ui);
@@ -686,6 +729,7 @@ void r300_mark_fb_state_dirty(struct r300_context *r300,
     /* What is marked as dirty depends on the enum r300_fb_state_change. */
     if (change == R300_CHANGED_FB_STATE) {
         r300_mark_atom_dirty(r300, &r300->aa_state);
+        r300_set_blend_color(&r300->context, r300->blend_color_state.state);
     }
 
     if (change == R300_CHANGED_FB_STATE ||

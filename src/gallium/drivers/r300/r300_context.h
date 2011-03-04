@@ -70,6 +70,7 @@ struct r300_blend_state {
 };
 
 struct r300_blend_color_state {
+    struct pipe_blend_color state;
     uint32_t cb[3];
 };
 
