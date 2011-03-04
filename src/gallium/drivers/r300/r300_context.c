@@ -78,10 +78,8 @@ static void r300_release_referenced_objects(struct r300_context *r300)
                 NULL);
     }
 
-    /* The dummy VBO. */
+    /* Manually-created vertex buffers. */
     pipe_resource_reference(&r300->dummy_vb, NULL);
-
-    /* The SWTCL VBO. */
     pipe_resource_reference(&r300->vbo, NULL);
 
     /* If there are any queries pending or not destroyed, remove them now. */

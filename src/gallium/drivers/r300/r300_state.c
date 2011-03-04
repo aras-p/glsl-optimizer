@@ -1593,12 +1593,6 @@ static void r300_vertex_psc(struct r300_vertex_element_state *velems)
     enum pipe_format format;
     unsigned i;
 
-    if (velems->count > 16) {
-        fprintf(stderr, "r300: More than 16 vertex elements are not supported,"
-                " requested %i, using 16.\n", velems->count);
-        velems->count = 16;
-    }
-
     /* Vertex shaders have no semantics on their inputs,
      * so PSC should just route stuff based on the vertex elements,
      * and not on attrib information. */
@@ -1649,9 +1643,12 @@ static void* r300_create_vertex_elements_state(struct pipe_context* pipe,
         dummy_attrib.src_format = PIPE_FORMAT_R8G8B8A8_UNORM;
         attribs = &dummy_attrib;
         count = 1;
+    } else if (count > 16) {
+        fprintf(stderr, "r300: More than 16 vertex elements are not supported,"
+                " requested %i, using 16.\n", count);
+        count = 16;
     }
 
-    assert(count <= PIPE_MAX_ATTRIBS);
     velems = CALLOC_STRUCT(r300_vertex_element_state);
     if (!velems)
         return NULL;
