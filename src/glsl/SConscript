@@ -102,16 +102,16 @@ if env['msvc']:
     env.Prepend(CPPPATH = ['#/src/getopt'])
     env.PrependUnique(LIBS = [getopt])
 
-main_obj = env.StaticObject('main.cpp')
-
-mesa_objs = env.StaticObject([
-    '#src/mesa/program/hash_table.c',
-    '#src/mesa/program/symbol_table.c',
-])
-
 if env['crosscompile'] and env['platform'] != 'embedded':
     Import('builtin_glsl_function')
 else:
+    main_obj = env.StaticObject('main.cpp')
+
+    mesa_objs = env.StaticObject([
+        '#src/mesa/program/hash_table.c',
+        '#src/mesa/program/symbol_table.c',
+    ])
+
     builtin_compiler = env.Program(
         target = 'builtin_compiler',
         source = main_obj + glsl_sources + ['builtin_stubs.cpp'] + mesa_objs,
@@ -148,6 +148,11 @@ glsl = env.ConvenienceLibrary(
 env.Depends(glsl, glsl_parser)
 
 Export('glsl')
+
+# Skip building these programs as they will cause SCons error "Two environments
+# with different actions were specified for the same target"
+if env['crosscompile'] or env['platform'] == 'embedded':
+    Return()
 
 env = env.Clone()
 
