@@ -24,6 +24,7 @@
 #include "util/u_format.h"
 #include "util/u_format_s3tc.h"
 #include "util/u_memory.h"
+#include "os/os_time.h"
 
 #include "r300_context.h"
 #include "r300_texture.h"
@@ -439,6 +440,22 @@ static int r300_fence_finish(struct pipe_screen *screen,
 {
     struct r300_winsys_screen *rws = r300_screen(screen)->rws;
     struct r300_winsys_bo *rfence = (struct r300_winsys_bo*)fence;
+
+    if (timeout != PIPE_TIMEOUT_INFINITE) {
+        int64_t start_time = os_time_get();
+
+        /* Convert to microseconds. */
+        timeout /= 1000;
+
+        /* Wait in a loop. */
+        while (rws->buffer_is_busy(rfence)) {
+            if (os_time_get() - start_time >= timeout) {
+                return 1;
+            }
+            os_time_sleep(10);
+        }
+        return 0;
+    }
 
     rws->buffer_wait(rfence);
     return 0; /* 0 == success */
