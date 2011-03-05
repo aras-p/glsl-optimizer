@@ -298,6 +298,7 @@ prog_decl(struct nvc0_translation_info *ti,
       }
       break;
    case TGSI_FILE_SYSTEM_VALUE:
+      i = first;
       ti->sysval_loc[i] = nvc0_system_value_location(sn, si, &ti->sysval_in[i]);
       assert(first == last);
       break;
