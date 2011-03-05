@@ -491,8 +491,10 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_shader_stencil_export = GL_TRUE;
    }
 
-   if (screen->get_param(screen, PIPE_CAP_INSTANCED_DRAWING)) {
+   if (screen->get_param(screen, PIPE_CAP_TGSI_INSTANCEID)) {
       ctx->Extensions.ARB_draw_instanced = GL_TRUE;
+   }
+   if (screen->get_param(screen, PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR)) {
       ctx->Extensions.ARB_instanced_arrays = GL_TRUE;
    }
 }

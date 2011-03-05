@@ -124,7 +124,8 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_GLSL:
    case PIPE_CAP_INDEP_BLEND_ENABLE:
    case PIPE_CAP_INDEP_BLEND_FUNC:
-   case PIPE_CAP_INSTANCED_DRAWING: /* draw module? */
+   case PIPE_CAP_TGSI_INSTANCEID:
+   case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
    case PIPE_CAP_POINT_SPRITE:
    case PIPE_CAP_SHADER_STENCIL_EXPORT:
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
