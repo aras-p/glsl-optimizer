@@ -328,10 +328,15 @@ prog_decl(struct nv50_translation_info *ti,
       }
       break;
    case TGSI_FILE_SYSTEM_VALUE:
+      /* For VP/GP inputs, they are put in s[] after the last normal input.
+       * Let sysval_map reflect the order of the sysvals in s[] and fixup later.
+       */
       switch (decl->Semantic.Name) {
       case TGSI_SEMANTIC_FACE:
          break;
       case TGSI_SEMANTIC_INSTANCEID:
+         ti->p->vp.attrs[2] |= NV50_3D_VP_GP_BUILTIN_ATTR_EN_INSTANCE_ID;
+         ti->sysval_map[first] = 2;
          break;
       case TGSI_SEMANTIC_PRIMID:
          break;
@@ -389,6 +394,18 @@ nv50_vertprog_prepare(struct nv50_translation_info *ti)
             continue;
          ti->output_map[i][c] = p->max_out++;
          p->out[i].mask |= 1 << c;
+      }
+   }
+
+   for (i = 0; i < TGSI_SEMANTIC_COUNT; ++i) {
+      switch (ti->sysval_map[i]) {
+      case 2:
+         if (!(ti->p->vp.attrs[2] & NV50_3D_VP_GP_BUILTIN_ATTR_EN_VERTEX_ID))
+            ti->sysval_map[i] = 1;
+         ti->sysval_map[i] = (ti->sysval_map[i] - 1) + num_inputs;
+         break;
+      default:
+         break;
       }
    }
 

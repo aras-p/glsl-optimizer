@@ -1159,6 +1159,13 @@ emit_fetch(struct bld_context *bld, const struct tgsi_full_instruction *insn,
    case TGSI_FILE_PREDICATE:
       res = bld_fetch_global(bld, &bld->pvs[idx][swz]);
       break;
+   case TGSI_FILE_SYSTEM_VALUE:
+      res = new_value(bld->pc, bld->ti->input_file, NV_TYPE_U32);
+      res->reg.id = bld->ti->sysval_map[idx];
+      res = bld_insn_1(bld, NV_OP_LDA, res);
+      res = bld_insn_1(bld, NV_OP_CVT, res);
+      res->reg.type = NV_TYPE_F32;
+      break;
    default:
       NOUVEAU_ERR("illegal/unhandled src reg file: %d\n", src->Register.File);
       abort();
