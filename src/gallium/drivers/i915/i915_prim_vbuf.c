@@ -470,7 +470,6 @@ draw_arrays_fallback(struct vbuf_render *render,
 
       /* Make sure state is re-emitted after a flush:
        */
-      i915_update_derived(i915);
       i915_emit_hardware_state(i915);
       i915->vbo_flushed = 1;
 
@@ -519,7 +518,6 @@ i915_vbuf_render_draw_arrays(struct vbuf_render *render,
 
       /* Make sure state is re-emitted after a flush:
        */
-      i915_update_derived(i915);
       i915_emit_hardware_state(i915);
       i915->vbo_flushed = 1;
 
@@ -640,7 +638,6 @@ i915_vbuf_render_draw_elements(struct vbuf_render *render,
 
       /* Make sure state is re-emitted after a flush: 
        */
-      i915_update_derived(i915);
       i915_emit_hardware_state(i915);
       i915->vbo_flushed = 1;
 

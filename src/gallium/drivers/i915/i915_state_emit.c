@@ -405,6 +405,8 @@ i915_emit_hardware_state(struct i915_context *i915 )
    unsigned batch_space;
    uintptr_t save_ptr;
 
+   assert(i915->dirty == 0);
+
    if (I915_DBG_ON(DBG_ATOMS))
       i915_dump_hardware_dirty(i915, __FUNCTION__);
 

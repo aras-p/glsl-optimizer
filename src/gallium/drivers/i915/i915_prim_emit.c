@@ -149,7 +149,6 @@ emit_prim( struct draw_stage *stage,
 
       /* Make sure state is re-emitted after a flush: 
        */
-      i915_update_derived( i915 );
       i915_emit_hardware_state( i915 );
 
       if (!BEGIN_BATCH( 1 + nr * vertex_size / 4)) {
