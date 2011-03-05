@@ -51,6 +51,7 @@
 #include "st_cb_texture.h"
 #include "st_cb_xformfb.h"
 #include "st_cb_flush.h"
+#include "st_cb_syncobj.h"
 #include "st_cb_strings.h"
 #include "st_cb_viewport.h"
 #include "st_atom.h"
@@ -292,6 +293,7 @@ void st_init_driver_functions(struct dd_function_table *functions)
    st_init_viewport_functions(functions);
 
    st_init_xformfb_functions(functions);
+   st_init_syncobj_functions(functions);
 
    functions->UpdateState = st_invalidate_state;
 }

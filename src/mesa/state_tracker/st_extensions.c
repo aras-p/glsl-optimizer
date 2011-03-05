@@ -518,4 +518,8 @@ void st_init_extensions(struct st_context *st)
    if (screen->get_param(screen, PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR)) {
       ctx->Extensions.ARB_instanced_arrays = GL_TRUE;
    }
+
+   if (screen->fence_finish) {
+      ctx->Extensions.ARB_sync = GL_TRUE;
+   }
 }

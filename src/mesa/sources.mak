@@ -215,6 +215,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_cb_queryobj.c \
 	state_tracker/st_cb_rasterpos.c \
 	state_tracker/st_cb_readpixels.c \
+	state_tracker/st_cb_syncobj.c \
 	state_tracker/st_cb_strings.c \
 	state_tracker/st_cb_texture.c \
 	state_tracker/st_cb_viewport.c \
