@@ -31,7 +31,8 @@ struct r300_vertex_program_code;
 
 uint32_t pack_float24(float f);
 
-void r300_emit_vertex_arrays(struct r300_context* r300, int offset, boolean indexed);
+void r300_emit_vertex_arrays(struct r300_context* r300, int offset,
+                             boolean indexed, int instance_id);
 
 void r300_emit_blend_state(struct r300_context* r300,
                            unsigned size, void* state);

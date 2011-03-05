@@ -610,6 +610,8 @@ struct r300_context {
     boolean vertex_arrays_dirty;
     boolean vertex_arrays_indexed;
     int vertex_arrays_offset;
+    int vertex_arrays_instance_id;
+    boolean instancing_enabled;
 };
 
 #define foreach_atom(r300, atom) \

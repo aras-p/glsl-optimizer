@@ -794,7 +794,8 @@ void r300_emit_textures_state(struct r300_context *r300,
     END_CS;
 }
 
-void r300_emit_vertex_arrays(struct r300_context* r300, int offset, boolean indexed)
+void r300_emit_vertex_arrays(struct r300_context* r300, int offset,
+                             boolean indexed, int instance_id)
 {
     struct pipe_vertex_buffer *vbuf = r300->vbuf_mgr->vertex_buffer;
     struct pipe_resource **valid_vbuf = r300->vbuf_mgr->real_vertex_buffer;
@@ -804,39 +805,92 @@ void r300_emit_vertex_arrays(struct r300_context* r300, int offset, boolean inde
     unsigned vertex_array_count = r300->velems->count;
     unsigned packet_size = (vertex_array_count * 3 + 1) / 2;
     struct pipe_vertex_buffer *vb1, *vb2;
-    unsigned *hw_format_size;
-    unsigned size1, size2;
+    unsigned *hw_format_size = r300->velems->format_size;
+    unsigned size1, size2, offset1, offset2, stride1, stride2;
     CS_LOCALS(r300);
 
     BEGIN_CS(2 + packet_size + vertex_array_count * 2);
     OUT_CS_PKT3(R300_PACKET3_3D_LOAD_VBPNTR, packet_size);
     OUT_CS(vertex_array_count | (!indexed ? R300_VC_FORCE_PREFETCH : 0));
 
-    hw_format_size = r300->velems->format_size;
+    if (instance_id == -1) {
+        /* Non-instanced arrays. This ignores instance_divisor and instance_id. */
+        for (i = 0; i < vertex_array_count - 1; i += 2) {
+            vb1 = &vbuf[velem[i].vertex_buffer_index];
+            vb2 = &vbuf[velem[i+1].vertex_buffer_index];
+            size1 = hw_format_size[i];
+            size2 = hw_format_size[i+1];
 
-    for (i = 0; i < vertex_array_count - 1; i += 2) {
-        vb1 = &vbuf[velem[i].vertex_buffer_index];
-        vb2 = &vbuf[velem[i+1].vertex_buffer_index];
-        size1 = hw_format_size[i];
-        size2 = hw_format_size[i+1];
+            OUT_CS(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(vb1->stride) |
+                   R300_VBPNTR_SIZE1(size2) | R300_VBPNTR_STRIDE1(vb2->stride));
+            OUT_CS(vb1->buffer_offset + velem[i].src_offset   + offset * vb1->stride);
+            OUT_CS(vb2->buffer_offset + velem[i+1].src_offset + offset * vb2->stride);
+        }
 
-        OUT_CS(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(vb1->stride) |
-               R300_VBPNTR_SIZE1(size2) | R300_VBPNTR_STRIDE1(vb2->stride));
-        OUT_CS(vb1->buffer_offset + velem[i].src_offset   + offset * vb1->stride);
-        OUT_CS(vb2->buffer_offset + velem[i+1].src_offset + offset * vb2->stride);
-    }
+        if (vertex_array_count & 1) {
+            vb1 = &vbuf[velem[i].vertex_buffer_index];
+            size1 = hw_format_size[i];
 
-    if (vertex_array_count & 1) {
-        vb1 = &vbuf[velem[i].vertex_buffer_index];
-        size1 = hw_format_size[i];
+            OUT_CS(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(vb1->stride));
+            OUT_CS(vb1->buffer_offset + velem[i].src_offset + offset * vb1->stride);
+        }
 
-        OUT_CS(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(vb1->stride));
-        OUT_CS(vb1->buffer_offset + velem[i].src_offset + offset * vb1->stride);
-    }
+        for (i = 0; i < vertex_array_count; i++) {
+            buf = r300_resource(valid_vbuf[velem[i].vertex_buffer_index]);
+            OUT_CS_RELOC(buf);
+        }
+    } else {
+        /* Instanced arrays. */
+        for (i = 0; i < vertex_array_count - 1; i += 2) {
+            vb1 = &vbuf[velem[i].vertex_buffer_index];
+            vb2 = &vbuf[velem[i+1].vertex_buffer_index];
+            size1 = hw_format_size[i];
+            size2 = hw_format_size[i+1];
 
-    for (i = 0; i < vertex_array_count; i++) {
-        buf = r300_resource(valid_vbuf[velem[i].vertex_buffer_index]);
-        OUT_CS_RELOC(buf);
+            if (velem[i].instance_divisor) {
+                stride1 = 0;
+                offset1 = vb1->buffer_offset + velem[i].src_offset +
+                          (instance_id / velem[i].instance_divisor) * vb1->stride;
+            } else {
+                stride1 = vb1->stride;
+                offset1 = vb1->buffer_offset + velem[i].src_offset + offset * vb1->stride;
+            }
+            if (velem[i+1].instance_divisor) {
+                stride2 = 0;
+                offset2 = vb2->buffer_offset + velem[i+1].src_offset +
+                          (instance_id / velem[i+1].instance_divisor) * vb2->stride;
+            } else {
+                stride2 = vb2->stride;
+                offset2 = vb2->buffer_offset + velem[i+1].src_offset + offset * vb2->stride;
+            }
+
+            OUT_CS(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(stride1) |
+                   R300_VBPNTR_SIZE1(size2) | R300_VBPNTR_STRIDE1(stride2));
+            OUT_CS(offset1);
+            OUT_CS(offset2);
+        }
+
+        if (vertex_array_count & 1) {
+            vb1 = &vbuf[velem[i].vertex_buffer_index];
+            size1 = hw_format_size[i];
+
+            if (velem[i].instance_divisor) {
+                stride1 = 0;
+                offset1 = vb1->buffer_offset + velem[i].src_offset +
+                          (instance_id / velem[i].instance_divisor) * vb1->stride;
+            } else {
+                stride1 = vb1->stride;
+                offset1 = vb1->buffer_offset + velem[i].src_offset + offset * vb1->stride;
+            }
+
+            OUT_CS(R300_VBPNTR_SIZE0(size1) | R300_VBPNTR_STRIDE0(stride1));
+            OUT_CS(offset1);
+        }
+
+        for (i = 0; i < vertex_array_count; i++) {
+            buf = r300_resource(valid_vbuf[velem[i].vertex_buffer_index]);
+            OUT_CS_RELOC(buf);
+        }
     }
     END_CS;
 }
