@@ -684,8 +684,9 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
    if (attribs->major > 1 || attribs->minor > 0) {
       _mesa_compute_version(st->ctx);
 
-      if (st->ctx->VersionMajor < attribs->major ||
-          st->ctx->VersionMajor < attribs->minor) {
+      /* is the actual version less than the requested version? */
+      if (st->ctx->VersionMajor * 10 + st->ctx->VersionMinor <
+          attribs->major * 10 + attribs->minor) {
          st_destroy_context(st);
          return NULL;
       }
