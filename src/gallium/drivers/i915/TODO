@@ -12,22 +12,19 @@ Random list of problems with i915g:
   unusable :( Upgrading xserver helped here, it doesn't crash anymore. Still
   broken, it doesn't update the viewport/get new buffers.
 
-- Tends to hang the chip after a few minutes of openarena. Looks tiling related,
-  at the last frame rendered has tiling corruption over the complete frame.
-
 - Kills the chip in 3D_PRIMITIVE LINELIST with mesa-demos/fbotexture in
-  wireframe mode.
-
-- Tiling is funny: If unlucky, it renders/samples all black. No clue yet what's
-  going on. Seems to depend on tiny details like whethever the sampler
-  relocation is fenced/unfenced (broken _with_ fenced reloc using tiling bits!).
+  wireframe mode. Changing the cullmode to cw from none mitigates the crash. As
+  does emitting only one line segment (2 indices) per 3D_PRIMITIVE command in
+  the batch.
 
 - Y-tiling is even more fun. i915c doesn't use it, maybe there's a reason?
   Texture sampling from Y-tiled buffers seems to work, though (save above
   problems).
+  RESOLVED: Y-tiling works with the render engine, but not with the blitter.
+  Use u_blitter and hw clears (PRIM3D_CLEAR_RECT).
 
-- Need to validate buffers before usage. Currently do_exec on the batchbuffer
-  can fail with -ENOSPC.
+- src/xvmc/i915_structs.h in xf86-video-intel has a few more bits of various
+  commands defined. Scavenge them and see what's useful.
 
 Other bugs can be found here:
 https://bugs.freedesktop.org/buglist.cgi?bug_status=NEW&bug_status=ASSIGNED&bug_status=REOPENED&component=Drivers/Gallium/i915g
