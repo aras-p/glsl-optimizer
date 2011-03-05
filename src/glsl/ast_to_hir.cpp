@@ -2055,6 +2055,260 @@ apply_type_qualifier_to_variable(const struct ast_type_qualifier *qual,
    }
 }
 
+/**
+ * Get the variable that is being redeclared by this declaration
+ *
+ * Semantic checks to verify the validity of the redeclaration are also
+ * performed.  If semantic checks fail, compilation error will be emitted via
+ * \c _mesa_glsl_error, but a non-\c NULL pointer will still be returned.
+ *
+ * \returns
+ * A pointer to an existing variable in the current scope if the declaration
+ * is a redeclaration, \c NULL otherwise.
+ */
+ir_variable *
+get_variable_being_redeclared(ir_variable *var, ast_declaration *decl,
+			      struct _mesa_glsl_parse_state *state)
+{
+   /* Check if this declaration is actually a re-declaration, either to
+    * resize an array or add qualifiers to an existing variable.
+    *
+    * This is allowed for variables in the current scope, or when at
+    * global scope (for built-ins in the implicit outer scope).
+    */
+   ir_variable *earlier = state->symbols->get_variable(decl->identifier);
+   if (earlier == NULL ||
+       (state->current_function != NULL &&
+	!state->symbols->name_declared_this_scope(decl->identifier))) {
+      return NULL;
+   }
+
+
+   YYLTYPE loc = decl->get_location();
+
+   /* From page 24 (page 30 of the PDF) of the GLSL 1.50 spec,
+    *
+    * "It is legal to declare an array without a size and then
+    *  later re-declare the same name as an array of the same
+    *  type and specify a size."
+    */
+   if ((earlier->type->array_size() == 0)
+       && var->type->is_array()
+       && (var->type->element_type() == earlier->type->element_type())) {
+      /* FINISHME: This doesn't match the qualifiers on the two
+       * FINISHME: declarations.  It's not 100% clear whether this is
+       * FINISHME: required or not.
+       */
+
+      /* From page 54 (page 60 of the PDF) of the GLSL 1.20 spec:
+       *
+       *     "The size [of gl_TexCoord] can be at most
+       *     gl_MaxTextureCoords."
+       */
+      const unsigned size = unsigned(var->type->array_size());
+      if ((strcmp("gl_TexCoord", var->name) == 0)
+	  && (size > state->Const.MaxTextureCoords)) {
+	 _mesa_glsl_error(& loc, state, "`gl_TexCoord' array size cannot "
+			  "be larger than gl_MaxTextureCoords (%u)\n",
+			  state->Const.MaxTextureCoords);
+      } else if ((size > 0) && (size <= earlier->max_array_access)) {
+	 _mesa_glsl_error(& loc, state, "array size must be > %u due to "
+			  "previous access",
+			  earlier->max_array_access);
+      }
+
+      earlier->type = var->type;
+      delete var;
+      var = NULL;
+   } else if (state->ARB_fragment_coord_conventions_enable
+	      && strcmp(var->name, "gl_FragCoord") == 0
+	      && earlier->type == var->type
+	      && earlier->mode == var->mode) {
+      /* Allow redeclaration of gl_FragCoord for ARB_fcc layout
+       * qualifiers.
+       */
+      earlier->origin_upper_left = var->origin_upper_left;
+      earlier->pixel_center_integer = var->pixel_center_integer;
+
+      /* According to section 4.3.7 of the GLSL 1.30 spec,
+       * the following built-in varaibles can be redeclared with an
+       * interpolation qualifier:
+       *    * gl_FrontColor
+       *    * gl_BackColor
+       *    * gl_FrontSecondaryColor
+       *    * gl_BackSecondaryColor
+       *    * gl_Color
+       *    * gl_SecondaryColor
+       */
+   } else if (state->language_version >= 130
+	      && (strcmp(var->name, "gl_FrontColor") == 0
+		  || strcmp(var->name, "gl_BackColor") == 0
+		  || strcmp(var->name, "gl_FrontSecondaryColor") == 0
+		  || strcmp(var->name, "gl_BackSecondaryColor") == 0
+		  || strcmp(var->name, "gl_Color") == 0
+		  || strcmp(var->name, "gl_SecondaryColor") == 0)
+	      && earlier->type == var->type
+	      && earlier->mode == var->mode) {
+      earlier->interpolation = var->interpolation;
+
+      /* Layout qualifiers for gl_FragDepth. */
+   } else if (state->AMD_conservative_depth_enable
+	      && strcmp(var->name, "gl_FragDepth") == 0
+	      && earlier->type == var->type
+	      && earlier->mode == var->mode) {
+
+      /** From the AMD_conservative_depth spec:
+       *     Within any shader, the first redeclarations of gl_FragDepth
+       *     must appear before any use of gl_FragDepth.
+       */
+      if (earlier->used) {
+	 _mesa_glsl_error(&loc, state,
+			  "the first redeclaration of gl_FragDepth "
+			  "must appear before any use of gl_FragDepth");
+      }
+
+      /* Prevent inconsistent redeclaration of depth layout qualifier. */
+      if (earlier->depth_layout != ir_depth_layout_none
+	  && earlier->depth_layout != var->depth_layout) {
+	 _mesa_glsl_error(&loc, state,
+			  "gl_FragDepth: depth layout is declared here "
+			  "as '%s, but it was previously declared as "
+			  "'%s'",
+			  depth_layout_string(var->depth_layout),
+			  depth_layout_string(earlier->depth_layout));
+      }
+
+      earlier->depth_layout = var->depth_layout;
+
+   } else {
+      _mesa_glsl_error(&loc, state, "`%s' redeclared", decl->identifier);
+   }
+
+   return earlier;
+}
+
+/**
+ * Generate the IR for an initializer in a variable declaration
+ */
+ir_rvalue *
+process_initializer(ir_variable *var, ast_declaration *decl,
+		    ast_fully_specified_type *type,
+		    exec_list *initializer_instructions,
+		    struct _mesa_glsl_parse_state *state)
+{
+   ir_rvalue *result = NULL;
+
+   YYLTYPE initializer_loc = decl->initializer->get_location();
+
+   /* From page 24 (page 30 of the PDF) of the GLSL 1.10 spec:
+    *
+    *    "All uniform variables are read-only and are initialized either
+    *    directly by an application via API commands, or indirectly by
+    *    OpenGL."
+    */
+   if ((state->language_version <= 110)
+       && (var->mode == ir_var_uniform)) {
+      _mesa_glsl_error(& initializer_loc, state,
+		       "cannot initialize uniforms in GLSL 1.10");
+   }
+
+   if (var->type->is_sampler()) {
+      _mesa_glsl_error(& initializer_loc, state,
+		       "cannot initialize samplers");
+   }
+
+   if ((var->mode == ir_var_in) && (state->current_function == NULL)) {
+      _mesa_glsl_error(& initializer_loc, state,
+		       "cannot initialize %s shader input / %s",
+		       _mesa_glsl_shader_target_name(state->target),
+		       (state->target == vertex_shader)
+		       ? "attribute" : "varying");
+   }
+
+   ir_dereference *const lhs = new(state) ir_dereference_variable(var);
+   ir_rvalue *rhs = decl->initializer->hir(initializer_instructions,
+					   state);
+
+   /* Calculate the constant value if this is a const or uniform
+    * declaration.
+    */
+   if (type->qualifier.flags.q.constant
+       || type->qualifier.flags.q.uniform) {
+      ir_rvalue *new_rhs = validate_assignment(state, var->type, rhs);
+      if (new_rhs != NULL) {
+	 rhs = new_rhs;
+
+	 ir_constant *constant_value = rhs->constant_expression_value();
+	 if (!constant_value) {
+	    _mesa_glsl_error(& initializer_loc, state,
+			     "initializer of %s variable `%s' must be a "
+			     "constant expression",
+			     (type->qualifier.flags.q.constant)
+			     ? "const" : "uniform",
+			     decl->identifier);
+	    if (var->type->is_numeric()) {
+	       /* Reduce cascading errors. */
+	       var->constant_value = ir_constant::zero(state, var->type);
+	    }
+	 } else {
+	    rhs = constant_value;
+	    var->constant_value = constant_value;
+	 }
+      } else {
+	 _mesa_glsl_error(&initializer_loc, state,
+			  "initializer of type %s cannot be assigned to "
+			  "variable of type %s",
+			  rhs->type->name, var->type->name);
+	 if (var->type->is_numeric()) {
+	    /* Reduce cascading errors. */
+	    var->constant_value = ir_constant::zero(state, var->type);
+	 }
+      }
+   }
+
+   if (rhs && !rhs->type->is_error()) {
+      bool temp = var->read_only;
+      if (type->qualifier.flags.q.constant)
+	 var->read_only = false;
+
+      /* Never emit code to initialize a uniform.
+       */
+      const glsl_type *initializer_type;
+      if (!type->qualifier.flags.q.uniform) {
+	 result = do_assignment(initializer_instructions, state,
+				lhs, rhs,
+				type->get_location());
+	 initializer_type = result->type;
+      } else
+	 initializer_type = rhs->type;
+
+      /* If the declared variable is an unsized array, it must inherrit
+       * its full type from the initializer.  A declaration such as
+       *
+       *     uniform float a[] = float[](1.0, 2.0, 3.0, 3.0);
+       *
+       * becomes
+       *
+       *     uniform float a[4] = float[](1.0, 2.0, 3.0, 3.0);
+       *
+       * The assignment generated in the if-statement (below) will also
+       * automatically handle this case for non-uniforms.
+       *
+       * If the declared variable is not an array, the types must
+       * already match exactly.  As a result, the type assignment
+       * here can be done unconditionally.  For non-uniforms the call
+       * to do_assignment can change the type of the initializer (via
+       * the implicit conversion rules).  For uniforms the initializer
+       * must be a constant expression, and the type of that expression
+       * was validated above.
+       */
+      var->type = initializer_type;
+
+      var->read_only = temp;
+   }
+
+   return result;
+}
 
 ir_rvalue *
 ast_declarator_list::hir(exec_list *instructions,
@@ -2439,115 +2693,12 @@ ast_declarator_list::hir(exec_list *instructions,
        * instruction stream.
        */
       exec_list initializer_instructions;
+      ir_variable *earlier = get_variable_being_redeclared(var, decl, state);
+
       if (decl->initializer != NULL) {
-	 YYLTYPE initializer_loc = decl->initializer->get_location();
-
-	 /* From page 24 (page 30 of the PDF) of the GLSL 1.10 spec:
-	  *
-	  *    "All uniform variables are read-only and are initialized either
-	  *    directly by an application via API commands, or indirectly by
-	  *    OpenGL."
-	  */
-	 if ((state->language_version <= 110)
-	     && (var->mode == ir_var_uniform)) {
-	    _mesa_glsl_error(& initializer_loc, state,
-			     "cannot initialize uniforms in GLSL 1.10");
-	 }
-
-	 if (var->type->is_sampler()) {
-	    _mesa_glsl_error(& initializer_loc, state,
-			     "cannot initialize samplers");
-	 }
-
-	 if ((var->mode == ir_var_in) && (state->current_function == NULL)) {
-	    _mesa_glsl_error(& initializer_loc, state,
-			     "cannot initialize %s shader input / %s",
-			     _mesa_glsl_shader_target_name(state->target),
-			     (state->target == vertex_shader)
-			     ? "attribute" : "varying");
-	 }
-
-	 ir_dereference *const lhs = new(ctx) ir_dereference_variable(var);
-	 ir_rvalue *rhs = decl->initializer->hir(&initializer_instructions,
-						 state);
-
-	 /* Calculate the constant value if this is a const or uniform
-	  * declaration.
-	  */
-	 if (this->type->qualifier.flags.q.constant
-	     || this->type->qualifier.flags.q.uniform) {
-	    ir_rvalue *new_rhs = validate_assignment(state, var->type, rhs);
-	    if (new_rhs != NULL) {
-	       rhs = new_rhs;
-
-	       ir_constant *constant_value = rhs->constant_expression_value();
-	       if (!constant_value) {
-		  _mesa_glsl_error(& initializer_loc, state,
-				   "initializer of %s variable `%s' must be a "
-				   "constant expression",
-				   (this->type->qualifier.flags.q.constant)
-				   ? "const" : "uniform",
-				   decl->identifier);
-		  if (var->type->is_numeric()) {
-		     /* Reduce cascading errors. */
-		     var->constant_value = ir_constant::zero(ctx, var->type);
-		  }
-	       } else {
-		  rhs = constant_value;
-		  var->constant_value = constant_value;
-	       }
-	    } else {
-	       _mesa_glsl_error(&initializer_loc, state,
-			        "initializer of type %s cannot be assigned to "
-				"variable of type %s",
-				rhs->type->name, var->type->name);
-	       if (var->type->is_numeric()) {
-		  /* Reduce cascading errors. */
-		  var->constant_value = ir_constant::zero(ctx, var->type);
-	       }
-	    }
-	 }
-
-	 if (rhs && !rhs->type->is_error()) {
-	    bool temp = var->read_only;
-	    if (this->type->qualifier.flags.q.constant)
-	       var->read_only = false;
-
-	    /* Never emit code to initialize a uniform.
-	     */
-	    const glsl_type *initializer_type;
-	    if (!this->type->qualifier.flags.q.uniform) {
-	       result = do_assignment(&initializer_instructions, state,
-				      lhs, rhs,
-				      this->get_location());
-	       initializer_type = result->type;
-	    } else
-	       initializer_type = rhs->type;
-
-	    /* If the declared variable is an unsized array, it must inherrit
-	     * its full type from the initializer.  A declaration such as
-	     *
-	     *     uniform float a[] = float[](1.0, 2.0, 3.0, 3.0);
-	     *
-	     * becomes
-	     *
-	     *     uniform float a[4] = float[](1.0, 2.0, 3.0, 3.0);
-	     *
-	     * The assignment generated in the if-statement (below) will also
-	     * automatically handle this case for non-uniforms.
-	     *
-	     * If the declared variable is not an array, the types must
-	     * already match exactly.  As a result, the type assignment
-	     * here can be done unconditionally.  For non-uniforms the call
-	     * to do_assignment can change the type of the initializer (via
-	     * the implicit conversion rules).  For uniforms the initializer
-	     * must be a constant expression, and the type of that expression
-	     * was validated above.
-	     */
-	    var->type = initializer_type;
-
-	    var->read_only = temp;
-	 }
+	 result = process_initializer((earlier == NULL) ? var : earlier,
+				      decl, this->type,
+				      &initializer_instructions, state);
       }
 
       /* From page 23 (page 29 of the PDF) of the GLSL 1.10 spec:
@@ -2562,163 +2713,50 @@ ast_declarator_list::hir(exec_list *instructions,
 			  decl->identifier);
       }
 
-      /* Check if this declaration is actually a re-declaration, either to
-       * resize an array or add qualifiers to an existing variable.
-       *
-       * This is allowed for variables in the current scope, or when at
-       * global scope (for built-ins in the implicit outer scope).
+      /* If the declaration is not a redeclaration, there are a few additional
+       * semantic checks that must be applied.  In addition, variable that was
+       * created for the declaration should be added to the IR stream.
        */
-      ir_variable *earlier = state->symbols->get_variable(decl->identifier);
-      if (earlier != NULL && (state->current_function == NULL ||
-	  state->symbols->name_declared_this_scope(decl->identifier))) {
-
-	 /* From page 24 (page 30 of the PDF) of the GLSL 1.50 spec,
+      if (earlier == NULL) {
+	 /* From page 15 (page 21 of the PDF) of the GLSL 1.10 spec,
 	  *
-	  * "It is legal to declare an array without a size and then
-	  *  later re-declare the same name as an array of the same
-	  *  type and specify a size."
+	  *   "Identifiers starting with "gl_" are reserved for use by
+	  *   OpenGL, and may not be declared in a shader as either a
+	  *   variable or a function."
 	  */
-	 if ((earlier->type->array_size() == 0)
-	     && var->type->is_array()
-	     && (var->type->element_type() == earlier->type->element_type())) {
-	    /* FINISHME: This doesn't match the qualifiers on the two
-	     * FINISHME: declarations.  It's not 100% clear whether this is
-	     * FINISHME: required or not.
-	     */
+	 if (strncmp(decl->identifier, "gl_", 3) == 0)
+	    _mesa_glsl_error(& loc, state,
+			     "identifier `%s' uses reserved `gl_' prefix",
+			     decl->identifier);
 
-	    /* From page 54 (page 60 of the PDF) of the GLSL 1.20 spec:
-	     *
-	     *     "The size [of gl_TexCoord] can be at most
-	     *     gl_MaxTextureCoords."
-	     */
-	    const unsigned size = unsigned(var->type->array_size());
-	    if ((strcmp("gl_TexCoord", var->name) == 0)
-		&& (size > state->Const.MaxTextureCoords)) {
-	       YYLTYPE loc = this->get_location();
-
-	       _mesa_glsl_error(& loc, state, "`gl_TexCoord' array size cannot "
-				"be larger than gl_MaxTextureCoords (%u)\n",
-				state->Const.MaxTextureCoords);
-	    } else if ((size > 0) && (size <= earlier->max_array_access)) {
-	       YYLTYPE loc = this->get_location();
-
-	       _mesa_glsl_error(& loc, state, "array size must be > %u due to "
-				"previous access",
-				earlier->max_array_access);
-	    }
-
-	    earlier->type = var->type;
-	    delete var;
-	    var = NULL;
-	 } else if (state->ARB_fragment_coord_conventions_enable
-		    && strcmp(var->name, "gl_FragCoord") == 0
-		    && earlier->type == var->type
-		    && earlier->mode == var->mode) {
-	    /* Allow redeclaration of gl_FragCoord for ARB_fcc layout
-	     * qualifiers.
-	     */
-	    earlier->origin_upper_left = var->origin_upper_left;
-	    earlier->pixel_center_integer = var->pixel_center_integer;
-
-	 /* According to section 4.3.7 of the GLSL 1.30 spec,
-	  * the following built-in varaibles can be redeclared with an
-	  * interpolation qualifier:
-	  *    * gl_FrontColor
-	  *    * gl_BackColor
-	  *    * gl_FrontSecondaryColor
-	  *    * gl_BackSecondaryColor
-	  *    * gl_Color
-	  *    * gl_SecondaryColor
+	 /* Add the variable to the symbol table.  Note that the initializer's
+	  * IR was already processed earlier (though it hasn't been emitted
+	  * yet), without the variable in scope.
+	  *
+	  * This differs from most C-like languages, but it follows the GLSL
+	  * specification.  From page 28 (page 34 of the PDF) of the GLSL 1.50
+	  * spec:
+	  *
+	  *     "Within a declaration, the scope of a name starts immediately
+	  *     after the initializer if present or immediately after the name
+	  *     being declared if not."
 	  */
-	 } else if (state->language_version >= 130
-	            && (strcmp(var->name, "gl_FrontColor") == 0
-                        || strcmp(var->name, "gl_BackColor") == 0
-                        || strcmp(var->name, "gl_FrontSecondaryColor") == 0
-                        || strcmp(var->name, "gl_BackSecondaryColor") == 0
-                        || strcmp(var->name, "gl_Color") == 0
-                        || strcmp(var->name, "gl_SecondaryColor") == 0)
-	            && earlier->type == var->type
-	            && earlier->mode == var->mode) {
-	    earlier->interpolation = var->interpolation;
-
-         /* Layout qualifiers for gl_FragDepth. */
-         } else if (state->AMD_conservative_depth_enable
-                    && strcmp(var->name, "gl_FragDepth") == 0
-                    && earlier->type == var->type
-                    && earlier->mode == var->mode) {
-
-            /** From the AMD_conservative_depth spec:
-             *     Within any shader, the first redeclarations of gl_FragDepth
-             *     must appear before any use of gl_FragDepth.
-             */
-            if (earlier->used) {
-               _mesa_glsl_error(&loc, state,
-                                "the first redeclaration of gl_FragDepth "
-                                "must appear before any use of gl_FragDepth");
-            }
-
-            /* Prevent inconsistent redeclaration of depth layout qualifier. */
-            if (earlier->depth_layout != ir_depth_layout_none
-                && earlier->depth_layout != var->depth_layout) {
-               _mesa_glsl_error(&loc, state,
-                                "gl_FragDepth: depth layout is declared here "
-                                "as '%s, but it was previously declared as "
-                                "'%s'",
-                                depth_layout_string(var->depth_layout),
-                                depth_layout_string(earlier->depth_layout));
-            }
-
-            earlier->depth_layout = var->depth_layout;
-
-	 } else {
+	 if (!state->symbols->add_variable(var)) {
 	    YYLTYPE loc = this->get_location();
-	    _mesa_glsl_error(&loc, state, "`%s' redeclared", decl->identifier);
+	    _mesa_glsl_error(&loc, state, "name `%s' already taken in the "
+			     "current scope", decl->identifier);
+	    continue;
 	 }
 
-	 continue;
+	 /* Push the variable declaration to the top.  It means that all the
+	  * variable declarations will appear in a funny last-to-first order,
+	  * but otherwise we run into trouble if a function is prototyped, a
+	  * global var is decled, then the function is defined with usage of
+	  * the global var.  See glslparsertest's CorrectModule.frag.
+	  */
+	 instructions->push_head(var);
       }
 
-      /* By now, we know it's a new variable declaration (we didn't hit the
-       * above "continue").
-       *
-       * From page 15 (page 21 of the PDF) of the GLSL 1.10 spec,
-       *
-       *   "Identifiers starting with "gl_" are reserved for use by
-       *   OpenGL, and may not be declared in a shader as either a
-       *   variable or a function."
-       */
-      if (strncmp(decl->identifier, "gl_", 3) == 0)
-	 _mesa_glsl_error(& loc, state,
-			  "identifier `%s' uses reserved `gl_' prefix",
-			  decl->identifier);
-
-      /* Add the variable to the symbol table.  Note that the initializer's
-       * IR was already processed earlier (though it hasn't been emitted yet),
-       * without the variable in scope.
-       *
-       * This differs from most C-like languages, but it follows the GLSL
-       * specification.  From page 28 (page 34 of the PDF) of the GLSL 1.50
-       * spec:
-       *
-       *     "Within a declaration, the scope of a name starts immediately
-       *     after the initializer if present or immediately after the name
-       *     being declared if not."
-       */
-      if (!state->symbols->add_variable(var)) {
-	 YYLTYPE loc = this->get_location();
-	 _mesa_glsl_error(&loc, state, "name `%s' already taken in the "
-			  "current scope", decl->identifier);
-	 continue;
-      }
-
-      /* Push the variable declaration to the top.  It means that all
-       * the variable declarations will appear in a funny
-       * last-to-first order, but otherwise we run into trouble if a
-       * function is prototyped, a global var is decled, then the
-       * function is defined with usage of the global var.  See
-       * glslparsertest's CorrectModule.frag.
-       */
-      instructions->push_head(var);
       instructions->append_list(&initializer_instructions);
    }
 

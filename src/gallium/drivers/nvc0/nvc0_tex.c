@@ -22,12 +22,16 @@
 
 #include "nvc0_context.h"
 #include "nvc0_resource.h"
-#include "nv50_texture.xml.h"
+#include "nv50/nv50_texture.xml.h"
 
 #include "util/u_format.h"
 
+#define NV50_TIC_0_SWIZZLE__MASK                      \
+   (NV50_TIC_0_MAPA__MASK | NV50_TIC_0_MAPB__MASK |   \
+    NV50_TIC_0_MAPG__MASK | NV50_TIC_0_MAPR__MASK)
+
 static INLINE uint32_t
-nv50_tic_swizzle(uint32_t tc, unsigned swz)
+nv50_tic_swizzle(uint32_t tc, unsigned swz, boolean tex_int)
 {
    switch (swz) {
    case PIPE_SWIZZLE_RED:
@@ -39,7 +43,7 @@ nv50_tic_swizzle(uint32_t tc, unsigned swz)
    case PIPE_SWIZZLE_ALPHA:
       return (tc & NV50_TIC_0_MAPA__MASK) >> NV50_TIC_0_MAPA__SHIFT;
    case PIPE_SWIZZLE_ONE:
-      return NV50_TIC_MAP_ONE;
+      return tex_int ? NV50_TIC_MAP_ONE_INT : NV50_TIC_MAP_ONE_FLOAT;
    case PIPE_SWIZZLE_ZERO:
    default:
       return NV50_TIC_MAP_ZERO;
@@ -55,10 +59,11 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
    uint32_t *tic;
    uint32_t swz[4];
    uint32_t depth;
-   struct nvc0_tic_entry *view;
+   struct nv50_tic_entry *view;
    struct nvc0_miptree *mt = nvc0_miptree(texture);
+   boolean tex_int;
 
-   view = MALLOC_STRUCT(nvc0_tic_entry);
+   view = MALLOC_STRUCT(nv50_tic_entry);
    if (!view)
       return NULL;
 
@@ -73,26 +78,28 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
 
    tic = &view->tic[0];
 
-   desc = util_format_description(mt->base.base.format);
+   desc = util_format_description(view->pipe.format);
 
    /* TIC[0] */
 
    tic[0] = nvc0_format_table[view->pipe.format].tic;
 
-   swz[0] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_r);
-   swz[1] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_g);
-   swz[2] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_b);
-   swz[3] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_a);
+   tex_int = FALSE; /* XXX: integer textures */
+
+   swz[0] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_r, tex_int);
+   swz[1] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_g, tex_int);
+   swz[2] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_b, tex_int);
+   swz[3] = nv50_tic_swizzle(tic[0], view->pipe.swizzle_a, tex_int);
    tic[0] = (tic[0] & ~NV50_TIC_0_SWIZZLE__MASK) |
       (swz[0] << NV50_TIC_0_MAPR__SHIFT) |
       (swz[1] << NV50_TIC_0_MAPG__SHIFT) |
       (swz[2] << NV50_TIC_0_MAPB__SHIFT) |
       (swz[3] << NV50_TIC_0_MAPA__SHIFT);
 
-   /* tic[1] = mt->base.bo->offset; */
+   tic[1] = /* mt->base.bo->offset; */ 0;
    tic[2] = /* mt->base.bo->offset >> 32 */ 0;
 
-   tic[2] |= 0x10001000 | /* NV50_TIC_2_NO_BORDER */ 0x40000000;
+   tic[2] |= 0x10001000 | NV50_TIC_2_NO_BORDER;
 
    if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
       tic[2] |= NV50_TIC_2_COLORSPACE_SRGB;
@@ -105,6 +112,13 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
       ((mt->base.bo->tile_mode & 0xf00) << (25 - 8));
 
    depth = MAX2(mt->base.base.array_size, mt->base.base.depth0);
+
+   if (mt->base.base.target == PIPE_TEXTURE_1D_ARRAY ||
+       mt->base.base.target == PIPE_TEXTURE_2D_ARRAY) {
+      /* there doesn't seem to be a base layer field in TIC */
+      tic[1] = view->pipe.u.tex.first_layer * mt->layer_stride;
+      depth = view->pipe.u.tex.last_layer - view->pipe.u.tex.first_layer + 1;
+   }
 
    switch (mt->base.base.target) {
    case PIPE_TEXTURE_1D:
@@ -133,7 +147,8 @@ nvc0_create_sampler_view(struct pipe_context *pipe,
       tic[2] |= NV50_TIC_2_TARGET_2D_ARRAY;
       break;
    case PIPE_BUFFER:
-      tic[2] |= NV50_TIC_2_TARGET_BUFFER | /* NV50_TIC_2_LINEAR */ (1 << 18);
+      tic[2] |= NV50_TIC_2_TARGET_BUFFER | NV50_TIC_2_LINEAR;
+      break;
    default:
       NOUVEAU_ERR("invalid texture target: %d\n", mt->base.base.target);
       return FALSE;
@@ -166,7 +181,7 @@ nvc0_validate_tic(struct nvc0_context *nvc0, int s)
    boolean need_flush = FALSE;
 
    for (i = 0; i < nvc0->num_textures[s]; ++i) {
-      struct nvc0_tic_entry *tic = nvc0_tic_entry(nvc0->textures[s][i]);
+      struct nv50_tic_entry *tic = nv50_tic_entry(nvc0->textures[s][i]);
       struct nv04_resource *res;
 
       if (!tic) {
@@ -177,6 +192,8 @@ nvc0_validate_tic(struct nvc0_context *nvc0, int s)
       res = &nvc0_miptree(tic->pipe.texture)->base;
 
       if (tic->id < 0) {
+         uint32_t offset = tic->tic[1];
+
          tic->id = nvc0_screen_tic_alloc(nvc0->screen, tic);
 
          MARK_RING (chan, 9 + 8, 4);
@@ -190,8 +207,8 @@ nvc0_validate_tic(struct nvc0_context *nvc0, int s)
          OUT_RING  (chan, 0x100111);
          BEGIN_RING_NI(chan, RING_MF(DATA), 8);
          OUT_RING  (chan, tic->tic[0]);
-         OUT_RELOCl(chan, res->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
-         OUT_RELOC (chan, res->bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
+         OUT_RELOCl(chan, res->bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD);
+         OUT_RELOC (chan, res->bo, offset, NOUVEAU_BO_VRAM | NOUVEAU_BO_RD |
                     NOUVEAU_BO_HIGH | NOUVEAU_BO_OR, tic->tic[2], tic->tic[2]);
          OUT_RINGp (chan, &tic->tic[3], 5);
 
@@ -242,7 +259,7 @@ nvc0_validate_tsc(struct nvc0_context *nvc0, int s)
    boolean need_flush = FALSE;
 
    for (i = 0; i < nvc0->num_samplers[s]; ++i) {
-      struct nvc0_tsc_entry *tsc = nvc0_tsc_entry(nvc0->samplers[s][i]);
+      struct nv50_tsc_entry *tsc = nv50_tsc_entry(nvc0->samplers[s][i]);
 
       if (!tsc) {
          BEGIN_RING(chan, RING_3D(BIND_TSC(s)), 1);

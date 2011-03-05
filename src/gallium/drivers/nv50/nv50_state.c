@@ -380,7 +380,7 @@ nv50_tsc_wrap_mode(unsigned wrap)
    }
 }
 
-static void *
+void *
 nv50_sampler_state_create(struct pipe_context *pipe,
                           const struct pipe_sampler_state *cso)
 {

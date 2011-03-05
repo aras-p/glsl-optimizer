@@ -96,7 +96,14 @@ vs_unit_create_from_key(struct brw_context *brw, struct brw_vs_unit_key *key)
     * and those dwords will be written to the second URB handle when we
     * brw_urb_WRITE() results.
     */
-   vs.thread1.single_program_flow = 0;
+   /* Disable single program flow on Ironlake.  We cannot reliably get
+    * all applications working without it.  See:
+    * https://bugs.freedesktop.org/show_bug.cgi?id=29172
+    *
+    * The most notable and reliably failing application is the Humus
+    * demo "CelShading"
+   */
+   vs.thread1.single_program_flow = (intel->gen == 5);
 
    if (intel->gen == 5)
       vs.thread1.binding_table_entry_count = 0; /* hardware requirement */

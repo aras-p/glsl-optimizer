@@ -8,10 +8,10 @@ http://0x04.net/cgit/index.cgi/rules-ng-ng
 git clone git://0x04.net/rules-ng-ng
 
 The rules-ng-ng source files this header was generated from are:
-- nv50_texture.xml (   6871 bytes, from 2010-10-03 13:18:37)
-- copyright.xml    (   6498 bytes, from 2010-10-03 13:18:37)
+- nv50_texture.xml (   8377 bytes, from 2011-02-12 12:05:21)
+- copyright.xml    (   6452 bytes, from 2010-11-25 23:28:20)
 
-Copyright (C) 2006-2010 by the following authors:
+Copyright (C) 2006-2011 by the following authors:
 - Artur Huillet <arthur.huillet@free.fr> (ahuillet)
 - Ben Skeggs (darktama, darktama_)
 - B. R. <koala_br@users.sourceforge.net> (koala_br)
@@ -22,7 +22,7 @@ Copyright (C) 2006-2010 by the following authors:
 - Dmitry Eremin-Solenikov <lumag@users.sf.net> (lumag)
 - EdB <edb_@users.sf.net> (edb_)
 - Erik Waling <erikwailing@users.sf.net> (erikwaling)
-- Francisco Jerez <currojerez@riseup.net> (curro, curro_, currojerez)
+- Francisco Jerez <currojerez@riseup.net> (curro)
 - imirkin <imirkin@users.sf.net> (imirkin)
 - jb17bsome <jb17bsome@bellsouth.net> (jb17bsome)
 - Jeremy Kolb <kjeremy@users.sf.net> (kjeremy)
@@ -75,7 +75,8 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NV50_TIC_MAP_C1						0x00000003
 #define NV50_TIC_MAP_C2						0x00000004
 #define NV50_TIC_MAP_C3						0x00000005
-#define NV50_TIC_MAP_ONE					0x00000007
+#define NV50_TIC_MAP_ONE_INT					0x00000006
+#define NV50_TIC_MAP_ONE_FLOAT					0x00000007
 #define NV50_TIC_TYPE_SNORM					0x00000001
 #define NV50_TIC_TYPE_UNORM					0x00000002
 #define NV50_TIC_TYPE_SINT					0x00000003
@@ -109,7 +110,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NV50_TIC_0_TYPE1__SHIFT					9
 #define NV50_TIC_0_TYPE0__MASK					0x000001c0
 #define NV50_TIC_0_TYPE0__SHIFT					6
-#define NV50_TIC_0_SWIZZLE__MASK				0x3ffc0000
 #define NV50_TIC_0_FMT__MASK					0x0000003f
 #define NV50_TIC_0_FMT__SHIFT					0
 #define NV50_TIC_0_FMT_32_32_32_32				0x00000001
@@ -122,16 +122,19 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NV50_TIC_0_FMT_8_24					0x0000000d
 #define NV50_TIC_0_FMT_24_8					0x0000000e
 #define NV50_TIC_0_FMT_32					0x0000000f
+#define NV50_TIC_0_FMT_BPTC_FLOAT				0x00000010
+#define NV50_TIC_0_FMT_BPTC_UFLOAT				0x00000011
 #define NV50_TIC_0_FMT_4_4_4_4					0x00000012
 #define NV50_TIC_0_FMT_5_5_5_1					0x00000013
 #define NV50_TIC_0_FMT_1_5_5_5					0x00000014
 #define NV50_TIC_0_FMT_5_6_5					0x00000015
 #define NV50_TIC_0_FMT_6_5_5					0x00000016
+#define NV50_TIC_0_FMT_BPTC					0x00000017
 #define NV50_TIC_0_FMT_8_8					0x00000018
 #define NV50_TIC_0_FMT_16					0x0000001b
 #define NV50_TIC_0_FMT_8					0x0000001d
 #define NV50_TIC_0_FMT_4_4					0x0000001e
-#define NV50_TIC_0_FMT_UNK1F					0x0000001f
+#define NV50_TIC_0_FMT_BITMAP_8X8				0x0000001f
 #define NV50_TIC_0_FMT_E5_9_9_9					0x00000020
 #define NV50_TIC_0_FMT_10_11_11					0x00000021
 #define NV50_TIC_0_FMT_C1_C2_C1_C0				0x00000022
@@ -141,14 +144,24 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NV50_TIC_0_FMT_DXT5					0x00000026
 #define NV50_TIC_0_FMT_RGTC1					0x00000027
 #define NV50_TIC_0_FMT_RGTC2					0x00000028
-#define NV50_TIC_0_FMT_24_8_ZETA				0x00000029
-#define NV50_TIC_0_FMT_8_24_ZETA				0x0000002a
-#define NV50_TIC_0_FMT_UNK2C_ZETA				0x0000002c
-#define NV50_TIC_0_FMT_UNK2D_ZETA				0x0000002d
-#define NV50_TIC_0_FMT_UNK2E_ZETA				0x0000002e
-#define NV50_TIC_0_FMT_32_ZETA					0x0000002f
-#define NV50_TIC_0_FMT_32_8_ZETA				0x00000030
-#define NV50_TIC_0_FMT_16_ZETA				0x0000003a
+#define NV50_TIC_0_FMT_Z24S8					0x00000029
+#define NV50_TIC_0_FMT_S8Z24					0x0000002a
+#define NV50_TIC_0_FMT_X8Z24					0x0000002b
+#define NV50_TIC_0_FMT_C8Z24_MS4_CS4				0x0000002c
+#define NV50_TIC_0_FMT_C8Z24_MS8_CS8				0x0000002d
+#define NV50_TIC_0_FMT_C8Z24_MS4_CS12				0x0000002e
+#define NV50_TIC_0_FMT_Z32					0x0000002f
+#define NV50_TIC_0_FMT_X24S8Z32					0x00000030
+#define NV50_TIC_0_FMT_X16C8S8X8Z24_MS4_CS4			0x00000031
+#define NV50_TIC_0_FMT_X16C8S8X8Z24_MS8_CS8			0x00000032
+#define NV50_TIC_0_FMT_X16C8X8Z32_MS4_CS4			0x00000033
+#define NV50_TIC_0_FMT_X16C8X8Z32_MS8_CS8			0x00000034
+#define NV50_TIC_0_FMT_X16C8S8Z32_MS4_CS4			0x00000035
+#define NV50_TIC_0_FMT_X16C8S8Z32_MS8_CS8			0x00000036
+#define NV50_TIC_0_FMT_X16C8S8X8Z24_MS4_CS12			0x00000037
+#define NV50_TIC_0_FMT_X16C8X8Z32_MS4_CS12			0x00000038
+#define NV50_TIC_0_FMT_X16C8S8Z32_MS4_CS12			0x00000039
+#define NV50_TIC_0_FMT_Z16					0x0000003a
 
 #define NV50_TIC_1						0x00000004
 #define NV50_TIC_1_OFFSET_LOW__MASK				0xffffffff
@@ -169,13 +182,16 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NV50_TIC_2_TARGET_BUFFER				0x00018000
 #define NV50_TIC_2_TARGET_RECT					0x0001c000
 #define NV50_TIC_2_TARGET_CUBE_ARRAY				0x00020000
-#define NV50_TIC_2_TILE_MODE_LINEAR				0x00040000
+#define NV50_TIC_2_LINEAR					0x00040000
+#define NV50_TIC_2_TILE_MODE_X__MASK				0x00380000
+#define NV50_TIC_2_TILE_MODE_X__SHIFT				19
 #define NV50_TIC_2_TILE_MODE_Y__MASK				0x01c00000
 #define NV50_TIC_2_TILE_MODE_Y__SHIFT				22
 #define NV50_TIC_2_TILE_MODE_Z__MASK				0x0e000000
 #define NV50_TIC_2_TILE_MODE_Z__SHIFT				25
 #define NV50_TIC_2_2D_UNK0258__MASK				0x30000000
 #define NV50_TIC_2_2D_UNK0258__SHIFT				28
+#define NV50_TIC_2_NO_BORDER					0x40000000
 #define NV50_TIC_2_NORMALIZED_COORDS				0x80000000
 
 #define NV50_TIC_3						0x0000000c
@@ -211,6 +227,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NV50_TSC_0_SHADOW_COMPARE_ENABLE			0x00000200
 #define NV50_TSC_0_SHADOW_COMPARE_FUNC__MASK			0x00001c00
 #define NV50_TSC_0_SHADOW_COMPARE_FUNC__SHIFT			10
+#define NV50_TSC_0_BOX_S__MASK					0x0001c000
+#define NV50_TSC_0_BOX_S__SHIFT					14
+#define NV50_TSC_0_BOX_T__MASK					0x000e0000
+#define NV50_TSC_0_BOX_T__SHIFT					17
 #define NV50_TSC_0_ANISOTROPY_MASK__MASK			0x00700000
 #define NV50_TSC_0_ANISOTROPY_MASK__SHIFT			20
 
@@ -234,10 +254,10 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define NV50_TSC_1_LOD_BIAS__SHIFT				12
 
 #define NV50_TSC_2						0x00000008
-#define NV50_TSC_2_MIN_LOD__MASK				0x00000f00
-#define NV50_TSC_2_MIN_LOD__SHIFT				8
-#define NV50_TSC_2_MAX_LOD__MASK				0x00f00000
-#define NV50_TSC_2_MAX_LOD__SHIFT				20
+#define NV50_TSC_2_MIN_LOD__MASK				0x00000fff
+#define NV50_TSC_2_MIN_LOD__SHIFT				0
+#define NV50_TSC_2_MAX_LOD__MASK				0x00fff000
+#define NV50_TSC_2_MAX_LOD__SHIFT				12
 
 #define NV50_TSC_4						0x00000010
 #define NV50_TSC_4_BORDER_COLOR_RED__MASK			0xffffffff

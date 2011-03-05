@@ -56,6 +56,7 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc *bc, struct r
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLNE:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL:
+		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_UINT:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MIN:
 		case V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETE:
@@ -105,6 +106,7 @@ static inline unsigned int r600_bc_get_num_operands(struct r600_bc *bc, struct r
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLGE:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_KILLNE:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL:
+		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_UINT:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MAX:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MIN:
 		case EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SETE:
@@ -2980,57 +2982,12 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 			struct r600_bc_alu alu;
 
 			memset(&alu, 0, sizeof(alu));
-			alu.inst = BC_INST(&bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT);
+			alu.inst = BC_INST(&bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_UINT);
 			alu.src[0].sel = 0;
 			alu.src[0].chan = 3;
 
-			alu.dst.sel = i + 1;
-			alu.dst.chan = 3;
-			alu.dst.write = 1;
-			alu.last = 1;
-
-			if ((r = r600_bc_add_alu(&bc, &alu))) {
-				r600_bc_clear(&bc);
-				return r;
-			}
-
-			memset(&alu, 0, sizeof(alu));
-			alu.inst = BC_INST(&bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL);
-			alu.src[0].sel = i + 1;
-			alu.src[0].chan = 3;
-
 			alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
-			alu.src[1].value = fui(1.0f / (float)elements[i].instance_divisor);
-
-			alu.dst.sel = i + 1;
-			alu.dst.chan = 3;
-			alu.dst.write = 1;
-			alu.last = 1;
-
-			if ((r = r600_bc_add_alu(&bc, &alu))) {
-				r600_bc_clear(&bc);
-				return r;
-			}
-
-			memset(&alu, 0, sizeof(alu));
-			alu.inst = BC_INST(&bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_TRUNC);
-			alu.src[0].sel = i + 1;
-			alu.src[0].chan = 3;
-
-			alu.dst.sel = i + 1;
-			alu.dst.chan = 3;
-			alu.dst.write = 1;
-			alu.last = 1;
-
-			if ((r = r600_bc_add_alu(&bc, &alu))) {
-				r600_bc_clear(&bc);
-				return r;
-			}
-
-			memset(&alu, 0, sizeof(alu));
-			alu.inst = BC_INST(&bc, V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT);
-			alu.src[0].sel = i + 1;
-			alu.src[0].chan = 3;
+			alu.src[1].value = (1l << 32) / elements[i].instance_divisor + 1;
 
 			alu.dst.sel = i + 1;
 			alu.dst.chan = 3;
@@ -3082,14 +3039,6 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 	r600_bc_add_cfinst(&bc, BC_INST(&bc, V_SQ_CF_WORD1_SQ_CF_INST_RETURN));
 	r600_bc_add_cfinst(&bc, BC_INST(&bc, V_SQ_CF_WORD1_SQ_CF_INST_NOP));
 
-	/* use PIPE_BIND_VERTEX_BUFFER so we use the cache buffer manager */
-	ve->fetch_shader = r600_bo(rctx->radeon, bc.ndw*4, 256, PIPE_BIND_VERTEX_BUFFER, 0);
-	if (ve->fetch_shader == NULL) {
-		r600_bc_clear(&bc);
-		return -ENOMEM;
-	}
-
-	ve->fs_size = bc.ndw*4;
 	if ((r = r600_bc_build(&bc))) {
 		r600_bc_clear(&bc);
 		return r;
@@ -3102,6 +3051,15 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 		fprintf(stderr, "--------------------------------------------------------------\n");
 		r600_bc_dump(&bc);
 		fprintf(stderr, "______________________________________________________________\n");
+	}
+
+	ve->fs_size = bc.ndw*4;
+
+	/* use PIPE_BIND_VERTEX_BUFFER so we use the cache buffer manager */
+	ve->fetch_shader = r600_bo(rctx->radeon, ve->fs_size, 256, PIPE_BIND_VERTEX_BUFFER, 0);
+	if (ve->fetch_shader == NULL) {
+		r600_bc_clear(&bc);
+		return -ENOMEM;
 	}
 
 	bytecode = r600_bo_map(rctx->radeon, ve->fetch_shader, 0, NULL);

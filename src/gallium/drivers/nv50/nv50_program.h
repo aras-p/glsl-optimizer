@@ -111,6 +111,7 @@ struct nv50_translation_info {
    ubyte output_file;
    ubyte input_map[PIPE_MAX_SHADER_INPUTS][4];
    ubyte output_map[PIPE_MAX_SHADER_OUTPUTS][4];
+   ubyte sysval_map[TGSI_SEMANTIC_COUNT];
    ubyte interp_mode[PIPE_MAX_SHADER_INPUTS];
    int input_access[PIPE_MAX_SHADER_INPUTS][4];
    int output_access[PIPE_MAX_SHADER_OUTPUTS][4];

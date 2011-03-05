@@ -70,6 +70,7 @@ struct r300_blend_state {
 };
 
 struct r300_blend_color_state {
+    struct pipe_blend_color state;
     uint32_t cb[3];
 };
 
@@ -91,9 +92,24 @@ struct r300_dsa_state {
     uint32_t stencil_ref_mask;  /* R300_ZB_STENCILREFMASK: 0x4f08 */
     uint32_t cb_reg;
     uint32_t stencil_ref_bf;    /* R500_ZB_STENCILREFMASK_BF: 0x4fd4 */
+    uint32_t cb_reg1;
+    uint32_t alpha_value;       /* R500_FG_ALPHA_VALUE: 0x4be0 */
+
+    /* The same, but for FP16 alpha test. */
+    uint32_t cb_begin_fp16;
+    uint32_t alpha_function_fp16;    /* R300_FG_ALPHA_FUNC: 0x4bd4 */
+    uint32_t cb_reg_seq_fp16;
+    uint32_t z_buffer_control_fp16;  /* R300_ZB_CNTL: 0x4f00 */
+    uint32_t z_stencil_control_fp16; /* R300_ZB_ZSTENCILCNTL: 0x4f04 */
+    uint32_t stencil_ref_mask_fp16;  /* R300_ZB_STENCILREFMASK: 0x4f08 */
+    uint32_t cb_reg_fp16;
+    uint32_t stencil_ref_bf_fp16;    /* R500_ZB_STENCILREFMASK_BF: 0x4fd4 */
+    uint32_t cb_reg1_fp16;
+    uint32_t alpha_value_fp16;       /* R500_FG_ALPHA_VALUE: 0x4be0 */
 
     /* The second command buffer disables zbuffer reads and writes. */
-    uint32_t cb_no_readwrite[8];
+    uint32_t cb_zb_no_readwrite[10];
+    uint32_t cb_fp16_zb_no_readwrite[10];
 
     /* Whether a two-sided stencil is enabled. */
     boolean two_sided;
@@ -120,7 +136,7 @@ struct r300_gpu_flush {
     uint32_t cb_flush_clean[6];
 };
 
-#define RS_STATE_MAIN_SIZE 23
+#define RS_STATE_MAIN_SIZE 25
 
 struct r300_rs_state {
     /* Original rasterizer state. */
@@ -219,7 +235,7 @@ struct r300_vertex_stream_state {
 };
 
 struct r300_invariant_state {
-    uint32_t cb[26];
+    uint32_t cb[24];
 };
 
 struct r300_vap_invariant_state {
