@@ -57,16 +57,12 @@ static inline void
 vl_vb_add_block(struct vl_vertex_buffer *buffer, void *elements)
 {
    void *pos;
-   unsigned i;
 
    assert(buffer);
 
    pos = buffer->vectors + buffer->num_verts * buffer->stride;
-   for(i = 0; i < 4; ++i) {
-      memcpy(pos, elements, buffer->stride);
-      pos += buffer->stride;
-      buffer->num_verts++;
-   }
+   memcpy(pos, elements, buffer->stride);
+   buffer->num_verts++;
 }
 
 void vl_vb_unmap(struct vl_vertex_buffer *buffer, struct pipe_context *pipe);

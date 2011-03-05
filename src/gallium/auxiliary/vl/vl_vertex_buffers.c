@@ -106,7 +106,7 @@ vl_vb_element_helper(struct pipe_vertex_element* elements, unsigned num_elements
 
    for ( i = 0; i < num_elements; ++i ) {
       elements[i].src_offset = offset;
-      elements[i].instance_divisor = 0;
+      elements[i].instance_divisor = 1;
       elements[i].vertex_buffer_index = vertex_buffer_index;
       offset += util_format_get_blocksize(elements[i].src_format);
    }

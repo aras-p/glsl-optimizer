@@ -752,7 +752,7 @@ vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer)
       idct->pipe->bind_fragment_sampler_states(idct->pipe, 2, idct->samplers.stage[0]);
       idct->pipe->bind_vs_state(idct->pipe, idct->matrix_vs);
       idct->pipe->bind_fs_state(idct->pipe, idct->matrix_fs);
-      util_draw_arrays(idct->pipe, PIPE_PRIM_QUADS, 0, num_verts);
+      util_draw_arrays_instanced(idct->pipe, PIPE_PRIM_QUADS, 0, 4, 0, num_verts);
 
       /* second stage */
       idct->pipe->set_framebuffer_state(idct->pipe, &buffer->fb_state[1]);
@@ -761,6 +761,6 @@ vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer)
       idct->pipe->bind_fragment_sampler_states(idct->pipe, 2, idct->samplers.stage[1]);
       idct->pipe->bind_vs_state(idct->pipe, idct->transpose_vs);
       idct->pipe->bind_fs_state(idct->pipe, idct->transpose_fs);
-      util_draw_arrays(idct->pipe, PIPE_PRIM_QUADS, 0, num_verts);
+      util_draw_arrays_instanced(idct->pipe, PIPE_PRIM_QUADS, 0, 4, 0, num_verts);
    }
 }

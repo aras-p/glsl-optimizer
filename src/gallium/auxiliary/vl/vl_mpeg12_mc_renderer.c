@@ -1080,7 +1080,7 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mp
 
    renderer->pipe->bind_vs_state(renderer->pipe, renderer->vs);
    renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs);
-   util_draw_arrays(renderer->pipe, PIPE_PRIM_QUADS, 0, buffer->num_macroblocks * 4);
+   util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4, 0, buffer->num_macroblocks);
 
    renderer->pipe->flush(renderer->pipe, PIPE_FLUSH_RENDER_CACHE, buffer->fence);
 
