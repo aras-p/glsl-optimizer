@@ -128,21 +128,6 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
       ctx->velem[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
    }
 
-   /* vertex shader - still required to provide the linkage between
-    * fragment shader input semantics and vertex_element/buffers.
-    */
-   {
-      const uint semantic_names[] = { TGSI_SEMANTIC_POSITION,
-                                      TGSI_SEMANTIC_GENERIC };
-      const uint semantic_indexes[] = { 0, 0 };
-      ctx->vs = util_make_vertex_passthrough_shader(pipe, 2, semantic_names,
-                                                    semantic_indexes);
-   }
-
-   /* fragment shader */
-   ctx->fs[TGSI_WRITEMASK_XYZW] =
-      util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D,
-                                    TGSI_INTERPOLATE_LINEAR);
    ctx->vbuf = NULL;
 
    /* init vertex data that doesn't change */
@@ -170,7 +155,8 @@ util_destroy_blit(struct blit_state *ctx)
    struct pipe_context *pipe = ctx->pipe;
    unsigned i;
 
-   pipe->delete_vs_state(pipe, ctx->vs);
+   if (ctx->vs)
+      pipe->delete_vs_state(pipe, ctx->vs);
 
    for (i = 0; i < Elements(ctx->fs); i++)
       if (ctx->fs[i])
@@ -182,6 +168,59 @@ util_destroy_blit(struct blit_state *ctx)
    pipe_resource_reference(&ctx->vbuf, NULL);
 
    FREE(ctx);
+}
+
+
+/**
+ * Helper function to set the fragment shaders.
+ */
+static INLINE void
+set_fragment_shader(struct blit_state *ctx, uint writemask)
+{
+   if (!ctx->fs[writemask])
+      ctx->fs[writemask] =
+         util_make_fragment_tex_shader_writemask(ctx->pipe, TGSI_TEXTURE_2D,
+                                                 TGSI_INTERPOLATE_LINEAR,
+                                                 writemask);
+
+   cso_set_fragment_shader_handle(ctx->cso, ctx->fs[writemask]);
+}
+
+
+/**
+ * Helper function to set the depthwrite shader.
+ */
+static INLINE void
+set_depth_fragment_shader(struct blit_state *ctx)
+{
+   if (!ctx->fs_depth)
+      ctx->fs_depth =
+         util_make_fragment_tex_shader_writedepth(ctx->pipe, TGSI_TEXTURE_2D,
+                                                  TGSI_INTERPOLATE_LINEAR);
+
+   cso_set_fragment_shader_handle(ctx->cso, ctx->fs_depth);
+}
+
+
+/**
+ * Helper function to set the vertex shader.
+ */
+static INLINE void
+set_vertex_shader(struct blit_state *ctx)
+{
+   /* vertex shader - still required to provide the linkage between
+    * fragment shader input semantics and vertex_element/buffers.
+    */
+   if (!ctx->vs) {
+      const uint semantic_names[] = { TGSI_SEMANTIC_POSITION,
+                                      TGSI_SEMANTIC_GENERIC };
+      const uint semantic_indexes[] = { 0, 0 };
+      ctx->vs = util_make_vertex_passthrough_shader(ctx->pipe, 2,
+                                                    semantic_names,
+                                                    semantic_indexes);
+   }
+
+   cso_set_vertex_shader_handle(ctx->cso, ctx->vs);
 }
 
 
@@ -530,22 +569,11 @@ util_blit_pixels_writemask(struct blit_state *ctx,
 
    /* shaders */
    if (dst_is_depth) {
-      if (ctx->fs_depth == NULL)
-         ctx->fs_depth =
-            util_make_fragment_tex_shader_writedepth(pipe, TGSI_TEXTURE_2D,
-                                                     TGSI_INTERPOLATE_LINEAR);
-
-      cso_set_fragment_shader_handle(ctx->cso, ctx->fs_depth);
+      set_depth_fragment_shader(ctx);
    } else {
-      if (ctx->fs[writemask] == NULL)
-         ctx->fs[writemask] =
-            util_make_fragment_tex_shader_writemask(pipe, TGSI_TEXTURE_2D,
-                                                    TGSI_INTERPOLATE_LINEAR,
-                                                    writemask);
-
-      cso_set_fragment_shader_handle(ctx->cso, ctx->fs[writemask]);
+      set_fragment_shader(ctx, writemask);
    }
-   cso_set_vertex_shader_handle(ctx->cso, ctx->vs);
+   set_vertex_shader(ctx);
 
    /* drawing dest */
    memset(&fb, 0, sizeof(fb));
@@ -720,8 +748,8 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_set_fragment_sampler_views(ctx->cso, 1, &src_sampler_view);
 
    /* shaders */
-   cso_set_fragment_shader_handle(ctx->cso, ctx->fs[TGSI_WRITEMASK_XYZW]);
-   cso_set_vertex_shader_handle(ctx->cso, ctx->vs);
+   set_fragment_shader(ctx, TGSI_WRITEMASK_XYZW);
+   set_vertex_shader(ctx);
 
    /* drawing dest */
    memset(&fb, 0, sizeof(fb));
