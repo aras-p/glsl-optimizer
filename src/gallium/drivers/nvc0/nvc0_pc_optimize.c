@@ -240,8 +240,6 @@ is_immd32_load(struct nv_instruction *nvi)
 static INLINE void
 check_swap_src_0_1(struct nv_instruction *nvi)
 {
-   static const uint8_t cc_swapped[8] = { 0, 4, 2, 6, 1, 5, 3, 7 };
-
    struct nv_ref *src0 = nvi->src[0];
    struct nv_ref *src1 = nvi->src[1];
 
@@ -270,7 +268,7 @@ check_swap_src_0_1(struct nv_instruction *nvi)
 
    if (nvi->src[0] != src0) {
       if (NV_BASEOP(nvi->opcode) == NV_OP_SET)
-         nvi->set_cond = (nvi->set_cond & ~7) | cc_swapped[nvi->set_cond & 7];
+         nvi->set_cond = nvc0_ir_reverse_cc(nvi->set_cond);
       else
       if (NV_BASEOP(nvi->opcode) == NV_OP_SLCT)
          nvi->set_cond = NV_CC_INVERSE(nvi->set_cond);
@@ -363,7 +361,7 @@ nv_pass_lower_mods(struct nv_pass *ctx, struct nv_basic_block *b)
             mod = 0;
          }
 
-         if ((nv_op_supported_src_mods(nvi->opcode) & mod) != mod)
+         if ((nv_op_supported_src_mods(nvi->opcode, j) & mod) != mod)
             continue;
 
          nv_reference(ctx->pc, nvi, j, mi->src[0]->value);

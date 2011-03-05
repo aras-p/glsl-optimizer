@@ -610,6 +610,8 @@ emit_selp(struct nv_pc *pc, struct nv_instruction *i)
 static void
 emit_slct(struct nv_pc *pc, struct nv_instruction *i)
 {
+   uint8_t cc = i->set_cond;
+
    pc->emit[0] = 0x00000000;
 
    switch (i->opcode) {
@@ -627,7 +629,10 @@ emit_slct(struct nv_pc *pc, struct nv_instruction *i)
 
    emit_form_0(pc, i);
 
-   pc->emit[1] |= i->set_cond << 23;
+   if (i->src[2]->mod & NV_MOD_NEG)
+      cc = nvc0_ir_reverse_cc(cc);
+
+   pc->emit[1] |= cc << 23;
 }
 
 static void
