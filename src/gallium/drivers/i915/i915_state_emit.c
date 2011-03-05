@@ -119,7 +119,7 @@ validate_immediate(struct i915_context *i915, unsigned *batch_space)
                      1 << I915_IMMEDIATE_S5 | 1 << I915_IMMEDIATE_S6) &
                     i915->immediate_dirty;
 
-   if (i915->immediate_dirty & (1 << I915_IMMEDIATE_S0))
+   if (i915->immediate_dirty & (1 << I915_IMMEDIATE_S0) && i915->vbo)
       i915->validation_buffers[i915->num_validation_buffers++] = i915->vbo;
 
    *batch_space = 1 + util_bitcount(dirty);
