@@ -96,8 +96,8 @@ static void st_client_wait_sync(struct gl_context *ctx,
    /* We don't care about GL_SYNC_FLUSH_COMMANDS_BIT, because flush is
     * already called when creating a fence. */
 
-   if (so->fence) {
-      screen->fence_finish(screen, so->fence, 0);
+   if (so->fence &&
+       screen->fence_finish(screen, so->fence, 0, timeout) == 0) {
       screen->fence_reference(screen, &so->fence, NULL);
       so->b.StatusFlag = GL_TRUE;
    }

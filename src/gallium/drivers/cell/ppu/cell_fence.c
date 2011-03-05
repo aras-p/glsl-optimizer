@@ -47,7 +47,8 @@ cell_fence_init(struct cell_fence *fence)
 
 boolean
 cell_fence_signalled(const struct cell_context *cell,
-                     const struct cell_fence *fence)
+                     const struct cell_fence *fence,
+                     unsigned flags)
 {
    uint i;
    for (i = 0; i < cell->num_spus; i++) {
@@ -61,7 +62,9 @@ cell_fence_signalled(const struct cell_context *cell,
 
 void
 cell_fence_finish(const struct cell_context *cell,
-                  const struct cell_fence *fence)
+                  const struct cell_fence *fence,
+                  unsigned flags,
+                  uint64_t timeout)
 {
    while (!cell_fence_signalled(cell, fence)) {
       usleep(10);

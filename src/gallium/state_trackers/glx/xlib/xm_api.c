@@ -1227,7 +1227,8 @@ void XMesaFlush( XMesaContext c )
 
       c->st->flush(c->st, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, &fence);
       if (fence) {
-         xmdpy->screen->fence_finish(xmdpy->screen, fence, 0);
+         xmdpy->screen->fence_finish(xmdpy->screen, fence, 0,
+                                     PIPE_TIMEOUT_INFINITE);
          xmdpy->screen->fence_reference(xmdpy->screen, &fence, NULL);
       }
       XFlush( c->xm_visual->display );

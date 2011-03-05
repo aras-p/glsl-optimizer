@@ -292,14 +292,16 @@ galahad_screen_fence_signalled(struct pipe_screen *_screen,
 static int
 galahad_screen_fence_finish(struct pipe_screen *_screen,
                              struct pipe_fence_handle *fence,
-                             unsigned flags)
+                             unsigned flags,
+                             uint64_t timeout)
 {
    struct galahad_screen *glhd_screen = galahad_screen(_screen);
    struct pipe_screen *screen = glhd_screen->screen;
 
    return screen->fence_finish(screen,
                                fence,
-                               flags);
+                               flags,
+                               timeout);
 }
 
 struct pipe_screen *

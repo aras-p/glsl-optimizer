@@ -193,11 +193,13 @@ struct pipe_screen {
    /**
     * Wait for the fence to finish.
     * \param flags  driver-specific meaning
+    * \param timeout  in nanoseconds
     * \return zero on success.
     */
    int (*fence_finish)( struct pipe_screen *screen,
                         struct pipe_fence_handle *fence,
-                        unsigned flags );
+                        unsigned flags,
+                        uint64_t timeout );
 
 };
 

@@ -109,7 +109,7 @@ egl_g3d_wait_fence_sync(struct egl_g3d_sync *gsync, EGLTimeKHR timeout)
 
       _eglUnlockMutex(&dpy->Mutex);
       /* no timed finish? */
-      screen->fence_finish(screen, fence, 0x0);
+      screen->fence_finish(screen, fence, 0x0, PIPE_TIMEOUT_INFINITE);
       ret = EGL_CONDITION_SATISFIED_KHR;
       _eglLockMutex(&dpy->Mutex);
 

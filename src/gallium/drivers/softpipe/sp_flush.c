@@ -162,7 +162,8 @@ softpipe_flush_resource(struct pipe_context *pipe,
              * This is for illustrative purposes only, as softpipe does not
              * have fences.
              */
-            pipe->screen->fence_finish(pipe->screen, fence, 0);
+            pipe->screen->fence_finish(pipe->screen, fence, 0,
+                                       PIPE_TIMEOUT_INFINITE);
             pipe->screen->fence_reference(pipe->screen, &fence, NULL);
          }
       } else {

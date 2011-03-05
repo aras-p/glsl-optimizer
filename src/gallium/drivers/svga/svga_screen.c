@@ -425,7 +425,8 @@ svga_fence_signalled(struct pipe_screen *screen,
 static int
 svga_fence_finish(struct pipe_screen *screen,
                   struct pipe_fence_handle *fence,
-                  unsigned flag)
+                  unsigned flag,
+                  uint64_t timeout)
 {
    struct svga_winsys_screen *sws = svga_screen(screen)->sws;
 

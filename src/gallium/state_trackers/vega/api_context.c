@@ -74,7 +74,8 @@ void vegaFinish(void)
 
    pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, &fence);
    if (fence) {
-      pipe->screen->fence_finish(pipe->screen, fence, 0);
+      pipe->screen->fence_finish(pipe->screen, fence, 0,
+                                 PIPE_TIMEOUT_INFINITE);
       pipe->screen->fence_reference(pipe->screen, &fence, NULL);
    }
 }

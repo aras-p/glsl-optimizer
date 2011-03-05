@@ -159,7 +159,8 @@ struct pipe_winsys
     */
    int (*fence_finish)( struct pipe_winsys *ws,
                         struct pipe_fence_handle *fence,
-                        unsigned flag );
+                        unsigned flags,
+                        uint64_t timeout );
 
 };
 

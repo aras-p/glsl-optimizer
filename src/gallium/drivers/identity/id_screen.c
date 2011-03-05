@@ -258,14 +258,16 @@ identity_screen_fence_signalled(struct pipe_screen *_screen,
 static int
 identity_screen_fence_finish(struct pipe_screen *_screen,
                              struct pipe_fence_handle *fence,
-                             unsigned flags)
+                             unsigned flags,
+                             uint64_t timeout)
 {
    struct identity_screen *id_screen = identity_screen(_screen);
    struct pipe_screen *screen = id_screen->screen;
 
    return screen->fence_finish(screen,
                                fence,
-                               flags);
+                               flags,
+                               timeout);
 }
 
 struct pipe_screen *

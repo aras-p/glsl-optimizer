@@ -434,7 +434,8 @@ static int r300_fence_signalled(struct pipe_screen *screen,
 
 static int r300_fence_finish(struct pipe_screen *screen,
                              struct pipe_fence_handle *fence,
-                             unsigned flags)
+                             unsigned flags,
+                             uint64_t timeout)
 {
     struct r300_winsys_screen *rws = r300_screen(screen)->rws;
     struct r300_winsys_bo *rfence = (struct r300_winsys_bo*)fence;

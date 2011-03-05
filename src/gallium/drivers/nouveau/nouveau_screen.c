@@ -165,7 +165,8 @@ nouveau_screen_fence_signalled(struct pipe_screen *screen,
 static int
 nouveau_screen_fence_finish(struct pipe_screen *screen,
 			    struct pipe_fence_handle *pfence,
-			    unsigned flags)
+                            unsigned flags,
+                            uint64_t timeout)
 {
 	return !nouveau_fence_wait(nouveau_fence(pfence));
 }

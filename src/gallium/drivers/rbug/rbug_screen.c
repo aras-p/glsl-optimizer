@@ -256,14 +256,16 @@ rbug_screen_fence_signalled(struct pipe_screen *_screen,
 static int
 rbug_screen_fence_finish(struct pipe_screen *_screen,
                          struct pipe_fence_handle *fence,
-                         unsigned flags)
+                         unsigned flags,
+                         uint64_t timeout)
 {
    struct rbug_screen *rb_screen = rbug_screen(_screen);
    struct pipe_screen *screen = rb_screen->screen;
 
    return screen->fence_finish(screen,
                                fence,
-                               flags);
+                               flags,
+                               timeout);
 }
 
 boolean

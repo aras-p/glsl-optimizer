@@ -331,7 +331,8 @@ i915_fence_signalled(struct pipe_screen *screen,
 static int
 i915_fence_finish(struct pipe_screen *screen,
                   struct pipe_fence_handle *fence,
-                  unsigned flags)
+                  unsigned flags,
+                  uint64_t timeout)
 {
    struct i915_screen *is = i915_screen(screen);
 

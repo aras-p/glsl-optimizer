@@ -421,7 +421,8 @@ trace_screen_fence_signalled(struct pipe_screen *_screen,
 static int
 trace_screen_fence_finish(struct pipe_screen *_screen,
                           struct pipe_fence_handle *fence,
-                          unsigned flags)
+                          unsigned flags,
+                          uint64_t timeout)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
    struct pipe_screen *screen = tr_scr->screen;
@@ -432,8 +433,9 @@ trace_screen_fence_finish(struct pipe_screen *_screen,
    trace_dump_arg(ptr, screen);
    trace_dump_arg(ptr, fence);
    trace_dump_arg(uint, flags);
+   trace_dump_arg(uint, timeout);
 
-   result = screen->fence_finish(screen, fence, flags);
+   result = screen->fence_finish(screen, fence, flags, timeout);
 
    trace_dump_ret(int, result);
 

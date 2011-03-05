@@ -103,7 +103,8 @@ void st_finish( struct st_context *st )
    st_flush(st, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, &fence);
 
    if(fence) {
-      st->pipe->screen->fence_finish(st->pipe->screen, fence, 0);
+      st->pipe->screen->fence_finish(st->pipe->screen, fence, 0,
+                                     PIPE_TIMEOUT_INFINITE);
       st->pipe->screen->fence_reference(st->pipe->screen, &fence, NULL);
    }
 }

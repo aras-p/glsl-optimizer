@@ -1084,7 +1084,8 @@ void xorg_exa_finish(struct exa_context *exa)
 
    xorg_exa_flush(exa, PIPE_FLUSH_RENDER_CACHE, &fence);
 
-   exa->pipe->screen->fence_finish(exa->pipe->screen, fence, 0);
+   exa->pipe->screen->fence_finish(exa->pipe->screen, fence, 0,
+                                   PIPE_TIMEOUT_INFINITE);
    exa->pipe->screen->fence_reference(exa->pipe->screen, &fence, NULL);
 }
 

@@ -365,7 +365,8 @@ llvmpipe_fence_signalled(struct pipe_screen *screen,
 static int
 llvmpipe_fence_finish(struct pipe_screen *screen,
                       struct pipe_fence_handle *fence_handle,
-                      unsigned flag)
+                      unsigned flag,
+                      uint64_t timeout)
 {
    struct lp_fence *f = (struct lp_fence *) fence_handle;
 

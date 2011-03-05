@@ -376,7 +376,8 @@ brw_fence_signalled(struct pipe_screen *screen,
 static int
 brw_fence_finish(struct pipe_screen *screen,
                  struct pipe_fence_handle *fence,
-                 unsigned flags)
+                 unsigned flags,
+                 uint64_t timeout)
 {
    return 0;
 }

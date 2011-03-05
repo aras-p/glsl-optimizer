@@ -426,6 +426,8 @@ enum pipe_transfer_usage {
 #define PIPE_SWIZZLE_ONE   5
 
 
+#define PIPE_TIMEOUT_INFINITE 0xffffffffffffffffull
+
 /**
  * Implementation capabilities/limits which are queried through
  * pipe_screen::get_param() and pipe_screen::get_paramf().

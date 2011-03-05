@@ -54,7 +54,8 @@ softpipe_fence_signalled(struct pipe_screen *screen,
 static int
 softpipe_fence_finish(struct pipe_screen *screen,
                       struct pipe_fence_handle *fence,
-                      unsigned flags)
+                      unsigned flags,
+                      uint64_t timeout)
 {
    assert(!fence);
    return 0;
