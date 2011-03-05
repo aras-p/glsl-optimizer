@@ -2196,14 +2196,6 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 
 	r600_bc_add_cfinst(&bc, BC_INST(&bc, V_SQ_CF_WORD1_SQ_CF_INST_RETURN));
 
-	/* use PIPE_BIND_VERTEX_BUFFER so we use the cache buffer manager */
-	ve->fetch_shader = r600_bo(rctx->radeon, bc.ndw*4, 256, PIPE_BIND_VERTEX_BUFFER, 0);
-	if (ve->fetch_shader == NULL) {
-		r600_bc_clear(&bc);
-		return -ENOMEM;
-	}
-
-	ve->fs_size = bc.ndw*4;
 	if ((r = r600_bc_build(&bc))) {
 		r600_bc_clear(&bc);
 		return r;
@@ -2216,6 +2208,15 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 		fprintf(stderr, "--------------------------------------------------------------\n");
 		r600_bc_dump(&bc);
 		fprintf(stderr, "______________________________________________________________\n");
+	}
+
+	ve->fs_size = bc.ndw*4;
+
+	/* use PIPE_BIND_VERTEX_BUFFER so we use the cache buffer manager */
+	ve->fetch_shader = r600_bo(rctx->radeon, ve->fs_size, 256, PIPE_BIND_VERTEX_BUFFER, 0);
+	if (ve->fetch_shader == NULL) {
+		r600_bc_clear(&bc);
+		return -ENOMEM;
 	}
 
 	bytecode = r600_bo_map(rctx->radeon, ve->fetch_shader, 0, NULL);
