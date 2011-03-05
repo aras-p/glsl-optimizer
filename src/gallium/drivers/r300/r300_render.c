@@ -305,6 +305,18 @@ static boolean r300_prepare_for_rendering(struct r300_context *r300,
                                           int index_bias,
                                           int instance_id)
 {
+    /* Update vertex elements for InstanceID here. */
+    boolean instancing_enabled = instance_id != -1;
+
+    if (r300->screen->caps.has_tcl &&
+        (flags & PREP_EMIT_AOS) &&
+        instancing_enabled != r300->instancing_enabled) {
+        r300->instancing_enabled = instancing_enabled;
+        r300_mark_atom_dirty(r300, &r300->vertex_stream_state);
+        r300->vertex_arrays_dirty = TRUE;
+        flags |= PREP_EMIT_STATES;
+    }
+
     /* Make sure there is enough space in the command stream and emit states. */
     if (r300_reserve_cs_dwords(r300, flags, cs_dwords))
         flags |= PREP_EMIT_STATES;

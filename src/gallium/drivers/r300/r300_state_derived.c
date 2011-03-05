@@ -133,7 +133,9 @@ static void r300_draw_emit_all_attribs(struct r300_context* r300)
 /* Update the PSC tables for SW TCL, using Draw. */
 static void r300_swtcl_vertex_psc(struct r300_context *r300)
 {
-    struct r300_vertex_stream_state *vstream = r300->vertex_stream_state.state;
+    struct r300_vertex_element_state *velems =
+            (struct r300_vertex_element_state*)r300->vertex_stream_state.state;
+    struct r300_vertex_stream_state *vstream = &velems->vertex_stream;
     struct vertex_info *vinfo = &r300->vertex_info;
     uint16_t type, swizzle;
     enum pipe_format format;
