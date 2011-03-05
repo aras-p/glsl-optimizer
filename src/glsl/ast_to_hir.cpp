@@ -2693,8 +2693,11 @@ ast_declarator_list::hir(exec_list *instructions,
        * instruction stream.
        */
       exec_list initializer_instructions;
+      ir_variable *earlier = get_variable_being_redeclared(var, decl, state);
+
       if (decl->initializer != NULL) {
-	 result = process_initializer(var, decl, this->type,
+	 result = process_initializer((earlier == NULL) ? var : earlier,
+				      decl, this->type,
 				      &initializer_instructions, state);
       }
 
@@ -2710,52 +2713,50 @@ ast_declarator_list::hir(exec_list *instructions,
 			  decl->identifier);
       }
 
-      ir_variable *earlier = get_variable_being_redeclared(var, decl, state);
-      if (earlier != NULL) {
-	 continue;
+      /* If the declaration is not a redeclaration, there are a few additional
+       * semantic checks that must be applied.  In addition, variable that was
+       * created for the declaration should be added to the IR stream.
+       */
+      if (earlier == NULL) {
+	 /* From page 15 (page 21 of the PDF) of the GLSL 1.10 spec,
+	  *
+	  *   "Identifiers starting with "gl_" are reserved for use by
+	  *   OpenGL, and may not be declared in a shader as either a
+	  *   variable or a function."
+	  */
+	 if (strncmp(decl->identifier, "gl_", 3) == 0)
+	    _mesa_glsl_error(& loc, state,
+			     "identifier `%s' uses reserved `gl_' prefix",
+			     decl->identifier);
+
+	 /* Add the variable to the symbol table.  Note that the initializer's
+	  * IR was already processed earlier (though it hasn't been emitted
+	  * yet), without the variable in scope.
+	  *
+	  * This differs from most C-like languages, but it follows the GLSL
+	  * specification.  From page 28 (page 34 of the PDF) of the GLSL 1.50
+	  * spec:
+	  *
+	  *     "Within a declaration, the scope of a name starts immediately
+	  *     after the initializer if present or immediately after the name
+	  *     being declared if not."
+	  */
+	 if (!state->symbols->add_variable(var)) {
+	    YYLTYPE loc = this->get_location();
+	    _mesa_glsl_error(&loc, state, "name `%s' already taken in the "
+			     "current scope", decl->identifier);
+	    continue;
+	 }
+
+	 /* Push the variable declaration to the top.  It means that all the
+	  * variable declarations will appear in a funny last-to-first order,
+	  * but otherwise we run into trouble if a function is prototyped, a
+	  * global var is decled, then the function is defined with usage of
+	  * the global var.  See glslparsertest's CorrectModule.frag.
+	  */
+	 instructions->push_head(var);
       }
 
-      /* By now, we know it's a new variable declaration (we didn't hit the
-       * above "continue").
-       *
-       * From page 15 (page 21 of the PDF) of the GLSL 1.10 spec,
-       *
-       *   "Identifiers starting with "gl_" are reserved for use by
-       *   OpenGL, and may not be declared in a shader as either a
-       *   variable or a function."
-       */
-      if (strncmp(decl->identifier, "gl_", 3) == 0)
-	 _mesa_glsl_error(& loc, state,
-			  "identifier `%s' uses reserved `gl_' prefix",
-			  decl->identifier);
-
-      /* Add the variable to the symbol table.  Note that the initializer's
-       * IR was already processed earlier (though it hasn't been emitted yet),
-       * without the variable in scope.
-       *
-       * This differs from most C-like languages, but it follows the GLSL
-       * specification.  From page 28 (page 34 of the PDF) of the GLSL 1.50
-       * spec:
-       *
-       *     "Within a declaration, the scope of a name starts immediately
-       *     after the initializer if present or immediately after the name
-       *     being declared if not."
-       */
-      if (!state->symbols->add_variable(var)) {
-	 YYLTYPE loc = this->get_location();
-	 _mesa_glsl_error(&loc, state, "name `%s' already taken in the "
-			  "current scope", decl->identifier);
-	 continue;
-      }
-
-      /* Push the variable declaration to the top.  It means that all
-       * the variable declarations will appear in a funny
-       * last-to-first order, but otherwise we run into trouble if a
-       * function is prototyped, a global var is decled, then the
-       * function is defined with usage of the global var.  See
-       * glslparsertest's CorrectModule.frag.
-       */
-      instructions->push_head(var);
       instructions->append_list(&initializer_instructions);
    }
 
