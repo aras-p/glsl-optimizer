@@ -110,6 +110,7 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
    case PIPE_CAP_TWO_SIDED_STENCIL:
+   case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
       return 1;
 
    /* Features that should be supported (boolean caps). */
@@ -120,7 +121,6 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    /* Unsupported features (boolean caps). */
    case PIPE_CAP_ARRAY_TEXTURES:
    case PIPE_CAP_DEPTH_CLAMP:
-   case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE: /* disable for now */
    case PIPE_CAP_GLSL:
    case PIPE_CAP_INDEP_BLEND_ENABLE:
    case PIPE_CAP_INDEP_BLEND_FUNC:
