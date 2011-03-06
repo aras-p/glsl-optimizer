@@ -174,11 +174,20 @@ pb_malloc_bufmgr_destroy(struct pb_manager *mgr)
 }
 
 
+static boolean
+pb_malloc_bufmgr_is_buffer_busy( struct pb_manager *mgr,
+                                 struct pb_buffer *buf )
+{
+   return FALSE;
+}
+
+
 static struct pb_manager 
 pb_malloc_bufmgr = {
    pb_malloc_bufmgr_destroy,
    pb_malloc_bufmgr_create_buffer,
-   pb_malloc_bufmgr_flush
+   pb_malloc_bufmgr_flush,
+   pb_malloc_bufmgr_is_buffer_busy
 };
 
 
