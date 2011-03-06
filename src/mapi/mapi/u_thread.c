@@ -113,11 +113,6 @@ u_tsd_set(struct u_tsd *tsd, void *ptr)
  */
 #ifdef WIN32
 
-static void InsteadOf_exit(int nCode)
-{
-   DWORD dwErr = GetLastError();
-}
-
 unsigned long
 u_thread_self(void)
 {
@@ -131,7 +126,7 @@ u_tsd_init(struct u_tsd *tsd)
    tsd->key = TlsAlloc();
    if (tsd->key == TLS_OUT_OF_INDEXES) {
       perror(INIT_TSD_ERROR);
-      InsteadOf_exit(-1);
+      exit(-1);
    }
    tsd->initMagic = INIT_MAGIC;
 }
@@ -168,7 +163,7 @@ u_tsd_set(struct u_tsd *tsd, void *ptr)
    }
    if (TlsSetValue(tsd->key, ptr) == 0) {
       perror(SET_TSD_ERROR);
-      InsteadOf_exit(-1);
+      exit(-1);
    }
 }
 

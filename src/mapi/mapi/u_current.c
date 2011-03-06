@@ -144,15 +144,7 @@ u_current_init_tsd(void)
 /**
  * Mutex for multithread check.
  */
-#ifdef WIN32
-/* _glthread_DECLARE_STATIC_MUTEX is broken on windows.  There will be race! */
-#define CHECK_MULTITHREAD_LOCK()
-#define CHECK_MULTITHREAD_UNLOCK()
-#else
 u_mutex_declare_static(ThreadCheckMutex);
-#define CHECK_MULTITHREAD_LOCK() u_mutex_lock(ThreadCheckMutex)
-#define CHECK_MULTITHREAD_UNLOCK() u_mutex_unlock(ThreadCheckMutex)
-#endif
 
 /**
  * We should call this periodically from a function such as glXMakeCurrent
@@ -167,7 +159,7 @@ u_current_init(void)
    if (ThreadSafe)
       return;
 
-   CHECK_MULTITHREAD_LOCK();
+   u_mutex_lock(ThreadCheckMutex);
    if (firstCall) {
       u_current_init_tsd();
 
@@ -179,7 +171,7 @@ u_current_init(void)
       u_current_set(NULL);
       u_current_set_user(NULL);
    }
-   CHECK_MULTITHREAD_UNLOCK();
+   u_mutex_unlock(ThreadCheckMutex);
 }
 
 #else

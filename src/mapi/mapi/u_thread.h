@@ -97,7 +97,7 @@ typedef CRITICAL_SECTION u_mutex;
 
 /* http://locklessinc.com/articles/pthreads_on_windows/ */
 #define u_mutex_declare_static(name) \
-   /* static */ u_mutex name = {(void*)-1, -1, 0, 0, 0, 0}
+   static u_mutex name = {(PCRITICAL_SECTION_DEBUG)-1, -1, 0, 0, 0, 0}
 
 #define u_mutex_init(name)    InitializeCriticalSection(&name)
 #define u_mutex_destroy(name) DeleteCriticalSection(&name)
