@@ -41,8 +41,6 @@
 #include "stw_framebuffer.h"
 #include "stw_st.h"
 
-extern _glthread_Mutex OneTimeLock;
-
 
 struct stw_device *stw_dev = NULL;
 
@@ -73,8 +71,6 @@ stw_init(const struct stw_winsys *stw_winsys)
 #endif
    
    stw_dev->stw_winsys = stw_winsys;
-
-   _glthread_INIT_MUTEX(OneTimeLock);
 
    stw_dev->stapi = stw_st_create_api();
    stw_dev->smapi = CALLOC_STRUCT(st_manager);
@@ -167,8 +163,6 @@ stw_cleanup(void)
    stw_dev->stapi->destroy(stw_dev->stapi);
 
    stw_dev->screen->destroy(stw_dev->screen);
-
-   _glthread_DESTROY_MUTEX(OneTimeLock);
 
    /* glapi is statically linked: we can call the local destroy function. */
 #ifdef _GLAPI_NO_EXPORTS
