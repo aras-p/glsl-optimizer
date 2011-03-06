@@ -79,7 +79,11 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
    else
       format = st_choose_renderbuffer_format(screen, internalFormat,
                                              rb->NumSamples);
-      
+
+   if (format == PIPE_FORMAT_NONE) {
+      return FALSE;
+   }
+
    /* init renderbuffer fields */
    strb->Base.Width  = width;
    strb->Base.Height = height;
