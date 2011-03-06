@@ -152,8 +152,9 @@ static INLINE int pipe_thread_destroy( pipe_thread thread )
  */
 typedef CRITICAL_SECTION pipe_mutex;
 
+/* http://locklessinc.com/articles/pthreads_on_windows/ */
 #define pipe_static_mutex(mutex) \
-   /*static*/ pipe_mutex mutex = {0,0,0,0,0,0}
+   static pipe_mutex mutex = {(PCRITICAL_SECTION_DEBUG)-1, -1, 0, 0, 0, 0}
 
 #define pipe_mutex_init(mutex) \
    InitializeCriticalSection(&mutex)
