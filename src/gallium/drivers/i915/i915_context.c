@@ -103,6 +103,9 @@ static void i915_destroy(struct pipe_context *pipe)
    int i;
 
    draw_destroy(i915->draw);
+
+   if (i915->blitter)
+      util_blitter_destroy(i915->blitter);
    
    if(i915->batch)
       i915->iws->batchbuffer_destroy(i915->batch);
@@ -166,6 +169,10 @@ i915_create_context(struct pipe_screen *screen, void *priv)
 
    draw_install_aaline_stage(i915->draw, &i915->base);
    draw_install_aapoint_stage(i915->draw, &i915->base);
+
+   /* Create blitter last - calls state creation functions. */
+   i915->blitter = util_blitter_create(&i915->base);
+   assert(i915->blitter);
 
    i915->dirty = ~0;
    i915->hardware_dirty = ~0;

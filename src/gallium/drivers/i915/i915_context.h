@@ -38,6 +38,7 @@
 #include "tgsi/tgsi_scan.h"
 
 #include "util/u_slab.h"
+#include "util/u_blitter.h"
 
 
 struct i915_winsys;
@@ -239,6 +240,8 @@ struct i915_context {
 
    struct i915_winsys_batchbuffer *batch;
 
+   struct blitter_context* blitter;
+
    /** Vertex buffer */
    struct i915_winsys_buffer *vbo;
    size_t vbo_offset;
@@ -332,6 +335,9 @@ void i915_clear_blitter(struct pipe_context *pipe, unsigned buffers, const float
                         double depth, unsigned stencil);
 void i915_clear_render(struct pipe_context *pipe, unsigned buffers, const float *rgba,
                        double depth, unsigned stencil);
+void i915_clear_emit(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+                     double depth, unsigned stencil,
+                     unsigned destx, unsigned desty, unsigned width, unsigned height);
 
 
 /***********************************************************************

@@ -40,7 +40,7 @@
 #include "i915_resource.h"
 #include "i915_state.h"
 
-static void
+void
 i915_clear_emit(struct pipe_context *pipe, unsigned buffers, const float *rgba,
                 double depth, unsigned stencil,
                 unsigned destx, unsigned desty, unsigned width, unsigned height)
