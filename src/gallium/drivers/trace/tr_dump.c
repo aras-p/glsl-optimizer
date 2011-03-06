@@ -60,10 +60,9 @@
 
 static struct os_stream *stream = NULL;
 static unsigned refcount = 0;
-static pipe_mutex call_mutex;
+pipe_static_mutex(call_mutex);
 static long unsigned call_no = 0;
 static boolean dumping = FALSE;
-static boolean initialized = FALSE;
 
 
 static INLINE void
@@ -225,25 +224,12 @@ trace_dump_trace_close(void)
       stream = NULL;
       refcount = 0;
       call_no = 0;
-      pipe_mutex_destroy(call_mutex);
    }
-}
-
-void trace_dump_init()
-{
-   if (initialized)
-      return;
-
-   pipe_mutex_init(call_mutex);
-   dumping = FALSE;
-   initialized = TRUE;
 }
 
 boolean trace_dump_trace_begin()
 {
    const char *filename;
-
-   assert(initialized);
 
    filename = debug_get_option("GALLIUM_TRACE", NULL);
    if(!filename)

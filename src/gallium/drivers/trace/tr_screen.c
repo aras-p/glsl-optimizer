@@ -472,8 +472,6 @@ trace_enabled(void)
       return trace;
    firstrun = FALSE;
 
-   trace_dump_init();
-
    if(trace_dump_trace_begin()) {
       trace_dumping_start();
       trace = TRUE;
