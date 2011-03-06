@@ -66,7 +66,6 @@ i915_surface_copy(struct pipe_context *pipe,
       assert(src_box->z == 0);
    src_offset = i915_texture_offset(src_tex, src_level, src_box->z);
 
-   assert( dst != src );
    assert( util_format_get_blocksize(dpt->format) == util_format_get_blocksize(spt->format) );
    assert( util_format_get_blockwidth(dpt->format) == util_format_get_blockwidth(spt->format) );
    assert( util_format_get_blockheight(dpt->format) == util_format_get_blockheight(spt->format) );
