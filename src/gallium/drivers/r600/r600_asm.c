@@ -2102,7 +2102,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 			alu.src[0].chan = 3;
 
 			alu.src[1].sel = V_SQ_ALU_SRC_LITERAL;
-			alu.src[1].value = (1l << 32) / elements[i].instance_divisor + 1;
+			alu.src[1].value = (1ll << 32) / elements[i].instance_divisor + 1;
 
 			alu.dst.sel = i + 1;
 			alu.dst.chan = 3;
