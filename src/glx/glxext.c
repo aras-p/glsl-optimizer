@@ -547,7 +547,7 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
          break;
 #endif
       case GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT:
-         config->framebuffer_srgb_capable = *bp++;
+         config->sRGBCapable = *bp++;
          break;
 
       case GLX_USE_GL:

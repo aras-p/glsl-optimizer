@@ -189,7 +189,7 @@ glx_config_get(struct glx_config * mode, int attribute, int *value_return)
       return 0;
 
    case GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT:
-      *value_return = mode->framebuffer_srgb_capable;
+      *value_return = mode->sRGBCapable;
       return 0;
 
       /* Applications are NOT allowed to query GLX_VISUAL_SELECT_GROUP_SGIX.
@@ -255,7 +255,7 @@ glx_config_create_list(unsigned count)
       (*next)->bindToMipmapTexture = GLX_DONT_CARE;
       (*next)->bindToTextureTargets = GLX_DONT_CARE;
       (*next)->yInverted = GLX_DONT_CARE;
-      (*next)->framebuffer_srgb_capable = GLX_DONT_CARE;
+      (*next)->sRGBCapable = GLX_DONT_CARE;
 
       next = &((*next)->next);
    }

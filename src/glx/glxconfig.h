@@ -102,7 +102,7 @@ struct glx_config {
     GLint yInverted;
 
     /* EXT_framebuffer_sRGB */
-    GLint framebuffer_srgb_capable;
+    GLint sRGBCapable;
 };
 
 #define __GLX_MIN_CONFIG_PROPS	18
