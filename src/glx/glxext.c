@@ -546,6 +546,10 @@ __glXInitializeVisualConfigFromTags(struct glx_config * config, int count,
          config->yInverted = *bp++;
          break;
 #endif
+      case GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT:
+         config->framebuffer_srgb_capable = *bp++;
+         break;
+
       case GLX_USE_GL:
          if (fbconfig_style_tags)
             bp++;

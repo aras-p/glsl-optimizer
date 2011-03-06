@@ -188,6 +188,10 @@ glx_config_get(struct glx_config * mode, int attribute, int *value_return)
       *value_return = mode->yInverted;
       return 0;
 
+   case GLX_FRAMEBUFFER_SRGB_CAPABLE_EXT:
+      *value_return = mode->framebuffer_srgb_capable;
+      return 0;
+
       /* Applications are NOT allowed to query GLX_VISUAL_SELECT_GROUP_SGIX.
        * It is ONLY for communication between the GLX client and the GLX
        * server.
@@ -251,6 +255,7 @@ glx_config_create_list(unsigned count)
       (*next)->bindToMipmapTexture = GLX_DONT_CARE;
       (*next)->bindToTextureTargets = GLX_DONT_CARE;
       (*next)->yInverted = GLX_DONT_CARE;
+      (*next)->framebuffer_srgb_capable = GLX_DONT_CARE;
 
       next = &((*next)->next);
    }
