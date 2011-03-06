@@ -642,7 +642,8 @@ static void i915_set_framebuffer_state(struct pipe_context *pipe,
    i915->framebuffer.height = fb->height;
    i915->framebuffer.nr_cbufs = fb->nr_cbufs;
    for (i = 0; i < PIPE_MAX_COLOR_BUFS; i++) {
-      pipe_surface_reference(&i915->framebuffer.cbufs[i], fb->cbufs[i]);
+      pipe_surface_reference(&i915->framebuffer.cbufs[i],
+                             i < fb->nr_cbufs ? fb->cbufs[i] : NULL);
    }
    pipe_surface_reference(&i915->framebuffer.zsbuf, fb->zsbuf);
 
