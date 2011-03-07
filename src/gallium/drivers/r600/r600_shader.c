@@ -1722,37 +1722,15 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	}
 
 	if (inst->Texture.Texture == TGSI_TEXTURE_CUBE) {
-		int src_chan, src2_chan;
+		static const unsigned src0_swizzle[] = {2, 2, 0, 1};
+		static const unsigned src1_swizzle[] = {1, 0, 2, 2};
 
 		/* tmp1.xyzw = CUBE(R0.zzxy, R0.yxzz) */
 		for (i = 0; i < 4; i++) {
 			memset(&alu, 0, sizeof(struct r600_bc_alu));
 			alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_CUBE);
-			switch (i) {
-			case 0:
-				src_chan = 2;
-				src2_chan = 1;
-				break;
-			case 1:
-				src_chan = 2;
-				src2_chan = 0;
-				break;
-			case 2:
-				src_chan = 0;
-				src2_chan = 2;
-				break;
-			case 3:
-				src_chan = 1;
-				src2_chan = 2;
-				break;
-			default:
-				assert(0);
-				src_chan = 0;
-				src2_chan = 0;
-				break;
-			}
-			r600_bc_src(&alu.src[0], &ctx->src[0], src_chan);
-			r600_bc_src(&alu.src[1], &ctx->src[0], src2_chan);
+			r600_bc_src(&alu.src[0], &ctx->src[0], src0_swizzle[i]);
+			r600_bc_src(&alu.src[1], &ctx->src[0], src1_swizzle[i]);
 			alu.dst.sel = ctx->temp_reg;
 			alu.dst.chan = i;
 			if (i == 3)
@@ -2027,6 +2005,8 @@ static int tgsi_cmp(struct r600_shader_ctx *ctx)
 static int tgsi_xpd(struct r600_shader_ctx *ctx)
 {
 	struct tgsi_full_instruction *inst = &ctx->parse.FullToken.FullInstruction;
+	static const unsigned int src0_swizzle[] = {2, 0, 1};
+	static const unsigned int src1_swizzle[] = {1, 2, 0};
 	struct r600_bc_alu alu;
 	uint32_t use_temp = 0;
 	int i, r;
@@ -2037,33 +2017,12 @@ static int tgsi_xpd(struct r600_shader_ctx *ctx)
 	for (i = 0; i < 4; i++) {
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL);
-
-		switch (i) {
-		case 0:
-			r600_bc_src(&alu.src[0], &ctx->src[0], 2);
-			break;
-		case 1:
-			r600_bc_src(&alu.src[0], &ctx->src[0], 0);
-			break;
-		case 2:
-			r600_bc_src(&alu.src[0], &ctx->src[0], 1);
-			break;
-		case 3:
+		if (i < 3) {
+			r600_bc_src(&alu.src[0], &ctx->src[0], src0_swizzle[i]);
+			r600_bc_src(&alu.src[1], &ctx->src[1], src1_swizzle[i]);
+		} else {
 			alu.src[0].sel = V_SQ_ALU_SRC_0;
 			alu.src[0].chan = i;
-		}
-
-		switch (i) {
-		case 0:
-			r600_bc_src(&alu.src[1], &ctx->src[1], 1);
-			break;
-		case 1:
-			r600_bc_src(&alu.src[1], &ctx->src[1], 2);
-			break;
-		case 2:
-			r600_bc_src(&alu.src[1], &ctx->src[1], 0);
-			break;
-		case 3:
 			alu.src[1].sel = V_SQ_ALU_SRC_0;
 			alu.src[1].chan = i;
 		}
@@ -2083,32 +2042,12 @@ static int tgsi_xpd(struct r600_shader_ctx *ctx)
 		memset(&alu, 0, sizeof(struct r600_bc_alu));
 		alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP3_SQ_OP3_INST_MULADD);
 
-		switch (i) {
-		case 0:
-			r600_bc_src(&alu.src[0], &ctx->src[0], 1);
-			break;
-		case 1:
-			r600_bc_src(&alu.src[0], &ctx->src[0], 2);
-			break;
-		case 2:
-			r600_bc_src(&alu.src[0], &ctx->src[0], 0);
-			break;
-		case 3:
+		if (i < 3) {
+			r600_bc_src(&alu.src[0], &ctx->src[0], src1_swizzle[i]);
+			r600_bc_src(&alu.src[1], &ctx->src[1], src0_swizzle[i]);
+		} else {
 			alu.src[0].sel = V_SQ_ALU_SRC_0;
 			alu.src[0].chan = i;
-		}
-
-		switch (i) {
-		case 0:
-			r600_bc_src(&alu.src[1], &ctx->src[1], 2);
-			break;
-		case 1:
-			r600_bc_src(&alu.src[1], &ctx->src[1], 0);
-			break;
-		case 2:
-			r600_bc_src(&alu.src[1], &ctx->src[1], 1);
-			break;
-		case 3:
 			alu.src[1].sel = V_SQ_ALU_SRC_0;
 			alu.src[1].chan = i;
 		}
