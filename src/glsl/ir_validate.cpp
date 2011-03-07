@@ -70,6 +70,7 @@ public:
    virtual ir_visitor_status visit_leave(ir_swizzle *ir);
 
    virtual ir_visitor_status visit_enter(ir_assignment *ir);
+   virtual ir_visitor_status visit_enter(ir_call *ir);
 
    static void validate_ir(ir_instruction *ir, void *data);
 
@@ -172,6 +173,19 @@ ir_validate::visit_enter(ir_function *ir)
    this->current_function = ir;
 
    this->validate_ir(ir, this->data);
+
+   /* Verify that all of the things stored in the list of signatures are,
+    * in fact, function signatures.
+    */
+   foreach_list(node, &ir->signatures) {
+      ir_instruction *sig = (ir_instruction *) node;
+
+      if (sig->ir_type != ir_type_function_signature) {
+	 printf("Non-signature in signature list of function `%s'\n",
+		ir->name);
+	 abort();
+      }
+   }
 
    return visit_continue;
 }
@@ -490,6 +504,19 @@ ir_validate::visit_enter(ir_assignment *ir)
    }
 
    this->validate_ir(ir, this->data);
+
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_validate::visit_enter(ir_call *ir)
+{
+   ir_function_signature *const callee = ir->get_callee();
+
+   if (callee->ir_type != ir_type_function_signature) {
+      printf("IR called by ir_call is not ir_function_signature!\n");
+      abort();
+   }
 
    return visit_continue;
 }
