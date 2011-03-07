@@ -103,7 +103,6 @@ drm_create_buffer(struct wl_client *client, struct wl_drm *drm,
 	buffer->buffer.width = width;
 	buffer->buffer.height = height;
 	buffer->buffer.visual = visual;
-	buffer->buffer.attach = NULL;
 
 	if (visual->object.interface != &wl_visual_interface) {
 		/* FIXME: Define a real exception event instead of
