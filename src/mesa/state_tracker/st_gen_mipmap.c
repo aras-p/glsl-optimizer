@@ -204,14 +204,10 @@ fallback_generate_mipmap(struct gl_context *ctx, GLenum target,
       _mesa_is_format_compressed(texObj->Image[face][baseLevel]->TexFormat);
 
    if (compressed) {
-      if (texObj->Image[face][baseLevel]->TexFormat == MESA_FORMAT_SIGNED_RED_RGTC1 ||
-          texObj->Image[face][baseLevel]->TexFormat == MESA_FORMAT_SIGNED_RG_RGTC2 ||
-          texObj->Image[face][baseLevel]->TexFormat == MESA_FORMAT_SIGNED_L_LATC1 ||
-          texObj->Image[face][baseLevel]->TexFormat == MESA_FORMAT_SIGNED_LA_LATC2)
-         datatype = GL_FLOAT;
-      else
-         datatype = GL_UNSIGNED_BYTE;
-      
+      GLenum type =
+         _mesa_get_format_datatype(texObj->Image[face][baseLevel]->TexFormat);
+
+      datatype = type == GL_UNSIGNED_NORMALIZED ? GL_UNSIGNED_BYTE : GL_FLOAT;
       comps = 4;
    }
    else {
