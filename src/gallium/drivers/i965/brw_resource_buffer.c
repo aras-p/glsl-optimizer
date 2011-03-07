@@ -91,30 +91,10 @@ brw_buffer_transfer_unmap( struct pipe_context *pipe,
 }
 
 
-static unsigned brw_buffer_is_referenced( struct pipe_context *pipe,
-                                          struct pipe_resource *resource,
-                                          unsigned level,
-                                          int layer)
-{
-   struct brw_context *brw = brw_context(pipe);
-   struct brw_winsys_buffer *batch_bo = brw->batch->buf;
-   struct brw_buffer *buf = brw_buffer(resource);
-
-   if (buf->bo == NULL)
-      return PIPE_UNREFERENCED;
-
-   if (!brw_screen(pipe->screen)->sws->bo_references( batch_bo, buf->bo ))
-      return PIPE_UNREFERENCED;
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
-
-
 struct u_resource_vtbl brw_buffer_vtbl = 
 {
    brw_buffer_get_handle,	     /* get_handle */
    brw_buffer_destroy,		     /* resource_destroy */
-   brw_buffer_is_referenced,	     /* is_resource_referenced */
    u_default_get_transfer,	     /* get_transfer */
    u_default_transfer_destroy,	     /* transfer_destroy */
    brw_buffer_transfer_map,	     /* transfer_map */

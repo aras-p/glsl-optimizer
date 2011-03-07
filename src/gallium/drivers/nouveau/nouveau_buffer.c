@@ -314,7 +314,6 @@ const struct u_resource_vtbl nouveau_buffer_vtbl =
 {
    u_default_resource_get_handle,     /* get_handle */
    nouveau_buffer_destroy,               /* resource_destroy */
-   NULL,                              /* is_resource_referenced */
    nouveau_buffer_transfer_get,          /* get_transfer */
    nouveau_buffer_transfer_destroy,      /* transfer_destroy */
    nouveau_buffer_transfer_map,          /* transfer_map */

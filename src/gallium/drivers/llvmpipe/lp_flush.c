@@ -118,10 +118,10 @@ llvmpipe_flush_resource(struct pipe_context *pipe,
 {
    unsigned referenced;
 
-   referenced = pipe->is_resource_referenced(pipe, resource, level, layer);
+   referenced = llvmpipe_is_resource_referenced(pipe, resource, level, layer);
 
-   if ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
-       ((referenced & PIPE_REFERENCED_FOR_READ) && !read_only)) {
+   if ((referenced & LP_REFERENCED_FOR_WRITE) ||
+       ((referenced & LP_REFERENCED_FOR_READ) && !read_only)) {
 
       if (cpu_access) {
          /*

@@ -148,13 +148,13 @@ softpipe_destroy( struct pipe_context *pipe )
 
 /**
  * if (the texture is being used as a framebuffer surface)
- *    return PIPE_REFERENCED_FOR_WRITE
+ *    return SP_REFERENCED_FOR_WRITE
  * else if (the texture is a bound texture source)
- *    return PIPE_REFERENCED_FOR_READ
+ *    return SP_REFERENCED_FOR_READ
  * else
- *    return PIPE_UNREFERENCED
+ *    return SP_UNREFERENCED
  */
-static unsigned int
+unsigned int
 softpipe_is_resource_referenced( struct pipe_context *pipe,
                                  struct pipe_resource *texture,
                                  unsigned level, int layer)
@@ -163,19 +163,19 @@ softpipe_is_resource_referenced( struct pipe_context *pipe,
    unsigned i;
 
    if (texture->target == PIPE_BUFFER)
-      return PIPE_UNREFERENCED;
+      return SP_UNREFERENCED;
 
    /* check if any of the bound drawing surfaces are this texture */
    if (softpipe->dirty_render_cache) {
       for (i = 0; i < softpipe->framebuffer.nr_cbufs; i++) {
          if (softpipe->framebuffer.cbufs[i] && 
              softpipe->framebuffer.cbufs[i]->texture == texture) {
-            return PIPE_REFERENCED_FOR_WRITE;
+            return SP_REFERENCED_FOR_WRITE;
          }
       }
       if (softpipe->framebuffer.zsbuf && 
           softpipe->framebuffer.zsbuf->texture == texture) {
-         return PIPE_REFERENCED_FOR_WRITE;
+         return SP_REFERENCED_FOR_WRITE;
       }
    }
    
@@ -183,20 +183,20 @@ softpipe_is_resource_referenced( struct pipe_context *pipe,
    for (i = 0; i < PIPE_MAX_SAMPLERS; i++) {
       if (softpipe->fragment_tex_cache[i] &&
           softpipe->fragment_tex_cache[i]->texture == texture)
-         return PIPE_REFERENCED_FOR_READ;
+         return SP_REFERENCED_FOR_READ;
    }
    for (i = 0; i < PIPE_MAX_VERTEX_SAMPLERS; i++) {
       if (softpipe->vertex_tex_cache[i] &&
           softpipe->vertex_tex_cache[i]->texture == texture)
-         return PIPE_REFERENCED_FOR_READ;
+         return SP_REFERENCED_FOR_READ;
    }
    for (i = 0; i < PIPE_MAX_GEOMETRY_SAMPLERS; i++) {
       if (softpipe->geometry_tex_cache[i] &&
           softpipe->geometry_tex_cache[i]->texture == texture)
-         return PIPE_REFERENCED_FOR_READ;
+         return SP_REFERENCED_FOR_READ;
    }
 
-   return PIPE_UNREFERENCED;
+   return SP_UNREFERENCED;
 }
 
 
@@ -256,8 +256,6 @@ softpipe_create_context( struct pipe_screen *screen,
 
    softpipe->pipe.clear = softpipe_clear;
    softpipe->pipe.flush = softpipe_flush;
-
-   softpipe->pipe.is_resource_referenced = softpipe_is_resource_referenced;
 
    softpipe->pipe.render_condition = softpipe_render_condition;
 

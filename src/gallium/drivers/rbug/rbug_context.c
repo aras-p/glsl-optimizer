@@ -812,23 +812,6 @@ rbug_flush(struct pipe_context *_pipe,
                fence);
 }
 
-static unsigned int
-rbug_is_resource_referenced(struct pipe_context *_pipe,
-                            struct pipe_resource *_resource,
-                            unsigned level,
-                            int layer)
-{
-   struct rbug_context *rb_pipe = rbug_context(_pipe);
-   struct rbug_resource *rb_resource = rbug_resource(_resource);
-   struct pipe_context *pipe = rb_pipe->pipe;
-   struct pipe_resource *resource = rb_resource->resource;
-
-   return pipe->is_resource_referenced(pipe,
-                                       resource,
-                                       level,
-                                       layer);
-}
-
 static struct pipe_sampler_view *
 rbug_context_create_sampler_view(struct pipe_context *_pipe,
                                  struct pipe_resource *_resource,
@@ -1077,7 +1060,6 @@ rbug_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    rb_pipe->base.clear_render_target = rbug_clear_render_target;
    rb_pipe->base.clear_depth_stencil = rbug_clear_depth_stencil;
    rb_pipe->base.flush = rbug_flush;
-   rb_pipe->base.is_resource_referenced = rbug_is_resource_referenced;
    rb_pipe->base.create_sampler_view = rbug_context_create_sampler_view;
    rb_pipe->base.sampler_view_destroy = rbug_context_sampler_view_destroy;
    rb_pipe->base.create_surface = rbug_context_create_surface;

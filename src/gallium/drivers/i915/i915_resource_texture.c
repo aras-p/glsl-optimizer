@@ -781,7 +781,6 @@ struct u_resource_vtbl i915_texture_vtbl =
 {
    i915_texture_get_handle,	      /* get_handle */
    i915_texture_destroy,	      /* resource_destroy */
-   NULL,			      /* is_resource_referenced */
    i915_texture_get_transfer,	      /* get_transfer */
    i915_transfer_destroy,	      /* transfer_destroy */
    i915_texture_transfer_map,	      /* transfer_map */

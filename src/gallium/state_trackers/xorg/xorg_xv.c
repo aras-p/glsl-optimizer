@@ -461,20 +461,6 @@ bind_shaders(struct xorg_xv_port_priv *port)
    cso_set_fragment_shader_handle(port->r->cso, shader.fs);
 }
 
-static INLINE void
-conditional_flush(struct pipe_context *pipe, struct pipe_resource **tex,
-                  int num)
-{
-   int i;
-   for (i = 0; i < num; ++i) {
-      if (tex[i] && pipe->is_resource_referenced(pipe, tex[i], 0, 0) &
-          PIPE_REFERENCED_FOR_WRITE) {
-         pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
-         return;
-      }
-   }
-}
-
 static void
 bind_samplers(struct xorg_xv_port_priv *port)
 {
@@ -484,8 +470,6 @@ bind_samplers(struct xorg_xv_port_priv *port)
    struct pipe_sampler_view **dst_views = port->yuv_views[port->current_set];
 
    memset(&sampler, 0, sizeof(struct pipe_sampler_state));
-
-   conditional_flush(port->r->pipe, dst, 3);
 
    sampler.wrap_s = PIPE_TEX_WRAP_CLAMP;
    sampler.wrap_t = PIPE_TEX_WRAP_CLAMP;

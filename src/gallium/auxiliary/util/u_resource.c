@@ -24,14 +24,6 @@ void u_resource_destroy_vtbl(struct pipe_screen *screen,
    ur->vtbl->resource_destroy(screen, resource);
 }
 
-unsigned u_is_resource_referenced_vtbl( struct pipe_context *pipe,
-                                        struct pipe_resource *resource,
-                                        unsigned level, int layer)
-{
-   struct u_resource *ur = u_resource(resource);
-   return ur->vtbl->is_resource_referenced(pipe, resource, level, layer);
-}
-
 struct pipe_transfer *u_get_transfer_vtbl(struct pipe_context *context,
                                           struct pipe_resource *resource,
                                           unsigned level,

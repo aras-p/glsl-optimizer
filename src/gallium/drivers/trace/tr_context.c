@@ -1219,31 +1219,6 @@ trace_context_destroy(struct pipe_context *_pipe)
    FREE(tr_ctx);
 }
 
-static unsigned int
-trace_is_resource_referenced( struct pipe_context *_pipe,
-                              struct pipe_resource *_resource,
-                              unsigned level, int layer)
-{
-   struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_resource *tr_tex = trace_resource(_resource);
-   struct pipe_context *pipe = tr_ctx->pipe;
-   struct pipe_resource *texture = tr_tex->resource;
-   unsigned int referenced;
-
-   trace_dump_call_begin("pipe_context", "is_resource_referenced");
-   trace_dump_arg(ptr, pipe);
-   trace_dump_arg(ptr, texture);
-   trace_dump_arg(uint, level);
-   trace_dump_arg(int, layer);
-
-   referenced = pipe->is_resource_referenced(pipe, texture, level, layer);
-
-   trace_dump_ret(uint, referenced);
-   trace_dump_call_end();
-
-   return referenced;
-}
-
 
 /********************************************************************
  * transfer
@@ -1520,7 +1495,6 @@ trace_context_create(struct trace_screen *tr_scr,
    tr_ctx->base.clear_render_target = trace_context_clear_render_target;
    tr_ctx->base.clear_depth_stencil = trace_context_clear_depth_stencil;
    tr_ctx->base.flush = trace_context_flush;
-   tr_ctx->base.is_resource_referenced = trace_is_resource_referenced;
 
    tr_ctx->base.get_transfer = trace_context_get_transfer;
    tr_ctx->base.transfer_destroy = trace_context_transfer_destroy;

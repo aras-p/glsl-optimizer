@@ -38,13 +38,6 @@ r300_resource_create(struct pipe_screen *screen,
 
 }
 
-static unsigned r300_resource_is_referenced_by_cs(struct pipe_context *context,
-                                                  struct pipe_resource *buf,
-                                                  unsigned level, int layer)
-{
-    return r300_buffer_is_referenced(context, buf);
-}
-
 void r300_init_resource_functions(struct r300_context *r300)
 {
    r300->context.get_transfer = u_get_transfer_vtbl;
@@ -53,7 +46,6 @@ void r300_init_resource_functions(struct r300_context *r300)
    r300->context.transfer_unmap = u_transfer_unmap_vtbl;
    r300->context.transfer_destroy = u_transfer_destroy_vtbl;
    r300->context.transfer_inline_write = u_transfer_inline_write_vtbl;
-   r300->context.is_resource_referenced = r300_resource_is_referenced_by_cs;
    r300->context.create_surface = r300_create_surface;
    r300->context.surface_destroy = r300_surface_destroy;
 }

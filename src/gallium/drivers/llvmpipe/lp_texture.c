@@ -695,7 +695,7 @@ llvmpipe_transfer_unmap(struct pipe_context *pipe,
                            transfer->box.z);
 }
 
-static unsigned int
+unsigned int
 llvmpipe_is_resource_referenced( struct pipe_context *pipe,
                                  struct pipe_resource *presource,
                                  unsigned level, int layer)
@@ -703,7 +703,7 @@ llvmpipe_is_resource_referenced( struct pipe_context *pipe,
    struct llvmpipe_context *llvmpipe = llvmpipe_context( pipe );
 
    if (presource->target == PIPE_BUFFER)
-      return PIPE_UNREFERENCED;
+      return LP_UNREFERENCED;
 
    return lp_setup_is_resource_referenced(llvmpipe->setup, presource);
 }
@@ -1401,7 +1401,6 @@ llvmpipe_init_context_resource_funcs(struct pipe_context *pipe)
    pipe->transfer_destroy = llvmpipe_transfer_destroy;
    pipe->transfer_map = llvmpipe_transfer_map;
    pipe->transfer_unmap = llvmpipe_transfer_unmap;
-   pipe->is_resource_referenced = llvmpipe_is_resource_referenced;
  
    pipe->transfer_flush_region = u_default_transfer_flush_region;
    pipe->transfer_inline_write = u_default_transfer_inline_write;

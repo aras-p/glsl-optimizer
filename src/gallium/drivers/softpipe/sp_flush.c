@@ -129,20 +129,20 @@ softpipe_flush_resource(struct pipe_context *pipe,
 {
    unsigned referenced;
 
-   referenced = pipe->is_resource_referenced(pipe, texture, level, layer);
+   referenced = softpipe_is_resource_referenced(pipe, texture, level, layer);
 
-   if ((referenced & PIPE_REFERENCED_FOR_WRITE) ||
-       ((referenced & PIPE_REFERENCED_FOR_READ) && !read_only)) {
+   if ((referenced & SP_REFERENCED_FOR_WRITE) ||
+       ((referenced & SP_REFERENCED_FOR_READ) && !read_only)) {
 
       /*
        * TODO: The semantics of these flush flags are too obtuse. They should
        * disappear and the pipe driver should just ensure that all visible
        * side-effects happen when they need to happen.
        */
-      if (referenced & PIPE_REFERENCED_FOR_WRITE)
+      if (referenced & SP_REFERENCED_FOR_WRITE)
          flush_flags |= PIPE_FLUSH_RENDER_CACHE;
 
-      if (referenced & PIPE_REFERENCED_FOR_READ)
+      if (referenced & SP_REFERENCED_FOR_READ)
          flush_flags |= PIPE_FLUSH_TEXTURE_CACHE;
 
       if (cpu_access) {

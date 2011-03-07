@@ -243,4 +243,14 @@ llvmpipe_init_screen_texture_funcs(struct pipe_screen *screen);
 extern void
 llvmpipe_init_context_texture_funcs(struct pipe_context *pipe);
 
+
+#define LP_UNREFERENCED         0
+#define LP_REFERENCED_FOR_READ  (1 << 0)
+#define LP_REFERENCED_FOR_WRITE (1 << 1)
+
+unsigned int
+llvmpipe_is_resource_referenced( struct pipe_context *pipe,
+                                 struct pipe_resource *presource,
+                                 unsigned level, int layer);
+
 #endif /* LP_TEXTURE_H */

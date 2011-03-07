@@ -340,19 +340,10 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 	FREE(rtex);
 }
 
-static unsigned int r600_texture_is_referenced(struct pipe_context *context,
-						struct pipe_resource *texture,
-						unsigned level, int layer)
-{
-	/* FIXME */
-	return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
-
 static const struct u_resource_vtbl r600_texture_vtbl =
 {
 	r600_texture_get_handle,	/* get_handle */
 	r600_texture_destroy,		/* resource_destroy */
-	r600_texture_is_referenced,	/* is_resource_referenced */
 	r600_texture_get_transfer,	/* get_transfer */
 	r600_texture_transfer_destroy,	/* transfer_destroy */
 	r600_texture_transfer_map,	/* transfer_map */

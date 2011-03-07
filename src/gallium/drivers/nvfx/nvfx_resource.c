@@ -4,13 +4,6 @@
 #include "nvfx_resource.h"
 #include "nouveau/nouveau_screen.h"
 
-static unsigned int
-nvfx_resource_is_referenced(struct pipe_context *pipe,
-			    struct pipe_resource *pr,
-			    unsigned level, int layer)
-{
-	return !!nouveau_reference_flags(nvfx_resource(pr)->bo);
-}
 
 static struct pipe_resource *
 nvfx_resource_create(struct pipe_screen *screen,
@@ -58,8 +51,6 @@ nvfx_resource_get_handle(struct pipe_screen *pscreen,
 void
 nvfx_init_resource_functions(struct pipe_context *pipe)
 {
-	pipe->is_resource_referenced = nvfx_resource_is_referenced;
-
 	pipe->create_surface = nvfx_miptree_surface_new;
 	pipe->surface_destroy = nvfx_miptree_surface_del;
 }

@@ -753,20 +753,20 @@ lp_setup_is_resource_referenced( const struct lp_setup_context *setup,
    /* check the render targets */
    for (i = 0; i < setup->fb.nr_cbufs; i++) {
       if (setup->fb.cbufs[i]->texture == texture)
-         return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+         return LP_REFERENCED_FOR_READ | LP_REFERENCED_FOR_WRITE;
    }
    if (setup->fb.zsbuf && setup->fb.zsbuf->texture == texture) {
-      return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+      return LP_REFERENCED_FOR_READ | LP_REFERENCED_FOR_WRITE;
    }
 
    /* check textures referenced by the scene */
    for (i = 0; i < Elements(setup->scenes); i++) {
       if (lp_scene_is_resource_referenced(setup->scenes[i], texture)) {
-         return PIPE_REFERENCED_FOR_READ;
+         return LP_REFERENCED_FOR_READ;
       }
    }
 
-   return PIPE_UNREFERENCED;
+   return LP_UNREFERENCED;
 }
 
 

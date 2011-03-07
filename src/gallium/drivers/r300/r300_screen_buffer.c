@@ -33,21 +33,6 @@
 #include "r300_screen_buffer.h"
 #include "r300_winsys.h"
 
-unsigned r300_buffer_is_referenced(struct pipe_context *context,
-				   struct pipe_resource *buf)
-{
-    struct r300_context *r300 = r300_context(context);
-    struct r300_resource *rbuf = r300_resource(buf);
-
-    if (rbuf->b.user_ptr || rbuf->constant_buffer)
- 	return PIPE_UNREFERENCED;
-
-    if (r300->rws->cs_is_buffer_referenced(r300->cs, rbuf->cs_buf))
-        return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-
-    return PIPE_UNREFERENCED;
-}
-
 void r300_upload_index_buffer(struct r300_context *r300,
 			      struct pipe_resource **index_buffer,
 			      unsigned index_size, unsigned *start,
@@ -181,7 +166,6 @@ static const struct u_resource_vtbl r300_buffer_vtbl =
 {
    NULL,                               /* get_handle */
    r300_buffer_destroy,                /* resource_destroy */
-   NULL,                               /* is_buffer_referenced */
    r300_buffer_get_transfer,           /* get_transfer */
    r300_buffer_transfer_destroy,       /* transfer_destroy */
    r300_buffer_transfer_map,           /* transfer_map */

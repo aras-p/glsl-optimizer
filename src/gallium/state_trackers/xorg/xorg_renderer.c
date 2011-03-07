@@ -519,10 +519,6 @@ renderer_clone_texture(struct xorg_renderer *r,
    struct pipe_resource *pt;
    struct pipe_resource templ;
 
-   if (pipe->is_resource_referenced(pipe, src, 0, 0) &
-       PIPE_REFERENCED_FOR_WRITE)
-      pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
-
    /* the coming in texture should already have that invariance */
    debug_assert(screen->is_format_supported(screen, src->format,
                                             PIPE_TEXTURE_2D, 0,

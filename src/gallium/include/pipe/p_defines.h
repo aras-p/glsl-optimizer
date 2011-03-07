@@ -507,13 +507,6 @@ enum pipe_shader_cap
    PIPE_SHADER_CAP_SUBROUTINES, /* BGNSUB, ENDSUB, CAL, RET */
 };
 
-/**
- * Referenced query flags.
- */
-
-#define PIPE_UNREFERENCED         0
-#define PIPE_REFERENCED_FOR_READ  (1 << 0)
-#define PIPE_REFERENCED_FOR_WRITE (1 << 1)
 
 /**
  * Composite query types

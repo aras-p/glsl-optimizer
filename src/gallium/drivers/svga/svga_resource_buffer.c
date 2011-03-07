@@ -51,42 +51,6 @@ svga_buffer_needs_hw_storage(unsigned usage)
 }
 
 
-static unsigned int
-svga_buffer_is_referenced( struct pipe_context *pipe,
-                           struct pipe_resource *buf,
-                           unsigned level, int layer)
-{
-   struct svga_screen *ss = svga_screen(pipe->screen);
-   struct svga_buffer *sbuf = svga_buffer(buf);
-
-   /**
-    * XXX: Check this.
-    * The screen may cache buffer writes, but when we map, we map out
-    * of those cached writes, so we don't need to set a
-    * PIPE_REFERENCED_FOR_WRITE flag for cached buffers.
-    */
-
-   if (!sbuf->handle || ss->sws->surface_is_flushed(ss->sws, sbuf->handle))
-     return PIPE_UNREFERENCED;
-
-   /**
-    * sws->surface_is_flushed() does not distinguish between read references
-    * and write references. So assume a reference is both,
-    * however, we make an exception for index- and vertex buffers, to avoid
-    * a flush in st_bufferobj_get_subdata, during display list replay.
-    */
-
-   if (sbuf->b.b.bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER))
-      return PIPE_REFERENCED_FOR_READ;
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
-
-
-
-
-
-
 static void *
 svga_buffer_map_range( struct pipe_screen *screen,
                        struct pipe_resource *buf,
@@ -274,7 +238,6 @@ struct u_resource_vtbl svga_buffer_vtbl =
 {
    u_default_resource_get_handle,      /* get_handle */
    svga_buffer_destroy,		     /* resource_destroy */
-   svga_buffer_is_referenced,	     /* is_resource_referenced */
    u_default_get_transfer,	     /* get_transfer */
    u_default_transfer_destroy,	     /* transfer_destroy */
    svga_buffer_transfer_map,	     /* transfer_map */

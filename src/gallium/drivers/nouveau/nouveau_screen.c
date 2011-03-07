@@ -211,26 +211,6 @@ nouveau_screen_bo_get_handle(struct pipe_screen *pscreen,
 	}
 }
 
-
-unsigned int
-nouveau_reference_flags(struct nouveau_bo *bo)
-{
-	uint32_t bo_flags;
-	int flags = 0;
-
-	bo_flags = nouveau_bo_pending(bo);
-	if (bo_flags & NOUVEAU_BO_RD)
-		flags |= PIPE_REFERENCED_FOR_READ;
-	if (bo_flags & NOUVEAU_BO_WR)
-		flags |= PIPE_REFERENCED_FOR_WRITE;
-
-	return flags;
-}
-
-
-
-
-
 int
 nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)
 {

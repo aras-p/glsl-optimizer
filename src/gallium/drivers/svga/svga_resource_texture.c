@@ -48,31 +48,6 @@
 #define SVGA3D_SURFACE_HINT_SCANOUT (1 << 9)
 
 
-static unsigned int
-svga_texture_is_referenced( struct pipe_context *pipe,
-                            struct pipe_resource *texture,
-                            unsigned level, int layer)
-{
-   struct svga_texture *tex = svga_texture(texture);
-   struct svga_screen *ss = svga_screen(pipe->screen);
-
-   /**
-    * The screen does not cache texture writes.
-    */
-
-   if (!tex->handle || ss->sws->surface_is_flushed(ss->sws, tex->handle))
-      return PIPE_UNREFERENCED;
-
-   /**
-    * sws->surface_is_flushed() does not distinguish between read references
-    * and write references. So assume a reference is both.
-    */
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
-
-
-
 /*
  * Helper function and arrays
  */
@@ -505,7 +480,6 @@ struct u_resource_vtbl svga_texture_vtbl =
 {
    svga_texture_get_handle,	      /* get_handle */
    svga_texture_destroy,	      /* resource_destroy */
-   svga_texture_is_referenced,	      /* is_resource_referenced */
    svga_texture_get_transfer,	      /* get_transfer */
    svga_texture_transfer_destroy,     /* transfer_destroy */
    svga_texture_transfer_map,	      /* transfer_map */
