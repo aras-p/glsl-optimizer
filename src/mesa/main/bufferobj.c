@@ -558,6 +558,7 @@ void
 _mesa_init_buffer_objects( struct gl_context *ctx )
 {
    memset(&DummyBufferObject, 0, sizeof(DummyBufferObject));
+   _glthread_INIT_MUTEX(DummyBufferObject.Mutex);
    DummyBufferObject.RefCount = 1000*1000*1000; /* never delete */
 
    _mesa_reference_buffer_object(ctx, &ctx->Array.ArrayBufferObj,
