@@ -269,7 +269,7 @@ translate_tex_src_target(struct i915_fragment_program *p, GLubyte bit)
 #define EMIT_TEX( OP )						\
 do {								\
    GLuint dim = translate_tex_src_target( p, inst->TexSrcTarget );	\
-   const struct gl_fragment_program *program = p->ctx->FragmentProgram._Current; \
+   const struct gl_fragment_program *program = &p->FragProg;	\
    GLuint unit = program->Base.SamplerUnits[inst->TexSrcUnit];	\
    GLuint sampler = i915_emit_decl(p, REG_TYPE_S,		\
 				   unit, dim);			\
@@ -304,7 +304,7 @@ do {									\
  */
 static void calc_live_regs( struct i915_fragment_program *p )
 {
-    const struct gl_fragment_program *program = p->ctx->FragmentProgram._Current;
+    const struct gl_fragment_program *program = &p->FragProg;
     GLuint regsUsed = 0xffff0000;
     uint8_t live_components[16] = { 0, };
     GLint i;
@@ -344,7 +344,7 @@ static void calc_live_regs( struct i915_fragment_program *p )
 static GLuint get_live_regs( struct i915_fragment_program *p, 
                              const struct prog_instruction *inst )
 {
-    const struct gl_fragment_program *program = p->ctx->FragmentProgram._Current;
+    const struct gl_fragment_program *program = &p->FragProg;
     GLuint nr = inst - program->Base.Instructions;
 
     return p->usedRegs[nr];
@@ -365,8 +365,7 @@ static GLuint get_live_regs( struct i915_fragment_program *p,
 static void
 upload_program(struct i915_fragment_program *p)
 {
-   const struct gl_fragment_program *program =
-      p->ctx->FragmentProgram._Current;
+   const struct gl_fragment_program *program = &p->FragProg;
    const struct prog_instruction *inst = program->Base.Instructions;
 
    if (INTEL_DEBUG & DEBUG_WM)
@@ -1166,7 +1165,7 @@ translate_program(struct i915_fragment_program *p)
 
    if (INTEL_DEBUG & DEBUG_WM) {
       printf("fp:\n");
-      _mesa_print_program(&p->ctx->FragmentProgram._Current->Base);
+      _mesa_print_program(&p->FragProg.Base);
       printf("\n");
    }
 
