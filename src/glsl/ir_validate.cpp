@@ -198,6 +198,12 @@ ir_validate::visit_enter(ir_function_signature *ir)
       abort();
    }
 
+   if (ir->return_type == NULL) {
+      printf("Function signature %p for function %s has NULL return type.\n",
+	     ir, ir->function_name());
+      abort();
+   }
+
    this->validate_ir(ir, this->data);
 
    return visit_continue;

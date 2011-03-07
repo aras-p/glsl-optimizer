@@ -126,7 +126,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
    parameters = new ir_variable *[num_parameters];
 
    /* Generate storage for the return value. */
-   if (this->callee->return_type) {
+   if (!this->callee->return_type->is_void()) {
       retval = new(ctx) ir_variable(this->callee->return_type, "_ret_val",
 				    ir_var_auto);
       next_ir->insert_before(retval);
