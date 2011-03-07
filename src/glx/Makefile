@@ -64,6 +64,7 @@ INCLUDES = -I. \
 	-I$(TOP)/src/mapi/glapi \
 	$(LIBDRM_CFLAGS) \
 	$(DRI2PROTO_CFLAGS) \
+	$(GLPROTO_CFLAGS) \
 	$(X11_INCLUDES)
 
 
