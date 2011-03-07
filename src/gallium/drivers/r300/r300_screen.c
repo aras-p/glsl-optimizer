@@ -318,9 +318,13 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
                               format == PIPE_FORMAT_B10G10R10A2_UNORM ||
                               format == PIPE_FORMAT_R10SG10SB10SA2U_NORM;
     boolean is_ati1n = format == PIPE_FORMAT_RGTC1_UNORM ||
-                       format == PIPE_FORMAT_RGTC1_SNORM;
+                       format == PIPE_FORMAT_RGTC1_SNORM ||
+                       format == PIPE_FORMAT_LATC1_UNORM ||
+                       format == PIPE_FORMAT_LATC1_SNORM;
     boolean is_ati2n = format == PIPE_FORMAT_RGTC2_UNORM ||
-                       format == PIPE_FORMAT_RGTC2_SNORM;
+                       format == PIPE_FORMAT_RGTC2_SNORM ||
+                       format == PIPE_FORMAT_LATC2_UNORM ||
+                       format == PIPE_FORMAT_LATC2_SNORM;
     boolean is_half_float = format == PIPE_FORMAT_R16_FLOAT ||
                             format == PIPE_FORMAT_R16G16_FLOAT ||
                             format == PIPE_FORMAT_R16G16B16_FLOAT ||
