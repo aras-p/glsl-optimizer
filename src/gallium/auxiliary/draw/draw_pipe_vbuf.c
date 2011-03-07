@@ -437,7 +437,7 @@ struct draw_stage *draw_vbuf_stage( struct draw_context *draw,
    vbuf->stage.destroy = vbuf_destroy;
    
    vbuf->render = render;
-   vbuf->max_indices = MAX2(render->max_indices, UNDEFINED_VERTEX_ID-1);
+   vbuf->max_indices = MIN2(render->max_indices, UNDEFINED_VERTEX_ID-1);
 
    vbuf->indices = (ushort *) align_malloc( vbuf->max_indices * 
 					    sizeof(vbuf->indices[0]), 
