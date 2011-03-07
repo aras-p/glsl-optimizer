@@ -423,20 +423,18 @@ static void r300_fence_reference(struct pipe_screen *screen,
                              (struct r300_winsys_bo*)fence);
 }
 
-static int r300_fence_signalled(struct pipe_screen *screen,
-                                struct pipe_fence_handle *fence,
-                                unsigned flags)
+static boolean r300_fence_signalled(struct pipe_screen *screen,
+                                    struct pipe_fence_handle *fence)
 {
     struct r300_winsys_screen *rws = r300_screen(screen)->rws;
     struct r300_winsys_bo *rfence = (struct r300_winsys_bo*)fence;
 
-    return !rws->buffer_is_busy(rfence) ? 0 : 1; /* 0 == success */
+    return !rws->buffer_is_busy(rfence);
 }
 
-static int r300_fence_finish(struct pipe_screen *screen,
-                             struct pipe_fence_handle *fence,
-                             unsigned flags,
-                             uint64_t timeout)
+static boolean r300_fence_finish(struct pipe_screen *screen,
+                                 struct pipe_fence_handle *fence,
+                                 uint64_t timeout)
 {
     struct r300_winsys_screen *rws = r300_screen(screen)->rws;
     struct r300_winsys_bo *rfence = (struct r300_winsys_bo*)fence;
@@ -450,15 +448,15 @@ static int r300_fence_finish(struct pipe_screen *screen,
         /* Wait in a loop. */
         while (rws->buffer_is_busy(rfence)) {
             if (os_time_get() - start_time >= timeout) {
-                return 1;
+                return FALSE;
             }
             os_time_sleep(10);
         }
-        return 0;
+        return TRUE;
     }
 
     rws->buffer_wait(rfence);
-    return 0; /* 0 == success */
+    return TRUE;
 }
 
 struct pipe_screen* r300_screen_create(struct r300_winsys_screen *rws)

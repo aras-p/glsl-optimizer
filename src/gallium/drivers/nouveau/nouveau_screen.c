@@ -154,21 +154,19 @@ nouveau_screen_fence_ref(struct pipe_screen *pscreen,
 	nouveau_fence_ref(nouveau_fence(pfence), (struct nouveau_fence **)ptr);
 }
 
-static int
+static boolean
 nouveau_screen_fence_signalled(struct pipe_screen *screen,
-			       struct pipe_fence_handle *pfence,
-			       unsigned flags)
+                               struct pipe_fence_handle *pfence)
 {
-	return !nouveau_fence_signalled(nouveau_fence(pfence));
+        return nouveau_fence_signalled(nouveau_fence(pfence));
 }
 
-static int
+static boolean
 nouveau_screen_fence_finish(struct pipe_screen *screen,
 			    struct pipe_fence_handle *pfence,
-                            unsigned flags,
                             uint64_t timeout)
 {
-	return !nouveau_fence_wait(nouveau_fence(pfence));
+        return nouveau_fence_wait(nouveau_fence(pfence));
 }
 
 

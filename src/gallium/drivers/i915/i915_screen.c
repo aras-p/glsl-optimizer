@@ -318,25 +318,23 @@ i915_fence_reference(struct pipe_screen *screen,
    is->iws->fence_reference(is->iws, ptr, fence);
 }
 
-static int
+static boolean
 i915_fence_signalled(struct pipe_screen *screen,
-                     struct pipe_fence_handle *fence,
-                     unsigned flags)
+                     struct pipe_fence_handle *fence)
 {
    struct i915_screen *is = i915_screen(screen);
 
-   return is->iws->fence_signalled(is->iws, fence);
+   return is->iws->fence_signalled(is->iws, fence) == 0;
 }
 
-static int
+static boolean
 i915_fence_finish(struct pipe_screen *screen,
                   struct pipe_fence_handle *fence,
-                  unsigned flags,
                   uint64_t timeout)
 {
    struct i915_screen *is = i915_screen(screen);
 
-   return is->iws->fence_finish(is->iws, fence);
+   return is->iws->fence_finish(is->iws, fence) == 0;
 }
 
 

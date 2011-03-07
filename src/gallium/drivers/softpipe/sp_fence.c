@@ -41,24 +41,22 @@ softpipe_fence_reference(struct pipe_screen *screen,
 }
 
 
-static int
+static boolean
 softpipe_fence_signalled(struct pipe_screen *screen,
-                         struct pipe_fence_handle *fence,
-                         unsigned flags)
+                         struct pipe_fence_handle *fence)
 {
    assert(!fence);
-   return 0;
+   return TRUE;
 }
 
 
-static int
+static boolean
 softpipe_fence_finish(struct pipe_screen *screen,
                       struct pipe_fence_handle *fence,
-                      unsigned flags,
                       uint64_t timeout)
 {
    assert(!fence);
-   return 0;
+   return TRUE;
 }
 
 

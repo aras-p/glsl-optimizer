@@ -362,7 +362,7 @@ dri2_copy_region(DrawablePtr pDraw, RegionPtr pRegion,
 
 	if (extents->x1 == 0 && extents->y1 == 0 &&
 	    extents->x2 == pDraw->width && extents->y2 == pDraw->height) {
-            ms->screen->fence_finish(ms->screen, dst_priv->fence, 0,
+            ms->screen->fence_finish(ms->screen, dst_priv->fence,
                                      PIPE_TIMEOUT_INFINITE);
 	    ms->screen->fence_reference(ms->screen, &dst_priv->fence, NULL);
 	}

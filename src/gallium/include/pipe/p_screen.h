@@ -183,23 +183,17 @@ struct pipe_screen {
 
    /**
     * Checks whether the fence has been signalled.
-    * \param flags  driver-specific meaning
-    * \return zero on success.
     */
-   int (*fence_signalled)( struct pipe_screen *screen,
-                           struct pipe_fence_handle *fence,
-                           unsigned flags );
+   boolean (*fence_signalled)( struct pipe_screen *screen,
+                               struct pipe_fence_handle *fence );
 
    /**
     * Wait for the fence to finish.
-    * \param flags  driver-specific meaning
     * \param timeout  in nanoseconds
-    * \return zero on success.
     */
-   int (*fence_finish)( struct pipe_screen *screen,
-                        struct pipe_fence_handle *fence,
-                        unsigned flags,
-                        uint64_t timeout );
+   boolean (*fence_finish)( struct pipe_screen *screen,
+                            struct pipe_fence_handle *fence,
+                            uint64_t timeout );
 
 };
 

@@ -412,20 +412,18 @@ svga_fence_reference(struct pipe_screen *screen,
 }
 
 
-static int
+static boolean
 svga_fence_signalled(struct pipe_screen *screen,
-                     struct pipe_fence_handle *fence,
-                     unsigned flag)
+                     struct pipe_fence_handle *fence)
 {
    struct svga_winsys_screen *sws = svga_screen(screen)->sws;
-   return sws->fence_signalled(sws, fence, flag);
+   return sws->fence_signalled(sws, fence, 0) == 0;
 }
 
 
-static int
+static boolean
 svga_fence_finish(struct pipe_screen *screen,
                   struct pipe_fence_handle *fence,
-                  unsigned flag,
                   uint64_t timeout)
 {
    struct svga_winsys_screen *sws = svga_screen(screen)->sws;
@@ -433,7 +431,7 @@ svga_fence_finish(struct pipe_screen *screen,
    SVGA_DBG(DEBUG_DMA|DEBUG_PERF, "%s fence_ptr %p\n",
             __FUNCTION__, fence);
 
-   return sws->fence_finish(sws, fence, flag);
+   return sws->fence_finish(sws, fence, 0) == 0;
 }
 
 

@@ -365,21 +365,19 @@ brw_fence_reference(struct pipe_screen *screen,
 {
 }
 
-static int
+static boolean
 brw_fence_signalled(struct pipe_screen *screen,
-                     struct pipe_fence_handle *fence,
-                     unsigned flags)
+                     struct pipe_fence_handle *fence)
 {
-   return 0;                    /* XXX shouldn't this be a boolean? */
+   return TRUE;
 }
 
-static int
+static boolean
 brw_fence_finish(struct pipe_screen *screen,
                  struct pipe_fence_handle *fence,
-                 unsigned flags,
                  uint64_t timeout)
 {
-   return 0;
+   return TRUE;
 }
 
 
