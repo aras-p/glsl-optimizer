@@ -110,6 +110,7 @@ C_SOURCES = \
 	util/u_draw_quad.c \
 	util/u_format.c \
 	util/u_format_other.c \
+	util/u_format_latc.c \
 	util/u_format_s3tc.c \
 	util/u_format_rgtc.c \
 	util/u_format_srgb.c \

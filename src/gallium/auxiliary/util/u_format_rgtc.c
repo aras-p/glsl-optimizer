@@ -281,7 +281,7 @@ util_format_rgtc2_unorm_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride, 
 }
 
 void
-util_format_rgtc2_unorm_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, const float *src_row, unsigned src_stride, unsigned width, unsigned height)
+util_format_rxtc2_unorm_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, const float *src_row, unsigned src_stride, unsigned width, unsigned height, unsigned chan2off)
 {
    const unsigned bw = 4, bh = 4, bytes_per_block = 16;
    unsigned x, y, i, j;
@@ -294,7 +294,7 @@ util_format_rgtc2_unorm_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, c
          for(j = 0; j < bh; ++j) {
             for(i = 0; i < bw; ++i) {
 	       tmp_r[j][i] = float_to_ubyte(src_row[(y + j)*src_stride/sizeof(*src_row) + (x + i)*4]);
-	       tmp_g[j][i] = float_to_ubyte(src_row[(y + j)*src_stride/sizeof(*src_row) + (x + i)*4 + 1]);
+               tmp_g[j][i] = float_to_ubyte(src_row[(y + j)*src_stride/sizeof(*src_row) + (x + i)*4 + chan2off]);
             }
          }
          u_format_unsigned_encode_rgtc_chan(dst, tmp_r, 4, 4);
@@ -303,6 +303,12 @@ util_format_rgtc2_unorm_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, c
       }
       dst_row += dst_stride / sizeof(*dst_row);
    }
+}
+
+void
+util_format_rgtc2_unorm_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, const float *src_row, unsigned src_stride, unsigned width, unsigned height)
+{
+   util_format_rxtc2_unorm_pack_rgba_float(dst_row, dst_stride, src_row, src_stride, width, height, 1);
 }
 
 void
@@ -389,7 +395,7 @@ util_format_rgtc2_snorm_unpack_rgba_float(float *dst_row, unsigned dst_stride, c
 }
 
 void
-util_format_rgtc2_snorm_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, const float *src_row, unsigned src_stride, unsigned width, unsigned height)
+util_format_rxtc2_snorm_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, const float *src_row, unsigned src_stride, unsigned width, unsigned height, unsigned chan2off)
 {
    const unsigned bw = 4, bh = 4, bytes_per_block = 16;
    unsigned x, y, i, j;
@@ -402,7 +408,7 @@ util_format_rgtc2_snorm_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, c
          for(j = 0; j < bh; ++j) {
             for(i = 0; i < bw; ++i) {
 	       tmp_r[j][i] = float_to_byte_tex(src_row[(y + j)*src_stride/sizeof(*src_row) + (x + i)*4]);
-	       tmp_g[j][i] = float_to_byte_tex(src_row[(y + j)*src_stride/sizeof(*src_row) + (x + i)*4 + 1]);
+               tmp_g[j][i] = float_to_byte_tex(src_row[(y + j)*src_stride/sizeof(*src_row) + (x + i)*4 + chan2off]);
             }
          }
          u_format_signed_encode_rgtc_chan(dst, tmp_r, 4, 4);
@@ -411,6 +417,12 @@ util_format_rgtc2_snorm_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, c
       }
       dst_row += dst_stride / sizeof(*dst_row);
    }
+}
+
+void
+util_format_rgtc2_snorm_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, const float *src_row, unsigned src_stride, unsigned width, unsigned height)
+{
+   util_format_rxtc2_snorm_pack_rgba_float(dst_row, dst_stride, src_row, src_stride, width, height, 1);
 }
 
 void

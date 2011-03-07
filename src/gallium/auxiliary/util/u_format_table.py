@@ -88,6 +88,7 @@ def write_format_table(formats):
     print '#include "u_format.h"'
     print '#include "u_format_s3tc.h"'
     print '#include "u_format_rgtc.h"'
+    print '#include "u_format_latc.h"'
     print
     
     u_format_pack.generate(formats)

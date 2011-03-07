@@ -77,6 +77,9 @@ void
 util_format_rgtc2_unorm_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height);
 
 void
+util_format_rxtc2_unorm_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, const float *src_row, unsigned src_stride, unsigned width, unsigned height, unsigned chan2off);
+
+void
 util_format_rgtc2_unorm_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, const float *src_row, unsigned src_stride, unsigned width, unsigned height);
 
 void
@@ -97,6 +100,9 @@ util_format_rgtc2_snorm_pack_rgba_8unorm(uint8_t *dst_row, unsigned dst_stride, 
 
 void
 util_format_rgtc2_snorm_unpack_rgba_float(float *dst_row, unsigned dst_stride, const uint8_t *src_row, unsigned src_stride, unsigned width, unsigned height);
+
+void
+util_format_rxtc2_snorm_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, const float *src_row, unsigned src_stride, unsigned width, unsigned height, unsigned chan2off);
 
 void
 util_format_rgtc2_snorm_pack_rgba_float(uint8_t *dst_row, unsigned dst_stride, const float *src_row, unsigned src_stride, unsigned width, unsigned height);
