@@ -1134,6 +1134,7 @@ invalidate_rb(GLuint key, void *data, void *userData)
              att->Renderbuffer == rb) {
             /* Mark fb status as indeterminate to force re-validation */
             fb->_Status = 0;
+            return;
          }
       }
    }
