@@ -78,7 +78,6 @@ upload_user_buffers( struct svga_context *svga )
                             buffer->b.b.width0);
          }
 
-         pipe_resource_reference( &svga->curr.vb[i].buffer, buffer->uploaded.buffer );
          svga->curr.vb[i].buffer_offset = buffer->uploaded.offset;
       }
    }
@@ -110,6 +109,7 @@ static int emit_hw_vs_vdecl( struct svga_context *svga,
    for (i = 0; i < svga->curr.velems->count; i++) {
       const struct pipe_vertex_buffer *vb = &svga->curr.vb[ve[i].vertex_buffer_index];
       unsigned usage, index;
+      struct svga_buffer *buffer = svga_buffer(vb->buffer);
 
 
       svga_generate_vdecl_semantics( i, &usage, &index );
@@ -127,6 +127,7 @@ static int emit_hw_vs_vdecl( struct svga_context *svga,
       svga_hwtnl_vdecl( svga->hwtnl,
                         i,
                         &decl,
+                        buffer->uploaded.buffer ? buffer->uploaded.buffer :
                         vb->buffer );
    }
 
