@@ -111,8 +111,6 @@ static void read_alpha_mask(void * data, VGint dataStride,
    VGubyte *dst = (VGubyte *)data;
    VGint xoffset = 0, yoffset = 0;
 
-   /* make sure rendering has completed */
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
    if (sx < 0) {
       xoffset = -sx;
       xoffset *= _vega_size_for_format(dataFormat);

@@ -387,8 +387,6 @@ void vegaWritePixels(const void * data, VGint dataStride,
 #endif
       image_destroy(img);
    }
-   /* make sure rendering has completed */
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 }
 
 void vegaReadPixels(void * data, VGint dataStride,
@@ -421,8 +419,6 @@ void vegaReadPixels(void * data, VGint dataStride,
       return;
    }
 
-   /* make sure rendering has completed */
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
    if (sx < 0) {
       xoffset = -sx;
       xoffset *= _vega_size_for_format(dataFormat);
