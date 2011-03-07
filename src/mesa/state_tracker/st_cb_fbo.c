@@ -431,13 +431,10 @@ static void
 st_finish_render_texture(struct gl_context *ctx,
                          struct gl_renderbuffer_attachment *att)
 {
-   struct st_context *st = st_context(ctx);
    struct st_renderbuffer *strb = st_renderbuffer(att->Renderbuffer);
 
    if (!strb)
       return;
-
-   st_flush(st, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    strb->rtt = NULL;
 

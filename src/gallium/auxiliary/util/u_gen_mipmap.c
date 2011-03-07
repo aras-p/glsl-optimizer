@@ -1660,8 +1660,6 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
                                  4,  /* verts */
                                  2); /* attribs/vert */
 
-         pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
-
          /* need to signal that the texture has changed _after_ rendering to it */
          pipe_surface_reference( &surf, NULL );
       }
