@@ -380,6 +380,7 @@ wayland_surface_present(struct native_surface *nsurf,
 
    if (surface->type == WL_WINDOW_SURFACE) {
       resource_surface_get_size(surface->rsurf, &width, &height);
+      wl_buffer_damage(surface->buffer[WL_BUFFER_FRONT], 0, 0, width, height);
       wl_surface_damage(surface->win->surface, 0, 0, width, height);
    }
 

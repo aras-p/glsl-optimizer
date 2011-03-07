@@ -488,6 +488,8 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 		  dri2_surf->dri_buffers[__DRI_BUFFER_FRONT_LEFT],
 		  dri2_surf->wl_win->visual);
 
+      wl_buffer_damage(dri2_surf->wl_drm_buffer[WL_BUFFER_FRONT], 0, 0,
+		       dri2_surf->base.Width, dri2_surf->base.Height);
       wl_surface_attach(dri2_surf->wl_win->surface,
 	    dri2_surf->wl_drm_buffer[WL_BUFFER_FRONT],
 	    dri2_surf->dx, dri2_surf->dy);
