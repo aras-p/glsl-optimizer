@@ -38,6 +38,7 @@
 #include "r600_resource.h"
 
 #define R600_MAX_CONST_BUFFERS 1
+#define R600_MAX_CONST_BUFFER_SIZE 4096
 
 enum r600_pipe_state_id {
 	R600_PIPE_STATE_BLEND = 0,
