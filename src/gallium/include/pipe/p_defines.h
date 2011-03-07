@@ -337,16 +337,6 @@ enum pipe_transfer_usage {
 #define PIPE_USAGE_STAGING        5 /* supports data transfers from the GPU to the CPU */
 
 
-/* These are intended to be used in calls to is_format_supported, but
- * no driver actually uses these flags, and only the glx/xlib state
- * tracker issues them.
- *
- * Deprecate?
- */
-#define PIPE_TEXTURE_GEOM_NON_SQUARE       0x1
-#define PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO 0x2
-
-
 /** 
  * Flush types:
  */

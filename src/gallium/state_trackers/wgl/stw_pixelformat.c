@@ -225,7 +225,7 @@ stw_pixelformat_init( void )
          
          if(!screen->is_format_supported(screen, color->format, PIPE_TEXTURE_2D,
                                          0, PIPE_BIND_RENDER_TARGET |
-                                         PIPE_BIND_DISPLAY_TARGET, 0))
+                                         PIPE_BIND_DISPLAY_TARGET))
             continue;
          
          for(k = 0; k < Elements(stw_pf_doublebuffer); ++k) {
@@ -235,7 +235,7 @@ stw_pixelformat_init( void )
                const struct stw_pf_depth_info *depth = &stw_pf_depth_stencil[l];
                
                if(!screen->is_format_supported(screen, depth->format, PIPE_TEXTURE_2D, 
-                                               0, PIPE_BIND_DEPTH_STENCIL, 0))
+                                               0, PIPE_BIND_DEPTH_STENCIL))
                   continue;
 
                stw_pixelformat_add( stw_dev, color, depth,  0, doublebuffer, samples );

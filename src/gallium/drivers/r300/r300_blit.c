@@ -447,11 +447,11 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
          !pipe->screen->is_format_supported(pipe->screen,
                                             src->format, src->target,
                                             src->nr_samples,
-                                            PIPE_BIND_SAMPLER_VIEW, 0) ||
+                                            PIPE_BIND_SAMPLER_VIEW) ||
          !pipe->screen->is_format_supported(pipe->screen,
                                             dst->format, dst->target,
                                             dst->nr_samples,
-                                            PIPE_BIND_RENDER_TARGET, 0))) {
+                                            PIPE_BIND_RENDER_TARGET))) {
         switch (util_format_get_blocksize(old_dst.format)) {
             case 1:
                 new_dst.format = PIPE_FORMAT_I8_UNORM;

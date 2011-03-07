@@ -342,8 +342,7 @@ svga_is_format_supported( struct pipe_screen *screen,
                           enum pipe_format format,
                           enum pipe_texture_target target,
                           unsigned sample_count,
-                          unsigned tex_usage,
-                          unsigned geom_flags )
+                          unsigned tex_usage)
 {
    struct svga_winsys_screen *sws = svga_screen(screen)->sws;
    SVGA3dDevCapIndex index;

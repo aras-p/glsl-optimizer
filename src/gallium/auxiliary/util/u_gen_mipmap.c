@@ -1539,7 +1539,7 @@ util_gen_mipmap(struct gen_mipmap_state *ctx,
 
    /* check if we can render in the texture's format */
    if (!screen->is_format_supported(screen, psv->format, pt->target,
-                                    pt->nr_samples, PIPE_BIND_RENDER_TARGET, 0)) {
+                                    pt->nr_samples, PIPE_BIND_RENDER_TARGET)) {
       fallback_gen_mipmap(ctx, pt, face, baseLevel, lastLevel);
       return;
    }

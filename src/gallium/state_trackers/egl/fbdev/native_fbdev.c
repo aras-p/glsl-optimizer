@@ -422,7 +422,7 @@ fbdev_display_init(struct native_display *ndpy)
    if (fbdpy->base.screen) {
       if (!fbdpy->base.screen->is_format_supported(fbdpy->base.screen,
                fbdpy->config.color_format, PIPE_TEXTURE_2D, 0,
-               PIPE_BIND_RENDER_TARGET, 0)) {
+               PIPE_BIND_RENDER_TARGET)) {
          fbdpy->base.screen->destroy(fbdpy->base.screen);
          fbdpy->base.screen = NULL;
       }

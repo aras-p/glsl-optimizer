@@ -43,7 +43,7 @@ drm_display_is_format_supported(struct native_display *ndpy,
    return ndpy->screen->is_format_supported(ndpy->screen,
          fmt, PIPE_TEXTURE_2D, 0,
          (is_color) ? PIPE_BIND_RENDER_TARGET :
-         PIPE_BIND_DEPTH_STENCIL, 0);
+         PIPE_BIND_DEPTH_STENCIL);
 }
 
 static const struct native_config **

@@ -84,7 +84,7 @@ util_create_rgba_surface(struct pipe_context *pipe,
    /* Choose surface format */
    for (i = 0; rgbaFormats[i]; i++) {
       if (screen->is_format_supported(screen, rgbaFormats[i],
-                                      target, 0, bind, 0)) {
+                                      target, 0, bind)) {
          format = rgbaFormats[i];
          break;
       }

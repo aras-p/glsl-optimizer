@@ -464,11 +464,11 @@ util_blit_pixels_writemask(struct blit_state *ctx,
 
    assert(screen->is_format_supported(screen, sampler_view->format, ctx->internal_target,
                                       sampler_view->texture->nr_samples,
-                                      PIPE_BIND_SAMPLER_VIEW, 0));
+                                      PIPE_BIND_SAMPLER_VIEW));
    assert(screen->is_format_supported(screen, dst->format, ctx->internal_target,
                                       dst->texture->nr_samples,
                                       dst_is_depth ? PIPE_BIND_DEPTH_STENCIL :
-                                                     PIPE_BIND_RENDER_TARGET, 0));
+                                                     PIPE_BIND_RENDER_TARGET));
    /* save state (restored below) */
    cso_save_blend(ctx->cso);
    cso_save_depth_stencil_alpha(ctx->cso);
@@ -660,8 +660,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
    assert(ctx->pipe->screen->is_format_supported(ctx->pipe->screen, dst->format,
                                                  PIPE_TEXTURE_2D,
                                                  dst->texture->nr_samples,
-                                                 PIPE_BIND_RENDER_TARGET,
-                                                 0));
+                                                 PIPE_BIND_RENDER_TARGET));
 
    /* save state (restored below) */
    cso_save_blend(ctx->cso);

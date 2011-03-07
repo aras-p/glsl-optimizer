@@ -772,9 +772,9 @@ void util_blitter_copy_region(struct blitter_context *blitter,
    /* (assuming copying a stencil buffer is not possible) */
     if ((!ignore_stencil && is_stencil) ||
        !screen->is_format_supported(screen, dst->format, dst->target,
-                                    dst->nr_samples, bind, 0) ||
+                                    dst->nr_samples, bind) ||
        !screen->is_format_supported(screen, src->format, src->target,
-                                    src->nr_samples, PIPE_BIND_SAMPLER_VIEW, 0)) {
+                                    src->nr_samples, PIPE_BIND_SAMPLER_VIEW)) {
       ctx->base.running = TRUE;
       util_resource_copy_region(pipe, dst, dstlevel, dstx, dsty, dstz,
                                 src, srclevel, srcbox);

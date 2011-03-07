@@ -103,8 +103,7 @@ identity_screen_is_format_supported(struct pipe_screen *_screen,
                                     enum pipe_format format,
                                     enum pipe_texture_target target,
                                     unsigned sample_count,
-                                    unsigned tex_usage,
-                                    unsigned geom_flags)
+                                    unsigned tex_usage)
 {
    struct identity_screen *id_screen = identity_screen(_screen);
    struct pipe_screen *screen = id_screen->screen;
@@ -113,8 +112,7 @@ identity_screen_is_format_supported(struct pipe_screen *_screen,
                                       format,
                                       target,
                                       sample_count,
-                                      tex_usage,
-                                      geom_flags);
+                                      tex_usage);
 }
 
 static struct pipe_context *

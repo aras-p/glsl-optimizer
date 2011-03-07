@@ -257,7 +257,7 @@ struct vg_image * image_create(VGImageFormat format,
    image->sampler.normalized_coords = 1;
 
    assert(screen->is_format_supported(screen, pformat, PIPE_TEXTURE_2D,
-                                      0, PIPE_BIND_SAMPLER_VIEW, 0));
+                                      0, PIPE_BIND_SAMPLER_VIEW));
 
    memset(&pt, 0, sizeof(pt));
    pt.target = PIPE_TEXTURE_2D;

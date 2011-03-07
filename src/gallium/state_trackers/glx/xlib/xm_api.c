@@ -376,8 +376,6 @@ choose_depth_stencil_format(XMesaDisplay xmdpy, int depth, int stencil)
 {
    const enum pipe_texture_target target = PIPE_TEXTURE_2D;
    const unsigned tex_usage = PIPE_BIND_DEPTH_STENCIL;
-   const unsigned geom_flags = (PIPE_TEXTURE_GEOM_NON_SQUARE |
-                                PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO);
    const unsigned sample_count = 0;
    enum pipe_format formats[8], fmt;
    int count, i;
@@ -403,7 +401,7 @@ choose_depth_stencil_format(XMesaDisplay xmdpy, int depth, int stencil)
    for (i = 0; i < count; i++) {
       if (xmdpy->screen->is_format_supported(xmdpy->screen, formats[i],
                                              target, sample_count,
-                                             tex_usage, geom_flags)) {
+                                             tex_usage)) {
          fmt = formats[i];
          break;
       }

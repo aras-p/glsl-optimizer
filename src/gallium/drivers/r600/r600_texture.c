@@ -299,14 +299,14 @@ static boolean permit_hardware_blit(struct pipe_screen *screen,
 				res->format,
 				res->target,
 				res->nr_samples,
-				bind, 0))
+                                bind))
 		return FALSE;
 
 	if (!screen->is_format_supported(screen,
 				res->format,
 				res->target,
 				res->nr_samples,
-				PIPE_BIND_SAMPLER_VIEW, 0))
+                                PIPE_BIND_SAMPLER_VIEW))
 		return FALSE;
 
 	return TRUE;

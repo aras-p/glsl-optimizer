@@ -225,8 +225,7 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
                               enum pipe_format format,
                               enum pipe_texture_target target,
                               unsigned sample_count,
-                              unsigned bind,
-                              unsigned geom_flags )
+                              unsigned bind)
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
    struct sw_winsys *winsys = screen->winsys;

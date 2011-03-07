@@ -217,7 +217,6 @@ default_bindings(struct st_context *st, enum pipe_format format)
 {
    struct pipe_screen *screen = st->pipe->screen;
    const unsigned target = PIPE_TEXTURE_2D;
-   const unsigned geom = 0x0;
    unsigned bindings;
 
    if (util_format_is_depth_or_stencil(format))
@@ -225,13 +224,13 @@ default_bindings(struct st_context *st, enum pipe_format format)
    else
       bindings = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
 
-   if (screen->is_format_supported(screen, format, target, 0, bindings, geom))
+   if (screen->is_format_supported(screen, format, target, 0, bindings))
       return bindings;
    else {
       /* Try non-sRGB. */
       format = util_format_linear(format);
 
-      if (screen->is_format_supported(screen, format, target, 0, bindings, geom))
+      if (screen->is_format_supported(screen, format, target, 0, bindings))
          return bindings;
       else
          return PIPE_BIND_SAMPLER_VIEW;
@@ -1523,12 +1522,10 @@ st_copy_texsubimage(struct gl_context *ctx,
                texBaseFormat != GL_DEPTH_STENCIL &&
                screen->is_format_supported(screen, src_format,
                                            PIPE_TEXTURE_2D, sample_count,
-                                           PIPE_BIND_SAMPLER_VIEW,
-                                           0) &&
+                                           PIPE_BIND_SAMPLER_VIEW) &&
                screen->is_format_supported(screen, dest_format,
                                            PIPE_TEXTURE_2D, 0,
-                                           PIPE_BIND_RENDER_TARGET,
-                                           0)) {
+                                           PIPE_BIND_RENDER_TARGET)) {
          /* draw textured quad to do the copy */
          GLint srcY0, srcY1;
          struct pipe_surface surf_tmpl;

@@ -106,8 +106,7 @@ rbug_screen_is_format_supported(struct pipe_screen *_screen,
                                 enum pipe_format format,
                                 enum pipe_texture_target target,
                                 unsigned sample_count,
-                                unsigned tex_usage,
-                                unsigned geom_flags)
+                                unsigned tex_usage)
 {
    struct rbug_screen *rb_screen = rbug_screen(_screen);
    struct pipe_screen *screen = rb_screen->screen;
@@ -116,8 +115,7 @@ rbug_screen_is_format_supported(struct pipe_screen *_screen,
                                       format,
                                       target,
                                       sample_count,
-                                      tex_usage,
-                                      geom_flags);
+                                      tex_usage);
 }
 
 static struct pipe_context *

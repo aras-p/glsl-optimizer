@@ -69,8 +69,7 @@ util_check_caps_out(struct pipe_screen *screen, const unsigned *list, int *out)
                                           list[i++],
                                           PIPE_TEXTURE_2D,
                                           0,
-                                          PIPE_BIND_SAMPLER_VIEW,
-                                          0)) {
+                                          PIPE_BIND_SAMPLER_VIEW)) {
             *out = i - 2;
             return FALSE;
          }

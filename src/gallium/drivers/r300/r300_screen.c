@@ -306,8 +306,7 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
                                         enum pipe_format format,
                                         enum pipe_texture_target target,
                                         unsigned sample_count,
-                                        unsigned usage,
-                                        unsigned geom_flags)
+                                        unsigned usage)
 {
     struct r300_winsys_screen *rws = r300_screen(screen)->rws;
     uint32_t retval = 0;

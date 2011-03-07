@@ -450,8 +450,7 @@ void renderer_copy_prepare(struct xorg_renderer *r,
 
    assert(screen->is_format_supported(screen, dst_surface->format,
                                       PIPE_TEXTURE_2D, 0,
-                                      PIPE_BIND_RENDER_TARGET,
-                                      0));
+                                      PIPE_BIND_RENDER_TARGET));
    (void) screen;
 
 
@@ -522,7 +521,7 @@ renderer_clone_texture(struct xorg_renderer *r,
    /* the coming in texture should already have that invariance */
    debug_assert(screen->is_format_supported(screen, src->format,
                                             PIPE_TEXTURE_2D, 0,
-                                            PIPE_BIND_SAMPLER_VIEW, 0));
+                                            PIPE_BIND_SAMPLER_VIEW));
 
    format = src->format;
 

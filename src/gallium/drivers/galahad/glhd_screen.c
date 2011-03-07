@@ -106,8 +106,7 @@ galahad_screen_is_format_supported(struct pipe_screen *_screen,
                                     enum pipe_format format,
                                     enum pipe_texture_target target,
                                     unsigned sample_count,
-                                    unsigned tex_usage,
-                                    unsigned geom_flags)
+                                    unsigned tex_usage)
 {
    struct galahad_screen *glhd_screen = galahad_screen(_screen);
    struct pipe_screen *screen = glhd_screen->screen;
@@ -120,8 +119,7 @@ galahad_screen_is_format_supported(struct pipe_screen *_screen,
                                       format,
                                       target,
                                       sample_count,
-                                      tex_usage,
-                                      geom_flags);
+                                      tex_usage);
 }
 
 static struct pipe_context *

@@ -278,8 +278,7 @@ brw_is_format_supported(struct pipe_screen *screen,
                          enum pipe_format format,
                          enum pipe_texture_target target,
                          unsigned sample_count,
-                         unsigned tex_usage,
-                         unsigned geom_flags)
+                         unsigned tex_usage)
 {
    static const enum pipe_format tex_supported[] = {
       PIPE_FORMAT_L8_UNORM,

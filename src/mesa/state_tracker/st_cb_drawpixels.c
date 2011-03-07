@@ -1332,7 +1332,7 @@ st_CopyPixels(struct gl_context *ctx, GLint srcx, GLint srcy,
 
    if (screen->is_format_supported(screen, srcFormat, st->internal_target,
                                    sample_count,
-                                   PIPE_BIND_SAMPLER_VIEW, 0)) {
+                                   PIPE_BIND_SAMPLER_VIEW)) {
       texFormat = srcFormat;
    }
    else {

@@ -87,27 +87,27 @@ static void u_vbuf_mgr_init_format_caps(struct u_vbuf_mgr_priv *mgr)
 
    mgr->caps.format_fixed32 =
       screen->is_format_supported(screen, PIPE_FORMAT_R32_FIXED, PIPE_BUFFER,
-                                  0, PIPE_BIND_VERTEX_BUFFER, 0);
+                                  0, PIPE_BIND_VERTEX_BUFFER);
 
    mgr->caps.format_float16 =
       screen->is_format_supported(screen, PIPE_FORMAT_R16_FLOAT, PIPE_BUFFER,
-                                  0, PIPE_BIND_VERTEX_BUFFER, 0);
+                                  0, PIPE_BIND_VERTEX_BUFFER);
 
    mgr->caps.format_float64 =
       screen->is_format_supported(screen, PIPE_FORMAT_R64_FLOAT, PIPE_BUFFER,
-                                  0, PIPE_BIND_VERTEX_BUFFER, 0);
+                                  0, PIPE_BIND_VERTEX_BUFFER);
 
    mgr->caps.format_norm32 =
       screen->is_format_supported(screen, PIPE_FORMAT_R32_UNORM, PIPE_BUFFER,
-                                  0, PIPE_BIND_VERTEX_BUFFER, 0) &&
+                                  0, PIPE_BIND_VERTEX_BUFFER) &&
       screen->is_format_supported(screen, PIPE_FORMAT_R32_SNORM, PIPE_BUFFER,
-                                  0, PIPE_BIND_VERTEX_BUFFER, 0);
+                                  0, PIPE_BIND_VERTEX_BUFFER);
 
    mgr->caps.format_scaled32 =
       screen->is_format_supported(screen, PIPE_FORMAT_R32_USCALED, PIPE_BUFFER,
-                                  0, PIPE_BIND_VERTEX_BUFFER, 0) &&
+                                  0, PIPE_BIND_VERTEX_BUFFER) &&
       screen->is_format_supported(screen, PIPE_FORMAT_R32_SSCALED, PIPE_BUFFER,
-                                  0, PIPE_BIND_VERTEX_BUFFER, 0);
+                                  0, PIPE_BIND_VERTEX_BUFFER);
 }
 
 struct u_vbuf_mgr *

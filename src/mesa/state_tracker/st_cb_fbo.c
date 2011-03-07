@@ -485,7 +485,7 @@ st_validate_attachment(struct gl_context *ctx,
 
    return screen->is_format_supported(screen, format,
                                       PIPE_TEXTURE_2D,
-                                      stObj->pt->nr_samples, bindings, 0);
+                                      stObj->pt->nr_samples, bindings);
 }
 
 

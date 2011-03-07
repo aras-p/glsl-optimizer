@@ -202,7 +202,7 @@ nvfx_screen_is_format_supported(struct pipe_screen *pscreen,
 				     enum pipe_format format,
 				     enum pipe_texture_target target,
 				     unsigned sample_count,
-				     unsigned bind, unsigned geom_flags)
+                                     unsigned bind)
 {
 	struct nvfx_screen *screen = nvfx_screen(pscreen);
 

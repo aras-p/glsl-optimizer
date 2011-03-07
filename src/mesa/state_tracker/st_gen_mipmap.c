@@ -87,7 +87,7 @@ st_render_mipmap(struct st_context *st,
    /* XXX should probably kill this and always use util_gen_mipmap
       since this implements a sw fallback as well */
    if (!screen->is_format_supported(screen, psv->format, psv->texture->target,
-                                    0, PIPE_BIND_RENDER_TARGET, 0)) {
+                                    0, PIPE_BIND_RENDER_TARGET)) {
       return FALSE;
    }
 

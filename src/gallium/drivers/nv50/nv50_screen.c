@@ -40,7 +40,7 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
                                 enum pipe_format format,
                                 enum pipe_texture_target target,
                                 unsigned sample_count,
-                                unsigned bindings, unsigned geom_flags)
+                                unsigned bindings)
 {
    if (sample_count > 1)
       return FALSE;
