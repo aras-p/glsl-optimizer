@@ -79,7 +79,7 @@ static void failover_draw_vbo( struct pipe_context *pipe,
    if (failover->mode == FO_SW) {
 
       if (failover->dirty) {
-         failover->hw->flush( failover->hw, ~0, NULL );
+         failover->hw->flush( failover->hw, NULL );
 	 failover_state_emit( failover );
       }
 
@@ -89,7 +89,7 @@ static void failover_draw_vbo( struct pipe_context *pipe,
        * intervening flush.  Unlikely to be much performance impact to
        * this:
        */
-      failover->sw->flush( failover->sw, ~0, NULL );
+      failover->sw->flush( failover->sw, NULL );
    }
 }
 

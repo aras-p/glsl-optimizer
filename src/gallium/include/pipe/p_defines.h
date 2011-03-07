@@ -337,15 +337,6 @@ enum pipe_transfer_usage {
 #define PIPE_USAGE_STAGING        5 /* supports data transfers from the GPU to the CPU */
 
 
-/** 
- * Flush types:
- */
-#define PIPE_FLUSH_RENDER_CACHE   0x1
-#define PIPE_FLUSH_TEXTURE_CACHE  0x2
-#define PIPE_FLUSH_SWAPBUFFERS    0x4
-#define PIPE_FLUSH_FRAME          0x8 /**< Mark the end of a frame */
-
-
 /**
  * Shaders
  */

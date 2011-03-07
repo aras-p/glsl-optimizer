@@ -1184,7 +1184,6 @@ trace_context_clear_depth_stencil(struct pipe_context *_pipe,
 
 static INLINE void
 trace_context_flush(struct pipe_context *_pipe,
-                    unsigned flags,
                     struct pipe_fence_handle **fence)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
@@ -1193,9 +1192,8 @@ trace_context_flush(struct pipe_context *_pipe,
    trace_dump_call_begin("pipe_context", "flush");
 
    trace_dump_arg(ptr, pipe);
-   trace_dump_arg(uint, flags);
 
-   pipe->flush(pipe, flags, fence);
+   pipe->flush(pipe, fence);
 
    if(fence)
       trace_dump_ret(ptr, *fence);

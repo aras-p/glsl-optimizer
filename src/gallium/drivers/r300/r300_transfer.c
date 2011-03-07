@@ -73,7 +73,7 @@ static void r300_copy_into_tiled_texture(struct pipe_context *ctx,
                               &r300transfer->linear_texture->b.b.b, 0, &src_box);
 
     /* XXX remove this. */
-    ctx->flush(ctx, 0, NULL);
+    r300_flush(ctx, 0, NULL);
 }
 
 struct pipe_transfer*

@@ -32,7 +32,6 @@
 
 
 static void svga_flush( struct pipe_context *pipe,
-                        unsigned flags,
                         struct pipe_fence_handle **fence )
 {
    struct svga_context *svga = svga_context(pipe);
@@ -45,29 +44,27 @@ static void svga_flush( struct pipe_context *pipe,
     */
    svga_context_flush(svga, fence);
 
-   SVGA_DBG(DEBUG_DMA|DEBUG_PERF, "%s flags %x fence_ptr %p\n",
-            __FUNCTION__, flags, fence ? *fence : 0x0);
+   SVGA_DBG(DEBUG_DMA|DEBUG_PERF, "%s fence_ptr %p\n",
+            __FUNCTION__, fence ? *fence : 0x0);
 
    /* Enable to dump BMPs of the color/depth buffers each frame */
    if (0) {
-      if (flags & PIPE_FLUSH_FRAME) {
-         struct pipe_framebuffer_state *fb = &svga->curr.framebuffer;
-         static unsigned frame_no = 1;
-         char filename[256];
-         unsigned i;
+      struct pipe_framebuffer_state *fb = &svga->curr.framebuffer;
+      static unsigned frame_no = 1;
+      char filename[256];
+      unsigned i;
 
-         for (i = 0; i < fb->nr_cbufs; i++) {
-            util_snprintf(filename, sizeof(filename), "cbuf%u_%04u", i, frame_no);
-            debug_dump_surface_bmp(&svga->pipe, filename, fb->cbufs[i]);
-         }
-
-         if (0 && fb->zsbuf) {
-            util_snprintf(filename, sizeof(filename), "zsbuf_%04u", frame_no);
-            debug_dump_surface_bmp(&svga->pipe, filename, fb->zsbuf);
-         }
-
-         ++frame_no;
+      for (i = 0; i < fb->nr_cbufs; i++) {
+         util_snprintf(filename, sizeof(filename), "cbuf%u_%04u", i, frame_no);
+         debug_dump_surface_bmp(&svga->pipe, filename, fb->cbufs[i]);
       }
+
+      if (0 && fb->zsbuf) {
+         util_snprintf(filename, sizeof(filename), "zsbuf_%04u", frame_no);
+         debug_dump_surface_bmp(&svga->pipe, filename, fb->zsbuf);
+      }
+
+      ++frame_no;
    }
 }
 

@@ -74,7 +74,7 @@ do {                                                          \
 struct pipe_surface *
 xorg_gpu_surface(struct pipe_context *pipe, struct exa_pixmap_priv *priv);
 
-void xorg_exa_flush(struct exa_context *exa, uint pipeFlushFlags,
+void xorg_exa_flush(struct exa_context *exa,
                     struct pipe_fence_handle **fence);
 void xorg_exa_finish(struct exa_context *exa);
 

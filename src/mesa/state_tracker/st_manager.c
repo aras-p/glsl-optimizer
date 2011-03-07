@@ -502,8 +502,8 @@ st_context_flush(struct st_context_iface *stctxi, unsigned flags,
                  struct pipe_fence_handle **fence)
 {
    struct st_context *st = (struct st_context *) stctxi;
-   st_flush(st, flags, fence);
-   if (flags & PIPE_FLUSH_RENDER_CACHE)
+   st_flush(st, fence);
+   if (flags & ST_FLUSH_FRONT)
       st_manager_flush_frontbuffer(st);
 }
 

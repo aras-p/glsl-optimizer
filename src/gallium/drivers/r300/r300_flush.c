@@ -94,10 +94,8 @@ void r300_flush(struct pipe_context *pipe,
 }
 
 static void r300_flush_wrapped(struct pipe_context *pipe,
-                               unsigned flags,
                                struct pipe_fence_handle **fence)
 {
-    /* don't use the flags param, it means something else */
     r300_flush(pipe, 0, fence);
 }
 

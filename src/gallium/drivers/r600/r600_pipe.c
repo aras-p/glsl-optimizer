@@ -48,7 +48,7 @@
 /*
  * pipe_context
  */
-static void r600_flush(struct pipe_context *ctx, unsigned flags,
+static void r600_flush(struct pipe_context *ctx,
 			struct pipe_fence_handle **fence)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;

@@ -38,7 +38,6 @@ void brw_context_flush( struct brw_context *brw )
 
 static void
 brw_flush( struct pipe_context *pipe,
-           unsigned flags, 
            struct pipe_fence_handle **fence )
 {
    brw_context_flush( brw_context( pipe ) );

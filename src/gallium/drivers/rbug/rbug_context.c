@@ -801,14 +801,12 @@ rbug_clear_depth_stencil(struct pipe_context *_pipe,
 
 static void
 rbug_flush(struct pipe_context *_pipe,
-           unsigned flags,
            struct pipe_fence_handle **fence)
 {
    struct rbug_context *rb_pipe = rbug_context(_pipe);
    struct pipe_context *pipe = rb_pipe->pipe;
 
    pipe->flush(pipe,
-               flags,
                fence);
 }
 

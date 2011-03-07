@@ -575,7 +575,6 @@ llvmpipe_get_transfer(struct pipe_context *pipe,
       if (!llvmpipe_flush_resource(pipe, resource,
                                    level,
                                    box->depth > 1 ? -1 : box->z,
-                                   0, /* flush_flags */
                                    read_only,
                                    TRUE, /* cpu_access */
                                    do_not_block,

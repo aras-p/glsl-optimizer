@@ -312,11 +312,9 @@ struct pipe_context {
                                unsigned dstx, unsigned dsty,
                                unsigned width, unsigned height);
 
-   /** Flush rendering
-    * \param flags  bitmask of PIPE_FLUSH_x tokens)
+   /** Flush draw commands
     */
    void (*flush)( struct pipe_context *pipe,
-                  unsigned flags,
                   struct pipe_fence_handle **fence );
 
    /**

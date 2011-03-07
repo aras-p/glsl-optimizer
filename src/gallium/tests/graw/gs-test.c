@@ -339,7 +339,7 @@ static void draw( void )
    else
       util_draw_arrays(ctx, PIPE_PRIM_TRIANGLES, 0, 3);
 
-   ctx->flush(ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
+   ctx->flush(ctx, NULL);
 
    graw_save_surface_to_file(ctx, surf, NULL);
 

@@ -426,7 +426,7 @@ nvfx_state_validate_swtnl(struct nvfx_context *nvfx)
 			NOUVEAU_ERR("hw->swtnl 0x%08x\n", nvfx->fallback_swtnl);
 			warned = TRUE;
 		}
-		nvfx->pipe.flush(&nvfx->pipe, 0, NULL);
+                nvfx->pipe.flush(&nvfx->pipe, NULL);
 		nvfx->dirty |= (NVFX_NEW_VIEWPORT |
 				NVFX_NEW_VERTPROG |
 				NVFX_NEW_ARRAYS);

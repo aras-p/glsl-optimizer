@@ -40,7 +40,7 @@ extern void
 st_init_flush_functions(struct dd_function_table *functions);
 
 extern void
-st_flush(struct st_context *st, uint pipeFlushFlags,
+st_flush(struct st_context *st,
          struct pipe_fence_handle **fence);
 
 extern void

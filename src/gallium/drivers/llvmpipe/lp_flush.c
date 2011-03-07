@@ -40,12 +40,10 @@
 
 
 /**
- * \param flags  bitmask of PIPE_FLUSH_x flags
  * \param fence  if non-null, returns pointer to a fence which can be waited on
  */
 void
 llvmpipe_flush( struct pipe_context *pipe,
-                unsigned flags,
                 struct pipe_fence_handle **fence,
                 const char *reason)
 {
@@ -54,7 +52,7 @@ llvmpipe_flush( struct pipe_context *pipe,
    draw_flush(llvmpipe->draw);
 
    /* ask the setup module to flush */
-   lp_setup_flush(llvmpipe->setup, flags, fence, reason);
+   lp_setup_flush(llvmpipe->setup, fence, reason);
 
 
    if (llvmpipe_variant_count > 1000) {
@@ -65,23 +63,21 @@ llvmpipe_flush( struct pipe_context *pipe,
 
    /* Enable to dump BMPs of the color/depth buffers each frame */
    if (0) {
-      if (flags & PIPE_FLUSH_FRAME) {
-         static unsigned frame_no = 1;
-         char filename[256];
-         unsigned i;
+      static unsigned frame_no = 1;
+      char filename[256];
+      unsigned i;
 
-         for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++) {
-            util_snprintf(filename, sizeof(filename), "cbuf%u_%u", i, frame_no);
-            debug_dump_surface_bmp(&llvmpipe->pipe, filename, llvmpipe->framebuffer.cbufs[i]);
-         }
-
-         if (0) {
-            util_snprintf(filename, sizeof(filename), "zsbuf_%u", frame_no);
-            debug_dump_surface_bmp(&llvmpipe->pipe, filename, llvmpipe->framebuffer.zsbuf);
-         }
-
-         ++frame_no;
+      for (i = 0; i < llvmpipe->framebuffer.nr_cbufs; i++) {
+         util_snprintf(filename, sizeof(filename), "cbuf%u_%u", i, frame_no);
+         debug_dump_surface_bmp(&llvmpipe->pipe, filename, llvmpipe->framebuffer.cbufs[i]);
       }
+
+      if (0) {
+         util_snprintf(filename, sizeof(filename), "zsbuf_%u", frame_no);
+         debug_dump_surface_bmp(&llvmpipe->pipe, filename, llvmpipe->framebuffer.zsbuf);
+      }
+
+      ++frame_no;
    }
 }
 
@@ -90,7 +86,7 @@ llvmpipe_finish( struct pipe_context *pipe,
                  const char *reason )
 {
    struct pipe_fence_handle *fence = NULL;
-   llvmpipe_flush(pipe, 0, &fence, reason);
+   llvmpipe_flush(pipe, &fence, reason);
    if (fence) {
       pipe->screen->fence_finish(pipe->screen, fence, PIPE_TIMEOUT_INFINITE);
       pipe->screen->fence_reference(pipe->screen, &fence, NULL);
@@ -110,7 +106,6 @@ llvmpipe_flush_resource(struct pipe_context *pipe,
                         struct pipe_resource *resource,
                         unsigned level,
                         int layer,
-                        unsigned flush_flags,
                         boolean read_only,
                         boolean cpu_access,
                         boolean do_not_block,
@@ -136,7 +131,7 @@ llvmpipe_flush_resource(struct pipe_context *pipe,
           * Just flush.
           */
 
-         llvmpipe_flush(pipe, flush_flags, NULL, reason);
+         llvmpipe_flush(pipe, NULL, reason);
       }
    }
 

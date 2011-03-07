@@ -498,7 +498,7 @@ rbug_context_flush(struct rbug_rbug *tr_rbug, struct rbug_header *header, uint32
    /* protect the pipe context */
    pipe_mutex_lock(rb_context->call_mutex);
 
-   rb_context->pipe->flush(rb_context->pipe, flush->flags, NULL);
+   rb_context->pipe->flush(rb_context->pipe, NULL);
 
    pipe_mutex_unlock(rb_context->call_mutex);
    pipe_mutex_unlock(rb_screen->list_mutex);

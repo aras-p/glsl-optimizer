@@ -255,7 +255,7 @@ softpipe_create_context( struct pipe_screen *screen,
    softpipe->pipe.draw_stream_output = softpipe_draw_stream_output;
 
    softpipe->pipe.clear = softpipe_clear;
-   softpipe->pipe.flush = softpipe_flush;
+   softpipe->pipe.flush = softpipe_flush_wrapped;
 
    softpipe->pipe.render_condition = softpipe_render_condition;
 

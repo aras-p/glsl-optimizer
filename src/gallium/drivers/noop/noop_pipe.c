@@ -260,7 +260,7 @@ static void noop_resource_copy_region(struct pipe_context *ctx,
 /*
  * context
  */
-static void noop_flush(struct pipe_context *ctx, unsigned flags,
+static void noop_flush(struct pipe_context *ctx,
 			struct pipe_fence_handle **fence)
 {
 }

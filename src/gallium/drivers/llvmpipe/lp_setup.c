@@ -333,12 +333,8 @@ fail:
 }
 
 
-/**
- * \param flags  bitmask of PIPE_FLUSH_x flags
- */
 void
 lp_setup_flush( struct lp_setup_context *setup,
-                unsigned flags,
                 struct pipe_fence_handle **fence,
                 const char *reason)
 {
@@ -469,7 +465,7 @@ lp_setup_clear( struct lp_setup_context *setup,
                 unsigned flags )
 {
    if (!lp_setup_try_clear( setup, color, depth, stencil, flags )) {
-      lp_setup_flush(setup, 0, NULL, __FUNCTION__);
+      lp_setup_flush(setup, NULL, __FUNCTION__);
 
       if (!lp_setup_try_clear( setup, color, depth, stencil, flags ))
          assert(0);
@@ -1114,7 +1110,7 @@ lp_setup_end_query(struct lp_setup_context *setup, struct llvmpipe_query *pq)
       if (!lp_scene_bin_everywhere(setup->scene,
                                    LP_RAST_OP_END_QUERY,
                                    dummy)) {
-         lp_setup_flush(setup, 0, NULL, __FUNCTION__);
+         lp_setup_flush(setup, NULL, __FUNCTION__);
       }
    }
    else {

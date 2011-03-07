@@ -234,7 +234,7 @@ egl_g3d_client_wait_sync(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync,
          struct egl_g3d_context *gctx = egl_g3d_context(ctx);
 
          if (gctx)
-            gctx->stctxi->flush(gctx->stctxi, PIPE_FLUSH_RENDER_CACHE , NULL);
+            gctx->stctxi->flush(gctx->stctxi, ST_FLUSH_FRONT, NULL);
       }
 
       if (timeout) {

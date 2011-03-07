@@ -142,8 +142,8 @@ vg_context_flush(struct st_context_iface *stctxi, unsigned flags,
                  struct pipe_fence_handle **fence)
 {
    struct vg_context *ctx = (struct vg_context *) stctxi;
-   ctx->pipe->flush(ctx->pipe, flags, fence);
-   if (flags & PIPE_FLUSH_RENDER_CACHE)
+   ctx->pipe->flush(ctx->pipe, fence);
+   if (flags & ST_FLUSH_FRONT)
       vg_manager_flush_frontbuffer(ctx);
 }
 

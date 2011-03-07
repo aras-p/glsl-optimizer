@@ -668,14 +668,12 @@ identity_clear_depth_stencil(struct pipe_context *_pipe,
 
 static void
 identity_flush(struct pipe_context *_pipe,
-               unsigned flags,
                struct pipe_fence_handle **fence)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
 
    pipe->flush(pipe,
-               flags,
                fence);
 }
 

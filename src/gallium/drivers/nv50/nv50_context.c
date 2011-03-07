@@ -30,25 +30,25 @@
 #include "nouveau/nouveau_reloc.h"
 
 static void
-nv50_flush(struct pipe_context *pipe, unsigned flags,
+nv50_flush(struct pipe_context *pipe,
            struct pipe_fence_handle **fence)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
    struct nouveau_channel *chan = nv50->screen->base.channel;
 
-   if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
+   /* XXX This flag wasn't set by the state tracker anyway. */
+   /*if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
       BEGIN_RING(chan, RING_3D_(NV50_GRAPH_WAIT_FOR_IDLE), 1);
       OUT_RING  (chan, 0);
       BEGIN_RING(chan, RING_3D(TEX_CACHE_CTL), 1);
       OUT_RING  (chan, 0x20);
-   }
+   }*/
 
    if (fence)
       nouveau_fence_ref(nv50->screen->base.fence.current,
                         (struct nouveau_fence **)fence);
 
-   if (flags & (PIPE_FLUSH_SWAPBUFFERS | PIPE_FLUSH_FRAME))
-      FIRE_RING(chan);
+   FIRE_RING(chan);
 }
 
 void

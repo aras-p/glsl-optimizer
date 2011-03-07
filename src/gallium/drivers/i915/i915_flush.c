@@ -39,7 +39,6 @@
 
 
 static void i915_flush_pipe( struct pipe_context *pipe,
-                             unsigned flags,
                              struct pipe_fence_handle **fence )
 {
    struct i915_context *i915 = i915_context(pipe);
@@ -50,6 +49,7 @@ static void i915_flush_pipe( struct pipe_context *pipe,
    /* Do we need to emit an MI_FLUSH command to flush the hardware
     * caches?
     */
+   /* XXX These flags are now implicit. All of them. */
    if (flags & (PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_TEXTURE_CACHE)) {
       unsigned flush = MI_FLUSH;
       

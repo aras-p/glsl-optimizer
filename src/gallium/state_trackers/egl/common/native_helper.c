@@ -352,7 +352,7 @@ resource_surface_flush(struct resource_surface *rsurf,
    if (!pipe)
       return FALSE;
 
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, &fence);
+   pipe->flush(pipe, &fence);
    if (fence == NULL)
       return FALSE;
 

@@ -68,7 +68,7 @@ static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600
 				  rtransfer->staging_texture,
 				  0, &sbox);
 
-	ctx->flush(ctx, 0, NULL);
+        ctx->flush(ctx, NULL);
 }
 
 unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
@@ -635,7 +635,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		if (usage & PIPE_TRANSFER_READ) {
 			r600_copy_to_staging_texture(ctx, trans);
 			/* Always referenced in the blit. */
-			ctx->flush(ctx, 0, NULL);
+                        ctx->flush(ctx, NULL);
 		}
 		return &trans->transfer;
 	}

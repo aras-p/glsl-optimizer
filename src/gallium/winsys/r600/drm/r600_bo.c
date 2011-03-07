@@ -120,7 +120,7 @@ void *r600_bo_map(struct radeon *radeon, struct r600_bo *bo, unsigned usage, voi
 			return NULL;
 		}
 		if (ctx) {
-			pctx->flush(pctx, 0, NULL);
+                        pctx->flush(pctx, NULL);
 		}
 	}
 

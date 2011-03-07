@@ -336,7 +336,7 @@ dri2_copy_region(DrawablePtr pDraw, RegionPtr pRegion,
 	/* pixmap glXWaitX */
 	if (pSrcBuffer->attachment == DRI2BufferFrontLeft &&
 	    pDestBuffer->attachment == DRI2BufferFakeFrontLeft) {
-	    ms->ctx->flush(ms->ctx, PIPE_FLUSH_SWAPBUFFERS, NULL);
+	    ms->ctx->flush(ms->ctx, NULL);
 	    return;
 	}
 	/* pixmap glXWaitGL */
@@ -389,7 +389,7 @@ dri2_copy_region(DrawablePtr pDraw, RegionPtr pRegion,
 
     FreeScratchGC(gc);
 
-    ms->ctx->flush(ms->ctx, PIPE_FLUSH_SWAPBUFFERS,
+    ms->ctx->flush(ms->ctx,
 		   (pDestBuffer->attachment == DRI2BufferFrontLeft
 		    && ms->swapThrottling) ?
 		   &dst_priv->fence : NULL);

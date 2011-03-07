@@ -69,7 +69,7 @@ llvmpipe_destroy_query(struct pipe_context *pipe, struct pipe_query *q)
     */
    if (pq->fence) {
       if (!lp_fence_issued(pq->fence))
-         llvmpipe_flush(pipe, 0, NULL, __FUNCTION__);
+         llvmpipe_flush(pipe, NULL, __FUNCTION__);
 
       if (!lp_fence_signalled(pq->fence))
          lp_fence_wait(pq->fence);
@@ -99,7 +99,7 @@ llvmpipe_get_query_result(struct pipe_context *pipe,
 
    if (!lp_fence_signalled(pq->fence)) {
       if (!lp_fence_issued(pq->fence))
-         llvmpipe_flush(pipe, 0, NULL, __FUNCTION__);
+         llvmpipe_flush(pipe, NULL, __FUNCTION__);
          
       if (!wait)
          return FALSE;
