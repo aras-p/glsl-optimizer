@@ -205,7 +205,9 @@ fallback_generate_mipmap(struct gl_context *ctx, GLenum target,
 
    if (compressed) {
       if (texObj->Image[face][baseLevel]->TexFormat == MESA_FORMAT_SIGNED_RED_RGTC1 ||
-	  texObj->Image[face][baseLevel]->TexFormat == MESA_FORMAT_SIGNED_RG_RGTC2)
+          texObj->Image[face][baseLevel]->TexFormat == MESA_FORMAT_SIGNED_RG_RGTC2 ||
+          texObj->Image[face][baseLevel]->TexFormat == MESA_FORMAT_SIGNED_L_LATC1 ||
+          texObj->Image[face][baseLevel]->TexFormat == MESA_FORMAT_SIGNED_LA_LATC2)
          datatype = GL_FLOAT;
       else
          datatype = GL_UNSIGNED_BYTE;

@@ -249,6 +249,16 @@ st_mesa_format_to_pipe_format(gl_format mesaFormat)
       return PIPE_FORMAT_RGTC2_UNORM;
    case MESA_FORMAT_SIGNED_RG_RGTC2:
       return PIPE_FORMAT_RGTC2_SNORM;
+
+   case MESA_FORMAT_L_LATC1:
+      return PIPE_FORMAT_LATC1_UNORM;
+   case MESA_FORMAT_SIGNED_L_LATC1:
+      return PIPE_FORMAT_LATC1_SNORM;
+   case MESA_FORMAT_LA_LATC2:
+      return PIPE_FORMAT_LATC2_UNORM;
+   case MESA_FORMAT_SIGNED_LA_LATC2:
+      return PIPE_FORMAT_LATC2_SNORM;
+
    default:
       assert(0);
       return PIPE_FORMAT_NONE;
@@ -396,6 +406,15 @@ st_pipe_format_to_mesa_format(enum pipe_format format)
       return MESA_FORMAT_RG_RGTC2;
    case PIPE_FORMAT_RGTC2_SNORM:
       return MESA_FORMAT_SIGNED_RG_RGTC2;
+
+   case PIPE_FORMAT_LATC1_UNORM:
+      return MESA_FORMAT_L_LATC1;
+   case PIPE_FORMAT_LATC1_SNORM:
+      return MESA_FORMAT_SIGNED_L_LATC1;
+   case PIPE_FORMAT_LATC2_UNORM:
+      return MESA_FORMAT_LA_LATC2;
+   case PIPE_FORMAT_LATC2_SNORM:
+      return MESA_FORMAT_SIGNED_LA_LATC2;
 
    default:
       assert(0);
@@ -612,7 +631,6 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
    case GL_LUMINANCE:
    case GL_LUMINANCE4:
    case GL_LUMINANCE8:
-   case GL_COMPRESSED_LUMINANCE:
       if (screen->is_format_supported( screen, PIPE_FORMAT_L8_UNORM, target,
                                        sample_count, bindings, geom_flags ))
          return PIPE_FORMAT_L8_UNORM;
@@ -630,7 +648,6 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
    case GL_LUMINANCE_ALPHA:
    case GL_LUMINANCE6_ALPHA2:
    case GL_LUMINANCE8_ALPHA8:
-   case GL_COMPRESSED_LUMINANCE_ALPHA:
       if (screen->is_format_supported( screen, PIPE_FORMAT_L8A8_UNORM, target,
                                        sample_count, bindings, geom_flags ))
          return PIPE_FORMAT_L8A8_UNORM;
@@ -899,6 +916,39 @@ st_choose_format(struct pipe_screen *screen, GLenum internalFormat,
       if (screen->is_format_supported(screen, PIPE_FORMAT_RGTC2_SNORM, target,
 				      sample_count, bindings, geom_flags))
 	      return PIPE_FORMAT_RGTC2_SNORM;
+      return PIPE_FORMAT_NONE;
+
+   case GL_COMPRESSED_LUMINANCE:
+   case GL_COMPRESSED_LUMINANCE_LATC1_EXT:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_LATC1_UNORM, target,
+                                      sample_count, bindings, geom_flags))
+              return PIPE_FORMAT_LATC1_UNORM;
+      if (screen->is_format_supported(screen, PIPE_FORMAT_L8_UNORM, target,
+                                      sample_count, bindings, geom_flags))
+              return PIPE_FORMAT_L8_UNORM;
+      return PIPE_FORMAT_NONE;
+
+   case GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_LATC1_SNORM, target,
+                                      sample_count, bindings, geom_flags))
+              return PIPE_FORMAT_LATC1_SNORM;
+      return PIPE_FORMAT_NONE;
+
+   case GL_COMPRESSED_LUMINANCE_ALPHA:
+   case GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
+   case GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_LATC2_UNORM, target,
+                                      sample_count, bindings, geom_flags))
+              return PIPE_FORMAT_LATC2_UNORM;
+      if (screen->is_format_supported(screen, PIPE_FORMAT_L8A8_UNORM, target,
+                                      sample_count, bindings, geom_flags))
+              return PIPE_FORMAT_L8A8_UNORM;
+      return PIPE_FORMAT_NONE;
+
+   case GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT:
+      if (screen->is_format_supported(screen, PIPE_FORMAT_LATC2_SNORM, target,
+                                      sample_count, bindings, geom_flags))
+              return PIPE_FORMAT_LATC2_SNORM;
       return PIPE_FORMAT_NONE;
 
    /* signed/unsigned integer formats.

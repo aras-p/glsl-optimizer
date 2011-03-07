@@ -432,6 +432,27 @@ void st_init_extensions(struct st_context *st)
      ctx->Extensions.ARB_texture_compression_rgtc = GL_TRUE;
    }
 
+   if (screen->is_format_supported(screen, PIPE_FORMAT_LATC1_UNORM,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW, 0) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_LATC1_SNORM,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW, 0) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_LATC2_UNORM,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW, 0) &&
+       screen->is_format_supported(screen, PIPE_FORMAT_LATC2_SNORM,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW, 0)) {
+      ctx->Extensions.EXT_texture_compression_latc = GL_TRUE;
+   }
+
+   if (screen->is_format_supported(screen, PIPE_FORMAT_LATC2_UNORM,
+                                   PIPE_TEXTURE_2D, 0,
+                                   PIPE_BIND_SAMPLER_VIEW, 0)) {
+      ctx->Extensions.ATI_texture_compression_3dc = GL_TRUE;
+   }
+
    /* ycbcr support */
    if (screen->is_format_supported(screen, PIPE_FORMAT_UYVY, 
                                    PIPE_TEXTURE_2D, 0,
