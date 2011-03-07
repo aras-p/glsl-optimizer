@@ -429,7 +429,7 @@ setup_non_interleaved_attribs(struct gl_context *ctx,
          vbuffer[attr].buffer_offset = 0;
 
          /* Track user vertex buffers. */
-         pipe_resource_reference(&st->user_vb[attr], vbuffer->buffer);
+         pipe_resource_reference(&st->user_vb[attr], vbuffer[attr].buffer);
          st->user_vb_stride[attr] = stride;
          st->num_user_vbs = MAX2(st->num_user_vbs, attr+1);
       }
@@ -632,10 +632,8 @@ st_draw_vbo(struct gl_context *ctx,
    struct pipe_index_buffer ibuffer;
    struct pipe_draw_info info;
    unsigned i, num_instances = 1;
-   GLboolean new_array = GL_TRUE;
-   /* Fix this (Bug 34378):
    GLboolean new_array =
-         st->dirty.st && (st->dirty.mesa & (_NEW_ARRAY | _NEW_PROGRAM)) != 0;*/
+         st->dirty.st && (st->dirty.mesa & (_NEW_ARRAY | _NEW_PROGRAM)) != 0;
 
    /* Mesa core state should have been validated already */
    assert(ctx->NewState == 0x0);
