@@ -461,6 +461,14 @@ recalculate_input_bindings(struct gl_context *ctx)
 	 inputs[VERT_ATTRIB_GENERIC0 + i] = &vbo->generic_currval[i];
          const_inputs |= 1 << (VERT_ATTRIB_GENERIC0 + i);
       }
+
+      /* There is no need to make _NEW_ARRAY dirty here for the TnL program,
+       * because it already takes care of invalidating the state necessary
+       * to revalidate vertex arrays. Not marking the state as dirty also
+       * improves performance (quite significantly in some apps).
+       */
+      if (!ctx->VertexProgram._MaintainTnlProgram)
+         ctx->NewState |= _NEW_ARRAY;
       break;
 
    case VP_NV:
@@ -486,6 +494,8 @@ recalculate_input_bindings(struct gl_context *ctx)
 	 inputs[i] = &vbo->generic_currval[i - VERT_ATTRIB_GENERIC0];
          const_inputs |= 1 << i;
       }
+
+      ctx->NewState |= _NEW_ARRAY;
       break;
 
    case VP_ARB:
@@ -521,8 +531,9 @@ recalculate_input_bindings(struct gl_context *ctx)
 	    inputs[VERT_ATTRIB_GENERIC0 + i] = &vbo->generic_currval[i];
             const_inputs |= 1 << (VERT_ATTRIB_GENERIC0 + i);
          }
-
       }
+
+      ctx->NewState |= _NEW_ARRAY;
       break;
    }
 
