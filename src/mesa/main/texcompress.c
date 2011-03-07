@@ -173,6 +173,15 @@ _mesa_glenum_to_compressed_format(GLenum format)
    case GL_COMPRESSED_SIGNED_RG_RGTC2:
       return MESA_FORMAT_SIGNED_RG_RGTC2;
 
+   case GL_COMPRESSED_LUMINANCE_LATC1_EXT:
+      return MESA_FORMAT_L_LATC1;
+   case GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT:
+      return MESA_FORMAT_SIGNED_L_LATC1;
+   case GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
+      return MESA_FORMAT_LA_LATC2;
+   case GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT:
+      return MESA_FORMAT_SIGNED_LA_LATC2;
+
    default:
       return MESA_FORMAT_NONE;
    }
@@ -228,6 +237,15 @@ _mesa_compressed_format_to_glenum(struct gl_context *ctx, GLuint mesaFormat)
       return GL_COMPRESSED_RG_RGTC2;
    case MESA_FORMAT_SIGNED_RG_RGTC2:
       return GL_COMPRESSED_SIGNED_RG_RGTC2;
+
+   case MESA_FORMAT_L_LATC1:
+      return GL_COMPRESSED_LUMINANCE_LATC1_EXT;
+   case MESA_FORMAT_SIGNED_L_LATC1:
+      return GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT;
+   case MESA_FORMAT_LA_LATC2:
+      return GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT;
+   case MESA_FORMAT_SIGNED_LA_LATC2:
+      return GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT;
 
    default:
       _mesa_problem(ctx, "Unexpected mesa texture format in"

@@ -4135,7 +4135,14 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_RED_RGTC1, _mesa_texstore_red_rgtc1 },
    { MESA_FORMAT_SIGNED_RED_RGTC1, _mesa_texstore_signed_red_rgtc1 },
    { MESA_FORMAT_RG_RGTC2, _mesa_texstore_rg_rgtc2 },
-   { MESA_FORMAT_SIGNED_RG_RGTC2, _mesa_texstore_signed_rg_rgtc2 }
+   { MESA_FORMAT_SIGNED_RG_RGTC2, _mesa_texstore_signed_rg_rgtc2 },
+
+   /* Re-use the R/RG texstore functions.
+    * The code is generic enough to handle LATC too. */
+   { MESA_FORMAT_L_LATC1, _mesa_texstore_red_rgtc1 },
+   { MESA_FORMAT_SIGNED_L_LATC1, _mesa_texstore_signed_red_rgtc1 },
+   { MESA_FORMAT_LA_LATC2, _mesa_texstore_rg_rgtc2 },
+   { MESA_FORMAT_SIGNED_LA_LATC2, _mesa_texstore_signed_rg_rgtc2 }
 };
 
 

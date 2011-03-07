@@ -509,6 +509,19 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       }
    }
 
+   if (ctx->Extensions.EXT_texture_compression_latc) {
+      switch (internalFormat) {
+      case GL_COMPRESSED_LUMINANCE_LATC1_EXT:
+      case GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT:
+         return GL_LUMINANCE;
+      case GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
+      case GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT:
+         return GL_LUMINANCE_ALPHA;
+      default:
+         ; /* fallthrough */
+      }
+   }
+
    return -1; /* error */
 }
 

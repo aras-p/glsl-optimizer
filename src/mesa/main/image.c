@@ -743,6 +743,10 @@ _mesa_is_color_format(GLenum format)
       case GL_COMPRESSED_SIGNED_RED_RGTC1:
       case GL_COMPRESSED_RG_RGTC2:
       case GL_COMPRESSED_SIGNED_RG_RGTC2:
+      case GL_COMPRESSED_LUMINANCE_LATC1_EXT:
+      case GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT:
+      case GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
+      case GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT:
       /* signed, normalized texture formats */
       case GL_RGBA_SNORM:
       case GL_RGBA8_SNORM:
@@ -1025,6 +1029,11 @@ _mesa_is_compressed_format(struct gl_context *ctx, GLenum format)
    case GL_COMPRESSED_RG_RGTC2:
    case GL_COMPRESSED_SIGNED_RG_RGTC2:
       return ctx->Extensions.ARB_texture_compression_rgtc;
+   case GL_COMPRESSED_LUMINANCE_LATC1_EXT:
+   case GL_COMPRESSED_SIGNED_LUMINANCE_LATC1_EXT:
+   case GL_COMPRESSED_LUMINANCE_ALPHA_LATC2_EXT:
+   case GL_COMPRESSED_SIGNED_LUMINANCE_ALPHA_LATC2_EXT:
+      return ctx->Extensions.EXT_texture_compression_latc;
    default:
       return GL_FALSE;
    }

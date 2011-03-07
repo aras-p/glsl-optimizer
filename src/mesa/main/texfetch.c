@@ -786,6 +786,34 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       NULL,
       NULL
    },
+   {
+      MESA_FORMAT_L_LATC1,
+      NULL,
+      _mesa_fetch_texel_2d_f_l_latc1,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_SIGNED_L_LATC1,
+      NULL,
+      _mesa_fetch_texel_2d_f_signed_l_latc1,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_LA_LATC2,
+      NULL,
+      _mesa_fetch_texel_2d_f_la_latc2,
+      NULL,
+      NULL
+   },
+   {
+      MESA_FORMAT_SIGNED_LA_LATC2,
+      NULL,
+      _mesa_fetch_texel_2d_f_signed_la_latc2,
+      NULL,
+      NULL
+   },
 };
 
 

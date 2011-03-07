@@ -57,4 +57,21 @@ _mesa_fetch_texel_2d_f_rg_rgtc2(const struct gl_texture_image *texImage,
 extern void
 _mesa_fetch_texel_2d_f_signed_rg_rgtc2(const struct gl_texture_image *texImage,
 				       GLint i, GLint j, GLint k, GLfloat *texel);
+
+extern void
+_mesa_fetch_texel_2d_f_l_latc1(const struct gl_texture_image *texImage,
+                                 GLint i, GLint j, GLint k, GLfloat *texel);
+
+extern void
+_mesa_fetch_texel_2d_f_signed_l_latc1(const struct gl_texture_image *texImage,
+                                        GLint i, GLint j, GLint k, GLfloat *texel);
+
+extern void
+_mesa_fetch_texel_2d_f_la_latc2(const struct gl_texture_image *texImage,
+                                 GLint i, GLint j, GLint k, GLfloat *texel);
+
+extern void
+_mesa_fetch_texel_2d_f_signed_la_latc2(const struct gl_texture_image *texImage,
+                                       GLint i, GLint j, GLint k, GLfloat *texel);
+
 #endif

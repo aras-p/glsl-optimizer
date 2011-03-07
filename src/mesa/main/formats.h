@@ -185,6 +185,14 @@ typedef enum
    MESA_FORMAT_RG_RGTC2,
    MESA_FORMAT_SIGNED_RG_RGTC2,
    /*@}*/
+
+   /*@{*/
+   MESA_FORMAT_L_LATC1,
+   MESA_FORMAT_SIGNED_L_LATC1,
+   MESA_FORMAT_LA_LATC2,
+   MESA_FORMAT_SIGNED_LA_LATC2,
+   /*@}*/
+
    MESA_FORMAT_COUNT
 } gl_format;
 

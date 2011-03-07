@@ -98,7 +98,8 @@ _mesa_texstore_red_rgtc1(TEXSTORE_PARAMS)
    GLubyte srcpixels[4][4];
    GLubyte *blkaddr;
    GLint dstRowDiff;
-   ASSERT(dstFormat == MESA_FORMAT_RED_RGTC1);
+   ASSERT(dstFormat == MESA_FORMAT_RED_RGTC1 ||
+          dstFormat == MESA_FORMAT_L_LATC1);
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
@@ -153,7 +154,8 @@ _mesa_texstore_signed_red_rgtc1(TEXSTORE_PARAMS)
    GLbyte srcpixels[4][4];
    GLbyte *blkaddr;
    GLint dstRowDiff;
-   ASSERT(dstFormat == MESA_FORMAT_SIGNED_RED_RGTC1);
+   ASSERT(dstFormat == MESA_FORMAT_SIGNED_RED_RGTC1 ||
+          dstFormat == MESA_FORMAT_SIGNED_L_LATC1);
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
@@ -208,7 +210,8 @@ _mesa_texstore_rg_rgtc2(TEXSTORE_PARAMS)
    GLubyte *blkaddr;
    GLint dstRowDiff;
 
-   ASSERT(dstFormat == MESA_FORMAT_RG_RGTC2);
+   ASSERT(dstFormat == MESA_FORMAT_RG_RGTC2 ||
+          dstFormat == MESA_FORMAT_LA_LATC2);
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
@@ -269,7 +272,8 @@ _mesa_texstore_signed_rg_rgtc2(TEXSTORE_PARAMS)
    GLbyte *blkaddr;
    GLint dstRowDiff;
 
-   ASSERT(dstFormat == MESA_FORMAT_SIGNED_RG_RGTC2);
+   ASSERT(dstFormat == MESA_FORMAT_SIGNED_RG_RGTC2 ||
+          dstFormat == MESA_FORMAT_SIGNED_LA_LATC2);
    ASSERT(dstXoffset % 4 == 0);
    ASSERT(dstYoffset % 4 == 0);
    ASSERT(dstZoffset % 4 == 0);
@@ -372,6 +376,62 @@ _mesa_fetch_texel_2d_f_signed_rg_rgtc2(const struct gl_texture_image *texImage,
    texel[GCOMP] = BYTE_TO_FLOAT_TEX(green);
    texel[BCOMP] = 0.0;
    texel[ACOMP] = 1.0;
+}
+
+void
+_mesa_fetch_texel_2d_f_l_latc1(const struct gl_texture_image *texImage,
+                                 GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   GLubyte red;
+   unsigned_fetch_texel_rgtc(texImage->RowStride, (GLubyte *)(texImage->Data),
+                       i, j, &red, 1);
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = UBYTE_TO_FLOAT(red);
+   texel[ACOMP] = 1.0;
+}
+
+void
+_mesa_fetch_texel_2d_f_signed_l_latc1(const struct gl_texture_image *texImage,
+                                        GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   GLbyte red;
+   signed_fetch_texel_rgtc(texImage->RowStride, (GLbyte *)(texImage->Data),
+                       i, j, &red, 1);
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = BYTE_TO_FLOAT_TEX(red);
+   texel[ACOMP] = 1.0;
+}
+
+void
+_mesa_fetch_texel_2d_f_la_latc2(const struct gl_texture_image *texImage,
+                                 GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   GLubyte red, green;
+   unsigned_fetch_texel_rgtc(texImage->RowStride, (GLubyte *)(texImage->Data),
+                     i, j, &red, 2);
+   unsigned_fetch_texel_rgtc(texImage->RowStride, (GLubyte *)(texImage->Data) + 8,
+                     i, j, &green, 2);
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = UBYTE_TO_FLOAT(red);
+   texel[ACOMP] = UBYTE_TO_FLOAT(green);
+}
+
+void
+_mesa_fetch_texel_2d_f_signed_la_latc2(const struct gl_texture_image *texImage,
+                                       GLint i, GLint j, GLint k, GLfloat *texel)
+{
+   GLbyte red, green;
+   signed_fetch_texel_rgtc(texImage->RowStride, (GLbyte *)(texImage->Data),
+                     i, j, &red, 2);
+   signed_fetch_texel_rgtc(texImage->RowStride, (GLbyte *)(texImage->Data) + 8,
+                     i, j, &green, 2);
+   texel[RCOMP] =
+   texel[GCOMP] =
+   texel[BCOMP] = BYTE_TO_FLOAT_TEX(red);
+   texel[ACOMP] = BYTE_TO_FLOAT_TEX(green);
 }
 
 #define TAG(x) unsigned_##x

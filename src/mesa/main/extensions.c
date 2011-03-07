@@ -181,6 +181,7 @@ static const struct extension extension_table[] = {
    { "GL_EXT_texture3D",                           o(EXT_texture3D),                           GL             },
    { "GL_EXT_texture_array",                       o(EXT_texture_array),                       GL             },
    { "GL_EXT_texture_compression_dxt1",            o(EXT_texture_compression_s3tc),            GL | ES1 | ES2 },
+   { "GL_EXT_texture_compression_latc",            o(EXT_texture_compression_latc),            GL             },
    { "GL_EXT_texture_compression_rgtc",            o(ARB_texture_compression_rgtc),            GL             },
    { "GL_EXT_texture_compression_s3tc",            o(EXT_texture_compression_s3tc),            GL             },
    { "GL_EXT_texture_cube_map",                    o(ARB_texture_cube_map),                    GL             },
@@ -483,6 +484,7 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
    ctx->Extensions.EXT_stencil_wrap = GL_TRUE;
    ctx->Extensions.EXT_stencil_two_side = GL_TRUE;
    ctx->Extensions.EXT_texture_array = GL_TRUE;
+   ctx->Extensions.EXT_texture_compression_latc = GL_TRUE;
    ctx->Extensions.EXT_texture_env_add = GL_TRUE;
    ctx->Extensions.EXT_texture_env_combine = GL_TRUE;
    ctx->Extensions.EXT_texture_env_dot3 = GL_TRUE;
