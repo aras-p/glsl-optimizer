@@ -522,6 +522,15 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       }
    }
 
+   if (ctx->Extensions.ATI_texture_compression_3dc) {
+      switch (internalFormat) {
+      case GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI:
+         return GL_LUMINANCE_ALPHA;
+      default:
+         ; /* fallthrough */
+      }
+   }
+
    return -1; /* error */
 }
 

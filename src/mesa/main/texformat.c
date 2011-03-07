@@ -640,6 +640,16 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
       }
    }
 
+   if (ctx->Extensions.ATI_texture_compression_3dc) {
+      switch (internalFormat) {
+         case GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI:
+            RETURN_IF_SUPPORTED(MESA_FORMAT_LA_LATC2);
+            break;
+         default:
+            ; /* fallthrough */
+      }
+   }
+
    _mesa_problem(ctx, "unexpected format in _mesa_choose_tex_format()");
    return MESA_FORMAT_NONE;
 }

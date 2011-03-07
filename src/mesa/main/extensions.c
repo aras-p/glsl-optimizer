@@ -259,6 +259,7 @@ static const struct extension extension_table[] = {
    { "GL_ATI_envmap_bumpmap",                      o(ATI_envmap_bumpmap),                      GL             },
    { "GL_ATI_fragment_shader",                     o(ATI_fragment_shader),                     GL             },
    { "GL_ATI_separate_stencil",                    o(ATI_separate_stencil),                    GL             },
+   { "GL_ATI_texture_compression_3dc",             o(ATI_texture_compression_3dc),             GL             },
    { "GL_ATI_texture_env_combine3",                o(ATI_texture_env_combine3),                GL             },
    { "GL_ATI_texture_mirror_once",                 o(ATI_texture_mirror_once),                 GL             },
    { "GL_IBM_multimode_draw_arrays",               o(IBM_multimode_draw_arrays),               GL             },
@@ -449,6 +450,7 @@ _mesa_enable_sw_extensions(struct gl_context *ctx)
 #if FEATURE_ATI_fragment_shader
    ctx->Extensions.ATI_fragment_shader = GL_TRUE;
 #endif
+   ctx->Extensions.ATI_texture_compression_3dc = GL_TRUE;
    ctx->Extensions.ATI_texture_env_combine3 = GL_TRUE;
    ctx->Extensions.ATI_texture_mirror_once = GL_TRUE;
    ctx->Extensions.ATI_separate_stencil = GL_TRUE;
