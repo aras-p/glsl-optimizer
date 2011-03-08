@@ -150,7 +150,7 @@ int radeonTransformTEX(
 			return 1;
 		} else {
 			struct rc_instruction * inst_rcp = NULL;
-			struct rc_instruction *inst_mul, *inst_add, *inst_cmp, *inst_cmp2, *inst_mul2;
+			struct rc_instruction *inst_mul, *inst_add, *inst_cmp;
 			unsigned tmp_texsample;
 			unsigned tmp_sum;
 			int pass, fail;
