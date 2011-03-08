@@ -283,6 +283,7 @@ static const struct extension extension_table[] = {
    { "GL_NV_point_sprite",                         o(NV_point_sprite),                         GL             },
    { "GL_NV_primitive_restart",                    o(NV_primitive_restart),                    GL             },
    { "GL_NV_texgen_reflection",                    o(NV_texgen_reflection),                    GL             },
+   { "GL_NV_texture_barrier",                      o(NV_texture_barrier),                      GL             },
    { "GL_NV_texture_env_combine4",                 o(NV_texture_env_combine4),                 GL             },
    { "GL_NV_texture_rectangle",                    o(NV_texture_rectangle),                    GL             },
    { "GL_NV_vertex_program1_1",                    o(NV_vertex_program1_1),                    GL             },

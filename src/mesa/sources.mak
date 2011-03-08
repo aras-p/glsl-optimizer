@@ -94,6 +94,7 @@ MAIN_SOURCES = \
 	main/texrender.c \
 	main/texstate.c \
 	main/texstore.c \
+	main/texturebarrier.c \
 	main/transformfeedback.c \
 	main/uniforms.c \
 	main/varray.c \

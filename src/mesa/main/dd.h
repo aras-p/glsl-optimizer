@@ -1025,6 +1025,11 @@ struct dd_function_table {
                                    struct gl_transform_feedback_object *obj);
    void (*DrawTransformFeedback)(struct gl_context *ctx, GLenum mode,
                                  struct gl_transform_feedback_object *obj);
+
+   /**
+    * \name GL_NV_texture_barrier interface
+    */
+   void (*TextureBarrier)(struct gl_context *ctx);
 };
 
 
