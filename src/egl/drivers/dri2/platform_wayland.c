@@ -677,11 +677,7 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
 		      EGL_WINDOW_BIT | EGL_PIXMAP_BIT, NULL);
 
 
-   disp->Extensions.MESA_drm_image = EGL_TRUE;
-   disp->Extensions.KHR_image_base = EGL_TRUE;
    disp->Extensions.KHR_image_pixmap = EGL_TRUE;
-   disp->Extensions.KHR_gl_renderbuffer_image = EGL_TRUE;
-   disp->Extensions.KHR_gl_texture_2D_image = EGL_TRUE;
 
    disp->Extensions.WL_bind_wayland_display = EGL_TRUE;
    dri2_dpy->authenticate = dri2_wayland_authenticate;

@@ -1030,11 +1030,7 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
 	 goto cleanup_configs;
    }
 
-   disp->Extensions.MESA_drm_image = EGL_TRUE;
-   disp->Extensions.KHR_image_base = EGL_TRUE;
    disp->Extensions.KHR_image_pixmap = EGL_TRUE;
-   disp->Extensions.KHR_gl_renderbuffer_image = EGL_TRUE;
-   disp->Extensions.KHR_gl_texture_2D_image = EGL_TRUE;
    disp->Extensions.NOK_swap_region = EGL_TRUE;
    disp->Extensions.NOK_texture_from_pixmap = EGL_TRUE;
 

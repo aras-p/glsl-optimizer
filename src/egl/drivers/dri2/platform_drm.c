@@ -708,11 +708,6 @@ dri2_initialize_drm(_EGLDriver *drv, _EGLDisplay *disp)
    for (i = 0; dri2_dpy->driver_configs[i]; i++)
       dri2_add_config(disp, dri2_dpy->driver_configs[i], i + 1, 0, 0, NULL);
 
-   disp->Extensions.MESA_drm_image = EGL_TRUE;
-   disp->Extensions.KHR_image_base = EGL_TRUE;
-   disp->Extensions.KHR_gl_renderbuffer_image = EGL_TRUE;
-   disp->Extensions.KHR_gl_texture_2D_image = EGL_TRUE;
-
 #ifdef HAVE_WAYLAND_PLATFORM
    disp->Extensions.WL_bind_wayland_display = EGL_TRUE;
 #endif
