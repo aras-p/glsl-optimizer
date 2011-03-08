@@ -209,10 +209,7 @@ ir_call::generate_inline(ir_instruction *next_ir)
    }
 
    /* Now push those new instructions in. */
-   foreach_iter(exec_list_iterator, iter, new_instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
-      next_ir->insert_before(ir);
-   }
+   next_ir->insert_before(&new_instructions);
 
    /* Copy back the value of any 'out' parameters from the function body
     * variables to our own.
