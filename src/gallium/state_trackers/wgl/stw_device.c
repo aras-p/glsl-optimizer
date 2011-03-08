@@ -48,7 +48,19 @@ static int
 stw_get_param(struct st_manager *smapi,
               enum st_manager_param param)
 {
-   return 0;
+   switch (param) {
+   case ST_MANAGER_BROKEN_INVALIDATE:
+      /*
+       * Force framebuffer validation on glViewport.
+       *
+       * Certain applications, like Rhinoceros 4, uses glReadPixels
+       * exclusively (never uses SwapBuffers), so framebuffers never get
+       * resized unless we check on glViewport.
+       */
+      return 1;
+   default:
+      return 0;
+   }
 }
 
 boolean
