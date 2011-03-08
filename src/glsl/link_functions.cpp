@@ -99,8 +99,14 @@ public:
        * details that may be missing.
        */
       ir_function *f = linked->symbols->get_function(name);
-      if (f == NULL)
+      if (f == NULL) {
 	 f = new(linked) ir_function(name);
+
+	 /* Add the new function to the linked IR.
+	  */
+	 linked->symbols->add_function(f);
+	 linked->ir->push_head(f);
+      }
 
       ir_function_signature *linked_sig =
 	 f->exact_matching_signature(&callee->parameters);
