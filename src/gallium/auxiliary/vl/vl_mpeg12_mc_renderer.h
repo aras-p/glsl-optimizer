@@ -56,12 +56,10 @@ struct vl_mpeg12_mc_renderer
    enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode;
    unsigned macroblocks_per_batch;
 
-   unsigned vertex_stream_stride;
-
    struct pipe_viewport_state viewport;
    struct pipe_framebuffer_state fb_state;
 
-   struct vl_idct idct_luma, idct_chroma;
+   struct vl_idct idct_y, idct_cr, idct_cb;
 
    void *vertex_elems_state;
    void *rs_state;
@@ -93,8 +91,8 @@ struct vl_mpeg12_mc_buffer
 
    union
    {
-      struct pipe_resource *all[5];
-      struct { struct pipe_resource *y, *cb, *cr, *ref[2]; } individual;
+      struct pipe_resource *all[3];
+      struct { struct pipe_resource *y, *cb, *cr; } individual;
    } textures;
 
    union
@@ -107,7 +105,6 @@ struct vl_mpeg12_mc_buffer
 
    struct pipe_surface *surface, *past, *future;
    struct pipe_fence_handle **fence;
-   unsigned num_macroblocks;
 };
 
 bool vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,

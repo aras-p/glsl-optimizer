@@ -43,9 +43,4 @@ struct vertex4f
    float x, y, z, w;
 };
 
-struct quadf
-{
-   struct vertex2f bl, tl, tr, br;
-};
-
 #endif /* vl_types_h */

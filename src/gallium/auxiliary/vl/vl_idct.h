@@ -37,8 +37,7 @@ struct vl_idct
 
    unsigned buffer_width;
    unsigned buffer_height;
-
-   unsigned max_blocks;
+   unsigned blocks_x, blocks_y;
 
    void *rs_state;
    void *vertex_elems_state;
@@ -58,8 +57,6 @@ struct vl_idct
 
    struct pipe_resource *matrix;
    struct pipe_vertex_buffer quad;
-
-   unsigned vertex_buffer_stride;
 };
 
 struct vl_idct_buffer
@@ -92,10 +89,8 @@ struct vl_idct_buffer
    union
    {
       struct pipe_vertex_buffer all[2];
-      struct { struct pipe_vertex_buffer quad, pos; } individual;
+      struct { struct pipe_vertex_buffer quad, stream; } individual;
    } vertex_bufs;
-
-   struct vl_vertex_buffer blocks;
 
    struct pipe_transfer *tex_transfer;
    short *texels;
@@ -103,13 +98,15 @@ struct vl_idct_buffer
 
 struct pipe_resource *vl_idct_upload_matrix(struct pipe_context *pipe);
 
-bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe, 
-                  unsigned buffer_width, unsigned buffer_height, 
-                  struct pipe_resource *matrix);
+bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
+                  unsigned buffer_width, unsigned buffer_height,
+                  unsigned blocks_x, unsigned blocks_y,
+                  int color_swizzle, struct pipe_resource *matrix);
 
 void vl_idct_cleanup(struct vl_idct *idct);
 
-bool vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer, struct pipe_resource *dst);
+bool vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
+                         struct pipe_resource *dst, struct pipe_vertex_buffer stream);
 
 void vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer);
 
@@ -119,6 +116,6 @@ void vl_idct_add_block(struct vl_idct_buffer *buffer, unsigned x, unsigned y, sh
 
 void vl_idct_unmap_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer);
 
-void vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer);
+void vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer, unsigned num_verts);
 
 #endif

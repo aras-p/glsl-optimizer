@@ -29,45 +29,53 @@
 
 #include <assert.h>
 #include <pipe/p_state.h>
+#include <pipe/p_video_state.h>
 #include "vl_types.h"
+
+enum VS_INPUT
+{
+   VS_I_RECT,
+   VS_I_VPOS,
+   VS_I_EB_0_0,
+   VS_I_EB_0_1,
+   VS_I_EB_1_0,
+   VS_I_EB_1_1,
+   VS_I_MV0,
+   VS_I_MV1,
+   VS_I_MV2,
+   VS_I_MV3,
+
+   NUM_VS_INPUTS
+};
 
 struct vl_vertex_buffer
 {
-   unsigned num_verts;
-   unsigned stride;
+   unsigned size;
+   unsigned num_not_empty;
+   unsigned num_empty;
    struct pipe_resource *resource;
    struct pipe_transfer *transfer;
-   void *vectors;
+   struct vl_vertex_stream *start;
+   struct vl_vertex_stream *end;
 };
 
-struct pipe_vertex_buffer vl_vb_upload_quads(struct pipe_context *pipe, unsigned max_blocks);
+struct pipe_vertex_buffer vl_vb_upload_quads(struct pipe_context *pipe,
+                                             unsigned blocks_x, unsigned blocks_y);
 
-struct pipe_vertex_element vl_vb_get_quad_vertex_element(void);
-
-unsigned vl_vb_element_helper(struct pipe_vertex_element* elements, unsigned num_elements,
-                              unsigned vertex_buffer_index);
+void *vl_vb_get_elems_state(struct pipe_context *pipe, bool include_mvs);
 
 struct pipe_vertex_buffer vl_vb_init(struct vl_vertex_buffer *buffer,
                                      struct pipe_context *pipe,
-                                     unsigned max_blocks, unsigned stride);
+                                     unsigned max_blocks);
 
 void vl_vb_map(struct vl_vertex_buffer *buffer, struct pipe_context *pipe);
 
-static inline void
-vl_vb_add_block(struct vl_vertex_buffer *buffer, void *elements)
-{
-   void *pos;
-
-   assert(buffer);
-
-   pos = buffer->vectors + buffer->num_verts * buffer->stride;
-   memcpy(pos, elements, buffer->stride);
-   buffer->num_verts++;
-}
+void vl_vb_add_block(struct vl_vertex_buffer *buffer, struct pipe_mpeg12_macroblock *mb,
+                     const unsigned (*empty_block_mask)[3][2][2]);
 
 void vl_vb_unmap(struct vl_vertex_buffer *buffer, struct pipe_context *pipe);
 
-unsigned vl_vb_restart(struct vl_vertex_buffer *buffer);
+void vl_vb_restart(struct vl_vertex_buffer *buffer);
 
 void vl_vb_cleanup(struct vl_vertex_buffer *buffer);
 

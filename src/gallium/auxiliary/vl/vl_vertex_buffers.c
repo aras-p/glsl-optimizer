@@ -34,32 +34,43 @@
 #include "vl_vertex_buffers.h"
 #include "vl_types.h"
 
+struct vl_vertex_stream
+{
+   struct vertex2s pos;
+   struct {
+      int8_t y;
+      int8_t cr;
+      int8_t cb;
+      int8_t flag;
+   } eb[2][2];
+   struct vertex2s mv[4];
+};
+
 /* vertices for a quad covering a block */
-static const struct quadf const_quad = {
-   {0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}
+static const struct vertex2f block_quad[4] = {
+   {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}
 };
 
 struct pipe_vertex_buffer
-vl_vb_upload_quads(struct pipe_context *pipe, unsigned max_blocks)
+vl_vb_upload_quads(struct pipe_context *pipe, unsigned blocks_x, unsigned blocks_y)
 {
    struct pipe_vertex_buffer quad;
    struct pipe_transfer *buf_transfer;
-   struct quadf *v;
+   struct vertex4f *v;
 
-   unsigned i;
+   unsigned x, y, i;
 
    assert(pipe);
-   assert(max_blocks);
 
    /* create buffer */
-   quad.stride = sizeof(struct vertex2f);
+   quad.stride = sizeof(struct vertex4f);
    quad.buffer_offset = 0;
    quad.buffer = pipe_buffer_create
    (
       pipe->screen,
       PIPE_BIND_VERTEX_BUFFER,
       PIPE_USAGE_STATIC,
-      sizeof(struct vertex2f) * 4 * max_blocks
+      sizeof(struct vertex4f) * 4 * blocks_x * blocks_y
    );
 
    if(!quad.buffer)
@@ -74,15 +85,24 @@ vl_vb_upload_quads(struct pipe_context *pipe, unsigned max_blocks)
       &buf_transfer
    );
 
-   for ( i = 0; i < max_blocks; ++i)
-     memcpy(v + i, &const_quad, sizeof(const_quad));
+   for ( y = 0; y < blocks_y; ++y) {
+      for ( x = 0; x < blocks_x; ++x) {
+         for (i = 0; i < 4; ++i, ++v) {
+            v->x = block_quad[i].x;
+            v->y = block_quad[i].y;
+
+            v->z = x;
+            v->w = y;
+         }
+      }
+   }
 
    pipe_buffer_unmap(pipe, buf_transfer);
 
    return quad;
 }
 
-struct pipe_vertex_element
+static struct pipe_vertex_element
 vl_vb_get_quad_vertex_element(void)
 {
    struct pipe_vertex_element element;
@@ -91,12 +111,12 @@ vl_vb_get_quad_vertex_element(void)
    element.src_offset = 0;
    element.instance_divisor = 0;
    element.vertex_buffer_index = 0;
-   element.src_format = PIPE_FORMAT_R32G32_FLOAT;
+   element.src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
 
    return element;
 }
 
-unsigned
+static void
 vl_vb_element_helper(struct pipe_vertex_element* elements, unsigned num_elements,
                               unsigned vertex_buffer_index)
 {
@@ -110,29 +130,61 @@ vl_vb_element_helper(struct pipe_vertex_element* elements, unsigned num_elements
       elements[i].vertex_buffer_index = vertex_buffer_index;
       offset += util_format_get_blocksize(elements[i].src_format);
    }
+}
 
-   return offset;
+void *
+vl_vb_get_elems_state(struct pipe_context *pipe, bool include_mvs)
+{
+   struct pipe_vertex_element vertex_elems[NUM_VS_INPUTS];
+
+   unsigned i;
+
+   memset(&vertex_elems, 0, sizeof(vertex_elems));
+   vertex_elems[VS_I_RECT] = vl_vb_get_quad_vertex_element();
+
+   /* Position element */
+   vertex_elems[VS_I_VPOS].src_format = PIPE_FORMAT_R16G16_SSCALED;
+
+   /* y, cr, cb empty block element top left block */
+   vertex_elems[VS_I_EB_0_0].src_format = PIPE_FORMAT_R8G8B8A8_SSCALED;
+
+   /* y, cr, cb empty block element top right block */
+   vertex_elems[VS_I_EB_0_1].src_format = PIPE_FORMAT_R8G8B8A8_SSCALED;
+
+   /* y, cr, cb empty block element bottom left block */
+   vertex_elems[VS_I_EB_1_0].src_format = PIPE_FORMAT_R8G8B8A8_SSCALED;
+
+   /* y, cr, cb empty block element bottom right block */
+   vertex_elems[VS_I_EB_1_1].src_format = PIPE_FORMAT_R8G8B8A8_SSCALED;
+
+   for (i = 0; i < 4; ++i)
+      /* motion vector 0..4 element */
+      vertex_elems[VS_I_MV0 + i].src_format = PIPE_FORMAT_R16G16_SSCALED;
+
+   vl_vb_element_helper(&vertex_elems[VS_I_VPOS], NUM_VS_INPUTS - (include_mvs ? 1 : 5), 1);
+
+   return pipe->create_vertex_elements_state(pipe, NUM_VS_INPUTS - (include_mvs ? 0 : 4), vertex_elems);
 }
 
 struct pipe_vertex_buffer
-vl_vb_init(struct vl_vertex_buffer *buffer, struct pipe_context *pipe,
-           unsigned max_blocks, unsigned stride)
+vl_vb_init(struct vl_vertex_buffer *buffer, struct pipe_context *pipe, unsigned size)
 {
    struct pipe_vertex_buffer buf;
 
    assert(buffer);
 
-   buffer->num_verts = 0;
-   buffer->stride = stride;
+   buffer->size = size;
+   buffer->num_not_empty = 0;
+   buffer->num_empty = 0;
 
-   buf.stride = stride;
+   buf.stride = sizeof(struct vl_vertex_stream);
    buf.buffer_offset = 0;
    buf.buffer = pipe_buffer_create
    (
       pipe->screen,
       PIPE_BIND_VERTEX_BUFFER,
       PIPE_USAGE_STREAM,
-      stride * 4 * max_blocks
+      sizeof(struct vl_vertex_stream) * size
    );
 
    pipe_resource_reference(&buffer->resource, buf.buffer);
@@ -147,13 +199,129 @@ vl_vb_map(struct vl_vertex_buffer *buffer, struct pipe_context *pipe)
 {
    assert(buffer && pipe);
 
-   buffer->vectors = pipe_buffer_map
+   buffer->start = pipe_buffer_map
    (
       pipe,
       buffer->resource,
       PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
       &buffer->transfer
    );
+   buffer->end = buffer->start + buffer->resource->width0 / sizeof(struct vl_vertex_stream);
+}
+
+static void
+get_motion_vectors(struct pipe_mpeg12_macroblock *mb, struct vertex2s mv[4])
+{
+   switch (mb->mb_type) {
+      case PIPE_MPEG12_MACROBLOCK_TYPE_BI:
+      {
+         if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
+            mv[2].x = mb->pmv[0][1][0];
+            mv[2].y = mb->pmv[0][1][1];
+
+         } else {
+            mv[2].x = mb->pmv[0][1][0];
+            mv[2].y = mb->pmv[0][1][1] - (mb->pmv[0][1][1] % 4);
+
+            mv[3].x = mb->pmv[1][1][0];
+            mv[3].y = mb->pmv[1][1][1] - (mb->pmv[1][1][1] % 4);
+
+            if(mb->mvfs[0][1]) mv[2].y += 2;
+            if(!mb->mvfs[1][1]) mv[3].y -= 2;
+         }
+
+         /* fall-through */
+      }
+      case PIPE_MPEG12_MACROBLOCK_TYPE_FWD:
+      case PIPE_MPEG12_MACROBLOCK_TYPE_BKWD:
+      {
+         if (mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BKWD) {
+
+            if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
+               mv[0].x = mb->pmv[0][1][0];
+               mv[0].y = mb->pmv[0][1][1];
+
+            } else {
+               mv[0].x = mb->pmv[0][1][0];
+               mv[0].y = mb->pmv[0][1][1] - (mb->pmv[0][1][1] % 4);
+
+               mv[1].x = mb->pmv[1][1][0];
+               mv[1].y = mb->pmv[1][1][1] - (mb->pmv[1][1][1] % 4);
+
+               if(mb->mvfs[0][1]) mv[0].y += 2;
+               if(!mb->mvfs[1][1]) mv[1].y -= 2;
+            }
+
+         } else {
+
+            if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
+               mv[0].x = mb->pmv[0][0][0];
+               mv[0].y = mb->pmv[0][0][1];
+
+            } else {
+               mv[0].x = mb->pmv[0][0][0];
+               mv[0].y = mb->pmv[0][0][1] - (mb->pmv[0][0][1] % 4);
+
+               mv[1].x = mb->pmv[1][0][0];
+               mv[1].y = mb->pmv[1][0][1] - (mb->pmv[1][0][1] % 4);
+
+               if(mb->mvfs[0][0]) mv[0].y += 2;
+               if(!mb->mvfs[1][0]) mv[1].y -= 2;
+            }
+         }
+      }
+      default:
+         break;
+   }
+}
+
+void
+vl_vb_add_block(struct vl_vertex_buffer *buffer, struct pipe_mpeg12_macroblock *mb,
+                const unsigned (*empty_block_mask)[3][2][2])
+{
+   struct vl_vertex_stream *stream;
+   unsigned i, j;
+
+   assert(buffer);
+   assert(mb);
+
+   if(mb->cbp)
+      stream = buffer->start + buffer->num_not_empty++;
+   else
+      stream = buffer->end - ++buffer->num_empty;
+
+   stream->pos.x = mb->mbx;
+   stream->pos.y = mb->mby;
+
+   for ( i = 0; i < 2; ++i) {
+      for ( j = 0; j < 2; ++j) {
+         stream->eb[i][j].y = !(mb->cbp & (*empty_block_mask)[0][i][j]);
+         stream->eb[i][j].cr = !(mb->cbp & (*empty_block_mask)[1][i][j]);
+         stream->eb[i][j].cb = !(mb->cbp & (*empty_block_mask)[2][i][j]);
+      }
+   }
+   stream->eb[0][0].flag = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD;
+   stream->eb[0][1].flag = mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME;
+   stream->eb[1][0].flag = mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BKWD;
+   switch (mb->mb_type) {
+      case PIPE_MPEG12_MACROBLOCK_TYPE_INTRA:
+         stream->eb[1][1].flag = -1;
+         break;
+
+      case PIPE_MPEG12_MACROBLOCK_TYPE_FWD:
+      case PIPE_MPEG12_MACROBLOCK_TYPE_BKWD:
+         stream->eb[1][1].flag = 1;
+         break;
+
+      case PIPE_MPEG12_MACROBLOCK_TYPE_BI:
+         stream->eb[1][1].flag = 0;
+         break;
+
+      default:
+         assert(0);
+   }
+
+   get_motion_vectors(mb, stream->mv);
 }
 
 void
@@ -164,14 +332,13 @@ vl_vb_unmap(struct vl_vertex_buffer *buffer, struct pipe_context *pipe)
    pipe_buffer_unmap(pipe, buffer->transfer);
 }
 
-unsigned
+void
 vl_vb_restart(struct vl_vertex_buffer *buffer)
 {
    assert(buffer);
 
-   unsigned todo = buffer->num_verts;
-   buffer->num_verts = 0;
-   return todo;
+   buffer->num_not_empty = 0;
+   buffer->num_empty = 0;
 }
 
 void
