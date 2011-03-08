@@ -39,6 +39,8 @@ glGetStringi command                                  DONE
 glTexParameterI, glGetTexParameterI commands          DONE
 glVertexAttribI commands                              DONE (but converts int
                                                             values to floats)
+Depth format cube textures                            0% done
+
 
 
 GL 3.1:
