@@ -2918,40 +2918,40 @@ shadow_compare4(GLenum function, GLfloat coord,
 
    switch (function) {
    case GL_LEQUAL:
-      if (depth00 < coord)  luminance -= d;
-      if (depth01 < coord)  luminance -= d;
-      if (depth10 < coord)  luminance -= d;
-      if (depth11 < coord)  luminance -= d;
+      if (coord > depth00)  luminance -= d;
+      if (coord > depth01)  luminance -= d;
+      if (coord > depth10)  luminance -= d;
+      if (coord > depth11)  luminance -= d;
       return luminance;
    case GL_GEQUAL:
-      if (depth00 > coord)  luminance -= d;
-      if (depth01 > coord)  luminance -= d;
-      if (depth10 > coord)  luminance -= d;
-      if (depth11 > coord)  luminance -= d;
+      if (coord < depth00)  luminance -= d;
+      if (coord < depth01)  luminance -= d;
+      if (coord < depth10)  luminance -= d;
+      if (coord < depth11)  luminance -= d;
       return luminance;
    case GL_LESS:
-      if (depth00 <= coord)  luminance -= d;
-      if (depth01 <= coord)  luminance -= d;
-      if (depth10 <= coord)  luminance -= d;
-      if (depth11 <= coord)  luminance -= d;
+      if (coord >= depth00)  luminance -= d;
+      if (coord >= depth01)  luminance -= d;
+      if (coord >= depth10)  luminance -= d;
+      if (coord >= depth11)  luminance -= d;
       return luminance;
    case GL_GREATER:
-      if (depth00 >= coord)  luminance -= d;
-      if (depth01 >= coord)  luminance -= d;
-      if (depth10 >= coord)  luminance -= d;
-      if (depth11 >= coord)  luminance -= d;
+      if (coord <= depth00)  luminance -= d;
+      if (coord <= depth01)  luminance -= d;
+      if (coord <= depth10)  luminance -= d;
+      if (coord <= depth11)  luminance -= d;
       return luminance;
    case GL_EQUAL:
-      if (depth00 != coord)  luminance -= d;
-      if (depth01 != coord)  luminance -= d;
-      if (depth10 != coord)  luminance -= d;
-      if (depth11 != coord)  luminance -= d;
+      if (coord != depth00)  luminance -= d;
+      if (coord != depth01)  luminance -= d;
+      if (coord != depth10)  luminance -= d;
+      if (coord != depth11)  luminance -= d;
       return luminance;
    case GL_NOTEQUAL:
-      if (depth00 == coord)  luminance -= d;
-      if (depth01 == coord)  luminance -= d;
-      if (depth10 == coord)  luminance -= d;
-      if (depth11 == coord)  luminance -= d;
+      if (coord == depth00)  luminance -= d;
+      if (coord == depth01)  luminance -= d;
+      if (coord == depth10)  luminance -= d;
+      if (coord == depth11)  luminance -= d;
       return luminance;
    case GL_ALWAYS:
       return 1.0F;
