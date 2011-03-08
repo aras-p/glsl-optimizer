@@ -399,7 +399,6 @@ def generate(env):
             ccflags += [
               '/Od', # disable optimizations
               '/Oi', # enable intrinsic functions
-              '/Oy-', # disable frame pointer omission
             ]
         else:
             ccflags += [
@@ -411,6 +410,7 @@ def generate(env):
             ]
         else:
             ccflags += [
+                '/Oy-', # disable frame pointer omission
                 '/GL-', # disable whole program optimization
             ]
         ccflags += [
