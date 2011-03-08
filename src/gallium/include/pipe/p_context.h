@@ -390,6 +390,11 @@ struct pipe_context {
                                 struct pipe_resource *,
                                 unsigned offset,
                                 unsigned size);
+
+   /**
+    * Flush any pending framebuffer writes and invalidate texture caches.
+    */
+   void (*texture_barrier)(struct pipe_context *);
 };
 
 

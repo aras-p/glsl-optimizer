@@ -221,6 +221,7 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_cb_syncobj.c \
 	state_tracker/st_cb_strings.c \
 	state_tracker/st_cb_texture.c \
+	state_tracker/st_cb_texturebarrier.c \
 	state_tracker/st_cb_viewport.c \
 	state_tracker/st_cb_xformfb.c \
 	state_tracker/st_context.c \

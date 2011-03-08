@@ -522,4 +522,8 @@ void st_init_extensions(struct st_context *st)
    if (screen->fence_finish) {
       ctx->Extensions.ARB_sync = GL_TRUE;
    }
+
+   if (st->pipe->texture_barrier) {
+      ctx->Extensions.NV_texture_barrier = GL_TRUE;
+   }
 }
