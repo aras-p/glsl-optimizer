@@ -2918,51 +2918,51 @@ shadow_compare4(GLenum function, GLfloat coord,
 
    switch (function) {
    case GL_LEQUAL:
-      if (depth00 <= coord)  luminance -= d;
-      if (depth01 <= coord)  luminance -= d;
-      if (depth10 <= coord)  luminance -= d;
-      if (depth11 <= coord)  luminance -= d;
-      return luminance;
-   case GL_GEQUAL:
-      if (depth00 >= coord)  luminance -= d;
-      if (depth01 >= coord)  luminance -= d;
-      if (depth10 >= coord)  luminance -= d;
-      if (depth11 >= coord)  luminance -= d;
-      return luminance;
-   case GL_LESS:
       if (depth00 < coord)  luminance -= d;
       if (depth01 < coord)  luminance -= d;
       if (depth10 < coord)  luminance -= d;
       if (depth11 < coord)  luminance -= d;
       return luminance;
-   case GL_GREATER:
+   case GL_GEQUAL:
       if (depth00 > coord)  luminance -= d;
       if (depth01 > coord)  luminance -= d;
       if (depth10 > coord)  luminance -= d;
       if (depth11 > coord)  luminance -= d;
       return luminance;
-   case GL_EQUAL:
-      if (depth00 == coord)  luminance -= d;
-      if (depth01 == coord)  luminance -= d;
-      if (depth10 == coord)  luminance -= d;
-      if (depth11 == coord)  luminance -= d;
+   case GL_LESS:
+      if (depth00 <= coord)  luminance -= d;
+      if (depth01 <= coord)  luminance -= d;
+      if (depth10 <= coord)  luminance -= d;
+      if (depth11 <= coord)  luminance -= d;
       return luminance;
-   case GL_NOTEQUAL:
+   case GL_GREATER:
+      if (depth00 >= coord)  luminance -= d;
+      if (depth01 >= coord)  luminance -= d;
+      if (depth10 >= coord)  luminance -= d;
+      if (depth11 >= coord)  luminance -= d;
+      return luminance;
+   case GL_EQUAL:
       if (depth00 != coord)  luminance -= d;
       if (depth01 != coord)  luminance -= d;
       if (depth10 != coord)  luminance -= d;
       if (depth11 != coord)  luminance -= d;
       return luminance;
+   case GL_NOTEQUAL:
+      if (depth00 == coord)  luminance -= d;
+      if (depth01 == coord)  luminance -= d;
+      if (depth10 == coord)  luminance -= d;
+      if (depth11 == coord)  luminance -= d;
+      return luminance;
    case GL_ALWAYS:
-      return 0.0;
+      return 1.0F;
    case GL_NEVER:
       return ambient;
    case GL_NONE:
       /* ordinary bilinear filtering */
       return lerp_2d(wi, wj, depth00, depth10, depth01, depth11);
    default:
-      _mesa_problem(NULL, "Bad compare func in sample_depth_texture");
-      return 0.0F;
+      _mesa_problem(NULL, "Bad compare func in sample_compare4");
+      return ambient;
    }
 }
 
@@ -3030,7 +3030,7 @@ sample_depth_texture( struct gl_context *ctx,
    if (tObj->MagFilter == GL_NEAREST) {
       GLuint i;
       for (i = 0; i < n; i++) {
-         GLfloat depthSample;
+         GLfloat depthSample, depthRef;
          GLint col, row, slice;
 
          nearest_texcoord(tObj, level, texcoords[i], &col, &row, &slice);
@@ -3043,8 +3043,9 @@ sample_depth_texture( struct gl_context *ctx,
             depthSample = tObj->BorderColor.f[0];
          }
 
-         result = shadow_compare(function, texcoords[i][compare_coord],
-                                 depthSample, ambient);
+         depthRef = CLAMP(texcoords[i][compare_coord], 0.0F, 1.0F);
+
+         result = shadow_compare(function, depthRef, depthSample, ambient);
 
          switch (tObj->DepthMode) {
          case GL_LUMINANCE:
@@ -3068,7 +3069,7 @@ sample_depth_texture( struct gl_context *ctx,
       GLuint i;
       ASSERT(tObj->MagFilter == GL_LINEAR);
       for (i = 0; i < n; i++) {
-         GLfloat depth00, depth01, depth10, depth11;
+         GLfloat depth00, depth01, depth10, depth11, depthRef;
          GLint i0, i1, j0, j1;
          GLint slice;
          GLfloat wi, wj;
@@ -3134,7 +3135,9 @@ sample_depth_texture( struct gl_context *ctx,
             }
          }
 
-         result = shadow_compare4(function, texcoords[i][compare_coord],
+         depthRef = CLAMP(texcoords[i][compare_coord], 0.0F, 1.0F);
+
+         result = shadow_compare4(function, depthRef,
                                   depth00, depth01, depth10, depth11,
                                   ambient, wi, wj);
 
