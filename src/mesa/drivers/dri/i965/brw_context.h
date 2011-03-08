@@ -701,6 +701,9 @@ struct brw_context
    /* Used to give every program string a unique id
     */
    GLuint program_id;
+
+   int num_prepare_atoms, num_emit_atoms;
+   struct brw_tracked_state prepare_atoms[64], emit_atoms[64];
 };
 
 

@@ -104,7 +104,7 @@ static const struct brw_tracked_state *gen4_atoms[] =
    &brw_constant_buffer
 };
 
-const struct brw_tracked_state *gen6_atoms[] =
+static const struct brw_tracked_state *gen6_atoms[] =
 {
    &brw_check_fallback,
 
@@ -169,7 +169,32 @@ const struct brw_tracked_state *gen6_atoms[] =
 
 void brw_init_state( struct brw_context *brw )
 {
+   const struct brw_tracked_state **atoms;
+   int num_atoms;
+
    brw_init_caches(brw);
+
+   if (brw->intel.gen >= 6) {
+      atoms = gen6_atoms;
+      num_atoms = ARRAY_SIZE(gen6_atoms);
+   } else {
+      atoms = gen4_atoms;
+      num_atoms = ARRAY_SIZE(gen4_atoms);
+   }
+
+   while (num_atoms--) {
+      assert((*atoms)->dirty.mesa |
+	     (*atoms)->dirty.brw |
+	     (*atoms)->dirty.cache);
+
+      if ((*atoms)->prepare)
+	 brw->prepare_atoms[brw->num_prepare_atoms++] = **atoms;
+      if ((*atoms)->emit)
+	 brw->emit_atoms[brw->num_emit_atoms++] = **atoms;
+      atoms++;
+   }
+   assert(brw->num_emit_atoms <= ARRAY_SIZE(brw->emit_atoms));
+   assert(brw->num_prepare_atoms <= ARRAY_SIZE(brw->prepare_atoms));
 }
 
 
@@ -186,7 +211,7 @@ static GLuint check_state( const struct brw_state_flags *a,
 {
    return ((a->mesa & b->mesa) |
 	   (a->brw & b->brw) |
-	   (a->cache & b->cache));
+	   (a->cache & b->cache)) != 0;
 }
 
 static void accumulate_state( struct brw_state_flags *a,
@@ -342,9 +367,9 @@ void brw_validate_state( struct brw_context *brw )
    struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
    struct brw_state_flags *state = &brw->state.dirty;
+   const struct brw_tracked_state *atoms = brw->prepare_atoms;
+   int num_atoms = brw->num_prepare_atoms;
    GLuint i;
-   const struct brw_tracked_state **atoms;
-   int num_atoms;
 
    brw_clear_validated_bos(brw);
 
@@ -352,14 +377,6 @@ void brw_validate_state( struct brw_context *brw )
    brw->intel.NewGLState = 0;
 
    brw_add_validated_bo(brw, intel->batch.bo);
-
-   if (intel->gen >= 6) {
-      atoms = gen6_atoms;
-      num_atoms = ARRAY_SIZE(gen6_atoms);
-   } else {
-      atoms = gen4_atoms;
-      num_atoms = ARRAY_SIZE(gen4_atoms);
-   }
 
    if (brw->emit_state_always) {
       state->mesa |= ~0;
@@ -384,15 +401,13 @@ void brw_validate_state( struct brw_context *brw )
 
    /* do prepare stage for all atoms */
    for (i = 0; i < num_atoms; i++) {
-      const struct brw_tracked_state *atom = atoms[i];
-
-      if (brw->intel.Fallback)
-         break;
+      const struct brw_tracked_state *atom = &atoms[i];
 
       if (check_state(state, &atom->dirty)) {
-         if (atom->prepare) {
-            atom->prepare(brw);
-        }
+	 atom->prepare(brw);
+
+	 if (brw->intel.Fallback)
+	    break;
       }
    }
 
@@ -415,20 +430,11 @@ void brw_validate_state( struct brw_context *brw )
 
 void brw_upload_state(struct brw_context *brw)
 {
-   struct intel_context *intel = &brw->intel;
    struct brw_state_flags *state = &brw->state.dirty;
+   const struct brw_tracked_state *atoms = brw->emit_atoms;
+   int num_atoms = brw->num_emit_atoms;
    int i;
    static int dirty_count = 0;
-   const struct brw_tracked_state **atoms;
-   int num_atoms;
-
-   if (intel->gen >= 6) {
-      atoms = gen6_atoms;
-      num_atoms = ARRAY_SIZE(gen6_atoms);
-   } else {
-      atoms = gen4_atoms;
-      num_atoms = ARRAY_SIZE(gen4_atoms);
-   }
 
    brw_clear_validated_bos(brw);
 
@@ -442,20 +448,14 @@ void brw_upload_state(struct brw_context *brw)
       prev = *state;
 
       for (i = 0; i < num_atoms; i++) {
-	 const struct brw_tracked_state *atom = atoms[i];
+	 const struct brw_tracked_state *atom = &atoms[i];
 	 struct brw_state_flags generated;
-
-	 assert(atom->dirty.mesa ||
-		atom->dirty.brw ||
-		atom->dirty.cache);
 
 	 if (brw->intel.Fallback)
 	    break;
 
 	 if (check_state(state, &atom->dirty)) {
-	    if (atom->emit) {
-	       atom->emit( brw );
-	    }
+	    atom->emit(brw);
 	 }
 
 	 accumulate_state(&examined, &atom->dirty);
@@ -471,15 +471,13 @@ void brw_upload_state(struct brw_context *brw)
    }
    else {
       for (i = 0; i < num_atoms; i++) {
-	 const struct brw_tracked_state *atom = atoms[i];
+	 const struct brw_tracked_state *atom = &atoms[i];
 
 	 if (brw->intel.Fallback)
 	    break;
 
 	 if (check_state(state, &atom->dirty)) {
-	    if (atom->emit) {
-	       atom->emit( brw );
-	    }
+	    atom->emit(brw);
 	 }
       }
    }
