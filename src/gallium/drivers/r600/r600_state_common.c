@@ -516,7 +516,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 	r600_pipe_state_add_reg(&vgt, R_028404_VGT_MIN_VTX_INDX, draw.info.min_index, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(&vgt, R_028238_CB_TARGET_MASK, rctx->cb_target_mask & mask, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(&vgt, R_03CFF0_SQ_VTX_BASE_VTX_LOC, 0, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(&vgt, R_03CFF4_SQ_VTX_START_INST_LOC, 0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(&vgt, R_03CFF4_SQ_VTX_START_INST_LOC, draw.info.start_instance, 0xFFFFFFFF, NULL);
 	r600_context_pipe_state_set(&rctx->ctx, &vgt);
 
 	rdraw.vgt_num_indices = draw.info.count;
