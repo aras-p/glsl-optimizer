@@ -100,7 +100,8 @@ r300_texture_get_transfer(struct pipe_context *ctx,
     }
 
     blittable = desc->layout == UTIL_FORMAT_LAYOUT_PLAIN ||
-                desc->layout == UTIL_FORMAT_LAYOUT_S3TC;
+                desc->layout == UTIL_FORMAT_LAYOUT_S3TC ||
+                desc->layout == UTIL_FORMAT_LAYOUT_RGTC;
 
     trans = CALLOC_STRUCT(r300_transfer);
     if (trans) {
