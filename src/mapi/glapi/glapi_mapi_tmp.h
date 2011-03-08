@@ -1295,11 +1295,12 @@ GLAPI GLenum APIENTRY GLAPI_PREFIX(ObjectUnpurgeableAPPLE)(GLenum objectType, GL
 GLAPI void APIENTRY GLAPI_PREFIX(ActiveProgramEXT)(GLuint program);
 GLAPI GLuint APIENTRY GLAPI_PREFIX(CreateShaderProgramEXT)(GLenum type, const GLchar *string);
 GLAPI void APIENTRY GLAPI_PREFIX(UseShaderProgramEXT)(GLenum type, GLuint program);
-void APIENTRY GLAPI_PREFIX(_dispatch_stub_943)(GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask);
-void APIENTRY GLAPI_PREFIX(_dispatch_stub_944)(GLenum target, GLuint index, GLsizei count, const GLfloat *params);
+GLAPI void APIENTRY GLAPI_PREFIX(TextureBarrierNV)(void);
+void APIENTRY GLAPI_PREFIX(_dispatch_stub_944)(GLenum frontfunc, GLenum backfunc, GLint ref, GLuint mask);
 void APIENTRY GLAPI_PREFIX(_dispatch_stub_945)(GLenum target, GLuint index, GLsizei count, const GLfloat *params);
-void APIENTRY GLAPI_PREFIX(_dispatch_stub_946)(GLuint id, GLenum pname, GLint64EXT *params);
-void APIENTRY GLAPI_PREFIX(_dispatch_stub_947)(GLuint id, GLenum pname, GLuint64EXT *params);
+void APIENTRY GLAPI_PREFIX(_dispatch_stub_946)(GLenum target, GLuint index, GLsizei count, const GLfloat *params);
+void APIENTRY GLAPI_PREFIX(_dispatch_stub_947)(GLuint id, GLenum pname, GLint64EXT *params);
+void APIENTRY GLAPI_PREFIX(_dispatch_stub_948)(GLuint id, GLenum pname, GLuint64EXT *params);
 GLAPI void APIENTRY GLAPI_PREFIX(EGLImageTargetRenderbufferStorageOES)(GLenum target, GLvoid *writeOffset);
 GLAPI void APIENTRY GLAPI_PREFIX(EGLImageTargetTexture2DOES)(GLenum target, GLvoid *writeOffset);
 #undef MAPI_TMP_DEFINES
@@ -9538,17 +9539,24 @@ GLAPI void APIENTRY GLAPI_PREFIX(UseShaderProgramEXT)(GLenum type, GLuint progra
    ((void (APIENTRY *)(GLenum type, GLuint program)) _func)(type, program);
 }
 
+GLAPI void APIENTRY GLAPI_PREFIX(TextureBarrierNV)(void)
+{
+   const struct mapi_table *_tbl = entry_current_get();
+   mapi_func _func = ((const mapi_func *) _tbl)[943];
+   ((void (APIENTRY *)(void)) _func)();
+}
+
 GLAPI void APIENTRY GLAPI_PREFIX(EGLImageTargetRenderbufferStorageOES)(GLenum target, GLvoid *writeOffset)
 {
    const struct mapi_table *_tbl = entry_current_get();
-   mapi_func _func = ((const mapi_func *) _tbl)[948];
+   mapi_func _func = ((const mapi_func *) _tbl)[949];
    ((void (APIENTRY *)(GLenum target, GLvoid *writeOffset)) _func)(target, writeOffset);
 }
 
 GLAPI void APIENTRY GLAPI_PREFIX(EGLImageTargetTexture2DOES)(GLenum target, GLvoid *writeOffset)
 {
    const struct mapi_table *_tbl = entry_current_get();
-   mapi_func _func = ((const mapi_func *) _tbl)[949];
+   mapi_func _func = ((const mapi_func *) _tbl)[950];
    ((void (APIENTRY *)(GLenum target, GLvoid *writeOffset)) _func)(target, writeOffset);
 }
 
@@ -13094,11 +13102,14 @@ STUB_ASM_ENTRY(GLAPI_PREFIX_STR(CreateShaderProgramEXT))"\n"
 STUB_ASM_ENTRY(GLAPI_PREFIX_STR(UseShaderProgramEXT))"\n"
 "\t"STUB_ASM_CODE("942")"\n"
 
+STUB_ASM_ENTRY(GLAPI_PREFIX_STR(TextureBarrierNV))"\n"
+"\t"STUB_ASM_CODE("943")"\n"
+
 STUB_ASM_ENTRY(GLAPI_PREFIX_STR(EGLImageTargetRenderbufferStorageOES))"\n"
-"\t"STUB_ASM_CODE("948")"\n"
+"\t"STUB_ASM_CODE("949")"\n"
 
 STUB_ASM_ENTRY(GLAPI_PREFIX_STR(EGLImageTargetTexture2DOES))"\n"
-"\t"STUB_ASM_CODE("949")"\n"
+"\t"STUB_ASM_CODE("950")"\n"
 
 );
 #undef MAPI_TMP_STUB_ASM_GCC_NO_HIDDEN
