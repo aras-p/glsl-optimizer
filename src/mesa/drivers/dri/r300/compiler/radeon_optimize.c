@@ -312,6 +312,13 @@ static void constant_folding(struct radeon_compiler * c, struct rc_instruction *
 		struct rc_src_register newsrc;
 		int have_real_reference;
 
+		if (inst->U.I.SrcReg[src].Swizzle == RC_SWIZZLE_1111 ||
+		    inst->U.I.SrcReg[src].Swizzle == RC_SWIZZLE_0000 ||
+		    inst->U.I.SrcReg[src].Swizzle == RC_SWIZZLE_HHHH) {
+			inst->U.I.SrcReg[src].File = RC_FILE_NONE;
+			continue;
+		}
+
 		if (inst->U.I.SrcReg[src].File != RC_FILE_CONSTANT ||
 		    inst->U.I.SrcReg[src].RelAddr ||
 		    inst->U.I.SrcReg[src].Index >= c->Program.Constants.Count)
