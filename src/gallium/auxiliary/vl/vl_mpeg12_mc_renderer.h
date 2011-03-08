@@ -39,13 +39,6 @@ struct pipe_context;
 struct pipe_macroblock;
 struct keymap;
 
-/* A slice is video-width (rounded up to a multiple of macroblock width) x macroblock height */
-enum VL_MPEG12_MC_RENDERER_BUFFER_MODE
-{
-   VL_MPEG12_MC_RENDERER_BUFFER_SLICE,  /* Saves memory at the cost of smaller batches */
-   VL_MPEG12_MC_RENDERER_BUFFER_PICTURE /* Larger batches, more memory */
-};
-
 struct vl_mpeg12_mc_renderer
 {
    struct pipe_context *pipe;
@@ -53,20 +46,15 @@ struct vl_mpeg12_mc_renderer
    unsigned buffer_height;
    enum pipe_video_chroma_format chroma_format;
    const unsigned (*empty_block_mask)[3][2][2];
-   enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode;
-   unsigned macroblocks_per_batch;
 
    struct pipe_viewport_state viewport;
    struct pipe_framebuffer_state fb_state;
 
    struct vl_idct idct_y, idct_cr, idct_cb;
 
-   void *vertex_elems_state;
    void *rs_state;
 
    void *vs, *fs;
-
-   struct pipe_vertex_buffer quad;
 
    union
    {
@@ -81,8 +69,6 @@ struct vl_mpeg12_mc_buffer
 {
    struct vl_idct_buffer idct_y, idct_cb, idct_cr;
 
-   struct vl_vertex_buffer vertex_stream;
-
    union
    {
       struct pipe_sampler_view *all[5];
@@ -95,14 +81,6 @@ struct vl_mpeg12_mc_buffer
       struct { struct pipe_resource *y, *cb, *cr; } individual;
    } textures;
 
-   union
-   {
-      struct pipe_vertex_buffer all[2];
-      struct {
-         struct pipe_vertex_buffer quad, stream;
-      } individual;
-   } vertex_bufs;
-
    struct pipe_surface *surface, *past, *future;
    struct pipe_fence_handle **fence;
 };
@@ -111,8 +89,7 @@ bool vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
                                 struct pipe_context *pipe,
                                 unsigned picture_width,
                                 unsigned picture_height,
-                                enum pipe_video_chroma_format chroma_format,
-                                enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode);
+                                enum pipe_video_chroma_format chroma_format);
 
 void vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer);
 
@@ -133,6 +110,8 @@ void vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer *rend
 
 void vl_mpeg12_mc_unmap_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer);
 
-void vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer);
+void vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer,
+                                 unsigned not_empty_start_instance, unsigned not_empty_num_instances,
+                                 unsigned empty_start_instance, unsigned empty_num_instances);
 
 #endif /* vl_mpeg12_mc_renderer_h */

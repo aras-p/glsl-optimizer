@@ -35,14 +35,35 @@
 struct pipe_screen;
 struct pipe_context;
 
+struct sp_mpeg12_buffer
+{
+   struct vl_vertex_buffer vertex_stream;
+
+   union
+   {
+      struct pipe_vertex_buffer all[2];
+      struct {
+         struct pipe_vertex_buffer quad, stream;
+      } individual;
+   } vertex_bufs;
+
+   struct vl_mpeg12_mc_buffer mc;
+};
+
 struct sp_mpeg12_context
 {
    struct pipe_video_context base;
    struct pipe_context *pipe;
    struct pipe_surface *decode_target;
+
+   struct pipe_vertex_buffer quads;
+   unsigned vertex_buffer_size;
+   void *vertex_elems_state;
+
    struct vl_mpeg12_mc_renderer mc_renderer;
+
    struct keymap *buffer_map;
-   struct vl_mpeg12_mc_buffer *mc_buffer;
+   struct sp_mpeg12_buffer *cur_buffer;
    struct vl_compositor compositor;
 
    void *rast;
@@ -63,7 +84,6 @@ struct pipe_video_context *
 sp_video_create_ex(struct pipe_context *pipe, enum pipe_video_profile profile,
                    enum pipe_video_chroma_format chroma_format,
                    unsigned width, unsigned height,
-                   enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode,
                    bool pot_buffers,
                    enum pipe_format decode_format);
 

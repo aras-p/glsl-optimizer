@@ -333,9 +333,16 @@ vl_vb_unmap(struct vl_vertex_buffer *buffer, struct pipe_context *pipe)
 }
 
 void
-vl_vb_restart(struct vl_vertex_buffer *buffer)
+vl_vb_restart(struct vl_vertex_buffer *buffer,
+              unsigned *not_empty_start_instance, unsigned *not_empty_num_instances,
+              unsigned *empty_start_instance, unsigned *empty_num_instances)
 {
    assert(buffer);
+
+   *not_empty_start_instance = 0;
+   *not_empty_num_instances = buffer->num_not_empty;
+   *empty_start_instance = buffer->size - buffer->num_empty;
+   *empty_num_instances = buffer->num_empty;
 
    buffer->num_not_empty = 0;
    buffer->num_empty = 0;

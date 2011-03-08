@@ -38,19 +38,28 @@
 #include "sp_public.h"
 #include "sp_texture.h"
 
+#define MACROBLOCK_WIDTH 16
+#define MACROBLOCK_HEIGHT 16
+
 #define NUM_BUFFERS 2
 
 static void
 flush_buffer(struct sp_mpeg12_context *ctx)
 {
+   unsigned ne_start, ne_num, e_start, e_num;
    assert(ctx);
 
-   if(ctx->mc_buffer != NULL) {
+   if(ctx->cur_buffer != NULL) {
 
-      vl_mpeg12_mc_unmap_buffer(&ctx->mc_renderer, ctx->mc_buffer);
-      vl_mpeg12_mc_renderer_flush(&ctx->mc_renderer, ctx->mc_buffer);
+      vl_vb_unmap(&ctx->cur_buffer->vertex_stream, ctx->pipe);
+      vl_mpeg12_mc_unmap_buffer(&ctx->mc_renderer, &ctx->cur_buffer->mc);
+      vl_vb_restart(&ctx->cur_buffer->vertex_stream, &ne_start, &ne_num, &e_start, &e_num);
 
-      ctx->mc_buffer = NULL;
+      ctx->pipe->set_vertex_buffers(ctx->pipe, 2, ctx->cur_buffer->vertex_bufs.all);
+      ctx->pipe->bind_vertex_elements_state(ctx->pipe, ctx->vertex_elems_state);
+      vl_mpeg12_mc_renderer_flush(&ctx->mc_renderer, &ctx->cur_buffer->mc, ne_start, ne_num, e_start, e_num);
+
+      ctx->cur_buffer = NULL;
    }
 }
 
@@ -58,21 +67,28 @@ static void
 rotate_buffer(struct sp_mpeg12_context *ctx)
 {
    static unsigned key = 0;
-   struct vl_mpeg12_mc_buffer *buffer;
+   struct sp_mpeg12_buffer *buffer;
 
    assert(ctx);
 
    flush_buffer(ctx);
 
-   buffer = (struct vl_mpeg12_mc_buffer*)util_keymap_lookup(ctx->buffer_map, &key);
+   buffer = (struct sp_mpeg12_buffer*)util_keymap_lookup(ctx->buffer_map, &key);
    if (!buffer) {
       boolean added_to_map;
 
-      buffer = CALLOC_STRUCT(vl_mpeg12_mc_buffer);
+      buffer = CALLOC_STRUCT(sp_mpeg12_buffer);
       if (buffer == NULL)
          return;
 
-      if(!vl_mpeg12_mc_init_buffer(&ctx->mc_renderer, buffer)) {
+      buffer->vertex_bufs.individual.quad.stride = ctx->quads.stride;
+      buffer->vertex_bufs.individual.quad.buffer_offset = ctx->quads.buffer_offset;
+      pipe_resource_reference(&buffer->vertex_bufs.individual.quad.buffer, ctx->quads.buffer);
+
+      buffer->vertex_bufs.individual.stream = vl_vb_init(&buffer->vertex_stream, ctx->pipe,
+                                                         ctx->vertex_buffer_size);
+
+      if(!vl_mpeg12_mc_init_buffer(&ctx->mc_renderer, &buffer->mc)) {
          FREE(buffer);
          return;
       }
@@ -82,9 +98,10 @@ rotate_buffer(struct sp_mpeg12_context *ctx)
    }
    ++key;
    key %= NUM_BUFFERS;
-   ctx->mc_buffer = buffer;
+   ctx->cur_buffer = buffer;
 
-   vl_mpeg12_mc_map_buffer(&ctx->mc_renderer, ctx->mc_buffer);
+   vl_vb_map(&ctx->cur_buffer->vertex_stream, ctx->pipe);
+   vl_mpeg12_mc_map_buffer(&ctx->mc_renderer, &ctx->cur_buffer->mc);
 }
 
 static void
@@ -93,14 +110,15 @@ delete_buffer(const struct keymap *map,
               void *user)
 {
    struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)user;
-   struct vl_mpeg12_mc_buffer *buf = (struct vl_mpeg12_mc_buffer*)data;
+   struct sp_mpeg12_buffer *buf = (struct sp_mpeg12_buffer*)data;
 
    assert(map);
    assert(key);
    assert(data);
    assert(user);
 
-   vl_mpeg12_mc_cleanup_buffer(&ctx->mc_renderer, buf);
+   vl_vb_cleanup(&buf->vertex_stream);
+   vl_mpeg12_mc_cleanup_buffer(&ctx->mc_renderer, &buf->mc);
 }
 
 static void
@@ -124,6 +142,8 @@ sp_mpeg12_destroy(struct pipe_video_context *vpipe)
    vl_compositor_cleanup(&ctx->compositor);
    util_delete_keymap(ctx->buffer_map, ctx);
    vl_mpeg12_mc_renderer_cleanup(&ctx->mc_renderer);
+   ctx->pipe->delete_vertex_elements_state(ctx->pipe, ctx->vertex_elems_state);
+   pipe_resource_reference(&ctx->quads.buffer, NULL);
    ctx->pipe->destroy(ctx->pipe);
 
    FREE(ctx);
@@ -194,16 +214,20 @@ sp_mpeg12_decode_macroblocks(struct pipe_video_context *vpipe,
 {
    struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
    struct pipe_mpeg12_macroblock *mpeg12_macroblocks = (struct pipe_mpeg12_macroblock*)macroblocks;
+   unsigned i;
 
    assert(vpipe);
    assert(num_macroblocks);
    assert(macroblocks);
    assert(macroblocks->codec == PIPE_VIDEO_CODEC_MPEG12);
    assert(ctx->decode_target);
-   assert(ctx->mc_buffer);
+   assert(ctx->cur_buffer);
+
+   for ( i = 0; i < num_macroblocks; ++i )
+      vl_vb_add_block(&ctx->cur_buffer->vertex_stream, &mpeg12_macroblocks[i], ctx->mc_renderer.empty_block_mask);
 
    vl_mpeg12_mc_renderer_render_macroblocks(&ctx->mc_renderer,
-                                            ctx->mc_buffer,
+                                            &ctx->cur_buffer->mc,
                                             ctx->decode_target,
                                             past, future, num_macroblocks,
                                             mpeg12_macroblocks, fence);
@@ -411,7 +435,7 @@ sp_mpeg12_set_decode_target(struct pipe_video_context *vpipe,
    assert(vpipe);
    assert(dt);
 
-   if (ctx->decode_target != dt || ctx->mc_buffer == NULL) {
+   if (ctx->decode_target != dt || ctx->cur_buffer == NULL) {
       rotate_buffer(ctx);
 
       pipe_surface_reference(&ctx->decode_target, dt);
@@ -466,7 +490,7 @@ init_pipe_state(struct sp_mpeg12_context *ctx)
    rast.offset_units = 1;
    rast.offset_scale = 1;
    rast.gl_rasterization_rules = 1;
-   
+
    ctx->rast = ctx->pipe->create_rasterizer_state(ctx->pipe, &rast);
    ctx->pipe->bind_rasterizer_state(ctx->pipe, ctx->rast);
 
@@ -514,7 +538,6 @@ static struct pipe_video_context *
 sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
                  enum pipe_video_chroma_format chroma_format,
                  unsigned width, unsigned height,
-                 enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode,
                  bool pot_buffers,
                  enum pipe_format decode_format)
 {
@@ -531,8 +554,8 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
    /* TODO: Non-pot buffers untested, probably doesn't work without changes to texcoord generation, vert shader, etc */
    assert(pot_buffers);
 
-   buffer_width = pot_buffers ? util_next_power_of_two(width) : width; 
-   buffer_height = pot_buffers ? util_next_power_of_two(height) : height; 
+   buffer_width = pot_buffers ? util_next_power_of_two(width) : width;
+   buffer_height = pot_buffers ? util_next_power_of_two(height) : height;
 
    ctx->base.profile = profile;
    ctx->base.chroma_format = chroma_format;
@@ -564,9 +587,18 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
    ctx->pipe = pipe;
    ctx->decode_format = decode_format;
 
+   ctx->quads = vl_vb_upload_quads(ctx->pipe, 2, 2);
+   ctx->vertex_buffer_size = width / MACROBLOCK_WIDTH * height / MACROBLOCK_HEIGHT;
+   ctx->vertex_elems_state = vl_vb_get_elems_state(ctx->pipe, true);
+
+   if (ctx->vertex_elems_state == NULL) {
+      ctx->pipe->destroy(ctx->pipe);
+      FREE(ctx);
+      return NULL;
+   }
+
    if (!vl_mpeg12_mc_renderer_init(&ctx->mc_renderer, ctx->pipe,
-                                   buffer_width, buffer_height, chroma_format,
-                                   bufmode)) {
+                                   buffer_width, buffer_height, chroma_format)) {
       ctx->pipe->destroy(ctx->pipe);
       FREE(ctx);
       return NULL;
@@ -618,7 +650,6 @@ sp_video_create(struct pipe_screen *screen, enum pipe_video_profile profile,
    return sp_video_create_ex(pipe, profile,
                              chroma_format,
                              width, height,
-                             VL_MPEG12_MC_RENDERER_BUFFER_PICTURE,
                              true,
                              PIPE_FORMAT_XYUV);
 }
@@ -627,7 +658,6 @@ struct pipe_video_context *
 sp_video_create_ex(struct pipe_context *pipe, enum pipe_video_profile profile,
                    enum pipe_video_chroma_format chroma_format,
                    unsigned width, unsigned height,
-                   enum VL_MPEG12_MC_RENDERER_BUFFER_MODE bufmode,
                    bool pot_buffers,
                    enum pipe_format decode_format)
 {
@@ -639,7 +669,6 @@ sp_video_create_ex(struct pipe_context *pipe, enum pipe_video_profile profile,
          return sp_mpeg12_create(pipe, profile,
                                  chroma_format,
                                  width, height,
-                                 bufmode,
                                  pot_buffers,
                                  decode_format);
       default:

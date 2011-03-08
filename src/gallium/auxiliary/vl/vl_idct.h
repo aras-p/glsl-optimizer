@@ -40,7 +40,6 @@ struct vl_idct
    unsigned blocks_x, blocks_y;
 
    void *rs_state;
-   void *vertex_elems_state;
 
    union
    {
@@ -56,7 +55,6 @@ struct vl_idct
    void *matrix_fs, *transpose_fs;
 
    struct pipe_resource *matrix;
-   struct pipe_vertex_buffer quad;
 };
 
 struct vl_idct_buffer
@@ -86,12 +84,6 @@ struct vl_idct_buffer
       } individual;
    } textures;
 
-   union
-   {
-      struct pipe_vertex_buffer all[2];
-      struct { struct pipe_vertex_buffer quad, stream; } individual;
-   } vertex_bufs;
-
    struct pipe_transfer *tex_transfer;
    short *texels;
 };
@@ -106,7 +98,7 @@ bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
 void vl_idct_cleanup(struct vl_idct *idct);
 
 bool vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
-                         struct pipe_resource *dst, struct pipe_vertex_buffer stream);
+                         struct pipe_resource *dst);
 
 void vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer);
 

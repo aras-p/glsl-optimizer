@@ -75,7 +75,9 @@ void vl_vb_add_block(struct vl_vertex_buffer *buffer, struct pipe_mpeg12_macrobl
 
 void vl_vb_unmap(struct vl_vertex_buffer *buffer, struct pipe_context *pipe);
 
-void vl_vb_restart(struct vl_vertex_buffer *buffer);
+void vl_vb_restart(struct vl_vertex_buffer *buffer,
+                   unsigned *not_empty_start_instance, unsigned *not_empty_num_instances,
+                   unsigned *empty_start_instance, unsigned *empty_num_instances);
 
 void vl_vb_cleanup(struct vl_vertex_buffer *buffer);
 

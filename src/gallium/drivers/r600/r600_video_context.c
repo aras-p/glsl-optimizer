@@ -15,7 +15,6 @@ r600_video_create(struct pipe_screen *screen, enum pipe_video_profile profile,
       return NULL;
 
    return sp_video_create_ex(pipe, profile, chroma_format, width, height,
-                             VL_MPEG12_MC_RENDERER_BUFFER_PICTURE,
                              true,
                              PIPE_FORMAT_VUYX);
 }

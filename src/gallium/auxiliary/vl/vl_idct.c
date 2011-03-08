@@ -394,11 +394,6 @@ init_state(struct vl_idct *idct)
 
    assert(idct);
 
-   idct->quad = vl_vb_upload_quads(idct->pipe, idct->blocks_x, idct->blocks_y);
-
-   if(idct->quad.buffer == NULL)
-      return false;
-
    for (i = 0; i < 4; ++i) {
       memset(&sampler, 0, sizeof(sampler));
       sampler.wrap_s = PIPE_TEX_WRAP_REPEAT;
@@ -427,8 +422,6 @@ init_state(struct vl_idct *idct)
    rs_state.gl_rasterization_rules = false;
    idct->rs_state = idct->pipe->create_rasterizer_state(idct->pipe, &rs_state);
 
-   idct->vertex_elems_state = vl_vb_get_elems_state(idct->pipe, false);
-
    return true;
 }
 
@@ -441,7 +434,6 @@ cleanup_state(struct vl_idct *idct)
       idct->pipe->delete_sampler_state(idct->pipe, idct->samplers.all[i]);
 
    idct->pipe->delete_rasterizer_state(idct->pipe, idct->rs_state);
-   idct->pipe->delete_vertex_elements_state(idct->pipe, idct->vertex_elems_state);
 }
 
 static bool
@@ -498,31 +490,6 @@ cleanup_textures(struct vl_idct *idct, struct vl_idct_buffer *buffer)
       pipe_sampler_view_reference(&buffer->sampler_views.all[i], NULL);
       pipe_resource_reference(&buffer->textures.all[i], NULL);
    }
-}
-
-static bool
-init_vertex_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer, struct pipe_vertex_buffer stream)
-{
-   assert(idct && buffer);
-
-   buffer->vertex_bufs.individual.quad.stride = idct->quad.stride;
-   buffer->vertex_bufs.individual.quad.buffer_offset = idct->quad.buffer_offset;
-   pipe_resource_reference(&buffer->vertex_bufs.individual.quad.buffer, idct->quad.buffer);
-
-   buffer->vertex_bufs.individual.stream.stride = stream.stride;
-   buffer->vertex_bufs.individual.stream.buffer_offset = stream.buffer_offset;
-   pipe_resource_reference(&buffer->vertex_bufs.individual.stream.buffer, stream.buffer);
-
-   return true;
-}
-
-static void
-cleanup_vertex_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer)
-{
-   assert(idct && buffer);
-
-   pipe_resource_reference(&buffer->vertex_bufs.individual.quad.buffer, NULL);
-   pipe_resource_reference(&buffer->vertex_bufs.individual.stream.buffer, NULL);
 }
 
 struct pipe_resource *
@@ -612,7 +579,7 @@ vl_idct_cleanup(struct vl_idct *idct)
 
 bool
 vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
-                    struct pipe_resource *dst, struct pipe_vertex_buffer stream)
+                    struct pipe_resource *dst)
 {
    struct pipe_surface template;
 
@@ -627,9 +594,6 @@ vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
    pipe_resource_reference(&buffer->destination, dst);
 
    if (!init_textures(idct, buffer))
-      return false;
-
-   if (!init_vertex_buffers(idct, buffer, stream))
       return false;
 
    /* init state */
@@ -693,7 +657,6 @@ vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    idct->pipe->surface_destroy(idct->pipe, buffer->fb_state[1].cbufs[0]);
 
    cleanup_textures(idct, buffer);
-   cleanup_vertex_buffers(idct, buffer);
 }
 
 void
@@ -758,8 +721,6 @@ vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer, unsigned num_
       num_verts = idct->blocks_x * idct->blocks_y * 4;
 
       idct->pipe->bind_rasterizer_state(idct->pipe, idct->rs_state);
-      idct->pipe->set_vertex_buffers(idct->pipe, 2, buffer->vertex_bufs.all);
-      idct->pipe->bind_vertex_elements_state(idct->pipe, idct->vertex_elems_state);
 
       /* first stage */
       idct->pipe->set_framebuffer_state(idct->pipe, &buffer->fb_state[0]);
