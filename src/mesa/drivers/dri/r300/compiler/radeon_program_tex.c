@@ -33,14 +33,14 @@
 /* Series of transformations to be done on textures. */
 
 static struct rc_src_register shadow_ambient(struct r300_fragment_program_compiler *compiler,
-											 int tmu)
+					     int tmu)
 {
 	struct rc_src_register reg = { 0, };
 
 	if (compiler->enable_shadow_ambient) {
 		reg.File = RC_FILE_CONSTANT;
 		reg.Index = rc_constants_add_state(&compiler->Base.Program.Constants,
-										   RC_STATE_SHADOW_AMBIENT, tmu);
+						   RC_STATE_SHADOW_AMBIENT, tmu);
 		reg.Swizzle = RC_SWIZZLE_WWWW;
 	} else {
 		reg.File = RC_FILE_NONE;
@@ -137,13 +137,6 @@ int radeonTransformTEX(
 		 (compiler->state.unit[inst->U.I.TexSrcUnit].compare_mode_enabled))) {
 		rc_compare_func comparefunc = compiler->state.unit[inst->U.I.TexSrcUnit].texture_compare_func;
 
-		/* Fake EQUAL/NOTEQUAL, they are equal to NEVER/ALWAYS due to precision issues anyway. */
-		if (comparefunc == RC_COMPARE_FUNC_EQUAL) {
-			comparefunc = RC_COMPARE_FUNC_NEVER;
-		} else if (comparefunc == RC_COMPARE_FUNC_NOTEQUAL) {
-			comparefunc = RC_COMPARE_FUNC_ALWAYS;
-		}
-
 		if (comparefunc == RC_COMPARE_FUNC_NEVER || comparefunc == RC_COMPARE_FUNC_ALWAYS) {
 			inst->U.I.Opcode = RC_OPCODE_MOV;
 
@@ -157,7 +150,7 @@ int radeonTransformTEX(
 			return 1;
 		} else {
 			struct rc_instruction * inst_rcp = NULL;
-			struct rc_instruction *inst_mul, *inst_cmp, *inst_add;
+			struct rc_instruction *inst_mul, *inst_add, *inst_cmp, *inst_cmp2, *inst_mul2;
 			unsigned tmp_texsample;
 			unsigned tmp_sum;
 			int pass, fail;
@@ -212,22 +205,27 @@ int radeonTransformTEX(
 			inst_add->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_WWWW;
 			inst_add->U.I.SrcReg[1].File = RC_FILE_TEMPORARY;
 			inst_add->U.I.SrcReg[1].Index = tmp_texsample;
-			inst_add->U.I.SrcReg[1].Swizzle = RC_SWIZZLE_WWWW;
+			inst_add->U.I.SrcReg[1].Swizzle = RC_SWIZZLE_XXXX;
 
-			/* Recall that SrcReg[0] is r, SrcReg[tex] is tex and:
+			/* Note that SrcReg[0] is r, SrcReg[1] is tex and:
 			 *   LESS:    r  < tex  <=>      -tex+r < 0
 			 *   GEQUAL:  r >= tex  <=> not (-tex+r < 0)
 			 *   GREATER: r  > tex  <=>       tex-r < 0
 			 *   LEQUAL:  r <= tex  <=> not ( tex-r < 0)
-			 *
-			 * This negates either r or tex: */
-			if (comparefunc == RC_COMPARE_FUNC_LESS || comparefunc == RC_COMPARE_FUNC_GEQUAL)
+			 *   EQUAL:   GEQUAL
+			 *   NOTEQUAL:LESS
+			 */
+
+			/* This negates either r or tex: */
+			if (comparefunc == RC_COMPARE_FUNC_LESS || comparefunc == RC_COMPARE_FUNC_GEQUAL ||
+			    comparefunc == RC_COMPARE_FUNC_EQUAL || comparefunc == RC_COMPARE_FUNC_NOTEQUAL)
 				inst_add->U.I.SrcReg[1].Negate = inst_add->U.I.SrcReg[1].Negate ^ RC_MASK_XYZW;
 			else
 				inst_add->U.I.SrcReg[0].Negate = inst_add->U.I.SrcReg[0].Negate ^ RC_MASK_XYZW;
 
 			/* This negates the whole expresion: */
-			if (comparefunc == RC_COMPARE_FUNC_LESS || comparefunc == RC_COMPARE_FUNC_GREATER) {
+			if (comparefunc == RC_COMPARE_FUNC_LESS || comparefunc == RC_COMPARE_FUNC_GREATER ||
+			    comparefunc == RC_COMPARE_FUNC_NOTEQUAL) {
 				pass = 1;
 				fail = 2;
 			} else {
@@ -241,8 +239,8 @@ int radeonTransformTEX(
 			inst_cmp->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
 			inst_cmp->U.I.SrcReg[0].Index = tmp_sum;
 			inst_cmp->U.I.SrcReg[0].Swizzle =
-				combine_swizzles(RC_SWIZZLE_WWWW,
-						 compiler->state.unit[inst->U.I.TexSrcUnit].depth_texture_swizzle);
+					combine_swizzles(RC_SWIZZLE_WWWW,
+							 compiler->state.unit[inst->U.I.TexSrcUnit].depth_texture_swizzle);
 			inst_cmp->U.I.SrcReg[pass].File = RC_FILE_NONE;
 			inst_cmp->U.I.SrcReg[pass].Swizzle = RC_SWIZZLE_1111;
 			inst_cmp->U.I.SrcReg[fail] = shadow_ambient(compiler, inst->U.I.TexSrcUnit);
