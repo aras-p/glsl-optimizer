@@ -139,11 +139,11 @@ static void r300_destroy_context(struct pipe_context* context)
     FREE(r300);
 }
 
-void r300_flush_cb(void *data)
+static void r300_flush_callback(void *data, unsigned flags)
 {
     struct r300_context* const cs_context_copy = data;
 
-    cs_context_copy->context.flush(&cs_context_copy->context, 0, NULL);
+    r300_flush(&cs_context_copy->context, flags, NULL);
 }
 
 #define R300_INIT_ATOM(atomname, atomsize) \
@@ -453,7 +453,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
     r300_init_render_functions(r300);
     r300_init_states(&r300->context);
 
-    rws->cs_set_flush(r300->cs, r300_flush_cb, r300);
+    rws->cs_set_flush(r300->cs, r300_flush_callback, r300);
 
     /* The KIL opcode needs the first texture unit to be enabled
      * on r3xx-r4xx. In order to calm down the CS checker, we bind this

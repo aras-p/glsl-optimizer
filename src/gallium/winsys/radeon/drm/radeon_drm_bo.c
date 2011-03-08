@@ -172,7 +172,7 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
         /* DONTBLOCK doesn't make sense with UNSYNCHRONIZED. */
         if (flags & PB_USAGE_DONTBLOCK) {
             if (radeon_bo_is_referenced_by_cs(cs, bo)) {
-                cs->flush_cs(cs->flush_data);
+                cs->flush_cs(cs->flush_data, R300_FLUSH_ASYNC);
                 return NULL;
             }
 
@@ -181,7 +181,11 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
             }
         } else {
             if (radeon_bo_is_referenced_by_cs(cs, bo)) {
-                cs->flush_cs(cs->flush_data);
+                cs->flush_cs(cs->flush_data, 0);
+            } else {
+                /* Try to avoid busy-waiting in radeon_bo_wait. */
+                if (p_atomic_read(&bo->num_active_ioctls))
+                    radeon_drm_cs_sync_flush(cs);
             }
 
             radeon_bo_wait((struct r300_winsys_bo*)bo);
@@ -406,8 +410,7 @@ static void radeon_bo_set_tiling(struct r300_winsys_bo *_buf,
     /* Tiling determines how DRM treats the buffer data.
      * We must flush CS when changing it if the buffer is referenced. */
     if (cs && radeon_bo_is_referenced_by_cs(cs, bo)) {
-        radeon_drm_cs_flush(rcs);
-        radeon_drm_cs_sync_flush(rcs);
+        cs->flush_cs(cs->flush_data, 0);
     }
 
     while (p_atomic_read(&bo->num_active_ioctls)) {

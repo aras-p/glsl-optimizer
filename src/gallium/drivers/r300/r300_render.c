@@ -219,7 +219,7 @@ static boolean r300_reserve_cs_dwords(struct r300_context *r300,
 
     /* Reserve requested CS space. */
     if (cs_dwords > (R300_MAX_CMDBUF_DWORDS - r300->cs->cdw)) {
-        r300->context.flush(&r300->context, 0, NULL);
+        r300_flush(&r300->context, R300_FLUSH_ASYNC, NULL);
         flushed = TRUE;
     }
 

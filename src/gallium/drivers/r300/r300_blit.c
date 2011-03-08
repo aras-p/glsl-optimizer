@@ -263,7 +263,7 @@ static void r300_clear(struct pipe_context* pipe,
 
         /* Reserve CS space. */
         if (dwords > (R300_MAX_CMDBUF_DWORDS - r300->cs->cdw)) {
-            r300->context.flush(&r300->context, 0, NULL);
+            r300_flush(&r300->context, R300_FLUSH_ASYNC, NULL);
         }
 
         /* Emit clear packets. */

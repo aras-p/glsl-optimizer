@@ -665,8 +665,6 @@ static INLINE void r300_mark_atom_dirty(struct r300_context *r300,
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                          void *priv);
 
-void r300_flush_cb(void *data);
-
 /* Context initialization. */
 struct draw_stage* r300_draw_stage(struct r300_context* r300);
 void r300_init_blit_functions(struct r300_context *r300);
@@ -680,6 +678,11 @@ void r300_init_resource_functions(struct r300_context* r300);
 void r300_decompress_zmask(struct r300_context *r300);
 void r300_decompress_zmask_locked_unsafe(struct r300_context *r300);
 void r300_decompress_zmask_locked(struct r300_context *r300);
+
+/* r300_flush.c */
+void r300_flush(struct pipe_context *pipe,
+                unsigned flags,
+                struct pipe_fence_handle **fence);
 
 /* r300_hyperz.c */
 void r300_update_hyperz_state(struct r300_context* r300);

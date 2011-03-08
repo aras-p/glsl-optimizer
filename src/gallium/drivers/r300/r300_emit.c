@@ -1218,7 +1218,7 @@ validate:
         if (flushed)
             return FALSE;
 
-        r300->context.flush(&r300->context, 0, NULL);
+        r300_flush(&r300->context, R300_FLUSH_ASYNC, NULL);
         flushed = TRUE;
         goto validate;
     }
