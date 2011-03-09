@@ -26,6 +26,15 @@
 #include "r600_asm.h"
 #include "r700_sq.h"
 
+void r700_bc_cf_vtx_build(uint32_t *bytecode, const struct r600_bc_cf *cf)
+{
+	unsigned count = (cf->ndw / 4) - 1;
+	*bytecode++ = S_SQ_CF_WORD0_ADDR(cf->addr >> 1);
+	*bytecode++ = S_SQ_CF_WORD1_CF_INST(cf->inst) |
+			S_SQ_CF_WORD1_BARRIER(1) |
+			S_SQ_CF_WORD1_COUNT(count) |
+			S_SQ_CF_WORD1_COUNT_3(count >> 3);
+}
 
 int r700_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id)
 {

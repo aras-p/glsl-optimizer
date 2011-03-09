@@ -1456,6 +1456,14 @@ static int r600_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsign
 	return 0;
 }
 
+static void r600_bc_cf_vtx_build(uint32_t *bytecode, const struct r600_bc_cf *cf)
+{
+	*bytecode++ = S_SQ_CF_WORD0_ADDR(cf->addr >> 1);
+	*bytecode++ = S_SQ_CF_WORD1_CF_INST(cf->inst) |
+			S_SQ_CF_WORD1_BARRIER(1) |
+			S_SQ_CF_WORD1_COUNT((cf->ndw / 4) - 1);
+}
+
 /* common for r600/r700 - eg in eg_asm.c */
 static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 {
@@ -1482,10 +1490,10 @@ static int r600_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 	case V_SQ_CF_WORD1_SQ_CF_INST_TEX:
 	case V_SQ_CF_WORD1_SQ_CF_INST_VTX:
 	case V_SQ_CF_WORD1_SQ_CF_INST_VTX_TC:
-		bc->bytecode[id++] = S_SQ_CF_WORD0_ADDR(cf->addr >> 1);
-		bc->bytecode[id++] = S_SQ_CF_WORD1_CF_INST(cf->inst) |
-					S_SQ_CF_WORD1_BARRIER(1) |
-					S_SQ_CF_WORD1_COUNT((cf->ndw / 4) - 1);
+		if (bc->chiprev == CHIPREV_R700)
+			r700_bc_cf_vtx_build(&bc->bytecode[id], cf);
+		else
+			r600_bc_cf_vtx_build(&bc->bytecode[id], cf);
 		break;
 	case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
 	case V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
