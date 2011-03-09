@@ -38,13 +38,15 @@
 
 static void upload_sf_vp(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &brw->intel.ctx;
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
-   struct brw_sf_viewport sfv_stack, *sfv = &sfv_stack;
+   struct brw_sf_viewport *sfv;
    GLfloat y_scale, y_bias;
    const GLboolean render_to_fbo = (ctx->DrawBuffer->Name != 0);
    const GLfloat *v = ctx->Viewport._WindowMap.m;
 
+   sfv = brw_state_batch(brw, sizeof(*sfv), 32, &brw->sf.vp_offset);
    memset(sfv, 0, sizeof(*sfv));
 
    if (render_to_fbo) {
@@ -104,8 +106,12 @@ static void upload_sf_vp(struct brw_context *brw)
       sfv->scissor.ymax = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymin - 1;
    }
 
+   /* Keep a pointer to it for brw_state_dump.c */
    drm_intel_bo_unreference(brw->sf.vp_bo);
-   brw->sf.vp_bo = brw_cache_data(&brw->cache, BRW_SF_VP, sfv, sizeof(*sfv));
+   drm_intel_bo_reference(intel->batch.bo);
+   brw->sf.vp_bo = intel->batch.bo;
+
+   brw->state.dirty.cache |= CACHE_NEW_SF_VP;
 }
 
 const struct brw_tracked_state brw_sf_vp = {
@@ -113,7 +119,7 @@ const struct brw_tracked_state brw_sf_vp = {
       .mesa  = (_NEW_VIEWPORT | 
 		_NEW_SCISSOR |
 		_NEW_BUFFERS),
-      .brw   = 0,
+      .brw   = BRW_NEW_BATCH,
       .cache = 0
    },
    .prepare = upload_sf_vp
@@ -171,7 +177,8 @@ static void upload_sf_unit( struct brw_context *brw )
       sf->thread4.stats_enable = 1;
 
    /* CACHE_NEW_SF_VP */
-   sf->sf5.sf_viewport_state_offset = brw->sf.vp_bo->offset >> 5; /* reloc */
+   sf->sf5.sf_viewport_state_offset = (brw->sf.vp_bo->offset +
+				       brw->sf.vp_offset) >> 5; /* reloc */
 
    sf->sf5.viewport_transform = 1;
 
@@ -289,8 +296,9 @@ static void upload_sf_unit( struct brw_context *brw )
    /* Emit SF viewport relocation */
    drm_intel_bo_emit_reloc(bo, (brw->sf.state_offset +
 				offsetof(struct brw_sf_unit_state, sf5)),
-			   brw->sf.vp_bo, (sf->sf5.front_winding |
-					   (sf->sf5.viewport_transform << 1)),
+			   intel->batch.bo, (brw->sf.vp_offset |
+					     sf->sf5.front_winding |
+					     (sf->sf5.viewport_transform << 1)),
 			   I915_GEM_DOMAIN_INSTRUCTION, 0);
 
    brw->state.dirty.cache |= CACHE_NEW_SF_UNIT;
