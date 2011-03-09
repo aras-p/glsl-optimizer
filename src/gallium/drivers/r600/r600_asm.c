@@ -1247,6 +1247,24 @@ int r600_bc_add_alu(struct r600_bc *bc, const struct r600_bc_alu *alu)
 	return r600_bc_add_alu_type(bc, alu, BC_INST(bc, V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU));
 }
 
+static unsigned r600_bc_num_tex_and_vtx_instructions(const struct r600_bc *bc)
+{
+	switch (bc->chiprev) {
+	case CHIPREV_R600:
+		return 8;
+
+	case CHIPREV_R700:
+		return 16;
+
+	case CHIPREV_EVERGREEN:
+		return 64;
+
+	default:
+		R600_ERR("Unknown chiprev %d.\n", bc->chiprev);
+		return 8;
+	}
+}
+
 int r600_bc_add_vtx(struct r600_bc *bc, const struct r600_bc_vtx *vtx)
 {
 	struct r600_bc_vtx *nvtx = r600_bc_vtx();
@@ -1272,7 +1290,7 @@ int r600_bc_add_vtx(struct r600_bc *bc, const struct r600_bc_vtx *vtx)
 	/* each fetch use 4 dwords */
 	bc->cf_last->ndw += 4;
 	bc->ndw += 4;
-	if ((bc->cf_last->ndw / 4) > 7)
+	if ((bc->cf_last->ndw / 4) >= r600_bc_num_tex_and_vtx_instructions(bc))
 		bc->force_add_cf = 1;
 	return 0;
 }
@@ -1319,7 +1337,7 @@ int r600_bc_add_tex(struct r600_bc *bc, const struct r600_bc_tex *tex)
 	/* each texture fetch use 4 dwords */
 	bc->cf_last->ndw += 4;
 	bc->ndw += 4;
-	if ((bc->cf_last->ndw / 4) > 7)
+	if ((bc->cf_last->ndw / 4) >= r600_bc_num_tex_and_vtx_instructions(bc))
 		bc->force_add_cf = 1;
 	return 0;
 }
