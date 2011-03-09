@@ -695,6 +695,7 @@ svga_redefine_user_buffer(struct pipe_context *pipe,
       sbuf->key.size.width = sbuf->b.b.width0 = offset + size;
    }
 
+   sbuf->source_offset = offset;
    pipe_mutex_unlock(ss->swc_mutex);
 
    svga->curr.any_user_vertex_buffers = TRUE;

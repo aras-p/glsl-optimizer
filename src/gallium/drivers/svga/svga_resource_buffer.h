@@ -144,6 +144,12 @@ struct svga_buffer
    } uploaded;
 
    /**
+    * The offset in the source user buffer that matches the
+    * uploaded offset
+    */
+   unsigned source_offset;
+
+   /**
     * DMA'ble memory.
     *
     * A piece of GMR memory, with the same size of the buffer. It is created

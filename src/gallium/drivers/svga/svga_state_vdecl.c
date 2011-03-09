@@ -59,8 +59,8 @@ upload_user_buffers( struct svga_context *svga )
          if (!buffer->uploaded.buffer) {
             boolean flushed;
             ret = u_upload_buffer( svga->upload_vb,
-                                   0, 0,
-                                   buffer->b.b.width0,
+                                   0, buffer->source_offset,
+                                   buffer->b.b.width0 - buffer->source_offset,
                                    &buffer->b.b,
                                    &buffer->uploaded.offset,
                                    &buffer->uploaded.buffer,
@@ -69,16 +69,19 @@ upload_user_buffers( struct svga_context *svga )
                return ret;
 
             if (0)
-               debug_printf("%s: %d: orig buf %p upl buf %p ofs %d sz %d\n",
+               debug_printf("%s: %d: orig buf %p upl buf %p ofs %d sofs %d"
+                            " sz %d\n",
                             __FUNCTION__,
                             i,
                             buffer,
                             buffer->uploaded.buffer,
                             buffer->uploaded.offset,
+                            buffer->source_offset,
                             buffer->b.b.width0);
          }
 
          svga->curr.vb[i].buffer_offset = buffer->uploaded.offset;
+         svga_buffer(buffer->uploaded.buffer)->source_offset = buffer->source_offset;
       }
    }
 
