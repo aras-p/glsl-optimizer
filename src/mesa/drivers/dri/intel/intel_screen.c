@@ -25,6 +25,7 @@
  * 
  **************************************************************************/
 
+#include <errno.h>
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/framebuffer.h"
@@ -302,7 +303,8 @@ intel_get_param(__DRIscreen *psp, int param, int *value)
 
    ret = drmCommandWriteRead(psp->fd, DRM_I915_GETPARAM, &gp, sizeof(gp));
    if (ret) {
-      _mesa_warning(NULL, "drm_i915_getparam: %d", ret);
+      if (ret != -EINVAL)
+	 _mesa_warning(NULL, "drm_i915_getparam: %d", ret);
       return GL_FALSE;
    }
 
