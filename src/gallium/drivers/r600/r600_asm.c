@@ -1357,31 +1357,7 @@ int r600_bc_add_cfinst(struct r600_bc *bc, int inst)
 /* common to all 3 families */
 static int r600_bc_vtx_build(struct r600_bc *bc, struct r600_bc_vtx *vtx, unsigned id)
 {
-	unsigned fetch_resource_start = 0;
-
-	/* check if we are fetch shader */
-			/* fetch shader can also access vertex resource,
-			 * first fetch shader resource is at 160
-			 */
-	if (bc->type == -1) {
-		switch (bc->chiprev) {
-		/* r600 */
-		case CHIPREV_R600:
-		/* r700 */
-		case CHIPREV_R700:
-			fetch_resource_start = 160;
-			break;
-		/* evergreen */
-		case CHIPREV_EVERGREEN:
-			fetch_resource_start = 0;
-			break;
-		default:
-			fprintf(stderr,  "%s:%s:%d unknown chiprev %d\n",
-				__FILE__, __func__, __LINE__, bc->chiprev);
-			break;
-		}
-	}
-	bc->bytecode[id++] = S_SQ_VTX_WORD0_BUFFER_ID(vtx->buffer_id + fetch_resource_start) |
+	bc->bytecode[id++] = S_SQ_VTX_WORD0_BUFFER_ID(vtx->buffer_id) |
 			S_SQ_VTX_WORD0_FETCH_TYPE(vtx->fetch_type) |
 			S_SQ_VTX_WORD0_SRC_GPR(vtx->src_gpr) |
 			S_SQ_VTX_WORD0_SRC_SEL_X(vtx->src_sel_x) |
