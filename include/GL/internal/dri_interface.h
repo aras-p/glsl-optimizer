@@ -849,6 +849,11 @@ struct __DRIimageExtensionRec {
 			       void *loaderPrivate);
 
    GLboolean (*queryImage)(__DRIimage *image, int attrib, int *value);
+
+   /**
+    * The new __DRIimage will share the content with the old one, see dup(2).
+    */
+   __DRIimage *(*dupImage)(__DRIimage *image, void *loaderPrivate);
 };
 
 
