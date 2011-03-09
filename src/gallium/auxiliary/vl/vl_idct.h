@@ -97,8 +97,7 @@ bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
 
 void vl_idct_cleanup(struct vl_idct *idct);
 
-bool vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
-                         struct pipe_resource *dst);
+struct pipe_resource *vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer);
 
 void vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer);
 

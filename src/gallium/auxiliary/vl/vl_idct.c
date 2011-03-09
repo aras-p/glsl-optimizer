@@ -476,6 +476,15 @@ init_textures(struct vl_idct *idct, struct vl_idct_buffer *buffer)
       buffer->sampler_views.all[i] = idct->pipe->create_sampler_view(idct->pipe, buffer->textures.all[i], &sampler_view);
    }
 
+   template.target = PIPE_TEXTURE_2D;
+   /* TODO: Accomodate HW that can't do this and also for cases when this isn't precise enough */
+   template.format = PIPE_FORMAT_R16_SNORM;
+   template.width0 = idct->buffer_width;
+   template.height0 = idct->buffer_height;
+   template.depth0 = 1;
+
+   buffer->destination = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
+
    return true;
 }
 
@@ -577,9 +586,8 @@ vl_idct_cleanup(struct vl_idct *idct)
    pipe_resource_reference(&idct->matrix, NULL);
 }
 
-bool
-vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
-                    struct pipe_resource *dst)
+struct pipe_resource *
+vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 {
    struct pipe_surface template;
 
@@ -587,14 +595,12 @@ vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
 
    assert(buffer);
    assert(idct);
-   assert(dst);
 
    pipe_resource_reference(&buffer->textures.individual.matrix, idct->matrix);
    pipe_resource_reference(&buffer->textures.individual.transpose, idct->matrix);
-   pipe_resource_reference(&buffer->destination, dst);
 
    if (!init_textures(idct, buffer))
-      return false;
+      return NULL;
 
    /* init state */
    buffer->viewport[0].scale[0] = buffer->textures.individual.intermediate->width0;
@@ -640,7 +646,7 @@ vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
       buffer->fb_state[i].zsbuf = NULL;
    }
 
-   return true;
+   return buffer->destination;
 }
 
 void
@@ -685,7 +691,6 @@ vl_idct_map_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 void
 vl_idct_add_block(struct vl_idct_buffer *buffer, unsigned x, unsigned y, short *block)
 {
-   //struct vertex2s v;
    unsigned tex_pitch;
    short *texels;
 

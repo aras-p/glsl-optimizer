@@ -47,6 +47,8 @@ struct sp_mpeg12_buffer
       } individual;
    } vertex_bufs;
 
+   struct vl_idct_buffer idct_y, idct_cb, idct_cr;
+
    struct vl_mpeg12_mc_buffer mc;
 };
 
@@ -60,6 +62,7 @@ struct sp_mpeg12_context
    unsigned vertex_buffer_size;
    void *vertex_elems_state;
 
+   struct vl_idct idct_y, idct_cr, idct_cb;
    struct vl_mpeg12_mc_renderer mc_renderer;
 
    struct keymap *buffer_map;

@@ -481,68 +481,6 @@ cleanup_pipe_state(struct vl_mpeg12_mc_renderer *r)
    r->pipe->delete_rasterizer_state(r->pipe, r->rs_state);
 }
 
-static bool
-init_buffers(struct vl_mpeg12_mc_renderer *r)
-{
-   struct pipe_resource *idct_matrix;
-   unsigned chroma_width, chroma_height, chroma_blocks_x, chroma_blocks_y;
-
-   assert(r);
-
-   if (!(idct_matrix = vl_idct_upload_matrix(r->pipe)))
-      return false;
-
-   if (!vl_idct_init(&r->idct_y, r->pipe, r->buffer_width, r->buffer_height,
-                     2, 2, TGSI_SWIZZLE_X, idct_matrix))
-      return false;
-
-   if (r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
-      chroma_width = r->buffer_width / 2;
-      chroma_height = r->buffer_height / 2;
-      chroma_blocks_x = 1;
-      chroma_blocks_y = 1;
-   } else if (r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_422) {
-      chroma_width = r->buffer_width;
-      chroma_height = r->buffer_height / 2;
-      chroma_blocks_x = 2;
-      chroma_blocks_y = 1;
-   } else {
-      chroma_width = r->buffer_width;
-      chroma_height = r->buffer_height;
-      chroma_blocks_x = 2;
-      chroma_blocks_y = 2;
-   }
-
-   if(!vl_idct_init(&r->idct_cr, r->pipe, chroma_width, chroma_height,
-                    chroma_blocks_x, chroma_blocks_y, TGSI_SWIZZLE_Y, idct_matrix))
-      return false;
-
-   if(!vl_idct_init(&r->idct_cb, r->pipe, chroma_width, chroma_height,
-                    chroma_blocks_x, chroma_blocks_y, TGSI_SWIZZLE_Z, idct_matrix))
-      return false;
-
-   r->vs = create_vert_shader(r);
-   r->fs = create_frag_shader(r);
-
-   if (r->vs == NULL || r->fs == NULL)
-      return false;
-
-   return true;
-}
-
-static void
-cleanup_buffers(struct vl_mpeg12_mc_renderer *r)
-{
-   assert(r);
-
-   r->pipe->delete_vs_state(r->pipe, r->vs);
-   r->pipe->delete_fs_state(r->pipe, r->fs);
-
-   vl_idct_cleanup(&r->idct_y);
-   vl_idct_cleanup(&r->idct_cr);
-   vl_idct_cleanup(&r->idct_cb);
-}
-
 static struct pipe_sampler_view
 *find_or_create_sampler_view(struct vl_mpeg12_mc_renderer *r, struct pipe_surface *surface)
 {
@@ -568,41 +506,6 @@ static struct pipe_sampler_view
    }
 
    return sampler_view;
-}
-
-static void
-grab_blocks(struct vl_mpeg12_mc_renderer *r,
-            struct vl_mpeg12_mc_buffer *buffer,
-            unsigned mbx, unsigned mby,
-            unsigned cbp, short *blocks)
-{
-   unsigned tb = 0;
-   unsigned x, y;
-
-   assert(r);
-   assert(blocks);
-
-   for (y = 0; y < 2; ++y) {
-      for (x = 0; x < 2; ++x, ++tb) {
-         if (cbp & (*r->empty_block_mask)[0][y][x]) {
-            vl_idct_add_block(&buffer->idct_y, mbx * 2 + x, mby * 2 + y, blocks);
-            blocks += BLOCK_WIDTH * BLOCK_HEIGHT;
-         }
-      }
-   }
-
-   /* TODO: Implement 422, 444 */
-   assert(r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
-
-   for (tb = 1; tb < 3; ++tb) {
-      if (cbp & (*r->empty_block_mask)[tb][0][0]) {
-         if(tb == 1)
-            vl_idct_add_block(&buffer->idct_cb, mbx, mby, blocks);
-         else
-            vl_idct_add_block(&buffer->idct_cr, mbx, mby, blocks);
-         blocks += BLOCK_WIDTH * BLOCK_HEIGHT;
-      }
-   }
 }
 
 static void
@@ -649,12 +552,15 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
    if (!init_pipe_state(renderer))
       goto error_pipe_state;
 
-   if (!init_buffers(renderer))
-      goto error_buffers;
+   renderer->vs = create_vert_shader(renderer);
+   renderer->fs = create_frag_shader(renderer);
+
+   if (renderer->vs == NULL || renderer->fs == NULL)
+      goto error_shaders;
 
    return true;
 
-error_buffers:
+error_shaders:
    cleanup_pipe_state(renderer);
 
 error_pipe_state:
@@ -669,13 +575,15 @@ vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer)
 
    util_delete_keymap(renderer->texview_map, renderer->pipe);
    cleanup_pipe_state(renderer);
-   cleanup_buffers(renderer);
+
+   renderer->pipe->delete_vs_state(renderer->pipe, renderer->vs);
+   renderer->pipe->delete_fs_state(renderer->pipe, renderer->fs);
 }
 
 bool
-vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer)
+vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer,
+                         struct pipe_resource *y, struct pipe_resource *cr, struct pipe_resource *cb)
 {
-   struct pipe_resource template;
    struct pipe_sampler_view sampler_view;
 
    unsigned i;
@@ -686,41 +594,9 @@ vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg1
    buffer->past = NULL;
    buffer->future = NULL;
 
-   memset(&template, 0, sizeof(struct pipe_resource));
-   template.target = PIPE_TEXTURE_2D;
-   /* TODO: Accomodate HW that can't do this and also for cases when this isn't precise enough */
-   template.format = PIPE_FORMAT_R16_SNORM;
-   template.last_level = 0;
-   template.width0 = renderer->buffer_width;
-   template.height0 = renderer->buffer_height;
-   template.depth0 = 1;
-   template.array_size = 1;
-   template.usage = PIPE_USAGE_STATIC;
-   template.bind = PIPE_BIND_SAMPLER_VIEW;
-   template.flags = 0;
-
-   buffer->textures.individual.y = renderer->pipe->screen->resource_create(renderer->pipe->screen, &template);
-
-   if (!vl_idct_init_buffer(&renderer->idct_y, &buffer->idct_y, buffer->textures.individual.y))
-      return false;
-
-   if (renderer->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
-      template.width0 = renderer->buffer_width / 2;
-      template.height0 = renderer->buffer_height / 2;
-   }
-   else if (renderer->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_422)
-      template.height0 = renderer->buffer_height / 2;
-
-   buffer->textures.individual.cb =
-      renderer->pipe->screen->resource_create(renderer->pipe->screen, &template);
-   buffer->textures.individual.cr =
-      renderer->pipe->screen->resource_create(renderer->pipe->screen, &template);
-
-   if (!vl_idct_init_buffer(&renderer->idct_cb, &buffer->idct_cb, buffer->textures.individual.cb))
-      return false;
-
-   if (!vl_idct_init_buffer(&renderer->idct_cr, &buffer->idct_cr, buffer->textures.individual.cr))
-      return false;
+   pipe_resource_reference(&buffer->textures.individual.y, y);
+   pipe_resource_reference(&buffer->textures.individual.cr, cr);
+   pipe_resource_reference(&buffer->textures.individual.cb, cb);
 
    for (i = 0; i < 3; ++i) {
       u_sampler_view_default_template(&sampler_view,
@@ -749,41 +625,21 @@ vl_mpeg12_mc_cleanup_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mp
       pipe_resource_reference(&buffer->textures.all[i], NULL);
    }
 
-   vl_idct_cleanup_buffer(&renderer->idct_y, &buffer->idct_y);
-   vl_idct_cleanup_buffer(&renderer->idct_cb, &buffer->idct_cb);
-   vl_idct_cleanup_buffer(&renderer->idct_cr, &buffer->idct_cr);
-
    pipe_surface_reference(&buffer->surface, NULL);
    pipe_surface_reference(&buffer->past, NULL);
    pipe_surface_reference(&buffer->future, NULL);
 }
 
 void
-vl_mpeg12_mc_map_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer)
+vl_mpeg12_mc_set_surfaces(struct vl_mpeg12_mc_renderer *renderer,
+                          struct vl_mpeg12_mc_buffer *buffer,
+                          struct pipe_surface *surface,
+                          struct pipe_surface *past,
+                          struct pipe_surface *future,
+                          struct pipe_fence_handle **fence)
 {
-   assert(renderer && buffer);
-
-   vl_idct_map_buffers(&renderer->idct_y, &buffer->idct_y);
-   vl_idct_map_buffers(&renderer->idct_cr, &buffer->idct_cr);
-   vl_idct_map_buffers(&renderer->idct_cb, &buffer->idct_cb);
-}
-
-void
-vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer *renderer,
-                                         struct vl_mpeg12_mc_buffer *buffer,
-                                         struct pipe_surface *surface,
-                                         struct pipe_surface *past,
-                                         struct pipe_surface *future,
-                                         unsigned num_macroblocks,
-                                         struct pipe_mpeg12_macroblock *mpeg12_macroblocks,
-                                         struct pipe_fence_handle **fence)
-{
-   unsigned i;
-
    assert(renderer && buffer);
    assert(surface);
-   assert(num_macroblocks);
-   assert(mpeg12_macroblocks);
 
    if (surface != buffer->surface) {
       pipe_surface_reference(&buffer->surface, surface);
@@ -795,23 +651,6 @@ vl_mpeg12_mc_renderer_render_macroblocks(struct vl_mpeg12_mc_renderer *renderer,
       assert(buffer->past == past);
       assert(buffer->future == future);
    }
-
-   for (i = 0; i < num_macroblocks; ++i) {
-      struct pipe_mpeg12_macroblock *mb = &mpeg12_macroblocks[i];
-
-      assert(mb->base.codec == PIPE_VIDEO_CODEC_MPEG12);
-      grab_blocks(renderer, buffer, mb->mbx, mb->mby, mb->cbp, mb->blocks);
-   }
-}
-
-void
-vl_mpeg12_mc_unmap_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer)
-{
-   assert(renderer && buffer);
-
-   vl_idct_unmap_buffers(&renderer->idct_y, &buffer->idct_y);
-   vl_idct_unmap_buffers(&renderer->idct_cr, &buffer->idct_cr);
-   vl_idct_unmap_buffers(&renderer->idct_cb, &buffer->idct_cb);
 }
 
 void
@@ -823,10 +662,6 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mp
 
    if (not_empty_num_instances == 0 && empty_num_instances == 0)
       return;
-
-   vl_idct_flush(&renderer->idct_y, &buffer->idct_y, not_empty_num_instances);
-   vl_idct_flush(&renderer->idct_cr, &buffer->idct_cr, not_empty_num_instances);
-   vl_idct_flush(&renderer->idct_cb, &buffer->idct_cb, not_empty_num_instances);
 
    renderer->fb_state.cbufs[0] = buffer->surface;
    renderer->pipe->bind_rasterizer_state(renderer->pipe, renderer->rs_state);

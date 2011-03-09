@@ -29,6 +29,7 @@
 #include "util/u_memory.h"
 
 #include "sp_video_context.h"
+#include <pipe/p_shader_tokens.h>
 #include <util/u_inlines.h>
 #include <util/u_memory.h>
 #include <util/u_keymap.h>
@@ -40,6 +41,8 @@
 
 #define MACROBLOCK_WIDTH 16
 #define MACROBLOCK_HEIGHT 16
+#define BLOCK_WIDTH 8
+#define BLOCK_HEIGHT 8
 
 #define NUM_BUFFERS 2
 
@@ -52,12 +55,19 @@ flush_buffer(struct sp_mpeg12_context *ctx)
    if(ctx->cur_buffer != NULL) {
 
       vl_vb_unmap(&ctx->cur_buffer->vertex_stream, ctx->pipe);
-      vl_mpeg12_mc_unmap_buffer(&ctx->mc_renderer, &ctx->cur_buffer->mc);
-      vl_vb_restart(&ctx->cur_buffer->vertex_stream, &ne_start, &ne_num, &e_start, &e_num);
+      vl_idct_unmap_buffers(&ctx->idct_y, &ctx->cur_buffer->idct_y);
+      vl_idct_unmap_buffers(&ctx->idct_cr, &ctx->cur_buffer->idct_cr);
+      vl_idct_unmap_buffers(&ctx->idct_cb, &ctx->cur_buffer->idct_cb);
+      vl_vb_restart(&ctx->cur_buffer->vertex_stream,
+		    &ne_start, &ne_num, &e_start, &e_num);
 
       ctx->pipe->set_vertex_buffers(ctx->pipe, 2, ctx->cur_buffer->vertex_bufs.all);
       ctx->pipe->bind_vertex_elements_state(ctx->pipe, ctx->vertex_elems_state);
-      vl_mpeg12_mc_renderer_flush(&ctx->mc_renderer, &ctx->cur_buffer->mc, ne_start, ne_num, e_start, e_num);
+      vl_idct_flush(&ctx->idct_y, &ctx->cur_buffer->idct_y, ne_num);
+      vl_idct_flush(&ctx->idct_cr, &ctx->cur_buffer->idct_cr, ne_num);
+      vl_idct_flush(&ctx->idct_cb, &ctx->cur_buffer->idct_cb, ne_num);
+      vl_mpeg12_mc_renderer_flush(&ctx->mc_renderer, &ctx->cur_buffer->mc,
+                                  ne_start, ne_num, e_start, e_num);
 
       ctx->cur_buffer = NULL;
    }
@@ -66,6 +76,7 @@ flush_buffer(struct sp_mpeg12_context *ctx)
 static void
 rotate_buffer(struct sp_mpeg12_context *ctx)
 {
+   struct pipe_resource *y, *cr, *cb;
    static unsigned key = 0;
    struct sp_mpeg12_buffer *buffer;
 
@@ -87,8 +98,22 @@ rotate_buffer(struct sp_mpeg12_context *ctx)
 
       buffer->vertex_bufs.individual.stream = vl_vb_init(&buffer->vertex_stream, ctx->pipe,
                                                          ctx->vertex_buffer_size);
+      if (!(y = vl_idct_init_buffer(&ctx->idct_y, &buffer->idct_y))) {
+         FREE(buffer);
+         return;
+      }
 
-      if(!vl_mpeg12_mc_init_buffer(&ctx->mc_renderer, &buffer->mc)) {
+      if (!(cr = vl_idct_init_buffer(&ctx->idct_cr, &buffer->idct_cr))) {
+         FREE(buffer);
+         return;
+      }
+
+      if (!(cb = vl_idct_init_buffer(&ctx->idct_cb, &buffer->idct_cb))) {
+         FREE(buffer);
+         return;
+      }
+
+      if(!vl_mpeg12_mc_init_buffer(&ctx->mc_renderer, &buffer->mc, y, cr, cb)) {
          FREE(buffer);
          return;
       }
@@ -101,7 +126,9 @@ rotate_buffer(struct sp_mpeg12_context *ctx)
    ctx->cur_buffer = buffer;
 
    vl_vb_map(&ctx->cur_buffer->vertex_stream, ctx->pipe);
-   vl_mpeg12_mc_map_buffer(&ctx->mc_renderer, &ctx->cur_buffer->mc);
+   vl_idct_map_buffers(&ctx->idct_y, &ctx->cur_buffer->idct_y);
+   vl_idct_map_buffers(&ctx->idct_cr, &ctx->cur_buffer->idct_cr);
+   vl_idct_map_buffers(&ctx->idct_cb, &ctx->cur_buffer->idct_cb);
 }
 
 static void
@@ -118,7 +145,47 @@ delete_buffer(const struct keymap *map,
    assert(user);
 
    vl_vb_cleanup(&buf->vertex_stream);
+   vl_idct_cleanup_buffer(&ctx->idct_y, &buf->idct_y);
+   vl_idct_cleanup_buffer(&ctx->idct_cb, &buf->idct_cb);
+   vl_idct_cleanup_buffer(&ctx->idct_cr, &buf->idct_cr);
    vl_mpeg12_mc_cleanup_buffer(&ctx->mc_renderer, &buf->mc);
+}
+
+static void
+upload_buffer(struct sp_mpeg12_context *ctx,
+              struct sp_mpeg12_buffer *buffer,
+              struct pipe_mpeg12_macroblock *mb)
+{
+   short *blocks;
+   unsigned tb, x, y;
+
+   assert(ctx);
+   assert(buffer);
+   assert(mb);
+
+   blocks = mb->blocks;
+
+   for (y = 0; y < 2; ++y) {
+      for (x = 0; x < 2; ++x, ++tb) {
+         if (mb->cbp & (*ctx->mc_renderer.empty_block_mask)[0][y][x]) {
+            vl_idct_add_block(&buffer->idct_y, mb->mbx * 2 + x, mb->mby * 2 + y, blocks);
+            blocks += BLOCK_WIDTH * BLOCK_HEIGHT;
+         }
+      }
+   }
+
+   /* TODO: Implement 422, 444 */
+   assert(ctx->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
+
+   for (tb = 1; tb < 3; ++tb) {
+      if (mb->cbp & (*ctx->mc_renderer.empty_block_mask)[tb][0][0]) {
+         if(tb == 1)
+            vl_idct_add_block(&buffer->idct_cb, mb->mbx, mb->mby, blocks);
+         else
+            vl_idct_add_block(&buffer->idct_cr, mb->mbx, mb->mby, blocks);
+         blocks += BLOCK_WIDTH * BLOCK_HEIGHT;
+      }
+   }
 }
 
 static void
@@ -142,6 +209,9 @@ sp_mpeg12_destroy(struct pipe_video_context *vpipe)
    vl_compositor_cleanup(&ctx->compositor);
    util_delete_keymap(ctx->buffer_map, ctx);
    vl_mpeg12_mc_renderer_cleanup(&ctx->mc_renderer);
+   vl_idct_cleanup(&ctx->idct_y);
+   vl_idct_cleanup(&ctx->idct_cr);
+   vl_idct_cleanup(&ctx->idct_cb);
    ctx->pipe->delete_vertex_elements_state(ctx->pipe, ctx->vertex_elems_state);
    pipe_resource_reference(&ctx->quads.buffer, NULL);
    ctx->pipe->destroy(ctx->pipe);
@@ -223,14 +293,14 @@ sp_mpeg12_decode_macroblocks(struct pipe_video_context *vpipe,
    assert(ctx->decode_target);
    assert(ctx->cur_buffer);
 
-   for ( i = 0; i < num_macroblocks; ++i )
-      vl_vb_add_block(&ctx->cur_buffer->vertex_stream, &mpeg12_macroblocks[i], ctx->mc_renderer.empty_block_mask);
+   for ( i = 0; i < num_macroblocks; ++i ) {
+      vl_vb_add_block(&ctx->cur_buffer->vertex_stream, &mpeg12_macroblocks[i],
+                      ctx->mc_renderer.empty_block_mask);
+      upload_buffer(ctx, ctx->cur_buffer, &mpeg12_macroblocks[i]);
+   }
 
-   vl_mpeg12_mc_renderer_render_macroblocks(&ctx->mc_renderer,
-                                            &ctx->cur_buffer->mc,
-                                            ctx->decode_target,
-                                            past, future, num_macroblocks,
-                                            mpeg12_macroblocks, fence);
+   vl_mpeg12_mc_set_surfaces(&ctx->mc_renderer, &ctx->cur_buffer->mc,
+                             ctx->decode_target, past, future, fence);
 }
 
 static void
@@ -541,7 +611,9 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
                  bool pot_buffers,
                  enum pipe_format decode_format)
 {
+   struct pipe_resource *idct_matrix;
    unsigned buffer_width, buffer_height;
+   unsigned chroma_width, chroma_height, chroma_blocks_x, chroma_blocks_y;
    struct sp_mpeg12_context *ctx;
 
    assert(u_reduce_video_profile(profile) == PIPE_VIDEO_CODEC_MPEG12);
@@ -596,6 +668,38 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
       FREE(ctx);
       return NULL;
    }
+
+   if (!(idct_matrix = vl_idct_upload_matrix(ctx->pipe)))
+      return false;
+
+   if (!vl_idct_init(&ctx->idct_y, ctx->pipe, buffer_width, buffer_height,
+                     2, 2, TGSI_SWIZZLE_X, idct_matrix))
+      return false;
+
+   if (chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
+      chroma_width = buffer_width / 2;
+      chroma_height = buffer_height / 2;
+      chroma_blocks_x = 1;
+      chroma_blocks_y = 1;
+   } else if (chroma_format == PIPE_VIDEO_CHROMA_FORMAT_422) {
+      chroma_width = buffer_width;
+      chroma_height = buffer_height / 2;
+      chroma_blocks_x = 2;
+      chroma_blocks_y = 1;
+   } else {
+      chroma_width = buffer_width;
+      chroma_height = buffer_height;
+      chroma_blocks_x = 2;
+      chroma_blocks_y = 2;
+   }
+
+   if(!vl_idct_init(&ctx->idct_cr, ctx->pipe, chroma_width, chroma_height,
+                    chroma_blocks_x, chroma_blocks_y, TGSI_SWIZZLE_Y, idct_matrix))
+      return false;
+
+   if(!vl_idct_init(&ctx->idct_cb, ctx->pipe, chroma_width, chroma_height,
+                    chroma_blocks_x, chroma_blocks_y, TGSI_SWIZZLE_Z, idct_matrix))
+      return false;
 
    if (!vl_mpeg12_mc_renderer_init(&ctx->mc_renderer, ctx->pipe,
                                    buffer_width, buffer_height, chroma_format)) {
