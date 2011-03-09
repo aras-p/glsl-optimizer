@@ -282,13 +282,38 @@ intel_query_image(__DRIimage *image, int attrib, int *value)
    }
 }
 
+static __DRIimage *
+intel_dup_image(__DRIimage *orig_image, void *loaderPrivate)
+{
+   __DRIimage *image;
+
+   image = CALLOC(sizeof *image);
+   if (image == NULL)
+      return NULL;
+
+   image->region = NULL;
+   intel_region_reference(&image->region, orig_image->region);
+   if (image->region == NULL) {
+      FREE(image);
+      return NULL;
+   }
+
+   image->internal_format = orig_image->internal_format;
+   image->format          = orig_image->format;
+   image->data_type       = orig_image->data_type;
+   image->data            = loaderPrivate;
+   
+   return image;
+}
+
 static struct __DRIimageExtensionRec intelImageExtension = {
     { __DRI_IMAGE, __DRI_IMAGE_VERSION },
     intel_create_image_from_name,
     intel_create_image_from_renderbuffer,
     intel_destroy_image,
     intel_create_image,
-    intel_query_image
+    intel_query_image,
+    intel_dup_image
 };
 
 static const __DRIextension *intelScreenExtensions[] = {
