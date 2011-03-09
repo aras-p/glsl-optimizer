@@ -40,12 +40,12 @@ static void upload_sf_vp(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    const GLfloat depth_scale = 1.0F / ctx->DrawBuffer->_DepthMaxF;
-   struct brw_sf_viewport sfv;
+   struct brw_sf_viewport sfv_stack, *sfv = &sfv_stack;
    GLfloat y_scale, y_bias;
    const GLboolean render_to_fbo = (ctx->DrawBuffer->Name != 0);
    const GLfloat *v = ctx->Viewport._WindowMap.m;
 
-   memset(&sfv, 0, sizeof(sfv));
+   memset(sfv, 0, sizeof(*sfv));
 
    if (render_to_fbo) {
       y_scale = 1.0;
@@ -58,12 +58,12 @@ static void upload_sf_vp(struct brw_context *brw)
 
    /* _NEW_VIEWPORT */
 
-   sfv.viewport.m00 = v[MAT_SX];
-   sfv.viewport.m11 = v[MAT_SY] * y_scale;
-   sfv.viewport.m22 = v[MAT_SZ] * depth_scale;
-   sfv.viewport.m30 = v[MAT_TX];
-   sfv.viewport.m31 = v[MAT_TY] * y_scale + y_bias;
-   sfv.viewport.m32 = v[MAT_TZ] * depth_scale;
+   sfv->viewport.m00 = v[MAT_SX];
+   sfv->viewport.m11 = v[MAT_SY] * y_scale;
+   sfv->viewport.m22 = v[MAT_SZ] * depth_scale;
+   sfv->viewport.m30 = v[MAT_TX];
+   sfv->viewport.m31 = v[MAT_TY] * y_scale + y_bias;
+   sfv->viewport.m32 = v[MAT_TZ] * depth_scale;
 
    /* _NEW_SCISSOR | _NEW_BUFFERS | _NEW_VIEWPORT
     * for DrawBuffer->_[XY]{min,max}
@@ -85,27 +85,27 @@ static void upload_sf_vp(struct brw_context *brw)
        * anything.  Instead, just provide a min > max scissor inside
        * the bounds, which produces the expected no rendering.
        */
-      sfv.scissor.xmin = 1;
-      sfv.scissor.xmax = 0;
-      sfv.scissor.ymin = 1;
-      sfv.scissor.ymax = 0;
+      sfv->scissor.xmin = 1;
+      sfv->scissor.xmax = 0;
+      sfv->scissor.ymin = 1;
+      sfv->scissor.ymax = 0;
    } else if (render_to_fbo) {
       /* texmemory: Y=0=bottom */
-      sfv.scissor.xmin = ctx->DrawBuffer->_Xmin;
-      sfv.scissor.xmax = ctx->DrawBuffer->_Xmax - 1;
-      sfv.scissor.ymin = ctx->DrawBuffer->_Ymin;
-      sfv.scissor.ymax = ctx->DrawBuffer->_Ymax - 1;
+      sfv->scissor.xmin = ctx->DrawBuffer->_Xmin;
+      sfv->scissor.xmax = ctx->DrawBuffer->_Xmax - 1;
+      sfv->scissor.ymin = ctx->DrawBuffer->_Ymin;
+      sfv->scissor.ymax = ctx->DrawBuffer->_Ymax - 1;
    }
    else {
       /* memory: Y=0=top */
-      sfv.scissor.xmin = ctx->DrawBuffer->_Xmin;
-      sfv.scissor.xmax = ctx->DrawBuffer->_Xmax - 1;
-      sfv.scissor.ymin = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymax;
-      sfv.scissor.ymax = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymin - 1;
+      sfv->scissor.xmin = ctx->DrawBuffer->_Xmin;
+      sfv->scissor.xmax = ctx->DrawBuffer->_Xmax - 1;
+      sfv->scissor.ymin = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymax;
+      sfv->scissor.ymax = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymin - 1;
    }
 
    drm_intel_bo_unreference(brw->sf.vp_bo);
-   brw->sf.vp_bo = brw_cache_data(&brw->cache, BRW_SF_VP, &sfv, sizeof(sfv));
+   brw->sf.vp_bo = brw_cache_data(&brw->cache, BRW_SF_VP, sfv, sizeof(*sfv));
 }
 
 const struct brw_tracked_state brw_sf_vp = {
@@ -178,27 +178,28 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 			drm_intel_bo **reloc_bufs)
 {
    struct intel_context *intel = &brw->intel;
-   struct brw_sf_unit_state sf;
+   struct brw_sf_unit_state sf_stack, *sf = &sf_stack;
    drm_intel_bo *bo;
    int chipset_max_threads;
-   memset(&sf, 0, sizeof(sf));
 
-   sf.thread0.grf_reg_count = ALIGN(key->total_grf, 16) / 16 - 1;
-   sf.thread0.kernel_start_pointer = brw->sf.prog_bo->offset >> 6; /* reloc */
+   memset(sf, 0, sizeof(*sf));
 
-   sf.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
+   sf->thread0.grf_reg_count = ALIGN(key->total_grf, 16) / 16 - 1;
+   sf->thread0.kernel_start_pointer = brw->sf.prog_bo->offset >> 6; /* reloc */
 
-   sf.thread3.dispatch_grf_start_reg = 3;
+   sf->thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
+
+   sf->thread3.dispatch_grf_start_reg = 3;
 
    if (intel->gen == 5)
-       sf.thread3.urb_entry_read_offset = 3;
+       sf->thread3.urb_entry_read_offset = 3;
    else
-       sf.thread3.urb_entry_read_offset = 1;
+       sf->thread3.urb_entry_read_offset = 1;
 
-   sf.thread3.urb_entry_read_length = key->urb_entry_read_length;
+   sf->thread3.urb_entry_read_length = key->urb_entry_read_length;
 
-   sf.thread4.nr_urb_entries = key->nr_urb_entries;
-   sf.thread4.urb_entry_allocation_size = key->sfsize - 1;
+   sf->thread4.nr_urb_entries = key->nr_urb_entries;
+   sf->thread4.urb_entry_allocation_size = key->sfsize - 1;
 
    /* Each SF thread produces 1 PUE, and there can be up to 24 (Pre-Ironlake) or
     * 48 (Ironlake) threads.
@@ -208,46 +209,46 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
    else
       chipset_max_threads = 24;
 
-   sf.thread4.max_threads = MIN2(chipset_max_threads, key->nr_urb_entries) - 1;
+   sf->thread4.max_threads = MIN2(chipset_max_threads, key->nr_urb_entries) - 1;
 
    if (unlikely(INTEL_DEBUG & DEBUG_SINGLE_THREAD))
-      sf.thread4.max_threads = 0;
+      sf->thread4.max_threads = 0;
 
    if (unlikely(INTEL_DEBUG & DEBUG_STATS))
-      sf.thread4.stats_enable = 1;
+      sf->thread4.stats_enable = 1;
 
    /* CACHE_NEW_SF_VP */
-   sf.sf5.sf_viewport_state_offset = brw->sf.vp_bo->offset >> 5; /* reloc */
+   sf->sf5.sf_viewport_state_offset = brw->sf.vp_bo->offset >> 5; /* reloc */
 
-   sf.sf5.viewport_transform = 1;
+   sf->sf5.viewport_transform = 1;
 
    /* _NEW_SCISSOR */
    if (key->scissor)
-      sf.sf6.scissor = 1;
+      sf->sf6.scissor = 1;
 
    /* _NEW_POLYGON */
    if (key->front_face == GL_CCW)
-      sf.sf5.front_winding = BRW_FRONTWINDING_CCW;
+      sf->sf5.front_winding = BRW_FRONTWINDING_CCW;
    else
-      sf.sf5.front_winding = BRW_FRONTWINDING_CW;
+      sf->sf5.front_winding = BRW_FRONTWINDING_CW;
 
    /* The viewport is inverted for rendering to a FBO, and that inverts
     * polygon front/back orientation.
     */
-   sf.sf5.front_winding ^= key->render_to_fbo;
+   sf->sf5.front_winding ^= key->render_to_fbo;
 
    switch (key->cull_face) {
    case GL_FRONT:
-      sf.sf6.cull_mode = BRW_CULLMODE_FRONT;
+      sf->sf6.cull_mode = BRW_CULLMODE_FRONT;
       break;
    case GL_BACK:
-      sf.sf6.cull_mode = BRW_CULLMODE_BACK;
+      sf->sf6.cull_mode = BRW_CULLMODE_BACK;
       break;
    case GL_FRONT_AND_BACK:
-      sf.sf6.cull_mode = BRW_CULLMODE_BOTH;
+      sf->sf6.cull_mode = BRW_CULLMODE_BOTH;
       break;
    case GL_NONE:
-      sf.sf6.cull_mode = BRW_CULLMODE_NONE;
+      sf->sf6.cull_mode = BRW_CULLMODE_NONE;
       break;
    default:
       assert(0);
@@ -256,19 +257,19 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
 
    /* _NEW_LINE */
    /* XXX use ctx->Const.Min/MaxLineWidth here */
-   sf.sf6.line_width = CLAMP(key->line_width, 1.0, 5.0) * (1<<1);
+   sf->sf6.line_width = CLAMP(key->line_width, 1.0, 5.0) * (1<<1);
 
-   sf.sf6.line_endcap_aa_region_width = 1;
+   sf->sf6.line_endcap_aa_region_width = 1;
    if (key->line_smooth)
-      sf.sf6.aa_enable = 1;
-   else if (sf.sf6.line_width <= 0x2)
-       sf.sf6.line_width = 0;
+      sf->sf6.aa_enable = 1;
+   else if (sf->sf6.line_width <= 0x2)
+       sf->sf6.line_width = 0;
 
    /* _NEW_BUFFERS */
    key->render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
    if (!key->render_to_fbo) {
       /* Rendering to an OpenGL window */
-      sf.sf6.point_rast_rule = BRW_RASTRULE_UPPER_RIGHT;
+      sf->sf6.point_rast_rule = BRW_RASTRULE_UPPER_RIGHT;
    }
    else {
       /* If rendering to an FBO, the pixel coordinate system is
@@ -290,51 +291,51 @@ sf_unit_create_from_key(struct brw_context *brw, struct brw_sf_unit_key *key,
        * incorrectly, which is no worse than occurs without
        * the value, so we're using it here.
        */
-      sf.sf6.point_rast_rule = BRW_RASTRULE_LOWER_RIGHT;
+      sf->sf6.point_rast_rule = BRW_RASTRULE_LOWER_RIGHT;
    }
    /* XXX clamp max depends on AA vs. non-AA */
 
    /* _NEW_POINT */
-   sf.sf7.sprite_point = key->point_sprite;
-   sf.sf7.point_size = CLAMP(rint(key->point_size), 1, 255) * (1<<3);
-   sf.sf7.use_point_size_state = !key->use_vs_point_size;
-   sf.sf7.aa_line_distance_mode = 0;
+   sf->sf7.sprite_point = key->point_sprite;
+   sf->sf7.point_size = CLAMP(rint(key->point_size), 1, 255) * (1<<3);
+   sf->sf7.use_point_size_state = !key->use_vs_point_size;
+   sf->sf7.aa_line_distance_mode = 0;
 
    /* might be BRW_NEW_PRIMITIVE if we have to adjust pv for polygons:
     */
    if (!key->pv_first) {
-      sf.sf7.trifan_pv = 2;
-      sf.sf7.linestrip_pv = 1;
-      sf.sf7.tristrip_pv = 2;
+      sf->sf7.trifan_pv = 2;
+      sf->sf7.linestrip_pv = 1;
+      sf->sf7.tristrip_pv = 2;
    } else {
-      sf.sf7.trifan_pv = 1;
-      sf.sf7.linestrip_pv = 0;
-      sf.sf7.tristrip_pv = 0;
+      sf->sf7.trifan_pv = 1;
+      sf->sf7.linestrip_pv = 0;
+      sf->sf7.tristrip_pv = 0;
    }
-   sf.sf7.line_last_pixel_enable = 0;
+   sf->sf7.line_last_pixel_enable = 0;
 
    /* Set bias for OpenGL rasterization rules:
     */
-   sf.sf6.dest_org_vbias = 0x8;
-   sf.sf6.dest_org_hbias = 0x8;
+   sf->sf6.dest_org_vbias = 0x8;
+   sf->sf6.dest_org_hbias = 0x8;
 
    bo = brw_upload_cache(&brw->cache, BRW_SF_UNIT,
 			 key, sizeof(*key),
 			 reloc_bufs, 2,
-			 &sf, sizeof(sf));
+			 sf, sizeof(*sf));
 
    /* STATE_PREFETCH command description describes this state as being
     * something loaded through the GPE (L2 ISC), so it's INSTRUCTION domain.
     */
    /* Emit SF program relocation */
    drm_intel_bo_emit_reloc(bo, offsetof(struct brw_sf_unit_state, thread0),
-			   brw->sf.prog_bo, sf.thread0.grf_reg_count << 1,
+			   brw->sf.prog_bo, sf->thread0.grf_reg_count << 1,
 			   I915_GEM_DOMAIN_INSTRUCTION, 0);
 
    /* Emit SF viewport relocation */
    drm_intel_bo_emit_reloc(bo, offsetof(struct brw_sf_unit_state, sf5),
-			   brw->sf.vp_bo, (sf.sf5.front_winding |
-					   (sf.sf5.viewport_transform << 1)),
+			   brw->sf.vp_bo, (sf->sf5.front_winding |
+					   (sf->sf5.viewport_transform << 1)),
 			   I915_GEM_DOMAIN_INSTRUCTION, 0);
 
    return bo;
