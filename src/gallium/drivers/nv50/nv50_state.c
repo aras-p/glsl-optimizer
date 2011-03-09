@@ -866,5 +866,7 @@ nv50_init_state_functions(struct nv50_context *nv50)
 
    pipe->set_vertex_buffers = nv50_set_vertex_buffers;
    pipe->set_index_buffer = nv50_set_index_buffer;
+
+   pipe->redefine_user_buffer = u_default_redefine_user_buffer;
 }
 
