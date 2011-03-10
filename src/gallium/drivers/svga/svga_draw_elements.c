@@ -113,7 +113,6 @@ svga_hwtnl_simple_draw_range_elements( struct svga_hwtnl *hwtnl,
    unsigned hw_count;
    unsigned index_offset = start * index_size;
    int ret = PIPE_OK;
-   unsigned i, src_offs;
 
    hw_prim = svga_translate_prim(prim, count, &hw_count);
    if (hw_count == 0)
@@ -142,21 +141,6 @@ svga_hwtnl_simple_draw_range_elements( struct svga_hwtnl *hwtnl,
        */
       index_buffer = upload_buffer;
    }
-
-   for (i = 0; i < hwtnl->cmd.vdecl_count; i++) {
-      struct pipe_resource *vb = hwtnl->cmd.vdecl_vb[i];
-      struct svga_buffer *sbuf = svga_buffer(vb);
-      unsigned stride = hwtnl->cmd.vdecl[i].array.stride;
-      unsigned tmp_src_offs = sbuf->source_offset;
-
-      if (stride)
-	 tmp_src_offs /= stride;
-      assert(i == 0 || tmp_src_offs == src_offs);
-      src_offs = tmp_src_offs;
-   }
-
-   index_bias -= src_offs;
-   assert(index_bias >= 0);
 
    range.primType = hw_prim;
    range.primitiveCount = hw_count;

@@ -32,7 +32,6 @@
 #include "svga_draw.h"
 #include "svga_draw_private.h"
 #include "svga_context.h"
-#include "svga_resource_buffer.h"
 
 
 #define DBG 0
@@ -192,8 +191,6 @@ simple_draw_arrays( struct svga_hwtnl *hwtnl,
    SVGA3dPrimitiveRange range;
    unsigned hw_prim;
    unsigned hw_count;
-   unsigned i;
-   unsigned src_offs;
 
    hw_prim = svga_translate_prim(prim, count, &hw_count);
    if (hw_count == 0)
@@ -212,22 +209,6 @@ simple_draw_arrays( struct svga_hwtnl *hwtnl,
     * looking at those numbers knows to adjust them by
     * range.indexBias.
     */
-
-   for (i = 0; i < hwtnl->cmd.vdecl_count; i++) {
-      struct pipe_resource *vb = hwtnl->cmd.vdecl_vb[i];
-      struct svga_buffer *sbuf = svga_buffer(vb);
-      unsigned stride = hwtnl->cmd.vdecl[i].array.stride;
-      unsigned tmp_src_offs = sbuf->source_offset;
-
-      if (stride)
-         tmp_src_offs /= stride;
-      assert(i == 0 || tmp_src_offs == src_offs);
-      src_offs = tmp_src_offs;
-   }
-
-   range.indexBias = start - src_offs;
-   assert(range.indexBias >= 0);
-
    return svga_hwtnl_prim( hwtnl, &range, 0, count - 1, NULL );
 }
 
