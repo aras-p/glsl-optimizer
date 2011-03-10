@@ -307,6 +307,10 @@ i915_emit_state(struct intel_context *intel)
 				   false);
    count = 0;
  again:
+   if (intel->batch.bo == NULL) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY, "i915 emit state");
+      assert(0);
+   }
    aper_count = 0;
    dirty = get_dirty(state);
 
