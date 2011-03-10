@@ -189,7 +189,7 @@ glXGetCurrentDrawable(void)
 }
 
 static void
-__glXGenerateError(Display * dpy, struct glx_context *gc, XID resource,
+__glXGenerateError(Display * dpy, XID resource,
                    BYTE errorCode, CARD16 minorCode)
 {
    xError error;
@@ -198,7 +198,7 @@ __glXGenerateError(Display * dpy, struct glx_context *gc, XID resource,
    error.resourceID = resource;
    error.sequenceNumber = dpy->request;
    error.type = X_Error;
-   error.majorCode = gc->majorOpcode;
+   error.majorCode = __glXSetupForCommand(dpy);
    error.minorCode = minorCode;
    _XError(dpy, &error);
 }
@@ -235,12 +235,12 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
    }
 
    if (gc == NULL && (draw != None || read != None)) {
-      __glXGenerateError(dpy, gc, (draw != None) ? draw : read,
+      __glXGenerateError(dpy, (draw != None) ? draw : read,
                          BadMatch, X_GLXMakeContextCurrent);
       return False;
    }
    if (gc != NULL && (draw == None || read == None)) {
-      __glXGenerateError(dpy, gc, None, BadMatch, X_GLXMakeContextCurrent);
+      __glXGenerateError(dpy, None, BadMatch, X_GLXMakeContextCurrent);
       return False;
    }
 
@@ -284,7 +284,7 @@ MakeContextCurrent(Display * dpy, GLXDrawable draw,
    __glXUnlock();
 
    if (ret) {
-      __glXGenerateError(dpy, gc, None, ret, X_GLXMakeContextCurrent);
+      __glXGenerateError(dpy, None, ret, X_GLXMakeContextCurrent);
       return GL_FALSE;
    }
 
