@@ -303,6 +303,8 @@ pipe_buffer_write(struct pipe_context *pipe,
 
    if (offset == 0 && size == buf->width0) {
       usage |= PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE;
+   } else {
+      usage |= PIPE_TRANSFER_DISCARD_RANGE;
    }
 
    u_box_1d(offset, size, &box);
