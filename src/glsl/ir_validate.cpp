@@ -214,7 +214,7 @@ ir_validate::visit_enter(ir_function_signature *ir)
 
    if (ir->return_type == NULL) {
       printf("Function signature %p for function %s has NULL return type.\n",
-	     ir, ir->function_name());
+	     (void *) ir, ir->function_name());
       abort();
    }
 
