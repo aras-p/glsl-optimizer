@@ -171,9 +171,12 @@
 #define     V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT             0x00000027
 #define     V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE        0x00000028
 
+/* cayman doesn't have VTX */
 #define     EG_V_SQ_CF_WORD1_SQ_CF_INST_NOP                             0x00000000
 #define     EG_V_SQ_CF_WORD1_SQ_CF_INST_TEX                             0x00000001
+#define     CM_V_SQ_CF_WORD1_SQ_CF_INST_TC                              0x00000001
 #define     EG_V_SQ_CF_WORD1_SQ_CF_INST_VTX                             0x00000002
+#define     CM_V_SQ_CF_WORD1_SQ_CF_INST_RSVD_2                          0x00000002
 #define     EG_V_SQ_CF_WORD1_SQ_CF_INST_GDS                             0x00000003
 #define     EG_V_SQ_CF_WORD1_SQ_CF_INST_LOOP_START                      0x00000004
 #define     EG_V_SQ_CF_WORD1_SQ_CF_INST_LOOP_END                        0x00000005
@@ -200,18 +203,36 @@
 #define     EG_V_SQ_CF_WORD1_SQ_CF_INST_WAIT_ACK                        0x0000001a
 #define     EG_V_SQ_CF_WORD1_SQ_CF_INST_TC_ACK                          0x0000001b
 #define     EG_V_SQ_CF_WORD1_SQ_CF_INST_VC_ACK                          0x0000001c
+#define     CM_V_SQ_CF_WORD1_SQ_CF_INST_RSVD_28                         0x0000001c
 #define     EG_V_SQ_CF_WORD1_SQ_CF_INST_JUMPTABLE                       0x0000001d
 #define     EG_V_SQ_CF_WORD1_SQ_CF_INST_GLOBAL_WAVE_SYNC                0x0000001e
 #define     EG_V_SQ_CF_WORD1_SQ_CF_INST_HALT                            0x0000001f
+#define     EG_V_SQ_CF_WORD1_SQ_CF_INST_HALT                            0x0000001f
+
+/* cayman extras */
+#define     CM_V_SQ_CF_WORD1_SQ_CF_INST_END                             0x00000020
+#define     CM_V_SQ_CF_WORD1_SQ_CF_INST_LDS_DEALLOC                     0x00000021
+#define     CM_V_SQ_CF_WORD1_SQ_CF_INST_PUSH_WQM                        0x00000022
+#define     CM_V_SQ_CF_WORD1_SQ_CF_INST_POP_WQM                         0x00000023
+#define     CM_V_SQ_CF_WORD1_SQ_CF_INST_ELSE_WQM                        0x00000024
+#define     CM_V_SQ_CF_WORD1_SQ_CF_INST_JUMP_ANY                        0x00000025
+#define     CM_V_SQ_CF_WORD1_SQ_CF_INST_REACTIVATE                      0x00000026
+#define     CM_V_SQ_CF_WORD1_SQ_CF_INST_REACTIVATE_WQM                  0x00000027
+#define     CM_V_SQ_CF_WORD1_SQ_CF_INST_INTERRUPT                       0x00000028
+#define     CM_V_SQ_CF_WORD1_SQ_CF_INST_INTERRUPT_AND_SLEEP             0x00000029
+#define     CM_V_SQ_CF_WORD1_SQ_CF_INST_SET_PRIORITY                    0x00000030
 
 #define     EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU                         0x00000008
 #define     EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE             0x00000009
 #define     EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER               0x0000000A
 #define     EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER              0x0000000B
 #define     EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_EXTENDED                    0x0000000C
-#define     EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_CONTINUE                0x0000000D
-#define     EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_BREAK                   0x0000000E
+#define     EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_CONTINUE                0x0000000D /* different on CAYMAN */
+#define     EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_BREAK                   0x0000000E /* different on CAYMAN */
 #define     EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_ELSE_AFTER              0x0000000F
+
+#define     CM_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_REACTIVATE_BEFORE       0x0000000D
+#define     CM_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_VALID_PIXEL_MODE        0x0000000E
 
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADD                       0x00000000
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MUL                       0x00000001
@@ -299,11 +320,11 @@
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ADDC_UINT                 0x00000052
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SUBB_UINT                 0x00000053
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_GROUP_BARRIER             0x00000054
-#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_GROUP_SEQ_BEGIN           0x00000055
-#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_GROUP_SEQ_END             0x00000056
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_GROUP_SEQ_BEGIN           0x00000055 /* not on CAYMAN */
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_GROUP_SEQ_END             0x00000056 /* not on CAYMAN */
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SET_MODE                  0x00000057
-#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SET_CF_IDX0               0x00000058
-#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SET_CF_IDX1               0x00000059
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SET_CF_IDX0               0x00000058 /* not on CAYMAN */
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SET_CF_IDX1               0x00000059 /* not on CAYMAN */
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_SET_LDS_SIZE              0x0000005A
 
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_EXP_IEEE                  0x00000081
@@ -322,8 +343,8 @@
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_INT                 0x00000090
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULLO_UINT                0x00000091
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MULHI_UINT                0x00000092
-#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_INT                 0x00000093
-#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_UINT                0x00000094
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_INT                 0x00000093 /* not on CAYMAN */
+#define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_UINT                0x00000094 /* not on CAYMAN */
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_64                  0x00000095
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIP_CLAMPED_64          0x00000096
 #define     EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_RECIPSQRT_64              0x00000097
@@ -393,9 +414,10 @@
 #define CHIPREV_R600      0
 #define CHIPREV_R700      1
 #define CHIPREV_EVERGREEN 2
+#define CHIPREV_CAYMAN    3
 
-#define BC_INST(bc, x) ((bc)->chiprev == CHIPREV_EVERGREEN ? EG_##x : x)
+#define BC_INST(bc, x) ((bc)->chiprev >= CHIPREV_EVERGREEN ? EG_##x : x)
 
-#define CTX_INST(x) (ctx->bc->chiprev == CHIPREV_EVERGREEN ? EG_##x : x)
+#define CTX_INST(x) (ctx->bc->chiprev >= CHIPREV_EVERGREEN ? EG_##x : x)
 
 #endif

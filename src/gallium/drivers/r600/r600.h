@@ -95,6 +95,7 @@ enum radeon_family {
 	CHIP_BARTS,
 	CHIP_TURKS,
 	CHIP_CAICOS,
+	CHIP_CAYMAN,
 	CHIP_LAST,
 };
 
@@ -102,6 +103,7 @@ enum chip_class {
 	R600,
 	R700,
 	EVERGREEN,
+	CAYMAN,
 };
 
 struct r600_tiling_info {

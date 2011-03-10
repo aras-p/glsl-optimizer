@@ -327,6 +327,11 @@ static struct radeon *radeon_new(int fd, unsigned device)
 		/* set default group bytes, overridden by tiling info ioctl */
 		radeon->tiling_info.group_bytes = 512;
 		break;
+	case CHIP_CAYMAN:
+		radeon->chip_class = CAYMAN;
+		/* set default group bytes, overridden by tiling info ioctl */
+		radeon->tiling_info.group_bytes = 512;
+		break;
 	default:
 		fprintf(stderr, "%s unknown or unsupported chipset 0x%04X\n",
 			__func__, radeon->device);
