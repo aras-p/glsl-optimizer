@@ -158,6 +158,8 @@ struct i915_state
    unsigned dst_buf_vars;
    uint32_t draw_offset;
    uint32_t draw_size;
+   /* for clears */
+   uint16_t fb_height, fb_width;
 
    unsigned id;			/* track lost context events */
 };
@@ -326,8 +328,10 @@ void i915_emit_hardware_state(struct i915_context *i915 );
 /***********************************************************************
  * i915_clear.c: 
  */
-void i915_clear( struct pipe_context *pipe, unsigned buffers, const float *rgba,
-                 double depth, unsigned stencil);
+void i915_clear_blitter(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+                        double depth, unsigned stencil);
+void i915_clear_render(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+                       double depth, unsigned stencil);
 
 
 /***********************************************************************

@@ -37,6 +37,9 @@
 #define OUT_BATCH(dword) \
    i915_winsys_batchbuffer_dword(i915->batch, dword)
 
+#define OUT_BATCH_F(f) \
+   i915_winsys_batchbuffer_float(i915->batch, f)
+
 #define OUT_RELOC(buf, usage, offset) \
    i915_winsys_batchbuffer_reloc(i915->batch, buf, usage, offset, false)
 

@@ -167,6 +167,8 @@ static void update_framebuffer(struct i915_context *i915)
       i915_set_flush_dirty(i915, I915_PIPELINE_FLUSH);
    }
    i915->current.draw_size = (w - 1 + x) | ((h - 1 + y) << 16);
+   i915->current.fb_height = h;
+   i915->current.fb_width = w;
 
    i915->hardware_dirty |= I915_HW_STATIC;
 

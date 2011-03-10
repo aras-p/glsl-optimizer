@@ -137,7 +137,10 @@ i915_create_context(struct pipe_screen *screen, void *priv)
 
    i915->base.destroy = i915_destroy;
 
-   i915->base.clear = i915_clear;
+   if (i915_screen(screen)->debug.use_blitter)
+      i915->base.clear = i915_clear_blitter;
+   else
+      i915->base.clear = i915_clear_render;
 
    i915->base.draw_vbo = i915_draw_vbo;
 
