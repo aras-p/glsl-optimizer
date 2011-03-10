@@ -131,6 +131,7 @@ C_SOURCES = \
 	util/u_network.c \
 	util/u_math.c \
 	util/u_mm.c \
+	util/u_pstipple.c \
 	util/u_rect.c \
 	util/u_ringbuffer.c \
 	util/u_sampler.c \
