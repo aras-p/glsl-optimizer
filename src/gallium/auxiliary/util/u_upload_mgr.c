@@ -72,6 +72,22 @@ struct u_upload_mgr *u_upload_create( struct pipe_context *pipe,
    return upload;
 }
 
+void u_upload_unmap( struct u_upload_mgr *upload )
+{
+   if (upload->transfer) {
+      struct pipe_box *box = &upload->transfer->box;
+      if (upload->offset > box->x) {
+
+         pipe_buffer_flush_mapped_range(upload->pipe, upload->transfer,
+                                        box->x, upload->offset - box->x);
+      }
+      pipe_transfer_unmap(upload->pipe, upload->transfer);
+      pipe_transfer_destroy(upload->pipe, upload->transfer);
+      upload->transfer = NULL;
+      upload->map = NULL;
+   }
+}
+
 /* Release old buffer.
  * 
  * This must usually be called prior to firing the command stream
@@ -84,15 +100,7 @@ struct u_upload_mgr *u_upload_create( struct pipe_context *pipe,
 void u_upload_flush( struct u_upload_mgr *upload )
 {
    /* Unmap and unreference the upload buffer. */
-   if (upload->transfer) {
-      if (upload->offset) {
-         pipe_buffer_flush_mapped_range(upload->pipe, upload->transfer,
-                                        0, upload->offset);
-      }
-      pipe_transfer_unmap(upload->pipe, upload->transfer);
-      pipe_transfer_destroy(upload->pipe, upload->transfer);
-      upload->transfer = NULL;
-   }
+   u_upload_unmap(upload);
    pipe_resource_reference( &upload->buffer, NULL );
    upload->size = 0;
 }
@@ -171,6 +179,15 @@ enum pipe_error u_upload_alloc( struct u_upload_mgr *upload,
    }
 
    offset = MAX2(upload->offset, alloc_offset);
+
+   if (!upload->map) {
+      upload->map = pipe_buffer_map_range(upload->pipe, upload->buffer,
+					  offset, upload->size - offset,
+					  PIPE_TRANSFER_WRITE |
+					  PIPE_TRANSFER_FLUSH_EXPLICIT |
+					  PIPE_TRANSFER_UNSYNCHRONIZED,
+					  &upload->transfer);
+   }
 
    assert(offset < upload->buffer->width0);
    assert(offset + size <= upload->buffer->width0);
