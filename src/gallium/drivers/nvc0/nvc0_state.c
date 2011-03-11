@@ -166,6 +166,7 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
                              const struct pipe_rasterizer_state *cso)
 {
     struct nvc0_rasterizer_stateobj *so;
+    uint32_t reg;
 
     so = CALLOC_STRUCT(nvc0_rasterizer_stateobj);
     if (!so)
@@ -202,6 +203,13 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
        SB_BEGIN_3D(so, POINT_SIZE, 1);
        SB_DATA    (so, fui(cso->point_size));
     }
+
+    reg = (cso->sprite_coord_mode == PIPE_SPRITE_COORD_UPPER_LEFT) ?
+       NVC0_3D_POINT_COORD_REPLACE_COORD_ORIGIN_UPPER_LEFT :
+       NVC0_3D_POINT_COORD_REPLACE_COORD_ORIGIN_LOWER_LEFT;
+
+    SB_BEGIN_3D(so, POINT_COORD_REPLACE, 1);
+    SB_DATA    (so, ((cso->sprite_coord_enable & 0xff) << 3) | reg);
     SB_IMMED_3D(so, POINT_SPRITE_ENABLE, cso->point_quad_rasterization);
     SB_IMMED_3D(so, POINT_SMOOTH_ENABLE, cso->point_smooth);
 

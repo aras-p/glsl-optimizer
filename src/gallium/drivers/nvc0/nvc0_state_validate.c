@@ -294,32 +294,6 @@ nvc0_validate_rasterizer(struct nvc0_context *nvc0)
 }
 
 static void
-nvc0_validate_sprite_coords(struct nvc0_context *nvc0)
-{
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
-   uint32_t reg;
-
-   if (nvc0->rast->pipe.sprite_coord_mode == PIPE_SPRITE_COORD_UPPER_LEFT)
-      reg = NVC0_3D_POINT_COORD_REPLACE_COORD_ORIGIN_UPPER_LEFT;
-   else
-      reg = NVC0_3D_POINT_COORD_REPLACE_COORD_ORIGIN_LOWER_LEFT;
-
-   if (nvc0->rast->pipe.point_quad_rasterization) {
-      uint32_t en = nvc0->rast->pipe.sprite_coord_enable;
-
-      while (en) {
-         int i = ffs(en) - 1;
-         en &= ~(1 << i);
-         if (i >= 0 && i < 8)
-            reg |= 8 << i;
-      }
-   }
-
-   BEGIN_RING(chan, RING_3D(POINT_COORD_REPLACE), 1);
-   OUT_RING  (chan, reg);
-}
-
-static void
 nvc0_constbufs_validate(struct nvc0_context *nvc0)
 {
    struct nouveau_channel *chan = nvc0->screen->base.channel;
@@ -432,7 +406,6 @@ static struct state_validate {
     { nvc0_tevlprog_validate,      NVC0_NEW_TEVLPROG },
     { nvc0_gmtyprog_validate,      NVC0_NEW_GMTYPROG },
     { nvc0_fragprog_validate,      NVC0_NEW_FRAGPROG },
-    { nvc0_validate_sprite_coords, NVC0_NEW_RASTERIZER | NVC0_NEW_FRAGPROG },
     { nvc0_constbufs_validate,     NVC0_NEW_CONSTBUF },
     { nvc0_validate_textures,      NVC0_NEW_TEXTURES },
     { nvc0_validate_samplers,      NVC0_NEW_SAMPLERS },
