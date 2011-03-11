@@ -356,7 +356,6 @@ void vegaWritePixels(const void * data, VGint dataStride,
                      VGint width, VGint height)
 {
    struct vg_context *ctx = vg_current_context();
-   struct pipe_context *pipe = ctx->pipe;
 
    if (!supported_image_format(dataFormat)) {
       vg_set_error(ctx, VG_UNSUPPORTED_IMAGE_FORMAT_ERROR);
