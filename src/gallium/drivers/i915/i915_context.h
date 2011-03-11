@@ -159,8 +159,6 @@ struct i915_state
    unsigned dst_buf_vars;
    uint32_t draw_offset;
    uint32_t draw_size;
-   /* for clears */
-   uint16_t fb_height, fb_width;
 
    unsigned id;			/* track lost context events */
 };

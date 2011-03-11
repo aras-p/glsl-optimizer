@@ -144,5 +144,5 @@ i915_clear_render(struct pipe_context *pipe, unsigned buffers, const float *rgba
       i915_update_derived(i915);
 
    i915_clear_emit(pipe, buffers, rgba, depth, stencil,
-                   0, 0, i915->current.fb_width, i915->current.fb_height);
+                   0, 0, i915->framebuffer.width, i915->framebuffer.height);
 }
