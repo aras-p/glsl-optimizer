@@ -85,9 +85,9 @@ void u_upload_flush( struct u_upload_mgr *upload )
 {
    /* Unmap and unreference the upload buffer. */
    if (upload->transfer) {
-      if (upload->size) {
+      if (upload->offset) {
          pipe_buffer_flush_mapped_range(upload->pipe, upload->transfer,
-                                        0, upload->size);
+                                        0, upload->offset);
       }
       pipe_transfer_unmap(upload->pipe, upload->transfer);
       pipe_transfer_destroy(upload->pipe, upload->transfer);
