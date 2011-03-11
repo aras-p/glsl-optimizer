@@ -43,6 +43,40 @@
  */
 
 static void
+i915_surface_copy_render(struct pipe_context *pipe,
+                         struct pipe_resource *dst, unsigned dst_level,
+                         unsigned dstx, unsigned dsty, unsigned dstz,
+                         struct pipe_resource *src, unsigned src_level,
+                         const struct pipe_box *src_box)
+{
+   struct i915_context *i915 = i915_context(pipe);
+
+   util_blitter_save_blend(i915->blitter, (void *)i915->blend);
+   util_blitter_save_depth_stencil_alpha(i915->blitter, (void *)i915->depth_stencil);
+   util_blitter_save_stencil_ref(i915->blitter, &i915->stencil_ref);
+   util_blitter_save_rasterizer(i915->blitter, (void *)i915->rasterizer);
+   util_blitter_save_fragment_shader(i915->blitter, i915->saved_fs);
+   util_blitter_save_vertex_shader(i915->blitter, i915->saved_vs);
+   util_blitter_save_viewport(i915->blitter, &i915->viewport);
+   util_blitter_save_clip(i915->blitter, &i915->saved_clip);
+   util_blitter_save_vertex_elements(i915->blitter, i915->saved_velems);
+   util_blitter_save_vertex_buffers(i915->blitter, i915->saved_nr_vertex_buffers,
+                                    i915->saved_vertex_buffers);
+
+   util_blitter_save_framebuffer(i915->blitter, &i915->framebuffer);
+
+   util_blitter_save_fragment_sampler_states(i915->blitter,
+                                             i915->saved_nr_samplers,
+                                             i915->saved_samplers);
+   util_blitter_save_fragment_sampler_views(i915->blitter,
+                                            i915->saved_nr_sampler_views,
+                                            i915->saved_sampler_views);
+
+   util_blitter_copy_region(i915->blitter, dst, dst_level, dstx, dsty, dstz,
+                            src, src_level, src_box, TRUE);
+}
+
+static void
 i915_clear_render_target_render(struct pipe_context *pipe,
                                 struct pipe_surface *dst,
                                 const float *rgba,
@@ -112,11 +146,11 @@ i915_clear_depth_stencil_render(struct pipe_context *pipe,
  * do it higher up if required.
  */
 static void
-i915_surface_copy(struct pipe_context *pipe,
-                  struct pipe_resource *dst, unsigned dst_level,
-                  unsigned dstx, unsigned dsty, unsigned dstz,
-                  struct pipe_resource *src, unsigned src_level,
-                  const struct pipe_box *src_box)
+i915_surface_copy_blitter(struct pipe_context *pipe,
+                          struct pipe_resource *dst, unsigned dst_level,
+                          unsigned dstx, unsigned dsty, unsigned dstz,
+                          struct pipe_resource *src, unsigned src_level,
+                          const struct pipe_box *src_box)
 {
    struct i915_texture *dst_tex = i915_texture(dst);
    struct i915_texture *src_tex = i915_texture(src);
@@ -149,7 +183,6 @@ i915_surface_copy(struct pipe_context *pipe,
                    (short) src_box->x, (short) src_box->y, (short) dstx, (short) dsty,
                    (short) src_box->width, (short) src_box->height );
 }
-
 
 static void
 i915_clear_render_target_blitter(struct pipe_context *pipe,
@@ -262,11 +295,12 @@ i915_surface_destroy(struct pipe_context *ctx,
 void
 i915_init_surface_functions(struct i915_context *i915)
 {
-   i915->base.resource_copy_region = i915_surface_copy;
    if (i915_screen(i915->base.screen)->debug.use_blitter) {
+      i915->base.resource_copy_region = i915_surface_copy_blitter;
       i915->base.clear_render_target = i915_clear_render_target_blitter;
       i915->base.clear_depth_stencil = i915_clear_depth_stencil_blitter;
    } else {
+      i915->base.resource_copy_region = i915_surface_copy_render;
       i915->base.clear_render_target = i915_clear_render_target_render;
       i915->base.clear_depth_stencil = i915_clear_depth_stencil_render;
    }

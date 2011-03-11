@@ -170,6 +170,9 @@ i915_create_context(struct pipe_screen *screen, void *priv)
    draw_install_aaline_stage(i915->draw, &i915->base);
    draw_install_aapoint_stage(i915->draw, &i915->base);
 
+   /* augmented draw pipeline clobbers state functions */
+   i915_init_fixup_state_functions(i915);
+
    /* Create blitter last - calls state creation functions. */
    i915->blitter = util_blitter_create(&i915->base);
    assert(i915->blitter);

@@ -287,6 +287,17 @@ i915_create_sampler_state(struct pipe_context *pipe,
    return cso;
 }
 
+static void i915_fixup_bind_sampler_states(struct pipe_context *pipe,
+                                           unsigned num, void **sampler)
+{
+   struct i915_context *i915 = i915_context(pipe);
+
+   i915->saved_nr_samplers = num;
+   memcpy(&i915->saved_samplers, sampler, sizeof(void *) * num);
+
+   i915->saved_bind_sampler_states(pipe, num, sampler);
+}
+
 static void i915_bind_sampler_states(struct pipe_context *pipe,
                                      unsigned num, void **sampler)
 {
@@ -466,6 +477,17 @@ i915_create_fs_state(struct pipe_context *pipe,
 }
 
 static void
+i915_fixup_bind_fs_state(struct pipe_context *pipe, void *shader)
+{
+   struct i915_context *i915 = i915_context(pipe);
+   draw_flush(i915->draw);
+
+   i915->saved_fs = shader;
+
+   i915->saved_bind_fs_state(pipe, shader);
+}
+
+static void
 i915_bind_fs_state(struct pipe_context *pipe, void *shader)
 {
    struct i915_context *i915 = i915_context(pipe);
@@ -504,6 +526,8 @@ i915_create_vs_state(struct pipe_context *pipe,
 static void i915_bind_vs_state(struct pipe_context *pipe, void *shader)
 {
    struct i915_context *i915 = i915_context(pipe);
+
+   i915->saved_vs = shader;
 
    /* just pass-through to draw module */
    draw_bind_vertex_shader(i915->draw, (struct draw_vertex_shader *) shader);
@@ -570,6 +594,27 @@ static void i915_set_constant_buffer(struct pipe_context *pipe,
       i915->dirty |= shader == PIPE_SHADER_VERTEX ? I915_NEW_VS_CONSTANTS : I915_NEW_FS_CONSTANTS;
 }
 
+
+static void
+i915_fixup_set_fragment_sampler_views(struct pipe_context *pipe,
+                                      unsigned num,
+                                      struct pipe_sampler_view **views)
+{
+   struct i915_context *i915 = i915_context(pipe);
+   int i;
+
+   for (i = 0; i < num; i++)
+      pipe_sampler_view_reference(&i915->saved_sampler_views[i],
+                                  views[i]);
+
+   for (i = num; i < i915->saved_nr_sampler_views; i++)
+      pipe_sampler_view_reference(&i915->saved_sampler_views[i],
+                                  NULL);
+
+   i915->saved_nr_sampler_views = num;
+
+   i915->saved_set_sampler_views(pipe, num, views);
+}
 
 static void i915_set_fragment_sampler_views(struct pipe_context *pipe,
                                             unsigned num,
@@ -657,6 +702,8 @@ static void i915_set_clip_state( struct pipe_context *pipe,
 {
    struct i915_context *i915 = i915_context(pipe);
    draw_flush(i915->draw);
+
+   i915->saved_clip = *clip;
 
    draw_set_clip_state(i915->draw, clip);
 
@@ -779,6 +826,9 @@ static void i915_set_vertex_buffers(struct pipe_context *pipe,
    struct draw_context *draw = i915->draw;
    int i;
 
+   util_copy_vertex_buffers(i915->saved_vertex_buffers,
+                            &i915->saved_nr_vertex_buffers,
+                            buffers, count);
 #if 0
    /* XXX doesn't look like this is needed */
    /* unmap old */
@@ -818,6 +868,8 @@ i915_bind_vertex_elements_state(struct pipe_context *pipe,
 {
    struct i915_context *i915 = i915_context(pipe);
    struct i915_velems_state *i915_velems = (struct i915_velems_state *) velems;
+
+   i915->saved_velems = velems;
 
    /* pass-through to draw module */
    if (i915_velems) {
@@ -896,4 +948,15 @@ i915_init_state_functions( struct i915_context *i915 )
    i915->base.set_vertex_buffers = i915_set_vertex_buffers;
    i915->base.set_index_buffer = i915_set_index_buffer;
    i915->base.redefine_user_buffer = u_default_redefine_user_buffer;
+}
+
+void
+i915_init_fixup_state_functions( struct i915_context *i915 )
+{
+   i915->saved_bind_fs_state = i915->base.bind_fs_state;
+   i915->base.bind_fs_state = i915_fixup_bind_fs_state;
+   i915->saved_bind_sampler_states = i915->base.bind_fragment_sampler_states;
+   i915->base.bind_fragment_sampler_states = i915_fixup_bind_sampler_states;
+   i915->saved_set_sampler_views = i915->base.set_fragment_sampler_views;
+   i915->base.set_fragment_sampler_views = i915_fixup_set_fragment_sampler_views;
 }
