@@ -28,6 +28,10 @@
 
 
 void
+svga_buffer_upload_flush(struct svga_context *svga,
+                         struct svga_buffer *sbuf);
+
+void
 svga_buffer_add_range(struct svga_buffer *sbuf,
                       unsigned start,
                       unsigned end);
