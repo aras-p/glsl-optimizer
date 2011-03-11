@@ -86,8 +86,7 @@ struct st_device {
    int is_format_supported( enum pipe_format format, 
                             enum pipe_texture_target target,
                             unsigned sample_count,
-                            unsigned bind, 
-                            unsigned geom_flags ) {
+                            unsigned bind ) {
       /* We can't really display surfaces with the python statetracker so mask
        * out that usage */
       bind &= ~PIPE_BIND_DISPLAY_TARGET;
@@ -96,8 +95,7 @@ struct st_device {
                                                  format,
                                                  target,
                                                  sample_count,
-                                                 bind,
-                                                 geom_flags );
+                                                 bind );
    }
 
    struct st_context *
