@@ -233,6 +233,7 @@ drisw_allocate_textures(struct dri_drawable *drawable,
  */
 
 static const __DRIextension *drisw_screen_extensions[] = {
+   &driTexBufferExtension.base,
    NULL
 };
 
