@@ -184,7 +184,10 @@ i915_texture_tiling(struct i915_screen *is, struct i915_texture *tex)
       /* XXX X-tiling might make sense */
       return I915_TILE_NONE;
 
-   return I915_TILE_X;
+   if (is->debug.use_blitter)
+      return I915_TILE_X;
+   else
+      return I915_TILE_Y;
 }
 
 
