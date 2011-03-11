@@ -37,10 +37,19 @@ public:
 
    virtual ir_visitor_status visit_leave(ir_if *);
    virtual ir_visitor_status visit_leave(ir_loop *);
+   virtual ir_visitor_status visit_enter(ir_assignment *);
 
    bool progress;
 };
 
+/* We only care about the top level instructions, so don't descend
+ * into expressions.
+ */
+ir_visitor_status
+redundant_jumps_visitor::visit_enter(ir_assignment *ir)
+{
+   return visit_continue_with_parent;
+}
 
 ir_visitor_status
 redundant_jumps_visitor::visit_leave(ir_if *ir)
