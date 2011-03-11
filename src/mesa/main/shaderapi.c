@@ -1732,7 +1732,7 @@ _mesa_ProgramParameteriARB(GLuint program, GLenum pname,
    switch (pname) {
    case GL_GEOMETRY_VERTICES_OUT_ARB:
       if (value < 1 ||
-          (unsigned) value > ctx->Const.GeometryProgram.MaxGeometryOutputVertices) {
+          (unsigned) value > ctx->Const.MaxGeometryOutputVertices) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glProgramParameteri(GL_GEOMETRY_VERTICES_OUT_ARB=%d",
                      value);

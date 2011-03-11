@@ -1201,22 +1201,22 @@ static const struct value_desc values[] = {
 
    /* GL_ARB_geometry_shader4 */
    { GL_MAX_GEOMETRY_TEXTURE_IMAGE_UNITS_ARB,
-     CONTEXT_INT(Const.GeometryProgram.MaxGeometryTextureImageUnits),
+     CONTEXT_INT(Const.MaxGeometryTextureImageUnits),
      extra_ARB_geometry_shader4 },
    { GL_MAX_GEOMETRY_OUTPUT_VERTICES_ARB,
-     CONTEXT_INT(Const.GeometryProgram.MaxGeometryOutputVertices),
+     CONTEXT_INT(Const.MaxGeometryOutputVertices),
      extra_ARB_geometry_shader4 },
    { GL_MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS_ARB,
-     CONTEXT_INT(Const.GeometryProgram.MaxGeometryTotalOutputComponents),
+     CONTEXT_INT(Const.MaxGeometryTotalOutputComponents),
      extra_ARB_geometry_shader4 },
    { GL_MAX_GEOMETRY_UNIFORM_COMPONENTS_ARB,
-     CONTEXT_INT(Const.GeometryProgram.MaxGeometryUniformComponents),
+     CONTEXT_INT(Const.GeometryProgram.MaxUniformComponents),
      extra_ARB_geometry_shader4 },
    { GL_MAX_GEOMETRY_VARYING_COMPONENTS_ARB,
-     CONTEXT_INT(Const.GeometryProgram.MaxGeometryVaryingComponents),
+     CONTEXT_INT(Const.MaxGeometryVaryingComponents),
      extra_ARB_geometry_shader4 },
    { GL_MAX_VERTEX_VARYING_COMPONENTS_ARB,
-     CONTEXT_INT(Const.GeometryProgram.MaxVertexVaryingComponents),
+     CONTEXT_INT(Const.MaxVertexVaryingComponents),
      extra_ARB_geometry_shader4 },
 
    /* GL_EXT_gpu_shader4 / GL 3.0 */

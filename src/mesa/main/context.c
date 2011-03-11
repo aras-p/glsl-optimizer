@@ -486,7 +486,6 @@ init_program_limits(GLenum type, struct gl_program_constants *prog)
    prog->MaxTemps = MAX_PROGRAM_TEMPS;
    prog->MaxEnvParams = MAX_PROGRAM_ENV_PARAMS;
    prog->MaxLocalParams = MAX_PROGRAM_LOCAL_PARAMS;
-   prog->MaxUniformComponents = 4 * MAX_UNIFORMS;
    prog->MaxAddressOffset = MAX_PROGRAM_LOCAL_PARAMS;
 
    switch (type) {
@@ -494,23 +493,19 @@ init_program_limits(GLenum type, struct gl_program_constants *prog)
       prog->MaxParameters = MAX_VERTEX_PROGRAM_PARAMS;
       prog->MaxAttribs = MAX_NV_VERTEX_PROGRAM_INPUTS;
       prog->MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
+      prog->MaxUniformComponents = 4 * MAX_UNIFORMS;
       break;
    case GL_FRAGMENT_PROGRAM_ARB:
       prog->MaxParameters = MAX_NV_FRAGMENT_PROGRAM_PARAMS;
       prog->MaxAttribs = MAX_NV_FRAGMENT_PROGRAM_INPUTS;
       prog->MaxAddressRegs = MAX_FRAGMENT_PROGRAM_ADDRESS_REGS;
+      prog->MaxUniformComponents = 4 * MAX_UNIFORMS;
       break;
    case MESA_GEOMETRY_PROGRAM:
       prog->MaxParameters = MAX_NV_VERTEX_PROGRAM_PARAMS;
       prog->MaxAttribs = MAX_NV_VERTEX_PROGRAM_INPUTS;
       prog->MaxAddressRegs = MAX_VERTEX_PROGRAM_ADDRESS_REGS;
-
-      prog->MaxGeometryTextureImageUnits = MAX_GEOMETRY_TEXTURE_IMAGE_UNITS;
-      prog->MaxGeometryVaryingComponents = MAX_GEOMETRY_VARYING_COMPONENTS;
-      prog->MaxVertexVaryingComponents = MAX_VERTEX_VARYING_COMPONENTS;
-      prog->MaxGeometryUniformComponents = MAX_GEOMETRY_UNIFORM_COMPONENTS;
-      prog->MaxGeometryOutputVertices = MAX_GEOMETRY_OUTPUT_VERTICES;
-      prog->MaxGeometryTotalOutputComponents = MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS;
+      prog->MaxUniformComponents = MAX_GEOMETRY_UNIFORM_COMPONENTS;
       break;
    default:
       assert(0 && "Bad program type in init_program_limits()");
@@ -618,6 +613,13 @@ _mesa_init_constants(struct gl_context *ctx)
    ctx->Const.MaxVertexTextureImageUnits = MAX_VERTEX_TEXTURE_IMAGE_UNITS;
    ctx->Const.MaxCombinedTextureImageUnits = MAX_COMBINED_TEXTURE_IMAGE_UNITS;
    ctx->Const.MaxVarying = MAX_VARYING;
+#endif
+#if FEATURE_ARB_geometry_shader4
+   ctx->Const.MaxGeometryTextureImageUnits = MAX_GEOMETRY_TEXTURE_IMAGE_UNITS;
+   ctx->Const.MaxVertexVaryingComponents = MAX_VERTEX_VARYING_COMPONENTS;
+   ctx->Const.MaxGeometryVaryingComponents = MAX_GEOMETRY_VARYING_COMPONENTS;
+   ctx->Const.MaxGeometryOutputVertices = MAX_GEOMETRY_OUTPUT_VERTICES;
+   ctx->Const.MaxGeometryTotalOutputComponents = MAX_GEOMETRY_TOTAL_OUTPUT_COMPONENTS;
 #endif
 
    /* Shading language version */

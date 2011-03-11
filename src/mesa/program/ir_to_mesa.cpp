@@ -2460,7 +2460,7 @@ check_resources(const struct gl_context *ctx,
       break;
    case MESA_GEOMETRY_PROGRAM:
       if (_mesa_bitcount(prog->SamplersUsed) >
-          ctx->Const.GeometryProgram.MaxGeometryTextureImageUnits) {
+          ctx->Const.MaxGeometryTextureImageUnits) {
          fail_link(shader_program, "Too many geometry shader texture samplers");
       }
       if (prog->Parameters->NumParameters >

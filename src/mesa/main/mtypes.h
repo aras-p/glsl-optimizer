@@ -2563,7 +2563,7 @@ struct gl_precision
 
 
 /**
- * Limits for vertex and fragment programs/shaders.
+ * Limits for vertex, geometry and fragment programs/shaders.
  */
 struct gl_program_constants
 {
@@ -2589,14 +2589,7 @@ struct gl_program_constants
    GLuint MaxNativeAddressRegs;
    GLuint MaxNativeParameters;
    /* For shaders */
-   GLuint MaxUniformComponents;
-   /* GL_ARB_geometry_shader4 */
-   GLuint MaxGeometryTextureImageUnits;
-   GLuint MaxGeometryVaryingComponents;
-   GLuint MaxVertexVaryingComponents;
-   GLuint MaxGeometryUniformComponents;
-   GLuint MaxGeometryOutputVertices;
-   GLuint MaxGeometryTotalOutputComponents;
+   GLuint MaxUniformComponents;  /**< Usually == MaxParameters * 4 */
    /* ES 2.0 and GL_ARB_ES2_compatibility */
    struct gl_precision LowFloat, MediumFloat, HighFloat;
    struct gl_precision LowInt, MediumInt, HighInt;
@@ -2619,6 +2612,7 @@ struct gl_constants
    GLuint MaxTextureImageUnits;
    GLuint MaxVertexTextureImageUnits;
    GLuint MaxCombinedTextureImageUnits;
+   GLuint MaxGeometryTextureImageUnits;
    GLuint MaxTextureUnits;           /**< = MIN(CoordUnits, ImageUnits) */
    GLfloat MaxTextureMaxAnisotropy;  /**< GL_EXT_texture_filter_anisotropic */
    GLfloat MaxTextureLodBias;        /**< GL_EXT_texture_lod_bias */
@@ -2658,7 +2652,14 @@ struct gl_constants
    GLuint MaxRenderbufferSize;   /**< GL_EXT_framebuffer_object */
    GLuint MaxSamples;            /**< GL_ARB_framebuffer_object */
 
-   GLuint MaxVarying;  /**< Number of float[4] varying parameters */
+   /** Number of varying vectors between vertex and fragment shaders */
+   GLuint MaxVarying;
+   GLuint MaxVertexVaryingComponents;   /**< Between vert and geom shader */
+   GLuint MaxGeometryVaryingComponents; /**< Between geom and frag shader */
+
+   /** GL_ARB_geometry_shader4 */
+   GLuint MaxGeometryOutputVertices;
+   GLuint MaxGeometryTotalOutputComponents;
 
    GLuint GLSLVersion;  /**< GLSL version supported (ex: 120 = 1.20) */
 
