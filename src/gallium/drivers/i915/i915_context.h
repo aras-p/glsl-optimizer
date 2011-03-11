@@ -188,7 +188,7 @@ struct i915_rasterizer_state {
    unsigned LIS7;
    unsigned sc[1];
 
-   const struct pipe_rasterizer_state *templ;
+   struct pipe_rasterizer_state templ;
 
    union { float f; unsigned u; } ds[2];
 };

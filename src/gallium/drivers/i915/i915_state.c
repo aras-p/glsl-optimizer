@@ -688,7 +688,7 @@ i915_create_rasterizer_state(struct pipe_context *pipe,
 {
    struct i915_rasterizer_state *cso = CALLOC_STRUCT( i915_rasterizer_state );
 
-   cso->templ = rasterizer;
+   cso->templ = *rasterizer;
    cso->color_interp = rasterizer->flatshade ? INTERP_CONSTANT : INTERP_LINEAR;
    cso->light_twoside = rasterizer->light_twoside;
    cso->ds[0].u = _3DSTATE_DEPTH_OFFSET_SCALE;
@@ -759,7 +759,7 @@ static void i915_bind_rasterizer_state( struct pipe_context *pipe,
 
    /* pass-through to draw module */
    draw_set_rasterizer_state(i915->draw,
-                           (i915->rasterizer ? i915->rasterizer->templ : NULL),
+                           (i915->rasterizer ? &(i915->rasterizer->templ) : NULL),
                            raster);
 
    i915->dirty |= I915_NEW_RASTERIZER;
