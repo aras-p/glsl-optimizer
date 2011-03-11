@@ -120,6 +120,14 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       do_lower_texture_projection(shader->ir);
       do_vec_index_to_cond_assign(shader->ir);
       brw_do_cubemap_normalize(shader->ir);
+      lower_noise(shader->ir);
+      lower_quadop_vector(shader->ir, false);
+      lower_variable_index_to_cond_assign(shader->ir,
+					  GL_TRUE, /* input */
+					  GL_TRUE, /* output */
+					  GL_TRUE, /* temp */
+					  GL_TRUE /* uniform */
+					  );
 
       do {
 	 progress = false;
@@ -134,16 +142,6 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 				   ) || progress;
 
 	 progress = do_common_optimization(shader->ir, true, 32) || progress;
-
-	 progress = lower_noise(shader->ir) || progress;
-	 progress =
-	    lower_variable_index_to_cond_assign(shader->ir,
-						GL_TRUE, /* input */
-						GL_TRUE, /* output */
-						GL_TRUE, /* temp */
-						GL_TRUE /* uniform */
-						) || progress;
-	 progress = lower_quadop_vector(shader->ir, false) || progress;
       } while (progress);
 
       validate_ir_tree(shader->ir);
