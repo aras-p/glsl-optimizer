@@ -26,7 +26,7 @@ struct nvc0_screen {
    struct nouveau_bo *uniforms;
    struct nouveau_bo *tls;
    struct nouveau_bo *txc; /* TIC (offset 0) and TSC (65536) */
-   struct nouveau_bo *mp_stack_bo;
+   struct nouveau_bo *vfetch_cache;
 
    uint64_t tls_size;
 
