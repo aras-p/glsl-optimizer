@@ -403,7 +403,7 @@ error1:
       $self->pipe->flush($self->pipe, flags | PIPE_FLUSH_RENDER_CACHE, &fence);
       if(fence) {
          /* TODO: allow asynchronous operation */ 
-         $self->pipe->screen->fence_finish( $self->pipe->screen, fence, 0, PIPE_TIMEOUT_INFINITE );
+         $self->pipe->screen->fence_finish( $self->pipe->screen, fence, PIPE_TIMEOUT_INFINITE );
          $self->pipe->screen->fence_reference( $self->pipe->screen, &fence, NULL );
       }
    }
