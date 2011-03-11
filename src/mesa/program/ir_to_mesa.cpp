@@ -2454,7 +2454,7 @@ check_resources(const struct gl_context *ctx,
          fail_link(shader_program, "Too many vertex shader texture samplers");
       }
       if (prog->Parameters->NumParameters >
-          ctx->Const.VertexProgram.MaxParameters) {
+          ctx->Const.VertexProgram.MaxUniformComponents / 4) {
          fail_link(shader_program, "Too many vertex shader constants");
       }
       break;
@@ -2464,7 +2464,7 @@ check_resources(const struct gl_context *ctx,
          fail_link(shader_program, "Too many geometry shader texture samplers");
       }
       if (prog->Parameters->NumParameters >
-          ctx->Const.GeometryProgram.MaxParameters) {
+          ctx->Const.GeometryProgram.MaxUniformComponents / 4) {
          fail_link(shader_program, "Too many geometry shader constants");
       }
       break;
@@ -2474,7 +2474,7 @@ check_resources(const struct gl_context *ctx,
          fail_link(shader_program, "Too many fragment shader texture samplers");
       }
       if (prog->Parameters->NumParameters >
-          ctx->Const.FragmentProgram.MaxParameters) {
+          ctx->Const.FragmentProgram.MaxUniformComponents / 4) {
          fail_link(shader_program, "Too many fragment shader constants");
       }
       break;
