@@ -102,7 +102,8 @@ SVGA3D_SurfaceDMA(struct svga_winsys_context *swc,
                   struct svga_transfer *st,
                   SVGA3dTransferType transfer,
                   const SVGA3dCopyBox *boxes,
-                  uint32 numBoxes);
+                  uint32 numBoxes,
+                  SVGA3dSurfaceDMAFlags flags);
 
 enum pipe_error
 SVGA3D_BufferDMA(struct svga_winsys_context *swc,
