@@ -453,7 +453,7 @@ static void r700SetBlendState(struct gl_context * ctx)
 
 	R600_STATECHANGE(context, blnd);
 
-	if (RGBA_LOGICOP_ENABLED(ctx) || !ctx->Color.BlendEnabled) {
+	if (_mesa_rgba_logicop_enabled(ctx) || !ctx->Color.BlendEnabled) {
 		SETfield(blend_reg,
 			 BLEND_ONE, COLOR_SRCBLEND_shift, COLOR_SRCBLEND_mask);
 		SETfield(blend_reg,
@@ -644,7 +644,7 @@ static void r700SetLogicOpState(struct gl_context *ctx)
 
 	R600_STATECHANGE(context, blnd);
 
-	if (RGBA_LOGICOP_ENABLED(ctx))
+	if (_mesa_rgba_logicop_enabled(ctx))
 		SETfield(r700->CB_COLOR_CONTROL.u32All,
 			 translate_logicop(ctx->Color.LogicOp), ROP3_shift, ROP3_mask);
 	else
@@ -657,7 +657,7 @@ static void r700SetLogicOpState(struct gl_context *ctx)
  */
 static void r700LogicOpcode(struct gl_context *ctx, GLenum logicop)
 {
-	if (RGBA_LOGICOP_ENABLED(ctx))
+	if (_mesa_rgba_logicop_enabled(ctx))
 		r700SetLogicOpState(ctx);
 }
 

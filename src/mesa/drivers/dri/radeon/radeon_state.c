@@ -40,6 +40,7 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "main/context.h"
 #include "main/framebuffer.h"
 #include "main/simple_list.h"
+#include "main/state.h"
 
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
@@ -661,7 +662,7 @@ static void radeonUpdateSpecular( struct gl_context *ctx )
 
    TCL_FALLBACK( ctx, RADEON_TCL_FALLBACK_FOGCOORDSPEC, flag);
 
-   if (NEED_SECONDARY_COLOR(ctx)) {
+   if (_mesa_need_secondary_color(ctx)) {
       assert( (p & RADEON_SPECULAR_ENABLE) != 0 );
    } else {
       assert( (p & RADEON_SPECULAR_ENABLE) == 0 );

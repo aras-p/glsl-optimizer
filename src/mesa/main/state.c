@@ -53,7 +53,7 @@
 static void
 update_separate_specular(struct gl_context *ctx)
 {
-   if (NEED_SECONDARY_COLOR(ctx))
+   if (_mesa_need_secondary_color(ctx))
       ctx->_TriangleCaps |= DD_SEPARATE_SPECULAR;
    else
       ctx->_TriangleCaps &= ~DD_SEPARATE_SPECULAR;
@@ -442,7 +442,7 @@ update_color(struct gl_context *ctx)
    /* This is needed to support 1.1's RGB logic ops AND
     * 1.0's blending logicops.
     */
-   ctx->Color._LogicOpEnabled = RGBA_LOGICOP_ENABLED(ctx);
+   ctx->Color._LogicOpEnabled = _mesa_rgba_logicop_enabled(ctx);
 }
 
 
@@ -524,7 +524,7 @@ update_tricaps(struct gl_context *ctx, GLbitfield new_state)
       ctx->_TriangleCaps |= DD_TRI_LIGHT_TWOSIDE;
    if (ctx->Light.ShadeModel == GL_FLAT)
       ctx->_TriangleCaps |= DD_FLATSHADE;
-   if (NEED_SECONDARY_COLOR(ctx))
+   if (_mesa_need_secondary_color(ctx))
       ctx->_TriangleCaps |= DD_SEPARATE_SPECULAR;
 
    /*

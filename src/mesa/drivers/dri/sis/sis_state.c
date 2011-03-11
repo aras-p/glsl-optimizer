@@ -38,6 +38,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "main/context.h"
 #include "main/macros.h"
+#include "main/state.h"
 #include "swrast/swrast.h"
 #include "vbo/vbo.h"
 #include "tnl/tnl.h"
@@ -407,7 +408,7 @@ static void sisUpdateSpecular(struct gl_context *ctx)
    sisContextPtr smesa = SIS_CONTEXT(ctx);
    __GLSiSHardware *current = &smesa->current;
 
-   if (NEED_SECONDARY_COLOR(ctx))
+   if (_mesa_need_secondary_color(ctx))
       current->hwCapEnable |= MASK_SpecularEnable;
    else
       current->hwCapEnable &= ~MASK_SpecularEnable;

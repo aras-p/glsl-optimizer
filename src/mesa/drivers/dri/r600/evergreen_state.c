@@ -342,7 +342,7 @@ static void evergreenSetBlendState(struct gl_context * ctx) //diff : CB_COLOR_CO
 
 	EVERGREEN_STATECHANGE(context, cb);
 
-	if (RGBA_LOGICOP_ENABLED(ctx) || !ctx->Color.BlendEnabled) {
+	if (_mesa_rgba_logicop_enabled(ctx) || !ctx->Color.BlendEnabled) {
 		SETfield(blend_reg,
 			 BLEND_ONE, COLOR_SRCBLEND_shift, COLOR_SRCBLEND_mask);
 		SETfield(blend_reg,
@@ -520,7 +520,7 @@ static void evergreenSetLogicOpState(struct gl_context *ctx) //diff : CB_COLOR_C
 
 	EVERGREEN_STATECHANGE(context, cb);
 
-	if (RGBA_LOGICOP_ENABLED(ctx))
+	if (_mesa_rgba_logicop_enabled(ctx))
 		SETfield(evergreen->CB_COLOR_CONTROL.u32All,
 			 evergreen_translate_logicop(ctx->Color.LogicOp), 
              EG_CB_COLOR_CONTROL__ROP3_shift, 
@@ -1148,7 +1148,7 @@ static void evergreenShadeModel(struct gl_context * ctx, GLenum mode) //same
 
 static void evergreenLogicOpcode(struct gl_context *ctx, GLenum logicop) //diff
 {
-	if (RGBA_LOGICOP_ENABLED(ctx))
+	if (_mesa_rgba_logicop_enabled(ctx))
 		evergreenSetLogicOpState(ctx);
 }
 

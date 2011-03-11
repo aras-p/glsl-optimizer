@@ -35,6 +35,7 @@
 #include "main/imports.h"
 #include "main/macros.h"
 #include "main/mtypes.h"
+#include "main/state.h"
 #include "program/prog_instruction.h"
 
 #include "s_aatriangle.h"
@@ -1032,7 +1033,7 @@ _swrast_choose_triangle( struct gl_context *ctx )
       if (ctx->Texture._EnabledCoordUnits ||
           ctx->FragmentProgram._Current ||
           ctx->ATIFragmentShader._Enabled ||
-          NEED_SECONDARY_COLOR(ctx) ||
+          _mesa_need_secondary_color(ctx) ||
           swrast->_FogEnabled) {
          /* Ugh, we do a _lot_ of tests to pick the best textured tri func */
          const struct gl_texture_object *texObj2D;
@@ -1113,7 +1114,7 @@ _swrast_choose_triangle( struct gl_context *ctx )
       }
       else {
          ASSERT(!swrast->_FogEnabled);
-         ASSERT(!NEED_SECONDARY_COLOR(ctx));
+         ASSERT(!_mesa_need_secondary_color(ctx));
 	 if (ctx->Light.ShadeModel==GL_SMOOTH) {
 	    /* smooth shaded, no texturing, stippled or some raster ops */
 #if CHAN_BITS != 8

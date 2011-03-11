@@ -30,6 +30,7 @@
 #include "main/colormac.h"
 #include "main/dd.h"
 #include "main/mm.h"
+#include "main/state.h"
 
 #include "mgacontext.h"
 #include "mgadd.h"
@@ -114,7 +115,7 @@ static void mgaDDAlphaFunc(struct gl_context *ctx, GLenum func, GLfloat ref)
 static void updateBlendLogicOp(struct gl_context *ctx)
 {
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
-   GLboolean logicOp = RGBA_LOGICOP_ENABLED(ctx);
+   GLboolean logicOp = _mesa_rgba_logicop_enabled(ctx);
 
    MGA_STATECHANGE( mmesa, MGA_UPLOAD_CONTEXT );
 
@@ -197,7 +198,7 @@ static void mgaDDBlendFuncSeparate( struct gl_context *ctx, GLenum sfactorRGB,
    mmesa->hw.blend_func = (src | dst);
 
    FALLBACK( ctx, MGA_FALLBACK_BLEND,
-             ctx->Color.BlendEnabled && !RGBA_LOGICOP_ENABLED(ctx) &&
+             ctx->Color.BlendEnabled && !_mesa_rgba_logicop_enabled(ctx) &&
              mmesa->hw.blend_func == (AC_src_src_alpha_sat | AC_dst_zero) );
 }
 
@@ -483,7 +484,7 @@ static void updateSpecularLighting( struct gl_context *ctx )
    mgaContextPtr mmesa = MGA_CONTEXT(ctx);
    unsigned int specen;
 
-   specen = NEED_SECONDARY_COLOR(ctx) ? TMC_specen_enable : 0;
+   specen = _mesa_need_secondary_color(ctx) ? TMC_specen_enable : 0;
 
    if ( specen != mmesa->hw.specen ) {
       mmesa->hw.specen = specen;
@@ -962,7 +963,7 @@ void mgaEmitHwStateLocked( mgaContextPtr mmesa )
 	  ? mmesa->hw.zmode : (DC_zmode_nozcmp | DC_atype_i);
 
       mmesa->setup.dwgctl &= DC_bop_MASK;
-      mmesa->setup.dwgctl |= RGBA_LOGICOP_ENABLED(ctx)
+      mmesa->setup.dwgctl |= _mesa_rgba_logicop_enabled(ctx)
 	  ? mmesa->hw.rop : mgarop_NoBLK[ GL_COPY & 0x0f ];
 
       mmesa->setup.alphactrl &= AC_src_MASK & AC_dst_MASK & AC_atmode_MASK

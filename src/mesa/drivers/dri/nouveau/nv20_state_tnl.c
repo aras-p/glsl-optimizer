@@ -178,7 +178,7 @@ nv20_emit_light_model(struct gl_context *ctx, int emit)
 	OUT_RING(chan, ((m->LocalViewer ?
 			 NV20_3D_LIGHT_MODEL_VIEWER_LOCAL :
 			 NV20_3D_LIGHT_MODEL_VIEWER_NONLOCAL) |
-			(NEED_SECONDARY_COLOR(ctx) ?
+			(_mesa_need_secondary_color(ctx) ?
 			 NV20_3D_LIGHT_MODEL_SEPARATE_SPECULAR :
 			 0)));
 

@@ -214,7 +214,7 @@ static void r300SetBlendState(struct gl_context * ctx)
 	    (R300_BLEND_GL_ZERO << R300_DST_BLEND_SHIFT);
 	int eqnA = R300_COMB_FCN_ADD_CLAMP;
 
-	if (RGBA_LOGICOP_ENABLED(ctx) || !ctx->Color.BlendEnabled) {
+	if (_mesa_rgba_logicop_enabled(ctx) || !ctx->Color.BlendEnabled) {
 		r300SetBlendCntl(r300, func, eqn, 0, func, eqn);
 		return;
 	}
@@ -335,7 +335,7 @@ static void r300SetLogicOpState(struct gl_context *ctx)
 {
 	r300ContextPtr r300 = R300_CONTEXT(ctx);
 	R300_STATECHANGE(r300, rop);
-	if (RGBA_LOGICOP_ENABLED(ctx)) {
+	if (_mesa_rgba_logicop_enabled(ctx)) {
 		r300->hw.rop.cmd[1] = R300_RB3D_ROPCNTL_ROP_ENABLE |
 			translate_logicop(ctx->Color.LogicOp);
 	} else {
@@ -349,7 +349,7 @@ static void r300SetLogicOpState(struct gl_context *ctx)
  */
 static void r300LogicOpcode(struct gl_context *ctx, GLenum logicop)
 {
-	if (RGBA_LOGICOP_ENABLED(ctx))
+	if (_mesa_rgba_logicop_enabled(ctx))
 		r300SetLogicOpState(ctx);
 }
 

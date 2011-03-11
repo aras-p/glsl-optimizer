@@ -46,4 +46,43 @@ extern void
 _mesa_set_vp_override(struct gl_context *ctx, GLboolean flag);
 
 
+/**
+ * Is the secondary color needed?
+ */
+static INLINE GLboolean
+_mesa_need_secondary_color(const struct gl_context *ctx)
+{
+   if (ctx->Light.Enabled &&
+       ctx->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)
+       return GL_TRUE;
+
+   if (ctx->Fog.ColorSumEnabled)
+      return GL_TRUE;
+
+   if (ctx->VertexProgram._Current &&
+       (ctx->VertexProgram._Current != ctx->VertexProgram._TnlProgram) &&
+       (ctx->VertexProgram._Current->Base.InputsRead & VERT_BIT_COLOR1))
+      return GL_TRUE;
+
+   if (ctx->FragmentProgram._Current &&
+       (ctx->FragmentProgram._Current != ctx->FragmentProgram._TexEnvProgram) &&
+       (ctx->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_COL1))
+      return GL_TRUE;
+
+   return GL_FALSE;
+}
+
+
+/**
+ * Is RGBA LogicOp enabled?
+ */
+static INLINE GLboolean
+_mesa_rgba_logicop_enabled(const struct gl_context *ctx)
+{
+   return ctx->Color.ColorLogicOpEnabled ||
+      (ctx->Color.BlendEnabled && ctx->Color.Blend[0].EquationRGB == GL_LOGIC_OP);
+}
+
+
+
 #endif
