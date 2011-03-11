@@ -105,11 +105,16 @@ if env['msvc']:
 if env['crosscompile'] and env['platform'] != 'embedded':
     Import('builtin_glsl_function')
 else:
+    # Copy these files to avoid generation object files into src/mesa/program
+    env.Prepend(CPPPATH = ['#src/mesa/program'])
+    env.Command('hash_table.c', '#src/mesa/program/hash_table.c', Copy('$TARGET', '$SOURCE'))
+    env.Command('symbol_table.c', '#src/mesa/program/symbol_table.c', Copy('$TARGET', '$SOURCE'))
+
     main_obj = env.StaticObject('main.cpp')
 
     mesa_objs = env.StaticObject([
-        '#src/mesa/program/hash_table.c',
-        '#src/mesa/program/symbol_table.c',
+        'hash_table.c',
+        'symbol_table.c',
     ])
 
     builtin_compiler = env.Program(
