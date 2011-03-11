@@ -47,6 +47,7 @@
 #include "r600_shader.h"
 #include "r600_pipe.h"
 #include "eg_state_inlines.h"
+#include "main/state.h"
 
 static void evergreen_set_blend_color(struct pipe_context *ctx,
 					const struct pipe_blend_color *state)

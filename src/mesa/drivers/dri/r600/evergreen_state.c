@@ -32,6 +32,7 @@
 #include "main/context.h"
 #include "main/dd.h"
 #include "main/simple_list.h"
+#include "main/state.h"
 
 #include "tnl/tnl.h"
 #include "tnl/t_pipeline.h"
