@@ -50,6 +50,7 @@ public:
    ir_dead_functions_visitor()
    {
       this->mem_ctx = ralloc_context(NULL);
+      this->seen_another_function_signature = false;
    }
 
    ~ir_dead_functions_visitor()
@@ -63,6 +64,8 @@ public:
    signature_entry *get_signature_entry(ir_function_signature *var);
 
    bool (*predicate)(ir_instruction *ir);
+
+   bool seen_another_function_signature;
 
    /* List of signature_entry */
    exec_list signature_list;
@@ -94,7 +97,13 @@ ir_dead_functions_visitor::visit_enter(ir_function_signature *ir)
       entry->used = true;
    }
 
-
+   /* If this is the first signature to look at, no need to descend to see
+    * if it has calls to another function signature.
+    */
+   if (!this->seen_another_function_signature) {
+      this->seen_another_function_signature = true;
+      return visit_continue_with_parent;
+   }
 
    return visit_continue;
 }
