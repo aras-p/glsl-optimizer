@@ -1236,6 +1236,7 @@ _mesa_DeleteObjectARB(GLhandleARB obj)
 
    if (obj) {
       GET_CURRENT_CONTEXT(ctx);
+      FLUSH_VERTICES(ctx, 0);
       if (is_program(ctx, obj)) {
          delete_shader_program(ctx, obj);
       }
@@ -1254,6 +1255,7 @@ _mesa_DeleteProgram(GLuint name)
 {
    if (name) {
       GET_CURRENT_CONTEXT(ctx);
+      FLUSH_VERTICES(ctx, 0);
       delete_shader_program(ctx, name);
    }
 }
@@ -1264,6 +1266,7 @@ _mesa_DeleteShader(GLuint name)
 {
    if (name) {
       GET_CURRENT_CONTEXT(ctx);
+      FLUSH_VERTICES(ctx, 0);
       delete_shader(ctx, name);
    }
 }

@@ -749,6 +749,7 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
    GET_CURRENT_CONTEXT(ctx);
    GLsizei i;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   FLUSH_VERTICES(ctx, 0);
 
    if (n < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glDeleteBuffersARB(n)");

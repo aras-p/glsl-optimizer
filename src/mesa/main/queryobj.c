@@ -218,6 +218,7 @@ _mesa_DeleteQueriesARB(GLsizei n, const GLuint *ids)
    GLint i;
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   FLUSH_VERTICES(ctx, 0);
 
    if (MESA_VERBOSE & VERBOSE_API)
       _mesa_debug(ctx, "glDeleeteQueries(%d)\n", n);
