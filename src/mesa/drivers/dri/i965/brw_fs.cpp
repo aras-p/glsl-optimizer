@@ -2140,6 +2140,17 @@ fs_visitor::emit_fb_writes()
    }
 
    if (c->key.nr_color_regions == 0) {
+      if (c->key.alpha_test && (this->frag_color || this->frag_data)) {
+	 /* If the alpha test is enabled but there's no color buffer,
+	  * we still need to send alpha out the pipeline to our null
+	  * renderbuffer.
+	  */
+	 color.reg_offset += 3;
+	 emit(fs_inst(BRW_OPCODE_MOV,
+		      fs_reg(MRF, color_mrf + 3),
+		      color));
+      }
+
       fs_inst *inst = emit(fs_inst(FS_OPCODE_FB_WRITE,
 				   reg_undef, reg_undef));
       inst->base_mrf = 0;
