@@ -277,21 +277,17 @@ update_program(struct gl_context *ctx)
                                fsProg->FragmentProgram);
    }
    else if (ctx->FragmentProgram._Enabled) {
-      /* use user-defined fragment program */
+      /* use user-defined vertex program */
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
                                ctx->FragmentProgram.Current);
    }
    else if (ctx->FragmentProgram._MaintainTexEnvProgram) {
       /* Use fragment program generated from fixed-function state.
        */
-      struct gl_shader_program *f = _mesa_get_fixed_func_fragment_program(ctx);
-#if 0
-      _mesa_reference_shader_program(ctx,
-				     &ctx->Shader.CurrentFragmentProgram, f);
-#endif
-
       _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._Current,
-                               f->FragmentProgram);
+                               _mesa_get_fixed_func_fragment_program(ctx));
+      _mesa_reference_fragprog(ctx, &ctx->FragmentProgram._TexEnvProgram,
+                               ctx->FragmentProgram._Current);
    }
    else {
       /* no fragment program */
