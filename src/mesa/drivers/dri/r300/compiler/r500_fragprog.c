@@ -77,9 +77,6 @@ static int r500_swizzle_is_native(rc_opcode opcode, struct rc_src_register reg)
 		if (opcode == RC_OPCODE_KIL && (reg.Swizzle != RC_SWIZZLE_XYZW || reg.Negate != RC_MASK_NONE))
 			return 0;
 
-		if (reg.Negate)
-			reg.Negate ^= RC_MASK_XYZW;
-
 		for(i = 0; i < 4; ++i) {
 			unsigned int swz = GET_SWZ(reg.Swizzle, i);
 			if (swz == RC_SWIZZLE_UNUSED) {
