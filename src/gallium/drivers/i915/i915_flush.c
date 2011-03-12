@@ -45,28 +45,6 @@ static void i915_flush_pipe( struct pipe_context *pipe,
 
    draw_flush(i915->draw);
 
-#if 0
-   /* Do we need to emit an MI_FLUSH command to flush the hardware
-    * caches?
-    */
-   /* XXX These flags are now implicit. All of them. */
-   if (flags & (PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_TEXTURE_CACHE)) {
-      unsigned flush = MI_FLUSH;
-      
-      if (!(flags & PIPE_FLUSH_RENDER_CACHE))
-	 flush |= INHIBIT_FLUSH_RENDER_CACHE;
-
-      if (flags & PIPE_FLUSH_TEXTURE_CACHE)
-	 flush |= FLUSH_MAP_CACHE;
-
-      if (!BEGIN_BATCH(1)) {
-	 FLUSH_BATCH(NULL);
-	 assert(BEGIN_BATCH(1));
-      }
-      OUT_BATCH( flush );
-   }
-#endif
-
    if (i915->batch->map == i915->batch->ptr) {
       return;
    }

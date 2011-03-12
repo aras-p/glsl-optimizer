@@ -151,6 +151,10 @@ i915_create_context(struct pipe_screen *screen, void *priv)
    util_slab_create(&i915->transfer_pool, sizeof(struct pipe_transfer),
                     16, UTIL_SLAB_SINGLETHREADED);
 
+   /* Batch stream debugging is a bit hacked up at the moment:
+    */
+   i915->batch = i915->iws->batchbuffer_create(i915->iws);
+
    /*
     * Create drawing context and plug our rendering stage into it.
     */
@@ -182,10 +186,6 @@ i915_create_context(struct pipe_screen *screen, void *priv)
    i915->immediate_dirty = ~0;
    i915->dynamic_dirty = ~0;
    i915->flush_dirty = 0;
-
-   /* Batch stream debugging is a bit hacked up at the moment:
-    */
-   i915->batch = i915->iws->batchbuffer_create(i915->iws);
 
    return &i915->base;
 }

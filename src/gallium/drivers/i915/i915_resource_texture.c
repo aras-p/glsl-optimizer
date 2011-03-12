@@ -759,6 +759,9 @@ i915_texture_transfer_map(struct pipe_context *pipe,
       assert(box->z == 0);
    offset = i915_texture_offset(tex, transfer->level, box->z);
 
+   /* TODO this is a sledgehammer */
+   pipe->flush(pipe, NULL);
+
    map = iws->buffer_map(iws, tex->buffer,
                          (transfer->usage & PIPE_TRANSFER_WRITE) ? TRUE : FALSE);
    if (map == NULL)
