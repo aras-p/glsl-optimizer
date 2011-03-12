@@ -105,12 +105,12 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    switch (cap) {
    /* Supported features (boolean caps). */
    case PIPE_CAP_ANISOTROPIC_FILTER:
+   case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
    case PIPE_CAP_NPOT_TEXTURES:
    case PIPE_CAP_PRIMITIVE_RESTART: /* draw module */
    case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
    case PIPE_CAP_TEXTURE_SHADOW_MAP:
    case PIPE_CAP_TWO_SIDED_STENCIL:
-   case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
       return 1;
 
    /* Features that should be supported (boolean caps). */
