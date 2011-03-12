@@ -785,6 +785,7 @@ void util_blitter_copy_region(struct blitter_context *blitter,
    /* Get surface. */
    memset(&surf_templ, 0, sizeof(surf_templ));
    u_surface_default_template(&surf_templ, dst, bind);
+   surf_templ.format = util_format_linear(dst->format);
    surf_templ.u.tex.level = dstlevel;
    surf_templ.u.tex.first_layer = dstz;
    surf_templ.u.tex.last_layer = dstz;
@@ -823,7 +824,7 @@ void util_blitter_copy_region(struct blitter_context *blitter,
    normalized = src->target != PIPE_TEXTURE_RECT;
 
    /* Initialize sampler view. */
-   u_sampler_view_default_template(&viewTempl, src, src->format);
+   u_sampler_view_default_template(&viewTempl, src, util_format_linear(src->format));
    view = pipe->create_sampler_view(pipe, src, &viewTempl);
 
    /* Set rasterizer state, shaders, and textures. */

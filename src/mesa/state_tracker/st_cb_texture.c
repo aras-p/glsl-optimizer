@@ -1530,7 +1530,7 @@ st_copy_texsubimage(struct gl_context *ctx,
          GLint srcY0, srcY1;
          struct pipe_surface surf_tmpl;
          memset(&surf_tmpl, 0, sizeof(surf_tmpl));
-         surf_tmpl.format = stImage->pt->format;
+         surf_tmpl.format = util_format_linear(stImage->pt->format);
          surf_tmpl.usage = PIPE_BIND_RENDER_TARGET;
          surf_tmpl.u.tex.level = stImage->level;
          surf_tmpl.u.tex.first_layer = stImage->face + destZ;
