@@ -270,7 +270,7 @@ dri2_allocate_buffer(__DRIscreen *sPriv,
    struct pipe_resource templ;
    enum st_attachment_type statt;
    enum pipe_format pf;
-   unsigned bind;
+   unsigned bind = 0;
    struct winsys_handle whandle;
 
    switch (attachment) {
