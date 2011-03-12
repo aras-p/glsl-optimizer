@@ -149,6 +149,8 @@ static void get_external_state(
     unsigned i;
     unsigned char *swizzle;
 
+    state->frag_clamp = 0;
+
     for (i = 0; i < texstate->sampler_state_count; i++) {
         struct r300_sampler_state *s = texstate->sampler_states[i];
         struct r300_sampler_view *v = texstate->sampler_views[i];

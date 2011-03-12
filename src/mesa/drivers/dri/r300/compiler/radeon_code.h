@@ -173,6 +173,8 @@ struct r300_fragment_program_external_state {
 		 * RC_STATE_R300_TEXSCALE_FACTOR. */
 		unsigned clamp_and_scale_before_fetch : 1;
 	} unit[16];
+
+	unsigned frag_clamp:1;
 };
 
 

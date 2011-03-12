@@ -195,6 +195,8 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
     boolean clamp = TRUE;
     CB_LOCALS;
 
+    blend->state = *state;
+
     if (state->rt[0].blend_enable)
     {
         unsigned eqRGB = state->rt[0].rgb_func;
@@ -377,6 +379,10 @@ static void r300_bind_blend_state(struct pipe_context* pipe,
     struct r300_context* r300 = r300_context(pipe);
 
     UPDATE_STATE(state, r300->blend_state);
+
+    if (r300->fs.state && r300_pick_fragment_shader(r300)) {
+        r300_mark_fs_code_dirty(r300);
+    }
 }
 
 /* Free blend state. */

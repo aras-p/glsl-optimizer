@@ -65,6 +65,8 @@ struct r300_aa_state {
 };
 
 struct r300_blend_state {
+    struct pipe_blend_state state;
+
     uint32_t cb[8];
     uint32_t cb_no_readwrite[8];
 };

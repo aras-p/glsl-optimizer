@@ -78,12 +78,32 @@ static void rc_rewrite_depth_out(struct radeon_compiler *cc, void *user)
 	}
 }
 
+static int radeon_saturate_output(
+		struct radeon_compiler * c,
+		struct rc_instruction * inst,
+		void* data)
+{
+	const struct rc_opcode_info *info = rc_get_opcode_info(inst->U.I.Opcode);
+
+	if (!info->HasDstReg || inst->U.I.DstReg.File != RC_FILE_OUTPUT)
+		return 0;
+
+	inst->U.I.SaturateMode = RC_SATURATE_ZERO_ONE;
+	return 1;
+}
+
 void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 {
 	int is_r500 = c->Base.is_r500;
 	int opt = !c->Base.disable_optimizations;
+	int sat_out = c->state.frag_clamp;
 
 	/* Lists of instruction transformations. */
+	struct radeon_program_transformation saturate_output[] = {
+		{ &radeon_saturate_output, c },
+		{ 0, 0 }
+	};
+
 	struct radeon_program_transformation rewrite_tex[] = {
 		{ &radeonTransformTEX, c },
 		{ 0, 0 }
@@ -113,6 +133,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		{"unroll loops",		1, is_r500,	rc_unroll_loops,		NULL},
 		{"transform loops",		1, !is_r500,	rc_transform_loops,		NULL},
 		{"emulate branches",		1, !is_r500,	rc_emulate_branches,		NULL},
+		{"saturate output writes",	1, sat_out,	rc_local_transform,		saturate_output},
 		{"transform TEX",		1, 1,		rc_local_transform,		rewrite_tex},
 		{"native rewrite",		1, is_r500,	rc_local_transform,		native_rewrite_r500},
 		{"native rewrite",		1, !is_r500,	rc_local_transform,		native_rewrite_r300},
