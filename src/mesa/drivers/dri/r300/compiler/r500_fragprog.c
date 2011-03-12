@@ -103,9 +103,6 @@ static int r500_swizzle_is_native(rc_opcode opcode, struct rc_src_register reg)
 		return 0;
 	} else {
 		/* ALU instructions support almost everything */
-		if (reg.Abs)
-			return 1;
-
 		relevant = 0;
 		for(i = 0; i < 3; ++i) {
 			unsigned int swz = GET_SWZ(reg.Swizzle, i);
