@@ -529,7 +529,7 @@ nvc0_fp_gen_header(struct nvc0_program *fp, struct nvc0_translation_info *ti)
    }
 
    for (i = 0; i <= ti->scan.file_max[TGSI_FILE_INPUT]; ++i) {
-      m = ti->interp_mode[i];
+      m = ti->interp_mode[i] & 3;
       for (c = 0; c < 4; ++c) {
          if (!ti->input_access[i][c])
             continue;
