@@ -120,7 +120,7 @@ brw_wm_non_glsl_emit(struct brw_context *brw, struct brw_wm_compile *c)
    brw_wm_emit(c);
 }
 
-static void
+void
 brw_wm_payload_setup(struct brw_context *brw,
 		     struct brw_wm_compile *c)
 {
@@ -225,18 +225,13 @@ static void do_wm_prog( struct brw_context *brw,
 
    brw_init_compile(brw, &c->func);
 
-   brw_wm_payload_setup(brw, c);
-
    if (!brw_wm_fs_emit(brw, c)) {
-      /*
-       * Shader which use GLSL features such as flow control are handled
-       * differently from "simple" shaders.
-       */
+      /* Fallback for fixed function and ARB_fp shaders. */
       c->dispatch_width = 16;
       brw_wm_payload_setup(brw, c);
       brw_wm_non_glsl_emit(brw, c);
+      c->prog_data.dispatch_width = 16;
    }
-   c->prog_data.dispatch_width = c->dispatch_width;
 
    /* Scratch space is used for register spilling */
    if (c->last_scratch) {
@@ -467,7 +462,7 @@ static void brw_prepare_wm_prog(struct brw_context *brw)
    struct brw_wm_prog_key key;
    struct brw_fragment_program *fp = (struct brw_fragment_program *)
       brw->fragment_program;
-     
+
    brw_wm_populate_key(brw, &key);
 
    /* Make an early check for the key.

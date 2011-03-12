@@ -143,14 +143,19 @@ upload_wm_state(struct brw_context *brw)
    dw2 |= (ALIGN(brw->wm.sampler_count, 4) / 4) << GEN6_WM_SAMPLER_COUNT_SHIFT;
    dw4 |= (brw->wm.prog_data->first_curbe_grf <<
 	   GEN6_WM_DISPATCH_START_GRF_SHIFT_0);
+   dw4 |= (brw->wm.prog_data->first_curbe_grf_16 <<
+	   GEN6_WM_DISPATCH_START_GRF_SHIFT_2);
 
    dw5 |= (brw->wm_max_threads - 1) << GEN6_WM_MAX_THREADS_SHIFT;
 
    /* CACHE_NEW_WM_PROG */
-   if (brw->wm.prog_data->dispatch_width == 8)
+   if (brw->wm.prog_data->dispatch_width == 8) {
       dw5 |= GEN6_WM_8_DISPATCH_ENABLE;
-   else
+      if (brw->wm.prog_data->prog_offset_16)
+	 dw5 |= GEN6_WM_16_DISPATCH_ENABLE;
+   } else {
       dw5 |= GEN6_WM_16_DISPATCH_ENABLE;
+   }
 
    /* _NEW_LINE */
    if (ctx->Line.StippleFlag)
@@ -194,7 +199,12 @@ upload_wm_state(struct brw_context *brw)
    OUT_BATCH(dw5);
    OUT_BATCH(dw6);
    OUT_BATCH(0); /* kernel 1 pointer */
-   OUT_BATCH(0); /* kernel 2 pointer */
+   if (brw->wm.prog_data->prog_offset_16) {
+      OUT_RELOC(brw->wm.prog_bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+		brw->wm.prog_data->prog_offset_16);
+   } else {
+      OUT_BATCH(0); /* kernel 2 pointer */
+   }
    ADVANCE_BATCH();
 }
 

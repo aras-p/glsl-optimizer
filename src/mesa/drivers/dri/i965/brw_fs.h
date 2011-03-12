@@ -343,6 +343,8 @@ public:
    bool eot;
    bool header_present;
    bool shadow_compare;
+   bool force_uncompressed;
+   bool force_sechalf;
    uint32_t offset; /* spill/unspill offset */
 
    /** @{
@@ -405,6 +407,8 @@ public:
       this->live_intervals_valid = false;
 
       this->kill_emitted = false;
+      this->force_uncompressed_stack = 0;
+      this->force_sechalf_stack = 0;
    }
 
    ~fs_visitor()
@@ -461,6 +465,7 @@ public:
       return emit(fs_inst(opcode, dst, src0, src1, src2));
    }
 
+   bool run();
    void setup_paramvalues_refs();
    void assign_curb_setup();
    void calculate_urb_setup();
@@ -480,6 +485,11 @@ public:
    bool virtual_grf_interferes(int a, int b);
    void schedule_instructions();
    void fail(const char *msg, ...);
+
+   void push_force_uncompressed();
+   void pop_force_uncompressed();
+   void push_force_sechalf();
+   void pop_force_sechalf();
 
    void generate_code();
    void generate_fb_write(fs_inst *inst);
@@ -568,6 +578,9 @@ public:
    fs_reg reg_null_cmp;
 
    int grf_used;
+
+   int force_uncompressed_stack;
+   int force_sechalf_stack;
 };
 
 GLboolean brw_do_channel_expressions(struct exec_list *instructions);

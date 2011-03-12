@@ -194,6 +194,32 @@ fs_visitor::fail(const char *format, ...)
    }
 }
 
+void
+fs_visitor::push_force_uncompressed()
+{
+   force_uncompressed_stack++;
+}
+
+void
+fs_visitor::pop_force_uncompressed()
+{
+   force_uncompressed_stack--;
+   assert(force_uncompressed_stack >= 0);
+}
+
+void
+fs_visitor::push_force_sechalf()
+{
+   force_sechalf_stack++;
+}
+
+void
+fs_visitor::pop_force_sechalf()
+{
+   force_sechalf_stack--;
+   assert(force_sechalf_stack >= 0);
+}
+
 /**
  * Returns how many MRFs an FS opcode will write over.
  *
@@ -1738,6 +1764,10 @@ fs_visitor::visit(ir_if *ir)
 {
    fs_inst *inst;
 
+   if (c->dispatch_width == 16) {
+      fail("Can't support (non-uniform) control flow on 16-wide\n");
+   }
+
    /* Don't point the annotation at the if statement, because then it plus
     * the then and else blocks get printed.
     */
@@ -1777,6 +1807,10 @@ void
 fs_visitor::visit(ir_loop *ir)
 {
    fs_reg counter = reg_undef;
+
+   if (c->dispatch_width == 16) {
+      fail("Can't support (non-uniform) control flow on 16-wide\n");
+   }
 
    if (ir->counter) {
       this->base_ir = ir->counter;
@@ -1880,6 +1914,11 @@ fs_visitor::emit(fs_inst inst)
 {
    fs_inst *list_inst = new(mem_ctx) fs_inst;
    *list_inst = inst;
+
+   if (force_uncompressed_stack > 0)
+      list_inst->force_uncompressed = true;
+   else if (force_sechalf_stack > 0)
+      list_inst->force_sechalf = true;
 
    list_inst->annotation = this->current_annotation;
    list_inst->ir = this->base_ir;
@@ -2006,6 +2045,7 @@ fs_visitor::emit_fb_writes()
    this->current_annotation = "FB write header";
    GLboolean header_present = GL_TRUE;
    int nr = 0;
+   int reg_width = c->dispatch_width / 8;
 
    if (intel->gen >= 6 &&
        !this->kill_emitted &&
@@ -2019,31 +2059,44 @@ fs_visitor::emit_fb_writes()
    }
 
    if (c->aa_dest_stencil_reg) {
+      push_force_uncompressed();
       emit(BRW_OPCODE_MOV, fs_reg(MRF, nr++),
 	   fs_reg(brw_vec8_grf(c->aa_dest_stencil_reg, 0)));
+      pop_force_uncompressed();
    }
 
    /* Reserve space for color. It'll be filled in per MRT below. */
    int color_mrf = nr;
-   nr += 4;
+   nr += 4 * reg_width;
 
    if (c->source_depth_to_render_target) {
+      if (intel->gen == 6 && c->dispatch_width == 16) {
+	 /* For outputting oDepth on gen6, SIMD8 writes have to be
+	  * used.  This would require 8-wide moves of each half to
+	  * message regs, kind of like pre-gen5 SIMD16 FB writes.
+	  * Just bail on doing so for now.
+	  */
+	 fail("Missing support for simd16 depth writes on gen6\n");
+      }
+
       if (c->computes_depth) {
 	 /* Hand over gl_FragDepth. */
 	 assert(this->frag_depth);
 	 fs_reg depth = *(variable_storage(this->frag_depth));
 
-	 emit(BRW_OPCODE_MOV, fs_reg(MRF, nr++), depth);
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, nr), depth);
       } else {
 	 /* Pass through the payload depth. */
-	 emit(BRW_OPCODE_MOV, fs_reg(MRF, nr++),
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, nr),
 	      fs_reg(brw_vec8_grf(c->source_depth_reg, 0)));
       }
+      nr += reg_width;
    }
 
    if (c->dest_depth_reg) {
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, nr++),
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, nr),
 	   fs_reg(brw_vec8_grf(c->dest_depth_reg, 0)));
+      nr += reg_width;
    }
 
    fs_reg color = reg_undef;
@@ -2060,7 +2113,7 @@ fs_visitor::emit_fb_writes()
 						 target);
       if (this->frag_color || this->frag_data) {
 	 for (int i = 0; i < 4; i++) {
-	    emit(BRW_OPCODE_MOV, fs_reg(MRF, color_mrf + i), color);
+	    emit(BRW_OPCODE_MOV, fs_reg(MRF, color_mrf + i * reg_width), color);
 	    color.reg_offset++;
 	 }
       }
@@ -2144,7 +2197,7 @@ fs_visitor::generate_fb_write(fs_inst *inst)
    brw_pop_insn_state(p);
 
    brw_fb_WRITE(p,
-		8, /* dispatch_width */
+		c->dispatch_width,
 		inst->base_mrf,
 		implied_header,
 		inst->target,
@@ -2608,8 +2661,12 @@ fs_visitor::setup_paramvalues_refs()
 void
 fs_visitor::assign_curb_setup()
 {
-   c->prog_data.first_curbe_grf = c->nr_payload_regs;
    c->prog_data.curb_read_length = ALIGN(c->prog_data.nr_params, 8) / 8;
+   if (c->dispatch_width == 8) {
+      c->prog_data.first_curbe_grf = c->nr_payload_regs;
+   } else {
+      c->prog_data.first_curbe_grf_16 = c->nr_payload_regs;
+   }
 
    /* Map the offsets in the UNIFORM file to fixed HW regs. */
    foreach_iter(exec_list_iterator, iter, this->instructions) {
@@ -2618,7 +2675,7 @@ fs_visitor::assign_curb_setup()
       for (unsigned int i = 0; i < 3; i++) {
 	 if (inst->src[i].file == UNIFORM) {
 	    int constant_nr = inst->src[i].hw_reg + inst->src[i].reg_offset;
-	    struct brw_reg brw_reg = brw_vec1_grf(c->prog_data.first_curbe_grf +
+	    struct brw_reg brw_reg = brw_vec1_grf(c->nr_payload_regs +
 						  constant_nr / 8,
 						  constant_nr % 8);
 
@@ -2670,7 +2727,7 @@ fs_visitor::calculate_urb_setup()
 void
 fs_visitor::assign_urb_setup()
 {
-   int urb_start = c->prog_data.first_curbe_grf + c->prog_data.curb_read_length;
+   int urb_start = c->nr_payload_regs + c->prog_data.curb_read_length;
 
    /* Offset all the urb_setup[] index by the actual position of the
     * setup regs, now that the location of the constants has been chosen.
@@ -3516,7 +3573,7 @@ static struct brw_reg brw_reg_from_fs_reg(fs_reg *reg)
 void
 fs_visitor::generate_code()
 {
-   int last_native_inst = 0;
+   int last_native_inst = p->nr_insn;
    const char *last_annotation_string = NULL;
    ir_instruction *last_annotation_ir = NULL;
 
@@ -3532,8 +3589,8 @@ fs_visitor::generate_code()
 
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
-      printf("Native code for fragment shader %d:\n",
-	     ctx->Shader.CurrentFragmentProgram->Name);
+      printf("Native code for fragment shader %d (%d-wide dispatch):\n",
+	     ctx->Shader.CurrentFragmentProgram->Name, c->dispatch_width);
    }
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
@@ -3565,6 +3622,14 @@ fs_visitor::generate_code()
       brw_set_predicate_control(p, inst->predicated);
       brw_set_predicate_inverse(p, inst->predicate_inverse);
       brw_set_saturate(p, inst->saturate);
+
+      if (inst->force_uncompressed || c->dispatch_width == 8) {
+	 brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+      } else if (inst->force_sechalf) {
+	 brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+      } else {
+	 brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
+      }
 
       switch (inst->opcode) {
       case BRW_OPCODE_MOV:
@@ -3804,7 +3869,111 @@ fs_visitor::generate_code()
    }
 }
 
-GLboolean
+bool
+fs_visitor::run()
+{
+   uint32_t prog_offset_16 = 0;
+
+   brw_wm_payload_setup(brw, c);
+
+   if (c->dispatch_width == 16) {
+      if (c->prog_data.curb_read_length) {
+	 /* Haven't hooked in support for uniforms through the 16-wide
+	  * version yet.
+	  */
+	 return GL_FALSE;
+      }
+
+      /* align to 64 byte boundary. */
+      while ((c->func.nr_insn * sizeof(struct brw_instruction)) % 64) {
+	 brw_NOP(p);
+      }
+
+      /* Save off the start of this 16-wide program in case we succeed. */
+      prog_offset_16 = c->func.nr_insn * sizeof(struct brw_instruction);
+
+      brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
+   }
+
+   if (0) {
+      emit_dummy_fs();
+   } else {
+      calculate_urb_setup();
+      if (intel->gen < 6)
+	 emit_interpolation_setup_gen4();
+      else
+	 emit_interpolation_setup_gen6();
+
+      /* Generate FS IR for main().  (the visitor only descends into
+       * functions called "main").
+       */
+      foreach_iter(exec_list_iterator, iter, *shader->ir) {
+	 ir_instruction *ir = (ir_instruction *)iter.get();
+	 base_ir = ir;
+	 ir->accept(this);
+      }
+
+      emit_fb_writes();
+
+      split_virtual_grfs();
+
+      setup_paramvalues_refs();
+      setup_pull_constants();
+
+      bool progress;
+      do {
+	 progress = false;
+
+	 progress = remove_duplicate_mrf_writes() || progress;
+
+	 progress = propagate_constants() || progress;
+	 progress = register_coalesce() || progress;
+	 progress = compute_to_mrf() || progress;
+	 progress = dead_code_eliminate() || progress;
+      } while (progress);
+
+      schedule_instructions();
+
+      assign_curb_setup();
+      assign_urb_setup();
+
+      if (0) {
+	 /* Debug of register spilling: Go spill everything. */
+	 int virtual_grf_count = virtual_grf_next;
+	 for (int i = 1; i < virtual_grf_count; i++) {
+	    spill_reg(i);
+	 }
+      }
+
+      if (0)
+	 assign_regs_trivial();
+      else {
+	 while (!assign_regs()) {
+	    if (failed)
+	       break;
+	 }
+      }
+   }
+   assert(force_uncompressed_stack == 0);
+   assert(force_sechalf_stack == 0);
+
+   if (!failed)
+      generate_code();
+
+   if (failed)
+      return GL_FALSE;
+
+   if (c->dispatch_width == 8) {
+      c->prog_data.total_grf = grf_used;
+   } else {
+      c->prog_data.total_grf_16 = grf_used;
+      c->prog_data.prog_offset_16 = prog_offset_16;
+   }
+
+   return !failed;
+}
+
+bool
 brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 {
    struct intel_context *intel = &brw->intel;
@@ -3812,20 +3981,12 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
    struct gl_shader_program *prog = ctx->Shader.CurrentFragmentProgram;
 
    if (!prog)
-      return GL_FALSE;
+      return false;
 
    struct brw_shader *shader =
      (brw_shader *) prog->_LinkedShaders[MESA_SHADER_FRAGMENT];
    if (!shader)
-      return GL_FALSE;
-
-   /* We always use 8-wide mode, at least for now.  For one, flow
-    * control only works in 8-wide.  Also, when we're fragment shader
-    * bound, we're almost always under register pressure as well, so
-    * 8-wide would save us from the performance cliff of spilling
-    * regs.
-    */
-   c->dispatch_width = 8;
+      return false;
 
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       printf("GLSL IR for native fragment shader %d:\n", prog->Name);
@@ -3835,77 +3996,22 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 
    /* Now the main event: Visit the shader IR and generate our FS IR for it.
     */
+   c->dispatch_width = 8;
+
    fs_visitor v(c, shader);
-
-   if (0) {
-      v.emit_dummy_fs();
-   } else {
-      v.calculate_urb_setup();
-      if (intel->gen < 6)
-	 v.emit_interpolation_setup_gen4();
-      else
-	 v.emit_interpolation_setup_gen6();
-
-      /* Generate FS IR for main().  (the visitor only descends into
-       * functions called "main").
-       */
-      foreach_iter(exec_list_iterator, iter, *shader->ir) {
-	 ir_instruction *ir = (ir_instruction *)iter.get();
-	 v.base_ir = ir;
-	 ir->accept(&v);
-      }
-
-      v.emit_fb_writes();
-
-      v.split_virtual_grfs();
-
-      v.setup_paramvalues_refs();
-      v.setup_pull_constants();
-
-      bool progress;
-      do {
-	 progress = false;
-
-	 progress = v.remove_duplicate_mrf_writes() || progress;
-
-	 progress = v.propagate_constants() || progress;
-	 progress = v.register_coalesce() || progress;
-	 progress = v.compute_to_mrf() || progress;
-	 progress = v.dead_code_eliminate() || progress;
-      } while (progress);
-
-      v.schedule_instructions();
-
-      v.assign_curb_setup();
-      v.assign_urb_setup();
-
-      if (0) {
-	 /* Debug of register spilling: Go spill everything. */
-	 int virtual_grf_count = v.virtual_grf_next;
-	 for (int i = 1; i < virtual_grf_count; i++) {
-	    v.spill_reg(i);
-	 }
-      }
-
-      if (0)
-	 v.assign_regs_trivial();
-      else {
-	 while (!v.assign_regs()) {
-	    if (v.failed)
-	       break;
-	 }
-      }
+   if (!v.run()) {
+      /* FINISHME: Cleanly fail, test at link time, etc. */
+      assert(!"not reached");
+      return false;
    }
 
-   if (!v.failed)
-      v.generate_code();
+   if (intel->gen >= 6) {
+      c->dispatch_width = 16;
+      fs_visitor v2(c, shader);
+      v2.run();
+   }
 
-   assert(!v.failed); /* FINISHME: Cleanly fail, tested at link time, etc. */
+   c->prog_data.dispatch_width = 8;
 
-   if (v.failed)
-      return GL_FALSE;
-
-   c->prog_data.total_grf = v.grf_used;
-
-   return GL_TRUE;
+   return true;
 }

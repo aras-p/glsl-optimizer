@@ -204,13 +204,16 @@ struct brw_wm_prog_data {
    GLuint urb_read_length;
 
    GLuint first_curbe_grf;
+   GLuint first_curbe_grf_16;
    GLuint total_grf;
+   GLuint total_grf_16;
    GLuint total_scratch;
 
    GLuint nr_params;       /**< number of float params/constants */
    GLuint nr_pull_params;
    GLboolean error;
    int dispatch_width;
+   uint32_t prog_offset_16;
 
    /* Pointer to tracked values (only valid once
     * _mesa_load_state_parameters has been called at runtime).
