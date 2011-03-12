@@ -402,6 +402,35 @@ nvc0_validate_derived_1(struct nvc0_context *nvc0)
    }
 }
 
+static void
+nvc0_switch_pipe_context(struct nvc0_context *ctx_to)
+{
+   struct nvc0_context *ctx_from = ctx_to->screen->cur_ctx;
+
+   if (ctx_from)
+      ctx_to->state = ctx_from->state;
+
+   ctx_to->dirty = ~0;
+
+   if (!ctx_to->vertex)
+      ctx_to->dirty &= ~(NVC0_NEW_VERTEX | NVC0_NEW_ARRAYS);
+
+   if (!ctx_to->vertprog)
+      ctx_to->dirty &= ~NVC0_NEW_VERTPROG;
+   if (!ctx_to->fragprog)
+      ctx_to->dirty &= ~NVC0_NEW_FRAGPROG;
+
+   if (!ctx_to->blend)
+      ctx_to->dirty &= ~NVC0_NEW_BLEND;
+   if (!ctx_to->rast)
+      ctx_to->dirty &= ~NVC0_NEW_RASTERIZER;
+   if (!ctx_to->zsa)
+      ctx_to->dirty &= ~NVC0_NEW_ZSA;
+
+   ctx_to->screen->base.channel->user_private = ctx_to->screen->cur_ctx =
+      ctx_to;
+}
+
 static struct state_validate {
     void (*func)(struct nvc0_context *);
     uint32_t states;
@@ -434,11 +463,9 @@ boolean
 nvc0_state_validate(struct nvc0_context *nvc0)
 {
    unsigned i;
-#if 0
-   if (nvc0->screen->cur_ctx != nvc0) /* FIXME: not everything is valid */
-      nvc0->dirty = 0xffffffff;
-#endif
-   nvc0->screen->cur_ctx = nvc0;
+
+   if (nvc0->screen->cur_ctx != nvc0)
+      nvc0_switch_pipe_context(nvc0);
 
    if (nvc0->dirty) {
       for (i = 0; i < validate_list_len; ++i) {
