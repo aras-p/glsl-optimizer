@@ -170,6 +170,7 @@ static void u_vbuf_translate_begin(struct u_vbuf_mgr_priv *mgr,
 
    /* Initialize the translate key, i.e. the recipe how vertices should be
      * translated. */
+   memset(&key, 0, sizeof key);
    for (i = 0; i < mgr->ve->count; i++) {
       struct pipe_vertex_buffer *vb =
             &mgr->b.vertex_buffer[mgr->ve->ve[i].vertex_buffer_index];
