@@ -2078,7 +2078,7 @@ fs_visitor::emit_fb_writes()
       if (this->frag_color)
 	 color.reg_offset -= 4;
 
-      fs_inst *inst = emit(FS_OPCODE_FB_WRITE, reg_undef, reg_undef);
+      fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
       inst->target = target;
       inst->base_mrf = 0;
       inst->mlen = nr;
@@ -2097,7 +2097,7 @@ fs_visitor::emit_fb_writes()
 	 emit(BRW_OPCODE_MOV, fs_reg(MRF, color_mrf + 3), color);
       }
 
-      fs_inst *inst = emit(FS_OPCODE_FB_WRITE, reg_undef, reg_undef);
+      fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
       inst->base_mrf = 0;
       inst->mlen = nr;
       inst->eot = true;
