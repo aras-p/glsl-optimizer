@@ -202,6 +202,8 @@ nvc0_varying_location(unsigned sn, unsigned si)
       return 0x40;
    case TGSI_SEMANTIC_FACE:
       return 0x3fc;
+   case TGSI_SEMANTIC_EDGEFLAG: /* doesn't exist, set value like for an sreg */
+      return 0xf00;
       /*
    case TGSI_SEMANTIC_CLIP_DISTANCE:
       return 0x2c0 + (si * 4);
@@ -290,6 +292,8 @@ prog_decl(struct nvc0_translation_info *ti,
                   ti->output_loc[i][c] = si * 4 + c;
             }
          } else {
+            if (sn == TGSI_SEMANTIC_EDGEFLAG)
+               ti->edgeflag_out = i;
             for (c = 0; c < 4; ++c)
                ti->output_loc[i][c] = nvc0_varying_location(sn, si) + c * 4;
             /* for TFB_VARYING_LOCS: */
@@ -427,6 +431,8 @@ nvc0_vp_gp_gen_header(struct nvc0_program *vp, struct nvc0_translation_info *ti)
 
    for (i = 0; i <= ti->scan.file_max[TGSI_FILE_OUTPUT]; ++i) {
       a = (ti->output_loc[i][0] - 0x40) / 4;
+      if (ti->output_loc[i][0] >= 0xf00)
+         continue;
       for (c = 0; c < 4; ++c, ++a) {
          if (!ti->output_access[i][c])
             continue;
@@ -669,6 +675,8 @@ nvc0_program_translate(struct nvc0_program *prog)
    ti->prog = prog;
 
    ti->edgeflag_out = PIPE_MAX_SHADER_OUTPUTS;
+
+   prog->vp.edgeflag = PIPE_MAX_ATTRIBS;
 
    if (prog->type == PIPE_SHADER_VERTEX && prog->vp.num_ucps)
       ti->append_ucp = TRUE;

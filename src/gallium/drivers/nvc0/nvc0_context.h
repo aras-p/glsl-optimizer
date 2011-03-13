@@ -136,6 +136,9 @@ struct nvc0_context {
    struct draw_context *draw;
 };
 
+#define NVC0_USING_EDGEFLAG(ctx) \
+   ((ctx)->vertprog->vp.edgeflag < PIPE_MAX_ATTRIBS)
+
 static INLINE struct nvc0_context *
 nvc0_context(struct pipe_context *pipe)
 {
