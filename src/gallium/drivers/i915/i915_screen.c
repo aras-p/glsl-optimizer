@@ -118,12 +118,12 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:
    /* XXX: No code but hw supports it */
    case PIPE_CAP_POINT_SPRITE:
-      return 0;
+      /* Also lie about these when asked to (needed for GLSL / GL 2.0) */
+      return is->debug.lie ? 1 : 0;
 
    /* Unsupported features (boolean caps). */
    case PIPE_CAP_ARRAY_TEXTURES:
    case PIPE_CAP_DEPTH_CLAMP:
-   case PIPE_CAP_GLSL:
    case PIPE_CAP_INDEP_BLEND_ENABLE:
    case PIPE_CAP_INDEP_BLEND_FUNC:
    case PIPE_CAP_TGSI_INSTANCEID:
@@ -135,6 +135,7 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
       return 0;
 
    /* Features we can lie about (boolean caps). */
+   case PIPE_CAP_GLSL:
    case PIPE_CAP_OCCLUSION_QUERY:
       return is->debug.lie ? 1 : 0;
 
