@@ -2500,9 +2500,7 @@ _mesa_texstore_signed_rgba_16(TEXSTORE_PARAMS)
    const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
-   ASSERT(dstFormat == MESA_FORMAT_SIGNED_R_16 ||
-          dstFormat == MESA_FORMAT_SIGNED_RG_16 ||
-          dstFormat == MESA_FORMAT_SIGNED_RGB_16 ||
+   ASSERT(dstFormat == MESA_FORMAT_SIGNED_RGB_16 ||
           dstFormat == MESA_FORMAT_SIGNED_RGBA_16);
 
    if (!ctx->_ImageTransferState &&
@@ -2545,16 +2543,29 @@ _mesa_texstore_signed_rgba_16(TEXSTORE_PARAMS)
             + dstXoffset * texelBytes;
          for (row = 0; row < srcHeight; row++) {
             GLshort *dstRowS = (GLshort *) dstRow;
-            for (col = 0; col < srcWidth; col++) {
-               GLuint c;
-               for (c = 0; c < comps; c++) {
-                  GLshort p;
-                  UNCLAMPED_FLOAT_TO_SHORT(p, src[col * 4 + c]);
-                  dstRowS[col * comps + c] = p;
+            if (dstFormat == MESA_FORMAT_SIGNED_RGBA_16) {
+               for (col = 0; col < srcWidth; col++) {
+                  GLuint c;
+                  for (c = 0; c < comps; c++) {
+                     GLshort p;
+                     UNCLAMPED_FLOAT_TO_SHORT(p, src[col * 4 + c]);
+                     dstRowS[col * comps + c] = p;
+                  }
                }
+               dstRow += dstRowStride;
+               src += 4 * srcWidth;
+            } else {
+               for (col = 0; col < srcWidth; col++) {
+                  GLuint c;
+                  for (c = 0; c < comps; c++) {
+                     GLshort p;
+                     UNCLAMPED_FLOAT_TO_SHORT(p, src[col * 3 + c]);
+                     dstRowS[col * comps + c] = p;
+                  }
+               }
+               dstRow += dstRowStride;
+               src += 3 * srcWidth;
             }
-            dstRow += dstRowStride;
-            src += 4 * srcWidth;
          }
       }
       free((void *) tempImage);
@@ -2889,19 +2900,33 @@ _mesa_texstore_dudv8(TEXSTORE_PARAMS)
 
 
 /**
- * Store a texture in MESA_FORMAT_SIGNED_R8 format.
+ * Store a texture in a signed normalized 8-bit format.
  */
 static GLboolean
-_mesa_texstore_signed_r8(TEXSTORE_PARAMS)
+_mesa_texstore_snorm8(TEXSTORE_PARAMS)
 {
    const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
-   ASSERT(dstFormat == MESA_FORMAT_SIGNED_R8);
+   ASSERT(dstFormat == MESA_FORMAT_SIGNED_A8 ||
+          dstFormat == MESA_FORMAT_SIGNED_L8 ||
+          dstFormat == MESA_FORMAT_SIGNED_I8 ||
+          dstFormat == MESA_FORMAT_SIGNED_R8);
    ASSERT(texelBytes == 1);
 
-   /* XXX look at adding optimized paths */
-   {
+   if (!ctx->_ImageTransferState &&
+       !srcPacking->SwapBytes &&
+       baseInternalFormat == srcFormat &&
+       srcType == GL_BYTE) {
+      /* simple memcpy path */
+      memcpy_texture(ctx, dims,
+                     dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
+                     dstRowStride,
+                     dstImageOffsets,
+                     srcWidth, srcHeight, srcDepth, srcFormat, srcType,
+                     srcAddr, srcPacking);
+   }
+   else {
       /* general path */
       const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
                                                  baseInternalFormat,
@@ -2910,21 +2935,21 @@ _mesa_texstore_signed_r8(TEXSTORE_PARAMS)
                                                  srcFormat, srcType, srcAddr,
                                                  srcPacking,
                                                  ctx->_ImageTransferState);
-      const GLfloat *srcRow = tempImage;
+      const GLfloat *src = tempImage;
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
       for (img = 0; img < srcDepth; img++) {
-         GLubyte *dstRow = (GLubyte *) dstAddr
+         GLbyte *dstRow = (GLbyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
             + dstYoffset * dstRowStride
             + dstXoffset * texelBytes;
          for (row = 0; row < srcHeight; row++) {
-            GLubyte *dstB = (GLubyte *) dstRow;
             for (col = 0; col < srcWidth; col++) {
-               dstB[col] = FLOAT_TO_BYTE_TEX(srcRow[RCOMP]);
+               dstRow[col] = FLOAT_TO_BYTE_TEX(src[col]);
             }
             dstRow += dstRowStride;
+            src += srcWidth;
          }
       }
       free((void *) tempImage);
@@ -2934,19 +2959,33 @@ _mesa_texstore_signed_r8(TEXSTORE_PARAMS)
 
 
 /**
- * Store a texture in MESA_FORMAT_SIGNED_RG88 format.
+ * Store a texture in a signed normalized two-channel 16-bit format.
  */
 static GLboolean
-_mesa_texstore_signed_rg88(TEXSTORE_PARAMS)
+_mesa_texstore_snorm88(TEXSTORE_PARAMS)
 {
+   const GLboolean littleEndian = _mesa_little_endian();
    const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
 
-   ASSERT(dstFormat == MESA_FORMAT_SIGNED_RG88);
-   ASSERT(texelBytes == 1);
+   ASSERT(dstFormat == MESA_FORMAT_SIGNED_AL88 ||
+          dstFormat == MESA_FORMAT_SIGNED_RG88_REV);
+   ASSERT(texelBytes == 2);
 
-   /* XXX look at adding optimized paths */
-   {
+   if (!ctx->_ImageTransferState &&
+       !srcPacking->SwapBytes &&
+       baseInternalFormat == srcFormat &&
+       srcType == GL_BYTE &&
+       littleEndian) {
+      /* simple memcpy path */
+      memcpy_texture(ctx, dims,
+                     dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
+                     dstRowStride,
+                     dstImageOffsets,
+                     srcWidth, srcHeight, srcDepth, srcFormat, srcType,
+                     srcAddr, srcPacking);
+   }
+   else {
       /* general path */
       const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
                                                  baseInternalFormat,
@@ -2955,20 +2994,22 @@ _mesa_texstore_signed_rg88(TEXSTORE_PARAMS)
                                                  srcFormat, srcType, srcAddr,
                                                  srcPacking,
                                                  ctx->_ImageTransferState);
-      const GLfloat *srcRow = tempImage;
+      const GLfloat *src = tempImage;
       GLint img, row, col;
       if (!tempImage)
          return GL_FALSE;
       for (img = 0; img < srcDepth; img++) {
-         GLubyte *dstRow = (GLubyte *) dstAddr
+         GLbyte *dstRow = (GLbyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
             + dstYoffset * dstRowStride
             + dstXoffset * texelBytes;
          for (row = 0; row < srcHeight; row++) {
-            GLushort *dstUS = (GLushort *) dstRow;
+            GLbyte *dst = dstRow;
             for (col = 0; col < srcWidth; col++) {
-               dstUS[col] = PACK_COLOR_88(FLOAT_TO_BYTE_TEX(srcRow[RCOMP]),
-                                          FLOAT_TO_BYTE_TEX(srcRow[GCOMP]));
+               dst[0] = FLOAT_TO_BYTE_TEX(src[0]);
+               dst[1] = FLOAT_TO_BYTE_TEX(src[1]);
+               src += 2;
+               dst += 2;
             }
             dstRow += dstRowStride;
          }
@@ -2978,6 +3019,132 @@ _mesa_texstore_signed_rg88(TEXSTORE_PARAMS)
    return GL_TRUE;
 }
 
+/* Texstore for signed R16, A16, L16, I16. */
+static GLboolean
+_mesa_texstore_snorm16(TEXSTORE_PARAMS)
+{
+   const GLboolean littleEndian = _mesa_little_endian();
+   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
+   const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
+
+   ASSERT(dstFormat == MESA_FORMAT_SIGNED_R16 ||
+          dstFormat == MESA_FORMAT_SIGNED_A16 ||
+          dstFormat == MESA_FORMAT_SIGNED_L16 ||
+          dstFormat == MESA_FORMAT_SIGNED_I16);
+   ASSERT(texelBytes == 2);
+
+   if (!ctx->_ImageTransferState &&
+       !srcPacking->SwapBytes &&
+       baseInternalFormat == srcFormat &&
+       srcType == GL_SHORT &&
+       littleEndian) {
+      /* simple memcpy path */
+      memcpy_texture(ctx, dims,
+                     dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
+                     dstRowStride,
+                     dstImageOffsets,
+                     srcWidth, srcHeight, srcDepth, srcFormat, srcType,
+                     srcAddr, srcPacking);
+   }
+   else {
+      /* general path */
+      const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
+                                                 baseInternalFormat,
+                                                 baseFormat,
+                                                 srcWidth, srcHeight, srcDepth,
+                                                 srcFormat, srcType, srcAddr,
+                                                 srcPacking,
+                                                 ctx->_ImageTransferState);
+      const GLfloat *src = tempImage;
+      GLint img, row, col;
+      if (!tempImage)
+         return GL_FALSE;
+      for (img = 0; img < srcDepth; img++) {
+         GLubyte *dstRow = (GLubyte *) dstAddr
+            + dstImageOffsets[dstZoffset + img] * texelBytes
+            + dstYoffset * dstRowStride
+            + dstXoffset * texelBytes;
+         for (row = 0; row < srcHeight; row++) {
+            GLshort *dstUS = (GLshort *) dstRow;
+	    for (col = 0; col < srcWidth; col++) {
+	       GLushort r;
+
+	       UNCLAMPED_FLOAT_TO_SHORT(r, src[0]);
+	       dstUS[col] = r;
+	       src += 1;
+	    }
+            dstRow += dstRowStride;
+         }
+      }
+      free((void *) tempImage);
+   }
+   return GL_TRUE;
+}
+
+/**
+ * Do texstore for 2-channel, 16-bit/channel, signed normalized formats.
+ */
+static GLboolean
+_mesa_texstore_snorm1616(TEXSTORE_PARAMS)
+{
+   const GLboolean littleEndian = _mesa_little_endian();
+   const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
+   const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
+
+   ASSERT(dstFormat == MESA_FORMAT_SIGNED_AL1616 ||
+          dstFormat == MESA_FORMAT_SIGNED_GR1616);
+   ASSERT(texelBytes == 4);
+
+   if (!ctx->_ImageTransferState &&
+       !srcPacking->SwapBytes &&
+       baseInternalFormat == srcFormat &&
+       srcType == GL_SHORT &&
+       littleEndian) {
+      /* simple memcpy path */
+      memcpy_texture(ctx, dims,
+                     dstFormat, dstAddr, dstXoffset, dstYoffset, dstZoffset,
+                     dstRowStride,
+                     dstImageOffsets,
+                     srcWidth, srcHeight, srcDepth, srcFormat, srcType,
+                     srcAddr, srcPacking);
+   }
+   else {
+      /* general path */
+      const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
+                                                 baseInternalFormat,
+                                                 baseFormat,
+                                                 srcWidth, srcHeight, srcDepth,
+                                                 srcFormat, srcType, srcAddr,
+                                                 srcPacking,
+                                                 ctx->_ImageTransferState);
+      const GLfloat *src = tempImage;
+      GLint img, row, col;
+      if (!tempImage)
+         return GL_FALSE;
+      for (img = 0; img < srcDepth; img++) {
+         GLubyte *dstRow = (GLubyte *) dstAddr
+            + dstImageOffsets[dstZoffset + img] * texelBytes
+            + dstYoffset * dstRowStride
+            + dstXoffset * texelBytes;
+         for (row = 0; row < srcHeight; row++) {
+            GLshort *dst = (GLshort *) dstRow;
+            for (col = 0; col < srcWidth; col++) {
+               GLushort l, a;
+
+               UNCLAMPED_FLOAT_TO_SHORT(l, src[0]);
+               UNCLAMPED_FLOAT_TO_SHORT(a, src[1]);
+               dst[0] = l;
+               dst[1] = a;
+               src += 2;
+               dst += 2;
+            }
+            dstRow += dstRowStride;
+         }
+      }
+      free((void *) tempImage);
+   }
+   return GL_TRUE;
+}
 
 /**
  * Store a texture in MESA_FORMAT_SIGNED_RGBX8888.
@@ -3005,18 +3172,19 @@ _mesa_texstore_signed_rgbx8888(TEXSTORE_PARAMS)
       if (!tempImage)
          return GL_FALSE;
       for (img = 0; img < srcDepth; img++) {
-         GLubyte *dstRow = (GLubyte *) dstAddr
+         GLbyte *dstRow = (GLbyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
             + dstYoffset * dstRowStride
             + dstXoffset * texelBytes;
          for (row = 0; row < srcHeight; row++) {
-            GLuint *dstUI = (GLuint *) dstRow;
+            GLbyte *dst = dstRow;
             for (col = 0; col < srcWidth; col++) {
-               dstUI[col] = PACK_COLOR_8888( FLOAT_TO_BYTE_TEX(srcRow[RCOMP]),
-                                             FLOAT_TO_BYTE_TEX(srcRow[GCOMP]),
-                                             FLOAT_TO_BYTE_TEX(srcRow[BCOMP]),
-                                             0xff );
-               srcRow += 4;
+               dst[3] = FLOAT_TO_BYTE_TEX(srcRow[RCOMP]);
+               dst[2] = FLOAT_TO_BYTE_TEX(srcRow[GCOMP]);
+               dst[1] = FLOAT_TO_BYTE_TEX(srcRow[BCOMP]);
+               dst[0] = 0xff;
+               srcRow += 3;
+               dst += 4;
             }
             dstRow += dstRowStride;
          }
@@ -3071,39 +3239,6 @@ _mesa_texstore_signed_rgba8888(TEXSTORE_PARAMS)
                      srcWidth, srcHeight, srcDepth, srcFormat, srcType,
                      srcAddr, srcPacking);
    }
-   else if (!ctx->_ImageTransferState &&
-	    (srcType == GL_BYTE) &&
-	    can_swizzle(baseInternalFormat) &&
-	    can_swizzle(srcFormat)) {
-
-      GLubyte dstmap[4];
-
-      /* dstmap - how to swizzle from RGBA to dst format:
-       */
-      if ((littleEndian && dstFormat == MESA_FORMAT_SIGNED_RGBA8888) ||
-	  (!littleEndian && dstFormat == MESA_FORMAT_SIGNED_RGBA8888_REV)) {
-	 dstmap[3] = 0;
-	 dstmap[2] = 1;
-	 dstmap[1] = 2;
-	 dstmap[0] = 3;
-      }
-      else {
-	 dstmap[3] = 3;
-	 dstmap[2] = 2;
-	 dstmap[1] = 1;
-	 dstmap[0] = 0;
-      }
-      
-      _mesa_swizzle_ubyte_image(ctx, dims,
-				srcFormat,
-				srcType,
-				baseInternalFormat,
-				dstmap, 4,
-				dstAddr, dstXoffset, dstYoffset, dstZoffset,
-				dstRowStride, dstImageOffsets,
-				srcWidth, srcHeight, srcDepth, srcAddr,
-				srcPacking);      
-   }
    else {
       /* general path */
       const GLfloat *tempImage = _mesa_make_temp_float_image(ctx, dims,
@@ -3118,28 +3253,30 @@ _mesa_texstore_signed_rgba8888(TEXSTORE_PARAMS)
       if (!tempImage)
          return GL_FALSE;
       for (img = 0; img < srcDepth; img++) {
-         GLubyte *dstRow = (GLubyte *) dstAddr
+         GLbyte *dstRow = (GLbyte *) dstAddr
             + dstImageOffsets[dstZoffset + img] * texelBytes
             + dstYoffset * dstRowStride
             + dstXoffset * texelBytes;
          for (row = 0; row < srcHeight; row++) {
-            GLuint *dstUI = (GLuint *) dstRow;
+            GLbyte *dst = dstRow;
             if (dstFormat == MESA_FORMAT_SIGNED_RGBA8888) {
                for (col = 0; col < srcWidth; col++) {
-                  dstUI[col] = PACK_COLOR_8888( FLOAT_TO_BYTE_TEX(srcRow[RCOMP]),
-                                                FLOAT_TO_BYTE_TEX(srcRow[GCOMP]),
-                                                FLOAT_TO_BYTE_TEX(srcRow[BCOMP]),
-                                                FLOAT_TO_BYTE_TEX(srcRow[ACOMP]) );
+                  dst[3] = FLOAT_TO_BYTE_TEX(srcRow[RCOMP]);
+                  dst[2] = FLOAT_TO_BYTE_TEX(srcRow[GCOMP]);
+                  dst[1] = FLOAT_TO_BYTE_TEX(srcRow[BCOMP]);
+                  dst[0] = FLOAT_TO_BYTE_TEX(srcRow[ACOMP]);
                   srcRow += 4;
+                  dst += 4;
                }
             }
             else {
                for (col = 0; col < srcWidth; col++) {
-                  dstUI[col] = PACK_COLOR_8888_REV( FLOAT_TO_BYTE_TEX(srcRow[RCOMP]),
-                                                    FLOAT_TO_BYTE_TEX(srcRow[GCOMP]),
-                                                    FLOAT_TO_BYTE_TEX(srcRow[BCOMP]),
-                                                    FLOAT_TO_BYTE_TEX(srcRow[ACOMP]) );
+                  dst[0] = FLOAT_TO_BYTE_TEX(srcRow[RCOMP]);
+                  dst[1] = FLOAT_TO_BYTE_TEX(srcRow[GCOMP]);
+                  dst[2] = FLOAT_TO_BYTE_TEX(srcRow[BCOMP]);
+                  dst[3] = FLOAT_TO_BYTE_TEX(srcRow[ACOMP]);
                   srcRow += 4;
+                  dst += 4;
                }
             }
             dstRow += dstRowStride;
@@ -4119,15 +4256,15 @@ texstore_funcs[MESA_FORMAT_COUNT] =
 
    { MESA_FORMAT_DUDV8, _mesa_texstore_dudv8 },
 
-   { MESA_FORMAT_SIGNED_R8, _mesa_texstore_signed_r8 },
-   { MESA_FORMAT_SIGNED_RG88, _mesa_texstore_signed_rg88 },
+   { MESA_FORMAT_SIGNED_R8, _mesa_texstore_snorm8 },
+   { MESA_FORMAT_SIGNED_RG88_REV, _mesa_texstore_snorm88 },
    { MESA_FORMAT_SIGNED_RGBX8888, _mesa_texstore_signed_rgbx8888 },
 
    { MESA_FORMAT_SIGNED_RGBA8888, _mesa_texstore_signed_rgba8888 },
    { MESA_FORMAT_SIGNED_RGBA8888_REV, _mesa_texstore_signed_rgba8888 },
 
-   { MESA_FORMAT_SIGNED_R_16, _mesa_texstore_signed_rgba_16 },
-   { MESA_FORMAT_SIGNED_RG_16, _mesa_texstore_signed_rgba_16 },
+   { MESA_FORMAT_SIGNED_R16, _mesa_texstore_snorm16 },
+   { MESA_FORMAT_SIGNED_GR1616, _mesa_texstore_snorm1616 },
    { MESA_FORMAT_SIGNED_RGB_16, _mesa_texstore_signed_rgba_16 },
    { MESA_FORMAT_SIGNED_RGBA_16, _mesa_texstore_signed_rgba_16 },
    { MESA_FORMAT_RGBA_16, _mesa_texstore_rgba_16 },
@@ -4142,7 +4279,17 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_L_LATC1, _mesa_texstore_red_rgtc1 },
    { MESA_FORMAT_SIGNED_L_LATC1, _mesa_texstore_signed_red_rgtc1 },
    { MESA_FORMAT_LA_LATC2, _mesa_texstore_rg_rgtc2 },
-   { MESA_FORMAT_SIGNED_LA_LATC2, _mesa_texstore_signed_rg_rgtc2 }
+   { MESA_FORMAT_SIGNED_LA_LATC2, _mesa_texstore_signed_rg_rgtc2 },
+
+   { MESA_FORMAT_SIGNED_A8, _mesa_texstore_snorm8 },
+   { MESA_FORMAT_SIGNED_L8, _mesa_texstore_snorm8 },
+   { MESA_FORMAT_SIGNED_AL88, _mesa_texstore_snorm88 },
+   { MESA_FORMAT_SIGNED_I8, _mesa_texstore_snorm8 },
+
+   { MESA_FORMAT_SIGNED_A16, _mesa_texstore_snorm16 },
+   { MESA_FORMAT_SIGNED_L16, _mesa_texstore_snorm16 },
+   { MESA_FORMAT_SIGNED_AL1616, _mesa_texstore_snorm1616 },
+   { MESA_FORMAT_SIGNED_I16, _mesa_texstore_snorm16 },
 };
 
 
