@@ -57,9 +57,36 @@ nvc0_flush(struct pipe_context *pipe,
 }
 
 static void
+nvc0_context_unreference_resources(struct nvc0_context *nvc0)
+{
+   unsigned s, i;
+
+   for (i = 0; i < NVC0_BUFCTX_COUNT; ++i)
+      nvc0_bufctx_reset(nvc0, i);
+
+   for (i = 0; i < nvc0->num_vtxbufs; ++i)
+      pipe_resource_reference(&nvc0->vtxbuf[i].buffer, NULL);
+
+   pipe_resource_reference(&nvc0->idxbuf.buffer, NULL);
+
+   for (s = 0; s < 5; ++s) {
+      for (i = 0; i < nvc0->num_textures[s]; ++i)
+         pipe_sampler_view_reference(&nvc0->textures[s][i], NULL);
+
+      for (i = 0; i < 16; ++i)
+         pipe_resource_reference(&nvc0->constbuf[s][i], NULL);
+   }
+
+   for (i = 0; i < nvc0->num_tfbbufs; ++i)
+      pipe_resource_reference(&nvc0->tfbbuf[i], NULL);
+}
+
+static void
 nvc0_destroy(struct pipe_context *pipe)
 {
    struct nvc0_context *nvc0 = nvc0_context(pipe);
+
+   nvc0_context_unreference_resources(nvc0);
 
    draw_destroy(nvc0->draw);
 

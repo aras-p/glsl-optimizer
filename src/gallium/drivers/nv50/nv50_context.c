@@ -64,9 +64,33 @@ nv50_default_flush_notify(struct nouveau_channel *chan)
 }
 
 static void
+nv50_context_unreference_resources(struct nv50_context *nv50)
+{
+   unsigned s, i;
+
+   for (i = 0; i < NV50_BUFCTX_COUNT; ++i)
+      nv50_bufctx_reset(nv50, i);
+
+   for (i = 0; i < nv50->num_vtxbufs; ++i)
+      pipe_resource_reference(&nv50->vtxbuf[i].buffer, NULL);
+
+   pipe_resource_reference(&nv50->idxbuf.buffer, NULL);
+
+   for (s = 0; s < 3; ++s) {
+      for (i = 0; i < nv50->num_textures[s]; ++i)
+         pipe_sampler_view_reference(&nv50->textures[s][i], NULL);
+
+      for (i = 0; i < 16; ++i)
+         pipe_resource_reference(&nv50->constbuf[s][i], NULL);
+   }
+}
+
+static void
 nv50_destroy(struct pipe_context *pipe)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
+
+   nv50_context_unreference_resources(nv50);
 
    draw_destroy(nv50->draw);
 

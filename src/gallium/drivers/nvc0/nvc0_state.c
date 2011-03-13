@@ -708,10 +708,13 @@ nvc0_set_index_buffer(struct pipe_context *pipe,
 {
     struct nvc0_context *nvc0 = nvc0_context(pipe);
 
-    if (ib)
-        memcpy(&nvc0->idxbuf, ib, sizeof(nvc0->idxbuf));
-    else
-        nvc0->idxbuf.buffer = NULL;
+    if (ib) {
+       pipe_resource_reference(&nvc0->idxbuf.buffer, ib->buffer);
+
+       memcpy(&nvc0->idxbuf, ib, sizeof(nvc0->idxbuf));
+    } else {
+       pipe_resource_reference(&nvc0->idxbuf.buffer, NULL);
+    }
 }
 
 static void
