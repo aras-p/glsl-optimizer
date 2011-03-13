@@ -177,6 +177,23 @@ type_size(const struct glsl_type *type)
    }
 }
 
+void
+fs_visitor::fail(const char *format, ...)
+{
+   if (!failed) {
+      failed = true;
+
+      if (INTEL_DEBUG & DEBUG_WM) {
+	 fprintf(stderr, "FS compile failed: ");
+
+	 va_list va;
+	 va_start(va, format);
+	 vfprintf(stderr, format, va);
+	 va_end(va);
+      }
+   }
+}
+
 /**
  * Returns how many MRFs an FS opcode will write over.
  *
@@ -391,8 +408,7 @@ fs_visitor::setup_builtin_uniform_values(ir_variable *ir)
    }
 
    if (!statevar->name) {
-      this->fail = true;
-      printf("Failed to find builtin uniform `%s'\n", ir->name);
+      fail("Failed to find builtin uniform `%s'\n", ir->name);
       return;
    }
 
@@ -503,7 +519,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
    if (ir->type->is_array()) {
       array_elements = ir->type->length;
       if (array_elements == 0) {
-	 this->fail = true;
+	 fail("dereferenced array '%s' has length 0\n", ir->name);
       }
       type = ir->type->fields.array;
    } else {
@@ -821,9 +837,8 @@ fs_visitor::visit(ir_expression *ir)
       ir->operands[operand]->accept(this);
       if (this->result.file == BAD_FILE) {
 	 ir_print_visitor v;
-	 printf("Failed to get tree for expression operand:\n");
+	 fail("Failed to get tree for expression operand:\n");
 	 ir->operands[operand]->accept(&v);
-	 this->fail = true;
       }
       op[operand] = this->result;
 
@@ -1634,7 +1649,7 @@ fs_visitor::emit_bool_to_cond_code(ir_rvalue *ir)
 
       default:
 	 assert(!"not reached");
-	 this->fail = true;
+	 fail("bad cond code\n");
 	 break;
       }
       return;
@@ -1724,7 +1739,7 @@ fs_visitor::emit_if_gen6(ir_if *ir)
 	 assert(!"not reached");
 	 inst = emit(BRW_OPCODE_IF, reg_null_d, op[0], fs_reg(0));
 	 inst->conditional_mod = BRW_CONDITIONAL_NZ;
-	 this->fail = true;
+	 fail("bad condition\n");
 	 return;
       }
       return;
@@ -3631,7 +3646,7 @@ fs_visitor::generate_code()
 	 } else {
 	    _mesa_problem(ctx, "Unsupported opcode %d in FS", inst->opcode);
 	 }
-	 this->fail = true;
+	 fail("unsupported opcode in FS\n");
       }
 
       if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
@@ -3762,18 +3777,18 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
 	 v.assign_regs_trivial();
       else {
 	 while (!v.assign_regs()) {
-	    if (v.fail)
+	    if (v.failed)
 	       break;
 	 }
       }
    }
 
-   if (!v.fail)
+   if (!v.failed)
       v.generate_code();
 
-   assert(!v.fail); /* FINISHME: Cleanly fail, tested at link time, etc. */
+   assert(!v.failed); /* FINISHME: Cleanly fail, tested at link time, etc. */
 
-   if (v.fail)
+   if (v.failed)
       return GL_FALSE;
 
    c->prog_data.total_grf = v.grf_used;

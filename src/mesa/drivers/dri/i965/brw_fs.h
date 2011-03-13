@@ -364,7 +364,7 @@ public:
       this->ctx = &intel->ctx;
       this->mem_ctx = ralloc_context(NULL);
       this->shader = shader;
-      this->fail = false;
+      this->failed = false;
       this->variable_ht = hash_table_ctor(0,
 					  hash_table_pointer_hash,
 					  hash_table_pointer_compare);
@@ -476,6 +476,7 @@ public:
    bool remove_duplicate_mrf_writes();
    bool virtual_grf_interferes(int a, int b);
    void schedule_instructions();
+   void fail(const char *msg, ...);
 
    void generate_code();
    void generate_fb_write(fs_inst *inst);
@@ -549,7 +550,7 @@ public:
    ir_instruction *base_ir;
    /** @} */
 
-   bool fail;
+   bool failed;
 
    /* Result of last visit() method. */
    fs_reg result;
