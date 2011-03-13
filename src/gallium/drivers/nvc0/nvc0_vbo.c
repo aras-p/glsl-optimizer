@@ -51,8 +51,6 @@ nvc0_vertex_state_create(struct pipe_context *pipe,
     struct translate_key transkey;
     unsigned i;
 
-    assert(num_elements);
-
     so = MALLOC(sizeof(*so) +
                 num_elements * sizeof(struct nvc0_vertex_element));
     if (!so)
