@@ -33,22 +33,17 @@ static void
 nv50_flush(struct pipe_context *pipe,
            struct pipe_fence_handle **fence)
 {
-   struct nv50_context *nv50 = nv50_context(pipe);
-   struct nouveau_channel *chan = nv50->screen->base.channel;
-
-   /* XXX This flag wasn't set by the state tracker anyway. */
-   /*if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
-      BEGIN_RING(chan, RING_3D_(NV50_GRAPH_WAIT_FOR_IDLE), 1);
-      OUT_RING  (chan, 0);
-      BEGIN_RING(chan, RING_3D(TEX_CACHE_CTL), 1);
-      OUT_RING  (chan, 0x20);
-   }*/
+   struct nouveau_screen *screen = &nv50_context(pipe)->screen->base;
 
    if (fence)
-      nouveau_fence_ref(nv50->screen->base.fence.current,
-                        (struct nouveau_fence **)fence);
+      nouveau_fence_ref(screen->fence.current, (struct nouveau_fence **)fence);
 
-   FIRE_RING(chan);
+   /* Try to emit before firing to avoid having to flush again right after
+    * in case we have to wait on this fence.
+    */
+   nouveau_fence_emit(screen->fence.current);
+
+   FIRE_RING(screen->channel);
 }
 
 void

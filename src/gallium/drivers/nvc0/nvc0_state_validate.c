@@ -93,8 +93,9 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         mt->base.status |=  NOUVEAU_BUFFER_STATUS_GPU_WRITING;
         mt->base.status &= ~NOUVEAU_BUFFER_STATUS_GPU_READING;
 
+        /* only register for writing, otherwise we'd always serialize here */
         nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_FRAME, &mt->base,
-                                 NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
+                                 NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
     }
 
     if (fb->zsbuf) {
@@ -127,7 +128,7 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         mt->base.status &= ~NOUVEAU_BUFFER_STATUS_GPU_READING;
 
         nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_FRAME, &mt->base,
-                                 NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
+                                 NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
     } else {
         BEGIN_RING(chan, RING_3D(ZETA_ENABLE), 1);
         OUT_RING  (chan, 0);

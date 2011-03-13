@@ -33,27 +33,17 @@ static void
 nvc0_flush(struct pipe_context *pipe,
            struct pipe_fence_handle **fence)
 {
-   struct nvc0_context *nvc0 = nvc0_context(pipe);
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
-
-   /* XXX This flag wasn't set by the state tracker anyway. */
-   /*if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
-      BEGIN_RING(chan, RING_3D(SERIALIZE), 1);
-      OUT_RING  (chan, 0);
-      BEGIN_RING(chan, RING_3D(TEX_CACHE_CTL), 1);
-      OUT_RING  (chan, 0x00);
-   } else*/
-   /* XXX FLUSH_FRAME is now implicit. */
-   /*if ((flags & PIPE_FLUSH_RENDER_CACHE) && !(flags & PIPE_FLUSH_FRAME)) {
-      BEGIN_RING(chan, RING_3D(SERIALIZE), 1);
-      OUT_RING  (chan, 0);
-   }*/
+   struct nouveau_screen *screen = &nvc0_context(pipe)->screen->base;
 
    if (fence)
-      nouveau_fence_ref(nvc0->screen->base.fence.current,
-                        (struct nouveau_fence **)fence);
+      nouveau_fence_ref(screen->fence.current, (struct nouveau_fence **)fence);
 
-   FIRE_RING(chan);
+   /* Try to emit before firing to avoid having to flush again right after
+    * in case we have to wait on this fence.
+    */
+   nouveau_fence_emit(screen->fence.current);
+
+   FIRE_RING(screen->channel);
 }
 
 static void
