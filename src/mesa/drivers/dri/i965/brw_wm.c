@@ -364,8 +364,6 @@ static void brw_wm_populate_key( struct brw_context *brw,
 	    SWIZZLE_NIL
 	 };
 
-	 key->tex_swizzles[i] = SWIZZLE_NOOP;
-
 	 /* GL_DEPTH_TEXTURE_MODE is normally handled through
 	  * brw_wm_surface_state, but it applies to shadow compares as
 	  * well and our shadow compares always return the result in
