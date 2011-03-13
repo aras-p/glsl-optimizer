@@ -1233,32 +1233,34 @@ fs_visitor::emit_texture_gen4(ir_texture *ir, fs_reg dst, fs_reg coordinate)
    return inst;
 }
 
+/* gen5's sampler has slots for u, v, r, array index, then optional
+ * parameters like shadow comparitor or LOD bias.  If optional
+ * parameters aren't present, those base slots are optional and don't
+ * need to be included in the message.
+ *
+ * We don't fill in the unnecessary slots regardless, which may look
+ * surprising in the disassembly.
+ */
 fs_inst *
 fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate)
 {
-   /* gen5's SIMD8 sampler has slots for u, v, r, array index, then
-    * optional parameters like shadow comparitor or LOD bias.  If
-    * optional parameters aren't present, those base slots are
-    * optional and don't need to be included in the message.
-    *
-    * We don't fill in the unnecessary slots regardless, which may
-    * look surprising in the disassembly.
-    */
    int mlen = 1; /* g0 header always present. */
    int base_mrf = 1;
+   int reg_width = c->dispatch_width / 8;
 
    for (int i = 0; i < ir->coordinate->type->vector_elements; i++) {
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i), coordinate);
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen + i * reg_width),
+	   coordinate);
       coordinate.reg_offset++;
    }
-   mlen += ir->coordinate->type->vector_elements;
+   mlen += ir->coordinate->type->vector_elements * reg_width;
 
    if (ir->shadow_comparitor) {
-      mlen = MAX2(mlen, 5);
+      mlen = MAX2(mlen, 1 + 4 * reg_width);
 
       ir->shadow_comparitor->accept(this);
       emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
-      mlen++;
+      mlen += reg_width;
    }
 
    fs_inst *inst = NULL;
@@ -1268,17 +1270,18 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate)
       break;
    case ir_txb:
       ir->lod_info.bias->accept(this);
-      mlen = MAX2(mlen, 5);
+      mlen = MAX2(mlen, 1 + 4 * reg_width);
       emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
-      mlen++;
+      mlen += reg_width;
 
       inst = emit(FS_OPCODE_TXB, dst);
+
       break;
    case ir_txl:
       ir->lod_info.lod->accept(this);
-      mlen = MAX2(mlen, 5);
+      mlen = MAX2(mlen, 1 + 4 * reg_width);
       emit(BRW_OPCODE_MOV, fs_reg(MRF, base_mrf + mlen), this->result);
-      mlen++;
+      mlen += reg_width;
 
       inst = emit(FS_OPCODE_TXL, dst);
       break;
@@ -1289,6 +1292,10 @@ fs_visitor::emit_texture_gen5(ir_texture *ir, fs_reg dst, fs_reg coordinate)
    }
    inst->base_mrf = base_mrf;
    inst->mlen = mlen;
+
+   if (mlen > 11) {
+      fail("Message length >11 disallowed by hardware\n");
+   }
 
    return inst;
 }
@@ -2270,6 +2277,12 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
    int rlen = 4;
    uint32_t simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD8;
 
+   if (c->dispatch_width == 16) {
+      rlen = 8;
+      dst = vec16(dst);
+      simd_mode = BRW_SAMPLER_SIMD_MODE_SIMD16;
+   }
+
    if (intel->gen >= 5) {
       switch (inst->opcode) {
       case FS_OPCODE_TEX:
@@ -2336,11 +2349,6 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
       }
    }
    assert(msg_type != -1);
-
-   if (simd_mode == BRW_SAMPLER_SIMD_MODE_SIMD16) {
-      rlen = 8;
-      dst = vec16(dst);
-   }
 
    brw_SAMPLE(p,
 	      retype(dst, BRW_REGISTER_TYPE_UW),
