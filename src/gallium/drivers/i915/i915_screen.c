@@ -116,6 +116,8 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    /* Features that should be supported (boolean caps). */
    /* XXX: Just test the code */
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:
+   /* XXX: No code but hw supports it */
+   case PIPE_CAP_POINT_SPRITE:
       return 0;
 
    /* Unsupported features (boolean caps). */
@@ -126,7 +128,6 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    case PIPE_CAP_INDEP_BLEND_FUNC:
    case PIPE_CAP_TGSI_INSTANCEID:
    case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
-   case PIPE_CAP_POINT_SPRITE:
    case PIPE_CAP_SHADER_STENCIL_EXPORT:
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
    case PIPE_CAP_TEXTURE_SWIZZLE:
