@@ -79,6 +79,7 @@ struct nvc0_context {
       uint32_t instance_base;
       int32_t index_bias;
       boolean prim_restart;
+      boolean early_z;
       uint8_t num_vtxbufs;
       uint8_t num_vtxelts;
       uint8_t num_textures[5];

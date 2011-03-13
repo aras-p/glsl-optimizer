@@ -387,6 +387,20 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
    }
 }
 
+static void
+nvc0_validate_derived_1(struct nvc0_context *nvc0)
+{
+   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   boolean early_z;
+
+   early_z = nvc0->fragprog->fp.early_z && !nvc0->zsa->pipe.alpha.enabled;
+
+   if (early_z != nvc0->state.early_z) {
+      nvc0->state.early_z = early_z;
+      IMMED_RING(chan, RING_3D(EARLY_FRAGMENT_TESTS), early_z);
+   }
+}
+
 static struct state_validate {
     void (*func)(struct nvc0_context *);
     uint32_t states;
@@ -406,6 +420,7 @@ static struct state_validate {
     { nvc0_tevlprog_validate,      NVC0_NEW_TEVLPROG },
     { nvc0_gmtyprog_validate,      NVC0_NEW_GMTYPROG },
     { nvc0_fragprog_validate,      NVC0_NEW_FRAGPROG },
+    { nvc0_validate_derived_1,     NVC0_NEW_FRAGPROG | NVC0_NEW_ZSA },
     { nvc0_constbufs_validate,     NVC0_NEW_CONSTBUF },
     { nvc0_validate_textures,      NVC0_NEW_TEXTURES },
     { nvc0_validate_samplers,      NVC0_NEW_SAMPLERS },

@@ -276,14 +276,11 @@ nvc0_zsa_state_create(struct pipe_context *pipe,
 
    so->pipe = *cso;
 
-   SB_IMMED_3D(so, DEPTH_WRITE_ENABLE, cso->depth.writemask);
-   SB_BEGIN_3D(so, DEPTH_TEST_ENABLE, 1);
+   SB_IMMED_3D(so, DEPTH_TEST_ENABLE, cso->depth.enabled);
    if (cso->depth.enabled) {
-      SB_DATA    (so, 1);
+      SB_IMMED_3D(so, DEPTH_WRITE_ENABLE, cso->depth.writemask);
       SB_BEGIN_3D(so, DEPTH_TEST_FUNC, 1);
       SB_DATA    (so, nvgl_comparison_op(cso->depth.func));
-   } else {
-      SB_DATA    (so, 0);
    }
 
    if (cso->stencil[0].enabled) {
@@ -315,15 +312,12 @@ nvc0_zsa_state_create(struct pipe_context *pipe,
    if (cso->stencil[0].enabled) {
       SB_IMMED_3D(so, STENCIL_TWO_SIDE_ENABLE, 0);
    }
-    
-   SB_BEGIN_3D(so, ALPHA_TEST_ENABLE, 1);
+
+   SB_IMMED_3D(so, ALPHA_TEST_ENABLE, cso->alpha.enabled);
    if (cso->alpha.enabled) {
-      SB_DATA    (so, 1);
       SB_BEGIN_3D(so, ALPHA_TEST_REF, 2);
       SB_DATA    (so, fui(cso->alpha.ref_value));
       SB_DATA    (so, nvgl_comparison_op(cso->alpha.func));
-   } else {
-      SB_DATA    (so, 0);
    }
 
    assert(so->size < (sizeof(so->state) / sizeof(so->state[0])));

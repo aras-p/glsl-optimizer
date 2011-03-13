@@ -111,8 +111,6 @@ nvc0_fragprog_validate(struct nvc0_context *nvc0)
          return;
    nvc0_program_update_context_state(nvc0, fp, 4);
 
-   BEGIN_RING(chan, RING_3D(EARLY_FRAGMENT_TESTS), 1);
-   OUT_RING  (chan, fp->fp.early_z);
    BEGIN_RING(chan, RING_3D(SP_SELECT(5)), 2);
    OUT_RING  (chan, 0x51);
    OUT_RING  (chan, fp->code_base);
