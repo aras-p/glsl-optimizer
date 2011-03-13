@@ -137,7 +137,7 @@ static boolean parse_identifier( const char **pcur, char *ret )
    int i = 0;
    if (is_alpha_underscore( cur )) {
       ret[i++] = *cur++;
-      while (is_alpha_underscore( cur ))
+      while (is_alpha_underscore( cur ) || is_digit( cur ))
          ret[i++] = *cur++;
       ret[i++] = '\0';
       *pcur = cur;
