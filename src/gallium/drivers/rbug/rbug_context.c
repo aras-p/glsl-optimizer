@@ -112,7 +112,10 @@ rbug_draw_vbo(struct pipe_context *_pipe, const struct pipe_draw_info *info)
    pipe_mutex_lock(rb_pipe->draw_mutex);
    rbug_draw_block_locked(rb_pipe, RBUG_BLOCK_BEFORE);
 
-   pipe->draw_vbo(pipe, info);
+   if (!(rb_pipe->curr.fs && rb_pipe->curr.fs->disabled) &&
+       !(rb_pipe->curr.gs && rb_pipe->curr.gs->disabled) &&
+       !(rb_pipe->curr.vs && rb_pipe->curr.vs->disabled))
+      pipe->draw_vbo(pipe, info);
 
    rbug_draw_block_locked(rb_pipe, RBUG_BLOCK_AFTER);
    pipe_mutex_unlock(rb_pipe->draw_mutex);
