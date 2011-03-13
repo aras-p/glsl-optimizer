@@ -188,11 +188,12 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
     struct r300_screen* r300screen = r300_screen(pipe->screen);
     struct r300_blend_state* blend = CALLOC_STRUCT(r300_blend_state);
     uint32_t blend_control = 0;       /* R300_RB3D_CBLEND: 0x4e04 */
+    uint32_t blend_control_noclamp = 0;    /* R300_RB3D_CBLEND: 0x4e04 */
     uint32_t alpha_blend_control = 0; /* R300_RB3D_ABLEND: 0x4e08 */
+    uint32_t alpha_blend_control_noclamp = 0; /* R300_RB3D_ABLEND: 0x4e08 */
     uint32_t color_channel_mask = 0;  /* R300_RB3D_COLOR_CHANNEL_MASK: 0x4e0c */
     uint32_t rop = 0;                 /* R300_RB3D_ROPCNTL: 0x4e18 */
     uint32_t dither = 0;              /* R300_RB3D_DITHER_CTL: 0x4e50 */
-    boolean clamp = TRUE;
     CB_LOCALS;
 
     blend->state = *state;
@@ -209,10 +210,14 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
 
         /* despite the name, ALPHA_BLEND_ENABLE has nothing to do with alpha,
          * this is just the crappy D3D naming */
-        blend_control = R300_ALPHA_BLEND_ENABLE |
-            r300_translate_blend_function(eqRGB, clamp) |
+        blend_control = blend_control_noclamp =
+            R300_ALPHA_BLEND_ENABLE |
             ( r300_translate_blend_factor(srcRGB) << R300_SRC_BLEND_SHIFT) |
             ( r300_translate_blend_factor(dstRGB) << R300_DST_BLEND_SHIFT);
+        blend_control |=
+            r300_translate_blend_function(eqRGB, TRUE);
+        blend_control_noclamp |=
+            r300_translate_blend_function(eqRGB, FALSE);
 
         /* Optimization: some operations do not require the destination color.
          *
@@ -234,6 +239,7 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
             srcRGB == PIPE_BLENDFACTOR_SRC_ALPHA_SATURATE) {
             /* Enable reading from the colorbuffer. */
             blend_control |= R300_READ_ENABLE;
+            blend_control_noclamp |= R300_READ_ENABLE;
 
             if (r300screen->caps.is_r500) {
                 /* Optimization: Depending on incoming pixels, we can
@@ -271,8 +277,7 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
          *
          * Equations other than ADD are rarely used and therefore won't be
          * optimized. */
-        if (clamp &&
-            (eqRGB == PIPE_BLEND_ADD || eqRGB == PIPE_BLEND_REVERSE_SUBTRACT) &&
+        if ((eqRGB == PIPE_BLEND_ADD || eqRGB == PIPE_BLEND_REVERSE_SUBTRACT) &&
             (eqA == PIPE_BLEND_ADD || eqA == PIPE_BLEND_REVERSE_SUBTRACT)) {
             /* ADD: X+Y
              * REVERSE_SUBTRACT: Y-X
@@ -310,10 +315,14 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
         /* separate alpha */
         if (srcA != srcRGB || dstA != dstRGB || eqA != eqRGB) {
             blend_control |= R300_SEPARATE_ALPHA_ENABLE;
-            alpha_blend_control =
-                r300_translate_blend_function(eqA, clamp) |
+            blend_control_noclamp |= R300_SEPARATE_ALPHA_ENABLE;
+            alpha_blend_control = alpha_blend_control_noclamp =
                 (r300_translate_blend_factor(srcA) << R300_SRC_BLEND_SHIFT) |
                 (r300_translate_blend_factor(dstA) << R300_DST_BLEND_SHIFT);
+            alpha_blend_control |=
+                r300_translate_blend_function(eqA, TRUE);
+            alpha_blend_control_noclamp |=
+                r300_translate_blend_function(eqA, FALSE);
         }
     }
 
@@ -350,11 +359,21 @@ static void* r300_create_blend_state(struct pipe_context* pipe,
     */
 
     /* Build a command buffer. */
-    BEGIN_CB(blend->cb, 8);
+    BEGIN_CB(blend->cb_clamp, 8);
     OUT_CB_REG(R300_RB3D_ROPCNTL, rop);
     OUT_CB_REG_SEQ(R300_RB3D_CBLEND, 3);
     OUT_CB(blend_control);
     OUT_CB(alpha_blend_control);
+    OUT_CB(color_channel_mask);
+    OUT_CB_REG(R300_RB3D_DITHER_CTL, dither);
+    END_CB;
+
+    /* Build a command buffer. */
+    BEGIN_CB(blend->cb_noclamp, 8);
+    OUT_CB_REG(R300_RB3D_ROPCNTL, rop);
+    OUT_CB_REG_SEQ(R300_RB3D_CBLEND, 3);
+    OUT_CB(blend_control_noclamp);
+    OUT_CB(alpha_blend_control_noclamp);
     OUT_CB(color_channel_mask);
     OUT_CB_REG(R300_RB3D_DITHER_CTL, dither);
     END_CB;
@@ -842,10 +861,9 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
         }
     }
 
-    /* If nr_cbufs is changed from zero to non-zero or vice versa... */
-    if (!!old_state->nr_cbufs != !!state->nr_cbufs) {
-        r300_mark_atom_dirty(r300, &r300->blend_state);
-    }
+    /* Need to reset clamping or colormask. */
+    r300_mark_atom_dirty(r300, &r300->blend_state);
+
     /* If zsbuf is set from NULL to non-NULL or vice versa.. */
     if (!!old_state->zsbuf != !!state->zsbuf) {
         r300_mark_atom_dirty(r300, &r300->dsa_state);
