@@ -161,7 +161,6 @@ GALLIVM_SOURCES = \
         gallivm/lp_bld_bitarit.c \
         gallivm/lp_bld_const.c \
         gallivm/lp_bld_conv.c \
-        gallivm/lp_bld_debug.c \
         gallivm/lp_bld_flow.c \
         gallivm/lp_bld_format_aos.c \
         gallivm/lp_bld_format_soa.c \
@@ -189,6 +188,7 @@ GALLIVM_SOURCES = \
         draw/draw_pt_fetch_shade_pipeline_llvm.c
 
 GALLIVM_CPP_SOURCES = \
+	gallivm/lp_bld_debug.cpp \
 	gallivm/lp_bld_misc.cpp
 
 GENERATED_SOURCES = \

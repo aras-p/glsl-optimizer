@@ -12,7 +12,7 @@ GALLIUM_DRIVERS_DIRS += llvmpipe
 OPT_FLAGS = -O3 -ansi -pedantic
 ARCH_FLAGS = -mmmx -msse -msse2 -mstackrealign
 
-DEFINES += -DNDEBUG -DGALLIUM_LLVMPIPE -DHAVE_UDIS86
+DEFINES += -DNDEBUG -DGALLIUM_LLVMPIPE
 
 # override -std=c99
 CFLAGS += -std=gnu99
@@ -41,4 +41,4 @@ else
 endif
 
 LD = g++
-GL_LIB_DEPS = $(LLVM_LDFLAGS) $(LLVM_LIBS) $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread -lstdc++ -ludis86
+GL_LIB_DEPS = $(LLVM_LDFLAGS) $(LLVM_LIBS) $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread -lstdc++

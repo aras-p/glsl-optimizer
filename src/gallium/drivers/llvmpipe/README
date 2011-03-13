@@ -12,7 +12,7 @@ Requirements
    
    See /proc/cpuinfo to know what your CPU supports.
  
- - LLVM 2.6 (or later)
+ - LLVM. Version 2.8 recommended. 2.6 or later required.
  
    For Linux, on a recent Debian based distribution do:
  
@@ -30,21 +30,8 @@ Requirements
    debug=no. This is necessary as LLVM builds as static library so the chosen
    MS CRT must match.
 
-   The version of LLVM from SVN ("2.7svn") from mid-March 2010 is pretty
-   stable and has some features not in version 2.6.
-
  - scons (optional)
 
- - udis86, http://udis86.sourceforge.net/ (optional). My personal repository
-   supports more opcodes which haven't been merged upstream yet:
- 
-     git clone git://anongit.freedesktop.org/~jrfonseca/udis86
-     cd udis86
-     ./autogen.sh
-     ./configure --with-pic
-     make
-     sudo make install
- 
 
 Building
 ========
@@ -94,13 +81,7 @@ that no tail call optimizations are done by gcc.
 
 To better profile JIT code you'll need to build LLVM with oprofile integration.
 
-  source_dir=$PWD/llvm-2.6
-  build_dir=$source_dir/build/profile
-  install_dir=$source_dir-profile
-
-  mkdir -p "$build_dir"
-  cd "$build_dir" && \
-  $source_dir/configure \
+  ./configure \
       --prefix=$install_dir \
       --enable-optimized \
       --disable-profiling \

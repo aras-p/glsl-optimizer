@@ -46,66 +46,6 @@
 #include "util/u_debug.h"
 
 
-#if (defined(PIPE_OS_WINDOWS) && !defined(PIPE_CC_MSVC)) || defined(PIPE_OS_EMBDDED)
-
-#include "llvm/Support/raw_ostream.h"
-
-class raw_debug_ostream :
-   public llvm::raw_ostream
-{
-   uint64_t pos;
-
-   void write_impl(const char *Ptr, size_t Size);
-   uint64_t current_pos() { return pos; }
-   uint64_t current_pos() const { return pos; }
-
-#if HAVE_LLVM >= 0x207
-   uint64_t preferred_buffer_size() { return 512; }
-#else
-   size_t preferred_buffer_size() { return 512; }
-#endif
-};
-
-
-void
-raw_debug_ostream::write_impl(const char *Ptr, size_t Size)
-{
-   if (Size > 0) {
-      char *lastPtr = (char *)&Ptr[Size];
-      char last = *lastPtr;
-      *lastPtr = 0;
-      _debug_printf("%*s", Size, Ptr);
-      *lastPtr = last;
-      pos += Size;
-   }
-}
-
-
-/**
- * Same as LLVMDumpValue, but through our debugging channels.
- */
-extern "C" void
-lp_debug_dump_value(LLVMValueRef value)
-{
-   raw_debug_ostream os;
-   llvm::unwrap(value)->print(os);
-   os.flush();
-}
-
-
-#else
-
-
-extern "C" void
-lp_debug_dump_value(LLVMValueRef value)
-{
-   LLVMDumpValue(value);
-}
-
-
-#endif
-
-
 /**
  * Register the engine with oprofile.
  *

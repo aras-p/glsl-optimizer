@@ -1400,8 +1400,6 @@ if test "x$enable_gallium" = xno -a "x$enable_openvg" = xyes; then
 fi
 if test "x$enable_gallium" = xyes; then
     SRC_DIRS="$SRC_DIRS gallium gallium/winsys gallium/targets"
-    AC_CHECK_HEADER([udis86.h], [HAS_UDIS86="yes"],
-                [HAS_UDIS86="no"])
     AC_PATH_PROG([LLVM_CONFIG], [llvm-config], [no])
 fi
 
@@ -1653,10 +1651,6 @@ if test "x$enable_gallium_llvm" = xyes; then
 	LLVM_CFLAGS=`$LLVM_CONFIG --cppflags`
 	LLVM_LIBS="`$LLVM_CONFIG --libs jit interpreter nativecodegen bitwriter` -lstdc++"
 
-	if test "x$HAS_UDIS86" != xno; then
-	    LLVM_LIBS="$LLVM_LIBS -ludis86"
-	    DEFINES="$DEFINES -DHAVE_UDIS86"
-	fi
 	LLVM_LDFLAGS=`$LLVM_CONFIG --ldflags`
 	GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS llvmpipe"
 	DEFINES="$DEFINES -DGALLIUM_LLVMPIPE -D__STDC_CONSTANT_MACROS"
