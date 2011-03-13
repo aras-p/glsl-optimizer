@@ -111,6 +111,7 @@ lp_debug_dump_value(LLVMValueRef value)
 }
 
 
+#if HAVE_LLVM >= 0x0207
 /*
  * MemoryObject wrapper around a buffer of memory, to be used by MC
  * disassembler.
@@ -145,6 +146,7 @@ public:
       return 0;
    }
 };
+#endif /* HAVE_LLVM >= 0x0207 */
 
 
 /*
@@ -348,8 +350,8 @@ lp_disassemble(const void* func)
    }
 
    debug_printf("\n");
-#else
+#else /* HAVE_LLVM < 0x0207 */
    (void)func;
-#endif
+#endif /* HAVE_LLVM < 0x0207 */
 }
 
