@@ -432,6 +432,32 @@ public:
    void visit(ir_function_signature *ir);
 
    fs_inst *emit(fs_inst inst);
+
+   fs_inst *emit(int opcode)
+   {
+      return emit(fs_inst(opcode));
+   }
+
+   fs_inst *emit(int opcode, fs_reg dst)
+   {
+      return emit(fs_inst(opcode, dst));
+   }
+
+   fs_inst *emit(int opcode, fs_reg dst, fs_reg src0)
+   {
+      return emit(fs_inst(opcode, dst, src0));
+   }
+
+   fs_inst *emit(int opcode, fs_reg dst, fs_reg src0, fs_reg src1)
+   {
+      return emit(fs_inst(opcode, dst, src0, src1));
+   }
+
+   fs_inst *emit(int opcode, fs_reg dst, fs_reg src0, fs_reg src1, fs_reg src2)
+   {
+      return emit(fs_inst(opcode, dst, src0, src1, src2));
+   }
+
    void setup_paramvalues_refs();
    void assign_curb_setup();
    void calculate_urb_setup();
