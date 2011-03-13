@@ -48,11 +48,11 @@ extern "C" {
 #include "../glsl/ir_print_visitor.h"
 
 static void
-assign_reg(int *reg_hw_locations, fs_reg *reg)
+assign_reg(int *reg_hw_locations, fs_reg *reg, int reg_width)
 {
    if (reg->file == GRF && reg->reg != 0) {
       assert(reg->reg_offset >= 0);
-      reg->hw_reg = reg_hw_locations[reg->reg] + reg->reg_offset;
+      reg->hw_reg = reg_hw_locations[reg->reg] + reg->reg_offset * reg_width;
       reg->reg = 0;
    }
 }
@@ -63,32 +63,48 @@ fs_visitor::assign_regs_trivial()
    int last_grf = 0;
    int hw_reg_mapping[this->virtual_grf_next];
    int i;
+   int reg_width = c->dispatch_width / 8;
 
    hw_reg_mapping[0] = 0;
-   hw_reg_mapping[1] = this->first_non_payload_grf;
+   /* Note that compressed instructions require alignment to 2 registers. */
+   hw_reg_mapping[1] = ALIGN(this->first_non_payload_grf, reg_width);
    for (i = 2; i < this->virtual_grf_next; i++) {
       hw_reg_mapping[i] = (hw_reg_mapping[i - 1] +
-			   this->virtual_grf_sizes[i - 1]);
+			   this->virtual_grf_sizes[i - 1] * reg_width);
    }
-   last_grf = hw_reg_mapping[i - 1] + this->virtual_grf_sizes[i - 1];
+   last_grf = hw_reg_mapping[i - 1] + (this->virtual_grf_sizes[i - 1] *
+				       reg_width);
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
 
-      assign_reg(hw_reg_mapping, &inst->dst);
-      assign_reg(hw_reg_mapping, &inst->src[0]);
-      assign_reg(hw_reg_mapping, &inst->src[1]);
+      assign_reg(hw_reg_mapping, &inst->dst, reg_width);
+      assign_reg(hw_reg_mapping, &inst->src[0], reg_width);
+      assign_reg(hw_reg_mapping, &inst->src[1], reg_width);
    }
 
-   this->grf_used = last_grf + 1;
+   if (last_grf >= BRW_MAX_GRF) {
+      fail("Ran out of regs on trivial allocator (%d/%d)\n",
+	   last_grf, BRW_MAX_GRF);
+   }
+
+   this->grf_used = last_grf + reg_width;
 }
 
 bool
 fs_visitor::assign_regs()
 {
+   /* Most of this allocation was written for a reg_width of 1
+    * (dispatch_width == 8).  In extending to 16-wide, the code was
+    * left in place and it was converted to have the hardware
+    * registers it's allocating be contiguous physical pairs of regs
+    * for reg_width == 2.
+    */
+   int reg_width = c->dispatch_width / 8;
    int last_grf = 0;
    int hw_reg_mapping[this->virtual_grf_next + 1];
-   int base_reg_count = BRW_MAX_GRF - this->first_non_payload_grf;
+   int first_assigned_grf = ALIGN(this->first_non_payload_grf, reg_width);
+   int base_reg_count = (BRW_MAX_GRF - first_assigned_grf) / reg_width;
    int class_sizes[base_reg_count];
    int class_count = 0;
    int aligned_pair_class = -1;
@@ -157,8 +173,8 @@ fs_visitor::assign_regs()
 
 	       if (0) {
 		  printf("%d/%d conflicts %d/%d\n",
-			 class_sizes[i], this->first_non_payload_grf + i_r,
-			 class_sizes[c], this->first_non_payload_grf + c_r);
+			 class_sizes[i], first_assigned_grf + i_r,
+			 class_sizes[c], first_assigned_grf + c_r);
 	       }
 
 	       ra_add_reg_conflict(regs,
@@ -172,7 +188,7 @@ fs_visitor::assign_regs()
    /* Add a special class for aligned pairs, which we'll put delta_x/y
     * in on gen5 so that we can do PLN.
     */
-   if (brw->has_pln && intel->gen < 6) {
+   if (brw->has_pln && reg_width == 1 && intel->gen < 6) {
       int reg_count = (base_reg_count - 1) / 2;
       int unaligned_pair_class = 1;
       assert(class_sizes[unaligned_pair_class] == 2);
@@ -182,7 +198,7 @@ fs_visitor::assign_regs()
       class_sizes[aligned_pair_class] = 2;
       class_base_reg[aligned_pair_class] = 0;
       class_reg_count[aligned_pair_class] = 0;
-      int start = (this->first_non_payload_grf & 1) ? 1 : 0;
+      int start = (first_assigned_grf & 1) ? 1 : 0;
 
       for (int i = 0; i < reg_count; i++) {
 	 ra_class_add_reg(regs, classes[aligned_pair_class],
@@ -228,6 +244,8 @@ fs_visitor::assign_regs()
 
       if (reg == -1) {
 	 fail("no register to spill\n");
+      } else if (c->dispatch_width == 16) {
+	 fail("no spilling support on 16-wide yet\n");
       } else {
 	 spill_reg(reg);
       }
@@ -257,7 +275,7 @@ fs_visitor::assign_regs()
       }
 
       assert(hw_reg >= 0);
-      hw_reg_mapping[i] = this->first_non_payload_grf + hw_reg;
+      hw_reg_mapping[i] = first_assigned_grf + hw_reg * reg_width;
       last_grf = MAX2(last_grf,
 		      hw_reg_mapping[i] + this->virtual_grf_sizes[i] - 1);
    }
@@ -265,12 +283,12 @@ fs_visitor::assign_regs()
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       fs_inst *inst = (fs_inst *)iter.get();
 
-      assign_reg(hw_reg_mapping, &inst->dst);
-      assign_reg(hw_reg_mapping, &inst->src[0]);
-      assign_reg(hw_reg_mapping, &inst->src[1]);
+      assign_reg(hw_reg_mapping, &inst->dst, reg_width);
+      assign_reg(hw_reg_mapping, &inst->src[0], reg_width);
+      assign_reg(hw_reg_mapping, &inst->src[1], reg_width);
    }
 
-   this->grf_used = last_grf + 1;
+   this->grf_used = last_grf + reg_width;
 
    ralloc_free(g);
    ralloc_free(regs);
