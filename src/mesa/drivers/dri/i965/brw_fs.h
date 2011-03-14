@@ -178,6 +178,7 @@ public:
    int type;
    bool negate;
    bool abs;
+   bool sechalf;
    struct brw_reg fixed_hw_reg;
    int smear; /* -1, or a channel of the reg to smear to all channels. */
 
@@ -521,6 +522,7 @@ public:
    void emit_if_gen6(ir_if *ir);
    void emit_unspill(fs_inst *inst, fs_reg reg, uint32_t spill_offset);
 
+   void emit_color_write(int index, int first_color_mrf, fs_reg color);
    void emit_fb_writes();
    void emit_assignment_writes(fs_reg &l, fs_reg &r,
 			       const glsl_type *type, bool predicated);

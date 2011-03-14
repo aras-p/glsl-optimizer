@@ -41,10 +41,11 @@
  */
 
 struct brw_wm_unit_key {
-   unsigned int total_grf, total_scratch;
+   unsigned int total_grf, total_grf_16, total_scratch;
    unsigned int urb_entry_read_length;
    unsigned int curb_entry_read_length;
    unsigned int dispatch_grf_start_reg;
+   uint32_t prog_offset_16;
 
    unsigned int curbe_offset;
 
@@ -92,10 +93,21 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
 
    /* CACHE_NEW_WM_PROG */
    key->total_grf = brw->wm.prog_data->total_grf;
+   key->total_grf_16 = brw->wm.prog_data->total_grf_16;
    key->urb_entry_read_length = brw->wm.prog_data->urb_read_length;
    key->curb_entry_read_length = brw->wm.prog_data->curb_read_length;
    key->dispatch_grf_start_reg = brw->wm.prog_data->first_curbe_grf;
    key->total_scratch = brw->wm.prog_data->total_scratch;
+   key->prog_offset_16 = brw->wm.prog_data->prog_offset_16;
+
+   if (key->prog_offset_16) {
+      /* These two fields should be the same pre-gen6, which is why we
+       * only have one hardware field to program for both dispatch
+       * widths.
+       */
+      assert(brw->wm.prog_data->first_curbe_grf ==
+	     brw->wm.prog_data->first_curbe_grf_16);
+   }
 
    /* BRW_NEW_CURBE_OFFSETS */
    key->curbe_offset = brw->curbe.wm_start;
@@ -166,7 +178,10 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    memset(&wm, 0, sizeof(wm));
 
    wm.thread0.grf_reg_count = ALIGN(key->total_grf, 16) / 16 - 1;
+   wm.wm9.grf_reg_count_2 = ALIGN(key->total_grf_16, 16) / 16 - 1;
    wm.thread0.kernel_start_pointer = brw->wm.prog_bo->offset >> 6; /* reloc */
+   wm.wm9.kernel_start_pointer_2 = (brw->wm.prog_bo->offset +
+				    key->prog_offset_16) >> 6; /* reloc */
    wm.thread1.depth_coef_urb_read_offset = 1;
    wm.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
 
@@ -206,9 +221,11 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    wm.wm5.program_computes_depth = key->computes_depth;
    wm.wm5.program_uses_killpixel = key->uses_kill;
 
-   if (key->is_glsl)
+   if (key->is_glsl) {
       wm.wm5.enable_8_pix = 1;
-   else
+      if (key->prog_offset_16)
+	 wm.wm5.enable_16_pix = 1;
+   } else
       wm.wm5.enable_16_pix = 1;
 
    wm.wm5.max_threads = brw->wm_max_threads - 1;
@@ -255,6 +272,13 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
    drm_intel_bo_emit_reloc(bo, offsetof(struct brw_wm_unit_state, thread0),
 			   brw->wm.prog_bo, wm.thread0.grf_reg_count << 1,
 			   I915_GEM_DOMAIN_INSTRUCTION, 0);
+
+   if (key->prog_offset_16) {
+      drm_intel_bo_emit_reloc(bo, offsetof(struct brw_wm_unit_state, wm9),
+			      brw->wm.prog_bo, ((wm.wm9.grf_reg_count_2 << 1) +
+						key->prog_offset_16),
+			      I915_GEM_DOMAIN_INSTRUCTION, 0);
+   }
 
    /* Emit scratch space relocation */
    if (key->total_scratch != 0) {

@@ -2040,6 +2040,59 @@ fs_visitor::emit_interpolation_setup_gen6()
 }
 
 void
+fs_visitor::emit_color_write(int index, int first_color_mrf, fs_reg color)
+{
+   int reg_width = c->dispatch_width / 8;
+
+   if (c->dispatch_width == 8 || intel->gen == 6) {
+      /* SIMD8 write looks like:
+       * m + 0: r0
+       * m + 1: r1
+       * m + 2: g0
+       * m + 3: g1
+       *
+       * gen6 SIMD16 DP write looks like:
+       * m + 0: r0
+       * m + 1: r1
+       * m + 2: g0
+       * m + 3: g1
+       * m + 4: b0
+       * m + 5: b1
+       * m + 6: a0
+       * m + 7: a1
+       */
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, first_color_mrf + index * reg_width),
+	   color);
+   } else {
+      /* pre-gen6 SIMD16 single source DP write looks like:
+       * m + 0: r0
+       * m + 1: g0
+       * m + 2: b0
+       * m + 3: a0
+       * m + 4: r1
+       * m + 5: g1
+       * m + 6: b1
+       * m + 7: a1
+       *
+       * By setting the high bit of the MRF register number,
+       * we could indicate that we want COMPR4 mode - instead
+       * of doing the usual destination + 1 for the second
+       * half we would get destination + 4.  We would need to
+       * clue the optimizer into that, though.
+       */
+      push_force_uncompressed();
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, first_color_mrf + index), color);
+      pop_force_uncompressed();
+
+      push_force_sechalf();
+      color.sechalf = true;
+      emit(BRW_OPCODE_MOV, fs_reg(MRF, first_color_mrf + index + 4), color);
+      pop_force_sechalf();
+      color.sechalf = false;
+   }
+}
+
+void
 fs_visitor::emit_fb_writes()
 {
    this->current_annotation = "FB write header";
@@ -2113,7 +2166,7 @@ fs_visitor::emit_fb_writes()
 						 target);
       if (this->frag_color || this->frag_data) {
 	 for (int i = 0; i < 4; i++) {
-	    emit(BRW_OPCODE_MOV, fs_reg(MRF, color_mrf + i * reg_width), color);
+	    emit_color_write(i, color_mrf, color);
 	    color.reg_offset++;
 	 }
       }
@@ -2137,7 +2190,7 @@ fs_visitor::emit_fb_writes()
 	  * renderbuffer.
 	  */
 	 color.reg_offset += 3;
-	 emit(BRW_OPCODE_MOV, fs_reg(MRF, color_mrf + 3), color);
+	 emit_color_write(3, color_mrf, color);
       }
 
       fs_inst *inst = emit(FS_OPCODE_FB_WRITE);
@@ -2330,7 +2383,7 @@ fs_visitor::generate_math(fs_inst *inst,
 	    brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
 	 }
       }
-   } else {
+   } else /* gen <= 5 */{
       assert(inst->mlen >= 1);
 
       brw_set_compression_control(p, BRW_COMPRESSION_NONE);
@@ -2351,6 +2404,7 @@ fs_visitor::generate_math(fs_inst *inst,
 		  inst->base_mrf + 1, sechalf(src[0]),
 		  BRW_MATH_DATA_VECTOR,
 		  BRW_MATH_PRECISION_FULL);
+
 	 brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
       }
    }
@@ -3528,6 +3582,8 @@ static struct brw_reg brw_reg_from_fs_reg(fs_reg *reg)
 				reg->hw_reg, reg->smear);
       }
       brw_reg = retype(brw_reg, reg->type);
+      if (reg->sechalf)
+	 brw_reg = sechalf(brw_reg);
       break;
    case IMM:
       switch (reg->type) {
@@ -3881,7 +3937,7 @@ fs_visitor::run()
 	 /* Haven't hooked in support for uniforms through the 16-wide
 	  * version yet.
 	  */
-	 return GL_FALSE;
+	 return false;
       }
 
       /* align to 64 byte boundary. */
@@ -3957,11 +4013,10 @@ fs_visitor::run()
    assert(force_uncompressed_stack == 0);
    assert(force_sechalf_stack == 0);
 
-   if (!failed)
-      generate_code();
-
    if (failed)
-      return GL_FALSE;
+      return false;
+
+   generate_code();
 
    if (c->dispatch_width == 8) {
       c->prog_data.total_grf = grf_used;
@@ -4005,7 +4060,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
       return false;
    }
 
-   if (intel->gen >= 6) {
+   if (intel->gen >= 5) {
       c->dispatch_width = 16;
       fs_visitor v2(c, shader);
       v2.run();
