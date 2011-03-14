@@ -384,9 +384,9 @@ class PrintGlxDispatchFunctions(glX_proto_common.glx_print_proto):
 		print '    int error;'
 
 		if self.do_swap:
-		    print '    struct glx_context * const cx = __glXForceCurrent(cl, bswap_CARD32( &req->contextTag ), &error);'
+		    print '    __GLXcontext * const cx = __glXForceCurrent(cl, bswap_CARD32( &req->contextTag ), &error);'
 		else:
-		    print '    struct glx_context * const cx = __glXForceCurrent(cl, req->contextTag, &error);'
+		    print '    __GLXcontext * const cx = __glXForceCurrent(cl, req->contextTag, &error);'
 
 		print ''
 		if name not in f.glx_vendorpriv_names:
