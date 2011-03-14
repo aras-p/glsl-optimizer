@@ -1222,6 +1222,54 @@ void r600_init_config(struct r600_pipe_context *rctx)
 	r600_context_pipe_state_set(&rctx->ctx, rstate);
 }
 
+void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+{
+	struct r600_pipe_state *rstate = &shader->rstate;
+	struct r600_shader *rshader = &shader->shader;
+	unsigned spi_vs_out_id[10];
+	unsigned i, tmp;
+
+	/* clear previous register */
+	rstate->nregs = 0;
+
+	/* so far never got proper semantic id from tgsi */
+	/* FIXME better to move this in config things so they get emited
+	 * only one time per cs
+	 */
+	for (i = 0; i < 10; i++) {
+		spi_vs_out_id[i] = 0;
+	}
+	for (i = 0; i < 32; i++) {
+		tmp = i << ((i & 3) * 8);
+		spi_vs_out_id[i / 4] |= tmp;
+	}
+	for (i = 0; i < 10; i++) {
+		r600_pipe_state_add_reg(rstate,
+					R_028614_SPI_VS_OUT_ID_0 + i * 4,
+					spi_vs_out_id[i], 0xFFFFFFFF, NULL);
+	}
+
+	r600_pipe_state_add_reg(rstate,
+			R_0286C4_SPI_VS_OUT_CONFIG,
+			S_0286C4_VS_EXPORT_COUNT(rshader->noutput - 2),
+			0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+			R_028868_SQ_PGM_RESOURCES_VS,
+			S_028868_NUM_GPRS(rshader->bc.ngpr) |
+			S_028868_STACK_SIZE(rshader->bc.nstack),
+			0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+			R_0288D0_SQ_PGM_CF_OFFSET_VS,
+			0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+			R_028858_SQ_PGM_START_VS,
+			r600_bo_offset(shader->bo) >> 8, 0xFFFFFFFF, shader->bo);
+
+	r600_pipe_state_add_reg(rstate,
+				R_03E200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF,
+				0xFFFFFFFF, NULL);
+}
+
 void *r600_create_db_flush_dsa(struct r600_pipe_context *rctx)
 {
 	struct pipe_depth_stencil_alpha_state dsa;
