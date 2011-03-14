@@ -165,6 +165,7 @@ static struct i915_tracked_state *atoms[] = {
    &i915_hw_dynamic,
    &i915_hw_fs,
    &i915_hw_framebuffer,
+   &i915_hw_dst_buf_vars,
    &i915_hw_constants,
    NULL,
 };

@@ -148,6 +148,7 @@
 /* p161 */
 #define _3DSTATE_DST_BUF_VARS_CMD	(CMD_3D | (0x1d<<24) | (0x85<<16))
 /* Dword 1 */
+#define CLASSIC_EARLY_DEPTH             (1<<31)
 #define TEX_DEFAULT_COLOR_OGL           (0<<30)
 #define TEX_DEFAULT_COLOR_D3D           (1<<30)
 #define ZR_EARLY_DEPTH                  (1<<29)

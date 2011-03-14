@@ -48,6 +48,7 @@ extern struct i915_tracked_state i915_hw_immediate;
 extern struct i915_tracked_state i915_hw_dynamic;
 extern struct i915_tracked_state i915_hw_fs;
 extern struct i915_tracked_state i915_hw_framebuffer;
+extern struct i915_tracked_state i915_hw_dst_buf_vars;
 extern struct i915_tracked_state i915_hw_constants;
 
 void i915_update_derived(struct i915_context *i915);
