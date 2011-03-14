@@ -152,8 +152,9 @@ static void *r600_create_blend_state(struct pipe_context *ctx,
 		}
 	}
 	blend->cb_target_mask = target_mask;
+	/* MULTIWRITE_ENABLE is controlled by r600_pipe_shader_ps(). */
 	r600_pipe_state_add_reg(rstate, R_028808_CB_COLOR_CONTROL,
-				color_control, 0xFFFFFFFF, NULL);
+				color_control, 0xFFFFFFFD, NULL);
 
 	for (int i = 0; i < 8; i++) {
 		unsigned eqRGB = state->rt[i].rgb_func;
@@ -1297,13 +1298,10 @@ void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shad
 	r600_pipe_state_add_reg(rstate,
 				R_0288CC_SQ_PGM_CF_OFFSET_PS,
 				0x00000000, 0xFFFFFFFF, NULL);
-
-	if (rshader->fs_write_all) {
-		r600_pipe_state_add_reg(rstate, R_028808_CB_COLOR_CONTROL,
-					S_028808_MULTIWRITE_ENABLE(1),
-					S_028808_MULTIWRITE_ENABLE(1),
-					NULL);
-	}
+	r600_pipe_state_add_reg(rstate, R_028808_CB_COLOR_CONTROL,
+				S_028808_MULTIWRITE_ENABLE(!!rshader->fs_write_all),
+				S_028808_MULTIWRITE_ENABLE(1),
+				NULL);
 	/* only set some bits here, the other bits are set in the dsa state */
 	r600_pipe_state_add_reg(rstate, R_02880C_DB_SHADER_CONTROL,
 				db_shader_control,

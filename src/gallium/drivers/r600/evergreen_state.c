@@ -1438,6 +1438,7 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 	r600_pipe_state_add_reg(rstate,
 				R_02884C_SQ_PGM_EXPORTS_PS,
 				exports_ps, 0xFFFFFFFF, NULL);
+	/* FIXME: Evergreen doesn't seem to support MULTIWRITE_ENABLE. */
 	/* only set some bits here, the other bits are set in the dsa state */
 	r600_pipe_state_add_reg(rstate,
 				R_02880C_DB_SHADER_CONTROL,
