@@ -228,11 +228,18 @@ svga_buffer_unmap( struct pipe_context *pipe,
    if(sbuf->hwbuf)
       sws->buffer_unmap(sws, sbuf->hwbuf);
 
-   if(sbuf->map.writing) {
-      if(!sbuf->map.flush_explicit) {
-         /* No mapped range was flushed -- flush the whole buffer */
+   if (sbuf->map.writing) {
+      if (!sbuf->map.flush_explicit) {
+         /*
+          * Mapped range not flushed explicitly, so flush the whole buffer,
+          * and tell the host to discard the contents when processing the DMA
+          * command.
+          */
+
          SVGA_DBG(DEBUG_DMA, "flushing the whole buffer\n");
    
+         sbuf->dma.flags.discard = TRUE;
+
          svga_buffer_add_range(sbuf, 0, sbuf->b.b.width0);
       }
       
