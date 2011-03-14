@@ -735,6 +735,10 @@ gnu*)
     dnl Disable by default on GNU/Hurd
     driglx_direct_default="no"
     ;;
+cygwin*)
+    dnl Disable by default on cygwin
+    driglx_direct_default="no"
+    ;;
 *)
     driglx_direct_default="yes"
     ;;
@@ -1020,6 +1024,16 @@ if test "$mesa_driver" = dri -o "$mesa_driver" = no; then
         DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING"
         if test "x$driglx_direct" = xyes; then
             DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
+        fi
+        ;;
+    cygwin*)
+        DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER"
+        DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING"
+        if test "x$driglx_direct" = xyes; then
+            DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
+        fi
+        if test "x$DRI_DIRS" = "xyes"; then
+            DRI_DIRS="swrast"
         fi
         ;;
     esac
