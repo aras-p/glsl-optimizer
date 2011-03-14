@@ -117,9 +117,10 @@ static void r600_set_blend_color(struct pipe_context *ctx,
 static void *r600_create_blend_state(struct pipe_context *ctx,
 					const struct pipe_blend_state *state)
 {
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_pipe_blend *blend = CALLOC_STRUCT(r600_pipe_blend);
 	struct r600_pipe_state *rstate;
-	u32 color_control, target_mask;
+	u32 color_control = 0, target_mask;
 
 	if (blend == NULL) {
 		return NULL;
@@ -129,7 +130,10 @@ static void *r600_create_blend_state(struct pipe_context *ctx,
 	rstate->id = R600_PIPE_STATE_BLEND;
 
 	target_mask = 0;
-	color_control = S_028808_PER_MRT_BLEND(1);
+
+	/* R600 does not support per-MRT blends */
+	if (rctx->family > CHIP_R600)
+		color_control |= S_028808_PER_MRT_BLEND(1);
 	if (state->logicop_enable) {
 		color_control |= (state->logicop_func << 16) | (state->logicop_func << 20);
 	} else {
@@ -180,10 +184,11 @@ static void *r600_create_blend_state(struct pipe_context *ctx,
 			bc |= S_028804_ALPHA_DESTBLEND(r600_translate_blend_factor(dstA));
 		}
 
-		r600_pipe_state_add_reg(rstate, R_028780_CB_BLEND0_CONTROL + i * 4, bc, 0xFFFFFFFF, NULL);
-		if (i == 0) {
+		/* R600 does not support per-MRT blends */
+		if (rctx->family > CHIP_R600)
+			r600_pipe_state_add_reg(rstate, R_028780_CB_BLEND0_CONTROL + i * 4, bc, 0xFFFFFFFF, NULL);
+		if (i == 0)
 			r600_pipe_state_add_reg(rstate, R_028804_CB_BLEND_CONTROL, bc, 0xFFFFFFFF, NULL);
-		}
 	}
 	return rstate;
 }
