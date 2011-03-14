@@ -116,10 +116,10 @@ uint32_t r300_translate_texformat(enum pipe_format format,
     unsigned i;
     boolean uniform = TRUE;
     const uint32_t sign_bit[4] = {
-        R300_TX_FORMAT_SIGNED_X,
-        R300_TX_FORMAT_SIGNED_Y,
-        R300_TX_FORMAT_SIGNED_Z,
         R300_TX_FORMAT_SIGNED_W,
+        R300_TX_FORMAT_SIGNED_Z,
+        R300_TX_FORMAT_SIGNED_Y,
+        R300_TX_FORMAT_SIGNED_X,
     };
 
     desc = util_format_description(format);
@@ -212,14 +212,14 @@ uint32_t r300_translate_texformat(enum pipe_format format,
         switch (format) {
             case PIPE_FORMAT_RGTC1_SNORM:
             case PIPE_FORMAT_LATC1_SNORM:
-                result |= sign_bit[1];
+                result |= sign_bit[2];
             case PIPE_FORMAT_LATC1_UNORM:
             case PIPE_FORMAT_RGTC1_UNORM:
                 return R500_TX_FORMAT_ATI1N | result;
 
             case PIPE_FORMAT_RGTC2_SNORM:
             case PIPE_FORMAT_LATC2_SNORM:
-                result |= sign_bit[2] | sign_bit[3];
+                result |= sign_bit[1] | sign_bit[0];
             case PIPE_FORMAT_RGTC2_UNORM:
             case PIPE_FORMAT_LATC2_UNORM:
                 return R400_TX_FORMAT_ATI2N | result;
@@ -390,18 +390,18 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
     switch (format) {
         /* 8-bit buffers. */
         case PIPE_FORMAT_A8_UNORM:
-        /*case PIPE_FORMAT_A8_SNORM:*/
+        case PIPE_FORMAT_A8_SNORM:
         case PIPE_FORMAT_I8_UNORM:
-        /*case PIPE_FORMAT_I8_SNORM:*/
+        case PIPE_FORMAT_I8_SNORM:
         case PIPE_FORMAT_L8_UNORM:
-        /*case PIPE_FORMAT_L8_SNORM:*/
+        case PIPE_FORMAT_L8_SNORM:
         case PIPE_FORMAT_R8_UNORM:
         case PIPE_FORMAT_R8_SNORM:
             return R300_COLOR_FORMAT_I8;
 
         /* 16-bit buffers. */
         case PIPE_FORMAT_L8A8_UNORM:
-        /*case PIPE_FORMAT_L8A8_SNORM:*/
+        case PIPE_FORMAT_L8A8_SNORM:
         case PIPE_FORMAT_R8G8_UNORM:
         case PIPE_FORMAT_R8G8_SNORM:
             return R300_COLOR_FORMAT_UV88;
@@ -490,9 +490,9 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
     unsigned i;
     const struct util_format_description *desc;
     static const uint32_t sign_bit[4] = {
-        R300_OUT_SIGN(0x1),
-        R300_OUT_SIGN(0x2),
         R300_OUT_SIGN(0x4),
+        R300_OUT_SIGN(0x2),
+        R300_OUT_SIGN(0x1),
         R300_OUT_SIGN(0x8),
     };
 
@@ -538,23 +538,25 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         /* 8-bit outputs, one channel.
          * COLORFORMAT_I8 stores the C2 component. */
         case PIPE_FORMAT_A8_UNORM:
-        /*case PIPE_FORMAT_A8_SNORM:*/
+        case PIPE_FORMAT_A8_SNORM:
             return modifier | R300_C2_SEL_A;
         case PIPE_FORMAT_I8_UNORM:
-        /*case PIPE_FORMAT_I8_SNORM:*/
+        case PIPE_FORMAT_I8_SNORM:
         case PIPE_FORMAT_L8_UNORM:
-        /*case PIPE_FORMAT_L8_SNORM:*/
+        case PIPE_FORMAT_L8_SNORM:
         case PIPE_FORMAT_R8_UNORM:
         case PIPE_FORMAT_R8_SNORM:
             return modifier | R300_C2_SEL_R;
 
         /* 16-bit outputs, two channels.
          * COLORFORMAT_UV88 stores C2 and C0. */
+        case PIPE_FORMAT_L8A8_SNORM:
+            modifier |= sign_bit[2];
         case PIPE_FORMAT_L8A8_UNORM:
-        /*case PIPE_FORMAT_L8A8_SNORM:*/
             return modifier | R300_C0_SEL_A | R300_C2_SEL_R;
-        case PIPE_FORMAT_R8G8_UNORM:
         case PIPE_FORMAT_R8G8_SNORM:
+            modifier |= sign_bit[2];
+        case PIPE_FORMAT_R8G8_UNORM:
             return modifier | R300_C0_SEL_G | R300_C2_SEL_R;
 
         /* BGRA outputs. */

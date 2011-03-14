@@ -592,6 +592,13 @@ static void r300_update_rs_block(struct r300_context *r300)
     }
 }
 
+static void rgba_to_bgra(float color[4])
+{
+    float x = color[0];
+    color[0] = color[2];
+    color[2] = x;
+}
+
 static uint32_t r300_get_border_color(enum pipe_format format,
                                       const float border[4],
                                       boolean is_r500)
@@ -625,13 +632,13 @@ static uint32_t r300_get_border_color(enum pipe_format format,
     for (i = 0; i < 4; i++) {
         switch (desc->swizzle[i]) {
         case UTIL_FORMAT_SWIZZLE_X:
-            border_swizzled[2] = border[i];
+            border_swizzled[0] = border[i];
             break;
         case UTIL_FORMAT_SWIZZLE_Y:
             border_swizzled[1] = border[i];
             break;
         case UTIL_FORMAT_SWIZZLE_Z:
-            border_swizzled[0] = border[i];
+            border_swizzled[2] = border[i];
             break;
         case UTIL_FORMAT_SWIZZLE_W:
             border_swizzled[3] = border[i];
@@ -648,34 +655,36 @@ static uint32_t r300_get_border_color(enum pipe_format format,
         case PIPE_FORMAT_LATC1_UNORM:
             /* Add 1/32 to round the border color instead of truncating. */
             /* The Y component is used for the border color. */
-            border_swizzled[1] = border_swizzled[2] + 1.0f/32;
+            border_swizzled[1] = border_swizzled[0] + 1.0f/32;
             util_pack_color(border_swizzled, PIPE_FORMAT_B4G4R4A4_UNORM, &uc);
             return uc.ui;
         case PIPE_FORMAT_RGTC2_SNORM:
         case PIPE_FORMAT_LATC2_SNORM:
-            border_swizzled[0] = border_swizzled[2];
             util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_SNORM, &uc);
             return uc.ui;
         case PIPE_FORMAT_RGTC2_UNORM:
         case PIPE_FORMAT_LATC2_UNORM:
-            util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
+            util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_UNORM, &uc);
             return uc.ui;
         default:
-            util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_UNORM, &uc);
+            util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
             return uc.ui;
         }
     }
 
     switch (desc->channel[0].size) {
         case 2:
+            rgba_to_bgra(border_swizzled);
             util_pack_color(border_swizzled, PIPE_FORMAT_B2G3R3_UNORM, &uc);
             break;
 
         case 4:
+            rgba_to_bgra(border_swizzled);
             util_pack_color(border_swizzled, PIPE_FORMAT_B4G4R4A4_UNORM, &uc);
             break;
 
         case 5:
+            rgba_to_bgra(border_swizzled);
             if (desc->channel[1].size == 5) {
                 util_pack_color(border_swizzled, PIPE_FORMAT_B5G5R5A1_UNORM, &uc);
             } else if (desc->channel[1].size == 6) {
@@ -687,32 +696,39 @@ static uint32_t r300_get_border_color(enum pipe_format format,
 
         default:
         case 8:
-            util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
+            if (desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED)
+               util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_SNORM, &uc);
+            else
+               util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_UNORM, &uc);
             break;
 
         case 10:
-            util_pack_color(border_swizzled, PIPE_FORMAT_B10G10R10A2_UNORM, &uc);
+            util_pack_color(border_swizzled, PIPE_FORMAT_R10G10B10A2_UNORM, &uc);
             break;
 
         case 16:
             if (desc->nr_channels <= 2) {
-                border_swizzled[0] = border_swizzled[2];
                 if (desc->channel[0].type == UTIL_FORMAT_TYPE_FLOAT) {
                     util_pack_color(border_swizzled, PIPE_FORMAT_R16G16_FLOAT, &uc);
+                } else if (desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED) {
+                    util_pack_color(border_swizzled, PIPE_FORMAT_R16G16_SNORM, &uc);
                 } else {
                     util_pack_color(border_swizzled, PIPE_FORMAT_R16G16_UNORM, &uc);
                 }
             } else {
-                util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
+                if (desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED) {
+                    util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_SNORM, &uc);
+                } else {
+                    util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_UNORM, &uc);
+                }
             }
             break;
 
         case 32:
             if (desc->nr_channels == 1) {
-                border_swizzled[0] = border_swizzled[2];
                 util_pack_color(border_swizzled, PIPE_FORMAT_R32_FLOAT, &uc);
             } else {
-                util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
+                util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_UNORM, &uc);
             }
             break;
     }
