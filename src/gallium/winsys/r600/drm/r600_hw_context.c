@@ -764,7 +764,7 @@ static void rv6xx_context_surface_base_update(struct r600_context *ctx,
 					      unsigned base_update_flags)
 {
 	/* need to emit surface base update on rv6xx */
-	if ((ctx->radeon->family > CHIP_R600) ||
+	if ((ctx->radeon->family > CHIP_R600) &&
 	    (ctx->radeon->family < CHIP_RV770)) {
 		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_BASE_UPDATE, 0, 0);
 		ctx->pm4[ctx->pm4_cdwords++] = base_update_flags;
