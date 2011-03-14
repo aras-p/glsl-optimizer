@@ -729,6 +729,14 @@ else
     enable_xcb=no
 fi
 
+dnl Direct rendering or just indirect rendering
+AC_ARG_ENABLE([driglx-direct],
+    [AS_HELP_STRING([--disable-driglx-direct],
+        [enable direct rendering in GLX and EGL for DRI \
+            @<:@default=enabled@:>@])],
+    [driglx_direct="$enableval"],
+    [driglx_direct="yes"])
+
 dnl
 dnl libGL configuration per driver
 dnl
@@ -762,12 +770,17 @@ dri|no) # these checks are still desired when there is no mesa_driver
         AC_MSG_ERROR([Can't use static libraries for DRI drivers])
     fi
 
-    # Check for libdrm
-    PKG_CHECK_MODULES([LIBDRM], [libdrm >= $LIBDRM_REQUIRED])
-    PKG_CHECK_MODULES([DRI2PROTO], [dri2proto >= $DRI2PROTO_REQUIRED])
     PKG_CHECK_MODULES([GLPROTO], [glproto >= $GLPROTO_REQUIRED])
-    GL_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED dri2proto >= $DRI2PROTO_REQUIRED glproto >= $GLPROTO_REQUIRED"
-    DRI_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED"
+    GL_PC_REQ_PRIV="glproto >= $GLPROTO_REQUIRED"
+    DRI_PC_REQ_PRIV=""
+
+    if test x"$driglx_direct" = xyes; then
+        # Check for libdrm
+        PKG_CHECK_MODULES([LIBDRM], [libdrm >= $LIBDRM_REQUIRED])
+        PKG_CHECK_MODULES([DRI2PROTO], [dri2proto >= $DRI2PROTO_REQUIRED])
+        GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV libdrm >= $LIBDRM_REQUIRED dri2proto >= $DRI2PROTO_REQUIRED"
+        DRI_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED"
+    fi
 
     # find the DRI deps for libGL
     if test "$x11_pkgconfig" = yes; then
@@ -910,12 +923,6 @@ AC_ARG_WITH([dri-searchpath],
     [DRI_DRIVER_SEARCH_DIR="$withval"],
     [DRI_DRIVER_SEARCH_DIR='${DRI_DRIVER_INSTALL_DIR}'])
 AC_SUBST([DRI_DRIVER_SEARCH_DIR])
-dnl Direct rendering or just indirect rendering
-AC_ARG_ENABLE([driglx-direct],
-    [AS_HELP_STRING([--disable-driglx-direct],
-        [enable direct rendering in GLX and EGL for DRI @<:@default=enabled@:>@])],
-    [driglx_direct="$enableval"],
-    [driglx_direct="yes"])
 dnl Which drivers to build - default is chosen by platform
 AC_ARG_WITH([dri-drivers],
     [AS_HELP_STRING([--with-dri-drivers@<:@=DIRS...@:>@],
