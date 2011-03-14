@@ -760,6 +760,17 @@ out_err:
 	return r;
 }
 
+static void rv6xx_context_surface_base_update(struct r600_context *ctx,
+					      unsigned base_update_flags)
+{
+	/* need to emit surface base update on rv6xx */
+	if ((ctx->radeon->family > CHIP_R600) ||
+	    (ctx->radeon->family < CHIP_RV770)) {
+		ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_BASE_UPDATE, 0, 0);
+		ctx->pm4[ctx->pm4_cdwords++] = base_update_flags;
+	}
+}
+
 void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				unsigned flush_mask, struct r600_bo *rbo)
 {
@@ -991,6 +1002,7 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	unsigned ndwords = 9;
 	struct r600_block *dirty_block = NULL;
 	struct r600_block *next_block;
+	unsigned rv6xx_surface_base_update = 0;
 
 	if (draw->indices) {
 		ndwords = 13;
@@ -1013,10 +1025,14 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	for (int i = 0; i < 8; i++) {
 		if (cb[i]) {
 			ndwords += 7;
+			rv6xx_surface_base_update |= SURFACE_BASE_UPDATE_COLOR(i);
 		}
 	}
-	if (db)
+	if (db) {
 		ndwords += 7;
+		rv6xx_surface_base_update |= SURFACE_BASE_UPDATE_DEPTH;
+	}
+	/* XXX also need to update SURFACE_BASE_UPDATE_STRMOUT when we support it */
 
 	/* queries need some special values */
 	if (ctx->num_query_running) {
@@ -1043,9 +1059,13 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	}
 
 	/* enough room to copy packet */
-	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &ctx->dirty,list) {
+	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &ctx->dirty, list) {
 		r600_context_block_emit_dirty(ctx, dirty_block);
 	}
+
+	/* rv6xx surface base udpate */
+	if (rv6xx_surface_base_update)
+		rv6xx_context_surface_base_update(ctx, rv6xx_surface_base_update);
 
 	/* draw packet */
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_INDEX_TYPE, 0, ctx->predicate_drawing);
