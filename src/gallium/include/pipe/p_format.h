@@ -211,6 +211,15 @@ enum pipe_format {
    PIPE_FORMAT_LATC2_UNORM             = 145,
    PIPE_FORMAT_LATC2_SNORM             = 146,
 
+   PIPE_FORMAT_A8_SNORM                = 147,
+   PIPE_FORMAT_L8_SNORM                = 148,
+   PIPE_FORMAT_L8A8_SNORM              = 149,
+   PIPE_FORMAT_I8_SNORM                = 150,
+   PIPE_FORMAT_A16_SNORM               = 151,
+   PIPE_FORMAT_L16_SNORM               = 152,
+   PIPE_FORMAT_L16A16_SNORM            = 153,
+   PIPE_FORMAT_I16_SNORM               = 154,
+
    PIPE_FORMAT_COUNT
 };
 
