@@ -1501,6 +1501,18 @@ void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader 
 				0xFFFFFFFF, NULL);
 }
 
+void evergreen_fetch_shader(struct r600_vertex_element *ve)
+{
+	struct r600_pipe_state *rstate = &ve->rstate;
+	rstate->id = R600_PIPE_STATE_FETCH_SHADER;
+	rstate->nregs = 0;
+	r600_pipe_state_add_reg(rstate, R_0288A8_SQ_PGM_RESOURCES_FS,
+				0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0288A4_SQ_PGM_START_FS,
+				(r600_bo_offset(ve->fetch_shader)) >> 8,
+				0xFFFFFFFF, ve->fetch_shader);
+}
+
 void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx)
 {
 	struct pipe_depth_stencil_alpha_state dsa;

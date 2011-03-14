@@ -190,7 +190,6 @@ struct r600_bc {
 
 /* eg_asm.c */
 int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf);
-void eg_cf_vtx(struct r600_vertex_element *ve);
 
 /* r600_asm.c */
 int r600_bc_init(struct r600_bc *bc, enum radeon_family family);

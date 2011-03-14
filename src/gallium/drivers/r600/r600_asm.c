@@ -1918,22 +1918,6 @@ void r600_bc_dump(struct r600_bc *bc)
 	fprintf(stderr, "--------------------------------------\n");
 }
 
-static void r600_cf_vtx(struct r600_vertex_element *ve)
-{
-	struct r600_pipe_state *rstate;
-
-	rstate = &ve->rstate;
-	rstate->id = R600_PIPE_STATE_FETCH_SHADER;
-	rstate->nregs = 0;
-	r600_pipe_state_add_reg(rstate, R_0288A4_SQ_PGM_RESOURCES_FS,
-				0x00000000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_0288DC_SQ_PGM_CF_OFFSET_FS,
-				0x00000000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_028894_SQ_PGM_START_FS,
-				r600_bo_offset(ve->fetch_shader) >> 8,
-				0xFFFFFFFF, ve->fetch_shader);
-}
-
 static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 				unsigned *num_format, unsigned *format_comp)
 {
@@ -2191,9 +2175,9 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 	r600_bc_clear(&bc);
 
 	if (rctx->family >= CHIP_CEDAR)
-		eg_cf_vtx(ve);
+		evergreen_fetch_shader(ve);
 	else
-		r600_cf_vtx(ve);
+		r600_fetch_shader(ve);
 
 	return 0;
 }
