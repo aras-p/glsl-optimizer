@@ -730,12 +730,21 @@ else
 fi
 
 dnl Direct rendering or just indirect rendering
+case "$host_os" in
+gnu*)
+    dnl Disable by default on GNU/Hurd
+    driglx_direct_default="no"
+    ;;
+*)
+    driglx_direct_default="yes"
+    ;;
+esac
 AC_ARG_ENABLE([driglx-direct],
     [AS_HELP_STRING([--disable-driglx-direct],
         [enable direct rendering in GLX and EGL for DRI \
-            @<:@default=enabled@:>@])],
+            @<:@default=auto@:>@])],
     [driglx_direct="$enableval"],
-    [driglx_direct="yes"])
+    [driglx_direct="$driglx_direct_default"])
 
 dnl
 dnl libGL configuration per driver
