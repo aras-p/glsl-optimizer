@@ -1452,7 +1452,10 @@ fs_visitor::visit(ir_texture *ir)
    if (ir->shadow_comparitor)
       inst->shadow_compare = true;
 
-   if (c->key.tex_swizzles[inst->sampler] != SWIZZLE_NOOP) {
+   if (ir->type == glsl_type::float_type) {
+      /* Ignore DEPTH_TEXTURE_MODE swizzling. */
+      assert(ir->sampler->type->sampler_shadow);
+   } else if (c->key.tex_swizzles[inst->sampler] != SWIZZLE_NOOP) {
       fs_reg swizzle_dst = fs_reg(this, glsl_type::vec4_type);
 
       for (int i = 0; i < 4; i++) {
