@@ -1329,7 +1329,7 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 {
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
-	unsigned i, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1;
+	unsigned i, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1, db_shader_control;
 	int pos_index = -1, face_index = -1;
 	int ninterp = 0;
 	boolean have_linear = FALSE, have_centroid = FALSE, have_perspective = FALSE;
@@ -1337,6 +1337,7 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 
 	rstate->nregs = 0;
 
+	db_shader_control = 0;
 	for (i = 0; i < rshader->ninput; i++) {
 		/* evergreen NUM_INTERP only contains values interpolated into the LDS,
 		   POSITION goes via GPRs from the SC so isn't counted */
@@ -1358,16 +1359,12 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 	}
 	for (i = 0; i < rshader->noutput; i++) {
 		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
-			r600_pipe_state_add_reg(rstate,
-						R_02880C_DB_SHADER_CONTROL,
-						S_02880C_Z_EXPORT_ENABLE(1),
-						S_02880C_Z_EXPORT_ENABLE(1), NULL);
+			db_shader_control |= S_02880C_Z_EXPORT_ENABLE(1);
 		if (rshader->output[i].name == TGSI_SEMANTIC_STENCIL)
-			r600_pipe_state_add_reg(rstate,
-						R_02880C_DB_SHADER_CONTROL,
-						S_02880C_STENCIL_EXPORT_ENABLE(1),
-						S_02880C_STENCIL_EXPORT_ENABLE(1), NULL);
+			db_shader_control |= S_02880C_STENCIL_EXPORT_ENABLE(1);
 	}
+	if (rshader->uses_kill)
+		db_shader_control |= S_02880C_KILL_ENABLE(1);
 
 	exports_ps = 0;
 	num_cout = 0;
@@ -1442,15 +1439,14 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 	r600_pipe_state_add_reg(rstate,
 				R_02884C_SQ_PGM_EXPORTS_PS,
 				exports_ps, 0xFFFFFFFF, NULL);
-
-	if (rshader->uses_kill) {
-		/* only set some bits here, the other bits are set in the dsa state */
-		r600_pipe_state_add_reg(rstate,
-					R_02880C_DB_SHADER_CONTROL,
-					S_02880C_KILL_ENABLE(1),
-					S_02880C_KILL_ENABLE(1), NULL);
-	}
-
+	/* only set some bits here, the other bits are set in the dsa state */
+	r600_pipe_state_add_reg(rstate,
+				R_02880C_DB_SHADER_CONTROL,
+				db_shader_control,
+				S_02880C_Z_EXPORT_ENABLE(1) |
+				S_02880C_STENCIL_EXPORT_ENABLE(1) |
+				S_02880C_KILL_ENABLE(1),
+				NULL);
 	r600_pipe_state_add_reg(rstate,
 				R_03A200_SQ_LOOP_CONST_0, 0x01000FFF,
 				0xFFFFFFFF, NULL);
