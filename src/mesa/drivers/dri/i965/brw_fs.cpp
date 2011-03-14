@@ -2145,7 +2145,6 @@ fs_visitor::generate_fb_write(fs_inst *inst)
 
    brw_fb_WRITE(p,
 		8, /* dispatch_width */
-		retype(vec8(brw_null_reg()), BRW_REGISTER_TYPE_UW),
 		inst->base_mrf,
 		implied_header,
 		inst->target,

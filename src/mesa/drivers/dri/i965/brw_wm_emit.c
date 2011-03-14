@@ -1325,12 +1325,6 @@ static void fire_fb_write( struct brw_wm_compile *c,
 {
    struct brw_compile *p = &c->func;
    struct intel_context *intel = &p->brw->intel;
-   struct brw_reg dst;
-
-   if (c->dispatch_width == 16)
-      dst = retype(vec16(brw_null_reg()), BRW_REGISTER_TYPE_UW);
-   else
-      dst = retype(vec8(brw_null_reg()), BRW_REGISTER_TYPE_UW);
 
    /* Pass through control information:
     * 
@@ -1352,7 +1346,6 @@ static void fire_fb_write( struct brw_wm_compile *c,
 /*  send (16) null.0<1>:uw m0               r0.0<8;8,1>:uw   0x85a04000:ud    { Align1 EOT } */
    brw_fb_WRITE(p,
 		c->dispatch_width,
-		dst,
 		base_reg,
 		retype(brw_vec8_grf(0, 0), BRW_REGISTER_TYPE_UW),
 		target,		

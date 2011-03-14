@@ -856,7 +856,6 @@ void brw_ff_sync(struct brw_compile *p,
 
 void brw_fb_WRITE(struct brw_compile *p,
 		  int dispatch_width,
-		   struct brw_reg dest,
 		   GLuint msg_reg_nr,
 		   struct brw_reg src0,
 		   GLuint binding_table_index,
