@@ -1222,6 +1222,102 @@ void r600_init_config(struct r600_pipe_context *rctx)
 	r600_context_pipe_state_set(&rctx->ctx, rstate);
 }
 
+void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader)
+{
+	struct r600_pipe_state *rstate = &shader->rstate;
+	struct r600_shader *rshader = &shader->shader;
+	unsigned i, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1, db_shader_control;
+	int pos_index = -1, face_index = -1;
+
+	rstate->nregs = 0;
+
+	for (i = 0; i < rshader->ninput; i++) {
+		if (rshader->input[i].name == TGSI_SEMANTIC_POSITION)
+			pos_index = i;
+		if (rshader->input[i].name == TGSI_SEMANTIC_FACE)
+			face_index = i;
+	}
+
+	db_shader_control = 0;
+	for (i = 0; i < rshader->noutput; i++) {
+		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
+			db_shader_control |= S_02880C_Z_EXPORT_ENABLE(1);
+		if (rshader->output[i].name == TGSI_SEMANTIC_STENCIL)
+			db_shader_control |= S_02880C_STENCIL_REF_EXPORT_ENABLE(1);
+	}
+	if (rshader->uses_kill)
+		db_shader_control |= S_02880C_KILL_ENABLE(1);
+
+	exports_ps = 0;
+	num_cout = 0;
+	for (i = 0; i < rshader->noutput; i++) {
+		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION ||
+		    rshader->output[i].name == TGSI_SEMANTIC_STENCIL)
+			exports_ps |= 1;
+		else if (rshader->output[i].name == TGSI_SEMANTIC_COLOR) {
+			num_cout++;
+		}
+	}
+	exports_ps |= S_028854_EXPORT_COLORS(num_cout);
+	if (!exports_ps) {
+		/* always at least export 1 component per pixel */
+		exports_ps = 2;
+	}
+
+	spi_ps_in_control_0 = S_0286CC_NUM_INTERP(rshader->ninput) |
+				S_0286CC_PERSP_GRADIENT_ENA(1);
+	spi_input_z = 0;
+	if (pos_index != -1) {
+		spi_ps_in_control_0 |= (S_0286CC_POSITION_ENA(1) |
+					S_0286CC_POSITION_CENTROID(rshader->input[pos_index].centroid) |
+					S_0286CC_POSITION_ADDR(rshader->input[pos_index].gpr) |
+					S_0286CC_BARYC_SAMPLE_CNTL(1));
+		spi_input_z |= 1;
+	}
+
+	spi_ps_in_control_1 = 0;
+	if (face_index != -1) {
+		spi_ps_in_control_1 |= S_0286D0_FRONT_FACE_ENA(1) |
+			S_0286D0_FRONT_FACE_ADDR(rshader->input[face_index].gpr);
+	}
+
+	r600_pipe_state_add_reg(rstate, R_0286CC_SPI_PS_IN_CONTROL_0, spi_ps_in_control_0, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0286D0_SPI_PS_IN_CONTROL_1, spi_ps_in_control_1, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0286D8_SPI_INPUT_Z, spi_input_z, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_028840_SQ_PGM_START_PS,
+				r600_bo_offset(shader->bo) >> 8, 0xFFFFFFFF, shader->bo);
+	r600_pipe_state_add_reg(rstate,
+				R_028850_SQ_PGM_RESOURCES_PS,
+				S_028868_NUM_GPRS(rshader->bc.ngpr) |
+				S_028868_STACK_SIZE(rshader->bc.nstack),
+				0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_028854_SQ_PGM_EXPORTS_PS,
+				exports_ps, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate,
+				R_0288CC_SQ_PGM_CF_OFFSET_PS,
+				0x00000000, 0xFFFFFFFF, NULL);
+
+	if (rshader->fs_write_all) {
+		r600_pipe_state_add_reg(rstate, R_028808_CB_COLOR_CONTROL,
+					S_028808_MULTIWRITE_ENABLE(1),
+					S_028808_MULTIWRITE_ENABLE(1),
+					NULL);
+	}
+	/* only set some bits here, the other bits are set in the dsa state */
+	r600_pipe_state_add_reg(rstate, R_02880C_DB_SHADER_CONTROL,
+				db_shader_control,
+				S_02880C_Z_EXPORT_ENABLE(1) |
+				S_02880C_STENCIL_REF_EXPORT_ENABLE(1) |
+				S_02880C_KILL_ENABLE(1),
+				NULL);
+
+	r600_pipe_state_add_reg(rstate,
+				R_03E200_SQ_LOOP_CONST_0, 0x01000FFF,
+				0xFFFFFFFF, NULL);
+}
+
 void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader)
 {
 	struct r600_pipe_state *rstate = &shader->rstate;
