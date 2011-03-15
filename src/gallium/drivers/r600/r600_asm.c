@@ -426,7 +426,9 @@ static int is_alu_mova_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 static int is_alu_vec_unit_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 {
 	return is_alu_reduction_inst(bc, alu) ||
-		is_alu_mova_inst(bc, alu);
+		is_alu_mova_inst(bc, alu) ||
+		(bc->chiprev == CHIPREV_EVERGREEN &&
+		alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_FLT_TO_INT_FLOOR);
 }
 
 /* alu instructions that can only execute on the trans unit */
@@ -468,8 +470,9 @@ static int is_alu_trans_unit_inst(struct r600_bc *bc, struct r600_bc_alu *alu)
 	case CHIPREV_EVERGREEN:
 	default:
 		if (!alu->is_op3)
-			/* Note that FLT_TO_INT* instructions are vector instructions
-			 * on Evergreen, despite what the documentation says. */
+			/* Note that FLT_TO_INT_* instructions are vector-only instructions
+			 * on Evergreen, despite what the documentation says. FLT_TO_INT
+			 * can do both vector and scalar. */
 			return alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_ASHR_INT ||
 				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_INT_TO_FLT ||
 				alu->inst == EG_V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_LSHL_INT ||
