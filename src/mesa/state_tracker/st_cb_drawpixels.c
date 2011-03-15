@@ -213,9 +213,9 @@ st_make_drawpix_z_stencil_program(struct st_context *st,
    p->InputsRead = FRAG_BIT_TEX0 | FRAG_BIT_COL0;
    p->OutputsWritten = 0;
    if (write_depth)
-      p->OutputsWritten |= (1 << FRAG_RESULT_DEPTH);
+      p->OutputsWritten |= BITFIELD64_BIT(FRAG_RESULT_DEPTH);
    if (write_stencil)
-      p->OutputsWritten |= (1 << FRAG_RESULT_STENCIL);
+      p->OutputsWritten |= BITFIELD64_BIT(FRAG_RESULT_STENCIL);
 
    p->SamplersUsed =  0x1;  /* sampler 0 (bit 0) is used */
    if (write_stencil)

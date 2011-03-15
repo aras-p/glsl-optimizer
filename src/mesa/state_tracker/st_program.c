@@ -798,7 +798,7 @@ st_translate_geometry_program(struct st_context *st,
     * mapping and the semantic information for each output.
     */
    for (attr = 0; attr < GEOM_RESULT_MAX; attr++) {
-      if (stgp->Base.Base.OutputsWritten & (1 << attr)) {
+      if (stgp->Base.Base.OutputsWritten & BITFIELD64_BIT(attr)) {
          GLuint slot;
 
          slot = gs_num_outputs;
