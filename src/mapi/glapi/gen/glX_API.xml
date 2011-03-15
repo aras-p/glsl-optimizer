@@ -217,4 +217,18 @@
     </function>
 </category>
 
+<category name="GLX_ARB_create_context" number="56">
+    <function name="SetClientInfoARB">
+        <glx sop="33"/>
+    </function>
+
+    <function name="CreateContextAttribsARB">
+        <glx sop="34"/>
+    </function>
+
+    <function name="SetClientInfo2ARB">
+        <glx sop="35"/>
+    </function>
+</category>
+
 </OpenGLAPI>
