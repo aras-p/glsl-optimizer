@@ -131,7 +131,8 @@ static void update_framebuffer(struct i915_context *i915)
       i915->current.draw_offset = draw_offset;
       i915_set_flush_dirty(i915, I915_PIPELINE_FLUSH);
       i915->static_dirty |= I915_DST_RECT;
-   } else if (i915->current.draw_size != draw_size) {
+   }
+   if (i915->current.draw_size != draw_size) {
       i915->current.draw_size = draw_size;
       i915->static_dirty |= I915_DST_RECT;
    }
