@@ -246,12 +246,12 @@ struct svga_winsys_screen
 
    /** 
     * Map the entire data store of a buffer object into the client's address.
-    * flags is a bitmaks of PIPE_TRANSFER_*
+    * usage is a bitmask of PIPE_TRANSFER_*
     */
    void *
    (*buffer_map)( struct svga_winsys_screen *sws, 
 	          struct svga_winsys_buffer *buf,
-		  unsigned flags );
+		  unsigned usage );
    
    void 
    (*buffer_unmap)( struct svga_winsys_screen *sws, 
