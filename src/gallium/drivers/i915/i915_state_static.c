@@ -83,9 +83,9 @@ static void update_framebuffer(struct i915_context *i915)
    struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
    struct pipe_surface *depth_surface = i915->framebuffer.zsbuf;
    unsigned cformat, zformat;
-   unsigned x, y, w, h;
+   unsigned x, y;
    int layer;
-   uint32_t draw_offset;
+   uint32_t draw_offset, draw_size, dst_buf_vars;
 
    if (cbuf_surface) {
       struct i915_texture *tex = i915_texture(cbuf_surface->texture);
@@ -107,6 +107,7 @@ static void update_framebuffer(struct i915_context *i915)
       x = y = 0;
    }
    cformat = translate_format(cformat);
+   i915->static_dirty |= I915_DST_BUF_COLOR;
 
    /* What happens if no zbuf??
     */
@@ -126,24 +127,31 @@ static void update_framebuffer(struct i915_context *i915)
       i915->current.depth_bo = NULL;
       zformat = 0;
    }
+   i915->static_dirty |= I915_DST_BUF_DEPTH;
 
-   i915->current.dst_buf_vars = DSTORG_HORT_BIAS(0x8) | /* .5 */
-                                DSTORG_VERT_BIAS(0x8) | /* .5 */
-                                LOD_PRECLAMP_OGL |
-                                TEX_DEFAULT_COLOR_OGL |
-                                cformat |
-                                zformat;
+   dst_buf_vars = DSTORG_HORT_BIAS(0x8) | /* .5 */
+                  DSTORG_VERT_BIAS(0x8) | /* .5 */
+                  LOD_PRECLAMP_OGL |
+                  TEX_DEFAULT_COLOR_OGL |
+                  cformat |
+                  zformat;
+   if (i915->current.dst_buf_vars != dst_buf_vars) {
+      i915->current.dst_buf_vars = dst_buf_vars;
+      i915->static_dirty |= I915_DST_VARS;
+   }
 
    /* drawing rect calculations */
    draw_offset = x | (y << 16);
+   draw_size = (i915->framebuffer.width - 1 + x) |
+               ((i915->framebuffer.height - 1 + y) << 16);
    if (i915->current.draw_offset != draw_offset) {
       i915->current.draw_offset = draw_offset;
       i915_set_flush_dirty(i915, I915_PIPELINE_FLUSH);
+      i915->static_dirty |= I915_DST_RECT;
+   } else if (i915->current.draw_size != draw_size) {
+      i915->current.draw_size = draw_size;
+      i915->static_dirty |= I915_DST_RECT;
    }
-
-   w = i915->framebuffer.width;
-   h = i915->framebuffer.height;
-   i915->current.draw_size = (w - 1 + x) | ((h - 1 + y) << 16);
 
    i915->hardware_dirty |= I915_HW_STATIC;
 

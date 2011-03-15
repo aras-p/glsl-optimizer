@@ -185,6 +185,7 @@ i915_create_context(struct pipe_screen *screen, void *priv)
    i915->hardware_dirty = ~0;
    i915->immediate_dirty = ~0;
    i915->dynamic_dirty = ~0;
+   i915->static_dirty = ~0;
    i915->flush_dirty = 0;
 
    return &i915->base;
