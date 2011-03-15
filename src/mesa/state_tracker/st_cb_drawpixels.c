@@ -296,7 +296,7 @@ base_format(GLenum format)
  * of the given format and type.
  */
 static GLenum
-internal_format(GLenum format, GLenum type)
+internal_format(struct gl_context *ctx, GLenum format, GLenum type)
 {
    switch (format) {
    case GL_DEPTH_COMPONENT:
@@ -326,7 +326,53 @@ internal_format(GLenum format, GLenum type)
          }
       }
       else {
-         return GL_RGBA;
+         switch (type) {
+         case GL_UNSIGNED_BYTE:
+         case GL_UNSIGNED_INT_8_8_8_8:
+         case GL_UNSIGNED_INT_8_8_8_8_REV:
+         default:
+            return GL_RGBA8;
+
+         case GL_UNSIGNED_BYTE_3_3_2:
+         case GL_UNSIGNED_BYTE_2_3_3_REV:
+         case GL_UNSIGNED_SHORT_4_4_4_4:
+         case GL_UNSIGNED_SHORT_4_4_4_4_REV:
+            return GL_RGBA4;
+
+         case GL_UNSIGNED_SHORT_5_6_5:
+         case GL_UNSIGNED_SHORT_5_6_5_REV:
+         case GL_UNSIGNED_SHORT_5_5_5_1:
+         case GL_UNSIGNED_SHORT_1_5_5_5_REV:
+            return GL_RGB5_A1;
+
+         case GL_UNSIGNED_INT_10_10_10_2:
+         case GL_UNSIGNED_INT_2_10_10_10_REV:
+            return GL_RGB10_A2;
+
+         case GL_UNSIGNED_SHORT:
+         case GL_UNSIGNED_INT:
+            return GL_RGBA16;
+
+         case GL_BYTE:
+            return
+               ctx->Extensions.EXT_texture_snorm ? GL_RGBA8_SNORM : GL_RGBA8;
+
+         case GL_SHORT:
+         case GL_INT:
+            return
+               ctx->Extensions.EXT_texture_snorm ? GL_RGBA16_SNORM : GL_RGBA16;
+
+         case GL_HALF_FLOAT_ARB:
+            return
+               ctx->Extensions.ARB_texture_float ? GL_RGBA16F :
+               ctx->Extensions.EXT_texture_snorm ? GL_RGBA16_SNORM : GL_RGBA16;
+
+         case GL_FLOAT:
+         case GL_DOUBLE:
+            return
+               ctx->Extensions.ARB_texture_float ? GL_RGBA32F :
+               ctx->Extensions.EXT_texture_snorm ? GL_RGBA16_SNORM : GL_RGBA16;
+         }
       }
    }
 }
@@ -369,7 +415,7 @@ make_texture(struct st_context *st,
    GLenum baseFormat, intFormat;
 
    baseFormat = base_format(format);
-   intFormat = internal_format(format, type);
+   intFormat = internal_format(ctx, format, type);
 
    mformat = st_ChooseTextureFormat_renderable(ctx, intFormat,
                                                format, type, GL_FALSE);
