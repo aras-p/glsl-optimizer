@@ -1157,7 +1157,7 @@ ir_texture::set_sampler(ir_dereference *sampler, const glsl_type *type)
    this->sampler = sampler;
    this->type = type;
 
-   assert(sampler->type->sampler_type == type->base_type);
+   assert(sampler->type->sampler_type == (int) type->base_type);
    if (sampler->type->sampler_shadow)
       assert(type->vector_elements == 4 || type->vector_elements == 1);
    else
