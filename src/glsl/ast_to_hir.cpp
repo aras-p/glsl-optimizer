@@ -603,7 +603,8 @@ shift_result_type(const struct glsl_type *type_a,
  */
 ir_rvalue *
 validate_assignment(struct _mesa_glsl_parse_state *state,
-		    const glsl_type *lhs_type, ir_rvalue *rhs)
+		    const glsl_type *lhs_type, ir_rvalue *rhs,
+		    bool is_initializer)
 {
    /* If there is already some error in the RHS, just return it.  Anything
     * else will lead to an avalanche of error message back to the user.
@@ -617,12 +618,13 @@ validate_assignment(struct _mesa_glsl_parse_state *state,
       return rhs;
 
    /* If the array element types are the same and the size of the LHS is zero,
-    * the assignment is okay.
+    * the assignment is okay for initializers embedded in variable
+    * declarations.
     *
     * Note: Whole-array assignments are not permitted in GLSL 1.10, but this
     * is handled by ir_dereference::is_lvalue.
     */
-   if (lhs_type->is_array() && rhs->type->is_array()
+   if (is_initializer && lhs_type->is_array() && rhs->type->is_array()
        && (lhs_type->element_type() == rhs->type->element_type())
        && (lhs_type->array_size() == 0)) {
       return rhs;
@@ -639,7 +641,7 @@ validate_assignment(struct _mesa_glsl_parse_state *state,
 
 ir_rvalue *
 do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
-	      ir_rvalue *lhs, ir_rvalue *rhs,
+	      ir_rvalue *lhs, ir_rvalue *rhs, bool is_initializer,
 	      YYLTYPE lhs_loc)
 {
    void *ctx = state;
@@ -665,7 +667,8 @@ do_assignment(exec_list *instructions, struct _mesa_glsl_parse_state *state,
       }
    }
 
-   ir_rvalue *new_rhs = validate_assignment(state, lhs->type, rhs);
+   ir_rvalue *new_rhs =
+      validate_assignment(state, lhs->type, rhs, is_initializer);
    if (new_rhs == NULL) {
       _mesa_glsl_error(& lhs_loc, state, "type mismatch");
    } else {
@@ -918,7 +921,7 @@ ast_expression::hir(exec_list *instructions,
       op[0] = this->subexpressions[0]->hir(instructions, state);
       op[1] = this->subexpressions[1]->hir(instructions, state);
 
-      result = do_assignment(instructions, state, op[0], op[1],
+      result = do_assignment(instructions, state, op[0], op[1], false,
 			     this->subexpressions[0]->get_location());
       error_emitted = result->type->is_error();
       type = result->type;
@@ -1245,7 +1248,7 @@ ast_expression::hir(exec_list *instructions,
 						   op[0], op[1]);
 
       result = do_assignment(instructions, state,
-			     op[0]->clone(ctx, NULL), temp_rhs,
+			     op[0]->clone(ctx, NULL), temp_rhs, false,
 			     this->subexpressions[0]->get_location());
       type = result->type;
       error_emitted = (op[0]->type->is_error());
@@ -1271,7 +1274,7 @@ ast_expression::hir(exec_list *instructions,
 					op[0], op[1]);
 
       result = do_assignment(instructions, state,
-			     op[0]->clone(ctx, NULL), temp_rhs,
+			     op[0]->clone(ctx, NULL), temp_rhs, false,
 			     this->subexpressions[0]->get_location());
       type = result->type;
       error_emitted = type->is_error();
@@ -1287,7 +1290,7 @@ ast_expression::hir(exec_list *instructions,
       ir_rvalue *temp_rhs = new(ctx) ir_expression(operations[this->oper],
                                                    type, op[0], op[1]);
       result = do_assignment(instructions, state, op[0]->clone(ctx, NULL),
-                             temp_rhs,
+                             temp_rhs, false,
                              this->subexpressions[0]->get_location());
       error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
       break;
@@ -1303,7 +1306,7 @@ ast_expression::hir(exec_list *instructions,
       ir_rvalue *temp_rhs = new(ctx) ir_expression(operations[this->oper],
                                                    type, op[0], op[1]);
       result = do_assignment(instructions, state, op[0]->clone(ctx, NULL),
-                             temp_rhs,
+                             temp_rhs, false,
                              this->subexpressions[0]->get_location());
       error_emitted = op[0]->type->is_error() || op[1]->type->is_error();
       break;
@@ -1419,7 +1422,7 @@ ast_expression::hir(exec_list *instructions,
 					op[0], op[1]);
 
       result = do_assignment(instructions, state,
-			     op[0]->clone(ctx, NULL), temp_rhs,
+			     op[0]->clone(ctx, NULL), temp_rhs, false,
 			     this->subexpressions[0]->get_location());
       type = result->type;
       error_emitted = op[0]->type->is_error();
@@ -1448,7 +1451,7 @@ ast_expression::hir(exec_list *instructions,
       result = get_lvalue_copy(instructions, op[0]->clone(ctx, NULL));
 
       (void)do_assignment(instructions, state,
-			  op[0]->clone(ctx, NULL), temp_rhs,
+			  op[0]->clone(ctx, NULL), temp_rhs, false,
 			  this->subexpressions[0]->get_location());
 
       type = result->type;
@@ -2234,7 +2237,7 @@ process_initializer(ir_variable *var, ast_declaration *decl,
     */
    if (type->qualifier.flags.q.constant
        || type->qualifier.flags.q.uniform) {
-      ir_rvalue *new_rhs = validate_assignment(state, var->type, rhs);
+      ir_rvalue *new_rhs = validate_assignment(state, var->type, rhs, true);
       if (new_rhs != NULL) {
 	 rhs = new_rhs;
 
@@ -2276,7 +2279,7 @@ process_initializer(ir_variable *var, ast_declaration *decl,
       const glsl_type *initializer_type;
       if (!type->qualifier.flags.q.uniform) {
 	 result = do_assignment(initializer_instructions, state,
-				lhs, rhs,
+				lhs, rhs, true,
 				type->get_location());
 	 initializer_type = result->type;
       } else
