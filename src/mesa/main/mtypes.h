@@ -85,11 +85,7 @@
 typedef GLuint64 GLbitfield64;
 
 /** Set a single bit */
-#ifdef __cplusplus
-#define BITFIELD64_BIT(b)      (1UL << (b))
-#else
-#define BITFIELD64_BIT(b)      (1ULL << (b))
-#endif
+#define BITFIELD64_BIT(b)      ((GLbitfield64)1 << (b))
 
 
 /**
