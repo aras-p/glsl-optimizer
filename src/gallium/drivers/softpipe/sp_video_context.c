@@ -36,13 +36,7 @@
 #include <util/u_rect.h>
 #include <util/u_video.h>
 #include <util/u_surface.h>
-#include "sp_public.h"
-#include "sp_texture.h"
-
-#define MACROBLOCK_WIDTH 16
-#define MACROBLOCK_HEIGHT 16
-#define BLOCK_WIDTH 8
-#define BLOCK_HEIGHT 8
+#include <vl/vl_defines.h>
 
 #define NUM_BUFFERS 2
 

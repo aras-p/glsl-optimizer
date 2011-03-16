@@ -26,6 +26,8 @@
  **************************************************************************/
 
 #include "vl_mpeg12_mc_renderer.h"
+#include "vl_vertex_buffers.h"
+#include "vl_defines.h"
 #include "util/u_draw.h"
 #include <assert.h>
 #include <pipe/p_context.h>
@@ -37,11 +39,6 @@
 #include <util/u_sampler.h>
 #include <util/u_draw.h>
 #include <tgsi/tgsi_ureg.h>
-
-#define MACROBLOCK_WIDTH 16
-#define MACROBLOCK_HEIGHT 16
-#define BLOCK_WIDTH 8
-#define BLOCK_HEIGHT 8
 
 enum VS_OUTPUT
 {

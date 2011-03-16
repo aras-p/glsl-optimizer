@@ -29,28 +29,12 @@
 #define SP_VIDEO_CONTEXT_H
 
 #include <pipe/p_video_context.h>
+#include <vl/vl_idct.h>
 #include <vl/vl_mpeg12_mc_renderer.h>
 #include <vl/vl_compositor.h>
 
 struct pipe_screen;
 struct pipe_context;
-
-struct sp_mpeg12_buffer
-{
-   struct vl_vertex_buffer vertex_stream;
-
-   union
-   {
-      struct pipe_vertex_buffer all[2];
-      struct {
-         struct pipe_vertex_buffer quad, stream;
-      } individual;
-   } vertex_bufs;
-
-   struct vl_idct_buffer idct_y, idct_cb, idct_cr;
-
-   struct vl_mpeg12_mc_buffer mc;
-};
 
 struct sp_mpeg12_context
 {
@@ -74,6 +58,23 @@ struct sp_mpeg12_context
    void *blend;
 
    enum pipe_format decode_format;
+};
+
+struct sp_mpeg12_buffer
+{
+   struct vl_vertex_buffer vertex_stream;
+
+   union
+   {
+      struct pipe_vertex_buffer all[2];
+      struct {
+         struct pipe_vertex_buffer quad, stream;
+      } individual;
+   } vertex_bufs;
+
+   struct vl_idct_buffer idct_y, idct_cb, idct_cr;
+
+   struct vl_mpeg12_mc_buffer mc;
 };
 
 struct pipe_video_context *

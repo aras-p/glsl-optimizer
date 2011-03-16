@@ -27,6 +27,7 @@
 
 #include "vl_idct.h"
 #include "vl_vertex_buffers.h"
+#include "vl_defines.h"
 #include "util/u_draw.h"
 #include <assert.h>
 #include <pipe/p_context.h>
@@ -36,9 +37,6 @@
 #include <util/u_format.h>
 #include <tgsi/tgsi_ureg.h>
 #include "vl_types.h"
-
-#define BLOCK_WIDTH 8
-#define BLOCK_HEIGHT 8
 
 #define SCALE_FACTOR_16_TO_9 (32768.0f / 256.0f)
 
@@ -504,6 +502,8 @@ cleanup_textures(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 struct pipe_resource *
 vl_idct_upload_matrix(struct pipe_context *pipe)
 {
+   const float scale = sqrtf(SCALE_FACTOR_16_TO_9);
+
    struct pipe_resource template, *matrix;
    struct pipe_transfer *buf_transfer;
    unsigned i, j, pitch;
@@ -544,7 +544,7 @@ vl_idct_upload_matrix(struct pipe_context *pipe)
    for(i = 0; i < BLOCK_HEIGHT; ++i)
       for(j = 0; j < BLOCK_WIDTH; ++j)
          // transpose and scale
-         f[i * pitch + j] = const_matrix[j][i] * sqrtf(SCALE_FACTOR_16_TO_9);
+         f[i * pitch + j] = const_matrix[j][i] * scale;
 
    pipe->transfer_unmap(pipe, buf_transfer);
    pipe->transfer_destroy(pipe, buf_transfer);

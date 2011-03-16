@@ -31,6 +31,9 @@
 #include <pipe/p_state.h>
 #include "vl_vertex_buffers.h"
 
+/* shader based inverse distinct cosinus transformation
+ * expect usage of vl_vertex_buffers as a todo list
+ */
 struct vl_idct
 {
    struct pipe_context *pipe;
@@ -57,6 +60,7 @@ struct vl_idct
    struct pipe_resource *matrix;
 };
 
+/* a set of buffers to work with */
 struct vl_idct_buffer
 {
    struct pipe_viewport_state viewport[2];
@@ -88,25 +92,34 @@ struct vl_idct_buffer
    short *texels;
 };
 
+/* upload the idct matrix, which can be shared by all idct instances of a pipe */
 struct pipe_resource *vl_idct_upload_matrix(struct pipe_context *pipe);
 
+/* init an idct instance */
 bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
                   unsigned buffer_width, unsigned buffer_height,
                   unsigned blocks_x, unsigned blocks_y,
                   int color_swizzle, struct pipe_resource *matrix);
 
+/* destroy an idct instance */
 void vl_idct_cleanup(struct vl_idct *idct);
 
+/* init a buffer assosiated with agiven idct instance */
 struct pipe_resource *vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer);
 
+/* cleanup a buffer of an idct instance */
 void vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer);
 
+/* map a buffer for use with vl_idct_add_block */
 void vl_idct_map_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer);
 
+/* add an block of to be tranformed data a the given x and y coordinate */
 void vl_idct_add_block(struct vl_idct_buffer *buffer, unsigned x, unsigned y, short *block);
 
+/* unmaps the buffers before flushing */
 void vl_idct_unmap_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer);
 
+/* flush the buffer and start rendering, vertex buffers needs to be setup before calling this */
 void vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer, unsigned num_verts);
 
 #endif

@@ -27,11 +27,16 @@
 #ifndef vl_vertex_buffers_h
 #define vl_vertex_buffers_h
 
-#include <assert.h>
 #include <pipe/p_state.h>
 #include <pipe/p_video_state.h>
 #include "vl_types.h"
 
+/* vertex buffers act as a todo list
+ * uploading all the usefull informations to video ram
+ * so a vertex shader can work with them
+ */
+
+/* inputs to the vertex shaders */
 enum VS_INPUT
 {
    VS_I_RECT,

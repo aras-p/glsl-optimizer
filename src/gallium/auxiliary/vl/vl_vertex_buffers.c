@@ -26,10 +26,6 @@
  **************************************************************************/
 
 #include <assert.h>
-#include <pipe/p_context.h>
-#include <pipe/p_screen.h>
-#include <util/u_memory.h>
-#include <util/u_inlines.h>
 #include <util/u_format.h>
 #include "vl_vertex_buffers.h"
 #include "vl_types.h"

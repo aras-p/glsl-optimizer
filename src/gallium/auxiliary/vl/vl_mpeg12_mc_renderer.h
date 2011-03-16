@@ -32,8 +32,6 @@
 #include <pipe/p_state.h>
 #include <pipe/p_video_state.h>
 #include "vl_types.h"
-#include "vl_idct.h"
-#include "vl_vertex_buffers.h"
 
 struct pipe_context;
 struct pipe_macroblock;
