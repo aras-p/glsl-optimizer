@@ -43,7 +43,7 @@ endef
 
 define mesa-cxx-c
 	@mkdir -p $(dir $@)
-	$(CXX) -c -o $@ $< $($(1)_CPPFLAGS) $($(1)_CFLAGS) $($(1)_CXXFLAGS)
+	$(CXX) -c -o $@ $< $($(1)_CPPFLAGS) $($(1)_CXXFLAGS)
 endef
 
 $(MESA_OBJ_DIR)/%.o: %.c
