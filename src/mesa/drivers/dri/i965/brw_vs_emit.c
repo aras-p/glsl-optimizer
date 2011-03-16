@@ -2109,7 +2109,7 @@ void brw_vs_emit(struct brw_vs_compile *c )
       case OPCODE_CONT:
 	 brw_set_predicate_control(p, get_predicate(inst));
 	 if (intel->gen >= 6) {
-	    brw_CONT_gen6(p, loop_inst[loop_depth - 1]);
+	    gen6_CONT(p, loop_inst[loop_depth - 1]);
 	 } else {
 	    brw_CONT(p, if_depth_in_loop[loop_depth]);
 	 }

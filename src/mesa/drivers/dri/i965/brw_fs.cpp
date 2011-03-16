@@ -3554,7 +3554,7 @@ fs_visitor::generate_code()
       case BRW_OPCODE_IF:
 	 if (inst->src[0].file != BAD_FILE) {
 	    assert(intel->gen >= 6);
-	    if_stack[if_stack_depth] = brw_IF_gen6(p, inst->conditional_mod, src[0], src[1]);
+	    if_stack[if_stack_depth] = gen6_IF(p, inst->conditional_mod, src[0], src[1]);
 	 } else {
 	    if_stack[if_stack_depth] = brw_IF(p, BRW_EXECUTE_8);
 	 }
@@ -3596,7 +3596,7 @@ fs_visitor::generate_code()
       case BRW_OPCODE_CONTINUE:
 	 /* FINISHME: We need to write the loop instruction support still. */
 	 if (intel->gen >= 6)
-	    brw_CONT_gen6(p, loop_stack[loop_stack_depth - 1]);
+	    gen6_CONT(p, loop_stack[loop_stack_depth - 1]);
 	 else
 	    brw_CONT(p, if_depth_in_loop[loop_stack_depth]);
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);
