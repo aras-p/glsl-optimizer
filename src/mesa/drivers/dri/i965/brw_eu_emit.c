@@ -1844,7 +1844,7 @@ void brw_fb_WRITE(struct brw_compile *p,
        /* headerless version, just submit color payload */
        src0 = brw_message_reg(msg_reg_nr);
 
-       msg_type = BRW_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE_GEN6;
+       msg_type = GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE;
    } else {
       insn->header.destreg__conditionalmod = msg_reg_nr;
 
