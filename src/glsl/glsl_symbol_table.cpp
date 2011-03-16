@@ -137,6 +137,7 @@ void glsl_symbol_table::add_global_function(ir_function *f)
    symbol_table_entry *entry = new(mem_ctx) symbol_table_entry(f);
    int added = _mesa_symbol_table_add_global_symbol(table, -1, f->name, entry);
    assert(added == 0);
+   (void)added;
 }
 
 ir_variable *glsl_symbol_table::get_variable(const char *name)
