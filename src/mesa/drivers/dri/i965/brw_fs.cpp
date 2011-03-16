@@ -1873,7 +1873,7 @@ fs_visitor::visit(ir_if *ir)
     */
    this->base_ir = ir->condition;
 
-   if (intel->gen >= 6) {
+   if (intel->gen == 6) {
       emit_if_gen6(ir);
    } else {
       emit_bool_to_cond_code(ir->condition);
@@ -3890,7 +3890,8 @@ fs_visitor::generate_code()
 
       case BRW_OPCODE_IF:
 	 if (inst->src[0].file != BAD_FILE) {
-	    assert(intel->gen >= 6);
+	    /* The instruction has an embedded compare (only allowed on gen6) */
+	    assert(intel->gen == 6);
 	    gen6_IF(p, inst->conditional_mod, src[0], src[1]);
 	 } else {
 	    brw_IF(p, BRW_EXECUTE_8);

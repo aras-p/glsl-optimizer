@@ -1664,6 +1664,7 @@ struct brw_instruction
 	 GLuint  pad0:12;
       } if_else;
 
+      /* This is also used for gen7 IF/ELSE instructions */
       struct
       {
 	 /* Signed jump distance to the ip to jump to if all channels
