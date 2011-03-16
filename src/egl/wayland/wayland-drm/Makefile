@@ -12,7 +12,8 @@ wayland_drm_OBJECTS = $(wayland_drm_SOURCES:.c=.o)
 
 wayland_drm_INCLUDES = \
 		$(WAYLAND_CFLAGS) \
-		-I$(TOP)/src/egl/main
+		-I$(TOP)/src/egl/main \
+		-I$(TOP)/include
 
 # Generate protocol sources
 prefix=$(shell pkg-config --variable=prefix wayland-server)
