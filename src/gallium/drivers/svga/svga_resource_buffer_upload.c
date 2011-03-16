@@ -686,6 +686,5 @@ svga_redefine_user_buffer(struct pipe_context *pipe,
 
    pipe_mutex_unlock(ss->swc_mutex);
 
-   svga->curr.any_user_vertex_buffers = TRUE;
    svga->dirty |= SVGA_NEW_VBUFFER | SVGA_NEW_VELEMENT;
 }

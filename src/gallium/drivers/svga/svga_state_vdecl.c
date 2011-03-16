@@ -153,8 +153,6 @@ static int emit_hw_vdecl( struct svga_context *svga,
       ret = upload_user_buffers( svga );
       if (ret)
          return ret;
-
-      svga->curr.any_user_vertex_buffers = FALSE;
    }
 
    return emit_hw_vs_vdecl( svga, dirty );
