@@ -2313,23 +2313,23 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
       switch (inst->opcode) {
       case FS_OPCODE_TEX:
 	 if (inst->shadow_compare) {
-	    msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_GEN5;
+	    msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_COMPARE;
 	 } else {
-	    msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_GEN5;
+	    msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE;
 	 }
 	 break;
       case FS_OPCODE_TXB:
 	 if (inst->shadow_compare) {
-	    msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_COMPARE_GEN5;
+	    msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_BIAS_COMPARE;
 	 } else {
-	    msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_GEN5;
+	    msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_BIAS;
 	 }
 	 break;
       case FS_OPCODE_TXL:
 	 if (inst->shadow_compare) {
-	    msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_LOD_COMPARE_GEN5;
+	    msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LOD_COMPARE;
 	 } else {
-	    msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_LOD_GEN5;
+	    msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LOD;
 	 }
 	 break;
       case FS_OPCODE_TXD:
