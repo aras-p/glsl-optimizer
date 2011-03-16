@@ -73,12 +73,6 @@ retry_draw_range_elements( struct svga_context *svga,
    if (ret)
       goto retry;
 
-   if (svga->curr.any_user_vertex_buffers) {
-      ret = svga_hwtnl_flush( svga->hwtnl );
-      if (ret)
-         goto retry;
-   }
-
    return PIPE_OK;
 
 retry:
@@ -121,12 +115,6 @@ retry_draw_arrays( struct svga_context *svga,
                                  start, count );
    if (ret)
       goto retry;
-
-   if (svga->curr.any_user_vertex_buffers) {
-      ret = svga_hwtnl_flush( svga->hwtnl );
-      if (ret)
-         goto retry;
-   }
 
    return 0;
 

@@ -149,9 +149,7 @@ static int emit_hw_vdecl( struct svga_context *svga,
     * userbuffers now and try to combine multiple userbuffers from
     * multiple draw calls into a single host buffer for performance.
     */
-   if (svga->curr.any_user_vertex_buffers &&
-       SVGA_COMBINE_USERBUFFERS)
-   {
+   if (svga->curr.any_user_vertex_buffers) {
       ret = upload_user_buffers( svga );
       if (ret)
          return ret;

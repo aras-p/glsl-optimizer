@@ -131,6 +131,8 @@ enum pipe_error
 svga_buffer_create_host_surface(struct svga_screen *ss,
                                 struct svga_buffer *sbuf)
 {
+   assert(!sbuf->user);
+
    if(!sbuf->handle) {
       sbuf->key.flags = 0;
       
@@ -665,6 +667,9 @@ svga_redefine_user_buffer(struct pipe_context *pipe,
    struct svga_buffer *sbuf = svga_buffer(resource);
 
    assert(sbuf->user);
+   assert(!sbuf->dma.pending);
+   assert(!sbuf->handle);
+   assert(!sbuf->hwbuf);
 
    /*
     * Release any uploaded user buffer.
@@ -677,26 +682,7 @@ svga_redefine_user_buffer(struct pipe_context *pipe,
 
    pipe_mutex_lock(ss->swc_mutex);
 
-   if (offset + size > resource->width0) {
-      /*
-       * User buffers shouldn't have DMA directly, unless
-       * SVGA_COMBINE_USERBUFFERS is not set.
-       */
-
-      if (sbuf->dma.pending) {
-         svga_buffer_upload_flush(svga, sbuf);
-      }
-
-      if (sbuf->handle) {
-         svga_buffer_destroy_host_surface(ss, sbuf);
-      }
-
-      if (sbuf->hwbuf) {
-         svga_buffer_destroy_hw_storage(ss, sbuf);
-      }
-
-      sbuf->key.size.width = sbuf->b.b.width0 = offset + size;
-   }
+   sbuf->key.size.width = sbuf->b.b.width0 = offset + size;
 
    pipe_mutex_unlock(ss->swc_mutex);
 

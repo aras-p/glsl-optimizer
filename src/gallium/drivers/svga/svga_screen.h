@@ -39,8 +39,6 @@ struct svga_winsys_screen;
 struct svga_winsys_context;
 struct SVGACmdMemory;
 
-#define SVGA_COMBINE_USERBUFFERS 1
-
 /**
  * Subclass of pipe_screen
  */

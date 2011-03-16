@@ -90,7 +90,9 @@ struct svga_buffer
     * Host surface handle.
     * 
     * This is a platform independent abstraction for host SID. We create when 
-    * trying to bind
+    * trying to bind.
+    *
+    * Only set for non-user buffers.
     */
    struct svga_winsys_surface *handle;
 
@@ -135,6 +137,8 @@ struct svga_buffer
     * A piece of GMR memory, with the same size of the buffer. It is created
     * when mapping the buffer, and will be used to upload vertex data to the
     * host.
+    *
+    * Only set for non-user buffers.
     */
    struct svga_winsys_buffer *hwbuf;
 
