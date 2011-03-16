@@ -28,7 +28,8 @@
 #include "util/u_inlines.h"
 #include "util/u_memory.h"
 
-#include "sp_video_context.h"
+#include "vl_mpeg12_context.h"
+#include "vl_defines.h"
 #include <pipe/p_shader_tokens.h>
 #include <util/u_inlines.h>
 #include <util/u_memory.h>
@@ -36,12 +37,11 @@
 #include <util/u_rect.h>
 #include <util/u_video.h>
 #include <util/u_surface.h>
-#include <vl/vl_defines.h>
 
 #define NUM_BUFFERS 2
 
 static void
-flush_buffer(struct sp_mpeg12_context *ctx)
+flush_buffer(struct vl_mpeg12_context *ctx)
 {
    unsigned ne_start, ne_num, e_start, e_num;
    assert(ctx);
@@ -68,21 +68,21 @@ flush_buffer(struct sp_mpeg12_context *ctx)
 }
 
 static void
-rotate_buffer(struct sp_mpeg12_context *ctx)
+rotate_buffer(struct vl_mpeg12_context *ctx)
 {
    struct pipe_resource *y, *cr, *cb;
    static unsigned key = 0;
-   struct sp_mpeg12_buffer *buffer;
+   struct vl_mpeg12_buffer *buffer;
 
    assert(ctx);
 
    flush_buffer(ctx);
 
-   buffer = (struct sp_mpeg12_buffer*)util_keymap_lookup(ctx->buffer_map, &key);
+   buffer = (struct vl_mpeg12_buffer*)util_keymap_lookup(ctx->buffer_map, &key);
    if (!buffer) {
       boolean added_to_map;
 
-      buffer = CALLOC_STRUCT(sp_mpeg12_buffer);
+      buffer = CALLOC_STRUCT(vl_mpeg12_buffer);
       if (buffer == NULL)
          return;
 
@@ -130,8 +130,8 @@ delete_buffer(const struct keymap *map,
               const void *key, void *data,
               void *user)
 {
-   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)user;
-   struct sp_mpeg12_buffer *buf = (struct sp_mpeg12_buffer*)data;
+   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)user;
+   struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer*)data;
 
    assert(map);
    assert(key);
@@ -146,8 +146,8 @@ delete_buffer(const struct keymap *map,
 }
 
 static void
-upload_buffer(struct sp_mpeg12_context *ctx,
-              struct sp_mpeg12_buffer *buffer,
+upload_buffer(struct vl_mpeg12_context *ctx,
+              struct vl_mpeg12_buffer *buffer,
               struct pipe_mpeg12_macroblock *mb)
 {
    short *blocks;
@@ -183,9 +183,9 @@ upload_buffer(struct sp_mpeg12_context *ctx,
 }
 
 static void
-sp_mpeg12_destroy(struct pipe_video_context *vpipe)
+vl_mpeg12_destroy(struct pipe_video_context *vpipe)
 {
-   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
 
    assert(vpipe);
 
@@ -214,9 +214,9 @@ sp_mpeg12_destroy(struct pipe_video_context *vpipe)
 }
 
 static int
-sp_mpeg12_get_param(struct pipe_video_context *vpipe, int param)
+vl_mpeg12_get_param(struct pipe_video_context *vpipe, int param)
 {
-   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
 
    assert(vpipe);
 
@@ -231,18 +231,18 @@ sp_mpeg12_get_param(struct pipe_video_context *vpipe, int param)
          return ctx->decode_format;
       default:
       {
-         debug_printf("Softpipe: Unknown PIPE_CAP %d\n", param);
+         debug_printf("vl_mpeg12_context: Unknown PIPE_CAP %d\n", param);
          return 0;
       }
    }
 }
 
 static struct pipe_surface *
-sp_mpeg12_create_surface(struct pipe_video_context *vpipe,
+vl_mpeg12_create_surface(struct pipe_video_context *vpipe,
                          struct pipe_resource *resource,
                          const struct pipe_surface *templat)
 {
-   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
 
    assert(vpipe);
 
@@ -250,12 +250,12 @@ sp_mpeg12_create_surface(struct pipe_video_context *vpipe,
 }
 
 static boolean
-sp_mpeg12_is_format_supported(struct pipe_video_context *vpipe,
+vl_mpeg12_is_format_supported(struct pipe_video_context *vpipe,
                               enum pipe_format format,
                               unsigned usage,
                               unsigned geom)
 {
-   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
 
    assert(vpipe);
 
@@ -269,14 +269,14 @@ sp_mpeg12_is_format_supported(struct pipe_video_context *vpipe,
 }
 
 static void
-sp_mpeg12_decode_macroblocks(struct pipe_video_context *vpipe,
+vl_mpeg12_decode_macroblocks(struct pipe_video_context *vpipe,
                              struct pipe_surface *past,
                              struct pipe_surface *future,
                              unsigned num_macroblocks,
                              struct pipe_macroblock *macroblocks,
                              struct pipe_fence_handle **fence)
 {
-   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
    struct pipe_mpeg12_macroblock *mpeg12_macroblocks = (struct pipe_mpeg12_macroblock*)macroblocks;
    unsigned i;
 
@@ -298,13 +298,13 @@ sp_mpeg12_decode_macroblocks(struct pipe_video_context *vpipe,
 }
 
 static void
-sp_mpeg12_clear_render_target(struct pipe_video_context *vpipe,
+vl_mpeg12_clear_render_target(struct pipe_video_context *vpipe,
                        struct pipe_surface *dst,
                        unsigned dstx, unsigned dsty,
+                       const float *rgba,
                        unsigned width, unsigned height)
 {
-   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
-   float rgba[4] = { 0, 0, 0, 0 };
+   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
 
    assert(vpipe);
    assert(dst);
@@ -316,14 +316,14 @@ sp_mpeg12_clear_render_target(struct pipe_video_context *vpipe,
 }
 
 static void
-sp_mpeg12_resource_copy_region(struct pipe_video_context *vpipe,
-                       struct pipe_surface *dst,
-                       unsigned dstx, unsigned dsty,
-                       struct pipe_surface *src,
-                       unsigned srcx, unsigned srcy,
-                       unsigned width, unsigned height)
+vl_mpeg12_resource_copy_region(struct pipe_video_context *vpipe,
+                               struct pipe_resource *dst,
+                               unsigned dstx, unsigned dsty, unsigned dstz,
+                               struct pipe_resource *src,
+                               unsigned srcx, unsigned srcy, unsigned srcz,
+                               unsigned width, unsigned height)
 {
-   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
 
    assert(vpipe);
    assert(dst);
@@ -331,28 +331,28 @@ sp_mpeg12_resource_copy_region(struct pipe_video_context *vpipe,
    struct pipe_box box;
    box.x = srcx;
    box.y = srcy;
-   box.z = 0;
+   box.z = srcz;
    box.width = width;
    box.height = height;
 
    if (ctx->pipe->resource_copy_region)
-      ctx->pipe->resource_copy_region(ctx->pipe, dst->texture, dst->u.tex.level,
-                                      dstx, dsty, dst->u.tex.first_layer,
-                                      src->texture, src->u.tex.level, &box);
+      ctx->pipe->resource_copy_region(ctx->pipe, dst, 0,
+                                      dstx, dsty, dstz,
+                                      src, 0, &box);
    else
-      util_resource_copy_region(ctx->pipe, dst->texture, dst->u.tex.level,
-                                dstx, dsty, dst->u.tex.first_layer,
-                                src->texture, src->u.tex.level, &box);
+      util_resource_copy_region(ctx->pipe, dst, 0,
+                                dstx, dsty, dstz,
+                                src, 0, &box);
 }
 
 static struct pipe_transfer*
-sp_mpeg12_get_transfer(struct pipe_video_context *vpipe,
+vl_mpeg12_get_transfer(struct pipe_video_context *vpipe,
                        struct pipe_resource *resource,
                        unsigned level,
                        unsigned usage,  /* a combination of PIPE_TRANSFER_x */
                        const struct pipe_box *box)
 {
-   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
 
    assert(vpipe);
    assert(resource);
@@ -362,10 +362,10 @@ sp_mpeg12_get_transfer(struct pipe_video_context *vpipe,
 }
 
 static void
-sp_mpeg12_transfer_destroy(struct pipe_video_context *vpipe,
+vl_mpeg12_transfer_destroy(struct pipe_video_context *vpipe,
                            struct pipe_transfer *transfer)
 {
-   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
 
    assert(vpipe);
    assert(transfer);
@@ -374,10 +374,10 @@ sp_mpeg12_transfer_destroy(struct pipe_video_context *vpipe,
 }
 
 static void*
-sp_mpeg12_transfer_map(struct pipe_video_context *vpipe,
+vl_mpeg12_transfer_map(struct pipe_video_context *vpipe,
                        struct pipe_transfer *transfer)
 {
-   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
 
    assert(vpipe);
    assert(transfer);
@@ -386,11 +386,11 @@ sp_mpeg12_transfer_map(struct pipe_video_context *vpipe,
 }
 
 static void
-sp_mpeg12_transfer_flush_region(struct pipe_video_context *vpipe,
+vl_mpeg12_transfer_flush_region(struct pipe_video_context *vpipe,
                                 struct pipe_transfer *transfer,
                                 const struct pipe_box *box)
 {
-   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
 
    assert(vpipe);
    assert(transfer);
@@ -400,10 +400,10 @@ sp_mpeg12_transfer_flush_region(struct pipe_video_context *vpipe,
 }
 
 static void
-sp_mpeg12_transfer_unmap(struct pipe_video_context *vpipe,
+vl_mpeg12_transfer_unmap(struct pipe_video_context *vpipe,
                          struct pipe_transfer *transfer)
 {
-   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
 
    assert(vpipe);
    assert(transfer);
@@ -412,7 +412,7 @@ sp_mpeg12_transfer_unmap(struct pipe_video_context *vpipe,
 }
 
 static void
-sp_mpeg12_transfer_inline_write(struct pipe_video_context *vpipe,
+vl_mpeg12_transfer_inline_write(struct pipe_video_context *vpipe,
                                 struct pipe_resource *resource,
                                 unsigned level,
                                 unsigned usage, /* a combination of PIPE_TRANSFER_x */
@@ -421,7 +421,7 @@ sp_mpeg12_transfer_inline_write(struct pipe_video_context *vpipe,
                                 unsigned stride,
                                 unsigned slice_stride)
 {
-   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
 
    assert(vpipe);
    assert(resource);
@@ -434,7 +434,7 @@ sp_mpeg12_transfer_inline_write(struct pipe_video_context *vpipe,
 }
 
 static void
-sp_mpeg12_render_picture(struct pipe_video_context     *vpipe,
+vl_mpeg12_render_picture(struct pipe_video_context     *vpipe,
                          struct pipe_surface           *src_surface,
                          enum pipe_mpeg12_picture_type picture_type,
                          /*unsigned                    num_past_surfaces,
@@ -446,7 +446,7 @@ sp_mpeg12_render_picture(struct pipe_video_context     *vpipe,
                          struct pipe_video_rect        *dst_area,
                          struct pipe_fence_handle      **fence)
 {
-   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
 
    assert(vpipe);
    assert(src_surface);
@@ -461,11 +461,11 @@ sp_mpeg12_render_picture(struct pipe_video_context     *vpipe,
 }
 
 static void
-sp_mpeg12_set_picture_background(struct pipe_video_context *vpipe,
+vl_mpeg12_set_picture_background(struct pipe_video_context *vpipe,
                                   struct pipe_surface *bg,
                                   struct pipe_video_rect *bg_src_rect)
 {
-   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
 
    assert(vpipe);
    assert(bg);
@@ -475,13 +475,13 @@ sp_mpeg12_set_picture_background(struct pipe_video_context *vpipe,
 }
 
 static void
-sp_mpeg12_set_picture_layers(struct pipe_video_context *vpipe,
+vl_mpeg12_set_picture_layers(struct pipe_video_context *vpipe,
                              struct pipe_surface *layers[],
                              struct pipe_video_rect *src_rects[],
                              struct pipe_video_rect *dst_rects[],
                              unsigned num_layers)
 {
-   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
 
    assert(vpipe);
    assert((layers && src_rects && dst_rects) ||
@@ -491,10 +491,10 @@ sp_mpeg12_set_picture_layers(struct pipe_video_context *vpipe,
 }
 
 static void
-sp_mpeg12_set_decode_target(struct pipe_video_context *vpipe,
+vl_mpeg12_set_decode_target(struct pipe_video_context *vpipe,
                             struct pipe_surface *dt)
 {
-   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
 
    assert(vpipe);
    assert(dt);
@@ -507,9 +507,9 @@ sp_mpeg12_set_decode_target(struct pipe_video_context *vpipe,
 }
 
 static void
-sp_mpeg12_set_csc_matrix(struct pipe_video_context *vpipe, const float *mat)
+vl_mpeg12_set_csc_matrix(struct pipe_video_context *vpipe, const float *mat)
 {
-   struct sp_mpeg12_context *ctx = (struct sp_mpeg12_context*)vpipe;
+   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
 
    assert(vpipe);
 
@@ -517,7 +517,7 @@ sp_mpeg12_set_csc_matrix(struct pipe_video_context *vpipe, const float *mat)
 }
 
 static bool
-init_pipe_state(struct sp_mpeg12_context *ctx)
+init_pipe_state(struct vl_mpeg12_context *ctx)
 {
    struct pipe_rasterizer_state rast;
    struct pipe_blend_state blend;
@@ -598,21 +598,22 @@ init_pipe_state(struct sp_mpeg12_context *ctx)
    return true;
 }
 
-static struct pipe_video_context *
-sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
-                 enum pipe_video_chroma_format chroma_format,
-                 unsigned width, unsigned height,
-                 bool pot_buffers,
-                 enum pipe_format decode_format)
+struct pipe_video_context *
+vl_create_mpeg12_context(struct pipe_context *pipe,
+                         enum pipe_video_profile profile,
+                         enum pipe_video_chroma_format chroma_format,
+                         unsigned width, unsigned height,
+                         bool pot_buffers,
+                         enum pipe_format decode_format)
 {
    struct pipe_resource *idct_matrix;
    unsigned buffer_width, buffer_height;
    unsigned chroma_width, chroma_height, chroma_blocks_x, chroma_blocks_y;
-   struct sp_mpeg12_context *ctx;
+   struct vl_mpeg12_context *ctx;
 
    assert(u_reduce_video_profile(profile) == PIPE_VIDEO_CODEC_MPEG12);
 
-   ctx = CALLOC_STRUCT(sp_mpeg12_context);
+   ctx = CALLOC_STRUCT(vl_mpeg12_context);
 
    if (!ctx)
       return NULL;
@@ -630,25 +631,25 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
 
    ctx->base.screen = pipe->screen;
 
-   ctx->base.destroy = sp_mpeg12_destroy;
-   ctx->base.get_param = sp_mpeg12_get_param;
-   ctx->base.is_format_supported = sp_mpeg12_is_format_supported;
-   ctx->base.create_surface = sp_mpeg12_create_surface;
-   ctx->base.decode_macroblocks = sp_mpeg12_decode_macroblocks;
-   ctx->base.render_picture = sp_mpeg12_render_picture;
-   ctx->base.clear_render_target = sp_mpeg12_clear_render_target;
-   ctx->base.resource_copy_region = sp_mpeg12_resource_copy_region;
-   ctx->base.get_transfer = sp_mpeg12_get_transfer;
-   ctx->base.transfer_destroy = sp_mpeg12_transfer_destroy;
-   ctx->base.transfer_map = sp_mpeg12_transfer_map;
-   ctx->base.transfer_flush_region = sp_mpeg12_transfer_flush_region;
-   ctx->base.transfer_unmap = sp_mpeg12_transfer_unmap;
+   ctx->base.destroy = vl_mpeg12_destroy;
+   ctx->base.get_param = vl_mpeg12_get_param;
+   ctx->base.is_format_supported = vl_mpeg12_is_format_supported;
+   ctx->base.create_surface = vl_mpeg12_create_surface;
+   ctx->base.decode_macroblocks = vl_mpeg12_decode_macroblocks;
+   ctx->base.render_picture = vl_mpeg12_render_picture;
+   ctx->base.clear_render_target = vl_mpeg12_clear_render_target;
+   ctx->base.resource_copy_region = vl_mpeg12_resource_copy_region;
+   ctx->base.get_transfer = vl_mpeg12_get_transfer;
+   ctx->base.transfer_destroy = vl_mpeg12_transfer_destroy;
+   ctx->base.transfer_map = vl_mpeg12_transfer_map;
+   ctx->base.transfer_flush_region = vl_mpeg12_transfer_flush_region;
+   ctx->base.transfer_unmap = vl_mpeg12_transfer_unmap;
    if (pipe->transfer_inline_write)
-      ctx->base.transfer_inline_write = sp_mpeg12_transfer_inline_write;
-   ctx->base.set_picture_background = sp_mpeg12_set_picture_background;
-   ctx->base.set_picture_layers = sp_mpeg12_set_picture_layers;
-   ctx->base.set_decode_target = sp_mpeg12_set_decode_target;
-   ctx->base.set_csc_matrix = sp_mpeg12_set_csc_matrix;
+      ctx->base.transfer_inline_write = vl_mpeg12_transfer_inline_write;
+   ctx->base.set_picture_background = vl_mpeg12_set_picture_background;
+   ctx->base.set_picture_layers = vl_mpeg12_set_picture_layers;
+   ctx->base.set_decode_target = vl_mpeg12_set_decode_target;
+   ctx->base.set_csc_matrix = vl_mpeg12_set_csc_matrix;
 
    ctx->pipe = pipe;
    ctx->decode_format = decode_format;
@@ -728,48 +729,4 @@ sp_mpeg12_create(struct pipe_context *pipe, enum pipe_video_profile profile,
    }
 
    return &ctx->base;
-}
-
-struct pipe_video_context *
-sp_video_create(struct pipe_screen *screen, enum pipe_video_profile profile,
-                enum pipe_video_chroma_format chroma_format,
-                unsigned width, unsigned height, void *priv)
-{
-   struct pipe_context *pipe;
-
-   assert(screen);
-   assert(width && height);
-
-   pipe = screen->context_create(screen, NULL);
-   if (!pipe)
-      return NULL;
-
-   /* TODO: Use slice buffering for softpipe when implemented, no advantage to buffering an entire picture with softpipe */
-   return sp_video_create_ex(pipe, profile,
-                             chroma_format,
-                             width, height,
-                             true,
-                             PIPE_FORMAT_XYUV);
-}
-
-struct pipe_video_context *
-sp_video_create_ex(struct pipe_context *pipe, enum pipe_video_profile profile,
-                   enum pipe_video_chroma_format chroma_format,
-                   unsigned width, unsigned height,
-                   bool pot_buffers,
-                   enum pipe_format decode_format)
-{
-   assert(pipe);
-   assert(width && height);
-
-   switch (u_reduce_video_profile(profile)) {
-      case PIPE_VIDEO_CODEC_MPEG12:
-         return sp_mpeg12_create(pipe, profile,
-                                 chroma_format,
-                                 width, height,
-                                 pot_buffers,
-                                 decode_format);
-      default:
-         return NULL;
-   }
 }

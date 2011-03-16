@@ -26,7 +26,8 @@
  **************************************************************************/
 
 #include "nv40_video_context.h"
-#include <softpipe/sp_video_context.h>
+#include "util/u_video.h"
+#include <vl/vl_mpeg12_context.h>
 
 struct pipe_video_context *
 nv40_video_create(struct pipe_screen *screen, enum pipe_video_profile profile,
@@ -41,7 +42,14 @@ nv40_video_create(struct pipe_screen *screen, enum pipe_video_profile profile,
    if (!pipe)
       return NULL;
 
-   return sp_video_create_ex(pipe, profile, chroma_format, width, height,
-                             VL_MPEG12_MC_RENDERER_BUFFER_PICTURE,
-                             true);
+   switch (u_reduce_video_profile(profile)) {
+      case PIPE_VIDEO_CODEC_MPEG12:
+         return vl_create_mpeg12_context(pipe, profile,
+                                         chroma_format,
+                                         width, height,
+                                         true,
+                                         PIPE_FORMAT_XYUV);
+      default:
+         return NULL;
+   }
 }

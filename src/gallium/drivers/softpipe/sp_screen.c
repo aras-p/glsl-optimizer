@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2008 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,16 +22,18 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 
 #include "util/u_memory.h"
 #include "util/u_format.h"
 #include "util/u_format_s3tc.h"
+#include "util/u_video.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 #include "draw/draw_context.h"
+#include "vl/vl_mpeg12_context.h"
 
 #include "state_tracker/sw_winsys.h"
 #include "tgsi/tgsi_exec.h"
@@ -39,7 +41,6 @@
 #include "sp_texture.h"
 #include "sp_screen.h"
 #include "sp_context.h"
-#include "sp_video_context.h"
 #include "sp_fence.h"
 #include "sp_public.h"
 
@@ -284,6 +285,33 @@ softpipe_flush_frontbuffer(struct pipe_screen *_screen,
    assert(texture->dt);
    if (texture->dt)
       winsys->displaytarget_display(winsys, texture->dt, context_private);
+}
+
+static struct pipe_video_context *
+sp_video_create(struct pipe_screen *screen, enum pipe_video_profile profile,
+                enum pipe_video_chroma_format chroma_format,
+                unsigned width, unsigned height, void *priv)
+{
+   struct pipe_context *pipe;
+
+   assert(screen);
+   assert(width && height);
+
+   pipe = screen->context_create(screen, NULL);
+   if (!pipe)
+      return NULL;
+
+   /* TODO: Use slice buffering for softpipe when implemented, no advantage to buffering an entire picture with softpipe */
+   switch (u_reduce_video_profile(profile)) {
+      case PIPE_VIDEO_CODEC_MPEG12:
+         return vl_create_mpeg12_context(pipe, profile,
+                                         chroma_format,
+                                         width, height,
+                                         true,
+                                         PIPE_FORMAT_XYUV);
+      default:
+         return NULL;
+   }
 }
 
 /**

@@ -25,18 +25,18 @@
  *
  **************************************************************************/
 
-#ifndef SP_VIDEO_CONTEXT_H
-#define SP_VIDEO_CONTEXT_H
+#ifndef VL_MPEG12_CONTEXT_H
+#define VL_MPEG12_CONTEXT_H
 
 #include <pipe/p_video_context.h>
-#include <vl/vl_idct.h>
-#include <vl/vl_mpeg12_mc_renderer.h>
-#include <vl/vl_compositor.h>
+#include "vl_idct.h"
+#include "vl_mpeg12_mc_renderer.h"
+#include "vl_compositor.h"
 
 struct pipe_screen;
 struct pipe_context;
 
-struct sp_mpeg12_context
+struct vl_mpeg12_context
 {
    struct pipe_video_context base;
    struct pipe_context *pipe;
@@ -50,7 +50,7 @@ struct sp_mpeg12_context
    struct vl_mpeg12_mc_renderer mc_renderer;
 
    struct keymap *buffer_map;
-   struct sp_mpeg12_buffer *cur_buffer;
+   struct vl_mpeg12_buffer *cur_buffer;
    struct vl_compositor compositor;
 
    void *rast;
@@ -60,7 +60,7 @@ struct sp_mpeg12_context
    enum pipe_format decode_format;
 };
 
-struct sp_mpeg12_buffer
+struct vl_mpeg12_buffer
 {
    struct vl_vertex_buffer vertex_stream;
 
@@ -77,18 +77,14 @@ struct sp_mpeg12_buffer
    struct vl_mpeg12_mc_buffer mc;
 };
 
-struct pipe_video_context *
-sp_video_create(struct pipe_screen *screen, enum pipe_video_profile profile,
-                enum pipe_video_chroma_format chroma_format,
-                unsigned width, unsigned height, void *priv);
-
-/* Other drivers can call this function in their pipe_video_context constructors and pass it
+/* drivers can call this function in their pipe_video_context constructors and pass it
    an accelerated pipe_context along with suitable buffering modes, etc */
 struct pipe_video_context *
-sp_video_create_ex(struct pipe_context *pipe, enum pipe_video_profile profile,
-                   enum pipe_video_chroma_format chroma_format,
-                   unsigned width, unsigned height,
-                   bool pot_buffers,
-                   enum pipe_format decode_format);
+vl_create_mpeg12_context(struct pipe_context *pipe,
+                         enum pipe_video_profile profile,
+                         enum pipe_video_chroma_format chroma_format,
+                         unsigned width, unsigned height,
+                         bool pot_buffers,
+                         enum pipe_format decode_format);
 
-#endif /* SP_VIDEO_CONTEXT_H */
+#endif /* VL_MPEG12_CONTEXT_H */
