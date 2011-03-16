@@ -100,22 +100,8 @@ struct svga_buffer
    struct {
       /**
        * Number of concurrent mappings.
-       *
-       * XXX: It is impossible to guarantee concurrent maps work in all
-       * circumstances -- pipe_buffers really need transfer objects too.
        */
       unsigned count;
-
-      /**
-       * Whether this buffer is currently mapped for writing.
-       */
-      boolean writing;
-
-      /**
-       * Whether the application will tell us explicity which ranges it touched
-       * or not.
-       */
-      boolean flush_explicit;
 
       /**
        * Dirty ranges.
