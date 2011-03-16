@@ -429,7 +429,7 @@ wayland_create_buffer(struct dri2_egl_surface *dri2_surf, __DRIbuffer *buffer)
 }
 
 static void
-wayland_frame_callback(void *data, uint32_t time)
+wayland_frame_callback(struct wl_surface *surface, void *data, uint32_t time)
 {
    struct dri2_egl_surface *dri2_surf = data;
 
@@ -459,7 +459,8 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
 
    dri2_surf->block_swap_buffers = EGL_TRUE;
    wl_display_frame_callback(dri2_dpy->wl_dpy->display,
-	 wayland_frame_callback, dri2_surf);
+	 		     dri2_surf->wl_win->surface,
+			     wayland_frame_callback, dri2_surf);
 
    if (dri2_surf->type == DRI2_WINDOW_SURFACE) {
       pointer_swap(

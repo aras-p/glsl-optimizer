@@ -280,7 +280,7 @@ wayland_surface_validate(struct native_surface *nsurf, uint attachment_mask,
 }
 
 static void
-wayland_frame_callback(void *data, uint32_t time)
+wayland_frame_callback(struct wl_surface *surf, void *data, uint32_t time)
 {
    struct wayland_surface *surface = data;
 
@@ -307,8 +307,8 @@ wayland_surface_swap_buffers(struct native_surface *nsurf)
       wl_display_iterate(display->dpy->display, WL_DISPLAY_READABLE);
 
    surface->block_swap_buffers = TRUE;
-   wl_display_frame_callback(display->dpy->display, wayland_frame_callback,
-                             surface);
+   wl_display_frame_callback(display->dpy->display, surface->win->surface,
+                             wayland_frame_callback, surface);
 
    if (surface->type == WL_WINDOW_SURFACE) {
       resource_surface_swap_buffers(surface->rsurf,
