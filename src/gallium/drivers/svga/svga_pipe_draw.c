@@ -141,17 +141,10 @@ svga_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
    unsigned reduced_prim = u_reduced_prim( info->mode );
    unsigned count = info->count;
    enum pipe_error ret = 0;
+   boolean needed_swtnl;
 
    if (!u_trim_pipe_prim( info->mode, &count ))
       return;
-
-   if (svga->state.sw.need_swtnl != svga->prev_draw_swtnl) {
-      /* We're switching between SW and HW drawing.  Do a flush to avoid
-       * mixing HW and SW rendering with the same vertex buffer.
-       */
-      pipe->flush(pipe, NULL);
-      svga->prev_draw_swtnl = svga->state.sw.need_swtnl;
-   }
 
    /*
     * Mark currently bound target surfaces as dirty
@@ -167,6 +160,8 @@ svga_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
       svga->dirty |= SVGA_NEW_REDUCED_PRIMITIVE;
    }
    
+   needed_swtnl = svga->state.sw.need_swtnl;
+
    svga_update_state_retry( svga, SVGA_STATE_NEED_SWTNL );
 
 #ifdef DEBUG
@@ -176,6 +171,18 @@ svga_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
 #endif
 
    if (svga->state.sw.need_swtnl) {
+      if (!needed_swtnl) {
+         /*
+          * We're switching from HW to SW TNL.  SW TNL will require mapping all
+          * currently bound vertex buffers, some of which may already be
+          * referenced in the current command buffer as result of previous HW
+          * TNL. So flush now, to prevent the context to flush while a referred
+          * vertex buffer is mapped.
+          */
+
+         svga_context_flush(svga, NULL);
+      }
+
       ret = svga_swtnl_draw_vbo( svga, info );
    }
    else {
