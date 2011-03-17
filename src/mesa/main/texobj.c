@@ -39,6 +39,7 @@
 #include "macros.h"
 #include "teximage.h"
 #include "texobj.h"
+#include "texstate.h"
 #include "mtypes.h"
 #include "program/prog_instruction.h"
 
@@ -1013,8 +1014,7 @@ void GLAPIENTRY
 _mesa_BindTexture( GLenum target, GLuint texName )
 {
    GET_CURRENT_CONTEXT(ctx);
-   const GLuint unit = ctx->Texture.CurrentUnit;
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
+   struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
    struct gl_texture_object *newTexObj = NULL;
    GLint targetIndex;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
