@@ -41,6 +41,7 @@ struct vl_mpeg12_context
    struct pipe_video_context base;
    struct pipe_context *pipe;
    struct pipe_surface *decode_target;
+   const unsigned (*empty_block_mask)[3][2][2];
 
    struct pipe_vertex_buffer quads;
    unsigned vertex_buffer_size;

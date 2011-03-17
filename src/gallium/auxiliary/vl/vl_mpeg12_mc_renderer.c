@@ -56,12 +56,6 @@ enum VS_OUTPUT
    VS_O_MV3
 };
 
-static const unsigned const_empty_block_mask_420[3][2][2] = {
-        { { 0x20, 0x10 },  { 0x08, 0x04 } },
-        { { 0x02, 0x02 },  { 0x02, 0x02 } },
-        { { 0x01, 0x01 },  { 0x01, 0x01 } }
-};
-
 static void *
 create_vert_shader(struct vl_mpeg12_mc_renderer *r)
 {
@@ -536,10 +530,6 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
    renderer->buffer_width = buffer_width;
    renderer->buffer_height = buffer_height;
    renderer->chroma_format = chroma_format;
-
-   /* TODO: Implement 422, 444 */
-   assert(chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
-   renderer->empty_block_mask = &const_empty_block_mask_420;
 
    renderer->texview_map = util_new_keymap(sizeof(struct pipe_surface*), -1,
                                            texview_map_delete);

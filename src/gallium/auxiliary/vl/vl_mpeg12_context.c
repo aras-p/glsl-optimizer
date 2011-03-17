@@ -40,6 +40,12 @@
 
 #define NUM_BUFFERS 2
 
+static const unsigned const_empty_block_mask_420[3][2][2] = {
+        { { 0x20, 0x10 },  { 0x08, 0x04 } },
+        { { 0x02, 0x02 },  { 0x02, 0x02 } },
+        { { 0x01, 0x01 },  { 0x01, 0x01 } }
+};
+
 static void
 flush_buffer(struct vl_mpeg12_context *ctx)
 {
@@ -161,7 +167,7 @@ upload_buffer(struct vl_mpeg12_context *ctx,
 
    for (y = 0; y < 2; ++y) {
       for (x = 0; x < 2; ++x, ++tb) {
-         if (mb->cbp & (*ctx->mc_renderer.empty_block_mask)[0][y][x]) {
+         if (mb->cbp & (*ctx->empty_block_mask)[0][y][x]) {
             vl_idct_add_block(&buffer->idct_y, mb->mbx * 2 + x, mb->mby * 2 + y, blocks);
             blocks += BLOCK_WIDTH * BLOCK_HEIGHT;
          }
@@ -172,7 +178,7 @@ upload_buffer(struct vl_mpeg12_context *ctx,
    assert(ctx->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
 
    for (tb = 1; tb < 3; ++tb) {
-      if (mb->cbp & (*ctx->mc_renderer.empty_block_mask)[tb][0][0]) {
+      if (mb->cbp & (*ctx->empty_block_mask)[tb][0][0]) {
          if(tb == 1)
             vl_idct_add_block(&buffer->idct_cb, mb->mbx, mb->mby, blocks);
          else
@@ -289,7 +295,7 @@ vl_mpeg12_decode_macroblocks(struct pipe_video_context *vpipe,
 
    for ( i = 0; i < num_macroblocks; ++i ) {
       vl_vb_add_block(&ctx->cur_buffer->vertex_stream, &mpeg12_macroblocks[i],
-                      ctx->mc_renderer.empty_block_mask);
+                      ctx->empty_block_mask);
       upload_buffer(ctx, ctx->cur_buffer, &mpeg12_macroblocks[i]);
    }
 
@@ -663,6 +669,10 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
       FREE(ctx);
       return NULL;
    }
+
+   /* TODO: Implement 422, 444 */
+   assert(chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
+   ctx->empty_block_mask = &const_empty_block_mask_420;
 
    if (!(idct_matrix = vl_idct_upload_matrix(ctx->pipe)))
       return false;
