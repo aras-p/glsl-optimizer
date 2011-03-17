@@ -145,7 +145,7 @@ svga_hwtnl_flush( struct svga_hwtnl *hwtnl )
       unsigned i;
 
       /* Unmap upload manager vertex buffers */
-      u_upload_flush(svga->upload_vb);
+      u_upload_unmap(svga->upload_vb);
 
       for (i = 0; i < hwtnl->cmd.vdecl_count; i++) {
          handle = svga_buffer_handle(svga, hwtnl->cmd.vdecl_vb[i]);
@@ -156,7 +156,7 @@ svga_hwtnl_flush( struct svga_hwtnl *hwtnl )
       }
 
       /* Unmap upload manager index buffers */
-      u_upload_flush(svga->upload_ib);
+      u_upload_unmap(svga->upload_ib);
 
       for (i = 0; i < hwtnl->cmd.prim_count; i++) {
          if (hwtnl->cmd.prim_ib[i]) {
