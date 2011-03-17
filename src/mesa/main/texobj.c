@@ -1015,7 +1015,7 @@ _mesa_BindTexture( GLenum target, GLuint texName )
    GET_CURRENT_CONTEXT(ctx);
    const GLuint unit = ctx->Texture.CurrentUnit;
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-   struct gl_texture_object *newTexObj = NULL, *defaultTexObj = NULL;
+   struct gl_texture_object *newTexObj = NULL;
    GLint targetIndex;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
@@ -1029,13 +1029,13 @@ _mesa_BindTexture( GLenum target, GLuint texName )
       return;
    }
    assert(targetIndex < NUM_TEXTURE_TARGETS);
-   defaultTexObj = ctx->Shared->DefaultTex[targetIndex];
 
    /*
     * Get pointer to new texture object (newTexObj)
     */
    if (texName == 0) {
-      newTexObj = defaultTexObj;
+      /* Use a default texture object */
+      newTexObj = ctx->Shared->DefaultTex[targetIndex];
    }
    else {
       /* non-default texture object */
