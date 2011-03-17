@@ -1017,7 +1017,6 @@ _mesa_BindTexture( GLenum target, GLuint texName )
    struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
    struct gl_texture_object *newTexObj = NULL, *defaultTexObj = NULL;
    GLint targetIndex;
-   GLboolean early_out = GL_FALSE;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
@@ -1071,15 +1070,18 @@ _mesa_BindTexture( GLenum target, GLuint texName )
 
    assert(valid_texture_object(newTexObj));
 
-   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
-   if ((ctx->Shared->RefCount == 1)
-       && (newTexObj == texUnit->CurrentTex[targetIndex])) {
-      early_out = GL_TRUE;
-   }
-   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
-
-   if (early_out) {
-      return;
+   /* Check if this texture is only used by this context and is already bound.
+    * If so, just return.
+    */
+   {
+      GLboolean early_out;
+      _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+      early_out = ((ctx->Shared->RefCount == 1)
+                   && (newTexObj == texUnit->CurrentTex[targetIndex]));
+      _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+      if (early_out) {
+         return;
+      }
    }
 
    /* flush before changing binding */
