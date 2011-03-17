@@ -104,7 +104,7 @@ vlVdpVideoSurfaceDestroy ( VdpVideoSurface surface )
  if (p_surf->psurface) {
  if (p_surf->psurface->texture) {
  if (p_surf->psurface->texture->screen)
- p_surf->psurface->texture->screen->tex_surface_destroy(p_surf->psurface);
+ p_surf->psurface->context->surface_destroy(p_surf->psurface->context, p_surf->psurface);
  }
  }
  FREE(p_surf);
