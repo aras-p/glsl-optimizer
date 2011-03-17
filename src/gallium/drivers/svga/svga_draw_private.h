@@ -116,6 +116,13 @@ struct draw_cmd {
 struct svga_hwtnl {
    struct svga_context *svga;
    struct u_upload_mgr *upload_ib;
+
+   /* Additional negative index bias due to partial buffer uploads
+    * This is compensated for in the offset associated with all
+    * vertex buffers.
+    */
+
+   int index_bias;
    
    /* Flatshade information:
     */

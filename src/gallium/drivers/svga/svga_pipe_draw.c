@@ -37,6 +37,116 @@
 #include "svga_state.h"
 #include "svga_swtnl.h"
 #include "svga_debug.h"
+#include "svga_resource_buffer.h"
+#include "util/u_upload_mgr.h"
+
+/**
+ * svga_upload_user_buffers - upload parts of user buffers
+ *
+ * This function streams a part of a user buffer to hw and sets
+ * svga_buffer::source_offset to the first byte uploaded. After upload
+ * also svga_buffer::uploaded::buffer is set to !NULL
+ */
+
+static int
+svga_upload_user_buffers(struct svga_context *svga,
+                         unsigned start,
+                         unsigned count,
+                         unsigned instance_count)
+{
+   const struct pipe_vertex_element *ve = svga->curr.velems->velem;
+   unsigned i;
+   int ret;
+
+   for (i=0; i < svga->curr.velems->count; i++) {
+      struct pipe_vertex_buffer *vb =
+         &svga->curr.vb[ve[i].vertex_buffer_index];
+
+      if (vb->buffer && svga_buffer_is_user_buffer(vb->buffer)) {
+         struct svga_buffer *buffer = svga_buffer(vb->buffer);
+         unsigned first, size;
+         boolean flushed;
+         unsigned instance_div = ve[i].instance_divisor;
+
+         svga->dirty |= SVGA_NEW_VBUFFER;
+
+         if (instance_div) {
+            first = 0;
+            size = vb->stride *
+               (instance_count + instance_div - 1) / instance_div;
+         } else if (vb->stride) {
+            first = vb->stride * start;
+            size = vb->stride * count;
+         } else {
+            /* Only a single vertex!
+             * Upload with the largest vertex size the hw supports,
+             * if possible.
+             */
+            first = 0;
+            size = MIN2(16, vb->buffer->width0);
+         }
+
+         ret = u_upload_buffer( svga->upload_vb,
+                                0, first, size,
+                                &buffer->b.b,
+                                &buffer->uploaded.offset,
+                                &buffer->uploaded.buffer,
+                                &flushed);
+
+         if (ret)
+            return ret;
+
+         if (0)
+            debug_printf("%s: %d: orig buf %p upl buf %p ofs %d sofs %d"
+                         " sz %d\n",
+                         __FUNCTION__,
+                         i,
+                         buffer,
+                         buffer->uploaded.buffer,
+                         buffer->uploaded.offset,
+                         first,
+                         size);
+
+         vb->buffer_offset = buffer->uploaded.offset;
+         buffer->source_offset = first;
+      }
+   }
+
+   return PIPE_OK;
+}
+
+/**
+ * svga_release_user_upl_buffers - release uploaded parts of user buffers
+ *
+ * This function releases the hw copy of the uploaded fraction of the
+ * user-buffer. It's important to do this as soon as all draw calls
+ * affecting the uploaded fraction are issued, as this allows for
+ * efficient reuse of the hardware surface backing the uploaded fraction.
+ *
+ * svga_buffer::source_offset is set to 0, and svga_buffer::uploaded::buffer
+ * is set to 0.
+ */
+
+static void
+svga_release_user_upl_buffers(struct svga_context *svga)
+{
+   unsigned i;
+   unsigned nr;
+
+   nr = svga->curr.num_vertex_buffers;
+
+   for (i = 0; i < nr; ++i) {
+      struct pipe_vertex_buffer *vb = &svga->curr.vb[i];
+
+      if (vb->buffer && svga_buffer_is_user_buffer(vb->buffer)) {
+         struct svga_buffer *buffer = svga_buffer(vb->buffer);
+
+         buffer->source_offset = 0;
+         if (buffer->uploaded.buffer)
+            pipe_resource_reference(&buffer->uploaded.buffer, NULL);
+      }
+   }
+}
 
 
 
@@ -50,6 +160,7 @@ retry_draw_range_elements( struct svga_context *svga,
                            unsigned prim, 
                            unsigned start, 
                            unsigned count,
+                           unsigned instance_count,
                            boolean do_retry )
 {
    enum pipe_error ret = 0;
@@ -61,6 +172,10 @@ retry_draw_range_elements( struct svga_context *svga,
                              svga->curr.rast->templ.flatshade,
                              svga->curr.rast->templ.flatshade_first );
 
+   ret = svga_upload_user_buffers( svga, min_index + index_bias,
+                                   max_index - min_index + 1, instance_count );
+   if (ret != PIPE_OK)
+      goto retry;
 
    ret = svga_update_state( svga, SVGA_STATE_HW_DRAW );
    if (ret)
@@ -84,7 +199,7 @@ retry:
                                         index_buffer, index_size, index_bias,
                                         min_index, max_index,
                                         prim, start, count,
-                                        FALSE );
+                                        instance_count, FALSE );
    }
 
    return ret;
@@ -96,6 +211,7 @@ retry_draw_arrays( struct svga_context *svga,
                    unsigned prim, 
                    unsigned start, 
                    unsigned count,
+                   unsigned instance_count,
                    boolean do_retry )
 {
    enum pipe_error ret;
@@ -106,6 +222,11 @@ retry_draw_arrays( struct svga_context *svga,
    svga_hwtnl_set_flatshade( svga->hwtnl,
                              svga->curr.rast->templ.flatshade,
                              svga->curr.rast->templ.flatshade_first );
+
+   ret = svga_upload_user_buffers( svga, start, count, instance_count );
+
+   if (ret != PIPE_OK)
+      goto retry;
 
    ret = svga_update_state( svga, SVGA_STATE_HW_DRAW );
    if (ret)
@@ -127,6 +248,7 @@ retry:
                                 prim,
                                 start,
                                 count,
+                                instance_count,
                                 FALSE );
    }
 
@@ -183,6 +305,8 @@ svga_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
          svga_context_flush(svga, NULL);
       }
 
+      /* Avoid leaking the previous hwtnl bias to swtnl */
+      svga_hwtnl_set_index_bias( svga->hwtnl, 0 );
       ret = svga_swtnl_draw_vbo( svga, info );
    }
    else {
@@ -201,6 +325,7 @@ svga_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
                                           info->mode,
                                           info->start + offset,
                                           info->count,
+                                          info->instance_count,
                                           TRUE );
       }
       else {
@@ -208,9 +333,12 @@ svga_draw_vbo(struct pipe_context *pipe, const struct pipe_draw_info *info)
                                   info->mode,
                                   info->start,
                                   info->count,
+                                  info->instance_count,
                                   TRUE );
       }
    }
+
+   svga_release_user_upl_buffers( svga );
 
    if (SVGA_DEBUG & DEBUG_FLUSH) {
       svga_hwtnl_flush_retry( svga );

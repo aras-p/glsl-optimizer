@@ -132,6 +132,13 @@ struct svga_buffer
    } uploaded;
 
    /**
+    * For user buffers, this is the offset to the data about to be
+    * referenced by the next draw command, and hence the data that needs
+    * to be uploaded.
+    */
+   unsigned source_offset;
+
+   /**
     * DMA'ble memory.
     *
     * A piece of GMR memory, with the same size of the buffer. It is created
