@@ -46,6 +46,17 @@ nv50_flush(struct pipe_context *pipe,
    FIRE_RING(screen->channel);
 }
 
+static void
+nv50_texture_barrier(struct pipe_context *pipe)
+{
+   struct nouveau_channel *chan = nv50_context(pipe)->screen->base.channel;
+
+   BEGIN_RING(chan, RING_3D(SERIALIZE), 1);
+   OUT_RING  (chan, 0);
+   BEGIN_RING(chan, RING_3D(TEX_CACHE_CTL), 1);
+   OUT_RING  (chan, 0x20);
+}
+
 void
 nv50_default_flush_notify(struct nouveau_channel *chan)
 {
@@ -125,6 +136,7 @@ nv50_create(struct pipe_screen *pscreen, void *priv)
    pipe->clear = nv50_clear;
 
    pipe->flush = nv50_flush;
+   pipe->texture_barrier = nv50_texture_barrier;
 
    if (!screen->cur_ctx)
       screen->cur_ctx = nv50;

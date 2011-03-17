@@ -47,6 +47,15 @@ nvc0_flush(struct pipe_context *pipe,
 }
 
 static void
+nvc0_texture_barrier(struct pipe_context *pipe)
+{
+   struct nouveau_channel *chan = nvc0_context(pipe)->screen->base.channel;
+
+   IMMED_RING(chan, RING_3D(SERIALIZE), 0);
+   IMMED_RING(chan, RING_3D(TEX_CACHE_CTL), 0);
+}
+
+static void
 nvc0_context_unreference_resources(struct nvc0_context *nvc0)
 {
    unsigned s, i;
@@ -128,6 +137,7 @@ nvc0_create(struct pipe_screen *pscreen, void *priv)
    pipe->clear = nvc0_clear;
 
    pipe->flush = nvc0_flush;
+   pipe->texture_barrier = nvc0_texture_barrier;
 
    if (!screen->cur_ctx)
       screen->cur_ctx = nvc0;
