@@ -699,11 +699,11 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
    }
 
    if(!vl_idct_init(&ctx->idct_cr, ctx->pipe, chroma_width, chroma_height,
-                    chroma_blocks_x, chroma_blocks_y, TGSI_SWIZZLE_Y, idct_matrix))
+                    chroma_blocks_x, chroma_blocks_y, TGSI_SWIZZLE_Z, idct_matrix))
       return false;
 
    if(!vl_idct_init(&ctx->idct_cb, ctx->pipe, chroma_width, chroma_height,
-                    chroma_blocks_x, chroma_blocks_y, TGSI_SWIZZLE_Z, idct_matrix))
+                    chroma_blocks_x, chroma_blocks_y, TGSI_SWIZZLE_Y, idct_matrix))
       return false;
 
    if (!vl_mpeg12_mc_renderer_init(&ctx->mc_renderer, ctx->pipe,
