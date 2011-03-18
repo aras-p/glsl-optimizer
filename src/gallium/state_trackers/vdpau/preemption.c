@@ -24,16 +24,16 @@
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  *
  **************************************************************************/
- 
+
  #include <vdpau/vdpau.h>
- 
- void vlVdpPreemptionCallback (VdpDevice device, void *context)
+
+ void vlVdpPreemptionCallback(VdpDevice device, void *context)
  {
-	 /* TODO: Implement preemption */
+   /* TODO: Implement preemption */
  }
- 
- VdpStatus vlVdpPreemptionCallbackRegister (VdpDevice device, VdpPreemptionCallback callback, void *context)
+
+ VdpStatus vlVdpPreemptionCallbackRegister(VdpDevice device, VdpPreemptionCallback callback,
+                                           void *context)
  {
-	 
-	 return VDP_STATUS_OK;
+   return VDP_STATUS_OK;
  }

@@ -30,46 +30,45 @@
 #include <util/u_debug.h>
 
 VdpStatus
-vlVdpBitmapSurfaceCreate(	VdpDevice device, 
-							VdpRGBAFormat rgba_format, 
-							uint32_t width, uint32_t height, 
-							VdpBool frequently_accessed, 
-							VdpBitmapSurface *surface)
+vlVdpBitmapSurfaceCreate(VdpDevice device,
+                         VdpRGBAFormat rgba_format,
+                         uint32_t width, uint32_t height,
+                         VdpBool frequently_accessed,
+                         VdpBitmapSurface *surface)
 {
-	debug_printf("[VDPAU] Creating a bitmap surface\n");
-	if (!surface)
-		return VDP_STATUS_INVALID_POINTER;
+   debug_printf("[VDPAU] Creating a bitmap surface\n");
+   if (!surface)
+      return VDP_STATUS_INVALID_POINTER;
 
-	return VDP_STATUS_NO_IMPLEMENTATION;
+   return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
 VdpStatus
-vlVdpBitmapSurfaceDestroy ( VdpBitmapSurface  surface )
+vlVdpBitmapSurfaceDestroy(VdpBitmapSurface surface)
 {
-	
-	return VDP_STATUS_NO_IMPLEMENTATION;
+   return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
 VdpStatus
-vlVdpBitmapSurfaceGetParameters ( 	VdpBitmapSurface  surface,
-									VdpRGBAFormat  *rgba_format, 
-									uint32_t *width, uint32_t *height, 
-									VdpBool  *frequently_accessed)
+vlVdpBitmapSurfaceGetParameters(VdpBitmapSurface surface,
+                                VdpRGBAFormat *rgba_format,
+                                uint32_t *width, uint32_t *height,
+                                VdpBool *frequently_accessed)
 {
-	if (!(rgba_format && width && height && frequently_accessed))
-		return VDP_STATUS_INVALID_POINTER;
-	
-	return VDP_STATUS_NO_IMPLEMENTATION;
+   if (!(rgba_format && width && height && frequently_accessed))
+      return VDP_STATUS_INVALID_POINTER;
+
+   return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
 VdpStatus
-vlVdpBitmapSurfacePutBitsNative ( 	VdpBitmapSurface  surface, 
-									void const *const *source_data, 
-									uint32_t const *source_pitches, 
-									VdpRect  const *destination_rect )
+vlVdpBitmapSurfacePutBitsNative(VdpBitmapSurface surface,
+                                void const *const *source_data,
+                                uint32_t const *source_pitches,
+                                VdpRect const *destination_rect )
 {
-	if (!(source_data && source_pitches && destination_rect))
-		return VDP_STATUS_INVALID_POINTER;
-	
-	return VDP_STATUS_NO_IMPLEMENTATION;
+   if (!(source_data && source_pitches && destination_rect))
+       return VDP_STATUS_INVALID_POINTER;
+
+   return VDP_STATUS_NO_IMPLEMENTATION;
 }

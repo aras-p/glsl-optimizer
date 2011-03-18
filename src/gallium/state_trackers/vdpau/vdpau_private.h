@@ -28,7 +28,6 @@
 #ifndef VDPAU_PRIVATE_H
 #define VDPAU_PRIVATE_H
 
-
 #include <vdpau/vdpau.h>
 #include <vdpau/vdpau_x11.h>
 #include <pipe/p_compiler.h>
@@ -182,7 +181,7 @@ typedef struct
 
 typedef struct
 {
-	vlVdpDevice *device;
+   vlVdpDevice *device;
 } vlVdpVideoMixer;
 
 typedef struct
@@ -206,12 +205,12 @@ typedef struct
 
 typedef struct
 {
-	vlVdpDevice *device;
-    struct vl_context *vctx;
-	enum pipe_video_chroma_format chroma_format;
-	enum pipe_video_profile profile;
-	uint32_t width;
-	uint32_t height;
+   vlVdpDevice *device;
+   struct vl_context *vctx;
+   enum pipe_video_chroma_format chroma_format;
+   enum pipe_video_profile profile;
+   uint32_t width;
+   uint32_t height;
 } vlVdpDecoder;
 
 typedef uint32_t vlHandle;
@@ -273,6 +272,5 @@ VdpVideoMixerCreate vlVdpVideoMixerCreate;
 VdpVideoMixerRender vlVdpVideoMixerRender;
 VdpVideoMixerSetAttributeValues vlVdpVideoMixerSetAttributeValues;
 VdpGenerateCSCMatrix vlVdpGenerateCSCMatrix;
-
 
 #endif // VDPAU_PRIVATE_H

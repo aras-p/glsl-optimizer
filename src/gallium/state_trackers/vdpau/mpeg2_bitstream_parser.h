@@ -34,32 +34,30 @@
 
 enum vdpMPEG2States
 {
-	MPEG2_SEEK_HEADER,
-	MPEG2_HEADER_DONE,
-	MPEG2_BITSTREAM_DONE,
-	MPEG2_HEADER_START_CODE
+   MPEG2_SEEK_HEADER,
+   MPEG2_HEADER_DONE,
+   MPEG2_BITSTREAM_DONE,
+   MPEG2_HEADER_START_CODE
 };
-
 
 struct vdpMPEG2BitstreamParser
 {
-	enum vdpMPEG2States state;
-	uint32_t cur_bitstream;
-	const uint8_t *ptr_bitstream_end;
-	const uint8_t *ptr_bitstream;
-	uint8_t code;
-	
-	/* The decoded bitstream goes here: */
-	/* Sequence_header_info */
-	uint32_t horizontal_size_value;
+   enum vdpMPEG2States state;
+   uint32_t cur_bitstream;
+   const uint8_t *ptr_bitstream_end;
+   const uint8_t *ptr_bitstream;
+   uint8_t code;
+
+   /* The decoded bitstream goes here: */
+   /* Sequence_header_info */
+   uint32_t horizontal_size_value;
 };
 
 int
 vlVdpMPEG2BitstreamToMacroblock(struct pipe_screen *screen,
-                  VdpBitstreamBuffer const *bitstream_buffers,
-				  uint32_t bitstream_buffer_count,
-                  unsigned int *num_macroblocks,
-                  struct pipe_mpeg12_macroblock **pipe_macroblocks);
-				  
+                                VdpBitstreamBuffer const *bitstream_buffers,
+                                uint32_t bitstream_buffer_count,
+                                unsigned int *num_macroblocks,
+                                struct pipe_mpeg12_macroblock **pipe_macroblocks);
 
 #endif // MPEG2_BITSTREAM_PARSER_H

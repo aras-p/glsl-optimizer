@@ -31,34 +31,34 @@
 #include <util/u_memory.h>
 
 VdpStatus
-vlVdpOutputSurfaceCreate (	VdpDevice  device, 
-							VdpRGBAFormat  rgba_format, 
-							uint32_t width, uint32_t height, 
-							VdpOutputSurface  *surface)
+vlVdpOutputSurfaceCreate(VdpDevice device,
+                         VdpRGBAFormat rgba_format,
+                         uint32_t width, uint32_t height,
+                         VdpOutputSurface  *surface)
 {
-	vlVdpOutputSurface *vlsurface = NULL;
-	
-	debug_printf("[VDPAU] Creating output surface\n");
-	if (!(width && height))
-		return VDP_STATUS_INVALID_SIZE;
-		
-	vlVdpDevice *dev = vlGetDataHTAB(device);
-	if (!dev)
+   vlVdpOutputSurface *vlsurface = NULL;
+
+   debug_printf("[VDPAU] Creating output surface\n");
+   if (!(width && height))
+      return VDP_STATUS_INVALID_SIZE;
+
+   vlVdpDevice *dev = vlGetDataHTAB(device);
+   if (!dev)
       return VDP_STATUS_INVALID_HANDLE;
-	  
-	vlsurface = CALLOC(1, sizeof(vlVdpOutputSurface));
-    if (!vlsurface)
+
+   vlsurface = CALLOC(1, sizeof(vlVdpOutputSurface));
+   if (!vlsurface)
       return VDP_STATUS_RESOURCES;
-	  
-	vlsurface->width = width;
-	vlsurface->height = height;
-	vlsurface->format = FormatRGBAToPipe(rgba_format);
-	  
-	*surface = vlAddDataHTAB(vlsurface);
+
+   vlsurface->width = width;
+   vlsurface->height = height;
+   vlsurface->format = FormatRGBAToPipe(rgba_format);
+
+   *surface = vlAddDataHTAB(vlsurface);
    if (*surface == 0) {
       FREE(dev);
-	  return VDP_STATUS_ERROR;
+      return VDP_STATUS_ERROR;
    }
-	
-	return VDP_STATUS_OK;
+
+   return VDP_STATUS_OK;
 }
