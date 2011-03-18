@@ -299,7 +299,8 @@ interpolate_int_colors(struct gl_context *ctx, SWspan *span)
       interpolate_active_attribs(ctx, span, FRAG_BIT_COL0);
       break;
    default:
-      _mesa_problem(NULL, "bad datatype in interpolate_int_colors");
+      _mesa_problem(ctx, "bad datatype 0x%x in interpolate_int_colors",
+                    span->array->ChanType);
    }
    span->arrayMask |= SPAN_RGBA;
 }
