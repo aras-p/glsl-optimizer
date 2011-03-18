@@ -32,162 +32,147 @@
 #include <util/u_format.h>
 
 VdpStatus
-vlVdpVideoSurfaceCreate(VdpDevice device,
- VdpChromaType chroma_type,
- uint32_t width,
- uint32_t height,
- VdpVideoSurface *surface)
+vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
+                        uint32_t width, uint32_t height,
+                        VdpVideoSurface *surface)
 {
- printf("[VDPAU] Creating a surface\n");
+   printf("[VDPAU] Creating a surface\n");
 
- vlVdpSurface *p_surf;
- VdpStatus ret;
+   vlVdpSurface *p_surf;
+   VdpStatus ret;
 
- if (!(width && height))
- {
- ret = VDP_STATUS_INVALID_SIZE;
- goto inv_size;
- }
+   if (!(width && height)) {
+      ret = VDP_STATUS_INVALID_SIZE;
+      goto inv_size;
+   }
 
+   if (!vlCreateHTAB()) {
+      ret = VDP_STATUS_RESOURCES;
+      goto no_htab;
+   }
 
- if (!vlCreateHTAB()) {
- ret = VDP_STATUS_RESOURCES;
- goto no_htab;
- }
+   p_surf = CALLOC(1, sizeof(p_surf));
+   if (!p_surf) {
+      ret = VDP_STATUS_RESOURCES;
+      goto no_res;
+   }
 
- p_surf = CALLOC(1, sizeof(p_surf));
- if (!p_surf) {
- ret = VDP_STATUS_RESOURCES;
- goto no_res;
- }
+   vlVdpDevice *dev = vlGetDataHTAB(device);
+   if (!dev) {
+      ret = VDP_STATUS_INVALID_HANDLE;
+      goto inv_device;
+   }
 
- vlVdpDevice *dev = vlGetDataHTAB(device);
- if (!dev) {
- ret = VDP_STATUS_INVALID_HANDLE;
- goto inv_device;
- }
+   p_surf->chroma_format = TypeToPipe(chroma_type);
+   p_surf->device = dev;
+   p_surf->width = width;
+   p_surf->height = height;
 
- p_surf->chroma_format = TypeToPipe(chroma_type);
- p_surf->device = dev;
- p_surf->width = width;
- p_surf->height = height;
+   *surface = vlAddDataHTAB(p_surf);
+   if (*surface == 0) {
+      ret = VDP_STATUS_ERROR;
+      goto no_handle;
+   }
 
- *surface = vlAddDataHTAB(p_surf);
- if (*surface == 0) {
- ret = VDP_STATUS_ERROR;
- goto no_handle;
- }
-
- return VDP_STATUS_OK;
+   return VDP_STATUS_OK;
 
 no_handle:
- FREE(p_surf->psurface);
+   FREE(p_surf->psurface);
 inv_device:
 no_surf:
- FREE(p_surf);
+   FREE(p_surf);
 no_res:
- // vlDestroyHTAB(); XXX: Do not destroy this tab, I think.
+   // vlDestroyHTAB(); XXX: Do not destroy this tab, I think.
 no_htab:
 inv_size:
- return ret;
+   return ret;
 }
 
 VdpStatus
-vlVdpVideoSurfaceDestroy ( VdpVideoSurface surface )
+vlVdpVideoSurfaceDestroy(VdpVideoSurface surface)
 {
- vlVdpSurface *p_surf;
+   vlVdpSurface *p_surf;
 
- p_surf = (vlVdpSurface *)vlGetDataHTAB((vlHandle)surface);
- if (!p_surf)
- return VDP_STATUS_INVALID_HANDLE;
+   p_surf = (vlVdpSurface *)vlGetDataHTAB((vlHandle)surface);
+   if (!p_surf)
+      return VDP_STATUS_INVALID_HANDLE;
 
- if (p_surf->psurface) {
- if (p_surf->psurface->texture) {
- if (p_surf->psurface->texture->screen)
- p_surf->psurface->context->surface_destroy(p_surf->psurface->context, p_surf->psurface);
- }
- }
- FREE(p_surf);
- return VDP_STATUS_OK;
+   if (p_surf->psurface) {
+      if (p_surf->psurface->texture) {
+         if (p_surf->psurface->texture->screen)
+            p_surf->psurface->context->surface_destroy(p_surf->psurface->context, p_surf->psurface);
+      }
+   }
+   FREE(p_surf);
+   return VDP_STATUS_OK;
 }
 
 VdpStatus
-vlVdpVideoSurfaceGetParameters ( VdpVideoSurface surface,
- VdpChromaType *chroma_type,
- uint32_t *width,
- uint32_t *height
-)
+vlVdpVideoSurfaceGetParameters(VdpVideoSurface surface,
+                               VdpChromaType *chroma_type,
+                               uint32_t *width, uint32_t *height)
 {
- if (!(width && height && chroma_type))
- return VDP_STATUS_INVALID_POINTER;
+   if (!(width && height && chroma_type))
+      return VDP_STATUS_INVALID_POINTER;
 
+   vlVdpSurface *p_surf = vlGetDataHTAB(surface);
+   if (!p_surf)
+      return VDP_STATUS_INVALID_HANDLE;
 
- vlVdpSurface *p_surf = vlGetDataHTAB(surface);
- if (!p_surf)
- return VDP_STATUS_INVALID_HANDLE;
+   if (!(p_surf->chroma_format > 0 && p_surf->chroma_format < 3))
+      return VDP_STATUS_INVALID_CHROMA_TYPE;
 
+   *width = p_surf->width;
+   *height = p_surf->height;
+   *chroma_type = PipeToType(p_surf->chroma_format);
 
- if (!(p_surf->chroma_format > 0 && p_surf->chroma_format < 3))
- return VDP_STATUS_INVALID_CHROMA_TYPE;
-
- *width = p_surf->width;
- *height = p_surf->height;
- *chroma_type = PipeToType(p_surf->chroma_format);
-
- return VDP_STATUS_OK;
+   return VDP_STATUS_OK;
 }
 
 VdpStatus
-vlVdpVideoSurfaceGetBitsYCbCr ( VdpVideoSurface surface,
- VdpYCbCrFormat destination_ycbcr_format,
- void *const *destination_data,
- uint32_t const *destination_pitches
-)
+vlVdpVideoSurfaceGetBitsYCbCr(VdpVideoSurface surface,
+                              VdpYCbCrFormat destination_ycbcr_format,
+                              void *const *destination_data,
+                              uint32_t const *destination_pitches)
 {
- if (!vlCreateHTAB())
- return VDP_STATUS_RESOURCES;
+   if (!vlCreateHTAB())
+      return VDP_STATUS_RESOURCES;
 
+   vlVdpSurface *p_surf = vlGetDataHTAB(surface);
+   if (!p_surf)
+      return VDP_STATUS_INVALID_HANDLE;
 
- vlVdpSurface *p_surf = vlGetDataHTAB(surface);
- if (!p_surf)
- return VDP_STATUS_INVALID_HANDLE;
+   if (!p_surf->psurface)
+      return VDP_STATUS_RESOURCES;
 
- if (!p_surf->psurface)
- return VDP_STATUS_RESOURCES;
-
-
- return VDP_STATUS_OK;
+   return VDP_STATUS_OK;
 }
 
 VdpStatus
-vlVdpVideoSurfacePutBitsYCbCr ( VdpVideoSurface surface,
- VdpYCbCrFormat source_ycbcr_format,
- void const *const *source_data,
- uint32_t const *source_pitches
-)
+vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
+                              VdpYCbCrFormat source_ycbcr_format,
+                              void const *const *source_data,
+                              uint32_t const *source_pitches)
 {
- uint32_t size_surface_bytes;
- const struct util_format_description *format_desc;
- enum pipe_format pformat = FormatToPipe(source_ycbcr_format);
+   uint32_t size_surface_bytes;
+   const struct util_format_description *format_desc;
+   enum pipe_format pformat = FormatToPipe(source_ycbcr_format);
 
- if (!vlCreateHTAB())
- return VDP_STATUS_RESOURCES;
+   if (!vlCreateHTAB())
+      return VDP_STATUS_RESOURCES;
 
+   vlVdpSurface *p_surf = vlGetDataHTAB(surface);
+   if (!p_surf)
+      return VDP_STATUS_INVALID_HANDLE;
 
- vlVdpSurface *p_surf = vlGetDataHTAB(surface);
- if (!p_surf)
- return VDP_STATUS_INVALID_HANDLE;
+   //size_surface_bytes = ( source_pitches[0] * p_surf->height util_format_get_blockheight(pformat) );
+   /*util_format_translate(enum pipe_format dst_format,
+   void *dst, unsigned dst_stride,
+   unsigned dst_x, unsigned dst_y,
+   enum pipe_format src_format,
+   const void *src, unsigned src_stride,
+   unsigned src_x, unsigned src_y,
+   unsigned width, unsigned height);*/
 
-
- //size_surface_bytes = ( source_pitches[0] * p_surf->height util_format_get_blockheight(pformat) );
- /*util_format_translate(enum pipe_format dst_format,
- void *dst, unsigned dst_stride,
- unsigned dst_x, unsigned dst_y,
- enum pipe_format src_format,
- const void *src, unsigned src_stride,
- unsigned src_x, unsigned src_y,
- unsigned width, unsigned height);*/
-
- return VDP_STATUS_NO_IMPLEMENTATION;
-
+   return VDP_STATUS_NO_IMPLEMENTATION;
 }
