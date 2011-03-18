@@ -411,9 +411,11 @@ set_combiner_scale(struct gl_context *ctx,
 void GLAPIENTRY
 _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 {
-   GLuint maxUnit;
-   GET_CURRENT_CONTEXT(ctx);
+   const GLint iparam0 = (GLint) param[0];
    struct gl_texture_unit *texUnit;
+   GLuint maxUnit;
+
+   GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    maxUnit = (target == GL_POINT_SPRITE_NV && pname == GL_COORD_REPLACE_NV)
@@ -428,14 +430,14 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
    if (target == GL_TEXTURE_ENV) {
       switch (pname) {
       case GL_TEXTURE_ENV_MODE:
-         set_env_mode(ctx, texUnit, (GLenum) (GLint) param[0]);
+         set_env_mode(ctx, texUnit, (GLenum) iparam0);
          break;
       case GL_TEXTURE_ENV_COLOR:
          set_env_color(ctx, texUnit, param);
          break;
       case GL_COMBINE_RGB:
       case GL_COMBINE_ALPHA:
-         set_combiner_mode(ctx, texUnit, pname, (GLenum) (GLint) param[0]);
+         set_combiner_mode(ctx, texUnit, pname, (GLenum) iparam0);
 	 break;
       case GL_SOURCE0_RGB:
       case GL_SOURCE1_RGB:
@@ -445,7 +447,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
       case GL_SOURCE1_ALPHA:
       case GL_SOURCE2_ALPHA:
       case GL_SOURCE3_ALPHA_NV:
-         set_combiner_source(ctx, texUnit, pname, (GLenum) (GLint) param[0]);
+         set_combiner_source(ctx, texUnit, pname, (GLenum) iparam0);
 	 break;
       case GL_OPERAND0_RGB:
       case GL_OPERAND1_RGB:
@@ -455,7 +457,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
       case GL_OPERAND1_ALPHA:
       case GL_OPERAND2_ALPHA:
       case GL_OPERAND3_ALPHA_NV:
-         set_combiner_operand(ctx, texUnit, pname, (GLenum) (GLint) param[0]);
+         set_combiner_operand(ctx, texUnit, pname, (GLenum) iparam0);
 	 break;
       case GL_RGB_SCALE:
       case GL_ALPHA_SCALE:
@@ -466,19 +468,19 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	    _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(pname=0x%x)", pname );
 	    return;
 	 }
-	 if (((GLenum) (GLint) param[0] < GL_TEXTURE0) ||
-	 ((GLenum) (GLint) param[0] > GL_TEXTURE31)) {
+	 if ((iparam0 < GL_TEXTURE0) ||
+             (iparam0 > GL_TEXTURE31)) {
 	    /* spec doesn't say this but it seems logical */
-	    _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(param=0x%x)", (GLenum) (GLint) param[0]);
+	    _mesa_error( ctx, GL_INVALID_ENUM, "glTexEnv(param=0x%x)", iparam0);
 	    return;
 	 }
-	 if (!((1 << ((GLenum) (GLint) param[0] - GL_TEXTURE0)) & ctx->Const.SupportedBumpUnits)) {
-	    _mesa_error( ctx, GL_INVALID_VALUE, "glTexEnv(param=0x%x)", (GLenum) (GLint) param[0]);
+	 if (!((1 << (iparam0 - GL_TEXTURE0)) & ctx->Const.SupportedBumpUnits)) {
+	    _mesa_error( ctx, GL_INVALID_VALUE, "glTexEnv(param=0x%x)", iparam0);
 	    return;
 	 }
 	 else {
 	    FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-	    texUnit->BumpTarget = (GLenum) (GLint) param[0];
+	    texUnit->BumpTarget = iparam0;
 	 }
 	 break;
       default:
@@ -511,19 +513,18 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
 	 return;
       }
       if (pname == GL_COORD_REPLACE_NV) {
-         const GLenum value = (GLenum) param[0];
-         if (value == GL_TRUE || value == GL_FALSE) {
+         if (iparam0 == GL_TRUE || iparam0 == GL_FALSE) {
             /* It's kind of weird to set point state via glTexEnv,
              * but that's what the spec calls for.
              */
-            const GLboolean state = (GLboolean) value;
+            const GLboolean state = (GLboolean) iparam0;
             if (ctx->Point.CoordReplace[ctx->Texture.CurrentUnit] == state)
                return;
             FLUSH_VERTICES(ctx, _NEW_POINT);
             ctx->Point.CoordReplace[ctx->Texture.CurrentUnit] = state;
          }
          else {
-            _mesa_error( ctx, GL_INVALID_VALUE, "glTexEnv(param=0x%x)", value);
+            _mesa_error( ctx, GL_INVALID_VALUE, "glTexEnv(param=0x%x)", iparam0);
             return;
          }
       }
@@ -542,7 +543,7 @@ _mesa_TexEnvfv( GLenum target, GLenum pname, const GLfloat *param )
                   _mesa_lookup_enum_by_nr(target),
                   _mesa_lookup_enum_by_nr(pname),
                   *param,
-                  _mesa_lookup_enum_by_nr((GLenum) (GLint) *param));
+                  _mesa_lookup_enum_by_nr((GLenum) iparam0));
 
    /* Tell device driver about the new texture environment */
    if (ctx->Driver.TexEnv) {
