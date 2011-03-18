@@ -114,6 +114,7 @@ compute_version(struct gl_context *ctx)
                               ctx->Extensions.ARB_draw_instanced &&
                               ctx->Extensions.ARB_texture_buffer_object &&
                               ctx->Extensions.ARB_uniform_buffer_object &&
+                              ctx->Extensions.EXT_texture_snorm &&
                               ctx->Extensions.NV_primitive_restart &&
                               ctx->Extensions.NV_texture_rectangle &&
                               ctx->Const.MaxVertexTextureImageUnits >= 16);

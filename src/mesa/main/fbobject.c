@@ -1081,7 +1081,6 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_RGB10_A2:
    case GL_RGBA12:
    case GL_RGBA16:
-   case GL_RGBA16_SNORM:
    case GL_SRGB8_ALPHA8_EXT:
       return GL_RGBA;
    case GL_STENCIL_INDEX:
@@ -1109,6 +1108,43 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_RG8:
    case GL_RG16:
       return ctx->Extensions.ARB_texture_rg ? GL_RG : 0;
+   /* signed normalized texture formats */
+   case GL_RED_SNORM:
+   case GL_R8_SNORM:
+   case GL_R16_SNORM:
+      return ctx->Extensions.EXT_texture_snorm ? GL_RED : 0;
+   case GL_RG_SNORM:
+   case GL_RG8_SNORM:
+   case GL_RG16_SNORM:
+      return ctx->Extensions.EXT_texture_snorm ? GL_RG : 0;
+   case GL_RGB_SNORM:
+   case GL_RGB8_SNORM:
+   case GL_RGB16_SNORM:
+      return ctx->Extensions.EXT_texture_snorm ? GL_RGB : 0;
+   case GL_RGBA_SNORM:
+   case GL_RGBA8_SNORM:
+   case GL_RGBA16_SNORM:
+      return ctx->Extensions.EXT_texture_snorm ? GL_RGBA : 0;
+   case GL_ALPHA_SNORM:
+   case GL_ALPHA8_SNORM:
+   case GL_ALPHA16_SNORM:
+      return ctx->Extensions.EXT_texture_snorm &&
+             ctx->Extensions.ARB_framebuffer_object ? GL_ALPHA : 0;
+   case GL_LUMINANCE_SNORM:
+   case GL_LUMINANCE8_SNORM:
+   case GL_LUMINANCE16_SNORM:
+      return ctx->Extensions.EXT_texture_snorm &&
+             ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE : 0;
+   case GL_LUMINANCE_ALPHA_SNORM:
+   case GL_LUMINANCE8_ALPHA8_SNORM:
+   case GL_LUMINANCE16_ALPHA16_SNORM:
+      return ctx->Extensions.EXT_texture_snorm &&
+             ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE_ALPHA : 0;
+   case GL_INTENSITY_SNORM:
+   case GL_INTENSITY8_SNORM:
+   case GL_INTENSITY16_SNORM:
+      return ctx->Extensions.EXT_texture_snorm &&
+             ctx->Extensions.ARB_framebuffer_object ? GL_INTENSITY : 0;
    /* XXX add floating point and integer formats eventually */
    default:
       return 0;

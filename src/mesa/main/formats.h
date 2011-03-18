@@ -168,12 +168,12 @@ typedef enum
    /*@{*/
    MESA_FORMAT_DUDV8,             /*                     DUDU DUDU DVDV DVDV */
    MESA_FORMAT_SIGNED_R8,         /*                               RRRR RRRR */
-   MESA_FORMAT_SIGNED_RG88,       /*                     RRRR RRRR GGGG GGGG */
+   MESA_FORMAT_SIGNED_RG88_REV,   /*                     GGGG GGGG RRRR RRRR */
    MESA_FORMAT_SIGNED_RGBX8888,   /* RRRR RRRR GGGG GGGG BBBB BBBB xxxx xxxx */
    MESA_FORMAT_SIGNED_RGBA8888,   /* RRRR RRRR GGGG GGGG BBBB BBBB AAAA AAAA */
    MESA_FORMAT_SIGNED_RGBA8888_REV,/*AAAA AAAA BBBB BBBB GGGG GGGG RRRR RRRR */
-   MESA_FORMAT_SIGNED_R_16,       /* ushort[0]=R */
-   MESA_FORMAT_SIGNED_RG_16,      /* ushort[0]=R, ushort[1]=G */
+   MESA_FORMAT_SIGNED_R16,        /*                     RRRR RRRR RRRR RRRR */
+   MESA_FORMAT_SIGNED_GR1616,     /* GGGG GGGG GGGG GGGG RRRR RRRR RRRR RRRR */
    MESA_FORMAT_SIGNED_RGB_16,     /* ushort[0]=R, ushort[1]=G, ushort[2]=B */
    MESA_FORMAT_SIGNED_RGBA_16,    /* ... */
    MESA_FORMAT_RGBA_16,           /* ... */
@@ -192,6 +192,15 @@ typedef enum
    MESA_FORMAT_LA_LATC2,
    MESA_FORMAT_SIGNED_LA_LATC2,
    /*@}*/
+
+   MESA_FORMAT_SIGNED_A8,         /*                               AAAA AAAA */
+   MESA_FORMAT_SIGNED_L8,         /*                               LLLL LLLL */
+   MESA_FORMAT_SIGNED_AL88,       /*                     AAAA AAAA LLLL LLLL */
+   MESA_FORMAT_SIGNED_I8,         /*                               IIII IIII */
+   MESA_FORMAT_SIGNED_A16,        /*                     AAAA AAAA AAAA AAAA */
+   MESA_FORMAT_SIGNED_L16,        /*                     LLLL LLLL LLLL LLLL */
+   MESA_FORMAT_SIGNED_AL1616,     /* AAAA AAAA AAAA AAAA LLLL LLLL LLLL LLLL */
+   MESA_FORMAT_SIGNED_I16,        /*                     IIII IIII IIII IIII */
 
    MESA_FORMAT_COUNT
 } gl_format;

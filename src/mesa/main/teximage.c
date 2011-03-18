@@ -311,11 +311,40 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       }
    }
 
-   if (ctx->Extensions.MESA_texture_signed_rgba) {
+   if (ctx->Extensions.EXT_texture_snorm) {
       switch (internalFormat) {
+         case GL_RED_SNORM:
+         case GL_R8_SNORM:
+         case GL_R16_SNORM:
+            return GL_RED;
+         case GL_RG_SNORM:
+         case GL_RG8_SNORM:
+         case GL_RG16_SNORM:
+            return GL_RG;
+         case GL_RGB_SNORM:
+         case GL_RGB8_SNORM:
+         case GL_RGB16_SNORM:
+            return GL_RGB;
          case GL_RGBA_SNORM:
          case GL_RGBA8_SNORM:
+         case GL_RGBA16_SNORM:
             return GL_RGBA;
+         case GL_ALPHA_SNORM:
+         case GL_ALPHA8_SNORM:
+         case GL_ALPHA16_SNORM:
+            return GL_ALPHA;
+         case GL_LUMINANCE_SNORM:
+         case GL_LUMINANCE8_SNORM:
+         case GL_LUMINANCE16_SNORM:
+            return GL_LUMINANCE;
+         case GL_LUMINANCE_ALPHA_SNORM:
+         case GL_LUMINANCE8_ALPHA8_SNORM:
+         case GL_LUMINANCE16_ALPHA16_SNORM:
+            return GL_LUMINANCE_ALPHA;
+         case GL_INTENSITY_SNORM:
+         case GL_INTENSITY8_SNORM:
+         case GL_INTENSITY16_SNORM:
+            return GL_INTENSITY;
          default:
             ; /* fallthrough */
       }

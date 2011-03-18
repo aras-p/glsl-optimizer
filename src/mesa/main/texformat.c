@@ -389,19 +389,7 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
       }
    }
 
-   if (ctx->Extensions.MESA_texture_signed_rgba) {
-      switch (internalFormat) {
-         case GL_RGBA_SNORM:
-         case GL_RGBA8_SNORM:
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_RGBA8888);
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_RGBA8888_REV);
-	    break;
-         default:
-            ; /* fallthrough */
-      }
-   }
-
-   if (ctx->VersionMajor * 10 + ctx->VersionMinor >= 31) {
+   if (ctx->Extensions.EXT_texture_snorm) {
       switch (internalFormat) {
          case GL_RED_SNORM:
          case GL_R8_SNORM:
@@ -409,7 +397,7 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
 	    break;
          case GL_RG_SNORM:
          case GL_RG8_SNORM:
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_RG88);
+	    RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_RG88_REV);
 	    break;
          case GL_RGB_SNORM:
          case GL_RGB8_SNORM:
@@ -418,12 +406,29 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
          case GL_RGBA_SNORM:
          case GL_RGBA8_SNORM:
 	    RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_RGBA8888);
+	    RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_RGBA8888_REV);
 	    break;
+         case GL_ALPHA_SNORM:
+         case GL_ALPHA8_SNORM:
+            RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_A8);
+            break;
+         case GL_LUMINANCE_SNORM:
+         case GL_LUMINANCE8_SNORM:
+            RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_L8);
+            break;
+         case GL_LUMINANCE_ALPHA_SNORM:
+         case GL_LUMINANCE8_ALPHA8_SNORM:
+            RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_AL88);
+            break;
+         case GL_INTENSITY_SNORM:
+         case GL_INTENSITY8_SNORM:
+            RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_I8);
+            break;
          case GL_R16_SNORM:
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_R_16);
+	    RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_R16);
 	    break;
          case GL_RG16_SNORM:
-	    RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_RG_16);
+	    RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_GR1616);
 	    break;
          case GL_RGB16_SNORM:
 	    RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_RGB_16);
@@ -431,6 +436,18 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
          case GL_RGBA16_SNORM:
 	    RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_RGBA_16);
 	    break;
+         case GL_ALPHA16_SNORM:
+            RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_A16);
+            break;
+         case GL_LUMINANCE16_SNORM:
+            RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_L16);
+            break;
+         case GL_LUMINANCE16_ALPHA16_SNORM:
+            RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_AL1616);
+            break;
+         case GL_INTENSITY16_SNORM:
+            RETURN_IF_SUPPORTED(MESA_FORMAT_SIGNED_I16);
+            break;
          default:
             ; /* fall-through */
       }

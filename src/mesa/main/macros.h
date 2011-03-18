@@ -58,8 +58,7 @@ extern GLfloat _mesa_ubyte_to_float_color_tab[256];
 #define BYTE_TO_FLOAT_TEX(B)    ((B) == -128 ? -1.0F : (B) * (1.0F/127.0F))
 
 /** Convert GLfloat in [-1.0,1.0] to GLbyte in [-128,127], texture/fb data */
-#define FLOAT_TO_BYTE_TEX(X)    ( (GLint) (127.0F * (X)) )
-
+#define FLOAT_TO_BYTE_TEX(X)    CLAMP( (GLint) (127.0F * (X)), -128, 127 )
 
 /** Convert GLushort in [0,65535] to GLfloat in [0.0,1.0] */
 #define USHORT_TO_FLOAT(S)  ((GLfloat) (S) * (1.0F / 65535.0F))

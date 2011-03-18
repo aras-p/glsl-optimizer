@@ -2828,6 +2828,7 @@ struct gl_extensions
    GLboolean EXT_texture_lod_bias;
    GLboolean EXT_texture_mirror_clamp;
    GLboolean EXT_texture_shared_exponent;
+   GLboolean EXT_texture_snorm;
    GLboolean EXT_texture_sRGB;
    GLboolean EXT_texture_sRGB_decode;
    GLboolean EXT_texture_swizzle;
@@ -2855,7 +2856,6 @@ struct gl_extensions
    GLboolean MESA_resize_buffers;
    GLboolean MESA_ycbcr_texture;
    GLboolean MESA_texture_array;
-   GLboolean MESA_texture_signed_rgba;
    GLboolean NV_blend_square;
    GLboolean NV_conditional_render;
    GLboolean NV_fragment_program;
