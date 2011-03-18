@@ -30,8 +30,10 @@
 #include <state_tracker/xlib_sw_winsys.h>
 #include <util/u_memory.h>
 #include <util/u_format.h>
+#include <util/u_inlines.h>
 #include <softpipe/sp_public.h>
-#include <softpipe/sp_video_context.h>
+#include <pipe/p_state.h>
+#include <pipe/p_video_context.h>
 
 struct vl_xsp_screen
 {
@@ -44,8 +46,9 @@ struct vl_xsp_screen
 };
 
 struct pipe_surface*
-vl_drawable_surface_get(struct vl_screen *vscreen, Drawable drawable)
+vl_drawable_surface_get(struct vl_context *vctx, Drawable drawable)
 {
+   struct vl_screen *vscreen = vctx->vscreen;
    struct vl_xsp_screen *xsp_screen = (struct vl_xsp_screen*)vscreen;
    Window root;
    int x, y;
@@ -53,7 +56,7 @@ vl_drawable_surface_get(struct vl_screen *vscreen, Drawable drawable)
    unsigned int border_width;
    unsigned int depth;
    struct pipe_resource templat, *drawable_tex;
-   struct pipe_surface *drawable_surface = NULL;
+   struct pipe_surface surf_template, *drawable_surface = NULL;
 
    assert(vscreen);
    assert(drawable != None);
@@ -89,9 +92,9 @@ vl_drawable_surface_get(struct vl_screen *vscreen, Drawable drawable)
    if (!drawable_tex)
       return NULL;
 
-   xsp_screen->drawable_surface = vscreen->pscreen->get_tex_surface(vscreen->pscreen, drawable_tex,
-                                                                    0, 0, 0,
-                                                                    templat.bind);
+   memset(&surf_template, 0, sizeof(surf_template));
+   xsp_screen->drawable_surface = vctx->vpipe->create_surface(vctx->vpipe, drawable_tex,
+                                                              &surf_template);
    pipe_resource_reference(&drawable_tex, NULL);
 
    if (!xsp_screen->drawable_surface)
