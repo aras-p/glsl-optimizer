@@ -289,7 +289,7 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 		}
 
 		if (needalpha) {
-			pair->Alpha.WriteMask |= GET_BIT(inst->DstReg.WriteMask, 3);
+			pair->Alpha.WriteMask |= (GET_BIT(inst->DstReg.WriteMask, 3) << 3);
 			if (pair->Alpha.WriteMask) {
 				pair->Alpha.DestIndex = inst->DstReg.Index;
 			}

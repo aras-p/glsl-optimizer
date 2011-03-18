@@ -71,7 +71,7 @@ struct rc_pair_instruction_arg {
 struct rc_pair_sub_instruction {
 	unsigned int Opcode:8;
 	unsigned int DestIndex:RC_REGISTER_INDEX_BITS;
-	unsigned int WriteMask:3;
+	unsigned int WriteMask:4;
 	unsigned int Target:2;
 	unsigned int OutputWriteMask:3;
 	unsigned int DepthWriteMask:1;

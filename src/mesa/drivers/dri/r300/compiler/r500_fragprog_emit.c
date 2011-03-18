@@ -259,7 +259,8 @@ static void emit_paired(struct r300_fragment_program_compiler *c, struct rc_pair
 	}
 	code->inst[ip].inst0 |= R500_INST_TEX_SEM_WAIT;
 
-	code->inst[ip].inst0 |= (inst->RGB.WriteMask << 11) | (inst->Alpha.WriteMask << 14);
+	code->inst[ip].inst0 |= (inst->RGB.WriteMask << 11);
+	code->inst[ip].inst0 |= inst->Alpha.WriteMask ? 1 << 14 : 0;
 	code->inst[ip].inst0 |= (inst->RGB.OutputWriteMask << 15) | (inst->Alpha.OutputWriteMask << 18);
 	if (inst->Nop) {
 		code->inst[ip].inst0 |= R500_INST_NOP;
