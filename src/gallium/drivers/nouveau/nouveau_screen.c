@@ -12,6 +12,7 @@
 #include <errno.h>
 
 #include "nouveau/nouveau_bo.h"
+#include "nouveau/nouveau_mm.h"
 #include "nouveau_winsys.h"
 #include "nouveau_screen.h"
 #include "nouveau_fence.h"
