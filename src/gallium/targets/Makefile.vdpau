@@ -8,6 +8,7 @@ VDPAU_MINOR = 0
 INCLUDES = -I$(TOP)/src/gallium/include \
 	   -I$(TOP)/src/gallium/drivers \
 	   -I$(TOP)/src/gallium/auxiliary \
+	   -I$(TOP)/src/gallium/winsys \
 	   -I$(TOP)/src/gallium/winsys/g3dvl \
 	   $(DRIVER_INCLUDES)
 DEFINES = -DGALLIUM_TRACE -DVER_MAJOR=$(VDPAU_MAJOR) -DVER_MINOR=$(VDPAU_MINOR) $(DRIVER_DEFINES)

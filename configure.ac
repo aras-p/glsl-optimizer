@@ -1788,7 +1788,7 @@ AC_ARG_ENABLE([gallium-r600],
     [enable_gallium_r600=auto])
 if test "x$enable_gallium_r600" = xyes; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r600"
-    gallium_check_st "r600/drm" "dri-r600" "xvmc-r600"
+    gallium_check_st "r600/drm" "dri-r600" "xvmc-r600" "vdpau-r600"
 fi
 
 dnl
