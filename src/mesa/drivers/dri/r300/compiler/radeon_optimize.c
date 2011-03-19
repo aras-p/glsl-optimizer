@@ -154,7 +154,7 @@ static void copy_propagate(struct radeon_compiler * c, struct rc_instruction * i
 	/* Propagate the MOV instruction. */
 	for (i = 0; i < reader_data.ReaderCount; i++) {
 		struct rc_instruction * inst = reader_data.Readers[i].Inst;
-		*reader_data.Readers[i].U.Src = chain_srcregs(*reader_data.Readers[i].U.Src, inst_mov->U.I.SrcReg[0]);
+		*reader_data.Readers[i].U.I.Src = chain_srcregs(*reader_data.Readers[i].U.I.Src, inst_mov->U.I.SrcReg[0]);
 
 		if (inst_mov->U.I.SrcReg[0].File == RC_FILE_PRESUB)
 			inst->U.I.PreSub = inst_mov->U.I.PreSub;
@@ -466,7 +466,7 @@ static int presub_helper(
 				rc_get_opcode_info(reader.Inst->U.I.Opcode);
 
 		for (src_index = 0; src_index < info->NumSrcRegs; src_index++) {
-			if (&reader.Inst->U.I.SrcReg[src_index] == reader.U.Src)
+			if (&reader.Inst->U.I.SrcReg[src_index] == reader.U.I.Src)
 				presub_replace(inst_add, reader.Inst, src_index);
 		}
 	}

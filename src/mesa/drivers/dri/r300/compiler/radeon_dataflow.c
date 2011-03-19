@@ -495,12 +495,11 @@ struct get_readers_callback_data {
 	struct branch_write_mask BranchMasks[R500_PFS_MAX_BRANCH_DEPTH_FULL + 1];
 };
 
-static void add_reader(
+static struct rc_reader * add_reader(
 	struct memory_pool * pool,
 	struct rc_reader_data * data,
 	struct rc_instruction * inst,
-	unsigned int mask,
-	void * arg_or_src)
+	unsigned int mask)
 {
 	struct rc_reader * new;
 	memory_pool_array_reserve(pool, struct rc_reader, data->Readers,
@@ -508,11 +507,32 @@ static void add_reader(
 	new = &data->Readers[data->ReaderCount++];
 	new->Inst = inst;
 	new->WriteMask = mask;
-	if (inst->Type == RC_INSTRUCTION_NORMAL) {
-		new->U.Src = arg_or_src;
-	} else {
-		new->U.Arg = arg_or_src;
-	}
+	return new;
+}
+
+static void add_reader_normal(
+	struct memory_pool * pool,
+	struct rc_reader_data * data,
+	struct rc_instruction * inst,
+	unsigned int mask,
+	struct rc_src_register * src)
+{
+	struct rc_reader * new = add_reader(pool, data, inst, mask);
+	new->U.I.Src = src;
+}
+
+
+static void add_reader_pair(
+	struct memory_pool * pool,
+	struct rc_reader_data * data,
+	struct rc_instruction * inst,
+	unsigned int mask,
+	struct rc_pair_instruction_arg * arg,
+	struct rc_pair_instruction_source * src)
+{
+	struct rc_reader * new = add_reader(pool, data, inst, mask);
+	new->U.P.Src = src;
+	new->U.P.Arg = arg;
 }
 
 static unsigned int get_readers_read_callback(
@@ -575,7 +595,7 @@ static void get_readers_pair_read_callback(
 	if (d->ReaderData->Abort)
 		return;
 
-	add_reader(&d->C->Pool, d->ReaderData, inst, shared_mask, arg);
+	add_reader_pair(&d->C->Pool, d->ReaderData, inst, shared_mask, arg, src);
 }
 
 /**
@@ -603,7 +623,7 @@ static void get_readers_normal_read_callback(
 	if (d->ReaderData->Abort)
 		return;
 
-	add_reader(&d->C->Pool, d->ReaderData, inst, shared_mask, src);
+	add_reader_normal(&d->C->Pool, d->ReaderData, inst, shared_mask, src);
 }
 
 /**

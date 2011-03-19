@@ -74,8 +74,13 @@ struct rc_reader {
 	struct rc_instruction * Inst;
 	unsigned int WriteMask;
 	union {
-		struct rc_src_register * Src;
-		struct rc_pair_instruction_arg * Arg;
+		struct {
+			struct rc_src_register * Src;
+		} I;
+		struct {
+			struct rc_pair_instruction_arg * Arg;
+			struct rc_pair_instruction_source * Src;
+		} P;
 	} U;
 };
 
