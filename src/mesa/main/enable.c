@@ -29,6 +29,7 @@
 
 
 #include "glheader.h"
+#include "clip.h"
 #include "context.h"
 #include "enable.h"
 #include "light.h"
@@ -310,17 +311,7 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
 
             if (state) {
                ctx->Transform.ClipPlanesEnabled |= (1 << p);
-
-               if (_math_matrix_is_dirty(ctx->ProjectionMatrixStack.Top))
-                  _math_matrix_analyse( ctx->ProjectionMatrixStack.Top );
-
-               /* This derived state also calculated in clip.c and
-                * from _mesa_update_state() on changes to EyeUserPlane
-                * and ctx->ProjectionMatrix respectively.
-                */
-               _mesa_transform_vector( ctx->Transform._ClipUserPlane[p],
-                                    ctx->Transform.EyeUserPlane[p],
-                                    ctx->ProjectionMatrixStack.Top->inv );
+               _mesa_update_clip_plane(ctx, p);
             }
             else {
                ctx->Transform.ClipPlanesEnabled &= ~(1 << p);

@@ -32,11 +32,20 @@
 #include "math/m_matrix.h"
 
 
+/**
+ * Update derived clip plane state.
+ */
+void
+_mesa_update_clip_plane(struct gl_context *ctx, GLuint plane)
+{
+   if (_math_matrix_is_dirty(ctx->ProjectionMatrixStack.Top))
+      _math_matrix_analyse( ctx->ProjectionMatrixStack.Top );
 
-/**********************************************************************/
-/*                     Get/Set User clip-planes.                      */
-/**********************************************************************/
-
+   /* Clip-Space Plane = Eye-Space Plane * Projection Matrix */
+   _mesa_transform_vector(ctx->Transform._ClipUserPlane[plane],
+                          ctx->Transform.EyeUserPlane[plane],
+                          ctx->ProjectionMatrixStack.Top->inv);
+}
 
 
 void GLAPIENTRY
@@ -78,17 +87,8 @@ _mesa_ClipPlane( GLenum plane, const GLdouble *eq )
    FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
    COPY_4FV(ctx->Transform.EyeUserPlane[p], equation);
 
-   /* Update derived state.  This state also depends on the projection
-    * matrix, and is recalculated on changes to the projection matrix by
-    * code in _mesa_update_state().
-    */
    if (ctx->Transform.ClipPlanesEnabled & (1 << p)) {
-      if (_math_matrix_is_dirty(ctx->ProjectionMatrixStack.Top))
-         _math_matrix_analyse( ctx->ProjectionMatrixStack.Top );
-
-      _mesa_transform_vector( ctx->Transform._ClipUserPlane[p],
-			   ctx->Transform.EyeUserPlane[p],
-			   ctx->ProjectionMatrixStack.Top->inv );
+      _mesa_update_clip_plane(ctx, p);
    }
 
    if (ctx->Driver.ClipPlane)
