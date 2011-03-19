@@ -603,55 +603,17 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
             return;
          }
          break;
+      case GL_TEXTURE_GEN_S:
+      case GL_TEXTURE_GEN_T:
+      case GL_TEXTURE_GEN_R:
       case GL_TEXTURE_GEN_Q:
          {
             struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
             if (texUnit) {
-               GLuint newenabled = texUnit->TexGenEnabled & ~Q_BIT;
+               GLbitfield coordBit = S_BIT << (cap - GL_TEXTURE_GEN_S);
+               GLbitfield newenabled = texUnit->TexGenEnabled & ~coordBit;
                if (state)
-                  newenabled |= Q_BIT;
-               if (texUnit->TexGenEnabled == newenabled)
-                  return;
-               FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-               texUnit->TexGenEnabled = newenabled;
-            }
-         }
-         break;
-      case GL_TEXTURE_GEN_R:
-         {
-            struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
-            if (texUnit) {
-               GLuint newenabled = texUnit->TexGenEnabled & ~R_BIT;
-               if (state)
-                  newenabled |= R_BIT;
-               if (texUnit->TexGenEnabled == newenabled)
-                  return;
-               FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-               texUnit->TexGenEnabled = newenabled;
-            }
-         }
-         break;
-      case GL_TEXTURE_GEN_S:
-         {
-            struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
-            if (texUnit) {
-               GLuint newenabled = texUnit->TexGenEnabled & ~S_BIT;
-               if (state)
-                  newenabled |= S_BIT;
-               if (texUnit->TexGenEnabled == newenabled)
-                  return;
-               FLUSH_VERTICES(ctx, _NEW_TEXTURE);
-               texUnit->TexGenEnabled = newenabled;
-            }
-         }
-         break;
-      case GL_TEXTURE_GEN_T:
-         {
-            struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
-            if (texUnit) {
-               GLuint newenabled = texUnit->TexGenEnabled & ~T_BIT;
-               if (state)
-                  newenabled |= T_BIT;
+                  newenabled |= coordBit;
                if (texUnit->TexGenEnabled == newenabled)
                   return;
                FLUSH_VERTICES(ctx, _NEW_TEXTURE);
@@ -1222,35 +1184,15 @@ _mesa_IsEnabled( GLenum cap )
          return is_texture_enabled(ctx, TEXTURE_2D_BIT);
       case GL_TEXTURE_3D:
          return is_texture_enabled(ctx, TEXTURE_3D_BIT);
+      case GL_TEXTURE_GEN_S:
+      case GL_TEXTURE_GEN_T:
+      case GL_TEXTURE_GEN_R:
       case GL_TEXTURE_GEN_Q:
          {
             const struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
             if (texUnit) {
-               return (texUnit->TexGenEnabled & Q_BIT) ? GL_TRUE : GL_FALSE;
-            }
-         }
-         return GL_FALSE;
-      case GL_TEXTURE_GEN_R:
-         {
-            const struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
-            if (texUnit) {
-               return (texUnit->TexGenEnabled & R_BIT) ? GL_TRUE : GL_FALSE;
-            }
-         }
-         return GL_FALSE;
-      case GL_TEXTURE_GEN_S:
-         {
-            const struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
-            if (texUnit) {
-               return (texUnit->TexGenEnabled & S_BIT) ? GL_TRUE : GL_FALSE;
-            }
-         }
-         return GL_FALSE;
-      case GL_TEXTURE_GEN_T:
-         {
-            const struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
-            if (texUnit) {
-               return (texUnit->TexGenEnabled & T_BIT) ? GL_TRUE : GL_FALSE;
+               GLbitfield coordBit = S_BIT << (cap - GL_TEXTURE_GEN_S);
+               return (texUnit->TexGenEnabled & coordBit) ? GL_TRUE : GL_FALSE;
             }
          }
          return GL_FALSE;
