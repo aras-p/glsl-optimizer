@@ -216,7 +216,8 @@ _mesa_new_buffer_object( struct gl_context *ctx, GLuint name, GLenum target )
  * Default callback for the \c dd_function_table::DeleteBuffer() hook.
  */
 static void
-_mesa_delete_buffer_object( struct gl_context *ctx, struct gl_buffer_object *bufObj )
+_mesa_delete_buffer_object(struct gl_context *ctx,
+                           struct gl_buffer_object *bufObj)
 {
    (void) ctx;
 
@@ -414,7 +415,8 @@ _mesa_buffer_subdata( struct gl_context *ctx, GLenum target, GLintptrARB offset,
  * \sa glBufferGetSubDataARB, dd_function_table::GetBufferSubData.
  */
 static void
-_mesa_buffer_get_subdata( struct gl_context *ctx, GLenum target, GLintptrARB offset,
+_mesa_buffer_get_subdata( struct gl_context *ctx,
+                          GLenum target, GLintptrARB offset,
 			  GLsizeiptrARB size, GLvoid * data,
 			  struct gl_buffer_object * bufObj )
 {
