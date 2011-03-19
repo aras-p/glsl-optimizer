@@ -497,7 +497,8 @@ _mesa_DeleteVertexArraysAPPLE(GLsizei n, const GLuint *ids)
  * \param vboOnly Will arrays have to reside in VBOs?
  */
 static void 
-gen_vertex_arrays(struct gl_context *ctx, GLsizei n, GLuint *arrays, GLboolean vboOnly)
+gen_vertex_arrays(struct gl_context *ctx, GLsizei n, GLuint *arrays,
+                  GLboolean vboOnly)
 {
    GLuint first;
    GLint i;
