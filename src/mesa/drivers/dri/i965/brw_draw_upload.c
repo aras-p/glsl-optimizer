@@ -291,7 +291,7 @@ static void brw_prepare_vertices(struct brw_context *brw)
    /* Accumulate the list of enabled arrays. */
    brw->vb.nr_enabled = 0;
    while (vs_inputs) {
-      GLuint i = _mesa_ffsll(vs_inputs) - 1;
+      GLuint i = ffs(vs_inputs) - 1;
       struct brw_vertex_element *input = &brw->vb.inputs[i];
 
       vs_inputs &= ~(1 << i);

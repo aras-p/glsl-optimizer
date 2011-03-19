@@ -38,19 +38,16 @@
  * Called via pipe->flush()
  */
 void
-cell_flush(struct pipe_context *pipe, unsigned flags,
+cell_flush(struct pipe_context *pipe,
            struct pipe_fence_handle **fence)
 {
    struct cell_context *cell = cell_context(pipe);
 
    if (fence) {
       *fence = NULL;
-      /* XXX: Implement real fencing */
-      flags |= CELL_FLUSH_WAIT;
    }
 
-   if (flags & (PIPE_FLUSH_SWAPBUFFERS | PIPE_FLUSH_RENDER_CACHE))
-      flags |= CELL_FLUSH_WAIT;
+   flags |= CELL_FLUSH_WAIT;
 
    draw_flush( cell->draw );
    cell_flush_int(cell, flags);

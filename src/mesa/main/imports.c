@@ -930,14 +930,20 @@ _mesa_problem( const struct gl_context *ctx, const char *fmtString, ... )
 {
    va_list args;
    char str[MAXSTRING];
+   static int numCalls = 0;
+
    (void) ctx;
 
-   va_start( args, fmtString );  
-   vsnprintf( str, MAXSTRING, fmtString, args );
-   va_end( args );
+   if (numCalls < 50) {
+      numCalls++;
 
-   fprintf(stderr, "Mesa %s implementation error: %s\n", MESA_VERSION_STRING, str);
-   fprintf(stderr, "Please report at bugs.freedesktop.org\n");
+      va_start( args, fmtString );  
+      vsnprintf( str, MAXSTRING, fmtString, args );
+      va_end( args );
+      fprintf(stderr, "Mesa %s implementation error: %s\n",
+              MESA_VERSION_STRING, str);
+      fprintf(stderr, "Please report at bugs.freedesktop.org\n");
+   }
 }
 
 

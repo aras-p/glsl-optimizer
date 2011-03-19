@@ -33,9 +33,16 @@
 struct pipe_context;
 struct pipe_fence_handle;
 
+#define SP_FLUSH_TEXTURE_CACHE  0x2
+
 void
-softpipe_flush(struct pipe_context *pipe, unsigned flags,
+softpipe_flush(struct pipe_context *pipe,
+               unsigned flags,
                struct pipe_fence_handle **fence);
+
+void
+softpipe_flush_wrapped( struct pipe_context *pipe,
+                        struct pipe_fence_handle **fence );
 
 boolean
 softpipe_flush_resource(struct pipe_context *pipe,

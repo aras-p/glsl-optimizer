@@ -796,10 +796,13 @@ nv50_set_index_buffer(struct pipe_context *pipe,
 {
    struct nv50_context *nv50 = nv50_context(pipe);
 
-   if (ib)
+   if (ib) {
+      pipe_resource_reference(&nv50->idxbuf.buffer, ib->buffer);
+
       memcpy(&nv50->idxbuf, ib, sizeof(nv50->idxbuf));
-   else
-      nv50->idxbuf.buffer = NULL;
+   } else {
+      pipe_resource_reference(&nv50->idxbuf.buffer, NULL);
+   }
 }
 
 static void
@@ -866,5 +869,7 @@ nv50_init_state_functions(struct nv50_context *nv50)
 
    pipe->set_vertex_buffers = nv50_set_vertex_buffers;
    pipe->set_index_buffer = nv50_set_index_buffer;
+
+   pipe->redefine_user_buffer = u_default_redefine_user_buffer;
 }
 

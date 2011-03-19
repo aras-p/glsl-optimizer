@@ -105,6 +105,7 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    switch (cap) {
    /* Supported features (boolean caps). */
    case PIPE_CAP_ANISOTROPIC_FILTER:
+   case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
    case PIPE_CAP_NPOT_TEXTURES:
    case PIPE_CAP_PRIMITIVE_RESTART: /* draw module */
    case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
@@ -115,17 +116,18 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
    /* Features that should be supported (boolean caps). */
    /* XXX: Just test the code */
    case PIPE_CAP_BLEND_EQUATION_SEPARATE:
-      return 0;
+   /* XXX: No code but hw supports it */
+   case PIPE_CAP_POINT_SPRITE:
+      /* Also lie about these when asked to (needed for GLSL / GL 2.0) */
+      return is->debug.lie ? 1 : 0;
 
    /* Unsupported features (boolean caps). */
    case PIPE_CAP_ARRAY_TEXTURES:
    case PIPE_CAP_DEPTH_CLAMP:
-   case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE: /* disable for now */
-   case PIPE_CAP_GLSL:
    case PIPE_CAP_INDEP_BLEND_ENABLE:
    case PIPE_CAP_INDEP_BLEND_FUNC:
-   case PIPE_CAP_INSTANCED_DRAWING: /* draw module? */
-   case PIPE_CAP_POINT_SPRITE:
+   case PIPE_CAP_TGSI_INSTANCEID:
+   case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
    case PIPE_CAP_SHADER_STENCIL_EXPORT:
    case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
    case PIPE_CAP_TEXTURE_SWIZZLE:
@@ -133,6 +135,7 @@ i915_get_param(struct pipe_screen *screen, enum pipe_cap cap)
       return 0;
 
    /* Features we can lie about (boolean caps). */
+   case PIPE_CAP_GLSL:
    case PIPE_CAP_OCCLUSION_QUERY:
       return is->debug.lie ? 1 : 0;
 
@@ -249,8 +252,7 @@ i915_is_format_supported(struct pipe_screen *screen,
                          enum pipe_format format,
                          enum pipe_texture_target target,
                          unsigned sample_count,
-                         unsigned tex_usage,
-                         unsigned geom_flags)
+                         unsigned tex_usage)
 {
    static const enum pipe_format tex_supported[] = {
       PIPE_FORMAT_B8G8R8A8_UNORM,
@@ -317,24 +319,23 @@ i915_fence_reference(struct pipe_screen *screen,
    is->iws->fence_reference(is->iws, ptr, fence);
 }
 
-static int
+static boolean
 i915_fence_signalled(struct pipe_screen *screen,
-                     struct pipe_fence_handle *fence,
-                     unsigned flags)
+                     struct pipe_fence_handle *fence)
 {
    struct i915_screen *is = i915_screen(screen);
 
-   return is->iws->fence_signalled(is->iws, fence);
+   return is->iws->fence_signalled(is->iws, fence) == 0;
 }
 
-static int
+static boolean
 i915_fence_finish(struct pipe_screen *screen,
                   struct pipe_fence_handle *fence,
-                  unsigned flags)
+                  uint64_t timeout)
 {
    struct i915_screen *is = i915_screen(screen);
 
-   return is->iws->fence_finish(is->iws, fence);
+   return is->iws->fence_finish(is->iws, fence) == 0;
 }
 
 

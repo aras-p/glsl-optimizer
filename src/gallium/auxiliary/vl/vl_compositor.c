@@ -618,7 +618,7 @@ void vl_compositor_render(struct vl_compositor          *compositor,
    draw_layers(compositor, src_surface, src_area, dst_area);
 
    assert(!compositor->dirty_bg && !compositor->dirty_layers);
-   compositor->pipe->flush(compositor->pipe, PIPE_FLUSH_RENDER_CACHE, fence);
+   compositor->pipe->flush(compositor->pipe, fence);
 }
 
 void vl_compositor_set_csc_matrix(struct vl_compositor *compositor, const float *mat)

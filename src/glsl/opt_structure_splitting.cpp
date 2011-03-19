@@ -151,6 +151,12 @@ ir_structure_reference_visitor::visit_enter(ir_dereference_record *ir)
 ir_visitor_status
 ir_structure_reference_visitor::visit_enter(ir_assignment *ir)
 {
+   /* If there are no structure references yet, no need to bother with
+    * processing the expression tree.
+    */
+   if (this->variable_list.is_empty())
+      return visit_continue_with_parent;
+
    if (ir->lhs->as_dereference_variable() &&
        ir->rhs->as_dereference_variable() &&
        !ir->condition) {

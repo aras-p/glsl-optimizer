@@ -772,9 +772,9 @@ void util_blitter_copy_region(struct blitter_context *blitter,
    /* (assuming copying a stencil buffer is not possible) */
     if ((!ignore_stencil && is_stencil) ||
        !screen->is_format_supported(screen, dst->format, dst->target,
-                                    dst->nr_samples, bind, 0) ||
+                                    dst->nr_samples, bind) ||
        !screen->is_format_supported(screen, src->format, src->target,
-                                    src->nr_samples, PIPE_BIND_SAMPLER_VIEW, 0)) {
+                                    src->nr_samples, PIPE_BIND_SAMPLER_VIEW)) {
       ctx->base.running = TRUE;
       util_resource_copy_region(pipe, dst, dstlevel, dstx, dsty, dstz,
                                 src, srclevel, srcbox);
@@ -785,6 +785,7 @@ void util_blitter_copy_region(struct blitter_context *blitter,
    /* Get surface. */
    memset(&surf_templ, 0, sizeof(surf_templ));
    u_surface_default_template(&surf_templ, dst, bind);
+   surf_templ.format = util_format_linear(dst->format);
    surf_templ.u.tex.level = dstlevel;
    surf_templ.u.tex.first_layer = dstz;
    surf_templ.u.tex.last_layer = dstz;
@@ -823,7 +824,7 @@ void util_blitter_copy_region(struct blitter_context *blitter,
    normalized = src->target != PIPE_TEXTURE_RECT;
 
    /* Initialize sampler view. */
-   u_sampler_view_default_template(&viewTempl, src, src->format);
+   u_sampler_view_default_template(&viewTempl, src, util_format_linear(src->format));
    view = pipe->create_sampler_view(pipe, src, &viewTempl);
 
    /* Set rasterizer state, shaders, and textures. */

@@ -121,6 +121,10 @@ typedef void *GLeglImageOES;
 #define GL_MAX_FRAGMENT_UNIFORM_VECTORS     0x8DFD
 #endif
 
+#ifndef GL_ATI_texture_compression_3dc
+#define GL_ATI_texture_compression_3dc 1
+#define GL_COMPRESSED_LUMINANCE_ALPHA_3DC_ATI 0x8837
+#endif
 
 
 /**

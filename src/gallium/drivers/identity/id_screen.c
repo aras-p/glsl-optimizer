@@ -103,8 +103,7 @@ identity_screen_is_format_supported(struct pipe_screen *_screen,
                                     enum pipe_format format,
                                     enum pipe_texture_target target,
                                     unsigned sample_count,
-                                    unsigned tex_usage,
-                                    unsigned geom_flags)
+                                    unsigned tex_usage)
 {
    struct identity_screen *id_screen = identity_screen(_screen);
    struct pipe_screen *screen = id_screen->screen;
@@ -113,8 +112,7 @@ identity_screen_is_format_supported(struct pipe_screen *_screen,
                                       format,
                                       target,
                                       sample_count,
-                                      tex_usage,
-                                      geom_flags);
+                                      tex_usage);
 }
 
 static struct pipe_context *
@@ -242,30 +240,28 @@ identity_screen_fence_reference(struct pipe_screen *_screen,
                            fence);
 }
 
-static int
+static boolean
 identity_screen_fence_signalled(struct pipe_screen *_screen,
-                                struct pipe_fence_handle *fence,
-                                unsigned flags)
+                                struct pipe_fence_handle *fence)
 {
    struct identity_screen *id_screen = identity_screen(_screen);
    struct pipe_screen *screen = id_screen->screen;
 
    return screen->fence_signalled(screen,
-                                  fence,
-                                  flags);
+                                  fence);
 }
 
-static int
+static boolean
 identity_screen_fence_finish(struct pipe_screen *_screen,
                              struct pipe_fence_handle *fence,
-                             unsigned flags)
+                             uint64_t timeout)
 {
    struct identity_screen *id_screen = identity_screen(_screen);
    struct pipe_screen *screen = id_screen->screen;
 
    return screen->fence_finish(screen,
                                fence,
-                               flags);
+                               timeout);
 }
 
 struct pipe_screen *

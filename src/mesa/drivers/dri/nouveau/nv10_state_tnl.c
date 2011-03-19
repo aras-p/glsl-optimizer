@@ -199,7 +199,7 @@ nv10_emit_light_model(struct gl_context *ctx, int emit)
 	BEGIN_RING(chan, celsius, NV10_3D_LIGHT_MODEL, 1);
 	OUT_RING(chan, ((m->LocalViewer ?
 			 NV10_3D_LIGHT_MODEL_LOCAL_VIEWER : 0) |
-			(NEED_SECONDARY_COLOR(ctx) ?
+			(_mesa_need_secondary_color(ctx) ?
 			 NV10_3D_LIGHT_MODEL_SEPARATE_SPECULAR : 0) |
 			(!ctx->Light.Enabled && ctx->Fog.ColorSumEnabled ?
 			 NV10_3D_LIGHT_MODEL_VERTEX_SPECULAR : 0)));

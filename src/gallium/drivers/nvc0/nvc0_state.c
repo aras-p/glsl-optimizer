@@ -166,6 +166,7 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
                              const struct pipe_rasterizer_state *cso)
 {
     struct nvc0_rasterizer_stateobj *so;
+    uint32_t reg;
 
     so = CALLOC_STRUCT(nvc0_rasterizer_stateobj);
     if (!so)
@@ -202,6 +203,13 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
        SB_BEGIN_3D(so, POINT_SIZE, 1);
        SB_DATA    (so, fui(cso->point_size));
     }
+
+    reg = (cso->sprite_coord_mode == PIPE_SPRITE_COORD_UPPER_LEFT) ?
+       NVC0_3D_POINT_COORD_REPLACE_COORD_ORIGIN_UPPER_LEFT :
+       NVC0_3D_POINT_COORD_REPLACE_COORD_ORIGIN_LOWER_LEFT;
+
+    SB_BEGIN_3D(so, POINT_COORD_REPLACE, 1);
+    SB_DATA    (so, ((cso->sprite_coord_enable & 0xff) << 3) | reg);
     SB_IMMED_3D(so, POINT_SPRITE_ENABLE, cso->point_quad_rasterization);
     SB_IMMED_3D(so, POINT_SMOOTH_ENABLE, cso->point_smooth);
 
@@ -268,14 +276,11 @@ nvc0_zsa_state_create(struct pipe_context *pipe,
 
    so->pipe = *cso;
 
-   SB_IMMED_3D(so, DEPTH_WRITE_ENABLE, cso->depth.writemask);
-   SB_BEGIN_3D(so, DEPTH_TEST_ENABLE, 1);
+   SB_IMMED_3D(so, DEPTH_TEST_ENABLE, cso->depth.enabled);
    if (cso->depth.enabled) {
-      SB_DATA    (so, 1);
+      SB_IMMED_3D(so, DEPTH_WRITE_ENABLE, cso->depth.writemask);
       SB_BEGIN_3D(so, DEPTH_TEST_FUNC, 1);
       SB_DATA    (so, nvgl_comparison_op(cso->depth.func));
-   } else {
-      SB_DATA    (so, 0);
    }
 
    if (cso->stencil[0].enabled) {
@@ -307,15 +312,12 @@ nvc0_zsa_state_create(struct pipe_context *pipe,
    if (cso->stencil[0].enabled) {
       SB_IMMED_3D(so, STENCIL_TWO_SIDE_ENABLE, 0);
    }
-    
-   SB_BEGIN_3D(so, ALPHA_TEST_ENABLE, 1);
+
+   SB_IMMED_3D(so, ALPHA_TEST_ENABLE, cso->alpha.enabled);
    if (cso->alpha.enabled) {
-      SB_DATA    (so, 1);
       SB_BEGIN_3D(so, ALPHA_TEST_REF, 2);
       SB_DATA    (so, fui(cso->alpha.ref_value));
       SB_DATA    (so, nvgl_comparison_op(cso->alpha.func));
-   } else {
-      SB_DATA    (so, 0);
    }
 
    assert(so->size < (sizeof(so->state) / sizeof(so->state[0])));
@@ -706,10 +708,13 @@ nvc0_set_index_buffer(struct pipe_context *pipe,
 {
     struct nvc0_context *nvc0 = nvc0_context(pipe);
 
-    if (ib)
-        memcpy(&nvc0->idxbuf, ib, sizeof(nvc0->idxbuf));
-    else
-        nvc0->idxbuf.buffer = NULL;
+    if (ib) {
+       pipe_resource_reference(&nvc0->idxbuf.buffer, ib->buffer);
+
+       memcpy(&nvc0->idxbuf, ib, sizeof(nvc0->idxbuf));
+    } else {
+       pipe_resource_reference(&nvc0->idxbuf.buffer, NULL);
+    }
 }
 
 static void

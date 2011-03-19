@@ -1236,6 +1236,7 @@ _mesa_DeleteObjectARB(GLhandleARB obj)
 
    if (obj) {
       GET_CURRENT_CONTEXT(ctx);
+      FLUSH_VERTICES(ctx, 0);
       if (is_program(ctx, obj)) {
          delete_shader_program(ctx, obj);
       }
@@ -1254,6 +1255,7 @@ _mesa_DeleteProgram(GLuint name)
 {
    if (name) {
       GET_CURRENT_CONTEXT(ctx);
+      FLUSH_VERTICES(ctx, 0);
       delete_shader_program(ctx, name);
    }
 }
@@ -1264,6 +1266,7 @@ _mesa_DeleteShader(GLuint name)
 {
    if (name) {
       GET_CURRENT_CONTEXT(ctx);
+      FLUSH_VERTICES(ctx, 0);
       delete_shader(ctx, name);
    }
 }
@@ -1729,7 +1732,7 @@ _mesa_ProgramParameteriARB(GLuint program, GLenum pname,
    switch (pname) {
    case GL_GEOMETRY_VERTICES_OUT_ARB:
       if (value < 1 ||
-          (unsigned) value > ctx->Const.GeometryProgram.MaxGeometryOutputVertices) {
+          (unsigned) value > ctx->Const.MaxGeometryOutputVertices) {
          _mesa_error(ctx, GL_INVALID_VALUE,
                      "glProgramParameteri(GL_GEOMETRY_VERTICES_OUT_ARB=%d",
                      value);

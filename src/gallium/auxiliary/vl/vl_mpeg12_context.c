@@ -265,13 +265,9 @@ vl_mpeg12_is_format_supported(struct pipe_video_context *vpipe,
 
    assert(vpipe);
 
-   /* XXX: Temporary; not all paths are NPOT-tested */
-   if (geom & PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO)
-      return FALSE;
-
-
-   return ctx->pipe->screen->is_format_supported(ctx->pipe->screen, format, PIPE_TEXTURE_2D,
-                                                 0, usage, geom);
+   return ctx->pipe->screen->is_format_supported(ctx->pipe->screen, format,
+                                                 PIPE_TEXTURE_2D,
+                                                 0, usage);
 }
 
 static void

@@ -51,53 +51,114 @@ svga_buffer_needs_hw_storage(unsigned usage)
 }
 
 
-static unsigned int
-svga_buffer_is_referenced( struct pipe_context *pipe,
-                           struct pipe_resource *buf,
-                           unsigned level, int layer)
+/**
+ * Create a buffer transfer.
+ *
+ * Unlike texture DMAs (which are written immediately to the command buffer and
+ * therefore inherently serialized with other context operations), for buffers
+ * we try to coalesce multiple range mappings (i.e, multiple calls to this
+ * function) into a single DMA command, for better efficiency in command
+ * processing.  This means we need to exercise extra care here to ensure that
+ * the end result is exactly the same as if one DMA was used for every mapped
+ * range.
+ */
+static struct pipe_transfer *
+svga_buffer_get_transfer(struct pipe_context *pipe,
+                         struct pipe_resource *resource,
+                         unsigned level,
+                         unsigned usage,
+                         const struct pipe_box *box)
 {
+   struct svga_context *svga = svga_context(pipe);
    struct svga_screen *ss = svga_screen(pipe->screen);
-   struct svga_buffer *sbuf = svga_buffer(buf);
+   struct svga_buffer *sbuf = svga_buffer(resource);
+   struct pipe_transfer *transfer;
 
-   /**
-    * XXX: Check this.
-    * The screen may cache buffer writes, but when we map, we map out
-    * of those cached writes, so we don't need to set a
-    * PIPE_REFERENCED_FOR_WRITE flag for cached buffers.
-    */
+   transfer = CALLOC_STRUCT(pipe_transfer);
+   if (transfer == NULL) {
+      return NULL;
+   }
 
-   if (!sbuf->handle || ss->sws->surface_is_flushed(ss->sws, sbuf->handle))
-     return PIPE_UNREFERENCED;
+   transfer->resource = resource;
+   transfer->level = level;
+   transfer->usage = usage;
+   transfer->box = *box;
 
-   /**
-    * sws->surface_is_flushed() does not distinguish between read references
-    * and write references. So assume a reference is both,
-    * however, we make an exception for index- and vertex buffers, to avoid
-    * a flush in st_bufferobj_get_subdata, during display list replay.
-    */
+   if (usage & PIPE_TRANSFER_WRITE) {
+      if (usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
+         /*
+          * Finish writing any pending DMA commands, and tell the host to discard
+          * the buffer contents on the next DMA operation.
+          */
 
-   if (sbuf->b.b.bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER))
-      return PIPE_REFERENCED_FOR_READ;
+         if (sbuf->dma.pending) {
+            svga_buffer_upload_flush(svga, sbuf);
 
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
+            /*
+             * Instead of flushing the context command buffer, simply discard
+             * the current hwbuf, and start a new one.
+             */
 
+            svga_buffer_destroy_hw_storage(ss, sbuf);
+         }
 
+         sbuf->map.num_ranges = 0;
+         sbuf->dma.flags.discard = TRUE;
+      }
 
+      if (usage & PIPE_TRANSFER_UNSYNCHRONIZED) {
+         if (!sbuf->map.num_ranges) {
+            /*
+             * No pending ranges to upload so far, so we can tell the host to
+             * not synchronize on the next DMA command.
+             */
 
+            sbuf->dma.flags.unsynchronized = TRUE;
+         }
+      } else {
+         /*
+          * Synchronizing, so finish writing any pending DMA command, and
+          * ensure the next DMA will be done in order.
+          */
 
+         if (sbuf->dma.pending) {
+            svga_buffer_upload_flush(svga, sbuf);
 
-static void *
-svga_buffer_map_range( struct pipe_screen *screen,
-                       struct pipe_resource *buf,
-                       unsigned offset,
-		       unsigned length,
-                       unsigned usage )
-{
-   struct svga_screen *ss = svga_screen(screen); 
-   struct svga_winsys_screen *sws = ss->sws;
-   struct svga_buffer *sbuf = svga_buffer( buf );
-   void *map;
+            if (sbuf->hwbuf) {
+               /*
+                * We have a pending DMA upload from a hardware buffer, therefore
+                * we need to ensure that the host finishes processing that DMA
+                * command before the state tracker can start overwriting the
+                * hardware buffer.
+                *
+                * XXX: This could be avoided by tying the hardware buffer to
+                * the transfer (just as done with textures), which would allow
+                * overlapping DMAs commands to be queued on the same context
+                * buffer. However, due to the likelihood of software vertex
+                * processing, it is more convenient to hold on to the hardware
+                * buffer, allowing to quickly access the contents from the CPU
+                * without having to do a DMA download from the host.
+                */
+
+               if (usage & PIPE_TRANSFER_DONTBLOCK) {
+                  /*
+                   * Flushing the command buffer here will most likely cause
+                   * the map of the hwbuf below to block, so preemptively
+                   * return NULL here if DONTBLOCK is set to prevent unnecessary
+                   * command buffer flushes.
+                   */
+
+                  FREE(transfer);
+                  return NULL;
+               }
+
+               svga_context_flush(svga, NULL);
+            }
+         }
+
+         sbuf->dma.flags.unsynchronized = FALSE;
+      }
+   }
 
    if (!sbuf->swbuf && !sbuf->hwbuf) {
       if (svga_buffer_create_hw_storage(ss, sbuf) != PIPE_OK) {
@@ -113,85 +174,119 @@ svga_buffer_map_range( struct pipe_screen *screen,
          }
 
          sbuf->swbuf = align_malloc(sbuf->b.b.width0, 16);
+         if (!sbuf->swbuf) {
+            FREE(transfer);
+            return NULL;
+         }
       }
    }
+
+   return transfer;
+}
+
+
+/**
+ * Map a range of a buffer.
+ */
+static void *
+svga_buffer_transfer_map( struct pipe_context *pipe,
+                          struct pipe_transfer *transfer )
+{
+   struct svga_buffer *sbuf = svga_buffer(transfer->resource);
+
+   uint8_t *map;
 
    if (sbuf->swbuf) {
       /* User/malloc buffer */
       map = sbuf->swbuf;
    }
    else if (sbuf->hwbuf) {
-      map = sws->buffer_map(sws, sbuf->hwbuf, usage);
+      struct svga_screen *ss = svga_screen(pipe->screen);
+      struct svga_winsys_screen *sws = ss->sws;
+
+      map = sws->buffer_map(sws, sbuf->hwbuf, transfer->usage);
    }
    else {
       map = NULL;
    }
 
-   if(map) {
+   if (map) {
       ++sbuf->map.count;
-
-      if (usage & PIPE_TRANSFER_WRITE) {
-         assert(sbuf->map.count <= 1);
-         sbuf->map.writing = TRUE;
-         if (usage & PIPE_TRANSFER_FLUSH_EXPLICIT)
-            sbuf->map.flush_explicit = TRUE;
-      }
+      map += transfer->box.x;
    }
    
    return map;
 }
 
 
-
-static void 
-svga_buffer_flush_mapped_range( struct pipe_screen *screen,
-                                struct pipe_resource *buf,
-                                unsigned offset, unsigned length)
+static void
+svga_buffer_transfer_flush_region( struct pipe_context *pipe,
+                                   struct pipe_transfer *transfer,
+                                   const struct pipe_box *box)
 {
-   struct svga_buffer *sbuf = svga_buffer( buf );
-   struct svga_screen *ss = svga_screen(screen);
-   
+   struct svga_screen *ss = svga_screen(pipe->screen);
+   struct svga_buffer *sbuf = svga_buffer(transfer->resource);
+
+   unsigned offset = transfer->box.x + box->x;
+   unsigned length = box->width;
+
+   assert(transfer->usage & PIPE_TRANSFER_WRITE);
+   assert(transfer->usage & PIPE_TRANSFER_FLUSH_EXPLICIT);
+
    pipe_mutex_lock(ss->swc_mutex);
-   assert(sbuf->map.writing);
-   if(sbuf->map.writing) {
-      assert(sbuf->map.flush_explicit);
-      svga_buffer_add_range(sbuf, offset, offset + length);
-   }
+   svga_buffer_add_range(sbuf, offset, offset + length);
    pipe_mutex_unlock(ss->swc_mutex);
 }
 
-static void 
-svga_buffer_unmap( struct pipe_screen *screen,
-                   struct pipe_resource *buf)
+
+static void
+svga_buffer_transfer_unmap( struct pipe_context *pipe,
+                            struct pipe_transfer *transfer )
 {
-   struct svga_screen *ss = svga_screen(screen); 
+   struct svga_screen *ss = svga_screen(pipe->screen);
    struct svga_winsys_screen *sws = ss->sws;
-   struct svga_buffer *sbuf = svga_buffer( buf );
+   struct svga_buffer *sbuf = svga_buffer(transfer->resource);
    
    pipe_mutex_lock(ss->swc_mutex);
    
    assert(sbuf->map.count);
-   if(sbuf->map.count)
+   if (sbuf->map.count) {
       --sbuf->map.count;
+   }
 
-   if(sbuf->hwbuf)
+   if (sbuf->hwbuf) {
       sws->buffer_unmap(sws, sbuf->hwbuf);
+   }
 
-   if(sbuf->map.writing) {
-      if(!sbuf->map.flush_explicit) {
-         /* No mapped range was flushed -- flush the whole buffer */
+   if (transfer->usage & PIPE_TRANSFER_WRITE) {
+      if (!(transfer->usage & PIPE_TRANSFER_FLUSH_EXPLICIT)) {
+         /*
+          * Mapped range not flushed explicitly, so flush the whole buffer,
+          * and tell the host to discard the contents when processing the DMA
+          * command.
+          */
+
          SVGA_DBG(DEBUG_DMA, "flushing the whole buffer\n");
    
+         sbuf->dma.flags.discard = TRUE;
+
          svga_buffer_add_range(sbuf, 0, sbuf->b.b.width0);
       }
-      
-      sbuf->map.writing = FALSE;
-      sbuf->map.flush_explicit = FALSE;
    }
 
    pipe_mutex_unlock(ss->swc_mutex);
 }
 
+
+/**
+ * Destroy transfer
+ */
+static void
+svga_buffer_transfer_destroy(struct pipe_context *pipe,
+                             struct pipe_transfer *transfer)
+{
+   FREE(transfer);
+}
 
 
 static void
@@ -221,62 +316,12 @@ svga_buffer_destroy( struct pipe_screen *screen,
 }
 
 
-/* Keep the original code more or less intact, implement transfers in
- * terms of the old functions.
- */
-static void *
-svga_buffer_transfer_map( struct pipe_context *pipe,
-			  struct pipe_transfer *transfer )
-{
-   uint8_t *map = svga_buffer_map_range( pipe->screen,
-					 transfer->resource,
-					 transfer->box.x,
-					 transfer->box.width,
-					 transfer->usage );
-   if (map == NULL)
-      return NULL;
-
-   /* map_buffer() returned a pointer to the beginning of the buffer,
-    * but transfers are expected to return a pointer to just the
-    * region specified in the box.
-    */
-   return map + transfer->box.x;
-}
-
-
-
-static void svga_buffer_transfer_flush_region( struct pipe_context *pipe,
-					       struct pipe_transfer *transfer,
-					       const struct pipe_box *box)
-{
-   assert(box->x + box->width <= transfer->box.width);
-
-   svga_buffer_flush_mapped_range(pipe->screen,
-				  transfer->resource,
-				  transfer->box.x + box->x,
-				  box->width);
-}
-
-static void svga_buffer_transfer_unmap( struct pipe_context *pipe,
-			    struct pipe_transfer *transfer )
-{
-   svga_buffer_unmap(pipe->screen,
-		     transfer->resource);
-}
-
-
-
-
-
-
-
 struct u_resource_vtbl svga_buffer_vtbl = 
 {
    u_default_resource_get_handle,      /* get_handle */
    svga_buffer_destroy,		     /* resource_destroy */
-   svga_buffer_is_referenced,	     /* is_resource_referenced */
-   u_default_get_transfer,	     /* get_transfer */
-   u_default_transfer_destroy,	     /* transfer_destroy */
+   svga_buffer_get_transfer,	     /* get_transfer */
+   svga_buffer_transfer_destroy,     /* transfer_destroy */
    svga_buffer_transfer_map,	     /* transfer_map */
    svga_buffer_transfer_flush_region,  /* transfer_flush_region */
    svga_buffer_transfer_unmap,	     /* transfer_unmap */

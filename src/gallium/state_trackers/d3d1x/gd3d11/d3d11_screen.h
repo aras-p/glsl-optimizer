@@ -299,25 +299,25 @@ struct GalliumD3D11ScreenImpl : public GalliumD3D11Screen
 				sampler_view |= D3D11_FORMAT_SUPPORT_SHADER_SAMPLE_COMPARISON;
 
 			/* TODO: do this properly when Gallium drivers actually support index/vertex format queries */
-			if(screen->is_format_supported(screen, format, PIPE_BUFFER, 0, PIPE_BIND_VERTEX_BUFFER, 0)
-				|| (screen->is_format_supported(screen, format, PIPE_BUFFER, 0, PIPE_BIND_INDEX_BUFFER, 0)
+                        if(screen->is_format_supported(screen, format, PIPE_BUFFER, 0, PIPE_BIND_VERTEX_BUFFER)
+                                || (screen->is_format_supported(screen, format, PIPE_BUFFER, 0, PIPE_BIND_INDEX_BUFFER)
 				|| format == PIPE_FORMAT_R8_UNORM))
 				support |= buffer;
-			if(screen->is_format_supported(screen, format, PIPE_BUFFER, 0, PIPE_BIND_STREAM_OUTPUT, 0))
+                        if(screen->is_format_supported(screen, format, PIPE_BUFFER, 0, PIPE_BIND_STREAM_OUTPUT))
 				support |= buffer | D3D11_FORMAT_SUPPORT_SO_BUFFER;
-			if(screen->is_format_supported(screen, format, PIPE_TEXTURE_1D, 0, PIPE_BIND_SAMPLER_VIEW, 0))
+                        if(screen->is_format_supported(screen, format, PIPE_TEXTURE_1D, 0, PIPE_BIND_SAMPLER_VIEW))
 				support |= D3D11_FORMAT_SUPPORT_TEXTURE1D | sampler_view;
-			if(screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 0, PIPE_BIND_SAMPLER_VIEW, 0))
+                        if(screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 0, PIPE_BIND_SAMPLER_VIEW))
 				support |= D3D11_FORMAT_SUPPORT_TEXTURE2D | sampler_view;
-			if(screen->is_format_supported(screen, format, PIPE_TEXTURE_CUBE, 0, PIPE_BIND_SAMPLER_VIEW, 0))
+                        if(screen->is_format_supported(screen, format, PIPE_TEXTURE_CUBE, 0, PIPE_BIND_SAMPLER_VIEW))
 				support |= D3D11_FORMAT_SUPPORT_TEXTURE2D | sampler_view;
-			if(screen->is_format_supported(screen, format, PIPE_TEXTURE_3D, 0, PIPE_BIND_SAMPLER_VIEW, 0))
+                        if(screen->is_format_supported(screen, format, PIPE_TEXTURE_3D, 0, PIPE_BIND_SAMPLER_VIEW))
 				support |= D3D11_FORMAT_SUPPORT_TEXTURE3D | sampler_view;
-			if(screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 0, PIPE_BIND_RENDER_TARGET, 0))
+                        if(screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 0, PIPE_BIND_RENDER_TARGET))
 				support |= D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_RENDER_TARGET | D3D11_FORMAT_SUPPORT_BLENDABLE;
-			if(screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 0, PIPE_BIND_DEPTH_STENCIL, 0))
+                        if(screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 0, PIPE_BIND_DEPTH_STENCIL))
 				support |= D3D11_FORMAT_SUPPORT_TEXTURE2D | D3D11_FORMAT_SUPPORT_DEPTH_STENCIL;
-			if(screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 0, PIPE_BIND_DISPLAY_TARGET, 0))
+                        if(screen->is_format_supported(screen, format, PIPE_TEXTURE_2D, 0, PIPE_BIND_DISPLAY_TARGET))
 				support |= D3D11_FORMAT_SUPPORT_DISPLAY;
 			format_support[format] = support;
 		}

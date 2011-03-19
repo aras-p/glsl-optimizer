@@ -263,7 +263,7 @@ static void r300_clear(struct pipe_context* pipe,
 
         /* Reserve CS space. */
         if (dwords > (R300_MAX_CMDBUF_DWORDS - r300->cs->cdw)) {
-            r300->context.flush(&r300->context, 0, NULL);
+            r300_flush(&r300->context, R300_FLUSH_ASYNC, NULL);
         }
 
         /* Emit clear packets. */
@@ -447,11 +447,11 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
          !pipe->screen->is_format_supported(pipe->screen,
                                             src->format, src->target,
                                             src->nr_samples,
-                                            PIPE_BIND_SAMPLER_VIEW, 0) ||
+                                            PIPE_BIND_SAMPLER_VIEW) ||
          !pipe->screen->is_format_supported(pipe->screen,
                                             dst->format, dst->target,
                                             dst->nr_samples,
-                                            PIPE_BIND_RENDER_TARGET, 0))) {
+                                            PIPE_BIND_RENDER_TARGET))) {
         switch (util_format_get_blocksize(old_dst.format)) {
             case 1:
                 new_dst.format = PIPE_FORMAT_I8_UNORM;

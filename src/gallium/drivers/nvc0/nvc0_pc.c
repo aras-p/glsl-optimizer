@@ -25,6 +25,14 @@
 #include "nvc0_pc.h"
 #include "nvc0_program.h"
 
+uint8_t
+nvc0_ir_reverse_cc(uint8_t cc)
+{
+   static const uint8_t cc_swapped[8] = { 0, 4, 2, 6, 1, 5, 3, 7 };
+
+   return cc_swapped[cc & 7] | (cc & ~7);
+}
+
 boolean
 nvc0_insn_can_load(struct nv_instruction *nvi, int s,
                    struct nv_instruction *ld)

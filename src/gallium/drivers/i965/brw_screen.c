@@ -278,8 +278,7 @@ brw_is_format_supported(struct pipe_screen *screen,
                          enum pipe_format format,
                          enum pipe_texture_target target,
                          unsigned sample_count,
-                         unsigned tex_usage,
-                         unsigned geom_flags)
+                         unsigned tex_usage)
 {
    static const enum pipe_format tex_supported[] = {
       PIPE_FORMAT_L8_UNORM,
@@ -365,20 +364,19 @@ brw_fence_reference(struct pipe_screen *screen,
 {
 }
 
-static int
+static boolean
 brw_fence_signalled(struct pipe_screen *screen,
-                     struct pipe_fence_handle *fence,
-                     unsigned flags)
+                     struct pipe_fence_handle *fence)
 {
-   return 0;                    /* XXX shouldn't this be a boolean? */
+   return TRUE;
 }
 
-static int
+static boolean
 brw_fence_finish(struct pipe_screen *screen,
                  struct pipe_fence_handle *fence,
-                 unsigned flags)
+                 uint64_t timeout)
 {
-   return 0;
+   return TRUE;
 }
 
 

@@ -227,7 +227,7 @@ static void draw( void )
 
    ctx->clear(ctx, PIPE_CLEAR_COLOR, clear_color, 0, 0);
    util_draw_arrays(ctx, PIPE_PRIM_POINTS, 0, Elements(vertices));
-   ctx->flush(ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
+   ctx->flush(ctx, NULL);
 
    graw_save_surface_to_file(ctx, surf, NULL);
 

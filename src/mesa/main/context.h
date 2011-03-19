@@ -286,28 +286,4 @@ do {									\
 
 
 
-/**
- * Is the secondary color needed?
- */
-#define NEED_SECONDARY_COLOR(CTX)					\
-   (((CTX)->Light.Enabled &&						\
-     (CTX)->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)	\
-    || (CTX)->Fog.ColorSumEnabled					\
-    || ((CTX)->VertexProgram._Current &&				\
-        ((CTX)->VertexProgram._Current != (CTX)->VertexProgram._TnlProgram) &&    \
-        ((CTX)->VertexProgram._Current->Base.InputsRead & VERT_BIT_COLOR1)) \
-    || ((CTX)->FragmentProgram._Current &&				\
-        ((CTX)->FragmentProgram._Current != (CTX)->FragmentProgram._TexEnvProgram) &&  \
-        ((CTX)->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_COL1)) \
-   )
-
-
-/**
- * Is RGBA LogicOp enabled?
- */
-#define RGBA_LOGICOP_ENABLED(CTX) \
-  ((CTX)->Color.ColorLogicOpEnabled || \
-   ((CTX)->Color.BlendEnabled && (CTX)->Color.Blend[0].EquationRGB == GL_LOGIC_OP))
-
-
 #endif /* CONTEXT_H */

@@ -1191,16 +1191,16 @@ enum ir_texture_opcode {
  * selected from \c ir_texture_opcodes.  In the printed IR, these will
  * appear as:
  *
- *                             Texel offset (0 or an expression)
- *                             | Projection divisor
- *                             | |  Shadow comparitor
- *                             | |  |
- *                             v v  v
- * (tex <sampler> <coordinate> 0 1 ( ))
- * (txb <sampler> <coordinate> 0 1 ( ) <bias>)
- * (txl <sampler> <coordinate> 0 1 ( ) <lod>)
- * (txd <sampler> <coordinate> 0 1 ( ) (dPdx dPdy))
- * (txf <sampler> <coordinate> 0       <lod>)
+ *                                    Texel offset (0 or an expression)
+ *                                    | Projection divisor
+ *                                    | |  Shadow comparitor
+ *                                    | |  |
+ *                                    v v  v
+ * (tex <type> <sampler> <coordinate> 0 1 ( ))
+ * (txb <type> <sampler> <coordinate> 0 1 ( ) <bias>)
+ * (txl <type> <sampler> <coordinate> 0 1 ( ) <lod>)
+ * (txd <type> <sampler> <coordinate> 0 1 ( ) (dPdx dPdy))
+ * (txf <type> <sampler> <coordinate> 0       <lod>)
  */
 class ir_texture : public ir_rvalue {
 public:
@@ -1226,8 +1226,8 @@ public:
     */
    const char *opcode_string();
 
-   /** Set the sampler and infer the type. */
-   void set_sampler(ir_dereference *sampler);
+   /** Set the sampler and type. */
+   void set_sampler(ir_dereference *sampler, const glsl_type *type);
 
    /**
     * Do a reverse-lookup to translate a string into an ir_texture_opcode.

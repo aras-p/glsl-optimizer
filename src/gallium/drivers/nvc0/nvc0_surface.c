@@ -240,7 +240,7 @@ nvc0_resource_copy_region(struct pipe_context *pipe,
       struct nvc0_m2mf_rect drect, srect;
       unsigned i;
       unsigned nx = util_format_get_nblocksx(src->format, src_box->width);
-      unsigned ny = util_format_get_nblocksx(src->format, src_box->height);
+      unsigned ny = util_format_get_nblocksy(src->format, src_box->height);
 
       nvc0_setup_m2mf_rect(&drect, dst, dst_level, dstx, dsty, dstz);
       nvc0_setup_m2mf_rect(&srect, src, src_level,

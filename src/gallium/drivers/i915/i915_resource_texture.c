@@ -184,7 +184,10 @@ i915_texture_tiling(struct i915_screen *is, struct i915_texture *tex)
       /* XXX X-tiling might make sense */
       return I915_TILE_NONE;
 
-   return I915_TILE_X;
+   if (is->debug.use_blitter)
+      return I915_TILE_X;
+   else
+      return I915_TILE_Y;
 }
 
 
@@ -756,6 +759,9 @@ i915_texture_transfer_map(struct pipe_context *pipe,
       assert(box->z == 0);
    offset = i915_texture_offset(tex, transfer->level, box->z);
 
+   /* TODO this is a sledgehammer */
+   pipe->flush(pipe, NULL);
+
    map = iws->buffer_map(iws, tex->buffer,
                          (transfer->usage & PIPE_TRANSFER_WRITE) ? TRUE : FALSE);
    if (map == NULL)
@@ -781,7 +787,6 @@ struct u_resource_vtbl i915_texture_vtbl =
 {
    i915_texture_get_handle,	      /* get_handle */
    i915_texture_destroy,	      /* resource_destroy */
-   NULL,			      /* is_resource_referenced */
    i915_texture_get_transfer,	      /* get_transfer */
    i915_transfer_destroy,	      /* transfer_destroy */
    i915_texture_transfer_map,	      /* transfer_map */

@@ -31,6 +31,7 @@
 #include "main/macros.h"
 #include "main/enums.h"
 #include "main/dd.h"
+#include "main/state.h"
 #include "tnl/tnl.h"
 #include "tnl/t_context.h"
 
@@ -209,7 +210,7 @@ i915EvalLogicOpBlendState(struct gl_context * ctx)
    dw0 = i915->state.Ctx[I915_CTXREG_LIS5];
    dw1 = i915->state.Ctx[I915_CTXREG_LIS6];
 
-   if (RGBA_LOGICOP_ENABLED(ctx)) {
+   if (_mesa_rgba_logicop_enabled(ctx)) {
       dw0 |= S5_LOGICOP_ENABLE;
       dw1 &= ~S6_CBUF_BLEND_ENABLE;
    }

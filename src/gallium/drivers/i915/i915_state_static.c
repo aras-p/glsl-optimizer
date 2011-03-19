@@ -28,6 +28,7 @@
 #include "i915_context.h"
 #include "i915_state.h"
 #include "i915_resource.h"
+#include "i915_screen.h"
 
 
 
@@ -78,38 +79,13 @@ buf_3d_tiling_bits(enum i915_winsys_buffer_tile tiling)
    return tiling_bits;
 }
 
-/**
- * Examine framebuffer state to determine width, height.
- */
-static boolean
-framebuffer_size(const struct pipe_framebuffer_state *fb,
-                 uint *width, uint *height)
-{
-   if (fb->cbufs[0]) {
-      *width = fb->cbufs[0]->width;
-      *height = fb->cbufs[0]->height;
-      return TRUE;
-   }
-   else if (fb->zsbuf) {
-      *width = fb->zsbuf->width;
-      *height = fb->zsbuf->height;
-      return TRUE;
-   }
-   else {
-      *width = *height = 0;
-      return FALSE;
-   }
-}
-
 static void update_framebuffer(struct i915_context *i915)
 {
    struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
    struct pipe_surface *depth_surface = i915->framebuffer.zsbuf;
-   unsigned cformat, zformat;
-   unsigned x, y, w, h;
+   unsigned x, y;
    int layer;
-   uint32_t draw_offset;
-   boolean ret;
+   uint32_t draw_offset, draw_size;
 
    if (cbuf_surface) {
       struct i915_texture *tex = i915_texture(cbuf_surface->texture);
@@ -119,7 +95,6 @@ static void update_framebuffer(struct i915_context *i915)
       i915->current.cbuf_flags = BUF_3D_ID_COLOR_BACK |
                                  BUF_3D_PITCH(tex->stride) |  /* pitch in bytes */
                                  buf_3d_tiling_bits(tex->tiling);
-      cformat = cbuf_surface->format;
 
       layer = cbuf_surface->u.tex.first_layer;
 
@@ -127,10 +102,9 @@ static void update_framebuffer(struct i915_context *i915)
       y = tex->image_offset[cbuf_surface->u.tex.level][layer].nblocksy;
    } else {
       i915->current.cbuf_bo = NULL;
-      cformat = PIPE_FORMAT_B8G8R8A8_UNORM; /* arbitrary */
       x = y = 0;
    }
-   cformat = translate_format(cformat);
+   i915->static_dirty |= I915_DST_BUF_COLOR;
 
    /* What happens if no zbuf??
     */
@@ -145,28 +119,23 @@ static void update_framebuffer(struct i915_context *i915)
       i915->current.depth_flags = BUF_3D_ID_DEPTH |
                                   BUF_3D_PITCH(tex->stride) |  /* pitch in bytes */
                                   buf_3d_tiling_bits(tex->tiling);
-      zformat = translate_depth_format(depth_surface->format);
-   } else {
+   } else
       i915->current.depth_bo = NULL;
-      zformat = 0;
-   }
-
-   i915->current.dst_buf_vars = DSTORG_HORT_BIAS(0x8) | /* .5 */
-                                DSTORG_VERT_BIAS(0x8) | /* .5 */
-                                LOD_PRECLAMP_OGL |
-                                TEX_DEFAULT_COLOR_OGL |
-                                cformat |
-                                zformat;
+   i915->static_dirty |= I915_DST_BUF_DEPTH;
 
    /* drawing rect calculations */
    draw_offset = x | (y << 16);
-   ret = framebuffer_size(&i915->framebuffer, &w, &h);
-   assert(ret);
+   draw_size = (i915->framebuffer.width - 1 + x) |
+               ((i915->framebuffer.height - 1 + y) << 16);
    if (i915->current.draw_offset != draw_offset) {
       i915->current.draw_offset = draw_offset;
       i915_set_flush_dirty(i915, I915_PIPELINE_FLUSH);
+      i915->static_dirty |= I915_DST_RECT;
    }
-   i915->current.draw_size = (w - 1 + x) | ((h - 1 + y) << 16);
+   if (i915->current.draw_size != draw_size) {
+      i915->current.draw_size = draw_size;
+      i915->static_dirty |= I915_DST_RECT;
+   }
 
    i915->hardware_dirty |= I915_HW_STATIC;
 
@@ -178,4 +147,53 @@ struct i915_tracked_state i915_hw_framebuffer = {
    "framebuffer",
    update_framebuffer,
    I915_NEW_FRAMEBUFFER
+};
+
+static void update_dst_buf_vars(struct i915_context *i915)
+{
+   struct pipe_surface *cbuf_surface = i915->framebuffer.cbufs[0];
+   struct pipe_surface *depth_surface = i915->framebuffer.zsbuf;
+   uint32_t dst_buf_vars, cformat, zformat;
+   uint32_t early_z = 0;
+
+   if (cbuf_surface)
+      cformat = cbuf_surface->format;
+   else
+      cformat = PIPE_FORMAT_B8G8R8A8_UNORM; /* arbitrary */
+   cformat = translate_format(cformat);
+
+   if (depth_surface) {
+      struct i915_texture *tex = i915_texture(depth_surface->texture);
+      struct i915_screen *is = i915_screen(i915->base.screen);
+
+      zformat = translate_depth_format(depth_surface->format);
+
+      if (is->is_i945 && tex->tiling != I915_TILE_NONE
+            && !i915->fs->info.writes_z)
+         early_z = CLASSIC_EARLY_DEPTH;
+   } else
+      zformat = 0;
+
+   dst_buf_vars = DSTORG_HORT_BIAS(0x8) | /* .5 */
+                  DSTORG_VERT_BIAS(0x8) | /* .5 */
+                  LOD_PRECLAMP_OGL |
+                  TEX_DEFAULT_COLOR_OGL |
+                  cformat |
+                  zformat |
+                  early_z;
+
+   if (i915->current.dst_buf_vars != dst_buf_vars) {
+      if (early_z != (i915->current.dst_buf_vars & CLASSIC_EARLY_DEPTH))
+         i915_set_flush_dirty(i915, I915_PIPELINE_FLUSH);
+
+      i915->current.dst_buf_vars = dst_buf_vars;
+      i915->static_dirty |= I915_DST_VARS;
+      i915->hardware_dirty |= I915_HW_STATIC;
+   }
+}
+
+struct i915_tracked_state i915_hw_dst_buf_vars = {
+   "dst buf vars",
+   update_dst_buf_vars,
+   I915_NEW_FRAMEBUFFER | I915_NEW_FS
 };

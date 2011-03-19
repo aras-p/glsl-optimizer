@@ -27,6 +27,7 @@
 
 #include "i915_surface.h"
 #include "i915_resource.h"
+#include "i915_state.h"
 #include "i915_blit.h"
 #include "i915_reg.h"
 #include "i915_screen.h"
@@ -37,16 +38,119 @@
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
 
+/*
+ * surface functions using the render engine
+ */
+
+static void
+i915_surface_copy_render(struct pipe_context *pipe,
+                         struct pipe_resource *dst, unsigned dst_level,
+                         unsigned dstx, unsigned dsty, unsigned dstz,
+                         struct pipe_resource *src, unsigned src_level,
+                         const struct pipe_box *src_box)
+{
+   struct i915_context *i915 = i915_context(pipe);
+
+   util_blitter_save_blend(i915->blitter, (void *)i915->blend);
+   util_blitter_save_depth_stencil_alpha(i915->blitter, (void *)i915->depth_stencil);
+   util_blitter_save_stencil_ref(i915->blitter, &i915->stencil_ref);
+   util_blitter_save_rasterizer(i915->blitter, (void *)i915->rasterizer);
+   util_blitter_save_fragment_shader(i915->blitter, i915->saved_fs);
+   util_blitter_save_vertex_shader(i915->blitter, i915->saved_vs);
+   util_blitter_save_viewport(i915->blitter, &i915->viewport);
+   util_blitter_save_clip(i915->blitter, &i915->saved_clip);
+   util_blitter_save_vertex_elements(i915->blitter, i915->saved_velems);
+   util_blitter_save_vertex_buffers(i915->blitter, i915->saved_nr_vertex_buffers,
+                                    i915->saved_vertex_buffers);
+
+   util_blitter_save_framebuffer(i915->blitter, &i915->framebuffer);
+
+   util_blitter_save_fragment_sampler_states(i915->blitter,
+                                             i915->saved_nr_samplers,
+                                             i915->saved_samplers);
+   util_blitter_save_fragment_sampler_views(i915->blitter,
+                                            i915->saved_nr_sampler_views,
+                                            i915->saved_sampler_views);
+
+   util_blitter_copy_region(i915->blitter, dst, dst_level, dstx, dsty, dstz,
+                            src, src_level, src_box, TRUE);
+}
+
+static void
+i915_clear_render_target_render(struct pipe_context *pipe,
+                                struct pipe_surface *dst,
+                                const float *rgba,
+                                unsigned dstx, unsigned dsty,
+                                unsigned width, unsigned height)
+{
+   struct i915_context *i915 = i915_context(pipe);
+   struct pipe_framebuffer_state fb_state;
+
+   util_blitter_save_framebuffer(i915->blitter, &i915->framebuffer);
+
+   fb_state.width = dst->width;
+   fb_state.height = dst->height;
+   fb_state.nr_cbufs = 1;
+   fb_state.cbufs[0] = dst;
+   fb_state.zsbuf = NULL;
+   pipe->set_framebuffer_state(pipe, &fb_state);
+
+   if (i915->dirty)
+      i915_update_derived(i915);
+
+   i915_clear_emit(pipe, PIPE_CLEAR_COLOR, rgba, 0.0, 0x0,
+                   dstx, dsty, width, height);
+
+   pipe->set_framebuffer_state(pipe, &i915->blitter->saved_fb_state);
+   util_unreference_framebuffer_state(&i915->blitter->saved_fb_state);
+   i915->blitter->saved_fb_state.nr_cbufs = ~0;
+}
+
+static void
+i915_clear_depth_stencil_render(struct pipe_context *pipe,
+                                struct pipe_surface *dst,
+                                unsigned clear_flags,
+                                double depth,
+                                unsigned stencil,
+                                unsigned dstx, unsigned dsty,
+                                unsigned width, unsigned height)
+{
+   struct i915_context *i915 = i915_context(pipe);
+   struct pipe_framebuffer_state fb_state;
+
+   util_blitter_save_framebuffer(i915->blitter, &i915->framebuffer);
+
+   fb_state.width = dst->width;
+   fb_state.height = dst->height;
+   fb_state.nr_cbufs = 0;
+   fb_state.zsbuf = dst;
+   pipe->set_framebuffer_state(pipe, &fb_state);
+
+   if (i915->dirty)
+      i915_update_derived(i915);
+
+   i915_clear_emit(pipe, clear_flags & PIPE_CLEAR_DEPTHSTENCIL,
+                   NULL, depth, stencil,
+                   dstx, dsty, width, height);
+
+   pipe->set_framebuffer_state(pipe, &i915->blitter->saved_fb_state);
+   util_unreference_framebuffer_state(&i915->blitter->saved_fb_state);
+   i915->blitter->saved_fb_state.nr_cbufs = ~0;
+}
+
+/*
+ * surface functions using the blitter
+ */
 
 /* Assumes all values are within bounds -- no checking at this level -
  * do it higher up if required.
  */
 static void
-i915_surface_copy(struct pipe_context *pipe,
-                  struct pipe_resource *dst, unsigned dst_level,
-                  unsigned dstx, unsigned dsty, unsigned dstz,
-                  struct pipe_resource *src, unsigned src_level,
-                  const struct pipe_box *src_box)
+i915_surface_copy_blitter(struct pipe_context *pipe,
+                          struct pipe_resource *dst, unsigned dst_level,
+                          unsigned dstx, unsigned dsty, unsigned dstz,
+                          struct pipe_resource *src, unsigned src_level,
+                          const struct pipe_box *src_box)
 {
    struct i915_texture *dst_tex = i915_texture(dst);
    struct i915_texture *src_tex = i915_texture(src);
@@ -66,7 +170,6 @@ i915_surface_copy(struct pipe_context *pipe,
       assert(src_box->z == 0);
    src_offset = i915_texture_offset(src_tex, src_level, src_box->z);
 
-   assert( dst != src );
    assert( util_format_get_blocksize(dpt->format) == util_format_get_blocksize(spt->format) );
    assert( util_format_get_blockwidth(dpt->format) == util_format_get_blockwidth(spt->format) );
    assert( util_format_get_blockheight(dpt->format) == util_format_get_blockheight(spt->format) );
@@ -81,13 +184,12 @@ i915_surface_copy(struct pipe_context *pipe,
                    (short) src_box->width, (short) src_box->height );
 }
 
-
 static void
-i915_clear_render_target(struct pipe_context *pipe,
-                         struct pipe_surface *dst,
-                         const float *rgba,
-                         unsigned dstx, unsigned dsty,
-                         unsigned width, unsigned height)
+i915_clear_render_target_blitter(struct pipe_context *pipe,
+                                 struct pipe_surface *dst,
+                                 const float *rgba,
+                                 unsigned dstx, unsigned dsty,
+                                 unsigned width, unsigned height)
 {
    struct i915_texture *tex = i915_texture(dst->texture);
    struct pipe_resource *pt = &tex->b.b;
@@ -109,13 +211,13 @@ i915_clear_render_target(struct pipe_context *pipe,
 }
 
 static void
-i915_clear_depth_stencil(struct pipe_context *pipe,
-                         struct pipe_surface *dst,
-                         unsigned clear_flags,
-                         double depth,
-                         unsigned stencil,
-                         unsigned dstx, unsigned dsty,
-                         unsigned width, unsigned height)
+i915_clear_depth_stencil_blitter(struct pipe_context *pipe,
+                                 struct pipe_surface *dst,
+                                 unsigned clear_flags,
+                                 double depth,
+                                 unsigned stencil,
+                                 unsigned dstx, unsigned dsty,
+                                 unsigned width, unsigned height)
 {
    struct i915_texture *tex = i915_texture(dst->texture);
    struct pipe_resource *pt = &tex->b.b;
@@ -193,9 +295,15 @@ i915_surface_destroy(struct pipe_context *ctx,
 void
 i915_init_surface_functions(struct i915_context *i915)
 {
-   i915->base.resource_copy_region = i915_surface_copy;
-   i915->base.clear_render_target = i915_clear_render_target;
-   i915->base.clear_depth_stencil = i915_clear_depth_stencil;
+   if (i915_screen(i915->base.screen)->debug.use_blitter) {
+      i915->base.resource_copy_region = i915_surface_copy_blitter;
+      i915->base.clear_render_target = i915_clear_render_target_blitter;
+      i915->base.clear_depth_stencil = i915_clear_depth_stencil_blitter;
+   } else {
+      i915->base.resource_copy_region = i915_surface_copy_render;
+      i915->base.clear_render_target = i915_clear_render_target_render;
+      i915->base.clear_depth_stencil = i915_clear_depth_stencil_render;
+   }
    i915->base.create_surface = i915_create_surface;
    i915->base.surface_destroy = i915_surface_destroy;
 }

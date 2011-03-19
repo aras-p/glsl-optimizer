@@ -150,10 +150,6 @@ static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 
 	rstate->id = R600_PIPE_STATE_DSA;
 	/* depth TODO some of those db_shader_control field depend on shader adjust mask & add it to shader */
-	/* db_shader_control is 0xFFFFFFBE as Z_EXPORT_ENABLE (bit 0) will be
-	 * set by fragment shader if it export Z and KILL_ENABLE (bit 6) will
-	 * be set if shader use texkill instruction
-	 */
 	db_shader_control = S_02880C_Z_ORDER(V_02880C_EARLY_Z_THEN_LATE_Z);
 	stencil_ref_mask = 0;
 	stencil_ref_mask_bf = 0;
@@ -210,7 +206,10 @@ static void *evergreen_create_dsa_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_028438_SX_ALPHA_REF, alpha_ref, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_0286DC_SPI_FOG_CNTL, 0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028800_DB_DEPTH_CONTROL, db_depth_control, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_02880C_DB_SHADER_CONTROL, db_shader_control, 0xFFFFFFBE, NULL);
+	/* The DB_SHADER_CONTROL mask is 0xFFFFFFBC since Z_EXPORT_ENABLE,
+	 * STENCIL_EXPORT_ENABLE and KILL_ENABLE are controlled by
+	 * evergreen_pipe_shader_ps().*/
+	r600_pipe_state_add_reg(rstate, R_02880C_DB_SHADER_CONTROL, db_shader_control, 0xFFFFFFBC, NULL);
 	r600_pipe_state_add_reg(rstate, R_028000_DB_RENDER_CONTROL, db_render_control, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_02800C_DB_RENDER_OVERRIDE, db_render_override, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_028AC0_DB_SRESULTS_COMPARE_STATE0, 0x0, 0xFFFFFFFF, NULL);
@@ -1329,7 +1328,7 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 {
 	struct r600_pipe_state *rstate = &shader->rstate;
 	struct r600_shader *rshader = &shader->shader;
-	unsigned i, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1;
+	unsigned i, exports_ps, num_cout, spi_ps_in_control_0, spi_input_z, spi_ps_in_control_1, db_shader_control;
 	int pos_index = -1, face_index = -1;
 	int ninterp = 0;
 	boolean have_linear = FALSE, have_centroid = FALSE, have_perspective = FALSE;
@@ -1337,6 +1336,7 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 
 	rstate->nregs = 0;
 
+	db_shader_control = 0;
 	for (i = 0; i < rshader->ninput; i++) {
 		/* evergreen NUM_INTERP only contains values interpolated into the LDS,
 		   POSITION goes via GPRs from the SC so isn't counted */
@@ -1358,16 +1358,12 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 	}
 	for (i = 0; i < rshader->noutput; i++) {
 		if (rshader->output[i].name == TGSI_SEMANTIC_POSITION)
-			r600_pipe_state_add_reg(rstate,
-						R_02880C_DB_SHADER_CONTROL,
-						S_02880C_Z_EXPORT_ENABLE(1),
-						S_02880C_Z_EXPORT_ENABLE(1), NULL);
+			db_shader_control |= S_02880C_Z_EXPORT_ENABLE(1);
 		if (rshader->output[i].name == TGSI_SEMANTIC_STENCIL)
-			r600_pipe_state_add_reg(rstate,
-						R_02880C_DB_SHADER_CONTROL,
-						S_02880C_STENCIL_EXPORT_ENABLE(1),
-						S_02880C_STENCIL_EXPORT_ENABLE(1), NULL);
+			db_shader_control |= S_02880C_STENCIL_EXPORT_ENABLE(1);
 	}
+	if (rshader->uses_kill)
+		db_shader_control |= S_02880C_KILL_ENABLE(1);
 
 	exports_ps = 0;
 	num_cout = 0;
@@ -1442,15 +1438,15 @@ void evergreen_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader 
 	r600_pipe_state_add_reg(rstate,
 				R_02884C_SQ_PGM_EXPORTS_PS,
 				exports_ps, 0xFFFFFFFF, NULL);
-
-	if (rshader->uses_kill) {
-		/* only set some bits here, the other bits are set in the dsa state */
-		r600_pipe_state_add_reg(rstate,
-					R_02880C_DB_SHADER_CONTROL,
-					S_02880C_KILL_ENABLE(1),
-					S_02880C_KILL_ENABLE(1), NULL);
-	}
-
+	/* FIXME: Evergreen doesn't seem to support MULTIWRITE_ENABLE. */
+	/* only set some bits here, the other bits are set in the dsa state */
+	r600_pipe_state_add_reg(rstate,
+				R_02880C_DB_SHADER_CONTROL,
+				db_shader_control,
+				S_02880C_Z_EXPORT_ENABLE(1) |
+				S_02880C_STENCIL_EXPORT_ENABLE(1) |
+				S_02880C_KILL_ENABLE(1),
+				NULL);
 	r600_pipe_state_add_reg(rstate,
 				R_03A200_SQ_LOOP_CONST_0, 0x01000FFF,
 				0xFFFFFFFF, NULL);
@@ -1499,6 +1495,18 @@ void evergreen_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader 
 	r600_pipe_state_add_reg(rstate,
 				R_03A200_SQ_LOOP_CONST_0 + (32 * 4), 0x01000FFF,
 				0xFFFFFFFF, NULL);
+}
+
+void evergreen_fetch_shader(struct r600_vertex_element *ve)
+{
+	struct r600_pipe_state *rstate = &ve->rstate;
+	rstate->id = R600_PIPE_STATE_FETCH_SHADER;
+	rstate->nregs = 0;
+	r600_pipe_state_add_reg(rstate, R_0288A8_SQ_PGM_RESOURCES_FS,
+				0x00000000, 0xFFFFFFFF, NULL);
+	r600_pipe_state_add_reg(rstate, R_0288A4_SQ_PGM_START_FS,
+				(r600_bo_offset(ve->fetch_shader)) >> 8,
+				0xFFFFFFFF, ve->fetch_shader);
 }
 
 void *evergreen_create_db_flush_dsa(struct r600_pipe_context *rctx)

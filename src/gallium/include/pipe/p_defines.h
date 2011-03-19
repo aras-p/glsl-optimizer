@@ -337,25 +337,6 @@ enum pipe_transfer_usage {
 #define PIPE_USAGE_STAGING        5 /* supports data transfers from the GPU to the CPU */
 
 
-/* These are intended to be used in calls to is_format_supported, but
- * no driver actually uses these flags, and only the glx/xlib state
- * tracker issues them.
- *
- * Deprecate?
- */
-#define PIPE_TEXTURE_GEOM_NON_SQUARE       0x1
-#define PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO 0x2
-
-
-/** 
- * Flush types:
- */
-#define PIPE_FLUSH_RENDER_CACHE   0x1
-#define PIPE_FLUSH_TEXTURE_CACHE  0x2
-#define PIPE_FLUSH_SWAPBUFFERS    0x4
-#define PIPE_FLUSH_FRAME          0x8 /**< Mark the end of a frame */
-
-
 /**
  * Shaders
  */
@@ -426,6 +407,8 @@ enum pipe_transfer_usage {
 #define PIPE_SWIZZLE_ONE   5
 
 
+#define PIPE_TIMEOUT_INFINITE 0xffffffffffffffffull
+
 /**
  * Implementation capabilities/limits which are queried through
  * pipe_screen::get_param() and pipe_screen::get_paramf().
@@ -478,7 +461,8 @@ enum pipe_cap {
    PIPE_CAP_TGSI_FS_COORD_PIXEL_CENTER_INTEGER,
    PIPE_CAP_DEPTH_CLAMP,
    PIPE_CAP_SHADER_STENCIL_EXPORT,
-   PIPE_CAP_INSTANCED_DRAWING,
+   PIPE_CAP_TGSI_INSTANCEID,
+   PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR,
 };
 
 /* Shader caps not specific to any single stage */
@@ -504,13 +488,6 @@ enum pipe_shader_cap
    PIPE_SHADER_CAP_SUBROUTINES, /* BGNSUB, ENDSUB, CAL, RET */
 };
 
-/**
- * Referenced query flags.
- */
-
-#define PIPE_UNREFERENCED         0
-#define PIPE_REFERENCED_FOR_READ  (1 << 0)
-#define PIPE_REFERENCED_FOR_WRITE (1 << 1)
 
 enum pipe_video_codec
 {

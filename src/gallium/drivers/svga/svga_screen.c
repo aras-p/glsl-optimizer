@@ -342,8 +342,7 @@ svga_is_format_supported( struct pipe_screen *screen,
                           enum pipe_format format,
                           enum pipe_texture_target target,
                           unsigned sample_count,
-                          unsigned tex_usage,
-                          unsigned geom_flags )
+                          unsigned tex_usage)
 {
    struct svga_winsys_screen *sws = svga_screen(screen)->sws;
    SVGA3dDevCapIndex index;
@@ -412,27 +411,26 @@ svga_fence_reference(struct pipe_screen *screen,
 }
 
 
-static int
+static boolean
 svga_fence_signalled(struct pipe_screen *screen,
-                     struct pipe_fence_handle *fence,
-                     unsigned flag)
+                     struct pipe_fence_handle *fence)
 {
    struct svga_winsys_screen *sws = svga_screen(screen)->sws;
-   return sws->fence_signalled(sws, fence, flag);
+   return sws->fence_signalled(sws, fence, 0) == 0;
 }
 
 
-static int
+static boolean
 svga_fence_finish(struct pipe_screen *screen,
                   struct pipe_fence_handle *fence,
-                  unsigned flag)
+                  uint64_t timeout)
 {
    struct svga_winsys_screen *sws = svga_screen(screen)->sws;
 
    SVGA_DBG(DEBUG_DMA|DEBUG_PERF, "%s fence_ptr %p\n",
             __FUNCTION__, fence);
 
-   return sws->fence_finish(sws, fence, flag);
+   return sws->fence_finish(sws, fence, 0) == 0;
 }
 
 
@@ -497,6 +495,12 @@ svga_screen_create(struct svga_winsys_screen *sws)
    svgascreen->sws = sws;
 
    svga_init_screen_resource_functions(svgascreen);
+
+   if (sws->get_hw_version) {
+      svgascreen->hw_version = sws->get_hw_version(sws);
+   } else {
+      svgascreen->hw_version = SVGA3D_HWVERSION_WS65_B1;
+   }
 
    svgascreen->use_ps30 =
       sws->get_cap(sws, SVGA3D_DEVCAP_FRAGMENT_SHADER_VERSION, &result) &&

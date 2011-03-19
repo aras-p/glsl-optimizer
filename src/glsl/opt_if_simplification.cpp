@@ -38,9 +38,19 @@ public:
    }
 
    ir_visitor_status visit_leave(ir_if *);
+   ir_visitor_status visit_enter(ir_assignment *);
 
    bool made_progress;
 };
+
+/* We only care about the top level "if" instructions, so don't
+ * descend into expressions.
+ */
+ir_visitor_status
+ir_if_simplification_visitor::visit_enter(ir_assignment *ir)
+{
+   return visit_continue_with_parent;
+}
 
 bool
 do_if_simplification(exec_list *instructions)

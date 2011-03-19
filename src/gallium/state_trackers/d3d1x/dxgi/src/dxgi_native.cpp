@@ -1234,7 +1234,7 @@ struct GalliumDXGISwapChain : public GalliumDXGIObject<IDXGISwapChain, GalliumDX
 		if(dst_surface)
 			pipe->surface_destroy(pipe, dst_surface);
 
-		pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, 0);
+                pipe->flush(pipe, 0);
 
 		att = (db) ? NATIVE_ATTACHMENT_BACK_LEFT : NATIVE_ATTACHMENT_FRONT_LEFT;
 		if(!surface->present(surface, att, FALSE, 0))

@@ -49,9 +49,6 @@ struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
 					      void *ptr, unsigned size,
 					      unsigned bind);
 
-unsigned r300_buffer_is_referenced(struct pipe_context *context,
-				   struct pipe_resource *buf);
-
 /* Inline functions. */
 
 static INLINE struct r300_buffer *r300_buffer(struct pipe_resource *buffer)

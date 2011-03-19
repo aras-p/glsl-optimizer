@@ -85,7 +85,7 @@
 typedef GLuint64 GLbitfield64;
 
 /** Set a single bit */
-#define BITFIELD64_BIT(b)      (1ULL << (b))
+#define BITFIELD64_BIT(b)      ((GLbitfield64)1 << (b))
 
 
 /**
@@ -2376,6 +2376,8 @@ struct gl_renderbuffer
    GLenum DataType;      /**< Type of values passed to the Get/Put functions */
    GLvoid *Data;        /**< This may not be used by some kinds of RBs */
 
+   GLboolean AttachedAnytime; /**< TRUE if it was attached to a framebuffer */
+
    /* Used to wrap one renderbuffer around another: */
    struct gl_renderbuffer *Wrapped;
 
@@ -2561,7 +2563,7 @@ struct gl_precision
 
 
 /**
- * Limits for vertex and fragment programs/shaders.
+ * Limits for vertex, geometry and fragment programs/shaders.
  */
 struct gl_program_constants
 {
@@ -2587,14 +2589,7 @@ struct gl_program_constants
    GLuint MaxNativeAddressRegs;
    GLuint MaxNativeParameters;
    /* For shaders */
-   GLuint MaxUniformComponents;
-   /* GL_ARB_geometry_shader4 */
-   GLuint MaxGeometryTextureImageUnits;
-   GLuint MaxGeometryVaryingComponents;
-   GLuint MaxVertexVaryingComponents;
-   GLuint MaxGeometryUniformComponents;
-   GLuint MaxGeometryOutputVertices;
-   GLuint MaxGeometryTotalOutputComponents;
+   GLuint MaxUniformComponents;  /**< Usually == MaxParameters * 4 */
    /* ES 2.0 and GL_ARB_ES2_compatibility */
    struct gl_precision LowFloat, MediumFloat, HighFloat;
    struct gl_precision LowInt, MediumInt, HighInt;
@@ -2617,6 +2612,7 @@ struct gl_constants
    GLuint MaxTextureImageUnits;
    GLuint MaxVertexTextureImageUnits;
    GLuint MaxCombinedTextureImageUnits;
+   GLuint MaxGeometryTextureImageUnits;
    GLuint MaxTextureUnits;           /**< = MIN(CoordUnits, ImageUnits) */
    GLfloat MaxTextureMaxAnisotropy;  /**< GL_EXT_texture_filter_anisotropic */
    GLfloat MaxTextureLodBias;        /**< GL_EXT_texture_lod_bias */
@@ -2656,7 +2652,14 @@ struct gl_constants
    GLuint MaxRenderbufferSize;   /**< GL_EXT_framebuffer_object */
    GLuint MaxSamples;            /**< GL_ARB_framebuffer_object */
 
-   GLuint MaxVarying;  /**< Number of float[4] varying parameters */
+   /** Number of varying vectors between vertex and fragment shaders */
+   GLuint MaxVarying;
+   GLuint MaxVertexVaryingComponents;   /**< Between vert and geom shader */
+   GLuint MaxGeometryVaryingComponents; /**< Between geom and frag shader */
+
+   /** GL_ARB_geometry_shader4 */
+   GLuint MaxGeometryOutputVertices;
+   GLuint MaxGeometryTotalOutputComponents;
 
    GLuint GLSLVersion;  /**< GLSL version supported (ex: 120 = 1.20) */
 
@@ -2800,6 +2803,7 @@ struct gl_extensions
    GLboolean EXT_texture_object;
    GLboolean EXT_texture3D;
    GLboolean EXT_texture_array;
+   GLboolean EXT_texture_compression_latc;
    GLboolean EXT_texture_compression_s3tc;
    GLboolean EXT_texture_env_add;
    GLboolean EXT_texture_env_combine;
@@ -2825,6 +2829,7 @@ struct gl_extensions
    GLboolean APPLE_vertex_array_object;
    GLboolean APPLE_object_purgeable;
    GLboolean ATI_envmap_bumpmap;
+   GLboolean ATI_texture_compression_3dc;
    GLboolean ATI_texture_mirror_once;
    GLboolean ATI_texture_env_combine3;
    GLboolean ATI_fragment_shader;
@@ -2843,6 +2848,7 @@ struct gl_extensions
    GLboolean NV_light_max_exponent;
    GLboolean NV_point_sprite;
    GLboolean NV_primitive_restart;
+   GLboolean NV_texture_barrier;
    GLboolean NV_texgen_reflection;
    GLboolean NV_texture_env_combine4;
    GLboolean NV_texture_rectangle;

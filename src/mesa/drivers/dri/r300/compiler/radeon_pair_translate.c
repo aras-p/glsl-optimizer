@@ -214,16 +214,21 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 		if (needrgb && !istranscendent) {
 			unsigned int srcrgb = 0;
 			unsigned int srcalpha = 0;
+			unsigned int srcmask = 0;
 			int j;
 			/* We don't care about the alpha channel here.  We only
 			 * want the part of the swizzle that writes to rgb,
 			 * since we are creating an rgb instruction. */
 			for(j = 0; j < 3; ++j) {
 				unsigned int swz = GET_SWZ(inst->SrcReg[i].Swizzle, j);
-				if (swz < 3)
+
+				if (swz < RC_SWIZZLE_W)
 					srcrgb = 1;
-				else if (swz < 4)
+				else if (swz == RC_SWIZZLE_W)
 					srcalpha = 1;
+
+				if (swz < RC_SWIZZLE_UNUSED)
+					srcmask |= 1 << j;
 			}
 			source = rc_pair_alloc_source(pair, srcrgb, srcalpha,
 							inst->SrcReg[i].File, inst->SrcReg[i].Index);
@@ -236,7 +241,7 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 			pair->RGB.Arg[i].Swizzle =
 				rc_init_swizzle(inst->SrcReg[i].Swizzle, 3);
 			pair->RGB.Arg[i].Abs = inst->SrcReg[i].Abs;
-			pair->RGB.Arg[i].Negate = !!(inst->SrcReg[i].Negate & (RC_MASK_X | RC_MASK_Y | RC_MASK_Z));
+			pair->RGB.Arg[i].Negate = !!(srcmask & inst->SrcReg[i].Negate & (RC_MASK_X | RC_MASK_Y | RC_MASK_Z));
 		}
 		if (needalpha) {
 			unsigned int srcrgb = 0;

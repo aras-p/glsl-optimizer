@@ -103,6 +103,9 @@ static void i915_destroy(struct pipe_context *pipe)
    int i;
 
    draw_destroy(i915->draw);
+
+   if (i915->blitter)
+      util_blitter_destroy(i915->blitter);
    
    if(i915->batch)
       i915->iws->batchbuffer_destroy(i915->batch);
@@ -137,13 +140,20 @@ i915_create_context(struct pipe_screen *screen, void *priv)
 
    i915->base.destroy = i915_destroy;
 
-   i915->base.clear = i915_clear;
+   if (i915_screen(screen)->debug.use_blitter)
+      i915->base.clear = i915_clear_blitter;
+   else
+      i915->base.clear = i915_clear_render;
 
    i915->base.draw_vbo = i915_draw_vbo;
 
    /* init this before draw */
    util_slab_create(&i915->transfer_pool, sizeof(struct pipe_transfer),
                     16, UTIL_SLAB_SINGLETHREADED);
+
+   /* Batch stream debugging is a bit hacked up at the moment:
+    */
+   i915->batch = i915->iws->batchbuffer_create(i915->iws);
 
    /*
     * Create drawing context and plug our rendering stage into it.
@@ -164,15 +174,19 @@ i915_create_context(struct pipe_screen *screen, void *priv)
    draw_install_aaline_stage(i915->draw, &i915->base);
    draw_install_aapoint_stage(i915->draw, &i915->base);
 
+   /* augmented draw pipeline clobbers state functions */
+   i915_init_fixup_state_functions(i915);
+
+   /* Create blitter last - calls state creation functions. */
+   i915->blitter = util_blitter_create(&i915->base);
+   assert(i915->blitter);
+
    i915->dirty = ~0;
    i915->hardware_dirty = ~0;
    i915->immediate_dirty = ~0;
    i915->dynamic_dirty = ~0;
+   i915->static_dirty = ~0;
    i915->flush_dirty = 0;
-
-   /* Batch stream debugging is a bit hacked up at the moment:
-    */
-   i915->batch = i915->iws->batchbuffer_create(i915->iws);
 
    return &i915->base;
 }

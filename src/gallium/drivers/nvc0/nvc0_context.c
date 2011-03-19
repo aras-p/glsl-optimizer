@@ -30,35 +30,53 @@
 #include "nouveau/nouveau_reloc.h"
 
 static void
-nvc0_flush(struct pipe_context *pipe, unsigned flags,
+nvc0_flush(struct pipe_context *pipe,
            struct pipe_fence_handle **fence)
 {
-   struct nvc0_context *nvc0 = nvc0_context(pipe);
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
-
-   if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
-      BEGIN_RING(chan, RING_3D(SERIALIZE), 1);
-      OUT_RING  (chan, 0);
-      BEGIN_RING(chan, RING_3D(TEX_CACHE_CTL), 1);
-      OUT_RING  (chan, 0x00);
-   } else
-   if ((flags & PIPE_FLUSH_RENDER_CACHE) && !(flags & PIPE_FLUSH_FRAME)) {
-      BEGIN_RING(chan, RING_3D(SERIALIZE), 1);
-      OUT_RING  (chan, 0);
-   }
+   struct nouveau_screen *screen = &nvc0_context(pipe)->screen->base;
 
    if (fence)
-      nouveau_fence_ref(nvc0->screen->base.fence.current,
-                        (struct nouveau_fence **)fence);
+      nouveau_fence_ref(screen->fence.current, (struct nouveau_fence **)fence);
 
-   if (flags & (PIPE_FLUSH_SWAPBUFFERS | PIPE_FLUSH_FRAME))
-      FIRE_RING(chan);
+   /* Try to emit before firing to avoid having to flush again right after
+    * in case we have to wait on this fence.
+    */
+   nouveau_fence_emit(screen->fence.current);
+
+   FIRE_RING(screen->channel);
+}
+
+static void
+nvc0_context_unreference_resources(struct nvc0_context *nvc0)
+{
+   unsigned s, i;
+
+   for (i = 0; i < NVC0_BUFCTX_COUNT; ++i)
+      nvc0_bufctx_reset(nvc0, i);
+
+   for (i = 0; i < nvc0->num_vtxbufs; ++i)
+      pipe_resource_reference(&nvc0->vtxbuf[i].buffer, NULL);
+
+   pipe_resource_reference(&nvc0->idxbuf.buffer, NULL);
+
+   for (s = 0; s < 5; ++s) {
+      for (i = 0; i < nvc0->num_textures[s]; ++i)
+         pipe_sampler_view_reference(&nvc0->textures[s][i], NULL);
+
+      for (i = 0; i < 16; ++i)
+         pipe_resource_reference(&nvc0->constbuf[s][i], NULL);
+   }
+
+   for (i = 0; i < nvc0->num_tfbbufs; ++i)
+      pipe_resource_reference(&nvc0->tfbbuf[i], NULL);
 }
 
 static void
 nvc0_destroy(struct pipe_context *pipe)
 {
    struct nvc0_context *nvc0 = nvc0_context(pipe);
+
+   nvc0_context_unreference_resources(nvc0);
 
    draw_destroy(nvc0->draw);
 

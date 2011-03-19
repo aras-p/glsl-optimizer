@@ -12,7 +12,7 @@ GALLIUM_DRIVERS_DIRS += llvmpipe
 OPT_FLAGS = -O3 -ansi -pedantic
 ARCH_FLAGS = -mmmx -msse -msse2 -mstackrealign
 
-DEFINES += -DNDEBUG -DGALLIUM_LLVMPIPE -DHAVE_UDIS86
+DEFINES += -DNDEBUG -DGALLIUM_LLVMPIPE
 
 # override -std=c99
 CFLAGS += -std=gnu99
@@ -31,9 +31,9 @@ endif
 
 ifeq ($(MESA_LLVM),1)
   LLVM_CFLAGS=`llvm-config --cppflags`
-  LLVM_CXXFLAGS=`llvm-config --cxxflags backend bitreader engine ipo interpreter instrumentation` -Wno-long-long
-  LLVM_LDFLAGS = $(shell llvm-config --ldflags backend bitreader engine ipo interpreter instrumentation)
-  LLVM_LIBS = $(shell llvm-config --libs backend bitwriter bitreader engine ipo interpreter instrumentation)
+  LLVM_CXXFLAGS=`llvm-config --cxxflags` -Wno-long-long
+  LLVM_LDFLAGS = $(shell llvm-config --ldflags)
+  LLVM_LIBS = $(shell llvm-config --libs)
   MKLIB_OPTIONS=-cplusplus
 else
   LLVM_CFLAGS=
@@ -41,4 +41,4 @@ else
 endif
 
 LD = g++
-GL_LIB_DEPS = $(LLVM_LDFLAGS) $(LLVM_LIBS) $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread -lstdc++ -ludis86
+GL_LIB_DEPS = $(LLVM_LDFLAGS) $(LLVM_LIBS) $(EXTRA_LIB_PATH) -lX11 -lXext -lm -lpthread -lstdc++

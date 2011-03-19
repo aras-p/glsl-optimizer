@@ -210,6 +210,8 @@
 #define NV_CC_P     0
 #define NV_CC_NOT_P 1
 
+uint8_t nvc0_ir_reverse_cc(uint8_t cc);
+
 #define NV_PC_MAX_INSTRUCTIONS 2048
 #define NV_PC_MAX_VALUES (NV_PC_MAX_INSTRUCTIONS * 4)
 
@@ -219,7 +221,7 @@ struct nv_op_info {
    uint base;                /* e.g. ADD_S32 -> ADD */
    char name[12];
    uint8_t type;
-   uint8_t mods;
+   uint16_t mods;
    unsigned flow        : 1;
    unsigned commutative : 1;
    unsigned vector      : 1;
@@ -233,12 +235,6 @@ extern struct nv_op_info nvc0_op_info_table[];
 
 #define NV_BASEOP(op) (nvc0_op_info_table[op].base)
 #define NV_OPTYPE(op) (nvc0_op_info_table[op].type)
-
-static INLINE uint
-nv_op_base(uint opcode)
-{
-   return nvc0_op_info_table[opcode].base;
-}
 
 static INLINE boolean
 nv_is_texture_op(uint opcode)
@@ -259,9 +255,9 @@ nv_op_commutative(uint opcode)
 }
 
 static INLINE uint8_t
-nv_op_supported_src_mods(uint opcode)
+nv_op_supported_src_mods(uint opcode, int s)
 {
-   return nvc0_op_info_table[opcode].mods;
+   return (nvc0_op_info_table[opcode].mods >> (s * 4)) & 0xf;
 }
 
 static INLINE uint

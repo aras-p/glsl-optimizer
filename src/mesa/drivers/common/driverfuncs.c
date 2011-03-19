@@ -42,6 +42,7 @@
 #include "main/fbobject.h"
 #include "main/texrender.h"
 #include "main/syncobj.h"
+#include "main/texturebarrier.h"
 #include "main/transformfeedback.h"
 
 #include "program/program.h"
@@ -187,6 +188,8 @@ _mesa_init_driver_functions(struct dd_function_table *driver)
    driver->ValidateFramebuffer = _mesa_validate_framebuffer;
 
    driver->BlitFramebuffer = _swrast_BlitFramebuffer;
+
+   _mesa_init_texture_barrier_functions(driver);
 
    /* APPLE_vertex_array_object */
    driver->NewArrayObject = _mesa_new_array_object;

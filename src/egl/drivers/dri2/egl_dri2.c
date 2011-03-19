@@ -94,6 +94,7 @@ EGLint dri2_to_egl_attribute_map[] = {
    0,				/* __DRI_ATTRIB_BIND_TO_MIPMAP_TEXTURE */
    0,				/* __DRI_ATTRIB_BIND_TO_TEXTURE_TARGETS */
    EGL_Y_INVERTED_NOK,		/* __DRI_ATTRIB_YINVERTED */
+   0,				/* __DRI_ATTRIB_FRAMEBUFFER_SRGB_CAPABLE */
 };
 
 struct dri2_egl_config *

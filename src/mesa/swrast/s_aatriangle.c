@@ -33,6 +33,7 @@
 #include "main/colormac.h"
 #include "main/macros.h"
 #include "main/imports.h"
+#include "main/state.h"
 #include "s_aatriangle.h"
 #include "s_context.h"
 #include "s_span.h"
@@ -305,7 +306,7 @@ _swrast_set_aa_triangle_function(struct gl_context *ctx)
    if (ctx->Texture._EnabledCoordUnits != 0
        || ctx->FragmentProgram._Current
        || swrast->_FogEnabled
-       || NEED_SECONDARY_COLOR(ctx)) {
+       || _mesa_need_secondary_color(ctx)) {
       SWRAST_CONTEXT(ctx)->Triangle = general_aa_tri;
    }
    else {

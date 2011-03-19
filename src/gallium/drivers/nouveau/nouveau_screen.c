@@ -12,6 +12,7 @@
 #include <errno.h>
 
 #include "nouveau/nouveau_bo.h"
+#include "nouveau/nouveau_mm.h"
 #include "nouveau_winsys.h"
 #include "nouveau_screen.h"
 #include "nouveau_fence.h"
@@ -154,20 +155,19 @@ nouveau_screen_fence_ref(struct pipe_screen *pscreen,
 	nouveau_fence_ref(nouveau_fence(pfence), (struct nouveau_fence **)ptr);
 }
 
-static int
+static boolean
 nouveau_screen_fence_signalled(struct pipe_screen *screen,
-			       struct pipe_fence_handle *pfence,
-			       unsigned flags)
+                               struct pipe_fence_handle *pfence)
 {
-	return !nouveau_fence_signalled(nouveau_fence(pfence));
+        return nouveau_fence_signalled(nouveau_fence(pfence));
 }
 
-static int
+static boolean
 nouveau_screen_fence_finish(struct pipe_screen *screen,
 			    struct pipe_fence_handle *pfence,
-			    unsigned flags)
+                            uint64_t timeout)
 {
-	return !nouveau_fence_wait(nouveau_fence(pfence));
+        return nouveau_fence_wait(nouveau_fence(pfence));
 }
 
 
@@ -209,26 +209,6 @@ nouveau_screen_bo_get_handle(struct pipe_screen *pscreen,
 		return FALSE;
 	}
 }
-
-
-unsigned int
-nouveau_reference_flags(struct nouveau_bo *bo)
-{
-	uint32_t bo_flags;
-	int flags = 0;
-
-	bo_flags = nouveau_bo_pending(bo);
-	if (bo_flags & NOUVEAU_BO_RD)
-		flags |= PIPE_REFERENCED_FOR_READ;
-	if (bo_flags & NOUVEAU_BO_WR)
-		flags |= PIPE_REFERENCED_FOR_WRITE;
-
-	return flags;
-}
-
-
-
-
 
 int
 nouveau_screen_init(struct nouveau_screen *screen, struct nouveau_device *dev)

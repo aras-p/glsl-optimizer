@@ -79,6 +79,10 @@ util_cache_clear(struct util_cache *cache);
 void
 util_cache_destroy(struct util_cache *cache);
 
+void
+util_cache_remove(struct util_cache *cache,
+                  const void *key);
+
 
 #ifdef __cplusplus
 }

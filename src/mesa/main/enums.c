@@ -6268,7 +6268,7 @@ static const char *prim_names[PRIM_UNKNOWN + 1] = {
  * GL_FALSE/GL_POINTS ambiguity and others.
  */
 const char *
-_mesa_lookup_prim_by_nr(unsigned nr)
+_mesa_lookup_prim_by_nr(GLuint nr)
 {
    if (nr < Elements(prim_names))
       return prim_names[nr];

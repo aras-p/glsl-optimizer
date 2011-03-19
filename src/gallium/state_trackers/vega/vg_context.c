@@ -69,7 +69,7 @@ choose_depth_stencil_format(struct vg_context *ctx)
 
    for (fmt = formats; *fmt != PIPE_FORMAT_NONE; fmt++) {
       if (screen->is_format_supported(screen, *fmt,
-               PIPE_TEXTURE_2D, 0, PIPE_BIND_DEPTH_STENCIL, 0))
+               PIPE_TEXTURE_2D, 0, PIPE_BIND_DEPTH_STENCIL))
          break;
    }
 

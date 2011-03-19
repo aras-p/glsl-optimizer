@@ -388,13 +388,6 @@ pstip_update_texture(struct pstip_stage *pstip)
    uint i, j;
    ubyte *data;
 
-   /* XXX: want to avoid flushing just because we use stipple: 
-    *
-    * Flush should no longer be necessary if driver is properly
-    * interleaving drawing and transfers on a given context:
-    */
-   pipe->flush( pipe, PIPE_FLUSH_TEXTURE_CACHE, NULL );
-
    transfer = pipe_get_transfer(pipe, pstip->texture, 0, 0,
                                 PIPE_TRANSFER_WRITE, 0, 0, 32, 32);
    data = pipe->transfer_map(pipe, transfer);

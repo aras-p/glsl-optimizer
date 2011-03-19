@@ -355,10 +355,8 @@ static PIPE_THREAD_ROUTINE(radeon_drm_cs_emit_ioctl, param)
     return NULL;
 }
 
-void radeon_drm_cs_sync_flush(struct r300_winsys_cs *rcs)
+void radeon_drm_cs_sync_flush(struct radeon_drm_cs *cs)
 {
-    struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
-
     /* Wait for any pending ioctl to complete. */
     if (cs->thread) {
         pipe_thread_wait(cs->thread);
@@ -368,12 +366,12 @@ void radeon_drm_cs_sync_flush(struct r300_winsys_cs *rcs)
 
 DEBUG_GET_ONCE_BOOL_OPTION(thread, "RADEON_THREAD", TRUE)
 
-void radeon_drm_cs_flush(struct r300_winsys_cs *rcs)
+static void radeon_drm_cs_flush(struct r300_winsys_cs *rcs, unsigned flags)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     struct radeon_cs_context *tmp;
 
-    radeon_drm_cs_sync_flush(rcs);
+    radeon_drm_cs_sync_flush(cs);
 
     /* If the CS is not empty, emit it in a newly-spawned thread. */
     if (cs->base.cdw) {
@@ -384,7 +382,8 @@ void radeon_drm_cs_flush(struct r300_winsys_cs *rcs)
         for (i = 0; i < crelocs; i++)
             p_atomic_inc(&cs->csc->relocs_bo[i]->num_active_ioctls);
 
-        if (cs->ws->num_cpus > 1 && debug_get_option_thread()) {
+        if (cs->ws->num_cpus > 1 && debug_get_option_thread() &&
+            (flags & R300_FLUSH_ASYNC)) {
             cs->thread = pipe_thread_create(radeon_drm_cs_emit_ioctl, cs->csc);
             assert(cs->thread);
         } else {
@@ -407,7 +406,7 @@ void radeon_drm_cs_flush(struct r300_winsys_cs *rcs)
 static void radeon_drm_cs_destroy(struct r300_winsys_cs *rcs)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
-    radeon_drm_cs_sync_flush(rcs);
+    radeon_drm_cs_sync_flush(cs);
     radeon_cs_context_cleanup(&cs->csc1);
     radeon_cs_context_cleanup(&cs->csc2);
     p_atomic_dec(&cs->ws->num_cs);
@@ -417,7 +416,8 @@ static void radeon_drm_cs_destroy(struct r300_winsys_cs *rcs)
 }
 
 static void radeon_drm_cs_set_flush(struct r300_winsys_cs *rcs,
-                                    void (*flush)(void *), void *user)
+                                    void (*flush)(void *ctx, unsigned flags),
+                                    void *user)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     cs->flush_cs = flush;
@@ -441,7 +441,6 @@ void radeon_drm_cs_init_functions(struct radeon_drm_winsys *ws)
     ws->base.cs_validate = radeon_drm_cs_validate;
     ws->base.cs_write_reloc = radeon_drm_cs_write_reloc;
     ws->base.cs_flush = radeon_drm_cs_flush;
-    ws->base.cs_sync_flush = radeon_drm_cs_sync_flush;
     ws->base.cs_set_flush = radeon_drm_cs_set_flush;
     ws->base.cs_is_buffer_referenced = radeon_bo_is_referenced;
 }

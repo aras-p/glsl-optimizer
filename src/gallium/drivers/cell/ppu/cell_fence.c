@@ -59,9 +59,10 @@ cell_fence_signalled(const struct cell_context *cell,
 }
 
 
-void
+boolean
 cell_fence_finish(const struct cell_context *cell,
-                  const struct cell_fence *fence)
+                  const struct cell_fence *fence,
+                  uint64_t timeout)
 {
    while (!cell_fence_signalled(cell, fence)) {
       usleep(10);
@@ -75,6 +76,7 @@ cell_fence_finish(const struct cell_context *cell,
       }
    }
 #endif
+   return TRUE;
 }
 
 

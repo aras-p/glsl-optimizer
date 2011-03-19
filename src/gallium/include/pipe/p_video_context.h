@@ -69,8 +69,7 @@ struct pipe_video_context
     */
    boolean (*is_format_supported)(struct pipe_video_context *vpipe,
                                   enum pipe_format format,
-                                  unsigned usage,
-                                  unsigned geom);
+                                  unsigned usage);
 
    void (*destroy)(struct pipe_video_context *vpipe);
 

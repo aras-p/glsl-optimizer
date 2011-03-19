@@ -490,6 +490,7 @@ static void
 intel_wpos_triangle(struct intel_context *intel,
                     intelVertexPtr v0, intelVertexPtr v1, intelVertexPtr v2)
 {
+   const struct gl_framebuffer *fb = intel->ctx.DrawBuffer;
    GLuint offset = intel->wpos_offset;
    GLuint size = intel->wpos_size;
    GLfloat *v0_wpos = (GLfloat *)((char *)v0 + offset);
@@ -500,10 +501,11 @@ intel_wpos_triangle(struct intel_context *intel,
    __memcpy(v1_wpos, v1, size);
    __memcpy(v2_wpos, v2, size);
 
-   v0_wpos[1] = -v0_wpos[1] + intel->ctx.DrawBuffer->Height;
-   v1_wpos[1] = -v1_wpos[1] + intel->ctx.DrawBuffer->Height;
-   v2_wpos[1] = -v2_wpos[1] + intel->ctx.DrawBuffer->Height;
-
+   if (!fb->Name) {
+      v0_wpos[1] = -v0_wpos[1] + fb->Height;
+      v1_wpos[1] = -v1_wpos[1] + fb->Height;
+      v2_wpos[1] = -v2_wpos[1] + fb->Height;
+   }
 
    intel_draw_triangle(intel, v0, v1, v2);
 }
@@ -513,6 +515,7 @@ static void
 intel_wpos_line(struct intel_context *intel,
                 intelVertexPtr v0, intelVertexPtr v1)
 {
+   const struct gl_framebuffer *fb = intel->ctx.DrawBuffer;
    GLuint offset = intel->wpos_offset;
    GLuint size = intel->wpos_size;
    GLfloat *v0_wpos = (GLfloat *)((char *)v0 + offset);
@@ -521,8 +524,10 @@ intel_wpos_line(struct intel_context *intel,
    __memcpy(v0_wpos, v0, size);
    __memcpy(v1_wpos, v1, size);
 
-   v0_wpos[1] = -v0_wpos[1] + intel->ctx.DrawBuffer->Height;
-   v1_wpos[1] = -v1_wpos[1] + intel->ctx.DrawBuffer->Height;
+   if (!fb->Name) {
+      v0_wpos[1] = -v0_wpos[1] + fb->Height;
+      v1_wpos[1] = -v1_wpos[1] + fb->Height;
+   }
 
    intel_draw_line(intel, v0, v1);
 }
@@ -531,12 +536,15 @@ intel_wpos_line(struct intel_context *intel,
 static void
 intel_wpos_point(struct intel_context *intel, intelVertexPtr v0)
 {
+   const struct gl_framebuffer *fb = intel->ctx.DrawBuffer;
    GLuint offset = intel->wpos_offset;
    GLuint size = intel->wpos_size;
    GLfloat *v0_wpos = (GLfloat *)((char *)v0 + offset);
 
    __memcpy(v0_wpos, v0, size);
-   v0_wpos[1] = -v0_wpos[1] + intel->ctx.DrawBuffer->Height;
+
+   if (!fb->Name)
+      v0_wpos[1] = -v0_wpos[1] + fb->Height;
 
    intel_draw_point(intel, v0);
 }

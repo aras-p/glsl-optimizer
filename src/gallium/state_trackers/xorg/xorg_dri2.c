@@ -336,7 +336,7 @@ dri2_copy_region(DrawablePtr pDraw, RegionPtr pRegion,
 	/* pixmap glXWaitX */
 	if (pSrcBuffer->attachment == DRI2BufferFrontLeft &&
 	    pDestBuffer->attachment == DRI2BufferFakeFrontLeft) {
-	    ms->ctx->flush(ms->ctx, PIPE_FLUSH_SWAPBUFFERS, NULL);
+	    ms->ctx->flush(ms->ctx, NULL);
 	    return;
 	}
 	/* pixmap glXWaitGL */
@@ -362,7 +362,8 @@ dri2_copy_region(DrawablePtr pDraw, RegionPtr pRegion,
 
 	if (extents->x1 == 0 && extents->y1 == 0 &&
 	    extents->x2 == pDraw->width && extents->y2 == pDraw->height) {
-	    ms->screen->fence_finish(ms->screen, dst_priv->fence, 0);
+            ms->screen->fence_finish(ms->screen, dst_priv->fence,
+                                     PIPE_TIMEOUT_INFINITE);
 	    ms->screen->fence_reference(ms->screen, &dst_priv->fence, NULL);
 	}
     }
@@ -388,7 +389,7 @@ dri2_copy_region(DrawablePtr pDraw, RegionPtr pRegion,
 
     FreeScratchGC(gc);
 
-    ms->ctx->flush(ms->ctx, PIPE_FLUSH_SWAPBUFFERS,
+    ms->ctx->flush(ms->ctx,
 		   (pDestBuffer->attachment == DRI2BufferFrontLeft
 		    && ms->swapThrottling) ?
 		   &dst_priv->fence : NULL);
@@ -451,12 +452,12 @@ xorg_dri2_init(ScreenPtr pScreen)
 	 ms->screen->is_format_supported(ms->screen, PIPE_FORMAT_Z24X8_UNORM,
 					 PIPE_TEXTURE_2D,
 					 0,
-					 PIPE_BIND_DEPTH_STENCIL, 0);
+                                         PIPE_BIND_DEPTH_STENCIL);
     ms->ds_depth_bits_last =
 	 ms->screen->is_format_supported(ms->screen, PIPE_FORMAT_Z24_UNORM_S8_USCALED,
 					 PIPE_TEXTURE_2D,
 					 0,
-					 PIPE_BIND_DEPTH_STENCIL, 0);
+                                         PIPE_BIND_DEPTH_STENCIL);
 
     return DRI2ScreenInit(pScreen, &dri2info);
 }

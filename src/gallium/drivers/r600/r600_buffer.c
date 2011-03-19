@@ -52,14 +52,6 @@ static void r600_buffer_destroy(struct pipe_screen *screen,
 	util_slab_free(&rscreen->pool_buffers, rbuffer);
 }
 
-static unsigned r600_buffer_is_referenced_by_cs(struct pipe_context *context,
-						struct pipe_resource *buf,
-						unsigned level, int layer)
-{
-	/* FIXME */
-	return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
-
 static struct pipe_transfer *r600_get_transfer(struct pipe_context *ctx,
 					       struct pipe_resource *resource,
 					       unsigned level,
@@ -160,7 +152,6 @@ static const struct u_resource_vtbl r600_buffer_vtbl =
 {
 	u_default_resource_get_handle,		/* get_handle */
 	r600_buffer_destroy,			/* resource_destroy */
-	r600_buffer_is_referenced_by_cs,	/* is_buffer_referenced */
 	r600_get_transfer,			/* get_transfer */
 	r600_transfer_destroy,			/* transfer_destroy */
 	r600_buffer_transfer_map,		/* transfer_map */

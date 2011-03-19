@@ -79,6 +79,7 @@ struct nvc0_context {
       uint32_t instance_base;
       int32_t index_bias;
       boolean prim_restart;
+      boolean early_z;
       uint8_t num_vtxbufs;
       uint8_t num_vtxelts;
       uint8_t num_textures[5];
@@ -134,6 +135,9 @@ struct nvc0_context {
 
    struct draw_context *draw;
 };
+
+#define NVC0_USING_EDGEFLAG(ctx) \
+   ((ctx)->vertprog->vp.edgeflag < PIPE_MAX_ATTRIBS)
 
 static INLINE struct nvc0_context *
 nvc0_context(struct pipe_context *pipe)

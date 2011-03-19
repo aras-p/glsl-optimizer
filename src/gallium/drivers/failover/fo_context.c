@@ -79,7 +79,7 @@ static void failover_draw_vbo( struct pipe_context *pipe,
    if (failover->mode == FO_SW) {
 
       if (failover->dirty) {
-         failover->hw->flush( failover->hw, ~0, NULL );
+         failover->hw->flush( failover->hw, NULL );
 	 failover_state_emit( failover );
       }
 
@@ -89,20 +89,8 @@ static void failover_draw_vbo( struct pipe_context *pipe,
        * intervening flush.  Unlikely to be much performance impact to
        * this:
        */
-      failover->sw->flush( failover->sw, ~0, NULL );
+      failover->sw->flush( failover->sw, NULL );
    }
-}
-
-static unsigned int
-failover_is_resource_referenced( struct pipe_context *_pipe,
-                                 struct pipe_resource *resource,
-                                 unsigned level, int layer)
-{
-   struct failover_context *failover = failover_context( _pipe );
-   struct pipe_context *pipe = (failover->mode == FO_HW) ?
-      failover->hw : failover->sw;
-
-   return pipe->is_resource_referenced(pipe, resource, level, layer);
 }
 
 struct pipe_context *failover_create( struct pipe_context *hw,
@@ -150,7 +138,6 @@ struct pipe_context *failover_create( struct pipe_context *hw,
 #endif
 
    failover->pipe.flush = hw->flush;
-   failover->pipe.is_resource_referenced = failover_is_resource_referenced;
 
    failover->dirty = 0;
 

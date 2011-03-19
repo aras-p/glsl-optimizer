@@ -1795,6 +1795,7 @@ sample_compare(struct tgsi_sampler *tgsi_sampler,
    const struct pipe_sampler_state *sampler = samp->sampler;
    int j, k0, k1, k2, k3;
    float val;
+   float pc0, pc1, pc2, pc3;
 
    samp->mip_filter(tgsi_sampler, s, t, p, c0, control, rgba);
 
@@ -1804,43 +1805,48 @@ sample_compare(struct tgsi_sampler *tgsi_sampler,
     * RGBA channels.  We look at the red channel here.
     */
 
+   pc0 = CLAMP(p[0], 0.0F, 1.0F);
+   pc1 = CLAMP(p[1], 0.0F, 1.0F);
+   pc2 = CLAMP(p[2], 0.0F, 1.0F);
+   pc3 = CLAMP(p[3], 0.0F, 1.0F);
+
    /* compare four texcoords vs. four texture samples */
    switch (sampler->compare_func) {
    case PIPE_FUNC_LESS:
-      k0 = p[0] < rgba[0][0];
-      k1 = p[1] < rgba[0][1];
-      k2 = p[2] < rgba[0][2];
-      k3 = p[3] < rgba[0][3];
+      k0 = pc0 < rgba[0][0];
+      k1 = pc1 < rgba[0][1];
+      k2 = pc2 < rgba[0][2];
+      k3 = pc3 < rgba[0][3];
       break;
    case PIPE_FUNC_LEQUAL:
-      k0 = p[0] <= rgba[0][0];
-      k1 = p[1] <= rgba[0][1];
-      k2 = p[2] <= rgba[0][2];
-      k3 = p[3] <= rgba[0][3];
+      k0 = pc0 <= rgba[0][0];
+      k1 = pc1 <= rgba[0][1];
+      k2 = pc2 <= rgba[0][2];
+      k3 = pc3 <= rgba[0][3];
       break;
    case PIPE_FUNC_GREATER:
-      k0 = p[0] > rgba[0][0];
-      k1 = p[1] > rgba[0][1];
-      k2 = p[2] > rgba[0][2];
-      k3 = p[3] > rgba[0][3];
+      k0 = pc0 > rgba[0][0];
+      k1 = pc1 > rgba[0][1];
+      k2 = pc2 > rgba[0][2];
+      k3 = pc3 > rgba[0][3];
       break;
    case PIPE_FUNC_GEQUAL:
-      k0 = p[0] >= rgba[0][0];
-      k1 = p[1] >= rgba[0][1];
-      k2 = p[2] >= rgba[0][2];
-      k3 = p[3] >= rgba[0][3];
+      k0 = pc0 >= rgba[0][0];
+      k1 = pc1 >= rgba[0][1];
+      k2 = pc2 >= rgba[0][2];
+      k3 = pc3 >= rgba[0][3];
       break;
    case PIPE_FUNC_EQUAL:
-      k0 = p[0] == rgba[0][0];
-      k1 = p[1] == rgba[0][1];
-      k2 = p[2] == rgba[0][2];
-      k3 = p[3] == rgba[0][3];
+      k0 = pc0 == rgba[0][0];
+      k1 = pc1 == rgba[0][1];
+      k2 = pc2 == rgba[0][2];
+      k3 = pc3 == rgba[0][3];
       break;
    case PIPE_FUNC_NOTEQUAL:
-      k0 = p[0] != rgba[0][0];
-      k1 = p[1] != rgba[0][1];
-      k2 = p[2] != rgba[0][2];
-      k3 = p[3] != rgba[0][3];
+      k0 = pc0 != rgba[0][0];
+      k1 = pc1 != rgba[0][1];
+      k2 = pc2 != rgba[0][2];
+      k3 = pc3 != rgba[0][3];
       break;
    case PIPE_FUNC_ALWAYS:
       k0 = k1 = k2 = k3 = 1;

@@ -104,14 +104,12 @@ struct pipe_screen {
     * Check if the given pipe_format is supported as a texture or
     * drawing surface.
     * \param bindings  bitmask of PIPE_BIND_*
-    * \param geom_flags  bitmask of PIPE_TEXTURE_GEOM_*
     */
    boolean (*is_format_supported)( struct pipe_screen *,
                                    enum pipe_format format,
                                    enum pipe_texture_target target,
                                    unsigned sample_count,
-                                   unsigned bindings,
-                                   unsigned geom_flags );
+                                   unsigned bindings );
 
    /**
     * Create a new texture object, using the given template info.
@@ -188,21 +186,17 @@ struct pipe_screen {
 
    /**
     * Checks whether the fence has been signalled.
-    * \param flags  driver-specific meaning
-    * \return zero on success.
     */
-   int (*fence_signalled)( struct pipe_screen *screen,
-                           struct pipe_fence_handle *fence,
-                           unsigned flags );
+   boolean (*fence_signalled)( struct pipe_screen *screen,
+                               struct pipe_fence_handle *fence );
 
    /**
     * Wait for the fence to finish.
-    * \param flags  driver-specific meaning
-    * \return zero on success.
+    * \param timeout  in nanoseconds
     */
-   int (*fence_finish)( struct pipe_screen *screen,
-                        struct pipe_fence_handle *fence,
-                        unsigned flags );
+   boolean (*fence_finish)( struct pipe_screen *screen,
+                            struct pipe_fence_handle *fence,
+                            uint64_t timeout );
 
 };
 

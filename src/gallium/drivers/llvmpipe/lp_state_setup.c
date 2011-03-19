@@ -651,7 +651,7 @@ generate_setup_variant(struct gallivm_state *gallivm,
    LLVMTypeRef arg_types[7];
    LLVMBasicBlockRef block;
    LLVMBuilderRef builder = gallivm->builder;
-   int64_t t0, t1;
+   int64_t t0 = 0, t1;
 
    if (0)
       goto fail;

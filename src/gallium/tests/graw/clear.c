@@ -29,7 +29,7 @@ static void draw( void )
    float clear_color[4] = {1,0,1,1};
 
    ctx->clear(ctx, PIPE_CLEAR_COLOR, clear_color, 0, 0);
-   ctx->flush(ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
+   ctx->flush(ctx, NULL);
 
    graw_save_surface_to_file(ctx, surf, NULL);
 

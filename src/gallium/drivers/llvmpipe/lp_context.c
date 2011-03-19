@@ -136,10 +136,9 @@ static void llvmpipe_destroy( struct pipe_context *pipe )
 
 static void
 do_flush( struct pipe_context *pipe,
-          unsigned flags,
           struct pipe_fence_handle **fence)
 {
-   llvmpipe_flush(pipe, flags, fence, __FUNCTION__);
+   llvmpipe_flush(pipe, fence, __FUNCTION__);
 }
 
 

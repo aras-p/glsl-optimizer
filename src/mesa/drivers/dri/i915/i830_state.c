@@ -31,6 +31,7 @@
 #include "main/macros.h"
 #include "main/enums.h"
 #include "main/dd.h"
+#include "main/state.h"
 
 #include "texmem.h"
 
@@ -234,7 +235,7 @@ i830EvalLogicOpBlendState(struct gl_context * ctx)
 
    I830_STATECHANGE(i830, I830_UPLOAD_CTX);
 
-   if (RGBA_LOGICOP_ENABLED(ctx)) {
+   if (_mesa_rgba_logicop_enabled(ctx)) {
       i830->state.Ctx[I830_CTXREG_ENABLES_1] &= ~(ENABLE_COLOR_BLEND |
                                                   ENABLE_LOGIC_OP_MASK);
       i830->state.Ctx[I830_CTXREG_ENABLES_1] |= (DISABLE_COLOR_BLEND |
@@ -679,7 +680,7 @@ update_specular(struct gl_context * ctx)
    I830_STATECHANGE(i830, I830_UPLOAD_CTX);
    i830->state.Ctx[I830_CTXREG_ENABLES_1] &= ~ENABLE_SPEC_ADD_MASK;
 
-   if (NEED_SECONDARY_COLOR(ctx))
+   if (_mesa_need_secondary_color(ctx))
       i830->state.Ctx[I830_CTXREG_ENABLES_1] |= ENABLE_SPEC_ADD;
    else
       i830->state.Ctx[I830_CTXREG_ENABLES_1] |= DISABLE_SPEC_ADD;

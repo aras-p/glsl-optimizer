@@ -140,6 +140,8 @@ intel_finalize_mipmap_tree(struct intel_context *intel, GLuint unit)
                                           cpp,
                                           comp_byte,
 					  GL_TRUE);
+      if (!intelObj->mt)
+         return GL_FALSE;
    }
 
    /* Pull in any images not in the object's tree:

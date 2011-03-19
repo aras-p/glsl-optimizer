@@ -55,6 +55,16 @@ i915_winsys_batchbuffer_dword_unchecked(struct i915_winsys_batchbuffer *batch,
 }
 
 static INLINE void
+i915_winsys_batchbuffer_float(struct i915_winsys_batchbuffer *batch,
+                              float f)
+{
+   union { float f; unsigned int ui; } uif;
+   uif.f = f;
+   assert (i915_winsys_batchbuffer_space(batch) >= 4);
+   i915_winsys_batchbuffer_dword_unchecked(batch, uif.ui);
+}
+
+static INLINE void
 i915_winsys_batchbuffer_dword(struct i915_winsys_batchbuffer *batch,
                               unsigned dword)
 {

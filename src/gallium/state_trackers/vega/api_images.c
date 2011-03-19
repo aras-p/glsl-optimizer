@@ -356,7 +356,6 @@ void vegaWritePixels(const void * data, VGint dataStride,
                      VGint width, VGint height)
 {
    struct vg_context *ctx = vg_current_context();
-   struct pipe_context *pipe = ctx->pipe;
 
    if (!supported_image_format(dataFormat)) {
       vg_set_error(ctx, VG_UNSUPPORTED_IMAGE_FORMAT_ERROR);
@@ -387,8 +386,6 @@ void vegaWritePixels(const void * data, VGint dataStride,
 #endif
       image_destroy(img);
    }
-   /* make sure rendering has completed */
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 }
 
 void vegaReadPixels(void * data, VGint dataStride,
@@ -421,8 +418,6 @@ void vegaReadPixels(void * data, VGint dataStride,
       return;
    }
 
-   /* make sure rendering has completed */
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
    if (sx < 0) {
       xoffset = -sx;
       xoffset *= _vega_size_for_format(dataFormat);

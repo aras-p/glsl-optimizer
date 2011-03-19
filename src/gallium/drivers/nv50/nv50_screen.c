@@ -40,7 +40,7 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
                                 enum pipe_format format,
                                 enum pipe_texture_target target,
                                 unsigned sample_count,
-                                unsigned bindings, unsigned geom_flags)
+                                unsigned bindings)
 {
    if (sample_count > 1)
       return FALSE;
@@ -127,7 +127,8 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_SHADER_STENCIL_EXPORT:
       return 0;
    case PIPE_CAP_PRIMITIVE_RESTART:
-   case PIPE_CAP_INSTANCED_DRAWING:
+   case PIPE_CAP_TGSI_INSTANCEID:
+   case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
       return 1;
    default:
       NOUVEAU_ERR("unknown PIPE_CAP %d\n", param);

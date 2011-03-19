@@ -1134,9 +1134,9 @@ void emit_tex(struct brw_wm_compile *c,
 
    if (intel->gen >= 5) {
       if (shadow)
-	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_GEN5;
+	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_COMPARE;
       else
-	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_GEN5;
+	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE;
    } else {
       /* Note that G45 and older determines shadow compare and dispatch width
        * from message length for most messages.
@@ -1186,14 +1186,14 @@ void emit_txb(struct brw_wm_compile *c,
     */
    if (c->dispatch_width == 16 || intel->gen < 5) {
       if (intel->gen >= 5)
-	 msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_GEN5;
+	 msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_BIAS;
       else
 	 msg_type = BRW_SAMPLER_MESSAGE_SIMD16_SAMPLE_BIAS;
       mrf_per_channel = 2;
       dst_retyped = retype(vec16(dst[0]), BRW_REGISTER_TYPE_UW);
       response_length = 8;
    } else {
-      msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_GEN5;
+      msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_BIAS;
       mrf_per_channel = 1;
       dst_retyped = retype(vec8(dst[0]), BRW_REGISTER_TYPE_UW);
       response_length = 4;

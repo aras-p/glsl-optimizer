@@ -1764,8 +1764,13 @@ _mesa_generate_mipmap(struct gl_context *ctx, GLenum target,
       } else if (srcImage->_BaseFormat == GL_RGBA) {
          convertFormat = MESA_FORMAT_RGBA8888;
          components = 4;
-      }
-      else {
+      } else if (srcImage->_BaseFormat == GL_LUMINANCE) {
+         convertFormat = MESA_FORMAT_L8;
+         components = 1;
+      } else if (srcImage->_BaseFormat == GL_LUMINANCE_ALPHA) {
+         convertFormat = MESA_FORMAT_AL88;
+         components = 2;
+      } else {
          _mesa_problem(ctx, "bad srcImage->_BaseFormat in _mesa_generate_mipmaps");
          return;
       }

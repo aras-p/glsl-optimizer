@@ -83,7 +83,6 @@ MAIN_SOURCES = \
 	main/texcompress_s3tc.c \
 	main/texcompress_fxt1.c \
 	main/texenv.c \
-	main/texenvprogram.c \
 	main/texfetch.c \
 	main/texformat.c \
 	main/texgen.c \
@@ -95,6 +94,7 @@ MAIN_SOURCES = \
 	main/texrender.c \
 	main/texstate.c \
 	main/texstore.c \
+	main/texturebarrier.c \
 	main/transformfeedback.c \
 	main/uniforms.c \
 	main/varray.c \
@@ -102,6 +102,9 @@ MAIN_SOURCES = \
 	main/viewport.c \
 	main/vtxfmt.c \
 	$(MAIN_ES_SOURCES)
+
+MAIN_CXX_SOURCES = \
+	main/ff_fragment_shader.cpp
 
 MATH_SOURCES = \
 	math/m_debug_clip.c \
@@ -215,8 +218,10 @@ STATETRACKER_SOURCES = \
 	state_tracker/st_cb_queryobj.c \
 	state_tracker/st_cb_rasterpos.c \
 	state_tracker/st_cb_readpixels.c \
+	state_tracker/st_cb_syncobj.c \
 	state_tracker/st_cb_strings.c \
 	state_tracker/st_cb_texture.c \
+	state_tracker/st_cb_texturebarrier.c \
 	state_tracker/st_cb_viewport.c \
 	state_tracker/st_cb_xformfb.c \
 	state_tracker/st_context.c \
@@ -315,7 +320,8 @@ MESA_SOURCES = \
 	$(ASM_C_SOURCES)
 
 MESA_CXX_SOURCES = \
-	 $(SHADER_CXX_SOURCES)
+	$(MAIN_CXX_SOURCES) \
+	$(SHADER_CXX_SOURCES)
 
 # Sources for building Gallium drivers
 MESA_GALLIUM_SOURCES = \
@@ -328,7 +334,8 @@ MESA_GALLIUM_SOURCES = \
 	x86/common_x86.c
 
 MESA_GALLIUM_CXX_SOURCES = \
-	 $(SHADER_CXX_SOURCES)
+	$(MAIN_CXX_SOURCES) \
+	$(SHADER_CXX_SOURCES)
 
 # All the core C sources, for dependency checking
 ALL_SOURCES = \

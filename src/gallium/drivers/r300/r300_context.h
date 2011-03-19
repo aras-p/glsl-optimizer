@@ -65,7 +65,10 @@ struct r300_aa_state {
 };
 
 struct r300_blend_state {
-    uint32_t cb[8];
+    struct pipe_blend_state state;
+
+    uint32_t cb_clamp[8];
+    uint32_t cb_noclamp[8];
     uint32_t cb_no_readwrite[8];
 };
 
@@ -610,6 +613,8 @@ struct r300_context {
     boolean vertex_arrays_dirty;
     boolean vertex_arrays_indexed;
     int vertex_arrays_offset;
+    int vertex_arrays_instance_id;
+    boolean instancing_enabled;
 };
 
 #define foreach_atom(r300, atom) \
@@ -663,8 +668,6 @@ static INLINE void r300_mark_atom_dirty(struct r300_context *r300,
 struct pipe_context* r300_create_context(struct pipe_screen* screen,
                                          void *priv);
 
-void r300_flush_cb(void *data);
-
 /* Context initialization. */
 struct draw_stage* r300_draw_stage(struct r300_context* r300);
 void r300_init_blit_functions(struct r300_context *r300);
@@ -678,6 +681,11 @@ void r300_init_resource_functions(struct r300_context* r300);
 void r300_decompress_zmask(struct r300_context *r300);
 void r300_decompress_zmask_locked_unsafe(struct r300_context *r300);
 void r300_decompress_zmask_locked(struct r300_context *r300);
+
+/* r300_flush.c */
+void r300_flush(struct pipe_context *pipe,
+                unsigned flags,
+                struct pipe_fence_handle **fence);
 
 /* r300_hyperz.c */
 void r300_update_hyperz_state(struct r300_context* r300);

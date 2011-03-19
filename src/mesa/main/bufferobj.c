@@ -558,6 +558,7 @@ void
 _mesa_init_buffer_objects( struct gl_context *ctx )
 {
    memset(&DummyBufferObject, 0, sizeof(DummyBufferObject));
+   _glthread_INIT_MUTEX(DummyBufferObject.Mutex);
    DummyBufferObject.RefCount = 1000*1000*1000; /* never delete */
 
    _mesa_reference_buffer_object(ctx, &ctx->Array.ArrayBufferObj,
@@ -748,6 +749,7 @@ _mesa_DeleteBuffersARB(GLsizei n, const GLuint *ids)
    GET_CURRENT_CONTEXT(ctx);
    GLsizei i;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
+   FLUSH_VERTICES(ctx, 0);
 
    if (n < 0) {
       _mesa_error(ctx, GL_INVALID_VALUE, "glDeleteBuffersARB(n)");

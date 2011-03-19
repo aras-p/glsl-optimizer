@@ -384,7 +384,7 @@ static void emit_store_R8G8B8A8_UNORM( struct aos_compilation *cp,
 static boolean emit_output( struct aos_compilation *cp,
                             struct x86_reg ptr,
                             struct x86_reg dataXMM, 
-                            unsigned format )
+                            enum attrib_emit format )
 {
    switch (format) {
    case EMIT_1F:
@@ -422,7 +422,7 @@ boolean aos_emit_outputs( struct aos_compilation *cp )
    unsigned i;
    
    for (i = 0; i < cp->vaos->base.key.nr_outputs; i++) {
-      unsigned format = cp->vaos->base.key.element[i].out.format;
+      enum attrib_emit format = cp->vaos->base.key.element[i].out.format;
       unsigned offset = cp->vaos->base.key.element[i].out.offset;
       unsigned vs_output = cp->vaos->base.key.element[i].out.vs_output;
 

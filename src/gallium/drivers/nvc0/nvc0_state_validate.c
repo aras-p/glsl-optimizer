@@ -93,8 +93,9 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         mt->base.status |=  NOUVEAU_BUFFER_STATUS_GPU_WRITING;
         mt->base.status &= ~NOUVEAU_BUFFER_STATUS_GPU_READING;
 
+        /* only register for writing, otherwise we'd always serialize here */
         nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_FRAME, &mt->base,
-                                 NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
+                                 NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
     }
 
     if (fb->zsbuf) {
@@ -127,7 +128,7 @@ nvc0_validate_fb(struct nvc0_context *nvc0)
         mt->base.status &= ~NOUVEAU_BUFFER_STATUS_GPU_READING;
 
         nvc0_bufctx_add_resident(nvc0, NVC0_BUFCTX_FRAME, &mt->base,
-                                 NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
+                                 NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
     } else {
         BEGIN_RING(chan, RING_3D(ZETA_ENABLE), 1);
         OUT_RING  (chan, 0);
@@ -294,32 +295,6 @@ nvc0_validate_rasterizer(struct nvc0_context *nvc0)
 }
 
 static void
-nvc0_validate_sprite_coords(struct nvc0_context *nvc0)
-{
-   struct nouveau_channel *chan = nvc0->screen->base.channel;
-   uint32_t reg;
-
-   if (nvc0->rast->pipe.sprite_coord_mode == PIPE_SPRITE_COORD_UPPER_LEFT)
-      reg = NVC0_3D_POINT_COORD_REPLACE_COORD_ORIGIN_UPPER_LEFT;
-   else
-      reg = NVC0_3D_POINT_COORD_REPLACE_COORD_ORIGIN_LOWER_LEFT;
-
-   if (nvc0->rast->pipe.point_quad_rasterization) {
-      uint32_t en = nvc0->rast->pipe.sprite_coord_enable;
-
-      while (en) {
-         int i = ffs(en) - 1;
-         en &= ~(1 << i);
-         if (i >= 0 && i < 8)
-            reg |= 8 << i;
-      }
-   }
-
-   BEGIN_RING(chan, RING_3D(POINT_COORD_REPLACE), 1);
-   OUT_RING  (chan, reg);
-}
-
-static void
 nvc0_constbufs_validate(struct nvc0_context *nvc0)
 {
    struct nouveau_channel *chan = nvc0->screen->base.channel;
@@ -413,6 +388,49 @@ nvc0_constbufs_validate(struct nvc0_context *nvc0)
    }
 }
 
+static void
+nvc0_validate_derived_1(struct nvc0_context *nvc0)
+{
+   struct nouveau_channel *chan = nvc0->screen->base.channel;
+   boolean early_z;
+
+   early_z = nvc0->fragprog->fp.early_z && !nvc0->zsa->pipe.alpha.enabled;
+
+   if (early_z != nvc0->state.early_z) {
+      nvc0->state.early_z = early_z;
+      IMMED_RING(chan, RING_3D(EARLY_FRAGMENT_TESTS), early_z);
+   }
+}
+
+static void
+nvc0_switch_pipe_context(struct nvc0_context *ctx_to)
+{
+   struct nvc0_context *ctx_from = ctx_to->screen->cur_ctx;
+
+   if (ctx_from)
+      ctx_to->state = ctx_from->state;
+
+   ctx_to->dirty = ~0;
+
+   if (!ctx_to->vertex)
+      ctx_to->dirty &= ~(NVC0_NEW_VERTEX | NVC0_NEW_ARRAYS);
+
+   if (!ctx_to->vertprog)
+      ctx_to->dirty &= ~NVC0_NEW_VERTPROG;
+   if (!ctx_to->fragprog)
+      ctx_to->dirty &= ~NVC0_NEW_FRAGPROG;
+
+   if (!ctx_to->blend)
+      ctx_to->dirty &= ~NVC0_NEW_BLEND;
+   if (!ctx_to->rast)
+      ctx_to->dirty &= ~NVC0_NEW_RASTERIZER;
+   if (!ctx_to->zsa)
+      ctx_to->dirty &= ~NVC0_NEW_ZSA;
+
+   ctx_to->screen->base.channel->user_private = ctx_to->screen->cur_ctx =
+      ctx_to;
+}
+
 static struct state_validate {
     void (*func)(struct nvc0_context *);
     uint32_t states;
@@ -432,7 +450,7 @@ static struct state_validate {
     { nvc0_tevlprog_validate,      NVC0_NEW_TEVLPROG },
     { nvc0_gmtyprog_validate,      NVC0_NEW_GMTYPROG },
     { nvc0_fragprog_validate,      NVC0_NEW_FRAGPROG },
-    { nvc0_validate_sprite_coords, NVC0_NEW_RASTERIZER | NVC0_NEW_FRAGPROG },
+    { nvc0_validate_derived_1,     NVC0_NEW_FRAGPROG | NVC0_NEW_ZSA },
     { nvc0_constbufs_validate,     NVC0_NEW_CONSTBUF },
     { nvc0_validate_textures,      NVC0_NEW_TEXTURES },
     { nvc0_validate_samplers,      NVC0_NEW_SAMPLERS },
@@ -445,11 +463,9 @@ boolean
 nvc0_state_validate(struct nvc0_context *nvc0)
 {
    unsigned i;
-#if 0
-   if (nvc0->screen->cur_ctx != nvc0) /* FIXME: not everything is valid */
-      nvc0->dirty = 0xffffffff;
-#endif
-   nvc0->screen->cur_ctx = nvc0;
+
+   if (nvc0->screen->cur_ctx != nvc0)
+      nvc0_switch_pipe_context(nvc0);
 
    if (nvc0->dirty) {
       for (i = 0; i < validate_list_len; ++i) {

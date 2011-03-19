@@ -31,9 +31,10 @@
 #include "r300_cs.h"
 #include "r300_emit.h"
 
-static void r300_flush(struct pipe_context* pipe,
-                       unsigned flags,
-                       struct pipe_fence_handle** fence)
+
+void r300_flush(struct pipe_context *pipe,
+                unsigned flags,
+                struct pipe_fence_handle **fence)
 {
     struct r300_context *r300 = r300_context(pipe);
     struct r300_atom *atom;
@@ -61,7 +62,7 @@ static void r300_flush(struct pipe_context* pipe,
             r500_emit_index_bias(r300, 0);
 
         r300->flush_counter++;
-        r300->rws->cs_flush(r300->cs);
+        r300->rws->cs_flush(r300->cs, flags);
         r300->dirty_hw = 0;
 
         /* New kitchen sink, baby. */
@@ -83,20 +84,22 @@ static void r300_flush(struct pipe_context* pipe,
              * and we cannot emit an empty CS. We must write some regs then. */
             CS_LOCALS(r300);
             OUT_CS_REG(RB3D_COLOR_CHANNEL_MASK, 0);
-            r300->rws->cs_flush(r300->cs);
+            r300->rws->cs_flush(r300->cs, flags);
         } else {
             /* Even if hw is not dirty, we should at least reset the CS in case
              * the space checking failed for the first draw operation. */
-            r300->rws->cs_flush(r300->cs);
+            r300->rws->cs_flush(r300->cs, flags);
         }
     }
+}
 
-    if (flags & PIPE_FLUSH_FRAME) {
-        r300->rws->cs_sync_flush(r300->cs);
-    }
+static void r300_flush_wrapped(struct pipe_context *pipe,
+                               struct pipe_fence_handle **fence)
+{
+    r300_flush(pipe, 0, fence);
 }
 
 void r300_init_flush_functions(struct r300_context* r300)
 {
-    r300->context.flush = r300_flush;
+    r300->context.flush = r300_flush_wrapped;
 }

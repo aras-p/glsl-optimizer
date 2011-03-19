@@ -98,6 +98,7 @@ API_XML = \
 	EXT_transform_feedback.xml \
 	NV_conditional_render.xml \
 	NV_primitive_restart.xml \
+	NV_texture_barrier.xml \
 	OES_EGL_image.xml \
 	GL3x.xml
 

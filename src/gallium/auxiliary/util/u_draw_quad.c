@@ -82,7 +82,7 @@ util_draw_texquad(struct pipe_context *pipe, struct cso_context *cso,
    uint numAttribs = 2, i, j;
    uint vertexBytes = 4 * (4 * numAttribs * sizeof(float));
    struct pipe_resource *vbuf = NULL;  
-   uint *v = NULL;
+   float *v = NULL;
 
    v = MALLOC(vertexBytes);
    if (v == NULL)
@@ -121,7 +121,7 @@ util_draw_texquad(struct pipe_context *pipe, struct cso_context *cso,
 	 
    vbuf = pipe_user_buffer_create(pipe->screen, v, vertexBytes,
 				  PIPE_BIND_VERTEX_BUFFER);
-   if (!vbuf) 
+   if (!vbuf)
       goto out;
 
    util_draw_vertex_buffer(pipe, cso, vbuf, 0, PIPE_PRIM_TRIANGLE_FAN, 4, 2);

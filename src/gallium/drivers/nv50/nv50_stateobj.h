@@ -49,7 +49,7 @@ struct nv50_vertex_stateobj {
    boolean need_conversion;
    unsigned vertex_size;
    unsigned packet_vertex_limit;
-   struct nv50_vertex_element element[1];
+   struct nv50_vertex_element element[0];
 };
 
 #endif

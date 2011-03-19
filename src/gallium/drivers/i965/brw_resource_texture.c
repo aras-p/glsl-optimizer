@@ -225,48 +225,6 @@ static void brw_texture_destroy(struct pipe_screen *screen,
 }
 
 
-
-
-static unsigned brw_texture_is_referenced( struct pipe_context *pipe,
-					   struct pipe_resource *texture,
-					   unsigned level,
-					   int layer )
-{
-   struct brw_context *brw = brw_context(pipe);
-   struct brw_screen *bscreen = brw_screen(pipe->screen);
-   struct brw_winsys_buffer *batch_bo = brw->batch->buf;
-   struct brw_texture *tex = brw_texture(texture);
-   struct brw_surface *surf;
-   int i;
-
-   /* XXX: this is subject to false positives if the underlying
-    * texture BO is referenced, we can't tell whether the sub-region
-    * we care about participates in that.
-    */
-   if (bscreen->sws->bo_references( batch_bo, tex->bo ))
-      return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-
-   /* Find any view on this texture for this level/layer and see if it
-    * is referenced:
-    */
-   for (i = 0; i < 2; i++) {
-      foreach (surf, &tex->views[i]) {
-         if (surf->bo == tex->bo)
-            continue;
-
-         if (!(layer == -1 || surf->id.bits.layer == layer) ||
-             surf->id.bits.level != level)
-            continue;
-         
-         if (bscreen->sws->bo_references( batch_bo, surf->bo))
-            return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-      }
-   }
-
-   return PIPE_UNREFERENCED;
-}
-
-
 /*
  * Transfer functions
  */
@@ -347,7 +305,6 @@ struct u_resource_vtbl brw_texture_vtbl =
 {
    brw_texture_get_handle,	      /* get_handle */
    brw_texture_destroy,	      /* resource_destroy */
-   brw_texture_is_referenced,	      /* is_resource_referenced */
    brw_texture_get_transfer,	      /* get_transfer */
    u_default_transfer_destroy,	      /* transfer_destroy */
    brw_texture_transfer_map,	      /* transfer_map */

@@ -422,7 +422,8 @@ SVGA3D_SurfaceDMA(struct svga_winsys_context *swc,
                   struct svga_transfer *st,         // IN
                   SVGA3dTransferType transfer,      // IN
                   const SVGA3dCopyBox *boxes,       // IN
-                  uint32 numBoxes)                  // IN
+                  uint32 numBoxes,                  // IN
+                  SVGA3dSurfaceDMAFlags flags)      // IN
 {
    struct svga_texture *texture = svga_texture(st->base.resource); 
    SVGA3dCmdSurfaceDMA *cmd;
@@ -465,7 +466,7 @@ SVGA3D_SurfaceDMA(struct svga_winsys_context *swc,
    pSuffix = (SVGA3dCmdSurfaceDMASuffix *)((uint8_t*)cmd + sizeof *cmd + boxesSize);
    pSuffix->suffixSize = sizeof *pSuffix;
    pSuffix->maximumOffset = st->hw_nblocksy*st->base.stride;
-   memset(&pSuffix->flags, 0, sizeof pSuffix->flags);
+   pSuffix->flags = flags;
 
    swc->commit(swc);
 

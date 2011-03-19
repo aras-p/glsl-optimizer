@@ -277,7 +277,7 @@ nv04_emit_blend(struct gl_context *ctx, int emit)
 			blend |= NV04_MULTITEX_TRIANGLE_BLEND_SHADE_MODE_FLAT;
 
 		/* Secondary color */
-		if (NEED_SECONDARY_COLOR(ctx))
+		if (_mesa_need_secondary_color(ctx))
 			blend |= NV04_MULTITEX_TRIANGLE_BLEND_SPECULAR_ENABLE;
 
 		/* Fog. */
@@ -315,7 +315,7 @@ nv04_emit_blend(struct gl_context *ctx, int emit)
 			blend |= get_texenv_mode(GL_MODULATE);
 
 		/* Secondary color */
-		if (NEED_SECONDARY_COLOR(ctx))
+		if (_mesa_need_secondary_color(ctx))
 			blend |= NV04_TEXTURED_TRIANGLE_BLEND_SPECULAR_ENABLE;
 
 		/* Fog. */

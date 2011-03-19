@@ -96,7 +96,6 @@ struct rbug_proto_context_flush
 {
 	struct rbug_header header;
 	rbug_context_t context;
-	int32_t flags;
 };
 
 struct rbug_proto_context_list_reply
@@ -162,7 +161,6 @@ int rbug_send_context_draw_rule(struct rbug_connection *__con,
 
 int rbug_send_context_flush(struct rbug_connection *__con,
                             rbug_context_t context,
-                            int32_t flags,
                             uint32_t *__serial);
 
 int rbug_send_context_list_reply(struct rbug_connection *__con,

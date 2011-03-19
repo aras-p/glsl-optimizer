@@ -284,6 +284,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
    /* Build the index for table lookup
     */
    /* _NEW_COLOR */
+   key->alpha_test = ctx->Color.AlphaEnabled;
    if (fp->program.UsesKill ||
        ctx->Color.AlphaEnabled)
       lookup |= IZ_PS_KILL_ALPHATEST_BIT;
@@ -364,8 +365,6 @@ static void brw_wm_populate_key( struct brw_context *brw,
 	    SWIZZLE_NIL
 	 };
 
-	 key->tex_swizzles[i] = SWIZZLE_NOOP;
-
 	 /* GL_DEPTH_TEXTURE_MODE is normally handled through
 	  * brw_wm_surface_state, but it applies to shadow compares as
 	  * well and our shadow compares always return the result in
@@ -379,9 +378,10 @@ static void brw_wm_populate_key( struct brw_context *brw,
 	    } else if (t->DepthMode == GL_LUMINANCE) {
 	       swizzles[3] = SWIZZLE_ONE;
 	    } else if (t->DepthMode == GL_RED) {
+	       /* See table 3.23 of the GL 3.0 spec. */
 	       swizzles[1] = SWIZZLE_ZERO;
 	       swizzles[2] = SWIZZLE_ZERO;
-	       swizzles[3] = SWIZZLE_ZERO;
+	       swizzles[3] = SWIZZLE_ONE;
 	    }
 	 }
 

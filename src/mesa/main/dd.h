@@ -602,15 +602,6 @@ struct dd_function_table {
     */
    /*@{*/
    /**
-    * Called when a shader is compiled.
-    *
-    * Note that not all shader objects get ShaderCompile called on
-    * them.  Notably, the shaders containing builtin functions do not
-    * have CompileShader() called, so if lowering passes are done they
-    * need to also be performed in LinkShader().
-    */
-   GLboolean (*CompileShader)(struct gl_context *ctx, struct gl_shader *shader);
-   /**
     * Called when a shader program is linked.
     *
     * This gives drivers an opportunity to clone the IR and make their
@@ -1025,6 +1016,11 @@ struct dd_function_table {
                                    struct gl_transform_feedback_object *obj);
    void (*DrawTransformFeedback)(struct gl_context *ctx, GLenum mode,
                                  struct gl_transform_feedback_object *obj);
+
+   /**
+    * \name GL_NV_texture_barrier interface
+    */
+   void (*TextureBarrier)(struct gl_context *ctx);
 };
 
 

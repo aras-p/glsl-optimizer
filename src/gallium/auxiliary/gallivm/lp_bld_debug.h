@@ -45,6 +45,11 @@
 #define GALLIVM_DEBUG_GC            (1 << 6)
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 #ifdef DEBUG
 extern unsigned gallivm_debug;
 #else
@@ -79,6 +84,11 @@ lp_check_alignment(const void *ptr, unsigned alignment);
 
 void
 lp_disassemble(const void* func);
+
+
+#ifdef __cplusplus
+}
+#endif
 
 
 #endif /* !LP_BLD_DEBUG_H */

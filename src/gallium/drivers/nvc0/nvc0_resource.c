@@ -3,25 +3,6 @@
 #include "nvc0_resource.h"
 #include "nouveau/nouveau_screen.h"
 
-static unsigned
-nvc0_resource_is_referenced(struct pipe_context *pipe,
-                            struct pipe_resource *resource,
-                            unsigned face, int layer)
-{
-   struct nv04_resource *res = nv04_resource(resource);
-   unsigned flags = 0;
-
-#ifdef NOUVEAU_USERSPACE_MM
-   flags = res->status;
-#else
-   unsigned bo_flags = nouveau_bo_pending(res->bo);
-   if (bo_flags & NOUVEAU_BO_RD)
-      flags = PIPE_REFERENCED_FOR_READ;
-   if (bo_flags & NOUVEAU_BO_WR)
-      flags |= PIPE_REFERENCED_FOR_WRITE;
-#endif
-   return flags;
-}
 
 static struct pipe_resource *
 nvc0_resource_create(struct pipe_screen *screen,
@@ -55,7 +36,6 @@ nvc0_init_resource_functions(struct pipe_context *pcontext)
    pcontext->transfer_unmap = u_transfer_unmap_vtbl;
    pcontext->transfer_destroy = u_transfer_destroy_vtbl;
    pcontext->transfer_inline_write = u_transfer_inline_write_vtbl;
-   pcontext->is_resource_referenced = nvc0_resource_is_referenced;
    pcontext->create_surface = nvc0_miptree_surface_new;
    pcontext->surface_destroy = nvc0_miptree_surface_del;
 }

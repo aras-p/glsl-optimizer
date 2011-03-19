@@ -123,8 +123,7 @@ vlVdpVideoSurfaceQueryGetPutBitsYCbCrCapabilities(VdpDevice device, VdpChromaTyp
                                                              FormatToPipe(bits_ycbcr_format),
                                                              PIPE_TEXTURE_2D,
                                                              1,
-                                                             PIPE_BIND_RENDER_TARGET,
-                                                             PIPE_TEXTURE_GEOM_NON_SQUARE);
+                                                             PIPE_BIND_RENDER_TARGET);
 
    vl_screen_destroy(vlscreen);
 

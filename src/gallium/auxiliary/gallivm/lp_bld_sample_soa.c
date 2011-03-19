@@ -1108,6 +1108,11 @@ lp_build_sample_compare(struct lp_build_sample_context *bld,
                       coord, tex);
    }
 
+   /* Clamp p coords to [0,1] */
+   p = lp_build_clamp(&bld->coord_bld, p,
+                      bld->coord_bld.zero,
+                      bld->coord_bld.one);
+
    /* result = (p FUNC texel) ? 1 : 0 */
    res = lp_build_cmp(texel_bld, bld->static_state->compare_func,
                       p, texel[chan]);

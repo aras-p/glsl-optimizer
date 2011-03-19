@@ -43,8 +43,9 @@ nv50_validate_fb(struct nv50_context *nv50)
       mt->base.status |= NOUVEAU_BUFFER_STATUS_GPU_WRITING;
       mt->base.status &= NOUVEAU_BUFFER_STATUS_GPU_READING;
 
+      /* only register for writing, otherwise we'd always serialize here */
       nv50_bufctx_add_resident(nv50, NV50_BUFCTX_FRAME, &mt->base,
-                               NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
+                               NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
    }
 
    if (fb->zsbuf) {
@@ -74,7 +75,7 @@ nv50_validate_fb(struct nv50_context *nv50)
       mt->base.status &= NOUVEAU_BUFFER_STATUS_GPU_READING;
 
       nv50_bufctx_add_resident(nv50, NV50_BUFCTX_FRAME, &mt->base,
-                               NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
+                               NOUVEAU_BO_VRAM | NOUVEAU_BO_WR);
    } else {
       BEGIN_RING(chan, RING_3D(ZETA_ENABLE), 1);
       OUT_RING  (chan, 0);
@@ -253,6 +254,35 @@ nv50_validate_rasterizer(struct nv50_context *nv50)
    OUT_RINGp(chan, nv50->rast->state, nv50->rast->size);
 }
 
+static void
+nv50_switch_pipe_context(struct nv50_context *ctx_to)
+{
+   struct nv50_context *ctx_from = ctx_to->screen->cur_ctx;
+
+   if (ctx_from)
+      ctx_to->state = ctx_from->state;
+
+   ctx_to->dirty = ~0;
+
+   if (!ctx_to->vertex)
+      ctx_to->dirty &= ~(NV50_NEW_VERTEX | NV50_NEW_ARRAYS);
+
+   if (!ctx_to->vertprog)
+      ctx_to->dirty &= ~NV50_NEW_VERTPROG;
+   if (!ctx_to->fragprog)
+      ctx_to->dirty &= ~NV50_NEW_FRAGPROG;
+
+   if (!ctx_to->blend)
+      ctx_to->dirty &= ~NV50_NEW_BLEND;
+   if (!ctx_to->rast)
+      ctx_to->dirty &= ~NV50_NEW_RASTERIZER;
+   if (!ctx_to->zsa)
+      ctx_to->dirty &= ~NV50_NEW_ZSA;
+
+   ctx_to->screen->base.channel->user_private = ctx_to->screen->cur_ctx =
+      ctx_to;
+}
+
 static struct state_validate {
     void (*func)(struct nv50_context *);
     uint32_t states;
@@ -292,11 +322,9 @@ boolean
 nv50_state_validate(struct nv50_context *nv50)
 {
    unsigned i;
-#if 0
-   if (nv50->screen->cur_ctx != nv50) /* FIXME: not everything is valid */
-      nv50->dirty = 0xffffffff;
-#endif
-   nv50->screen->cur_ctx = nv50;
+
+   if (nv50->screen->cur_ctx != nv50)
+      nv50_switch_pipe_context(nv50);
 
    if (nv50->dirty) {
       for (i = 0; i < validate_list_len; ++i) {

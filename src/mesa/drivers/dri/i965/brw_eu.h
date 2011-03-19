@@ -939,8 +939,8 @@ void brw_dp_READ_4_vs_relative(struct brw_compile *p,
  */
 struct brw_instruction *brw_IF(struct brw_compile *p, 
 			       GLuint execute_size);
-struct brw_instruction *brw_IF_gen6(struct brw_compile *p, uint32_t conditional,
-				    struct brw_reg src0, struct brw_reg src1);
+struct brw_instruction *gen6_IF(struct brw_compile *p, uint32_t conditional,
+				struct brw_reg src0, struct brw_reg src1);
 
 struct brw_instruction *brw_ELSE(struct brw_compile *p, 
 				 struct brw_instruction *if_insn);
@@ -958,9 +958,9 @@ struct brw_instruction *brw_WHILE(struct brw_compile *p,
 	       struct brw_instruction *patch_insn);
 
 struct brw_instruction *brw_BREAK(struct brw_compile *p, int pop_count);
-struct brw_instruction *brw_CONT_gen6(struct brw_compile *p,
-				      struct brw_instruction *do_insn);
 struct brw_instruction *brw_CONT(struct brw_compile *p, int pop_count);
+struct brw_instruction *gen6_CONT(struct brw_compile *p,
+				  struct brw_instruction *do_insn);
 /* Forward jumps:
  */
 void brw_land_fwd_jump(struct brw_compile *p, 

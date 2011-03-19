@@ -38,6 +38,7 @@
 #include "tgsi/tgsi_scan.h"
 
 #include "util/u_slab.h"
+#include "util/u_blitter.h"
 
 
 struct i915_winsys;
@@ -185,7 +186,7 @@ struct i915_rasterizer_state {
    unsigned LIS7;
    unsigned sc[1];
 
-   const struct pipe_rasterizer_state *templ;
+   struct pipe_rasterizer_state templ;
 
    union { float f; unsigned u; } ds[2];
 };
@@ -244,14 +245,35 @@ struct i915_context {
 
    struct i915_state current;
    unsigned hardware_dirty;
-   unsigned immediate_dirty;
-   unsigned dynamic_dirty;
-   unsigned flush_dirty;
+   unsigned immediate_dirty : I915_MAX_IMMEDIATE;
+   unsigned dynamic_dirty : I915_MAX_DYNAMIC;
+   unsigned static_dirty : 4;
+   unsigned flush_dirty : 2;
 
    struct i915_winsys_buffer *validation_buffers[2 + 1 + I915_TEX_UNITS];
    int num_validation_buffers;
 
    struct util_slab_mempool transfer_pool;
+
+   /** blitter/hw-clear */
+   struct blitter_context* blitter;
+
+   /** State tracking needed by u_blitter for save/restore. */
+   void *saved_fs;
+   void (*saved_bind_fs_state)(struct pipe_context *pipe, void *shader);
+   void *saved_vs;
+   struct pipe_clip_state saved_clip;
+   struct i915_velems_state *saved_velems;
+   unsigned saved_nr_vertex_buffers;
+   struct pipe_vertex_buffer saved_vertex_buffers[PIPE_MAX_ATTRIBS];
+   unsigned saved_nr_samplers;
+   void *saved_samplers[PIPE_MAX_SAMPLERS];
+   void (*saved_bind_sampler_states)(struct pipe_context *pipe,
+                                     unsigned num, void **sampler);
+   unsigned saved_nr_sampler_views;
+   struct pipe_sampler_view *saved_sampler_views[PIPE_MAX_SAMPLERS];
+   void (*saved_set_sampler_views)(struct pipe_context *pipe,
+                                   unsigned num, struct pipe_sampler_view **views);
 };
 
 /* A flag for each state_tracker state object:
@@ -296,6 +318,12 @@ struct i915_context {
 #define I915_FLUSH_CACHE		1
 #define I915_PIPELINE_FLUSH		2
 
+/* split up static state */
+#define I915_DST_BUF_COLOR              1
+#define I915_DST_BUF_DEPTH              2
+#define I915_DST_VARS                   4
+#define I915_DST_RECT                   8
+
 static INLINE
 void i915_set_flush_dirty(struct i915_context *i915, unsigned flush)
 {
@@ -326,14 +354,20 @@ void i915_emit_hardware_state(struct i915_context *i915 );
 /***********************************************************************
  * i915_clear.c: 
  */
-void i915_clear( struct pipe_context *pipe, unsigned buffers, const float *rgba,
-                 double depth, unsigned stencil);
+void i915_clear_blitter(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+                        double depth, unsigned stencil);
+void i915_clear_render(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+                       double depth, unsigned stencil);
+void i915_clear_emit(struct pipe_context *pipe, unsigned buffers, const float *rgba,
+                     double depth, unsigned stencil,
+                     unsigned destx, unsigned desty, unsigned width, unsigned height);
 
 
 /***********************************************************************
  * 
  */
 void i915_init_state_functions( struct i915_context *i915 );
+void i915_init_fixup_state_functions( struct i915_context *i915 );
 void i915_init_flush_functions( struct i915_context *i915 );
 void i915_init_string_functions( struct i915_context *i915 );
 

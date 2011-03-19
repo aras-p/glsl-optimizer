@@ -78,15 +78,6 @@ brw_new_shader_program(struct gl_context *ctx, GLuint name)
 }
 
 GLboolean
-brw_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
-{
-   if (!_mesa_ir_compile_shader(ctx, shader))
-      return GL_FALSE;
-
-   return GL_TRUE;
-}
-
-GLboolean
 brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 {
    struct brw_context *brw = brw_context(ctx);
@@ -120,6 +111,14 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
       do_lower_texture_projection(shader->ir);
       do_vec_index_to_cond_assign(shader->ir);
       brw_do_cubemap_normalize(shader->ir);
+      lower_noise(shader->ir);
+      lower_quadop_vector(shader->ir, false);
+      lower_variable_index_to_cond_assign(shader->ir,
+					  GL_TRUE, /* input */
+					  GL_TRUE, /* output */
+					  GL_TRUE, /* temp */
+					  GL_TRUE /* uniform */
+					  );
 
       do {
 	 progress = false;
@@ -134,16 +133,6 @@ brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog)
 				   ) || progress;
 
 	 progress = do_common_optimization(shader->ir, true, 32) || progress;
-
-	 progress = lower_noise(shader->ir) || progress;
-	 progress =
-	    lower_variable_index_to_cond_assign(shader->ir,
-						GL_TRUE, /* input */
-						GL_TRUE, /* output */
-						GL_TRUE, /* temp */
-						GL_TRUE /* uniform */
-						) || progress;
-	 progress = lower_quadop_vector(shader->ir, false) || progress;
       } while (progress);
 
       validate_ir_tree(shader->ir);
@@ -1452,7 +1441,10 @@ fs_visitor::visit(ir_texture *ir)
    if (ir->shadow_comparitor)
       inst->shadow_compare = true;
 
-   if (c->key.tex_swizzles[inst->sampler] != SWIZZLE_NOOP) {
+   if (ir->type == glsl_type::float_type) {
+      /* Ignore DEPTH_TEXTURE_MODE swizzling. */
+      assert(ir->sampler->type->sampler_shadow);
+   } else if (c->key.tex_swizzles[inst->sampler] != SWIZZLE_NOOP) {
       fs_reg swizzle_dst = fs_reg(this, glsl_type::vec4_type);
 
       for (int i = 0; i < 4; i++) {
@@ -2139,6 +2131,17 @@ fs_visitor::emit_fb_writes()
    }
 
    if (c->key.nr_color_regions == 0) {
+      if (c->key.alpha_test && (this->frag_color || this->frag_data)) {
+	 /* If the alpha test is enabled but there's no color buffer,
+	  * we still need to send alpha out the pipeline to our null
+	  * renderbuffer.
+	  */
+	 color.reg_offset += 3;
+	 emit(fs_inst(BRW_OPCODE_MOV,
+		      fs_reg(MRF, color_mrf + 3),
+		      color));
+      }
+
       fs_inst *inst = emit(fs_inst(FS_OPCODE_FB_WRITE,
 				   reg_undef, reg_undef));
       inst->base_mrf = 0;
@@ -2301,23 +2304,23 @@ fs_visitor::generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src)
       switch (inst->opcode) {
       case FS_OPCODE_TEX:
 	 if (inst->shadow_compare) {
-	    msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_COMPARE_GEN5;
+	    msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_COMPARE;
 	 } else {
-	    msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_GEN5;
+	    msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE;
 	 }
 	 break;
       case FS_OPCODE_TXB:
 	 if (inst->shadow_compare) {
-	    msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_COMPARE_GEN5;
+	    msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_BIAS_COMPARE;
 	 } else {
-	    msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_BIAS_GEN5;
+	    msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_BIAS;
 	 }
 	 break;
       case FS_OPCODE_TXL:
 	 if (inst->shadow_compare) {
-	    msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_LOD_COMPARE_GEN5;
+	    msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LOD_COMPARE;
 	 } else {
-	    msg_type = BRW_SAMPLER_MESSAGE_SAMPLE_LOD_GEN5;
+	    msg_type = GEN5_SAMPLER_MESSAGE_SAMPLE_LOD;
 	 }
 	 break;
       case FS_OPCODE_TXD:
@@ -3542,7 +3545,7 @@ fs_visitor::generate_code()
       case BRW_OPCODE_IF:
 	 if (inst->src[0].file != BAD_FILE) {
 	    assert(intel->gen >= 6);
-	    if_stack[if_stack_depth] = brw_IF_gen6(p, inst->conditional_mod, src[0], src[1]);
+	    if_stack[if_stack_depth] = gen6_IF(p, inst->conditional_mod, src[0], src[1]);
 	 } else {
 	    if_stack[if_stack_depth] = brw_IF(p, BRW_EXECUTE_8);
 	 }
@@ -3584,7 +3587,7 @@ fs_visitor::generate_code()
       case BRW_OPCODE_CONTINUE:
 	 /* FINISHME: We need to write the loop instruction support still. */
 	 if (intel->gen >= 6)
-	    brw_CONT_gen6(p, loop_stack[loop_stack_depth - 1]);
+	    gen6_CONT(p, loop_stack[loop_stack_depth - 1]);
 	 else
 	    brw_CONT(p, if_depth_in_loop[loop_stack_depth]);
 	 brw_set_predicate_control(p, BRW_PREDICATE_NONE);

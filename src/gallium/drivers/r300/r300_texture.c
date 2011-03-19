@@ -174,9 +174,11 @@ uint32_t r300_translate_texformat(enum pipe_format format,
     if (util_format_is_compressed(format) &&
         dxtc_swizzle &&
         format != PIPE_FORMAT_RGTC2_UNORM &&
-        format != PIPE_FORMAT_RGTC2_SNORM) {
+        format != PIPE_FORMAT_RGTC2_SNORM &&
+        format != PIPE_FORMAT_LATC2_UNORM &&
+        format != PIPE_FORMAT_LATC2_SNORM) {
         result |= r300_get_swizzle_combined(desc->swizzle, swizzle_view,
-                                            dxtc_swizzle);
+                                            TRUE);
     } else {
         result |= r300_get_swizzle_combined(desc->swizzle, swizzle_view,
                                             FALSE);
@@ -209,13 +211,19 @@ uint32_t r300_translate_texformat(enum pipe_format format,
     if (desc->layout == UTIL_FORMAT_LAYOUT_RGTC) {
         switch (format) {
             case PIPE_FORMAT_RGTC1_SNORM:
+            case PIPE_FORMAT_LATC1_SNORM:
                 result |= sign_bit[1];
+            case PIPE_FORMAT_LATC1_UNORM:
             case PIPE_FORMAT_RGTC1_UNORM:
                 return R500_TX_FORMAT_ATI1N | result;
+
             case PIPE_FORMAT_RGTC2_SNORM:
+            case PIPE_FORMAT_LATC2_SNORM:
                 result |= sign_bit[2] | sign_bit[3];
             case PIPE_FORMAT_RGTC2_UNORM:
+            case PIPE_FORMAT_LATC2_UNORM:
                 return R400_TX_FORMAT_ATI2N | result;
+
             default:
                 return ~0; /* Unsupported/unknown. */
         }
@@ -363,6 +371,8 @@ uint32_t r500_tx_format_msb_bit(enum pipe_format format)
     switch (format) {
         case PIPE_FORMAT_RGTC1_UNORM:
         case PIPE_FORMAT_RGTC1_SNORM:
+        case PIPE_FORMAT_LATC1_UNORM:
+        case PIPE_FORMAT_LATC1_SNORM:
         case PIPE_FORMAT_X8Z24_UNORM:
         case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
             return R500_TXFORMAT_MSB;
@@ -742,7 +752,6 @@ static const struct u_resource_vtbl r300_texture_vtbl =
 {
     NULL,                           /* get_handle */
     r300_texture_destroy,           /* resource_destroy */
-    NULL,                           /* is_resource_referenced */
     r300_texture_get_transfer,      /* get_transfer */
     r300_texture_transfer_destroy,  /* transfer_destroy */
     r300_texture_transfer_map,      /* transfer_map */

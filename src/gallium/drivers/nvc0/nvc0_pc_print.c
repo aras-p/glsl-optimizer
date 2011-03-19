@@ -269,7 +269,11 @@ nvc0_print_instruction(struct nv_instruction *i)
    PRINT(" %s\n", norm);
 }
 
-#define NV_MOD_SGN NV_MOD_ABS | NV_MOD_NEG
+#define NV_MOD_SGN_12  ((NV_MOD_ABS | NV_MOD_NEG) | ((NV_MOD_ABS | NV_MOD_NEG) << 4))
+#define NV_MOD_NEG_123 (NV_MOD_NEG | (NV_MOD_NEG << 4) | (NV_MOD_NEG << 8))
+#define NV_MOD_NEG_3   (NV_MOD_NEG << 8)
+
+#define NV_MOD_SGN NV_MOD_SGN_12
 
 struct nv_op_info nvc0_op_info_table[NV_OP_COUNT + 1] =
 {
@@ -292,8 +296,8 @@ struct nv_op_info nvc0_op_info_table[NV_OP_COUNT + 1] =
    { NV_OP_SET, "set", NV_TYPE_ANY, NV_MOD_SGN, 0, 0, 0, 1, 0, 0, 0 },
    { NV_OP_ADD, "add", NV_TYPE_F32, NV_MOD_SGN, 0, 1, 0, 1, 0, 2, 2 },
    { NV_OP_SUB, "sub", NV_TYPE_F32, NV_MOD_SGN, 0, 0, 0, 1, 0, 2, 2 },
-   { NV_OP_MUL, "mul", NV_TYPE_F32, NV_MOD_SGN, 0, 1, 0, 1, 0, 2, 2 },
-   { NV_OP_MAD, "mad", NV_TYPE_F32, NV_MOD_SGN, 0, 1, 0, 1, 0, 2, 2 },
+   { NV_OP_MUL, "mul", NV_TYPE_F32, NV_MOD_NEG_123, 0, 1, 0, 1, 0, 2, 2 },
+   { NV_OP_MAD, "mad", NV_TYPE_F32, NV_MOD_NEG_123, 0, 1, 0, 1, 0, 2, 2 },
    { NV_OP_ABS, "abs", NV_TYPE_F32, 0, 0, 0, 0, 1, 0, 0, 0 },
    { NV_OP_NEG, "neg", NV_TYPE_F32, NV_MOD_ABS, 0, 0, 0, 1, 0, 0, 0 },
    { NV_OP_MAX, "max", NV_TYPE_F32, NV_MOD_SGN, 0, 1, 0, 1, 0, 2, 2 },
@@ -363,9 +367,9 @@ struct nv_op_info nvc0_op_info_table[NV_OP_COUNT + 1] =
 
    { NV_OP_SELP, "selp", NV_TYPE_U32, 0, 0, 0, 0, 1, 0, 0, 0 },
 
-   { NV_OP_SLCT, "slct", NV_TYPE_F32, 0, 0, 0, 0, 1, 0, 2, 2 },
-   { NV_OP_SLCT, "slct", NV_TYPE_S32, 0, 0, 0, 0, 1, 0, 2, 2 },
-   { NV_OP_SLCT, "slct", NV_TYPE_U32, 0, 0, 0, 0, 1, 0, 2, 2 },
+   { NV_OP_SLCT, "slct", NV_TYPE_F32, NV_MOD_NEG_3, 0, 0, 0, 1, 0, 2, 2 },
+   { NV_OP_SLCT, "slct", NV_TYPE_S32, NV_MOD_NEG_3, 0, 0, 0, 1, 0, 2, 2 },
+   { NV_OP_SLCT, "slct", NV_TYPE_U32, NV_MOD_NEG_3, 0, 0, 0, 1, 0, 2, 2 },
 
    { NV_OP_ADD, "sub", NV_TYPE_F32, 0, 0, 0, 0, 1, 0, 1, 0 },
 

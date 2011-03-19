@@ -34,6 +34,7 @@
 #include "main/light.h"
 #include "math/m_translate.h"
 #include "math/m_xform.h"
+#include "main/state.h"
 
 #include "tnl.h"
 #include "t_context.h"
@@ -127,7 +128,7 @@ _tnl_InvalidateState( struct gl_context *ctx, GLuint new_state )
      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR0 );
    }
 
-   if (NEED_SECONDARY_COLOR(ctx))
+   if (_mesa_need_secondary_color(ctx))
      RENDERINPUTS_SET( tnl->render_inputs_bitset, _TNL_ATTRIB_COLOR1 );
 
    for (i = 0; i < ctx->Const.MaxTextureCoordUnits; i++) {

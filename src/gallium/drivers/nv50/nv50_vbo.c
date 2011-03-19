@@ -51,10 +51,8 @@ nv50_vertex_state_create(struct pipe_context *pipe,
     struct translate_key transkey;
     unsigned i;
 
-    assert(num_elements);
-
     so = MALLOC(sizeof(*so) +
-                (num_elements - 1) * sizeof(struct nv50_vertex_element));
+                num_elements * sizeof(struct nv50_vertex_element));
     if (!so)
         return NULL;
     so->num_elements = num_elements;

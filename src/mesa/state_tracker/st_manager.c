@@ -502,8 +502,8 @@ st_context_flush(struct st_context_iface *stctxi, unsigned flags,
                  struct pipe_fence_handle **fence)
 {
    struct st_context *st = (struct st_context *) stctxi;
-   st_flush(st, flags, fence);
-   if (flags & PIPE_FLUSH_RENDER_CACHE)
+   st_flush(st, fence);
+   if (flags & ST_FLUSH_FRONT)
       st_manager_flush_frontbuffer(st);
 }
 
@@ -684,8 +684,9 @@ st_api_create_context(struct st_api *stapi, struct st_manager *smapi,
    if (attribs->major > 1 || attribs->minor > 0) {
       _mesa_compute_version(st->ctx);
 
-      if (st->ctx->VersionMajor < attribs->major ||
-          st->ctx->VersionMajor < attribs->minor) {
+      /* is the actual version less than the requested version? */
+      if (st->ctx->VersionMajor * 10 + st->ctx->VersionMinor <
+          attribs->major * 10 + attribs->minor) {
          st_destroy_context(st);
          return NULL;
       }

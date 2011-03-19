@@ -97,15 +97,3 @@ int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 	}
 	return 0;
 }
-
-void eg_cf_vtx(struct r600_vertex_element *ve)
-{
-	struct r600_pipe_state *rstate = &ve->rstate;
-	rstate->id = R600_PIPE_STATE_FETCH_SHADER;
-	rstate->nregs = 0;
-	r600_pipe_state_add_reg(rstate, R_0288A8_SQ_PGM_RESOURCES_FS,
-				0x00000000, 0xFFFFFFFF, NULL);
-	r600_pipe_state_add_reg(rstate, R_0288A4_SQ_PGM_START_FS,
-				(r600_bo_offset(ve->fetch_shader)) >> 8,
-				0xFFFFFFFF, ve->fetch_shader);
-}

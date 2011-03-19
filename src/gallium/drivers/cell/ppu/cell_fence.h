@@ -36,12 +36,15 @@ cell_fence_init(struct cell_fence *fence);
 
 extern boolean
 cell_fence_signalled(const struct cell_context *cell,
-                     const struct cell_fence *fence);
+                     const struct cell_fence *fence,
+                     unsigned flags);
 
 
-extern void
+extern boolean
 cell_fence_finish(const struct cell_context *cell,
-                  const struct cell_fence *fence);
+                  const struct cell_fence *fence,
+                  unsigned flags,
+                  uint64_t timeout);
 
 
 

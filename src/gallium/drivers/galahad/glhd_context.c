@@ -761,32 +761,13 @@ galahad_clear_depth_stencil(struct pipe_context *_pipe,
 
 static void
 galahad_flush(struct pipe_context *_pipe,
-               unsigned flags,
                struct pipe_fence_handle **fence)
 {
    struct galahad_context *glhd_pipe = galahad_context(_pipe);
    struct pipe_context *pipe = glhd_pipe->pipe;
 
    pipe->flush(pipe,
-               flags,
                fence);
-}
-
-static unsigned int
-galahad_is_resource_referenced(struct pipe_context *_pipe,
-                                struct pipe_resource *_resource,
-                                unsigned level,
-                                int layer)
-{
-   struct galahad_context *glhd_pipe = galahad_context(_pipe);
-   struct galahad_resource *glhd_resource = galahad_resource(_resource);
-   struct pipe_context *pipe = glhd_pipe->pipe;
-   struct pipe_resource *resource = glhd_resource->resource;
-
-   return pipe->is_resource_referenced(pipe,
-                                       resource,
-                                       level,
-                                       layer);
 }
 
 static struct pipe_sampler_view *
@@ -1038,7 +1019,6 @@ galahad_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    glhd_pipe->base.clear_render_target = galahad_clear_render_target;
    glhd_pipe->base.clear_depth_stencil = galahad_clear_depth_stencil;
    glhd_pipe->base.flush = galahad_flush;
-   glhd_pipe->base.is_resource_referenced = galahad_is_resource_referenced;
    glhd_pipe->base.create_sampler_view = galahad_context_create_sampler_view;
    glhd_pipe->base.sampler_view_destroy = galahad_context_sampler_view_destroy;
    glhd_pipe->base.create_surface = galahad_context_create_surface;

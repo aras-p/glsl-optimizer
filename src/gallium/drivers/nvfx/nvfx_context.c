@@ -7,7 +7,7 @@
 #include "nvfx_resource.h"
 
 static void
-nvfx_flush(struct pipe_context *pipe, unsigned flags,
+nvfx_flush(struct pipe_context *pipe,
 	   struct pipe_fence_handle **fence)
 {
 	struct nvfx_context *nvfx = nvfx_context(pipe);
@@ -16,12 +16,13 @@ nvfx_flush(struct pipe_context *pipe, unsigned flags,
 	struct nouveau_grobj *eng3d = screen->eng3d;
 
 	/* XXX: we need to actually be intelligent here */
-	if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
+        /* XXX This flag wasn't set by the state tracker anyway. */
+        /*if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
 		BEGIN_RING(chan, eng3d, 0x1fd8, 1);
 		OUT_RING(chan, 2);
 		BEGIN_RING(chan, eng3d, 0x1fd8, 1);
 		OUT_RING(chan, 1);
-	}
+        }*/
 
 	FIRE_RING(chan);
 	if (fence)

@@ -72,7 +72,8 @@ static void r300_copy_into_tiled_texture(struct pipe_context *ctx,
                               transfer->box.x, transfer->box.y, transfer->box.z,
                               &r300transfer->linear_texture->b.b.b, 0, &src_box);
 
-    ctx->flush(ctx, 0, NULL);
+    /* XXX remove this. */
+    r300_flush(ctx, 0, NULL);
 }
 
 struct pipe_transfer*
@@ -100,7 +101,8 @@ r300_texture_get_transfer(struct pipe_context *ctx,
     }
 
     blittable = desc->layout == UTIL_FORMAT_LAYOUT_PLAIN ||
-                desc->layout == UTIL_FORMAT_LAYOUT_S3TC;
+                desc->layout == UTIL_FORMAT_LAYOUT_S3TC ||
+                desc->layout == UTIL_FORMAT_LAYOUT_RGTC;
 
     trans = CALLOC_STRUCT(r300_transfer);
     if (trans) {
@@ -151,7 +153,7 @@ r300_texture_get_transfer(struct pipe_context *ctx,
             if (!trans->linear_texture) {
                 /* Oh crap, the thing can't create the texture.
                  * Let's flush and try again. */
-                ctx->flush(ctx, 0, NULL);
+                r300_flush(ctx, 0, NULL);
 
                 trans->linear_texture = r300_resource(
                    ctx->screen->resource_create(ctx->screen,
@@ -175,13 +177,7 @@ r300_texture_get_transfer(struct pipe_context *ctx,
             assert(!trans->linear_texture->tex.microtile &&
                    !trans->linear_texture->tex.macrotile[0]);
 
-            /* Set the stride.
-	     *
-	     * Even though we are using an internal texture for this,
-	     * the transfer level, box and usage parameters still reflect
-	     * the arguments received to get_transfer.  We just do the
-	     * right thing internally.
-	     */
+            /* Set the stride. */
             trans->transfer.stride =
                     trans->linear_texture->tex.stride_in_bytes[0];
 
@@ -191,7 +187,7 @@ r300_texture_get_transfer(struct pipe_context *ctx,
                 r300_copy_from_tiled_texture(ctx, trans);
 
                 /* Always referenced in the blit. */
-                ctx->flush(ctx, 0, NULL);
+                r300_flush(ctx, 0, NULL);
             }
             return &trans->transfer;
         }
@@ -201,8 +197,9 @@ r300_texture_get_transfer(struct pipe_context *ctx,
         trans->transfer.stride = tex->tex.stride_in_bytes[level];
         trans->offset = r300_texture_get_offset(tex, level, box->z);
 
-        if (referenced_cs)
-            ctx->flush(ctx, PIPE_FLUSH_RENDER_CACHE, NULL);
+        if (referenced_cs &&
+            !(usage & PIPE_TRANSFER_UNSYNCHRONIZED))
+            r300_flush(ctx, 0, NULL);
         return &trans->transfer;
     }
     return NULL;

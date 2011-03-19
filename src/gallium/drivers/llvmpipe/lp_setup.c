@@ -333,12 +333,8 @@ fail:
 }
 
 
-/**
- * \param flags  bitmask of PIPE_FLUSH_x flags
- */
 void
 lp_setup_flush( struct lp_setup_context *setup,
-                unsigned flags,
                 struct pipe_fence_handle **fence,
                 const char *reason)
 {
@@ -469,7 +465,7 @@ lp_setup_clear( struct lp_setup_context *setup,
                 unsigned flags )
 {
    if (!lp_setup_try_clear( setup, color, depth, stencil, flags )) {
-      lp_setup_flush(setup, 0, NULL, __FUNCTION__);
+      lp_setup_flush(setup, NULL, __FUNCTION__);
 
       if (!lp_setup_try_clear( setup, color, depth, stencil, flags ))
          assert(0);
@@ -753,20 +749,20 @@ lp_setup_is_resource_referenced( const struct lp_setup_context *setup,
    /* check the render targets */
    for (i = 0; i < setup->fb.nr_cbufs; i++) {
       if (setup->fb.cbufs[i]->texture == texture)
-         return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+         return LP_REFERENCED_FOR_READ | LP_REFERENCED_FOR_WRITE;
    }
    if (setup->fb.zsbuf && setup->fb.zsbuf->texture == texture) {
-      return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
+      return LP_REFERENCED_FOR_READ | LP_REFERENCED_FOR_WRITE;
    }
 
    /* check textures referenced by the scene */
    for (i = 0; i < Elements(setup->scenes); i++) {
       if (lp_scene_is_resource_referenced(setup->scenes[i], texture)) {
-         return PIPE_REFERENCED_FOR_READ;
+         return LP_REFERENCED_FOR_READ;
       }
    }
 
-   return PIPE_UNREFERENCED;
+   return LP_UNREFERENCED;
 }
 
 
@@ -1114,7 +1110,7 @@ lp_setup_end_query(struct lp_setup_context *setup, struct llvmpipe_query *pq)
       if (!lp_scene_bin_everywhere(setup->scene,
                                    LP_RAST_OP_END_QUERY,
                                    dummy)) {
-         lp_setup_flush(setup, 0, NULL, __FUNCTION__);
+         lp_setup_flush(setup, NULL, __FUNCTION__);
       }
    }
    else {

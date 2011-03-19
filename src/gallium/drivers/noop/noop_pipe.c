@@ -87,13 +87,6 @@ struct noop_resource {
 	struct sw_displaytarget	*dt;
 };
 
-static unsigned noop_is_resource_referenced(struct pipe_context *pipe,
-						struct pipe_resource *resource,
-						unsigned level, int layer)
-{
-	return PIPE_UNREFERENCED;
-}
-
 static struct pipe_resource *noop_resource_create(struct pipe_screen *screen,
 						const struct pipe_resource *templ)
 {
@@ -267,7 +260,7 @@ static void noop_resource_copy_region(struct pipe_context *ctx,
 /*
  * context
  */
-static void noop_flush(struct pipe_context *ctx, unsigned flags,
+static void noop_flush(struct pipe_context *ctx,
 			struct pipe_fence_handle **fence)
 {
 }
@@ -303,7 +296,6 @@ static struct pipe_context *noop_create_context(struct pipe_screen *screen, void
 	ctx->transfer_unmap = noop_transfer_unmap;
 	ctx->transfer_destroy = noop_transfer_destroy;
 	ctx->transfer_inline_write = noop_transfer_inline_write;
-	ctx->is_resource_referenced = noop_is_resource_referenced;
 	noop_init_state_functions(ctx);
 
 	return ctx;
@@ -453,8 +445,7 @@ static boolean noop_is_format_supported(struct pipe_screen* screen,
 					enum pipe_format format,
 					enum pipe_texture_target target,
 					unsigned sample_count,
-					unsigned usage,
-					unsigned geom_flags)
+                                        unsigned usage)
 {
 	return true;
 }

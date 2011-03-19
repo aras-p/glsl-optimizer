@@ -128,21 +128,6 @@ util_create_blit(struct pipe_context *pipe, struct cso_context *cso)
       ctx->velem[i].src_format = PIPE_FORMAT_R32G32B32A32_FLOAT;
    }
 
-   /* vertex shader - still required to provide the linkage between
-    * fragment shader input semantics and vertex_element/buffers.
-    */
-   {
-      const uint semantic_names[] = { TGSI_SEMANTIC_POSITION,
-                                      TGSI_SEMANTIC_GENERIC };
-      const uint semantic_indexes[] = { 0, 0 };
-      ctx->vs = util_make_vertex_passthrough_shader(pipe, 2, semantic_names,
-                                                    semantic_indexes);
-   }
-
-   /* fragment shader */
-   ctx->fs[TGSI_WRITEMASK_XYZW] =
-      util_make_fragment_tex_shader(pipe, TGSI_TEXTURE_2D,
-                                    TGSI_INTERPOLATE_LINEAR);
    ctx->vbuf = NULL;
 
    /* init vertex data that doesn't change */
@@ -170,7 +155,8 @@ util_destroy_blit(struct blit_state *ctx)
    struct pipe_context *pipe = ctx->pipe;
    unsigned i;
 
-   pipe->delete_vs_state(pipe, ctx->vs);
+   if (ctx->vs)
+      pipe->delete_vs_state(pipe, ctx->vs);
 
    for (i = 0; i < Elements(ctx->fs); i++)
       if (ctx->fs[i])
@@ -182,6 +168,59 @@ util_destroy_blit(struct blit_state *ctx)
    pipe_resource_reference(&ctx->vbuf, NULL);
 
    FREE(ctx);
+}
+
+
+/**
+ * Helper function to set the fragment shaders.
+ */
+static INLINE void
+set_fragment_shader(struct blit_state *ctx, uint writemask)
+{
+   if (!ctx->fs[writemask])
+      ctx->fs[writemask] =
+         util_make_fragment_tex_shader_writemask(ctx->pipe, TGSI_TEXTURE_2D,
+                                                 TGSI_INTERPOLATE_LINEAR,
+                                                 writemask);
+
+   cso_set_fragment_shader_handle(ctx->cso, ctx->fs[writemask]);
+}
+
+
+/**
+ * Helper function to set the depthwrite shader.
+ */
+static INLINE void
+set_depth_fragment_shader(struct blit_state *ctx)
+{
+   if (!ctx->fs_depth)
+      ctx->fs_depth =
+         util_make_fragment_tex_shader_writedepth(ctx->pipe, TGSI_TEXTURE_2D,
+                                                  TGSI_INTERPOLATE_LINEAR);
+
+   cso_set_fragment_shader_handle(ctx->cso, ctx->fs_depth);
+}
+
+
+/**
+ * Helper function to set the vertex shader.
+ */
+static INLINE void
+set_vertex_shader(struct blit_state *ctx)
+{
+   /* vertex shader - still required to provide the linkage between
+    * fragment shader input semantics and vertex_element/buffers.
+    */
+   if (!ctx->vs) {
+      const uint semantic_names[] = { TGSI_SEMANTIC_POSITION,
+                                      TGSI_SEMANTIC_GENERIC };
+      const uint semantic_indexes[] = { 0, 0 };
+      ctx->vs = util_make_vertex_passthrough_shader(ctx->pipe, 2,
+                                                    semantic_names,
+                                                    semantic_indexes);
+   }
+
+   cso_set_vertex_shader_handle(ctx->cso, ctx->vs);
 }
 
 
@@ -304,8 +343,10 @@ util_blit_pixels_writemask(struct blit_state *ctx,
 {
    struct pipe_context *pipe = ctx->pipe;
    struct pipe_screen *screen = pipe->screen;
+   enum pipe_format src_format, dst_format;
    struct pipe_sampler_view *sampler_view = NULL;
    struct pipe_sampler_view sv_templ;
+   struct pipe_surface *dst_surface;
    struct pipe_framebuffer_state fb;
    const int srcW = abs(srcX1 - srcX0);
    const int srcH = abs(srcY1 - srcY0);
@@ -326,12 +367,15 @@ util_blit_pixels_writemask(struct blit_state *ctx,
       regions_overlap(srcX0, srcY0, srcX1, srcY1,
                       dstX0, dstY0, dstX1, dstY1);
 
+   src_format = util_format_linear(src_tex->format);
+   dst_format = util_format_linear(dst->format);
+
    /*
     * Check for simple case:  no format conversion, no flipping, no stretching,
     * no overlapping.
     * Filter mode should not matter since there's no stretching.
     */
-   if (dst->format == src_tex->format &&
+   if (dst_format == src_format &&
        srcX0 < srcX1 &&
        dstX0 < dstX1 &&
        srcY0 < srcY1 &&
@@ -354,6 +398,14 @@ util_blit_pixels_writemask(struct blit_state *ctx,
        return;
    }
 
+   if (dst_format == dst->format) {
+      dst_surface = dst;
+   } else {
+      struct pipe_surface templ = *dst;
+      templ.format = dst_format;
+      dst_surface = pipe->create_surface(pipe, dst->texture, &templ);
+   }
+
    /* Create a temporary texture when src and dest alias or when src
     * is anything other than a 2d texture.
     * XXX should just use appropriate shader to access 1d / 3d slice / cube face,
@@ -361,9 +413,9 @@ util_blit_pixels_writemask(struct blit_state *ctx,
     * 
     * This can still be improved upon.
     */
-   if ((src_tex == dst->texture &&
-       dst->u.tex.level == src_level &&
-       dst->u.tex.first_layer == srcZ0) ||
+   if ((src_tex == dst_surface->texture &&
+       dst_surface->u.tex.level == src_level &&
+       dst_surface->u.tex.first_layer == srcZ0) ||
        (src_tex->target != PIPE_TEXTURE_2D &&
        src_tex->target != PIPE_TEXTURE_2D &&
        src_tex->target != PIPE_TEXTURE_RECT))
@@ -392,7 +444,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
       /* create temp texture */
       memset(&texTemp, 0, sizeof(texTemp));
       texTemp.target = ctx->internal_target;
-      texTemp.format = src_tex->format;
+      texTemp.format = src_format;
       texTemp.last_level = 0;
       texTemp.width0 = srcW;
       texTemp.height0 = srcH;
@@ -439,7 +491,7 @@ util_blit_pixels_writemask(struct blit_state *ctx,
       pipe_resource_reference(&tex, NULL);
    }
    else {
-      u_sampler_view_default_template(&sv_templ, src_tex, src_tex->format);
+      u_sampler_view_default_template(&sv_templ, src_tex, src_format);
       sampler_view = pipe->create_sampler_view(pipe, src_tex, &sv_templ);
 
       if (!sampler_view) {
@@ -460,15 +512,15 @@ util_blit_pixels_writemask(struct blit_state *ctx,
       }
    }
 
-   dst_is_depth = util_format_is_depth_or_stencil(dst->format);
+   dst_is_depth = util_format_is_depth_or_stencil(dst_format);
 
    assert(screen->is_format_supported(screen, sampler_view->format, ctx->internal_target,
                                       sampler_view->texture->nr_samples,
-                                      PIPE_BIND_SAMPLER_VIEW, 0));
-   assert(screen->is_format_supported(screen, dst->format, ctx->internal_target,
-                                      dst->texture->nr_samples,
+                                      PIPE_BIND_SAMPLER_VIEW));
+   assert(screen->is_format_supported(screen, dst_format, ctx->internal_target,
+                                      dst_surface->texture->nr_samples,
                                       dst_is_depth ? PIPE_BIND_DEPTH_STENCIL :
-                                                     PIPE_BIND_RENDER_TARGET, 0));
+                                                     PIPE_BIND_RENDER_TARGET));
    /* save state (restored below) */
    cso_save_blend(ctx->cso);
    cso_save_depth_stencil_alpha(ctx->cso);
@@ -502,12 +554,12 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_single_sampler_done(ctx->cso);
 
    /* viewport */
-   ctx->viewport.scale[0] = 0.5f * dst->width;
-   ctx->viewport.scale[1] = 0.5f * dst->height;
+   ctx->viewport.scale[0] = 0.5f * dst_surface->width;
+   ctx->viewport.scale[1] = 0.5f * dst_surface->height;
    ctx->viewport.scale[2] = 0.5f;
    ctx->viewport.scale[3] = 1.0f;
-   ctx->viewport.translate[0] = 0.5f * dst->width;
-   ctx->viewport.translate[1] = 0.5f * dst->height;
+   ctx->viewport.translate[0] = 0.5f * dst_surface->width;
+   ctx->viewport.translate[1] = 0.5f * dst_surface->height;
    ctx->viewport.translate[2] = 0.5f;
    ctx->viewport.translate[3] = 0.0f;
    cso_set_viewport(ctx->cso, &ctx->viewport);
@@ -517,41 +569,30 @@ util_blit_pixels_writemask(struct blit_state *ctx,
 
    /* shaders */
    if (dst_is_depth) {
-      if (ctx->fs_depth == NULL)
-         ctx->fs_depth =
-            util_make_fragment_tex_shader_writedepth(pipe, TGSI_TEXTURE_2D,
-                                                     TGSI_INTERPOLATE_LINEAR);
-
-      cso_set_fragment_shader_handle(ctx->cso, ctx->fs_depth);
+      set_depth_fragment_shader(ctx);
    } else {
-      if (ctx->fs[writemask] == NULL)
-         ctx->fs[writemask] =
-            util_make_fragment_tex_shader_writemask(pipe, TGSI_TEXTURE_2D,
-                                                    TGSI_INTERPOLATE_LINEAR,
-                                                    writemask);
-
-      cso_set_fragment_shader_handle(ctx->cso, ctx->fs[writemask]);
+      set_fragment_shader(ctx, writemask);
    }
-   cso_set_vertex_shader_handle(ctx->cso, ctx->vs);
+   set_vertex_shader(ctx);
 
    /* drawing dest */
    memset(&fb, 0, sizeof(fb));
-   fb.width = dst->width;
-   fb.height = dst->height;
+   fb.width = dst_surface->width;
+   fb.height = dst_surface->height;
    if (dst_is_depth) {
-      fb.zsbuf = dst;
+      fb.zsbuf = dst_surface;
    } else {
       fb.nr_cbufs = 1;
-      fb.cbufs[0] = dst;
+      fb.cbufs[0] = dst_surface;
    }
    cso_set_framebuffer(ctx->cso, &fb);
 
    /* draw quad */
    offset = setup_vertex_data_tex(ctx,
-                                  (float) dstX0 / dst->width * 2.0f - 1.0f,
-                                  (float) dstY0 / dst->height * 2.0f - 1.0f,
-                                  (float) dstX1 / dst->width * 2.0f - 1.0f,
-                                  (float) dstY1 / dst->height * 2.0f - 1.0f,
+                                  (float) dstX0 / dst_surface->width * 2.0f - 1.0f,
+                                  (float) dstY0 / dst_surface->height * 2.0f - 1.0f,
+                                  (float) dstX1 / dst_surface->width * 2.0f - 1.0f,
+                                  (float) dstY1 / dst_surface->height * 2.0f - 1.0f,
                                   s0, t0,
                                   s1, t1,
                                   z);
@@ -576,6 +617,8 @@ util_blit_pixels_writemask(struct blit_state *ctx,
    cso_restore_vertex_buffers(ctx->cso);
 
    pipe_sampler_view_reference(&sampler_view, NULL);
+   if (dst_surface != dst)
+      pipe_surface_reference(&dst_surface, NULL);
 }
 
 
@@ -660,8 +703,7 @@ util_blit_pixels_tex(struct blit_state *ctx,
    assert(ctx->pipe->screen->is_format_supported(ctx->pipe->screen, dst->format,
                                                  PIPE_TEXTURE_2D,
                                                  dst->texture->nr_samples,
-                                                 PIPE_BIND_RENDER_TARGET,
-                                                 0));
+                                                 PIPE_BIND_RENDER_TARGET));
 
    /* save state (restored below) */
    cso_save_blend(ctx->cso);
@@ -706,8 +748,8 @@ util_blit_pixels_tex(struct blit_state *ctx,
    cso_set_fragment_sampler_views(ctx->cso, 1, &src_sampler_view);
 
    /* shaders */
-   cso_set_fragment_shader_handle(ctx->cso, ctx->fs[TGSI_WRITEMASK_XYZW]);
-   cso_set_vertex_shader_handle(ctx->cso, ctx->vs);
+   set_fragment_shader(ctx, TGSI_WRITEMASK_XYZW);
+   set_vertex_shader(ctx);
 
    /* drawing dest */
    memset(&fb, 0, sizeof(fb));

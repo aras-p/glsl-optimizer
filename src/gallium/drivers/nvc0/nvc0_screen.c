@@ -34,7 +34,7 @@ nvc0_screen_is_format_supported(struct pipe_screen *pscreen,
                                 enum pipe_format format,
                                 enum pipe_texture_target target,
                                 unsigned sample_count,
-                                unsigned bindings, unsigned geom_flags)
+                                unsigned bindings)
 {
    if (sample_count > 1)
       return FALSE;
@@ -111,7 +111,8 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_SHADER_STENCIL_EXPORT:
       return 0;
    case PIPE_CAP_PRIMITIVE_RESTART:
-   case PIPE_CAP_INSTANCED_DRAWING:
+   case PIPE_CAP_TGSI_INSTANCEID:
+   case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
       return 1;
    default:
       NOUVEAU_ERR("unknown PIPE_CAP %d\n", param);
@@ -206,7 +207,7 @@ nvc0_screen_destroy(struct pipe_screen *pscreen)
    nouveau_bo_ref(NULL, &screen->tls);
    nouveau_bo_ref(NULL, &screen->txc);
    nouveau_bo_ref(NULL, &screen->fence.bo);
-   nouveau_bo_ref(NULL, &screen->mp_stack_bo);
+   nouveau_bo_ref(NULL, &screen->vfetch_cache);
 
    nouveau_resource_destroy(&screen->text_heap);
 
@@ -495,14 +496,14 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    OUT_RING  (chan, 0);
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 17, 1 << 20,
-                        &screen->mp_stack_bo);
+                        &screen->vfetch_cache);
    if (ret)
       goto fail;
 
-   BEGIN_RING(chan, RING_3D_(0x17bc), 3);
-   OUT_RELOCh(chan, screen->mp_stack_bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
-   OUT_RELOCl(chan, screen->mp_stack_bo, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
-   OUT_RING  (chan, 1);
+   BEGIN_RING(chan, RING_3D(VERTEX_QUARANTINE_ADDRESS_HIGH), 3);
+   OUT_RELOCh(chan, screen->vfetch_cache, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
+   OUT_RELOCl(chan, screen->vfetch_cache, 0, NOUVEAU_BO_VRAM | NOUVEAU_BO_RDWR);
+   OUT_RING  (chan, 3);
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 17, 1 << 17, &screen->txc);
    if (ret)
@@ -634,7 +635,7 @@ nvc0_screen_make_buffers_resident(struct nvc0_screen *screen)
    nouveau_bo_validate(chan, screen->text, flags);
    nouveau_bo_validate(chan, screen->uniforms, flags);
    nouveau_bo_validate(chan, screen->txc, flags);
-   nouveau_bo_validate(chan, screen->mp_stack_bo, flags);
+   nouveau_bo_validate(chan, screen->vfetch_cache, flags);
 
    if (screen->cur_ctx && screen->cur_ctx->state.tls_required)
       nouveau_bo_validate(chan, screen->tls, flags);

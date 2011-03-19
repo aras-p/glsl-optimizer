@@ -109,7 +109,7 @@ egl_g3d_wait_fence_sync(struct egl_g3d_sync *gsync, EGLTimeKHR timeout)
 
       _eglUnlockMutex(&dpy->Mutex);
       /* no timed finish? */
-      screen->fence_finish(screen, fence, 0x0);
+      screen->fence_finish(screen, fence, PIPE_TIMEOUT_INFINITE);
       ret = EGL_CONDITION_SATISFIED_KHR;
       _eglLockMutex(&dpy->Mutex);
 
@@ -234,7 +234,7 @@ egl_g3d_client_wait_sync(_EGLDriver *drv, _EGLDisplay *dpy, _EGLSync *sync,
          struct egl_g3d_context *gctx = egl_g3d_context(ctx);
 
          if (gctx)
-            gctx->stctxi->flush(gctx->stctxi, PIPE_FLUSH_RENDER_CACHE , NULL);
+            gctx->stctxi->flush(gctx->stctxi, ST_FLUSH_FRONT, NULL);
       }
 
       if (timeout) {

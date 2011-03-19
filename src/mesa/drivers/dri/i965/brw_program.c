@@ -243,7 +243,6 @@ void brwInitFragProgFuncs( struct dd_function_table *functions )
 
    functions->NewShader = brw_new_shader;
    functions->NewShaderProgram = brw_new_shader_program;
-   functions->CompileShader = brw_compile_shader;
    functions->LinkShader = brw_link_shader;
 }
 

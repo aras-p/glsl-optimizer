@@ -349,7 +349,7 @@ ExaPrepareSolid(PixmapPtr pPixmap, int alu, Pixel planeMask, Pixel fg)
 
     if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
                                         priv->tex->target, 0,
-                                        PIPE_BIND_RENDER_TARGET, 0)) {
+                                        PIPE_BIND_RENDER_TARGET)) {
 	XORG_FALLBACK("format %s", util_format_name(priv->tex->format));
     }
 
@@ -430,12 +430,12 @@ ExaPrepareCopy(PixmapPtr pSrcPixmap, PixmapPtr pDstPixmap, int xdir,
 
     if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
                                         priv->tex->target, 0,
-                                        PIPE_BIND_RENDER_TARGET, 0))
+                                        PIPE_BIND_RENDER_TARGET))
 	XORG_FALLBACK("pDst format %s", util_format_name(priv->tex->format));
 
     if (!exa->scrn->is_format_supported(exa->scrn, src_priv->tex->format,
                                         src_priv->tex->target, 0,
-                                        PIPE_BIND_SAMPLER_VIEW, 0))
+                                        PIPE_BIND_SAMPLER_VIEW))
 	XORG_FALLBACK("pSrc format %s", util_format_name(src_priv->tex->format));
 
     exa->copy.src = src_priv;
@@ -630,7 +630,7 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
 
    if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
                                        priv->tex->target, 0,
-                                       PIPE_BIND_RENDER_TARGET, 0))
+                                       PIPE_BIND_RENDER_TARGET))
       XORG_FALLBACK("pDst format: %s", util_format_name(priv->tex->format));
 
    if (priv->picture_format != pDstPicture->format)
@@ -645,7 +645,7 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
 
       if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
                                           priv->tex->target, 0,
-                                          PIPE_BIND_SAMPLER_VIEW, 0))
+                                          PIPE_BIND_SAMPLER_VIEW))
          XORG_FALLBACK("pSrc format: %s", util_format_name(priv->tex->format));
 
       if (!picture_check_formats(priv, pSrcPicture))
@@ -662,7 +662,7 @@ ExaPrepareComposite(int op, PicturePtr pSrcPicture,
 
       if (!exa->scrn->is_format_supported(exa->scrn, priv->tex->format,
                                           priv->tex->target, 0,
-                                          PIPE_BIND_SAMPLER_VIEW, 0))
+                                          PIPE_BIND_SAMPLER_VIEW))
          XORG_FALLBACK("pMask format: %s", util_format_name(priv->tex->format));
 
       if (!picture_check_formats(priv, pMaskPicture))
@@ -1072,19 +1072,20 @@ xorg_gpu_surface(struct pipe_context *pipe, struct exa_pixmap_priv *priv)
 
 }
 
-void xorg_exa_flush(struct exa_context *exa, uint pipeFlushFlags,
+void xorg_exa_flush(struct exa_context *exa,
                     struct pipe_fence_handle **fence)
 {
-   exa->pipe->flush(exa->pipe, pipeFlushFlags, fence);
+   exa->pipe->flush(exa->pipe, fence);
 }
 
 void xorg_exa_finish(struct exa_context *exa)
 {
    struct pipe_fence_handle *fence = NULL;
 
-   xorg_exa_flush(exa, PIPE_FLUSH_RENDER_CACHE, &fence);
+   xorg_exa_flush(exa, &fence);
 
-   exa->pipe->screen->fence_finish(exa->pipe->screen, fence, 0);
+   exa->pipe->screen->fence_finish(exa->pipe->screen, fence,
+                                   PIPE_TIMEOUT_INFINITE);
    exa->pipe->screen->fence_reference(exa->pipe->screen, &fence, NULL);
 }
 

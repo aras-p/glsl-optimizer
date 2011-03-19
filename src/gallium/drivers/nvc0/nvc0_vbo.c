@@ -51,8 +51,6 @@ nvc0_vertex_state_create(struct pipe_context *pipe,
     struct translate_key transkey;
     unsigned i;
 
-    assert(num_elements);
-
     so = MALLOC(sizeof(*so) +
                 num_elements * sizeof(struct nvc0_vertex_element));
     if (!so)
@@ -265,7 +263,7 @@ nvc0_vertex_arrays_validate(struct nvc0_context *nvc0)
    struct nvc0_vertex_element *ve;
    unsigned i;
 
-   if (unlikely(vertex->need_conversion)) {
+   if (unlikely(vertex->need_conversion || NVC0_USING_EDGEFLAG(nvc0))) {
       nvc0->vbo_fifo = ~0;
       nvc0->vbo_user = 0;
    } else {

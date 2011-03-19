@@ -149,7 +149,7 @@ dri_unbind_context(__DRIcontext * cPriv)
 
    if (--ctx->bind_count == 0) {
       if (ctx->st == ctx->stapi->get_current(ctx->stapi)) {
-         ctx->st->flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+         ctx->st->flush(ctx->st, ST_FLUSH_FRONT, NULL);
          stapi->make_current(stapi, NULL, NULL, NULL);
          draw->context = NULL;
          read->context = NULL;
@@ -171,7 +171,7 @@ dri_make_current(__DRIcontext * cPriv,
    struct st_context_iface *old_st = ctx->stapi->get_current(ctx->stapi);
 
    if (old_st && old_st != ctx->st)
-      old_st->flush(old_st, PIPE_FLUSH_RENDER_CACHE, NULL);
+      old_st->flush(old_st, ST_FLUSH_FRONT, NULL);
 
    ++ctx->bind_count;
 

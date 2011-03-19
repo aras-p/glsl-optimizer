@@ -125,7 +125,8 @@ softpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 0;
    case PIPE_CAP_SHADER_STENCIL_EXPORT:
       return 1;
-   case PIPE_CAP_INSTANCED_DRAWING:
+   case PIPE_CAP_TGSI_INSTANCEID:
+   case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
       return 1;
    case PIPE_CAP_ARRAY_TEXTURES:
       return 1;
@@ -181,8 +182,7 @@ softpipe_is_format_supported( struct pipe_screen *screen,
                               enum pipe_format format,
                               enum pipe_texture_target target,
                               unsigned sample_count,
-                              unsigned bind,
-                              unsigned geom_flags )
+                              unsigned bind)
 {
    struct sw_winsys *winsys = softpipe_screen(screen)->winsys;
    const struct util_format_description *format_desc;

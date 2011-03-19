@@ -68,7 +68,7 @@ static void r600_copy_from_staging_texture(struct pipe_context *ctx, struct r600
 				  rtransfer->staging_texture,
 				  0, &sbox);
 
-	ctx->flush(ctx, 0, NULL);
+        ctx->flush(ctx, NULL);
 }
 
 unsigned r600_texture_get_offset(struct r600_resource_texture *rtex,
@@ -299,14 +299,14 @@ static boolean permit_hardware_blit(struct pipe_screen *screen,
 				res->format,
 				res->target,
 				res->nr_samples,
-				bind, 0))
+                                bind))
 		return FALSE;
 
 	if (!screen->is_format_supported(screen,
 				res->format,
 				res->target,
 				res->nr_samples,
-				PIPE_BIND_SAMPLER_VIEW, 0))
+                                PIPE_BIND_SAMPLER_VIEW))
 		return FALSE;
 
         switch (res->usage) {
@@ -349,19 +349,10 @@ static void r600_texture_destroy(struct pipe_screen *screen,
 	FREE(rtex);
 }
 
-static unsigned int r600_texture_is_referenced(struct pipe_context *context,
-						struct pipe_resource *texture,
-						unsigned level, int layer)
-{
-	/* FIXME */
-	return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
-
 static const struct u_resource_vtbl r600_texture_vtbl =
 {
 	r600_texture_get_handle,	/* get_handle */
 	r600_texture_destroy,		/* resource_destroy */
-	r600_texture_is_referenced,	/* is_resource_referenced */
 	r600_texture_get_transfer,	/* get_transfer */
 	r600_texture_transfer_destroy,	/* transfer_destroy */
 	r600_texture_transfer_map,	/* transfer_map */
@@ -423,10 +414,12 @@ struct pipe_resource *r600_texture_create(struct pipe_screen *screen,
 	/* Would like some magic "get_bool_option_once" routine.
 	 */
 	if (force_tiling == -1) {
-		struct r600_screen *rscreen = (struct r600_screen *)screen;
+#if 0
 		/* reenable when 2D tiling is fixed better */
-		/*if (r600_get_minor_version(rscreen->radeon) >= 9)
-			force_tiling = debug_get_bool_option("R600_TILING", TRUE);*/
+		struct r600_screen *rscreen = (struct r600_screen *)screen;
+		if (r600_get_minor_version(rscreen->radeon) >= 9)
+			force_tiling = debug_get_bool_option("R600_TILING", TRUE);
+#endif
 		force_tiling = debug_get_bool_option("R600_TILING", FALSE);
 	}
 
@@ -653,7 +646,7 @@ struct pipe_transfer* r600_texture_get_transfer(struct pipe_context *ctx,
 		if (usage & PIPE_TRANSFER_READ) {
 			r600_copy_to_staging_texture(ctx, trans);
 			/* Always referenced in the blit. */
-			ctx->flush(ctx, 0, NULL);
+                        ctx->flush(ctx, NULL);
 		}
 		return &trans->transfer;
 	}

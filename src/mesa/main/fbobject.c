@@ -384,6 +384,7 @@ _mesa_framebuffer_renderbuffer(struct gl_context *ctx,
          assert(att);
          _mesa_set_renderbuffer_attachment(ctx, att, rb);
       }
+      rb->AttachedAnytime = GL_TRUE;
    }
    else {
       _mesa_remove_attachment(ctx, att);
@@ -1115,6 +1116,31 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
 }
 
 
+/**
+ * Invalidate a renderbuffer attachment.  Called from _mesa_HashWalk().
+ */
+static void
+invalidate_rb(GLuint key, void *data, void *userData)
+{
+   struct gl_framebuffer *fb = (struct gl_framebuffer *) data;
+   struct gl_renderbuffer *rb = (struct gl_renderbuffer *) userData;
+
+   /* If this is a user-created FBO */
+   if (fb->Name) {
+      GLuint i;
+      for (i = 0; i < BUFFER_COUNT; i++) {
+         struct gl_renderbuffer_attachment *att = fb->Attachment + i;
+         if (att->Type == GL_RENDERBUFFER &&
+             att->Renderbuffer == rb) {
+            /* Mark fb status as indeterminate to force re-validation */
+            fb->_Status = 0;
+            return;
+         }
+      }
+   }
+}
+
+
 /** sentinal value, see below */
 #define NO_SAMPLES 1000
 
@@ -1207,12 +1233,10 @@ renderbuffer_storage(GLenum target, GLenum internalFormat,
       rb->NumSamples = 0;
    }
 
-   /*
-   test_framebuffer_completeness(ctx, fb);
-   */
-   /* XXX if this renderbuffer is attached anywhere, invalidate attachment
-    * points???
-    */
+   /* Invalidate the framebuffers the renderbuffer is attached in. */
+   if (rb->AttachedAnytime) {
+      _mesa_HashWalk(ctx->Shared->FrameBuffers, invalidate_rb, rb);
+   }
 }
 
 

@@ -681,7 +681,7 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mp
       util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4,
                                  empty_start_instance, empty_num_instances);
 
-   renderer->pipe->flush(renderer->pipe, PIPE_FLUSH_RENDER_CACHE, buffer->fence);
+   renderer->pipe->flush(renderer->pipe, buffer->fence);
 
    /* Next time we get this surface it may have new ref frames */
    pipe_surface_reference(&buffer->surface, NULL);

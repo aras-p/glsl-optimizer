@@ -140,7 +140,7 @@ static VGboolean renderer_can_support(struct renderer *renderer,
    struct pipe_screen *screen = renderer->pipe->screen;
 
    return screen->is_format_supported(screen,
-         res->format, res->target, 0, bindings, 0);
+         res->format, res->target, 0, bindings);
 }
 
 /**
@@ -1463,11 +1463,11 @@ void renderer_copy_surface(struct renderer *ctx,
    }
 
    assert(screen->is_format_supported(screen, src->format, PIPE_TEXTURE_2D,
-                                      0, PIPE_BIND_SAMPLER_VIEW, 0));
+                                      0, PIPE_BIND_SAMPLER_VIEW));
    assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
-                                      0, PIPE_BIND_SAMPLER_VIEW, 0));
+                                      0, PIPE_BIND_SAMPLER_VIEW));
    assert(screen->is_format_supported(screen, dst->format, PIPE_TEXTURE_2D,
-                                      0, PIPE_BIND_RENDER_TARGET, 0));
+                                      0, PIPE_BIND_RENDER_TARGET));
 
    /*
     * XXX for now we're always creating a temporary texture.

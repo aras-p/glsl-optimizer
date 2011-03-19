@@ -2406,6 +2406,11 @@ print_program(struct prog_instruction *mesa_instructions,
    }
 }
 
+
+/**
+ * Count resources used by the given gpu program (number of texture
+ * samplers, etc).
+ */
 static void
 count_resources(struct gl_program *prog)
 {
@@ -2428,6 +2433,55 @@ count_resources(struct gl_program *prog)
 
    _mesa_update_shader_textures_used(prog);
 }
+
+
+/**
+ * Check if the given vertex/fragment/shader program is within the
+ * resource limits of the context (number of texture units, etc).
+ * If any of those checks fail, record a linker error.
+ *
+ * XXX more checks are needed...
+ */
+static void
+check_resources(const struct gl_context *ctx,
+                struct gl_shader_program *shader_program,
+                struct gl_program *prog)
+{
+   switch (prog->Target) {
+   case GL_VERTEX_PROGRAM_ARB:
+      if (_mesa_bitcount(prog->SamplersUsed) >
+          ctx->Const.MaxVertexTextureImageUnits) {
+         fail_link(shader_program, "Too many vertex shader texture samplers");
+      }
+      if (prog->Parameters->NumParameters > MAX_UNIFORMS) {
+         fail_link(shader_program, "Too many vertex shader constants");
+      }
+      break;
+   case MESA_GEOMETRY_PROGRAM:
+      if (_mesa_bitcount(prog->SamplersUsed) >
+          ctx->Const.MaxGeometryTextureImageUnits) {
+         fail_link(shader_program, "Too many geometry shader texture samplers");
+      }
+      if (prog->Parameters->NumParameters >
+          MAX_GEOMETRY_UNIFORM_COMPONENTS / 4) {
+         fail_link(shader_program, "Too many geometry shader constants");
+      }
+      break;
+   case GL_FRAGMENT_PROGRAM_ARB:
+      if (_mesa_bitcount(prog->SamplersUsed) >
+          ctx->Const.MaxTextureImageUnits) {
+         fail_link(shader_program, "Too many fragment shader texture samplers");
+      }
+      if (prog->Parameters->NumParameters > MAX_UNIFORMS) {
+         fail_link(shader_program, "Too many fragment shader constants");
+      }
+      break;
+   default:
+      _mesa_problem(ctx, "unexpected program type in check_resources()");
+   }
+}
+
+
 
 struct uniform_sort {
    struct gl_uniform *u;
@@ -3026,6 +3080,8 @@ get_mesa_program(struct gl_context *ctx,
    do_set_program_inouts(shader->ir, prog);
    count_resources(prog);
 
+   check_resources(ctx, shader_program, prog);
+
    _mesa_reference_program(ctx, &shader->Program, prog);
 
    if ((ctx->Shader.Flags & GLSL_NO_OPT) == 0) {
@@ -3036,21 +3092,6 @@ get_mesa_program(struct gl_context *ctx,
 }
 
 extern "C" {
-
-/**
- * Called via ctx->Driver.CompilerShader().
- * This is a no-op.
- * XXX can we remove the ctx->Driver.CompileShader() hook?
- */
-GLboolean
-_mesa_ir_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
-{
-   assert(shader->CompileStatus);
-   (void) ctx;
-
-   return GL_TRUE;
-}
-
 
 /**
  * Link a shader.
@@ -3237,11 +3278,6 @@ _mesa_glsl_compile_shader(struct gl_context *ctx, struct gl_shader *shader)
    reparent_ir(shader->ir, shader->ir);
 
    ralloc_free(state);
-
-   if (shader->CompileStatus) {
-      if (!ctx->Driver.CompileShader(ctx, shader))
-	 shader->CompileStatus = GL_FALSE;
-   }
 }
 
 

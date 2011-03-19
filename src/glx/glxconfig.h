@@ -100,6 +100,9 @@ struct glx_config {
     GLint bindToMipmapTexture;
     GLint bindToTextureTargets;
     GLint yInverted;
+
+    /* EXT_framebuffer_sRGB */
+    GLint sRGBCapable;
 };
 
 #define __GLX_MIN_CONFIG_PROPS	18

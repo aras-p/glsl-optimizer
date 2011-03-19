@@ -30,6 +30,7 @@
 #include "nouveau_fbo.h"
 #include "nouveau_util.h"
 
+#include "main/pbo.h"
 #include "main/texobj.h"
 #include "main/texstore.h"
 #include "main/texformat.h"

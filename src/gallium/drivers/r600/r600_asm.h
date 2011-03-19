@@ -188,7 +188,6 @@ struct r600_bc {
 
 /* eg_asm.c */
 int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf);
-void eg_cf_vtx(struct r600_vertex_element *ve);
 
 /* r600_asm.c */
 int r600_bc_init(struct r600_bc *bc, enum radeon_family family);
@@ -206,6 +205,7 @@ void r600_bc_dump(struct r600_bc *bc);
 int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, struct r600_vertex_element *ve);
 
 /* r700_asm.c */
+void r700_bc_cf_vtx_build(uint32_t *bytecode, const struct r600_bc_cf *cf);
 int r700_bc_alu_build(struct r600_bc *bc, struct r600_bc_alu *alu, unsigned id);
 
 #endif

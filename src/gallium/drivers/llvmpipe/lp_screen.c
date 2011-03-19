@@ -164,7 +164,8 @@ llvmpipe_get_param(struct pipe_screen *screen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_DEPTH_CLAMP:
       return 0;
-   case PIPE_CAP_INSTANCED_DRAWING:
+   case PIPE_CAP_TGSI_INSTANCEID:
+   case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
       return 1;
    default:
       return 0;
@@ -224,8 +225,7 @@ llvmpipe_is_format_supported( struct pipe_screen *_screen,
                               enum pipe_format format,
                               enum pipe_texture_target target,
                               unsigned sample_count,
-                              unsigned bind,
-                              unsigned geom_flags )
+                              unsigned bind)
 {
    struct llvmpipe_screen *screen = llvmpipe_screen(_screen);
    struct sw_winsys *winsys = screen->winsys;
@@ -348,10 +348,9 @@ llvmpipe_fence_reference(struct pipe_screen *screen,
 /**
  * Has the fence been executed/finished?
  */
-static int
+static boolean
 llvmpipe_fence_signalled(struct pipe_screen *screen,
-                         struct pipe_fence_handle *fence,
-                         unsigned flag)
+                         struct pipe_fence_handle *fence)
 {
    struct lp_fence *f = (struct lp_fence *) fence;
    return lp_fence_signalled(f);
@@ -361,15 +360,15 @@ llvmpipe_fence_signalled(struct pipe_screen *screen,
 /**
  * Wait for the fence to finish.
  */
-static int
+static boolean
 llvmpipe_fence_finish(struct pipe_screen *screen,
                       struct pipe_fence_handle *fence_handle,
-                      unsigned flag)
+                      uint64_t timeout)
 {
    struct lp_fence *f = (struct lp_fence *) fence_handle;
 
    lp_fence_wait(f);
-   return 0;
+   return TRUE;
 }
 
 

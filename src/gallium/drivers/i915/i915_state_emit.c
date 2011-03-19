@@ -119,7 +119,7 @@ validate_immediate(struct i915_context *i915, unsigned *batch_space)
                      1 << I915_IMMEDIATE_S5 | 1 << I915_IMMEDIATE_S6) &
                     i915->immediate_dirty;
 
-   if (i915->immediate_dirty & (1 << I915_IMMEDIATE_S0))
+   if (i915->immediate_dirty & (1 << I915_IMMEDIATE_S0) && i915->vbo)
       i915->validation_buffers[i915->num_validation_buffers++] = i915->vbo;
 
    *batch_space = 1 + util_bitcount(dirty);
@@ -173,25 +173,31 @@ emit_dynamic(struct i915_context *i915)
 static void
 validate_static(struct i915_context *i915, unsigned *batch_space)
 {
-   *batch_space = 2 + 5; /* including DRAW_RECT */
+   *batch_space = 0;
 
-   if (i915->current.cbuf_bo) {
+   if (i915->current.cbuf_bo && (i915->static_dirty & I915_DST_BUF_COLOR)) {
       i915->validation_buffers[i915->num_validation_buffers++]
          = i915->current.cbuf_bo;
       *batch_space += 3;
    }
 
-   if (i915->current.depth_bo) {
+   if (i915->current.depth_bo && (i915->static_dirty & I915_DST_BUF_DEPTH)) {
       i915->validation_buffers[i915->num_validation_buffers++]
          = i915->current.depth_bo;
       *batch_space += 3;
    }
+
+   if (i915->static_dirty & I915_DST_VARS)
+      *batch_space += 2;
+
+   if (i915->static_dirty & I915_DST_RECT)
+      *batch_space += 5;
 }
 
 static void
 emit_static(struct i915_context *i915)
 {
-   if (i915->current.cbuf_bo) {
+   if (i915->current.cbuf_bo && (i915->static_dirty & I915_DST_BUF_COLOR)) {
       OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
       OUT_BATCH(i915->current.cbuf_flags);
       OUT_RELOC(i915->current.cbuf_bo,
@@ -201,7 +207,7 @@ emit_static(struct i915_context *i915)
 
    /* What happens if no zbuf??
     */
-   if (i915->current.depth_bo) {
+   if (i915->current.depth_bo && (i915->static_dirty & I915_DST_BUF_DEPTH)) {
       OUT_BATCH(_3DSTATE_BUF_INFO_CMD);
       OUT_BATCH(i915->current.depth_flags);
       OUT_RELOC(i915->current.depth_bo,
@@ -209,7 +215,7 @@ emit_static(struct i915_context *i915)
                 0);
    }
 
-   {
+   if (i915->static_dirty & I915_DST_VARS) {
       OUT_BATCH(_3DSTATE_DST_BUF_VARS_CMD);
       OUT_BATCH(i915->current.dst_buf_vars);
    }
@@ -273,7 +279,7 @@ emit_sampler(struct i915_context *i915)
    if (i915->current.sampler_enable_nr) {
       int i;
 
-      OUT_BATCH( _3DSTATE_SAMPLER_STATE | 
+      OUT_BATCH( _3DSTATE_SAMPLER_STATE |
                  (3 * i915->current.sampler_enable_nr) );
 
       OUT_BATCH( i915->current.sampler_enable_flags );
@@ -355,11 +361,13 @@ emit_program(struct i915_context *i915)
 static void
 emit_draw_rect(struct i915_context *i915)
 {
-   OUT_BATCH(_3DSTATE_DRAW_RECT_CMD);
-   OUT_BATCH(DRAW_RECT_DIS_DEPTH_OFS);
-   OUT_BATCH(i915->current.draw_offset);
-   OUT_BATCH(i915->current.draw_size);
-   OUT_BATCH(i915->current.draw_offset);
+   if (i915->static_dirty & I915_DST_RECT) {
+      OUT_BATCH(_3DSTATE_DRAW_RECT_CMD);
+      OUT_BATCH(DRAW_RECT_DIS_DEPTH_OFS);
+      OUT_BATCH(i915->current.draw_offset);
+      OUT_BATCH(i915->current.draw_size);
+      OUT_BATCH(i915->current.draw_offset);
+   }
 }
 
 static boolean
@@ -405,6 +413,8 @@ i915_emit_hardware_state(struct i915_context *i915 )
    unsigned batch_space;
    uintptr_t save_ptr;
 
+   assert(i915->dirty == 0);
+
    if (I915_DBG_ON(DBG_ATOMS))
       i915_dump_hardware_dirty(i915, __FUNCTION__);
 
@@ -444,5 +454,6 @@ i915_emit_hardware_state(struct i915_context *i915 )
    i915->hardware_dirty = 0;
    i915->immediate_dirty = 0;
    i915->dynamic_dirty = 0;
+   i915->static_dirty = 0;
    i915->flush_dirty = 0;
 }

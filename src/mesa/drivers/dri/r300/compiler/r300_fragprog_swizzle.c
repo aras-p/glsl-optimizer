@@ -98,9 +98,6 @@ static int r300_swizzle_is_native(rc_opcode opcode, struct rc_src_register reg)
 	unsigned int relevant;
 	int j;
 
-	if (reg.Abs)
-		reg.Negate = RC_MASK_NONE;
-
 	if (opcode == RC_OPCODE_KIL ||
 	    opcode == RC_OPCODE_TEX ||
 	    opcode == RC_OPCODE_TXB ||
@@ -140,9 +137,6 @@ static void r300_swizzle_split(
 		struct rc_src_register src, unsigned int mask,
 		struct rc_swizzle_split * split)
 {
-	if (src.Abs)
-		src.Negate = RC_MASK_NONE;
-
 	split->NumPhases = 0;
 
 	while(mask) {

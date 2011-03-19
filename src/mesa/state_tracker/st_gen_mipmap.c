@@ -87,7 +87,7 @@ st_render_mipmap(struct st_context *st,
    /* XXX should probably kill this and always use util_gen_mipmap
       since this implements a sw fallback as well */
    if (!screen->is_format_supported(screen, psv->format, psv->texture->target,
-                                    0, PIPE_BIND_RENDER_TARGET, 0)) {
+                                    0, PIPE_BIND_RENDER_TARGET)) {
       return FALSE;
    }
 
@@ -204,12 +204,10 @@ fallback_generate_mipmap(struct gl_context *ctx, GLenum target,
       _mesa_is_format_compressed(texObj->Image[face][baseLevel]->TexFormat);
 
    if (compressed) {
-      if (texObj->Image[face][baseLevel]->TexFormat == MESA_FORMAT_SIGNED_RED_RGTC1 ||
-	  texObj->Image[face][baseLevel]->TexFormat == MESA_FORMAT_SIGNED_RG_RGTC2)
-         datatype = GL_FLOAT;
-      else
-         datatype = GL_UNSIGNED_BYTE;
-      
+      GLenum type =
+         _mesa_get_format_datatype(texObj->Image[face][baseLevel]->TexFormat);
+
+      datatype = type == GL_UNSIGNED_NORMALIZED ? GL_UNSIGNED_BYTE : GL_FLOAT;
       comps = 4;
    }
    else {

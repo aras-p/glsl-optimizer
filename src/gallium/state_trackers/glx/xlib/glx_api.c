@@ -1367,8 +1367,8 @@ glXSwapBuffers( Display *dpy, GLXDrawable drawable )
 /*** GLX_MESA_copy_sub_buffer ***/
 
 PUBLIC void
-glXCopySubBufferMESA( Display *dpy, GLXDrawable drawable,
-                           int x, int y, int width, int height )
+glXCopySubBufferMESA(Display *dpy, GLXDrawable drawable,
+                     int x, int y, int width, int height)
 {
    XMesaBuffer buffer = XMesaFindBuffer( dpy, drawable );
    if (buffer) {
@@ -1718,8 +1718,8 @@ glXGetClientString( Display *dpy, int name )
 
 
 PUBLIC int
-glXGetFBConfigAttrib( Display *dpy, GLXFBConfig config,
-                           int attribute, int *value )
+glXGetFBConfigAttrib(Display *dpy, GLXFBConfig config,
+                     int attribute, int *value)
 {
    XMesaVisual v = (XMesaVisual) config;
    (void) dpy;
@@ -1763,8 +1763,8 @@ glXGetFBConfigs( Display *dpy, int screen, int *nelements )
 
 
 PUBLIC GLXFBConfig *
-glXChooseFBConfig( Display *dpy, int screen,
-                        const int *attribList, int *nitems )
+glXChooseFBConfig(Display *dpy, int screen,
+                  const int *attribList, int *nitems)
 {
    XMesaVisual xmvis;
 
@@ -1814,8 +1814,8 @@ glXGetVisualFromFBConfig( Display *dpy, GLXFBConfig config )
 
 
 PUBLIC GLXWindow
-glXCreateWindow( Display *dpy, GLXFBConfig config, Window win,
-                      const int *attribList )
+glXCreateWindow(Display *dpy, GLXFBConfig config, Window win,
+                const int *attribList)
 {
    XMesaVisual xmvis = (XMesaVisual) config;
    XMesaBuffer xmbuf;
@@ -1845,8 +1845,8 @@ glXDestroyWindow( Display *dpy, GLXWindow window )
 
 /* XXX untested */
 PUBLIC GLXPixmap
-glXCreatePixmap( Display *dpy, GLXFBConfig config, Pixmap pixmap,
-                      const int *attribList )
+glXCreatePixmap(Display *dpy, GLXFBConfig config, Pixmap pixmap,
+                const int *attribList)
 {
    XMesaVisual v = (XMesaVisual) config;
    XMesaBuffer b;
@@ -1965,8 +1965,7 @@ glXDestroyPixmap( Display *dpy, GLXPixmap pixmap )
 
 
 PUBLIC GLXPbuffer
-glXCreatePbuffer( Display *dpy, GLXFBConfig config,
-                       const int *attribList )
+glXCreatePbuffer(Display *dpy, GLXFBConfig config, const int *attribList)
 {
    XMesaVisual xmvis = (XMesaVisual) config;
    XMesaBuffer xmbuf;
@@ -2038,8 +2037,8 @@ glXDestroyPbuffer( Display *dpy, GLXPbuffer pbuf )
 
 
 PUBLIC void
-glXQueryDrawable( Display *dpy, GLXDrawable draw, int attribute,
-                       unsigned int *value )
+glXQueryDrawable(Display *dpy, GLXDrawable draw, int attribute,
+                 unsigned int *value)
 {
    GLuint width, height;
    XMesaBuffer xmbuf = XMesaFindBuffer(dpy, draw);
@@ -2085,7 +2084,7 @@ glXQueryDrawable( Display *dpy, GLXDrawable draw, int attribute,
 
 PUBLIC GLXContext
 glXCreateNewContext( Display *dpy, GLXFBConfig config,
-                          int renderType, GLXContext shareList, Bool direct )
+                     int renderType, GLXContext shareList, Bool direct )
 {
    GLXContext glxCtx;
    GLXContext shareCtx = shareList;
@@ -2156,8 +2155,7 @@ glXSelectEvent( Display *dpy, GLXDrawable drawable, unsigned long mask )
 
 
 PUBLIC void
-glXGetSelectedEvent( Display *dpy, GLXDrawable drawable,
-                          unsigned long *mask )
+glXGetSelectedEvent(Display *dpy, GLXDrawable drawable, unsigned long *mask)
 {
    XMesaBuffer xmbuf = XMesaFindBuffer(dpy, drawable);
    if (xmbuf)
@@ -2209,7 +2207,8 @@ glXWaitVideoSyncSGI(int divisor, int remainder, unsigned int *count)
 /*** GLX_SGI_make_current_read ***/
 
 PUBLIC Bool
-glXMakeCurrentReadSGI(Display *dpy, GLXDrawable draw, GLXDrawable read, GLXContext ctx)
+glXMakeCurrentReadSGI(Display *dpy, GLXDrawable draw, GLXDrawable read,
+                      GLXContext ctx)
 {
    return glXMakeContextCurrent( dpy, draw, read, ctx );
 }
@@ -2227,7 +2226,8 @@ glXGetCurrentReadDrawableSGI(void)
 #if defined(_VL_H)
 
 PUBLIC GLXVideoSourceSGIX
-glXCreateGLXVideoSourceSGIX(Display *dpy, int screen, VLServer server, VLPath path, int nodeClass, VLNode drainNode)
+glXCreateGLXVideoSourceSGIX(Display *dpy, int screen, VLServer server,
+                            VLPath path, int nodeClass, VLNode drainNode)
 {
    (void) dpy;
    (void) screen;
@@ -2273,7 +2273,8 @@ glXImportContextEXT(Display *dpy, GLXContextID contextID)
 }
 
 PUBLIC int
-glXQueryContextInfoEXT(Display *dpy, GLXContext context, int attribute, int *value)
+glXQueryContextInfoEXT(Display *dpy, GLXContext context, int attribute,
+                       int *value)
 {
    (void) dpy;
    (void) context;
@@ -2287,20 +2288,24 @@ glXQueryContextInfoEXT(Display *dpy, GLXContext context, int attribute, int *val
 /*** GLX_SGIX_fbconfig ***/
 
 PUBLIC int
-glXGetFBConfigAttribSGIX(Display *dpy, GLXFBConfigSGIX config, int attribute, int *value)
+glXGetFBConfigAttribSGIX(Display *dpy, GLXFBConfigSGIX config,
+                         int attribute, int *value)
 {
    return glXGetFBConfigAttrib(dpy, config, attribute, value);
 }
 
 PUBLIC GLXFBConfigSGIX *
-glXChooseFBConfigSGIX(Display *dpy, int screen, int *attrib_list, int *nelements)
+glXChooseFBConfigSGIX(Display *dpy, int screen, int *attrib_list,
+                      int *nelements)
 {
-   return (GLXFBConfig *) glXChooseFBConfig(dpy, screen, attrib_list, nelements);
+   return (GLXFBConfig *) glXChooseFBConfig(dpy, screen,
+                                            attrib_list, nelements);
 }
 
 
 PUBLIC GLXPixmap
-glXCreateGLXPixmapWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config, Pixmap pixmap)
+glXCreateGLXPixmapWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config,
+                                 Pixmap pixmap)
 {
    XMesaVisual xmvis = (XMesaVisual) config;
    XMesaBuffer xmbuf = XMesaCreatePixmapBuffer(xmvis, pixmap, 0);
@@ -2309,7 +2314,9 @@ glXCreateGLXPixmapWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config, Pixmap pi
 
 
 PUBLIC GLXContext
-glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config, int render_type, GLXContext share_list, Bool direct)
+glXCreateContextWithConfigSGIX(Display *dpy, GLXFBConfigSGIX config,
+                               int render_type, GLXContext share_list,
+                               Bool direct)
 {
    XMesaVisual xmvis = (XMesaVisual) config;
    GLXContext glxCtx;
@@ -2362,8 +2369,8 @@ glXGetFBConfigFromVisualSGIX(Display *dpy, XVisualInfo *vis)
 
 PUBLIC GLXPbufferSGIX
 glXCreateGLXPbufferSGIX(Display *dpy, GLXFBConfigSGIX config,
-                             unsigned int width, unsigned int height,
-                             int *attribList)
+                        unsigned int width, unsigned int height,
+                        int *attribList)
 {
    XMesaVisual xmvis = (XMesaVisual) config;
    XMesaBuffer xmbuf;
@@ -2410,7 +2417,8 @@ glXDestroyGLXPbufferSGIX(Display *dpy, GLXPbufferSGIX pbuf)
 
 
 PUBLIC int
-glXQueryGLXPbufferSGIX(Display *dpy, GLXPbufferSGIX pbuf, int attribute, unsigned int *value)
+glXQueryGLXPbufferSGIX(Display *dpy, GLXPbufferSGIX pbuf, int attribute,
+                       unsigned int *value)
 {
    const XMesaBuffer xmbuf = XMesaFindBuffer(dpy, pbuf);
 
@@ -2454,7 +2462,8 @@ glXSelectEventSGIX(Display *dpy, GLXDrawable drawable, unsigned long mask)
 
 
 PUBLIC void
-glXGetSelectedEventSGIX(Display *dpy, GLXDrawable drawable, unsigned long *mask)
+glXGetSelectedEventSGIX(Display *dpy, GLXDrawable drawable,
+                        unsigned long *mask)
 {
    XMesaBuffer xmbuf = XMesaFindBuffer(dpy, drawable);
    if (xmbuf) {
@@ -2482,7 +2491,8 @@ glXCushionSGI(Display *dpy, Window win, float cushion)
 /*** GLX_SGIX_video_resize ***/
 
 PUBLIC int
-glXBindChannelToWindowSGIX(Display *dpy, int screen, int channel , Window window)
+glXBindChannelToWindowSGIX(Display *dpy, int screen, int channel,
+                           Window window)
 {
    (void) dpy;
    (void) screen;
@@ -2492,7 +2502,8 @@ glXBindChannelToWindowSGIX(Display *dpy, int screen, int channel , Window window
 }
 
 PUBLIC int
-glXChannelRectSGIX(Display *dpy, int screen, int channel, int x, int y, int w, int h)
+glXChannelRectSGIX(Display *dpy, int screen, int channel,
+                   int x, int y, int w, int h)
 {
    (void) dpy;
    (void) screen;
@@ -2505,7 +2516,8 @@ glXChannelRectSGIX(Display *dpy, int screen, int channel, int x, int y, int w, i
 }
 
 PUBLIC int
-glXQueryChannelRectSGIX(Display *dpy, int screen, int channel, int *x, int *y, int *w, int *h)
+glXQueryChannelRectSGIX(Display *dpy, int screen, int channel,
+                        int *x, int *y, int *w, int *h)
 {
    (void) dpy;
    (void) screen;
@@ -2518,7 +2530,8 @@ glXQueryChannelRectSGIX(Display *dpy, int screen, int channel, int *x, int *y, i
 }
 
 PUBLIC int
-glXQueryChannelDeltasSGIX(Display *dpy, int screen, int channel, int *dx, int *dy, int *dw, int *dh)
+glXQueryChannelDeltasSGIX(Display *dpy, int screen, int channel,
+                          int *dx, int *dy, int *dw, int *dh)
 {
    (void) dpy;
    (void) screen;
@@ -2546,7 +2559,8 @@ glXChannelRectSyncSGIX(Display *dpy, int screen, int channel, GLenum synctype)
 
 #if defined(_DM_BUFFER_H_)
 PUBLIC Bool
-glXAssociateDMPbufferSGIX(Display *dpy, GLXPbufferSGIX pbuffer, DMparams *params, DMbuffer dmbuffer)
+glXAssociateDMPbufferSGIX(Display *dpy, GLXPbufferSGIX pbuffer,
+                          DMparams *params, DMbuffer dmbuffer)
 {
    (void) dpy;
    (void) pbuffer;
@@ -2593,7 +2607,8 @@ glXQueryMaxSwapBarriersSGIX(Display *dpy, int screen, int *max)
 /*** GLX_SUN_get_transparent_index ***/
 
 PUBLIC Status
-glXGetTransparentIndexSUN(Display *dpy, Window overlay, Window underlay, long *pTransparent)
+glXGetTransparentIndexSUN(Display *dpy, Window overlay, Window underlay,
+                          long *pTransparent)
 {
    (void) dpy;
    (void) overlay;

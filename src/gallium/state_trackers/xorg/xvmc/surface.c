@@ -226,20 +226,14 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    memset(&template, 0, sizeof(struct pipe_resource));
    template.target = PIPE_TEXTURE_2D;
    template.format = (enum pipe_format)vpipe->get_param(vpipe, PIPE_CAP_DECODE_TARGET_PREFERRED_FORMAT);
+   if (!vpipe->is_format_supported(vpipe, template.format,
+                                   PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET)) {
+      FREE(surface_priv);
+      return BadAlloc;
+   }
    template.last_level = 0;
-   if (vpipe->is_format_supported(vpipe, template.format,
-                                  PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET,
-                                  PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO)) {
-      template.width0 = context->width;
-      template.height0 = context->height;
-   }
-   else {
-      assert(vpipe->is_format_supported(vpipe, template.format,
-                                       PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET,
-                                       PIPE_TEXTURE_GEOM_NON_SQUARE));
-      template.width0 = util_next_power_of_two(context->width);
-      template.height0 = util_next_power_of_two(context->height);
-   }
+   template.width0 = util_next_power_of_two(context->width);
+   template.height0 = util_next_power_of_two(context->height);
    template.depth0 = 1;
    template.array_size = 1;
    template.usage = PIPE_USAGE_DEFAULT;

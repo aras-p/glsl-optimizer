@@ -49,7 +49,7 @@
 /*
  * pipe_context
  */
-static void r600_flush(struct pipe_context *ctx, unsigned flags,
+static void r600_flush(struct pipe_context *ctx,
 			struct pipe_fence_handle **fence)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
@@ -281,18 +281,28 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_BLEND_EQUATION_SEPARATE:
 	case PIPE_CAP_SM3:
 	case PIPE_CAP_TEXTURE_SWIZZLE:
-	case PIPE_CAP_INDEP_BLEND_ENABLE:
 	case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
 	case PIPE_CAP_DEPTH_CLAMP:
 	case PIPE_CAP_SHADER_STENCIL_EXPORT:
-	case PIPE_CAP_INSTANCED_DRAWING:
+	case PIPE_CAP_TGSI_INSTANCEID:
+	case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
 		return 1;
+	case PIPE_CAP_INDEP_BLEND_ENABLE:
+		/* R600 doesn't support per-MRT blends */
+		if (family == CHIP_R600)
+			return 0;
+		else
+			return 1;
 
 	/* Unsupported features (boolean caps). */
 	case PIPE_CAP_STREAM_OUTPUT:
 	case PIPE_CAP_PRIMITIVE_RESTART:
 	case PIPE_CAP_INDEP_BLEND_FUNC: /* FIXME allow this */
-		return 0;
+		/* R600 doesn't support per-MRT blends */
+		if (family == CHIP_R600)
+			return 0;
+		else
+			return 0;
 
 	case PIPE_CAP_ARRAY_TEXTURES:
 		/* fix once the CS checker upstream is fixed */
@@ -394,7 +404,7 @@ static int r600_get_shader_param(struct pipe_screen* pscreen, unsigned shader, e
 	case PIPE_SHADER_CAP_MAX_ADDRS:
 		return 1; //max native address registers/* FIXME Isn't this equal to TEMPS? */
 	case PIPE_SHADER_CAP_MAX_CONSTS:
-		return 256; //max native parameters
+		return R600_MAX_CONST_BUFFER_SIZE;
 	case PIPE_SHADER_CAP_MAX_CONST_BUFFERS:
 		return R600_MAX_CONST_BUFFERS;
 	case PIPE_SHADER_CAP_MAX_PREDS:
@@ -417,8 +427,7 @@ static boolean r600_is_format_supported(struct pipe_screen* screen,
 					enum pipe_format format,
 					enum pipe_texture_target target,
 					unsigned sample_count,
-					unsigned usage,
-					unsigned geom_flags)
+                                        unsigned usage)
 {
 	unsigned retval = 0;
 	if (target >= PIPE_MAX_TEXTURE_TYPES) {

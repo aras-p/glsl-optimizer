@@ -10717,5 +10717,5 @@ __indirect_get_proc_address(const char *name)
 #endif /* GLX_SHARED_GLAPI */
 
 
-#undef FASTCALL
-#undef NOINLINE
+#  undef FASTCALL
+#  undef NOINLINE

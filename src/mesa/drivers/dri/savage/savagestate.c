@@ -29,8 +29,9 @@
 #include "main/enums.h"
 #include "main/macros.h"
 #include "main/dd.h"
-
 #include "main/mm.h"
+#include "main/state.h"
+
 #include "savagedd.h"
 #include "savagecontext.h"
 
@@ -869,7 +870,7 @@ static void savageUpdateSpecular_s4(struct gl_context *ctx) {
     savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
     uint32_t drawLocalCtrl = imesa->regs.s4.drawLocalCtrl.ui;
 
-    if (NEED_SECONDARY_COLOR(ctx)) {
+    if (_mesa_need_secondary_color(ctx)) {
 	imesa->regs.s4.drawLocalCtrl.ni.specShadeEn = GL_TRUE;
     } else {
 	imesa->regs.s4.drawLocalCtrl.ni.specShadeEn = GL_FALSE;
@@ -883,7 +884,7 @@ static void savageUpdateSpecular_s3d(struct gl_context *ctx) {
     savageContextPtr imesa = SAVAGE_CONTEXT( ctx );
     uint32_t drawCtrl = imesa->regs.s3d.drawCtrl.ui;
 
-    if (NEED_SECONDARY_COLOR(ctx)) {
+    if (_mesa_need_secondary_color(ctx)) {
 	imesa->regs.s3d.drawCtrl.ni.specShadeEn = GL_TRUE;
     } else {
 	imesa->regs.s3d.drawCtrl.ni.specShadeEn = GL_FALSE;

@@ -138,11 +138,11 @@ nvfx_miptree_create_skeleton(struct pipe_screen *pscreen, const struct pipe_reso
 
         // on our current driver (and the driver too), format support does not depend on geometry, so don't bother computing it
         // TODO: may want to revisit this
-        if(!pscreen->is_format_supported(pscreen, pt->format, pt->target, 0, PIPE_BIND_RENDER_TARGET, 0))
+        if(!pscreen->is_format_supported(pscreen, pt->format, pt->target, 0, PIPE_BIND_RENDER_TARGET))
                 mt->base.base.bind &=~ PIPE_BIND_RENDER_TARGET;
-        if(!pscreen->is_format_supported(pscreen, pt->format, pt->target, 0, PIPE_BIND_SAMPLER_VIEW, 0))
+        if(!pscreen->is_format_supported(pscreen, pt->format, pt->target, 0, PIPE_BIND_SAMPLER_VIEW))
                 mt->base.base.bind &=~ PIPE_BIND_SAMPLER_VIEW;
-        if(!pscreen->is_format_supported(pscreen, pt->format, pt->target, 0, PIPE_BIND_DEPTH_STENCIL, 0))
+        if(!pscreen->is_format_supported(pscreen, pt->format, pt->target, 0, PIPE_BIND_DEPTH_STENCIL))
                 mt->base.base.bind &=~ PIPE_BIND_DEPTH_STENCIL;
 
         return mt;

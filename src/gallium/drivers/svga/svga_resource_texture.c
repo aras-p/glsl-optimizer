@@ -48,31 +48,6 @@
 #define SVGA3D_SURFACE_HINT_SCANOUT (1 << 9)
 
 
-static unsigned int
-svga_texture_is_referenced( struct pipe_context *pipe,
-                            struct pipe_resource *texture,
-                            unsigned level, int layer)
-{
-   struct svga_texture *tex = svga_texture(texture);
-   struct svga_screen *ss = svga_screen(pipe->screen);
-
-   /**
-    * The screen does not cache texture writes.
-    */
-
-   if (!tex->handle || ss->sws->surface_is_flushed(ss->sws, tex->handle))
-      return PIPE_UNREFERENCED;
-
-   /**
-    * sws->surface_is_flushed() does not distinguish between read references
-    * and write references. So assume a reference is both.
-    */
-
-   return PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE;
-}
-
-
-
 /*
  * Helper function and arrays
  */
@@ -156,7 +131,8 @@ static INLINE void
 svga_transfer_dma_band(struct svga_context *svga,
                        struct svga_transfer *st,
                        SVGA3dTransferType transfer,
-                       unsigned y, unsigned h, unsigned srcy)
+                       unsigned y, unsigned h, unsigned srcy,
+                       SVGA3dSurfaceDMAFlags flags)
 {
    struct svga_texture *texture = svga_texture(st->base.resource); 
    SVGA3dCopyBox box;
@@ -192,10 +168,10 @@ svga_transfer_dma_band(struct svga_context *svga,
                 util_format_get_blocksize(texture->b.b.format) * 8 /
                 (util_format_get_blockwidth(texture->b.b.format)*util_format_get_blockheight(texture->b.b.format)));
 
-   ret = SVGA3D_SurfaceDMA(svga->swc, st, transfer, &box, 1);
+   ret = SVGA3D_SurfaceDMA(svga->swc, st, transfer, &box, 1, flags);
    if(ret != PIPE_OK) {
       svga_context_flush(svga, NULL);
-      ret = SVGA3D_SurfaceDMA(svga->swc, st, transfer, &box, 1);
+      ret = SVGA3D_SurfaceDMA(svga->swc, st, transfer, &box, 1, flags);
       assert(ret == PIPE_OK);
    }
 }
@@ -204,7 +180,8 @@ svga_transfer_dma_band(struct svga_context *svga,
 static INLINE void
 svga_transfer_dma(struct svga_context *svga,
                   struct svga_transfer *st,
-                  SVGA3dTransferType transfer)
+                  SVGA3dTransferType transfer,
+                  SVGA3dSurfaceDMAFlags flags)
 {
    struct svga_texture *texture = svga_texture(st->base.resource); 
    struct svga_screen *screen = svga_screen(texture->b.b.screen);
@@ -223,7 +200,9 @@ svga_transfer_dma(struct svga_context *svga,
    if(!st->swbuf) {
       /* Do the DMA transfer in a single go */
 
-      svga_transfer_dma_band(svga, st, transfer, st->base.box.y, st->base.box.height, 0);
+      svga_transfer_dma_band(svga, st, transfer,
+                             st->base.box.y, st->base.box.height, 0,
+                             flags);
 
       if(transfer == SVGA3D_READ_HOST_VRAM) {
          svga_context_flush(svga, &fence);
@@ -269,7 +248,14 @@ svga_transfer_dma(struct svga_context *svga,
             }
          }
 
-         svga_transfer_dma_band(svga, st, transfer, y, h, srcy);
+         svga_transfer_dma_band(svga, st, transfer, y, h, srcy, flags);
+
+         /*
+          * Prevent the texture contents to be discarded on the next band
+          * upload.
+          */
+
+         flags.discard = FALSE;
 
          if(transfer == SVGA3D_READ_HOST_VRAM) {
             svga_context_flush(svga, &fence);
@@ -398,8 +384,11 @@ svga_texture_get_transfer(struct pipe_context *pipe,
          goto no_swbuf;
    }
 
-   if (usage & PIPE_TRANSFER_READ)
-      svga_transfer_dma(svga, st, SVGA3D_READ_HOST_VRAM);
+   if (usage & PIPE_TRANSFER_READ) {
+      SVGA3dSurfaceDMAFlags flags;
+      memset(&flags, 0, sizeof flags);
+      svga_transfer_dma(svga, st, SVGA3D_READ_HOST_VRAM, flags);
+   }
 
    return &st->base;
 
@@ -458,7 +447,17 @@ svga_texture_transfer_destroy(struct pipe_context *pipe,
    struct svga_transfer *st = svga_transfer(transfer);
 
    if (st->base.usage & PIPE_TRANSFER_WRITE) {
-      svga_transfer_dma(svga, st, SVGA3D_WRITE_HOST_VRAM);
+      SVGA3dSurfaceDMAFlags flags;
+
+      memset(&flags, 0, sizeof flags);
+      if (transfer->usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE) {
+         flags.discard = TRUE;
+      }
+      if (transfer->usage & PIPE_TRANSFER_UNSYNCHRONIZED) {
+         flags.unsynchronized = TRUE;
+      }
+
+      svga_transfer_dma(svga, st, SVGA3D_WRITE_HOST_VRAM, flags);
       ss->texture_timestamp++;
       tex->view_age[transfer->level] = ++(tex->age);
       if (transfer->resource->target == PIPE_TEXTURE_CUBE)
@@ -481,7 +480,6 @@ struct u_resource_vtbl svga_texture_vtbl =
 {
    svga_texture_get_handle,	      /* get_handle */
    svga_texture_destroy,	      /* resource_destroy */
-   svga_texture_is_referenced,	      /* is_resource_referenced */
    svga_texture_get_transfer,	      /* get_transfer */
    svga_texture_transfer_destroy,     /* transfer_destroy */
    svga_texture_transfer_map,	      /* transfer_map */

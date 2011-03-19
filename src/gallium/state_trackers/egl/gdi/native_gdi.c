@@ -285,7 +285,7 @@ fill_color_formats(struct native_display *ndpy, enum pipe_format formats[8])
 
    for (i = 0; i < Elements(candidates); i++) {
       if (screen->is_format_supported(screen, candidates[i],
-               PIPE_TEXTURE_2D, 0, PIPE_BIND_RENDER_TARGET, 0))
+               PIPE_TEXTURE_2D, 0, PIPE_BIND_RENDER_TARGET))
          formats[count++] = candidates[i];
    }
 

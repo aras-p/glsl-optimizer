@@ -277,7 +277,7 @@ stw_make_current(
             return TRUE;
          }
       } else {
-         curctx->st->flush(curctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+         curctx->st->flush(curctx->st, ST_FLUSH_FRONT, NULL);
       }
    }
 
@@ -351,11 +351,7 @@ stw_flush_current_locked( struct stw_framebuffer *fb )
    struct stw_context *ctx = stw_current_context();
 
    if (ctx && ctx->current_framebuffer == fb) {
-      ctx->st->flush(ctx->st,
-            PIPE_FLUSH_RENDER_CACHE | 
-            PIPE_FLUSH_SWAPBUFFERS |
-            PIPE_FLUSH_FRAME,
-            NULL);
+      ctx->st->flush(ctx->st, ST_FLUSH_FRONT, NULL);
    }
 }
 

@@ -64,6 +64,7 @@ struct brw_wm_prog_key {
    GLuint linear_color:1;  /**< linear interpolation vs perspective interp */
    GLuint nr_color_regions:5;
    GLuint render_to_fbo:1;
+   GLuint alpha_test:1;
 
    GLbitfield proj_attrib_mask; /**< one bit per fragment program attribute */
    GLuint shadowtex_mask:16;
@@ -467,8 +468,6 @@ void emit_xpd(struct brw_compile *p,
 	      const struct brw_reg *arg0,
 	      const struct brw_reg *arg1);
 
-GLboolean brw_compile_shader(struct gl_context *ctx,
-			     struct gl_shader *shader);
 GLboolean brw_link_shader(struct gl_context *ctx, struct gl_shader_program *prog);
 struct gl_shader *brw_new_shader(struct gl_context *ctx, GLuint name, GLuint type);
 struct gl_shader_program *brw_new_shader_program(struct gl_context *ctx, GLuint name);

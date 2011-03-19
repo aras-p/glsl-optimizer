@@ -2621,7 +2621,7 @@ _mesa_texstore_rgb332(TEXSTORE_PARAMS)
  * Texstore for _mesa_texformat_a8, _mesa_texformat_l8, _mesa_texformat_i8.
  */
 static GLboolean
-_mesa_texstore_a8(TEXSTORE_PARAMS)
+_mesa_texstore_unorm8(TEXSTORE_PARAMS)
 {
    const GLuint texelBytes = _mesa_get_format_bytes(dstFormat);
    const GLenum baseFormat = _mesa_get_format_base_format(dstFormat);
@@ -3981,7 +3981,7 @@ _mesa_texstore_sl8(TEXSTORE_PARAMS)
    newDstFormat = MESA_FORMAT_L8;
 
    /* _mesa_textore_a8 handles luminance8 too */
-   k = _mesa_texstore_a8(ctx, dims, baseInternalFormat,
+   k = _mesa_texstore_unorm8(ctx, dims, baseInternalFormat,
                          newDstFormat, dstAddr,
                          dstXoffset, dstYoffset, dstZoffset,
                          dstRowStride, dstImageOffsets,
@@ -4059,16 +4059,16 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_AL1616, _mesa_texstore_unorm1616 },
    { MESA_FORMAT_AL1616_REV, _mesa_texstore_unorm1616 },
    { MESA_FORMAT_RGB332, _mesa_texstore_rgb332 },
-   { MESA_FORMAT_A8, _mesa_texstore_a8 },
+   { MESA_FORMAT_A8, _mesa_texstore_unorm8 },
    { MESA_FORMAT_A16, _mesa_texstore_unorm16 },
-   { MESA_FORMAT_L8, _mesa_texstore_a8 },
+   { MESA_FORMAT_L8, _mesa_texstore_unorm8 },
    { MESA_FORMAT_L16, _mesa_texstore_unorm16 },
-   { MESA_FORMAT_I8, _mesa_texstore_a8 },
+   { MESA_FORMAT_I8, _mesa_texstore_unorm8 },
    { MESA_FORMAT_I16, _mesa_texstore_unorm16 },
    { MESA_FORMAT_CI8, _mesa_texstore_ci8 },
    { MESA_FORMAT_YCBCR, _mesa_texstore_ycbcr },
    { MESA_FORMAT_YCBCR_REV, _mesa_texstore_ycbcr },
-   { MESA_FORMAT_R8, _mesa_texstore_a8 },
+   { MESA_FORMAT_R8, _mesa_texstore_unorm8 },
    { MESA_FORMAT_RG88, _mesa_texstore_unorm88 },
    { MESA_FORMAT_RG88_REV, _mesa_texstore_unorm88 },
    { MESA_FORMAT_R16, _mesa_texstore_unorm16 },
@@ -4135,7 +4135,14 @@ texstore_funcs[MESA_FORMAT_COUNT] =
    { MESA_FORMAT_RED_RGTC1, _mesa_texstore_red_rgtc1 },
    { MESA_FORMAT_SIGNED_RED_RGTC1, _mesa_texstore_signed_red_rgtc1 },
    { MESA_FORMAT_RG_RGTC2, _mesa_texstore_rg_rgtc2 },
-   { MESA_FORMAT_SIGNED_RG_RGTC2, _mesa_texstore_signed_rg_rgtc2 }
+   { MESA_FORMAT_SIGNED_RG_RGTC2, _mesa_texstore_signed_rg_rgtc2 },
+
+   /* Re-use the R/RG texstore functions.
+    * The code is generic enough to handle LATC too. */
+   { MESA_FORMAT_L_LATC1, _mesa_texstore_red_rgtc1 },
+   { MESA_FORMAT_SIGNED_L_LATC1, _mesa_texstore_signed_red_rgtc1 },
+   { MESA_FORMAT_LA_LATC2, _mesa_texstore_rg_rgtc2 },
+   { MESA_FORMAT_SIGNED_LA_LATC2, _mesa_texstore_signed_rg_rgtc2 }
 };
 
 

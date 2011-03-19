@@ -35,6 +35,7 @@
 #include "pipe/p_state.h"
 
 #define R300_MAX_CMDBUF_DWORDS (16 * 1024)
+#define R300_FLUSH_ASYNC       (1 << 0)
 
 struct winsys_handle;
 struct r300_winsys_screen;
@@ -265,15 +266,9 @@ struct r300_winsys_screen {
      * Flush a command stream.
      *
      * \param cs        A command stream to flush.
+     * \param flags,    R300_FLUSH_ASYNC or 0.
      */
-    void (*cs_flush)(struct r300_winsys_cs *cs);
-
-    /**
-     * Wait until the last flush is completed.
-     *
-     * \param cs        A command stream.
-     */
-    void (*cs_sync_flush)(struct r300_winsys_cs *cs);
+    void (*cs_flush)(struct r300_winsys_cs *cs, unsigned flags);
 
     /**
      * Set a flush callback which is called from winsys when flush is
@@ -284,7 +279,7 @@ struct r300_winsys_screen {
      * \param user      A user pointer that will be passed to the flush callback.
      */
     void (*cs_set_flush)(struct r300_winsys_cs *cs,
-                         void (*flush)(void *),
+                         void (*flush)(void *ctx, unsigned flags),
                          void *user);
 
     /**

@@ -149,11 +149,6 @@ intel_region_alloc_internal(struct intel_screen *screen,
 {
    struct intel_region *region;
 
-   if (buffer == NULL) {
-      _DBG("%s <-- NULL\n", __FUNCTION__);
-      return NULL;
-   }
-
    region = calloc(sizeof(*region), 1);
    if (region == NULL)
       return region;
@@ -180,6 +175,7 @@ intel_region_alloc(struct intel_screen *screen,
    drm_intel_bo *buffer;
    unsigned long flags = 0;
    unsigned long aligned_pitch;
+   struct intel_region *region;
 
    if (expect_accelerated_upload)
       flags |= BO_ALLOC_FOR_RENDER;
@@ -187,9 +183,17 @@ intel_region_alloc(struct intel_screen *screen,
    buffer = drm_intel_bo_alloc_tiled(screen->bufmgr, "region",
 				     width, height, cpp,
 				     &tiling, &aligned_pitch, flags);
+   if (buffer == NULL)
+      return NULL;
 
-   return intel_region_alloc_internal(screen, cpp, width, height,
-				      aligned_pitch / cpp, tiling, buffer);
+   region = intel_region_alloc_internal(screen, cpp, width, height,
+                                        aligned_pitch / cpp, tiling, buffer);
+   if (region == NULL) {
+      drm_intel_bo_unreference(buffer);
+      return NULL;
+   }
+
+   return region;
 }
 
 GLboolean

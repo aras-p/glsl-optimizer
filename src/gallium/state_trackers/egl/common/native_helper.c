@@ -333,7 +333,7 @@ resource_surface_throttle(struct resource_surface *rsurf)
    struct pipe_fence_handle *fence = swap_fences_pop_front(rsurf);
 
    if (fence) {
-      (void) screen->fence_finish(screen, fence, 0);
+      (void) screen->fence_finish(screen, fence, PIPE_TIMEOUT_INFINITE);
       screen->fence_reference(screen, &fence, NULL);
       return TRUE;
    }
@@ -352,7 +352,7 @@ resource_surface_flush(struct resource_surface *rsurf,
    if (!pipe)
       return FALSE;
 
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, &fence);
+   pipe->flush(pipe, &fence);
    if (fence == NULL)
       return FALSE;
 

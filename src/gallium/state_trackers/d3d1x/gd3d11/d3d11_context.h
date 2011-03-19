@@ -1823,7 +1823,7 @@ changed:
 	virtual void STDMETHODCALLTYPE Flush(void)
 	{
 		SYNCHRONIZED;
-		pipe->flush(pipe, PIPE_FLUSH_FRAME, 0);
+                pipe->flush(pipe, 0);
 	}
 
 	/* In Direct3D 10, if the reference count of an object drops to 0, it is automatically

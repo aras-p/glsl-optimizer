@@ -59,7 +59,7 @@
     } while(0)
 
 /* total number of offsets below */
-#define _gloffset_COUNT 891
+#define _gloffset_COUNT 892
 
 #define _gloffset_NewList 0
 #define _gloffset_EndList 1
@@ -948,17 +948,18 @@
 #define _gloffset_ActiveProgramEXT 881
 #define _gloffset_CreateShaderProgramEXT 882
 #define _gloffset_UseShaderProgramEXT 883
-#define _gloffset_StencilFuncSeparateATI 884
-#define _gloffset_ProgramEnvParameters4fvEXT 885
-#define _gloffset_ProgramLocalParameters4fvEXT 886
-#define _gloffset_GetQueryObjecti64vEXT 887
-#define _gloffset_GetQueryObjectui64vEXT 888
-#define _gloffset_EGLImageTargetRenderbufferStorageOES 889
-#define _gloffset_EGLImageTargetTexture2DOES 890
+#define _gloffset_TextureBarrierNV 884
+#define _gloffset_StencilFuncSeparateATI 885
+#define _gloffset_ProgramEnvParameters4fvEXT 886
+#define _gloffset_ProgramLocalParameters4fvEXT 887
+#define _gloffset_GetQueryObjecti64vEXT 888
+#define _gloffset_GetQueryObjectui64vEXT 889
+#define _gloffset_EGLImageTargetRenderbufferStorageOES 890
+#define _gloffset_EGLImageTargetTexture2DOES 891
 
 #else /* !_GLAPI_USE_REMAP_TABLE */
 
-#define driDispatchRemapTable_size 483
+#define driDispatchRemapTable_size 484
 extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 
 #define AttachShader_remap_index 0
@@ -1437,13 +1438,14 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define ActiveProgramEXT_remap_index 473
 #define CreateShaderProgramEXT_remap_index 474
 #define UseShaderProgramEXT_remap_index 475
-#define StencilFuncSeparateATI_remap_index 476
-#define ProgramEnvParameters4fvEXT_remap_index 477
-#define ProgramLocalParameters4fvEXT_remap_index 478
-#define GetQueryObjecti64vEXT_remap_index 479
-#define GetQueryObjectui64vEXT_remap_index 480
-#define EGLImageTargetRenderbufferStorageOES_remap_index 481
-#define EGLImageTargetTexture2DOES_remap_index 482
+#define TextureBarrierNV_remap_index 476
+#define StencilFuncSeparateATI_remap_index 477
+#define ProgramEnvParameters4fvEXT_remap_index 478
+#define ProgramLocalParameters4fvEXT_remap_index 479
+#define GetQueryObjecti64vEXT_remap_index 480
+#define GetQueryObjectui64vEXT_remap_index 481
+#define EGLImageTargetRenderbufferStorageOES_remap_index 482
+#define EGLImageTargetTexture2DOES_remap_index 483
 
 #define _gloffset_AttachShader driDispatchRemapTable[AttachShader_remap_index]
 #define _gloffset_CreateProgram driDispatchRemapTable[CreateProgram_remap_index]
@@ -1921,6 +1923,7 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define _gloffset_ActiveProgramEXT driDispatchRemapTable[ActiveProgramEXT_remap_index]
 #define _gloffset_CreateShaderProgramEXT driDispatchRemapTable[CreateShaderProgramEXT_remap_index]
 #define _gloffset_UseShaderProgramEXT driDispatchRemapTable[UseShaderProgramEXT_remap_index]
+#define _gloffset_TextureBarrierNV driDispatchRemapTable[TextureBarrierNV_remap_index]
 #define _gloffset_StencilFuncSeparateATI driDispatchRemapTable[StencilFuncSeparateATI_remap_index]
 #define _gloffset_ProgramEnvParameters4fvEXT driDispatchRemapTable[ProgramEnvParameters4fvEXT_remap_index]
 #define _gloffset_ProgramLocalParameters4fvEXT driDispatchRemapTable[ProgramLocalParameters4fvEXT_remap_index]
@@ -4583,6 +4586,9 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_UseShaderProgramEXT(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLuint)), _gloffset_UseShaderProgramEXT, parameters)
 #define GET_UseShaderProgramEXT(disp) GET_by_offset(disp, _gloffset_UseShaderProgramEXT)
 #define SET_UseShaderProgramEXT(disp, fn) SET_by_offset(disp, _gloffset_UseShaderProgramEXT, fn)
+#define CALL_TextureBarrierNV(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(void)), _gloffset_TextureBarrierNV, parameters)
+#define GET_TextureBarrierNV(disp) GET_by_offset(disp, _gloffset_TextureBarrierNV)
+#define SET_TextureBarrierNV(disp, fn) SET_by_offset(disp, _gloffset_TextureBarrierNV, fn)
 #define CALL_StencilFuncSeparateATI(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum, GLint, GLuint)), _gloffset_StencilFuncSeparateATI, parameters)
 #define GET_StencilFuncSeparateATI(disp) GET_by_offset(disp, _gloffset_StencilFuncSeparateATI)
 #define SET_StencilFuncSeparateATI(disp, fn) SET_by_offset(disp, _gloffset_StencilFuncSeparateATI, fn)

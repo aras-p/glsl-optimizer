@@ -31,6 +31,7 @@
 #include "main/mtypes.h"
 #include "main/macros.h"
 #include "main/formats.h"
+#include "main/state.h"
 #include "utils.h"
 #include "dri_util.h"
 

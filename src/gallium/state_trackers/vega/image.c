@@ -257,7 +257,7 @@ struct vg_image * image_create(VGImageFormat format,
    image->sampler.normalized_coords = 1;
 
    assert(screen->is_format_supported(screen, pformat, PIPE_TEXTURE_2D,
-                                      0, PIPE_BIND_SAMPLER_VIEW, 0));
+                                      0, PIPE_BIND_SAMPLER_VIEW));
 
    memset(&pt, 0, sizeof(pt));
    pt.target = PIPE_TEXTURE_2D;
@@ -518,8 +518,6 @@ void image_copy(struct vg_image *dst, VGint dx, VGint dy,
       vg_set_error(ctx, VG_ILLEGAL_ARGUMENT_ERROR);
       return;
    }
-   /* make sure rendering has completed */
-   ctx->pipe->flush(ctx->pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
    vg_copy_texture(ctx, dst->sampler_view->texture, dst->x + dx, dst->y + dy,
                    src->sampler_view, src->x + sx, src->y + sy, width, height);
 }
@@ -569,9 +567,6 @@ void image_set_pixels(VGint dx, VGint dy,
    struct pipe_surface *surf, surf_tmpl;
    struct st_renderbuffer *strb = ctx->draw_buffer->strb;
 
-   /* make sure rendering has completed */
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
-
    memset(&surf_tmpl, 0, sizeof(surf_tmpl));
    u_surface_default_template(&surf_tmpl, image_texture(src),
                               0 /* no bind flag - not a surface*/);
@@ -594,9 +589,6 @@ void image_get_pixels(struct vg_image *dst, VGint dx, VGint dy,
 
    /* flip the y coordinates */
    /*dy = dst->height - dy - height;*/
-
-   /* make sure rendering has completed */
-   pipe->flush(pipe, PIPE_FLUSH_RENDER_CACHE, NULL);
 
    memset(&surf_tmpl, 0, sizeof(surf_tmpl));
    u_surface_default_template(&surf_tmpl, image_texture(dst),

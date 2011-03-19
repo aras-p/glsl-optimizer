@@ -76,7 +76,7 @@ display_front_buffer(struct st_context *st)
 }
 
 
-void st_flush( struct st_context *st, uint pipeFlushFlags,
+void st_flush( struct st_context *st,
                struct pipe_fence_handle **fence )
 {
    FLUSH_CURRENT(st->ctx, 0);
@@ -89,7 +89,7 @@ void st_flush( struct st_context *st, uint pipeFlushFlags,
    util_blit_flush(st->blit);
    util_gen_mipmap_flush(st->gen_mipmap);
 
-   st->pipe->flush( st->pipe, pipeFlushFlags, fence );
+   st->pipe->flush( st->pipe, fence );
 }
 
 
@@ -100,10 +100,11 @@ void st_finish( struct st_context *st )
 {
    struct pipe_fence_handle *fence = NULL;
 
-   st_flush(st, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, &fence);
+   st_flush(st, &fence);
 
    if(fence) {
-      st->pipe->screen->fence_finish(st->pipe->screen, fence, 0);
+      st->pipe->screen->fence_finish(st->pipe->screen, fence,
+                                     PIPE_TIMEOUT_INFINITE);
       st->pipe->screen->fence_reference(st->pipe->screen, &fence, NULL);
    }
 }
@@ -122,7 +123,7 @@ static void st_glFlush(struct gl_context *ctx)
     * synchronization issues.  Calling finish() here will just hide
     * problems that need to be fixed elsewhere.
     */
-   st_flush(st, PIPE_FLUSH_RENDER_CACHE | PIPE_FLUSH_FRAME, NULL);
+   st_flush(st, NULL);
 
    if (is_front_buffer_dirty(st)) {
       display_front_buffer(st);

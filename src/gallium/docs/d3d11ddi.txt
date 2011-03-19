@@ -453,8 +453,8 @@ SetVertexPipelineOutput (D3D10.1+ only)
 SetViewports
 	- Gallium lacks support for multiple geometry-shader-selectable viewports D3D11 has
 
-ShaderResourceViewReadAfterWriteHazard -> flush(PIPE_FLUSH_RENDER_CACHE)
-	- Gallium does not support specifying this per-render-target/view
+ShaderResourceViewReadAfterWriteHazard
+	- Gallium lacks support for this
 
 SoSetTargets -> set_stream_output_buffers
 

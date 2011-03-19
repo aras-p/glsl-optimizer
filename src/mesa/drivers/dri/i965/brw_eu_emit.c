@@ -874,8 +874,8 @@ struct brw_instruction *brw_IF(struct brw_compile *p, GLuint execute_size)
 }
 
 struct brw_instruction *
-brw_IF_gen6(struct brw_compile *p, uint32_t conditional,
-	    struct brw_reg src0, struct brw_reg src1)
+gen6_IF(struct brw_compile *p, uint32_t conditional,
+	struct brw_reg src0, struct brw_reg src1)
 {
    struct brw_instruction *insn;
 
@@ -1061,8 +1061,8 @@ struct brw_instruction *brw_BREAK(struct brw_compile *p, int pop_count)
    return insn;
 }
 
-struct brw_instruction *brw_CONT_gen6(struct brw_compile *p,
-				      struct brw_instruction *do_insn)
+struct brw_instruction *gen6_CONT(struct brw_compile *p,
+				  struct brw_instruction *do_insn)
 {
    struct brw_instruction *insn;
    int br = 2;
@@ -1844,7 +1844,7 @@ void brw_fb_WRITE(struct brw_compile *p,
        /* headerless version, just submit color payload */
        src0 = brw_message_reg(msg_reg_nr);
 
-       msg_type = BRW_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE_GEN6;
+       msg_type = GEN6_DATAPORT_WRITE_MESSAGE_RENDER_TARGET_WRITE;
    } else {
       insn->header.destreg__conditionalmod = msg_reg_nr;
 

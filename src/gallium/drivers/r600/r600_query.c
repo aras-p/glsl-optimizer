@@ -62,7 +62,7 @@ static boolean r600_get_query_result(struct pipe_context *ctx,
 	struct r600_query *rquery = (struct r600_query *)query;
 
 	if (rquery->num_results) {
-		ctx->flush(ctx, 0, NULL);
+                ctx->flush(ctx, NULL);
 	}
 	return r600_context_query_result(&rctx->ctx, (struct r600_query *)query, wait, vresult);
 }

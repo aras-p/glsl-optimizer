@@ -541,7 +541,7 @@ is_format_supported(struct pipe_screen *screen,
 {
    return screen->is_format_supported(screen, fmt, PIPE_TEXTURE_2D, sample_count,
          (is_color) ? PIPE_BIND_RENDER_TARGET :
-         PIPE_BIND_DEPTH_STENCIL, 0);
+         PIPE_BIND_DEPTH_STENCIL);
 }
 
 static boolean

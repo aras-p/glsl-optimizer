@@ -431,6 +431,9 @@ typedef enum
    /* GL_ARB_instanced_arrays */
    OPCODE_VERTEX_ATTRIB_DIVISOR,
 
+   /* GL_NV_texture_barrier */
+   OPCODE_TEXTURE_BARRIER_NV,
+
    /* The following three are meta instructions */
    OPCODE_ERROR,                /* raise compiled-in error */
    OPCODE_CONTINUE,
@@ -7031,6 +7034,18 @@ save_VertexAttribDivisor(GLuint index, GLuint divisor)
 }
 
 
+/* GL_NV_texture_barrier */
+static void
+save_TextureBarrierNV()
+{
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   alloc_instruction(ctx, OPCODE_TEXTURE_BARRIER_NV, 0);
+   if (ctx->ExecuteFlag) {
+      CALL_TextureBarrierNV(ctx->Exec, ());
+   }
+}
+
 
 /**
  * Save an error-generating command into display list.
@@ -8205,6 +8220,10 @@ execute_list(struct gl_context *ctx, GLuint list)
          case OPCODE_VERTEX_ATTRIB_DIVISOR:
             /* GL_ARB_instanced_arrays */
             CALL_VertexAttribDivisorARB(ctx->Exec, (n[1].ui, n[2].ui));
+            break;
+
+         case OPCODE_TEXTURE_BARRIER_NV:
+            CALL_TextureBarrierNV(ctx->Exec, ());
             break;
 
          case OPCODE_CONTINUE:
@@ -9880,6 +9899,9 @@ _mesa_create_save_table(void)
 
    /* GL_ARB_instanced_arrays */
    SET_VertexAttribDivisorARB(table, save_VertexAttribDivisor);
+
+   /* GL_NV_texture_barrier */
+   SET_TextureBarrierNV(table, save_TextureBarrierNV);
 
    /* GL_ARB_draw_buffer_blend */
    SET_BlendFunciARB(table, save_BlendFunci);

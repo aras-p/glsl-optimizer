@@ -43,11 +43,6 @@ struct pipe_transfer;
 struct pipe_box;
 
 /*
- * Call before use.
- */
-void trace_dump_init(void);
-
-/*
  * Low level dumping controls.
  *
  * Opening the trace file and checking if that is opened.

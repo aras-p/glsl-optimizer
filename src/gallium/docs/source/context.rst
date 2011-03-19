@@ -408,6 +408,16 @@ The width0 is redefined to ``MAX2(width0, offset+size)``.
 
 
 
+.. _texture_barrier
+
+texture_barrier
+%%%%%%%%%%%%%%%
+
+This function flushes all pending writes to the currently-set surfaces and
+invalidates all read caches of the currently-set samplers.
+
+
+
 .. _pipe_transfer:
 
 PIPE_TRANSFER

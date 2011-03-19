@@ -24,6 +24,7 @@
 #include "util/u_format.h"
 #include "util/u_format_s3tc.h"
 #include "util/u_memory.h"
+#include "os/os_time.h"
 
 #include "r300_context.h"
 #include "r300_texture.h"
@@ -112,6 +113,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_TEXTURE_MIRROR_CLAMP:
         case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
         case PIPE_CAP_BLEND_EQUATION_SEPARATE:
+        case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
             return 1;
         case PIPE_CAP_TEXTURE_SWIZZLE:
             return util_format_s3tc_enabled ? r300screen->caps.dxtc_swizzle : 1;
@@ -124,11 +126,14 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_DEPTH_CLAMP:
         case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
         case PIPE_CAP_SHADER_STENCIL_EXPORT:
-        case PIPE_CAP_STREAM_OUTPUT:
-        case PIPE_CAP_PRIMITIVE_RESTART:
-        case PIPE_CAP_INSTANCED_DRAWING:
         case PIPE_CAP_ARRAY_TEXTURES:
             return 0;
+
+        /* SWTCL-only features. */
+        case PIPE_CAP_STREAM_OUTPUT:
+        case PIPE_CAP_PRIMITIVE_RESTART:
+        case PIPE_CAP_TGSI_INSTANCEID:
+            return !r300screen->caps.has_tcl;
 
         /* Texturing. */
         case PIPE_CAP_MAX_TEXTURE_IMAGE_UNITS:
@@ -301,8 +306,7 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
                                         enum pipe_format format,
                                         enum pipe_texture_target target,
                                         unsigned sample_count,
-                                        unsigned usage,
-                                        unsigned geom_flags)
+                                        unsigned usage)
 {
     struct r300_winsys_screen *rws = r300_screen(screen)->rws;
     uint32_t retval = 0;
@@ -314,9 +318,13 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
                               format == PIPE_FORMAT_B10G10R10A2_UNORM ||
                               format == PIPE_FORMAT_R10SG10SB10SA2U_NORM;
     boolean is_ati1n = format == PIPE_FORMAT_RGTC1_UNORM ||
-                       format == PIPE_FORMAT_RGTC1_SNORM;
+                       format == PIPE_FORMAT_RGTC1_SNORM ||
+                       format == PIPE_FORMAT_LATC1_UNORM ||
+                       format == PIPE_FORMAT_LATC1_SNORM;
     boolean is_ati2n = format == PIPE_FORMAT_RGTC2_UNORM ||
-                       format == PIPE_FORMAT_RGTC2_SNORM;
+                       format == PIPE_FORMAT_RGTC2_SNORM ||
+                       format == PIPE_FORMAT_LATC2_UNORM ||
+                       format == PIPE_FORMAT_LATC2_SNORM;
     boolean is_half_float = format == PIPE_FORMAT_R16_FLOAT ||
                             format == PIPE_FORMAT_R16G16_FLOAT ||
                             format == PIPE_FORMAT_R16G16B16_FLOAT ||
@@ -414,25 +422,40 @@ static void r300_fence_reference(struct pipe_screen *screen,
                              (struct r300_winsys_bo*)fence);
 }
 
-static int r300_fence_signalled(struct pipe_screen *screen,
-                                struct pipe_fence_handle *fence,
-                                unsigned flags)
+static boolean r300_fence_signalled(struct pipe_screen *screen,
+                                    struct pipe_fence_handle *fence)
 {
     struct r300_winsys_screen *rws = r300_screen(screen)->rws;
     struct r300_winsys_bo *rfence = (struct r300_winsys_bo*)fence;
 
-    return !rws->buffer_is_busy(rfence) ? 0 : 1; /* 0 == success */
+    return !rws->buffer_is_busy(rfence);
 }
 
-static int r300_fence_finish(struct pipe_screen *screen,
-                             struct pipe_fence_handle *fence,
-                             unsigned flags)
+static boolean r300_fence_finish(struct pipe_screen *screen,
+                                 struct pipe_fence_handle *fence,
+                                 uint64_t timeout)
 {
     struct r300_winsys_screen *rws = r300_screen(screen)->rws;
     struct r300_winsys_bo *rfence = (struct r300_winsys_bo*)fence;
 
+    if (timeout != PIPE_TIMEOUT_INFINITE) {
+        int64_t start_time = os_time_get();
+
+        /* Convert to microseconds. */
+        timeout /= 1000;
+
+        /* Wait in a loop. */
+        while (rws->buffer_is_busy(rfence)) {
+            if (os_time_get() - start_time >= timeout) {
+                return FALSE;
+            }
+            os_time_sleep(10);
+        }
+        return TRUE;
+    }
+
     rws->buffer_wait(rfence);
-    return 0; /* 0 == success */
+    return TRUE;
 }
 
 struct pipe_screen* r300_screen_create(struct r300_winsys_screen *rws)

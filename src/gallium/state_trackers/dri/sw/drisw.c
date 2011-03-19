@@ -139,7 +139,7 @@ drisw_swap_buffers(__DRIdrawable *dPriv)
    ptex = drawable->textures[ST_ATTACHMENT_BACK_LEFT];
 
    if (ptex) {
-      ctx->st->flush(ctx->st, PIPE_FLUSH_RENDER_CACHE, NULL);
+      ctx->st->flush(ctx->st, ST_FLUSH_FRONT, NULL);
 
       drisw_copy_to_front(dPriv, ptex);
    }
@@ -233,6 +233,7 @@ drisw_allocate_textures(struct dri_drawable *drawable,
  */
 
 static const __DRIextension *drisw_screen_extensions[] = {
+   &driTexBufferExtension.base,
    NULL
 };
 

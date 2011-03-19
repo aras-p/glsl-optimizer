@@ -668,32 +668,13 @@ identity_clear_depth_stencil(struct pipe_context *_pipe,
 
 static void
 identity_flush(struct pipe_context *_pipe,
-               unsigned flags,
                struct pipe_fence_handle **fence)
 {
    struct identity_context *id_pipe = identity_context(_pipe);
    struct pipe_context *pipe = id_pipe->pipe;
 
    pipe->flush(pipe,
-               flags,
                fence);
-}
-
-static unsigned int
-identity_is_resource_referenced(struct pipe_context *_pipe,
-                                struct pipe_resource *_resource,
-                                unsigned level,
-                                int layer)
-{
-   struct identity_context *id_pipe = identity_context(_pipe);
-   struct identity_resource *id_resource = identity_resource(_resource);
-   struct pipe_context *pipe = id_pipe->pipe;
-   struct pipe_resource *resource = id_resource->resource;
-
-   return pipe->is_resource_referenced(pipe,
-                                       resource,
-                                       level,
-                                       layer);
 }
 
 static struct pipe_sampler_view *
@@ -931,7 +912,6 @@ identity_context_create(struct pipe_screen *_screen, struct pipe_context *pipe)
    id_pipe->base.clear_render_target = identity_clear_render_target;
    id_pipe->base.clear_depth_stencil = identity_clear_depth_stencil;
    id_pipe->base.flush = identity_flush;
-   id_pipe->base.is_resource_referenced = identity_is_resource_referenced;
    id_pipe->base.create_surface = identity_context_create_surface;
    id_pipe->base.surface_destroy = identity_context_surface_destroy;
    id_pipe->base.create_sampler_view = identity_context_create_sampler_view;

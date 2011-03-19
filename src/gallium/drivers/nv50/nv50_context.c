@@ -30,25 +30,20 @@
 #include "nouveau/nouveau_reloc.h"
 
 static void
-nv50_flush(struct pipe_context *pipe, unsigned flags,
+nv50_flush(struct pipe_context *pipe,
            struct pipe_fence_handle **fence)
 {
-   struct nv50_context *nv50 = nv50_context(pipe);
-   struct nouveau_channel *chan = nv50->screen->base.channel;
-
-   if (flags & PIPE_FLUSH_TEXTURE_CACHE) {
-      BEGIN_RING(chan, RING_3D_(NV50_GRAPH_WAIT_FOR_IDLE), 1);
-      OUT_RING  (chan, 0);
-      BEGIN_RING(chan, RING_3D(TEX_CACHE_CTL), 1);
-      OUT_RING  (chan, 0x20);
-   }
+   struct nouveau_screen *screen = &nv50_context(pipe)->screen->base;
 
    if (fence)
-      nouveau_fence_ref(nv50->screen->base.fence.current,
-                        (struct nouveau_fence **)fence);
+      nouveau_fence_ref(screen->fence.current, (struct nouveau_fence **)fence);
 
-   if (flags & (PIPE_FLUSH_SWAPBUFFERS | PIPE_FLUSH_FRAME))
-      FIRE_RING(chan);
+   /* Try to emit before firing to avoid having to flush again right after
+    * in case we have to wait on this fence.
+    */
+   nouveau_fence_emit(screen->fence.current);
+
+   FIRE_RING(screen->channel);
 }
 
 void
@@ -64,9 +59,33 @@ nv50_default_flush_notify(struct nouveau_channel *chan)
 }
 
 static void
+nv50_context_unreference_resources(struct nv50_context *nv50)
+{
+   unsigned s, i;
+
+   for (i = 0; i < NV50_BUFCTX_COUNT; ++i)
+      nv50_bufctx_reset(nv50, i);
+
+   for (i = 0; i < nv50->num_vtxbufs; ++i)
+      pipe_resource_reference(&nv50->vtxbuf[i].buffer, NULL);
+
+   pipe_resource_reference(&nv50->idxbuf.buffer, NULL);
+
+   for (s = 0; s < 3; ++s) {
+      for (i = 0; i < nv50->num_textures[s]; ++i)
+         pipe_sampler_view_reference(&nv50->textures[s][i], NULL);
+
+      for (i = 0; i < 16; ++i)
+         pipe_resource_reference(&nv50->constbuf[s][i], NULL);
+   }
+}
+
+static void
 nv50_destroy(struct pipe_context *pipe)
 {
    struct nv50_context *nv50 = nv50_context(pipe);
+
+   nv50_context_unreference_resources(nv50);
 
    draw_destroy(nv50->draw);
 

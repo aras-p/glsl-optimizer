@@ -187,6 +187,9 @@ void ir_print_visitor::visit(ir_texture *ir)
 {
    printf("(%s ", ir->opcode_string());
 
+   print_type(ir->type);
+   printf(" ");
+
    ir->sampler->accept(this);
    printf(" ");
 

@@ -315,7 +315,7 @@ static unsigned r300_pixels_to_dwords(unsigned stride,
                                       unsigned height,
                                       unsigned xblock, unsigned yblock)
 {
-    return (align(stride, xblock) * align(height, yblock)) / (xblock * yblock);
+    return (util_align_npot(stride, xblock) * align(height, yblock)) / (xblock * yblock);
 }
 
 static void r300_setup_hyperz_properties(struct r300_screen *screen,
@@ -390,7 +390,7 @@ static void r300_setup_hyperz_properties(struct r300_screen *screen,
                 tex->tex.zcomp8x8[i] = zcompsize == 8;
 
                 tex->tex.zmask_stride_in_pixels[i] =
-                    align(stride, zmask_blocks_x_per_dw[pipes-1] * zcompsize);
+                    util_align_npot(stride, zmask_blocks_x_per_dw[pipes-1] * zcompsize);
             } else {
                 tex->tex.zmask_dwords[i] = 0;
                 tex->tex.zcomp8x8[i] = FALSE;
@@ -398,7 +398,7 @@ static void r300_setup_hyperz_properties(struct r300_screen *screen,
             }
 
             /* Now setup HIZ. */
-            stride = align(stride, hiz_align_x[pipes-1]);
+            stride = util_align_npot(stride, hiz_align_x[pipes-1]);
             height = align(height, hiz_align_y[pipes-1]);
 
             /* Get the HIZ buffer size in dwords. */

@@ -363,9 +363,6 @@ struct radeon *radeon_decref(struct radeon *radeon)
 	if (radeon->bomgr)
 		r600_bomgr_destroy(radeon->bomgr);
 
-	if (radeon->fd >= 0)
-		drmClose(radeon->fd);
-
 	free(radeon);
 	return NULL;
 }

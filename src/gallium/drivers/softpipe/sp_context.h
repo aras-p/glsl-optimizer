@@ -198,4 +198,13 @@ struct pipe_context *
 softpipe_create_context( struct pipe_screen *, void *priv );
 
 
+#define SP_UNREFERENCED         0
+#define SP_REFERENCED_FOR_READ  (1 << 0)
+#define SP_REFERENCED_FOR_WRITE (1 << 1)
+
+unsigned int
+softpipe_is_resource_referenced( struct pipe_context *pipe,
+                                 struct pipe_resource *texture,
+                                 unsigned level, int layer);
+
 #endif /* SP_CONTEXT_H */

@@ -39,6 +39,7 @@
 #include "macros.h"
 #include "teximage.h"
 #include "texobj.h"
+#include "texstate.h"
 #include "mtypes.h"
 #include "program/prog_instruction.h"
 
@@ -1013,11 +1014,9 @@ void GLAPIENTRY
 _mesa_BindTexture( GLenum target, GLuint texName )
 {
    GET_CURRENT_CONTEXT(ctx);
-   const GLuint unit = ctx->Texture.CurrentUnit;
-   struct gl_texture_unit *texUnit = &ctx->Texture.Unit[unit];
-   struct gl_texture_object *newTexObj = NULL, *defaultTexObj = NULL;
+   struct gl_texture_unit *texUnit = _mesa_get_current_tex_unit(ctx);
+   struct gl_texture_object *newTexObj = NULL;
    GLint targetIndex;
-   GLboolean early_out = GL_FALSE;
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
    if (MESA_VERBOSE & (VERBOSE_API|VERBOSE_TEXTURE))
@@ -1030,13 +1029,13 @@ _mesa_BindTexture( GLenum target, GLuint texName )
       return;
    }
    assert(targetIndex < NUM_TEXTURE_TARGETS);
-   defaultTexObj = ctx->Shared->DefaultTex[targetIndex];
 
    /*
     * Get pointer to new texture object (newTexObj)
     */
    if (texName == 0) {
-      newTexObj = defaultTexObj;
+      /* Use a default texture object */
+      newTexObj = ctx->Shared->DefaultTex[targetIndex];
    }
    else {
       /* non-default texture object */
@@ -1071,15 +1070,18 @@ _mesa_BindTexture( GLenum target, GLuint texName )
 
    assert(valid_texture_object(newTexObj));
 
-   _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
-   if ((ctx->Shared->RefCount == 1)
-       && (newTexObj == texUnit->CurrentTex[targetIndex])) {
-      early_out = GL_TRUE;
-   }
-   _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
-
-   if (early_out) {
-      return;
+   /* Check if this texture is only used by this context and is already bound.
+    * If so, just return.
+    */
+   {
+      GLboolean early_out;
+      _glthread_LOCK_MUTEX(ctx->Shared->Mutex);
+      early_out = ((ctx->Shared->RefCount == 1)
+                   && (newTexObj == texUnit->CurrentTex[targetIndex]));
+      _glthread_UNLOCK_MUTEX(ctx->Shared->Mutex);
+      if (early_out) {
+         return;
+      }
    }
 
    /* flush before changing binding */

@@ -134,24 +134,15 @@ vlVdpCreateSurfaceTarget(vlVdpDecoder *vldecoder, vlVdpSurface *vlsurf)
 
    vctx = vldecoder->vctx->vpipe;
 
+   if (!vctx->is_format_supported(vctx, tmplt.format, PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET))
+      return VDP_STATUS_RESOURCES;
+
    memset(&tmplt, 0, sizeof(struct pipe_resource));
    tmplt.target = PIPE_TEXTURE_2D;
    tmplt.format = vctx->get_param(vctx,PIPE_CAP_DECODE_TARGET_PREFERRED_FORMAT);
    tmplt.last_level = 0;
-
-   if (vctx->is_format_supported(vctx, tmplt.format,
-                                 PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET,
-                                 PIPE_TEXTURE_GEOM_NON_POWER_OF_TWO)) {
-      tmplt.width0 = vlsurf->width;
-      tmplt.height0 = vlsurf->height;
-   } else {
-      assert(vctx->is_format_supported(vctx, tmplt.format,
-                                       PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET,
-                                       PIPE_TEXTURE_GEOM_NON_SQUARE));
-      tmplt.width0 = util_next_power_of_two(vlsurf->width);
-      tmplt.height0 = util_next_power_of_two(vlsurf->height);
-   }
-
+   tmplt.width0 = vlsurf->width;
+   tmplt.height0 = vlsurf->height;
    tmplt.depth0 = 1;
    tmplt.usage = PIPE_USAGE_DEFAULT;
    tmplt.bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;

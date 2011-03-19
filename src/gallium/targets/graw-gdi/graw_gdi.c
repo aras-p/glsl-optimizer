@@ -66,7 +66,7 @@ graw_create_window_and_screen(int x,
 {
    struct sw_winsys *winsys = NULL;
    struct pipe_screen *screen = NULL;
-   WNDCLASSEX wc = {sizeof(wc)};
+   WNDCLASSEX wc;
    UINT style = WS_VISIBLE | WS_TILEDWINDOW;
    RECT rect;
    HWND hWnd = NULL;
@@ -83,6 +83,8 @@ graw_create_window_and_screen(int x,
    if (screen == NULL)
       goto fail;
 
+   memset(&wc, 0, sizeof wc);
+   wc.cbSize = sizeof wc;
    wc.style = CS_OWNDC | CS_HREDRAW | CS_VREDRAW;
    wc.lpfnWndProc = window_proc;
    wc.lpszClassName = "graw-gdi";

@@ -312,27 +312,10 @@ struct pipe_context {
                                unsigned dstx, unsigned dsty,
                                unsigned width, unsigned height);
 
-   /** Flush rendering
-    * \param flags  bitmask of PIPE_FLUSH_x tokens)
+   /** Flush draw commands
     */
    void (*flush)( struct pipe_context *pipe,
-                  unsigned flags,
                   struct pipe_fence_handle **fence );
-
-   /**
-    * Check whether a texture is referenced by an unflushed hw command.
-    * The state-tracker uses this function to avoid unnecessary flushes.
-    * It is safe (but wasteful) to always return
-    * PIPE_REFERENCED_FOR_READ | PIPE_REFERENCED_FOR_WRITE.
-    * \param pipe  context whose unflushed hw commands will be checked.
-    * \param texture  texture to check.
-    * \param level  mipmap level.
-    * \param layer  cubemap face, 2d array or 3d slice, 0 otherwise. Use -1 for any layer.
-    * \return mask of PIPE_REFERENCED_FOR_READ/WRITE or PIPE_UNREFERENCED
-    */
-   unsigned int (*is_resource_referenced)(struct pipe_context *pipe,
-                                          struct pipe_resource *texture,
-                                          unsigned level, int layer);
 
    /**
     * Create a view on a texture to be used by a shader stage.
@@ -407,6 +390,11 @@ struct pipe_context {
                                 struct pipe_resource *,
                                 unsigned offset,
                                 unsigned size);
+
+   /**
+    * Flush any pending framebuffer writes and invalidate texture caches.
+    */
+   void (*texture_barrier)(struct pipe_context *);
 };
 
 

@@ -299,13 +299,20 @@ pipe_buffer_write(struct pipe_context *pipe,
                   const void *data)
 {
    struct pipe_box box;
+   unsigned usage = PIPE_TRANSFER_WRITE;
+
+   if (offset == 0 && size == buf->width0) {
+      usage |= PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE;
+   } else {
+      usage |= PIPE_TRANSFER_DISCARD_RANGE;
+   }
 
    u_box_1d(offset, size, &box);
 
    pipe->transfer_inline_write( pipe,
                                 buf,
                                 0,
-                                PIPE_TRANSFER_WRITE,
+                                usage,
                                 &box,
                                 data,
                                 size,
