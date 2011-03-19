@@ -109,6 +109,8 @@ struct r600_bc_vtx {
 struct r600_bc_output {
 	unsigned			array_base;
 	unsigned			type;
+	unsigned			end_of_program;
+	unsigned			inst;
 	unsigned			elem_size;
 	unsigned			gpr;
 	unsigned			swizzle_x;
@@ -116,6 +118,7 @@ struct r600_bc_output {
 	unsigned			swizzle_z;
 	unsigned			swizzle_w;
 	unsigned			burst_count;
+	unsigned			barrier;
 };
 
 struct r600_bc_kcache {
@@ -133,7 +136,6 @@ struct r600_bc_cf {
 	unsigned			cond;
 	unsigned			pop_count;
 	unsigned			cf_addr; /* control flow addr */
-	unsigned			barrier;
 	struct r600_bc_kcache		kcache[2];
 	unsigned			r6xx_uses_waterfall;
 	struct list_head		alu;

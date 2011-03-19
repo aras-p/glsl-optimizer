@@ -32,14 +32,12 @@
 int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 {
 	unsigned id = cf->id;
-	unsigned end_of_program = bc->cf.prev == &cf->list;
 
 	switch (cf->inst) {
 	case (EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU << 3):
 	case (EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP_AFTER << 3):
 	case (EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_POP2_AFTER << 3):
 	case (EG_V_SQ_CF_ALU_WORD1_SQ_CF_INST_ALU_PUSH_BEFORE << 3):
-		assert(!end_of_program);
 		bc->bytecode[id++] = S_SQ_CF_ALU_WORD0_ADDR(cf->addr >> 1) |
 			S_SQ_CF_ALU_WORD0_KCACHE_MODE0(cf->kcache[0].mode) |
 			S_SQ_CF_ALU_WORD0_KCACHE_BANK0(cf->kcache[0].bank) |
@@ -48,16 +46,15 @@ int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 			S_SQ_CF_ALU_WORD1_KCACHE_MODE1(cf->kcache[1].mode) |
 			S_SQ_CF_ALU_WORD1_KCACHE_ADDR0(cf->kcache[0].addr) |
 			S_SQ_CF_ALU_WORD1_KCACHE_ADDR1(cf->kcache[1].addr) |
-			S_SQ_CF_ALU_WORD1_BARRIER(cf->barrier) |
-			S_SQ_CF_ALU_WORD1_COUNT((cf->ndw / 2) - 1);
+					S_SQ_CF_ALU_WORD1_BARRIER(1) |
+					S_SQ_CF_ALU_WORD1_COUNT((cf->ndw / 2) - 1);
 		break;
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_TEX:
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_VTX:
 		bc->bytecode[id++] = S_SQ_CF_WORD0_ADDR(cf->addr >> 1);
 		bc->bytecode[id++] = S_SQ_CF_WORD1_CF_INST(cf->inst) |
-			S_SQ_CF_WORD1_BARRIER(cf->barrier) |
-			S_SQ_CF_WORD1_COUNT((cf->ndw / 4) - 1) |
-			S_SQ_CF_WORD1_END_OF_PROGRAM(end_of_program);
+					S_SQ_CF_WORD1_BARRIER(1) |
+					S_SQ_CF_WORD1_COUNT((cf->ndw / 4) - 1);
 		break;
 	case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT:
 	case EG_V_SQ_CF_ALLOC_EXPORT_WORD1_SQ_CF_INST_EXPORT_DONE:
@@ -70,9 +67,9 @@ int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_Y(cf->output.swizzle_y) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_Z(cf->output.swizzle_z) |
 			S_SQ_CF_ALLOC_EXPORT_WORD1_SWIZ_SEL_W(cf->output.swizzle_w) |
-			S_SQ_CF_ALLOC_EXPORT_WORD1_BARRIER(cf->barrier) |
-			S_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(cf->inst) |
-			S_SQ_CF_ALLOC_EXPORT_WORD1_END_OF_PROGRAM(end_of_program);
+			S_SQ_CF_ALLOC_EXPORT_WORD1_BARRIER(cf->output.barrier) |
+			S_SQ_CF_ALLOC_EXPORT_WORD1_CF_INST(cf->output.inst) |
+			S_SQ_CF_ALLOC_EXPORT_WORD1_END_OF_PROGRAM(cf->output.end_of_program);
 		break;
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_JUMP:
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_ELSE:
@@ -85,10 +82,9 @@ int eg_bc_cf_build(struct r600_bc *bc, struct r600_bc_cf *cf)
 	case EG_V_SQ_CF_WORD1_SQ_CF_INST_RETURN:
 		bc->bytecode[id++] = S_SQ_CF_WORD0_ADDR(cf->cf_addr >> 1);
 		bc->bytecode[id++] = S_SQ_CF_WORD1_CF_INST(cf->inst) |
-			S_SQ_CF_WORD1_BARRIER(cf->barrier) |
-			S_SQ_CF_WORD1_COND(cf->cond) |
-			S_SQ_CF_WORD1_POP_COUNT(cf->pop_count) |
-			S_SQ_CF_WORD1_END_OF_PROGRAM(end_of_program);
+					S_SQ_CF_WORD1_BARRIER(1) |
+					S_SQ_CF_WORD1_COND(cf->cond) |
+					S_SQ_CF_WORD1_POP_COUNT(cf->pop_count);
 
 		break;
 	default:
