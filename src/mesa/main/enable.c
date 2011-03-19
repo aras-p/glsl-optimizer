@@ -214,8 +214,8 @@ _mesa_DisableClientState( GLenum cap )
 /**
  * Return pointer to current texture unit for setting/getting coordinate
  * state.
- * Note that we'll set GL_INVALID_OPERATION if the active texture unit is
- * higher than the number of supported coordinate units.  And we'll return NULL.
+ * Note that we'll set GL_INVALID_OPERATION and return NULL if the active
+ * texture unit is higher than the number of supported coordinate units.
  */
 static struct gl_texture_unit *
 get_texcoord_unit(struct gl_context *ctx)
@@ -287,7 +287,8 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          break;
       case GL_BLEND:
          {
-            GLbitfield newEnabled = state * ((1 << ctx->Const.MaxDrawBuffers) - 1);
+            GLbitfield newEnabled =
+               state * ((1 << ctx->Const.MaxDrawBuffers) - 1);
             if (newEnabled != ctx->Color.BlendEnabled) {
                FLUSH_VERTICES(ctx, _NEW_COLOR);
                ctx->Color.BlendEnabled = newEnabled;
@@ -304,7 +305,8 @@ _mesa_set_enable(struct gl_context *ctx, GLenum cap, GLboolean state)
          {
             const GLuint p = cap - GL_CLIP_PLANE0;
 
-            if ((ctx->Transform.ClipPlanesEnabled & (1 << p)) == ((GLuint) state << p))
+            if ((ctx->Transform.ClipPlanesEnabled & (1 << p))
+                == ((GLuint) state << p))
                return;
 
             FLUSH_VERTICES(ctx, _NEW_TRANSFORM);
@@ -965,7 +967,8 @@ _mesa_Disable( GLenum cap )
  * Enable/disable an indexed state var.
  */
 void
-_mesa_set_enablei(struct gl_context *ctx, GLenum cap, GLuint index, GLboolean state)
+_mesa_set_enablei(struct gl_context *ctx, GLenum cap,
+                  GLuint index, GLboolean state)
 {
    ASSERT(state == 0 || state == 1);
    switch (cap) {
@@ -1201,7 +1204,8 @@ _mesa_IsEnabled( GLenum cap )
 	 {
             const struct gl_texture_unit *texUnit = get_texcoord_unit(ctx);
             if (texUnit) {
-		    return (texUnit->TexGenEnabled & STR_BITS) == STR_BITS ? GL_TRUE : GL_FALSE;
+               return (texUnit->TexGenEnabled & STR_BITS) == STR_BITS
+                  ? GL_TRUE : GL_FALSE;
             }
          }
 #endif
@@ -1218,7 +1222,8 @@ _mesa_IsEnabled( GLenum cap )
       case GL_INDEX_ARRAY:
          return (ctx->Array.ArrayObj->Index.Enabled != 0);
       case GL_TEXTURE_COORD_ARRAY:
-         return (ctx->Array.ArrayObj->TexCoord[ctx->Array.ActiveTexture].Enabled != 0);
+         return (ctx->Array.ArrayObj->TexCoord[ctx->Array.ActiveTexture]
+                 .Enabled != 0);
       case GL_EDGE_FLAG_ARRAY:
          return (ctx->Array.ArrayObj->EdgeFlag.Enabled != 0);
       case GL_FOG_COORDINATE_ARRAY_EXT:
