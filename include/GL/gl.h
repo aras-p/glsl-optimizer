@@ -655,6 +655,8 @@ typedef double		GLclampd;	/* double precision float in [0,1] */
 #define GL_TEXTURE_ENV_COLOR			0x2201
 #define GL_TEXTURE_GEN_S			0x0C60
 #define GL_TEXTURE_GEN_T			0x0C61
+#define GL_TEXTURE_GEN_R			0x0C62
+#define GL_TEXTURE_GEN_Q			0x0C63
 #define GL_TEXTURE_GEN_MODE			0x2500
 #define GL_TEXTURE_BORDER_COLOR			0x1004
 #define GL_TEXTURE_WIDTH			0x1000
@@ -685,8 +687,6 @@ typedef double		GLclampd;	/* double precision float in [0,1] */
 #define GL_T					0x2001
 #define GL_R					0x2002
 #define GL_Q					0x2003
-#define GL_TEXTURE_GEN_R			0x0C62
-#define GL_TEXTURE_GEN_Q			0x0C63
 
 /* Utility */
 #define GL_VENDOR				0x1F00
