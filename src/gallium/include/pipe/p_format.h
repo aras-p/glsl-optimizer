@@ -196,32 +196,32 @@ enum pipe_format {
    PIPE_FORMAT_R8G8B8X8_UNORM          = 134,
    PIPE_FORMAT_B4G4R4X4_UNORM          = 135,
 
-   PIPE_FORMAT_YV12                  = 136,
-   PIPE_FORMAT_YV16                  = 137,
-   PIPE_FORMAT_IYUV                  = 138,  /**< aka I420 */
-   PIPE_FORMAT_NV12                  = 139,
-   PIPE_FORMAT_NV21                  = 140,
-   PIPE_FORMAT_AYUV                  = PIPE_FORMAT_A8R8G8B8_UNORM,
-   PIPE_FORMAT_VUYA                  = PIPE_FORMAT_B8G8R8A8_UNORM,
-   PIPE_FORMAT_XYUV                  = PIPE_FORMAT_X8R8G8B8_UNORM,
-   PIPE_FORMAT_VUYX                  = PIPE_FORMAT_B8G8R8X8_UNORM,
-   PIPE_FORMAT_IA44                  = 141,
-   PIPE_FORMAT_AI44                  = 142,
-
    /* some stencil samplers formats */
-   PIPE_FORMAT_X24S8_USCALED           = 143,
-   PIPE_FORMAT_S8X24_USCALED           = 144,
-   PIPE_FORMAT_X32_S8X24_USCALED       = 145,
+   PIPE_FORMAT_X24S8_USCALED           = 136,
+   PIPE_FORMAT_S8X24_USCALED           = 137,
+   PIPE_FORMAT_X32_S8X24_USCALED       = 138,
 
-   PIPE_FORMAT_B2G3R3_UNORM            = 146,
-   PIPE_FORMAT_L16A16_UNORM            = 147,
-   PIPE_FORMAT_A16_UNORM               = 148,
-   PIPE_FORMAT_I16_UNORM               = 149,
+   PIPE_FORMAT_B2G3R3_UNORM            = 139,
+   PIPE_FORMAT_L16A16_UNORM            = 140,
+   PIPE_FORMAT_A16_UNORM               = 141,
+   PIPE_FORMAT_I16_UNORM               = 142,
 
    PIPE_FORMAT_LATC1_UNORM             = 143,
    PIPE_FORMAT_LATC1_SNORM             = 144,
    PIPE_FORMAT_LATC2_UNORM             = 145,
    PIPE_FORMAT_LATC2_SNORM             = 146,
+
+   PIPE_FORMAT_YV12                    = 147,
+   PIPE_FORMAT_YV16                    = 148,
+   PIPE_FORMAT_IYUV                    = 149,  /**< aka I420 */
+   PIPE_FORMAT_NV12                    = 150,
+   PIPE_FORMAT_NV21                    = 151,
+   PIPE_FORMAT_AYUV                    = PIPE_FORMAT_A8R8G8B8_UNORM,
+   PIPE_FORMAT_VUYA                    = PIPE_FORMAT_B8G8R8A8_UNORM,
+   PIPE_FORMAT_XYUV                    = PIPE_FORMAT_X8R8G8B8_UNORM,
+   PIPE_FORMAT_VUYX                    = PIPE_FORMAT_B8G8R8X8_UNORM,
+   PIPE_FORMAT_IA44                    = 152,
+   PIPE_FORMAT_AI44                    = 153,
 
    PIPE_FORMAT_COUNT
 };
