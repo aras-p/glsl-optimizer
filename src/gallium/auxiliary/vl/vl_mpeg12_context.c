@@ -258,8 +258,7 @@ vl_mpeg12_create_surface(struct pipe_video_context *vpipe,
 static boolean
 vl_mpeg12_is_format_supported(struct pipe_video_context *vpipe,
                               enum pipe_format format,
-                              unsigned usage,
-                              unsigned geom)
+                              unsigned usage)
 {
    struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
 
@@ -600,6 +599,51 @@ init_pipe_state(struct vl_mpeg12_context *ctx)
    return true;
 }
 
+static bool
+init_idct(struct vl_mpeg12_context *ctx, unsigned buffer_width, unsigned buffer_height)
+{
+   unsigned chroma_width, chroma_height, chroma_blocks_x, chroma_blocks_y;
+   struct pipe_resource *idct_matrix;
+
+   /* TODO: Implement 422, 444 */
+   assert(ctx->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
+   ctx->empty_block_mask = &const_empty_block_mask_420;
+
+   if (!(idct_matrix = vl_idct_upload_matrix(ctx->pipe)))
+      return false;
+
+   if (!vl_idct_init(&ctx->idct_y, ctx->pipe, buffer_width, buffer_height,
+                     2, 2, TGSI_SWIZZLE_X, idct_matrix))
+      return false;
+
+   if (ctx->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
+      chroma_width = buffer_width / 2;
+      chroma_height = buffer_height / 2;
+      chroma_blocks_x = 1;
+      chroma_blocks_y = 1;
+   } else if (ctx->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_422) {
+      chroma_width = buffer_width;
+      chroma_height = buffer_height / 2;
+      chroma_blocks_x = 2;
+      chroma_blocks_y = 1;
+   } else {
+      chroma_width = buffer_width;
+      chroma_height = buffer_height;
+      chroma_blocks_x = 2;
+      chroma_blocks_y = 2;
+   }
+
+   if(!vl_idct_init(&ctx->idct_cr, ctx->pipe, chroma_width, chroma_height,
+                    chroma_blocks_x, chroma_blocks_y, TGSI_SWIZZLE_Z, idct_matrix))
+      return false;
+
+   if(!vl_idct_init(&ctx->idct_cb, ctx->pipe, chroma_width, chroma_height,
+                    chroma_blocks_x, chroma_blocks_y, TGSI_SWIZZLE_Y, idct_matrix))
+      return false;
+
+   return true;
+}
+
 struct pipe_video_context *
 vl_create_mpeg12_context(struct pipe_context *pipe,
                          enum pipe_video_profile profile,
@@ -608,10 +652,8 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
                          bool pot_buffers,
                          enum pipe_format decode_format)
 {
-   struct pipe_resource *idct_matrix;
-   unsigned buffer_width, buffer_height;
-   unsigned chroma_width, chroma_height, chroma_blocks_x, chroma_blocks_y;
    struct vl_mpeg12_context *ctx;
+   unsigned buffer_width, buffer_height;
 
    assert(u_reduce_video_profile(profile) == PIPE_VIDEO_CODEC_MPEG12);
 
@@ -619,12 +661,6 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
 
    if (!ctx)
       return NULL;
-
-   /* TODO: Non-pot buffers untested, probably doesn't work without changes to texcoord generation, vert shader, etc */
-   assert(pot_buffers);
-
-   buffer_width = pot_buffers ? util_next_power_of_two(width) : width;
-   buffer_height = pot_buffers ? util_next_power_of_two(height) : height;
 
    ctx->base.profile = profile;
    ctx->base.chroma_format = chroma_format;
@@ -666,44 +702,22 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
       return NULL;
    }
 
-   /* TODO: Implement 422, 444 */
-   assert(chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
-   ctx->empty_block_mask = &const_empty_block_mask_420;
+   /* TODO: Non-pot buffers untested, probably doesn't work without changes to texcoord generation, vert shader, etc */
+   assert(pot_buffers);
+   buffer_width = pot_buffers ? util_next_power_of_two(width) : width;
+   buffer_height = pot_buffers ? util_next_power_of_two(height) : height;
 
-   if (!(idct_matrix = vl_idct_upload_matrix(ctx->pipe)))
-      return false;
-
-   if (!vl_idct_init(&ctx->idct_y, ctx->pipe, buffer_width, buffer_height,
-                     2, 2, TGSI_SWIZZLE_X, idct_matrix))
-      return false;
-
-   if (chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
-      chroma_width = buffer_width / 2;
-      chroma_height = buffer_height / 2;
-      chroma_blocks_x = 1;
-      chroma_blocks_y = 1;
-   } else if (chroma_format == PIPE_VIDEO_CHROMA_FORMAT_422) {
-      chroma_width = buffer_width;
-      chroma_height = buffer_height / 2;
-      chroma_blocks_x = 2;
-      chroma_blocks_y = 1;
-   } else {
-      chroma_width = buffer_width;
-      chroma_height = buffer_height;
-      chroma_blocks_x = 2;
-      chroma_blocks_y = 2;
+   if (!init_idct(ctx, buffer_width, buffer_height)) {
+      ctx->pipe->destroy(ctx->pipe);
+      FREE(ctx);
+      return NULL;
    }
-
-   if(!vl_idct_init(&ctx->idct_cr, ctx->pipe, chroma_width, chroma_height,
-                    chroma_blocks_x, chroma_blocks_y, TGSI_SWIZZLE_Z, idct_matrix))
-      return false;
-
-   if(!vl_idct_init(&ctx->idct_cb, ctx->pipe, chroma_width, chroma_height,
-                    chroma_blocks_x, chroma_blocks_y, TGSI_SWIZZLE_Y, idct_matrix))
-      return false;
 
    if (!vl_mpeg12_mc_renderer_init(&ctx->mc_renderer, ctx->pipe,
                                    buffer_width, buffer_height, chroma_format)) {
+      vl_idct_cleanup(&ctx->idct_y);
+      vl_idct_cleanup(&ctx->idct_cr);
+      vl_idct_cleanup(&ctx->idct_cb);
       ctx->pipe->destroy(ctx->pipe);
       FREE(ctx);
       return NULL;
@@ -711,6 +725,9 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
 
    ctx->buffer_map = util_new_keymap(sizeof(unsigned), -1, delete_buffer);
    if (!ctx->buffer_map) {
+      vl_idct_cleanup(&ctx->idct_y);
+      vl_idct_cleanup(&ctx->idct_cr);
+      vl_idct_cleanup(&ctx->idct_cb);
       vl_mpeg12_mc_renderer_cleanup(&ctx->mc_renderer);
       ctx->pipe->destroy(ctx->pipe);
       FREE(ctx);
@@ -718,17 +735,23 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
    }
 
    if (!vl_compositor_init(&ctx->compositor, ctx->pipe)) {
-      util_delete_keymap(ctx->buffer_map, ctx);
+      vl_idct_cleanup(&ctx->idct_y);
+      vl_idct_cleanup(&ctx->idct_cr);
+      vl_idct_cleanup(&ctx->idct_cb);
       vl_mpeg12_mc_renderer_cleanup(&ctx->mc_renderer);
+      util_delete_keymap(ctx->buffer_map, ctx);
       ctx->pipe->destroy(ctx->pipe);
       FREE(ctx);
       return NULL;
    }
 
    if (!init_pipe_state(ctx)) {
-      vl_compositor_cleanup(&ctx->compositor);
-      util_delete_keymap(ctx->buffer_map, ctx);
+      vl_idct_cleanup(&ctx->idct_y);
+      vl_idct_cleanup(&ctx->idct_cr);
+      vl_idct_cleanup(&ctx->idct_cb);
       vl_mpeg12_mc_renderer_cleanup(&ctx->mc_renderer);
+      util_delete_keymap(ctx->buffer_map, ctx);
+      vl_compositor_cleanup(&ctx->compositor);
       ctx->pipe->destroy(ctx->pipe);
       FREE(ctx);
       return NULL;
