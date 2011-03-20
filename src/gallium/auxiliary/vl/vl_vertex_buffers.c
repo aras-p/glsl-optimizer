@@ -212,58 +212,54 @@ get_motion_vectors(struct pipe_mpeg12_macroblock *mb, struct vertex2s mv[4])
       case PIPE_MPEG12_MACROBLOCK_TYPE_BI:
       {
          if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
-            mv[2].x = mb->pmv[0][1][0];
-            mv[2].y = mb->pmv[0][1][1];
+            mv[2].x = mb->mv[1].top.x;
+            mv[2].y = mb->mv[1].top.y;
 
          } else {
-            mv[2].x = mb->pmv[0][1][0];
-            mv[2].y = mb->pmv[0][1][1] - (mb->pmv[0][1][1] % 4);
+            mv[2].x = mb->mv[1].top.x;
+            mv[2].y = mb->mv[1].top.y - (mb->mv[1].top.y % 4);
 
-            mv[3].x = mb->pmv[1][1][0];
-            mv[3].y = mb->pmv[1][1][1] - (mb->pmv[1][1][1] % 4);
+            mv[3].x = mb->mv[1].bottom.x;
+            mv[3].y = mb->mv[1].bottom.y - (mb->mv[1].bottom.y % 4);
 
-            if(mb->mvfs[0][1]) mv[2].y += 2;
-            if(!mb->mvfs[1][1]) mv[3].y -= 2;
+            if (mb->mv[1].top.field_select) mv[2].y += 2;
+            if (!mb->mv[1].bottom.field_select) mv[3].y -= 2;
          }
 
          /* fall-through */
       }
       case PIPE_MPEG12_MACROBLOCK_TYPE_FWD:
-      case PIPE_MPEG12_MACROBLOCK_TYPE_BKWD:
       {
-         if (mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BKWD) {
-
-            if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
-               mv[0].x = mb->pmv[0][1][0];
-               mv[0].y = mb->pmv[0][1][1];
-
-            } else {
-               mv[0].x = mb->pmv[0][1][0];
-               mv[0].y = mb->pmv[0][1][1] - (mb->pmv[0][1][1] % 4);
-
-               mv[1].x = mb->pmv[1][1][0];
-               mv[1].y = mb->pmv[1][1][1] - (mb->pmv[1][1][1] % 4);
-
-               if(mb->mvfs[0][1]) mv[0].y += 2;
-               if(!mb->mvfs[1][1]) mv[1].y -= 2;
-            }
+         if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
+            mv[0].x = mb->mv[0].top.x;
+            mv[0].y = mb->mv[0].top.y;
 
          } else {
+            mv[0].x = mb->mv[0].top.x;
+            mv[0].y = mb->mv[0].top.y - (mb->mv[0].top.y % 4);
 
-            if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
-               mv[0].x = mb->pmv[0][0][0];
-               mv[0].y = mb->pmv[0][0][1];
+            mv[1].x = mb->mv[0].bottom.x;
+            mv[1].y = mb->mv[0].bottom.y - (mb->mv[0].bottom.y % 4);
 
-            } else {
-               mv[0].x = mb->pmv[0][0][0];
-               mv[0].y = mb->pmv[0][0][1] - (mb->pmv[0][0][1] % 4);
+            if (mb->mv[0].top.field_select) mv[0].y += 2;
+            if (!mb->mv[0].bottom.field_select) mv[1].y -= 2;
+         }
+         break;
 
-               mv[1].x = mb->pmv[1][0][0];
-               mv[1].y = mb->pmv[1][0][1] - (mb->pmv[1][0][1] % 4);
+      case PIPE_MPEG12_MACROBLOCK_TYPE_BKWD:
+         if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
+            mv[0].x = mb->mv[1].top.x;
+            mv[0].y = mb->mv[1].top.y;
 
-               if(mb->mvfs[0][0]) mv[0].y += 2;
-               if(!mb->mvfs[1][0]) mv[1].y -= 2;
-            }
+         } else {
+            mv[0].x = mb->mv[1].top.x;
+            mv[0].y = mb->mv[1].top.y - (mb->mv[1].top.y % 4);
+
+            mv[1].x = mb->mv[1].bottom.x;
+            mv[1].y = mb->mv[1].bottom.y - (mb->mv[1].bottom.y % 4);
+
+            if (mb->mv[1].top.field_select) mv[0].y += 2;
+            if (!mb->mv[1].bottom.field_select) mv[1].y -= 2;
          }
       }
       default:

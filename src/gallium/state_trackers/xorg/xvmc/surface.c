@@ -153,45 +153,47 @@ MacroBlocksToPipe(struct pipe_screen *screen,
                   const XvMCBlockArray *xvmc_blocks,
                   unsigned int first_macroblock,
                   unsigned int num_macroblocks,
-                  struct pipe_mpeg12_macroblock *pipe_macroblocks)
+                  struct pipe_mpeg12_macroblock *mb)
 {
    unsigned int i, j, k, l;
    XvMCMacroBlock *xvmc_mb;
 
    assert(xvmc_macroblocks);
    assert(xvmc_blocks);
-   assert(pipe_macroblocks);
+   assert(mb);
    assert(num_macroblocks);
 
    xvmc_mb = xvmc_macroblocks->macro_blocks + first_macroblock;
 
    for (i = 0; i < num_macroblocks; ++i) {
-      pipe_macroblocks->base.codec = PIPE_VIDEO_CODEC_MPEG12;
-      pipe_macroblocks->mbx = xvmc_mb->x;
-      pipe_macroblocks->mby = xvmc_mb->y;
-      pipe_macroblocks->mb_type = TypeToPipe(xvmc_mb->macroblock_type);
-      if (pipe_macroblocks->mb_type != PIPE_MPEG12_MACROBLOCK_TYPE_INTRA)
-         pipe_macroblocks->mo_type = MotionToPipe(xvmc_mb->motion_type, xvmc_picture_structure);
+      mb->base.codec = PIPE_VIDEO_CODEC_MPEG12;
+      mb->mbx = xvmc_mb->x;
+      mb->mby = xvmc_mb->y;
+      mb->mb_type = TypeToPipe(xvmc_mb->macroblock_type);
+      if (mb->mb_type != PIPE_MPEG12_MACROBLOCK_TYPE_INTRA)
+         mb->mo_type = MotionToPipe(xvmc_mb->motion_type, xvmc_picture_structure);
       /* Get rid of Valgrind 'undefined' warnings */
       else
-         pipe_macroblocks->mo_type = -1;
-      pipe_macroblocks->dct_type = xvmc_mb->dct_type == XVMC_DCT_TYPE_FIELD ?
+         mb->mo_type = -1;
+      mb->dct_type = xvmc_mb->dct_type == XVMC_DCT_TYPE_FIELD ?
          PIPE_MPEG12_DCT_TYPE_FIELD : PIPE_MPEG12_DCT_TYPE_FRAME;
 
-      for (j = 0; j < 2; ++j)
-         for (k = 0; k < 2; ++k)
-            for (l = 0; l < 2; ++l)
-               pipe_macroblocks->pmv[j][k][l] = xvmc_mb->PMV[j][k][l];
+      for (j = 0; j < 2; ++j) {
+         mb->mv[j].top.x = xvmc_mb->PMV[0][j][0];
+         mb->mv[j].top.y = xvmc_mb->PMV[0][j][1];
+         mb->mv[j].bottom.x = xvmc_mb->PMV[1][j][0];
+         mb->mv[j].bottom.y = xvmc_mb->PMV[1][j][1];
+      }
 
-      pipe_macroblocks->mvfs[0][0] = xvmc_mb->motion_vertical_field_select & XVMC_SELECT_FIRST_FORWARD;
-      pipe_macroblocks->mvfs[0][1] = xvmc_mb->motion_vertical_field_select & XVMC_SELECT_FIRST_BACKWARD;
-      pipe_macroblocks->mvfs[1][0] = xvmc_mb->motion_vertical_field_select & XVMC_SELECT_SECOND_FORWARD;
-      pipe_macroblocks->mvfs[1][1] = xvmc_mb->motion_vertical_field_select & XVMC_SELECT_SECOND_BACKWARD;
+      mb->mv[0].top.field_select = xvmc_mb->motion_vertical_field_select & XVMC_SELECT_FIRST_FORWARD;
+      mb->mv[1].top.field_select = xvmc_mb->motion_vertical_field_select & XVMC_SELECT_FIRST_BACKWARD;
+      mb->mv[0].bottom.field_select = xvmc_mb->motion_vertical_field_select & XVMC_SELECT_SECOND_FORWARD;
+      mb->mv[1].bottom.field_select = xvmc_mb->motion_vertical_field_select & XVMC_SELECT_SECOND_BACKWARD;
 
-      pipe_macroblocks->cbp = xvmc_mb->coded_block_pattern;
-      pipe_macroblocks->blocks = xvmc_blocks->blocks + xvmc_mb->index * BLOCK_SIZE_SAMPLES;
+      mb->cbp = xvmc_mb->coded_block_pattern;
+      mb->blocks = xvmc_blocks->blocks + xvmc_mb->index * BLOCK_SIZE_SAMPLES;
 
-      ++pipe_macroblocks;
+      ++mb;
       ++xvmc_mb;
    }
 }

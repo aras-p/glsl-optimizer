@@ -74,10 +74,15 @@ enum pipe_mpeg12_dct_type
    PIPE_MPEG12_DCT_TYPE_FRAME
 };
 
-
 struct pipe_macroblock
 {
    enum pipe_video_codec codec;
+};
+
+struct pipe_mpeg12_motionvector
+{
+   signed x, y;
+   bool field_select;
 };
 
 struct pipe_mpeg12_macroblock
@@ -89,8 +94,9 @@ struct pipe_mpeg12_macroblock
    enum pipe_mpeg12_macroblock_type mb_type;
    enum pipe_mpeg12_motion_type mo_type;
    enum pipe_mpeg12_dct_type dct_type;
-   signed pmv[2][2][2];
-   bool mvfs[2][2];
+   struct {
+      struct pipe_mpeg12_motionvector top, bottom;
+   } mv[2];
    unsigned cbp;
    short *blocks;
 };
