@@ -232,8 +232,14 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
       return BadAlloc;
    }
    template.last_level = 0;
-   template.width0 = util_next_power_of_two(context->width);
-   template.height0 = util_next_power_of_two(context->height);
+   if (vpipe->get_param(vpipe, PIPE_CAP_NPOT_TEXTURES)) {
+      template.width0 = context->width;
+      template.height0 = context->height;
+   }
+   else {
+      template.width0 = util_next_power_of_two(context->width);
+      template.height0 = util_next_power_of_two(context->height);
+   }
    template.depth0 = 1;
    template.array_size = 1;
    template.usage = PIPE_USAGE_DEFAULT;
