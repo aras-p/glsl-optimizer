@@ -709,7 +709,7 @@ static int convert_rgb_to_alpha(
 
 	pair_inst->Alpha.Opcode = pair_inst->RGB.Opcode;
 	pair_inst->Alpha.DestIndex = new_index;
-	pair_inst->Alpha.WriteMask = 1;
+	pair_inst->Alpha.WriteMask = RC_MASK_W;
 	pair_inst->Alpha.Target = pair_inst->RGB.Target;
 	pair_inst->Alpha.OutputWriteMask = pair_inst->RGB.OutputWriteMask;
 	pair_inst->Alpha.DepthWriteMask = pair_inst->RGB.DepthWriteMask;
