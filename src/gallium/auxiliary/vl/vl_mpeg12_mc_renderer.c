@@ -314,6 +314,9 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
       ureg_CMP(shader, ureg_writemask(ref[0], TGSI_WRITEMASK_XY),
                ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
                tc[1], tc[0]);
+      ureg_CMP(shader, ureg_writemask(ref[1], TGSI_WRITEMASK_XY),
+               ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
+               tc[3], tc[2]);
 
       ureg_IF(shader, ureg_scalar(info, TGSI_SWIZZLE_X), &bi_label);
 
@@ -321,7 +324,7 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
           * result = tex(field.z ? tc[1] : tc[0], sampler[bkwd_pred ? 1 : 0])
           */
          ureg_IF(shader, ureg_scalar(info, TGSI_SWIZZLE_Z), &label);
-            ureg_TEX(shader, result, TGSI_TEXTURE_2D, ureg_src(ref[0]), sampler[1]);
+            ureg_TEX(shader, result, TGSI_TEXTURE_2D, ureg_src(ref[1]), sampler[1]);
          ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
          ureg_ELSE(shader, &label);
             ureg_TEX(shader, result, TGSI_TEXTURE_2D, ureg_src(ref[0]), sampler[0]);
@@ -337,9 +340,6 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
           * else
           *    ref[0..1] = tex(tc[2..3], sampler[0..1])
           */
-         ureg_CMP(shader, ureg_writemask(ref[1], TGSI_WRITEMASK_XY),
-            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
-            tc[3], tc[2]);
          ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, ureg_src(ref[0]), sampler[0]);
          ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, ureg_src(ref[1]), sampler[1]);
 
