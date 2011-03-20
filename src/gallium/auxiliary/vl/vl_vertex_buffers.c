@@ -212,8 +212,8 @@ get_motion_vectors(struct pipe_mpeg12_macroblock *mb, struct vertex2s mv[4])
        mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_FWD) {
 
       if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
-         mv[0].x = mb->mv[0].top.x;
-         mv[0].y = mb->mv[0].top.y;
+         mv[0].x = mv[1].x = mb->mv[0].top.x;
+         mv[0].y = mv[1].y = mb->mv[0].top.y;
 
       } else {
          mv[0].x = mb->mv[0].top.x;
@@ -225,14 +225,16 @@ get_motion_vectors(struct pipe_mpeg12_macroblock *mb, struct vertex2s mv[4])
          if (mb->mv[0].top.field_select) mv[0].y += 2;
          if (!mb->mv[0].bottom.field_select) mv[1].y -= 2;
       }
+   } else {
+      mv[0].x = mv[0].y = mv[1].x = mv[1].y = 0x8000;
    }
 
    if (mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BI ||
        mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BKWD) {
 
       if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
-         mv[2].x = mb->mv[1].top.x;
-         mv[2].y = mb->mv[1].top.y;
+         mv[2].x = mv[3].x = mb->mv[1].top.x;
+         mv[2].y = mv[3].y = mb->mv[1].top.y;
 
       } else {
          mv[2].x = mb->mv[1].top.x;
@@ -244,6 +246,8 @@ get_motion_vectors(struct pipe_mpeg12_macroblock *mb, struct vertex2s mv[4])
          if (mb->mv[1].top.field_select) mv[2].y += 2;
          if (!mb->mv[1].bottom.field_select) mv[3].y -= 2;
       }
+   } else {
+      mv[2].x = mv[2].y = mv[3].x = mv[3].y = 0x8000;
    }
 }
 
@@ -274,23 +278,19 @@ vl_vb_add_block(struct vl_vertex_buffer *buffer, struct pipe_mpeg12_macroblock *
    }
    stream->eb[0][0].flag = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD;
    stream->eb[0][1].flag = mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME;
-   stream->eb[1][0].flag = mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BKWD;
+   stream->eb[1][0].flag = mb->mb_type != PIPE_MPEG12_MACROBLOCK_TYPE_INTRA;
    switch (mb->mb_type) {
-      case PIPE_MPEG12_MACROBLOCK_TYPE_INTRA:
-         stream->eb[1][1].flag = -1;
-         break;
-
       case PIPE_MPEG12_MACROBLOCK_TYPE_FWD:
-      case PIPE_MPEG12_MACROBLOCK_TYPE_BKWD:
-         stream->eb[1][1].flag = 1;
-         break;
-
-      case PIPE_MPEG12_MACROBLOCK_TYPE_BI:
          stream->eb[1][1].flag = 0;
          break;
 
-      default:
-         assert(0);
+      case PIPE_MPEG12_MACROBLOCK_TYPE_BI:
+         stream->eb[1][1].flag = 1;
+         break;
+
+      case PIPE_MPEG12_MACROBLOCK_TYPE_BKWD:
+         stream->eb[1][1].flag = 2;
+         break;
    }
 
    get_motion_vectors(mb, stream->mv);

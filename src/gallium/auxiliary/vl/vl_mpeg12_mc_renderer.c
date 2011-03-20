@@ -106,12 +106,11 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
     * o_eb[0..1] = vrect.x ? eb[0..1][1] : eb[0..1][0]
     *
     * o_frame_pred = frame_pred
-    * o_info.x = ref_frames
-    * o_info.y = ref_frames > 0
-    * o_info.z = bkwd_pred
+    * o_info.x = not_intra
+    * o_info.y = ref_weight / 2
     *
     * // Apply motion vectors
-    * o_vmv[0..count] = t_vpos + vmv[0..count] * mv_scale
+    * o_vmv[0..3] = t_vpos + vmv[0..3] * mv_scale
     *
     * o_line.xy = vrect * 8
     * o_line.z = interlaced
@@ -152,24 +151,13 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
             eb[1][1], eb[1][0]);
 
    ureg_MOV(shader, ureg_writemask(o_info, TGSI_WRITEMASK_X),
-            ureg_scalar(eb[1][1], TGSI_SWIZZLE_W));
-   ureg_SGE(shader, ureg_writemask(o_info, TGSI_WRITEMASK_Y),
-      ureg_scalar(eb[1][1], TGSI_SWIZZLE_W), ureg_imm1f(shader, 0.0f));
-   ureg_MOV(shader, ureg_writemask(o_info, TGSI_WRITEMASK_Z),
             ureg_scalar(eb[1][0], TGSI_SWIZZLE_W));
+   ureg_MUL(shader, ureg_writemask(o_info, TGSI_WRITEMASK_Y),
+            ureg_scalar(eb[1][1], TGSI_SWIZZLE_W),
+            ureg_imm1f(shader, 0.5f));
 
-   ureg_MAD(shader, ureg_writemask(o_vmv[0], TGSI_WRITEMASK_XY), mv_scale, vmv[0], ureg_src(t_vpos));
-   ureg_MAD(shader, ureg_writemask(o_vmv[2], TGSI_WRITEMASK_XY), mv_scale, vmv[2], ureg_src(t_vpos));
-
-   ureg_CMP(shader, ureg_writemask(t_vmv, TGSI_WRITEMASK_XY),
-            ureg_negate(ureg_scalar(eb[0][1], TGSI_SWIZZLE_W)),
-            vmv[0], vmv[1]);
-   ureg_MAD(shader, ureg_writemask(o_vmv[1], TGSI_WRITEMASK_XY), mv_scale, ureg_src(t_vmv), ureg_src(t_vpos));
-
-   ureg_CMP(shader, ureg_writemask(t_vmv, TGSI_WRITEMASK_XY),
-            ureg_negate(ureg_scalar(eb[0][1], TGSI_SWIZZLE_W)),
-            vmv[2], vmv[3]);
-   ureg_MAD(shader, ureg_writemask(o_vmv[3], TGSI_WRITEMASK_XY), mv_scale, ureg_src(t_vmv), ureg_src(t_vpos));
+   for (i = 0; i < 4; ++i)
+      ureg_MAD(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_XY), mv_scale, vmv[i], ureg_src(t_vpos));
 
    ureg_MOV(shader, ureg_writemask(o_vtex[0], TGSI_WRITEMASK_XY), ureg_src(t_vpos));
    ureg_MOV(shader, ureg_writemask(o_vtex[1], TGSI_WRITEMASK_XY), ureg_src(t_vpos));
@@ -310,7 +298,14 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
 
    ureg_MOV(shader, ureg_writemask(result, TGSI_WRITEMASK_XYZ), ureg_imm1f(shader, 0.5f));
 
-   ureg_IF(shader, ureg_scalar(info, TGSI_SWIZZLE_Y), &intra_label);
+   ureg_IF(shader, ureg_scalar(info, TGSI_SWIZZLE_X), &intra_label);
+      /*
+       * if (field.z)
+       *    ref[0..1] = tex(tc[0..1], sampler[0..1])
+       * else
+       *    ref[0..1] = tex(tc[2..3], sampler[0..1])
+       * result = LRP(info.y, ref[0..1])
+       */
       ureg_CMP(shader, ureg_writemask(ref[0], TGSI_WRITEMASK_XY),
                ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
                tc[1], tc[0]);
@@ -318,36 +313,13 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
                ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
                tc[3], tc[2]);
 
-      ureg_IF(shader, ureg_scalar(info, TGSI_SWIZZLE_X), &bi_label);
+      ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, ureg_src(ref[0]), sampler[0]);
+      ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, ureg_src(ref[1]), sampler[1]);
 
-         /*
-          * result = tex(field.z ? tc[1] : tc[0], sampler[bkwd_pred ? 1 : 0])
-          */
-         ureg_IF(shader, ureg_scalar(info, TGSI_SWIZZLE_Z), &label);
-            ureg_TEX(shader, result, TGSI_TEXTURE_2D, ureg_src(ref[1]), sampler[1]);
-         ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
-         ureg_ELSE(shader, &label);
-            ureg_TEX(shader, result, TGSI_TEXTURE_2D, ureg_src(ref[0]), sampler[0]);
-         ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
-         ureg_ENDIF(shader);
+      ureg_LRP(shader, ureg_writemask(result, TGSI_WRITEMASK_XYZ),
+               ureg_scalar(info, TGSI_SWIZZLE_Y),
+               ureg_src(ref[1]), ureg_src(ref[0]));
 
-      ureg_fixup_label(shader, bi_label, ureg_get_instruction_number(shader));
-      ureg_ELSE(shader, &bi_label);
-
-         /*
-          * if (field.z)
-          *    ref[0..1] = tex(tc[0..1], sampler[0..1])
-          * else
-          *    ref[0..1] = tex(tc[2..3], sampler[0..1])
-          */
-         ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, ureg_src(ref[0]), sampler[0]);
-         ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, ureg_src(ref[1]), sampler[1]);
-
-         ureg_LRP(shader, ureg_writemask(result, TGSI_WRITEMASK_XYZ), ureg_imm1f(shader, 0.5f),
-            ureg_src(ref[0]), ureg_src(ref[1]));
-
-      ureg_fixup_label(shader, bi_label, ureg_get_instruction_number(shader));
-      ureg_ENDIF(shader);
    ureg_fixup_label(shader, intra_label, ureg_get_instruction_number(shader));
    ureg_ENDIF(shader);
 
