@@ -228,11 +228,7 @@ vl_mpeg12_get_param(struct pipe_video_context *vpipe, int param)
 
    switch (param) {
       case PIPE_CAP_NPOT_TEXTURES:
-         /* XXX: Temporary; not all paths are NPOT-tested */
-#if 0
-         return ctx->pipe->screen->get_param(ctx->pipe->screen, param);
-#endif
-         return FALSE;
+         return !ctx->pot_buffers;
       case PIPE_CAP_DECODE_TARGET_PREFERRED_FORMAT:
          return ctx->decode_format;
       default:
@@ -691,6 +687,7 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
 
    ctx->pipe = pipe;
    ctx->decode_format = decode_format;
+   ctx->pot_buffers = pot_buffers;
 
    ctx->quads = vl_vb_upload_quads(ctx->pipe, 2, 2);
    ctx->vertex_buffer_size = width / MACROBLOCK_WIDTH * height / MACROBLOCK_HEIGHT;
@@ -702,8 +699,6 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
       return NULL;
    }
 
-   /* TODO: Non-pot buffers untested, probably doesn't work without changes to texcoord generation, vert shader, etc */
-   assert(pot_buffers);
    buffer_width = pot_buffers ? util_next_power_of_two(width) : width;
    buffer_height = pot_buffers ? util_next_power_of_two(height) : height;
 

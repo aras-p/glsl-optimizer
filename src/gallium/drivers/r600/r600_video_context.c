@@ -47,7 +47,7 @@ r600_video_create(struct pipe_screen *screen, enum pipe_video_profile profile,
          return vl_create_mpeg12_context(pipe, profile,
                                          chroma_format,
                                          width, height,
-                                         true,
+                                         false,
                                          PIPE_FORMAT_XYUV);
       default:
          return NULL;

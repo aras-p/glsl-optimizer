@@ -40,6 +40,9 @@ struct vl_mpeg12_context
 {
    struct pipe_video_context base;
    struct pipe_context *pipe;
+   enum pipe_format decode_format;
+   bool pot_buffers;
+
    struct pipe_surface *decode_target;
    const unsigned (*empty_block_mask)[3][2][2];
 
@@ -57,8 +60,6 @@ struct vl_mpeg12_context
    void *rast;
    void *dsa;
    void *blend;
-
-   enum pipe_format decode_format;
 };
 
 struct vl_mpeg12_buffer
