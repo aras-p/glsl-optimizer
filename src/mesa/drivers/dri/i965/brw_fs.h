@@ -67,6 +67,8 @@ enum fs_opcodes {
    FS_OPCODE_COS,
    FS_OPCODE_DDX,
    FS_OPCODE_DDY,
+   FS_OPCODE_PIXEL_X,
+   FS_OPCODE_PIXEL_Y,
    FS_OPCODE_CINTERP,
    FS_OPCODE_LINTERP,
    FS_OPCODE_TEX,
@@ -481,6 +483,7 @@ public:
 
    void generate_code();
    void generate_fb_write(fs_inst *inst);
+   void generate_pixel_xy(struct brw_reg dst, bool is_x);
    void generate_linterp(fs_inst *inst, struct brw_reg dst,
 			 struct brw_reg *src);
    void generate_tex(fs_inst *inst, struct brw_reg dst, struct brw_reg src);

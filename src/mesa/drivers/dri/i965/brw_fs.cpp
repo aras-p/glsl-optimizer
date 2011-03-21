@@ -1916,21 +1916,14 @@ fs_visitor::interp_reg(int location, int channel)
 void
 fs_visitor::emit_interpolation_setup_gen4()
 {
-   struct brw_reg g1_uw = retype(brw_vec1_grf(1, 0), BRW_REGISTER_TYPE_UW);
-
    this->current_annotation = "compute pixel centers";
    this->pixel_x = fs_reg(this, glsl_type::uint_type);
    this->pixel_y = fs_reg(this, glsl_type::uint_type);
    this->pixel_x.type = BRW_REGISTER_TYPE_UW;
    this->pixel_y.type = BRW_REGISTER_TYPE_UW;
-   emit(BRW_OPCODE_ADD,
-	this->pixel_x,
-	fs_reg(stride(suboffset(g1_uw, 4), 2, 4, 0)),
-	fs_reg(brw_imm_v(0x10101010)));
-   emit(BRW_OPCODE_ADD,
-	this->pixel_y,
-	fs_reg(stride(suboffset(g1_uw, 5), 2, 4, 0)),
-	fs_reg(brw_imm_v(0x11001100)));
+
+   emit(FS_OPCODE_PIXEL_X, this->pixel_x);
+   emit(FS_OPCODE_PIXEL_Y, this->pixel_y);
 
    this->current_annotation = "compute pixel deltas from v0";
    if (brw->has_pln) {
@@ -2152,6 +2145,40 @@ fs_visitor::generate_fb_write(fs_inst *inst)
 		0,
 		eot,
 		inst->header_present);
+}
+
+/* Computes the integer pixel x,y values from the origin.
+ *
+ * This is the basis of gl_FragCoord computation, but is also used
+ * pre-gen6 for computing the deltas from v0 for computing
+ * interpolation.
+ */
+void
+fs_visitor::generate_pixel_xy(struct brw_reg dst, bool is_x)
+{
+   struct brw_reg g1_uw = retype(brw_vec1_grf(1, 0), BRW_REGISTER_TYPE_UW);
+   struct brw_reg src;
+   struct brw_reg deltas;
+
+   if (is_x) {
+      src = stride(suboffset(g1_uw, 4), 2, 4, 0);
+      deltas = brw_imm_v(0x10101010);
+   } else {
+      src = stride(suboffset(g1_uw, 5), 2, 4, 0);
+      deltas = brw_imm_v(0x11001100);
+   }
+
+   if (c->dispatch_width == 16) {
+      dst = vec16(dst);
+   }
+
+   /* We do this 8 or 16-wide, but since the destination is UW we
+    * don't do compression in the 16-wide case.
+    */
+   brw_push_insn_state(p);
+   brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+   brw_ADD(p, dst, src, deltas);
+   brw_pop_insn_state(p);
 }
 
 void
@@ -3600,6 +3627,12 @@ fs_visitor::generate_code()
       case FS_OPCODE_SIN:
       case FS_OPCODE_COS:
 	 generate_math(inst, dst, src);
+	 break;
+      case FS_OPCODE_PIXEL_X:
+	 generate_pixel_xy(dst, true);
+	 break;
+      case FS_OPCODE_PIXEL_Y:
+	 generate_pixel_xy(dst, false);
 	 break;
       case FS_OPCODE_CINTERP:
 	 brw_MOV(p, dst, src[0]);
