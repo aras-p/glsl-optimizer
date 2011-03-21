@@ -231,18 +231,19 @@ svga_transfer_dma(struct svga_context *svga,
 
          sw = (uint8_t *)st->swbuf + offset;
 
-         if(transfer == SVGA3D_WRITE_HOST_VRAM) {
+         if (transfer == SVGA3D_WRITE_HOST_VRAM) {
+            unsigned usage = PIPE_TRANSFER_WRITE;
+
             /* Wait for the previous DMAs to complete */
             /* TODO: keep one DMA (at half the size) in the background */
-            if(y) {
-               svga_context_flush(svga, &fence);
-               sws->fence_finish(sws, fence, 0);
-               sws->fence_reference(sws, &fence, NULL);
+            if (y) {
+               svga_context_flush(svga, NULL);
+               usage |= PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE;
             }
 
-            hw = sws->buffer_map(sws, st->hwbuf, PIPE_TRANSFER_WRITE);
+            hw = sws->buffer_map(sws, st->hwbuf, usage);
             assert(hw);
-            if(hw) {
+            if (hw) {
                memcpy(hw, sw, length);
                sws->buffer_unmap(sws, st->hwbuf);
             }
