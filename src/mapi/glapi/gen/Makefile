@@ -41,8 +41,6 @@ XORG_GLX_DIR = $(XORG_BASE)/glx
 XORG_GLAPI_DIR = $(XORG_BASE)/glx
 
 XORG_GLAPI_FILES = \
-	$(XORG_GLAPI_DIR)/glapi.h \
-	$(XORG_GLAPI_DIR)/glapi.c \
 	$(XORG_GLAPI_DIR)/glapi_getproc.c \
 	$(XORG_GLAPI_DIR)/glapi_nop.c \
 	$(XORG_GLAPI_DIR)/glthread.c \
@@ -50,7 +48,6 @@ XORG_GLAPI_FILES = \
 
 XORG_GLAPI_OUTPUTS = \
 	$(XORG_GLAPI_DIR)/glprocs.h \
-	$(XORG_GLAPI_DIR)/glapitemp.h \
 	$(XORG_GLAPI_DIR)/glapioffsets.h \
 	$(XORG_GLAPI_DIR)/glapitable.h \
 	$(XORG_GLAPI_DIR)/glapidispatch.h
