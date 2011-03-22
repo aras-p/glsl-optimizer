@@ -80,6 +80,12 @@
 #define PCI_CHIP_SANDYBRIDGE_M_GT2_PLUS	0x0126
 #define PCI_CHIP_SANDYBRIDGE_S		0x010A	/* Server */
 
+#define PCI_CHIP_IVYBRIDGE_GT1          0x0152  /* Desktop */
+#define PCI_CHIP_IVYBRIDGE_GT2          0x0162
+#define PCI_CHIP_IVYBRIDGE_M_GT1        0x0156  /* Mobile */
+#define PCI_CHIP_IVYBRIDGE_M_GT2        0x0166
+#define PCI_CHIP_IVYBRIDGE_S_GT1        0x015a  /* Server */
+
 #define IS_MOBILE(devid)	(devid == PCI_CHIP_I855_GM || \
 				 devid == PCI_CHIP_I915_GM || \
 				 devid == PCI_CHIP_I945_GM || \
@@ -136,9 +142,12 @@
 
 #define IS_GEN6(devid)		(IS_GT1(devid) || IS_GT2(devid))
 
-#define IS_IVB_GT1(devid)       0
+#define IS_IVB_GT1(devid)       (devid == PCI_CHIP_IVYBRIDGE_GT1 || \
+				 devid == PCI_CHIP_IVYBRIDGE_M_GT1 || \
+				 devid == PCI_CHIP_IVYBRIDGE_S_GT1)
 
-#define IS_IVB_GT2(devid)       0
+#define IS_IVB_GT2(devid)       (devid == PCI_CHIP_IVYBRIDGE_GT2 || \
+				 devid == PCI_CHIP_IVYBRIDGE_M_GT2)
 
 #define IS_IVYBRIDGE(devid)     (IS_IVB_GT1(devid) || IS_IVB_GT2(devid))
 
