@@ -740,8 +740,8 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
       return NULL;
    }
 
-   ctx->buffer_width = pot_buffers ? util_next_power_of_two(width) : width;
-   ctx->buffer_height = pot_buffers ? util_next_power_of_two(height) : height;
+   ctx->buffer_width = pot_buffers ? util_next_power_of_two(width) : align(width, MACROBLOCK_WIDTH);
+   ctx->buffer_height = pot_buffers ? util_next_power_of_two(height) : align(height, MACROBLOCK_HEIGHT);
 
    if (!init_idct(ctx, ctx->buffer_width, ctx->buffer_height)) {
       ctx->pipe->destroy(ctx->pipe);
