@@ -582,11 +582,11 @@ static const struct value_desc values[] = {
    { GL_TEXTURE_COORD_ARRAY,
      LOC_CUSTOM, TYPE_BOOLEAN, offsetof(struct gl_client_array, Enabled), NO_EXTRA },
    { GL_TEXTURE_COORD_ARRAY_SIZE,
-     LOC_CUSTOM, TYPE_BOOLEAN, offsetof(struct gl_client_array, Size), NO_EXTRA },
+     LOC_CUSTOM, TYPE_INT, offsetof(struct gl_client_array, Size), NO_EXTRA },
    { GL_TEXTURE_COORD_ARRAY_TYPE,
-     LOC_CUSTOM, TYPE_BOOLEAN, offsetof(struct gl_client_array, Type), NO_EXTRA },
+     LOC_CUSTOM, TYPE_ENUM, offsetof(struct gl_client_array, Type), NO_EXTRA },
    { GL_TEXTURE_COORD_ARRAY_STRIDE,
-     LOC_CUSTOM, TYPE_BOOLEAN, offsetof(struct gl_client_array, Stride), NO_EXTRA },
+     LOC_CUSTOM, TYPE_INT, offsetof(struct gl_client_array, Stride), NO_EXTRA },
 
    /* GL_ARB_ES2_compatibility */
    { GL_SHADER_COMPILER, CONST(1), extra_ARB_ES2_compatibility },
