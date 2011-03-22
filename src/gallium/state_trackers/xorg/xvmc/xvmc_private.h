@@ -49,7 +49,7 @@ typedef struct
 
 typedef struct
 {
-   struct pipe_surface *pipe_vsfc;
+   struct pipe_video_buffer *pipe_buffer;
    struct pipe_fence_handle *render_fence;
    struct pipe_fence_handle *disp_fence;
 

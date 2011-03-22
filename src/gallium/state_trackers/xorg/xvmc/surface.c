@@ -155,7 +155,7 @@ MacroBlocksToPipe(struct pipe_screen *screen,
                   unsigned int num_macroblocks,
                   struct pipe_mpeg12_macroblock *mb)
 {
-   unsigned int i, j, k, l;
+   unsigned int i, j;
    XvMCMacroBlock *xvmc_mb;
 
    assert(xvmc_macroblocks);
@@ -204,10 +204,6 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    XvMCContextPrivate *context_priv;
    struct pipe_video_context *vpipe;
    XvMCSurfacePrivate *surface_priv;
-   struct pipe_resource template;
-   struct pipe_resource *vsfc_tex;
-   struct pipe_surface surf_template;
-   struct pipe_surface *vsfc;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Creating surface %p.\n", surface);
 
@@ -225,45 +221,9 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    if (!surface_priv)
       return BadAlloc;
 
-   memset(&template, 0, sizeof(struct pipe_resource));
-   template.target = PIPE_TEXTURE_2D;
-   template.format = (enum pipe_format)vpipe->get_param(vpipe, PIPE_CAP_DECODE_TARGET_PREFERRED_FORMAT);
-   if (!vpipe->is_format_supported(vpipe, template.format,
-                                   PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET)) {
-      FREE(surface_priv);
-      return BadAlloc;
-   }
-   template.last_level = 0;
-   if (vpipe->get_param(vpipe, PIPE_CAP_NPOT_TEXTURES)) {
-      template.width0 = context->width;
-      template.height0 = context->height;
-   }
-   else {
-      template.width0 = util_next_power_of_two(context->width);
-      template.height0 = util_next_power_of_two(context->height);
-   }
-   template.depth0 = 1;
-   template.array_size = 1;
-   template.usage = PIPE_USAGE_DEFAULT;
-   template.bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
-   template.flags = 0;
-   vsfc_tex = vpipe->screen->resource_create(vpipe->screen, &template);
-   if (!vsfc_tex) {
-      FREE(surface_priv);
-      return BadAlloc;
-   }
 
-   memset(&surf_template, 0, sizeof(surf_template));
-   surf_template.format = vsfc_tex->format;
-   surf_template.usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
-   vsfc = vpipe->create_surface(vpipe, vsfc_tex, &surf_template);
-   pipe_resource_reference(&vsfc_tex, NULL);
-   if (!vsfc) {
-      FREE(surface_priv);
-      return BadAlloc;
-   }
 
-   surface_priv->pipe_vsfc = vsfc;
+   surface_priv->pipe_buffer = vpipe->create_buffer(vpipe);
    surface_priv->context = context;
 
    surface->surface_id = XAllocID(dpy);
@@ -288,9 +248,9 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
 )
 {
    struct pipe_video_context *vpipe;
-   struct pipe_surface *t_vsfc;
-   struct pipe_surface *p_vsfc;
-   struct pipe_surface *f_vsfc;
+   struct pipe_video_buffer *t_vsfc;
+   struct pipe_video_buffer *p_vsfc;
+   struct pipe_video_buffer *f_vsfc;
    XvMCContextPrivate *context_priv;
    XvMCSurfacePrivate *target_surface_priv;
    XvMCSurfacePrivate *past_surface_priv;
@@ -337,16 +297,15 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    context_priv = context->privData;
    vpipe = context_priv->vctx->vpipe;
 
-   t_vsfc = target_surface_priv->pipe_vsfc;
-   p_vsfc = past_surface ? past_surface_priv->pipe_vsfc : NULL;
-   f_vsfc = future_surface ? future_surface_priv->pipe_vsfc : NULL;
+   t_vsfc = target_surface_priv->pipe_buffer;
+   p_vsfc = past_surface ? past_surface_priv->pipe_buffer : NULL;
+   f_vsfc = future_surface ? future_surface_priv->pipe_buffer : NULL;
 
    MacroBlocksToPipe(vpipe->screen, picture_structure, macroblocks, blocks, first_macroblock,
                      num_macroblocks, pipe_macroblocks);
 
-   vpipe->set_decode_target(vpipe, t_vsfc);
-   vpipe->decode_macroblocks(vpipe, p_vsfc, f_vsfc, num_macroblocks,
-                             &pipe_macroblocks->base, &target_surface_priv->render_fence);
+   t_vsfc->add_macroblocks(t_vsfc, p_vsfc, f_vsfc, num_macroblocks,
+                           &pipe_macroblocks->base, &target_surface_priv->render_fence);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for rendering.\n", target_surface);
 
@@ -447,7 +406,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    else
       vpipe->set_picture_layers(vpipe, NULL, NULL, NULL, 0);
 
-   vpipe->render_picture(vpipe, surface_priv->pipe_vsfc, PictureToPipe(flags), &src_rect,
+   vpipe->render_picture(vpipe, surface_priv->pipe_buffer, &src_rect, PictureToPipe(flags),
                          drawable_surface, &dst_rect, &surface_priv->disp_fence);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for display. Pushing to front buffer.\n", surface);
@@ -506,7 +465,7 @@ Status XvMCDestroySurface(Display *dpy, XvMCSurface *surface)
       return XvMCBadSurface;
 
    surface_priv = surface->privData;
-   pipe_surface_reference(&surface_priv->pipe_vsfc, NULL);
+   surface_priv->pipe_buffer->destroy(surface_priv->pipe_buffer);
    FREE(surface_priv);
    surface->privData = NULL;
 

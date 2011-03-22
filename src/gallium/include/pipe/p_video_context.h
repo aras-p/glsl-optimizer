@@ -43,6 +43,7 @@ struct pipe_surface;
 struct pipe_macroblock;
 struct pipe_picture_desc;
 struct pipe_fence_handle;
+struct pipe_video_buffer;
 
 /**
  * Gallium video rendering context
@@ -78,28 +79,25 @@ struct pipe_video_context
                                           const struct pipe_surface *templat);
 
    /**
+    * Creates a buffer for as decoding target
+    */
+   struct pipe_video_buffer *(*create_buffer)(struct pipe_video_context *vpipe);
+
+   /**
     * Picture decoding and displaying
     */
+
+#if 0
    /*@{*/
    void (*decode_bitstream)(struct pipe_video_context *vpipe,
                             unsigned num_bufs,
                             struct pipe_buffer **bitstream_buf);
-
-   void (*decode_macroblocks)(struct pipe_video_context *vpipe,
-                              struct pipe_surface *past,
-                              struct pipe_surface *future,
-                              unsigned num_macroblocks,
-                              struct pipe_macroblock *macroblocks,
-                              struct pipe_fence_handle **fence);
+#endif
 
    void (*render_picture)(struct pipe_video_context     *vpipe,
-                          struct pipe_surface           *src_surface,
-                          enum pipe_mpeg12_picture_type picture_type,
-                          /*unsigned                    num_past_surfaces,
-                          struct pipe_surface           *past_surfaces,
-                          unsigned                      num_future_surfaces,
-                          struct pipe_surface           *future_surfaces,*/
+                          struct pipe_video_buffer      *src_surface,
                           struct pipe_video_rect        *src_area,
+                          enum pipe_mpeg12_picture_type picture_type,
                           struct pipe_surface           *dst_surface,
                           struct pipe_video_rect        *dst_area,
                           struct pipe_fence_handle      **fence);
@@ -110,12 +108,14 @@ struct pipe_video_context
                                const float *rgba,
                                unsigned width, unsigned height);
 
+#if 0
    void (*resource_copy_region)(struct pipe_video_context *vpipe,
                                 struct pipe_resource *dst,
                                 unsigned dstx, unsigned dsty, unsigned dstz,
                                 struct pipe_resource *src,
                                 unsigned srcx, unsigned srcy, unsigned srcz,
                                 unsigned width, unsigned height);
+#endif
 
    struct pipe_transfer *(*get_transfer)(struct pipe_video_context *vpipe,
                                          struct pipe_resource *resource,
@@ -164,15 +164,27 @@ struct pipe_video_context
    void (*set_picture_desc)(struct pipe_video_context *vpipe,
                             const struct pipe_picture_desc *desc);
 
-   void (*set_decode_target)(struct pipe_video_context *vpipe,
-                             struct pipe_surface *dt);
-
    void (*set_csc_matrix)(struct pipe_video_context *vpipe, const float *mat);
 
    /* TODO: Interface for scaling modes, post-processing, etc. */
    /*@}*/
 };
 
+struct pipe_video_buffer
+{
+   struct pipe_video_context* context;
+
+   void (*destroy)(struct pipe_video_buffer *buffer);
+
+   void (*add_macroblocks)(struct pipe_video_buffer *buffer,
+                           struct pipe_video_buffer *past,
+                           struct pipe_video_buffer *future,
+                           unsigned num_macroblocks,
+                           struct pipe_macroblock *macroblocks,
+                           struct pipe_fence_handle **fence);
+
+
+};
 
 #ifdef __cplusplus
 }

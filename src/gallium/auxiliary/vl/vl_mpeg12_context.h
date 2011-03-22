@@ -42,8 +42,8 @@ struct vl_mpeg12_context
    struct pipe_context *pipe;
    enum pipe_format decode_format;
    bool pot_buffers;
+   unsigned buffer_width, buffer_height;
 
-   struct pipe_surface *decode_target;
    const unsigned (*empty_block_mask)[3][2][2];
 
    struct pipe_vertex_buffer quads;
@@ -52,9 +52,6 @@ struct vl_mpeg12_context
 
    struct vl_idct idct_y, idct_cr, idct_cb;
    struct vl_mpeg12_mc_renderer mc_renderer;
-
-   struct keymap *buffer_map;
-   struct vl_mpeg12_buffer *cur_buffer;
    struct vl_compositor compositor;
 
    void *rast;
@@ -64,6 +61,10 @@ struct vl_mpeg12_context
 
 struct vl_mpeg12_buffer
 {
+   struct pipe_video_buffer base;
+   struct pipe_surface *surface;
+   bool mapped;
+
    struct vl_vertex_buffer vertex_stream;
 
    union
