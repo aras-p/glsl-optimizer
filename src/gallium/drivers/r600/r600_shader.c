@@ -1526,9 +1526,11 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	unsigned src_gpr;
 	int r, i;
 	int opcode;
-	boolean src_not_temp =
+	/* Texture fetch instructions can only use gprs as source. */
+	const boolean src_requires_loading =
 		inst->Src[0].Register.File != TGSI_FILE_TEMPORARY &&
 		inst->Src[0].Register.File != TGSI_FILE_INPUT;
+	boolean src_loaded = FALSE;
 
 	src_gpr = ctx->file_offset[inst->Src[0].Register.File] + inst->Src[0].Register.Index;
 
@@ -1570,7 +1572,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		r = r600_bc_add_alu(ctx->bc, &alu);
 		if (r)
 			return r;
-		src_not_temp = FALSE;
+		src_loaded = TRUE;
 		src_gpr = ctx->temp_reg;
 	}
 
@@ -1655,11 +1657,11 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		if (r)
 			return r;
 
-		src_not_temp = FALSE;
+		src_loaded = TRUE;
 		src_gpr = ctx->temp_reg;
 	}
 
-	if (src_not_temp) {
+	if (src_requires_loading && !src_loaded) {
 		for (i = 0; i < 4; i++) {
 			memset(&alu, 0, sizeof(struct r600_bc_alu));
 			alu.inst = CTX_INST(V_SQ_ALU_WORD1_OP2_SQ_OP2_INST_MOV);
@@ -1673,6 +1675,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 			if (r)
 				return r;
 		}
+		src_loaded = TRUE;
 		src_gpr = ctx->temp_reg;
 	}
 
@@ -1691,10 +1694,17 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	tex.dst_sel_y = (inst->Dst[0].Register.WriteMask & 2) ? 1 : 7;
 	tex.dst_sel_z = (inst->Dst[0].Register.WriteMask & 4) ? 2 : 7;
 	tex.dst_sel_w = (inst->Dst[0].Register.WriteMask & 8) ? 3 : 7;
-	tex.src_sel_x = 0;
-	tex.src_sel_y = 1;
-	tex.src_sel_z = 2;
-	tex.src_sel_w = 3;
+	if (src_loaded) {
+		tex.src_sel_x = 0;
+		tex.src_sel_y = 1;
+		tex.src_sel_z = 2;
+		tex.src_sel_w = 3;
+	} else {
+		tex.src_sel_x = ctx->src[0].swizzle[0];
+		tex.src_sel_y = ctx->src[0].swizzle[1];
+		tex.src_sel_z = ctx->src[0].swizzle[2];
+		tex.src_sel_w = ctx->src[0].swizzle[3];
+	}
 
 	if (inst->Texture.Texture == TGSI_TEXTURE_CUBE) {
 		tex.src_sel_x = 1;
@@ -1712,12 +1722,12 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 
 	if (inst->Texture.Texture == TGSI_TEXTURE_1D_ARRAY) {
 		tex.coord_type_z = 0;
-		tex.src_sel_z = 1;
+		tex.src_sel_z = tex.src_sel_y;
 	} else if (inst->Texture.Texture == TGSI_TEXTURE_2D_ARRAY)
 		tex.coord_type_z = 0;
 
 	if (inst->Texture.Texture == TGSI_TEXTURE_SHADOW1D || inst->Texture.Texture == TGSI_TEXTURE_SHADOW2D)
-		tex.src_sel_w = 2;
+		tex.src_sel_w = tex.src_sel_z;
 
 	r = r600_bc_add_tex(ctx->bc, &tex);
 	if (r)
