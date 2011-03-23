@@ -617,7 +617,7 @@ update_image_transfer_state(struct gl_context *ctx)
  */
 void _mesa_update_pixel( struct gl_context *ctx, GLuint new_state )
 {
-   if (new_state & _MESA_NEW_TRANSFER_STATE)
+   if (new_state & _NEW_PIXEL)
       update_image_transfer_state(ctx);
 }
 

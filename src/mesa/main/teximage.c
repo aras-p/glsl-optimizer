@@ -55,9 +55,7 @@
  * In particular, we care about pixel transfer state and buffer state
  * (such as glReadBuffer to make sure we read from the right renderbuffer).
  */
-#define NEW_COPY_TEX_STATE (_MESA_NEW_TRANSFER_STATE | \
-                            _NEW_BUFFERS | \
-                            _NEW_PIXEL)
+#define NEW_COPY_TEX_STATE (_NEW_BUFFERS | _NEW_PIXEL)
 
 
 
@@ -2434,7 +2432,7 @@ teximage(struct gl_context *ctx, GLuint dims,
          return;   /* error was recorded */
       }
 
-      if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
+      if (ctx->NewState & _NEW_PIXEL)
 	 _mesa_update_state(ctx);
 
       texObj = _mesa_get_current_tex_object(ctx, target);
@@ -2580,7 +2578,7 @@ _mesa_EGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
       return;
    }
 
-   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
+   if (ctx->NewState & _NEW_PIXEL)
       _mesa_update_state(ctx);
 
    texObj = _mesa_get_current_tex_object(ctx, target);
@@ -2637,7 +2635,7 @@ texsubimage(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
       return;
    }       
 
-   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
+   if (ctx->NewState & _NEW_PIXEL)
       _mesa_update_state(ctx);
 
    if (subtexture_error_check(ctx, dims, target, level, xoffset, yoffset, zoffset,

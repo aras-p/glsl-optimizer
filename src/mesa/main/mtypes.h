@@ -3025,8 +3025,6 @@ struct gl_matrix_stack
 
 #define _MESA_NEW_NEED_NORMALS            (_NEW_LIGHT |		\
                                            _NEW_TEXTURE)
-
-#define _MESA_NEW_TRANSFER_STATE          (_NEW_PIXEL)
 /*@}*/
 
 

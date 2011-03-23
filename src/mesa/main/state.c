@@ -602,7 +602,7 @@ _mesa_update_state_locked( struct gl_context *ctx )
    if (new_state & (_NEW_STENCIL | _NEW_BUFFERS))
       _mesa_update_stencil( ctx );
 
-   if (new_state & _MESA_NEW_TRANSFER_STATE)
+   if (new_state & _NEW_PIXEL)
       _mesa_update_pixel( ctx, new_state );
 
    if (new_state & _DD_NEW_SEPARATE_SPECULAR)
