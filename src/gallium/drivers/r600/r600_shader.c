@@ -1526,10 +1526,12 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 	unsigned src_gpr;
 	int r, i;
 	int opcode;
-	/* Texture fetch instructions can only use gprs as source. */
+	/* Texture fetch instructions can only use gprs as source.
+	 * Also they cannot negate the source or take the absolute value */
 	const boolean src_requires_loading =
-		inst->Src[0].Register.File != TGSI_FILE_TEMPORARY &&
-		inst->Src[0].Register.File != TGSI_FILE_INPUT;
+		(inst->Src[0].Register.File != TGSI_FILE_TEMPORARY &&
+		inst->Src[0].Register.File != TGSI_FILE_INPUT) ||
+		ctx->src[0].neg || ctx->src[0].abs;
 	boolean src_loaded = FALSE;
 
 	src_gpr = ctx->file_offset[inst->Src[0].Register.File] + inst->Src[0].Register.Index;
