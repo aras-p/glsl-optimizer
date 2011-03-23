@@ -39,6 +39,7 @@
 #include "st_texture.h"
 #include "st_cb_blit.h"
 #include "st_cb_fbo.h"
+#include "st_atom.h"
 
 #include "util/u_blit.h"
 
@@ -74,6 +75,8 @@ st_BlitFramebuffer(struct gl_context *ctx,
                          : PIPE_TEX_MIPFILTER_LINEAR);
    struct gl_framebuffer *readFB = ctx->ReadBuffer;
    struct gl_framebuffer *drawFB = ctx->DrawBuffer;
+
+   st_validate_state(st);
 
    if (!_mesa_clip_blit(ctx, &srcX0, &srcY0, &srcX1, &srcY1,
                         &dstX0, &dstY0, &dstX1, &dstY1)) {
