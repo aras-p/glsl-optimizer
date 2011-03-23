@@ -3904,6 +3904,10 @@ fs_visitor::generate_code()
       last_native_inst = p->nr_insn;
    }
 
+   if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
+      printf("\n");
+   }
+
    ralloc_free(if_stack);
    ralloc_free(loop_stack);
    ralloc_free(if_depth_in_loop);
@@ -4050,7 +4054,7 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
    if (unlikely(INTEL_DEBUG & DEBUG_WM)) {
       printf("GLSL IR for native fragment shader %d:\n", prog->Name);
       _mesa_print_ir(shader->ir, NULL);
-      printf("\n");
+      printf("\n\n");
    }
 
    /* Now the main event: Visit the shader IR and generate our FS IR for it.
