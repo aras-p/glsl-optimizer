@@ -160,6 +160,25 @@ hash_table_remove(struct hash_table *ht, const void *key)
     }
 }
 
+void
+hash_table_call_foreach(struct hash_table *ht,
+			void (*callback)(const void *key,
+					 void *data,
+					 void *closure),
+			void *closure)
+{
+   int bucket;
+
+   for (bucket = 0; bucket < ht->num_buckets; bucket++) {
+      struct node *node, *temp;
+      foreach_s(node, temp, &ht->buckets[bucket]) {
+	 struct hash_node *hn = (struct hash_node *) node;
+
+	 callback(hn->key, hn->data, closure);
+      }
+   }
+}
+
 unsigned
 hash_table_string_hash(const void *key)
 {
