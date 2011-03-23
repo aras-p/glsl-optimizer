@@ -420,6 +420,7 @@ public:
 
    fs_reg *variable_storage(ir_variable *var);
    int virtual_grf_alloc(int size);
+   void import_uniforms(struct hash_table *src_variable_ht);
 
    void visit(ir_variable *ir);
    void visit(ir_assignment *ir);

@@ -339,6 +339,31 @@ fs_visitor::variable_storage(ir_variable *var)
    return (fs_reg *)hash_table_find(this->variable_ht, var);
 }
 
+void
+import_uniforms_callback(const void *key,
+			 void *data,
+			 void *closure)
+{
+   struct hash_table *dst_ht = (struct hash_table *)closure;
+   const fs_reg *reg = (const fs_reg *)data;
+
+   if (reg->file != UNIFORM)
+      return;
+
+   hash_table_insert(dst_ht, data, key);
+}
+
+/* For 16-wide, we need to follow from the uniform setup of 8-wide dispatch.
+ * This brings in those uniform definitions
+ */
+void
+fs_visitor::import_uniforms(struct hash_table *src_variable_ht)
+{
+   hash_table_call_foreach(src_variable_ht,
+			   import_uniforms_callback,
+			   variable_ht);
+}
+
 /* Our support for uniforms is piggy-backed on the struct
  * gl_fragment_program, because that's where the values actually
  * get stored, rather than in some global gl_shader_program uniform
@@ -714,6 +739,13 @@ fs_visitor::visit(ir_variable *ir)
 
    if (ir->mode == ir_var_uniform) {
       int param_index = c->prog_data.nr_params;
+
+      if (c->dispatch_width == 16) {
+	 if (!variable_storage(ir)) {
+	    fail("Failed to find uniform '%s' in 16-wide\n", ir->name);
+	 }
+	 return;
+      }
 
       if (!strncmp(ir->name, "gl_", 3)) {
 	 setup_builtin_uniform_values(ir);
@@ -1387,6 +1419,12 @@ fs_visitor::visit(ir_texture *ir)
 	 0,
 	 0
       };
+
+      if (c->dispatch_width == 16) {
+	 fail("rectangle scale uniform setup not supported on 16-wide\n");
+	 this->result = fs_reg(this, ir->type);
+	 return;
+      }
 
       c->prog_data.param_convert[c->prog_data.nr_params] =
 	 PARAM_NO_CONVERT;
@@ -2708,6 +2746,9 @@ fs_visitor::generate_pull_constant_load(fs_inst *inst, struct brw_reg dst)
 void
 fs_visitor::setup_paramvalues_refs()
 {
+   if (c->dispatch_width != 8)
+      return;
+
    /* Set up the pointers to ParamValues now that that array is finalized. */
    for (unsigned int i = 0; i < c->prog_data.nr_params; i++) {
       c->prog_data.param[i] =
@@ -2909,6 +2950,11 @@ fs_visitor::setup_pull_constants()
    unsigned int max_uniform_components = 16 * 8;
    if (c->prog_data.nr_params <= max_uniform_components)
       return;
+
+   if (c->dispatch_width == 16) {
+      fail("Pull constants not supported in 16-wide\n");
+      return;
+   }
 
    /* Just demote the end of the list.  We could probably do better
     * here, demoting things that are rarely used in the program first.
@@ -3937,17 +3983,11 @@ bool
 fs_visitor::run()
 {
    uint32_t prog_offset_16 = 0;
+   uint32_t orig_nr_params = c->prog_data.nr_params;
 
    brw_wm_payload_setup(brw, c);
 
    if (c->dispatch_width == 16) {
-      if (c->prog_data.curb_read_length) {
-	 /* Haven't hooked in support for uniforms through the 16-wide
-	  * version yet.
-	  */
-	 return false;
-      }
-
       /* align to 64 byte boundary. */
       while ((c->func.nr_insn * sizeof(struct brw_instruction)) % 64) {
 	 brw_NOP(p);
@@ -4031,6 +4071,9 @@ fs_visitor::run()
    } else {
       c->prog_data.total_grf_16 = grf_used;
       c->prog_data.prog_offset_16 = prog_offset_16;
+
+      /* Make sure we didn't try to sneak in an extra uniform */
+      assert(orig_nr_params == c->prog_data.nr_params);
    }
 
    return !failed;
@@ -4068,9 +4111,10 @@ brw_wm_fs_emit(struct brw_context *brw, struct brw_wm_compile *c)
       return false;
    }
 
-   if (intel->gen >= 5) {
+   if (intel->gen >= 5 && c->prog_data.nr_pull_params == 0) {
       c->dispatch_width = 16;
       fs_visitor v2(c, shader);
+      v2.import_uniforms(v.variable_ht);
       v2.run();
    }
 
