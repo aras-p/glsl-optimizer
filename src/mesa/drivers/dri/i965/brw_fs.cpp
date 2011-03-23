@@ -2910,6 +2910,10 @@ fs_visitor::propagate_constants()
 {
    bool progress = false;
 
+   /* Need to update the MRF tracking for compressed instructions. */
+   if (c->dispatch_width == 16)
+      return false;
+
    calculate_live_intervals();
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
@@ -3171,6 +3175,10 @@ fs_visitor::compute_to_mrf()
    bool progress = false;
    int next_ip = 0;
 
+   /* Need to update the MRF tracking for compressed instructions. */
+   if (c->dispatch_width == 16)
+      return false;
+
    calculate_live_intervals();
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
@@ -3301,6 +3309,10 @@ fs_visitor::remove_duplicate_mrf_writes()
 {
    fs_inst *last_mrf_move[16];
    bool progress = false;
+
+   /* Need to update the MRF tracking for compressed instructions. */
+   if (c->dispatch_width == 16)
+      return false;
 
    memset(last_mrf_move, 0, sizeof(last_mrf_move));
 
