@@ -1706,6 +1706,7 @@ static int tgsi_tex(struct r600_shader_ctx *ctx)
 		tex.src_sel_y = ctx->src[0].swizzle[1];
 		tex.src_sel_z = ctx->src[0].swizzle[2];
 		tex.src_sel_w = ctx->src[0].swizzle[3];
+		tex.src_rel = ctx->src[0].rel;
 	}
 
 	if (inst->Texture.Texture == TGSI_TEXTURE_CUBE) {
