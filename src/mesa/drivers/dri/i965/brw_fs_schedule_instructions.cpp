@@ -145,6 +145,8 @@ public:
    void calculate_deps();
    void schedule_instructions(fs_inst *next_block_header);
 
+   bool is_compressed(fs_inst *inst);
+
    void *mem_ctx;
 
    int instructions_to_schedule;
@@ -234,6 +236,17 @@ instruction_scheduler::add_barrier_deps(schedule_node *n)
    }
 }
 
+/* instruction scheduling needs to be aware of when an MRF write
+ * actually writes 2 MRFs.
+ */
+bool
+instruction_scheduler::is_compressed(fs_inst *inst)
+{
+   return (v->c->dispatch_width == 16 &&
+	   !inst->force_uncompressed &&
+	   !inst->force_sechalf);
+}
+
 void
 instruction_scheduler::calculate_deps()
 {
@@ -297,11 +310,24 @@ instruction_scheduler::calculate_deps()
 	 }
 	 last_grf_write[inst->dst.reg] = n;
       } else if (inst->dst.file == MRF) {
-	 if (last_mrf_write[inst->dst.hw_reg]) {
-	    add_dep(last_mrf_write[inst->dst.hw_reg], n,
-		    last_mrf_write[inst->dst.hw_reg]->latency);
+	 int reg = inst->dst.hw_reg & ~BRW_MRF_COMPR4;
+
+	 if (last_mrf_write[reg]) {
+	    add_dep(last_mrf_write[reg], n,
+		    last_mrf_write[reg]->latency);
 	 }
-	 last_mrf_write[inst->dst.hw_reg] = n;
+	 last_mrf_write[reg] = n;
+	 if (is_compressed(inst)) {
+	    if (inst->dst.hw_reg & BRW_MRF_COMPR4)
+	       reg += 4;
+	    else
+	       reg++;
+	    if (last_mrf_write[reg]) {
+	       add_dep(last_mrf_write[reg], n,
+		       last_mrf_write[reg]->latency);
+	    }
+	    last_mrf_write[reg] = n;
+	 }
       } else if (inst->dst.file != BAD_FILE) {
 	 add_barrier_deps(n);
       }
@@ -369,7 +395,18 @@ instruction_scheduler::calculate_deps()
       if (inst->dst.file == GRF) {
 	 last_grf_write[inst->dst.reg] = n;
       } else if (inst->dst.file == MRF) {
-	 last_mrf_write[inst->dst.hw_reg] = n;
+	 int reg = inst->dst.hw_reg & ~BRW_MRF_COMPR4;
+
+	 last_mrf_write[reg] = n;
+
+	 if (is_compressed(inst)) {
+	    if (inst->dst.hw_reg & BRW_MRF_COMPR4)
+	       reg += 4;
+	    else
+	       reg++;
+
+	    last_mrf_write[reg] = n;
+	 }
       } else if (inst->dst.file != BAD_FILE) {
 	 add_barrier_deps(n);
       }
@@ -462,9 +499,6 @@ fs_visitor::schedule_instructions()
 {
    fs_inst *next_block_header = (fs_inst *)instructions.head;
    instruction_scheduler sched(this, mem_ctx, this->virtual_grf_next);
-
-   if (c->dispatch_width == 16)
-      return;
 
    while (!next_block_header->is_tail_sentinel()) {
       /* Add things to be scheduled until we get to a new BB. */
