@@ -572,7 +572,7 @@ static const struct value_desc values[] = {
    { GL_VERTEX_ARRAY_SIZE, ARRAY_INT(Vertex.Size), NO_EXTRA },
    { GL_VERTEX_ARRAY_TYPE, ARRAY_ENUM(Vertex.Type), NO_EXTRA },
    { GL_VERTEX_ARRAY_STRIDE, ARRAY_INT(Vertex.Stride), NO_EXTRA },
-   { GL_NORMAL_ARRAY, ARRAY_ENUM(Normal.Enabled), NO_EXTRA },
+   { GL_NORMAL_ARRAY, ARRAY_BOOL(Normal.Enabled), NO_EXTRA },
    { GL_NORMAL_ARRAY_TYPE, ARRAY_ENUM(Normal.Type), NO_EXTRA },
    { GL_NORMAL_ARRAY_STRIDE, ARRAY_INT(Normal.Stride), NO_EXTRA },
    { GL_COLOR_ARRAY, ARRAY_BOOL(Color.Enabled), NO_EXTRA },
@@ -1367,7 +1367,7 @@ void _mesa_init_get_hash(struct gl_context *ctx)
 static void
 find_custom_value(struct gl_context *ctx, const struct value_desc *d, union value *v)
 {
-   struct gl_buffer_object *buffer_obj;
+   struct gl_buffer_object **buffer_obj;
    struct gl_client_array *array;
    GLuint unit, *p;
 
@@ -1569,9 +1569,9 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
    case GL_EDGE_FLAG_ARRAY_BUFFER_BINDING_ARB:
    case GL_SECONDARY_COLOR_ARRAY_BUFFER_BINDING_ARB:
    case GL_FOG_COORDINATE_ARRAY_BUFFER_BINDING_ARB:
-      buffer_obj = (struct gl_buffer_object *)
+      buffer_obj = (struct gl_buffer_object **)
 	 ((char *) ctx->Array.ArrayObj + d->offset);
-      v->value_int = buffer_obj->Name;
+      v->value_int = (*buffer_obj)->Name;
       break;
    case GL_ARRAY_BUFFER_BINDING_ARB:
       v->value_int = ctx->Array.ArrayBufferObj->Name;
