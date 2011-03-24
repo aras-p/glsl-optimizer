@@ -401,12 +401,12 @@ static const struct __DRI2flushExtensionRec radeonFlushExtension = {
 };
 
 static __DRIimage *
-radeon_create_image_from_name(__DRIcontext *context,
+radeon_create_image_from_name(__DRIscreen *screen,
                               int width, int height, int format,
                               int name, int pitch, void *loaderPrivate)
 {
    __DRIimage *image;
-   radeonContextPtr radeon = context->driverPrivate;
+   radeonScreenPtr radeonScreen = screen->private;
 
    if (name == 0)
       return NULL;
@@ -442,7 +442,7 @@ radeon_create_image_from_name(__DRIcontext *context,
    image->pitch = pitch;
    image->height = height;
 
-   image->bo = radeon_bo_open(radeon->radeonScreen->bom,
+   image->bo = radeon_bo_open(radeonScreen->bom,
                               (uint32_t)name,
                               image->pitch * image->height * image->cpp,
                               0,
