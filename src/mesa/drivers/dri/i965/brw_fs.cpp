@@ -2475,6 +2475,7 @@ fs_visitor::generate_discard_not(fs_inst *inst, struct brw_reg mask)
    } else {
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
+      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
       brw_NOT(p, mask, brw_mask_reg(1)); /* IMASK */
       brw_pop_insn_state(p);
    }
@@ -2499,6 +2500,7 @@ fs_visitor::generate_discard_and(fs_inst *inst, struct brw_reg mask)
 
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
+      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
       brw_AND(p, g1, f0, g1);
       brw_pop_insn_state(p);
    } else {
@@ -2508,6 +2510,7 @@ fs_visitor::generate_discard_and(fs_inst *inst, struct brw_reg mask)
 
       brw_push_insn_state(p);
       brw_set_mask_control(p, BRW_MASK_DISABLE);
+      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
       brw_AND(p, g0, mask, g0);
       brw_pop_insn_state(p);
    }
