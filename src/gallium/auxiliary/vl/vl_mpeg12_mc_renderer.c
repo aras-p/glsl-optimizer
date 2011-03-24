@@ -444,48 +444,6 @@ cleanup_pipe_state(struct vl_mpeg12_mc_renderer *r)
    r->pipe->delete_rasterizer_state(r->pipe, r->rs_state);
 }
 
-static struct pipe_sampler_view
-*find_or_create_sampler_view(struct vl_mpeg12_mc_renderer *r, struct pipe_surface *surface)
-{
-   struct pipe_sampler_view *sampler_view;
-   assert(r);
-   assert(surface);
-
-   sampler_view = (struct pipe_sampler_view*)util_keymap_lookup(r->texview_map, &surface);
-   if (!sampler_view) {
-      struct pipe_sampler_view templat;
-      boolean added_to_map;
-
-      u_sampler_view_default_template(&templat, surface->texture,
-                                      surface->texture->format);
-      sampler_view = r->pipe->create_sampler_view(r->pipe, surface->texture,
-                                                  &templat);
-      if (!sampler_view)
-         return NULL;
-
-      added_to_map = util_keymap_insert(r->texview_map, &surface,
-                                        sampler_view, r->pipe);
-      assert(added_to_map);
-   }
-
-   return sampler_view;
-}
-
-static void
-texview_map_delete(const struct keymap *map,
-                   const void *key, void *data,
-                   void *user)
-{
-   struct pipe_sampler_view *sv = (struct pipe_sampler_view*)data;
-
-   assert(map);
-   assert(key);
-   assert(data);
-   assert(user);
-
-   pipe_sampler_view_reference(&sv, NULL);
-}
-
 bool
 vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
                            struct pipe_context *pipe,
@@ -493,6 +451,9 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
                            unsigned buffer_height,
                            enum pipe_video_chroma_format chroma_format)
 {
+   struct pipe_resource tex_templ, *tex_dummy;
+   struct pipe_sampler_view sampler_view;
+
    assert(renderer);
    assert(pipe);
 
@@ -503,11 +464,6 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
    renderer->buffer_height = buffer_height;
    renderer->chroma_format = chroma_format;
 
-   renderer->texview_map = util_new_keymap(sizeof(struct pipe_surface*), -1,
-                                           texview_map_delete);
-   if (!renderer->texview_map)
-      return false;
-
    if (!init_pipe_state(renderer))
       goto error_pipe_state;
 
@@ -517,13 +473,30 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
    if (renderer->vs == NULL || renderer->fs == NULL)
       goto error_shaders;
 
+   /* create a dummy sampler */
+   memset(&tex_templ, 0, sizeof(tex_templ));
+   tex_templ.bind = PIPE_BIND_SAMPLER_VIEW;
+   tex_templ.flags = 0;
+
+   tex_templ.target = PIPE_TEXTURE_2D;
+   tex_templ.format = PIPE_FORMAT_R8_SNORM;
+   tex_templ.width0 = 1;
+   tex_templ.height0 = 1;
+   tex_templ.depth0 = 1;
+   tex_templ.array_size = 1;
+   tex_templ.last_level = 0;
+   tex_templ.usage = PIPE_USAGE_STATIC;
+   tex_dummy = pipe->screen->resource_create(pipe->screen, &tex_templ);
+
+   u_sampler_view_default_template(&sampler_view, tex_dummy, tex_dummy->format);
+   renderer->dummy = pipe->create_sampler_view(pipe, tex_dummy, &sampler_view);
+
    return true;
 
 error_shaders:
    cleanup_pipe_state(renderer);
 
 error_pipe_state:
-   util_delete_keymap(renderer->texview_map, renderer->pipe);
    return false;
 }
 
@@ -532,7 +505,8 @@ vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer)
 {
    assert(renderer);
 
-   util_delete_keymap(renderer->texview_map, renderer->pipe);
+   pipe_sampler_view_reference(&renderer->dummy, NULL);
+
    cleanup_pipe_state(renderer);
 
    renderer->pipe->delete_vs_state(renderer->pipe, renderer->vs);
@@ -583,7 +557,7 @@ vl_mpeg12_mc_cleanup_buffer(struct vl_mpeg12_mc_buffer *buffer)
 
 void
 vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer,
-                            struct pipe_surface *surface, struct pipe_surface *ref[2],
+                            struct pipe_surface *surface, struct pipe_sampler_view *ref[2],
                             unsigned not_empty_start_instance, unsigned not_empty_num_instances,
                             unsigned empty_start_instance, unsigned empty_num_instances,
                             struct pipe_fence_handle **fence)
@@ -598,17 +572,9 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mp
    renderer->pipe->set_framebuffer_state(renderer->pipe, &renderer->fb_state);
    renderer->pipe->set_viewport_state(renderer->pipe, &renderer->viewport);
 
-   if (ref[0]) {
-      buffer->sampler_views.individual.ref[0] = find_or_create_sampler_view(renderer, ref[0]);
-   } else {
-      buffer->sampler_views.individual.ref[0] = find_or_create_sampler_view(renderer, surface);
-   }
-
-   if (ref[1]) {
-      buffer->sampler_views.individual.ref[1] = find_or_create_sampler_view(renderer, ref[1]);
-   } else {
-      buffer->sampler_views.individual.ref[1] = find_or_create_sampler_view(renderer, surface);
-   }
+   /* if no reference frame provided use a dummy sampler instead */
+   buffer->sampler_views.individual.ref[0] = ref[0] ? ref[0] : renderer->dummy;
+   buffer->sampler_views.individual.ref[1] = ref[1] ? ref[1] : renderer->dummy;
 
    renderer->pipe->set_fragment_sampler_views(renderer->pipe, 5, buffer->sampler_views.all);
    renderer->pipe->bind_fragment_sampler_states(renderer->pipe, 5, renderer->samplers.all);

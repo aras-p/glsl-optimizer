@@ -57,7 +57,7 @@ struct vl_mpeg12_mc_renderer
       struct { void *y, *cb, *cr, *ref[2]; } individual;
    } samplers;
 
-   struct keymap *texview_map;
+   struct pipe_sampler_view *dummy;
 };
 
 struct vl_mpeg12_mc_buffer
@@ -89,7 +89,7 @@ bool vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_
 void vl_mpeg12_mc_cleanup_buffer(struct vl_mpeg12_mc_buffer *buffer);
 
 void vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer,
-                                 struct pipe_surface *surface, struct pipe_surface *ref[2],
+                                 struct pipe_surface *surface, struct pipe_sampler_view *ref[2],
                                  unsigned not_empty_start_instance, unsigned not_empty_num_instances,
                                  unsigned empty_start_instance, unsigned empty_num_instances,
                                  struct pipe_fence_handle **fence);

@@ -37,6 +37,7 @@
 #include <util/u_rect.h>
 #include <util/u_video.h>
 #include <util/u_surface.h>
+#include <util/u_sampler.h>
 
 static const unsigned const_empty_block_mask_420[3][2][2] = {
         { { 0x20, 0x10 },  { 0x08, 0x04 } },
@@ -94,6 +95,7 @@ vl_mpeg12_buffer_destroy(struct pipe_video_buffer *buffer)
    vl_idct_cleanup_buffer(&ctx->idct_cr, &buf->idct_cr);
    vl_mpeg12_mc_cleanup_buffer(&buf->mc);
    pipe_surface_reference(&buf->surface, NULL);
+   pipe_sampler_view_reference(&buf->sampler_view, NULL);
 
    FREE(buf);
 }
@@ -164,7 +166,7 @@ vl_mpeg12_buffer_flush(struct pipe_video_buffer *buffer,
    struct vl_mpeg12_buffer *past = (struct vl_mpeg12_buffer *)refs[0];
    struct vl_mpeg12_buffer *future = (struct vl_mpeg12_buffer *)refs[1];
 
-   struct pipe_surface *surf_refs[2];
+   struct pipe_sampler_view *sv_refs[2];
    unsigned ne_start, ne_num, e_start, e_num;
    struct vl_mpeg12_context *ctx;
 
@@ -181,11 +183,11 @@ vl_mpeg12_buffer_flush(struct pipe_video_buffer *buffer,
    vl_idct_flush(&ctx->idct_cr, &buf->idct_cr, ne_num);
    vl_idct_flush(&ctx->idct_cb, &buf->idct_cb, ne_num);
 
-   surf_refs[0] = past ? past->surface : NULL;
-   surf_refs[1] = future ? future->surface : NULL;
+   sv_refs[0] = past ? past->sampler_view : NULL;
+   sv_refs[1] = future ? future->sampler_view : NULL;
 
    vl_mpeg12_mc_renderer_flush(&ctx->mc_renderer, &buf->mc,
-                               buf->surface, surf_refs,
+                               buf->surface, sv_refs,
                                ne_start, ne_num, e_start, e_num,
                                fence);
 }
@@ -258,6 +260,7 @@ vl_mpeg12_create_buffer(struct pipe_video_context *vpipe)
 
    struct pipe_resource res_template, *resource;
    struct pipe_surface surf_template;
+   struct pipe_sampler_view sv_template;
 
    assert(ctx);
 
@@ -293,11 +296,19 @@ vl_mpeg12_create_buffer(struct pipe_video_context *vpipe)
    surf_template.format = resource->format;
    surf_template.usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
    buffer->surface = ctx->pipe->create_surface(ctx->pipe, resource, &surf_template);
-   pipe_resource_reference(&resource, NULL);
    if (!buffer->surface) {
       FREE(buffer);
       return NULL;
    }
+
+   u_sampler_view_default_template(&sv_template, resource, resource->format);
+   buffer->sampler_view = ctx->pipe->create_sampler_view(ctx->pipe, resource, &sv_template);
+   if (!buffer->sampler_view) {
+      FREE(buffer);
+      return NULL;
+   }
+
+   pipe_resource_reference(&resource, NULL);
 
    buffer->vertex_bufs.individual.quad.stride = ctx->quads.stride;
    buffer->vertex_bufs.individual.quad.buffer_offset = ctx->quads.buffer_offset;
