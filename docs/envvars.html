@@ -49,6 +49,15 @@ Setting this variable automatically sets the MESA_TEX_PROG variable as well.
 <li>MESA_EXTENSION_OVERRIDE - can be used to enable/disable extensions.
 A value such as "GL_EXT_foo -GL_EXT_bar" will enable the GL_EXT_foo extension
 and disable the GL_EXT_bar extension.
+<li>MESA_EXTENSION_MAX_YEAR - The GL_EXTENSIONS string returned by Mesa is sorted
+by extension year.
+If this variable is set to year X, only extensions defined on or before year
+X will be reported.
+This is to work-around a bug in some games where the extension string is
+copied into a fixed-size buffer without truncating.
+If the extension string is too long, the buffer overrun can cause the game
+to crash.
+This is a work-around for that.
 <li>MESA_GLSL - <a href="shading.html#envvars">shading language compiler options</a>
 </ul>
 
