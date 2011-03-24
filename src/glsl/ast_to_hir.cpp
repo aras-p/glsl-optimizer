@@ -1577,7 +1577,7 @@ ast_expression::hir(exec_list *instructions,
 	     */
 	    ir_variable *v = array->whole_variable_referenced();
 	    if (v != NULL)
-	       v->max_array_access = array->type->array_size();
+	       v->max_array_access = array->type->array_size() - 1;
 	 }
       }
 
