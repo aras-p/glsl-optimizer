@@ -495,6 +495,11 @@ void r300_emit_fb_state_pipelined(struct r300_context *r300,
     for (i = 0; i < num_cbufs; i++) {
         OUT_CS(r300_surface(fb->cbufs[i])->format);
     }
+    for (; i < 1; i++) {
+        OUT_CS(R300_US_OUT_FMT_C4_8 |
+               R300_C0_SEL_B | R300_C1_SEL_G |
+               R300_C2_SEL_R | R300_C3_SEL_A);
+    }
     for (; i < 4; i++) {
         OUT_CS(R300_US_OUT_FMT_UNUSED);
     }
