@@ -85,6 +85,10 @@ extern void
 _mesa_dump_stencil_buffer(const char *filename);
 
 extern void
+_mesa_dump_image(const char *filename, const void *image, GLuint w, GLuint h,
+                 GLenum format, GLenum type);
+
+extern void
 _mesa_print_texture(struct gl_context *ctx, const struct gl_texture_image *img);
 
 #endif
