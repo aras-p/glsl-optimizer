@@ -198,6 +198,37 @@ MacroBlocksToPipe(struct pipe_screen *screen,
    }
 }
 
+static void
+unmap_and_flush_surface(XvMCSurfacePrivate *surface)
+{
+   struct pipe_video_buffer *ref_frames[2];
+   unsigned i;
+
+   assert(surface);
+
+   for ( i = 0; i < 3; ++i ) {
+      if (surface->ref_surfaces[i]) {
+         XvMCSurfacePrivate *ref = surface->ref_surfaces[i]->privData;
+
+         assert(ref);
+
+         unmap_and_flush_surface(ref);
+         surface->ref_surfaces[i] = NULL;
+         ref_frames[i] = ref->pipe_buffer;
+      } else {
+         ref_frames[i] = NULL;
+      }
+   }
+
+   if (surface->mapped) {
+      surface->pipe_buffer->unmap(surface->pipe_buffer);
+      surface->pipe_buffer->flush(surface->pipe_buffer,
+                                  ref_frames,
+                                  &surface->flush_fence);
+      surface->mapped = 0;
+   }
+}
+
 PUBLIC
 Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surface)
 {
@@ -220,8 +251,6 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    surface_priv = CALLOC(1, sizeof(XvMCSurfacePrivate));
    if (!surface_priv)
       return BadAlloc;
-
-
 
    surface_priv->pipe_buffer = vpipe->create_buffer(vpipe);
    surface_priv->context = context;
@@ -248,9 +277,7 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
 )
 {
    struct pipe_video_context *vpipe;
-   struct pipe_video_buffer *t_vsfc;
-   struct pipe_video_buffer *p_vsfc;
-   struct pipe_video_buffer *f_vsfc;
+   struct pipe_video_buffer *t_buffer;
    XvMCContextPrivate *context_priv;
    XvMCSurfacePrivate *target_surface_priv;
    XvMCSurfacePrivate *past_surface_priv;
@@ -297,15 +324,30 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    context_priv = context->privData;
    vpipe = context_priv->vctx->vpipe;
 
-   t_vsfc = target_surface_priv->pipe_buffer;
-   p_vsfc = past_surface ? past_surface_priv->pipe_buffer : NULL;
-   f_vsfc = future_surface ? future_surface_priv->pipe_buffer : NULL;
+   t_buffer = target_surface_priv->pipe_buffer;
+
+   // enshure that all reference frames are flushed
+   // not really nessasary, but speeds ups rendering
+   if (past_surface)
+      unmap_and_flush_surface(past_surface->privData);
+
+   if (future_surface)
+      unmap_and_flush_surface(future_surface->privData);
 
    MacroBlocksToPipe(vpipe->screen, picture_structure, macroblocks, blocks, first_macroblock,
                      num_macroblocks, pipe_macroblocks);
 
-   t_vsfc->add_macroblocks(t_vsfc, p_vsfc, f_vsfc, num_macroblocks,
-                           &pipe_macroblocks->base, &target_surface_priv->render_fence);
+   if (!target_surface_priv->mapped) {
+      t_buffer->map(t_buffer);
+      target_surface_priv->ref_surfaces[0] = past_surface;
+      target_surface_priv->ref_surfaces[1] = future_surface;
+      target_surface_priv->mapped = 1;
+   } else {
+      /* If the surface we're rendering hasn't changed the ref frames shouldn't change. */
+      assert(target_surface_priv->ref_surfaces[0] == past_surface);
+      assert(target_surface_priv->ref_surfaces[1] == future_surface);
+   }
+   t_buffer->add_macroblocks(t_buffer, num_macroblocks, &pipe_macroblocks->base);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for rendering.\n", target_surface);
 
@@ -319,6 +361,9 @@ Status XvMCFlushSurface(Display *dpy, XvMCSurface *surface)
 
    if (!surface)
       return XvMCBadSurface;
+
+   // don't call flush here, because this is usually
+   // called once for every slice instead of every frame
 
    return Success;
 }
@@ -406,6 +451,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    else
       vpipe->set_picture_layers(vpipe, NULL, NULL, NULL, 0);
 
+   unmap_and_flush_surface(surface_priv);
    vpipe->render_picture(vpipe, surface_priv->pipe_buffer, &src_rect, PictureToPipe(flags),
                          drawable_surface, &dst_rect, &surface_priv->disp_fence);
 

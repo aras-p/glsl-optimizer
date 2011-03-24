@@ -45,63 +45,6 @@ static const unsigned const_empty_block_mask_420[3][2][2] = {
 };
 
 static void
-map_buffer(struct vl_mpeg12_buffer *buf)
-{
-   struct vl_mpeg12_context *ctx;
-   assert(buf);
-
-   ctx = (struct vl_mpeg12_context *)buf->base.context;
-   assert(ctx);
-
-   if (!buf->mapped) {
-      vl_vb_map(&buf->vertex_stream, ctx->pipe);
-      vl_idct_map_buffers(&ctx->idct_y, &buf->idct_y);
-      vl_idct_map_buffers(&ctx->idct_cr, &buf->idct_cr);
-      vl_idct_map_buffers(&ctx->idct_cb, &buf->idct_cb);
-      buf->mapped = 1;
-   }
-}
-
-static void
-unmap_buffer(struct vl_mpeg12_buffer *buf)
-{
-   struct vl_mpeg12_context *ctx;
-   assert(buf);
-
-   ctx = (struct vl_mpeg12_context *)buf->base.context;
-   assert(ctx);
-
-   if (buf->mapped) {
-      vl_vb_unmap(&buf->vertex_stream, ctx->pipe);
-      vl_idct_unmap_buffers(&ctx->idct_y, &buf->idct_y);
-      vl_idct_unmap_buffers(&ctx->idct_cr, &buf->idct_cr);
-      vl_idct_unmap_buffers(&ctx->idct_cb, &buf->idct_cb);
-      buf->mapped = 0;
-   }
-}
-
-static void
-flush_buffer(struct vl_mpeg12_buffer *buf)
-{
-   unsigned ne_start, ne_num, e_start, e_num;
-   struct vl_mpeg12_context *ctx;
-   assert(buf);
-
-   ctx = (struct vl_mpeg12_context *)buf->base.context;
-   assert(ctx);
-
-   vl_vb_restart(&buf->vertex_stream, &ne_start, &ne_num, &e_start, &e_num);
-
-   ctx->pipe->set_vertex_buffers(ctx->pipe, 2, buf->vertex_bufs.all);
-   ctx->pipe->bind_vertex_elements_state(ctx->pipe, ctx->vertex_elems_state);
-   vl_idct_flush(&ctx->idct_y, &buf->idct_y, ne_num);
-   vl_idct_flush(&ctx->idct_cr, &buf->idct_cr, ne_num);
-   vl_idct_flush(&ctx->idct_cb, &buf->idct_cb, ne_num);
-   vl_mpeg12_mc_renderer_flush(&ctx->mc_renderer, &buf->mc,
-                               ne_start, ne_num, e_start, e_num);
-}
-
-static void
 upload_buffer(struct vl_mpeg12_context *ctx,
               struct vl_mpeg12_buffer *buffer,
               struct pipe_mpeg12_macroblock *mb)
@@ -149,24 +92,35 @@ vl_mpeg12_buffer_destroy(struct pipe_video_buffer *buffer)
    vl_idct_cleanup_buffer(&ctx->idct_y, &buf->idct_y);
    vl_idct_cleanup_buffer(&ctx->idct_cb, &buf->idct_cb);
    vl_idct_cleanup_buffer(&ctx->idct_cr, &buf->idct_cr);
-   vl_mpeg12_mc_cleanup_buffer(&ctx->mc_renderer, &buf->mc);
+   vl_mpeg12_mc_cleanup_buffer(&buf->mc);
    pipe_surface_reference(&buf->surface, NULL);
 
    FREE(buf);
 }
 
 static void
+vl_mpeg12_buffer_map(struct pipe_video_buffer *buffer)
+{
+   struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer*)buffer;
+   struct vl_mpeg12_context *ctx;
+   assert(buf);
+
+   ctx = (struct vl_mpeg12_context *)buf->base.context;
+   assert(ctx);
+
+   vl_vb_map(&buf->vertex_stream, ctx->pipe);
+   vl_idct_map_buffers(&ctx->idct_y, &buf->idct_y);
+   vl_idct_map_buffers(&ctx->idct_cr, &buf->idct_cr);
+   vl_idct_map_buffers(&ctx->idct_cb, &buf->idct_cb);
+}
+
+static void
 vl_mpeg12_buffer_add_macroblocks(struct pipe_video_buffer *buffer,
-                                 struct pipe_video_buffer *past,
-                                 struct pipe_video_buffer *future,
                                  unsigned num_macroblocks,
-                                 struct pipe_macroblock *macroblocks,
-                                 struct pipe_fence_handle **fence)
+                                 struct pipe_macroblock *macroblocks)
 {
    struct pipe_mpeg12_macroblock *mpeg12_macroblocks = (struct pipe_mpeg12_macroblock*)macroblocks;
    struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer*)buffer;
-   struct vl_mpeg12_buffer *buf_past = (struct vl_mpeg12_buffer*)past;
-   struct vl_mpeg12_buffer *buf_future = (struct vl_mpeg12_buffer*)future;
    struct vl_mpeg12_context *ctx;
    unsigned i;
 
@@ -179,28 +133,61 @@ vl_mpeg12_buffer_add_macroblocks(struct pipe_video_buffer *buffer,
    assert(macroblocks);
    assert(macroblocks->codec == PIPE_VIDEO_CODEC_MPEG12);
 
-   map_buffer(buf);
-
    for ( i = 0; i < num_macroblocks; ++i ) {
       vl_vb_add_block(&buf->vertex_stream, &mpeg12_macroblocks[i], ctx->empty_block_mask);
       upload_buffer(ctx, buf, &mpeg12_macroblocks[i]);
    }
+}
 
-   // TODO this doesn't belong here
-   if (buf_past) {
-      unmap_buffer(buf_past);
-      flush_buffer(buf_past);
-   }
+static void
+vl_mpeg12_buffer_unmap(struct pipe_video_buffer *buffer)
+{
+   struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer*)buffer;
+   struct vl_mpeg12_context *ctx;
+   assert(buf);
 
-   if (buf_future) {
-      unmap_buffer(buf_future);
-      flush_buffer(buf_future);
-   }
+   ctx = (struct vl_mpeg12_context *)buf->base.context;
+   assert(ctx);
 
-   vl_mpeg12_mc_set_surfaces(&ctx->mc_renderer, &buf->mc, buf->surface,
-                             buf_past ? buf_past->surface : NULL,
-                             buf_future ? buf_future->surface : NULL,
-                             fence);
+   vl_vb_unmap(&buf->vertex_stream, ctx->pipe);
+   vl_idct_unmap_buffers(&ctx->idct_y, &buf->idct_y);
+   vl_idct_unmap_buffers(&ctx->idct_cr, &buf->idct_cr);
+   vl_idct_unmap_buffers(&ctx->idct_cb, &buf->idct_cb);
+}
+
+static void
+vl_mpeg12_buffer_flush(struct pipe_video_buffer *buffer,
+                       struct pipe_video_buffer *refs[2],
+                       struct pipe_fence_handle **fence)
+{
+   struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer *)buffer;
+   struct vl_mpeg12_buffer *past = (struct vl_mpeg12_buffer *)refs[0];
+   struct vl_mpeg12_buffer *future = (struct vl_mpeg12_buffer *)refs[1];
+
+   struct pipe_surface *surf_refs[2];
+   unsigned ne_start, ne_num, e_start, e_num;
+   struct vl_mpeg12_context *ctx;
+
+   assert(buf);
+
+   ctx = (struct vl_mpeg12_context *)buf->base.context;
+   assert(ctx);
+
+   vl_vb_restart(&buf->vertex_stream, &ne_start, &ne_num, &e_start, &e_num);
+
+   ctx->pipe->set_vertex_buffers(ctx->pipe, 2, buf->vertex_bufs.all);
+   ctx->pipe->bind_vertex_elements_state(ctx->pipe, ctx->vertex_elems_state);
+   vl_idct_flush(&ctx->idct_y, &buf->idct_y, ne_num);
+   vl_idct_flush(&ctx->idct_cr, &buf->idct_cr, ne_num);
+   vl_idct_flush(&ctx->idct_cb, &buf->idct_cb, ne_num);
+
+   surf_refs[0] = past ? past->surface : NULL;
+   surf_refs[1] = future ? future->surface : NULL;
+
+   vl_mpeg12_mc_renderer_flush(&ctx->mc_renderer, &buf->mc,
+                               buf->surface, surf_refs,
+                               ne_start, ne_num, e_start, e_num,
+                               fence);
 }
 
 static void
@@ -280,7 +267,10 @@ vl_mpeg12_create_buffer(struct pipe_video_context *vpipe)
 
    buffer->base.context = vpipe;
    buffer->base.destroy = vl_mpeg12_buffer_destroy;
+   buffer->base.map = vl_mpeg12_buffer_map;
    buffer->base.add_macroblocks = vl_mpeg12_buffer_add_macroblocks;
+   buffer->base.unmap = vl_mpeg12_buffer_unmap;
+   buffer->base.flush = vl_mpeg12_buffer_flush;
 
    memset(&res_template, 0, sizeof(res_template));
    res_template.target = PIPE_TEXTURE_2D;
@@ -507,9 +497,6 @@ vl_mpeg12_render_picture(struct pipe_video_context     *vpipe,
    assert(src_area);
    assert(dst_surface);
    assert(dst_area);
-
-   unmap_buffer(buf);
-   flush_buffer(buf);
 
    vl_compositor_render(&ctx->compositor, buf->surface,
                         picture_type, src_area,

@@ -282,7 +282,7 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
    struct ureg_src info;
    struct ureg_src tc[4], sampler[2];
    struct ureg_dst ref[2], result;
-   unsigned i, intra_label, bi_label, label;
+   unsigned i, intra_label;
 
    info = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_INFO, TGSI_INTERPOLATE_CONSTANT);
 
@@ -549,10 +549,6 @@ vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg1
 
    assert(renderer && buffer);
 
-   buffer->surface = NULL;
-   buffer->past = NULL;
-   buffer->future = NULL;
-
    pipe_resource_reference(&buffer->textures.individual.y, y);
    pipe_resource_reference(&buffer->textures.individual.cr, cr);
    pipe_resource_reference(&buffer->textures.individual.cb, cb);
@@ -573,70 +569,45 @@ vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg1
 }
 
 void
-vl_mpeg12_mc_cleanup_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer)
+vl_mpeg12_mc_cleanup_buffer(struct vl_mpeg12_mc_buffer *buffer)
 {
    unsigned i;
 
-   assert(renderer && buffer);
+   assert(buffer);
 
    for (i = 0; i < 3; ++i) {
       pipe_sampler_view_reference(&buffer->sampler_views.all[i], NULL);
       pipe_resource_reference(&buffer->textures.all[i], NULL);
    }
-
-   pipe_surface_reference(&buffer->surface, NULL);
-   pipe_surface_reference(&buffer->past, NULL);
-   pipe_surface_reference(&buffer->future, NULL);
-}
-
-void
-vl_mpeg12_mc_set_surfaces(struct vl_mpeg12_mc_renderer *renderer,
-                          struct vl_mpeg12_mc_buffer *buffer,
-                          struct pipe_surface *surface,
-                          struct pipe_surface *past,
-                          struct pipe_surface *future,
-                          struct pipe_fence_handle **fence)
-{
-   assert(renderer && buffer);
-   assert(surface);
-
-   if (surface != buffer->surface) {
-      pipe_surface_reference(&buffer->surface, surface);
-      pipe_surface_reference(&buffer->past, past);
-      pipe_surface_reference(&buffer->future, future);
-      buffer->fence = fence;
-   } else {
-      /* If the surface we're rendering hasn't changed the ref frames shouldn't change. */
-      assert(buffer->past == past);
-      assert(buffer->future == future);
-   }
 }
 
 void
 vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer,
+                            struct pipe_surface *surface, struct pipe_surface *ref[2],
                             unsigned not_empty_start_instance, unsigned not_empty_num_instances,
-                            unsigned empty_start_instance, unsigned empty_num_instances)
+                            unsigned empty_start_instance, unsigned empty_num_instances,
+                            struct pipe_fence_handle **fence)
 {
    assert(renderer && buffer);
 
    if (not_empty_num_instances == 0 && empty_num_instances == 0)
       return;
 
-   renderer->fb_state.cbufs[0] = buffer->surface;
+   renderer->fb_state.cbufs[0] = surface;
    renderer->pipe->bind_rasterizer_state(renderer->pipe, renderer->rs_state);
    renderer->pipe->set_framebuffer_state(renderer->pipe, &renderer->fb_state);
    renderer->pipe->set_viewport_state(renderer->pipe, &renderer->viewport);
 
-   if (buffer->past) {
-      buffer->sampler_views.individual.ref[0] = find_or_create_sampler_view(renderer, buffer->past);
+   if (ref[0]) {
+      buffer->sampler_views.individual.ref[0] = find_or_create_sampler_view(renderer, ref[0]);
    } else {
-      buffer->sampler_views.individual.ref[0] = find_or_create_sampler_view(renderer, buffer->surface);
+      buffer->sampler_views.individual.ref[0] = find_or_create_sampler_view(renderer, surface);
    }
 
-   if (buffer->future) {
-      buffer->sampler_views.individual.ref[1] = find_or_create_sampler_view(renderer, buffer->future);
+   if (ref[1]) {
+      buffer->sampler_views.individual.ref[1] = find_or_create_sampler_view(renderer, ref[1]);
    } else {
-      buffer->sampler_views.individual.ref[1] = find_or_create_sampler_view(renderer, buffer->surface);
+      buffer->sampler_views.individual.ref[1] = find_or_create_sampler_view(renderer, surface);
    }
 
    renderer->pipe->set_fragment_sampler_views(renderer->pipe, 5, buffer->sampler_views.all);
@@ -653,10 +624,5 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mp
       util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4,
                                  empty_start_instance, empty_num_instances);
 
-   renderer->pipe->flush(renderer->pipe, buffer->fence);
-
-   /* Next time we get this surface it may have new ref frames */
-   pipe_surface_reference(&buffer->surface, NULL);
-   pipe_surface_reference(&buffer->past, NULL);
-   pipe_surface_reference(&buffer->future, NULL);
+   renderer->pipe->flush(renderer->pipe, fence);
 }

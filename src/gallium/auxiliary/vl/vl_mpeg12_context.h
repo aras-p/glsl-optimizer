@@ -63,7 +63,6 @@ struct vl_mpeg12_buffer
 {
    struct pipe_video_buffer base;
    struct pipe_surface *surface;
-   bool mapped;
 
    struct vl_vertex_buffer vertex_stream;
 

@@ -176,13 +176,17 @@ struct pipe_video_buffer
 
    void (*destroy)(struct pipe_video_buffer *buffer);
 
-   void (*add_macroblocks)(struct pipe_video_buffer *buffer,
-                           struct pipe_video_buffer *past,
-                           struct pipe_video_buffer *future,
-                           unsigned num_macroblocks,
-                           struct pipe_macroblock *macroblocks,
-                           struct pipe_fence_handle **fence);
+   void (*map)(struct pipe_video_buffer *buffer);
 
+   void (*add_macroblocks)(struct pipe_video_buffer *buffer,
+                           unsigned num_macroblocks,
+                           struct pipe_macroblock *macroblocks);
+
+   void (*unmap)(struct pipe_video_buffer *buffer);
+
+   void (*flush)(struct pipe_video_buffer *buffer,
+                 struct pipe_video_buffer *ref_frames[2],
+                 struct pipe_fence_handle **fence);
 
 };
 

@@ -73,9 +73,6 @@ struct vl_mpeg12_mc_buffer
       struct pipe_resource *all[3];
       struct { struct pipe_resource *y, *cb, *cr; } individual;
    } textures;
-
-   struct pipe_surface *surface, *past, *future;
-   struct pipe_fence_handle **fence;
 };
 
 bool vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
@@ -89,17 +86,12 @@ void vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer);
 bool vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer,
                               struct pipe_resource *y, struct pipe_resource *cr, struct pipe_resource *cb);
 
-void vl_mpeg12_mc_cleanup_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer);
-
-void vl_mpeg12_mc_set_surfaces(struct vl_mpeg12_mc_renderer *renderer,
-                               struct vl_mpeg12_mc_buffer *buffer,
-                               struct pipe_surface *surface,
-                               struct pipe_surface *past,
-                               struct pipe_surface *future,
-                               struct pipe_fence_handle **fence);
+void vl_mpeg12_mc_cleanup_buffer(struct vl_mpeg12_mc_buffer *buffer);
 
 void vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer,
+                                 struct pipe_surface *surface, struct pipe_surface *ref[2],
                                  unsigned not_empty_start_instance, unsigned not_empty_num_instances,
-                                 unsigned empty_start_instance, unsigned empty_num_instances);
+                                 unsigned empty_start_instance, unsigned empty_num_instances,
+                                 struct pipe_fence_handle **fence);
 
 #endif /* vl_mpeg12_mc_renderer_h */

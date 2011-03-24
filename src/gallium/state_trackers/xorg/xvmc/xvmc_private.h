@@ -50,6 +50,11 @@ typedef struct
 typedef struct
 {
    struct pipe_video_buffer *pipe_buffer;
+   bool mapped; // are we still mapped to memory?
+
+   XvMCSurface *ref_surfaces[2];
+
+   struct pipe_fence_handle *flush_fence;
    struct pipe_fence_handle *render_fence;
    struct pipe_fence_handle *disp_fence;
 
