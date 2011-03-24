@@ -3393,6 +3393,29 @@ fs_visitor::virtual_grf_interferes(int a, int b)
 	  (this->virtual_grf_use[b] != -1 ||
 	   this->virtual_grf_def[b] == MAX_INSTRUCTION));
 
+   /* If the register is used to store 16 values of less than float
+    * size (only the case for pixel_[xy]), then we can't allocate
+    * another dword-sized thing to that register that would be used in
+    * the same instruction.  This is because when the GPU decodes (for
+    * example):
+    *
+    * (declare (in ) vec4 gl_FragCoord@0x97766a0)
+    * add(16)         g6<1>F          g6<8,8,1>UW     0.5F { align1 compr };
+    *
+    * it's actually processed as:
+    * add(8)         g6<1>F          g6<8,8,1>UW     0.5F { align1 };
+    * add(8)         g7<1>F          g6.8<8,8,1>UW   0.5F { align1 sechalf };
+    *
+    * so our second half values in g6 got overwritten in the first
+    * half.
+    */
+   if (c->dispatch_width == 16 && (this->pixel_x.reg == a ||
+				   this->pixel_x.reg == b ||
+				   this->pixel_y.reg == a ||
+				   this->pixel_y.reg == b)) {
+      return start <= end;
+   }
+
    return start < end;
 }
 
