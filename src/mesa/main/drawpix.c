@@ -188,7 +188,7 @@ _mesa_CopyPixels( GLint srcx, GLint srcy, GLsizei width, GLsizei height,
       goto end;
    }
 
-   if (!ctx->Current.RasterPosValid || width ==0 || height == 0) {
+   if (!ctx->Current.RasterPosValid || width == 0 || height == 0) {
       goto end; /* no-op, not an error */
    }
 

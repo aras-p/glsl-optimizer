@@ -81,8 +81,8 @@ _mesa_validate_pbo_access(GLuint dimensions,
                                format, type, 0, 0, 0);
 
    /* get address just past the last pixel we'll read */
-   end =  _mesa_image_address(dimensions, pack, ptr, width, height,
-                              format, type, depth-1, height-1, width);
+   end = _mesa_image_address(dimensions, pack, ptr, width, height,
+                             format, type, depth-1, height-1, width);
 
 
    sizeAddr = ((const GLubyte *) 0) + pack->BufferObj->Size;

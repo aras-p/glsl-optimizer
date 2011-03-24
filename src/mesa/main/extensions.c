@@ -753,7 +753,7 @@ _mesa_extension_is_enabled( struct gl_context *ctx, const char *name )
 static char *
 get_extension_override( struct gl_context *ctx )
 {
-   const char *env_const= _mesa_getenv("MESA_EXTENSION_OVERRIDE");
+   const char *env_const = _mesa_getenv("MESA_EXTENSION_OVERRIDE");
    char *env;
    char *ext;
    char *extra_exts;
@@ -794,7 +794,7 @@ get_extension_override( struct gl_context *ctx )
    }
 
    /* Remove trailing space. */
-   len  = strlen(extra_exts);
+   len = strlen(extra_exts);
    if (extra_exts[len - 1] == ' ')
       extra_exts[len - 1] = '\0';
 
