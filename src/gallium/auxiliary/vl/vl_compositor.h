@@ -61,8 +61,6 @@ struct vl_compositor
    struct pipe_video_rect layer_src_rects[VL_COMPOSITOR_MAX_LAYERS];
    struct pipe_video_rect layer_dst_rects[VL_COMPOSITOR_MAX_LAYERS];
    unsigned dirty_layers;
-
-   struct keymap *texview_map;
 };
 
 bool vl_compositor_init(struct vl_compositor *compositor, struct pipe_context *pipe);

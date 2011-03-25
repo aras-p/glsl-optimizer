@@ -297,21 +297,6 @@ cleanup_buffers(struct vl_compositor *c)
    pipe_resource_reference(&c->fs_const_buf, NULL);
 }
 
-static void
-texview_map_delete(const struct keymap *map,
-                   const void *key, void *data,
-                   void *user)
-{
-   struct pipe_sampler_view *sv = (struct pipe_sampler_view*)data;
-
-   assert(map);
-   assert(key);
-   assert(data);
-   assert(user);
-
-   pipe_sampler_view_reference(&sv, NULL);
-}
-
 bool vl_compositor_init(struct vl_compositor *compositor, struct pipe_context *pipe)
 {
    unsigned i;
@@ -322,22 +307,14 @@ bool vl_compositor_init(struct vl_compositor *compositor, struct pipe_context *p
 
    compositor->pipe = pipe;
 
-   compositor->texview_map = util_new_keymap(sizeof(struct pipe_surface*), -1,
-                                             texview_map_delete);
-   if (!compositor->texview_map)
+   if (!init_pipe_state(compositor))
       return false;
 
-   if (!init_pipe_state(compositor)) {
-      util_delete_keymap(compositor->texview_map, compositor->pipe);
-      return false;
-   }
    if (!init_shaders(compositor)) {
-      util_delete_keymap(compositor->texview_map, compositor->pipe);
       cleanup_pipe_state(compositor);
       return false;
    }
    if (!init_buffers(compositor)) {
-      util_delete_keymap(compositor->texview_map, compositor->pipe);
       cleanup_shaders(compositor);
       cleanup_pipe_state(compositor);
       return false;
@@ -356,7 +333,6 @@ void vl_compositor_cleanup(struct vl_compositor *compositor)
 {
    assert(compositor);
 
-   util_delete_keymap(compositor->texview_map, compositor->pipe);
    cleanup_buffers(compositor);
    cleanup_shaders(compositor);
    cleanup_pipe_state(compositor);
@@ -517,8 +493,8 @@ static void draw_layers(struct vl_compositor *c,
                         struct pipe_video_rect *dst_rect)
 {
    unsigned num_rects;
-   struct pipe_sampler_view *src_surfaces[VL_COMPOSITOR_MAX_LAYERS + 2];
-   void *frag_shaders[VL_COMPOSITOR_MAX_LAYERS + 2];
+   struct pipe_sampler_view *src_surfaces[VL_COMPOSITOR_MAX_LAYERS + 1];
+   void *frag_shaders[VL_COMPOSITOR_MAX_LAYERS + 1];
    unsigned i;
 
    assert(c);
@@ -529,30 +505,10 @@ static void draw_layers(struct vl_compositor *c,
    num_rects = gen_data(c, src_surface, src_rect, dst_rect, src_surfaces, frag_shaders);
 
    for (i = 0; i < num_rects; ++i) {
-      boolean delete_view = FALSE;
-      struct pipe_sampler_view *surface_view = (struct pipe_sampler_view*)util_keymap_lookup(c->texview_map,
-                                                                                             &src_surfaces[i]);
-      if (!surface_view) {
-         struct pipe_sampler_view templat;
-         u_sampler_view_default_template(&templat, src_surfaces[i]->texture,
-                                         src_surfaces[i]->texture->format);
-         surface_view = c->pipe->create_sampler_view(c->pipe, src_surfaces[i]->texture,
-                                                     &templat);
-         if (!surface_view)
-            return;
-
-         delete_view = !util_keymap_insert(c->texview_map, &src_surfaces[i],
-                                           surface_view, c->pipe);
-      }
-
       c->pipe->bind_fs_state(c->pipe, frag_shaders[i]);
-      c->pipe->set_fragment_sampler_views(c->pipe, 1, &surface_view);
+      c->pipe->set_fragment_sampler_views(c->pipe, 1, &src_surfaces[i]);
 
       util_draw_arrays(c->pipe, PIPE_PRIM_TRIANGLES, i * 6, 6);
-
-      if (delete_view) {
-         pipe_sampler_view_reference(&surface_view, NULL);
-      }
    }
 }
 
