@@ -334,6 +334,15 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    if (future_surface)
       unmap_and_flush_surface(future_surface->privData);
 
+   /* If the surface we're rendering hasn't changed the ref frames shouldn't change. */
+   if (target_surface_priv->mapped && (
+       target_surface_priv->ref_surfaces[0] != past_surface ||
+       target_surface_priv->ref_surfaces[1] != future_surface)) {
+
+      // If they change anyway we need to flush our surface
+      unmap_and_flush_surface(target_surface_priv);
+   }
+
    MacroBlocksToPipe(vpipe->screen, picture_structure, macroblocks, blocks, first_macroblock,
                      num_macroblocks, pipe_macroblocks);
 
@@ -342,11 +351,8 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
       target_surface_priv->ref_surfaces[0] = past_surface;
       target_surface_priv->ref_surfaces[1] = future_surface;
       target_surface_priv->mapped = 1;
-   } else {
-      /* If the surface we're rendering hasn't changed the ref frames shouldn't change. */
-      assert(target_surface_priv->ref_surfaces[0] == past_surface);
-      assert(target_surface_priv->ref_surfaces[1] == future_surface);
    }
+
    t_buffer->add_macroblocks(t_buffer, num_macroblocks, &pipe_macroblocks->base);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for rendering.\n", target_surface);
