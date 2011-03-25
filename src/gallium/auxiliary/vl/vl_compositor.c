@@ -345,8 +345,6 @@ bool vl_compositor_init(struct vl_compositor *compositor, struct pipe_context *p
 
    compositor->fb_state.width = 0;
    compositor->fb_state.height = 0;
-   compositor->bg = NULL;
-   compositor->dirty_bg = false;
    for (i = 0; i < VL_COMPOSITOR_MAX_LAYERS; ++i)
       compositor->layers[i] = NULL;
    compositor->dirty_layers = 0;
@@ -484,16 +482,6 @@ static unsigned gen_data(struct vl_compositor *c,
    if (!vb)
       return 0;
 
-   if (c->dirty_bg) {
-      struct vertex2f bg_inv_size = {1.0f / c->bg->texture->width0, 1.0f / c->bg->texture->height0};
-      gen_rect_verts(num_rects, &c->bg_src_rect, &bg_inv_size, NULL, NULL, vb);
-      textures[num_rects] = c->bg;
-      /* XXX: Hack */
-      frag_shaders[num_rects] = c->fragment_shader.rgb_2_rgb;
-      ++num_rects;
-      c->dirty_bg = false;
-   }
-
    {
       struct vertex2f src_inv_size = { 1.0f / src_surface->texture->width0, 1.0f / src_surface->texture->height0};
       gen_rect_verts(num_rects, src_rect, &src_inv_size, dst_rect, &c->fb_inv_size, vb);
@@ -613,7 +601,7 @@ void vl_compositor_render(struct vl_compositor          *compositor,
 
    draw_layers(compositor, src_surface, src_area, dst_area);
 
-   assert(!compositor->dirty_bg && !compositor->dirty_layers);
+   assert(!compositor->dirty_layers);
    compositor->pipe->flush(compositor->pipe, fence);
 }
 

@@ -36,6 +36,7 @@
 #include <util/u_memory.h>
 #include <util/u_math.h>
 #include <util/u_format.h>
+#include <util/u_sampler.h>
 #include "xvmc_private.h"
 
 #define FOURCC_RGB 0x0000003
@@ -190,6 +191,27 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    tex = vpipe->screen->resource_create(vpipe->screen, &tex_templ);
 
    memset(&sampler_templ, 0, sizeof(sampler_templ));
+   u_sampler_view_default_template(&sampler_templ, tex, tex->format);
+
+#if 0
+   switch (image->id) {
+      case FOURCC_RGB:
+         assert(subpicture_priv->sfc->format == XvIDToPipe(image->id));
+         for (y = 0; y < height; ++y) {
+            dst_line = dst;
+            for (x = 0; x < width; ++x, src += 3, dst_line += 4) {
+               dst_line[0] = src[2]; /* B */
+               dst_line[1] = src[1]; /* G */
+               dst_line[2] = src[0]; /* R */
+            }
+            dst += xfer->stride;
+         }
+         break;
+      default:
+         XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized Xv image ID 0x%08X.\n", image->id);
+   }
+#endif
+
    subpicture_priv->sampler = vpipe->create_sampler_view(vpipe, tex, &sampler_templ);
    pipe_resource_reference(&tex, NULL);
    if (!subpicture_priv->sampler) {
@@ -220,6 +242,7 @@ Status XvMCClearSubpicture(Display *dpy, XvMCSubpicture *subpicture, short x, sh
 {
    XvMCSubpicturePrivate *subpicture_priv;
    XvMCContextPrivate *context_priv;
+   struct pipe_box dst_box = {x, y, 0, width, height, 1};
    float color_f[4];
 
    assert(dpy);
@@ -235,9 +258,9 @@ Status XvMCClearSubpicture(Display *dpy, XvMCSubpicture *subpicture, short x, sh
    subpicture_priv = subpicture->privData;
    context_priv = subpicture_priv->context->privData;
    /* TODO: Assert clear rect is within bounds? Or clip? */
-   //context_priv->vctx->vpipe->clear_render_target(context_priv->vctx->vpipe,
-   //                                               subpicture_priv->sampler, x, y,
-   //                                               color_f, width, height);
+   context_priv->vctx->vpipe->clear_sampler(context_priv->vctx->vpipe,
+                                            subpicture_priv->sampler, &dst_box,
+                                            color_f);
 
    return Success;
 }
@@ -250,9 +273,6 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
    XvMCSubpicturePrivate *subpicture_priv;
    XvMCContextPrivate *context_priv;
    struct pipe_video_context *vpipe;
-
-   unsigned char *src, *dst, *dst_line;
-   unsigned x, y;
    struct pipe_box dst_box = {dstx, dsty, 0, width, height, 1};
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Compositing subpicture %p.\n", subpicture);
@@ -278,25 +298,6 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
    /* TODO: Assert rects are within bounds? Or clip? */
    vpipe->upload_sampler(vpipe, subpicture_priv->sampler, &dst_box,
                          image->data, width*3, srcx, srcy);
-
-#if 0
-   switch (image->id) {
-      case FOURCC_RGB:
-         assert(subpicture_priv->sfc->format == XvIDToPipe(image->id));
-         for (y = 0; y < height; ++y) {
-            dst_line = dst;
-            for (x = 0; x < width; ++x, src += 3, dst_line += 4) {
-               dst_line[0] = src[2]; /* B */
-               dst_line[1] = src[1]; /* G */
-               dst_line[2] = src[0]; /* R */
-            }
-            dst += xfer->stride;
-         }
-         break;
-      default:
-         XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized Xv image ID 0x%08X.\n", image->id);
-   }
-#endif
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Subpicture %p composited.\n", subpicture);
 

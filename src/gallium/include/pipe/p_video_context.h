@@ -85,12 +85,33 @@ struct pipe_video_context
                                           const struct pipe_surface *templ);
 
    /**
+    * sampler view handling, used for subpictures for example
+    */
+   /*@{*/
+
+   /**
     * create a sampler view of a texture, for subpictures for example
     */
    struct pipe_sampler_view *(*create_sampler_view)(struct pipe_video_context *vpipe,
                                                     struct pipe_resource *resource,
                                                     const struct pipe_sampler_view *templ);
 
+   /**
+    * upload image data to a sampler
+    */
+   void (*upload_sampler)(struct pipe_video_context *vpipe,
+                          struct pipe_sampler_view *dst,
+                          const struct pipe_box *dst_box,
+                          const void *src, unsigned src_stride,
+                          unsigned src_x, unsigned src_y);
+
+   /**
+    * clear a sampler with a specific rgba color
+    */
+   void (*clear_sampler)(struct pipe_video_context *vpipe,
+                         struct pipe_sampler_view *dst,
+                         const struct pipe_box *dst_box,
+                         const float *rgba);
    /**
     * Creates a buffer as decoding target
     */
@@ -101,12 +122,14 @@ struct pipe_video_context
     */
 
 #if 0
-   /*@{*/
    void (*decode_bitstream)(struct pipe_video_context *vpipe,
                             unsigned num_bufs,
                             struct pipe_buffer **bitstream_buf);
 #endif
 
+   /**
+    * render a video buffer to the frontbuffer
+    */
    void (*render_picture)(struct pipe_video_context     *vpipe,
                           struct pipe_video_buffer      *src_surface,
                           struct pipe_video_rect        *src_area,
@@ -115,67 +138,21 @@ struct pipe_video_context
                           struct pipe_video_rect        *dst_area,
                           struct pipe_fence_handle      **fence);
 
-#if 0
-   void (*resource_copy_region)(struct pipe_video_context *vpipe,
-                                struct pipe_resource *dst,
-                                unsigned dstx, unsigned dsty, unsigned dstz,
-                                struct pipe_resource *src,
-                                unsigned srcx, unsigned srcy, unsigned srcz,
-                                unsigned width, unsigned height);
-
-   struct pipe_transfer *(*get_transfer)(struct pipe_video_context *vpipe,
-                                         struct pipe_resource *resource,
-                                         unsigned level,
-                                         unsigned usage,  /* a combination of PIPE_TRANSFER_x */
-                                         const struct pipe_box *box);
-
-   void (*transfer_destroy)(struct pipe_video_context *vpipe,
-                            struct pipe_transfer *transfer);
-
-   void* (*transfer_map)(struct pipe_video_context *vpipe,
-                         struct pipe_transfer *transfer);
-
-   void (*transfer_flush_region)(struct pipe_video_context *vpipe,
-                                 struct pipe_transfer *transfer,
-                                 const struct pipe_box *box);
-
-   void (*transfer_unmap)(struct pipe_video_context *vpipe,
-                          struct pipe_transfer *transfer);
-#endif
-
-   void (*upload_sampler)(struct pipe_video_context *vpipe,
-                          struct pipe_sampler_view *dst,
-                          const struct pipe_box *dst_box,
-                          const void *src, unsigned src_stride,
-                          unsigned src_x, unsigned src_y);
-
-   void (*clear_sampler)(struct pipe_video_context *vpipe,
-                         struct pipe_sampler_view *dst,
-                         const struct pipe_box *dst_box,
-                         const float *rgba);
-
    /*@}*/
 
    /**
     * Parameter-like states (or properties)
     */
    /*@{*/
-#if 0
-   void (*set_picture_background)(struct pipe_video_context *vpipe,
-                                  struct pipe_surface *bg,
-                                  struct pipe_video_rect *bg_src_rect);
-#endif
 
+   /**
+    * set overlay samplers
+    */
    void (*set_picture_layers)(struct pipe_video_context *vpipe,
                               struct pipe_sampler_view *layers[],
                               struct pipe_video_rect *src_rects[],
                               struct pipe_video_rect *dst_rects[],
                               unsigned num_layers);
-
-#if 0
-   void (*set_picture_desc)(struct pipe_video_context *vpipe,
-                            const struct pipe_picture_desc *desc);
-#endif
 
    void (*set_csc_matrix)(struct pipe_video_context *vpipe, const float *mat);
 
@@ -187,16 +164,31 @@ struct pipe_video_buffer
 {
    struct pipe_video_context* context;
 
+   /**
+    * destroy this video buffer
+    */
    void (*destroy)(struct pipe_video_buffer *buffer);
 
+   /**
+    * map the buffer into memory before calling add_macroblocks
+    */
    void (*map)(struct pipe_video_buffer *buffer);
 
+   /**
+    * add macroblocks to buffer for decoding
+    */
    void (*add_macroblocks)(struct pipe_video_buffer *buffer,
                            unsigned num_macroblocks,
                            struct pipe_macroblock *macroblocks);
 
+   /**
+    * unmap buffer before flushing
+    */
    void (*unmap)(struct pipe_video_buffer *buffer);
 
+   /**
+    * flush buffer to video hardware
+    */
    void (*flush)(struct pipe_video_buffer *buffer,
                  struct pipe_video_buffer *ref_frames[2],
                  struct pipe_fence_handle **fence);

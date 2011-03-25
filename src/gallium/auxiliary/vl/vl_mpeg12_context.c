@@ -365,105 +365,6 @@ vl_mpeg12_is_format_supported(struct pipe_video_context *vpipe,
                                                  0, usage);
 }
 
-#if 0
-static void
-vl_mpeg12_resource_copy_region(struct pipe_video_context *vpipe,
-                               struct pipe_resource *dst,
-                               unsigned dstx, unsigned dsty, unsigned dstz,
-                               struct pipe_resource *src,
-                               unsigned srcx, unsigned srcy, unsigned srcz,
-                               unsigned width, unsigned height)
-{
-   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
-
-   assert(vpipe);
-   assert(dst);
-
-   struct pipe_box box;
-   box.x = srcx;
-   box.y = srcy;
-   box.z = srcz;
-   box.width = width;
-   box.height = height;
-
-   if (ctx->pipe->resource_copy_region)
-      ctx->pipe->resource_copy_region(ctx->pipe, dst, 0,
-                                      dstx, dsty, dstz,
-                                      src, 0, &box);
-   else
-      util_resource_copy_region(ctx->pipe, dst, 0,
-                                dstx, dsty, dstz,
-                                src, 0, &box);
-}
-
-static struct pipe_transfer*
-vl_mpeg12_get_transfer(struct pipe_video_context *vpipe,
-                       struct pipe_resource *resource,
-                       unsigned level,
-                       unsigned usage,  /* a combination of PIPE_TRANSFER_x */
-                       const struct pipe_box *box)
-{
-   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
-
-   assert(vpipe);
-   assert(resource);
-   assert(box);
-
-   return ctx->pipe->get_transfer(ctx->pipe, resource, level, usage, box);
-}
-
-static void
-vl_mpeg12_transfer_destroy(struct pipe_video_context *vpipe,
-                           struct pipe_transfer *transfer)
-{
-   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
-
-   assert(vpipe);
-   assert(transfer);
-
-   ctx->pipe->transfer_destroy(ctx->pipe, transfer);
-}
-
-static void*
-vl_mpeg12_transfer_map(struct pipe_video_context *vpipe,
-                       struct pipe_transfer *transfer)
-{
-   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
-
-   assert(vpipe);
-   assert(transfer);
-
-   return ctx->pipe->transfer_map(ctx->pipe, transfer);
-}
-
-static void
-vl_mpeg12_transfer_flush_region(struct pipe_video_context *vpipe,
-                                struct pipe_transfer *transfer,
-                                const struct pipe_box *box)
-{
-   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
-
-   assert(vpipe);
-   assert(transfer);
-   assert(box);
-
-   ctx->pipe->transfer_flush_region(ctx->pipe, transfer, box);
-}
-
-static void
-vl_mpeg12_transfer_unmap(struct pipe_video_context *vpipe,
-                         struct pipe_transfer *transfer)
-{
-   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
-
-   assert(vpipe);
-   assert(transfer);
-
-   ctx->pipe->transfer_unmap(ctx->pipe, transfer);
-}
-
-#endif
-
 static void
 vl_mpeg12_clear_sampler(struct pipe_video_context *vpipe,
                         struct pipe_sampler_view *dst,
@@ -557,22 +458,6 @@ vl_mpeg12_render_picture(struct pipe_video_context     *vpipe,
                         picture_type, src_area,
                         dst_surface, dst_area, fence);
 }
-
-#if 0
-static void
-vl_mpeg12_set_picture_background(struct pipe_video_context *vpipe,
-                                  struct pipe_surface *bg,
-                                  struct pipe_video_rect *bg_src_rect)
-{
-   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
-
-   assert(vpipe);
-   assert(bg);
-   assert(bg_src_rect);
-
-   vl_compositor_set_background(&ctx->compositor, bg, bg_src_rect);
-}
-#endif
 
 static void
 vl_mpeg12_set_picture_layers(struct pipe_video_context *vpipe,
@@ -759,14 +644,7 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
    ctx->base.create_buffer = vl_mpeg12_create_buffer;
    ctx->base.render_picture = vl_mpeg12_render_picture;
    ctx->base.clear_sampler = vl_mpeg12_clear_sampler;
-   //ctx->base.resource_copy_region = vl_mpeg12_resource_copy_region;
-   //ctx->base.get_transfer = vl_mpeg12_get_transfer;
-   //ctx->base.transfer_destroy = vl_mpeg12_transfer_destroy;
-   //ctx->base.transfer_map = vl_mpeg12_transfer_map;
-   //ctx->base.transfer_flush_region = vl_mpeg12_transfer_flush_region;
-   //ctx->base.transfer_unmap = vl_mpeg12_transfer_unmap;
    ctx->base.upload_sampler = vl_mpeg12_upload_sampler;
-   //ctx->base.set_picture_background = vl_mpeg12_set_picture_background;
    ctx->base.set_picture_layers = vl_mpeg12_set_picture_layers;
    ctx->base.set_csc_matrix = vl_mpeg12_set_csc_matrix;
 

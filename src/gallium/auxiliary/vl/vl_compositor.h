@@ -57,9 +57,6 @@ struct vl_compositor
    void *vertex_elems_state;
    struct pipe_resource *fs_const_buf;
 
-   struct pipe_sampler_view *bg;
-   struct pipe_video_rect bg_src_rect;
-   bool dirty_bg;
    struct pipe_sampler_view *layers[VL_COMPOSITOR_MAX_LAYERS];
    struct pipe_video_rect layer_src_rects[VL_COMPOSITOR_MAX_LAYERS];
    struct pipe_video_rect layer_dst_rects[VL_COMPOSITOR_MAX_LAYERS];
@@ -71,11 +68,6 @@ struct vl_compositor
 bool vl_compositor_init(struct vl_compositor *compositor, struct pipe_context *pipe);
 
 void vl_compositor_cleanup(struct vl_compositor *compositor);
-
-#if 0
-void vl_compositor_set_background(struct vl_compositor *compositor,
-                                  struct pipe_surface *bg, struct pipe_video_rect *bg_src_rect);
-#endif
 
 void vl_compositor_set_layers(struct vl_compositor *compositor,
                               struct pipe_sampler_view *layers[],

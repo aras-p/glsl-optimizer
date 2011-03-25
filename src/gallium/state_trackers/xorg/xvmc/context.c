@@ -177,12 +177,12 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
                          int width, int height, int flags, XvMCContext *context)
 {
    bool found_port;
-   int scrn;
-   int chroma_format;
-   int mc_type;
-   int surface_flags;
-   unsigned short subpic_max_w;
-   unsigned short subpic_max_h;
+   int scrn = 0;
+   int chroma_format = 0;
+   int mc_type = 0;
+   int surface_flags = 0;
+   unsigned short subpic_max_w = 0;
+   unsigned short subpic_max_h = 0;
    Status ret;
    struct vl_screen *vscreen;
    struct vl_context *vctx;
