@@ -44,6 +44,11 @@ static enum pipe_format XvIDToPipe(int xvimage_id)
    switch (xvimage_id) {
       case FOURCC_RGB:
          return PIPE_FORMAT_B8G8R8X8_UNORM;
+
+      case FOURCC_AI44:
+      case FOURCC_IA44:
+         return PIPE_FORMAT_L4A4_UNORM;
+
       default:
          XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized Xv image ID 0x%08X.\n", xvimage_id);
          return PIPE_FORMAT_NONE;
@@ -56,6 +61,7 @@ static int PipeToComponentOrder(enum pipe_format format, char *component_order)
 
    switch (format) {
       case PIPE_FORMAT_B8G8R8X8_UNORM:
+      case PIPE_FORMAT_L4A4_UNORM:
          return 0;
       default:
          XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized PIPE_FORMAT 0x%08X.\n", format);
@@ -64,8 +70,7 @@ static int PipeToComponentOrder(enum pipe_format format, char *component_order)
          component_order[2] = 0;
          component_order[3] = 0;
    }
-
-      return 0;
+   return 0;
 }
 
 static Status Validate(Display *dpy, XvPortID port, int surface_type_id, int xvimage_id)
@@ -101,7 +106,8 @@ static Status Validate(Display *dpy, XvPortID port, int surface_type_id, int xvi
                                  "[XvMC]   red mask=0x%08X\n" \
                                  "[XvMC]   green mask=0x%08X\n" \
                                  "[XvMC]   blue mask=0x%08X\n",
-                                 subpictures[i].depth, subpictures[i].red_mask, subpictures[i].green_mask, subpictures[i].blue_mask);
+                                 subpictures[i].depth, subpictures[i].red_mask,
+                                 subpictures[i].green_mask, subpictures[i].blue_mask);
          }
          else if (subpictures[i].type == XvYUV) {
             XVMC_MSG(XVMC_TRACE, "[XvMC]   y sample bits=0x%08X\n" \
@@ -226,17 +232,15 @@ Status XvMCClearSubpicture(Display *dpy, XvMCSubpicture *subpicture, short x, sh
 
    /* Convert color to float */
    util_format_read_4f(PIPE_FORMAT_B8G8R8A8_UNORM,
-                    color_f, 1,
-                    &color, 4,
-                    0, 0, 1, 1);
+                       color_f, 1, &color, 4,
+                       0, 0, 1, 1);
 
    subpicture_priv = subpicture->privData;
    context_priv = subpicture_priv->context->privData;
    /* TODO: Assert clear rect is within bounds? Or clip? */
    context_priv->vctx->vpipe->clear_render_target(context_priv->vctx->vpipe,
-                                           subpicture_priv->sfc, x, y,
-										   color_f,
-                                           width, height);
+                                                  subpicture_priv->sfc, x, y,
+                                                  color_f, width, height);
 
    return Success;
 }
