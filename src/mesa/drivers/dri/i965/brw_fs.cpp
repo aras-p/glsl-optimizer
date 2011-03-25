@@ -3107,10 +3107,6 @@ fs_visitor::propagate_constants()
 {
    bool progress = false;
 
-   /* Need to update the MRF tracking for compressed instructions. */
-   if (c->dispatch_width == 16)
-      return false;
-
    calculate_live_intervals();
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
@@ -3119,7 +3115,9 @@ fs_visitor::propagate_constants()
       if (inst->opcode != BRW_OPCODE_MOV ||
 	  inst->predicated ||
 	  inst->dst.file != GRF || inst->src[0].file != IMM ||
-	  inst->dst.type != inst->src[0].type)
+	  inst->dst.type != inst->src[0].type ||
+	  (c->dispatch_width == 16 &&
+	   (inst->force_uncompressed || inst->force_sechalf)))
 	 continue;
 
       /* Don't bother with cases where we should have had the
