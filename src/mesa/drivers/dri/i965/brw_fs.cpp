@@ -402,31 +402,29 @@ fs_visitor::setup_builtin_uniform_values(ir_variable *ir)
    const ir_state_slot *const slots = ir->state_slots;
    assert(ir->state_slots != NULL);
 
-   {
-      for (unsigned int i = 0; i < ir->num_state_slots; i++) {
-	 /* This state reference has already been setup by ir_to_mesa,
-	  * but we'll get the same index back here.
-	  */
-	 int index = _mesa_add_state_reference(this->fp->Base.Parameters,
-					       (gl_state_index *)slots[i].tokens);
+   for (unsigned int i = 0; i < ir->num_state_slots; i++) {
+      /* This state reference has already been setup by ir_to_mesa, but we'll
+       * get the same index back here.
+       */
+      int index = _mesa_add_state_reference(this->fp->Base.Parameters,
+					    (gl_state_index *)slots[i].tokens);
 
-	 /* Add each of the unique swizzles of the element as a
-	  * parameter.  This'll end up matching the expected layout of
-	  * the array/matrix/structure we're trying to fill in.
-	  */
-	 int last_swiz = -1;
-	 for (unsigned int j = 0; j < 4; j++) {
-	    int swiz = GET_SWZ(slots[i].swizzle, j);
-	    if (swiz == last_swiz)
-	       break;
-	    last_swiz = swiz;
+      /* Add each of the unique swizzles of the element as a parameter.
+       * This'll end up matching the expected layout of the
+       * array/matrix/structure we're trying to fill in.
+       */
+      int last_swiz = -1;
+      for (unsigned int j = 0; j < 4; j++) {
+	 int swiz = GET_SWZ(slots[i].swizzle, j);
+	 if (swiz == last_swiz)
+	    break;
+	 last_swiz = swiz;
 
-	    c->prog_data.param_convert[c->prog_data.nr_params] =
-	       PARAM_NO_CONVERT;
-	    this->param_index[c->prog_data.nr_params] = index;
-	    this->param_offset[c->prog_data.nr_params] = swiz;
-	    c->prog_data.nr_params++;
-	 }
+	 c->prog_data.param_convert[c->prog_data.nr_params] =
+	    PARAM_NO_CONVERT;
+	 this->param_index[c->prog_data.nr_params] = index;
+	 this->param_offset[c->prog_data.nr_params] = swiz;
+	 c->prog_data.nr_params++;
       }
    }
 }

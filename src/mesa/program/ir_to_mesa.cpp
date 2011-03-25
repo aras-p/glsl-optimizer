@@ -795,26 +795,25 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
       }
 
 
-      {
-	 for (unsigned int i = 0; i < ir->num_state_slots; i++) {
-	    int index = _mesa_add_state_reference(this->prog->Parameters,
-						  (gl_state_index *)slots[i].tokens);
+      for (unsigned int i = 0; i < ir->num_state_slots; i++) {
+	 int index = _mesa_add_state_reference(this->prog->Parameters,
+					       (gl_state_index *)slots[i].tokens);
 
-	    if (storage->file == PROGRAM_STATE_VAR) {
-	       if (storage->index == -1) {
-		  storage->index = index;
-	       } else {
-		  assert(index == storage->index + (int)i);
-	       }
+	 if (storage->file == PROGRAM_STATE_VAR) {
+	    if (storage->index == -1) {
+	       storage->index = index;
 	    } else {
-	       ir_to_mesa_src_reg src(PROGRAM_STATE_VAR, index, NULL);
-	       src.swizzle = slots[i].swizzle;
-	       ir_to_mesa_emit_op1(ir, OPCODE_MOV, dst, src);
-	       /* even a float takes up a whole vec4 reg in a struct/array. */
-	       dst.index++;
+	       assert(index == storage->index + (int)i);
 	    }
+	 } else {
+	    ir_to_mesa_src_reg src(PROGRAM_STATE_VAR, index, NULL);
+	    src.swizzle = slots[i].swizzle;
+	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, dst, src);
+	    /* even a float takes up a whole vec4 reg in a struct/array. */
+	    dst.index++;
 	 }
       }
+
       if (storage->file == PROGRAM_TEMPORARY &&
 	  dst.index != storage->index + ir->num_state_slots) {
 	 fail_link(this->shader_program,
