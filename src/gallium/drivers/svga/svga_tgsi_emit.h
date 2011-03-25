@@ -79,6 +79,7 @@ struct svga_shader_emitter
    int internal_frontface_idx;
 
    int ps30_input_count;
+   int vs30_output_count;
 
    int dynamic_branching_level;
 
@@ -99,9 +100,15 @@ struct svga_shader_emitter
    struct src_register input_map[PIPE_MAX_ATTRIBS];
    SVGA3dShaderDestToken output_map[PIPE_MAX_ATTRIBS];
 
+   boolean ps_reads_pos;
+   struct src_register ps_true_pos;
+   struct src_register ps_depth_pos;
+   SVGA3dShaderDestToken ps_temp_pos;
+
    struct src_register imm_0055;
    SVGA3dShaderDestToken temp_pos;
    SVGA3dShaderDestToken true_pos;
+   SVGA3dShaderDestToken depth_pos;
 
    SVGA3dShaderDestToken temp_col[PIPE_MAX_COLOR_BUFS];
    SVGA3dShaderDestToken true_col[PIPE_MAX_COLOR_BUFS];

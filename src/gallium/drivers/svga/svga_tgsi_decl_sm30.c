@@ -58,7 +58,8 @@ static boolean translate_vs_ps_semantic( struct tgsi_declaration_semantic semant
       *usage = SVGA3D_DECLUSAGE_PSIZE;
       break;
    case TGSI_SEMANTIC_GENERIC:   
-      *idx = semantic.Index + 1; /* texcoord[0] is reserved for fog */
+      *idx = semantic.Index + 2; /* texcoord[0] is reserved for fog,
+                                    texcoord[1] is reserved for position */
       *usage = SVGA3D_DECLUSAGE_TEXCOORD;
       break;
    case TGSI_SEMANTIC_NORMAL:    
@@ -120,17 +121,23 @@ static boolean ps30_input( struct svga_shader_emitter *emit,
    SVGA3dShaderDestToken reg;
 
    if (semantic.Name == TGSI_SEMANTIC_POSITION) {
-      emit->input_map[idx] = src_register( SVGA3DREG_MISCTYPE,
-                                           SVGA3DMISCREG_POSITION );
+      emit->ps_true_pos = src_register( SVGA3DREG_MISCTYPE,
+                                        SVGA3DMISCREG_POSITION );
+      emit->ps_temp_pos = dst_register( SVGA3DREG_TEMP,
+                                        emit->nr_hw_temp );
+      emit->ps_depth_pos = src_register( SVGA3DREG_INPUT, emit->ps30_input_count++ );
 
-      emit->input_map[idx].base.swizzle = TRANSLATE_SWIZZLE( TGSI_SWIZZLE_X,
-                                                             TGSI_SWIZZLE_Y,
-                                                             TGSI_SWIZZLE_Y,
-                                                             TGSI_SWIZZLE_Y );
+      emit->input_map[idx] = src_register( SVGA3DREG_TEMP,
+                                           emit->nr_hw_temp );
+      emit->nr_hw_temp++;
 
-      reg = writemask( dst(emit->input_map[idx]),
-                       TGSI_WRITEMASK_XY );
+      reg = writemask( dst(emit->ps_true_pos),
+                       TGSI_WRITEMASK_XYZW );
 
+      emit->ps_reads_pos = TRUE;
+      if (!emit_decl( emit, dst(emit->ps_depth_pos),
+                      SVGA3D_DECLUSAGE_TEXCOORD, 1 ))
+         return FALSE;
       return emit_decl( emit, reg, 0, 0 );
    }
    else if (emit->key.fkey.light_twoside &&
@@ -288,7 +295,7 @@ static boolean vs30_output( struct svga_shader_emitter *emit,
    if (!translate_vs_ps_semantic( semantic, &usage, &index ))
       return FALSE;
 
-   dcl.dst = dst_register( SVGA3DREG_OUTPUT, idx );
+   dcl.dst = dst_register( SVGA3DREG_OUTPUT, emit->vs30_output_count++ );
    dcl.usage = usage;
    dcl.index = index;
    dcl.values[0] |= 1<<31;
@@ -299,6 +306,13 @@ static boolean vs30_output( struct svga_shader_emitter *emit,
                                             emit->nr_hw_temp++ );
       emit->temp_pos = emit->output_map[idx];
       emit->true_pos = dcl.dst;
+      /* Grab an extra output for the depth output */
+      emit->depth_pos = dst_register( SVGA3DREG_OUTPUT,
+                                      emit->vs30_output_count++ );
+      emit->info.num_outputs++;
+
+      emit_decl( emit, emit->depth_pos,
+                 SVGA3D_DECLUSAGE_TEXCOORD, 1 );
    }
    else if (semantic.Name == TGSI_SEMANTIC_PSIZE) {
       emit->output_map[idx] = dst_register( SVGA3DREG_TEMP,

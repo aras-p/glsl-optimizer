@@ -2550,6 +2550,34 @@ static boolean emit_ps_preamble( struct svga_shader_emitter *emit )
                return FALSE;
          }
       }
+   } else if (emit->ps_reads_pos) {
+      /*
+       * Assemble the position from various bits of inputs. Depth and W are
+       * passed in a texcoord this is due to D3D's vPos not hold Z or W.
+       * Also fixup the perspective interpolation.
+       *
+       * temp_pos.xy = vPos.xy
+       * temp_pos.w = rcp(texcoord1.w);
+       * temp_pos.z = texcoord1.z * temp_pos.w;
+       */
+      if (!submit_op1( emit,
+                       inst_token(SVGA3DOP_MOV),
+                       writemask( emit->ps_temp_pos, TGSI_WRITEMASK_XY ),
+                       emit->ps_true_pos ))
+         return FALSE;
+
+      if (!submit_op1( emit,
+                       inst_token(SVGA3DOP_RCP),
+                       writemask( emit->ps_temp_pos, TGSI_WRITEMASK_W ),
+                       scalar( emit->ps_depth_pos, TGSI_SWIZZLE_W ) ))
+         return FALSE;
+
+      if (!submit_op2( emit,
+                       inst_token(SVGA3DOP_MUL),
+                       writemask( emit->ps_temp_pos, TGSI_WRITEMASK_Z ),
+                       scalar( emit->ps_depth_pos, TGSI_SWIZZLE_Z ),
+                       scalar( src(emit->ps_temp_pos), TGSI_SWIZZLE_W ) ))
+         return FALSE;
    }
    
    return TRUE;
@@ -2628,12 +2656,19 @@ static boolean emit_vs_postamble( struct svga_shader_emitter *emit )
     */
    if (emit->key.vkey.need_prescale) {
       SVGA3dShaderDestToken temp_pos = emit->temp_pos;
+      SVGA3dShaderDestToken depth = emit->depth_pos;
       SVGA3dShaderDestToken pos = emit->true_pos;
       unsigned offset = emit->info.file_max[TGSI_FILE_CONSTANT] + 1;
       struct src_register prescale_scale = src_register( SVGA3DREG_CONST, 
                                                          offset + 0 ); 
       struct src_register prescale_trans = src_register( SVGA3DREG_CONST, 
                                                          offset + 1 ); 
+
+      if (!submit_op1( emit,
+                       inst_token(SVGA3DOP_MOV),
+                       writemask(depth, TGSI_WRITEMASK_W),
+                       scalar(src(temp_pos), TGSI_SWIZZLE_W) ))
+         return FALSE;
 
       /* MUL temp_pos.xyz,    temp_pos,      prescale.scale
        * MAD result.position, temp_pos.wwww, prescale.trans, temp_pos
@@ -2653,9 +2688,19 @@ static boolean emit_vs_postamble( struct svga_shader_emitter *emit )
                        prescale_trans,
                        src(temp_pos)))
          return FALSE;
+
+      /* Also write to depth value */
+      if (!submit_op3( emit,
+                       inst_token(SVGA3DOP_MAD),
+                       writemask(depth, TGSI_WRITEMASK_XYZ),
+                       swizzle(src(temp_pos), 3, 3, 3, 3),
+                       prescale_trans,
+                       src(temp_pos) ))
+         return FALSE;
    }
    else {
       SVGA3dShaderDestToken temp_pos = emit->temp_pos;
+      SVGA3dShaderDestToken depth = emit->depth_pos;
       SVGA3dShaderDestToken pos = emit->true_pos;
       struct src_register imm_0055 = emit->imm_0055;
 
@@ -2674,6 +2719,13 @@ static boolean emit_vs_postamble( struct svga_shader_emitter *emit )
       if (!submit_op1( emit,
                        inst_token(SVGA3DOP_MOV),
                        pos,
+                       src(temp_pos) ))
+         return FALSE;
+
+      /* Move the manipulated depth into the extra texcoord reg */
+      if (!submit_op1( emit,
+                       inst_token(SVGA3DOP_MOV),
+                       depth,
                        src(temp_pos) ))
          return FALSE;
    }
