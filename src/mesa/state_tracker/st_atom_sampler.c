@@ -163,7 +163,8 @@ update_samplers(struct st_context *st)
          if (texobj->Target != GL_TEXTURE_RECTANGLE_ARB)
             sampler->normalized_coords = 1;
 
-         sampler->lod_bias = st->ctx->Texture.Unit[texUnit].LodBias;
+         sampler->lod_bias = st->ctx->Texture.Unit[texUnit].LodBias +
+            texobj->LodBias;
 
          sampler->min_lod = texobj->BaseLevel + texobj->MinLod;
          if (sampler->min_lod < texobj->BaseLevel)
