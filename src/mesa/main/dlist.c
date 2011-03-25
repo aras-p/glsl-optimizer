@@ -7036,7 +7036,7 @@ save_VertexAttribDivisor(GLuint index, GLuint divisor)
 
 /* GL_NV_texture_barrier */
 static void
-save_TextureBarrierNV()
+save_TextureBarrierNV(void)
 {
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
