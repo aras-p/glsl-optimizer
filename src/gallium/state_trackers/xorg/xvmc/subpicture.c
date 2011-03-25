@@ -35,6 +35,7 @@
 #include <pipe/p_state.h>
 #include <util/u_memory.h>
 #include <util/u_math.h>
+#include <util/u_format.h>
 #include "xvmc_private.h"
 
 #define FOURCC_RGB 0x0000003
@@ -139,9 +140,8 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    XvMCContextPrivate *context_priv;
    XvMCSubpicturePrivate *subpicture_priv;
    struct pipe_video_context *vpipe;
-   struct pipe_resource template;
-   struct pipe_resource *tex;
-   struct pipe_surface surf_template;
+   struct pipe_resource tex_templ, *tex;
+   struct pipe_sampler_view sampler_templ;
    Status ret;
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Creating subpicture %p.\n", subpicture);
@@ -169,44 +169,42 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    if (!subpicture_priv)
       return BadAlloc;
 
-   memset(&template, 0, sizeof(struct pipe_resource));
-   template.target = PIPE_TEXTURE_2D;
-   template.format = XvIDToPipe(xvimage_id);
-   template.last_level = 0;
+   memset(&tex_templ, 0, sizeof(tex_templ));
+   tex_templ.target = PIPE_TEXTURE_2D;
+   tex_templ.format = XvIDToPipe(xvimage_id);
+   tex_templ.last_level = 0;
    if (vpipe->get_param(vpipe, PIPE_CAP_NPOT_TEXTURES)) {
-      template.width0 = width;
-      template.height0 = height;
+      tex_templ.width0 = width;
+      tex_templ.height0 = height;
    }
    else {
-      template.width0 = util_next_power_of_two(width);
-      template.height0 = util_next_power_of_two(height);
+      tex_templ.width0 = util_next_power_of_two(width);
+      tex_templ.height0 = util_next_power_of_two(height);
    }
-   template.depth0 = 1;
-   template.array_size = 1;
-   template.usage = PIPE_USAGE_DYNAMIC;
-   template.bind = PIPE_BIND_SAMPLER_VIEW;
-   template.flags = 0;
+   tex_templ.depth0 = 1;
+   tex_templ.array_size = 1;
+   tex_templ.usage = PIPE_USAGE_DYNAMIC;
+   tex_templ.bind = PIPE_BIND_SAMPLER_VIEW;
+   tex_templ.flags = 0;
 
-   subpicture_priv->context = context;
-   tex = vpipe->screen->resource_create(vpipe->screen, &template);
+   tex = vpipe->screen->resource_create(vpipe->screen, &tex_templ);
 
-   memset(&surf_template, 0, sizeof(surf_template));
-   surf_template.format = tex->format;
-   surf_template.usage = PIPE_BIND_SAMPLER_VIEW;
-   subpicture_priv->sfc = vpipe->create_surface(vpipe, tex, &surf_template);
+   memset(&sampler_templ, 0, sizeof(sampler_templ));
+   subpicture_priv->sampler = vpipe->create_sampler_view(vpipe, tex, &sampler_templ);
    pipe_resource_reference(&tex, NULL);
-   if (!subpicture_priv->sfc) {
+   if (!subpicture_priv->sampler) {
       FREE(subpicture_priv);
       return BadAlloc;
    }
 
+   subpicture_priv->context = context;
    subpicture->subpicture_id = XAllocID(dpy);
    subpicture->context_id = context->context_id;
    subpicture->xvimage_id = xvimage_id;
    subpicture->width = width;
    subpicture->height = height;
    subpicture->num_palette_entries = 0;
-   subpicture->entry_bytes = PipeToComponentOrder(template.format, subpicture->component_order);
+   subpicture->entry_bytes = PipeToComponentOrder(tex_templ.format, subpicture->component_order);
    subpicture->privData = subpicture_priv;
 
    SyncHandle();
@@ -222,7 +220,6 @@ Status XvMCClearSubpicture(Display *dpy, XvMCSubpicture *subpicture, short x, sh
 {
    XvMCSubpicturePrivate *subpicture_priv;
    XvMCContextPrivate *context_priv;
-   unsigned int tmp_color;
    float color_f[4];
 
    assert(dpy);
@@ -238,9 +235,9 @@ Status XvMCClearSubpicture(Display *dpy, XvMCSubpicture *subpicture, short x, sh
    subpicture_priv = subpicture->privData;
    context_priv = subpicture_priv->context->privData;
    /* TODO: Assert clear rect is within bounds? Or clip? */
-   context_priv->vctx->vpipe->clear_render_target(context_priv->vctx->vpipe,
-                                                  subpicture_priv->sfc, x, y,
-                                                  color_f, width, height);
+   //context_priv->vctx->vpipe->clear_render_target(context_priv->vctx->vpipe,
+   //                                               subpicture_priv->sampler, x, y,
+   //                                               color_f, width, height);
 
    return Success;
 }
@@ -253,7 +250,7 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
    XvMCSubpicturePrivate *subpicture_priv;
    XvMCContextPrivate *context_priv;
    struct pipe_video_context *vpipe;
-   struct pipe_transfer *xfer;
+
    unsigned char *src, *dst, *dst_line;
    unsigned x, y;
    struct pipe_box dst_box = {dstx, dsty, 0, width, height, 1};
@@ -279,19 +276,10 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
    vpipe = context_priv->vctx->vpipe;
 
    /* TODO: Assert rects are within bounds? Or clip? */
+   vpipe->upload_sampler(vpipe, subpicture_priv->sampler, &dst_box,
+                         image->data, width*3, srcx, srcy);
 
-   xfer = vpipe->get_transfer(vpipe, subpicture_priv->sfc->texture,
-                              0, PIPE_TRANSFER_WRITE, &dst_box);
-   if (!xfer)
-      return BadAlloc;
-
-   src = image->data;
-   dst = vpipe->transfer_map(vpipe, xfer);
-   if (!dst) {
-      vpipe->transfer_destroy(vpipe, xfer);
-      return BadAlloc;
-   }
-
+#if 0
    switch (image->id) {
       case FOURCC_RGB:
          assert(subpicture_priv->sfc->format == XvIDToPipe(image->id));
@@ -308,9 +296,7 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
       default:
          XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized Xv image ID 0x%08X.\n", image->id);
    }
-
-   vpipe->transfer_unmap(vpipe, xfer);
-   vpipe->transfer_destroy(vpipe, xfer);
+#endif
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Subpicture %p composited.\n", subpicture);
 
@@ -330,7 +316,7 @@ Status XvMCDestroySubpicture(Display *dpy, XvMCSubpicture *subpicture)
       return XvMCBadSubpicture;
 
    subpicture_priv = subpicture->privData;
-   pipe_surface_reference(&subpicture_priv->sfc, NULL);
+   pipe_sampler_view_reference(&subpicture_priv->sampler, NULL);
    FREE(subpicture_priv);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Subpicture %p destroyed.\n", subpicture);

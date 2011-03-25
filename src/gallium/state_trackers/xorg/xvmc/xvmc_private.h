@@ -36,7 +36,7 @@
 #define BLOCK_SIZE_BYTES (BLOCK_SIZE_SAMPLES * 2)
 
 struct vl_context;
-struct pipe_surface;
+struct pipe_sampler_view;
 struct pipe_fence_handle;
 
 typedef struct
@@ -72,7 +72,7 @@ typedef struct
 
 typedef struct
 {
-   struct pipe_surface *sfc;
+   struct pipe_sampler_view *sampler;
 
    /* The surface this subpicture is currently associated with, if any. */
    XvMCSurface *surface;

@@ -57,10 +57,10 @@ struct vl_compositor
    void *vertex_elems_state;
    struct pipe_resource *fs_const_buf;
 
-   struct pipe_surface *bg;
+   struct pipe_sampler_view *bg;
    struct pipe_video_rect bg_src_rect;
    bool dirty_bg;
-   struct pipe_surface *layers[VL_COMPOSITOR_MAX_LAYERS];
+   struct pipe_sampler_view *layers[VL_COMPOSITOR_MAX_LAYERS];
    struct pipe_video_rect layer_src_rects[VL_COMPOSITOR_MAX_LAYERS];
    struct pipe_video_rect layer_dst_rects[VL_COMPOSITOR_MAX_LAYERS];
    unsigned dirty_layers;
@@ -72,22 +72,20 @@ bool vl_compositor_init(struct vl_compositor *compositor, struct pipe_context *p
 
 void vl_compositor_cleanup(struct vl_compositor *compositor);
 
+#if 0
 void vl_compositor_set_background(struct vl_compositor *compositor,
                                   struct pipe_surface *bg, struct pipe_video_rect *bg_src_rect);
+#endif
 
 void vl_compositor_set_layers(struct vl_compositor *compositor,
-                              struct pipe_surface *layers[],
+                              struct pipe_sampler_view *layers[],
                               struct pipe_video_rect *src_rects[],
                               struct pipe_video_rect *dst_rects[],
                               unsigned num_layers);
 
 void vl_compositor_render(struct vl_compositor          *compositor,
-                          struct pipe_surface           *src_surface,
+                          struct pipe_sampler_view      *src_surface,
                           enum pipe_mpeg12_picture_type picture_type,
-                          /*unsigned                    num_past_surfaces,
-                          struct pipe_surface           *past_surfaces,
-                          unsigned                      num_future_surfaces,
-                          struct pipe_surface           *future_surfaces,*/
                           struct pipe_video_rect        *src_area,
                           struct pipe_surface           *dst_surface,
                           struct pipe_video_rect        *dst_area,
