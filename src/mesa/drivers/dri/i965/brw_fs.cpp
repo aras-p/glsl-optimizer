@@ -440,8 +440,8 @@ fs_visitor::setup_builtin_uniform_values(ir_variable *ir)
 	  * the array/matrix/structure we're trying to fill in.
 	  */
 	 int last_swiz = -1;
-	 for (unsigned int i = 0; i < 4; i++) {
-	    int swiz = GET_SWZ(element->swizzle, i);
+	 for (unsigned int j = 0; j < 4; j++) {
+	    int swiz = GET_SWZ(element->swizzle, j);
 	    if (swiz == last_swiz)
 	       break;
 	    last_swiz = swiz;
