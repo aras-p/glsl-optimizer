@@ -3227,7 +3227,7 @@ extern int driDispatchRemapTable[ driDispatchRemapTable_size ];
 #define CALL_ClampColor(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLenum)), _gloffset_ClampColor, parameters)
 #define GET_ClampColor(disp) GET_by_offset(disp, _gloffset_ClampColor)
 #define SET_ClampColor(disp, fn) SET_by_offset(disp, _gloffset_ClampColor, fn)
-#define CALL_ClearBufferfi(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, const GLfloat, const GLint)), _gloffset_ClearBufferfi, parameters)
+#define CALL_ClearBufferfi(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, GLfloat, GLint)), _gloffset_ClearBufferfi, parameters)
 #define GET_ClearBufferfi(disp) GET_by_offset(disp, _gloffset_ClearBufferfi)
 #define SET_ClearBufferfi(disp, fn) SET_by_offset(disp, _gloffset_ClearBufferfi, fn)
 #define CALL_ClearBufferfv(disp, parameters) CALL_by_offset(disp, (void (GLAPIENTRYP)(GLenum, GLint, const GLfloat *)), _gloffset_ClearBufferfv, parameters)

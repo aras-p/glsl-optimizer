@@ -2637,7 +2637,7 @@ KEYWORD1 void KEYWORD2 NAME(ClampColor)(GLenum target, GLenum clamp)
    DISPATCH(ClampColor, (target, clamp), (F, "glClampColor(0x%x, 0x%x);\n", target, clamp));
 }
 
-KEYWORD1 void KEYWORD2 NAME(ClearBufferfi)(GLenum buffer, GLint drawbuffer, const GLfloat depth, const GLint stencil)
+KEYWORD1 void KEYWORD2 NAME(ClearBufferfi)(GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil)
 {
    DISPATCH(ClearBufferfi, (buffer, drawbuffer, depth, stencil), (F, "glClearBufferfi(0x%x, %d, %f, %d);\n", buffer, drawbuffer, depth, stencil));
 }

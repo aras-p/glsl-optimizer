@@ -522,7 +522,7 @@ GLAPI void APIENTRY GLAPI_PREFIX(UniformMatrix3x4fv)(GLint location, GLsizei cou
 GLAPI void APIENTRY GLAPI_PREFIX(UniformMatrix4x2fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 GLAPI void APIENTRY GLAPI_PREFIX(UniformMatrix4x3fv)(GLint location, GLsizei count, GLboolean transpose, const GLfloat *value);
 GLAPI void APIENTRY GLAPI_PREFIX(ClampColor)(GLenum target, GLenum clamp);
-GLAPI void APIENTRY GLAPI_PREFIX(ClearBufferfi)(GLenum buffer, GLint drawbuffer, const GLfloat depth, const GLint stencil);
+GLAPI void APIENTRY GLAPI_PREFIX(ClearBufferfi)(GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil);
 GLAPI void APIENTRY GLAPI_PREFIX(ClearBufferfv)(GLenum buffer, GLint drawbuffer, const GLfloat *value);
 GLAPI void APIENTRY GLAPI_PREFIX(ClearBufferiv)(GLenum buffer, GLint drawbuffer, const GLint *value);
 GLAPI void APIENTRY GLAPI_PREFIX(ClearBufferuiv)(GLenum buffer, GLint drawbuffer, const GLuint *value);
@@ -4751,11 +4751,11 @@ GLAPI void APIENTRY GLAPI_PREFIX(ClampColor)(GLenum target, GLenum clamp)
    ((void (APIENTRY *)(GLenum target, GLenum clamp)) _func)(target, clamp);
 }
 
-GLAPI void APIENTRY GLAPI_PREFIX(ClearBufferfi)(GLenum buffer, GLint drawbuffer, const GLfloat depth, const GLint stencil)
+GLAPI void APIENTRY GLAPI_PREFIX(ClearBufferfi)(GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil)
 {
    const struct mapi_table *_tbl = entry_current_get();
    mapi_func _func = ((const mapi_func *) _tbl)[431];
-   ((void (APIENTRY *)(GLenum buffer, GLint drawbuffer, const GLfloat depth, const GLint stencil)) _func)(buffer, drawbuffer, depth, stencil);
+   ((void (APIENTRY *)(GLenum buffer, GLint drawbuffer, GLfloat depth, GLint stencil)) _func)(buffer, drawbuffer, depth, stencil);
 }
 
 GLAPI void APIENTRY GLAPI_PREFIX(ClearBufferfv)(GLenum buffer, GLint drawbuffer, const GLfloat *value)
