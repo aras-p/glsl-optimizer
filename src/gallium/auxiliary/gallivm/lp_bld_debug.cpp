@@ -32,7 +32,12 @@
 #include <llvm/Target/TargetInstrInfo.h>
 #include <llvm/Support/raw_ostream.h>
 #include <llvm/Support/MemoryObject.h>
+
+#if HAVE_LLVM >= 0x0209
+#include <llvm/Support/Host.h>
+#else
 #include <llvm/System/Host.h>
+#endif
 
 #if HAVE_LLVM >= 0x0207
 #include <llvm/MC/MCDisassembler.h>
