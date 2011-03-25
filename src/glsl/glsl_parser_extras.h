@@ -268,8 +268,8 @@ extern "C" {
 extern int preprocess(void *ctx, const char **shader, char **info_log,
                       const struct gl_extensions *extensions, int api);
 
-extern void _mesa_destroy_shader_compiler();
-extern void _mesa_destroy_shader_compiler_caches();
+extern void _mesa_destroy_shader_compiler(void);
+extern void _mesa_destroy_shader_compiler_caches(void);
 
 #ifdef __cplusplus
 }
