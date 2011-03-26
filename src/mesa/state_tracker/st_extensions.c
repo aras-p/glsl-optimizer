@@ -514,12 +514,34 @@ void st_init_extensions(struct st_context *st)
       ctx->Extensions.ARB_depth_clamp = GL_TRUE;
    }
 
-   /* this extension does not actually require support of floating point
-    * render targets, just clamping controls
+   /* This extension does not actually require support of floating point
+    * render targets, just clamping controls.
+    * Advertise this extension if either fragment color clamping is supported
+    * or no render targets having color values outside of the range [0, 1]
+    * are supported, in which case the fragment color clamping has no effect
+    * on rendering.
     */
-   if(screen->get_param(screen, PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL) &&
-      screen->get_param(screen, PIPE_CAP_VERTEX_COLOR_CLAMP_CONTROL))
+   if (screen->get_param(screen, PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL) ||
+       (!screen->is_format_supported(screen, PIPE_FORMAT_R8G8B8A8_SNORM,
+                                     PIPE_TEXTURE_2D, 0,
+                                     PIPE_BIND_RENDER_TARGET) &&
+        !screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_SNORM,
+                                             PIPE_TEXTURE_2D, 0,
+                                             PIPE_BIND_RENDER_TARGET) &&
+        !screen->is_format_supported(screen, PIPE_FORMAT_R16G16B16A16_FLOAT,
+                                     PIPE_TEXTURE_2D, 0,
+                                     PIPE_BIND_RENDER_TARGET) &&
+        !screen->is_format_supported(screen, PIPE_FORMAT_R32G32B32A32_FLOAT,
+                                     PIPE_TEXTURE_2D, 0,
+                                     PIPE_BIND_RENDER_TARGET) &&
+        !screen->is_format_supported(screen, PIPE_FORMAT_R11G11B10_FLOAT,
+                                     PIPE_TEXTURE_2D, 0,
+                                     PIPE_BIND_RENDER_TARGET) &&
+        !screen->is_format_supported(screen, PIPE_FORMAT_R9G9B9E5_FLOAT,
+                                     PIPE_TEXTURE_2D, 0,
+                                     PIPE_BIND_RENDER_TARGET))) {
       ctx->Extensions.ARB_color_buffer_float = GL_TRUE;
+   }
 
    if (screen->get_param(screen, PIPE_CAP_SHADER_STENCIL_EXPORT)) {
       ctx->Extensions.ARB_shader_stencil_export = GL_TRUE;
