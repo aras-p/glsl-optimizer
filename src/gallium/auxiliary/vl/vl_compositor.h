@@ -52,6 +52,7 @@ struct vl_compositor
    {
       void *ycbcr_2_rgb;
       void *rgb_2_rgb;
+      void *palette_2_rgb;
    } fragment_shader;
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buf;
@@ -59,6 +60,7 @@ struct vl_compositor
    struct pipe_resource *fs_const_buf;
 
    struct pipe_sampler_view *layers[VL_COMPOSITOR_MAX_LAYERS];
+   struct pipe_sampler_view *palettes[VL_COMPOSITOR_MAX_LAYERS];
    struct pipe_video_rect layer_src_rects[VL_COMPOSITOR_MAX_LAYERS];
    struct pipe_video_rect layer_dst_rects[VL_COMPOSITOR_MAX_LAYERS];
    unsigned dirty_layers;
@@ -70,6 +72,7 @@ void vl_compositor_cleanup(struct vl_compositor *compositor);
 
 void vl_compositor_set_layers(struct vl_compositor *compositor,
                               struct pipe_sampler_view *layers[],
+                              struct pipe_sampler_view *palettes[],
                               struct pipe_video_rect *src_rects[],
                               struct pipe_video_rect *dst_rects[],
                               unsigned num_layers);

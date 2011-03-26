@@ -150,6 +150,7 @@ struct pipe_video_context
     */
    void (*set_picture_layers)(struct pipe_video_context *vpipe,
                               struct pipe_sampler_view *layers[],
+                              struct pipe_sampler_view *palettes[],
                               struct pipe_video_rect *src_rects[],
                               struct pipe_video_rect *dst_rects[],
                               unsigned num_layers);

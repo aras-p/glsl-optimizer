@@ -463,6 +463,7 @@ vl_mpeg12_render_picture(struct pipe_video_context     *vpipe,
 static void
 vl_mpeg12_set_picture_layers(struct pipe_video_context *vpipe,
                              struct pipe_sampler_view *layers[],
+                             struct pipe_sampler_view *palettes[],
                              struct pipe_video_rect *src_rects[],
                              struct pipe_video_rect *dst_rects[],
                              unsigned num_layers)
@@ -473,7 +474,7 @@ vl_mpeg12_set_picture_layers(struct pipe_video_context *vpipe,
    assert((layers && src_rects && dst_rects) ||
           (!layers && !src_rects && !dst_rects));
 
-   vl_compositor_set_layers(&ctx->compositor, layers, src_rects, dst_rects, num_layers);
+   vl_compositor_set_layers(&ctx->compositor, layers, palettes, src_rects, dst_rects, num_layers);
 }
 
 static void

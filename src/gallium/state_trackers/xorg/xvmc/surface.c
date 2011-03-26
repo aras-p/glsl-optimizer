@@ -449,13 +449,13 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
       XVMC_MSG(XVMC_TRACE, "[XvMC] Surface %p has subpicture %p.\n", surface, surface_priv->subpicture);
 
       assert(subpicture_priv->surface == surface);
-      vpipe->set_picture_layers(vpipe, &subpicture_priv->sampler, src_rects, dst_rects, 1);
+      vpipe->set_picture_layers(vpipe, &subpicture_priv->sampler, &subpicture_priv->palette, src_rects, dst_rects, 1);
 
       surface_priv->subpicture = NULL;
       subpicture_priv->surface = NULL;
    }
    else
-      vpipe->set_picture_layers(vpipe, NULL, NULL, NULL, 0);
+      vpipe->set_picture_layers(vpipe, NULL, NULL, NULL, NULL, 0);
 
    unmap_and_flush_surface(surface_priv);
    vpipe->render_picture(vpipe, surface_priv->pipe_buffer, &src_rect, PictureToPipe(flags),

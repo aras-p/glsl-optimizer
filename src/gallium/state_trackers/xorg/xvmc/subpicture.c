@@ -226,15 +226,15 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
 
       case FOURCC_AI44:
          sampler_templ.swizzle_r = PIPE_SWIZZLE_ALPHA;
-         sampler_templ.swizzle_g = PIPE_SWIZZLE_ALPHA;
-         sampler_templ.swizzle_b = PIPE_SWIZZLE_ALPHA;
+         sampler_templ.swizzle_g = PIPE_SWIZZLE_ZERO;
+         sampler_templ.swizzle_b = PIPE_SWIZZLE_ZERO;
          sampler_templ.swizzle_a = PIPE_SWIZZLE_RED;
          break;
 
       case FOURCC_IA44:
          sampler_templ.swizzle_r = PIPE_SWIZZLE_RED;
-         sampler_templ.swizzle_g = PIPE_SWIZZLE_RED;
-         sampler_templ.swizzle_b = PIPE_SWIZZLE_RED;
+         sampler_templ.swizzle_g = PIPE_SWIZZLE_ZERO;
+         sampler_templ.swizzle_b = PIPE_SWIZZLE_ZERO;
          sampler_templ.swizzle_a = PIPE_SWIZZLE_ALPHA;
          break;
 
