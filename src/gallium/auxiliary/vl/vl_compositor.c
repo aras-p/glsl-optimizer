@@ -126,8 +126,9 @@ create_frag_shader_ycbcr_2_rgb(struct vl_compositor *c)
     * fragment = csc * texel
     */
    ureg_TEX(shader, texel, TGSI_TEXTURE_2D, tc, sampler);
-   for (i = 0; i < 4; ++i)
+   for (i = 0; i < 3; ++i)
       ureg_DP4(shader, ureg_writemask(fragment, TGSI_WRITEMASK_X << i), csc[i], ureg_src(texel));
+   ureg_MOV(shader, ureg_writemask(fragment, TGSI_WRITEMASK_W), ureg_imm1f(shader, 1.0f));
 
    ureg_release_temporary(shader, texel);
    ureg_END(shader);
@@ -172,6 +173,7 @@ static bool
 init_pipe_state(struct vl_compositor *c)
 {
    struct pipe_sampler_state sampler;
+   struct pipe_blend_state blend;
 
    assert(c);
 
@@ -195,6 +197,21 @@ init_pipe_state(struct vl_compositor *c)
    /*sampler.max_anisotropy = ;*/
    c->sampler = c->pipe->create_sampler_state(c->pipe, &sampler);
 
+   memset(&blend, 0, sizeof blend);
+   blend.independent_blend_enable = 0;
+   blend.rt[0].blend_enable = 1;
+   blend.rt[0].rgb_func = PIPE_BLEND_ADD;
+   blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_SRC_ALPHA;
+   blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_INV_SRC_ALPHA;
+   blend.rt[0].alpha_func = PIPE_BLEND_ADD;
+   blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
+   blend.logicop_enable = 0;
+   blend.logicop_func = PIPE_LOGICOP_CLEAR;
+   blend.rt[0].colormask = PIPE_MASK_RGBA;
+   blend.dither = 0;
+   c->blend = c->pipe->create_blend_state(c->pipe, &blend);
+
    return true;
 }
 
@@ -203,6 +220,7 @@ static void cleanup_pipe_state(struct vl_compositor *c)
    assert(c);
 
    c->pipe->delete_sampler_state(c->pipe, c->sampler);
+   c->pipe->delete_blend_state(c->pipe, c->blend);
 }
 
 static bool
@@ -476,6 +494,7 @@ static void draw_layers(struct vl_compositor *c,
 
    num_rects = gen_data(c, src_surface, src_rect, dst_rect, src_surfaces, frag_shaders);
 
+   c->pipe->bind_blend_state(c->pipe, c->blend);
    for (i = 0; i < num_rects; ++i) {
       c->pipe->bind_fs_state(c->pipe, frag_shaders[i]);
       c->pipe->set_fragment_sampler_views(c->pipe, 1, &src_surfaces[i]);

@@ -45,6 +45,7 @@ struct vl_compositor
    struct pipe_framebuffer_state fb_state;
    struct vertex2f fb_inv_size;
    void *sampler;
+   void *blend;
    struct pipe_sampler_view *sampler_view;
    void *vertex_shader;
    struct

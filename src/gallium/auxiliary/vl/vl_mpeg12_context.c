@@ -179,6 +179,7 @@ vl_mpeg12_buffer_flush(struct pipe_video_buffer *buffer,
 
    ctx->pipe->set_vertex_buffers(ctx->pipe, 2, buf->vertex_bufs.all);
    ctx->pipe->bind_vertex_elements_state(ctx->pipe, ctx->vertex_elems_state);
+   ctx->pipe->bind_blend_state(ctx->pipe, ctx->blend);
    vl_idct_flush(&ctx->idct_y, &buf->idct_y, ne_num);
    vl_idct_flush(&ctx->idct_cr, &buf->idct_cr, ne_num);
    vl_idct_flush(&ctx->idct_cb, &buf->idct_cb, ne_num);
@@ -543,7 +544,6 @@ init_pipe_state(struct vl_mpeg12_context *ctx)
    blend.rt[0].colormask = PIPE_MASK_RGBA;
    blend.dither = 0;
    ctx->blend = ctx->pipe->create_blend_state(ctx->pipe, &blend);
-   ctx->pipe->bind_blend_state(ctx->pipe, ctx->blend);
 
    memset(&dsa, 0, sizeof dsa);
    dsa.depth.enabled = 0;
