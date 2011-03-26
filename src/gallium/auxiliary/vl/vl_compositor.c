@@ -372,20 +372,16 @@ void vl_compositor_set_layers(struct vl_compositor *compositor,
       pipe_sampler_view_reference(&compositor->layers[i], NULL);
 }
 
-static void gen_rect_verts(unsigned pos,
-                           struct pipe_video_rect *src_rect,
+static void gen_rect_verts(struct pipe_video_rect *src_rect,
                            struct vertex2f *src_inv_size,
                            struct pipe_video_rect *dst_rect,
                            struct vertex2f *dst_inv_size,
                            struct vertex4f *vb)
 {
-   assert(pos < VL_COMPOSITOR_MAX_LAYERS + 1);
    assert(src_rect);
    assert(src_inv_size);
    assert((dst_rect && dst_inv_size) /*|| (!dst_rect && !dst_inv_size)*/);
    assert(vb);
-
-   vb += pos * 4;
 
    vb[0].x = dst_rect->x * dst_inv_size->x;
    vb[0].y = dst_rect->y * dst_inv_size->y;
@@ -415,7 +411,7 @@ static unsigned gen_data(struct vl_compositor *c,
                          struct pipe_sampler_view **textures,
                          void **frag_shaders)
 {
-   void *vb;
+   struct vertex4f *vb;
    struct pipe_transfer *buf_transfer;
    unsigned num_rects = 0;
    unsigned i;
@@ -435,11 +431,12 @@ static unsigned gen_data(struct vl_compositor *c,
 
    {
       struct vertex2f src_inv_size = { 1.0f / src_surface->texture->width0, 1.0f / src_surface->texture->height0};
-      gen_rect_verts(num_rects, src_rect, &src_inv_size, dst_rect, &c->fb_inv_size, vb);
+      gen_rect_verts(src_rect, &src_inv_size, dst_rect, &c->fb_inv_size, vb);
       textures[num_rects] = src_surface;
       /* XXX: Hack, sort of */
       frag_shaders[num_rects] = c->fragment_shader.ycbcr_2_rgb;
       ++num_rects;
+      vb += 4;
    }
 
    for (i = 0; c->dirty_layers > 0; i++) {
@@ -447,12 +444,12 @@ static unsigned gen_data(struct vl_compositor *c,
 
       if (c->dirty_layers & (1 << i)) {
          struct vertex2f layer_inv_size = {1.0f / c->layers[i]->texture->width0, 1.0f / c->layers[i]->texture->height0};
-         gen_rect_verts(num_rects, &c->layer_src_rects[i], &layer_inv_size,
-                        &c->layer_dst_rects[i], &c->fb_inv_size, vb);
+         gen_rect_verts(&c->layer_src_rects[i], &layer_inv_size, &c->layer_dst_rects[i], &layer_inv_size, vb);
          textures[num_rects] = c->layers[i];
          /* XXX: Hack */
          frag_shaders[num_rects] = c->fragment_shader.rgb_2_rgb;
          ++num_rects;
+         vb += 4;
          c->dirty_layers &= ~(1 << i);
       }
    }
