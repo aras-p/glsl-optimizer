@@ -534,10 +534,18 @@ set_tex_parameterf(struct gl_context *ctx,
 
    case GL_TEXTURE_BORDER_COLOR:
       flush(ctx);
-      texObj->BorderColor.f[RCOMP] = params[0];
-      texObj->BorderColor.f[GCOMP] = params[1];
-      texObj->BorderColor.f[BCOMP] = params[2];
-      texObj->BorderColor.f[ACOMP] = params[3];
+      /* ARB_texture_float disables clamping */
+      if (ctx->Extensions.ARB_texture_float) {
+         texObj->BorderColor.f[RCOMP] = params[0];
+         texObj->BorderColor.f[GCOMP] = params[1];
+         texObj->BorderColor.f[BCOMP] = params[2];
+         texObj->BorderColor.f[ACOMP] = params[3];
+      } else {
+         texObj->BorderColor.f[RCOMP] = CLAMP(params[0], 0.0F, 1.0F);
+         texObj->BorderColor.f[GCOMP] = CLAMP(params[1], 0.0F, 1.0F);
+         texObj->BorderColor.f[BCOMP] = CLAMP(params[2], 0.0F, 1.0F);
+         texObj->BorderColor.f[ACOMP] = CLAMP(params[3], 0.0F, 1.0F);
+      }
       return GL_TRUE;
 
    default:
