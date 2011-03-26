@@ -346,7 +346,7 @@ Status XvMCCompositeSubpicture(Display *dpy, XvMCSubpicture *subpicture, XvImage
 
    /* TODO: Assert rects are within bounds? Or clip? */
    vpipe->upload_sampler(vpipe, subpicture_priv->sampler, &dst_box,
-                         image->data, width*3, srcx, srcy);
+                         image->data, image->pitches[0], srcx, srcy);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Subpicture %p composited.\n", subpicture);
 
