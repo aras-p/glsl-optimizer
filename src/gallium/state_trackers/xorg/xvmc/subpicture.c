@@ -193,24 +193,31 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    memset(&sampler_templ, 0, sizeof(sampler_templ));
    u_sampler_view_default_template(&sampler_templ, tex, tex->format);
 
-#if 0
-   switch (image->id) {
+   switch (xvimage_id) {
       case FOURCC_RGB:
-         assert(subpicture_priv->sfc->format == XvIDToPipe(image->id));
-         for (y = 0; y < height; ++y) {
-            dst_line = dst;
-            for (x = 0; x < width; ++x, src += 3, dst_line += 4) {
-               dst_line[0] = src[2]; /* B */
-               dst_line[1] = src[1]; /* G */
-               dst_line[2] = src[0]; /* R */
-            }
-            dst += xfer->stride;
-         }
+         sampler_templ.swizzle_r = PIPE_SWIZZLE_BLUE;
+         sampler_templ.swizzle_g = PIPE_SWIZZLE_GREEN;
+         sampler_templ.swizzle_b = PIPE_SWIZZLE_RED;
+         sampler_templ.swizzle_a = PIPE_SWIZZLE_ONE;
          break;
+
+      case FOURCC_AI44:
+         sampler_templ.swizzle_r = PIPE_SWIZZLE_ALPHA;
+         sampler_templ.swizzle_g = PIPE_SWIZZLE_ALPHA;
+         sampler_templ.swizzle_b = PIPE_SWIZZLE_ALPHA;
+         sampler_templ.swizzle_a = PIPE_SWIZZLE_RED;
+         break;
+
+      case FOURCC_IA44:
+         sampler_templ.swizzle_r = PIPE_SWIZZLE_RED;
+         sampler_templ.swizzle_g = PIPE_SWIZZLE_RED;
+         sampler_templ.swizzle_b = PIPE_SWIZZLE_RED;
+         sampler_templ.swizzle_a = PIPE_SWIZZLE_ALPHA;
+         break;
+
       default:
-         XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized Xv image ID 0x%08X.\n", image->id);
+         XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized Xv image ID 0x%08X.\n", xvimage_id);
    }
-#endif
 
    subpicture_priv->sampler = vpipe->create_sampler_view(vpipe, tex, &sampler_templ);
    pipe_resource_reference(&tex, NULL);
