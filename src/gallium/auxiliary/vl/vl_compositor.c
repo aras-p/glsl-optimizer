@@ -254,7 +254,7 @@ init_buffers(struct vl_compositor *c)
       c->pipe->screen,
       PIPE_BIND_VERTEX_BUFFER,
       PIPE_USAGE_STATIC,
-      sizeof(struct vertex4f) * (VL_COMPOSITOR_MAX_LAYERS + 2) * 6
+      sizeof(struct vertex4f) * (VL_COMPOSITOR_MAX_LAYERS + 1) * 4
    );
 
    vertex_elems[0].src_offset = 0;
@@ -338,23 +338,6 @@ void vl_compositor_cleanup(struct vl_compositor *compositor)
    cleanup_pipe_state(compositor);
 }
 
-#if 0
-void vl_compositor_set_background(struct vl_compositor *compositor,
-                                 struct pipe_surface *bg, struct pipe_video_rect *bg_src_rect)
-{
-   assert(compositor);
-   assert((bg && bg_src_rect) || (!bg && !bg_src_rect));
-
-   if (compositor->bg != bg ||
-       !u_video_rects_equal(&compositor->bg_src_rect, bg_src_rect)) {
-      pipe_surface_reference(&compositor->bg, bg);
-      /*if (!u_video_rects_equal(&compositor->bg_src_rect, bg_src_rect))*/
-         compositor->bg_src_rect = *bg_src_rect;
-      compositor->dirty_bg = true;
-   }
-}
-#endif
-
 void vl_compositor_set_layers(struct vl_compositor *compositor,
                               struct pipe_sampler_view *layers[],
                               struct pipe_video_rect *src_rects[],
@@ -396,41 +379,33 @@ static void gen_rect_verts(unsigned pos,
                            struct vertex2f *dst_inv_size,
                            struct vertex4f *vb)
 {
-   assert(pos < VL_COMPOSITOR_MAX_LAYERS + 2);
+   assert(pos < VL_COMPOSITOR_MAX_LAYERS + 1);
    assert(src_rect);
    assert(src_inv_size);
    assert((dst_rect && dst_inv_size) /*|| (!dst_rect && !dst_inv_size)*/);
    assert(vb);
 
-   vb[pos * 6 + 0].x = dst_rect->x * dst_inv_size->x;
-   vb[pos * 6 + 0].y = dst_rect->y * dst_inv_size->y;
-   vb[pos * 6 + 0].z = src_rect->x * src_inv_size->x;
-   vb[pos * 6 + 0].w = src_rect->y * src_inv_size->y;
+   vb += pos * 4;
 
-   vb[pos * 6 + 1].x = dst_rect->x * dst_inv_size->x;
-   vb[pos * 6 + 1].y = (dst_rect->y + dst_rect->h) * dst_inv_size->y;
-   vb[pos * 6 + 1].z = src_rect->x * src_inv_size->x;
-   vb[pos * 6 + 1].w = (src_rect->y + src_rect->h) * src_inv_size->y;
+   vb[0].x = dst_rect->x * dst_inv_size->x;
+   vb[0].y = dst_rect->y * dst_inv_size->y;
+   vb[0].z = src_rect->x * src_inv_size->x;
+   vb[0].w = src_rect->y * src_inv_size->y;
 
-   vb[pos * 6 + 2].x = (dst_rect->x + dst_rect->w) * dst_inv_size->x;
-   vb[pos * 6 + 2].y = dst_rect->y * dst_inv_size->y;
-   vb[pos * 6 + 2].z = (src_rect->x + src_rect->w) * src_inv_size->x;
-   vb[pos * 6 + 2].w = src_rect->y * src_inv_size->y;
+   vb[1].x = (dst_rect->x + dst_rect->w) * dst_inv_size->x;
+   vb[1].y = dst_rect->y * dst_inv_size->y;
+   vb[1].z = (src_rect->x + src_rect->w) * src_inv_size->x;
+   vb[1].w = src_rect->y * src_inv_size->y;
 
-   vb[pos * 6 + 3].x = (dst_rect->x + dst_rect->w) * dst_inv_size->x;
-   vb[pos * 6 + 3].y = dst_rect->y * dst_inv_size->y;
-   vb[pos * 6 + 3].z = (src_rect->x + src_rect->w) * src_inv_size->x;
-   vb[pos * 6 + 3].w = src_rect->y * src_inv_size->y;
+   vb[2].x = (dst_rect->x + dst_rect->w) * dst_inv_size->x;
+   vb[2].y = (dst_rect->y + dst_rect->h) * dst_inv_size->y;
+   vb[2].z = (src_rect->x + src_rect->w) * src_inv_size->x;
+   vb[2].w = (src_rect->y + src_rect->h) * src_inv_size->y;
 
-   vb[pos * 6 + 4].x = dst_rect->x * dst_inv_size->x;
-   vb[pos * 6 + 4].y = (dst_rect->y + dst_rect->h) * dst_inv_size->y;
-   vb[pos * 6 + 4].z = src_rect->x * src_inv_size->x;
-   vb[pos * 6 + 4].w = (src_rect->y + src_rect->h) * src_inv_size->y;
-
-   vb[pos * 6 + 5].x = (dst_rect->x + dst_rect->w) * dst_inv_size->x;
-   vb[pos * 6 + 5].y = (dst_rect->y + dst_rect->h) * dst_inv_size->y;
-   vb[pos * 6 + 5].z = (src_rect->x + src_rect->w) * src_inv_size->x;
-   vb[pos * 6 + 5].w = (src_rect->y + src_rect->h) * src_inv_size->y;
+   vb[3].x = dst_rect->x * dst_inv_size->x;
+   vb[3].y = (dst_rect->y + dst_rect->h) * dst_inv_size->y;
+   vb[3].z = src_rect->x * src_inv_size->x;
+   vb[3].w = (src_rect->y + src_rect->h) * src_inv_size->y;
 }
 
 static unsigned gen_data(struct vl_compositor *c,
@@ -508,7 +483,7 @@ static void draw_layers(struct vl_compositor *c,
       c->pipe->bind_fs_state(c->pipe, frag_shaders[i]);
       c->pipe->set_fragment_sampler_views(c->pipe, 1, &src_surfaces[i]);
 
-      util_draw_arrays(c->pipe, PIPE_PRIM_TRIANGLES, i * 6, 6);
+      util_draw_arrays(c->pipe, PIPE_PRIM_QUADS, i * 4, 4);
    }
 }
 
