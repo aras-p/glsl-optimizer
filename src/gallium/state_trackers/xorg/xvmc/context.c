@@ -285,7 +285,6 @@ Status XvMCDestroyContext(Display *dpy, XvMCContext *context)
 
    context_priv = context->privData;
    vctx = context_priv->vctx;
-   pipe_surface_reference(&context_priv->backbuffer, NULL);
    vscreen = vctx->vscreen;
    vl_video_destroy(vctx);
    vl_screen_destroy(vscreen);

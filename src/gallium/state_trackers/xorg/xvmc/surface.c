@@ -95,57 +95,6 @@ static enum pipe_mpeg12_motion_type MotionToPipe(int xvmc_motion_type, unsigned 
    return -1;
 }
 
-#if 0
-static bool
-CreateOrResizeBackBuffer(struct vl_context *vctx, unsigned int width, unsigned int height,
-                         struct pipe_surface **backbuffer)
-{
-   struct pipe_video_context *vpipe;
-   struct pipe_resource template;
-   struct pipe_resource *tex;
-
-   assert(vctx);
-
-   vpipe = vctx->vpipe;
-
-   if (*backbuffer) {
-      if ((*backbuffer)->width != width || (*backbuffer)->height != height)
-         pipe_surface_reference(backbuffer, NULL);
-      else
-         return true;
-   }
-
-   memset(&template, 0, sizeof(struct pipe_resource));
-   template.target = PIPE_TEXTURE_2D;
-   template.format = vctx->vscreen->format;
-   template.last_level = 0;
-   template.width0 = width;
-   template.height0 = height;
-   template.depth0 = 1;
-   template.array_size = 1;
-   template.usage = PIPE_USAGE_DEFAULT;
-   template.bind = PIPE_BIND_RENDER_TARGET | PIPE_BIND_DISPLAY_TARGET | PIPE_BIND_BLIT_SOURCE;
-   template.flags = 0;
-
-   tex = vpipe->screen->resource_create(vpipe->screen, &template);
-   if (!tex)
-      return false;
-
-   *backbuffer = vpipe->screen->get_tex_surface(vpipe->screen, tex, 0, 0, 0,
-                                                template.bind);
-   pipe_resource_reference(&tex, NULL);
-
-   if (!*backbuffer)
-      return false;
-
-   /* Clear the backbuffer in case the video doesn't cover the whole window */
-   /* FIXME: Need to clear every time a frame moves and leaves dirty rects */
-   vpipe->surface_fill(vpipe, *backbuffer, 0, 0, width, height, 0);
-
-   return true;
-}
-#endif
-
 static void
 MacroBlocksToPipe(struct pipe_screen *screen,
                   unsigned int xvmc_picture_structure,
@@ -434,11 +383,6 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
 
    subpicture_priv = surface_priv->subpicture ? surface_priv->subpicture->privData : NULL;
    vpipe = context_priv->vctx->vpipe;
-
-#if 0
-   if (!CreateOrResizeBackBuffer(context_priv->vctx, width, height, &context_priv->backbuffer))
-      return BadAlloc;
-#endif
 
    if (subpicture_priv) {
       struct pipe_video_rect src_rect = {surface_priv->subx, surface_priv->suby, surface_priv->subw, surface_priv->subh};

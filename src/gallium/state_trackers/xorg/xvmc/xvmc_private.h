@@ -42,7 +42,6 @@ struct pipe_fence_handle;
 typedef struct
 {
    struct vl_context *vctx;
-   struct pipe_surface *backbuffer;
    unsigned short subpicture_max_width;
    unsigned short subpicture_max_height;
 } XvMCContextPrivate;
