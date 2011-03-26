@@ -74,6 +74,9 @@ typedef struct
 {
    struct pipe_sampler_view *sampler;
 
+   /* optional palette for this subpicture */
+   struct pipe_sampler_view *palette;
+
    /* The surface this subpicture is currently associated with, if any. */
    XvMCSurface *surface;
 

@@ -57,22 +57,45 @@ static enum pipe_format XvIDToPipe(int xvimage_id)
    }
 }
 
+static unsigned NumPaletteEntries4XvID(int xvimage_id)
+{
+   switch (xvimage_id) {
+      case FOURCC_RGB:
+         return 0;
+
+      case FOURCC_AI44:
+      case FOURCC_IA44:
+         return 16;
+
+      default:
+         XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized Xv image ID 0x%08X.\n", xvimage_id);
+         return 0;
+   }
+}
+
 static int PipeToComponentOrder(enum pipe_format format, char *component_order)
 {
    assert(component_order);
 
    switch (format) {
       case PIPE_FORMAT_B8G8R8X8_UNORM:
-      case PIPE_FORMAT_L4A4_UNORM:
          return 0;
+
+      case PIPE_FORMAT_L4A4_UNORM:
+         component_order[0] = PIPE_SWIZZLE_RED;
+         component_order[1] = PIPE_SWIZZLE_GREEN;
+         component_order[2] = PIPE_SWIZZLE_BLUE;
+         component_order[3] = PIPE_SWIZZLE_ALPHA;
+         return 4;
+
       default:
          XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized PIPE_FORMAT 0x%08X.\n", format);
          component_order[0] = 0;
          component_order[1] = 0;
          component_order[2] = 0;
          component_order[3] = 0;
+         return 0;
    }
-   return 0;
 }
 
 static Status Validate(Display *dpy, XvPortID port, int surface_type_id, int xvimage_id)
@@ -232,9 +255,28 @@ Status XvMCCreateSubpicture(Display *dpy, XvMCContext *context, XvMCSubpicture *
    subpicture->xvimage_id = xvimage_id;
    subpicture->width = width;
    subpicture->height = height;
-   subpicture->num_palette_entries = 0;
+   subpicture->num_palette_entries = NumPaletteEntries4XvID(xvimage_id);
    subpicture->entry_bytes = PipeToComponentOrder(tex_templ.format, subpicture->component_order);
    subpicture->privData = subpicture_priv;
+
+   if (subpicture->num_palette_entries > 0) {
+      tex_templ.target = PIPE_TEXTURE_1D;
+      tex_templ.format = PIPE_FORMAT_B8G8R8A8_UNORM;
+      tex_templ.width0 = subpicture->num_palette_entries;
+      tex_templ.height0 = 1;
+      tex_templ.usage = PIPE_USAGE_STATIC;
+
+      tex = vpipe->screen->resource_create(vpipe->screen, &tex_templ);
+
+      memset(&sampler_templ, 0, sizeof(sampler_templ));
+      u_sampler_view_default_template(&sampler_templ, tex, tex->format);
+      subpicture_priv->palette = vpipe->create_sampler_view(vpipe, tex, &sampler_templ);
+      pipe_resource_reference(&tex, NULL);
+      if (!subpicture_priv->sampler) {
+         FREE(subpicture_priv);
+         return BadAlloc;
+      }
+   }
 
    SyncHandle();
 
@@ -325,6 +367,7 @@ Status XvMCDestroySubpicture(Display *dpy, XvMCSubpicture *subpicture)
 
    subpicture_priv = subpicture->privData;
    pipe_sampler_view_reference(&subpicture_priv->sampler, NULL);
+   pipe_sampler_view_reference(&subpicture_priv->palette, NULL);
    FREE(subpicture_priv);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Subpicture %p destroyed.\n", subpicture);
@@ -335,15 +378,28 @@ Status XvMCDestroySubpicture(Display *dpy, XvMCSubpicture *subpicture)
 PUBLIC
 Status XvMCSetSubpicturePalette(Display *dpy, XvMCSubpicture *subpicture, unsigned char *palette)
 {
+   XvMCSubpicturePrivate *subpicture_priv;
+   XvMCContextPrivate *context_priv;
+   struct pipe_video_context *vpipe;
+   struct pipe_box dst_box = {0, 0, 0, 0, 1, 1};
+
    assert(dpy);
+   assert(palette);
 
    if (!subpicture)
       return XvMCBadSubpicture;
 
-   assert(palette);
+   subpicture_priv = subpicture->privData;
+   context_priv = subpicture_priv->context->privData;
+   vpipe = context_priv->vctx->vpipe;
 
-   /* We don't support paletted subpictures */
-   return BadMatch;
+   dst_box.width = subpicture->num_palette_entries;
+
+   vpipe->upload_sampler(vpipe, subpicture_priv->palette, &dst_box, palette, 0, 0, 0);
+
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Palette of Subpicture %p set.\n", subpicture);
+
+   return Success;
 }
 
 PUBLIC
