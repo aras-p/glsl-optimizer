@@ -20,6 +20,7 @@ C_SOURCES = \
 		radeon_pair_translate.c \
 		radeon_pair_schedule.c \
 		radeon_pair_regalloc.c \
+		radeon_pair_dead_sources.c \
 		radeon_dataflow.c \
 		radeon_dataflow_deadcode.c \
 		radeon_dataflow_swizzles.c \

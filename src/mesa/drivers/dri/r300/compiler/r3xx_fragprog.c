@@ -148,6 +148,7 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		{"register rename",		1, !is_r500,	rc_rename_regs,			NULL},
 		{"pair translate",		1, 1,		rc_pair_translate,		NULL},
 		{"pair scheduling",		1, 1,		rc_pair_schedule,		NULL},
+		{"dead sources",		1, 1,		rc_pair_remove_dead_sources, NULL},
 		{"register allocation",		1, opt,		rc_pair_regalloc,		NULL},
 		{"dumb register allocation",	1, !opt,	rc_pair_regalloc_inputs_only,	NULL},
 		{"final code validation",	0, 1,		rc_validate_final_shader,	NULL},
