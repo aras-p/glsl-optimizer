@@ -77,6 +77,8 @@
 #include "main/mtypes.h"
 #include "register_allocate.h"
 
+#define NO_REG ~0
+
 struct ra_reg {
    GLboolean *conflicts;
    unsigned int *conflict_list;
@@ -123,7 +125,7 @@ struct ra_node {
 
    unsigned int class;
 
-   /* Register, if assigned, or ~0. */
+   /* Register, if assigned, or NO_REG. */
    unsigned int reg;
 
    /**
@@ -289,7 +291,7 @@ ra_alloc_interference_graph(struct ra_regs *regs, unsigned int count)
       g->nodes[i].adjacency_list = ralloc_array(g, unsigned int, count);
       g->nodes[i].adjacency_count = 0;
       ra_add_node_adjacency(g, i, i);
-      g->nodes[i].reg = ~0;
+      g->nodes[i].reg = NO_REG;
    }
 
    return g;
@@ -349,7 +351,7 @@ ra_simplify(struct ra_graph *g)
       progress = GL_FALSE;
 
       for (i = g->count - 1; i >= 0; i--) {
-	 if (g->nodes[i].in_stack)
+	 if (g->nodes[i].in_stack || g->nodes[i].reg != NO_REG)
 	    continue;
 
 	 if (pq_test(g, i)) {
@@ -429,7 +431,7 @@ ra_optimistic_color(struct ra_graph *g)
    unsigned int i;
 
    for (i = 0; i < g->count; i++) {
-      if (g->nodes[i].in_stack)
+      if (g->nodes[i].in_stack || g->nodes[i].reg != NO_REG)
 	 continue;
 
       g->stack[g->stack_count] = i;
@@ -451,6 +453,24 @@ unsigned int
 ra_get_node_reg(struct ra_graph *g, unsigned int n)
 {
    return g->nodes[n].reg;
+}
+
+/**
+ * Forces a node to a specific register.  This can be used to avoid
+ * creating a register class containing one node when handling data
+ * that must live in a fixed location and is known to not conflict
+ * with other forced register assignment (as is common with shader
+ * input data).  These nodes do not end up in the stack during
+ * ra_simplify(), and thus at ra_select() time it is as if they were
+ * the first popped off the stack and assigned their fixed locations.
+ *
+ * Must be called before ra_simplify().
+ */
+void
+ra_set_node_reg(struct ra_graph *g, unsigned int n, unsigned int reg)
+{
+   g->nodes[n].reg = reg;
+   g->nodes[n].in_stack = GL_FALSE;
 }
 
 static float
