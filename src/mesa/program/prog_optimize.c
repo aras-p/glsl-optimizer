@@ -937,24 +937,35 @@ update_interval(GLint intBegin[], GLint intEnd[],
 		GLuint index, GLuint ic)
 {
    int i;
+   GLuint begin = ic;
+   GLuint end = ic;
 
    /* If the register is used in a loop, extend its lifetime through the end
     * of the outermost loop that doesn't contain its definition.
     */
    for (i = 0; i < loopStackDepth; i++) {
       if (intBegin[index] < loopStack[i].Start) {
-	 ic = loopStack[i].End;
+	 end = loopStack[i].End;
 	 break;
       }
+   }
+
+   /* Variables that are live at the end of a loop will also be live at the
+    * beginning, so an instruction inside of a loop should have its live
+    * interval begin at the start of the outermost loop.
+    */
+   if (loopStackDepth > 0 && ic > loopStack[0].Start && ic < loopStack[0].End) {
+      begin = loopStack[0].Start;
    }
 
    ASSERT(index < REG_ALLOCATE_MAX_PROGRAM_TEMPS);
    if (intBegin[index] == -1) {
       ASSERT(intEnd[index] == -1);
-      intBegin[index] = intEnd[index] = ic;
+      intBegin[index] = begin;
+      intEnd[index] = end;
    }
    else {
-      intEnd[index] = ic;
+      intEnd[index] = end;
    }
 }
 
