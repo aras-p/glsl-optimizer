@@ -44,15 +44,7 @@ struct vl_idct
 
    void *rs_state;
 
-   union
-   {
-      void *all[4];
-      void *stage[2][2];
-      struct {
-         void *matrix, *source;
-         void *transpose, *intermediate;
-      } individual;
-   } samplers;
+   void *samplers[2];
 
    void *matrix_vs, *transpose_vs;
    void *matrix_fs, *transpose_fs;

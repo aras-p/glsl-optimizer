@@ -416,7 +416,7 @@ init_state(struct vl_idct *idct)
    if (!idct->rs_state)
       goto error_rs_state;
 
-   for (i = 0; i < 4; ++i) {
+   for (i = 0; i < 2; ++i) {
       memset(&sampler, 0, sizeof(sampler));
       sampler.wrap_s = PIPE_TEX_WRAP_REPEAT;
       sampler.wrap_t = PIPE_TEX_WRAP_REPEAT;
@@ -427,17 +427,17 @@ init_state(struct vl_idct *idct)
       sampler.compare_mode = PIPE_TEX_COMPARE_NONE;
       sampler.compare_func = PIPE_FUNC_ALWAYS;
       sampler.normalized_coords = 1;
-      idct->samplers.all[i] = idct->pipe->create_sampler_state(idct->pipe, &sampler);
-      if (!idct->samplers.all[i])
+      idct->samplers[i] = idct->pipe->create_sampler_state(idct->pipe, &sampler);
+      if (!idct->samplers[i])
          goto error_samplers;
    }
 
    return true;
 
 error_samplers:
-   for (i = 0; i < 4; ++i)
-      if (idct->samplers.all[i])
-         idct->pipe->delete_sampler_state(idct->pipe, idct->samplers.all[i]);
+   for (i = 0; i < 2; ++i)
+      if (idct->samplers[i])
+         idct->pipe->delete_sampler_state(idct->pipe, idct->samplers[i]);
 
    idct->pipe->delete_rasterizer_state(idct->pipe, idct->rs_state);
 
@@ -450,8 +450,8 @@ cleanup_state(struct vl_idct *idct)
 {
    unsigned i;
 
-   for (i = 0; i < 4; ++i)
-      idct->pipe->delete_sampler_state(idct->pipe, idct->samplers.all[i]);
+   for (i = 0; i < 2; ++i)
+      idct->pipe->delete_sampler_state(idct->pipe, idct->samplers[i]);
 
    idct->pipe->delete_rasterizer_state(idct->pipe, idct->rs_state);
 }
@@ -795,12 +795,12 @@ vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer, unsigned num_
       num_verts = idct->blocks_x * idct->blocks_y * 4;
 
       idct->pipe->bind_rasterizer_state(idct->pipe, idct->rs_state);
+      idct->pipe->bind_fragment_sampler_states(idct->pipe, 2, idct->samplers);
 
       /* first stage */
       idct->pipe->set_framebuffer_state(idct->pipe, &buffer->fb_state[0]);
       idct->pipe->set_viewport_state(idct->pipe, &buffer->viewport[0]);
       idct->pipe->set_fragment_sampler_views(idct->pipe, 2, buffer->sampler_views.stage[0]);
-      idct->pipe->bind_fragment_sampler_states(idct->pipe, 2, idct->samplers.stage[0]);
       idct->pipe->bind_vs_state(idct->pipe, idct->matrix_vs);
       idct->pipe->bind_fs_state(idct->pipe, idct->matrix_fs);
       util_draw_arrays_instanced(idct->pipe, PIPE_PRIM_QUADS, 0, num_verts, 0, num_instances);
@@ -809,7 +809,6 @@ vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer, unsigned num_
       idct->pipe->set_framebuffer_state(idct->pipe, &buffer->fb_state[1]);
       idct->pipe->set_viewport_state(idct->pipe, &buffer->viewport[1]);
       idct->pipe->set_fragment_sampler_views(idct->pipe, 2, buffer->sampler_views.stage[1]);
-      idct->pipe->bind_fragment_sampler_states(idct->pipe, 2, idct->samplers.stage[1]);
       idct->pipe->bind_vs_state(idct->pipe, idct->transpose_vs);
       idct->pipe->bind_fs_state(idct->pipe, idct->transpose_fs);
       util_draw_arrays_instanced(idct->pipe, PIPE_PRIM_QUADS, 0, num_verts, 0, num_instances);
