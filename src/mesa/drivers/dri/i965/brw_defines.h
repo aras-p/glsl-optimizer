@@ -875,11 +875,22 @@
 #define CMD_VF_STATISTICS_GM45        0x680b
 #define _3DSTATE_CC_STATE_POINTERS		0x780e /* GEN6+ */
 
-#define _3DSTATE_URB				0x7805 /* GEN6+ */
+#define _3DSTATE_URB				0x7805 /* GEN6 */
 # define GEN6_URB_VS_SIZE_SHIFT				16
 # define GEN6_URB_VS_ENTRIES_SHIFT			0
 # define GEN6_URB_GS_ENTRIES_SHIFT			8
 # define GEN6_URB_GS_SIZE_SHIFT				0
+
+#define _3DSTATE_URB_VS                         0x7830 /* GEN7+ */
+#define _3DSTATE_URB_HS                         0x7831 /* GEN7+ */
+#define _3DSTATE_URB_DS                         0x7832 /* GEN7+ */
+#define _3DSTATE_URB_GS                         0x7833 /* GEN7+ */
+# define GEN7_URB_ENTRY_SIZE_SHIFT                      16
+# define GEN7_URB_STARTING_ADDRESS_SHIFT                25
+
+#define _3DSTATE_PUSH_CONSTANT_ALLOC_VS         0x7912 /* GEN7+ */
+#define _3DSTATE_PUSH_CONSTANT_ALLOC_PS         0x7916 /* GEN7+ */
+# define GEN7_PUSH_CONSTANT_BUFFER_OFFSET_SHIFT         16
 
 #define _3DSTATE_VIEWPORT_STATE_POINTERS	0x780d /* GEN6+ */
 # define GEN6_CC_VIEWPORT_MODIFY			(1 << 12)

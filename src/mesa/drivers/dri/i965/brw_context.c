@@ -182,9 +182,15 @@ GLboolean brwCreateContext( int api,
       if (IS_IVB_GT1(intel->intelScreen->deviceID)) {
 	 brw->wm_max_threads = 86;
 	 brw->vs_max_threads = 36;
+	 brw->urb.size = 128;
+	 brw->urb.max_vs_entries = 512;
+	 brw->urb.max_gs_entries = 192;
       } else if (IS_IVB_GT2(intel->intelScreen->deviceID)) {
 	 brw->wm_max_threads = 86;
 	 brw->vs_max_threads = 128;
+	 brw->urb.size = 256;
+	 brw->urb.max_vs_entries = 704;
+	 brw->urb.max_gs_entries = 320;
       } else {
 	 assert(!"Unknown gen7 device.");
       }
