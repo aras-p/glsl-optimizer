@@ -372,8 +372,8 @@ vl_mpeg12_create_buffer(struct pipe_video_context *vpipe)
 
    if(!vl_mpeg12_mc_init_buffer(&ctx->mc_renderer, &buffer->mc,
                                 buffer->idct_2_mc.resources.y,
-                                buffer->idct_2_mc.resources.cr,
-                                buffer->idct_2_mc.resources.cb)) {
+                                buffer->idct_2_mc.resources.cb,
+                                buffer->idct_2_mc.resources.cr)) {
       FREE(buffer);
       return NULL;
    }

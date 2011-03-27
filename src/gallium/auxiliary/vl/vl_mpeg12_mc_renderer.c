@@ -539,30 +539,29 @@ vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer)
 
 bool
 vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer,
-                         struct pipe_resource *y, struct pipe_resource *cr, struct pipe_resource *cb)
+                         struct pipe_resource *y, struct pipe_resource *cb, struct pipe_resource *cr)
 {
    struct pipe_sampler_view sampler_view;
+   struct pipe_resource *res[3];
 
    unsigned i;
 
    assert(renderer && buffer);
    assert(y && cb && cr);
 
-   pipe_resource_reference(&buffer->textures.individual.y, y);
-   pipe_resource_reference(&buffer->textures.individual.cr, cr);
-   pipe_resource_reference(&buffer->textures.individual.cb, cb);
+   res[0] = y;
+   res[1] = cb;
+   res[2] = cr;
 
    for (i = 0; i < 3; ++i) {
       memset(&sampler_view, 0, sizeof(sampler_view));
-      u_sampler_view_default_template(&sampler_view,
-                                      buffer->textures.all[i],
-                                      buffer->textures.all[i]->format);
+      u_sampler_view_default_template(&sampler_view, res[i], res[i]->format);
       sampler_view.swizzle_r = i == 0 ? PIPE_SWIZZLE_RED : PIPE_SWIZZLE_ZERO;
       sampler_view.swizzle_g = i == 1 ? PIPE_SWIZZLE_RED : PIPE_SWIZZLE_ZERO;
       sampler_view.swizzle_b = i == 2 ? PIPE_SWIZZLE_RED : PIPE_SWIZZLE_ZERO;
       sampler_view.swizzle_a = PIPE_SWIZZLE_ONE;
       buffer->sampler_views.all[i] = renderer->pipe->create_sampler_view(
-         renderer->pipe, buffer->textures.all[i], &sampler_view);
+         renderer->pipe, res[i], &sampler_view);
       if (!buffer->sampler_views.all[i])
          goto error_samplers;
    }
@@ -570,10 +569,8 @@ vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg1
    return true;
 
 error_samplers:
-   for (i = 0; i < 3; ++i) {
+   for (i = 0; i < 3; ++i)
       pipe_sampler_view_reference(&buffer->sampler_views.all[i], NULL);
-      pipe_resource_reference(&buffer->textures.all[i], NULL);
-   }
 
    return false;
 }
@@ -587,9 +584,6 @@ vl_mpeg12_mc_cleanup_buffer(struct vl_mpeg12_mc_buffer *buffer)
 
    for (i = 0; i < 5; ++i)
       pipe_sampler_view_reference(&buffer->sampler_views.all[i], NULL);
-
-   for (i = 0; i < 3; ++i)
-      pipe_resource_reference(&buffer->textures.all[i], NULL);
 }
 
 void
