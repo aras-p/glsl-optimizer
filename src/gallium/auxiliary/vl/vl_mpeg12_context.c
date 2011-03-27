@@ -268,12 +268,13 @@ static struct pipe_video_buffer *
 vl_mpeg12_create_buffer(struct pipe_video_context *vpipe)
 {
    struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
-   struct pipe_resource *y, *cr, *cb;
    struct vl_mpeg12_buffer *buffer;
 
    struct pipe_resource res_template, *resource;
    struct pipe_surface surf_template;
    struct pipe_sampler_view sv_template;
+   struct vl_ycbcr_sampler_views *idct_views;
+   struct vl_ycbcr_surfaces *idct_surfaces;
 
    assert(ctx);
 
@@ -329,22 +330,50 @@ vl_mpeg12_create_buffer(struct pipe_video_context *vpipe)
 
    buffer->vertex_bufs.individual.stream = vl_vb_init(&buffer->vertex_stream, ctx->pipe,
                                                       ctx->vertex_buffer_size);
-   if (!(y = vl_idct_init_buffer(&ctx->idct_y, &buffer->idct_y))) {
+
+   if (!vl_ycbcr_buffer_init(&buffer->idct_source, ctx->pipe,
+                             ctx->buffer_width, ctx->buffer_height,
+                             ctx->base.chroma_format,
+                             PIPE_FORMAT_R16G16B16A16_SNORM,
+                             PIPE_USAGE_STREAM)) {
       FREE(buffer);
       return NULL;
    }
 
-   if (!(cr = vl_idct_init_buffer(&ctx->idct_cr, &buffer->idct_cr))) {
+   if (!vl_ycbcr_buffer_init(&buffer->idct_2_mc, ctx->pipe,
+                             ctx->buffer_width, ctx->buffer_height,
+                             ctx->base.chroma_format,
+                             PIPE_FORMAT_R16_SNORM,
+                             PIPE_USAGE_STATIC)) {
       FREE(buffer);
       return NULL;
    }
 
-   if (!(cb = vl_idct_init_buffer(&ctx->idct_cb, &buffer->idct_cb))) {
+   idct_views = vl_ycbcr_get_sampler_views(&buffer->idct_source);
+   idct_surfaces = vl_ycbcr_get_surfaces(&buffer->idct_2_mc);
+
+   if (!vl_idct_init_buffer(&ctx->idct_y, &buffer->idct_y,
+                            idct_views->y, idct_surfaces->y)) {
       FREE(buffer);
       return NULL;
    }
 
-   if(!vl_mpeg12_mc_init_buffer(&ctx->mc_renderer, &buffer->mc, y, cr, cb)) {
+   if (!vl_idct_init_buffer(&ctx->idct_cb, &buffer->idct_cb,
+                            idct_views->cb, idct_surfaces->cb)) {
+      FREE(buffer);
+      return NULL;
+   }
+
+   if (!vl_idct_init_buffer(&ctx->idct_cr, &buffer->idct_cr,
+                            idct_views->cr, idct_surfaces->cr)) {
+      FREE(buffer);
+      return NULL;
+   }
+
+   if(!vl_mpeg12_mc_init_buffer(&ctx->mc_renderer, &buffer->mc,
+                                buffer->idct_2_mc.resources.y,
+                                buffer->idct_2_mc.resources.cr,
+                                buffer->idct_2_mc.resources.cb)) {
       FREE(buffer);
       return NULL;
    }
@@ -572,7 +601,7 @@ static bool
 init_idct(struct vl_mpeg12_context *ctx, unsigned buffer_width, unsigned buffer_height)
 {
    unsigned chroma_width, chroma_height, chroma_blocks_x, chroma_blocks_y;
-   struct pipe_resource *idct_matrix;
+   struct pipe_sampler_view *idct_matrix;
 
    /* TODO: Implement 422, 444 */
    assert(ctx->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);

@@ -30,6 +30,7 @@
 
 #include <pipe/p_state.h>
 #include "vl_vertex_buffers.h"
+#include "vl_ycbcr_buffer.h"
 
 /* shader based inverse distinct cosinus transformation
  * expect usage of vl_vertex_buffers as a todo list
@@ -49,7 +50,7 @@ struct vl_idct
    void *matrix_vs, *transpose_vs;
    void *matrix_fs, *transpose_fs;
 
-   struct pipe_resource *matrix;
+   struct pipe_sampler_view *matrix;
 };
 
 /* a set of buffers to work with */
@@ -57,8 +58,6 @@ struct vl_idct_buffer
 {
    struct pipe_viewport_state viewport[2];
    struct pipe_framebuffer_state fb_state[2];
-
-   struct pipe_resource *destination;
 
    union
    {
@@ -70,34 +69,25 @@ struct vl_idct_buffer
       } individual;
    } sampler_views;
 
-   union
-   {
-      struct pipe_resource *all[4];
-      struct pipe_resource *stage[2][2];
-      struct {
-         struct pipe_resource *matrix, *source;
-         struct pipe_resource *transpose, *intermediate;
-      } individual;
-   } textures;
-
    struct pipe_transfer *tex_transfer;
    short *texels;
 };
 
 /* upload the idct matrix, which can be shared by all idct instances of a pipe */
-struct pipe_resource *vl_idct_upload_matrix(struct pipe_context *pipe);
+struct pipe_sampler_view *vl_idct_upload_matrix(struct pipe_context *pipe);
 
 /* init an idct instance */
 bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
                   unsigned buffer_width, unsigned buffer_height,
                   unsigned blocks_x, unsigned blocks_y,
-                  int color_swizzle, struct pipe_resource *matrix);
+                  int color_swizzle, struct pipe_sampler_view *matrix);
 
 /* destroy an idct instance */
 void vl_idct_cleanup(struct vl_idct *idct);
 
 /* init a buffer assosiated with agiven idct instance */
-struct pipe_resource *vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer);
+bool vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
+                         struct pipe_sampler_view *source, struct pipe_surface *destination);
 
 /* cleanup a buffer of an idct instance */
 void vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer);

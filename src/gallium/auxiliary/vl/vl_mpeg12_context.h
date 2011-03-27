@@ -32,6 +32,7 @@
 #include "vl_idct.h"
 #include "vl_mpeg12_mc_renderer.h"
 #include "vl_compositor.h"
+#include "vl_ycbcr_buffer.h"
 
 struct pipe_screen;
 struct pipe_context;
@@ -62,6 +63,10 @@ struct vl_mpeg12_context
 struct vl_mpeg12_buffer
 {
    struct pipe_video_buffer base;
+
+   struct vl_ycbcr_buffer idct_source;
+   struct vl_ycbcr_buffer idct_2_mc;
+
    struct pipe_surface *surface;
    struct pipe_sampler_view *sampler_view;
 

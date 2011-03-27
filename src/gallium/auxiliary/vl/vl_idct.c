@@ -27,6 +27,7 @@
 
 #include "vl_idct.h"
 #include "vl_vertex_buffers.h"
+#include "vl_ycbcr_buffer.h"
 #include "vl_defines.h"
 #include "util/u_draw.h"
 #include <assert.h>
@@ -457,89 +458,91 @@ cleanup_state(struct vl_idct *idct)
 }
 
 static bool
-init_textures(struct vl_idct *idct, struct vl_idct_buffer *buffer)
+init_intermediate(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 {
-   struct pipe_resource template;
-   struct pipe_sampler_view sampler_view;
+   struct pipe_resource tex_templ, *tex;
+   struct pipe_sampler_view sv_templ;
+   struct pipe_surface surf_templ;
    unsigned i;
 
    assert(idct && buffer);
 
-   /* create textures */
-   memset(&template, 0, sizeof(struct pipe_resource));
-   template.last_level = 0;
-   template.bind = PIPE_BIND_SAMPLER_VIEW;
-   template.flags = 0;
+   memset(&tex_templ, 0, sizeof(tex_templ));
+   tex_templ.target = PIPE_TEXTURE_3D;
+   tex_templ.format = PIPE_FORMAT_R16G16B16A16_SNORM;
+   tex_templ.width0 = idct->buffer_width / NR_RENDER_TARGETS;
+   tex_templ.height0 = idct->buffer_height / 4;
+   tex_templ.depth0 = NR_RENDER_TARGETS;
+   tex_templ.array_size = 1;
+   tex_templ.bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
+   tex_templ.usage = PIPE_USAGE_STATIC;
 
-   template.target = PIPE_TEXTURE_2D;
-   template.format = PIPE_FORMAT_R16G16B16A16_SNORM;
-   template.width0 = idct->buffer_width / 4;
-   template.height0 = idct->buffer_height;
-   template.depth0 = 1;
-   template.array_size = 1;
-   template.usage = PIPE_USAGE_STREAM;
-   buffer->textures.individual.source = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
-   if (!buffer->textures.individual.source)
-      goto error;
+   tex = idct->pipe->screen->resource_create(idct->pipe->screen, &tex_templ);
+   if (!tex)
+      goto error_tex;
 
-   template.target = PIPE_TEXTURE_3D;
-   template.format = PIPE_FORMAT_R16G16B16A16_SNORM;
-   template.width0 = idct->buffer_width / NR_RENDER_TARGETS;
-   template.height0 = idct->buffer_height / 4;
-   template.depth0 = NR_RENDER_TARGETS;
-   template.usage = PIPE_USAGE_STATIC;
-   buffer->textures.individual.intermediate = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
-   if (!buffer->textures.individual.intermediate)
-      goto error;
+   memset(&sv_templ, 0, sizeof(sv_templ));
+   u_sampler_view_default_template(&sv_templ, tex, tex->format);
+   buffer->sampler_views.individual.intermediate =
+      idct->pipe->create_sampler_view(idct->pipe, tex, &sv_templ);
+   if (!buffer->sampler_views.individual.intermediate)
+         goto error_sampler_view;
 
-   for (i = 0; i < 4; ++i) {
-      memset(&sampler_view, 0, sizeof(sampler_view));
-      u_sampler_view_default_template(&sampler_view, buffer->textures.all[i], buffer->textures.all[i]->format);
-      buffer->sampler_views.all[i] = idct->pipe->create_sampler_view(idct->pipe, buffer->textures.all[i], &sampler_view);
-      if (!buffer->sampler_views.all[i])
-         goto error;
+   buffer->fb_state[0].width = tex->width0;
+   buffer->fb_state[0].height = tex->height0;
+   buffer->fb_state[0].nr_cbufs = NR_RENDER_TARGETS;
+   for(i = 0; i < NR_RENDER_TARGETS; ++i) {
+      memset(&surf_templ, 0, sizeof(surf_templ));
+      surf_templ.format = tex->format;
+      surf_templ.u.tex.first_layer = i;
+      surf_templ.u.tex.last_layer = i;
+      surf_templ.usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
+      buffer->fb_state[0].cbufs[i] = idct->pipe->create_surface(
+         idct->pipe, tex, &surf_templ);
+
+      if (!buffer->fb_state[0].cbufs[i])
+         goto error_surfaces;
    }
 
-   template.target = PIPE_TEXTURE_2D;
-   /* TODO: Accomodate HW that can't do this and also for cases when this isn't precise enough */
-   template.format = PIPE_FORMAT_R16_SNORM;
-   template.width0 = idct->buffer_width;
-   template.height0 = idct->buffer_height;
-   template.depth0 = 1;
+   buffer->viewport[0].scale[0] = tex->width0;
+   buffer->viewport[0].scale[1] = tex->height0;
 
-   buffer->destination = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
-   if (!buffer->destination)
-      goto error;
-
+   pipe_resource_reference(&tex, NULL);
    return true;
 
-error:
-   for (i = 0; i < 4; ++i) {
-      pipe_sampler_view_reference(&buffer->sampler_views.all[i], NULL);
-      pipe_resource_reference(&buffer->textures.all[i], NULL);
-   }
+error_surfaces:
+   for(i = 0; i < NR_RENDER_TARGETS; ++i)
+      pipe_surface_reference(&buffer->fb_state[0].cbufs[i], NULL);
+
+   pipe_sampler_view_reference(&buffer->sampler_views.individual.intermediate, NULL);
+
+error_sampler_view:
+   pipe_resource_reference(&tex, NULL);
+
+error_tex:
    return false;
 }
 
 static void
-cleanup_textures(struct vl_idct *idct, struct vl_idct_buffer *buffer)
+cleanup_intermediate(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 {
    unsigned i;
 
    assert(idct && buffer);
 
-   for (i = 0; i < 4; ++i) {
-      pipe_sampler_view_reference(&buffer->sampler_views.all[i], NULL);
-      pipe_resource_reference(&buffer->textures.all[i], NULL);
-   }
+   for(i = 0; i < NR_RENDER_TARGETS; ++i)
+      pipe_surface_reference(&buffer->fb_state[0].cbufs[i], NULL);
+
+   pipe_sampler_view_reference(&buffer->sampler_views.individual.intermediate, NULL);
 }
 
-struct pipe_resource *
+struct pipe_sampler_view *
 vl_idct_upload_matrix(struct pipe_context *pipe)
 {
    const float scale = sqrtf(SCALE_FACTOR_16_TO_9);
 
-   struct pipe_resource template, *matrix;
+   struct pipe_resource tex_templ, *matrix;
+   struct pipe_sampler_view sv_templ, *sv;
    struct pipe_transfer *buf_transfer;
    unsigned i, j, pitch;
    float *f;
@@ -554,19 +557,19 @@ vl_idct_upload_matrix(struct pipe_context *pipe)
 
    assert(pipe);
 
-   memset(&template, 0, sizeof(struct pipe_resource));
-   template.target = PIPE_TEXTURE_2D;
-   template.format = PIPE_FORMAT_R32G32B32A32_FLOAT;
-   template.last_level = 0;
-   template.width0 = 2;
-   template.height0 = 8;
-   template.depth0 = 1;
-   template.array_size = 1;
-   template.usage = PIPE_USAGE_IMMUTABLE;
-   template.bind = PIPE_BIND_SAMPLER_VIEW;
-   template.flags = 0;
+   memset(&tex_templ, 0, sizeof(tex_templ));
+   tex_templ.target = PIPE_TEXTURE_2D;
+   tex_templ.format = PIPE_FORMAT_R32G32B32A32_FLOAT;
+   tex_templ.last_level = 0;
+   tex_templ.width0 = 2;
+   tex_templ.height0 = 8;
+   tex_templ.depth0 = 1;
+   tex_templ.array_size = 1;
+   tex_templ.usage = PIPE_USAGE_IMMUTABLE;
+   tex_templ.bind = PIPE_BIND_SAMPLER_VIEW;
+   tex_templ.flags = 0;
 
-   matrix = pipe->screen->resource_create(pipe->screen, &template);
+   matrix = pipe->screen->resource_create(pipe->screen, &tex_templ);
    if (!matrix)
       goto error_matrix;
 
@@ -593,7 +596,14 @@ vl_idct_upload_matrix(struct pipe_context *pipe)
    pipe->transfer_unmap(pipe, buf_transfer);
    pipe->transfer_destroy(pipe, buf_transfer);
 
-   return matrix;
+   memset(&sv_templ, 0, sizeof(sv_templ));
+   u_sampler_view_default_template(&sv_templ, matrix, matrix->format);
+   sv = pipe->create_sampler_view(pipe, matrix, &sv_templ);
+   pipe_resource_reference(&matrix, NULL);
+   if (!sv)
+      goto error_map;
+
+   return sv;
 
 error_map:
    pipe->transfer_destroy(pipe, buf_transfer);
@@ -608,7 +618,7 @@ error_matrix:
 bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
                   unsigned buffer_width, unsigned buffer_height,
                   unsigned blocks_x, unsigned blocks_y,
-                  int color_swizzle, struct pipe_resource *matrix)
+                  int color_swizzle, struct pipe_sampler_view *matrix)
 {
    assert(idct && pipe && matrix);
 
@@ -617,7 +627,7 @@ bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
    idct->buffer_height = buffer_height;
    idct->blocks_x = blocks_x;
    idct->blocks_y = blocks_y;
-   pipe_resource_reference(&idct->matrix, matrix);
+   pipe_sampler_view_reference(&idct->matrix, matrix);
 
    if(!init_shaders(idct, color_swizzle))
       return false;
@@ -636,63 +646,35 @@ vl_idct_cleanup(struct vl_idct *idct)
    cleanup_shaders(idct);
    cleanup_state(idct);
 
-   pipe_resource_reference(&idct->matrix, NULL);
+   pipe_sampler_view_reference(&idct->matrix, NULL);
 }
 
-struct pipe_resource *
-vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer)
+bool
+vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
+                    struct pipe_sampler_view *source, struct pipe_surface *destination)
 {
-   struct pipe_surface template;
-
    unsigned i;
 
    assert(buffer);
    assert(idct);
+   assert(source);
+   assert(destination);
 
-   pipe_resource_reference(&buffer->textures.individual.matrix, idct->matrix);
-   pipe_resource_reference(&buffer->textures.individual.transpose, idct->matrix);
+   pipe_sampler_view_reference(&buffer->sampler_views.individual.matrix, idct->matrix);
+   pipe_sampler_view_reference(&buffer->sampler_views.individual.source, source);
+   pipe_sampler_view_reference(&buffer->sampler_views.individual.transpose, idct->matrix);
 
-   if (!init_textures(idct, buffer))
-      goto error_textures;
+   if (!init_intermediate(idct, buffer))
+      return false;
 
    /* init state */
-   buffer->viewport[0].scale[0] = buffer->textures.individual.intermediate->width0;
-   buffer->viewport[0].scale[1] = buffer->textures.individual.intermediate->height0;
-
-   buffer->viewport[1].scale[0] = buffer->destination->width0;
-   buffer->viewport[1].scale[1] = buffer->destination->height0;
-
-   buffer->fb_state[0].width = buffer->textures.individual.intermediate->width0;
-   buffer->fb_state[0].height = buffer->textures.individual.intermediate->height0;
-
-   buffer->fb_state[0].nr_cbufs = NR_RENDER_TARGETS;
-   for(i = 0; i < NR_RENDER_TARGETS; ++i) {
-      memset(&template, 0, sizeof(template));
-      template.format = buffer->textures.individual.intermediate->format;
-      template.u.tex.first_layer = i;
-      template.u.tex.last_layer = i;
-      template.usage = PIPE_BIND_RENDER_TARGET;
-      buffer->fb_state[0].cbufs[i] = idct->pipe->create_surface(
-         idct->pipe, buffer->textures.individual.intermediate,
-         &template);
-
-      if (!buffer->fb_state[0].cbufs[i])
-         goto error_matrix_surfaces;
-   }
-
-   buffer->fb_state[1].width = buffer->destination->width0;
-   buffer->fb_state[1].height = buffer->destination->height0;
-
+   buffer->fb_state[1].width = destination->texture->width0;
+   buffer->fb_state[1].height = destination->texture->height0;
    buffer->fb_state[1].nr_cbufs = 1;
+   pipe_surface_reference(&buffer->fb_state[1].cbufs[0], destination);
 
-   memset(&template, 0, sizeof(template));
-   template.format = buffer->destination->format;
-   template.usage = PIPE_BIND_RENDER_TARGET;
-   buffer->fb_state[1].cbufs[0] = idct->pipe->create_surface(
-      idct->pipe, buffer->destination, &template);
-
-   if (!buffer->fb_state[1].cbufs[0])
-      goto error_transpose_surface;
+   buffer->viewport[1].scale[0] = destination->texture->width0;
+   buffer->viewport[1].scale[1] = destination->texture->height0;
 
    for(i = 0; i < 2; ++i) {
       buffer->viewport[i].scale[2] = 1;
@@ -705,17 +687,7 @@ vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer)
       buffer->fb_state[i].zsbuf = NULL;
    }
 
-   return buffer->destination;
-
-error_transpose_surface:
-   pipe_surface_reference(&buffer->fb_state[1].cbufs[0], NULL);
-
-error_matrix_surfaces:
-   for(i = 0; i < NR_RENDER_TARGETS; ++i)
-      pipe_surface_reference(&buffer->fb_state[0].cbufs[i], NULL);
-
-error_textures:
-   return NULL;
+   return true;
 }
 
 void
@@ -730,25 +702,29 @@ vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 
    pipe_surface_reference(&buffer->fb_state[1].cbufs[0], NULL);
 
-   cleanup_textures(idct, buffer);
+   cleanup_intermediate(idct, buffer);
 }
 
 void
 vl_idct_map_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 {
+   struct pipe_resource *tex;
+
    assert(idct && buffer);
+
+   tex = buffer->sampler_views.individual.source->texture;
 
    struct pipe_box rect =
    {
       0, 0, 0,
-      buffer->textures.individual.source->width0,
-      buffer->textures.individual.source->height0,
+      tex->width0,
+      tex->height0,
       1
    };
 
    buffer->tex_transfer = idct->pipe->get_transfer
    (
-      idct->pipe, buffer->textures.individual.source,
+      idct->pipe, tex,
       0, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
       &rect
    );

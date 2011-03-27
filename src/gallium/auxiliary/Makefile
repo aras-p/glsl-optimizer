@@ -153,7 +153,8 @@ C_SOURCES = \
 	vl/vl_compositor.c \
 	vl/vl_csc.c \
         vl/vl_idct.c \
-        vl/vl_vertex_buffers.c
+        vl/vl_vertex_buffers.c \
+        vl/vl_ycbcr_buffer.c
 
 GALLIVM_SOURCES = \
         gallivm/lp_bld_arit.c \
