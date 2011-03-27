@@ -362,16 +362,34 @@ static bool
 init_shaders(struct vl_idct *idct, int color_swizzle)
 {
    idct->matrix_vs = create_vert_shader(idct, true, color_swizzle);
+   if (!idct->matrix_vs)
+      goto error_matrix_vs;
+
    idct->matrix_fs = create_matrix_frag_shader(idct);
+   if (!idct->matrix_fs)
+      goto error_matrix_fs;
 
    idct->transpose_vs = create_vert_shader(idct, false, color_swizzle);
-   idct->transpose_fs = create_transpose_frag_shader(idct);
+   if (!idct->transpose_vs)
+      goto error_transpose_vs;
 
-   return
-      idct->matrix_vs != NULL &&
-      idct->matrix_fs != NULL &&
-      idct->transpose_vs != NULL &&
-      idct->transpose_fs != NULL;
+   idct->transpose_fs = create_transpose_frag_shader(idct);
+   if (!idct->transpose_fs)
+      goto error_transpose_fs;
+
+   return true;
+
+error_transpose_fs:
+   idct->pipe->delete_vs_state(idct->pipe, idct->transpose_vs);
+
+error_transpose_vs:
+   idct->pipe->delete_fs_state(idct->pipe, idct->matrix_fs);
+
+error_matrix_fs:
+   idct->pipe->delete_vs_state(idct->pipe, idct->matrix_vs);
+
+error_matrix_vs:
+   return false;
 }
 
 static void
@@ -392,6 +410,12 @@ init_state(struct vl_idct *idct)
 
    assert(idct);
 
+   memset(&rs_state, 0, sizeof(rs_state));
+   rs_state.gl_rasterization_rules = false;
+   idct->rs_state = idct->pipe->create_rasterizer_state(idct->pipe, &rs_state);
+   if (!idct->rs_state)
+      goto error_rs_state;
+
    for (i = 0; i < 4; ++i) {
       memset(&sampler, 0, sizeof(sampler));
       sampler.wrap_s = PIPE_TEX_WRAP_REPEAT;
@@ -403,24 +427,22 @@ init_state(struct vl_idct *idct)
       sampler.compare_mode = PIPE_TEX_COMPARE_NONE;
       sampler.compare_func = PIPE_FUNC_ALWAYS;
       sampler.normalized_coords = 1;
-      /*sampler.shadow_ambient = ; */
-      /*sampler.lod_bias = ; */
-      sampler.min_lod = 0;
-      /*sampler.max_lod = ; */
-      /*sampler.border_color[0] = ; */
-      /*sampler.max_anisotropy = ; */
       idct->samplers.all[i] = idct->pipe->create_sampler_state(idct->pipe, &sampler);
+      if (!idct->samplers.all[i])
+         goto error_samplers;
    }
 
-   memset(&rs_state, 0, sizeof(rs_state));
-   /*rs_state.sprite_coord_enable */
-   rs_state.sprite_coord_mode = PIPE_SPRITE_COORD_UPPER_LEFT;
-   rs_state.point_quad_rasterization = true;
-   rs_state.point_size = BLOCK_WIDTH;
-   rs_state.gl_rasterization_rules = false;
-   idct->rs_state = idct->pipe->create_rasterizer_state(idct->pipe, &rs_state);
-
    return true;
+
+error_samplers:
+   for (i = 0; i < 4; ++i)
+      if (idct->samplers.all[i])
+         idct->pipe->delete_sampler_state(idct->pipe, idct->samplers.all[i]);
+
+   idct->pipe->delete_rasterizer_state(idct->pipe, idct->rs_state);
+
+error_rs_state:
+   return false;
 }
 
 static void
@@ -457,6 +479,8 @@ init_textures(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    template.array_size = 1;
    template.usage = PIPE_USAGE_STREAM;
    buffer->textures.individual.source = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
+   if (!buffer->textures.individual.source)
+      goto error;
 
    template.target = PIPE_TEXTURE_3D;
    template.format = PIPE_FORMAT_R16G16B16A16_SNORM;
@@ -465,13 +489,15 @@ init_textures(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    template.depth0 = NR_RENDER_TARGETS;
    template.usage = PIPE_USAGE_STATIC;
    buffer->textures.individual.intermediate = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
+   if (!buffer->textures.individual.intermediate)
+      goto error;
 
    for (i = 0; i < 4; ++i) {
-      if(buffer->textures.all[i] == NULL)
-         return false; /* a texture failed to allocate */
-
+      memset(&sampler_view, 0, sizeof(sampler_view));
       u_sampler_view_default_template(&sampler_view, buffer->textures.all[i], buffer->textures.all[i]->format);
       buffer->sampler_views.all[i] = idct->pipe->create_sampler_view(idct->pipe, buffer->textures.all[i], &sampler_view);
+      if (!buffer->sampler_views.all[i])
+         goto error;
    }
 
    template.target = PIPE_TEXTURE_2D;
@@ -482,8 +508,17 @@ init_textures(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    template.depth0 = 1;
 
    buffer->destination = idct->pipe->screen->resource_create(idct->pipe->screen, &template);
+   if (!buffer->destination)
+      goto error;
 
    return true;
+
+error:
+   for (i = 0; i < 4; ++i) {
+      pipe_sampler_view_reference(&buffer->sampler_views.all[i], NULL);
+      pipe_resource_reference(&buffer->textures.all[i], NULL);
+   }
+   return false;
 }
 
 static void
@@ -517,6 +552,8 @@ vl_idct_upload_matrix(struct pipe_context *pipe)
       1
    };
 
+   assert(pipe);
+
    memset(&template, 0, sizeof(struct pipe_resource));
    template.target = PIPE_TEXTURE_2D;
    template.format = PIPE_FORMAT_R32G32B32A32_FLOAT;
@@ -530,17 +567,24 @@ vl_idct_upload_matrix(struct pipe_context *pipe)
    template.flags = 0;
 
    matrix = pipe->screen->resource_create(pipe->screen, &template);
+   if (!matrix)
+      goto error_matrix;
 
-   /* matrix */
    buf_transfer = pipe->get_transfer
    (
       pipe, matrix,
       0, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
       &rect
    );
+   if (!buf_transfer)
+      goto error_transfer;
+
    pitch = buf_transfer->stride / sizeof(float);
 
    f = pipe->transfer_map(pipe, buf_transfer);
+   if (!f)
+      goto error_map;
+
    for(i = 0; i < BLOCK_HEIGHT; ++i)
       for(j = 0; j < BLOCK_WIDTH; ++j)
          // transpose and scale
@@ -550,6 +594,15 @@ vl_idct_upload_matrix(struct pipe_context *pipe)
    pipe->transfer_destroy(pipe, buf_transfer);
 
    return matrix;
+
+error_map:
+   pipe->transfer_destroy(pipe, buf_transfer);
+
+error_transfer:
+   pipe_resource_reference(&matrix, NULL);
+
+error_matrix:
+   return NULL;
 }
 
 bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
@@ -600,7 +653,7 @@ vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    pipe_resource_reference(&buffer->textures.individual.transpose, idct->matrix);
 
    if (!init_textures(idct, buffer))
-      return NULL;
+      goto error_textures;
 
    /* init state */
    buffer->viewport[0].scale[0] = buffer->textures.individual.intermediate->width0;
@@ -622,6 +675,9 @@ vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer)
       buffer->fb_state[0].cbufs[i] = idct->pipe->create_surface(
          idct->pipe, buffer->textures.individual.intermediate,
          &template);
+
+      if (!buffer->fb_state[0].cbufs[i])
+         goto error_matrix_surfaces;
    }
 
    buffer->fb_state[1].width = buffer->destination->width0;
@@ -635,6 +691,9 @@ vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    buffer->fb_state[1].cbufs[0] = idct->pipe->create_surface(
       idct->pipe, buffer->destination, &template);
 
+   if (!buffer->fb_state[1].cbufs[0])
+      goto error_transpose_surface;
+
    for(i = 0; i < 2; ++i) {
       buffer->viewport[i].scale[2] = 1;
       buffer->viewport[i].scale[3] = 1;
@@ -647,6 +706,16 @@ vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    }
 
    return buffer->destination;
+
+error_transpose_surface:
+   pipe_surface_reference(&buffer->fb_state[1].cbufs[0], NULL);
+
+error_matrix_surfaces:
+   for(i = 0; i < NR_RENDER_TARGETS; ++i)
+      pipe_surface_reference(&buffer->fb_state[0].cbufs[i], NULL);
+
+error_textures:
+   return NULL;
 }
 
 void
@@ -654,13 +723,12 @@ vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 {
    unsigned i;
 
-   assert(buffer);
+   assert(idct && buffer);
 
-   for(i = 0; i < NR_RENDER_TARGETS; ++i) {
-      idct->pipe->surface_destroy(idct->pipe, buffer->fb_state[0].cbufs[i]);
-   }
+   for(i = 0; i < NR_RENDER_TARGETS; ++i)
+      pipe_surface_reference(&buffer->fb_state[0].cbufs[i], NULL);
 
-   idct->pipe->surface_destroy(idct->pipe, buffer->fb_state[1].cbufs[0]);
+   pipe_surface_reference(&buffer->fb_state[1].cbufs[0], NULL);
 
    cleanup_textures(idct, buffer);
 }
@@ -668,7 +736,7 @@ vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 void
 vl_idct_map_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 {
-   assert(idct);
+   assert(idct && buffer);
 
    struct pipe_box rect =
    {
@@ -697,6 +765,7 @@ vl_idct_add_block(struct vl_idct_buffer *buffer, unsigned x, unsigned y, short *
    unsigned i;
 
    assert(buffer);
+   assert(block);
 
    tex_pitch = buffer->tex_transfer->stride / sizeof(short);
    texels = buffer->texels + y * tex_pitch * BLOCK_HEIGHT + x * BLOCK_WIDTH;
