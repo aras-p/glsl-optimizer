@@ -539,8 +539,10 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 	    continue;
 	 }
 
-	 if (c->key.flat_shade && (location == FRAG_ATTRIB_COL0 ||
-				   location == FRAG_ATTRIB_COL1)) {
+	 bool is_gl_Color =
+	    location == FRAG_ATTRIB_COL0 || location == FRAG_ATTRIB_COL1;
+
+	 if (c->key.flat_shade && is_gl_Color) {
 	    /* Constant interpolation (flat shading) case. The SF has
 	     * handed us defined values in only the constant offset
 	     * field of the setup reg.
@@ -560,7 +562,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 	       attr.reg_offset++;
 	    }
 
-	    if (intel->gen < 6) {
+	    if (intel->gen < 6 && !(is_gl_Color && c->key.linear_color)) {
 	       attr.reg_offset -= type->vector_elements;
 	       for (unsigned int c = 0; c < type->vector_elements; c++) {
 		  emit(BRW_OPCODE_MUL, attr, attr, this->pixel_w);
