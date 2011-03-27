@@ -2676,17 +2676,24 @@ ast_declarator_list::hir(exec_list *instructions,
        *    preceded by one of these precision qualifiers [...] Literal
        *    constants do not have precision qualifiers. Neither do Boolean
        *    variables.
+       *
+       * In GLSL ES, sampler types are also allowed.
+       *
+       * From page 87 of the GLSL ES spec:
+       *    "RESOLUTION: Allow sampler types to take a precision qualifier."
        */
       if (this->type->specifier->precision != ast_precision_none
           && !var->type->is_float()
           && !var->type->is_integer()
+          && !(var->type->is_sampler() && state->es_shader)
           && !(var->type->is_array()
                && (var->type->fields.array->is_float()
                    || var->type->fields.array->is_integer()))) {
 
          _mesa_glsl_error(&loc, state,
-                          "precision qualifiers apply only to floating point "
-                          "and integer types");
+                          "precision qualifiers apply only to floating point"
+                          "%s types", state->es_shader ? ", integer, and sampler"
+						       : "and integer");
       }
 
       /* Process the initializer and add its instructions to a temporary
