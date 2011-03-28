@@ -3472,7 +3472,7 @@ fs_visitor::compute_to_mrf()
 
 	 if (scan_inst->dst.file == MRF &&
 	     scan_inst->dst.hw_reg == inst->dst.hw_reg) {
-	    /* Somebody else wrote our MRF here, so we can't can't
+	    /* Somebody else wrote our MRF here, so we can't
 	     * compute-to-MRF before that.
 	     */
 	    break;
