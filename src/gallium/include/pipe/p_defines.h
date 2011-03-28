@@ -464,6 +464,7 @@ enum pipe_cap {
    PIPE_CAP_TGSI_INSTANCEID = 43,
    PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR = 44,
    PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL = 45,
+   PIPE_CAP_MIXED_COLORBUFFER_FORMATS = 46,
 };
 
 /* Shader caps not specific to any single stage */
