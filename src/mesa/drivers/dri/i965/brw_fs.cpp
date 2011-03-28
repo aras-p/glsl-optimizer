@@ -3370,10 +3370,6 @@ fs_visitor::compute_to_mrf()
    bool progress = false;
    int next_ip = 0;
 
-   /* Need to update the MRF tracking for compressed instructions. */
-   if (c->dispatch_width == 16)
-      return false;
-
    calculate_live_intervals();
 
    foreach_iter(exec_list_iterator, iter, this->instructions) {
@@ -3388,6 +3384,20 @@ fs_visitor::compute_to_mrf()
 	  inst->dst.type != inst->src[0].type ||
 	  inst->src[0].abs || inst->src[0].negate || inst->src[0].smear != -1)
 	 continue;
+
+      /* Work out which hardware MRF registers are written by this
+       * instruction.
+       */
+      int mrf_low = inst->dst.hw_reg & ~BRW_MRF_COMPR4;
+      int mrf_high;
+      if (inst->dst.hw_reg & BRW_MRF_COMPR4) {
+	 mrf_high = mrf_low + 4;
+      } else if (c->dispatch_width == 16 &&
+		 (!inst->force_uncompressed && !inst->force_sechalf)) {
+	 mrf_high = mrf_low + 1;
+      } else {
+	 mrf_high = mrf_low;
+      }
 
       /* Can't compute-to-MRF this GRF if someone else was going to
        * read it later.
@@ -3416,10 +3426,20 @@ fs_visitor::compute_to_mrf()
 	    }
 
 	    /* If it's predicated, it (probably) didn't populate all
-	     * the channels.
+	     * the channels.  We might be able to rewrite everything
+	     * that writes that reg, but it would require smarter
+	     * tracking to delay the rewriting until complete success.
 	     */
 	    if (scan_inst->predicated)
 	       break;
+
+	    /* If it's half of register setup and not the same half as
+	     * our MOV we're trying to remove, bail for now.
+	     */
+	    if (scan_inst->force_uncompressed != inst->force_uncompressed ||
+		scan_inst->force_sechalf != inst->force_sechalf) {
+	       break;
+	    }
 
 	    /* SEND instructions can't have MRF as a destination. */
 	    if (scan_inst->mlen)
@@ -3470,12 +3490,29 @@ fs_visitor::compute_to_mrf()
 	 if (interfered)
 	    break;
 
-	 if (scan_inst->dst.file == MRF &&
-	     scan_inst->dst.hw_reg == inst->dst.hw_reg) {
-	    /* Somebody else wrote our MRF here, so we can't
+	 if (scan_inst->dst.file == MRF) {
+	    /* If somebody else writes our MRF here, we can't
 	     * compute-to-MRF before that.
 	     */
-	    break;
+	    int scan_mrf_low = scan_inst->dst.hw_reg & ~BRW_MRF_COMPR4;
+	    int scan_mrf_high;
+
+	    if (scan_inst->dst.hw_reg & BRW_MRF_COMPR4) {
+	       scan_mrf_high = scan_mrf_low + 4;
+	    } else if (c->dispatch_width == 16 &&
+		       (!scan_inst->force_uncompressed &&
+			!scan_inst->force_sechalf)) {
+	       scan_mrf_high = scan_mrf_low + 1;
+	    } else {
+	       scan_mrf_high = scan_mrf_low;
+	    }
+
+	    if (mrf_low == scan_mrf_low ||
+		mrf_low == scan_mrf_high ||
+		mrf_high == scan_mrf_low ||
+		mrf_high == scan_mrf_high) {
+	       break;
+	    }
 	 }
 
 	 if (scan_inst->mlen > 0) {
@@ -3484,8 +3521,12 @@ fs_visitor::compute_to_mrf()
 	     * scan_inst->mlen - 1.  Don't go pushing our MRF write up
 	     * above it.
 	     */
-	    if (inst->dst.hw_reg >= scan_inst->base_mrf &&
-		inst->dst.hw_reg < scan_inst->base_mrf + scan_inst->mlen) {
+	    if (mrf_low >= scan_inst->base_mrf &&
+		mrf_low < scan_inst->base_mrf + scan_inst->mlen) {
+	       break;
+	    }
+	    if (mrf_high >= scan_inst->base_mrf &&
+		mrf_high < scan_inst->base_mrf + scan_inst->mlen) {
 	       break;
 	    }
 	 }
