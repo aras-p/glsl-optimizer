@@ -2073,22 +2073,26 @@ fs_visitor::emit_color_write(int index, int first_color_mrf, fs_reg color)
        * m + 5: g1
        * m + 6: b1
        * m + 7: a1
-       *
-       * By setting the high bit of the MRF register number,
-       * we could indicate that we want COMPR4 mode - instead
-       * of doing the usual destination + 1 for the second
-       * half we would get destination + 4.  We would need to
-       * clue the optimizer into that, though.
        */
-      push_force_uncompressed();
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, first_color_mrf + index), color);
-      pop_force_uncompressed();
+      if (brw->has_compr4) {
+	 /* By setting the high bit of the MRF register number, we
+	  * indicate that we want COMPR4 mode - instead of doing the
+	  * usual destination + 1 for the second half we get
+	  * destination + 4.
+	  */
+	 emit(BRW_OPCODE_MOV,
+	      fs_reg(MRF, BRW_MRF_COMPR4 + first_color_mrf + index), color);
+      } else {
+	 push_force_uncompressed();
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, first_color_mrf + index), color);
+	 pop_force_uncompressed();
 
-      push_force_sechalf();
-      color.sechalf = true;
-      emit(BRW_OPCODE_MOV, fs_reg(MRF, first_color_mrf + index + 4), color);
-      pop_force_sechalf();
-      color.sechalf = false;
+	 push_force_sechalf();
+	 color.sechalf = true;
+	 emit(BRW_OPCODE_MOV, fs_reg(MRF, first_color_mrf + index + 4), color);
+	 pop_force_sechalf();
+	 color.sechalf = false;
+      }
    }
 }
 
