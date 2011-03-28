@@ -113,6 +113,7 @@ extern const struct brw_tracked_state gen6_wm_constants;
 extern const struct brw_tracked_state gen6_wm_state;
 extern const struct brw_tracked_state gen7_blend_state_pointer;
 extern const struct brw_tracked_state gen7_cc_state_pointer;
+extern const struct brw_tracked_state gen7_clip_state;
 extern const struct brw_tracked_state gen7_depth_stencil_state_pointer;
 extern const struct brw_tracked_state gen7_ps_state;
 extern const struct brw_tracked_state gen7_sbe_state;

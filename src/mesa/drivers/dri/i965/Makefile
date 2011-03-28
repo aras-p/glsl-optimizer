@@ -98,6 +98,7 @@ DRIVER_SOURCES = \
 	gen6_vs_state.c \
 	gen6_wm_state.c \
 	gen7_cc_state.c \
+	gen7_clip_state.c \
 	gen7_sf_state.c \
 	gen7_urb.c \
 	gen7_wm_state.c

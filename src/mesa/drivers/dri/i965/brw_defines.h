@@ -939,6 +939,15 @@
 
 #define _3DSTATE_CLIP				0x7812 /* GEN6+ */
 /* DW1 */
+# define GEN7_CLIP_WINDING_CW                           (0 << 20)
+# define GEN7_CLIP_WINDING_CCW                          (1 << 20)
+# define GEN7_CLIP_VERTEX_SUBPIXEL_PRECISION_8          (0 << 19)
+# define GEN7_CLIP_VERTEX_SUBPIXEL_PRECISION_4          (1 << 19)
+# define GEN7_CLIP_EARLY_CULL                           (1 << 18)
+# define GEN7_CLIP_CULLMODE_BOTH                        (0 << 16)
+# define GEN7_CLIP_CULLMODE_NONE                        (1 << 16)
+# define GEN7_CLIP_CULLMODE_FRONT                       (2 << 16)
+# define GEN7_CLIP_CULLMODE_BACK                        (3 << 16)
 # define GEN6_CLIP_STATISTICS_ENABLE			(1 << 10)
 /**
  * Just does cheap culling based on the clip distance.  Bits must be
