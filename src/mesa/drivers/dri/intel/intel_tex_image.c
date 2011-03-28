@@ -370,8 +370,10 @@ intelTexImage(struct gl_context * ctx,
        * whole object since our level didn't fit what was there
        * before, and any lower levels would fit into our miptree.
        */
-      if (intelImage->mt)
+      if (intelImage->mt) {
+	 intel_miptree_release(intel, &intelObj->mt);
 	 intel_miptree_reference(&intelObj->mt, intelImage->mt);
+      }
    }
 
    /* PBO fastpaths:
