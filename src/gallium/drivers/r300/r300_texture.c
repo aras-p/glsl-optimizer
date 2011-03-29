@@ -420,13 +420,13 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
         /* These formats work fine with UV88 if US_OUT_FMT is set correctly. */
         case PIPE_FORMAT_A16_UNORM:
         case PIPE_FORMAT_A16_SNORM:
-        /*case PIPE_FORMAT_A16_FLOAT:*/
+        case PIPE_FORMAT_A16_FLOAT:
         case PIPE_FORMAT_L16_UNORM:
         case PIPE_FORMAT_L16_SNORM:
-        /*case PIPE_FORMAT_L16_FLOAT:*/
+        case PIPE_FORMAT_L16_FLOAT:
         case PIPE_FORMAT_I16_UNORM:
         case PIPE_FORMAT_I16_SNORM:
-        /*case PIPE_FORMAT_I16_FLOAT:*/
+        case PIPE_FORMAT_I16_FLOAT:
         case PIPE_FORMAT_R16_UNORM:
         case PIPE_FORMAT_R16_SNORM:
         case PIPE_FORMAT_R16_FLOAT:
@@ -467,10 +467,10 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
         case PIPE_FORMAT_R16G16_FLOAT:
         case PIPE_FORMAT_L16A16_UNORM:
         case PIPE_FORMAT_L16A16_SNORM:
-        /*case PIPE_FORMAT_L16A16_FLOAT:
+        case PIPE_FORMAT_L16A16_FLOAT:
         case PIPE_FORMAT_A32_FLOAT:
         case PIPE_FORMAT_L32_FLOAT:
-        case PIPE_FORMAT_I32_FLOAT:*/
+        case PIPE_FORMAT_I32_FLOAT:
         case PIPE_FORMAT_R32_FLOAT:
             return R300_COLOR_FORMAT_ARGB8888;
 
@@ -486,7 +486,7 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
         /* These formats work fine with ARGB16161616 if US_OUT_FMT is set
          * correctly. */
         case PIPE_FORMAT_R32G32_FLOAT:
-        /*case PIPE_FORMAT_L32A32_FLOAT:*/
+        case PIPE_FORMAT_L32A32_FLOAT:
             return R300_COLOR_FORMAT_ARGB16161616;
 
         /* 128-bit buffers. */
@@ -669,8 +669,8 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         /*case PIPE_FORMAT_X8R8G8B8_SNORM:*/
         case PIPE_FORMAT_A16_UNORM:
         case PIPE_FORMAT_A16_SNORM:
-        /*case PIPE_FORMAT_A16_FLOAT:
-        case PIPE_FORMAT_A32_FLOAT:*/
+        case PIPE_FORMAT_A16_FLOAT:
+        case PIPE_FORMAT_A32_FLOAT:
             return modifier |
                 R300_C0_SEL_A | R300_C1_SEL_R |
                 R300_C2_SEL_G | R300_C3_SEL_B;
@@ -704,12 +704,12 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         case PIPE_FORMAT_R32G32B32A32_FLOAT:
         case PIPE_FORMAT_L16_UNORM:
         case PIPE_FORMAT_L16_SNORM:
-        /*case PIPE_FORMAT_L16_FLOAT:
-        case PIPE_FORMAT_L32_FLOAT:*/
+        case PIPE_FORMAT_L16_FLOAT:
+        case PIPE_FORMAT_L32_FLOAT:
         case PIPE_FORMAT_I16_UNORM:
         case PIPE_FORMAT_I16_SNORM:
-        /*case PIPE_FORMAT_I16_FLOAT:
-        case PIPE_FORMAT_I32_FLOAT:*/
+        case PIPE_FORMAT_I16_FLOAT:
+        case PIPE_FORMAT_I32_FLOAT:
             return modifier |
                 R300_C0_SEL_R | R300_C1_SEL_G |
                 R300_C2_SEL_B | R300_C3_SEL_A;
@@ -717,8 +717,8 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         /* LA outputs. */
         case PIPE_FORMAT_L16A16_UNORM:
         case PIPE_FORMAT_L16A16_SNORM:
-        /*case PIPE_FORMAT_L16A16_FLOAT:
-        case PIPE_FORMAT_L32A32_FLOAT:*/
+        case PIPE_FORMAT_L16A16_FLOAT:
+        case PIPE_FORMAT_L32A32_FLOAT:
             return modifier |
                 R300_C0_SEL_R | R300_C1_SEL_A;
 
