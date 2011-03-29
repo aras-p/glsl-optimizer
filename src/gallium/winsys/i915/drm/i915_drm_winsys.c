@@ -1,4 +1,7 @@
 #include <stdio.h>
+#include <sys/ioctl.h>
+
+#include "i915_drm.h"
 
 #include "state_tracker/drm_driver.h"
 
@@ -13,13 +16,13 @@
 
 
 static void
-i915_drm_get_device_id(unsigned int *device_id)
+i915_drm_get_device_id(int fd, unsigned int *device_id)
 {
    int ret;
    struct drm_i915_getparam gp;
 
    gp.param = I915_PARAM_CHIPSET_ID;
-   gp.value = (int *)devid;
+   gp.value = (int *)device_id;
 
    ret = ioctl(fd, DRM_IOCTL_I915_GETPARAM, &gp, sizeof(gp));
    assert(ret == 0);
@@ -45,7 +48,7 @@ i915_drm_winsys_create(int drmFD)
    if (!idws)
       return NULL;
 
-   i915_drm_get_device_id(&deviceID);
+   i915_drm_get_device_id(drmFD, &deviceID);
 
    i915_drm_winsys_init_batchbuffer_functions(idws);
    i915_drm_winsys_init_buffer_functions(idws);
