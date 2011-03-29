@@ -2321,7 +2321,7 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
    if ((mask & (GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT))
         && filter != GL_NEAREST) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-             "glBlitFramebufferEXT(depth/stencil requires GL_NEAREST filter");
+             "glBlitFramebufferEXT(depth/stencil requires GL_NEAREST filter)");
       return;
    }
 
@@ -2342,7 +2342,7 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
           _mesa_get_format_bits(readRb->Format, GL_STENCIL_BITS) != 
           _mesa_get_format_bits(drawRb->Format, GL_STENCIL_BITS)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glBlitFramebufferEXT(stencil buffer size mismatch");
+                     "glBlitFramebufferEXT(stencil buffer size mismatch)");
          return;
       }
    }
@@ -2355,7 +2355,7 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
           _mesa_get_format_bits(readRb->Format, GL_DEPTH_BITS) != 
           _mesa_get_format_bits(drawRb->Format, GL_DEPTH_BITS)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glBlitFramebufferEXT(depth buffer size mismatch");
+                     "glBlitFramebufferEXT(depth buffer size mismatch)");
          return;
       }
    }
@@ -2374,7 +2374,7 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       if (srcX1 - srcX0 != dstX1 - dstX0 ||
           srcY1 - srcY0 != dstY1 - dstY0) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                "glBlitFramebufferEXT(bad src/dst multisample region sizes");
+                "glBlitFramebufferEXT(bad src/dst multisample region sizes)");
          return;
       }
 
@@ -2383,7 +2383,7 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
           colorDrawRb &&
           colorReadRb->Format != colorDrawRb->Format) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                "glBlitFramebufferEXT(bad src/dst multisample pixel formats");
+                "glBlitFramebufferEXT(bad src/dst multisample pixel formats)");
          return;
       }
    }
