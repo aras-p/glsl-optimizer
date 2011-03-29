@@ -93,6 +93,8 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_MAX_RENDER_TARGETS:
       return 8;
+   case PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL:
+      return 1;
    case PIPE_CAP_TIMER_QUERY:
    case PIPE_CAP_OCCLUSION_QUERY:
       return 1;
@@ -599,8 +601,6 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    BEGIN_RING(chan, RING_3D(POINT_RASTER_RULES), 1);
    OUT_RING  (chan, NVC0_3D_POINT_RASTER_RULES_OGL);
 
-   BEGIN_RING(chan, RING_3D(FRAG_COLOR_CLAMP_EN), 1);
-   OUT_RING  (chan, 0x11111111);
    BEGIN_RING(chan, RING_3D(EDGEFLAG_ENABLE), 1);
    OUT_RING  (chan, 1);
 

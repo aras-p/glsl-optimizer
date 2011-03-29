@@ -486,7 +486,7 @@ nv50_fragprog_prepare(struct nv50_translation_info *ti)
       ++nintp;
    }
 
-   p->fp.colors = (1 << 24) | 4; /* CLAMP, FFC0_ID = 4 */
+   p->fp.colors = 4 << NV50_3D_MAP_SEMANTIC_0_FFC0_ID__SHIFT; /* after HPOS */
 
    for (i = 0; i < p->in_nr; ++i) {
       int j = p->in[i].id;

@@ -198,6 +198,9 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
    SB_BEGIN_3D(so, VERTEX_TWO_SIDE_ENABLE, 1);
    SB_DATA    (so, cso->light_twoside);
 
+   SB_BEGIN_3D(so, FRAG_COLOR_CLAMP_EN, 1);
+   SB_DATA    (so, cso->clamp_fragment_color ? 0x11111111 : 0x00000000);
+
    SB_BEGIN_3D(so, LINE_WIDTH, 1);
    SB_DATA    (so, fui(cso->line_width));
    SB_BEGIN_3D(so, LINE_SMOOTH_ENABLE, 1);

@@ -183,6 +183,10 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
     SB_IMMED_3D(so, PROVOKING_VERTEX_LAST, !cso->flatshade_first);
     SB_IMMED_3D(so, VERTEX_TWO_SIDE_ENABLE, cso->light_twoside);
 
+    SB_IMMED_3D(so, VERT_COLOR_CLAMP_EN, cso->clamp_vertex_color);
+    SB_BEGIN_3D(so, FRAG_COLOR_CLAMP_EN, 1);
+    SB_DATA    (so, cso->clamp_fragment_color ? 0x11111111 : 0x00000000);
+
     SB_BEGIN_3D(so, LINE_WIDTH, 1);
     SB_DATA    (so, fui(cso->line_width));
     SB_IMMED_3D(so, LINE_SMOOTH_ENABLE, cso->line_smooth);
