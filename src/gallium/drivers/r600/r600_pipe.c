@@ -371,6 +371,7 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_SHADER_STENCIL_EXPORT:
 	case PIPE_CAP_TGSI_INSTANCEID:
 	case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
+	case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
 		return 1;
 	case PIPE_CAP_INDEP_BLEND_ENABLE:
 		/* R600 doesn't support per-MRT blends */

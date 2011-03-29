@@ -131,6 +131,7 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_PRIMITIVE_RESTART:
    case PIPE_CAP_TGSI_INSTANCEID:
    case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
+   case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
       return 1;
    default:
       NOUVEAU_ERR("unknown PIPE_CAP %d\n", param);

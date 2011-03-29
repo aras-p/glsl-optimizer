@@ -118,6 +118,8 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
             return 1;
         case PIPE_CAP_TEXTURE_SWIZZLE:
             return util_format_s3tc_enabled ? r300screen->caps.dxtc_swizzle : 1;
+        case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
+            return is_r500 ? 1 : 0;
 
         /* Unsupported features (boolean caps). */
         case PIPE_CAP_TIMER_QUERY:
