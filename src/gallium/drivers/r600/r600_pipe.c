@@ -37,6 +37,7 @@
 #include <util/u_memory.h>
 #include <util/u_inlines.h>
 #include "util/u_upload_mgr.h"
+#include "os/os_time.h"
 #include <pipebuffer/pb_buffer.h>
 #include "r600.h"
 #include "r600d.h"
@@ -48,14 +49,81 @@
 /*
  * pipe_context
  */
+static struct r600_fence *r600_create_fence(struct r600_pipe_context *ctx)
+{
+	struct r600_fence *fence = NULL;
+
+	if (!ctx->fences.bo) {
+		/* Create the shared buffer object */
+		ctx->fences.bo = r600_bo(ctx->radeon, 4096, 0, 0, 0);
+		if (!ctx->fences.bo) {
+			R600_ERR("r600: failed to create bo for fence objects\n");
+			return NULL;
+		}
+		ctx->fences.data = r600_bo_map(ctx->radeon, ctx->fences.bo, PB_USAGE_UNSYNCHRONIZED, NULL);
+	}
+
+	if (!LIST_IS_EMPTY(&ctx->fences.pool)) {
+		struct r600_fence *entry;
+
+		/* Try to find a freed fence that has been signalled */
+		LIST_FOR_EACH_ENTRY(entry, &ctx->fences.pool, head) {
+			if (ctx->fences.data[entry->index] != 0) {
+				LIST_DELINIT(&entry->head);
+				fence = entry;
+				break;
+			}
+		}
+	}
+
+	if (!fence) {
+		/* Allocate a new fence */
+		struct r600_fence_block *block;
+		unsigned index;
+
+		if ((ctx->fences.next_index + 1) >= 1024) {
+			R600_ERR("r600: too many concurrent fences\n");
+			return NULL;
+		}
+
+		index = ctx->fences.next_index++;
+
+		if (!(index % FENCE_BLOCK_SIZE)) {
+			/* Allocate a new block */
+			block = CALLOC_STRUCT(r600_fence_block);
+			if (block == NULL)
+				return NULL;
+
+			LIST_ADD(&block->head, &ctx->fences.blocks);
+		} else {
+			block = LIST_ENTRY(struct r600_fence_block, ctx->fences.blocks.next, head);
+		}
+
+		fence = &block->fences[index % FENCE_BLOCK_SIZE];
+		fence->ctx = ctx;
+		fence->index = index;
+	}
+
+	pipe_reference_init(&fence->reference, 1);
+
+	ctx->fences.data[fence->index] = 0;
+	r600_context_emit_fence(&ctx->ctx, ctx->fences.bo, fence->index, 1);
+	return fence;
+}
+
 static void r600_flush(struct pipe_context *ctx,
 			struct pipe_fence_handle **fence)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+	struct r600_fence **rfence = (struct r600_fence**)fence;
+
 #if 0
 	static int dc = 0;
 	char dname[256];
 #endif
+
+	if (rfence)
+		*rfence = r600_create_fence(rctx);
 
 	if (!rctx->ctx.pm4_cdwords)
 		return;
@@ -112,6 +180,18 @@ static void r600_destroy_context(struct pipe_context *context)
 	u_vbuf_mgr_destroy(rctx->vbuf_mgr);
 	util_slab_destroy(&rctx->pool_transfers);
 
+	if (rctx->fences.bo) {
+		struct r600_fence_block *entry, *tmp;
+
+		LIST_FOR_EACH_ENTRY_SAFE(entry, tmp, &rctx->fences.blocks, head) {
+			LIST_DEL(&entry->head);
+			FREE(entry);
+		}
+
+		r600_bo_unmap(rctx->radeon, rctx->fences.bo);
+		r600_bo_reference(rctx->radeon, &rctx->fences.bo, NULL);
+	}
+
 	r600_update_num_contexts(rctx->screen, -1);
 
 	FREE(rctx);
@@ -138,6 +218,12 @@ static struct pipe_context *r600_create_context(struct pipe_screen *screen, void
 	rctx->screen = rscreen;
 	rctx->radeon = rscreen->radeon;
 	rctx->family = r600_get_family(rctx->radeon);
+
+	rctx->fences.bo = NULL;
+	rctx->fences.data = NULL;
+	rctx->fences.next_index = 0;
+	LIST_INITHEAD(&rctx->fences.pool);
+	LIST_INITHEAD(&rctx->fences.blocks);
 
 	r600_init_blit_functions(rctx);
 	r600_init_query_functions(rctx);
@@ -491,6 +577,62 @@ static void r600_destroy_screen(struct pipe_screen* pscreen)
 	FREE(rscreen);
 }
 
+static void r600_fence_reference(struct pipe_screen *pscreen,
+                                 struct pipe_fence_handle **ptr,
+                                 struct pipe_fence_handle *fence)
+{
+	struct r600_fence **oldf = (struct r600_fence**)ptr;
+	struct r600_fence *newf = (struct r600_fence*)fence;
+
+	if (pipe_reference(&(*oldf)->reference, &newf->reference)) {
+		struct r600_pipe_context *ctx = (*oldf)->ctx;
+		LIST_ADDTAIL(&(*oldf)->head, &ctx->fences.pool);
+	}
+
+	*ptr = fence;
+}
+
+static boolean r600_fence_signalled(struct pipe_screen *pscreen,
+                                    struct pipe_fence_handle *fence)
+{
+	struct r600_fence *rfence = (struct r600_fence*)fence;
+	struct r600_pipe_context *ctx = rfence->ctx;
+
+	return ctx->fences.data[rfence->index];
+}
+
+static boolean r600_fence_finish(struct pipe_screen *pscreen,
+                                 struct pipe_fence_handle *fence,
+                                 uint64_t timeout)
+{
+	struct r600_fence *rfence = (struct r600_fence*)fence;
+	struct r600_pipe_context *ctx = rfence->ctx;
+	int64_t start_time = 0;
+	unsigned spins = 0;
+
+	if (timeout != PIPE_TIMEOUT_INFINITE) {
+		start_time = os_time_get();
+
+		/* Convert to microseconds. */
+		timeout /= 1000;
+	}
+
+	while (ctx->fences.data[rfence->index] == 0) {
+		if (++spins % 256)
+			continue;
+#ifdef PIPE_OS_UNIX
+		sched_yield();
+#else
+		os_time_sleep(10);
+#endif
+		if (timeout != PIPE_TIMEOUT_INFINITE &&
+		    os_time_get() - start_time >= timeout) {
+			return FALSE;
+		}
+	}
+
+	return TRUE;
+}
 
 struct pipe_screen *r600_screen_create(struct radeon *radeon)
 {
@@ -511,6 +653,9 @@ struct pipe_screen *r600_screen_create(struct radeon *radeon)
 	rscreen->screen.get_paramf = r600_get_paramf;
 	rscreen->screen.is_format_supported = r600_is_format_supported;
 	rscreen->screen.context_create = r600_create_context;
+	rscreen->screen.fence_reference = r600_fence_reference;
+	rscreen->screen.fence_signalled = r600_fence_signalled;
+	rscreen->screen.fence_finish = r600_fence_finish;
 	r600_init_screen_resource_functions(&rscreen->screen);
 
 	rscreen->tiling_info = r600_get_tiling_info(radeon);

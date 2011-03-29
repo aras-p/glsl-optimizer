@@ -1188,6 +1188,29 @@ void r600_context_flush(struct r600_context *ctx)
 	}
 }
 
+void r600_context_emit_fence(struct r600_context *ctx, struct r600_bo *fence_bo, unsigned offset, unsigned value)
+{
+	unsigned ndwords = 10;
+
+	if (((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) ||
+	    (ctx->creloc >= (ctx->nreloc - 1))) {
+		/* need to flush */
+		r600_context_flush(ctx);
+	}
+
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
+	ctx->pm4[ctx->pm4_cdwords++] = offset << 2;             /* ADDRESS_LO */
+	ctx->pm4[ctx->pm4_cdwords++] = (1 << 29) | (0 << 24);   /* DATA_SEL | INT_EN | ADDRESS_HI */
+	ctx->pm4[ctx->pm4_cdwords++] = value;                   /* DATA_LO */
+	ctx->pm4[ctx->pm4_cdwords++] = 0;                       /* DATA_HI */
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_NOP, 0, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = 0;
+	r600_context_bo_reloc(ctx, &ctx->pm4[ctx->pm4_cdwords - 1], fence_bo);
+}
+
 void r600_context_dump_bof(struct r600_context *ctx, const char *file)
 {
 	bof_t *bcs, *blob, *array, *bo, *size, *handle, *device_id, *root;

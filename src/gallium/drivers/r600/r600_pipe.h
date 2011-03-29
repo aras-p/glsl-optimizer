@@ -124,6 +124,30 @@ struct r600_textures_info {
 	unsigned			n_samplers;
 };
 
+struct r600_fence {
+	struct pipe_reference		reference;
+	struct r600_pipe_context	*ctx;
+	unsigned			index; /* in the shared bo */
+	struct list_head		head;
+};
+
+#define FENCE_BLOCK_SIZE 16
+
+struct r600_fence_block {
+	struct r600_fence		fences[FENCE_BLOCK_SIZE];
+	struct list_head		head;
+};
+
+struct r600_pipe_fences {
+	struct r600_bo			*bo;
+	unsigned			*data;
+	unsigned			next_index;
+	/* linked list of preallocated blocks */
+	struct list_head		blocks;
+	/* linked list of freed fences */
+	struct list_head		pool;
+};
+
 #define R600_CONSTANT_ARRAY_SIZE 256
 #define R600_RESOURCE_ARRAY_SIZE 160
 
@@ -158,9 +182,12 @@ struct r600_pipe_context {
 	bool				flatshade;
 	struct r600_textures_info	ps_samplers;
 
+	struct r600_pipe_fences		fences;
+
 	struct u_vbuf_mgr		*vbuf_mgr;
 	struct util_slab_mempool	pool_transfers;
 	bool				blit;
+
 };
 
 struct r600_drawl {
