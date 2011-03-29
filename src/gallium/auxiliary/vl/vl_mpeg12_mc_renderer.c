@@ -217,11 +217,11 @@ calc_field(struct ureg_program *shader)
 }
 
 static struct ureg_dst
-fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct ureg_dst field)
+fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct ureg_dst field, unsigned color_swizzle)
 {
-   struct ureg_src tc[3], sampler[3], eb[2];
+   struct ureg_src tc[3], sampler, eb[2];
    struct ureg_dst texel, t_tc, t_eb_info;
-   unsigned i, label;
+   unsigned label;
 
    texel = ureg_DECL_temporary(shader);
    t_tc = ureg_DECL_temporary(shader);
@@ -234,9 +234,10 @@ fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct
    eb[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB_0, TGSI_INTERPOLATE_CONSTANT);
    eb[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_EB_1, TGSI_INTERPOLATE_CONSTANT);
 
-   for (i = 0; i < 3; ++i)  {
-      sampler[i] = ureg_DECL_sampler(shader, i);
-   }
+   //for (i = 0; i < 3; ++i)  {
+   //   sampler[i] = ureg_DECL_sampler(shader, i);
+   //}
+   sampler = ureg_DECL_sampler(shader, 0);
 
    /*
     * texel.y  = tex(field.y ? tc[1] : tc[0], sampler[0])
@@ -256,19 +257,16 @@ fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct
    ureg_SLT(shader, ureg_writemask(t_eb_info, TGSI_WRITEMASK_XYZ), ureg_src(t_eb_info), ureg_imm1f(shader, 0.5f));
 
    ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_XYZ), ureg_imm1f(shader, 0.0f));
-   for (i = 0; i < 3; ++i) {
-      ureg_IF(shader, ureg_scalar(ureg_src(t_eb_info), TGSI_SWIZZLE_X + i), &label);
+   ureg_IF(shader, ureg_scalar(ureg_src(t_eb_info), color_swizzle), &label);
 
-         /* Nouveau can't writemask tex dst regs (yet?), so this won't work anymore on nvidia hardware */
-         if(i==0 || r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444) {
-            ureg_TEX(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), TGSI_TEXTURE_3D, ureg_src(t_tc), sampler[i]);
-         } else {
-            ureg_TEX(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), TGSI_TEXTURE_3D, tc[2], sampler[i]);
-         }
+      if(color_swizzle==TGSI_SWIZZLE_X || r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444) {
+         ureg_TEX(shader, texel, TGSI_TEXTURE_3D, ureg_src(t_tc), sampler);
+      } else {
+         ureg_TEX(shader, texel, TGSI_TEXTURE_3D, tc[2], sampler);
+      }
 
-      ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
-      ureg_ENDIF(shader);
-   }
+   ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
+   ureg_ENDIF(shader);
 
    ureg_release_temporary(shader, t_tc);
    ureg_release_temporary(shader, t_eb_info);
@@ -290,13 +288,13 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
       tc[i] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV0 + i, TGSI_INTERPOLATE_LINEAR);
 
    for (i = 0; i < 2; ++i) {
-      sampler[i] = ureg_DECL_sampler(shader, i + 3);
+      sampler[i] = ureg_DECL_sampler(shader, i + 1);
       ref[i] = ureg_DECL_temporary(shader);
    }
 
    result = ureg_DECL_temporary(shader);
 
-   ureg_MOV(shader, ureg_writemask(result, TGSI_WRITEMASK_XYZ), ureg_imm1f(shader, 0.5f));
+   ureg_MOV(shader, result, ureg_imm1f(shader, 0.5f));
 
    ureg_IF(shader, ureg_scalar(info, TGSI_SWIZZLE_X), &intra_label);
       /*
@@ -316,7 +314,7 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
       ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, ureg_src(ref[0]), sampler[0]);
       ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, ureg_src(ref[1]), sampler[1]);
 
-      ureg_LRP(shader, ureg_writemask(result, TGSI_WRITEMASK_XYZ),
+      ureg_LRP(shader, result,
                ureg_scalar(info, TGSI_SWIZZLE_Y),
                ureg_src(ref[1]), ureg_src(ref[0]));
 
@@ -330,7 +328,7 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
 }
 
 static void *
-create_frag_shader(struct vl_mpeg12_mc_renderer *r)
+create_frag_shader(struct vl_mpeg12_mc_renderer *r, unsigned color_swizzle)
 {
    struct ureg_program *shader;
    struct ureg_dst result;
@@ -344,11 +342,11 @@ create_frag_shader(struct vl_mpeg12_mc_renderer *r)
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
    field = calc_field(shader);
-   texel = fetch_ycbcr(r, shader, field);
+   texel = fetch_ycbcr(r, shader, field, color_swizzle);
 
    result = fetch_ref(shader, field);
 
-   ureg_ADD(shader, ureg_writemask(fragment, TGSI_WRITEMASK_XYZ), ureg_src(texel), ureg_src(result));
+   ureg_ADD(shader, fragment, ureg_src(texel), ureg_src(result));
 
    ureg_release_temporary(shader, field);
    ureg_release_temporary(shader, texel);
@@ -363,13 +361,11 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
 {
    struct pipe_sampler_state sampler;
    struct pipe_rasterizer_state rs_state;
-   unsigned filters[5];
+   unsigned filters[3];
    unsigned i;
 
    assert(r);
 
-   r->viewport.scale[0] = r->buffer_width;
-   r->viewport.scale[1] = r->buffer_height;
    r->viewport.scale[2] = 1;
    r->viewport.scale[3] = 1;
    r->viewport.translate[0] = 0;
@@ -377,27 +373,17 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
    r->viewport.translate[2] = 0;
    r->viewport.translate[3] = 0;
 
-   r->fb_state.width = r->buffer_width;
-   r->fb_state.height = r->buffer_height;
    r->fb_state.nr_cbufs = 1;
    r->fb_state.zsbuf = NULL;
 
-   /* Luma filter */
+   /* source filter */
    filters[0] = PIPE_TEX_FILTER_NEAREST;
-   /* Chroma filters */
-   if (r->chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444 || true) { //TODO
-      filters[1] = PIPE_TEX_FILTER_NEAREST;
-      filters[2] = PIPE_TEX_FILTER_NEAREST;
-   }
-   else {
-      filters[1] = PIPE_TEX_FILTER_LINEAR;
-      filters[2] = PIPE_TEX_FILTER_LINEAR;
-   }
-   /* Fwd, bkwd ref filters */
-   filters[3] = PIPE_TEX_FILTER_LINEAR;
-   filters[4] = PIPE_TEX_FILTER_LINEAR;
 
-   for (i = 0; i < 5; ++i) {
+   /* Fwd, bkwd ref filters */
+   filters[1] = PIPE_TEX_FILTER_LINEAR;
+   filters[2] = PIPE_TEX_FILTER_LINEAR;
+
+   for (i = 0; i < 3; ++i) {
       memset(&sampler, 0, sizeof(sampler));
       sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
       sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
@@ -448,7 +434,7 @@ cleanup_pipe_state(struct vl_mpeg12_mc_renderer *r)
 
    assert(r);
 
-   for (i = 0; i < 5; ++i)
+   for (i = 0; i < 3; ++i)
       r->pipe->delete_sampler_state(r->pipe, r->samplers.all[i]);
 
    r->pipe->delete_rasterizer_state(r->pipe, r->rs_state);
@@ -459,7 +445,8 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
                            struct pipe_context *pipe,
                            unsigned buffer_width,
                            unsigned buffer_height,
-                           enum pipe_video_chroma_format chroma_format)
+                           enum pipe_video_chroma_format chroma_format,
+                           unsigned color_swizzle)
 {
    struct pipe_resource tex_templ, *tex_dummy;
    struct pipe_sampler_view sampler_view;
@@ -481,7 +468,7 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
    if (!renderer->vs)
       goto error_vs_shaders;
 
-   renderer->fs = create_frag_shader(renderer);
+   renderer->fs = create_frag_shader(renderer, color_swizzle);
    if (!renderer->fs)
       goto error_fs_shaders;
 
@@ -539,40 +526,14 @@ vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer)
 
 bool
 vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer,
-                         struct pipe_resource *y, struct pipe_resource *cb, struct pipe_resource *cr)
+                         struct pipe_sampler_view *source)
 {
-   struct pipe_sampler_view sampler_view;
-   struct pipe_resource *res[3];
-
-   unsigned i;
-
    assert(renderer && buffer);
-   assert(y && cb && cr);
+   assert(source);
 
-   res[0] = y;
-   res[1] = cb;
-   res[2] = cr;
-
-   for (i = 0; i < 3; ++i) {
-      memset(&sampler_view, 0, sizeof(sampler_view));
-      u_sampler_view_default_template(&sampler_view, res[i], res[i]->format);
-      sampler_view.swizzle_r = i == 0 ? PIPE_SWIZZLE_RED : PIPE_SWIZZLE_ZERO;
-      sampler_view.swizzle_g = i == 1 ? PIPE_SWIZZLE_RED : PIPE_SWIZZLE_ZERO;
-      sampler_view.swizzle_b = i == 2 ? PIPE_SWIZZLE_RED : PIPE_SWIZZLE_ZERO;
-      sampler_view.swizzle_a = PIPE_SWIZZLE_ONE;
-      buffer->sampler_views.all[i] = renderer->pipe->create_sampler_view(
-         renderer->pipe, res[i], &sampler_view);
-      if (!buffer->sampler_views.all[i])
-         goto error_samplers;
-   }
+   pipe_sampler_view_reference(&buffer->sampler_views.individual.source, source);
 
    return true;
-
-error_samplers:
-   for (i = 0; i < 3; ++i)
-      pipe_sampler_view_reference(&buffer->sampler_views.all[i], NULL);
-
-   return false;
 }
 
 void
@@ -582,7 +543,7 @@ vl_mpeg12_mc_cleanup_buffer(struct vl_mpeg12_mc_buffer *buffer)
 
    assert(buffer);
 
-   for (i = 0; i < 5; ++i)
+   for (i = 0; i < 3; ++i)
       pipe_sampler_view_reference(&buffer->sampler_views.all[i], NULL);
 }
 
@@ -599,7 +560,14 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mp
    if (not_empty_num_instances == 0 && empty_num_instances == 0)
       return;
 
+   renderer->viewport.scale[0] = surface->width;
+   renderer->viewport.scale[1] = surface->height;
+
+   renderer->fb_state.width = surface->width;
+   renderer->fb_state.height = surface->height;
    renderer->fb_state.cbufs[0] = surface;
+
+
    renderer->pipe->bind_rasterizer_state(renderer->pipe, renderer->rs_state);
    renderer->pipe->set_framebuffer_state(renderer->pipe, &renderer->fb_state);
    renderer->pipe->set_viewport_state(renderer->pipe, &renderer->viewport);
@@ -610,8 +578,8 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mp
    pipe_sampler_view_reference(&buffer->sampler_views.individual.ref[1],
                                ref[1] ? ref[1] : renderer->dummy);
 
-   renderer->pipe->set_fragment_sampler_views(renderer->pipe, 5, buffer->sampler_views.all);
-   renderer->pipe->bind_fragment_sampler_states(renderer->pipe, 5, renderer->samplers.all);
+   renderer->pipe->set_fragment_sampler_views(renderer->pipe, 3, buffer->sampler_views.all);
+   renderer->pipe->bind_fragment_sampler_states(renderer->pipe, 3, renderer->samplers.all);
 
    renderer->pipe->bind_vs_state(renderer->pipe, renderer->vs);
    renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs);

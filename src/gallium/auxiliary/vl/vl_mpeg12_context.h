@@ -51,8 +51,8 @@ struct vl_mpeg12_context
    unsigned vertex_buffer_size;
    void *vertex_elems_state;
 
-   struct vl_idct idct_y, idct_cr, idct_cb;
-   struct vl_mpeg12_mc_renderer mc_renderer;
+   struct vl_idct idct_y, idct_cb, idct_cr;
+   struct vl_mpeg12_mc_renderer mc_y, mc_cb, mc_cr;
    struct vl_compositor compositor;
 
    void *rast;
@@ -66,9 +66,7 @@ struct vl_mpeg12_buffer
 
    struct vl_ycbcr_buffer idct_source;
    struct vl_ycbcr_buffer idct_2_mc;
-
-   struct pipe_surface *surface;
-   struct pipe_sampler_view *sampler_view;
+   struct vl_ycbcr_buffer render_result;
 
    struct vl_vertex_buffer vertex_stream;
 
@@ -81,8 +79,7 @@ struct vl_mpeg12_buffer
    } vertex_bufs;
 
    struct vl_idct_buffer idct_y, idct_cb, idct_cr;
-
-   struct vl_mpeg12_mc_buffer mc;
+   struct vl_mpeg12_mc_buffer mc_y, mc_cb, mc_cr;
 };
 
 /* drivers can call this function in their pipe_video_context constructors and pass it

@@ -97,25 +97,29 @@ struct vl_ycbcr_sampler_views *vl_ycbcr_get_sampler_views(struct vl_ycbcr_buffer
 
    pipe = buffer->pipe;
 
+   memset(&sv_templ, 0, sizeof(sv_templ));
+   u_sampler_view_default_template(&sv_templ, buffer->resources.y, buffer->resources.y->format);
+
+   // Workaround
+   if (util_format_get_nr_components(buffer->resources.y->format) == 1) {
+      sv_templ.swizzle_r = PIPE_SWIZZLE_RED;
+      sv_templ.swizzle_g = PIPE_SWIZZLE_RED;
+      sv_templ.swizzle_b = PIPE_SWIZZLE_RED;
+   }
+
    if (!buffer->sampler_views.y) {
-      memset(&sv_templ, 0, sizeof(sv_templ));
-      u_sampler_view_default_template(&sv_templ, buffer->resources.y, buffer->resources.y->format);
       buffer->sampler_views.y = pipe->create_sampler_view(pipe, buffer->resources.y, &sv_templ);
       if (!buffer->sampler_views.y)
          goto error;
    }
 
    if (!buffer->sampler_views.cb) {
-      memset(&sv_templ, 0, sizeof(sv_templ));
-      u_sampler_view_default_template(&sv_templ, buffer->resources.cb, buffer->resources.cb->format);
       buffer->sampler_views.cb = pipe->create_sampler_view(pipe, buffer->resources.cb, &sv_templ);
       if (!buffer->sampler_views.cb)
          goto error;
    }
 
    if (!buffer->sampler_views.cr) {
-      memset(&sv_templ, 0, sizeof(sv_templ));
-      u_sampler_view_default_template(&sv_templ, buffer->resources.cr, buffer->resources.cr->format);
       buffer->sampler_views.cr = pipe->create_sampler_view(pipe, buffer->resources.cr, &sv_templ);
       if (!buffer->sampler_views.cr)
          goto error;

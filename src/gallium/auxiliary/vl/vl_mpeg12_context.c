@@ -89,13 +89,16 @@ vl_mpeg12_buffer_destroy(struct pipe_video_buffer *buffer)
    struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)buf->base.context;
    assert(buf && ctx);
 
+   vl_ycbcr_buffer_cleanup(&buf->idct_source);
+   vl_ycbcr_buffer_cleanup(&buf->idct_2_mc);
+   vl_ycbcr_buffer_cleanup(&buf->render_result);
    vl_vb_cleanup(&buf->vertex_stream);
    vl_idct_cleanup_buffer(&ctx->idct_y, &buf->idct_y);
    vl_idct_cleanup_buffer(&ctx->idct_cb, &buf->idct_cb);
    vl_idct_cleanup_buffer(&ctx->idct_cr, &buf->idct_cr);
-   vl_mpeg12_mc_cleanup_buffer(&buf->mc);
-   pipe_surface_reference(&buf->surface, NULL);
-   pipe_sampler_view_reference(&buf->sampler_view, NULL);
+   vl_mpeg12_mc_cleanup_buffer(&buf->mc_y);
+   vl_mpeg12_mc_cleanup_buffer(&buf->mc_cb);
+   vl_mpeg12_mc_cleanup_buffer(&buf->mc_cr);
 
    FREE(buf);
 }
@@ -166,6 +169,10 @@ vl_mpeg12_buffer_flush(struct pipe_video_buffer *buffer,
    struct vl_mpeg12_buffer *past = (struct vl_mpeg12_buffer *)refs[0];
    struct vl_mpeg12_buffer *future = (struct vl_mpeg12_buffer *)refs[1];
 
+   struct vl_ycbcr_surfaces *surfaces;
+   struct vl_ycbcr_sampler_views *sv_past;
+   struct vl_ycbcr_sampler_views *sv_future;
+
    struct pipe_sampler_view *sv_refs[2];
    unsigned ne_start, ne_num, e_start, e_num;
    struct vl_mpeg12_context *ctx;
@@ -184,13 +191,28 @@ vl_mpeg12_buffer_flush(struct pipe_video_buffer *buffer,
    vl_idct_flush(&ctx->idct_cr, &buf->idct_cr, ne_num);
    vl_idct_flush(&ctx->idct_cb, &buf->idct_cb, ne_num);
 
-   sv_refs[0] = past ? past->sampler_view : NULL;
-   sv_refs[1] = future ? future->sampler_view : NULL;
+   surfaces = vl_ycbcr_get_surfaces(&buf->render_result);
 
-   vl_mpeg12_mc_renderer_flush(&ctx->mc_renderer, &buf->mc,
-                               buf->surface, sv_refs,
-                               ne_start, ne_num, e_start, e_num,
-                               fence);
+   sv_past = past ? vl_ycbcr_get_sampler_views(&past->render_result) : NULL;
+   sv_future = future ? vl_ycbcr_get_sampler_views(&future->render_result) : NULL;
+
+   sv_refs[0] = sv_past ? sv_past->y : NULL;
+   sv_refs[1] = sv_future ? sv_future->y : NULL;
+
+   vl_mpeg12_mc_renderer_flush(&ctx->mc_y, &buf->mc_y, surfaces->y,
+                               sv_refs, ne_start, ne_num, e_start, e_num, fence);
+
+   sv_refs[0] = sv_past ? sv_past->cb : NULL;
+   sv_refs[1] = sv_future ? sv_future->cb : NULL;
+
+   vl_mpeg12_mc_renderer_flush(&ctx->mc_cb, &buf->mc_cb, surfaces->cb,
+                               sv_refs, ne_start, ne_num, e_start, e_num, fence);
+
+   sv_refs[0] = sv_past ? sv_past->cr : NULL;
+   sv_refs[1] = sv_future ? sv_future->cr : NULL;
+
+   vl_mpeg12_mc_renderer_flush(&ctx->mc_cr, &buf->mc_cr, surfaces->cr,
+                               sv_refs, ne_start, ne_num, e_start, e_num, fence);
 }
 
 static void
@@ -209,7 +231,9 @@ vl_mpeg12_destroy(struct pipe_video_context *vpipe)
    ctx->pipe->delete_depth_stencil_alpha_state(ctx->pipe, ctx->dsa);
 
    vl_compositor_cleanup(&ctx->compositor);
-   vl_mpeg12_mc_renderer_cleanup(&ctx->mc_renderer);
+   vl_mpeg12_mc_renderer_cleanup(&ctx->mc_y);
+   vl_mpeg12_mc_renderer_cleanup(&ctx->mc_cb);
+   vl_mpeg12_mc_renderer_cleanup(&ctx->mc_cr);
    vl_idct_cleanup(&ctx->idct_y);
    vl_idct_cleanup(&ctx->idct_cr);
    vl_idct_cleanup(&ctx->idct_cb);
@@ -270,10 +294,7 @@ vl_mpeg12_create_buffer(struct pipe_video_context *vpipe)
    struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
    struct vl_mpeg12_buffer *buffer;
 
-   struct pipe_resource res_template, *resource;
-   struct pipe_surface surf_template;
-   struct pipe_sampler_view sv_template;
-   struct vl_ycbcr_sampler_views *idct_views;
+   struct vl_ycbcr_sampler_views *idct_views, *mc_views;
    struct vl_ycbcr_surfaces *idct_surfaces;
 
    assert(ctx);
@@ -288,41 +309,6 @@ vl_mpeg12_create_buffer(struct pipe_video_context *vpipe)
    buffer->base.add_macroblocks = vl_mpeg12_buffer_add_macroblocks;
    buffer->base.unmap = vl_mpeg12_buffer_unmap;
    buffer->base.flush = vl_mpeg12_buffer_flush;
-
-   memset(&res_template, 0, sizeof(res_template));
-   res_template.target = PIPE_TEXTURE_2D;
-   res_template.format = ctx->decode_format;
-   res_template.last_level = 0;
-   res_template.width0 = ctx->buffer_width;
-   res_template.height0 = ctx->buffer_height;
-   res_template.depth0 = 1;
-   res_template.array_size = 1;
-   res_template.usage = PIPE_USAGE_DEFAULT;
-   res_template.bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
-   res_template.flags = 0;
-   resource = ctx->pipe->screen->resource_create(ctx->pipe->screen, &res_template);
-   if (!resource) {
-      FREE(buffer);
-      return NULL;
-   }
-
-   memset(&surf_template, 0, sizeof(surf_template));
-   surf_template.format = resource->format;
-   surf_template.usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
-   buffer->surface = ctx->pipe->create_surface(ctx->pipe, resource, &surf_template);
-   if (!buffer->surface) {
-      FREE(buffer);
-      return NULL;
-   }
-
-   u_sampler_view_default_template(&sv_template, resource, resource->format);
-   buffer->sampler_view = ctx->pipe->create_sampler_view(ctx->pipe, resource, &sv_template);
-   if (!buffer->sampler_view) {
-      FREE(buffer);
-      return NULL;
-   }
-
-   pipe_resource_reference(&resource, NULL);
 
    buffer->vertex_bufs.individual.quad.stride = ctx->quads.stride;
    buffer->vertex_bufs.individual.quad.buffer_offset = ctx->quads.buffer_offset;
@@ -349,6 +335,15 @@ vl_mpeg12_create_buffer(struct pipe_video_context *vpipe)
       return NULL;
    }
 
+   if (!vl_ycbcr_buffer_init(&buffer->render_result, ctx->pipe,
+                             ctx->buffer_width, ctx->buffer_height,
+                             ctx->base.chroma_format,
+                             PIPE_FORMAT_R8_SNORM,
+                             PIPE_USAGE_STATIC)) {
+      FREE(buffer);
+      return NULL;
+   }
+
    idct_views = vl_ycbcr_get_sampler_views(&buffer->idct_source);
    idct_surfaces = vl_ycbcr_get_surfaces(&buffer->idct_2_mc);
 
@@ -370,10 +365,19 @@ vl_mpeg12_create_buffer(struct pipe_video_context *vpipe)
       return NULL;
    }
 
-   if(!vl_mpeg12_mc_init_buffer(&ctx->mc_renderer, &buffer->mc,
-                                buffer->idct_2_mc.resources.y,
-                                buffer->idct_2_mc.resources.cb,
-                                buffer->idct_2_mc.resources.cr)) {
+   mc_views = vl_ycbcr_get_sampler_views(&buffer->idct_2_mc);
+
+   if(!vl_mpeg12_mc_init_buffer(&ctx->mc_y, &buffer->mc_y, mc_views->y)) {
+      FREE(buffer);
+      return NULL;
+   }
+
+   if(!vl_mpeg12_mc_init_buffer(&ctx->mc_cb, &buffer->mc_cb, mc_views->cb)) {
+      FREE(buffer);
+      return NULL;
+   }
+
+   if(!vl_mpeg12_mc_init_buffer(&ctx->mc_cr, &buffer->mc_cr, mc_views->cr)) {
       FREE(buffer);
       return NULL;
    }
@@ -477,6 +481,7 @@ vl_mpeg12_render_picture(struct pipe_video_context     *vpipe,
 {
    struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
    struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer*)src_surface;
+   struct vl_ycbcr_sampler_views *sampler_views;
 
    assert(vpipe);
    assert(src_surface);
@@ -484,8 +489,9 @@ vl_mpeg12_render_picture(struct pipe_video_context     *vpipe,
    assert(dst_surface);
    assert(dst_area);
 
-   vl_compositor_render(&ctx->compositor, buf->sampler_view,
-                        picture_type, src_area,
+   sampler_views = vl_ycbcr_get_sampler_views(&buf->render_result);
+
+   vl_compositor_render(&ctx->compositor, sampler_views, src_area,
                         dst_surface, dst_area, fence);
 }
 
@@ -631,12 +637,12 @@ init_idct(struct vl_mpeg12_context *ctx, unsigned buffer_width, unsigned buffer_
       chroma_blocks_y = 2;
    }
 
-   if(!vl_idct_init(&ctx->idct_cr, ctx->pipe, chroma_width, chroma_height,
-                    chroma_blocks_x, chroma_blocks_y, TGSI_SWIZZLE_Z, idct_matrix))
-      return false;
-
    if(!vl_idct_init(&ctx->idct_cb, ctx->pipe, chroma_width, chroma_height,
                     chroma_blocks_x, chroma_blocks_y, TGSI_SWIZZLE_Y, idct_matrix))
+      return false;
+
+   if(!vl_idct_init(&ctx->idct_cr, ctx->pipe, chroma_width, chroma_height,
+                    chroma_blocks_x, chroma_blocks_y, TGSI_SWIZZLE_Z, idct_matrix))
       return false;
 
    return true;
@@ -701,9 +707,31 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
       return NULL;
    }
 
-   if (!vl_mpeg12_mc_renderer_init(&ctx->mc_renderer, ctx->pipe,
+   if (!vl_mpeg12_mc_renderer_init(&ctx->mc_y, ctx->pipe,
                                    ctx->buffer_width, ctx->buffer_height,
-                                   chroma_format)) {
+                                   chroma_format, TGSI_SWIZZLE_X)) {
+      vl_idct_cleanup(&ctx->idct_y);
+      vl_idct_cleanup(&ctx->idct_cr);
+      vl_idct_cleanup(&ctx->idct_cb);
+      ctx->pipe->destroy(ctx->pipe);
+      FREE(ctx);
+      return NULL;
+   }
+
+   if (!vl_mpeg12_mc_renderer_init(&ctx->mc_cb, ctx->pipe,
+                                   ctx->buffer_width, ctx->buffer_height,
+                                   chroma_format, TGSI_SWIZZLE_Y)) {
+      vl_idct_cleanup(&ctx->idct_y);
+      vl_idct_cleanup(&ctx->idct_cr);
+      vl_idct_cleanup(&ctx->idct_cb);
+      ctx->pipe->destroy(ctx->pipe);
+      FREE(ctx);
+      return NULL;
+   }
+
+   if (!vl_mpeg12_mc_renderer_init(&ctx->mc_cr, ctx->pipe,
+                                   ctx->buffer_width, ctx->buffer_height,
+                                   chroma_format, TGSI_SWIZZLE_Z)) {
       vl_idct_cleanup(&ctx->idct_y);
       vl_idct_cleanup(&ctx->idct_cr);
       vl_idct_cleanup(&ctx->idct_cb);
@@ -716,7 +744,9 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
       vl_idct_cleanup(&ctx->idct_y);
       vl_idct_cleanup(&ctx->idct_cr);
       vl_idct_cleanup(&ctx->idct_cb);
-      vl_mpeg12_mc_renderer_cleanup(&ctx->mc_renderer);
+      vl_mpeg12_mc_renderer_cleanup(&ctx->mc_y);
+      vl_mpeg12_mc_renderer_cleanup(&ctx->mc_cb);
+      vl_mpeg12_mc_renderer_cleanup(&ctx->mc_cr);
       ctx->pipe->destroy(ctx->pipe);
       FREE(ctx);
       return NULL;
@@ -726,7 +756,9 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
       vl_idct_cleanup(&ctx->idct_y);
       vl_idct_cleanup(&ctx->idct_cr);
       vl_idct_cleanup(&ctx->idct_cb);
-      vl_mpeg12_mc_renderer_cleanup(&ctx->mc_renderer);
+      vl_mpeg12_mc_renderer_cleanup(&ctx->mc_y);
+      vl_mpeg12_mc_renderer_cleanup(&ctx->mc_cb);
+      vl_mpeg12_mc_renderer_cleanup(&ctx->mc_cr);
       vl_compositor_cleanup(&ctx->compositor);
       ctx->pipe->destroy(ctx->pipe);
       FREE(ctx);

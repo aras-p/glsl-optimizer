@@ -104,8 +104,8 @@ create_frag_shader_ycbcr_2_rgb(struct vl_compositor *c)
 {
    struct ureg_program *shader;
    struct ureg_src tc;
-   struct ureg_src csc[4];
-   struct ureg_src sampler;
+   struct ureg_src csc[3];
+   struct ureg_src sampler[3];
    struct ureg_dst texel;
    struct ureg_dst fragment;
    unsigned i;
@@ -115,19 +115,25 @@ create_frag_shader_ycbcr_2_rgb(struct vl_compositor *c)
       return false;
 
    tc = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, 1, TGSI_INTERPOLATE_LINEAR);
-   for (i = 0; i < 4; ++i)
+   for (i = 0; i < 3; ++i) {
       csc[i] = ureg_DECL_constant(shader, i);
-   sampler = ureg_DECL_sampler(shader, 0);
+      sampler[i] = ureg_DECL_sampler(shader, i);
+   }
    texel = ureg_DECL_temporary(shader);
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
    /*
-    * texel = tex(tc, sampler)
+    * texel.xyz = tex(tc, sampler[i])
     * fragment = csc * texel
     */
-   ureg_TEX(shader, texel, TGSI_TEXTURE_2D, tc, sampler);
+   for (i = 0; i < 3; ++i)
+      ureg_TEX(shader, ureg_writemask(texel, TGSI_WRITEMASK_X << i), TGSI_TEXTURE_2D, tc, sampler[i]);
+
+   ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_W), ureg_imm1f(shader, 1.0f));
+
    for (i = 0; i < 3; ++i)
       ureg_DP4(shader, ureg_writemask(fragment, TGSI_WRITEMASK_X << i), csc[i], ureg_src(texel));
+
    ureg_MOV(shader, ureg_writemask(fragment, TGSI_WRITEMASK_W), ureg_imm1f(shader, 1.0f));
 
    ureg_release_temporary(shader, texel);
@@ -531,7 +537,7 @@ static unsigned gen_data(struct vl_compositor *c,
 }
 
 static void draw_layers(struct vl_compositor *c,
-                        struct pipe_sampler_view *src_surface,
+                        struct vl_ycbcr_sampler_views *src_sampler,
                         struct pipe_video_rect *src_rect,
                         struct pipe_video_rect *dst_rect)
 {
@@ -541,37 +547,39 @@ static void draw_layers(struct vl_compositor *c,
    unsigned i;
 
    assert(c);
-   assert(src_surface);
+   assert(src_sampler);
    assert(src_rect);
    assert(dst_rect);
 
-   num_rects = gen_data(c, src_surface, src_rect, dst_rect, surfaces, frag_shaders);
+   num_rects = gen_data(c, src_sampler->y, src_rect, dst_rect, surfaces, frag_shaders);
 
    c->pipe->bind_blend_state(c->pipe, c->blend);
    for (i = 0; i < num_rects; ++i) {
       c->pipe->bind_fs_state(c->pipe, frag_shaders[i]);
-      c->pipe->set_fragment_sampler_views(c->pipe, surfaces[i][1] ? 2 : 1, &surfaces[i][0]);
+      if (i == 0) {
+         c->pipe->set_fragment_sampler_views(c->pipe, 3, &src_sampler->y);
+      } else {
+         c->pipe->set_fragment_sampler_views(c->pipe, surfaces[i][1] ? 2 : 1, &surfaces[i][0]);
+      }
 
       util_draw_arrays(c->pipe, PIPE_PRIM_QUADS, i * 4, 4);
    }
 }
 
 void vl_compositor_render(struct vl_compositor          *compositor,
-                          struct pipe_sampler_view      *src_surface,
-                          enum pipe_mpeg12_picture_type picture_type,
+                          struct vl_ycbcr_sampler_views *src_sampler,
                           struct pipe_video_rect        *src_area,
                           struct pipe_surface           *dst_surface,
                           struct pipe_video_rect        *dst_area,
                           struct pipe_fence_handle      **fence)
 {
-   void *samplers[2];
+   void *samplers[3];
 
    assert(compositor);
-   assert(src_surface);
+   assert(src_sampler);
    assert(src_area);
    assert(dst_surface);
    assert(dst_area);
-   assert(picture_type == PIPE_MPEG12_PICTURE_TYPE_FRAME);
 
    if (compositor->fb_state.width != dst_surface->width) {
       compositor->fb_inv_size.x = 1.0f / dst_surface->width;
@@ -593,17 +601,17 @@ void vl_compositor_render(struct vl_compositor          *compositor,
    compositor->viewport.translate[2] = 0;
    compositor->viewport.translate[3] = 0;
 
-   samplers[0] = samplers[1] = compositor->sampler;
+   samplers[0] = samplers[1] = samplers[2] = compositor->sampler;
 
    compositor->pipe->set_framebuffer_state(compositor->pipe, &compositor->fb_state);
    compositor->pipe->set_viewport_state(compositor->pipe, &compositor->viewport);
-   compositor->pipe->bind_fragment_sampler_states(compositor->pipe, 2, &samplers[0]);
+   compositor->pipe->bind_fragment_sampler_states(compositor->pipe, 3, &samplers[0]);
    compositor->pipe->bind_vs_state(compositor->pipe, compositor->vertex_shader);
    compositor->pipe->set_vertex_buffers(compositor->pipe, 1, &compositor->vertex_buf);
    compositor->pipe->bind_vertex_elements_state(compositor->pipe, compositor->vertex_elems_state);
    compositor->pipe->set_constant_buffer(compositor->pipe, PIPE_SHADER_FRAGMENT, 0, compositor->fs_const_buf);
 
-   draw_layers(compositor, src_surface, src_area, dst_area);
+   draw_layers(compositor, src_sampler, src_area, dst_area);
 
    assert(!compositor->dirty_layers);
    compositor->pipe->flush(compositor->pipe, fence);

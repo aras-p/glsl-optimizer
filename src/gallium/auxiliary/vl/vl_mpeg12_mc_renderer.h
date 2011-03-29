@@ -53,8 +53,8 @@ struct vl_mpeg12_mc_renderer
 
    union
    {
-      void *all[5];
-      struct { void *y, *cb, *cr, *ref[2]; } individual;
+      void *all[3];
+      struct { void *source, *ref[2]; } individual;
    } samplers;
 
    struct pipe_sampler_view *dummy;
@@ -64,8 +64,8 @@ struct vl_mpeg12_mc_buffer
 {
    union
    {
-      struct pipe_sampler_view *all[5];
-      struct { struct pipe_sampler_view *y, *cb, *cr, *ref[2]; } individual;
+      struct pipe_sampler_view *all[3];
+      struct { struct pipe_sampler_view *source, *ref[2]; } individual;
    } sampler_views;
 };
 
@@ -73,12 +73,13 @@ bool vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
                                 struct pipe_context *pipe,
                                 unsigned picture_width,
                                 unsigned picture_height,
-                                enum pipe_video_chroma_format chroma_format);
+                                enum pipe_video_chroma_format chroma_format,
+                                unsigned color_swizzle);
 
 void vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer);
 
 bool vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer,
-                              struct pipe_resource *y, struct pipe_resource *cb, struct pipe_resource *cr);
+                              struct pipe_sampler_view *source);
 
 void vl_mpeg12_mc_cleanup_buffer(struct vl_mpeg12_mc_buffer *buffer);
 

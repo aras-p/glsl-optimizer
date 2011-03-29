@@ -32,6 +32,7 @@
 #include <pipe/p_state.h>
 #include <pipe/p_video_state.h>
 #include "vl_types.h"
+#include "vl_ycbcr_buffer.h"
 
 struct pipe_context;
 struct keymap;
@@ -78,8 +79,7 @@ void vl_compositor_set_layers(struct vl_compositor *compositor,
                               unsigned num_layers);
 
 void vl_compositor_render(struct vl_compositor          *compositor,
-                          struct pipe_sampler_view      *src_surface,
-                          enum pipe_mpeg12_picture_type picture_type,
+                          struct vl_ycbcr_sampler_views *src_sampler,
                           struct pipe_video_rect        *src_area,
                           struct pipe_surface           *dst_surface,
                           struct pipe_video_rect        *dst_area,
