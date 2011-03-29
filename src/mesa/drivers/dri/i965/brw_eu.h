@@ -293,6 +293,14 @@ static INLINE struct brw_reg retype( struct brw_reg reg,
    return reg;
 }
 
+static inline struct brw_reg
+sechalf(struct brw_reg reg)
+{
+   if (reg.vstride)
+      reg.nr++;
+   return reg;
+}
+
 static INLINE struct brw_reg suboffset( struct brw_reg reg,
 					  GLuint delta )
 {   

@@ -214,9 +214,9 @@ fs_visitor::implied_mrf_writes(fs_inst *inst)
    case FS_OPCODE_LOG2:
    case FS_OPCODE_SIN:
    case FS_OPCODE_COS:
-      return 1;
+      return 1 * c->dispatch_width / 8;
    case FS_OPCODE_POW:
-      return 2;
+      return 2 * c->dispatch_width / 8;
    case FS_OPCODE_TEX:
    case FS_OPCODE_TXB:
    case FS_OPCODE_TXD:
@@ -614,7 +614,7 @@ fs_visitor::emit_math(fs_opcodes opcode, fs_reg dst, fs_reg src)
 
    if (intel->gen < 6) {
       inst->base_mrf = 2;
-      inst->mlen = 1;
+      inst->mlen = c->dispatch_width / 8;
    }
 
    return inst;
@@ -652,7 +652,7 @@ fs_visitor::emit_math(fs_opcodes opcode, fs_reg dst, fs_reg src0, fs_reg src1)
       inst = emit(opcode, dst, src0, reg_null_f);
 
       inst->base_mrf = base_mrf;
-      inst->mlen = 2;
+      inst->mlen = 2 * c->dispatch_width / 8;
    }
    return inst;
 }
@@ -2247,8 +2247,16 @@ fs_visitor::generate_math(fs_inst *inst,
       assert(inst->mlen == 0);
 
       if (inst->opcode == FS_OPCODE_POW) {
+	 brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 	 brw_math2(p, dst, op, src[0], src[1]);
+
+	 if (c->dispatch_width == 16) {
+	    brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+	    brw_math2(p, sechalf(dst), op, sechalf(src[0]), sechalf(src[1]));
+	    brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
+	 }
       } else {
+	 brw_set_compression_control(p, BRW_COMPRESSION_NONE);
 	 brw_math(p, dst,
 		  op,
 		  inst->saturate ? BRW_MATH_SATURATE_SATURATE :
@@ -2256,10 +2264,23 @@ fs_visitor::generate_math(fs_inst *inst,
 		  0, src[0],
 		  BRW_MATH_DATA_VECTOR,
 		  BRW_MATH_PRECISION_FULL);
+
+	 if (c->dispatch_width == 16) {
+	    brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+	    brw_math(p, sechalf(dst),
+		     op,
+		     inst->saturate ? BRW_MATH_SATURATE_SATURATE :
+		     BRW_MATH_SATURATE_NONE,
+		     0, sechalf(src[0]),
+		     BRW_MATH_DATA_VECTOR,
+		     BRW_MATH_PRECISION_FULL);
+	    brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
+	 }
       }
    } else {
       assert(inst->mlen >= 1);
 
+      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
       brw_math(p, dst,
 	       op,
 	       inst->saturate ? BRW_MATH_SATURATE_SATURATE :
@@ -2267,6 +2288,18 @@ fs_visitor::generate_math(fs_inst *inst,
 	       inst->base_mrf, src[0],
 	       BRW_MATH_DATA_VECTOR,
 	       BRW_MATH_PRECISION_FULL);
+
+      if (c->dispatch_width == 16) {
+	 brw_set_compression_control(p, BRW_COMPRESSION_2NDHALF);
+	 brw_math(p, sechalf(dst),
+		  op,
+		  inst->saturate ? BRW_MATH_SATURATE_SATURATE :
+		  BRW_MATH_SATURATE_NONE,
+		  inst->base_mrf + 1, sechalf(src[0]),
+		  BRW_MATH_DATA_VECTOR,
+		  BRW_MATH_PRECISION_FULL);
+	 brw_set_compression_control(p, BRW_COMPRESSION_COMPRESSED);
+      }
    }
 }
 

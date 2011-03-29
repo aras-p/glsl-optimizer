@@ -51,16 +51,6 @@ static GLboolean can_do_pln(struct intel_context *intel,
    return GL_TRUE;
 }
 
-/* Not quite sure how correct this is - need to understand horiz
- * vs. vertical strides a little better.
- */
-static INLINE struct brw_reg sechalf( struct brw_reg reg )
-{
-   if (reg.vstride)
-      reg.nr++;
-   return reg;
-}
-
 /* Return the SrcReg index of the channels that can be immediate float operands
  * instead of usage of PROGRAM_CONSTANT values through push/pull.
  */
