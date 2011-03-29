@@ -771,6 +771,23 @@ static void rv6xx_context_surface_base_update(struct r600_context *ctx,
 	}
 }
 
+/* Flushes all surfaces */
+void r600_context_flush_all(struct r600_context *ctx, unsigned flush_flags)
+{
+	unsigned ndwords = 5;
+
+	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
+		/* need to flush */
+		r600_context_flush(ctx);
+	}
+
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_SURFACE_SYNC, 3, ctx->predicate_drawing);
+	ctx->pm4[ctx->pm4_cdwords++] = flush_flags;     /* CP_COHER_CNTL */
+	ctx->pm4[ctx->pm4_cdwords++] = 0xffffffff;      /* CP_COHER_SIZE */
+	ctx->pm4[ctx->pm4_cdwords++] = 0;               /* CP_COHER_BASE */
+	ctx->pm4[ctx->pm4_cdwords++] = 0x0000000A;      /* POLL_INTERVAL */
+}
+
 void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				unsigned flush_mask, struct r600_bo *rbo)
 {

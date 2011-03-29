@@ -290,6 +290,7 @@ void r600_query_predication(struct r600_context *ctx, struct r600_query *query, 
 			    int flag_wait);
 void r600_context_emit_fence(struct r600_context *ctx, struct r600_bo *fence,
                              unsigned offset, unsigned value);
+void r600_context_flush_all(struct r600_context *ctx, unsigned flush_flags);
 
 int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon);
 void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw);

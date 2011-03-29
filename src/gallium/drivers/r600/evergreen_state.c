@@ -920,6 +920,7 @@ void evergreen_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.set_viewport_state = evergreen_set_viewport_state;
 	rctx->context.sampler_view_destroy = r600_sampler_view_destroy;
 	rctx->context.redefine_user_buffer = u_default_redefine_user_buffer;
+	rctx->context.texture_barrier = r600_texture_barrier;
 }
 
 void evergreen_init_config(struct r600_pipe_context *rctx)

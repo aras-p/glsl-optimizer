@@ -934,6 +934,13 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	}
 }
 
+void r600_texture_barrier(struct pipe_context *ctx)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+
+	r600_context_flush_all(&rctx->ctx, S_0085F0_TC_ACTION_ENA(1));
+}
+
 void r600_init_state_functions(struct r600_pipe_context *rctx)
 {
 	rctx->context.create_blend_state = r600_create_blend_state;
@@ -974,6 +981,7 @@ void r600_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.set_viewport_state = r600_set_viewport_state;
 	rctx->context.sampler_view_destroy = r600_sampler_view_destroy;
 	rctx->context.redefine_user_buffer = u_default_redefine_user_buffer;
+	rctx->context.texture_barrier = r600_texture_barrier;
 }
 
 void r600_init_config(struct r600_pipe_context *rctx)
