@@ -144,7 +144,7 @@ upload_wm_state(struct brw_context *brw)
    dw4 |= (brw->wm.prog_data->first_curbe_grf <<
 	   GEN6_WM_DISPATCH_START_GRF_SHIFT_0);
 
-   dw5 |= (40 - 1) << GEN6_WM_MAX_THREADS_SHIFT;
+   dw5 |= (brw->wm_max_threads - 1) << GEN6_WM_MAX_THREADS_SHIFT;
 
    /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->dispatch_width == 8)
