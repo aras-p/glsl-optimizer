@@ -135,7 +135,7 @@ static GLboolean brwProgramStringNotify( struct gl_context *ctx,
       struct gl_shader_program *shader_program;
 
       if (fprog->FogOption) {
-         _mesa_append_fog_code(ctx, fprog, TRUE);
+         _mesa_append_fog_code(ctx, fprog, GL_TRUE);
          fprog->FogOption = GL_NONE;
       }
 
