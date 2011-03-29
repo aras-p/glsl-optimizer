@@ -547,16 +547,16 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 	     * handed us defined values in only the constant offset
 	     * field of the setup reg.
 	     */
-	    for (unsigned int c = 0; c < type->vector_elements; c++) {
-	       struct brw_reg interp = interp_reg(location, c);
+	    for (unsigned int k = 0; k < type->vector_elements; k++) {
+	       struct brw_reg interp = interp_reg(location, k);
 	       interp = suboffset(interp, 3);
 	       emit(FS_OPCODE_CINTERP, attr, fs_reg(interp));
 	       attr.reg_offset++;
 	    }
 	 } else {
 	    /* Perspective interpolation case. */
-	    for (unsigned int c = 0; c < type->vector_elements; c++) {
-	       struct brw_reg interp = interp_reg(location, c);
+	    for (unsigned int k = 0; k < type->vector_elements; k++) {
+	       struct brw_reg interp = interp_reg(location, k);
 	       emit(FS_OPCODE_LINTERP, attr,
 		    this->delta_x, this->delta_y, fs_reg(interp));
 	       attr.reg_offset++;
@@ -564,7 +564,7 @@ fs_visitor::emit_general_interpolation(ir_variable *ir)
 
 	    if (intel->gen < 6 && !(is_gl_Color && c->key.linear_color)) {
 	       attr.reg_offset -= type->vector_elements;
-	       for (unsigned int c = 0; c < type->vector_elements; c++) {
+	       for (unsigned int k = 0; k < type->vector_elements; k++) {
 		  emit(BRW_OPCODE_MUL, attr, attr, this->pixel_w);
 		  attr.reg_offset++;
 	       }
