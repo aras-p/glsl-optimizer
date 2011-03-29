@@ -1800,6 +1800,7 @@ void brw_dp_READ_4_vs_relative(struct brw_compile *p,
 			       GLuint bind_table_index)
 {
    struct intel_context *intel = &p->brw->intel;
+   struct brw_reg src = brw_vec8_grf(0, 0);
    int msg_type;
 
    /* Setup MRF[1] with offset into const buffer */
@@ -1816,6 +1817,7 @@ void brw_dp_READ_4_vs_relative(struct brw_compile *p,
 	   addr_reg, brw_imm_d(offset));
    brw_pop_insn_state(p);
 
+   gen6_resolve_implied_move(p, &src, 0);
    struct brw_instruction *insn = next_insn(p, BRW_OPCODE_SEND);
 
    insn->header.predicate_control = BRW_PREDICATE_NONE;
@@ -1824,7 +1826,7 @@ void brw_dp_READ_4_vs_relative(struct brw_compile *p,
    insn->header.mask_control = BRW_MASK_DISABLE;
 
    brw_set_dest(p, insn, dest);
-   brw_set_src0(insn, brw_vec8_grf(0, 0));
+   brw_set_src0(insn, src);
 
    if (intel->gen == 6)
       msg_type = GEN6_DATAPORT_READ_MESSAGE_OWORD_DUAL_BLOCK_READ;
