@@ -47,13 +47,18 @@ CONCAT(vsplit_primitive_, ELT_TYPE)(struct vsplit_frontend *vsplit,
    const ushort *draw_elts = NULL;
    unsigned i;
 
+   ib += istart;
+
+   fetch_start = min_index + elt_bias;
+   fetch_count = max_index - min_index + 1;
+
    /* use the ib directly */
    if (min_index == 0 && sizeof(ib[0]) == sizeof(draw_elts[0])) {
       if (icount > vsplit->max_vertices)
          return FALSE;
 
       for (i = 0; i < icount; i++) {
-         ELT_TYPE idx = ib[istart + i];
+         ELT_TYPE idx = ib[i];
          assert(idx >= min_index && idx <= max_index);
       }
       draw_elts = (const ushort *) ib;
@@ -65,7 +70,7 @@ CONCAT(vsplit_primitive_, ELT_TYPE)(struct vsplit_frontend *vsplit,
    }
 
    /* this is faster only when we fetch less elements than the normal path */
-   if (max_index - min_index > icount - 1)
+   if (fetch_count > icount)
       return FALSE;
 
    if (elt_bias < 0 && min_index < -elt_bias)
@@ -77,13 +82,10 @@ CONCAT(vsplit_primitive_, ELT_TYPE)(struct vsplit_frontend *vsplit,
          return FALSE;
    }
 
-   fetch_start = min_index + elt_bias;
-   fetch_count = max_index - min_index + 1;
-
    if (!draw_elts) {
       if (min_index == 0) {
          for (i = 0; i < icount; i++) {
-            ELT_TYPE idx = ib[istart + i];
+            ELT_TYPE idx = ib[i];
 
             assert(idx >= min_index && idx <= max_index);
             vsplit->draw_elts[i] = (ushort) idx;
