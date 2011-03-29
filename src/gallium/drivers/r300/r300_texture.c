@@ -404,6 +404,19 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
         case PIPE_FORMAT_L8A8_SNORM:
         case PIPE_FORMAT_R8G8_UNORM:
         case PIPE_FORMAT_R8G8_SNORM:
+        /* These formats work fine with UV88 if US_OUT_FMT is set correctly. */
+        case PIPE_FORMAT_A16_UNORM:
+        case PIPE_FORMAT_A16_SNORM:
+        /*case PIPE_FORMAT_A16_FLOAT:*/
+        case PIPE_FORMAT_L16_UNORM:
+        case PIPE_FORMAT_L16_SNORM:
+        /*case PIPE_FORMAT_L16_FLOAT:*/
+        case PIPE_FORMAT_I16_UNORM:
+        case PIPE_FORMAT_I16_SNORM:
+        /*case PIPE_FORMAT_I16_FLOAT:*/
+        case PIPE_FORMAT_R16_UNORM:
+        case PIPE_FORMAT_R16_SNORM:
+        case PIPE_FORMAT_R16_FLOAT:
             return R300_COLOR_FORMAT_UV88;
 
         case PIPE_FORMAT_B5G6R5_UNORM:
@@ -434,19 +447,33 @@ static uint32_t r300_translate_colorformat(enum pipe_format format)
         /*case PIPE_FORMAT_X8B8G8R8_SNORM:*/
         case PIPE_FORMAT_R8G8B8X8_UNORM:
         /*case PIPE_FORMAT_R8G8B8X8_SNORM:*/
-        case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
+        /* These formats work fine with ARGB8888 if US_OUT_FMT is set
+         * correctly. */
+        case PIPE_FORMAT_R16G16_UNORM:
+        case PIPE_FORMAT_R16G16_SNORM:
+        case PIPE_FORMAT_R16G16_FLOAT:
+        case PIPE_FORMAT_L16A16_UNORM:
+        case PIPE_FORMAT_L16A16_SNORM:
+        /*case PIPE_FORMAT_L16A16_FLOAT:
+        case PIPE_FORMAT_A32_FLOAT:
+        case PIPE_FORMAT_L32_FLOAT:
+        case PIPE_FORMAT_I32_FLOAT:*/
+        case PIPE_FORMAT_R32_FLOAT:
             return R300_COLOR_FORMAT_ARGB8888;
 
         case PIPE_FORMAT_R10G10B10A2_UNORM:
         case PIPE_FORMAT_R10G10B10X2_SNORM:
         case PIPE_FORMAT_B10G10R10A2_UNORM:
-        case PIPE_FORMAT_R10SG10SB10SA2U_NORM:
             return R500_COLOR_FORMAT_ARGB2101010;  /* R5xx-only? */
 
         /* 64-bit buffers. */
         case PIPE_FORMAT_R16G16B16A16_UNORM:
         case PIPE_FORMAT_R16G16B16A16_SNORM:
         case PIPE_FORMAT_R16G16B16A16_FLOAT:
+        /* These formats work fine with ARGB16161616 if US_OUT_FMT is set
+         * correctly. */
+        case PIPE_FORMAT_R32G32_FLOAT:
+        /*case PIPE_FORMAT_L32A32_FLOAT:*/
             return R300_COLOR_FORMAT_ARGB16161616;
 
         /* 128-bit buffers. */
@@ -489,12 +516,7 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
     uint32_t modifier = 0;
     unsigned i;
     const struct util_format_description *desc;
-    static const uint32_t sign_bit[4] = {
-        R300_OUT_SIGN(0x4),
-        R300_OUT_SIGN(0x2),
-        R300_OUT_SIGN(0x1),
-        R300_OUT_SIGN(0x8),
-    };
+    boolean uniform_sign;
 
     desc = util_format_description(format);
 
@@ -509,34 +531,82 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         return ~0; /* Unsupported/unknown. */
 
     /* Specifies how the shader output is written to the fog unit. */
-    if (desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT) {
-        if (desc->channel[i].size == 32) {
-            modifier |= R300_US_OUT_FMT_C4_32_FP;
-        } else {
-            modifier |= R300_US_OUT_FMT_C4_16_FP;
+    switch (desc->channel[i].type) {
+    case UTIL_FORMAT_TYPE_FLOAT:
+        switch (desc->channel[i].size) {
+        case 32:
+            switch (desc->nr_channels) {
+            case 1:
+                modifier |= R300_US_OUT_FMT_C_32_FP;
+                break;
+            case 2:
+                modifier |= R300_US_OUT_FMT_C2_32_FP;
+                break;
+            case 4:
+                modifier |= R300_US_OUT_FMT_C4_32_FP;
+                break;
+            }
+            break;
+
+        case 16:
+            switch (desc->nr_channels) {
+            case 1:
+                modifier |= R300_US_OUT_FMT_C_16_FP;
+                break;
+            case 2:
+                modifier |= R300_US_OUT_FMT_C2_16_FP;
+                break;
+            case 4:
+                modifier |= R300_US_OUT_FMT_C4_16_FP;
+                break;
+            }
+            break;
         }
-    } else {
-        if (desc->channel[i].size == 16) {
-            modifier |= R300_US_OUT_FMT_C4_16;
-        } else if (desc->channel[i].size == 10) {
+        break;
+
+    default:
+        switch (desc->channel[i].size) {
+        case 16:
+            switch (desc->nr_channels) {
+            case 1:
+                modifier |= R300_US_OUT_FMT_C_16;
+                break;
+            case 2:
+                modifier |= R300_US_OUT_FMT_C2_16;
+                break;
+            case 4:
+                modifier |= R300_US_OUT_FMT_C4_16;
+                break;
+            }
+            break;
+
+        case 10:
             modifier |= R300_US_OUT_FMT_C4_10;
-        } else {
+            break;
+
+        default:
             /* C4_8 seems to be used for the formats whose pixel size
              * is <= 32 bits. */
             modifier |= R300_US_OUT_FMT_C4_8;
+            break;
         }
     }
 
     /* Add sign. */
-    for (i = 0; i < 4; i++)
-        if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED) {
-            modifier |= sign_bit[i];
-        }
+    uniform_sign = TRUE;
+    for (i = 0; i < desc->nr_channels; i++)
+        if (desc->channel[i].type != UTIL_FORMAT_TYPE_SIGNED)
+            uniform_sign = FALSE;
+
+    if (uniform_sign)
+        modifier |= R300_OUT_SIGN(0xf);
 
     /* Add swizzles and return. */
     switch (format) {
-        /* 8-bit outputs, one channel.
-         * COLORFORMAT_I8 stores the C2 component. */
+        /*** Special cases (non-standard channel mapping) ***/
+
+        /* X8
+         * COLORFORMAT_I8 stores the Z component (C2). */
         case PIPE_FORMAT_A8_UNORM:
         case PIPE_FORMAT_A8_SNORM:
             return modifier | R300_C2_SEL_A;
@@ -548,16 +618,21 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         case PIPE_FORMAT_R8_SNORM:
             return modifier | R300_C2_SEL_R;
 
-        /* 16-bit outputs, two channels.
-         * COLORFORMAT_UV88 stores C2 and C0. */
+        /* X8Y8
+         * COLORFORMAT_UV88 stores ZX (C2 and C0). */
         case PIPE_FORMAT_L8A8_SNORM:
-            modifier |= sign_bit[2];
         case PIPE_FORMAT_L8A8_UNORM:
             return modifier | R300_C0_SEL_A | R300_C2_SEL_R;
         case PIPE_FORMAT_R8G8_SNORM:
-            modifier |= sign_bit[2];
         case PIPE_FORMAT_R8G8_UNORM:
             return modifier | R300_C0_SEL_G | R300_C2_SEL_R;
+
+        /* X32Y32
+         * ARGB16161616 stores XZ for RG32F */
+        case PIPE_FORMAT_R32G32_FLOAT:
+            return modifier | R300_C0_SEL_R | R300_C2_SEL_G;
+
+        /*** Generic cases (standard channel mapping) ***/
 
         /* BGRA outputs. */
         case PIPE_FORMAT_B5G6R5_UNORM:
@@ -579,6 +654,10 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         /*case PIPE_FORMAT_A8R8G8B8_SNORM:*/
         case PIPE_FORMAT_X8R8G8B8_UNORM:
         /*case PIPE_FORMAT_X8R8G8B8_SNORM:*/
+        case PIPE_FORMAT_A16_UNORM:
+        case PIPE_FORMAT_A16_SNORM:
+        /*case PIPE_FORMAT_A16_FLOAT:
+        case PIPE_FORMAT_A32_FLOAT:*/
             return modifier |
                 R300_C0_SEL_A | R300_C1_SEL_R |
                 R300_C2_SEL_G | R300_C3_SEL_B;
@@ -597,17 +676,38 @@ static uint32_t r300_translate_out_fmt(enum pipe_format format)
         /*case PIPE_FORMAT_R8G8B8X8_SNORM:*/
         case PIPE_FORMAT_R8G8B8A8_UNORM:
         case PIPE_FORMAT_R8G8B8A8_SNORM:
-        case PIPE_FORMAT_R8SG8SB8UX8U_NORM:
         case PIPE_FORMAT_R10G10B10A2_UNORM:
         case PIPE_FORMAT_R10G10B10X2_SNORM:
-        case PIPE_FORMAT_R10SG10SB10SA2U_NORM:
+        case PIPE_FORMAT_R16_UNORM:
+        case PIPE_FORMAT_R16G16_UNORM:
         case PIPE_FORMAT_R16G16B16A16_UNORM:
+        case PIPE_FORMAT_R16_SNORM:
+        case PIPE_FORMAT_R16G16_SNORM:
         case PIPE_FORMAT_R16G16B16A16_SNORM:
+        case PIPE_FORMAT_R16_FLOAT:
+        case PIPE_FORMAT_R16G16_FLOAT:
         case PIPE_FORMAT_R16G16B16A16_FLOAT:
+        case PIPE_FORMAT_R32_FLOAT:
         case PIPE_FORMAT_R32G32B32A32_FLOAT:
+        case PIPE_FORMAT_L16_UNORM:
+        case PIPE_FORMAT_L16_SNORM:
+        /*case PIPE_FORMAT_L16_FLOAT:
+        case PIPE_FORMAT_L32_FLOAT:*/
+        case PIPE_FORMAT_I16_UNORM:
+        case PIPE_FORMAT_I16_SNORM:
+        /*case PIPE_FORMAT_I16_FLOAT:
+        case PIPE_FORMAT_I32_FLOAT:*/
             return modifier |
                 R300_C0_SEL_R | R300_C1_SEL_G |
                 R300_C2_SEL_B | R300_C3_SEL_A;
+
+        /* LA outputs. */
+        case PIPE_FORMAT_L16A16_UNORM:
+        case PIPE_FORMAT_L16A16_SNORM:
+        /*case PIPE_FORMAT_L16A16_FLOAT:
+        case PIPE_FORMAT_L32A32_FLOAT:*/
+            return modifier |
+                R300_C0_SEL_R | R300_C1_SEL_A;
 
         default:
             return ~0; /* Unsupported. */
