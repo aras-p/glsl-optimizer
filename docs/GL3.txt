@@ -15,7 +15,7 @@ GL 3.0:
 GLSL changes (GL_EXT_gpu_shader4, etc)                not started
 Conditional rendering (GL_NV_conditional_render)      DONE (swrast & softpipe)
 Map buffer subranges (GL_ARB_map_buffer_range)        DONE
-Clamping controls (GL_ARB_color_buffer_float)         BRANCH ~mareko/mesa floating2
+Clamping controls (GL_ARB_color_buffer_float)         DONE
 Float textures, renderbuffers (GL_ARB_texture_float)  BRANCH ~mareko/mesa floating2
 GL_EXT_packed_float                                   not started
 GL_EXT_texture_shared_exponent                        not started
@@ -53,7 +53,7 @@ Primitive restart (GL_NV_primitive_restart)           DONE (gallium)
 Texture buffer objs (GL_ARB_texture_buffer_object)    not started
 Rectangular textures (GL_ARB_texture_rectangle)       DONE
 Uniform buffer objs (GL_ARB_uniform_buffer_object)    not started
-Signed normalized textures (GL_EXT_texture_snorm)     ~50% done
+Signed normalized textures (GL_EXT_texture_snorm)     DONE (gallium)
 
 
 GL 3.2:
