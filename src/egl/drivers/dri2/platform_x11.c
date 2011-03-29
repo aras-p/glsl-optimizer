@@ -231,7 +231,7 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
    if (dri2_dpy->dri2) {
       xcb_dri2_create_drawable (dri2_dpy->conn, dri2_surf->drawable);
    } else {
-      swrastCreateDrawable(dri2_dpy, dri2_surf, _eglGetConfigKey(conf, EGL_DEPTH_SIZE));
+      swrastCreateDrawable(dri2_dpy, dri2_surf, _eglGetConfigKey(conf, EGL_BUFFER_SIZE));
    }
 
    if (type != EGL_PBUFFER_BIT) {
