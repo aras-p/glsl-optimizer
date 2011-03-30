@@ -93,7 +93,7 @@ CONCAT(vsplit_primitive_, ELT_TYPE)(struct vsplit_frontend *vsplit,
       }
       else {
          for (i = 0; i < icount; i++) {
-            ELT_TYPE idx = ib[istart + i];
+            ELT_TYPE idx = ib[i];
 
             assert(idx >= min_index && idx <= max_index);
             vsplit->draw_elts[i] = (ushort) (idx - min_index);
