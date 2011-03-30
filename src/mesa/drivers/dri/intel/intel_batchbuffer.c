@@ -176,8 +176,6 @@ intel_batchbuffer_emit_reloc(struct intel_context *intel,
 {
    int ret;
 
-   assert(delta < buffer->size);
-
    ret = drm_intel_bo_emit_reloc(intel->batch.bo, 4*intel->batch.used,
 				 buffer, delta,
 				 read_domains, write_domain);
@@ -202,8 +200,6 @@ intel_batchbuffer_emit_reloc_fenced(struct intel_context *intel,
 				    uint32_t delta)
 {
    int ret;
-
-   assert(delta < buffer->size);
 
    ret = drm_intel_bo_emit_reloc_fence(intel->batch.bo, 4*intel->batch.used,
 				       buffer, delta,
