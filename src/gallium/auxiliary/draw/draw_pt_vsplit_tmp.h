@@ -49,9 +49,6 @@ CONCAT(vsplit_primitive_, ELT_TYPE)(struct vsplit_frontend *vsplit,
 
    ib += istart;
 
-   fetch_start = min_index + elt_bias;
-   fetch_count = max_index - min_index + 1;
-
    /* use the ib directly */
    if (min_index == 0 && sizeof(ib[0]) == sizeof(draw_elts[0])) {
       if (icount > vsplit->max_vertices)
@@ -70,7 +67,7 @@ CONCAT(vsplit_primitive_, ELT_TYPE)(struct vsplit_frontend *vsplit,
    }
 
    /* this is faster only when we fetch less elements than the normal path */
-   if (fetch_count > icount)
+   if (max_index - min_index > icount - 1)
       return FALSE;
 
    if (elt_bias < 0 && min_index < -elt_bias)
@@ -81,6 +78,9 @@ CONCAT(vsplit_primitive_, ELT_TYPE)(struct vsplit_frontend *vsplit,
       if (draw->pt.vertex_element[i].instance_divisor)
          return FALSE;
    }
+
+   fetch_start = min_index + elt_bias;
+   fetch_count = max_index - min_index + 1;
 
    if (!draw_elts) {
       if (min_index == 0) {
