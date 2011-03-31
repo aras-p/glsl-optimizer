@@ -5,7 +5,10 @@ TOP = .
 SUBDIRS = src
 
 
+# The git command below generates an empty string when we're not
+# building in a GIT tree (i.e., building from a release tarball).
 default: $(TOP)/configs/current
+	@$(TOP)/bin/extract_git_sha1
 	@for dir in $(SUBDIRS) ; do \
 		if [ -d $$dir ] ; then \
 			(cd $$dir && $(MAKE)) || exit 1 ; \
@@ -199,6 +202,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/aclocal.m4						\
 	$(DIRECTORY)/bin/config.guess					\
 	$(DIRECTORY)/bin/config.sub					\
+	$(DIRECTORY)/bin/extract_git_sha1				\
 	$(DIRECTORY)/bin/install-sh					\
 	$(DIRECTORY)/bin/mklib						\
 	$(DIRECTORY)/bin/minstall					\

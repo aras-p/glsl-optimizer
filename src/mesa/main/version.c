@@ -25,6 +25,7 @@
 #include "imports.h"
 #include "mtypes.h"
 #include "version.h"
+#include "git_sha1.h"
 
 
 
@@ -185,7 +186,11 @@ compute_version(struct gl_context *ctx)
    ctx->VersionString = (char *) malloc(max);
    if (ctx->VersionString) {
       _mesa_snprintf(ctx->VersionString, max,
-		     "%u.%u Mesa " MESA_VERSION_STRING,
+		     "%u.%u Mesa " MESA_VERSION_STRING
+#ifdef MESA_GIT_SHA1
+		     " (" MESA_GIT_SHA1 ")"
+#endif
+		     ,
 		     ctx->VersionMajor, ctx->VersionMinor);
    }
 }
