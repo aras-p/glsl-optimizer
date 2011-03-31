@@ -107,6 +107,7 @@ C_SOURCES = \
 	util/u_caps.c \
 	util/u_cpu_detect.c \
 	util/u_dl.c \
+	util/u_draw.c \
 	util/u_draw_quad.c \
 	util/u_format.c \
 	util/u_format_other.c \

@@ -146,6 +146,14 @@ struct draw_context
       struct pipe_vertex_buffer vertex_buffer[PIPE_MAX_ATTRIBS];
       unsigned nr_vertex_buffers;
 
+      /*
+       * This is the largest legal index value for the current set of
+       * bound vertex buffers.  Regardless of any other consideration,
+       * all vertex lookups need to be clamped to 0..max_index to
+       * prevent out-of-bound access.
+       */
+      unsigned max_index;
+
       struct pipe_vertex_element vertex_element[PIPE_MAX_ATTRIBS];
       unsigned nr_vertex_elements;
 

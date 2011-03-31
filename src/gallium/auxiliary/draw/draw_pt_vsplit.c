@@ -85,7 +85,12 @@ vsplit_flush_cache(struct vsplit_frontend *vsplit, unsigned flags)
 static INLINE void
 vsplit_add_cache(struct vsplit_frontend *vsplit, unsigned fetch)
 {
-   unsigned hash = fetch % MAP_SIZE;
+   struct draw_context *draw = vsplit->draw;
+   unsigned hash;
+
+   fetch = MIN2(fetch, draw->pt.max_index);
+
+   hash = fetch % MAP_SIZE;
 
    if (vsplit->cache.fetches[hash] != fetch) {
       /* update cache */
