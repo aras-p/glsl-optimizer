@@ -319,6 +319,21 @@ else
     esac
 fi
 
+dnl
+dnl potentially-infringing-but-nobody-knows-for-sure stuff
+dnl
+AC_ARG_ENABLE([texture-float],
+    [AS_HELP_STRING([--enable-texture-float],
+        [enable floating-point textures and renderbuffers @<:@default=disabled@:>@])],
+    [enable_texture_float="$enableval"],
+    [enable_texture_float=no]
+)
+if test "x$enable_texture_float" = xyes; then
+    AC_MSG_WARN([Floating-point textures enabled.])
+    AC_MSG_WARN([Please consult docs/patents.txt with your lawyer before building Mesa.])
+    DEFINES="$DEFINES -DTEXTURE_FLOAT_ENABLED"
+fi
+
 GL_LIB_NAME='lib$(GL_LIB).'${LIB_EXTENSION}
 GLU_LIB_NAME='lib$(GLU_LIB).'${LIB_EXTENSION}
 GLUT_LIB_NAME='lib$(GLUT_LIB).'${LIB_EXTENSION}
