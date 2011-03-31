@@ -211,7 +211,7 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
 {
    struct intel_context *intel = intel_context(ctx);
    struct gl_framebuffer *fb = ctx->DrawBuffer;
-   GLuint clear_depth;
+   GLuint clear_depth_value, clear_depth_mask;
    GLboolean all;
    GLint cx, cy, cw, ch;
    GLbitfield fail_mask = 0;
@@ -220,12 +220,15 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
    /*
     * Compute values for clearing the buffers.
     */
-   clear_depth = 0;
+   clear_depth_value = 0;
+   clear_depth_mask = 0;
    if (mask & BUFFER_BIT_DEPTH) {
-      clear_depth = (GLuint) (fb->_DepthMax * ctx->Depth.Clear);
+      clear_depth_value = (GLuint) (fb->_DepthMax * ctx->Depth.Clear);
+      clear_depth_mask = XY_BLT_WRITE_RGB;
    }
    if (mask & BUFFER_BIT_STENCIL) {
-      clear_depth |= (ctx->Stencil.Clear & 0xff) << 24;
+      clear_depth_value |= (ctx->Stencil.Clear & 0xff) << 24;
+      clear_depth_mask |= XY_BLT_WRITE_ALPHA;
    }
 
    cx = fb->_Xmin;
@@ -245,6 +248,7 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
    mask &= (1 << BUFFER_COUNT) - 1;
    while (mask) {
       GLuint buf = _mesa_ffs(mask) - 1;
+      GLboolean is_depth_stencil = buf == BUFFER_DEPTH || buf == BUFFER_STENCIL;
       struct intel_renderbuffer *irb;
       drm_intel_bo *write_buffer;
       int x1, y1, x2, y2;
@@ -283,11 +287,8 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
 
       /* Setup the blit command */
       if (cpp == 4) {
-	 if (buf == BUFFER_DEPTH || buf == BUFFER_STENCIL) {
-	    if (mask & BUFFER_BIT_DEPTH)
-	       CMD |= XY_BLT_WRITE_RGB;
-	    if (mask & BUFFER_BIT_STENCIL)
-	       CMD |= XY_BLT_WRITE_ALPHA;
+	 if (is_depth_stencil) {
+	    CMD |= clear_depth_mask;
 	 } else {
 	    /* clearing RGBA */
 	    CMD |= XY_BLT_WRITE_ALPHA | XY_BLT_WRITE_RGB;
@@ -304,8 +305,8 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
 #endif
       BR13 |= (pitch * cpp);
 
-      if (buf == BUFFER_DEPTH || buf == BUFFER_STENCIL) {
-	 clear_val = clear_depth;
+      if (is_depth_stencil) {
+	 clear_val = clear_depth_value;
       } else {
 	 uint8_t clear[4];
 	 GLclampf *color = ctx->Color.ClearColor;
