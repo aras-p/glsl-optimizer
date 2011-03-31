@@ -971,6 +971,9 @@ pass_allocate_constrained_values(struct nv_pc_pass *ctx)
          continue;
       }
 
+      /* Compute registers available for this "vector" of consecutive registers.
+       * Each value (component) has its own independent live interval.
+       */
       for (c = 0; c < vsize; ++c) {
          nv50_ctor_register_set(ctx->pc, &regs[c]);
 
@@ -978,10 +981,13 @@ pass_allocate_constrained_values(struct nv_pc_pass *ctx)
             if (val->reg.id >= 0 && livei_have_overlap(val, defs[c]))
                reg_occupy(&regs[c], val);
          }
-         mask = 0x11111111;
+         /* Only 32 bit GPRs will be allocated here, but register set
+          * granularity for GPRs is 16 bit.
+          */
+         mask = 0x03030303;
          if (vsize == 2) /* granularity is 2 and not 4 */
-            mask |= 0x11111111 << 2;
-         mask_register_set(&regs[c], 0, mask << c);
+            mask |= 0x03030303 << 4;
+         mask_register_set(&regs[c], 0, mask << (c * 2));
 
          if (defs[c]->livei)
             insert_ordered_tail(&regvals, defs[c]);
