@@ -294,8 +294,6 @@ nvc0_magic_3d_init(struct nouveau_channel *chan)
    OUT_RING  (chan, 1 << 12);
    BEGIN_RING(chan, RING_3D_(0x151c), 1);
    OUT_RING  (chan, 1);
-   BEGIN_RING(chan, RING_3D_(0x020c), 1);
-   OUT_RING  (chan, 1);
    BEGIN_RING(chan, RING_3D_(0x030c), 1);
    OUT_RING  (chan, 0);
    BEGIN_RING(chan, RING_3D_(0x0300), 1);
@@ -447,6 +445,10 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    BEGIN_RING(chan, RING_3D(MULTISAMPLE_MODE), 1);
    OUT_RING  (chan, NVC0_3D_MULTISAMPLE_MODE_1X);
    BEGIN_RING(chan, RING_3D(MULTISAMPLE_CTRL), 1);
+   OUT_RING  (chan, 0);
+   BEGIN_RING(chan, RING_3D(LINE_WIDTH_SEPARATE), 1);
+   OUT_RING  (chan, 1);
+   BEGIN_RING(chan, RING_3D(LINE_LAST_PIXEL), 1);
    OUT_RING  (chan, 0);
 
    nvc0_magic_3d_init(chan);

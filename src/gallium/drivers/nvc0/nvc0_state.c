@@ -161,6 +161,7 @@ nvc0_blend_state_delete(struct pipe_context *pipe, void *hwcso)
     FREE(hwcso);
 }
 
+/* NOTE: ignoring line_last_pixel, using FALSE (set on screen init) */
 static void *
 nvc0_rasterizer_state_create(struct pipe_context *pipe,
                              const struct pipe_rasterizer_state *cso)
@@ -187,9 +188,12 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
     SB_BEGIN_3D(so, FRAG_COLOR_CLAMP_EN, 1);
     SB_DATA    (so, cso->clamp_fragment_color ? 0x11111111 : 0x00000000);
 
-    SB_BEGIN_3D(so, LINE_WIDTH, 1);
-    SB_DATA    (so, fui(cso->line_width));
     SB_IMMED_3D(so, LINE_SMOOTH_ENABLE, cso->line_smooth);
+    if (cso->line_smooth)
+       SB_BEGIN_3D(so, LINE_WIDTH_SMOOTH, 1);
+    else
+       SB_BEGIN_3D(so, LINE_WIDTH_ALIASED, 1);
+    SB_DATA    (so, fui(cso->line_width));
 
     SB_BEGIN_3D(so, LINE_STIPPLE_ENABLE, 1);
     if (cso->line_stipple_enable) {

@@ -174,6 +174,7 @@ nv50_blend_state_delete(struct pipe_context *pipe, void *hwcso)
    FREE(hwcso);
 }
 
+/* NOTE: ignoring line_last_pixel, using FALSE (set on screen init) */
 static void *
 nv50_rasterizer_state_create(struct pipe_context *pipe,
                              const struct pipe_rasterizer_state *cso)
