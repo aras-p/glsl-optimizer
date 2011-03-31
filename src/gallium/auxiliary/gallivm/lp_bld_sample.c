@@ -51,6 +51,10 @@
  */
 #define BRILINEAR_FACTOR 2
 
+static LLVMValueRef
+lp_build_minify(struct lp_build_context *bld,
+                LLVMValueRef base_size,
+                LLVMValueRef level);
 
 /**
  * Does the given texture wrap mode allow sampling the texture border color?
@@ -184,9 +188,11 @@ lp_sampler_static_state(struct lp_sampler_static_state *state,
  */
 static LLVMValueRef
 lp_build_rho(struct lp_build_sample_context *bld,
+             unsigned unit,
              const LLVMValueRef ddx[4],
              const LLVMValueRef ddy[4])
 {
+   struct lp_build_context *int_size_bld = &bld->int_size_bld;
    struct lp_build_context *float_size_bld = &bld->float_size_bld;
    struct lp_build_context *float_bld = &bld->float_bld;
    const unsigned dims = bld->dims;
@@ -198,8 +204,9 @@ lp_build_rho(struct lp_build_sample_context *bld,
    LLVMValueRef dsdx, dsdy, dtdx, dtdy, drdx, drdy;
    LLVMValueRef rho_x, rho_y;
    LLVMValueRef rho_vec;
-   LLVMValueRef float_size;
+   LLVMValueRef int_size, float_size;
    LLVMValueRef rho;
+   LLVMValueRef first_level, first_level_vec;
 
    dsdx = ddx[0];
    dsdy = ddy[0];
@@ -235,7 +242,11 @@ lp_build_rho(struct lp_build_sample_context *bld,
 
    rho_vec = lp_build_max(float_size_bld, rho_x, rho_y);
 
-   float_size = lp_build_int_to_float(float_size_bld, bld->int_size);
+   first_level = bld->dynamic_state->first_level(bld->dynamic_state,
+                                                 bld->gallivm, unit);
+   first_level_vec = lp_build_broadcast_scalar(&bld->int_size_bld, first_level);
+   int_size = lp_build_minify(int_size_bld, bld->int_size, first_level_vec);
+   float_size = lp_build_int_to_float(float_size_bld, int_size);
 
    rho_vec = lp_build_mul(float_size_bld, rho_vec, float_size);
 
@@ -442,7 +453,7 @@ lp_build_lod_selector(struct lp_build_sample_context *bld,
       else {
          LLVMValueRef rho;
 
-         rho = lp_build_rho(bld, ddx, ddy);
+         rho = lp_build_rho(bld, unit, ddx, ddy);
 
          /*
           * Compute lod = log2(rho)
@@ -542,18 +553,18 @@ lp_build_nearest_mip_level(struct lp_build_sample_context *bld,
                            LLVMValueRef *level_out)
 {
    struct lp_build_context *int_bld = &bld->int_bld;
-   LLVMValueRef last_level, level;
+   LLVMValueRef first_level, last_level, level;
 
-   LLVMValueRef zero = lp_build_const_int32(bld->gallivm, 0);
-
+   first_level = bld->dynamic_state->first_level(bld->dynamic_state,
+                                                 bld->gallivm, unit);
    last_level = bld->dynamic_state->last_level(bld->dynamic_state,
                                                bld->gallivm, unit);
 
    /* convert float lod to integer */
-   level = lod_ipart;
+   level = lp_build_add(int_bld, lod_ipart, first_level);
 
    /* clamp level to legal range of levels */
-   *level_out = lp_build_clamp(int_bld, level, zero, last_level);
+   *level_out = lp_build_clamp(int_bld, level, first_level, last_level);
 }
 
 
@@ -573,39 +584,42 @@ lp_build_linear_mip_levels(struct lp_build_sample_context *bld,
    LLVMBuilderRef builder = bld->gallivm->builder;
    struct lp_build_context *int_bld = &bld->int_bld;
    struct lp_build_context *float_bld = &bld->float_bld;
-   LLVMValueRef last_level;
+   LLVMValueRef first_level, last_level;
    LLVMValueRef clamp_min;
    LLVMValueRef clamp_max;
 
-   *level0_out = lod_ipart;
-   *level1_out = lp_build_add(int_bld, lod_ipart, int_bld->one);
+   first_level = bld->dynamic_state->first_level(bld->dynamic_state,
+                                                 bld->gallivm, unit);
+
+   *level0_out = lp_build_add(int_bld, lod_ipart, first_level);
+   *level1_out = lp_build_add(int_bld, *level0_out, int_bld->one);
 
    last_level = bld->dynamic_state->last_level(bld->dynamic_state,
                                                bld->gallivm, unit);
 
    /*
-    * Clamp both lod_ipart and lod_ipart + 1 to [0, last_level], with the
-    * minimum number of comparisons, and zeroing lod_fpart in the extreme
+    * Clamp both *level0_out and *level1_out to [first_level, last_level], with
+    * the minimum number of comparisons, and zeroing lod_fpart in the extreme
     * ends in the process.
     */
 
-   /* lod_ipart < 0 */
+   /* *level0_out < first_level */
    clamp_min = LLVMBuildICmp(builder, LLVMIntSLT,
-                             lod_ipart, int_bld->zero,
-                             "clamp_lod_to_zero");
+                             *level0_out, first_level,
+                             "clamp_lod_to_first");
 
    *level0_out = LLVMBuildSelect(builder, clamp_min,
-                                 int_bld->zero, *level0_out, "");
+                                 first_level, *level0_out, "");
 
    *level1_out = LLVMBuildSelect(builder, clamp_min,
-                                 int_bld->zero, *level1_out, "");
+                                 first_level, *level1_out, "");
 
    *lod_fpart_inout = LLVMBuildSelect(builder, clamp_min,
                                       float_bld->zero, *lod_fpart_inout, "");
 
-   /* lod_ipart >= last_level */
+   /* *level0_out >= last_level */
    clamp_max = LLVMBuildICmp(builder, LLVMIntSGE,
-                             lod_ipart, last_level,
+                             *level0_out, last_level,
                              "clamp_lod_to_last");
 
    *level0_out = LLVMBuildSelect(builder, clamp_max,

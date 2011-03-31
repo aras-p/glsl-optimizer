@@ -54,6 +54,7 @@ lp_jit_create_types(struct llvmpipe_context *lp)
       elem_types[LP_JIT_TEXTURE_WIDTH]  =
       elem_types[LP_JIT_TEXTURE_HEIGHT] =
       elem_types[LP_JIT_TEXTURE_DEPTH] =
+      elem_types[LP_JIT_TEXTURE_FIRST_LEVEL] =
       elem_types[LP_JIT_TEXTURE_LAST_LEVEL] =  LLVMInt32TypeInContext(lc);
       elem_types[LP_JIT_TEXTURE_ROW_STRIDE] =
       elem_types[LP_JIT_TEXTURE_IMG_STRIDE] =
@@ -81,6 +82,9 @@ lp_jit_create_types(struct llvmpipe_context *lp)
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, depth,
                              gallivm->target, texture_type,
                              LP_JIT_TEXTURE_DEPTH);
+      LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, first_level,
+                             gallivm->target, texture_type,
+                             LP_JIT_TEXTURE_FIRST_LEVEL);
       LP_CHECK_MEMBER_OFFSET(struct lp_jit_texture, last_level,
                              gallivm->target, texture_type,
                              LP_JIT_TEXTURE_LAST_LEVEL);

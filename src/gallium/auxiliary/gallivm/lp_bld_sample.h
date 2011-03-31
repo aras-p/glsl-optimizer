@@ -120,6 +120,12 @@ struct lp_sampler_dynamic_state
              struct gallivm_state *gallivm,
              unsigned unit);
 
+   /** Obtain the first mipmap level (base level) (returns int32) */
+   LLVMValueRef
+   (*first_level)( const struct lp_sampler_dynamic_state *state,
+                   struct gallivm_state *gallivm,
+                   unsigned unit);
+
    /** Obtain the number of mipmap levels minus one (returns int32) */
    LLVMValueRef
    (*last_level)( const struct lp_sampler_dynamic_state *state,

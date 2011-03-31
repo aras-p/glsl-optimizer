@@ -106,6 +106,7 @@ create_jit_texture_type(struct gallivm_state *gallivm)
    elem_types[DRAW_JIT_TEXTURE_WIDTH]  =
    elem_types[DRAW_JIT_TEXTURE_HEIGHT] =
    elem_types[DRAW_JIT_TEXTURE_DEPTH] =
+   elem_types[DRAW_JIT_TEXTURE_FIRST_LEVEL] =
    elem_types[DRAW_JIT_TEXTURE_LAST_LEVEL] = int32_type;
    elem_types[DRAW_JIT_TEXTURE_ROW_STRIDE] =
    elem_types[DRAW_JIT_TEXTURE_IMG_STRIDE] =
@@ -136,6 +137,9 @@ create_jit_texture_type(struct gallivm_state *gallivm)
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_texture, depth,
                           target, texture_type,
                           DRAW_JIT_TEXTURE_DEPTH);
+   LP_CHECK_MEMBER_OFFSET(struct draw_jit_texture, first_level,
+                          target, texture_type,
+                          DRAW_JIT_TEXTURE_FIRST_LEVEL);
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_texture, last_level,
                           target, texture_type,
                           DRAW_JIT_TEXTURE_LAST_LEVEL);
@@ -1595,7 +1599,7 @@ void
 draw_llvm_set_mapped_texture(struct draw_context *draw,
                              unsigned sampler_idx,
                              uint32_t width, uint32_t height, uint32_t depth,
-                             uint32_t last_level,
+                             uint32_t first_level, uint32_t last_level,
                              uint32_t row_stride[PIPE_MAX_TEXTURE_LEVELS],
                              uint32_t img_stride[PIPE_MAX_TEXTURE_LEVELS],
                              const void *data[PIPE_MAX_TEXTURE_LEVELS])
@@ -1611,9 +1615,10 @@ draw_llvm_set_mapped_texture(struct draw_context *draw,
    jit_tex->width = width;
    jit_tex->height = height;
    jit_tex->depth = depth;
+   jit_tex->first_level = first_level;
    jit_tex->last_level = last_level;
 
-   for (j = 0; j <= last_level; j++) {
+   for (j = first_level; j <= last_level; j++) {
       jit_tex->data[j] = data[j];
       jit_tex->row_stride[j] = row_stride[j];
       jit_tex->img_stride[j] = img_stride[j];

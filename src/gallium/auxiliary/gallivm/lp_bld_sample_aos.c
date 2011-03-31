@@ -939,6 +939,7 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
    LLVMValueRef unswizzled[4];
    LLVMValueRef face_ddx[4], face_ddy[4];
    struct lp_build_context h16_bld;
+   LLVMValueRef first_level;
    LLVMValueRef i32t_zero = lp_build_const_int32(bld->gallivm, 0);
 
    /* we only support the common/simple wrap modes at this time */
@@ -1008,7 +1009,9 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
          lp_build_nearest_mip_level(bld, unit, lod_ipart, &ilevel0);
       }
       else {
-         ilevel0 = i32t_zero;
+         first_level = bld->dynamic_state->first_level(bld->dynamic_state,
+                                                       bld->gallivm, unit);
+         ilevel0 = first_level;
       }
       break;
    case PIPE_TEX_MIPFILTER_NEAREST:
@@ -1065,7 +1068,7 @@ lp_build_sample_aos(struct lp_build_sample_context *bld,
          lp_build_sample_mipmap(bld, 
                                 mag_filter, PIPE_TEX_MIPFILTER_NONE,
                                 s, t, r,
-                                i32t_zero, NULL, NULL,
+                                ilevel0, NULL, NULL,
                                 packed_lo, packed_hi);
       }
       lp_build_endif(&if_ctx);
