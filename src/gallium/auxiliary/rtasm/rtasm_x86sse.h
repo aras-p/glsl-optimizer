@@ -309,6 +309,7 @@ void sse_movmskps( struct x86_function *p, struct x86_reg dst, struct x86_reg sr
 
 void x86_add( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_and( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
+void x86_cmovcc( struct x86_function *p, struct x86_reg dst, struct x86_reg src, enum x86_cc cc );
 void x86_cmp( struct x86_function *p, struct x86_reg dst, struct x86_reg src );
 void x86_dec( struct x86_function *p, struct x86_reg reg );
 void x86_inc( struct x86_function *p, struct x86_reg reg );

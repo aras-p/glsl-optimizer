@@ -726,6 +726,16 @@ void x86_movzx16(struct x86_function *p, struct x86_reg dst, struct x86_reg src 
    emit_modrm(p, dst, src);
 }
 
+void x86_cmovcc( struct x86_function *p,
+                 struct x86_reg dst,
+                 struct x86_reg src,
+                 enum x86_cc cc)
+{
+   DUMP_RRI( dst, src, cc );
+   emit_2ub( p, 0x0f, 0x40 + cc );
+   emit_modrm( p, dst, src );
+}
+
 void x86_xor( struct x86_function *p,
 	      struct x86_reg dst,
 	      struct x86_reg src )

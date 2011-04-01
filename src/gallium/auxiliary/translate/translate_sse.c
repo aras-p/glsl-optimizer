@@ -1067,6 +1067,8 @@ static boolean init_inputs( struct translate_sse *p,
       struct translate_buffer *buffer = &p->buffer[varient->buffer_index];
 
       if (!index_size || varient->instance_divisor) {
+         struct x86_reg buf_max_index = x86_make_disp(p->machine_EDI,
+                                                     get_offset(p, &buffer->max_index));
          struct x86_reg buf_stride   = x86_make_disp(p->machine_EDI,
                                                      get_offset(p, &buffer->stride));
          struct x86_reg buf_ptr      = x86_make_disp(p->machine_EDI,
@@ -1100,13 +1102,16 @@ static boolean init_inputs( struct translate_sse *p,
             x86_mov(p->func, tmp_EAX, elt);
          }
 
-         /*
-          * TODO: Respect translate_buffer::max_index.
+         /* Clamp to max_index
           */
+         x86_cmp(p->func, tmp_EAX, buf_max_index);
+         x86_cmovcc(p->func, tmp_EAX, buf_max_index, cc_AE);
 
          x86_imul(p->func, tmp_EAX, buf_stride);
          x64_rexw(p->func);
          x86_add(p->func, tmp_EAX, buf_base_ptr);
+
+         x86_cmp(p->func, p->count_EBP, p->tmp_EAX);
 
 
          /* In the linear case, keep the buffer pointer instead of the
@@ -1163,6 +1168,10 @@ static struct x86_reg get_buffer_ptr( struct translate_sse *p,
          x86_make_disp(p->machine_EDI,
                        get_offset(p, &p->buffer[varient->buffer_index].base_ptr));
 
+      struct x86_reg buf_max_index =
+         x86_make_disp(p->machine_EDI,
+                       get_offset(p, &p->buffer[varient->buffer_index].max_index));
+
 
 
       /* Calculate pointer to current attrib:
@@ -1179,6 +1188,12 @@ static struct x86_reg get_buffer_ptr( struct translate_sse *p,
          x86_mov(p->func, ptr, elt);
          break;
       }
+
+      /* Clamp to max_index
+       */
+      x86_cmp(p->func, ptr, buf_max_index);
+      x86_cmovcc(p->func, ptr, buf_max_index, cc_AE);
+
       x86_imul(p->func, ptr, buf_stride);
       x64_rexw(p->func);
       x86_add(p->func, ptr, buf_base_ptr);
