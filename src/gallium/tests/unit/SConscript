@@ -19,13 +19,13 @@ progs = [
     'translate_test'
 ]
 
-for prog in progs:
+for progname in progs:
     prog = env.Program(
-        target = prog,
-        source = prog + '.c',
+        target = progname,
+        source = progname + '.c',
     )
     
-    env.InstallProgram(prog)
+    env.Alias(progname, env.InstallProgram(prog))
 
     # http://www.scons.org/wiki/UnitTests
     test_alias = env.Alias('unit', [prog], prog[0].abspath)
