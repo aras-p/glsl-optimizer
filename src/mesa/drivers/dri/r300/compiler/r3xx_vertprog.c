@@ -30,7 +30,6 @@
 #include "radeon_dataflow.h"
 #include "radeon_program_alu.h"
 #include "radeon_swizzle.h"
-#include "radeon_emulate_branches.h"
 #include "radeon_emulate_loops.h"
 #include "radeon_remove_constants.h"
 
@@ -999,7 +998,6 @@ void r3xx_compile_vertex_program(struct r300_vertex_program_compiler *c)
 		/* NAME				DUMP PREDICATE	FUNCTION			PARAM */
 		{"add artificial outputs",	0, 1,		rc_vs_add_artificial_outputs,	NULL},
 		{"transform loops",		1, 1,		rc_transform_loops,		NULL},
-		{"emulate branches",		1, !is_r500,	rc_emulate_branches,		NULL},
 		{"emulate negative addressing", 1, 1,		rc_emulate_negative_addressing,	NULL},
 		{"native rewrite",		1, is_r500,	rc_local_transform,		alu_rewrite_r500},
 		{"native rewrite",		1, !is_r500,	rc_local_transform,		alu_rewrite_r300},

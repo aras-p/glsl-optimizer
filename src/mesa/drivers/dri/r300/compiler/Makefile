@@ -9,7 +9,6 @@ C_SOURCES = \
 		radeon_code.c \
 		radeon_compiler.c \
 		radeon_compiler_util.c \
-		radeon_emulate_branches.c \
 		radeon_emulate_loops.c \
 		radeon_program.c \
 		radeon_program_print.c \
