@@ -57,6 +57,7 @@ int main(int argc, char** argv)
    unsigned char* byte_buffer;
    float* float_buffer;
    double* double_buffer;
+   unsigned * elts;
    unsigned count = 4;
    unsigned i, j, k;
    unsigned passed = 0;
@@ -137,6 +138,8 @@ int main(int argc, char** argv)
    float_buffer = align_malloc(buffer_size, 4096);
    double_buffer = align_malloc(buffer_size, 4096);
 
+   elts = align_malloc(count * sizeof *elts, 4096);
+
    key.nr_elements = 1;
    key.element[0].input_buffer = 0;
    key.element[0].input_offset = 0;
@@ -155,6 +158,9 @@ int main(int argc, char** argv)
 
    for (i = 0; i < buffer_size / sizeof(double); ++i)
       double_buffer[i] = rand_double();
+
+   for (i = 0; i < count; ++i)
+      elts[i] = i;
 
    for (output_format = 1; output_format < PIPE_FORMAT_COUNT; ++output_format)
    {
@@ -245,14 +251,14 @@ int main(int argc, char** argv)
          else
             buffer[0] = byte_buffer;
 
-         translate[0]->set_buffer(translate[0], 0, buffer[0], input_format_size, ~0);
-         translate[0]->run(translate[0], 0, count, 0, buffer[1]);
-         translate[1]->set_buffer(translate[1], 0, buffer[1], output_format_size, ~0);
-         translate[1]->run(translate[1], 0, count, 0, buffer[2]);
-         translate[0]->set_buffer(translate[0], 0, buffer[2], input_format_size, ~0);
-         translate[0]->run(translate[0], 0, count, 0, buffer[3]);
-         translate[1]->set_buffer(translate[1], 0, buffer[3], output_format_size, ~0);
-         translate[1]->run(translate[1], 0, count, 0, buffer[4]);
+         translate[0]->set_buffer(translate[0], 0, buffer[0], input_format_size, count - 1);
+         translate[0]->run_elts(translate[0], elts, count, 0, buffer[1]);
+         translate[1]->set_buffer(translate[1], 0, buffer[1], output_format_size, count - 1);
+         translate[1]->run_elts(translate[1], elts, count, 0, buffer[2]);
+         translate[0]->set_buffer(translate[0], 0, buffer[2], input_format_size, count - 1);
+         translate[0]->run_elts(translate[0], elts, count, 0, buffer[3]);
+         translate[1]->set_buffer(translate[1], 0, buffer[3], output_format_size, count - 1);
+         translate[1]->run_elts(translate[1], elts, count, 0, buffer[4]);
 
          for (i = 0; i < count; ++i)
          {
