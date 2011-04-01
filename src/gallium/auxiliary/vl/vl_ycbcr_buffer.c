@@ -100,11 +100,11 @@ struct vl_ycbcr_sampler_views *vl_ycbcr_get_sampler_views(struct vl_ycbcr_buffer
    memset(&sv_templ, 0, sizeof(sv_templ));
    u_sampler_view_default_template(&sv_templ, buffer->resources.y, buffer->resources.y->format);
 
-   // Workaround
    if (util_format_get_nr_components(buffer->resources.y->format) == 1) {
       sv_templ.swizzle_r = PIPE_SWIZZLE_RED;
       sv_templ.swizzle_g = PIPE_SWIZZLE_RED;
       sv_templ.swizzle_b = PIPE_SWIZZLE_RED;
+      sv_templ.swizzle_a = PIPE_SWIZZLE_RED;
    }
 
    if (!buffer->sampler_views.y) {
