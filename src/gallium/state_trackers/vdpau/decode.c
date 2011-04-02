@@ -39,6 +39,9 @@ vlVdpDecoderCreate(VdpDevice device,
                    uint32_t max_references,
                    VdpDecoder *decoder)
 {
+   return VDP_STATUS_NO_IMPLEMENTATION;
+
+#if 0
    enum pipe_video_profile p_profile = PIPE_VIDEO_PROFILE_UNKNOWN;
    VdpStatus ret = VDP_STATUS_OK;
    vlVdpDecoder *vldecoder = NULL;
@@ -93,11 +96,15 @@ no_screen:
 no_decoder:
 inv_device:
     return ret;
+#endif
 }
 
 VdpStatus
 vlVdpDecoderDestroy(VdpDecoder decoder)
 {
+   return VDP_STATUS_NO_IMPLEMENTATION;
+
+#if 0
    debug_printf("[VDPAU] Destroying decoder\n");
    vlVdpDecoder *vldecoder;
 
@@ -117,8 +124,10 @@ vlVdpDecoderDestroy(VdpDecoder decoder)
    FREE(vldecoder);
 
    return VDP_STATUS_OK;
+#endif
 }
 
+#if 0
 VdpStatus
 vlVdpCreateSurfaceTarget(vlVdpDecoder *vldecoder, vlVdpSurface *vlsurf)
 {
@@ -154,12 +163,12 @@ vlVdpCreateSurfaceTarget(vlVdpDecoder *vldecoder, vlVdpSurface *vlsurf)
    memset(&surf_template, 0, sizeof(surf_template));
    surf_template.format = surf_tex->format;
    surf_template.usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
-   vlsurf->psurface = vctx->create_surface(vctx->screen, surf_tex, &surf_template);
+   //vlsurf->psurface = vctx->create_surface(vctx->screen, surf_tex, &surf_template);
 
    pipe_resource_reference(&surf_tex, NULL);
 
-   if (!vlsurf->psurface)
-      return VDP_STATUS_RESOURCES;
+   //if (!vlsurf->psurface)
+   //   return VDP_STATUS_RESOURCES;
    debug_printf("[VDPAU] Done creating surface\n");
 
    return VDP_STATUS_OK;
@@ -227,6 +236,7 @@ vlVdpDecoderRenderMpeg2(vlVdpDecoder *vldecoder,
    skip_frame:
    return ret;
 }
+#endif
 
 VdpStatus
 vlVdpDecoderRender(VdpDecoder decoder,
@@ -235,6 +245,9 @@ vlVdpDecoderRender(VdpDecoder decoder,
                    uint32_t bitstream_buffer_count,
                    VdpBitstreamBuffer const *bitstream_buffers)
 {
+   return VDP_STATUS_NO_IMPLEMENTATION;
+
+#if 0
    vlVdpDecoder *vldecoder;
    vlVdpSurface *vlsurf;
    struct vl_screen *vscreen;
@@ -281,6 +294,7 @@ vlVdpDecoderRender(VdpDecoder decoder,
    assert(0);
 
    return ret;
+#endif
 }
 
 VdpStatus

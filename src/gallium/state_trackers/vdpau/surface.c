@@ -77,7 +77,7 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
    return VDP_STATUS_OK;
 
 no_handle:
-   FREE(p_surf->psurface);
+   //FREE(p_surf->psurface);
 inv_device:
 no_surf:
    FREE(p_surf);
@@ -97,12 +97,12 @@ vlVdpVideoSurfaceDestroy(VdpVideoSurface surface)
    if (!p_surf)
       return VDP_STATUS_INVALID_HANDLE;
 
-   if (p_surf->psurface) {
-      if (p_surf->psurface->texture) {
-         if (p_surf->psurface->texture->screen)
-            p_surf->psurface->context->surface_destroy(p_surf->psurface->context, p_surf->psurface);
-      }
-   }
+   //if (p_surf->psurface) {
+   //   if (p_surf->psurface->texture) {
+   //      if (p_surf->psurface->texture->screen)
+   //         p_surf->psurface->context->surface_destroy(p_surf->psurface->context, p_surf->psurface);
+   //   }
+   //}
    FREE(p_surf);
    return VDP_STATUS_OK;
 }
@@ -142,8 +142,8 @@ vlVdpVideoSurfaceGetBitsYCbCr(VdpVideoSurface surface,
    if (!p_surf)
       return VDP_STATUS_INVALID_HANDLE;
 
-   if (!p_surf->psurface)
-      return VDP_STATUS_RESOURCES;
+   //if (!p_surf->psurface)
+   //   return VDP_STATUS_RESOURCES;
 
    return VDP_STATUS_OK;
 }
