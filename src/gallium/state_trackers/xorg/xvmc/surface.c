@@ -155,7 +155,7 @@ unmap_and_flush_surface(XvMCSurfacePrivate *surface)
 
    assert(surface);
 
-   for ( i = 0; i < 3; ++i ) {
+   for ( i = 0; i < 2; ++i ) {
       if (surface->ref_surfaces[i]) {
          XvMCSurfacePrivate *ref = surface->ref_surfaces[i]->privData;
 
