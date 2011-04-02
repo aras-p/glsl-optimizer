@@ -256,17 +256,11 @@ vl_mpeg12_get_param(struct pipe_video_context *vpipe, int param)
 
    assert(vpipe);
 
-   switch (param) {
-      case PIPE_CAP_NPOT_TEXTURES:
-         return !ctx->pot_buffers;
-      case PIPE_CAP_DECODE_TARGET_PREFERRED_FORMAT:
-         return ctx->decode_format;
-      default:
-      {
-         debug_printf("vl_mpeg12_context: Unknown PIPE_CAP %d\n", param);
-         return 0;
-      }
-   }
+   if (param == PIPE_CAP_NPOT_TEXTURES)
+      return !ctx->pot_buffers;
+
+   debug_printf("vl_mpeg12_context: Unknown PIPE_CAP %d\n", param);
+   return 0;
 }
 
 static struct pipe_surface *
@@ -654,8 +648,7 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
                          enum pipe_video_profile profile,
                          enum pipe_video_chroma_format chroma_format,
                          unsigned width, unsigned height,
-                         bool pot_buffers,
-                         enum pipe_format decode_format)
+                         bool pot_buffers)
 {
    struct vl_mpeg12_context *ctx;
 
@@ -686,7 +679,6 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
    ctx->base.set_csc_matrix = vl_mpeg12_set_csc_matrix;
 
    ctx->pipe = pipe;
-   ctx->decode_format = decode_format;
    ctx->pot_buffers = pot_buffers;
 
    ctx->quads = vl_vb_upload_quads(ctx->pipe, 2, 2);

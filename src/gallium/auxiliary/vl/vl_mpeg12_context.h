@@ -41,7 +41,6 @@ struct vl_mpeg12_context
 {
    struct pipe_video_context base;
    struct pipe_context *pipe;
-   enum pipe_format decode_format;
    bool pot_buffers;
    unsigned buffer_width, buffer_height;
 
@@ -89,7 +88,6 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
                          enum pipe_video_profile profile,
                          enum pipe_video_chroma_format chroma_format,
                          unsigned width, unsigned height,
-                         bool pot_buffers,
-                         enum pipe_format decode_format);
+                         bool pot_buffers);
 
 #endif /* VL_MPEG12_CONTEXT_H */

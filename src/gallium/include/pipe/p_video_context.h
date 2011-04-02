@@ -34,9 +34,6 @@ extern "C" {
 
 #include <pipe/p_video_state.h>
 
-/* XXX: Move to an appropriate place */
-#define PIPE_CAP_DECODE_TARGET_PREFERRED_FORMAT 256
-
 struct pipe_screen;
 struct pipe_buffer;
 struct pipe_surface;

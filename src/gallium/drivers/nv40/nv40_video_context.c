@@ -47,8 +47,7 @@ nv40_video_create(struct pipe_screen *screen, enum pipe_video_profile profile,
          return vl_create_mpeg12_context(pipe, profile,
                                          chroma_format,
                                          width, height,
-                                         true,
-                                         PIPE_FORMAT_XYUV);
+                                         true);
       default:
          return NULL;
    }
