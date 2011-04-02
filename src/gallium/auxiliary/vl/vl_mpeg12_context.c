@@ -315,73 +315,98 @@ vl_mpeg12_create_buffer(struct pipe_video_context *vpipe)
 
    buffer->vertex_bufs.individual.stream = vl_vb_init(&buffer->vertex_stream, ctx->pipe,
                                                       ctx->vertex_buffer_size);
+   if (!buffer->vertex_bufs.individual.stream.buffer)
+      goto error_vertex_stream;
 
    if (!vl_ycbcr_buffer_init(&buffer->idct_source, ctx->pipe,
                              ctx->buffer_width, ctx->buffer_height,
                              ctx->base.chroma_format,
                              PIPE_FORMAT_R16G16B16A16_SNORM,
-                             PIPE_USAGE_STREAM)) {
-      FREE(buffer);
-      return NULL;
-   }
+                             PIPE_USAGE_STREAM))
+      goto error_idct_source;
 
    if (!vl_ycbcr_buffer_init(&buffer->idct_2_mc, ctx->pipe,
                              ctx->buffer_width, ctx->buffer_height,
                              ctx->base.chroma_format,
                              PIPE_FORMAT_R16_SNORM,
-                             PIPE_USAGE_STATIC)) {
-      FREE(buffer);
-      return NULL;
-   }
+                             PIPE_USAGE_STATIC))
+      goto error_idct_2_mc;
 
    if (!vl_ycbcr_buffer_init(&buffer->render_result, ctx->pipe,
                              ctx->buffer_width, ctx->buffer_height,
                              ctx->base.chroma_format,
                              PIPE_FORMAT_R8_SNORM,
-                             PIPE_USAGE_STATIC)) {
-      FREE(buffer);
-      return NULL;
-   }
+                             PIPE_USAGE_STATIC))
+      goto error_render_result;
 
    idct_views = vl_ycbcr_get_sampler_views(&buffer->idct_source);
+   if (!idct_views)
+      goto error_idct_views;
+
    idct_surfaces = vl_ycbcr_get_surfaces(&buffer->idct_2_mc);
+   if (!idct_surfaces)
+      goto error_idct_surfaces;
 
    if (!vl_idct_init_buffer(&ctx->idct_y, &buffer->idct_y,
-                            idct_views->y, idct_surfaces->y)) {
-      FREE(buffer);
-      return NULL;
-   }
+                            idct_views->y, idct_surfaces->y))
+      goto error_idct_y;
 
    if (!vl_idct_init_buffer(&ctx->idct_c, &buffer->idct_cb,
-                            idct_views->cb, idct_surfaces->cb)) {
-      FREE(buffer);
-      return NULL;
-   }
+                            idct_views->cb, idct_surfaces->cb))
+      goto error_idct_cb;
 
    if (!vl_idct_init_buffer(&ctx->idct_c, &buffer->idct_cr,
-                            idct_views->cr, idct_surfaces->cr)) {
-      FREE(buffer);
-      return NULL;
-   }
+                            idct_views->cr, idct_surfaces->cr))
+      goto error_idct_cr;
 
    mc_views = vl_ycbcr_get_sampler_views(&buffer->idct_2_mc);
+   if (!mc_views)
+      goto error_mc_views;
 
-   if(!vl_mpeg12_mc_init_buffer(&ctx->mc, &buffer->mc_y, mc_views->y)) {
-      FREE(buffer);
-      return NULL;
-   }
+   if(!vl_mpeg12_mc_init_buffer(&ctx->mc, &buffer->mc_y, mc_views->y))
+      goto error_mc_y;
 
-   if(!vl_mpeg12_mc_init_buffer(&ctx->mc, &buffer->mc_cb, mc_views->cb)) {
-      FREE(buffer);
-      return NULL;
-   }
+   if(!vl_mpeg12_mc_init_buffer(&ctx->mc, &buffer->mc_cb, mc_views->cb))
+      goto error_mc_cb;
 
-   if(!vl_mpeg12_mc_init_buffer(&ctx->mc, &buffer->mc_cr, mc_views->cr)) {
-      FREE(buffer);
-      return NULL;
-   }
+   if(!vl_mpeg12_mc_init_buffer(&ctx->mc, &buffer->mc_cr, mc_views->cr))
+      goto error_mc_cr;
 
    return &buffer->base;
+
+error_mc_cr:
+   vl_mpeg12_mc_cleanup_buffer(&buffer->mc_cb);
+
+error_mc_cb:
+   vl_mpeg12_mc_cleanup_buffer(&buffer->mc_y);
+
+error_mc_y:
+error_mc_views:
+   vl_idct_cleanup_buffer(&ctx->idct_c, &buffer->idct_cr);
+
+error_idct_cr:
+   vl_idct_cleanup_buffer(&ctx->idct_c, &buffer->idct_cb);
+
+error_idct_cb:
+   vl_idct_cleanup_buffer(&ctx->idct_y, &buffer->idct_y);
+
+error_idct_y:
+error_idct_surfaces:
+error_idct_views:
+   vl_ycbcr_buffer_cleanup(&buffer->render_result);
+
+error_render_result:
+   vl_ycbcr_buffer_cleanup(&buffer->idct_2_mc);
+
+error_idct_2_mc:
+   vl_ycbcr_buffer_cleanup(&buffer->idct_source);
+
+error_idct_source:
+   vl_vb_cleanup(&buffer->vertex_stream);
+
+error_vertex_stream:
+   FREE(buffer);
+   return NULL;
 }
 
 static boolean
@@ -613,11 +638,11 @@ init_idct(struct vl_mpeg12_context *ctx, unsigned buffer_width, unsigned buffer_
    ctx->empty_block_mask = &const_empty_block_mask_420;
 
    if (!(idct_matrix = vl_idct_upload_matrix(ctx->pipe)))
-      return false;
+      goto error_idct_matrix;
 
    if (!vl_idct_init(&ctx->idct_y, ctx->pipe, buffer_width, buffer_height,
                      2, 2, TGSI_SWIZZLE_X, idct_matrix))
-      return false;
+      goto error_idct_y;
 
    if (ctx->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
       chroma_width = buffer_width / 2;
@@ -638,9 +663,19 @@ init_idct(struct vl_mpeg12_context *ctx, unsigned buffer_width, unsigned buffer_
 
    if(!vl_idct_init(&ctx->idct_c, ctx->pipe, chroma_width, chroma_height,
                     chroma_blocks_x, chroma_blocks_y, TGSI_SWIZZLE_Y, idct_matrix))
-      return false;
+      goto error_idct_c;
 
+   pipe_sampler_view_reference(&idct_matrix, NULL);
    return true;
+
+error_idct_c:
+   vl_idct_cleanup(&ctx->idct_y);
+
+error_idct_y:
+   pipe_sampler_view_reference(&idct_matrix, NULL);
+
+error_idct_matrix:
+   return false;
 }
 
 struct pipe_video_context *
@@ -690,38 +725,32 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
    ctx->buffer_width = pot_buffers ? util_next_power_of_two(width) : align(width, MACROBLOCK_WIDTH);
    ctx->buffer_height = pot_buffers ? util_next_power_of_two(height) : align(height, MACROBLOCK_HEIGHT);
 
-   if (!init_idct(ctx, ctx->buffer_width, ctx->buffer_height)) {
-      ctx->pipe->destroy(ctx->pipe);
-      FREE(ctx);
-      return NULL;
-   }
+   if (!init_idct(ctx, ctx->buffer_width, ctx->buffer_height))
+      goto error_idct;
 
-   if (!vl_mpeg12_mc_renderer_init(&ctx->mc, ctx->pipe, ctx->buffer_width, ctx->buffer_height)) {
-      vl_idct_cleanup(&ctx->idct_y);
-      vl_idct_cleanup(&ctx->idct_c);
-      ctx->pipe->destroy(ctx->pipe);
-      FREE(ctx);
-      return NULL;
-   }
+   if (!vl_mpeg12_mc_renderer_init(&ctx->mc, ctx->pipe, ctx->buffer_width, ctx->buffer_height))
+      goto error_mc;
 
-   if (!vl_compositor_init(&ctx->compositor, ctx->pipe)) {
-      vl_idct_cleanup(&ctx->idct_y);
-      vl_idct_cleanup(&ctx->idct_c);
-      vl_mpeg12_mc_renderer_cleanup(&ctx->mc);
-      ctx->pipe->destroy(ctx->pipe);
-      FREE(ctx);
-      return NULL;
-   }
+   if (!vl_compositor_init(&ctx->compositor, ctx->pipe))
+      goto error_compositor;
 
-   if (!init_pipe_state(ctx)) {
-      vl_idct_cleanup(&ctx->idct_y);
-      vl_idct_cleanup(&ctx->idct_c);
-      vl_mpeg12_mc_renderer_cleanup(&ctx->mc);
-      vl_compositor_cleanup(&ctx->compositor);
-      ctx->pipe->destroy(ctx->pipe);
-      FREE(ctx);
-      return NULL;
-   }
+   if (!init_pipe_state(ctx))
+      goto error_pipe_state;
 
    return &ctx->base;
+
+error_pipe_state:
+      vl_compositor_cleanup(&ctx->compositor);
+
+error_compositor:
+      vl_mpeg12_mc_renderer_cleanup(&ctx->mc);
+
+error_mc:
+      vl_idct_cleanup(&ctx->idct_y);
+      vl_idct_cleanup(&ctx->idct_c);
+
+error_idct:
+      ctx->pipe->destroy(ctx->pipe);
+      FREE(ctx);
+      return NULL;
 }
