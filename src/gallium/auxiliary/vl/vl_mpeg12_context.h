@@ -49,10 +49,10 @@ struct vl_mpeg12_context
 
    struct pipe_vertex_buffer quads;
    unsigned vertex_buffer_size;
-   void *vertex_elems_state;
+   void *ves_y, *ves_cb, *ves_cr;
 
-   struct vl_idct idct_y, idct_cb, idct_cr;
-   struct vl_mpeg12_mc_renderer mc_y, mc_cb, mc_cr;
+   struct vl_idct idct_y, idct_c;
+   struct vl_mpeg12_mc_renderer mc;
    struct vl_compositor compositor;
 
    void *rast;

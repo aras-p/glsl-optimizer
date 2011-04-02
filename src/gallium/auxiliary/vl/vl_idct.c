@@ -93,8 +93,8 @@ static void *
 create_vert_shader(struct vl_idct *idct, bool matrix_stage, int color_swizzle)
 {
    struct ureg_program *shader;
-   struct ureg_src vrect, vpos, vblock, eb[4];
-   struct ureg_src scale, blocks_xy, t_eb;
+   struct ureg_src vrect, vpos, vblock, eb;
+   struct ureg_src scale, blocks_xy;
    struct ureg_dst t_tex, t_start;
    struct ureg_dst o_vpos, o_l_addr[2], o_r_addr[2];
    unsigned label;
@@ -112,10 +112,7 @@ create_vert_shader(struct vl_idct *idct, bool matrix_stage, int color_swizzle)
 
    o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, VS_O_VPOS);
 
-   eb[0] = ureg_DECL_vs_input(shader, VS_I_EB_0_0);
-   eb[1] = ureg_DECL_vs_input(shader, VS_I_EB_1_0);
-   eb[2] = ureg_DECL_vs_input(shader, VS_I_EB_0_1);
-   eb[3] = ureg_DECL_vs_input(shader, VS_I_EB_1_1);
+   eb = ureg_DECL_vs_input(shader, VS_I_EB);
 
    o_l_addr[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_L_ADDR0);
    o_l_addr[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_L_ADDR1);
@@ -127,8 +124,7 @@ create_vert_shader(struct vl_idct *idct, bool matrix_stage, int color_swizzle)
     * scale = (BLOCK_WIDTH, BLOCK_HEIGHT) / (dst.width, dst.height)
     * blocks_xy = (blocks_x, blocks_y)
     *
-    * ar = vblock.y * blocks.x + vblock.x
-    * if eb[ar].(color_swizzle)
+    * if eb.(vblock.y, vblock.x)
     *    o_vpos.xy = -1
     * else
     *    t_tex = vpos * blocks_xy + vblock
@@ -150,18 +146,20 @@ create_vert_shader(struct vl_idct *idct, bool matrix_stage, int color_swizzle)
    blocks_xy = ureg_imm2f(shader, idct->blocks_x, idct->blocks_y);
 
    if (idct->blocks_x > 1 || idct->blocks_y > 1) {
-      struct ureg_dst ar = ureg_DECL_address(shader);
+      ureg_CMP(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_XY),
+         ureg_negate(ureg_scalar(vblock, TGSI_SWIZZLE_Y)),
+         ureg_swizzle(eb, TGSI_SWIZZLE_Z, TGSI_SWIZZLE_W, TGSI_SWIZZLE_Z, TGSI_SWIZZLE_W),
+         ureg_swizzle(eb, TGSI_SWIZZLE_X, TGSI_SWIZZLE_Y, TGSI_SWIZZLE_X, TGSI_SWIZZLE_Y));
 
-      ureg_MAD(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_X),
-               ureg_scalar(vblock, TGSI_SWIZZLE_Y), blocks_xy, vblock);
+      ureg_CMP(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_X),
+         ureg_negate(ureg_scalar(vblock, TGSI_SWIZZLE_X)),
+         ureg_scalar(ureg_src(t_tex), TGSI_SWIZZLE_Y),
+         ureg_scalar(ureg_src(t_tex), TGSI_SWIZZLE_X));
 
-      ureg_ARL(shader, ureg_writemask(ar, TGSI_WRITEMASK_X), ureg_src(t_tex));
-      t_eb = ureg_src_indirect(eb[0], ureg_src(ar));
-   } else {
-      t_eb = eb[0];
+      eb = ureg_src(t_tex);
    }
 
-   ureg_IF(shader, ureg_scalar(t_eb, color_swizzle), &label);
+   ureg_IF(shader, ureg_scalar(eb, TGSI_SWIZZLE_X), &label);
 
       ureg_MOV(shader, o_vpos, ureg_imm1f(shader, -1.0f));
 

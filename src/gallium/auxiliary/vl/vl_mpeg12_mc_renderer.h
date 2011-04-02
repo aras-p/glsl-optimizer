@@ -42,7 +42,6 @@ struct vl_mpeg12_mc_renderer
    struct pipe_context *pipe;
    unsigned buffer_width;
    unsigned buffer_height;
-   enum pipe_video_chroma_format chroma_format;
 
    struct pipe_viewport_state viewport;
    struct pipe_framebuffer_state fb_state;
@@ -72,9 +71,7 @@ struct vl_mpeg12_mc_buffer
 bool vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
                                 struct pipe_context *pipe,
                                 unsigned picture_width,
-                                unsigned picture_height,
-                                enum pipe_video_chroma_format chroma_format,
-                                unsigned color_swizzle);
+                                unsigned picture_height);
 
 void vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer);
 

@@ -94,8 +94,8 @@ vl_mpeg12_buffer_destroy(struct pipe_video_buffer *buffer)
    vl_ycbcr_buffer_cleanup(&buf->render_result);
    vl_vb_cleanup(&buf->vertex_stream);
    vl_idct_cleanup_buffer(&ctx->idct_y, &buf->idct_y);
-   vl_idct_cleanup_buffer(&ctx->idct_cb, &buf->idct_cb);
-   vl_idct_cleanup_buffer(&ctx->idct_cr, &buf->idct_cr);
+   vl_idct_cleanup_buffer(&ctx->idct_c, &buf->idct_cb);
+   vl_idct_cleanup_buffer(&ctx->idct_c, &buf->idct_cr);
    vl_mpeg12_mc_cleanup_buffer(&buf->mc_y);
    vl_mpeg12_mc_cleanup_buffer(&buf->mc_cb);
    vl_mpeg12_mc_cleanup_buffer(&buf->mc_cr);
@@ -115,8 +115,8 @@ vl_mpeg12_buffer_map(struct pipe_video_buffer *buffer)
 
    vl_vb_map(&buf->vertex_stream, ctx->pipe);
    vl_idct_map_buffers(&ctx->idct_y, &buf->idct_y);
-   vl_idct_map_buffers(&ctx->idct_cr, &buf->idct_cr);
-   vl_idct_map_buffers(&ctx->idct_cb, &buf->idct_cb);
+   vl_idct_map_buffers(&ctx->idct_c, &buf->idct_cb);
+   vl_idct_map_buffers(&ctx->idct_c, &buf->idct_cr);
 }
 
 static void
@@ -156,8 +156,8 @@ vl_mpeg12_buffer_unmap(struct pipe_video_buffer *buffer)
 
    vl_vb_unmap(&buf->vertex_stream, ctx->pipe);
    vl_idct_unmap_buffers(&ctx->idct_y, &buf->idct_y);
-   vl_idct_unmap_buffers(&ctx->idct_cr, &buf->idct_cr);
-   vl_idct_unmap_buffers(&ctx->idct_cb, &buf->idct_cb);
+   vl_idct_unmap_buffers(&ctx->idct_c, &buf->idct_cb);
+   vl_idct_unmap_buffers(&ctx->idct_c, &buf->idct_cr);
 }
 
 static void
@@ -182,36 +182,42 @@ vl_mpeg12_buffer_flush(struct pipe_video_buffer *buffer,
    ctx = (struct vl_mpeg12_context *)buf->base.context;
    assert(ctx);
 
-   vl_vb_restart(&buf->vertex_stream, &ne_start, &ne_num, &e_start, &e_num);
-
-   ctx->pipe->set_vertex_buffers(ctx->pipe, 2, buf->vertex_bufs.all);
-   ctx->pipe->bind_vertex_elements_state(ctx->pipe, ctx->vertex_elems_state);
-   ctx->pipe->bind_blend_state(ctx->pipe, ctx->blend);
-   vl_idct_flush(&ctx->idct_y, &buf->idct_y, ne_num);
-   vl_idct_flush(&ctx->idct_cr, &buf->idct_cr, ne_num);
-   vl_idct_flush(&ctx->idct_cb, &buf->idct_cb, ne_num);
-
    surfaces = vl_ycbcr_get_surfaces(&buf->render_result);
 
    sv_past = past ? vl_ycbcr_get_sampler_views(&past->render_result) : NULL;
    sv_future = future ? vl_ycbcr_get_sampler_views(&future->render_result) : NULL;
 
+   vl_vb_restart(&buf->vertex_stream, &ne_start, &ne_num, &e_start, &e_num);
+
+   ctx->pipe->set_vertex_buffers(ctx->pipe, 2, buf->vertex_bufs.all);
+   ctx->pipe->bind_blend_state(ctx->pipe, ctx->blend);
+
+
+   ctx->pipe->bind_vertex_elements_state(ctx->pipe, ctx->ves_y);
+   vl_idct_flush(&ctx->idct_y, &buf->idct_y, ne_num);
+
    sv_refs[0] = sv_past ? sv_past->y : NULL;
    sv_refs[1] = sv_future ? sv_future->y : NULL;
 
-   vl_mpeg12_mc_renderer_flush(&ctx->mc_y, &buf->mc_y, surfaces->y,
+   vl_mpeg12_mc_renderer_flush(&ctx->mc, &buf->mc_y, surfaces->y,
                                sv_refs, ne_start, ne_num, e_start, e_num, fence);
+
+   ctx->pipe->bind_vertex_elements_state(ctx->pipe, ctx->ves_cb);
+   vl_idct_flush(&ctx->idct_c, &buf->idct_cb, ne_num);
 
    sv_refs[0] = sv_past ? sv_past->cb : NULL;
    sv_refs[1] = sv_future ? sv_future->cb : NULL;
 
-   vl_mpeg12_mc_renderer_flush(&ctx->mc_cb, &buf->mc_cb, surfaces->cb,
+   vl_mpeg12_mc_renderer_flush(&ctx->mc, &buf->mc_cb, surfaces->cb,
                                sv_refs, ne_start, ne_num, e_start, e_num, fence);
+
+   ctx->pipe->bind_vertex_elements_state(ctx->pipe, ctx->ves_cr);
+   vl_idct_flush(&ctx->idct_c, &buf->idct_cr, ne_num);
 
    sv_refs[0] = sv_past ? sv_past->cr : NULL;
    sv_refs[1] = sv_future ? sv_future->cr : NULL;
 
-   vl_mpeg12_mc_renderer_flush(&ctx->mc_cr, &buf->mc_cr, surfaces->cr,
+   vl_mpeg12_mc_renderer_flush(&ctx->mc, &buf->mc_cr, surfaces->cr,
                                sv_refs, ne_start, ne_num, e_start, e_num, fence);
 }
 
@@ -231,13 +237,12 @@ vl_mpeg12_destroy(struct pipe_video_context *vpipe)
    ctx->pipe->delete_depth_stencil_alpha_state(ctx->pipe, ctx->dsa);
 
    vl_compositor_cleanup(&ctx->compositor);
-   vl_mpeg12_mc_renderer_cleanup(&ctx->mc_y);
-   vl_mpeg12_mc_renderer_cleanup(&ctx->mc_cb);
-   vl_mpeg12_mc_renderer_cleanup(&ctx->mc_cr);
+   vl_mpeg12_mc_renderer_cleanup(&ctx->mc);
    vl_idct_cleanup(&ctx->idct_y);
-   vl_idct_cleanup(&ctx->idct_cr);
-   vl_idct_cleanup(&ctx->idct_cb);
-   ctx->pipe->delete_vertex_elements_state(ctx->pipe, ctx->vertex_elems_state);
+   vl_idct_cleanup(&ctx->idct_c);
+   ctx->pipe->delete_vertex_elements_state(ctx->pipe, ctx->ves_y);
+   ctx->pipe->delete_vertex_elements_state(ctx->pipe, ctx->ves_cb);
+   ctx->pipe->delete_vertex_elements_state(ctx->pipe, ctx->ves_cr);
    pipe_resource_reference(&ctx->quads.buffer, NULL);
    ctx->pipe->destroy(ctx->pipe);
 
@@ -353,13 +358,13 @@ vl_mpeg12_create_buffer(struct pipe_video_context *vpipe)
       return NULL;
    }
 
-   if (!vl_idct_init_buffer(&ctx->idct_cb, &buffer->idct_cb,
+   if (!vl_idct_init_buffer(&ctx->idct_c, &buffer->idct_cb,
                             idct_views->cb, idct_surfaces->cb)) {
       FREE(buffer);
       return NULL;
    }
 
-   if (!vl_idct_init_buffer(&ctx->idct_cr, &buffer->idct_cr,
+   if (!vl_idct_init_buffer(&ctx->idct_c, &buffer->idct_cr,
                             idct_views->cr, idct_surfaces->cr)) {
       FREE(buffer);
       return NULL;
@@ -367,17 +372,17 @@ vl_mpeg12_create_buffer(struct pipe_video_context *vpipe)
 
    mc_views = vl_ycbcr_get_sampler_views(&buffer->idct_2_mc);
 
-   if(!vl_mpeg12_mc_init_buffer(&ctx->mc_y, &buffer->mc_y, mc_views->y)) {
+   if(!vl_mpeg12_mc_init_buffer(&ctx->mc, &buffer->mc_y, mc_views->y)) {
       FREE(buffer);
       return NULL;
    }
 
-   if(!vl_mpeg12_mc_init_buffer(&ctx->mc_cb, &buffer->mc_cb, mc_views->cb)) {
+   if(!vl_mpeg12_mc_init_buffer(&ctx->mc, &buffer->mc_cb, mc_views->cb)) {
       FREE(buffer);
       return NULL;
    }
 
-   if(!vl_mpeg12_mc_init_buffer(&ctx->mc_cr, &buffer->mc_cr, mc_views->cr)) {
+   if(!vl_mpeg12_mc_init_buffer(&ctx->mc, &buffer->mc_cr, mc_views->cr)) {
       FREE(buffer);
       return NULL;
    }
@@ -637,12 +642,8 @@ init_idct(struct vl_mpeg12_context *ctx, unsigned buffer_width, unsigned buffer_
       chroma_blocks_y = 2;
    }
 
-   if(!vl_idct_init(&ctx->idct_cb, ctx->pipe, chroma_width, chroma_height,
+   if(!vl_idct_init(&ctx->idct_c, ctx->pipe, chroma_width, chroma_height,
                     chroma_blocks_x, chroma_blocks_y, TGSI_SWIZZLE_Y, idct_matrix))
-      return false;
-
-   if(!vl_idct_init(&ctx->idct_cr, ctx->pipe, chroma_width, chroma_height,
-                    chroma_blocks_x, chroma_blocks_y, TGSI_SWIZZLE_Z, idct_matrix))
       return false;
 
    return true;
@@ -690,13 +691,9 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
 
    ctx->quads = vl_vb_upload_quads(ctx->pipe, 2, 2);
    ctx->vertex_buffer_size = width / MACROBLOCK_WIDTH * height / MACROBLOCK_HEIGHT;
-   ctx->vertex_elems_state = vl_vb_get_elems_state(ctx->pipe, true);
-
-   if (ctx->vertex_elems_state == NULL) {
-      ctx->pipe->destroy(ctx->pipe);
-      FREE(ctx);
-      return NULL;
-   }
+   ctx->ves_y = vl_vb_get_elems_state(ctx->pipe, TGSI_SWIZZLE_X);
+   ctx->ves_cb = vl_vb_get_elems_state(ctx->pipe, TGSI_SWIZZLE_Y);
+   ctx->ves_cr = vl_vb_get_elems_state(ctx->pipe, TGSI_SWIZZLE_Z);
 
    ctx->buffer_width = pot_buffers ? util_next_power_of_two(width) : align(width, MACROBLOCK_WIDTH);
    ctx->buffer_height = pot_buffers ? util_next_power_of_two(height) : align(height, MACROBLOCK_HEIGHT);
@@ -707,34 +704,9 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
       return NULL;
    }
 
-   if (!vl_mpeg12_mc_renderer_init(&ctx->mc_y, ctx->pipe,
-                                   ctx->buffer_width, ctx->buffer_height,
-                                   chroma_format, TGSI_SWIZZLE_X)) {
+   if (!vl_mpeg12_mc_renderer_init(&ctx->mc, ctx->pipe, ctx->buffer_width, ctx->buffer_height)) {
       vl_idct_cleanup(&ctx->idct_y);
-      vl_idct_cleanup(&ctx->idct_cr);
-      vl_idct_cleanup(&ctx->idct_cb);
-      ctx->pipe->destroy(ctx->pipe);
-      FREE(ctx);
-      return NULL;
-   }
-
-   if (!vl_mpeg12_mc_renderer_init(&ctx->mc_cb, ctx->pipe,
-                                   ctx->buffer_width, ctx->buffer_height,
-                                   chroma_format, TGSI_SWIZZLE_Y)) {
-      vl_idct_cleanup(&ctx->idct_y);
-      vl_idct_cleanup(&ctx->idct_cr);
-      vl_idct_cleanup(&ctx->idct_cb);
-      ctx->pipe->destroy(ctx->pipe);
-      FREE(ctx);
-      return NULL;
-   }
-
-   if (!vl_mpeg12_mc_renderer_init(&ctx->mc_cr, ctx->pipe,
-                                   ctx->buffer_width, ctx->buffer_height,
-                                   chroma_format, TGSI_SWIZZLE_Z)) {
-      vl_idct_cleanup(&ctx->idct_y);
-      vl_idct_cleanup(&ctx->idct_cr);
-      vl_idct_cleanup(&ctx->idct_cb);
+      vl_idct_cleanup(&ctx->idct_c);
       ctx->pipe->destroy(ctx->pipe);
       FREE(ctx);
       return NULL;
@@ -742,11 +714,8 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
 
    if (!vl_compositor_init(&ctx->compositor, ctx->pipe)) {
       vl_idct_cleanup(&ctx->idct_y);
-      vl_idct_cleanup(&ctx->idct_cr);
-      vl_idct_cleanup(&ctx->idct_cb);
-      vl_mpeg12_mc_renderer_cleanup(&ctx->mc_y);
-      vl_mpeg12_mc_renderer_cleanup(&ctx->mc_cb);
-      vl_mpeg12_mc_renderer_cleanup(&ctx->mc_cr);
+      vl_idct_cleanup(&ctx->idct_c);
+      vl_mpeg12_mc_renderer_cleanup(&ctx->mc);
       ctx->pipe->destroy(ctx->pipe);
       FREE(ctx);
       return NULL;
@@ -754,11 +723,8 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
 
    if (!init_pipe_state(ctx)) {
       vl_idct_cleanup(&ctx->idct_y);
-      vl_idct_cleanup(&ctx->idct_cr);
-      vl_idct_cleanup(&ctx->idct_cb);
-      vl_mpeg12_mc_renderer_cleanup(&ctx->mc_y);
-      vl_mpeg12_mc_renderer_cleanup(&ctx->mc_cb);
-      vl_mpeg12_mc_renderer_cleanup(&ctx->mc_cr);
+      vl_idct_cleanup(&ctx->idct_c);
+      vl_mpeg12_mc_renderer_cleanup(&ctx->mc);
       vl_compositor_cleanup(&ctx->compositor);
       ctx->pipe->destroy(ctx->pipe);
       FREE(ctx);

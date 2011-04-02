@@ -33,12 +33,11 @@
 struct vl_vertex_stream
 {
    struct vertex2s pos;
-   struct {
-      int8_t y;
-      int8_t cr;
-      int8_t cb;
-      int8_t flag;
-   } eb[2][2];
+   int8_t eb[3][2][2];
+   int8_t dct_type_field;
+   int8_t mo_type_frame;
+   int8_t mb_type_intra;
+   int8_t mv_wheights;
    struct vertex2s mv[4];
 };
 
@@ -121,7 +120,10 @@ vl_vb_element_helper(struct pipe_vertex_element* elements, unsigned num_elements
    assert(elements && num_elements);
 
    for ( i = 0; i < num_elements; ++i ) {
-      elements[i].src_offset = offset;
+      if (elements[i].src_offset)
+         offset = elements[i].src_offset;
+      else
+         elements[i].src_offset = offset;
       elements[i].instance_divisor = 1;
       elements[i].vertex_buffer_index = vertex_buffer_index;
       offset += util_format_get_blocksize(elements[i].src_format);
@@ -129,11 +131,9 @@ vl_vb_element_helper(struct pipe_vertex_element* elements, unsigned num_elements
 }
 
 void *
-vl_vb_get_elems_state(struct pipe_context *pipe, bool include_mvs)
+vl_vb_get_elems_state(struct pipe_context *pipe, int component)
 {
    struct pipe_vertex_element vertex_elems[NUM_VS_INPUTS];
-
-   unsigned i;
 
    memset(&vertex_elems, 0, sizeof(vertex_elems));
    vertex_elems[VS_I_RECT] = vl_vb_get_quad_vertex_element();
@@ -141,25 +141,29 @@ vl_vb_get_elems_state(struct pipe_context *pipe, bool include_mvs)
    /* Position element */
    vertex_elems[VS_I_VPOS].src_format = PIPE_FORMAT_R16G16_SSCALED;
 
-   /* y, cr, cb empty block element top left block */
-   vertex_elems[VS_I_EB_0_0].src_format = PIPE_FORMAT_R8G8B8A8_SSCALED;
+   /* empty block element of selected component */
+   vertex_elems[VS_I_EB].src_offset = 4 + component * 4;
+   vertex_elems[VS_I_EB].src_format = PIPE_FORMAT_R8G8B8A8_SSCALED;
 
-   /* y, cr, cb empty block element top right block */
-   vertex_elems[VS_I_EB_0_1].src_format = PIPE_FORMAT_R8G8B8A8_SSCALED;
+   /* flags */
+   vertex_elems[VS_I_FLAGS].src_offset = 16;
+   vertex_elems[VS_I_FLAGS].src_format = PIPE_FORMAT_R8G8B8A8_SSCALED;
 
-   /* y, cr, cb empty block element bottom left block */
-   vertex_elems[VS_I_EB_1_0].src_format = PIPE_FORMAT_R8G8B8A8_SSCALED;
+   /* motion vector 0 TOP element */
+   vertex_elems[VS_I_MV0_TOP].src_format = PIPE_FORMAT_R16G16_SSCALED;
 
-   /* y, cr, cb empty block element bottom right block */
-   vertex_elems[VS_I_EB_1_1].src_format = PIPE_FORMAT_R8G8B8A8_SSCALED;
+   /* motion vector 0 BOTTOM element */
+   vertex_elems[VS_I_MV0_BOTTOM].src_format = PIPE_FORMAT_R16G16_SSCALED;
 
-   for (i = 0; i < 4; ++i)
-      /* motion vector 0..4 element */
-      vertex_elems[VS_I_MV0 + i].src_format = PIPE_FORMAT_R16G16_SSCALED;
+   /* motion vector 1 TOP element */
+   vertex_elems[VS_I_MV1_TOP].src_format = PIPE_FORMAT_R16G16_SSCALED;
 
-   vl_vb_element_helper(&vertex_elems[VS_I_VPOS], NUM_VS_INPUTS - (include_mvs ? 1 : 5), 1);
+   /* motion vector 1 BOTTOM element */
+   vertex_elems[VS_I_MV1_BOTTOM].src_format = PIPE_FORMAT_R16G16_SSCALED;
 
-   return pipe->create_vertex_elements_state(pipe, NUM_VS_INPUTS - (include_mvs ? 0 : 4), vertex_elems);
+   vl_vb_element_helper(&vertex_elems[VS_I_VPOS], NUM_VS_INPUTS - 1, 1);
+
+   return pipe->create_vertex_elements_state(pipe, NUM_VS_INPUTS, vertex_elems);
 }
 
 struct pipe_vertex_buffer
@@ -256,7 +260,7 @@ vl_vb_add_block(struct vl_vertex_buffer *buffer, struct pipe_mpeg12_macroblock *
                 const unsigned (*empty_block_mask)[3][2][2])
 {
    struct vl_vertex_stream *stream;
-   unsigned i, j;
+   unsigned i, j, k;
 
    assert(buffer);
    assert(mb);
@@ -269,28 +273,29 @@ vl_vb_add_block(struct vl_vertex_buffer *buffer, struct pipe_mpeg12_macroblock *
    stream->pos.x = mb->mbx;
    stream->pos.y = mb->mby;
 
-   for ( i = 0; i < 2; ++i) {
-      for ( j = 0; j < 2; ++j) {
-         stream->eb[i][j].y = !(mb->cbp & (*empty_block_mask)[0][i][j]);
-         stream->eb[i][j].cr = !(mb->cbp & (*empty_block_mask)[1][i][j]);
-         stream->eb[i][j].cb = !(mb->cbp & (*empty_block_mask)[2][i][j]);
-      }
-   }
-   stream->eb[0][0].flag = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD;
-   stream->eb[0][1].flag = mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME;
-   stream->eb[1][0].flag = mb->mb_type != PIPE_MPEG12_MACROBLOCK_TYPE_INTRA;
+   for ( i = 0; i < 3; ++i)
+      for ( j = 0; j < 2; ++j)
+         for ( k = 0; k < 2; ++k)
+            stream->eb[i][j][k] = !(mb->cbp & (*empty_block_mask)[i][j][k]);
+
+   stream->dct_type_field = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD;
+   stream->mo_type_frame = mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME;
+   stream->mb_type_intra = mb->mb_type != PIPE_MPEG12_MACROBLOCK_TYPE_INTRA;
    switch (mb->mb_type) {
       case PIPE_MPEG12_MACROBLOCK_TYPE_FWD:
-         stream->eb[1][1].flag = 0;
+         stream->mv_wheights = 0;
          break;
 
       case PIPE_MPEG12_MACROBLOCK_TYPE_BI:
-         stream->eb[1][1].flag = 1;
+         stream->mv_wheights = 1;
          break;
 
       case PIPE_MPEG12_MACROBLOCK_TYPE_BKWD:
-         stream->eb[1][1].flag = 2;
+         stream->mv_wheights = 2;
          break;
+
+      default:
+         stream->mv_wheights = 0;
    }
 
    get_motion_vectors(mb, stream->mv);

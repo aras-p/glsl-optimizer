@@ -41,14 +41,12 @@ enum VS_INPUT
 {
    VS_I_RECT,
    VS_I_VPOS,
-   VS_I_EB_0_0,
-   VS_I_EB_0_1,
-   VS_I_EB_1_0,
-   VS_I_EB_1_1,
-   VS_I_MV0,
-   VS_I_MV1,
-   VS_I_MV2,
-   VS_I_MV3,
+   VS_I_EB,
+   VS_I_FLAGS,
+   VS_I_MV0_TOP,
+   VS_I_MV0_BOTTOM,
+   VS_I_MV1_TOP,
+   VS_I_MV1_BOTTOM,
 
    NUM_VS_INPUTS
 };
@@ -67,7 +65,7 @@ struct vl_vertex_buffer
 struct pipe_vertex_buffer vl_vb_upload_quads(struct pipe_context *pipe,
                                              unsigned blocks_x, unsigned blocks_y);
 
-void *vl_vb_get_elems_state(struct pipe_context *pipe, bool include_mvs);
+void *vl_vb_get_elems_state(struct pipe_context *pipe, int component);
 
 struct pipe_vertex_buffer vl_vb_init(struct vl_vertex_buffer *buffer,
                                      struct pipe_context *pipe,
