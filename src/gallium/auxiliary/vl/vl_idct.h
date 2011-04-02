@@ -80,7 +80,7 @@ struct pipe_sampler_view *vl_idct_upload_matrix(struct pipe_context *pipe);
 bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
                   unsigned buffer_width, unsigned buffer_height,
                   unsigned blocks_x, unsigned blocks_y,
-                  int color_swizzle, struct pipe_sampler_view *matrix);
+                  struct pipe_sampler_view *matrix);
 
 /* destroy an idct instance */
 void vl_idct_cleanup(struct vl_idct *idct);

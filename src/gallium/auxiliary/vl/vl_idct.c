@@ -90,7 +90,7 @@ calc_addr(struct ureg_program *shader, struct ureg_dst addr[2],
 }
 
 static void *
-create_vert_shader(struct vl_idct *idct, bool matrix_stage, int color_swizzle)
+create_vert_shader(struct vl_idct *idct, bool matrix_stage)
 {
    struct ureg_program *shader;
    struct ureg_src vrect, vpos, vblock, eb;
@@ -358,9 +358,9 @@ create_transpose_frag_shader(struct vl_idct *idct)
 }
 
 static bool
-init_shaders(struct vl_idct *idct, int color_swizzle)
+init_shaders(struct vl_idct *idct)
 {
-   idct->matrix_vs = create_vert_shader(idct, true, color_swizzle);
+   idct->matrix_vs = create_vert_shader(idct, true);
    if (!idct->matrix_vs)
       goto error_matrix_vs;
 
@@ -368,7 +368,7 @@ init_shaders(struct vl_idct *idct, int color_swizzle)
    if (!idct->matrix_fs)
       goto error_matrix_fs;
 
-   idct->transpose_vs = create_vert_shader(idct, false, color_swizzle);
+   idct->transpose_vs = create_vert_shader(idct, false);
    if (!idct->transpose_vs)
       goto error_transpose_vs;
 
@@ -616,7 +616,7 @@ error_matrix:
 bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
                   unsigned buffer_width, unsigned buffer_height,
                   unsigned blocks_x, unsigned blocks_y,
-                  int color_swizzle, struct pipe_sampler_view *matrix)
+                  struct pipe_sampler_view *matrix)
 {
    assert(idct && pipe && matrix);
 
@@ -627,7 +627,7 @@ bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
    idct->blocks_y = blocks_y;
    pipe_sampler_view_reference(&idct->matrix, matrix);
 
-   if(!init_shaders(idct, color_swizzle))
+   if(!init_shaders(idct))
       return false;
 
    if(!init_state(idct)) {

@@ -641,7 +641,7 @@ init_idct(struct vl_mpeg12_context *ctx, unsigned buffer_width, unsigned buffer_
       goto error_idct_matrix;
 
    if (!vl_idct_init(&ctx->idct_y, ctx->pipe, buffer_width, buffer_height,
-                     2, 2, TGSI_SWIZZLE_X, idct_matrix))
+                     2, 2, idct_matrix))
       goto error_idct_y;
 
    if (ctx->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
@@ -662,7 +662,7 @@ init_idct(struct vl_mpeg12_context *ctx, unsigned buffer_width, unsigned buffer_
    }
 
    if(!vl_idct_init(&ctx->idct_c, ctx->pipe, chroma_width, chroma_height,
-                    chroma_blocks_x, chroma_blocks_y, TGSI_SWIZZLE_Y, idct_matrix))
+                    chroma_blocks_x, chroma_blocks_y, idct_matrix))
       goto error_idct_c;
 
    pipe_sampler_view_reference(&idct_matrix, NULL);
