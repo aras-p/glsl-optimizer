@@ -139,7 +139,8 @@ vlVdpCreateSurfaceTarget(vlVdpDecoder *vldecoder, vlVdpSurface *vlsurf)
 
    memset(&tmplt, 0, sizeof(struct pipe_resource));
    tmplt.target = PIPE_TEXTURE_2D;
-   tmplt.format = vctx->get_param(vctx,PIPE_CAP_DECODE_TARGET_PREFERRED_FORMAT);
+   // TODO
+   //tmplt.format = vctx->get_param(vctx,PIPE_CAP_DECODE_TARGET_PREFERRED_FORMAT);
    tmplt.last_level = 0;
    tmplt.width0 = vlsurf->width;
    tmplt.height0 = vlsurf->height;
@@ -218,9 +219,10 @@ vlVdpDecoderRenderMpeg2(vlVdpDecoder *vldecoder,
       goto skip_frame;
    }
 
-   vpipe->set_decode_target(vpipe,t_surf);
-   vpipe->decode_macroblocks(vpipe, p_surf, f_surf, num_macroblocks,
-                             (struct pipe_macroblock *)pipe_macroblocks, NULL);
+   // TODO
+   //vpipe->set_decode_target(vpipe,t_surf);
+   //vpipe->decode_macroblocks(vpipe, p_surf, f_surf, num_macroblocks,
+   //                          (struct pipe_macroblock *)pipe_macroblocks, NULL);
 
    skip_frame:
    return ret;
