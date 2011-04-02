@@ -41,7 +41,8 @@
 #define INFORMATION_STRING TOSTRING(INFORMATION)
 #define VL_HANDLES
 
-static enum pipe_video_chroma_format TypeToPipe(VdpChromaType vdpau_type)
+static inline enum pipe_video_chroma_format
+ChromaToPipe(VdpChromaType vdpau_type)
 {
    switch (vdpau_type) {
       case VDP_CHROMA_TYPE_420:
@@ -57,7 +58,8 @@ static enum pipe_video_chroma_format TypeToPipe(VdpChromaType vdpau_type)
    return -1;
 }
 
-static VdpChromaType PipeToType(enum pipe_video_chroma_format pipe_type)
+static inline VdpChromaType
+PipeToChroma(enum pipe_video_chroma_format pipe_type)
 {
    switch (pipe_type) {
       case PIPE_VIDEO_CHROMA_FORMAT_420:
@@ -74,7 +76,8 @@ static VdpChromaType PipeToType(enum pipe_video_chroma_format pipe_type)
 }
 
 
-static enum pipe_format FormatToPipe(VdpYCbCrFormat vdpau_format)
+static inline enum pipe_format
+FormatToPipe(VdpYCbCrFormat vdpau_format)
 {
    switch (vdpau_format) {
       case VDP_YCBCR_FORMAT_NV12:
@@ -96,7 +99,8 @@ static enum pipe_format FormatToPipe(VdpYCbCrFormat vdpau_format)
    return -1;
 }
 
-static enum pipe_format FormatRGBAToPipe(VdpRGBAFormat vdpau_format)
+static inline enum pipe_format
+FormatRGBAToPipe(VdpRGBAFormat vdpau_format)
 {
    switch (vdpau_format) {
       case VDP_RGBA_FORMAT_A8:
@@ -116,7 +120,8 @@ static enum pipe_format FormatRGBAToPipe(VdpRGBAFormat vdpau_format)
    return -1;
 }
 
-static VdpYCbCrFormat PipeToFormat(enum pipe_format p_format)
+static inline VdpYCbCrFormat
+PipeToFormat(enum pipe_format p_format)
 {
    switch (p_format) {
       case PIPE_FORMAT_NV12:
@@ -138,7 +143,8 @@ static VdpYCbCrFormat PipeToFormat(enum pipe_format p_format)
    return -1;
 }
 
-static enum pipe_video_profile ProfileToPipe(VdpDecoderProfile vdpau_profile)
+static inline enum pipe_video_profile
+ProfileToPipe(VdpDecoderProfile vdpau_profile)
 {
    switch (vdpau_profile) {
       case VDP_DECODER_PROFILE_MPEG1:

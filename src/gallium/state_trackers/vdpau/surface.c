@@ -63,7 +63,7 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
       goto inv_device;
    }
 
-   p_surf->chroma_format = TypeToPipe(chroma_type);
+   p_surf->chroma_format = ChromaToPipe(chroma_type);
    p_surf->device = dev;
    p_surf->width = width;
    p_surf->height = height;
@@ -124,7 +124,7 @@ vlVdpVideoSurfaceGetParameters(VdpVideoSurface surface,
 
    *width = p_surf->width;
    *height = p_surf->height;
-   *chroma_type = PipeToType(p_surf->chroma_format);
+   *chroma_type = PipeToChroma(p_surf->chroma_format);
 
    return VDP_STATUS_OK;
 }
