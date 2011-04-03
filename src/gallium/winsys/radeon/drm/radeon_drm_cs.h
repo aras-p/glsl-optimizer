@@ -84,14 +84,32 @@ radeon_drm_cs(struct r300_winsys_cs *base)
     return (struct radeon_drm_cs*)base;
 }
 
-static INLINE boolean radeon_bo_is_referenced_by_cs(struct radeon_drm_cs *cs,
-                                                    struct radeon_bo *bo)
+static INLINE boolean
+radeon_bo_is_referenced_by_cs(struct radeon_drm_cs *cs,
+                              struct radeon_bo *bo)
 {
     return bo->num_cs_references == bo->rws->num_cs ||
            (bo->num_cs_references && radeon_get_reloc(cs->csc, bo) != -1);
 }
 
-static INLINE boolean radeon_bo_is_referenced_by_any_cs(struct radeon_bo *bo)
+static INLINE boolean
+radeon_bo_is_referenced_by_cs_for_write(struct radeon_drm_cs *cs,
+                                        struct radeon_bo *bo)
+{
+    int index;
+
+    if (!bo->num_cs_references)
+        return FALSE;
+
+    index = radeon_get_reloc(cs->csc, bo);
+    if (index == -1)
+        return FALSE;
+
+    return cs->csc->relocs[index].write_domain != 0;
+}
+
+static INLINE boolean
+radeon_bo_is_referenced_by_any_cs(struct radeon_bo *bo)
 {
     return bo->num_cs_references;
 }

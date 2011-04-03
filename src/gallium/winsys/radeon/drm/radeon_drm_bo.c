@@ -99,20 +99,27 @@ static void radeon_bo_wait(struct r300_winsys_bo *_buf)
     args.handle = bo->handle;
     while (drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_WAIT_IDLE,
                                &args, sizeof(args)) == -EBUSY);
+
+    bo->busy_for_write = FALSE;
 }
 
 static boolean radeon_bo_is_busy(struct r300_winsys_bo *_buf)
 {
     struct radeon_bo *bo = get_radeon_bo(pb_buffer(_buf));
     struct drm_radeon_gem_busy args = {};
+    boolean busy;
 
     if (p_atomic_read(&bo->num_active_ioctls)) {
         return TRUE;
     }
 
     args.handle = bo->handle;
-    return drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_BUSY,
+    busy = drmCommandWriteRead(bo->rws->fd, DRM_RADEON_GEM_BUSY,
                                &args, sizeof(args)) != 0;
+
+    if (!busy)
+        bo->busy_for_write = FALSE;
+    return busy;
 }
 
 static void radeon_bo_destroy(struct pb_buffer *_buf)
@@ -140,6 +147,9 @@ static void radeon_bo_destroy(struct pb_buffer *_buf)
 static unsigned get_pb_usage_from_transfer_flags(enum pipe_transfer_usage usage)
 {
     unsigned res = 0;
+
+    if (usage & PIPE_TRANSFER_WRITE)
+        res |= PB_USAGE_CPU_WRITE;
 
     if (usage & PIPE_TRANSFER_DONTBLOCK)
         res |= PB_USAGE_DONTBLOCK;
@@ -171,15 +181,36 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
                 return NULL;
             }
         } else {
-            if (radeon_bo_is_referenced_by_cs(cs, bo)) {
-                cs->flush_cs(cs->flush_data, 0);
+            if (!(flags & PB_USAGE_CPU_WRITE)) {
+                /* Mapping for read.
+                 *
+                 * Since we are mapping for read, we don't need to wait
+                 * if the GPU is using the buffer for read too
+                 * (neither one is changing it).
+                 *
+                 * Only check whether the buffer is being used for write. */
+                if (radeon_bo_is_referenced_by_cs_for_write(cs, bo)) {
+                    cs->flush_cs(cs->flush_data, 0);
+                    radeon_bo_wait((struct r300_winsys_bo*)bo);
+                } else if (bo->busy_for_write) {
+                    /* Update the busy_for_write field (done by radeon_bo_is_busy)
+                     * and wait if needed. */
+                    if (radeon_bo_is_busy((struct r300_winsys_bo*)bo)) {
+                        radeon_bo_wait((struct r300_winsys_bo*)bo);
+                    }
+                }
             } else {
-                /* Try to avoid busy-waiting in radeon_bo_wait. */
-                if (p_atomic_read(&bo->num_active_ioctls))
-                    radeon_drm_cs_sync_flush(cs);
-            }
+                /* Mapping for write. */
+                if (radeon_bo_is_referenced_by_cs(cs, bo)) {
+                    cs->flush_cs(cs->flush_data, 0);
+                } else {
+                    /* Try to avoid busy-waiting in radeon_bo_wait. */
+                    if (p_atomic_read(&bo->num_active_ioctls))
+                        radeon_drm_cs_sync_flush(cs);
+                }
 
-            radeon_bo_wait((struct r300_winsys_bo*)bo);
+                radeon_bo_wait((struct r300_winsys_bo*)bo);
+            }
         }
     }
 

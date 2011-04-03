@@ -60,6 +60,13 @@ struct radeon_bo {
      * thread, is this bo referenced in? */
     int num_active_ioctls;
 
+    /* Whether the buffer has been relocated for write and is busy since then.
+     * This field is updated in:
+     * - radeon_drm_cs_flush (to TRUE if it's relocated for write)
+     * - radeon_bo_is_busy (to FALSE if it's not busy)
+     * - radeon_bo_wait (to FALSE) */
+    boolean busy_for_write;
+
     boolean flinked;
     uint32_t flink;
 };
