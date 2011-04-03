@@ -36,7 +36,6 @@
 #include "pipebuffer/pb_bufmgr.h"
 #include "os/os_thread.h"
 
-#define RADEON_PB_USAGE_CACHE       (1 << 28)
 #define RADEON_PB_USAGE_DOMAIN_GTT  (1 << 29)
 #define RADEON_PB_USAGE_DOMAIN_VRAM (1 << 30)
 

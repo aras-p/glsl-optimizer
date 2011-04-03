@@ -87,8 +87,6 @@ static struct radeon_bo *get_radeon_bo(struct pb_buffer *_buf)
     return bo;
 }
 
-
-
 static void radeon_bo_wait(struct r300_winsys_bo *_buf)
 {
     struct radeon_bo *bo = get_radeon_bo(pb_buffer(_buf));
@@ -443,9 +441,6 @@ static unsigned get_pb_usage_from_create_flags(unsigned bind, unsigned usage,
                                                enum r300_buffer_domain domain)
 {
     unsigned res = 0;
-
-    if (bind & (PIPE_BIND_VERTEX_BUFFER | PIPE_BIND_INDEX_BUFFER))
-        res |= RADEON_PB_USAGE_CACHE;
 
     if (domain & R300_DOMAIN_GTT)
         res |= RADEON_PB_USAGE_DOMAIN_GTT;
