@@ -32,7 +32,6 @@
 #include <util/u_debug.h>
 #include "vdpau_private.h"
 
-
 PUBLIC VdpStatus
 vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device,
                           VdpGetProcAddress **get_proc_address)
@@ -57,8 +56,7 @@ vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device,
    dev->display = display;
    dev->screen = screen;
    dev->vscreen = vl_screen_create(display, screen);
-   if (!dev->vscreen)
-	   {
+   if (!dev->vscreen) {
       ret = VDP_STATUS_RESOURCES;
       goto no_vscreen;
    }
@@ -107,14 +105,14 @@ vlVdpPresentationQueueTargetCreateX11(VdpDevice device, Drawable drawable,
    pqt->device = dev;
    pqt->drawable = drawable;
 
-	*target = vlAddDataHTAB(pqt);
+   *target = vlAddDataHTAB(pqt);
    if (*target == 0) {
       ret = VDP_STATUS_ERROR;
       goto no_handle;
    }
 
-
    return VDP_STATUS_OK;
+
 no_handle:
    FREE(dev);
    return ret;
@@ -191,5 +189,6 @@ vlVdpGetErrorString (VdpStatus status)
       all supplied surfaces must have been created within the context of the same VdpDevice object. \
       This error is raised if they were not.");
    _ERROR_TYPE(VDP_STATUS_ERROR,"A catch-all error, used when no other error code applies.");
+   default: return "Unknown Error";
    }
 }
