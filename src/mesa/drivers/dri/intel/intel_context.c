@@ -728,8 +728,13 @@ intelInitContext(struct intel_context *intel,
    ctx->TextureFormatSupported[MESA_FORMAT_RG88] = GL_TRUE;
    ctx->TextureFormatSupported[MESA_FORMAT_RG1616] = GL_TRUE;
 
+   /* GL_MESA_texture_signed_rgba / GL_EXT_texture_snorm */
    ctx->TextureFormatSupported[MESA_FORMAT_DUDV8] = GL_TRUE;
    ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RGBA8888_REV] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_R8] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RG88_REV] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_R16] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_GR1616] = GL_TRUE;
 
    /* GL_EXT_texture_sRGB */
    ctx->TextureFormatSupported[MESA_FORMAT_SARGB8] = GL_TRUE;
