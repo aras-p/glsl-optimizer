@@ -67,6 +67,20 @@ static void r300_buffer_destroy(struct pipe_screen *screen,
     util_slab_free(&r300screen->pool_buffers, rbuf);
 }
 
+static boolean r300_setup_new_winsys_buffer(struct r300_winsys_screen *rws,
+                                            struct r300_resource *rbuf)
+{
+    rbuf->buf = rws->buffer_create(rws,
+                                   rbuf->b.b.b.width0, 16,
+                                   rbuf->b.b.b.bind, rbuf->b.b.b.usage,
+                                   rbuf->domain);
+    if (!rbuf->buf)
+        return FALSE;
+
+    rbuf->cs_buf = rws->buffer_get_cs_handle(rbuf->buf);
+    return TRUE;
+}
+
 static struct pipe_transfer*
 r300_buffer_get_transfer(struct pipe_context *context,
                          struct pipe_resource *resource,
@@ -113,6 +127,16 @@ r300_buffer_transfer_map( struct pipe_context *pipe,
         return (uint8_t *) rbuf->b.user_ptr + transfer->box.x;
     if (rbuf->constant_buffer)
         return (uint8_t *) rbuf->constant_buffer + transfer->box.x;
+
+    /* Discard the whole resource if needed. */
+    if (transfer->usage & PIPE_TRANSFER_DISCARD_WHOLE_RESOURCE &&
+        (rws->cs_is_buffer_referenced(r300->cs, rbuf->cs_buf) ||
+         rws->buffer_is_busy(rbuf->buf))) {
+        r300_winsys_bo_reference(&rbuf->buf, NULL);
+
+        r300_setup_new_winsys_buffer(rws, rbuf);
+        assert(rbuf->buf);
+    }
 
     map = rws->buffer_map(rbuf->buf, r300->cs, transfer->usage);
 
@@ -179,7 +203,6 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
 {
     struct r300_screen *r300screen = r300_screen(screen);
     struct r300_resource *rbuf;
-    unsigned alignment = 16;
 
     rbuf = util_slab_alloc(&r300screen->pool_buffers);
 
@@ -199,18 +222,10 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
         return &rbuf->b.b.b;
     }
 
-    rbuf->buf =
-        r300screen->rws->buffer_create(r300screen->rws,
-                                       rbuf->b.b.b.width0, alignment,
-                                       rbuf->b.b.b.bind, rbuf->b.b.b.usage,
-                                       rbuf->domain);
-    if (!rbuf->buf) {
+    if (!r300_setup_new_winsys_buffer(r300screen->rws, rbuf)) {
         util_slab_free(&r300screen->pool_buffers, rbuf);
         return NULL;
     }
-
-    rbuf->cs_buf =
-        r300screen->rws->buffer_get_cs_handle(rbuf->buf);
 
     return &rbuf->b.b.b;
 }
