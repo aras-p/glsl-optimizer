@@ -1989,10 +1989,10 @@ fs_visitor::emit_interpolation_setup_gen6()
    emit(BRW_OPCODE_MOV, this->pixel_x, int_pixel_x);
    emit(BRW_OPCODE_MOV, this->pixel_y, int_pixel_y);
 
-   this->current_annotation = "compute 1/pos.w";
-   this->wpos_w = fs_reg(brw_vec8_grf(c->source_w_reg, 0));
-   this->pixel_w = fs_reg(this, glsl_type::float_type);
-   emit_math(FS_OPCODE_RCP, this->pixel_w, wpos_w);
+   this->current_annotation = "compute pos.w";
+   this->pixel_w = fs_reg(brw_vec8_grf(c->source_w_reg, 0));
+   this->wpos_w = fs_reg(this, glsl_type::float_type);
+   emit_math(FS_OPCODE_RCP, this->wpos_w, this->pixel_w);
 
    this->delta_x = fs_reg(brw_vec8_grf(2, 0));
    this->delta_y = fs_reg(brw_vec8_grf(3, 0));
