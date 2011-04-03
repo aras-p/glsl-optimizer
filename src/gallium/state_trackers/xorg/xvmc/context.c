@@ -241,6 +241,15 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
       return BadAlloc;
    }
 
+   context_priv->compositor = vctx->vpipe->create_compositor(vctx->vpipe);
+   if (!context_priv->compositor) {
+      XVMC_MSG(XVMC_ERR, "[XvMC] Could not create VL compositor.\n");
+      vl_video_destroy(vctx);
+      vl_screen_destroy(vscreen);
+      FREE(context_priv);
+      return BadAlloc;
+   }
+
    /* TODO: Define some Xv attribs to allow users to specify color standard, procamp */
    vl_csc_get_matrix
    (
@@ -248,7 +257,7 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
       VL_CSC_COLOR_STANDARD_IDENTITY : VL_CSC_COLOR_STANDARD_BT_601,
       NULL, true, csc
    );
-   vctx->vpipe->set_csc_matrix(vctx->vpipe, csc);
+   context_priv->compositor->set_csc_matrix(context_priv->compositor, csc);
 
    context_priv->vctx = vctx;
    context_priv->subpicture_max_width = subpic_max_w;
@@ -286,6 +295,7 @@ Status XvMCDestroyContext(Display *dpy, XvMCContext *context)
    context_priv = context->privData;
    vctx = context_priv->vctx;
    vscreen = vctx->vscreen;
+   context_priv->compositor->destroy(context_priv->compositor);
    vl_video_destroy(vctx);
    vl_screen_destroy(vscreen);
    FREE(context_priv);

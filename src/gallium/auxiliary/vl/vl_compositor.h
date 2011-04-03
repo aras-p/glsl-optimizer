@@ -28,63 +28,46 @@
 #ifndef vl_compositor_h
 #define vl_compositor_h
 
-#include <pipe/p_compiler.h>
 #include <pipe/p_state.h>
+#include <pipe/p_video_context.h>
 #include <pipe/p_video_state.h>
-#include "vl_types.h"
-#include "vl_ycbcr_buffer.h"
 
 struct pipe_context;
-struct keymap;
 
 #define VL_COMPOSITOR_MAX_LAYERS 16
 
+struct vl_compositor_layer
+{
+   void *fs;
+   struct pipe_sampler_view *sampler_views[3];
+   struct pipe_video_rect src_rect;
+   struct pipe_video_rect dst_rect;
+};
+
 struct vl_compositor
 {
+   struct pipe_video_compositor base;
    struct pipe_context *pipe;
 
    struct pipe_framebuffer_state fb_state;
-   struct vertex2f fb_inv_size;
-   void *sampler;
-   void *blend;
-   struct pipe_sampler_view *sampler_view;
-   void *vertex_shader;
-   struct
-   {
-      void *ycbcr_2_rgb;
-      void *rgb_2_rgb;
-      void *palette_2_rgb;
-   } fragment_shader;
    struct pipe_viewport_state viewport;
    struct pipe_vertex_buffer vertex_buf;
-   void *vertex_elems_state;
-   struct pipe_resource *fs_const_buf;
+   struct pipe_resource *csc_matrix;
 
-   struct pipe_sampler_view *layers[VL_COMPOSITOR_MAX_LAYERS];
-   struct pipe_sampler_view *palettes[VL_COMPOSITOR_MAX_LAYERS];
-   struct pipe_video_rect layer_src_rects[VL_COMPOSITOR_MAX_LAYERS];
-   struct pipe_video_rect layer_dst_rects[VL_COMPOSITOR_MAX_LAYERS];
-   unsigned dirty_layers;
+   void *sampler;
+   void *blend;
+   void *vertex_elems_state;
+
+   void *vs;
+   void *fs_video_buffer;
+   void *fs_palette;
+   void *fs_rgba;
+
+   unsigned used_layers:VL_COMPOSITOR_MAX_LAYERS;
+   struct vl_compositor_layer layers[VL_COMPOSITOR_MAX_LAYERS];
 };
 
-bool vl_compositor_init(struct vl_compositor *compositor, struct pipe_context *pipe);
-
-void vl_compositor_cleanup(struct vl_compositor *compositor);
-
-void vl_compositor_set_layers(struct vl_compositor *compositor,
-                              struct pipe_sampler_view *layers[],
-                              struct pipe_sampler_view *palettes[],
-                              struct pipe_video_rect *src_rects[],
-                              struct pipe_video_rect *dst_rects[],
-                              unsigned num_layers);
-
-void vl_compositor_render(struct vl_compositor          *compositor,
-                          struct vl_ycbcr_sampler_views *src_sampler,
-                          struct pipe_video_rect        *src_area,
-                          struct pipe_surface           *dst_surface,
-                          struct pipe_video_rect        *dst_area,
-                          struct pipe_fence_handle      **fence);
-
-void vl_compositor_set_csc_matrix(struct vl_compositor *compositor, const float *mat);
+struct pipe_video_compositor *vl_compositor_init(struct pipe_video_context *vpipe,
+                                                 struct pipe_context *pipe);
 
 #endif /* vl_compositor_h */

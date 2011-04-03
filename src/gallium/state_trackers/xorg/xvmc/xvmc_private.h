@@ -42,6 +42,8 @@ struct pipe_fence_handle;
 typedef struct
 {
    struct vl_context *vctx;
+   struct pipe_video_compositor *compositor;
+
    unsigned short subpicture_max_width;
    unsigned short subpicture_max_height;
 } XvMCContextPrivate;

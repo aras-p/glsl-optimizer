@@ -222,6 +222,24 @@ vl_mpeg12_buffer_flush(struct pipe_video_buffer *buffer,
 }
 
 static void
+vl_mpeg12_buffer_get_sampler_views(struct pipe_video_buffer *buffer,
+                                   struct pipe_sampler_view *sampler_views[3])
+{
+   struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer*)buffer;
+   struct vl_ycbcr_sampler_views *samplers;
+
+   assert(buf);
+
+   samplers = vl_ycbcr_get_sampler_views(&buf->render_result);
+
+   assert(samplers);
+
+   pipe_sampler_view_reference(&sampler_views[0], samplers->y);
+   pipe_sampler_view_reference(&sampler_views[1], samplers->cb);
+   pipe_sampler_view_reference(&sampler_views[2], samplers->cr);
+}
+
+static void
 vl_mpeg12_destroy(struct pipe_video_context *vpipe)
 {
    struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
@@ -236,7 +254,6 @@ vl_mpeg12_destroy(struct pipe_video_context *vpipe)
    ctx->pipe->delete_rasterizer_state(ctx->pipe, ctx->rast);
    ctx->pipe->delete_depth_stencil_alpha_state(ctx->pipe, ctx->dsa);
 
-   vl_compositor_cleanup(&ctx->compositor);
    vl_mpeg12_mc_renderer_cleanup(&ctx->mc);
    vl_idct_cleanup(&ctx->idct_y);
    vl_idct_cleanup(&ctx->idct_c);
@@ -308,6 +325,7 @@ vl_mpeg12_create_buffer(struct pipe_video_context *vpipe)
    buffer->base.add_macroblocks = vl_mpeg12_buffer_add_macroblocks;
    buffer->base.unmap = vl_mpeg12_buffer_unmap;
    buffer->base.flush = vl_mpeg12_buffer_flush;
+   buffer->base.get_sampler_views = vl_mpeg12_buffer_get_sampler_views;
 
    buffer->vertex_bufs.individual.quad.stride = ctx->quads.stride;
    buffer->vertex_bufs.individual.quad.buffer_offset = ctx->quads.buffer_offset;
@@ -494,56 +512,14 @@ error_map:
    ctx->pipe->transfer_destroy(ctx->pipe, transfer);
 }
 
-static void
-vl_mpeg12_render_picture(struct pipe_video_context     *vpipe,
-                         struct pipe_video_buffer      *src_surface,
-                         struct pipe_video_rect        *src_area,
-                         enum pipe_mpeg12_picture_type picture_type,
-                         struct pipe_surface           *dst_surface,
-                         struct pipe_video_rect        *dst_area,
-                         struct pipe_fence_handle      **fence)
-{
-   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
-   struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer*)src_surface;
-   struct vl_ycbcr_sampler_views *sampler_views;
-
-   assert(vpipe);
-   assert(src_surface);
-   assert(src_area);
-   assert(dst_surface);
-   assert(dst_area);
-
-   sampler_views = vl_ycbcr_get_sampler_views(&buf->render_result);
-
-   vl_compositor_render(&ctx->compositor, sampler_views, src_area,
-                        dst_surface, dst_area, fence);
-}
-
-static void
-vl_mpeg12_set_picture_layers(struct pipe_video_context *vpipe,
-                             struct pipe_sampler_view *layers[],
-                             struct pipe_sampler_view *palettes[],
-                             struct pipe_video_rect *src_rects[],
-                             struct pipe_video_rect *dst_rects[],
-                             unsigned num_layers)
-{
-   struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
-
-   assert(vpipe);
-   assert((layers && src_rects && dst_rects) ||
-          (!layers && !src_rects && !dst_rects));
-
-   vl_compositor_set_layers(&ctx->compositor, layers, palettes, src_rects, dst_rects, num_layers);
-}
-
-static void
-vl_mpeg12_set_csc_matrix(struct pipe_video_context *vpipe, const float *mat)
+static struct pipe_video_compositor *
+vl_mpeg12_create_compositor(struct pipe_video_context *vpipe)
 {
    struct vl_mpeg12_context *ctx = (struct vl_mpeg12_context*)vpipe;
 
    assert(vpipe);
 
-   vl_compositor_set_csc_matrix(&ctx->compositor, mat);
+   return vl_compositor_init(vpipe, ctx->pipe);
 }
 
 static bool
@@ -707,11 +683,9 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
    ctx->base.create_surface = vl_mpeg12_create_surface;
    ctx->base.create_sampler_view = vl_mpeg12_create_sampler_view;
    ctx->base.create_buffer = vl_mpeg12_create_buffer;
-   ctx->base.render_picture = vl_mpeg12_render_picture;
    ctx->base.clear_sampler = vl_mpeg12_clear_sampler;
    ctx->base.upload_sampler = vl_mpeg12_upload_sampler;
-   ctx->base.set_picture_layers = vl_mpeg12_set_picture_layers;
-   ctx->base.set_csc_matrix = vl_mpeg12_set_csc_matrix;
+   ctx->base.create_compositor = vl_mpeg12_create_compositor;
 
    ctx->pipe = pipe;
    ctx->pot_buffers = pot_buffers;
@@ -731,26 +705,20 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
    if (!vl_mpeg12_mc_renderer_init(&ctx->mc, ctx->pipe, ctx->buffer_width, ctx->buffer_height))
       goto error_mc;
 
-   if (!vl_compositor_init(&ctx->compositor, ctx->pipe))
-      goto error_compositor;
-
    if (!init_pipe_state(ctx))
       goto error_pipe_state;
 
    return &ctx->base;
 
 error_pipe_state:
-      vl_compositor_cleanup(&ctx->compositor);
-
-error_compositor:
-      vl_mpeg12_mc_renderer_cleanup(&ctx->mc);
+   vl_mpeg12_mc_renderer_cleanup(&ctx->mc);
 
 error_mc:
-      vl_idct_cleanup(&ctx->idct_y);
-      vl_idct_cleanup(&ctx->idct_c);
+   vl_idct_cleanup(&ctx->idct_y);
+   vl_idct_cleanup(&ctx->idct_c);
 
 error_idct:
-      ctx->pipe->destroy(ctx->pipe);
-      FREE(ctx);
-      return NULL;
+   ctx->pipe->destroy(ctx->pipe);
+   FREE(ctx);
+   return NULL;
 }

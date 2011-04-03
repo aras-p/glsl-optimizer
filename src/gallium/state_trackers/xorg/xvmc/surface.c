@@ -343,6 +343,8 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    static int dump_window = -1;
 
    struct pipe_video_context *vpipe;
+   struct pipe_video_compositor *compositor;
+
    XvMCSurfacePrivate *surface_priv;
    XvMCContextPrivate *context_priv;
    XvMCSubpicturePrivate *subpicture_priv;
@@ -383,27 +385,30 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
 
    subpicture_priv = surface_priv->subpicture ? surface_priv->subpicture->privData : NULL;
    vpipe = context_priv->vctx->vpipe;
+   compositor = context_priv->compositor;
+
+   unmap_and_flush_surface(surface_priv);
+
+   compositor->clear_layers(compositor);
+   compositor->set_buffer_layer(compositor, 0, surface_priv->pipe_buffer, &src_rect, NULL);
 
    if (subpicture_priv) {
       struct pipe_video_rect src_rect = {surface_priv->subx, surface_priv->suby, surface_priv->subw, surface_priv->subh};
       struct pipe_video_rect dst_rect = {surface_priv->surfx, surface_priv->surfy, surface_priv->surfw, surface_priv->surfh};
-      struct pipe_video_rect *src_rects[1] = {&src_rect};
-      struct pipe_video_rect *dst_rects[1] = {&dst_rect};
 
       XVMC_MSG(XVMC_TRACE, "[XvMC] Surface %p has subpicture %p.\n", surface, surface_priv->subpicture);
 
       assert(subpicture_priv->surface == surface);
-      vpipe->set_picture_layers(vpipe, &subpicture_priv->sampler, &subpicture_priv->palette, src_rects, dst_rects, 1);
+      if (subpicture_priv->palette)
+         compositor->set_palette_layer(compositor, 1, subpicture_priv->sampler, subpicture_priv->palette, &src_rect, &dst_rect);
+      else
+         compositor->set_rgba_layer(compositor, 1, subpicture_priv->sampler, &src_rect, &dst_rect);
 
       surface_priv->subpicture = NULL;
       subpicture_priv->surface = NULL;
    }
-   else
-      vpipe->set_picture_layers(vpipe, NULL, NULL, NULL, NULL, 0);
 
-   unmap_and_flush_surface(surface_priv);
-   vpipe->render_picture(vpipe, surface_priv->pipe_buffer, &src_rect, PictureToPipe(flags),
-                         drawable_surface, &dst_rect, &surface_priv->disp_fence);
+   compositor->render_picture(compositor, PictureToPipe(flags), drawable_surface, &dst_rect, &surface_priv->disp_fence);
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Submitted surface %p for display. Pushing to front buffer.\n", surface);
 

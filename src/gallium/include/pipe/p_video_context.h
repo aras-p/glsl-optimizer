@@ -109,10 +109,16 @@ struct pipe_video_context
                          struct pipe_sampler_view *dst,
                          const struct pipe_box *dst_box,
                          const float *rgba);
+
    /**
     * Creates a buffer as decoding target
     */
    struct pipe_video_buffer *(*create_buffer)(struct pipe_video_context *vpipe);
+
+   /**
+    * Creates a video compositor
+    */
+   struct pipe_video_compositor *(*create_compositor)(struct pipe_video_context *vpipe);
 
    /**
     * Picture decoding and displaying
@@ -124,38 +130,6 @@ struct pipe_video_context
                             struct pipe_buffer **bitstream_buf);
 #endif
 
-   /**
-    * render a video buffer to the frontbuffer
-    */
-   void (*render_picture)(struct pipe_video_context     *vpipe,
-                          struct pipe_video_buffer      *src_surface,
-                          struct pipe_video_rect        *src_area,
-                          enum pipe_mpeg12_picture_type picture_type,
-                          struct pipe_surface           *dst_surface,
-                          struct pipe_video_rect        *dst_area,
-                          struct pipe_fence_handle      **fence);
-
-   /*@}*/
-
-   /**
-    * Parameter-like states (or properties)
-    */
-   /*@{*/
-
-   /**
-    * set overlay samplers
-    */
-   void (*set_picture_layers)(struct pipe_video_context *vpipe,
-                              struct pipe_sampler_view *layers[],
-                              struct pipe_sampler_view *palettes[],
-                              struct pipe_video_rect *src_rects[],
-                              struct pipe_video_rect *dst_rects[],
-                              unsigned num_layers);
-
-   void (*set_csc_matrix)(struct pipe_video_context *vpipe, const float *mat);
-
-   /* TODO: Interface for scaling modes, post-processing, etc. */
-   /*@}*/
 };
 
 struct pipe_video_buffer
@@ -190,6 +164,74 @@ struct pipe_video_buffer
    void (*flush)(struct pipe_video_buffer *buffer,
                  struct pipe_video_buffer *ref_frames[2],
                  struct pipe_fence_handle **fence);
+
+
+   void (*get_sampler_views)(struct pipe_video_buffer *buffer,
+                             struct pipe_sampler_view *sampler_views[3]);
+};
+
+struct pipe_video_compositor
+{
+   struct pipe_video_context* context;
+
+   /**
+    * destroy this compositor
+    */
+   void (*destroy)(struct pipe_video_compositor *compositor);
+
+   /**
+    * set yuv -> rgba conversion matrix
+    */
+   void (*set_csc_matrix)(struct pipe_video_compositor *compositor, const float mat[16]);
+
+   /**
+    * set overlay samplers
+    */
+   /*@{*/
+
+   /**
+    * reset all currently set layers
+    */
+   void (*clear_layers)(struct pipe_video_compositor *compositor);
+
+   /**
+    * set a video buffer as a layer to render
+    */
+   void (*set_buffer_layer)(struct pipe_video_compositor *compositor,
+                            unsigned layer,
+                            struct pipe_video_buffer *buffer,
+                            struct pipe_video_rect *src_rect,
+                            struct pipe_video_rect *dst_rect);
+
+   /**
+    * set a paletted sampler as a layer to render
+    */
+   void (*set_palette_layer)(struct pipe_video_compositor *compositor,
+                             unsigned layer,
+                             struct pipe_sampler_view *indexes,
+                             struct pipe_sampler_view *palette,
+                             struct pipe_video_rect *src_rect,
+                             struct pipe_video_rect *dst_rect);
+
+   /**
+    * set a rgba sampler as a layer to render
+    */
+   void (*set_rgba_layer)(struct pipe_video_compositor *compositor,
+                          unsigned layer,
+                          struct pipe_sampler_view *rgba,
+                          struct pipe_video_rect *src_rect,
+                          struct pipe_video_rect *dst_rect);
+
+   /*@}*/
+
+   /**
+    * render the layers to the frontbuffer
+    */
+   void (*render_picture)(struct pipe_video_compositor  *compositor,
+                          enum pipe_mpeg12_picture_type picture_type,
+                          struct pipe_surface           *dst_surface,
+                          struct pipe_video_rect        *dst_area,
+                          struct pipe_fence_handle      **fence);
 
 };
 

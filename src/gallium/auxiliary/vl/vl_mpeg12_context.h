@@ -52,7 +52,6 @@ struct vl_mpeg12_context
 
    struct vl_idct idct_y, idct_c;
    struct vl_mpeg12_mc_renderer mc;
-   struct vl_compositor compositor;
 
    void *rast;
    void *dsa;
