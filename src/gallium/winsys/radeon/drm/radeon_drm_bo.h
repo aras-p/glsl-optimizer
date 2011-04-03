@@ -54,8 +54,6 @@ struct radeon_bo {
     uint32_t handle;
     uint32_t name;
 
-    int ref_count;
-
     /* how many command streams is this bo referenced in? */
     int num_cs_references;
 
@@ -70,12 +68,10 @@ struct radeon_bo {
 struct pb_manager *radeon_bomgr_create(struct radeon_drm_winsys *rws);
 void radeon_bomgr_init_functions(struct radeon_drm_winsys *ws);
 
-void radeon_bo_unref(struct radeon_bo *buf);
-
-
-static INLINE void radeon_bo_ref(struct radeon_bo *bo)
+static INLINE
+void radeon_bo_reference(struct radeon_bo **dst, struct radeon_bo *src)
 {
-    p_atomic_inc(&bo->ref_count);
+    pb_reference((struct pb_buffer**)dst, (struct pb_buffer*)src);
 }
 
 static INLINE struct pb_buffer *

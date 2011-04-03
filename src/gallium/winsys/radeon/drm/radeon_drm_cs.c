@@ -111,8 +111,7 @@ static void radeon_cs_context_cleanup(struct radeon_cs_context *csc)
 
     for (i = 0; i < csc->crelocs; i++) {
         p_atomic_dec(&csc->relocs_bo[i]->num_cs_references);
-        radeon_bo_unref(csc->relocs_bo[i]);
-        csc->relocs_bo[i] = NULL;
+        radeon_bo_reference(&csc->relocs_bo[i], NULL);
     }
 
     csc->crelocs = 0;
@@ -266,9 +265,8 @@ static void radeon_add_reloc(struct radeon_cs_context *csc,
     }
 
     /* Initialize the new relocation. */
-    radeon_bo_ref(bo);
     p_atomic_inc(&bo->num_cs_references);
-    csc->relocs_bo[csc->crelocs] = bo;
+    radeon_bo_reference(&csc->relocs_bo[csc->crelocs], bo);
     reloc = &csc->relocs[csc->crelocs];
     reloc->handle = bo->handle;
     reloc->read_domains = rd;

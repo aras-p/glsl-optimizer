@@ -87,29 +87,7 @@ static struct radeon_bo *get_radeon_bo(struct pb_buffer *_buf)
     return bo;
 }
 
-void radeon_bo_unref(struct radeon_bo *bo)
-{
-    struct drm_gem_close args = {};
 
-    if (!p_atomic_dec_zero(&bo->ref_count))
-        return;
-
-    if (bo->name) {
-        pipe_mutex_lock(bo->mgr->bo_handles_mutex);
-        util_hash_table_remove(bo->mgr->bo_handles,
-			       (void*)(uintptr_t)bo->name);
-        pipe_mutex_unlock(bo->mgr->bo_handles_mutex);
-    }
-
-    if (bo->ptr)
-        munmap(bo->ptr, bo->size);
-
-    /* Close object. */
-    args.handle = bo->handle;
-    drmIoctl(bo->rws->fd, DRM_IOCTL_GEM_CLOSE, &args);
-    pipe_mutex_destroy(bo->map_mutex);
-    FREE(bo);
-}
 
 static void radeon_bo_wait(struct r300_winsys_bo *_buf)
 {
@@ -142,8 +120,23 @@ static boolean radeon_bo_is_busy(struct r300_winsys_bo *_buf)
 static void radeon_bo_destroy(struct pb_buffer *_buf)
 {
     struct radeon_bo *bo = radeon_bo(_buf);
+    struct drm_gem_close args = {};
 
-    radeon_bo_unref(bo);
+    if (bo->name) {
+        pipe_mutex_lock(bo->mgr->bo_handles_mutex);
+        util_hash_table_remove(bo->mgr->bo_handles,
+			       (void*)(uintptr_t)bo->name);
+        pipe_mutex_unlock(bo->mgr->bo_handles_mutex);
+    }
+
+    if (bo->ptr)
+        munmap(bo->ptr, bo->size);
+
+    /* Close object. */
+    args.handle = bo->handle;
+    drmIoctl(bo->rws->fd, DRM_IOCTL_GEM_CLOSE, &args);
+    pipe_mutex_destroy(bo->map_mutex);
+    FREE(bo);
 }
 
 static unsigned get_pb_usage_from_transfer_flags(enum pipe_transfer_usage usage)
@@ -300,7 +293,6 @@ static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
     bo->size = size;
     pipe_mutex_init(bo->map_mutex);
 
-    radeon_bo_ref(bo);
     return &bo->base;
 }
 
@@ -531,7 +523,6 @@ static struct r300_winsys_bo *radeon_winsys_bo_from_handle(struct r300_winsys_sc
     bo->handle = open_arg.handle;
     bo->size = open_arg.size;
     bo->name = whandle->handle;
-    radeon_bo_ref(bo);
 
     /* Initialize it. */
     pipe_reference_init(&bo->base.base.reference, 1);
