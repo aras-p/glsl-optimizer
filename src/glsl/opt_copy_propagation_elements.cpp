@@ -161,9 +161,16 @@ ir_visitor_status
 ir_copy_propagation_elements_visitor::visit_leave(ir_assignment *ir)
 {
    ir_dereference_variable *lhs = ir->lhs->as_dereference_variable();
+   ir_variable *var = ir->lhs->variable_referenced();
 
-   if (lhs && (lhs->type->is_scalar() || lhs->type->is_vector())) {
-      kill_entry *k = new(mem_ctx) kill_entry(lhs->var, ir->write_mask);
+   if (var->type->is_scalar() || var->type->is_vector()) {
+      kill_entry *k;
+
+      if (lhs)
+	 k = new(mem_ctx) kill_entry(var, ir->write_mask);
+      else
+	 k = new(mem_ctx) kill_entry(var, ~0);
+
       kill(k);
    }
 
