@@ -2812,8 +2812,7 @@ fs_visitor::calculate_live_intervals()
 	    if (inst->src[i].file == GRF && inst->src[i].reg != 0) {
 	       int reg = inst->src[i].reg;
 
-	       if (!loop_depth || (this->virtual_grf_sizes[reg] == 1 &&
-				   def[reg] >= bb_header_ip)) {
+	       if (!loop_depth) {
 		  use[reg] = ip;
 	       } else {
 		  def[reg] = MIN2(loop_start, def[reg]);
@@ -2829,8 +2828,7 @@ fs_visitor::calculate_live_intervals()
 	 if (inst->dst.file == GRF && inst->dst.reg != 0) {
 	    int reg = inst->dst.reg;
 
-	    if (!loop_depth || (this->virtual_grf_sizes[reg] == 1 &&
-				!inst->predicated)) {
+	    if (!loop_depth) {
 	       def[reg] = MIN2(def[reg], ip);
 	    } else {
 	       def[reg] = MIN2(def[reg], loop_start);
