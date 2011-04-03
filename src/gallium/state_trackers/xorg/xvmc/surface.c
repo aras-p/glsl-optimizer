@@ -233,7 +233,8 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    XvMCSurfacePrivate *future_surface_priv;
    struct pipe_mpeg12_macroblock pipe_macroblocks[num_macroblocks];
 
-   XVMC_MSG(XVMC_TRACE, "[XvMC] Rendering to surface %p.\n", target_surface);
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Rendering to surface %p, with past %p and future %p\n",
+            target_surface, past_surface, future_surface);
 
    assert(dpy);
 
@@ -320,6 +321,8 @@ Status XvMCFlushSurface(Display *dpy, XvMCSurface *surface)
    // don't call flush here, because this is usually
    // called once for every slice instead of every frame
 
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Flushing surface %p\n", surface);
+
    return Success;
 }
 
@@ -330,6 +333,8 @@ Status XvMCSyncSurface(Display *dpy, XvMCSurface *surface)
 
    if (!surface)
       return XvMCBadSurface;
+
+   XVMC_MSG(XVMC_TRACE, "[XvMC] Syncing surface %p\n", surface);
 
    return Success;
 }
