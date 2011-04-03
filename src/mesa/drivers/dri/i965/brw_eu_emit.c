@@ -68,15 +68,14 @@ gen6_resolve_implied_move(struct brw_compile *p,
    if (intel->gen != 6)
       return;
 
-   if (src->file == BRW_ARCHITECTURE_REGISTER_FILE && src->nr == BRW_ARF_NULL)
-      return;
-
-   brw_push_insn_state(p);
-   brw_set_mask_control(p, BRW_MASK_DISABLE);
-   brw_set_compression_control(p, BRW_COMPRESSION_NONE);
-   brw_MOV(p, retype(brw_message_reg(msg_reg_nr), BRW_REGISTER_TYPE_UD),
-	   retype(*src, BRW_REGISTER_TYPE_UD));
-   brw_pop_insn_state(p);
+   if (src->file != BRW_ARCHITECTURE_REGISTER_FILE || src->nr != BRW_ARF_NULL) {
+      brw_push_insn_state(p);
+      brw_set_mask_control(p, BRW_MASK_DISABLE);
+      brw_set_compression_control(p, BRW_COMPRESSION_NONE);
+      brw_MOV(p, retype(brw_message_reg(msg_reg_nr), BRW_REGISTER_TYPE_UD),
+	      retype(*src, BRW_REGISTER_TYPE_UD));
+      brw_pop_insn_state(p);
+   }
    *src = brw_message_reg(msg_reg_nr);
 }
 
