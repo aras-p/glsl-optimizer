@@ -191,6 +191,11 @@ static void *radeon_bo_map_internal(struct pb_buffer *_buf,
 
     /* Map the buffer. */
     pipe_mutex_lock(bo->map_mutex);
+    /* Return the pointer if it's already mapped (in case of a race). */
+    if (bo->ptr) {
+        pipe_mutex_unlock(bo->map_mutex);
+        return bo->ptr;
+    }
     args.handle = bo->handle;
     args.offset = 0;
     args.size = (uint64_t)bo->size;
