@@ -264,6 +264,7 @@ vl_vb_add_block(struct vl_vertex_buffer *buffer, struct pipe_mpeg12_macroblock *
 
    assert(buffer);
    assert(mb);
+   assert(buffer->num_not_empty + buffer->num_empty < buffer->size);
 
    if(mb->cbp)
       stream = buffer->start + buffer->num_not_empty++;

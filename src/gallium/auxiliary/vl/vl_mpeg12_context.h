@@ -47,7 +47,6 @@ struct vl_mpeg12_context
    const unsigned (*empty_block_mask)[3][2][2];
 
    struct pipe_vertex_buffer quads;
-   unsigned vertex_buffer_size;
    void *ves_y, *ves_cb, *ves_cr;
 
    struct vl_idct idct_y, idct_c;

@@ -332,7 +332,8 @@ vl_mpeg12_create_buffer(struct pipe_video_context *vpipe)
    pipe_resource_reference(&buffer->vertex_bufs.individual.quad.buffer, ctx->quads.buffer);
 
    buffer->vertex_bufs.individual.stream = vl_vb_init(&buffer->vertex_stream, ctx->pipe,
-                                                      ctx->vertex_buffer_size);
+                                                      ctx->buffer_width / MACROBLOCK_WIDTH *
+                                                      ctx->buffer_height / MACROBLOCK_HEIGHT);
    if (!buffer->vertex_bufs.individual.stream.buffer)
       goto error_vertex_stream;
 
@@ -691,7 +692,6 @@ vl_create_mpeg12_context(struct pipe_context *pipe,
    ctx->pot_buffers = pot_buffers;
 
    ctx->quads = vl_vb_upload_quads(ctx->pipe, 2, 2);
-   ctx->vertex_buffer_size = width / MACROBLOCK_WIDTH * height / MACROBLOCK_HEIGHT;
    ctx->ves_y = vl_vb_get_elems_state(ctx->pipe, TGSI_SWIZZLE_X);
    ctx->ves_cb = vl_vb_get_elems_state(ctx->pipe, TGSI_SWIZZLE_Y);
    ctx->ves_cr = vl_vb_get_elems_state(ctx->pipe, TGSI_SWIZZLE_Z);
