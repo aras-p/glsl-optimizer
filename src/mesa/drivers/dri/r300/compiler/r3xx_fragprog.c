@@ -26,6 +26,7 @@
 
 #include "radeon_compiler_util.h"
 #include "radeon_dataflow.h"
+#include "radeon_emulate_branches.h"
 #include "radeon_emulate_loops.h"
 #include "radeon_program_alu.h"
 #include "radeon_program_tex.h"
@@ -129,11 +130,15 @@ void r3xx_compile_fragment_program(struct r300_fragment_program_compiler* c)
 		/* This transformation needs to be done before any of the IF
 		 * instructions are modified. */
 		{"transform KILP",		1, 1,		rc_transform_KILP,		NULL},
+		{"unroll loops",		1, is_r500,	rc_unroll_loops,		NULL},
+		{"transform loops",		1, !is_r500,	rc_transform_loops,		NULL},
+		{"emulate branches",		1, !is_r500,	rc_emulate_branches,		NULL},
 		{"saturate output writes",	1, sat_out,	rc_local_transform,		saturate_output},
 		{"transform TEX",		1, 1,		rc_local_transform,		rewrite_tex},
 		{"native rewrite",		1, is_r500,	rc_local_transform,		native_rewrite_r500},
 		{"native rewrite",		1, !is_r500,	rc_local_transform,		native_rewrite_r300},
 		{"deadcode",			1, opt,		rc_dataflow_deadcode,		dataflow_outputs_mark_use},
+		{"emulate loops",		1, !is_r500,	rc_emulate_loops,		NULL},
 		{"dataflow optimize",		1, opt,		rc_optimize,			NULL},
 		{"dataflow swizzles",		1, 1,		rc_dataflow_swizzles,		NULL},
 		{"dead constants",		1, 1,		rc_remove_unused_constants,	&c->code->constants_remap_table},
