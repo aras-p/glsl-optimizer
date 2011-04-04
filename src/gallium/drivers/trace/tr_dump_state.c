@@ -321,8 +321,29 @@ void trace_dump_depth_stencil_alpha_state(const struct pipe_depth_stencil_alpha_
    trace_dump_struct_end();
 }
 
+static void trace_dump_rt_blend_state(const struct pipe_rt_blend_state *state)
+{
+   trace_dump_struct_begin("pipe_rt_blend_state");
+
+   trace_dump_member(uint, state, blend_enable);
+
+   trace_dump_member(uint, state, rgb_func);
+   trace_dump_member(uint, state, rgb_src_factor);
+   trace_dump_member(uint, state, rgb_dst_factor);
+
+   trace_dump_member(uint, state, alpha_func);
+   trace_dump_member(uint, state, alpha_src_factor);
+   trace_dump_member(uint, state, alpha_dst_factor);
+
+   trace_dump_member(uint, state, colormask);
+
+   trace_dump_struct_end();
+}
+
 void trace_dump_blend_state(const struct pipe_blend_state *state)
 {
+   unsigned valid_entries = 1;
+
    if (!trace_dumping_enabled_locked())
       return;
 
@@ -331,7 +352,22 @@ void trace_dump_blend_state(const struct pipe_blend_state *state)
       return;
    }
 
-   trace_dump_bytes(state, sizeof *state);
+   trace_dump_struct_begin("pipe_blend_state");
+
+   trace_dump_member(bool, state, dither);
+
+   trace_dump_member(bool, state, logicop_enable);
+   trace_dump_member(uint, state, logicop_func);
+
+   trace_dump_member(bool, state, independent_blend_enable);
+
+   trace_dump_member_begin("rt");
+   if (state->independent_blend_enable)
+      valid_entries = PIPE_MAX_COLOR_BUFS;
+   trace_dump_struct_array(rt_blend_state, state->rt, valid_entries);
+   trace_dump_member_end();
+
+   trace_dump_struct_end();
 }
 
 
