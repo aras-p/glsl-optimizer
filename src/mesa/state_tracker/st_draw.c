@@ -181,7 +181,7 @@ static GLuint fixed_types[4] = {
 /**
  * Return a PIPE_FORMAT_x for the given GL datatype and size.
  */
-GLuint
+enum pipe_format
 st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
                       GLboolean normalized)
 {
@@ -211,7 +211,7 @@ st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
       case GL_UNSIGNED_BYTE: return ubyte_types_norm[size-1];
       case GL_FIXED: return fixed_types[size-1];
       default: assert(0); return 0;
-      }      
+      }
    }
    else {
       switch (type) {
@@ -226,12 +226,10 @@ st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
       case GL_UNSIGNED_BYTE: return ubyte_types_scale[size-1];
       case GL_FIXED: return fixed_types[size-1];
       default: assert(0); return 0;
-      }      
+      }
    }
-   return 0; /* silence compiler warning */
+   return PIPE_FORMAT_NONE; /* silence compiler warning */
 }
-
-
 
 
 
@@ -316,8 +314,8 @@ setup_interleaved_attribs(struct gl_context *ctx,
    GLuint attr;
    const GLubyte *low_addr = NULL;
 
-   /* Find the lowest address. */
-   if(vpv->num_inputs) {
+   /* Find the lowest address of the arrays we're drawing */
+   if (vpv->num_inputs) {
       low_addr = arrays[vp->index_to_input[0]]->Ptr;
 
       for (attr = 1; attr < vpv->num_inputs; attr++) {
@@ -338,13 +336,14 @@ setup_interleaved_attribs(struct gl_context *ctx,
             vbuffer->buffer = NULL;
             pipe_resource_reference(&vbuffer->buffer, stobj->buffer);
             vbuffer->buffer_offset = pointer_to_offset(low_addr);
-         } else {
+         }
+         else {
             uint divisor = array->InstanceDivisor;
             uint length = (divisor ? num_instances / divisor : max_index) + 1;
-            vbuffer->buffer =
-               pipe_user_buffer_create(pipe->screen, (void*)low_addr,
-                                       stride * length,
-				       PIPE_BIND_VERTEX_BUFFER);
+            vbuffer->buffer = pipe_user_buffer_create(pipe->screen,
+                                                      (void*) low_addr,
+                                                      stride * length,
+                                                      PIPE_BIND_VERTEX_BUFFER);
             vbuffer->buffer_offset = 0;
 
             /* Track user vertex buffers. */
@@ -603,7 +602,8 @@ st_validate_varrays(struct gl_context *ctx,
    }
    else {
       setup_non_interleaved_attribs(ctx, vp, vpv, arrays,
-                                    vbuffer, velements, max_index, num_instances);
+                                    vbuffer, velements, max_index,
+                                    num_instances);
       num_vbuffers = vpv->num_inputs;
       num_velements = vpv->num_inputs;
    }
@@ -656,7 +656,8 @@ st_draw_vbo(struct gl_context *ctx,
       for (i = 0; i < nr_prims; i++) {
          num_instances = MAX2(num_instances, prims[i].num_instances);
       }
-   } else {
+   }
+   else {
       /* Get min/max index for non-indexed drawing. */
       min_index = ~0;
       max_index = 0;
@@ -708,7 +709,8 @@ st_draw_vbo(struct gl_context *ctx,
                pipe->redefine_user_buffer(pipe, st->user_vb[i],
                                           min_index * stride,
                                           (max_index + 1 - min_index) * stride);
-            } else {
+            }
+            else {
                /* stride == 0 */
                pipe->redefine_user_buffer(pipe, st->user_vb[i],
                                           0, st->user_vb[i]->width0);
@@ -752,7 +754,8 @@ st_draw_vbo(struct gl_context *ctx,
 }
 
 
-void st_init_draw( struct st_context *st )
+void
+st_init_draw(struct st_context *st)
 {
    struct gl_context *ctx = st->ctx;
 
@@ -772,11 +775,10 @@ void st_init_draw( struct st_context *st )
 }
 
 
-void st_destroy_draw( struct st_context *st )
+void
+st_destroy_draw(struct st_context *st)
 {
 #if FEATURE_feedback || FEATURE_rastpos
    draw_destroy(st->draw);
 #endif
 }
-
-
