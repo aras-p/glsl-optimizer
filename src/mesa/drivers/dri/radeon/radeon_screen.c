@@ -1168,6 +1168,25 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
        screen->chip_flags = RADEON_CHIPSET_TCL;
        break;
 
+    case PCI_CHIP_SUMO_9640:
+    case PCI_CHIP_SUMO_9641:
+    case PCI_CHIP_SUMO_9647:
+    case PCI_CHIP_SUMO_9648:
+    case PCI_CHIP_SUMO_964A:
+    case PCI_CHIP_SUMO_964E:
+    case PCI_CHIP_SUMO_964F:
+       screen->chip_family = CHIP_FAMILY_SUMO;
+       screen->chip_flags = RADEON_CHIPSET_TCL;
+       break;
+
+    case PCI_CHIP_SUMO2_9642:
+    case PCI_CHIP_SUMO2_9643:
+    case PCI_CHIP_SUMO2_9644:
+    case PCI_CHIP_SUMO2_9645:
+       screen->chip_family = CHIP_FAMILY_SUMO2;
+       screen->chip_flags = RADEON_CHIPSET_TCL;
+       break;
+
    case PCI_CHIP_BARTS_6720:
    case PCI_CHIP_BARTS_6721:
    case PCI_CHIP_BARTS_6722:

@@ -287,7 +287,9 @@ static void evergreenSetupVTXConstants(struct gl_context  * ctx,
 	    return;
 
     if ((context->radeon.radeonScreen->chip_family == CHIP_FAMILY_CEDAR) ||
-	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_PALM))
+	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_PALM) ||
+	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_SUMO) ||
+	(context->radeon.radeonScreen->chip_family == CHIP_FAMILY_SUMO2))
 	    r700SyncSurf(context, paos->bo, RADEON_GEM_DOMAIN_GTT, 0, TC_ACTION_ENA_bit);
     else
 	    r700SyncSurf(context, paos->bo, RADEON_GEM_DOMAIN_GTT, 0, VC_ACTION_ENA_bit);
