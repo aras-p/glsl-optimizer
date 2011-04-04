@@ -157,9 +157,11 @@ int radeonTransformTEX(
 
 			/* Save the output register. */
 			struct rc_dst_register output_reg = inst->U.I.DstReg;
+			unsigned saturate_mode = inst->U.I.SaturateMode;
 
 			/* Redirect TEX to a new temp. */
 			tmp_texsample = rc_find_free_temporary(c);
+			inst->U.I.SaturateMode = 0;
 			inst->U.I.DstReg.File = RC_FILE_TEMPORARY;
 			inst->U.I.DstReg.Index = tmp_texsample;
 			inst->U.I.DstReg.WriteMask = RC_MASK_XYZW;
@@ -235,6 +237,7 @@ int radeonTransformTEX(
 
 			inst_cmp = rc_insert_new_instruction(c, inst_add);
 			inst_cmp->U.I.Opcode = RC_OPCODE_CMP;
+			inst_cmp->U.I.SaturateMode = saturate_mode;
 			inst_cmp->U.I.DstReg = output_reg;
 			inst_cmp->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
 			inst_cmp->U.I.SrcReg[0].Index = tmp_sum;
