@@ -2084,15 +2084,39 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
 	 coord_dst.writemask = WRITEMASK_W;
 	 ir_to_mesa_emit_op1(ir, OPCODE_RCP, coord_dst, projector);
 
+	 /* In the case where we have to project the coordinates "by hand,"
+	  * the shadow comparitor value must also be projected.
+	  */
+	 ir_to_mesa_src_reg tmp_src = coord;
+	 if (ir->shadow_comparitor) {
+	    /* Slot the shadow value in as the second to last component of the
+	     * coord.
+	     */
+	    ir->shadow_comparitor->accept(this);
+
+	    tmp_src = get_temp(glsl_type::vec4_type);
+	    ir_to_mesa_dst_reg tmp_dst = ir_to_mesa_dst_reg_from_src(tmp_src);
+
+	    tmp_dst.writemask = WRITEMASK_Z;
+	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, tmp_dst, this->result);
+
+	    tmp_dst.writemask = WRITEMASK_XY;
+	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, tmp_dst, coord);
+	 }
+
 	 coord_dst.writemask = WRITEMASK_XYZ;
-	 ir_to_mesa_emit_op2(ir, OPCODE_MUL, coord_dst, coord, coord_w);
+	 ir_to_mesa_emit_op2(ir, OPCODE_MUL, coord_dst, tmp_src, coord_w);
 
 	 coord_dst.writemask = WRITEMASK_XYZW;
 	 coord.swizzle = SWIZZLE_XYZW;
       }
    }
 
-   if (ir->shadow_comparitor) {
+   /* If projection is done and the opcode is not OPCODE_TXP, then the shadow
+    * comparitor was put in the correct place (and projected) by the code,
+    * above, that handles by-hand projection.
+    */
+   if (ir->shadow_comparitor && (!ir->projector || opcode == OPCODE_TXP)) {
       /* Slot the shadow value in as the second to last component of the
        * coord.
        */
