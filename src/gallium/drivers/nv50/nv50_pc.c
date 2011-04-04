@@ -180,6 +180,7 @@ nv50_op_can_write_flags(uint opcode)
    switch (opcode) { /* obvious ones like KIL, CALL, etc. not included */
    case NV_OP_PHI:
    case NV_OP_MOV:
+   case NV_OP_SELECT:
    case NV_OP_LINTERP:
    case NV_OP_PINTERP:
    case NV_OP_LDA:
