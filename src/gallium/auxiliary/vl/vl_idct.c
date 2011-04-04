@@ -27,7 +27,6 @@
 
 #include "vl_idct.h"
 #include "vl_vertex_buffers.h"
-#include "vl_ycbcr_buffer.h"
 #include "vl_defines.h"
 #include "util/u_draw.h"
 #include <assert.h>

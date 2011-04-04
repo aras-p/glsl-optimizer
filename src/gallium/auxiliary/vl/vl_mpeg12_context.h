@@ -32,7 +32,8 @@
 #include "vl_idct.h"
 #include "vl_mpeg12_mc_renderer.h"
 #include "vl_compositor.h"
-#include "vl_ycbcr_buffer.h"
+#include "vl_video_buffer.h"
+#include "vl_vertex_buffers.h"
 
 struct pipe_screen;
 struct pipe_context;
@@ -47,7 +48,7 @@ struct vl_mpeg12_context
    const unsigned (*empty_block_mask)[3][2][2];
 
    struct pipe_vertex_buffer quads;
-   void *ves_y, *ves_cb, *ves_cr;
+   void *ves[VL_MAX_PLANES];
 
    struct vl_idct idct_y, idct_c;
    struct vl_mpeg12_mc_renderer mc;
@@ -61,9 +62,9 @@ struct vl_mpeg12_buffer
 {
    struct pipe_video_buffer base;
 
-   struct vl_ycbcr_buffer idct_source;
-   struct vl_ycbcr_buffer idct_2_mc;
-   struct vl_ycbcr_buffer render_result;
+   struct vl_video_buffer idct_source;
+   struct vl_video_buffer idct_2_mc;
+   struct vl_video_buffer render_result;
 
    struct vl_vertex_buffer vertex_stream;
 
@@ -75,8 +76,8 @@ struct vl_mpeg12_buffer
       } individual;
    } vertex_bufs;
 
-   struct vl_idct_buffer idct_y, idct_cb, idct_cr;
-   struct vl_mpeg12_mc_buffer mc_y, mc_cb, mc_cr;
+   struct vl_idct_buffer idct[VL_MAX_PLANES];
+   struct vl_mpeg12_mc_buffer mc[VL_MAX_PLANES];
 };
 
 /* drivers can call this function in their pipe_video_context constructors and pass it

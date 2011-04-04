@@ -30,60 +30,55 @@
 
 #include <pipe/p_state.h>
 
+#define VL_MAX_PLANES 3
+
 /**
  * implementation of a planar ycbcr buffer
  */
 
 /* resources of a buffer */
-struct vl_ycbcr_resources
-{
-   struct pipe_resource *y, *cb, *cr;
-};
+typedef struct pipe_resource *vl_resources[VL_MAX_PLANES];
 
 /* sampler views of a buffer */
-struct vl_ycbcr_sampler_views
-{
-   struct pipe_sampler_view *y, *cb, *cr;
-};
+typedef struct pipe_sampler_view *vl_sampler_views[VL_MAX_PLANES];
 
 /* surfaces of a buffer */
-struct vl_ycbcr_surfaces
-{
-   struct pipe_surface *y, *cb, *cr;
-};
+typedef struct pipe_surface *vl_surfaces[VL_MAX_PLANES];
 
 /* planar buffer for vl data upload and manipulation */
-struct vl_ycbcr_buffer
+struct vl_video_buffer
 {
-   struct pipe_context           *pipe;
-   struct vl_ycbcr_resources     resources;
-   struct vl_ycbcr_sampler_views sampler_views;
-   struct vl_ycbcr_surfaces      surfaces;
+   struct pipe_context *pipe;
+   unsigned            num_planes;
+   vl_resources        resources;
+   vl_sampler_views    sampler_views;
+   vl_surfaces         surfaces;
 };
 
 /**
  * initialize a buffer, creating its resources
  */
-bool vl_ycbcr_buffer_init(struct vl_ycbcr_buffer *buffer,
+bool vl_video_buffer_init(struct vl_video_buffer *buffer,
                           struct pipe_context *pipe,
-                          unsigned width, unsigned height,
+                          unsigned width, unsigned height, unsigned depth,
                           enum pipe_video_chroma_format chroma_format,
-                          enum pipe_format resource_format,
+                          unsigned num_planes,
+                          const enum pipe_format resource_formats[VL_MAX_PLANES],
                           unsigned usage);
 
 /**
  * create default sampler views for the buffer on demand
  */
-struct vl_ycbcr_sampler_views *vl_ycbcr_get_sampler_views(struct vl_ycbcr_buffer *buffer);
+vl_sampler_views *vl_video_buffer_sampler_views(struct vl_video_buffer *buffer);
 
 /**
  * create default surfaces for the buffer on demand
  */
-struct vl_ycbcr_surfaces *vl_ycbcr_get_surfaces(struct vl_ycbcr_buffer *buffer);
+vl_surfaces *vl_video_buffer_surfaces(struct vl_video_buffer *buffer);
 
 /**
  * cleanup the buffer destroying all its resources
  */
-void vl_ycbcr_buffer_cleanup(struct vl_ycbcr_buffer *buffer);
+void vl_video_buffer_cleanup(struct vl_video_buffer *buffer);
 
 #endif

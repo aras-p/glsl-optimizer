@@ -29,8 +29,6 @@
 #define vl_idct_h
 
 #include <pipe/p_state.h>
-#include "vl_vertex_buffers.h"
-#include "vl_ycbcr_buffer.h"
 
 /* shader based inverse distinct cosinus transformation
  * expect usage of vl_vertex_buffers as a todo list
