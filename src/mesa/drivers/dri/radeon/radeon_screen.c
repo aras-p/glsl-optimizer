@@ -1158,6 +1158,8 @@ static int radeon_set_screen_flags(radeonScreenPtr screen, int device_id)
     case PCI_CHIP_PALM_9803:
     case PCI_CHIP_PALM_9804:
     case PCI_CHIP_PALM_9805:
+    case PCI_CHIP_PALM_9806:
+    case PCI_CHIP_PALM_9807:
        screen->chip_family = CHIP_FAMILY_PALM;
        screen->chip_flags = RADEON_CHIPSET_TCL;
        break;

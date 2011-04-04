@@ -443,6 +443,8 @@
 #define PCI_CHIP_PALM_9803              0x9803
 #define PCI_CHIP_PALM_9804              0x9804
 #define PCI_CHIP_PALM_9805              0x9805
+#define PCI_CHIP_PALM_9806              0x9806
+#define PCI_CHIP_PALM_9807              0x9807
 
 #define PCI_CHIP_BARTS_6720             0x6720
 #define PCI_CHIP_BARTS_6721             0x6721
