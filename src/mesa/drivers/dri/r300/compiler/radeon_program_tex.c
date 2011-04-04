@@ -32,8 +32,8 @@
 
 /* Series of transformations to be done on textures. */
 
-static struct rc_src_register shadow_ambient(struct r300_fragment_program_compiler *compiler,
-					     int tmu)
+static struct rc_src_register shadow_fail_value(struct r300_fragment_program_compiler *compiler,
+						int tmu)
 {
 	struct rc_src_register reg = { 0, };
 
@@ -46,6 +46,20 @@ static struct rc_src_register shadow_ambient(struct r300_fragment_program_compil
 		reg.File = RC_FILE_NONE;
 		reg.Swizzle = RC_SWIZZLE_0000;
 	}
+
+	reg.Swizzle = combine_swizzles(reg.Swizzle,
+				compiler->state.unit[tmu].depth_texture_swizzle);
+	return reg;
+}
+
+static struct rc_src_register shadow_pass_value(struct r300_fragment_program_compiler *compiler,
+						int tmu)
+{
+	struct rc_src_register reg = { 0, };
+
+	reg.File = RC_FILE_NONE;
+	reg.Swizzle = combine_swizzles(RC_SWIZZLE_1111,
+				compiler->state.unit[tmu].depth_texture_swizzle);
 	return reg;
 }
 
@@ -141,10 +155,9 @@ int radeonTransformTEX(
 			inst->U.I.Opcode = RC_OPCODE_MOV;
 
 			if (comparefunc == RC_COMPARE_FUNC_ALWAYS) {
-				inst->U.I.SrcReg[0].File = RC_FILE_NONE;
-				inst->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_1111;
+				inst->U.I.SrcReg[0] = shadow_pass_value(compiler, inst->U.I.TexSrcUnit);
 			} else {
-				inst->U.I.SrcReg[0] = shadow_ambient(compiler, inst->U.I.TexSrcUnit);
+				inst->U.I.SrcReg[0] = shadow_fail_value(compiler, inst->U.I.TexSrcUnit);
 			}
 
 			return 1;
@@ -244,9 +257,8 @@ int radeonTransformTEX(
 			inst_cmp->U.I.SrcReg[0].Swizzle =
 					combine_swizzles(RC_SWIZZLE_WWWW,
 							 compiler->state.unit[inst->U.I.TexSrcUnit].depth_texture_swizzle);
-			inst_cmp->U.I.SrcReg[pass].File = RC_FILE_NONE;
-			inst_cmp->U.I.SrcReg[pass].Swizzle = RC_SWIZZLE_1111;
-			inst_cmp->U.I.SrcReg[fail] = shadow_ambient(compiler, inst->U.I.TexSrcUnit);
+			inst_cmp->U.I.SrcReg[pass] = shadow_pass_value(compiler, inst->U.I.TexSrcUnit);
+			inst_cmp->U.I.SrcReg[fail] = shadow_fail_value(compiler, inst->U.I.TexSrcUnit);
 
 			assert(tmp_texsample != tmp_sum);
 		}
