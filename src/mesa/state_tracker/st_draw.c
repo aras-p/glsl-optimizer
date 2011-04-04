@@ -406,25 +406,35 @@ setup_non_interleaved_attribs(struct gl_context *ctx,
       }
       else {
          /* wrap user data */
+         uint bytes;
+         void *ptr;
+
          if (arrays[mesaAttr]->Ptr) {
-            uint divisor = arrays[mesaAttr]->InstanceDivisor;
-            uint length = (divisor ? num_instances / divisor : max_index) + 1;
-            vbuffer[attr].buffer =
-	       pipe_user_buffer_create(pipe->screen,
-				       (void *) arrays[mesaAttr]->Ptr,
-				       stride * length,
-				       PIPE_BIND_VERTEX_BUFFER);
+            if (stride == 0) {
+               bytes = _mesa_sizeof_type(arrays[mesaAttr]->Type)
+                  * arrays[mesaAttr]->Size;
+            }
+            else {
+               uint divisor = arrays[mesaAttr]->InstanceDivisor;
+               uint length = (divisor ? num_instances / divisor : max_index) + 1;
+               bytes = stride * length;
+            }
+
+            ptr = (void *) arrays[mesaAttr]->Ptr;
          }
          else {
             /* no array, use ctx->Current.Attrib[] value */
-            uint bytes = sizeof(ctx->Current.Attrib[0]);
-            vbuffer[attr].buffer =
-	       pipe_user_buffer_create(pipe->screen,
-				       (void *) ctx->Current.Attrib[mesaAttr],
-				       bytes,
-				       PIPE_BIND_VERTEX_BUFFER);
+            bytes = sizeof(ctx->Current.Attrib[0]);
+            ptr = (void *) ctx->Current.Attrib[mesaAttr];
             stride = 0;
          }
+
+         assert(ptr);
+         assert(bytes);
+
+         vbuffer[attr].buffer =
+            pipe_user_buffer_create(pipe->screen, ptr, bytes,
+                                    PIPE_BIND_VERTEX_BUFFER);
 
          vbuffer[attr].buffer_offset = 0;
 
