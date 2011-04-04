@@ -1122,7 +1122,20 @@ _mesa_soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *
    rb->Width = width;
    rb->Height = height;
    rb->_BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
-   ASSERT(rb->_BaseFormat);
+
+   if (rb->Name == 0 &&
+       internalFormat == GL_RGBA16_SNORM &&
+       rb->_BaseFormat == 0) {
+      /* NOTE: This is a special case just for accumulation buffers.
+       * This is a very limited use case- there's no snorm texturing or
+       * rendering going on.
+       */
+      rb->_BaseFormat = GL_RGBA;
+   }
+   else {
+      /* the internalFormat should have been error checked long ago */
+      ASSERT(rb->_BaseFormat);
+   }
 
    return GL_TRUE;
 }
