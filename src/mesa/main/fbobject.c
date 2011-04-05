@@ -746,7 +746,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
          continue;
       }
 
-      if (numSamples < 0) {
+      if (att->Renderbuffer && numSamples < 0) {
          /* first buffer */
          numSamples = att->Renderbuffer->NumSamples;
       }
