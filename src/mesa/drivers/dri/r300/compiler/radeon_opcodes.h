@@ -56,6 +56,9 @@ typedef enum {
 	/** vec4 instruction: dst.c = src0.c < 0.0 ? src1.c : src2.c */
 	RC_OPCODE_CMP,
 
+	/** vec4 instruction: dst.c = src2.c > 0.5 ? src0.c : src1.c */
+	RC_OPCODE_CND,
+
 	/** scalar instruction: dst = cos(src0.x) */
 	RC_OPCODE_COS,
 

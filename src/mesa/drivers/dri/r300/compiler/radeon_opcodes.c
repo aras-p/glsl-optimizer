@@ -81,6 +81,13 @@ struct rc_opcode_info rc_opcodes[MAX_RC_OPCODE] = {
 		.IsComponentwise = 1
 	},
 	{
+		.Opcode = RC_OPCODE_CND,
+		.Name = "CND",
+		.NumSrcRegs = 3,
+		.HasDstReg = 1,
+		.IsComponentwise = 1
+	},
+	{
 		.Opcode = RC_OPCODE_COS,
 		.Name = "COS",
 		.NumSrcRegs = 1,

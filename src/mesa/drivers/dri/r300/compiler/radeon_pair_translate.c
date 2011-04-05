@@ -99,6 +99,7 @@ static void classify_instruction(struct rc_sub_instruction * inst,
 	switch(inst->Opcode) {
 	case RC_OPCODE_ADD:
 	case RC_OPCODE_CMP:
+	case RC_OPCODE_CND:
 	case RC_OPCODE_DDX:
 	case RC_OPCODE_DDY:
 	case RC_OPCODE_FRC:

@@ -93,6 +93,7 @@ static unsigned int translate_rgb_op(struct r300_fragment_program_compiler *c, r
 {
 	switch(opcode) {
 	case RC_OPCODE_CMP: return R500_ALU_RGBA_OP_CMP;
+	case RC_OPCODE_CND: return R500_ALU_RGBA_OP_CND;
 	case RC_OPCODE_DDX: return R500_ALU_RGBA_OP_MDH;
 	case RC_OPCODE_DDY: return R500_ALU_RGBA_OP_MDV;
 	case RC_OPCODE_DP3: return R500_ALU_RGBA_OP_DP3;
@@ -114,6 +115,7 @@ static unsigned int translate_alpha_op(struct r300_fragment_program_compiler *c,
 {
 	switch(opcode) {
 	case RC_OPCODE_CMP: return R500_ALPHA_OP_CMP;
+	case RC_OPCODE_CND: return R500_ALPHA_OP_CND;
 	case RC_OPCODE_COS: return R500_ALPHA_OP_COS;
 	case RC_OPCODE_DDX: return R500_ALPHA_OP_MDH;
 	case RC_OPCODE_DDY: return R500_ALPHA_OP_MDV;
