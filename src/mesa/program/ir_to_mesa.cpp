@@ -56,6 +56,9 @@ extern "C" {
 #include "program/sampler.h"
 }
 
+class src_reg;
+class dst_reg;
+
 static int swizzle_for_size(int size);
 
 /**
@@ -85,6 +88,8 @@ public:
       this->reladdr = NULL;
    }
 
+   explicit src_reg(dst_reg reg);
+
    gl_register_file file; /**< PROGRAM_* from Mesa */
    int index; /**< temporary index, VERT_ATTRIB_*, FRAG_ATTRIB_*, etc. */
    GLuint swizzle; /**< SWIZZLE_XYZWONEZERO swizzles from Mesa. */
@@ -95,6 +100,26 @@ public:
 
 class dst_reg {
 public:
+   dst_reg(int file, int writemask)
+   {
+      this->file = file;
+      this->index = 0;
+      this->writemask = writemask;
+      this->cond_mask = COND_TR;
+      this->reladdr = NULL;
+   }
+
+   dst_reg()
+   {
+      this->file = PROGRAM_UNDEFINED;
+      this->index = 0;
+      this->writemask = 0;
+      this->cond_mask = COND_TR;
+      this->reladdr = NULL;
+   }
+
+   explicit dst_reg(src_reg reg);
+
    int file; /**< PROGRAM_* from Mesa */
    int index; /**< temporary index, VERT_ATTRIB_*, FRAG_ATTRIB_*, etc. */
    int writemask; /**< Bitfield of WRITEMASK_[XYZW] */
@@ -102,6 +127,24 @@ public:
    /** Register index should be offset by the integer in this reg. */
    src_reg *reladdr;
 };
+
+src_reg::src_reg(dst_reg reg)
+{
+   this->file = (gl_register_file) reg.file;
+   this->index = reg.index;
+   this->swizzle = SWIZZLE_XYZW;
+   this->negate = 0;
+   this->reladdr = NULL;
+}
+
+dst_reg::dst_reg(src_reg reg)
+{
+   this->file = reg.file;
+   this->index = reg.index;
+   this->writemask = WRITEMASK_XYZW;
+   this->cond_mask = COND_TR;
+   this->reladdr = reg.reladdr;
+}
 
 extern src_reg ir_to_mesa_undef;
 
@@ -302,13 +345,9 @@ public:
 
 src_reg ir_to_mesa_undef = src_reg(PROGRAM_UNDEFINED, 0, NULL);
 
-dst_reg ir_to_mesa_undef_dst = {
-   PROGRAM_UNDEFINED, 0, SWIZZLE_NOOP, COND_TR, NULL,
-};
+dst_reg ir_to_mesa_undef_dst = dst_reg(PROGRAM_UNDEFINED, SWIZZLE_NOOP);
 
-dst_reg ir_to_mesa_address_reg = {
-   PROGRAM_ADDRESS, 0, WRITEMASK_X, COND_TR, NULL
-};
+dst_reg ir_to_mesa_address_reg = dst_reg(PROGRAM_ADDRESS, WRITEMASK_X);
 
 static void
 fail_link(struct gl_shader_program *prog, const char *fmt, ...) PRINTFLIKE(2, 3);
@@ -429,26 +468,6 @@ ir_to_mesa_visitor::ir_to_mesa_emit_dp(ir_instruction *ir,
 
    ir_to_mesa_emit_op3(ir, dot_opcodes[elements - 2],
 		       dst, src0, src1, ir_to_mesa_undef);
-}
-
-inline dst_reg
-ir_to_mesa_dst_reg_from_src(src_reg reg)
-{
-   dst_reg dst;
-
-   dst.file = reg.file;
-   dst.index = reg.index;
-   dst.writemask = WRITEMASK_XYZW;
-   dst.cond_mask = COND_TR;
-   dst.reladdr = reg.reladdr;
-
-   return dst;
-}
-
-inline src_reg
-ir_to_mesa_src_reg_from_dst(dst_reg reg)
-{
-   return src_reg(reg.file, reg.index, NULL);
 }
 
 /**
@@ -592,7 +611,7 @@ ir_to_mesa_visitor::emit_scs(ir_instruction *ir, enum prog_opcode op,
 
       if (this_mask != scs_mask) {
 	 ir_to_mesa_instruction *inst;
-	 dst_reg tmp_dst = ir_to_mesa_dst_reg_from_src(tmp);
+	 dst_reg tmp_dst = dst_reg(tmp);
 
 	 /* Emit the SCS instruction.
 	  */
@@ -789,9 +808,7 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 	 this->variables.push_tail(storage);
 	 this->next_temp += type_size(ir->type);
 
-	 dst = ir_to_mesa_dst_reg_from_src(src_reg(PROGRAM_TEMPORARY,
-						   storage->index,
-						   NULL));
+	 dst = dst_reg(src_reg(PROGRAM_TEMPORARY, storage->index, NULL));
       }
 
 
@@ -939,7 +956,7 @@ ir_to_mesa_visitor::try_emit_mad(ir_expression *ir, int mul_operand)
 
    this->result = get_temp(ir->type);
    ir_to_mesa_emit_op3(ir, OPCODE_MAD,
-		       ir_to_mesa_dst_reg_from_src(this->result), a, b, c);
+		       dst_reg(this->result), a, b, c);
 
    return true;
 }
@@ -963,7 +980,7 @@ ir_to_mesa_visitor::try_emit_sat(ir_expression *ir)
    this->result = get_temp(ir->type);
    ir_to_mesa_instruction *inst;
    inst = ir_to_mesa_emit_op1(ir, OPCODE_MOV,
-			      ir_to_mesa_dst_reg_from_src(this->result),
+			      dst_reg(this->result),
 			      src);
    inst->saturate = true;
 
@@ -983,7 +1000,7 @@ ir_to_mesa_visitor::reladdr_to_temp(ir_instruction *ir,
       src_reg temp = get_temp(glsl_type::vec4_type);
 
       ir_to_mesa_emit_op1(ir, OPCODE_MOV,
-			  ir_to_mesa_dst_reg_from_src(temp), *reg);
+			  dst_reg(temp), *reg);
       *reg = temp;
    }
 
@@ -1095,7 +1112,7 @@ ir_to_mesa_visitor::emit_swz(ir_expression *ir)
     * actual storage for the result here, instead.
     */
    const src_reg result_src = get_temp(ir->type);
-   dst_reg result_dst = ir_to_mesa_dst_reg_from_src(result_src);
+   dst_reg result_dst = dst_reg(result_src);
 
    /* Limit writes to the channels that will be used by result_src later.
     * This does limit this temp's use as a temporary for multi-instruction
@@ -1161,7 +1178,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
     */
    result_src = get_temp(ir->type);
    /* convenience for the emit functions below. */
-   result_dst = ir_to_mesa_dst_reg_from_src(result_src);
+   result_dst = dst_reg(result_src);
    /* Limit writes to the channels that will be used by result_src later.
     * This does limit this temp's use as a temporary for multi-instruction
     * sequences.
@@ -1267,7 +1284,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 	  ir->operands[1]->type->is_vector()) {
 	 src_reg temp = get_temp(glsl_type::vec4_type);
 	 ir_to_mesa_emit_op2(ir, OPCODE_SNE,
-			     ir_to_mesa_dst_reg_from_src(temp), op[0], op[1]);
+			     dst_reg(temp), op[0], op[1]);
 	 ir_to_mesa_emit_dp(ir, result_dst, temp, temp, vector_elements);
 	 ir_to_mesa_emit_op2(ir, OPCODE_SEQ,
 			     result_dst, result_src, src_reg_for_float(0.0));
@@ -1281,7 +1298,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 	  ir->operands[1]->type->is_vector()) {
 	 src_reg temp = get_temp(glsl_type::vec4_type);
 	 ir_to_mesa_emit_op2(ir, OPCODE_SNE,
-			     ir_to_mesa_dst_reg_from_src(temp), op[0], op[1]);
+			     dst_reg(temp), op[0], op[1]);
 	 ir_to_mesa_emit_dp(ir, result_dst, temp, temp, vector_elements);
 	 ir_to_mesa_emit_op2(ir, OPCODE_SNE,
 			     result_dst, result_src, src_reg_for_float(0.0));
@@ -1540,7 +1557,7 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 	 index_reg = get_temp(glsl_type::float_type);
 
 	 ir_to_mesa_emit_op2(ir, OPCODE_MUL,
-			     ir_to_mesa_dst_reg_from_src(index_reg),
+			     dst_reg(index_reg),
 			     this->result, src_reg_for_float(element_size));
       }
 
@@ -1603,7 +1620,7 @@ get_assignment_lhs(ir_dereference *ir, ir_to_mesa_visitor *v)
     * swizzles in it and write swizzles using writemask, though.
     */
    ir->accept(v);
-   return ir_to_mesa_dst_reg_from_src(v->result);
+   return dst_reg(v->result);
 }
 
 /**
@@ -1757,11 +1774,9 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
 
       for (i = 0; i < type_size(ir->lhs->type); i++) {
 	 if (switch_order) {
-	    ir_to_mesa_emit_op3(ir, OPCODE_CMP, l,
-				condition, ir_to_mesa_src_reg_from_dst(l), r);
+	    ir_to_mesa_emit_op3(ir, OPCODE_CMP, l, condition, src_reg(l), r);
 	 } else {
-	    ir_to_mesa_emit_op3(ir, OPCODE_CMP, l,
-				condition, r, ir_to_mesa_src_reg_from_dst(l));
+	    ir_to_mesa_emit_op3(ir, OPCODE_CMP, l, condition, r, src_reg(l));
 	 }
 
 	 l.index++;
@@ -1793,7 +1808,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 
    if (ir->type->base_type == GLSL_TYPE_STRUCT) {
       src_reg temp_base = get_temp(ir->type);
-      dst_reg temp = ir_to_mesa_dst_reg_from_src(temp_base);
+      dst_reg temp = dst_reg(temp_base);
 
       foreach_iter(exec_list_iterator, iter, ir->components) {
 	 ir_constant *field_value = (ir_constant *)iter.get();
@@ -1817,7 +1832,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 
    if (ir->type->is_array()) {
       src_reg temp_base = get_temp(ir->type);
-      dst_reg temp = ir_to_mesa_dst_reg_from_src(temp_base);
+      dst_reg temp = dst_reg(temp_base);
       int size = type_size(ir->type->fields.array);
 
       assert(size > 0);
@@ -1838,7 +1853,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 
    if (ir->type->is_matrix()) {
       src_reg mat = get_temp(ir->type);
-      dst_reg mat_column = ir_to_mesa_dst_reg_from_src(mat);
+      dst_reg mat_column = dst_reg(mat);
 
       for (i = 0; i < ir->type->matrix_columns; i++) {
 	 assert(ir->type->base_type == GLSL_TYPE_FLOAT);
@@ -1995,7 +2010,7 @@ ir_to_mesa_visitor::visit(ir_call *ir)
 	 r.negate = 0;
 
 	 param_rval->accept(this);
-	 dst_reg l = ir_to_mesa_dst_reg_from_src(this->result);
+	 dst_reg l = dst_reg(this->result);
 
 	 for (i = 0; i < type_size(param->type); i++) {
 	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, l, r);
@@ -2028,7 +2043,7 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
     * handle cleaning up our mess in that case.
     */
    coord = get_temp(glsl_type::vec4_type);
-   coord_dst = ir_to_mesa_dst_reg_from_src(coord);
+   coord_dst = dst_reg(coord);
    ir_to_mesa_emit_op1(ir, OPCODE_MOV, coord_dst,
 		       this->result);
 
@@ -2041,7 +2056,7 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
     * the actual storage for the result here, instead.
     */
    result_src = get_temp(glsl_type::vec4_type);
-   result_dst = ir_to_mesa_dst_reg_from_src(result_src);
+   result_dst = dst_reg(result_src);
 
    switch (ir->op) {
    case ir_tex:
@@ -2181,7 +2196,7 @@ ir_to_mesa_visitor::visit(ir_return *ir)
       ir->get_value()->accept(this);
       src_reg r = this->result;
 
-      l = ir_to_mesa_dst_reg_from_src(current_function->return_reg);
+      l = dst_reg(current_function->return_reg);
 
       for (i = 0; i < type_size(current_function->sig->return_type); i++) {
 	 ir_to_mesa_emit_op1(ir, OPCODE_MOV, l, r);
@@ -2230,7 +2245,7 @@ ir_to_mesa_visitor::visit(ir_if *ir)
       if (cond_inst == prev_inst) {
 	 src_reg temp = get_temp(glsl_type::bool_type);
 	 cond_inst = ir_to_mesa_emit_op1(ir->condition, OPCODE_MOV,
-					 ir_to_mesa_dst_reg_from_src(temp),
+					 dst_reg(temp),
 					 result);
       }
       cond_inst->cond_update = GL_TRUE;
