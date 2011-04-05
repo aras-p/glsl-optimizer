@@ -434,7 +434,7 @@ ir_to_mesa_visitor::emit_dp(ir_instruction *ir,
       OPCODE_DP2, OPCODE_DP3, OPCODE_DP4
    };
 
-   emit(ir, dot_opcodes[elements - 2], dst, src0, src1, ir_to_mesa_undef);
+   emit(ir, dot_opcodes[elements - 2], dst, src0, src1);
 }
 
 /**
@@ -1928,7 +1928,7 @@ ir_to_mesa_visitor::visit(ir_call *ir)
    assert(!sig_iter.has_next());
 
    /* Emit call instruction */
-   call_inst = emit(ir, OPCODE_CAL, ir_to_mesa_undef_dst, ir_to_mesa_undef);
+   call_inst = emit(ir, OPCODE_CAL);
    call_inst->function = entry;
 
    /* Process out parameters. */
@@ -2203,8 +2203,7 @@ ir_to_mesa_visitor::visit(ir_if *ir)
       visit_exec_list(&ir->else_instructions, this);
    }
 
-   if_inst = emit(ir->condition, OPCODE_ENDIF,
-		  ir_to_mesa_undef_dst, ir_to_mesa_undef);
+   if_inst = emit(ir->condition, OPCODE_ENDIF);
 }
 
 ir_to_mesa_visitor::ir_to_mesa_visitor()
