@@ -121,7 +121,7 @@ _mesa_texstore_red_rgtc1(TEXSTORE_PARAMS)
                                         texWidth, (GLubyte *) dstAddr);
 
    blkaddr = dst;
-   dstRowDiff = dstRowStride >= (srcWidth * 4) ? dstRowStride - (((srcWidth + 3) & ~3) * 4) : 0;
+   dstRowDiff = dstRowStride >= (srcWidth * 2) ? dstRowStride - (((srcWidth + 3) & ~3) * 2) : 0;
    for (j = 0; j < srcHeight; j+=4) {
       if (srcHeight > j + 3) numypixels = 4;
       else numypixels = srcHeight - j;
@@ -176,7 +176,7 @@ _mesa_texstore_signed_red_rgtc1(TEXSTORE_PARAMS)
 						  texWidth, (GLubyte *) dstAddr);
 
    blkaddr = dst;
-   dstRowDiff = dstRowStride >= (srcWidth * 4) ? dstRowStride - (((srcWidth + 3) & ~3) * 4) : 0;
+   dstRowDiff = dstRowStride >= (srcWidth * 2) ? dstRowStride - (((srcWidth + 3) & ~3) * 2) : 0;
    for (j = 0; j < srcHeight; j+=4) {
       if (srcHeight > j + 3) numypixels = 4;
       else numypixels = srcHeight - j;
@@ -232,7 +232,7 @@ _mesa_texstore_rg_rgtc2(TEXSTORE_PARAMS)
                                         texWidth, (GLubyte *) dstAddr);
 
    blkaddr = dst;
-   dstRowDiff = dstRowStride >= (srcWidth * 8) ? dstRowStride - (((srcWidth + 7) & ~7) * 8) : 0;
+   dstRowDiff = dstRowStride >= (srcWidth * 4) ? dstRowStride - (((srcWidth + 3) & ~3) * 4) : 0;
    for (j = 0; j < srcHeight; j+=4) {
       if (srcHeight > j + 3) numypixels = 4;
       else numypixels = srcHeight - j;
@@ -294,7 +294,7 @@ _mesa_texstore_signed_rg_rgtc2(TEXSTORE_PARAMS)
 						  texWidth, (GLubyte *) dstAddr);
 
    blkaddr = dst;
-   dstRowDiff = dstRowStride >= (srcWidth * 8) ? dstRowStride - (((srcWidth + 7) & ~7) * 8) : 0;
+   dstRowDiff = dstRowStride >= (srcWidth * 4) ? dstRowStride - (((srcWidth + 3) & ~3) * 4) : 0;
    for (j = 0; j < srcHeight; j += 4) {
       if (srcHeight > j + 3) numypixels = 4;
       else numypixels = srcHeight - j;
