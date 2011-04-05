@@ -390,6 +390,18 @@ if env['gcc'] and env['platform'] != 'windows':
         # build dir) to the include path
         env.Append(CPPPATH = [matypes[0].dir])
 
+
+    # Create the git_sha1.h file if it doesn't exist already
+    try:
+        f = open('main/git_sha1.h', 'r')
+        f.close()
+    except IOError:
+        f = open('main/git_sha1.h', 'w')
+        f.close()
+    # and update CPPPATH so the git_sha1.h header can be found
+    env.Append(CPPPATH = ["#" + env['build_dir'] + "/mesa/main"])
+
+
 #
 # Libraries
 #
