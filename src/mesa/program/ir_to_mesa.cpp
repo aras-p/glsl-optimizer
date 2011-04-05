@@ -62,8 +62,9 @@ static int swizzle_for_size(int size);
  * This struct is a corresponding struct to Mesa prog_src_register, with
  * wider fields.
  */
-typedef struct ir_to_mesa_src_reg {
-   ir_to_mesa_src_reg(int file, int index, const glsl_type *type)
+class src_reg {
+public:
+   src_reg(int file, int index, const glsl_type *type)
    {
       this->file = (gl_register_file) file;
       this->index = index;
@@ -75,7 +76,7 @@ typedef struct ir_to_mesa_src_reg {
       this->reladdr = NULL;
    }
 
-   ir_to_mesa_src_reg()
+   src_reg()
    {
       this->file = PROGRAM_UNDEFINED;
       this->index = 0;
@@ -89,19 +90,20 @@ typedef struct ir_to_mesa_src_reg {
    GLuint swizzle; /**< SWIZZLE_XYZWONEZERO swizzles from Mesa. */
    int negate; /**< NEGATE_XYZW mask from mesa */
    /** Register index should be offset by the integer in this reg. */
-   ir_to_mesa_src_reg *reladdr;
-} ir_to_mesa_src_reg;
+   src_reg *reladdr;
+};
 
-typedef struct ir_to_mesa_dst_reg {
+class dst_reg {
+public:
    int file; /**< PROGRAM_* from Mesa */
    int index; /**< temporary index, VERT_ATTRIB_*, FRAG_ATTRIB_*, etc. */
    int writemask; /**< Bitfield of WRITEMASK_[XYZW] */
    GLuint cond_mask:4;
    /** Register index should be offset by the integer in this reg. */
-   ir_to_mesa_src_reg *reladdr;
-} ir_to_mesa_dst_reg;
+   src_reg *reladdr;
+};
 
-extern ir_to_mesa_src_reg ir_to_mesa_undef;
+extern src_reg ir_to_mesa_undef;
 
 class ir_to_mesa_instruction : public exec_node {
 public:
@@ -118,8 +120,8 @@ public:
    }
 
    enum prog_opcode op;
-   ir_to_mesa_dst_reg dst;
-   ir_to_mesa_src_reg src[3];
+   dst_reg dst;
+   src_reg src[3];
    /** Pointer to the ir source this tree came from for debugging */
    ir_instruction *ir;
    GLboolean cond_update;
@@ -174,7 +176,7 @@ public:
    int inst;
 
    /** Storage for the return value. */
-   ir_to_mesa_src_reg return_reg;
+   src_reg return_reg;
 };
 
 class ir_to_mesa_visitor : public ir_visitor {
@@ -195,11 +197,10 @@ public:
 
    function_entry *get_function_signature(ir_function_signature *sig);
 
-   ir_to_mesa_src_reg get_temp(const glsl_type *type);
-   void reladdr_to_temp(ir_instruction *ir,
-			ir_to_mesa_src_reg *reg, int *num_reladdr);
+   src_reg get_temp(const glsl_type *type);
+   void reladdr_to_temp(ir_instruction *ir, src_reg *reg, int *num_reladdr);
 
-   struct ir_to_mesa_src_reg src_reg_for_float(float val);
+   src_reg src_reg_for_float(float val);
 
    /**
     * \name Visit methods
@@ -228,7 +229,7 @@ public:
    virtual void visit(ir_if *);
    /*@}*/
 
-   struct ir_to_mesa_src_reg result;
+   src_reg result;
 
    /** List of variable_storage */
    exec_list variables;
@@ -245,21 +246,21 @@ public:
 
    ir_to_mesa_instruction *ir_to_mesa_emit_op1(ir_instruction *ir,
 					       enum prog_opcode op,
-					       ir_to_mesa_dst_reg dst,
-					       ir_to_mesa_src_reg src0);
+					       dst_reg dst,
+					       src_reg src0);
 
    ir_to_mesa_instruction *ir_to_mesa_emit_op2(ir_instruction *ir,
 					       enum prog_opcode op,
-					       ir_to_mesa_dst_reg dst,
-					       ir_to_mesa_src_reg src0,
-					       ir_to_mesa_src_reg src1);
+					       dst_reg dst,
+					       src_reg src0,
+					       src_reg src1);
 
    ir_to_mesa_instruction *ir_to_mesa_emit_op3(ir_instruction *ir,
 					       enum prog_opcode op,
-					       ir_to_mesa_dst_reg dst,
-					       ir_to_mesa_src_reg src0,
-					       ir_to_mesa_src_reg src1,
-					       ir_to_mesa_src_reg src2);
+					       dst_reg dst,
+					       src_reg src0,
+					       src_reg src1,
+					       src_reg src2);
 
    /**
     * Emit the correct dot-product instruction for the type of arguments
@@ -267,25 +268,24 @@ public:
     * \sa ir_to_mesa_emit_op2
     */
    void ir_to_mesa_emit_dp(ir_instruction *ir,
-			   ir_to_mesa_dst_reg dst,
-			   ir_to_mesa_src_reg src0,
-			   ir_to_mesa_src_reg src1,
+			   dst_reg dst,
+			   src_reg src0,
+			   src_reg src1,
 			   unsigned elements);
 
    void ir_to_mesa_emit_scalar_op1(ir_instruction *ir,
 				   enum prog_opcode op,
-				   ir_to_mesa_dst_reg dst,
-				   ir_to_mesa_src_reg src0);
+				   dst_reg dst,
+				   src_reg src0);
 
    void ir_to_mesa_emit_scalar_op2(ir_instruction *ir,
 				   enum prog_opcode op,
-				   ir_to_mesa_dst_reg dst,
-				   ir_to_mesa_src_reg src0,
-				   ir_to_mesa_src_reg src1);
+				   dst_reg dst,
+				   src_reg src0,
+				   src_reg src1);
 
    void emit_scs(ir_instruction *ir, enum prog_opcode op,
-		 ir_to_mesa_dst_reg dst,
-		 const ir_to_mesa_src_reg &src);
+		 dst_reg dst, const src_reg &src);
 
    GLboolean try_emit_mad(ir_expression *ir,
 			  int mul_operand);
@@ -300,13 +300,13 @@ public:
    void *mem_ctx;
 };
 
-ir_to_mesa_src_reg ir_to_mesa_undef = ir_to_mesa_src_reg(PROGRAM_UNDEFINED, 0, NULL);
+src_reg ir_to_mesa_undef = src_reg(PROGRAM_UNDEFINED, 0, NULL);
 
-ir_to_mesa_dst_reg ir_to_mesa_undef_dst = {
+dst_reg ir_to_mesa_undef_dst = {
    PROGRAM_UNDEFINED, 0, SWIZZLE_NOOP, COND_TR, NULL,
 };
 
-ir_to_mesa_dst_reg ir_to_mesa_address_reg = {
+dst_reg ir_to_mesa_address_reg = {
    PROGRAM_ADDRESS, 0, WRITEMASK_X, COND_TR, NULL
 };
 
@@ -341,10 +341,10 @@ swizzle_for_size(int size)
 ir_to_mesa_instruction *
 ir_to_mesa_visitor::ir_to_mesa_emit_op3(ir_instruction *ir,
 					enum prog_opcode op,
-					ir_to_mesa_dst_reg dst,
-					ir_to_mesa_src_reg src0,
-					ir_to_mesa_src_reg src1,
-					ir_to_mesa_src_reg src2)
+					dst_reg dst,
+					src_reg src0,
+					src_reg src1,
+					src_reg src2)
 {
    ir_to_mesa_instruction *inst = new(mem_ctx) ir_to_mesa_instruction();
    int num_reladdr = 0;
@@ -388,9 +388,9 @@ ir_to_mesa_visitor::ir_to_mesa_emit_op3(ir_instruction *ir,
 ir_to_mesa_instruction *
 ir_to_mesa_visitor::ir_to_mesa_emit_op2(ir_instruction *ir,
 					enum prog_opcode op,
-					ir_to_mesa_dst_reg dst,
-					ir_to_mesa_src_reg src0,
-					ir_to_mesa_src_reg src1)
+					dst_reg dst,
+					src_reg src0,
+					src_reg src1)
 {
    return ir_to_mesa_emit_op3(ir, op, dst, src0, src1, ir_to_mesa_undef);
 }
@@ -398,8 +398,8 @@ ir_to_mesa_visitor::ir_to_mesa_emit_op2(ir_instruction *ir,
 ir_to_mesa_instruction *
 ir_to_mesa_visitor::ir_to_mesa_emit_op1(ir_instruction *ir,
 					enum prog_opcode op,
-					ir_to_mesa_dst_reg dst,
-					ir_to_mesa_src_reg src0)
+					dst_reg dst,
+					src_reg src0)
 {
    assert(dst.writemask != 0);
    return ir_to_mesa_emit_op3(ir, op, dst,
@@ -418,9 +418,9 @@ ir_to_mesa_visitor::ir_to_mesa_emit_op0(ir_instruction *ir,
 
 void
 ir_to_mesa_visitor::ir_to_mesa_emit_dp(ir_instruction *ir,
-				       ir_to_mesa_dst_reg dst,
-				       ir_to_mesa_src_reg src0,
-				       ir_to_mesa_src_reg src1,
+				       dst_reg dst,
+				       src_reg src0,
+				       src_reg src1,
 				       unsigned elements)
 {
    static const gl_inst_opcode dot_opcodes[] = {
@@ -431,10 +431,10 @@ ir_to_mesa_visitor::ir_to_mesa_emit_dp(ir_instruction *ir,
 		       dst, src0, src1, ir_to_mesa_undef);
 }
 
-inline ir_to_mesa_dst_reg
-ir_to_mesa_dst_reg_from_src(ir_to_mesa_src_reg reg)
+inline dst_reg
+ir_to_mesa_dst_reg_from_src(src_reg reg)
 {
-   ir_to_mesa_dst_reg dst;
+   dst_reg dst;
 
    dst.file = reg.file;
    dst.index = reg.index;
@@ -445,10 +445,10 @@ ir_to_mesa_dst_reg_from_src(ir_to_mesa_src_reg reg)
    return dst;
 }
 
-inline ir_to_mesa_src_reg
-ir_to_mesa_src_reg_from_dst(ir_to_mesa_dst_reg reg)
+inline src_reg
+ir_to_mesa_src_reg_from_dst(dst_reg reg)
 {
-   return ir_to_mesa_src_reg(reg.file, reg.index, NULL);
+   return src_reg(reg.file, reg.index, NULL);
 }
 
 /**
@@ -462,9 +462,9 @@ ir_to_mesa_src_reg_from_dst(ir_to_mesa_dst_reg reg)
 void
 ir_to_mesa_visitor::ir_to_mesa_emit_scalar_op2(ir_instruction *ir,
 					       enum prog_opcode op,
-					       ir_to_mesa_dst_reg dst,
-					       ir_to_mesa_src_reg orig_src0,
-					       ir_to_mesa_src_reg orig_src1)
+					       dst_reg dst,
+					       src_reg orig_src0,
+					       src_reg orig_src1)
 {
    int i, j;
    int done_mask = ~dst.writemask;
@@ -476,8 +476,8 @@ ir_to_mesa_visitor::ir_to_mesa_emit_scalar_op2(ir_instruction *ir,
    for (i = 0; i < 4; i++) {
       GLuint this_mask = (1 << i);
       ir_to_mesa_instruction *inst;
-      ir_to_mesa_src_reg src0 = orig_src0;
-      ir_to_mesa_src_reg src1 = orig_src1;
+      src_reg src0 = orig_src0;
+      src_reg src1 = orig_src1;
 
       if (done_mask & this_mask)
 	 continue;
@@ -512,10 +512,10 @@ ir_to_mesa_visitor::ir_to_mesa_emit_scalar_op2(ir_instruction *ir,
 void
 ir_to_mesa_visitor::ir_to_mesa_emit_scalar_op1(ir_instruction *ir,
 					       enum prog_opcode op,
-					       ir_to_mesa_dst_reg dst,
-					       ir_to_mesa_src_reg src0)
+					       dst_reg dst,
+					       src_reg src0)
 {
-   ir_to_mesa_src_reg undef = ir_to_mesa_undef;
+   src_reg undef = ir_to_mesa_undef;
 
    undef.swizzle = SWIZZLE_XXXX;
 
@@ -538,8 +538,8 @@ ir_to_mesa_visitor::ir_to_mesa_emit_scalar_op1(ir_instruction *ir,
  */
 void
 ir_to_mesa_visitor::emit_scs(ir_instruction *ir, enum prog_opcode op,
-			     ir_to_mesa_dst_reg dst,
-			     const ir_to_mesa_src_reg &src)
+			     dst_reg dst,
+			     const src_reg &src)
 {
    /* Vertex programs cannot use the SCS opcode.
     */
@@ -551,7 +551,7 @@ ir_to_mesa_visitor::emit_scs(ir_instruction *ir, enum prog_opcode op,
    const unsigned component = (op == OPCODE_SIN) ? 0 : 1;
    const unsigned scs_mask = (1U << component);
    int done_mask = ~dst.writemask;
-   ir_to_mesa_src_reg tmp;
+   src_reg tmp;
 
    assert(op == OPCODE_SIN || op == OPCODE_COS);
 
@@ -564,7 +564,7 @@ ir_to_mesa_visitor::emit_scs(ir_instruction *ir, enum prog_opcode op,
 
    for (unsigned i = 0; i < 4; i++) {
       unsigned this_mask = (1U << i);
-      ir_to_mesa_src_reg src0 = src;
+      src_reg src0 = src;
 
       if ((done_mask & this_mask) != 0)
 	 continue;
@@ -592,7 +592,7 @@ ir_to_mesa_visitor::emit_scs(ir_instruction *ir, enum prog_opcode op,
 
       if (this_mask != scs_mask) {
 	 ir_to_mesa_instruction *inst;
-	 ir_to_mesa_dst_reg tmp_dst = ir_to_mesa_dst_reg_from_src(tmp);
+	 dst_reg tmp_dst = ir_to_mesa_dst_reg_from_src(tmp);
 
 	 /* Emit the SCS instruction.
 	  */
@@ -618,10 +618,10 @@ ir_to_mesa_visitor::emit_scs(ir_instruction *ir, enum prog_opcode op,
    }
 }
 
-struct ir_to_mesa_src_reg
+struct src_reg
 ir_to_mesa_visitor::src_reg_for_float(float val)
 {
-   ir_to_mesa_src_reg src(PROGRAM_CONSTANT, -1, NULL);
+   src_reg src(PROGRAM_CONSTANT, -1, NULL);
 
    src.index = _mesa_add_unnamed_constant(this->prog->Parameters,
 					  &val, 1, &src.swizzle);
@@ -676,10 +676,10 @@ type_size(const struct glsl_type *type)
  * storage).  Actual register allocation for the Mesa VM occurs in a
  * pass over the Mesa IR later.
  */
-ir_to_mesa_src_reg
+src_reg
 ir_to_mesa_visitor::get_temp(const glsl_type *type)
 {
-   ir_to_mesa_src_reg src;
+   src_reg src;
    int swizzle[4];
    int i;
 
@@ -770,7 +770,7 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
       }
 
       struct variable_storage *storage;
-      ir_to_mesa_dst_reg dst;
+      dst_reg dst;
       if (i == ir->num_state_slots) {
 	 /* We'll set the index later. */
 	 storage = new(mem_ctx) variable_storage(ir, PROGRAM_STATE_VAR, -1);
@@ -789,9 +789,9 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 	 this->variables.push_tail(storage);
 	 this->next_temp += type_size(ir->type);
 
-	 dst = ir_to_mesa_dst_reg_from_src(ir_to_mesa_src_reg(PROGRAM_TEMPORARY,
-							      storage->index,
-							      NULL));
+	 dst = ir_to_mesa_dst_reg_from_src(src_reg(PROGRAM_TEMPORARY,
+						   storage->index,
+						   NULL));
       }
 
 
@@ -806,7 +806,7 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 	       assert(index == storage->index + (int)i);
 	    }
 	 } else {
-	    ir_to_mesa_src_reg src(PROGRAM_STATE_VAR, index, NULL);
+	    src_reg src(PROGRAM_STATE_VAR, index, NULL);
 	    src.swizzle = slots[i].swizzle;
 	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, dst, src);
 	    /* even a float takes up a whole vec4 reg in a struct/array. */
@@ -924,7 +924,7 @@ GLboolean
 ir_to_mesa_visitor::try_emit_mad(ir_expression *ir, int mul_operand)
 {
    int nonmul_operand = 1 - mul_operand;
-   ir_to_mesa_src_reg a, b, c;
+   src_reg a, b, c;
 
    ir_expression *expr = ir->operands[mul_operand]->as_expression();
    if (!expr || expr->operation != ir_binop_mul)
@@ -958,7 +958,7 @@ ir_to_mesa_visitor::try_emit_sat(ir_expression *ir)
       return false;
 
    sat_src->accept(this);
-   ir_to_mesa_src_reg src = this->result;
+   src_reg src = this->result;
 
    this->result = get_temp(ir->type);
    ir_to_mesa_instruction *inst;
@@ -972,7 +972,7 @@ ir_to_mesa_visitor::try_emit_sat(ir_expression *ir)
 
 void
 ir_to_mesa_visitor::reladdr_to_temp(ir_instruction *ir,
-				    ir_to_mesa_src_reg *reg, int *num_reladdr)
+				    src_reg *reg, int *num_reladdr)
 {
    if (!reg->reladdr)
       return;
@@ -980,7 +980,7 @@ ir_to_mesa_visitor::reladdr_to_temp(ir_instruction *ir,
    ir_to_mesa_emit_op1(ir, OPCODE_ARL, ir_to_mesa_address_reg, *reg->reladdr);
 
    if (*num_reladdr != 1) {
-      ir_to_mesa_src_reg temp = get_temp(glsl_type::vec4_type);
+      src_reg temp = get_temp(glsl_type::vec4_type);
 
       ir_to_mesa_emit_op1(ir, OPCODE_MOV,
 			  ir_to_mesa_dst_reg_from_src(temp), *reg);
@@ -1079,7 +1079,7 @@ ir_to_mesa_visitor::emit_swz(ir_expression *ir)
       exit(1);
    }
 
-   ir_to_mesa_src_reg src;
+   src_reg src;
 
    src = this->result;
    src.swizzle = MAKE_SWIZZLE4(components[0],
@@ -1094,8 +1094,8 @@ ir_to_mesa_visitor::emit_swz(ir_expression *ir)
    /* Storage for our result.  Ideally for an assignment we'd be using the
     * actual storage for the result here, instead.
     */
-   const ir_to_mesa_src_reg result_src = get_temp(ir->type);
-   ir_to_mesa_dst_reg result_dst = ir_to_mesa_dst_reg_from_src(result_src);
+   const src_reg result_src = get_temp(ir->type);
+   dst_reg result_dst = ir_to_mesa_dst_reg_from_src(result_src);
 
    /* Limit writes to the channels that will be used by result_src later.
     * This does limit this temp's use as a temporary for multi-instruction
@@ -1111,9 +1111,9 @@ void
 ir_to_mesa_visitor::visit(ir_expression *ir)
 {
    unsigned int operand;
-   struct ir_to_mesa_src_reg op[Elements(ir->operands)];
-   struct ir_to_mesa_src_reg result_src;
-   struct ir_to_mesa_dst_reg result_dst;
+   src_reg op[Elements(ir->operands)];
+   src_reg result_src;
+   dst_reg result_dst;
 
    /* Quick peephole: Emit OPCODE_MAD(a, b, c) instead of ADD(MUL(a, b), c)
     */
@@ -1265,7 +1265,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       /* "==" operator producing a scalar boolean. */
       if (ir->operands[0]->type->is_vector() ||
 	  ir->operands[1]->type->is_vector()) {
-	 ir_to_mesa_src_reg temp = get_temp(glsl_type::vec4_type);
+	 src_reg temp = get_temp(glsl_type::vec4_type);
 	 ir_to_mesa_emit_op2(ir, OPCODE_SNE,
 			     ir_to_mesa_dst_reg_from_src(temp), op[0], op[1]);
 	 ir_to_mesa_emit_dp(ir, result_dst, temp, temp, vector_elements);
@@ -1279,7 +1279,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       /* "!=" operator producing a scalar boolean. */
       if (ir->operands[0]->type->is_vector() ||
 	  ir->operands[1]->type->is_vector()) {
-	 ir_to_mesa_src_reg temp = get_temp(glsl_type::vec4_type);
+	 src_reg temp = get_temp(glsl_type::vec4_type);
 	 ir_to_mesa_emit_op2(ir, OPCODE_SNE,
 			     ir_to_mesa_dst_reg_from_src(temp), op[0], op[1]);
 	 ir_to_mesa_emit_dp(ir, result_dst, temp, temp, vector_elements);
@@ -1403,7 +1403,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 void
 ir_to_mesa_visitor::visit(ir_swizzle *ir)
 {
-   ir_to_mesa_src_reg src;
+   src_reg src;
    int i;
    int swizzle[4];
 
@@ -1507,14 +1507,14 @@ ir_to_mesa_visitor::visit(ir_dereference_variable *ir)
       }
    }
 
-   this->result = ir_to_mesa_src_reg(entry->file, entry->index, var->type);
+   this->result = src_reg(entry->file, entry->index, var->type);
 }
 
 void
 ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 {
    ir_constant *index;
-   ir_to_mesa_src_reg src;
+   src_reg src;
    int element_size = type_size(ir->type);
 
    index = ir->array_index->constant_expression_value();
@@ -1525,14 +1525,14 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
    if (index) {
       src.index += index->value.i[0] * element_size;
    } else {
-      ir_to_mesa_src_reg array_base = this->result;
+      src_reg array_base = this->result;
       /* Variable index array dereference.  It eats the "vec4" of the
        * base of the array and an index that offsets the Mesa register
        * index.
        */
       ir->array_index->accept(this);
 
-      ir_to_mesa_src_reg index_reg;
+      src_reg index_reg;
 
       if (element_size == 1) {
 	 index_reg = this->result;
@@ -1544,7 +1544,7 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 			     this->result, src_reg_for_float(element_size));
       }
 
-      src.reladdr = ralloc(mem_ctx, ir_to_mesa_src_reg);
+      src.reladdr = ralloc(mem_ctx, src_reg);
       memcpy(src.reladdr, &index_reg, sizeof(index_reg));
    }
 
@@ -1586,7 +1586,7 @@ ir_to_mesa_visitor::visit(ir_dereference_record *ir)
  * instead of potentially using a temporary like we might with the
  * ir_dereference handler.
  */
-static struct ir_to_mesa_dst_reg
+static dst_reg
 get_assignment_lhs(ir_dereference *ir, ir_to_mesa_visitor *v)
 {
    /* The LHS must be a dereference.  If the LHS is a variable indexed array
@@ -1696,8 +1696,8 @@ ir_to_mesa_visitor::process_move_condition(ir_rvalue *ir)
 void
 ir_to_mesa_visitor::visit(ir_assignment *ir)
 {
-   struct ir_to_mesa_dst_reg l;
-   struct ir_to_mesa_src_reg r;
+   dst_reg l;
+   src_reg r;
    int i;
 
    ir->rhs->accept(this);
@@ -1753,7 +1753,7 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
 
    if (ir->condition) {
       const bool switch_order = this->process_move_condition(ir->condition);
-      ir_to_mesa_src_reg condition = this->result;
+      src_reg condition = this->result;
 
       for (i = 0; i < type_size(ir->lhs->type); i++) {
 	 if (switch_order) {
@@ -1780,7 +1780,7 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
 void
 ir_to_mesa_visitor::visit(ir_constant *ir)
 {
-   ir_to_mesa_src_reg src;
+   src_reg src;
    GLfloat stack_vals[4] = { 0 };
    GLfloat *values = stack_vals;
    unsigned int i;
@@ -1792,8 +1792,8 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
     */
 
    if (ir->type->base_type == GLSL_TYPE_STRUCT) {
-      ir_to_mesa_src_reg temp_base = get_temp(ir->type);
-      ir_to_mesa_dst_reg temp = ir_to_mesa_dst_reg_from_src(temp_base);
+      src_reg temp_base = get_temp(ir->type);
+      dst_reg temp = ir_to_mesa_dst_reg_from_src(temp_base);
 
       foreach_iter(exec_list_iterator, iter, ir->components) {
 	 ir_constant *field_value = (ir_constant *)iter.get();
@@ -1816,8 +1816,8 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
    }
 
    if (ir->type->is_array()) {
-      ir_to_mesa_src_reg temp_base = get_temp(ir->type);
-      ir_to_mesa_dst_reg temp = ir_to_mesa_dst_reg_from_src(temp_base);
+      src_reg temp_base = get_temp(ir->type);
+      dst_reg temp = ir_to_mesa_dst_reg_from_src(temp_base);
       int size = type_size(ir->type->fields.array);
 
       assert(size > 0);
@@ -1837,14 +1837,14 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
    }
 
    if (ir->type->is_matrix()) {
-      ir_to_mesa_src_reg mat = get_temp(ir->type);
-      ir_to_mesa_dst_reg mat_column = ir_to_mesa_dst_reg_from_src(mat);
+      src_reg mat = get_temp(ir->type);
+      dst_reg mat_column = ir_to_mesa_dst_reg_from_src(mat);
 
       for (i = 0; i < ir->type->matrix_columns; i++) {
 	 assert(ir->type->base_type == GLSL_TYPE_FLOAT);
 	 values = &ir->value.f[i * ir->type->vector_elements];
 
-	 src = ir_to_mesa_src_reg(PROGRAM_CONSTANT, -1, NULL);
+	 src = src_reg(PROGRAM_CONSTANT, -1, NULL);
 	 src.index = _mesa_add_unnamed_constant(this->prog->Parameters,
 						values,
 						ir->type->vector_elements,
@@ -1882,7 +1882,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
       assert(!"Non-float/uint/int/bool constant");
    }
 
-   this->result = ir_to_mesa_src_reg(PROGRAM_CONSTANT, -1, ir->type);
+   this->result = src_reg(PROGRAM_CONSTANT, -1, ir->type);
    this->result.index = _mesa_add_unnamed_constant(this->prog->Parameters,
 						   values,
 						   ir->type->vector_elements,
@@ -1951,9 +1951,9 @@ ir_to_mesa_visitor::visit(ir_call *ir)
 	 assert(storage);
 
 	 param_rval->accept(this);
-	 ir_to_mesa_src_reg r = this->result;
+	 src_reg r = this->result;
 
-	 ir_to_mesa_dst_reg l;
+	 dst_reg l;
 	 l.file = storage->file;
 	 l.index = storage->index;
 	 l.reladdr = NULL;
@@ -1987,7 +1987,7 @@ ir_to_mesa_visitor::visit(ir_call *ir)
 	 variable_storage *storage = find_variable_storage(param);
 	 assert(storage);
 
-	 ir_to_mesa_src_reg r;
+	 src_reg r;
 	 r.file = storage->file;
 	 r.index = storage->index;
 	 r.reladdr = NULL;
@@ -1995,7 +1995,7 @@ ir_to_mesa_visitor::visit(ir_call *ir)
 	 r.negate = 0;
 
 	 param_rval->accept(this);
-	 ir_to_mesa_dst_reg l = ir_to_mesa_dst_reg_from_src(this->result);
+	 dst_reg l = ir_to_mesa_dst_reg_from_src(this->result);
 
 	 for (i = 0; i < type_size(param->type); i++) {
 	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, l, r);
@@ -2015,8 +2015,8 @@ ir_to_mesa_visitor::visit(ir_call *ir)
 void
 ir_to_mesa_visitor::visit(ir_texture *ir)
 {
-   ir_to_mesa_src_reg result_src, coord, lod_info, projector;
-   ir_to_mesa_dst_reg result_dst, coord_dst;
+   src_reg result_src, coord, lod_info, projector;
+   dst_reg result_dst, coord_dst;
    ir_to_mesa_instruction *inst = NULL;
    prog_opcode opcode = OPCODE_NOP;
 
@@ -2071,7 +2071,7 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
 	 coord_dst.writemask = WRITEMASK_XYZW;
 	 opcode = OPCODE_TXP;
       } else {
-	 ir_to_mesa_src_reg coord_w = coord;
+	 src_reg coord_w = coord;
 	 coord_w.swizzle = SWIZZLE_WWWW;
 
 	 /* For the other TEX opcodes there's no projective version
@@ -2173,13 +2173,13 @@ void
 ir_to_mesa_visitor::visit(ir_return *ir)
 {
    if (ir->get_value()) {
-      ir_to_mesa_dst_reg l;
+      dst_reg l;
       int i;
 
       assert(current_function);
 
       ir->get_value()->accept(this);
-      ir_to_mesa_src_reg r = this->result;
+      src_reg r = this->result;
 
       l = ir_to_mesa_dst_reg_from_src(current_function->return_reg);
 
@@ -2228,7 +2228,7 @@ ir_to_mesa_visitor::visit(ir_if *ir)
        * have something to set cond_update on.
        */
       if (cond_inst == prev_inst) {
-	 ir_to_mesa_src_reg temp = get_temp(glsl_type::bool_type);
+	 src_reg temp = get_temp(glsl_type::bool_type);
 	 cond_inst = ir_to_mesa_emit_op1(ir->condition, OPCODE_MOV,
 					 ir_to_mesa_dst_reg_from_src(temp),
 					 result);
@@ -2271,7 +2271,7 @@ ir_to_mesa_visitor::~ir_to_mesa_visitor()
 }
 
 static struct prog_src_register
-mesa_src_reg_from_ir_src_reg(ir_to_mesa_src_reg reg)
+mesa_src_reg_from_ir_src_reg(src_reg reg)
 {
    struct prog_src_register mesa_reg;
 
