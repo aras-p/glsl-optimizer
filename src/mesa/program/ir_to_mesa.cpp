@@ -284,48 +284,32 @@ public:
    /** List of ir_to_mesa_instruction */
    exec_list instructions;
 
-   ir_to_mesa_instruction *ir_to_mesa_emit_op0(ir_instruction *ir,
-					       enum prog_opcode op);
+   ir_to_mesa_instruction *emit(ir_instruction *ir, enum prog_opcode op);
 
-   ir_to_mesa_instruction *ir_to_mesa_emit_op1(ir_instruction *ir,
-					       enum prog_opcode op,
-					       dst_reg dst,
-					       src_reg src0);
+   ir_to_mesa_instruction *emit(ir_instruction *ir, enum prog_opcode op,
+			        dst_reg dst, src_reg src0);
 
-   ir_to_mesa_instruction *ir_to_mesa_emit_op2(ir_instruction *ir,
-					       enum prog_opcode op,
-					       dst_reg dst,
-					       src_reg src0,
-					       src_reg src1);
+   ir_to_mesa_instruction *emit(ir_instruction *ir, enum prog_opcode op,
+			        dst_reg dst, src_reg src0, src_reg src1);
 
-   ir_to_mesa_instruction *ir_to_mesa_emit_op3(ir_instruction *ir,
-					       enum prog_opcode op,
-					       dst_reg dst,
-					       src_reg src0,
-					       src_reg src1,
-					       src_reg src2);
+   ir_to_mesa_instruction *emit(ir_instruction *ir, enum prog_opcode op,
+			        dst_reg dst,
+			        src_reg src0, src_reg src1, src_reg src2);
 
    /**
     * Emit the correct dot-product instruction for the type of arguments
-    *
-    * \sa ir_to_mesa_emit_op2
     */
-   void ir_to_mesa_emit_dp(ir_instruction *ir,
-			   dst_reg dst,
-			   src_reg src0,
-			   src_reg src1,
-			   unsigned elements);
+   void emit_dp(ir_instruction *ir,
+	        dst_reg dst,
+	        src_reg src0,
+	        src_reg src1,
+	        unsigned elements);
 
-   void ir_to_mesa_emit_scalar_op1(ir_instruction *ir,
-				   enum prog_opcode op,
-				   dst_reg dst,
-				   src_reg src0);
+   void emit_scalar(ir_instruction *ir, enum prog_opcode op,
+		    dst_reg dst, src_reg src0);
 
-   void ir_to_mesa_emit_scalar_op2(ir_instruction *ir,
-				   enum prog_opcode op,
-				   dst_reg dst,
-				   src_reg src0,
-				   src_reg src1);
+   void emit_scalar(ir_instruction *ir, enum prog_opcode op,
+		    dst_reg dst, src_reg src0, src_reg src1);
 
    void emit_scs(ir_instruction *ir, enum prog_opcode op,
 		 dst_reg dst, const src_reg &src);
@@ -378,12 +362,9 @@ swizzle_for_size(int size)
 }
 
 ir_to_mesa_instruction *
-ir_to_mesa_visitor::ir_to_mesa_emit_op3(ir_instruction *ir,
-					enum prog_opcode op,
-					dst_reg dst,
-					src_reg src0,
-					src_reg src1,
-					src_reg src2)
+ir_to_mesa_visitor::emit(ir_instruction *ir, enum prog_opcode op,
+			 dst_reg dst,
+			 src_reg src0, src_reg src1, src_reg src2)
 {
    ir_to_mesa_instruction *inst = new(mem_ctx) ir_to_mesa_instruction();
    int num_reladdr = 0;
@@ -402,9 +383,7 @@ ir_to_mesa_visitor::ir_to_mesa_emit_op3(ir_instruction *ir,
    reladdr_to_temp(ir, &src0, &num_reladdr);
 
    if (dst.reladdr) {
-      ir_to_mesa_emit_op1(ir, OPCODE_ARL, ir_to_mesa_address_reg,
-                          *dst.reladdr);
-
+      emit(ir, OPCODE_ARL, ir_to_mesa_address_reg, *dst.reladdr);
       num_reladdr--;
    }
    assert(num_reladdr == 0);
@@ -425,49 +404,37 @@ ir_to_mesa_visitor::ir_to_mesa_emit_op3(ir_instruction *ir,
 
 
 ir_to_mesa_instruction *
-ir_to_mesa_visitor::ir_to_mesa_emit_op2(ir_instruction *ir,
-					enum prog_opcode op,
-					dst_reg dst,
-					src_reg src0,
-					src_reg src1)
+ir_to_mesa_visitor::emit(ir_instruction *ir, enum prog_opcode op,
+			 dst_reg dst, src_reg src0, src_reg src1)
 {
-   return ir_to_mesa_emit_op3(ir, op, dst, src0, src1, ir_to_mesa_undef);
+   return emit(ir, op, dst, src0, src1, ir_to_mesa_undef);
 }
 
 ir_to_mesa_instruction *
-ir_to_mesa_visitor::ir_to_mesa_emit_op1(ir_instruction *ir,
-					enum prog_opcode op,
-					dst_reg dst,
-					src_reg src0)
+ir_to_mesa_visitor::emit(ir_instruction *ir, enum prog_opcode op,
+			 dst_reg dst, src_reg src0)
 {
    assert(dst.writemask != 0);
-   return ir_to_mesa_emit_op3(ir, op, dst,
-			      src0, ir_to_mesa_undef, ir_to_mesa_undef);
+   return emit(ir, op, dst, src0, ir_to_mesa_undef, ir_to_mesa_undef);
 }
 
 ir_to_mesa_instruction *
-ir_to_mesa_visitor::ir_to_mesa_emit_op0(ir_instruction *ir,
-					enum prog_opcode op)
+ir_to_mesa_visitor::emit(ir_instruction *ir, enum prog_opcode op)
 {
-   return ir_to_mesa_emit_op3(ir, op, ir_to_mesa_undef_dst,
-			      ir_to_mesa_undef,
-			      ir_to_mesa_undef,
-			      ir_to_mesa_undef);
+   return emit(ir, op, ir_to_mesa_undef_dst,
+	       ir_to_mesa_undef, ir_to_mesa_undef, ir_to_mesa_undef);
 }
 
 void
-ir_to_mesa_visitor::ir_to_mesa_emit_dp(ir_instruction *ir,
-				       dst_reg dst,
-				       src_reg src0,
-				       src_reg src1,
-				       unsigned elements)
+ir_to_mesa_visitor::emit_dp(ir_instruction *ir,
+			    dst_reg dst, src_reg src0, src_reg src1,
+			    unsigned elements)
 {
    static const gl_inst_opcode dot_opcodes[] = {
       OPCODE_DP2, OPCODE_DP3, OPCODE_DP4
    };
 
-   ir_to_mesa_emit_op3(ir, dot_opcodes[elements - 2],
-		       dst, src0, src1, ir_to_mesa_undef);
+   emit(ir, dot_opcodes[elements - 2], dst, src0, src1, ir_to_mesa_undef);
 }
 
 /**
@@ -479,11 +446,9 @@ ir_to_mesa_visitor::ir_to_mesa_emit_dp(ir_instruction *ir,
  * to produce dest channels.
  */
 void
-ir_to_mesa_visitor::ir_to_mesa_emit_scalar_op2(ir_instruction *ir,
-					       enum prog_opcode op,
-					       dst_reg dst,
-					       src_reg orig_src0,
-					       src_reg orig_src1)
+ir_to_mesa_visitor::emit_scalar(ir_instruction *ir, enum prog_opcode op,
+			        dst_reg dst,
+				src_reg orig_src0, src_reg orig_src1)
 {
    int i, j;
    int done_mask = ~dst.writemask;
@@ -519,26 +484,21 @@ ir_to_mesa_visitor::ir_to_mesa_emit_scalar_op2(ir_instruction *ir,
       src1.swizzle = MAKE_SWIZZLE4(src1_swiz, src1_swiz,
 				  src1_swiz, src1_swiz);
 
-      inst = ir_to_mesa_emit_op2(ir, op,
-				 dst,
-				 src0,
-				 src1);
+      inst = emit(ir, op, dst, src0, src1);
       inst->dst.writemask = this_mask;
       done_mask |= this_mask;
    }
 }
 
 void
-ir_to_mesa_visitor::ir_to_mesa_emit_scalar_op1(ir_instruction *ir,
-					       enum prog_opcode op,
-					       dst_reg dst,
-					       src_reg src0)
+ir_to_mesa_visitor::emit_scalar(ir_instruction *ir, enum prog_opcode op,
+			        dst_reg dst, src_reg src0)
 {
    src_reg undef = ir_to_mesa_undef;
 
    undef.swizzle = SWIZZLE_XXXX;
 
-   ir_to_mesa_emit_scalar_op2(ir, op, dst, src0, undef);
+   emit_scalar(ir, op, dst, src0, undef);
 }
 
 /**
@@ -563,7 +523,7 @@ ir_to_mesa_visitor::emit_scs(ir_instruction *ir, enum prog_opcode op,
    /* Vertex programs cannot use the SCS opcode.
     */
    if (this->prog->Target == GL_VERTEX_PROGRAM_ARB) {
-      ir_to_mesa_emit_scalar_op1(ir, op, dst, src);
+      emit_scalar(ir, op, dst, src);
       return;
    }
 
@@ -615,7 +575,7 @@ ir_to_mesa_visitor::emit_scs(ir_instruction *ir, enum prog_opcode op,
 
 	 /* Emit the SCS instruction.
 	  */
-	 inst = ir_to_mesa_emit_op1(ir, OPCODE_SCS, tmp_dst, src0);
+	 inst = emit(ir, OPCODE_SCS, tmp_dst, src0);
 	 inst->dst.writemask = scs_mask;
 
 	 /* Move the result of the SCS instruction to the desired location in
@@ -623,13 +583,12 @@ ir_to_mesa_visitor::emit_scs(ir_instruction *ir, enum prog_opcode op,
 	  */
 	 tmp.swizzle = MAKE_SWIZZLE4(component, component,
 				     component, component);
-	 inst = ir_to_mesa_emit_op1(ir, OPCODE_SCS, dst, tmp);
+	 inst = emit(ir, OPCODE_SCS, dst, tmp);
 	 inst->dst.writemask = this_mask;
       } else {
 	 /* Emit the SCS instruction to write directly to the destination.
 	  */
-	 ir_to_mesa_instruction *inst =
-	    ir_to_mesa_emit_op1(ir, OPCODE_SCS, dst, src0);
+	 ir_to_mesa_instruction *inst = emit(ir, OPCODE_SCS, dst, src0);
 	 inst->dst.writemask = scs_mask;
       }
 
@@ -825,7 +784,7 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 	 } else {
 	    src_reg src(PROGRAM_STATE_VAR, index, NULL);
 	    src.swizzle = slots[i].swizzle;
-	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, dst, src);
+	    emit(ir, OPCODE_MOV, dst, src);
 	    /* even a float takes up a whole vec4 reg in a struct/array. */
 	    dst.index++;
 	 }
@@ -858,7 +817,7 @@ ir_to_mesa_visitor::visit(ir_loop *ir)
       delete a;
    }
 
-   ir_to_mesa_emit_op0(NULL, OPCODE_BGNLOOP);
+   emit(NULL, OPCODE_BGNLOOP);
 
    if (ir->to) {
       ir_expression *e =
@@ -891,7 +850,7 @@ ir_to_mesa_visitor::visit(ir_loop *ir)
       delete e;
    }
 
-   ir_to_mesa_emit_op0(NULL, OPCODE_ENDLOOP);
+   emit(NULL, OPCODE_ENDLOOP);
 }
 
 void
@@ -899,10 +858,10 @@ ir_to_mesa_visitor::visit(ir_loop_jump *ir)
 {
    switch (ir->mode) {
    case ir_loop_jump::jump_break:
-      ir_to_mesa_emit_op0(NULL, OPCODE_BRK);
+      emit(NULL, OPCODE_BRK);
       break;
    case ir_loop_jump::jump_continue:
-      ir_to_mesa_emit_op0(NULL, OPCODE_CONT);
+      emit(NULL, OPCODE_CONT);
       break;
    }
 }
@@ -955,8 +914,7 @@ ir_to_mesa_visitor::try_emit_mad(ir_expression *ir, int mul_operand)
    c = this->result;
 
    this->result = get_temp(ir->type);
-   ir_to_mesa_emit_op3(ir, OPCODE_MAD,
-		       dst_reg(this->result), a, b, c);
+   emit(ir, OPCODE_MAD, dst_reg(this->result), a, b, c);
 
    return true;
 }
@@ -979,9 +937,7 @@ ir_to_mesa_visitor::try_emit_sat(ir_expression *ir)
 
    this->result = get_temp(ir->type);
    ir_to_mesa_instruction *inst;
-   inst = ir_to_mesa_emit_op1(ir, OPCODE_MOV,
-			      dst_reg(this->result),
-			      src);
+   inst = emit(ir, OPCODE_MOV, dst_reg(this->result), src);
    inst->saturate = true;
 
    return true;
@@ -994,13 +950,12 @@ ir_to_mesa_visitor::reladdr_to_temp(ir_instruction *ir,
    if (!reg->reladdr)
       return;
 
-   ir_to_mesa_emit_op1(ir, OPCODE_ARL, ir_to_mesa_address_reg, *reg->reladdr);
+   emit(ir, OPCODE_ARL, ir_to_mesa_address_reg, *reg->reladdr);
 
    if (*num_reladdr != 1) {
       src_reg temp = get_temp(glsl_type::vec4_type);
 
-      ir_to_mesa_emit_op1(ir, OPCODE_MOV,
-			  dst_reg(temp), *reg);
+      emit(ir, OPCODE_MOV, dst_reg(temp), *reg);
       *reg = temp;
    }
 
@@ -1120,7 +1075,7 @@ ir_to_mesa_visitor::emit_swz(ir_expression *ir)
     */
    result_dst.writemask = (1 << ir->type->vector_elements) - 1;
 
-   ir_to_mesa_emit_op1(ir, OPCODE_SWZ, result_dst, src);
+   emit(ir, OPCODE_SWZ, result_dst, src);
    this->result = result_src;
 }
 
@@ -1187,38 +1142,37 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 
    switch (ir->operation) {
    case ir_unop_logic_not:
-      ir_to_mesa_emit_op2(ir, OPCODE_SEQ, result_dst,
-			  op[0], src_reg_for_float(0.0));
+      emit(ir, OPCODE_SEQ, result_dst, op[0], src_reg_for_float(0.0));
       break;
    case ir_unop_neg:
       op[0].negate = ~op[0].negate;
       result_src = op[0];
       break;
    case ir_unop_abs:
-      ir_to_mesa_emit_op1(ir, OPCODE_ABS, result_dst, op[0]);
+      emit(ir, OPCODE_ABS, result_dst, op[0]);
       break;
    case ir_unop_sign:
-      ir_to_mesa_emit_op1(ir, OPCODE_SSG, result_dst, op[0]);
+      emit(ir, OPCODE_SSG, result_dst, op[0]);
       break;
    case ir_unop_rcp:
-      ir_to_mesa_emit_scalar_op1(ir, OPCODE_RCP, result_dst, op[0]);
+      emit_scalar(ir, OPCODE_RCP, result_dst, op[0]);
       break;
 
    case ir_unop_exp2:
-      ir_to_mesa_emit_scalar_op1(ir, OPCODE_EX2, result_dst, op[0]);
+      emit_scalar(ir, OPCODE_EX2, result_dst, op[0]);
       break;
    case ir_unop_exp:
    case ir_unop_log:
       assert(!"not reached: should be handled by ir_explog_to_explog2");
       break;
    case ir_unop_log2:
-      ir_to_mesa_emit_scalar_op1(ir, OPCODE_LG2, result_dst, op[0]);
+      emit_scalar(ir, OPCODE_LG2, result_dst, op[0]);
       break;
    case ir_unop_sin:
-      ir_to_mesa_emit_scalar_op1(ir, OPCODE_SIN, result_dst, op[0]);
+      emit_scalar(ir, OPCODE_SIN, result_dst, op[0]);
       break;
    case ir_unop_cos:
-      ir_to_mesa_emit_scalar_op1(ir, OPCODE_COS, result_dst, op[0]);
+      emit_scalar(ir, OPCODE_COS, result_dst, op[0]);
       break;
    case ir_unop_sin_reduced:
       emit_scs(ir, OPCODE_SIN, result_dst, op[0]);
@@ -1228,10 +1182,10 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       break;
 
    case ir_unop_dFdx:
-      ir_to_mesa_emit_op1(ir, OPCODE_DDX, result_dst, op[0]);
+      emit(ir, OPCODE_DDX, result_dst, op[0]);
       break;
    case ir_unop_dFdy:
-      ir_to_mesa_emit_op1(ir, OPCODE_DDY, result_dst, op[0]);
+      emit(ir, OPCODE_DDY, result_dst, op[0]);
       break;
 
    case ir_unop_noise: {
@@ -1240,19 +1194,19 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 		     + (ir->operands[0]->type->vector_elements) - 1);
       assert((opcode >= OPCODE_NOISE1) && (opcode <= OPCODE_NOISE4));
 
-      ir_to_mesa_emit_op1(ir, opcode, result_dst, op[0]);
+      emit(ir, opcode, result_dst, op[0]);
       break;
    }
 
    case ir_binop_add:
-      ir_to_mesa_emit_op2(ir, OPCODE_ADD, result_dst, op[0], op[1]);
+      emit(ir, OPCODE_ADD, result_dst, op[0], op[1]);
       break;
    case ir_binop_sub:
-      ir_to_mesa_emit_op2(ir, OPCODE_SUB, result_dst, op[0], op[1]);
+      emit(ir, OPCODE_SUB, result_dst, op[0], op[1]);
       break;
 
    case ir_binop_mul:
-      ir_to_mesa_emit_op2(ir, OPCODE_MUL, result_dst, op[0], op[1]);
+      emit(ir, OPCODE_MUL, result_dst, op[0], op[1]);
       break;
    case ir_binop_div:
       assert(!"not reached: should be handled by ir_div_to_mul_rcp");
@@ -1261,35 +1215,33 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       break;
 
    case ir_binop_less:
-      ir_to_mesa_emit_op2(ir, OPCODE_SLT, result_dst, op[0], op[1]);
+      emit(ir, OPCODE_SLT, result_dst, op[0], op[1]);
       break;
    case ir_binop_greater:
-      ir_to_mesa_emit_op2(ir, OPCODE_SGT, result_dst, op[0], op[1]);
+      emit(ir, OPCODE_SGT, result_dst, op[0], op[1]);
       break;
    case ir_binop_lequal:
-      ir_to_mesa_emit_op2(ir, OPCODE_SLE, result_dst, op[0], op[1]);
+      emit(ir, OPCODE_SLE, result_dst, op[0], op[1]);
       break;
    case ir_binop_gequal:
-      ir_to_mesa_emit_op2(ir, OPCODE_SGE, result_dst, op[0], op[1]);
+      emit(ir, OPCODE_SGE, result_dst, op[0], op[1]);
       break;
    case ir_binop_equal:
-      ir_to_mesa_emit_op2(ir, OPCODE_SEQ, result_dst, op[0], op[1]);
+      emit(ir, OPCODE_SEQ, result_dst, op[0], op[1]);
       break;
    case ir_binop_nequal:
-      ir_to_mesa_emit_op2(ir, OPCODE_SNE, result_dst, op[0], op[1]);
+      emit(ir, OPCODE_SNE, result_dst, op[0], op[1]);
       break;
    case ir_binop_all_equal:
       /* "==" operator producing a scalar boolean. */
       if (ir->operands[0]->type->is_vector() ||
 	  ir->operands[1]->type->is_vector()) {
 	 src_reg temp = get_temp(glsl_type::vec4_type);
-	 ir_to_mesa_emit_op2(ir, OPCODE_SNE,
-			     dst_reg(temp), op[0], op[1]);
-	 ir_to_mesa_emit_dp(ir, result_dst, temp, temp, vector_elements);
-	 ir_to_mesa_emit_op2(ir, OPCODE_SEQ,
-			     result_dst, result_src, src_reg_for_float(0.0));
+	 emit(ir, OPCODE_SNE, dst_reg(temp), op[0], op[1]);
+	 emit_dp(ir, result_dst, temp, temp, vector_elements);
+	 emit(ir, OPCODE_SEQ, result_dst, result_src, src_reg_for_float(0.0));
       } else {
-	 ir_to_mesa_emit_op2(ir, OPCODE_SEQ, result_dst, op[0], op[1]);
+	 emit(ir, OPCODE_SEQ, result_dst, op[0], op[1]);
       }
       break;
    case ir_binop_any_nequal:
@@ -1297,64 +1249,54 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       if (ir->operands[0]->type->is_vector() ||
 	  ir->operands[1]->type->is_vector()) {
 	 src_reg temp = get_temp(glsl_type::vec4_type);
-	 ir_to_mesa_emit_op2(ir, OPCODE_SNE,
-			     dst_reg(temp), op[0], op[1]);
-	 ir_to_mesa_emit_dp(ir, result_dst, temp, temp, vector_elements);
-	 ir_to_mesa_emit_op2(ir, OPCODE_SNE,
-			     result_dst, result_src, src_reg_for_float(0.0));
+	 emit(ir, OPCODE_SNE, dst_reg(temp), op[0], op[1]);
+	 emit_dp(ir, result_dst, temp, temp, vector_elements);
+	 emit(ir, OPCODE_SNE, result_dst, result_src, src_reg_for_float(0.0));
       } else {
-	 ir_to_mesa_emit_op2(ir, OPCODE_SNE, result_dst, op[0], op[1]);
+	 emit(ir, OPCODE_SNE, result_dst, op[0], op[1]);
       }
       break;
 
    case ir_unop_any:
       assert(ir->operands[0]->type->is_vector());
-      ir_to_mesa_emit_dp(ir, result_dst, op[0], op[0],
-			 ir->operands[0]->type->vector_elements);
-      ir_to_mesa_emit_op2(ir, OPCODE_SNE,
-			  result_dst, result_src, src_reg_for_float(0.0));
+      emit_dp(ir, result_dst, op[0], op[0],
+	      ir->operands[0]->type->vector_elements);
+      emit(ir, OPCODE_SNE, result_dst, result_src, src_reg_for_float(0.0));
       break;
 
    case ir_binop_logic_xor:
-      ir_to_mesa_emit_op2(ir, OPCODE_SNE, result_dst, op[0], op[1]);
+      emit(ir, OPCODE_SNE, result_dst, op[0], op[1]);
       break;
 
    case ir_binop_logic_or:
       /* This could be a saturated add and skip the SNE. */
-      ir_to_mesa_emit_op2(ir, OPCODE_ADD,
-			  result_dst,
-			  op[0], op[1]);
-
-      ir_to_mesa_emit_op2(ir, OPCODE_SNE,
-			  result_dst,
-			  result_src, src_reg_for_float(0.0));
+      emit(ir, OPCODE_ADD, result_dst, op[0], op[1]);
+      emit(ir, OPCODE_SNE, result_dst, result_src, src_reg_for_float(0.0));
       break;
 
    case ir_binop_logic_and:
       /* the bool args are stored as float 0.0 or 1.0, so "mul" gives us "and". */
-      ir_to_mesa_emit_op2(ir, OPCODE_MUL,
-			  result_dst,
-			  op[0], op[1]);
+      emit(ir, OPCODE_MUL, result_dst, op[0], op[1]);
       break;
 
    case ir_binop_dot:
       assert(ir->operands[0]->type->is_vector());
       assert(ir->operands[0]->type == ir->operands[1]->type);
-      ir_to_mesa_emit_dp(ir, result_dst, op[0], op[1],
-			 ir->operands[0]->type->vector_elements);
+      emit_dp(ir, result_dst, op[0], op[1],
+	      ir->operands[0]->type->vector_elements);
       break;
 
    case ir_unop_sqrt:
       /* sqrt(x) = x * rsq(x). */
-      ir_to_mesa_emit_scalar_op1(ir, OPCODE_RSQ, result_dst, op[0]);
-      ir_to_mesa_emit_op2(ir, OPCODE_MUL, result_dst, result_src, op[0]);
+      emit_scalar(ir, OPCODE_RSQ, result_dst, op[0]);
+      emit(ir, OPCODE_MUL, result_dst, result_src, op[0]);
       /* For incoming channels <= 0, set the result to 0. */
       op[0].negate = ~op[0].negate;
-      ir_to_mesa_emit_op3(ir, OPCODE_CMP, result_dst,
+      emit(ir, OPCODE_CMP, result_dst,
 			  op[0], result_src, src_reg_for_float(0.0));
       break;
    case ir_unop_rsq:
-      ir_to_mesa_emit_scalar_op1(ir, OPCODE_RSQ, result_dst, op[0]);
+      emit_scalar(ir, OPCODE_RSQ, result_dst, op[0]);
       break;
    case ir_unop_i2f:
    case ir_unop_b2f:
@@ -1363,36 +1305,36 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
       result_src = op[0];
       break;
    case ir_unop_f2i:
-      ir_to_mesa_emit_op1(ir, OPCODE_TRUNC, result_dst, op[0]);
+      emit(ir, OPCODE_TRUNC, result_dst, op[0]);
       break;
    case ir_unop_f2b:
    case ir_unop_i2b:
-      ir_to_mesa_emit_op2(ir, OPCODE_SNE, result_dst,
+      emit(ir, OPCODE_SNE, result_dst,
 			  op[0], src_reg_for_float(0.0));
       break;
    case ir_unop_trunc:
-      ir_to_mesa_emit_op1(ir, OPCODE_TRUNC, result_dst, op[0]);
+      emit(ir, OPCODE_TRUNC, result_dst, op[0]);
       break;
    case ir_unop_ceil:
       op[0].negate = ~op[0].negate;
-      ir_to_mesa_emit_op1(ir, OPCODE_FLR, result_dst, op[0]);
+      emit(ir, OPCODE_FLR, result_dst, op[0]);
       result_src.negate = ~result_src.negate;
       break;
    case ir_unop_floor:
-      ir_to_mesa_emit_op1(ir, OPCODE_FLR, result_dst, op[0]);
+      emit(ir, OPCODE_FLR, result_dst, op[0]);
       break;
    case ir_unop_fract:
-      ir_to_mesa_emit_op1(ir, OPCODE_FRC, result_dst, op[0]);
+      emit(ir, OPCODE_FRC, result_dst, op[0]);
       break;
 
    case ir_binop_min:
-      ir_to_mesa_emit_op2(ir, OPCODE_MIN, result_dst, op[0], op[1]);
+      emit(ir, OPCODE_MIN, result_dst, op[0], op[1]);
       break;
    case ir_binop_max:
-      ir_to_mesa_emit_op2(ir, OPCODE_MAX, result_dst, op[0], op[1]);
+      emit(ir, OPCODE_MAX, result_dst, op[0], op[1]);
       break;
    case ir_binop_pow:
-      ir_to_mesa_emit_scalar_op2(ir, OPCODE_POW, result_dst, op[0], op[1]);
+      emit_scalar(ir, OPCODE_POW, result_dst, op[0], op[1]);
       break;
 
    case ir_unop_bit_not:
@@ -1556,9 +1498,8 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
       } else {
 	 index_reg = get_temp(glsl_type::float_type);
 
-	 ir_to_mesa_emit_op2(ir, OPCODE_MUL,
-			     dst_reg(index_reg),
-			     this->result, src_reg_for_float(element_size));
+	 emit(ir, OPCODE_MUL, dst_reg(index_reg),
+	      this->result, src_reg_for_float(element_size));
       }
 
       src.reladdr = ralloc(mem_ctx, src_reg);
@@ -1774,9 +1715,9 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
 
       for (i = 0; i < type_size(ir->lhs->type); i++) {
 	 if (switch_order) {
-	    ir_to_mesa_emit_op3(ir, OPCODE_CMP, l, condition, src_reg(l), r);
+	    emit(ir, OPCODE_CMP, l, condition, src_reg(l), r);
 	 } else {
-	    ir_to_mesa_emit_op3(ir, OPCODE_CMP, l, condition, r, src_reg(l));
+	    emit(ir, OPCODE_CMP, l, condition, r, src_reg(l));
 	 }
 
 	 l.index++;
@@ -1784,7 +1725,7 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
       }
    } else {
       for (i = 0; i < type_size(ir->lhs->type); i++) {
-	 ir_to_mesa_emit_op1(ir, OPCODE_MOV, l, r);
+	 emit(ir, OPCODE_MOV, l, r);
 	 l.index++;
 	 r.index++;
       }
@@ -1820,7 +1761,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 	 src = this->result;
 
 	 for (i = 0; i < (unsigned int)size; i++) {
-	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, temp, src);
+	    emit(ir, OPCODE_MOV, temp, src);
 
 	    src.index++;
 	    temp.index++;
@@ -1841,7 +1782,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 	 ir->array_elements[i]->accept(this);
 	 src = this->result;
 	 for (int j = 0; j < size; j++) {
-	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, temp, src);
+	    emit(ir, OPCODE_MOV, temp, src);
 
 	    src.index++;
 	    temp.index++;
@@ -1864,7 +1805,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 						values,
 						ir->type->vector_elements,
 						&src.swizzle);
-	 ir_to_mesa_emit_op1(ir, OPCODE_MOV, mat_column, src);
+	 emit(ir, OPCODE_MOV, mat_column, src);
 
 	 mat_column.index++;
       }
@@ -1976,7 +1917,7 @@ ir_to_mesa_visitor::visit(ir_call *ir)
 	 l.cond_mask = COND_TR;
 
 	 for (i = 0; i < type_size(param->type); i++) {
-	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, l, r);
+	    emit(ir, OPCODE_MOV, l, r);
 	    l.index++;
 	    r.index++;
 	 }
@@ -1987,8 +1928,7 @@ ir_to_mesa_visitor::visit(ir_call *ir)
    assert(!sig_iter.has_next());
 
    /* Emit call instruction */
-   call_inst = ir_to_mesa_emit_op1(ir, OPCODE_CAL,
-				   ir_to_mesa_undef_dst, ir_to_mesa_undef);
+   call_inst = emit(ir, OPCODE_CAL, ir_to_mesa_undef_dst, ir_to_mesa_undef);
    call_inst->function = entry;
 
    /* Process out parameters. */
@@ -2013,7 +1953,7 @@ ir_to_mesa_visitor::visit(ir_call *ir)
 	 dst_reg l = dst_reg(this->result);
 
 	 for (i = 0; i < type_size(param->type); i++) {
-	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, l, r);
+	    emit(ir, OPCODE_MOV, l, r);
 	    l.index++;
 	    r.index++;
 	 }
@@ -2044,8 +1984,7 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
     */
    coord = get_temp(glsl_type::vec4_type);
    coord_dst = dst_reg(coord);
-   ir_to_mesa_emit_op1(ir, OPCODE_MOV, coord_dst,
-		       this->result);
+   emit(ir, OPCODE_MOV, coord_dst, this->result);
 
    if (ir->projector) {
       ir->projector->accept(this);
@@ -2082,7 +2021,7 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
       if (opcode == OPCODE_TEX) {
 	 /* Slot the projector in as the last component of the coord. */
 	 coord_dst.writemask = WRITEMASK_W;
-	 ir_to_mesa_emit_op1(ir, OPCODE_MOV, coord_dst, projector);
+	 emit(ir, OPCODE_MOV, coord_dst, projector);
 	 coord_dst.writemask = WRITEMASK_XYZW;
 	 opcode = OPCODE_TXP;
       } else {
@@ -2094,12 +2033,12 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
 	  * projective divide now.
 	  */
 	 coord_dst.writemask = WRITEMASK_W;
-	 ir_to_mesa_emit_op1(ir, OPCODE_RCP, coord_dst, projector);
+	 emit(ir, OPCODE_RCP, coord_dst, projector);
 
 	 /* In the case where we have to project the coordinates "by hand,"
 	  * the shadow comparitor value must also be projected.
 	  */
-	 ir_to_mesa_src_reg tmp_src = coord;
+	 src_reg tmp_src = coord;
 	 if (ir->shadow_comparitor) {
 	    /* Slot the shadow value in as the second to last component of the
 	     * coord.
@@ -2107,17 +2046,17 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
 	    ir->shadow_comparitor->accept(this);
 
 	    tmp_src = get_temp(glsl_type::vec4_type);
-	    ir_to_mesa_dst_reg tmp_dst = ir_to_mesa_dst_reg_from_src(tmp_src);
+	    dst_reg tmp_dst = dst_reg(tmp_src);
 
 	    tmp_dst.writemask = WRITEMASK_Z;
-	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, tmp_dst, this->result);
+	    emit(ir, OPCODE_MOV, tmp_dst, this->result);
 
 	    tmp_dst.writemask = WRITEMASK_XY;
-	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, tmp_dst, coord);
+	    emit(ir, OPCODE_MOV, tmp_dst, coord);
 	 }
 
 	 coord_dst.writemask = WRITEMASK_XYZ;
-	 ir_to_mesa_emit_op2(ir, OPCODE_MUL, coord_dst, tmp_src, coord_w);
+	 emit(ir, OPCODE_MUL, coord_dst, tmp_src, coord_w);
 
 	 coord_dst.writemask = WRITEMASK_XYZW;
 	 coord.swizzle = SWIZZLE_XYZW;
@@ -2134,18 +2073,18 @@ ir_to_mesa_visitor::visit(ir_texture *ir)
        */
       ir->shadow_comparitor->accept(this);
       coord_dst.writemask = WRITEMASK_Z;
-      ir_to_mesa_emit_op1(ir, OPCODE_MOV, coord_dst, this->result);
+      emit(ir, OPCODE_MOV, coord_dst, this->result);
       coord_dst.writemask = WRITEMASK_XYZW;
    }
 
    if (opcode == OPCODE_TXL || opcode == OPCODE_TXB) {
       /* Mesa IR stores lod or lod bias in the last channel of the coords. */
       coord_dst.writemask = WRITEMASK_W;
-      ir_to_mesa_emit_op1(ir, OPCODE_MOV, coord_dst, lod_info);
+      emit(ir, OPCODE_MOV, coord_dst, lod_info);
       coord_dst.writemask = WRITEMASK_XYZW;
    }
 
-   inst = ir_to_mesa_emit_op1(ir, opcode, result_dst, coord);
+   inst = emit(ir, opcode, result_dst, coord);
 
    if (ir->shadow_comparitor)
       inst->tex_shadow = GL_TRUE;
@@ -2199,13 +2138,13 @@ ir_to_mesa_visitor::visit(ir_return *ir)
       l = dst_reg(current_function->return_reg);
 
       for (i = 0; i < type_size(current_function->sig->return_type); i++) {
-	 ir_to_mesa_emit_op1(ir, OPCODE_MOV, l, r);
+	 emit(ir, OPCODE_MOV, l, r);
 	 l.index++;
 	 r.index++;
       }
    }
 
-   ir_to_mesa_emit_op0(ir, OPCODE_RET);
+   emit(ir, OPCODE_RET);
 }
 
 void
@@ -2216,9 +2155,9 @@ ir_to_mesa_visitor::visit(ir_discard *ir)
    if (ir->condition) {
       ir->condition->accept(this);
       this->result.negate = ~this->result.negate;
-      ir_to_mesa_emit_op1(ir, OPCODE_KIL, ir_to_mesa_undef_dst, this->result);
+      emit(ir, OPCODE_KIL, ir_to_mesa_undef_dst, this->result);
    } else {
-      ir_to_mesa_emit_op0(ir, OPCODE_KIL_NV);
+      emit(ir, OPCODE_KIL_NV);
    }
 
    fp->UsesKill = GL_TRUE;
@@ -2244,18 +2183,15 @@ ir_to_mesa_visitor::visit(ir_if *ir)
        */
       if (cond_inst == prev_inst) {
 	 src_reg temp = get_temp(glsl_type::bool_type);
-	 cond_inst = ir_to_mesa_emit_op1(ir->condition, OPCODE_MOV,
-					 dst_reg(temp),
-					 result);
+	 cond_inst = emit(ir->condition, OPCODE_MOV, dst_reg(temp), result);
       }
       cond_inst->cond_update = GL_TRUE;
 
-      if_inst = ir_to_mesa_emit_op0(ir->condition, OPCODE_IF);
+      if_inst = emit(ir->condition, OPCODE_IF);
       if_inst->dst.cond_mask = COND_NE;
    } else {
-      if_inst = ir_to_mesa_emit_op1(ir->condition,
-				    OPCODE_IF, ir_to_mesa_undef_dst,
-				    this->result);
+      if_inst = emit(ir->condition, OPCODE_IF, ir_to_mesa_undef_dst,
+		     this->result);
    }
 
    this->instructions.push_tail(if_inst);
@@ -2263,12 +2199,12 @@ ir_to_mesa_visitor::visit(ir_if *ir)
    visit_exec_list(&ir->then_instructions, this);
 
    if (!ir->else_instructions.is_empty()) {
-      else_inst = ir_to_mesa_emit_op0(ir->condition, OPCODE_ELSE);
+      else_inst = emit(ir->condition, OPCODE_ELSE);
       visit_exec_list(&ir->else_instructions, this);
    }
 
-   if_inst = ir_to_mesa_emit_op1(ir->condition, OPCODE_ENDIF,
-				 ir_to_mesa_undef_dst, ir_to_mesa_undef);
+   if_inst = emit(ir->condition, OPCODE_ENDIF,
+		  ir_to_mesa_undef_dst, ir_to_mesa_undef);
 }
 
 ir_to_mesa_visitor::ir_to_mesa_visitor()
@@ -2958,7 +2894,7 @@ get_mesa_program(struct gl_context *ctx,
 
    /* Emit Mesa IR for main(). */
    visit_exec_list(shader->ir, &v);
-   v.ir_to_mesa_emit_op0(NULL, OPCODE_END);
+   v.emit(NULL, OPCODE_END);
 
    /* Now emit bodies for any functions that were used. */
    do {
@@ -2970,7 +2906,7 @@ get_mesa_program(struct gl_context *ctx,
 	 if (!entry->bgn_inst) {
 	    v.current_function = entry;
 
-	    entry->bgn_inst = v.ir_to_mesa_emit_op0(NULL, OPCODE_BGNSUB);
+	    entry->bgn_inst = v.emit(NULL, OPCODE_BGNSUB);
 	    entry->bgn_inst->function = entry;
 
 	    visit_exec_list(&entry->sig->body, &v);
@@ -2978,10 +2914,10 @@ get_mesa_program(struct gl_context *ctx,
 	    ir_to_mesa_instruction *last;
 	    last = (ir_to_mesa_instruction *)v.instructions.get_tail();
 	    if (last->op != OPCODE_RET)
-	       v.ir_to_mesa_emit_op0(NULL, OPCODE_RET);
+	       v.emit(NULL, OPCODE_RET);
 
 	    ir_to_mesa_instruction *end;
-	    end = v.ir_to_mesa_emit_op0(NULL, OPCODE_ENDSUB);
+	    end = v.emit(NULL, OPCODE_ENDSUB);
 	    end->function = entry;
 
 	    progress = GL_TRUE;
