@@ -118,8 +118,8 @@ public:
    }
 
    enum prog_opcode op;
-   ir_to_mesa_dst_reg dst_reg;
-   ir_to_mesa_src_reg src_reg[3];
+   ir_to_mesa_dst_reg dst;
+   ir_to_mesa_src_reg src[3];
    /** Pointer to the ir source this tree came from for debugging */
    ir_instruction *ir;
    GLboolean cond_update;
@@ -371,10 +371,10 @@ ir_to_mesa_visitor::ir_to_mesa_emit_op3(ir_instruction *ir,
    assert(num_reladdr == 0);
 
    inst->op = op;
-   inst->dst_reg = dst;
-   inst->src_reg[0] = src0;
-   inst->src_reg[1] = src1;
-   inst->src_reg[2] = src2;
+   inst->dst = dst;
+   inst->src[0] = src0;
+   inst->src[1] = src1;
+   inst->src[2] = src2;
    inst->ir = ir;
 
    inst->function = NULL;
@@ -434,15 +434,15 @@ ir_to_mesa_visitor::ir_to_mesa_emit_dp(ir_instruction *ir,
 inline ir_to_mesa_dst_reg
 ir_to_mesa_dst_reg_from_src(ir_to_mesa_src_reg reg)
 {
-   ir_to_mesa_dst_reg dst_reg;
+   ir_to_mesa_dst_reg dst;
 
-   dst_reg.file = reg.file;
-   dst_reg.index = reg.index;
-   dst_reg.writemask = WRITEMASK_XYZW;
-   dst_reg.cond_mask = COND_TR;
-   dst_reg.reladdr = reg.reladdr;
+   dst.file = reg.file;
+   dst.index = reg.index;
+   dst.writemask = WRITEMASK_XYZW;
+   dst.cond_mask = COND_TR;
+   dst.reladdr = reg.reladdr;
 
-   return dst_reg;
+   return dst;
 }
 
 inline ir_to_mesa_src_reg
@@ -504,7 +504,7 @@ ir_to_mesa_visitor::ir_to_mesa_emit_scalar_op2(ir_instruction *ir,
 				 dst,
 				 src0,
 				 src1);
-      inst->dst_reg.writemask = this_mask;
+      inst->dst.writemask = this_mask;
       done_mask |= this_mask;
    }
 }
@@ -597,7 +597,7 @@ ir_to_mesa_visitor::emit_scs(ir_instruction *ir, enum prog_opcode op,
 	 /* Emit the SCS instruction.
 	  */
 	 inst = ir_to_mesa_emit_op1(ir, OPCODE_SCS, tmp_dst, src0);
-	 inst->dst_reg.writemask = scs_mask;
+	 inst->dst.writemask = scs_mask;
 
 	 /* Move the result of the SCS instruction to the desired location in
 	  * the destination.
@@ -605,13 +605,13 @@ ir_to_mesa_visitor::emit_scs(ir_instruction *ir, enum prog_opcode op,
 	 tmp.swizzle = MAKE_SWIZZLE4(component, component,
 				     component, component);
 	 inst = ir_to_mesa_emit_op1(ir, OPCODE_SCS, dst, tmp);
-	 inst->dst_reg.writemask = this_mask;
+	 inst->dst.writemask = this_mask;
       } else {
 	 /* Emit the SCS instruction to write directly to the destination.
 	  */
 	 ir_to_mesa_instruction *inst =
 	    ir_to_mesa_emit_op1(ir, OPCODE_SCS, dst, src0);
-	 inst->dst_reg.writemask = scs_mask;
+	 inst->dst.writemask = scs_mask;
       }
 
       done_mask |= this_mask;
@@ -621,12 +621,12 @@ ir_to_mesa_visitor::emit_scs(ir_instruction *ir, enum prog_opcode op,
 struct ir_to_mesa_src_reg
 ir_to_mesa_visitor::src_reg_for_float(float val)
 {
-   ir_to_mesa_src_reg src_reg(PROGRAM_CONSTANT, -1, NULL);
+   ir_to_mesa_src_reg src(PROGRAM_CONSTANT, -1, NULL);
 
-   src_reg.index = _mesa_add_unnamed_constant(this->prog->Parameters,
-					      &val, 1, &src_reg.swizzle);
+   src.index = _mesa_add_unnamed_constant(this->prog->Parameters,
+					  &val, 1, &src.swizzle);
 
-   return src_reg;
+   return src;
 }
 
 static int
@@ -679,28 +679,28 @@ type_size(const struct glsl_type *type)
 ir_to_mesa_src_reg
 ir_to_mesa_visitor::get_temp(const glsl_type *type)
 {
-   ir_to_mesa_src_reg src_reg;
+   ir_to_mesa_src_reg src;
    int swizzle[4];
    int i;
 
-   src_reg.file = PROGRAM_TEMPORARY;
-   src_reg.index = next_temp;
-   src_reg.reladdr = NULL;
+   src.file = PROGRAM_TEMPORARY;
+   src.index = next_temp;
+   src.reladdr = NULL;
    next_temp += type_size(type);
 
    if (type->is_array() || type->is_record()) {
-      src_reg.swizzle = SWIZZLE_NOOP;
+      src.swizzle = SWIZZLE_NOOP;
    } else {
       for (i = 0; i < type->vector_elements; i++)
 	 swizzle[i] = i;
       for (; i < 4; i++)
 	 swizzle[i] = type->vector_elements - 1;
-      src_reg.swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1],
-				      swizzle[2], swizzle[3]);
+      src.swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1],
+				  swizzle[2], swizzle[3]);
    }
-   src_reg.negate = 0;
+   src.negate = 0;
 
-   return src_reg;
+   return src;
 }
 
 variable_storage *
@@ -1403,7 +1403,7 @@ ir_to_mesa_visitor::visit(ir_expression *ir)
 void
 ir_to_mesa_visitor::visit(ir_swizzle *ir)
 {
-   ir_to_mesa_src_reg src_reg;
+   ir_to_mesa_src_reg src;
    int i;
    int swizzle[4];
 
@@ -1413,23 +1413,23 @@ ir_to_mesa_visitor::visit(ir_swizzle *ir)
     */
 
    ir->val->accept(this);
-   src_reg = this->result;
-   assert(src_reg.file != PROGRAM_UNDEFINED);
+   src = this->result;
+   assert(src.file != PROGRAM_UNDEFINED);
 
    for (i = 0; i < 4; i++) {
       if (i < ir->type->vector_elements) {
 	 switch (i) {
 	 case 0:
-	    swizzle[i] = GET_SWZ(src_reg.swizzle, ir->mask.x);
+	    swizzle[i] = GET_SWZ(src.swizzle, ir->mask.x);
 	    break;
 	 case 1:
-	    swizzle[i] = GET_SWZ(src_reg.swizzle, ir->mask.y);
+	    swizzle[i] = GET_SWZ(src.swizzle, ir->mask.y);
 	    break;
 	 case 2:
-	    swizzle[i] = GET_SWZ(src_reg.swizzle, ir->mask.z);
+	    swizzle[i] = GET_SWZ(src.swizzle, ir->mask.z);
 	    break;
 	 case 3:
-	    swizzle[i] = GET_SWZ(src_reg.swizzle, ir->mask.w);
+	    swizzle[i] = GET_SWZ(src.swizzle, ir->mask.w);
 	    break;
 	 }
       } else {
@@ -1440,12 +1440,9 @@ ir_to_mesa_visitor::visit(ir_swizzle *ir)
       }
    }
 
-   src_reg.swizzle = MAKE_SWIZZLE4(swizzle[0],
-				   swizzle[1],
-				   swizzle[2],
-				   swizzle[3]);
+   src.swizzle = MAKE_SWIZZLE4(swizzle[0], swizzle[1], swizzle[2], swizzle[3]);
 
-   this->result = src_reg;
+   this->result = src;
 }
 
 void
@@ -1517,16 +1514,16 @@ void
 ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 {
    ir_constant *index;
-   ir_to_mesa_src_reg src_reg;
+   ir_to_mesa_src_reg src;
    int element_size = type_size(ir->type);
 
    index = ir->array_index->constant_expression_value();
 
    ir->array->accept(this);
-   src_reg = this->result;
+   src = this->result;
 
    if (index) {
-      src_reg.index += index->value.i[0] * element_size;
+      src.index += index->value.i[0] * element_size;
    } else {
       ir_to_mesa_src_reg array_base = this->result;
       /* Variable index array dereference.  It eats the "vec4" of the
@@ -1547,17 +1544,17 @@ ir_to_mesa_visitor::visit(ir_dereference_array *ir)
 			     this->result, src_reg_for_float(element_size));
       }
 
-      src_reg.reladdr = ralloc(mem_ctx, ir_to_mesa_src_reg);
-      memcpy(src_reg.reladdr, &index_reg, sizeof(index_reg));
+      src.reladdr = ralloc(mem_ctx, ir_to_mesa_src_reg);
+      memcpy(src.reladdr, &index_reg, sizeof(index_reg));
    }
 
    /* If the type is smaller than a vec4, replicate the last channel out. */
    if (ir->type->is_scalar() || ir->type->is_vector())
-      src_reg.swizzle = swizzle_for_size(ir->type->vector_elements);
+      src.swizzle = swizzle_for_size(ir->type->vector_elements);
    else
-      src_reg.swizzle = SWIZZLE_NOOP;
+      src.swizzle = SWIZZLE_NOOP;
 
-   this->result = src_reg;
+   this->result = src;
 }
 
 void
@@ -1783,7 +1780,7 @@ ir_to_mesa_visitor::visit(ir_assignment *ir)
 void
 ir_to_mesa_visitor::visit(ir_constant *ir)
 {
-   ir_to_mesa_src_reg src_reg;
+   ir_to_mesa_src_reg src;
    GLfloat stack_vals[4] = { 0 };
    GLfloat *values = stack_vals;
    unsigned int i;
@@ -1805,12 +1802,12 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 	 assert(size > 0);
 
 	 field_value->accept(this);
-	 src_reg = this->result;
+	 src = this->result;
 
 	 for (i = 0; i < (unsigned int)size; i++) {
-	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, temp, src_reg);
+	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, temp, src);
 
-	    src_reg.index++;
+	    src.index++;
 	    temp.index++;
 	 }
       }
@@ -1827,11 +1824,11 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 
       for (i = 0; i < ir->type->length; i++) {
 	 ir->array_elements[i]->accept(this);
-	 src_reg = this->result;
+	 src = this->result;
 	 for (int j = 0; j < size; j++) {
-	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, temp, src_reg);
+	    ir_to_mesa_emit_op1(ir, OPCODE_MOV, temp, src);
 
-	    src_reg.index++;
+	    src.index++;
 	    temp.index++;
 	 }
       }
@@ -1847,12 +1844,12 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
 	 assert(ir->type->base_type == GLSL_TYPE_FLOAT);
 	 values = &ir->value.f[i * ir->type->vector_elements];
 
-	 src_reg = ir_to_mesa_src_reg(PROGRAM_CONSTANT, -1, NULL);
-	 src_reg.index = _mesa_add_unnamed_constant(this->prog->Parameters,
+	 src = ir_to_mesa_src_reg(PROGRAM_CONSTANT, -1, NULL);
+	 src.index = _mesa_add_unnamed_constant(this->prog->Parameters,
 						values,
 						ir->type->vector_elements,
-						&src_reg.swizzle);
-	 ir_to_mesa_emit_op1(ir, OPCODE_MOV, mat_column, src_reg);
+						&src.swizzle);
+	 ir_to_mesa_emit_op1(ir, OPCODE_MOV, mat_column, src);
 
 	 mat_column.index++;
       }
@@ -1861,7 +1858,7 @@ ir_to_mesa_visitor::visit(ir_constant *ir)
       return;
    }
 
-   src_reg.file = PROGRAM_CONSTANT;
+   src.file = PROGRAM_CONSTANT;
    switch (ir->type->base_type) {
    case GLSL_TYPE_FLOAT:
       values = &ir->value.f[0];
@@ -2239,7 +2236,7 @@ ir_to_mesa_visitor::visit(ir_if *ir)
       cond_inst->cond_update = GL_TRUE;
 
       if_inst = ir_to_mesa_emit_op0(ir->condition, OPCODE_IF);
-      if_inst->dst_reg.cond_mask = COND_NE;
+      if_inst->dst.cond_mask = COND_NE;
    } else {
       if_inst = ir_to_mesa_emit_op1(ir->condition,
 				    OPCODE_IF, ir_to_mesa_undef_dst,
@@ -2731,17 +2728,17 @@ ir_to_mesa_visitor::copy_propagate(void)
    foreach_iter(exec_list_iterator, iter, this->instructions) {
       ir_to_mesa_instruction *inst = (ir_to_mesa_instruction *)iter.get();
 
-      assert(inst->dst_reg.file != PROGRAM_TEMPORARY
-	     || inst->dst_reg.index < this->next_temp);
+      assert(inst->dst.file != PROGRAM_TEMPORARY
+	     || inst->dst.index < this->next_temp);
 
       /* First, do any copy propagation possible into the src regs. */
       for (int r = 0; r < 3; r++) {
 	 ir_to_mesa_instruction *first = NULL;
 	 bool good = true;
-	 int acp_base = inst->src_reg[r].index * 4;
+	 int acp_base = inst->src[r].index * 4;
 
-	 if (inst->src_reg[r].file != PROGRAM_TEMPORARY ||
-	     inst->src_reg[r].reladdr)
+	 if (inst->src[r].file != PROGRAM_TEMPORARY ||
+	     inst->src[r].reladdr)
 	    continue;
 
 	 /* See if we can find entries in the ACP consisting of MOVs
@@ -2749,7 +2746,7 @@ ir_to_mesa_visitor::copy_propagate(void)
 	  * of this src register reference.
 	  */
 	 for (int i = 0; i < 4; i++) {
-	    int src_chan = GET_SWZ(inst->src_reg[r].swizzle, i);
+	    int src_chan = GET_SWZ(inst->src[r].swizzle, i);
 	    ir_to_mesa_instruction *copy_chan = acp[acp_base + src_chan];
 
 	    if (!copy_chan) {
@@ -2762,8 +2759,8 @@ ir_to_mesa_visitor::copy_propagate(void)
 	    if (!first) {
 	       first = copy_chan;
 	    } else {
-	       if (first->src_reg[0].file != copy_chan->src_reg[0].file ||
-		   first->src_reg[0].index != copy_chan->src_reg[0].index) {
+	       if (first->src[0].file != copy_chan->src[0].file ||
+		   first->src[0].index != copy_chan->src[0].index) {
 		  good = false;
 		  break;
 	       }
@@ -2774,17 +2771,17 @@ ir_to_mesa_visitor::copy_propagate(void)
 	    /* We've now validated that we can copy-propagate to
 	     * replace this src register reference.  Do it.
 	     */
-	    inst->src_reg[r].file = first->src_reg[0].file;
-	    inst->src_reg[r].index = first->src_reg[0].index;
+	    inst->src[r].file = first->src[0].file;
+	    inst->src[r].index = first->src[0].index;
 
 	    int swizzle = 0;
 	    for (int i = 0; i < 4; i++) {
-	       int src_chan = GET_SWZ(inst->src_reg[r].swizzle, i);
+	       int src_chan = GET_SWZ(inst->src[r].swizzle, i);
 	       ir_to_mesa_instruction *copy_inst = acp[acp_base + src_chan];
-	       swizzle |= (GET_SWZ(copy_inst->src_reg[0].swizzle, src_chan) <<
+	       swizzle |= (GET_SWZ(copy_inst->src[0].swizzle, src_chan) <<
 			   (3 * i));
 	    }
-	    inst->src_reg[r].swizzle = swizzle;
+	    inst->src[r].swizzle = swizzle;
 	 }
       }
 
@@ -2821,13 +2818,13 @@ ir_to_mesa_visitor::copy_propagate(void)
 	 /* Continuing the block, clear any written channels from
 	  * the ACP.
 	  */
-	 if (inst->dst_reg.file == PROGRAM_TEMPORARY && inst->dst_reg.reladdr) {
+	 if (inst->dst.file == PROGRAM_TEMPORARY && inst->dst.reladdr) {
 	    /* Any temporary might be written, so no copy propagation
 	     * across this instruction.
 	     */
 	    memset(acp, 0, sizeof(*acp) * this->next_temp * 4);
-	 } else if (inst->dst_reg.file == PROGRAM_OUTPUT &&
-		    inst->dst_reg.reladdr) {
+	 } else if (inst->dst.file == PROGRAM_OUTPUT &&
+		    inst->dst.reladdr) {
 	    /* Any output might be written, so no copy propagation
 	     * from outputs across this instruction.
 	     */
@@ -2836,17 +2833,17 @@ ir_to_mesa_visitor::copy_propagate(void)
 		  if (!acp[4 * r + c])
 		     continue;
 
-		  if (acp[4 * r + c]->src_reg[0].file == PROGRAM_OUTPUT)
+		  if (acp[4 * r + c]->src[0].file == PROGRAM_OUTPUT)
 		     acp[4 * r + c] = NULL;
 	       }
 	    }
-	 } else if (inst->dst_reg.file == PROGRAM_TEMPORARY ||
-		    inst->dst_reg.file == PROGRAM_OUTPUT) {
+	 } else if (inst->dst.file == PROGRAM_TEMPORARY ||
+		    inst->dst.file == PROGRAM_OUTPUT) {
 	    /* Clear where it's used as dst. */
-	    if (inst->dst_reg.file == PROGRAM_TEMPORARY) {
+	    if (inst->dst.file == PROGRAM_TEMPORARY) {
 	       for (int c = 0; c < 4; c++) {
-		  if (inst->dst_reg.writemask & (1 << c)) {
-		     acp[4 * inst->dst_reg.index + c] = NULL;
+		  if (inst->dst.writemask & (1 << c)) {
+		     acp[4 * inst->dst.index + c] = NULL;
 		  }
 	       }
 	    }
@@ -2857,11 +2854,11 @@ ir_to_mesa_visitor::copy_propagate(void)
 		  if (!acp[4 * r + c])
 		     continue;
 
-		  int src_chan = GET_SWZ(acp[4 * r + c]->src_reg[0].swizzle, c);
+		  int src_chan = GET_SWZ(acp[4 * r + c]->src[0].swizzle, c);
 
-		  if (acp[4 * r + c]->src_reg[0].file == inst->dst_reg.file &&
-		      acp[4 * r + c]->src_reg[0].index == inst->dst_reg.index &&
-		      inst->dst_reg.writemask & (1 << src_chan))
+		  if (acp[4 * r + c]->src[0].file == inst->dst.file &&
+		      acp[4 * r + c]->src[0].index == inst->dst.index &&
+		      inst->dst.writemask & (1 << src_chan))
 		  {
 		     acp[4 * r + c] = NULL;
 		  }
@@ -2873,15 +2870,15 @@ ir_to_mesa_visitor::copy_propagate(void)
 
       /* If this is a copy, add it to the ACP. */
       if (inst->op == OPCODE_MOV &&
-	  inst->dst_reg.file == PROGRAM_TEMPORARY &&
-	  !inst->dst_reg.reladdr &&
+	  inst->dst.file == PROGRAM_TEMPORARY &&
+	  !inst->dst.reladdr &&
 	  !inst->saturate &&
-	  !inst->src_reg[0].reladdr &&
-	  !inst->src_reg[0].negate) {
+	  !inst->src[0].reladdr &&
+	  !inst->src[0].negate) {
 	 for (int i = 0; i < 4; i++) {
-	    if (inst->dst_reg.writemask & (1 << i)) {
-	       acp[4 * inst->dst_reg.index + i] = inst;
-	       acp_level[4 * inst->dst_reg.index + i] = level;
+	    if (inst->dst.writemask & (1 << i)) {
+	       acp[4 * inst->dst.index + i] = inst;
+	       acp_level[4 * inst->dst.index + i] = level;
 	    }
 	 }
       }
@@ -3003,14 +3000,14 @@ get_mesa_program(struct gl_context *ctx,
       mesa_inst->CondUpdate = inst->cond_update;
       if (inst->saturate)
 	 mesa_inst->SaturateMode = SATURATE_ZERO_ONE;
-      mesa_inst->DstReg.File = inst->dst_reg.file;
-      mesa_inst->DstReg.Index = inst->dst_reg.index;
-      mesa_inst->DstReg.CondMask = inst->dst_reg.cond_mask;
-      mesa_inst->DstReg.WriteMask = inst->dst_reg.writemask;
-      mesa_inst->DstReg.RelAddr = inst->dst_reg.reladdr != NULL;
-      mesa_inst->SrcReg[0] = mesa_src_reg_from_ir_src_reg(inst->src_reg[0]);
-      mesa_inst->SrcReg[1] = mesa_src_reg_from_ir_src_reg(inst->src_reg[1]);
-      mesa_inst->SrcReg[2] = mesa_src_reg_from_ir_src_reg(inst->src_reg[2]);
+      mesa_inst->DstReg.File = inst->dst.file;
+      mesa_inst->DstReg.Index = inst->dst.index;
+      mesa_inst->DstReg.CondMask = inst->dst.cond_mask;
+      mesa_inst->DstReg.WriteMask = inst->dst.writemask;
+      mesa_inst->DstReg.RelAddr = inst->dst.reladdr != NULL;
+      mesa_inst->SrcReg[0] = mesa_src_reg_from_ir_src_reg(inst->src[0]);
+      mesa_inst->SrcReg[1] = mesa_src_reg_from_ir_src_reg(inst->src[1]);
+      mesa_inst->SrcReg[2] = mesa_src_reg_from_ir_src_reg(inst->src[2]);
       mesa_inst->TexSrcUnit = inst->sampler;
       mesa_inst->TexSrcTarget = inst->tex_target;
       mesa_inst->TexShadow = inst->tex_shadow;
