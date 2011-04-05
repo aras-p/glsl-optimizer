@@ -28,7 +28,8 @@
 #ifndef vl_ycbcr_buffer_h
 #define vl_ycbcr_buffer_h
 
-#include <pipe/p_state.h>
+#include <pipe/p_context.h>
+#include <pipe/p_video_context.h>
 
 #define VL_MAX_PLANES 3
 
@@ -36,49 +37,26 @@
  * implementation of a planar ycbcr buffer
  */
 
-/* resources of a buffer */
-typedef struct pipe_resource *vl_resources[VL_MAX_PLANES];
-
-/* sampler views of a buffer */
-typedef struct pipe_sampler_view *vl_sampler_views[VL_MAX_PLANES];
-
-/* surfaces of a buffer */
-typedef struct pipe_surface *vl_surfaces[VL_MAX_PLANES];
-
 /* planar buffer for vl data upload and manipulation */
 struct vl_video_buffer
 {
-   struct pipe_context *pipe;
-   unsigned            num_planes;
-   vl_resources        resources;
-   vl_sampler_views    sampler_views;
-   vl_surfaces         surfaces;
+   struct pipe_video_buffer base;
+   struct pipe_context      *pipe;
+   unsigned                 num_planes;
+   struct pipe_resource     *resources[VL_MAX_PLANES];
+   struct pipe_sampler_view *sampler_views[VL_MAX_PLANES];
+   struct pipe_surface      *surfaces[VL_MAX_PLANES];
 };
 
 /**
  * initialize a buffer, creating its resources
  */
-bool vl_video_buffer_init(struct vl_video_buffer *buffer,
-                          struct pipe_context *pipe,
-                          unsigned width, unsigned height, unsigned depth,
-                          enum pipe_video_chroma_format chroma_format,
-                          unsigned num_planes,
-                          const enum pipe_format resource_formats[VL_MAX_PLANES],
-                          unsigned usage);
-
-/**
- * create default sampler views for the buffer on demand
- */
-vl_sampler_views *vl_video_buffer_sampler_views(struct vl_video_buffer *buffer);
-
-/**
- * create default surfaces for the buffer on demand
- */
-vl_surfaces *vl_video_buffer_surfaces(struct vl_video_buffer *buffer);
-
-/**
- * cleanup the buffer destroying all its resources
- */
-void vl_video_buffer_cleanup(struct vl_video_buffer *buffer);
-
+struct pipe_video_buffer *
+vl_video_buffer_init(struct pipe_video_context *context,
+                     struct pipe_context *pipe,
+                     unsigned width, unsigned height, unsigned depth,
+                     enum pipe_video_chroma_format chroma_format,
+                     unsigned num_planes,
+                     const enum pipe_format resource_formats[VL_MAX_PLANES],
+                     unsigned usage);
 #endif

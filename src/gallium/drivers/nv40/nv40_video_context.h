@@ -31,8 +31,6 @@
 #include <pipe/p_video_context.h>
 
 struct pipe_video_context *
-nv40_video_create(struct pipe_screen *screen, enum pipe_video_profile profile,
-                  enum pipe_video_chroma_format chroma_format,
-                  unsigned width, unsigned height, void *priv);
+nv40_video_create(struct pipe_screen *screen, void *priv);
 
 #endif

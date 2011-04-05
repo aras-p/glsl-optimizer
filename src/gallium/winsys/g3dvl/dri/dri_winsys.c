@@ -232,10 +232,7 @@ void vl_screen_destroy(struct vl_screen *vscreen)
 }
 
 struct vl_context*
-vl_video_create(struct vl_screen *vscreen,
-                enum pipe_video_profile profile,
-                enum pipe_video_chroma_format chroma_format,
-                unsigned width, unsigned height)
+vl_video_create(struct vl_screen *vscreen)
 {
    struct vl_dri_screen *vl_dri_scrn = (struct vl_dri_screen*)vscreen;
    struct vl_dri_context *vl_dri_ctx;
@@ -251,10 +248,7 @@ vl_video_create(struct vl_screen *vscreen,
       goto no_vpipe;
    }
 
-   vl_dri_ctx->base.vpipe = vscreen->pscreen->video_context_create(vscreen->pscreen,
-                                                                   profile, chroma_format,
-                                                                   width, height,
-                                                                   vl_dri_ctx);
+   vl_dri_ctx->base.vpipe = vscreen->pscreen->video_context_create(vscreen->pscreen, vl_dri_ctx);
 
    if (!vl_dri_ctx->base.vpipe)
       goto no_vpipe;

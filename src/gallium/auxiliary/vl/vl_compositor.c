@@ -484,13 +484,20 @@ vl_compositor_set_buffer_layer(struct pipe_video_compositor *compositor,
                                struct pipe_video_rect *dst_rect)
 {
    struct vl_compositor *c = (struct vl_compositor *)compositor;
+   struct pipe_sampler_view **sampler_views;
+   unsigned i;
+
    assert(compositor && buffer);
 
    assert(layer < VL_COMPOSITOR_MAX_LAYERS);
 
    c->used_layers |= 1 << layer;
    c->layers[layer].fs = c->fs_video_buffer;
-   buffer->get_sampler_views(buffer, c->layers[layer].sampler_views);
+
+   sampler_views = buffer->get_sampler_views(buffer);
+   for (i = 0; i < 3; ++i)
+      pipe_sampler_view_reference(&c->layers[layer].sampler_views[i], sampler_views[i]);
+
    c->layers[layer].src_rect = src_rect ? *src_rect : default_rect(&c->layers[layer]);
    c->layers[layer].dst_rect = dst_rect ? *dst_rect : default_rect(&c->layers[layer]);
 }

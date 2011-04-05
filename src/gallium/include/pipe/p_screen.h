@@ -1,8 +1,8 @@
 /**************************************************************************
- * 
+ *
  * Copyright 2007 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the
  * "Software"), to deal in the Software without restriction, including
@@ -10,11 +10,11 @@
  * distribute, sub license, and/or sell copies of the Software, and to
  * permit persons to whom the Software is furnished to do so, subject to
  * the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice (including the
  * next paragraph) shall be included in all copies or substantial portions
  * of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
  * OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
  * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
@@ -22,12 +22,12 @@
  * ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
  * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
  * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
- * 
+ *
  **************************************************************************/
 
 /**
  * @file
- * 
+ *
  * Screen, Adapter or GPU
  *
  * These are driver functions/facilities that are context independent.
@@ -94,11 +94,7 @@ struct pipe_screen {
 
    struct pipe_context * (*context_create)( struct pipe_screen *, void *priv );
 
-   struct pipe_video_context * (*video_context_create)( struct pipe_screen *screen,
-                                                        enum pipe_video_profile profile,
-                                                        enum pipe_video_chroma_format chroma_format,
-                                                        unsigned width, unsigned height, void *priv );
-
+   struct pipe_video_context * (*video_context_create)( struct pipe_screen *screen, void *priv );
 
    /**
     * Check if the given pipe_format is supported as a texture or

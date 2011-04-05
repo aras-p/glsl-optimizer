@@ -42,6 +42,7 @@ struct pipe_fence_handle;
 typedef struct
 {
    struct vl_context *vctx;
+   struct pipe_video_decoder *decoder;
    struct pipe_video_compositor *compositor;
 
    unsigned short subpicture_max_width;
@@ -50,7 +51,9 @@ typedef struct
 
 typedef struct
 {
-   struct pipe_video_buffer *pipe_buffer;
+   struct pipe_video_decode_buffer *decode_buffer;
+   struct pipe_video_buffer *video_buffer;
+
    bool mapped; // are we still mapped to memory?
 
    XvMCSurface *ref_surfaces[2];

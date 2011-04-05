@@ -1,6 +1,7 @@
 /**************************************************************************
  *
  * Copyright 2009 Younes Manton.
+ * Copyright 2011 Christian König.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,68 +26,24 @@
  *
  **************************************************************************/
 
-#ifndef VL_MPEG12_CONTEXT_H
-#define VL_MPEG12_CONTEXT_H
+#ifndef VL_CONTEXT_H
+#define VL_CONTEXT_H
 
 #include <pipe/p_video_context.h>
-#include "vl_idct.h"
-#include "vl_mpeg12_mc_renderer.h"
-#include "vl_compositor.h"
-#include "vl_video_buffer.h"
-#include "vl_vertex_buffers.h"
 
 struct pipe_screen;
 struct pipe_context;
 
-struct vl_mpeg12_context
+struct vl_context
 {
    struct pipe_video_context base;
    struct pipe_context *pipe;
    bool pot_buffers;
-   unsigned buffer_width, buffer_height;
-
-   const unsigned (*empty_block_mask)[3][2][2];
-
-   struct pipe_vertex_buffer quads;
-   void *ves[VL_MAX_PLANES];
-
-   struct vl_idct idct_y, idct_c;
-   struct vl_mpeg12_mc_renderer mc;
-
-   void *rast;
-   void *dsa;
-   void *blend;
-};
-
-struct vl_mpeg12_buffer
-{
-   struct pipe_video_buffer base;
-
-   struct vl_video_buffer idct_source;
-   struct vl_video_buffer idct_2_mc;
-   struct vl_video_buffer render_result;
-
-   struct vl_vertex_buffer vertex_stream;
-
-   union
-   {
-      struct pipe_vertex_buffer all[2];
-      struct {
-         struct pipe_vertex_buffer quad, stream;
-      } individual;
-   } vertex_bufs;
-
-   struct vl_idct_buffer idct[VL_MAX_PLANES];
-   struct vl_mpeg12_mc_buffer mc[VL_MAX_PLANES];
 };
 
 /* drivers can call this function in their pipe_video_context constructors and pass it
    an accelerated pipe_context along with suitable buffering modes, etc */
 struct pipe_video_context *
-vl_create_mpeg12_context(struct pipe_context *pipe,
-                         enum pipe_video_profile profile,
-                         enum pipe_video_chroma_format chroma_format,
-                         unsigned width, unsigned height,
-                         bool pot_buffers);
+vl_create_context(struct pipe_context *pipe, bool pot_buffers);
 
-#endif /* VL_MPEG12_CONTEXT_H */
+#endif /* VL_CONTEXT_H */

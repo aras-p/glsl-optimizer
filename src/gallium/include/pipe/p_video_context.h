@@ -35,12 +35,10 @@ extern "C" {
 #include <pipe/p_video_state.h>
 
 struct pipe_screen;
-struct pipe_buffer;
 struct pipe_surface;
 struct pipe_macroblock;
 struct pipe_picture_desc;
 struct pipe_fence_handle;
-struct pipe_video_buffer;
 
 /**
  * Gallium video rendering context
@@ -48,36 +46,33 @@ struct pipe_video_buffer;
 struct pipe_video_context
 {
    struct pipe_screen *screen;
-   enum pipe_video_profile profile;
-   enum pipe_video_chroma_format chroma_format;
-   unsigned width;
-   unsigned height;
 
    void *priv; /**< context private data (for DRI for example) */
+
+   /**
+    * destroy context, all objects created from this context
+    * (buffers, decoders, compositors etc...) must be freed before calling this
+    */
+   void (*destroy)(struct pipe_video_context *context);
 
    /**
     * Query an integer-valued capability/parameter/limit
     * \param param  one of PIPE_CAP_x
     */
-   int (*get_param)(struct pipe_video_context *vpipe, int param);
+   int (*get_param)(struct pipe_video_context *context, int param);
 
    /**
     * Check if the given pipe_format is supported as a texture or
     * drawing surface.
     */
-   boolean (*is_format_supported)(struct pipe_video_context *vpipe,
+   boolean (*is_format_supported)(struct pipe_video_context *context,
                                   enum pipe_format format,
                                   unsigned usage);
 
    /**
-    * destroy context, all buffers must be freed before calling this
-    */
-   void (*destroy)(struct pipe_video_context *vpipe);
-
-   /**
     * create a surface of a texture
     */
-   struct pipe_surface *(*create_surface)(struct pipe_video_context *vpipe,
+   struct pipe_surface *(*create_surface)(struct pipe_video_context *context,
                                           struct pipe_resource *resource,
                                           const struct pipe_surface *templ);
 
@@ -89,14 +84,14 @@ struct pipe_video_context
    /**
     * create a sampler view of a texture, for subpictures for example
     */
-   struct pipe_sampler_view *(*create_sampler_view)(struct pipe_video_context *vpipe,
+   struct pipe_sampler_view *(*create_sampler_view)(struct pipe_video_context *context,
                                                     struct pipe_resource *resource,
                                                     const struct pipe_sampler_view *templ);
 
    /**
     * upload image data to a sampler
     */
-   void (*upload_sampler)(struct pipe_video_context *vpipe,
+   void (*upload_sampler)(struct pipe_video_context *context,
                           struct pipe_sampler_view *dst,
                           const struct pipe_box *dst_box,
                           const void *src, unsigned src_stride,
@@ -105,36 +100,122 @@ struct pipe_video_context
    /**
     * clear a sampler with a specific rgba color
     */
-   void (*clear_sampler)(struct pipe_video_context *vpipe,
+   void (*clear_sampler)(struct pipe_video_context *context,
                          struct pipe_sampler_view *dst,
                          const struct pipe_box *dst_box,
                          const float *rgba);
 
+   /*}@*/
+
+   /**
+    * create a decoder for a specific video profile
+    */
+   struct pipe_video_decoder *(*create_decoder)(struct pipe_video_context *context,
+                                                enum pipe_video_profile profile,
+                                                enum pipe_video_chroma_format chroma_format,
+                                                unsigned width, unsigned height);
+
    /**
     * Creates a buffer as decoding target
     */
-   struct pipe_video_buffer *(*create_buffer)(struct pipe_video_context *vpipe);
+   struct pipe_video_buffer *(*create_buffer)(struct pipe_video_context *context,
+                                              enum pipe_format buffer_format,
+                                              enum pipe_video_chroma_format chroma_format,
+                                              unsigned width, unsigned height);
 
    /**
     * Creates a video compositor
     */
-   struct pipe_video_compositor *(*create_compositor)(struct pipe_video_context *vpipe);
+   struct pipe_video_compositor *(*create_compositor)(struct pipe_video_context *context);
+};
+
+/**
+ * decoder for a specific video codec
+ */
+struct pipe_video_decoder
+{
+   struct pipe_video_context *context;
+
+   enum pipe_video_profile profile;
+   enum pipe_video_chroma_format chroma_format;
+   unsigned width;
+   unsigned height;
 
    /**
-    * Picture decoding and displaying
+    * destroy this video decoder
     */
+   void (*destroy)(struct pipe_video_decoder *decoder);
+
+   /**
+    * Creates a buffer as decoding input
+    */
+   struct pipe_video_decode_buffer *(*create_buffer)(struct pipe_video_decoder *decoder);
+
+   /**
+    * flush decoder buffer to video hardware
+    */
+   void (*flush_buffer)(struct pipe_video_decode_buffer *decbuf,
+                        struct pipe_video_buffer *ref_frames[2],
+                        struct pipe_video_buffer *dst,
+                        struct pipe_fence_handle **fence);
+
+   /**
+    * clear decoder buffers todo list
+    */
+   void (*clear_buffer)(struct pipe_video_decode_buffer *decbuf);
+
+};
+
+/**
+ * input buffer for a decoder
+ */
+struct pipe_video_decode_buffer
+{
+   struct pipe_video_decoder *decoder;
+
+   /**
+    * destroy this decode buffer
+    */
+   void (*destroy)(struct pipe_video_decode_buffer *decbuf);
+
+   /**
+    * map the input buffer into memory before starting decoding
+    */
+   void (*map)(struct pipe_video_decode_buffer *decbuf);
 
 #if 0
-   void (*decode_bitstream)(struct pipe_video_context *vpipe,
+   /**
+    * decode a bitstream
+    */
+   void (*decode_bitstream)(struct pipe_video_decode_buffer *decbuf,
                             unsigned num_bufs,
                             struct pipe_buffer **bitstream_buf);
 #endif
 
+   /**
+    * add macroblocks to decoder buffer
+    */
+   void (*add_macroblocks)(struct pipe_video_decode_buffer *decbuf,
+                           unsigned num_macroblocks,
+                           struct pipe_macroblock *macroblocks);
+
+   /**
+    * unmap decoder buffer before flushing
+    */
+   void (*unmap)(struct pipe_video_decode_buffer *decbuf);
 };
 
+/**
+ * output for decoding / input for displaying
+ */
 struct pipe_video_buffer
 {
-   struct pipe_video_context* context;
+   struct pipe_video_context *context;
+
+   enum pipe_format buffer_format;
+   enum pipe_video_chroma_format chroma_format;
+   unsigned width;
+   unsigned height;
 
    /**
     * destroy this video buffer
@@ -142,37 +223,22 @@ struct pipe_video_buffer
    void (*destroy)(struct pipe_video_buffer *buffer);
 
    /**
-    * map the buffer into memory before calling add_macroblocks
+    * get a individual sampler view for each plane
     */
-   void (*map)(struct pipe_video_buffer *buffer);
+   struct pipe_sampler_view **(*get_sampler_views)(struct pipe_video_buffer *buffer);
 
    /**
-    * add macroblocks to buffer for decoding
+    * get a individual surfaces for each plane
     */
-   void (*add_macroblocks)(struct pipe_video_buffer *buffer,
-                           unsigned num_macroblocks,
-                           struct pipe_macroblock *macroblocks);
-
-   /**
-    * unmap buffer before flushing
-    */
-   void (*unmap)(struct pipe_video_buffer *buffer);
-
-   /**
-    * flush buffer to video hardware
-    */
-   void (*flush)(struct pipe_video_buffer *buffer,
-                 struct pipe_video_buffer *ref_frames[2],
-                 struct pipe_fence_handle **fence);
-
-
-   void (*get_sampler_views)(struct pipe_video_buffer *buffer,
-                             struct pipe_sampler_view *sampler_views[3]);
+   struct pipe_surface **(*get_surfaces)(struct pipe_video_buffer *buffer);
 };
 
+/**
+ * composing and displaying of image data
+ */
 struct pipe_video_compositor
 {
-   struct pipe_video_context* context;
+   struct pipe_video_context *context;
 
    /**
     * destroy this compositor

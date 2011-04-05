@@ -53,10 +53,7 @@ vl_screen_create(Display *display, int screen);
 void vl_screen_destroy(struct vl_screen *vscreen);
 
 struct vl_context*
-vl_video_create(struct vl_screen *vscreen,
-                enum pipe_video_profile profile,
-                enum pipe_video_chroma_format chroma_format,
-                unsigned width, unsigned height);
+vl_video_create(struct vl_screen *vscreen);
 
 void vl_video_destroy(struct vl_context *vctx);
 

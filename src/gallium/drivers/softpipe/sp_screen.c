@@ -33,7 +33,7 @@
 #include "pipe/p_defines.h"
 #include "pipe/p_screen.h"
 #include "draw/draw_context.h"
-#include "vl/vl_mpeg12_context.h"
+#include "vl/vl_context.h"
 
 #include "state_tracker/sw_winsys.h"
 #include "tgsi/tgsi_exec.h"
@@ -288,29 +288,18 @@ softpipe_flush_frontbuffer(struct pipe_screen *_screen,
 }
 
 static struct pipe_video_context *
-sp_video_create(struct pipe_screen *screen, enum pipe_video_profile profile,
-                enum pipe_video_chroma_format chroma_format,
-                unsigned width, unsigned height, void *priv)
+sp_video_create(struct pipe_screen *screen, void *priv)
 {
    struct pipe_context *pipe;
 
    assert(screen);
-   assert(width && height);
 
    pipe = screen->context_create(screen, NULL);
    if (!pipe)
       return NULL;
 
    /* TODO: Use slice buffering for softpipe when implemented, no advantage to buffering an entire picture with softpipe */
-   switch (u_reduce_video_profile(profile)) {
-      case PIPE_VIDEO_CODEC_MPEG12:
-         return vl_create_mpeg12_context(pipe, profile,
-                                         chroma_format,
-                                         width, height,
-                                         true);
-      default:
-         return NULL;
-   }
+   return vl_create_context(pipe, true);
 }
 
 /**

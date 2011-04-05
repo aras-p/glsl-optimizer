@@ -27,12 +27,10 @@
 
 #include "r600_video_context.h"
 #include "util/u_video.h"
-#include <vl/vl_mpeg12_context.h>
+#include <vl/vl_context.h>
 
 struct pipe_video_context *
-r600_video_create(struct pipe_screen *screen, enum pipe_video_profile profile,
-                  enum pipe_video_chroma_format chroma_format,
-                  unsigned width, unsigned height, void *priv)
+r600_video_create(struct pipe_screen *screen, void *priv)
 {
    struct pipe_context *pipe;
 
@@ -42,13 +40,5 @@ r600_video_create(struct pipe_screen *screen, enum pipe_video_profile profile,
    if (!pipe)
       return NULL;
 
-   switch (u_reduce_video_profile(profile)) {
-      case PIPE_VIDEO_CODEC_MPEG12:
-         return vl_create_mpeg12_context(pipe, profile,
-                                         chroma_format,
-                                         width, height,
-                                         false);
-      default:
-         return NULL;
-   }
+   return vl_create_context(pipe, false);
 }

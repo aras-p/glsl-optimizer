@@ -151,9 +151,12 @@ static void
 unmap_and_flush_surface(XvMCSurfacePrivate *surface)
 {
    struct pipe_video_buffer *ref_frames[2];
+   XvMCContextPrivate *context_priv;
    unsigned i;
 
    assert(surface);
+
+   context_priv = surface->context->privData;
 
    for ( i = 0; i < 2; ++i ) {
       if (surface->ref_surfaces[i]) {
@@ -163,17 +166,18 @@ unmap_and_flush_surface(XvMCSurfacePrivate *surface)
 
          unmap_and_flush_surface(ref);
          surface->ref_surfaces[i] = NULL;
-         ref_frames[i] = ref->pipe_buffer;
+         ref_frames[i] = ref->video_buffer;
       } else {
          ref_frames[i] = NULL;
       }
    }
 
    if (surface->mapped) {
-      surface->pipe_buffer->unmap(surface->pipe_buffer);
-      surface->pipe_buffer->flush(surface->pipe_buffer,
-                                  ref_frames,
-                                  &surface->flush_fence);
+      surface->decode_buffer->unmap(surface->decode_buffer);
+      context_priv->decoder->flush_buffer(surface->decode_buffer,
+                                          ref_frames,
+                                          surface->video_buffer,
+                                          &surface->flush_fence);
       surface->mapped = 0;
    }
 }
@@ -201,7 +205,11 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
    if (!surface_priv)
       return BadAlloc;
 
-   surface_priv->pipe_buffer = vpipe->create_buffer(vpipe);
+   surface_priv->decode_buffer = context_priv->decoder->create_buffer(context_priv->decoder);
+   surface_priv->video_buffer = vpipe->create_buffer(vpipe, PIPE_FORMAT_YV12, //TODO
+                                                     context_priv->decoder->chroma_format,
+                                                     context_priv->decoder->width,
+                                                     context_priv->decoder->height);
    surface_priv->context = context;
 
    surface->surface_id = XAllocID(dpy);
@@ -226,7 +234,7 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
 )
 {
    struct pipe_video_context *vpipe;
-   struct pipe_video_buffer *t_buffer;
+   struct pipe_video_decode_buffer *t_buffer;
    XvMCContextPrivate *context_priv;
    XvMCSurfacePrivate *target_surface_priv;
    XvMCSurfacePrivate *past_surface_priv;
@@ -274,7 +282,7 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    context_priv = context->privData;
    vpipe = context_priv->vctx->vpipe;
 
-   t_buffer = target_surface_priv->pipe_buffer;
+   t_buffer = target_surface_priv->decode_buffer;
 
    // enshure that all reference frames are flushed
    // not really nessasary, but speeds ups rendering
@@ -395,7 +403,7 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    unmap_and_flush_surface(surface_priv);
 
    compositor->clear_layers(compositor);
-   compositor->set_buffer_layer(compositor, 0, surface_priv->pipe_buffer, &src_rect, NULL);
+   compositor->set_buffer_layer(compositor, 0, surface_priv->video_buffer, &src_rect, NULL);
 
    if (subpicture_priv) {
       struct pipe_video_rect src_rect = {surface_priv->subx, surface_priv->suby, surface_priv->subw, surface_priv->subh};
@@ -471,7 +479,8 @@ Status XvMCDestroySurface(Display *dpy, XvMCSurface *surface)
       return XvMCBadSurface;
 
    surface_priv = surface->privData;
-   surface_priv->pipe_buffer->destroy(surface_priv->pipe_buffer);
+   surface_priv->decode_buffer->destroy(surface_priv->decode_buffer);
+   surface_priv->video_buffer->destroy(surface_priv->video_buffer);
    FREE(surface_priv);
    surface->privData = NULL;
 
