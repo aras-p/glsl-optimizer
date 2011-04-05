@@ -447,6 +447,13 @@ enum r300_hiz_func {
     HIZ_FUNC_MIN,
 };
 
+/* For deferred fragment shader state validation. */
+enum r300_fs_validity_status {
+    FRAGMENT_SHADER_VALID,      /* No need to change/validate the FS. */
+    FRAGMENT_SHADER_MAYBE_DIRTY,/* Validate the FS if external state was changed. */
+    FRAGMENT_SHADER_DIRTY       /* Always validate the FS (if the FS was changed) */
+};
+
 struct r300_context {
     /* Parent class */
     struct pipe_context context;
@@ -598,6 +605,10 @@ struct r300_context {
     enum r300_hiz_func hiz_func;
     /* HiZ clear value. */
     uint32_t hiz_clear_value;
+    /* Whether fragment shader needs to be validated. */
+    enum r300_fs_validity_status fs_status;
+    /* Framebuffer multi-write. */
+    boolean fb_multiwrite;
 
     void *dsa_decompress_zmask;
 

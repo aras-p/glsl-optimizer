@@ -961,11 +961,10 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
     r300->textures_state.size = size;
 
     /* Pick a fragment shader based on either the texture compare state
-     * or the uses_pitch flag. */
-    if (r300->fs.state && count) {
-        if (r300_pick_fragment_shader(r300)) {
-            r300_mark_fs_code_dirty(r300);
-        }
+     * or the uses_pitch flag or some other external state. */
+    if (count &&
+        r300->fs_status == FRAGMENT_SHADER_VALID) {
+        r300->fs_status = FRAGMENT_SHADER_MAYBE_DIRTY;
     }
 }
 
@@ -994,12 +993,42 @@ static void r300_decompress_depth_textures(struct r300_context *r300)
     }
 }
 
+static void r300_validate_fragment_shader(struct r300_context *r300)
+{
+    struct pipe_framebuffer_state *fb = r300->fb_state.state;
+
+    if (r300->fs.state && r300->fs_status != FRAGMENT_SHADER_VALID) {
+        /* Pick the fragment shader based on external states.
+         * Then mark the state dirty if the fragment shader is either dirty
+         * or the function r300_pick_fragment_shader changed the shader. */
+        if (r300_pick_fragment_shader(r300) ||
+            r300->fs_status == FRAGMENT_SHADER_DIRTY) {
+            /* Mark the state atom as dirty. */
+            r300_mark_fs_code_dirty(r300);
+
+            /* Does Multiwrite need to be changed? */
+            if (fb->nr_cbufs > 1) {
+                boolean new_multiwrite =
+                    r300_fragment_shader_writes_all(r300_fs(r300));
+
+                if (r300->fb_multiwrite != new_multiwrite) {
+                    r300->fb_multiwrite = new_multiwrite;
+                    r300_mark_fb_state_dirty(r300, R300_CHANGED_MULTIWRITE);
+                }
+            }
+        }
+        r300->fs_status = FRAGMENT_SHADER_VALID;
+    }
+}
+
 void r300_update_derived_state(struct r300_context* r300)
 {
     if (r300->textures_state.dirty) {
         r300_decompress_depth_textures(r300);
         r300_merge_textures_and_samplers(r300);
     }
+
+    r300_validate_fragment_shader(r300);
 
     if (r300->rs_block_state.dirty) {
         r300_update_rs_block(r300);
