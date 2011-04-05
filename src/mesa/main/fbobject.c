@@ -335,7 +335,7 @@ _mesa_set_texture_attachment(struct gl_context *ctx,
    att->Zoffset = zoffset;
    att->Complete = GL_FALSE;
 
-   if (att->Texture->Image[att->CubeMapFace][att->TextureLevel]) {
+   if (_mesa_get_attachment_teximage(att)) {
       ctx->Driver.RenderTexture(ctx, fb, att);
    }
 
@@ -716,8 +716,8 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
       /* get width, height, format of the renderbuffer/texture
        */
       if (att->Type == GL_TEXTURE) {
-         const struct gl_texture_image *texImg
-            = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
+         const struct gl_texture_image *texImg =
+            _mesa_get_attachment_teximage(att);
          minWidth = MIN2(minWidth, texImg->Width);
          maxWidth = MAX2(maxWidth, texImg->Width);
          minHeight = MIN2(minHeight, texImg->Height);
@@ -1496,9 +1496,7 @@ check_begin_texture_render(struct gl_context *ctx, struct gl_framebuffer *fb)
 
    for (i = 0; i < BUFFER_COUNT; i++) {
       struct gl_renderbuffer_attachment *att = fb->Attachment + i;
-      struct gl_texture_object *texObj = att->Texture;
-      if (texObj
-          && texObj->Image[att->CubeMapFace][att->TextureLevel]) {
+      if (att->Texture && _mesa_get_attachment_teximage(att)) {
          ctx->Driver.RenderTexture(ctx, fb, att);
       }
    }

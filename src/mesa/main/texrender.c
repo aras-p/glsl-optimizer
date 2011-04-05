@@ -1,6 +1,7 @@
 
 #include "context.h"
 #include "colormac.h"
+#include "fbobject.h"
 #include "macros.h"
 #include "texfetch.h"
 #include "teximage.h"
@@ -525,7 +526,7 @@ wrap_texture(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
  * update the internal format info, etc.
  */
 static void
-update_wrapper(struct gl_context *ctx, const struct gl_renderbuffer_attachment *att)
+update_wrapper(struct gl_context *ctx, struct gl_renderbuffer_attachment *att)
 {
    struct texture_renderbuffer *trb
       = (struct texture_renderbuffer *) att->Renderbuffer;
@@ -533,7 +534,7 @@ update_wrapper(struct gl_context *ctx, const struct gl_renderbuffer_attachment *
    (void) ctx;
    ASSERT(trb);
 
-   trb->TexImage = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
+   trb->TexImage = _mesa_get_attachment_teximage(att);
    ASSERT(trb->TexImage);
 
    trb->Store = _mesa_get_texel_store_func(trb->TexImage->TexFormat);

@@ -2251,7 +2251,7 @@ check_rtt_cb(GLuint key, void *data, void *userData)
              att->Texture == texObj &&
              att->TextureLevel == level &&
              att->CubeMapFace == face) {
-            ASSERT(att->Texture->Image[att->CubeMapFace][att->TextureLevel]);
+            ASSERT(_mesa_get_attachment_teximage(att));
             /* Tell driver about the new renderbuffer texture */
             ctx->Driver.RenderTexture(ctx, ctx->DrawBuffer, att);
             /* Mark fb status as indeterminate to force re-validation */

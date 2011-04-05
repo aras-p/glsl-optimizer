@@ -1061,12 +1061,12 @@ _mesa_print_framebuffer(const struct gl_framebuffer *fb)
    for (i = 0; i < BUFFER_COUNT; i++) {
       const struct gl_renderbuffer_attachment *att = &fb->Attachment[i];
       if (att->Type == GL_TEXTURE) {
-         const struct gl_texture_image *texImage;
+         const struct gl_texture_image *texImage =
+            _mesa_get_attachment_teximage_const(att);
          fprintf(stderr,
                  "  %2d: Texture %u, level %u, face %u, slice %u, complete %d\n",
                  i, att->Texture->Name, att->TextureLevel, att->CubeMapFace,
                  att->Zoffset, att->Complete);
-         texImage = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
          fprintf(stderr, "       Size: %u x %u x %u  Format %s\n",
                  texImage->Width, texImage->Height, texImage->Depth,
                  _mesa_get_format_name(texImage->TexFormat));

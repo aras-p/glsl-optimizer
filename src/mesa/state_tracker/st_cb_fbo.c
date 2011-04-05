@@ -353,7 +353,7 @@ st_render_texture(struct gl_context *ctx,
       return;
 
    /* get pointer to texture image we're rendeing to */
-   texImage = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
+   texImage = _mesa_get_attachment_teximage(att);
 
    /* create new renderbuffer which wraps the texture image */
    rb = st_new_renderbuffer(ctx, 0);
@@ -471,8 +471,7 @@ st_validate_attachment(struct gl_context *ctx,
       return GL_FALSE;
 
    format = stObj->pt->format;
-   texFormat =
-      stObj->base.Image[att->CubeMapFace][att->TextureLevel]->TexFormat;
+   texFormat = _mesa_get_attachment_teximage_const(att)->TexFormat;
 
    /* If the encoding is sRGB and sRGB rendering cannot be enabled,
     * check for linear format support instead.

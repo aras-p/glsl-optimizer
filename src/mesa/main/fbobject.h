@@ -26,6 +26,7 @@
 #ifndef FBOBJECT_H
 #define FBOBJECT_H
 
+#include "compiler.h"
 #include "glheader.h"
 
 struct gl_context;
@@ -46,6 +47,24 @@ _mesa_lookup_framebuffer(struct gl_context *ctx, GLuint id);
 extern struct gl_renderbuffer_attachment *
 _mesa_get_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
                      GLenum attachment);
+
+
+/** Return the texture image for a renderbuffer attachment */
+static INLINE struct gl_texture_image *
+_mesa_get_attachment_teximage(struct gl_renderbuffer_attachment *att)
+{
+   assert(att->Type == GL_TEXTURE);
+   return att->Texture->Image[att->CubeMapFace][att->TextureLevel];
+}
+
+
+/** Return the (const) texture image for a renderbuffer attachment */
+static INLINE const struct gl_texture_image *
+_mesa_get_attachment_teximage_const(const struct gl_renderbuffer_attachment *att)
+{
+   assert(att->Type == GL_TEXTURE);
+   return att->Texture->Image[att->CubeMapFace][att->TextureLevel];
+}
 
 
 extern void
