@@ -453,7 +453,8 @@ void trace_dump_sampler_state(const struct pipe_sampler_state *state)
 }
 
 
-void trace_dump_sampler_view_template(const struct pipe_sampler_view *state)
+void trace_dump_sampler_view_template(const struct pipe_sampler_view *state,
+                                      enum pipe_texture_target target)
 {
    if (!trace_dumping_enabled_locked())
       return;
@@ -466,13 +467,29 @@ void trace_dump_sampler_view_template(const struct pipe_sampler_view *state)
    trace_dump_struct_begin("pipe_sampler_view");
 
    trace_dump_member(format, state, format);
-   /* XXX */
-   trace_dump_member(uint, state, u.tex.first_level);
-   trace_dump_member(uint, state, u.tex.last_level);
-   trace_dump_member(uint, state, u.tex.first_layer);
-   trace_dump_member(uint, state, u.tex.last_layer);
-   trace_dump_member(uint, state, u.buf.first_element);
-   trace_dump_member(uint, state, u.buf.last_element);
+
+   trace_dump_member_begin("u");
+   trace_dump_struct_begin(""); /* anonymous */
+   if (target == PIPE_BUFFER) {
+      trace_dump_member_begin("buf");
+      trace_dump_struct_begin(""); /* anonymous */
+      trace_dump_member(uint, &state->u.buf, first_element);
+      trace_dump_member(uint, &state->u.buf, last_element);
+      trace_dump_struct_end(); /* anonymous */
+      trace_dump_member_end(); /* buf */
+   } else {
+      trace_dump_member_begin("tex");
+      trace_dump_struct_begin(""); /* anonymous */
+      trace_dump_member(uint, &state->u.tex, first_layer);
+      trace_dump_member(uint, &state->u.tex, last_layer);
+      trace_dump_member(uint, &state->u.tex, first_level);
+      trace_dump_member(uint, &state->u.tex, last_level);
+      trace_dump_struct_end(); /* anonymous */
+      trace_dump_member_end(); /* tex */
+   }
+   trace_dump_struct_end(); /* anonymous */
+   trace_dump_member_end(); /* u */
+
    trace_dump_member(uint, state, swizzle_r);
    trace_dump_member(uint, state, swizzle_g);
    trace_dump_member(uint, state, swizzle_b);
@@ -482,7 +499,8 @@ void trace_dump_sampler_view_template(const struct pipe_sampler_view *state)
 }
 
 
-void trace_dump_surface(const struct pipe_surface *state)
+void trace_dump_surface_template(const struct pipe_surface *state,
+                                 enum pipe_texture_target target)
 {
    if (!trace_dumping_enabled_locked())
       return;
@@ -500,12 +518,26 @@ void trace_dump_surface(const struct pipe_surface *state)
 
    trace_dump_member(uint, state, usage);
 
-   trace_dump_member(ptr, state, texture);
-   trace_dump_member(uint, state, u.tex.level);
-   trace_dump_member(uint, state, u.tex.first_layer);
-   trace_dump_member(uint, state, u.tex.last_layer);
-   trace_dump_member(uint, state, u.buf.first_element);
-   trace_dump_member(uint, state, u.buf.last_element);
+   trace_dump_member_begin("u");
+   trace_dump_struct_begin(""); /* anonymous */
+   if (target == PIPE_BUFFER) {
+      trace_dump_member_begin("buf");
+      trace_dump_struct_begin(""); /* anonymous */
+      trace_dump_member(uint, &state->u.buf, first_element);
+      trace_dump_member(uint, &state->u.buf, last_element);
+      trace_dump_struct_end(); /* anonymous */
+      trace_dump_member_end(); /* buf */
+   } else {
+      trace_dump_member_begin("tex");
+      trace_dump_struct_begin(""); /* anonymous */
+      trace_dump_member(uint, &state->u.tex, level);
+      trace_dump_member(uint, &state->u.tex, first_layer);
+      trace_dump_member(uint, &state->u.tex, last_layer);
+      trace_dump_struct_end(); /* anonymous */
+      trace_dump_member_end(); /* tex */
+   }
+   trace_dump_struct_end(); /* anonymous */
+   trace_dump_member_end(); /* u */
 
    trace_dump_struct_end();
 }

@@ -117,7 +117,7 @@ trace_screen_get_shader_param(struct pipe_screen *_screen, unsigned shader,
    trace_dump_call_begin("pipe_screen", "get_shader_param");
 
    trace_dump_arg(ptr, screen);
-   trace_dump_arg(int, shader);
+   trace_dump_arg(uint, shader);
    trace_dump_arg(int, param);
 
    result = screen->get_shader_param(screen, shader, param);
@@ -282,40 +282,40 @@ trace_screen_resource_from_handle(struct pipe_screen *_screen,
 
 static boolean
 trace_screen_resource_get_handle(struct pipe_screen *_screen,
-                                struct pipe_resource *_texture,
+                                struct pipe_resource *_resource,
                                 struct winsys_handle *handle)
 {
    struct trace_screen *tr_screen = trace_screen(_screen);
-   struct trace_resource *tr_texture = trace_resource(_texture);
+   struct trace_resource *tr_resource = trace_resource(_resource);
    struct pipe_screen *screen = tr_screen->screen;
-   struct pipe_resource *texture = tr_texture->resource;
+   struct pipe_resource *resource = tr_resource->resource;
 
    /* TODO trace call */
 
-   return screen->resource_get_handle(screen, texture, handle);
+   return screen->resource_get_handle(screen, resource, handle);
 }
 
 
 
 static void
 trace_screen_resource_destroy(struct pipe_screen *_screen,
-			      struct pipe_resource *_texture)
+			      struct pipe_resource *_resource)
 {
    struct trace_screen *tr_scr = trace_screen(_screen);
-   struct trace_resource *tr_tex = trace_resource(_texture);
+   struct trace_resource *tr_res = trace_resource(_resource);
    struct pipe_screen *screen = tr_scr->screen;
-   struct pipe_resource *texture = tr_tex->resource;
+   struct pipe_resource *resource = tr_res->resource;
 
-   assert(texture->screen == screen);
+   assert(resource->screen == screen);
 
-   trace_dump_call_begin("pipe_screen", "texture_destroy");
+   trace_dump_call_begin("pipe_screen", "resource_destroy");
 
    trace_dump_arg(ptr, screen);
-   trace_dump_arg(ptr, texture);
+   trace_dump_arg(ptr, resource);
 
    trace_dump_call_end();
 
-   trace_resource_destroy(tr_scr, tr_tex);
+   trace_resource_destroy(tr_scr, tr_res);
 }
 
 

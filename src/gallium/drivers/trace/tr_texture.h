@@ -122,10 +122,10 @@ trace_resource_create(struct trace_screen *tr_scr,
 
 void
 trace_resource_destroy(struct trace_screen *tr_scr,
-		       struct trace_resource *tr_tex);
+		       struct trace_resource *tr_res);
 
 struct pipe_surface *
-trace_surf_create(struct trace_resource *tr_tex,
+trace_surf_create(struct trace_resource *tr_res,
                      struct pipe_surface *surface);
 
 void
@@ -133,7 +133,7 @@ trace_surf_destroy(struct trace_surface *tr_surf);
 
 struct pipe_transfer *
 trace_transfer_create(struct trace_context *tr_ctx,
-		      struct trace_resource *tr_tex,
+		      struct trace_resource *tr_res,
 		      struct pipe_transfer *transfer);
 
 void
