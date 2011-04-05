@@ -650,8 +650,13 @@ static uint32_t r300_get_border_color(enum pipe_format format,
     if (util_format_is_compressed(format)) {
         switch (format) {
         case PIPE_FORMAT_RGTC1_SNORM:
-        case PIPE_FORMAT_RGTC1_UNORM:
         case PIPE_FORMAT_LATC1_SNORM:
+            border_swizzled[0] = border_swizzled[0] < 0 ?
+                                 border_swizzled[0]*0.5+1 :
+                                 border_swizzled[0]*0.5;
+            /* Pass through. */
+
+        case PIPE_FORMAT_RGTC1_UNORM:
         case PIPE_FORMAT_LATC1_UNORM:
             /* Add 1/32 to round the border color instead of truncating. */
             /* The Y component is used for the border color. */

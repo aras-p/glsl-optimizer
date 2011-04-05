@@ -22,6 +22,7 @@
  * OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
+#include "util/u_format.h"
 #include "util/u_math.h"
 #include "util/u_memory.h"
 
@@ -34,6 +35,7 @@
 #include "r300_screen.h"
 #include "r300_fs.h"
 #include "r300_reg.h"
+#include "r300_texture.h"
 #include "r300_tgsi_to_rc.h"
 
 #include "radeon_code.h"
@@ -148,7 +150,6 @@ static void get_external_state(
     struct r300_textures_state *texstate = r300->textures_state.state;
     struct r300_rs_state *rs = r300->rs_state.state;
     unsigned i;
-    unsigned char *swizzle;
 
     state->frag_clamp = rs ? rs->rs.clamp_fragment_color : 0;
 
@@ -161,27 +162,37 @@ static void get_external_state(
             continue;
         }
 
-        t = r300_resource(texstate->sampler_views[i]->base.texture);
+        t = r300_resource(v->base.texture);
 
         if (s->state.compare_mode == PIPE_TEX_COMPARE_R_TO_TEXTURE) {
             state->unit[i].compare_mode_enabled = 1;
-
-            /* Pass depth texture swizzling to the compiler. */
-            if (texstate->sampler_views[i]) {
-                swizzle = texstate->sampler_views[i]->swizzle;
-
-                state->unit[i].depth_texture_swizzle =
-                    RC_MAKE_SWIZZLE(swizzle[0], swizzle[1],
-                                    swizzle[2], swizzle[3]);
-            } else {
-                state->unit[i].depth_texture_swizzle = RC_SWIZZLE_XYZW;
-            }
 
             /* Fortunately, no need to translate this. */
             state->unit[i].texture_compare_func = s->state.compare_func;
         }
 
         state->unit[i].non_normalized_coords = !s->state.normalized_coords;
+        state->unit[i].convert_unorm_to_snorm =
+                v->base.format == PIPE_FORMAT_RGTC1_SNORM ||
+                v->base.format == PIPE_FORMAT_LATC1_SNORM;
+
+        /* Pass texture swizzling to the compiler, some lowering passes need it. */
+        if (v->base.format == PIPE_FORMAT_RGTC1_SNORM ||
+            v->base.format == PIPE_FORMAT_LATC1_SNORM) {
+            unsigned char swizzle[4];
+
+            util_format_combine_swizzles(swizzle,
+                            util_format_description(v->base.format)->swizzle,
+                            v->swizzle);
+
+            state->unit[i].texture_swizzle =
+                    RC_MAKE_SWIZZLE(swizzle[0], swizzle[1],
+                                    swizzle[2], swizzle[3]);
+        } else if (state->unit[i].compare_mode_enabled) {
+            state->unit[i].texture_swizzle =
+                RC_MAKE_SWIZZLE(v->swizzle[0], v->swizzle[1],
+                                v->swizzle[2], v->swizzle[3]);
+        }
 
         /* XXX this should probably take into account STR, not just S. */
         if (t->tex.is_npot) {

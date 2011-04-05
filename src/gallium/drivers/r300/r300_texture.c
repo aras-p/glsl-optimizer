@@ -39,6 +39,18 @@
 
 #include "pipe/p_screen.h"
 
+void util_format_combine_swizzles(unsigned char *dst,
+                                  const unsigned char *swz1,
+                                  const unsigned char *swz2)
+{
+    unsigned i;
+
+    for (i = 0; i < 4; i++) {
+        dst[i] = swz2[i] <= UTIL_FORMAT_SWIZZLE_W ?
+                 swz1[swz2[i]] : swz2[i];
+    }
+}
+
 unsigned r300_get_swizzle_combined(const unsigned char *swizzle_format,
                                    const unsigned char *swizzle_view,
                                    boolean dxtc_swizzle)
@@ -61,10 +73,7 @@ unsigned r300_get_swizzle_combined(const unsigned char *swizzle_format,
 
     if (swizzle_view) {
         /* Combine two sets of swizzles. */
-        for (i = 0; i < 4; i++) {
-            swizzle[i] = swizzle_view[i] <= UTIL_FORMAT_SWIZZLE_W ?
-                         swizzle_format[swizzle_view[i]] : swizzle_view[i];
-        }
+        util_format_combine_swizzles(swizzle, swizzle_format, swizzle_view);
     } else {
         memcpy(swizzle, swizzle_format, 4);
     }
@@ -171,17 +180,22 @@ uint32_t r300_translate_texformat(enum pipe_format format,
             }
     }
 
-    if (util_format_is_compressed(format) &&
-        dxtc_swizzle &&
-        format != PIPE_FORMAT_RGTC2_UNORM &&
-        format != PIPE_FORMAT_RGTC2_SNORM &&
-        format != PIPE_FORMAT_LATC2_UNORM &&
-        format != PIPE_FORMAT_LATC2_SNORM) {
-        result |= r300_get_swizzle_combined(desc->swizzle, swizzle_view,
-                                            TRUE);
-    } else {
-        result |= r300_get_swizzle_combined(desc->swizzle, swizzle_view,
-                                            FALSE);
+    /* Add swizzling. */
+    /* The RGTC1_SNORM and LATC1_SNORM swizzle is done in the shader. */
+    if (format != PIPE_FORMAT_RGTC1_SNORM &&
+        format != PIPE_FORMAT_LATC1_SNORM) {
+        if (util_format_is_compressed(format) &&
+            dxtc_swizzle &&
+            format != PIPE_FORMAT_RGTC2_UNORM &&
+            format != PIPE_FORMAT_RGTC2_SNORM &&
+            format != PIPE_FORMAT_LATC2_UNORM &&
+            format != PIPE_FORMAT_LATC2_SNORM) {
+            result |= r300_get_swizzle_combined(desc->swizzle, swizzle_view,
+                                                TRUE);
+        } else {
+            result |= r300_get_swizzle_combined(desc->swizzle, swizzle_view,
+                                                FALSE);
+        }
     }
 
     /* S3TC formats. */
@@ -212,7 +226,6 @@ uint32_t r300_translate_texformat(enum pipe_format format,
         switch (format) {
             case PIPE_FORMAT_RGTC1_SNORM:
             case PIPE_FORMAT_LATC1_SNORM:
-                result |= sign_bit[2];
             case PIPE_FORMAT_LATC1_UNORM:
             case PIPE_FORMAT_RGTC1_UNORM:
                 return R500_TX_FORMAT_ATI1N | result;
