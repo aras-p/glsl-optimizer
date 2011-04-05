@@ -146,8 +146,6 @@ dst_reg::dst_reg(src_reg reg)
    this->reladdr = reg.reladdr;
 }
 
-extern src_reg ir_to_mesa_undef;
-
 class ir_to_mesa_instruction : public exec_node {
 public:
    /* Callers of this ralloc-based new need not call delete. It's
@@ -327,11 +325,11 @@ public:
    void *mem_ctx;
 };
 
-src_reg ir_to_mesa_undef = src_reg(PROGRAM_UNDEFINED, 0, NULL);
+src_reg undef_src = src_reg(PROGRAM_UNDEFINED, 0, NULL);
 
-dst_reg ir_to_mesa_undef_dst = dst_reg(PROGRAM_UNDEFINED, SWIZZLE_NOOP);
+dst_reg undef_dst = dst_reg(PROGRAM_UNDEFINED, SWIZZLE_NOOP);
 
-dst_reg ir_to_mesa_address_reg = dst_reg(PROGRAM_ADDRESS, WRITEMASK_X);
+dst_reg address_reg = dst_reg(PROGRAM_ADDRESS, WRITEMASK_X);
 
 static void
 fail_link(struct gl_shader_program *prog, const char *fmt, ...) PRINTFLIKE(2, 3);
@@ -383,7 +381,7 @@ ir_to_mesa_visitor::emit(ir_instruction *ir, enum prog_opcode op,
    reladdr_to_temp(ir, &src0, &num_reladdr);
 
    if (dst.reladdr) {
-      emit(ir, OPCODE_ARL, ir_to_mesa_address_reg, *dst.reladdr);
+      emit(ir, OPCODE_ARL, address_reg, *dst.reladdr);
       num_reladdr--;
    }
    assert(num_reladdr == 0);
@@ -407,7 +405,7 @@ ir_to_mesa_instruction *
 ir_to_mesa_visitor::emit(ir_instruction *ir, enum prog_opcode op,
 			 dst_reg dst, src_reg src0, src_reg src1)
 {
-   return emit(ir, op, dst, src0, src1, ir_to_mesa_undef);
+   return emit(ir, op, dst, src0, src1, undef_src);
 }
 
 ir_to_mesa_instruction *
@@ -415,14 +413,13 @@ ir_to_mesa_visitor::emit(ir_instruction *ir, enum prog_opcode op,
 			 dst_reg dst, src_reg src0)
 {
    assert(dst.writemask != 0);
-   return emit(ir, op, dst, src0, ir_to_mesa_undef, ir_to_mesa_undef);
+   return emit(ir, op, dst, src0, undef_src, undef_src);
 }
 
 ir_to_mesa_instruction *
 ir_to_mesa_visitor::emit(ir_instruction *ir, enum prog_opcode op)
 {
-   return emit(ir, op, ir_to_mesa_undef_dst,
-	       ir_to_mesa_undef, ir_to_mesa_undef, ir_to_mesa_undef);
+   return emit(ir, op, undef_dst, undef_src, undef_src, undef_src);
 }
 
 void
@@ -494,7 +491,7 @@ void
 ir_to_mesa_visitor::emit_scalar(ir_instruction *ir, enum prog_opcode op,
 			        dst_reg dst, src_reg src0)
 {
-   src_reg undef = ir_to_mesa_undef;
+   src_reg undef = undef_src;
 
    undef.swizzle = SWIZZLE_XXXX;
 
@@ -754,7 +751,7 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 	 storage = new(mem_ctx) variable_storage(ir, PROGRAM_STATE_VAR, -1);
 	 this->variables.push_tail(storage);
 
-	 dst = ir_to_mesa_undef_dst;
+	 dst = undef_dst;
       } else {
 	 /* The variable_storage constructor allocates slots based on the size
 	  * of the type.  However, this had better match the number of state
@@ -950,7 +947,7 @@ ir_to_mesa_visitor::reladdr_to_temp(ir_instruction *ir,
    if (!reg->reladdr)
       return;
 
-   emit(ir, OPCODE_ARL, ir_to_mesa_address_reg, *reg->reladdr);
+   emit(ir, OPCODE_ARL, address_reg, *reg->reladdr);
 
    if (*num_reladdr != 1) {
       src_reg temp = get_temp(glsl_type::vec4_type);
@@ -1880,7 +1877,7 @@ ir_to_mesa_visitor::get_function_signature(ir_function_signature *sig)
    if (!sig->return_type->is_void()) {
       entry->return_reg = get_temp(sig->return_type);
    } else {
-      entry->return_reg = ir_to_mesa_undef;
+      entry->return_reg = undef_src;
    }
 
    this->function_signatures.push_tail(entry);
@@ -2155,7 +2152,7 @@ ir_to_mesa_visitor::visit(ir_discard *ir)
    if (ir->condition) {
       ir->condition->accept(this);
       this->result.negate = ~this->result.negate;
-      emit(ir, OPCODE_KIL, ir_to_mesa_undef_dst, this->result);
+      emit(ir, OPCODE_KIL, undef_dst, this->result);
    } else {
       emit(ir, OPCODE_KIL_NV);
    }
@@ -2190,8 +2187,7 @@ ir_to_mesa_visitor::visit(ir_if *ir)
       if_inst = emit(ir->condition, OPCODE_IF);
       if_inst->dst.cond_mask = COND_NE;
    } else {
-      if_inst = emit(ir->condition, OPCODE_IF, ir_to_mesa_undef_dst,
-		     this->result);
+      if_inst = emit(ir->condition, OPCODE_IF, undef_dst, this->result);
    }
 
    this->instructions.push_tail(if_inst);
