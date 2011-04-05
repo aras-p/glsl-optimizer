@@ -273,6 +273,7 @@ static void ei_mad(struct r300_vertex_program_code *vp,
 				      struct rc_sub_instruction *vpi,
 				      unsigned int * inst)
 {
+	unsigned int i;
 	/* Remarks about hardware limitations of MAD
 	 * (please preserve this comment, as this information is _NOT_
 	 * in the documentation provided by AMD).
@@ -318,6 +319,23 @@ static void ei_mad(struct r300_vertex_program_code *vp,
 				t_dst_index(vp, &vpi->DstReg),
 				t_dst_mask(vpi->DstReg.WriteMask),
 				t_dst_class(vpi->DstReg.File));
+
+		/* Arguments with constant swizzles still count as a unique
+		 * temporary, so we should make sure these arguments share a
+		 * register index with one of the other arguments. */
+		for (i = 0; i < 3; i++) {
+			unsigned int j;
+			if (vpi->SrcReg[i].File != RC_FILE_NONE)
+				continue;
+
+			for (j = 0; j < 3; j++) {
+				if (i != j) {
+					vpi->SrcReg[i].Index =
+						vpi->SrcReg[j].Index;
+					break;
+				}
+			}
+		}
 	}
 	inst[1] = t_src(vp, &vpi->SrcReg[0]);
 	inst[2] = t_src(vp, &vpi->SrcReg[1]);
