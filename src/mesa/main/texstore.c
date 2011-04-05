@@ -3182,7 +3182,7 @@ _mesa_texstore_signed_rgbx8888(TEXSTORE_PARAMS)
                dst[3] = FLOAT_TO_BYTE_TEX(srcRow[RCOMP]);
                dst[2] = FLOAT_TO_BYTE_TEX(srcRow[GCOMP]);
                dst[1] = FLOAT_TO_BYTE_TEX(srcRow[BCOMP]);
-               dst[0] = 0xff;
+               dst[0] = 127;
                srcRow += 3;
                dst += 4;
             }
