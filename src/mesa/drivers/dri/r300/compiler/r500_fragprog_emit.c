@@ -197,11 +197,14 @@ static void use_temporary(struct r500_fragment_program_code* code, unsigned int 
 
 static unsigned int use_source(struct r500_fragment_program_code* code, struct rc_pair_instruction_source src)
 {
+	/* From docs:
+	 *   Note that inline constants set the MSB of ADDR0 and clear ADDR0_CONST.
+	 * MSB = 1 << 7 */
 	if (!src.Used)
-		return 0;
+		return 1 << 7;
 
 	if (src.File == RC_FILE_CONSTANT) {
-		return src.Index | 0x100;
+		return src.Index | R500_RGB_ADDR0_CONST;
 	} else if (src.File == RC_FILE_TEMPORARY) {
 		use_temporary(code, src.Index);
 		return src.Index;
