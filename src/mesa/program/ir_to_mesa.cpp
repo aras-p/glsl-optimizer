@@ -67,9 +67,9 @@ static int swizzle_for_size(int size);
  */
 class src_reg {
 public:
-   src_reg(int file, int index, const glsl_type *type)
+   src_reg(gl_register_file file, int index, const glsl_type *type)
    {
-      this->file = (gl_register_file) file;
+      this->file = file;
       this->index = index;
       if (type && (type->is_scalar() || type->is_vector() || type->is_matrix()))
 	 this->swizzle = swizzle_for_size(type->vector_elements);
@@ -100,7 +100,7 @@ public:
 
 class dst_reg {
 public:
-   dst_reg(int file, int writemask)
+   dst_reg(gl_register_file file, int writemask)
    {
       this->file = file;
       this->index = 0;
@@ -120,7 +120,7 @@ public:
 
    explicit dst_reg(src_reg reg);
 
-   int file; /**< PROGRAM_* from Mesa */
+   gl_register_file file; /**< PROGRAM_* from Mesa */
    int index; /**< temporary index, VERT_ATTRIB_*, FRAG_ATTRIB_*, etc. */
    int writemask; /**< Bitfield of WRITEMASK_[XYZW] */
    GLuint cond_mask:4;
@@ -130,7 +130,7 @@ public:
 
 src_reg::src_reg(dst_reg reg)
 {
-   this->file = (gl_register_file) reg.file;
+   this->file = reg.file;
    this->index = reg.index;
    this->swizzle = SWIZZLE_XYZW;
    this->negate = 0;
