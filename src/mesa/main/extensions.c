@@ -908,7 +908,7 @@ _mesa_make_extension_string(struct gl_context *ctx)
       return NULL;
    }
 
-   extension_indices = malloc(count * sizeof extension_indices);
+   extension_indices = malloc(count * sizeof(extension_index));
    if (extension_indices == NULL) {
       free(exts);
       free(extra_extensions);
