@@ -82,6 +82,7 @@ API_XML = \
 	ARB_map_buffer_range.xml \
 	ARB_seamless_cube_map.xml \
 	ARB_sync.xml \
+	ARB_texture_buffer_object.xml \
 	ARB_vertex_array_object.xml \
 	APPLE_object_purgeable.xml \
 	APPLE_vertex_array_object.xml \
