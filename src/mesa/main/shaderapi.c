@@ -1029,6 +1029,7 @@ static GLboolean
 validate_samplers(const struct gl_program *prog, char *errMsg)
 {
    static const char *targetName[] = {
+      "TEXTURE_BUFFER",
       "TEXTURE_2D_ARRAY",
       "TEXTURE_1D_ARRAY",
       "TEXTURE_CUBE",
