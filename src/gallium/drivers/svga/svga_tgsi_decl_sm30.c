@@ -123,6 +123,12 @@ static boolean ps30_input( struct svga_shader_emitter *emit,
    if (semantic.Name == TGSI_SEMANTIC_POSITION) {
       emit->ps_true_pos = src_register( SVGA3DREG_MISCTYPE,
                                         SVGA3DMISCREG_POSITION );
+
+      emit->ps_true_pos.base.swizzle = TRANSLATE_SWIZZLE( TGSI_SWIZZLE_X,
+                                                          TGSI_SWIZZLE_Y,
+                                                          TGSI_SWIZZLE_Y,
+                                                          TGSI_SWIZZLE_Y );
+
       emit->ps_temp_pos = dst_register( SVGA3DREG_TEMP,
                                         emit->nr_hw_temp );
       emit->ps_depth_pos = src_register( SVGA3DREG_INPUT, emit->ps30_input_count++ );
@@ -132,7 +138,7 @@ static boolean ps30_input( struct svga_shader_emitter *emit,
       emit->nr_hw_temp++;
 
       reg = writemask( dst(emit->ps_true_pos),
-                       TGSI_WRITEMASK_XYZW );
+                       TGSI_WRITEMASK_XY );
 
       emit->ps_reads_pos = TRUE;
       if (!emit_decl( emit, dst(emit->ps_depth_pos),
