@@ -183,7 +183,7 @@ static void add_debug_flags( const char *debug )
 
    MESA_VERBOSE = 0x0;
    for (i = 0; i < Elements(debug_opt); i++) {
-      if (strstr(debug, debug_opt[i].name))
+      if (strstr(debug, debug_opt[i].name) || strcmp(debug, "all") == 0)
          MESA_VERBOSE |= debug_opt[i].flag;
    }
 
