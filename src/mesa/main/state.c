@@ -48,6 +48,7 @@
 #include "texenvprogram.h"
 #include "texobj.h"
 #include "texstate.h"
+#include "varray.h"
 
 
 static void
@@ -61,43 +62,13 @@ update_separate_specular(struct gl_context *ctx)
 
 
 /**
- * Compute the index of the last array element that can be safely accessed
- * in a vertex array.  We can really only do this when the array lives in
- * a VBO.
- * The array->_MaxElement field will be updated.
- * Later in glDrawArrays/Elements/etc we can do some bounds checking.
- */
-static void
-compute_max_element(struct gl_client_array *array)
-{
-   assert(array->Enabled);
-   if (array->BufferObj->Name) {
-      GLsizeiptrARB offset = (GLsizeiptrARB) array->Ptr;
-      GLsizeiptrARB obj_size = (GLsizeiptrARB) array->BufferObj->Size;
-
-      if (offset < obj_size) {
-	 array->_MaxElement = (obj_size - offset +
-			       array->StrideB -
-			       array->_ElementSize) / array->StrideB;
-      } else {
-	 array->_MaxElement = 0;
-      }
-   }
-   else {
-      /* user-space array, no idea how big it is */
-      array->_MaxElement = 2 * 1000 * 1000 * 1000; /* just a big number */
-   }
-}
-
-
-/**
  * Helper for update_arrays().
  * \return  min(current min, array->_MaxElement).
  */
 static GLuint
 update_min(GLuint min, struct gl_client_array *array)
 {
-   compute_max_element(array);
+   _mesa_update_array_max_element(array);
    return MIN2(min, array->_MaxElement);
 }
 
