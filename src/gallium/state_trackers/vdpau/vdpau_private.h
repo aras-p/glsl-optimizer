@@ -171,6 +171,7 @@ typedef struct
    Display *display;
    int screen;
    struct vl_screen *vscreen;
+   struct vl_context *context;
 } vlVdpDevice;
 
 typedef struct
@@ -193,13 +194,7 @@ typedef struct
 typedef struct
 {
    vlVdpDevice *device;
-   enum pipe_video_chroma_format chroma_format;
-   uint32_t width;
-   uint32_t height;
-
-   //uint32_t pitch;
-   //struct pipe_surface *psurface;
-   //uint8_t *data;
+   struct pipe_video_buffer *video_buffer;
 } vlVdpSurface;
 
 typedef struct

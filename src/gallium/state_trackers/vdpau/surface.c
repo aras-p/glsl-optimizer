@@ -1,6 +1,7 @@
 /**************************************************************************
  *
  * Copyright 2010 Thomas Balling Sørensen.
+ * Copyright 2011 Christian König.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,21 +26,25 @@
  *
  **************************************************************************/
 
-#include "vdpau_private.h"
-#include <pipe/p_screen.h>
+#include <assert.h>
+
+#include <pipe/p_video_context.h>
 #include <pipe/p_state.h>
+
 #include <util/u_memory.h>
-#include <util/u_format.h>
+#include <util/u_debug.h>
+
+#include "vdpau_private.h"
 
 VdpStatus
 vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
                         uint32_t width, uint32_t height,
                         VdpVideoSurface *surface)
 {
-   printf("[VDPAU] Creating a surface\n");
-
    vlVdpSurface *p_surf;
    VdpStatus ret;
+
+   _debug_printf("[VDPAU] Creating a surface\n");
 
    if (!(width && height)) {
       ret = VDP_STATUS_INVALID_SIZE;
@@ -63,10 +68,11 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
       goto inv_device;
    }
 
-   p_surf->chroma_format = ChromaToPipe(chroma_type);
    p_surf->device = dev;
-   p_surf->width = width;
-   p_surf->height = height;
+   p_surf->video_buffer = dev->context->vpipe->create_buffer(dev->context->vpipe,
+                                                             PIPE_FORMAT_YV12, // most common used
+                                                             ChromaToPipe(chroma_type),
+                                                             width, height);
 
    *surface = vlAddDataHTAB(p_surf);
    if (*surface == 0) {
@@ -77,12 +83,12 @@ vlVdpVideoSurfaceCreate(VdpDevice device, VdpChromaType chroma_type,
    return VDP_STATUS_OK;
 
 no_handle:
-   //FREE(p_surf->psurface);
+   p_surf->video_buffer->destroy(p_surf->video_buffer);
+
 inv_device:
-no_surf:
    FREE(p_surf);
+
 no_res:
-   // vlDestroyHTAB(); XXX: Do not destroy this tab, I think.
 no_htab:
 inv_size:
    return ret;
@@ -97,12 +103,9 @@ vlVdpVideoSurfaceDestroy(VdpVideoSurface surface)
    if (!p_surf)
       return VDP_STATUS_INVALID_HANDLE;
 
-   //if (p_surf->psurface) {
-   //   if (p_surf->psurface->texture) {
-   //      if (p_surf->psurface->texture->screen)
-   //         p_surf->psurface->context->surface_destroy(p_surf->psurface->context, p_surf->psurface);
-   //   }
-   //}
+   if (p_surf->video_buffer)
+      p_surf->video_buffer->destroy(p_surf->video_buffer);
+
    FREE(p_surf);
    return VDP_STATUS_OK;
 }
@@ -119,12 +122,9 @@ vlVdpVideoSurfaceGetParameters(VdpVideoSurface surface,
    if (!p_surf)
       return VDP_STATUS_INVALID_HANDLE;
 
-   if (!(p_surf->chroma_format > 0 && p_surf->chroma_format < 3))
-      return VDP_STATUS_INVALID_CHROMA_TYPE;
-
-   *width = p_surf->width;
-   *height = p_surf->height;
-   *chroma_type = PipeToChroma(p_surf->chroma_format);
+   *width = p_surf->video_buffer->width;
+   *height = p_surf->video_buffer->height;
+   *chroma_type = PipeToChroma(p_surf->video_buffer->chroma_format);
 
    return VDP_STATUS_OK;
 }
@@ -145,7 +145,8 @@ vlVdpVideoSurfaceGetBitsYCbCr(VdpVideoSurface surface,
    //if (!p_surf->psurface)
    //   return VDP_STATUS_RESOURCES;
 
-   return VDP_STATUS_OK;
+   //return VDP_STATUS_OK;
+   return VDP_STATUS_NO_IMPLEMENTATION;
 }
 
 VdpStatus
@@ -154,9 +155,10 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
                               void const *const *source_data,
                               uint32_t const *source_pitches)
 {
-   uint32_t size_surface_bytes;
-   const struct util_format_description *format_desc;
    enum pipe_format pformat = FormatToPipe(source_ycbcr_format);
+   struct pipe_video_context *context;
+   struct pipe_sampler_view **sampler_views;
+   unsigned i;
 
    if (!vlCreateHTAB())
       return VDP_STATUS_RESOURCES;
@@ -165,14 +167,24 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
    if (!p_surf)
       return VDP_STATUS_INVALID_HANDLE;
 
-   //size_surface_bytes = ( source_pitches[0] * p_surf->height util_format_get_blockheight(pformat) );
-   /*util_format_translate(enum pipe_format dst_format,
-   void *dst, unsigned dst_stride,
-   unsigned dst_x, unsigned dst_y,
-   enum pipe_format src_format,
-   const void *src, unsigned src_stride,
-   unsigned src_x, unsigned src_y,
-   unsigned width, unsigned height);*/
+   context = p_surf->device->context->vpipe;
+   if (!context)
+      return VDP_STATUS_INVALID_HANDLE;
 
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   if (p_surf->video_buffer == NULL || pformat != p_surf->video_buffer->buffer_format) {
+      assert(0); // TODO Recreate resource
+      return VDP_STATUS_NO_IMPLEMENTATION;
+   }
+
+   sampler_views = p_surf->video_buffer->get_sampler_views(p_surf->video_buffer);
+   if (!sampler_views)
+      return VDP_STATUS_RESOURCES;
+
+   for (i = 0; i < 3; ++i) { //TODO put nr of planes into util format
+      struct pipe_sampler_view *sv = sampler_views[i];
+      struct pipe_box dst_box = { 0, 0, sv->texture->width0, sv->texture->height0 };
+      context->upload_sampler(context, sv, &dst_box, source_data[i], source_pitches[i], 0, 0);
+   }
+
+   return VDP_STATUS_OK;
 }

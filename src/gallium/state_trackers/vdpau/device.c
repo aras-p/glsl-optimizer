@@ -61,6 +61,12 @@ vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device,
       goto no_vscreen;
    }
 
+   dev->context = vl_video_create(dev->vscreen);
+   if (!dev->context) {
+      ret = VDP_STATUS_RESOURCES;
+      goto no_context;
+   }
+
    *device = vlAddDataHTAB(dev);
    if (*device == 0) {
       ret = VDP_STATUS_ERROR;
@@ -74,6 +80,8 @@ vdp_imp_device_create_x11(Display *display, int screen, VdpDevice *device,
 
 no_handle:
    /* Destroy vscreen */
+no_context:
+   vl_screen_destroy(dev->vscreen);
 no_vscreen:
    FREE(dev);
 no_dev:
