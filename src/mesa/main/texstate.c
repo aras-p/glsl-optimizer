@@ -30,6 +30,7 @@
 
 #include "glheader.h"
 #include "mfeatures.h"
+#include "bufferobj.h"
 #include "colormac.h"
 #include "colortab.h"
 #include "context.h"
@@ -794,6 +795,10 @@ _mesa_init_texture(struct gl_context *ctx)
    if (!alloc_proxy_textures( ctx ))
       return GL_FALSE;
 
+   /* GL_ARB_texture_buffer_object */
+   _mesa_reference_buffer_object(ctx, &ctx->Texture.BufferObject,
+                                 ctx->Shared->NullBufferObj);
+
    return GL_TRUE;
 }
 
@@ -819,6 +824,9 @@ _mesa_free_texture_data(struct gl_context *ctx)
    /* Free proxy texture objects */
    for (tgt = 0; tgt < NUM_TEXTURE_TARGETS; tgt++)
       ctx->Driver.DeleteTexture(ctx, ctx->Texture.ProxyTex[tgt]);
+
+   /* GL_ARB_texture_buffer_object */
+   _mesa_reference_buffer_object(ctx, &ctx->Texture.BufferObject, NULL);
 }
 
 
