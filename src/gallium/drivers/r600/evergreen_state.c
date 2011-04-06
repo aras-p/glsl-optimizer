@@ -107,15 +107,18 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_028C3C_PA_SC_AA_MASK, 0xFFFFFFFF, 0xFFFFFFFF, NULL);
 
 	for (int i = 0; i < 8; i++) {
-		unsigned eqRGB = state->rt[i].rgb_func;
-		unsigned srcRGB = state->rt[i].rgb_src_factor;
-		unsigned dstRGB = state->rt[i].rgb_dst_factor;
-		unsigned eqA = state->rt[i].alpha_func;
-		unsigned srcA = state->rt[i].alpha_src_factor;
-		unsigned dstA = state->rt[i].alpha_dst_factor;
+		/* state->rt entries > 0 only written if independent blending */
+		const int j = state->independent_blend_enable ? i : 0;
+
+		unsigned eqRGB = state->rt[j].rgb_func;
+		unsigned srcRGB = state->rt[j].rgb_src_factor;
+		unsigned dstRGB = state->rt[j].rgb_dst_factor;
+		unsigned eqA = state->rt[j].alpha_func;
+		unsigned srcA = state->rt[j].alpha_src_factor;
+		unsigned dstA = state->rt[j].alpha_dst_factor;
 
 		blend_cntl[i] = 0;
-		if (!state->rt[i].blend_enable)
+		if (!state->rt[j].blend_enable)
 			continue;
 
 		blend_cntl[i] |= S_028780_BLEND_CONTROL_ENABLE(1);

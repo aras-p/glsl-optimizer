@@ -161,16 +161,19 @@ static void *r600_create_blend_state(struct pipe_context *ctx,
 				color_control, 0xFFFFFFFD, NULL);
 
 	for (int i = 0; i < 8; i++) {
-		unsigned eqRGB = state->rt[i].rgb_func;
-		unsigned srcRGB = state->rt[i].rgb_src_factor;
-		unsigned dstRGB = state->rt[i].rgb_dst_factor;
+		/* state->rt entries > 0 only written if independent blending */
+		const int j = state->independent_blend_enable ? i : 0;
 
-		unsigned eqA = state->rt[i].alpha_func;
-		unsigned srcA = state->rt[i].alpha_src_factor;
-		unsigned dstA = state->rt[i].alpha_dst_factor;
+		unsigned eqRGB = state->rt[j].rgb_func;
+		unsigned srcRGB = state->rt[j].rgb_src_factor;
+		unsigned dstRGB = state->rt[j].rgb_dst_factor;
+
+		unsigned eqA = state->rt[j].alpha_func;
+		unsigned srcA = state->rt[j].alpha_src_factor;
+		unsigned dstA = state->rt[j].alpha_dst_factor;
 		uint32_t bc = 0;
 
-		if (!state->rt[i].blend_enable)
+		if (!state->rt[j].blend_enable)
 			continue;
 
 		bc |= S_028804_COLOR_COMB_FCN(r600_translate_blend_function(eqRGB));
