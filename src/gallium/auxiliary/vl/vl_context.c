@@ -208,6 +208,7 @@ vl_context_create_buffer(struct pipe_video_context *context,
    };
 
    struct vl_context *ctx = (struct vl_context*)context;
+   struct pipe_video_buffer *result;
    unsigned buffer_width, buffer_height;
 
    assert(context);
@@ -217,11 +218,15 @@ vl_context_create_buffer(struct pipe_video_context *context,
    buffer_width = ctx->pot_buffers ? util_next_power_of_two(width) : width;
    buffer_height = ctx->pot_buffers ? util_next_power_of_two(height) : height;
 
-   return vl_video_buffer_init(context, ctx->pipe,
-                               buffer_width, buffer_height, 1,
-                               chroma_format, 3,
-                               resource_formats,
-                               PIPE_USAGE_STATIC);
+   result = vl_video_buffer_init(context, ctx->pipe,
+                                 buffer_width, buffer_height, 1,
+                                 chroma_format, 3,
+                                 resource_formats,
+                                 PIPE_USAGE_STATIC);
+   if (result) // TODO move format handling into vl_video_buffer
+      result->buffer_format = buffer_format;
+
+   return result;
 }
 
 static struct pipe_video_compositor *
