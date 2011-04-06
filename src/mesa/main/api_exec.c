@@ -726,6 +726,9 @@ _mesa_create_exec_table(void)
    /* GL_NV_texture_barrier */
    SET_TextureBarrierNV(exec, _mesa_TextureBarrierNV);
  
+   /* GL_ARB_texture_buffer_object */
+   SET_TexBufferARB(exec, _mesa_TexBuffer);
+
    return exec;
 }
 

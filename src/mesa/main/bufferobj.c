@@ -93,6 +93,11 @@ get_buffer_target(struct gl_context *ctx, GLenum target)
       }
       break;
 #endif
+   case GL_TEXTURE_BUFFER:
+      if (ctx->Extensions.ARB_texture_buffer_object) {
+         return &ctx->Texture.BufferObject;
+      }
+      break;
    default:
       return NULL;
    }

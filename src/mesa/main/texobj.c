@@ -29,6 +29,7 @@
 
 
 #include "mfeatures.h"
+#include "bufferobj.h"
 #include "colortab.h"
 #include "context.h"
 #include "enums.h"
@@ -105,7 +106,8 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
           target == GL_TEXTURE_CUBE_MAP_ARB ||
           target == GL_TEXTURE_RECTANGLE_NV ||
           target == GL_TEXTURE_1D_ARRAY_EXT ||
-          target == GL_TEXTURE_2D_ARRAY_EXT);
+          target == GL_TEXTURE_2D_ARRAY_EXT ||
+          target == GL_TEXTURE_BUFFER);
 
    memset(obj, 0, sizeof(*obj));
    /* init the non-zero fields */
@@ -204,6 +206,8 @@ _mesa_delete_texture_object(struct gl_context *ctx,
       }
    }
 
+   _mesa_reference_buffer_object(ctx, &texObj->BufferObject, NULL);
+
    /* destroy the mutex -- it may have allocated memory (eg on bsd) */
    _glthread_DESTROY_MUTEX(texObj->Mutex);
 
@@ -299,6 +303,7 @@ valid_texture_object(const struct gl_texture_object *tex)
    case GL_TEXTURE_RECTANGLE_NV:
    case GL_TEXTURE_1D_ARRAY_EXT:
    case GL_TEXTURE_2D_ARRAY_EXT:
+   case GL_TEXTURE_BUFFER:
       return GL_TRUE;
    case 0x99:
       _mesa_problem(NULL, "invalid reference to a deleted texture object");
@@ -989,6 +994,8 @@ target_enum_to_index(GLenum target)
       return TEXTURE_1D_ARRAY_INDEX;
    case GL_TEXTURE_2D_ARRAY_EXT:
       return TEXTURE_2D_ARRAY_INDEX;
+   case GL_TEXTURE_BUFFER_ARB:
+      return TEXTURE_BUFFER_INDEX;
    default:
       return -1;
    }

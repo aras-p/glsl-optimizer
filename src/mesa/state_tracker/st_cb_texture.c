@@ -87,6 +87,8 @@ gl_target_to_pipe(GLenum target)
       return PIPE_TEXTURE_1D_ARRAY;
    case GL_TEXTURE_2D_ARRAY_EXT:
       return PIPE_TEXTURE_2D_ARRAY;
+   case GL_TEXTURE_BUFFER:
+      return PIPE_BUFFER;
    default:
       assert(0);
       return 0;
@@ -245,6 +247,7 @@ get_texture_dims(GLenum target)
    switch (target) {
    case GL_TEXTURE_1D:
    case GL_TEXTURE_1D_ARRAY_EXT:
+   case GL_TEXTURE_BUFFER:
       return 1;
    case GL_TEXTURE_2D:
    case GL_TEXTURE_CUBE_MAP_ARB:
