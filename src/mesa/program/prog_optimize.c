@@ -74,6 +74,17 @@ get_src_arg_mask(const struct prog_instruction *inst,
       case OPCODE_MAD:
       case OPCODE_MUL:
       case OPCODE_SUB:
+      case OPCODE_CMP:
+      case OPCODE_FLR:
+      case OPCODE_FRC:
+      case OPCODE_LRP:
+      case OPCODE_SEQ:
+      case OPCODE_SGE:
+      case OPCODE_SGT:
+      case OPCODE_SLE:
+      case OPCODE_SLT:
+      case OPCODE_SNE:
+      case OPCODE_SSG:
          channel_mask = inst->DstReg.WriteMask & dst_mask;
          break;
       case OPCODE_RCP:
