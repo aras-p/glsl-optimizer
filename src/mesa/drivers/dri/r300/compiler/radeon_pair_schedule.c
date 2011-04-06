@@ -600,7 +600,8 @@ static void is_rgb_to_alpha_possible(
 	struct rc_reader_data * reader_data = userdata;
 
 	if (!can_remap(inst->U.P.RGB.Opcode)
-	    || !can_remap(inst->U.P.Alpha.Opcode)) {
+	    || !can_remap(inst->U.P.Alpha.Opcode)
+	    || inst->U.P.Alpha.Opcode != RC_OPCODE_NOP) {
 		reader_data->Abort = 1;
 		return;
 	}
