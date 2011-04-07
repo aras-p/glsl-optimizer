@@ -286,12 +286,11 @@ init_buffers(struct vl_compositor *c)
     */
    c->vertex_buf.stride = sizeof(struct vertex4f);
    c->vertex_buf.buffer_offset = 0;
-   /* XXX: Create with DYNAMIC or STREAM */
    c->vertex_buf.buffer = pipe_buffer_create
    (
       c->pipe->screen,
       PIPE_BIND_VERTEX_BUFFER,
-      PIPE_USAGE_STATIC,
+      PIPE_USAGE_STREAM,
       sizeof(struct vertex4f) * (VL_COMPOSITOR_MAX_LAYERS + 1) * 4
    );
 
@@ -382,7 +381,7 @@ gen_vertex_data(struct vl_compositor *c, struct pipe_video_rect *dst_rect, struc
    assert(dst_rect);
 
    vb = pipe_buffer_map(c->pipe, c->vertex_buf.buffer,
-                        PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+                        PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD | PIPE_TRANSFER_DONTBLOCK,
                         &buf_transfer);
 
    if (!vb)
