@@ -168,6 +168,7 @@ static void r600_destroy_context(struct pipe_context *context)
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)context;
 
 	rctx->context.delete_depth_stencil_alpha_state(&rctx->context, rctx->custom_dsa_flush);
+	util_unreference_framebuffer_state(&rctx->framebuffer);
 
 	r600_context_fini(&rctx->ctx);
 
