@@ -277,6 +277,8 @@ util_cpu_detect(void)
          util_cpu_caps.has_sse3   = (regs2[2] >>  0) & 1; /* 0x0000001 */
          util_cpu_caps.has_ssse3  = (regs2[2] >>  9) & 1; /* 0x0000020 */
          util_cpu_caps.has_sse4_1 = (regs2[2] >> 19) & 1;
+         util_cpu_caps.has_sse4_2 = (regs2[2] >> 20) & 1;
+         util_cpu_caps.has_avx    = (regs2[2] >> 28) & 1;
          util_cpu_caps.has_mmx2   = util_cpu_caps.has_sse; /* SSE cpus supports mmxext too */
 
          cacheline = ((regs2[1] >> 8) & 0xFF) * 8;
@@ -329,6 +331,8 @@ util_cpu_detect(void)
       debug_printf("util_cpu_caps.has_sse3 = %u\n", util_cpu_caps.has_sse3);
       debug_printf("util_cpu_caps.has_ssse3 = %u\n", util_cpu_caps.has_ssse3);
       debug_printf("util_cpu_caps.has_sse4_1 = %u\n", util_cpu_caps.has_sse4_1);
+      debug_printf("util_cpu_caps.has_sse4_2 = %u\n", util_cpu_caps.has_sse4_2);
+      debug_printf("util_cpu_caps.has_avx = %u\n", util_cpu_caps.has_avx);
       debug_printf("util_cpu_caps.has_3dnow = %u\n", util_cpu_caps.has_3dnow);
       debug_printf("util_cpu_caps.has_3dnow_ext = %u\n", util_cpu_caps.has_3dnow_ext);
       debug_printf("util_cpu_caps.has_altivec = %u\n", util_cpu_caps.has_altivec);
