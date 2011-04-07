@@ -2692,7 +2692,7 @@ static boolean emit_vs_postamble( struct svga_shader_emitter *emit )
       /* Also write to depth value */
       if (!submit_op3( emit,
                        inst_token(SVGA3DOP_MAD),
-                       writemask(depth, TGSI_WRITEMASK_XYZ),
+                       writemask(depth, TGSI_WRITEMASK_Z),
                        swizzle(src(temp_pos), 3, 3, 3, 3),
                        prescale_trans,
                        src(temp_pos) ))
@@ -2725,7 +2725,7 @@ static boolean emit_vs_postamble( struct svga_shader_emitter *emit )
       /* Move the manipulated depth into the extra texcoord reg */
       if (!submit_op1( emit,
                        inst_token(SVGA3DOP_MOV),
-                       depth,
+                       writemask(depth, TGSI_WRITEMASK_ZW),
                        src(temp_pos) ))
          return FALSE;
    }

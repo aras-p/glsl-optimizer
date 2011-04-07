@@ -101,14 +101,21 @@ struct svga_shader_emitter
    SVGA3dShaderDestToken output_map[PIPE_MAX_ATTRIBS];
 
    boolean ps_reads_pos;
+   boolean emitted_depth_fog;
    struct src_register ps_true_pos;
    struct src_register ps_depth_pos;
    SVGA3dShaderDestToken ps_temp_pos;
+
+   /* shared input for depth and fog */
+   struct src_register ps_depth_fog;
 
    struct src_register imm_0055;
    SVGA3dShaderDestToken temp_pos;
    SVGA3dShaderDestToken true_pos;
    SVGA3dShaderDestToken depth_pos;
+
+   /* shared output for depth and fog */
+   SVGA3dShaderDestToken vs_depth_fog;
 
    SVGA3dShaderDestToken temp_col[PIPE_MAX_COLOR_BUFS];
    SVGA3dShaderDestToken true_col[PIPE_MAX_COLOR_BUFS];
