@@ -407,7 +407,6 @@ _mesa_drawbuffers(struct gl_context *ctx, GLuint n, const GLenum *buffers,
                fb->_ColorDrawBufferIndexes[buf] = bufIndex;
                newState = GL_TRUE;
             }
-            fb->ColorDrawBuffer[buf] = buffers[buf];
             count = buf + 1;
          }
          else {
@@ -416,6 +415,7 @@ _mesa_drawbuffers(struct gl_context *ctx, GLuint n, const GLenum *buffers,
                newState = GL_TRUE;
             }
          }
+         fb->ColorDrawBuffer[buf] = buffers[buf];
       }
       /* set remaining outputs to -1 (GL_NONE) */
       while (buf < ctx->Const.MaxDrawBuffers) {
