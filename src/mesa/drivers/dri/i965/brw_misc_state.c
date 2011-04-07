@@ -284,6 +284,9 @@ static void emit_depthbuffer(struct brw_context *brw)
    }
 }
 
+/**
+ * \see brw_context.state.depth_region
+ */
 const struct brw_tracked_state brw_depthbuffer = {
    .dirty = {
       .mesa = 0,
