@@ -320,7 +320,7 @@ static void radeon_drm_cs_write_reloc(struct r300_winsys_cs *rcs,
     unsigned index = radeon_get_reloc(cs->csc, bo);
 
     if (index == -1) {
-        fprintf(stderr, "r300: Cannot get a relocation in %s.\n", __func__);
+        fprintf(stderr, "radeon: Cannot get a relocation in %s.\n", __func__);
         return;
     }
 

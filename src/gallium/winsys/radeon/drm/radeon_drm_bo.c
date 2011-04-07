@@ -305,10 +305,10 @@ static struct pb_buffer *radeon_bomgr_create_bo(struct pb_manager *_mgr,
 
     if (drmCommandWriteRead(rws->fd, DRM_RADEON_GEM_CREATE,
                             &args, sizeof(args))) {
-        fprintf(stderr, "Failed to allocate :\n");
-        fprintf(stderr, "   size      : %d bytes\n", size);
-        fprintf(stderr, "   alignment : %d bytes\n", desc->alignment);
-        fprintf(stderr, "   domains   : %d\n", args.initial_domain);
+        fprintf(stderr, "radeon: Failed to allocate a buffer:\n");
+        fprintf(stderr, "radeon:    size      : %d bytes\n", size);
+        fprintf(stderr, "radeon:    alignment : %d bytes\n", desc->alignment);
+        fprintf(stderr, "radeon:    domains   : %d\n", args.initial_domain);
         return NULL;
     }
 
