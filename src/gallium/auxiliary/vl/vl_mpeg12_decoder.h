@@ -64,7 +64,7 @@ struct vl_mpeg12_buffer
    struct vl_vertex_buffer vertex_stream;
 
    struct pipe_video_buffer *idct_source;
-   struct pipe_video_buffer *idct_2_mc;
+   struct pipe_video_buffer *mc_source;
 
    union
    {
@@ -87,6 +87,7 @@ struct pipe_video_decoder *
 vl_create_mpeg12_decoder(struct pipe_video_context *context,
                          struct pipe_context *pipe,
                          enum pipe_video_profile profile,
+                         enum pipe_video_entrypoint entrypoint,
                          enum pipe_video_chroma_format chroma_format,
                          unsigned width, unsigned height);
 

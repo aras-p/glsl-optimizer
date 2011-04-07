@@ -25,17 +25,8 @@
  *
  **************************************************************************/
 
-//#include <pipe/p_shader_tokens.h>
-
-//#include "util/u_inlines.h"
-
-//#include <util/u_inlines.h>
-//#include <util/u_memory.h>
-//#include <util/u_keymap.h>
-
-//#include <util/u_video.h>
-//#include <util/u_surface.h>
-//#include <util/u_sampler.h>
+#include <math.h>
+#include <assert.h>
 
 #include <util/u_memory.h>
 #include <util/u_rect.h>
@@ -43,6 +34,8 @@
 
 #include "vl_mpeg12_decoder.h"
 #include "vl_defines.h"
+
+#define SCALE_FACTOR_16_TO_9 (32768.0f / 256.0f)
 
 static const unsigned const_empty_block_mask_420[3][2][2] = {
         { { 0x20, 0x10 },  { 0x08, 0x04 } },
@@ -59,7 +52,10 @@ map_buffers(struct vl_mpeg12_decoder *ctx, struct vl_mpeg12_buffer *buffer)
 
    assert(ctx && buffer);
 
-   sampler_views = buffer->idct_source->get_sampler_views(buffer->idct_source);
+   if (ctx->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
+      sampler_views = buffer->idct_source->get_sampler_views(buffer->idct_source);
+   else
+      sampler_views = buffer->mc_source->get_sampler_views(buffer->mc_source);
    assert(sampler_views);
 
    for (i = 0; i < VL_MAX_PLANES; ++i) {
@@ -156,12 +152,14 @@ vl_mpeg12_buffer_destroy(struct pipe_video_decode_buffer *buffer)
    struct vl_mpeg12_decoder *dec = (struct vl_mpeg12_decoder*)buf->base.decoder;
    assert(buf && dec);
 
-   buf->idct_source->destroy(buf->idct_source);
-   buf->idct_2_mc->destroy(buf->idct_2_mc);
+   if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT) {
+      buf->idct_source->destroy(buf->idct_source);
+      vl_idct_cleanup_buffer(&dec->idct_y, &buf->idct[0]);
+      vl_idct_cleanup_buffer(&dec->idct_c, &buf->idct[1]);
+      vl_idct_cleanup_buffer(&dec->idct_c, &buf->idct[2]);
+   }
+   buf->mc_source->destroy(buf->mc_source);
    vl_vb_cleanup(&buf->vertex_stream);
-   vl_idct_cleanup_buffer(&dec->idct_y, &buf->idct[0]);
-   vl_idct_cleanup_buffer(&dec->idct_c, &buf->idct[1]);
-   vl_idct_cleanup_buffer(&dec->idct_c, &buf->idct[2]);
    vl_mpeg12_mc_cleanup_buffer(&buf->mc[0]);
    vl_mpeg12_mc_cleanup_buffer(&buf->mc[1]);
    vl_mpeg12_mc_cleanup_buffer(&buf->mc[2]);
@@ -238,8 +236,10 @@ vl_mpeg12_destroy(struct pipe_video_decoder *decoder)
    dec->pipe->delete_depth_stencil_alpha_state(dec->pipe, dec->dsa);
 
    vl_mpeg12_mc_renderer_cleanup(&dec->mc);
-   vl_idct_cleanup(&dec->idct_y);
-   vl_idct_cleanup(&dec->idct_c);
+   if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT) {
+      vl_idct_cleanup(&dec->idct_y);
+      vl_idct_cleanup(&dec->idct_c);
+   }
    dec->pipe->delete_vertex_elements_state(dec->pipe, dec->ves[0]);
    dec->pipe->delete_vertex_elements_state(dec->pipe, dec->ves[1]);
    dec->pipe->delete_vertex_elements_state(dec->pipe, dec->ves[2]);
@@ -257,7 +257,7 @@ vl_mpeg12_create_buffer(struct pipe_video_decoder *decoder)
       PIPE_FORMAT_R16G16B16A16_SNORM
    };
 
-   const enum pipe_format idct_2_mc_formats[3] = {
+   const enum pipe_format mc_source_formats[3] = {
       PIPE_FORMAT_R16_SNORM,
       PIPE_FORMAT_R16_SNORM,
       PIPE_FORMAT_R16_SNORM
@@ -291,43 +291,47 @@ vl_mpeg12_create_buffer(struct pipe_video_decoder *decoder)
    if (!buffer->vertex_bufs.individual.stream.buffer)
       goto error_vertex_stream;
 
-   buffer->idct_source = vl_video_buffer_init(dec->base.context, dec->pipe,
-                                              dec->base.width / 4, dec->base.height, 1,
-                                              dec->base.chroma_format, 3,
-                                              idct_source_formats,
-                                              PIPE_USAGE_STREAM);
-   if (!buffer->idct_source)
-      goto error_idct_source;
-
-   buffer->idct_2_mc = vl_video_buffer_init(dec->base.context, dec->pipe,
+   buffer->mc_source = vl_video_buffer_init(dec->base.context, dec->pipe,
                                             dec->base.width, dec->base.height, 1,
                                             dec->base.chroma_format, 3,
-                                            idct_2_mc_formats,
+                                            mc_source_formats,
                                             PIPE_USAGE_STATIC);
-   if (!buffer->idct_2_mc)
-      goto error_idct_2_mc;
 
-   idct_views = buffer->idct_source->get_sampler_views(buffer->idct_source);
-   if (!idct_views)
-      goto error_idct_views;
+   if (!buffer->mc_source)
+      goto error_mc_source;
 
-   idct_surfaces = buffer->idct_2_mc->get_surfaces(buffer->idct_2_mc);
-   if (!idct_surfaces)
-      goto error_idct_surfaces;
+   if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT) {
+      buffer->idct_source = vl_video_buffer_init(dec->base.context, dec->pipe,
+                                                 dec->base.width / 4, dec->base.height, 1,
+                                                 dec->base.chroma_format, 3,
+                                                 idct_source_formats,
+                                                 PIPE_USAGE_STREAM);
+      if (!buffer->idct_source)
+         goto error_idct_source;
 
-   if (!vl_idct_init_buffer(&dec->idct_y, &buffer->idct[0],
-                            idct_views[0], idct_surfaces[0]))
-      goto error_idct_y;
 
-   if (!vl_idct_init_buffer(&dec->idct_c, &buffer->idct[1],
-                            idct_views[1], idct_surfaces[1]))
-      goto error_idct_cb;
+      idct_views = buffer->idct_source->get_sampler_views(buffer->idct_source);
+      if (!idct_views)
+         goto error_idct_views;
 
-   if (!vl_idct_init_buffer(&dec->idct_c, &buffer->idct[2],
-                            idct_views[2], idct_surfaces[2]))
-      goto error_idct_cr;
+      idct_surfaces = buffer->mc_source->get_surfaces(buffer->mc_source);
+      if (!idct_surfaces)
+         goto error_idct_surfaces;
 
-   mc_views = buffer->idct_2_mc->get_sampler_views(buffer->idct_2_mc);
+      if (!vl_idct_init_buffer(&dec->idct_y, &buffer->idct[0],
+                               idct_views[0], idct_surfaces[0]))
+         goto error_idct_y;
+
+      if (!vl_idct_init_buffer(&dec->idct_c, &buffer->idct[1],
+                               idct_views[1], idct_surfaces[1]))
+         goto error_idct_cb;
+
+      if (!vl_idct_init_buffer(&dec->idct_c, &buffer->idct[2],
+                               idct_views[2], idct_surfaces[2]))
+         goto error_idct_cr;
+   }
+
+   mc_views = buffer->mc_source->get_sampler_views(buffer->mc_source);
    if (!mc_views)
       goto error_mc_views;
 
@@ -350,23 +354,27 @@ error_mc_cb:
 
 error_mc_y:
 error_mc_views:
-   vl_idct_cleanup_buffer(&dec->idct_c, &buffer->idct[2]);
+   if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
+      vl_idct_cleanup_buffer(&dec->idct_c, &buffer->idct[2]);
 
 error_idct_cr:
-   vl_idct_cleanup_buffer(&dec->idct_c, &buffer->idct[1]);
+   if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
+      vl_idct_cleanup_buffer(&dec->idct_c, &buffer->idct[1]);
 
 error_idct_cb:
-   vl_idct_cleanup_buffer(&dec->idct_y, &buffer->idct[0]);
+   if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
+      vl_idct_cleanup_buffer(&dec->idct_y, &buffer->idct[0]);
 
 error_idct_y:
 error_idct_surfaces:
 error_idct_views:
-   buffer->idct_2_mc->destroy(buffer->idct_2_mc);
-
-error_idct_2_mc:
-   buffer->idct_source->destroy(buffer->idct_source);
+   if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
+      buffer->idct_source->destroy(buffer->idct_source);
 
 error_idct_source:
+   buffer->mc_source->destroy(buffer->mc_source);
+
+error_mc_source:
    vl_vb_cleanup(&buffer->vertex_stream);
 
 error_vertex_stream:
@@ -408,7 +416,9 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
 
    for (i = 0; i < VL_MAX_PLANES; ++i) {
       dec->pipe->bind_vertex_elements_state(dec->pipe, dec->ves[i]);
-      vl_idct_flush(i == 0 ? &dec->idct_y : &dec->idct_c, &buf->idct[i], ne_num);
+
+      if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
+         vl_idct_flush(i == 0 ? &dec->idct_y : &dec->idct_c, &buf->idct[i], ne_num);
 
       sv_refs[0] = sv_past ? sv_past[i] : NULL;
       sv_refs[1] = sv_future ? sv_future[i] : NULL;
@@ -516,11 +526,7 @@ init_idct(struct vl_mpeg12_decoder *dec, unsigned buffer_width, unsigned buffer_
    unsigned chroma_width, chroma_height, chroma_blocks_x, chroma_blocks_y;
    struct pipe_sampler_view *idct_matrix;
 
-   /* TODO: Implement 422, 444 */
-   assert(dec->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
-   dec->empty_block_mask = &const_empty_block_mask_420;
-
-   if (!(idct_matrix = vl_idct_upload_matrix(dec->pipe)))
+   if (!(idct_matrix = vl_idct_upload_matrix(dec->pipe, sqrt(SCALE_FACTOR_16_TO_9))))
       goto error_idct_matrix;
 
    if (!vl_idct_init(&dec->idct_y, dec->pipe, buffer_width, buffer_height,
@@ -565,6 +571,7 @@ struct pipe_video_decoder *
 vl_create_mpeg12_decoder(struct pipe_video_context *context,
                          struct pipe_context *pipe,
                          enum pipe_video_profile profile,
+                         enum pipe_video_entrypoint entrypoint,
                          enum pipe_video_chroma_format chroma_format,
                          unsigned width, unsigned height)
 {
@@ -580,6 +587,7 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
 
    dec->base.context = context;
    dec->base.profile = profile;
+   dec->base.entrypoint = entrypoint;
    dec->base.chroma_format = chroma_format;
    dec->base.width = width;
    dec->base.height = height;
@@ -598,10 +606,16 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
    dec->base.width = align(width, MACROBLOCK_WIDTH);
    dec->base.height = align(height, MACROBLOCK_HEIGHT);
 
-   if (!init_idct(dec, dec->base.width, dec->base.height))
-      goto error_idct;
+   /* TODO: Implement 422, 444 */
+   assert(dec->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
+   dec->empty_block_mask = &const_empty_block_mask_420;
 
-   if (!vl_mpeg12_mc_renderer_init(&dec->mc, dec->pipe, dec->base.width, dec->base.height))
+   if (entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
+      if (!init_idct(dec, dec->base.width, dec->base.height))
+         goto error_idct;
+
+   if (!vl_mpeg12_mc_renderer_init(&dec->mc, dec->pipe, dec->base.width, dec->base.height,
+                                   entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT ? 1.0f : SCALE_FACTOR_16_TO_9))
       goto error_mc;
 
    if (!init_pipe_state(dec))
@@ -613,8 +627,10 @@ error_pipe_state:
    vl_mpeg12_mc_renderer_cleanup(&dec->mc);
 
 error_mc:
-   vl_idct_cleanup(&dec->idct_y);
-   vl_idct_cleanup(&dec->idct_c);
+   if (entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT) {
+      vl_idct_cleanup(&dec->idct_y);
+      vl_idct_cleanup(&dec->idct_c);
+   }
 
 error_idct:
    FREE(dec);

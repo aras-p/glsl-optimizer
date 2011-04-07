@@ -216,7 +216,7 @@ calc_field(struct ureg_program *shader)
 }
 
 static struct ureg_dst
-fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct ureg_dst field)
+fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct ureg_dst field, float scale)
 {
    struct ureg_src tc[2], sampler;
    struct ureg_dst texel, t_tc;
@@ -249,6 +249,9 @@ fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct
 
    ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
    ureg_ENDIF(shader);
+
+   if (scale != 1.0f)
+      ureg_MUL(shader, texel, ureg_src(texel), ureg_imm1f(shader, scale));
 
    ureg_release_temporary(shader, t_tc);
 
@@ -308,7 +311,7 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
 }
 
 static void *
-create_frag_shader(struct vl_mpeg12_mc_renderer *r)
+create_frag_shader(struct vl_mpeg12_mc_renderer *r, float scale)
 {
    struct ureg_program *shader;
    struct ureg_dst result;
@@ -322,7 +325,7 @@ create_frag_shader(struct vl_mpeg12_mc_renderer *r)
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
    field = calc_field(shader);
-   texel = fetch_ycbcr(r, shader, field);
+   texel = fetch_ycbcr(r, shader, field, scale);
 
    result = fetch_ref(shader, field);
 
@@ -424,7 +427,8 @@ bool
 vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
                            struct pipe_context *pipe,
                            unsigned buffer_width,
-                           unsigned buffer_height)
+                           unsigned buffer_height,
+                           float scale)
 {
    struct pipe_resource tex_templ, *tex_dummy;
    struct pipe_sampler_view sampler_view;
@@ -445,7 +449,7 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
    if (!renderer->vs)
       goto error_vs_shaders;
 
-   renderer->fs = create_frag_shader(renderer);
+   renderer->fs = create_frag_shader(renderer, scale);
    if (!renderer->fs)
       goto error_fs_shaders;
 

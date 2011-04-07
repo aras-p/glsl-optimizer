@@ -112,6 +112,7 @@ struct pipe_video_context
     */
    struct pipe_video_decoder *(*create_decoder)(struct pipe_video_context *context,
                                                 enum pipe_video_profile profile,
+                                                enum pipe_video_entrypoint entrypoint,
                                                 enum pipe_video_chroma_format chroma_format,
                                                 unsigned width, unsigned height);
 
@@ -137,6 +138,7 @@ struct pipe_video_decoder
    struct pipe_video_context *context;
 
    enum pipe_video_profile profile;
+   enum pipe_video_entrypoint entrypoint;
    enum pipe_video_chroma_format chroma_format;
    unsigned width;
    unsigned height;

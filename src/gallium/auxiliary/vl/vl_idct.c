@@ -38,8 +38,6 @@
 #include <tgsi/tgsi_ureg.h>
 #include "vl_types.h"
 
-#define SCALE_FACTOR_16_TO_9 (32768.0f / 256.0f)
-
 #define NR_RENDER_TARGETS 4
 
 enum VS_OUTPUT
@@ -534,10 +532,8 @@ cleanup_intermediate(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 }
 
 struct pipe_sampler_view *
-vl_idct_upload_matrix(struct pipe_context *pipe)
+vl_idct_upload_matrix(struct pipe_context *pipe, float scale)
 {
-   const float scale = sqrtf(SCALE_FACTOR_16_TO_9);
-
    struct pipe_resource tex_templ, *matrix;
    struct pipe_sampler_view sv_templ, *sv;
    struct pipe_transfer *buf_transfer;

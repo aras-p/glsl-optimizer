@@ -69,7 +69,7 @@ struct vl_idct_buffer
 };
 
 /* upload the idct matrix, which can be shared by all idct instances of a pipe */
-struct pipe_sampler_view *vl_idct_upload_matrix(struct pipe_context *pipe);
+struct pipe_sampler_view *vl_idct_upload_matrix(struct pipe_context *pipe, float scale);
 
 /* init an idct instance */
 bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,

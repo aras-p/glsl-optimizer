@@ -209,7 +209,7 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
       XVMC_MSG(XVMC_ERR, "[XvMC] Cannot decode requested surface type. Unsupported chroma format.\n");
       return BadImplementation;
    }
-   if (mc_type != (XVMC_IDCT | XVMC_MOCOMP | XVMC_MPEG_2)) {
+   if ((mc_type & ~XVMC_IDCT) != (XVMC_MOCOMP | XVMC_MPEG_2)) {
       XVMC_MSG(XVMC_ERR, "[XvMC] Cannot decode requested surface type. Non-MPEG2/Mocomp/iDCT acceleration unsupported.\n");
       return BadImplementation;
    }
@@ -241,6 +241,9 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
 
    context_priv->decoder = vctx->vpipe->create_decoder(vctx->vpipe,
                                                        ProfileToPipe(mc_type),
+                                                       (mc_type & XVMC_IDCT) ?
+                                                          PIPE_VIDEO_ENTRYPOINT_IDCT :
+                                                          PIPE_VIDEO_ENTRYPOINT_MC,
                                                        FormatToPipe(chroma_format),
                                                        width, height);
 

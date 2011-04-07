@@ -173,6 +173,7 @@ error_map:
 static struct pipe_video_decoder *
 vl_context_create_decoder(struct pipe_video_context *context,
                           enum pipe_video_profile profile,
+                          enum pipe_video_entrypoint entrypoint,
                           enum pipe_video_chroma_format chroma_format,
                           unsigned width, unsigned height)
 {
@@ -187,8 +188,8 @@ vl_context_create_decoder(struct pipe_video_context *context,
 
    switch (u_reduce_video_profile(profile)) {
       case PIPE_VIDEO_CODEC_MPEG12:
-         return vl_create_mpeg12_decoder(context, ctx->pipe, profile, chroma_format,
-                                         buffer_width, buffer_height);
+         return vl_create_mpeg12_decoder(context, ctx->pipe, profile, entrypoint,
+                                         chroma_format, buffer_width, buffer_height);
       default:
          return NULL;
    }

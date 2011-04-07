@@ -71,7 +71,8 @@ struct vl_mpeg12_mc_buffer
 bool vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
                                 struct pipe_context *pipe,
                                 unsigned picture_width,
-                                unsigned picture_height);
+                                unsigned picture_height,
+                                float scale);
 
 void vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer);
 

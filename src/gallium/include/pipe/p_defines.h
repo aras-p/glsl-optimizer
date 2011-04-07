@@ -514,6 +514,13 @@ enum pipe_video_profile
    PIPE_VIDEO_PROFILE_MPEG4_AVC_HIGH
 };
 
+enum pipe_video_entrypoint
+{
+   PIPE_VIDEO_ENTRYPOINT_UNKNOWN,
+   PIPE_VIDEO_ENTRYPOINT_BITSTREAM,
+   PIPE_VIDEO_ENTRYPOINT_IDCT,
+   PIPE_VIDEO_ENTRYPOINT_MC
+};
 
 /**
  * Composite query types
