@@ -213,7 +213,7 @@ DRI2QueryVersion(Display * dpy, int *major, int *minor)
 	   nevents = 2;
 	   break;
    }
-	
+
    for (i = 0; i < nevents; i++) {
        XESetWireToEvent (dpy, info->codes->first_event + i, DRI2WireToEvent);
        XESetEventToWire (dpy, info->codes->first_event + i, DRI2EventToWire);
@@ -466,7 +466,6 @@ DRI2CopyRegion(Display * dpy, XID drawable, XserverRegion region,
 {
    XExtDisplayInfo *info = DRI2FindDisplay(dpy);
    xDRI2CopyRegionReq *req;
-   xDRI2CopyRegionReply rep;
 
    XextSimpleCheckExtension(dpy, info, dri2ExtensionName);
 
@@ -478,8 +477,6 @@ DRI2CopyRegion(Display * dpy, XID drawable, XserverRegion region,
    req->region = region;
    req->dest = dest;
    req->src = src;
-
-   _XReply(dpy, (xReply *) & rep, 0, xFalse);
 
    UnlockDisplay(dpy);
    SyncHandle();
