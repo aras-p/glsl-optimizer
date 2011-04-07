@@ -248,8 +248,7 @@ static void emit_depthbuffer(struct brw_context *brw)
       }
 
       assert(region->tiling != I915_TILING_X);
-      if (intel->gen >= 6)
-	 assert(region->tiling != I915_TILING_NONE);
+      assert(intel->gen < 6 || region->tiling == I915_TILING_Y);
 
       BEGIN_BATCH(len);
       OUT_BATCH(_3DSTATE_DEPTH_BUFFER << 16 | (len - 2));
