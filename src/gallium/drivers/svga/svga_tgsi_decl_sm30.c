@@ -121,29 +121,35 @@ static boolean ps30_input( struct svga_shader_emitter *emit,
    SVGA3dShaderDestToken reg;
 
    if (semantic.Name == TGSI_SEMANTIC_POSITION) {
+
       emit->ps_true_pos = src_register( SVGA3DREG_MISCTYPE,
                                         SVGA3DMISCREG_POSITION );
-
       emit->ps_true_pos.base.swizzle = TRANSLATE_SWIZZLE( TGSI_SWIZZLE_X,
                                                           TGSI_SWIZZLE_Y,
                                                           TGSI_SWIZZLE_Y,
                                                           TGSI_SWIZZLE_Y );
-
-      emit->ps_temp_pos = dst_register( SVGA3DREG_TEMP,
-                                        emit->nr_hw_temp );
-      emit->ps_depth_pos = src_register( SVGA3DREG_INPUT, emit->ps30_input_count++ );
-
-      emit->input_map[idx] = src_register( SVGA3DREG_TEMP,
-                                           emit->nr_hw_temp );
-      emit->nr_hw_temp++;
-
       reg = writemask( dst(emit->ps_true_pos),
                        TGSI_WRITEMASK_XY );
-
       emit->ps_reads_pos = TRUE;
-      if (!emit_decl( emit, dst(emit->ps_depth_pos),
-                      SVGA3D_DECLUSAGE_TEXCOORD, 1 ))
-         return FALSE;
+
+      if (emit->info.reads_z) {
+         emit->ps_temp_pos = dst_register( SVGA3DREG_TEMP,
+                                           emit->nr_hw_temp );
+         emit->ps_depth_pos = src_register( SVGA3DREG_INPUT,
+                                            emit->ps30_input_count++ );
+
+         emit->input_map[idx] = src_register( SVGA3DREG_TEMP,
+                                              emit->nr_hw_temp );
+         emit->nr_hw_temp++;
+
+         if (!emit_decl( emit, dst( emit->ps_depth_pos ),
+                         SVGA3D_DECLUSAGE_TEXCOORD, 1 ))
+            return FALSE;
+      }
+      else {
+         emit->input_map[idx] = emit->ps_true_pos;
+      }
+
       return emit_decl( emit, reg, 0, 0 );
    }
    else if (emit->key.fkey.light_twoside &&

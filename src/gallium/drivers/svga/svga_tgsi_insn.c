@@ -2550,7 +2550,7 @@ static boolean emit_ps_preamble( struct svga_shader_emitter *emit )
                return FALSE;
          }
       }
-   } else if (emit->ps_reads_pos) {
+   } else if (emit->ps_reads_pos && emit->info.reads_z) {
       /*
        * Assemble the position from various bits of inputs. Depth and W are
        * passed in a texcoord this is due to D3D's vPos not hold Z or W.
@@ -2579,7 +2579,7 @@ static boolean emit_ps_preamble( struct svga_shader_emitter *emit )
                        scalar( src(emit->ps_temp_pos), TGSI_SWIZZLE_W ) ))
          return FALSE;
    }
-   
+
    return TRUE;
 }
 
