@@ -170,6 +170,20 @@ svga_hwtnl_flush( struct svga_hwtnl *hwtnl )
          ib_handle[i] = handle;
       }
 
+      if (svga->rebind.rendertargets) {
+         ret = svga_reemit_framebuffer_bindings(svga);
+         if (ret != PIPE_OK) {
+            return ret;
+         }
+      }
+
+      if (svga->rebind.texture_samplers) {
+         ret = svga_reemit_tss_bindings(svga);
+         if (ret != PIPE_OK) {
+            return ret;
+         }
+      }
+
       SVGA_DBG(DEBUG_DMA, "draw to sid %p, %d prims\n",
                svga->curr.framebuffer.cbufs[0] ?
                svga_surface(svga->curr.framebuffer.cbufs[0])->handle : NULL,

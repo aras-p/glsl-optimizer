@@ -52,6 +52,13 @@ try_clear(struct svga_context *svga,
    if (ret)
       return ret;
 
+   if (svga->rebind.rendertargets) {
+      ret = svga_reemit_framebuffer_bindings(svga);
+      if (ret != PIPE_OK) {
+         return ret;
+      }
+   }
+
    if ((buffers & PIPE_CLEAR_COLOR) && fb->cbufs[0]) {
       flags |= SVGA3D_CLEAR_COLOR;
       util_pack_color(rgba, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);

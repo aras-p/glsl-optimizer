@@ -66,7 +66,7 @@ static int
 update_tss_binding(struct svga_context *svga, 
                    unsigned dirty )
 {
-   boolean reemit = !!(dirty & SVGA_NEW_COMMAND_BUFFER);
+   boolean reemit = svga->rebind.texture_samplers;
    unsigned i;
    unsigned count = MAX2( svga->curr.num_sampler_views,
                           svga->state.hw_draw.num_views );
@@ -159,6 +159,8 @@ update_tss_binding(struct svga_context *svga,
       SVGA_FIFOCommitAll( svga->swc );
    }
 
+   svga->rebind.texture_samplers = FALSE;
+
    return 0;
 
 fail:
@@ -180,6 +182,8 @@ svga_reemit_tss_bindings(struct svga_context *svga)
    unsigned i;
    enum pipe_error ret;
    struct bind_queue queue;
+
+   assert(svga->rebind.texture_samplers);
 
    queue.bind_count = 0;
 
@@ -220,6 +224,8 @@ svga_reemit_tss_bindings(struct svga_context *svga)
       SVGA_FIFOCommitAll(svga->swc);
    }
 
+   svga->rebind.texture_samplers = FALSE;
+
    return PIPE_OK;
 }
 
@@ -227,8 +233,7 @@ svga_reemit_tss_bindings(struct svga_context *svga)
 struct svga_tracked_state svga_hw_tss_binding = {
    "texture binding emit",
    SVGA_NEW_TEXTURE_BINDING |
-   SVGA_NEW_SAMPLER |
-   SVGA_NEW_COMMAND_BUFFER,
+   SVGA_NEW_SAMPLER,
    update_tss_binding
 };
 

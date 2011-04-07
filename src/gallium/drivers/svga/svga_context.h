@@ -358,6 +358,11 @@ struct svga_context
    struct svga_state curr;      /* state from the state tracker */
    unsigned dirty;              /* statechanges since last update_state() */
 
+   struct {
+      unsigned rendertargets:1;
+      unsigned texture_samplers:1;
+   } rebind;
+
    struct u_upload_mgr *upload_ib;
    struct u_upload_mgr *upload_vb;
    struct svga_hwtnl *hwtnl;
@@ -402,7 +407,6 @@ struct svga_context
 #define SVGA_NEW_ZERO_STRIDE         0x2000000
 #define SVGA_NEW_TEXTURE_FLAGS       0x4000000
 #define SVGA_NEW_STENCIL_REF         0x8000000
-#define SVGA_NEW_COMMAND_BUFFER      0x10000000
 
 
 

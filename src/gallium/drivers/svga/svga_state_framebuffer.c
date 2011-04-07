@@ -43,7 +43,7 @@ static int emit_framebuffer( struct svga_context *svga,
 {
    const struct pipe_framebuffer_state *curr = &svga->curr.framebuffer;
    struct pipe_framebuffer_state *hw = &svga->state.hw_clear.framebuffer;
-   boolean reemit = !!(dirty & SVGA_NEW_COMMAND_BUFFER);
+   boolean reemit = svga->rebind.rendertargets;
    unsigned i;
    enum pipe_error ret;
 
@@ -88,6 +88,7 @@ static int emit_framebuffer( struct svga_context *svga,
       pipe_surface_reference(&hw->zsbuf, curr->zsbuf);
    }
 
+   svga->rebind.rendertargets = FALSE;
 
    return 0;
 }
@@ -107,6 +108,8 @@ svga_reemit_framebuffer_bindings(struct svga_context *svga)
    struct pipe_framebuffer_state *hw = &svga->state.hw_clear.framebuffer;
    unsigned i;
    enum pipe_error ret;
+
+   assert(svga->rebind.rendertargets);
 
    for (i = 0; i < MIN2(PIPE_MAX_COLOR_BUFS, 8); ++i) {
       if (hw->cbufs[i]) {
@@ -138,6 +141,8 @@ svga_reemit_framebuffer_bindings(struct svga_context *svga)
       }
    }
 
+   svga->rebind.rendertargets = FALSE;
+
    return PIPE_OK;
 }
 
@@ -145,8 +150,7 @@ svga_reemit_framebuffer_bindings(struct svga_context *svga)
 struct svga_tracked_state svga_hw_framebuffer = 
 {
    "hw framebuffer state",
-   SVGA_NEW_FRAME_BUFFER |
-   SVGA_NEW_COMMAND_BUFFER,
+   SVGA_NEW_FRAME_BUFFER,
    emit_framebuffer
 };
 
