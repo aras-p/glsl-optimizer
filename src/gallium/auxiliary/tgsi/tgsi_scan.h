@@ -63,6 +63,8 @@ struct tgsi_shader_info
 
    uint opcode_count[TGSI_OPCODE_LAST];  /**< opcode histogram */
 
+   boolean reads_position; /**< does fragment shader read position? */
+   boolean reads_z; /**< does fragment shader read depth? */
    boolean writes_z;  /**< does fragment shader write Z value? */
    boolean writes_stencil; /**< does fragment shader write stencil value? */
    boolean writes_edgeflag; /**< vertex shader outputs edgeflag */

@@ -108,6 +108,17 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                      assert(ind < PIPE_MAX_SHADER_INPUTS);
                      info->input_usage_mask[ind] |= usage_mask;
                   }
+
+                  if (procType == TGSI_PROCESSOR_FRAGMENT &&
+                      src->Register.File == TGSI_FILE_INPUT &&
+                      info->reads_position &&
+                      src->Register.Index == 0 &&
+                      (src->Register.SwizzleX == TGSI_SWIZZLE_Z ||
+                       src->Register.SwizzleY == TGSI_SWIZZLE_Z ||
+                       src->Register.SwizzleZ == TGSI_SWIZZLE_Z ||
+                       src->Register.SwizzleW == TGSI_SWIZZLE_Z)) {
+                     info->reads_z = TRUE;
+                  }
                }
 
                /* check for indirect register reads */
@@ -150,6 +161,10 @@ tgsi_scan_shader(const struct tgsi_token *tokens,
                   info->input_centroid[reg] = (ubyte)fulldecl->Declaration.Centroid;
                   info->input_cylindrical_wrap[reg] = (ubyte)fulldecl->Declaration.CylindricalWrap;
                   info->num_inputs++;
+
+                  if (procType == TGSI_PROCESSOR_FRAGMENT &&
+                      fulldecl->Semantic.Name == TGSI_SEMANTIC_POSITION)
+                        info->reads_position = TRUE;
                }
                else if (file == TGSI_FILE_SYSTEM_VALUE) {
                   unsigned index = fulldecl->Range.First;
