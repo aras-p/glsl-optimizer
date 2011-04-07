@@ -66,9 +66,6 @@ struct vl_idct_buffer
          struct pipe_sampler_view *transpose, *intermediate;
       } individual;
    } sampler_views;
-
-   struct pipe_transfer *tex_transfer;
-   short *texels;
 };
 
 /* upload the idct matrix, which can be shared by all idct instances of a pipe */
@@ -89,15 +86,6 @@ bool vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
 
 /* cleanup a buffer of an idct instance */
 void vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer);
-
-/* map a buffer for use with vl_idct_add_block */
-void vl_idct_map_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer);
-
-/* add an block of to be tranformed data a the given x and y coordinate */
-void vl_idct_add_block(struct vl_idct_buffer *buffer, unsigned x, unsigned y, short *block);
-
-/* unmaps the buffers before flushing */
-void vl_idct_unmap_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer);
 
 /* flush the buffer and start rendering, vertex buffers needs to be setup before calling this */
 void vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer, unsigned num_verts);

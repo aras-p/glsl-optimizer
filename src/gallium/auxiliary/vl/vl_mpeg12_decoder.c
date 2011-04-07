@@ -51,6 +51,58 @@ static const unsigned const_empty_block_mask_420[3][2][2] = {
 };
 
 static void
+map_buffers(struct vl_mpeg12_decoder *ctx, struct vl_mpeg12_buffer *buffer)
+{
+   struct pipe_sampler_view **sampler_views;
+   struct pipe_resource *tex;
+   unsigned i;
+
+   assert(ctx && buffer);
+
+   sampler_views = buffer->idct_source->get_sampler_views(buffer->idct_source);
+   assert(sampler_views);
+
+   for (i = 0; i < VL_MAX_PLANES; ++i) {
+      tex = sampler_views[i]->texture;
+
+      struct pipe_box rect =
+      {
+         0, 0, 0,
+         tex->width0,
+         tex->height0,
+         1
+      };
+
+      buffer->tex_transfer[i] = ctx->pipe->get_transfer
+      (
+         ctx->pipe, tex,
+         0, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+         &rect
+      );
+
+      buffer->texels[i] = ctx->pipe->transfer_map(ctx->pipe, buffer->tex_transfer[i]);
+   }
+}
+
+static void
+upload_block(struct vl_mpeg12_buffer *buffer, unsigned plane, unsigned x, unsigned y, short *block)
+{
+   unsigned tex_pitch;
+   short *texels;
+
+   unsigned i;
+
+   assert(buffer);
+   assert(block);
+
+   tex_pitch = buffer->tex_transfer[plane]->stride / sizeof(short);
+   texels = buffer->texels[plane] + y * tex_pitch * BLOCK_HEIGHT + x * BLOCK_WIDTH;
+
+   for (i = 0; i < BLOCK_HEIGHT; ++i)
+      memcpy(texels + i * tex_pitch, block + i * BLOCK_WIDTH, BLOCK_WIDTH * sizeof(short));
+}
+
+static void
 upload_buffer(struct vl_mpeg12_decoder *ctx,
               struct vl_mpeg12_buffer *buffer,
               struct pipe_mpeg12_macroblock *mb)
@@ -67,7 +119,7 @@ upload_buffer(struct vl_mpeg12_decoder *ctx,
    for (y = 0; y < 2; ++y) {
       for (x = 0; x < 2; ++x, ++tb) {
          if (mb->cbp & (*ctx->empty_block_mask)[0][y][x]) {
-            vl_idct_add_block(&buffer->idct[0], mb->mbx * 2 + x, mb->mby * 2 + y, blocks);
+            upload_block(buffer, 0, mb->mbx * 2 + x, mb->mby * 2 + y, blocks);
             blocks += BLOCK_WIDTH * BLOCK_HEIGHT;
          }
       }
@@ -78,9 +130,22 @@ upload_buffer(struct vl_mpeg12_decoder *ctx,
 
    for (tb = 1; tb < 3; ++tb) {
       if (mb->cbp & (*ctx->empty_block_mask)[tb][0][0]) {
-         vl_idct_add_block(&buffer->idct[tb], mb->mbx, mb->mby, blocks);
+         upload_block(buffer, tb, mb->mbx, mb->mby, blocks);
          blocks += BLOCK_WIDTH * BLOCK_HEIGHT;
       }
+   }
+}
+
+static void
+unmap_buffers(struct vl_mpeg12_decoder *ctx, struct vl_mpeg12_buffer *buffer)
+{
+   unsigned i;
+
+   assert(ctx && buffer);
+
+   for (i = 0; i < VL_MAX_PLANES; ++i) {
+      ctx->pipe->transfer_unmap(ctx->pipe, buffer->tex_transfer[i]);
+      ctx->pipe->transfer_destroy(ctx->pipe, buffer->tex_transfer[i]);
    }
 }
 
@@ -115,9 +180,7 @@ vl_mpeg12_buffer_map(struct pipe_video_decode_buffer *buffer)
    assert(dec);
 
    vl_vb_map(&buf->vertex_stream, dec->pipe);
-   vl_idct_map_buffers(&dec->idct_y, &buf->idct[0]);
-   vl_idct_map_buffers(&dec->idct_c, &buf->idct[1]);
-   vl_idct_map_buffers(&dec->idct_c, &buf->idct[2]);
+   map_buffers(dec, buf);
 }
 
 static void
@@ -156,9 +219,7 @@ vl_mpeg12_buffer_unmap(struct pipe_video_decode_buffer *buffer)
    assert(dec);
 
    vl_vb_unmap(&buf->vertex_stream, dec->pipe);
-   vl_idct_unmap_buffers(&dec->idct_y, &buf->idct[0]);
-   vl_idct_unmap_buffers(&dec->idct_c, &buf->idct[1]);
-   vl_idct_unmap_buffers(&dec->idct_c, &buf->idct[2]);
+   unmap_buffers(dec, buf);
 }
 
 static void

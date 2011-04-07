@@ -76,6 +76,9 @@ struct vl_mpeg12_buffer
 
    struct vl_idct_buffer idct[VL_MAX_PLANES];
    struct vl_mpeg12_mc_buffer mc[VL_MAX_PLANES];
+
+   struct pipe_transfer *tex_transfer[VL_MAX_PLANES];
+   short *texels[VL_MAX_PLANES];
 };
 
 /* drivers can call this function in their pipe_video_context constructors and pass it

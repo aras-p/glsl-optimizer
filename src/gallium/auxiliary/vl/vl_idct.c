@@ -703,60 +703,6 @@ vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 }
 
 void
-vl_idct_map_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer)
-{
-   struct pipe_resource *tex;
-
-   assert(idct && buffer);
-
-   tex = buffer->sampler_views.individual.source->texture;
-
-   struct pipe_box rect =
-   {
-      0, 0, 0,
-      tex->width0,
-      tex->height0,
-      1
-   };
-
-   buffer->tex_transfer = idct->pipe->get_transfer
-   (
-      idct->pipe, tex,
-      0, PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-      &rect
-   );
-
-   buffer->texels = idct->pipe->transfer_map(idct->pipe, buffer->tex_transfer);
-}
-
-void
-vl_idct_add_block(struct vl_idct_buffer *buffer, unsigned x, unsigned y, short *block)
-{
-   unsigned tex_pitch;
-   short *texels;
-
-   unsigned i;
-
-   assert(buffer);
-   assert(block);
-
-   tex_pitch = buffer->tex_transfer->stride / sizeof(short);
-   texels = buffer->texels + y * tex_pitch * BLOCK_HEIGHT + x * BLOCK_WIDTH;
-
-   for (i = 0; i < BLOCK_HEIGHT; ++i)
-      memcpy(texels + i * tex_pitch, block + i * BLOCK_WIDTH, BLOCK_WIDTH * sizeof(short));
-}
-
-void
-vl_idct_unmap_buffers(struct vl_idct *idct, struct vl_idct_buffer *buffer)
-{
-   assert(idct && buffer);
-
-   idct->pipe->transfer_unmap(idct->pipe, buffer->tex_transfer);
-   idct->pipe->transfer_destroy(idct->pipe, buffer->tex_transfer);
-}
-
-void
 vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer, unsigned num_instances)
 {
    unsigned num_verts;
