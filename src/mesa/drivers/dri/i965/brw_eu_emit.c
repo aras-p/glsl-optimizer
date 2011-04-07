@@ -1759,6 +1759,11 @@ void brw_dp_READ_4_vs(struct brw_compile *p,
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_mask_control(p, BRW_MASK_DISABLE);
    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+
+   /* M0.2 is global offset */
+   brw_MOV(p, retype(get_element(brw_message_reg(0), 2), BRW_REGISTER_TYPE_D),
+                   brw_imm_d(0));
+
    brw_MOV(p, retype(brw_vec1_reg(BRW_MESSAGE_REGISTER_FILE, msg_reg_nr, 2),
 		     BRW_REGISTER_TYPE_UD),
 	   brw_imm_ud(location));
@@ -1808,6 +1813,10 @@ void brw_dp_READ_4_vs_relative(struct brw_compile *p,
    brw_set_compression_control(p, BRW_COMPRESSION_NONE);
    brw_set_mask_control(p, BRW_MASK_DISABLE);
    brw_set_predicate_control(p, BRW_PREDICATE_NONE);
+
+   /* M0.2 is global offset */
+   brw_MOV(p, retype(get_element(brw_message_reg(0), 2), BRW_REGISTER_TYPE_D),
+                   brw_imm_d(0));
 
    /* M1.0 is block offset 0, M1.4 is block offset 1, all other
     * fields ignored.
