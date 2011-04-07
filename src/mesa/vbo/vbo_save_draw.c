@@ -90,6 +90,8 @@ _playback_copy_to_current(struct gl_context *ctx,
             memcpy(current, tmp, 4 * sizeof(GLfloat));
 
             vbo->currval[i].Size = node->attrsz[i];
+            assert(vbo->currval[i].Type == GL_FLOAT);
+            vbo->currval[i]._ElementSize = vbo->currval[i].Size * sizeof(GLfloat);
 
             if (i >= VBO_ATTRIB_FIRST_MATERIAL &&
                 i <= VBO_ATTRIB_LAST_MATERIAL)

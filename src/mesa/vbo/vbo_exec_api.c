@@ -168,6 +168,8 @@ static void vbo_exec_copy_to_current( struct vbo_exec_context *exec )
              * directly.
              */
             vbo->currval[i].Size = exec->vtx.attrsz[i];
+            assert(vbo->currval[i].Type == GL_FLOAT);
+            vbo->currval[i]._ElementSize = vbo->currval[i].Size * sizeof(GLfloat);
 
             /* This triggers rather too much recalculation of Mesa state
              * that doesn't get used (eg light positions).
