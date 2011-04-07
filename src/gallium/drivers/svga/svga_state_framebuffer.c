@@ -296,7 +296,7 @@ static int emit_viewport( struct svga_context *svga,
          break;
       case PIPE_PRIM_POINTS:
       case PIPE_PRIM_TRIANGLES:
-         adjust_x = -0.25;
+         adjust_x = -0.5;
          adjust_y = -0.5;
          break;
       }
