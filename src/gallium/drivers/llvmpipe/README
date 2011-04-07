@@ -13,6 +13,10 @@ Requirements
    See /proc/cpuinfo to know what your CPU supports.
  
  - LLVM. Version 2.8 recommended. 2.6 or later required.
+
+   NOTE: LLVM 2.8 and earlier will not work on systems that support the
+   Intel AVX extensions (e.g. Sandybridge).  LLVM's code generator will
+   fail when trying to emit AVX instructions.  This was fixed in LLVM 2.9.
  
    For Linux, on a recent Debian based distribution do:
  
