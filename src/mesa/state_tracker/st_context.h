@@ -187,9 +187,16 @@ struct st_context
    void *winsys_drawable_handle;
 
    /* User vertex buffers. */
-   struct pipe_resource *user_vb[PIPE_MAX_ATTRIBS];
-   unsigned user_vb_stride[PIPE_MAX_ATTRIBS];
-   unsigned num_user_vbs;
+   struct {
+      struct pipe_resource *buffer;
+
+      /** Element size */
+      GLuint element_size;
+
+      /** Attribute stride */
+      GLsizei stride;
+   } user_attrib[PIPE_MAX_ATTRIBS];
+   unsigned num_user_attribs;
 };
 
 

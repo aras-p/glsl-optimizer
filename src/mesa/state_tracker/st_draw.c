@@ -329,7 +329,11 @@ setup_interleaved_attribs(struct gl_context *ctx,
       const struct gl_client_array *array = arrays[mesaAttr];
       struct gl_buffer_object *bufobj = array->BufferObj;
       struct st_buffer_object *stobj = st_buffer_object(bufobj);
+      unsigned src_offset = (unsigned) (array->Ptr - low_addr);
+      GLuint element_size = array->_ElementSize;
       GLsizei stride = array->StrideB;
+
+      assert(element_size == array->Size * _mesa_sizeof_type(array->Type));
 
       if (attr == 0) {
          if (bufobj && bufobj->Name) {
@@ -339,22 +343,25 @@ setup_interleaved_attribs(struct gl_context *ctx,
          }
          else {
             uint divisor = array->InstanceDivisor;
-            uint length = (divisor ? num_instances / divisor : max_index) + 1;
+            uint last_index = divisor ? num_instances / divisor : max_index;
+            uint bytes = src_offset + stride * last_index + element_size;
+
             vbuffer->buffer = pipe_user_buffer_create(pipe->screen,
                                                       (void*) low_addr,
-                                                      stride * length,
+                                                      bytes,
                                                       PIPE_BIND_VERTEX_BUFFER);
             vbuffer->buffer_offset = 0;
 
             /* Track user vertex buffers. */
-            pipe_resource_reference(&st->user_vb[0], vbuffer->buffer);
-            st->user_vb_stride[0] = stride;
-            st->num_user_vbs = 1;
+            pipe_resource_reference(&st->user_attrib[0].buffer, vbuffer->buffer);
+            st->user_attrib[0].element_size = element_size;
+            st->user_attrib[0].stride = stride;
+            st->num_user_attribs = 1;
          }
          vbuffer->stride = stride; /* in bytes */
       }
 
-      velements[attr].src_offset = (unsigned) (array->Ptr - low_addr);
+      velements[attr].src_offset = src_offset;
       velements[attr].instance_divisor = array->InstanceDivisor;
       velements[attr].vertex_buffer_index = 0;
       velements[attr].src_format = st_pipe_vertex_format(array->Type,
@@ -390,7 +397,10 @@ setup_non_interleaved_attribs(struct gl_context *ctx,
       const GLuint mesaAttr = vp->index_to_input[attr];
       const struct gl_client_array *array = arrays[mesaAttr];
       struct gl_buffer_object *bufobj = array->BufferObj;
+      GLuint element_size = array->_ElementSize;
       GLsizei stride = array->StrideB;
+
+      assert(element_size == array->Size * _mesa_sizeof_type(array->Type));
 
       if (bufobj && bufobj->Name) {
          /* Attribute data is in a VBO.
@@ -410,20 +420,16 @@ setup_non_interleaved_attribs(struct gl_context *ctx,
          void *ptr;
 
          if (array->Ptr) {
-            if (stride == 0) {
-               bytes = _mesa_sizeof_type(array->Type) * array->Size;
-            }
-            else {
-               uint divisor = array->InstanceDivisor;
-               uint length = (divisor ? num_instances / divisor : max_index) + 1;
-               bytes = stride * length;
-            }
+            uint divisor = array->InstanceDivisor;
+            uint last_index = divisor ? num_instances / divisor : max_index;
+
+            bytes = stride * last_index + element_size;
 
             ptr = (void *) array->Ptr;
          }
          else {
             /* no array, use ctx->Current.Attrib[] value */
-            bytes = sizeof(ctx->Current.Attrib[0]);
+            bytes = element_size = sizeof(ctx->Current.Attrib[0]);
             ptr = (void *) ctx->Current.Attrib[mesaAttr];
             stride = 0;
          }
@@ -438,9 +444,10 @@ setup_non_interleaved_attribs(struct gl_context *ctx,
          vbuffer[attr].buffer_offset = 0;
 
          /* Track user vertex buffers. */
-         pipe_resource_reference(&st->user_vb[attr], vbuffer[attr].buffer);
-         st->user_vb_stride[attr] = stride;
-         st->num_user_vbs = MAX2(st->num_user_vbs, attr+1);
+         pipe_resource_reference(&st->user_attrib[attr].buffer, vbuffer[attr].buffer);
+         st->user_attrib[attr].element_size = element_size;
+         st->user_attrib[attr].stride = stride;
+         st->num_user_attribs = MAX2(st->num_user_attribs, attr + 1);
       }
 
       /* common-case setup */
@@ -583,10 +590,10 @@ st_validate_varrays(struct gl_context *ctx,
    memset(velements, 0, sizeof(struct pipe_vertex_element) * vpv->num_inputs);
 
    /* Unreference any user vertex buffers. */
-   for (i = 0; i < st->num_user_vbs; i++) {
-      pipe_resource_reference(&st->user_vb[i], NULL);
+   for (i = 0; i < st->num_user_attribs; i++) {
+      pipe_resource_reference(&st->user_attrib[i].buffer, NULL);
    }
-   st->num_user_vbs = 0;
+   st->num_user_attribs = 0;
 
    /*
     * Setup the vbuffer[] and velements[] arrays.
@@ -700,21 +707,20 @@ st_draw_vbo(struct gl_context *ctx,
 
    /* Notify the driver that the content of user buffers may have been
     * changed. */
-   if (!new_array && st->num_user_vbs) {
-      for (i = 0; i < st->num_user_vbs; i++) {
-         if (st->user_vb[i]) {
-            unsigned stride = st->user_vb_stride[i];
+   assert(max_index >= min_index);
+   if (!new_array && st->num_user_attribs) {
+      for (i = 0; i < st->num_user_attribs; i++) {
+         if (st->user_attrib[i].buffer) {
+            unsigned element_size = st->user_attrib[i].element_size;
+            unsigned stride = st->user_attrib[i].stride;
+            unsigned min_offset = min_index * stride;
+            unsigned max_offset = max_index * stride + element_size;
 
-            if (stride) {
-               pipe->redefine_user_buffer(pipe, st->user_vb[i],
-                                          min_index * stride,
-                                          (max_index + 1 - min_index) * stride);
-            }
-            else {
-               /* stride == 0 */
-               pipe->redefine_user_buffer(pipe, st->user_vb[i],
-                                          0, st->user_vb[i]->width0);
-            }
+            assert(max_offset > min_offset);
+
+            pipe->redefine_user_buffer(pipe, st->user_attrib[i].buffer,
+                                       min_offset,
+                                       max_offset - min_offset);
          }
       }
    }
