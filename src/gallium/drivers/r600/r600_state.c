@@ -742,7 +742,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 					 level, state->cbufs[cb]->u.tex.first_layer);
 	pitch = rtex->pitch_in_blocks[level] / 8 - 1;
 	slice = rtex->pitch_in_blocks[level] * surf->aligned_height / 64 - 1;
-	ntype = 0;
+	ntype = V_0280A0_NUMBER_UNORM;
 	desc = util_format_description(surf->base.format);
 	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
 		ntype = V_0280A0_NUMBER_SRGB;
@@ -758,7 +758,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 
 	/* disable when gallium grows int textures */
 	if ((format == FMT_32_32_32_32 || format == FMT_16_16_16_16) && rtex->force_int_type)
-		ntype = 4;
+		ntype = V_0280A0_NUMBER_UINT;
 
 	color_info = S_0280A0_FORMAT(format) |
 		S_0280A0_COMP_SWAP(swap) |

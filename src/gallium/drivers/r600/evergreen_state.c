@@ -680,7 +680,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 					 level, state->cbufs[cb]->u.tex.first_layer);
 	pitch = rtex->pitch_in_blocks[level] / 8 - 1;
 	slice = rtex->pitch_in_blocks[level] * surf->aligned_height / 64 - 1;
-	ntype = 0;
+	ntype = V_028C70_NUMBER_UNORM;
 	desc = util_format_description(surf->base.format);
 	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
 		ntype = V_028C70_NUMBER_SRGB;
@@ -690,7 +690,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 
 	/* disable when gallium grows int textures */
 	if ((format == FMT_32_32_32_32 || format == FMT_16_16_16_16) && rtex->force_int_type)
-		ntype = 4;
+		ntype = V_028C70_NUMBER_UINT;
 
 	color_info = S_028C70_FORMAT(format) |
 		S_028C70_COMP_SWAP(swap) |
@@ -708,7 +708,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	   if we aren't a float, sint or uint */
 	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS &&
 	    desc->channel[i].size < 12 && desc->channel[i].type != UTIL_FORMAT_TYPE_FLOAT &&
-	    ntype != 4 && ntype != 5)
+	    ntype != V_028C70_NUMBER_UINT && ntype != V_028C70_NUMBER_SINT)
 		color_info |= S_028C70_SOURCE_FORMAT(V_028C70_EXPORT_4C_16BPC);
 
 	if (rtex->array_mode[level] > V_028C70_ARRAY_LINEAR_ALIGNED) {
