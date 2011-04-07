@@ -65,6 +65,14 @@ struct svga_screen
 
    pipe_mutex swc_mutex; /* Used for buffer uploads */
 
+   /* which formats to translate depth formats into */
+   struct {
+     enum SVGA3dSurfaceFormat z16;
+     /* note gallium order */
+     enum SVGA3dSurfaceFormat x8z24;
+     enum SVGA3dSurfaceFormat s8z24;
+   } depth;
+
    struct svga_host_surface_cache cache;
 };
 
