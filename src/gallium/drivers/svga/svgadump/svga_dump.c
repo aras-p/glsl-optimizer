@@ -1430,6 +1430,15 @@ dump_SVGA3dCmdDefineSurface(const SVGA3dCmdDefineSurface *cmd)
    case SVGA3D_AYUV:
       _debug_printf("\t\t.format = SVGA3D_AYUV\n");
       break;
+   case SVGA3D_Z_DF16:
+      _debug_printf("\t\t.format = SVGA3D_Z_D16\n");
+      break;
+   case SVGA3D_Z_DF24:
+      _debug_printf("\t\t.format = SVGA3D_Z_DF24\n");
+      break;
+   case SVGA3D_Z_D24S8_INT:
+      _debug_printf("\t\t.format = SVGA3D_Z_D24S8_INT\n");
+      break;
    default:
       _debug_printf("\t\t.format = %i\n", (*cmd).format);
       break;
