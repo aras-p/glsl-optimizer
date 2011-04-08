@@ -775,6 +775,7 @@ void r300_emit_textures_state(struct r300_context *r300,
     struct r300_texture_sampler_state *texstate;
     struct r300_resource *tex;
     unsigned i;
+    boolean has_us_format = r300->screen->caps.has_us_format;
     CS_LOCALS(r300);
 
     BEGIN_CS(size);
@@ -796,6 +797,11 @@ void r300_emit_textures_state(struct r300_context *r300,
 
             OUT_CS_REG(R300_TX_OFFSET_0 + (i * 4), texstate->format.tile_config);
             OUT_CS_RELOC(tex);
+
+            if (has_us_format) {
+                OUT_CS_REG(R500_US_FORMAT0_0 + (i * 4),
+                           texstate->format.us_format0);
+            }
         }
     }
     END_CS;

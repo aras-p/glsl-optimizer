@@ -751,6 +751,16 @@ void r300_texture_setup_format_state(struct r300_screen *screen,
     struct pipe_resource *pt = &tex->b.b.b;
     struct r300_texture_desc *desc = &tex->tex;
     boolean is_r500 = screen->caps.is_r500;
+    unsigned width, height, depth;
+    unsigned txwidth, txheight, txdepth;
+
+    width = u_minify(desc->width0, level);
+    height = u_minify(desc->height0, level);
+    depth = u_minify(desc->depth0, level);
+
+    txwidth = (width - 1) & 0x7ff;
+    txheight = (height - 1) & 0x7ff;
+    txdepth = util_logbase2(depth) & 0xf;
 
     /* Mask out all the fields we change. */
     out->format0 = 0;
@@ -760,9 +770,9 @@ void r300_texture_setup_format_state(struct r300_screen *screen,
 
     /* Set sampler state. */
     out->format0 =
-        R300_TX_WIDTH((u_minify(desc->width0, level) - 1) & 0x7ff) |
-        R300_TX_HEIGHT((u_minify(desc->height0, level) - 1) & 0x7ff) |
-        R300_TX_DEPTH(util_logbase2(u_minify(desc->depth0, level)) & 0xf);
+        R300_TX_WIDTH(txwidth) |
+        R300_TX_HEIGHT(txheight) |
+        R300_TX_DEPTH(txdepth);
 
     if (desc->uses_stride_addressing) {
         /* rectangles love this */
@@ -780,12 +790,32 @@ void r300_texture_setup_format_state(struct r300_screen *screen,
     /* large textures on r500 */
     if (is_r500)
     {
-        if (desc->width0 > 2048) {
+        unsigned us_width = txwidth;
+        unsigned us_height = txheight;
+        unsigned us_depth = txdepth;
+
+        if (width > 2048) {
             out->format2 |= R500_TXWIDTH_BIT11;
         }
-        if (desc->height0 > 2048) {
+        if (height > 2048) {
             out->format2 |= R500_TXHEIGHT_BIT11;
         }
+
+        /* The US_FORMAT register fixes an R500 TX addressing bug.
+         * Don't ask why it must be set like this. I don't know it either. */
+        if (width > 2048) {
+            us_width = (0x000007FF + us_width) >> 1;
+            us_depth |= 0x0000000D;
+        }
+        if (height > 2048) {
+            us_height = (0x000007FF + us_height) >> 1;
+            us_depth |= 0x0000000E;
+        }
+
+        out->us_format0 =
+            R300_TX_WIDTH(us_width) |
+            R300_TX_HEIGHT(us_height) |
+            R300_TX_DEPTH(us_depth);
     }
 
     out->tile_config = R300_TXO_MACRO_TILE(desc->macrotile[level]) |

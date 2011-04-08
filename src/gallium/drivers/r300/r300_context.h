@@ -190,6 +190,7 @@ struct r300_texture_format_state {
     uint32_t format1; /* R300_TX_FORMAT1: 0x44c0 */
     uint32_t format2; /* R300_TX_FORMAT2: 0x4500 */
     uint32_t tile_config; /* R300_TX_OFFSET (subset thereof) */
+    uint32_t us_format0;   /* R500_US_FORMAT0_0: 0x4640 (through 15) */
 };
 
 struct r300_sampler_view {
@@ -211,7 +212,7 @@ struct r300_texture_sampler_state {
     struct r300_texture_format_state format;
     uint32_t filter0;      /* R300_TX_FILTER0: 0x4400 */
     uint32_t filter1;      /* R300_TX_FILTER1: 0x4440 */
-    uint32_t border_color;  /* R300_TX_BORDER_COLOR: 0x45c0 */
+    uint32_t border_color; /* R300_TX_BORDER_COLOR: 0x45c0 */
 };
 
 struct r300_textures_state {

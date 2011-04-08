@@ -90,6 +90,8 @@ struct r300_capabilities {
     boolean high_second_pipe;
     /* DXTC texture swizzling. */
     boolean dxtc_swizzle;
+    /* Whether R500_US_FORMAT0_0 is supported (depends on DRM). */
+    boolean has_us_format;
 };
 
 /* Enumerations for legibility and telling which card we're running on. */

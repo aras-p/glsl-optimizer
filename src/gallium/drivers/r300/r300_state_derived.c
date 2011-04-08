@@ -771,6 +771,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
     unsigned min_level, max_level, i, j, size;
     unsigned count = MIN2(state->sampler_view_count,
                           state->sampler_state_count);
+    boolean has_us_format = r300->screen->caps.has_us_format;
 
     /* The KIL opcode fix, see below. */
     if (!count && !r300->screen->caps.is_r500)
@@ -923,7 +924,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
 
             texstate->filter0 |= i << 28;
 
-            size += 16;
+            size += 16 + (has_us_format ? 2 : 0);
             state->count = i+1;
         } else {
             /* For the KIL opcode to work on r3xx-r4xx, the texture unit
@@ -952,7 +953,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                 texstate->border_color = 0;
 
                 texstate->filter0 |= i << 28;
-                size += 16;
+                size += 16 + (has_us_format ? 2 : 0);
                 state->count = i+1;
             }
         }
