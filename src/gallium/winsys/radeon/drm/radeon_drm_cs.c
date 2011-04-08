@@ -265,8 +265,9 @@ static void radeon_add_reloc(struct radeon_cs_context *csc,
     }
 
     /* Initialize the new relocation. */
-    p_atomic_inc(&bo->num_cs_references);
+    csc->relocs_bo[csc->crelocs] = NULL;
     radeon_bo_reference(&csc->relocs_bo[csc->crelocs], bo);
+    p_atomic_inc(&bo->num_cs_references);
     reloc = &csc->relocs[csc->crelocs];
     reloc->handle = bo->handle;
     reloc->read_domains = rd;
