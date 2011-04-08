@@ -328,8 +328,9 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
                        format == PIPE_FORMAT_RGTC2_SNORM ||
                        format == PIPE_FORMAT_LATC2_UNORM ||
                        format == PIPE_FORMAT_LATC2_SNORM;
-    boolean is_half_float = format == PIPE_FORMAT_R16_FLOAT ||
-                            format == PIPE_FORMAT_R16G16_FLOAT ||
+    boolean is_r16f_rg16f = format == PIPE_FORMAT_R16_FLOAT ||
+                            format == PIPE_FORMAT_R16G16_FLOAT;
+    boolean is_half_float = is_r16f_rg16f ||
                             format == PIPE_FORMAT_R16G16B16_FLOAT ||
                             format == PIPE_FORMAT_R16G16B16A16_FLOAT;
 
@@ -361,6 +362,8 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
         (is_r500 || !is_ati1n) &&
         /* ATI2N is supported on r4xx-r5xx. */
         (is_r400 || is_r500 || !is_ati2n) &&
+        /* R16F and RG16F texture support was added in as late as DRM 2.8.0 */
+        (drm_2_8_0 || !is_r16f_rg16f) &&
         r300_is_sampler_format_supported(format)) {
         retval |= PIPE_BIND_SAMPLER_VIEW;
     }
