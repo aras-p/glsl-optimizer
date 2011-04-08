@@ -200,9 +200,8 @@ typedef struct
 typedef struct
 {
    vlVdpDevice *device;
-   uint32_t width;
-   uint32_t height;
-   enum pipe_format format;
+   struct pipe_surface *surface;
+   struct pipe_sampler_view *sampler_view;
 } vlVdpOutputSurface;
 
 typedef struct

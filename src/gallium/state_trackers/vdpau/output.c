@@ -1,6 +1,7 @@
 /**************************************************************************
  *
  * Copyright 2010 Thomas Balling Sørensen.
+ * Copyright 2011 Christian König.
  * All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a
@@ -25,10 +26,12 @@
  *
  **************************************************************************/
 
-#include "vdpau_private.h"
 #include <vdpau/vdpau.h>
+
 #include <util/u_debug.h>
 #include <util/u_memory.h>
+
+#include "vdpau_private.h"
 
 VdpStatus
 vlVdpOutputSurfaceCreate(VdpDevice device,
@@ -36,6 +39,11 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
                          uint32_t width, uint32_t height,
                          VdpOutputSurface  *surface)
 {
+   struct pipe_video_context *context;
+   struct pipe_resource res_tmpl, *res;
+   struct pipe_sampler_view sv_templ;
+   struct pipe_surface surf_templ;
+
    vlVdpOutputSurface *vlsurface = NULL;
 
    debug_printf("[VDPAU] Creating output surface\n");
@@ -46,13 +54,47 @@ vlVdpOutputSurfaceCreate(VdpDevice device,
    if (!dev)
       return VDP_STATUS_INVALID_HANDLE;
 
+   context = dev->context->vpipe;
+   if (!context)
+      return VDP_STATUS_INVALID_HANDLE;
+
    vlsurface = CALLOC(1, sizeof(vlVdpOutputSurface));
    if (!vlsurface)
       return VDP_STATUS_RESOURCES;
 
-   vlsurface->width = width;
-   vlsurface->height = height;
-   vlsurface->format = FormatRGBAToPipe(rgba_format);
+   memset(&res_tmpl, 0, sizeof(res_tmpl));
+
+   res_tmpl.target = PIPE_TEXTURE_2D;
+   res_tmpl.format = FormatRGBAToPipe(rgba_format);
+   res_tmpl.width0 = width;
+   res_tmpl.height0 = height;
+   res_tmpl.depth0 = 1;
+   res_tmpl.array_size = 1;
+   res_tmpl.bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
+   res_tmpl.usage = PIPE_USAGE_STATIC;
+
+   res = context->screen->resource_create(context->screen, &res_tmpl);
+   if (!res) {
+      FREE(dev);
+      return VDP_STATUS_ERROR;
+   }
+
+   memset(&sv_templ, 0, sizeof(sv_templ));
+   u_sampler_view_default_template(&sv_templ, res, res->format);
+   vlsurface->sampler_view = context->create_sampler_view(context, res, &sv_templ);
+   if (!vlsurface->sampler_view) {
+      FREE(dev);
+      return VDP_STATUS_ERROR;
+   }
+
+   memset(&surf_templ, 0, sizeof(surf_templ));
+   surf_templ.format = res->format;
+   surf_templ.usage = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
+   vlsurface->surface = context->create_surface(context, res, &surf_templ);
+   if (!vlsurface->surface) {
+      FREE(dev);
+      return VDP_STATUS_ERROR;
+   }
 
    *surface = vlAddDataHTAB(vlsurface);
    if (*surface == 0) {
