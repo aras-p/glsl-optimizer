@@ -241,13 +241,13 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
 
       unsupported = !state->extensions->EXT_texture_array;
    } else if (strcmp(name, "GL_ARB_shader_stencil_export") == 0) {
-      if (state->target != fragment_shader) {
-	 unsupported = true;
-      } else {
-	 state->ARB_shader_stencil_export_enable = (ext_mode != extension_disable);
-	 state->ARB_shader_stencil_export_warn = (ext_mode == extension_warn);
-	 unsupported = !state->extensions->ARB_shader_stencil_export;
-      }
+      state->ARB_shader_stencil_export_enable = (ext_mode != extension_disable);
+      state->ARB_shader_stencil_export_warn = (ext_mode == extension_warn);
+
+      /* This extension is only supported in fragment shaders.
+       */
+      unsupported = (state->target != fragment_shader)
+	 || !state->extensions->ARB_shader_stencil_export;
    } else if (strcmp(name, "GL_AMD_conservative_depth") == 0) {
       /* The AMD_conservative spec does not forbid requiring the extension in
        * the vertex shader.
