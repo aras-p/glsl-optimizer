@@ -183,7 +183,7 @@ typedef struct
 typedef struct
 {
    vlVdpDevice *device;
-   Drawable drawable;
+   struct pipe_video_compositor *compositor;
 } vlVdpPresentationQueue;
 
 typedef struct

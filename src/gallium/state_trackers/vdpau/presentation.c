@@ -41,9 +41,11 @@ vlVdpPresentationQueueCreate(VdpDevice device,
                              VdpPresentationQueueTarget presentation_queue_target,
                              VdpPresentationQueue *presentation_queue)
 {
-   debug_printf("[VDPAU] Creating PresentationQueue\n");
-   VdpStatus ret;
    vlVdpPresentationQueue *pq = NULL;
+   struct pipe_video_context *context;
+   VdpStatus ret;
+
+   _debug_printf("[VDPAU] Creating PresentationQueue\n");
 
    if (!presentation_queue)
       return VDP_STATUS_INVALID_POINTER;
@@ -59,9 +61,18 @@ vlVdpPresentationQueueCreate(VdpDevice device,
    if (dev != pqt->device)
       return VDP_STATUS_HANDLE_DEVICE_MISMATCH;
 
+   context = dev->context->vpipe;
+
    pq = CALLOC(1, sizeof(vlVdpPresentationQueue));
    if (!pq)
       return VDP_STATUS_RESOURCES;
+
+   pq->device = dev;
+   pq->compositor = context->create_compositor(context);
+   if (!pq->compositor) {
+      ret = VDP_STATUS_ERROR;
+      goto no_compositor;
+   }
 
    *presentation_queue = vlAddDataHTAB(pq);
    if (*presentation_queue == 0) {
@@ -71,6 +82,7 @@ vlVdpPresentationQueueCreate(VdpDevice device,
 
    return VDP_STATUS_OK;
 no_handle:
+no_compositor:
    FREE(pq);
    return ret;
 }
@@ -129,7 +141,8 @@ vlVdpPresentationQueueBlockUntilSurfaceIdle(VdpPresentationQueue presentation_qu
    if (!first_presentation_time)
       return VDP_STATUS_INVALID_POINTER;
 
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   //return VDP_STATUS_NO_IMPLEMENTATION;
+   return VDP_STATUS_OK;
 }
 
 VdpStatus
