@@ -19,19 +19,19 @@
 struct nvc0_blend_stateobj {
    struct pipe_blend_state pipe;
    int size;
-   uint32_t state[72];
+   uint32_t state[69];
 };
 
 struct nvc0_rasterizer_stateobj {
    struct pipe_rasterizer_state pipe;
    int size;
-   uint32_t state[39];
+   uint32_t state[38];
 };
 
 struct nvc0_zsa_stateobj {
    struct pipe_depth_stencil_alpha_state pipe;
    int size;
-   uint32_t state[29];
+   uint32_t state[26];
 };
 
 struct nvc0_vertex_element {

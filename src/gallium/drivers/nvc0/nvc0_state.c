@@ -93,9 +93,18 @@ nvc0_blend_state_create(struct pipe_context *pipe,
 
     SB_IMMED_3D(so, BLEND_INDEPENDENT, cso->independent_blend_enable);
 
+    if (!cso->logicop_enable)
+       SB_IMMED_3D(so, LOGIC_OP_ENABLE, 0);
+
+    if (cso->logicop_enable) {
+       SB_BEGIN_3D(so, LOGIC_OP_ENABLE, 2);
+       SB_DATA    (so, 1);
+       SB_DATA    (so, nvgl_logicop_func(cso->logicop_func));
+
+       SB_IMMED_3D(so, BLEND_ENABLES, 0);
+    } else
     if (!cso->independent_blend_enable) {
-        SB_BEGIN_3D(so, BLEND_ENABLES, 1);
-        SB_DATA    (so, cso->rt[0].blend_enable ? 0xff : 0);
+        SB_IMMED_3D(so, BLEND_ENABLES, cso->rt[0].blend_enable ? 0xff : 0);
 
         if (cso->rt[0].blend_enable) {
             SB_BEGIN_3D(so, BLEND_EQUATION_RGB, 5);
@@ -126,23 +135,14 @@ nvc0_blend_state_create(struct pipe_context *pipe,
             SB_DATA    (so, nvc0_blend_fac(cso->rt[i].alpha_src_factor));
             SB_DATA    (so, nvc0_blend_fac(cso->rt[i].alpha_dst_factor));
         }
-        SB_BEGIN_3D(so, BLEND_ENABLES, 1);
-        SB_DATA    (so, en);
+        SB_IMMED_3D(so, BLEND_ENABLES, en);
 
         SB_BEGIN_3D(so, COLOR_MASK(0), 8);
         for (i = 0; i < 8; ++i)
             SB_DATA(so, nvc0_colormask(cso->rt[i].colormask));
     }
 
-    if (cso->logicop_enable) {
-       SB_BEGIN_3D(so, LOGIC_OP_ENABLE, 2);
-       SB_DATA    (so, 1);
-       SB_DATA    (so, nvgl_logicop_func(cso->logicop_func));
-    } else {
-       SB_IMMED_3D(so, LOGIC_OP_ENABLE, 0);
-    }
-
-    assert(so->size < (sizeof(so->state) / sizeof(so->state[0])));
+    assert(so->size <= (sizeof(so->state) / sizeof(so->state[0])));
     return so;
 }
 
@@ -195,15 +195,12 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
        SB_BEGIN_3D(so, LINE_WIDTH_ALIASED, 1);
     SB_DATA    (so, fui(cso->line_width));
 
-    SB_BEGIN_3D(so, LINE_STIPPLE_ENABLE, 1);
+    SB_IMMED_3D(so, LINE_STIPPLE_ENABLE, cso->line_stipple_enable);
     if (cso->line_stipple_enable) {
-        SB_DATA    (so, 1);
         SB_BEGIN_3D(so, LINE_STIPPLE_PATTERN, 1);
         SB_DATA    (so, (cso->line_stipple_pattern << 8) |
                          cso->line_stipple_factor);
                     
-    } else {
-        SB_DATA    (so, 0);
     }
 
     SB_IMMED_3D(so, VP_POINT_SIZE_EN, cso->point_size_per_vertex);
@@ -257,7 +254,7 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
         SB_DATA    (so, fui(cso->offset_units * 2.0f));
     }
 
-    assert(so->size < (sizeof(so->state) / sizeof(so->state[0])));
+    assert(so->size <= (sizeof(so->state) / sizeof(so->state[0])));
     return (void *)so;
 }
 
@@ -328,7 +325,7 @@ nvc0_zsa_state_create(struct pipe_context *pipe,
       SB_DATA    (so, nvgl_comparison_op(cso->alpha.func));
    }
 
-   assert(so->size < (sizeof(so->state) / sizeof(so->state[0])));
+   assert(so->size <= (sizeof(so->state) / sizeof(so->state[0])));
    return (void *)so;
 }
 

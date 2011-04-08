@@ -156,11 +156,10 @@ static void
 nvc0_validate_stencil_ref(struct nvc0_context *nvc0)
 {
     struct nouveau_channel *chan = nvc0->screen->base.channel;
+    const ubyte *ref = &nvc0->stencil_ref.ref_value[0];
 
-    BEGIN_RING(chan, RING_3D(STENCIL_FRONT_FUNC_REF), 1);
-    OUT_RING  (chan, nvc0->stencil_ref.ref_value[0]);
-    BEGIN_RING(chan, RING_3D(STENCIL_BACK_FUNC_REF), 1);
-    OUT_RING  (chan, nvc0->stencil_ref.ref_value[1]);
+    IMMED_RING(chan, RING_3D(STENCIL_FRONT_FUNC_REF), ref[0]);
+    IMMED_RING(chan, RING_3D(STENCIL_BACK_FUNC_REF), ref[1]);
 }
 
 static void
