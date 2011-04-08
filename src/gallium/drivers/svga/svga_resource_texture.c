@@ -616,7 +616,8 @@ svga_texture_from_handle(struct pipe_screen *screen,
       /* It's okay for XRGB and ARGB or depth with/out stencil to get mixed up */
       if ( !( (f1 == SVGA3D_X8R8G8B8 && f2 == SVGA3D_A8R8G8B8) ||
               (f1 == SVGA3D_A8R8G8B8 && f2 == SVGA3D_X8R8G8B8) ||
-              (f1 == SVGA3D_Z_D24X8 && f2 == SVGA3D_Z_D24S8) ) ) {
+              (f1 == SVGA3D_Z_D24X8 && f2 == SVGA3D_Z_D24S8) ||
+              (f1 == SVGA3D_Z_DF24 && f2 == SVGA3D_Z_D24S8_INT) ) ) {
          debug_printf("%s wrong format %u != %u\n", __FUNCTION__, f1, f2);
          return NULL;
       }
