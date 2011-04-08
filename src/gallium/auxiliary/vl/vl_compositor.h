@@ -56,6 +56,7 @@ struct vl_compositor
 
    void *sampler;
    void *blend;
+   void *rast;
    void *vertex_elems_state;
 
    void *vs;

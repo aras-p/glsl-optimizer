@@ -216,6 +216,7 @@ static void cleanup_shaders(struct vl_compositor *c)
 static bool
 init_pipe_state(struct vl_compositor *c)
 {
+   struct pipe_rasterizer_state rast;
    struct pipe_sampler_state sampler;
    struct pipe_blend_state blend;
 
@@ -263,6 +264,21 @@ init_pipe_state(struct vl_compositor *c)
    blend.dither = 0;
    c->blend = c->pipe->create_blend_state(c->pipe, &blend);
 
+   memset(&rast, 0, sizeof rast);
+   rast.flatshade = 1;
+   rast.front_ccw = 1;
+   rast.cull_face = PIPE_FACE_NONE;
+   rast.fill_back = PIPE_POLYGON_MODE_FILL;
+   rast.fill_front = PIPE_POLYGON_MODE_FILL;
+   rast.scissor = 1;
+   rast.line_width = 1;
+   rast.point_size_per_vertex = 1;
+   rast.offset_units = 1;
+   rast.offset_scale = 1;
+   rast.gl_rasterization_rules = 1;
+
+   c->rast = c->pipe->create_rasterizer_state(c->pipe, &rast);
+
    return true;
 }
 
@@ -272,6 +288,7 @@ static void cleanup_pipe_state(struct vl_compositor *c)
 
    c->pipe->delete_sampler_state(c->pipe, c->sampler);
    c->pipe->delete_blend_state(c->pipe, c->blend);
+   c->pipe->delete_rasterizer_state(c->pipe, c->rast);
 }
 
 static bool
@@ -371,14 +388,13 @@ gen_rect_verts(struct vertex4f *vb,
 }
 
 static void
-gen_vertex_data(struct vl_compositor *c, struct pipe_video_rect *dst_rect, struct vertex2f *dst_inv_size)
+gen_vertex_data(struct vl_compositor *c)
 {
    struct vertex4f *vb;
    struct pipe_transfer *buf_transfer;
    unsigned i;
 
    assert(c);
-   assert(dst_rect);
 
    vb = pipe_buffer_map(c->pipe, c->vertex_buf.buffer,
                         PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD | PIPE_TRANSFER_DONTBLOCK,
@@ -392,10 +408,7 @@ gen_vertex_data(struct vl_compositor *c, struct pipe_video_rect *dst_rect, struc
          struct pipe_sampler_view *sv = c->layers[i].sampler_views[0];
          struct vertex2f src_inv_size = {1.0f / sv->texture->width0, 1.0f / sv->texture->height0};
 
-         if (&c->layers[i].fs == c->fs_video_buffer)
-            gen_rect_verts(vb, &c->layers[i].src_rect, &src_inv_size, dst_rect, dst_inv_size);
-         else
-            gen_rect_verts(vb, &c->layers[i].src_rect, &src_inv_size, &c->layers[i].dst_rect, &src_inv_size);
+         gen_rect_verts(vb, &c->layers[i].src_rect, &src_inv_size, &c->layers[i].dst_rect, &src_inv_size);
 
          vb += 4;
       }
@@ -552,12 +565,11 @@ vl_compositor_render(struct pipe_video_compositor *compositor,
                      struct pipe_fence_handle      **fence)
 {
    struct vl_compositor *c = (struct vl_compositor *)compositor;
-   struct vertex2f dst_inv_size;
+   struct pipe_scissor_state scissor;
    void *samplers[3];
 
    assert(compositor);
    assert(dst_surface);
-   assert(dst_area);
 
    c->fb_state.width = dst_surface->width;
    c->fb_state.height = dst_surface->height;
@@ -566,13 +578,23 @@ vl_compositor_render(struct pipe_video_compositor *compositor,
    c->viewport.scale[0] = dst_surface->width;
    c->viewport.scale[1] = dst_surface->height;
 
-   dst_inv_size.x = 1.0f / dst_surface->width;
-   dst_inv_size.y = 1.0f / dst_surface->height;
+   if (dst_area) {
+      scissor.minx = dst_area->x;
+      scissor.miny = dst_area->y;
+      scissor.maxx = dst_area->x + dst_area->w;
+      scissor.maxy = dst_area->y + dst_area->h;
+   } else {
+      scissor.minx = 0;
+      scissor.miny = 0;
+      scissor.maxx = dst_surface->width;
+      scissor.maxy = dst_surface->height;
+   }
 
    samplers[0] = samplers[1] = samplers[2] = c->sampler;
 
-   gen_vertex_data(c, dst_area, &dst_inv_size);
+   gen_vertex_data(c);
 
+   c->pipe->set_scissor_state(c->pipe, &scissor);
    c->pipe->set_framebuffer_state(c->pipe, &c->fb_state);
    c->pipe->set_viewport_state(c->pipe, &c->viewport);
    c->pipe->bind_fragment_sampler_states(c->pipe, 3, &samplers[0]);
@@ -581,6 +603,7 @@ vl_compositor_render(struct pipe_video_compositor *compositor,
    c->pipe->bind_vertex_elements_state(c->pipe, c->vertex_elems_state);
    c->pipe->set_constant_buffer(c->pipe, PIPE_SHADER_FRAGMENT, 0, c->csc_matrix);
    c->pipe->bind_blend_state(c->pipe, c->blend);
+   c->pipe->bind_rasterizer_state(c->pipe, c->rast);
 
    draw_layers(c);
 
