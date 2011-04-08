@@ -390,8 +390,10 @@ ir_copy_propagation_elements_visitor::kill(kill_entry *k)
 
       if (entry->lhs == k->var) {
 	 entry->write_mask = entry->write_mask & ~k->write_mask;
-	 if (entry->write_mask == 0)
+	 if (entry->write_mask == 0) {
 	    entry->remove();
+	    continue;
+	 }
       }
       if (entry->rhs == k->var) {
 	 entry->remove();
