@@ -39,8 +39,9 @@ vlVdpVideoMixerCreate(VdpDevice device,
                       void const *const *parameter_values,
                       VdpVideoMixer *mixer)
 {
-   VdpStatus ret;
    vlVdpVideoMixer *vmixer = NULL;
+   struct pipe_video_context *context;
+   VdpStatus ret;
 
    debug_printf("[VDPAU] Creating VideoMixer\n");
 
@@ -48,11 +49,15 @@ vlVdpVideoMixerCreate(VdpDevice device,
    if (!dev)
       return VDP_STATUS_INVALID_HANDLE;
 
+   context = dev->context->vpipe;
+
    vmixer = CALLOC(1, sizeof(vlVdpVideoMixer));
    if (!vmixer)
       return VDP_STATUS_RESOURCES;
 
    vmixer->device = dev;
+   vmixer->compositor = context->create_compositor(context);
+
    /*
     * TODO: Handle features and parameters
     * */

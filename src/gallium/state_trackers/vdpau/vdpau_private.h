@@ -189,6 +189,7 @@ typedef struct
 typedef struct
 {
    vlVdpDevice *device;
+   struct pipe_video_compositor *compositor;
 } vlVdpVideoMixer;
 
 typedef struct
