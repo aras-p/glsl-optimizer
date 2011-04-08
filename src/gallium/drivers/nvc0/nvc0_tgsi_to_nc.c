@@ -259,6 +259,12 @@ fetch_by_bb(struct bld_register *reg,
          fetch_by_bb(reg, vals, n, b->in[i]);
 }
 
+static INLINE boolean
+nvc0_bblock_is_terminated(struct nv_basic_block *bb)
+{
+   return bb->exit && bb->exit->terminator;
+}
+
 static INLINE struct nv_value *
 bld_load_imm_u32(struct bld_context *bld, uint32_t u);
 
@@ -1637,8 +1643,7 @@ bld_instruction(struct bld_context *bld,
    {
       struct nv_basic_block *b = new_basic_block(bld->pc);
 
-      if (bld->pc->current_block->exit &&
-          !bld->pc->current_block->exit->terminator)
+      if (!nvc0_bblock_is_terminated(bld->pc->current_block))
          bld_flow(bld, NV_OP_BRA, NULL, NV_CC_P, b, FALSE);
 
       --bld->cond_lvl;

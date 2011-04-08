@@ -273,6 +273,12 @@ fetch_by_bb(struct bld_value_stack *stack,
          fetch_by_bb(stack, vals, n, b->in[i]);
 }
 
+static INLINE boolean
+nvbb_is_terminated(struct nv_basic_block *bb)
+{
+   return bb->exit && bb->exit->is_terminator;
+}
+
 static INLINE struct nv_value *
 bld_load_imm_u32(struct bld_context *bld, uint32_t u);
 
@@ -1727,8 +1733,7 @@ bld_instruction(struct bld_context *bld,
    {
       struct nv_basic_block *b = new_basic_block(bld->pc);
 
-      if (bld->pc->current_block->exit &&
-          !bld->pc->current_block->exit->is_terminator)
+      if (!nvbb_is_terminated(bld->pc->current_block))
          bld_flow(bld, NV_OP_BRA, NV_CC_TR, NULL, b, FALSE);
 
       --bld->cond_lvl;
@@ -1800,7 +1805,8 @@ bld_instruction(struct bld_context *bld,
    {
       struct nv_basic_block *bb = bld->loop_bb[bld->loop_lvl - 1];
 
-      bld_flow(bld, NV_OP_BRA, NV_CC_TR, NULL, bb, FALSE);
+      if (!nvbb_is_terminated(bld->pc->current_block))
+         bld_flow(bld, NV_OP_BRA, NV_CC_TR, NULL, bb, FALSE);
 
       nvbb_attach_block(bld->pc->current_block, bb, CFG_EDGE_BACK);
 

@@ -504,7 +504,9 @@ pass_generate_phi_movs(struct nv_pc_pass *ctx, struct nv_basic_block *b)
       }
 
       if (pn != p && pn->exit) {
-         ctx->pc->current_block = b->in[n ? 0 : 1];
+         assert(!b->in[!n]->exit || b->in[!n]->exit->terminator);
+         /* insert terminator (branch to ENDIF) in new else block */
+         ctx->pc->current_block = pn;
          ni = new_instruction(ctx->pc, NV_OP_BRA);
          ni->target = b;
          ni->terminator = 1;

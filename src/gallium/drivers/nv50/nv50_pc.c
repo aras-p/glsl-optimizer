@@ -625,6 +625,9 @@ nvbb_insert_tail(struct nv_basic_block *b, struct nv_instruction *i)
 
    i->bb = b;
    b->num_instructions++;
+
+   if (i->prev && i->prev->is_terminator)
+      nv_nvi_permute(i->prev, i);
 }
 
 void
