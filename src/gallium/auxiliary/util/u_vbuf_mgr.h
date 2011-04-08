@@ -53,7 +53,7 @@ struct u_vbuf_mgr {
    int nr_real_vertex_buffers;
 
    /* Precomputed max_index for hardware vertex buffers. */
-   int max_index;
+   unsigned max_index;
 
    /* This uploader can optionally be used by the driver.
     *
