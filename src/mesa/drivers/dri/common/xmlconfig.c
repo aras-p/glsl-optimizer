@@ -64,7 +64,25 @@ extern char *program_invocation_name, *program_invocation_short_name;
    the basename to match BSD getprogname() */
 #    include <stdlib.h>
 #    include <libgen.h>
-#    define GET_PROGRAM_NAME() basename(getexecname())
+
+static const char *__getProgramName () {
+    static const char *progname;
+
+    if (progname == NULL) {
+	const char *e = getexecname();
+	if (e != NULL) {
+	    /* Have to make a copy since getexecname can return a readonly
+	       string, but basename expects to be able to modify its arg. */
+	    char *n = strdup(e);
+	    if (n != NULL) {
+		progname = basename(n);
+	    }
+	}
+    }
+    return progname;
+}
+
+#    define GET_PROGRAM_NAME() __getProgramName()
 #endif
 
 #if !defined(GET_PROGRAM_NAME)
