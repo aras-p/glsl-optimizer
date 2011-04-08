@@ -419,5 +419,5 @@ void r300_parse_chipset(struct r300_capabilities* caps)
     caps->is_rv350 = caps->family >= CHIP_FAMILY_RV350;
     caps->z_compress = caps->is_rv350 ? R300_ZCOMP_8X8 : R300_ZCOMP_4X4;
     caps->dxtc_swizzle = caps->is_r400 || caps->is_r500;
-    caps->has_us_format = caps->is_r500;
+    caps->has_us_format = caps->family == CHIP_FAMILY_R520;
 }
