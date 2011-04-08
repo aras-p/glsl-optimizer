@@ -253,13 +253,11 @@ static void r300_clear(struct pipe_context* pipe,
     } else if (r300->zmask_clear.dirty || r300->hiz_clear.dirty) {
         /* Just clear zmask and hiz now, this does not use the standard draw
          * procedure. */
-        unsigned dwords;
-
         /* Calculate zmask_clear and hiz_clear atom sizes. */
-        r300_update_hyperz_state(r300);
-        dwords = (r300->zmask_clear.dirty ? r300->zmask_clear.size : 0) +
-                 (r300->hiz_clear.dirty ? r300->hiz_clear.size : 0) +
-                 r300_get_num_cs_end_dwords(r300);
+        unsigned dwords =
+            (r300->zmask_clear.dirty ? r300->zmask_clear.size : 0) +
+            (r300->hiz_clear.dirty ? r300->hiz_clear.size : 0) +
+            r300_get_num_cs_end_dwords(r300);
 
         /* Reserve CS space. */
         if (dwords > (R300_MAX_CMDBUF_DWORDS - r300->cs->cdw)) {
