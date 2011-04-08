@@ -69,6 +69,7 @@ vlVdpPresentationQueueCreate(VdpDevice device,
 
    pq->device = dev;
    pq->compositor = context->create_compositor(context);
+   pq->drawable = pqt->drawable;
    if (!pq->compositor) {
       ret = VDP_STATUS_ERROR;
       goto no_compositor;
@@ -130,7 +131,36 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
                               uint32_t clip_height,
                               VdpTime  earliest_presentation_time)
 {
-   return VDP_STATUS_NO_IMPLEMENTATION;
+   vlVdpPresentationQueue *pq;
+   vlVdpOutputSurface *surf;
+   struct pipe_surface *drawable_surface;
+
+   pq = vlGetDataHTAB(presentation_queue);
+   if (!pq)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   drawable_surface = vl_drawable_surface_get(pq->device->context, pq->drawable);
+   if (!drawable_surface)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   surf = vlGetDataHTAB(surface);
+   if (!surf)
+      return VDP_STATUS_INVALID_HANDLE;
+
+   pq->compositor->clear_layers(pq->compositor);
+   pq->compositor->set_rgba_layer(pq->compositor, 0, surf->sampler_view, NULL, NULL);
+   pq->compositor->render_picture(pq->compositor, PIPE_MPEG12_PICTURE_TYPE_FRAME,
+                                  drawable_surface, NULL, NULL);
+
+   pq->device->context->vpipe->screen->flush_frontbuffer
+   (
+      pq->device->context->vpipe->screen,
+      drawable_surface->texture,
+      0, 0,
+      vl_contextprivate_get(pq->device->context, drawable_surface)
+   );
+
+   return VDP_STATUS_OK;
 }
 
 VdpStatus
