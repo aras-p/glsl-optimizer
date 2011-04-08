@@ -519,6 +519,15 @@ svga_screen_create(struct svga_winsys_screen *sws)
       sws->get_cap(sws, SVGA3D_DEVCAP_VERTEX_SHADER_VERSION, &result) &&
       result.u >= SVGA3DVSVERSION_30 ? TRUE : FALSE;
 
+   /*
+    * The D16, D24X8, and D24S8 formats always do an implicit shadow compare
+    * when sampled from, where as the DF16, DF24, and D24S8_INT do not.  So
+    * we prefer the later when available.
+    *
+    * This mimics hardware vendors extensions for D3D depth sampling. See also
+    * http://aras-p.info/texts/D3D9GPUHacks.html
+    */
+
    {
       SVGA3dSurfaceFormatCaps mask;
       mask.value = 0;
@@ -551,7 +560,7 @@ svga_screen_create(struct svga_winsys_screen *sws)
          sws->get_cap(sws, SVGA3D_DEVCAP_SURFACEFMT_Z_D24S8_INT, &result) &&
          (result.u & mask.value) == mask.value ?
             SVGA3D_Z_D24S8_INT : svgascreen->depth.s8z24;
-    }
+   }
 
 
 #if 1
