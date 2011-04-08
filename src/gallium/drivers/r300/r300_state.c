@@ -856,6 +856,7 @@ r300_set_framebuffer_state(struct pipe_context* pipe,
             }
         }
     }
+    assert(state->zsbuf || r300->hyperz_locked || !r300->zmask_in_use);
 
     /* Need to reset clamping or colormask. */
     r300_mark_atom_dirty(r300, &r300->blend_state);

@@ -304,16 +304,10 @@ static void r300_clear_render_target(struct pipe_context *pipe,
 {
     struct r300_context *r300 = r300_context(pipe);
 
-    r300->hyperz_locked = TRUE;
-    r300_mark_atom_dirty(r300, &r300->hyperz_state);
-
     r300_blitter_begin(r300, R300_CLEAR_SURFACE);
     util_blitter_clear_render_target(r300->blitter, dst, rgba,
                                      dstx, dsty, width, height);
     r300_blitter_end(r300);
-
-    r300->hyperz_locked = FALSE;
-    r300_mark_atom_dirty(r300, &r300->hyperz_state);
 }
 
 /* Clear a region of a depth stencil surface. */
@@ -332,21 +326,14 @@ static void r300_clear_depth_stencil(struct pipe_context *pipe,
     if (r300->zmask_in_use && !r300->hyperz_locked) {
         if (fb->zsbuf->texture == dst->texture) {
             r300_decompress_zmask(r300);
-        } else {
-            r300->hyperz_locked = TRUE;
-            r300_mark_atom_dirty(r300, &r300->hyperz_state);
         }
     }
 
+    /* XXX Do not decompress ZMask of the currently-set zbuffer. */
     r300_blitter_begin(r300, R300_CLEAR_SURFACE);
     util_blitter_clear_depth_stencil(r300->blitter, dst, clear_flags, depth, stencil,
                                      dstx, dsty, width, height);
     r300_blitter_end(r300);
-
-    if (r300->hyperz_locked) {
-        r300->hyperz_locked = FALSE;
-        r300_mark_atom_dirty(r300, &r300->hyperz_state);
-    }
 }
 
 void r300_decompress_zmask(struct r300_context *r300)
@@ -433,9 +420,6 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
         if (fb->zsbuf->texture == src ||
             fb->zsbuf->texture == dst) {
             r300_decompress_zmask(r300);
-        } else {
-            r300->hyperz_locked = TRUE;
-            r300_mark_atom_dirty(r300, &r300->hyperz_state);
         }
     }
 
@@ -511,11 +495,6 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
         r300_resource_set_properties(pipe->screen, src, 0, &old_src);
     if (old_dst.format != new_dst.format)
         r300_resource_set_properties(pipe->screen, dst, 0, &old_dst);
-
-    if (r300->hyperz_locked) {
-        r300->hyperz_locked = FALSE;
-        r300_mark_atom_dirty(r300, &r300->hyperz_state);
-    }
 }
 
 void r300_init_blit_functions(struct r300_context *r300)
