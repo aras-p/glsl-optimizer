@@ -97,8 +97,14 @@ nv50_blend_state_create(struct pipe_context *pipe,
 
    so->pipe = *cso;
 
-   SB_BEGIN_3D(so, BLEND_ENABLE(0), 8);
+   SB_BEGIN_3D(so, COLOR_MASK_COMMON, 1);
+   SB_DATA    (so, !cso->independent_blend_enable);
+
+   SB_BEGIN_3D(so, BLEND_ENABLE_COMMON, 1);
+   SB_DATA    (so, !cso->independent_blend_enable);
+
    if (cso->independent_blend_enable) {
+      SB_BEGIN_3D(so, BLEND_ENABLE(0), 8);
       for (i = 0; i < 8; ++i) {
          SB_DATA(so, cso->rt[i].blend_enable);
          if (cso->rt[i].blend_enable)
@@ -121,8 +127,8 @@ nv50_blend_state_create(struct pipe_context *pipe,
          }
       }
    } else {
-      for (i = 0; i < 8; ++i)
-         SB_DATA(so, cso->rt[0].blend_enable);
+      SB_BEGIN_3D(so, BLEND_ENABLE(0), 1);
+      SB_DATA    (so, cso->rt[0].blend_enable);
    }
 
    if (emit_common_func) {
@@ -145,14 +151,13 @@ nv50_blend_state_create(struct pipe_context *pipe,
       SB_DATA    (so, 0);
    }
 
-   SB_BEGIN_3D(so, COLOR_MASK(0), 8);
    if (cso->independent_blend_enable) {
+      SB_BEGIN_3D(so, COLOR_MASK(0), 8);
       for (i = 0; i < 8; ++i)
          SB_DATA(so, nv50_colormask(cso->rt[i].colormask));
    } else {
-      uint32_t cmask = nv50_colormask(cso->rt[0].colormask);
-      for (i = 0; i < 8; ++i)
-         SB_DATA(so, cmask);
+      SB_BEGIN_3D(so, COLOR_MASK(0), 1);
+      SB_DATA    (so, nv50_colormask(cso->rt[0].colormask));
    }
 
    assert(so->size <= (sizeof(so->state) / sizeof(so->state[0])));

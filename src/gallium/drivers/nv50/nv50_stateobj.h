@@ -21,7 +21,7 @@
 struct nv50_blend_stateobj {
    struct pipe_blend_state pipe;
    int size;
-   uint32_t state[78];
+   uint32_t state[82]; // TODO: allocate less if !independent_blend_enable
 };
 
 struct nv50_rasterizer_stateobj {

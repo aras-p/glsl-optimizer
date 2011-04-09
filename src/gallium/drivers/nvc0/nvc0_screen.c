@@ -313,8 +313,6 @@ nvc0_magic_3d_init(struct nouveau_channel *chan)
 
    BEGIN_RING(chan, RING_3D_(0x0fac), 1);
    OUT_RING  (chan, 0);
-   BEGIN_RING(chan, RING_3D_(0x0f90), 1);
-   OUT_RING  (chan, 0);
 }
 
 static void
@@ -450,6 +448,10 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    OUT_RING  (chan, 1);
    BEGIN_RING(chan, RING_3D(LINE_LAST_PIXEL), 1);
    OUT_RING  (chan, 0);
+   BEGIN_RING(chan, RING_3D(BLEND_SEPARATE_ALPHA), 1);
+   OUT_RING  (chan, 1);
+   BEGIN_RING(chan, RING_3D(BLEND_ENABLE_COMMON), 1);
+   OUT_RING  (chan, 0);
 
    nvc0_magic_3d_init(chan);
 
@@ -582,7 +584,6 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    MK_MACRO(NVC0_3D_GP_SELECT, nvc0_9097_gp_select);
    MK_MACRO(NVC0_3D_POLYGON_MODE_FRONT, nvc0_9097_poly_mode_front);
    MK_MACRO(NVC0_3D_POLYGON_MODE_BACK, nvc0_9097_poly_mode_back);
-   MK_MACRO(NVC0_3D_COLOR_MASK_BROADCAST, nvc0_9097_color_mask_brdc);
 
    BEGIN_RING(chan, RING_3D(RASTERIZE_ENABLE), 1);
    OUT_RING  (chan, 1);

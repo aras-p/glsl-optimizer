@@ -117,7 +117,8 @@ nvc0_blend_state_create(struct pipe_context *pipe,
             SB_DATA    (so, nvc0_blend_fac(cso->rt[0].alpha_dst_factor));
         }
 
-        SB_BEGIN_3D(so, COLOR_MASK_BROADCAST, 1);
+        SB_IMMED_3D(so, COLOR_MASK_COMMON, 1);
+        SB_BEGIN_3D(so, COLOR_MASK(0), 1);
         SB_DATA    (so, nvc0_colormask(cso->rt[0].colormask));
     } else {
         uint8_t en = 0;
@@ -137,6 +138,7 @@ nvc0_blend_state_create(struct pipe_context *pipe,
         }
         SB_IMMED_3D(so, BLEND_ENABLES, en);
 
+        SB_IMMED_3D(so, COLOR_MASK_COMMON, 0);
         SB_BEGIN_3D(so, COLOR_MASK(0), 8);
         for (i = 0; i < 8; ++i)
             SB_DATA(so, nvc0_colormask(cso->rt[i].colormask));

@@ -422,6 +422,8 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    OUT_RING  (chan, 0);
    BEGIN_RING(chan, RING_3D(LINE_LAST_PIXEL), 1);
    OUT_RING  (chan, 0);
+   BEGIN_RING(chan, RING_3D(BLEND_SEPARATE_ALPHA), 1);
+   OUT_RING  (chan, 1);
 
    BEGIN_RING(chan, RING_3D(SCREEN_Y_CONTROL), 1);
    OUT_RING  (chan, 0);
