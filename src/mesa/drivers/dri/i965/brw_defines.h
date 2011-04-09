@@ -930,6 +930,7 @@
 # define GEN6_GS_BINDING_TABLE_ENTRY_COUNT_SHIFT	18
 /* DW4 */
 # define GEN6_GS_URB_READ_LENGTH_SHIFT			11
+# define GEN7_GS_INCLUDE_VERTEX_HANDLES		        (1 << 10)
 # define GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT		4
 # define GEN6_GS_DISPATCH_START_GRF_SHIFT		0
 /* DW5 */
@@ -937,8 +938,13 @@
 # define GEN6_GS_STATISTICS_ENABLE			(1 << 10)
 # define GEN6_GS_SO_STATISTICS_ENABLE			(1 << 9)
 # define GEN6_GS_RENDERING_ENABLE			(1 << 8)
+# define GEN7_GS_ENABLE					(1 << 0)
 /* DW6 */
 # define GEN6_GS_ENABLE					(1 << 15)
+
+#define _3DSTATE_HS                             0x781B /* GEN7+ */
+#define _3DSTATE_TE                             0x781C /* GEN7+ */
+#define _3DSTATE_DS                             0x781D /* GEN7+ */
 
 #define _3DSTATE_CLIP				0x7812 /* GEN6+ */
 /* DW1 */
@@ -1148,6 +1154,9 @@
 # define GEN6_CONSTANT_BUFFER_1_ENABLE			(1 << 13)
 # define GEN6_CONSTANT_BUFFER_0_ENABLE			(1 << 12)
 
+#define _3DSTATE_CONSTANT_HS                  0x7819 /* GEN7+ */
+#define _3DSTATE_CONSTANT_DS                  0x781A /* GEN7+ */
+
 /* 3DSTATE_WM for Gen7 */
 /* DW1 */
 # define GEN7_WM_STATISTICS_ENABLE			(1 << 31)
@@ -1218,6 +1227,8 @@
 # define GEN7_PS_DISPATCH_START_GRF_SHIFT_2		0
 /* DW6: kernel 1 pointer */
 /* DW7: kernel 2 pointer */
+
+#define _3DSTATE_STREAMOUT                      0x781e /* GEN7+ */
 
 #define _3DSTATE_SAMPLE_MASK			0x7818 /* GEN6+ */
 

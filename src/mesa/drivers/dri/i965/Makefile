@@ -99,6 +99,7 @@ DRIVER_SOURCES = \
 	gen6_wm_state.c \
 	gen7_cc_state.c \
 	gen7_clip_state.c \
+	gen7_disable.c \
 	gen7_sf_state.c \
 	gen7_urb.c \
 	gen7_viewport_state.c \
