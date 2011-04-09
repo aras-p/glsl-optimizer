@@ -1073,10 +1073,14 @@ ast_expression::hir(exec_list *instructions,
 	 error_emitted = true;
       }
 
-      result = do_comparison(ctx, operations[this->oper], op[0], op[1]);
-      type = glsl_type::bool_type;
+      if (error_emitted) {
+	 result = new(ctx) ir_constant(false);
+      } else {
+	 result = do_comparison(ctx, operations[this->oper], op[0], op[1]);
+	 assert(result->type == glsl_type::bool_type);
+	 type = glsl_type::bool_type;
+      }
 
-      assert(error_emitted || (result->type == glsl_type::bool_type));
       break;
 
    case ast_bit_and:
