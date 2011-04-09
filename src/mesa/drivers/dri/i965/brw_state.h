@@ -111,6 +111,7 @@ extern const struct brw_tracked_state gen6_vs_constants;
 extern const struct brw_tracked_state gen6_vs_state;
 extern const struct brw_tracked_state gen6_wm_constants;
 extern const struct brw_tracked_state gen6_wm_state;
+extern const struct brw_tracked_state gen7_depthbuffer;
 extern const struct brw_tracked_state gen7_blend_state_pointer;
 extern const struct brw_tracked_state gen7_cc_state_pointer;
 extern const struct brw_tracked_state gen7_cc_viewport_state_pointer;
@@ -182,5 +183,9 @@ void brw_create_constant_surface(struct brw_context *brw,
 /* gen6_sf_state.c */
 uint32_t
 get_attr_override(struct brw_context *brw, int fs_attr, int two_side_color);
+
+/* gen7_misc_state.c */
+unsigned int
+gen7_depth_format(struct brw_context *brw);
 
 #endif

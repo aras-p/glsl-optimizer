@@ -219,7 +219,7 @@ const struct brw_tracked_state *gen7_atoms[] =
 
    &gen6_scissor_state,
 
-   &brw_depthbuffer,
+   &gen7_depthbuffer,
 
    &brw_polygon_stipple,
    &brw_polygon_stipple_offset,

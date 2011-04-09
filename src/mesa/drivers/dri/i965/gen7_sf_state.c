@@ -126,8 +126,9 @@ upload_sf_state(struct brw_context *brw)
    /* _NEW_BUFFERS */
    bool render_to_fbo = brw->intel.ctx.DrawBuffer->Name != 0;
 
-   /* FINISHME: Depth Buffer Surface Format? */
    dw1 = GEN6_SF_STATISTICS_ENABLE | GEN6_SF_VIEWPORT_TRANSFORM_ENABLE;
+
+   dw1 |= (gen7_depth_format(brw) << GEN7_SF_DEPTH_BUFFER_SURFACE_FORMAT_SHIFT);
 
    /* _NEW_POLYGON */
    if ((ctx->Polygon.FrontFace == GL_CCW) ^ render_to_fbo)
@@ -257,7 +258,8 @@ const struct brw_tracked_state gen7_sf_state = {
 		_NEW_SCISSOR |
 		_NEW_BUFFERS |
 		_NEW_POINT),
-      .brw   = BRW_NEW_CONTEXT,
+      .brw   = (BRW_NEW_CONTEXT |
+		BRW_NEW_DEPTH_BUFFER),
       .cache = CACHE_NEW_VS_PROG
    },
    .emit = upload_sf_state,
