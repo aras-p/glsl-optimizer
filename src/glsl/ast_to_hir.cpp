@@ -1109,14 +1109,17 @@ ast_expression::hir(exec_list *instructions,
       break;
 
    case ast_logic_and: {
+      exec_list rhs_instructions;
       op[0] = get_scalar_boolean_operand(instructions, state, this, 0,
 					 "LHS", &error_emitted);
+      op[1] = get_scalar_boolean_operand(&rhs_instructions, state, this, 1,
+					 "RHS", &error_emitted);
 
       ir_constant *op0_const = op[0]->constant_expression_value();
       if (op0_const) {
 	 if (op0_const->value.b[0]) {
-	    result = get_scalar_boolean_operand(instructions, state, this, 1,
-					       "RHS", &error_emitted);
+	    instructions->append_list(&rhs_instructions);
+	    result = op[1];
 	 } else {
 	    result = op0_const;
 	 }
@@ -1130,10 +1133,7 @@ ast_expression::hir(exec_list *instructions,
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
 	 instructions->push_tail(stmt);
 
-	 op[1] = get_scalar_boolean_operand(&stmt->then_instructions,
-					    state, this, 1,
-					    "RHS", &error_emitted);
-
+	 stmt->then_instructions.append_list(&rhs_instructions);
 	 ir_dereference *const then_deref = new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const then_assign =
 	    new(ctx) ir_assignment(then_deref, op[1], NULL);
