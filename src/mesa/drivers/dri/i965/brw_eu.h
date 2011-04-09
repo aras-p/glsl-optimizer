@@ -1017,6 +1017,8 @@ void brw_set_src1( struct brw_instruction *insn,
 
 void brw_set_uip_jip(struct brw_compile *p);
 
+uint32_t brw_swap_cmod(uint32_t cmod);
+
 /* brw_optimize.c */
 void brw_optimize(struct brw_compile *p);
 void brw_remove_duplicate_mrf_moves(struct brw_compile *p);

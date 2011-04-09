@@ -2938,12 +2938,33 @@ fs_visitor::propagate_constants()
 		  progress = true;
 	       }
 	       break;
+
 	    case BRW_OPCODE_CMP:
+	       if (i == 1) {
+		  scan_inst->src[i] = inst->src[0];
+		  progress = true;
+	       } else if (i == 0 && scan_inst->src[1].file != IMM) {
+		  uint32_t new_cmod;
+
+		  new_cmod = brw_swap_cmod(scan_inst->conditional_mod);
+		  if (new_cmod != ~0u) {
+		     /* Fit this constant in by swapping the operands and
+		      * flipping the test
+		      */
+		     scan_inst->src[0] = scan_inst->src[1];
+		     scan_inst->src[1] = inst->src[0];
+		     scan_inst->conditional_mod = new_cmod;
+		     progress = true;
+		  }
+	       }
+	       break;
+
 	    case BRW_OPCODE_SEL:
 	       if (i == 1) {
 		  scan_inst->src[i] = inst->src[0];
 		  progress = true;
 	       }
+	       break;
 	    }
 	 }
 
