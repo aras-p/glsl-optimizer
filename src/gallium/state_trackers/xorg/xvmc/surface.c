@@ -101,7 +101,7 @@ MacroBlocksToPipe(struct pipe_screen *screen,
       mb->mbx = xvmc_mb->x;
       mb->mby = xvmc_mb->y;
 
-      if (!xvmc_mb->macroblock_type & XVMC_MB_TYPE_INTRA)
+      if (!(xvmc_mb->macroblock_type & XVMC_MB_TYPE_INTRA))
          mb->mo_type = MotionToPipe(xvmc_mb->motion_type, xvmc_picture_structure);
       /* Get rid of Valgrind 'undefined' warnings */
       else
@@ -128,8 +128,14 @@ MacroBlocksToPipe(struct pipe_screen *screen,
          break;
 
       default:
-         mb->mv[0].wheight = 0;
-         mb->mv[1].wheight = 0;
+         /* workaround for xines xxmc video out plugin */
+         if (!(xvmc_mb->macroblock_type & ~XVMC_MB_TYPE_PATTERN)) {
+            mb->mv[0].wheight = 255;
+            mb->mv[1].wheight = 0;
+         } else {
+            mb->mv[0].wheight = 0;
+            mb->mv[1].wheight = 0;
+         }
          break;
       }
 
