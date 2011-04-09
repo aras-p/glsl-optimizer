@@ -83,45 +83,23 @@ static void compile_gs_prog( struct brw_context *brw,
    /* Note that primitives which don't require a GS program have
     * already been weeded out by this stage:
     */
+
+   /* Gen6: VF has already converted into polygon, and LINELOOP is
+    * converted to LINESTRIP at the beginning of the 3D pipeline.
+    */
+   if (intel->gen == 6)
+      return;
+
    switch (key->primitive) {
    case GL_QUADS:
-      /* Gen6: VF has already converted into polygon. */
-      if (intel->gen == 6)
-          return;
       brw_gs_quads( &c, key );
       break;
    case GL_QUAD_STRIP:
-      if (intel->gen == 6)
-          return;
       brw_gs_quad_strip( &c, key );
       break;
    case GL_LINE_LOOP:
-      /* Gen6: LINELOOP is converted to LINESTRIP at the beginning of the 3D pipeline */
-      if (intel->gen == 6)
-          return;
       brw_gs_lines( &c );
       break;
-   case GL_LINES:
-      if (key->hint_gs_always)
-	 brw_gs_lines( &c );
-      else {
-	 return;
-      }
-      break;
-   case GL_TRIANGLES:
-      if (key->hint_gs_always)
-	 brw_gs_tris( &c );
-      else {
-	 return;
-      }
-      break;
-   case GL_POINTS:
-      if (key->hint_gs_always)
-	 brw_gs_points( &c );
-      else {
-	 return;
-      }
-      break;      
    default:
       return;
    }
@@ -170,7 +148,6 @@ static void populate_key( struct brw_context *brw,
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
-   int prim_gs_always;
 
    memset(key, 0, sizeof(*key));
 
@@ -180,8 +157,6 @@ static void populate_key( struct brw_context *brw,
    /* BRW_NEW_PRIMITIVE */
    key->primitive = gs_prim[brw->primitive];
 
-   key->hint_gs_always = 0;	/* debug code? */
-   
    /* _NEW_LIGHT */
    key->pv_first = (ctx->Light.ProvokingVertex == GL_FIRST_VERTEX_CONVENTION);
    if (key->primitive == GL_QUADS && ctx->Light.ShadeModel != GL_FLAT) {
@@ -191,14 +166,11 @@ static void populate_key( struct brw_context *brw,
       key->pv_first = GL_TRUE;
    }
 
-   if (intel->gen == 6)
-       prim_gs_always = 0;
-   else
-       prim_gs_always = brw->primitive == GL_QUADS ||
-			brw->primitive == GL_QUAD_STRIP ||
-			brw->primitive == GL_LINE_LOOP;
-
-   key->need_gs_prog = (key->hint_gs_always || prim_gs_always);
+   key->need_gs_prog = (intel->gen == 6)
+      ? 0
+      : (brw->primitive == GL_QUADS ||
+	 brw->primitive == GL_QUAD_STRIP ||
+	 brw->primitive == GL_LINE_LOOP);
 }
 
 /* Calculate interpolants for triangle and line rasterization.

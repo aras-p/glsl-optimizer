@@ -193,19 +193,6 @@ void brw_gs_quad_strip( struct brw_gs_compile *c, struct brw_gs_prog_key *key )
    }
 }
 
-void brw_gs_tris( struct brw_gs_compile *c )
-{
-   struct intel_context *intel = &c->func.brw->intel;
-
-   brw_gs_alloc_regs(c, 3);
-
-   if (intel->needs_ff_sync)
-	   brw_gs_ff_sync(c, 1);      
-   brw_gs_emit_vue(c, c->reg.vertex[0], 0, ((_3DPRIM_TRILIST << 2) | R02_PRIM_START));
-   brw_gs_emit_vue(c, c->reg.vertex[1], 0, (_3DPRIM_TRILIST << 2));
-   brw_gs_emit_vue(c, c->reg.vertex[2], 1, ((_3DPRIM_TRILIST << 2) | R02_PRIM_END));
-}
-
 void brw_gs_lines( struct brw_gs_compile *c )
 {
    struct intel_context *intel = &c->func.brw->intel;
@@ -217,22 +204,3 @@ void brw_gs_lines( struct brw_gs_compile *c )
    brw_gs_emit_vue(c, c->reg.vertex[0], 0, ((_3DPRIM_LINESTRIP << 2) | R02_PRIM_START));
    brw_gs_emit_vue(c, c->reg.vertex[1], 1, ((_3DPRIM_LINESTRIP << 2) | R02_PRIM_END));
 }
-
-void brw_gs_points( struct brw_gs_compile *c )
-{
-   struct intel_context *intel = &c->func.brw->intel;
-
-   brw_gs_alloc_regs(c, 1);
-
-   if (intel->needs_ff_sync)
-	   brw_gs_ff_sync(c, 1);      
-   brw_gs_emit_vue(c, c->reg.vertex[0], 1, ((_3DPRIM_POINTLIST << 2) | R02_PRIM_START | R02_PRIM_END));
-}
-
-
-
-
-
-
-
-
