@@ -2963,6 +2963,14 @@ fs_visitor::propagate_constants()
 	       if (i == 1) {
 		  scan_inst->src[i] = inst->src[0];
 		  progress = true;
+	       } else if (i == 0 && scan_inst->src[1].file != IMM) {
+		  /* Fit this constant in by swapping the operands and
+		   * flipping the predicate
+		   */
+		  scan_inst->src[0] = scan_inst->src[1];
+		  scan_inst->src[1] = inst->src[0];
+		  scan_inst->predicate_inverse = !scan_inst->predicate_inverse;
+		  progress = true;
 	       }
 	       break;
 	    }
@@ -3450,6 +3458,7 @@ fs_visitor::generate_code()
 
       brw_set_conditionalmod(p, inst->conditional_mod);
       brw_set_predicate_control(p, inst->predicated);
+      brw_set_predicate_inverse(p, inst->predicate_inverse);
       brw_set_saturate(p, inst->saturate);
 
       switch (inst->opcode) {

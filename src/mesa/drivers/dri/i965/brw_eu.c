@@ -82,6 +82,11 @@ void brw_set_predicate_control( struct brw_compile *p, GLuint pc )
    p->current->header.predicate_control = pc;
 }
 
+void brw_set_predicate_inverse(struct brw_compile *p, bool predicate_inverse)
+{
+   p->current->header.predicate_inverse = predicate_inverse;
+}
+
 void brw_set_conditionalmod( struct brw_compile *p, GLuint conditional )
 {
    p->current->header.destreg__conditionalmod = conditional;

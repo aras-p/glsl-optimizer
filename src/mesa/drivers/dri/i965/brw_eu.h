@@ -772,6 +772,7 @@ void brw_set_access_mode( struct brw_compile *p, GLuint access_mode );
 void brw_set_compression_control( struct brw_compile *p, GLboolean control );
 void brw_set_predicate_control_flag_value( struct brw_compile *p, GLuint value );
 void brw_set_predicate_control( struct brw_compile *p, GLuint pc );
+void brw_set_predicate_inverse(struct brw_compile *p, bool predicate_inverse);
 void brw_set_conditionalmod( struct brw_compile *p, GLuint conditional );
 void brw_set_acc_write_control(struct brw_compile *p, GLuint value);
 
