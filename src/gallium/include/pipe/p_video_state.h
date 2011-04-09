@@ -50,16 +50,6 @@ enum pipe_mpeg12_picture_type
    PIPE_MPEG12_PICTURE_TYPE_FRAME
 };
 
-enum pipe_mpeg12_macroblock_type
-{
-   PIPE_MPEG12_MACROBLOCK_TYPE_INTRA,
-   PIPE_MPEG12_MACROBLOCK_TYPE_FWD,
-   PIPE_MPEG12_MACROBLOCK_TYPE_BKWD,
-   PIPE_MPEG12_MACROBLOCK_TYPE_BI,
-
-   PIPE_MPEG12_MACROBLOCK_NUM_TYPES
-};
-
 enum pipe_mpeg12_motion_type
 {
    PIPE_MPEG12_MOTION_TYPE_FIELD,
@@ -91,10 +81,11 @@ struct pipe_mpeg12_macroblock
 
    unsigned mbx;
    unsigned mby;
-   enum pipe_mpeg12_macroblock_type mb_type;
    enum pipe_mpeg12_motion_type mo_type;
+   bool dct_intra;
    enum pipe_mpeg12_dct_type dct_type;
    struct {
+      unsigned wheight:8;
       struct pipe_mpeg12_motionvector top, bottom;
    } mv[2];
    unsigned cbp;

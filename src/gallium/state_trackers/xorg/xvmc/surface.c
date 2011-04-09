@@ -37,24 +37,6 @@
 #include <util/u_math.h>
 #include "xvmc_private.h"
 
-static enum pipe_mpeg12_macroblock_type TypeToPipe(int xvmc_mb_type)
-{
-   if (xvmc_mb_type & XVMC_MB_TYPE_INTRA)
-      return PIPE_MPEG12_MACROBLOCK_TYPE_INTRA;
-   if ((xvmc_mb_type & (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD)) == XVMC_MB_TYPE_MOTION_FORWARD)
-      return PIPE_MPEG12_MACROBLOCK_TYPE_FWD;
-   if ((xvmc_mb_type & (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD)) == XVMC_MB_TYPE_MOTION_BACKWARD)
-      return PIPE_MPEG12_MACROBLOCK_TYPE_BKWD;
-   if ((xvmc_mb_type & (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD)) == (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD))
-      return PIPE_MPEG12_MACROBLOCK_TYPE_BI;
-
-   assert(0);
-
-   XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized mb type 0x%08X.\n", xvmc_mb_type);
-
-   return -1;
-}
-
 static enum pipe_mpeg12_picture_type PictureToPipe(int xvmc_pic)
 {
    switch (xvmc_pic) {
@@ -73,21 +55,21 @@ static enum pipe_mpeg12_picture_type PictureToPipe(int xvmc_pic)
    return -1;
 }
 
-static enum pipe_mpeg12_motion_type MotionToPipe(int xvmc_motion_type, unsigned int xvmc_picture_structure)
+static enum pipe_mpeg12_motion_type MotionToPipe(int xvmc_motion_type, unsigned xvmc_picture_structure)
 {
    switch (xvmc_motion_type) {
-      case XVMC_PREDICTION_FRAME:
-         if (xvmc_picture_structure == XVMC_FRAME_PICTURE)
-            return PIPE_MPEG12_MOTION_TYPE_FRAME;
-         else
-            return PIPE_MPEG12_MOTION_TYPE_16x8;
-         break;
-      case XVMC_PREDICTION_FIELD:
-         return PIPE_MPEG12_MOTION_TYPE_FIELD;
-      case XVMC_PREDICTION_DUAL_PRIME:
-         return PIPE_MPEG12_MOTION_TYPE_DUALPRIME;
-      default:
-         assert(0);
+   case XVMC_PREDICTION_FRAME:
+      if (xvmc_picture_structure == XVMC_FRAME_PICTURE)
+         return PIPE_MPEG12_MOTION_TYPE_FRAME;
+      else
+         return PIPE_MPEG12_MOTION_TYPE_16x8;
+      break;
+
+   case XVMC_PREDICTION_FIELD:
+      return PIPE_MPEG12_MOTION_TYPE_FIELD;
+
+   case XVMC_PREDICTION_DUAL_PRIME:
+      return PIPE_MPEG12_MOTION_TYPE_DUALPRIME;
    }
 
    XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized motion type 0x%08X (with picture structure 0x%08X).\n", xvmc_motion_type, xvmc_picture_structure);
@@ -118,14 +100,38 @@ MacroBlocksToPipe(struct pipe_screen *screen,
       mb->base.codec = PIPE_VIDEO_CODEC_MPEG12;
       mb->mbx = xvmc_mb->x;
       mb->mby = xvmc_mb->y;
-      mb->mb_type = TypeToPipe(xvmc_mb->macroblock_type);
-      if (mb->mb_type != PIPE_MPEG12_MACROBLOCK_TYPE_INTRA)
+
+      if (!xvmc_mb->macroblock_type & XVMC_MB_TYPE_INTRA)
          mb->mo_type = MotionToPipe(xvmc_mb->motion_type, xvmc_picture_structure);
       /* Get rid of Valgrind 'undefined' warnings */
       else
          mb->mo_type = -1;
+
+      mb->dct_intra = xvmc_mb->macroblock_type & XVMC_MB_TYPE_INTRA;
       mb->dct_type = xvmc_mb->dct_type == XVMC_DCT_TYPE_FIELD ?
          PIPE_MPEG12_DCT_TYPE_FIELD : PIPE_MPEG12_DCT_TYPE_FRAME;
+
+      switch (xvmc_mb->macroblock_type & (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD)) {
+      case XVMC_MB_TYPE_MOTION_FORWARD:
+         mb->mv[0].wheight = 255;
+         mb->mv[1].wheight = 0;
+         break;
+
+      case (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD):
+         mb->mv[0].wheight = 127;
+         mb->mv[1].wheight = 127;
+         break;
+
+      case XVMC_MB_TYPE_MOTION_BACKWARD:
+         mb->mv[0].wheight = 0;
+         mb->mv[1].wheight = 255;
+         break;
+
+      default:
+         mb->mv[0].wheight = 0;
+         mb->mv[1].wheight = 0;
+         break;
+      }
 
       for (j = 0; j < 2; ++j) {
          mb->mv[j].top.x = xvmc_mb->PMV[0][j][0];

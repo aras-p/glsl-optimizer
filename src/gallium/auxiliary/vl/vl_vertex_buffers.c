@@ -211,46 +211,30 @@ vl_vb_map(struct vl_vertex_buffer *buffer, struct pipe_context *pipe)
 static void
 get_motion_vectors(struct pipe_mpeg12_macroblock *mb, struct vertex2s mv[4])
 {
-   if (mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BI ||
-       mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_FWD) {
+   if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
+      mv[0].x = mv[1].x = mb->mv[0].top.x;
+      mv[0].y = mv[1].y = mb->mv[0].top.y;
+      mv[2].x = mv[3].x = mb->mv[1].top.x;
+      mv[2].y = mv[3].y = mb->mv[1].top.y;
 
-      if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
-         mv[0].x = mv[1].x = mb->mv[0].top.x;
-         mv[0].y = mv[1].y = mb->mv[0].top.y;
-
-      } else {
-         mv[0].x = mb->mv[0].top.x;
-         mv[0].y = mb->mv[0].top.y - (mb->mv[0].top.y % 4);
-
-         mv[1].x = mb->mv[0].bottom.x;
-         mv[1].y = mb->mv[0].bottom.y - (mb->mv[0].bottom.y % 4);
-
-         if (mb->mv[0].top.field_select) mv[0].y += 2;
-         if (!mb->mv[0].bottom.field_select) mv[1].y -= 2;
-      }
    } else {
-      mv[0].x = mv[0].y = mv[1].x = mv[1].y = 0x8000;
-   }
+      mv[0].x = mb->mv[0].top.x;
+      mv[0].y = mb->mv[0].top.y - (mb->mv[0].top.y % 4);
 
-   if (mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BI ||
-       mb->mb_type == PIPE_MPEG12_MACROBLOCK_TYPE_BKWD) {
+      mv[1].x = mb->mv[0].bottom.x;
+      mv[1].y = mb->mv[0].bottom.y - (mb->mv[0].bottom.y % 4);
 
-      if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
-         mv[2].x = mv[3].x = mb->mv[1].top.x;
-         mv[2].y = mv[3].y = mb->mv[1].top.y;
+      if (mb->mv[0].top.field_select) mv[0].y += 2;
+      if (!mb->mv[0].bottom.field_select) mv[1].y -= 2;
 
-      } else {
-         mv[2].x = mb->mv[1].top.x;
-         mv[2].y = mb->mv[1].top.y - (mb->mv[1].top.y % 4);
+      mv[2].x = mb->mv[1].top.x;
+      mv[2].y = mb->mv[1].top.y - (mb->mv[1].top.y % 4);
 
-         mv[3].x = mb->mv[1].bottom.x;
-         mv[3].y = mb->mv[1].bottom.y - (mb->mv[1].bottom.y % 4);
+      mv[3].x = mb->mv[1].bottom.x;
+      mv[3].y = mb->mv[1].bottom.y - (mb->mv[1].bottom.y % 4);
 
-         if (mb->mv[1].top.field_select) mv[2].y += 2;
-         if (!mb->mv[1].bottom.field_select) mv[3].y -= 2;
-      }
-   } else {
-      mv[2].x = mv[2].y = mv[3].x = mv[3].y = 0x8000;
+      if (mb->mv[1].top.field_select) mv[2].y += 2;
+      if (!mb->mv[1].bottom.field_select) mv[3].y -= 2;
    }
 }
 
@@ -279,29 +263,10 @@ vl_vb_add_block(struct vl_vertex_buffer *buffer, struct pipe_mpeg12_macroblock *
             stream->eb[i][j][k] = !(mb->cbp & (*empty_block_mask)[i][j][k]);
 
    stream->dct_type_field = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD;
-   //stream->mo_type_frame = mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME;
-   stream->mb_type_intra = mb->mb_type != PIPE_MPEG12_MACROBLOCK_TYPE_INTRA;
-   switch (mb->mb_type) {
-      case PIPE_MPEG12_MACROBLOCK_TYPE_FWD:
-         stream->mv_wheights[0] = 255;
-         stream->mv_wheights[1] = 0;
-         break;
+   stream->mb_type_intra = !mb->dct_intra;
 
-      case PIPE_MPEG12_MACROBLOCK_TYPE_BI:
-         stream->mv_wheights[0] = 127;
-         stream->mv_wheights[1] = 127;
-         break;
-
-      case PIPE_MPEG12_MACROBLOCK_TYPE_BKWD:
-         stream->mv_wheights[0] = 0;
-         stream->mv_wheights[1] = 255;
-         break;
-
-      default:
-         stream->mv_wheights[0] = 0;
-         stream->mv_wheights[1] = 0;
-   }
-
+   stream->mv_wheights[0] = mb->mv[0].wheight;
+   stream->mv_wheights[1] = mb->mv[1].wheight;
    get_motion_vectors(mb, stream->mv);
 }
 
