@@ -476,12 +476,15 @@ static void upload_invarient_state( struct brw_context *brw )
 
    if (intel->gen >= 6) {
       int i;
+      int len = intel->gen >= 7 ? 4 : 3;
 
-      BEGIN_BATCH(3);
-      OUT_BATCH(_3DSTATE_MULTISAMPLE << 16 | (3 - 2));
+      BEGIN_BATCH(len);
+      OUT_BATCH(_3DSTATE_MULTISAMPLE << 16 | (len - 2));
       OUT_BATCH(MS_PIXEL_LOCATION_CENTER |
 		MS_NUMSAMPLES_1);
       OUT_BATCH(0); /* positions for 4/8-sample */
+      if (intel->gen >= 7)
+	 OUT_BATCH(0);
       ADVANCE_BATCH();
 
       BEGIN_BATCH(2);
