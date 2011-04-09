@@ -136,14 +136,10 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos));
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), vpos);
 
-   ureg_MUL(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_Z),
-            ureg_scalar(flags, TGSI_SWIZZLE_W),
-            ureg_imm1f(shader, 0.5f));
-
    for (i = 0; i < 2; ++i)
       for (j = 0; j < 2; ++j) {
          ureg_MAD(shader, ureg_writemask(o_vmv[i][j], TGSI_WRITEMASK_XY), mv_scale, vmv[i][j], ureg_src(t_vpos));
-         ureg_MOV(shader, ureg_writemask(o_vmv[i][j], TGSI_WRITEMASK_Z), ureg_src(t_vpos));
+         ureg_MOV(shader, ureg_writemask(o_vmv[i][j], TGSI_WRITEMASK_Z), ureg_scalar(flags, TGSI_SWIZZLE_Z + i));
       }
 
    ureg_MOV(shader, ureg_writemask(o_vtex[0], TGSI_WRITEMASK_XY), ureg_src(t_vpos));
@@ -162,7 +158,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
    ureg_MUL(shader, ureg_writemask(o_line, TGSI_WRITEMASK_Y),
       vrect, ureg_imm1f(shader, MACROBLOCK_HEIGHT / 2));
    ureg_MOV(shader, ureg_writemask(o_line, TGSI_WRITEMASK_Z),
-            ureg_scalar(flags, TGSI_SWIZZLE_Z));
+            ureg_scalar(flags, TGSI_SWIZZLE_Y));
 
    ureg_IF(shader, ureg_scalar(flags, TGSI_SWIZZLE_X), &label);
 
@@ -297,9 +293,15 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
       ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, ureg_src(ref[0]), sampler[0]);
       ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, ureg_src(ref[1]), sampler[1]);
 
-      ureg_LRP(shader, result,
+      ureg_LRP(shader, ref[0],
                ureg_scalar(tc[0][0], TGSI_SWIZZLE_Z),
-               ureg_src(ref[1]), ureg_src(ref[0]));
+               ureg_src(ref[0]), ureg_imm1f(shader, 0.0f));
+
+      ureg_LRP(shader, ref[1],
+               ureg_scalar(tc[1][0], TGSI_SWIZZLE_Z),
+               ureg_src(ref[1]), ureg_imm1f(shader, 0.0f));
+
+      ureg_ADD(shader, result, ureg_src(ref[0]), ureg_src(ref[1]));
 
    ureg_fixup_label(shader, intra_label, ureg_get_instruction_number(shader));
    ureg_ENDIF(shader);

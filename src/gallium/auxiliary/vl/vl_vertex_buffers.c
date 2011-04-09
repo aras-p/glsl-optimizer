@@ -33,11 +33,10 @@
 struct vl_vertex_stream
 {
    struct vertex2s pos;
-   int8_t eb[3][2][2];
-   int8_t dct_type_field;
-   int8_t mo_type_frame;
-   int8_t mb_type_intra;
-   int8_t mv_wheights;
+   uint8_t eb[3][2][2];
+   uint8_t dct_type_field;
+   uint8_t mb_type_intra;
+   uint8_t mv_wheights[2];
    struct vertex2s mv[4];
 };
 
@@ -143,11 +142,11 @@ vl_vb_get_elems_state(struct pipe_context *pipe, int component)
 
    /* empty block element of selected component */
    vertex_elems[VS_I_EB].src_offset = 4 + component * 4;
-   vertex_elems[VS_I_EB].src_format = PIPE_FORMAT_R8G8B8A8_SSCALED;
+   vertex_elems[VS_I_EB].src_format = PIPE_FORMAT_R8G8B8A8_USCALED;
 
    /* flags */
    vertex_elems[VS_I_FLAGS].src_offset = 16;
-   vertex_elems[VS_I_FLAGS].src_format = PIPE_FORMAT_R8G8B8A8_SSCALED;
+   vertex_elems[VS_I_FLAGS].src_format = PIPE_FORMAT_R8G8B8A8_UNORM;
 
    /* motion vector 0 TOP element */
    vertex_elems[VS_I_MV0_TOP].src_format = PIPE_FORMAT_R16G16_SSCALED;
@@ -280,23 +279,27 @@ vl_vb_add_block(struct vl_vertex_buffer *buffer, struct pipe_mpeg12_macroblock *
             stream->eb[i][j][k] = !(mb->cbp & (*empty_block_mask)[i][j][k]);
 
    stream->dct_type_field = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD;
-   stream->mo_type_frame = mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME;
+   //stream->mo_type_frame = mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME;
    stream->mb_type_intra = mb->mb_type != PIPE_MPEG12_MACROBLOCK_TYPE_INTRA;
    switch (mb->mb_type) {
       case PIPE_MPEG12_MACROBLOCK_TYPE_FWD:
-         stream->mv_wheights = 0;
+         stream->mv_wheights[0] = 255;
+         stream->mv_wheights[1] = 0;
          break;
 
       case PIPE_MPEG12_MACROBLOCK_TYPE_BI:
-         stream->mv_wheights = 1;
+         stream->mv_wheights[0] = 127;
+         stream->mv_wheights[1] = 127;
          break;
 
       case PIPE_MPEG12_MACROBLOCK_TYPE_BKWD:
-         stream->mv_wheights = 2;
+         stream->mv_wheights[0] = 0;
+         stream->mv_wheights[1] = 255;
          break;
 
       default:
-         stream->mv_wheights = 0;
+         stream->mv_wheights[0] = 0;
+         stream->mv_wheights[1] = 0;
    }
 
    get_motion_vectors(mb, stream->mv);
