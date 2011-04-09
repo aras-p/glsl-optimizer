@@ -64,7 +64,7 @@ gen6_resolve_implied_move(struct brw_compile *p,
 			  GLuint msg_reg_nr)
 {
    struct intel_context *intel = &p->brw->intel;
-   if (intel->gen != 6)
+   if (intel->gen < 6)
       return;
 
    if (src->file != BRW_ARCHITECTURE_REGISTER_FILE || src->nr != BRW_ARF_NULL) {
@@ -78,14 +78,28 @@ gen6_resolve_implied_move(struct brw_compile *p,
    *src = brw_message_reg(msg_reg_nr);
 }
 
+static void
+gen7_convert_mrf_to_grf(struct brw_compile *p, struct brw_reg *reg)
+{
+   struct intel_context *intel = &p->brw->intel;
+   if (intel->gen == 7 && reg->file == BRW_MESSAGE_REGISTER_FILE) {
+      reg->file = BRW_GENERAL_REGISTER_FILE;
+      reg->nr += 111;
+   }
+}
+
 
 static void brw_set_dest(struct brw_compile *p,
 			 struct brw_instruction *insn,
 			 struct brw_reg dest)
 {
+   struct intel_context *intel = &p->brw->intel;
+
    if (dest.file != BRW_ARCHITECTURE_REGISTER_FILE &&
        dest.file != BRW_MESSAGE_REGISTER_FILE)
       assert(dest.nr < 128);
+
+   gen7_convert_mrf_to_grf(p, &dest);
 
    insn->bits1.da1.dest_reg_file = dest.file;
    insn->bits1.da1.dest_reg_type = dest.type;
@@ -216,6 +230,8 @@ static void brw_set_src0(struct brw_compile *p,
    if (reg.type != BRW_ARCHITECTURE_REGISTER_FILE)
       assert(reg.nr < 128);
 
+   gen7_convert_mrf_to_grf(p, &reg);
+
    validate_reg(insn, reg);
 
    insn->bits1.da1.src0_reg_file = reg.file;
@@ -293,6 +309,8 @@ void brw_set_src1(struct brw_compile *p,
    assert(reg.file != BRW_MESSAGE_REGISTER_FILE);
 
    assert(reg.nr < 128);
+
+   gen7_convert_mrf_to_grf(p, &reg);
 
    validate_reg(insn, reg);
 
