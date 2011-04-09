@@ -122,6 +122,7 @@ extern const struct brw_tracked_state gen7_sf_clip_viewport;
 extern const struct brw_tracked_state gen7_sf_clip_viewport_state_pointer;
 extern const struct brw_tracked_state gen7_sf_state;
 extern const struct brw_tracked_state gen7_urb;
+extern const struct brw_tracked_state gen7_vs_state;
 extern const struct brw_tracked_state gen7_wm_constants;
 extern const struct brw_tracked_state gen7_wm_state;
 

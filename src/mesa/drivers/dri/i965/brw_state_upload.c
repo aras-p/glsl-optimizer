@@ -210,7 +210,7 @@ const struct brw_tracked_state *gen7_atoms[] =
    &brw_wm_samplers,
    &gen6_sampler_state,
 
-   &gen6_vs_state,
+   &gen7_vs_state,
    &gen6_gs_state,
    &gen7_clip_state,
    &gen7_sbe_state,
