@@ -25,15 +25,19 @@
  *
  **************************************************************************/
 
-#include <vl_winsys.h>
 #include <X11/Xlibint.h>
-#include <state_tracker/xlib_sw_winsys.h>
+
+#include <pipe/p_state.h>
+#include <pipe/p_video_context.h>
+
 #include <util/u_memory.h>
 #include <util/u_format.h>
 #include <util/u_inlines.h>
+
+#include <state_tracker/xlib_sw_winsys.h>
 #include <softpipe/sp_public.h>
-#include <pipe/p_state.h>
-#include <pipe/p_video_context.h>
+
+#include <vl_winsys.h>
 
 struct vl_xsp_screen
 {
@@ -93,6 +97,8 @@ vl_drawable_surface_get(struct vl_context *vctx, Drawable drawable)
       return NULL;
 
    memset(&surf_template, 0, sizeof(surf_template));
+   surf_template.format = templat.format;
+   surf_template.usage = PIPE_BIND_RENDER_TARGET;
    xsp_screen->drawable_surface = vctx->vpipe->create_surface(vctx->vpipe, drawable_tex,
                                                               &surf_template);
    pipe_resource_reference(&drawable_tex, NULL);
@@ -164,22 +170,15 @@ void vl_screen_destroy(struct vl_screen *vscreen)
 }
 
 struct vl_context*
-vl_video_create(struct vl_screen *vscreen,
-                enum pipe_video_profile profile,
-                enum pipe_video_chroma_format chroma_format,
-                unsigned width, unsigned height)
+vl_video_create(struct vl_screen *vscreen)
 {
    struct pipe_video_context *vpipe;
    struct vl_context *vctx;
 
    assert(vscreen);
-   assert(width && height);
    assert(vscreen->pscreen->video_context_create);
 
-   vpipe = vscreen->pscreen->video_context_create(vscreen->pscreen,
-                                                  profile,
-                                                  chroma_format,
-                                                  width, height, NULL);
+   vpipe = vscreen->pscreen->video_context_create(vscreen->pscreen, NULL);
    if (!vpipe)
       return NULL;
 
