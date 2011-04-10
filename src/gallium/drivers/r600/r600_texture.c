@@ -996,7 +996,7 @@ uint32_t r600_translate_texformat(struct pipe_screen *screen,
 	case UTIL_FORMAT_TYPE_SIGNED:
 		if (!desc->channel[i].normalized &&
 		    desc->colorspace != UTIL_FORMAT_COLORSPACE_SRGB) {
-			goto out_unknown;
+			word4 |= S_038010_NUM_FORMAT_ALL(V_038010_SQ_NUM_FORMAT_SCALED);
 		}
 
 		switch (desc->channel[i].size) {
