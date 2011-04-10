@@ -225,6 +225,9 @@ nvc0_interp_mode(const struct tgsi_full_declaration *decl)
    if (decl->Declaration.Interpolate == TGSI_INTERPOLATE_PERSPECTIVE)
       mode = NVC0_INTERP_PERSPECTIVE;
    else
+   if (decl->Declaration.Semantic && decl->Semantic.Name == TGSI_SEMANTIC_COLOR)
+      mode = NVC0_INTERP_PERSPECTIVE;
+   else
       mode = NVC0_INTERP_LINEAR;
 
    if (decl->Declaration.Centroid)

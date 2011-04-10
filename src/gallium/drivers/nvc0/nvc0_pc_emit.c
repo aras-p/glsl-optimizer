@@ -715,6 +715,10 @@ emit_interp(struct nv_pc *pc, struct nv_instruction *i)
    if (i->opcode == NV_OP_PINTERP) {
       pc->emit[0] |= 0x040;
       SID(pc, i->src[1], 26);
+
+      if (i->src[0]->value->reg.address >= 0x280 &&
+          i->src[0]->value->reg.address <= 0x29c)
+         pc->emit[0] |= 0x080; /* XXX: ? */
    } else {
       SID(pc, NULL, 26);
    }
