@@ -311,7 +311,8 @@ vl_mpeg12_create_buffer(struct pipe_video_decoder *decoder)
          goto error_idct_source;
 
       buffer->idct_intermediate = vl_video_buffer_init(dec->base.context, dec->pipe,
-                                                       dec->base.width / 4, dec->base.height / 4, 4,
+                                                       dec->base.width / dec->nr_of_idct_render_targets,
+                                                       dec->base.height / 4, dec->nr_of_idct_render_targets,
                                                        dec->base.chroma_format, 3,
                                                        idct_source_formats,
                                                        PIPE_USAGE_STATIC);
@@ -550,11 +551,13 @@ init_idct(struct vl_mpeg12_decoder *dec, unsigned buffer_width, unsigned buffer_
    unsigned chroma_width, chroma_height, chroma_blocks_x, chroma_blocks_y;
    struct pipe_sampler_view *idct_matrix;
 
+   dec->nr_of_idct_render_targets = 4;
+
    if (!(idct_matrix = vl_idct_upload_matrix(dec->pipe, sqrt(SCALE_FACTOR_16_TO_9))))
       goto error_idct_matrix;
 
    if (!vl_idct_init(&dec->idct_y, dec->pipe, buffer_width, buffer_height,
-                     2, 2, idct_matrix))
+                     2, 2, dec->nr_of_idct_render_targets, idct_matrix))
       goto error_idct_y;
 
    if (dec->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
@@ -575,7 +578,8 @@ init_idct(struct vl_mpeg12_decoder *dec, unsigned buffer_width, unsigned buffer_
    }
 
    if(!vl_idct_init(&dec->idct_c, dec->pipe, chroma_width, chroma_height,
-                    chroma_blocks_x, chroma_blocks_y, idct_matrix))
+                    chroma_blocks_x, chroma_blocks_y,
+                    dec->nr_of_idct_render_targets, idct_matrix))
       goto error_idct_c;
 
    pipe_sampler_view_reference(&idct_matrix, NULL);

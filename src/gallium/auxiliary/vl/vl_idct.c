@@ -38,8 +38,6 @@
 #include <tgsi/tgsi_ureg.h>
 #include "vl_types.h"
 
-#define NR_RENDER_TARGETS 4
-
 enum VS_OUTPUT
 {
    VS_O_VPOS,
@@ -171,7 +169,7 @@ create_vert_shader(struct vl_idct *idct, bool matrix_stage)
       ureg_MUL(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_XY), ureg_src(t_tex), scale);
       ureg_MUL(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_Z),
          ureg_scalar(vrect, TGSI_SWIZZLE_X),
-         ureg_imm1f(shader, BLOCK_WIDTH / NR_RENDER_TARGETS));
+         ureg_imm1f(shader, BLOCK_WIDTH / idct->nr_of_render_targets));
 
       ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(t_tex));
 
@@ -250,7 +248,7 @@ create_matrix_frag_shader(struct vl_idct *idct)
    struct ureg_src l_addr[2], r_addr[2];
 
    struct ureg_dst l[4][2], r[2];
-   struct ureg_dst fragment[NR_RENDER_TARGETS];
+   struct ureg_dst fragment[idct->nr_of_render_targets];
 
    unsigned i, j;
 
@@ -264,7 +262,7 @@ create_matrix_frag_shader(struct vl_idct *idct)
    r_addr[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_R_ADDR0, TGSI_INTERPOLATE_LINEAR);
    r_addr[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_R_ADDR1, TGSI_INTERPOLATE_LINEAR);
 
-   for (i = 0; i < NR_RENDER_TARGETS; ++i)
+   for (i = 0; i < idct->nr_of_render_targets; ++i)
        fragment[i] = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, i);
 
    for (i = 0; i < 4; ++i) {
@@ -286,7 +284,7 @@ create_matrix_frag_shader(struct vl_idct *idct)
       fetch_four(shader, l[i], s_addr, ureg_DECL_sampler(shader, 1));
    }
 
-   for (i = 0; i < NR_RENDER_TARGETS; ++i) {
+   for (i = 0; i < idct->nr_of_render_targets; ++i) {
       if(i > 0)
          increment_addr(shader, r, r_addr, true, true, i, BLOCK_HEIGHT);
 
@@ -465,8 +463,8 @@ init_intermediate(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 
    buffer->fb_state[0].width = tex->width0;
    buffer->fb_state[0].height = tex->height0;
-   buffer->fb_state[0].nr_cbufs = NR_RENDER_TARGETS;
-   for(i = 0; i < NR_RENDER_TARGETS; ++i) {
+   buffer->fb_state[0].nr_cbufs = idct->nr_of_render_targets;
+   for(i = 0; i < idct->nr_of_render_targets; ++i) {
       memset(&surf_templ, 0, sizeof(surf_templ));
       surf_templ.format = tex->format;
       surf_templ.u.tex.first_layer = i;
@@ -485,7 +483,7 @@ init_intermediate(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    return true;
 
 error_surfaces:
-   for(i = 0; i < NR_RENDER_TARGETS; ++i)
+   for(i = 0; i < idct->nr_of_render_targets; ++i)
       pipe_surface_reference(&buffer->fb_state[0].cbufs[i], NULL);
 
    return false;
@@ -498,7 +496,7 @@ cleanup_intermediate(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 
    assert(idct && buffer);
 
-   for(i = 0; i < NR_RENDER_TARGETS; ++i)
+   for(i = 0; i < idct->nr_of_render_targets; ++i)
       pipe_surface_reference(&buffer->fb_state[0].cbufs[i], NULL);
 
    pipe_sampler_view_reference(&buffer->sampler_views.individual.intermediate, NULL);
@@ -584,6 +582,7 @@ error_matrix:
 bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
                   unsigned buffer_width, unsigned buffer_height,
                   unsigned blocks_x, unsigned blocks_y,
+                  unsigned nr_of_render_targets,
                   struct pipe_sampler_view *matrix)
 {
    assert(idct && pipe && matrix);
@@ -593,6 +592,7 @@ bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
    idct->buffer_height = buffer_height;
    idct->blocks_x = blocks_x;
    idct->blocks_y = blocks_y;
+   idct->nr_of_render_targets = nr_of_render_targets;
    pipe_sampler_view_reference(&idct->matrix, matrix);
 
    if(!init_shaders(idct))
@@ -666,7 +666,7 @@ vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 
    assert(idct && buffer);
 
-   for(i = 0; i < NR_RENDER_TARGETS; ++i)
+   for(i = 0; i < idct->nr_of_render_targets; ++i)
       pipe_surface_reference(&buffer->fb_state[0].cbufs[i], NULL);
 
    pipe_surface_reference(&buffer->fb_state[1].cbufs[0], NULL);

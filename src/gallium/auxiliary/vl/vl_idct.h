@@ -40,6 +40,7 @@ struct vl_idct
    unsigned buffer_width;
    unsigned buffer_height;
    unsigned blocks_x, blocks_y;
+   unsigned nr_of_render_targets;
 
    void *rs_state;
 
@@ -75,6 +76,7 @@ struct pipe_sampler_view *vl_idct_upload_matrix(struct pipe_context *pipe, float
 bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
                   unsigned buffer_width, unsigned buffer_height,
                   unsigned blocks_x, unsigned blocks_y,
+                  unsigned nr_of_render_targets,
                   struct pipe_sampler_view *matrix);
 
 /* destroy an idct instance */

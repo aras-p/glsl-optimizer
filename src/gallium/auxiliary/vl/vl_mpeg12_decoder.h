@@ -45,6 +45,7 @@ struct vl_mpeg12_decoder
    struct pipe_context *pipe;
 
    const unsigned (*empty_block_mask)[3][2][2];
+   unsigned nr_of_idct_render_targets;
 
    struct pipe_vertex_buffer quads;
    void *ves[VL_MAX_PLANES];
