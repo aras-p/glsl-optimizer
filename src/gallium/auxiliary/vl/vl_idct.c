@@ -455,33 +455,13 @@ cleanup_state(struct vl_idct *idct)
 static bool
 init_intermediate(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 {
-   struct pipe_resource tex_templ, *tex;
-   struct pipe_sampler_view sv_templ;
+   struct pipe_resource *tex;
    struct pipe_surface surf_templ;
    unsigned i;
 
    assert(idct && buffer);
 
-   memset(&tex_templ, 0, sizeof(tex_templ));
-   tex_templ.target = PIPE_TEXTURE_3D;
-   tex_templ.format = PIPE_FORMAT_R16G16B16A16_SNORM;
-   tex_templ.width0 = idct->buffer_width / NR_RENDER_TARGETS;
-   tex_templ.height0 = idct->buffer_height / 4;
-   tex_templ.depth0 = NR_RENDER_TARGETS;
-   tex_templ.array_size = 1;
-   tex_templ.bind = PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET;
-   tex_templ.usage = PIPE_USAGE_STATIC;
-
-   tex = idct->pipe->screen->resource_create(idct->pipe->screen, &tex_templ);
-   if (!tex)
-      goto error_tex;
-
-   memset(&sv_templ, 0, sizeof(sv_templ));
-   u_sampler_view_default_template(&sv_templ, tex, tex->format);
-   buffer->sampler_views.individual.intermediate =
-      idct->pipe->create_sampler_view(idct->pipe, tex, &sv_templ);
-   if (!buffer->sampler_views.individual.intermediate)
-         goto error_sampler_view;
+   tex = buffer->sampler_views.individual.intermediate->texture;
 
    buffer->fb_state[0].width = tex->width0;
    buffer->fb_state[0].height = tex->height0;
@@ -502,19 +482,12 @@ init_intermediate(struct vl_idct *idct, struct vl_idct_buffer *buffer)
    buffer->viewport[0].scale[0] = tex->width0;
    buffer->viewport[0].scale[1] = tex->height0;
 
-   pipe_resource_reference(&tex, NULL);
    return true;
 
 error_surfaces:
    for(i = 0; i < NR_RENDER_TARGETS; ++i)
       pipe_surface_reference(&buffer->fb_state[0].cbufs[i], NULL);
 
-   pipe_sampler_view_reference(&buffer->sampler_views.individual.intermediate, NULL);
-
-error_sampler_view:
-   pipe_resource_reference(&tex, NULL);
-
-error_tex:
    return false;
 }
 
@@ -644,7 +617,9 @@ vl_idct_cleanup(struct vl_idct *idct)
 
 bool
 vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
-                    struct pipe_sampler_view *source, struct pipe_surface *destination)
+                    struct pipe_sampler_view *source,
+                    struct pipe_sampler_view *intermediate,
+                    struct pipe_surface *destination)
 {
    unsigned i;
 
@@ -656,6 +631,7 @@ vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
    pipe_sampler_view_reference(&buffer->sampler_views.individual.matrix, idct->matrix);
    pipe_sampler_view_reference(&buffer->sampler_views.individual.source, source);
    pipe_sampler_view_reference(&buffer->sampler_views.individual.transpose, idct->matrix);
+   pipe_sampler_view_reference(&buffer->sampler_views.individual.intermediate, intermediate);
 
    if (!init_intermediate(idct, buffer))
       return false;

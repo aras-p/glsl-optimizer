@@ -154,6 +154,7 @@ vl_mpeg12_buffer_destroy(struct pipe_video_decode_buffer *buffer)
 
    if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT) {
       buf->idct_source->destroy(buf->idct_source);
+      buf->idct_intermediate->destroy(buf->idct_intermediate);
       vl_idct_cleanup_buffer(&dec->idct_y, &buf->idct[0]);
       vl_idct_cleanup_buffer(&dec->idct_c, &buf->idct[1]);
       vl_idct_cleanup_buffer(&dec->idct_c, &buf->idct[2]);
@@ -266,7 +267,7 @@ vl_mpeg12_create_buffer(struct pipe_video_decoder *decoder)
    struct vl_mpeg12_decoder *dec = (struct vl_mpeg12_decoder*)decoder;
    struct vl_mpeg12_buffer *buffer;
 
-   struct pipe_sampler_view **idct_views, **mc_views;
+   struct pipe_sampler_view **idct_source_sv, **idct_intermediate_sv, **mc_source_sv;
    struct pipe_surface **idct_surfaces;
 
    assert(dec);
@@ -309,39 +310,57 @@ vl_mpeg12_create_buffer(struct pipe_video_decoder *decoder)
       if (!buffer->idct_source)
          goto error_idct_source;
 
+      buffer->idct_intermediate = vl_video_buffer_init(dec->base.context, dec->pipe,
+                                                       dec->base.width / 4, dec->base.height / 4, 4,
+                                                       dec->base.chroma_format, 3,
+                                                       idct_source_formats,
+                                                       PIPE_USAGE_STATIC);
 
-      idct_views = buffer->idct_source->get_sampler_views(buffer->idct_source);
-      if (!idct_views)
-         goto error_idct_views;
+      if (!buffer->idct_intermediate)
+         goto error_idct_intermediate;
+
+      idct_source_sv = buffer->idct_source->get_sampler_views(buffer->idct_source);
+      if (!idct_source_sv)
+         goto error_idct_source_sv;
+
+      idct_intermediate_sv = buffer->idct_intermediate->get_sampler_views(buffer->idct_intermediate);
+      if (!idct_intermediate_sv)
+         goto error_idct_intermediate_sv;
 
       idct_surfaces = buffer->mc_source->get_surfaces(buffer->mc_source);
       if (!idct_surfaces)
          goto error_idct_surfaces;
 
       if (!vl_idct_init_buffer(&dec->idct_y, &buffer->idct[0],
-                               idct_views[0], idct_surfaces[0]))
+                               idct_source_sv[0],
+                               idct_intermediate_sv[0],
+                               idct_surfaces[0]))
          goto error_idct_y;
 
       if (!vl_idct_init_buffer(&dec->idct_c, &buffer->idct[1],
-                               idct_views[1], idct_surfaces[1]))
+                               idct_source_sv[1],
+                               idct_intermediate_sv[1],
+                               idct_surfaces[1]))
          goto error_idct_cb;
 
       if (!vl_idct_init_buffer(&dec->idct_c, &buffer->idct[2],
-                               idct_views[2], idct_surfaces[2]))
+                               idct_source_sv[2],
+                               idct_intermediate_sv[2],
+                               idct_surfaces[2]))
          goto error_idct_cr;
    }
 
-   mc_views = buffer->mc_source->get_sampler_views(buffer->mc_source);
-   if (!mc_views)
-      goto error_mc_views;
+   mc_source_sv = buffer->mc_source->get_sampler_views(buffer->mc_source);
+   if (!mc_source_sv)
+      goto error_mc_source_sv;
 
-   if(!vl_mpeg12_mc_init_buffer(&dec->mc, &buffer->mc[0], mc_views[0]))
+   if(!vl_mpeg12_mc_init_buffer(&dec->mc, &buffer->mc[0], mc_source_sv[0]))
       goto error_mc_y;
 
-   if(!vl_mpeg12_mc_init_buffer(&dec->mc, &buffer->mc[1], mc_views[1]))
+   if(!vl_mpeg12_mc_init_buffer(&dec->mc, &buffer->mc[1], mc_source_sv[1]))
       goto error_mc_cb;
 
-   if(!vl_mpeg12_mc_init_buffer(&dec->mc, &buffer->mc[2], mc_views[2]))
+   if(!vl_mpeg12_mc_init_buffer(&dec->mc, &buffer->mc[2], mc_source_sv[2]))
       goto error_mc_cr;
 
    return &buffer->base;
@@ -353,7 +372,7 @@ error_mc_cb:
    vl_mpeg12_mc_cleanup_buffer(&buffer->mc[0]);
 
 error_mc_y:
-error_mc_views:
+error_mc_source_sv:
    if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
       vl_idct_cleanup_buffer(&dec->idct_c, &buffer->idct[2]);
 
@@ -367,7 +386,12 @@ error_idct_cb:
 
 error_idct_y:
 error_idct_surfaces:
-error_idct_views:
+error_idct_intermediate_sv:
+error_idct_source_sv:
+   if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
+      buffer->idct_intermediate->destroy(buffer->idct_intermediate);
+
+error_idct_intermediate:
    if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
       buffer->idct_source->destroy(buffer->idct_source);
 

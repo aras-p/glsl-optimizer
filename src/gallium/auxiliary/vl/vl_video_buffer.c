@@ -153,7 +153,7 @@ vl_video_buffer_init(struct pipe_video_context *context,
    buffer->num_planes = num_planes;
 
    memset(&templ, 0, sizeof(templ));
-   templ.target = PIPE_TEXTURE_2D;
+   templ.target = depth > 1 ? PIPE_TEXTURE_3D : PIPE_TEXTURE_2D;
    templ.format = resource_formats[0];
    templ.width0 = width;
    templ.height0 = height;
@@ -173,16 +173,10 @@ vl_video_buffer_init(struct pipe_video_context *context,
 
    templ.format = resource_formats[1];
    if (chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
-      if (depth > 1)
-         templ.depth0 /= 2;
-      else
-         templ.width0 /= 2;
+      templ.width0 /= 2;
       templ.height0 /= 2;
    } else if (chroma_format == PIPE_VIDEO_CHROMA_FORMAT_422) {
-      if (depth > 1)
-         templ.depth0 /= 2;
-      else
-         templ.height0 /= 2;
+      templ.height0 /= 2;
    }
 
    buffer->resources[1] = pipe->screen->resource_create(pipe->screen, &templ);

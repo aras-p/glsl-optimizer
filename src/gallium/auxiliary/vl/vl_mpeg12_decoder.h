@@ -64,6 +64,7 @@ struct vl_mpeg12_buffer
    struct vl_vertex_buffer vertex_stream;
 
    struct pipe_video_buffer *idct_source;
+   struct pipe_video_buffer *idct_intermediate;
    struct pipe_video_buffer *mc_source;
 
    union

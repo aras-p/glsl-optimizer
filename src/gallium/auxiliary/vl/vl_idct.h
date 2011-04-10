@@ -82,7 +82,9 @@ void vl_idct_cleanup(struct vl_idct *idct);
 
 /* init a buffer assosiated with agiven idct instance */
 bool vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
-                         struct pipe_sampler_view *source, struct pipe_surface *destination);
+                         struct pipe_sampler_view *source,
+                         struct pipe_sampler_view *intermediate,
+                         struct pipe_surface *destination);
 
 /* cleanup a buffer of an idct instance */
 void vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer);
