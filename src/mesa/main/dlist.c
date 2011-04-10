@@ -49,6 +49,7 @@
 #include "eval.h"
 #include "framebuffer.h"
 #include "glapi/glapi.h"
+#include "glapidispatch.h"
 #include "hash.h"
 #include "image.h"
 #include "light.h"
@@ -436,6 +437,9 @@ typedef enum
 
    /* GL_NV_texture_barrier */
    OPCODE_TEXTURE_BARRIER_NV,
+
+   /* GL_ARB_sampler_object */
+   OPCODE_BIND_SAMPLER,
 
    /* The following three are meta instructions */
    OPCODE_ERROR,                /* raise compiled-in error */
@@ -7066,6 +7070,24 @@ save_TextureBarrierNV(void)
 }
 
 
+/* GL_ARB_sampler_objects */
+static void
+save_BindSampler(GLuint unit, GLuint sampler)
+{
+   Node *n;
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_SAVE_BEGIN_END_AND_FLUSH(ctx);
+   n = alloc_instruction(ctx, OPCODE_BIND_SAMPLER, 2);
+   if (n) {
+      n[1].ui = unit;
+      n[2].ui = sampler;
+   }
+   if (ctx->ExecuteFlag) {
+      CALL_BindSampler(ctx->Exec, (unit, sampler));
+   }
+}
+
+
 /**
  * Save an error-generating command into display list.
  *
@@ -8247,6 +8269,10 @@ execute_list(struct gl_context *ctx, GLuint list)
 
          case OPCODE_TEXTURE_BARRIER_NV:
             CALL_TextureBarrierNV(ctx->Exec, ());
+            break;
+
+         case OPCODE_BIND_SAMPLER:
+            CALL_BindSampler(ctx->Exec, (n[1].ui, n[2].ui));
             break;
 
          case OPCODE_CONTINUE:
@@ -9929,6 +9955,9 @@ _mesa_create_save_table(void)
 
    /* GL_NV_texture_barrier */
    SET_TextureBarrierNV(table, save_TextureBarrierNV);
+
+   /* GL_ARB_sampler_objects */
+   SET_BindSampler(table, save_BindSampler);
 
    /* GL_ARB_draw_buffer_blend */
    SET_BlendFunciARB(table, save_BlendFunci);
