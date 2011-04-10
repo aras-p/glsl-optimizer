@@ -43,6 +43,32 @@ static const unsigned const_empty_block_mask_420[3][2][2] = {
         { { 0x01, 0x01 },  { 0x01, 0x01 } }
 };
 
+static const enum pipe_format const_idct_source_formats[] = {
+   PIPE_FORMAT_R16G16B16A16_SNORM
+   //PIPE_FORMAT_R16G16B16A16_SSCALED
+};
+
+static const unsigned num_idct_source_formats =
+   sizeof(const_idct_source_formats) / sizeof(enum pipe_format);
+
+static const enum pipe_format const_idct_intermediate_formats[] = {
+   PIPE_FORMAT_R16G16B16A16_FLOAT,
+   PIPE_FORMAT_R16G16B16A16_SNORM
+   //PIPE_FORMAT_R32G32B32A32_FLOAT,
+   //PIPE_FORMAT_R16G16B16A16_SSCALED
+};
+
+static const unsigned num_idct_intermediate_formats =
+   sizeof(const_idct_intermediate_formats) / sizeof(enum pipe_format);
+
+static const enum pipe_format const_mc_source_formats[] = {
+   PIPE_FORMAT_R16_SNORM
+   //PIPE_FORMAT_R16_SSCALED
+};
+
+static const unsigned num_mc_source_formats =
+   sizeof(const_mc_source_formats) / sizeof(enum pipe_format);
+
 static void
 map_buffers(struct vl_mpeg12_decoder *ctx, struct vl_mpeg12_buffer *buffer)
 {
@@ -266,11 +292,7 @@ vl_mpeg12_destroy(struct pipe_video_decoder *decoder)
 static bool
 init_idct_buffer(struct vl_mpeg12_buffer *buffer)
 {
-   const enum pipe_format idct_source_formats[3] = {
-      PIPE_FORMAT_R16G16B16A16_SNORM,
-      PIPE_FORMAT_R16G16B16A16_SNORM,
-      PIPE_FORMAT_R16G16B16A16_SNORM
-   };
+   enum pipe_format formats[3];
 
    struct pipe_sampler_view **idct_source_sv, **idct_intermediate_sv;
    struct pipe_surface **idct_surfaces;
@@ -283,20 +305,20 @@ init_idct_buffer(struct vl_mpeg12_buffer *buffer)
 
    dec = (struct vl_mpeg12_decoder*)buffer->base.decoder;
 
+   formats[0] = formats[1] = formats[2] = dec->idct_source_format;
    buffer->idct_source = vl_video_buffer_init(dec->base.context, dec->pipe,
                                               dec->base.width / 4, dec->base.height, 1,
                                               dec->base.chroma_format, 3,
-                                              idct_source_formats,
-                                              PIPE_USAGE_STREAM);
+                                              formats, PIPE_USAGE_STREAM);
    if (!buffer->idct_source)
       goto error_source;
 
+   formats[0] = formats[1] = formats[2] = dec->idct_intermediate_format;
    buffer->idct_intermediate = vl_video_buffer_init(dec->base.context, dec->pipe,
                                                     dec->base.width / dec->nr_of_idct_render_targets,
                                                     dec->base.height / 4, dec->nr_of_idct_render_targets,
                                                     dec->base.chroma_format, 3,
-                                                    idct_source_formats,
-                                                    PIPE_USAGE_STATIC);
+                                                    formats, PIPE_USAGE_STATIC);
 
    if (!buffer->idct_intermediate)
       goto error_intermediate;
@@ -315,10 +337,8 @@ init_idct_buffer(struct vl_mpeg12_buffer *buffer)
 
    for (i = 0; i < 3; ++i)
       if (!vl_idct_init_buffer(i == 0 ? &dec->idct_y : &dec->idct_c,
-                               &buffer->idct[i],
-                               idct_source_sv[i],
-                               idct_intermediate_sv[i],
-                               idct_surfaces[i]))
+                               &buffer->idct[i], idct_source_sv[i],
+                               idct_intermediate_sv[i], idct_surfaces[i]))
          goto error_plane;
 
    return true;
@@ -342,11 +362,7 @@ error_source:
 static struct pipe_video_decode_buffer *
 vl_mpeg12_create_buffer(struct pipe_video_decoder *decoder)
 {
-   const enum pipe_format mc_source_formats[3] = {
-      PIPE_FORMAT_R16_SNORM,
-      PIPE_FORMAT_R16_SNORM,
-      PIPE_FORMAT_R16_SNORM
-   };
+   enum pipe_format formats[3];
 
    struct vl_mpeg12_decoder *dec = (struct vl_mpeg12_decoder*)decoder;
    struct vl_mpeg12_buffer *buffer;
@@ -375,11 +391,11 @@ vl_mpeg12_create_buffer(struct pipe_video_decoder *decoder)
    if (!buffer->vertex_bufs.individual.stream.buffer)
       goto error_vertex_stream;
 
+   formats[0] = formats[1] = formats[2] =dec->mc_source_format;
    buffer->mc_source = vl_video_buffer_init(dec->base.context, dec->pipe,
                                             dec->base.width, dec->base.height, 1,
                                             dec->base.chroma_format, 3,
-                                            mc_source_formats,
-                                            PIPE_USAGE_STATIC);
+                                            formats, PIPE_USAGE_STATIC);
 
    if (!buffer->mc_source)
       goto error_mc_source;
@@ -530,6 +546,27 @@ init_pipe_state(struct vl_mpeg12_decoder *dec)
    return true;
 }
 
+static enum pipe_format
+find_first_supported_format(struct vl_mpeg12_decoder *dec,
+                            const enum pipe_format formats[],
+                            unsigned num_formats,
+                            enum pipe_texture_target target)
+{
+   struct pipe_screen *screen;
+   unsigned i;
+
+   assert(dec);
+
+   screen = dec->pipe->screen;
+
+   for (i = 0; i < num_formats; ++i)
+      if (screen->is_format_supported(dec->pipe->screen, formats[i], target, 1,
+                                      PIPE_BIND_SAMPLER_VIEW | PIPE_BIND_RENDER_TARGET))
+         return formats[i];
+
+   return PIPE_FORMAT_NONE;
+}
+
 static bool
 init_idct(struct vl_mpeg12_decoder *dec, unsigned buffer_width, unsigned buffer_height)
 {
@@ -540,6 +577,18 @@ init_idct(struct vl_mpeg12_decoder *dec, unsigned buffer_width, unsigned buffer_
 
    // more than 4 render targets usually doesn't makes any seens
    dec->nr_of_idct_render_targets = MIN2(dec->nr_of_idct_render_targets, 4);
+
+   dec->idct_source_format = find_first_supported_format(dec, const_idct_source_formats,
+                                                         num_idct_source_formats, PIPE_TEXTURE_2D);
+
+   if (dec->idct_source_format == PIPE_FORMAT_NONE)
+      return false;
+
+   dec->idct_intermediate_format = find_first_supported_format(dec, const_idct_intermediate_formats,
+                                                               num_idct_intermediate_formats, PIPE_TEXTURE_3D);
+
+   if (dec->idct_intermediate_format == PIPE_FORMAT_NONE)
+      return false;
 
    if (!(idct_matrix = vl_idct_upload_matrix(dec->pipe, sqrt(SCALE_FACTOR_16_TO_9))))
       goto error_idct_matrix;
@@ -626,13 +675,19 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
    assert(dec->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
    dec->empty_block_mask = &const_empty_block_mask_420;
 
+   if (!vl_mpeg12_mc_renderer_init(&dec->mc, dec->pipe, dec->base.width, dec->base.height,
+                                   entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT ? 1.0f : SCALE_FACTOR_16_TO_9))
+      goto error_mc;
+
    if (entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
       if (!init_idct(dec, dec->base.width, dec->base.height))
          goto error_idct;
 
-   if (!vl_mpeg12_mc_renderer_init(&dec->mc, dec->pipe, dec->base.width, dec->base.height,
-                                   entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT ? 1.0f : SCALE_FACTOR_16_TO_9))
-      goto error_mc;
+   dec->mc_source_format = find_first_supported_format(dec, const_mc_source_formats,
+                                                       num_mc_source_formats, PIPE_TEXTURE_3D);
+
+   if (dec->mc_source_format == PIPE_FORMAT_NONE)
+      return false;
 
    if (!init_pipe_state(dec))
       goto error_pipe_state;

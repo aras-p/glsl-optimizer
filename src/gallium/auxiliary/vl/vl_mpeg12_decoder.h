@@ -47,6 +47,10 @@ struct vl_mpeg12_decoder
    const unsigned (*empty_block_mask)[3][2][2];
    unsigned nr_of_idct_render_targets;
 
+   enum pipe_format idct_source_format;
+   enum pipe_format idct_intermediate_format;
+   enum pipe_format mc_source_format;
+
    struct pipe_vertex_buffer quads;
    void *ves[VL_MAX_PLANES];
 
