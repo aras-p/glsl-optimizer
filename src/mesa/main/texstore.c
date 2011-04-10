@@ -2186,8 +2186,11 @@ _mesa_texstore_unorm88(TEXSTORE_PARAMS)
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
-       (dstFormat == MESA_FORMAT_AL88 || dstFormat == MESA_FORMAT_RG88) &&
-       baseInternalFormat == srcFormat &&
+       ((dstFormat == MESA_FORMAT_AL88 &&
+         baseInternalFormat == GL_LUMINANCE_ALPHA &&
+         srcFormat == GL_LUMINANCE_ALPHA) ||
+        (dstFormat == MESA_FORMAT_RG88 &&
+         baseInternalFormat == srcFormat)) &&
        srcType == GL_UNSIGNED_BYTE &&
        littleEndian) {
       /* simple memcpy path */
@@ -2305,8 +2308,11 @@ _mesa_texstore_unorm1616(TEXSTORE_PARAMS)
 
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
-       (dstFormat == MESA_FORMAT_AL1616 || dstFormat == MESA_FORMAT_RG1616) &&
-       baseInternalFormat == srcFormat &&
+       ((dstFormat == MESA_FORMAT_AL1616 &&
+         baseInternalFormat == GL_LUMINANCE_ALPHA &&
+         srcFormat == GL_LUMINANCE_ALPHA) ||
+        (dstFormat == MESA_FORMAT_RG1616 &&
+         baseInternalFormat == srcFormat)) &&
        srcType == GL_UNSIGNED_SHORT &&
        littleEndian) {
       /* simple memcpy path */
