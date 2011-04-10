@@ -502,9 +502,9 @@ savageAllocTexObj( struct gl_texture_object *texObj )
   
       make_empty_list( &t->base );
 
-      savageSetTexWrapping(t,texObj->WrapS,texObj->WrapT);
-      savageSetTexFilter(t,texObj->MinFilter,texObj->MagFilter);
-      savageSetTexBorderColor(t,texObj->BorderColor.f);
+      savageSetTexWrapping(t,texObj->Sampler.WrapS,texObj->Sampler.WrapT);
+      savageSetTexFilter(t,texObj->Sampler.MinFilter,texObj->Sampler.MagFilter);
+      savageSetTexBorderColor(t,texObj->Sampler.BorderColor.f);
    }
 
    return t;
@@ -2031,16 +2031,16 @@ static void savageTexParameter( struct gl_context *ctx, GLenum target,
    switch (pname) {
    case GL_TEXTURE_MIN_FILTER:
    case GL_TEXTURE_MAG_FILTER:
-      savageSetTexFilter(t,tObj->MinFilter,tObj->MagFilter);
+      savageSetTexFilter(t,tObj->Sampler.MinFilter,tObj->Sampler.MagFilter);
       break;
 
    case GL_TEXTURE_WRAP_S:
    case GL_TEXTURE_WRAP_T:
-      savageSetTexWrapping(t,tObj->WrapS,tObj->WrapT);
+      savageSetTexWrapping(t,tObj->Sampler.WrapS,tObj->Sampler.WrapT);
       break;
   
    case GL_TEXTURE_BORDER_COLOR:
-      savageSetTexBorderColor(t,tObj->BorderColor.f);
+      savageSetTexBorderColor(t,tObj->Sampler.BorderColor.f);
       break;
 
    default:

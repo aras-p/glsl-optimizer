@@ -770,6 +770,7 @@ pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
       /* Restore texture object state for each target */
       for (tgt = 0; tgt < NUM_TEXTURE_TARGETS; tgt++) {
          const struct gl_texture_object *obj = NULL;
+         const struct gl_sampler_object *samp;
          GLenum target;
 
          obj = &texstate->SavedObj[u][tgt];
@@ -797,26 +798,28 @@ pop_texture_group(struct gl_context *ctx, struct texture_state *texstate)
 
          _mesa_BindTexture(target, obj->Name);
 
-         _mesa_TexParameterfv(target, GL_TEXTURE_BORDER_COLOR, obj->BorderColor.f);
+         samp = &obj->Sampler;
+
+         _mesa_TexParameterfv(target, GL_TEXTURE_BORDER_COLOR, samp->BorderColor.f);
+         _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, samp->WrapS);
+         _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, samp->WrapT);
+         _mesa_TexParameteri(target, GL_TEXTURE_WRAP_R, samp->WrapR);
+         _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, samp->MinFilter);
+         _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, samp->MagFilter);
+         _mesa_TexParameterf(target, GL_TEXTURE_MIN_LOD, samp->MinLod);
+         _mesa_TexParameterf(target, GL_TEXTURE_MAX_LOD, samp->MaxLod);
+         _mesa_TexParameterf(target, GL_TEXTURE_LOD_BIAS, samp->LodBias);
          _mesa_TexParameterf(target, GL_TEXTURE_PRIORITY, obj->Priority);
-         _mesa_TexParameteri(target, GL_TEXTURE_WRAP_S, obj->WrapS);
-         _mesa_TexParameteri(target, GL_TEXTURE_WRAP_T, obj->WrapT);
-         _mesa_TexParameteri(target, GL_TEXTURE_WRAP_R, obj->WrapR);
-         _mesa_TexParameteri(target, GL_TEXTURE_MIN_FILTER, obj->MinFilter);
-         _mesa_TexParameteri(target, GL_TEXTURE_MAG_FILTER, obj->MagFilter);
-         _mesa_TexParameterf(target, GL_TEXTURE_MIN_LOD, obj->MinLod);
-         _mesa_TexParameterf(target, GL_TEXTURE_MAX_LOD, obj->MaxLod);
-         _mesa_TexParameterf(target, GL_TEXTURE_LOD_BIAS, obj->LodBias);
          _mesa_TexParameteri(target, GL_TEXTURE_BASE_LEVEL, obj->BaseLevel);
          if (target != GL_TEXTURE_RECTANGLE_ARB)
             _mesa_TexParameteri(target, GL_TEXTURE_MAX_LEVEL, obj->MaxLevel);
          if (ctx->Extensions.EXT_texture_filter_anisotropic) {
             _mesa_TexParameterf(target, GL_TEXTURE_MAX_ANISOTROPY_EXT,
-                                obj->MaxAnisotropy);
+                                samp->MaxAnisotropy);
          }
          if (ctx->Extensions.ARB_shadow_ambient) {
             _mesa_TexParameterf(target, GL_TEXTURE_COMPARE_FAIL_VALUE_ARB,
-                                obj->CompareFailValue);
+                                samp->CompareFailValue);
          }
       }
 

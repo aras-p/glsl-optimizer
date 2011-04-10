@@ -362,8 +362,8 @@ guess_and_alloc_texture(struct st_context *st,
     * to re-allocating a texture buffer with space for more (or fewer)
     * mipmap levels later.
     */
-   if ((stObj->base.MinFilter == GL_NEAREST ||
-        stObj->base.MinFilter == GL_LINEAR ||
+   if ((stObj->base.Sampler.MinFilter == GL_NEAREST ||
+        stObj->base.Sampler.MinFilter == GL_LINEAR ||
         stImage->base._BaseFormat == GL_DEPTH_COMPONENT ||
         stImage->base._BaseFormat == GL_DEPTH_STENCIL_EXT) &&
        !stObj->base.GenerateMipmap &&
@@ -1742,8 +1742,8 @@ st_finalize_texture(struct gl_context *ctx,
        * incomplete.  In that case, we'll have set stObj->lastLevel before
        * we get here.
        */
-      if (stObj->base.MinFilter == GL_LINEAR ||
-          stObj->base.MinFilter == GL_NEAREST)
+      if (stObj->base.Sampler.MinFilter == GL_LINEAR ||
+          stObj->base.Sampler.MinFilter == GL_NEAREST)
          stObj->lastLevel = stObj->base.BaseLevel;
       else
          stObj->lastLevel = stObj->base._MaxLevel;
@@ -1890,8 +1890,8 @@ st_get_default_texture(struct st_context *st)
                   texObj, texImg,
                   0, 0);
 
-      texObj->MinFilter = GL_NEAREST;
-      texObj->MagFilter = GL_NEAREST;
+      texObj->Sampler.MinFilter = GL_NEAREST;
+      texObj->Sampler.MagFilter = GL_NEAREST;
       texObj->_Complete = GL_TRUE;
 
       st->default_texture = texObj;

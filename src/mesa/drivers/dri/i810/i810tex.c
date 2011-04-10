@@ -204,10 +204,10 @@ i810AllocTexObj( struct gl_context *ctx, struct gl_texture_object *texObj )
       
       make_empty_list( & t->base );
 
-      i810SetTexWrapping( t, texObj->WrapS, texObj->WrapT );
+      i810SetTexWrapping( t, texObj->Sampler.WrapS, texObj->Sampler.WrapT );
       /*i830SetTexMaxAnisotropy( t, texObj->MaxAnisotropy );*/
-      i810SetTexFilter( imesa, t, texObj->MinFilter, texObj->MagFilter, bias );
-      i810SetTexBorderColor( t, texObj->BorderColor.f );
+      i810SetTexFilter( imesa, t, texObj->Sampler.MinFilter, texObj->Sampler.MagFilter, bias );
+      i810SetTexBorderColor( t, texObj->Sampler.BorderColor.f );
    }
 
    return t;
@@ -238,17 +238,17 @@ static void i810TexParameter( struct gl_context *ctx, GLenum target,
    case GL_TEXTURE_MAG_FILTER:
       {
          GLfloat bias = ctx->Texture.Unit[ctx->Texture.CurrentUnit].LodBias;
-         i810SetTexFilter( imesa, t, tObj->MinFilter, tObj->MagFilter, bias );
+         i810SetTexFilter( imesa, t, tObj->Sampler.MinFilter, tObj->Sampler.MagFilter, bias );
       }
       break;
 
    case GL_TEXTURE_WRAP_S:
    case GL_TEXTURE_WRAP_T:
-      i810SetTexWrapping( t, tObj->WrapS, tObj->WrapT );
+      i810SetTexWrapping( t, tObj->Sampler.WrapS, tObj->Sampler.WrapT );
       break;
   
    case GL_TEXTURE_BORDER_COLOR:
-      i810SetTexBorderColor( t, tObj->BorderColor.f );
+      i810SetTexBorderColor( t, tObj->Sampler.BorderColor.f );
       break;
 
    case GL_TEXTURE_BASE_LEVEL:

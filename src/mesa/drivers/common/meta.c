@@ -1124,12 +1124,12 @@ blitframebuffer_texture(struct gl_context *ctx,
       if (readAtt && readAtt->Texture) {
          const struct gl_texture_object *texObj = readAtt->Texture;
          const GLuint srcLevel = readAtt->TextureLevel;
-         const GLenum minFilterSave = texObj->MinFilter;
-         const GLenum magFilterSave = texObj->MagFilter;
+         const GLenum minFilterSave = texObj->Sampler.MinFilter;
+         const GLenum magFilterSave = texObj->Sampler.MagFilter;
          const GLint baseLevelSave = texObj->BaseLevel;
          const GLint maxLevelSave = texObj->MaxLevel;
-         const GLenum wrapSSave = texObj->WrapS;
-         const GLenum wrapTSave = texObj->WrapT;
+         const GLenum wrapSSave = texObj->Sampler.WrapS;
+         const GLenum wrapTSave = texObj->Sampler.WrapT;
          const GLenum target = texObj->Target;
 
          if (drawAtt->Texture == readAtt->Texture) {
@@ -2259,13 +2259,13 @@ _mesa_meta_GenerateMipmap(struct gl_context *ctx, GLenum target,
    struct vertex verts[4];
    const GLuint baseLevel = texObj->BaseLevel;
    const GLuint maxLevel = texObj->MaxLevel;
-   const GLenum minFilterSave = texObj->MinFilter;
-   const GLenum magFilterSave = texObj->MagFilter;
+   const GLenum minFilterSave = texObj->Sampler.MinFilter;
+   const GLenum magFilterSave = texObj->Sampler.MagFilter;
    const GLint maxLevelSave = texObj->MaxLevel;
    const GLboolean genMipmapSave = texObj->GenerateMipmap;
-   const GLenum wrapSSave = texObj->WrapS;
-   const GLenum wrapTSave = texObj->WrapT;
-   const GLenum wrapRSave = texObj->WrapR;
+   const GLenum wrapSSave = texObj->Sampler.WrapS;
+   const GLenum wrapTSave = texObj->Sampler.WrapT;
+   const GLenum wrapRSave = texObj->Sampler.WrapR;
    const GLuint fboSave = ctx->DrawBuffer->Name;
    const GLuint original_active_unit = ctx->Texture.CurrentUnit;
    GLenum faceTarget;

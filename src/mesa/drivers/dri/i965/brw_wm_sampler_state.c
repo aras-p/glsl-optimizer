@@ -288,26 +288,26 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	 entry->seamless_cube_map = (texObj->Target == GL_TEXTURE_CUBE_MAP)
 	    ? ctx->Texture.CubeMapSeamless : GL_FALSE;
 
-	 entry->wrap_r = texObj->WrapR;
-	 entry->wrap_s = texObj->WrapS;
-	 entry->wrap_t = texObj->WrapT;
+	 entry->wrap_r = texObj->Sampler.WrapR;
+	 entry->wrap_s = texObj->Sampler.WrapS;
+	 entry->wrap_t = texObj->Sampler.WrapT;
 
-	 entry->maxlod = texObj->MaxLod;
-	 entry->minlod = texObj->MinLod;
-	 entry->lod_bias = texUnit->LodBias + texObj->LodBias;
-	 entry->max_aniso = texObj->MaxAnisotropy;
-	 entry->minfilter = texObj->MinFilter;
-	 entry->magfilter = texObj->MagFilter;
-	 entry->comparemode = texObj->CompareMode;
-         entry->comparefunc = texObj->CompareFunc;
+	 entry->maxlod = texObj->Sampler.MaxLod;
+	 entry->minlod = texObj->Sampler.MinLod;
+	 entry->lod_bias = texUnit->LodBias + texObj->Sampler.LodBias;
+	 entry->max_aniso = texObj->Sampler.MaxAnisotropy;
+	 entry->minfilter = texObj->Sampler.MinFilter;
+	 entry->magfilter = texObj->Sampler.MagFilter;
+	 entry->comparemode = texObj->Sampler.CompareMode;
+         entry->comparefunc = texObj->Sampler.CompareFunc;
 
 	 drm_intel_bo_unreference(brw->wm.sdc_bo[unit]);
 	 if (firstImage->_BaseFormat == GL_DEPTH_COMPONENT) {
 	    float bordercolor[4] = {
-	       texObj->BorderColor.f[0],
-	       texObj->BorderColor.f[0],
-	       texObj->BorderColor.f[0],
-	       texObj->BorderColor.f[0]
+	       texObj->Sampler.BorderColor.f[0],
+	       texObj->Sampler.BorderColor.f[0],
+	       texObj->Sampler.BorderColor.f[0],
+	       texObj->Sampler.BorderColor.f[0]
 	    };
 	    /* GL specs that border color for depth textures is taken from the
 	     * R channel, while the hardware uses A.  Spam R into all the
@@ -316,7 +316,7 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	    brw->wm.sdc_bo[unit] = upload_default_color(brw, bordercolor);
 	 } else {
 	    brw->wm.sdc_bo[unit] = upload_default_color(brw,
-							texObj->BorderColor.f);
+							texObj->Sampler.BorderColor.f);
 	 }
 	 key->sampler_count = unit + 1;
       }

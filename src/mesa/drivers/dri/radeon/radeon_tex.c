@@ -330,17 +330,17 @@ static void radeonTexParameter( struct gl_context *ctx, GLenum target,
    case GL_TEXTURE_MIN_FILTER:
    case GL_TEXTURE_MAG_FILTER:
    case GL_TEXTURE_MAX_ANISOTROPY_EXT:
-      radeonSetTexMaxAnisotropy( t, texObj->MaxAnisotropy );
-      radeonSetTexFilter( t, texObj->MinFilter, texObj->MagFilter );
+      radeonSetTexMaxAnisotropy( t, texObj->Sampler.MaxAnisotropy );
+      radeonSetTexFilter( t, texObj->Sampler.MinFilter, texObj->Sampler.MagFilter );
       break;
 
    case GL_TEXTURE_WRAP_S:
    case GL_TEXTURE_WRAP_T:
-      radeonSetTexWrap( t, texObj->WrapS, texObj->WrapT );
+      radeonSetTexWrap( t, texObj->Sampler.WrapS, texObj->Sampler.WrapT );
       break;
 
    case GL_TEXTURE_BORDER_COLOR:
-      radeonSetTexBorderColor( t, texObj->BorderColor.f );
+      radeonSetTexBorderColor( t, texObj->Sampler.BorderColor.f );
       break;
 
    case GL_TEXTURE_BASE_LEVEL:
@@ -416,7 +416,7 @@ radeonNewTextureObject( struct gl_context *ctx, GLuint name, GLenum target )
    radeonTexObj* t = CALLOC_STRUCT(radeon_tex_obj);
 
    _mesa_initialize_texture_object(&t->base, name, target);
-   t->base.MaxAnisotropy = rmesa->radeon.initialMaxAnisotropy;
+   t->base.Sampler.MaxAnisotropy = rmesa->radeon.initialMaxAnisotropy;
 
    t->border_fallback = GL_FALSE;
 
@@ -424,10 +424,10 @@ radeonNewTextureObject( struct gl_context *ctx, GLuint name, GLenum target )
    t->pp_txformat = (RADEON_TXFORMAT_ENDIAN_NO_SWAP |
 		     RADEON_TXFORMAT_PERSPECTIVE_ENABLE);
    
-   radeonSetTexWrap( t, t->base.WrapS, t->base.WrapT );
-   radeonSetTexMaxAnisotropy( t, t->base.MaxAnisotropy );
-   radeonSetTexFilter( t, t->base.MinFilter, t->base.MagFilter );
-   radeonSetTexBorderColor( t, t->base.BorderColor.f );
+   radeonSetTexWrap( t, t->base.Sampler.WrapS, t->base.Sampler.WrapT );
+   radeonSetTexMaxAnisotropy( t, t->base.Sampler.MaxAnisotropy );
+   radeonSetTexFilter( t, t->base.Sampler.MinFilter, t->base.Sampler.MagFilter );
+   radeonSetTexBorderColor( t, t->base.Sampler.BorderColor.f );
    return &t->base;
 }
 

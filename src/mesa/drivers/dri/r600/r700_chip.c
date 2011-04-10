@@ -141,7 +141,7 @@ static void r700SendTexSamplerState(struct gl_context *ctx, struct radeon_state_
 	}
 }
 
-static void r700SendTexBorderColorState(struct gl_context *ctx, struct radeon_state_atom *atom)
+static void r700SendTexSampler.BorderColorState(struct gl_context *ctx, struct radeon_state_atom *atom)
 {
 	context_t         *context = R700_CONTEXT(ctx);
 	R700_CHIP_CONTEXT *r700 = (R700_CHIP_CONTEXT*)(&context->hw);
@@ -1640,7 +1640,7 @@ void r600InitAtoms(context_t *context)
     ALLOC_STATE(vtx, vtx, (VERT_ATTRIB_MAX * 18), r700SendVTXState);
     ALLOC_STATE(tx, tx, (R700_TEXTURE_NUMBERUNITS * 20), r700SendTexState);
     ALLOC_STATE(tx_smplr, tx, (R700_TEXTURE_NUMBERUNITS * 5), r700SendTexSamplerState);
-    ALLOC_STATE(tx_brdr_clr, tx, (R700_TEXTURE_NUMBERUNITS * 6), r700SendTexBorderColorState);
+    ALLOC_STATE(tx_brdr_clr, tx, (R700_TEXTURE_NUMBERUNITS * 6), r700SendTexSampler.BorderColorState);
     r600_init_query_stateobj(&context->radeon, 6 * 2);
 
     context->radeon.hw.is_dirty = GL_TRUE;

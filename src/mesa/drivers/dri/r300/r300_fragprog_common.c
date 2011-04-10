@@ -77,8 +77,8 @@ static void build_state(
 		if (fp->Base.ShadowSamplers & (1 << unit)) {
 			struct gl_texture_object* tex = r300->radeon.glCtx->Texture.Unit[unit]._Current;
 
-			state->unit[unit].texture_swizzle = build_dts(tex->DepthMode);
-			state->unit[unit].texture_compare_func = build_func(tex->CompareFunc);
+			state->unit[unit].texture_swizzle = build_dts(tex->Sampler.DepthMode);
+			state->unit[unit].texture_compare_func = build_func(tex->Sampler.CompareFunc);
 		}
 	}
 }

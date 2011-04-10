@@ -250,9 +250,9 @@ static GLboolean run_texnorm_stage( struct gl_context *ctx,
       const GLbitfield reallyEnabled = ctx->Texture.Unit[i]._ReallyEnabled;
       if (reallyEnabled) {
          const struct gl_texture_object *texObj = ctx->Texture.Unit[i]._Current;
-         const GLboolean normalizeS = (texObj->WrapS == GL_REPEAT);
+         const GLboolean normalizeS = (texObj->Sampler.WrapS == GL_REPEAT);
          const GLboolean normalizeT = (reallyEnabled & TEXTURE_2D_BIT) &&
-            (texObj->WrapT == GL_REPEAT);
+            (texObj->Sampler.WrapT == GL_REPEAT);
          const GLfloat *in = (GLfloat *)VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]->data;
          const GLint instride = VB->AttribPtr[_TNL_ATTRIB_TEX0 + i]->stride;
          GLfloat (*out)[4] = store->texcoord[i].data;
@@ -332,15 +332,15 @@ static void validate_texnorm( struct gl_context *ctx,
    GLuint flags = 0;
 
    if (((ctx->Texture.Unit[0]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) &&
-	(ctx->Texture.Unit[0]._Current->WrapS == GL_REPEAT)) ||
+	(ctx->Texture.Unit[0]._Current->Sampler.WrapS == GL_REPEAT)) ||
        ((ctx->Texture.Unit[0]._ReallyEnabled & TEXTURE_2D_BIT) &&
-	(ctx->Texture.Unit[0]._Current->WrapT == GL_REPEAT)))
+	(ctx->Texture.Unit[0]._Current->Sampler.WrapT == GL_REPEAT)))
       flags |= VERT_BIT_TEX0;
 
    if (((ctx->Texture.Unit[1]._ReallyEnabled & (TEXTURE_1D_BIT|TEXTURE_2D_BIT)) &&
-	(ctx->Texture.Unit[1]._Current->WrapS == GL_REPEAT)) ||
+	(ctx->Texture.Unit[1]._Current->Sampler.WrapS == GL_REPEAT)) ||
        ((ctx->Texture.Unit[1]._ReallyEnabled & TEXTURE_2D_BIT) &&
-	(ctx->Texture.Unit[1]._Current->WrapT == GL_REPEAT)))
+	(ctx->Texture.Unit[1]._Current->Sampler.WrapT == GL_REPEAT)))
       flags |= VERT_BIT_TEX1;
 
    store->active = (flags != 0);

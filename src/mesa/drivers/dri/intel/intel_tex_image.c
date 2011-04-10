@@ -112,8 +112,8 @@ intel_miptree_create_for_teximage(struct intel_context *intel,
        * resizable buffers, or require that buffers implement lazy
        * pagetable arrangements.
        */
-      if ((intelObj->base.MinFilter == GL_NEAREST ||
-	   intelObj->base.MinFilter == GL_LINEAR) &&
+      if ((intelObj->base.Sampler.MinFilter == GL_NEAREST ||
+	   intelObj->base.Sampler.MinFilter == GL_LINEAR) &&
 	  intelImage->level == firstLevel &&
 	  (intel->gen < 4 || firstLevel == 0)) {
 	 lastLevel = firstLevel;

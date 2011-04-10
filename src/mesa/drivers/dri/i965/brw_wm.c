@@ -370,14 +370,14 @@ static void brw_wm_populate_key( struct brw_context *brw,
 	  * well and our shadow compares always return the result in
 	  * all 4 channels.
 	  */
-	 if (t->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
-	    if (t->DepthMode == GL_ALPHA) {
+	 if (t->Sampler.CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
+	    if (t->Sampler.DepthMode == GL_ALPHA) {
 	       swizzles[0] = SWIZZLE_ZERO;
 	       swizzles[1] = SWIZZLE_ZERO;
 	       swizzles[2] = SWIZZLE_ZERO;
-	    } else if (t->DepthMode == GL_LUMINANCE) {
+	    } else if (t->Sampler.DepthMode == GL_LUMINANCE) {
 	       swizzles[3] = SWIZZLE_ONE;
-	    } else if (t->DepthMode == GL_RED) {
+	    } else if (t->Sampler.DepthMode == GL_RED) {
 	       /* See table 3.23 of the GL 3.0 spec. */
 	       swizzles[1] = SWIZZLE_ZERO;
 	       swizzles[2] = SWIZZLE_ZERO;

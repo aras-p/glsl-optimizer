@@ -335,7 +335,7 @@ sis_set_texobj_parm( struct gl_context *ctx, struct gl_texture_object *texObj,
    current->texture[hw_unit].hwTextureMip = 0UL;
    current->texture[hw_unit].hwTextureSet = t->hwformat;
 
-   if ((texObj->MinFilter == GL_NEAREST) || (texObj->MinFilter == GL_LINEAR)) {
+   if ((texObj->Sampler.MinFilter == GL_NEAREST) || (texObj->Sampler.MinFilter == GL_LINEAR)) {
       firstLevel = lastLevel = texObj->BaseLevel;
    } else {
       /* Compute which mipmap levels we really want to send to the hardware.
@@ -344,9 +344,9 @@ sis_set_texobj_parm( struct gl_context *ctx, struct gl_texture_object *texObj,
        * Yes, this looks overly complicated, but it's all needed.
        */
 
-      firstLevel = texObj->BaseLevel + (GLint)(texObj->MinLod + 0.5);
+      firstLevel = texObj->BaseLevel + (GLint)(texObj->Sampler.MinLod + 0.5);
       firstLevel = MAX2(firstLevel, texObj->BaseLevel);
-      lastLevel = texObj->BaseLevel + (GLint)(texObj->MaxLod + 0.5);
+      lastLevel = texObj->BaseLevel + (GLint)(texObj->Sampler.MaxLod + 0.5);
       lastLevel = MAX2(lastLevel, texObj->BaseLevel);
       lastLevel = MIN2(lastLevel, texObj->BaseLevel +
          texObj->Image[0][texObj->BaseLevel]->MaxLog2);
@@ -356,7 +356,7 @@ sis_set_texobj_parm( struct gl_context *ctx, struct gl_texture_object *texObj,
 
    current->texture[hw_unit].hwTextureSet |= (lastLevel << 8);
 
-   switch (texObj->MagFilter)
+   switch (texObj->Sampler.MagFilter)
    {
    case GL_NEAREST:
       current->texture[hw_unit].hwTextureMip |= TEXTURE_FILTER_NEAREST;
@@ -382,7 +382,7 @@ sis_set_texobj_parm( struct gl_context *ctx, struct gl_texture_object *texObj,
          MASK_TextureMipmapLodBias);
    }
 
-   switch (texObj->MinFilter)
+   switch (texObj->Sampler.MinFilter)
    {
    case GL_NEAREST:
       current->texture[hw_unit].hwTextureMip |= TEXTURE_FILTER_NEAREST;
@@ -408,7 +408,7 @@ sis_set_texobj_parm( struct gl_context *ctx, struct gl_texture_object *texObj,
       break;
    }
 
-   switch (texObj->WrapS)
+   switch (texObj->Sampler.WrapS)
    {
    case GL_REPEAT:
       current->texture[hw_unit].hwTextureSet |= MASK_TextureWrapU;
@@ -431,7 +431,7 @@ sis_set_texobj_parm( struct gl_context *ctx, struct gl_texture_object *texObj,
       break;
    }
 
-   switch (texObj->WrapT)
+   switch (texObj->Sampler.WrapT)
    {
    case GL_REPEAT:
       current->texture[hw_unit].hwTextureSet |= MASK_TextureWrapV;
@@ -456,10 +456,10 @@ sis_set_texobj_parm( struct gl_context *ctx, struct gl_texture_object *texObj,
 
    {
       GLubyte c[4];
-      CLAMPED_FLOAT_TO_UBYTE(c[0], texObj->BorderColor.f[0]);
-      CLAMPED_FLOAT_TO_UBYTE(c[1], texObj->BorderColor.f[1]);
-      CLAMPED_FLOAT_TO_UBYTE(c[2], texObj->BorderColor.f[2]);
-      CLAMPED_FLOAT_TO_UBYTE(c[3], texObj->BorderColor.f[3]);
+      CLAMPED_FLOAT_TO_UBYTE(c[0], texObj->Sampler.BorderColor.f[0]);
+      CLAMPED_FLOAT_TO_UBYTE(c[1], texObj->Sampler.BorderColor.f[1]);
+      CLAMPED_FLOAT_TO_UBYTE(c[2], texObj->Sampler.BorderColor.f[2]);
+      CLAMPED_FLOAT_TO_UBYTE(c[3], texObj->Sampler.BorderColor.f[3]);
 
       current->texture[hw_unit].hwTextureBorderColor = 
          PACK_COLOR_8888(c[3], c[0], c[1], c[2]);

@@ -1305,6 +1305,42 @@ typedef enum
 
 
 /**
+ * Sampler object state.  These objects are new with GL_ARB_sampler_objects
+ * and OpenGL 3.3.  Legacy texture objects also contain a sampler object.
+ */
+struct gl_sampler_object
+{
+   GLuint Name;
+   GLint RefCount;
+
+   GLenum WrapS;		/**< S-axis texture image wrap mode */
+   GLenum WrapT;		/**< T-axis texture image wrap mode */
+   GLenum WrapR;		/**< R-axis texture image wrap mode */
+   GLenum MinFilter;		/**< minification filter */
+   GLenum MagFilter;		/**< magnification filter */
+   union {
+      GLfloat f[4];
+      GLuint ui[4];
+      GLint i[4];
+   } BorderColor;               /**< Interpreted according to texture format */
+   GLfloat MinLod;		/**< min lambda, OpenGL 1.2 */
+   GLfloat MaxLod;		/**< max lambda, OpenGL 1.2 */
+   GLfloat LodBias;		/**< OpenGL 1.4 */
+   GLfloat MaxAnisotropy;	/**< GL_EXT_texture_filter_anisotropic */
+   GLenum CompareMode;		/**< GL_ARB_shadow */
+   GLenum CompareFunc;		/**< GL_ARB_shadow */
+   GLfloat CompareFailValue;    /**< GL_ARB_shadow_ambient */
+   GLenum sRGBDecode;           /**< GL_DECODE_EXT or GL_SKIP_DECODE_EXT */
+
+   /* deprecated sampler state */
+   GLenum DepthMode;		/**< GL_ARB_depth_texture */
+
+   /** Is the texture object complete with respect to this sampler? */
+   GLboolean _CompleteTexture;
+};
+
+
+/**
  * Texture object state.  Contains the array of mipmap images, border color,
  * wrap modes, filter modes, shadow/texcompare state, and the per-texture
  * color palette.
@@ -1315,27 +1351,12 @@ struct gl_texture_object
    GLint RefCount;		/**< reference count */
    GLuint Name;			/**< the user-visible texture object ID */
    GLenum Target;               /**< GL_TEXTURE_1D, GL_TEXTURE_2D, etc. */
+
+   struct gl_sampler_object Sampler;
+
    GLfloat Priority;		/**< in [0,1] */
-   union {
-      GLfloat f[4];
-      GLuint ui[4];
-      GLint i[4];
-   } BorderColor;               /**< Interpreted according to texture format */
-   GLenum WrapS;		/**< S-axis texture image wrap mode */
-   GLenum WrapT;		/**< T-axis texture image wrap mode */
-   GLenum WrapR;		/**< R-axis texture image wrap mode */
-   GLenum MinFilter;		/**< minification filter */
-   GLenum MagFilter;		/**< magnification filter */
-   GLfloat MinLod;		/**< min lambda, OpenGL 1.2 */
-   GLfloat MaxLod;		/**< max lambda, OpenGL 1.2 */
-   GLfloat LodBias;		/**< OpenGL 1.4 */
    GLint BaseLevel;		/**< min mipmap level, OpenGL 1.2 */
    GLint MaxLevel;		/**< max mipmap level, OpenGL 1.2 */
-   GLfloat MaxAnisotropy;	/**< GL_EXT_texture_filter_anisotropic */
-   GLenum CompareMode;		/**< GL_ARB_shadow */
-   GLenum CompareFunc;		/**< GL_ARB_shadow */
-   GLfloat CompareFailValue;    /**< GL_ARB_shadow_ambient */
-   GLenum DepthMode;		/**< GL_ARB_depth_texture */
    GLint _MaxLevel;		/**< actual max mipmap level (q in the spec) */
    GLfloat _MaxLambda;		/**< = _MaxLevel - BaseLevel (q - b in spec) */
    GLint CropRect[4];           /**< GL_OES_draw_texture */
@@ -1345,7 +1366,6 @@ struct gl_texture_object
    GLboolean _Complete;		/**< Is texture object complete? */
    GLboolean _RenderToTexture;  /**< Any rendering to this texture? */
    GLboolean Purgeable;         /**< Is the buffer purgeable under memory pressure? */
-   GLenum sRGBDecode;           /**< GL_DECODE_EXT or GL_SKIP_DECODE_EXT */
 
    /** Actual texture images, indexed by [cube face] and [mipmap level] */
    struct gl_texture_image *Image[MAX_FACES][MAX_TEXTURE_LEVELS];
@@ -1428,6 +1448,9 @@ struct gl_texture_unit
    GLfloat LodBias;		/**< for biasing mipmap levels */
    GLenum BumpTarget;
    GLfloat RotMatrix[4]; /* 2x2 matrix */
+
+   /** Current sampler object (GL_ARB_sampler_objects) */
+   struct gl_sampler_object *Sampler;
 
    /** 
     * \name GL_EXT_texture_env_combine 
@@ -2362,6 +2385,9 @@ struct gl_shared_state
 
    /* GL_ARB_sync */
    struct simple_node SyncObjects;
+
+   /** GL_ARB_sampler_objects */
+   struct _mesa_HashTable *SamplerObjects;
 
    void *DriverData;  /**< Device driver shared state */
 };

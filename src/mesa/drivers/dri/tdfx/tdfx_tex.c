@@ -327,7 +327,7 @@ static void RevalidateTexture(struct gl_context *ctx, struct gl_texture_object *
                       &(ti->sScale), &(ti->tScale), NULL, NULL);
     }
 
-    if (tObj->Image[0][maxl] && (tObj->MinFilter != GL_NEAREST) && (tObj->MinFilter != GL_LINEAR)) {
+    if (tObj->Image[0][maxl] && (tObj->Sampler.MinFilter != GL_NEAREST) && (tObj->Sampler.MinFilter != GL_LINEAR)) {
         /* mipmapping: need to compute smallLodLog2 */
         tdfxTexGetInfo(ctx, tObj->Image[0][maxl]->Width,
                        tObj->Image[0][maxl]->Height,
@@ -1786,12 +1786,12 @@ tdfxTestProxyTexImage(struct gl_context *ctx, GLenum target,
 #endif
             if (level == 0) {
                /* don't use mipmap levels > 0 */
-               tObj->MinFilter = tObj->MagFilter = GL_NEAREST;
+               tObj->Sampler.MinFilter = tObj->Sampler.MagFilter = GL_NEAREST;
             }
             else {
                /* test with all mipmap levels */
-               tObj->MinFilter = GL_LINEAR_MIPMAP_LINEAR;
-               tObj->MagFilter = GL_NEAREST;
+               tObj->Sampler.MinFilter = GL_LINEAR_MIPMAP_LINEAR;
+               tObj->Sampler.MagFilter = GL_NEAREST;
             }
             RevalidateTexture(ctx, tObj);
 

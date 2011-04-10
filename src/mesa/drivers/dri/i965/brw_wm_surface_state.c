@@ -201,8 +201,9 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    surf->ss0.mipmap_layout_mode = BRW_SURFACE_MIPMAPLAYOUT_BELOW;
    surf->ss0.surface_type = translate_tex_target(tObj->Target);
    surf->ss0.surface_format = translate_tex_format(firstImage->TexFormat,
-						  firstImage->InternalFormat,
-						  tObj->DepthMode, tObj->sRGBDecode);
+                                                   firstImage->InternalFormat,
+                                                   tObj->Sampler.DepthMode,
+                                                   tObj->Sampler.sRGBDecode);
 
    /* This is ok for all textures with channel width 8bit or less:
     */

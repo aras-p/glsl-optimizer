@@ -186,12 +186,12 @@ nv20_emit_tex_obj(struct gl_context *ctx, int emit)
 		| NV20_3D_TEX_FORMAT_NO_BORDER
 		| 1 << 16;
 
-	tx_wrap = nvgl_wrap_mode(t->WrapR) << 16
-		| nvgl_wrap_mode(t->WrapT) << 8
-		| nvgl_wrap_mode(t->WrapS) << 0;
+	tx_wrap = nvgl_wrap_mode(t->Sampler.WrapR) << 16
+		| nvgl_wrap_mode(t->Sampler.WrapT) << 8
+		| nvgl_wrap_mode(t->Sampler.WrapS) << 0;
 
-	tx_filter = nvgl_filter_mode(t->MagFilter) << 24
-		| nvgl_filter_mode(t->MinFilter) << 16
+	tx_filter = nvgl_filter_mode(t->Sampler.MagFilter) << 24
+		| nvgl_filter_mode(t->Sampler.MinFilter) << 16
 		| 2 << 12;
 
 	tx_enable = NV20_3D_TEX_ENABLE_ENABLE
@@ -208,8 +208,8 @@ nv20_emit_tex_obj(struct gl_context *ctx, int emit)
 		tx_format |= get_tex_format_pot(ti);
 	}
 
-	if (t->MinFilter != GL_NEAREST &&
-	    t->MinFilter != GL_LINEAR) {
+	if (t->Sampler.MinFilter != GL_NEAREST &&
+	    t->Sampler.MinFilter != GL_LINEAR) {
 		int lod_min = t->MinLod;
 		int lod_max = MIN2(t->MaxLod, t->_MaxLambda);
 		int lod_bias = t->LodBias

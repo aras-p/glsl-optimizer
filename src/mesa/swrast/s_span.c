@@ -490,7 +490,7 @@ interpolate_texcoords(struct gl_context *ctx, SWspan *span)
 
          if (obj) {
             const struct gl_texture_image *img = obj->Image[0][obj->BaseLevel];
-            needLambda = (obj->MinFilter != obj->MagFilter)
+            needLambda = (obj->Sampler.MinFilter != obj->Sampler.MagFilter)
                || ctx->FragmentProgram._Current;
             texW = img->WidthScale;
             texH = img->HeightScale;

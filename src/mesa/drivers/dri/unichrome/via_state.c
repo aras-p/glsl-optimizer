@@ -877,21 +877,21 @@ static GLboolean viaChooseTextureState(struct gl_context *ctx)
         if (texUnit0->_ReallyEnabled) {
             struct gl_texture_object *texObj = texUnit0->_Current;
    
-	    vmesa->regHTXnTB[0] = get_minmag_filter( texObj->MinFilter,
-						    texObj->MagFilter );
+	    vmesa->regHTXnTB[0] = get_minmag_filter( texObj->Sampler.MinFilter,
+						    texObj->Sampler.MagFilter );
 
 	    vmesa->regHTXnMPMD[0] &= ~(HC_HTXnMPMD_SMASK | HC_HTXnMPMD_TMASK);
-	    vmesa->regHTXnMPMD[0] |= get_wrap_mode( texObj->WrapS,
-						   texObj->WrapT );
+	    vmesa->regHTXnMPMD[0] |= get_wrap_mode( texObj->Sampler.WrapS,
+						   texObj->Sampler.WrapT );
 
 	    vmesa->regHTXnTB[0] &= ~(HC_HTXnTB_TBC_S | HC_HTXnTB_TBC_T);
             if (texObj->Image[0][texObj->BaseLevel]->Border > 0) {
 	       vmesa->regHTXnTB[0] |= (HC_HTXnTB_TBC_S | HC_HTXnTB_TBC_T);
 	       vmesa->regHTXnTBC[0] = 
-		  PACK_COLOR_888(FLOAT_TO_UBYTE(texObj->BorderColor.f[0]),
-				 FLOAT_TO_UBYTE(texObj->BorderColor.f[1]),
-				 FLOAT_TO_UBYTE(texObj->BorderColor.f[2]));
-	       vmesa->regHTXnTRAH[0] = FLOAT_TO_UBYTE(texObj->BorderColor.f[3]);
+		  PACK_COLOR_888(FLOAT_TO_UBYTE(texObj->Sampler.BorderColor.f[0]),
+				 FLOAT_TO_UBYTE(texObj->Sampler.BorderColor.f[1]),
+				 FLOAT_TO_UBYTE(texObj->Sampler.BorderColor.f[2]));
+	       vmesa->regHTXnTRAH[0] = FLOAT_TO_UBYTE(texObj->Sampler.BorderColor.f[3]);
             }
 
 	    if (texUnit0->LodBias != 0.0f) {
@@ -911,20 +911,20 @@ static GLboolean viaChooseTextureState(struct gl_context *ctx)
         if (texUnit1->_ReallyEnabled) {
             struct gl_texture_object *texObj = texUnit1->_Current;
 
-	    vmesa->regHTXnTB[1] = get_minmag_filter( texObj->MinFilter,
-						    texObj->MagFilter );
+	    vmesa->regHTXnTB[1] = get_minmag_filter( texObj->Sampler.MinFilter,
+						    texObj->Sampler.MagFilter );
 	    vmesa->regHTXnMPMD[1] &= ~(HC_HTXnMPMD_SMASK | HC_HTXnMPMD_TMASK);
-	    vmesa->regHTXnMPMD[1] |= get_wrap_mode( texObj->WrapS,
-						   texObj->WrapT );
+	    vmesa->regHTXnMPMD[1] |= get_wrap_mode( texObj->Sampler.WrapS,
+						   texObj->Sampler.WrapT );
 
 	    vmesa->regHTXnTB[1] &= ~(HC_HTXnTB_TBC_S | HC_HTXnTB_TBC_T);
             if (texObj->Image[0][texObj->BaseLevel]->Border > 0) {
 	       vmesa->regHTXnTB[1] |= (HC_HTXnTB_TBC_S | HC_HTXnTB_TBC_T);
 	       vmesa->regHTXnTBC[1] = 
-		  PACK_COLOR_888(FLOAT_TO_UBYTE(texObj->BorderColor.f[0]),
-				 FLOAT_TO_UBYTE(texObj->BorderColor.f[1]),
-				 FLOAT_TO_UBYTE(texObj->BorderColor.f[2]));
-	       vmesa->regHTXnTRAH[1] = FLOAT_TO_UBYTE(texObj->BorderColor.f[3]);
+		  PACK_COLOR_888(FLOAT_TO_UBYTE(texObj->Sampler.BorderColor.f[0]),
+				 FLOAT_TO_UBYTE(texObj->Sampler.BorderColor.f[1]),
+				 FLOAT_TO_UBYTE(texObj->Sampler.BorderColor.f[2]));
+	       vmesa->regHTXnTRAH[1] = FLOAT_TO_UBYTE(texObj->Sampler.BorderColor.f[3]);
             }
 
 
