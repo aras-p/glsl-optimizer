@@ -536,7 +536,10 @@ init_idct(struct vl_mpeg12_decoder *dec, unsigned buffer_width, unsigned buffer_
    unsigned chroma_width, chroma_height, chroma_blocks_x, chroma_blocks_y;
    struct pipe_sampler_view *idct_matrix;
 
-   dec->nr_of_idct_render_targets = 4;
+   dec->nr_of_idct_render_targets = dec->pipe->screen->get_param(dec->pipe->screen, PIPE_CAP_MAX_RENDER_TARGETS);
+
+   // more than 4 render targets usually doesn't makes any seens
+   dec->nr_of_idct_render_targets = MIN2(dec->nr_of_idct_render_targets, 4);
 
    if (!(idct_matrix = vl_idct_upload_matrix(dec->pipe, sqrt(SCALE_FACTOR_16_TO_9))))
       goto error_idct_matrix;
