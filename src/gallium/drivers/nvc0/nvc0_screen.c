@@ -310,9 +310,6 @@ nvc0_magic_3d_init(struct nouveau_channel *chan)
    OUT_RING  (chan, 1);
    BEGIN_RING(chan, RING_3D_(0x075c), 1);
    OUT_RING  (chan, 3);
-
-   BEGIN_RING(chan, RING_3D_(0x0fac), 1);
-   OUT_RING  (chan, 0);
 }
 
 static void
@@ -564,17 +561,6 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    OUT_RING  (chan, 8192 << 16);
    OUT_RING  (chan, 8192 << 16);
 
-   BEGIN_RING(chan, RING_3D_(0x0fac), 1);
-   OUT_RING  (chan, 0);
-   BEGIN_RING(chan, RING_3D_(0x3484), 1);
-   OUT_RING  (chan, 0);
-   BEGIN_RING(chan, RING_3D_(0x0dbc), 1);
-   OUT_RING  (chan, 0x00010000);
-   BEGIN_RING(chan, RING_3D_(0x0dd8), 1);
-   OUT_RING  (chan, 0xff800006);
-   BEGIN_RING(chan, RING_3D_(0x3488), 1);
-   OUT_RING  (chan, 0);
-
 #define MK_MACRO(m, n) i = nvc0_graph_set_macro(screen, m, i, sizeof(n), n);
 
    i = 0;
@@ -586,6 +572,8 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    MK_MACRO(NVC0_3D_POLYGON_MODE_BACK, nvc0_9097_poly_mode_back);
 
    BEGIN_RING(chan, RING_3D(RASTERIZE_ENABLE), 1);
+   OUT_RING  (chan, 1);
+   BEGIN_RING(chan, RING_3D(RT_SEPARATE_FRAG_DATA), 1);
    OUT_RING  (chan, 1);
    BEGIN_RING(chan, RING_3D(GP_SELECT), 1);
    OUT_RING  (chan, 0x40);
