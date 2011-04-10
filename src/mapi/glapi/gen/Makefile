@@ -80,6 +80,7 @@ API_XML = \
 	ARB_geometry_shader4.xml \
 	ARB_instanced_arrays.xml \
 	ARB_map_buffer_range.xml \
+	ARB_sampler_objects.xml \
 	ARB_seamless_cube_map.xml \
 	ARB_sync.xml \
 	ARB_texture_buffer_object.xml \
