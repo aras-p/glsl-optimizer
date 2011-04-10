@@ -248,7 +248,6 @@ vl_mpeg12_destroy(struct pipe_video_decoder *decoder)
    dec->pipe->bind_fs_state(dec->pipe, NULL);
 
    dec->pipe->delete_blend_state(dec->pipe, dec->blend);
-   dec->pipe->delete_rasterizer_state(dec->pipe, dec->rast);
    dec->pipe->delete_depth_stencil_alpha_state(dec->pipe, dec->dsa);
 
    vl_mpeg12_mc_renderer_cleanup(&dec->mc);
@@ -486,44 +485,11 @@ vl_mpeg12_decoder_clear_buffer(struct pipe_video_decode_buffer *buffer)
 static bool
 init_pipe_state(struct vl_mpeg12_decoder *dec)
 {
-   struct pipe_rasterizer_state rast;
    struct pipe_blend_state blend;
    struct pipe_depth_stencil_alpha_state dsa;
    unsigned i;
 
    assert(dec);
-
-   memset(&rast, 0, sizeof rast);
-   rast.flatshade = 1;
-   rast.flatshade_first = 0;
-   rast.light_twoside = 0;
-   rast.front_ccw = 1;
-   rast.cull_face = PIPE_FACE_NONE;
-   rast.fill_back = PIPE_POLYGON_MODE_FILL;
-   rast.fill_front = PIPE_POLYGON_MODE_FILL;
-   rast.offset_point = 0;
-   rast.offset_line = 0;
-   rast.scissor = 0;
-   rast.poly_smooth = 0;
-   rast.poly_stipple_enable = 0;
-   rast.sprite_coord_enable = 0;
-   rast.point_size_per_vertex = 0;
-   rast.multisample = 0;
-   rast.line_smooth = 0;
-   rast.line_stipple_enable = 0;
-   rast.line_stipple_factor = 0;
-   rast.line_stipple_pattern = 0;
-   rast.line_last_pixel = 0;
-   rast.line_width = 1;
-   rast.point_smooth = 0;
-   rast.point_quad_rasterization = 0;
-   rast.point_size_per_vertex = 1;
-   rast.offset_units = 1;
-   rast.offset_scale = 1;
-   rast.gl_rasterization_rules = 1;
-
-   dec->rast = dec->pipe->create_rasterizer_state(dec->pipe, &rast);
-   dec->pipe->bind_rasterizer_state(dec->pipe, dec->rast);
 
    memset(&blend, 0, sizeof blend);
 

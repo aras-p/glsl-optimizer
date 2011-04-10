@@ -53,7 +53,6 @@ struct vl_mpeg12_decoder
    struct vl_idct idct_y, idct_c;
    struct vl_mpeg12_mc_renderer mc;
 
-   void *rast;
    void *dsa;
    void *blend;
 };
