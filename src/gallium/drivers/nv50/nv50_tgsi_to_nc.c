@@ -20,8 +20,6 @@
  * SOFTWARE.
  */
 
-/* #define NV50_TGSI2NC_DEBUG */
-
 #include <unistd.h>
 
 #include "nv50_context.h"
@@ -213,7 +211,7 @@ static INLINE void
 bld_warn_uninitialized(struct bld_context *bld, int kind,
                        struct bld_value_stack *stk, struct nv_basic_block *b)
 {
-#ifdef NV50_TGSI2NC_DEBUG
+#if NV50_DEBUG & NV50_DEBUG_PROG_IR
    long i = (stk - &bld->tvs[0][0]) / 4;
    long c = (stk - &bld->tvs[0][0]) & 3;
 
@@ -1562,7 +1560,7 @@ bld_instruction(struct bld_context *bld,
    int c;
    uint opcode = translate_opcode(insn->Instruction.Opcode);
 
-#ifdef NV50_TGSI2NC_DEBUG
+#if NV50_DEBUG & NV50_DEBUG_PROG_IR
    debug_printf("bld_instruction:"); tgsi_dump_instruction(insn, 1);
 #endif
 	

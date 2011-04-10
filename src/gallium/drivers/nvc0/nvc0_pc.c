@@ -20,8 +20,6 @@
  * SOFTWARE.
  */
 
-#define NOUVEAU_DEBUG 1
-
 #include "nvc0_pc.h"
 #include "nvc0_program.h"
 
@@ -262,7 +260,7 @@ nvc0_print_program(struct nv_pc *pc)
          nvc0_print_function(pc->root[i]);
 }
 
-#if NOUVEAU_DEBUG > 1
+#if NV50_DEBUG & NV50_DEBUG_PROG_CFLOW
 static void
 nv_do_print_cfgraph(struct nv_pc *pc, FILE *f, struct nv_basic_block *b)
 {
@@ -327,7 +325,7 @@ nvc0_pc_print_binary(struct nv_pc *pc)
 {
    unsigned i;
 
-   NOUVEAU_DBG("nvc0_pc_print_binary(%u ops)\n", pc->emit_size / 8);
+   NV50_DBGMSG(SHADER, "nvc0_pc_print_binary(%u ops)\n", pc->emit_size / 8);
 
    for (i = 0; i < pc->emit_size / 4; i += 2) {
       debug_printf("0x%08x ", pc->emit[i + 0]);
@@ -344,7 +342,7 @@ nvc0_emit_program(struct nv_pc *pc)
    uint32_t *code = pc->emit;
    int n;
 
-   NOUVEAU_DBG("emitting program: size = %u\n", pc->emit_size);
+   NV50_DBGMSG(SHADER, "emitting program: size = %u\n", pc->emit_size);
 
    pc->emit_pos = 0;
    for (n = 0; n < pc->num_blocks; ++n) {
@@ -365,11 +363,10 @@ nvc0_emit_program(struct nv_pc *pc)
 
    pc->emit = code;
 
-#ifdef NOUVEAU_DEBUG
+#if NV50_DEBUG & NV50_DEBUG_SHADER
    nvc0_pc_print_binary(pc);
-#else
-   debug_printf("not printing binary\n");
 #endif
+
    return 0;
 }
 
@@ -396,7 +393,7 @@ nvc0_generate_code(struct nvc0_translation_info *ti)
    ret = nvc0_tgsi_to_nc(pc, ti);
    if (ret)
       goto out;
-#if NOUVEAU_DEBUG > 1
+#if NV50_DEBUG & NV50_DEBUG_PROG_IR
    nvc0_print_program(pc);
 #endif
 
@@ -406,7 +403,7 @@ nvc0_generate_code(struct nvc0_translation_info *ti)
    ret = nvc0_pc_exec_pass0(pc);
    if (ret)
       goto out;
-#ifdef NOUVEAU_DEBUG
+#if NV50_DEBUG & NV50_DEBUG_PROG_IR
    nvc0_print_program(pc);
 #endif
 
@@ -414,7 +411,7 @@ nvc0_generate_code(struct nvc0_translation_info *ti)
    ret = nvc0_pc_exec_pass1(pc);
    if (ret)
       goto out;
-#if NOUVEAU_DEBUG > 1
+#if NV50_DEBUG & NV50_DEBUG_PROG_CFLOW
    nvc0_print_program(pc);
    nv_print_cfgraph(pc, "nvc0_shader_cfgraph.dot", 0);
 #endif
@@ -444,7 +441,7 @@ nvc0_generate_code(struct nvc0_translation_info *ti)
    ti->prog->relocs = pc->reloc_entries;
    ti->prog->num_relocs = pc->num_relocs;
 
-   NOUVEAU_DBG("SHADER TRANSLATION - %s\n", ret ? "failure" : "success");
+   NV50_DBGMSG(SHADER, "SHADER TRANSLATION - %s\n", ret ? "failed" : "success");
 
 out:
    nv_pc_free_refs(pc);
@@ -573,7 +570,7 @@ nvc0_insn_delete(struct nv_instruction *nvi)
 
    if (nvi == b->phi) {
       if (nvi->opcode != NV_OP_PHI)
-         NOUVEAU_DBG("NOTE: b->phi points to non-PHI instruction\n");
+         NV50_DBGMSG(PROG_IR, "NOTE: b->phi points to non-PHI instruction\n");
 
       assert(!nvi->prev);
       if (!nvi->next || nvi->next->opcode != NV_OP_PHI)

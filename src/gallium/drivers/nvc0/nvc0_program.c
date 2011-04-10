@@ -23,8 +23,6 @@
 #include "pipe/p_shader_tokens.h"
 #include "pipe/p_defines.h"
 
-#define NOUVEAU_DEBUG
-
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
 #include "tgsi/tgsi_dump.h"
@@ -577,7 +575,7 @@ nvc0_prog_scan(struct nvc0_translation_info *ti)
    int ret;
    unsigned i;
 
-#ifdef NOUVEAU_DEBUG
+#if NV50_DEBUG & NV50_DEBUG_SHADER
    tgsi_dump(prog->pipe.tokens, 0);
 #endif
 
@@ -694,12 +692,12 @@ nvc0_program_translate(struct nvc0_program *prog)
    if (ret)
       NOUVEAU_ERR("shader translation failed\n");
 
-   {
-      unsigned i;
-      for (i = 0; i < sizeof(prog->hdr) / sizeof(prog->hdr[0]); ++i)
-         debug_printf("HDR[%02lx] = 0x%08x\n",
-                      i * sizeof(prog->hdr[0]), prog->hdr[i]);
-   }
+#if NV50_DEBUG & NV50_DEBUG_SHADER
+   unsigned i;
+   for (i = 0; i < sizeof(prog->hdr) / sizeof(prog->hdr[0]); ++i)
+      debug_printf("HDR[%02lx] = 0x%08x\n",
+                   i * sizeof(prog->hdr[0]), prog->hdr[i]);
+#endif
 
 out:
    if (ti->immd32)

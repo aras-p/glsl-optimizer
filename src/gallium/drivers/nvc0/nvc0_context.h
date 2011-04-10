@@ -1,7 +1,6 @@
 #ifndef __NVC0_CONTEXT_H__
 #define __NVC0_CONTEXT_H__
 
-#include <stdio.h>
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
@@ -13,6 +12,7 @@
 
 #include "draw/draw_vertex.h"
 
+#include "nv50/nv50_debug.h"
 #include "nvc0_winsys.h"
 #include "nvc0_stateobj.h"
 #include "nvc0_screen.h"
@@ -25,15 +25,6 @@
 #include "nvc0_3d.xml.h"
 #include "nvc0_2d.xml.h"
 #include "nvc0_m2mf.xml.h"
-
-#define NOUVEAU_ERR(fmt, args...) \
-   fprintf(stderr, "%s:%d -  "fmt, __FUNCTION__, __LINE__, ##args);
-
-#ifdef NOUVEAU_DEBUG
-# define NOUVEAU_DBG(args...) printf(args);
-#else
-# define NOUVEAU_DBG(args...)
-#endif
 
 #define NVC0_NEW_BLEND        (1 << 0)
 #define NVC0_NEW_RASTERIZER   (1 << 1)

@@ -20,11 +20,11 @@
  * SOFTWARE.
  */
 
-/* #define NV50PC_DEBUG */
-
-/* #define NV50_RA_DEBUG_LIVEI */
-/* #define NV50_RA_DEBUG_LIVE_SETS */
-/* #define NV50_RA_DEBUG_JOIN */
+#if NV50_DEBUG & NV50_DEBUG_PROG_RA
+# define NV50_RA_DEBUG_LIVEI
+# define NV50_RA_DEBUG_LIVE_SETS
+# define NV50_RA_DEBUG_JOIN
+#endif
 
 #include "nv50_context.h"
 #include "nv50_pc.h"
@@ -1013,7 +1013,7 @@ nv_pc_pass1(struct nv_pc *pc, struct nv_basic_block *root)
    struct nv_pc_pass *ctx;
    int i, ret;
 
-   NV50_DBGMSG("REGISTER ALLOCATION - entering\n");
+   NV50_DBGMSG(PROG_RA, "REGISTER ALLOCATION - entering\n");
 
    ctx = CALLOC_STRUCT(nv_pc_pass);
    if (!ctx)
@@ -1075,7 +1075,7 @@ nv_pc_pass1(struct nv_pc *pc, struct nv_basic_block *root)
    for (i = 0; i < pc->num_values; ++i)
       livei_release(&pc->values[i]);
 
-   NV50_DBGMSG("REGISTER ALLOCATION - leaving\n");
+   NV50_DBGMSG(PROG_RA, "REGISTER ALLOCATION - leaving\n");
 
 out:
    FREE(ctx->insns);

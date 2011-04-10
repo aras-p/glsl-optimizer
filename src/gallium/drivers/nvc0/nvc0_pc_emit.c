@@ -879,7 +879,9 @@ emit_st(struct nv_pc *pc, struct nv_instruction *i)
 void
 nvc0_emit_instruction(struct nv_pc *pc, struct nv_instruction *i)
 {
+#if NV50_DEBUG & NV50_DEBUG_SHADER
    debug_printf("EMIT: "); nvc0_print_instruction(i);
+#endif
 
    switch (i->opcode) {
    case NV_OP_VFETCH:
