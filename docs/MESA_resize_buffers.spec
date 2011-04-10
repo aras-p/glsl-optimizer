@@ -35,7 +35,7 @@ Overview
 
     Mesa's glViewport command queries the current window size and updates
     its internal data structors accordingly.  This normally works fine
-    since most applications call glViewport in responce to window size
+    since most applications call glViewport in response to window size
     changes.
 
     In some situations, however, the application may not call glViewport
@@ -65,7 +65,7 @@ Additions to the AGL/GLX/WGL Specifications
 
 Errors
 
-    INVALID_OPERATION is generated if ResizeBuffersMESA is called betweeen
+    INVALID_OPERATION is generated if glResizeBuffersMESA is called between
     Begin and End.
 
 New State

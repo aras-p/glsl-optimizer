@@ -67,7 +67,7 @@ Additions to Chapter 3 the GLX 1.4 Specification (Functions and Errors)
     On "PC" computers, AGP memory can be allocated with glXAllocateMemoryNV
     and freed with glXFreeMemoryNV.  Sometimes it's useful to know where a
     block of AGP memory is located with respect to the start of the AGP
-    aperature.  The function
+    aperture.  The function
 
         GLuint glXGetAGPOffsetMESA( const GLvoid *pointer )
 

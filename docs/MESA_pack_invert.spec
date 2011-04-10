@@ -48,7 +48,7 @@ IP Status
 
 Issues
 
-    1. Should we also defined UNPACK_INVERT_MESA for glDrawPixels, etc?
+    1. Should we also define UNPACK_INVERT_MESA for glDrawPixels, etc?
 
     Resolved:  No, we're only concerned with pixel packing.  There are other
     solutions for inverting images when using glDrawPixels (negative Y pixel

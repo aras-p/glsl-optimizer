@@ -328,7 +328,7 @@ Additions to Chapter 3 of the OpenGL 2.0 Specification (Rasterization)
 
     -- Section 3.8.10 "Texture Completeness"
 
-       Change the second paragaph (page 177) to say (spec changes identical
+       Change the second paragraph (page 177) to say (spec changes identical
        to EXT_texture_array):
 
        "For one-, two-, or three-dimensional textures and one- or
@@ -443,10 +443,10 @@ Additions to Chapter 3 of the OpenGL 2.0 Specification (Rasterization)
        Change second through fourth paragraphs (page 188) to say:
 
        "Let D_t be the depth texture value, in the range [0, 1].  For
-       texture lookups from one- and two-dimesional, rectangle, and
+       texture lookups from one- and two-dimensional, rectangle, and
        one-dimensional array targets, let R be the interpolated <r>
        texture coordinate, clamped to the range [0, 1].  For texture lookups
-       from two-dimesional array texture targets, let R be the interpolated
+       from two-dimensional array texture targets, let R be the interpolated
        <q> texture coordinate, clamped to the range [0, 1].  Then the
        effective texture value L_t, I_t, or A_t is computed as follows:
 
@@ -604,7 +604,7 @@ Additions to Chapter 5 of the OpenGL 2.0 Specification (Special Functions)
 
     -- Section 5.4 "Display Lists"
 
-       Change the first paragraphi on page 242 to say (spec changes
+       Change the first paragraph on page 242 to say (spec changes
        identical to EXT_texture_array):
 
        "TexImage3D, TexImage2D, TexImage1D, Histogram, and ColorTable are

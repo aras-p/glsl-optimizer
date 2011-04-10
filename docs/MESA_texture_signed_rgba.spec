@@ -44,7 +44,7 @@ Overview
     ARB_texture_compression_rgtc introduces some compressed red and
     red_green signed formats but no uncompressed ones, which might
     still be useful. NV_texture_shader adds signed texture formats,
-    but also a lot of functionality which has been superceded by fragment
+    but also a lot of functionality which has been superseded by fragment
     shaders.
     It is usually possible to get the same functionality
     using a unsigned format by doing scale and bias in a shader, but this
@@ -105,7 +105,7 @@ Issues
        This is also different to what NV_texture_shader used.
        The above mapping should be considered the reference, but there
        is some leeway so other mappings are allowed for implementations which
-       cannot do this. Particulary the mapping given in NV_texture_shader or
+       cannot do this. Particularly the mapping given in NV_texture_shader or
        the standard OpenGL byte/float mapping is considered acceptable too, as
        might be a mapping which represents -1.0 by -128, 0.0 by 0 and 1.0 by
        127 (that is, uses different scale factors for negative and positive

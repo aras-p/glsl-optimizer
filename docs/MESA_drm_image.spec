@@ -24,7 +24,7 @@ Number
 
 Dependencies
 
-    Reguires EGL 1.4 or later.  This extension is written against the
+    Requires EGL 1.4 or later.  This extension is written against the
     wording of the EGL 1.4 specification.
 
     EGL_KHR_base_image is required.
@@ -134,7 +134,7 @@ Issues
         RESOLVED: The eglQueryImage function has been proposed often,
         but it goes against the EGLImage design.  EGLImages are opaque
         handles to a 2D array of pixels, which can be passed between
-        client APIs.  By referenceing an EGLImage in a client API, the
+        client APIs.  By referencing an EGLImage in a client API, the
         EGLImage target (a texture, a renderbuffer or such) can be
         used to query the attributes of the EGLImage.  We don't have a
         full client API for creating and querying DRM buffers, though,

@@ -31,12 +31,12 @@ Overview
 
     Mesa's implementation of GLX is entirely implemented on the client side.
     Therefore, Mesa cannot immediately detect when an X window or pixmap is
-    destroyed in order to free any ancilliary data associated with the window
+    destroyed in order to free any ancillary data associated with the window
     or pixmap.
 
     The glxMesaReleaseBuffers() function can be used to explicitly indicate
-    when the back color buffer, depth buffer, stencil buffer, and/or accum-
-    ulation buffer associated with a drawable can be freed.
+    when the back color buffer, depth buffer, stencil buffer, and/or accumu-
+    lation buffer associated with a drawable can be freed.
 
 IP Status
 
@@ -60,7 +60,7 @@ Additions to Chapter 3 of the GLX 1.3 Specification (Functions and Errors)
 
 	Bool glXReleaseBuffersMESA( Display *dpy, GLXDrawable d );
 
-    causes all software ancilliary buffers (back buffer, depth, stencil,
+    causes all software ancillary buffers (back buffer, depth, stencil,
     accum, etc) associated with the named drawable to be immediately
     deallocated.  True is returned if <d> is a valid Mesa GLX drawable,
     else False is returned.  After calling glXReleaseBuffersMESA, the

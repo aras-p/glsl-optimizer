@@ -26,7 +26,7 @@ Number
 Dependencies
 
     OpenGL 1.0 or later is required
-    This extensions is written against the OpenGL 1.4 Specification.
+    This extension is written against the OpenGL 1.4 Specification.
     NV_texture_rectangle effects the definition of this extension.
 
 Overview
@@ -104,7 +104,7 @@ Additions to Chapter 3 of the OpenGL 1.4 Specification (Rasterization)
 
 
     In section 3.6.4, Rasterization of Pixel Rectangles, on page 104,
-    add the following to Table 3.12 (Packed pixel fiedl assignments):
+    add the following to Table 3.12 (Packed pixel field assignments):
 
                        First       Second     Third      Fourth
     Format             Element     Element    Element    Element
