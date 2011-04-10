@@ -29,6 +29,7 @@
 
 #include <pipe/p_state.h>
 #include <pipe/p_video_state.h>
+
 #include "vl_types.h"
 
 /* vertex buffers act as a todo list
@@ -84,4 +85,4 @@ void vl_vb_restart(struct vl_vertex_buffer *buffer,
 
 void vl_vb_cleanup(struct vl_vertex_buffer *buffer);
 
-#endif
+#endif /* vl_vertex_buffers_h */

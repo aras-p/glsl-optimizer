@@ -25,18 +25,20 @@
  *
  **************************************************************************/
 
-#include "vl_idct.h"
-#include "vl_vertex_buffers.h"
-#include "vl_defines.h"
-#include "util/u_draw.h"
 #include <assert.h>
+
 #include <pipe/p_context.h>
 #include <pipe/p_screen.h>
-#include <util/u_inlines.h>
+
+#include <util/u_draw.h>
 #include <util/u_sampler.h>
-#include <util/u_format.h>
+
 #include <tgsi/tgsi_ureg.h>
+
+#include "vl_defines.h"
 #include "vl_types.h"
+#include "vl_vertex_buffers.h"
+#include "vl_idct.h"
 
 enum VS_OUTPUT
 {

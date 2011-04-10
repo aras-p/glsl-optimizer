@@ -28,14 +28,12 @@
 #ifndef vl_mpeg12_mc_renderer_h
 #define vl_mpeg12_mc_renderer_h
 
-#include <pipe/p_compiler.h>
 #include <pipe/p_state.h>
 #include <pipe/p_video_state.h>
+
 #include "vl_types.h"
 
 struct pipe_context;
-struct pipe_macroblock;
-struct keymap;
 
 struct vl_mpeg12_mc_renderer
 {

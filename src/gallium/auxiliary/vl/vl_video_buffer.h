@@ -59,4 +59,4 @@ vl_video_buffer_init(struct pipe_video_context *context,
                      unsigned num_planes,
                      const enum pipe_format resource_formats[VL_MAX_PLANES],
                      unsigned usage);
-#endif
+#endif /* vl_ycbcr_buffer_h */

@@ -25,8 +25,8 @@
  *
  **************************************************************************/
 
-#ifndef VL_MPEG12_DECODER_H
-#define VL_MPEG12_DECODER_H
+#ifndef vl_mpeg12_decoder_h
+#define vl_mpeg12_decoder_h
 
 #include <pipe/p_video_context.h>
 
@@ -93,4 +93,4 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
                          enum pipe_video_chroma_format chroma_format,
                          unsigned width, unsigned height);
 
-#endif /* VL_MPEG12_DECODER_H */
+#endif /* vl_mpeg12_decoder_h */

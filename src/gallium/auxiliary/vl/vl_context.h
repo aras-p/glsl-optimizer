@@ -26,8 +26,8 @@
  *
  **************************************************************************/
 
-#ifndef VL_CONTEXT_H
-#define VL_CONTEXT_H
+#ifndef vl_context_h
+#define vl_context_h
 
 #include <pipe/p_video_context.h>
 
@@ -46,4 +46,4 @@ struct vl_context
 struct pipe_video_context *
 vl_create_context(struct pipe_context *pipe, bool pot_buffers);
 
-#endif /* VL_CONTEXT_H */
+#endif /* vl_context_h */

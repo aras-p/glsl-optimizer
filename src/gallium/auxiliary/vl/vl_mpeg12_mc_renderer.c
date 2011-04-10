@@ -25,20 +25,18 @@
  *
  **************************************************************************/
 
-#include "vl_mpeg12_mc_renderer.h"
-#include "vl_vertex_buffers.h"
-#include "vl_defines.h"
-#include "util/u_draw.h"
 #include <assert.h>
+
 #include <pipe/p_context.h>
-#include <util/u_inlines.h>
-#include <util/u_format.h>
-#include <util/u_math.h>
-#include <util/u_memory.h>
-#include <util/u_keymap.h>
+
 #include <util/u_sampler.h>
 #include <util/u_draw.h>
+
 #include <tgsi/tgsi_ureg.h>
+
+#include "vl_defines.h"
+#include "vl_vertex_buffers.h"
+#include "vl_mpeg12_mc_renderer.h"
 
 enum VS_OUTPUT
 {
