@@ -1196,9 +1196,16 @@ ast_expression::hir(exec_list *instructions,
    }
 
    case ast_logic_xor:
-      op[0] = this->subexpressions[0]->hir(instructions, state);
-      op[1] = this->subexpressions[1]->hir(instructions, state);
-
+      /* From page 33 (page 39 of the PDF) of the GLSL 1.10 spec:
+       *
+       *    "The logical binary operators and (&&), or ( | | ), and
+       *     exclusive or (^^). They operate only on two Boolean
+       *     expressions and result in a Boolean expression."
+       */
+      op[0] = get_scalar_boolean_operand(instructions, state, this, 0, "LHS",
+					 &error_emitted);
+      op[1] = get_scalar_boolean_operand(instructions, state, this, 1, "RHS",
+					 &error_emitted);
 
       result = new(ctx) ir_expression(operations[this->oper], glsl_type::bool_type,
 				      op[0], op[1]);
