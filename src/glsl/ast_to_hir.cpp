@@ -848,6 +848,36 @@ do_comparison(void *mem_ctx, int operation, ir_rvalue *op0, ir_rvalue *op1)
    return cmp;
 }
 
+/* For logical operations, we want to ensure that the operands are
+ * scalar booleans.  If it isn't, emit an error and return a constant
+ * boolean to avoid triggering cascading error messages.
+ */
+ir_rvalue *
+get_scalar_boolean_operand(exec_list *instructions,
+			   struct _mesa_glsl_parse_state *state,
+			   ast_expression *parent_expr,
+			   int operand,
+			   const char *operand_name,
+			   bool *error_emitted)
+{
+   ast_expression *expr = parent_expr->subexpressions[operand];
+   void *ctx = state;
+   ir_rvalue *val = expr->hir(instructions, state);
+
+   if (val->type->is_boolean() && val->type->is_scalar())
+      return val;
+
+   if (!*error_emitted) {
+      YYLTYPE loc = expr->get_location();
+      _mesa_glsl_error(&loc, state, "%s of `%s' must be scalar boolean",
+		       operand_name,
+		       parent_expr->operator_string(parent_expr->oper));
+      *error_emitted = true;
+   }
+
+   return new(ctx) ir_constant(true);
+}
+
 ir_rvalue *
 ast_expression::hir(exec_list *instructions,
 		    struct _mesa_glsl_parse_state *state)
@@ -1079,30 +1109,14 @@ ast_expression::hir(exec_list *instructions,
       break;
 
    case ast_logic_and: {
-      op[0] = this->subexpressions[0]->hir(instructions, state);
-
-      if (!op[0]->type->is_boolean() || !op[0]->type->is_scalar()) {
-	 YYLTYPE loc = this->subexpressions[0]->get_location();
-
-	 _mesa_glsl_error(& loc, state, "LHS of `%s' must be scalar boolean",
-			  operator_string(this->oper));
-	 error_emitted = true;
-      }
+      op[0] = get_scalar_boolean_operand(instructions, state, this, 0,
+					 "LHS", &error_emitted);
 
       ir_constant *op0_const = op[0]->constant_expression_value();
       if (op0_const) {
 	 if (op0_const->value.b[0]) {
-	    op[1] = this->subexpressions[1]->hir(instructions, state);
-
-	    if (!op[1]->type->is_boolean() || !op[1]->type->is_scalar()) {
-	       YYLTYPE loc = this->subexpressions[1]->get_location();
-
-	       _mesa_glsl_error(& loc, state,
-				"RHS of `%s' must be scalar boolean",
-				operator_string(this->oper));
-	       error_emitted = true;
-	    }
-	    result = op[1];
+	    result = get_scalar_boolean_operand(instructions, state, this, 1,
+					       "RHS", &error_emitted);
 	 } else {
 	    result = op0_const;
 	 }
@@ -1116,16 +1130,9 @@ ast_expression::hir(exec_list *instructions,
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
 	 instructions->push_tail(stmt);
 
-	 op[1] = this->subexpressions[1]->hir(&stmt->then_instructions, state);
-
-	 if (!op[1]->type->is_boolean() || !op[1]->type->is_scalar()) {
-	    YYLTYPE loc = this->subexpressions[1]->get_location();
-
-	    _mesa_glsl_error(& loc, state,
-			     "RHS of `%s' must be scalar boolean",
-			     operator_string(this->oper));
-	    error_emitted = true;
-	 }
+	 op[1] = get_scalar_boolean_operand(&stmt->then_instructions,
+					    state, this, 1,
+					    "RHS", &error_emitted);
 
 	 ir_dereference *const then_deref = new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const then_assign =
@@ -1144,32 +1151,16 @@ ast_expression::hir(exec_list *instructions,
    }
 
    case ast_logic_or: {
-      op[0] = this->subexpressions[0]->hir(instructions, state);
-
-      if (!op[0]->type->is_boolean() || !op[0]->type->is_scalar()) {
-	 YYLTYPE loc = this->subexpressions[0]->get_location();
-
-	 _mesa_glsl_error(& loc, state, "LHS of `%s' must be scalar boolean",
-			  operator_string(this->oper));
-	 error_emitted = true;
-      }
+      op[0] = get_scalar_boolean_operand(instructions, state, this, 0,
+					 "LHS", &error_emitted);
 
       ir_constant *op0_const = op[0]->constant_expression_value();
       if (op0_const) {
 	 if (op0_const->value.b[0]) {
 	    result = op0_const;
 	 } else {
-	    op[1] = this->subexpressions[1]->hir(instructions, state);
-
-	    if (!op[1]->type->is_boolean() || !op[1]->type->is_scalar()) {
-	       YYLTYPE loc = this->subexpressions[1]->get_location();
-
-	       _mesa_glsl_error(& loc, state,
-				"RHS of `%s' must be scalar boolean",
-				operator_string(this->oper));
-	       error_emitted = true;
-	    }
-	    result = op[1];
+	    result = get_scalar_boolean_operand(instructions, state, this, 1,
+						"RHS", &error_emitted);
 	 }
 	 type = glsl_type::bool_type;
       } else {
@@ -1181,15 +1172,9 @@ ast_expression::hir(exec_list *instructions,
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
 	 instructions->push_tail(stmt);
 
-	 op[1] = this->subexpressions[1]->hir(&stmt->else_instructions, state);
-
-	 if (!op[1]->type->is_boolean() || !op[1]->type->is_scalar()) {
-	    YYLTYPE loc = this->subexpressions[1]->get_location();
-
-	    _mesa_glsl_error(& loc, state, "RHS of `%s' must be scalar boolean",
-			     operator_string(this->oper));
-	    error_emitted = true;
-	 }
+	 op[1] = get_scalar_boolean_operand(&stmt->else_instructions,
+					    state, this, 1,
+					    "RHS", &error_emitted);
 
 	 ir_dereference *const then_deref = new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const then_assign =
@@ -1218,15 +1203,8 @@ ast_expression::hir(exec_list *instructions,
       break;
 
    case ast_logic_not:
-      op[0] = this->subexpressions[0]->hir(instructions, state);
-
-      if (!op[0]->type->is_boolean() || !op[0]->type->is_scalar()) {
-	 YYLTYPE loc = this->subexpressions[0]->get_location();
-
-	 _mesa_glsl_error(& loc, state,
-			  "operand of `!' must be scalar boolean");
-	 error_emitted = true;
-      }
+      op[0] = get_scalar_boolean_operand(instructions, state, this, 0,
+					 "operand", &error_emitted);
 
       result = new(ctx) ir_expression(operations[this->oper], glsl_type::bool_type,
 				      op[0], NULL);
@@ -1313,20 +1291,14 @@ ast_expression::hir(exec_list *instructions,
    }
 
    case ast_conditional: {
-      op[0] = this->subexpressions[0]->hir(instructions, state);
-
       /* From page 59 (page 65 of the PDF) of the GLSL 1.50 spec:
        *
        *    "The ternary selection operator (?:). It operates on three
        *    expressions (exp1 ? exp2 : exp3). This operator evaluates the
        *    first expression, which must result in a scalar Boolean."
        */
-      if (!op[0]->type->is_boolean() || !op[0]->type->is_scalar()) {
-	 YYLTYPE loc = this->subexpressions[0]->get_location();
-
-	 _mesa_glsl_error(& loc, state, "?: condition must be scalar boolean");
-	 error_emitted = true;
-      }
+      op[0] = get_scalar_boolean_operand(instructions, state, this, 0,
+					 "condition", &error_emitted);
 
       /* The :? operator is implemented by generating an anonymous temporary
        * followed by an if-statement.  The last instruction in each branch of
