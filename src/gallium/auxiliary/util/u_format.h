@@ -473,6 +473,10 @@ util_format_colormask(const struct util_format_description *desc)
 }
 
 
+boolean
+util_format_is_float(enum pipe_format format);
+
+
 /**
  * Whether the src format can be blitted to destation format with a simple
  * memcpy.
@@ -481,6 +485,12 @@ boolean
 util_is_format_compatible(const struct util_format_description *src_desc,
                           const struct util_format_description *dst_desc);
 
+/**
+ * Whether the format is supported by Gallium for the given bindings.
+ * This covers S3TC textures and floating-point render targets.
+ */
+boolean
+util_format_is_supported(enum pipe_format format, unsigned bind);
 
 /**
  * Whether this format is a rgab8 variant.

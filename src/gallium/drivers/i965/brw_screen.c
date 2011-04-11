@@ -333,6 +333,9 @@ brw_is_format_supported(struct pipe_screen *screen,
    const enum pipe_format *list;
    uint i;
 
+   if (!util_format_is_supported(format, tex_usage))
+      return FALSE;
+
    if (sample_count > 1)
       return FALSE;
 

@@ -36,6 +36,55 @@
 #include "u_memory.h"
 #include "u_rect.h"
 #include "u_format.h"
+#include "u_format_s3tc.h"
+
+#include "pipe/p_defines.h"
+
+
+boolean
+util_format_is_float(enum pipe_format format)
+{
+   const struct util_format_description *desc = util_format_description(format);
+   unsigned i;
+
+   assert(desc);
+   if (!desc) {
+      return FALSE;
+   }
+
+   /* Find the first non-void channel. */
+   for (i = 0; i < 4; i++) {
+      if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
+         break;
+      }
+   }
+
+   if (i == 4) {
+      return FALSE;
+   }
+
+   return desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT ? TRUE : FALSE;
+}
+
+
+boolean
+util_format_is_supported(enum pipe_format format, unsigned bind)
+{
+   if (util_format_is_s3tc(format) && !util_format_s3tc_enabled) {
+      return FALSE;
+   }
+
+#ifndef TEXTURE_FLOAT_ENABLED
+   if ((bind & PIPE_BIND_RENDER_TARGET) &&
+       format != PIPE_FORMAT_R9G9B9E5_FLOAT &&
+       format != PIPE_FORMAT_R11G11B10_FLOAT &&
+       util_format_is_float(format)) {
+      return FALSE;
+   }
+#endif
+
+   return TRUE;
+}
 
 
 void

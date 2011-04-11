@@ -334,6 +334,9 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
                             format == PIPE_FORMAT_R16G16B16_FLOAT ||
                             format == PIPE_FORMAT_R16G16B16A16_FLOAT;
 
+    if (!util_format_is_supported(format, usage))
+       return FALSE;
+
     /* Check multisampling support. */
     switch (sample_count) {
         case 0:

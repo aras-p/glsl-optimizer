@@ -45,17 +45,8 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
    if (sample_count > 1)
       return FALSE;
 
-   if (!util_format_s3tc_enabled) {
-      switch (format) {
-      case PIPE_FORMAT_DXT1_RGB:
-      case PIPE_FORMAT_DXT1_RGBA:
-      case PIPE_FORMAT_DXT3_RGBA:
-      case PIPE_FORMAT_DXT5_RGBA:
-         return FALSE;
-      default:
-         break;
-      }
-   }
+   if (!util_format_is_supported(format, bindings))
+      return FALSE;
 
    switch (format) {
    case PIPE_FORMAT_Z16_UNORM:

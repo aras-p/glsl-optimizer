@@ -208,6 +208,9 @@ nvfx_screen_is_format_supported(struct pipe_screen *pscreen,
 {
 	struct nvfx_screen *screen = nvfx_screen(pscreen);
 
+        if (!util_format_is_supported(format, bind))
+                return FALSE;
+
 	 if (sample_count > 1)
 		return FALSE;
 

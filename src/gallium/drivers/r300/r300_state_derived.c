@@ -741,25 +741,6 @@ static uint32_t r300_get_border_color(enum pipe_format format,
     return uc.ui;
 }
 
-static boolean util_format_is_float(enum pipe_format format)
-{
-    const struct util_format_description *desc = util_format_description(format);
-    unsigned i;
-
-    if (!format)
-       return FALSE;
-
-    /* Find the first non-void channel. */
-    for (i = 0; i < 4; i++)
-        if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID)
-            break;
-
-    if (i == 4)
-        return FALSE;
-
-    return desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT ? TRUE : FALSE;
-}
-
 static void r300_merge_textures_and_samplers(struct r300_context* r300)
 {
     struct r300_textures_state *state =
