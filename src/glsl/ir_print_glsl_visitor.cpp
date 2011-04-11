@@ -222,11 +222,11 @@ void ir_print_glsl_visitor::visit(ir_variable *ir)
 {
    const char *const cent = (ir->centroid) ? "centroid " : "";
    const char *const inv = (ir->invariant) ? "invariant " : "";
-   const char *const mode[3][6] = 
+   const char *const mode[3][8] = 
    {
-	{ "", "uniform ", "in ",        "out ",     "inout ", "" },
-	{ "", "uniform ", "attribute ", "varying ", "inout ", "" },
-	{ "", "uniform ", "varying ",   "out ",     "inout ", "" },
+	{ "", "uniform ", "in ",        "out ",     "inout ", "", "", "" },
+	{ "", "uniform ", "attribute ", "varying ", "inout ", "", "", "" },
+	{ "", "uniform ", "varying ",   "out ",     "inout ", "", "", "" },
    };
    const char *const interp[] = { "", "flat ", "noperspective " };
 
