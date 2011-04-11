@@ -562,6 +562,14 @@
 					>
 				</File>
 				<File
+					RelativePath="..\ralloc.c"
+					>
+				</File>
+				<File
+					RelativePath="..\ralloc.h"
+					>
+				</File>
+				<File
 					RelativePath="..\s_expression.cpp"
 					>
 				</File>
@@ -734,18 +742,6 @@
 					</File>
 				</Filter>
 			</Filter>
-		</Filter>
-		<Filter
-			Name="talloc"
-			>
-			<File
-				RelativePath="..\..\talloc\talloc.c"
-				>
-			</File>
-			<File
-				RelativePath="..\..\talloc\talloc.h"
-				>
-			</File>
 		</Filter>
 		<File
 			RelativePath=".\msvccompat.h"
