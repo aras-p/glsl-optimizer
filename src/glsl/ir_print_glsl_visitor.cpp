@@ -427,9 +427,11 @@ void ir_print_glsl_visitor::visit(ir_texture *ir)
    ralloc_asprintf_append (&buffer, " ");
 
    ir->coordinate->accept(this);
-
-   ralloc_asprintf_append (&buffer, " (%d %d %d) ", ir->offsets[0], ir->offsets[1], ir->offsets[2]);
-
+	
+   if (ir->offset != NULL) {
+      ir->offset->accept(this);
+   }
+	
    if (ir->op != ir_txf) {
       if (ir->projector)
 	 ir->projector->accept(this);

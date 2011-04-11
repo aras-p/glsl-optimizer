@@ -81,7 +81,7 @@ static void visit_variable (ir_instruction* ir, void* data)
 
 ir_struct_usage_visitor::ir_struct_usage_visitor()
 {
-	this->mem_ctx = talloc_new(NULL);
+	this->mem_ctx = ralloc_context(NULL);
 	this->struct_list.make_empty();
 	this->callback = visit_variable;
 	this->data = this;
@@ -89,5 +89,5 @@ ir_struct_usage_visitor::ir_struct_usage_visitor()
 
 ir_struct_usage_visitor::~ir_struct_usage_visitor(void)
 {
-	talloc_free(mem_ctx);
+	ralloc_free(mem_ctx);
 }

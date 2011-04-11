@@ -299,7 +299,7 @@ public:
       } else {
 	 var = new(mem_ctx) ir_variable(orig_deref->type,
 					"dereference_array_value",
-					ir_var_temporary);
+					ir_var_temporary, precision_from_ir(orig_deref));
 	 base_ir->insert_before(var);
       }
 

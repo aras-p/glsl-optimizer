@@ -2332,7 +2332,7 @@ apply_precision_to_variable(const struct ast_type_specifier *spec,
 {
 	if (!state->es_shader)
 		return;
-	if (var->type->is_sampler() && spec->precision == ast_precision_undefined)
+	if (var->type->is_sampler() && spec->precision == ast_precision_none)
 		var->precision = ast_precision_low; // samplers default to low precision
 	else
 		var->precision = spec->precision;
