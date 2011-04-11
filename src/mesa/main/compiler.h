@@ -171,12 +171,14 @@ extern "C" {
  * We also need to define a USED attribute, so the optimizer doesn't 
  * inline a static function that we later use in an alias. - ajax
  */
-#if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
-#  define PUBLIC __attribute__((visibility("default")))
-#  define USED __attribute__((used))
-#else
-#  define PUBLIC
-#  define USED
+#ifndef PUBLIC
+#  if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590))
+#    define PUBLIC __attribute__((visibility("default")))
+#    define USED __attribute__((used))
+#  else
+#    define PUBLIC
+#    define USED
+#  endif
 #endif
 
 
@@ -195,15 +197,17 @@ extern "C" {
  * __builtin_expect macros
  */
 #if !defined(__GNUC__)
-#  define __builtin_expect(x, y) x
+#  define __builtin_expect(x, y) (x)
 #endif
 
-#ifdef __GNUC__
-#define likely(x) __builtin_expect(!!(x), 1)
-#define unlikely(x) __builtin_expect(!!(x), 0)
-#else
-#define likely(x) !!(x)
-#define unlikely(x) !!(x)
+#ifndef likely
+#  ifdef __GNUC__
+#    define likely(x)   __builtin_expect(!!(x), 1)
+#    define unlikely(x) __builtin_expect(!!(x), 0)
+#  else
+#    define likely(x)   (x)
+#    define unlikely(x) (x)
+#  endif
 #endif
 
 /**

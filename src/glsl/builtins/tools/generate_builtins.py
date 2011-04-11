@@ -1,15 +1,26 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
+from __future__ import with_statement
+
 import re
+import sys
 from glob import glob
 from os import path
 from subprocess import Popen, PIPE
+from sys import argv
 
 # Local module: generator for texture lookup builtins
 from texture_builtins import generate_texture_functions
 
 builtins_dir = path.join(path.dirname(path.abspath(__file__)), "..")
+
+# Get the path to the standalone GLSL compiler
+if len(argv) != 2:
+    print "Usage:", argv[0], "<path to compiler>"
+    sys.exit(1)
+
+compiler = argv[1]
 
 # Read the files in builtins/ir/*...add them to the supplied dictionary.
 def read_ir_files(fs):
@@ -47,14 +58,13 @@ def write_function_definitions():
         print stringify(v), ';'
 
 def run_compiler(args):
-    compiler_path = path.join(path.join(builtins_dir, '..'), 'glsl_compiler')
-    command = [compiler_path, '--dump-lir'] + args
+    command = [compiler, '--dump-lir'] + args
     p = Popen(command, 1, stdout=PIPE, shell=False)
     output = p.communicate()[0]
 
     # Clean up output a bit by killing whitespace before a closing paren.
-    kill_paren_whitespace = re.compile(r'[ \n]*\)', re.MULTILINE);
-    output = kill_paren_whitespace.sub(')', output);
+    kill_paren_whitespace = re.compile(r'[ \n]*\)', re.MULTILINE)
+    output = kill_paren_whitespace.sub(')', output)
 
     # Also toss any duplicate newlines
     output = output.replace('\n\n', '\n')
@@ -69,12 +79,12 @@ def write_profile(filename, profile):
         return
 
     # Kill any global variable declarations.  We don't want them.
-    kill_globals = re.compile(r'^\(declare.*\n', re.MULTILINE);
+    kill_globals = re.compile(r'^\(declare.*\n', re.MULTILINE)
     proto_ir = kill_globals.sub('', proto_ir)
 
     # Kill pointer addresses.  They're not necessary in prototypes and just
     # clutter the diff output.
-    proto_ir = re.sub(r'@0x[0-9a-f]+', '', proto_ir);
+    proto_ir = re.sub(r'@0x[0-9a-f]+', '', proto_ir)
 
     print 'static const char prototypes_for_' + profile + '[] ='
     print stringify(proto_ir), ';'
@@ -142,6 +152,8 @@ read_builtins(GLenum target, const char *protos, const char **functions, unsigne
 {
    struct gl_context fakeCtx;
    fakeCtx.API = API_OPENGL;
+   fakeCtx.Const.GLSLVersion = 130;
+   fakeCtx.Extensions.ARB_ES2_compatibility = true;
    gl_shader *sh = _mesa_new_shader(NULL, 0, target);
    struct _mesa_glsl_parse_state *st =
       new(sh) _mesa_glsl_parse_state(&fakeCtx, target, sh);
@@ -168,7 +180,7 @@ read_builtins(GLenum target, const char *protos, const char **functions, unsigne
       if (st->error) {
          printf("error reading builtin: %.35s ...\\n", functions[i]);
          printf("Info log:\\n%s\\n", st->info_log);
-         talloc_free(sh);
+         ralloc_free(sh);
          return NULL;
       }
    }
@@ -193,14 +205,13 @@ void *builtin_mem_ctx = NULL;
 void
 _mesa_glsl_release_functions(void)
 {
-   talloc_free(builtin_mem_ctx);
+   ralloc_free(builtin_mem_ctx);
    builtin_mem_ctx = NULL;
    memset(builtin_profiles, 0, sizeof(builtin_profiles));
 }
 
 static void
 _mesa_read_profile(struct _mesa_glsl_parse_state *state,
-		   exec_list *instructions,
                    int profile_index,
 		   const char *prototypes,
 		   const char **functions,
@@ -210,7 +221,7 @@ _mesa_read_profile(struct _mesa_glsl_parse_state *state,
 
    if (sh == NULL) {
       sh = read_builtins(GL_VERTEX_SHADER, prototypes, functions, count);
-      talloc_steal(builtin_mem_ctx, sh);
+      ralloc_steal(builtin_mem_ctx, sh);
       builtin_profiles[profile_index] = sh;
    }
 
@@ -219,18 +230,17 @@ _mesa_read_profile(struct _mesa_glsl_parse_state *state,
 }
 
 void
-_mesa_glsl_initialize_functions(exec_list *instructions,
-                                struct _mesa_glsl_parse_state *state)
+_mesa_glsl_initialize_functions(struct _mesa_glsl_parse_state *state)
 {
    if (builtin_mem_ctx == NULL) {
-      builtin_mem_ctx = talloc_init("GLSL built-in functions");
+      builtin_mem_ctx = ralloc_context(NULL); // "GLSL built-in functions"
       memset(&builtin_profiles, 0, sizeof(builtin_profiles));
    }
 
    state->num_builtins_to_link = 0;
 """
 
-    i=0
+    i = 0
     for (filename, profile) in profiles:
         if profile.endswith('_vert'):
             check = 'state->target == vertex_shader && '
@@ -244,7 +254,7 @@ _mesa_glsl_initialize_functions(exec_list *instructions,
             check += 'state->' + version + '_enable'
 
         print '   if (' + check + ') {'
-        print '      _mesa_read_profile(state, instructions, %d,' % i
+        print '      _mesa_read_profile(state, %d,' % i
         print '                         prototypes_for_' + profile + ','
         print '                         functions_for_' + profile + ','
         print '                         Elements(functions_for_' + profile + '));'

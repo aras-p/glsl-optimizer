@@ -53,6 +53,18 @@ ir_variable::clone(void *mem_ctx, struct hash_table *ht) const
    var->origin_upper_left = this->origin_upper_left;
    var->pixel_center_integer = this->pixel_center_integer;
    var->explicit_location = this->explicit_location;
+
+   var->num_state_slots = this->num_state_slots;
+   if (this->state_slots) {
+      /* FINISHME: This really wants to use something like talloc_reference, but
+       * FINISHME: ralloc doesn't have any similar function.
+       */
+      var->state_slots = ralloc_array(var, ir_state_slot,
+				      this->num_state_slots);
+      memcpy(var->state_slots, this->state_slots,
+	     sizeof(this->state_slots[0]) * var->num_state_slots);
+   }
+
    if (this->explicit_location)
       var->location = this->location;
 
@@ -217,8 +229,8 @@ ir_texture::clone(void *mem_ctx, struct hash_table *ht) const
       new_tex->shadow_comparitor = this->shadow_comparitor->clone(mem_ctx, ht);
    }
 
-   for (int i = 0; i < 3; i++)
-      new_tex->offsets[i] = this->offsets[i];
+   if (this->offset != NULL)
+      new_tex->offset = this->offset->clone(mem_ctx, ht);
 
    switch (this->op) {
    case ir_tex:
@@ -346,7 +358,7 @@ ir_constant::clone(void *mem_ctx, struct hash_table *ht) const
       ir_constant *c = new(mem_ctx) ir_constant;
 
       c->type = this->type;
-      c->array_elements = talloc_array(c, ir_constant *, this->type->length);
+      c->array_elements = ralloc_array(c, ir_constant *, this->type->length);
       for (unsigned i = 0; i < this->type->length; i++) {
 	 c->array_elements[i] = this->array_elements[i]->clone(mem_ctx, NULL);
       }

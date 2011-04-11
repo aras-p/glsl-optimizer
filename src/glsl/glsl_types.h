@@ -26,13 +26,14 @@
 #ifndef GLSL_TYPES_H
 #define GLSL_TYPES_H
 
-#include <cstring>
-#include <cassert>
+#include <string.h>
+#include <assert.h>
 
 extern "C" {
 #include "GL/gl.h"
-#include <talloc.h>
 }
+
+#include "ralloc.h"
 
 struct _mesa_glsl_parse_state;
 struct glsl_symbol_table;
@@ -75,7 +76,7 @@ struct glsl_type {
    GLenum gl_type;
    glsl_base_type base_type;
 
-   unsigned sampler_dimensionality:3;
+   unsigned sampler_dimensionality:3; /**< \see glsl_sampler_dim */
    unsigned sampler_shadow:1;
    unsigned sampler_array:1;
    unsigned sampler_type:2;    /**< Type of data returned using this sampler.
@@ -83,28 +84,28 @@ struct glsl_type {
 				* and \c GLSL_TYPE_UINT are valid.
 				*/
 
-   /* Callers of this talloc-based new need not call delete. It's
-    * easier to just talloc_free 'mem_ctx' (or any of its ancestors). */
+   /* Callers of this ralloc-based new need not call delete. It's
+    * easier to just ralloc_free 'mem_ctx' (or any of its ancestors). */
    static void* operator new(size_t size)
    {
       if (glsl_type::mem_ctx == NULL) {
-	 glsl_type::mem_ctx = talloc_init("glsl_type");
+	 glsl_type::mem_ctx = ralloc_context(NULL);
 	 assert(glsl_type::mem_ctx != NULL);
       }
 
       void *type;
 
-      type = talloc_size(glsl_type::mem_ctx, size);
+      type = ralloc_size(glsl_type::mem_ctx, size);
       assert(type != NULL);
 
       return type;
    }
 
    /* If the user *does* call delete, that's OK, we will just
-    * talloc_free in that case. */
+    * ralloc_free in that case. */
    static void operator delete(void *type)
    {
-      talloc_free(type);
+      ralloc_free(type);
    }
 
    /**
@@ -148,6 +149,7 @@ struct glsl_type {
     */
    /*@{*/
    static const glsl_type *const error_type;
+   static const glsl_type *const void_type;
    static const glsl_type *const int_type;
    static const glsl_type *const ivec4_type;
    static const glsl_type *const uint_type;
@@ -393,13 +395,13 @@ struct glsl_type {
 
 private:
    /**
-    * talloc context for all glsl_type allocations
+    * ralloc context for all glsl_type allocations
     *
     * Set on the first call to \c glsl_type::new.
     */
    static void *mem_ctx;
 
-   void init_talloc_type_ctx(void);
+   void init_ralloc_type_ctx(void);
 
    /** Constructor for vector and matrix types */
    glsl_type(GLenum gl_type,
@@ -432,7 +434,8 @@ private:
     */
    /*@{*/
    static const glsl_type _error_type;
-   static const glsl_type void_type;
+   static const glsl_type _void_type;
+   static const glsl_type _sampler3D_type;
    static const glsl_type builtin_core_types[];
    static const glsl_type builtin_structure_types[];
    static const glsl_type builtin_110_deprecated_structure_types[];
@@ -459,6 +462,7 @@ private:
    static void generate_130_types(glsl_symbol_table *);
    static void generate_ARB_texture_rectangle_types(glsl_symbol_table *, bool);
    static void generate_EXT_texture_array_types(glsl_symbol_table *, bool);
+   static void generate_OES_texture_3D_types(glsl_symbol_table *, bool);
    /*@}*/
 
    /**

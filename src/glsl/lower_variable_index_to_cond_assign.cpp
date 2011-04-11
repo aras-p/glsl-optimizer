@@ -42,6 +42,7 @@ struct assignment_generator
    ir_instruction* base_ir;
    ir_rvalue* array;
    bool is_write;
+   unsigned int write_mask;
    ir_variable* var;
 
    assignment_generator()
@@ -53,15 +54,19 @@ struct assignment_generator
       /* Just clone the rest of the deref chain when trying to get at the
        * underlying variable.
        */
-      void *mem_ctx = talloc_parent(base_ir);
-      ir_rvalue *element =
+      void *mem_ctx = ralloc_parent(base_ir);
+      ir_dereference *element =
 	 new(mem_ctx) ir_dereference_array(this->array->clone(mem_ctx, NULL),
 					   new(mem_ctx) ir_constant(i));
       ir_rvalue *variable = new(mem_ctx) ir_dereference_variable(this->var);
 
-      ir_assignment *assignment = (is_write)
-	 ? new(mem_ctx) ir_assignment(element, variable, condition)
-	 : new(mem_ctx) ir_assignment(variable, element, condition);
+      ir_assignment *assignment;
+      if (is_write) {
+	 assignment = new(mem_ctx) ir_assignment(element, variable, condition,
+						 write_mask);
+      } else {
+	 assignment = new(mem_ctx) ir_assignment(variable, element, condition);
+      }
 
       list->push_tail(assignment);
    }
@@ -86,7 +91,7 @@ struct switch_generator
 	linear_sequence_max_length(linear_sequence_max_length),
 	condition_components(condition_components)
    {
-      this->mem_ctx = talloc_parent(index);
+      this->mem_ctx = ralloc_parent(index);
    }
 
    void linear_sequence(unsigned begin, unsigned end, exec_list *list)
@@ -250,6 +255,7 @@ public:
       case ir_var_uniform:
 	 return this->lower_uniforms;
       case ir_var_in:
+      case ir_var_const_in:
 	 return (var->location == -1) ? this->lower_temps : this->lower_inputs;
       case ir_var_out:
 	 return (var->location == -1) ? this->lower_temps : this->lower_outputs;
@@ -262,7 +268,7 @@ public:
    }
 
    ir_variable *convert_dereference_array(ir_dereference_array *orig_deref,
-					  ir_rvalue* value)
+					  ir_assignment* orig_assign)
    {
       assert(is_array_or_matrix(orig_deref->array));
 
@@ -270,17 +276,31 @@ public:
          ? orig_deref->array->type->length
          : orig_deref->array->type->matrix_columns;
 
-      void *const mem_ctx = talloc_parent(base_ir);
-      ir_variable *var =
-	 new(mem_ctx) ir_variable(orig_deref->type, "dereference_array_value",
-				  ir_var_temporary, precision_from_ir(orig_deref));
-      base_ir->insert_before(var);
+      void *const mem_ctx = ralloc_parent(base_ir);
 
-      if (value) {
+      /* Temporary storage for either the result of the dereference of
+       * the array, or the RHS that's being assigned into the
+       * dereference of the array.
+       */
+      ir_variable *var;
+
+      if (orig_assign) {
+	 var = new(mem_ctx) ir_variable(orig_assign->rhs->type,
+					"dereference_array_value",
+					ir_var_temporary, precision_from_ir(orig_deref));
+	 base_ir->insert_before(var);
+
 	 ir_dereference *lhs = new(mem_ctx) ir_dereference_variable(var);
-	 ir_assignment *assign = new(mem_ctx) ir_assignment(lhs, value, NULL);
+	 ir_assignment *assign = new(mem_ctx) ir_assignment(lhs,
+							    orig_assign->rhs,
+							    NULL);
 
          base_ir->insert_before(assign);
+      } else {
+	 var = new(mem_ctx) ir_variable(orig_deref->type,
+					"dereference_array_value",
+					ir_var_temporary);
+	 base_ir->insert_before(var);
       }
 
       /* Store the index to a temporary to avoid reusing its tree. */
@@ -298,7 +318,12 @@ public:
       ag.array = orig_deref->array;
       ag.base_ir = base_ir;
       ag.var = var;
-      ag.is_write = !!value;
+      if (orig_assign) {
+	 ag.is_write = true;
+	 ag.write_mask = orig_assign->write_mask;
+      } else {
+	 ag.is_write = false;
+      }
 
       switch_generator sg(ag, index, 4, 4);
 
@@ -318,7 +343,7 @@ public:
       if (needs_lowering(orig_deref)) {
          ir_variable* var = convert_dereference_array(orig_deref, 0);
          assert(var);
-         *pir = new(talloc_parent(base_ir)) ir_dereference_variable(var);
+         *pir = new(ralloc_parent(base_ir)) ir_dereference_variable(var);
          this->progress = true;
       }
    }
@@ -331,7 +356,7 @@ public:
       ir_dereference_array *orig_deref = ir->lhs->as_dereference_array();
 
       if (needs_lowering(orig_deref)) {
-         convert_dereference_array(orig_deref, ir->rhs);
+         convert_dereference_array(orig_deref, ir);
          ir->remove();
          this->progress = true;
       }

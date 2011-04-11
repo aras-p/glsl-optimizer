@@ -21,7 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <climits>
+#include <limits.h>
 #include "main/compiler.h"
 #include "glsl_types.h"
 #include "loop_analysis.h"
@@ -88,7 +88,7 @@ calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
    if (from == NULL || to == NULL || increment == NULL)
       return -1;
 
-   void *mem_ctx = talloc_init("%s", __func__);
+   void *mem_ctx = ralloc_context(NULL);
 
    ir_expression *const sub =
       new(mem_ctx) ir_expression(ir_binop_sub, from->type, to, from);
@@ -147,7 +147,7 @@ calculate_iterations(ir_rvalue *from, ir_rvalue *to, ir_rvalue *increment,
       }
    }
 
-   talloc_free(mem_ctx);
+   ralloc_free(mem_ctx);
    return (valid_loop) ? iter_value : -1;
 }
 

@@ -95,6 +95,7 @@ public:
 
    ir_visitor_status visit_enter(ir_if *);
    ir_visitor_status visit_enter(ir_loop *);
+   ir_visitor_status visit_enter(ir_assignment *);
 
    bool progress;
 };
@@ -115,6 +116,15 @@ is_only_instruction(ir_discard *discard)
 {
    return (discard->prev->is_head_sentinel() &&
 	   discard->next->is_tail_sentinel());
+}
+
+/* We only care about the top level instructions, so don't descend
+ * into expressions.
+ */
+ir_visitor_status
+discard_simplifier::visit_enter(ir_assignment *ir)
+{
+   return visit_continue_with_parent;
 }
 
 ir_visitor_status

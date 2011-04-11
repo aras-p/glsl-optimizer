@@ -26,7 +26,7 @@
 
 #include <stdint.h>
 
-#include <talloc.h>
+#include "../ralloc.h"
 
 #include "program/hash_table.h"
 
@@ -189,7 +189,7 @@ void
 glcpp_parser_destroy (glcpp_parser_t *parser);
 
 int
-preprocess(void *talloc_ctx, const char **shader, char **info_log,
+preprocess(void *ralloc_ctx, const char **shader, char **info_log,
 	   const struct gl_extensions *extensions, int api);
 
 /* Functions for writing to the info log */

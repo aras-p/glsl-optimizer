@@ -29,6 +29,10 @@
 #include "ir.h"
 #include "ir_visitor.h"
 
+extern "C" {
+#include "program/symbol_table.h"
+}
+
 extern void _mesa_print_ir(exec_list *instructions,
 			   struct _mesa_glsl_parse_state *state);
 
@@ -37,15 +41,8 @@ extern void _mesa_print_ir(exec_list *instructions,
  */
 class ir_print_visitor : public ir_visitor {
 public:
-   ir_print_visitor()
-   {
-      indentation = 0;
-   }
-
-   virtual ~ir_print_visitor()
-   {
-      /* empty */
-   }
+   ir_print_visitor();
+   virtual ~ir_print_visitor();
 
    void indent(void);
 
@@ -77,6 +74,20 @@ public:
    /*@}*/
 
 private:
+   /**
+    * Fetch/generate a unique name for ir_variable.
+    *
+    * GLSL IR permits multiple ir_variables to share the same name.  This works
+    * fine until we try to print it, when we really need a unique one.
+    */
+   const char *unique_name(ir_variable *var);
+
+   /** A mapping from ir_variable * -> unique printable names. */
+   hash_table *printable_names;
+   _mesa_symbol_table *symbols;
+
+   void *mem_ctx;
+
    int indentation;
 };
 

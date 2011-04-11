@@ -20,14 +20,7 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
  * DEALINGS IN THE SOFTWARE.
  */
-#include <cstdlib>
-#include <cstdio>
 #include <getopt.h>
-
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
 
 #include "ast.h"
 #include "glsl_parser_extras.h"
@@ -61,7 +54,7 @@ _mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type)
    (void) ctx;
 
    assert(type == GL_FRAGMENT_SHADER || type == GL_VERTEX_SHADER);
-   shader = talloc_zero(NULL, struct gl_shader);
+   shader = rzalloc(NULL, struct gl_shader);
    if (shader) {
       shader->Type = type;
       shader->Name = name;
@@ -77,10 +70,17 @@ initialize_context(struct gl_context *ctx, gl_api api)
 
    ctx->API = api;
 
+   ctx->Extensions.ARB_ES2_compatibility = GL_TRUE;
    ctx->Extensions.ARB_draw_buffers = GL_TRUE;
+   ctx->Extensions.ARB_draw_instanced = GL_TRUE;
    ctx->Extensions.ARB_fragment_coord_conventions = GL_TRUE;
    ctx->Extensions.EXT_texture_array = GL_TRUE;
    ctx->Extensions.NV_texture_rectangle = GL_TRUE;
+
+   /* GLSL 1.30 isn't fully supported, but we need to advertise 1.30 so that
+    * the built-in functions for 1.30 can be built.
+    */
+   ctx->Const.GLSLVersion = 130;
 
    /* 1.10 minimums. */
    ctx->Const.MaxLights = 8;
@@ -105,43 +105,45 @@ initialize_context(struct gl_context *ctx, gl_api api)
    ctx->Driver.NewShader = _mesa_new_shader;
 }
 
-/* Returned string will have 'ctx' as its talloc owner. */
+/* Returned string will have 'ctx' as its ralloc owner. */
 static char *
 load_text_file(void *ctx, const char *file_name)
 {
 	char *text = NULL;
-	struct stat st;
-	ssize_t total_read = 0;
-	int fd = open(file_name, O_RDONLY);
+	size_t size;
+	size_t total_read = 0;
+	FILE *fp = fopen(file_name, "rb");
 
-	if (fd < 0) {
+	if (!fp) {
 		return NULL;
 	}
 
-	if (fstat(fd, & st) == 0) {
-	   text = (char *) talloc_size(ctx, st.st_size + 1);
-		if (text != NULL) {
-			do {
-				ssize_t bytes = read(fd, text + total_read,
-						     st.st_size - total_read);
-				if (bytes < 0) {
-					free(text);
-					text = NULL;
-					break;
-				}
+	fseek(fp, 0L, SEEK_END);
+	size = ftell(fp);
+	fseek(fp, 0L, SEEK_SET);
 
-				if (bytes == 0) {
-					break;
-				}
+	text = (char *) ralloc_size(ctx, size + 1);
+	if (text != NULL) {
+		do {
+			size_t bytes = fread(text + total_read,
+					     1, size - total_read, fp);
+			if (bytes < size - total_read) {
+				free(text);
+				text = NULL;
+				break;
+			}
 
-				total_read += bytes;
-			} while (total_read < st.st_size);
+			if (bytes == 0) {
+				break;
+			}
 
-			text[total_read] = '\0';
-		}
+			total_read += bytes;
+		} while (total_read < size);
+
+		text[total_read] = '\0';
 	}
 
-	close(fd);
+	fclose(fp);
 
 	return text;
 }
@@ -188,7 +190,7 @@ compile_shader(struct gl_context *ctx, struct gl_shader *shader)
 
    const char *source = shader->Source;
    state->error = preprocess(state, &source, &state->info_log,
-			     state->extensions, ctx->API);
+			     state->extensions, ctx->API) != 0;
 
    if (!state->error) {
       _mesa_glsl_lexer_ctor(state, source);
@@ -238,14 +240,14 @@ compile_shader(struct gl_context *ctx, struct gl_shader *shader)
    shader->num_builtins_to_link = state->num_builtins_to_link;
 
    if (shader->InfoLog)
-      talloc_free(shader->InfoLog);
+      ralloc_free(shader->InfoLog);
 
    shader->InfoLog = state->info_log;
 
    /* Retain any live IR, but trash the rest. */
    reparent_ir(shader->ir, shader);
 
-   talloc_free(state);
+   ralloc_free(state);
 
    return;
 }
@@ -270,16 +272,16 @@ main(int argc, char **argv)
 
    struct gl_shader_program *whole_program;
 
-   whole_program = talloc_zero (NULL, struct gl_shader_program);
+   whole_program = rzalloc (NULL, struct gl_shader_program);
    assert(whole_program != NULL);
 
    for (/* empty */; argc > optind; optind++) {
-      whole_program->Shaders = (struct gl_shader **)
-	 talloc_realloc(whole_program, whole_program->Shaders,
-			struct gl_shader *, whole_program->NumShaders + 1);
+      whole_program->Shaders =
+	 reralloc(whole_program, whole_program->Shaders,
+		  struct gl_shader *, whole_program->NumShaders + 1);
       assert(whole_program->Shaders != NULL);
 
-      struct gl_shader *shader = talloc_zero(whole_program, gl_shader);
+      struct gl_shader *shader = rzalloc(whole_program, gl_shader);
 
       whole_program->Shaders[whole_program->NumShaders] = shader;
       whole_program->NumShaders++;
@@ -322,9 +324,9 @@ main(int argc, char **argv)
    }
 
    for (unsigned i = 0; i < MESA_SHADER_TYPES; i++)
-      talloc_free(whole_program->_LinkedShaders[i]);
+      ralloc_free(whole_program->_LinkedShaders[i]);
 
-   talloc_free(whole_program);
+   ralloc_free(whole_program);
    _mesa_glsl_release_types();
    _mesa_glsl_release_functions();
 

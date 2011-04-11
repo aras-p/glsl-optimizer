@@ -150,7 +150,7 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
           */
          break_ir->remove();
 
-         void *const mem_ctx = talloc_parent(ir);
+         void *const mem_ctx = ralloc_parent(ir);
          ir_instruction *ir_to_replace = ir;
 
          for (int i = 0; i < iterations; i++) {
@@ -182,7 +182,7 @@ loop_unroll_visitor::visit_leave(ir_loop *ir)
       }
    }
 
-   void *const mem_ctx = talloc_parent(ir);
+   void *const mem_ctx = ralloc_parent(ir);
 
    for (int i = 0; i < iterations; i++) {
       exec_list copy_list;

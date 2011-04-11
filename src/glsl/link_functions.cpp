@@ -21,14 +21,6 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <cstdlib>
-#include <cstdio>
-#include <cstdarg>
-
-extern "C" {
-#include <talloc.h>
-}
-
 #include "main/core.h"
 #include "glsl_symbol_table.h"
 #include "glsl_parser_extras.h"
@@ -107,8 +99,14 @@ public:
        * details that may be missing.
        */
       ir_function *f = linked->symbols->get_function(name);
-      if (f == NULL)
+      if (f == NULL) {
 	 f = new(linked) ir_function(name);
+
+	 /* Add the new function to the linked IR.
+	  */
+	 linked->symbols->add_function(f);
+	 linked->ir->push_head(f);
+      }
 
       ir_function_signature *linked_sig =
 	 f->exact_matching_signature(&callee->parameters);
@@ -185,6 +183,18 @@ public:
 	    var = ir->var->clone(linked, NULL);
 	    linked->symbols->add_variable(var);
 	    linked->ir->push_head(var);
+	 } else if (var->type->is_array()) {
+	    /* It is possible to have a global array declared in multiple
+	     * shaders without a size.  The array is implicitly sized by the
+	     * maximal access to it in *any* shader.  Because of this, we
+	     * need to track the maximal access to the array as linking pulls
+	     * more functions in that access the array.
+	     */
+	    var->max_array_access =
+	       MAX2(var->max_array_access, ir->var->max_array_access);
+
+	    if (var->type->length == 0 && ir->var->type->length != 0)
+	       var->type = ir->var->type;
 	 }
 
 	 ir->var = var;

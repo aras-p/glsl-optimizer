@@ -170,7 +170,7 @@ lower_discard_visitor::visit_leave(ir_if *ir)
    if (then_discard == NULL && else_discard == NULL)
       return visit_continue;
 
-   void *mem_ctx = talloc_parent(ir);
+   void *mem_ctx = ralloc_parent(ir);
 
    ir_variable *temp = new(mem_ctx) ir_variable(glsl_type::bool_type,
 						"discard_cond_temp",

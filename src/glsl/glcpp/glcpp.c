@@ -21,10 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <unistd.h>
+#include <stdio.h>
 #include <string.h>
 #include <errno.h>
 #include "glcpp.h"
@@ -40,39 +37,32 @@ _mesa_reference_shader(struct gl_context *ctx, struct gl_shader **ptr,
    *ptr = sh;
 }
 
-/* Read from fd until EOF and return a string of everything read.
+/* Read from fp until EOF and return a string of everything read.
  */
 static char *
-load_text_fd (void *ctx, int fd)
+load_text_fp (void *ctx, FILE *fp)
 {
 #define CHUNK 4096
 	char *text = NULL;
-	ssize_t text_size = 0;
-	ssize_t total_read = 0;
-	ssize_t bytes;
+	size_t text_size = 0;
+	size_t total_read = 0;
+	size_t bytes;
 
 	while (1) {
 		if (total_read + CHUNK + 1 > text_size) {
 			text_size = text_size ? text_size * 2 : CHUNK + 1;
-			text = talloc_realloc_size (ctx, text, text_size);
+			text = reralloc_size (ctx, text, text_size);
 			if (text == NULL) {
 				fprintf (stderr, "Out of memory\n");
 				return NULL;
 			}
 		}
-		bytes = read (fd, text + total_read, CHUNK);
-		if (bytes < 0) {
-			fprintf (stderr, "Error while reading: %s\n",
-				 strerror (errno));
-			talloc_free (text);
-			return NULL;
-		}
+		bytes = fread (text + total_read, 1, CHUNK, fp);
+		total_read += bytes;
 
-		if (bytes == 0) {
+		if (bytes < CHUNK) {
 			break;
 		}
-
-		total_read += bytes;
 	}
 
 	text[total_read] = '\0';
@@ -84,21 +74,21 @@ static char *
 load_text_file(void *ctx, const char *filename)
 {
 	char *text;
-	int fd;
+	FILE *fp;
 
 	if (filename == NULL || strcmp (filename, "-") == 0)
-		return load_text_fd (ctx, STDIN_FILENO);
+		return load_text_fp (ctx, stdin);
 
-	fd = open (filename, O_RDONLY);
-	if (fd < 0) {
+	fp = fopen (filename, "r");
+	if (fp == NULL) {
 		fprintf (stderr, "Failed to open file %s: %s\n",
 			 filename, strerror (errno));
 		return NULL;
 	}
 
-	text = load_text_fd (ctx, fd);
+	text = load_text_fp (ctx, fp);
 
-	close(fd);
+	fclose(fp);
 
 	return text;
 }
@@ -107,8 +97,8 @@ int
 main (int argc, char *argv[])
 {
 	char *filename = NULL;
-	void *ctx = talloc(NULL, void*);
-	char *info_log = talloc_strdup(ctx, "");
+	void *ctx = ralloc(NULL, void*);
+	char *info_log = ralloc_strdup(ctx, "");
 	const char *shader;
 	int ret;
 
@@ -125,7 +115,7 @@ main (int argc, char *argv[])
 	printf("%s", shader);
 	fprintf(stderr, "%s", info_log);
 
-	talloc_free(ctx);
+	ralloc_free(ctx);
 
 	return ret;
 }

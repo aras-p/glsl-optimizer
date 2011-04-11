@@ -37,14 +37,15 @@ loop_state::loop_state()
 {
    this->ht = hash_table_ctor(0, hash_table_pointer_hash,
 			      hash_table_pointer_compare);
-   this->mem_ctx = talloc_init("loop state");
+   this->mem_ctx = ralloc_context(NULL);
+   this->loop_found = false;
 }
 
 
 loop_state::~loop_state()
 {
    hash_table_dtor(this->ht);
-   talloc_free(this->mem_ctx);
+   ralloc_free(this->mem_ctx);
 }
 
 
@@ -52,7 +53,9 @@ loop_variable_state *
 loop_state::insert(ir_loop *ir)
 {
    loop_variable_state *ls = new(this->mem_ctx) loop_variable_state;
+
    hash_table_insert(this->ht, ls, ir);
+   this->loop_found = true;
 
    return ls;
 }
@@ -75,8 +78,8 @@ loop_variable_state::get(const ir_variable *ir)
 loop_variable *
 loop_variable_state::insert(ir_variable *var)
 {
-   void *mem_ctx = talloc_parent(this);
-   loop_variable *lv = talloc_zero(mem_ctx, loop_variable);
+   void *mem_ctx = ralloc_parent(this);
+   loop_variable *lv = rzalloc(mem_ctx, loop_variable);
 
    lv->var = var;
 
@@ -90,8 +93,8 @@ loop_variable_state::insert(ir_variable *var)
 loop_terminator *
 loop_variable_state::insert(ir_if *if_stmt)
 {
-   void *mem_ctx = talloc_parent(this);
-   loop_terminator *t = talloc_zero(mem_ctx, loop_terminator);
+   void *mem_ctx = ralloc_parent(this);
+   loop_terminator *t = rzalloc(mem_ctx, loop_terminator);
 
    t->ir = if_stmt;
    this->terminators.push_tail(t);
@@ -447,7 +450,7 @@ get_basic_induction_increment(ir_assignment *ir, hash_table *var_hash)
    }
 
    if ((inc != NULL) && (rhs->operation == ir_binop_sub)) {
-      void *mem_ctx = talloc_parent(ir);
+      void *mem_ctx = ralloc_parent(ir);
 
       inc = new(mem_ctx) ir_expression(ir_unop_neg,
 				       inc->type,

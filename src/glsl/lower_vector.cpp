@@ -125,7 +125,7 @@ lower_vector_visitor::handle_rvalue(ir_rvalue **rvalue)
    if (this->dont_lower_swz && is_extended_swizzle(expr))
       return;
 
-   /* FINISHME: Is this the right thing to use for the talloc context?
+   /* FINISHME: Is this the right thing to use for the ralloc context?
     */
    void *const mem_ctx = expr;
 

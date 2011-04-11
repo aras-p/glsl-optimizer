@@ -99,33 +99,20 @@ _mesa_destroy_visual( struct gl_config *vis );
 /** \name Context-related functions */
 /*@{*/
 
-extern struct gl_context *
-_mesa_create_context( const struct gl_config *visual,
-                      struct gl_context *share_list,
-                      const struct dd_function_table *driverFunctions,
-                      void *driverContext );
-
 extern GLboolean
 _mesa_initialize_context( struct gl_context *ctx,
+                          gl_api api,
                           const struct gl_config *visual,
                           struct gl_context *share_list,
                           const struct dd_function_table *driverFunctions,
                           void *driverContext );
 
 extern struct gl_context *
-_mesa_create_context_for_api(gl_api api,
-			     const struct gl_config *visual,
-			     struct gl_context *share_list,
-			     const struct dd_function_table *driverFunctions,
-			     void *driverContext);
-
-extern GLboolean
-_mesa_initialize_context_for_api(struct gl_context *ctx,
-				 gl_api api,
-				 const struct gl_config *visual,
-				 struct gl_context *share_list,
-				 const struct dd_function_table *driverFunctions,
-				 void *driverContext);
+_mesa_create_context(gl_api api,
+                     const struct gl_config *visual,
+                     struct gl_context *share_list,
+                     const struct dd_function_table *driverFunctions,
+                     void *driverContext);
 
 extern void
 _mesa_free_context_data( struct gl_context *ctx );
@@ -297,30 +284,6 @@ do {									\
 
 /*@}*/
 
-
-
-/**
- * Is the secondary color needed?
- */
-#define NEED_SECONDARY_COLOR(CTX)					\
-   (((CTX)->Light.Enabled &&						\
-     (CTX)->Light.Model.ColorControl == GL_SEPARATE_SPECULAR_COLOR)	\
-    || (CTX)->Fog.ColorSumEnabled					\
-    || ((CTX)->VertexProgram._Current &&				\
-        ((CTX)->VertexProgram._Current != (CTX)->VertexProgram._TnlProgram) &&    \
-        ((CTX)->VertexProgram._Current->Base.InputsRead & VERT_BIT_COLOR1)) \
-    || ((CTX)->FragmentProgram._Current &&				\
-        ((CTX)->FragmentProgram._Current != (CTX)->FragmentProgram._TexEnvProgram) &&  \
-        ((CTX)->FragmentProgram._Current->Base.InputsRead & FRAG_BIT_COL1)) \
-   )
-
-
-/**
- * Is RGBA LogicOp enabled?
- */
-#define RGBA_LOGICOP_ENABLED(CTX) \
-  ((CTX)->Color.ColorLogicOpEnabled || \
-   ((CTX)->Color.BlendEnabled && (CTX)->Color.BlendEquationRGB == GL_LOGIC_OP))
 
 
 #endif /* CONTEXT_H */

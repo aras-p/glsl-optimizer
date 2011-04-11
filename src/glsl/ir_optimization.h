@@ -43,6 +43,7 @@ bool do_constant_folding(exec_list *instructions);
 bool do_constant_variable(exec_list *instructions);
 bool do_constant_variable_unlinked(exec_list *instructions);
 bool do_copy_propagation(exec_list *instructions);
+bool do_copy_propagation_elements(exec_list *instructions);
 bool do_constant_propagation(exec_list *instructions);
 bool do_dead_code(exec_list *instructions);
 bool do_dead_code_local(exec_list *instructions);
@@ -53,7 +54,7 @@ bool do_lower_jumps(exec_list *instructions, bool pull_out_jumps = true, bool lo
 bool do_lower_texture_projection(exec_list *instructions);
 bool do_if_simplification(exec_list *instructions);
 bool do_discard_simplification(exec_list *instructions);
-bool do_if_to_cond_assign(exec_list *instructions);
+bool lower_if_to_cond_assign(exec_list *instructions, unsigned max_depth = 0);
 bool do_mat_op_to_vec(exec_list *instructions);
 bool do_mod_to_fract(exec_list *instructions);
 bool do_noop_swizzle(exec_list *instructions);

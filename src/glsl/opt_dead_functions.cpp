@@ -1,109 +1,120 @@
- /*
-  * Copyright © 2010 Intel Corporation
-  *
-  * Permission is hereby granted, free of charge, to any person obtaining a
-  * copy of this software and associated documentation files (the "Software"),
-  * to deal in the Software without restriction, including without limitation
-  * the rights to use, copy, modify, merge, publish, distribute, sublicense,
-  * and/or sell copies of the Software, and to permit persons to whom the
-  * Software is furnished to do so, subject to the following conditions:
-  *
-  * The above copyright notice and this permission notice (including the next
-  * paragraph) shall be included in all copies or substantial portions of the
-  * Software.
-  *
-  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
-  * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
-  * DEALINGS IN THE SOFTWARE.
-  */
+/*
+ * Copyright © 2010 Intel Corporation
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a
+ * copy of this software and associated documentation files (the "Software"),
+ * to deal in the Software without restriction, including without limitation
+ * the rights to use, copy, modify, merge, publish, distribute, sublicense,
+ * and/or sell copies of the Software, and to permit persons to whom the
+ * Software is furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice (including the next
+ * paragraph) shall be included in all copies or substantial portions of the
+ * Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.  IN NO EVENT SHALL
+ * THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
+ * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER
+ * DEALINGS IN THE SOFTWARE.
+ */
 
- /**
-  * \file opt_dead_functions.cpp
-  *
-  * Eliminates unused functions from the linked program.
-  */
+/**
+ * \file opt_dead_functions.cpp
+ *
+ * Eliminates unused functions from the linked program.
+ */
 
- #include "ir.h"
- #include "ir_visitor.h"
- #include "ir_expression_flattening.h"
- #include "glsl_types.h"
+#include "ir.h"
+#include "ir_visitor.h"
+#include "ir_expression_flattening.h"
+#include "glsl_types.h"
 
- class signature_entry : public exec_node
- {
- public:
-    signature_entry(ir_function_signature *sig)
-    {
-       this->signature = sig;
-       this->used = false;
-    }
+class signature_entry : public exec_node
+{
+public:
+   signature_entry(ir_function_signature *sig)
+   {
+      this->signature = sig;
+      this->used = false;
+   }
 
-    ir_function_signature *signature;
-    bool used;
- };
+   ir_function_signature *signature;
+   bool used;
+};
 
- class ir_dead_functions_visitor : public ir_hierarchical_visitor {
- public:
-    ir_dead_functions_visitor()
-    {
-       this->mem_ctx = talloc_new(NULL);
-    }
+class ir_dead_functions_visitor : public ir_hierarchical_visitor {
+public:
+   ir_dead_functions_visitor()
+   {
+      this->mem_ctx = ralloc_context(NULL);
+      this->seen_another_function_signature = false;
+   }
 
-    ~ir_dead_functions_visitor()
-    {
-       talloc_free(this->mem_ctx);
-    }
+   ~ir_dead_functions_visitor()
+   {
+      ralloc_free(this->mem_ctx);
+   }
 
-    virtual ir_visitor_status visit_enter(ir_function_signature *);
-    virtual ir_visitor_status visit_enter(ir_call *);
+   virtual ir_visitor_status visit_enter(ir_function_signature *);
+   virtual ir_visitor_status visit_enter(ir_call *);
 
-    signature_entry *get_signature_entry(ir_function_signature *var);
+   signature_entry *get_signature_entry(ir_function_signature *var);
 
-    bool (*predicate)(ir_instruction *ir);
+   bool (*predicate)(ir_instruction *ir);
 
-    /* List of signature_entry */
-    exec_list signature_list;
-    void *mem_ctx;
- };
+   bool seen_another_function_signature;
 
-
- signature_entry *
- ir_dead_functions_visitor::get_signature_entry(ir_function_signature *sig)
- {
-    foreach_iter(exec_list_iterator, iter, this->signature_list) {
-       signature_entry *entry = (signature_entry *)iter.get();
-       if (entry->signature == sig)
-	  return entry;
-    }
-
-    signature_entry *entry = new(mem_ctx) signature_entry(sig);
-    this->signature_list.push_tail(entry);
-    return entry;
- }
+   /* List of signature_entry */
+   exec_list signature_list;
+   void *mem_ctx;
+};
 
 
- ir_visitor_status
- ir_dead_functions_visitor::visit_enter(ir_function_signature *ir)
- {
-    signature_entry *entry = this->get_signature_entry(ir);
+signature_entry *
+ir_dead_functions_visitor::get_signature_entry(ir_function_signature *sig)
+{
+   foreach_iter(exec_list_iterator, iter, this->signature_list) {
+      signature_entry *entry = (signature_entry *)iter.get();
+      if (entry->signature == sig)
+	 return entry;
+   }
 
-    if (strcmp(ir->function_name(), "main") == 0) {
-       entry->used = true;
-    }
-
-    return visit_continue;
- }
+   signature_entry *entry = new(mem_ctx) signature_entry(sig);
+   this->signature_list.push_tail(entry);
+   return entry;
+}
 
 
- ir_visitor_status
- ir_dead_functions_visitor::visit_enter(ir_call *ir)
- {
-    signature_entry *entry = this->get_signature_entry(ir->get_callee());
+ir_visitor_status
+ir_dead_functions_visitor::visit_enter(ir_function_signature *ir)
+{
+   signature_entry *entry = this->get_signature_entry(ir);
 
-    entry->used = true;
+   if (strcmp(ir->function_name(), "main") == 0) {
+      entry->used = true;
+   }
+
+   /* If this is the first signature to look at, no need to descend to see
+    * if it has calls to another function signature.
+    */
+   if (!this->seen_another_function_signature) {
+      this->seen_another_function_signature = true;
+      return visit_continue_with_parent;
+   }
+
+   return visit_continue;
+}
+
+
+ir_visitor_status
+ir_dead_functions_visitor::visit_enter(ir_call *ir)
+{
+   signature_entry *entry = this->get_signature_entry(ir->get_callee());
+
+   entry->used = true;
 
    return visit_continue;
 }

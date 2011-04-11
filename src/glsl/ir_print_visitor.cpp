@@ -25,6 +25,10 @@
 #include "glsl_types.h"
 #include "glsl_parser_extras.h"
 
+extern "C" {
+#include "program/hash_table.h"
+}
+
 static void print_type(const glsl_type *t);
 
 void
@@ -67,11 +71,46 @@ _mesa_print_ir(exec_list *instructions,
    printf("\n)");
 }
 
+ir_print_visitor::ir_print_visitor()
+{
+   indentation = 0;
+   printable_names =
+      hash_table_ctor(32, hash_table_pointer_hash, hash_table_pointer_compare);
+   symbols = _mesa_symbol_table_ctor();
+   mem_ctx = ralloc_context(NULL);
+}
+
+ir_print_visitor::~ir_print_visitor()
+{
+   hash_table_dtor(printable_names);
+   _mesa_symbol_table_dtor(symbols);
+   ralloc_free(mem_ctx);
+}
 
 void ir_print_visitor::indent(void)
 {
    for (int i = 0; i < indentation; i++)
       printf("  ");
+}
+
+const char *
+ir_print_visitor::unique_name(ir_variable *var)
+{
+   /* Do we already have a name for this variable? */
+   const char *name = (const char *) hash_table_find(this->printable_names, var);
+   if (name != NULL)
+      return name;
+
+   /* If there's no conflict, just use the original name */
+   if (_mesa_symbol_table_find_symbol(this->symbols, -1, var->name) == NULL) {
+      name = var->name;
+   } else {
+      static unsigned i = 1;
+      name = ralloc_asprintf(this->mem_ctx, "%s@%u", var->name, ++i);
+   }
+   hash_table_insert(this->printable_names, (void *) name, var);
+   _mesa_symbol_table_add_symbol(this->symbols, -1, name, var);
+   return name;
 }
 
 static void
@@ -97,19 +136,20 @@ void ir_print_visitor::visit(ir_variable *ir)
    const char *const cent = (ir->centroid) ? "centroid " : "";
    const char *const inv = (ir->invariant) ? "invariant " : "";
    const char *const mode[] = { "", "uniform ", "in ", "out ", "inout ",
-			        "temporary " };
+			        "const_in ", "sys ", "temporary " };
    const char *const interp[] = { "", "flat", "noperspective" };
 
    printf("(%s%s%s%s) ",
 	  cent, inv, mode[ir->mode], interp[ir->interpolation]);
 
    print_type(ir->type);
-   printf(" %s@%p)", ir->name, (void *) ir);
+   printf(" %s)", unique_name(ir));
 }
 
 
 void ir_print_visitor::visit(ir_function_signature *ir)
 {
+   _mesa_symbol_table_push_scope(symbols);
    printf("(signature ");
    indentation++;
 
@@ -148,6 +188,7 @@ void ir_print_visitor::visit(ir_function_signature *ir)
    indent();
    printf("))\n");
    indentation--;
+   _mesa_symbol_table_pop_scope(symbols);
 }
 
 
@@ -187,12 +228,23 @@ void ir_print_visitor::visit(ir_texture *ir)
 {
    printf("(%s ", ir->opcode_string());
 
+   print_type(ir->type);
+   printf(" ");
+
    ir->sampler->accept(this);
    printf(" ");
 
    ir->coordinate->accept(this);
 
-   printf(" (%d %d %d) ", ir->offsets[0], ir->offsets[1], ir->offsets[2]);
+   printf(" ");
+
+   if (ir->offset != NULL) {
+      ir->offset->accept(this);
+   } else {
+      printf("0");
+   }
+
+   printf(" ");
 
    if (ir->op != ir_txf) {
       if (ir->projector)
@@ -254,7 +306,7 @@ void ir_print_visitor::visit(ir_swizzle *ir)
 void ir_print_visitor::visit(ir_dereference_variable *ir)
 {
    ir_variable *var = ir->variable_referenced();
-   printf("(var_ref %s@%p) ", var->name, (void *) var);
+   printf("(var_ref %s) ", unique_name(var));
 }
 
 
@@ -281,9 +333,6 @@ void ir_print_visitor::visit(ir_assignment *ir)
 
    if (ir->condition)
       ir->condition->accept(this);
-   else
-      printf("(constant bool (1))");
-
 
    char mask[5];
    unsigned j = 0;

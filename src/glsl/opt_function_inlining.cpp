@@ -103,7 +103,7 @@ do_function_inlining(exec_list *instructions)
 static void
 replace_return_with_assignment(ir_instruction *ir, void *data)
 {
-   void *ctx = talloc_parent(ir);
+   void *ctx = ralloc_parent(ir);
    ir_variable *retval = (ir_variable *)data;
    ir_return *ret = ir->as_return();
 
@@ -161,7 +161,7 @@ static void rename_inlined_variable (ir_instruction* new_ir, ir_function_signatu
 ir_rvalue *
 ir_call::generate_inline(ir_instruction *next_ir, ir_function_signature* parent)
 {
-   void *ctx = talloc_parent(this);
+   void *ctx = ralloc_parent(this);
    ir_variable **parameters;
    int num_parameters;
    int i;
@@ -177,7 +177,7 @@ ir_call::generate_inline(ir_instruction *next_ir, ir_function_signature* parent)
    parameters = new ir_variable *[num_parameters];
 
    /* Generate storage for the return value. */
-   if (this->callee->return_type) {
+   if (!this->callee->return_type->is_void()) {
       retval = new(ctx) ir_variable(this->callee->return_type, "_ret_val",
 				    ir_var_temporary, this->callee->precision);
       next_ir->insert_before(retval);
@@ -217,6 +217,7 @@ ir_call::generate_inline(ir_instruction *next_ir, ir_function_signature* parent)
 
       /* Move the actual param into our param variable if it's an 'in' type. */
       if (parameters[i] && (sig_param->mode == ir_var_in ||
+			    sig_param->mode == ir_var_const_in ||
 			    sig_param->mode == ir_var_inout)) {
 	 ir_assignment *assign;
 
@@ -261,10 +262,7 @@ ir_call::generate_inline(ir_instruction *next_ir, ir_function_signature* parent)
    }
 
    /* Now push those new instructions in. */
-   foreach_iter(exec_list_iterator, iter, new_instructions) {
-      ir_instruction *ir = (ir_instruction *)iter.get();
-      next_ir->insert_before(ir);
-   }
+   next_ir->insert_before(&new_instructions);
 
    /* Copy back the value of any 'out' parameters from the function body
     * variables to our own.
@@ -410,7 +408,7 @@ ir_sampler_replacement_visitor::replace_deref(ir_dereference **deref)
 {
    ir_dereference_variable *deref_var = (*deref)->as_dereference_variable();
    if (deref_var && deref_var->var == this->sampler) {
-      *deref = this->deref->clone(talloc_parent(*deref), NULL);
+      *deref = this->deref->clone(ralloc_parent(*deref), NULL);
    }
 }
 

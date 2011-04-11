@@ -70,6 +70,7 @@ public:
    virtual ir_visitor_status visit_leave(ir_swizzle *ir);
 
    virtual ir_visitor_status visit_enter(ir_assignment *ir);
+   virtual ir_visitor_status visit_enter(ir_call *ir);
 
    static void validate_ir(ir_instruction *ir, void *data);
 
@@ -173,13 +174,26 @@ ir_validate::visit_enter(ir_function *ir)
 
    this->validate_ir(ir, this->data);
 
+   /* Verify that all of the things stored in the list of signatures are,
+    * in fact, function signatures.
+    */
+   foreach_list(node, &ir->signatures) {
+      ir_instruction *sig = (ir_instruction *) node;
+
+      if (sig->ir_type != ir_type_function_signature) {
+	 printf("Non-signature in signature list of function `%s'\n",
+		ir->name);
+	 abort();
+      }
+   }
+
    return visit_continue;
 }
 
 ir_visitor_status
 ir_validate::visit_leave(ir_function *ir)
 {
-   assert(talloc_parent(ir->name) == ir);
+   assert(ralloc_parent(ir->name) == ir);
 
    this->current_function = NULL;
    return visit_continue;
@@ -195,6 +209,12 @@ ir_validate::visit_enter(ir_function_signature *ir)
 	     (void *) ir,
 	     this->current_function->name, (void *) this->current_function,
 	     ir->function_name(), (void *) ir->function());
+      abort();
+   }
+
+   if (ir->return_type == NULL) {
+      printf("Function signature %p for function %s has NULL return type.\n",
+	     (void *) ir, ir->function_name());
       abort();
    }
 
@@ -450,9 +470,24 @@ ir_validate::visit(ir_variable *ir)
     * declared before it is dereferenced.
     */
    if (ir->name)
-      assert(talloc_parent(ir->name) == ir);
+      assert(ralloc_parent(ir->name) == ir);
 
    hash_table_insert(ht, ir, ir);
+
+
+   /* If a variable is an array, verify that the maximum array index is in
+    * bounds.  There was once an error in AST-to-HIR conversion that set this
+    * to be out of bounds.
+    */
+   if (ir->type->array_size() > 0) {
+      if (ir->max_array_access >= ir->type->length) {
+	 printf("ir_variable has maximum access out of bounds (%d vs %d)\n",
+		ir->max_array_access, ir->type->length - 1);
+	 ir->print();
+	 abort();
+      }
+   }
+
    return visit_continue;
 }
 
@@ -484,6 +519,19 @@ ir_validate::visit_enter(ir_assignment *ir)
    }
 
    this->validate_ir(ir, this->data);
+
+   return visit_continue;
+}
+
+ir_visitor_status
+ir_validate::visit_enter(ir_call *ir)
+{
+   ir_function_signature *const callee = ir->get_callee();
+
+   if (callee->ir_type != ir_type_function_signature) {
+      printf("IR called by ir_call is not ir_function_signature!\n");
+      abort();
+   }
 
    return visit_continue;
 }

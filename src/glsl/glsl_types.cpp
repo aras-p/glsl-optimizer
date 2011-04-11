@@ -21,7 +21,7 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#include <cstdio>
+#include <stdio.h>
 #include <stdlib.h>
 #include "main/core.h" /* for Elements */
 #include "glsl_symbol_table.h"
@@ -37,10 +37,10 @@ hash_table *glsl_type::record_types = NULL;
 void *glsl_type::mem_ctx = NULL;
 
 void
-glsl_type::init_talloc_type_ctx(void)
+glsl_type::init_ralloc_type_ctx(void)
 {
    if (glsl_type::mem_ctx == NULL) {
-      glsl_type::mem_ctx = talloc_autofree_context();
+      glsl_type::mem_ctx = ralloc_autofree_context();
       assert(glsl_type::mem_ctx != NULL);
    }
 }
@@ -55,8 +55,8 @@ glsl_type::glsl_type(GLenum gl_type,
    vector_elements(vector_elements), matrix_columns(matrix_columns),
    length(0)
 {
-   init_talloc_type_ctx();
-   this->name = talloc_strdup(this->mem_ctx, name);
+   init_ralloc_type_ctx();
+   this->name = ralloc_strdup(this->mem_ctx, name);
    /* Neither dimension is zero or both dimensions are zero.
     */
    assert((vector_elements == 0) == (matrix_columns == 0));
@@ -73,8 +73,8 @@ glsl_type::glsl_type(GLenum gl_type,
    vector_elements(0), matrix_columns(0),
    length(0)
 {
-   init_talloc_type_ctx();
-   this->name = talloc_strdup(this->mem_ctx, name);
+   init_ralloc_type_ctx();
+   this->name = ralloc_strdup(this->mem_ctx, name);
    memset(& fields, 0, sizeof(fields));
 }
 
@@ -88,13 +88,13 @@ glsl_type::glsl_type(const glsl_struct_field *fields, unsigned num_fields,
 {
    unsigned int i;
 
-   init_talloc_type_ctx();
-   this->name = talloc_strdup(this->mem_ctx, name);
-   this->fields.structure = talloc_array(this->mem_ctx,
+   init_ralloc_type_ctx();
+   this->name = ralloc_strdup(this->mem_ctx, name);
+   this->fields.structure = ralloc_array(this->mem_ctx,
 					 glsl_struct_field, length);
    for (i = 0; i < length; i++) {
       this->fields.structure[i].type = fields[i].type;
-      this->fields.structure[i].name = talloc_strdup(this->fields.structure,
+      this->fields.structure[i].name = ralloc_strdup(this->fields.structure,
 						     fields[i].name);
 	  this->fields.structure[i].precision = fields[i].precision;
    }
@@ -121,7 +121,7 @@ glsl_type::generate_100ES_types(glsl_symbol_table *symtab)
    add_types_to_symbol_table(symtab, builtin_structure_types,
 			     Elements(builtin_structure_types),
 			     false);
-   add_types_to_symbol_table(symtab, &void_type, 1, false);
+   add_types_to_symbol_table(symtab, void_type, 1, false);
 }
 
 void
@@ -132,6 +132,7 @@ glsl_type::generate_110_types(glsl_symbol_table *symtab)
    add_types_to_symbol_table(symtab, builtin_110_types,
 			     Elements(builtin_110_types),
 			     false);
+   add_types_to_symbol_table(symtab, &_sampler3D_type, 1, false);
    add_types_to_symbol_table(symtab, builtin_110_deprecated_structure_types,
 			     Elements(builtin_110_deprecated_structure_types),
 			     false);
@@ -180,6 +181,13 @@ glsl_type::generate_EXT_texture_array_types(glsl_symbol_table *symtab,
 
 
 void
+glsl_type::generate_OES_texture_3D_types(glsl_symbol_table *symtab, bool warn)
+{
+   add_types_to_symbol_table(symtab, &_sampler3D_type, 1, warn);
+}
+
+
+void
 _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
 {
    switch (state->language_version) {
@@ -204,6 +212,10 @@ _mesa_glsl_initialize_types(struct _mesa_glsl_parse_state *state)
    if (state->ARB_texture_rectangle_enable) {
       glsl_type::generate_ARB_texture_rectangle_types(state->symbols,
 					   state->ARB_texture_rectangle_warn);
+   }
+   if (state->OES_texture_3D_enable && state->language_version == 100) {
+      glsl_type::generate_OES_texture_3D_types(state->symbols,
+					       state->OES_texture_3D_warn);
    }
 
    if (state->EXT_texture_array_enable && state->language_version < 130) {
@@ -265,7 +277,7 @@ glsl_type::glsl_type(const glsl_type *array, unsigned length) :
     * NUL.
     */
    const unsigned name_length = strlen(array->name) + 10 + 3;
-   char *const n = (char *) talloc_size(this->mem_ctx, name_length);
+   char *const n = (char *) ralloc_size(this->mem_ctx, name_length);
 
    if (length == 0)
       snprintf(n, name_length, "%s[]", array->name);
@@ -280,7 +292,7 @@ const glsl_type *
 glsl_type::get_instance(unsigned base_type, unsigned rows, unsigned columns)
 {
    if (base_type == GLSL_TYPE_VOID)
-      return &void_type;
+      return void_type;
 
    if ((rows < 1) || (rows > 4) || (columns < 1) || (columns > 4))
       return error_type;
@@ -355,7 +367,7 @@ glsl_type::get_array_instance(const glsl_type *base, unsigned array_size)
    if (t == NULL) {
       t = new glsl_type(base, array_size);
 
-      hash_table_insert(array_types, (void *) t, talloc_strdup(mem_ctx, key));
+      hash_table_insert(array_types, (void *) t, ralloc_strdup(mem_ctx, key));
    }
 
    assert(t->base_type == GLSL_TYPE_ARRAY);

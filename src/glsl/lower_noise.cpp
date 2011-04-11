@@ -51,7 +51,7 @@ public:
        * that implements noise.  No hardware has a noise instruction.
        */
       if (expr->operation == ir_unop_noise) {
-	 *rvalue = ir_constant::zero(talloc_parent(expr), expr->type);
+	 *rvalue = ir_constant::zero(ralloc_parent(expr), expr->type);
 	 this->progress = true;
       }
    }

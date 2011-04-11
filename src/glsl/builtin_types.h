@@ -24,10 +24,15 @@
 const glsl_type glsl_type::_error_type =
    glsl_type(GL_INVALID_ENUM, GLSL_TYPE_ERROR, 0, 0, "");
 
-const glsl_type glsl_type::void_type =
+const glsl_type glsl_type::_void_type =
    glsl_type(GL_INVALID_ENUM, GLSL_TYPE_VOID, 0, 0, "void");
 
+const glsl_type glsl_type::_sampler3D_type =
+   glsl_type(GL_SAMPLER_3D, GLSL_SAMPLER_DIM_3D, 0, 0, GLSL_TYPE_FLOAT,
+	     "sampler3D");
+
 const glsl_type *const glsl_type::error_type = & glsl_type::_error_type;
+const glsl_type *const glsl_type::void_type = & glsl_type::_void_type;
 
 /** \name Core built-in types
  *
@@ -180,8 +185,6 @@ const glsl_type glsl_type::builtin_110_types[] = {
 	     "sampler1DShadow"),
    glsl_type(GL_SAMPLER_2D_SHADOW, GLSL_SAMPLER_DIM_2D, 1, 0, GLSL_TYPE_FLOAT,
 	     "sampler2DShadow"),
-   glsl_type(GL_SAMPLER_3D,   GLSL_SAMPLER_DIM_3D, 0, 0, GLSL_TYPE_FLOAT,
-	     "sampler3D"),
 };
 /*@}*/
 

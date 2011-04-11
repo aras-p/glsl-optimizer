@@ -78,13 +78,13 @@ public:
    ir_constant_propagation_visitor()
    {
       progress = false;
-      mem_ctx = talloc_new(0);
+      mem_ctx = ralloc_context(0);
       this->acp = new(mem_ctx) exec_list;
       this->kills = new(mem_ctx) exec_list;
    }
    ~ir_constant_propagation_visitor()
    {
-      talloc_free(mem_ctx);
+      ralloc_free(mem_ctx);
    }
 
    virtual ir_visitor_status visit_enter(class ir_loop *);
@@ -195,7 +195,7 @@ ir_constant_propagation_visitor::handle_rvalue(ir_rvalue **rvalue)
       }
    }
 
-   *rvalue = new(talloc_parent(deref)) ir_constant(type, &data);
+   *rvalue = new(ralloc_parent(deref)) ir_constant(type, &data);
    this->progress = true;
 }
 
@@ -398,11 +398,8 @@ ir_constant_propagation_visitor::add_constant(ir_assignment *ir)
 {
    acp_entry *entry;
 
-   if (ir->condition) {
-      ir_constant *condition = ir->condition->as_constant();
-      if (!condition || !condition->value.b[0])
-	 return;
-   }
+   if (ir->condition)
+      return;
 
    if (!ir->write_mask)
       return;

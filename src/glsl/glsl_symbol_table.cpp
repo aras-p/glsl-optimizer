@@ -26,22 +26,19 @@
 
 class symbol_table_entry {
 public:
-   /* Callers of this talloc-based new need not call delete. It's
-    * easier to just talloc_free 'ctx' (or any of its ancestors). */
+   /* Callers of this ralloc-based new need not call delete. It's
+    * easier to just ralloc_free 'ctx' (or any of its ancestors). */
    static void* operator new(size_t size, void *ctx)
    {
-      void *entry = talloc_size(ctx, size);
+      void *entry = ralloc_size(ctx, size);
       assert(entry != NULL);
       return entry;
    }
 
-   /* If the user *does* call delete, that's OK, we will just
-    * talloc_free in that case. Here, C++ will have already called the
-    * destructor so tell talloc not to do that again. */
-   static void operator delete(void *table)
+   /* If the user *does* call delete, that's OK, we will just ralloc_free. */
+   static void operator delete(void *entry)
    {
-      talloc_set_destructor(table, NULL);
-      talloc_free(table);
+      ralloc_free(entry);
    }
 
    symbol_table_entry(ir_variable *v)                     : v(v), f(0), t(0) {}
@@ -57,13 +54,13 @@ glsl_symbol_table::glsl_symbol_table()
 {
    this->language_version = 120;
    this->table = _mesa_symbol_table_ctor();
-   this->mem_ctx = talloc_init("symbol table entries");
+   this->mem_ctx = ralloc_context(NULL);
 }
 
 glsl_symbol_table::~glsl_symbol_table()
 {
    _mesa_symbol_table_dtor(table);
-   talloc_free(mem_ctx);
+   ralloc_free(mem_ctx);
 }
 
 void glsl_symbol_table::push_scope()
@@ -140,6 +137,7 @@ void glsl_symbol_table::add_global_function(ir_function *f)
    symbol_table_entry *entry = new(mem_ctx) symbol_table_entry(f);
    int added = _mesa_symbol_table_add_global_symbol(table, -1, f->name, entry);
    assert(added == 0);
+   (void)added;
 }
 
 ir_variable *glsl_symbol_table::get_variable(const char *name)

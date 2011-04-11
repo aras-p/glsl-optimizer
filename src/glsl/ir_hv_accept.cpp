@@ -187,6 +187,12 @@ ir_texture::accept(ir_hierarchical_visitor *v)
 	 return (s == visit_continue_with_parent) ? visit_continue : s;
    }
 
+   if (this->offset) {
+      s = this->offset->accept(v);
+      if (s != visit_continue)
+	 return (s == visit_continue_with_parent) ? visit_continue : s;
+   }
+
    switch (this->op) {
    case ir_tex:
       break;
