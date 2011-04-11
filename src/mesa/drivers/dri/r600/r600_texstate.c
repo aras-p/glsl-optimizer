@@ -571,7 +571,7 @@ static GLboolean r600GetTexFormat(struct gl_texture_object *tObj, gl_format mesa
 		default:
 			break;
 		};
-		switch (tObj->DepthMode) {
+		switch (tObj->Sampler.DepthMode) {
 		case GL_LUMINANCE:  /* X, X, X, ONE */
 			SETfield(t->SQ_TEX_RESOURCE4, SQ_SEL_X,
 				 SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_mask);
@@ -777,18 +777,18 @@ static GLboolean setup_hardware_state(struct gl_context * ctx, struct gl_texture
 	SETfield(t->SQ_TEX_RESOURCE5, t->maxLod - t->minLod, LAST_LEVEL_shift, LAST_LEVEL_mask);
 
 	SETfield(t->SQ_TEX_SAMPLER1,
-		S_FIXED(CLAMP(t->base.MinLod - t->minLod, 0, 15), 6),
+		S_FIXED(CLAMP(t->base.Sampler.MinLod - t->minLod, 0, 15), 6),
 		MIN_LOD_shift, MIN_LOD_mask);
 	SETfield(t->SQ_TEX_SAMPLER1,
-		S_FIXED(CLAMP(t->base.MaxLod - t->minLod, 0, 15), 6),
+		S_FIXED(CLAMP(t->base.Sampler.MaxLod - t->minLod, 0, 15), 6),
 		MAX_LOD_shift, MAX_LOD_mask);
 	SETfield(t->SQ_TEX_SAMPLER1,
-		S_FIXED(CLAMP(ctx->Texture.Unit[unit].LodBias + t->base.LodBias, -16, 16), 6),
+		S_FIXED(CLAMP(ctx->Texture.Unit[unit].LodBias + t->base.Sampler.LodBias, -16, 16), 6),
 		SQ_TEX_SAMPLER_WORD1_0__LOD_BIAS_shift, SQ_TEX_SAMPLER_WORD1_0__LOD_BIAS_mask);
 
-	if(texObj->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB)
+	if(texObj->Sampler.CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB)
 	{
-		SETfield(t->SQ_TEX_SAMPLER0, r600_translate_shadow_func(texObj->CompareFunc), DEPTH_COMPARE_FUNCTION_shift, DEPTH_COMPARE_FUNCTION_mask);
+		SETfield(t->SQ_TEX_SAMPLER0, r600_translate_shadow_func(texObj->Sampler.CompareFunc), DEPTH_COMPARE_FUNCTION_shift, DEPTH_COMPARE_FUNCTION_mask);
 	}
 	else
 	{

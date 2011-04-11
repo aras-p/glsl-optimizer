@@ -262,7 +262,7 @@ static void r600SetTexFilter(radeonTexObjPtr t, GLenum minf, GLenum magf, GLfloa
 	}
 }
 
-static void r600SetTexSampler.BorderColor(radeonTexObjPtr t, const GLfloat color[4])
+static void r600SetTexBorderColor(radeonTexObjPtr t, const GLfloat color[4])
 {
 	t->TD_PS_SAMPLER0_BORDER_ALPHA = *((uint32_t*)&(color[3]));
 	t->TD_PS_SAMPLER0_BORDER_BLUE = *((uint32_t*)&(color[2]));
@@ -292,7 +292,7 @@ static void r600TexParameter(struct gl_context * ctx, GLenum target,
 	case GL_TEXTURE_MIN_FILTER:
 	case GL_TEXTURE_MAG_FILTER:
 	case GL_TEXTURE_MAX_ANISOTROPY_EXT:
-		r600SetTexFilter(t, texObj->Sampler.MinFilter, texObj->Sampler.MagFilter, texObj->MaxAnisotropy);
+		r600SetTexFilter(t, texObj->Sampler.MinFilter, texObj->Sampler.MagFilter, texObj->Sampler.MaxAnisotropy);
 		break;
 
 	case GL_TEXTURE_WRAP_S:
@@ -302,7 +302,7 @@ static void r600TexParameter(struct gl_context * ctx, GLenum target,
 		break;
 
 	case GL_TEXTURE_BORDER_COLOR:
-		r600SetTexSampler.BorderColor(t, texObj->Sampler.BorderColor.f);
+		r600SetTexBorderColor(t, texObj->Sampler.BorderColor.f);
 		break;
 
 	case GL_TEXTURE_BASE_LEVEL:
@@ -382,13 +382,13 @@ static struct gl_texture_object *r600NewTextureObject(struct gl_context * ctx,
 			t, _mesa_lookup_enum_by_nr(target));
 
 	_mesa_initialize_texture_object(&t->base, name, target);
-	t->base.MaxAnisotropy = rmesa->radeon.initialMaxAnisotropy;
+	t->base.Sampler.MaxAnisotropy = rmesa->radeon.initialMaxAnisotropy;
 
 	/* Initialize hardware state */
 	r600SetTexDefaultState(t);
 	r600UpdateTexWrap(t);
-	r600SetTexFilter(t, t->base.Sampler.MinFilter, t->base.Sampler.MagFilter, t->base.MaxAnisotropy);
-	r600SetTexSampler.BorderColor(t, t->base.Sampler.BorderColor.f);
+	r600SetTexFilter(t, t->base.Sampler.MinFilter, t->base.Sampler.MagFilter, t->base.Sampler.MaxAnisotropy);
+	r600SetTexBorderColor(t, t->base.Sampler.BorderColor.f);
 
 	return &t->base;
 }
