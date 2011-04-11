@@ -14840,6 +14840,216 @@ static const char *functions_for_130_vert [] = {
    builtin_transpose,
    builtin_trunc,
 };
+static const char prototypes_for_ARB_shader_texture_lod_frag[] =
+   "(\n"
+   "(function texture1DLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1D sampler)\n"
+   "      (declare (in) float coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function texture1DProjLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1D sampler)\n"
+   "      (declare (in) vec2 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1D sampler)\n"
+   "      (declare (in) vec4 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function texture2DLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2D sampler)\n"
+   "      (declare (in) vec2 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function texture2DProjLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2D sampler)\n"
+   "      (declare (in) vec3 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2D sampler)\n"
+   "      (declare (in) vec4 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function texture3DLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler3D sampler)\n"
+   "      (declare (in) vec3 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function texture3DProjLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler3D sampler)\n"
+   "      (declare (in) vec4 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function textureCubeLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) samplerCube sampler)\n"
+   "      (declare (in) vec3 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function shadow1DLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1DShadow sampler)\n"
+   "      (declare (in) vec3 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function shadow2DLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DShadow sampler)\n"
+   "      (declare (in) vec3 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function shadow1DProjLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1DShadow sampler)\n"
+   "      (declare (in) vec4 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function shadow2DProjLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DShadow sampler)\n"
+   "      (declare (in) vec4 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ())))"
+;
+static const char *functions_for_ARB_shader_texture_lod_frag [] = {
+   builtin_shadow1DLod,
+   builtin_shadow1DProjLod,
+   builtin_shadow2DLod,
+   builtin_shadow2DProjLod,
+   builtin_texture1DLod,
+   builtin_texture1DProjLod,
+   builtin_texture2DLod,
+   builtin_texture2DProjLod,
+   builtin_texture3DLod,
+   builtin_texture3DProjLod,
+   builtin_textureCubeLod,
+};
+static const char prototypes_for_ARB_shader_texture_lod_vert[] =
+   "(\n"
+   "(function texture1DLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1D sampler)\n"
+   "      (declare (in) float coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function texture1DProjLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1D sampler)\n"
+   "      (declare (in) vec2 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1D sampler)\n"
+   "      (declare (in) vec4 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function texture2DLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2D sampler)\n"
+   "      (declare (in) vec2 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function texture2DProjLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2D sampler)\n"
+   "      (declare (in) vec3 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ())\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2D sampler)\n"
+   "      (declare (in) vec4 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function texture3DLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler3D sampler)\n"
+   "      (declare (in) vec3 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function texture3DProjLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler3D sampler)\n"
+   "      (declare (in) vec4 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function textureCubeLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) samplerCube sampler)\n"
+   "      (declare (in) vec3 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function shadow1DLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1DShadow sampler)\n"
+   "      (declare (in) vec3 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function shadow2DLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DShadow sampler)\n"
+   "      (declare (in) vec3 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function shadow1DProjLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler1DShadow sampler)\n"
+   "      (declare (in) vec4 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function shadow2DProjLod\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2DShadow sampler)\n"
+   "      (declare (in) vec4 coord)\n"
+   "      (declare (in) float lod))\n"
+   "    ())))"
+;
+static const char *functions_for_ARB_shader_texture_lod_vert [] = {
+   builtin_shadow1DLod,
+   builtin_shadow1DProjLod,
+   builtin_shadow2DLod,
+   builtin_shadow2DProjLod,
+   builtin_texture1DLod,
+   builtin_texture1DProjLod,
+   builtin_texture2DLod,
+   builtin_texture2DProjLod,
+   builtin_texture3DLod,
+   builtin_texture3DProjLod,
+   builtin_textureCubeLod,
+};
 static const char prototypes_for_ARB_texture_rectangle_frag[] =
    "(\n"
    "(function texture2DRect\n"
@@ -15090,7 +15300,7 @@ static const char *functions_for_OES_texture_3D_vert [] = {
    builtin_texture3DProj,
    builtin_texture3DProjLod,
 };
-static gl_shader *builtin_profiles[14];
+static gl_shader *builtin_profiles[16];
 
 void *builtin_mem_ctx = NULL;
 
@@ -15187,43 +15397,57 @@ _mesa_glsl_initialize_functions(struct _mesa_glsl_parse_state *state)
                          Elements(functions_for_130_vert));
    }
 
-   if (state->target == fragment_shader && state->ARB_texture_rectangle_enable) {
+   if (state->target == fragment_shader && state->ARB_shader_texture_lod_enable) {
       _mesa_read_profile(state, 8,
+                         prototypes_for_ARB_shader_texture_lod_frag,
+                         functions_for_ARB_shader_texture_lod_frag,
+                         Elements(functions_for_ARB_shader_texture_lod_frag));
+   }
+
+   if (state->target == vertex_shader && state->ARB_shader_texture_lod_enable) {
+      _mesa_read_profile(state, 9,
+                         prototypes_for_ARB_shader_texture_lod_vert,
+                         functions_for_ARB_shader_texture_lod_vert,
+                         Elements(functions_for_ARB_shader_texture_lod_vert));
+   }
+
+   if (state->target == fragment_shader && state->ARB_texture_rectangle_enable) {
+      _mesa_read_profile(state, 10,
                          prototypes_for_ARB_texture_rectangle_frag,
                          functions_for_ARB_texture_rectangle_frag,
                          Elements(functions_for_ARB_texture_rectangle_frag));
    }
 
    if (state->target == vertex_shader && state->ARB_texture_rectangle_enable) {
-      _mesa_read_profile(state, 9,
+      _mesa_read_profile(state, 11,
                          prototypes_for_ARB_texture_rectangle_vert,
                          functions_for_ARB_texture_rectangle_vert,
                          Elements(functions_for_ARB_texture_rectangle_vert));
    }
 
    if (state->target == fragment_shader && state->EXT_texture_array_enable) {
-      _mesa_read_profile(state, 10,
+      _mesa_read_profile(state, 12,
                          prototypes_for_EXT_texture_array_frag,
                          functions_for_EXT_texture_array_frag,
                          Elements(functions_for_EXT_texture_array_frag));
    }
 
    if (state->target == vertex_shader && state->EXT_texture_array_enable) {
-      _mesa_read_profile(state, 11,
+      _mesa_read_profile(state, 13,
                          prototypes_for_EXT_texture_array_vert,
                          functions_for_EXT_texture_array_vert,
                          Elements(functions_for_EXT_texture_array_vert));
    }
 
    if (state->target == fragment_shader && state->OES_texture_3D_enable) {
-      _mesa_read_profile(state, 12,
+      _mesa_read_profile(state, 14,
                          prototypes_for_OES_texture_3D_frag,
                          functions_for_OES_texture_3D_frag,
                          Elements(functions_for_OES_texture_3D_frag));
    }
 
    if (state->target == vertex_shader && state->OES_texture_3D_enable) {
-      _mesa_read_profile(state, 13,
+      _mesa_read_profile(state, 15,
                          prototypes_for_OES_texture_3D_vert,
                          functions_for_OES_texture_3D_vert,
                          Elements(functions_for_OES_texture_3D_vert));
