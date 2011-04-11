@@ -105,6 +105,10 @@ _mesa_print_ir_glsl(exec_list *instructions,
 	    struct _mesa_glsl_parse_state *state,
 		char* buffer, PrintGlslMode mode)
 {
+	if (state) {
+		if (state->ARB_shader_texture_lod_enable)
+			ralloc_strcat (&buffer, "#extension GL_ARB_shader_texture_lod : enable\n");
+	}
    if (state) {
 	   ir_struct_usage_visitor v;
 	   v.run (instructions);
