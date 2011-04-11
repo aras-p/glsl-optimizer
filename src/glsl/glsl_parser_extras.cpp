@@ -261,6 +261,9 @@ _mesa_glsl_process_extension(const char *name, YYLTYPE *name_locp,
       state->OES_texture_3D_warn = (ext_mode == extension_warn);
 
       unsupported = !state->extensions->EXT_texture3D;
+   } else if (strcmp(name, "GL_ARB_shader_texture_lod") == 0) {
+	   state->ARB_shader_texture_lod_enable = (ext_mode != extension_disable);
+	   state->ARB_shader_texture_lod_warn = (ext_mode == extension_warn);
    } else {
       unsupported = true;
    }

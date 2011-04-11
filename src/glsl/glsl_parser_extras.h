@@ -174,6 +174,8 @@ struct _mesa_glsl_parse_state {
    unsigned AMD_conservative_depth_warn:1;
    unsigned OES_texture_3D_enable:1;
    unsigned OES_texture_3D_warn:1;
+   unsigned ARB_shader_texture_lod_enable:1;
+   unsigned ARB_shader_texture_lod_warn:1;
    /*@}*/
 
    /** Extensions supported by the OpenGL implementation. */
