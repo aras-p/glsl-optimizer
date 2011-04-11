@@ -585,7 +585,8 @@ bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
                   unsigned buffer_width, unsigned buffer_height,
                   unsigned blocks_x, unsigned blocks_y,
                   unsigned nr_of_render_targets,
-                  struct pipe_sampler_view *matrix)
+                  struct pipe_sampler_view *matrix,
+                  struct pipe_sampler_view *transpose)
 {
    assert(idct && pipe && matrix);
 
@@ -595,7 +596,9 @@ bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
    idct->blocks_x = blocks_x;
    idct->blocks_y = blocks_y;
    idct->nr_of_render_targets = nr_of_render_targets;
+
    pipe_sampler_view_reference(&idct->matrix, matrix);
+   pipe_sampler_view_reference(&idct->transpose, transpose);
 
    if(!init_shaders(idct))
       return false;
@@ -632,7 +635,7 @@ vl_idct_init_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer,
 
    pipe_sampler_view_reference(&buffer->sampler_views.individual.matrix, idct->matrix);
    pipe_sampler_view_reference(&buffer->sampler_views.individual.source, source);
-   pipe_sampler_view_reference(&buffer->sampler_views.individual.transpose, idct->matrix);
+   pipe_sampler_view_reference(&buffer->sampler_views.individual.transpose, idct->transpose);
    pipe_sampler_view_reference(&buffer->sampler_views.individual.intermediate, intermediate);
 
    if (!init_intermediate(idct, buffer))

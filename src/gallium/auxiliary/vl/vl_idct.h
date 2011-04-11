@@ -50,6 +50,7 @@ struct vl_idct
    void *matrix_fs, *transpose_fs;
 
    struct pipe_sampler_view *matrix;
+   struct pipe_sampler_view *transpose;
 };
 
 /* a set of buffers to work with */
@@ -77,7 +78,8 @@ bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
                   unsigned buffer_width, unsigned buffer_height,
                   unsigned blocks_x, unsigned blocks_y,
                   unsigned nr_of_render_targets,
-                  struct pipe_sampler_view *matrix);
+                  struct pipe_sampler_view *matrix,
+                  struct pipe_sampler_view *transpose);
 
 /* destroy an idct instance */
 void vl_idct_cleanup(struct vl_idct *idct);

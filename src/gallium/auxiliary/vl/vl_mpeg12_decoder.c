@@ -35,17 +35,18 @@
 #include "vl_mpeg12_decoder.h"
 #include "vl_defines.h"
 
-#define SCALE_FACTOR_16_TO_9 (32768.0f / 256.0f)
+#define SCALE_FACTOR_SNORM (32768.0f / 256.0f)
+#define SCALE_FACTOR_SSCALED (1.0f / 256.0f)
 
 static const unsigned const_empty_block_mask_420[3][2][2] = {
-        { { 0x20, 0x10 },  { 0x08, 0x04 } },
-        { { 0x02, 0x02 },  { 0x02, 0x02 } },
-        { { 0x01, 0x01 },  { 0x01, 0x01 } }
+   { { 0x20, 0x10 },  { 0x08, 0x04 } },
+   { { 0x02, 0x02 },  { 0x02, 0x02 } },
+   { { 0x01, 0x01 },  { 0x01, 0x01 } }
 };
 
 static const enum pipe_format const_idct_source_formats[] = {
-   PIPE_FORMAT_R16G16B16A16_SNORM
-   //PIPE_FORMAT_R16G16B16A16_SSCALED
+   PIPE_FORMAT_R16G16B16A16_SNORM,
+   PIPE_FORMAT_R16G16B16A16_SSCALED
 };
 
 static const unsigned num_idct_source_formats =
@@ -53,17 +54,17 @@ static const unsigned num_idct_source_formats =
 
 static const enum pipe_format const_idct_intermediate_formats[] = {
    PIPE_FORMAT_R16G16B16A16_FLOAT,
-   PIPE_FORMAT_R16G16B16A16_SNORM
-   //PIPE_FORMAT_R32G32B32A32_FLOAT,
-   //PIPE_FORMAT_R16G16B16A16_SSCALED
+   PIPE_FORMAT_R16G16B16A16_SNORM,
+   PIPE_FORMAT_R16G16B16A16_SSCALED,
+   PIPE_FORMAT_R32G32B32A32_FLOAT
 };
 
 static const unsigned num_idct_intermediate_formats =
    sizeof(const_idct_intermediate_formats) / sizeof(enum pipe_format);
 
 static const enum pipe_format const_mc_source_formats[] = {
-   PIPE_FORMAT_R16_SNORM
-   //PIPE_FORMAT_R16_SSCALED
+   PIPE_FORMAT_R16_SNORM,
+   PIPE_FORMAT_R16_SSCALED
 };
 
 static const unsigned num_mc_source_formats =
@@ -571,7 +572,8 @@ static bool
 init_idct(struct vl_mpeg12_decoder *dec, unsigned buffer_width, unsigned buffer_height)
 {
    unsigned chroma_width, chroma_height, chroma_blocks_x, chroma_blocks_y;
-   struct pipe_sampler_view *idct_matrix;
+   struct pipe_sampler_view *matrix, *transpose;
+   float matrix_scale, transpose_scale;
 
    dec->nr_of_idct_render_targets = dec->pipe->screen->get_param(dec->pipe->screen, PIPE_CAP_MAX_RENDER_TARGETS);
 
@@ -590,12 +592,41 @@ init_idct(struct vl_mpeg12_decoder *dec, unsigned buffer_width, unsigned buffer_
    if (dec->idct_intermediate_format == PIPE_FORMAT_NONE)
       return false;
 
-   if (!(idct_matrix = vl_idct_upload_matrix(dec->pipe, sqrt(SCALE_FACTOR_16_TO_9))))
-      goto error_idct_matrix;
+   switch (dec->idct_source_format) {
+   case PIPE_FORMAT_R16G16B16A16_SSCALED:
+      matrix_scale = SCALE_FACTOR_SSCALED;
+      break;
+
+   case PIPE_FORMAT_R16G16B16A16_SNORM:
+      matrix_scale = SCALE_FACTOR_SNORM;
+      break;
+
+   default:
+      assert(0);
+      return false;
+   }
+
+   if (dec->idct_intermediate_format == PIPE_FORMAT_R16G16B16A16_FLOAT ||
+       dec->idct_intermediate_format == PIPE_FORMAT_R32G32B32A32_FLOAT)
+      transpose_scale = 1.0f;
+   else
+      transpose_scale = matrix_scale = sqrt(matrix_scale);
+
+   if (dec->mc_source_format == PIPE_FORMAT_R16_SSCALED)
+      transpose_scale /= SCALE_FACTOR_SSCALED;
+
+   if (!(matrix = vl_idct_upload_matrix(dec->pipe, matrix_scale)))
+      goto error_matrix;
+
+   if (matrix_scale != transpose_scale) {
+      if (!(transpose = vl_idct_upload_matrix(dec->pipe, transpose_scale)))
+         goto error_transpose;
+   } else
+      pipe_sampler_view_reference(&transpose, matrix);
 
    if (!vl_idct_init(&dec->idct_y, dec->pipe, buffer_width, buffer_height,
-                     2, 2, dec->nr_of_idct_render_targets, idct_matrix))
-      goto error_idct_y;
+                     2, 2, dec->nr_of_idct_render_targets, matrix, transpose))
+      goto error_y;
 
    if (dec->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
       chroma_width = buffer_width / 2;
@@ -616,19 +647,23 @@ init_idct(struct vl_mpeg12_decoder *dec, unsigned buffer_width, unsigned buffer_
 
    if(!vl_idct_init(&dec->idct_c, dec->pipe, chroma_width, chroma_height,
                     chroma_blocks_x, chroma_blocks_y,
-                    dec->nr_of_idct_render_targets, idct_matrix))
-      goto error_idct_c;
+                    dec->nr_of_idct_render_targets, matrix, transpose))
+      goto error_c;
 
-   pipe_sampler_view_reference(&idct_matrix, NULL);
+   pipe_sampler_view_reference(&matrix, NULL);
+   pipe_sampler_view_reference(&transpose, NULL);
    return true;
 
-error_idct_c:
+error_c:
    vl_idct_cleanup(&dec->idct_y);
 
-error_idct_y:
-   pipe_sampler_view_reference(&idct_matrix, NULL);
+error_y:
+   pipe_sampler_view_reference(&transpose, NULL);
 
-error_idct_matrix:
+error_transpose:
+   pipe_sampler_view_reference(&matrix, NULL);
+
+error_matrix:
    return false;
 }
 
@@ -641,6 +676,7 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
                          unsigned width, unsigned height)
 {
    struct vl_mpeg12_decoder *dec;
+   float mc_scale;
    unsigned i;
 
    assert(u_reduce_video_profile(profile) == PIPE_VIDEO_CODEC_MPEG12);
@@ -675,19 +711,37 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
    assert(dec->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);
    dec->empty_block_mask = &const_empty_block_mask_420;
 
-   if (!vl_mpeg12_mc_renderer_init(&dec->mc, dec->pipe, dec->base.width, dec->base.height,
-                                   entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT ? 1.0f : SCALE_FACTOR_16_TO_9))
-      goto error_mc;
-
-   if (entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
-      if (!init_idct(dec, dec->base.width, dec->base.height))
-         goto error_idct;
-
    dec->mc_source_format = find_first_supported_format(dec, const_mc_source_formats,
                                                        num_mc_source_formats, PIPE_TEXTURE_3D);
 
    if (dec->mc_source_format == PIPE_FORMAT_NONE)
-      return false;
+      return NULL;
+
+   if (entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT) {
+      if (!init_idct(dec, dec->base.width, dec->base.height))
+         goto error_idct;
+      if (dec->mc_source_format == PIPE_FORMAT_R16_SSCALED)
+         mc_scale = SCALE_FACTOR_SSCALED;
+      else
+         mc_scale = 1.0f;
+   } else {
+      switch (dec->mc_source_format) {
+      case PIPE_FORMAT_R16_SNORM:
+         mc_scale = SCALE_FACTOR_SNORM;
+         break;
+
+      case PIPE_FORMAT_R16_SSCALED:
+         mc_scale = SCALE_FACTOR_SSCALED;
+         break;
+
+      default:
+         assert(0);
+         return NULL;
+      }
+   }
+
+   if (!vl_mpeg12_mc_renderer_init(&dec->mc, dec->pipe, dec->base.width, dec->base.height, mc_scale))
+      goto error_mc;
 
    if (!init_pipe_state(dec))
       goto error_pipe_state;
