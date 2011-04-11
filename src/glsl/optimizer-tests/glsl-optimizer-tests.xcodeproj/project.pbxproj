@@ -28,6 +28,13 @@
 			remoteGlobalIDString = D2AAC045055464E500DB518D;
 			remoteInfo = mesaglsl2;
 		};
+		2BA080EF1352F86600A1C074 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 2B47D9C51209C72F00937F2C /* mesaglsl2.xcodeproj */;
+			proxyType = 2;
+			remoteGlobalIDString = 2BA0803D1352EB9300A1C074 /* builtin_compiler */;
+			remoteInfo = builtin_compiler;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -96,6 +103,7 @@
 			isa = PBXGroup;
 			children = (
 				2B6A99711223A7D30059FBED /* libmesaglsl2.a */,
+				2BA080F01352F86600A1C074 /* builtin_compiler */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -158,6 +166,13 @@
 			fileType = archive.ar;
 			path = libmesaglsl2.a;
 			remoteRef = 2B6A99701223A7D30059FBED /* PBXContainerItemProxy */;
+			sourceTree = BUILT_PRODUCTS_DIR;
+		};
+		2BA080F01352F86600A1C074 /* builtin_compiler */ = {
+			isa = PBXReferenceProxy;
+			fileType = "compiled.mach-o.executable";
+			path = builtin_compiler;
+			remoteRef = 2BA080EF1352F86600A1C074 /* PBXContainerItemProxy */;
 			sourceTree = BUILT_PRODUCTS_DIR;
 		};
 /* End PBXReferenceProxy section */
