@@ -139,7 +139,7 @@ static void rename_inlined_variable (ir_instruction* new_ir, ir_function_signatu
 			if (!strcmp(var->name, new_var->name))
 			{
 				progress = true;
-				new_var->name = talloc_asprintf_append(const_cast<char*>(new_var->name), "_i%d", counter++);
+				ralloc_asprintf_append((char**)&new_var->name, "_i%d", counter++);
 			}
 		}
 		foreach_iter(exec_list_iterator, iter, func->body)
@@ -151,7 +151,7 @@ static void rename_inlined_variable (ir_instruction* new_ir, ir_function_signatu
 			if (!strcmp(var->name, new_var->name))
 			{
 				progress = true;
-				new_var->name = talloc_asprintf_append(const_cast<char*>(new_var->name), "_i%d", counter++);
+				ralloc_asprintf_append((char**)&new_var->name, "_i%d", counter++);
 			}
 		}
 	}

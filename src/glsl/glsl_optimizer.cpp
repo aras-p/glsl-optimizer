@@ -16,7 +16,7 @@ _mesa_new_shader(struct gl_context *ctx, GLuint name, GLenum type)
 {
    struct gl_shader *shader;
    assert(type == GL_FRAGMENT_SHADER || type == GL_VERTEX_SHADER);
-   shader = talloc_zero(NULL, struct gl_shader);
+   shader = rzalloc_size(NULL, struct gl_shader);
    if (shader) {
       shader->Type = type;
       shader->Name = name;
@@ -64,11 +64,11 @@ initialize_mesa_context(struct gl_context *ctx, gl_api api)
 
 struct glslopt_ctx {
 	glslopt_ctx (bool openglES) {
-		mem_ctx = talloc_new (NULL);
+		mem_ctx = ralloc_context (NULL);
 		initialize_mesa_context (&mesa_ctx, openglES ? API_OPENGLES2 : API_OPENGL);
 	}
 	~glslopt_ctx() {
-		talloc_free (mem_ctx);
+		ralloc_free (mem_ctx);
 	}
 	struct gl_context mesa_ctx;
 	void* mem_ctx;
@@ -92,13 +92,13 @@ struct glslopt_shader {
 	static void* operator new(size_t size, void *ctx)
 	{
 		void *node;
-		node = talloc_size(ctx, size);
+		node = ralloc_size(ctx, size);
 		assert(node != NULL);
 		return node;
 	}
 	static void operator delete(void *node)
 	{
-		talloc_free(node);
+		ralloc_free(node);
 	}
 
 	glslopt_shader ()
@@ -120,7 +120,7 @@ static inline void debug_print_ir (const char* name, exec_list* ir, _mesa_glsl_p
 	#if 0
 	printf("**** %s:\n", name);
 	_mesa_print_ir (ir, state);
-	//char* foobar = _mesa_print_ir_glsl(ir, state, talloc_strdup(memctx, ""), kPrintGlslFragment);
+	//char* foobar = _mesa_print_ir_glsl(ir, state, ralloc_strdup(memctx, ""), kPrintGlslFragment);
 	//printf(foobar);
 	validate_ir_tree(ir);
 	#endif
@@ -138,7 +138,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	}
 	if (!glType)
 	{
-		shader->infoLog = talloc_asprintf (ctx->mem_ctx, "Unknown shader type %d", (int)type);
+		shader->infoLog = ralloc_asprintf (ctx->mem_ctx, "Unknown shader type %d", (int)type);
 		shader->status = false;
 		return shader;
 	}
@@ -169,7 +169,7 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	// Un-optimized output
 	if (!state->error) {
 		validate_ir_tree(ir);
-		shader->rawOutput = _mesa_print_ir_glsl(ir, state, talloc_strdup(ctx->mem_ctx, ""), printMode);
+		shader->rawOutput = _mesa_print_ir_glsl(ir, state, ralloc_strdup(ctx->mem_ctx, ""), printMode);
 	}
 
 	// Optimization passes
@@ -220,14 +220,14 @@ glslopt_shader* glslopt_optimize (glslopt_ctx* ctx, glslopt_shader_type type, co
 	// Final optimized output
 	if (!state->error)
 	{
-		shader->optimizedOutput = _mesa_print_ir_glsl(ir, state, talloc_strdup(ctx->mem_ctx, ""), printMode);
+		shader->optimizedOutput = _mesa_print_ir_glsl(ir, state, ralloc_strdup(ctx->mem_ctx, ""), printMode);
 	}
 
 	shader->status = !state->error;
 	shader->infoLog = state->info_log;
 
-	talloc_free (ir);
-	talloc_free (state);
+	ralloc_free (ir);
+	ralloc_free (state);
 
 	return shader;
 }
