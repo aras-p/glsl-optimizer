@@ -44,38 +44,22 @@ upload_gs_state(struct brw_context *brw)
    OUT_BATCH(0);
    ADVANCE_BATCH();
 
-   if (brw->gs.prog_bo) {
-      BEGIN_BATCH(7);
-      OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
-      OUT_RELOC(brw->gs.prog_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
-      OUT_BATCH(GEN6_GS_SPF_MODE |
-		(0 << GEN6_GS_SAMPLER_COUNT_SHIFT) |
-		(0 << GEN6_GS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
-      OUT_BATCH(0); /* scratch space base offset */
-      OUT_BATCH((1 << GEN6_GS_DISPATCH_START_GRF_SHIFT) |
-		(brw->gs.prog_data->urb_read_length << GEN6_GS_URB_READ_LENGTH_SHIFT) |
-		(0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT));
-      OUT_BATCH((0 << GEN6_GS_MAX_THREADS_SHIFT) |
-		GEN6_GS_STATISTICS_ENABLE |
-		GEN6_GS_RENDERING_ENABLE);
-      OUT_BATCH(GEN6_GS_ENABLE);
-      ADVANCE_BATCH();
-   } else {
-      BEGIN_BATCH(7);
-      OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
-      OUT_BATCH(0); /* prog_bo */
-      OUT_BATCH((0 << GEN6_GS_SAMPLER_COUNT_SHIFT) |
-		(0 << GEN6_GS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
-      OUT_BATCH(0); /* scratch space base offset */
-      OUT_BATCH((1 << GEN6_GS_DISPATCH_START_GRF_SHIFT) |
-		(0 << GEN6_GS_URB_READ_LENGTH_SHIFT) |
-		(0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT));
-      OUT_BATCH((0 << GEN6_GS_MAX_THREADS_SHIFT) |
-		GEN6_GS_STATISTICS_ENABLE |
-		GEN6_GS_RENDERING_ENABLE);
-      OUT_BATCH(0);
-      ADVANCE_BATCH();
-   }
+   // GS should never be used on Gen6.  Disable it.
+   assert(brw->gs.prog_bo == NULL);
+   BEGIN_BATCH(7);
+   OUT_BATCH(_3DSTATE_GS << 16 | (7 - 2));
+   OUT_BATCH(0); /* prog_bo */
+   OUT_BATCH((0 << GEN6_GS_SAMPLER_COUNT_SHIFT) |
+	     (0 << GEN6_GS_BINDING_TABLE_ENTRY_COUNT_SHIFT));
+   OUT_BATCH(0); /* scratch space base offset */
+   OUT_BATCH((1 << GEN6_GS_DISPATCH_START_GRF_SHIFT) |
+	     (0 << GEN6_GS_URB_READ_LENGTH_SHIFT) |
+	     (0 << GEN6_GS_URB_ENTRY_READ_OFFSET_SHIFT));
+   OUT_BATCH((0 << GEN6_GS_MAX_THREADS_SHIFT) |
+	     GEN6_GS_STATISTICS_ENABLE |
+	     GEN6_GS_RENDERING_ENABLE);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
 }
 
 const struct brw_tracked_state gen6_gs_state = {
