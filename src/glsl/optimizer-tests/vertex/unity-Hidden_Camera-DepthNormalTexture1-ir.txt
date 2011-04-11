@@ -33,7 +33,7 @@ void FastSinCos (
   tmpvar_1 = vec4(1.0, -0.161616, 0.0083333, -0.00019841);
   sin7 = tmpvar_1;
   vec4 tmpvar_2;
-  tmpvar_2 = vec4(-0.5, 0.0416667, -0.00138889, 2.48016e-005);
+  tmpvar_2 = vec4(-0.5, 0.0416667, -0.00138889, 2.48016e-05);
   cos8 = tmpvar_2;
   vec4 tmpvar_3;
   tmpvar_3 = ((val * 6.40885) - 3.14159);

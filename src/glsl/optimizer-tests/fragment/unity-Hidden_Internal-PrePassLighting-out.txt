@@ -45,7 +45,7 @@ void main ()
   float tmpvar_9;
   tmpvar_9 = ((length (tmpvar_8) * _LightPositionRange.w) * 0.97);
   float tmpvar_10;
-  tmpvar_10 = dot (textureCube (_ShadowMapTexture, tmpvar_8), vec4(1.0, 0.00392157, 1.53787e-005, 0.0));
+  tmpvar_10 = dot (textureCube (_ShadowMapTexture, tmpvar_8), vec4(1.0, 0.00392157, 1.53787e-05, 0.0));
   float tmpvar_11;
   if ((tmpvar_10 < tmpvar_9)) {
     tmpvar_11 = _LightShadowData.x;
