@@ -499,7 +499,7 @@ void u_vbuf_mgr_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
       /* Update the maximum index. */
       mgr->b.max_index =
             MIN2(mgr->b.max_index,
-                 (vb->buffer->width0 - vb->buffer_offset) / vb->stride);
+                 (vb->buffer->width0 - vb->buffer_offset) / vb->stride - 1);
    }
 
    for (; i < mgr->b.nr_real_vertex_buffers; i++) {
