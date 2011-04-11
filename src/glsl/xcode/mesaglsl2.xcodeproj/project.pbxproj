@@ -582,6 +582,7 @@
 			buildPhases = (
 				2BA0803A1352EB9300A1C074 /* Sources */,
 				2BA0803B1352EB9300A1C074 /* Frameworks */,
+				2BA080AA1352EE5500A1C074 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -633,6 +634,22 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		2BA080AA1352EE5500A1C074 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "echo \"Generating builtin functions...\"\ncd $BUILT_PRODUCTS_DIR\npython builtins/tools/generate_builtins.py ./builtin_compiler >builtin_function.cpp";
+		};
+/* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		2BA0803A1352EB9300A1C074 /* Sources */ = {
