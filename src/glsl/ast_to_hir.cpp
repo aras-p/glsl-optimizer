@@ -1664,8 +1664,42 @@ ast_expression::hir(exec_list *instructions,
        * therefore add instructions to the instruction list), they get dropped
        * on the floor.
        */
-      foreach_list_typed (ast_node, ast, link, &this->expressions)
+      exec_node *previous_tail_pred = NULL;
+      YYLTYPE previous_operand_loc = loc;
+
+      foreach_list_typed (ast_node, ast, link, &this->expressions) {
+	 /* If one of the operands of comma operator does not generate any
+	  * code, we want to emit a warning.  At each pass through the loop
+	  * previous_tail_pred will point to the last instruction in the
+	  * stream *before* processing the previous operand.  Naturally,
+	  * instructions->tail_pred will point to the last instruction in the
+	  * stream *after* processing the previous operand.  If the two
+	  * pointers match, then the previous operand had no effect.
+	  *
+	  * The warning behavior here differs slightly from GCC.  GCC will
+	  * only emit a warning if none of the left-hand operands have an
+	  * effect.  However, it will emit a warning for each.  I believe that
+	  * there are some cases in C (especially with GCC extensions) where
+	  * it is useful to have an intermediate step in a sequence have no
+	  * effect, but I don't think these cases exist in GLSL.  Either way,
+	  * it would be a giant hassle to replicate that behavior.
+	  */
+	 if (previous_tail_pred == instructions->tail_pred) {
+	    _mesa_glsl_warning(&previous_operand_loc, state,
+			       "left-hand operand of comma expression has "
+			       "no effect");
+	 }
+
+	 /* tail_pred is directly accessed instead of using the get_tail()
+	  * method for performance reasons.  get_tail() has extra code to
+	  * return NULL when the list is empty.  We don't care about that
+	  * here, so using tail_pred directly is fine.
+	  */
+	 previous_tail_pred = instructions->tail_pred;
+	 previous_operand_loc = ast->get_location();
+
 	 result = ast->hir(instructions, state);
+      }
 
       type = result->type;
 
