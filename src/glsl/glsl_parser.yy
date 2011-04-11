@@ -912,7 +912,7 @@ init_declarator_list:
 
 	   $$ = $1;
 	   $$->declarations.push_tail(&decl->link);
-	   state->symbols->add_variable(new(state) ir_variable(NULL, $3, ir_var_auto));
+	   state->symbols->add_variable(new(state) ir_variable(NULL, $3, ir_var_auto, glsl_precision_undefined));
 	}
 	| init_declarator_list ',' any_identifier '[' ']'
 	{
@@ -922,7 +922,7 @@ init_declarator_list:
 
 	   $$ = $1;
 	   $$->declarations.push_tail(&decl->link);
-	   state->symbols->add_variable(new(state) ir_variable(NULL, $3, ir_var_auto));
+	   state->symbols->add_variable(new(state) ir_variable(NULL, $3, ir_var_auto, glsl_precision_undefined));
 	}
 	| init_declarator_list ',' any_identifier '[' constant_expression ']'
 	{
@@ -932,7 +932,7 @@ init_declarator_list:
 
 	   $$ = $1;
 	   $$->declarations.push_tail(&decl->link);
-	   state->symbols->add_variable(new(state) ir_variable(NULL, $3, ir_var_auto));
+	   state->symbols->add_variable(new(state) ir_variable(NULL, $3, ir_var_auto, glsl_precision_undefined));
 	}
 	| init_declarator_list ',' any_identifier '[' ']' '=' initializer
 	{
@@ -942,7 +942,7 @@ init_declarator_list:
 
 	   $$ = $1;
 	   $$->declarations.push_tail(&decl->link);
-	   state->symbols->add_variable(new(state) ir_variable(NULL, $3, ir_var_auto));
+	   state->symbols->add_variable(new(state) ir_variable(NULL, $3, ir_var_auto, glsl_precision_undefined));
 	}
 	| init_declarator_list ',' any_identifier '[' constant_expression ']' '=' initializer
 	{
@@ -952,7 +952,7 @@ init_declarator_list:
 
 	   $$ = $1;
 	   $$->declarations.push_tail(&decl->link);
-	   state->symbols->add_variable(new(state) ir_variable(NULL, $3, ir_var_auto));
+	   state->symbols->add_variable(new(state) ir_variable(NULL, $3, ir_var_auto, glsl_precision_undefined));
 	}
 	| init_declarator_list ',' any_identifier '=' initializer
 	{
@@ -962,7 +962,7 @@ init_declarator_list:
 
 	   $$ = $1;
 	   $$->declarations.push_tail(&decl->link);
-	   state->symbols->add_variable(new(state) ir_variable(NULL, $3, ir_var_auto));
+	   state->symbols->add_variable(new(state) ir_variable(NULL, $3, ir_var_auto, glsl_precision_undefined));
 	}
 	;
 
@@ -1490,7 +1490,7 @@ struct_declarator:
 	   void *ctx = state;
 	   $$ = new(ctx) ast_declaration($1, false, NULL, NULL);
 	   $$->set_location(yylloc);
-	   state->symbols->add_variable(new(state) ir_variable(NULL, $1, ir_var_auto));
+	   state->symbols->add_variable(new(state) ir_variable(NULL, $1, ir_var_auto, glsl_precision_undefined));
 	}
 	| any_identifier '[' constant_expression ']'
 	{

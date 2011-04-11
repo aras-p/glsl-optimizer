@@ -3763,7 +3763,7 @@ yyreduce:
 
 	   (yyval.declarator_list) = (yyvsp[(1) - (3)].declarator_list);
 	   (yyval.declarator_list)->declarations.push_tail(&decl->link);
-	   state->symbols->add_variable(new(state) ir_variable(NULL, (yyvsp[(3) - (3)].identifier), ir_var_auto));
+	   state->symbols->add_variable(new(state) ir_variable(NULL, (yyvsp[(3) - (3)].identifier), ir_var_auto, glsl_precision_undefined));
 	;}
     break;
 
@@ -3776,7 +3776,7 @@ yyreduce:
 
 	   (yyval.declarator_list) = (yyvsp[(1) - (5)].declarator_list);
 	   (yyval.declarator_list)->declarations.push_tail(&decl->link);
-	   state->symbols->add_variable(new(state) ir_variable(NULL, (yyvsp[(3) - (5)].identifier), ir_var_auto));
+	   state->symbols->add_variable(new(state) ir_variable(NULL, (yyvsp[(3) - (5)].identifier), ir_var_auto, glsl_precision_undefined));
 	;}
     break;
 
@@ -3789,7 +3789,7 @@ yyreduce:
 
 	   (yyval.declarator_list) = (yyvsp[(1) - (6)].declarator_list);
 	   (yyval.declarator_list)->declarations.push_tail(&decl->link);
-	   state->symbols->add_variable(new(state) ir_variable(NULL, (yyvsp[(3) - (6)].identifier), ir_var_auto));
+	   state->symbols->add_variable(new(state) ir_variable(NULL, (yyvsp[(3) - (6)].identifier), ir_var_auto, glsl_precision_undefined));
 	;}
     break;
 
@@ -3802,7 +3802,7 @@ yyreduce:
 
 	   (yyval.declarator_list) = (yyvsp[(1) - (7)].declarator_list);
 	   (yyval.declarator_list)->declarations.push_tail(&decl->link);
-	   state->symbols->add_variable(new(state) ir_variable(NULL, (yyvsp[(3) - (7)].identifier), ir_var_auto));
+	   state->symbols->add_variable(new(state) ir_variable(NULL, (yyvsp[(3) - (7)].identifier), ir_var_auto, glsl_precision_undefined));
 	;}
     break;
 
@@ -3815,7 +3815,7 @@ yyreduce:
 
 	   (yyval.declarator_list) = (yyvsp[(1) - (8)].declarator_list);
 	   (yyval.declarator_list)->declarations.push_tail(&decl->link);
-	   state->symbols->add_variable(new(state) ir_variable(NULL, (yyvsp[(3) - (8)].identifier), ir_var_auto));
+	   state->symbols->add_variable(new(state) ir_variable(NULL, (yyvsp[(3) - (8)].identifier), ir_var_auto, glsl_precision_undefined));
 	;}
     break;
 
@@ -3828,7 +3828,7 @@ yyreduce:
 
 	   (yyval.declarator_list) = (yyvsp[(1) - (5)].declarator_list);
 	   (yyval.declarator_list)->declarations.push_tail(&decl->link);
-	   state->symbols->add_variable(new(state) ir_variable(NULL, (yyvsp[(3) - (5)].identifier), ir_var_auto));
+	   state->symbols->add_variable(new(state) ir_variable(NULL, (yyvsp[(3) - (5)].identifier), ir_var_auto, glsl_precision_undefined));
 	;}
     break;
 
@@ -4650,7 +4650,7 @@ yyreduce:
 	   void *ctx = state;
 	   (yyval.declaration) = new(ctx) ast_declaration((yyvsp[(1) - (1)].identifier), false, NULL, NULL);
 	   (yyval.declaration)->set_location(yylloc);
-	   state->symbols->add_variable(new(state) ir_variable(NULL, (yyvsp[(1) - (1)].identifier), ir_var_auto));
+	   state->symbols->add_variable(new(state) ir_variable(NULL, (yyvsp[(1) - (1)].identifier), ir_var_auto, glsl_precision_undefined));
 	;}
     break;
 
