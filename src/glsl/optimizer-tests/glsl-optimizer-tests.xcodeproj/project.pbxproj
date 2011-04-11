@@ -32,7 +32,7 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = 2B47D9C51209C72F00937F2C /* mesaglsl2.xcodeproj */;
 			proxyType = 2;
-			remoteGlobalIDString = 2BA0803D1352EB9300A1C074 /* builtin_compiler */;
+			remoteGlobalIDString = 2BA0803D1352EB9300A1C074;
 			remoteInfo = builtin_compiler;
 		};
 /* End PBXContainerItemProxy section */
