@@ -100,6 +100,20 @@
 		2BB2F5B312B8F1580052C6B0 /* opt_discard_simplification.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BB2F5AD12B8F1580052C6B0 /* opt_discard_simplification.cpp */; };
 		2BB2F5B412B8F1580052C6B0 /* strtod.c in Sources */ = {isa = PBXBuildFile; fileRef = 2BB2F5AE12B8F1580052C6B0 /* strtod.c */; };
 		2BB2F5B512B8F1580052C6B0 /* strtod.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BB2F5AF12B8F1580052C6B0 /* strtod.h */; };
+		2BB725A9135094BE0057D8B5 /* compiler.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BB7259B135094BE0057D8B5 /* compiler.h */; };
+		2BB725AA135094BE0057D8B5 /* config.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BB7259C135094BE0057D8B5 /* config.h */; };
+		2BB725AB135094BE0057D8B5 /* context.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BB7259D135094BE0057D8B5 /* context.h */; };
+		2BB725AC135094BE0057D8B5 /* core.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BB7259E135094BE0057D8B5 /* core.h */; };
+		2BB725AD135094BE0057D8B5 /* dd.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BB7259F135094BE0057D8B5 /* dd.h */; };
+		2BB725AE135094BE0057D8B5 /* extensions.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BB725A0135094BE0057D8B5 /* extensions.h */; };
+		2BB725AF135094BE0057D8B5 /* glheader.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BB725A1135094BE0057D8B5 /* glheader.h */; };
+		2BB725B0135094BE0057D8B5 /* imports.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BB725A2135094BE0057D8B5 /* imports.h */; };
+		2BB725B1135094BE0057D8B5 /* macros.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BB725A3135094BE0057D8B5 /* macros.h */; };
+		2BB725B2135094BE0057D8B5 /* mfeatures.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BB725A4135094BE0057D8B5 /* mfeatures.h */; };
+		2BB725B3135094BE0057D8B5 /* mtypes.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BB725A5135094BE0057D8B5 /* mtypes.h */; };
+		2BB725B4135094BE0057D8B5 /* shaderobj.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BB725A6135094BE0057D8B5 /* shaderobj.h */; };
+		2BB725B5135094BE0057D8B5 /* simple_list.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BB725A7135094BE0057D8B5 /* simple_list.h */; };
+		2BB725B6135094BE0057D8B5 /* version.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BB725A8135094BE0057D8B5 /* version.h */; };
 		2BBA49281254706A00D42573 /* glsl_symbol_table.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BBA491F1254706A00D42573 /* glsl_symbol_table.cpp */; };
 		2BBA492A1254706A00D42573 /* loop_analysis.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 2BBA49211254706A00D42573 /* loop_analysis.cpp */; };
 		2BBA492B1254706A00D42573 /* loop_analysis.h in Headers */ = {isa = PBXBuildFile; fileRef = 2BBA49221254706A00D42573 /* loop_analysis.h */; };
@@ -209,6 +223,20 @@
 		2BB2F5AD12B8F1580052C6B0 /* opt_discard_simplification.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = opt_discard_simplification.cpp; path = ../opt_discard_simplification.cpp; sourceTree = SOURCE_ROOT; };
 		2BB2F5AE12B8F1580052C6B0 /* strtod.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = strtod.c; path = ../strtod.c; sourceTree = SOURCE_ROOT; };
 		2BB2F5AF12B8F1580052C6B0 /* strtod.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = strtod.h; path = ../strtod.h; sourceTree = SOURCE_ROOT; };
+		2BB7259B135094BE0057D8B5 /* compiler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = compiler.h; path = ../../mesa/main/compiler.h; sourceTree = SOURCE_ROOT; };
+		2BB7259C135094BE0057D8B5 /* config.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = config.h; path = ../../mesa/main/config.h; sourceTree = SOURCE_ROOT; };
+		2BB7259D135094BE0057D8B5 /* context.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = context.h; path = ../../mesa/main/context.h; sourceTree = SOURCE_ROOT; };
+		2BB7259E135094BE0057D8B5 /* core.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = core.h; path = ../../mesa/main/core.h; sourceTree = SOURCE_ROOT; };
+		2BB7259F135094BE0057D8B5 /* dd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = dd.h; path = ../../mesa/main/dd.h; sourceTree = SOURCE_ROOT; };
+		2BB725A0135094BE0057D8B5 /* extensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = extensions.h; path = ../../mesa/main/extensions.h; sourceTree = SOURCE_ROOT; };
+		2BB725A1135094BE0057D8B5 /* glheader.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = glheader.h; path = ../../mesa/main/glheader.h; sourceTree = SOURCE_ROOT; };
+		2BB725A2135094BE0057D8B5 /* imports.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = imports.h; path = ../../mesa/main/imports.h; sourceTree = SOURCE_ROOT; };
+		2BB725A3135094BE0057D8B5 /* macros.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = macros.h; path = ../../mesa/main/macros.h; sourceTree = SOURCE_ROOT; };
+		2BB725A4135094BE0057D8B5 /* mfeatures.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mfeatures.h; path = ../../mesa/main/mfeatures.h; sourceTree = SOURCE_ROOT; };
+		2BB725A5135094BE0057D8B5 /* mtypes.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = mtypes.h; path = ../../mesa/main/mtypes.h; sourceTree = SOURCE_ROOT; };
+		2BB725A6135094BE0057D8B5 /* shaderobj.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = shaderobj.h; path = ../../mesa/main/shaderobj.h; sourceTree = SOURCE_ROOT; };
+		2BB725A7135094BE0057D8B5 /* simple_list.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = simple_list.h; path = ../../mesa/main/simple_list.h; sourceTree = SOURCE_ROOT; };
+		2BB725A8135094BE0057D8B5 /* version.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = version.h; path = ../../mesa/main/version.h; sourceTree = SOURCE_ROOT; };
 		2BBA491F1254706A00D42573 /* glsl_symbol_table.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = glsl_symbol_table.cpp; path = ../glsl_symbol_table.cpp; sourceTree = SOURCE_ROOT; };
 		2BBA49211254706A00D42573 /* loop_analysis.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = loop_analysis.cpp; path = ../loop_analysis.cpp; sourceTree = SOURCE_ROOT; };
 		2BBA49221254706A00D42573 /* loop_analysis.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = loop_analysis.h; path = ../loop_analysis.h; sourceTree = SOURCE_ROOT; };
@@ -243,6 +271,7 @@
 		08FB7795FE84155DC02AAC07 /* Source */ = {
 			isa = PBXGroup;
 			children = (
+				2BB7259A135094A60057D8B5 /* mesa */,
 				2B47D9FC1209C85400937F2C /* program */,
 				2BA55AE91207FEDB002DC82D /* talloc */,
 				2BA55A501207FE41002DC82D /* glsl */,
@@ -393,6 +422,27 @@
 			name = talloc;
 			sourceTree = "<group>";
 		};
+		2BB7259A135094A60057D8B5 /* mesa */ = {
+			isa = PBXGroup;
+			children = (
+				2BB7259B135094BE0057D8B5 /* compiler.h */,
+				2BB7259C135094BE0057D8B5 /* config.h */,
+				2BB7259D135094BE0057D8B5 /* context.h */,
+				2BB7259E135094BE0057D8B5 /* core.h */,
+				2BB7259F135094BE0057D8B5 /* dd.h */,
+				2BB725A0135094BE0057D8B5 /* extensions.h */,
+				2BB725A1135094BE0057D8B5 /* glheader.h */,
+				2BB725A2135094BE0057D8B5 /* imports.h */,
+				2BB725A3135094BE0057D8B5 /* macros.h */,
+				2BB725A4135094BE0057D8B5 /* mfeatures.h */,
+				2BB725A5135094BE0057D8B5 /* mtypes.h */,
+				2BB725A6135094BE0057D8B5 /* shaderobj.h */,
+				2BB725A7135094BE0057D8B5 /* simple_list.h */,
+				2BB725A8135094BE0057D8B5 /* version.h */,
+			);
+			name = mesa;
+			sourceTree = "<group>";
+		};
 /* End PBXGroup section */
 
 /* Begin PBXHeadersBuildPhase section */
@@ -432,6 +482,20 @@
 				2B6A99FA1223B1670059FBED /* glcpp.h in Headers */,
 				2BBA492B1254706A00D42573 /* loop_analysis.h in Headers */,
 				2BB2F5B512B8F1580052C6B0 /* strtod.h in Headers */,
+				2BB725A9135094BE0057D8B5 /* compiler.h in Headers */,
+				2BB725AA135094BE0057D8B5 /* config.h in Headers */,
+				2BB725AB135094BE0057D8B5 /* context.h in Headers */,
+				2BB725AC135094BE0057D8B5 /* core.h in Headers */,
+				2BB725AD135094BE0057D8B5 /* dd.h in Headers */,
+				2BB725AE135094BE0057D8B5 /* extensions.h in Headers */,
+				2BB725AF135094BE0057D8B5 /* glheader.h in Headers */,
+				2BB725B0135094BE0057D8B5 /* imports.h in Headers */,
+				2BB725B1135094BE0057D8B5 /* macros.h in Headers */,
+				2BB725B2135094BE0057D8B5 /* mfeatures.h in Headers */,
+				2BB725B3135094BE0057D8B5 /* mtypes.h in Headers */,
+				2BB725B4135094BE0057D8B5 /* shaderobj.h in Headers */,
+				2BB725B5135094BE0057D8B5 /* simple_list.h in Headers */,
+				2BB725B6135094BE0057D8B5 /* version.h in Headers */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
