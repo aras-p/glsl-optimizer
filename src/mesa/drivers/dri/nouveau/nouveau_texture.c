@@ -270,8 +270,8 @@ get_last_level(struct gl_texture_object *t)
 {
 	struct gl_texture_image *base = t->Image[0][t->BaseLevel];
 
-	if (t->MinFilter == GL_NEAREST ||
-	    t->MinFilter == GL_LINEAR || !base)
+	if (t->Sampler.MinFilter == GL_NEAREST ||
+	    t->Sampler.MinFilter == GL_LINEAR || !base)
 		return t->BaseLevel;
 	else
 		return MIN2(t->BaseLevel + base->MaxLog2, t->MaxLevel);

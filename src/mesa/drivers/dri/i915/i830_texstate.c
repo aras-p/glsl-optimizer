@@ -193,7 +193,7 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
       float maxlod;
       uint32_t minlod_fixed, maxlod_fixed;
 
-      switch (tObj->MinFilter) {
+      switch (tObj->Sampler.MinFilter) {
       case GL_NEAREST:
          minFilt = FILTER_NEAREST;
          mipFilt = MIPFILTER_NONE;
@@ -222,12 +222,12 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
          return GL_FALSE;
       }
 
-      if (tObj->MaxAnisotropy > 1.0) {
+      if (tObj->Sampler.MaxAnisotropy > 1.0) {
          minFilt = FILTER_ANISOTROPIC;
          magFilt = FILTER_ANISOTROPIC;
       }
       else {
-         switch (tObj->MagFilter) {
+         switch (tObj->Sampler.MagFilter) {
          case GL_NEAREST:
             magFilt = FILTER_NEAREST;
             break;
@@ -239,7 +239,7 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
          }
       }
 
-      lodbias = (int) ((tUnit->LodBias + tObj->LodBias) * 16.0);
+      lodbias = (int) ((tUnit->LodBias + tObj->Sampler.LodBias) * 16.0);
       if (lodbias < -64)
           lodbias = -64;
       if (lodbias > 63)
@@ -259,8 +259,8 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
        * addressable (smallest resolution) LOD.  Use it to cover both
        * MAX_LEVEL and MAX_LOD.
        */
-      minlod_fixed = U_FIXED(CLAMP(tObj->MinLod, 0.0, 11), 4);
-      maxlod = MIN2(tObj->MaxLod, tObj->_MaxLevel - tObj->BaseLevel);
+      minlod_fixed = U_FIXED(CLAMP(tObj->Sampler.MinLod, 0.0, 11), 4);
+      maxlod = MIN2(tObj->Sampler.MaxLod, tObj->_MaxLevel - tObj->BaseLevel);
       if (intel->intelScreen->deviceID == PCI_CHIP_I855_GM ||
 	  intel->intelScreen->deviceID == PCI_CHIP_I865_G) {
 	 maxlod_fixed = U_FIXED(CLAMP(maxlod, 0.0, 11.75), 2);
@@ -279,8 +279,8 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    }
 
    {
-      GLenum ws = tObj->WrapS;
-      GLenum wt = tObj->WrapT;
+      GLenum ws = tObj->Sampler.WrapS;
+      GLenum wt = tObj->Sampler.WrapT;
 
 
       /* 3D textures not available on i830
@@ -300,10 +300,10 @@ i830_update_tex_unit(struct intel_context *intel, GLuint unit, GLuint ss3)
    }
 
    /* convert border color from float to ubyte */
-   CLAMPED_FLOAT_TO_UBYTE(border[0], tObj->BorderColor.f[0]);
-   CLAMPED_FLOAT_TO_UBYTE(border[1], tObj->BorderColor.f[1]);
-   CLAMPED_FLOAT_TO_UBYTE(border[2], tObj->BorderColor.f[2]);
-   CLAMPED_FLOAT_TO_UBYTE(border[3], tObj->BorderColor.f[3]);
+   CLAMPED_FLOAT_TO_UBYTE(border[0], tObj->Sampler.BorderColor.f[0]);
+   CLAMPED_FLOAT_TO_UBYTE(border[1], tObj->Sampler.BorderColor.f[1]);
+   CLAMPED_FLOAT_TO_UBYTE(border[2], tObj->Sampler.BorderColor.f[2]);
+   CLAMPED_FLOAT_TO_UBYTE(border[3], tObj->Sampler.BorderColor.f[3]);
 
    state[I830_TEXREG_TM0S4] = PACK_COLOR_8888(border[3],
 					      border[0],

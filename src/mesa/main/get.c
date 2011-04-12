@@ -278,6 +278,11 @@ static const int extra_EXT_gpu_shader4[] = {
    EXTRA_END
 };
 
+static const int extra_ARB_sampler_objects[] = {
+   EXT(ARB_sampler_objects),
+   EXTRA_END
+};
+
 
 EXTRA_EXT(ARB_ES2_compatibility);
 EXTRA_EXT(ARB_multitexture);
@@ -1249,6 +1254,10 @@ static const struct value_desc values[] = {
    { GL_TEXTURE_BUFFER_ARB, LOC_CUSTOM, TYPE_INT, 0,
      extra_ARB_texture_buffer_object },
 
+   /* GL_ARB_sampler_objects / GL 3.3 */
+   { GL_SAMPLER_BINDING,
+     LOC_CUSTOM, TYPE_INT, GL_SAMPLER_BINDING, extra_ARB_sampler_objects },
+
    /* GL 3.0 */
    { GL_NUM_EXTENSIONS, LOC_CUSTOM, TYPE_INT, 0, extra_version_30 },
    { GL_MAJOR_VERSION, CONTEXT_INT(VersionMajor), extra_version_30 },
@@ -1709,6 +1718,14 @@ find_custom_value(struct gl_context *ctx, const struct value_desc *d, union valu
          .CurrentTex[TEXTURE_BUFFER_INDEX]->BufferObjectFormat;
       break;
 
+   /* GL_ARB_sampler_objects */
+   case GL_SAMPLER_BINDING:
+      {
+         struct gl_sampler_object *samp =
+            ctx->Texture.Unit[ctx->Texture.CurrentUnit].Sampler;
+         v->value_int = samp ? samp->Name : 0;
+      }
+      break;
    }   
 }
 

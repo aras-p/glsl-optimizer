@@ -216,7 +216,7 @@ void r300SetDepthTexMode(struct gl_texture_object *tObj)
 		return;
 	}
 
-	switch (tObj->DepthMode) {
+	switch (tObj->Sampler.DepthMode) {
 	case GL_LUMINANCE:
 		t->pp_txformat = format[0];
 		break;

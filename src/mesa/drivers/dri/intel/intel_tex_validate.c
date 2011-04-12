@@ -18,7 +18,7 @@ intel_update_max_level(struct intel_context *intel,
 {
    struct gl_texture_object *tObj = &intelObj->base;
 
-   if (tObj->MinFilter == GL_NEAREST || tObj->MinFilter == GL_LINEAR) {
+   if (tObj->Sampler.MinFilter == GL_NEAREST || tObj->Sampler.MinFilter == GL_LINEAR) {
       intelObj->_MaxLevel = tObj->BaseLevel;
    } else {
       intelObj->_MaxLevel = tObj->_MaxLevel;

@@ -383,18 +383,18 @@ static void r200TexParameter( struct gl_context *ctx, GLenum target,
    case GL_TEXTURE_MIN_FILTER:
    case GL_TEXTURE_MAG_FILTER:
    case GL_TEXTURE_MAX_ANISOTROPY_EXT:
-      r200SetTexMaxAnisotropy( t, texObj->MaxAnisotropy );
-      r200SetTexFilter( t, texObj->MinFilter, texObj->MagFilter );
+      r200SetTexMaxAnisotropy( t, texObj->Sampler.MaxAnisotropy );
+      r200SetTexFilter( t, texObj->Sampler.MinFilter, texObj->Sampler.MagFilter );
       break;
 
    case GL_TEXTURE_WRAP_S:
    case GL_TEXTURE_WRAP_T:
    case GL_TEXTURE_WRAP_R:
-      r200SetTexWrap( t, texObj->WrapS, texObj->WrapT, texObj->WrapR );
+      r200SetTexWrap( t, texObj->Sampler.WrapS, texObj->Sampler.WrapT, texObj->Sampler.WrapR );
       break;
 
    case GL_TEXTURE_BORDER_COLOR:
-      r200SetTexBorderColor( t, texObj->BorderColor.f );
+      r200SetTexBorderColor( t, texObj->Sampler.BorderColor.f );
       break;
 
    case GL_TEXTURE_BASE_LEVEL:
@@ -479,13 +479,13 @@ static struct gl_texture_object *r200NewTextureObject(struct gl_context * ctx,
 	   _mesa_lookup_enum_by_nr(target), t);
 
    _mesa_initialize_texture_object(&t->base, name, target);
-   t->base.MaxAnisotropy = rmesa->radeon.initialMaxAnisotropy;
+   t->base.Sampler.MaxAnisotropy = rmesa->radeon.initialMaxAnisotropy;
 
    /* Initialize hardware state */
-   r200SetTexWrap( t, t->base.WrapS, t->base.WrapT, t->base.WrapR );
-   r200SetTexMaxAnisotropy( t, t->base.MaxAnisotropy );
-   r200SetTexFilter(t, t->base.MinFilter, t->base.MagFilter);
-   r200SetTexBorderColor(t, t->base.BorderColor.f);
+   r200SetTexWrap( t, t->base.Sampler.WrapS, t->base.Sampler.WrapT, t->base.Sampler.WrapR );
+   r200SetTexMaxAnisotropy( t, t->base.Sampler.MaxAnisotropy );
+   r200SetTexFilter(t, t->base.Sampler.MinFilter, t->base.Sampler.MagFilter);
+   r200SetTexBorderColor(t, t->base.Sampler.BorderColor.f);
 
    return &t->base;
 }

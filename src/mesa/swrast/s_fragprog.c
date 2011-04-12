@@ -71,7 +71,7 @@ fetch_texel_lod( struct gl_context *ctx, const GLfloat texcoord[4], GLfloat lamb
       SWcontext *swrast = SWRAST_CONTEXT(ctx);
       GLfloat rgba[4];
 
-      lambda = CLAMP(lambda, texObj->MinLod, texObj->MaxLod);
+      lambda = CLAMP(lambda, texObj->Sampler.MinLod, texObj->Sampler.MaxLod);
 
       swrast->TextureSample[unit](ctx, texObj, 1,
                                   (const GLfloat (*)[4]) texcoord,
@@ -115,9 +115,9 @@ fetch_texel_deriv( struct gl_context *ctx, const GLfloat texcoord[4],
                                       texcoord[0], texcoord[1], texcoord[3],
                                       1.0F / texcoord[3]);
 
-      lambda += lodBias + texUnit->LodBias + texObj->LodBias;
+      lambda += lodBias + texUnit->LodBias + texObj->Sampler.LodBias;
 
-      lambda = CLAMP(lambda, texObj->MinLod, texObj->MaxLod);
+      lambda = CLAMP(lambda, texObj->Sampler.MinLod, texObj->Sampler.MaxLod);
 
       swrast->TextureSample[unit](ctx, texObj, 1,
                                   (const GLfloat (*)[4]) texcoord,

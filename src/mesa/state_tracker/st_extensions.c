@@ -228,6 +228,7 @@ void st_init_extensions(struct st_context *st)
    ctx->Extensions.ARB_half_float_pixel = GL_TRUE;
    ctx->Extensions.ARB_map_buffer_range = GL_TRUE;
    ctx->Extensions.ARB_multisample = GL_TRUE;
+   ctx->Extensions.ARB_sampler_objects = GL_TRUE;
    ctx->Extensions.ARB_texture_border_clamp = GL_TRUE; /* XXX temp */
    ctx->Extensions.ARB_texture_compression = GL_TRUE;
    ctx->Extensions.ARB_texture_cube_map = GL_TRUE;

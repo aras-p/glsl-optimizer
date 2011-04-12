@@ -138,12 +138,13 @@ check_sampler_swizzle(struct pipe_sampler_view *sv,
 static INLINE struct pipe_sampler_view *
 st_create_texture_sampler_view_from_stobj(struct pipe_context *pipe,
 					  struct st_texture_object *stObj,
+                                          const struct gl_sampler_object *samp,
 					  enum pipe_format format)
 {
    struct pipe_sampler_view templ;
    GLuint swizzle = apply_depthmode(stObj->pt->format,
                                     stObj->base._Swizzle,
-                                    stObj->base.DepthMode);
+                                    samp->DepthMode);
 
    u_sampler_view_default_template(&templ,
                                    stObj->pt,
@@ -164,6 +165,7 @@ st_create_texture_sampler_view_from_stobj(struct pipe_context *pipe,
 static INLINE struct pipe_sampler_view *
 st_get_texture_sampler_view_from_stobj(struct st_texture_object *stObj,
 				       struct pipe_context *pipe,
+                                       const struct gl_sampler_object *samp,
 				       enum pipe_format format)
 {
    if (!stObj || !stObj->pt) {
@@ -172,7 +174,7 @@ st_get_texture_sampler_view_from_stobj(struct st_texture_object *stObj,
 
    if (!stObj->sampler_view) {
       stObj->sampler_view =
-         st_create_texture_sampler_view_from_stobj(pipe, stObj, format);
+         st_create_texture_sampler_view_from_stobj(pipe, stObj, samp, format);
    }
 
    return stObj->sampler_view;
@@ -200,16 +202,20 @@ update_textures(struct st_context *st)
          struct st_texture_object *stObj;
          GLboolean retval;
          GLuint texUnit;
+         const struct gl_sampler_object *samp;
 
          if (fprog->Base.SamplersUsed & (1 << su))
             texUnit = fprog->Base.SamplerUnits[su];
          else
             texUnit = vprog->Base.SamplerUnits[su];
 
+         samp = st_get_mesa_sampler(st->ctx, texUnit);
+
          texObj = st->ctx->Texture.Unit[texUnit]._Current;
 
          if (!texObj) {
             texObj = st_get_default_texture(st);
+            samp = &texObj->Sampler;
          }
          stObj = st_texture_object(texObj);
 
@@ -228,7 +234,7 @@ update_textures(struct st_context *st)
 	    enum pipe_format firstImageFormat =
                st_mesa_format_to_pipe_format(texFormat);
 
-	    if ((stObj->base.sRGBDecode == GL_SKIP_DECODE_EXT) &&
+	    if ((samp->sRGBDecode == GL_SKIP_DECODE_EXT) &&
                 (_mesa_get_format_color_encoding(texFormat) == GL_SRGB)) {
                /* don't do sRGB->RGB conversion.  Interpret the texture
                 * texture data as linear values.
@@ -248,12 +254,14 @@ update_textures(struct st_context *st)
 	 if (stObj->sampler_view)
             if (check_sampler_swizzle(stObj->sampler_view,
                                       stObj->base._Swizzle,
-                                      stObj->base.DepthMode) ||
+                                      samp->DepthMode) ||
                 (st_view_format != stObj->sampler_view->format) ||
                 stObj->base.BaseLevel != stObj->sampler_view->u.tex.first_level)
 	       pipe_sampler_view_reference(&stObj->sampler_view, NULL);
 
-         sampler_view = st_get_texture_sampler_view_from_stobj(stObj, pipe, st_view_format);
+         sampler_view = st_get_texture_sampler_view_from_stobj(stObj, pipe,
+                                                               samp,
+                                                               st_view_format);
       }
       pipe_sampler_view_reference(&st->state.sampler_views[su], sampler_view);
    }

@@ -71,6 +71,7 @@ MAIN_SOURCES = \
 	main/readpix.c \
 	main/remap.c \
 	main/renderbuffer.c \
+	main/samplerobj.c \
 	main/scissor.c \
 	main/shaderapi.c \
 	main/shaderobj.c \

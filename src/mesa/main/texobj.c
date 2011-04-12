@@ -116,35 +116,37 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
    obj->Name = name;
    obj->Target = target;
    obj->Priority = 1.0F;
-   if (target == GL_TEXTURE_RECTANGLE_NV) {
-      obj->WrapS = GL_CLAMP_TO_EDGE;
-      obj->WrapT = GL_CLAMP_TO_EDGE;
-      obj->WrapR = GL_CLAMP_TO_EDGE;
-      obj->MinFilter = GL_LINEAR;
-   }
-   else {
-      obj->WrapS = GL_REPEAT;
-      obj->WrapT = GL_REPEAT;
-      obj->WrapR = GL_REPEAT;
-      obj->MinFilter = GL_NEAREST_MIPMAP_LINEAR;
-   }
-   obj->MagFilter = GL_LINEAR;
-   obj->MinLod = -1000.0;
-   obj->MaxLod = 1000.0;
-   obj->LodBias = 0.0;
    obj->BaseLevel = 0;
    obj->MaxLevel = 1000;
-   obj->MaxAnisotropy = 1.0;
-   obj->CompareMode = GL_NONE;         /* ARB_shadow */
-   obj->CompareFunc = GL_LEQUAL;       /* ARB_shadow */
-   obj->CompareFailValue = 0.0F;       /* ARB_shadow_ambient */
-   obj->DepthMode = GL_LUMINANCE;      /* ARB_depth_texture */
+
+   /* sampler state */
+   if (target == GL_TEXTURE_RECTANGLE_NV) {
+      obj->Sampler.WrapS = GL_CLAMP_TO_EDGE;
+      obj->Sampler.WrapT = GL_CLAMP_TO_EDGE;
+      obj->Sampler.WrapR = GL_CLAMP_TO_EDGE;
+      obj->Sampler.MinFilter = GL_LINEAR;
+   }
+   else {
+      obj->Sampler.WrapS = GL_REPEAT;
+      obj->Sampler.WrapT = GL_REPEAT;
+      obj->Sampler.WrapR = GL_REPEAT;
+      obj->Sampler.MinFilter = GL_NEAREST_MIPMAP_LINEAR;
+   }
+   obj->Sampler.MagFilter = GL_LINEAR;
+   obj->Sampler.MinLod = -1000.0;
+   obj->Sampler.MaxLod = 1000.0;
+   obj->Sampler.LodBias = 0.0;
+   obj->Sampler.MaxAnisotropy = 1.0;
+   obj->Sampler.CompareMode = GL_NONE;         /* ARB_shadow */
+   obj->Sampler.CompareFunc = GL_LEQUAL;       /* ARB_shadow */
+   obj->Sampler.CompareFailValue = 0.0F;       /* ARB_shadow_ambient */
+   obj->Sampler.DepthMode = GL_LUMINANCE;      /* ARB_depth_texture */
    obj->Swizzle[0] = GL_RED;
    obj->Swizzle[1] = GL_GREEN;
    obj->Swizzle[2] = GL_BLUE;
    obj->Swizzle[3] = GL_ALPHA;
    obj->_Swizzle = SWIZZLE_NOOP;
-   obj->sRGBDecode = GL_DECODE_EXT;
+   obj->Sampler.sRGBDecode = GL_DECODE_EXT;
 }
 
 
@@ -160,10 +162,10 @@ finish_texture_init(struct gl_context *ctx, GLenum target,
 
    if (target == GL_TEXTURE_RECTANGLE_NV) {
       /* have to init wrap and filter state here - kind of klunky */
-      obj->WrapS = GL_CLAMP_TO_EDGE;
-      obj->WrapT = GL_CLAMP_TO_EDGE;
-      obj->WrapR = GL_CLAMP_TO_EDGE;
-      obj->MinFilter = GL_LINEAR;
+      obj->Sampler.WrapS = GL_CLAMP_TO_EDGE;
+      obj->Sampler.WrapT = GL_CLAMP_TO_EDGE;
+      obj->Sampler.WrapR = GL_CLAMP_TO_EDGE;
+      obj->Sampler.MinFilter = GL_LINEAR;
       if (ctx->Driver.TexParameter) {
          static const GLfloat fparam_wrap[1] = {(GLfloat) GL_CLAMP_TO_EDGE};
          static const GLfloat fparam_filter[1] = {(GLfloat) GL_LINEAR};
@@ -231,25 +233,25 @@ _mesa_copy_texture_object( struct gl_texture_object *dest,
    dest->Target = src->Target;
    dest->Name = src->Name;
    dest->Priority = src->Priority;
-   dest->BorderColor.f[0] = src->BorderColor.f[0];
-   dest->BorderColor.f[1] = src->BorderColor.f[1];
-   dest->BorderColor.f[2] = src->BorderColor.f[2];
-   dest->BorderColor.f[3] = src->BorderColor.f[3];
-   dest->WrapS = src->WrapS;
-   dest->WrapT = src->WrapT;
-   dest->WrapR = src->WrapR;
-   dest->MinFilter = src->MinFilter;
-   dest->MagFilter = src->MagFilter;
-   dest->MinLod = src->MinLod;
-   dest->MaxLod = src->MaxLod;
-   dest->LodBias = src->LodBias;
+   dest->Sampler.BorderColor.f[0] = src->Sampler.BorderColor.f[0];
+   dest->Sampler.BorderColor.f[1] = src->Sampler.BorderColor.f[1];
+   dest->Sampler.BorderColor.f[2] = src->Sampler.BorderColor.f[2];
+   dest->Sampler.BorderColor.f[3] = src->Sampler.BorderColor.f[3];
+   dest->Sampler.WrapS = src->Sampler.WrapS;
+   dest->Sampler.WrapT = src->Sampler.WrapT;
+   dest->Sampler.WrapR = src->Sampler.WrapR;
+   dest->Sampler.MinFilter = src->Sampler.MinFilter;
+   dest->Sampler.MagFilter = src->Sampler.MagFilter;
+   dest->Sampler.MinLod = src->Sampler.MinLod;
+   dest->Sampler.MaxLod = src->Sampler.MaxLod;
+   dest->Sampler.LodBias = src->Sampler.LodBias;
    dest->BaseLevel = src->BaseLevel;
    dest->MaxLevel = src->MaxLevel;
-   dest->MaxAnisotropy = src->MaxAnisotropy;
-   dest->CompareMode = src->CompareMode;
-   dest->CompareFunc = src->CompareFunc;
-   dest->CompareFailValue = src->CompareFailValue;
-   dest->DepthMode = src->DepthMode;
+   dest->Sampler.MaxAnisotropy = src->Sampler.MaxAnisotropy;
+   dest->Sampler.CompareMode = src->Sampler.CompareMode;
+   dest->Sampler.CompareFunc = src->Sampler.CompareFunc;
+   dest->Sampler.CompareFailValue = src->Sampler.CompareFailValue;
+   dest->Sampler.DepthMode = src->Sampler.DepthMode;
    dest->_MaxLevel = src->_MaxLevel;
    dest->_MaxLambda = src->_MaxLambda;
    dest->GenerateMipmap = src->GenerateMipmap;
@@ -506,7 +508,7 @@ _mesa_test_texobj_completeness( const struct gl_context *ctx,
    }
 
    /* extra checking for mipmaps */
-   if (t->MinFilter != GL_NEAREST && t->MinFilter != GL_LINEAR) {
+   if (t->Sampler.MinFilter != GL_NEAREST && t->Sampler.MinFilter != GL_LINEAR) {
       /*
        * Mipmapping: determine if we have a complete set of mipmaps
        */
@@ -761,8 +763,8 @@ _mesa_get_fallback_texture(struct gl_context *ctx)
       /* create texture object */
       texObj = ctx->Driver.NewTextureObject(ctx, 0, GL_TEXTURE_2D);
       assert(texObj->RefCount == 1);
-      texObj->MinFilter = GL_NEAREST;
-      texObj->MagFilter = GL_NEAREST;
+      texObj->Sampler.MinFilter = GL_NEAREST;
+      texObj->Sampler.MagFilter = GL_NEAREST;
 
       /* create level[0] texture image */
       texImage = _mesa_get_tex_image(ctx, texObj, GL_TEXTURE_2D, 0);

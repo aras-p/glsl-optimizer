@@ -975,7 +975,7 @@ _mesa_set_fetch_functions(struct gl_texture_image *texImage, GLuint dims)
 
    ASSERT(dims == 1 || dims == 2 || dims == 3);
 
-   if (texImage->TexObject->sRGBDecode == GL_SKIP_DECODE_EXT &&
+   if (texImage->TexObject->Sampler.sRGBDecode == GL_SKIP_DECODE_EXT &&
        _mesa_get_format_color_encoding(format) == GL_SRGB) {
       format = _mesa_get_srgb_format_linear(format);
    }

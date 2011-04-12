@@ -7973,6 +7973,8 @@
 
 <xi:include href="NV_texture_barrier.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
+<xi:include href="ARB_sampler_objects.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
+
 <xi:include href="EXT_transform_feedback.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>
 
 <xi:include href="ARB_draw_instanced.xml" xmlns:xi="http://www.w3.org/2001/XInclude"/>

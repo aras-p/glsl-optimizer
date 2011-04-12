@@ -582,7 +582,7 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
                value[0] =
                value[1] =
                value[2] =
-               value[3] = texObj->CompareFailValue;
+               value[3] = texObj->Sampler.CompareFailValue;
             }
          }
          return;

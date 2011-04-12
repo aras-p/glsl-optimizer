@@ -173,14 +173,14 @@ nv10_emit_tex_obj(struct gl_context *ctx, int emit)
 		return;
 
 	/* Recompute the texturing registers. */
-	tx_format = nvgl_wrap_mode(t->WrapT) << 28
-		| nvgl_wrap_mode(t->WrapS) << 24
+	tx_format = nvgl_wrap_mode(t->Sampler.WrapT) << 28
+		| nvgl_wrap_mode(t->Sampler.WrapS) << 24
 		| ti->HeightLog2 << 20
 		| ti->WidthLog2 << 16
 		| 5 << 4 | 1 << 12;
 
-	tx_filter = nvgl_filter_mode(t->MagFilter) << 28
-		| nvgl_filter_mode(t->MinFilter) << 24;
+	tx_filter = nvgl_filter_mode(t->Sampler.MagFilter) << 28
+		| nvgl_filter_mode(t->Sampler.MinFilter) << 24;
 
 	tx_enable = NV10_3D_TEX_ENABLE_ENABLE
 		| log2i(t->MaxAnisotropy) << 4;
@@ -196,8 +196,8 @@ nv10_emit_tex_obj(struct gl_context *ctx, int emit)
 		tx_format |= get_tex_format_pot(ti);
 	}
 
-	if (t->MinFilter != GL_NEAREST &&
-	    t->MinFilter != GL_LINEAR) {
+	if (t->Sampler.MinFilter != GL_NEAREST &&
+	    t->Sampler.MinFilter != GL_LINEAR) {
 		int lod_min = t->MinLod;
 		int lod_max = MIN2(t->MaxLod, t->_MaxLambda);
 		int lod_bias = t->LodBias
