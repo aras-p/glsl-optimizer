@@ -26,8 +26,12 @@
  **************************************************************************/
 
 #include <vdpau/vdpau.h>
+
 #include <util/u_memory.h>
 #include <util/u_debug.h>
+
+#include <vl/vl_csc.h>
+
 #include "vdpau_private.h"
 
 VdpStatus
@@ -42,6 +46,7 @@ vlVdpVideoMixerCreate(VdpDevice device,
    vlVdpVideoMixer *vmixer = NULL;
    struct pipe_video_context *context;
    VdpStatus ret;
+   float csc[16];
 
    debug_printf("[VDPAU] Creating VideoMixer\n");
 
@@ -57,6 +62,14 @@ vlVdpVideoMixerCreate(VdpDevice device,
 
    vmixer->device = dev;
    vmixer->compositor = context->create_compositor(context);
+
+   vl_csc_get_matrix
+   (
+      debug_get_bool_option("G3DVL_NO_CSC", FALSE) ?
+      VL_CSC_COLOR_STANDARD_IDENTITY : VL_CSC_COLOR_STANDARD_BT_601,
+      NULL, true, csc
+   );
+   vmixer->compositor->set_csc_matrix(vmixer->compositor, csc);
 
    /*
     * TODO: Handle features and parameters
