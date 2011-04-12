@@ -188,7 +188,7 @@ vlVdpVideoSurfacePutBitsYCbCr(VdpVideoSurface surface,
       return VDP_STATUS_RESOURCES;
 
    for (i = 0; i < 3; ++i) { //TODO put nr of planes into util format
-      struct pipe_sampler_view *sv = sampler_views[i];
+      struct pipe_sampler_view *sv = sampler_views[i ? i ^ 3 : 0];
       struct pipe_box dst_box = { 0, 0, 0, sv->texture->width0, sv->texture->height0, 1 };
       context->upload_sampler(context, sv, &dst_box, source_data[i], source_pitches[i], 0, 0);
    }
