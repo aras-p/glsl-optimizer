@@ -85,21 +85,17 @@ static enum pipe_mpeg12_motion_type MotionToPipe(int xvmc_motion_type, unsigned 
 static void
 MacroBlocksToPipe(struct pipe_screen *screen,
                   unsigned int xvmc_picture_structure,
-                  const XvMCMacroBlockArray *xvmc_macroblocks,
+                  const XvMCMacroBlock *xvmc_mb,
                   const XvMCBlockArray *xvmc_blocks,
-                  unsigned int first_macroblock,
                   unsigned int num_macroblocks,
                   struct pipe_mpeg12_macroblock *mb)
 {
    unsigned int i, j;
-   XvMCMacroBlock *xvmc_mb;
 
-   assert(xvmc_macroblocks);
+   assert(xvmc_mb);
    assert(xvmc_blocks);
    assert(mb);
    assert(num_macroblocks);
-
-   xvmc_mb = xvmc_macroblocks->macro_blocks + first_macroblock;
 
    for (i = 0; i < num_macroblocks; ++i) {
       mb->base.codec = PIPE_VIDEO_CODEC_MPEG12;
@@ -259,10 +255,13 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
 {
    struct pipe_video_context *vpipe;
    struct pipe_video_decode_buffer *t_buffer;
+
    XvMCContextPrivate *context_priv;
    XvMCSurfacePrivate *target_surface_priv;
    XvMCSurfacePrivate *past_surface_priv;
    XvMCSurfacePrivate *future_surface_priv;
+   XvMCMacroBlock *xvmc_mb;
+
    struct pipe_mpeg12_macroblock pipe_macroblocks[num_macroblocks];
 
    XVMC_MSG(XVMC_TRACE, "[XvMC] Rendering to surface %p, with past %p and future %p\n",
@@ -316,17 +315,19 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    if (future_surface)
       unmap_and_flush_surface(future_surface->privData);
 
+   xvmc_mb = macroblocks->macro_blocks + first_macroblock;
+
    /* If the surface we're rendering hasn't changed the ref frames shouldn't change. */
    if (target_surface_priv->mapped && (
        target_surface_priv->ref_surfaces[0] != past_surface ||
-       target_surface_priv->ref_surfaces[1] != future_surface)) {
+       target_surface_priv->ref_surfaces[1] != future_surface ||
+       (xvmc_mb->x == 0 && xvmc_mb->y == 0))) {
 
-      // If they change anyway we need to flush our surface
+      // If they change anyway we need to clear our surface
       unmap_and_flush_surface(target_surface_priv);
    }
 
-   MacroBlocksToPipe(vpipe->screen, picture_structure, macroblocks, blocks, first_macroblock,
-                     num_macroblocks, pipe_macroblocks);
+   MacroBlocksToPipe(vpipe->screen, picture_structure, xvmc_mb, blocks, num_macroblocks, pipe_macroblocks);
 
    if (!target_surface_priv->mapped) {
       t_buffer->map(t_buffer);
