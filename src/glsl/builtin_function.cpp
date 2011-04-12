@@ -3964,6 +3964,19 @@ static const char builtin_texture2DArrayLod[] =
    "))\n"
    ""
 ;
+static const char builtin_texture2DGradARB[] =
+   "((function texture2DGradARB\n"
+   "   (signature vec4\n"
+   "     (parameters\n"
+   "       (declare (in) sampler2D sampler)\n"
+   "       (declare (in) vec2 P) \n"
+   "       (declare (in) vec2 dPdx) \n"
+   "       (declare (in) vec2 dPdy) )\n"
+   "     ((return (txd vec4 (var_ref sampler) (var_ref P) 0 1 () ((var_ref dPdx) (var_ref dPdy)) ))))\n"
+   "\n"
+   "))\n"
+   ""
+;
 static const char builtin_texture2DLod[] =
    "((function texture2DLod\n"
    "   (signature vec4\n"
@@ -14930,6 +14943,14 @@ static const char prototypes_for_ARB_shader_texture_lod_frag[] =
    "      (declare (in) sampler2DShadow sampler)\n"
    "      (declare (in) vec4 coord)\n"
    "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function texture2DGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2D sampler)\n"
+   "      (declare (in) vec2 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
    "    ())))"
 ;
 static const char *functions_for_ARB_shader_texture_lod_frag [] = {
@@ -14939,6 +14960,7 @@ static const char *functions_for_ARB_shader_texture_lod_frag [] = {
    builtin_shadow2DProjLod,
    builtin_texture1DLod,
    builtin_texture1DProjLod,
+   builtin_texture2DGradARB,
    builtin_texture2DLod,
    builtin_texture2DProjLod,
    builtin_texture3DLod,
@@ -15035,6 +15057,14 @@ static const char prototypes_for_ARB_shader_texture_lod_vert[] =
    "      (declare (in) sampler2DShadow sampler)\n"
    "      (declare (in) vec4 coord)\n"
    "      (declare (in) float lod))\n"
+   "    ()))\n"
+   "(function texture2DGradARB\n"
+   "  (signature vec4\n"
+   "    (parameters\n"
+   "      (declare (in) sampler2D sampler)\n"
+   "      (declare (in) vec2 P)\n"
+   "      (declare (in) vec2 dPdx)\n"
+   "      (declare (in) vec2 dPdy))\n"
    "    ())))"
 ;
 static const char *functions_for_ARB_shader_texture_lod_vert [] = {
@@ -15044,6 +15074,7 @@ static const char *functions_for_ARB_shader_texture_lod_vert [] = {
    builtin_shadow2DProjLod,
    builtin_texture1DLod,
    builtin_texture1DProjLod,
+   builtin_texture2DGradARB,
    builtin_texture2DLod,
    builtin_texture2DProjLod,
    builtin_texture3DLod,

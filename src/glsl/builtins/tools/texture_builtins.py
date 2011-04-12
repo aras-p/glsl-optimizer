@@ -369,6 +369,11 @@ def generate_texture_functions(fs):
     generate_sigs("", "tex", "2DArrayShadow")
     end_function(fs, "shadow2DArray")
 
+    # ARB_shader_texture_lod extension
+    start_function("texture2DGradARB")
+    generate_sigs("", "txd", "2D")
+    end_function(fs, "texture2DGradARB")
+
     # Deprecated (110/120 style) functions with silly names:
     start_function("texture1D")
     generate_sigs("", "tex", "1D")

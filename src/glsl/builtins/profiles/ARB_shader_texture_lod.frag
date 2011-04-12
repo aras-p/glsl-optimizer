@@ -17,3 +17,6 @@ vec4 shadow1DLod    (sampler1DShadow sampler, vec3 coord, float lod);
 vec4 shadow2DLod    (sampler2DShadow sampler, vec3 coord, float lod);
 vec4 shadow1DProjLod(sampler1DShadow sampler, vec4 coord, float lod);
 vec4 shadow2DProjLod(sampler2DShadow sampler, vec4 coord, float lod);
+
+
+vec4 texture2DGradARB(sampler2D sampler, vec2 P, vec2 dPdx, vec2 dPdy);
