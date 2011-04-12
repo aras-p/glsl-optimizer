@@ -82,11 +82,11 @@ nv04_emit_tex_obj(struct gl_context *ctx, int emit)
 
 		if (t->Sampler.MinFilter != GL_NEAREST &&
 		    t->Sampler.MinFilter != GL_LINEAR) {
-			lod_max = CLAMP(MIN2(t->MaxLod, t->_MaxLambda),
+			lod_max = CLAMP(MIN2(t->Sampler.MaxLod, t->_MaxLambda),
 					0, 15) + 1;
 
 			lod_bias = CLAMP(ctx->Texture.Unit[i].LodBias +
-					 t->LodBias, -16, 15) * 8;
+					 t->Sampler.LodBias, -16, 15) * 8;
 		}
 
 		format |= nvgl_wrap_mode(t->Sampler.WrapT) << 28 |
@@ -96,9 +96,9 @@ nv04_emit_tex_obj(struct gl_context *ctx, int emit)
 			lod_max << 12 |
 			get_tex_format(ti);
 
-		filter |= log2i(t->MaxAnisotropy) << 31 |
+		filter |= log2i(t->Sampler.MaxAnisotropy) << 31 |
 			nvgl_filter_mode(t->Sampler.MagFilter) << 28 |
-			log2i(t->MaxAnisotropy) << 27 |
+			log2i(t->Sampler.MaxAnisotropy) << 27 |
 			nvgl_filter_mode(t->Sampler.MinFilter) << 24 |
 			(lod_bias & 0xff) << 16;
 

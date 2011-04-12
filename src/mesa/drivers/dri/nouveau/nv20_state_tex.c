@@ -195,7 +195,7 @@ nv20_emit_tex_obj(struct gl_context *ctx, int emit)
 		| 2 << 12;
 
 	tx_enable = NV20_3D_TEX_ENABLE_ENABLE
-		| log2i(t->MaxAnisotropy) << 4;
+		| log2i(t->Sampler.MaxAnisotropy) << 4;
 
 	if (t->Target == GL_TEXTURE_RECTANGLE) {
 		BEGIN_RING(chan, kelvin, NV20_3D_TEX_NPOT_PITCH(i), 1);
@@ -210,9 +210,9 @@ nv20_emit_tex_obj(struct gl_context *ctx, int emit)
 
 	if (t->Sampler.MinFilter != GL_NEAREST &&
 	    t->Sampler.MinFilter != GL_LINEAR) {
-		int lod_min = t->MinLod;
-		int lod_max = MIN2(t->MaxLod, t->_MaxLambda);
-		int lod_bias = t->LodBias
+		int lod_min = t->Sampler.MinLod;
+		int lod_max = MIN2(t->Sampler.MaxLod, t->_MaxLambda);
+		int lod_bias = t->Sampler.LodBias
 			+ ctx->Texture.Unit[i].LodBias;
 
 		lod_max = CLAMP(lod_max, 0, 15);
