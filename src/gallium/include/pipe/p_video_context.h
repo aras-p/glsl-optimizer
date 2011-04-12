@@ -121,7 +121,7 @@ struct pipe_video_context
     */
    struct pipe_video_buffer *(*create_buffer)(struct pipe_video_context *context,
                                               enum pipe_format buffer_format,
-                                              enum pipe_format resource_formats[3],
+                                              const enum pipe_format resource_formats[3],
                                               enum pipe_video_chroma_format chroma_format,
                                               unsigned width, unsigned height);
 
