@@ -555,12 +555,12 @@ struct brw_context
       GLuint nr_sf_entries;
       GLuint nr_cs_entries;
 
-      /* gen6 */
+      /* gen6:
+       * The length of each URB entry owned by the VS (or GS), as
+       * a number of 1024-bit (128-byte) rows.  Should be >= 1.
+       */
       GLuint vs_size;
 /*       GLuint gs_size; */
-/*       GLuint clip_size; */
-/*       GLuint sf_size; */
-/*       GLuint cs_size; */
 
       GLuint vs_start;
       GLuint gs_start;
