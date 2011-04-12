@@ -30,12 +30,20 @@
 
 #include <X11/Xlib.h>
 #include <X11/extensions/XvMClib.h>
+
 #include <util/u_debug.h>
+#include <util/u_math.h>
 
 #define BLOCK_SIZE_SAMPLES 64
 #define BLOCK_SIZE_BYTES (BLOCK_SIZE_SAMPLES * 2)
 
 struct vl_context;
+
+struct pipe_video_decoder;
+struct pipe_video_compositor;
+struct pipe_video_decode_buffer;
+struct pipe_video_buffer;
+
 struct pipe_sampler_view;
 struct pipe_fence_handle;
 
@@ -93,14 +101,13 @@ typedef struct
 #define XVMC_ERR   1
 #define XVMC_WARN  2
 #define XVMC_TRACE 3
+
 static INLINE void XVMC_MSG(unsigned int level, const char *fmt, ...)
 {
-   static boolean check_dbg_level = TRUE;
-   static unsigned int debug_level;
+   static int debug_level = -1;
 
-   if (check_dbg_level) {
-      debug_level = debug_get_num_option("XVMC_DEBUG", 0);
-      check_dbg_level = FALSE;
+   if (debug_level == -1) {
+      debug_level = MIN2(debug_get_num_option("XVMC_DEBUG", 0), 0);
    }
 
    if (level <= debug_level) {

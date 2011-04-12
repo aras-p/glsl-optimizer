@@ -26,17 +26,22 @@
  **************************************************************************/
 
 #include <assert.h>
+
 #include <X11/Xlibint.h>
 #include <X11/extensions/XvMClib.h>
 #include <xorg/fourcc.h>
-#include <vl_winsys.h>
+
 #include <pipe/p_screen.h>
 #include <pipe/p_video_context.h>
 #include <pipe/p_state.h>
+
 #include <util/u_memory.h>
 #include <util/u_math.h>
 #include <util/u_format.h>
 #include <util/u_sampler.h>
+
+#include <vl_winsys.h>
+
 #include "xvmc_private.h"
 
 #define FOURCC_RGB 0x0000003

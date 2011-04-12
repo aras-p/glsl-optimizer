@@ -26,15 +26,20 @@
  **************************************************************************/
 
 #include <assert.h>
+
 #include <X11/Xlibint.h>
 #include <X11/extensions/XvMClib.h>
+
 #include <pipe/p_screen.h>
 #include <pipe/p_video_context.h>
 #include <pipe/p_video_state.h>
 #include <pipe/p_state.h>
-#include <vl_winsys.h>
+
 #include <util/u_memory.h>
+
 #include <vl/vl_csc.h>
+#include <vl_winsys.h>
+
 #include "xvmc_private.h"
 
 static Status Validate(Display *dpy, XvPortID port, int surface_type_id,

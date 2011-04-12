@@ -27,14 +27,19 @@
 
 #include <assert.h>
 #include <stdio.h>
+
 #include <X11/Xlibint.h>
-#include <vl_winsys.h>
+
 #include <pipe/p_video_context.h>
 #include <pipe/p_video_state.h>
 #include <pipe/p_state.h>
+
 #include <util/u_inlines.h>
 #include <util/u_memory.h>
 #include <util/u_math.h>
+
+#include <vl_winsys.h>
+
 #include "xvmc_private.h"
 
 static enum pipe_mpeg12_picture_type PictureToPipe(int xvmc_pic)
