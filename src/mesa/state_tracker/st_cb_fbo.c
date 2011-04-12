@@ -90,6 +90,7 @@ st_renderbuffer_alloc_storage(struct gl_context * ctx,
    strb->Base.Format = st_pipe_format_to_mesa_format(format);
    strb->Base._BaseFormat = _mesa_base_fbo_format(ctx, internalFormat);
    strb->Base.DataType = st_format_datatype(format);
+   strb->format = format;
 
    strb->defined = GL_FALSE;  /* undefined contents now */
 
