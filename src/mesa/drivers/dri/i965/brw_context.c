@@ -182,7 +182,6 @@ GLboolean brwCreateContext( int api,
 
    /* WM maximum threads is number of EUs times number of threads per EU. */
    if (intel->gen >= 6) {
-      brw->urb.size = 1024;
       if (IS_GT2(intel->intelScreen->deviceID)) {
 	 /* This could possibly be 80, but is supposed to require
 	  * disabling of WIZ hashing (bit 6 of GT_MODE, 0x20d0) and a
@@ -190,9 +189,13 @@ GLboolean brwCreateContext( int api,
 	  */
 	 brw->wm_max_threads = 40;
 	 brw->vs_max_threads = 60;
+	 brw->urb.size = 64;            /* volume 5c.5 section 5.1 */
+	 brw->urb.max_vs_handles = 128; /* volume 2a (see 3DSTATE_URB) */
       } else {
 	 brw->wm_max_threads = 40;
 	 brw->vs_max_threads = 24;
+	 brw->urb.size = 32;            /* volume 5c.5 section 5.1 */
+	 brw->urb.max_vs_handles = 256; /* volume 2a (see 3DSTATE_URB) */
       }
    } else if (intel->gen == 5) {
       brw->urb.size = 1024;

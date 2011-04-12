@@ -34,26 +34,25 @@
 static void
 prepare_urb( struct brw_context *brw )
 {
-   int urb_size, max_urb_entry;
-   struct intel_context *intel = &brw->intel;
-
-   if (IS_GT1(intel->intelScreen->deviceID)) {
-	urb_size = 32 * 1024;
-	max_urb_entry = 128;
-   } else {
-	urb_size = 64 * 1024;
-	max_urb_entry = 256;
-   }
-
-   brw->urb.nr_vs_entries = max_urb_entry;
-   brw->urb.nr_gs_entries = max_urb_entry;
+   int nr_vs_entries;
 
    /* CACHE_NEW_VS_PROG */
    brw->urb.vs_size = MAX2(brw->vs.prog_data->urb_entry_size, 1);
 
-   if (2 * brw->urb.vs_size > urb_size)
-	   brw->urb.nr_vs_entries = brw->urb.nr_gs_entries = 
-		(urb_size ) / (2 * brw->urb.vs_size);
+   /* Calculate how many VS URB entries fit in the total URB size */
+   nr_vs_entries = (brw->urb.size * 1024) / (brw->urb.vs_size * 128);
+
+   if (nr_vs_entries > brw->urb.max_vs_handles)
+      nr_vs_entries = brw->urb.max_vs_handles;
+
+   /* According to volume 2a, nr_vs_entries must be a multiple of 4. */
+   brw->urb.nr_vs_entries = ROUND_DOWN_TO(nr_vs_entries, 4);
+
+   /* Since we currently don't support Geometry Shaders, we always put the
+    * GS unit in passthrough mode and don't allocate it any URB space.
+    */
+   brw->urb.nr_gs_entries = 0;
+   brw->urb.gs_size = 1; /* Incorrect, but with 0 GS entries it doesn't matter. */
 }
 
 static void
@@ -61,6 +60,7 @@ upload_urb(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
 
+   assert(brw->urb.nr_vs_entries >= 24);
    assert(brw->urb.nr_vs_entries % 4 == 0);
    assert(brw->urb.nr_gs_entries % 4 == 0);
    /* GS requirement */
@@ -70,7 +70,7 @@ upload_urb(struct brw_context *brw)
    OUT_BATCH(_3DSTATE_URB << 16 | (3 - 2));
    OUT_BATCH(((brw->urb.vs_size - 1) << GEN6_URB_VS_SIZE_SHIFT) |
 	     ((brw->urb.nr_vs_entries) << GEN6_URB_VS_ENTRIES_SHIFT));
-   OUT_BATCH(((brw->urb.vs_size - 1) << GEN6_URB_GS_SIZE_SHIFT) |
+   OUT_BATCH(((brw->urb.gs_size - 1) << GEN6_URB_GS_SIZE_SHIFT) |
 	     ((brw->urb.nr_gs_entries) << GEN6_URB_GS_ENTRIES_SHIFT));
    ADVANCE_BATCH();
 }

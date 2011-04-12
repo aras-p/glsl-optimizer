@@ -568,6 +568,9 @@ struct brw_context
 
       GLboolean constrained;
 
+      GLuint max_vs_handles;	/* Maximum number of VS handles */
+      GLuint max_gs_handles;	/* Maximum number of GS handles */
+
       GLuint nr_vs_entries;
       GLuint nr_gs_entries;
       GLuint nr_clip_entries;
@@ -579,7 +582,7 @@ struct brw_context
        * a number of 1024-bit (128-byte) rows.  Should be >= 1.
        */
       GLuint vs_size;
-/*       GLuint gs_size; */
+      GLuint gs_size;
 
       GLuint vs_start;
       GLuint gs_start;
