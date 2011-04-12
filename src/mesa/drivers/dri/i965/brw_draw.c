@@ -182,6 +182,61 @@ static void brw_emit_prim(struct brw_context *brw,
    }
 }
 
+static void gen7_emit_prim(struct brw_context *brw,
+			   const struct _mesa_prim *prim,
+			   uint32_t hw_prim)
+{
+   struct intel_context *intel = &brw->intel;
+   int verts_per_instance;
+   int vertex_access_type;
+   int start_vertex_location;
+   int base_vertex_location;
+
+   DBG("PRIM: %s %d %d\n", _mesa_lookup_enum_by_nr(prim->mode),
+       prim->start, prim->count);
+
+   start_vertex_location = prim->start;
+   base_vertex_location = prim->basevertex;
+   if (prim->indexed) {
+      vertex_access_type = GEN7_3DPRIM_VERTEXBUFFER_ACCESS_RANDOM;
+      start_vertex_location += brw->ib.start_vertex_offset;
+      base_vertex_location += brw->vb.start_vertex_bias;
+   } else {
+      vertex_access_type = GEN7_3DPRIM_VERTEXBUFFER_ACCESS_SEQUENTIAL;
+      start_vertex_location += brw->vb.start_vertex_bias;
+   }
+
+   verts_per_instance = trim(prim->mode, prim->count);
+
+   /* If nothing to emit, just return. */
+   if (verts_per_instance == 0)
+      return;
+
+   /* If we're set to always flush, do it before and after the primitive emit.
+    * We want to catch both missed flushes that hurt instruction/state cache
+    * and missed flushes of the render cache as it heads to other parts of
+    * the besides the draw code.
+    */
+   if (intel->always_flush_cache) {
+      intel_batchbuffer_emit_mi_flush(intel);
+   }
+
+   BEGIN_BATCH(7);
+   OUT_BATCH(CMD_3D_PRIM << 16 | (7 - 2));
+   OUT_BATCH(hw_prim | vertex_access_type);
+   OUT_BATCH(verts_per_instance);
+   OUT_BATCH(start_vertex_location);
+   OUT_BATCH(1); // instance count
+   OUT_BATCH(0); // start instance location
+   OUT_BATCH(base_vertex_location);
+   ADVANCE_BATCH();
+
+   if (intel->always_flush_cache) {
+      intel_batchbuffer_emit_mi_flush(intel);
+   }
+}
+
+
 static void brw_merge_inputs( struct brw_context *brw,
 		       const struct gl_client_array *arrays[])
 {
@@ -415,7 +470,10 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
 	 brw_upload_state(brw);
       }
 
-      brw_emit_prim(brw, &prim[i], hw_prim);
+      if (intel->gen >= 7)
+	 gen7_emit_prim(brw, &prim[i], hw_prim);
+      else
+	 brw_emit_prim(brw, &prim[i], hw_prim);
 
       intel->no_batch_wrap = GL_FALSE;
 
