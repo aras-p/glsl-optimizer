@@ -537,3 +537,49 @@ unsigned int rc_pair_remove_src(
 
 	return 1;
 }
+
+/**
+ * @return RC_OPCODE_NOOP if inst is not a flow control instruction.
+ * @return The opcode of inst if it is a flow control instruction.
+ */
+rc_opcode rc_get_flow_control_inst(struct rc_instruction * inst)
+{
+	const struct rc_opcode_info * info;
+	if (inst->Type == RC_INSTRUCTION_NORMAL) {
+		info = rc_get_opcode_info(inst->U.I.Opcode);
+	} else {
+		info = rc_get_opcode_info(inst->U.P.RGB.Opcode);
+		/*A flow control instruction shouldn't have an alpha
+		 * instruction.*/
+		assert(!info->IsFlowControl ||
+				inst->U.P.Alpha.Opcode == RC_OPCODE_NOP);
+	}
+
+	if (info->IsFlowControl)
+		return info->Opcode;
+	else
+		return RC_OPCODE_NOP;
+
+}
+
+/**
+ * @return The BGNLOOP instruction that starts the loop ended by endloop.
+ */
+struct rc_instruction * rc_match_endloop(struct rc_instruction * endloop)
+{
+	unsigned int endloop_count = 0;
+	struct rc_instruction * inst;
+	for (inst = endloop->Prev; inst != endloop; inst = inst->Prev) {
+		rc_opcode op = rc_get_flow_control_inst(inst);
+		if (op == RC_OPCODE_ENDLOOP) {
+			endloop_count++;
+		} else if (op == RC_OPCODE_BGNLOOP) {
+			if (endloop_count == 0) {
+				return inst;
+			} else {
+				endloop_count--;
+			}
+		}
+	}
+	return NULL;
+}

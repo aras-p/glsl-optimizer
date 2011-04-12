@@ -3,6 +3,8 @@
 #ifndef RADEON_PROGRAM_UTIL_H
 #define RADEON_PROGRAM_UTIL_H
 
+#include "radeon_opcodes.h"
+
 struct radeon_compiler;
 struct rc_instruction;
 struct rc_pair_instruction;
@@ -70,5 +72,9 @@ unsigned int rc_pair_remove_src(
 	unsigned int src_type,
 	unsigned int source,
 	unsigned int new_readmask);
+
+rc_opcode rc_get_flow_control_inst(struct rc_instruction * inst);
+
+struct rc_instruction * rc_match_endloop(struct rc_instruction * endloop);
 
 #endif /* RADEON_PROGRAM_UTIL_H */

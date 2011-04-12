@@ -449,30 +449,6 @@ void rc_remap_registers(struct rc_instruction * inst, rc_remap_register_fn cb, v
 		remap_pair_instruction(inst, cb, userdata);
 }
 
-/**
- * @return RC_OPCODE_NOOP if inst is not a flow control instruction.
- * @return The opcode of inst if it is a flow control instruction.
- */
-static rc_opcode get_flow_control_inst(struct rc_instruction * inst)
-{
-	const struct rc_opcode_info * info;
-	if (inst->Type == RC_INSTRUCTION_NORMAL) {
-		info = rc_get_opcode_info(inst->U.I.Opcode);
-	} else {
-		info = rc_get_opcode_info(inst->U.P.RGB.Opcode);
-		/*A flow control instruction shouldn't have an alpha
-		 * instruction.*/
-		assert(!info->IsFlowControl ||
-				inst->U.P.Alpha.Opcode == RC_OPCODE_NOP);
-	}
-
-	if (info->IsFlowControl)
-		return info->Opcode;
-	else
-		return RC_OPCODE_NOP;
-
-}
-
 struct branch_write_mask {
 	unsigned int IfWriteMask:4;
 	unsigned int ElseWriteMask:4;
@@ -567,6 +543,11 @@ static unsigned int get_readers_read_callback(
 		return shared_mask;
 	}
 
+	if (cb_data->ReaderData->LoopDepth > 0) {
+		cb_data->ReaderData->AbortOnWrite |=
+				(read_mask & cb_data->AliveWriteMask);
+	}
+
 	/* XXX The behavior in this case should be configurable. */
 	if ((read_mask & cb_data->AliveWriteMask) != read_mask) {
 		cb_data->ReaderData->Abort = 1;
@@ -649,10 +630,55 @@ static void get_readers_write_callback(
 		unsigned int shared_mask = mask & d->DstMask;
 		d->ReaderData->AbortOnRead &= ~shared_mask;
 		d->AliveWriteMask &= ~shared_mask;
+		if (d->ReaderData->AbortOnWrite & shared_mask) {
+			d->ReaderData->Abort = 1;
+		}
 	}
 
 	if(d->WriteCB)
 		d->WriteCB(d->ReaderData, inst, file, index, mask);
+}
+
+static void push_branch_mask(
+	struct get_readers_callback_data * d,
+	unsigned int * branch_depth)
+{
+	(*branch_depth)++;
+	if (*branch_depth > R500_PFS_MAX_BRANCH_DEPTH_FULL) {
+		d->ReaderData->Abort = 1;
+		return;
+	}
+	d->BranchMasks[*branch_depth].IfWriteMask =
+					d->AliveWriteMask;
+}
+
+static void pop_branch_mask(
+	struct get_readers_callback_data * d,
+	unsigned int * branch_depth)
+{
+	struct branch_write_mask * masks = &d->BranchMasks[*branch_depth];
+
+	if (masks->HasElse) {
+		/* Abort on read for components that were written in the IF
+		 * block. */
+		d->ReaderData->AbortOnRead |=
+				masks->IfWriteMask & ~masks->ElseWriteMask;
+		/* Abort on read for components that were written in the ELSE
+		 * block. */
+		d->ReaderData->AbortOnRead |=
+				masks->ElseWriteMask & ~d->AliveWriteMask;
+
+		d->AliveWriteMask = masks->IfWriteMask
+			^ ((masks->IfWriteMask ^ masks->ElseWriteMask)
+			& (masks->IfWriteMask ^ d->AliveWriteMask));
+	} else {
+		d->ReaderData->AbortOnRead |=
+				masks->IfWriteMask & ~d->AliveWriteMask;
+		d->AliveWriteMask = masks->IfWriteMask;
+
+	}
+	memset(masks, 0, sizeof(struct branch_write_mask));
+	(*branch_depth)--;
 }
 
 static void get_readers_for_single_write(
@@ -664,10 +690,14 @@ static void get_readers_for_single_write(
 {
 	struct rc_instruction * tmp;
 	unsigned int branch_depth = 0;
+	struct rc_instruction * endloop = NULL;
+	unsigned int abort_on_read_at_endloop;
 	struct get_readers_callback_data * d = userdata;
 
 	d->ReaderData->Writer = writer;
 	d->ReaderData->AbortOnRead = 0;
+	d->ReaderData->AbortOnWrite = 0;
+	d->ReaderData->LoopDepth = 0;
 	d->ReaderData->InElse = 0;
 	d->DstFile = dst_file;
 	d->DstIndex = dst_index;
@@ -680,32 +710,43 @@ static void get_readers_for_single_write(
 
 	for(tmp = writer->Next; tmp != &d->C->Program.Instructions;
 							tmp = tmp->Next){
-		rc_opcode opcode = get_flow_control_inst(tmp);
+		rc_opcode opcode = rc_get_flow_control_inst(tmp);
 		switch(opcode) {
 		case RC_OPCODE_BGNLOOP:
-			/* XXX We can do better when we see a BGNLOOP if we
-			 * add a flag called AbortOnWrite to struct
-			 * rc_reader_data and leave it set until the next
-			 * ENDLOOP. */
+			d->ReaderData->LoopDepth++;
+			push_branch_mask(d, &branch_depth);
+			break;
 		case RC_OPCODE_ENDLOOP:
-			/* XXX We can do better when we see an ENDLOOP by
-			 * searching backwards from writer and looking for
-			 * readers of writer's destination index.  If we find a
-			 * reader before we get to the BGNLOOP, we must abort
-			 * unless there is another writer between that reader
-			 * and the BGNLOOP. */
-		case RC_OPCODE_BRK:
-		case RC_OPCODE_CONT:
-			d->ReaderData->Abort = 1;
-			return;
-		case RC_OPCODE_IF:
-			branch_depth++;
-			if (branch_depth > R500_PFS_MAX_BRANCH_DEPTH_FULL) {
-				d->ReaderData->Abort = 1;
-				return;
+			if (d->ReaderData->LoopDepth > 0) {
+				d->ReaderData->LoopDepth--;
+				if (d->ReaderData->LoopDepth == 0) {
+					d->ReaderData->AbortOnWrite = 0;
+				}
+				pop_branch_mask(d, &branch_depth);
+			} else {
+				/* Here we have reached an ENDLOOP without
+				 * seeing its BGNLOOP.  These means that
+				 * the writer was written inside of a loop,
+				 * so it could have readers that are above it
+				 * (i.e. they have a lower IP).  To find these
+				 * readers we jump to the BGNLOOP instruction
+				 * and check each instruction until we get
+				 * back to the writer.
+				 */
+				endloop = tmp;
+				tmp = rc_match_endloop(tmp);
+				if (!tmp) {
+					rc_error(d->C, "Failed to match endloop.\n");
+					d->ReaderData->Abort = 1;
+					return;
+				}
+				abort_on_read_at_endloop = d->ReaderData->AbortOnRead;
+				d->ReaderData->AbortOnRead |= d->AliveWriteMask;
+				continue;
 			}
-			d->BranchMasks[branch_depth].IfWriteMask =
-							d->AliveWriteMask;
+			break;
+		case RC_OPCODE_IF:
+			push_branch_mask(d, &branch_depth);
 			break;
 		case RC_OPCODE_ELSE:
 			if (branch_depth == 0) {
@@ -725,35 +766,7 @@ static void get_readers_for_single_write(
 				d->ReaderData->InElse = 0;
 			}
 			else {
-				struct branch_write_mask * masks =
-					&d->BranchMasks[branch_depth];
-
-				if (masks->HasElse) {
-					/* Abort on read for components that
-					 * were written in the IF block. */
-					d->ReaderData->AbortOnRead |=
-						masks->IfWriteMask
-							& ~masks->ElseWriteMask;
-					/* Abort on read for components that
-					 * were written in the ELSE block. */
-					d->ReaderData->AbortOnRead |=
-						masks->ElseWriteMask
-							& ~d->AliveWriteMask;
-					d->AliveWriteMask = masks->IfWriteMask
-						^ ((masks->IfWriteMask ^
-							masks->ElseWriteMask)
-						& (masks->IfWriteMask
-							^ d->AliveWriteMask));
-				} else {
-					d->ReaderData->AbortOnRead |=
-						masks->IfWriteMask
-							& ~d->AliveWriteMask;
-					d->AliveWriteMask = masks->IfWriteMask;
-
-				}
-				memset(masks, 0,
-					sizeof(struct branch_write_mask));
-				branch_depth--;
+				pop_branch_mask(d, &branch_depth);
 			}
 			break;
 		default:
@@ -769,6 +782,14 @@ static void get_readers_for_single_write(
 		} else {
 			rc_pair_for_all_reads_arg(tmp,
 				get_readers_pair_read_callback, d);
+		}
+
+		/* This can happen when we jump from an ENDLOOP to BGNLOOP */
+		if (tmp == writer) {
+			tmp = endloop;
+			endloop = NULL;
+			d->ReaderData->AbortOnRead = abort_on_read_at_endloop;
+			continue;
 		}
 		rc_for_all_writes_mask(tmp, get_readers_write_callback, d);
 

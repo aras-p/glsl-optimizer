@@ -88,6 +88,8 @@ struct rc_reader {
 struct rc_reader_data {
 	unsigned int Abort;
 	unsigned int AbortOnRead;
+	unsigned int AbortOnWrite;
+	unsigned int LoopDepth;
 	unsigned int InElse;
 	struct rc_instruction * Writer;
 
