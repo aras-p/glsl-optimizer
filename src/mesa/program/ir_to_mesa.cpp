@@ -757,7 +757,7 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
 	  * of the type.  However, this had better match the number of state
 	  * elements that we're going to copy into the new temporary.
 	  */
-	 assert(ir->num_state_slots == type_size(ir->type));
+	 assert((int) ir->num_state_slots == type_size(ir->type));
 
 	 storage = new(mem_ctx) variable_storage(ir, PROGRAM_TEMPORARY,
 						 this->next_temp);
@@ -788,7 +788,7 @@ ir_to_mesa_visitor::visit(ir_variable *ir)
       }
 
       if (storage->file == PROGRAM_TEMPORARY &&
-	  dst.index != storage->index + ir->num_state_slots) {
+	  dst.index != storage->index + (int) ir->num_state_slots) {
 	 fail_link(this->shader_program,
 		   "failed to load builtin uniform `%s'  (%d/%d regs loaded)\n",
 		   ir->name, dst.index - storage->index,
