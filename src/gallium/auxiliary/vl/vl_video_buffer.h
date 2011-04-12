@@ -56,7 +56,6 @@ vl_video_buffer_init(struct pipe_video_context *context,
                      struct pipe_context *pipe,
                      unsigned width, unsigned height, unsigned depth,
                      enum pipe_video_chroma_format chroma_format,
-                     unsigned num_planes,
                      const enum pipe_format resource_formats[VL_MAX_PLANES],
                      unsigned usage);
 #endif /* vl_ycbcr_buffer_h */

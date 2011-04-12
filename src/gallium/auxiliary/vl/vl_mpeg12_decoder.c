@@ -309,7 +309,7 @@ init_idct_buffer(struct vl_mpeg12_buffer *buffer)
    formats[0] = formats[1] = formats[2] = dec->idct_source_format;
    buffer->idct_source = vl_video_buffer_init(dec->base.context, dec->pipe,
                                               dec->base.width / 4, dec->base.height, 1,
-                                              dec->base.chroma_format, 3,
+                                              dec->base.chroma_format,
                                               formats, PIPE_USAGE_STREAM);
    if (!buffer->idct_source)
       goto error_source;
@@ -318,7 +318,7 @@ init_idct_buffer(struct vl_mpeg12_buffer *buffer)
    buffer->idct_intermediate = vl_video_buffer_init(dec->base.context, dec->pipe,
                                                     dec->base.width / dec->nr_of_idct_render_targets,
                                                     dec->base.height / 4, dec->nr_of_idct_render_targets,
-                                                    dec->base.chroma_format, 3,
+                                                    dec->base.chroma_format,
                                                     formats, PIPE_USAGE_STATIC);
 
    if (!buffer->idct_intermediate)
@@ -395,7 +395,7 @@ vl_mpeg12_create_buffer(struct pipe_video_decoder *decoder)
    formats[0] = formats[1] = formats[2] =dec->mc_source_format;
    buffer->mc_source = vl_video_buffer_init(dec->base.context, dec->pipe,
                                             dec->base.width, dec->base.height, 1,
-                                            dec->base.chroma_format, 3,
+                                            dec->base.chroma_format,
                                             formats, PIPE_USAGE_STATIC);
 
    if (!buffer->mc_source)

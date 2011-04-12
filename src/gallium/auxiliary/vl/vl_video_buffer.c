@@ -133,7 +133,6 @@ vl_video_buffer_init(struct pipe_video_context *context,
                      struct pipe_context *pipe,
                      unsigned width, unsigned height, unsigned depth,
                      enum pipe_video_chroma_format chroma_format,
-                     unsigned num_planes,
                      const enum pipe_format resource_formats[VL_MAX_PLANES],
                      unsigned usage)
 {
@@ -142,7 +141,6 @@ vl_video_buffer_init(struct pipe_video_context *context,
    unsigned i;
 
    assert(context && pipe);
-   assert(num_planes > 0 && num_planes <= VL_MAX_PLANES);
 
    buffer = CALLOC_STRUCT(vl_video_buffer);
 
@@ -150,7 +148,7 @@ vl_video_buffer_init(struct pipe_video_context *context,
    buffer->base.get_sampler_views = vl_video_buffer_sampler_views;
    buffer->base.get_surfaces = vl_video_buffer_surfaces;
    buffer->pipe = pipe;
-   buffer->num_planes = num_planes;
+   buffer->num_planes = 1;
 
    memset(&templ, 0, sizeof(templ));
    templ.target = depth > 1 ? PIPE_TEXTURE_3D : PIPE_TEXTURE_2D;
@@ -166,10 +164,12 @@ vl_video_buffer_init(struct pipe_video_context *context,
    if (!buffer->resources[0])
       goto error;
 
-   if (num_planes == 1) {
+   if (resource_formats[1] == PIPE_FORMAT_NONE) {
       assert(chroma_format == PIPE_VIDEO_CHROMA_FORMAT_444);
+      assert(resource_formats[2] == PIPE_FORMAT_NONE);
       return &buffer->base;
-   }
+   } else
+      buffer->num_planes = 2;
 
    templ.format = resource_formats[1];
    if (chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
@@ -183,8 +183,10 @@ vl_video_buffer_init(struct pipe_video_context *context,
    if (!buffer->resources[1])
       goto error;
 
-   if (num_planes == 2)
+   if (resource_formats[2] == PIPE_FORMAT_NONE)
       return &buffer->base;
+   else
+      buffer->num_planes = 3;
 
    templ.format = resource_formats[2];
    buffer->resources[2] = pipe->screen->resource_create(pipe->screen, &templ);
