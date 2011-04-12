@@ -259,6 +259,7 @@ GLboolean is_reduction_opcode(PVSDWORD* dest)
     return GL_FALSE;
 }
 
+#if 0 /* unused */
 GLboolean EG_is_reduction_opcode(PVSDWORD* dest)
 {
     if (dest->dst.op3 == 0) 
@@ -270,6 +271,7 @@ GLboolean EG_is_reduction_opcode(PVSDWORD* dest)
     }
     return GL_FALSE;
 }
+#endif
 
 GLuint GetSurfaceFormat(GLenum eType, GLuint nChannels, GLuint * pClient_size)
 {

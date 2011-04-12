@@ -42,7 +42,7 @@
 
 static void evergreen_freeVertProgCache(struct gl_context *ctx, struct r700_vertex_program_cont *cache)
 {
-	struct evergreen_vertex_program *tmp, *vp = cache->progs;
+	struct evergreen_vertex_program *tmp, *vp = (struct evergreen_vertex_program *) cache->progs;
 
 	while (vp) {
 		tmp = vp->next;
@@ -121,7 +121,7 @@ static void evergreenDeleteProgram(struct gl_context * ctx, struct gl_program *p
     {
     case GL_VERTEX_STATE_PROGRAM_NV:
     case GL_VERTEX_PROGRAM_ARB:	    
-	    evergreen_freeVertProgCache(ctx, vpc);
+	    evergreen_freeVertProgCache(ctx, (struct r700_vertex_program_cont *) vpc);
 	    break;
     case GL_FRAGMENT_PROGRAM_NV:
     case GL_FRAGMENT_PROGRAM_ARB:
@@ -154,7 +154,7 @@ evergreenProgramStringNotify(struct gl_context * ctx, GLenum target, struct gl_p
 
 	switch (target) {
 	case GL_VERTEX_PROGRAM_ARB:
-		evergreen_freeVertProgCache(ctx, vpc);
+		evergreen_freeVertProgCache(ctx, (struct r700_vertex_program_cont *) vpc);
 		vpc->progs = NULL;
 		break;
 	case GL_FRAGMENT_PROGRAM_ARB:

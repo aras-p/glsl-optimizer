@@ -620,6 +620,7 @@ static void evergreenSetupIndexBuffer(struct gl_context *ctx, const struct _mesa
     }
 }
 
+#if 0 /* unused */
 static void evergreenAlignDataToDword(struct gl_context *ctx, 
                                  const struct gl_client_array *input, 
                                  int count, 
@@ -661,6 +662,7 @@ static void evergreenAlignDataToDword(struct gl_context *ctx,
 
     attr->stride = dst_stride;
 }
+#endif
 
 static void evergreenSetupStreams(struct gl_context *ctx, const struct gl_client_array *input[], int count)
 {

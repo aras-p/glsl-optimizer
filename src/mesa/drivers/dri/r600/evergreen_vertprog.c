@@ -405,7 +405,7 @@ void evergreenSelectVertexShader(struct gl_context *ctx)
 	}
 	if (match)
 	{
-		context->selected_vp = vp;
+		context->selected_vp = (struct r700_vertex_program *) vp;
 		return;
 	}
     }
@@ -418,7 +418,7 @@ void evergreenSelectVertexShader(struct gl_context *ctx)
     }
     vp->next = vpc->progs;
     vpc->progs = vp;
-    context->selected_vp = vp;
+    context->selected_vp = (struct r700_vertex_program *) vp;
     return;
 }
 
@@ -566,7 +566,7 @@ void evergreenSetVertexFormat(struct gl_context *ctx, const struct gl_client_arr
 void * evergreenGetActiveVpShaderBo(struct gl_context * ctx)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
-    struct evergreen_vertex_program *vp = context->selected_vp;;
+    struct evergreen_vertex_program *vp = (struct evergreen_vertex_program *) context->selected_vp;
 
     if (vp)
 	return vp->shaderbo;
@@ -577,7 +577,7 @@ void * evergreenGetActiveVpShaderBo(struct gl_context * ctx)
 void * evergreenGetActiveVpShaderConstBo(struct gl_context * ctx)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
-    struct evergreen_vertex_program *vp = context->selected_vp;;
+    struct evergreen_vertex_program *vp = (struct evergreen_vertex_program *) context->selected_vp;
 
     if (vp)
 	return vp->constbo0;
@@ -589,7 +589,7 @@ GLboolean evergreenSetupVertexProgram(struct gl_context * ctx)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
-    struct evergreen_vertex_program *vp = context->selected_vp;
+    struct evergreen_vertex_program *vp = (struct evergreen_vertex_program *) context->selected_vp;
 
     if(GL_FALSE == vp->loaded)
     {
@@ -650,7 +650,7 @@ GLboolean evergreenSetupVPconstants(struct gl_context * ctx)
 {
     context_t *context = EVERGREEN_CONTEXT(ctx);
     EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
-    struct evergreen_vertex_program *vp = context->selected_vp;
+    struct evergreen_vertex_program *vp = (struct evergreen_vertex_program *) context->selected_vp;
 
     struct gl_program_parameter_list *paramList;
     unsigned int unNumParamData;

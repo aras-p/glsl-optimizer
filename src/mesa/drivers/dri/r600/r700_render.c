@@ -580,6 +580,7 @@ static void r700ConvertAttrib(struct gl_context *ctx, int count,
     }
 }
 
+#if 0 /* unused */
 static void r700AlignDataToDword(struct gl_context *ctx, 
                                  const struct gl_client_array *input, 
                                  int count, 
@@ -621,6 +622,7 @@ static void r700AlignDataToDword(struct gl_context *ctx,
 
     attr->stride = dst_stride;
 }
+#endif
 
 static void r700SetupStreams(struct gl_context *ctx, const struct gl_client_array *input[], int count)
 {

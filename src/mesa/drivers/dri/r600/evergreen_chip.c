@@ -124,7 +124,7 @@ static void evergreenSendTexState(struct gl_context *ctx, struct radeon_state_at
     context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
 
-    struct evergreen_vertex_program *vp = context->selected_vp;
+    struct evergreen_vertex_program *vp = (struct evergreen_vertex_program *) context->selected_vp;
 
 	struct radeon_bo *bo = NULL;
 	unsigned int i;
@@ -379,6 +379,8 @@ static void evergreenSendVTX(struct gl_context *ctx, struct radeon_state_atom *a
     struct evergreen_vertex_program *vp = (struct evergreen_vertex_program *)(context->selected_vp);
     unsigned int i, j = 0;
     BATCH_LOCALS(&context->radeon);
+    (void) b_l_rmesa;  /* silence unused var warning */
+
 	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
     if (context->radeon.tcl.aos_count == 0)

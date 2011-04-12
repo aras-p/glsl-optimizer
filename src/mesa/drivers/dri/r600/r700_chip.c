@@ -249,6 +249,7 @@ static void r700SendVTXState(struct gl_context *ctx, struct radeon_state_atom *a
     struct r700_vertex_program *vp = context->selected_vp;
     unsigned int i, j = 0;
     BATCH_LOCALS(&context->radeon);
+    (void) b_l_rmesa; /* silence unused var warning */
 	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
     if (context->radeon.tcl.aos_count == 0)
