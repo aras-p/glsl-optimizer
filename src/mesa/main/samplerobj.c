@@ -63,7 +63,7 @@ _mesa_reference_sampler_object(struct gl_context *ctx,
       return;
 
    if (*ptr) {
-      /* Unreference the old buffer */
+      /* Unreference the old sampler */
       GLboolean deleteFlag = GL_FALSE;
       struct gl_sampler_object *oldSamp = *ptr;
 
@@ -90,9 +90,9 @@ _mesa_reference_sampler_object(struct gl_context *ctx,
       /* reference new sampler */
       /*_glthread_LOCK_MUTEX(samp->Mutex);*/
       if (samp->RefCount == 0) {
-         /* this buffer's being deleted (look just above) */
+         /* this sampler's being deleted (look just above) */
          /* Not sure this can every really happen.  Warn if it does. */
-         _mesa_problem(NULL, "referencing deleted buffer object");
+         _mesa_problem(NULL, "referencing deleted sampler object");
          *ptr = NULL;
       }
       else {
@@ -281,7 +281,7 @@ _mesa_BindSampler(GLuint unit, GLuint sampler)
 
 
 /**
- * Check if a coordinate wrap mode is supported for the texture target.
+ * Check if a coordinate wrap mode is legal.
  * \return GL_TRUE if legal, GL_FALSE otherwise
  */
 static GLboolean 
