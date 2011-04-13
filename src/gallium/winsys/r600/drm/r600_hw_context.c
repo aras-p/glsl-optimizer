@@ -800,8 +800,8 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 	struct radeon_bo *bo;
 
 	bo = r600_bo_get_bo(rbo);
-	/* if bo has already been flush */
-	if (!(bo->last_flush ^ flush_flags)) {
+	/* if bo has already been flushed */
+	if (!(~bo->last_flush & flush_flags)) {
 		bo->last_flush &= flush_mask;
 		return;
 	}
