@@ -455,7 +455,6 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
    struct pipe_sampler_view **sv_future;
    struct pipe_surface **surfaces;
 
-   struct pipe_sampler_view *sv_refs[2];
    unsigned ne_start, ne_num, e_start, e_num;
    unsigned i;
 
@@ -472,9 +471,11 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
    vl_vb_restart(&buf->vertex_stream, &ne_start, &ne_num, &e_start, &e_num);
 
    dec->pipe->set_vertex_buffers(dec->pipe, 2, buf->vertex_bufs.all);
-   dec->pipe->bind_blend_state(dec->pipe, dec->blend);
 
    for (i = 0; i < VL_MAX_PLANES; ++i) {
+      struct pipe_sampler_view *sv_refs[2];
+
+      dec->pipe->bind_blend_state(dec->pipe, dec->blend);
       dec->pipe->bind_vertex_elements_state(dec->pipe, dec->ves[i]);
 
       if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)

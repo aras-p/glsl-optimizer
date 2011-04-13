@@ -46,7 +46,8 @@ struct vl_mpeg12_mc_renderer
 
    void *rs_state;
 
-   void *vs, *fs;
+   void *blend_clear, *blend_add;
+   void *vs, *fs_ref, *fs_ycbcr;
 
    union
    {

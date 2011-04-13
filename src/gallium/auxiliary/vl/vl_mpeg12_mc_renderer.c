@@ -209,20 +209,30 @@ calc_field(struct ureg_program *shader)
    return tmp;
 }
 
-static struct ureg_dst
-fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct ureg_dst field, float scale)
+static void *
+create_ycbcr_frag_shader(struct vl_mpeg12_mc_renderer *r, float scale)
 {
+   struct ureg_program *shader;
    struct ureg_src tc[2], sampler;
-   struct ureg_dst texel, t_tc;
+   struct ureg_dst texel, t_tc, field;
+   struct ureg_dst fragment;
    unsigned label;
 
-   texel = ureg_DECL_temporary(shader);
-   t_tc = ureg_DECL_temporary(shader);
+   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   if (!shader)
+      return NULL;
 
    tc[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX_TOP, TGSI_INTERPOLATE_LINEAR);
    tc[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX_BOTTOM, TGSI_INTERPOLATE_LINEAR);
 
    sampler = ureg_DECL_sampler(shader, 0);
+
+   t_tc = ureg_DECL_temporary(shader);
+   texel = ureg_DECL_temporary(shader);
+
+   fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
+
+   field = calc_field(shader);
 
    /*
     * texel.y  = tex(field.y ? tc[1] : tc[0], sampler[0])
@@ -236,7 +246,7 @@ fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct
 
    ureg_SLT(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Z), ureg_src(t_tc), ureg_imm1f(shader, 0.5f));
 
-   ureg_MOV(shader, ureg_writemask(texel, TGSI_WRITEMASK_XYZ), ureg_imm1f(shader, 0.0f));
+   ureg_MOV(shader, fragment, ureg_imm1f(shader, 0.0f));
    ureg_IF(shader, ureg_scalar(ureg_src(t_tc), TGSI_SWIZZLE_Z), &label);
 
       ureg_TEX(shader, texel, TGSI_TEXTURE_3D, ureg_src(t_tc), sampler);
@@ -245,24 +255,31 @@ fetch_ycbcr(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader, struct
                ureg_imm1f(shader, 0.0f), ureg_imm1f(shader, 0.5f));
 
       if (scale != 1.0f)
-         ureg_MAD(shader, texel, ureg_src(texel), ureg_imm1f(shader, scale), ureg_src(t_tc));
+         ureg_MAD(shader, fragment, ureg_src(texel), ureg_imm1f(shader, scale), ureg_src(t_tc));
       else
-         ureg_ADD(shader, texel, ureg_src(texel), ureg_src(t_tc));
+         ureg_ADD(shader, fragment, ureg_src(texel), ureg_src(t_tc));
 
    ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
    ureg_ENDIF(shader);
 
    ureg_release_temporary(shader, t_tc);
+   ureg_release_temporary(shader, texel);
 
-   return texel;
+   return ureg_create_shader_and_destroy(shader, r->pipe);
 }
 
-static struct ureg_dst
-fetch_ref(struct ureg_program *shader, struct ureg_dst field)
+static void *
+create_ref_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
+   struct ureg_program *shader;
    struct ureg_src tc[2][2], sampler[2];
-   struct ureg_dst ref[2], result;
+   struct ureg_dst ref[2], field;
+   struct ureg_dst fragment;
    unsigned i;
+
+   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
+   if (!shader)
+      return NULL;
 
    tc[0][0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV0_TOP, TGSI_INTERPOLATE_LINEAR);
    tc[0][1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV0_BOTTOM, TGSI_INTERPOLATE_LINEAR);
@@ -274,7 +291,9 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
       ref[i] = ureg_DECL_temporary(shader);
    }
 
-   result = ureg_DECL_temporary(shader);
+   fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
+
+   field = calc_field(shader);
 
    /*
     * if (field.z)
@@ -301,38 +320,12 @@ fetch_ref(struct ureg_program *shader, struct ureg_dst field)
             ureg_scalar(tc[1][0], TGSI_SWIZZLE_Z),
             ureg_src(ref[1]), ureg_imm1f(shader, 0.0f));
 
-   ureg_ADD(shader, result, ureg_src(ref[0]), ureg_src(ref[1]));
+   ureg_ADD(shader, fragment, ureg_src(ref[0]), ureg_src(ref[1]));
 
    for (i = 0; i < 2; ++i)
       ureg_release_temporary(shader, ref[i]);
 
-   return result;
-}
-
-static void *
-create_frag_shader(struct vl_mpeg12_mc_renderer *r, float scale)
-{
-   struct ureg_program *shader;
-   struct ureg_dst result;
-   struct ureg_dst field, texel;
-   struct ureg_dst fragment;
-
-   shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
-   if (!shader)
-      return NULL;
-
-   fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
-
-   field = calc_field(shader);
-   texel = fetch_ycbcr(r, shader, field, scale);
-
-   result = fetch_ref(shader, field);
-
-   ureg_ADD(shader, fragment, ureg_src(texel), ureg_src(result));
-
    ureg_release_temporary(shader, field);
-   ureg_release_temporary(shader, texel);
-   ureg_release_temporary(shader, result);
    ureg_END(shader);
 
    return ureg_create_shader_and_destroy(shader, r->pipe);
@@ -342,6 +335,7 @@ static bool
 init_pipe_state(struct vl_mpeg12_mc_renderer *r)
 {
    struct pipe_sampler_state sampler;
+   struct pipe_blend_state blend;
    struct pipe_rasterizer_state rs_state;
    unsigned filters[3];
    unsigned i;
@@ -390,6 +384,28 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
          goto error_samplers;
    }
 
+   memset(&blend, 0, sizeof blend);
+   blend.independent_blend_enable = 0;
+   blend.rt[0].blend_enable = 0;
+   blend.rt[0].rgb_func = PIPE_BLEND_ADD;
+   blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].alpha_func = PIPE_BLEND_ADD;
+   blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
+   blend.logicop_enable = 0;
+   blend.logicop_func = PIPE_LOGICOP_CLEAR;
+   blend.rt[0].colormask = PIPE_MASK_RGBA;
+   blend.dither = 0;
+   r->blend_clear = r->pipe->create_blend_state(r->pipe, &blend);
+   if (!r->blend_clear)
+      goto error_blend_clear;
+
+   blend.rt[0].blend_enable = 1;
+   r->blend_add = r->pipe->create_blend_state(r->pipe, &blend);
+   if (!r->blend_add)
+      goto error_blend_add;
+
    memset(&rs_state, 0, sizeof(rs_state));
    /*rs_state.sprite_coord_enable */
    rs_state.sprite_coord_mode = PIPE_SPRITE_COORD_UPPER_LEFT;
@@ -398,10 +414,17 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
    rs_state.gl_rasterization_rules = true;
    r->rs_state = r->pipe->create_rasterizer_state(r->pipe, &rs_state);
    if (!r->rs_state)
-      goto error_samplers;
+      goto error_rs_state;
 
    return true;
 
+error_rs_state:
+   r->pipe->delete_blend_state(r->pipe, r->blend_add);
+
+error_blend_add:
+   r->pipe->delete_blend_state(r->pipe, r->blend_clear);
+
+error_blend_clear:
 error_samplers:
    for (i = 0; i < 5; ++i)
       r->pipe->delete_sampler_state(r->pipe, r->samplers.all[i]);
@@ -419,6 +442,8 @@ cleanup_pipe_state(struct vl_mpeg12_mc_renderer *r)
    for (i = 0; i < 3; ++i)
       r->pipe->delete_sampler_state(r->pipe, r->samplers.all[i]);
 
+   r->pipe->delete_blend_state(r->pipe, r->blend_clear);
+   r->pipe->delete_blend_state(r->pipe, r->blend_add);
    r->pipe->delete_rasterizer_state(r->pipe, r->rs_state);
 }
 
@@ -448,9 +473,13 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
    if (!renderer->vs)
       goto error_vs_shaders;
 
-   renderer->fs = create_frag_shader(renderer, scale);
-   if (!renderer->fs)
-      goto error_fs_shaders;
+   renderer->fs_ref = create_ref_frag_shader(renderer);
+   if (!renderer->fs_ref)
+      goto error_fs_ref_shaders;
+
+   renderer->fs_ycbcr = create_ycbcr_frag_shader(renderer, scale);
+   if (!renderer->fs_ycbcr)
+      goto error_fs_ycbcr_shaders;
 
    /* create a dummy sampler */
    memset(&tex_templ, 0, sizeof(tex_templ));
@@ -479,9 +508,12 @@ vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
    return true;
 
 error_dummy:
-   renderer->pipe->delete_fs_state(renderer->pipe, renderer->fs);
+   renderer->pipe->delete_fs_state(renderer->pipe, renderer->fs_ycbcr);
 
-error_fs_shaders:
+error_fs_ycbcr_shaders:
+   renderer->pipe->delete_fs_state(renderer->pipe, renderer->fs_ref);
+
+error_fs_ref_shaders:
    renderer->pipe->delete_vs_state(renderer->pipe, renderer->vs);
 
 error_vs_shaders:
@@ -501,7 +533,8 @@ vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer)
    cleanup_pipe_state(renderer);
 
    renderer->pipe->delete_vs_state(renderer->pipe, renderer->vs);
-   renderer->pipe->delete_fs_state(renderer->pipe, renderer->fs);
+   renderer->pipe->delete_fs_state(renderer->pipe, renderer->fs_ref);
+   renderer->pipe->delete_fs_state(renderer->pipe, renderer->fs_ycbcr);
 }
 
 bool
@@ -547,7 +580,6 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mp
    renderer->fb_state.height = surface->height;
    renderer->fb_state.cbufs[0] = surface;
 
-
    renderer->pipe->bind_rasterizer_state(renderer->pipe, renderer->rs_state);
    renderer->pipe->set_framebuffer_state(renderer->pipe, &renderer->fb_state);
    renderer->pipe->set_viewport_state(renderer->pipe, &renderer->viewport);
@@ -562,15 +594,27 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mp
    renderer->pipe->bind_fragment_sampler_states(renderer->pipe, 3, renderer->samplers.all);
 
    renderer->pipe->bind_vs_state(renderer->pipe, renderer->vs);
-   renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs);
+
+   renderer->pipe->bind_blend_state(renderer->pipe, renderer->blend_clear);
+   if (ref[0] || ref[1]) {
+      renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs_ref);
+
+      if (not_empty_num_instances > 0)
+         util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4,
+                                    not_empty_start_instance, not_empty_num_instances);
+
+      if (empty_num_instances > 0)
+         util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4,
+                                    empty_start_instance, empty_num_instances);
+
+      renderer->pipe->bind_blend_state(renderer->pipe, renderer->blend_add);
+   }
+
+   renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs_ycbcr);
 
    if (not_empty_num_instances > 0)
       util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4,
                                  not_empty_start_instance, not_empty_num_instances);
-
-   if (empty_num_instances > 0)
-      util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4,
-                                 empty_start_instance, empty_num_instances);
 
    renderer->pipe->flush(renderer->pipe, fence);
 }
