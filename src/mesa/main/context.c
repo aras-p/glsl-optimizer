@@ -191,7 +191,8 @@ _mesa_notifySwapBuffers(struct gl_context *ctx)
  * is acceptable but the actual depth type will be GLushort or GLuint as
  * needed.
  * \param stencilBits requested minimum bits per stencil buffer value
- * \param accumRedBits, accumGreenBits, accumBlueBits, accumAlphaBits number of bits per color component in accum buffer.
+ * \param accumRedBits, accumGreenBits, accumBlueBits, accumAlphaBits number
+ * of bits per color component in accum buffer.
  * \param indexBits number of bits per pixel if \p rgbFlag is GL_FALSE
  * \param redBits number of bits per color component in frame buffer for RGB(A)
  * mode.  We always use 8 in core Mesa though.
@@ -200,8 +201,8 @@ _mesa_notifySwapBuffers(struct gl_context *ctx)
  * \param alphaBits same as above.
  * \param numSamples not really used.
  * 
- * \return pointer to new struct gl_config or NULL if requested parameters can't be
- * met.
+ * \return pointer to new struct gl_config or NULL if requested parameters
+ * can't be met.
  *
  * \note Need to add params for level and numAuxBuffers (at least)
  */
@@ -1186,7 +1187,8 @@ _mesa_destroy_context( struct gl_context *ctx )
  * structures.
  */
 void
-_mesa_copy_context( const struct gl_context *src, struct gl_context *dst, GLuint mask )
+_mesa_copy_context( const struct gl_context *src, struct gl_context *dst,
+                    GLuint mask )
 {
    if (mask & GL_ACCUM_BUFFER_BIT) {
       /* OK to memcpy */

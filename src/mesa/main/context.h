@@ -30,16 +30,16 @@
  * There are three large Mesa data types/classes which are meant to be
  * used by device drivers:
  * - struct gl_context: this contains the Mesa rendering state
- * - struct gl_config:  this describes the color buffer (RGB vs. ci), whether or not
- *   there's a depth buffer, stencil buffer, etc.
- * - struct gl_framebuffer:  contains pointers to the depth buffer, stencil buffer,
- *   accum buffer and alpha buffers.
+ * - struct gl_config:  this describes the color buffer (RGB vs. ci), whether
+ *   or not there's a depth buffer, stencil buffer, etc.
+ * - struct gl_framebuffer:  contains pointers to the depth buffer, stencil
+ *   buffer, accum buffer and alpha buffers.
  *
  * These types should be encapsulated by corresponding device driver
  * data types.  See xmesa.h and xmesaP.h for an example.
  *
- * In OOP terms, struct gl_context, struct gl_config, and struct gl_framebuffer are base classes
- * which the device driver must derive from.
+ * In OOP terms, struct gl_context, struct gl_config, and struct gl_framebuffer
+ * are base classes which the device driver must derive from.
  *
  * The following functions create and destroy these data types.
  */

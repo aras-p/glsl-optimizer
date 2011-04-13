@@ -27,8 +27,6 @@
  * Shared-context state
  */
 
-
-
 #include "imports.h"
 #include "mfeatures.h"
 #include "mtypes.h"
@@ -45,6 +43,7 @@
 #endif
 #include "shaderobj.h"
 #include "syncobj.h"
+
 
 /**
  * Allocate and initialize a shared context state structure.
@@ -403,7 +402,8 @@ free_shared_state(struct gl_context *ctx, struct gl_shared_state *shared)
  * \sa free_shared_state().
  */
 void
-_mesa_release_shared_state(struct gl_context *ctx, struct gl_shared_state *shared)
+_mesa_release_shared_state(struct gl_context *ctx,
+                           struct gl_shared_state *shared)
 {
    GLint RefCount;
 
