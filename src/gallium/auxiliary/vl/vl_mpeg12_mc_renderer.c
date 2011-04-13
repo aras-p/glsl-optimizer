@@ -246,7 +246,7 @@ create_ycbcr_frag_shader(struct vl_mpeg12_mc_renderer *r, float scale)
 
    ureg_SLT(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Z), ureg_src(t_tc), ureg_imm1f(shader, 0.5f));
 
-   ureg_MOV(shader, fragment, ureg_imm1f(shader, 0.0f));
+   ureg_MOV(shader, fragment, ureg_imm4f(shader, 0.0f, 0.0f, 0.0f, 1.0f));
    ureg_IF(shader, ureg_scalar(ureg_src(t_tc), TGSI_SWIZZLE_Z), &label);
 
       ureg_TEX(shader, texel, TGSI_TEXTURE_3D, ureg_src(t_tc), sampler);
@@ -255,9 +255,11 @@ create_ycbcr_frag_shader(struct vl_mpeg12_mc_renderer *r, float scale)
                ureg_imm1f(shader, 0.0f), ureg_imm1f(shader, 0.5f));
 
       if (scale != 1.0f)
-         ureg_MAD(shader, fragment, ureg_src(texel), ureg_imm1f(shader, scale), ureg_src(t_tc));
+         ureg_MAD(shader, ureg_writemask(fragment, TGSI_WRITEMASK_XYZ),
+                  ureg_src(texel), ureg_imm1f(shader, scale), ureg_src(t_tc));
       else
-         ureg_ADD(shader, fragment, ureg_src(texel), ureg_src(t_tc));
+         ureg_ADD(shader, ureg_writemask(fragment, TGSI_WRITEMASK_XYZ),
+                  ureg_src(texel), ureg_src(t_tc));
 
    ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
    ureg_ENDIF(shader);
@@ -287,7 +289,7 @@ create_ref_frag_shader(struct vl_mpeg12_mc_renderer *r)
    tc[1][1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV1_BOTTOM, TGSI_INTERPOLATE_LINEAR);
 
    for (i = 0; i < 2; ++i) {
-      sampler[i] = ureg_DECL_sampler(shader, i + 1);
+      sampler[i] = ureg_DECL_sampler(shader, i);
       ref[i] = ureg_DECL_temporary(shader);
    }
 
@@ -320,7 +322,8 @@ create_ref_frag_shader(struct vl_mpeg12_mc_renderer *r)
             ureg_scalar(tc[1][0], TGSI_SWIZZLE_Z),
             ureg_src(ref[1]), ureg_imm1f(shader, 0.0f));
 
-   ureg_ADD(shader, fragment, ureg_src(ref[0]), ureg_src(ref[1]));
+   ureg_ADD(shader, ureg_writemask(fragment, TGSI_WRITEMASK_XYZ), ureg_src(ref[0]), ureg_src(ref[1]));
+   ureg_MOV(shader, ureg_writemask(fragment, TGSI_WRITEMASK_W), ureg_imm1f(shader, 1.0f));
 
    for (i = 0; i < 2; ++i)
       ureg_release_temporary(shader, ref[i]);
@@ -337,8 +340,6 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
    struct pipe_sampler_state sampler;
    struct pipe_blend_state blend;
    struct pipe_rasterizer_state rs_state;
-   unsigned filters[3];
-   unsigned i;
 
    assert(r);
 
@@ -352,47 +353,33 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
    r->fb_state.nr_cbufs = 1;
    r->fb_state.zsbuf = NULL;
 
-   /* source filter */
-   filters[0] = PIPE_TEX_FILTER_NEAREST;
+   memset(&sampler, 0, sizeof(sampler));
+   sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
+   sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_BORDER;
+   sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
+   sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
+   sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
+   sampler.compare_mode = PIPE_TEX_COMPARE_NONE;
+   sampler.compare_func = PIPE_FUNC_ALWAYS;
+   sampler.normalized_coords = 1;
+   r->sampler_ref = r->pipe->create_sampler_state(r->pipe, &sampler);
+   if (!r->sampler_ref)
+      goto error_sampler_ref;
 
-   /* Fwd, bkwd ref filters */
-   filters[1] = PIPE_TEX_FILTER_LINEAR;
-   filters[2] = PIPE_TEX_FILTER_LINEAR;
-
-   for (i = 0; i < 3; ++i) {
-      memset(&sampler, 0, sizeof(sampler));
-      sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-      sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
-      sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_BORDER;
-      sampler.min_img_filter = filters[i];
-      sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
-      sampler.mag_img_filter = filters[i];
-      sampler.compare_mode = PIPE_TEX_COMPARE_NONE;
-      sampler.compare_func = PIPE_FUNC_ALWAYS;
-      sampler.normalized_coords = 1;
-      /*sampler.shadow_ambient = ; */
-      /*sampler.lod_bias = ; */
-      sampler.min_lod = 0;
-      /*sampler.max_lod = ; */
-      sampler.border_color[0] = 0.0f;
-      sampler.border_color[1] = 0.0f;
-      sampler.border_color[2] = 0.0f;
-      sampler.border_color[3] = 0.0f;
-      /*sampler.max_anisotropy = ; */
-      r->samplers.all[i] = r->pipe->create_sampler_state(r->pipe, &sampler);
-      if (!r->samplers.all[i])
-         goto error_samplers;
-   }
+   r->sampler_ycbcr = r->pipe->create_sampler_state(r->pipe, &sampler);
+   if (!r->sampler_ycbcr)
+      goto error_sampler_ycbcr;
 
    memset(&blend, 0, sizeof blend);
    blend.independent_blend_enable = 0;
-   blend.rt[0].blend_enable = 0;
+   blend.rt[0].blend_enable = 1;
    blend.rt[0].rgb_func = PIPE_BLEND_ADD;
-   blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_SRC_ALPHA;
+   blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ZERO;
    blend.rt[0].alpha_func = PIPE_BLEND_ADD;
-   blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_SRC_ALPHA;
+   blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ZERO;
    blend.logicop_enable = 0;
    blend.logicop_func = PIPE_LOGICOP_CLEAR;
    blend.rt[0].colormask = PIPE_MASK_RGBA;
@@ -401,7 +388,8 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
    if (!r->blend_clear)
       goto error_blend_clear;
 
-   blend.rt[0].blend_enable = 1;
+   blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
    r->blend_add = r->pipe->create_blend_state(r->pipe, &blend);
    if (!r->blend_add)
       goto error_blend_add;
@@ -425,23 +413,22 @@ error_blend_add:
    r->pipe->delete_blend_state(r->pipe, r->blend_clear);
 
 error_blend_clear:
-error_samplers:
-   for (i = 0; i < 5; ++i)
-      r->pipe->delete_sampler_state(r->pipe, r->samplers.all[i]);
+   r->pipe->delete_sampler_state(r->pipe, r->sampler_ref);
 
+error_sampler_ref:
+   r->pipe->delete_sampler_state(r->pipe, r->sampler_ycbcr);
+
+error_sampler_ycbcr:
    return false;
 }
 
 static void
 cleanup_pipe_state(struct vl_mpeg12_mc_renderer *r)
 {
-   unsigned i;
-
    assert(r);
 
-   for (i = 0; i < 3; ++i)
-      r->pipe->delete_sampler_state(r->pipe, r->samplers.all[i]);
-
+   r->pipe->delete_sampler_state(r->pipe, r->sampler_ref);
+   r->pipe->delete_sampler_state(r->pipe, r->sampler_ycbcr);
    r->pipe->delete_blend_state(r->pipe, r->blend_clear);
    r->pipe->delete_blend_state(r->pipe, r->blend_add);
    r->pipe->delete_rasterizer_state(r->pipe, r->rs_state);
@@ -544,7 +531,7 @@ vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg1
    assert(renderer && buffer);
    assert(source);
 
-   pipe_sampler_view_reference(&buffer->sampler_views.individual.source, source);
+   pipe_sampler_view_reference(&buffer->source, source);
 
    return true;
 }
@@ -552,12 +539,9 @@ vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg1
 void
 vl_mpeg12_mc_cleanup_buffer(struct vl_mpeg12_mc_buffer *buffer)
 {
-   unsigned i;
-
    assert(buffer);
 
-   for (i = 0; i < 3; ++i)
-      pipe_sampler_view_reference(&buffer->sampler_views.all[i], NULL);
+   pipe_sampler_view_reference(&buffer->source, NULL);
 }
 
 void
@@ -584,20 +568,22 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mp
    renderer->pipe->set_framebuffer_state(renderer->pipe, &renderer->fb_state);
    renderer->pipe->set_viewport_state(renderer->pipe, &renderer->viewport);
 
-   /* if no reference frame provided use a dummy sampler instead */
-   pipe_sampler_view_reference(&buffer->sampler_views.individual.ref[0],
-                               ref[0] ? ref[0] : renderer->dummy);
-   pipe_sampler_view_reference(&buffer->sampler_views.individual.ref[1],
-                               ref[1] ? ref[1] : renderer->dummy);
-
-   renderer->pipe->set_fragment_sampler_views(renderer->pipe, 3, buffer->sampler_views.all);
-   renderer->pipe->bind_fragment_sampler_states(renderer->pipe, 3, renderer->samplers.all);
-
    renderer->pipe->bind_vs_state(renderer->pipe, renderer->vs);
 
    renderer->pipe->bind_blend_state(renderer->pipe, renderer->blend_clear);
    if (ref[0] || ref[1]) {
+      void *samplers[2];
+
       renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs_ref);
+
+      /* if no reference frame provided use a dummy sampler instead */
+      if (!ref[0]) ref[0] = renderer->dummy;
+      if (!ref[1]) ref[1] = renderer->dummy;
+
+      renderer->pipe->set_fragment_sampler_views(renderer->pipe, 2, ref);
+
+      samplers[0] = samplers[1] = renderer->sampler_ref;
+      renderer->pipe->bind_fragment_sampler_states(renderer->pipe, 2, samplers);
 
       if (not_empty_num_instances > 0)
          util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4,
@@ -610,6 +596,8 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mp
       renderer->pipe->bind_blend_state(renderer->pipe, renderer->blend_add);
    }
 
+   renderer->pipe->set_fragment_sampler_views(renderer->pipe, 1, &buffer->source);
+   renderer->pipe->bind_fragment_sampler_states(renderer->pipe, 1, &renderer->sampler_ycbcr);
    renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs_ycbcr);
 
    if (not_empty_num_instances > 0)

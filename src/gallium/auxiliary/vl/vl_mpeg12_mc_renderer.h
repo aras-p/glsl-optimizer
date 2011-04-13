@@ -48,23 +48,14 @@ struct vl_mpeg12_mc_renderer
 
    void *blend_clear, *blend_add;
    void *vs, *fs_ref, *fs_ycbcr;
-
-   union
-   {
-      void *all[3];
-      struct { void *source, *ref[2]; } individual;
-   } samplers;
+   void *sampler_ref, *sampler_ycbcr;
 
    struct pipe_sampler_view *dummy;
 };
 
 struct vl_mpeg12_mc_buffer
 {
-   union
-   {
-      struct pipe_sampler_view *all[3];
-      struct { struct pipe_sampler_view *source, *ref[2]; } individual;
-   } sampler_views;
+   struct pipe_sampler_view *source;
 };
 
 bool vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
