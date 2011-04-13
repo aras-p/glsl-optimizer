@@ -229,6 +229,16 @@ _mesa_ARBfp_parse_option(struct asm_parser_state *state, const char *option)
             }
          }
       }
+   } else if (strncmp(option, "ATI_", 4) == 0) {
+      option += 4;
+
+      if (strcmp(option, "draw_buffers") == 0) {
+	 /* Don't need to check extension availability because all Mesa-based
+	  * drivers support GL_ATI_draw_buffers.
+	  */
+	 state->option.DrawBuffers = 1;
+	 return 1;
+      }
    } else if (strncmp(option, "NV_fragment_program", 19) == 0) {
       option += 19;
 
