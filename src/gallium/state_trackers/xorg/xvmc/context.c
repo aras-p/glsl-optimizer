@@ -270,12 +270,15 @@ Status XvMCCreateContext(Display *dpy, XvPortID port, int surface_type_id,
       return BadAlloc;
    }
 
-   /* TODO: Define some Xv attribs to allow users to specify color standard, procamp */
+   context_priv->color_standard =
+      debug_get_bool_option("G3DVL_NO_CSC", FALSE) ?
+      VL_CSC_COLOR_STANDARD_IDENTITY : VL_CSC_COLOR_STANDARD_BT_601;
+   context_priv->procamp = vl_default_procamp;
+
    vl_csc_get_matrix
    (
-      debug_get_bool_option("G3DVL_NO_CSC", FALSE) ?
-      VL_CSC_COLOR_STANDARD_IDENTITY : VL_CSC_COLOR_STANDARD_BT_601,
-      NULL, true, csc
+      context_priv->color_standard,
+      &context_priv->procamp, true, csc
    );
    context_priv->compositor->set_csc_matrix(context_priv->compositor, csc);
 

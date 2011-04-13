@@ -34,6 +34,8 @@
 #include <util/u_debug.h>
 #include <util/u_math.h>
 
+#include <vl/vl_csc.h>
+
 #define BLOCK_SIZE_SAMPLES 64
 #define BLOCK_SIZE_BYTES (BLOCK_SIZE_SAMPLES * 2)
 
@@ -52,6 +54,9 @@ typedef struct
    struct vl_context *vctx;
    struct pipe_video_decoder *decoder;
    struct pipe_video_compositor *compositor;
+
+   enum VL_CSC_COLOR_STANDARD color_standard;
+   struct vl_procamp procamp;
 
    unsigned short subpicture_max_width;
    unsigned short subpicture_max_height;
@@ -107,7 +112,7 @@ static INLINE void XVMC_MSG(unsigned int level, const char *fmt, ...)
    static int debug_level = -1;
 
    if (debug_level == -1) {
-      debug_level = MIN2(debug_get_num_option("XVMC_DEBUG", 0), 0);
+      debug_level = MAX2(debug_get_num_option("XVMC_DEBUG", 0), 0);
    }
 
    if (level <= debug_level) {

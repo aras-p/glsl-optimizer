@@ -155,6 +155,13 @@ static const float identity[16] =
    0.0f, 0.0f, 0.0f, 1.0f
 };
 
+const struct vl_procamp vl_default_procamp = {
+   .contrast = 1.0f,
+   .saturation = 1.0f,
+   .brightness = 0.0f,
+   .hue = 0.0f
+};
+
 void vl_csc_get_matrix(enum VL_CSC_COLOR_STANDARD cs,
                        struct vl_procamp *procamp,
                        bool full_range,
@@ -163,10 +170,13 @@ void vl_csc_get_matrix(enum VL_CSC_COLOR_STANDARD cs,
    float ybias = full_range ? -16.0f/255.0f : 0.0f;
    float cbbias = -128.0f/255.0f;
    float crbias = -128.0f/255.0f;
-   float c = procamp ? procamp->contrast : 1.0f;
-   float s = procamp ? procamp->saturation : 1.0f;
-   float b = procamp ? procamp->brightness : 0.0f;
-   float h = procamp ? procamp->hue : 0.0f;
+
+   const struct vl_procamp *p = procamp ? procamp : &vl_default_procamp;
+   float c = p->contrast;
+   float s = p->saturation;
+   float b = p->brightness;
+   float h = p->hue;
+
    const float *cstd;
 
    assert(matrix);
