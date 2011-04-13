@@ -431,14 +431,13 @@ Status XvMCPutSurface(Display *dpy, XvMCSurface *surface, Drawable drawable,
    compositor->set_buffer_layer(compositor, 0, surface_priv->video_buffer, &src_rect, NULL);
 
    if (subpicture_priv) {
-      struct pipe_video_rect src_rect = {surface_priv->subx, surface_priv->suby, surface_priv->subw, surface_priv->subh};
-      struct pipe_video_rect dst_rect = {surface_priv->surfx, surface_priv->surfy, surface_priv->surfw, surface_priv->surfh};
-
       XVMC_MSG(XVMC_TRACE, "[XvMC] Surface %p has subpicture %p.\n", surface, surface_priv->subpicture);
 
       assert(subpicture_priv->surface == surface);
+
       if (subpicture_priv->palette)
-         compositor->set_palette_layer(compositor, 1, subpicture_priv->sampler, subpicture_priv->palette, &src_rect, &dst_rect);
+         compositor->set_palette_layer(compositor, 1, subpicture_priv->sampler, subpicture_priv->palette,
+                                       &subpicture_priv->src_rect, &subpicture_priv->dst_rect);
       else
          compositor->set_rgba_layer(compositor, 1, subpicture_priv->sampler, &src_rect, &dst_rect);
 

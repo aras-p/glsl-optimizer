@@ -31,6 +31,8 @@
 #include <X11/Xlib.h>
 #include <X11/extensions/XvMClib.h>
 
+#include <pipe/p_video_state.h>
+
 #include <util/u_debug.h>
 #include <util/u_math.h>
 
@@ -77,10 +79,6 @@ typedef struct
 
    /* The subpicture associated with this surface, if any. */
    XvMCSubpicture *subpicture;
-   short subx, suby;
-   unsigned short subw, subh;
-   short surfx, surfy;
-   unsigned short surfw, surfh;
 
    /* Some XvMC functions take a surface but not a context,
       so we keep track of which context each surface belongs to. */
@@ -93,6 +91,9 @@ typedef struct
 
    /* optional palette for this subpicture */
    struct pipe_sampler_view *palette;
+
+   struct pipe_video_rect src_rect;
+   struct pipe_video_rect dst_rect;
 
    /* The surface this subpicture is currently associated with, if any. */
    XvMCSurface *surface;

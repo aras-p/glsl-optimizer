@@ -417,6 +417,9 @@ Status XvMCBlendSubpicture(Display *dpy, XvMCSurface *target_surface, XvMCSubpic
                            short subx, short suby, unsigned short subw, unsigned short subh,
                            short surfx, short surfy, unsigned short surfw, unsigned short surfh)
 {
+   struct pipe_video_rect src_rect = {subx, suby, subw, subh};
+   struct pipe_video_rect dst_rect = {surfx, surfy, surfw, surfh};
+
    XvMCSurfacePrivate *surface_priv;
    XvMCSubpicturePrivate *subpicture_priv;
 
@@ -439,16 +442,10 @@ Status XvMCBlendSubpicture(Display *dpy, XvMCSurface *target_surface, XvMCSubpic
    subpicture_priv = subpicture->privData;
 
    /* TODO: Assert rects are within bounds? Or clip? */
+   subpicture_priv->src_rect = src_rect;
+   subpicture_priv->dst_rect = dst_rect;
 
    surface_priv->subpicture = subpicture;
-   surface_priv->subx = subx;
-   surface_priv->suby = suby;
-   surface_priv->subw = subw;
-   surface_priv->subh = subh;
-   surface_priv->surfx = surfx;
-   surface_priv->surfy = surfy;
-   surface_priv->surfw = surfw;
-   surface_priv->surfh = surfh;
    subpicture_priv->surface = target_surface;
 
    return Success;
