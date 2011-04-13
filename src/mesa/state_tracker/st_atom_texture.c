@@ -251,13 +251,15 @@ update_textures(struct st_context *st)
          st->state.num_textures = su + 1;
 
 	 /* if sampler view has changed dereference it */
-	 if (stObj->sampler_view)
+	 if (stObj->sampler_view) {
             if (check_sampler_swizzle(stObj->sampler_view,
                                       stObj->base._Swizzle,
                                       samp->DepthMode) ||
                 (st_view_format != stObj->sampler_view->format) ||
-                stObj->base.BaseLevel != stObj->sampler_view->u.tex.first_level)
+                stObj->base.BaseLevel != stObj->sampler_view->u.tex.first_level) {
 	       pipe_sampler_view_reference(&stObj->sampler_view, NULL);
+            }
+         }
 
          sampler_view = st_get_texture_sampler_view_from_stobj(stObj, pipe,
                                                                samp,
@@ -269,10 +271,12 @@ update_textures(struct st_context *st)
    cso_set_fragment_sampler_views(st->cso_context,
                                   st->state.num_textures,
                                   st->state.sampler_views);
+
    if (st->ctx->Const.MaxVertexTextureImageUnits > 0) {
+      GLuint numUnits = MIN2(st->state.num_textures,
+                             st->ctx->Const.MaxVertexTextureImageUnits);
       cso_set_vertex_sampler_views(st->cso_context,
-                                   MIN2(st->state.num_textures,
-                                        st->ctx->Const.MaxVertexTextureImageUnits),
+                                   numUnits,
                                    st->state.sampler_views);
    }
 }
