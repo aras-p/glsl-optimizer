@@ -201,7 +201,8 @@ st_fast_readpixels(struct gl_context *ctx, struct st_renderbuffer *strb,
    enum combination {
       A8R8G8B8_UNORM_TO_RGBA_UBYTE,
       A8R8G8B8_UNORM_TO_RGB_UBYTE,
-      A8R8G8B8_UNORM_TO_BGRA_UINT
+      A8R8G8B8_UNORM_TO_BGRA_UINT,
+      A8R8G8B8_UNORM_TO_RGBA_UINT
    } combo;
 
    if (ctx->_ImageTransferState)
@@ -218,6 +219,10 @@ st_fast_readpixels(struct gl_context *ctx, struct st_renderbuffer *strb,
    else if (strb->format == PIPE_FORMAT_B8G8R8A8_UNORM &&
             format == GL_BGRA && type == GL_UNSIGNED_INT_8_8_8_8_REV) {
       combo = A8R8G8B8_UNORM_TO_BGRA_UINT;
+   }
+   else if (strb->format == PIPE_FORMAT_B8G8R8A8_UNORM &&
+            format == GL_RGBA && type == GL_UNSIGNED_INT_8_8_8_8) {
+      combo = A8R8G8B8_UNORM_TO_RGBA_UINT;
    }
    else {
       return GL_FALSE;
@@ -301,6 +306,20 @@ st_fast_readpixels(struct gl_context *ctx, struct st_renderbuffer *strb,
          for (row = 0; row < height; row++) {
             const GLubyte *src = map + y * trans->stride;
             memcpy(dst, src, 4 * width);
+            dst += dstStride;
+            y += dy;
+         }
+         break;
+      case A8R8G8B8_UNORM_TO_RGBA_UINT:
+         for (row = 0; row < height; row++) {
+            const GLubyte *src = map + y * trans->stride;
+            for (col = 0; col < width; col++) {
+               GLuint pixel = ((GLuint *) src)[col];
+               dst[col*4+0] = (pixel >> 24) & 0xff;
+               dst[col*4+1] = (pixel >> 0) & 0xff;
+               dst[col*4+2] = (pixel >> 8) & 0xff;
+               dst[col*4+3] = (pixel >> 16) & 0xff;
+            }
             dst += dstStride;
             y += dy;
          }
