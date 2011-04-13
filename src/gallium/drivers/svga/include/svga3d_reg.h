@@ -968,10 +968,16 @@ typedef enum {
 } SVGA3dTransferType;
 
 /*
- * The maximum number vertex arrays we're guaranteed to support in
+ * The maximum number of vertex arrays we're guaranteed to support in
  * SVGA_3D_CMD_DRAWPRIMITIVES.
  */
 #define SVGA3D_MAX_VERTEX_ARRAYS   32
+
+/*
+ * The maximum number of primitive ranges we're guaranteed to support
+ * in SVGA_3D_CMD_DRAWPRIMITIVES.
+ */
+#define SVGA3D_MAX_DRAW_PRIMITIVE_RANGES 32
 
 /*
  * Identifiers for commands in the command FIFO.
@@ -1474,10 +1480,12 @@ struct {
     * SVGA3dCmdDrawPrimitives structure. In order,
     * they are:
     *
-    * 1. SVGA3dVertexDecl, quantity 'numVertexDecls'
-    * 2. SVGA3dPrimitiveRange, quantity 'numRanges'
+    * 1. SVGA3dVertexDecl, quantity 'numVertexDecls', but no more than
+    *    SVGA3D_MAX_VERTEX_ARRAYS;
+    * 2. SVGA3dPrimitiveRange, quantity 'numRanges', but no more than
+    *    SVGA3D_MAX_DRAW_PRIMITIVE_RANGES;
     * 3. Optionally, SVGA3dVertexDivisor, quantity 'numVertexDecls' (contains
-    *    the frequency divisor for this the corresponding vertex decl)
+    *    the frequency divisor for the corresponding vertex decl).
     */
 } SVGA3dCmdDrawPrimitives;      /* SVGA_3D_CMD_DRAWPRIMITIVES */
 
