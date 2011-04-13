@@ -262,6 +262,7 @@ static const struct extension extension_table[] = {
    { "GL_APPLE_packed_pixels",                     o(APPLE_packed_pixels),                     GL,             2002 },
    { "GL_APPLE_vertex_array_object",               o(APPLE_vertex_array_object),               GL,             2002 },
    { "GL_ATI_blend_equation_separate",             o(EXT_blend_equation_separate),             GL,             2003 },
+   { "GL_ATI_draw_buffers",                        o(ARB_draw_buffers),                        GL,             2002 },
    { "GL_ATI_envmap_bumpmap",                      o(ATI_envmap_bumpmap),                      GL,             2001 },
    { "GL_ATI_fragment_shader",                     o(ATI_fragment_shader),                     GL,             2001 },
    { "GL_ATI_separate_stencil",                    o(ATI_separate_stencil),                    GL,             2006 },
