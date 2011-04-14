@@ -450,6 +450,9 @@ ir_copy_propagation_elements_visitor::add_copy(ir_assignment *ir)
       if (ir->write_mask & (1 << i))
 	 swizzle[i] = orig_swizzle[j++];
    }
+	
+   if (lhs->var->precision != rhs->var->precision && lhs->var->precision!=glsl_precision_undefined && rhs->var->precision!=glsl_precision_undefined)
+      return;
 
    entry = new(this->mem_ctx) acp_entry(lhs->var, rhs->var, ir->write_mask,
 					swizzle);
