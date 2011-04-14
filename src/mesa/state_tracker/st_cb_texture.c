@@ -600,7 +600,12 @@ st_TexImage(struct gl_context * ctx,
     * memory or malloc space for it.
     */
    if (stImage->pt) {
-      /* Store the image in the gallium texture memory buffer */
+      if (!pixels) {
+         /* We've allocated texture resource, but have no pixel data - all done. */
+         goto done;
+      }
+
+      /* Store the image in the gallium transfer object */
       if (format == GL_DEPTH_COMPONENT &&
           util_format_is_depth_and_stencil(stImage->pt->format))
          transfer_usage = PIPE_TRANSFER_READ_WRITE;
