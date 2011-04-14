@@ -15,10 +15,8 @@ void main ()
   n.z = -(n.z);
   vec4 tmpvar_4;
   if ((tmpvar_3 < 0.999985)) {
-    vec3 normal;
-    normal = n.xyz;
     vec4 enc;
-    enc.xy = ((((normal.xy / (normal.z + 1.0)) / 1.7777) * 0.5) + 0.5);
+    enc.xy = ((((n.xy / (n.z + 1.0)) / 1.7777) * 0.5) + 0.5);
     vec2 enc_i0_i1;
     vec2 tmpvar_5;
     tmpvar_5 = fract ((vec2(1.0, 255.0) * tmpvar_3));

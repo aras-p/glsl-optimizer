@@ -33,7 +33,7 @@ void main ()
   light.xyz = (tmpvar_7.xyz + unity_Ambient.xyz);
   vec4 c;
   float tmpvar_8;
-  tmpvar_8 = (light.w * tmpvar_5);
+  tmpvar_8 = (tmpvar_7.w * tmpvar_5);
   c.xyz = ((tmpvar_4 * light.xyz) + ((light.xyz * _SpecColor.xyz) * tmpvar_8));
   c.w = (tmpvar_6 + (tmpvar_8 * _SpecColor.w));
   gl_FragData[0] = c;

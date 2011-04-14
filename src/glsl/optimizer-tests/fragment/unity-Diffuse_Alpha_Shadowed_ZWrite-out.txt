@@ -7,16 +7,14 @@ void main ()
   vec4 c;
   vec4 tmpvar_1;
   tmpvar_1 = (texture2D (_MainTex, gl_TexCoord[0].xy) * _Color);
-  vec3 tmpvar_2;
-  tmpvar_2 = tmpvar_1.xyz;
-  float tmpvar_3;
-  tmpvar_3 = tmpvar_1.w;
+  float tmpvar_2;
+  tmpvar_2 = tmpvar_1.w;
   vec4 c_i0_i1;
-  c_i0_i1.xyz = ((tmpvar_2 * _LightColor0.xyz) * (max (0.0, dot (gl_TexCoord[1].xyz, _WorldSpaceLightPos0.xyz)) * 2.0));
-  c_i0_i1.w = tmpvar_3;
+  c_i0_i1.xyz = ((tmpvar_1.xyz * _LightColor0.xyz) * (max (0.0, dot (gl_TexCoord[1].xyz, _WorldSpaceLightPos0.xyz)) * 2.0));
+  c_i0_i1.w = tmpvar_2;
   c = c_i0_i1;
-  c.xyz = (c_i0_i1.xyz + (tmpvar_2 * gl_TexCoord[2].xyz));
-  c.w = tmpvar_3;
+  c.xyz = (c_i0_i1.xyz + (tmpvar_1.xyz * gl_TexCoord[2].xyz));
+  c.w = tmpvar_2;
   gl_FragData[0] = c;
 }
 

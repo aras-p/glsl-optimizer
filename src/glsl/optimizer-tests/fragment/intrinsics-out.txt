@@ -95,15 +95,9 @@ void main ()
   tmpvar_21.z = tmpvar_19;
   tmpvar_21.w = tmpvar_20;
   c = (c + tmpvar_21);
-  float x_i0_i1_i2_i3;
-  x_i0_i1_i2_i3 = xlv_TEXCOORD0.x;
-  c.x = (c.x + (x_i0_i1_i2_i3 - float(int(x_i0_i1_i2_i3))));
-  vec2 x_i0_i1_i2_i3_i4;
-  x_i0_i1_i2_i3_i4 = xlv_TEXCOORD0.xy;
-  c.xy = (c.xy + (x_i0_i1_i2_i3_i4 - vec2(ivec2(x_i0_i1_i2_i3_i4))));
-  vec3 x_i0_i1_i2_i3_i4_i5;
-  x_i0_i1_i2_i3_i4_i5 = xlv_TEXCOORD0.xyz;
-  c.xyz = (c.xyz + (x_i0_i1_i2_i3_i4_i5 - vec3(ivec3(x_i0_i1_i2_i3_i4_i5))));
+  c.x = (c.x + (xlv_TEXCOORD0.x - float(int(xlv_TEXCOORD0.x))));
+  c.xy = (c.xy + (xlv_TEXCOORD0.xy - vec2(ivec2(xlv_TEXCOORD0.xy))));
+  c.xyz = (c.xyz + (xlv_TEXCOORD0.xyz - vec3(ivec3(xlv_TEXCOORD0.xyz))));
   c = (c + (xlv_TEXCOORD0 - vec4(ivec4(xlv_TEXCOORD0))));
   gl_FragData[0] = c;
 }

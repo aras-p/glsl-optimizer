@@ -85,71 +85,69 @@ void main ()
   tmpvar_15 = vec4(((length (tmpvar_7) * _LightPositionRange.w) * 0.97));
   bvec4 tmpvar_16;
   tmpvar_16 = lessThan (shadowVals, tmpvar_15);
-  highp vec4 tmpvar_17;
-  tmpvar_17 = _LightShadowData.xxxx;
-  float tmpvar_18;
+  float tmpvar_17;
   if (tmpvar_16.x) {
-    tmpvar_18 = tmpvar_17.x;
+    tmpvar_17 = _LightShadowData.x;
+  } else {
+    tmpvar_17 = 1.0;
+  };
+  float tmpvar_18;
+  if (tmpvar_16.y) {
+    tmpvar_18 = _LightShadowData.x;
   } else {
     tmpvar_18 = 1.0;
   };
   float tmpvar_19;
-  if (tmpvar_16.y) {
-    tmpvar_19 = tmpvar_17.y;
+  if (tmpvar_16.z) {
+    tmpvar_19 = _LightShadowData.x;
   } else {
     tmpvar_19 = 1.0;
   };
   float tmpvar_20;
-  if (tmpvar_16.z) {
-    tmpvar_20 = tmpvar_17.z;
+  if (tmpvar_16.w) {
+    tmpvar_20 = _LightShadowData.x;
   } else {
     tmpvar_20 = 1.0;
   };
-  float tmpvar_21;
-  if (tmpvar_16.w) {
-    tmpvar_21 = tmpvar_17.w;
-  } else {
-    tmpvar_21 = 1.0;
-  };
-  vec4 tmpvar_22;
-  tmpvar_22.x = tmpvar_18;
-  tmpvar_22.y = tmpvar_19;
-  tmpvar_22.z = tmpvar_20;
-  tmpvar_22.w = tmpvar_21;
-  mediump float tmpvar_23;
-  tmpvar_23 = dot (tmpvar_22, vec4(0.25, 0.25, 0.25, 0.25));
-  highp vec4 tmpvar_24;
-  tmpvar_24.w = 1.0;
-  tmpvar_24.xyz = tmpvar_6;
-  lowp vec4 tmpvar_25;
-  tmpvar_25 = textureCube (_LightTexture0, (_LightMatrix0 * tmpvar_24).xyz);
-  highp float tmpvar_26;
-  tmpvar_26 = ((atten * tmpvar_23) * tmpvar_25.w);
-  atten = tmpvar_26;
-  mediump float tmpvar_27;
-  tmpvar_27 = max (0.0, dot (lightDir, normal));
-  highp vec3 tmpvar_28;
-  tmpvar_28 = normalize ((lightDir - normalize ((tmpvar_6 - _WorldSpaceCameraPos))));
-  h = tmpvar_28;
-  mediump float tmpvar_29;
-  tmpvar_29 = pow (max (0.0, dot (h, normal)), (nspec.w * 128.0));
+  vec4 tmpvar_21;
+  tmpvar_21.x = tmpvar_17;
+  tmpvar_21.y = tmpvar_18;
+  tmpvar_21.z = tmpvar_19;
+  tmpvar_21.w = tmpvar_20;
+  mediump float tmpvar_22;
+  tmpvar_22 = dot (tmpvar_21, vec4(0.25, 0.25, 0.25, 0.25));
+  highp vec4 tmpvar_23;
+  tmpvar_23.w = 1.0;
+  tmpvar_23.xyz = tmpvar_6;
+  lowp vec4 tmpvar_24;
+  tmpvar_24 = textureCube (_LightTexture0, (_LightMatrix0 * tmpvar_23).xyz);
+  highp float tmpvar_25;
+  tmpvar_25 = ((atten * tmpvar_22) * tmpvar_24.w);
+  atten = tmpvar_25;
+  mediump float tmpvar_26;
+  tmpvar_26 = max (0.0, dot (lightDir, normal));
+  highp vec3 tmpvar_27;
+  tmpvar_27 = normalize ((lightDir - normalize ((tmpvar_6 - _WorldSpaceCameraPos))));
+  h = tmpvar_27;
+  mediump float tmpvar_28;
+  tmpvar_28 = pow (max (0.0, dot (h, normal)), (nspec.w * 128.0));
+  spec = tmpvar_28;
+  highp float tmpvar_29;
+  tmpvar_29 = (spec * clamp (tmpvar_25, 0.0, 1.0));
   spec = tmpvar_29;
-  highp float tmpvar_30;
-  tmpvar_30 = (spec * clamp (tmpvar_26, 0.0, 1.0));
-  spec = tmpvar_30;
-  highp vec3 tmpvar_31;
-  tmpvar_31 = (_LightColor.xyz * (tmpvar_27 * tmpvar_26));
-  res.xyz = tmpvar_31;
+  highp vec3 tmpvar_30;
+  tmpvar_30 = (_LightColor.xyz * (tmpvar_26 * tmpvar_25));
+  res.xyz = tmpvar_30;
   mediump vec3 c;
   c = _LightColor.xyz;
-  mediump float tmpvar_32;
-  tmpvar_32 = dot (c, vec3(0.22, 0.707, 0.071));
-  highp float tmpvar_33;
-  tmpvar_33 = (tmpvar_30 * tmpvar_32);
-  res.w = tmpvar_33;
-  highp vec4 tmpvar_34;
-  tmpvar_34 = (res * clamp ((1.0 - ((tmpvar_5.z * unity_LightmapFade.z) + unity_LightmapFade.w)), 0.0, 1.0));
-  res = tmpvar_34;
+  mediump float tmpvar_31;
+  tmpvar_31 = dot (c, vec3(0.22, 0.707, 0.071));
+  highp float tmpvar_32;
+  tmpvar_32 = (tmpvar_29 * tmpvar_31);
+  res.w = tmpvar_32;
+  highp vec4 tmpvar_33;
+  tmpvar_33 = (res * clamp ((1.0 - ((tmpvar_5.z * unity_LightmapFade.z) + unity_LightmapFade.w)), 0.0, 1.0));
+  res = tmpvar_33;
   gl_FragData[0] = exp2 (-(res));
 }
 

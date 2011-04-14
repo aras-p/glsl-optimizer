@@ -12,7 +12,7 @@ void main ()
   tmpvar_2 = ((((texture2D (_MainTex, tmpvar_1[0].xy) + texture2D (_MainTex, tmpvar_1[1].xy)) + texture2D (_MainTex, tmpvar_1[2].xy)) + texture2D (_MainTex, tmpvar_1[3].xy)) / 4.0);
   c = tmpvar_2;
   c.xyz = (tmpvar_2.xyz * _Color.xyz);
-  c.xyz = (c.xyz * (c.w + _Color.w));
+  c.xyz = (c.xyz * (tmpvar_2.w + _Color.w));
   c.w = 0.0;
   gl_FragData[0] = c;
 }

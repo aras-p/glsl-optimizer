@@ -41,7 +41,7 @@ void main ()
   light.xyz = (tmpvar_10.xyz + unity_Ambient.xyz);
   vec4 c_i0;
   float tmpvar_11;
-  tmpvar_11 = (light.w * tmpvar_6.w);
+  tmpvar_11 = (tmpvar_10.w * tmpvar_6.w);
   c_i0.xyz = (((tmpvar_6 * _Color).xyz * light.xyz) + ((light.xyz * _SpecColor.xyz) * tmpvar_11));
   c_i0.w = ((tmpvar_9.w * _ReflectColor.w) + (tmpvar_11 * _SpecColor.w));
   col = c_i0;

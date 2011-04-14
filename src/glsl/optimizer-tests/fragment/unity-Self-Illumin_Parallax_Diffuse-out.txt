@@ -21,7 +21,7 @@ void main ()
   tmpvar_5 = normalize (gl_TexCoord[1].xyz);
   v = tmpvar_5;
   v.z = (tmpvar_5.z + 0.42);
-  tmpvar_4 = (((texture2D (_ParallaxMap, tmpvar_3).w * _Parallax) - (_Parallax / 2.0)) * (v.xy / v.z));
+  tmpvar_4 = (((texture2D (_ParallaxMap, tmpvar_3).w * _Parallax) - (_Parallax / 2.0)) * (tmpvar_5.xy / v.z));
   vec4 tmpvar_6;
   tmpvar_6 = (texture2D (_MainTex, (tmpvar_1.xy + tmpvar_4)) * _Color);
   vec4 normal;

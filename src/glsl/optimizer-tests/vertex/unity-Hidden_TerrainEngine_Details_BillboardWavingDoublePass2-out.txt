@@ -54,8 +54,8 @@ void main ()
   tmpvar_13 = (gl_ModelViewProjectionMatrix * vertex);
   tmpvar_1 = tmpvar_13;
   tmpvar_1.z = (tmpvar_13.z + unity_LightShadowBias.x);
-  if ((tmpvar_1.z < -(tmpvar_1.w))) {
-    tmpvar_1.z = -(tmpvar_1.w);
+  if ((tmpvar_1.z < -(tmpvar_13.w))) {
+    tmpvar_1.z = -(tmpvar_13.w);
   };
   gl_Position = tmpvar_1;
   vec4 tmpvar_14;

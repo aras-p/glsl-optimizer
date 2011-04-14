@@ -18,7 +18,7 @@ void main ()
   float tmpvar_5;
   tmpvar_5 = tmpvar_3.w;
   float x;
-  x = (tmpvar_5 - _Cutoff);
+  x = (tmpvar_3.w - _Cutoff);
   if ((x < 0.0)) {
     discard;
   };
