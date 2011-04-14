@@ -54,7 +54,8 @@
 
 SVGA3dSurfaceFormat
 svga_translate_format(struct svga_screen *ss,
-                      enum pipe_format format)
+                      enum pipe_format format,
+                      unsigned bind)
 {
    switch(format) {
    
@@ -81,11 +82,11 @@ svga_translate_format(struct svga_screen *ss,
       return SVGA3D_Z_D32;
     */
    case PIPE_FORMAT_Z16_UNORM:
-      return ss->depth.z16;
+      return bind & PIPE_BIND_SAMPLER_VIEW ? ss->depth.z16 : SVGA3D_Z_D16;
    case PIPE_FORMAT_S8_USCALED_Z24_UNORM:
-      return ss->depth.s8z24;
+      return bind & PIPE_BIND_SAMPLER_VIEW ? ss->depth.s8z24 : SVGA3D_Z_D24S8;
    case PIPE_FORMAT_X8Z24_UNORM:
-      return ss->depth.x8z24;
+      return bind & PIPE_BIND_SAMPLER_VIEW ? ss->depth.x8z24 : SVGA3D_Z_D24X8;
 
    case PIPE_FORMAT_A8_UNORM:
       return SVGA3D_ALPHA8;
@@ -108,7 +109,8 @@ svga_translate_format(struct svga_screen *ss,
 
 SVGA3dSurfaceFormat
 svga_translate_format_render(struct svga_screen *ss,
-                             enum pipe_format format)
+                             enum pipe_format format,
+                             unsigned bind)
 {
    switch(format) { 
    case PIPE_FORMAT_B8G8R8A8_UNORM:
@@ -121,7 +123,7 @@ svga_translate_format_render(struct svga_screen *ss,
    case PIPE_FORMAT_Z32_UNORM:
    case PIPE_FORMAT_Z16_UNORM:
    case PIPE_FORMAT_L8_UNORM:
-      return svga_translate_format(ss, format);
+      return svga_translate_format(ss, format, bind);
 
    default:
       return SVGA3D_FORMAT_INVALID;
@@ -562,7 +564,7 @@ svga_texture_create(struct pipe_screen *screen,
    
    tex->key.numMipLevels = template->last_level + 1;
    
-   tex->key.format = svga_translate_format(svgascreen, template->format);
+   tex->key.format = svga_translate_format(svgascreen, template->format, template->bind);
    if(tex->key.format == SVGA3D_FORMAT_INVALID)
       goto error2;
 
@@ -609,8 +611,8 @@ svga_texture_from_handle(struct pipe_screen *screen,
    if (!srf)
       return NULL;
 
-   if (svga_translate_format(svga_screen(screen), template->format) != format) {
-      unsigned f1 = svga_translate_format(svga_screen(screen), template->format);
+   if (svga_translate_format(svga_screen(screen), template->format, template->bind) != format) {
+      unsigned f1 = svga_translate_format(svga_screen(screen), template->format, template->bind);
       unsigned f2 = format;
 
       /* It's okay for XRGB and ARGB or depth with/out stencil to get mixed up */

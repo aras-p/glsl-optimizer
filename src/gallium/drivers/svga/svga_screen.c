@@ -404,9 +404,9 @@ svga_is_format_supported( struct pipe_screen *screen,
     * out of sync:
     */
    if(tex_usage & (PIPE_BIND_RENDER_TARGET | PIPE_BIND_DEPTH_STENCIL))
-      return svga_translate_format_render(ss, format) != SVGA3D_FORMAT_INVALID;
+      return svga_translate_format_render(ss, format, tex_usage) != SVGA3D_FORMAT_INVALID;
    else
-      return svga_translate_format(ss, format) != SVGA3D_FORMAT_INVALID;
+      return svga_translate_format(ss, format, tex_usage) != SVGA3D_FORMAT_INVALID;
 }
 
 

@@ -127,10 +127,14 @@ svga_texture_from_handle(struct pipe_screen * screen,
 
 
 enum SVGA3dSurfaceFormat
-svga_translate_format(struct svga_screen *ss, enum pipe_format format);
+svga_translate_format(struct svga_screen *ss,
+                      enum pipe_format format,
+                      unsigned bind);
 
 enum SVGA3dSurfaceFormat
-svga_translate_format_render(struct svga_screen *ss, enum pipe_format format);
+svga_translate_format_render(struct svga_screen *ss,
+                             enum pipe_format format,
+                             unsigned bind);
 
 
 #endif /* SVGA_TEXTURE_H */

@@ -225,7 +225,7 @@ svga_create_surface(struct pipe_context *pipe,
 
    if (!render) {
       flags = SVGA3D_SURFACE_HINT_TEXTURE;
-      format = svga_translate_format(ss, surf_tmpl->format);
+      format = svga_translate_format(ss, surf_tmpl->format, surf_tmpl->usage);
    } else {
       if (surf_tmpl->usage & PIPE_BIND_RENDER_TARGET) {
          flags = SVGA3D_SURFACE_HINT_RENDERTARGET;
@@ -233,7 +233,7 @@ svga_create_surface(struct pipe_context *pipe,
       if (surf_tmpl->usage & PIPE_BIND_DEPTH_STENCIL) {
          flags = SVGA3D_SURFACE_HINT_DEPTHSTENCIL;
       }
-      format = svga_translate_format_render(ss, surf_tmpl->format);
+      format = svga_translate_format_render(ss, surf_tmpl->format, surf_tmpl->usage);
    }
 
    assert(format != SVGA3D_FORMAT_INVALID);
@@ -243,7 +243,7 @@ svga_create_surface(struct pipe_context *pipe,
 
    /* Currently only used for compressed textures */
    if (render && 
-       format != svga_translate_format(ss, surf_tmpl->format)) {
+       format != svga_translate_format(ss, surf_tmpl->format, surf_tmpl->usage)) {
       view = TRUE;
    }
 
