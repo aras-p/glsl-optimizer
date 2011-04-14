@@ -418,21 +418,24 @@ get_tex_memcpy(struct gl_context *ctx, GLenum format, GLenum type, GLvoid *pixel
         texObj->Target == GL_TEXTURE_RECTANGLE ||
         (texObj->Target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X &&
          texObj->Target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z))) {
-      if (texImage->TexFormat == MESA_FORMAT_ARGB8888 &&
+      if ((texImage->TexFormat == MESA_FORMAT_ARGB8888 ||
+             texImage->TexFormat == MESA_FORMAT_SARGB8) &&
           format == GL_BGRA &&
-          type == GL_UNSIGNED_BYTE &&
+          (type == GL_UNSIGNED_BYTE || type == GL_UNSIGNED_INT_8_8_8_8_REV) &&
           !ctx->Pack.SwapBytes &&
           _mesa_little_endian()) {
          memCopy = GL_TRUE;
       }
-      else if (texImage->TexFormat == MESA_FORMAT_AL88 &&
+      else if ((texImage->TexFormat == MESA_FORMAT_AL88 ||
+                  texImage->TexFormat == MESA_FORMAT_SLA8) &&
                format == GL_LUMINANCE_ALPHA &&
                type == GL_UNSIGNED_BYTE &&
                !ctx->Pack.SwapBytes &&
                _mesa_little_endian()) {
          memCopy = GL_TRUE;
       }
-      else if (texImage->TexFormat == MESA_FORMAT_L8 &&
+      else if ((texImage->TexFormat == MESA_FORMAT_L8 ||
+                  texImage->TexFormat == MESA_FORMAT_SL8) &&
                format == GL_LUMINANCE &&
                type == GL_UNSIGNED_BYTE) {
          memCopy = GL_TRUE;
