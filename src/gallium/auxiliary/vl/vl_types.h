@@ -43,4 +43,9 @@ struct vertex4f
    float x, y, z, w;
 };
 
+struct vertex4s
+{
+   short x, y, z, w;
+};
+
 #endif /* vl_types_h */

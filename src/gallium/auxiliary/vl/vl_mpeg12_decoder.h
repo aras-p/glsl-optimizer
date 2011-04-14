@@ -52,7 +52,8 @@ struct vl_mpeg12_decoder
    enum pipe_format mc_source_format;
 
    struct pipe_vertex_buffer quads;
-   void *ves[VL_MAX_PLANES];
+   void *ves_eb[VL_MAX_PLANES];
+   void *ves_mv[2];
 
    struct vl_idct idct_y, idct_c;
    struct vl_mpeg12_mc_renderer mc;

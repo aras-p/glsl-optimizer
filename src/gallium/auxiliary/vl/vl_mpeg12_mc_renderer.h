@@ -55,26 +55,28 @@ struct vl_mpeg12_mc_renderer
 
 struct vl_mpeg12_mc_buffer
 {
+   struct vl_mpeg12_mc_renderer *renderer;
    struct pipe_sampler_view *source;
 };
 
-bool vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
-                                struct pipe_context *pipe,
-                                unsigned picture_width,
-                                unsigned picture_height,
-                                float scale);
+bool vl_mc_init(struct vl_mpeg12_mc_renderer *renderer, struct pipe_context *pipe,
+                unsigned picture_width, unsigned picture_height, float scale);
 
-void vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer);
+void vl_mc_cleanup(struct vl_mpeg12_mc_renderer *renderer);
 
-bool vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer,
-                              struct pipe_sampler_view *source);
+bool vl_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer,
+                       struct pipe_sampler_view *source);
 
-void vl_mpeg12_mc_cleanup_buffer(struct vl_mpeg12_mc_buffer *buffer);
+void vl_mc_cleanup_buffer(struct vl_mpeg12_mc_buffer *buffer);
 
-void vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer,
-                                 struct pipe_surface *surface, struct pipe_sampler_view *ref[2],
-                                 unsigned not_empty_start_instance, unsigned not_empty_num_instances,
-                                 unsigned empty_start_instance, unsigned empty_num_instances,
-                                 struct pipe_fence_handle **fence);
+void vl_mc_set_surface(struct vl_mpeg12_mc_renderer *renderer, struct pipe_surface *surface);
+
+void vl_mc_render_ref(struct vl_mpeg12_mc_buffer *buffer,
+                      struct pipe_sampler_view *ref, bool first,
+                      unsigned not_empty_start_instance, unsigned not_empty_num_instances,
+                      unsigned empty_start_instance, unsigned empty_num_instances);
+
+void vl_mc_render_ycbcr(struct vl_mpeg12_mc_buffer *buffer, bool first,
+                        unsigned not_empty_start_instance, unsigned not_empty_num_instances);
 
 #endif /* vl_mpeg12_mc_renderer_h */

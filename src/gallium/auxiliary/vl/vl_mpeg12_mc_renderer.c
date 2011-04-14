@@ -44,10 +44,8 @@ enum VS_OUTPUT
    VS_O_LINE,
    VS_O_TEX_TOP,
    VS_O_TEX_BOTTOM,
-   VS_O_MV0_TOP,
-   VS_O_MV0_BOTTOM,
-   VS_O_MV1_TOP,
-   VS_O_MV1_BOTTOM
+   VS_O_MV_TOP,
+   VS_O_MV_BOTTOM
 };
 
 static void *
@@ -55,10 +53,10 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
 {
    struct ureg_program *shader;
    struct ureg_src block_scale, mv_scale;
-   struct ureg_src vrect, vpos, eb, flags, vmv[2][2];
+   struct ureg_src vrect, vpos, eb, flags, vmv[2];
    struct ureg_dst t_vpos, t_vtex, t_vmv;
-   struct ureg_dst o_vpos, o_line, o_vtex[2], o_vmv[2][2];
-   unsigned i, j, label;
+   struct ureg_dst o_vpos, o_line, o_vtex[2], o_vmv[2];
+   unsigned i, label;
 
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
    if (!shader)
@@ -72,19 +70,15 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
    vpos = ureg_DECL_vs_input(shader, VS_I_VPOS);
    eb = ureg_DECL_vs_input(shader, VS_I_EB);
    flags = ureg_DECL_vs_input(shader, VS_I_FLAGS);
-   vmv[0][0] = ureg_DECL_vs_input(shader, VS_I_MV0_TOP);
-   vmv[0][1] = ureg_DECL_vs_input(shader, VS_I_MV0_BOTTOM);
-   vmv[1][0] = ureg_DECL_vs_input(shader, VS_I_MV1_TOP);
-   vmv[1][1] = ureg_DECL_vs_input(shader, VS_I_MV1_BOTTOM);
+   vmv[0] = ureg_DECL_vs_input(shader, VS_I_MV_TOP);
+   vmv[1] = ureg_DECL_vs_input(shader, VS_I_MV_BOTTOM);
 
    o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, VS_O_VPOS);
    o_line = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_LINE);
    o_vtex[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX_TOP);
    o_vtex[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX_BOTTOM);
-   o_vmv[0][0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV0_TOP);
-   o_vmv[0][1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV0_BOTTOM);
-   o_vmv[1][0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV1_TOP);
-   o_vmv[1][1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV1_BOTTOM);
+   o_vmv[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV_TOP);
+   o_vmv[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV_BOTTOM);
 
    /*
     * block_scale = (MACROBLOCK_WIDTH, MACROBLOCK_HEIGHT) / (dst.width, dst.height)
@@ -125,20 +119,21 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
       (float)MACROBLOCK_WIDTH / r->buffer_width,
       (float)MACROBLOCK_HEIGHT / r->buffer_height);
 
-   mv_scale = ureg_imm2f(shader,
+   mv_scale = ureg_imm4f(shader,
       0.5f / r->buffer_width,
-      0.5f / r->buffer_height);
+      0.5f / r->buffer_height,
+      1.0f,
+      1.0f / 255.0f);
 
    ureg_ADD(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_XY), vpos, vrect);
    ureg_MUL(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos), block_scale);
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos));
    ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), vpos);
 
-   for (i = 0; i < 2; ++i)
-      for (j = 0; j < 2; ++j) {
-         ureg_MAD(shader, ureg_writemask(o_vmv[i][j], TGSI_WRITEMASK_XY), mv_scale, vmv[i][j], ureg_src(t_vpos));
-         ureg_MOV(shader, ureg_writemask(o_vmv[i][j], TGSI_WRITEMASK_Z), ureg_scalar(flags, TGSI_SWIZZLE_Z + i));
-      }
+   for (i = 0; i < 2; ++i) {
+      ureg_MAD(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_XY), mv_scale, vmv[i], ureg_src(t_vpos));
+      ureg_MUL(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_W), mv_scale, vmv[i]);
+   }
 
    ureg_MOV(shader, ureg_writemask(o_vtex[0], TGSI_WRITEMASK_XY), ureg_src(t_vpos));
    ureg_CMP(shader, ureg_writemask(o_vtex[0], TGSI_WRITEMASK_Z),
@@ -274,24 +269,19 @@ static void *
 create_ref_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
    struct ureg_program *shader;
-   struct ureg_src tc[2][2], sampler[2];
-   struct ureg_dst ref[2], field;
+   struct ureg_src tc[2], sampler;
+   struct ureg_dst ref, field;
    struct ureg_dst fragment;
-   unsigned i;
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
       return NULL;
 
-   tc[0][0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV0_TOP, TGSI_INTERPOLATE_LINEAR);
-   tc[0][1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV0_BOTTOM, TGSI_INTERPOLATE_LINEAR);
-   tc[1][0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV1_TOP, TGSI_INTERPOLATE_LINEAR);
-   tc[1][1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV1_BOTTOM, TGSI_INTERPOLATE_LINEAR);
+   tc[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV_TOP, TGSI_INTERPOLATE_LINEAR);
+   tc[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV_BOTTOM, TGSI_INTERPOLATE_LINEAR);
 
-   for (i = 0; i < 2; ++i) {
-      sampler[i] = ureg_DECL_sampler(shader, i);
-      ref[i] = ureg_DECL_temporary(shader);
-   }
+   sampler = ureg_DECL_sampler(shader, 0);
+   ref = ureg_DECL_temporary(shader);
 
    fragment = ureg_DECL_output(shader, TGSI_SEMANTIC_COLOR, 0);
 
@@ -304,29 +294,12 @@ create_ref_frag_shader(struct vl_mpeg12_mc_renderer *r)
     *    ref[0..1] = tex(tc[2..3], sampler[0..1])
     * result = LRP(info.y, ref[0..1])
     */
-   ureg_CMP(shader, ureg_writemask(ref[0], TGSI_WRITEMASK_XY),
-            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
-            tc[0][1], tc[0][0]);
-   ureg_CMP(shader, ureg_writemask(ref[1], TGSI_WRITEMASK_XY),
-            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
-            tc[1][1], tc[1][0]);
+   ureg_CMP(shader, ref, ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)), tc[1], tc[0]);
 
-   ureg_TEX(shader, ref[0], TGSI_TEXTURE_2D, ureg_src(ref[0]), sampler[0]);
-   ureg_TEX(shader, ref[1], TGSI_TEXTURE_2D, ureg_src(ref[1]), sampler[1]);
+   ureg_MOV(shader, ureg_writemask(fragment, TGSI_WRITEMASK_W), ureg_src(ref));
+   ureg_TEX(shader, ureg_writemask(fragment, TGSI_WRITEMASK_XYZ), TGSI_TEXTURE_2D, ureg_src(ref), sampler);
 
-   ureg_LRP(shader, ref[0],
-            ureg_scalar(tc[0][0], TGSI_SWIZZLE_Z),
-            ureg_src(ref[0]), ureg_imm1f(shader, 0.0f));
-
-   ureg_LRP(shader, ref[1],
-            ureg_scalar(tc[1][0], TGSI_SWIZZLE_Z),
-            ureg_src(ref[1]), ureg_imm1f(shader, 0.0f));
-
-   ureg_ADD(shader, ureg_writemask(fragment, TGSI_WRITEMASK_XYZ), ureg_src(ref[0]), ureg_src(ref[1]));
-   ureg_MOV(shader, ureg_writemask(fragment, TGSI_WRITEMASK_W), ureg_imm1f(shader, 1.0f));
-
-   for (i = 0; i < 2; ++i)
-      ureg_release_temporary(shader, ref[i]);
+   ureg_release_temporary(shader, ref);
 
    ureg_release_temporary(shader, field);
    ureg_END(shader);
@@ -435,11 +408,8 @@ cleanup_pipe_state(struct vl_mpeg12_mc_renderer *r)
 }
 
 bool
-vl_mpeg12_mc_renderer_init(struct vl_mpeg12_mc_renderer *renderer,
-                           struct pipe_context *pipe,
-                           unsigned buffer_width,
-                           unsigned buffer_height,
-                           float scale)
+vl_mc_init(struct vl_mpeg12_mc_renderer *renderer, struct pipe_context *pipe,
+           unsigned buffer_width, unsigned buffer_height, float scale)
 {
    struct pipe_resource tex_templ, *tex_dummy;
    struct pipe_sampler_view sampler_view;
@@ -511,7 +481,7 @@ error_pipe_state:
 }
 
 void
-vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer)
+vl_mc_cleanup(struct vl_mpeg12_mc_renderer *renderer)
 {
    assert(renderer);
 
@@ -525,11 +495,13 @@ vl_mpeg12_mc_renderer_cleanup(struct vl_mpeg12_mc_renderer *renderer)
 }
 
 bool
-vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer,
-                         struct pipe_sampler_view *source)
+vl_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer,
+                  struct pipe_sampler_view *source)
 {
    assert(renderer && buffer);
    assert(source);
+
+   buffer->renderer = renderer;
 
    pipe_sampler_view_reference(&buffer->source, source);
 
@@ -537,7 +509,7 @@ vl_mpeg12_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg1
 }
 
 void
-vl_mpeg12_mc_cleanup_buffer(struct vl_mpeg12_mc_buffer *buffer)
+vl_mc_cleanup_buffer(struct vl_mpeg12_mc_buffer *buffer)
 {
    assert(buffer);
 
@@ -545,17 +517,9 @@ vl_mpeg12_mc_cleanup_buffer(struct vl_mpeg12_mc_buffer *buffer)
 }
 
 void
-vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer,
-                            struct pipe_surface *surface, struct pipe_sampler_view *ref[2],
-                            unsigned not_empty_start_instance, unsigned not_empty_num_instances,
-                            unsigned empty_start_instance, unsigned empty_num_instances,
-                            struct pipe_fence_handle **fence)
+vl_mc_set_surface(struct vl_mpeg12_mc_renderer *renderer, struct pipe_surface *surface)
 {
-   assert(renderer && buffer);
-   assert(surface && ref);
-
-   if (not_empty_num_instances == 0 && empty_num_instances == 0)
-      return;
+   assert(renderer && surface);
 
    renderer->viewport.scale[0] = surface->width;
    renderer->viewport.scale[1] = surface->height;
@@ -563,46 +527,65 @@ vl_mpeg12_mc_renderer_flush(struct vl_mpeg12_mc_renderer *renderer, struct vl_mp
    renderer->fb_state.width = surface->width;
    renderer->fb_state.height = surface->height;
    renderer->fb_state.cbufs[0] = surface;
+}
 
+void
+vl_mc_render_ref(struct vl_mpeg12_mc_buffer *buffer,
+                 struct pipe_sampler_view *ref, bool first,
+                 unsigned not_empty_start_instance, unsigned not_empty_num_instances,
+                 unsigned empty_start_instance, unsigned empty_num_instances)
+{
+   struct vl_mpeg12_mc_renderer *renderer;
+
+   assert(buffer && ref);
+
+   if (not_empty_num_instances == 0 && empty_num_instances == 0)
+      return;
+
+   renderer = buffer->renderer;
    renderer->pipe->bind_rasterizer_state(renderer->pipe, renderer->rs_state);
    renderer->pipe->set_framebuffer_state(renderer->pipe, &renderer->fb_state);
    renderer->pipe->set_viewport_state(renderer->pipe, &renderer->viewport);
+   renderer->pipe->bind_blend_state(renderer->pipe, first ? renderer->blend_clear : renderer->blend_add);
 
    renderer->pipe->bind_vs_state(renderer->pipe, renderer->vs);
+   renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs_ref);
 
-   renderer->pipe->bind_blend_state(renderer->pipe, renderer->blend_clear);
-   if (ref[0] || ref[1]) {
-      void *samplers[2];
-
-      renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs_ref);
-
-      /* if no reference frame provided use a dummy sampler instead */
-      if (!ref[0]) ref[0] = renderer->dummy;
-      if (!ref[1]) ref[1] = renderer->dummy;
-
-      renderer->pipe->set_fragment_sampler_views(renderer->pipe, 2, ref);
-
-      samplers[0] = samplers[1] = renderer->sampler_ref;
-      renderer->pipe->bind_fragment_sampler_states(renderer->pipe, 2, samplers);
-
-      if (not_empty_num_instances > 0)
-         util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4,
-                                    not_empty_start_instance, not_empty_num_instances);
-
-      if (empty_num_instances > 0)
-         util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4,
-                                    empty_start_instance, empty_num_instances);
-
-      renderer->pipe->bind_blend_state(renderer->pipe, renderer->blend_add);
-   }
-
-   renderer->pipe->set_fragment_sampler_views(renderer->pipe, 1, &buffer->source);
-   renderer->pipe->bind_fragment_sampler_states(renderer->pipe, 1, &renderer->sampler_ycbcr);
-   renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs_ycbcr);
+   renderer->pipe->set_fragment_sampler_views(renderer->pipe, 1, &ref);
+   renderer->pipe->bind_fragment_sampler_states(renderer->pipe, 1, &renderer->sampler_ref);
 
    if (not_empty_num_instances > 0)
       util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4,
                                  not_empty_start_instance, not_empty_num_instances);
 
-   renderer->pipe->flush(renderer->pipe, fence);
+   if (empty_num_instances > 0)
+      util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4,
+                                 empty_start_instance, empty_num_instances);
+}
+
+void
+vl_mc_render_ycbcr(struct vl_mpeg12_mc_buffer *buffer, bool first,
+                   unsigned not_empty_start_instance, unsigned not_empty_num_instances)
+{
+   struct vl_mpeg12_mc_renderer *renderer;
+
+   assert(buffer);
+
+   if (not_empty_num_instances == 0)
+      return;
+
+   renderer = buffer->renderer;
+   renderer->pipe->bind_rasterizer_state(renderer->pipe, renderer->rs_state);
+   renderer->pipe->set_framebuffer_state(renderer->pipe, &renderer->fb_state);
+   renderer->pipe->set_viewport_state(renderer->pipe, &renderer->viewport);
+   renderer->pipe->bind_blend_state(renderer->pipe, first ? renderer->blend_clear : renderer->blend_add);
+
+   renderer->pipe->bind_vs_state(renderer->pipe, renderer->vs);
+   renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs_ycbcr);
+
+   renderer->pipe->set_fragment_sampler_views(renderer->pipe, 1, &buffer->source);
+   renderer->pipe->bind_fragment_sampler_states(renderer->pipe, 1, &renderer->sampler_ycbcr);
+
+   util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4,
+                              not_empty_start_instance, not_empty_num_instances);
 }
