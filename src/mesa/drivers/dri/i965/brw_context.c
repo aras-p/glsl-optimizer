@@ -161,7 +161,7 @@ GLboolean brwCreateContext( int api,
       but we're not sure how it's actually done for vertex order,
       that affect provoking vertex decision. Always use last vertex
       convention for quad primitive which works as expected for now. */
-   if (intel->gen == 6)
+   if (intel->gen >= 6)
        ctx->Const.QuadsFollowProvokingVertexConvention = GL_FALSE;
 
    if (intel->is_g4x || intel->gen >= 5) {

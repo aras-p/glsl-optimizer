@@ -56,7 +56,7 @@ static void compile_gs_prog( struct brw_context *brw,
    /* Gen6: VF has already converted into polygon, and LINELOOP is
     * converted to LINESTRIP at the beginning of the 3D pipeline.
     */
-   if (intel->gen == 6)
+   if (intel->gen >= 6)
       return;
 
    memset(&c, 0, sizeof(c));
@@ -168,7 +168,7 @@ static void populate_key( struct brw_context *brw,
       key->pv_first = GL_TRUE;
    }
 
-   key->need_gs_prog = (intel->gen == 6)
+   key->need_gs_prog = (intel->gen >= 6)
       ? 0
       : (brw->primitive == GL_QUADS ||
 	 brw->primitive == GL_QUAD_STRIP ||
