@@ -43,6 +43,12 @@
 #define PIPE_CONTROL_GTTWRITE_PROCESS_LOCAL 0x00
 #define PIPE_CONTROL_GTTWRITE_GLOBAL        0x01
 
+#define CMD_3D_PRIM                                 0x7b00 /* 3DPRIMITIVE */
+/* DW0 */
+# define GEN4_3DPRIM_TOPOLOGY_TYPE_SHIFT            10
+# define GEN4_3DPRIM_VERTEXBUFFER_ACCESS_SEQUENTIAL (0 << 15)
+# define GEN4_3DPRIM_VERTEXBUFFER_ACCESS_RANDOM     (1 << 15)
+
 #define _3DPRIM_POINTLIST         0x01
 #define _3DPRIM_LINELIST          0x02
 #define _3DPRIM_LINESTRIP         0x03
@@ -64,9 +70,6 @@
 #define _3DPRIM_LINESTRIP_BF      0x13
 #define _3DPRIM_LINESTRIP_CONT_BF 0x14
 #define _3DPRIM_TRIFAN_NOSTIPPLE  0x15
-
-#define _3DPRIM_VERTEXBUFFER_ACCESS_SEQUENTIAL 0
-#define _3DPRIM_VERTEXBUFFER_ACCESS_RANDOM     1
 
 #define BRW_ANISORATIO_2     0 
 #define BRW_ANISORATIO_4     1 
@@ -1131,8 +1134,6 @@
 /* DW1: depth clear value */
 
 #define CMD_PIPE_CONTROL              0x7a00
-
-#define CMD_3D_PRIM                   0x7b00
 
 #define CMD_MI_FLUSH                  0x0200
 

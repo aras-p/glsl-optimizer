@@ -80,25 +80,6 @@ struct brw_3d_control
    GLuint dword3;   
 };
 
-
-struct brw_3d_primitive
-{
-   struct
-   {
-      GLuint length:8; 
-      GLuint pad:2;
-      GLuint topology:5; 
-      GLuint indexed:1; 
-      GLuint opcode:16; 
-   } header;
-
-   GLuint verts_per_instance;  
-   GLuint start_vert_location;  
-   GLuint instance_count;  
-   GLuint start_instance_location;  
-   GLuint base_vert_location;  
-};
-
 /* These seem to be passed around as function args, so it works out
  * better to keep them as #defines:
  */
