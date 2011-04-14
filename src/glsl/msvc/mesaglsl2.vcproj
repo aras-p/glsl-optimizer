@@ -514,6 +514,10 @@
 					>
 				</File>
 				<File
+					RelativePath="..\opt_copy_propagation_elements.cpp"
+					>
+				</File>
+				<File
 					RelativePath="..\opt_dead_code.cpp"
 					>
 				</File>
