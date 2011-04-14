@@ -198,6 +198,7 @@ st_fast_readpixels(struct gl_context *ctx, struct st_renderbuffer *strb,
                    const struct gl_pixelstore_attrib *pack,
                    GLvoid *dest)
 {
+   GLubyte alphaORoperand;
    enum combination {
       A8R8G8B8_UNORM_TO_RGBA_UBYTE,
       A8R8G8B8_UNORM_TO_RGB_UBYTE,
@@ -208,20 +209,24 @@ st_fast_readpixels(struct gl_context *ctx, struct st_renderbuffer *strb,
    if (ctx->_ImageTransferState)
       return GL_FALSE;
 
-   if (strb->format == PIPE_FORMAT_B8G8R8A8_UNORM &&
-       format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
+   if (strb->format == PIPE_FORMAT_B8G8R8A8_UNORM) {
+      alphaORoperand = 0;
+   } else if (strb->format == PIPE_FORMAT_B8G8R8X8_UNORM ) {
+      alphaORoperand = 0xff;
+   } else {
+      return GL_FALSE;
+   }
+
+   if (format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
       combo = A8R8G8B8_UNORM_TO_RGBA_UBYTE;
    }
-   else if (strb->format == PIPE_FORMAT_B8G8R8A8_UNORM &&
-            format == GL_RGB && type == GL_UNSIGNED_BYTE) {
+   else if (format == GL_RGB && type == GL_UNSIGNED_BYTE) {
       combo = A8R8G8B8_UNORM_TO_RGB_UBYTE;
    }
-   else if (strb->format == PIPE_FORMAT_B8G8R8A8_UNORM &&
-            format == GL_BGRA && type == GL_UNSIGNED_INT_8_8_8_8_REV) {
+   else if (format == GL_BGRA && type == GL_UNSIGNED_INT_8_8_8_8_REV) {
       combo = A8R8G8B8_UNORM_TO_BGRA_UINT;
    }
-   else if (strb->format == PIPE_FORMAT_B8G8R8A8_UNORM &&
-            format == GL_RGBA && type == GL_UNSIGNED_INT_8_8_8_8) {
+   else if (format == GL_RGBA && type == GL_UNSIGNED_INT_8_8_8_8) {
       combo = A8R8G8B8_UNORM_TO_RGBA_UINT;
    }
    else {
@@ -283,7 +288,7 @@ st_fast_readpixels(struct gl_context *ctx, struct st_renderbuffer *strb,
                dst[col*4+0] = (pixel >> 16) & 0xff;
                dst[col*4+1] = (pixel >>  8) & 0xff;
                dst[col*4+2] = (pixel >>  0) & 0xff;
-               dst[col*4+3] = (pixel >> 24) & 0xff;
+               dst[col*4+3] = ((pixel >> 24) & 0xff) | alphaORoperand;
             }
             dst += dstStride;
             y += dy;
@@ -306,6 +311,11 @@ st_fast_readpixels(struct gl_context *ctx, struct st_renderbuffer *strb,
          for (row = 0; row < height; row++) {
             const GLubyte *src = map + y * trans->stride;
             memcpy(dst, src, 4 * width);
+            if (alphaORoperand) {
+                for (col = 0; col < width; col++) {
+                    dst[col*4+3] |= alphaORoperand;
+                }
+            }
             dst += dstStride;
             y += dy;
          }
@@ -315,7 +325,7 @@ st_fast_readpixels(struct gl_context *ctx, struct st_renderbuffer *strb,
             const GLubyte *src = map + y * trans->stride;
             for (col = 0; col < width; col++) {
                GLuint pixel = ((GLuint *) src)[col];
-               dst[col*4+0] = (pixel >> 24) & 0xff;
+               dst[col*4+0] = ((pixel >> 24) & 0xff) | alphaORoperand;
                dst[col*4+1] = (pixel >> 0) & 0xff;
                dst[col*4+2] = (pixel >> 8) & 0xff;
                dst[col*4+3] = (pixel >> 16) & 0xff;
