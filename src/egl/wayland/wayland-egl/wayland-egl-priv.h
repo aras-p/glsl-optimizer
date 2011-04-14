@@ -42,11 +42,10 @@ struct wl_egl_window {
 struct wl_egl_pixmap {
 	struct wl_egl_display *display;
 	struct wl_visual      *visual;
+	struct wl_buffer *buffer;
 
-	int name;
 	int width;
 	int height;
-	int stride;
 
 	void (*destroy) (struct wl_egl_pixmap *egl_pixmap);
 

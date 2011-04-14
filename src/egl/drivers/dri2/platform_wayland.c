@@ -32,6 +32,8 @@
 #include <dlfcn.h>
 #include <errno.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <xf86drm.h>
 
 #include "egl_dri2.h"
 
@@ -107,7 +109,7 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
       dri2_surf->base.Width  = dri2_surf->wl_pix->width;
       dri2_surf->base.Height = dri2_surf->wl_pix->height;
 
-      if (dri2_surf->wl_pix->name > 0) {
+      if (dri2_surf->wl_pix->driver_private) {
          dri2_buf = dri2_surf->wl_pix->driver_private;
          dri2_surf->dri_buffers[__DRI_BUFFER_FRONT_LEFT] = dri2_buf->dri_buffer;
       }
@@ -204,7 +206,6 @@ dri2_wl_egl_pixmap_destroy(struct wl_egl_pixmap *egl_pixmap)
    
    egl_pixmap->driver_private = NULL;
    egl_pixmap->destroy = NULL;
-   egl_pixmap->name = 0;
 }
 
 static void
@@ -244,8 +245,6 @@ dri2_process_front_buffer(struct dri2_egl_surface *dri2_surf, unsigned format)
       dri2_buf->dri_buffer = dri2_surf->dri_buffers[__DRI_BUFFER_FRONT_LEFT];
       dri2_buf->dri2_dpy   = dri2_dpy;
 
-      dri2_surf->wl_pix->name           = dri2_buf->dri_buffer->name;
-      dri2_surf->wl_pix->stride         = dri2_buf->dri_buffer->pitch;
       dri2_surf->wl_pix->driver_private = dri2_buf;
       dri2_surf->wl_pix->destroy        = dri2_wl_egl_pixmap_destroy;
       break;
@@ -282,9 +281,9 @@ dri2_release_buffers(struct dri2_egl_surface *dri2_surf)
          switch (i) {
          case __DRI_BUFFER_FRONT_LEFT:
             if (dri2_surf->pending_buffer)
-               force_roundtrip(dri2_dpy->wl_dpy->display);
+               force_roundtrip(dri2_dpy->wl_dpy);
             dri2_surf->pending_buffer = dri2_surf->dri_buffers[i];
-            wl_display_sync_callback(dri2_dpy->wl_dpy->display,
+            wl_display_sync_callback(dri2_dpy->wl_dpy,
                                      dri2_release_pending_buffer, dri2_surf);
             break;
          default:
@@ -423,7 +422,7 @@ wayland_create_buffer(struct dri2_egl_surface *dri2_surf, __DRIbuffer *buffer)
    struct dri2_egl_display *dri2_dpy =
       dri2_egl_display(dri2_surf->base.Resource.Display);
 
-   return wl_drm_create_buffer(dri2_dpy->wl_dpy->drm, buffer->name,
+   return wl_drm_create_buffer(dri2_dpy->wl_drm, buffer->name,
                                dri2_surf->base.Width, dri2_surf->base.Height,
                                buffer->pitch, dri2_surf->wl_win->visual);
 }
@@ -455,10 +454,10 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
    struct dri2_egl_driver *dri2_drv = dri2_egl_driver(drv);
 
    while (dri2_surf->block_swap_buffers)
-      wl_display_iterate(dri2_dpy->wl_dpy->display, WL_DISPLAY_READABLE);
+      wl_display_iterate(dri2_dpy->wl_dpy, WL_DISPLAY_READABLE);
 
    dri2_surf->block_swap_buffers = EGL_TRUE;
-   wl_display_frame_callback(dri2_dpy->wl_dpy->display,
+   wl_display_frame_callback(dri2_dpy->wl_dpy,
 	 		     dri2_surf->wl_win->surface,
 			     wayland_frame_callback, dri2_surf);
 
@@ -536,18 +535,23 @@ dri2_create_image_khr_pixmap(_EGLDisplay *disp, _EGLContext *ctx,
 				     wl_egl_pixmap->width,
 				     wl_egl_pixmap->height);
 
-   wl_egl_pixmap->name    = dri2_buf->dri_buffer->name;
-   wl_egl_pixmap->stride  = dri2_buf->dri_buffer->pitch;
    wl_egl_pixmap->destroy = dri2_wl_egl_pixmap_destroy;
    wl_egl_pixmap->driver_private = dri2_buf;
 
+   wl_egl_pixmap->buffer =
+      wl_drm_create_buffer(dri2_dpy->wl_drm,
+			   dri2_buf->dri_buffer->name,
+			   wl_egl_pixmap->width,
+			   wl_egl_pixmap->height,
+			   dri2_buf->dri_buffer->pitch,
+			   wl_egl_pixmap->visual);
+
    wl_attr_list[1] = wl_egl_pixmap->width;
    wl_attr_list[3] = wl_egl_pixmap->height;
-   wl_attr_list[5] = wl_egl_pixmap->stride / 4;
-
+   wl_attr_list[5] = dri2_buf->dri_buffer->pitch / 4;
 
    return dri2_create_image_khr(disp->Driver, disp, ctx, EGL_DRM_BUFFER_MESA,
-	       (EGLClientBuffer)(intptr_t) wl_egl_pixmap->name, wl_attr_list);
+	(EGLClientBuffer)(intptr_t) dri2_buf->dri_buffer->name, wl_attr_list);
 }
 
 static _EGLImage *
@@ -571,16 +575,16 @@ dri2_wayland_authenticate(_EGLDisplay *disp, uint32_t id)
    struct dri2_egl_display *dri2_dpy = dri2_egl_display(disp);
    int ret = 0;
 
-   dri2_dpy->wl_dpy->authenticated = false;
+   dri2_dpy->authenticated = false;
 
-   wl_drm_authenticate(dri2_dpy->wl_dpy->drm, id);
-   force_roundtrip(dri2_dpy->wl_dpy->display);
+   wl_drm_authenticate(dri2_dpy->wl_drm, id);
+   force_roundtrip(dri2_dpy->wl_dpy);
 
-   if (!dri2_dpy->wl_dpy->authenticated)
+   if (!dri2_dpy->authenticated)
       ret = -1;
 
    /* reset authenticated */
-   dri2_dpy->wl_dpy->authenticated = true;
+   dri2_dpy->authenticated = true;
 
    return ret;
 }
@@ -606,10 +610,45 @@ dri2_terminate(_EGLDriver *drv, _EGLDisplay *disp)
    return EGL_TRUE;
 }
 
+static void
+drm_handle_device(void *data, struct wl_drm *drm, const char *device)
+{
+   struct dri2_egl_display *dri2_dpy = data;
+   drm_magic_t magic;
+
+   dri2_dpy->device_name = strdup(device);
+   if (!dri2_dpy->device_name)
+      return;
+
+   dri2_dpy->fd = open(dri2_dpy->device_name, O_RDWR);
+   if (dri2_dpy->fd == -1) {
+      _eglLog(_EGL_WARNING, "wayland-egl: could not open %s (%s)",
+	      dri2_dpy->device_name, strerror(errno));
+      return;
+   }
+
+   drmGetMagic(dri2_dpy->fd, &magic);
+   wl_drm_authenticate(dri2_dpy->wl_drm, magic);
+}
+
+static void
+drm_handle_authenticated(void *data, struct wl_drm *drm)
+{
+   struct dri2_egl_display *dri2_dpy = data;
+
+   dri2_dpy->authenticated = true;
+}
+
+static const struct wl_drm_listener drm_listener = {
+	drm_handle_device,
+	drm_handle_authenticated
+};
+
 EGLBoolean
 dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
 {
    struct dri2_egl_display *dri2_dpy;
+   uint32_t id;
    int i;
 
    drv->API.CreateWindowSurface = dri2_create_window_surface;
@@ -628,21 +667,23 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    disp->DriverData = (void *) dri2_dpy;
    dri2_dpy->wl_dpy = disp->PlatformDisplay;
 
-   if (dri2_dpy->wl_dpy->fd == -1)
-      force_roundtrip(dri2_dpy->wl_dpy->display);
-   if (dri2_dpy->wl_dpy->fd == -1)
+   id = wl_display_get_global(dri2_dpy->wl_dpy, "drm", 1);
+   if (id == 0)
+      wl_display_iterate(dri2_dpy->wl_dpy, WL_DISPLAY_READABLE);
+   id = wl_display_get_global(dri2_dpy->wl_dpy, "drm", 1);
+   if (id == 0)
       goto cleanup_dpy;
+   dri2_dpy->wl_drm = wl_drm_create(dri2_dpy->wl_dpy, id, 1);
+   if (!dri2_dpy->wl_drm)
+      goto cleanup_dpy;
+   wl_drm_add_listener(dri2_dpy->wl_drm, &drm_listener, dri2_dpy);
+   force_roundtrip(dri2_dpy->wl_dpy);
+   if (dri2_dpy->fd == -1)
+      goto cleanup_drm;
 
-   dri2_dpy->fd = dup(dri2_dpy->wl_dpy->fd);
-   if (dri2_dpy->fd < 0) {
-      _eglError(EGL_BAD_ALLOC, "DRI2: failed to dup fd");
-      goto cleanup_dpy;
-   }
-
-   if (!dri2_dpy->wl_dpy->authenticated)
-      force_roundtrip(dri2_dpy->wl_dpy->display);
-   if (!dri2_dpy->wl_dpy->authenticated)
-      goto cleanup_dpy;
+   force_roundtrip(dri2_dpy->wl_dpy);
+   if (!dri2_dpy->authenticated)
+      goto cleanup_fd;
 
    dri2_dpy->driver_name = dri2_get_driver_for_fd(dri2_dpy->fd);
    if (dri2_dpy->driver_name == NULL) {
@@ -650,14 +691,8 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
       goto cleanup_fd;
    }
 
-   dri2_dpy->device_name = strdup(dri2_dpy->wl_dpy->device_name);
-   if (dri2_dpy->device_name == NULL) {
-      _eglError(EGL_BAD_ALLOC, "DRI2: failed to get device name");
-      goto cleanup_driver_name;
-   }
-
    if (!dri2_load_driver(disp))
-      goto cleanup_device_name;
+      goto cleanup_driver_name;
 
    dri2_dpy->dri2_loader_extension.base.name = __DRI_DRI2_LOADER;
    dri2_dpy->dri2_loader_extension.base.version = 3;
@@ -691,12 +726,13 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
 
  cleanup_driver:
    dlclose(dri2_dpy->driver);
- cleanup_device_name:
-   free(dri2_dpy->device_name);
  cleanup_driver_name:
    free(dri2_dpy->driver_name);
  cleanup_fd:
    close(dri2_dpy->fd);
+ cleanup_drm:
+   free(dri2_dpy->device_name);
+   wl_drm_destroy(dri2_dpy->wl_drm);
  cleanup_dpy:
    free(dri2_dpy);
    

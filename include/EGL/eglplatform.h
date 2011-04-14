@@ -80,7 +80,7 @@ typedef void *EGLNativePixmapType;
 
 #elif defined(WL_EGL_PLATFORM)
 
-typedef struct wl_egl_display *EGLNativeDisplayType;
+typedef struct wl_display     *EGLNativeDisplayType;
 typedef struct wl_egl_pixmap  *EGLNativePixmapType;
 typedef struct wl_egl_window  *EGLNativeWindowType;
 
