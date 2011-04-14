@@ -330,9 +330,9 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
    sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    sampler.wrap_r = PIPE_TEX_WRAP_CLAMP_TO_BORDER;
-   sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
+   sampler.min_img_filter = PIPE_TEX_FILTER_LINEAR;
    sampler.min_mip_filter = PIPE_TEX_MIPFILTER_NONE;
-   sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
+   sampler.mag_img_filter = PIPE_TEX_FILTER_LINEAR;
    sampler.compare_mode = PIPE_TEX_COMPARE_NONE;
    sampler.compare_func = PIPE_FUNC_ALWAYS;
    sampler.normalized_coords = 1;
@@ -340,6 +340,8 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
    if (!r->sampler_ref)
       goto error_sampler_ref;
 
+   sampler.min_img_filter = PIPE_TEX_FILTER_NEAREST;
+   sampler.mag_img_filter = PIPE_TEX_FILTER_NEAREST;
    r->sampler_ycbcr = r->pipe->create_sampler_state(r->pipe, &sampler);
    if (!r->sampler_ycbcr)
       goto error_sampler_ycbcr;
