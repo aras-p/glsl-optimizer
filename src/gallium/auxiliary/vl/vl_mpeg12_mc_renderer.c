@@ -42,65 +42,80 @@ enum VS_OUTPUT
 {
    VS_O_VPOS,
    VS_O_LINE,
-   VS_O_TEX_TOP,
-   VS_O_TEX_BOTTOM,
-   VS_O_MV_TOP,
-   VS_O_MV_BOTTOM
+   VS_O_VTOP,
+   VS_O_VBOTTOM
 };
 
+static struct ureg_dst
+calc_position(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader)
+{
+   struct ureg_src block_scale;
+   struct ureg_src vrect, vpos;
+   struct ureg_dst t_vpos;
+   struct ureg_dst o_vpos;
+
+   vrect = ureg_DECL_vs_input(shader, VS_I_RECT);
+   vpos = ureg_DECL_vs_input(shader, VS_I_VPOS);
+
+   t_vpos = ureg_DECL_temporary(shader);
+
+   o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, VS_O_VPOS);
+
+   /*
+    * block_scale = (MACROBLOCK_WIDTH, MACROBLOCK_HEIGHT) / (dst.width, dst.height)
+    *
+    * t_vpos = (vpos + vrect) * block_scale
+    * o_vpos.xy = t_vpos
+    * o_vpos.zw = vpos
+    */
+   block_scale = ureg_imm2f(shader,
+      (float)MACROBLOCK_WIDTH / r->buffer_width,
+      (float)MACROBLOCK_HEIGHT / r->buffer_height);
+
+   ureg_ADD(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_XY), vpos, vrect);
+   ureg_MUL(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos), block_scale);
+   ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos));
+   ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), vpos);
+
+   return t_vpos;
+}
+
 static void *
-create_vert_shader(struct vl_mpeg12_mc_renderer *r)
+create_ycbcr_vert_shader(struct vl_mpeg12_mc_renderer *r)
 {
    struct ureg_program *shader;
-   struct ureg_src block_scale, mv_scale;
-   struct ureg_src vrect, vpos, eb, flags, vmv[2];
-   struct ureg_dst t_vpos, t_vtex, t_vmv;
-   struct ureg_dst o_vpos, o_line, o_vtex[2], o_vmv[2];
-   unsigned i, label;
+   struct ureg_src block_scale;
+   struct ureg_src vrect, vpos, eb, flags;
+   struct ureg_dst t_vpos, t_vtex;
+   struct ureg_dst o_line, o_vtex[2];
+   unsigned label;
 
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
    if (!shader)
       return NULL;
 
-   t_vpos = ureg_DECL_temporary(shader);
-   t_vtex = ureg_DECL_temporary(shader);
-   t_vmv = ureg_DECL_temporary(shader);
-
    vrect = ureg_DECL_vs_input(shader, VS_I_RECT);
    vpos = ureg_DECL_vs_input(shader, VS_I_VPOS);
    eb = ureg_DECL_vs_input(shader, VS_I_EB);
    flags = ureg_DECL_vs_input(shader, VS_I_FLAGS);
-   vmv[0] = ureg_DECL_vs_input(shader, VS_I_MV_TOP);
-   vmv[1] = ureg_DECL_vs_input(shader, VS_I_MV_BOTTOM);
 
-   o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, VS_O_VPOS);
+   t_vpos = calc_position(r, shader);
+   t_vtex = ureg_DECL_temporary(shader);
+
    o_line = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_LINE);
-   o_vtex[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX_TOP);
-   o_vtex[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX_BOTTOM);
-   o_vmv[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV_TOP);
-   o_vmv[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV_BOTTOM);
+   o_vtex[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTOP);
+   o_vtex[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_VBOTTOM);
 
    /*
     * block_scale = (MACROBLOCK_WIDTH, MACROBLOCK_HEIGHT) / (dst.width, dst.height)
-    * mv_scale = 0.5 / (dst.width, dst.height);
     *
-    * t_vpos = (vpos + vrect) * block_scale
-    * o_vpos.xy = t_vpos
-    * o_vpos.zw = vpos
+    * o_line.x = interlaced
+    * o_line.y = vrect
     *
-    * o_eb[0..1] = vrect.x ? eb[0..1][1] : eb[0..1][0]
+    * o_vtex[0].z = vrect.x ? eb.y : eb.x
+    * o_vtex[1].z = vrect.x ? eb.w : eb.z
     *
-    * o_frame_pred = frame_pred
-    * o_info.x = not_intra
-    * o_info.y = ref_weight / 2
-    *
-    * // Apply motion vectors
-    * o_vmv[0..3] = t_vpos + vmv[0..3] * mv_scale
-    *
-    * o_line.xy = vrect * 8
-    * o_line.z = interlaced
-    *
-    * if(eb[0][0].w) { //interlaced
+    * if(interlaced) {
     *    t_vtex.x = vrect.x
     *    t_vtex.y = vrect.y * 0.5
     *    t_vtex += vpos
@@ -119,21 +134,8 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
       (float)MACROBLOCK_WIDTH / r->buffer_width,
       (float)MACROBLOCK_HEIGHT / r->buffer_height);
 
-   mv_scale = ureg_imm4f(shader,
-      0.5f / r->buffer_width,
-      0.5f / r->buffer_height,
-      1.0f,
-      1.0f / 255.0f);
-
-   ureg_ADD(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_XY), vpos, vrect);
-   ureg_MUL(shader, ureg_writemask(t_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos), block_scale);
-   ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(t_vpos));
-   ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), vpos);
-
-   for (i = 0; i < 2; ++i) {
-      ureg_MAD(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_XY), mv_scale, vmv[i], ureg_src(t_vpos));
-      ureg_MUL(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_W), mv_scale, vmv[i]);
-   }
+   ureg_MUL(shader, ureg_writemask(o_line, TGSI_WRITEMASK_X), flags, ureg_imm1f(shader, 0.5f));
+   ureg_MOV(shader, ureg_writemask(o_line, TGSI_WRITEMASK_Y), vrect);
 
    ureg_MOV(shader, ureg_writemask(o_vtex[0], TGSI_WRITEMASK_XY), ureg_src(t_vpos));
    ureg_CMP(shader, ureg_writemask(o_vtex[0], TGSI_WRITEMASK_Z),
@@ -147,13 +149,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
             ureg_scalar(eb, TGSI_SWIZZLE_W),
             ureg_scalar(eb, TGSI_SWIZZLE_Z));
 
-   ureg_MOV(shader, ureg_writemask(o_line, TGSI_WRITEMASK_X), ureg_scalar(vrect, TGSI_SWIZZLE_Y));
-   ureg_MUL(shader, ureg_writemask(o_line, TGSI_WRITEMASK_Y),
-      vrect, ureg_imm1f(shader, MACROBLOCK_HEIGHT / 2));
-   ureg_MOV(shader, ureg_writemask(o_line, TGSI_WRITEMASK_Z),
-            ureg_scalar(flags, TGSI_SWIZZLE_Y));
-
-   ureg_IF(shader, ureg_scalar(flags, TGSI_SWIZZLE_X), &label);
+   ureg_IF(shader, ureg_scalar(flags, TGSI_SWIZZLE_Y), &label);
 
       ureg_MOV(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_X), vrect);
       ureg_MUL(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_Y), vrect, ureg_imm1f(shader, 0.5f));
@@ -162,7 +158,7 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
       ureg_ADD(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_Y), ureg_src(t_vtex), ureg_imm1f(shader, 0.5f));
       ureg_MUL(shader, ureg_writemask(o_vtex[1], TGSI_WRITEMASK_XY), ureg_src(t_vtex), block_scale);
 
-      ureg_MUL(shader, ureg_writemask(o_line, TGSI_WRITEMASK_X),
+      ureg_MUL(shader, ureg_writemask(o_line, TGSI_WRITEMASK_Y),
          ureg_scalar(vrect, TGSI_SWIZZLE_Y),
          ureg_imm1f(shader, MACROBLOCK_HEIGHT / 2));
 
@@ -171,7 +167,64 @@ create_vert_shader(struct vl_mpeg12_mc_renderer *r)
 
    ureg_release_temporary(shader, t_vtex);
    ureg_release_temporary(shader, t_vpos);
-   ureg_release_temporary(shader, t_vmv);
+
+   ureg_END(shader);
+
+   return ureg_create_shader_and_destroy(shader, r->pipe);
+}
+
+static void *
+create_ref_vert_shader(struct vl_mpeg12_mc_renderer *r)
+{
+   struct ureg_program *shader;
+   struct ureg_src mv_scale;
+   struct ureg_src vrect, vmv[2];
+   struct ureg_dst t_vpos;
+   struct ureg_dst o_vpos, o_line, o_vmv[2];
+   unsigned i;
+
+   shader = ureg_create(TGSI_PROCESSOR_VERTEX);
+   if (!shader)
+      return NULL;
+
+   vrect = ureg_DECL_vs_input(shader, VS_I_RECT);
+   ureg_DECL_vs_input(shader, VS_I_EB);
+   ureg_DECL_vs_input(shader, VS_I_FLAGS);
+   vmv[0] = ureg_DECL_vs_input(shader, VS_I_MV_TOP);
+   vmv[1] = ureg_DECL_vs_input(shader, VS_I_MV_BOTTOM);
+
+   t_vpos = calc_position(r, shader);
+
+   o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, VS_O_VPOS);
+   o_line = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_LINE);
+   o_vmv[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTOP);
+   o_vmv[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_VBOTTOM);
+
+   /*
+    * mv_scale = 0.5 / (dst.width, dst.height);
+    *
+    * // Apply motion vectors
+    * o_vmv[0..3] = t_vpos + vmv[0..3] * mv_scale
+    *
+    * o_line.y = vrect
+    *
+    */
+
+   ureg_MUL(shader, ureg_writemask(o_line, TGSI_WRITEMASK_Y),
+      vrect, ureg_imm1f(shader, MACROBLOCK_HEIGHT / 2));
+
+   mv_scale = ureg_imm4f(shader,
+      0.5f / r->buffer_width,
+      0.5f / r->buffer_height,
+      1.0f,
+      1.0f / 255.0f);
+
+   for (i = 0; i < 2; ++i) {
+      ureg_MAD(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_XY), mv_scale, vmv[i], ureg_src(t_vpos));
+      ureg_MUL(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_W), mv_scale, vmv[i]);
+   }
+
+   ureg_release_temporary(shader, t_vpos);
 
    ureg_END(shader);
 
@@ -189,17 +242,16 @@ calc_field(struct ureg_program *shader)
    line = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_LINE, TGSI_INTERPOLATE_LINEAR);
 
    /*
-    * line.x going from 0 to 1 if not interlaced
-    * line.x going from 0 to 8 in steps of 0.5 if interlaced
-    * line.y going from 0 to 8 in steps of 0.5
-    * line.z is flag for intra frames
+    * line.x is flag for intra frames
+    * line.y going from 0 to 1 if not interlaced
+    * line.y going from 0 to 8 in steps of 0.5 if interlaced
     *
     * tmp.xy = fraction(line)
     * tmp.xy = tmp.xy >= 0.5 ? 1 : 0
     */
-   ureg_FRC(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY), line);
-   ureg_SGE(shader, ureg_writemask(tmp, TGSI_WRITEMASK_XY), ureg_src(tmp), ureg_imm1f(shader, 0.5f));
-   ureg_MOV(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Z), line);
+   ureg_MOV(shader, ureg_writemask(tmp, TGSI_WRITEMASK_X), line);
+   ureg_FRC(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y), line);
+   ureg_SGE(shader, ureg_writemask(tmp, TGSI_WRITEMASK_Y), ureg_src(tmp), ureg_imm1f(shader, 0.5f));
 
    return tmp;
 }
@@ -217,8 +269,8 @@ create_ycbcr_frag_shader(struct vl_mpeg12_mc_renderer *r, float scale)
    if (!shader)
       return NULL;
 
-   tc[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX_TOP, TGSI_INTERPOLATE_LINEAR);
-   tc[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_TEX_BOTTOM, TGSI_INTERPOLATE_LINEAR);
+   tc[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTOP, TGSI_INTERPOLATE_LINEAR);
+   tc[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_VBOTTOM, TGSI_INTERPOLATE_LINEAR);
 
    sampler = ureg_DECL_sampler(shader, 0);
 
@@ -236,7 +288,7 @@ create_ycbcr_frag_shader(struct vl_mpeg12_mc_renderer *r, float scale)
     */
 
    ureg_CMP(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_XYZ),
-            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_X)),
+            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
             tc[1], tc[0]);
 
    ureg_SLT(shader, ureg_writemask(t_tc, TGSI_WRITEMASK_Z), ureg_src(t_tc), ureg_imm1f(shader, 0.5f));
@@ -246,15 +298,13 @@ create_ycbcr_frag_shader(struct vl_mpeg12_mc_renderer *r, float scale)
 
       ureg_TEX(shader, texel, TGSI_TEXTURE_3D, ureg_src(t_tc), sampler);
 
-      ureg_CMP(shader, t_tc, ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Z)),
-               ureg_imm1f(shader, 0.0f), ureg_imm1f(shader, 0.5f));
-
       if (scale != 1.0f)
          ureg_MAD(shader, ureg_writemask(fragment, TGSI_WRITEMASK_XYZ),
-                  ureg_src(texel), ureg_imm1f(shader, scale), ureg_src(t_tc));
+                  ureg_src(texel), ureg_imm1f(shader, scale),
+                  ureg_scalar(ureg_src(field), TGSI_SWIZZLE_X));
       else
          ureg_ADD(shader, ureg_writemask(fragment, TGSI_WRITEMASK_XYZ),
-                  ureg_src(texel), ureg_src(t_tc));
+                  ureg_src(texel), ureg_scalar(ureg_src(field), TGSI_SWIZZLE_X));
 
    ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
    ureg_ENDIF(shader);
@@ -277,8 +327,8 @@ create_ref_frag_shader(struct vl_mpeg12_mc_renderer *r)
    if (!shader)
       return NULL;
 
-   tc[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV_TOP, TGSI_INTERPOLATE_LINEAR);
-   tc[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_MV_BOTTOM, TGSI_INTERPOLATE_LINEAR);
+   tc[0] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_VTOP, TGSI_INTERPOLATE_LINEAR);
+   tc[1] = ureg_DECL_fs_input(shader, TGSI_SEMANTIC_GENERIC, VS_O_VBOTTOM, TGSI_INTERPOLATE_LINEAR);
 
    sampler = ureg_DECL_sampler(shader, 0);
    ref = ureg_DECL_temporary(shader);
@@ -428,17 +478,21 @@ vl_mc_init(struct vl_mpeg12_mc_renderer *renderer, struct pipe_context *pipe,
    if (!init_pipe_state(renderer))
       goto error_pipe_state;
 
-   renderer->vs = create_vert_shader(renderer);
-   if (!renderer->vs)
-      goto error_vs_shaders;
+   renderer->vs_ref = create_ref_vert_shader(renderer);
+   if (!renderer->vs_ref)
+      goto error_vs_ref;
+
+   renderer->vs_ycbcr = create_ycbcr_vert_shader(renderer);
+   if (!renderer->vs_ycbcr)
+      goto error_vs_ycbcr;
 
    renderer->fs_ref = create_ref_frag_shader(renderer);
    if (!renderer->fs_ref)
-      goto error_fs_ref_shaders;
+      goto error_fs_ref;
 
    renderer->fs_ycbcr = create_ycbcr_frag_shader(renderer, scale);
    if (!renderer->fs_ycbcr)
-      goto error_fs_ycbcr_shaders;
+      goto error_fs_ycbcr;
 
    /* create a dummy sampler */
    memset(&tex_templ, 0, sizeof(tex_templ));
@@ -469,13 +523,16 @@ vl_mc_init(struct vl_mpeg12_mc_renderer *renderer, struct pipe_context *pipe,
 error_dummy:
    renderer->pipe->delete_fs_state(renderer->pipe, renderer->fs_ycbcr);
 
-error_fs_ycbcr_shaders:
+error_fs_ycbcr:
    renderer->pipe->delete_fs_state(renderer->pipe, renderer->fs_ref);
 
-error_fs_ref_shaders:
-   renderer->pipe->delete_vs_state(renderer->pipe, renderer->vs);
+error_fs_ref:
+   renderer->pipe->delete_vs_state(renderer->pipe, renderer->vs_ycbcr);
 
-error_vs_shaders:
+error_vs_ycbcr:
+   renderer->pipe->delete_vs_state(renderer->pipe, renderer->vs_ref);
+
+error_vs_ref:
    cleanup_pipe_state(renderer);
 
 error_pipe_state:
@@ -491,7 +548,8 @@ vl_mc_cleanup(struct vl_mpeg12_mc_renderer *renderer)
 
    cleanup_pipe_state(renderer);
 
-   renderer->pipe->delete_vs_state(renderer->pipe, renderer->vs);
+   renderer->pipe->delete_vs_state(renderer->pipe, renderer->vs_ref);
+   renderer->pipe->delete_vs_state(renderer->pipe, renderer->vs_ycbcr);
    renderer->pipe->delete_fs_state(renderer->pipe, renderer->fs_ref);
    renderer->pipe->delete_fs_state(renderer->pipe, renderer->fs_ycbcr);
 }
@@ -550,7 +608,7 @@ vl_mc_render_ref(struct vl_mpeg12_mc_buffer *buffer,
    renderer->pipe->set_viewport_state(renderer->pipe, &renderer->viewport);
    renderer->pipe->bind_blend_state(renderer->pipe, first ? renderer->blend_clear : renderer->blend_add);
 
-   renderer->pipe->bind_vs_state(renderer->pipe, renderer->vs);
+   renderer->pipe->bind_vs_state(renderer->pipe, renderer->vs_ref);
    renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs_ref);
 
    renderer->pipe->set_fragment_sampler_views(renderer->pipe, 1, &ref);
@@ -582,7 +640,7 @@ vl_mc_render_ycbcr(struct vl_mpeg12_mc_buffer *buffer, bool first,
    renderer->pipe->set_viewport_state(renderer->pipe, &renderer->viewport);
    renderer->pipe->bind_blend_state(renderer->pipe, first ? renderer->blend_clear : renderer->blend_add);
 
-   renderer->pipe->bind_vs_state(renderer->pipe, renderer->vs);
+   renderer->pipe->bind_vs_state(renderer->pipe, renderer->vs_ycbcr);
    renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs_ycbcr);
 
    renderer->pipe->set_fragment_sampler_views(renderer->pipe, 1, &buffer->source);

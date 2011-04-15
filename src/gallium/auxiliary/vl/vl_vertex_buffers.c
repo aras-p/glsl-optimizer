@@ -33,8 +33,8 @@
 struct vl_vertex_stream
 {
    struct vertex2s pos;
-   uint8_t dct_type_field;
    uint8_t mb_type_intra;
+   uint8_t dct_type_field;
    uint8_t dummy[2];
    uint8_t eb[3][2][2];
    struct vertex4s mv[4];
@@ -141,7 +141,7 @@ vl_vb_get_elems_state(struct pipe_context *pipe, int component, int motionvector
    vertex_elems[VS_I_VPOS].src_format = PIPE_FORMAT_R16G16_SSCALED;
 
    /* flags */
-   vertex_elems[VS_I_FLAGS].src_format = PIPE_FORMAT_R8G8B8A8_UNORM;
+   vertex_elems[VS_I_FLAGS].src_format = PIPE_FORMAT_R8G8B8A8_USCALED;
 
    /* empty block element of selected component */
    vertex_elems[VS_I_EB].src_offset = 8 + component * 4;
@@ -267,7 +267,7 @@ vl_vb_add_block(struct vl_vertex_buffer *buffer, struct pipe_mpeg12_macroblock *
             stream->eb[i][j][k] = !(mb->cbp & (*empty_block_mask)[i][j][k]);
 
    stream->dct_type_field = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD;
-   stream->mb_type_intra = !mb->dct_intra;
+   stream->mb_type_intra = mb->dct_intra;
 
    get_motion_vectors(mb, stream->mv);
 }
