@@ -2406,8 +2406,6 @@ struct gl_shared_state
  */
 struct gl_renderbuffer
 {
-#define RB_MAGIC 0xaabbccdd
-   int Magic; /** XXX TEMPORARY DEBUG INFO */
    _glthread_Mutex Mutex;		   /**< for thread safety */
    GLuint ClassID;        /**< Useful for drivers */
    GLuint Name;
