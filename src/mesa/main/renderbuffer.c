@@ -1011,6 +1011,7 @@ _mesa_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
 
    case MESA_FORMAT_Z32:
    case MESA_FORMAT_X8_Z24:
+   case MESA_FORMAT_Z24_X8:
       rb->DataType = GL_UNSIGNED_INT;
       rb->GetPointer = get_pointer_uint;
       rb->GetRow = get_row_uint;
@@ -1023,6 +1024,7 @@ _mesa_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       break;
 
    case MESA_FORMAT_Z24_S8:
+   case MESA_FORMAT_S8_Z24:
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
       rb->GetPointer = get_pointer_uint;
       rb->GetRow = get_row_uint;

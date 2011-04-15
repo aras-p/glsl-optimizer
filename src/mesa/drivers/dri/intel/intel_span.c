@@ -30,6 +30,7 @@
 #include "main/macros.h"
 #include "main/mtypes.h"
 #include "main/colormac.h"
+#include "main/renderbuffer.h"
 
 #include "intel_buffers.h"
 #include "intel_fbo.h"
@@ -134,36 +135,6 @@ intel_set_span_functions(struct intel_context *intel,
 #define TAG2(x,y) intel_##x##y##_RG1616
 #include "spantmp2.h"
 
-#define LOCAL_DEPTH_VARS						\
-   struct intel_renderbuffer *irb = intel_renderbuffer(rb);		\
-   const GLint yScale = rb->Name ? 1 : -1;				\
-   const GLint yBias = rb->Name ? 0 : rb->Height - 1;			\
-   int minx = 0, miny = 0;						\
-   int maxx = rb->Width;						\
-   int maxy = rb->Height;						\
-   int pitch = irb->region->pitch * irb->region->cpp;			\
-   void *buf = irb->region->buffer->virtual;				\
-   (void)buf; (void)pitch; /* unused for non-gttmap. */			\
-
-#define LOCAL_STENCIL_VARS LOCAL_DEPTH_VARS
-
-/* z16 depthbuffer functions. */
-#define VALUE_TYPE GLushort
-#define WRITE_DEPTH(_x, _y, d) \
-   (*(uint16_t *)(irb->region->buffer->virtual + NO_TILE(_x, _y)) = d)
-#define READ_DEPTH(d, _x, _y) \
-   d = *(uint16_t *)(irb->region->buffer->virtual + NO_TILE(_x, _y))
-#define TAG(x) intel_##x##_z16
-#include "depthtmp.h"
-
-/* z24_s8 and z24_x8 depthbuffer functions. */
-#define VALUE_TYPE GLuint
-#define WRITE_DEPTH(_x, _y, d) \
-   (*(uint32_t *)(irb->region->buffer->virtual + NO_TILE(_x, _y)) = d)
-#define READ_DEPTH(d, _x, _y) \
-   d = *(uint32_t *)(irb->region->buffer->virtual + NO_TILE(_x, _y))
-#define TAG(x) intel_##x##_z24_s8
-#include "depthtmp.h"
 
 void
 intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
@@ -174,6 +145,15 @@ intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
       return;
 
    drm_intel_gem_bo_map_gtt(irb->region->buffer);
+
+   rb->Data = irb->region->buffer->virtual;
+   rb->RowStride = irb->region->pitch;
+
+   /* Flip orientation if it's the window system buffer */
+   if (!rb->Name) {
+      rb->Data += rb->RowStride * (irb->region->height - 1) * irb->region->cpp;
+      rb->RowStride = -rb->RowStride;
+   }
 
    intel_set_span_functions(intel, rb);
 }
@@ -191,6 +171,8 @@ intel_renderbuffer_unmap(struct intel_context *intel,
 
    rb->GetRow = NULL;
    rb->PutRow = NULL;
+   rb->Data = NULL;
+   rb->RowStride = 0;
 }
 
 /**
@@ -371,9 +353,9 @@ static span_init_func intel_span_init_funcs[MESA_FORMAT_COUNT] =
    [MESA_FORMAT_XRGB8888] = intel_InitPointers_xRGB8888,
    [MESA_FORMAT_ARGB8888] = intel_InitPointers_ARGB8888,
    [MESA_FORMAT_SARGB8] = intel_InitPointers_ARGB8888,
-   [MESA_FORMAT_Z16] = intel_InitDepthPointers_z16,
-   [MESA_FORMAT_X8_Z24] = intel_InitDepthPointers_z24_s8,
-   [MESA_FORMAT_S8_Z24] = intel_InitDepthPointers_z24_s8,
+   [MESA_FORMAT_Z16] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_X8_Z24] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_S8_Z24] = _mesa_set_renderbuffer_accessors,
    [MESA_FORMAT_R8] = intel_InitPointers_R8,
    [MESA_FORMAT_RG88] = intel_InitPointers_RG88,
    [MESA_FORMAT_R16] = intel_InitPointers_R16,
