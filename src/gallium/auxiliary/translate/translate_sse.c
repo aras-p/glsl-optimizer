@@ -53,7 +53,7 @@ struct translate_buffer {
    unsigned max_index;
 };
 
-struct translate_buffer_varient {
+struct translate_buffer_variant {
    unsigned buffer_index;
    unsigned instance_divisor;
    void *ptr;                    /* updated either per vertex or per instance */
@@ -103,12 +103,12 @@ struct translate_sse {
    struct translate_buffer buffer[PIPE_MAX_ATTRIBS];
    unsigned nr_buffers;
 
-   /* Multiple buffer varients can map to a single buffer. */
-   struct translate_buffer_varient buffer_varient[PIPE_MAX_ATTRIBS];
-   unsigned nr_buffer_varients;
+   /* Multiple buffer variants can map to a single buffer. */
+   struct translate_buffer_variant buffer_variant[PIPE_MAX_ATTRIBS];
+   unsigned nr_buffer_variants;
 
-   /* Multiple elements can map to a single buffer varient. */
-   unsigned element_to_buffer_varient[PIPE_MAX_ATTRIBS];
+   /* Multiple elements can map to a single buffer variant. */
+   unsigned element_to_buffer_variant[PIPE_MAX_ATTRIBS];
 
    boolean use_instancing;
    unsigned instance_id;
@@ -1062,17 +1062,17 @@ static boolean init_inputs( struct translate_sse *p,
    struct x86_reg instance_id = x86_make_disp(p->machine_EDI,
                                               get_offset(p, &p->instance_id));
 
-   for (i = 0; i < p->nr_buffer_varients; i++) {
-      struct translate_buffer_varient *varient = &p->buffer_varient[i];
-      struct translate_buffer *buffer = &p->buffer[varient->buffer_index];
+   for (i = 0; i < p->nr_buffer_variants; i++) {
+      struct translate_buffer_variant *variant = &p->buffer_variant[i];
+      struct translate_buffer *buffer = &p->buffer[variant->buffer_index];
 
-      if (!index_size || varient->instance_divisor) {
+      if (!index_size || variant->instance_divisor) {
          struct x86_reg buf_max_index = x86_make_disp(p->machine_EDI,
                                                      get_offset(p, &buffer->max_index));
          struct x86_reg buf_stride   = x86_make_disp(p->machine_EDI,
                                                      get_offset(p, &buffer->stride));
          struct x86_reg buf_ptr      = x86_make_disp(p->machine_EDI,
-                                                     get_offset(p, &varient->ptr));
+                                                     get_offset(p, &variant->ptr));
          struct x86_reg buf_base_ptr = x86_make_disp(p->machine_EDI,
                                                      get_offset(p, &buffer->base_ptr));
          struct x86_reg elt = p->idx_ESI;
@@ -1081,12 +1081,12 @@ static boolean init_inputs( struct translate_sse *p,
          /* Calculate pointer to first attrib:
           *   base_ptr + stride * index, where index depends on instance divisor
           */
-         if (varient->instance_divisor) {
+         if (variant->instance_divisor) {
             /* Our index is instance ID divided by instance divisor.
              */
             x86_mov(p->func, tmp_EAX, instance_id);
 
-            if (varient->instance_divisor != 1) {
+            if (variant->instance_divisor != 1) {
                struct x86_reg tmp_EDX = p->tmp2_EDX;
                struct x86_reg tmp_ECX = p->src_ECX;
 
@@ -1095,7 +1095,7 @@ static boolean init_inputs( struct translate_sse *p,
                 */
 
                x86_xor(p->func, tmp_EDX, tmp_EDX);
-               x86_mov_reg_imm(p->func, tmp_ECX, varient->instance_divisor);
+               x86_mov_reg_imm(p->func, tmp_ECX, variant->instance_divisor);
                x86_div(p->func, tmp_ECX);    /* EAX = EDX:EAX / ECX */
             }
          } else {
@@ -1117,7 +1117,7 @@ static boolean init_inputs( struct translate_sse *p,
          /* In the linear case, keep the buffer pointer instead of the
           * index number.
           */
-         if (!index_size && p->nr_buffer_varients == 1)
+         if (!index_size && p->nr_buffer_variants == 1)
          {
             x64_rexw(p->func);
             x86_mov(p->func, elt, tmp_EAX);
@@ -1143,14 +1143,14 @@ static struct x86_reg get_buffer_ptr( struct translate_sse *p,
       return x86_make_disp(p->machine_EDI,
                            get_offset(p, &p->instance_id));
    }
-   if (!index_size && p->nr_buffer_varients == 1) {
+   if (!index_size && p->nr_buffer_variants == 1) {
       return p->idx_ESI;
    }
-   else if (!index_size || p->buffer_varient[var_idx].instance_divisor) {
+   else if (!index_size || p->buffer_variant[var_idx].instance_divisor) {
       struct x86_reg ptr = p->src_ECX;
       struct x86_reg buf_ptr = 
          x86_make_disp(p->machine_EDI,
-                       get_offset(p, &p->buffer_varient[var_idx].ptr));
+                       get_offset(p, &p->buffer_variant[var_idx].ptr));
       
       x64_rexw(p->func);
       x86_mov(p->func, ptr, buf_ptr);
@@ -1158,19 +1158,19 @@ static struct x86_reg get_buffer_ptr( struct translate_sse *p,
    }
    else {
       struct x86_reg ptr = p->src_ECX;
-      const struct translate_buffer_varient *varient = &p->buffer_varient[var_idx];
+      const struct translate_buffer_variant *variant = &p->buffer_variant[var_idx];
 
       struct x86_reg buf_stride = 
          x86_make_disp(p->machine_EDI,
-                       get_offset(p, &p->buffer[varient->buffer_index].stride));
+                       get_offset(p, &p->buffer[variant->buffer_index].stride));
 
       struct x86_reg buf_base_ptr = 
          x86_make_disp(p->machine_EDI,
-                       get_offset(p, &p->buffer[varient->buffer_index].base_ptr));
+                       get_offset(p, &p->buffer[variant->buffer_index].base_ptr));
 
       struct x86_reg buf_max_index =
          x86_make_disp(p->machine_EDI,
-                       get_offset(p, &p->buffer[varient->buffer_index].max_index));
+                       get_offset(p, &p->buffer[variant->buffer_index].max_index));
 
 
 
@@ -1206,11 +1206,11 @@ static struct x86_reg get_buffer_ptr( struct translate_sse *p,
 static boolean incr_inputs( struct translate_sse *p, 
                             unsigned index_size )
 {
-   if (!index_size && p->nr_buffer_varients == 1) {
+   if (!index_size && p->nr_buffer_variants == 1) {
       struct x86_reg stride = x86_make_disp(p->machine_EDI,
                                             get_offset(p, &p->buffer[0].stride));
 
-      if (p->buffer_varient[0].instance_divisor == 0) {
+      if (p->buffer_variant[0].instance_divisor == 0) {
          x64_rexw(p->func);
          x86_add(p->func, p->idx_ESI, stride);
          sse_prefetchnta(p->func, x86_make_disp(p->idx_ESI, 192));
@@ -1221,14 +1221,14 @@ static boolean incr_inputs( struct translate_sse *p,
 
       /* Is this worthwhile??
        */
-      for (i = 0; i < p->nr_buffer_varients; i++) {
-         struct translate_buffer_varient *varient = &p->buffer_varient[i];
+      for (i = 0; i < p->nr_buffer_variants; i++) {
+         struct translate_buffer_variant *variant = &p->buffer_variant[i];
          struct x86_reg buf_ptr = x86_make_disp(p->machine_EDI,
-                                                get_offset(p, &varient->ptr));
+                                                get_offset(p, &variant->ptr));
          struct x86_reg buf_stride = x86_make_disp(p->machine_EDI,
-                                                   get_offset(p, &p->buffer[varient->buffer_index].stride));
+                                                   get_offset(p, &p->buffer[variant->buffer_index].stride));
 
-         if (varient->instance_divisor == 0) {
+         if (variant->instance_divisor == 0) {
             x86_mov(p->func, p->tmp_EAX, buf_stride);
             x64_rexw(p->func);
             x86_add(p->func, p->tmp_EAX, buf_ptr);
@@ -1338,18 +1338,18 @@ static boolean build_vertex_emit( struct translate_sse *p,
    label = x86_get_label(p->func);
    {
       struct x86_reg elt = !index_size ? p->idx_ESI : x86_deref(p->idx_ESI);
-      int last_varient = -1;
+      int last_variant = -1;
       struct x86_reg vb;
 
       for (j = 0; j < p->translate.key.nr_elements; j++) {
          const struct translate_element *a = &p->translate.key.element[j];
-         unsigned varient = p->element_to_buffer_varient[j];
+         unsigned variant = p->element_to_buffer_variant[j];
 
          /* Figure out source pointer address:
           */
-         if (varient != last_varient) {
-            last_varient = varient;
-            vb = get_buffer_ptr(p, index_size, varient, elt);
+         if (variant != last_variant) {
+            last_variant = variant;
+            vb = get_buffer_ptr(p, index_size, variant, elt);
          }
          
          if (!translate_attr( p, a, 
@@ -1475,24 +1475,24 @@ struct translate *translate_sse2_create( const struct translate_key *key )
          }
 
          /*
-          * Map vertex element to vertex buffer varient.
+          * Map vertex element to vertex buffer variant.
           */
-         for (j = 0; j < p->nr_buffer_varients; j++) {
-            if (p->buffer_varient[j].buffer_index == key->element[i].input_buffer &&
-                p->buffer_varient[j].instance_divisor == key->element[i].instance_divisor) {
+         for (j = 0; j < p->nr_buffer_variants; j++) {
+            if (p->buffer_variant[j].buffer_index == key->element[i].input_buffer &&
+                p->buffer_variant[j].instance_divisor == key->element[i].instance_divisor) {
                break;
             }
          }
-         if (j == p->nr_buffer_varients) {
-            p->buffer_varient[j].buffer_index = key->element[i].input_buffer;
-            p->buffer_varient[j].instance_divisor = key->element[i].instance_divisor;
-            p->nr_buffer_varients++;
+         if (j == p->nr_buffer_variants) {
+            p->buffer_variant[j].buffer_index = key->element[i].input_buffer;
+            p->buffer_variant[j].instance_divisor = key->element[i].instance_divisor;
+            p->nr_buffer_variants++;
          }
-         p->element_to_buffer_varient[i] = j;
+         p->element_to_buffer_variant[i] = j;
       } else {
          assert(key->element[i].type == TRANSLATE_ELEMENT_INSTANCE_ID);
 
-         p->element_to_buffer_varient[i] = ELEMENT_BUFFER_INSTANCE_ID;
+         p->element_to_buffer_variant[i] = ELEMENT_BUFFER_INSTANCE_ID;
       }
    }
 
