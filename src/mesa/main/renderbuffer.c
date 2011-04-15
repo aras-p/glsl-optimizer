@@ -113,6 +113,23 @@ get_row_generic(struct gl_context *ctx, struct gl_renderbuffer *rb,
    memcpy(values, src, count * _mesa_get_format_bytes(rb->Format));
 }
 
+/* Only used for float textures currently, but might also be used for
+ * RGBA8888, RGBA16, etc.
+ */
+static void
+get_values_generic(struct gl_context *ctx, struct gl_renderbuffer *rb,
+		   GLuint count, const GLint x[], const GLint y[], void *values)
+{
+   int format_bytes = _mesa_get_format_bytes(rb->Format) / sizeof(GLfloat);
+   GLuint i;
+
+   for (i = 0; i < count; i++) {
+      const void *src = rb->GetPointer(ctx, rb, x[i], y[i]);
+
+      memcpy(values + i * format_bytes, src, format_bytes);
+   }
+}
+
 /* For the GL_RED/GL_RG/GL_RGB format/DataType combinations (and
  * GL_LUMINANCE/GL_INTENSITY?), the Put functions are a matter of
  * storing those initial components of the value per pixel into the
@@ -1236,6 +1253,16 @@ _mesa_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->PutMonoRow = put_mono_row_uint;
       rb->PutValues = put_values_uint;
       rb->PutMonoValues = put_mono_values_uint;
+      break;
+
+   case MESA_FORMAT_RGBA_FLOAT32:
+      rb->GetRow = get_row_generic;
+      rb->GetValues = get_values_generic;
+      rb->PutRow = put_row_generic;
+      rb->PutRowRGB = NULL;
+      rb->PutMonoRow = put_mono_row_generic;
+      rb->PutValues = put_values_generic;
+      rb->PutMonoValues = put_mono_values_generic;
       break;
 
    default:
