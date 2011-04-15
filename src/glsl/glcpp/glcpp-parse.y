@@ -1563,6 +1563,7 @@ _glcpp_parser_expand_token_list (glcpp_parser_t *parser,
 	token_node_t *node_prev;
 	token_node_t *node, *last = NULL;
 	token_list_t *expansion;
+	active_list_t *active_initial = parser->active;
 
 	if (list == NULL)
 		return;
@@ -1617,7 +1618,10 @@ _glcpp_parser_expand_token_list (glcpp_parser_t *parser,
 		node = node_prev ? node_prev->next : list->head;
 	}
 
-	while (parser->active)
+	/* Remove any lingering effects of this invocation on the
+	 * active list. That is, pop until the list looks like it did
+	 * at the beginning of this function. */
+	while (parser->active && parser->active != active_initial)
 		_parser_active_list_pop (parser);
 
 	list->non_space_tail = list->tail;
