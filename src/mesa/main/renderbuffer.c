@@ -923,7 +923,121 @@ put_mono_values_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb,
    }
 }
 
+/**
+ * This is the default software fallback for gl_renderbuffer's span
+ * access functions.
+ *
+ * The assumptions are that rb->Data will be a pointer to (0,0), that pixels
+ * are packed in the type of rb->Format, and that subsequent rows appear
+ * rb->RowStride pixels later.
+ */
+void
+_mesa_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
+{
+   switch (rb->Format) {
+   case MESA_FORMAT_RGB888:
+      rb->DataType = GL_UNSIGNED_BYTE;
+      rb->GetPointer = get_pointer_ubyte3;
+      rb->GetRow = get_row_ubyte3;
+      rb->GetValues = get_values_ubyte3;
+      rb->PutRow = put_row_ubyte3;
+      rb->PutRowRGB = put_row_rgb_ubyte3;
+      rb->PutMonoRow = put_mono_row_ubyte3;
+      rb->PutValues = put_values_ubyte3;
+      rb->PutMonoValues = put_mono_values_ubyte3;
+      break;
 
+   case MESA_FORMAT_RGBA8888:
+      rb->DataType = GL_UNSIGNED_BYTE;
+      rb->GetPointer = get_pointer_ubyte4;
+      rb->GetRow = get_row_ubyte4;
+      rb->GetValues = get_values_ubyte4;
+      rb->PutRow = put_row_ubyte4;
+      rb->PutRowRGB = put_row_rgb_ubyte4;
+      rb->PutMonoRow = put_mono_row_ubyte4;
+      rb->PutValues = put_values_ubyte4;
+      rb->PutMonoValues = put_mono_values_ubyte4;
+      break;
+
+   case MESA_FORMAT_SIGNED_RGBA_16:
+      rb->DataType = GL_SHORT;
+      rb->GetPointer = get_pointer_ushort4;
+      rb->GetRow = get_row_ushort4;
+      rb->GetValues = get_values_ushort4;
+      rb->PutRow = put_row_ushort4;
+      rb->PutRowRGB = put_row_rgb_ushort4;
+      rb->PutMonoRow = put_mono_row_ushort4;
+      rb->PutValues = put_values_ushort4;
+      rb->PutMonoValues = put_mono_values_ushort4;
+      break;
+
+#if 0
+   case MESA_FORMAT_A8:
+      rb->DataType = GL_UNSIGNED_BYTE;
+      rb->GetPointer = get_pointer_alpha8;
+      rb->GetRow = get_row_alpha8;
+      rb->GetValues = get_values_alpha8;
+      rb->PutRow = put_row_alpha8;
+      rb->PutRowRGB = NULL;
+      rb->PutMonoRow = put_mono_row_alpha8;
+      rb->PutValues = put_values_alpha8;
+      rb->PutMonoValues = put_mono_values_alpha8;
+      break;
+#endif
+
+   case MESA_FORMAT_S8:
+      rb->DataType = GL_UNSIGNED_BYTE;
+      rb->GetPointer = get_pointer_ubyte;
+      rb->GetRow = get_row_ubyte;
+      rb->GetValues = get_values_ubyte;
+      rb->PutRow = put_row_ubyte;
+      rb->PutRowRGB = NULL;
+      rb->PutMonoRow = put_mono_row_ubyte;
+      rb->PutValues = put_values_ubyte;
+      rb->PutMonoValues = put_mono_values_ubyte;
+      break;
+
+   case MESA_FORMAT_Z16:
+      rb->DataType = GL_UNSIGNED_SHORT;
+      rb->GetPointer = get_pointer_ushort;
+      rb->GetRow = get_row_ushort;
+      rb->GetValues = get_values_ushort;
+      rb->PutRow = put_row_ushort;
+      rb->PutRowRGB = NULL;
+      rb->PutMonoRow = put_mono_row_ushort;
+      rb->PutValues = put_values_ushort;
+      rb->PutMonoValues = put_mono_values_ushort;
+      break;
+
+   case MESA_FORMAT_Z32:
+   case MESA_FORMAT_X8_Z24:
+      rb->DataType = GL_UNSIGNED_INT;
+      rb->GetPointer = get_pointer_uint;
+      rb->GetRow = get_row_uint;
+      rb->GetValues = get_values_uint;
+      rb->PutRow = put_row_uint;
+      rb->PutRowRGB = NULL;
+      rb->PutMonoRow = put_mono_row_uint;
+      rb->PutValues = put_values_uint;
+      rb->PutMonoValues = put_mono_values_uint;
+      break;
+
+   case MESA_FORMAT_Z24_S8:
+      rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
+      rb->GetPointer = get_pointer_uint;
+      rb->GetRow = get_row_uint;
+      rb->GetValues = get_values_uint;
+      rb->PutRow = put_row_uint;
+      rb->PutRowRGB = NULL;
+      rb->PutMonoRow = put_mono_row_uint;
+      rb->PutValues = put_values_uint;
+      rb->PutMonoValues = put_mono_values_uint;
+      break;
+
+   default:
+      break;
+   }
+}
 
 /**
  * This is a software fallback for the gl_renderbuffer->AllocStorage
@@ -944,8 +1058,6 @@ _mesa_soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *
                                 GLenum internalFormat,
                                 GLuint width, GLuint height)
 {
-   GLuint pixelSize;
-
    switch (internalFormat) {
    case GL_RGB:
    case GL_R3_G3_B2:
@@ -956,16 +1068,6 @@ _mesa_soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *
    case GL_RGB12:
    case GL_RGB16:
       rb->Format = MESA_FORMAT_RGB888;
-      rb->DataType = GL_UNSIGNED_BYTE;
-      rb->GetPointer = get_pointer_ubyte3;
-      rb->GetRow = get_row_ubyte3;
-      rb->GetValues = get_values_ubyte3;
-      rb->PutRow = put_row_ubyte3;
-      rb->PutRowRGB = put_row_rgb_ubyte3;
-      rb->PutMonoRow = put_mono_row_ubyte3;
-      rb->PutValues = put_values_ubyte3;
-      rb->PutMonoValues = put_mono_values_ubyte3;
-      pixelSize = 3 * sizeof(GLubyte);
       break;
    case GL_RGBA:
    case GL_RGBA2:
@@ -977,45 +1079,15 @@ _mesa_soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *
    case GL_RGBA12:
 #endif
       rb->Format = MESA_FORMAT_RGBA8888;
-      rb->DataType = GL_UNSIGNED_BYTE;
-      rb->GetPointer = get_pointer_ubyte4;
-      rb->GetRow = get_row_ubyte4;
-      rb->GetValues = get_values_ubyte4;
-      rb->PutRow = put_row_ubyte4;
-      rb->PutRowRGB = put_row_rgb_ubyte4;
-      rb->PutMonoRow = put_mono_row_ubyte4;
-      rb->PutValues = put_values_ubyte4;
-      rb->PutMonoValues = put_mono_values_ubyte4;
-      pixelSize = 4 * sizeof(GLubyte);
       break;
    case GL_RGBA16:
    case GL_RGBA16_SNORM:
       /* for accum buffer */
       rb->Format = MESA_FORMAT_SIGNED_RGBA_16;
-      rb->DataType = GL_SHORT;
-      rb->GetPointer = get_pointer_ushort4;
-      rb->GetRow = get_row_ushort4;
-      rb->GetValues = get_values_ushort4;
-      rb->PutRow = put_row_ushort4;
-      rb->PutRowRGB = put_row_rgb_ushort4;
-      rb->PutMonoRow = put_mono_row_ushort4;
-      rb->PutValues = put_values_ushort4;
-      rb->PutMonoValues = put_mono_values_ushort4;
-      pixelSize = 4 * sizeof(GLushort);
       break;
 #if 0
    case GL_ALPHA8:
       rb->Format = MESA_FORMAT_A8;
-      rb->DataType = GL_UNSIGNED_BYTE;
-      rb->GetPointer = get_pointer_alpha8;
-      rb->GetRow = get_row_alpha8;
-      rb->GetValues = get_values_alpha8;
-      rb->PutRow = put_row_alpha8;
-      rb->PutRowRGB = NULL;
-      rb->PutMonoRow = put_mono_row_alpha8;
-      rb->PutValues = put_values_alpha8;
-      rb->PutMonoValues = put_mono_values_alpha8;
-      pixelSize = sizeof(GLubyte);
       break;
 #endif
    case GL_STENCIL_INDEX:
@@ -1024,75 +1096,27 @@ _mesa_soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *
    case GL_STENCIL_INDEX8_EXT:
    case GL_STENCIL_INDEX16_EXT:
       rb->Format = MESA_FORMAT_S8;
-      rb->DataType = GL_UNSIGNED_BYTE;
-      rb->GetPointer = get_pointer_ubyte;
-      rb->GetRow = get_row_ubyte;
-      rb->GetValues = get_values_ubyte;
-      rb->PutRow = put_row_ubyte;
-      rb->PutRowRGB = NULL;
-      rb->PutMonoRow = put_mono_row_ubyte;
-      rb->PutValues = put_values_ubyte;
-      rb->PutMonoValues = put_mono_values_ubyte;
-      pixelSize = sizeof(GLubyte);
       break;
    case GL_DEPTH_COMPONENT:
    case GL_DEPTH_COMPONENT16:
       rb->Format = MESA_FORMAT_Z16;
-      rb->DataType = GL_UNSIGNED_SHORT;
-      rb->GetPointer = get_pointer_ushort;
-      rb->GetRow = get_row_ushort;
-      rb->GetValues = get_values_ushort;
-      rb->PutRow = put_row_ushort;
-      rb->PutRowRGB = NULL;
-      rb->PutMonoRow = put_mono_row_ushort;
-      rb->PutValues = put_values_ushort;
-      rb->PutMonoValues = put_mono_values_ushort;
-      pixelSize = sizeof(GLushort);
       break;
    case GL_DEPTH_COMPONENT24:
-      rb->DataType = GL_UNSIGNED_INT;
-      rb->GetPointer = get_pointer_uint;
-      rb->GetRow = get_row_uint;
-      rb->GetValues = get_values_uint;
-      rb->PutRow = put_row_uint;
-      rb->PutRowRGB = NULL;
-      rb->PutMonoRow = put_mono_row_uint;
-      rb->PutValues = put_values_uint;
-      rb->PutMonoValues = put_mono_values_uint;
       rb->Format = MESA_FORMAT_X8_Z24;
-      pixelSize = sizeof(GLuint);
       break;
    case GL_DEPTH_COMPONENT32:
-      rb->DataType = GL_UNSIGNED_INT;
-      rb->GetPointer = get_pointer_uint;
-      rb->GetRow = get_row_uint;
-      rb->GetValues = get_values_uint;
-      rb->PutRow = put_row_uint;
-      rb->PutRowRGB = NULL;
-      rb->PutMonoRow = put_mono_row_uint;
-      rb->PutValues = put_values_uint;
-      rb->PutMonoValues = put_mono_values_uint;
       rb->Format = MESA_FORMAT_Z32;
-      pixelSize = sizeof(GLuint);
       break;
    case GL_DEPTH_STENCIL_EXT:
    case GL_DEPTH24_STENCIL8_EXT:
       rb->Format = MESA_FORMAT_Z24_S8;
-      rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
-      rb->GetPointer = get_pointer_uint;
-      rb->GetRow = get_row_uint;
-      rb->GetValues = get_values_uint;
-      rb->PutRow = put_row_uint;
-      rb->PutRowRGB = NULL;
-      rb->PutMonoRow = put_mono_row_uint;
-      rb->PutValues = put_values_uint;
-      rb->PutMonoValues = put_mono_values_uint;
-      pixelSize = sizeof(GLuint);
       break;
    default:
       /* unsupported format */
       return GL_FALSE;
    }
+
+   _mesa_set_renderbuffer_accessors(rb);
 
    ASSERT(rb->DataType);
    ASSERT(rb->GetPointer);
@@ -1113,7 +1137,7 @@ _mesa_soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *
 
    if (width > 0 && height > 0) {
       /* allocate new buffer storage */
-      rb->Data = malloc(width * height * pixelSize);
+      rb->Data = malloc(width * height * _mesa_get_format_bytes(rb->Format));
 
       if (rb->Data == NULL) {
          rb->Width = 0;
@@ -1121,7 +1145,7 @@ _mesa_soft_renderbuffer_storage(struct gl_context *ctx, struct gl_renderbuffer *
 	 rb->RowStride = 0;
          _mesa_error(ctx, GL_OUT_OF_MEMORY,
                      "software renderbuffer allocation (%d x %d x %d)",
-                     width, height, pixelSize);
+                     width, height, _mesa_get_format_bytes(rb->Format));
          return GL_FALSE;
       }
    }
