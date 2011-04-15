@@ -53,24 +53,21 @@
  * Routines for get/put values in common buffer formats follow.
  */
 
+static void *
+get_pointer_generic(struct gl_context *ctx, struct gl_renderbuffer *rb,
+		    GLint x, GLint y)
+{
+   if (!rb->Data)
+      return NULL;
+
+   return (rb->Data +
+	   (y * rb->RowStride + x) * _mesa_get_format_bytes(rb->Format));
+}
+
 /**********************************************************************
  * Functions for buffers of 1 X GLubyte values.
  * Typically stencil.
  */
-
-static void *
-get_pointer_ubyte(struct gl_context *ctx, struct gl_renderbuffer *rb,
-                  GLint x, GLint y)
-{
-   if (!rb->Data)
-      return NULL;
-   ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
-   /* Can't assert rb->Format since these funcs may be used for serveral
-    * different formats (GL_ALPHA8, GL_STENCIL_INDEX8, etc).
-    */
-   return (GLubyte *) rb->Data + y * rb->RowStride + x;
-}
-
 
 static void
 get_row_ubyte(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
@@ -179,18 +176,6 @@ put_mono_values_ubyte(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint
  * Functions for buffers of 1 X GLushort values.
  * Typically depth/Z.
  */
-
-static void *
-get_pointer_ushort(struct gl_context *ctx, struct gl_renderbuffer *rb,
-                   GLint x, GLint y)
-{
-   if (!rb->Data)
-      return NULL;
-   ASSERT(rb->DataType == GL_UNSIGNED_SHORT);
-   ASSERT(rb->Width > 0);
-   return (GLushort *) rb->Data + y * rb->RowStride + x;
-}
-
 
 static void
 get_row_ushort(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
@@ -308,18 +293,6 @@ put_mono_values_ushort(struct gl_context *ctx, struct gl_renderbuffer *rb,
  * Functions for buffers of 1 X GLuint values.
  * Typically depth/Z or color index.
  */
-
-static void *
-get_pointer_uint(struct gl_context *ctx, struct gl_renderbuffer *rb,
-                 GLint x, GLint y)
-{
-   if (!rb->Data)
-      return NULL;
-   ASSERT(rb->DataType == GL_UNSIGNED_INT ||
-          rb->DataType == GL_UNSIGNED_INT_24_8_EXT);
-   return (GLuint *) rb->Data + y * rb->RowStride + x;
-}
-
 
 static void
 get_row_uint(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
@@ -605,18 +578,6 @@ put_mono_values_ubyte3(struct gl_context *ctx, struct gl_renderbuffer *rb,
  * Typically color buffers.
  */
 
-static void *
-get_pointer_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb,
-                   GLint x, GLint y)
-{
-   if (!rb->Data)
-      return NULL;
-   ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
-   ASSERT(rb->Format == MESA_FORMAT_RGBA8888);
-   return (GLubyte *) rb->Data + 4 * (y * rb->RowStride + x);
-}
-
-
 static void
 get_row_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                GLint x, GLint y, void *values)
@@ -764,17 +725,6 @@ put_mono_values_ubyte4(struct gl_context *ctx, struct gl_renderbuffer *rb,
  * Functions for buffers of 4 X GLushort (or GLshort) values.
  * Typically accum buffer.
  */
-
-static void *
-get_pointer_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb,
-                    GLint x, GLint y)
-{
-   if (!rb->Data)
-      return NULL;
-   ASSERT(rb->DataType == GL_UNSIGNED_SHORT || rb->DataType == GL_SHORT);
-   return (GLushort *) rb->Data + 4 * (y * rb->RowStride + x);
-}
-
 
 static void
 get_row_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
@@ -934,6 +884,8 @@ put_mono_values_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb,
 void
 _mesa_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
 {
+   rb->GetPointer = get_pointer_generic;
+
    switch (rb->Format) {
    case MESA_FORMAT_RGB888:
       rb->DataType = GL_UNSIGNED_BYTE;
@@ -949,7 +901,6 @@ _mesa_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
 
    case MESA_FORMAT_RGBA8888:
       rb->DataType = GL_UNSIGNED_BYTE;
-      rb->GetPointer = get_pointer_ubyte4;
       rb->GetRow = get_row_ubyte4;
       rb->GetValues = get_values_ubyte4;
       rb->PutRow = put_row_ubyte4;
@@ -961,7 +912,6 @@ _mesa_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
 
    case MESA_FORMAT_SIGNED_RGBA_16:
       rb->DataType = GL_SHORT;
-      rb->GetPointer = get_pointer_ushort4;
       rb->GetRow = get_row_ushort4;
       rb->GetValues = get_values_ushort4;
       rb->PutRow = put_row_ushort4;
@@ -974,7 +924,6 @@ _mesa_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
 #if 0
    case MESA_FORMAT_A8:
       rb->DataType = GL_UNSIGNED_BYTE;
-      rb->GetPointer = get_pointer_alpha8;
       rb->GetRow = get_row_alpha8;
       rb->GetValues = get_values_alpha8;
       rb->PutRow = put_row_alpha8;
@@ -987,7 +936,6 @@ _mesa_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
 
    case MESA_FORMAT_S8:
       rb->DataType = GL_UNSIGNED_BYTE;
-      rb->GetPointer = get_pointer_ubyte;
       rb->GetRow = get_row_ubyte;
       rb->GetValues = get_values_ubyte;
       rb->PutRow = put_row_ubyte;
@@ -999,7 +947,6 @@ _mesa_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
 
    case MESA_FORMAT_Z16:
       rb->DataType = GL_UNSIGNED_SHORT;
-      rb->GetPointer = get_pointer_ushort;
       rb->GetRow = get_row_ushort;
       rb->GetValues = get_values_ushort;
       rb->PutRow = put_row_ushort;
@@ -1013,7 +960,6 @@ _mesa_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
    case MESA_FORMAT_X8_Z24:
    case MESA_FORMAT_Z24_X8:
       rb->DataType = GL_UNSIGNED_INT;
-      rb->GetPointer = get_pointer_uint;
       rb->GetRow = get_row_uint;
       rb->GetValues = get_values_uint;
       rb->PutRow = put_row_uint;
@@ -1026,7 +972,6 @@ _mesa_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
    case MESA_FORMAT_Z24_S8:
    case MESA_FORMAT_S8_Z24:
       rb->DataType = GL_UNSIGNED_INT_24_8_EXT;
-      rb->GetPointer = get_pointer_uint;
       rb->GetRow = get_row_uint;
       rb->GetValues = get_values_uint;
       rb->PutRow = put_row_uint;
