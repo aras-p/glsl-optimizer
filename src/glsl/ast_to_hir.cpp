@@ -940,7 +940,7 @@ ast_expression::hir(exec_list *instructions,
    };
    ir_rvalue *result = NULL;
    ir_rvalue *op[3];
-   const struct glsl_type *type = glsl_type::error_type;
+   const struct glsl_type *type; /* a temporary variable for switch cases */
    bool error_emitted = false;
    YYLTYPE loc;
 
@@ -954,7 +954,6 @@ ast_expression::hir(exec_list *instructions,
       result = do_assignment(instructions, state, op[0], op[1], false,
 			     this->subexpressions[0]->get_location());
       error_emitted = result->type->is_error();
-      type = result->type;
       break;
    }
 
@@ -1078,9 +1077,7 @@ ast_expression::hir(exec_list *instructions,
       } else {
 	 result = do_comparison(ctx, operations[this->oper], op[0], op[1]);
 	 assert(result->type == glsl_type::bool_type);
-	 type = glsl_type::bool_type;
       }
-
       break;
 
    case ast_bit_and:
@@ -1209,7 +1206,6 @@ ast_expression::hir(exec_list *instructions,
 
       result = new(ctx) ir_expression(operations[this->oper], glsl_type::bool_type,
 				      op[0], op[1]);
-      type = glsl_type::bool_type;
       break;
 
    case ast_logic_not:
@@ -1218,7 +1214,6 @@ ast_expression::hir(exec_list *instructions,
 
       result = new(ctx) ir_expression(operations[this->oper], glsl_type::bool_type,
 				      op[0], NULL);
-      type = glsl_type::bool_type;
       break;
 
    case ast_mul_assign:
@@ -1238,7 +1233,6 @@ ast_expression::hir(exec_list *instructions,
       result = do_assignment(instructions, state,
 			     op[0]->clone(ctx, NULL), temp_rhs, false,
 			     this->subexpressions[0]->get_location());
-      type = result->type;
       error_emitted = (op[0]->type->is_error());
 
       /* GLSL 1.10 does not allow array assignment.  However, we don't have to
@@ -1264,7 +1258,6 @@ ast_expression::hir(exec_list *instructions,
       result = do_assignment(instructions, state,
 			     op[0]->clone(ctx, NULL), temp_rhs, false,
 			     this->subexpressions[0]->get_location());
-      type = result->type;
       error_emitted = type->is_error();
       break;
    }
@@ -1406,7 +1399,6 @@ ast_expression::hir(exec_list *instructions,
       result = do_assignment(instructions, state,
 			     op[0]->clone(ctx, NULL), temp_rhs, false,
 			     this->subexpressions[0]->get_location());
-      type = result->type;
       error_emitted = op[0]->type->is_error();
       break;
    }
@@ -1436,14 +1428,12 @@ ast_expression::hir(exec_list *instructions,
 			  op[0]->clone(ctx, NULL), temp_rhs, false,
 			  this->subexpressions[0]->get_location());
 
-      type = result->type;
       error_emitted = op[0]->type->is_error();
       break;
    }
 
    case ast_field_selection:
       result = _mesa_ast_field_selection_to_hir(this, instructions, state);
-      type = result->type;
       break;
 
    case ast_array_index: {
@@ -1600,7 +1590,6 @@ ast_expression::hir(exec_list *instructions,
       if (error_emitted)
 	 result->type = glsl_type::error_type;
 
-      type = result->type;
       break;
    }
 
@@ -1623,7 +1612,6 @@ ast_expression::hir(exec_list *instructions,
 
       if (var != NULL) {
 	 var->used = true;
-	 type = result->type;
       } else {
 	 _mesa_glsl_error(& loc, state, "`%s' undeclared",
 			  this->primary_expression.identifier);
@@ -1634,22 +1622,18 @@ ast_expression::hir(exec_list *instructions,
    }
 
    case ast_int_constant:
-      type = glsl_type::int_type;
       result = new(ctx) ir_constant(this->primary_expression.int_constant);
       break;
 
    case ast_uint_constant:
-      type = glsl_type::uint_type;
       result = new(ctx) ir_constant(this->primary_expression.uint_constant);
       break;
 
    case ast_float_constant:
-      type = glsl_type::float_type;
       result = new(ctx) ir_constant(this->primary_expression.float_constant);
       break;
 
    case ast_bool_constant:
-      type = glsl_type::bool_type;
       result = new(ctx) ir_constant(bool(this->primary_expression.bool_constant));
       break;
 
@@ -1701,16 +1685,16 @@ ast_expression::hir(exec_list *instructions,
 	 result = ast->hir(instructions, state);
       }
 
-      type = result->type;
-
       /* Any errors should have already been emitted in the loop above.
        */
       error_emitted = true;
       break;
    }
    }
+   type = NULL; /* use result->type, not type. */
+   assert(result != NULL);
 
-   if (type->is_error() && !error_emitted)
+   if (result->type->is_error() && !error_emitted)
       _mesa_glsl_error(& loc, state, "type mismatch");
 
    return result;
