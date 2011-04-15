@@ -339,6 +339,11 @@ static span_init_func intel_span_init_funcs[MESA_FORMAT_COUNT] =
    [MESA_FORMAT_RG88] = _mesa_set_renderbuffer_accessors,
    [MESA_FORMAT_R16] = _mesa_set_renderbuffer_accessors,
    [MESA_FORMAT_RG1616] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_RGBA_FLOAT32] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_RG_FLOAT32] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_R_FLOAT32] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_INTENSITY_FLOAT32] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_LUMINANCE_FLOAT32] = _mesa_set_renderbuffer_accessors,
 };
 
 bool

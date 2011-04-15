@@ -31,6 +31,15 @@ intel_mesa_format_to_rb_datatype(gl_format format)
       return GL_UNSIGNED_INT;
    case MESA_FORMAT_S8_Z24:
       return GL_UNSIGNED_INT_24_8_EXT;
+   case MESA_FORMAT_RGBA_FLOAT32:
+   case MESA_FORMAT_RG_FLOAT32:
+   case MESA_FORMAT_R_FLOAT32:
+   case MESA_FORMAT_INTENSITY_FLOAT32:
+   case MESA_FORMAT_LUMINANCE_FLOAT32:
+   case MESA_FORMAT_ALPHA_FLOAT32:
+   case MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32:
+      return GL_FLOAT;
+
    default:
       _mesa_problem(NULL, "unexpected MESA_FORMAT for renderbuffer");
       return GL_UNSIGNED_BYTE;

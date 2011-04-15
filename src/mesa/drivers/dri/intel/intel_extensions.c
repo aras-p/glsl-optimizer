@@ -171,6 +171,9 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_point_sprite", 		  NULL },
    { "GL_ARB_seamless_cube_map",          NULL },
    { "GL_ARB_shadow",                     NULL },
+#ifdef TEXTURE_FLOAT_ENABLED
+   { "GL_ARB_texture_float",              NULL },
+#endif
    { "GL_MESA_texture_signed_rgba",       NULL },
    { "GL_ARB_texture_non_power_of_two",   NULL },
    { "GL_ARB_texture_rg",                 NULL },

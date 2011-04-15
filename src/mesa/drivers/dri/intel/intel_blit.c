@@ -293,7 +293,7 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
 	  irb->region->buffer, (pitch * cpp),
 	  x1, y1, x2 - x1, y2 - y1);
 
-      BR13 = br13_for_cpp(cpp) | 0xf0 << 16;
+      BR13 = 0xf0 << 16;
       CMD = XY_COLOR_BLT_CMD;
 
       /* Setup the blit command */
@@ -353,6 +353,8 @@ intelClearWithBlit(struct gl_context *ctx, GLbitfield mask)
 	    continue;
 	 }
       }
+
+      BR13 |= br13_for_cpp(cpp);
 
       assert(x1 < x2);
       assert(y1 < y2);

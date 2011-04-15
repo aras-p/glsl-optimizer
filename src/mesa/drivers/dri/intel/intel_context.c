@@ -743,7 +743,18 @@ intelInitContext(struct intel_context *intel,
       ctx->TextureFormatSupported[MESA_FORMAT_SL8] = GL_TRUE;
       ctx->TextureFormatSupported[MESA_FORMAT_SLA8] = GL_TRUE;
    }
+
+#ifdef TEXTURE_FLOAT_ENABLED
+   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_FLOAT32] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_RG_FLOAT32] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_R_FLOAT32] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_INTENSITY_FLOAT32] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_LUMINANCE_FLOAT32] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_ALPHA_FLOAT32] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32] = GL_TRUE;
 #endif
+
+#endif /* !I915 */
 
    driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
                        sPriv->myNum, (intel->gen >= 4) ? "i965" : "i915");
