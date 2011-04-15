@@ -92,6 +92,7 @@
 #define META_TEXTURE        0x1000
 #define META_VERTEX         0x2000
 #define META_VIEWPORT       0x4000
+#define META_CLAMP_FRAGMENT_COLOR 0x8000
 /*@}*/
 
 
@@ -179,6 +180,9 @@ struct save_state
    /** META_VIEWPORT */
    GLint ViewportX, ViewportY, ViewportW, ViewportH;
    GLclampd DepthNear, DepthFar;
+
+   /** META_CLAMP_FRAGMENT_COLOR */
+   GLenum ClampFragmentColor;
 
    /** Miscellaneous (always disabled) */
    GLboolean Lighting;
@@ -569,6 +573,17 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
       _mesa_DepthRange(0.0, 1.0);
    }
 
+   if (state & META_CLAMP_FRAGMENT_COLOR) {
+      save->ClampFragmentColor = ctx->Color.ClampFragmentColor;
+
+      /* Generally in here we want to do clamping according to whether
+       * it's for the pixel path (ClampFragmentColor is GL_TRUE),
+       * regardless of the internal implementation of the metaops.
+       */
+      if (ctx->Color.ClampFragmentColor != GL_TRUE)
+	 _mesa_ClampColorARB(GL_CLAMP_FRAGMENT_COLOR, GL_FALSE);
+   }
+
    /* misc */
    {
       save->Lighting = ctx->Light.Enabled;
@@ -831,6 +846,10 @@ _mesa_meta_end(struct gl_context *ctx)
                             save->ViewportW, save->ViewportH);
       }
       _mesa_DepthRange(save->DepthNear, save->DepthFar);
+   }
+
+   if (state & META_CLAMP_FRAGMENT_COLOR) {
+      _mesa_ClampColorARB(GL_CLAMP_FRAGMENT_COLOR, save->ClampFragmentColor);
    }
 
    /* misc */
@@ -1803,6 +1822,14 @@ _mesa_meta_DrawPixels(struct gl_context *ctx,
          texIntFormat = format;
       else
          texIntFormat = GL_RGBA;
+
+      /* If we're not supposed to clamp the resulting color, then just
+       * promote our texture to fully float.  We could do better by
+       * just going for the matching set of channels, in floating
+       * point.
+       */
+      if (ctx->Color.ClampFragmentColor != GL_TRUE)
+	 texIntFormat = GL_RGBA32F;
    }
    else if (_mesa_is_stencil_format(format)) {
       if (ctx->Extensions.ARB_fragment_program &&
@@ -1861,6 +1888,7 @@ _mesa_meta_DrawPixels(struct gl_context *ctx,
                           META_TRANSFORM |
                           META_VERTEX |
                           META_VIEWPORT |
+			  META_CLAMP_FRAGMENT_COLOR |
                           metaExtraSave));
 
    newTex = alloc_texture(tex, width, height, texIntFormat);
