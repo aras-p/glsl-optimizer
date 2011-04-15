@@ -555,8 +555,9 @@ void st_init_extensions(struct st_context *st)
 #endif
    }
 
-   if (screen->get_param(screen, PIPE_CAP_PRIMITIVE_RESTART)) {
-      ctx->Extensions.NV_primitive_restart = GL_TRUE;
+   ctx->Extensions.NV_primitive_restart = GL_TRUE;
+   if (!screen->get_param(screen, PIPE_CAP_PRIMITIVE_RESTART)) {
+      st->sw_primitive_restart = GL_TRUE;
    }
 
    if (screen->get_param(screen, PIPE_CAP_DEPTH_CLAMP)) {

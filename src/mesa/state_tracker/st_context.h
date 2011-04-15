@@ -75,6 +75,7 @@ struct st_context
    struct draw_stage *feedback_stage;  /**< For GL_FEEDBACK rendermode */
    struct draw_stage *selection_stage;  /**< For GL_SELECT rendermode */
    struct draw_stage *rastpos_stage;  /**< For glRasterPos */
+   GLboolean sw_primitive_restart;
 
 
    /* On old libGL's for linux we need to invalidate the drawables

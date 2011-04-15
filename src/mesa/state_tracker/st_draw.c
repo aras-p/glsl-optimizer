@@ -582,6 +582,118 @@ check_uniforms(struct gl_context *ctx)
    }
 }
 
+/** Helper code for primitive restart fallback */
+#define DO_DRAW(pipe, cur_start, cur_count) \
+   do { \
+      info.start = cur_start; \
+      info.count = cur_count; \
+      if (u_trim_pipe_prim(info.mode, &info.count)) \
+         pipe->draw_vbo(pipe, &info); \
+   } while(0)
+      
+/** More helper code for primitive restart fallback */
+#define PRIM_RESTART_LOOP(elements) \
+   do { \
+      for (i = start; i < end; i++) { \
+         if (elements[i] == info.restart_index) { \
+            if (cur_count > 0) { \
+               /* draw elts up to prev pos */ \
+               DO_DRAW(pipe, cur_start, cur_count); \
+            } \
+            /* begin new prim at next elt */ \
+            cur_start = i + 1; \
+            cur_count = 0; \
+         } \
+         else { \
+            cur_count++; \
+         } \
+      } \
+      if (cur_count > 0) { \
+         DO_DRAW(pipe, cur_start, cur_count); \
+      } \
+   } while (0)
+
+static void
+handle_fallback_primitive_restart(struct pipe_context *pipe,
+                                  struct pipe_index_buffer *ibuffer,
+                                  struct pipe_draw_info *orig_info)
+{
+   const unsigned start = orig_info->start;
+   const unsigned count = orig_info->count;
+   const unsigned end = start + count;
+   struct pipe_draw_info info = *orig_info;
+   struct pipe_transfer *transfer;
+   unsigned instance, i, cur_start, cur_count;
+   void *ptr;
+
+   info.primitive_restart = FALSE;
+
+   /* split the draw_arrays calls into two */
+   if (!info.indexed) {
+#if 0
+       /* handled by VBO */
+       if (info.restart_index >= info.min_index) {
+          info.count = MIN(info.restart_index-1, info.max_index) - info.start + 1;
+          if (u_trim_pipe_prim(info.mode, &info.count))
+             pipe->draw_vbo(pipe, &info);
+       }
+
+       if (info.restart_index <= info.max_index) {
+          info.start = MAX(info.min_index, info.restart_index + 1);
+          info.count = info.max_index - info.start + 1;
+          if (u_trim_pipe_prim(info.mode, &info.count))
+             pipe->draw_vbo(pipe, &info);
+       }
+#endif
+       if (u_trim_pipe_prim(info.mode, &info.count))
+          pipe->draw_vbo(pipe, &info);
+
+       return;
+   }
+
+   /* info.indexed == TRUE */
+   assert(ibuffer);
+   assert(ibuffer->buffer);
+
+   ptr = pipe_buffer_map(pipe, ibuffer->buffer, PIPE_TRANSFER_READ, &transfer);
+   if (!ptr)
+     return;
+   ptr = ADD_POINTERS(ptr, ibuffer->offset);
+
+   /* Need to loop over instances as well to preserve draw order */
+   for (instance = 0; instance < orig_info->instance_count; instance++) {
+      info.start_instance = instance + orig_info->start_instance;
+      info.instance_count = 1;
+      cur_start = start;
+      cur_count = 0;
+
+      switch (ibuffer->index_size) {
+      case 1:
+         {
+            const ubyte *elt_ub = (const ubyte *)ptr; 
+            PRIM_RESTART_LOOP(elt_ub);
+         }
+         break;
+      case 2:
+         {
+            const ushort *elt_us = (const ushort *)ptr;
+            PRIM_RESTART_LOOP(elt_us);
+         }
+         break;
+      case 4:
+         {
+            const uint *elt_ui = (const uint *)ptr;
+            PRIM_RESTART_LOOP(elt_ui);
+         }
+         break;
+      default:
+         assert(0 && "bad index_size in handle_fallback_primitive_restart()");
+      }
+   }
+
+   pipe_buffer_unmap(pipe, transfer);
+}
+
 
 /**
  * Translate OpenGL primtive type (GL_POINTS, GL_TRIANGLE_STRIP, etc) to
@@ -794,7 +906,22 @@ st_draw_vbo(struct gl_context *ctx,
          info.max_index = info.start + info.count - 1;
       }
 
-      if (u_trim_pipe_prim(info.mode, &info.count))
+      if (info.primitive_restart) {
+         /*
+          * Handle primitive restart for drivers that doesn't support it.
+          *
+          * The VBO module handles restart inside of draw_arrays for us,
+          * but we should still remove the primitive_restart flag on the
+          * info struct, the fallback function does this for us. Just
+          * remove the flag for all drivers in this case as well.
+          */
+         if (st->sw_primitive_restart || !info.indexed)
+            handle_fallback_primitive_restart(pipe, &ibuffer, &info);
+         else
+            /* don't trim, restarts might be inside index list */
+            pipe->draw_vbo(pipe, &info);
+      }
+      else if (u_trim_pipe_prim(info.mode, &info.count))
          pipe->draw_vbo(pipe, &info);
    }
 
