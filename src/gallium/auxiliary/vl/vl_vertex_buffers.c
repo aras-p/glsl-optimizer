@@ -130,9 +130,11 @@ vl_vb_element_helper(struct pipe_vertex_element* elements, unsigned num_elements
 }
 
 void *
-vl_vb_get_elems_state(struct pipe_context *pipe, int component, int motionvector)
+vl_vb_get_ves_eb(struct pipe_context *pipe, int component)
 {
    struct pipe_vertex_element vertex_elems[NUM_VS_INPUTS];
+
+   assert(pipe);
 
    memset(&vertex_elems, 0, sizeof(vertex_elems));
    vertex_elems[VS_I_RECT] = vl_vb_get_quad_vertex_element();
@@ -144,11 +146,29 @@ vl_vb_get_elems_state(struct pipe_context *pipe, int component, int motionvector
    vertex_elems[VS_I_FLAGS].src_format = PIPE_FORMAT_R8G8B8A8_USCALED;
 
    /* empty block element of selected component */
-   vertex_elems[VS_I_EB].src_offset = 8 + component * 4;
+   vertex_elems[VS_I_EB].src_offset = offsetof(struct vl_vertex_stream, eb[component]);
    vertex_elems[VS_I_EB].src_format = PIPE_FORMAT_R8G8B8A8_USCALED;
 
+   vl_vb_element_helper(&vertex_elems[VS_I_VPOS], NUM_VS_INPUTS - 1, 1);
+
+   return pipe->create_vertex_elements_state(pipe, NUM_VS_INPUTS, vertex_elems);
+}
+
+void *
+vl_vb_get_ves_mv(struct pipe_context *pipe, int motionvector)
+{
+   struct pipe_vertex_element vertex_elems[NUM_VS_INPUTS];
+
+   memset(&vertex_elems, 0, sizeof(vertex_elems));
+   vertex_elems[VS_I_RECT] = vl_vb_get_quad_vertex_element();
+
+   assert(pipe);
+
+   /* Position element */
+   vertex_elems[VS_I_VPOS].src_format = PIPE_FORMAT_R16G16_SSCALED;
+
    /* motion vector TOP element */
-   vertex_elems[VS_I_MV_TOP].src_offset = 20 + motionvector * 16;
+   vertex_elems[VS_I_MV_TOP].src_offset = offsetof(struct vl_vertex_stream, mv[motionvector * 2]);
    vertex_elems[VS_I_MV_TOP].src_format = PIPE_FORMAT_R16G16B16A16_SSCALED;
 
    /* motion vector BOTTOM element */

@@ -715,10 +715,10 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
 
    dec->quads = vl_vb_upload_quads(dec->pipe, 2, 2);
    for (i = 0; i < VL_MAX_PLANES; ++i)
-      dec->ves_eb[i] = vl_vb_get_elems_state(dec->pipe, i, 0);
+      dec->ves_eb[i] = vl_vb_get_ves_eb(dec->pipe, i);
 
    for (i = 0; i < 2; ++i)
-      dec->ves_mv[i] = vl_vb_get_elems_state(dec->pipe, 0, i);
+      dec->ves_mv[i] = vl_vb_get_ves_mv(dec->pipe, i);
 
    dec->base.width = align(width, MACROBLOCK_WIDTH);
    dec->base.height = align(height, MACROBLOCK_HEIGHT);
