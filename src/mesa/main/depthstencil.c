@@ -91,6 +91,7 @@ alloc_wrapper_storage(struct gl_context *ctx, struct gl_renderbuffer *rb,
    if (retVal) {
       rb->Width = width;
       rb->Height = height;
+      rb->RowStride = dsrb->RowStride;
    }
    return retVal;
 }
@@ -371,6 +372,7 @@ _mesa_new_z24_renderbuffer_wrapper(struct gl_context *ctx,
    z24rb->RefCount = 0;
    z24rb->Width = dsrb->Width;
    z24rb->Height = dsrb->Height;
+   z24rb->RowStride = dsrb->RowStride;
    z24rb->InternalFormat = GL_DEPTH_COMPONENT24;
    z24rb->Format = MESA_FORMAT_X8_Z24;
    z24rb->_BaseFormat = GL_DEPTH_COMPONENT;
@@ -657,6 +659,7 @@ _mesa_new_s8_renderbuffer_wrapper(struct gl_context *ctx, struct gl_renderbuffer
    s8rb->RefCount = 0;
    s8rb->Width = dsrb->Width;
    s8rb->Height = dsrb->Height;
+   s8rb->RowStride = dsrb->RowStride;
    s8rb->InternalFormat = GL_STENCIL_INDEX8_EXT;
    s8rb->Format = MESA_FORMAT_S8;
    s8rb->_BaseFormat = GL_STENCIL_INDEX;
