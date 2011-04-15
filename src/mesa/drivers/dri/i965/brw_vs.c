@@ -132,6 +132,9 @@ static void brw_upload_vs_prog(struct brw_context *brw)
 			ctx->Polygon.BackMode != GL_FILL);
    key.two_side_color = (ctx->Light.Enabled && ctx->Light.Model.TwoSide);
 
+   /* _NEW_LIGHT | _NEW_BUFFERS */
+   key.clamp_vertex_color = ctx->Light._ClampVertexColor;
+
    /* _NEW_POINT */
    if (ctx->Point.PointSprite) {
       for (i = 0; i < 8; i++) {
@@ -158,7 +161,8 @@ static void brw_upload_vs_prog(struct brw_context *brw)
  */
 const struct brw_tracked_state brw_vs_prog = {
    .dirty = {
-      .mesa  = _NEW_TRANSFORM | _NEW_POLYGON | _NEW_POINT | _NEW_LIGHT,
+      .mesa  = (_NEW_TRANSFORM | _NEW_POLYGON | _NEW_POINT | _NEW_LIGHT |
+		_NEW_BUFFERS),
       .brw   = BRW_NEW_VERTEX_PROGRAM,
       .cache = 0
    },

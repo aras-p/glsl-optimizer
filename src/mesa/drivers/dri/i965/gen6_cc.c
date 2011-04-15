@@ -210,10 +210,10 @@ color_calc_state_populate_key(struct brw_context *brw,
    if (ctx->Color.AlphaEnabled)
       key->alpha_ref = ctx->Color.AlphaRef;
 
-   key->blend_constant_color[0] = ctx->Color.BlendColor[0];
-   key->blend_constant_color[1] = ctx->Color.BlendColor[1];
-   key->blend_constant_color[2] = ctx->Color.BlendColor[2];
-   key->blend_constant_color[3] = ctx->Color.BlendColor[3];
+   key->blend_constant_color[0] = ctx->Color.BlendColorUnclamped[0];
+   key->blend_constant_color[1] = ctx->Color.BlendColorUnclamped[1];
+   key->blend_constant_color[2] = ctx->Color.BlendColorUnclamped[2];
+   key->blend_constant_color[3] = ctx->Color.BlendColorUnclamped[3];
 }
 
 /**

@@ -238,10 +238,10 @@ static void upload_blend_constant_color(struct brw_context *brw)
 
    BEGIN_BATCH(5);
    OUT_BATCH(_3DSTATE_BLEND_CONSTANT_COLOR << 16 | (5-2));
-   OUT_BATCH_F(ctx->Color.BlendColor[0]);
-   OUT_BATCH_F(ctx->Color.BlendColor[1]);
-   OUT_BATCH_F(ctx->Color.BlendColor[2]);
-   OUT_BATCH_F(ctx->Color.BlendColor[3]);
+   OUT_BATCH_F(ctx->Color.BlendColorUnclamped[0]);
+   OUT_BATCH_F(ctx->Color.BlendColorUnclamped[1]);
+   OUT_BATCH_F(ctx->Color.BlendColorUnclamped[2]);
+   OUT_BATCH_F(ctx->Color.BlendColorUnclamped[3]);
    CACHED_BATCH();
 }
 

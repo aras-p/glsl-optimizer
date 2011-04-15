@@ -2221,7 +2221,8 @@ void brw_vs_emit(struct brw_vs_compile *c )
        * instructions. Instead, we directly modify the header
        * of the last (already stored) instruction.
        */
-      if (inst->DstReg.File == PROGRAM_OUTPUT) {
+      if (inst->DstReg.File == PROGRAM_OUTPUT &&
+	  c->key.clamp_vertex_color) {
          if ((inst->DstReg.Index == VERT_RESULT_COL0)
              || (inst->DstReg.Index == VERT_RESULT_COL1)
              || (inst->DstReg.Index == VERT_RESULT_BFC0)

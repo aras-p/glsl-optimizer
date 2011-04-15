@@ -1408,6 +1408,9 @@ void emit_fb_write(struct brw_wm_compile *c,
     */
    brw_push_insn_state(p);
 
+   if (c->key.clamp_fragment_color)
+      brw_set_saturate(p, 1);
+
    for (channel = 0; channel < 4; channel++) {
       if (intel->gen >= 6) {
 	 /* gen6 SIMD16 single source DP write looks like:
@@ -1459,6 +1462,9 @@ void emit_fb_write(struct brw_wm_compile *c,
 	 }
       }
    }
+
+   brw_set_saturate(p, 0);
+
    /* skip over the regs populated above:
     */
    if (c->dispatch_width == 16)

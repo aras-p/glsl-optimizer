@@ -160,6 +160,7 @@ static const struct dri_extension i915_extensions[] = {
 
 /** i965-only extensions */
 static const struct dri_extension brw_extensions[] = {
+   { "GL_ARB_color_buffer_float",         NULL },
    { "GL_ARB_depth_clamp",                NULL },
    { "GL_ARB_depth_texture",              NULL },
    { "GL_ARB_fragment_coord_conventions", NULL },

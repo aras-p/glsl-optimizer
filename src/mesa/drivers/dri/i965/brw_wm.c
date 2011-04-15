@@ -363,6 +363,9 @@ static void brw_wm_populate_key( struct brw_context *brw,
    /* _NEW_HINT */
    key->linear_color = (ctx->Hint.PerspectiveCorrection == GL_FASTEST);
 
+   /* _NEW_FRAG_CLAMP | _NEW_BUFFERS */
+   key->clamp_fragment_color = ctx->Color._ClampFragmentColor;
+
    /* _NEW_TEXTURE */
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       const struct gl_texture_unit *unit = &ctx->Texture.Unit[i];
@@ -486,6 +489,7 @@ const struct brw_tracked_state brw_wm_prog = {
 		_NEW_POLYGON |
 		_NEW_LINE |
 		_NEW_LIGHT |
+		_NEW_FRAG_CLAMP |
 		_NEW_BUFFERS |
 		_NEW_TEXTURE),
       .brw   = (BRW_NEW_FRAGMENT_PROGRAM |
