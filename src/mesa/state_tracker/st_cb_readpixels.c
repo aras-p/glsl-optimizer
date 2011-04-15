@@ -211,9 +211,11 @@ st_fast_readpixels(struct gl_context *ctx, struct st_renderbuffer *strb,
 
    if (strb->format == PIPE_FORMAT_B8G8R8A8_UNORM) {
       alphaORoperand = 0;
-   } else if (strb->format == PIPE_FORMAT_B8G8R8X8_UNORM ) {
+   }
+   else if (strb->format == PIPE_FORMAT_B8G8R8X8_UNORM ) {
       alphaORoperand = 0xff;
-   } else {
+   }
+   else {
       return GL_FALSE;
    }
 
@@ -312,9 +314,10 @@ st_fast_readpixels(struct gl_context *ctx, struct st_renderbuffer *strb,
             const GLubyte *src = map + y * trans->stride;
             memcpy(dst, src, 4 * width);
             if (alphaORoperand) {
-                for (col = 0; col < width; col++) {
-                    dst[col*4+3] |= alphaORoperand;
-                }
+               assert(alphaORoperand == 0xff);
+               for (col = 0; col < width; col++) {
+                  dst[col*4+3] = 0xff;
+               }
             }
             dst += dstStride;
             y += dy;
