@@ -229,13 +229,14 @@ combine_shaders(const struct shader_asm_info *shaders[SHADER_STAGES], int num_sh
       return NULL;
 
    p = pipe->create_fs_state(pipe, shader);
-   ureg_destroy(ureg);
 
    if (num_temps >= 1) {
       for (i = start_temp; i < end_temp; i++) {
          ureg_release_temporary(ureg, temp[i]);
       }
    }
+
+   ureg_destroy(ureg);
 
    if (temp)
       free(temp);
