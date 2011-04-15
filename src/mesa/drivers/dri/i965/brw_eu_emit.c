@@ -499,9 +499,6 @@ static void brw_set_dp_write_message( struct brw_context *brw,
 
        /* We always use the render cache for write messages */
        insn->header.destreg__conditionalmod = BRW_MESSAGE_TARGET_DATAPORT_WRITE;
-	/* XXX really need below? */
-       insn->bits2.send_gen5.sfid = BRW_MESSAGE_TARGET_DATAPORT_WRITE;
-       insn->bits2.send_gen5.end_of_thread = end_of_thread;
    } else if (intel->gen == 5) {
        insn->bits3.dp_write_gen5.binding_table_index = binding_table_index;
        insn->bits3.dp_write_gen5.msg_control = msg_control;
@@ -558,9 +555,6 @@ brw_set_dp_read_message(struct brw_context *brw,
        insn->bits3.dp_render_cache.msg_length = msg_length;
        insn->bits3.dp_render_cache.end_of_thread = 0;
        insn->header.destreg__conditionalmod = target_function;
-	/* XXX really need below? */
-       insn->bits2.send_gen5.sfid = target_function;
-       insn->bits2.send_gen5.end_of_thread = 0;
    } else if (intel->gen == 5) {
        insn->bits3.dp_read_gen5.binding_table_index = binding_table_index;
        insn->bits3.dp_read_gen5.msg_control = msg_control;
