@@ -228,8 +228,6 @@ fs_visitor::assign_regs()
 
       if (reg == -1) {
 	 fail("no register to spill\n");
-      } else if (intel->gen >= 6) {
-	 fail("no spilling support on gen6 yet\n");
       } else {
 	 spill_reg(reg);
       }
