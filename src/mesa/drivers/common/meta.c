@@ -93,6 +93,7 @@
 #define META_VERTEX         0x2000
 #define META_VIEWPORT       0x4000
 #define META_CLAMP_FRAGMENT_COLOR 0x8000
+#define META_CLAMP_VERTEX_COLOR 0x10000
 /*@}*/
 
 
@@ -183,6 +184,9 @@ struct save_state
 
    /** META_CLAMP_FRAGMENT_COLOR */
    GLenum ClampFragmentColor;
+
+   /** META_CLAMP_VERTEX_COLOR */
+   GLenum ClampVertexColor;
 
    /** Miscellaneous (always disabled) */
    GLboolean Lighting;
@@ -584,6 +588,15 @@ _mesa_meta_begin(struct gl_context *ctx, GLbitfield state)
 	 _mesa_ClampColorARB(GL_CLAMP_FRAGMENT_COLOR, GL_FALSE);
    }
 
+   if (state & META_CLAMP_VERTEX_COLOR) {
+      save->ClampVertexColor = ctx->Light.ClampVertexColor;
+
+      /* Generally in here we never want vertex color clamping --
+       * result clamping is only dependent on fragment clamping.
+       */
+      _mesa_ClampColorARB(GL_CLAMP_VERTEX_COLOR, GL_FALSE);
+   }
+
    /* misc */
    {
       save->Lighting = ctx->Light.Enabled;
@@ -850,6 +863,10 @@ _mesa_meta_end(struct gl_context *ctx)
 
    if (state & META_CLAMP_FRAGMENT_COLOR) {
       _mesa_ClampColorARB(GL_CLAMP_FRAGMENT_COLOR, save->ClampFragmentColor);
+   }
+
+   if (state & META_CLAMP_VERTEX_COLOR) {
+      _mesa_ClampColorARB(GL_CLAMP_VERTEX_COLOR, save->ClampVertexColor);
    }
 
    /* misc */
@@ -1460,6 +1477,9 @@ _mesa_meta_Clear(struct gl_context *ctx, GLbitfield buffers)
    /* GL_COLOR_BUFFER_BIT */
    if (buffers & BUFFER_BITS_COLOR) {
       /* leave colormask, glDrawBuffer state as-is */
+
+      /* Clears never have the color clamped. */
+      _mesa_ClampColorARB(GL_CLAMP_FRAGMENT_COLOR, GL_FALSE);
    }
    else {
       ASSERT(metaSave & META_COLOR_MASK);
@@ -1513,10 +1533,10 @@ _mesa_meta_Clear(struct gl_context *ctx, GLbitfield buffers)
 
       /* vertex colors */
       for (i = 0; i < 4; i++) {
-         verts[i].r = ctx->Color.ClearColor[0];
-         verts[i].g = ctx->Color.ClearColor[1];
-         verts[i].b = ctx->Color.ClearColor[2];
-         verts[i].a = ctx->Color.ClearColor[3];
+         verts[i].r = ctx->Color.ClearColorUnclamped[0];
+         verts[i].g = ctx->Color.ClearColorUnclamped[1];
+         verts[i].b = ctx->Color.ClearColorUnclamped[2];
+         verts[i].a = ctx->Color.ClearColorUnclamped[3];
       }
 
       /* upload new vertex data */
