@@ -2413,17 +2413,17 @@ struct gl_renderbuffer
    GLuint Width, Height;
    GLboolean Purgeable;   /**< Is the buffer purgeable under memory pressure? */
 
+   GLboolean AttachedAnytime; /**< TRUE if it was attached to a framebuffer */
+
+   GLubyte NumSamples;
+
    GLenum InternalFormat; /**< The user-specified format */
    GLenum _BaseFormat;    /**< Either GL_RGB, GL_RGBA, GL_DEPTH_COMPONENT or
                                GL_STENCIL_INDEX. */
    gl_format Format;      /**< The actual renderbuffer memory format */
 
-   GLubyte NumSamples;
-
    GLenum DataType;      /**< Type of values passed to the Get/Put functions */
    GLvoid *Data;        /**< This may not be used by some kinds of RBs */
-
-   GLboolean AttachedAnytime; /**< TRUE if it was attached to a framebuffer */
 
    /* Used to wrap one renderbuffer around another: */
    struct gl_renderbuffer *Wrapped;
