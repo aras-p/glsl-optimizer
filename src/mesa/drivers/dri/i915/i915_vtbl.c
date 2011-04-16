@@ -260,9 +260,6 @@ get_state_size(struct i915_hw_state *state)
    if (dirty & I915_UPLOAD_STIPPLE)
       sz += sizeof(state->Stipple);
 
-   if (dirty & I915_UPLOAD_FOG)
-      sz += sizeof(state->Fog);
-
    if (dirty & I915_UPLOAD_TEX_ALL) {
       int nr = 0;
       for (i = 0; i < I915_TEX_UNITS; i++)
@@ -427,12 +424,6 @@ i915_emit_state(struct intel_context *intel)
       if (INTEL_DEBUG & DEBUG_STATE)
          fprintf(stderr, "I915_UPLOAD_STIPPLE:\n");
       emit(intel, state->Stipple, sizeof(state->Stipple));
-   }
-
-   if (dirty & I915_UPLOAD_FOG) {
-      if (INTEL_DEBUG & DEBUG_STATE)
-         fprintf(stderr, "I915_UPLOAD_FOG:\n");
-      emit(intel, state->Fog, sizeof(state->Fog));
    }
 
    /* Combine all the dirty texture state into a single command to
