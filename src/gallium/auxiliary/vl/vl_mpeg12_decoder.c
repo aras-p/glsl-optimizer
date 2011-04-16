@@ -279,11 +279,14 @@ vl_mpeg12_destroy(struct pipe_video_decoder *decoder)
    dec->pipe->delete_blend_state(dec->pipe, dec->blend);
    dec->pipe->delete_depth_stencil_alpha_state(dec->pipe, dec->dsa);
 
-   vl_mc_cleanup(&dec->mc);
+   vl_mc_cleanup(&dec->mc_y);
+   vl_mc_cleanup(&dec->mc_c);
+
    if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT) {
       vl_idct_cleanup(&dec->idct_y);
       vl_idct_cleanup(&dec->idct_c);
    }
+
    for (i = 0; i < VL_MAX_PLANES; ++i)
       dec->pipe->delete_vertex_elements_state(dec->pipe, dec->ves_eb[i]);
 
@@ -414,13 +417,13 @@ vl_mpeg12_create_buffer(struct pipe_video_decoder *decoder)
    if (!mc_source_sv)
       goto error_mc_source_sv;
 
-   if(!vl_mc_init_buffer(&dec->mc, &buffer->mc[0], mc_source_sv[0]))
+   if(!vl_mc_init_buffer(&dec->mc_y, &buffer->mc[0], mc_source_sv[0]))
       goto error_mc_y;
 
-   if(!vl_mc_init_buffer(&dec->mc, &buffer->mc[1], mc_source_sv[1]))
+   if(!vl_mc_init_buffer(&dec->mc_c, &buffer->mc[1], mc_source_sv[1]))
       goto error_mc_cb;
 
-   if(!vl_mc_init_buffer(&dec->mc, &buffer->mc[2], mc_source_sv[2]))
+   if(!vl_mc_init_buffer(&dec->mc_c, &buffer->mc[2], mc_source_sv[2]))
       goto error_mc_cr;
 
    return &buffer->base;
@@ -479,7 +482,7 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
    for (i = 0; i < VL_MAX_PLANES; ++i) {
       bool first = true;
 
-      vl_mc_set_surface(&dec->mc, surfaces[i]);
+      vl_mc_set_surface(i == 0 ? &dec->mc_y : &dec->mc_c, surfaces[i]);
 
       for (j = 0; j < 2; ++j) {
          if (sv[j] == NULL) continue;
@@ -756,8 +759,11 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
       }
    }
 
-   if (!vl_mc_init(&dec->mc, dec->pipe, dec->base.width, dec->base.height, mc_scale))
-      goto error_mc;
+   if (!vl_mc_init(&dec->mc_y, dec->pipe, dec->base.width, dec->base.height, mc_scale))
+      goto error_mc_y;
+
+   if (!vl_mc_init(&dec->mc_c, dec->pipe, dec->base.width, dec->base.height, mc_scale))
+      goto error_mc_c;
 
    if (!init_pipe_state(dec))
       goto error_pipe_state;
@@ -765,9 +771,12 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
    return &dec->base;
 
 error_pipe_state:
-   vl_mc_cleanup(&dec->mc);
+   vl_mc_cleanup(&dec->mc_c);
 
-error_mc:
+error_mc_c:
+   vl_mc_cleanup(&dec->mc_y);
+
+error_mc_y:
    if (entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT) {
       vl_idct_cleanup(&dec->idct_y);
       vl_idct_cleanup(&dec->idct_c);
