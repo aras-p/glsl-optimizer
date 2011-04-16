@@ -371,7 +371,6 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
 	case PIPE_CAP_DEPTH_CLAMP:
 	case PIPE_CAP_SHADER_STENCIL_EXPORT:
-	case PIPE_CAP_TGSI_INSTANCEID:
 	case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
 	case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
 		return 1;
@@ -381,6 +380,9 @@ static int r600_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 			return 0;
 		else
 			return 1;
+
+	case PIPE_CAP_TGSI_INSTANCEID:
+		return 0;
 
 	/* Unsupported features (boolean caps). */
 	case PIPE_CAP_STREAM_OUTPUT:
