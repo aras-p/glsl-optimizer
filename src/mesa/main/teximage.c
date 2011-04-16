@@ -3281,13 +3281,13 @@ compressedteximage(struct gl_context *ctx, GLuint dims,
                                           internalFormat, width, height, depth,
                                           border, imageSize);
 
-#if FEATURE_ES
-   /* XXX this is kind of a hack */
    if (error) {
       _mesa_error(ctx, error, "glTexImage2D");
       return;
    }
 
+#if FEATURE_ES
+   /* XXX this is kind of a hack */
    if (dims == 2) {
       switch (internalFormat) {
       case GL_PALETTE4_RGB8_OES:
