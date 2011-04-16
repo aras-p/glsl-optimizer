@@ -1,6 +1,7 @@
 
+#include "util/u_math.h"
+
 #include "nvc0_context.h"
-#include "os/os_time.h"
 
 static void
 nvc0_validate_zcull(struct nvc0_context *nvc0)
@@ -213,10 +214,11 @@ nvc0_validate_viewport(struct nvc0_context *nvc0)
 
     /* now set the viewport rectangle to viewport dimensions for clipping */
 
-    x = (int)(vp->translate[0] - fabsf(vp->scale[0]));
-    y = (int)(vp->translate[1] - fabsf(vp->scale[1]));
-    w = (int)fabsf(2.0f * vp->scale[0]);
-    h = (int)fabsf(2.0f * vp->scale[1]);
+    x = util_iround(MAX2(0.0f, vp->translate[0] - fabsf(vp->scale[0])));
+    y = util_iround(MAX2(0.0f, vp->translate[1] - fabsf(vp->scale[1])));
+    w = util_iround(vp->translate[0] + fabsf(vp->scale[0])) - x;
+    h = util_iround(vp->translate[1] + fabsf(vp->scale[1])) - y;
+
     zmin = vp->translate[2] - fabsf(vp->scale[2]);
     zmax = vp->translate[2] + fabsf(vp->scale[2]);
 
