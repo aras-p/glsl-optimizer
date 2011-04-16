@@ -736,8 +736,8 @@ i915_update_fog(struct gl_context * ctx)
 
    if (ctx->FragmentProgram._Current) {
       /* Pull in static fog state from program */
-      mode = ctx->FragmentProgram._Current->FogOption;
-      enabled = (mode != GL_NONE);
+      mode = GL_NONE;
+      enabled = GL_FALSE;
       try_pixel_fog = 0;
    }
    else {

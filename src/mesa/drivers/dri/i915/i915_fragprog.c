@@ -1285,15 +1285,6 @@ i915ProgramStringNotify(struct gl_context * ctx,
    if (target == GL_FRAGMENT_PROGRAM_ARB) {
       struct i915_fragment_program *p = (struct i915_fragment_program *) prog;
       p->translated = 0;
-
-      /* Hack: make sure fog is correctly enabled according to this
-       * fragment program's fog options.
-       */
-      if (p->FragProg.FogOption) {
-         /* add extra instructions to do fog, then turn off FogOption field */
-         _mesa_append_fog_code(ctx, &p->FragProg, GL_TRUE);
-         p->FragProg.FogOption = GL_NONE;
-      }
    }
 
    (void) _tnl_program_string(ctx, target, prog);
