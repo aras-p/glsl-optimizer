@@ -25,6 +25,8 @@
  *
  **************************************************************************/
 
+#include <stdio.h>
+
 #include "vdpau_private.h"
 #include <vdpau/vdpau.h>
 #include <util/u_debug.h>
@@ -131,6 +133,8 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
                               uint32_t clip_height,
                               VdpTime  earliest_presentation_time)
 {
+   static int dump_window = -1;
+
    vlVdpPresentationQueue *pq;
    vlVdpOutputSurface *surf;
    struct pipe_surface *drawable_surface;
@@ -159,6 +163,19 @@ vlVdpPresentationQueueDisplay(VdpPresentationQueue presentation_queue,
       0, 0,
       vl_contextprivate_get(pq->device->context, drawable_surface)
    );
+
+   if(dump_window == -1) {
+      dump_window = debug_get_num_option("VDPAU_DUMP", 0);
+   }
+
+   if(dump_window) {
+      static unsigned int framenum = 0;
+      char cmd[256];
+
+      sprintf(cmd, "xwd -id %d -out vdpau_frame_%08d.xwd", (int)pq->drawable, ++framenum);
+      if (system(cmd) != 0)
+         _debug_printf("[XvMC] Dumping surface %d failed.\n", surface);
+   }
 
    return VDP_STATUS_OK;
 }
