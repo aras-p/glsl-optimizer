@@ -385,7 +385,7 @@ intel_update_wrapper(struct gl_context *ctx, struct intel_renderbuffer *irb,
    irb->Base.Format = texImage->TexFormat;
    irb->Base.DataType = intel_mesa_format_to_rb_datatype(texImage->TexFormat);
    irb->Base.InternalFormat = texImage->InternalFormat;
-   irb->Base._BaseFormat = _mesa_base_fbo_format(ctx, irb->Base.InternalFormat);
+   irb->Base._BaseFormat = _mesa_base_tex_format(ctx, irb->Base.InternalFormat);
    irb->Base.Width = texImage->Width;
    irb->Base.Height = texImage->Height;
 
