@@ -447,7 +447,10 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    if (ret)
       goto fail;
 
-   nouveau_resource_init(&screen->text_heap, 0, 1 << 20);
+   /* XXX: getting a page fault at the end of the code buffer every few
+    *  launches, don't use the last 256 bytes to work around them - prefetch ?
+    */
+   nouveau_resource_init(&screen->text_heap, 0, (1 << 20) - 0x100);
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 12, 6 << 16,
                         &screen->uniforms);
