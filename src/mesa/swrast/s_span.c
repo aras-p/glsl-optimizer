@@ -1348,7 +1348,10 @@ _swrast_read_rgba_span( struct gl_context *ctx, struct gl_renderbuffer *rb,
 
       ASSERT(rb);
       ASSERT(rb->GetRow);
-      ASSERT(rb->_BaseFormat == GL_RGB || rb->_BaseFormat == GL_RGBA ||
+      ASSERT(rb->_BaseFormat == GL_RGBA ||
+	     rb->_BaseFormat == GL_RGB ||
+	     rb->_BaseFormat == GL_RG ||
+	     rb->_BaseFormat == GL_RED ||
 	     rb->_BaseFormat == GL_ALPHA);
 
       if (rb->DataType == dstType) {

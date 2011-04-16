@@ -191,7 +191,10 @@ fast_read_rgba_pixels( struct gl_context *ctx,
    if (!rb)
       return GL_FALSE;
 
-   ASSERT(rb->_BaseFormat == GL_RGBA || rb->_BaseFormat == GL_RGB ||
+   ASSERT(rb->_BaseFormat == GL_RGBA ||
+	  rb->_BaseFormat == GL_RGB ||
+	  rb->_BaseFormat == GL_RG ||
+	  rb->_BaseFormat == GL_RED ||
 	  rb->_BaseFormat == GL_ALPHA);
 
    /* clipping should have already been done */
