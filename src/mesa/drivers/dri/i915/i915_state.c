@@ -731,75 +731,20 @@ i915_update_fog(struct gl_context * ctx)
    struct i915_context *i915 = I915_CONTEXT(ctx);
    GLenum mode;
    GLboolean enabled;
-   GLboolean try_pixel_fog;
    GLuint dw;
 
    if (ctx->FragmentProgram._Current) {
       /* Pull in static fog state from program */
       mode = GL_NONE;
       enabled = GL_FALSE;
-      try_pixel_fog = 0;
    }
    else {
       enabled = ctx->Fog.Enabled;
       mode = ctx->Fog.Mode;
-#if 0
-      /* XXX - DISABLED -- Need ortho fallback */
-      try_pixel_fog = (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH_EXT
-                       && ctx->Hint.Fog == GL_NICEST);
-#else
-      try_pixel_fog = 0;
-#endif
    }
 
    if (!enabled) {
       i915->vertex_fog = I915_FOG_NONE;
-   }
-   else if (try_pixel_fog) {
-      I915_STATECHANGE(i915, I915_UPLOAD_FOG);
-      i915->state.Fog[I915_FOGREG_MODE1] &= ~FMC1_FOGFUNC_MASK;
-      i915->vertex_fog = I915_FOG_PIXEL;
-
-      switch (mode) {
-      case GL_LINEAR:
-         if (ctx->Fog.End <= ctx->Fog.Start) {
-            /* XXX - this won't work with fragment programs.  Need to
-             * either fallback or append fog instructions to end of
-             * program in the case of linear fog.
-             */
-            printf("vertex fog!\n");
-            i915->state.Fog[I915_FOGREG_MODE1] |= FMC1_FOGFUNC_VERTEX;
-            i915->vertex_fog = I915_FOG_VERTEX;
-         }
-         else {
-            GLfloat c2 = 1.0 / (ctx->Fog.End - ctx->Fog.Start);
-            GLfloat c1 = ctx->Fog.End * c2;
-
-            i915->state.Fog[I915_FOGREG_MODE1] &= ~FMC1_C1_MASK;
-            i915->state.Fog[I915_FOGREG_MODE1] |= FMC1_FOGFUNC_PIXEL_LINEAR;
-            i915->state.Fog[I915_FOGREG_MODE1] |=
-               ((GLuint) (c1 * FMC1_C1_ONE)) & FMC1_C1_MASK;
-
-            if (i915->state.Fog[I915_FOGREG_MODE1] & FMC1_FOGINDEX_Z) {
-               i915->state.Fog[I915_FOGREG_MODE2]
-                  = (GLuint) (c2 * FMC2_C2_ONE);
-            }
-            else {
-               fi_type fi;
-               fi.f = c2;
-               i915->state.Fog[I915_FOGREG_MODE2] = fi.i;
-            }
-         }
-         break;
-      case GL_EXP:
-         i915->state.Fog[I915_FOGREG_MODE1] |= FMC1_FOGFUNC_PIXEL_EXP;
-         break;
-      case GL_EXP2:
-         i915->state.Fog[I915_FOGREG_MODE1] |= FMC1_FOGFUNC_PIXEL_EXP2;
-         break;
-      default:
-         break;
-      }
    }
    else { /* if (i915->vertex_fog != I915_FOG_VERTEX) */
       I915_STATECHANGE(i915, I915_UPLOAD_FOG);
