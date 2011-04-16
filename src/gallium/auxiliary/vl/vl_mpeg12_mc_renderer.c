@@ -366,16 +366,6 @@ init_pipe_state(struct vl_mpeg12_mc_renderer *r)
 
    assert(r);
 
-   r->viewport.scale[2] = 1;
-   r->viewport.scale[3] = 1;
-   r->viewport.translate[0] = 0;
-   r->viewport.translate[1] = 0;
-   r->viewport.translate[2] = 0;
-   r->viewport.translate[3] = 0;
-
-   r->fb_state.nr_cbufs = 1;
-   r->fb_state.zsbuf = NULL;
-
    memset(&sampler, 0, sizeof(sampler));
    sampler.wrap_s = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
    sampler.wrap_t = PIPE_TEX_WRAP_CLAMP_TO_EDGE;
@@ -563,6 +553,16 @@ vl_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_bu
 
    buffer->renderer = renderer;
 
+   buffer->viewport.scale[2] = 1;
+   buffer->viewport.scale[3] = 1;
+   buffer->viewport.translate[0] = 0;
+   buffer->viewport.translate[1] = 0;
+   buffer->viewport.translate[2] = 0;
+   buffer->viewport.translate[3] = 0;
+
+   buffer->fb_state.nr_cbufs = 1;
+   buffer->fb_state.zsbuf = NULL;
+
    pipe_sampler_view_reference(&buffer->source, source);
 
    return true;
@@ -577,21 +577,43 @@ vl_mc_cleanup_buffer(struct vl_mpeg12_mc_buffer *buffer)
 }
 
 void
-vl_mc_set_surface(struct vl_mpeg12_mc_renderer *renderer, struct pipe_surface *surface)
+vl_mc_set_surface(struct vl_mpeg12_mc_buffer *buffer, struct pipe_surface *surface)
 {
-   assert(renderer && surface);
+   assert(buffer && surface);
 
-   renderer->viewport.scale[0] = surface->width;
-   renderer->viewport.scale[1] = surface->height;
+   buffer->surface_cleared = false;
 
-   renderer->fb_state.width = surface->width;
-   renderer->fb_state.height = surface->height;
-   renderer->fb_state.cbufs[0] = surface;
+   buffer->viewport.scale[0] = surface->width;
+   buffer->viewport.scale[1] = surface->height;
+
+   buffer->fb_state.width = surface->width;
+   buffer->fb_state.height = surface->height;
+   buffer->fb_state.cbufs[0] = surface;
+}
+
+static void
+prepare_pipe_4_rendering(struct vl_mpeg12_mc_buffer *buffer)
+{
+   struct vl_mpeg12_mc_renderer *renderer;
+
+   assert(buffer);
+
+   renderer = buffer->renderer;
+   renderer->pipe->bind_rasterizer_state(renderer->pipe, renderer->rs_state);
+
+   if (buffer->surface_cleared)
+      renderer->pipe->bind_blend_state(renderer->pipe, renderer->blend_add);
+   else {
+      renderer->pipe->bind_blend_state(renderer->pipe, renderer->blend_clear);
+      buffer->surface_cleared = true;
+   }
+
+   renderer->pipe->set_framebuffer_state(renderer->pipe, &buffer->fb_state);
+   renderer->pipe->set_viewport_state(renderer->pipe, &buffer->viewport);
 }
 
 void
-vl_mc_render_ref(struct vl_mpeg12_mc_buffer *buffer,
-                 struct pipe_sampler_view *ref, bool first,
+vl_mc_render_ref(struct vl_mpeg12_mc_buffer *buffer, struct pipe_sampler_view *ref,
                  unsigned not_empty_start_instance, unsigned not_empty_num_instances,
                  unsigned empty_start_instance, unsigned empty_num_instances)
 {
@@ -602,11 +624,9 @@ vl_mc_render_ref(struct vl_mpeg12_mc_buffer *buffer,
    if (not_empty_num_instances == 0 && empty_num_instances == 0)
       return;
 
+   prepare_pipe_4_rendering(buffer);
+
    renderer = buffer->renderer;
-   renderer->pipe->bind_rasterizer_state(renderer->pipe, renderer->rs_state);
-   renderer->pipe->set_framebuffer_state(renderer->pipe, &renderer->fb_state);
-   renderer->pipe->set_viewport_state(renderer->pipe, &renderer->viewport);
-   renderer->pipe->bind_blend_state(renderer->pipe, first ? renderer->blend_clear : renderer->blend_add);
 
    renderer->pipe->bind_vs_state(renderer->pipe, renderer->vs_ref);
    renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs_ref);
@@ -624,7 +644,7 @@ vl_mc_render_ref(struct vl_mpeg12_mc_buffer *buffer,
 }
 
 void
-vl_mc_render_ycbcr(struct vl_mpeg12_mc_buffer *buffer, bool first,
+vl_mc_render_ycbcr(struct vl_mpeg12_mc_buffer *buffer,
                    unsigned not_empty_start_instance, unsigned not_empty_num_instances)
 {
    struct vl_mpeg12_mc_renderer *renderer;
@@ -634,11 +654,9 @@ vl_mc_render_ycbcr(struct vl_mpeg12_mc_buffer *buffer, bool first,
    if (not_empty_num_instances == 0)
       return;
 
+   prepare_pipe_4_rendering(buffer);
+
    renderer = buffer->renderer;
-   renderer->pipe->bind_rasterizer_state(renderer->pipe, renderer->rs_state);
-   renderer->pipe->set_framebuffer_state(renderer->pipe, &renderer->fb_state);
-   renderer->pipe->set_viewport_state(renderer->pipe, &renderer->viewport);
-   renderer->pipe->bind_blend_state(renderer->pipe, first ? renderer->blend_clear : renderer->blend_add);
 
    renderer->pipe->bind_vs_state(renderer->pipe, renderer->vs_ycbcr);
    renderer->pipe->bind_fs_state(renderer->pipe, renderer->fs_ycbcr);

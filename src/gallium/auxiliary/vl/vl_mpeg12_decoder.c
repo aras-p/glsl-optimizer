@@ -480,16 +480,13 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
    dec->pipe->set_vertex_buffers(dec->pipe, 2, buf->vertex_bufs.all);
 
    for (i = 0; i < VL_MAX_PLANES; ++i) {
-      bool first = true;
-
-      vl_mc_set_surface(i == 0 ? &dec->mc_y : &dec->mc_c, surfaces[i]);
+      vl_mc_set_surface(&buf->mc[i], surfaces[i]);
 
       for (j = 0; j < 2; ++j) {
          if (sv[j] == NULL) continue;
 
          dec->pipe->bind_vertex_elements_state(dec->pipe, dec->ves_mv[j]);
-         vl_mc_render_ref(&buf->mc[i], sv[j][i], first, ne_start, ne_num, e_start, e_num);
-         first = false;
+         vl_mc_render_ref(&buf->mc[i], sv[j][i], ne_start, ne_num, e_start, e_num);
       }
 
       dec->pipe->bind_blend_state(dec->pipe, dec->blend);
@@ -498,7 +495,7 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
       if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
          vl_idct_flush(i == 0 ? &dec->idct_y : &dec->idct_c, &buf->idct[i], ne_num);
 
-      vl_mc_render_ycbcr(&buf->mc[i], first, ne_start, ne_num);
+      vl_mc_render_ycbcr(&buf->mc[i], ne_start, ne_num);
 
    }
    dec->pipe->flush(dec->pipe, fence);

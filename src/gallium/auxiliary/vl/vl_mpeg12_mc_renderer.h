@@ -41,9 +41,6 @@ struct vl_mpeg12_mc_renderer
    unsigned buffer_width;
    unsigned buffer_height;
 
-   struct pipe_viewport_state viewport;
-   struct pipe_framebuffer_state fb_state;
-
    void *rs_state;
 
    void *blend_clear, *blend_add;
@@ -57,6 +54,12 @@ struct vl_mpeg12_mc_renderer
 struct vl_mpeg12_mc_buffer
 {
    struct vl_mpeg12_mc_renderer *renderer;
+
+   bool surface_cleared;
+
+   struct pipe_viewport_state viewport;
+   struct pipe_framebuffer_state fb_state;
+
    struct pipe_sampler_view *source;
 };
 
@@ -70,14 +73,13 @@ bool vl_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_
 
 void vl_mc_cleanup_buffer(struct vl_mpeg12_mc_buffer *buffer);
 
-void vl_mc_set_surface(struct vl_mpeg12_mc_renderer *renderer, struct pipe_surface *surface);
+void vl_mc_set_surface(struct vl_mpeg12_mc_buffer *buffer, struct pipe_surface *surface);
 
-void vl_mc_render_ref(struct vl_mpeg12_mc_buffer *buffer,
-                      struct pipe_sampler_view *ref, bool first,
+void vl_mc_render_ref(struct vl_mpeg12_mc_buffer *buffer, struct pipe_sampler_view *ref,
                       unsigned not_empty_start_instance, unsigned not_empty_num_instances,
                       unsigned empty_start_instance, unsigned empty_num_instances);
 
-void vl_mc_render_ycbcr(struct vl_mpeg12_mc_buffer *buffer, bool first,
+void vl_mc_render_ycbcr(struct vl_mpeg12_mc_buffer *buffer,
                         unsigned not_empty_start_instance, unsigned not_empty_num_instances);
 
 #endif /* vl_mpeg12_mc_renderer_h */
