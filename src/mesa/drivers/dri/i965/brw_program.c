@@ -134,11 +134,6 @@ static GLboolean brwProgramStringNotify( struct gl_context *ctx,
          brw_fragment_program_const(brw->fragment_program);
       struct gl_shader_program *shader_program;
 
-      if (fprog->FogOption) {
-         _mesa_append_fog_code(ctx, fprog, GL_TRUE);
-         fprog->FogOption = GL_NONE;
-      }
-
       if (newFP == curFP)
 	 brw->state.dirty.brw |= BRW_NEW_FRAGMENT_PROGRAM;
       newFP->id = brw->program_id++;      
