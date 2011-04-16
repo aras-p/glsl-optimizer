@@ -30,6 +30,7 @@
 #include <tgsi/tgsi_util.h>
 #include <util/u_blitter.h>
 #include <util/u_double_list.h>
+#include "util/u_format.h"
 #include <util/u_format_s3tc.h>
 #include <util/u_transfer.h>
 #include <util/u_surface.h>

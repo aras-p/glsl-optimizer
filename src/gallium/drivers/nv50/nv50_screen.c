@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include "util/u_format.h"
 #include "util/u_format_s3tc.h"
 #include "pipe/p_screen.h"
 

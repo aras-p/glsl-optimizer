@@ -1,5 +1,6 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_state.h"
+#include "util/u_format.h"
 #include "util/u_format_s3tc.h"
 #include "util/u_simple_screen.h"
 
