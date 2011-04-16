@@ -3033,6 +3033,7 @@ get_compressed_block_size(GLenum glformat, GLuint *bw, GLuint *bh)
 
 /**
  * Error checking for glCompressedTexImage[123]D().
+ * \param reason  returns reason for error, if any
  * \return error code or GL_NO_ERROR.
  */
 static GLenum
@@ -3040,36 +3041,49 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
                                GLenum target, GLint level,
                                GLenum internalFormat, GLsizei width,
                                GLsizei height, GLsizei depth, GLint border,
-                               GLsizei imageSize)
+                               GLsizei imageSize, char **reason)
 {
    const GLenum proxyTarget = get_proxy_target(target);
    const GLint maxLevels = _mesa_max_texture_levels(ctx, target);
    GLint expectedSize;
 
+   *reason = ""; /* no error */
+
    /* check level */
-   if (level < 0 || level >= maxLevels)
+   if (level < 0 || level >= maxLevels) {
+      *reason = "level";
       return GL_INVALID_VALUE;
+   }
 
    if (!target_can_be_compressed(ctx, target, internalFormat)) {
+      *reason = "target";
       return GL_INVALID_ENUM;
    }
 
    /* This will detect any invalid internalFormat value */
-   if (!_mesa_is_compressed_format(ctx, internalFormat))
+   if (!_mesa_is_compressed_format(ctx, internalFormat)) {
+      *reason = "internalFormat";
       return GL_INVALID_ENUM;
+   }
 
    /* This should really never fail */
-   if (_mesa_base_tex_format(ctx, internalFormat) < 0)
+   if (_mesa_base_tex_format(ctx, internalFormat) < 0) {
+      *reason = "internalFormat";
       return GL_INVALID_ENUM;
+   }
 
    /* No compressed formats support borders at this time */
-   if (border != 0)
+   if (border != 0) {
+      *reason = "border != 0";
       return GL_INVALID_VALUE;
+   }
 
    /* For cube map, width must equal height */
    if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
-       target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB && width != height)
+       target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB && width != height) {
+      *reason = "width != height";
       return GL_INVALID_VALUE;
+   }
 
    /* check image size against compression block size */
    {
@@ -3086,6 +3100,7 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
           * generated [...] if any parameter combinations are not
           * supported by the specific compressed internal format. 
           */
+         *reason = "invalid width or height for compression format";
          return GL_INVALID_OPERATION;
       }
    }
@@ -3095,6 +3110,7 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
                                       internalFormat, GL_NONE, GL_NONE,
                                       width, height, depth, border)) {
       /* See error comment above */
+      *reason = "invalid width, height or format";
       return GL_INVALID_OPERATION;
    }
 
@@ -3105,6 +3121,7 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
        * if <imageSize> is not consistent with the format, dimensions, and
        * contents of the specified image.
        */
+      *reason = "imageSize inconsistant with width/height/format";
       return GL_INVALID_VALUE;
    }
 
@@ -3259,6 +3276,7 @@ compressedteximage(struct gl_context *ctx, GLuint dims,
                    GLsizei imageSize, const GLvoid *data)
 {
    GLenum error;
+   char *reason = "";
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -3279,10 +3297,10 @@ compressedteximage(struct gl_context *ctx, GLuint dims,
 
    error = compressed_texture_error_check(ctx, dims, target, level,
                                           internalFormat, width, height, depth,
-                                          border, imageSize);
+                                          border, imageSize, &reason);
 
    if (error) {
-      _mesa_error(ctx, error, "glTexImage2D");
+      _mesa_error(ctx, error, "glTexImage2D(%s)", reason);
       return;
    }
 
