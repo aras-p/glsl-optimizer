@@ -146,6 +146,17 @@ intelEmitCopyBlit(struct intel_context *intel,
    src_pitch *= cpp;
    dst_pitch *= cpp;
 
+   /* For big formats (such as floating point), do the copy using 32bpp and
+    * multiply the coordinates.
+    */
+   if (cpp > 4) {
+      assert(cpp % 4 == 0);
+      dst_x *= cpp / 4;
+      dst_x2 *= cpp / 4;
+      src_x *= cpp / 4;
+      cpp = 4;
+   }
+
    BR13 = br13_for_cpp(cpp) | translate_raster_op(logic_op) << 16;
 
    switch (cpp) {
