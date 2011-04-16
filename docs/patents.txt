@@ -12,8 +12,8 @@ ARB_texture_float:
 
     The source code to implement ARB_texture_float extension is included
     and can be toggled on at compile time, for those who purchased a
-    license from SGI, or are in a country where the this patent do not
-    apply, etc.
+    license from SGI, or are in a country where the patent does not apply,
+    etc.
 
     The software is provided "as is", without warranty of any kind, express
     or implied, including but not limited to the warranties of
