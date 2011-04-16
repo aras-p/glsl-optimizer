@@ -1530,14 +1530,32 @@ create_new_program(struct gl_context *ctx, struct state_key *key,
     */
    emit_arith( &p, OPCODE_END, undef, WRITEMASK_XYZW, 0, undef, undef, undef);
 
+   /* Allocate final instruction array.  This has to be done before calling
+    * _mesa_append_fog_code because that function frees the Base.Instructions.
+    * At this point, Base.Instructions points to stack data, so it's a really
+    * bad idea to free it.
+    */
+   p.program->Base.Instructions
+      = _mesa_alloc_instructions(p.program->Base.NumInstructions);
+   if (!p.program->Base.Instructions) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY,
+                  "generating tex env program");
+      return;
+   }
+   _mesa_copy_instructions(p.program->Base.Instructions, instBuffer,
+                           p.program->Base.NumInstructions);
+
+   /* Append fog code.  This must be done before checking the program against
+    * the limits becuase it will potentially add some instructions.
+    */
    if (key->fog_enabled) {
       /* Pull fog mode from struct gl_context, the value in the state key is
        * a reduced value and not what is expected in FogOption
        */
       p.program->FogOption = ctx->Fog.Mode;
       p.program->Base.InputsRead |= FRAG_BIT_FOGC;
-   }
-   else {
+
+      _mesa_append_fog_code(ctx, p.program, GL_FALSE);
       p.program->FogOption = GL_NONE;
    }
 
@@ -1551,23 +1569,6 @@ create_new_program(struct gl_context *ctx, struct state_key *key,
       program_error(&p, "Exceeded max ALU instructions");
 
    ASSERT(p.program->Base.NumInstructions <= MAX_INSTRUCTIONS);
-
-   /* Allocate final instruction array */
-   p.program->Base.Instructions
-      = _mesa_alloc_instructions(p.program->Base.NumInstructions);
-   if (!p.program->Base.Instructions) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY,
-                  "generating tex env program");
-      return;
-   }
-   _mesa_copy_instructions(p.program->Base.Instructions, instBuffer,
-                           p.program->Base.NumInstructions);
-
-   if (key->num_draw_buffers && p.program->FogOption) {
-      _mesa_append_fog_code(ctx, p.program, GL_FALSE);
-      p.program->FogOption = GL_NONE;
-   }
-
 
    /* Notify driver the fragment program has (actually) changed.
     */
