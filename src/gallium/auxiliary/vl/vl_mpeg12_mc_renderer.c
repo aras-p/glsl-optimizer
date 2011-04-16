@@ -453,9 +453,6 @@ bool
 vl_mc_init(struct vl_mpeg12_mc_renderer *renderer, struct pipe_context *pipe,
            unsigned buffer_width, unsigned buffer_height, float scale)
 {
-   struct pipe_resource tex_templ, *tex_dummy;
-   struct pipe_sampler_view sampler_view;
-
    assert(renderer);
    assert(pipe);
 
@@ -484,34 +481,7 @@ vl_mc_init(struct vl_mpeg12_mc_renderer *renderer, struct pipe_context *pipe,
    if (!renderer->fs_ycbcr)
       goto error_fs_ycbcr;
 
-   /* create a dummy sampler */
-   memset(&tex_templ, 0, sizeof(tex_templ));
-   tex_templ.bind = PIPE_BIND_SAMPLER_VIEW;
-   tex_templ.flags = 0;
-
-   tex_templ.target = PIPE_TEXTURE_2D;
-   tex_templ.format = PIPE_FORMAT_R8_SNORM;
-   tex_templ.width0 = 1;
-   tex_templ.height0 = 1;
-   tex_templ.depth0 = 1;
-   tex_templ.array_size = 1;
-   tex_templ.last_level = 0;
-   tex_templ.usage = PIPE_USAGE_STATIC;
-   tex_dummy = pipe->screen->resource_create(pipe->screen, &tex_templ);
-   if (!tex_dummy)
-      goto error_dummy;
-
-   memset(&sampler_view, 0, sizeof(sampler_view));
-   u_sampler_view_default_template(&sampler_view, tex_dummy, tex_dummy->format);
-   renderer->dummy = pipe->create_sampler_view(pipe, tex_dummy, &sampler_view);
-   pipe_resource_reference(&tex_dummy, NULL);
-   if (!renderer->dummy)
-      goto error_dummy;
-
    return true;
-
-error_dummy:
-   renderer->pipe->delete_fs_state(renderer->pipe, renderer->fs_ycbcr);
 
 error_fs_ycbcr:
    renderer->pipe->delete_fs_state(renderer->pipe, renderer->fs_ref);
@@ -533,8 +503,6 @@ void
 vl_mc_cleanup(struct vl_mpeg12_mc_renderer *renderer)
 {
    assert(renderer);
-
-   pipe_sampler_view_reference(&renderer->dummy, NULL);
 
    cleanup_pipe_state(renderer);
 

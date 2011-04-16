@@ -47,8 +47,6 @@ struct vl_mpeg12_mc_renderer
    void *vs_ref, *vs_ycbcr;
    void *fs_ref, *fs_ycbcr;
    void *sampler_ref, *sampler_ycbcr;
-
-   struct pipe_sampler_view *dummy;
 };
 
 struct vl_mpeg12_mc_buffer
