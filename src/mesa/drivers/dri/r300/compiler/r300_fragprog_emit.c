@@ -34,8 +34,6 @@
  * \author Ben Skeggs <darktama@iinet.net.au>
  *
  * \author Jerome Glisse <j.glisse@gmail.com>
- *
- * \todo FogOption
  */
 
 #include "r300_fragprog.h"

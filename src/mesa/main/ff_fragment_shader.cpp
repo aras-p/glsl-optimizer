@@ -1549,14 +1549,7 @@ create_new_program(struct gl_context *ctx, struct state_key *key,
     * the limits becuase it will potentially add some instructions.
     */
    if (key->fog_enabled) {
-      /* Pull fog mode from struct gl_context, the value in the state key is
-       * a reduced value and not what is expected in FogOption
-       */
-      p.program->FogOption = ctx->Fog.Mode;
-      p.program->Base.InputsRead |= FRAG_BIT_FOGC;
-
-      _mesa_append_fog_code(ctx, p.program, GL_FALSE);
-      p.program->FogOption = GL_NONE;
+      _mesa_append_fog_code(ctx, p.program, ctx->Fog.Mode, GL_FALSE);
    }
 
    if (p.program->Base.NumTexIndirections > ctx->Const.FragmentProgram.MaxTexIndirections) 

@@ -1923,7 +1923,6 @@ struct gl_geometry_program
 struct gl_fragment_program
 {
    struct gl_program Base;   /**< base class */
-   GLenum FogOption;
    GLboolean UsesKill;          /**< shader uses KIL instruction */
    GLboolean OriginUpperLeft;
    GLboolean PixelCenterInteger;
