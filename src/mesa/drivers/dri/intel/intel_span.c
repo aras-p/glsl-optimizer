@@ -115,27 +115,6 @@ intel_set_span_functions(struct intel_context *intel,
 #define TAG2(x,y) intel_##x##y##_A8
 #include "spantmp2.h"
 
-#define SPANTMP_MESA_FMT MESA_FORMAT_R8
-#define TAG(x) intel_##x##_R8
-#define TAG2(x,y) intel_##x##y##_R8
-#include "spantmp2.h"
-
-#define SPANTMP_MESA_FMT MESA_FORMAT_RG88
-#define TAG(x) intel_##x##_RG88
-#define TAG2(x,y) intel_##x##y##_RG88
-#include "spantmp2.h"
-
-#define SPANTMP_MESA_FMT MESA_FORMAT_R16
-#define TAG(x) intel_##x##_R16
-#define TAG2(x,y) intel_##x##y##_R16
-#include "spantmp2.h"
-
-#define SPANTMP_MESA_FMT MESA_FORMAT_RG1616
-#define TAG(x) intel_##x##_RG1616
-#define TAG2(x,y) intel_##x##y##_RG1616
-#include "spantmp2.h"
-
-
 void
 intel_renderbuffer_map(struct intel_context *intel, struct gl_renderbuffer *rb)
 {
@@ -356,10 +335,10 @@ static span_init_func intel_span_init_funcs[MESA_FORMAT_COUNT] =
    [MESA_FORMAT_Z16] = _mesa_set_renderbuffer_accessors,
    [MESA_FORMAT_X8_Z24] = _mesa_set_renderbuffer_accessors,
    [MESA_FORMAT_S8_Z24] = _mesa_set_renderbuffer_accessors,
-   [MESA_FORMAT_R8] = intel_InitPointers_R8,
-   [MESA_FORMAT_RG88] = intel_InitPointers_RG88,
-   [MESA_FORMAT_R16] = intel_InitPointers_R16,
-   [MESA_FORMAT_RG1616] = intel_InitPointers_RG1616,
+   [MESA_FORMAT_R8] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_RG88] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_R16] = _mesa_set_renderbuffer_accessors,
+   [MESA_FORMAT_RG1616] = _mesa_set_renderbuffer_accessors,
 };
 
 bool
