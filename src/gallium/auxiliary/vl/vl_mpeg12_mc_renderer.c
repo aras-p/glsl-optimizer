@@ -149,21 +149,23 @@ create_ycbcr_vert_shader(struct vl_mpeg12_mc_renderer *r)
             ureg_scalar(eb, TGSI_SWIZZLE_W),
             ureg_scalar(eb, TGSI_SWIZZLE_Z));
 
-   ureg_IF(shader, ureg_scalar(flags, TGSI_SWIZZLE_Y), &label);
+   if (r->macroblock_size == MACROBLOCK_HEIGHT) { //TODO
+      ureg_IF(shader, ureg_scalar(flags, TGSI_SWIZZLE_Y), &label);
 
-      ureg_MOV(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_X), vrect);
-      ureg_MUL(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_Y), vrect, ureg_imm1f(shader, 0.5f));
-      ureg_ADD(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_XY), vpos, ureg_src(t_vtex));
-      ureg_MUL(shader, ureg_writemask(o_vtex[0], TGSI_WRITEMASK_XY), ureg_src(t_vtex), block_scale);
-      ureg_ADD(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_Y), ureg_src(t_vtex), ureg_imm1f(shader, 0.5f));
-      ureg_MUL(shader, ureg_writemask(o_vtex[1], TGSI_WRITEMASK_XY), ureg_src(t_vtex), block_scale);
+         ureg_MOV(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_X), vrect);
+         ureg_MUL(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_Y), vrect, ureg_imm1f(shader, 0.5f));
+         ureg_ADD(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_XY), vpos, ureg_src(t_vtex));
+         ureg_MUL(shader, ureg_writemask(o_vtex[0], TGSI_WRITEMASK_XY), ureg_src(t_vtex), block_scale);
+         ureg_ADD(shader, ureg_writemask(t_vtex, TGSI_WRITEMASK_Y), ureg_src(t_vtex), ureg_imm1f(shader, 0.5f));
+         ureg_MUL(shader, ureg_writemask(o_vtex[1], TGSI_WRITEMASK_XY), ureg_src(t_vtex), block_scale);
 
-      ureg_MUL(shader, ureg_writemask(o_line, TGSI_WRITEMASK_Y),
-         ureg_scalar(vrect, TGSI_SWIZZLE_Y),
-         ureg_imm1f(shader, MACROBLOCK_HEIGHT / 2));
+         ureg_MUL(shader, ureg_writemask(o_line, TGSI_WRITEMASK_Y),
+            ureg_scalar(vrect, TGSI_SWIZZLE_Y),
+            ureg_imm1f(shader, MACROBLOCK_HEIGHT / 2));
 
-   ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
-   ureg_ENDIF(shader);
+      ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
+      ureg_ENDIF(shader);
+   }
 
    ureg_release_temporary(shader, t_vtex);
    ureg_release_temporary(shader, t_vpos);
@@ -211,7 +213,7 @@ create_ref_vert_shader(struct vl_mpeg12_mc_renderer *r)
     */
 
    ureg_MUL(shader, ureg_writemask(o_line, TGSI_WRITEMASK_Y),
-      vrect, ureg_imm1f(shader, MACROBLOCK_HEIGHT / 2));
+      vrect, ureg_imm1f(shader, r->macroblock_size / 2));
 
    mv_scale = ureg_imm4f(shader,
       0.5f / r->buffer_width,
@@ -451,7 +453,8 @@ cleanup_pipe_state(struct vl_mpeg12_mc_renderer *r)
 
 bool
 vl_mc_init(struct vl_mpeg12_mc_renderer *renderer, struct pipe_context *pipe,
-           unsigned buffer_width, unsigned buffer_height, float scale)
+           unsigned buffer_width, unsigned buffer_height,
+           unsigned macroblock_size, float scale)
 {
    assert(renderer);
    assert(pipe);
@@ -461,6 +464,7 @@ vl_mc_init(struct vl_mpeg12_mc_renderer *renderer, struct pipe_context *pipe,
    renderer->pipe = pipe;
    renderer->buffer_width = buffer_width;
    renderer->buffer_height = buffer_height;
+   renderer->macroblock_size = macroblock_size;
 
    if (!init_pipe_state(renderer))
       goto error_pipe_state;

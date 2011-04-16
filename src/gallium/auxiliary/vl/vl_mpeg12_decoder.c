@@ -756,10 +756,11 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
       }
    }
 
-   if (!vl_mc_init(&dec->mc_y, dec->pipe, dec->base.width, dec->base.height, mc_scale))
+   if (!vl_mc_init(&dec->mc_y, dec->pipe, dec->base.width, dec->base.height, MACROBLOCK_HEIGHT, mc_scale))
       goto error_mc_y;
 
-   if (!vl_mc_init(&dec->mc_c, dec->pipe, dec->base.width, dec->base.height, mc_scale))
+   // TODO
+   if (!vl_mc_init(&dec->mc_c, dec->pipe, dec->base.width, dec->base.height, BLOCK_HEIGHT, mc_scale))
       goto error_mc_c;
 
    if (!init_pipe_state(dec))

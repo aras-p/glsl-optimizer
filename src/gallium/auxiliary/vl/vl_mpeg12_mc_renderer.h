@@ -40,6 +40,7 @@ struct vl_mpeg12_mc_renderer
    struct pipe_context *pipe;
    unsigned buffer_width;
    unsigned buffer_height;
+   unsigned macroblock_size;
 
    void *rs_state;
 
@@ -62,7 +63,8 @@ struct vl_mpeg12_mc_buffer
 };
 
 bool vl_mc_init(struct vl_mpeg12_mc_renderer *renderer, struct pipe_context *pipe,
-                unsigned picture_width, unsigned picture_height, float scale);
+                unsigned picture_width, unsigned picture_height,
+                unsigned macroblock_size, float scale);
 
 void vl_mc_cleanup(struct vl_mpeg12_mc_renderer *renderer);
 
