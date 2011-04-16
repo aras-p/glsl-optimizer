@@ -254,16 +254,11 @@ struct i915_hw_state
    GLuint emitted;              /* I915_UPLOAD_* */
 };
 
-#define I915_FOG_PIXEL  2
-#define I915_FOG_VERTEX 1
-#define I915_FOG_NONE   0
-
 struct i915_context
 {
    struct intel_context intel;
 
    GLuint last_ReallyEnabled;
-   GLuint vertex_fog;
    GLuint lodbias_ss2[MAX_TEXTURE_UNITS];
 
 

@@ -1362,7 +1362,7 @@ i915ValidateFragmentProgram(struct i915_context *i915)
        EMIT_ATTR(_TNL_ATTRIB_COLOR1, EMIT_4UB_4F_BGRA, S4_VFMT_SPEC_FOG, 4);
    }
 
-   if ((inputsRead & FRAG_BIT_FOGC) || i915->vertex_fog != I915_FOG_NONE) {
+   if ((inputsRead & FRAG_BIT_FOGC)) {
       EMIT_ATTR(_TNL_ATTRIB_FOG, EMIT_1F, S4_VFMT_FOG_PARAM, 4);
    }
 

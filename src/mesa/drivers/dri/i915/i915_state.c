@@ -733,8 +733,6 @@ i915_update_fog(struct gl_context * ctx)
 
    assert(ctx->FragmentProgram._Current);
 
-   i915->vertex_fog = I915_FOG_NONE;
-
    I915_ACTIVESTATE(i915, I915_UPLOAD_FOG, 0);
    dw = i915->state.Ctx[I915_CTXREG_LIS5] & ~S5_FOG_ENABLE;
 
