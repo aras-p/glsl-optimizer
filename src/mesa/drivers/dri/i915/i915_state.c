@@ -729,36 +729,15 @@ void
 i915_update_fog(struct gl_context * ctx)
 {
    struct i915_context *i915 = I915_CONTEXT(ctx);
-   GLenum mode;
-   GLboolean enabled;
    GLuint dw;
 
-   if (ctx->FragmentProgram._Current) {
-      /* Pull in static fog state from program */
-      mode = GL_NONE;
-      enabled = GL_FALSE;
-   }
-   else {
-      enabled = ctx->Fog.Enabled;
-      mode = ctx->Fog.Mode;
-   }
+   assert(ctx->FragmentProgram._Current);
 
-   if (!enabled) {
-      i915->vertex_fog = I915_FOG_NONE;
-   }
-   else { /* if (i915->vertex_fog != I915_FOG_VERTEX) */
-      I915_STATECHANGE(i915, I915_UPLOAD_FOG);
-      i915->state.Fog[I915_FOGREG_MODE1] &= ~FMC1_FOGFUNC_MASK;
-      i915->state.Fog[I915_FOGREG_MODE1] |= FMC1_FOGFUNC_VERTEX;
-      i915->vertex_fog = I915_FOG_VERTEX;
-   }
+   i915->vertex_fog = I915_FOG_NONE;
 
-   I915_ACTIVESTATE(i915, I915_UPLOAD_FOG, enabled);
-   dw = i915->state.Ctx[I915_CTXREG_LIS5];
-   if (enabled)
-      dw |= S5_FOG_ENABLE;
-   else
-      dw &= ~S5_FOG_ENABLE;
+   I915_ACTIVESTATE(i915, I915_UPLOAD_FOG, 0);
+   dw = i915->state.Ctx[I915_CTXREG_LIS5] & ~S5_FOG_ENABLE;
+
    if (dw != i915->state.Ctx[I915_CTXREG_LIS5]) {
       i915->state.Ctx[I915_CTXREG_LIS5] = dw;
       I915_STATECHANGE(i915, I915_UPLOAD_CTX);
