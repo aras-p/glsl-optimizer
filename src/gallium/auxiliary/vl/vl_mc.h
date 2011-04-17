@@ -75,11 +75,8 @@ void vl_mc_cleanup_buffer(struct vl_mc_buffer *buffer);
 
 void vl_mc_set_surface(struct vl_mc_buffer *buffer, struct pipe_surface *surface);
 
-void vl_mc_render_ref(struct vl_mc_buffer *buffer, struct pipe_sampler_view *ref,
-                      unsigned not_empty_start_instance, unsigned not_empty_num_instances,
-                      unsigned empty_start_instance, unsigned empty_num_instances);
+void vl_mc_render_ref(struct vl_mc_buffer *buffer, struct pipe_sampler_view *ref);
 
-void vl_mc_render_ycbcr(struct vl_mc_buffer *buffer,
-                        unsigned not_empty_start_instance, unsigned not_empty_num_instances);
+void vl_mc_render_ycbcr(struct vl_mc_buffer *buffer, unsigned num_instances);
 
 #endif /* vl_mc_h */

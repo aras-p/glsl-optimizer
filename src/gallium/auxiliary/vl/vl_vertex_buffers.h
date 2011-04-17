@@ -30,6 +30,7 @@
 #include <pipe/p_state.h>
 #include <pipe/p_video_state.h>
 
+#include "vl_defines.h"
 #include "vl_types.h"
 
 /* vertex buffers act as a todo list
@@ -54,25 +55,36 @@ enum VS_INPUT
 
 struct vl_vertex_buffer
 {
-   unsigned size;
-   unsigned num_not_empty;
-   unsigned num_empty;
+   unsigned width, height;
+   unsigned num_instances;
+
    struct pipe_resource *resource;
    struct pipe_transfer *transfer;
-   struct vl_vertex_stream *start;
-   struct vl_vertex_stream *end;
+   struct vl_vertex_stream *buffer;
+
+   struct {
+      struct pipe_resource       *resource;
+      struct pipe_transfer       *transfer;
+      struct vl_mv_vertex_stream *vertex_stream;
+   } mv[VL_MAX_REF_FRAMES];
 };
 
 struct pipe_vertex_buffer vl_vb_upload_quads(struct pipe_context *pipe,
                                              unsigned blocks_x, unsigned blocks_y);
 
+struct pipe_vertex_buffer vl_vb_upload_pos(struct pipe_context *pipe, unsigned width, unsigned height);
+
 void *vl_vb_get_ves_eb(struct pipe_context *pipe, int component);
 
 void *vl_vb_get_ves_mv(struct pipe_context *pipe, int motionvector);
 
-struct pipe_vertex_buffer vl_vb_init(struct vl_vertex_buffer *buffer,
-                                     struct pipe_context *pipe,
-                                     unsigned max_blocks);
+void vl_vb_init(struct vl_vertex_buffer *buffer,
+                struct pipe_context *pipe,
+                unsigned width, unsigned height);
+
+struct pipe_vertex_buffer vl_vb_get_ycbcr(struct vl_vertex_buffer *buffer);
+
+struct pipe_vertex_buffer vl_vb_get_mv(struct vl_vertex_buffer *buffer, int motionvector);
 
 void vl_vb_map(struct vl_vertex_buffer *buffer, struct pipe_context *pipe);
 
@@ -81,9 +93,7 @@ void vl_vb_add_block(struct vl_vertex_buffer *buffer, struct pipe_mpeg12_macrobl
 
 void vl_vb_unmap(struct vl_vertex_buffer *buffer, struct pipe_context *pipe);
 
-void vl_vb_restart(struct vl_vertex_buffer *buffer,
-                   unsigned *not_empty_start_instance, unsigned *not_empty_num_instances,
-                   unsigned *empty_start_instance, unsigned *empty_num_instances);
+unsigned vl_vb_restart(struct vl_vertex_buffer *buffer);
 
 void vl_vb_cleanup(struct vl_vertex_buffer *buffer);
 

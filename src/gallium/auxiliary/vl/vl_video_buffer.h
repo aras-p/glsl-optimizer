@@ -31,7 +31,7 @@
 #include <pipe/p_context.h>
 #include <pipe/p_video_context.h>
 
-#define VL_MAX_PLANES 3
+#include "vl_defines.h"
 
 /**
  * implementation of a planar ycbcr buffer

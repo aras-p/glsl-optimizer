@@ -114,28 +114,28 @@ MacroBlocksToPipe(struct pipe_screen *screen,
 
       switch (xvmc_mb->macroblock_type & (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD)) {
       case XVMC_MB_TYPE_MOTION_FORWARD:
-         mb->mv[0].wheight = 255;
-         mb->mv[1].wheight = 0;
+         mb->mv[0].top.wheight = mb->mv[0].bottom.wheight = 255;
+         mb->mv[1].top.wheight = mb->mv[1].bottom.wheight = 0;
          break;
 
       case (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD):
-         mb->mv[0].wheight = 127;
-         mb->mv[1].wheight = 127;
+         mb->mv[0].top.wheight = mb->mv[0].bottom.wheight = 127;
+         mb->mv[1].top.wheight = mb->mv[1].bottom.wheight = 127;
          break;
 
       case XVMC_MB_TYPE_MOTION_BACKWARD:
-         mb->mv[0].wheight = 0;
-         mb->mv[1].wheight = 255;
+         mb->mv[0].top.wheight = mb->mv[0].bottom.wheight = 0;
+         mb->mv[1].top.wheight = mb->mv[1].bottom.wheight = 255;
          break;
 
       default:
          /* workaround for xines xxmc video out plugin */
          if (!(xvmc_mb->macroblock_type & ~XVMC_MB_TYPE_PATTERN)) {
-            mb->mv[0].wheight = 255;
-            mb->mv[1].wheight = 0;
+            mb->mv[0].top.wheight = mb->mv[0].bottom.wheight = 255;
+            mb->mv[1].top.wheight = mb->mv[1].bottom.wheight = 0;
          } else {
-            mb->mv[0].wheight = 0;
-            mb->mv[1].wheight = 0;
+            mb->mv[0].top.wheight = mb->mv[0].bottom.wheight = 0;
+            mb->mv[1].top.wheight = mb->mv[1].bottom.wheight = 0;
          }
          break;
       }

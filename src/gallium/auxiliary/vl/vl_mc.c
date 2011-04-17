@@ -612,16 +612,11 @@ prepare_pipe_4_rendering(struct vl_mc_buffer *buffer)
 }
 
 void
-vl_mc_render_ref(struct vl_mc_buffer *buffer, struct pipe_sampler_view *ref,
-                 unsigned not_empty_start_instance, unsigned not_empty_num_instances,
-                 unsigned empty_start_instance, unsigned empty_num_instances)
+vl_mc_render_ref(struct vl_mc_buffer *buffer, struct pipe_sampler_view *ref)
 {
    struct vl_mc *renderer;
 
    assert(buffer && ref);
-
-   if (not_empty_num_instances == 0 && empty_num_instances == 0)
-      return;
 
    prepare_pipe_4_rendering(buffer);
 
@@ -633,24 +628,19 @@ vl_mc_render_ref(struct vl_mc_buffer *buffer, struct pipe_sampler_view *ref,
    renderer->pipe->set_fragment_sampler_views(renderer->pipe, 1, &ref);
    renderer->pipe->bind_fragment_sampler_states(renderer->pipe, 1, &renderer->sampler_ref);
 
-   if (not_empty_num_instances > 0)
-      util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4,
-                                 not_empty_start_instance, not_empty_num_instances);
-
-   if (empty_num_instances > 0)
-      util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4,
-                                 empty_start_instance, empty_num_instances);
+   util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4, 0,
+                              renderer->buffer_width / MACROBLOCK_WIDTH *
+                              renderer->buffer_height / MACROBLOCK_HEIGHT);
 }
 
 void
-vl_mc_render_ycbcr(struct vl_mc_buffer *buffer,
-                   unsigned not_empty_start_instance, unsigned not_empty_num_instances)
+vl_mc_render_ycbcr(struct vl_mc_buffer *buffer, unsigned num_instances)
 {
    struct vl_mc *renderer;
 
    assert(buffer);
 
-   if (not_empty_num_instances == 0)
+   if (num_instances == 0)
       return;
 
    prepare_pipe_4_rendering(buffer);
@@ -663,6 +653,5 @@ vl_mc_render_ycbcr(struct vl_mc_buffer *buffer,
    renderer->pipe->set_fragment_sampler_views(renderer->pipe, 1, &buffer->source);
    renderer->pipe->bind_fragment_sampler_states(renderer->pipe, 1, &renderer->sampler_ycbcr);
 
-   util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4,
-                              not_empty_start_instance, not_empty_num_instances);
+   util_draw_arrays_instanced(renderer->pipe, PIPE_PRIM_QUADS, 0, 4, 0, num_instances);
 }
