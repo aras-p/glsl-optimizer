@@ -218,12 +218,12 @@ create_ref_vert_shader(struct vl_mpeg12_mc_renderer *r)
    mv_scale = ureg_imm4f(shader,
       0.5f / r->buffer_width,
       0.5f / r->buffer_height,
-      1.0f,
+      1.0f / 4.0f,
       1.0f / 255.0f);
 
    for (i = 0; i < 2; ++i) {
       ureg_MAD(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_XY), mv_scale, vmv[i], ureg_src(t_vpos));
-      ureg_MUL(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_W), mv_scale, vmv[i]);
+      ureg_MUL(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_ZW), mv_scale, vmv[i]);
    }
 
    ureg_release_temporary(shader, t_vpos);
@@ -320,10 +320,15 @@ create_ycbcr_frag_shader(struct vl_mpeg12_mc_renderer *r, float scale)
 static void *
 create_ref_frag_shader(struct vl_mpeg12_mc_renderer *r)
 {
+   const float y_scale =
+      r->buffer_height / 2 *
+      r->macroblock_size / MACROBLOCK_HEIGHT;
+
    struct ureg_program *shader;
    struct ureg_src tc[2], sampler;
    struct ureg_dst ref, field;
    struct ureg_dst fragment;
+   unsigned label;
 
    shader = ureg_create(TGSI_PROCESSOR_FRAGMENT);
    if (!shader)
@@ -340,15 +345,37 @@ create_ref_frag_shader(struct vl_mpeg12_mc_renderer *r)
    field = calc_field(shader);
 
    /*
-    * if (field.z)
-    *    ref[0..1] = tex(tc[0..1], sampler[0..1])
-    * else
-    *    ref[0..1] = tex(tc[2..3], sampler[0..1])
-    * result = LRP(info.y, ref[0..1])
+    * ref = field.z ? tc[1] : tc[0]
+    *
+    * // Adjust tc acording to top/bottom field selection
+    * if (|ref.z|) {
+    *    ref.y *= y_scale
+    *    ref.y = floor(ref.y)
+    *    ref.y += ref.z
+    *    ref.y /= y_scale
+    * }
+    * fragment.xyz = tex(ref, sampler[0])
     */
-   ureg_CMP(shader, ref, ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)), tc[1], tc[0]);
+   ureg_CMP(shader, ureg_writemask(ref, TGSI_WRITEMASK_XYZ),
+            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
+            tc[1], tc[0]);
+   ureg_CMP(shader, ureg_writemask(fragment, TGSI_WRITEMASK_W),
+            ureg_negate(ureg_scalar(ureg_src(field), TGSI_SWIZZLE_Y)),
+            tc[1], tc[0]);
 
-   ureg_MOV(shader, ureg_writemask(fragment, TGSI_WRITEMASK_W), ureg_src(ref));
+   ureg_IF(shader, ureg_scalar(ureg_src(ref), TGSI_SWIZZLE_Z), &label);
+
+      ureg_MUL(shader, ureg_writemask(ref, TGSI_WRITEMASK_Y),
+               ureg_src(ref), ureg_imm1f(shader, y_scale));
+      ureg_FLR(shader, ureg_writemask(ref, TGSI_WRITEMASK_Y), ureg_src(ref));
+      ureg_ADD(shader, ureg_writemask(ref, TGSI_WRITEMASK_Y),
+               ureg_src(ref), ureg_scalar(ureg_src(ref), TGSI_SWIZZLE_Z));
+      ureg_MUL(shader, ureg_writemask(ref, TGSI_WRITEMASK_Y),
+               ureg_src(ref), ureg_imm1f(shader, 1.0f / y_scale));
+
+   ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
+   ureg_ENDIF(shader);
+
    ureg_TEX(shader, ureg_writemask(fragment, TGSI_WRITEMASK_XYZ), TGSI_TEXTURE_2D, ureg_src(ref), sampler);
 
    ureg_release_temporary(shader, ref);

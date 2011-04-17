@@ -228,34 +228,28 @@ get_motion_vectors(struct pipe_mpeg12_macroblock *mb, struct vertex4s mv[4])
    if (mb->mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
       mv[0].x = mv[1].x = mb->mv[0].top.x;
       mv[0].y = mv[1].y = mb->mv[0].top.y;
-      mv[0].z = 0; mv[1].z = 1;
+      mv[0].z = mv[1].z = 0;
 
       mv[2].x = mv[3].x = mb->mv[1].top.x;
       mv[2].y = mv[3].y = mb->mv[1].top.y;
-      mv[2].z = 0; mv[3].z = 1;
+      mv[2].z = mv[3].z = 0;
 
    } else {
       mv[0].x = mb->mv[0].top.x;
-      mv[0].y = mb->mv[0].top.y - (mb->mv[0].top.y % 4);
-      mv[0].z = mb->mv[0].top.field_select;
+      mv[0].y = mb->mv[0].top.y;
+      mv[0].z = mb->mv[0].top.field_select ? 3 : 1;
 
       mv[1].x = mb->mv[0].bottom.x;
-      mv[1].y = mb->mv[0].bottom.y - (mb->mv[0].bottom.y % 4);
-      mv[1].z = mb->mv[0].bottom.field_select;
-
-      if (mb->mv[0].top.field_select) mv[0].y += 2;
-      if (!mb->mv[0].bottom.field_select) mv[1].y -= 2;
+      mv[1].y = mb->mv[0].bottom.y;
+      mv[1].z = mb->mv[0].bottom.field_select ? 3 : 1;
 
       mv[2].x = mb->mv[1].top.x;
-      mv[2].y = mb->mv[1].top.y - (mb->mv[1].top.y % 4);
-      mv[2].z = mb->mv[1].top.field_select;
+      mv[2].y = mb->mv[1].top.y;
+      mv[2].z = mb->mv[1].top.field_select ? 3 : 1;
 
       mv[3].x = mb->mv[1].bottom.x;
-      mv[3].y = mb->mv[1].bottom.y - (mb->mv[1].bottom.y % 4);
-      mv[3].z = mb->mv[1].bottom.field_select;
-
-      if (mb->mv[1].top.field_select) mv[2].y += 2;
-      if (!mb->mv[1].bottom.field_select) mv[3].y -= 2;
+      mv[3].y = mb->mv[1].bottom.y;
+      mv[3].z = mb->mv[1].bottom.field_select ? 3 : 1;
    }
 
    mv[0].w = mv[1].w = mb->mv[0].wheight;
