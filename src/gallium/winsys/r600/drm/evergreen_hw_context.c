@@ -637,6 +637,7 @@ static inline void evergreen_context_pipe_state_set_resource(struct r600_context
 {
 	struct r600_range *range;
 	struct r600_block *block;
+	int i;
 
 	range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
 	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
@@ -647,14 +648,9 @@ static inline void evergreen_context_pipe_state_set_resource(struct r600_context
 		LIST_DELINIT(&block->list);
 		return;
 	}
-	block->reg[0] = state->regs[0].value;
-	block->reg[1] = state->regs[1].value;
-	block->reg[2] = state->regs[2].value;
-	block->reg[3] = state->regs[3].value;
-	block->reg[4] = state->regs[4].value;
-	block->reg[5] = state->regs[5].value;
-	block->reg[6] = state->regs[6].value;
-	block->reg[7] = state->regs[7].value;
+	for (i = 0; i < 8; i++)
+		block->reg[i] = state->regs[i].value;
+
 	r600_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
 	r600_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
 	if (state->regs[0].bo) {
@@ -696,6 +692,7 @@ static inline void evergreen_context_pipe_state_set_sampler(struct r600_context 
 {
 	struct r600_range *range;
 	struct r600_block *block;
+	int i;
 
 	range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
 	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
@@ -704,9 +701,8 @@ static inline void evergreen_context_pipe_state_set_sampler(struct r600_context 
 		LIST_DELINIT(&block->list);
 		return;
 	}
-	block->reg[0] = state->regs[0].value;
-	block->reg[1] = state->regs[1].value;
-	block->reg[2] = state->regs[2].value;
+	for (i = 0; i < 3; i++)
+		block->reg[i] = state->regs[i].value;
 
 	r600_context_dirty_block(ctx, block);
 }
@@ -716,6 +712,7 @@ static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_c
 	unsigned fake_offset = (offset - R_00A400_TD_PS_SAMPLER0_BORDER_INDEX) * 0x100 + 0x40000 + id * 0x1C;
 	struct r600_range *range;
 	struct r600_block *block;
+	int i;
 
 	range = &ctx->range[CTX_RANGE_ID(ctx, fake_offset)];
 	block = range->blocks[CTX_BLOCK_ID(ctx, fake_offset)];
@@ -728,10 +725,9 @@ static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_c
 		return;
 	}
 	block->reg[0] = id;
-	block->reg[1] = state->regs[3].value;
-	block->reg[2] = state->regs[4].value;
-	block->reg[3] = state->regs[5].value;
-	block->reg[4] = state->regs[6].value;
+
+	for (i = 1; i < 5; i++)
+		block->reg[i] = state->regs[i + 2].value;
 
 	r600_context_dirty_block(ctx, block);
 }
