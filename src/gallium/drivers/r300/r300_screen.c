@@ -130,12 +130,12 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
         case PIPE_CAP_SHADER_STENCIL_EXPORT:
         case PIPE_CAP_ARRAY_TEXTURES:
+        case PIPE_CAP_TGSI_INSTANCEID:
             return 0;
 
         /* SWTCL-only features. */
         case PIPE_CAP_STREAM_OUTPUT:
         case PIPE_CAP_PRIMITIVE_RESTART:
-        case PIPE_CAP_TGSI_INSTANCEID:
             return !r300screen->caps.has_tcl;
 
         /* Texturing. */
