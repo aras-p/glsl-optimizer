@@ -400,8 +400,9 @@ cleanup_shaders(struct vl_idct *idct)
 static bool
 init_state(struct vl_idct *idct)
 {
-   struct pipe_sampler_state sampler;
+   struct pipe_blend_state blend;
    struct pipe_rasterizer_state rs_state;
+   struct pipe_sampler_state sampler;
    unsigned i;
 
    assert(idct);
@@ -411,6 +412,25 @@ init_state(struct vl_idct *idct)
    idct->rs_state = idct->pipe->create_rasterizer_state(idct->pipe, &rs_state);
    if (!idct->rs_state)
       goto error_rs_state;
+
+   memset(&blend, 0, sizeof blend);
+
+   blend.independent_blend_enable = 0;
+   blend.rt[0].blend_enable = 0;
+   blend.rt[0].rgb_func = PIPE_BLEND_ADD;
+   blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].alpha_func = PIPE_BLEND_ADD;
+   blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
+   blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
+   blend.logicop_enable = 0;
+   blend.logicop_func = PIPE_LOGICOP_CLEAR;
+   /* Needed to allow color writes to FB, even if blending disabled */
+   blend.rt[0].colormask = PIPE_MASK_RGBA;
+   blend.dither = 0;
+   idct->blend = idct->pipe->create_blend_state(idct->pipe, &blend);
+   if (!idct->blend)
+      goto error_blend;
 
    for (i = 0; i < 2; ++i) {
       memset(&sampler, 0, sizeof(sampler));
@@ -437,6 +457,9 @@ error_samplers:
 
    idct->pipe->delete_rasterizer_state(idct->pipe, idct->rs_state);
 
+error_blend:
+   idct->pipe->delete_blend_state(idct->pipe, idct->blend);
+
 error_rs_state:
    return false;
 }
@@ -450,6 +473,7 @@ cleanup_state(struct vl_idct *idct)
       idct->pipe->delete_sampler_state(idct->pipe, idct->samplers[i]);
 
    idct->pipe->delete_rasterizer_state(idct->pipe, idct->rs_state);
+   idct->pipe->delete_blend_state(idct->pipe, idct->blend);
 }
 
 static bool
@@ -691,6 +715,7 @@ vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer, unsigned num_
       num_verts = idct->blocks_x * idct->blocks_y * 4;
 
       idct->pipe->bind_rasterizer_state(idct->pipe, idct->rs_state);
+      idct->pipe->bind_blend_state(idct->pipe, idct->blend);
       idct->pipe->bind_fragment_sampler_states(idct->pipe, 2, idct->samplers);
 
       /* first stage */

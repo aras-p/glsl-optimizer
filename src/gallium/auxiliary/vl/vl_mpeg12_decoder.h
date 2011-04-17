@@ -59,7 +59,6 @@ struct vl_mpeg12_decoder
    struct vl_mc mc_y, mc_c;
 
    void *dsa;
-   void *blend;
 };
 
 struct vl_mpeg12_buffer

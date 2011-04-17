@@ -276,7 +276,6 @@ vl_mpeg12_destroy(struct pipe_video_decoder *decoder)
    dec->pipe->bind_vs_state(dec->pipe, NULL);
    dec->pipe->bind_fs_state(dec->pipe, NULL);
 
-   dec->pipe->delete_blend_state(dec->pipe, dec->blend);
    dec->pipe->delete_depth_stencil_alpha_state(dec->pipe, dec->dsa);
 
    vl_mc_cleanup(&dec->mc_y);
@@ -489,7 +488,6 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
          vl_mc_render_ref(&buf->mc[i], sv[j][i], ne_start, ne_num, e_start, e_num);
       }
 
-      dec->pipe->bind_blend_state(dec->pipe, dec->blend);
       dec->pipe->bind_vertex_elements_state(dec->pipe, dec->ves_eb[i]);
 
       if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
@@ -515,28 +513,10 @@ vl_mpeg12_decoder_clear_buffer(struct pipe_video_decode_buffer *buffer)
 static bool
 init_pipe_state(struct vl_mpeg12_decoder *dec)
 {
-   struct pipe_blend_state blend;
    struct pipe_depth_stencil_alpha_state dsa;
    unsigned i;
 
    assert(dec);
-
-   memset(&blend, 0, sizeof blend);
-
-   blend.independent_blend_enable = 0;
-   blend.rt[0].blend_enable = 0;
-   blend.rt[0].rgb_func = PIPE_BLEND_ADD;
-   blend.rt[0].rgb_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.rt[0].rgb_dst_factor = PIPE_BLENDFACTOR_ONE;
-   blend.rt[0].alpha_func = PIPE_BLEND_ADD;
-   blend.rt[0].alpha_src_factor = PIPE_BLENDFACTOR_ONE;
-   blend.rt[0].alpha_dst_factor = PIPE_BLENDFACTOR_ONE;
-   blend.logicop_enable = 0;
-   blend.logicop_func = PIPE_LOGICOP_CLEAR;
-   /* Needed to allow color writes to FB, even if blending disabled */
-   blend.rt[0].colormask = PIPE_MASK_RGBA;
-   blend.dither = 0;
-   dec->blend = dec->pipe->create_blend_state(dec->pipe, &blend);
 
    memset(&dsa, 0, sizeof dsa);
    dsa.depth.enabled = 0;

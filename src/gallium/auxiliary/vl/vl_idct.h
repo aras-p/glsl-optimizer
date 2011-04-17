@@ -43,6 +43,7 @@ struct vl_idct
    unsigned nr_of_render_targets;
 
    void *rs_state;
+   void *blend;
 
    void *samplers[2];
 
