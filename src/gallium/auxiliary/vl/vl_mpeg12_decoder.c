@@ -268,7 +268,6 @@ static void
 vl_mpeg12_destroy(struct pipe_video_decoder *decoder)
 {
    struct vl_mpeg12_decoder *dec = (struct vl_mpeg12_decoder*)decoder;
-   unsigned i;
 
    assert(decoder);
 
@@ -286,9 +285,7 @@ vl_mpeg12_destroy(struct pipe_video_decoder *decoder)
       vl_idct_cleanup(&dec->idct_c);
    }
 
-   for (i = 0; i < VL_MAX_PLANES; ++i)
-      dec->pipe->delete_vertex_elements_state(dec->pipe, dec->ves_eb[i]);
-
+   dec->pipe->delete_vertex_elements_state(dec->pipe, dec->ves_ycbcr);
    dec->pipe->delete_vertex_elements_state(dec->pipe, dec->ves_mv);
 
    pipe_resource_reference(&dec->quads.buffer, NULL);
@@ -457,7 +454,6 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
 
    struct pipe_vertex_buffer vb[3];
 
-   unsigned num_instances;
    unsigned i, j;
 
    assert(buf);
@@ -469,8 +465,6 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
       sv[i] = refs[i] ? refs[i]->get_sampler_views(refs[i]) : NULL;
 
    surfaces = dst->get_surfaces(dst);
-
-   num_instances = vl_vb_restart(&buf->vertex_stream);
 
    vb[0] = dec->quads;
    vb[1] = dec->pos;
@@ -489,11 +483,13 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
       }
    }
 
-   vb[1] = vl_vb_get_ycbcr(&buf->vertex_stream);
-   dec->pipe->set_vertex_buffers(dec->pipe, 2, vb);
-
+   dec->pipe->bind_vertex_elements_state(dec->pipe, dec->ves_ycbcr);
    for (i = 0; i < VL_MAX_PLANES; ++i) {
-      dec->pipe->bind_vertex_elements_state(dec->pipe, dec->ves_eb[i]);
+      unsigned num_instances = vl_vb_restart(&buf->vertex_stream, i);
+
+      vb[1] = vl_vb_get_ycbcr(&buf->vertex_stream, i);
+      dec->pipe->set_vertex_buffers(dec->pipe, 2, vb);
+
       if (dec->base.entrypoint <= PIPE_VIDEO_ENTRYPOINT_IDCT)
          vl_idct_flush(i == 0 ? &dec->idct_y : &dec->idct_c, &buf->idct[i], num_instances);
 
@@ -507,10 +503,12 @@ static void
 vl_mpeg12_decoder_clear_buffer(struct pipe_video_decode_buffer *buffer)
 {
    struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer *)buffer;
+   unsigned i;
 
    assert(buf);
 
-   vl_vb_restart(&buf->vertex_stream);
+   for (i = 0; i < VL_MAX_PLANES; ++i)
+      vl_vb_restart(&buf->vertex_stream, i);
 }
 
 static bool
@@ -673,7 +671,6 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
 {
    struct vl_mpeg12_decoder *dec;
    float mc_scale;
-   unsigned i;
 
    assert(u_reduce_video_profile(profile) == PIPE_VIDEO_CODEC_MPEG12);
 
@@ -706,9 +703,7 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
       dec->base.height / MACROBLOCK_HEIGHT
    );
 
-   for (i = 0; i < VL_MAX_PLANES; ++i)
-      dec->ves_eb[i] = vl_vb_get_ves_eb(dec->pipe, i);
-
+   dec->ves_ycbcr = vl_vb_get_ves_ycbcr(dec->pipe);
    dec->ves_mv = vl_vb_get_ves_mv(dec->pipe);
 
    /* TODO: Implement 422, 444 */

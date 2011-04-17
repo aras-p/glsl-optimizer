@@ -56,11 +56,13 @@ enum VS_INPUT
 struct vl_vertex_buffer
 {
    unsigned width, height;
-   unsigned num_instances;
 
-   struct pipe_resource *resource;
-   struct pipe_transfer *transfer;
-   struct vl_vertex_stream *buffer;
+   struct {
+      unsigned                      num_instances;
+      struct pipe_resource          *resource;
+      struct pipe_transfer          *transfer;
+      struct vl_ycbcr_vertex_stream *vertex_stream;
+   } ycbcr[VL_MAX_PLANES];
 
    struct {
       struct pipe_resource       *resource;
@@ -74,7 +76,7 @@ struct pipe_vertex_buffer vl_vb_upload_quads(struct pipe_context *pipe,
 
 struct pipe_vertex_buffer vl_vb_upload_pos(struct pipe_context *pipe, unsigned width, unsigned height);
 
-void *vl_vb_get_ves_eb(struct pipe_context *pipe, int component);
+void *vl_vb_get_ves_ycbcr(struct pipe_context *pipe);
 
 void *vl_vb_get_ves_mv(struct pipe_context *pipe);
 
@@ -82,7 +84,7 @@ void vl_vb_init(struct vl_vertex_buffer *buffer,
                 struct pipe_context *pipe,
                 unsigned width, unsigned height);
 
-struct pipe_vertex_buffer vl_vb_get_ycbcr(struct vl_vertex_buffer *buffer);
+struct pipe_vertex_buffer vl_vb_get_ycbcr(struct vl_vertex_buffer *buffer, int component);
 
 struct pipe_vertex_buffer vl_vb_get_mv(struct vl_vertex_buffer *buffer, int motionvector);
 
@@ -93,7 +95,7 @@ void vl_vb_add_block(struct vl_vertex_buffer *buffer, struct pipe_mpeg12_macrobl
 
 void vl_vb_unmap(struct vl_vertex_buffer *buffer, struct pipe_context *pipe);
 
-unsigned vl_vb_restart(struct vl_vertex_buffer *buffer);
+unsigned vl_vb_restart(struct vl_vertex_buffer *buffer, int component);
 
 void vl_vb_cleanup(struct vl_vertex_buffer *buffer);
 

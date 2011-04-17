@@ -30,13 +30,13 @@
 #include "vl_vertex_buffers.h"
 #include "vl_types.h"
 
-struct vl_vertex_stream
+struct vl_ycbcr_vertex_stream
 {
    struct vertex2s pos;
    uint8_t mb_type_intra;
    uint8_t dct_type_field;
    uint8_t dummy[2];
-   uint8_t eb[3][2][2];
+   uint8_t eb[2][2];
 };
 
 struct vl_mv_vertex_stream
@@ -169,10 +169,7 @@ vl_vb_element_helper(struct pipe_vertex_element* elements, unsigned num_elements
    assert(elements && num_elements);
 
    for ( i = 0; i < num_elements; ++i ) {
-      if (elements[i].src_offset)
-         offset = elements[i].src_offset;
-      else
-         elements[i].src_offset = offset;
+      elements[i].src_offset = offset;
       elements[i].instance_divisor = 1;
       elements[i].vertex_buffer_index = vertex_buffer_index;
       offset += util_format_get_blocksize(elements[i].src_format);
@@ -180,7 +177,7 @@ vl_vb_element_helper(struct pipe_vertex_element* elements, unsigned num_elements
 }
 
 void *
-vl_vb_get_ves_eb(struct pipe_context *pipe, int component)
+vl_vb_get_ves_ycbcr(struct pipe_context *pipe)
 {
    struct pipe_vertex_element vertex_elems[NUM_VS_INPUTS];
 
@@ -196,7 +193,6 @@ vl_vb_get_ves_eb(struct pipe_context *pipe, int component)
    vertex_elems[VS_I_FLAGS].src_format = PIPE_FORMAT_R8G8B8A8_USCALED;
 
    /* empty block element of selected component */
-   vertex_elems[VS_I_EB].src_offset = offsetof(struct vl_vertex_stream, eb[component]);
    vertex_elems[VS_I_EB].src_format = PIPE_FORMAT_R8G8B8A8_USCALED;
 
    vl_vb_element_helper(&vertex_elems[VS_I_VPOS], NUM_VS_INPUTS - 1, 1);
@@ -233,21 +229,25 @@ vl_vb_get_ves_mv(struct pipe_context *pipe)
 void
 vl_vb_init(struct vl_vertex_buffer *buffer, struct pipe_context *pipe, unsigned width, unsigned height)
 {
-   unsigned i;
+   unsigned i, size;
 
    assert(buffer);
 
    buffer->width = width;
    buffer->height = height;
-   buffer->num_instances = 0;
 
-   buffer->resource = pipe_buffer_create
-   (
-      pipe->screen,
-      PIPE_BIND_VERTEX_BUFFER,
-      PIPE_USAGE_STREAM,
-      sizeof(struct vl_vertex_stream) * width * height
-   );
+   size = width * height;
+
+   for (i = 0; i < VL_MAX_PLANES; ++i) {
+      buffer->ycbcr[i].num_instances = 0;
+      buffer->ycbcr[i].resource = pipe_buffer_create
+      (
+         pipe->screen,
+         PIPE_BIND_VERTEX_BUFFER,
+         PIPE_USAGE_STREAM,
+         sizeof(struct vl_ycbcr_vertex_stream) * size
+      );
+   }
 
    for (i = 0; i < VL_MAX_REF_FRAMES; ++i) {
       buffer->mv[i].resource = pipe_buffer_create
@@ -255,7 +255,7 @@ vl_vb_init(struct vl_vertex_buffer *buffer, struct pipe_context *pipe, unsigned 
          pipe->screen,
          PIPE_BIND_VERTEX_BUFFER,
          PIPE_USAGE_STREAM,
-         sizeof(struct vl_mv_vertex_stream) * width * height
+         sizeof(struct vl_mv_vertex_stream) * size
       );
    }
 
@@ -263,15 +263,15 @@ vl_vb_init(struct vl_vertex_buffer *buffer, struct pipe_context *pipe, unsigned 
 }
 
 struct pipe_vertex_buffer
-vl_vb_get_ycbcr(struct vl_vertex_buffer *buffer)
+vl_vb_get_ycbcr(struct vl_vertex_buffer *buffer, int component)
 {
    struct pipe_vertex_buffer buf;
 
    assert(buffer);
 
-   buf.stride = sizeof(struct vl_vertex_stream);
+   buf.stride = sizeof(struct vl_ycbcr_vertex_stream);
    buf.buffer_offset = 0;
-   buf.buffer = buffer->resource;
+   buf.buffer = buffer->ycbcr[component].resource;
 
    return buf;
 }
@@ -297,13 +297,15 @@ vl_vb_map(struct vl_vertex_buffer *buffer, struct pipe_context *pipe)
 
    assert(buffer && pipe);
 
-   buffer->buffer = pipe_buffer_map
-   (
-      pipe,
-      buffer->resource,
-      PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
-      &buffer->transfer
-   );
+   for (i = 0; i < VL_MAX_PLANES; ++i) {
+      buffer->ycbcr[i].vertex_stream = pipe_buffer_map
+      (
+         pipe,
+         buffer->ycbcr[i].resource,
+         PIPE_TRANSFER_WRITE | PIPE_TRANSFER_DISCARD,
+         &buffer->ycbcr[i].transfer
+      );
+   }
 
    for (i = 0; i < VL_MAX_REF_FRAMES; ++i) {
       buffer->mv[i].vertex_stream = pipe_buffer_map
@@ -339,31 +341,45 @@ get_motion_vectors(enum pipe_mpeg12_motion_type mo_type, struct pipe_motionvecto
    dst[1].w = src->bottom.wheight;
 }
 
+static bool
+get_ycbcr_vectors(struct vl_ycbcr_vertex_stream *stream,
+                  struct pipe_mpeg12_macroblock *mb, const unsigned (*empty_block_mask)[2][2])
+{
+   bool completely_empty = true;
+   unsigned i, j;
+
+   stream->pos.x = mb->mbx;
+   stream->pos.y = mb->mby;
+   stream->dct_type_field = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD;
+   stream->mb_type_intra = mb->dct_intra;
+
+   for ( i = 0; i < 2; ++i)
+      for ( j = 0; j < 2; ++j) {
+         bool empty = !(mb->cbp & (*empty_block_mask)[i][j]);
+         stream->eb[i][j] = empty;
+         completely_empty &= empty;
+      }
+
+   return !completely_empty;
+}
+
 void
 vl_vb_add_block(struct vl_vertex_buffer *buffer, struct pipe_mpeg12_macroblock *mb,
                 const unsigned (*empty_block_mask)[3][2][2])
 {
-   unsigned i, j, k;
-   unsigned mv_pos;
+   unsigned i, mv_pos;
 
    assert(buffer);
    assert(mb);
-   assert(buffer->num_instances < buffer->width * buffer->height);
 
    if(mb->cbp) {
-      struct vl_vertex_stream *stream;
-      stream = buffer->buffer + buffer->num_instances++;
-
-      stream->pos.x = mb->mbx;
-      stream->pos.y = mb->mby;
-
-      for ( i = 0; i < 3; ++i)
-         for ( j = 0; j < 2; ++j)
-            for ( k = 0; k < 2; ++k)
-               stream->eb[i][j][k] = !(mb->cbp & (*empty_block_mask)[i][j][k]);
-
-      stream->dct_type_field = mb->dct_type == PIPE_MPEG12_DCT_TYPE_FIELD;
-      stream->mb_type_intra = mb->dct_intra;
+      for (i = 0; i < VL_MAX_PLANES; ++i) {
+         assert(buffer->ycbcr[i].num_instances < buffer->width * buffer->height);
+         if (get_ycbcr_vectors(buffer->ycbcr[i].vertex_stream, mb, &(*empty_block_mask)[i])) {
+            buffer->ycbcr[i].vertex_stream++;
+            buffer->ycbcr[i].num_instances++;
+         }
+      }
    }
 
    mv_pos = mb->mbx + mb->mby * buffer->width;
@@ -378,21 +394,24 @@ vl_vb_unmap(struct vl_vertex_buffer *buffer, struct pipe_context *pipe)
 
    assert(buffer && pipe);
 
-   pipe_buffer_unmap(pipe, buffer->transfer);
+   for (i = 0; i < VL_MAX_PLANES; ++i) {
+      pipe_buffer_unmap(pipe, buffer->ycbcr[i].transfer);
+   }
+
    for (i = 0; i < VL_MAX_REF_FRAMES; ++i) {
       pipe_buffer_unmap(pipe, buffer->mv[i].transfer);
    }
 }
 
 unsigned
-vl_vb_restart(struct vl_vertex_buffer *buffer)
+vl_vb_restart(struct vl_vertex_buffer *buffer, int component)
 {
    unsigned num_instances;
 
    assert(buffer);
 
-   num_instances = buffer->num_instances;
-   buffer->num_instances = 0;
+   num_instances = buffer->ycbcr[component].num_instances;
+   buffer->ycbcr[component].num_instances = 0;
    return num_instances;
 }
 
@@ -403,7 +422,9 @@ vl_vb_cleanup(struct vl_vertex_buffer *buffer)
 
    assert(buffer);
 
-   pipe_resource_reference(&buffer->resource, NULL);
+   for (i = 0; i < VL_MAX_REF_FRAMES; ++i) {
+      pipe_resource_reference(&buffer->ycbcr[i].resource, NULL);
+   }
 
    for (i = 0; i < VL_MAX_REF_FRAMES; ++i) {
       pipe_resource_reference(&buffer->mv[i].resource, NULL);
