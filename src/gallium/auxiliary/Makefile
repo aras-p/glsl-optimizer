@@ -149,11 +149,11 @@ C_SOURCES = \
 	util/u_vbuf_mgr.c \
 	vl/vl_context.c \
 	vl/vl_bitstream_parser.c \
-	vl/vl_mpeg12_mc_renderer.c \
 	vl/vl_mpeg12_decoder.c \
 	vl/vl_compositor.c \
 	vl/vl_csc.c \
         vl/vl_idct.c \
+	vl/vl_mc.c \
         vl/vl_vertex_buffers.c \
         vl/vl_video_buffer.c
 

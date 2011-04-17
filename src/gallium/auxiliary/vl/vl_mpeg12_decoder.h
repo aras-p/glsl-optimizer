@@ -31,7 +31,7 @@
 #include <pipe/p_video_context.h>
 
 #include "vl_idct.h"
-#include "vl_mpeg12_mc_renderer.h"
+#include "vl_mc.h"
 
 #include "vl_vertex_buffers.h"
 #include "vl_video_buffer.h"
@@ -56,7 +56,7 @@ struct vl_mpeg12_decoder
    void *ves_mv[2];
 
    struct vl_idct idct_y, idct_c;
-   struct vl_mpeg12_mc_renderer mc_y, mc_c;
+   struct vl_mc mc_y, mc_c;
 
    void *dsa;
    void *blend;
@@ -81,7 +81,7 @@ struct vl_mpeg12_buffer
    } vertex_bufs;
 
    struct vl_idct_buffer idct[VL_MAX_PLANES];
-   struct vl_mpeg12_mc_buffer mc[VL_MAX_PLANES];
+   struct vl_mc_buffer mc[VL_MAX_PLANES];
 
    struct pipe_transfer *tex_transfer[VL_MAX_PLANES];
    short *texels[VL_MAX_PLANES];

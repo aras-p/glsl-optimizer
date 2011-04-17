@@ -36,7 +36,7 @@
 
 #include "vl_defines.h"
 #include "vl_vertex_buffers.h"
-#include "vl_mpeg12_mc_renderer.h"
+#include "vl_mc.h"
 
 enum VS_OUTPUT
 {
@@ -47,7 +47,7 @@ enum VS_OUTPUT
 };
 
 static struct ureg_dst
-calc_position(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader)
+calc_position(struct vl_mc *r, struct ureg_program *shader)
 {
    struct ureg_src block_scale;
    struct ureg_src vrect, vpos;
@@ -81,7 +81,7 @@ calc_position(struct vl_mpeg12_mc_renderer *r, struct ureg_program *shader)
 }
 
 static void *
-create_ycbcr_vert_shader(struct vl_mpeg12_mc_renderer *r)
+create_ycbcr_vert_shader(struct vl_mc *r)
 {
    struct ureg_program *shader;
    struct ureg_src block_scale;
@@ -176,7 +176,7 @@ create_ycbcr_vert_shader(struct vl_mpeg12_mc_renderer *r)
 }
 
 static void *
-create_ref_vert_shader(struct vl_mpeg12_mc_renderer *r)
+create_ref_vert_shader(struct vl_mc *r)
 {
    struct ureg_program *shader;
    struct ureg_src mv_scale;
@@ -259,7 +259,7 @@ calc_field(struct ureg_program *shader)
 }
 
 static void *
-create_ycbcr_frag_shader(struct vl_mpeg12_mc_renderer *r, float scale)
+create_ycbcr_frag_shader(struct vl_mc *r, float scale)
 {
    struct ureg_program *shader;
    struct ureg_src tc[2], sampler;
@@ -318,7 +318,7 @@ create_ycbcr_frag_shader(struct vl_mpeg12_mc_renderer *r, float scale)
 }
 
 static void *
-create_ref_frag_shader(struct vl_mpeg12_mc_renderer *r)
+create_ref_frag_shader(struct vl_mc *r)
 {
    const float y_scale =
       r->buffer_height / 2 *
@@ -387,7 +387,7 @@ create_ref_frag_shader(struct vl_mpeg12_mc_renderer *r)
 }
 
 static bool
-init_pipe_state(struct vl_mpeg12_mc_renderer *r)
+init_pipe_state(struct vl_mc *r)
 {
    struct pipe_sampler_state sampler;
    struct pipe_blend_state blend;
@@ -467,7 +467,7 @@ error_sampler_ycbcr:
 }
 
 static void
-cleanup_pipe_state(struct vl_mpeg12_mc_renderer *r)
+cleanup_pipe_state(struct vl_mc *r)
 {
    assert(r);
 
@@ -479,14 +479,14 @@ cleanup_pipe_state(struct vl_mpeg12_mc_renderer *r)
 }
 
 bool
-vl_mc_init(struct vl_mpeg12_mc_renderer *renderer, struct pipe_context *pipe,
+vl_mc_init(struct vl_mc *renderer, struct pipe_context *pipe,
            unsigned buffer_width, unsigned buffer_height,
            unsigned macroblock_size, float scale)
 {
    assert(renderer);
    assert(pipe);
 
-   memset(renderer, 0, sizeof(struct vl_mpeg12_mc_renderer));
+   memset(renderer, 0, sizeof(struct vl_mc));
 
    renderer->pipe = pipe;
    renderer->buffer_width = buffer_width;
@@ -531,7 +531,7 @@ error_pipe_state:
 }
 
 void
-vl_mc_cleanup(struct vl_mpeg12_mc_renderer *renderer)
+vl_mc_cleanup(struct vl_mc *renderer)
 {
    assert(renderer);
 
@@ -544,7 +544,7 @@ vl_mc_cleanup(struct vl_mpeg12_mc_renderer *renderer)
 }
 
 bool
-vl_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_buffer *buffer,
+vl_mc_init_buffer(struct vl_mc *renderer, struct vl_mc_buffer *buffer,
                   struct pipe_sampler_view *source)
 {
    assert(renderer && buffer);
@@ -568,7 +568,7 @@ vl_mc_init_buffer(struct vl_mpeg12_mc_renderer *renderer, struct vl_mpeg12_mc_bu
 }
 
 void
-vl_mc_cleanup_buffer(struct vl_mpeg12_mc_buffer *buffer)
+vl_mc_cleanup_buffer(struct vl_mc_buffer *buffer)
 {
    assert(buffer);
 
@@ -576,7 +576,7 @@ vl_mc_cleanup_buffer(struct vl_mpeg12_mc_buffer *buffer)
 }
 
 void
-vl_mc_set_surface(struct vl_mpeg12_mc_buffer *buffer, struct pipe_surface *surface)
+vl_mc_set_surface(struct vl_mc_buffer *buffer, struct pipe_surface *surface)
 {
    assert(buffer && surface);
 
@@ -591,9 +591,9 @@ vl_mc_set_surface(struct vl_mpeg12_mc_buffer *buffer, struct pipe_surface *surfa
 }
 
 static void
-prepare_pipe_4_rendering(struct vl_mpeg12_mc_buffer *buffer)
+prepare_pipe_4_rendering(struct vl_mc_buffer *buffer)
 {
-   struct vl_mpeg12_mc_renderer *renderer;
+   struct vl_mc *renderer;
 
    assert(buffer);
 
@@ -612,11 +612,11 @@ prepare_pipe_4_rendering(struct vl_mpeg12_mc_buffer *buffer)
 }
 
 void
-vl_mc_render_ref(struct vl_mpeg12_mc_buffer *buffer, struct pipe_sampler_view *ref,
+vl_mc_render_ref(struct vl_mc_buffer *buffer, struct pipe_sampler_view *ref,
                  unsigned not_empty_start_instance, unsigned not_empty_num_instances,
                  unsigned empty_start_instance, unsigned empty_num_instances)
 {
-   struct vl_mpeg12_mc_renderer *renderer;
+   struct vl_mc *renderer;
 
    assert(buffer && ref);
 
@@ -643,10 +643,10 @@ vl_mc_render_ref(struct vl_mpeg12_mc_buffer *buffer, struct pipe_sampler_view *r
 }
 
 void
-vl_mc_render_ycbcr(struct vl_mpeg12_mc_buffer *buffer,
+vl_mc_render_ycbcr(struct vl_mc_buffer *buffer,
                    unsigned not_empty_start_instance, unsigned not_empty_num_instances)
 {
-   struct vl_mpeg12_mc_renderer *renderer;
+   struct vl_mc *renderer;
 
    assert(buffer);
 
