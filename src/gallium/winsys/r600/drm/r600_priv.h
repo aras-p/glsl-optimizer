@@ -194,6 +194,16 @@ static void inline r600_context_reg(struct r600_context *ctx,
 	}
 }
 
+static inline void r600_context_dirty_block(struct r600_context *ctx, struct r600_block *block)
+{
+	if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
+		block->status |= R600_BLOCK_STATUS_ENABLED;
+		block->status |= R600_BLOCK_STATUS_DIRTY;
+		ctx->pm4_dirty_cdwords += block->pm4_ndwords + block->pm4_flush_ndwords;
+		LIST_ADDTAIL(&block->list,&ctx->dirty);
+	}
+}
+
 static inline void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block)
 {
 	int id;

@@ -668,12 +668,7 @@ static inline void evergreen_context_pipe_state_set_resource(struct r600_context
 		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[2].bo);
 		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[3].bo);
 	}
-	if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
-		block->status |= R600_BLOCK_STATUS_ENABLED;
-		block->status |= R600_BLOCK_STATUS_DIRTY;
-		ctx->pm4_dirty_cdwords += block->pm4_ndwords + block->pm4_flush_ndwords;
-		LIST_ADDTAIL(&block->list,&ctx->dirty);
-	}
+	r600_context_dirty_block(ctx, block);
 }
 
 void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
@@ -712,12 +707,8 @@ static inline void evergreen_context_pipe_state_set_sampler(struct r600_context 
 	block->reg[0] = state->regs[0].value;
 	block->reg[1] = state->regs[1].value;
 	block->reg[2] = state->regs[2].value;
-	if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
-		block->status |= R600_BLOCK_STATUS_ENABLED;
-		block->status |= R600_BLOCK_STATUS_DIRTY;
-		ctx->pm4_dirty_cdwords += block->pm4_ndwords + block->pm4_flush_ndwords;
-		LIST_ADDTAIL(&block->list,&ctx->dirty);
-	}
+
+	r600_context_dirty_block(ctx, block);
 }
 
 static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset, unsigned id)
@@ -741,12 +732,8 @@ static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_c
 	block->reg[2] = state->regs[4].value;
 	block->reg[3] = state->regs[5].value;
 	block->reg[4] = state->regs[6].value;
-	if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
-		block->status |= R600_BLOCK_STATUS_ENABLED;
-		block->status |= R600_BLOCK_STATUS_DIRTY;
-		ctx->pm4_dirty_cdwords += block->pm4_ndwords + block->pm4_flush_ndwords;
-		LIST_ADDTAIL(&block->list,&ctx->dirty);
-	}
+
+	r600_context_dirty_block(ctx, block);
 }
 
 void evergreen_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id)

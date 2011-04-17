@@ -851,12 +851,7 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 			r600_bo_reference(ctx->radeon, &block->reloc[id].bo, state->regs[i].bo);
 			state->regs[i].bo->fence = ctx->radeon->fence;
 		}
-		if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
-			block->status |= R600_BLOCK_STATUS_ENABLED;
-			block->status |= R600_BLOCK_STATUS_DIRTY;
-			ctx->pm4_dirty_cdwords += block->pm4_ndwords + block->pm4_flush_ndwords;
-			LIST_ADDTAIL(&block->list,&ctx->dirty);
-		}
+		r600_context_dirty_block(ctx, block);
 	}
 }
 
@@ -897,12 +892,7 @@ static inline void r600_context_pipe_state_set_resource(struct r600_context *ctx
 		state->regs[2].bo->fence = ctx->radeon->fence;
 		state->regs[3].bo->fence = ctx->radeon->fence;
 	}
-	if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
-		block->status |= R600_BLOCK_STATUS_ENABLED;
-		block->status |= R600_BLOCK_STATUS_DIRTY;
-		ctx->pm4_dirty_cdwords += block->pm4_ndwords + block->pm4_flush_ndwords;
-		LIST_ADDTAIL(&block->list,&ctx->dirty);
-	}
+	r600_context_dirty_block(ctx, block);
 }
 
 void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
@@ -941,12 +931,8 @@ static inline void r600_context_pipe_state_set_sampler(struct r600_context *ctx,
 	block->reg[0] = state->regs[0].value;
 	block->reg[1] = state->regs[1].value;
 	block->reg[2] = state->regs[2].value;
-	if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
-		block->status |= R600_BLOCK_STATUS_ENABLED;
-		block->status |= R600_BLOCK_STATUS_DIRTY;
-		ctx->pm4_dirty_cdwords += block->pm4_ndwords + block->pm4_flush_ndwords;
-		LIST_ADDTAIL(&block->list,&ctx->dirty);
-	}
+
+	r600_context_dirty_block(ctx, block);
 }
 
 static inline void r600_context_pipe_state_set_sampler_border(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)
@@ -968,12 +954,8 @@ static inline void r600_context_pipe_state_set_sampler_border(struct r600_contex
 	block->reg[1] = state->regs[4].value;
 	block->reg[2] = state->regs[5].value;
 	block->reg[3] = state->regs[6].value;
-	if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
-		block->status |= R600_BLOCK_STATUS_ENABLED;
-		block->status |= R600_BLOCK_STATUS_DIRTY;
-		ctx->pm4_dirty_cdwords += block->pm4_ndwords + block->pm4_flush_ndwords;
-		LIST_ADDTAIL(&block->list,&ctx->dirty);
-	}
+
+	r600_context_dirty_block(ctx, block);
 }
 
 void r600_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id)
