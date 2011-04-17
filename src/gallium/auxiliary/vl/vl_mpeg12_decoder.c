@@ -289,8 +289,7 @@ vl_mpeg12_destroy(struct pipe_video_decoder *decoder)
    for (i = 0; i < VL_MAX_PLANES; ++i)
       dec->pipe->delete_vertex_elements_state(dec->pipe, dec->ves_eb[i]);
 
-   for (i = 0; i < 2; ++i)
-      dec->pipe->delete_vertex_elements_state(dec->pipe, dec->ves_mv[i]);
+   dec->pipe->delete_vertex_elements_state(dec->pipe, dec->ves_mv);
 
    pipe_resource_reference(&dec->quads.buffer, NULL);
    pipe_resource_reference(&dec->pos.buffer, NULL);
@@ -476,6 +475,7 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
    vb[0] = dec->quads;
    vb[1] = dec->pos;
 
+   dec->pipe->bind_vertex_elements_state(dec->pipe, dec->ves_mv);
    for (i = 0; i < VL_MAX_PLANES; ++i) {
       vl_mc_set_surface(&buf->mc[i], surfaces[i]);
 
@@ -485,7 +485,6 @@ vl_mpeg12_decoder_flush_buffer(struct pipe_video_decode_buffer *buffer,
          vb[2] = vl_vb_get_mv(&buf->vertex_stream, j);;
          dec->pipe->set_vertex_buffers(dec->pipe, 3, vb);
 
-         dec->pipe->bind_vertex_elements_state(dec->pipe, dec->ves_mv[j]);
          vl_mc_render_ref(&buf->mc[i], sv[j][i]);
       }
    }
@@ -710,8 +709,7 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
    for (i = 0; i < VL_MAX_PLANES; ++i)
       dec->ves_eb[i] = vl_vb_get_ves_eb(dec->pipe, i);
 
-   for (i = 0; i < 2; ++i)
-      dec->ves_mv[i] = vl_vb_get_ves_mv(dec->pipe, i);
+   dec->ves_mv = vl_vb_get_ves_mv(dec->pipe);
 
    /* TODO: Implement 422, 444 */
    assert(dec->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420);

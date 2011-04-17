@@ -55,7 +55,7 @@ struct vl_mpeg12_decoder
    struct pipe_vertex_buffer pos;
 
    void *ves_eb[VL_MAX_PLANES];
-   void *ves_mv[2];
+   void *ves_mv;
 
    struct vl_idct idct_y, idct_c;
    struct vl_mc mc_y, mc_c;

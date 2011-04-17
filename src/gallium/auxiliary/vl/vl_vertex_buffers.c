@@ -205,7 +205,7 @@ vl_vb_get_ves_eb(struct pipe_context *pipe, int component)
 }
 
 void *
-vl_vb_get_ves_mv(struct pipe_context *pipe, int motionvector)
+vl_vb_get_ves_mv(struct pipe_context *pipe)
 {
    struct pipe_vertex_element vertex_elems[NUM_VS_INPUTS];
 
