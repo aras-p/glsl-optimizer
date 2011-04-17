@@ -59,11 +59,14 @@ struct radeon {
 	pipe_mutex bo_handles_mutex;
 };
 
+#define REG_FLAG_NEED_BO 1
+#define REG_FLAG_DIRTY_ALWAYS 2
+
 struct r600_reg {
 	unsigned			opcode;
 	unsigned			offset_base;
 	unsigned			offset;
-	unsigned			need_bo;
+	unsigned			flags;
 	unsigned			flush_flags;
 	unsigned			flush_mask;
 };
@@ -194,9 +197,10 @@ static void inline r600_context_reg(struct r600_context *ctx,
 	}
 }
 
-static inline void r600_context_dirty_block(struct r600_context *ctx, struct r600_block *block)
+static inline void r600_context_dirty_block(struct r600_context *ctx, struct r600_block *block,
+					    int dirty)
 {
-	if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
+	if ((dirty != (block->status & R600_BLOCK_STATUS_DIRTY)) || !(block->status & R600_BLOCK_STATUS_ENABLED)) {
 		block->status |= R600_BLOCK_STATUS_ENABLED;
 		block->status |= R600_BLOCK_STATUS_DIRTY;
 		ctx->pm4_dirty_cdwords += block->pm4_ndwords + block->pm4_flush_ndwords;

@@ -179,6 +179,7 @@ struct r600_block_reloc {
 struct r600_block {
 	struct list_head	list;
 	unsigned		status;
+	unsigned                flags;
 	unsigned		start_offset;
 	unsigned		pm4_ndwords;
 	unsigned		pm4_flush_ndwords;
