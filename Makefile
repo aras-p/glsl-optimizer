@@ -250,7 +250,6 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/math/descrip.mms				\
 	$(DIRECTORY)/src/mesa/program/*.[chly]				\
 	$(DIRECTORY)/src/mesa/program/*.cpp				\
-	$(DIRECTORY)/src/mesa/program/Makefile				\
 	$(DIRECTORY)/src/mesa/program/descrip.mms			\
 	$(DIRECTORY)/src/mesa/swrast/*.[ch]				\
 	$(DIRECTORY)/src/mesa/swrast/descrip.mms			\
