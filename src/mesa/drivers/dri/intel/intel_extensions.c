@@ -176,6 +176,7 @@ static const struct dri_extension brw_extensions[] = {
    { "GL_ARB_texture_float",              NULL },
 #endif
    { "GL_MESA_texture_signed_rgba",       NULL },
+   { "GL_ARB_texture_compression_rgtc",   NULL },
    { "GL_ARB_texture_non_power_of_two",   NULL },
    { "GL_ARB_texture_rg",                 NULL },
    { "GL_EXT_draw_buffers2",              GL_EXT_draw_buffers2_functions },

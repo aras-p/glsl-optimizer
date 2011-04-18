@@ -718,6 +718,12 @@ intelInitContext(struct intel_context *intel,
    ctx->TextureFormatSupported[MESA_FORMAT_RGBA_DXT5] = GL_TRUE;
 
 #ifndef I915
+   /* GL_ARB_texture_compression_rgtc */
+   ctx->TextureFormatSupported[MESA_FORMAT_RED_RGTC1] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RED_RGTC1] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_RG_RGTC2] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RG_RGTC2] = GL_TRUE;
+
    /* GL_ARB_texture_rg */
    ctx->TextureFormatSupported[MESA_FORMAT_R8] = GL_TRUE;
    ctx->TextureFormatSupported[MESA_FORMAT_R16] = GL_TRUE;
