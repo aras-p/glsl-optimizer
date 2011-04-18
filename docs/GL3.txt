@@ -12,7 +12,7 @@ Feature                                               Status
 
 GL 3.0:
 
-GLSL 1.30 (GL_EXT_gpu_shader4, etc.)                  not started
+GLSL 1.30 (GL_EXT_gpu_shader4, etc.)                  started
 Conditional rendering (GL_NV_conditional_render)      DONE (swrast & softpipe)
 Map buffer subranges (GL_ARB_map_buffer_range)        DONE
 Clamping controls (GL_ARB_color_buffer_float)         DONE
