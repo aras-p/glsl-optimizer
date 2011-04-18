@@ -481,7 +481,7 @@ set_sampler_min_lod(struct gl_context *ctx, struct gl_sampler_object *samp,
 
 static GLuint
 set_sampler_max_lod(struct gl_context *ctx, struct gl_sampler_object *samp,
-                    GLint param)
+                    GLfloat param)
 {
    if (samp->MaxLod == param)
       return GL_FALSE;
