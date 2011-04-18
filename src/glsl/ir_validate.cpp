@@ -254,7 +254,7 @@ ir_validate::visit_leave(ir_expression *ir)
 
    case ir_unop_f2i:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
-      assert(ir->type->base_type == GLSL_TYPE_INT);
+      assert(ir->type->is_integer());
       break;
    case ir_unop_i2f:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_INT);
@@ -269,12 +269,12 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->type->base_type == GLSL_TYPE_FLOAT);
       break;
    case ir_unop_i2b:
-      assert(ir->operands[0]->type->base_type == GLSL_TYPE_INT);
+      assert(ir->operands[0]->type->is_integer());
       assert(ir->type->base_type == GLSL_TYPE_BOOL);
       break;
    case ir_unop_b2i:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_BOOL);
-      assert(ir->type->base_type == GLSL_TYPE_INT);
+      assert(ir->type->is_integer());
       break;
    case ir_unop_u2f:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_UINT);
