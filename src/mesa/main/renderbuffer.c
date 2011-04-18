@@ -1110,6 +1110,194 @@ get_values_rg1616(struct gl_context *ctx, struct gl_renderbuffer *rb,
 }
 
 /**********************************************************************
+ * Functions for MESA_FORMAT_INTENSITY_FLOAT32.
+ */
+static void
+get_row_i_float32(struct gl_context *ctx, struct gl_renderbuffer *rb,
+		  GLuint count, GLint x, GLint y, void *values)
+{
+   const GLfloat *src = rb->GetPointer(ctx, rb, x, y);
+   GLfloat *dst = values;
+   GLuint i;
+
+   for (i = 0; i < count; i++) {
+      dst[i * 4 + RCOMP] =
+      dst[i * 4 + GCOMP] =
+      dst[i * 4 + BCOMP] =
+      dst[i * 4 + ACOMP] = src[i];
+   }
+}
+
+static void
+get_values_i_float32(struct gl_context *ctx, struct gl_renderbuffer *rb,
+		     GLuint count, const GLint x[], const GLint y[],
+		     void *values)
+{
+   GLfloat *dst = values;
+   GLuint i;
+
+   for (i = 0; i < count; i++) {
+      const GLfloat *src = rb->GetPointer(ctx, rb, x[i], y[i]);
+      dst[i * 4 + RCOMP] =
+      dst[i * 4 + GCOMP] =
+      dst[i * 4 + BCOMP] =
+      dst[i * 4 + ACOMP] = src[0];
+   }
+}
+
+/**********************************************************************
+ * Functions for MESA_FORMAT_LUMINANCE_FLOAT32.
+ */
+static void
+get_row_l_float32(struct gl_context *ctx, struct gl_renderbuffer *rb,
+		  GLuint count, GLint x, GLint y, void *values)
+{
+   const GLfloat *src = rb->GetPointer(ctx, rb, x, y);
+   GLfloat *dst = values;
+   GLuint i;
+
+   for (i = 0; i < count; i++) {
+      dst[i * 4 + RCOMP] =
+      dst[i * 4 + GCOMP] =
+      dst[i * 4 + BCOMP] = src[i];
+      dst[i * 4 + ACOMP] = 1.0;
+   }
+}
+
+static void
+get_values_l_float32(struct gl_context *ctx, struct gl_renderbuffer *rb,
+		     GLuint count, const GLint x[], const GLint y[],
+		     void *values)
+{
+   GLfloat *dst = values;
+   GLuint i;
+
+   for (i = 0; i < count; i++) {
+      const GLfloat *src = rb->GetPointer(ctx, rb, x[i], y[i]);
+      dst[i * 4 + RCOMP] =
+      dst[i * 4 + GCOMP] =
+      dst[i * 4 + BCOMP] = src[0];
+      dst[i * 4 + ACOMP] = 1.0;
+   }
+}
+
+/**********************************************************************
+ * Functions for MESA_FORMAT_ALPHA_FLOAT32.
+ */
+static void
+get_row_a_float32(struct gl_context *ctx, struct gl_renderbuffer *rb,
+		  GLuint count, GLint x, GLint y, void *values)
+{
+   const GLfloat *src = rb->GetPointer(ctx, rb, x, y);
+   GLfloat *dst = values;
+   GLuint i;
+
+   for (i = 0; i < count; i++) {
+      dst[i * 4 + RCOMP] = 0.0;
+      dst[i * 4 + GCOMP] = 0.0;
+      dst[i * 4 + BCOMP] = 0.0;
+      dst[i * 4 + ACOMP] = src[i];
+   }
+}
+
+static void
+get_values_a_float32(struct gl_context *ctx, struct gl_renderbuffer *rb,
+		     GLuint count, const GLint x[], const GLint y[],
+		     void *values)
+{
+   GLfloat *dst = values;
+   GLuint i;
+
+   for (i = 0; i < count; i++) {
+      const GLfloat *src = rb->GetPointer(ctx, rb, x[i], y[i]);
+      dst[i * 4 + RCOMP] = 0.0;
+      dst[i * 4 + GCOMP] = 0.0;
+      dst[i * 4 + BCOMP] = 0.0;
+      dst[i * 4 + ACOMP] = src[0];
+   }
+}
+
+static void
+put_row_a_float32(struct gl_context *ctx, struct gl_renderbuffer *rb,
+		  GLuint count, GLint x, GLint y,
+		  const void *values, const GLubyte *mask)
+{
+   float *dst = rb->GetPointer(ctx, rb, x, y);
+   const float *src = values;
+   unsigned int i;
+
+   if (mask) {
+      for (i = 0; i < count; i++) {
+         if (mask[i]) {
+	    dst[i] = src[i * 4 + ACOMP];
+         }
+      }
+   }
+   else {
+      for (i = 0; i < count; i++) {
+	 dst[i] = src[i * 4 + ACOMP];
+      }
+   }
+}
+
+static void
+put_mono_row_a_float32(struct gl_context *ctx, struct gl_renderbuffer *rb,
+		       GLuint count, GLint x, GLint y,
+		       const void *value, const GLubyte *mask)
+{
+   float *dst = rb->GetPointer(ctx, rb, x, y);
+   const float *src = value;
+   unsigned int i;
+
+   if (mask) {
+      for (i = 0; i < count; i++) {
+         if (mask[i]) {
+	    dst[i] = src[ACOMP];
+         }
+      }
+   }
+   else {
+      for (i = 0; i < count; i++) {
+	 dst[i] = src[ACOMP];
+      }
+   }
+}
+
+static void
+put_values_a_float32(struct gl_context *ctx, struct gl_renderbuffer *rb,
+		     GLuint count, const GLint x[], const GLint y[],
+		     const void *values, const GLubyte *mask)
+{
+   const float *src = values;
+   unsigned int i;
+
+   for (i = 0; i < count; i++) {
+      if (!mask || mask[i]) {
+	 float *dst = rb->GetPointer(ctx, rb, x[i], y[i]);
+
+	 *dst = src[i * 4 + ACOMP];
+      }
+   }
+}
+
+static void
+put_mono_values_a_float32(struct gl_context *ctx,
+			  struct gl_renderbuffer *rb,
+			  GLuint count, const GLint x[], const GLint y[],
+			  const void *value, const GLubyte *mask)
+{
+   const float *src = value;
+   unsigned int i;
+
+   for (i = 0; i < count; i++) {
+      if (!mask || mask[i]) {
+	 float *dst = rb->GetPointer(ctx, rb, x[i], y[i]);
+	 *dst = src[ACOMP];
+      }
+   }
+}
+
+/**********************************************************************
  * Functions for MESA_FORMAT_R_FLOAT32.
  */
 static void
@@ -1335,6 +1523,36 @@ _mesa_set_renderbuffer_accessors(struct gl_renderbuffer *rb)
       rb->PutMonoRow = put_mono_row_generic;
       rb->PutValues = put_values_generic;
       rb->PutMonoValues = put_mono_values_generic;
+      break;
+
+   case MESA_FORMAT_INTENSITY_FLOAT32:
+      rb->GetRow = get_row_i_float32;
+      rb->GetValues = get_values_i_float32;
+      rb->PutRow = put_row_generic;
+      rb->PutRowRGB = NULL;
+      rb->PutMonoRow = put_mono_row_generic;
+      rb->PutValues = put_values_generic;
+      rb->PutMonoValues = put_mono_values_generic;
+      break;
+
+   case MESA_FORMAT_LUMINANCE_FLOAT32:
+      rb->GetRow = get_row_l_float32;
+      rb->GetValues = get_values_l_float32;
+      rb->PutRow = put_row_generic;
+      rb->PutRowRGB = NULL;
+      rb->PutMonoRow = put_mono_row_generic;
+      rb->PutValues = put_values_generic;
+      rb->PutMonoValues = put_mono_values_generic;
+      break;
+
+   case MESA_FORMAT_ALPHA_FLOAT32:
+      rb->GetRow = get_row_a_float32;
+      rb->GetValues = get_values_a_float32;
+      rb->PutRow = put_row_a_float32;
+      rb->PutRowRGB = NULL;
+      rb->PutMonoRow = put_mono_row_a_float32;
+      rb->PutValues = put_values_a_float32;
+      rb->PutMonoValues = put_mono_values_a_float32;
       break;
 
    case MESA_FORMAT_RG_FLOAT32:
