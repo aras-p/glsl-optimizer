@@ -880,6 +880,7 @@ static inline void r600_context_pipe_state_set_resource(struct r600_context *ctx
 	struct r600_range *range;
 	struct r600_block *block;
 	int i;
+	int dirty;
 
 	range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
 	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
@@ -891,26 +892,56 @@ static inline void r600_context_pipe_state_set_resource(struct r600_context *ctx
 		return;
 	}
 
-	for (i = 0; i < 7; i++)
-		block->reg[i] = state->regs[i].value;
+	dirty = block->status & R600_BLOCK_STATUS_DIRTY;
 
-	r600_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
-	r600_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
-	if (state->regs[0].bo) {
-		/* VERTEX RESOURCE, we preted there is 2 bo to relocate so
-		 * we have single case btw VERTEX & TEXTURE resource
-		 */
-		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[0].bo);
-		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[0].bo);
-		state->regs[0].bo->fence = ctx->radeon->fence;
-	} else {
-		/* TEXTURE RESOURCE */
-		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[2].bo);
-		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[3].bo);
-		state->regs[2].bo->fence = ctx->radeon->fence;
-		state->regs[3].bo->fence = ctx->radeon->fence;
+	for (i = 0; i < 7; i++) {
+		if (block->reg[i] != state->regs[i].value) {
+			dirty |= R600_BLOCK_STATUS_DIRTY;
+			block->reg[i] = state->regs[i].value;
+		}
 	}
-	r600_context_dirty_block(ctx, block, R600_BLOCK_STATUS_DIRTY, 6);
+
+	/* if no BOs on block, force dirty */
+	if (!block->reloc[1].bo || !block->reloc[2].bo)
+		dirty |= R600_BLOCK_STATUS_DIRTY;
+
+	if (!dirty) {
+		if (state->regs[0].bo) {
+			if ((block->reloc[1].bo->bo->handle != state->regs[0].bo->bo->handle) ||
+			    (block->reloc[2].bo->bo->handle != state->regs[0].bo->bo->handle))
+				dirty |= R600_BLOCK_STATUS_DIRTY;
+		} else {
+			if ((block->reloc[1].bo->bo->handle != state->regs[2].bo->bo->handle) ||
+			    (block->reloc[2].bo->bo->handle != state->regs[3].bo->bo->handle))
+				dirty |= R600_BLOCK_STATUS_DIRTY;
+		}
+	}
+	if (!dirty) {
+		if (state->regs[0].bo)
+			state->regs[0].bo->fence = ctx->radeon->fence;
+		else {
+			state->regs[2].bo->fence = ctx->radeon->fence;
+			state->regs[3].bo->fence = ctx->radeon->fence;
+		}
+	} else {
+		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
+		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, NULL);
+		if (state->regs[0].bo) {
+			/* VERTEX RESOURCE, we preted there is 2 bo to relocate so
+			 * we have single case btw VERTEX & TEXTURE resource
+			 */
+			r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[0].bo);
+			r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[0].bo);
+			state->regs[0].bo->fence = ctx->radeon->fence;
+		} else {
+			/* TEXTURE RESOURCE */
+			r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[2].bo);
+			r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[3].bo);
+			state->regs[2].bo->fence = ctx->radeon->fence;
+			state->regs[3].bo->fence = ctx->radeon->fence;
+		}
+	}
+	r600_context_dirty_block(ctx, block, dirty, 6);
 }
 
 void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
