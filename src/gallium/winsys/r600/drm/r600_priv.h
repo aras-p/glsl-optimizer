@@ -36,6 +36,9 @@
 #include <os/os_thread.h>
 #include "r600.h"
 
+#define PKT_COUNT_C                     0xC000FFFF
+#define PKT_COUNT_S(x)                  (((x) & 0x3FFF) << 16)
+
 struct r600_bomgr;
 struct r600_bo;
 
@@ -198,9 +201,13 @@ static void inline r600_context_reg(struct r600_context *ctx,
 }
 
 static inline void r600_context_dirty_block(struct r600_context *ctx, struct r600_block *block,
-					    int dirty)
+					    int dirty, int index)
 {
+	if (dirty && (index + 1) > block->nreg_dirty)
+		block->nreg_dirty = index + 1;
+
 	if ((dirty != (block->status & R600_BLOCK_STATUS_DIRTY)) || !(block->status & R600_BLOCK_STATUS_ENABLED)) {
+
 		block->status |= R600_BLOCK_STATUS_ENABLED;
 		block->status |= R600_BLOCK_STATUS_DIRTY;
 		ctx->pm4_dirty_cdwords += block->pm4_ndwords + block->pm4_flush_ndwords;
@@ -211,6 +218,10 @@ static inline void r600_context_dirty_block(struct r600_context *ctx, struct r60
 static inline void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block)
 {
 	int id;
+
+	if (block->nreg_dirty == 0 && block->nbo == 0 && !(block->flags & REG_FLAG_DIRTY_ALWAYS)) {
+		goto out;
+	}
 
 	for (int j = 0; j < block->nreg; j++) {
 		if (block->pm4_bo_index[j]) {
@@ -227,7 +238,20 @@ static inline void r600_context_block_emit_dirty(struct r600_context *ctx, struc
 	}
 	memcpy(&ctx->pm4[ctx->pm4_cdwords], block->pm4, block->pm4_ndwords * 4);
 	ctx->pm4_cdwords += block->pm4_ndwords;
+
+	if (block->nreg_dirty != block->nreg && block->nbo == 0 && !(block->flags & REG_FLAG_DIRTY_ALWAYS)) {
+		int new_dwords = block->nreg_dirty;
+		uint32_t oldword, newword;
+		ctx->pm4_cdwords -= block->pm4_ndwords;
+		newword = oldword = ctx->pm4[ctx->pm4_cdwords];
+		newword &= PKT_COUNT_C;
+		newword |= PKT_COUNT_S(new_dwords);
+		ctx->pm4[ctx->pm4_cdwords] = newword;
+		ctx->pm4_cdwords += new_dwords + 2;
+	}
+out:
 	block->status ^= R600_BLOCK_STATUS_DIRTY;
+	block->nreg_dirty = 0;
 	LIST_DELINIT(&block->list);
 }
 

@@ -184,7 +184,8 @@ struct r600_block {
 	unsigned		pm4_ndwords;
 	unsigned		pm4_flush_ndwords;
 	unsigned		nbo;
-	unsigned		nreg;
+	u16 		        nreg;
+	u16                     nreg_dirty;
 	u32			*reg;
 	u32			pm4[R600_BLOCK_MAX_REG];
 	unsigned		pm4_bo_index[R600_BLOCK_MAX_REG];

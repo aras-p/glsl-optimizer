@@ -113,6 +113,7 @@ int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg,
 		block->reg = &block->pm4[block->pm4_ndwords];
 		block->pm4_ndwords += n;
 		block->nreg = n;
+		block->nreg_dirty = n;
 		block->flags = 0;
 		LIST_INITHEAD(&block->list);
 
@@ -844,7 +845,7 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 	unsigned new_val;
 	int dirty;
 	for (int i = 0; i < state->nregs; i++) {
-		unsigned id;
+		unsigned id, reloc_id;
 
 		range = &ctx->range[CTX_RANGE_ID(ctx, state->regs[i].offset)];
 		block = range->blocks[CTX_BLOCK_ID(ctx, state->regs[i].offset)];
@@ -863,14 +864,14 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 			dirty |= R600_BLOCK_STATUS_DIRTY;
 		if (block->pm4_bo_index[id]) {
 			/* find relocation */
-			id = block->pm4_bo_index[id];
-			r600_bo_reference(ctx->radeon, &block->reloc[id].bo, state->regs[i].bo);
+			reloc_id = block->pm4_bo_index[id];
+			r600_bo_reference(ctx->radeon, &block->reloc[reloc_id].bo, state->regs[i].bo);
 			state->regs[i].bo->fence = ctx->radeon->fence;
 			/* always force dirty for relocs for now */
 			dirty |= R600_BLOCK_STATUS_DIRTY;
 		}
 
-		r600_context_dirty_block(ctx, block, dirty);
+		r600_context_dirty_block(ctx, block, dirty, id);
 	}
 }
 
@@ -909,7 +910,7 @@ static inline void r600_context_pipe_state_set_resource(struct r600_context *ctx
 		state->regs[2].bo->fence = ctx->radeon->fence;
 		state->regs[3].bo->fence = ctx->radeon->fence;
 	}
-	r600_context_dirty_block(ctx, block, R600_BLOCK_STATUS_DIRTY);
+	r600_context_dirty_block(ctx, block, R600_BLOCK_STATUS_DIRTY, 6);
 }
 
 void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
@@ -955,7 +956,7 @@ static inline void r600_context_pipe_state_set_sampler(struct r600_context *ctx,
 		}
 	}
 
-	r600_context_dirty_block(ctx, block, dirty);
+	r600_context_dirty_block(ctx, block, dirty, 2);
 }
 
 static inline void r600_context_pipe_state_set_sampler_border(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)
@@ -983,7 +984,7 @@ static inline void r600_context_pipe_state_set_sampler_border(struct r600_contex
 		}
 	}
 
-	r600_context_dirty_block(ctx, block, dirty);
+	r600_context_dirty_block(ctx, block, dirty, 3);
 }
 
 void r600_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id)
@@ -1211,6 +1212,7 @@ void r600_context_flush(struct r600_context *ctx)
 			}
 			ctx->pm4_dirty_cdwords += ctx->blocks[i]->pm4_ndwords + ctx->blocks[i]->pm4_flush_ndwords;
 			ctx->blocks[i]->status |= R600_BLOCK_STATUS_DIRTY;
+			ctx->blocks[i]->nreg_dirty = ctx->blocks[i]->nreg;
 		}
 	}
 }

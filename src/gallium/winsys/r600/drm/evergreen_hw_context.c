@@ -664,7 +664,7 @@ static inline void evergreen_context_pipe_state_set_resource(struct r600_context
 		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[2].bo);
 		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[3].bo);
 	}
-	r600_context_dirty_block(ctx, block, R600_BLOCK_STATUS_DIRTY);
+	r600_context_dirty_block(ctx, block, R600_BLOCK_STATUS_DIRTY, 7);
 }
 
 void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
@@ -711,7 +711,7 @@ static inline void evergreen_context_pipe_state_set_sampler(struct r600_context 
 		}
 	}
 
-	r600_context_dirty_block(ctx, block, dirty);
+	r600_context_dirty_block(ctx, block, dirty, 2);
 }
 
 static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset, unsigned id)
@@ -745,7 +745,7 @@ static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_c
 		}
 	}
 
-	r600_context_dirty_block(ctx, block, dirty);
+	r600_context_dirty_block(ctx, block, dirty, 4);
 }
 
 void evergreen_context_pipe_state_set_ps_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned id)
