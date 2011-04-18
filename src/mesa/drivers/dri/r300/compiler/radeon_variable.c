@@ -164,12 +164,75 @@ void rc_variable_compute_live_intervals(struct rc_variable * var)
 
 		for (i = 0; i < var->ReaderCount; i++) {
 			unsigned int chan;
+			unsigned int chan_start = start;
+			unsigned int chan_end = var->Readers[i].Inst->IP;
 			unsigned int mask = var->Readers[i].WriteMask;
+			struct rc_instruction * inst;
+
+			/* Extend the live interval of T0 to the start of the
+			 * loop for sequences like:
+			 * BGNLOOP
+			 * read T0
+			 * ...
+			 * write T0
+			 * ENDLOOP
+			 */
+			if (var->Readers[i].Inst->IP < start) {
+				struct rc_instruction * bgnloop =
+					rc_match_endloop(var->Readers[i].Inst);
+				chan_start = bgnloop->IP;
+			}
+
+			/* Extend the live interval of T0 to the start of the
+			 * loop in case there is a BRK instruction in the loop
+			 * (we don't actually check for a BRK instruction we
+			 * assume there is one somewhere in the loop, which
+			 * there usually is) for sequences like:
+			 * BGNLOOP
+			 * ...
+			 * conditional BRK
+			 * ...
+			 * write T0
+			 * ENDLOOP
+			 * read T0
+			 ***************************************************
+			 * Extend the live interval of T0 to the end of the
+			 * loop for sequences like:
+			 * write T0
+			 * BGNLOOP
+			 * ...
+			 * read T0
+			 * ENDLOOP
+			 */
+			for (inst = var->Inst; inst != var->Readers[i].Inst;
+							inst = inst->Next) {
+				rc_opcode op = rc_get_flow_control_inst(inst);
+				if (op == RC_OPCODE_ENDLOOP) {
+					struct rc_instruction * bgnloop =
+						rc_match_endloop(inst);
+					if (bgnloop->IP < chan_start) {
+						chan_start = bgnloop->IP;
+					}
+				} else if (op == RC_OPCODE_BGNLOOP) {
+					struct rc_instruction * endloop =
+						rc_match_bgnloop(inst);
+					if (endloop->IP > chan_end) {
+						chan_end = endloop->IP;
+					}
+				}
+			}
+
 			for (chan = 0; chan < 4; chan++) {
 				if ((mask >> chan) & 0x1) {
-					var->Live[chan].Start = start;
-					var->Live[chan].End =
-						var->Readers[i].Inst->IP;
+					if (!var->Live[chan].Used
+					|| chan_start < var->Live[chan].Start) {
+						var->Live[chan].Start =
+								chan_start;
+					}
+					if (!var->Live[chan].Used
+					|| chan_end > var->Live[chan].End) {
+						var->Live[chan].End = chan_end;
+					}
 					var->Live[chan].Used = 1;
 				}
 			}
@@ -197,10 +260,9 @@ static unsigned int readers_intersect(
 
 				return 1;
 			}
-
 			if (reader_a.Inst->Type == RC_INSTRUCTION_PAIR
 				&& reader_b.Inst->Type == RC_INSTRUCTION_PAIR
-				&& reader_a.U.P.Arg == reader_b.U.P.Arg) {
+				&& reader_a.U.P.Src == reader_b.U.P.Src) {
 
 				return 1;
 			}
@@ -213,6 +275,7 @@ void rc_variable_add_friend(
 	struct rc_variable * var,
 	struct rc_variable * friend)
 {
+	assert(var->Dst.Index == friend->Dst.Index);
 	while(var->Friend) {
 		var = var->Friend;
 	}

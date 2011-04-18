@@ -76,5 +76,6 @@ unsigned int rc_pair_remove_src(
 rc_opcode rc_get_flow_control_inst(struct rc_instruction * inst);
 
 struct rc_instruction * rc_match_endloop(struct rc_instruction * endloop);
+struct rc_instruction * rc_match_bgnloop(struct rc_instruction * bgnloop);
 
 #endif /* RADEON_PROGRAM_UTIL_H */

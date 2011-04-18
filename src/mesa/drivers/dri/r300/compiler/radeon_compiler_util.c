@@ -583,3 +583,25 @@ struct rc_instruction * rc_match_endloop(struct rc_instruction * endloop)
 	}
 	return NULL;
 }
+
+/**
+ * @return The ENDLOOP instruction that ends the loop started by bgnloop.
+ */
+struct rc_instruction * rc_match_bgnloop(struct rc_instruction * bgnloop)
+{
+	unsigned int bgnloop_count = 0;
+	struct rc_instruction * inst;
+	for (inst = bgnloop->Next; inst!=bgnloop; inst = inst->Next) {
+		rc_opcode op = rc_get_flow_control_inst(inst);
+		if (op == RC_OPCODE_BGNLOOP) {
+			bgnloop_count++;
+		} else if (op == RC_OPCODE_ENDLOOP) {
+			if (bgnloop_count == 0) {
+				return inst;
+			} else {
+				bgnloop_count--;
+			}
+		}
+	}
+	return NULL;
+}

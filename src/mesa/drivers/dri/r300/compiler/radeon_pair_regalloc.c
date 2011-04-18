@@ -66,7 +66,7 @@ struct regalloc_state {
 	unsigned int NumTemporaries;
 
 	unsigned int Simple;
-	unsigned int HasLoop;
+	int LoopEnd;
 };
 
 enum rc_reg_class {
@@ -176,7 +176,8 @@ static void scan_read_callback(void * data, struct rc_instruction * inst,
 		}
 		reg->Live[i].Used = 1;
 		reg->Live[i].Start = 0;
-		reg->Live[i].End = inst->IP;
+		reg->Live[i].End =
+			s->LoopEnd > inst->IP ? s->LoopEnd : inst->IP;
 	}
 }
 
@@ -509,6 +510,14 @@ static void do_advanced_regalloc(struct regalloc_state * s)
 	for (inst = s->C->Program.Instructions.Next;
 					inst != &s->C->Program.Instructions;
 					inst = inst->Next) {
+		rc_opcode op = rc_get_flow_control_inst(inst);
+		if (op == RC_OPCODE_BGNLOOP) {
+			struct rc_instruction * endloop =
+							rc_match_bgnloop(inst);
+			if (endloop->IP > s->LoopEnd) {
+				s->LoopEnd = endloop->IP;
+			}
+		}
 		rc_for_all_reads_mask(inst, scan_read_callback, s);
 	}
 
@@ -622,7 +631,6 @@ void rc_pair_regalloc(struct radeon_compiler *cc, void *user)
 				(struct r300_fragment_program_compiler*)cc;
 	struct regalloc_state s;
 	int do_full_regalloc = (int)user;
-	struct rc_instruction * inst;
 
 	memset(&s, 0, sizeof(s));
 	s.C = cc;
@@ -636,20 +644,10 @@ void rc_pair_regalloc(struct radeon_compiler *cc, void *user)
 			s.NumTemporaries * sizeof(struct register_info));
 	memset(s.Temporary, 0, s.NumTemporaries * sizeof(struct register_info));
 
-	for(inst = cc->Program.Instructions.Next;
-	    inst != &cc->Program.Instructions;
-	    inst = inst->Next) {
-
-		if (inst->U.I.Opcode == RC_OPCODE_BGNLOOP) {
-			s.HasLoop = 1;
-			break;
-		}
-	}
-
 	rc_recompute_ips(s.C);
 
 	c->AllocateHwInputs(c, &alloc_input_simple, &s);
-	if (!s.HasLoop && do_full_regalloc) {
+	if (do_full_regalloc) {
 		do_advanced_regalloc(&s);
 	} else {
 		s.Simple = 1;
