@@ -32,7 +32,6 @@
 #include "util/u_transfer.h"
 
 #include "r300_screen.h"
-#include "r300_winsys.h"
 #include "r300_context.h"
 
 /* Functions. */

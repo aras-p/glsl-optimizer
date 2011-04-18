@@ -375,7 +375,7 @@ void r300_emit_fb_state(struct r300_context* r300, unsigned size, void* state)
     struct pipe_framebuffer_state* fb = (struct pipe_framebuffer_state*)state;
     struct r300_surface* surf;
     unsigned i;
-    boolean can_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
+    boolean can_hyperz = r300->rws->get_value(r300->rws, RADEON_VID_CAN_HYPERZ);
     uint32_t rb3d_cctl = 0;
 
     CS_LOCALS(r300);
@@ -1231,7 +1231,7 @@ validate:
         if (flushed)
             return FALSE;
 
-        r300_flush(&r300->context, R300_FLUSH_ASYNC, NULL);
+        r300_flush(&r300->context, RADEON_FLUSH_ASYNC, NULL);
         flushed = TRUE;
         goto validate;
     }

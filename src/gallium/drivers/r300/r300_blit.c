@@ -23,7 +23,6 @@
 #include "r300_context.h"
 #include "r300_emit.h"
 #include "r300_texture.h"
-#include "r300_winsys.h"
 
 #include "util/u_format.h"
 #include "util/u_pack_color.h"
@@ -206,7 +205,7 @@ static void r300_clear(struct pipe_context* pipe,
         (struct r300_hyperz_state*)r300->hyperz_state.state;
     uint32_t width = fb->width;
     uint32_t height = fb->height;
-    boolean can_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
+    boolean can_hyperz = r300->rws->get_value(r300->rws, RADEON_VID_CAN_HYPERZ);
     uint32_t hyperz_dcv = hyperz->zb_depthclearvalue;
 
     /* Enable fast Z clear.
@@ -260,8 +259,8 @@ static void r300_clear(struct pipe_context* pipe,
             r300_get_num_cs_end_dwords(r300);
 
         /* Reserve CS space. */
-        if (dwords > (R300_MAX_CMDBUF_DWORDS - r300->cs->cdw)) {
-            r300_flush(&r300->context, R300_FLUSH_ASYNC, NULL);
+        if (dwords > (RADEON_MAX_CMDBUF_DWORDS - r300->cs->cdw)) {
+            r300_flush(&r300->context, RADEON_FLUSH_ASYNC, NULL);
         }
 
         /* Emit clear packets. */

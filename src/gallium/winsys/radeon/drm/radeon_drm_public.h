@@ -3,9 +3,9 @@
 
 #include "pipe/p_defines.h"
 
-struct r300_winsys_screen;
+struct radeon_winsys;
 
-struct r300_winsys_screen *r300_drm_winsys_screen_create(int fd);
+struct radeon_winsys *radeon_drm_winsys_create(int fd);
 
 static INLINE boolean is_r3xx(int pciid)
 {

@@ -31,7 +31,6 @@
 #include "util/u_math.h"
 
 #include "r300_screen_buffer.h"
-#include "r300_winsys.h"
 
 void r300_upload_index_buffer(struct r300_context *r300,
 			      struct pipe_resource **index_buffer,
@@ -62,7 +61,7 @@ static void r300_buffer_destroy(struct pipe_screen *screen,
         FREE(rbuf->constant_buffer);
 
     if (rbuf->buf)
-        r300_winsys_bo_reference(&rbuf->buf, NULL);
+        pb_reference(&rbuf->buf, NULL);
 
     util_slab_free(&r300screen->pool_buffers, rbuf);
 }
@@ -105,7 +104,7 @@ r300_buffer_transfer_map( struct pipe_context *pipe,
 {
     struct r300_context *r300 = r300_context(pipe);
     struct r300_screen *r300screen = r300_screen(pipe->screen);
-    struct r300_winsys_screen *rws = r300screen->rws;
+    struct radeon_winsys *rws = r300screen->rws;
     struct r300_resource *rbuf = r300_resource(transfer->resource);
     uint8_t *map;
 
@@ -126,7 +125,7 @@ static void r300_buffer_transfer_unmap( struct pipe_context *pipe,
 			    struct pipe_transfer *transfer )
 {
     struct r300_screen *r300screen = r300_screen(pipe->screen);
-    struct r300_winsys_screen *rws = r300screen->rws;
+    struct radeon_winsys *rws = r300screen->rws;
     struct r300_resource *rbuf = r300_resource(transfer->resource);
 
     if (rbuf->buf) {
@@ -144,7 +143,7 @@ static void r300_buffer_transfer_inline_write(struct pipe_context *pipe,
                                               unsigned layer_stride)
 {
     struct r300_context *r300 = r300_context(pipe);
-    struct r300_winsys_screen *rws = r300->screen->rws;
+    struct radeon_winsys *rws = r300->screen->rws;
     struct r300_resource *rbuf = r300_resource(resource);
     uint8_t *map = NULL;
 
@@ -188,7 +187,7 @@ struct pipe_resource *r300_buffer_create(struct pipe_screen *screen,
     pipe_reference_init(&rbuf->b.b.b.reference, 1);
     rbuf->b.b.b.screen = screen;
     rbuf->b.user_ptr = NULL;
-    rbuf->domain = R300_DOMAIN_GTT;
+    rbuf->domain = RADEON_DOMAIN_GTT;
     rbuf->buf = NULL;
     rbuf->buf_size = templ->width0;
     rbuf->constant_buffer = NULL;
@@ -237,7 +236,7 @@ struct pipe_resource *r300_user_buffer_create(struct pipe_screen *screen,
     rbuf->b.b.b.flags = 0;
     rbuf->b.b.vtbl = &r300_buffer_vtbl;
     rbuf->b.user_ptr = ptr;
-    rbuf->domain = R300_DOMAIN_GTT;
+    rbuf->domain = RADEON_DOMAIN_GTT;
     rbuf->buf = NULL;
     rbuf->buf_size = size;
     rbuf->constant_buffer = NULL;

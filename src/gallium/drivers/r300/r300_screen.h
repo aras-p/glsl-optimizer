@@ -32,13 +32,13 @@
 
 #include <stdio.h>
 
-struct r300_winsys_screen;
+struct radeon_winsys;
 
 struct r300_screen {
     /* Parent class */
     struct pipe_screen screen;
 
-    struct r300_winsys_screen *rws;
+    struct radeon_winsys *rws;
 
     /* Chipset capabilities */
     struct r300_capabilities caps;
@@ -61,8 +61,8 @@ static INLINE struct r300_screen* r300_screen(struct pipe_screen* screen) {
     return (struct r300_screen*)screen;
 }
 
-static INLINE struct r300_winsys_screen *
-r300_winsys_screen(struct pipe_screen *screen) {
+static INLINE struct radeon_winsys *
+radeon_winsys(struct pipe_screen *screen) {
     return r300_screen(screen)->rws;
 }
 

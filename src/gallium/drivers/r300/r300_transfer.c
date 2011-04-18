@@ -226,7 +226,7 @@ void* r300_texture_transfer_map(struct pipe_context *ctx,
 				struct pipe_transfer *transfer)
 {
     struct r300_context *r300 = r300_context(ctx);
-    struct r300_winsys_screen *rws = (struct r300_winsys_screen *)ctx->winsys;
+    struct radeon_winsys *rws = (struct radeon_winsys *)ctx->winsys;
     struct r300_transfer *r300transfer = r300_transfer(transfer);
     struct r300_resource *tex = r300_resource(transfer->resource);
     char *map;
@@ -256,7 +256,7 @@ void* r300_texture_transfer_map(struct pipe_context *ctx,
 void r300_texture_transfer_unmap(struct pipe_context *ctx,
 				 struct pipe_transfer *transfer)
 {
-    struct r300_winsys_screen *rws = (struct r300_winsys_screen *)ctx->winsys;
+    struct radeon_winsys *rws = (struct radeon_winsys *)ctx->winsys;
     struct r300_transfer *r300transfer = r300_transfer(transfer);
     struct r300_resource *tex = r300_resource(transfer->resource);
 

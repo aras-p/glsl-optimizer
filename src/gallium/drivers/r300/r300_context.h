@@ -34,7 +34,7 @@
 
 #include "r300_defines.h"
 #include "r300_screen.h"
-#include "r300_winsys.h"
+#include "../../winsys/radeon/drm/radeon_winsys.h"
 
 struct u_upload_mgr;
 struct r300_context;
@@ -291,12 +291,12 @@ struct r300_query {
     boolean begin_emitted;
 
     /* The buffer where query results are stored. */
-    struct r300_winsys_bo *buf;
-    struct r300_winsys_cs_handle *cs_buf;
+    struct pb_buffer *buf;
+    struct radeon_winsys_cs_handle *cs_buf;
     /* The size of the buffer. */
     unsigned buffer_size;
     /* The domain of the buffer. */
-    enum r300_buffer_domain domain;
+    enum radeon_bo_domain domain;
 
     /* Linked list members. */
     struct r300_query* prev;
@@ -307,10 +307,10 @@ struct r300_surface {
     struct pipe_surface base;
 
     /* Winsys buffer backing the texture. */
-    struct r300_winsys_bo *buf;
-    struct r300_winsys_cs_handle *cs_buf;
+    struct pb_buffer *buf;
+    struct radeon_winsys_cs_handle *cs_buf;
 
-    enum r300_buffer_domain domain;
+    enum radeon_bo_domain domain;
 
     uint32_t offset;    /* COLOROFFSET or DEPTHOFFSET. */
     uint32_t pitch;     /* COLORPITCH or DEPTHPITCH. */
@@ -340,8 +340,8 @@ struct r300_texture_desc {
     /* Buffer tiling.
      * Macrotiling is specified per-level because small mipmaps cannot
      * be macrotiled. */
-    enum r300_buffer_tiling microtile;
-    enum r300_buffer_tiling macrotile[R300_MAX_TEXTURE_LEVELS];
+    enum radeon_bo_layout microtile;
+    enum radeon_bo_layout macrotile[R300_MAX_TEXTURE_LEVELS];
 
     /* Offsets into the buffer. */
     unsigned offset_in_bytes[R300_MAX_TEXTURE_LEVELS];
@@ -397,9 +397,9 @@ struct r300_resource
     struct u_vbuf_resource b;
 
     /* Winsys buffer backing this resource. */
-    struct r300_winsys_bo *buf;
-    struct r300_winsys_cs_handle *cs_buf;
-    enum r300_buffer_domain domain;
+    struct pb_buffer *buf;
+    struct radeon_winsys_cs_handle *cs_buf;
+    enum radeon_bo_domain domain;
     unsigned buf_size;
 
     /* Constant buffers are in user memory. */
@@ -460,9 +460,9 @@ struct r300_context {
     struct pipe_context context;
 
     /* The interface to the windowing system, etc. */
-    struct r300_winsys_screen *rws;
+    struct radeon_winsys *rws;
     /* The command stream. */
-    struct r300_winsys_cs *cs;
+    struct radeon_winsys_cs *cs;
     /* Screen. */
     struct r300_screen *screen;
 

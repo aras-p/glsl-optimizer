@@ -38,7 +38,7 @@ void r300_flush(struct pipe_context *pipe,
 {
     struct r300_context *r300 = r300_context(pipe);
     struct r300_atom *atom;
-    struct r300_winsys_bo **rfence = (struct r300_winsys_bo**)fence;
+    struct pb_buffer **rfence = (struct pb_buffer**)fence;
 
     if (r300->draw && !r300->draw_vbo_locked)
 	r300_draw_flush_vbuf(r300);
@@ -48,11 +48,11 @@ void r300_flush(struct pipe_context *pipe,
         *rfence = r300->rws->buffer_create(r300->rws, 1, 1,
                                            PIPE_BIND_VERTEX_BUFFER,
                                            PIPE_USAGE_STATIC,
-                                           R300_DOMAIN_GTT);
+                                           RADEON_DOMAIN_GTT);
         /* Add the fence as a dummy relocation. */
         r300->rws->cs_add_reloc(r300->cs,
                                 r300->rws->buffer_get_cs_handle(*rfence),
-                                R300_DOMAIN_GTT, R300_DOMAIN_GTT);
+                                RADEON_DOMAIN_GTT, RADEON_DOMAIN_GTT);
     }
 
     if (r300->dirty_hw) {

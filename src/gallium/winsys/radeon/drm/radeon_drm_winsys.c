@@ -31,7 +31,6 @@
  *      Marek Olšák <maraeo@gmail.com>
  */
 
-#include "radeon_winsys.h"
 #include "radeon_drm_bo.h"
 #include "radeon_drm_cs.h"
 #include "radeon_drm_public.h"
@@ -164,7 +163,7 @@ static void do_ioctls(struct radeon_drm_winsys *winsys)
     winsys->num_cpus = sysconf(_SC_NPROCESSORS_ONLN);
 }
 
-static void radeon_winsys_destroy(struct r300_winsys_screen *rws)
+static void radeon_winsys_destroy(struct radeon_winsys *rws)
 {
     struct radeon_drm_winsys *ws = (struct radeon_drm_winsys*)rws;
 
@@ -173,41 +172,41 @@ static void radeon_winsys_destroy(struct r300_winsys_screen *rws)
     FREE(rws);
 }
 
-static uint32_t radeon_get_value(struct r300_winsys_screen *rws,
-                                 enum r300_value_id id)
+static uint32_t radeon_get_value(struct radeon_winsys *rws,
+                                 enum radeon_value_id id)
 {
     struct radeon_drm_winsys *ws = (struct radeon_drm_winsys *)rws;
 
     switch(id) {
-    case R300_VID_PCI_ID:
+    case RADEON_VID_PCI_ID:
 	return ws->pci_id;
-    case R300_VID_GB_PIPES:
+    case RADEON_VID_R300_GB_PIPES:
 	return ws->gb_pipes;
-    case R300_VID_Z_PIPES:
+    case RADEON_VID_R300_Z_PIPES:
 	return ws->z_pipes;
-    case R300_VID_GART_SIZE:
+    case RADEON_VID_GART_SIZE:
         return ws->gart_size;
-    case R300_VID_VRAM_SIZE:
+    case RADEON_VID_VRAM_SIZE:
         return ws->vram_size;
-    case R300_VID_DRM_MAJOR:
+    case RADEON_VID_DRM_MAJOR:
         return ws->drm_major;
-    case R300_VID_DRM_MINOR:
+    case RADEON_VID_DRM_MINOR:
         return ws->drm_minor;
-    case R300_VID_DRM_PATCHLEVEL:
+    case RADEON_VID_DRM_PATCHLEVEL:
         return ws->drm_patchlevel;
-    case R300_VID_DRM_2_6_0:
+    case RADEON_VID_DRM_2_6_0:
         return ws->drm_major*100 + ws->drm_minor >= 206;
-    case R300_VID_DRM_2_8_0:
+    case RADEON_VID_DRM_2_8_0:
         return ws->drm_major*100 + ws->drm_minor >= 208;
-    case R300_CAN_HYPERZ:
+    case RADEON_VID_CAN_HYPERZ:
         return ws->hyperz;
-    case R300_CAN_AACOMPRESS:
+    case RADEON_VID_CAN_AACOMPRESS:
         return ws->aacompress;
     }
     return 0;
 }
 
-struct r300_winsys_screen *r300_drm_winsys_screen_create(int fd)
+struct radeon_winsys *radeon_drm_winsys_create(int fd)
 {
     struct radeon_drm_winsys *ws = CALLOC_STRUCT(radeon_drm_winsys);
     if (!ws) {

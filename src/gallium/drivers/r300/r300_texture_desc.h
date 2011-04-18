@@ -25,7 +25,7 @@
 #define R300_TEXTURE_DESC_H
 
 #include "pipe/p_format.h"
-#include "r300_defines.h"
+#include "r300_context.h"
 
 struct pipe_resource;
 struct r300_screen;
@@ -39,8 +39,8 @@ enum r300_dim {
 
 unsigned r300_get_pixel_alignment(enum pipe_format format,
                                   unsigned num_samples,
-                                  enum r300_buffer_tiling microtile,
-                                  enum r300_buffer_tiling macrotile,
+                                  enum radeon_bo_layout microtile,
+                                  enum radeon_bo_layout macrotile,
                                   enum r300_dim dim, boolean is_rs690);
 
 boolean r300_texture_desc_init(struct r300_screen *rscreen,

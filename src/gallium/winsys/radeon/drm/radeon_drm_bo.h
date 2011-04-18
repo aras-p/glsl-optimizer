@@ -29,10 +29,10 @@
  *      Jérôme Glisse <glisse@freedesktop.org>
  *      Marek Olšák <maraeo@gmail.com>
  */
-#ifndef RADEON_DRM_BUFFER_H
-#define RADEON_DRM_BUFFER_H
+#ifndef RADEON_DRM_BO_H
+#define RADEON_DRM_BO_H
 
-#include "radeon_winsys.h"
+#include "radeon_drm_winsys.h"
 #include "pipebuffer/pb_bufmgr.h"
 #include "os/os_thread.h"
 
@@ -81,7 +81,7 @@ void radeon_bo_reference(struct radeon_bo **dst, struct radeon_bo *src)
 }
 
 static INLINE struct pb_buffer *
-pb_buffer(struct r300_winsys_bo *buffer)
+pb_buffer(struct pb_buffer *buffer)
 {
     return (struct pb_buffer *)buffer;
 }

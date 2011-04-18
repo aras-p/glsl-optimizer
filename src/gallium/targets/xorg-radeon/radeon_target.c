@@ -7,10 +7,10 @@
 static struct pipe_screen *
 create_screen(int fd)
 {
-   struct r300_winsys_screen *sws;
+   struct radeon_winsys *sws;
    struct pipe_screen *screen;
 
-   sws = r300_drm_winsys_screen_create(fd);
+   sws = radeon_drm_winsys_create(fd);
    if (!sws)
       return NULL;
 
