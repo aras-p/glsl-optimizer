@@ -99,7 +99,7 @@ get_pointer_generic(struct gl_context *ctx, struct gl_renderbuffer *rb,
    if (!rb->Data)
       return NULL;
 
-   return (rb->Data +
+   return ((char *) rb->Data +
 	   (y * rb->RowStride + x) * _mesa_get_format_bytes(rb->Format));
 }
 
@@ -130,8 +130,8 @@ put_row_generic(struct gl_context *ctx, struct gl_renderbuffer *rb,
 
    if (mask) {
       for (i = 0; i < count; i++) {
-	 void *dst = row + i * format_bytes;
-	 const void *src = values + i * datatype_bytes;
+	 char *dst = (char *) row + i * format_bytes;
+	 const char *src = (const char *) values + i * datatype_bytes;
 
          if (mask[i]) {
 	    memcpy(dst, src, format_bytes);
@@ -140,8 +140,8 @@ put_row_generic(struct gl_context *ctx, struct gl_renderbuffer *rb,
    }
    else {
       for (i = 0; i < count; i++) {
-	 void *dst = row + i * format_bytes;
-	 const void *src = values + i * datatype_bytes;
+	 char *dst = (char *) row + i * format_bytes;
+	 const char *src = (const char *) values + i * datatype_bytes;
 	 memcpy(dst, src, format_bytes);
       }
    }
@@ -158,7 +158,7 @@ put_mono_row_generic(struct gl_context *ctx, struct gl_renderbuffer *rb,
 
    if (mask) {
       for (i = 0; i < count; i++) {
-	 void *dst = row + i * format_bytes;
+	 char *dst = (char *) row + i * format_bytes;
          if (mask[i]) {
 	    memcpy(dst, value, format_bytes);
          }
@@ -166,7 +166,7 @@ put_mono_row_generic(struct gl_context *ctx, struct gl_renderbuffer *rb,
    }
    else {
       for (i = 0; i < count; i++) {
-	 void *dst = row + i * format_bytes;
+	 char *dst = (char *) row + i * format_bytes;
 	 memcpy(dst, value, format_bytes);
       }
    }
@@ -184,10 +184,8 @@ put_values_generic(struct gl_context *ctx, struct gl_renderbuffer *rb,
 
    for (i = 0; i < count; i++) {
       if (!mask || mask[i]) {
-	 void *row = rb->GetPointer(ctx, rb, x[i], y[i]);
-	 void *dst = row + i * format_bytes;
-	 const void *src = values + i * datatype_bytes;
-
+	 void *dst = rb->GetPointer(ctx, rb, x[i], y[i]);
+	 const char *src = (const char *) values + i * datatype_bytes;
 	 memcpy(dst, src, format_bytes);
       }
    }
@@ -205,8 +203,7 @@ put_mono_values_generic(struct gl_context *ctx,
 
    for (i = 0; i < count; i++) {
       if (!mask || mask[i]) {
-	 void *row = rb->GetPointer(ctx, rb, x[i], y[i]);
-	 void *dst = row + i * format_bytes;
+	 void *dst = rb->GetPointer(ctx, rb, x[i], y[i]);
 	 memcpy(dst, value, format_bytes);
       }
    }
@@ -543,8 +540,8 @@ static void
 get_row_ubyte3(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint count,
                GLint x, GLint y, void *values)
 {
-   const GLubyte *src = (const GLubyte *) (rb->Data +
-					   3 * (y * rb->RowStride + x));
+   const GLubyte *src = ((const GLubyte *) rb->Data) +
+					   3 * (y * rb->RowStride + x);
    GLubyte *dst = (GLubyte *) values;
    GLuint i;
    ASSERT(rb->Format == MESA_FORMAT_RGB888);
@@ -680,8 +677,8 @@ put_mono_values_ubyte3(struct gl_context *ctx, struct gl_renderbuffer *rb,
    ASSERT(rb->DataType == GL_UNSIGNED_BYTE);
    for (i = 0; i < count; i++) {
       if (!mask || mask[i]) {
-         GLubyte *dst = (GLubyte *) (rb->Data +
-				     3 * (y[i] * rb->RowStride + x[i]));
+         GLubyte *dst = ((GLubyte *) rb->Data) +
+				     3 * (y[i] * rb->RowStride + x[i]);
          dst[0] = val0;
          dst[1] = val1;
          dst[2] = val2;
@@ -933,8 +930,8 @@ put_values_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb, GLuint co
    ASSERT(rb->DataType == GL_UNSIGNED_SHORT || rb->DataType == GL_SHORT);
    for (i = 0; i < count; i++) {
       if (!mask || mask[i]) {
-         GLushort *dst = (GLushort *) (rb->Data + 4 *
-				       (y[i] * rb->RowStride + x[i]));
+         GLushort *dst =
+            ((GLushort *) rb->Data) + 4 * (y[i] * rb->RowStride + x[i]);
          dst[0] = src[i * 4 + 0];
          dst[1] = src[i * 4 + 1];
          dst[2] = src[i * 4 + 2];
@@ -957,8 +954,8 @@ put_mono_values_ushort4(struct gl_context *ctx, struct gl_renderbuffer *rb,
    ASSERT(rb->DataType == GL_UNSIGNED_SHORT || rb->DataType == GL_SHORT);
    for (i = 0; i < count; i++) {
       if (!mask || mask[i]) {
-         GLushort *dst = (GLushort *) (rb->Data +
-				       4 * (y[i] * rb->RowStride + x[i]));
+         GLushort *dst = ((GLushort *) rb->Data) +
+				       4 * (y[i] * rb->RowStride + x[i]);
          dst[0] = val0;
          dst[1] = val1;
          dst[2] = val2;
