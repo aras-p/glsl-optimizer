@@ -1098,21 +1098,25 @@ static boolean init_inputs( struct translate_sse *p,
                x86_mov_reg_imm(p->func, tmp_ECX, variant->instance_divisor);
                x86_div(p->func, tmp_ECX);    /* EAX = EDX:EAX / ECX */
             }
+
+            /* XXX we need to clamp the index here too, but to a
+             * per-array max value, not the draw->pt.max_index value
+             * that's being given to us via translate->set_buffer().
+             */
          } else {
             x86_mov(p->func, tmp_EAX, elt);
-         }
 
-         /* Clamp to max_index
-          */
-         x86_cmp(p->func, tmp_EAX, buf_max_index);
-         x86_cmovcc(p->func, tmp_EAX, buf_max_index, cc_AE);
+            /* Clamp to max_index
+             */
+            x86_cmp(p->func, tmp_EAX, buf_max_index);
+            x86_cmovcc(p->func, tmp_EAX, buf_max_index, cc_AE);
+         }
 
          x86_imul(p->func, tmp_EAX, buf_stride);
          x64_rexw(p->func);
          x86_add(p->func, tmp_EAX, buf_base_ptr);
 
          x86_cmp(p->func, p->count_EBP, p->tmp_EAX);
-
 
          /* In the linear case, keep the buffer pointer instead of the
           * index number.
