@@ -570,6 +570,9 @@ static void brw_emit_vertices(struct brw_context *brw)
 	    dw0 = BRW_VB0_ACCESS_VERTEXDATA | (i << BRW_VB0_INDEX_SHIFT);
 	 }
 
+	 if (intel->gen >= 7)
+	    dw0 |= GEN7_VB0_ADDRESS_MODIFYENABLE;
+
 	 OUT_BATCH(dw0 | (buffer->stride << BRW_VB0_PITCH_SHIFT));
 	 OUT_RELOC(buffer->bo, I915_GEM_DOMAIN_VERTEX, 0, buffer->offset);
 	 if (intel->gen >= 5) {
