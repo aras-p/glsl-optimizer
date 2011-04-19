@@ -680,6 +680,17 @@ static inline void evergreen_context_pipe_state_set_sampler(struct r600_context 
 	r600_context_dirty_block(ctx, block, dirty, 2);
 }
 
+static inline void evergreen_context_ps_partial_flush(struct r600_context *ctx)
+{
+	if (!(ctx->flags & R600_CONTEXT_DRAW_PENDING))
+		return;
+
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
+
+	ctx->flags &= ~R600_CONTEXT_DRAW_PENDING;
+}
+
 static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset, unsigned id)
 {
 	unsigned fake_offset = (offset - R_00A400_TD_PS_SAMPLER0_BORDER_INDEX) * 0x100 + 0x40000 + id * 0x1C;
@@ -698,6 +709,7 @@ static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_c
 	if (state->nregs <= 3) {
 		return;
 	}
+
 	dirty = block->status & R600_BLOCK_STATUS_DIRTY;
 	if (block->reg[0] != id) {
 		block->reg[0] = id;
@@ -710,6 +722,12 @@ static inline void evergreen_context_pipe_state_set_sampler_border(struct r600_c
 			dirty |= R600_BLOCK_STATUS_DIRTY;
 		}
 	}
+
+	/* We have to flush the shaders before we change the border color
+	 * registers, or previous draw commands that haven't completed yet
+	 * will end up using the new border color. */
+	if (dirty & R600_BLOCK_STATUS_DIRTY)
+		evergreen_context_ps_partial_flush(ctx);
 
 	r600_context_dirty_block(ctx, block, dirty, 4);
 }
@@ -735,41 +753,17 @@ void evergreen_context_pipe_state_set_vs_sampler(struct r600_context *ctx, struc
 
 void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 {
-	struct r600_bo *cb[12];
-	struct r600_bo *db;
-	unsigned ndwords = 9, flush;
+	unsigned ndwords = 7;
 	struct r600_block *dirty_block = NULL;
 	struct r600_block *next_block;
 
 	if (draw->indices) {
-		ndwords = 13;
+		ndwords = 11;
 		/* make sure there is enough relocation space before scheduling draw */
 		if (ctx->creloc >= (ctx->nreloc - 1)) {
 			r600_context_flush(ctx);
 		}
 	}
-
-	/* find number of color buffer */
-	db = r600_context_reg_bo(ctx, R_028048_DB_Z_READ_BASE);
-	cb[0] = r600_context_reg_bo(ctx, R_028C60_CB_COLOR0_BASE);
-	cb[1] = r600_context_reg_bo(ctx, R_028C9C_CB_COLOR1_BASE);
-	cb[2] = r600_context_reg_bo(ctx, R_028CD8_CB_COLOR2_BASE);
-	cb[3] = r600_context_reg_bo(ctx, R_028D14_CB_COLOR3_BASE);
-	cb[4] = r600_context_reg_bo(ctx, R_028D50_CB_COLOR4_BASE);
-	cb[5] = r600_context_reg_bo(ctx, R_028D8C_CB_COLOR5_BASE);
-	cb[6] = r600_context_reg_bo(ctx, R_028DC8_CB_COLOR6_BASE);
-	cb[7] = r600_context_reg_bo(ctx, R_028E04_CB_COLOR7_BASE);
-	cb[8] = r600_context_reg_bo(ctx, R_028E40_CB_COLOR8_BASE);
-	cb[9] = r600_context_reg_bo(ctx, R_028E5C_CB_COLOR9_BASE);
-	cb[10] = r600_context_reg_bo(ctx, R_028E78_CB_COLOR10_BASE);
-	cb[11] = r600_context_reg_bo(ctx, R_028E94_CB_COLOR11_BASE);
-	for (int i = 0; i < 12; i++) {
-		if (cb[i]) {
-			ndwords += 7;
-		}
-	}
-	if (db)
-		ndwords += 7;
 
 	/* queries need some special values */
 	if (ctx->num_query_running) {
@@ -782,6 +776,10 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 				S_02800C_NOOP_CULL_DISABLE(1),
 				S_02800C_NOOP_CULL_DISABLE(1));
 	}
+
+	/* update the max dword count to make sure we have enough space
+	 * reserved for flushing the destination caches */
+	ctx->pm4_ndwords = RADEON_CTX_MAX_PM4 - ctx->num_dest_buffers * 7 - 16;
 
 	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
 		/* need to flush */
@@ -817,12 +815,41 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_num_indices;
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_draw_initiator;
 	}
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, ctx->predicate_drawing);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
+
+	ctx->flags |= (R600_CONTEXT_DRAW_PENDING | R600_CONTEXT_DST_CACHES_DIRTY);
+
+	/* all dirty state have been scheduled in current cs */
+	ctx->pm4_dirty_cdwords = 0;
+}
+
+void evergreen_context_flush_dest_caches(struct r600_context *ctx)
+{
+	struct r600_bo *cb[12];
+	struct r600_bo *db;
+
+	if (!(ctx->flags & R600_CONTEXT_DST_CACHES_DIRTY))
+		return;
+
+	/* find number of color buffer */
+	db = r600_context_reg_bo(ctx, R_028048_DB_Z_READ_BASE);
+	cb[0] = r600_context_reg_bo(ctx, R_028C60_CB_COLOR0_BASE);
+	cb[1] = r600_context_reg_bo(ctx, R_028C9C_CB_COLOR1_BASE);
+	cb[2] = r600_context_reg_bo(ctx, R_028CD8_CB_COLOR2_BASE);
+	cb[3] = r600_context_reg_bo(ctx, R_028D14_CB_COLOR3_BASE);
+	cb[4] = r600_context_reg_bo(ctx, R_028D50_CB_COLOR4_BASE);
+	cb[5] = r600_context_reg_bo(ctx, R_028D8C_CB_COLOR5_BASE);
+	cb[6] = r600_context_reg_bo(ctx, R_028DC8_CB_COLOR6_BASE);
+	cb[7] = r600_context_reg_bo(ctx, R_028E04_CB_COLOR7_BASE);
+	cb[8] = r600_context_reg_bo(ctx, R_028E40_CB_COLOR8_BASE);
+	cb[9] = r600_context_reg_bo(ctx, R_028E5C_CB_COLOR9_BASE);
+	cb[10] = r600_context_reg_bo(ctx, R_028E78_CB_COLOR10_BASE);
+	cb[11] = r600_context_reg_bo(ctx, R_028E94_CB_COLOR11_BASE);
 
 	/* flush color buffer */
 	for (int i = 0; i < 12; i++) {
 		if (cb[i]) {
+			unsigned flush;
+
 			if (i > 7) {
 				flush = (S_0085F0_CB8_DEST_BASE_ENA(1) << (i - 8)) |
 					S_0085F0_CB_ACTION_ENA(1);
@@ -840,7 +867,6 @@ void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *dr
 					0, db);
 	}
 
-	/* all dirty state have been scheduled in current cs */
-	ctx->pm4_dirty_cdwords = 0;
+	ctx->flags &= ~R600_CONTEXT_DST_CACHES_DIRTY;
 }
 

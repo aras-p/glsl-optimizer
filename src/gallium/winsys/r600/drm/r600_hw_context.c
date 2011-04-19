@@ -798,7 +798,6 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				unsigned flush_mask, struct r600_bo *rbo)
 {
 	struct radeon_bo *bo;
-
 	bo = r600_bo_get_bo(rbo);
 	/* if bo has already been flushed */
 	if (!(~bo->last_flush & flush_flags)) {
@@ -1032,6 +1031,17 @@ static inline void r600_context_pipe_state_set_sampler(struct r600_context *ctx,
 	r600_context_dirty_block(ctx, block, dirty, 2);
 }
 
+static inline void r600_context_ps_partial_flush(struct r600_context *ctx)
+{
+	if (!(ctx->flags & R600_CONTEXT_DRAW_PENDING))
+		return;
+
+	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
+	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
+
+	ctx->flags &= ~R600_CONTEXT_DRAW_PENDING;
+}
+
 static inline void r600_context_pipe_state_set_sampler_border(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)
 {
 	struct r600_range *range;
@@ -1056,6 +1066,12 @@ static inline void r600_context_pipe_state_set_sampler_border(struct r600_contex
 			dirty |= R600_BLOCK_STATUS_DIRTY;
 		}
 	}
+
+	/* We have to flush the shaders before we change the border color
+	 * registers, or previous draw commands that haven't completed yet
+	 * will end up using the new border color. */
+	if (dirty & R600_BLOCK_STATUS_DIRTY)
+		r600_context_ps_partial_flush(ctx);
 
 	r600_context_dirty_block(ctx, block, dirty, 3);
 }
@@ -1136,24 +1152,14 @@ out:
 	LIST_DELINIT(&block->list);
 }
 
-void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
+void r600_context_flush_dest_caches(struct r600_context *ctx)
 {
 	struct r600_bo *cb[8];
 	struct r600_bo *db;
-	unsigned ndwords = 9;
-	struct r600_block *dirty_block = NULL;
-	struct r600_block *next_block;
-	unsigned rv6xx_surface_base_update = 0;
 
-	if (draw->indices) {
-		ndwords = 13;
-		/* make sure there is enough relocation space before scheduling draw */
-		if (ctx->creloc >= (ctx->nreloc - 1)) {
-			r600_context_flush(ctx);
-		}
-	}
+	if (!(ctx->flags & R600_CONTEXT_DST_CACHES_DIRTY))
+		return;
 
-	/* find number of color buffer */
 	db = r600_context_reg_bo(ctx, R_02800C_DB_DEPTH_BASE);
 	cb[0] = r600_context_reg_bo(ctx, R_028040_CB_COLOR0_BASE);
 	cb[1] = r600_context_reg_bo(ctx, R_028044_CB_COLOR1_BASE);
@@ -1163,16 +1169,64 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 	cb[5] = r600_context_reg_bo(ctx, R_028054_CB_COLOR5_BASE);
 	cb[6] = r600_context_reg_bo(ctx, R_028058_CB_COLOR6_BASE);
 	cb[7] = r600_context_reg_bo(ctx, R_02805C_CB_COLOR7_BASE);
+
+	/* flush the color buffers */
 	for (int i = 0; i < 8; i++) {
-		if (cb[i]) {
-			ndwords += 7;
-			rv6xx_surface_base_update |= SURFACE_BASE_UPDATE_COLOR(i);
-		}
+		if (!cb[i])
+			continue;
+
+		r600_context_bo_flush(ctx,
+					(S_0085F0_CB0_DEST_BASE_ENA(1) << i) |
+					S_0085F0_CB_ACTION_ENA(1),
+					0, cb[i]);
 	}
 	if (db) {
-		ndwords += 7;
-		rv6xx_surface_base_update |= SURFACE_BASE_UPDATE_DEPTH;
+		r600_context_bo_flush(ctx, S_0085F0_DB_ACTION_ENA(1), 0, db);
 	}
+
+	ctx->flags &= ~R600_CONTEXT_DST_CACHES_DIRTY;
+}
+
+void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
+{
+	unsigned ndwords = 7;
+	struct r600_block *dirty_block = NULL;
+	struct r600_block *next_block;
+	unsigned rv6xx_surface_base_update = 0;
+
+	if (draw->indices) {
+		ndwords = 11;
+		/* make sure there is enough relocation space before scheduling draw */
+		if (ctx->creloc >= (ctx->nreloc - 1)) {
+			r600_context_flush(ctx);
+		}
+	}
+
+	/* rv6xx surface base update */
+	if ((ctx->radeon->family > CHIP_R600) &&
+	    (ctx->radeon->family < CHIP_RV770)) {
+		struct r600_bo *cb[8];
+		struct r600_bo *db;
+
+		db = r600_context_reg_bo(ctx, R_02800C_DB_DEPTH_BASE);
+		cb[0] = r600_context_reg_bo(ctx, R_028040_CB_COLOR0_BASE);
+		cb[1] = r600_context_reg_bo(ctx, R_028044_CB_COLOR1_BASE);
+		cb[2] = r600_context_reg_bo(ctx, R_028048_CB_COLOR2_BASE);
+		cb[3] = r600_context_reg_bo(ctx, R_02804C_CB_COLOR3_BASE);
+		cb[4] = r600_context_reg_bo(ctx, R_028050_CB_COLOR4_BASE);
+		cb[5] = r600_context_reg_bo(ctx, R_028054_CB_COLOR5_BASE);
+		cb[6] = r600_context_reg_bo(ctx, R_028058_CB_COLOR6_BASE);
+		cb[7] = r600_context_reg_bo(ctx, R_02805C_CB_COLOR7_BASE);
+		for (int i = 0; i < 8; i++) {
+			if (cb[i]) {
+				rv6xx_surface_base_update |= SURFACE_BASE_UPDATE_COLOR(i);
+			}
+		}
+		if (db) {
+			rv6xx_surface_base_update |= SURFACE_BASE_UPDATE_DEPTH;
+		}
+	}
+
 	/* XXX also need to update SURFACE_BASE_UPDATE_STRMOUT when we support it */
 
 	/* queries need some special values */
@@ -1189,6 +1243,10 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 				S_028D10_NOOP_CULL_DISABLE(1));
 	}
 
+	/* update the max dword count to make sure we have enough space
+	 * reserved for flushing the destination caches */
+	ctx->pm4_ndwords = RADEON_CTX_MAX_PM4 - ctx->num_dest_buffers * 7 - 16;
+
 	if ((ctx->pm4_dirty_cdwords + ndwords + ctx->pm4_cdwords) > ctx->pm4_ndwords) {
 		/* need to flush */
 		r600_context_flush(ctx);
@@ -1198,7 +1256,6 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 		R600_ERR("context is too big to be scheduled\n");
 		return;
 	}
-
 	/* enough room to copy packet */
 	LIST_FOR_EACH_ENTRY_SAFE(dirty_block, next_block, &ctx->dirty, list) {
 		r600_context_block_emit_dirty(ctx, dirty_block);
@@ -1227,21 +1284,8 @@ void r600_context_draw(struct r600_context *ctx, const struct r600_draw *draw)
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_num_indices;
 		ctx->pm4[ctx->pm4_cdwords++] = draw->vgt_draw_initiator;
 	}
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, ctx->predicate_drawing);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT) | EVENT_INDEX(0);
 
-	/* flush color buffer */
-	for (int i = 0; i < 8; i++) {
-		if (cb[i]) {
-			r600_context_bo_flush(ctx,
-					(S_0085F0_CB0_DEST_BASE_ENA(1) << i) |
-					S_0085F0_CB_ACTION_ENA(1),
-					0, cb[i]);
-		}
-	}
-	if (db) {
-		r600_context_bo_flush(ctx, S_0085F0_DB_ACTION_ENA(1), 0, db);
-	}
+	ctx->flags |= (R600_CONTEXT_DST_CACHES_DIRTY | R600_CONTEXT_DRAW_PENDING);
 
 	/* all dirty state have been scheduled in current cs */
 	ctx->pm4_dirty_cdwords = 0;
@@ -1261,9 +1305,12 @@ void r600_context_flush(struct r600_context *ctx)
 	/* suspend queries */
 	r600_context_queries_suspend(ctx);
 
+	if (ctx->radeon->family >= CHIP_CEDAR)
+		evergreen_context_flush_dest_caches(ctx);
+	else
+		r600_context_flush_dest_caches(ctx);
+
 	/* emit fence */
-	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE, 0, 0);
-	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_PS_PARTIAL_FLUSH) | EVENT_INDEX(4);
 	ctx->pm4[ctx->pm4_cdwords++] = PKT3(PKT3_EVENT_WRITE_EOP, 4, 0);
 	ctx->pm4[ctx->pm4_cdwords++] = EVENT_TYPE(EVENT_TYPE_CACHE_FLUSH_AND_INV_TS_EVENT) | EVENT_INDEX(5);
 	ctx->pm4[ctx->pm4_cdwords++] = 0;
@@ -1311,6 +1358,7 @@ void r600_context_flush(struct r600_context *ctx)
 	ctx->creloc = 0;
 	ctx->pm4_dirty_cdwords = 0;
 	ctx->pm4_cdwords = 0;
+	ctx->flags = 0;
 
 	/* resume queries */
 	r600_context_queries_resume(ctx);

@@ -298,8 +298,6 @@ void r600_set_constant_buffer(struct pipe_context *ctx, uint shader, uint index,
 			      struct pipe_resource *buffer);
 void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info);
 
-void r600_texture_barrier(struct pipe_context *ctx);
-
 /*
  * common helpers
  */

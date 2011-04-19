@@ -857,6 +857,9 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	if (rstate == NULL)
 		return;
 
+	r600_context_flush_dest_caches(&rctx->ctx);
+	rctx->ctx.num_dest_buffers = state->nr_cbufs;
+
 	/* unreference old buffer and reference new one */
 	rstate->id = R600_PIPE_STATE_FRAMEBUFFER;
 
@@ -868,6 +871,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	}
 	if (state->zsbuf) {
 		r600_db(rctx, rstate, state);
+		rctx->ctx.num_dest_buffers++;
 	}
 
 	target_mask = 0x00000000;
@@ -947,11 +951,15 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	}
 }
 
-void r600_texture_barrier(struct pipe_context *ctx)
+static void r600_texture_barrier(struct pipe_context *ctx)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 
-	r600_context_flush_all(&rctx->ctx, S_0085F0_TC_ACTION_ENA(1));
+	r600_context_flush_all(&rctx->ctx, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_CB_ACTION_ENA(1) |
+			S_0085F0_CB0_DEST_BASE_ENA(1) | S_0085F0_CB1_DEST_BASE_ENA(1) |
+			S_0085F0_CB2_DEST_BASE_ENA(1) | S_0085F0_CB3_DEST_BASE_ENA(1) |
+			S_0085F0_CB4_DEST_BASE_ENA(1) | S_0085F0_CB5_DEST_BASE_ENA(1) |
+			S_0085F0_CB6_DEST_BASE_ENA(1) | S_0085F0_CB7_DEST_BASE_ENA(1));
 }
 
 void r600_init_state_functions(struct r600_pipe_context *rctx)
