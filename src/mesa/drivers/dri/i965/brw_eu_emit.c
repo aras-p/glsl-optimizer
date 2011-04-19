@@ -509,7 +509,19 @@ static void brw_set_dp_write_message( struct brw_compile *p,
    struct intel_context *intel = &brw->intel;
    brw_set_src1(p, insn, brw_imm_ud(0));
 
-   if (intel->gen >= 6) {
+   if (intel->gen >= 7) {
+       insn->bits3.gen7_dp.binding_table_index = binding_table_index;
+       insn->bits3.gen7_dp.msg_control = msg_control;
+       insn->bits3.gen7_dp.pixel_scoreboard_clear = pixel_scoreboard_clear;
+       insn->bits3.gen7_dp.msg_type = msg_type;
+       insn->bits3.gen7_dp.header_present = header_present;
+       insn->bits3.gen7_dp.response_length = response_length;
+       insn->bits3.gen7_dp.msg_length = msg_length;
+       insn->bits3.gen7_dp.end_of_thread = end_of_thread;
+
+       /* We always use the render cache for write messages */
+       insn->header.destreg__conditionalmod = GEN6_MESSAGE_TARGET_DP_RENDER_CACHE;
+   } else if (intel->gen == 6) {
        insn->bits3.gen6_dp.binding_table_index = binding_table_index;
        insn->bits3.gen6_dp.msg_control = msg_control;
        insn->bits3.gen6_dp.pixel_scoreboard_clear = pixel_scoreboard_clear;

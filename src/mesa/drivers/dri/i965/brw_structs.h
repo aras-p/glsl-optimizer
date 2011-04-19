@@ -1728,6 +1728,22 @@ struct brw_instruction
 	 GLuint end_of_thread:1;
       } gen6_dp;
 
+      /* See volume vol5c.2 sections 2.11.2.1.5 and 2.11.21.2.2. */
+      struct {
+	 GLuint binding_table_index:8;
+	 GLuint msg_control:3;
+	 GLuint slot_group_select:1;
+	 GLuint pixel_scoreboard_clear:1;
+	 GLuint pad0:1;
+	 GLuint msg_type:4;
+	 GLuint pad1:1;
+	 GLuint header_present:1;
+	 GLuint response_length:5;
+	 GLuint msg_length:4;
+	 GLuint pad2:2;
+	 GLuint end_of_thread:1;
+      } gen7_dp;
+
       struct {
 	 GLuint function_control:16;
 	 GLuint response_length:4;
