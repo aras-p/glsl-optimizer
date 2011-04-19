@@ -1637,6 +1637,20 @@ struct brw_instruction
       } urb_gen5;
 
       struct {
+	 GLuint opcode:3;
+	 GLuint offset:11;
+	 GLuint swizzle_control:1;
+	 GLuint complete:1;
+	 GLuint per_slot_offset:1;
+	 GLuint pad0:2;
+	 GLuint header_present:1;
+	 GLuint response_length:5;
+	 GLuint msg_length:4;
+	 GLuint pad1:2;
+	 GLuint end_of_thread:1;
+      } urb_gen7;
+
+      struct {
 	 GLuint binding_table_index:8;
 	 GLuint msg_control:4;  
 	 GLuint msg_type:2;  

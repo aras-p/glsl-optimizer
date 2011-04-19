@@ -458,8 +458,21 @@ static void brw_set_urb_message( struct brw_compile *p,
     struct intel_context *intel = &brw->intel;
     brw_set_src1(p, insn, brw_imm_d(0));
 
-    if (intel->gen >= 5) {
-        insn->bits3.urb_gen5.opcode = 0;	/* ? */
+    if (intel->gen == 7) {
+        insn->bits3.urb_gen7.opcode = 0;	/* URB_WRITE_HWORD */
+        insn->bits3.urb_gen7.offset = offset;
+        assert(swizzle_control != BRW_URB_SWIZZLE_TRANSPOSE);
+        insn->bits3.urb_gen7.swizzle_control = swizzle_control;
+        /* per_slot_offset = 0 makes it ignore offsets in message header */
+        insn->bits3.urb_gen7.per_slot_offset = 0;
+        insn->bits3.urb_gen7.complete = complete;
+        insn->bits3.urb_gen7.header_present = 1;
+        insn->bits3.urb_gen7.response_length = response_length;
+        insn->bits3.urb_gen7.msg_length = msg_length;
+        insn->bits3.urb_gen7.end_of_thread = end_of_thread;
+	insn->header.destreg__conditionalmod = BRW_MESSAGE_TARGET_URB;
+    } else if (intel->gen >= 5) {
+        insn->bits3.urb_gen5.opcode = 0;	/* URB_WRITE */
         insn->bits3.urb_gen5.offset = offset;
         insn->bits3.urb_gen5.swizzle_control = swizzle_control;
         insn->bits3.urb_gen5.allocate = allocate;
