@@ -1773,16 +1773,15 @@ fi
 dnl
 dnl Gallium Radeon r300g configuration
 dnl
-AC_ARG_ENABLE([gallium-radeon],
-    [AS_HELP_STRING([--enable-gallium-radeon],
-        [build gallium radeon @<:@default=disabled@:>@])],
-    [enable_gallium_radeon="$enableval"],
-    [enable_gallium_radeon=auto])
-if test "x$enable_gallium_radeon" = xauto; then
+AC_ARG_ENABLE([gallium-r300],
+    [AS_HELP_STRING([--enable-gallium-r300],
+        [build gallium r300 @<:@default=disabled@:>@])],
+    [enable_gallium_r300="$enableval"],
+    [enable_gallium_r300=auto])
+if test "x$enable_gallium_r300" = xauto; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
     gallium_check_st "radeon/drm" "dri-r300"
-fi
-if test "x$enable_gallium_radeon" = xyes; then
+elif test "x$enable_gallium_r300" = xyes; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
     gallium_check_st "radeon/drm" "dri-r300" "xorg-radeon"
 fi
@@ -1792,7 +1791,7 @@ dnl Gallium Radeon r600g configuration
 dnl
 AC_ARG_ENABLE([gallium-r600],
     [AS_HELP_STRING([--enable-gallium-r600],
-        [build gallium radeon @<:@default=disabled@:>@])],
+        [build gallium r600 @<:@default=disabled@:>@])],
     [enable_gallium_r600="$enableval"],
     [enable_gallium_r600=auto])
 if test "x$enable_gallium_r600" = xyes; then
