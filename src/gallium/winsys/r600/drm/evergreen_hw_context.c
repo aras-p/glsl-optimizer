@@ -633,59 +633,25 @@ out_err:
 	return r;
 }
 
-static inline void evergreen_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)
-{
-	struct r600_range *range;
-	struct r600_block *block;
-	int i;
-
-	range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
-	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
-	if (state == NULL) {
-		block->status &= ~(R600_BLOCK_STATUS_ENABLED | R600_BLOCK_STATUS_DIRTY);
-		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
-		r600_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
-		LIST_DELINIT(&block->list);
-		return;
-	}
-	for (i = 0; i < 8; i++)
-		block->reg[i] = state->regs[i].value;
-
-	r600_bo_reference(ctx->radeon, &block->reloc[1].bo, NULL);
-	r600_bo_reference(ctx->radeon , &block->reloc[2].bo, NULL);
-	if (state->regs[0].bo) {
-		/* VERTEX RESOURCE, we preted there is 2 bo to relocate so
-		 * we have single case btw VERTEX & TEXTURE resource
-		 */
-		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[0].bo);
-		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[0].bo);
-	} else {
-		/* TEXTURE RESOURCE */
-		r600_bo_reference(ctx->radeon, &block->reloc[1].bo, state->regs[2].bo);
-		r600_bo_reference(ctx->radeon, &block->reloc[2].bo, state->regs[3].bo);
-	}
-	r600_context_dirty_block(ctx, block, R600_BLOCK_STATUS_DIRTY, 7);
-}
-
 void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
 {
 	unsigned offset = R_030000_SQ_TEX_RESOURCE_WORD0_0 + 0x20 * rid;
 
-	evergreen_context_pipe_state_set_resource(ctx, state, offset);
+	r600_context_pipe_state_set_resource(ctx, state, offset);
 }
 
 void evergreen_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
 {
 	unsigned offset = R_030000_SQ_TEX_RESOURCE_WORD0_0 + 0x1600 + 0x20 * rid;
 
-	evergreen_context_pipe_state_set_resource(ctx, state, offset);
+	r600_context_pipe_state_set_resource(ctx, state, offset);
 }
 
 void evergreen_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
 {
 	unsigned offset = R_030000_SQ_TEX_RESOURCE_WORD0_0 + 0x7C00 + 0x20 * rid;
 
-	evergreen_context_pipe_state_set_resource(ctx, state, offset);
+	r600_context_pipe_state_set_resource(ctx, state, offset);
 }
 
 static inline void evergreen_context_pipe_state_set_sampler(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)

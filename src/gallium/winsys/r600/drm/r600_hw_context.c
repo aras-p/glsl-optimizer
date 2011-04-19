@@ -875,12 +875,13 @@ void r600_context_pipe_state_set(struct r600_context *ctx, struct r600_pipe_stat
 	}
 }
 
-static inline void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)
+void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset)
 {
 	struct r600_range *range;
 	struct r600_block *block;
 	int i;
 	int dirty;
+	int num_regs = ctx->radeon->chip_class >= EVERGREEN ? 8 : 7;
 
 	range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
 	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
@@ -894,7 +895,7 @@ static inline void r600_context_pipe_state_set_resource(struct r600_context *ctx
 
 	dirty = block->status & R600_BLOCK_STATUS_DIRTY;
 
-	for (i = 0; i < 7; i++) {
+	for (i = 0; i < num_regs; i++) {
 		if (block->reg[i] != state->regs[i].value) {
 			dirty |= R600_BLOCK_STATUS_DIRTY;
 			block->reg[i] = state->regs[i].value;
@@ -941,7 +942,7 @@ static inline void r600_context_pipe_state_set_resource(struct r600_context *ctx
 			state->regs[3].bo->fence = ctx->radeon->fence;
 		}
 	}
-	r600_context_dirty_block(ctx, block, dirty, 6);
+	r600_context_dirty_block(ctx, block, dirty, num_regs - 1);
 }
 
 void r600_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid)
