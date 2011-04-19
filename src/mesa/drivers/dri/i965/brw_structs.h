@@ -1228,31 +1228,6 @@ struct brw_surface_state
 };
 
 
-
-struct brw_vertex_buffer_state
-{
-   struct {
-      GLuint pitch:11; 
-      GLuint pad:15;
-      GLuint access_type:1; 
-      GLuint vb_index:5; 
-   } vb0;
-   
-   GLuint start_addr; 
-   GLuint max_index;   
-#if 1
-   GLuint instance_data_step_rate; /* not included for sequential/random vertices? */
-#endif
-};
-
-#define BRW_VBP_MAX 17
-
-struct brw_vb_array_state {
-   struct header header;
-   struct brw_vertex_buffer_state vb[BRW_VBP_MAX];
-};
-
-
 struct brw_vertex_element_state
 {
    struct
