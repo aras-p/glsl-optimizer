@@ -155,6 +155,13 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 struct r600_bo *r600_context_reg_bo(struct r600_context *ctx, unsigned offset);
 int r600_context_add_block(struct r600_context *ctx, const struct r600_reg *reg, unsigned nreg);
 void r600_context_pipe_state_set_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned offset);
+void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block);
+void r600_context_dirty_block(struct r600_context *ctx, struct r600_block *block,
+			      int dirty, int index);
+
+void r600_context_reg(struct r600_context *ctx,
+		      unsigned offset, unsigned value,
+		      unsigned mask);
 /*
  * r600_bo.c
  */
@@ -178,82 +185,6 @@ struct r600_bo *r600_bomgr_bo_create(struct r600_bomgr *mgr,
  */
 #define CTX_RANGE_ID(ctx, offset) (((offset) >> (ctx)->hash_shift) & 255)
 #define CTX_BLOCK_ID(ctx, offset) ((offset) & ((1 << (ctx)->hash_shift) - 1))
-
-static void inline r600_context_reg(struct r600_context *ctx,
-					unsigned offset, unsigned value,
-					unsigned mask)
-{
-	struct r600_range *range;
-	struct r600_block *block;
-	unsigned id;
-
-	range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
-	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
-	id = (offset - block->start_offset) >> 2;
-	block->reg[id] &= ~mask;
-	block->reg[id] |= value;
-	if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
-		ctx->pm4_dirty_cdwords += block->pm4_ndwords;
-		block->status |= R600_BLOCK_STATUS_ENABLED;
-		block->status |= R600_BLOCK_STATUS_DIRTY;
-		LIST_ADDTAIL(&block->list,&ctx->dirty);
-	}
-}
-
-static inline void r600_context_dirty_block(struct r600_context *ctx, struct r600_block *block,
-					    int dirty, int index)
-{
-	if (dirty && (index + 1) > block->nreg_dirty)
-		block->nreg_dirty = index + 1;
-
-	if ((dirty != (block->status & R600_BLOCK_STATUS_DIRTY)) || !(block->status & R600_BLOCK_STATUS_ENABLED)) {
-
-		block->status |= R600_BLOCK_STATUS_ENABLED;
-		block->status |= R600_BLOCK_STATUS_DIRTY;
-		ctx->pm4_dirty_cdwords += block->pm4_ndwords + block->pm4_flush_ndwords;
-		LIST_ADDTAIL(&block->list,&ctx->dirty);
-	}
-}
-
-static inline void r600_context_block_emit_dirty(struct r600_context *ctx, struct r600_block *block)
-{
-	int id;
-
-	if (block->nreg_dirty == 0 && block->nbo == 0 && !(block->flags & REG_FLAG_DIRTY_ALWAYS)) {
-		goto out;
-	}
-
-	for (int j = 0; j < block->nreg; j++) {
-		if (block->pm4_bo_index[j]) {
-			/* find relocation */
-			id = block->pm4_bo_index[j];
-			r600_context_bo_reloc(ctx,
-					&block->pm4[block->reloc[id].bo_pm4_index],
-					block->reloc[id].bo);
-			r600_context_bo_flush(ctx,
-					block->reloc[id].flush_flags,
-					block->reloc[id].flush_mask,
-					block->reloc[id].bo);
-		}
-	}
-	memcpy(&ctx->pm4[ctx->pm4_cdwords], block->pm4, block->pm4_ndwords * 4);
-	ctx->pm4_cdwords += block->pm4_ndwords;
-
-	if (block->nreg_dirty != block->nreg && block->nbo == 0 && !(block->flags & REG_FLAG_DIRTY_ALWAYS)) {
-		int new_dwords = block->nreg_dirty;
-		uint32_t oldword, newword;
-		ctx->pm4_cdwords -= block->pm4_ndwords;
-		newword = oldword = ctx->pm4[ctx->pm4_cdwords];
-		newword &= PKT_COUNT_C;
-		newword |= PKT_COUNT_S(new_dwords);
-		ctx->pm4[ctx->pm4_cdwords] = newword;
-		ctx->pm4_cdwords += new_dwords + 2;
-	}
-out:
-	block->status ^= R600_BLOCK_STATUS_DIRTY;
-	block->nreg_dirty = 0;
-	LIST_DELINIT(&block->list);
-}
 
 /*
  * radeon_bo.c
