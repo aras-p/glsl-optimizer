@@ -231,6 +231,8 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/glsl/Makefile.template				\
 	$(DIRECTORY)/src/glsl/SConscript				\
 	$(DIRECTORY)/src/glsl/*.[ch]					\
+	$(DIRECTORY)/src/glsl/*.ll					\
+	$(DIRECTORY)/src/glsl/*.yy					\
 	$(DIRECTORY)/src/glsl/*.[cly]pp					\
 	$(DIRECTORY)/src/glsl/README					\
 	$(DIRECTORY)/src/glsl/glcpp/*.[chly]				\
@@ -245,6 +247,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/depend					\
 	$(MAIN_ES_FILES)						\
 	$(DIRECTORY)/src/mesa/main/*.[chS]				\
+	$(DIRECTORY)/src/mesa/main/*.cpp				\
 	$(DIRECTORY)/src/mesa/main/descrip.mms				\
 	$(DIRECTORY)/src/mesa/math/*.[ch]				\
 	$(DIRECTORY)/src/mesa/math/descrip.mms				\
