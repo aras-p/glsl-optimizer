@@ -282,7 +282,7 @@ void r600_upload_const_buffer(struct r600_pipe_context *rctx, struct r600_resour
 		for(i = 0; i < size / 4; i++) {
 			tmpPtr[i] = bswap_32(*((uint32_t *)ptr + i));
 		}
-	
+
 		u_upload_data(rctx->vbuf_mgr->uploader, 0, size, tmpPtr, const_offset,
 			      (struct pipe_resource**)rbuffer, &flushed);
 

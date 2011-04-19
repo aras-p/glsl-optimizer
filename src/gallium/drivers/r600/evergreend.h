@@ -1885,4 +1885,10 @@
 #define R_03CFF4_SQ_VTX_START_INST_LOC                  0x03CFF4
 
 #define R_03A200_SQ_LOOP_CONST_0                     0x3A200
+
+#define ENDIAN_NONE	0
+#define ENDIAN_8IN16	1
+#define ENDIAN_8IN32	2
+#define ENDIAN_8IN64	3
+
 #endif

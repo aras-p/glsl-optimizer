@@ -357,7 +357,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	const struct util_format_description *desc;
 	struct r600_resource_texture *tmp;
 	struct r600_resource *rbuffer;
-	unsigned format;
+	unsigned format, endian;
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
 	unsigned char swizzle[4], array_mode = 0, tile_type = 0;
 	struct r600_bo *bo[2];
@@ -394,6 +394,8 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 		tmp = tmp->flushed_depth_texture;
 	}
 
+	endian = r600_colorformat_endian_swap(format);
+
 	if (tmp->force_int_type) {
 		word4 &= C_030010_NUM_FORMAT_ALL;
 		word4 |= S_030010_NUM_FORMAT_ALL(V_030010_SQ_NUM_FORMAT_INT);
@@ -425,6 +427,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	r600_pipe_state_add_reg(rstate, R_030010_RESOURCE0_WORD4,
 				word4 |
 				S_030010_SRF_MODE_ALL(V_030010_SRF_MODE_NO_ZERO) |
+				S_030010_ENDIAN_SWAP(endian) |
 				S_030010_BASE_LEVEL(state->u.tex.first_level), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_030014_RESOURCE0_WORD5,
 				S_030014_LAST_LEVEL(state->u.tex.last_level) |
@@ -655,7 +658,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	unsigned level = state->cbufs[cb]->u.tex.level;
 	unsigned pitch, slice;
 	unsigned color_info;
-	unsigned format, swap, ntype;
+	unsigned format, swap, ntype, endian;
 	unsigned offset;
 	unsigned tile_type;
 	const struct util_format_description *desc;
@@ -694,6 +697,11 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 
 	format = r600_translate_colorformat(surf->base.format);
 	swap = r600_translate_colorswap(surf->base.format);
+	if (rbuffer->b.b.b.usage == PIPE_USAGE_STAGING) {
+		endian = ENDIAN_NONE;
+	} else {
+		endian = r600_colorformat_endian_swap(format);
+	}
 
 	/* disable when gallium grows int textures */
 	if ((format == FMT_32_32_32_32 || format == FMT_16_16_16_16) && rtex->force_int_type)
@@ -703,7 +711,8 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 		S_028C70_COMP_SWAP(swap) |
 		S_028C70_ARRAY_MODE(rtex->array_mode[level]) |
 		S_028C70_BLEND_CLAMP(1) |
-		S_028C70_NUMBER_TYPE(ntype);
+		S_028C70_NUMBER_TYPE(ntype) |
+		S_028C70_ENDIAN(endian);
 
 
 	/* we can only set the export size if any thing is snorm/unorm component is > 11 bits,
@@ -1548,8 +1557,10 @@ void evergreen_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
 	r600_pipe_state_add_reg(rstate, R_030004_RESOURCE0_WORD1,
 				rbuffer->bo_size - offset - 1, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_030008_RESOURCE0_WORD2,
-				S_030008_STRIDE(stride),
-				0xFFFFFFFF, NULL);
+#ifdef PIPE_ARCH_BIG_ENDIAN
+				S_030008_ENDIAN_SWAP(ENDIAN_8IN32) |
+#endif
+				S_030008_STRIDE(stride), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_03000C_RESOURCE0_WORD3,
 				S_03000C_DST_SEL_X(V_03000C_SQ_SEL_X) |
 				S_03000C_DST_SEL_Y(V_03000C_SQ_SEL_Y) |
