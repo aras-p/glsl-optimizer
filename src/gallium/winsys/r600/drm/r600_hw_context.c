@@ -845,18 +845,23 @@ void r600_context_reg(struct r600_context *ctx,
 	struct r600_range *range;
 	struct r600_block *block;
 	unsigned id;
+	unsigned new_val;
+	int dirty;
 
 	range = &ctx->range[CTX_RANGE_ID(ctx, offset)];
 	block = range->blocks[CTX_BLOCK_ID(ctx, offset)];
 	id = (offset - block->start_offset) >> 2;
-	block->reg[id] &= ~mask;
-	block->reg[id] |= value;
-	if (!(block->status & R600_BLOCK_STATUS_DIRTY)) {
-		ctx->pm4_dirty_cdwords += block->pm4_ndwords;
-		block->status |= R600_BLOCK_STATUS_ENABLED;
-		block->status |= R600_BLOCK_STATUS_DIRTY;
-		LIST_ADDTAIL(&block->list,&ctx->dirty);
+
+	dirty = block->status & R600_BLOCK_STATUS_DIRTY;
+
+	new_val = block->reg[id];
+	new_val &= ~mask;
+	new_val |= value;
+	if (new_val != block->reg[id]) {
+		dirty |= R600_BLOCK_STATUS_DIRTY;
+		block->reg[id] = new_val;
 	}
+	r600_context_dirty_block(ctx, block, dirty, id);
 }
 
 void r600_context_dirty_block(struct r600_context *ctx, struct r600_block *block,
