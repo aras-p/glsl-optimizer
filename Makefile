@@ -200,6 +200,9 @@ MAIN_FILES = \
 	$(DIRECTORY)/configure.ac					\
 	$(DIRECTORY)/acinclude.m4					\
 	$(DIRECTORY)/aclocal.m4						\
+	$(DIRECTORY)/SConstruct						\
+	$(DIRECTORY)/common.py						\
+	$(DIRECTORY)/scons/*py						\
 	$(DIRECTORY)/bin/config.guess					\
 	$(DIRECTORY)/bin/config.sub					\
 	$(DIRECTORY)/bin/extract_git_sha1				\
@@ -227,6 +230,8 @@ MAIN_FILES = \
 	$(DIRECTORY)/include/GL/vms_x_fix.h				\
 	$(DIRECTORY)/include/GL/wglext.h				\
 	$(DIRECTORY)/include/GL/wmesa.h					\
+	$(DIRECTORY)/src/getopt/SConscript				\
+	$(DIRECTORY)/src/getopt/getopt*.[ch]				\
 	$(DIRECTORY)/src/glsl/Makefile					\
 	$(DIRECTORY)/src/glsl/Makefile.template				\
 	$(DIRECTORY)/src/glsl/SConscript				\
@@ -239,7 +244,9 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/glsl/glcpp/README				\
 	$(DIRECTORY)/src/glsl/builtins					\
 	$(DIRECTORY)/src/Makefile					\
+	$(DIRECTORY)/src/SConscript					\
 	$(DIRECTORY)/src/mesa/Makefile*					\
+	$(DIRECTORY)/src/mesa/SConscript				\
 	$(DIRECTORY)/src/mesa/sources.mak				\
 	$(DIRECTORY)/src/mesa/descrip.mms				\
 	$(DIRECTORY)/src/mesa/gl.pc.in					\
@@ -265,6 +272,7 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/tnl_dd/*.[ch]				\
 	$(DIRECTORY)/src/mesa/tnl_dd/imm/*.[ch]				\
 	$(DIRECTORY)/src/mesa/tnl_dd/imm/NOTES.imm			\
+	$(DIRECTORY)/src/mesa/vf/*.[ch]					\
 	$(DIRECTORY)/src/mesa/drivers/Makefile				\
 	$(DIRECTORY)/src/mesa/drivers/beos/*.cpp			\
 	$(DIRECTORY)/src/mesa/drivers/beos/Makefile			\
@@ -277,6 +285,9 @@ MAIN_FILES = \
 	$(DIRECTORY)/src/mesa/drivers/osmesa/descrip.mms		\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/osmesa.def			\
 	$(DIRECTORY)/src/mesa/drivers/osmesa/*.[ch]			\
+	$(DIRECTORY)/src/mesa/drivers/dri/r300/compiler/*.[ch]		\
+	$(DIRECTORY)/src/mesa/drivers/dri/r300/compiler/Makefile	\
+	$(DIRECTORY)/src/mesa/drivers/dri/r300/compiler/SConscript	\
 	$(DIRECTORY)/src/mesa/drivers/windows/*/*.[ch]			\
 	$(DIRECTORY)/src/mesa/drivers/windows/*/*.def			\
 	$(DIRECTORY)/src/mesa/drivers/x11/Makefile			\
@@ -311,7 +322,9 @@ MAPI_FILES = \
 	$(DIRECTORY)/src/mapi/mapi/mapi_abi.py				\
 	$(DIRECTORY)/src/mapi/mapi/sources.mak				\
 	$(DIRECTORY)/src/mapi/mapi/*.[ch]				\
+	$(DIRECTORY)/src/mapi/shared-glapi/SConscript			\
 	$(DIRECTORY)/src/mapi/vgapi/Makefile				\
+	$(DIRECTORY)/src/mapi/vgapi/SConscript				\
 	$(DIRECTORY)/src/mapi/vgapi/vgapi.csv				\
 	$(DIRECTORY)/src/mapi/vgapi/vg.pc.in
 
@@ -324,6 +337,7 @@ EGL_FILES = \
 	$(DIRECTORY)/src/egl/*/*.[ch]					\
 	$(DIRECTORY)/src/egl/*/*/Makefile				\
 	$(DIRECTORY)/src/egl/*/*/*.[ch]					\
+	$(DIRECTORY)/src/egl/main/SConscript				\
 	$(DIRECTORY)/src/egl/main/*.pc.in				\
 	$(DIRECTORY)/src/egl/main/*.def
 
@@ -399,6 +413,7 @@ GLUT_FILES = \
 	$(DIRECTORY)/include/GL/glut.h			\
 	$(DIRECTORY)/include/GL/glutf90.h		\
 	$(DIRECTORY)/src/glut/glx/Makefile*		\
+	$(DIRECTORY)/src/glut/glx/SConscript		\
 	$(DIRECTORY)/src/glut/glx/depend		\
 	$(DIRECTORY)/src/glut/glx/glut.pc.in		\
 	$(DIRECTORY)/src/glut/glx/*def			\
