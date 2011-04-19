@@ -44,11 +44,8 @@ enum VS_INPUT
    VS_I_RECT,
    VS_I_VPOS,
 
-   VS_I_FLAGS,
-   VS_I_EB,
-
-   VS_I_MV_TOP = VS_I_FLAGS,
-   VS_I_MV_BOTTOM = VS_I_EB,
+   VS_I_MV_TOP,
+   VS_I_MV_BOTTOM,
 
    NUM_VS_INPUTS
 };
@@ -71,8 +68,7 @@ struct vl_vertex_buffer
    } mv[VL_MAX_REF_FRAMES];
 };
 
-struct pipe_vertex_buffer vl_vb_upload_quads(struct pipe_context *pipe,
-                                             unsigned blocks_x, unsigned blocks_y);
+struct pipe_vertex_buffer vl_vb_upload_quads(struct pipe_context *pipe);
 
 struct pipe_vertex_buffer vl_vb_upload_pos(struct pipe_context *pipe, unsigned width, unsigned height);
 
@@ -90,8 +86,11 @@ struct pipe_vertex_buffer vl_vb_get_mv(struct vl_vertex_buffer *buffer, int moti
 
 void vl_vb_map(struct vl_vertex_buffer *buffer, struct pipe_context *pipe);
 
-void vl_vb_add_block(struct vl_vertex_buffer *buffer, struct pipe_mpeg12_macroblock *mb,
-                     const unsigned (*empty_block_mask)[3][2][2]);
+void vl_vb_add_ycbcr(struct vl_vertex_buffer *buffer,
+                     unsigned component, unsigned x, unsigned y,
+                     bool intra, enum pipe_mpeg12_dct_type type);
+
+void vl_vb_add_block(struct vl_vertex_buffer *buffer, struct pipe_mpeg12_macroblock *mb);
 
 void vl_vb_unmap(struct vl_vertex_buffer *buffer, struct pipe_context *pipe);
 

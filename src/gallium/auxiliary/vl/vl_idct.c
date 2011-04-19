@@ -90,11 +90,10 @@ static void *
 create_vert_shader(struct vl_idct *idct, bool matrix_stage)
 {
    struct ureg_program *shader;
-   struct ureg_src vrect, vpos, vblock, eb;
-   struct ureg_src scale, blocks_xy;
+   struct ureg_src vrect, vpos;
+   struct ureg_src scale;
    struct ureg_dst t_tex, t_start;
    struct ureg_dst o_vpos, o_l_addr[2], o_r_addr[2];
-   unsigned label;
 
    shader = ureg_create(TGSI_PROCESSOR_VERTEX);
    if (!shader)
@@ -105,11 +104,8 @@ create_vert_shader(struct vl_idct *idct, bool matrix_stage)
 
    vrect = ureg_DECL_vs_input(shader, VS_I_RECT);
    vpos = ureg_DECL_vs_input(shader, VS_I_VPOS);
-   vblock = ureg_swizzle(vrect, TGSI_SWIZZLE_Z, TGSI_SWIZZLE_W, TGSI_SWIZZLE_X, TGSI_SWIZZLE_X);
 
    o_vpos = ureg_DECL_output(shader, TGSI_SEMANTIC_POSITION, VS_O_VPOS);
-
-   eb = ureg_DECL_vs_input(shader, VS_I_EB);
 
    o_l_addr[0] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_L_ADDR0);
    o_l_addr[1] = ureg_DECL_output(shader, TGSI_SEMANTIC_GENERIC, VS_O_L_ADDR1);
@@ -119,20 +115,13 @@ create_vert_shader(struct vl_idct *idct, bool matrix_stage)
 
    /*
     * scale = (BLOCK_WIDTH, BLOCK_HEIGHT) / (dst.width, dst.height)
-    * blocks_xy = (blocks_x, blocks_y)
     *
-    * if eb.(vblock.y, vblock.x)
-    *    o_vpos.xy = -1
-    * else
-    *    t_tex = vpos * blocks_xy + vblock
-    *    t_start = t_tex * scale
-    *    t_tex = t_tex + vrect
-    *    o_vpos.xy = t_tex * scale
-    *
-    *    o_l_addr = calc_addr(...)
-    *    o_r_addr = calc_addr(...)
-    * endif
+    * t_vpos = vpos + vrect
+    * o_vpos.xy = t_vpos * scale
     * o_vpos.zw = vpos
+    *
+    * o_l_addr = calc_addr(...)
+    * o_r_addr = calc_addr(...)
     *
     */
 
@@ -140,53 +129,24 @@ create_vert_shader(struct vl_idct *idct, bool matrix_stage)
       (float)BLOCK_WIDTH / idct->buffer_width,
       (float)BLOCK_HEIGHT / idct->buffer_height);
 
-   blocks_xy = ureg_imm2f(shader, idct->blocks_x, idct->blocks_y);
+   ureg_ADD(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_XY), vpos, vrect);
+   ureg_MUL(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_XY), ureg_src(t_tex), scale);
+   ureg_MUL(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_Z),
+      ureg_scalar(vrect, TGSI_SWIZZLE_X),
+      ureg_imm1f(shader, BLOCK_WIDTH / idct->nr_of_render_targets));
 
-   if (idct->blocks_x > 1 || idct->blocks_y > 1) {
-      ureg_CMP(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_XY),
-         ureg_negate(ureg_scalar(vblock, TGSI_SWIZZLE_Y)),
-         ureg_swizzle(eb, TGSI_SWIZZLE_Z, TGSI_SWIZZLE_W, TGSI_SWIZZLE_Z, TGSI_SWIZZLE_W),
-         ureg_swizzle(eb, TGSI_SWIZZLE_X, TGSI_SWIZZLE_Y, TGSI_SWIZZLE_X, TGSI_SWIZZLE_Y));
+   ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(t_tex));
+   ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), ureg_imm1f(shader, 1.0f));
 
-      ureg_CMP(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_X),
-         ureg_negate(ureg_scalar(vblock, TGSI_SWIZZLE_X)),
-         ureg_scalar(ureg_src(t_tex), TGSI_SWIZZLE_Y),
-         ureg_scalar(ureg_src(t_tex), TGSI_SWIZZLE_X));
+   ureg_MUL(shader, ureg_writemask(t_start, TGSI_WRITEMASK_XY), vpos, scale);
 
-      eb = ureg_src(t_tex);
+   if(matrix_stage) {
+      calc_addr(shader, o_l_addr, ureg_src(t_tex), ureg_src(t_start), false, false, idct->buffer_width / 4);
+      calc_addr(shader, o_r_addr, vrect, ureg_imm1f(shader, 0.0f), true, true, BLOCK_WIDTH / 4);
+   } else {
+      calc_addr(shader, o_l_addr, vrect, ureg_imm1f(shader, 0.0f), false, false, BLOCK_WIDTH / 4);
+      calc_addr(shader, o_r_addr, ureg_src(t_tex), ureg_src(t_start), true, false, idct->buffer_height / 4);
    }
-
-   ureg_IF(shader, ureg_scalar(eb, TGSI_SWIZZLE_X), &label);
-
-      ureg_MOV(shader, o_vpos, ureg_imm1f(shader, -1.0f));
-
-   ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
-   ureg_ELSE(shader, &label);
-
-      ureg_MAD(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_XY), vpos, blocks_xy, vblock);
-      ureg_MUL(shader, ureg_writemask(t_start, TGSI_WRITEMASK_XY), ureg_src(t_tex), scale);
-
-      ureg_ADD(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_XY), ureg_src(t_tex), vrect);
-
-      ureg_MUL(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_XY), ureg_src(t_tex), scale);
-      ureg_MUL(shader, ureg_writemask(t_tex, TGSI_WRITEMASK_Z),
-         ureg_scalar(vrect, TGSI_SWIZZLE_X),
-         ureg_imm1f(shader, BLOCK_WIDTH / idct->nr_of_render_targets));
-
-      ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_XY), ureg_src(t_tex));
-
-      if(matrix_stage) {
-         calc_addr(shader, o_l_addr, ureg_src(t_tex), ureg_src(t_start), false, false, idct->buffer_width / 4);
-         calc_addr(shader, o_r_addr, vrect, ureg_imm1f(shader, 0.0f), true, true, BLOCK_WIDTH / 4);
-      } else {
-         calc_addr(shader, o_l_addr, vrect, ureg_imm1f(shader, 0.0f), false, false, BLOCK_WIDTH / 4);
-         calc_addr(shader, o_r_addr, ureg_src(t_tex), ureg_src(t_start), true, false, idct->buffer_height / 4);
-      }
-
-   ureg_fixup_label(shader, label, ureg_get_instruction_number(shader));
-   ureg_ENDIF(shader);
-
-   ureg_MOV(shader, ureg_writemask(o_vpos, TGSI_WRITEMASK_ZW), vpos);
 
    ureg_release_temporary(shader, t_tex);
    ureg_release_temporary(shader, t_start);
@@ -607,7 +567,6 @@ error_matrix:
 
 bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
                   unsigned buffer_width, unsigned buffer_height,
-                  unsigned blocks_x, unsigned blocks_y,
                   unsigned nr_of_render_targets,
                   struct pipe_sampler_view *matrix,
                   struct pipe_sampler_view *transpose)
@@ -617,8 +576,6 @@ bool vl_idct_init(struct vl_idct *idct, struct pipe_context *pipe,
    idct->pipe = pipe;
    idct->buffer_width = buffer_width;
    idct->buffer_height = buffer_height;
-   idct->blocks_x = blocks_x;
-   idct->blocks_y = blocks_y;
    idct->nr_of_render_targets = nr_of_render_targets;
 
    pipe_sampler_view_reference(&idct->matrix, matrix);
@@ -706,14 +663,10 @@ vl_idct_cleanup_buffer(struct vl_idct *idct, struct vl_idct_buffer *buffer)
 void
 vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer, unsigned num_instances)
 {
-   unsigned num_verts;
-
    assert(idct);
    assert(buffer);
 
    if(num_instances > 0) {
-      num_verts = idct->blocks_x * idct->blocks_y * 4;
-
       idct->pipe->bind_rasterizer_state(idct->pipe, idct->rs_state);
       idct->pipe->bind_blend_state(idct->pipe, idct->blend);
       idct->pipe->bind_fragment_sampler_states(idct->pipe, 2, idct->samplers);
@@ -724,7 +677,7 @@ vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer, unsigned num_
       idct->pipe->set_fragment_sampler_views(idct->pipe, 2, buffer->sampler_views.stage[0]);
       idct->pipe->bind_vs_state(idct->pipe, idct->matrix_vs);
       idct->pipe->bind_fs_state(idct->pipe, idct->matrix_fs);
-      util_draw_arrays_instanced(idct->pipe, PIPE_PRIM_QUADS, 0, num_verts, 0, num_instances);
+      util_draw_arrays_instanced(idct->pipe, PIPE_PRIM_QUADS, 0, 4, 0, num_instances);
 
       /* second stage */
       idct->pipe->set_framebuffer_state(idct->pipe, &buffer->fb_state[1]);
@@ -732,6 +685,6 @@ vl_idct_flush(struct vl_idct *idct, struct vl_idct_buffer *buffer, unsigned num_
       idct->pipe->set_fragment_sampler_views(idct->pipe, 2, buffer->sampler_views.stage[1]);
       idct->pipe->bind_vs_state(idct->pipe, idct->transpose_vs);
       idct->pipe->bind_fs_state(idct->pipe, idct->transpose_fs);
-      util_draw_arrays_instanced(idct->pipe, PIPE_PRIM_QUADS, 0, num_verts, 0, num_instances);
+      util_draw_arrays_instanced(idct->pipe, PIPE_PRIM_QUADS, 0, 4, 0, num_instances);
    }
 }

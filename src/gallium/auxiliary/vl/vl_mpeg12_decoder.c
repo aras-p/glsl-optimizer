@@ -108,7 +108,9 @@ map_buffers(struct vl_mpeg12_decoder *ctx, struct vl_mpeg12_buffer *buffer)
 }
 
 static void
-upload_block(struct vl_mpeg12_buffer *buffer, unsigned plane, unsigned x, unsigned y, short *block)
+upload_block(struct vl_mpeg12_buffer *buffer, unsigned plane,
+             unsigned x, unsigned y, short *block,
+             bool intra, enum pipe_mpeg12_dct_type type)
 {
    unsigned tex_pitch;
    short *texels;
@@ -117,6 +119,8 @@ upload_block(struct vl_mpeg12_buffer *buffer, unsigned plane, unsigned x, unsign
 
    assert(buffer);
    assert(block);
+
+   vl_vb_add_ycbcr(&buffer->vertex_stream, plane, x, y, intra, type);
 
    tex_pitch = buffer->tex_transfer[plane]->stride / sizeof(short);
    texels = buffer->texels[plane] + y * tex_pitch * BLOCK_HEIGHT + x * BLOCK_WIDTH;
@@ -142,7 +146,8 @@ upload_buffer(struct vl_mpeg12_decoder *ctx,
    for (y = 0; y < 2; ++y) {
       for (x = 0; x < 2; ++x, ++tb) {
          if (mb->cbp & (*ctx->empty_block_mask)[0][y][x]) {
-            upload_block(buffer, 0, mb->mbx * 2 + x, mb->mby * 2 + y, blocks);
+            upload_block(buffer, 0, mb->mbx * 2 + x, mb->mby * 2 + y, blocks,
+                         mb->dct_intra, mb->dct_type);
             blocks += BLOCK_WIDTH * BLOCK_HEIGHT;
          }
       }
@@ -153,7 +158,8 @@ upload_buffer(struct vl_mpeg12_decoder *ctx,
 
    for (tb = 1; tb < 3; ++tb) {
       if (mb->cbp & (*ctx->empty_block_mask)[tb][0][0]) {
-         upload_block(buffer, tb, mb->mbx, mb->mby, blocks);
+         upload_block(buffer, tb, mb->mbx, mb->mby, blocks,
+                      mb->dct_intra, mb->dct_type);
          blocks += BLOCK_WIDTH * BLOCK_HEIGHT;
       }
    }
@@ -245,7 +251,7 @@ vl_mpeg12_buffer_add_macroblocks(struct pipe_video_decode_buffer *buffer,
    assert(macroblocks->codec == PIPE_VIDEO_CODEC_MPEG12);
 
    for ( i = 0; i < num_macroblocks; ++i ) {
-      vl_vb_add_block(&buf->vertex_stream, &mb[i], dec->empty_block_mask);
+      vl_vb_add_block(&buf->vertex_stream, &mb[i]);
       upload_buffer(dec, buf, &mb[i]);
    }
 }
@@ -565,7 +571,7 @@ find_first_supported_format(struct vl_mpeg12_decoder *dec,
 static bool
 init_idct(struct vl_mpeg12_decoder *dec, unsigned buffer_width, unsigned buffer_height)
 {
-   unsigned chroma_width, chroma_height, chroma_blocks_x, chroma_blocks_y;
+   unsigned chroma_width, chroma_height;
    struct pipe_sampler_view *matrix, *transpose;
    float matrix_scale, transpose_scale;
 
@@ -619,28 +625,21 @@ init_idct(struct vl_mpeg12_decoder *dec, unsigned buffer_width, unsigned buffer_
       pipe_sampler_view_reference(&transpose, matrix);
 
    if (!vl_idct_init(&dec->idct_y, dec->pipe, buffer_width, buffer_height,
-                     2, 2, dec->nr_of_idct_render_targets, matrix, transpose))
+                     dec->nr_of_idct_render_targets, matrix, transpose))
       goto error_y;
 
    if (dec->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_420) {
       chroma_width = buffer_width / 2;
       chroma_height = buffer_height / 2;
-      chroma_blocks_x = 1;
-      chroma_blocks_y = 1;
    } else if (dec->base.chroma_format == PIPE_VIDEO_CHROMA_FORMAT_422) {
       chroma_width = buffer_width;
       chroma_height = buffer_height / 2;
-      chroma_blocks_x = 2;
-      chroma_blocks_y = 1;
    } else {
       chroma_width = buffer_width;
       chroma_height = buffer_height;
-      chroma_blocks_x = 2;
-      chroma_blocks_y = 2;
    }
 
    if(!vl_idct_init(&dec->idct_c, dec->pipe, chroma_width, chroma_height,
-                    chroma_blocks_x, chroma_blocks_y,
                     dec->nr_of_idct_render_targets, matrix, transpose))
       goto error_c;
 
@@ -696,7 +695,7 @@ vl_create_mpeg12_decoder(struct pipe_video_context *context,
 
    dec->pipe = pipe;
 
-   dec->quads = vl_vb_upload_quads(dec->pipe, 2, 2);
+   dec->quads = vl_vb_upload_quads(dec->pipe);
    dec->pos = vl_vb_upload_pos(
       dec->pipe,
       dec->base.width / MACROBLOCK_WIDTH,
