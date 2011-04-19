@@ -3460,4 +3460,10 @@
 #define SQ_TEX_INST_SAMPLE 0x10
 #define SQ_TEX_INST_SAMPLE_L 0x11
 #define SQ_TEX_INST_SAMPLE_C 0x18
+
+#define ENDIAN_NONE		0
+#define ENDIAN_8IN16	1
+#define ENDIAN_8IN32	2
+#define ENDIAN_8IN64	3
+
 #endif

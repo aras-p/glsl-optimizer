@@ -33,6 +33,13 @@
 #include "r600d.h"
 #include <stdio.h>
 #include <errno.h>
+#include <byteswap.h>
+
+#ifdef PIPE_ARCH_BIG_ENDIAN
+#define CPU_TO_LE32(x)	bswap_32(x)
+#else
+#define CPU_TO_LE32(x)	(x)
+#endif
 
 int r600_find_vs_semantic_index(struct r600_shader *vs,
 				struct r600_shader *ps, int id)
@@ -52,7 +59,8 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *s
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_shader *rshader = &shader->shader;
-	void *ptr;
+	uint32_t *ptr;
+	int	i;
 
 	/* copy new shader */
 	if (shader->bo == NULL) {
@@ -60,8 +68,10 @@ static int r600_pipe_shader(struct pipe_context *ctx, struct r600_pipe_shader *s
 		if (shader->bo == NULL) {
 			return -ENOMEM;
 		}
-		ptr = r600_bo_map(rctx->radeon, shader->bo, 0, NULL);
-		memcpy(ptr, rshader->bc.bytecode, rshader->bc.ndw * 4);
+		ptr = (uint32_t*)r600_bo_map(rctx->radeon, shader->bo, 0, NULL);
+		for(i = 0; i < rshader->bc.ndw; i++) {
+			*(ptr + i) = CPU_TO_LE32(*(rshader->bc.bytecode + i));
+		}
 		r600_bo_unmap(rctx->radeon, shader->bo);
 	}
 	/* build state */
@@ -467,6 +477,11 @@ static int tgsi_fetch_rel_const(struct r600_shader_ctx *ctx, unsigned int offset
 	vtx.num_format_all = 2;		/* NUM_FORMAT_SCALED */
 	vtx.format_comp_all = 1;	/* FORMAT_COMP_SIGNED */
 	vtx.srf_mode_all = 1;		/* SRF_MODE_NO_ZERO */
+#ifdef PIPE_ARCH_BIG_ENDIAN
+	vtx.endian = ENDIAN_8IN32;
+#else
+	vtx.endian = ENDIAN_NONE;
+#endif
 
 	if ((r = r600_bc_add_vtx(ctx->bc, &vtx)))
 		return r;

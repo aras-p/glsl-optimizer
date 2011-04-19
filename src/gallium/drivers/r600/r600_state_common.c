@@ -435,7 +435,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 {
 	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
 	struct r600_resource *rbuffer;
-	u32 vgt_dma_index_type, vgt_draw_initiator, mask;
+	u32 vgt_dma_index_type, vgt_dma_swap_mode, vgt_draw_initiator, mask;
 	struct r600_draw rdraw;
 	struct r600_pipe_state vgt;
 	struct r600_drawl draw = {};
@@ -467,14 +467,21 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		draw.info.index_bias = info->start;
 	}
 
+	vgt_dma_swap_mode = 0;
 	switch (draw.index_size) {
 	case 2:
 		vgt_draw_initiator = 0;
 		vgt_dma_index_type = 0;
+#ifdef PIPE_ARCH_BIG_ENDIAN
+		vgt_dma_swap_mode = ENDIAN_8IN16;
+#endif
 		break;
 	case 4:
 		vgt_draw_initiator = 0;
 		vgt_dma_index_type = 1;
+#ifdef PIPE_ARCH_BIG_ENDIAN
+		vgt_dma_swap_mode = ENDIAN_8IN32;
+#endif
 		break;
 	case 0:
 		vgt_draw_initiator = 2;
@@ -521,7 +528,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 
 	rdraw.vgt_num_indices = draw.info.count;
 	rdraw.vgt_num_instances = draw.info.instance_count;
-	rdraw.vgt_index_type = vgt_dma_index_type;
+	rdraw.vgt_index_type = vgt_dma_index_type | (vgt_dma_swap_mode << 2);
 	rdraw.vgt_draw_initiator = vgt_draw_initiator;
 	rdraw.indices = NULL;
 	if (draw.index_buffer) {

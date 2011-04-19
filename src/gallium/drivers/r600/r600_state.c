@@ -413,7 +413,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	const struct util_format_description *desc;
 	struct r600_resource_texture *tmp;
 	struct r600_resource *rbuffer;
-	unsigned format;
+	unsigned format, endian;
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
 	unsigned char swizzle[4], array_mode = 0, tile_type = 0;
 	struct r600_bo *bo[2];
@@ -450,6 +450,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	        r600_texture_depth_flush(ctx, texture, TRUE);
 		tmp = tmp->flushed_depth_texture;
 	}
+	endian = r600_colorformat_endian_swap(format);
 
 	if (tmp->force_int_type) {
 		word4 &= C_038010_NUM_FORMAT_ALL;
@@ -490,6 +491,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 				word4 |
 				S_038010_SRF_MODE_ALL(V_038010_SRF_MODE_NO_ZERO) |
 				S_038010_REQUEST_SIZE(1) |
+				S_038010_ENDIAN_SWAP(endian) |
 				S_038010_BASE_LEVEL(state->u.tex.first_level), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038014_RESOURCE0_WORD5,
 				S_038014_LAST_LEVEL(state->u.tex.last_level) |
@@ -718,7 +720,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	unsigned level = state->cbufs[cb]->u.tex.level;
 	unsigned pitch, slice;
 	unsigned color_info;
-	unsigned format, swap, ntype;
+	unsigned format, swap, ntype, endian;
 	unsigned offset;
 	const struct util_format_description *desc;
 	struct r600_bo *bo[3];
@@ -757,6 +759,11 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 
 	format = r600_translate_colorformat(surf->base.format);
 	swap = r600_translate_colorswap(surf->base.format);
+	if(rbuffer->b.b.b.usage == PIPE_USAGE_STAGING) {
+		endian = ENDIAN_NONE;
+	} else {
+		endian = r600_colorformat_endian_swap(format);
+	}
 
 	/* disable when gallium grows int textures */
 	if ((format == FMT_32_32_32_32 || format == FMT_16_16_16_16) && rtex->force_int_type)
@@ -766,7 +773,8 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 		S_0280A0_COMP_SWAP(swap) |
 		S_0280A0_ARRAY_MODE(rtex->array_mode[level]) |
 		S_0280A0_BLEND_CLAMP(1) |
-		S_0280A0_NUMBER_TYPE(ntype);
+		S_0280A0_NUMBER_TYPE(ntype) |
+		S_0280A0_ENDIAN(endian);
 
 	/* on R600 this can't be set if BLEND_CLAMP isn't set,
 	   if BLEND_FLOAT32 is set of > 11 bits in a UNORM or SNORM */
@@ -1445,8 +1453,10 @@ void r600_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
 	r600_pipe_state_add_reg(rstate, R_038004_RESOURCE0_WORD1,
 				rbuffer->bo_size - offset - 1, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038008_RESOURCE0_WORD2,
-				S_038008_STRIDE(stride),
-				0xFFFFFFFF, NULL);
+#ifdef PIPE_ARCH_BIG_ENDIAN
+				S_038008_ENDIAN_SWAP(ENDIAN_8IN32) |
+#endif
+				S_038008_STRIDE(stride), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_03800C_RESOURCE0_WORD3,
 				0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038010_RESOURCE0_WORD4,
