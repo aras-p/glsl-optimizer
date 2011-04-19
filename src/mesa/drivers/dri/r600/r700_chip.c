@@ -202,7 +202,15 @@ static void r700SetupVTXConstants(struct gl_context  * ctx,
     SETfield(uSQ_VTX_CONSTANT_WORD2_0, GetSurfaceFormat(pStreamDesc->type, pStreamDesc->size, NULL),
 	     SQ_VTX_CONSTANT_WORD2_0__DATA_FORMAT_shift,
 	     SQ_VTX_CONSTANT_WORD2_0__DATA_FORMAT_mask); /* TODO : trace back api for initial data type, not only GL_FLOAT */
-    
+	SETfield(uSQ_VTX_CONSTANT_WORD2_0, 
+#ifdef MESA_BIG_ENDIAN 
+			 SQ_ENDIAN_8IN32,
+#else
+			 SQ_ENDIAN_NONE,
+#endif
+             SQ_VTX_CONSTANT_WORD2_0__ENDIAN_SWAP_shift,
+             SQ_VTX_CONSTANT_WORD2_0__ENDIAN_SWAP_mask);
+
     if(GL_TRUE == pStreamDesc->normalize)
     {
         SETfield(uSQ_VTX_CONSTANT_WORD2_0, SQ_NUM_FORMAT_NORM,

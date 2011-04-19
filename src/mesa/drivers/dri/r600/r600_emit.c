@@ -100,14 +100,17 @@ GLboolean r600EmitShaderConsts(struct gl_context * ctx,
                                int sizeinBYTE)
 {	
 	struct radeon_bo * pbo = (struct radeon_bo *)constbo;
-	uint8_t *out;
+	uint32_t *out;
+	int i;
 
 	radeon_bo_map(pbo, 1);
 
-	out = (uint8_t*)(pbo->ptr);
-    out = (uint8_t*)ADD_POINTERS(pbo->ptr, bo_offset);
+	out = (uint32_t*)(pbo->ptr);
+    out = (uint32_t*)ADD_POINTERS(pbo->ptr, bo_offset);
 
-	memcpy(out, data, sizeinBYTE);
+	for(i = 0; i < sizeinBYTE / 4; i++) {
+		out[i] = CPU_TO_LE32(*((uint32_t *)data + i));
+	}
 
 	radeon_bo_unmap(pbo);
 
@@ -123,6 +126,7 @@ GLboolean r600EmitShader(struct gl_context * ctx,
 	radeonContextPtr radeonctx = RADEON_CONTEXT(ctx);
 	struct radeon_bo * pbo;
 	uint32_t *out;
+	int i;
 shader_again_alloc:
 	pbo = radeon_bo_open(radeonctx->radeonScreen->bom,
 			0,
@@ -154,7 +158,9 @@ shader_again_alloc:
 
 	out = (uint32_t*)(pbo->ptr);
 
-	memcpy(out, data, sizeinDWORD * 4);
+	for(i = 0; i < sizeinDWORD; i++) {
+		out[i] = CPU_TO_LE32(*((uint32_t *)data + i));
+	}
 
 	radeon_bo_unmap(pbo);
 

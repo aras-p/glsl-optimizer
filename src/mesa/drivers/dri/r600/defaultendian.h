@@ -29,8 +29,8 @@
 #define _DEFINEENDIAN_H_
 
 //We have to choose a reg bits orientation if there is no compile flag for it.
-#if defined(LITTLEENDIAN_CPU)
-#elif defined(BIGENDIAN_CPU)
+#ifdef MESA_BIG_ENDIAN
+#define BIGENDIAN_CPU
 #else
 #define LITTLEENDIAN_CPU
 #endif

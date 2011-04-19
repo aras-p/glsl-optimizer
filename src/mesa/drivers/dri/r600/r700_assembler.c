@@ -1188,7 +1188,12 @@ GLboolean EG_assemble_vfetch_instruction(r700_AssemblerBase* pAsm,
     SETfield(vfetch_instruction_ptr->m_Word2.val, 0,
              EG_VTX_WORD2__OFFSET_shift,
              EG_VTX_WORD2__OFFSET_mask); 
-    SETfield(vfetch_instruction_ptr->m_Word2.val, SQ_ENDIAN_NONE,
+    SETfield(vfetch_instruction_ptr->m_Word2.val, 
+#ifdef MESA_BIG_ENDIAN
+			 SQ_ENDIAN_8IN32,
+#else
+			 SQ_ENDIAN_NONE,
+#endif
              EG_VTX_WORD2__ENDIAN_SWAP_shift,
              EG_VTX_WORD2__ENDIAN_SWAP_mask);
     SETfield(vfetch_instruction_ptr->m_Word2.val, 0,
@@ -1294,7 +1299,11 @@ GLboolean assemble_vfetch_instruction2(r700_AssemblerBase* pAsm,
 
 	vfetch_instruction_ptr->m_Word1.f.use_const_fields = 1;
     vfetch_instruction_ptr->m_Word1.f.data_format      = data_format;
+#ifdef MESA_BIG_ENDIAN
+    vfetch_instruction_ptr->m_Word2.f.endian_swap      = SQ_ENDIAN_8IN32;
+#else
     vfetch_instruction_ptr->m_Word2.f.endian_swap      = SQ_ENDIAN_NONE;
+#endif
 
     if(1 == _signed)
     {

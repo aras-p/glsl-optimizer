@@ -276,6 +276,16 @@ static void r700RunRenderPrimitive(struct gl_context * ctx, int start, int end,
             SETfield(vgt_index_type, DI_INDEX_SIZE_16_BIT, INDEX_TYPE_shift, INDEX_TYPE_mask);
     }
 
+	/* 16-bit indexes are packed in a 32-bit value */
+	SETfield(vgt_index_type,
+#if MESA_BIG_ENDIAN
+			VGT_DMA_SWAP_32_BIT,
+#else
+			VGT_DMA_SWAP_NONE,
+#endif
+			SWAP_MODE_shift, SWAP_MODE_mask);
+
+
     vgt_num_indices = num_indices;
     SETfield(vgt_draw_initiator, DI_SRC_SEL_DMA, SOURCE_SELECT_shift, SOURCE_SELECT_mask);
     SETfield(vgt_draw_initiator, DI_MAJOR_MODE_0, MAJOR_MODE_shift, MAJOR_MODE_mask);
@@ -347,6 +357,15 @@ static void r700RunRenderPrimitiveImmediate(struct gl_context * ctx, int start, 
     {
             SETfield(vgt_index_type, DI_INDEX_SIZE_16_BIT, INDEX_TYPE_shift, INDEX_TYPE_mask);
     }
+
+	/* 16-bit indexes are packed in a 32-bit value */
+	SETfield(vgt_index_type,
+#if MESA_BIG_ENDIAN
+			VGT_DMA_SWAP_32_BIT,
+#else
+			VGT_DMA_SWAP_NONE,
+#endif
+			SWAP_MODE_shift, SWAP_MODE_mask);
 
     vgt_num_indices = num_indices;
     SETfield(vgt_draw_initiator, DI_MAJOR_MODE_0, MAJOR_MODE_shift, MAJOR_MODE_mask);

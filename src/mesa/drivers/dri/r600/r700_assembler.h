@@ -130,6 +130,27 @@ typedef unsigned int BITS;
 
 typedef struct PVSDSTtag 
 {
+#ifdef MESA_BIG_ENDIAN
+	BITS addrmode1:1; //32
+	BITS addrmode0:1; //31   //29
+
+	BITS dualop:1;    // 30  //26
+
+	BITS op3:1;       // 29  Represents *_OP3_* ALU opcode
+
+	BITS writew:1;     //28
+	BITS writez:1;
+	BITS writey:1;
+	BITS writex:1;
+
+	BITS reg:10;       //24   //20
+	BITS rtype:3;
+
+	BITS pred_inv  :1; //11   //8
+	BITS predicated:1; //10   //8
+	BITS math:1;
+	BITS opcode:8;     //(:6)  //@@@ really should be 10 bits for OP2
+#else
 	BITS opcode:8;     //(:6)  //@@@ really should be 10 bits for OP2
 	BITS math:1;
 	BITS predicated:1; //10   //8
@@ -149,17 +170,41 @@ typedef struct PVSDSTtag
 
 	BITS addrmode0:1; //31   //29
 	BITS addrmode1:1; //32
+#endif
 } PVSDST;
 
 typedef struct PVSINSTtag
 {
+#ifdef MESA_BIG_ENDIAN
+    BITS index_mode   :3;
+    BITS SaturateMode :2; 
+    BITS literal_slots      :2; 
+#else
     BITS literal_slots      :2; 
     BITS SaturateMode :2; 
     BITS index_mode   :3;
+#endif
 } PVSINST;
 
 typedef struct PVSSRCtag 
 {
+#ifdef MESA_BIG_ENDIAN
+	BITS addrmode1:1; //32
+	//BITS addrsel:2;
+	BITS negw:1;      //31
+	BITS negz:1;
+	BITS negy:1;
+	BITS negx:1;
+	BITS abs:1;
+
+	BITS swizzlew:3;  //26        
+	BITS swizzlez:3;
+	BITS swizzley:3;
+	BITS swizzlex:3;
+	BITS reg:10;      //14     (8)
+	BITS addrmode0:1;        
+	BITS rtype:3;            
+#else
 	BITS rtype:3;            
 	BITS addrmode0:1;        
 	BITS reg:10;      //14     (8)
@@ -175,10 +220,24 @@ typedef struct PVSSRCtag
 	BITS negw:1;      //31
 	//BITS addrsel:2;
 	BITS addrmode1:1; //32
+#endif
 } PVSSRC;
 
 typedef struct PVSMATHtag 
 {
+#ifdef MESA_BIG_ENDIAN
+	BITS spare2:3;
+	BITS dstcomp:2; // select dest component
+	BITS negy:1;
+	BITS negx:1;
+	BITS opcode:4;
+	BITS dstoff:2; // 2 bits of dest offset into alt ram
+	BITS swizzley:3;
+	BITS swizzlex:3;
+	BITS reg:8;
+	BITS spare:1;
+	BITS rtype:4;
+#else
 	BITS rtype:4;
 	BITS spare:1;
 	BITS reg:8;
@@ -190,6 +249,7 @@ typedef struct PVSMATHtag
 	BITS negy:1;
 	BITS dstcomp:2; // select dest component
 	BITS spare2:3;
+#endif
 } PVSMATH;
 
 typedef union PVSDWORDtag 
@@ -204,6 +264,34 @@ typedef union PVSDWORDtag
 
 typedef struct VAP_OUT_VTX_FMT_0tag 
 {
+#ifdef MESA_BIG_ENDIAN
+	BITS resvd1:12;        // 20
+
+	BITS viewport_index:1; // 19   
+	BITS kill_flag:1;
+	BITS rta_index:1;      //     shares same channel as kill_flag
+	BITS edge_flag:1;      
+	BITS point_size:1;     // 15   
+
+	BITS depth:1;          // 14
+
+	BITS normal:1;    
+
+	BITS color7:1;
+	BITS color6:1;
+	BITS color5:1;
+	BITS color4:1;
+	BITS color3:1;
+	BITS color2:1;
+	BITS color1:1;
+	BITS color0:1;
+
+	BITS pos_param:1; // 4
+	BITS clip_dist1:1;
+	BITS clip_dist0:1;
+	BITS misc:1;
+	BITS pos:1;      // 0
+#else
 	BITS pos:1;      // 0
 	BITS misc:1;
 	BITS clip_dist0:1;
@@ -230,10 +318,23 @@ typedef struct VAP_OUT_VTX_FMT_0tag
 	BITS viewport_index:1; // 19   
 
 	BITS resvd1:12;        // 20
+#endif
 } VAP_OUT_VTX_FMT_0;
 
 typedef struct VAP_OUT_VTX_FMT_1tag 
 {
+#ifdef MESA_BIG_ENDIAN
+	BITS resvd:8;
+
+	BITS tex7comp:3;
+	BITS tex6comp:3;
+	BITS tex5comp:3;
+	BITS tex4comp:3;
+	BITS tex3comp:3;
+	BITS tex2comp:3;
+	BITS tex1comp:3;
+	BITS tex0comp:3;
+#else
 	BITS tex0comp:3;
 	BITS tex1comp:3;
 	BITS tex2comp:3;
@@ -244,10 +345,23 @@ typedef struct VAP_OUT_VTX_FMT_1tag
 	BITS tex7comp:3;
 
 	BITS resvd:8;
+#endif
 } VAP_OUT_VTX_FMT_1;
 
 typedef struct VAP_OUT_VTX_FMT_2tag 
 {
+#ifdef MESA_BIG_ENDIAN
+	BITS resvd:8;
+
+	BITS tex15comp:3;
+	BITS tex14comp:3;
+	BITS tex13comp:3;
+	BITS tex12comp:3;
+	BITS tex11comp:3;
+	BITS tex10comp:3;
+	BITS tex9comp:3;
+	BITS tex8comp:3;
+#else
 	BITS tex8comp :3;
 	BITS tex9comp :3;
 	BITS tex10comp:3;
@@ -258,10 +372,28 @@ typedef struct VAP_OUT_VTX_FMT_2tag
 	BITS tex15comp:3;
 
 	BITS resvd:8;
+#endif
 } VAP_OUT_VTX_FMT_2;
 
 typedef struct OUT_FRAGMENT_FMT_0tag 
 {
+#ifdef MESA_BIG_ENDIAN
+	BITS resvd1:20;
+
+	BITS mask:1;
+	BITS coverage_to_mask:1;
+	BITS stencil_ref:1;
+	BITS depth:1;
+
+	BITS color7:1;
+	BITS color6:1;
+	BITS color5:1;
+	BITS color4:1;
+	BITS color3:1;
+	BITS color2:1;
+	BITS color1:1;
+	BITS color0:1;
+#else
 	BITS color0:1;
 	BITS color1:1;
 	BITS color2:1;
@@ -277,6 +409,7 @@ typedef struct OUT_FRAGMENT_FMT_0tag
 	BITS mask:1;
 
 	BITS resvd1:20;
+#endif
 } OUT_FRAGMENT_FMT_0;
 
 typedef enum  CF_CLAUSE_TYPE 
