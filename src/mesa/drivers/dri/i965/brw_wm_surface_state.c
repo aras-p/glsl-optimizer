@@ -31,6 +31,7 @@
                    
 
 #include "main/mtypes.h"
+#include "main/samplerobj.h"
 #include "main/texstore.h"
 #include "program/prog_parameter.h"
 
@@ -217,6 +218,7 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    struct gl_texture_object *tObj = ctx->Texture.Unit[unit]._Current;
    struct intel_texture_object *intelObj = intel_texture_object(tObj);
    struct gl_texture_image *firstImage = tObj->Image[0][tObj->BaseLevel];
+   struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
    const GLuint surf_index = SURF_INDEX_TEXTURE(unit);
    struct brw_surface_state *surf;
 
@@ -228,8 +230,8 @@ brw_update_texture_surface( struct gl_context *ctx, GLuint unit )
    surf->ss0.surface_type = translate_tex_target(tObj->Target);
    surf->ss0.surface_format = translate_tex_format(firstImage->TexFormat,
                                                    firstImage->InternalFormat,
-                                                   tObj->Sampler.DepthMode,
-                                                   tObj->Sampler.sRGBDecode);
+                                                   sampler->DepthMode,
+                                                   sampler->sRGBDecode);
 
    /* This is ok for all textures with channel width 8bit or less:
     */

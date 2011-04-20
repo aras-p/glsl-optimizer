@@ -33,6 +33,7 @@
 #include "brw_wm.h"
 #include "brw_state.h"
 #include "main/formats.h"
+#include "main/samplerobj.h"
 
 /** Return number of src args for given instruction */
 GLuint brw_wm_nr_args( GLuint opcode )
@@ -373,6 +374,7 @@ static void brw_wm_populate_key( struct brw_context *brw,
       if (unit->_ReallyEnabled) {
          const struct gl_texture_object *t = unit->_Current;
          const struct gl_texture_image *img = t->Image[0][t->BaseLevel];
+	 struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, i);
 	 int swizzles[SWIZZLE_NIL + 1] = {
 	    SWIZZLE_X,
 	    SWIZZLE_Y,
@@ -388,14 +390,14 @@ static void brw_wm_populate_key( struct brw_context *brw,
 	  * well and our shadow compares always return the result in
 	  * all 4 channels.
 	  */
-	 if (t->Sampler.CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
-	    if (t->Sampler.DepthMode == GL_ALPHA) {
+	 if (sampler->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
+	    if (sampler->DepthMode == GL_ALPHA) {
 	       swizzles[0] = SWIZZLE_ZERO;
 	       swizzles[1] = SWIZZLE_ZERO;
 	       swizzles[2] = SWIZZLE_ZERO;
-	    } else if (t->Sampler.DepthMode == GL_LUMINANCE) {
+	    } else if (sampler->DepthMode == GL_LUMINANCE) {
 	       swizzles[3] = SWIZZLE_ONE;
-	    } else if (t->Sampler.DepthMode == GL_RED) {
+	    } else if (sampler->DepthMode == GL_RED) {
 	       /* See table 3.23 of the GL 3.0 spec. */
 	       swizzles[1] = SWIZZLE_ZERO;
 	       swizzles[2] = SWIZZLE_ZERO;

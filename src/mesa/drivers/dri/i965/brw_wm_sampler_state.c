@@ -35,7 +35,7 @@
 #include "brw_defines.h"
 
 #include "main/macros.h"
-
+#include "main/samplerobj.h"
 
 
 /* Samplers aren't strictly wm state from the hardware's perspective,
@@ -278,6 +278,7 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	 struct gl_texture_object *texObj = texUnit->_Current;
 	 struct gl_texture_image *firstImage =
 	    texObj->Image[0][texObj->BaseLevel];
+	 struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, unit);
 
 	 memset(last_entry_end, 0, 
 		(char*)entry - last_entry_end + sizeof(*entry));
@@ -288,26 +289,26 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	 entry->seamless_cube_map = (texObj->Target == GL_TEXTURE_CUBE_MAP)
 	    ? ctx->Texture.CubeMapSeamless : GL_FALSE;
 
-	 entry->wrap_r = texObj->Sampler.WrapR;
-	 entry->wrap_s = texObj->Sampler.WrapS;
-	 entry->wrap_t = texObj->Sampler.WrapT;
+	 entry->wrap_r = sampler->WrapR;
+	 entry->wrap_s = sampler->WrapS;
+	 entry->wrap_t = sampler->WrapT;
 
-	 entry->maxlod = texObj->Sampler.MaxLod;
-	 entry->minlod = texObj->Sampler.MinLod;
-	 entry->lod_bias = texUnit->LodBias + texObj->Sampler.LodBias;
-	 entry->max_aniso = texObj->Sampler.MaxAnisotropy;
-	 entry->minfilter = texObj->Sampler.MinFilter;
-	 entry->magfilter = texObj->Sampler.MagFilter;
-	 entry->comparemode = texObj->Sampler.CompareMode;
-         entry->comparefunc = texObj->Sampler.CompareFunc;
+	 entry->maxlod = sampler->MaxLod;
+	 entry->minlod = sampler->MinLod;
+	 entry->lod_bias = texUnit->LodBias + sampler->LodBias;
+	 entry->max_aniso = sampler->MaxAnisotropy;
+	 entry->minfilter = sampler->MinFilter;
+	 entry->magfilter = sampler->MagFilter;
+	 entry->comparemode = sampler->CompareMode;
+         entry->comparefunc = sampler->CompareFunc;
 
 	 drm_intel_bo_unreference(brw->wm.sdc_bo[unit]);
 	 if (firstImage->_BaseFormat == GL_DEPTH_COMPONENT) {
 	    float bordercolor[4] = {
-	       texObj->Sampler.BorderColor.f[0],
-	       texObj->Sampler.BorderColor.f[0],
-	       texObj->Sampler.BorderColor.f[0],
-	       texObj->Sampler.BorderColor.f[0]
+	       sampler->BorderColor.f[0],
+	       sampler->BorderColor.f[0],
+	       sampler->BorderColor.f[0],
+	       sampler->BorderColor.f[0]
 	    };
 	    /* GL specs that border color for depth textures is taken from the
 	     * R channel, while the hardware uses A.  Spam R into all the
@@ -316,7 +317,7 @@ brw_wm_sampler_populate_key(struct brw_context *brw,
 	    brw->wm.sdc_bo[unit] = upload_default_color(brw, bordercolor);
 	 } else {
 	    brw->wm.sdc_bo[unit] = upload_default_color(brw,
-							texObj->Sampler.BorderColor.f);
+							sampler->BorderColor.f);
 	 }
 	 key->sampler_count = unit + 1;
       }

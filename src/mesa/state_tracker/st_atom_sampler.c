@@ -33,6 +33,8 @@
  
 
 #include "main/macros.h"
+#include "main/mtypes.h"
+#include "main/samplerobj.h"
 
 #include "st_context.h"
 #include "st_cb_texture.h"
@@ -154,7 +156,7 @@ update_samplers(struct st_context *st)
 
          teximg = texobj->Image[0][texobj->BaseLevel];
 
-         msamp = st_get_mesa_sampler(st->ctx, texUnit);
+         msamp = _mesa_get_samplerobj(st->ctx, texUnit);
 
          sampler->wrap_s = gl_wrap_xlate(msamp->WrapS);
          sampler->wrap_t = gl_wrap_xlate(msamp->WrapT);

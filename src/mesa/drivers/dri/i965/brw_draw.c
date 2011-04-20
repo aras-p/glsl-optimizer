@@ -29,6 +29,7 @@
 #include "main/glheader.h"
 #include "main/context.h"
 #include "main/condrender.h"
+#include "main/samplerobj.h"
 #include "main/state.h"
 #include "main/enums.h"
 #include "tnl/tnl.h"
@@ -279,22 +280,25 @@ static GLboolean check_fallbacks( struct brw_context *brw,
       int u;
       for (u = 0; u < ctx->Const.MaxTextureCoordUnits; u++) {
          struct gl_texture_unit *texUnit = &ctx->Texture.Unit[u];
+
          if (texUnit->Enabled) {
+	    struct gl_sampler_object *sampler = _mesa_get_samplerobj(ctx, u);
+
             if (texUnit->Enabled & TEXTURE_1D_BIT) {
-               if (texUnit->CurrentTex[TEXTURE_1D_INDEX]->Sampler.WrapS == GL_CLAMP) {
+               if (sampler->WrapS == GL_CLAMP) {
                    return GL_TRUE;
                }
             }
             if (texUnit->Enabled & TEXTURE_2D_BIT) {
-               if (texUnit->CurrentTex[TEXTURE_2D_INDEX]->Sampler.WrapS == GL_CLAMP ||
-                   texUnit->CurrentTex[TEXTURE_2D_INDEX]->Sampler.WrapT == GL_CLAMP) {
+               if (sampler->WrapS == GL_CLAMP ||
+                   sampler->WrapT == GL_CLAMP) {
                    return GL_TRUE;
                }
             }
             if (texUnit->Enabled & TEXTURE_3D_BIT) {
-               if (texUnit->CurrentTex[TEXTURE_3D_INDEX]->Sampler.WrapS == GL_CLAMP ||
-                   texUnit->CurrentTex[TEXTURE_3D_INDEX]->Sampler.WrapT == GL_CLAMP ||
-                   texUnit->CurrentTex[TEXTURE_3D_INDEX]->Sampler.WrapR == GL_CLAMP) {
+               if (sampler->WrapS == GL_CLAMP ||
+                   sampler->WrapT == GL_CLAMP ||
+                   sampler->WrapR == GL_CLAMP) {
                    return GL_TRUE;
                }
             }
