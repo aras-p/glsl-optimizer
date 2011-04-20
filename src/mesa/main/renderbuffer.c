@@ -125,8 +125,8 @@ get_values_generic(struct gl_context *ctx, struct gl_renderbuffer *rb,
 
    for (i = 0; i < count; i++) {
       const void *src = rb->GetPointer(ctx, rb, x[i], y[i]);
-
-      memcpy(values + i * format_bytes, src, format_bytes);
+      char *dst = (char *) values + i * format_bytes;
+      memcpy(dst, src, format_bytes);
    }
 }
 
