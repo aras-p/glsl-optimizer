@@ -1896,7 +1896,6 @@ _mesa_generate_mipmap(struct gl_context *ctx, GLenum target,
          const GLenum srcFormat = _mesa_get_format_base_format(convertFormat);
          GLint dstRowStride
             = _mesa_format_row_stride(dstImage->TexFormat, dstWidth);
-         ASSERT(srcFormat == GL_RGB || srcFormat == GL_RGBA);
 
          _mesa_texstore(ctx, 2, dstImage->_BaseFormat,
                         dstImage->TexFormat,
