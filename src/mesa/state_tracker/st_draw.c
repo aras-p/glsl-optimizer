@@ -587,8 +587,16 @@ check_uniforms(struct gl_context *ctx)
    do { \
       info.start = cur_start; \
       info.count = cur_count; \
-      if (u_trim_pipe_prim(info.mode, &info.count)) \
+      if (u_trim_pipe_prim(info.mode, &info.count)) { \
+         if (transfer) \
+            pipe_buffer_unmap(pipe, transfer); \
          pipe->draw_vbo(pipe, &info); \
+         if (transfer) { \
+            ptr = pipe_buffer_map(pipe, ibuffer->buffer, PIPE_TRANSFER_READ, &transfer); \
+            assert(ptr != NULL); \
+            ptr = ADD_POINTERS(ptr, ibuffer->offset); \
+         } \
+      } \
    } while(0)
       
 /** More helper code for primitive restart fallback */
@@ -615,6 +623,7 @@ check_uniforms(struct gl_context *ctx)
 
 static void
 handle_fallback_primitive_restart(struct pipe_context *pipe,
+                                  const struct _mesa_index_buffer *ib,
                                   struct pipe_index_buffer *ibuffer,
                                   struct pipe_draw_info *orig_info)
 {
@@ -622,29 +631,16 @@ handle_fallback_primitive_restart(struct pipe_context *pipe,
    const unsigned count = orig_info->count;
    const unsigned end = start + count;
    struct pipe_draw_info info = *orig_info;
-   struct pipe_transfer *transfer;
+   struct pipe_transfer *transfer = NULL;
    unsigned instance, i, cur_start, cur_count;
-   void *ptr;
+   const void *ptr;
 
    info.primitive_restart = FALSE;
 
-   /* split the draw_arrays calls into two */
    if (!info.indexed) {
-#if 0
-       /* handled by VBO */
-       if (info.restart_index >= info.min_index) {
-          info.count = MIN(info.restart_index-1, info.max_index) - info.start + 1;
-          if (u_trim_pipe_prim(info.mode, &info.count))
-             pipe->draw_vbo(pipe, &info);
-       }
+       /* Splitting the draw arrays call is handled by the VBO module */
+       assert(info.restart_index > info.max_index || info.restart_index < info.min_index);
 
-       if (info.restart_index <= info.max_index) {
-          info.start = MAX(info.min_index, info.restart_index + 1);
-          info.count = info.max_index - info.start + 1;
-          if (u_trim_pipe_prim(info.mode, &info.count))
-             pipe->draw_vbo(pipe, &info);
-       }
-#endif
        if (u_trim_pipe_prim(info.mode, &info.count))
           pipe->draw_vbo(pipe, &info);
 
@@ -655,7 +651,19 @@ handle_fallback_primitive_restart(struct pipe_context *pipe,
    assert(ibuffer);
    assert(ibuffer->buffer);
 
-   ptr = pipe_buffer_map(pipe, ibuffer->buffer, PIPE_TRANSFER_READ, &transfer);
+   if (ib) {
+      struct gl_buffer_object *bufobj = ib->obj;
+      if (bufobj && bufobj->Name) {
+         ptr = NULL;
+      }
+      else {
+         ptr = ib->ptr;
+      }
+   }
+
+   if (!ptr)
+      ptr = pipe_buffer_map(pipe, ibuffer->buffer, PIPE_TRANSFER_READ, &transfer);
+
    if (!ptr)
      return;
    ptr = ADD_POINTERS(ptr, ibuffer->offset);
@@ -691,7 +699,8 @@ handle_fallback_primitive_restart(struct pipe_context *pipe,
       }
    }
 
-   pipe_buffer_unmap(pipe, transfer);
+   if (transfer)
+      pipe_buffer_unmap(pipe, transfer);
 }
 
 
@@ -916,7 +925,7 @@ st_draw_vbo(struct gl_context *ctx,
           * remove the flag for all drivers in this case as well.
           */
          if (st->sw_primitive_restart || !info.indexed)
-            handle_fallback_primitive_restart(pipe, &ibuffer, &info);
+            handle_fallback_primitive_restart(pipe, ib, &ibuffer, &info);
          else
             /* don't trim, restarts might be inside index list */
             pipe->draw_vbo(pipe, &info);
