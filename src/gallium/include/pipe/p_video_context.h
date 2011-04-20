@@ -186,6 +186,16 @@ struct pipe_video_decode_buffer
     */
    void (*map)(struct pipe_video_decode_buffer *decbuf);
 
+   /**
+    * get the stride of the mv buffer
+    */
+   unsigned (*get_mv_stream_stride)(struct pipe_video_decode_buffer *decbuf);
+
+   /**
+    * get the pointer where to put the motion vectors of a ref frame
+    */
+   struct pipe_motionvector *(*get_mv_stream)(struct pipe_video_decode_buffer *decbuf, int ref_frame);
+
 #if 0
    /**
     * decode a bitstream

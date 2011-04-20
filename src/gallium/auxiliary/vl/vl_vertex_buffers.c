@@ -38,11 +38,6 @@ struct vl_ycbcr_vertex_stream
    uint8_t field;
 };
 
-struct vl_mv_vertex_stream
-{
-   struct vertex4s mv[2];
-};
-
 /* vertices for a quad covering a block */
 static const struct vertex2f block_quad[4] = {
    {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}
@@ -242,7 +237,7 @@ vl_vb_init(struct vl_vertex_buffer *buffer, struct pipe_context *pipe,
          pipe->screen,
          PIPE_BIND_VERTEX_BUFFER,
          PIPE_USAGE_STREAM,
-         sizeof(struct vl_mv_vertex_stream) * size
+         sizeof(struct pipe_motionvector) * size
       );
    }
 
@@ -270,7 +265,7 @@ vl_vb_get_mv(struct vl_vertex_buffer *buffer, int motionvector)
 
    assert(buffer);
 
-   buf.stride = sizeof(struct vl_mv_vertex_stream);
+   buf.stride = sizeof(struct pipe_motionvector);
    buf.buffer_offset = 0;
    buf.buffer = buffer->mv[motionvector].resource;
 
@@ -324,39 +319,21 @@ void vl_vb_add_ycbcr(struct vl_vertex_buffer *buffer,
    buffer->ycbcr[component].num_instances++;
 }
 
-static void
-get_motion_vectors(enum pipe_mpeg12_motion_type mo_type, struct pipe_motionvector *src, struct vertex4s dst[2])
+unsigned
+vl_vb_get_mv_stream_stride(struct vl_vertex_buffer *buffer)
 {
-   if (mo_type == PIPE_MPEG12_MOTION_TYPE_FRAME) {
-      dst[0].x = dst[1].x = src->top.x;
-      dst[0].y = dst[1].y = src->top.y;
-      dst[0].z = dst[1].z = 0;
+   assert(buffer);
 
-   } else {
-      dst[0].x = src->top.x;
-      dst[0].y = src->top.y;
-      dst[0].z = src->top.field_select ? 3 : 1;
-
-      dst[1].x = src->bottom.x;
-      dst[1].y = src->bottom.y;
-      dst[1].z = src->bottom.field_select ? 3 : 1;
-   }
-
-   dst[0].w = src->top.wheight;
-   dst[1].w = src->bottom.wheight;
+   return buffer->width;
 }
 
-void
-vl_vb_add_block(struct vl_vertex_buffer *buffer, struct pipe_mpeg12_macroblock *mb)
+struct pipe_motionvector *
+vl_vb_get_mv_stream(struct vl_vertex_buffer *buffer, int ref_frame)
 {
-   unsigned mv_pos;
-
    assert(buffer);
-   assert(mb);
+   assert(ref_frame < VL_MAX_REF_FRAMES);
 
-   mv_pos = mb->mbx + mb->mby * buffer->width;
-   get_motion_vectors(mb->mo_type, &mb->mv[0], buffer->mv[0].vertex_stream[mv_pos].mv);
-   get_motion_vectors(mb->mo_type, &mb->mv[1], buffer->mv[1].vertex_stream[mv_pos].mv);
+   return buffer->mv[ref_frame].vertex_stream;
 }
 
 void

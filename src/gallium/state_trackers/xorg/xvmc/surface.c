@@ -60,30 +60,84 @@ static enum pipe_mpeg12_picture_type PictureToPipe(int xvmc_pic)
    return -1;
 }
 
-static enum pipe_mpeg12_motion_type MotionToPipe(int xvmc_motion_type, unsigned xvmc_picture_structure)
+static inline void
+MacroBlockTypeToPipeWeights(const XvMCMacroBlock *xvmc_mb, unsigned weights[2])
 {
-   switch (xvmc_motion_type) {
+   assert(xvmc_mb);
+
+   switch (xvmc_mb->macroblock_type & (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD)) {
+   case XVMC_MB_TYPE_MOTION_FORWARD:
+      weights[0] = PIPE_VIDEO_MV_WEIGHT_MAX;
+      weights[1] = PIPE_VIDEO_MV_WEIGHT_MIN;
+      break;
+
+   case (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD):
+      weights[0] = PIPE_VIDEO_MV_WEIGHT_HALF;
+      weights[1] = PIPE_VIDEO_MV_WEIGHT_HALF;
+      break;
+
+   case XVMC_MB_TYPE_MOTION_BACKWARD:
+      weights[0] = PIPE_VIDEO_MV_WEIGHT_MIN;
+      weights[1] = PIPE_VIDEO_MV_WEIGHT_MAX;
+      break;
+
+   default:
+      /* workaround for xines xxmc video out plugin */
+      if (!(xvmc_mb->macroblock_type & ~XVMC_MB_TYPE_PATTERN)) {
+         weights[0] = PIPE_VIDEO_MV_WEIGHT_MAX;
+         weights[1] = PIPE_VIDEO_MV_WEIGHT_MIN;
+      } else {
+         weights[0] = PIPE_VIDEO_MV_WEIGHT_MIN;
+         weights[1] = PIPE_VIDEO_MV_WEIGHT_MIN;
+      }
+      break;
+   }
+}
+
+static inline struct pipe_motionvector
+MotionVectorToPipe(const XvMCMacroBlock *xvmc_mb, unsigned vector,
+                   unsigned field_select_mask, unsigned weight)
+{
+   struct pipe_motionvector mv;
+
+   assert(xvmc_mb);
+
+   switch (xvmc_mb->motion_type) {
    case XVMC_PREDICTION_FRAME:
-      if (xvmc_picture_structure == XVMC_FRAME_PICTURE)
-         return PIPE_MPEG12_MOTION_TYPE_FRAME;
-      else
-         return PIPE_MPEG12_MOTION_TYPE_16x8;
+      mv.top.x = xvmc_mb->PMV[0][vector][0];
+      mv.top.y = xvmc_mb->PMV[0][vector][1];
+      mv.top.field_select = PIPE_VIDEO_FRAME;
+      mv.top.weight = weight;
+
+      mv.bottom.x = xvmc_mb->PMV[0][vector][0];
+      mv.bottom.y = xvmc_mb->PMV[0][vector][1];
+      mv.bottom.weight = weight;
+      mv.bottom.field_select = PIPE_VIDEO_FRAME;
       break;
 
    case XVMC_PREDICTION_FIELD:
-      return PIPE_MPEG12_MOTION_TYPE_FIELD;
+      mv.top.x = xvmc_mb->PMV[0][vector][0];
+      mv.top.y = xvmc_mb->PMV[0][vector][1];
+      mv.top.field_select = (xvmc_mb->motion_vertical_field_select & field_select_mask) ?
+         PIPE_VIDEO_BOTTOM_FIELD : PIPE_VIDEO_TOP_FIELD;
+      mv.top.weight = weight;
 
-   case XVMC_PREDICTION_DUAL_PRIME:
-      return PIPE_MPEG12_MOTION_TYPE_DUALPRIME;
+      mv.bottom.x = xvmc_mb->PMV[1][vector][0];
+      mv.bottom.y = xvmc_mb->PMV[1][vector][1];
+      mv.bottom.field_select = (xvmc_mb->motion_vertical_field_select & (field_select_mask << 2)) ?
+         PIPE_VIDEO_BOTTOM_FIELD : PIPE_VIDEO_TOP_FIELD;
+      mv.bottom.weight = weight;
+      break;
+
+   default: // TODO: Support DUALPRIME and 16x8
+      break;
    }
 
-   XVMC_MSG(XVMC_ERR, "[XvMC] Unrecognized motion type 0x%08X (with picture structure 0x%08X).\n", xvmc_motion_type, xvmc_picture_structure);
-
-   return -1;
+   return mv;
 }
 
 static void
-MacroBlocksToPipe(struct pipe_screen *screen,
+MacroBlocksToPipe(XvMCSurfacePrivate *surface,
                   unsigned int xvmc_picture_structure,
                   const XvMCMacroBlock *xvmc_mb,
                   const XvMCBlockArray *xvmc_blocks,
@@ -98,62 +152,32 @@ MacroBlocksToPipe(struct pipe_screen *screen,
    assert(num_macroblocks);
 
    for (i = 0; i < num_macroblocks; ++i) {
+      unsigned mv_pos = xvmc_mb->x + surface->mv_stride * xvmc_mb->y;
+      unsigned mv_weights[2];
+
       mb->base.codec = PIPE_VIDEO_CODEC_MPEG12;
       mb->mbx = xvmc_mb->x;
       mb->mby = xvmc_mb->y;
 
-      if (!(xvmc_mb->macroblock_type & XVMC_MB_TYPE_INTRA))
-         mb->mo_type = MotionToPipe(xvmc_mb->motion_type, xvmc_picture_structure);
-      /* Get rid of Valgrind 'undefined' warnings */
-      else
-         mb->mo_type = -1;
-
       mb->dct_intra = xvmc_mb->macroblock_type & XVMC_MB_TYPE_INTRA;
       mb->dct_type = xvmc_mb->dct_type == XVMC_DCT_TYPE_FIELD ?
          PIPE_MPEG12_DCT_TYPE_FIELD : PIPE_MPEG12_DCT_TYPE_FRAME;
-
-      switch (xvmc_mb->macroblock_type & (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD)) {
-      case XVMC_MB_TYPE_MOTION_FORWARD:
-         mb->mv[0].top.wheight = mb->mv[0].bottom.wheight = 255;
-         mb->mv[1].top.wheight = mb->mv[1].bottom.wheight = 0;
-         break;
-
-      case (XVMC_MB_TYPE_MOTION_FORWARD | XVMC_MB_TYPE_MOTION_BACKWARD):
-         mb->mv[0].top.wheight = mb->mv[0].bottom.wheight = 127;
-         mb->mv[1].top.wheight = mb->mv[1].bottom.wheight = 127;
-         break;
-
-      case XVMC_MB_TYPE_MOTION_BACKWARD:
-         mb->mv[0].top.wheight = mb->mv[0].bottom.wheight = 0;
-         mb->mv[1].top.wheight = mb->mv[1].bottom.wheight = 255;
-         break;
-
-      default:
-         /* workaround for xines xxmc video out plugin */
-         if (!(xvmc_mb->macroblock_type & ~XVMC_MB_TYPE_PATTERN)) {
-            mb->mv[0].top.wheight = mb->mv[0].bottom.wheight = 255;
-            mb->mv[1].top.wheight = mb->mv[1].bottom.wheight = 0;
-         } else {
-            mb->mv[0].top.wheight = mb->mv[0].bottom.wheight = 0;
-            mb->mv[1].top.wheight = mb->mv[1].bottom.wheight = 0;
-         }
-         break;
-      }
-
-      for (j = 0; j < 2; ++j) {
-         mb->mv[j].top.x = xvmc_mb->PMV[0][j][0];
-         mb->mv[j].top.y = xvmc_mb->PMV[0][j][1];
-         mb->mv[j].bottom.x = xvmc_mb->PMV[1][j][0];
-         mb->mv[j].bottom.y = xvmc_mb->PMV[1][j][1];
-      }
-
-      mb->mv[0].top.field_select = xvmc_mb->motion_vertical_field_select & XVMC_SELECT_FIRST_FORWARD;
-      mb->mv[1].top.field_select = xvmc_mb->motion_vertical_field_select & XVMC_SELECT_FIRST_BACKWARD;
-      mb->mv[0].bottom.field_select = xvmc_mb->motion_vertical_field_select & XVMC_SELECT_SECOND_FORWARD;
-      mb->mv[1].bottom.field_select = xvmc_mb->motion_vertical_field_select & XVMC_SELECT_SECOND_BACKWARD;
-
       mb->cbp = xvmc_mb->coded_block_pattern;
       mb->blocks = xvmc_blocks->blocks + xvmc_mb->index * BLOCK_SIZE_SAMPLES;
+
+      MacroBlockTypeToPipeWeights(xvmc_mb, mv_weights);
+
+      for (j = 0; j < 2; ++j) {
+         if (!surface->ref[j].mv) continue;
+
+         surface->ref[j].mv[mv_pos] = MotionVectorToPipe
+         (
+            xvmc_mb, j,
+            j ? XVMC_SELECT_FIRST_BACKWARD : XVMC_SELECT_FIRST_FORWARD,
+            mv_weights[j]
+         );
+
+      }
 
       ++mb;
       ++xvmc_mb;
@@ -172,13 +196,13 @@ unmap_and_flush_surface(XvMCSurfacePrivate *surface)
    context_priv = surface->context->privData;
 
    for ( i = 0; i < 2; ++i ) {
-      if (surface->ref_surfaces[i]) {
-         XvMCSurfacePrivate *ref = surface->ref_surfaces[i]->privData;
+      if (surface->ref[i].surface) {
+         XvMCSurfacePrivate *ref = surface->ref[i].surface->privData;
 
          assert(ref);
 
          unmap_and_flush_surface(ref);
-         surface->ref_surfaces[i] = NULL;
+         surface->ref[i].surface = NULL;
          ref_frames[i] = ref->video_buffer;
       } else {
          ref_frames[i] = NULL;
@@ -225,6 +249,7 @@ Status XvMCCreateSurface(Display *dpy, XvMCContext *context, XvMCSurface *surfac
       return BadAlloc;
 
    surface_priv->decode_buffer = context_priv->decoder->create_buffer(context_priv->decoder);
+   surface_priv->mv_stride = surface_priv->decode_buffer->get_mv_stream_stride(surface_priv->decode_buffer);
    surface_priv->video_buffer = vpipe->create_buffer(vpipe, PIPE_FORMAT_YV12, //TODO
                                                      resource_formats,
                                                      context_priv->decoder->chroma_format,
@@ -261,6 +286,8 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
    XvMCSurfacePrivate *past_surface_priv;
    XvMCSurfacePrivate *future_surface_priv;
    XvMCMacroBlock *xvmc_mb;
+
+   unsigned i;
 
    struct pipe_mpeg12_macroblock pipe_macroblocks[num_macroblocks];
 
@@ -319,22 +346,29 @@ Status XvMCRenderSurface(Display *dpy, XvMCContext *context, unsigned int pictur
 
    /* If the surface we're rendering hasn't changed the ref frames shouldn't change. */
    if (target_surface_priv->mapped && (
-       target_surface_priv->ref_surfaces[0] != past_surface ||
-       target_surface_priv->ref_surfaces[1] != future_surface ||
+       target_surface_priv->ref[0].surface != past_surface ||
+       target_surface_priv->ref[1].surface != future_surface ||
        (xvmc_mb->x == 0 && xvmc_mb->y == 0))) {
 
       // If they change anyway we need to clear our surface
       unmap_and_flush_surface(target_surface_priv);
    }
 
-   MacroBlocksToPipe(vpipe->screen, picture_structure, xvmc_mb, blocks, num_macroblocks, pipe_macroblocks);
-
    if (!target_surface_priv->mapped) {
       t_buffer->map(t_buffer);
-      target_surface_priv->ref_surfaces[0] = past_surface;
-      target_surface_priv->ref_surfaces[1] = future_surface;
+
+      for (i = 0; i < 2; ++i) {
+         target_surface_priv->ref[i].surface = i == 0 ? past_surface : future_surface;
+
+         if (target_surface_priv->ref[i].surface)
+            target_surface_priv->ref[i].mv = t_buffer->get_mv_stream(t_buffer, i);
+         else
+            target_surface_priv->ref[i].mv = NULL;
+      }
       target_surface_priv->mapped = 1;
    }
+
+   MacroBlocksToPipe(target_surface_priv, picture_structure, xvmc_mb, blocks, num_macroblocks, pipe_macroblocks);
 
    t_buffer->add_macroblocks(t_buffer, num_macroblocks, &pipe_macroblocks->base);
 

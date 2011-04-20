@@ -231,6 +231,26 @@ vl_mpeg12_buffer_map(struct pipe_video_decode_buffer *buffer)
    map_buffers(dec, buf);
 }
 
+static unsigned
+vl_mpeg12_buffer_get_mv_stream_stride(struct pipe_video_decode_buffer *buffer)
+{
+   struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer*)buffer;
+
+   assert(buf);
+
+   return vl_vb_get_mv_stream_stride(&buf->vertex_stream);
+}
+
+static struct pipe_motionvector *
+vl_mpeg12_buffer_get_mv_stream(struct pipe_video_decode_buffer *buffer, int ref_frame)
+{
+   struct vl_mpeg12_buffer *buf = (struct vl_mpeg12_buffer*)buffer;
+
+   assert(buf);
+
+   return vl_vb_get_mv_stream(&buf->vertex_stream, ref_frame);
+}
+
 static void
 vl_mpeg12_buffer_add_macroblocks(struct pipe_video_decode_buffer *buffer,
                                  unsigned num_macroblocks,
@@ -251,7 +271,6 @@ vl_mpeg12_buffer_add_macroblocks(struct pipe_video_decode_buffer *buffer,
    assert(macroblocks->codec == PIPE_VIDEO_CODEC_MPEG12);
 
    for ( i = 0; i < num_macroblocks; ++i ) {
-      vl_vb_add_block(&buf->vertex_stream, &mb[i]);
       upload_buffer(dec, buf, &mb[i]);
    }
 }
@@ -389,6 +408,8 @@ vl_mpeg12_create_buffer(struct pipe_video_decoder *decoder)
    buffer->base.decoder = decoder;
    buffer->base.destroy = vl_mpeg12_buffer_destroy;
    buffer->base.map = vl_mpeg12_buffer_map;
+   buffer->base.get_mv_stream_stride = vl_mpeg12_buffer_get_mv_stream_stride;
+   buffer->base.get_mv_stream = vl_mpeg12_buffer_get_mv_stream;
    buffer->base.add_macroblocks = vl_mpeg12_buffer_add_macroblocks;
    buffer->base.unmap = vl_mpeg12_buffer_unmap;
 

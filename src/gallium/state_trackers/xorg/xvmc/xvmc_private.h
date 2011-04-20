@@ -71,7 +71,12 @@ typedef struct
 
    bool mapped; // are we still mapped to memory?
 
-   XvMCSurface *ref_surfaces[2];
+   unsigned mv_stride;
+
+   struct {
+      XvMCSurface *surface;
+      struct pipe_motionvector *mv;
+   } ref[2];
 
    struct pipe_fence_handle *flush_fence;
    struct pipe_fence_handle *render_fence;

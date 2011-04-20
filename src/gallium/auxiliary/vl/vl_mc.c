@@ -136,7 +136,7 @@ create_ref_vert_shader(struct vl_mc *r)
       0.5f / r->buffer_width,
       0.5f / r->buffer_height,
       1.0f / 4.0f,
-      1.0f / 255.0f);
+      1.0f / PIPE_VIDEO_MV_WEIGHT_MAX);
 
    for (i = 0; i < 2; ++i) {
       ureg_MAD(shader, ureg_writemask(o_vmv[i], TGSI_WRITEMASK_XY), mv_scale, vmv[i], ureg_src(t_vpos));
