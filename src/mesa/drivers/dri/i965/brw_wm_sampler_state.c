@@ -91,10 +91,20 @@ static drm_intel_bo *upload_default_color( struct brw_context *brw,
       UNCLAMPED_FLOAT_TO_SHORT(sdc.s[2], color[2]);
       UNCLAMPED_FLOAT_TO_SHORT(sdc.s[3], color[3]);
 
-      /* XXX: Fill in half floats */
-      /* XXX: Fill in signed bytes */
+      sdc.hf[0] = _mesa_float_to_half(color[0]);
+      sdc.hf[1] = _mesa_float_to_half(color[1]);
+      sdc.hf[2] = _mesa_float_to_half(color[2]);
+      sdc.hf[3] = _mesa_float_to_half(color[3]);
 
-      COPY_4V(sdc.f, color);
+      sdc.b[0] = sdc.s[0] >> 8;
+      sdc.b[1] = sdc.s[1] >> 8;
+      sdc.b[2] = sdc.s[2] >> 8;
+      sdc.b[3] = sdc.s[3] >> 8;
+
+      sdc.f[0] = color[0];
+      sdc.f[1] = color[1];
+      sdc.f[2] = color[2];
+      sdc.f[3] = color[3];
 
       return brw_cache_data(&brw->cache, BRW_SAMPLER_DEFAULT_COLOR,
 			    &sdc, sizeof(sdc));
