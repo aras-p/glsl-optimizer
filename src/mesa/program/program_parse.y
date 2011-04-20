@@ -2060,9 +2060,14 @@ resultColBinding: COLOR optResultFaceType optResultColorType
 
 optResultFaceType:
 	{
-	   $$ = (state->mode == ARB_vertex)
-	      ? VERT_RESULT_COL0
-	      : FRAG_RESULT_COLOR;
+	   if (state->mode == ARB_vertex) {
+	      $$ = VERT_RESULT_COL0;
+	   } else {
+	      if (state->option.DrawBuffers)
+		 $$ = FRAG_RESULT_DATA0;
+	      else
+		 $$ = FRAG_RESULT_COLOR;
+	   }
 	}
 	| '[' INTEGER ']'
 	{
