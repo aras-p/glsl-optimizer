@@ -318,12 +318,12 @@ read_rgba_pixels( struct gl_context *ctx,
    if (!rb)
       return;
 
-   if (type == GL_FLOAT && ((ctx->Color.ClampReadColor == GL_TRUE) ||
-                            (ctx->Color.ClampReadColor == GL_FIXED_ONLY_ARB &&
-                             rb->DataType != GL_FLOAT)))
+   if ((ctx->Color._ClampReadColor == GL_TRUE || type != GL_FLOAT) &&
+       !_mesa_is_integer_format(format)) {
       transferOps |= IMAGE_CLAMP_BIT;
+   }
 
-   /* Try optimized path first */
+   /* Try the optimized path first. */
    if (fast_read_rgba_pixels(ctx, x, y, width, height,
                              format, type, pixels, packing, transferOps)) {
       return; /* done! */
