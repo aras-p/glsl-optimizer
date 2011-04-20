@@ -621,7 +621,11 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
       switch (internalFormat) {
       case GL_R8:
       case GL_RED:
+	 RETURN_IF_SUPPORTED(MESA_FORMAT_R8);
+	 break;
+
       case GL_COMPRESSED_RED:
+	 RETURN_IF_SUPPORTED(MESA_FORMAT_RED_RGTC1);
 	 RETURN_IF_SUPPORTED(MESA_FORMAT_R8);
 	 break;
 
@@ -631,7 +635,11 @@ _mesa_choose_tex_format( struct gl_context *ctx, GLint internalFormat,
 
       case GL_RG:
       case GL_RG8:
+	 RETURN_IF_SUPPORTED(MESA_FORMAT_RG88);
+	 break;
+
       case GL_COMPRESSED_RG:
+	 RETURN_IF_SUPPORTED(MESA_FORMAT_RG_RGTC2);
 	 RETURN_IF_SUPPORTED(MESA_FORMAT_RG88);
 	 break;
 
