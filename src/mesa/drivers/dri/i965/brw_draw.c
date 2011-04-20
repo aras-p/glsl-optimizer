@@ -28,6 +28,7 @@
 
 #include "main/glheader.h"
 #include "main/context.h"
+#include "main/condrender.h"
 #include "main/state.h"
 #include "main/enums.h"
 #include "tnl/tnl.h"
@@ -437,6 +438,9 @@ void brw_draw_prims( struct gl_context *ctx,
 		     GLuint max_index )
 {
    GLboolean retval;
+
+   if (!_mesa_check_conditional_render(ctx))
+      return;
 
    if (!vbo_all_varyings_in_vbos(arrays)) {
       if (!index_bounds_valid)

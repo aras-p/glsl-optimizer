@@ -28,6 +28,7 @@
 
 #include "main/glheader.h"
 #include "main/mtypes.h"
+#include "main/condrender.h"
 #include "swrast/swrast.h"
 #include "drivers/common/meta.h"
 
@@ -87,6 +88,9 @@ intelClear(struct gl_context *ctx, GLbitfield mask)
    struct gl_framebuffer *fb = ctx->DrawBuffer;
    struct intel_renderbuffer *irb;
    int i;
+
+   if (!_mesa_check_conditional_render(ctx))
+      return;
 
    if (mask & (BUFFER_BIT_FRONT_LEFT | BUFFER_BIT_FRONT_RIGHT)) {
       intel->front_buffer_dirty = GL_TRUE;
