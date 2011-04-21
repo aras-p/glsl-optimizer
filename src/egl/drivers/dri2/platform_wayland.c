@@ -667,10 +667,10 @@ dri2_initialize_wayland(_EGLDriver *drv, _EGLDisplay *disp)
    disp->DriverData = (void *) dri2_dpy;
    dri2_dpy->wl_dpy = disp->PlatformDisplay;
 
-   id = wl_display_get_global(dri2_dpy->wl_dpy, "drm", 1);
+   id = wl_display_get_global(dri2_dpy->wl_dpy, "wl_drm", 1);
    if (id == 0)
       wl_display_iterate(dri2_dpy->wl_dpy, WL_DISPLAY_READABLE);
-   id = wl_display_get_global(dri2_dpy->wl_dpy, "drm", 1);
+   id = wl_display_get_global(dri2_dpy->wl_dpy, "wl_drm", 1);
    if (id == 0)
       goto cleanup_dpy;
    dri2_dpy->wl_drm = wl_drm_create(dri2_dpy->wl_dpy, id, 1);
