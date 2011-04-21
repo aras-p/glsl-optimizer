@@ -188,15 +188,19 @@ util_resource_copy_region(struct pipe_context *pipe,
    assert(dst_map);
 
    if (src_map && dst_map) {
-      util_copy_rect(dst_map,
-                     dst_format,
-                     dst_trans->stride,
-                     0, 0,
-                     w, h,
-                     src_map,
-                     src_trans->stride,
-                     0,
-                     0);
+      if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
+         memcpy(dst_map, src_map, w);
+      } else {
+         util_copy_rect(dst_map,
+                        dst_format,
+                        dst_trans->stride,
+                        0, 0,
+                        w, h,
+                        src_map,
+                        src_trans->stride,
+                        0,
+                        0);
+      }
    }
 
    pipe->transfer_unmap(pipe, src_trans);
