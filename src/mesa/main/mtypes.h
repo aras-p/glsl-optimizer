@@ -376,7 +376,15 @@ typedef enum
 {
    FRAG_RESULT_DEPTH = 0,
    FRAG_RESULT_STENCIL = 1,
+   /* If a single color should be written to all render targets, this
+    * register is written.  No FRAG_RESULT_DATAn will be written.
+    */
    FRAG_RESULT_COLOR = 2,
+
+   /* FRAG_RESULT_DATAn are the per-render-target (GLSL gl_FragData[n]
+    * or ARB_fragment_program fragment.color[n]) color results.  If
+    * any are written, FRAG_RESULT_COLOR will not be written.
+    */
    FRAG_RESULT_DATA0 = 3,
    FRAG_RESULT_MAX = (FRAG_RESULT_DATA0 + MAX_DRAW_BUFFERS)
 } gl_frag_result;
