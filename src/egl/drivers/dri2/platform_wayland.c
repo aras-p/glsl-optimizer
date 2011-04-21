@@ -208,6 +208,19 @@ dri2_wl_egl_pixmap_destroy(struct wl_egl_pixmap *egl_pixmap)
    egl_pixmap->destroy = NULL;
 }
 
+static struct wl_buffer *
+wayland_create_buffer(struct dri2_egl_surface *dri2_surf,
+                      __DRIbuffer *buffer,
+                      struct wl_visual *visual)
+{
+   struct dri2_egl_display *dri2_dpy =
+      dri2_egl_display(dri2_surf->base.Resource.Display);
+
+   return wl_drm_create_buffer(dri2_dpy->wl_drm, buffer->name,
+                               dri2_surf->base.Width, dri2_surf->base.Height,
+                               buffer->pitch, visual);
+}
+
 static void
 dri2_process_back_buffer(struct dri2_egl_surface *dri2_surf, unsigned format)
 {
@@ -356,6 +369,12 @@ dri2_get_buffers_with_format(__DRIdrawable * driDrawable,
    assert(dri2_surf->type == DRI2_PIXMAP_SURFACE ||
           dri2_surf->dri_buffers[__DRI_BUFFER_BACK_LEFT]);
 
+   if (dri2_surf->type == DRI2_PIXMAP_SURFACE && !dri2_surf->wl_pix->buffer)
+      dri2_surf->wl_pix->buffer =
+         wayland_create_buffer(dri2_surf,
+			       dri2_surf->dri_buffers[__DRI_BUFFER_FRONT_LEFT],
+			       dri2_surf->wl_pix->visual);
+
    *out_count = dri2_surf->buffer_count;
    if (dri2_surf->buffer_count == 0)
 	   return NULL;
@@ -416,17 +435,6 @@ dri2_flush_front_buffer(__DRIdrawable * driDrawable, void *loaderPrivate)
 #endif
 }
 
-static struct wl_buffer *
-wayland_create_buffer(struct dri2_egl_surface *dri2_surf, __DRIbuffer *buffer)
-{
-   struct dri2_egl_display *dri2_dpy =
-      dri2_egl_display(dri2_surf->base.Resource.Display);
-
-   return wl_drm_create_buffer(dri2_dpy->wl_drm, buffer->name,
-                               dri2_surf->base.Width, dri2_surf->base.Height,
-                               buffer->pitch, dri2_surf->wl_win->visual);
-}
-
 static void
 wayland_frame_callback(struct wl_surface *surface, void *data, uint32_t time)
 {
@@ -477,7 +485,8 @@ dri2_swap_buffers(_EGLDriver *drv, _EGLDisplay *disp, _EGLSurface *draw)
       if (!dri2_surf->wl_drm_buffer[WL_BUFFER_FRONT])
 	 dri2_surf->wl_drm_buffer[WL_BUFFER_FRONT] =
 	    wayland_create_buffer(dri2_surf,
-		  dri2_surf->dri_buffers[__DRI_BUFFER_FRONT_LEFT]);
+		  dri2_surf->dri_buffers[__DRI_BUFFER_FRONT_LEFT],
+		  dri2_surf->wl_win->visual);
 
       wl_surface_attach(dri2_surf->wl_win->surface,
 	    dri2_surf->wl_drm_buffer[WL_BUFFER_FRONT],

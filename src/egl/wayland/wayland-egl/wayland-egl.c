@@ -79,6 +79,8 @@ wl_egl_pixmap_create(int width, int height,
 	egl_pixmap->visual  = visual;
 
 	egl_pixmap->destroy = NULL;
+	egl_pixmap->buffer  = NULL;
+	egl_pixmap->driver_private = NULL;
 
 	return egl_pixmap;
 }
