@@ -33,6 +33,7 @@
 #include "state_tracker/drm_driver.h"
 
 #include "egllog.h"
+#include <errno.h>
 
 #include "native_wayland.h"
 
@@ -45,6 +46,9 @@
 #include "wayland-egl-priv.h"
 
 #include <xf86drm.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 static struct native_event_handler *wayland_event_handler;
 
@@ -135,6 +139,12 @@ wayland_display_destroy(struct native_display *ndpy)
 {
    struct wayland_display *display = wayland_display(ndpy);
 
+   if (display->fd)
+      close(display->fd);
+   if (display->wl_drm)
+      wl_drm_destroy(display->wl_drm);
+   if (display->device_name)
+      FREE(display->device_name);
    if (display->config)
       FREE(display->config);
 
@@ -161,7 +171,7 @@ wayland_create_buffer(struct wayland_surface *surface,
 
    pipe_resource_reference(&resource, NULL);
 
-   return wl_drm_create_buffer(display->dpy->drm, wsh.handle,
+   return wl_drm_create_buffer(display->wl_drm, wsh.handle,
                                width, height,
                                wsh.stride, surface->win->visual);
 }
@@ -174,21 +184,24 @@ wayland_pixmap_destroy(struct wl_egl_pixmap *egl_pixmap)
    assert(resource);
 
    pipe_resource_reference(&resource, NULL);
+   if (egl_pixmap->buffer) {
+      wl_buffer_destroy(egl_pixmap->buffer);
+      egl_pixmap->buffer = NULL;
+   }
    
    egl_pixmap->driver_private = NULL;
    egl_pixmap->destroy = NULL;
-   egl_pixmap->name = 0;
 }
 
 static void
-wayland_pixmap_surface_intialize(struct wayland_surface *surface)
+wayland_pixmap_surface_initialize(struct wayland_surface *surface)
 {
    struct native_display *ndpy = &surface->display->base;
    struct pipe_resource *resource;
    struct winsys_handle wsh;
    const enum native_attachment front_natt = NATIVE_ATTACHMENT_FRONT_LEFT;
 
-   if (surface->pix->name > 0)
+   if (surface->pix->buffer != NULL)
       return;
 
    resource = resource_surface_get_single_resource(surface->rsurf, front_natt);
@@ -196,8 +209,11 @@ wayland_pixmap_surface_intialize(struct wayland_surface *surface)
    wsh.type = DRM_API_HANDLE_TYPE_SHARED;
    ndpy->screen->resource_get_handle(ndpy->screen, resource, &wsh);
 
-   surface->pix->name           = wsh.handle;
-   surface->pix->stride         = wsh.stride;
+   surface->pix->buffer =
+      wl_drm_create_buffer(surface->display->wl_drm, wsh.handle,
+                           surface->pix->width, surface->pix->height,
+                           wsh.stride, surface->pix->visual);
+
    surface->pix->destroy        = wayland_pixmap_destroy;
    surface->pix->driver_private = resource;
 }
@@ -228,12 +244,12 @@ wayland_window_surface_handle_resize(struct wayland_surface *surface)
        surface->win->width, surface->win->height)) {
 
       if (surface->pending_resource)
-         force_roundtrip(display->dpy->display);
+         force_roundtrip(display->dpy);
 
       if (front_resource) {
          surface->pending_resource = front_resource;
          front_resource = NULL;
-         wl_display_sync_callback(display->dpy->display,
+         wl_display_sync_callback(display->dpy,
                                   wayland_release_pending_resource, surface);
       }
 
@@ -274,7 +290,7 @@ wayland_surface_validate(struct native_surface *nsurf, uint attachment_mask,
    resource_surface_get_size(surface->rsurf, (uint *) width, (uint *) height);
 
    if (surface->type == WL_PIXMAP_SURFACE)
-      wayland_pixmap_surface_intialize(surface);
+      wayland_pixmap_surface_initialize(surface);
 
    return TRUE;
 }
@@ -304,10 +320,10 @@ wayland_surface_swap_buffers(struct native_surface *nsurf)
    struct wayland_display *display = surface->display;
 
    while (surface->block_swap_buffers)
-      wl_display_iterate(display->dpy->display, WL_DISPLAY_READABLE);
+      wl_display_iterate(display->dpy, WL_DISPLAY_READABLE);
 
    surface->block_swap_buffers = TRUE;
-   wl_display_frame_callback(display->dpy->display, surface->win->surface,
+   wl_display_frame_callback(display->dpy, surface->win->surface,
                              wayland_frame_callback, surface);
 
    if (surface->type == WL_WINDOW_SURFACE) {
@@ -397,7 +413,6 @@ wayland_create_pixmap_surface(struct native_display *ndpy,
                               const struct native_config *nconf)
 {
    struct wayland_display *display = wayland_display(ndpy);
-   struct wayland_config *config = wayland_config(nconf);
    struct wayland_surface *surface;
    struct wl_egl_pixmap *egl_pixmap = (struct wl_egl_pixmap *) pix;
    enum native_attachment natt = NATIVE_ATTACHMENT_FRONT_LEFT;
@@ -412,7 +427,7 @@ wayland_create_pixmap_surface(struct native_display *ndpy,
    surface->type = WL_PIXMAP_SURFACE;
    surface->pix = egl_pixmap;
 
-   if (surface->pix->visual == wl_display_get_rgb_visual(display->dpy->display))
+   if (surface->pix->visual == wl_display_get_rgb_visual(display->dpy))
       surface->color_format = PIPE_FORMAT_B8G8R8X8_UNORM;
    else
       surface->color_format = PIPE_FORMAT_B8G8R8A8_UNORM;
@@ -433,7 +448,7 @@ wayland_create_pixmap_surface(struct native_display *ndpy,
                              egl_pixmap->width, egl_pixmap->height);
 
    /* the pixmap is already allocated, so import it */
-   if (surface->pix->name > 0)
+   if (surface->pix->buffer != NULL)
       resource_surface_import_resource(surface->rsurf, natt,
                                        surface->pix->driver_private);
 
@@ -511,35 +526,80 @@ get_drm_screen_name(int fd, drmVersionPtr version)
    return name;
 }
 
+static void
+drm_handle_device(void *data, struct wl_drm *drm, const char *device)
+{
+   struct wayland_display *display = data;
+   drm_magic_t magic;
+
+   display->device_name = strdup(device);
+   if (!display->device_name)
+      return;
+
+   display->fd = open(display->device_name, O_RDWR);
+   if (display->fd == -1) {
+      _eglLog(_EGL_WARNING, "wayland-egl: could not open %s (%s)",
+              display->device_name, strerror(errno));
+      return;
+   }
+
+   drmGetMagic(display->fd, &magic);
+   wl_drm_authenticate(display->wl_drm, magic);
+}
+
+static void
+drm_handle_authenticated(void *data, struct wl_drm *drm)
+{
+   struct wayland_display *display = data;
+
+   display->authenticated = true;
+}
+
+static const struct wl_drm_listener drm_listener = {
+   drm_handle_device,
+   drm_handle_authenticated
+};
+
 static boolean
 wayland_display_init_screen(struct native_display *ndpy)
 {
    struct wayland_display *display = wayland_display(ndpy);
    drmVersionPtr version;
    const char *driver_name;
+   uint32_t id;
 
-   if (display->dpy->fd == -1)
-	   force_roundtrip(display->dpy->display);
-   if (display->dpy->fd == -1)
+   id = wl_display_get_global(display->dpy, "wl_drm", 1);
+   if (id == 0)
+      wl_display_iterate(display->dpy, WL_DISPLAY_READABLE);
+   id = wl_display_get_global(display->dpy, "wl_drm", 1);
+   if (id == 0)
+      return FALSE;
+
+   display->wl_drm = wl_drm_create(display->dpy, id, 1);
+   if (!display->wl_drm)
 	   return FALSE;
 
-   if (!display->dpy->authenticated)
-	   force_roundtrip(display->dpy->display);
-   if (!display->dpy->authenticated)
-	   return FALSE;
+   wl_drm_add_listener(display->wl_drm, &drm_listener, display);
+   force_roundtrip(display->dpy);
+   if (display->fd == -1)
+      return FALSE;
 
-   version = drmGetVersion(display->dpy->fd);
+   force_roundtrip(display->dpy);
+   if (!display->authenticated)
+      return FALSE;
+
+   version = drmGetVersion(display->fd);
    if (!version) {
-      _eglLog(_EGL_WARNING, "invalid fd %d", display->dpy->fd);
+      _eglLog(_EGL_WARNING, "invalid fd %d", display->fd);
       return FALSE;
    }
 
    /* FIXME: share this with native_drm or egl_dri2 */
-   driver_name = get_drm_screen_name(display->dpy->fd, version);
+   driver_name = get_drm_screen_name(display->fd, version);
 
    display->base.screen =
       wayland_event_handler->new_drm_screen(&display->base,
-            driver_name, display->dpy->fd);
+            driver_name, display->fd);
    drmFreeVersion(version);
 
    if (!display->base.screen) {
@@ -592,7 +652,7 @@ wayland_display_create(void *dpy, boolean use_sw, void *user_data)
    display->base.user_data = user_data;
 
    display->dpy = dpy;
-   if (!display->dpy->display) {
+   if (!display->dpy) {
       wayland_display_destroy(&display->base);
       return NULL;
    }
