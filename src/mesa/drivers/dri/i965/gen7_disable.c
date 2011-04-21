@@ -59,6 +59,11 @@ disable_stages(struct brw_context *brw)
    OUT_BATCH(0);
    ADVANCE_BATCH();
 
+   BEGIN_BATCH(2);
+   OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS_GS << 16 | (2 - 2));
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+
    /* Disable the HS Unit */
    BEGIN_BATCH(7);
    OUT_BATCH(_3DSTATE_CONSTANT_HS << 16 | (7 - 2));
@@ -77,6 +82,11 @@ disable_stages(struct brw_context *brw)
    OUT_BATCH(0);
    OUT_BATCH(0);
    OUT_BATCH(0);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+
+   BEGIN_BATCH(2);
+   OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS_HS << 16 | (2 - 2));
    OUT_BATCH(0);
    ADVANCE_BATCH();
 
@@ -105,6 +115,11 @@ disable_stages(struct brw_context *brw)
    OUT_BATCH(0);
    OUT_BATCH(0);
    OUT_BATCH(0);
+   OUT_BATCH(0);
+   ADVANCE_BATCH();
+
+   BEGIN_BATCH(2);
+   OUT_BATCH(_3DSTATE_BINDING_TABLE_POINTERS_DS << 16 | (2 - 2));
    OUT_BATCH(0);
    ADVANCE_BATCH();
 
