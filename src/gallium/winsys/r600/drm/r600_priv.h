@@ -202,24 +202,6 @@ static inline void radeon_bo_unmap(struct radeon *radeon, struct radeon_bo *bo)
 }
 
 /*
- * r600_bo
- */
-static inline struct radeon_bo *r600_bo_get_bo(struct r600_bo *bo)
-{
-	return bo->bo;
-}
-
-static unsigned inline r600_bo_get_handle(struct r600_bo *bo)
-{
-	return bo->bo->handle;
-}
-
-static unsigned inline r600_bo_get_size(struct r600_bo *bo)
-{
-	return bo->size;
-}
-
-/*
  * fence
  */
 static inline bool fence_is_after(unsigned fence, unsigned ofence)

@@ -798,7 +798,7 @@ void r600_context_bo_flush(struct r600_context *ctx, unsigned flush_flags,
 				unsigned flush_mask, struct r600_bo *rbo)
 {
 	struct radeon_bo *bo;
-	bo = r600_bo_get_bo(rbo);
+	bo = rbo->bo;
 	/* if bo has already been flushed */
 	if (!(~bo->last_flush & flush_flags)) {
 		bo->last_flush &= flush_mask;
@@ -818,7 +818,7 @@ void r600_context_bo_reloc(struct r600_context *ctx, u32 *pm4, struct r600_bo *r
 {
 	struct radeon_bo *bo;
 
-	bo = r600_bo_get_bo(rbo);
+	bo = rbo->bo;
 	assert(bo != NULL);
 	if (bo->reloc) {
 		*pm4 = bo->reloc_id;

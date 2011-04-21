@@ -178,7 +178,7 @@ boolean r600_bo_get_winsys_handle(struct radeon *radeon, struct r600_bo *bo,
 	whandle->stride = stride;
 	switch(whandle->type) {
 	case DRM_API_HANDLE_TYPE_KMS:
-		whandle->handle = r600_bo_get_handle(bo);
+		whandle->handle = bo->bo->handle;
 		break;
 	case DRM_API_HANDLE_TYPE_SHARED:
 		if (radeon_bo_get_name(radeon, bo->bo, &whandle->handle))
