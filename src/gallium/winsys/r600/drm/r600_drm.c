@@ -199,7 +199,6 @@ static int radeon_get_clock_crystal_freq(struct radeon *radeon)
 	uint32_t clock_crystal_freq;
 	int r;
 
-	radeon->device = 0;
 	info.request = RADEON_INFO_CLOCK_CRYSTAL_FREQ;
 	info.value = (uintptr_t)&clock_crystal_freq;
 	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
@@ -218,7 +217,6 @@ static int radeon_get_num_backends(struct radeon *radeon)
 	uint32_t num_backends;
 	int r;
 
-	radeon->device = 0;
 	info.request = RADEON_INFO_NUM_BACKENDS;
 	info.value = (uintptr_t)&num_backends;
 	r = drmCommandWriteRead(radeon->fd, DRM_RADEON_INFO, &info,
