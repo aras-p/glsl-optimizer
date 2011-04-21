@@ -67,6 +67,13 @@ lp_resource_copy(struct pipe_context *pipe,
    unsigned height = src_box->height;
    assert(src_box->depth == 1);
 
+   /* Fallback for buffers. */
+   if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
+      util_resource_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
+                                src, src_level, src_box);
+      return;
+   }
+
    llvmpipe_flush_resource(pipe,
                            dst, dst_level, dstz,
                            FALSE, /* read_only */

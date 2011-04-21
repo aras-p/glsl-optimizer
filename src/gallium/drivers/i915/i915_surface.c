@@ -37,6 +37,7 @@
 #include "util/u_format.h"
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
+#include "util/u_surface.h"
 
 /*
  * surface functions using the render engine
@@ -50,6 +51,13 @@ i915_surface_copy_render(struct pipe_context *pipe,
                          const struct pipe_box *src_box)
 {
    struct i915_context *i915 = i915_context(pipe);
+
+   /* Fallback for buffers. */
+   if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
+      util_resource_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
+                                src, src_level, src_box);
+      return;
+   }
 
    util_blitter_save_blend(i915->blitter, (void *)i915->blend);
    util_blitter_save_depth_stencil_alpha(i915->blitter, (void *)i915->depth_stencil);
@@ -157,6 +165,13 @@ i915_surface_copy_blitter(struct pipe_context *pipe,
    struct pipe_resource *dpt = &dst_tex->b.b;
    struct pipe_resource *spt = &src_tex->b.b;
    unsigned dst_offset, src_offset;  /* in bytes */
+
+   /* Fallback for buffers. */
+   if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
+      util_resource_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
+                                src, src_level, src_box);
+      return;
+   }
 
    /* XXX cannot copy 3d regions at this time */
    assert(src_box->depth == 1);
