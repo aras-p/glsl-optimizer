@@ -1687,9 +1687,14 @@ dnl Gallium LLVM
 dnl
 AC_ARG_ENABLE([gallium-llvm],
     [AS_HELP_STRING([--enable-gallium-llvm],
-        [build gallium LLVM support @<:@default=disabled@:>@])],
+        [build gallium LLVM support @<:@default=enabled on x86/x86_64@:>@])],
     [enable_gallium_llvm="$enableval"],
     [enable_gallium_llvm=auto])
+if test "x$enable_gallium_llvm" = xauto; then
+    case "$host_cpu" in
+    i*86|x86_64) enable_gallium_llvm=yes;;
+    esac
+fi
 if test "x$enable_gallium_llvm" = xyes; then
     if test "x$LLVM_CONFIG" != xno; then
 	LLVM_VERSION=`$LLVM_CONFIG --version`
