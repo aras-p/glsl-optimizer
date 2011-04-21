@@ -164,7 +164,9 @@ const static struct wl_drm_interface drm_interface = {
 };
 
 static void
-post_drm_device(struct wl_client *client, struct wl_object *global)
+post_drm_device(struct wl_client *client,
+		struct wl_object *global,
+		uint32_t version)
 {
 	struct wl_drm *drm = (struct wl_drm *) global;
 
