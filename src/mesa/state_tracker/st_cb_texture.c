@@ -1686,7 +1686,7 @@ copy_image_data_to_texture(struct st_context *st,
    /* debug checks */
    {
       const struct gl_texture_image *dstImage =
-         stObj->base.Image[stImage->face][stImage->level];
+         stObj->base.Image[stImage->face][dstLevel];
       assert(dstImage);
       assert(dstImage->Width == stImage->base.Width);
       assert(dstImage->Height == stImage->base.Height);
@@ -1843,7 +1843,12 @@ st_finalize_texture(struct gl_context *ctx,
          /* Need to import images in main memory or held in other textures.
           */
          if (stImage && stObj->pt != stImage->pt) {
-            copy_image_data_to_texture(st, stObj, level, stImage);
+            if (stImage->base.Width == u_minify(stObj->width0, level) &&
+                stImage->base.Height == u_minify(stObj->height0, level) &&
+                stImage->base.Depth == u_minify(stObj->depth0, level)) {
+               /* src image fits expected dest mipmap level size */
+               copy_image_data_to_texture(st, stObj, level, stImage);
+            }
          }
       }
    }
