@@ -157,6 +157,9 @@ util_resource_copy_region(struct pipe_context *pipe,
    unsigned h = src_box->height;
 
    assert(src && dst);
+   assert((src->target == PIPE_BUFFER && dst->target == PIPE_BUFFER) ||
+          (src->target != PIPE_BUFFER && dst->target != PIPE_BUFFER));
+
    if (!src || !dst)
       return;
 
