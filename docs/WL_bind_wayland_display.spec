@@ -82,7 +82,7 @@ Additions to the EGL 1.4 Specification:
 
     Import a wl_buffer by calling eglCreateImageKHR with
     wl_buffer as EGLClientBuffer, EGL_WAYLAND_BUFFER_WL as the target,
-    and an empty attribute_list.
+    NULL context and an empty attribute_list.
 
 Issues
 
