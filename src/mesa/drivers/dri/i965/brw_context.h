@@ -715,7 +715,6 @@ struct brw_context
    struct {
       /* gen4 */
       drm_intel_bo *prog_bo;
-      drm_intel_bo *vp_bo;
 
       /* gen6 */
       drm_intel_bo *blend_state_bo;
@@ -723,6 +722,7 @@ struct brw_context
       drm_intel_bo *color_calc_state_bo;
 
       uint32_t state_offset;
+      uint32_t vp_offset;
    } cc;
 
    struct {
@@ -792,19 +792,12 @@ void brwInitFragProgFuncs( struct dd_function_table *functions );
  */
 void brw_upload_urb_fence(struct brw_context *brw);
 
-/* brw_cc.c */
-void brw_update_cc_vp(struct brw_context *brw);
-
 /* brw_curbe.c
  */
 void brw_upload_cs_urb_state(struct brw_context *brw);
 
 /* brw_disasm.c */
 int brw_disasm (FILE *file, struct brw_instruction *inst, int gen);
-
-/* brw_state.c */
-void brw_enable(struct gl_context * ctx, GLenum cap, GLboolean state);
-void brw_depth_range(struct gl_context *ctx, GLclampd nearval, GLclampd farval);
 
 /*======================================================================
  * Inline conversion functions.  These are better-typed than the

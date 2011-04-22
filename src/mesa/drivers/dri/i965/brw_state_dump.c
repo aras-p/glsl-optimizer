@@ -250,21 +250,19 @@ static void dump_clip_viewport_state(struct brw_context *brw)
 
 static void dump_cc_viewport_state(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    const char *name = "CC VP";
    struct brw_cc_viewport *vp;
    uint32_t vp_off;
 
-   if (brw->cc.vp_bo == NULL)
-      return;
+   drm_intel_bo_map(intel->batch.bo, GL_FALSE);
 
-   drm_intel_bo_map(brw->cc.vp_bo, GL_FALSE);
-
-   vp = brw->cc.vp_bo->virtual;
-   vp_off = brw->cc.vp_bo->offset;
+   vp = intel->batch.bo->virtual + brw->cc.vp_offset;
+   vp_off = intel->batch.bo->offset + brw->cc.vp_offset;
 
    state_out(name, vp, vp_off, 0, "min_depth = %f\n", vp->min_depth);
    state_out(name, vp, vp_off, 1, "max_depth = %f\n", vp->max_depth);
-   drm_intel_bo_unmap(brw->cc.vp_bo);
+   drm_intel_bo_unmap(intel->batch.bo);
 }
 
 static void dump_depth_stencil_state(struct brw_context *brw)

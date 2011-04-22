@@ -47,6 +47,7 @@ brw_add_validated_bo(struct brw_context *brw, drm_intel_bo *bo)
 };
 
 extern const struct brw_tracked_state brw_blend_constant_color;
+extern const struct brw_tracked_state brw_cc_vp;
 extern const struct brw_tracked_state brw_cc_unit;
 extern const struct brw_tracked_state brw_check_fallback;
 extern const struct brw_tracked_state brw_clip_prog;

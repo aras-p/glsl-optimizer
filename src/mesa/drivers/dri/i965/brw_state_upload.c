@@ -60,6 +60,7 @@ static const struct brw_tracked_state *gen4_atoms[] =
    &brw_curbe_offsets,
    &brw_recalculate_urb_fence,
 
+   &brw_cc_vp,
    &brw_cc_unit,
 
    &brw_vs_constants, /* Before vs_surfaces and constant_buffer */
@@ -119,6 +120,7 @@ static const struct brw_tracked_state *gen6_atoms[] =
    /* Command packets: */
    &brw_invarient_state,
 
+   &brw_cc_vp,
    &gen6_viewport_state,	/* must do after *_vp stages */
 
    &gen6_urb,

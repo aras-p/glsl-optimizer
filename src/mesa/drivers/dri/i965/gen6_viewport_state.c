@@ -104,11 +104,6 @@ const struct brw_tracked_state gen6_sf_vp = {
    .prepare = prepare_sf_vp,
 };
 
-static void prepare_viewport_state_pointers(struct brw_context *brw)
-{
-   brw_add_validated_bo(brw, brw->cc.vp_bo);
-}
-
 static void upload_viewport_state_pointers(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
@@ -122,7 +117,8 @@ static void upload_viewport_state_pointers(struct brw_context *brw)
 	     brw->clip.vp_offset);
    OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
 	     brw->sf.vp_offset);
-   OUT_RELOC(brw->cc.vp_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
+   OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+	     brw->cc.vp_offset);
    ADVANCE_BATCH();
 }
 
@@ -134,6 +130,5 @@ const struct brw_tracked_state gen6_viewport_state = {
 		CACHE_NEW_SF_VP |
 		CACHE_NEW_CC_VP)
    },
-   .prepare = prepare_viewport_state_pointers,
    .emit = upload_viewport_state_pointers,
 };
