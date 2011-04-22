@@ -35,7 +35,7 @@
 #include "intel_batchbuffer.h"
 
 static void
-prepare_wm_constants(struct brw_context *brw)
+gen6_prepare_wm_push_constants(struct brw_context *brw)
 {
    struct intel_context *intel = &brw->intel;
    struct gl_context *ctx = &intel->ctx;
@@ -91,7 +91,7 @@ const struct brw_tracked_state gen6_wm_constants = {
       .brw   = BRW_NEW_FRAGMENT_PROGRAM,
       .cache = 0,
    },
-   .prepare = prepare_wm_constants,
+   .prepare = gen6_prepare_wm_push_constants,
 };
 
 static void

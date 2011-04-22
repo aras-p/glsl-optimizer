@@ -315,7 +315,7 @@ brw_create_constant_surface(struct brw_context *brw,
  * state atom.
  */
 static void
-prepare_wm_constants(struct brw_context *brw)
+prepare_wm_pull_constants(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
    struct intel_context *intel = &brw->intel;
@@ -359,7 +359,7 @@ const struct brw_tracked_state brw_wm_constants = {
       .brw = (BRW_NEW_FRAGMENT_PROGRAM),
       .cache = 0
    },
-   .prepare = prepare_wm_constants,
+   .prepare = prepare_wm_pull_constants,
 };
 
 /**
