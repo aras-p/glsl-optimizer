@@ -131,9 +131,10 @@ brw_prepare_wm_unit(struct brw_context *brw)
       wm->wm4.sampler_count = (brw->wm.sampler_count + 1) / 4;
    }
 
-   if (brw->wm.sampler_bo != NULL) {
+   if (brw->wm.sampler_count) {
       /* reloc */
-      wm->wm4.sampler_state_pointer = brw->wm.sampler_bo->offset >> 5;
+      wm->wm4.sampler_state_pointer = (intel->batch.bo->offset +
+				       brw->wm.sampler_offset) >> 5;
    } else {
       wm->wm4.sampler_state_pointer = 0;
    }
@@ -244,8 +245,9 @@ brw_prepare_wm_unit(struct brw_context *brw)
       drm_intel_bo_emit_reloc(intel->batch.bo,
 			      brw->wm.state_offset +
 			      offsetof(struct brw_wm_unit_state, wm4),
-			      brw->wm.sampler_bo, (wm->wm4.stats_enable |
-						   (wm->wm4.sampler_count << 2)),
+			      intel->batch.bo, (brw->wm.sampler_offset |
+						wm->wm4.stats_enable |
+						(wm->wm4.sampler_count << 2)),
 			      I915_GEM_DOMAIN_INSTRUCTION, 0);
    }
 

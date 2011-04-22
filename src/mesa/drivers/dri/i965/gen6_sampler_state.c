@@ -43,19 +43,13 @@ upload_sampler_state_pointers(struct brw_context *brw)
 	     (4 - 2));
    OUT_BATCH(0); /* VS */
    OUT_BATCH(0); /* GS */
-   if (brw->wm.sampler_bo)
-      OUT_RELOC(brw->wm.sampler_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
+   if (brw->wm.sampler_count)
+      OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+		brw->wm.sampler_offset);
    else
       OUT_BATCH(0);
 
    ADVANCE_BATCH();
-}
-
-
-static void
-prepare_sampler_state_pointers(struct brw_context *brw)
-{
-   brw_add_validated_bo(brw, brw->wm.sampler_bo);
 }
 
 const struct brw_tracked_state gen6_sampler_state = {
@@ -64,6 +58,5 @@ const struct brw_tracked_state gen6_sampler_state = {
       .brw = BRW_NEW_BATCH,
       .cache = CACHE_NEW_SAMPLER
    },
-   .prepare = prepare_sampler_state_pointers,
    .emit = upload_sampler_state_pointers,
 };

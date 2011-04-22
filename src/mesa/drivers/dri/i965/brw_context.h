@@ -311,7 +311,6 @@ enum brw_cache_id {
    BRW_CC_VP,
    BRW_CC_UNIT,
    BRW_WM_PROG,
-   BRW_SAMPLER_DEFAULT_COLOR,
    BRW_SAMPLER,
    BRW_WM_UNIT,
    BRW_SF_PROG,
@@ -384,7 +383,6 @@ struct brw_tracked_state {
 #define CACHE_NEW_CC_VP                  (1<<BRW_CC_VP)
 #define CACHE_NEW_CC_UNIT                (1<<BRW_CC_UNIT)
 #define CACHE_NEW_WM_PROG                (1<<BRW_WM_PROG)
-#define CACHE_NEW_SAMPLER_DEFAULT_COLOR  (1<<BRW_SAMPLER_DEFAULT_COLOR)
 #define CACHE_NEW_SAMPLER                (1<<BRW_SAMPLER)
 #define CACHE_NEW_WM_UNIT                (1<<BRW_WM_UNIT)
 #define CACHE_NEW_SF_PROG                (1<<BRW_SF_PROG)
@@ -684,8 +682,9 @@ struct brw_context
        */
       GLbitfield input_size_masks[4];
 
-      /** Array of surface default colors (texture border color) */
-      drm_intel_bo *sdc_bo[BRW_MAX_TEX_UNIT];
+      /** offsets in the batch to sampler default colors (texture border color)
+       */
+      uint32_t sdc_offset[BRW_MAX_TEX_UNIT];
 
       GLuint render_surf;
       GLuint nr_surfaces;      
@@ -694,7 +693,7 @@ struct brw_context
       drm_intel_bo *scratch_bo;
 
       GLuint sampler_count;
-      drm_intel_bo *sampler_bo;
+      uint32_t sampler_offset;
 
       /** Binding table of pointers to surf_bo entries */
       uint32_t bind_bo_offset;

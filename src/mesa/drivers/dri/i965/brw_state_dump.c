@@ -144,12 +144,7 @@ static void dump_wm_sampler_state(struct brw_context *brw)
    struct gl_context *ctx = &brw->intel.ctx;
    int i;
 
-   if (!brw->wm.sampler_bo) {
-      fprintf(stderr, "WM_SAMPLER: NULL\n");
-      return;
-   }
-
-   drm_intel_bo_map(brw->wm.sampler_bo, GL_FALSE);
+   drm_intel_bo_map(intel->batch.bo, GL_FALSE);
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       unsigned int offset;
       uint32_t sdc_offset;
@@ -161,9 +156,11 @@ static void dump_wm_sampler_state(struct brw_context *brw)
 	 continue;
       }
 
-      offset = brw->wm.sampler_bo->offset +
-	 i * sizeof(struct brw_sampler_state);
-      samp = (struct brw_sampler_state *)(brw->wm.sampler_bo->virtual +
+      offset = (intel->batch.bo->offset +
+		brw->wm.sampler_offset +
+		i * sizeof(struct brw_sampler_state));
+      samp = (struct brw_sampler_state *)(intel->batch.bo->virtual +
+					  brw->wm.sampler_offset +
 					  i * sizeof(struct brw_sampler_state));
 
       sprintf(name, "WM SAMP%d", i);
@@ -174,10 +171,10 @@ static void dump_wm_sampler_state(struct brw_context *brw)
 
       sprintf(name, " WM SDC%d", i);
 
-      drm_intel_bo_map(brw->wm.sdc_bo[i], GL_FALSE);
-      sdc_offset = brw->wm.sdc_bo[i]->offset;
+      sdc_offset = intel->batch.bo->offset + brw->wm.sdc_offset[i];
       if (intel->gen >= 5) {
-	 struct gen5_sampler_default_color *sdc = brw->wm.sdc_bo[i]->virtual;
+	 struct gen5_sampler_default_color *sdc = (intel->batch.bo->virtual +
+						   brw->wm.sdc_offset[i]);
 	 state_out(name, sdc, sdc_offset, 0, "unorm rgba\n");
 	 state_out(name, sdc, sdc_offset, 1, "r %f\n", sdc->f[0]);
 	 state_out(name, sdc, sdc_offset, 2, "b %f\n", sdc->f[1]);
@@ -191,15 +188,15 @@ static void dump_wm_sampler_state(struct brw_context *brw)
 	 state_out(name, sdc, sdc_offset, 10, "s16 ba\n");
 	 state_out(name, sdc, sdc_offset, 11, "s8 rgba\n");
       } else {
-	 struct brw_sampler_default_color *sdc = brw->wm.sdc_bo[i]->virtual;
+	 struct brw_sampler_default_color *sdc = (intel->batch.bo->virtual +
+						  brw->wm.sdc_offset[i]);
 	 state_out(name, sdc, sdc_offset, 0, "r %f\n", sdc->color[0]);
 	 state_out(name, sdc, sdc_offset, 1, "g %f\n", sdc->color[1]);
 	 state_out(name, sdc, sdc_offset, 2, "b %f\n", sdc->color[2]);
 	 state_out(name, sdc, sdc_offset, 3, "a %f\n", sdc->color[3]);
       }
-      drm_intel_bo_unmap(brw->wm.sdc_bo[i]);
    }
-   drm_intel_bo_unmap(brw->wm.sampler_bo);
+   drm_intel_bo_unmap(intel->batch.bo);
 }
 
 static void dump_sf_viewport_state(struct brw_context *brw)

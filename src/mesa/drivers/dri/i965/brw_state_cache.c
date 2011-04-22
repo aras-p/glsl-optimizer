@@ -367,7 +367,6 @@ brw_init_non_surface_cache(struct brw_context *brw)
    brw_init_cache_id(cache, "CC_VP", BRW_CC_VP);
    brw_init_cache_id(cache, "CC_UNIT", BRW_CC_UNIT);
    brw_init_cache_id(cache, "WM_PROG", BRW_WM_PROG);
-   brw_init_cache_id(cache, "SAMPLER_DEFAULT_COLOR", BRW_SAMPLER_DEFAULT_COLOR);
    brw_init_cache_id(cache, "SAMPLER", BRW_SAMPLER);
    brw_init_cache_id(cache, "WM_UNIT", BRW_WM_UNIT);
    brw_init_cache_id(cache, "SF_PROG", BRW_SF_PROG);
