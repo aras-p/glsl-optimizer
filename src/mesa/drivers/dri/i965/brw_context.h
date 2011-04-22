@@ -698,11 +698,11 @@ struct brw_context
       drm_intel_bo *state_bo;
       drm_intel_bo *const_bo; /* pull constant buffer. */
       /**
-       *  This is the push constant BO on gen6.
+       * This is offset in the batch to the push constants on gen6.
        *
        * Pre-gen6, push constants live in the CURBE.
        */
-      drm_intel_bo *push_const_bo;
+      uint32_t push_const_offset;
    } wm;
 
 

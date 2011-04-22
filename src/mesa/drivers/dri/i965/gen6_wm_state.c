@@ -42,9 +42,6 @@ gen6_prepare_wm_push_constants(struct brw_context *brw)
    const struct brw_fragment_program *fp =
       brw_fragment_program_const(brw->fragment_program);
 
-   drm_intel_bo_unreference(brw->wm.push_const_bo);
-   brw->wm.push_const_bo = NULL;
-
    /* Updates the ParamaterValues[i] pointers for all parameters of the
     * basic type of PROGRAM_STATE_VAR.
     */
@@ -55,13 +52,11 @@ gen6_prepare_wm_push_constants(struct brw_context *brw)
       float *constants;
       unsigned int i;
 
-      brw->wm.push_const_bo = drm_intel_bo_alloc(intel->bufmgr,
-						 "WM constant_bo",
-						 brw->wm.prog_data->nr_params *
-						 sizeof(float),
-						 4096);
-      drm_intel_gem_bo_map_gtt(brw->wm.push_const_bo);
-      constants = brw->wm.push_const_bo->virtual;
+      constants = brw_state_batch(brw,
+				  brw->wm.prog_data->nr_params *
+				  sizeof(float),
+				  32, &brw->wm.push_const_offset);
+
       for (i = 0; i < brw->wm.prog_data->nr_params; i++) {
 	 constants[i] = convert_param(brw->wm.prog_data->param_convert[i],
 				      *brw->wm.prog_data->param[i]);
@@ -80,15 +75,14 @@ gen6_prepare_wm_push_constants(struct brw_context *brw)
 	    printf("\n");
 	 printf("\n");
       }
-
-      drm_intel_gem_bo_unmap_gtt(brw->wm.push_const_bo);
    }
 }
 
 const struct brw_tracked_state gen6_wm_constants = {
    .dirty = {
       .mesa  = _NEW_PROGRAM_CONSTANTS,
-      .brw   = BRW_NEW_FRAGMENT_PROGRAM,
+      .brw   = (BRW_NEW_BATCH |
+		BRW_NEW_FRAGMENT_PROGRAM),
       .cache = 0,
    },
    .prepare = gen6_prepare_wm_push_constants,
@@ -118,8 +112,10 @@ upload_wm_state(struct brw_context *brw)
       OUT_BATCH(_3DSTATE_CONSTANT_PS << 16 |
 		GEN6_CONSTANT_BUFFER_0_ENABLE |
 		(5 - 2));
-      OUT_RELOC(brw->wm.push_const_bo,
+      /* This is also the set of state flags from gen6_prepare_wm_constants */
+      OUT_RELOC(intel->batch.bo,
 		I915_GEM_DOMAIN_RENDER, 0, /* XXX: bad domain */
+		brw->wm.push_const_offset +
 		ALIGN(brw->wm.prog_data->nr_params,
 		      brw->wm.prog_data->dispatch_width) / 8 - 1);
       OUT_BATCH(0);

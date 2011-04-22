@@ -364,15 +364,17 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
 
    for (i = 0; i < nr_prims; i++) {
       uint32_t hw_prim;
+      int estimated_max_prim_size;
+
+      estimated_max_prim_size = 512; /* batchbuffer commands */
+      estimated_max_prim_size += 1024; /* gen6 WM push constants */
+      estimated_max_prim_size += 512; /* misc. pad */
 
       /* Flush the batch if it's approaching full, so that we don't wrap while
        * we've got validated state that needs to be in the same batch as the
-       * primitives.  This fraction is just a guess (minimal full state plus
-       * a primitive is around 512 bytes), and would be better if we had
-       * an upper bound of how much we might emit in a single
-       * brw_try_draw_prims().
+       * primitives.
        */
-      intel_batchbuffer_require_space(intel, 1024, false);
+      intel_batchbuffer_require_space(intel, estimated_max_prim_size, false);
 
       hw_prim = brw_set_prim(brw, &prim[i]);
       if (brw->state.dirty.brw) {
