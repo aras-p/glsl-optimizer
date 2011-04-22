@@ -156,12 +156,9 @@ static void upload_cc_state_pointers(struct brw_context *brw)
 
    BEGIN_BATCH(4);
    OUT_BATCH(_3DSTATE_CC_STATE_POINTERS << 16 | (4 - 2));
-   OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
-	     brw->cc.blend_state_offset | 1);
-   OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
-	     brw->cc.depth_stencil_state_offset | 1);
-   OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
-	     brw->cc.state_offset | 1);
+   OUT_BATCH(brw->cc.blend_state_offset | 1);
+   OUT_BATCH(brw->cc.depth_stencil_state_offset | 1);
+   OUT_BATCH(brw->cc.state_offset | 1);
    ADVANCE_BATCH();
 }
 

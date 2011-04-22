@@ -113,12 +113,9 @@ static void upload_viewport_state_pointers(struct brw_context *brw)
 	     GEN6_CC_VIEWPORT_MODIFY |
 	     GEN6_SF_VIEWPORT_MODIFY |
 	     GEN6_CLIP_VIEWPORT_MODIFY);
-   OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
-	     brw->clip.vp_offset);
-   OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
-	     brw->sf.vp_offset);
-   OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
-	     brw->cc.vp_offset);
+   OUT_BATCH(brw->clip.vp_offset);
+   OUT_BATCH(brw->sf.vp_offset);
+   OUT_BATCH(brw->cc.vp_offset);
    ADVANCE_BATCH();
 }
 

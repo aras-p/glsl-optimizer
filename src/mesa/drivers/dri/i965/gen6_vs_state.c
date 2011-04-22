@@ -134,10 +134,10 @@ upload_vs_state(struct brw_context *brw)
       OUT_BATCH(_3DSTATE_CONSTANT_VS << 16 |
 		GEN6_CONSTANT_BUFFER_0_ENABLE |
 		(5 - 2));
-      /* This is also the set of state flags from gen6_prepare_vs_constants */
-      OUT_RELOC(intel->batch.bo,
-		I915_GEM_DOMAIN_RENDER, 0, /* XXX: bad domain */
-		brw->vs.push_const_offset +
+      /* Pointer to the VS constant buffer.  Covered by the set of
+       * state flags from gen6_prepare_wm_constants
+       */
+      OUT_BATCH(brw->vs.push_const_offset +
 		brw->vs.push_const_size - 1);
       OUT_BATCH(0);
       OUT_BATCH(0);

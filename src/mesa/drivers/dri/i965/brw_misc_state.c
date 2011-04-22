@@ -550,12 +550,28 @@ static void upload_state_base_address( struct brw_context *brw )
    if (intel->gen >= 6) {
        BEGIN_BATCH(10);
        OUT_BATCH(CMD_STATE_BASE_ADDRESS << 16 | (10 - 2));
-       OUT_BATCH(1); /* General state base address */
-       OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_SAMPLER, 0,
-		 1); /* Surface state base address */
-       OUT_BATCH(1); /* Dynamic state base address */
-       OUT_BATCH(1); /* Indirect object base address */
-       OUT_BATCH(1); /* Instruction base address */
+       /* General state base address: stateless DP read/write requests */
+       OUT_BATCH(1);
+       /* Surface state base address:
+	* BINDING_TABLE_STATE
+	* SURFACE_STATE
+	*/
+       OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_SAMPLER, 0, 1);
+        /* Dynamic state base address:
+	 * SAMPLER_STATE
+	 * SAMPLER_BORDER_COLOR_STATE
+	 * CLIP, SF, WM/CC viewport state
+	 * COLOR_CALC_STATE
+	 * DEPTH_STENCIL_STATE
+	 * BLEND_STATE
+	 * Push constants (when INSTPM: CONSTANT_BUFFER Address Offset
+	 * Disable is clear, which we rely on)
+	 */
+       OUT_RELOC(intel->batch.bo, (I915_GEM_DOMAIN_RENDER |
+				   I915_GEM_DOMAIN_INSTRUCTION), 0, 1);
+
+       OUT_BATCH(1); /* Indirect object base address: MEDIA_OBJECT data */
+       OUT_BATCH(1); /* Instruction base address: shader kernels (incl. SIP) */
        OUT_BATCH(1); /* General state upper bound */
        OUT_BATCH(1); /* Dynamic state upper bound */
        OUT_BATCH(1); /* Indirect object upper bound */

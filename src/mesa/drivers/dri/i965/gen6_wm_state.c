@@ -112,10 +112,10 @@ upload_wm_state(struct brw_context *brw)
       OUT_BATCH(_3DSTATE_CONSTANT_PS << 16 |
 		GEN6_CONSTANT_BUFFER_0_ENABLE |
 		(5 - 2));
-      /* This is also the set of state flags from gen6_prepare_wm_constants */
-      OUT_RELOC(intel->batch.bo,
-		I915_GEM_DOMAIN_RENDER, 0, /* XXX: bad domain */
-		brw->wm.push_const_offset +
+      /* Pointer to the WM constant buffer.  Covered by the set of
+       * state flags from gen6_prepare_wm_constants
+       */
+      OUT_BATCH(brw->wm.push_const_offset +
 		ALIGN(brw->wm.prog_data->nr_params,
 		      brw->wm.prog_data->dispatch_width) / 8 - 1);
       OUT_BATCH(0);

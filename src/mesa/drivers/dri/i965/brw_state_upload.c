@@ -120,6 +120,9 @@ static const struct brw_tracked_state *gen6_atoms[] =
    /* Command packets: */
    &brw_invarient_state,
 
+   /* must do before binding table pointers, cc state ptrs */
+   &brw_state_base_address,
+
    &brw_cc_vp,
    &gen6_viewport_state,	/* must do after *_vp stages */
 
@@ -149,8 +152,6 @@ static const struct brw_tracked_state *gen6_atoms[] =
    &gen6_wm_state,
 
    &gen6_scissor_state,
-
-   &brw_state_base_address,
 
    &gen6_binding_table_pointers,
 

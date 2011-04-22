@@ -43,12 +43,7 @@ upload_sampler_state_pointers(struct brw_context *brw)
 	     (4 - 2));
    OUT_BATCH(0); /* VS */
    OUT_BATCH(0); /* GS */
-   if (brw->wm.sampler_count)
-      OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
-		brw->wm.sampler_offset);
-   else
-      OUT_BATCH(0);
-
+   OUT_BATCH(brw->wm.sampler_offset);
    ADVANCE_BATCH();
 }
 

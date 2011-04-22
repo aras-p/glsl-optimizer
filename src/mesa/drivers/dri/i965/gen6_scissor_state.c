@@ -79,8 +79,7 @@ gen6_prepare_scissor_state(struct brw_context *brw)
 
    BEGIN_BATCH(2);
    OUT_BATCH(_3DSTATE_SCISSOR_STATE_POINTERS << 16 | (2 - 2));
-   OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
-	     scissor_state_offset);
+   OUT_BATCH(scissor_state_offset);
    ADVANCE_BATCH();
 }
 
