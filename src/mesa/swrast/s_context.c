@@ -252,7 +252,6 @@ _swrast_update_fog_state( struct gl_context *ctx )
 
    /* determine if fog is needed, and if so, which fog mode */
    swrast->_FogEnabled = (fp == NULL && ctx->Fog.Enabled);
-   swrast->_FogMode = ctx->Fog.Mode;
 }
 
 
