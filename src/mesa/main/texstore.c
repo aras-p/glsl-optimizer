@@ -3551,6 +3551,7 @@ _mesa_texstore_rgba_float32(TEXSTORE_PARAMS)
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
        baseInternalFormat == srcFormat &&
+       baseInternalFormat == baseFormat &&
        srcType == GL_FLOAT) {
       /* simple memcpy path */
       memcpy_texture(ctx, dims,
@@ -3625,6 +3626,7 @@ _mesa_texstore_rgba_float16(TEXSTORE_PARAMS)
    if (!ctx->_ImageTransferState &&
        !srcPacking->SwapBytes &&
        baseInternalFormat == srcFormat &&
+       baseInternalFormat == baseFormat &&
        srcType == GL_HALF_FLOAT_ARB) {
       /* simple memcpy path */
       memcpy_texture(ctx, dims,
