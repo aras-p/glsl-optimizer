@@ -106,11 +106,6 @@ static void upload_sf_vp(struct brw_context *brw)
       sfv->scissor.ymax = ctx->DrawBuffer->Height - ctx->DrawBuffer->_Ymin - 1;
    }
 
-   /* Keep a pointer to it for brw_state_dump.c */
-   drm_intel_bo_unreference(brw->sf.vp_bo);
-   drm_intel_bo_reference(intel->batch.bo);
-   brw->sf.vp_bo = intel->batch.bo;
-
    brw->state.dirty.cache |= CACHE_NEW_SF_VP;
 }
 
@@ -177,7 +172,7 @@ static void upload_sf_unit( struct brw_context *brw )
       sf->thread4.stats_enable = 1;
 
    /* CACHE_NEW_SF_VP */
-   sf->sf5.sf_viewport_state_offset = (brw->sf.vp_bo->offset +
+   sf->sf5.sf_viewport_state_offset = (intel->batch.bo->offset +
 				       brw->sf.vp_offset) >> 5; /* reloc */
 
    sf->sf5.viewport_transform = 1;

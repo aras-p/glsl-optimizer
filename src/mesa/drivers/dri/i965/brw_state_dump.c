@@ -204,17 +204,15 @@ static void dump_wm_sampler_state(struct brw_context *brw)
 
 static void dump_sf_viewport_state(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    const char *name = "SF VP";
    struct brw_sf_viewport *vp;
    uint32_t vp_off;
 
-   if (brw->sf.vp_bo == NULL)
-      return;
+   drm_intel_bo_map(intel->batch.bo, GL_FALSE);
 
-   drm_intel_bo_map(brw->sf.vp_bo, GL_FALSE);
-
-   vp = brw->sf.vp_bo->virtual + brw->sf.vp_offset;
-   vp_off = brw->sf.vp_bo->offset + brw->sf.vp_offset;
+   vp = intel->batch.bo->virtual + brw->sf.vp_offset;
+   vp_off = intel->batch.bo->offset + brw->sf.vp_offset;
 
    state_out(name, vp, vp_off, 0, "m00 = %f\n", vp->viewport.m00);
    state_out(name, vp, vp_off, 1, "m11 = %f\n", vp->viewport.m11);
@@ -228,7 +226,7 @@ static void dump_sf_viewport_state(struct brw_context *brw)
    state_out(name, vp, vp_off, 7, "bottom right = %d,%d\n",
 	     vp->scissor.xmax, vp->scissor.ymax);
 
-   drm_intel_bo_unmap(brw->sf.vp_bo);
+   drm_intel_bo_unmap(intel->batch.bo);
 }
 
 static void dump_clip_viewport_state(struct brw_context *brw)
