@@ -183,94 +183,39 @@ const struct brw_tracked_state gen6_blend_state = {
    .prepare = prepare_blend_state,
 };
 
-struct gen6_color_calc_state_key {
-   float blend_constant_color[4];
-   GLclampf alpha_ref;
-   GLubyte stencil_ref[2];
-};
-
 static void
-color_calc_state_populate_key(struct brw_context *brw,
-			      struct gen6_color_calc_state_key *key)
+gen6_prepare_color_calc_state(struct brw_context *brw)
 {
    struct gl_context *ctx = &brw->intel.ctx;
+   struct gen6_color_calc_state *cc;
 
-   memset(key, 0, sizeof(*key));
-
-   /* _NEW_STENCIL */
-   if (ctx->Stencil._Enabled) {
-      const unsigned back = ctx->Stencil._BackFace;
-
-      key->stencil_ref[0] = ctx->Stencil.Ref[0];
-      if (ctx->Stencil._TestTwoSide)
-	 key->stencil_ref[1] = ctx->Stencil.Ref[back];
-   }
+   cc = brw_state_batch(brw, sizeof(*cc), 64, &brw->cc.state_offset);
+   memset(cc, 0, sizeof(*cc));
 
    /* _NEW_COLOR */
-   if (ctx->Color.AlphaEnabled)
-      key->alpha_ref = ctx->Color.AlphaRef;
+   cc->cc0.alpha_test_format = BRW_ALPHATEST_FORMAT_UNORM8;
+   UNCLAMPED_FLOAT_TO_UBYTE(cc->cc1.alpha_ref_fi.ui, ctx->Color.AlphaRef);
 
-   key->blend_constant_color[0] = ctx->Color.BlendColorUnclamped[0];
-   key->blend_constant_color[1] = ctx->Color.BlendColorUnclamped[1];
-   key->blend_constant_color[2] = ctx->Color.BlendColorUnclamped[2];
-   key->blend_constant_color[3] = ctx->Color.BlendColorUnclamped[3];
-}
+   /* _NEW_STENCIL */
+   cc->cc0.stencil_ref = ctx->Stencil.Ref[0];
+   cc->cc0.bf_stencil_ref = ctx->Stencil.Ref[ctx->Stencil._BackFace];
 
-/**
- * Creates the state cache entry for the given CC state key.
- */
-static drm_intel_bo *
-color_calc_state_create_from_key(struct brw_context *brw,
-				 struct gen6_color_calc_state_key *key)
-{
-   struct gen6_color_calc_state cc;
-   drm_intel_bo *bo;
+   /* _NEW_COLOR */
+   cc->constant_r = ctx->Color.BlendColorUnclamped[0];
+   cc->constant_g = ctx->Color.BlendColorUnclamped[1];
+   cc->constant_b = ctx->Color.BlendColorUnclamped[2];
+   cc->constant_a = ctx->Color.BlendColorUnclamped[3];
 
-   memset(&cc, 0, sizeof(cc));
-
-   cc.cc0.alpha_test_format = BRW_ALPHATEST_FORMAT_UNORM8;
-   UNCLAMPED_FLOAT_TO_UBYTE(cc.cc1.alpha_ref_fi.ui, key->alpha_ref);
-
-   cc.cc0.stencil_ref = key->stencil_ref[0];
-   cc.cc0.bf_stencil_ref = key->stencil_ref[1];
-
-   cc.constant_r = key->blend_constant_color[0];
-   cc.constant_g = key->blend_constant_color[1];
-   cc.constant_b = key->blend_constant_color[2];
-   cc.constant_a = key->blend_constant_color[3];
-
-   bo = brw_upload_cache(&brw->cache, BRW_COLOR_CALC_STATE,
-			 key, sizeof(*key),
-			 NULL, 0,
-			 &cc, sizeof(cc));
-
-   return bo;
-}
-
-static void
-prepare_color_calc_state(struct brw_context *brw)
-{
-   struct gen6_color_calc_state_key key;
-
-   color_calc_state_populate_key(brw, &key);
-
-   drm_intel_bo_unreference(brw->cc.color_calc_state_bo);
-   brw->cc.color_calc_state_bo = brw_search_cache(&brw->cache, BRW_COLOR_CALC_STATE,
-				       &key, sizeof(key),
-				       NULL, 0,
-				       NULL);
-
-   if (brw->cc.color_calc_state_bo == NULL)
-      brw->cc.color_calc_state_bo = color_calc_state_create_from_key(brw, &key);
+   brw->state.dirty.cache |= CACHE_NEW_COLOR_CALC_STATE;
 }
 
 const struct brw_tracked_state gen6_color_calc_state = {
    .dirty = {
       .mesa = _NEW_COLOR | _NEW_STENCIL,
-      .brw = 0,
+      .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
-   .prepare = prepare_color_calc_state,
+   .prepare = gen6_prepare_color_calc_state,
 };
 
 static void upload_cc_state_pointers(struct brw_context *brw)
@@ -281,14 +226,14 @@ static void upload_cc_state_pointers(struct brw_context *brw)
    OUT_BATCH(_3DSTATE_CC_STATE_POINTERS << 16 | (4 - 2));
    OUT_RELOC(brw->cc.blend_state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
    OUT_RELOC(brw->cc.depth_stencil_state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
-   OUT_RELOC(brw->cc.color_calc_state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
+   OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+	     brw->cc.state_offset | 1);
    ADVANCE_BATCH();
 }
 
 
 static void prepare_cc_state_pointers(struct brw_context *brw)
 {
-   brw_add_validated_bo(brw, brw->cc.color_calc_state_bo);
    brw_add_validated_bo(brw, brw->cc.blend_state_bo);
    brw_add_validated_bo(brw, brw->cc.depth_stencil_state_bo);
 }

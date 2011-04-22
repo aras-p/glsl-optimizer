@@ -303,8 +303,8 @@ static void dump_cc_state(struct brw_context *brw)
 	return;
 
    drm_intel_bo_map(bo, GL_FALSE);
-   cc = bo->virtual;
-   cc_off = bo->offset;
+   cc = bo->virtual + brw->cc.state_offset;
+   cc_off = bo->offset + brw->cc.state_offset;
 
    state_out(name, cc, cc_off, 0, "alpha test format %s, round disable %d, stencil ref %d,"
 		"bf stencil ref %d\n",
