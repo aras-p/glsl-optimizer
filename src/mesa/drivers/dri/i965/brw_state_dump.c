@@ -324,22 +324,20 @@ static void dump_cc_state(struct brw_context *brw)
 
 static void dump_blend_state(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    const char *name = "BLEND";
    struct gen6_blend_state *blend;
    uint32_t blend_off;
 
-   if (brw->cc.blend_state_bo == NULL)
-	return;
+   drm_intel_bo_map(intel->batch.bo, GL_FALSE);
 
-   drm_intel_bo_map(brw->cc.blend_state_bo, GL_FALSE);
-
-   blend = brw->cc.blend_state_bo->virtual;
-   blend_off = brw->cc.blend_state_bo->offset;
+   blend = intel->batch.bo->virtual + brw->cc.blend_state_offset;
+   blend_off = intel->batch.bo->offset + brw->cc.blend_state_offset;
 
    state_out(name, blend, blend_off, 0, "\n");
    state_out(name, blend, blend_off, 1, "\n");
 
-   drm_intel_bo_unmap(brw->cc.blend_state_bo);
+   drm_intel_bo_unmap(intel->batch.bo);
 
 }
 

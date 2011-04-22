@@ -717,10 +717,10 @@ struct brw_context
       drm_intel_bo *prog_bo;
 
       /* gen6 */
-      drm_intel_bo *blend_state_bo;
       drm_intel_bo *depth_stencil_state_bo;
 
       uint32_t state_offset;
+      uint32_t blend_state_offset;
       uint32_t vp_offset;
    } cc;
 
