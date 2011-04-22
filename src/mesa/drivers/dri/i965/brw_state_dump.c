@@ -267,17 +267,15 @@ static void dump_cc_viewport_state(struct brw_context *brw)
 
 static void dump_depth_stencil_state(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    const char *name = "DEPTH STENCIL";
    struct gen6_depth_stencil_state *ds;
    uint32_t ds_off;
 
-   if (brw->cc.depth_stencil_state_bo == NULL)
-	return;
+   drm_intel_bo_map(intel->batch.bo, GL_FALSE);
 
-   drm_intel_bo_map(brw->cc.depth_stencil_state_bo, GL_FALSE);
-
-   ds = brw->cc.depth_stencil_state_bo->virtual;
-   ds_off = brw->cc.depth_stencil_state_bo->offset;
+   ds = intel->batch.bo->virtual + brw->cc.depth_stencil_state_offset;
+   ds_off = intel->batch.bo->offset + brw->cc.depth_stencil_state_offset;
 
    state_out(name, ds, ds_off, 0, "stencil %sable, func %d, write %sable\n",
 		ds->ds0.stencil_enable ? "en" : "dis",
@@ -289,7 +287,7 @@ static void dump_depth_stencil_state(struct brw_context *brw)
 		ds->ds2.depth_test_enable ? "en" : "dis",
 		ds->ds2.depth_test_func,
 		ds->ds2.depth_write_enable ? "en" : "dis");
-   drm_intel_bo_unmap(brw->cc.depth_stencil_state_bo); 
+   drm_intel_bo_unmap(intel->batch.bo);
 }
 
 static void dump_cc_state(struct brw_context *brw)

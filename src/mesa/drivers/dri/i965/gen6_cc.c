@@ -158,16 +158,11 @@ static void upload_cc_state_pointers(struct brw_context *brw)
    OUT_BATCH(_3DSTATE_CC_STATE_POINTERS << 16 | (4 - 2));
    OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
 	     brw->cc.blend_state_offset | 1);
-   OUT_RELOC(brw->cc.depth_stencil_state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
+   OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+	     brw->cc.depth_stencil_state_offset | 1);
    OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
 	     brw->cc.state_offset | 1);
    ADVANCE_BATCH();
-}
-
-
-static void prepare_cc_state_pointers(struct brw_context *brw)
-{
-   brw_add_validated_bo(brw, brw->cc.depth_stencil_state_bo);
 }
 
 const struct brw_tracked_state gen6_cc_state_pointers = {
@@ -178,6 +173,5 @@ const struct brw_tracked_state gen6_cc_state_pointers = {
 		CACHE_NEW_COLOR_CALC_STATE |
 		CACHE_NEW_DEPTH_STENCIL_STATE)
    },
-   .prepare = prepare_cc_state_pointers,
    .emit = upload_cc_state_pointers,
 };
