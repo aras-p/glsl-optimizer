@@ -658,7 +658,11 @@ struct brw_context
 
       drm_intel_bo *prog_bo;
       drm_intel_bo *state_bo;
-      drm_intel_bo *vp_bo;
+
+      /* As of gen6, this is the offset in the batch to the CLIP VP,
+       * instead of vp_bo.
+       */
+      uint32_t vp_offset;
    } clip;
 
 

@@ -41,22 +41,22 @@
 static void
 prepare_clip_vp(struct brw_context *brw)
 {
-   struct brw_clipper_viewport vp;
+   struct brw_clipper_viewport *vp;
 
-   vp.xmin = -1.0;
-   vp.xmax = 1.0;
-   vp.ymin = -1.0;
-   vp.ymax = 1.0;
+   vp = brw_state_batch(brw, sizeof(*vp), 32, &brw->clip.vp_offset);
 
-   drm_intel_bo_unreference(brw->clip.vp_bo);
-   brw->clip.vp_bo = brw_cache_data(&brw->cache, BRW_CLIP_VP,
-				    &vp, sizeof(vp));
+   vp->xmin = -1.0;
+   vp->xmax = 1.0;
+   vp->ymin = -1.0;
+   vp->ymax = 1.0;
+
+   brw->state.dirty.cache |= CACHE_NEW_CLIP_VP;
 }
 
 const struct brw_tracked_state gen6_clip_vp = {
    .dirty = {
-      .mesa = _NEW_VIEWPORT, /* XXX: not really, but we need nonzero */
-      .brw = 0,
+      .mesa = 0,
+      .brw = BRW_NEW_BATCH,
       .cache = 0,
    },
    .prepare = prepare_clip_vp,
@@ -107,7 +107,6 @@ const struct brw_tracked_state gen6_sf_vp = {
 
 static void prepare_viewport_state_pointers(struct brw_context *brw)
 {
-   brw_add_validated_bo(brw, brw->clip.vp_bo);
    brw_add_validated_bo(brw, brw->sf.vp_bo);
    brw_add_validated_bo(brw, brw->cc.vp_bo);
 }
@@ -121,7 +120,8 @@ static void upload_viewport_state_pointers(struct brw_context *brw)
 	     GEN6_CC_VIEWPORT_MODIFY |
 	     GEN6_SF_VIEWPORT_MODIFY |
 	     GEN6_CLIP_VIEWPORT_MODIFY);
-   OUT_RELOC(brw->clip.vp_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
+   OUT_RELOC(intel->batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+	     brw->clip.vp_offset);
    OUT_RELOC(brw->sf.vp_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
    OUT_RELOC(brw->cc.vp_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
    ADVANCE_BATCH();

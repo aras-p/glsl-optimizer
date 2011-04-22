@@ -233,23 +233,21 @@ static void dump_sf_viewport_state(struct brw_context *brw)
 
 static void dump_clip_viewport_state(struct brw_context *brw)
 {
+   struct intel_context *intel = &brw->intel;
    const char *name = "CLIP VP";
    struct brw_clipper_viewport *vp;
    uint32_t vp_off;
 
-   if (brw->clip.vp_bo == NULL)
-      return;
+   drm_intel_bo_map(intel->batch.bo, GL_FALSE);
 
-   drm_intel_bo_map(brw->clip.vp_bo, GL_FALSE);
-
-   vp = brw->clip.vp_bo->virtual;
-   vp_off = brw->clip.vp_bo->offset;
+   vp = intel->batch.bo->virtual + brw->clip.vp_offset;
+   vp_off = intel->batch.bo->offset + brw->clip.vp_offset;
 
    state_out(name, vp, vp_off, 0, "xmin = %f\n", vp->xmin);
    state_out(name, vp, vp_off, 1, "xmax = %f\n", vp->xmax);
    state_out(name, vp, vp_off, 2, "ymin = %f\n", vp->ymin);
    state_out(name, vp, vp_off, 3, "ymax = %f\n", vp->ymax);
-   drm_intel_bo_unmap(brw->clip.vp_bo);
+   drm_intel_bo_unmap(intel->batch.bo);
 }
 
 static void dump_cc_viewport_state(struct brw_context *brw)

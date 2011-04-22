@@ -83,7 +83,6 @@ static void brw_destroy_context( struct intel_context *intel )
    dri_bo_release(&brw->gs.state_bo);
    dri_bo_release(&brw->clip.prog_bo);
    dri_bo_release(&brw->clip.state_bo);
-   dri_bo_release(&brw->clip.vp_bo);
    dri_bo_release(&brw->sf.prog_bo);
    dri_bo_release(&brw->sf.state_bo);
    dri_bo_release(&brw->sf.vp_bo);
