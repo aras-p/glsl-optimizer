@@ -640,6 +640,9 @@ struct brw_context
       uint32_t bind_bo_offset;
       uint32_t surf_offset[BRW_VS_MAX_SURF];
       GLuint nr_surfaces;      
+
+      uint32_t push_const_offset; /* Offset in the batchbuffer */
+      int push_const_size; /* in 256-bit register increments */
    } vs;
 
    struct {

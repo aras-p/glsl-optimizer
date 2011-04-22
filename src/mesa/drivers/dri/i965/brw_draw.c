@@ -367,6 +367,7 @@ static GLboolean brw_try_draw_prims( struct gl_context *ctx,
       int estimated_max_prim_size;
 
       estimated_max_prim_size = 512; /* batchbuffer commands */
+      estimated_max_prim_size += 1024; /* gen6 VS push constants */
       estimated_max_prim_size += 1024; /* gen6 WM push constants */
       estimated_max_prim_size += 512; /* misc. pad */
 
