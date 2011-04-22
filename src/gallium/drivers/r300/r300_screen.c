@@ -114,7 +114,7 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_BLEND_EQUATION_SEPARATE:
         case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
         case PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL:
-            return 1;
+            return is_r500 ? 1 : 0;
         case PIPE_CAP_TEXTURE_SWIZZLE:
             return util_format_s3tc_enabled ? r300screen->caps.dxtc_swizzle : 1;
         case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
