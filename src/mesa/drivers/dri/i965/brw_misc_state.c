@@ -151,7 +151,8 @@ static void upload_pipelined_state_pointers(struct brw_context *brw )
    OUT_RELOC(brw->clip.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 1);
    OUT_RELOC(brw->intel.batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
 	     brw->sf.state_offset);
-   OUT_RELOC(brw->wm.state_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
+   OUT_RELOC(brw->intel.batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
+	     brw->wm.state_offset);
    OUT_RELOC(brw->intel.batch.bo, I915_GEM_DOMAIN_INSTRUCTION, 0,
 	     brw->cc.state_offset);
    ADVANCE_BATCH();
@@ -166,7 +167,6 @@ static void prepare_psp_urb_cbs(struct brw_context *brw)
    brw_add_validated_bo(brw, brw->gs.state_bo);
    brw_add_validated_bo(brw, brw->clip.state_bo);
    brw_add_validated_bo(brw, brw->sf.state_bo);
-   brw_add_validated_bo(brw, brw->wm.state_bo);
 }
 
 static void upload_psp_urb_cbs(struct brw_context *brw )

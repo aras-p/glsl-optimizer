@@ -699,9 +699,9 @@ struct brw_context
       /** Binding table of pointers to surf_bo entries */
       uint32_t bind_bo_offset;
       uint32_t surf_offset[BRW_WM_MAX_SURF];
+      uint32_t state_offset; /* offset in batchbuffer to pre-gen6 WM state */
 
       drm_intel_bo *prog_bo;
-      drm_intel_bo *state_bo;
       drm_intel_bo *const_bo; /* pull constant buffer. */
       /**
        * This is offset in the batch to the push constants on gen6.

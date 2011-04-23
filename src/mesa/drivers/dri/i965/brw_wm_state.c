@@ -40,22 +40,6 @@
  * WM unit - fragment programs and rasterization
  */
 
-struct brw_wm_unit_key {
-   unsigned int total_grf, total_grf_16, total_scratch;
-   unsigned int urb_entry_read_length;
-   unsigned int curb_entry_read_length;
-   unsigned int dispatch_grf_start_reg;
-   uint32_t prog_offset_16;
-
-   unsigned int curbe_offset;
-
-   unsigned int nr_surfaces, sampler_count;
-   GLboolean uses_depth, computes_depth, uses_kill, is_glsl;
-   GLboolean polygon_stipple, stats_wm, line_stipple, offset_enable;
-   GLboolean color_write_enable;
-   GLfloat offset_units, offset_factor;
-};
-
 bool
 brw_color_buffer_write_enabled(struct brw_context *brw)
 {
@@ -82,25 +66,21 @@ brw_color_buffer_write_enabled(struct brw_context *brw)
    return false;
 }
 
+/**
+ * Setup wm hardware state.  See page 225 of Volume 2
+ */
 static void
-wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
+brw_prepare_wm_unit(struct brw_context *brw)
 {
-   struct gl_context *ctx = &brw->intel.ctx;
-   const struct gl_fragment_program *fp = brw->fragment_program;
    struct intel_context *intel = &brw->intel;
+   struct gl_context *ctx = &intel->ctx;
+   const struct gl_fragment_program *fp = brw->fragment_program;
+   struct brw_wm_unit_state *wm;
 
-   memset(key, 0, sizeof(*key));
+   wm = brw_state_batch(brw, sizeof(*wm), 32, &brw->wm.state_offset);
+   memset(wm, 0, sizeof(*wm));
 
-   /* CACHE_NEW_WM_PROG */
-   key->total_grf = brw->wm.prog_data->total_grf;
-   key->total_grf_16 = brw->wm.prog_data->total_grf_16;
-   key->urb_entry_read_length = brw->wm.prog_data->urb_read_length;
-   key->curb_entry_read_length = brw->wm.prog_data->curb_read_length;
-   key->dispatch_grf_start_reg = brw->wm.prog_data->first_curbe_grf;
-   key->total_scratch = brw->wm.prog_data->total_scratch;
-   key->prog_offset_16 = brw->wm.prog_data->prog_offset_16;
-
-   if (key->prog_offset_16) {
+   if (brw->wm.prog_data->prog_offset_16) {
       /* These two fields should be the same pre-gen6, which is why we
        * only have one hardware field to program for both dispatch
        * widths.
@@ -109,215 +89,167 @@ wm_unit_populate_key(struct brw_context *brw, struct brw_wm_unit_key *key)
 	     brw->wm.prog_data->first_curbe_grf_16);
    }
 
+   /* CACHE_NEW_WM_PROG */
+   wm->thread0.grf_reg_count = ALIGN(brw->wm.prog_data->total_grf, 16) / 16 - 1;
+   wm->wm9.grf_reg_count_2 = ALIGN(brw->wm.prog_data->total_grf_16, 16) / 16 - 1;
+   wm->thread0.kernel_start_pointer = brw->wm.prog_bo->offset >> 6; /* reloc */
+   /* reloc */
+   wm->wm9.kernel_start_pointer_2 = (brw->wm.prog_bo->offset +
+				     brw->wm.prog_data->prog_offset_16) >> 6;
+   wm->thread1.depth_coef_urb_read_offset = 1;
+   wm->thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
+
+   if (intel->gen == 5)
+      wm->thread1.binding_table_entry_count = 0; /* hardware requirement */
+   else {
+      /* BRW_NEW_NR_SURFACES */
+      wm->thread1.binding_table_entry_count = brw->wm.nr_surfaces;
+   }
+
+   if (brw->wm.prog_data->total_scratch != 0) {
+      wm->thread2.scratch_space_base_pointer =
+	 brw->wm.scratch_bo->offset >> 10; /* reloc */
+      wm->thread2.per_thread_scratch_space =
+	 ffs(brw->wm.prog_data->total_scratch) - 11;
+   } else {
+      wm->thread2.scratch_space_base_pointer = 0;
+      wm->thread2.per_thread_scratch_space = 0;
+   }
+
+   wm->thread3.dispatch_grf_start_reg = brw->wm.prog_data->first_curbe_grf;
+   wm->thread3.urb_entry_read_length = brw->wm.prog_data->urb_read_length;
+   wm->thread3.urb_entry_read_offset = 0;
+   wm->thread3.const_urb_entry_read_length =
+      brw->wm.prog_data->curb_read_length;
    /* BRW_NEW_CURBE_OFFSETS */
-   key->curbe_offset = brw->curbe.wm_start;
+   wm->thread3.const_urb_entry_read_offset = brw->curbe.wm_start * 2;
 
-   /* BRW_NEW_NR_SURFACEs */
-   key->nr_surfaces = brw->wm.nr_surfaces;
+   if (intel->gen == 5)
+      wm->wm4.sampler_count = 0; /* hardware requirement */
+   else {
+      /* CACHE_NEW_SAMPLER */
+      wm->wm4.sampler_count = (brw->wm.sampler_count + 1) / 4;
+   }
 
-   /* CACHE_NEW_SAMPLER */
-   key->sampler_count = brw->wm.sampler_count;
-
-   /* _NEW_POLYGONSTIPPLE */
-   key->polygon_stipple = ctx->Polygon.StippleFlag;
+   if (brw->wm.sampler_bo != NULL) {
+      /* reloc */
+      wm->wm4.sampler_state_pointer = brw->wm.sampler_bo->offset >> 5;
+   } else {
+      wm->wm4.sampler_state_pointer = 0;
+   }
 
    /* BRW_NEW_FRAGMENT_PROGRAM */
-   key->uses_depth = (fp->Base.InputsRead & (1 << FRAG_ATTRIB_WPOS)) != 0;
-
-   /* as far as we can tell */
-   key->computes_depth =
-      (fp->Base.OutputsWritten & BITFIELD64_BIT(FRAG_RESULT_DEPTH)) != 0;
+   wm->wm5.program_uses_depth = (fp->Base.InputsRead &
+				 (1 << FRAG_ATTRIB_WPOS)) != 0;
+   wm->wm5.program_computes_depth = (fp->Base.OutputsWritten &
+				     BITFIELD64_BIT(FRAG_RESULT_DEPTH)) != 0;
    /* BRW_NEW_DEPTH_BUFFER
     * Override for NULL depthbuffer case, required by the Pixel Shader Computed
     * Depth field.
     */
    if (brw->state.depth_region == NULL)
-      key->computes_depth = 0;
-
-   /* _NEW_BUFFERS | _NEW_COLOR */
-   key->color_write_enable = brw_color_buffer_write_enabled(brw);
+      wm->wm5.program_computes_depth = 0;
 
    /* _NEW_COLOR */
-   key->uses_kill = fp->UsesKill || ctx->Color.AlphaEnabled;
+   wm->wm5.program_uses_killpixel = fp->UsesKill || ctx->Color.AlphaEnabled;
 
-   /* If using the fragment shader backend, the program is always
-    * 8-wide.
+
+   /* BRW_NEW_FRAGMENT_PROGRAM
+    *
+    * If using the fragment shader backend, the program is always
+    * 8-wide.  If not, it's always 16.
     */
    if (ctx->Shader.CurrentFragmentProgram) {
       struct brw_shader *shader = (struct brw_shader *)
 	 ctx->Shader.CurrentFragmentProgram->_LinkedShaders[MESA_SHADER_FRAGMENT];
 
       if (shader != NULL && shader->ir != NULL) {
-	 key->is_glsl = GL_TRUE;
+	 wm->wm5.enable_8_pix = 1;
+	 if (brw->wm.prog_data->prog_offset_16)
+	    wm->wm5.enable_16_pix = 1;
       }
    }
+   if (!wm->wm5.enable_8_pix)
+      wm->wm5.enable_16_pix = 1;
 
-   /* _NEW_DEPTH */
-   key->stats_wm = intel->stats_wm;
+   wm->wm5.max_threads = brw->wm_max_threads - 1;
 
-   /* _NEW_LINE */
-   key->line_stipple = ctx->Line.StippleFlag;
+   /* _NEW_BUFFERS | _NEW_COLOR */
+   if (brw_color_buffer_write_enabled(brw) ||
+       wm->wm5.program_uses_killpixel ||
+       wm->wm5.program_computes_depth) {
+      wm->wm5.thread_dispatch_enable = 1;
+   }
+
+   wm->wm5.legacy_line_rast = 0;
+   wm->wm5.legacy_global_depth_bias = 0;
+   wm->wm5.early_depth_test = 1;	        /* never need to disable */
+   wm->wm5.line_aa_region_width = 0;
+   wm->wm5.line_endcap_aa_region_width = 1;
+
+   /* _NEW_POLYGONSTIPPLE */
+   wm->wm5.polygon_stipple = ctx->Polygon.StippleFlag;
 
    /* _NEW_POLYGON */
-   key->offset_enable = ctx->Polygon.OffsetFill;
-   key->offset_units = ctx->Polygon.OffsetUnits;
-   key->offset_factor = ctx->Polygon.OffsetFactor;
-}
-
-/**
- * Setup wm hardware state.  See page 225 of Volume 2
- */
-static drm_intel_bo *
-wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
-			drm_intel_bo **reloc_bufs)
-{
-   struct intel_context *intel = &brw->intel;
-   struct brw_wm_unit_state wm;
-   drm_intel_bo *bo;
-
-   memset(&wm, 0, sizeof(wm));
-
-   wm.thread0.grf_reg_count = ALIGN(key->total_grf, 16) / 16 - 1;
-   wm.wm9.grf_reg_count_2 = ALIGN(key->total_grf_16, 16) / 16 - 1;
-   wm.thread0.kernel_start_pointer = brw->wm.prog_bo->offset >> 6; /* reloc */
-   wm.wm9.kernel_start_pointer_2 = (brw->wm.prog_bo->offset +
-				    key->prog_offset_16) >> 6; /* reloc */
-   wm.thread1.depth_coef_urb_read_offset = 1;
-   wm.thread1.floating_point_mode = BRW_FLOATING_POINT_NON_IEEE_754;
-
-   if (intel->gen == 5)
-      wm.thread1.binding_table_entry_count = 0; /* hardware requirement */
-   else
-      wm.thread1.binding_table_entry_count = key->nr_surfaces;
-
-   if (key->total_scratch != 0) {
-      wm.thread2.scratch_space_base_pointer =
-	 brw->wm.scratch_bo->offset >> 10; /* reloc */
-      wm.thread2.per_thread_scratch_space = ffs(key->total_scratch) - 11;
-   } else {
-      wm.thread2.scratch_space_base_pointer = 0;
-      wm.thread2.per_thread_scratch_space = 0;
-   }
-
-   wm.thread3.dispatch_grf_start_reg = key->dispatch_grf_start_reg;
-   wm.thread3.urb_entry_read_length = key->urb_entry_read_length;
-   wm.thread3.urb_entry_read_offset = 0;
-   wm.thread3.const_urb_entry_read_length = key->curb_entry_read_length;
-   wm.thread3.const_urb_entry_read_offset = key->curbe_offset * 2;
-
-   if (intel->gen == 5)
-      wm.wm4.sampler_count = 0; /* hardware requirement */
-   else
-      wm.wm4.sampler_count = (key->sampler_count + 1) / 4;
-
-   if (brw->wm.sampler_bo != NULL) {
-      /* reloc */
-      wm.wm4.sampler_state_pointer = brw->wm.sampler_bo->offset >> 5;
-   } else {
-      wm.wm4.sampler_state_pointer = 0;
-   }
-
-   wm.wm5.program_uses_depth = key->uses_depth;
-   wm.wm5.program_computes_depth = key->computes_depth;
-   wm.wm5.program_uses_killpixel = key->uses_kill;
-
-   if (key->is_glsl) {
-      wm.wm5.enable_8_pix = 1;
-      if (key->prog_offset_16)
-	 wm.wm5.enable_16_pix = 1;
-   } else
-      wm.wm5.enable_16_pix = 1;
-
-   wm.wm5.max_threads = brw->wm_max_threads - 1;
-
-   if (key->color_write_enable ||
-       key->uses_kill ||
-       key->computes_depth) {
-      wm.wm5.thread_dispatch_enable = 1;
-   }
-
-   wm.wm5.legacy_line_rast = 0;
-   wm.wm5.legacy_global_depth_bias = 0;
-   wm.wm5.early_depth_test = 1;	        /* never need to disable */
-   wm.wm5.line_aa_region_width = 0;
-   wm.wm5.line_endcap_aa_region_width = 1;
-
-   wm.wm5.polygon_stipple = key->polygon_stipple;
-
-   if (key->offset_enable) {
-      wm.wm5.depth_offset = 1;
+   if (ctx->Polygon.OffsetFill) {
+      wm->wm5.depth_offset = 1;
       /* Something wierd going on with legacy_global_depth_bias,
        * offset_constant, scaling and MRD.  This value passes glean
        * but gives some odd results elsewere (eg. the
        * quad-offset-units test).
        */
-      wm.global_depth_offset_constant = key->offset_units * 2;
+      wm->global_depth_offset_constant = ctx->Polygon.OffsetUnits * 2;
 
       /* This is the only value that passes glean:
        */
-      wm.global_depth_offset_scale = key->offset_factor;
+      wm->global_depth_offset_scale = ctx->Polygon.OffsetFactor;
    }
 
-   wm.wm5.line_stipple = key->line_stipple;
+   /* _NEW_LINE */
+   wm->wm5.line_stipple = ctx->Line.StippleFlag;
 
-   if (unlikely(INTEL_DEBUG & DEBUG_STATS) || key->stats_wm)
-      wm.wm4.stats_enable = 1;
-
-   bo = brw_upload_cache(&brw->cache, BRW_WM_UNIT,
-			 key, sizeof(*key),
-			 reloc_bufs, 3,
-			 &wm, sizeof(wm));
+   /* _NEW_DEPTH */
+   if (unlikely(INTEL_DEBUG & DEBUG_STATS) || intel->stats_wm)
+      wm->wm4.stats_enable = 1;
 
    /* Emit WM program relocation */
-   drm_intel_bo_emit_reloc(bo, offsetof(struct brw_wm_unit_state, thread0),
-			   brw->wm.prog_bo, wm.thread0.grf_reg_count << 1,
+   drm_intel_bo_emit_reloc(intel->batch.bo,
+			   brw->wm.state_offset +
+			   offsetof(struct brw_wm_unit_state, thread0),
+			   brw->wm.prog_bo, wm->thread0.grf_reg_count << 1,
 			   I915_GEM_DOMAIN_INSTRUCTION, 0);
 
-   if (key->prog_offset_16) {
-      drm_intel_bo_emit_reloc(bo, offsetof(struct brw_wm_unit_state, wm9),
-			      brw->wm.prog_bo, ((wm.wm9.grf_reg_count_2 << 1) +
-						key->prog_offset_16),
+   if (brw->wm.prog_data->prog_offset_16) {
+      drm_intel_bo_emit_reloc(intel->batch.bo,
+			      brw->wm.state_offset +
+			      offsetof(struct brw_wm_unit_state, wm9),
+			      brw->wm.prog_bo,
+			      ((wm->wm9.grf_reg_count_2 << 1) +
+			       brw->wm.prog_data->prog_offset_16),
 			      I915_GEM_DOMAIN_INSTRUCTION, 0);
    }
 
    /* Emit scratch space relocation */
-   if (key->total_scratch != 0) {
-      drm_intel_bo_emit_reloc(bo, offsetof(struct brw_wm_unit_state, thread2),
+   if (brw->wm.prog_data->total_scratch != 0) {
+      drm_intel_bo_emit_reloc(intel->batch.bo,
+			      brw->wm.state_offset +
+			      offsetof(struct brw_wm_unit_state, thread2),
 			      brw->wm.scratch_bo,
-			      wm.thread2.per_thread_scratch_space,
+			      wm->thread2.per_thread_scratch_space,
 			      I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER);
    }
 
    /* Emit sampler state relocation */
-   if (key->sampler_count != 0) {
-      drm_intel_bo_emit_reloc(bo, offsetof(struct brw_wm_unit_state, wm4),
-			      brw->wm.sampler_bo, (wm.wm4.stats_enable |
-						   (wm.wm4.sampler_count << 2)),
+   if (brw->wm.sampler_count != 0) {
+      drm_intel_bo_emit_reloc(intel->batch.bo,
+			      brw->wm.state_offset +
+			      offsetof(struct brw_wm_unit_state, wm4),
+			      brw->wm.sampler_bo, (wm->wm4.stats_enable |
+						   (wm->wm4.sampler_count << 2)),
 			      I915_GEM_DOMAIN_INSTRUCTION, 0);
    }
 
-   return bo;
-}
-
-
-static void upload_wm_unit( struct brw_context *brw )
-{
-   struct brw_wm_unit_key key;
-   drm_intel_bo *reloc_bufs[3];
-   wm_unit_populate_key(brw, &key);
-
-   reloc_bufs[0] = brw->wm.prog_bo;
-   reloc_bufs[1] = brw->wm.scratch_bo;
-   reloc_bufs[2] = brw->wm.sampler_bo;
-
-   drm_intel_bo_unreference(brw->wm.state_bo);
-   brw->wm.state_bo = brw_search_cache(&brw->cache, BRW_WM_UNIT,
-				       &key, sizeof(key),
-				       reloc_bufs, 3,
-				       NULL);
-   if (brw->wm.state_bo == NULL) {
-      brw->wm.state_bo = wm_unit_create_from_key(brw, &key, reloc_bufs);
-   }
+   brw->state.dirty.cache |= CACHE_NEW_WM_UNIT;
 }
 
 const struct brw_tracked_state brw_wm_unit = {
@@ -329,7 +261,8 @@ const struct brw_tracked_state brw_wm_unit = {
 	       _NEW_DEPTH |
 	       _NEW_BUFFERS),
 
-      .brw = (BRW_NEW_FRAGMENT_PROGRAM | 
+      .brw = (BRW_NEW_BATCH |
+	      BRW_NEW_FRAGMENT_PROGRAM |
 	      BRW_NEW_CURBE_OFFSETS |
 	      BRW_NEW_DEPTH_BUFFER |
 	      BRW_NEW_NR_WM_SURFACES),
@@ -337,6 +270,6 @@ const struct brw_tracked_state brw_wm_unit = {
       .cache = (CACHE_NEW_WM_PROG |
 		CACHE_NEW_SAMPLER)
    },
-   .prepare = upload_wm_unit,
+   .prepare = brw_prepare_wm_unit,
 };
 

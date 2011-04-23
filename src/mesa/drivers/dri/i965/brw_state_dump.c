@@ -405,7 +405,8 @@ void brw_debug_batch(struct intel_context *intel)
    dump_sf_viewport_state(brw);
 
    if (intel->gen < 6)
-       state_struct_out("WM", brw->wm.state_bo, 0, sizeof(struct brw_wm_unit_state));
+       state_struct_out("WM", intel->batch.bo, brw->wm.state_offset,
+			sizeof(struct brw_wm_unit_state));
    brw_debug_prog("WM prog", brw->wm.prog_bo);
 
    if (intel->gen >= 6) {
