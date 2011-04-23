@@ -709,8 +709,12 @@ static int check_scalar(struct r600_bc *bc, struct r600_bc_alu *alu,
 			if (r)
 				return r;
 		}
-		// Constants already processed
-		// No restrictions on PV, PS
+		// PV PS restrictions
+		if (const_count && (sel == 254 || sel == 255)) {
+			cycle = cycle_for_bank_swizzle_scl[bank_swizzle][src];
+			if (cycle < const_count)
+				return -1;
+		}
 	}
 	return 0;
 }
