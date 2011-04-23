@@ -1,5 +1,7 @@
 Import('*')
 
+env = env.Clone()
+
 env.Prepend(CPPPATH = [
     'include',
     'internals',
