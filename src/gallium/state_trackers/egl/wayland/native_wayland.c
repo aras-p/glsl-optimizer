@@ -456,9 +456,19 @@ native_create_display(void *dpy, boolean use_sw, void *user_data)
 {
    struct wayland_display *display = NULL;
 
-   display = wayland_create_drm_display((struct wl_display *) dpy,
-                                        wayland_event_handler,
-                                        user_data);
+   use_sw = use_sw || debug_get_bool_option("EGL_SOFTWARE", FALSE);
+
+   if (use_sw) {
+      _eglLog(_EGL_INFO, "use software fallback");
+      display = wayland_create_shm_display((struct wl_display *) dpy,
+                                           wayland_event_handler,
+                                           user_data);
+   } else {
+      display = wayland_create_drm_display((struct wl_display *) dpy,
+                                           wayland_event_handler,
+                                           user_data);
+   }
+
    if (!display)
       return NULL;
 

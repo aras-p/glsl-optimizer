@@ -101,6 +101,10 @@ wayland_config(const struct native_config *nconf)
 }
 
 struct wayland_display *
+wayland_create_shm_display(struct wl_display *display,
+                           struct native_event_handler *event_handler,
+                           void *user_data);
+struct wayland_display *
 wayland_create_drm_display(struct wl_display *display,
                            struct native_event_handler *event_handler,
                            void *user_data);
