@@ -515,11 +515,7 @@ do {								\
    PACK_RGBA(p, color[0], color[1], color[2], color[3]);	\
 } while (0)
 
-#ifdef WIN32
-#include "..\swrast\s_linetemp.h"
-#else
 #include "swrast/s_linetemp.h"
-#endif
 
 
 
@@ -544,11 +540,7 @@ do {							\
    }							\
 } while (0)
 
-#ifdef WIN32
-#include "..\swrast\s_linetemp.h"
-#else
 #include "swrast/s_linetemp.h"
-#endif
 
 
 
@@ -624,11 +616,7 @@ osmesa_choose_line_function( struct gl_context *ctx )
       span.z += span.zStep;					\
    }                                                            \
 }
-#ifdef WIN32
-#include "..\swrast\s_tritemp.h"
-#else
 #include "swrast/s_tritemp.h"
-#endif
 
 
 
@@ -656,11 +644,8 @@ osmesa_choose_line_function( struct gl_context *ctx )
       span.z += span.zStep;				\
    }                                                    \
 }
-#ifdef WIN32
-#include "..\swrast\s_tritemp.h"
-#else
+
 #include "swrast/s_tritemp.h"
-#endif
 
 
 

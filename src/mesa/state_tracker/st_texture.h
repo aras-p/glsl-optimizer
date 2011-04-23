@@ -163,6 +163,21 @@ st_get_texture_sampler_view(struct st_texture_object *stObj,
 }
 
 
+/**
+ * Get pointer to the active sampler object for the given texture unit.
+ * This will either be a user-defined sampler object or the texture
+ * object's own sampler state.
+ */
+static INLINE struct gl_sampler_object *
+st_get_mesa_sampler(const struct gl_context *ctx, GLuint unit)
+{
+   if (ctx->Texture.Unit[unit].Sampler)
+      return ctx->Texture.Unit[unit].Sampler;
+   else
+      return &ctx->Texture.Unit[unit]._Current->Sampler;
+}
+
+
 extern struct pipe_resource *
 st_texture_create(struct st_context *st,
                   enum pipe_texture_target target,

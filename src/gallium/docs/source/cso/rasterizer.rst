@@ -7,6 +7,30 @@ The rasterizer state controls the rendering of points, lines and triangles.
 Attributes include polygon culling state, line width, line stipple,
 multisample state, scissoring and flat/smooth shading.
 
+Linkage
+
+clamp_vertex_color
+^^^^^^^^^^^^^^^^^^
+
+If set, TGSI_SEMANTIC_COLOR registers are clamped to the [0, 1] range after
+the execution of the vertex shader, before being passed to the geometry
+shader or fragment shader.
+
+OpenGL: glClampColor(GL_CLAMP_VERTEX_COLOR) in GL 3.0 or GL_ARB_color_buffer_float
+
+D3D11: seems always disabled
+
+clamp_fragment_color
+^^^^^^^^^^^^^^^^^^^^
+
+Controls whether TGSI_SEMANTIC_COLOR outputs of the fragment shader
+are clamped to [0, 1].
+
+OpenGL: glClampColor(GL_CLAMP_FRAGMENT_COLOR) in GL 3.0 or ARB_color_buffer_float
+
+D3D11: seems always disabled
+
+
 Shading
 -------
 

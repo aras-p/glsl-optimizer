@@ -69,7 +69,7 @@ st_feedback_draw_vbo(struct gl_context *ctx,
 
 /* Internal function:
  */
-extern GLuint
+extern enum pipe_format
 st_pipe_vertex_format(GLenum type, GLuint size, GLenum format,
                       GLboolean normalized);
 

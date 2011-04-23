@@ -43,6 +43,7 @@
 #define EVERGREEN_CTL_CONST_OFFSET                  0x0003CFF0
 #define EVERGREEN_CTL_CONST_END                     0x0003E200
 
+#define EVENT_TYPE_PS_PARTIAL_FLUSH            0x10
 #define EVENT_TYPE_ZPASS_DONE                  0x15
 #define EVENT_TYPE_CACHE_FLUSH_AND_INV_EVENT   0x16
 #define		EVENT_TYPE(x)                           ((x) << 0)
@@ -1885,4 +1886,10 @@
 #define R_03CFF4_SQ_VTX_START_INST_LOC                  0x03CFF4
 
 #define R_03A200_SQ_LOOP_CONST_0                     0x3A200
+
+#define ENDIAN_NONE	0
+#define ENDIAN_8IN16	1
+#define ENDIAN_8IN32	2
+#define ENDIAN_8IN64	3
+
 #endif

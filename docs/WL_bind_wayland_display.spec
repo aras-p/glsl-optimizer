@@ -25,7 +25,7 @@ Number
 
 Dependencies
 
-    Reguires EGL 1.4 or later.  This extension is written against the
+    Requires EGL 1.4 or later.  This extension is written against the
     wording of the EGL 1.4 specification.
 
     EGL_KHR_base_image is required.
@@ -40,9 +40,9 @@ Overview
     provides a new target for eglCreateImageKHR, to create an EGLImage
     from a wl_buffer
 
-    Adding a implementation specific wayland interface, allows the
+    Adding an implementation specific wayland interface, allows the
     EGL implementation to define specific wayland requests and events,
-    needed for buffer sharing in a EGL wayland platform.
+    needed for buffer sharing in an EGL wayland platform.
 
 IP Status
 
@@ -82,7 +82,7 @@ Additions to the EGL 1.4 Specification:
 
     Import a wl_buffer by calling eglCreateImageKHR with
     wl_buffer as EGLClientBuffer, EGL_WAYLAND_BUFFER_WL as the target,
-    and an empty attribute_list.
+    NULL context and an empty attribute_list.
 
 Issues
 

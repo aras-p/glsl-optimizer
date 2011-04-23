@@ -80,25 +80,6 @@ struct brw_3d_control
    GLuint dword3;   
 };
 
-
-struct brw_3d_primitive
-{
-   struct
-   {
-      GLuint length:8; 
-      GLuint pad:2;
-      GLuint topology:5; 
-      GLuint indexed:1; 
-      GLuint opcode:16; 
-   } header;
-
-   GLuint verts_per_instance;  
-   GLuint start_vert_location;  
-   GLuint instance_count;  
-   GLuint start_instance_location;  
-   GLuint base_vert_location;  
-};
-
 /* These seem to be passed around as function args, so it works out
  * better to keep them as #defines:
  */
@@ -1244,31 +1225,6 @@ struct brw_surface_state
       GLuint x_offset:7;
    } ss5;   /* New in G4X */
 
-};
-
-
-
-struct brw_vertex_buffer_state
-{
-   struct {
-      GLuint pitch:11; 
-      GLuint pad:15;
-      GLuint access_type:1; 
-      GLuint vb_index:5; 
-   } vb0;
-   
-   GLuint start_addr; 
-   GLuint max_index;   
-#if 1
-   GLuint instance_data_step_rate; /* not included for sequential/random vertices? */
-#endif
-};
-
-#define BRW_VBP_MAX 17
-
-struct brw_vb_array_state {
-   struct header header;
-   struct brw_vertex_buffer_state vb[BRW_VBP_MAX];
 };
 
 

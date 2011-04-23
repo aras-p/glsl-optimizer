@@ -23,10 +23,10 @@
 #include "r300_context.h"
 #include "r300_emit.h"
 #include "r300_texture.h"
-#include "r300_winsys.h"
 
 #include "util/u_format.h"
 #include "util/u_pack_color.h"
+#include "util/u_surface.h"
 
 enum r300_blitter_op /* bitmask */
 {
@@ -206,7 +206,7 @@ static void r300_clear(struct pipe_context* pipe,
         (struct r300_hyperz_state*)r300->hyperz_state.state;
     uint32_t width = fb->width;
     uint32_t height = fb->height;
-    boolean can_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
+    boolean can_hyperz = r300->rws->get_value(r300->rws, RADEON_VID_CAN_HYPERZ);
     uint32_t hyperz_dcv = hyperz->zb_depthclearvalue;
 
     /* Enable fast Z clear.
@@ -253,17 +253,15 @@ static void r300_clear(struct pipe_context* pipe,
     } else if (r300->zmask_clear.dirty || r300->hiz_clear.dirty) {
         /* Just clear zmask and hiz now, this does not use the standard draw
          * procedure. */
-        unsigned dwords;
-
         /* Calculate zmask_clear and hiz_clear atom sizes. */
-        r300_update_hyperz_state(r300);
-        dwords = (r300->zmask_clear.dirty ? r300->zmask_clear.size : 0) +
-                 (r300->hiz_clear.dirty ? r300->hiz_clear.size : 0) +
-                 r300_get_num_cs_end_dwords(r300);
+        unsigned dwords =
+            (r300->zmask_clear.dirty ? r300->zmask_clear.size : 0) +
+            (r300->hiz_clear.dirty ? r300->hiz_clear.size : 0) +
+            r300_get_num_cs_end_dwords(r300);
 
         /* Reserve CS space. */
-        if (dwords > (R300_MAX_CMDBUF_DWORDS - r300->cs->cdw)) {
-            r300_flush(&r300->context, R300_FLUSH_ASYNC, NULL);
+        if (dwords > (RADEON_MAX_CMDBUF_DWORDS - r300->cs->cdw)) {
+            r300_flush(&r300->context, RADEON_FLUSH_ASYNC, NULL);
         }
 
         /* Emit clear packets. */
@@ -306,16 +304,10 @@ static void r300_clear_render_target(struct pipe_context *pipe,
 {
     struct r300_context *r300 = r300_context(pipe);
 
-    r300->hyperz_locked = TRUE;
-    r300_mark_atom_dirty(r300, &r300->hyperz_state);
-
     r300_blitter_begin(r300, R300_CLEAR_SURFACE);
     util_blitter_clear_render_target(r300->blitter, dst, rgba,
                                      dstx, dsty, width, height);
     r300_blitter_end(r300);
-
-    r300->hyperz_locked = FALSE;
-    r300_mark_atom_dirty(r300, &r300->hyperz_state);
 }
 
 /* Clear a region of a depth stencil surface. */
@@ -334,21 +326,14 @@ static void r300_clear_depth_stencil(struct pipe_context *pipe,
     if (r300->zmask_in_use && !r300->hyperz_locked) {
         if (fb->zsbuf->texture == dst->texture) {
             r300_decompress_zmask(r300);
-        } else {
-            r300->hyperz_locked = TRUE;
-            r300_mark_atom_dirty(r300, &r300->hyperz_state);
         }
     }
 
+    /* XXX Do not decompress ZMask of the currently-set zbuffer. */
     r300_blitter_begin(r300, R300_CLEAR_SURFACE);
     util_blitter_clear_depth_stencil(r300->blitter, dst, clear_flags, depth, stencil,
                                      dstx, dsty, width, height);
     r300_blitter_end(r300);
-
-    if (r300->hyperz_locked) {
-        r300->hyperz_locked = FALSE;
-        r300_mark_atom_dirty(r300, &r300->hyperz_state);
-    }
 }
 
 void r300_decompress_zmask(struct r300_context *r300)
@@ -431,13 +416,17 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
             util_format_description(dst->format);
     struct pipe_box box;
 
+    /* Fallback for buffers. */
+    if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
+        util_resource_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
+                                  src, src_level, src_box);
+        return;
+    }
+
     if (r300->zmask_in_use && !r300->hyperz_locked) {
         if (fb->zsbuf->texture == src ||
             fb->zsbuf->texture == dst) {
             r300_decompress_zmask(r300);
-        } else {
-            r300->hyperz_locked = TRUE;
-            r300_mark_atom_dirty(r300, &r300->hyperz_state);
         }
     }
 
@@ -513,11 +502,6 @@ static void r300_resource_copy_region(struct pipe_context *pipe,
         r300_resource_set_properties(pipe->screen, src, 0, &old_src);
     if (old_dst.format != new_dst.format)
         r300_resource_set_properties(pipe->screen, dst, 0, &old_dst);
-
-    if (r300->hyperz_locked) {
-        r300->hyperz_locked = FALSE;
-        r300_mark_atom_dirty(r300, &r300->hyperz_state);
-    }
 }
 
 void r300_init_blit_functions(struct r300_context *r300)

@@ -685,6 +685,12 @@ galahad_resource_copy_region(struct pipe_context *_pipe,
          util_format_short_name(_dst->format));
    }
 
+   if ((_src->target == PIPE_BUFFER && _dst->target != PIPE_BUFFER) ||
+       (_src->target != PIPE_BUFFER && _dst->target == PIPE_BUFFER)) {
+      glhd_warn("Resource target mismatch: Source is %i, destination is %i",
+                _src->target, _dst->target);
+   }
+
    pipe->resource_copy_region(pipe,
                               dst,
                               dst_level,

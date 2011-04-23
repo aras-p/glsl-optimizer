@@ -27,6 +27,7 @@
 #include "util/u_inlines.h"
 #include "util/u_pack_color.h"
 #include "util/u_format.h"
+#include "util/u_surface.h"
 
 #include "nv50_context.h"
 #include "nv50_resource.h"
@@ -197,6 +198,13 @@ nv50_resource_copy_region(struct pipe_context *pipe,
    struct nv50_screen *screen = nv50_context(pipe)->screen;
    int ret;
    unsigned dst_layer = dstz, src_layer = src_box->z;
+
+   /* Fallback for buffers. */
+   if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
+      util_resource_copy_region(pipe, dst, dst_level, dstx, dsty, dstz,
+                                src, src_level, src_box);
+      return;
+   }
 
    assert((src->format == dst->format) ||
           (nv50_2d_format_faithful(src->format) &&

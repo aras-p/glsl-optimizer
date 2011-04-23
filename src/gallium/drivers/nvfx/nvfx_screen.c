@@ -1,5 +1,6 @@
 #include "pipe/p_screen.h"
 #include "pipe/p_state.h"
+#include "util/u_format.h"
 #include "util/u_format_s3tc.h"
 #include "util/u_simple_screen.h"
 
@@ -82,6 +83,8 @@ nvfx_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
 		return 0; // TODO: implement primitive restart
 	case PIPE_CAP_SHADER_STENCIL_EXPORT:
 		return 0;
+	case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
+                return 0;
 	default:
 		NOUVEAU_ERR("Warning: unknown PIPE_CAP %d\n", param);
 		return 0;
@@ -206,6 +209,9 @@ nvfx_screen_is_format_supported(struct pipe_screen *pscreen,
                                      unsigned bind)
 {
 	struct nvfx_screen *screen = nvfx_screen(pscreen);
+
+        if (!util_format_is_supported(format, bind))
+                return FALSE;
 
 	 if (sample_count > 1)
 		return FALSE;

@@ -69,8 +69,6 @@ i915InvalidateState(struct gl_context * ctx, GLuint new_state)
          p->params_uptodate = 0;
    }
 
-   if (new_state & (_NEW_FOG | _NEW_HINT | _NEW_PROGRAM | _NEW_PROGRAM_CONSTANTS))
-      i915_update_fog(ctx);
    if (new_state & (_NEW_STENCIL | _NEW_BUFFERS | _NEW_POLYGON))
       i915_update_stencil(ctx);
    if (new_state & (_NEW_LIGHT))
@@ -208,6 +206,12 @@ i915CreateContext(int api,
    intel->verts = TNL_CONTEXT(ctx)->clipspace.vertex_buf;
 
    i915InitState(i915);
+
+   /* Always enable pixel fog.  Vertex fog using fog coord will conflict
+    * with fog code appended onto fragment program.
+    */
+   _tnl_allow_vertex_fog(ctx, 0);
+   _tnl_allow_pixel_fog(ctx, 1);
 
    return GL_TRUE;
 }

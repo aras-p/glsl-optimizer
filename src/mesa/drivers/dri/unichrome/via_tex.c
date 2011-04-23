@@ -495,13 +495,13 @@ static GLboolean viaSetTexImages(struct gl_context *ctx,
     * GL_TEXTURE_MAX_LOD, GL_TEXTURE_BASE_LEVEL, and GL_TEXTURE_MAX_LEVEL.
     * Yes, this looks overly complicated, but it's all needed.
     */
-   if (texObj->MinFilter == GL_LINEAR || texObj->MinFilter == GL_NEAREST) {
+   if (texObj->Sampler.MinFilter == GL_LINEAR || texObj->Sampler.MinFilter == GL_NEAREST) {
       firstLevel = lastLevel = texObj->BaseLevel;
    }
    else {
-      firstLevel = texObj->BaseLevel + (GLint)(texObj->MinLod + 0.5);
+      firstLevel = texObj->BaseLevel + (GLint)(texObj->Sampler.MinLod + 0.5);
       firstLevel = MAX2(firstLevel, texObj->BaseLevel);
-      lastLevel = texObj->BaseLevel + (GLint)(texObj->MaxLod + 0.5);
+      lastLevel = texObj->BaseLevel + (GLint)(texObj->Sampler.MaxLod + 0.5);
       lastLevel = MAX2(lastLevel, texObj->BaseLevel);
       lastLevel = MIN2(lastLevel, texObj->BaseLevel + baseImage->image.MaxLog2);
       lastLevel = MIN2(lastLevel, texObj->MaxLevel);

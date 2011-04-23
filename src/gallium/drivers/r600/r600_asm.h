@@ -104,6 +104,7 @@ struct r600_bc_vtx {
 	unsigned			format_comp_all;
 	unsigned			srf_mode_all;
 	unsigned			offset;
+	unsigned			endian;
 };
 
 struct r600_bc_output {

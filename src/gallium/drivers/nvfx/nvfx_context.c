@@ -13,7 +13,7 @@ nvfx_flush(struct pipe_context *pipe,
 	struct nvfx_context *nvfx = nvfx_context(pipe);
 	struct nvfx_screen *screen = nvfx->screen;
 	struct nouveau_channel *chan = screen->base.channel;
-	struct nouveau_grobj *eng3d = screen->eng3d;
+	/*struct nouveau_grobj *eng3d = screen->eng3d;*/
 
 	/* XXX: we need to actually be intelligent here */
         /* XXX This flag wasn't set by the state tracker anyway. */

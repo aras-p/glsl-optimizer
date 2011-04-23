@@ -1343,7 +1343,7 @@ static void r300SetupTextures(struct gl_context * ctx)
 			 */
 			r300->hw.tex.filter_1.cmd[R300_TEX_VALUE_0 + hw_tmu] =
 				t->pp_txfilter_1 |
-				translate_lod_bias(ctx->Texture.Unit[i].LodBias + t->base.LodBias);
+				translate_lod_bias(ctx->Texture.Unit[i].LodBias + t->base.Sampler.LodBias);
 			r300->hw.tex.size.cmd[R300_TEX_VALUE_0 + hw_tmu] =
 			    t->pp_txsize;
 			r300->hw.tex.format.cmd[R300_TEX_VALUE_0 +
@@ -2014,7 +2014,7 @@ static const GLfloat *get_fragmentprogram_constant(struct gl_context *ctx, GLuin
 				buffer[0] =
 				buffer[1] =
 				buffer[2] =
-				buffer[3] = texObj->CompareFailValue;
+				buffer[3] = texObj->Sampler.CompareFailValue;
 			}
 			return buffer;
 		}

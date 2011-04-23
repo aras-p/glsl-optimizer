@@ -112,7 +112,7 @@ stw_framebuffer_release(
 static INLINE void
 stw_framebuffer_get_size( struct stw_framebuffer *fb )
 {
-   unsigned width, height;
+   LONG width, height;
    RECT client_rect;
    RECT window_rect;
    POINT client_pos;
@@ -126,10 +126,17 @@ stw_framebuffer_get_size( struct stw_framebuffer *fb )
    width = client_rect.right - client_rect.left;
    height = client_rect.bottom - client_rect.top;
 
-   if(width < 1)
-      width = 1;
-   if(height < 1)
-      height = 1;
+   if (width <= 0 || height <= 0) {
+      /*
+       * When the window is minimized GetClientRect will return zeros.  Simply
+       * preserve the current window size, until the window is restored or
+       * maximized again.
+       */
+
+      assert(width == 0 && height == 0);
+
+      return;
+   }
 
    if(width != fb->width || height != fb->height) {
       fb->must_resize = TRUE;
@@ -150,13 +157,13 @@ stw_framebuffer_get_size( struct stw_framebuffer *fb )
 
 #if 0
    debug_printf("\n");
-   debug_printf("%s: client_position = (%i, %i)\n",
+   debug_printf("%s: client_position = (%li, %li)\n",
                 __FUNCTION__, client_pos.x, client_pos.y);
-   debug_printf("%s: window_rect = (%i, %i) - (%i, %i)\n",
+   debug_printf("%s: window_rect = (%li, %li) - (%li, %li)\n",
                 __FUNCTION__,
                 window_rect.left, window_rect.top,
                 window_rect.right, window_rect.bottom);
-   debug_printf("%s: client_rect = (%i, %i) - (%i, %i)\n",
+   debug_printf("%s: client_rect = (%li, %li) - (%li, %li)\n",
                 __FUNCTION__,
                 fb->client_rect.left, fb->client_rect.top,
                 fb->client_rect.right, fb->client_rect.bottom);

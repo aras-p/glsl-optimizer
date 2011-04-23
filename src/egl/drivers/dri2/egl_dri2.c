@@ -462,6 +462,12 @@ dri2_create_screen(_EGLDisplay *disp)
       }
    }
 
+   if (dri2_dpy->image) {
+      disp->Extensions.MESA_drm_image = EGL_TRUE;
+      disp->Extensions.KHR_image_base = EGL_TRUE;
+      disp->Extensions.KHR_gl_renderbuffer_image = EGL_TRUE;
+   }
+
    return EGL_TRUE;
 
  cleanup_dri_screen:

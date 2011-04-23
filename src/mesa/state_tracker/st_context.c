@@ -27,6 +27,7 @@
 
 #include "main/imports.h"
 #include "main/context.h"
+#include "main/samplerobj.h"
 #include "main/shaderobj.h"
 #include "program/prog_cache.h"
 #include "vbo/vbo.h"
@@ -206,8 +207,8 @@ static void st_destroy_context_priv( struct st_context *st )
    st_destroy_drawtex(st);
 
    /* Unreference any user vertex buffers. */
-   for (i = 0; i < st->num_user_vbs; i++) {
-      pipe_resource_reference(&st->user_vb[i], NULL);
+   for (i = 0; i < st->num_user_attribs; i++) {
+      pipe_resource_reference(&st->user_attrib[i].buffer, NULL);
    }
 
    for (i = 0; i < Elements(st->state.sampler_views); i++) {
@@ -269,6 +270,7 @@ void st_destroy_context( struct st_context *st )
 void st_init_driver_functions(struct dd_function_table *functions)
 {
    _mesa_init_shader_object_functions(functions);
+   _mesa_init_sampler_object_functions(functions);
 
    st_init_accum_functions(functions);
    st_init_blit_functions(functions);

@@ -2,7 +2,7 @@
 <protocol name="drm">
   <!-- drm support. This object is created by the server and published
        using the display's global event. -->
-  <interface name="drm" version="1">
+  <interface name="wl_drm" version="1">
     <!-- Call this request with the magic received from drmGetMagic().
          It will be passed on to the drmAuthMagic() or
          DRIAuthConnection() call.  This authentication must be
@@ -14,12 +14,12 @@
     <!-- Create a wayland buffer for the named DRM buffer.  The DRM
          surface must have a name using the flink ioctl -->
     <request name="create_buffer">
-      <arg name="id" type="new_id" interface="buffer"/>
+      <arg name="id" type="new_id" interface="wl_buffer"/>
       <arg name="name" type="uint"/>
       <arg name="width" type="int"/>
       <arg name="height" type="int"/>
       <arg name="stride" type="uint"/>
-      <arg name="visual" type="object" interface="visual"/>
+      <arg name="visual" type="object" interface="wl_visual"/>
     </request>
 
     <!-- Notification of the path of the drm device which is used by

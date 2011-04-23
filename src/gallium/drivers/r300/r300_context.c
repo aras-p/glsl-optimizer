@@ -32,7 +32,6 @@
 #include "r300_emit.h"
 #include "r300_screen.h"
 #include "r300_screen_buffer.h"
-#include "r300_winsys.h"
 
 static void r300_update_num_contexts(struct r300_screen *r300screen,
                                      int diff)
@@ -167,8 +166,8 @@ static boolean r300_setup_atoms(struct r300_context* r300)
     boolean is_rv350 = r300->screen->caps.is_rv350;
     boolean is_r500 = r300->screen->caps.is_r500;
     boolean has_tcl = r300->screen->caps.has_tcl;
-    boolean drm_2_6_0 = r300->rws->get_value(r300->rws, R300_VID_DRM_2_6_0);
-    boolean can_hyperz = r300->rws->get_value(r300->rws, R300_CAN_HYPERZ);
+    boolean drm_2_6_0 = r300->rws->get_value(r300->rws, RADEON_VID_DRM_2_6_0);
+    boolean can_hyperz = r300->rws->get_value(r300->rws, RADEON_VID_CAN_HYPERZ);
     boolean has_hiz_ram = r300->screen->caps.hiz_ram > 0;
 
     /* Create the actual atom list.
@@ -379,7 +378,7 @@ static void r300_init_states(struct pipe_context *pipe)
 
         if (r300->screen->caps.is_r500 ||
             (r300->screen->caps.is_rv350 &&
-             r300->rws->get_value(r300->rws, R300_VID_DRM_2_6_0))) {
+             r300->rws->get_value(r300->rws, RADEON_VID_DRM_2_6_0))) {
             OUT_CB_REG(R300_GB_Z_PEQ_CONFIG, 0);
         }
         END_CB;
@@ -391,7 +390,7 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
 {
     struct r300_context* r300 = CALLOC_STRUCT(r300_context);
     struct r300_screen* r300screen = r300_screen(screen);
-    struct r300_winsys_screen *rws = r300screen->rws;
+    struct radeon_winsys *rws = r300screen->rws;
 
     if (!r300)
         return NULL;
@@ -514,19 +513,19 @@ struct pipe_context* r300_create_context(struct pipe_screen* screen,
                 "r300: DRM version: %d.%d.%d, Name: %s, ID: 0x%04x, GB: %d, Z: %d\n"
                 "r300: GART size: %d MB, VRAM size: %d MB\n"
                 "r300: AA compression: %s, Z compression: %s, HiZ: %s\n",
-                rws->get_value(rws, R300_VID_DRM_MAJOR),
-                rws->get_value(rws, R300_VID_DRM_MINOR),
-                rws->get_value(rws, R300_VID_DRM_PATCHLEVEL),
+                rws->get_value(rws, RADEON_VID_DRM_MAJOR),
+                rws->get_value(rws, RADEON_VID_DRM_MINOR),
+                rws->get_value(rws, RADEON_VID_DRM_PATCHLEVEL),
                 screen->get_name(screen),
-                rws->get_value(rws, R300_VID_PCI_ID),
-                rws->get_value(rws, R300_VID_GB_PIPES),
-                rws->get_value(rws, R300_VID_Z_PIPES),
-                rws->get_value(rws, R300_VID_GART_SIZE) >> 20,
-                rws->get_value(rws, R300_VID_VRAM_SIZE) >> 20,
-                rws->get_value(rws, R300_CAN_AACOMPRESS) ? "YES" : "NO",
-                rws->get_value(rws, R300_CAN_HYPERZ) &&
+                rws->get_value(rws, RADEON_VID_PCI_ID),
+                rws->get_value(rws, RADEON_VID_R300_GB_PIPES),
+                rws->get_value(rws, RADEON_VID_R300_Z_PIPES),
+                rws->get_value(rws, RADEON_VID_GART_SIZE) >> 20,
+                rws->get_value(rws, RADEON_VID_VRAM_SIZE) >> 20,
+                rws->get_value(rws, RADEON_VID_CAN_AACOMPRESS) ? "YES" : "NO",
+                rws->get_value(rws, RADEON_VID_CAN_HYPERZ) &&
                 r300->screen->caps.zmask_ram ? "YES" : "NO",
-                rws->get_value(rws, R300_CAN_HYPERZ) &&
+                rws->get_value(rws, RADEON_VID_CAN_HYPERZ) &&
                 r300->screen->caps.hiz_ram ? "YES" : "NO");
     }
 

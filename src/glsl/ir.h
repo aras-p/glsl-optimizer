@@ -253,6 +253,16 @@ enum ir_depth_layout {
 const char*
 depth_layout_string(ir_depth_layout layout);
 
+/**
+ * Description of built-in state associated with a uniform
+ *
+ * \sa ir_variable::state_slots
+ */
+struct ir_state_slot {
+   int tokens[5];
+   int swizzle;
+};
+
 class ir_variable : public ir_instruction {
 public:
    ir_variable(const struct glsl_type *, const char *, ir_variable_mode);
@@ -384,6 +394,22 @@ public:
     * slot has not been assigned, the value will be -1.
     */
    int location;
+
+   /**
+    * Built-in state that backs this uniform
+    *
+    * Once set at variable creation, \c state_slots must remain invariant.
+    * This is because, ideally, this array would be shared by all clones of
+    * this variable in the IR tree.  In other words, we'd really like for it
+    * to be a fly-weight.
+    *
+    * If the variable is not a uniform, \c num_state_slots will be zero and
+    * \c state_slots will be \c NULL.
+    */
+   /*@{*/
+   unsigned num_state_slots;    /**< Number of state slots used */
+   ir_state_slot *state_slots;  /**< State descriptors. */
+   /*@}*/
 
    /**
     * Emit a warning if this variable is accessed.

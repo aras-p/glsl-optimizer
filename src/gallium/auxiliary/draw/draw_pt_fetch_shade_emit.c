@@ -169,7 +169,7 @@ static void fse_prepare( struct draw_pt_middle_end *middle,
                                ((const ubyte *) draw->pt.user.vbuffer[i] + 
                                 draw->pt.vertex_buffer[i].buffer_offset),
                               draw->pt.vertex_buffer[i].stride,
-                              draw->pt.user.max_index );
+                              draw->pt.max_index );
    }
 
    *max_vertices = (draw->render->max_vertex_buffer_bytes / 

@@ -470,6 +470,17 @@ draw_vbo(struct draw_context *draw,
    if (0)
       draw_print_arrays(draw, info->mode, info->start, MIN2(info->count, 20));
 
+   draw->pt.max_index = util_draw_max_index(draw->pt.vertex_buffer,
+                                            draw->pt.nr_vertex_buffers,
+                                            draw->pt.vertex_element,
+                                            draw->pt.nr_vertex_elements,
+                                            info);
+
+   /*
+    * TODO: We could use draw->pt.max_index to further narrow
+    * the min_index/max_index hints given by the state tracker.
+    */
+
    for (instance = 0; instance < info->instance_count; instance++) {
       draw->instance_id = instance + info->start_instance;
 

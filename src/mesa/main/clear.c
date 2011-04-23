@@ -78,19 +78,27 @@ _mesa_ClearColor( GLclampf red, GLclampf green, GLclampf blue, GLclampf alpha )
    GET_CURRENT_CONTEXT(ctx);
    ASSERT_OUTSIDE_BEGIN_END(ctx);
 
-   tmp[0] = CLAMP(red,   0.0F, 1.0F);
-   tmp[1] = CLAMP(green, 0.0F, 1.0F);
-   tmp[2] = CLAMP(blue,  0.0F, 1.0F);
-   tmp[3] = CLAMP(alpha, 0.0F, 1.0F);
+   tmp[0] = red;
+   tmp[1] = green;
+   tmp[2] = blue;
+   tmp[3] = alpha;
 
-   if (TEST_EQ_4V(tmp, ctx->Color.ClearColor))
+   if (TEST_EQ_4V(tmp, ctx->Color.ClearColorUnclamped))
       return; /* no change */
 
    FLUSH_VERTICES(ctx, _NEW_COLOR);
-   COPY_4V(ctx->Color.ClearColor, tmp);
+   COPY_4V(ctx->Color.ClearColorUnclamped, tmp);
+
+   ctx->Color.ClearColor[0] = CLAMP(tmp[0], 0.0F, 1.0F);
+   ctx->Color.ClearColor[1] = CLAMP(tmp[1], 0.0F, 1.0F);
+   ctx->Color.ClearColor[2] = CLAMP(tmp[2], 0.0F, 1.0F);
+   ctx->Color.ClearColor[3] = CLAMP(tmp[3], 0.0F, 1.0F);
 
    if (ctx->Driver.ClearColor) {
       /* it's OK to call glClearColor in CI mode but it should be a NOP */
+      /* we pass the clamped color, since all drivers that need this don't
+       * support GL_ARB_color_buffer_float
+       */
       (*ctx->Driver.ClearColor)(ctx, ctx->Color.ClearColor);
    }
 }

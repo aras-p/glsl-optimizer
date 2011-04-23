@@ -97,8 +97,14 @@ nv50_blend_state_create(struct pipe_context *pipe,
 
    so->pipe = *cso;
 
-   SB_BEGIN_3D(so, BLEND_ENABLE(0), 8);
+   SB_BEGIN_3D(so, COLOR_MASK_COMMON, 1);
+   SB_DATA    (so, !cso->independent_blend_enable);
+
+   SB_BEGIN_3D(so, BLEND_ENABLE_COMMON, 1);
+   SB_DATA    (so, !cso->independent_blend_enable);
+
    if (cso->independent_blend_enable) {
+      SB_BEGIN_3D(so, BLEND_ENABLE(0), 8);
       for (i = 0; i < 8; ++i) {
          SB_DATA(so, cso->rt[i].blend_enable);
          if (cso->rt[i].blend_enable)
@@ -121,8 +127,8 @@ nv50_blend_state_create(struct pipe_context *pipe,
          }
       }
    } else {
-      for (i = 0; i < 8; ++i)
-         SB_DATA(so, cso->rt[0].blend_enable);
+      SB_BEGIN_3D(so, BLEND_ENABLE(0), 1);
+      SB_DATA    (so, cso->rt[0].blend_enable);
    }
 
    if (emit_common_func) {
@@ -145,17 +151,16 @@ nv50_blend_state_create(struct pipe_context *pipe,
       SB_DATA    (so, 0);
    }
 
-   SB_BEGIN_3D(so, COLOR_MASK(0), 8);
    if (cso->independent_blend_enable) {
+      SB_BEGIN_3D(so, COLOR_MASK(0), 8);
       for (i = 0; i < 8; ++i)
          SB_DATA(so, nv50_colormask(cso->rt[i].colormask));
    } else {
-      uint32_t cmask = nv50_colormask(cso->rt[0].colormask);
-      for (i = 0; i < 8; ++i)
-         SB_DATA(so, cmask);
+      SB_BEGIN_3D(so, COLOR_MASK(0), 1);
+      SB_DATA    (so, nv50_colormask(cso->rt[0].colormask));
    }
 
-   assert(so->size < (sizeof(so->state) / sizeof(so->state[0])));
+   assert(so->size <= (sizeof(so->state) / sizeof(so->state[0])));
    return so;
 }
 
@@ -174,6 +179,7 @@ nv50_blend_state_delete(struct pipe_context *pipe, void *hwcso)
    FREE(hwcso);
 }
 
+/* NOTE: ignoring line_last_pixel, using FALSE (set on screen init) */
 static void *
 nv50_rasterizer_state_create(struct pipe_context *pipe,
                              const struct pipe_rasterizer_state *cso)
@@ -197,6 +203,9 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
    SB_DATA    (so, !cso->flatshade_first);
    SB_BEGIN_3D(so, VERTEX_TWO_SIDE_ENABLE, 1);
    SB_DATA    (so, cso->light_twoside);
+
+   SB_BEGIN_3D(so, FRAG_COLOR_CLAMP_EN, 1);
+   SB_DATA    (so, cso->clamp_fragment_color ? 0x11111111 : 0x00000000);
 
    SB_BEGIN_3D(so, LINE_WIDTH, 1);
    SB_DATA    (so, fui(cso->line_width));
@@ -258,7 +267,7 @@ nv50_rasterizer_state_create(struct pipe_context *pipe,
       SB_DATA    (so, fui(cso->offset_units * 2.0f));
    }
 
-   assert(so->size < (sizeof(so->state) / sizeof(so->state[0])));
+   assert(so->size <= (sizeof(so->state) / sizeof(so->state[0])));
    return (void *)so;
 }
 
@@ -337,7 +346,7 @@ nv50_zsa_state_create(struct pipe_context *pipe,
       SB_DATA    (so, 0);
    }
 
-   assert(so->size < (sizeof(so->state) / sizeof(so->state[0])));
+   assert(so->size <= (sizeof(so->state) / sizeof(so->state[0])));
    return (void *)so;
 }
 

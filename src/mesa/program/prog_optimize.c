@@ -74,6 +74,17 @@ get_src_arg_mask(const struct prog_instruction *inst,
       case OPCODE_MAD:
       case OPCODE_MUL:
       case OPCODE_SUB:
+      case OPCODE_CMP:
+      case OPCODE_FLR:
+      case OPCODE_FRC:
+      case OPCODE_LRP:
+      case OPCODE_SEQ:
+      case OPCODE_SGE:
+      case OPCODE_SGT:
+      case OPCODE_SLE:
+      case OPCODE_SLT:
+      case OPCODE_SNE:
+      case OPCODE_SSG:
          channel_mask = inst->DstReg.WriteMask & dst_mask;
          break;
       case OPCODE_RCP:
@@ -937,24 +948,35 @@ update_interval(GLint intBegin[], GLint intEnd[],
 		GLuint index, GLuint ic)
 {
    int i;
+   GLuint begin = ic;
+   GLuint end = ic;
 
    /* If the register is used in a loop, extend its lifetime through the end
     * of the outermost loop that doesn't contain its definition.
     */
    for (i = 0; i < loopStackDepth; i++) {
       if (intBegin[index] < loopStack[i].Start) {
-	 ic = loopStack[i].End;
+	 end = loopStack[i].End;
 	 break;
       }
+   }
+
+   /* Variables that are live at the end of a loop will also be live at the
+    * beginning, so an instruction inside of a loop should have its live
+    * interval begin at the start of the outermost loop.
+    */
+   if (loopStackDepth > 0 && ic > loopStack[0].Start && ic < loopStack[0].End) {
+      begin = loopStack[0].Start;
    }
 
    ASSERT(index < REG_ALLOCATE_MAX_PROGRAM_TEMPS);
    if (intBegin[index] == -1) {
       ASSERT(intEnd[index] == -1);
-      intBegin[index] = intEnd[index] = ic;
+      intBegin[index] = begin;
+      intEnd[index] = end;
    }
    else {
-      intEnd[index] = ic;
+      intEnd[index] = end;
    }
 }
 
@@ -1224,6 +1246,83 @@ print_it(struct gl_context *ctx, struct gl_program *program, const char *txt) {
 }
 #endif
 
+/**
+ * This pass replaces CMP T0, T1 T2 T0 with MOV T0, T2 when the CMP
+ * instruction is the first instruction to write to register T0.  The are
+ * several lowering passes done in GLSL IR (e.g. branches and
+ * relative addressing) that create a large number of conditional assignments
+ * that ir_to_mesa converts to CMP instructions like the one mentioned above.
+ *
+ * Here is why this conversion is safe:
+ * CMP T0, T1 T2 T0 can be expanded to:
+ * if (T1 < 0.0)
+ * 	MOV T0, T2;
+ * else
+ * 	MOV T0, T0;
+ *
+ * If (T1 < 0.0) evaluates to true then our replacement MOV T0, T2 is the same
+ * as the original program.  If (T1 < 0.0) evaluates to false, executing
+ * MOV T0, T0 will store a garbage value in T0 since T0 is uninitialized.
+ * Therefore, it doesn't matter that we are replacing MOV T0, T0 with MOV T0, T2
+ * because any instruction that was going to read from T0 after this was going
+ * to read a garbage value anyway.
+ */
+static void
+_mesa_simplify_cmp(struct gl_program * program)
+{
+   GLuint tempWrites[REG_ALLOCATE_MAX_PROGRAM_TEMPS];
+   GLuint outputWrites[MAX_PROGRAM_OUTPUTS];
+   GLuint i;
+
+   if (dbg) {
+      printf("Optimize: Begin reads without writes\n");
+      _mesa_print_program(program);
+   }
+
+   for (i = 0; i < REG_ALLOCATE_MAX_PROGRAM_TEMPS; i++) {
+      tempWrites[i] = 0;
+   }
+
+   for (i = 0; i < MAX_PROGRAM_OUTPUTS; i++) {
+      outputWrites[i] = 0;
+   }
+
+   for (i = 0; i < program->NumInstructions; i++) {
+      struct prog_instruction *inst = program->Instructions + i;
+      GLuint prevWriteMask;
+
+      /* Give up if we encounter relative addressing or flow control. */
+      if (_mesa_is_flow_control_opcode(inst->Opcode) || inst->DstReg.RelAddr) {
+         return;
+      }
+
+      if (inst->DstReg.File == PROGRAM_OUTPUT) {
+         assert(inst->DstReg.Index < MAX_PROGRAM_OUTPUTS);
+         prevWriteMask = outputWrites[inst->DstReg.Index];
+         outputWrites[inst->DstReg.Index] |= inst->DstReg.WriteMask;
+      } else if (inst->DstReg.File == PROGRAM_TEMPORARY) {
+         assert(inst->DstReg.Index < REG_ALLOCATE_MAX_PROGRAM_TEMPS);
+         prevWriteMask = tempWrites[inst->DstReg.Index];
+         tempWrites[inst->DstReg.Index] |= inst->DstReg.WriteMask;
+      }
+
+      /* For a CMP to be considered a conditional write, the destination
+       * register and source register two must be the same. */
+      if (inst->Opcode == OPCODE_CMP
+          && !(inst->DstReg.WriteMask & prevWriteMask)
+          && inst->SrcReg[2].File == inst->DstReg.File
+          && inst->SrcReg[2].Index == inst->DstReg.Index
+          && inst->DstReg.WriteMask == get_src_arg_mask(inst, 2, NO_MASK)) {
+
+         inst->Opcode = OPCODE_MOV;
+         inst->SrcReg[0] = inst->SrcReg[1];
+      }
+   }
+   if (dbg) {
+      printf("Optimize: End reads without writes\n");
+      _mesa_print_program(program);
+   }
+}
 
 /**
  * Apply optimizations to the given program to eliminate unnecessary
@@ -1234,6 +1333,7 @@ _mesa_optimize_program(struct gl_context *ctx, struct gl_program *program)
 {
    GLboolean any_change;
 
+   _mesa_simplify_cmp(program);
    /* Stop when no modifications were output */
    do {
       any_change = GL_FALSE;

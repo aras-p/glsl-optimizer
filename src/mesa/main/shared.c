@@ -27,8 +27,6 @@
  * Shared-context state
  */
 
-
-
 #include "imports.h"
 #include "mfeatures.h"
 #include "mtypes.h"
@@ -40,8 +38,12 @@
 #include "shared.h"
 #include "program/program.h"
 #include "dlist.h"
+#if FEATURE_ARB_sampler_objects
+#include "samplerobj.h"
+#endif
 #include "shaderobj.h"
 #include "syncobj.h"
+
 
 /**
  * Allocate and initialize a shared context state structure.
@@ -91,6 +93,11 @@ _mesa_alloc_shared_state(struct gl_context *ctx)
    shared->BufferObjects = _mesa_NewHashTable();
 #endif
 
+#if FEATURE_ARB_sampler_objects
+   /* GL_ARB_sampler_objects */
+   shared->SamplerObjects = _mesa_NewHashTable();
+#endif
+
    /* Allocate the default buffer object */
    shared->NullBufferObj = ctx->Driver.NewBufferObject(ctx, 0, 0);
 
@@ -98,6 +105,7 @@ _mesa_alloc_shared_state(struct gl_context *ctx)
    for (i = 0; i < NUM_TEXTURE_TARGETS; i++) {
       /* NOTE: the order of these enums matches the TEXTURE_x_INDEX values */
       static const GLenum targets[NUM_TEXTURE_TARGETS] = {
+         GL_TEXTURE_BUFFER,
          GL_TEXTURE_2D_ARRAY_EXT,
          GL_TEXTURE_1D_ARRAY_EXT,
          GL_TEXTURE_CUBE_MAP,
@@ -106,6 +114,7 @@ _mesa_alloc_shared_state(struct gl_context *ctx)
          GL_TEXTURE_2D,
          GL_TEXTURE_1D
       };
+      assert(Elements(targets) == NUM_TEXTURE_TARGETS);
       shared->DefaultTex[i] = ctx->Driver.NewTextureObject(ctx, 0, targets[i]);
    }
 
@@ -268,6 +277,20 @@ delete_renderbuffer_cb(GLuint id, void *data, void *userData)
 }
 
 
+#if FEATURE_ARB_sampler_objects
+/**
+ * Callback for deleting a sampler object. Called by _mesa_HashDeleteAll()
+ */
+static void
+delete_sampler_object_cb(GLuint id, void *data, void *userData)
+{
+   struct gl_context *ctx = (struct gl_context *) userData;
+   struct gl_sampler_object *sampObj = (struct gl_sampler_object *) data;
+   _mesa_reference_sampler_object(ctx, &sampObj, NULL);
+}
+#endif
+
+
 /**
  * Deallocate a shared state object and all children structures.
  *
@@ -343,6 +366,11 @@ free_shared_state(struct gl_context *ctx, struct gl_shared_state *shared)
       }
    }
 
+#if FEATURE_ARB_sampler_objects
+   _mesa_HashDeleteAll(shared->SamplerObjects, delete_sampler_object_cb, ctx);
+   _mesa_DeleteHashTable(shared->SamplerObjects);
+#endif
+
    /*
     * Free texture objects (after FBOs since some textures might have
     * been bound to FBOs).
@@ -374,7 +402,8 @@ free_shared_state(struct gl_context *ctx, struct gl_shared_state *shared)
  * \sa free_shared_state().
  */
 void
-_mesa_release_shared_state(struct gl_context *ctx, struct gl_shared_state *shared)
+_mesa_release_shared_state(struct gl_context *ctx,
+                           struct gl_shared_state *shared)
 {
    GLint RefCount;
 

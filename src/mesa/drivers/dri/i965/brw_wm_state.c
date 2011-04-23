@@ -278,29 +278,9 @@ wm_unit_create_from_key(struct brw_context *brw, struct brw_wm_unit_key *key,
 
 static void upload_wm_unit( struct brw_context *brw )
 {
-   struct intel_context *intel = &brw->intel;
    struct brw_wm_unit_key key;
    drm_intel_bo *reloc_bufs[3];
    wm_unit_populate_key(brw, &key);
-
-   /* Allocate the necessary scratch space if we haven't already.  Don't
-    * bother reducing the allocation later, since we use scratch so
-    * rarely.
-    */
-   if (key.total_scratch) {
-      GLuint total = key.total_scratch * brw->wm_max_threads;
-
-      if (brw->wm.scratch_bo && total > brw->wm.scratch_bo->size) {
-	 drm_intel_bo_unreference(brw->wm.scratch_bo);
-	 brw->wm.scratch_bo = NULL;
-      }
-      if (brw->wm.scratch_bo == NULL) {
-	 brw->wm.scratch_bo = drm_intel_bo_alloc(intel->bufmgr,
-						 "wm scratch",
-						 total,
-						 4096);
-      }
-   }
 
    reloc_bufs[0] = brw->wm.prog_bo;
    reloc_bufs[1] = brw->wm.scratch_bo;

@@ -592,6 +592,13 @@ static void r300_update_rs_block(struct r300_context *r300)
     }
 }
 
+static void rgba_to_bgra(float color[4])
+{
+    float x = color[0];
+    color[0] = color[2];
+    color[2] = x;
+}
+
 static uint32_t r300_get_border_color(enum pipe_format format,
                                       const float border[4],
                                       boolean is_r500)
@@ -625,13 +632,13 @@ static uint32_t r300_get_border_color(enum pipe_format format,
     for (i = 0; i < 4; i++) {
         switch (desc->swizzle[i]) {
         case UTIL_FORMAT_SWIZZLE_X:
-            border_swizzled[2] = border[i];
+            border_swizzled[0] = border[i];
             break;
         case UTIL_FORMAT_SWIZZLE_Y:
             border_swizzled[1] = border[i];
             break;
         case UTIL_FORMAT_SWIZZLE_Z:
-            border_swizzled[0] = border[i];
+            border_swizzled[2] = border[i];
             break;
         case UTIL_FORMAT_SWIZZLE_W:
             border_swizzled[3] = border[i];
@@ -643,39 +650,46 @@ static uint32_t r300_get_border_color(enum pipe_format format,
     if (util_format_is_compressed(format)) {
         switch (format) {
         case PIPE_FORMAT_RGTC1_SNORM:
-        case PIPE_FORMAT_RGTC1_UNORM:
         case PIPE_FORMAT_LATC1_SNORM:
+            border_swizzled[0] = border_swizzled[0] < 0 ?
+                                 border_swizzled[0]*0.5+1 :
+                                 border_swizzled[0]*0.5;
+            /* Pass through. */
+
+        case PIPE_FORMAT_RGTC1_UNORM:
         case PIPE_FORMAT_LATC1_UNORM:
             /* Add 1/32 to round the border color instead of truncating. */
             /* The Y component is used for the border color. */
-            border_swizzled[1] = border_swizzled[2] + 1.0f/32;
+            border_swizzled[1] = border_swizzled[0] + 1.0f/32;
             util_pack_color(border_swizzled, PIPE_FORMAT_B4G4R4A4_UNORM, &uc);
             return uc.ui;
         case PIPE_FORMAT_RGTC2_SNORM:
         case PIPE_FORMAT_LATC2_SNORM:
-            border_swizzled[0] = border_swizzled[2];
             util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_SNORM, &uc);
             return uc.ui;
         case PIPE_FORMAT_RGTC2_UNORM:
         case PIPE_FORMAT_LATC2_UNORM:
-            util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
+            util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_UNORM, &uc);
             return uc.ui;
         default:
-            util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_UNORM, &uc);
+            util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
             return uc.ui;
         }
     }
 
     switch (desc->channel[0].size) {
         case 2:
+            rgba_to_bgra(border_swizzled);
             util_pack_color(border_swizzled, PIPE_FORMAT_B2G3R3_UNORM, &uc);
             break;
 
         case 4:
+            rgba_to_bgra(border_swizzled);
             util_pack_color(border_swizzled, PIPE_FORMAT_B4G4R4A4_UNORM, &uc);
             break;
 
         case 5:
+            rgba_to_bgra(border_swizzled);
             if (desc->channel[1].size == 5) {
                 util_pack_color(border_swizzled, PIPE_FORMAT_B5G5R5A1_UNORM, &uc);
             } else if (desc->channel[1].size == 6) {
@@ -687,56 +701,44 @@ static uint32_t r300_get_border_color(enum pipe_format format,
 
         default:
         case 8:
-            util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
+            if (desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED)
+               util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_SNORM, &uc);
+            else
+               util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_UNORM, &uc);
             break;
 
         case 10:
-            util_pack_color(border_swizzled, PIPE_FORMAT_B10G10R10A2_UNORM, &uc);
+            util_pack_color(border_swizzled, PIPE_FORMAT_R10G10B10A2_UNORM, &uc);
             break;
 
         case 16:
             if (desc->nr_channels <= 2) {
-                border_swizzled[0] = border_swizzled[2];
                 if (desc->channel[0].type == UTIL_FORMAT_TYPE_FLOAT) {
                     util_pack_color(border_swizzled, PIPE_FORMAT_R16G16_FLOAT, &uc);
+                } else if (desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED) {
+                    util_pack_color(border_swizzled, PIPE_FORMAT_R16G16_SNORM, &uc);
                 } else {
                     util_pack_color(border_swizzled, PIPE_FORMAT_R16G16_UNORM, &uc);
                 }
             } else {
-                util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
+                if (desc->channel[0].type == UTIL_FORMAT_TYPE_SIGNED) {
+                    util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_SNORM, &uc);
+                } else {
+                    util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_UNORM, &uc);
+                }
             }
             break;
 
         case 32:
             if (desc->nr_channels == 1) {
-                border_swizzled[0] = border_swizzled[2];
                 util_pack_color(border_swizzled, PIPE_FORMAT_R32_FLOAT, &uc);
             } else {
-                util_pack_color(border_swizzled, PIPE_FORMAT_B8G8R8A8_UNORM, &uc);
+                util_pack_color(border_swizzled, PIPE_FORMAT_R8G8B8A8_UNORM, &uc);
             }
             break;
     }
 
     return uc.ui;
-}
-
-static boolean util_format_is_float(enum pipe_format format)
-{
-    const struct util_format_description *desc = util_format_description(format);
-    unsigned i;
-
-    if (!format)
-       return FALSE;
-
-    /* Find the first non-void channel. */
-    for (i = 0; i < 4; i++)
-        if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID)
-            break;
-
-    if (i == 4)
-        return FALSE;
-
-    return desc->channel[i].type == UTIL_FORMAT_TYPE_FLOAT ? TRUE : FALSE;
 }
 
 static void r300_merge_textures_and_samplers(struct r300_context* r300)
@@ -747,9 +749,10 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
     struct r300_sampler_state *sampler;
     struct r300_sampler_view *view;
     struct r300_resource *tex;
-    unsigned min_level, max_level, i, j, size;
+    unsigned base_level, min_level, level_count, i, j, size;
     unsigned count = MIN2(state->sampler_view_count,
                           state->sampler_state_count);
+    boolean has_us_format = r300->screen->caps.has_us_format;
 
     /* The KIL opcode fix, see below. */
     if (!count && !r300->screen->caps.is_r500)
@@ -779,21 +782,27 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                                       r300->screen->caps.is_r500);
 
             /* determine min/max levels */
-            max_level = MIN3(sampler->max_lod + view->base.u.tex.first_level,
-                             tex->b.b.b.last_level, view->base.u.tex.last_level);
-            min_level = MIN2(sampler->min_lod + view->base.u.tex.first_level,
-                             max_level);
+            base_level = view->base.u.tex.first_level;
+            min_level = sampler->min_lod;
+            level_count = MIN3(sampler->max_lod,
+                               tex->b.b.b.last_level - base_level,
+                               view->base.u.tex.last_level - base_level);
 
-            if (tex->tex.is_npot && min_level > 0) {
-                /* Even though we do not implement mipmapping for NPOT
-                 * textures, we should at least honor the minimum level
-                 * which is allowed to be displayed. We do this by setting up
-                 * the i-th mipmap level as the zero level. */
-                unsigned offset = tex->tex_offset +
-                                  tex->tex.offset_in_bytes[min_level];
+            if (base_level + min_level) {
+                unsigned offset;
+
+                if (tex->tex.is_npot) {
+                    /* Even though we do not implement mipmapping for NPOT
+                     * textures, we should at least honor the minimum level
+                     * which is allowed to be displayed. We do this by setting up
+                     * an i-th mipmap level as the zero level. */
+                    base_level += min_level;
+                }
+                offset = tex->tex_offset +
+                         tex->tex.offset_in_bytes[base_level];
 
                 r300_texture_setup_format_state(r300->screen, tex,
-                                                min_level,
+                                                base_level,
                                                 &texstate->format);
                 texstate->format.tile_config |= offset & 0xffffffe0;
                 assert((offset & 0x1f) == 0);
@@ -870,7 +879,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                 }
             } else {
                 /* the MAX_MIP level is the largest (finest) one */
-                texstate->format.format0 |= R300_TX_NUM_LEVELS(max_level);
+                texstate->format.format0 |= R300_TX_NUM_LEVELS(level_count);
                 texstate->filter0 |= R300_TX_MAX_MIP_LEVEL(min_level);
             }
 
@@ -902,7 +911,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
 
             texstate->filter0 |= i << 28;
 
-            size += 16;
+            size += 16 + (has_us_format ? 2 : 0);
             state->count = i+1;
         } else {
             /* For the KIL opcode to work on r3xx-r4xx, the texture unit
@@ -931,7 +940,7 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
                 texstate->border_color = 0;
 
                 texstate->filter0 |= i << 28;
-                size += 16;
+                size += 16 + (has_us_format ? 2 : 0);
                 state->count = i+1;
             }
         }
@@ -940,11 +949,10 @@ static void r300_merge_textures_and_samplers(struct r300_context* r300)
     r300->textures_state.size = size;
 
     /* Pick a fragment shader based on either the texture compare state
-     * or the uses_pitch flag. */
-    if (r300->fs.state && count) {
-        if (r300_pick_fragment_shader(r300)) {
-            r300_mark_fs_code_dirty(r300);
-        }
+     * or the uses_pitch flag or some other external state. */
+    if (count &&
+        r300->fs_status == FRAGMENT_SHADER_VALID) {
+        r300->fs_status = FRAGMENT_SHADER_MAYBE_DIRTY;
     }
 }
 
@@ -973,12 +981,42 @@ static void r300_decompress_depth_textures(struct r300_context *r300)
     }
 }
 
+static void r300_validate_fragment_shader(struct r300_context *r300)
+{
+    struct pipe_framebuffer_state *fb = r300->fb_state.state;
+
+    if (r300->fs.state && r300->fs_status != FRAGMENT_SHADER_VALID) {
+        /* Pick the fragment shader based on external states.
+         * Then mark the state dirty if the fragment shader is either dirty
+         * or the function r300_pick_fragment_shader changed the shader. */
+        if (r300_pick_fragment_shader(r300) ||
+            r300->fs_status == FRAGMENT_SHADER_DIRTY) {
+            /* Mark the state atom as dirty. */
+            r300_mark_fs_code_dirty(r300);
+
+            /* Does Multiwrite need to be changed? */
+            if (fb->nr_cbufs > 1) {
+                boolean new_multiwrite =
+                    r300_fragment_shader_writes_all(r300_fs(r300));
+
+                if (r300->fb_multiwrite != new_multiwrite) {
+                    r300->fb_multiwrite = new_multiwrite;
+                    r300_mark_fb_state_dirty(r300, R300_CHANGED_MULTIWRITE);
+                }
+            }
+        }
+        r300->fs_status = FRAGMENT_SHADER_VALID;
+    }
+}
+
 void r300_update_derived_state(struct r300_context* r300)
 {
     if (r300->textures_state.dirty) {
         r300_decompress_depth_textures(r300);
         r300_merge_textures_and_samplers(r300);
     }
+
+    r300_validate_fragment_shader(r300);
 
     if (r300->rs_block_state.dirty) {
         r300_update_rs_block(r300);

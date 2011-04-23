@@ -24,7 +24,6 @@
 #include "r300_context.h"
 #include "r300_reg.h"
 #include "r300_fs.h"
-#include "r300_winsys.h"
 
 #include "util/u_format.h"
 #include "util/u_mm.h"
@@ -153,7 +152,7 @@ static void r300_update_hyperz(struct r300_context* r300)
     }
 
     if (!zstex ||
-        !r300->rws->get_value(r300->rws, R300_CAN_HYPERZ))
+        !r300->rws->get_value(r300->rws, RADEON_VID_CAN_HYPERZ))
         return;
 
     /* Zbuffer compression. */

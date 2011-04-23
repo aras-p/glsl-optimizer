@@ -81,13 +81,13 @@ static void r300UpdateTexWrap(radeonTexObjPtr t)
 	t->pp_txfilter &=
 	    ~(R300_TX_WRAP_S_MASK | R300_TX_WRAP_T_MASK | R300_TX_WRAP_R_MASK);
 
-	t->pp_txfilter |= translate_wrap_mode(tObj->WrapS) << R300_TX_WRAP_S_SHIFT;
+	t->pp_txfilter |= translate_wrap_mode(tObj->Sampler.WrapS) << R300_TX_WRAP_S_SHIFT;
 
 	if (tObj->Target != GL_TEXTURE_1D) {
-		t->pp_txfilter |= translate_wrap_mode(tObj->WrapT) << R300_TX_WRAP_T_SHIFT;
+		t->pp_txfilter |= translate_wrap_mode(tObj->Sampler.WrapT) << R300_TX_WRAP_T_SHIFT;
 
 		if (tObj->Target == GL_TEXTURE_3D)
-			t->pp_txfilter |= translate_wrap_mode(tObj->WrapR) << R300_TX_WRAP_R_SHIFT;
+			t->pp_txfilter |= translate_wrap_mode(tObj->Sampler.WrapR) << R300_TX_WRAP_R_SHIFT;
 	}
 }
 
@@ -202,7 +202,7 @@ static void r300TexParameter(struct gl_context * ctx, GLenum target,
 	case GL_TEXTURE_MIN_FILTER:
 	case GL_TEXTURE_MAG_FILTER:
 	case GL_TEXTURE_MAX_ANISOTROPY_EXT:
-		r300SetTexFilter(t, texObj->MinFilter, texObj->MagFilter, texObj->MaxAnisotropy);
+		r300SetTexFilter(t, texObj->Sampler.MinFilter, texObj->Sampler.MagFilter, texObj->Sampler.MaxAnisotropy);
 		break;
 
 	case GL_TEXTURE_WRAP_S:
@@ -212,7 +212,7 @@ static void r300TexParameter(struct gl_context * ctx, GLenum target,
 		break;
 
 	case GL_TEXTURE_BORDER_COLOR:
-		r300SetTexBorderColor(t, texObj->BorderColor.f);
+		r300SetTexBorderColor(t, texObj->Sampler.BorderColor.f);
 		break;
 
 	case GL_TEXTURE_BASE_LEVEL:
@@ -299,12 +299,14 @@ static struct gl_texture_object *r300NewTextureObject(struct gl_context * ctx,
 	}
 
 	_mesa_initialize_texture_object(&t->base, name, target);
-	t->base.MaxAnisotropy = rmesa->radeon.initialMaxAnisotropy;
+	t->base.Sampler.MaxAnisotropy = rmesa->radeon.initialMaxAnisotropy;
 
 	/* Initialize hardware state */
 	r300UpdateTexWrap(t);
-	r300SetTexFilter(t, t->base.MinFilter, t->base.MagFilter, t->base.MaxAnisotropy);
-	r300SetTexBorderColor(t, t->base.BorderColor.f);
+	r300SetTexFilter(t, t->base.Sampler.MinFilter,
+                         t->base.Sampler.MagFilter,
+                         t->base.Sampler.MaxAnisotropy);
+	r300SetTexBorderColor(t, t->base.Sampler.BorderColor.f);
 
 	return &t->base;
 }

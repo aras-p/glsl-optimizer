@@ -48,15 +48,6 @@
 #define HW_WRITE_CLIPLOOP()	HW_CLIPLOOP()
 #endif
 
-#ifdef SPANTMP_MESA_FMT
-#define SPANTMP_PIXEL_FMT GL_NONE
-#define SPANTMP_PIXEL_TYPE GL_NONE
-#endif
-
-#ifndef SPANTMP_MESA_FMT
-#define SPANTMP_MESA_FMT MESA_FORMAT_COUNT
-#endif
-
 #if (SPANTMP_PIXEL_FMT == GL_RGB)  && (SPANTMP_PIXEL_TYPE == GL_UNSIGNED_SHORT_5_6_5)
 
 /**
@@ -452,118 +443,6 @@
 	rgba[1] = 0;							\
 	rgba[2] = 0;							\
 	rgba[3] = p;							\
-     } while (0)
-
-#elif (SPANTMP_MESA_FMT == MESA_FORMAT_R8)
-
-#ifndef GET_VALUE
-#ifndef GET_PTR
-#define GET_PTR(_x, _y) (     buf + (_x) + (_y) * pitch)
-#endif
-
-#define GET_VALUE(_x, _y) *(volatile GLubyte *)(GET_PTR(_x, _y))
-#define PUT_VALUE(_x, _y, _v) *(volatile GLubyte *)(GET_PTR(_x, _y)) = (_v)
-#endif /* GET_VALUE */
-
-# define INIT_MONO_PIXEL(p, color)                       \
-     p = color[0]
-
-# define WRITE_RGBA(_x, _y, r, g, b, a)                                 \
-   PUT_VALUE(_x, _y, r)
-
-#define WRITE_PIXEL(_x, _y, p) PUT_VALUE(_x, _y, p)
-
-#define READ_RGBA( rgba, _x, _y )				        \
-     do {								\
-        GLubyte p = GET_VALUE(_x, _y);					\
-	rgba[0] = p;							\
-	rgba[1] = 0;							\
-	rgba[2] = 0;							\
-	rgba[3] = 0;							\
-     } while (0)
-
-#elif (SPANTMP_MESA_FMT == MESA_FORMAT_RG88)
-
-#ifndef GET_VALUE
-#ifndef GET_PTR
-#define GET_PTR(_x, _y) (     buf + (_x) * 2 + (_y) * pitch)
-#endif
-
-#define GET_VALUE(_x, _y) *(volatile GLushort *)(GET_PTR(_x, _y))
-#define PUT_VALUE(_x, _y, _v) *(volatile GLushort *)(GET_PTR(_x, _y)) = (_v)
-#endif /* GET_VALUE */
-
-# define INIT_MONO_PIXEL(p, color)                       \
-   PACK_COLOR_8888(color[0], color[1], 0, 0)
-
-# define WRITE_RGBA(_x, _y, r, g, b, a)                                 \
-   PUT_VALUE(_x, _y, r)
-
-#define WRITE_PIXEL(_x, _y, p) PUT_VALUE(_x, _y, p)
-
-#define READ_RGBA( rgba, _x, _y )				        \
-     do {								\
-        GLushort p = GET_VALUE(_x, _y);					\
-	rgba[0] = p & 0xff;						\
-	rgba[1] = (p >> 8) & 0xff;					\
-	rgba[2] = 0;							\
-	rgba[3] = 0;							\
-     } while (0)
-
-#elif (SPANTMP_MESA_FMT == MESA_FORMAT_R16)
-
-#ifndef GET_VALUE
-#ifndef GET_PTR
-#define GET_PTR(_x, _y) (     buf + (_x) * 2 + (_y) * pitch)
-#endif
-
-#define GET_VALUE(_x, _y) *(volatile GLushort *)(GET_PTR(_x, _y))
-#define PUT_VALUE(_x, _y, _v) *(volatile GLushort *)(GET_PTR(_x, _y)) = (_v)
-#endif /* GET_VALUE */
-
-# define INIT_MONO_PIXEL(p, color)                       \
-     p = color[0]
-
-# define WRITE_RGBA(_x, _y, r, g, b, a)                                 \
-   PUT_VALUE(_x, _y, r)
-
-#define WRITE_PIXEL(_x, _y, p) PUT_VALUE(_x, _y, p)
-
-#define READ_RGBA( rgba, _x, _y )				        \
-     do {								\
-        GLushort p = GET_VALUE(_x, _y);					\
-	rgba[0] = p;							\
-	rgba[1] = 0;							\
-	rgba[2] = 0;							\
-	rgba[3] = 0;							\
-     } while (0)
-
-#elif (SPANTMP_MESA_FMT == MESA_FORMAT_RG1616)
-
-#ifndef GET_VALUE
-#ifndef GET_PTR
-#define GET_PTR(_x, _y) (     buf + (_x) * 4 + (_y) * pitch)
-#endif
-
-#define GET_VALUE(_x, _y) *(volatile GLuint *)(GET_PTR(_x, _y))
-#define PUT_VALUE(_x, _y, _v) *(volatile GLuint *)(GET_PTR(_x, _y)) = (_v)
-#endif /* GET_VALUE */
-
-# define INIT_MONO_PIXEL(p, color)                       \
-   ((color[1] << 16) | (color[0]))
-
-# define WRITE_RGBA(_x, _y, r, g, b, a)                                 \
-   PUT_VALUE(_x, _y, r)
-
-#define WRITE_PIXEL(_x, _y, p) PUT_VALUE(_x, _y, p)
-
-#define READ_RGBA( rgba, _x, _y )				        \
-     do {								\
-        GLuint p = GET_VALUE(_x, _y);					\
-	rgba[0] = p & 0xffff;						\
-	rgba[1] = (p >> 16) & 0xffff;					\
-	rgba[2] = 0;							\
-	rgba[3] = 0;							\
      } while (0)
 
 #else
@@ -1035,4 +914,3 @@ static void TAG(InitPointers)(struct gl_renderbuffer *rb)
 #undef GET_PTR
 #undef SPANTMP_PIXEL_FMT
 #undef SPANTMP_PIXEL_TYPE
-#undef SPANTMP_MESA_FMT

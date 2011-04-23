@@ -367,10 +367,13 @@ static inline uint32_t r600_translate_colorswap(enum pipe_format format)
 	case PIPE_FORMAT_B10G10R10A2_UNORM:
 		return V_028C70_SWAP_ALT;
 
+	case PIPE_FORMAT_R32_FLOAT:
+	case PIPE_FORMAT_R16G16_FLOAT:
 	case PIPE_FORMAT_R16G16_UNORM:
 		return V_028C70_SWAP_STD;
 
 		/* 64-bit buffers. */
+	case PIPE_FORMAT_R32G32_FLOAT:
 	case PIPE_FORMAT_R16G16B16A16_UNORM:
 	case PIPE_FORMAT_R16G16B16A16_SNORM:
 	case PIPE_FORMAT_R16G16B16A16_SSCALED:
@@ -502,6 +505,57 @@ static INLINE uint32_t r600_translate_colorformat(enum pipe_format format)
 		//R600_ERR("unsupported color format %d\n", format);
 		return ~0; /* Unsupported. */
 	}
+}
+
+static INLINE uint32_t r600_colorformat_endian_swap(uint32_t colorformat)
+{
+#ifdef PIPE_ARCH_BIG_ENDIAN
+	switch(colorformat) {
+	case V_0280A0_COLOR_4_4:
+		return(ENDIAN_NONE);
+
+		/* 8-bit buffers. */
+	case V_0280A0_COLOR_8:
+		return(ENDIAN_NONE);
+
+		/* 16-bit buffers. */
+	case V_0280A0_COLOR_5_6_5:
+	case V_0280A0_COLOR_1_5_5_5:
+	case V_0280A0_COLOR_4_4_4_4:
+	case V_0280A0_COLOR_16:
+	case V_0280A0_COLOR_8_8:
+		return(ENDIAN_8IN16);
+
+		/* 32-bit buffers. */
+	case V_0280A0_COLOR_8_8_8_8:
+	case V_0280A0_COLOR_2_10_10_10:
+	case V_0280A0_COLOR_8_24:
+	case V_0280A0_COLOR_24_8:
+	case V_0280A0_COLOR_32_FLOAT:
+	case V_0280A0_COLOR_16_16_FLOAT:
+	case V_0280A0_COLOR_16_16:
+		return(ENDIAN_8IN32);
+
+		/* 64-bit buffers. */
+	case V_0280A0_COLOR_16_16_16_16:
+	case V_0280A0_COLOR_16_16_16_16_FLOAT:
+		return(ENDIAN_8IN16);
+
+	case V_0280A0_COLOR_32_32_FLOAT:
+	case V_0280A0_COLOR_32_32:
+		return(ENDIAN_8IN32);
+
+		/* 128-bit buffers. */
+	case V_0280A0_COLOR_32_32_32_FLOAT:
+	case V_0280A0_COLOR_32_32_32_32_FLOAT:
+	case V_0280A0_COLOR_32_32_32_32:
+		return(ENDIAN_8IN32);
+	default:
+		return ENDIAN_NONE; /* Unsupported. */
+	}
+#else
+	return ENDIAN_NONE;
+#endif
 }
 
 static INLINE boolean r600_is_sampler_format_supported(struct pipe_screen *screen, enum pipe_format format)

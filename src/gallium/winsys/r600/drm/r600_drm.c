@@ -30,6 +30,7 @@
 #include <sys/ioctl.h>
 #include "util/u_inlines.h"
 #include "util/u_debug.h"
+#include "util/u_hash_table.h"
 #include <pipebuffer/pb_bufmgr.h>
 #include "r600.h"
 #include "r600_priv.h"
@@ -242,6 +243,18 @@ static int radeon_init_fence(struct radeon *radeon)
 	return 0;
 }
 
+#define PTR_TO_UINT(x) ((unsigned)((intptr_t)(x)))
+
+static unsigned handle_hash(void *key)
+{
+    return PTR_TO_UINT(key);
+}
+
+static int handle_compare(void *key1, void *key2)
+{
+    return PTR_TO_UINT(key1) != PTR_TO_UINT(key2);
+}
+
 static struct radeon *radeon_new(int fd, unsigned device)
 {
 	struct radeon *radeon;
@@ -340,6 +353,9 @@ static struct radeon *radeon_new(int fd, unsigned device)
 		radeon_decref(radeon);
 		return NULL;
 	}
+
+	radeon->bo_handles = util_hash_table_create(handle_hash, handle_compare);
+	pipe_mutex_init(radeon->bo_handles_mutex);
 	return radeon;
 }
 
@@ -356,6 +372,8 @@ struct radeon *radeon_decref(struct radeon *radeon)
 		return NULL;
 	}
 
+	util_hash_table_destroy(radeon->bo_handles);
+	pipe_mutex_destroy(radeon->bo_handles_mutex);
 	if (radeon->fence_bo) {
 		r600_bo_reference(radeon, &radeon->fence_bo, NULL);
 	}

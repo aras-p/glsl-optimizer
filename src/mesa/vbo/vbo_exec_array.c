@@ -585,15 +585,11 @@ vbo_draw_arrays(struct gl_context *ctx, GLenum mode, GLint start,
    if (ctx->NewState)
       _mesa_update_state(ctx);
 
+   /* init most fields to zero */
+   memset(prim, 0, sizeof(prim));
    prim[0].begin = 1;
    prim[0].end = 1;
-   prim[0].weak = 0;
-   prim[0].pad = 0;
    prim[0].mode = mode;
-   prim[0].start = 0; /* filled in below */
-   prim[0].count = 0; /* filled in below */
-   prim[0].indexed = 0;
-   prim[0].basevertex = 0;
    prim[0].num_instances = numInstances;
 
    /* Implement the primitive restart index */
@@ -943,8 +939,13 @@ vbo_exec_DrawRangeElementsBaseVertex(GLenum mode,
       /* Set 'end' to the max possible legal value */
       assert(ctx->Array.ArrayObj->_MaxElement >= 1);
       end = ctx->Array.ArrayObj->_MaxElement - 1;
+
+      if (end < start) {
+         return;
+      }
    }
-   else if (0) {
+
+   if (0) {
       printf("glDraw[Range]Elements{,BaseVertex}"
 	     "(start %u, end %u, type 0x%x, count %d) ElemBuf %u, "
 	     "base %d\n",

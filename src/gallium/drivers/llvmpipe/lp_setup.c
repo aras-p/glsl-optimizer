@@ -653,6 +653,7 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
          jit_tex->width = tex->width0;
          jit_tex->height = tex->height0;
          jit_tex->depth = tex->depth0;
+         jit_tex->first_level = view->u.tex.first_level;
          jit_tex->last_level = tex->last_level;
 
          /* We're referencing the texture's internal data, so save a
@@ -663,7 +664,7 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
          if (!lp_tex->dt) {
             /* regular texture - setup array of mipmap level pointers */
             int j;
-            for (j = 0; j <= tex->last_level; j++) {
+            for (j = view->u.tex.first_level; j <= tex->last_level; j++) {
                jit_tex->data[j] =
                   llvmpipe_get_texture_image_all(lp_tex, j, LP_TEX_USAGE_READ,
                                                  LP_TEX_LAYOUT_LINEAR);
@@ -677,6 +678,7 @@ lp_setup_set_fragment_sampler_views(struct lp_setup_context *setup,
                   jit_tex->width = TILE_SIZE/8;
                   jit_tex->height = TILE_SIZE/8;
                   jit_tex->depth = 1;
+                  jit_tex->first_level = 0;
                   jit_tex->last_level = 0;
                   jit_tex->row_stride[j] = 0;
                   jit_tex->img_stride[j] = 0;

@@ -1264,17 +1264,18 @@ driCalculateTextureFirstLastLevel( driTextureObject * t )
    case GL_TEXTURE_2D:
    case GL_TEXTURE_3D:
    case GL_TEXTURE_CUBE_MAP:
-      if (tObj->MinFilter == GL_NEAREST || tObj->MinFilter == GL_LINEAR) {
+      if (tObj->Sampler.MinFilter == GL_NEAREST ||
+          tObj->Sampler.MinFilter == GL_LINEAR) {
          /* GL_NEAREST and GL_LINEAR only care about GL_TEXTURE_BASE_LEVEL.
           */
 
          firstLevel = lastLevel = tObj->BaseLevel;
       }
       else {
-	 firstLevel = tObj->BaseLevel + (GLint)(tObj->MinLod + 0.5);
+	 firstLevel = tObj->BaseLevel + (GLint)(tObj->Sampler.MinLod + 0.5);
 	 firstLevel = MAX2(firstLevel, tObj->BaseLevel);
 	 firstLevel = MIN2(firstLevel, tObj->BaseLevel + baseImage->MaxLog2);
-	 lastLevel = tObj->BaseLevel + (GLint)(tObj->MaxLod + 0.5);
+	 lastLevel = tObj->BaseLevel + (GLint)(tObj->Sampler.MaxLod + 0.5);
 	 lastLevel = MAX2(lastLevel, t->tObj->BaseLevel);
 	 lastLevel = MIN2(lastLevel, t->tObj->BaseLevel + baseImage->MaxLog2);
 	 lastLevel = MIN2(lastLevel, t->tObj->MaxLevel);

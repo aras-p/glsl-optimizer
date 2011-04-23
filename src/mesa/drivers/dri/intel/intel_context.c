@@ -62,10 +62,6 @@ int INTEL_DEBUG = (0);
 #endif
 
 
-#define DRIVER_DATE                     "20100330 DEVELOPMENT"
-#define DRIVER_DATE_GEM                 "GEM " DRIVER_DATE
-
-
 static const GLubyte *
 intelGetString(struct gl_context * ctx, GLenum name)
 {
@@ -182,7 +178,7 @@ intelGetString(struct gl_context * ctx, GLenum name)
          break;
       }
 
-      (void) driGetRendererString(buffer, chipset, DRIVER_DATE_GEM, 0);
+      (void) driGetRendererString(buffer, chipset, 0);
       return (GLubyte *) buffer;
 
    default:
@@ -728,8 +724,13 @@ intelInitContext(struct intel_context *intel,
    ctx->TextureFormatSupported[MESA_FORMAT_RG88] = GL_TRUE;
    ctx->TextureFormatSupported[MESA_FORMAT_RG1616] = GL_TRUE;
 
+   /* GL_MESA_texture_signed_rgba / GL_EXT_texture_snorm */
    ctx->TextureFormatSupported[MESA_FORMAT_DUDV8] = GL_TRUE;
    ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RGBA8888_REV] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_R8] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_RG88_REV] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_R16] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_SIGNED_GR1616] = GL_TRUE;
 
    /* GL_EXT_texture_sRGB */
    ctx->TextureFormatSupported[MESA_FORMAT_SARGB8] = GL_TRUE;
@@ -742,7 +743,18 @@ intelInitContext(struct intel_context *intel,
       ctx->TextureFormatSupported[MESA_FORMAT_SL8] = GL_TRUE;
       ctx->TextureFormatSupported[MESA_FORMAT_SLA8] = GL_TRUE;
    }
+
+#ifdef TEXTURE_FLOAT_ENABLED
+   ctx->TextureFormatSupported[MESA_FORMAT_RGBA_FLOAT32] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_RG_FLOAT32] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_R_FLOAT32] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_INTENSITY_FLOAT32] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_LUMINANCE_FLOAT32] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_ALPHA_FLOAT32] = GL_TRUE;
+   ctx->TextureFormatSupported[MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32] = GL_TRUE;
 #endif
+
+#endif /* !I915 */
 
    driParseConfigFiles(&intel->optionCache, &intelScreen->optionCache,
                        sPriv->myNum, (intel->gen >= 4) ? "i965" : "i915");

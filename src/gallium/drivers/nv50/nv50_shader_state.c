@@ -226,7 +226,7 @@ nv50_gmtyprog_validate(struct nv50_context *nv50)
    OUT_RING  (chan, gp->code_base);
 }
 
-void
+static void
 nv50_sprite_coords_validate(struct nv50_context *nv50)
 {
    struct nouveau_channel *chan = nv50->screen->base.channel;
@@ -280,6 +280,39 @@ nv50_sprite_coords_validate(struct nv50_context *nv50)
 
    BEGIN_RING(chan, RING_3D(POINT_COORD_REPLACE_MAP(0)), 8);
    OUT_RINGp (chan, pntc, 8);
+}
+
+/* Validate state derived from shaders and the rasterizer cso. */
+void
+nv50_validate_derived_rs(struct nv50_context *nv50)
+{
+   struct nouveau_channel *chan = nv50->screen->base.channel;
+   uint32_t color, psize;
+
+   nv50_sprite_coords_validate(nv50);
+
+   if (nv50->dirty & NV50_NEW_FRAGPROG)
+      return;
+   psize = nv50->state.semantic_psize & ~NV50_3D_MAP_SEMANTIC_3_PTSZ_EN__MASK;
+   color = nv50->state.semantic_color & ~NV50_3D_MAP_SEMANTIC_0_CLMP_EN;
+
+   if (nv50->rast->pipe.clamp_vertex_color)
+      color |= NV50_3D_MAP_SEMANTIC_0_CLMP_EN;
+
+   if (color != nv50->state.semantic_color) {
+      nv50->state.semantic_color = color;
+      BEGIN_RING(chan, RING_3D(MAP_SEMANTIC_0), 1);
+      OUT_RING  (chan, color);
+   }
+
+   if (nv50->rast->pipe.point_size_per_vertex)
+      psize |= NV50_3D_MAP_SEMANTIC_3_PTSZ_EN__MASK;
+
+   if (psize != nv50->state.semantic_psize) {
+      nv50->state.semantic_psize = psize;
+      BEGIN_RING(chan, RING_3D(MAP_SEMANTIC_3), 1);
+      OUT_RING  (chan, psize);
+   }
 }
 
 static int
@@ -372,6 +405,9 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
       map[m++] = vp->vp.psiz;
    }
 
+   if (nv50->rast->pipe.clamp_vertex_color)
+      colors |= NV50_3D_MAP_SEMANTIC_0_CLMP_EN;
+
    n = (m + 3) / 4;
    assert(m <= 64);
 
@@ -403,6 +439,9 @@ nv50_fp_linkage_validate(struct nv50_context *nv50)
    OUT_RING  (chan, interp);
 
    nv50->state.interpolant_ctrl = interp;
+
+   nv50->state.semantic_color = colors;
+   nv50->state.semantic_psize = psiz;
 
    BEGIN_RING(chan, RING_3D(NOPERSPECTIVE_BITMAP(0)), 4);
    OUT_RINGp (chan, lin, 4);

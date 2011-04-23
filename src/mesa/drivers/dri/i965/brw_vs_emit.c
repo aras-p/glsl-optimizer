@@ -437,8 +437,14 @@ static void brw_vs_alloc_regs( struct brw_vs_compile *c )
       if (c->key.nr_userclip)
 	 header_regs += 2;
 
+      /* Each attribute is 16 bytes (1 vec4), so dividing by 8 gives us the
+       * number of 128-byte (1024-bit) units.
+       */
       c->prog_data.urb_entry_size = (attributes_in_vue + header_regs + 7) / 8;
    } else if (intel->gen == 5)
+      /* Each attribute is 16 bytes (1 vec4), so dividing by 4 gives us the
+       * number of 64-byte (512-bit) units.
+       */
       c->prog_data.urb_entry_size = (attributes_in_vue + 6 + 3) / 4;
    else
       c->prog_data.urb_entry_size = (attributes_in_vue + 2 + 3) / 4;
@@ -2215,7 +2221,8 @@ void brw_vs_emit(struct brw_vs_compile *c )
        * instructions. Instead, we directly modify the header
        * of the last (already stored) instruction.
        */
-      if (inst->DstReg.File == PROGRAM_OUTPUT) {
+      if (inst->DstReg.File == PROGRAM_OUTPUT &&
+	  c->key.clamp_vertex_color) {
          if ((inst->DstReg.Index == VERT_RESULT_COL0)
              || (inst->DstReg.Index == VERT_RESULT_COL1)
              || (inst->DstReg.Index == VERT_RESULT_BFC0)

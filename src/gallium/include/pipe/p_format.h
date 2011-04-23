@@ -211,17 +211,35 @@ enum pipe_format {
    PIPE_FORMAT_LATC2_UNORM             = 145,
    PIPE_FORMAT_LATC2_SNORM             = 146,
 
-   PIPE_FORMAT_YV12                    = 147,
-   PIPE_FORMAT_YV16                    = 148,
-   PIPE_FORMAT_IYUV                    = 149,  /**< aka I420 */
-   PIPE_FORMAT_NV12                    = 150,
-   PIPE_FORMAT_NV21                    = 151,
+   PIPE_FORMAT_A8_SNORM                = 147,
+   PIPE_FORMAT_L8_SNORM                = 148,
+   PIPE_FORMAT_L8A8_SNORM              = 149,
+   PIPE_FORMAT_I8_SNORM                = 150,
+   PIPE_FORMAT_A16_SNORM               = 151,
+   PIPE_FORMAT_L16_SNORM               = 152,
+   PIPE_FORMAT_L16A16_SNORM            = 153,
+   PIPE_FORMAT_I16_SNORM               = 154,
+
+   PIPE_FORMAT_A16_FLOAT               = 155,
+   PIPE_FORMAT_L16_FLOAT               = 156,
+   PIPE_FORMAT_L16A16_FLOAT            = 157,
+   PIPE_FORMAT_I16_FLOAT               = 158,
+   PIPE_FORMAT_A32_FLOAT               = 159,
+   PIPE_FORMAT_L32_FLOAT               = 160,
+   PIPE_FORMAT_L32A32_FLOAT            = 161,
+   PIPE_FORMAT_I32_FLOAT               = 162,
+
+   PIPE_FORMAT_YV12                    = 163,
+   PIPE_FORMAT_YV16                    = 164,
+   PIPE_FORMAT_IYUV                    = 165,  /**< aka I420 */
+   PIPE_FORMAT_NV12                    = 166,
+   PIPE_FORMAT_NV21                    = 167,
    PIPE_FORMAT_AYUV                    = PIPE_FORMAT_A8R8G8B8_UNORM,
    PIPE_FORMAT_VUYA                    = PIPE_FORMAT_B8G8R8A8_UNORM,
    PIPE_FORMAT_XYUV                    = PIPE_FORMAT_X8R8G8B8_UNORM,
    PIPE_FORMAT_VUYX                    = PIPE_FORMAT_B8G8R8X8_UNORM,
-   PIPE_FORMAT_IA44                    = 152,
-   PIPE_FORMAT_AI44                    = 153,
+   PIPE_FORMAT_IA44                    = 168,
+   PIPE_FORMAT_AI44                    = 169,
 
    PIPE_FORMAT_COUNT
 };

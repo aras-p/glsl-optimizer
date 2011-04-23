@@ -704,9 +704,16 @@ static void get_readers_for_single_write(
 					&d->BranchMasks[branch_depth];
 
 				if (masks->HasElse) {
+					/* Abort on read for components that
+					 * were written in the IF block. */
 					d->ReaderData->AbortOnRead |=
 						masks->IfWriteMask
 							& ~masks->ElseWriteMask;
+					/* Abort on read for components that
+					 * were written in the ELSE block. */
+					d->ReaderData->AbortOnRead |=
+						masks->ElseWriteMask
+							& ~d->AliveWriteMask;
 					d->AliveWriteMask = masks->IfWriteMask
 						^ ((masks->IfWriteMask ^
 							masks->ElseWriteMask)

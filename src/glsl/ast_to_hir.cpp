@@ -848,6 +848,36 @@ do_comparison(void *mem_ctx, int operation, ir_rvalue *op0, ir_rvalue *op1)
    return cmp;
 }
 
+/* For logical operations, we want to ensure that the operands are
+ * scalar booleans.  If it isn't, emit an error and return a constant
+ * boolean to avoid triggering cascading error messages.
+ */
+ir_rvalue *
+get_scalar_boolean_operand(exec_list *instructions,
+			   struct _mesa_glsl_parse_state *state,
+			   ast_expression *parent_expr,
+			   int operand,
+			   const char *operand_name,
+			   bool *error_emitted)
+{
+   ast_expression *expr = parent_expr->subexpressions[operand];
+   void *ctx = state;
+   ir_rvalue *val = expr->hir(instructions, state);
+
+   if (val->type->is_boolean() && val->type->is_scalar())
+      return val;
+
+   if (!*error_emitted) {
+      YYLTYPE loc = expr->get_location();
+      _mesa_glsl_error(&loc, state, "%s of `%s' must be scalar boolean",
+		       operand_name,
+		       parent_expr->operator_string(parent_expr->oper));
+      *error_emitted = true;
+   }
+
+   return new(ctx) ir_constant(true);
+}
+
 ir_rvalue *
 ast_expression::hir(exec_list *instructions,
 		    struct _mesa_glsl_parse_state *state)
@@ -910,7 +940,7 @@ ast_expression::hir(exec_list *instructions,
    };
    ir_rvalue *result = NULL;
    ir_rvalue *op[3];
-   const struct glsl_type *type = glsl_type::error_type;
+   const struct glsl_type *type; /* a temporary variable for switch cases */
    bool error_emitted = false;
    YYLTYPE loc;
 
@@ -924,7 +954,6 @@ ast_expression::hir(exec_list *instructions,
       result = do_assignment(instructions, state, op[0], op[1], false,
 			     this->subexpressions[0]->get_location());
       error_emitted = result->type->is_error();
-      type = result->type;
       break;
    }
 
@@ -1043,10 +1072,12 @@ ast_expression::hir(exec_list *instructions,
 	 error_emitted = true;
       }
 
-      result = do_comparison(ctx, operations[this->oper], op[0], op[1]);
-      type = glsl_type::bool_type;
-
-      assert(error_emitted || (result->type == glsl_type::bool_type));
+      if (error_emitted) {
+	 result = new(ctx) ir_constant(false);
+      } else {
+	 result = do_comparison(ctx, operations[this->oper], op[0], op[1]);
+	 assert(result->type == glsl_type::bool_type);
+      }
       break;
 
    case ast_bit_and:
@@ -1079,29 +1110,16 @@ ast_expression::hir(exec_list *instructions,
       break;
 
    case ast_logic_and: {
-      op[0] = this->subexpressions[0]->hir(instructions, state);
-
-      if (!op[0]->type->is_boolean() || !op[0]->type->is_scalar()) {
-	 YYLTYPE loc = this->subexpressions[0]->get_location();
-
-	 _mesa_glsl_error(& loc, state, "LHS of `%s' must be scalar boolean",
-			  operator_string(this->oper));
-	 error_emitted = true;
-      }
+      exec_list rhs_instructions;
+      op[0] = get_scalar_boolean_operand(instructions, state, this, 0,
+					 "LHS", &error_emitted);
+      op[1] = get_scalar_boolean_operand(&rhs_instructions, state, this, 1,
+					 "RHS", &error_emitted);
 
       ir_constant *op0_const = op[0]->constant_expression_value();
       if (op0_const) {
 	 if (op0_const->value.b[0]) {
-	    op[1] = this->subexpressions[1]->hir(instructions, state);
-
-	    if (!op[1]->type->is_boolean() || !op[1]->type->is_scalar()) {
-	       YYLTYPE loc = this->subexpressions[1]->get_location();
-
-	       _mesa_glsl_error(& loc, state,
-				"RHS of `%s' must be scalar boolean",
-				operator_string(this->oper));
-	       error_emitted = true;
-	    }
+	    instructions->append_list(&rhs_instructions);
 	    result = op[1];
 	 } else {
 	    result = op0_const;
@@ -1116,17 +1134,7 @@ ast_expression::hir(exec_list *instructions,
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
 	 instructions->push_tail(stmt);
 
-	 op[1] = this->subexpressions[1]->hir(&stmt->then_instructions, state);
-
-	 if (!op[1]->type->is_boolean() || !op[1]->type->is_scalar()) {
-	    YYLTYPE loc = this->subexpressions[1]->get_location();
-
-	    _mesa_glsl_error(& loc, state,
-			     "RHS of `%s' must be scalar boolean",
-			     operator_string(this->oper));
-	    error_emitted = true;
-	 }
-
+	 stmt->then_instructions.append_list(&rhs_instructions);
 	 ir_dereference *const then_deref = new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const then_assign =
 	    new(ctx) ir_assignment(then_deref, op[1], NULL);
@@ -1144,31 +1152,17 @@ ast_expression::hir(exec_list *instructions,
    }
 
    case ast_logic_or: {
-      op[0] = this->subexpressions[0]->hir(instructions, state);
-
-      if (!op[0]->type->is_boolean() || !op[0]->type->is_scalar()) {
-	 YYLTYPE loc = this->subexpressions[0]->get_location();
-
-	 _mesa_glsl_error(& loc, state, "LHS of `%s' must be scalar boolean",
-			  operator_string(this->oper));
-	 error_emitted = true;
-      }
+      exec_list rhs_instructions;
+      op[0] = get_scalar_boolean_operand(instructions, state, this, 0,
+					 "LHS", &error_emitted);
+      op[1] = get_scalar_boolean_operand(&rhs_instructions, state, this, 1,
+					 "RHS", &error_emitted);
 
       ir_constant *op0_const = op[0]->constant_expression_value();
       if (op0_const) {
 	 if (op0_const->value.b[0]) {
 	    result = op0_const;
 	 } else {
-	    op[1] = this->subexpressions[1]->hir(instructions, state);
-
-	    if (!op[1]->type->is_boolean() || !op[1]->type->is_scalar()) {
-	       YYLTYPE loc = this->subexpressions[1]->get_location();
-
-	       _mesa_glsl_error(& loc, state,
-				"RHS of `%s' must be scalar boolean",
-				operator_string(this->oper));
-	       error_emitted = true;
-	    }
 	    result = op[1];
 	 }
 	 type = glsl_type::bool_type;
@@ -1181,21 +1175,12 @@ ast_expression::hir(exec_list *instructions,
 	 ir_if *const stmt = new(ctx) ir_if(op[0]);
 	 instructions->push_tail(stmt);
 
-	 op[1] = this->subexpressions[1]->hir(&stmt->else_instructions, state);
-
-	 if (!op[1]->type->is_boolean() || !op[1]->type->is_scalar()) {
-	    YYLTYPE loc = this->subexpressions[1]->get_location();
-
-	    _mesa_glsl_error(& loc, state, "RHS of `%s' must be scalar boolean",
-			     operator_string(this->oper));
-	    error_emitted = true;
-	 }
-
 	 ir_dereference *const then_deref = new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const then_assign =
 	    new(ctx) ir_assignment(then_deref, new(ctx) ir_constant(true), NULL);
 	 stmt->then_instructions.push_tail(then_assign);
 
+	 stmt->else_instructions.append_list(&rhs_instructions);
 	 ir_dereference *const else_deref = new(ctx) ir_dereference_variable(tmp);
 	 ir_assignment *const else_assign =
 	    new(ctx) ir_assignment(else_deref, op[1], NULL);
@@ -1208,29 +1193,27 @@ ast_expression::hir(exec_list *instructions,
    }
 
    case ast_logic_xor:
-      op[0] = this->subexpressions[0]->hir(instructions, state);
-      op[1] = this->subexpressions[1]->hir(instructions, state);
-
+      /* From page 33 (page 39 of the PDF) of the GLSL 1.10 spec:
+       *
+       *    "The logical binary operators and (&&), or ( | | ), and
+       *     exclusive or (^^). They operate only on two Boolean
+       *     expressions and result in a Boolean expression."
+       */
+      op[0] = get_scalar_boolean_operand(instructions, state, this, 0, "LHS",
+					 &error_emitted);
+      op[1] = get_scalar_boolean_operand(instructions, state, this, 1, "RHS",
+					 &error_emitted);
 
       result = new(ctx) ir_expression(operations[this->oper], glsl_type::bool_type,
 				      op[0], op[1]);
-      type = glsl_type::bool_type;
       break;
 
    case ast_logic_not:
-      op[0] = this->subexpressions[0]->hir(instructions, state);
-
-      if (!op[0]->type->is_boolean() || !op[0]->type->is_scalar()) {
-	 YYLTYPE loc = this->subexpressions[0]->get_location();
-
-	 _mesa_glsl_error(& loc, state,
-			  "operand of `!' must be scalar boolean");
-	 error_emitted = true;
-      }
+      op[0] = get_scalar_boolean_operand(instructions, state, this, 0,
+					 "operand", &error_emitted);
 
       result = new(ctx) ir_expression(operations[this->oper], glsl_type::bool_type,
 				      op[0], NULL);
-      type = glsl_type::bool_type;
       break;
 
    case ast_mul_assign:
@@ -1250,7 +1233,6 @@ ast_expression::hir(exec_list *instructions,
       result = do_assignment(instructions, state,
 			     op[0]->clone(ctx, NULL), temp_rhs, false,
 			     this->subexpressions[0]->get_location());
-      type = result->type;
       error_emitted = (op[0]->type->is_error());
 
       /* GLSL 1.10 does not allow array assignment.  However, we don't have to
@@ -1276,7 +1258,6 @@ ast_expression::hir(exec_list *instructions,
       result = do_assignment(instructions, state,
 			     op[0]->clone(ctx, NULL), temp_rhs, false,
 			     this->subexpressions[0]->get_location());
-      type = result->type;
       error_emitted = type->is_error();
       break;
    }
@@ -1313,20 +1294,14 @@ ast_expression::hir(exec_list *instructions,
    }
 
    case ast_conditional: {
-      op[0] = this->subexpressions[0]->hir(instructions, state);
-
       /* From page 59 (page 65 of the PDF) of the GLSL 1.50 spec:
        *
        *    "The ternary selection operator (?:). It operates on three
        *    expressions (exp1 ? exp2 : exp3). This operator evaluates the
        *    first expression, which must result in a scalar Boolean."
        */
-      if (!op[0]->type->is_boolean() || !op[0]->type->is_scalar()) {
-	 YYLTYPE loc = this->subexpressions[0]->get_location();
-
-	 _mesa_glsl_error(& loc, state, "?: condition must be scalar boolean");
-	 error_emitted = true;
-      }
+      op[0] = get_scalar_boolean_operand(instructions, state, this, 0,
+					 "condition", &error_emitted);
 
       /* The :? operator is implemented by generating an anonymous temporary
        * followed by an if-statement.  The last instruction in each branch of
@@ -1424,7 +1399,6 @@ ast_expression::hir(exec_list *instructions,
       result = do_assignment(instructions, state,
 			     op[0]->clone(ctx, NULL), temp_rhs, false,
 			     this->subexpressions[0]->get_location());
-      type = result->type;
       error_emitted = op[0]->type->is_error();
       break;
    }
@@ -1454,14 +1428,12 @@ ast_expression::hir(exec_list *instructions,
 			  op[0]->clone(ctx, NULL), temp_rhs, false,
 			  this->subexpressions[0]->get_location());
 
-      type = result->type;
       error_emitted = op[0]->type->is_error();
       break;
    }
 
    case ast_field_selection:
       result = _mesa_ast_field_selection_to_hir(this, instructions, state);
-      type = result->type;
       break;
 
    case ast_array_index: {
@@ -1577,7 +1549,7 @@ ast_expression::hir(exec_list *instructions,
 	     */
 	    ir_variable *v = array->whole_variable_referenced();
 	    if (v != NULL)
-	       v->max_array_access = array->type->array_size();
+	       v->max_array_access = array->type->array_size() - 1;
 	 }
       }
 
@@ -1618,7 +1590,6 @@ ast_expression::hir(exec_list *instructions,
       if (error_emitted)
 	 result->type = glsl_type::error_type;
 
-      type = result->type;
       break;
    }
 
@@ -1641,7 +1612,6 @@ ast_expression::hir(exec_list *instructions,
 
       if (var != NULL) {
 	 var->used = true;
-	 type = result->type;
       } else {
 	 _mesa_glsl_error(& loc, state, "`%s' undeclared",
 			  this->primary_expression.identifier);
@@ -1652,22 +1622,18 @@ ast_expression::hir(exec_list *instructions,
    }
 
    case ast_int_constant:
-      type = glsl_type::int_type;
       result = new(ctx) ir_constant(this->primary_expression.int_constant);
       break;
 
    case ast_uint_constant:
-      type = glsl_type::uint_type;
       result = new(ctx) ir_constant(this->primary_expression.uint_constant);
       break;
 
    case ast_float_constant:
-      type = glsl_type::float_type;
       result = new(ctx) ir_constant(this->primary_expression.float_constant);
       break;
 
    case ast_bool_constant:
-      type = glsl_type::bool_type;
       result = new(ctx) ir_constant(bool(this->primary_expression.bool_constant));
       break;
 
@@ -1682,10 +1648,42 @@ ast_expression::hir(exec_list *instructions,
        * therefore add instructions to the instruction list), they get dropped
        * on the floor.
        */
-      foreach_list_typed (ast_node, ast, link, &this->expressions)
-	 result = ast->hir(instructions, state);
+      exec_node *previous_tail_pred = NULL;
+      YYLTYPE previous_operand_loc = loc;
 
-      type = result->type;
+      foreach_list_typed (ast_node, ast, link, &this->expressions) {
+	 /* If one of the operands of comma operator does not generate any
+	  * code, we want to emit a warning.  At each pass through the loop
+	  * previous_tail_pred will point to the last instruction in the
+	  * stream *before* processing the previous operand.  Naturally,
+	  * instructions->tail_pred will point to the last instruction in the
+	  * stream *after* processing the previous operand.  If the two
+	  * pointers match, then the previous operand had no effect.
+	  *
+	  * The warning behavior here differs slightly from GCC.  GCC will
+	  * only emit a warning if none of the left-hand operands have an
+	  * effect.  However, it will emit a warning for each.  I believe that
+	  * there are some cases in C (especially with GCC extensions) where
+	  * it is useful to have an intermediate step in a sequence have no
+	  * effect, but I don't think these cases exist in GLSL.  Either way,
+	  * it would be a giant hassle to replicate that behavior.
+	  */
+	 if (previous_tail_pred == instructions->tail_pred) {
+	    _mesa_glsl_warning(&previous_operand_loc, state,
+			       "left-hand operand of comma expression has "
+			       "no effect");
+	 }
+
+	 /* tail_pred is directly accessed instead of using the get_tail()
+	  * method for performance reasons.  get_tail() has extra code to
+	  * return NULL when the list is empty.  We don't care about that
+	  * here, so using tail_pred directly is fine.
+	  */
+	 previous_tail_pred = instructions->tail_pred;
+	 previous_operand_loc = ast->get_location();
+
+	 result = ast->hir(instructions, state);
+      }
 
       /* Any errors should have already been emitted in the loop above.
        */
@@ -1693,8 +1691,10 @@ ast_expression::hir(exec_list *instructions,
       break;
    }
    }
+   type = NULL; /* use result->type, not type. */
+   assert(result != NULL);
 
-   if (type->is_error() && !error_emitted)
+   if (result->type->is_error() && !error_emitted)
       _mesa_glsl_error(& loc, state, "type mismatch");
 
    return result;
@@ -2676,17 +2676,24 @@ ast_declarator_list::hir(exec_list *instructions,
        *    preceded by one of these precision qualifiers [...] Literal
        *    constants do not have precision qualifiers. Neither do Boolean
        *    variables.
+       *
+       * In GLSL ES, sampler types are also allowed.
+       *
+       * From page 87 of the GLSL ES spec:
+       *    "RESOLUTION: Allow sampler types to take a precision qualifier."
        */
       if (this->type->specifier->precision != ast_precision_none
           && !var->type->is_float()
           && !var->type->is_integer()
+          && !(var->type->is_sampler() && state->es_shader)
           && !(var->type->is_array()
                && (var->type->fields.array->is_float()
                    || var->type->fields.array->is_integer()))) {
 
          _mesa_glsl_error(&loc, state,
-                          "precision qualifiers apply only to floating point "
-                          "and integer types");
+                          "precision qualifiers apply only to floating point"
+                          "%s types", state->es_shader ? ", integer, and sampler"
+						       : "and integer");
       }
 
       /* Process the initializer and add its instructions to a temporary

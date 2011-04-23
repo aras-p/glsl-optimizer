@@ -93,9 +93,18 @@ nvc0_blend_state_create(struct pipe_context *pipe,
 
     SB_IMMED_3D(so, BLEND_INDEPENDENT, cso->independent_blend_enable);
 
+    if (!cso->logicop_enable)
+       SB_IMMED_3D(so, LOGIC_OP_ENABLE, 0);
+
+    if (cso->logicop_enable) {
+       SB_BEGIN_3D(so, LOGIC_OP_ENABLE, 2);
+       SB_DATA    (so, 1);
+       SB_DATA    (so, nvgl_logicop_func(cso->logicop_func));
+
+       SB_IMMED_3D(so, BLEND_ENABLES, 0);
+    } else
     if (!cso->independent_blend_enable) {
-        SB_BEGIN_3D(so, BLEND_ENABLES, 1);
-        SB_DATA    (so, cso->rt[0].blend_enable ? 0xff : 0);
+        SB_IMMED_3D(so, BLEND_ENABLES, cso->rt[0].blend_enable ? 0xff : 0);
 
         if (cso->rt[0].blend_enable) {
             SB_BEGIN_3D(so, BLEND_EQUATION_RGB, 5);
@@ -108,7 +117,8 @@ nvc0_blend_state_create(struct pipe_context *pipe,
             SB_DATA    (so, nvc0_blend_fac(cso->rt[0].alpha_dst_factor));
         }
 
-        SB_BEGIN_3D(so, COLOR_MASK_BROADCAST, 1);
+        SB_IMMED_3D(so, COLOR_MASK_COMMON, 1);
+        SB_BEGIN_3D(so, COLOR_MASK(0), 1);
         SB_DATA    (so, nvc0_colormask(cso->rt[0].colormask));
     } else {
         uint8_t en = 0;
@@ -126,23 +136,15 @@ nvc0_blend_state_create(struct pipe_context *pipe,
             SB_DATA    (so, nvc0_blend_fac(cso->rt[i].alpha_src_factor));
             SB_DATA    (so, nvc0_blend_fac(cso->rt[i].alpha_dst_factor));
         }
-        SB_BEGIN_3D(so, BLEND_ENABLES, 1);
-        SB_DATA    (so, en);
+        SB_IMMED_3D(so, BLEND_ENABLES, en);
 
+        SB_IMMED_3D(so, COLOR_MASK_COMMON, 0);
         SB_BEGIN_3D(so, COLOR_MASK(0), 8);
         for (i = 0; i < 8; ++i)
             SB_DATA(so, nvc0_colormask(cso->rt[i].colormask));
     }
 
-    if (cso->logicop_enable) {
-       SB_BEGIN_3D(so, LOGIC_OP_ENABLE, 2);
-       SB_DATA    (so, 1);
-       SB_DATA    (so, nvgl_logicop_func(cso->logicop_func));
-    } else {
-       SB_IMMED_3D(so, LOGIC_OP_ENABLE, 0);
-    }
-
-    assert(so->size < (sizeof(so->state) / sizeof(so->state[0])));
+    assert(so->size <= (sizeof(so->state) / sizeof(so->state[0])));
     return so;
 }
 
@@ -161,6 +163,7 @@ nvc0_blend_state_delete(struct pipe_context *pipe, void *hwcso)
     FREE(hwcso);
 }
 
+/* NOTE: ignoring line_last_pixel, using FALSE (set on screen init) */
 static void *
 nvc0_rasterizer_state_create(struct pipe_context *pipe,
                              const struct pipe_rasterizer_state *cso)
@@ -183,19 +186,23 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
     SB_IMMED_3D(so, PROVOKING_VERTEX_LAST, !cso->flatshade_first);
     SB_IMMED_3D(so, VERTEX_TWO_SIDE_ENABLE, cso->light_twoside);
 
-    SB_BEGIN_3D(so, LINE_WIDTH, 1);
-    SB_DATA    (so, fui(cso->line_width));
-    SB_IMMED_3D(so, LINE_SMOOTH_ENABLE, cso->line_smooth);
+    SB_IMMED_3D(so, VERT_COLOR_CLAMP_EN, cso->clamp_vertex_color);
+    SB_BEGIN_3D(so, FRAG_COLOR_CLAMP_EN, 1);
+    SB_DATA    (so, cso->clamp_fragment_color ? 0x11111111 : 0x00000000);
 
-    SB_BEGIN_3D(so, LINE_STIPPLE_ENABLE, 1);
+    SB_IMMED_3D(so, LINE_SMOOTH_ENABLE, cso->line_smooth);
+    if (cso->line_smooth)
+       SB_BEGIN_3D(so, LINE_WIDTH_SMOOTH, 1);
+    else
+       SB_BEGIN_3D(so, LINE_WIDTH_ALIASED, 1);
+    SB_DATA    (so, fui(cso->line_width));
+
+    SB_IMMED_3D(so, LINE_STIPPLE_ENABLE, cso->line_stipple_enable);
     if (cso->line_stipple_enable) {
-        SB_DATA    (so, 1);
         SB_BEGIN_3D(so, LINE_STIPPLE_PATTERN, 1);
         SB_DATA    (so, (cso->line_stipple_pattern << 8) |
                          cso->line_stipple_factor);
                     
-    } else {
-        SB_DATA    (so, 0);
     }
 
     SB_IMMED_3D(so, VP_POINT_SIZE_EN, cso->point_size_per_vertex);
@@ -249,7 +256,7 @@ nvc0_rasterizer_state_create(struct pipe_context *pipe,
         SB_DATA    (so, fui(cso->offset_units * 2.0f));
     }
 
-    assert(so->size < (sizeof(so->state) / sizeof(so->state[0])));
+    assert(so->size <= (sizeof(so->state) / sizeof(so->state[0])));
     return (void *)so;
 }
 
@@ -320,7 +327,7 @@ nvc0_zsa_state_create(struct pipe_context *pipe,
       SB_DATA    (so, nvgl_comparison_op(cso->alpha.func));
    }
 
-   assert(so->size < (sizeof(so->state) / sizeof(so->state[0])));
+   assert(so->size <= (sizeof(so->state) / sizeof(so->state[0])));
    return (void *)so;
 }
 

@@ -22,6 +22,7 @@
  */
 #include <stdio.h>
 #include <errno.h>
+#include <byteswap.h>
 #include "util/u_format.h"
 #include "util/u_memory.h"
 #include "pipe/p_shader_tokens.h"
@@ -31,6 +32,12 @@
 #include "r600_asm.h"
 #include "r600_formats.h"
 #include "r600d.h"
+
+#ifdef PIPE_ARCH_BIG_ENDIAN
+#define CPU_TO_LE32(x)	bswap_32(x)
+#else
+#define CPU_TO_LE32(x)	(x)
+#endif
 
 #define NUM_OF_CYCLES 3
 #define NUM_OF_COMPONENTS 4
@@ -953,10 +960,17 @@ static int merge_inst_groups(struct r600_bc *bc, struct r600_bc_alu *slots[5],
 		} else
 			result[i] = slots[i];
 
-		// let's check source gprs
 		alu = slots[i];
 		num_once_inst += is_alu_once_inst(bc, alu);
 
+		// let's check dst gpr
+		if (alu->dst.rel) {
+			if (have_mova)
+				return 0;
+			have_rel = 1;
+		}
+
+		// let's check source gprs
 		num_src = r600_bc_get_num_operands(bc, alu);
 		for (src = 0; src < num_src; ++src) {
 			if (alu->src[src].rel) {
@@ -1376,6 +1390,7 @@ static int r600_bc_vtx_build(struct r600_bc *bc, struct r600_bc_vtx *vtx, unsign
 				S_SQ_VTX_WORD1_SRF_MODE_ALL(vtx->srf_mode_all) |
 				S_SQ_VTX_WORD1_GPR_DST_GPR(vtx->dst_gpr);
 	bc->bytecode[id++] = S_SQ_VTX_WORD2_OFFSET(vtx->offset) |
+	   			S_SQ_VTX_WORD2_ENDIAN_SWAP(vtx->endian) |
 				S_SQ_VTX_WORD2_MEGA_FETCH(1);
 	bc->bytecode[id++] = 0;
 	return 0;
@@ -1910,6 +1925,7 @@ void r600_bc_dump(struct r600_bc *bc)
 			fprintf(stderr, "MODE:%d)\n", vtx->srf_mode_all);
 			id++;
 			fprintf(stderr, "%04d %08X   ", id, bc->bytecode[id]);
+			fprintf(stderr, "ENDIAN:%d ", vtx->endian);
 			fprintf(stderr, "OFFSET:%d\n", vtx->offset);
 			//TODO
 			id++;
@@ -1922,7 +1938,7 @@ void r600_bc_dump(struct r600_bc *bc)
 }
 
 static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
-				unsigned *num_format, unsigned *format_comp)
+				unsigned *num_format, unsigned *format_comp, unsigned *endian)
 {
 	const struct util_format_description *desc;
 	unsigned i;
@@ -1930,6 +1946,7 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 	*format = 0;
 	*num_format = 0;
 	*format_comp = 0;
+	*endian = ENDIAN_NONE;
 
 	desc = util_format_description(pformat);
 	if (desc->layout != UTIL_FORMAT_LAYOUT_PLAIN) {
@@ -1960,6 +1977,9 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 				*format = FMT_16_16_16_16_FLOAT;
 				break;
 			}
+#ifdef PIPE_ARCH_BIG_ENDIAN
+			*endian = ENDIAN_8IN16;
+#endif
 			break;
 		case 32:
 			switch (desc->nr_channels) {
@@ -1976,6 +1996,9 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 				*format = FMT_32_32_32_32_FLOAT;
 				break;
 			}
+#ifdef PIPE_ARCH_BIG_ENDIAN
+			*endian = ENDIAN_8IN32;
+#endif
 			break;
 		default:
 			goto out_unknown;
@@ -2013,6 +2036,9 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 				*format = FMT_16_16_16_16;
 				break;
 			}
+#ifdef PIPE_ARCH_BIG_ENDIAN
+			*endian = ENDIAN_8IN16;
+#endif
 			break;
 		case 32:
 			switch (desc->nr_channels) {
@@ -2029,6 +2055,9 @@ static void r600_vertex_data_type(enum pipe_format pformat, unsigned *format,
 				*format = FMT_32_32_32_32;
 				break;
 			}
+#ifdef PIPE_ARCH_BIG_ENDIAN
+			*endian = ENDIAN_8IN32;
+#endif
 			break;
 		default:
 			goto out_unknown;
@@ -2060,7 +2089,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 	struct pipe_vertex_element *elements = ve->elements;
 	const struct util_format_description *desc;
 	unsigned fetch_resource_start = rctx->family >= CHIP_CEDAR ? 0 : 160;
-	unsigned format, num_format, format_comp;
+	unsigned format, num_format, format_comp, endian;
 	u32 *bytecode;
 	int i, r;
 
@@ -2107,7 +2136,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 
 	for (i = 0; i < ve->count; i++) {
 		unsigned vbuffer_index;
-		r600_vertex_data_type(ve->elements[i].src_format, &format, &num_format, &format_comp);
+		r600_vertex_data_type(ve->elements[i].src_format, &format, &num_format, &format_comp, &endian);
 		desc = util_format_description(ve->elements[i].src_format);
 		if (desc == NULL) {
 			r600_bc_clear(&bc);
@@ -2133,6 +2162,7 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 		vtx.format_comp_all = format_comp;
 		vtx.srf_mode_all = 1;
 		vtx.offset = elements[i].src_offset;
+		vtx.endian = endian;
 
 		if ((r = r600_bc_add_vtx(&bc, &vtx))) {
 			r600_bc_clear(&bc);
@@ -2172,7 +2202,9 @@ int r600_vertex_elements_build_fetch_shader(struct r600_pipe_context *rctx, stru
 		return -ENOMEM;
 	}
 
-	memcpy(bytecode, bc.bytecode, ve->fs_size);
+	for(i = 0; i < ve->fs_size / 4; i++) {
+		*(bytecode + i) = CPU_TO_LE32(*(bc.bytecode + i));
+	}
 
 	r600_bo_unmap(rctx->radeon, ve->fetch_shader);
 	r600_bc_clear(&bc);

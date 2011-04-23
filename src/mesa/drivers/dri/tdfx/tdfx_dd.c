@@ -41,9 +41,6 @@
 #include "main/context.h"
 
 
-#define DRIVER_DATE	"20061113"
-
-
 /* These are used in calls to FX_grColorMaskv() */
 const GLboolean false4[4] = { GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE };
 const GLboolean true4[4] = { GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE };
@@ -91,7 +88,7 @@ static const GLubyte *tdfxDDGetString( struct gl_context *ctx, GLenum name )
 	 }
       }
 
-      (void) driGetRendererString(buffer, hardware, DRIVER_DATE, 0);
+      (void) driGetRendererString(buffer, hardware, 0);
       return (const GLubyte *) buffer;
    }
    case GL_VENDOR:

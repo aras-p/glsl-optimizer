@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include "util/u_format.h"
 #include "util/u_format_s3tc.h"
 #include "pipe/p_screen.h"
 
@@ -45,17 +46,8 @@ nv50_screen_is_format_supported(struct pipe_screen *pscreen,
    if (sample_count > 1)
       return FALSE;
 
-   if (!util_format_s3tc_enabled) {
-      switch (format) {
-      case PIPE_FORMAT_DXT1_RGB:
-      case PIPE_FORMAT_DXT1_RGBA:
-      case PIPE_FORMAT_DXT3_RGBA:
-      case PIPE_FORMAT_DXT5_RGBA:
-         return FALSE;
-      default:
-         break;
-      }
-   }
+   if (!util_format_is_supported(format, bindings))
+      return FALSE;
 
    switch (format) {
    case PIPE_FORMAT_Z16_UNORM:
@@ -108,6 +100,8 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_MAX_RENDER_TARGETS:
       return 8;
+   case PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL:
+      return 1;
    case PIPE_CAP_TIMER_QUERY:
    case PIPE_CAP_OCCLUSION_QUERY:
       return 1;
@@ -129,6 +123,7 @@ nv50_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_PRIMITIVE_RESTART:
    case PIPE_CAP_TGSI_INSTANCEID:
    case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
+   case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
       return 1;
    default:
       NOUVEAU_ERR("unknown PIPE_CAP %d\n", param);
@@ -417,6 +412,10 @@ nv50_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    OUT_RING  (chan, NV50_3D_MULTISAMPLE_MODE_MS1);
    BEGIN_RING(chan, RING_3D(MULTISAMPLE_CTRL), 1);
    OUT_RING  (chan, 0);
+   BEGIN_RING(chan, RING_3D(LINE_LAST_PIXEL), 1);
+   OUT_RING  (chan, 0);
+   BEGIN_RING(chan, RING_3D(BLEND_SEPARATE_ALPHA), 1);
+   OUT_RING  (chan, 1);
 
    BEGIN_RING(chan, RING_3D(SCREEN_Y_CONTROL), 1);
    OUT_RING  (chan, 0);

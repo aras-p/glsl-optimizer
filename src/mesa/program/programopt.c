@@ -230,15 +230,25 @@ _mesa_insert_mvp_code(struct gl_context *ctx, struct gl_vertex_program *vprog)
 
 
 /**
- * Append extra instructions onto the given fragment program to implement
- * the fog mode specified by fprog->FogOption.
- * The fragment.fogcoord input is used to compute the fog blend factor.
+ * Append instructions to implement fog
  *
- * XXX with a little work, this function could be adapted to add fog code
+ * The \c fragment.fogcoord input is used to compute the fog blend factor.
+ *
+ * \param ctx      The GL context
+ * \param fprog    Fragment program that fog instructions will be appended to.
+ * \param fog_mode Fog mode.  One of \c GL_EXP, \c GL_EXP2, or \c GL_LINEAR.
+ * \param saturate True if writes to color outputs should be clamped to [0, 1]
+ *
+ * \note
+ * This function sets \c FRAG_BIT_FOGC in \c fprog->Base.InputsRead.
+ *
+ * \todo With a little work, this function could be adapted to add fog code
  * to vertex programs too.
  */
 void
-_mesa_append_fog_code(struct gl_context *ctx, struct gl_fragment_program *fprog)
+_mesa_append_fog_code(struct gl_context *ctx,
+		      struct gl_fragment_program *fprog, GLenum fog_mode,
+		      GLboolean saturate)
 {
    static const gl_state_index fogPStateOpt[STATE_LENGTH]
       = { STATE_INTERNAL, STATE_FOG_PARAMS_OPTIMIZED, 0, 0, 0 };
@@ -251,9 +261,9 @@ _mesa_append_fog_code(struct gl_context *ctx, struct gl_fragment_program *fprog)
    GLint fogPRefOpt, fogColorRef; /* state references */
    GLuint colorTemp, fogFactorTemp; /* temporary registerss */
 
-   if (fprog->FogOption == GL_NONE) {
+   if (fog_mode == GL_NONE) {
       _mesa_problem(ctx, "_mesa_append_fog_code() called for fragment program"
-                    " with FogOption == GL_NONE");
+                    " with fog_mode == GL_NONE");
       return;
    }
 
@@ -290,7 +300,7 @@ _mesa_append_fog_code(struct gl_context *ctx, struct gl_fragment_program *fprog)
          /* change the instruction to write to colorTemp w/ clamping */
          inst->DstReg.File = PROGRAM_TEMPORARY;
          inst->DstReg.Index = colorTemp;
-         inst->SaturateMode = SATURATE_ZERO_ONE;
+         inst->SaturateMode = saturate;
          /* don't break (may be several writes to result.color) */
       }
       inst++;
@@ -300,7 +310,8 @@ _mesa_append_fog_code(struct gl_context *ctx, struct gl_fragment_program *fprog)
    _mesa_init_instructions(inst, 5);
 
    /* emit instructions to compute fog blending factor */
-   if (fprog->FogOption == GL_LINEAR) {
+   /* this is always clamped to [0, 1] regardless of fragment clamping */
+   if (fog_mode == GL_LINEAR) {
       /* MAD fogFactorTemp.x, fragment.fogcoord.x, fogPRefOpt.x, fogPRefOpt.y; */
       inst->Opcode = OPCODE_MAD;
       inst->DstReg.File = PROGRAM_TEMPORARY;
@@ -319,7 +330,7 @@ _mesa_append_fog_code(struct gl_context *ctx, struct gl_fragment_program *fprog)
       inst++;
    }
    else {
-      ASSERT(fprog->FogOption == GL_EXP || fprog->FogOption == GL_EXP2);
+      ASSERT(fog_mode == GL_EXP || fog_mode == GL_EXP2);
       /* fogPRefOpt.z = d/ln(2), fogPRefOpt.w = d/sqrt(ln(2) */
       /* EXP: MUL fogFactorTemp.x, fogPRefOpt.z, fragment.fogcoord.x; */
       /* EXP2: MUL fogFactorTemp.x, fogPRefOpt.w, fragment.fogcoord.x; */
@@ -330,12 +341,12 @@ _mesa_append_fog_code(struct gl_context *ctx, struct gl_fragment_program *fprog)
       inst->SrcReg[0].File = PROGRAM_STATE_VAR;
       inst->SrcReg[0].Index = fogPRefOpt;
       inst->SrcReg[0].Swizzle
-         = (fprog->FogOption == GL_EXP) ? SWIZZLE_ZZZZ : SWIZZLE_WWWW;
+         = (fog_mode == GL_EXP) ? SWIZZLE_ZZZZ : SWIZZLE_WWWW;
       inst->SrcReg[1].File = PROGRAM_INPUT;
       inst->SrcReg[1].Index = FRAG_ATTRIB_FOGC;
       inst->SrcReg[1].Swizzle = SWIZZLE_XXXX;
       inst++;
-      if (fprog->FogOption == GL_EXP2) {
+      if (fog_mode == GL_EXP2) {
          /* MUL fogFactorTemp.x, fogFactorTemp.x, fogFactorTemp.x; */
          inst->Opcode = OPCODE_MUL;
          inst->DstReg.File = PROGRAM_TEMPORARY;
@@ -396,7 +407,6 @@ _mesa_append_fog_code(struct gl_context *ctx, struct gl_fragment_program *fprog)
    fprog->Base.Instructions = newInst;
    fprog->Base.NumInstructions = inst - newInst;
    fprog->Base.InputsRead |= FRAG_BIT_FOGC;
-   /* XXX do this?  fprog->FogOption = GL_NONE; */
 }
 
 

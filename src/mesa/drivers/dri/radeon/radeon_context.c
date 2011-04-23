@@ -70,8 +70,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #define need_GL_OES_EGL_image
 #include "main/remap_helper.h"
 
-#define DRIVER_DATE	"20061018"
-
 #include "utils.h"
 #include "xmlpool.h" /* for symbolic values of enum-type options */
 

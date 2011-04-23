@@ -41,8 +41,6 @@ XORG_GLX_DIR = $(XORG_BASE)/glx
 XORG_GLAPI_DIR = $(XORG_BASE)/glx
 
 XORG_GLAPI_FILES = \
-	$(XORG_GLAPI_DIR)/glapi.h \
-	$(XORG_GLAPI_DIR)/glapi.c \
 	$(XORG_GLAPI_DIR)/glapi_getproc.c \
 	$(XORG_GLAPI_DIR)/glapi_nop.c \
 	$(XORG_GLAPI_DIR)/glthread.c \
@@ -50,7 +48,6 @@ XORG_GLAPI_FILES = \
 
 XORG_GLAPI_OUTPUTS = \
 	$(XORG_GLAPI_DIR)/glprocs.h \
-	$(XORG_GLAPI_DIR)/glapitemp.h \
 	$(XORG_GLAPI_DIR)/glapioffsets.h \
 	$(XORG_GLAPI_DIR)/glapitable.h \
 	$(XORG_GLAPI_DIR)/glapidispatch.h
@@ -72,6 +69,7 @@ XORG_OUTPUTS = \
 
 API_XML = \
 	gl_API.xml \
+	ARB_color_buffer_float.xml \
 	ARB_copy_buffer.xml \
 	ARB_depth_clamp.xml \
 	ARB_draw_buffers_blend.xml \
@@ -82,8 +80,10 @@ API_XML = \
 	ARB_geometry_shader4.xml \
 	ARB_instanced_arrays.xml \
 	ARB_map_buffer_range.xml \
+	ARB_sampler_objects.xml \
 	ARB_seamless_cube_map.xml \
 	ARB_sync.xml \
+	ARB_texture_buffer_object.xml \
 	ARB_vertex_array_object.xml \
 	APPLE_object_purgeable.xml \
 	APPLE_vertex_array_object.xml \

@@ -34,7 +34,7 @@
 
 #include "r300_defines.h"
 #include "r300_screen.h"
-#include "r300_winsys.h"
+#include "../../winsys/radeon/drm/radeon_winsys.h"
 
 struct u_upload_mgr;
 struct r300_context;
@@ -190,6 +190,7 @@ struct r300_texture_format_state {
     uint32_t format1; /* R300_TX_FORMAT1: 0x44c0 */
     uint32_t format2; /* R300_TX_FORMAT2: 0x4500 */
     uint32_t tile_config; /* R300_TX_OFFSET (subset thereof) */
+    uint32_t us_format0;   /* R500_US_FORMAT0_0: 0x4640 (through 15) */
 };
 
 struct r300_sampler_view {
@@ -211,7 +212,7 @@ struct r300_texture_sampler_state {
     struct r300_texture_format_state format;
     uint32_t filter0;      /* R300_TX_FILTER0: 0x4400 */
     uint32_t filter1;      /* R300_TX_FILTER1: 0x4440 */
-    uint32_t border_color;  /* R300_TX_BORDER_COLOR: 0x45c0 */
+    uint32_t border_color; /* R300_TX_BORDER_COLOR: 0x45c0 */
 };
 
 struct r300_textures_state {
@@ -290,12 +291,12 @@ struct r300_query {
     boolean begin_emitted;
 
     /* The buffer where query results are stored. */
-    struct r300_winsys_bo *buf;
-    struct r300_winsys_cs_handle *cs_buf;
+    struct pb_buffer *buf;
+    struct radeon_winsys_cs_handle *cs_buf;
     /* The size of the buffer. */
     unsigned buffer_size;
     /* The domain of the buffer. */
-    enum r300_buffer_domain domain;
+    enum radeon_bo_domain domain;
 
     /* Linked list members. */
     struct r300_query* prev;
@@ -306,10 +307,10 @@ struct r300_surface {
     struct pipe_surface base;
 
     /* Winsys buffer backing the texture. */
-    struct r300_winsys_bo *buf;
-    struct r300_winsys_cs_handle *cs_buf;
+    struct pb_buffer *buf;
+    struct radeon_winsys_cs_handle *cs_buf;
 
-    enum r300_buffer_domain domain;
+    enum radeon_bo_domain domain;
 
     uint32_t offset;    /* COLOROFFSET or DEPTHOFFSET. */
     uint32_t pitch;     /* COLORPITCH or DEPTHPITCH. */
@@ -339,8 +340,8 @@ struct r300_texture_desc {
     /* Buffer tiling.
      * Macrotiling is specified per-level because small mipmaps cannot
      * be macrotiled. */
-    enum r300_buffer_tiling microtile;
-    enum r300_buffer_tiling macrotile[R300_MAX_TEXTURE_LEVELS];
+    enum radeon_bo_layout microtile;
+    enum radeon_bo_layout macrotile[R300_MAX_TEXTURE_LEVELS];
 
     /* Offsets into the buffer. */
     unsigned offset_in_bytes[R300_MAX_TEXTURE_LEVELS];
@@ -396,9 +397,9 @@ struct r300_resource
     struct u_vbuf_resource b;
 
     /* Winsys buffer backing this resource. */
-    struct r300_winsys_bo *buf;
-    struct r300_winsys_cs_handle *cs_buf;
-    enum r300_buffer_domain domain;
+    struct pb_buffer *buf;
+    struct radeon_winsys_cs_handle *cs_buf;
+    enum radeon_bo_domain domain;
     unsigned buf_size;
 
     /* Constant buffers are in user memory. */
@@ -447,14 +448,21 @@ enum r300_hiz_func {
     HIZ_FUNC_MIN,
 };
 
+/* For deferred fragment shader state validation. */
+enum r300_fs_validity_status {
+    FRAGMENT_SHADER_VALID,      /* No need to change/validate the FS. */
+    FRAGMENT_SHADER_MAYBE_DIRTY,/* Validate the FS if external state was changed. */
+    FRAGMENT_SHADER_DIRTY       /* Always validate the FS (if the FS was changed) */
+};
+
 struct r300_context {
     /* Parent class */
     struct pipe_context context;
 
     /* The interface to the windowing system, etc. */
-    struct r300_winsys_screen *rws;
+    struct radeon_winsys *rws;
     /* The command stream. */
-    struct r300_winsys_cs *cs;
+    struct radeon_winsys_cs *cs;
     /* Screen. */
     struct r300_screen *screen;
 
@@ -580,6 +588,8 @@ struct r300_context {
     int sprite_coord_enable;
     /* Whether two-sided color selection is enabled (AKA light_twoside). */
     boolean two_sided_color;
+    /* Whether fragment color clamping is enabled. */
+    boolean frag_clamp;
     /* Whether fast color clear is enabled. */
     boolean cbzb_clear;
     /* Whether ZMASK is enabled. */
@@ -596,6 +606,10 @@ struct r300_context {
     enum r300_hiz_func hiz_func;
     /* HiZ clear value. */
     uint32_t hiz_clear_value;
+    /* Whether fragment shader needs to be validated. */
+    enum r300_fs_validity_status fs_status;
+    /* Framebuffer multi-write. */
+    boolean fb_multiwrite;
 
     void *dsa_decompress_zmask;
 

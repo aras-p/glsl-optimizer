@@ -133,8 +133,8 @@
   <function name="ClearBufferfi" offset="assign">
     <param name="buffer" type="GLenum"/>
     <param name="drawbuffer" type="GLint"/>
-    <param name="depth" type="const GLfloat"/>
-    <param name="stencil" type="const GLint"/>
+    <param name="depth" type="GLfloat"/>
+    <param name="stencil" type="GLint"/>
   </function>
 
   <function name="GetStringi" offset="assign">

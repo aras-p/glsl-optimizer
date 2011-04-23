@@ -6,7 +6,6 @@ env = env.Clone()
 # add the paths for r300compiler
 env.Append(CPPPATH = [
     '#/src/mesa/drivers/dri/r300/compiler', 
-    '#/src/gallium/winsys/drm/radeon/core',
     '#/include', 
     '#/src/mesa',
 ])

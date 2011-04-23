@@ -277,6 +277,13 @@ static void r600_resource_copy_region(struct pipe_context *ctx,
 	struct texture_orig_info orig_info[2];
 	boolean restore_orig[2];
 
+	/* Fallback for buffers. */
+	if (dst->target == PIPE_BUFFER && src->target == PIPE_BUFFER) {
+		util_resource_copy_region(ctx, dst, dst_level, dstx, dsty, dstz,
+                                          src, src_level, src_box);
+		return;
+	}
+
 	if (rsrc->depth && !rsrc->is_flushing_texture)
 		r600_texture_depth_flush(ctx, src, FALSE);
 

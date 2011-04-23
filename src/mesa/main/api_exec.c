@@ -78,6 +78,9 @@
 #include "polygon.h"
 #include "queryobj.h"
 #include "readpix.h"
+#if FEATURE_ARB_sampler_objects
+#include "samplerobj.h"
+#endif
 #include "scissor.h"
 #include "stencil.h"
 #include "texenv.h"
@@ -691,6 +694,8 @@ _mesa_create_exec_table(void)
    SET_FramebufferTextureFaceARB(exec, _mesa_FramebufferTextureFaceARB);
 #endif
 
+   SET_ClampColorARB(exec, _mesa_ClampColorARB);
+
    /* GL_EXT_texture_integer */
    SET_ClearColorIiEXT(exec, _mesa_ClearColorIiEXT);
    SET_ClearColorIuiEXT(exec, _mesa_ClearColorIuiEXT);
@@ -724,6 +729,13 @@ _mesa_create_exec_table(void)
    /* GL_NV_texture_barrier */
    SET_TextureBarrierNV(exec, _mesa_TextureBarrierNV);
  
+   /* GL_ARB_texture_buffer_object */
+   SET_TexBufferARB(exec, _mesa_TexBuffer);
+
+#if FEATURE_ARB_sampler_objects
+   _mesa_init_sampler_object_dispatch(exec);
+#endif
+
    return exec;
 }
 

@@ -52,14 +52,16 @@ _mesa_initialize_texture_object( struct gl_texture_object *obj,
                                  GLuint name, GLenum target );
 
 extern void
-_mesa_delete_texture_object( struct gl_context *ctx, struct gl_texture_object *obj );
+_mesa_delete_texture_object( struct gl_context *ctx,
+                             struct gl_texture_object *obj );
 
 extern void
 _mesa_copy_texture_object( struct gl_texture_object *dest,
                            const struct gl_texture_object *src );
 
 extern void
-_mesa_clear_texture_object(struct gl_context *ctx, struct gl_texture_object *obj);
+_mesa_clear_texture_object(struct gl_context *ctx,
+                           struct gl_texture_object *obj);
 
 extern void
 _mesa_reference_texobj(struct gl_texture_object **ptr,

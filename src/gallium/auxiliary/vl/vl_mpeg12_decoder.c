@@ -655,7 +655,7 @@ init_zscan(struct vl_mpeg12_decoder *dec)
 static bool
 init_idct(struct vl_mpeg12_decoder *dec)
 {
-   struct pipe_sampler_view *matrix, *transpose;
+   struct pipe_sampler_view *matrix, *transpose = NULL;
    float matrix_scale, transpose_scale;
 
    dec->nr_of_idct_render_targets = dec->pipe->screen->get_param(dec->pipe->screen, PIPE_CAP_MAX_RENDER_TARGETS);

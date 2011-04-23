@@ -39,24 +39,24 @@ struct pipe_resource *
 trace_resource_create(struct trace_screen *tr_scr,
                      struct pipe_resource *texture)
 {
-   struct trace_resource *tr_tex;
+   struct trace_resource *tr_res;
 
    if(!texture)
       goto error;
 
    assert(texture->screen == tr_scr->screen);
 
-   tr_tex = CALLOC_STRUCT(trace_resource);
-   if(!tr_tex)
+   tr_res = CALLOC_STRUCT(trace_resource);
+   if(!tr_res)
       goto error;
 
-   memcpy(&tr_tex->base, texture, sizeof(struct pipe_resource));
+   memcpy(&tr_res->base, texture, sizeof(struct pipe_resource));
 
-   pipe_reference_init(&tr_tex->base.reference, 1);
-   tr_tex->base.screen = &tr_scr->base;
-   tr_tex->resource = texture;
+   pipe_reference_init(&tr_res->base.reference, 1);
+   tr_res->base.screen = &tr_scr->base;
+   tr_res->resource = texture;
 
-   return &tr_tex->base;
+   return &tr_res->base;
 
 error:
    pipe_resource_reference(&texture, NULL);
@@ -66,15 +66,15 @@ error:
 
 void
 trace_resource_destroy(struct trace_screen *tr_scr,
-		       struct trace_resource *tr_tex)
+		       struct trace_resource *tr_res)
 {
-   pipe_resource_reference(&tr_tex->resource, NULL);
-   FREE(tr_tex);
+   pipe_resource_reference(&tr_res->resource, NULL);
+   FREE(tr_res);
 }
 
 
 struct pipe_surface *
-trace_surf_create(struct trace_resource *tr_tex,
+trace_surf_create(struct trace_resource *tr_res,
                   struct pipe_surface *surface)
 {
    struct trace_surface *tr_surf;
@@ -82,7 +82,7 @@ trace_surf_create(struct trace_resource *tr_tex,
    if(!surface)
       goto error;
 
-   assert(surface->texture == tr_tex->resource);
+   assert(surface->texture == tr_res->resource);
 
    tr_surf = CALLOC_STRUCT(trace_surface);
    if(!tr_surf)
@@ -92,7 +92,7 @@ trace_surf_create(struct trace_resource *tr_tex,
 
    pipe_reference_init(&tr_surf->base.reference, 1);
    tr_surf->base.texture = NULL;
-   pipe_resource_reference(&tr_surf->base.texture, &tr_tex->base);
+   pipe_resource_reference(&tr_surf->base.texture, &tr_res->base);
    tr_surf->surface = surface;
 
    return &tr_surf->base;
@@ -114,7 +114,7 @@ trace_surf_destroy(struct trace_surface *tr_surf)
 
 struct pipe_transfer *
 trace_transfer_create(struct trace_context *tr_ctx,
-		      struct trace_resource *tr_tex,
+		      struct trace_resource *tr_res,
 		      struct pipe_transfer *transfer)
 {
    struct trace_transfer *tr_trans;
@@ -122,7 +122,7 @@ trace_transfer_create(struct trace_context *tr_ctx,
    if(!transfer)
       goto error;
 
-   assert(transfer->resource == tr_tex->resource);
+   assert(transfer->resource == tr_res->resource);
 
    tr_trans = CALLOC_STRUCT(trace_transfer);
    if(!tr_trans)
@@ -133,8 +133,8 @@ trace_transfer_create(struct trace_context *tr_ctx,
    tr_trans->base.resource = NULL;
    tr_trans->transfer = transfer;
 
-   pipe_resource_reference(&tr_trans->base.resource, &tr_tex->base);
-   assert(tr_trans->base.resource == &tr_tex->base);
+   pipe_resource_reference(&tr_trans->base.resource, &tr_res->base);
+   assert(tr_trans->base.resource == &tr_res->base);
 
    return &tr_trans->base;
 

@@ -35,6 +35,10 @@ struct r300_texture_desc;
 struct r300_resource;
 struct r300_screen;
 
+void util_format_combine_swizzles(unsigned char *dst,
+                                  const unsigned char *swz1,
+                                  const unsigned char *swz2);
+
 unsigned r300_get_swizzle_combined(const unsigned char *swizzle_format,
                                    const unsigned char *swizzle_view,
                                    boolean dxtc_swizzle);

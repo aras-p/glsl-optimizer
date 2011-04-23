@@ -540,7 +540,7 @@ affine_span(struct gl_context *ctx, SWspan *span,
    info.smask = texImg->Width - 1;					\
    info.tmask = texImg->Height - 1;					\
    info.format = texImg->TexFormat;					\
-   info.filter = obj->MinFilter;					\
+   info.filter = obj->Sampler.MinFilter;				\
    info.envmode = unit->EnvMode;					\
    info.er = 0;					\
    info.eg = 0;					\
@@ -805,7 +805,7 @@ fast_persp_span(struct gl_context *ctx, SWspan *span,
    info.smask = texImg->Width - 1;					\
    info.tmask = texImg->Height - 1;					\
    info.format = texImg->TexFormat;					\
-   info.filter = obj->MinFilter;					\
+   info.filter = obj->Sampler.MinFilter;				\
    info.envmode = unit->EnvMode;					\
    info.er = 0;					\
    info.eg = 0;					\
@@ -1044,8 +1044,8 @@ _swrast_choose_triangle( struct gl_context *ctx )
 
          texImg = texObj2D ? texObj2D->Image[0][texObj2D->BaseLevel] : NULL;
          format = texImg ? texImg->TexFormat : MESA_FORMAT_NONE;
-         minFilter = texObj2D ? texObj2D->MinFilter : GL_NONE;
-         magFilter = texObj2D ? texObj2D->MagFilter : GL_NONE;
+         minFilter = texObj2D ? texObj2D->Sampler.MinFilter : GL_NONE;
+         magFilter = texObj2D ? texObj2D->Sampler.MagFilter : GL_NONE;
          envMode = ctx->Texture.Unit[0].EnvMode;
 
          /* First see if we can use an optimized 2-D texture function */
@@ -1054,8 +1054,8 @@ _swrast_choose_triangle( struct gl_context *ctx )
              && !ctx->ATIFragmentShader._Enabled
              && ctx->Texture._EnabledUnits == 0x1
              && ctx->Texture.Unit[0]._ReallyEnabled == TEXTURE_2D_BIT
-             && texObj2D->WrapS == GL_REPEAT
-             && texObj2D->WrapT == GL_REPEAT
+             && texObj2D->Sampler.WrapS == GL_REPEAT
+             && texObj2D->Sampler.WrapT == GL_REPEAT
              && texObj2D->_Swizzle == SWIZZLE_NOOP
              && texImg->_IsPowerOfTwo
              && texImg->Border == 0

@@ -99,6 +99,7 @@ static void classify_instruction(struct rc_sub_instruction * inst,
 	switch(inst->Opcode) {
 	case RC_OPCODE_ADD:
 	case RC_OPCODE_CMP:
+	case RC_OPCODE_CND:
 	case RC_OPCODE_DDX:
 	case RC_OPCODE_DDY:
 	case RC_OPCODE_FRC:
@@ -289,7 +290,7 @@ static void set_pair_instruction(struct r300_fragment_program_compiler *c,
 		}
 
 		if (needalpha) {
-			pair->Alpha.WriteMask |= GET_BIT(inst->DstReg.WriteMask, 3);
+			pair->Alpha.WriteMask |= (GET_BIT(inst->DstReg.WriteMask, 3) << 3);
 			if (pair->Alpha.WriteMask) {
 				pair->Alpha.DestIndex = inst->DstReg.Index;
 			}

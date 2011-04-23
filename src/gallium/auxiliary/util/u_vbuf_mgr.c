@@ -499,7 +499,7 @@ void u_vbuf_mgr_set_vertex_buffers(struct u_vbuf_mgr *mgrb,
       /* Update the maximum index. */
       mgr->b.max_index =
             MIN2(mgr->b.max_index,
-                 (vb->buffer->width0 - vb->buffer_offset) / vb->stride);
+                 (vb->buffer->width0 - vb->buffer_offset) / vb->stride - 1);
    }
 
    for (; i < mgr->b.nr_real_vertex_buffers; i++) {
@@ -572,7 +572,11 @@ void u_vbuf_mgr_draw_begin(struct u_vbuf_mgr *mgrb,
    int min_index, max_index;
 
    min_index = info->min_index - info->index_bias;
-   max_index = info->max_index - info->index_bias;
+   if (info->max_index == ~0) {
+      max_index = mgr->b.max_index;
+   } else {
+      max_index = MIN2(info->max_index - info->index_bias, mgr->b.max_index);
+   }
 
    /* Translate vertices with non-native layouts or formats. */
    if (mgr->incompatible_vb_layout || mgr->ve->incompatible_layout) {

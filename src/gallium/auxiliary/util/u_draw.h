@@ -34,6 +34,11 @@
 #include "pipe/p_state.h"
 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
 static INLINE void
 util_draw_init_info(struct pipe_draw_info *info)
 {
@@ -136,4 +141,18 @@ util_draw_range_elements(struct pipe_context *pipe,
    pipe->draw_vbo(pipe, &info);
 }
 
+
+unsigned
+util_draw_max_index(
+      const struct pipe_vertex_buffer *vertex_buffers,
+      unsigned nr_vertex_buffers,
+      const struct pipe_vertex_element *vertex_elements,
+      unsigned nr_vertex_elements,
+      const struct pipe_draw_info *info);
+
+
+#ifdef __cplusplus
+}
 #endif
+
+#endif /* !U_DRAW_H */

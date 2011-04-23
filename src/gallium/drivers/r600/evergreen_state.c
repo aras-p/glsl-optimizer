@@ -107,15 +107,18 @@ static void *evergreen_create_blend_state(struct pipe_context *ctx,
 	r600_pipe_state_add_reg(rstate, R_028C3C_PA_SC_AA_MASK, 0xFFFFFFFF, 0xFFFFFFFF, NULL);
 
 	for (int i = 0; i < 8; i++) {
-		unsigned eqRGB = state->rt[i].rgb_func;
-		unsigned srcRGB = state->rt[i].rgb_src_factor;
-		unsigned dstRGB = state->rt[i].rgb_dst_factor;
-		unsigned eqA = state->rt[i].alpha_func;
-		unsigned srcA = state->rt[i].alpha_src_factor;
-		unsigned dstA = state->rt[i].alpha_dst_factor;
+		/* state->rt entries > 0 only written if independent blending */
+		const int j = state->independent_blend_enable ? i : 0;
+
+		unsigned eqRGB = state->rt[j].rgb_func;
+		unsigned srcRGB = state->rt[j].rgb_src_factor;
+		unsigned dstRGB = state->rt[j].rgb_dst_factor;
+		unsigned eqA = state->rt[j].alpha_func;
+		unsigned srcA = state->rt[j].alpha_src_factor;
+		unsigned dstA = state->rt[j].alpha_dst_factor;
 
 		blend_cntl[i] = 0;
-		if (!state->rt[i].blend_enable)
+		if (!state->rt[j].blend_enable)
 			continue;
 
 		blend_cntl[i] |= S_028780_BLEND_CONTROL_ENABLE(1);
@@ -354,7 +357,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	const struct util_format_description *desc;
 	struct r600_resource_texture *tmp;
 	struct r600_resource *rbuffer;
-	unsigned format;
+	unsigned format, endian;
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
 	unsigned char swizzle[4], array_mode = 0, tile_type = 0;
 	struct r600_bo *bo[2];
@@ -391,6 +394,8 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 		tmp = tmp->flushed_depth_texture;
 	}
 
+	endian = r600_colorformat_endian_swap(format);
+
 	if (tmp->force_int_type) {
 		word4 &= C_030010_NUM_FORMAT_ALL;
 		word4 |= S_030010_NUM_FORMAT_ALL(V_030010_SQ_NUM_FORMAT_INT);
@@ -422,6 +427,7 @@ static struct pipe_sampler_view *evergreen_create_sampler_view(struct pipe_conte
 	r600_pipe_state_add_reg(rstate, R_030010_RESOURCE0_WORD4,
 				word4 |
 				S_030010_SRF_MODE_ALL(V_030010_SRF_MODE_NO_ZERO) |
+				S_030010_ENDIAN_SWAP(endian) |
 				S_030010_BASE_LEVEL(state->u.tex.first_level), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_030014_RESOURCE0_WORD5,
 				S_030014_LAST_LEVEL(state->u.tex.last_level) |
@@ -652,7 +658,7 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 	unsigned level = state->cbufs[cb]->u.tex.level;
 	unsigned pitch, slice;
 	unsigned color_info;
-	unsigned format, swap, ntype;
+	unsigned format, swap, ntype, endian;
 	unsigned offset;
 	unsigned tile_type;
 	const struct util_format_description *desc;
@@ -677,35 +683,43 @@ static void evergreen_cb(struct r600_pipe_context *rctx, struct r600_pipe_state 
 					 level, state->cbufs[cb]->u.tex.first_layer);
 	pitch = rtex->pitch_in_blocks[level] / 8 - 1;
 	slice = rtex->pitch_in_blocks[level] * surf->aligned_height / 64 - 1;
-	ntype = 0;
 	desc = util_format_description(surf->base.format);
-	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
-		ntype = V_028C70_NUMBER_SRGB;
-
-	format = r600_translate_colorformat(surf->base.format);
-	swap = r600_translate_colorswap(surf->base.format);
-
-	/* disable when gallium grows int textures */
-	if ((format == FMT_32_32_32_32 || format == FMT_16_16_16_16) && rtex->force_int_type)
-		ntype = 4;
-
-	color_info = S_028C70_FORMAT(format) |
-		S_028C70_COMP_SWAP(swap) |
-		S_028C70_ARRAY_MODE(rtex->array_mode[level]) |
-		S_028C70_BLEND_CLAMP(1) |
-		S_028C70_NUMBER_TYPE(ntype);
-
 	for (i = 0; i < 4; i++) {
 		if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
 			break;
 		}
 	}
+	ntype = V_028C70_NUMBER_UNORM;
+	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
+		ntype = V_028C70_NUMBER_SRGB;
+	else if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED)
+		ntype = V_028C70_NUMBER_SNORM;
+
+	format = r600_translate_colorformat(surf->base.format);
+	swap = r600_translate_colorswap(surf->base.format);
+	if (rbuffer->b.b.b.usage == PIPE_USAGE_STAGING) {
+		endian = ENDIAN_NONE;
+	} else {
+		endian = r600_colorformat_endian_swap(format);
+	}
+
+	/* disable when gallium grows int textures */
+	if ((format == FMT_32_32_32_32 || format == FMT_16_16_16_16) && rtex->force_int_type)
+		ntype = V_028C70_NUMBER_UINT;
+
+	color_info = S_028C70_FORMAT(format) |
+		S_028C70_COMP_SWAP(swap) |
+		S_028C70_ARRAY_MODE(rtex->array_mode[level]) |
+		S_028C70_BLEND_CLAMP(1) |
+		S_028C70_NUMBER_TYPE(ntype) |
+		S_028C70_ENDIAN(endian);
+
 
 	/* we can only set the export size if any thing is snorm/unorm component is > 11 bits,
 	   if we aren't a float, sint or uint */
 	if (desc->colorspace != UTIL_FORMAT_COLORSPACE_ZS &&
 	    desc->channel[i].size < 12 && desc->channel[i].type != UTIL_FORMAT_TYPE_FLOAT &&
-	    ntype != 4 && ntype != 5)
+	    ntype != V_028C70_NUMBER_UINT && ntype != V_028C70_NUMBER_SINT)
 		color_info |= S_028C70_SOURCE_FORMAT(V_028C70_EXPORT_4C_16BPC);
 
 	if (rtex->array_mode[level] > V_028C70_ARRAY_LINEAR_ALIGNED) {
@@ -808,6 +822,9 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	if (rstate == NULL)
 		return;
 
+	evergreen_context_flush_dest_caches(&rctx->ctx);
+	rctx->ctx.num_dest_buffers = state->nr_cbufs;
+
 	/* unreference old buffer and reference new one */
 	rstate->id = R600_PIPE_STATE_FRAMEBUFFER;
 
@@ -819,6 +836,7 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	}
 	if (state->zsbuf) {
 		evergreen_db(rctx, rstate, state);
+		rctx->ctx.num_dest_buffers++;
 	}
 
 	target_mask = 0x00000000;
@@ -880,6 +898,19 @@ static void evergreen_set_framebuffer_state(struct pipe_context *ctx,
 	}
 }
 
+static void evergreen_texture_barrier(struct pipe_context *ctx)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+
+	r600_context_flush_all(&rctx->ctx, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_CB_ACTION_ENA(1) |
+			S_0085F0_CB0_DEST_BASE_ENA(1) | S_0085F0_CB1_DEST_BASE_ENA(1) |
+			S_0085F0_CB2_DEST_BASE_ENA(1) | S_0085F0_CB3_DEST_BASE_ENA(1) |
+			S_0085F0_CB4_DEST_BASE_ENA(1) | S_0085F0_CB5_DEST_BASE_ENA(1) |
+			S_0085F0_CB6_DEST_BASE_ENA(1) | S_0085F0_CB7_DEST_BASE_ENA(1) |
+			S_0085F0_CB8_DEST_BASE_ENA(1) | S_0085F0_CB9_DEST_BASE_ENA(1) |
+			S_0085F0_CB10_DEST_BASE_ENA(1) | S_0085F0_CB11_DEST_BASE_ENA(1));
+}
+
 void evergreen_init_state_functions(struct r600_pipe_context *rctx)
 {
 	rctx->context.create_blend_state = evergreen_create_blend_state;
@@ -920,6 +951,7 @@ void evergreen_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.set_viewport_state = evergreen_set_viewport_state;
 	rctx->context.sampler_view_destroy = r600_sampler_view_destroy;
 	rctx->context.redefine_user_buffer = u_default_redefine_user_buffer;
+	rctx->context.texture_barrier = evergreen_texture_barrier;
 }
 
 void evergreen_init_config(struct r600_pipe_context *rctx)
@@ -1542,8 +1574,10 @@ void evergreen_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
 	r600_pipe_state_add_reg(rstate, R_030004_RESOURCE0_WORD1,
 				rbuffer->bo_size - offset - 1, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_030008_RESOURCE0_WORD2,
-				S_030008_STRIDE(stride),
-				0xFFFFFFFF, NULL);
+#ifdef PIPE_ARCH_BIG_ENDIAN
+				S_030008_ENDIAN_SWAP(ENDIAN_8IN32) |
+#endif
+				S_030008_STRIDE(stride), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_03000C_RESOURCE0_WORD3,
 				S_03000C_DST_SEL_X(V_03000C_SQ_SEL_X) |
 				S_03000C_DST_SEL_Y(V_03000C_SQ_SEL_Y) |

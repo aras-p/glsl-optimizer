@@ -22,8 +22,6 @@
 
 #include <unistd.h>
 
-#define NOUVEAU_DEBUG 1
-
 #include "pipe/p_shader_tokens.h"
 #include "tgsi/tgsi_parse.h"
 #include "tgsi/tgsi_util.h"
@@ -200,7 +198,7 @@ static INLINE void
 bld_warn_uninitialized(struct bld_context *bld, int kind,
                        struct bld_register *reg, struct nv_basic_block *b)
 {
-#ifdef NOUVEAU_DEBUG
+#if NV50_DEBUG & NV50_DEBUG_SHADER
    long i = (reg - &bld->tvs[0][0]) / 4;
    long c = (reg - &bld->tvs[0][0]) & 3;
 
@@ -257,6 +255,12 @@ fetch_by_bb(struct bld_register *reg,
    for (i = 0; i < b->num_in; ++i)
       if (!IS_WALL_EDGE(b->in_kind[i]))
          fetch_by_bb(reg, vals, n, b->in[i]);
+}
+
+static INLINE boolean
+nvc0_bblock_is_terminated(struct nv_basic_block *bb)
+{
+   return bb->exit && bb->exit->terminator;
 }
 
 static INLINE struct nv_value *
@@ -1465,7 +1469,7 @@ bld_instruction(struct bld_context *bld,
    uint opcode = translate_opcode(insn->Instruction.Opcode);
    uint8_t mask = insn->Dst[0].Register.WriteMask;
 
-#ifdef NOUVEAU_DEBUG
+#if NV50_DEBUG & NV50_DEBUG_PROG_IR
    debug_printf("bld_instruction:"); tgsi_dump_instruction(insn, 1);
 #endif
 	
@@ -1637,8 +1641,7 @@ bld_instruction(struct bld_context *bld,
    {
       struct nv_basic_block *b = new_basic_block(bld->pc);
 
-      if (bld->pc->current_block->exit &&
-          !bld->pc->current_block->exit->terminator)
+      if (!nvc0_bblock_is_terminated(bld->pc->current_block))
          bld_flow(bld, NV_OP_BRA, NULL, NV_CC_P, b, FALSE);
 
       --bld->cond_lvl;

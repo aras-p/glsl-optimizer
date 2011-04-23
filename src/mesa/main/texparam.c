@@ -38,6 +38,7 @@
 #include "main/macros.h"
 #include "main/mfeatures.h"
 #include "main/mtypes.h"
+#include "main/state.h"
 #include "main/texcompress.h"
 #include "main/texparam.h"
 #include "main/teximage.h"
@@ -215,13 +216,13 @@ set_tex_parameteri(struct gl_context *ctx,
 {
    switch (pname) {
    case GL_TEXTURE_MIN_FILTER:
-      if (texObj->MinFilter == params[0])
+      if (texObj->Sampler.MinFilter == params[0])
          return GL_FALSE;
       switch (params[0]) {
       case GL_NEAREST:
       case GL_LINEAR:
          incomplete(ctx, texObj);
-         texObj->MinFilter = params[0];
+         texObj->Sampler.MinFilter = params[0];
          return GL_TRUE;
       case GL_NEAREST_MIPMAP_NEAREST:
       case GL_LINEAR_MIPMAP_NEAREST:
@@ -229,7 +230,7 @@ set_tex_parameteri(struct gl_context *ctx,
       case GL_LINEAR_MIPMAP_LINEAR:
          if (texObj->Target != GL_TEXTURE_RECTANGLE_NV) {
             incomplete(ctx, texObj);
-            texObj->MinFilter = params[0];
+            texObj->Sampler.MinFilter = params[0];
             return GL_TRUE;
          }
          /* fall-through */
@@ -239,13 +240,13 @@ set_tex_parameteri(struct gl_context *ctx,
       return GL_FALSE;
 
    case GL_TEXTURE_MAG_FILTER:
-      if (texObj->MagFilter == params[0])
+      if (texObj->Sampler.MagFilter == params[0])
          return GL_FALSE;
       switch (params[0]) {
       case GL_NEAREST:
       case GL_LINEAR:
          flush(ctx); /* does not effect completeness */
-         texObj->MagFilter = params[0];
+         texObj->Sampler.MagFilter = params[0];
          return GL_TRUE;
       default:
          goto invalid_param;
@@ -253,31 +254,31 @@ set_tex_parameteri(struct gl_context *ctx,
       return GL_FALSE;
 
    case GL_TEXTURE_WRAP_S:
-      if (texObj->WrapS == params[0])
+      if (texObj->Sampler.WrapS == params[0])
          return GL_FALSE;
       if (validate_texture_wrap_mode(ctx, texObj->Target, params[0])) {
          flush(ctx);
-         texObj->WrapS = params[0];
+         texObj->Sampler.WrapS = params[0];
          return GL_TRUE;
       }
       return GL_FALSE;
 
    case GL_TEXTURE_WRAP_T:
-      if (texObj->WrapT == params[0])
+      if (texObj->Sampler.WrapT == params[0])
          return GL_FALSE;
       if (validate_texture_wrap_mode(ctx, texObj->Target, params[0])) {
          flush(ctx);
-         texObj->WrapT = params[0];
+         texObj->Sampler.WrapT = params[0];
          return GL_TRUE;
       }
       return GL_FALSE;
 
    case GL_TEXTURE_WRAP_R:
-      if (texObj->WrapR == params[0])
+      if (texObj->Sampler.WrapR == params[0])
          return GL_FALSE;
       if (validate_texture_wrap_mode(ctx, texObj->Target, params[0])) {
          flush(ctx);
-         texObj->WrapR = params[0];
+         texObj->Sampler.WrapR = params[0];
          return GL_TRUE;
       }
       return GL_FALSE;
@@ -317,12 +318,12 @@ set_tex_parameteri(struct gl_context *ctx,
 
    case GL_TEXTURE_COMPARE_MODE_ARB:
       if (ctx->Extensions.ARB_shadow) {
-         if (texObj->CompareMode == params[0])
+         if (texObj->Sampler.CompareMode == params[0])
             return GL_FALSE;
          if (params[0] == GL_NONE ||
              params[0] == GL_COMPARE_R_TO_TEXTURE_ARB) {
             flush(ctx);
-            texObj->CompareMode = params[0];
+            texObj->Sampler.CompareMode = params[0];
             return GL_TRUE;
          }
          goto invalid_param;
@@ -331,13 +332,13 @@ set_tex_parameteri(struct gl_context *ctx,
 
    case GL_TEXTURE_COMPARE_FUNC_ARB:
       if (ctx->Extensions.ARB_shadow) {
-         if (texObj->CompareFunc == params[0])
+         if (texObj->Sampler.CompareFunc == params[0])
             return GL_FALSE;
          switch (params[0]) {
          case GL_LEQUAL:
          case GL_GEQUAL:
             flush(ctx);
-            texObj->CompareFunc = params[0];
+            texObj->Sampler.CompareFunc = params[0];
             return GL_TRUE;
          case GL_EQUAL:
          case GL_NOTEQUAL:
@@ -347,7 +348,7 @@ set_tex_parameteri(struct gl_context *ctx,
          case GL_NEVER:
             if (ctx->Extensions.EXT_shadow_funcs) {
                flush(ctx);
-               texObj->CompareFunc = params[0];
+               texObj->Sampler.CompareFunc = params[0];
                return GL_TRUE;
             }
             /* fall-through */
@@ -359,14 +360,14 @@ set_tex_parameteri(struct gl_context *ctx,
 
    case GL_DEPTH_TEXTURE_MODE_ARB:
       if (ctx->Extensions.ARB_depth_texture) {
-         if (texObj->DepthMode == params[0])
+         if (texObj->Sampler.DepthMode == params[0])
             return GL_FALSE;
          if (params[0] == GL_LUMINANCE ||
              params[0] == GL_INTENSITY ||
              params[0] == GL_ALPHA ||
              (ctx->Extensions.ARB_texture_rg && params[0] == GL_RED)) {
             flush(ctx);
-            texObj->DepthMode = params[0];
+            texObj->Sampler.DepthMode = params[0];
             return GL_TRUE;
          }
          goto invalid_param;
@@ -428,9 +429,9 @@ set_tex_parameteri(struct gl_context *ctx,
       if (ctx->Extensions.EXT_texture_sRGB_decode) {
 	 GLenum decode = params[0];
 	 if (decode == GL_DECODE_EXT || decode == GL_SKIP_DECODE_EXT) {
-	    if (texObj->sRGBDecode != decode) {
+	    if (texObj->Sampler.sRGBDecode != decode) {
 	       flush(ctx);
-	       texObj->sRGBDecode = decode;
+	       texObj->Sampler.sRGBDecode = decode;
 	       _mesa_update_fetch_functions(texObj);
 	    }
 	    return GL_TRUE;
@@ -465,17 +466,17 @@ set_tex_parameterf(struct gl_context *ctx,
 {
    switch (pname) {
    case GL_TEXTURE_MIN_LOD:
-      if (texObj->MinLod == params[0])
+      if (texObj->Sampler.MinLod == params[0])
          return GL_FALSE;
       flush(ctx);
-      texObj->MinLod = params[0];
+      texObj->Sampler.MinLod = params[0];
       return GL_TRUE;
 
    case GL_TEXTURE_MAX_LOD:
-      if (texObj->MaxLod == params[0])
+      if (texObj->Sampler.MaxLod == params[0])
          return GL_FALSE;
       flush(ctx);
-      texObj->MaxLod = params[0];
+      texObj->Sampler.MaxLod = params[0];
       return GL_TRUE;
 
    case GL_TEXTURE_PRIORITY:
@@ -485,7 +486,7 @@ set_tex_parameterf(struct gl_context *ctx,
 
    case GL_TEXTURE_MAX_ANISOTROPY_EXT:
       if (ctx->Extensions.EXT_texture_filter_anisotropic) {
-         if (texObj->MaxAnisotropy == params[0])
+         if (texObj->Sampler.MaxAnisotropy == params[0])
             return GL_FALSE;
          if (params[0] < 1.0) {
             _mesa_error(ctx, GL_INVALID_VALUE, "glTexParameter(param)" );
@@ -493,7 +494,7 @@ set_tex_parameterf(struct gl_context *ctx,
          }
          flush(ctx);
          /* clamp to max, that's what NVIDIA does */
-         texObj->MaxAnisotropy = MIN2(params[0],
+         texObj->Sampler.MaxAnisotropy = MIN2(params[0],
                                       ctx->Const.MaxTextureMaxAnisotropy);
          return GL_TRUE;
       }
@@ -507,9 +508,9 @@ set_tex_parameterf(struct gl_context *ctx,
 
    case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
       if (ctx->Extensions.ARB_shadow_ambient) {
-         if (texObj->CompareFailValue != params[0]) {
+         if (texObj->Sampler.CompareFailValue != params[0]) {
             flush(ctx);
-            texObj->CompareFailValue = CLAMP(params[0], 0.0F, 1.0F);
+            texObj->Sampler.CompareFailValue = CLAMP(params[0], 0.0F, 1.0F);
             return GL_TRUE;
          }
       }
@@ -522,9 +523,9 @@ set_tex_parameterf(struct gl_context *ctx,
    case GL_TEXTURE_LOD_BIAS:
       /* NOTE: this is really part of OpenGL 1.4, not EXT_texture_lod_bias */
       if (ctx->Extensions.EXT_texture_lod_bias) {
-         if (texObj->LodBias != params[0]) {
+         if (texObj->Sampler.LodBias != params[0]) {
             flush(ctx);
-            texObj->LodBias = params[0];
+            texObj->Sampler.LodBias = params[0];
             return GL_TRUE;
          }
          return GL_FALSE;
@@ -533,10 +534,18 @@ set_tex_parameterf(struct gl_context *ctx,
 
    case GL_TEXTURE_BORDER_COLOR:
       flush(ctx);
-      texObj->BorderColor.f[RCOMP] = params[0];
-      texObj->BorderColor.f[GCOMP] = params[1];
-      texObj->BorderColor.f[BCOMP] = params[2];
-      texObj->BorderColor.f[ACOMP] = params[3];
+      /* ARB_texture_float disables clamping */
+      if (ctx->Extensions.ARB_texture_float) {
+         texObj->Sampler.BorderColor.f[RCOMP] = params[0];
+         texObj->Sampler.BorderColor.f[GCOMP] = params[1];
+         texObj->Sampler.BorderColor.f[BCOMP] = params[2];
+         texObj->Sampler.BorderColor.f[ACOMP] = params[3];
+      } else {
+         texObj->Sampler.BorderColor.f[RCOMP] = CLAMP(params[0], 0.0F, 1.0F);
+         texObj->Sampler.BorderColor.f[GCOMP] = CLAMP(params[1], 0.0F, 1.0F);
+         texObj->Sampler.BorderColor.f[BCOMP] = CLAMP(params[2], 0.0F, 1.0F);
+         texObj->Sampler.BorderColor.f[ACOMP] = CLAMP(params[3], 0.0F, 1.0F);
+      }
       return GL_TRUE;
 
    default:
@@ -775,7 +784,7 @@ _mesa_TexParameterIiv(GLenum target, GLenum pname, const GLint *params)
    case GL_TEXTURE_BORDER_COLOR:
       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
       /* set the integer-valued border color */
-      COPY_4V(texObj->BorderColor.i, params);
+      COPY_4V(texObj->Sampler.BorderColor.i, params);
       break;
    default:
       _mesa_TexParameteriv(target, pname, params);
@@ -805,7 +814,7 @@ _mesa_TexParameterIuiv(GLenum target, GLenum pname, const GLuint *params)
    case GL_TEXTURE_BORDER_COLOR:
       FLUSH_VERTICES(ctx, _NEW_TEXTURE);
       /* set the unsigned integer-valued border color */
-      COPY_4V(texObj->BorderColor.ui, params);
+      COPY_4V(texObj->Sampler.BorderColor.ui, params);
       break;
    default:
       _mesa_TexParameteriv(target, pname, (const GLint *) params);
@@ -1092,25 +1101,37 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
    _mesa_lock_texture(ctx, obj);
    switch (pname) {
       case GL_TEXTURE_MAG_FILTER:
-	 *params = ENUM_TO_FLOAT(obj->MagFilter);
+	 *params = ENUM_TO_FLOAT(obj->Sampler.MagFilter);
 	 break;
       case GL_TEXTURE_MIN_FILTER:
-         *params = ENUM_TO_FLOAT(obj->MinFilter);
+         *params = ENUM_TO_FLOAT(obj->Sampler.MinFilter);
          break;
       case GL_TEXTURE_WRAP_S:
-         *params = ENUM_TO_FLOAT(obj->WrapS);
+         *params = ENUM_TO_FLOAT(obj->Sampler.WrapS);
          break;
       case GL_TEXTURE_WRAP_T:
-         *params = ENUM_TO_FLOAT(obj->WrapT);
+         *params = ENUM_TO_FLOAT(obj->Sampler.WrapT);
          break;
       case GL_TEXTURE_WRAP_R:
-         *params = ENUM_TO_FLOAT(obj->WrapR);
+         *params = ENUM_TO_FLOAT(obj->Sampler.WrapR);
          break;
       case GL_TEXTURE_BORDER_COLOR:
-         params[0] = CLAMP(obj->BorderColor.f[0], 0.0F, 1.0F);
-         params[1] = CLAMP(obj->BorderColor.f[1], 0.0F, 1.0F);
-         params[2] = CLAMP(obj->BorderColor.f[2], 0.0F, 1.0F);
-         params[3] = CLAMP(obj->BorderColor.f[3], 0.0F, 1.0F);
+         if(ctx->NewState & (_NEW_BUFFERS | _NEW_FRAG_CLAMP))
+            _mesa_update_state_locked(ctx);
+         if(ctx->Color._ClampFragmentColor)
+         {
+            params[0] = CLAMP(obj->Sampler.BorderColor.f[0], 0.0F, 1.0F);
+            params[1] = CLAMP(obj->Sampler.BorderColor.f[1], 0.0F, 1.0F);
+            params[2] = CLAMP(obj->Sampler.BorderColor.f[2], 0.0F, 1.0F);
+            params[3] = CLAMP(obj->Sampler.BorderColor.f[3], 0.0F, 1.0F);
+         }
+         else
+         {
+            params[0] = obj->Sampler.BorderColor.f[0];
+            params[1] = obj->Sampler.BorderColor.f[1];
+            params[2] = obj->Sampler.BorderColor.f[2];
+            params[3] = obj->Sampler.BorderColor.f[3];
+         }
          break;
       case GL_TEXTURE_RESIDENT:
          {
@@ -1126,10 +1147,10 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
          *params = obj->Priority;
          break;
       case GL_TEXTURE_MIN_LOD:
-         *params = obj->MinLod;
+         *params = obj->Sampler.MinLod;
          break;
       case GL_TEXTURE_MAX_LOD:
-         *params = obj->MaxLod;
+         *params = obj->Sampler.MaxLod;
          break;
       case GL_TEXTURE_BASE_LEVEL:
          *params = (GLfloat) obj->BaseLevel;
@@ -1139,14 +1160,14 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
          break;
       case GL_TEXTURE_MAX_ANISOTROPY_EXT:
          if (ctx->Extensions.EXT_texture_filter_anisotropic) {
-            *params = obj->MaxAnisotropy;
+            *params = obj->Sampler.MaxAnisotropy;
          }
 	 else
 	    error = GL_TRUE;
          break;
       case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
          if (ctx->Extensions.ARB_shadow_ambient) {
-            *params = obj->CompareFailValue;
+            *params = obj->Sampler.CompareFailValue;
          }
 	 else 
 	    error = GL_TRUE;
@@ -1156,28 +1177,28 @@ _mesa_GetTexParameterfv( GLenum target, GLenum pname, GLfloat *params )
          break;
       case GL_TEXTURE_COMPARE_MODE_ARB:
          if (ctx->Extensions.ARB_shadow) {
-            *params = (GLfloat) obj->CompareMode;
+            *params = (GLfloat) obj->Sampler.CompareMode;
          }
 	 else 
 	    error = GL_TRUE;
          break;
       case GL_TEXTURE_COMPARE_FUNC_ARB:
          if (ctx->Extensions.ARB_shadow) {
-            *params = (GLfloat) obj->CompareFunc;
+            *params = (GLfloat) obj->Sampler.CompareFunc;
          }
 	 else 
 	    error = GL_TRUE;
          break;
       case GL_DEPTH_TEXTURE_MODE_ARB:
          if (ctx->Extensions.ARB_depth_texture) {
-            *params = (GLfloat) obj->DepthMode;
+            *params = (GLfloat) obj->Sampler.DepthMode;
          }
 	 else 
 	    error = GL_TRUE;
          break;
       case GL_TEXTURE_LOD_BIAS:
          if (ctx->Extensions.EXT_texture_lod_bias) {
-            *params = obj->LodBias;
+            *params = obj->Sampler.LodBias;
          }
 	 else 
 	    error = GL_TRUE;
@@ -1244,27 +1265,27 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
    _mesa_lock_texture(ctx, obj);
    switch (pname) {
       case GL_TEXTURE_MAG_FILTER:
-         *params = (GLint) obj->MagFilter;
+         *params = (GLint) obj->Sampler.MagFilter;
          break;;
       case GL_TEXTURE_MIN_FILTER:
-         *params = (GLint) obj->MinFilter;
+         *params = (GLint) obj->Sampler.MinFilter;
          break;;
       case GL_TEXTURE_WRAP_S:
-         *params = (GLint) obj->WrapS;
+         *params = (GLint) obj->Sampler.WrapS;
          break;;
       case GL_TEXTURE_WRAP_T:
-         *params = (GLint) obj->WrapT;
+         *params = (GLint) obj->Sampler.WrapT;
          break;;
       case GL_TEXTURE_WRAP_R:
-         *params = (GLint) obj->WrapR;
+         *params = (GLint) obj->Sampler.WrapR;
          break;;
       case GL_TEXTURE_BORDER_COLOR:
          {
             GLfloat b[4];
-            b[0] = CLAMP(obj->BorderColor.f[0], 0.0F, 1.0F);
-            b[1] = CLAMP(obj->BorderColor.f[1], 0.0F, 1.0F);
-            b[2] = CLAMP(obj->BorderColor.f[2], 0.0F, 1.0F);
-            b[3] = CLAMP(obj->BorderColor.f[3], 0.0F, 1.0F);
+            b[0] = CLAMP(obj->Sampler.BorderColor.f[0], 0.0F, 1.0F);
+            b[1] = CLAMP(obj->Sampler.BorderColor.f[1], 0.0F, 1.0F);
+            b[2] = CLAMP(obj->Sampler.BorderColor.f[2], 0.0F, 1.0F);
+            b[3] = CLAMP(obj->Sampler.BorderColor.f[3], 0.0F, 1.0F);
             params[0] = FLOAT_TO_INT(b[0]);
             params[1] = FLOAT_TO_INT(b[1]);
             params[2] = FLOAT_TO_INT(b[2]);
@@ -1285,10 +1306,10 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          *params = FLOAT_TO_INT(obj->Priority);
          break;;
       case GL_TEXTURE_MIN_LOD:
-         *params = (GLint) obj->MinLod;
+         *params = (GLint) obj->Sampler.MinLod;
          break;;
       case GL_TEXTURE_MAX_LOD:
-         *params = (GLint) obj->MaxLod;
+         *params = (GLint) obj->Sampler.MaxLod;
          break;;
       case GL_TEXTURE_BASE_LEVEL:
          *params = obj->BaseLevel;
@@ -1298,7 +1319,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          break;;
       case GL_TEXTURE_MAX_ANISOTROPY_EXT:
          if (ctx->Extensions.EXT_texture_filter_anisotropic) {
-            *params = (GLint) obj->MaxAnisotropy;
+            *params = (GLint) obj->Sampler.MaxAnisotropy;
          }
          else {
             error = GL_TRUE;
@@ -1306,7 +1327,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          break;
       case GL_TEXTURE_COMPARE_FAIL_VALUE_ARB:
          if (ctx->Extensions.ARB_shadow_ambient) {
-            *params = (GLint) FLOAT_TO_INT(obj->CompareFailValue);
+            *params = (GLint) FLOAT_TO_INT(obj->Sampler.CompareFailValue);
          }
          else {
             error = GL_TRUE;
@@ -1317,7 +1338,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          break;
       case GL_TEXTURE_COMPARE_MODE_ARB:
          if (ctx->Extensions.ARB_shadow) {
-            *params = (GLint) obj->CompareMode;
+            *params = (GLint) obj->Sampler.CompareMode;
          }
          else {
             error = GL_TRUE;
@@ -1325,7 +1346,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          break;
       case GL_TEXTURE_COMPARE_FUNC_ARB:
          if (ctx->Extensions.ARB_shadow) {
-            *params = (GLint) obj->CompareFunc;
+            *params = (GLint) obj->Sampler.CompareFunc;
          }
          else {
             error = GL_TRUE;
@@ -1333,7 +1354,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          break;
       case GL_DEPTH_TEXTURE_MODE_ARB:
          if (ctx->Extensions.ARB_depth_texture) {
-            *params = (GLint) obj->DepthMode;
+            *params = (GLint) obj->Sampler.DepthMode;
          }
          else {
             error = GL_TRUE;
@@ -1341,7 +1362,7 @@ _mesa_GetTexParameteriv( GLenum target, GLenum pname, GLint *params )
          break;
       case GL_TEXTURE_LOD_BIAS:
          if (ctx->Extensions.EXT_texture_lod_bias) {
-            *params = (GLint) obj->LodBias;
+            *params = (GLint) obj->Sampler.LodBias;
          }
          else {
             error = GL_TRUE;
@@ -1401,7 +1422,7 @@ _mesa_GetTexParameterIiv(GLenum target, GLenum pname, GLint *params)
    
    switch (pname) {
    case GL_TEXTURE_BORDER_COLOR:
-      COPY_4V(params, texObj->BorderColor.i);
+      COPY_4V(params, texObj->Sampler.BorderColor.i);
       break;
    default:
       _mesa_GetTexParameteriv(target, pname, params);
@@ -1421,7 +1442,7 @@ _mesa_GetTexParameterIuiv(GLenum target, GLenum pname, GLuint *params)
    
    switch (pname) {
    case GL_TEXTURE_BORDER_COLOR:
-      COPY_4V(params, texObj->BorderColor.i);
+      COPY_4V(params, texObj->Sampler.BorderColor.i);
       break;
    default:
       {

@@ -296,15 +296,15 @@ static void calculate_min_max_lod(struct gl_texture_object *tObj,
 	case GL_TEXTURE_2D:
 	case GL_TEXTURE_3D:
 	case GL_TEXTURE_CUBE_MAP:
-		if (tObj->MinFilter == GL_NEAREST || tObj->MinFilter == GL_LINEAR) {
+		if (tObj->Sampler.MinFilter == GL_NEAREST || tObj->Sampler.MinFilter == GL_LINEAR) {
 			/* GL_NEAREST and GL_LINEAR only care about GL_TEXTURE_BASE_LEVEL.
 			*/
 			minLod = maxLod = tObj->BaseLevel;
 		} else {
-			minLod = tObj->BaseLevel + (GLint)(tObj->MinLod);
+			minLod = tObj->BaseLevel + (GLint)(tObj->Sampler.MinLod);
 			minLod = MAX2(minLod, tObj->BaseLevel);
 			minLod = MIN2(minLod, tObj->MaxLevel);
-			maxLod = tObj->BaseLevel + (GLint)(tObj->MaxLod + 0.5);
+			maxLod = tObj->BaseLevel + (GLint)(tObj->Sampler.MaxLod + 0.5);
 			maxLod = MIN2(maxLod, tObj->MaxLevel);
 			maxLod = MIN2(maxLod, tObj->Image[0][minLod]->MaxLog2 + minLod);
 			maxLod = MAX2(maxLod, minLod); /* need at least one level */

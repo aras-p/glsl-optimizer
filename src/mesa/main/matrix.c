@@ -140,8 +140,8 @@ _mesa_Ortho( GLdouble left, GLdouble right,
  * \sa glMatrixMode().
  *
  * Flushes the vertices, validates the parameter and updates
- * __struct gl_contextRec::CurrentStack and gl_transform_attrib::MatrixMode with the
- * specified matrix stack.
+ * __struct gl_contextRec::CurrentStack and gl_transform_attrib::MatrixMode
+ * with the specified matrix stack.
  */
 void GLAPIENTRY
 _mesa_MatrixMode( GLenum mode )
@@ -170,7 +170,8 @@ _mesa_MatrixMode( GLenum mode )
        */
 #if 0
       if (ctx->Texture.CurrentUnit >= ctx->Const.MaxTextureCoordUnits) {
-         _mesa_error(ctx, GL_INVALID_OPERATION, "glMatrixMode(invalid tex unit %d)",
+         _mesa_error(ctx, GL_INVALID_OPERATION,
+                     "glMatrixMode(invalid tex unit %d)",
                      ctx->Texture.CurrentUnit);
          return;
       }
@@ -232,8 +233,8 @@ _mesa_MatrixMode( GLenum mode )
  * \sa glPushMatrix().
  * 
  * Verifies the current matrix stack is not full, and duplicates the top-most
- * matrix in the stack. Marks __struct gl_contextRec::NewState with the stack dirty
- * flag.
+ * matrix in the stack.
+ * Marks __struct gl_contextRec::NewState with the stack dirty flag.
  */
 void GLAPIENTRY
 _mesa_PushMatrix( void )
@@ -272,8 +273,8 @@ _mesa_PushMatrix( void )
  * \sa glPopMatrix().
  * 
  * Flushes the vertices, verifies the current matrix stack is not empty, and
- * moves the stack head down. Marks __struct gl_contextRec::NewState with the dirty
- * stack flag.
+ * moves the stack head down.
+ * Marks __struct gl_contextRec::NewState with the dirty stack flag.
  */
 void GLAPIENTRY
 _mesa_PopMatrix( void )
@@ -309,9 +310,9 @@ _mesa_PopMatrix( void )
  *
  * \sa glLoadIdentity().
  *
- * Flushes the vertices and calls _math_matrix_set_identity() with the top-most
- * matrix in the current stack. Marks __struct gl_contextRec::NewState with the stack
- * dirty flag.
+ * Flushes the vertices and calls _math_matrix_set_identity() with the
+ * top-most matrix in the current stack.
+ * Marks __struct gl_contextRec::NewState with the stack dirty flag.
  */
 void GLAPIENTRY
 _mesa_LoadIdentity( void )
@@ -334,9 +335,9 @@ _mesa_LoadIdentity( void )
  *
  * \sa glLoadMatrixf().
  *
- * Flushes the vertices and calls _math_matrix_loadf() with the top-most matrix
- * in the current stack and the given matrix. Marks __struct gl_contextRec::NewState
- * with the dirty stack flag.
+ * Flushes the vertices and calls _math_matrix_loadf() with the top-most
+ * matrix in the current stack and the given matrix.
+ * Marks __struct gl_contextRec::NewState with the dirty stack flag.
  */
 void GLAPIENTRY
 _mesa_LoadMatrixf( const GLfloat *m )
@@ -560,8 +561,8 @@ _mesa_MultTransposeMatrixdARB( const GLdouble *m )
  * Calls _math_matrix_analyse() with the top-matrix of the projection matrix
  * stack, and recomputes user clip positions if necessary.
  * 
- * \note This routine references __struct gl_contextRec::Tranform attribute values to
- * compute userclip positions in clip space, but is only called on
+ * \note This routine references __struct gl_contextRec::Tranform attribute
+ * values to compute userclip positions in clip space, but is only called on
  * _NEW_PROJECTION.  The _mesa_ClipPlane() function keeps these values up to
  * date across changes to the __struct gl_contextRec::Transform attributes.
  */
@@ -594,8 +595,8 @@ update_projection( struct gl_context *ctx )
  * \param ctx GL context.
  *
  * Multiplies the top matrices of the projection and model view stacks into
- * __struct gl_contextRec::_ModelProjectMatrix via _math_matrix_mul_matrix() and
- * analyzes the resulting matrix via _math_matrix_analyse().
+ * __struct gl_contextRec::_ModelProjectMatrix via _math_matrix_mul_matrix()
+ * and analyzes the resulting matrix via _math_matrix_analyse().
  */
 static void
 calculate_model_project_matrix( struct gl_context *ctx )
@@ -624,7 +625,7 @@ void _mesa_update_modelview_project( struct gl_context *ctx, GLuint new_state )
    if (new_state & _NEW_MODELVIEW) {
       _math_matrix_analyse( ctx->ModelviewMatrixStack.Top );
     
-      /* Bring cull position uptodate.
+      /* Bring cull position up to date.
        */
       TRANSFORM_POINT3( ctx->Transform.CullObjPos, 
 			ctx->ModelviewMatrixStack.Top->inv,
@@ -635,7 +636,7 @@ void _mesa_update_modelview_project( struct gl_context *ctx, GLuint new_state )
    if (new_state & _NEW_PROJECTION)
       update_projection( ctx );
 
-   /* Keep ModelviewProject uptodate always to allow tnl
+   /* Keep ModelviewProject up to date always to allow tnl
     * implementations that go model->clip even when eye is required.
     */
    calculate_model_project_matrix(ctx);

@@ -40,9 +40,6 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 #include "utils.h"
 
-#define DRIVER_DATE	"20051027"
-
-
 /* Return the width and height of the current color buffer.
  */
 static void r128GetBufferSize( struct gl_framebuffer *buffer,
@@ -82,8 +79,7 @@ static const GLubyte *r128GetString( struct gl_context *ctx, GLenum name )
 	 card_name = "Rage 128 Mobility";
       }
 
-      offset = driGetRendererString( buffer, card_name, DRIVER_DATE,
-				     agp_mode );
+      offset = driGetRendererString( buffer, card_name, agp_mode );
 
       return (GLubyte *)buffer;
 

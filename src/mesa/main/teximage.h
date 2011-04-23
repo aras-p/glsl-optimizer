@@ -59,7 +59,8 @@ _mesa_new_texture_image( struct gl_context *ctx );
 
 
 extern void
-_mesa_delete_texture_image( struct gl_context *ctx, struct gl_texture_image *teximage );
+_mesa_delete_texture_image( struct gl_context *ctx,
+                            struct gl_texture_image *teximage );
 
 extern void
 _mesa_free_texture_image_data( struct gl_context *ctx, 
@@ -82,7 +83,8 @@ _mesa_choose_texture_format(struct gl_context *ctx,
 
 
 extern void
-_mesa_clear_texture_image(struct gl_context *ctx, struct gl_texture_image *texImage);
+_mesa_clear_texture_image(struct gl_context *ctx,
+                          struct gl_texture_image *texImage);
 
 
 extern void
@@ -92,7 +94,8 @@ _mesa_set_tex_image(struct gl_texture_object *tObj,
 
 
 extern struct gl_texture_object *
-_mesa_select_tex_object(struct gl_context *ctx, const struct gl_texture_unit *texUnit,
+_mesa_select_tex_object(struct gl_context *ctx,
+                        const struct gl_texture_unit *texUnit,
                         GLenum target);
 
 extern struct gl_texture_object *
@@ -100,7 +103,8 @@ _mesa_get_current_tex_object(struct gl_context *ctx, GLenum target);
 
 
 extern struct gl_texture_image *
-_mesa_select_tex_image(struct gl_context *ctx, const struct gl_texture_object *texObj,
+_mesa_select_tex_image(struct gl_context *ctx,
+                       const struct gl_texture_object *texObj,
                        GLenum target, GLint level);
 
 
@@ -270,6 +274,11 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
                                  GLint yoffset, GLint zoffset, GLsizei width,
                                  GLsizei height, GLsizei depth, GLenum format,
                                  GLsizei imageSize, const GLvoid *data);
+
+
+extern void GLAPIENTRY
+_mesa_TexBuffer(GLenum target, GLenum internalFormat, GLuint buffer);
+
 
 /*@}*/
 

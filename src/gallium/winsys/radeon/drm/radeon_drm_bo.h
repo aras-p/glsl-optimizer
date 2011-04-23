@@ -29,14 +29,13 @@
  *      Jérôme Glisse <glisse@freedesktop.org>
  *      Marek Olšák <maraeo@gmail.com>
  */
-#ifndef RADEON_DRM_BUFFER_H
-#define RADEON_DRM_BUFFER_H
+#ifndef RADEON_DRM_BO_H
+#define RADEON_DRM_BO_H
 
-#include "radeon_winsys.h"
+#include "radeon_drm_winsys.h"
 #include "pipebuffer/pb_bufmgr.h"
 #include "os/os_thread.h"
 
-#define RADEON_PB_USAGE_CACHE       (1 << 28)
 #define RADEON_PB_USAGE_DOMAIN_GTT  (1 << 29)
 #define RADEON_PB_USAGE_DOMAIN_VRAM (1 << 30)
 
@@ -54,14 +53,19 @@ struct radeon_bo {
     uint32_t handle;
     uint32_t name;
 
-    int ref_count;
-
     /* how many command streams is this bo referenced in? */
     int num_cs_references;
 
     /* how many command streams, which are being emitted in a separate
      * thread, is this bo referenced in? */
     int num_active_ioctls;
+
+    /* Whether the buffer has been relocated for write and is busy since then.
+     * This field is updated in:
+     * - radeon_drm_cs_flush (to TRUE if it's relocated for write)
+     * - radeon_bo_is_busy (to FALSE if it's not busy)
+     * - radeon_bo_wait (to FALSE) */
+    boolean busy_for_write;
 
     boolean flinked;
     uint32_t flink;
@@ -70,16 +74,14 @@ struct radeon_bo {
 struct pb_manager *radeon_bomgr_create(struct radeon_drm_winsys *rws);
 void radeon_bomgr_init_functions(struct radeon_drm_winsys *ws);
 
-void radeon_bo_unref(struct radeon_bo *buf);
-
-
-static INLINE void radeon_bo_ref(struct radeon_bo *bo)
+static INLINE
+void radeon_bo_reference(struct radeon_bo **dst, struct radeon_bo *src)
 {
-    p_atomic_inc(&bo->ref_count);
+    pb_reference((struct pb_buffer**)dst, (struct pb_buffer*)src);
 }
 
 static INLINE struct pb_buffer *
-pb_buffer(struct r300_winsys_bo *buffer)
+pb_buffer(struct pb_buffer *buffer)
 {
     return (struct pb_buffer *)buffer;
 }

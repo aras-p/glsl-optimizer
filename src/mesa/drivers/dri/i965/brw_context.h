@@ -139,7 +139,7 @@ struct brw_context;
  * by any 3D rendering.
  */
 #define BRW_NEW_BATCH			0x10000
-/** brw->depth_region updated */
+/** \see brw.state.depth_region */
 #define BRW_NEW_DEPTH_BUFFER		0x20000
 #define BRW_NEW_NR_WM_SURFACES		0x40000
 #define BRW_NEW_NR_VS_SURFACES		0x80000
@@ -464,7 +464,26 @@ struct brw_context
    struct {
       struct brw_state_flags dirty;
 
+      /**
+       * \name Cached region pointers
+       *
+       * When the draw buffer is updated, often the depth buffer is not
+       * changed. Caching the pointer to the buffer's region allows us to
+       * detect when the buffer has in fact changed, and allows us to avoid
+       * updating the buffer's GPU state when it has not.
+       *
+       * The original of each cached pointer is an instance of
+       * \c intel_renderbuffer.region.
+       *
+       * \see brw_set_draw_region()
+       *
+       * \{
+       */
+
+      /** \see struct brw_tracked_state brw_depthbuffer */
       struct intel_region *depth_region;
+
+      /** \} */
 
       /**
        * List of buffers accumulated in brw_validate_state to receive
@@ -549,18 +568,21 @@ struct brw_context
 
       GLboolean constrained;
 
+      GLuint max_vs_handles;	/* Maximum number of VS handles */
+      GLuint max_gs_handles;	/* Maximum number of GS handles */
+
       GLuint nr_vs_entries;
       GLuint nr_gs_entries;
       GLuint nr_clip_entries;
       GLuint nr_sf_entries;
       GLuint nr_cs_entries;
 
-      /* gen6 */
+      /* gen6:
+       * The length of each URB entry owned by the VS (or GS), as
+       * a number of 1024-bit (128-byte) rows.  Should be >= 1.
+       */
       GLuint vs_size;
-/*       GLuint gs_size; */
-/*       GLuint clip_size; */
-/*       GLuint sf_size; */
-/*       GLuint cs_size; */
+      GLuint gs_size;
 
       GLuint vs_start;
       GLuint gs_start;
@@ -639,7 +661,9 @@ struct brw_context
 
       drm_intel_bo *prog_bo;
       drm_intel_bo *state_bo;
+      uint32_t state_offset;
       drm_intel_bo *vp_bo;
+      uint32_t vp_offset;
    } sf;
 
    struct {

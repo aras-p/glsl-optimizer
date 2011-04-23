@@ -218,8 +218,8 @@ static boolean r300_reserve_cs_dwords(struct r300_context *r300,
     cs_dwords += r300_get_num_cs_end_dwords(r300);
 
     /* Reserve requested CS space. */
-    if (cs_dwords > (R300_MAX_CMDBUF_DWORDS - r300->cs->cdw)) {
-        r300_flush(&r300->context, R300_FLUSH_ASYNC, NULL);
+    if (cs_dwords > (RADEON_MAX_CMDBUF_DWORDS - r300->cs->cdw)) {
+        r300_flush(&r300->context, RADEON_FLUSH_ASYNC, NULL);
         flushed = TRUE;
     }
 
@@ -343,7 +343,7 @@ static boolean immd_is_good_idea(struct r300_context *r300,
         if (!checked[vbi]) {
             buf = r300->vbuf_mgr->real_vertex_buffer[vbi];
 
-            if ((r300_resource(buf)->domain != R300_DOMAIN_GTT)) {
+            if ((r300_resource(buf)->domain != RADEON_DOMAIN_GTT)) {
                 return FALSE;
             }
 
@@ -1080,7 +1080,7 @@ static void r300_render_draw_elements(struct vbuf_render* render,
     end_cs_dwords = r300_get_num_cs_end_dwords(r300);
 
     while (count) {
-        free_dwords = R300_MAX_CMDBUF_DWORDS - r300->cs->cdw;
+        free_dwords = RADEON_MAX_CMDBUF_DWORDS - r300->cs->cdw;
 
         short_count = MIN2(count, (free_dwords - end_cs_dwords - 6) * 2);
 

@@ -588,6 +588,10 @@ struct _glapi_table * __glXNewIndirectAPI( void )
 
     glAPI->DrawBuffersARB = __indirect_glDrawBuffersARB;
 
+    /*  39. GL_ARB_color_buffer_float */
+
+    glAPI->ClampColorARB = __indirect_glClampColorARB;
+
     /*  45. GL_ARB_framebuffer_object */
 
     glAPI->RenderbufferStorageMultisample = __indirect_glRenderbufferStorageMultisample;

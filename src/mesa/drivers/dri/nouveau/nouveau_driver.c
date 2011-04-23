@@ -45,7 +45,7 @@ nouveau_get_string(struct gl_context *ctx, GLenum name)
 
 		case GL_RENDERER:
 			sprintf(hardware_name, "nv%02X", context_chipset(ctx));
-			driGetRendererString(buffer, hardware_name, DRIVER_DATE, 0);
+			driGetRendererString(buffer, hardware_name, 0);
 
 			return (GLubyte *)buffer;
 		default:

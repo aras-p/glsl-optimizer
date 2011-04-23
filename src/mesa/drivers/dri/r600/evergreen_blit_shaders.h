@@ -37,11 +37,19 @@ const uint32_t evergreen_vs[] =
 	0x00000000,
 	0x3c000000,
 	0x67961001,
+#ifdef MESA_BIG_ENDIAN
+	0x000a0000,
+#else
 	0x00080000,
+#endif
 	0x00000000,
 	0x1c000000,
 	0x67961000,
+#ifdef MESA_BIG_ENDIAN
+	0x00020008,
+#else
 	0x00000008,
+#endif
 	0x00000000,
 };
 

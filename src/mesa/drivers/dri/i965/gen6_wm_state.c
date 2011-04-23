@@ -144,7 +144,7 @@ upload_wm_state(struct brw_context *brw)
    dw4 |= (brw->wm.prog_data->first_curbe_grf <<
 	   GEN6_WM_DISPATCH_START_GRF_SHIFT_0);
 
-   dw5 |= (40 - 1) << GEN6_WM_MAX_THREADS_SHIFT;
+   dw5 |= (brw->wm_max_threads - 1) << GEN6_WM_MAX_THREADS_SHIFT;
 
    /* CACHE_NEW_WM_PROG */
    if (brw->wm.prog_data->dispatch_width == 8)
@@ -184,7 +184,12 @@ upload_wm_state(struct brw_context *brw)
    OUT_BATCH(_3DSTATE_WM << 16 | (9 - 2));
    OUT_RELOC(brw->wm.prog_bo, I915_GEM_DOMAIN_INSTRUCTION, 0, 0);
    OUT_BATCH(dw2);
-   OUT_BATCH(0); /* scratch space base offset */
+   if (brw->wm.prog_data->total_scratch) {
+      OUT_RELOC(brw->wm.scratch_bo, I915_GEM_DOMAIN_RENDER, I915_GEM_DOMAIN_RENDER,
+		ffs(brw->wm.prog_data->total_scratch) - 11);
+   } else {
+      OUT_BATCH(0);
+   }
    OUT_BATCH(dw4);
    OUT_BATCH(dw5);
    OUT_BATCH(dw6);

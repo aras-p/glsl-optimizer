@@ -439,9 +439,10 @@ static GLuint make_state_key( struct gl_context *ctx,  struct state_key *key )
       key->unit[i].source_index =
          translate_tex_src_bit(texUnit->_ReallyEnabled);
 
-      key->unit[i].shadow = ((texObj->CompareMode == GL_COMPARE_R_TO_TEXTURE) &&
-                             ((format == GL_DEPTH_COMPONENT) || 
-                              (format == GL_DEPTH_STENCIL_EXT)));
+      key->unit[i].shadow =
+         ((texObj->Sampler.CompareMode == GL_COMPARE_R_TO_TEXTURE) &&
+          ((format == GL_DEPTH_COMPONENT) || 
+           (format == GL_DEPTH_STENCIL_EXT)));
 
       key->unit[i].NumArgsRGB = comb->_NumArgsRGB;
       key->unit[i].NumArgsA = comb->_NumArgsA;
@@ -726,7 +727,7 @@ static struct ureg register_input( struct texenv_fragment_program *p, GLuint inp
    }
    else {
       GLuint idx = frag_to_vert_attrib( input );
-      return register_param3( p, STATE_INTERNAL, STATE_CURRENT_ATTRIB, idx );
+      return register_param3( p, STATE_INTERNAL, STATE_CURRENT_ATTRIB_MAYBE_VP_CLAMPED, idx );
    }
 }
 
@@ -1529,15 +1530,26 @@ create_new_program(struct gl_context *ctx, struct state_key *key,
     */
    emit_arith( &p, OPCODE_END, undef, WRITEMASK_XYZW, 0, undef, undef, undef);
 
-   if (key->fog_enabled) {
-      /* Pull fog mode from struct gl_context, the value in the state key is
-       * a reduced value and not what is expected in FogOption
-       */
-      p.program->FogOption = ctx->Fog.Mode;
-      p.program->Base.InputsRead |= FRAG_BIT_FOGC;
+   /* Allocate final instruction array.  This has to be done before calling
+    * _mesa_append_fog_code because that function frees the Base.Instructions.
+    * At this point, Base.Instructions points to stack data, so it's a really
+    * bad idea to free it.
+    */
+   p.program->Base.Instructions
+      = _mesa_alloc_instructions(p.program->Base.NumInstructions);
+   if (!p.program->Base.Instructions) {
+      _mesa_error(ctx, GL_OUT_OF_MEMORY,
+                  "generating tex env program");
+      return;
    }
-   else {
-      p.program->FogOption = GL_NONE;
+   _mesa_copy_instructions(p.program->Base.Instructions, instBuffer,
+                           p.program->Base.NumInstructions);
+
+   /* Append fog code.  This must be done before checking the program against
+    * the limits becuase it will potentially add some instructions.
+    */
+   if (key->fog_enabled) {
+      _mesa_append_fog_code(ctx, p.program, ctx->Fog.Mode, GL_FALSE);
    }
 
    if (p.program->Base.NumTexIndirections > ctx->Const.FragmentProgram.MaxTexIndirections) 
@@ -1550,23 +1562,6 @@ create_new_program(struct gl_context *ctx, struct state_key *key,
       program_error(&p, "Exceeded max ALU instructions");
 
    ASSERT(p.program->Base.NumInstructions <= MAX_INSTRUCTIONS);
-
-   /* Allocate final instruction array */
-   p.program->Base.Instructions
-      = _mesa_alloc_instructions(p.program->Base.NumInstructions);
-   if (!p.program->Base.Instructions) {
-      _mesa_error(ctx, GL_OUT_OF_MEMORY,
-                  "generating tex env program");
-      return;
-   }
-   _mesa_copy_instructions(p.program->Base.Instructions, instBuffer,
-                           p.program->Base.NumInstructions);
-
-   if (key->num_draw_buffers && p.program->FogOption) {
-      _mesa_append_fog_code(ctx, p.program);
-      p.program->FogOption = GL_NONE;
-   }
-
 
    /* Notify driver the fragment program has (actually) changed.
     */

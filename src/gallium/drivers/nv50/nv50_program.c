@@ -20,8 +20,6 @@
  * SOFTWARE.
  */
 
-/* #define NV50_PROGRAM_DEBUG */
-
 #include "nv50_program.h"
 #include "nv50_pc.h"
 #include "nv50_context.h"
@@ -486,7 +484,7 @@ nv50_fragprog_prepare(struct nv50_translation_info *ti)
       ++nintp;
    }
 
-   p->fp.colors = (1 << 24) | 4; /* CLAMP, FFC0_ID = 4 */
+   p->fp.colors = 4 << NV50_3D_MAP_SEMANTIC_0_FFC0_ID__SHIFT; /* after HPOS */
 
    for (i = 0; i < p->in_nr; ++i) {
       int j = p->in[i].id;
@@ -564,7 +562,7 @@ nv50_prog_scan(struct nv50_translation_info *ti)
 
    tgsi_scan_shader(p->pipe.tokens, &ti->scan);
 
-#ifdef NV50_PROGRAM_DEBUG
+#if NV50_DEBUG & NV50_DEBUG_SHADER
    tgsi_dump(p->pipe.tokens, 0);
 #endif
 

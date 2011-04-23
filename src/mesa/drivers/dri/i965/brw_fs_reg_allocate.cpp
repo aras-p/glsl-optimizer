@@ -119,8 +119,7 @@ fs_visitor::assign_regs()
       }
       if (i == class_count) {
 	 if (this->virtual_grf_sizes[r] >= base_reg_count) {
-	    fprintf(stderr, "Object too large to register allocate.\n");
-	    this->fail = true;
+	    fail("Object too large to register allocate.\n");
 	 }
 
 	 class_sizes[class_count++] = this->virtual_grf_sizes[r];
@@ -226,8 +225,9 @@ fs_visitor::assign_regs()
        * loop back into here to try again.
        */
       int reg = choose_spill_reg(g);
-      if (reg == -1 || intel->gen >= 6) {
-	 this->fail = true;
+
+      if (reg == -1) {
+	 fail("no register to spill\n");
       } else {
 	 spill_reg(reg);
       }

@@ -51,9 +51,8 @@ struct wl_drm {
 };
 
 static void
-drm_buffer_damage(struct wl_buffer *buffer_base,
-		  struct wl_surface *surface,
-		  int32_t x, int32_t y, int32_t width, int32_t height)
+buffer_damage(struct wl_client *client, struct wl_buffer *buffer,
+	      int32_t x, int32_t y, int32_t width, int32_t height)
 {
 }
 
@@ -74,6 +73,7 @@ buffer_destroy(struct wl_client *client, struct wl_buffer *buffer)
 }
 
 const static struct wl_buffer_interface buffer_interface = {
+	buffer_damage,
 	buffer_destroy
 };
 
@@ -103,8 +103,6 @@ drm_create_buffer(struct wl_client *client, struct wl_drm *drm,
 	buffer->buffer.width = width;
 	buffer->buffer.height = height;
 	buffer->buffer.visual = visual;
-	buffer->buffer.attach = NULL;
-	buffer->buffer.damage = drm_buffer_damage;
 
 	if (visual->object.interface != &wl_visual_interface) {
 		/* FIXME: Define a real exception event instead of
@@ -164,7 +162,9 @@ const static struct wl_drm_interface drm_interface = {
 };
 
 static void
-post_drm_device(struct wl_client *client, struct wl_object *global)
+post_drm_device(struct wl_client *client,
+		struct wl_object *global,
+		uint32_t version)
 {
 	struct wl_drm *drm = (struct wl_drm *) global;
 

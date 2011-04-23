@@ -124,7 +124,7 @@ static void evergreenSendTexState(struct gl_context *ctx, struct radeon_state_at
     context_t *context = EVERGREEN_CONTEXT(ctx);
 	EVERGREEN_CHIP_CONTEXT *evergreen = GET_EVERGREEN_CHIP(context);
 
-    struct evergreen_vertex_program *vp = context->selected_vp;
+    struct evergreen_vertex_program *vp = (struct evergreen_vertex_program *) context->selected_vp;
 
 	struct radeon_bo *bo = NULL;
 	unsigned int i;
@@ -307,6 +307,16 @@ static void evergreenSetupVTXConstants(struct gl_context  * ctx,
 	     SQ_VTX_CONSTANT_WORD2_0__DATA_FORMAT_shift,
 	     SQ_VTX_CONSTANT_WORD2_0__DATA_FORMAT_mask); // TODO : trace back api for initial data type, not only GL_FLOAT     
     SETfield(uSQ_VTX_CONSTANT_WORD2_0, 0, BASE_ADDRESS_HI_shift, BASE_ADDRESS_HI_mask); // TODO    
+
+	SETfield(uSQ_VTX_CONSTANT_WORD2_0, 
+#ifdef MESA_BIG_ENDIAN 
+			 SQ_ENDIAN_8IN32,
+#else
+			 SQ_ENDIAN_NONE,
+#endif
+             SQ_VTX_CONSTANT_WORD2_0__ENDIAN_SWAP_shift,
+             SQ_VTX_CONSTANT_WORD2_0__ENDIAN_SWAP_mask);
+
     if(GL_TRUE == pStreamDesc->normalize)
     {
         SETfield(uSQ_VTX_CONSTANT_WORD2_0, SQ_NUM_FORMAT_NORM,
@@ -379,6 +389,8 @@ static void evergreenSendVTX(struct gl_context *ctx, struct radeon_state_atom *a
     struct evergreen_vertex_program *vp = (struct evergreen_vertex_program *)(context->selected_vp);
     unsigned int i, j = 0;
     BATCH_LOCALS(&context->radeon);
+    (void) b_l_rmesa;  /* silence unused var warning */
+
 	radeon_print(RADEON_STATE, RADEON_VERBOSE, "%s\n", __func__);
 
     if (context->radeon.tcl.aos_count == 0)

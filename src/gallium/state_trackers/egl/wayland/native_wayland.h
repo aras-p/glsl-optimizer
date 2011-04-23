@@ -33,12 +33,17 @@
 #include "common/native_helper.h"
 
 #include "wayland-egl-priv.h"
+#include "wayland-drm-client-protocol.h"
 
 struct wayland_display {
    struct native_display base;
 
    struct wayland_config *config;
-   struct wl_egl_display *dpy;
+   struct wl_display *dpy;
+   struct wl_drm *wl_drm;
+   int fd;
+   char *device_name;
+   boolean authenticated;
 };
 
 enum wayland_buffer_type {

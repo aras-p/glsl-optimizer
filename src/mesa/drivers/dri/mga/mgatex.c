@@ -327,9 +327,9 @@ mgaAllocTexObj( struct gl_texture_object *tObj )
 
       make_empty_list( & t->base );
 
-      mgaSetTexWrapping( t, tObj->WrapS, tObj->WrapT );
-      mgaSetTexFilter( t, tObj->MinFilter, tObj->MagFilter );
-      mgaSetTexBorderColor( t, tObj->BorderColor.f );
+      mgaSetTexWrapping( t, tObj->Sampler.WrapS, tObj->Sampler.WrapT );
+      mgaSetTexFilter( t, tObj->Sampler.MinFilter, tObj->Sampler.MagFilter );
+      mgaSetTexBorderColor( t, tObj->Sampler.BorderColor.f );
    }
 
    return( t );
@@ -447,18 +447,18 @@ mgaTexParameter( struct gl_context *ctx, GLenum target,
       /* FALLTHROUGH */
    case GL_TEXTURE_MAG_FILTER:
       FLUSH_BATCH(mmesa);
-      mgaSetTexFilter( t, tObj->MinFilter, tObj->MagFilter );
+      mgaSetTexFilter( t, tObj->Sampler.MinFilter, tObj->Sampler.MagFilter );
       break;
 
    case GL_TEXTURE_WRAP_S:
    case GL_TEXTURE_WRAP_T:
       FLUSH_BATCH(mmesa);
-      mgaSetTexWrapping(t,tObj->WrapS,tObj->WrapT);
+      mgaSetTexWrapping(t,tObj->Sampler.WrapS,tObj->Sampler.WrapT);
       break;
 
    case GL_TEXTURE_BORDER_COLOR:
       FLUSH_BATCH(mmesa);
-      mgaSetTexBorderColor(t, tObj->BorderColor.f);
+      mgaSetTexBorderColor(t, tObj->Sampler.BorderColor.f);
       break;
 
    case GL_TEXTURE_BASE_LEVEL:

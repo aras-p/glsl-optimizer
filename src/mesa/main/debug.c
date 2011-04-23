@@ -183,7 +183,7 @@ static void add_debug_flags( const char *debug )
 
    MESA_VERBOSE = 0x0;
    for (i = 0; i < Elements(debug_opt); i++) {
-      if (strstr(debug, debug_opt[i].name))
+      if (strstr(debug, debug_opt[i].name) || strcmp(debug, "all") == 0)
          MESA_VERBOSE |= debug_opt[i].flag;
    }
 
@@ -250,6 +250,9 @@ write_ppm(const char *filename, const GLubyte *buffer, int width, int height,
          }
       }
       fclose(f);
+   }
+   else {
+      fprintf(stderr, "Unable to create %s in write_ppm()\n", filename);
    }
 }
 
@@ -546,6 +549,27 @@ _mesa_dump_stencil_buffer(const char *filename)
 
    free(buf);
    free(buf2);
+}
+
+
+void
+_mesa_dump_image(const char *filename, const void *image, GLuint w, GLuint h,
+                 GLenum format, GLenum type)
+{
+   GLboolean invert = GL_TRUE;
+
+   if (format == GL_RGBA && type == GL_UNSIGNED_BYTE) {
+      write_ppm(filename, image, w, h, 4, 0, 1, 2, invert);
+   }
+   else if (format == GL_BGRA && type == GL_UNSIGNED_BYTE) {
+      write_ppm(filename, image, w, h, 4, 2, 1, 0, invert);
+   }
+   else if (format == GL_LUMINANCE_ALPHA && type == GL_UNSIGNED_BYTE) {
+      write_ppm(filename, image, w, h, 2, 1, 0, 0, invert);
+   }
+   else {
+      _mesa_problem(NULL, "Unsupported format/type in _mesa_dump_image()");
+   }
 }
 
 

@@ -46,7 +46,6 @@
 #define I915_UPLOAD_STIPPLE          0x4
 #define I915_UPLOAD_PROGRAM          0x8
 #define I915_UPLOAD_CONSTANTS        0x10
-#define I915_UPLOAD_FOG              0x20
 #define I915_UPLOAD_INVARIENT        0x40
 #define I915_UPLOAD_DEFAULTS         0x80
 #define I915_UPLOAD_RASTER_RULES     0x100
@@ -90,13 +89,6 @@
 #define I915_BLENDREG_BLENDCOLOR0	1
 #define I915_BLENDREG_BLENDCOLOR1	2
 #define I915_BLEND_SETUP_SIZE		3
-
-#define I915_FOGREG_COLOR		0
-#define I915_FOGREG_MODE0		1
-#define I915_FOGREG_MODE1		2
-#define I915_FOGREG_MODE2		3
-#define I915_FOGREG_MODE3		4
-#define I915_FOG_SETUP_SIZE		5
 
 #define I915_STPREG_ST0        0
 #define I915_STPREG_ST1        1
@@ -227,7 +219,6 @@ struct i915_hw_state
    GLuint Blend[I915_BLEND_SETUP_SIZE];
    GLuint Buffer[I915_DEST_SETUP_SIZE];
    GLuint Stipple[I915_STP_SETUP_SIZE];
-   GLuint Fog[I915_FOG_SETUP_SIZE];
    GLuint Defaults[I915_DEF_SETUP_SIZE];
    GLuint RasterRules[I915_RASTER_RULES_SETUP_SIZE];
    GLuint Tex[I915_TEX_UNITS][I915_TEX_SETUP_SIZE];
@@ -254,16 +245,11 @@ struct i915_hw_state
    GLuint emitted;              /* I915_UPLOAD_* */
 };
 
-#define I915_FOG_PIXEL  2
-#define I915_FOG_VERTEX 1
-#define I915_FOG_NONE   0
-
 struct i915_context
 {
    struct intel_context intel;
 
    GLuint last_ReallyEnabled;
-   GLuint vertex_fog;
    GLuint lodbias_ss2[MAX_TEXTURE_UNITS];
 
 
@@ -350,7 +336,6 @@ extern void i915_print_ureg(const char *msg, GLuint ureg);
  */
 extern void i915InitStateFunctions(struct dd_function_table *functions);
 extern void i915InitState(struct i915_context *i915);
-extern void i915_update_fog(struct gl_context * ctx);
 extern void i915_update_stencil(struct gl_context * ctx);
 extern void i915_update_provoking_vertex(struct gl_context *ctx);
 

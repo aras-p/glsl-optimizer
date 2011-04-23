@@ -38,6 +38,7 @@
 #include "st_cb_texture.h"
 #include "st_format.h"
 #include "st_atom.h"
+#include "st_texture.h"
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 
@@ -138,6 +139,7 @@ update_samplers(struct st_context *st)
       if (samplersUsed & (1 << su)) {
          struct gl_texture_object *texobj;
          struct gl_texture_image *teximg;
+         struct gl_sampler_object *msamp;
          GLuint texUnit;
 
          if (fprog->Base.SamplersUsed & (1 << su))
@@ -152,25 +154,27 @@ update_samplers(struct st_context *st)
 
          teximg = texobj->Image[0][texobj->BaseLevel];
 
-         sampler->wrap_s = gl_wrap_xlate(texobj->WrapS);
-         sampler->wrap_t = gl_wrap_xlate(texobj->WrapT);
-         sampler->wrap_r = gl_wrap_xlate(texobj->WrapR);
+         msamp = st_get_mesa_sampler(st->ctx, texUnit);
 
-         sampler->min_img_filter = gl_filter_to_img_filter(texobj->MinFilter);
-         sampler->min_mip_filter = gl_filter_to_mip_filter(texobj->MinFilter);
-         sampler->mag_img_filter = gl_filter_to_img_filter(texobj->MagFilter);
+         sampler->wrap_s = gl_wrap_xlate(msamp->WrapS);
+         sampler->wrap_t = gl_wrap_xlate(msamp->WrapT);
+         sampler->wrap_r = gl_wrap_xlate(msamp->WrapR);
+
+         sampler->min_img_filter = gl_filter_to_img_filter(msamp->MinFilter);
+         sampler->min_mip_filter = gl_filter_to_mip_filter(msamp->MinFilter);
+         sampler->mag_img_filter = gl_filter_to_img_filter(msamp->MagFilter);
 
          if (texobj->Target != GL_TEXTURE_RECTANGLE_ARB)
             sampler->normalized_coords = 1;
 
-         sampler->lod_bias = st->ctx->Texture.Unit[su].LodBias;
+         sampler->lod_bias = st->ctx->Texture.Unit[texUnit].LodBias +
+            msamp->LodBias;
 
-         sampler->min_lod = texobj->BaseLevel + texobj->MinLod;
-         if (sampler->min_lod < texobj->BaseLevel)
-            sampler->min_lod = texobj->BaseLevel;
-
-         sampler->max_lod = MIN2((GLfloat) texobj->MaxLevel,
-                                 (texobj->MaxLod + texobj->BaseLevel));
+         sampler->min_lod = CLAMP(msamp->MinLod,
+                                  0.0f,
+                                  (GLfloat) texobj->MaxLevel - texobj->BaseLevel);
+         sampler->max_lod = MIN2((GLfloat) texobj->MaxLevel - texobj->BaseLevel,
+                                 msamp->MaxLod);
          if (sampler->max_lod < sampler->min_lod) {
             /* The GL spec doesn't seem to specify what to do in this case.
              * Swap the values.
@@ -181,17 +185,18 @@ update_samplers(struct st_context *st)
             assert(sampler->min_lod <= sampler->max_lod);
          }
 
-         st_translate_color(texobj->BorderColor.f,
+         st_translate_color(msamp->BorderColor.f,
                             teximg ? teximg->_BaseFormat : GL_RGBA,
                             sampler->border_color);
 
-	 sampler->max_anisotropy = (texobj->MaxAnisotropy == 1.0 ? 0 : (GLuint)texobj->MaxAnisotropy);
+	 sampler->max_anisotropy = (msamp->MaxAnisotropy == 1.0 ?
+                                    0 : (GLuint) msamp->MaxAnisotropy);
 
          /* only care about ARB_shadow, not SGI shadow */
-         if (texobj->CompareMode == GL_COMPARE_R_TO_TEXTURE) {
+         if (msamp->CompareMode == GL_COMPARE_R_TO_TEXTURE) {
             sampler->compare_mode = PIPE_TEX_COMPARE_R_TO_TEXTURE;
             sampler->compare_func
-               = st_compare_func_to_pipe(texobj->CompareFunc);
+               = st_compare_func_to_pipe(msamp->CompareFunc);
          }
 
          st->state.num_samplers = su + 1;

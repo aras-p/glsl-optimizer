@@ -94,17 +94,17 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
 {
     uint32_t cb_color0_base, cb_color0_size = 0, cb_color0_info = 0, cb_color0_view = 0;
     int id = 0;
-    uint32_t comp_swap, format;
+    uint32_t endian, comp_swap, format;
     BATCH_LOCALS(&context->radeon);
 
     cb_color0_base = dst_offset / 256;
+	endian = ENDIAN_NONE;
 
     SETfield(cb_color0_size, (nPitchInPixel / 8) - 1,
              PITCH_TILE_MAX_shift, PITCH_TILE_MAX_mask);
     SETfield(cb_color0_size, ((nPitchInPixel * h) / 64) - 1,
              SLICE_TILE_MAX_shift, SLICE_TILE_MAX_mask);
 
-    SETfield(cb_color0_info, ENDIAN_NONE, ENDIAN_shift, ENDIAN_mask);
     SETfield(cb_color0_info, ARRAY_LINEAR_GENERAL,
              CB_COLOR0_INFO__ARRAY_MODE_shift, CB_COLOR0_INFO__ARRAY_MODE_mask);
 
@@ -112,24 +112,36 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
 
     switch(mesa_format) {
     case MESA_FORMAT_RGBA8888:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN32;
+#endif
             format = COLOR_8_8_8_8;
             comp_swap = SWAP_STD_REV;
 	    SETbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_SIGNED_RGBA8888:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN32;
+#endif
             format = COLOR_8_8_8_8;
             comp_swap = SWAP_STD_REV;
 	    SETbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_SNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_RGBA8888_REV:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN32;
+#endif
             format = COLOR_8_8_8_8;
             comp_swap = SWAP_STD;
 	    SETbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_SIGNED_RGBA8888_REV:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN32;
+#endif
             format = COLOR_8_8_8_8;
             comp_swap = SWAP_STD;
 	    SETbit(cb_color0_info, SOURCE_FORMAT_bit);
@@ -137,6 +149,9 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
             break;
     case MESA_FORMAT_ARGB8888:
     case MESA_FORMAT_XRGB8888:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN32;
+#endif
             format = COLOR_8_8_8_8;
             comp_swap = SWAP_ALT;
 	    SETbit(cb_color0_info, SOURCE_FORMAT_bit);
@@ -144,54 +159,81 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
             break;
     case MESA_FORMAT_ARGB8888_REV:
     case MESA_FORMAT_XRGB8888_REV:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN32;
+#endif
             format = COLOR_8_8_8_8;
             comp_swap = SWAP_ALT_REV;
 	    SETbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_RGB565:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN16;
+#endif
+		    comp_swap = SWAP_STD_REV;	
             format = COLOR_5_6_5;
-            comp_swap = SWAP_STD_REV;
 	    SETbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_RGB565_REV:
-            format = COLOR_5_6_5;
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN16;
+#endif
             comp_swap = SWAP_STD;
+            format = COLOR_5_6_5;
 	    SETbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_ARGB4444:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN16;
+#endif
             format = COLOR_4_4_4_4;
             comp_swap = SWAP_ALT;
 	    SETbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_ARGB4444_REV:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN16;
+#endif
             format = COLOR_4_4_4_4;
             comp_swap = SWAP_ALT_REV;
 	    SETbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_ARGB1555:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN16;
+#endif
             format = COLOR_1_5_5_5;
             comp_swap = SWAP_ALT;
 	    SETbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_ARGB1555_REV:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN16;
+#endif
             format = COLOR_1_5_5_5;
             comp_swap = SWAP_ALT_REV;
 	    SETbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_AL88:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN16;
+#endif
             format = COLOR_8_8;
             comp_swap = SWAP_STD;
 	    SETbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_AL88_REV:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN16;
+#endif
             format = COLOR_8_8;
             comp_swap = SWAP_STD_REV;
 	    SETbit(cb_color0_info, SOURCE_FORMAT_bit);
@@ -223,6 +265,9 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
 	    SETfield(cb_color0_info, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_RGBA_FLOAT32:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN32;
+#endif
             format = COLOR_32_32_32_32_FLOAT;
             comp_swap = SWAP_STD;
 	    SETbit(cb_color0_info, BLEND_FLOAT32_bit);
@@ -230,12 +275,18 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
 	    SETfield(cb_color0_info, NUMBER_FLOAT, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_RGBA_FLOAT16:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN16;
+#endif
             format = COLOR_16_16_16_16_FLOAT;
             comp_swap = SWAP_STD;
 	    CLEARbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_FLOAT, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_ALPHA_FLOAT32:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN32;
+#endif
             format = COLOR_32_FLOAT;
             comp_swap = SWAP_ALT_REV;
 	    SETbit(cb_color0_info, BLEND_FLOAT32_bit);
@@ -243,12 +294,18 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
 	    SETfield(cb_color0_info, NUMBER_FLOAT, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_ALPHA_FLOAT16:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN16;
+#endif
             format = COLOR_16_FLOAT;
             comp_swap = SWAP_ALT_REV;
 	    CLEARbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_FLOAT, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_LUMINANCE_FLOAT32:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN32;
+#endif
             format = COLOR_32_FLOAT;
             comp_swap = SWAP_ALT;
 	    SETbit(cb_color0_info, BLEND_FLOAT32_bit);
@@ -256,12 +313,18 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
 	    SETfield(cb_color0_info, NUMBER_FLOAT, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_LUMINANCE_FLOAT16:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN16;
+#endif
             format = COLOR_16_FLOAT;
             comp_swap = SWAP_ALT;
 	    CLEARbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_FLOAT, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_LUMINANCE_ALPHA_FLOAT32:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN32;
+#endif
             format = COLOR_32_32_FLOAT;
             comp_swap = SWAP_ALT_REV;
 	    SETbit(cb_color0_info, BLEND_FLOAT32_bit);
@@ -269,12 +332,18 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
 	    SETfield(cb_color0_info, NUMBER_FLOAT, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_LUMINANCE_ALPHA_FLOAT16:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN16;
+#endif
             format = COLOR_16_16_FLOAT;
             comp_swap = SWAP_ALT_REV;
 	    CLEARbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_FLOAT, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_INTENSITY_FLOAT32: /* X, X, X, X */
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN32;
+#endif
             format = COLOR_32_FLOAT;
             comp_swap = SWAP_STD;
 	    SETbit(cb_color0_info, BLEND_FLOAT32_bit);
@@ -282,6 +351,9 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
 	    SETfield(cb_color0_info, NUMBER_FLOAT, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_INTENSITY_FLOAT16: /* X, X, X, X */
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN16;
+#endif
             format = COLOR_16_FLOAT;
             comp_swap = SWAP_STD;
 	    CLEARbit(cb_color0_info, SOURCE_FORMAT_bit);
@@ -289,6 +361,9 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
             break;
     case MESA_FORMAT_X8_Z24:
     case MESA_FORMAT_S8_Z24:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN32;
+#endif
             format = COLOR_8_24;
             comp_swap = SWAP_STD;
 	    SETfield(cb_color0_info, ARRAY_1D_TILED_THIN1,
@@ -297,6 +372,9 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
 	    SETfield(cb_color0_info, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_Z24_S8:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN32;
+#endif
             format = COLOR_24_8;
             comp_swap = SWAP_STD;
 	    SETfield(cb_color0_info, ARRAY_1D_TILED_THIN1,
@@ -305,6 +383,9 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
 	    SETfield(cb_color0_info, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_Z16:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN16;
+#endif
             format = COLOR_16;
             comp_swap = SWAP_STD;
 	    SETfield(cb_color0_info, ARRAY_1D_TILED_THIN1,
@@ -313,6 +394,9 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
 	    SETfield(cb_color0_info, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_Z32:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN32;
+#endif
             format = COLOR_32;
             comp_swap = SWAP_STD;
 	    SETfield(cb_color0_info, ARRAY_1D_TILED_THIN1,
@@ -321,12 +405,18 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
 	    SETfield(cb_color0_info, NUMBER_UNORM, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_SARGB8:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN32;
+#endif
             format = COLOR_8_8_8_8;
             comp_swap = SWAP_ALT;
 	    SETbit(cb_color0_info, SOURCE_FORMAT_bit);
 	    SETfield(cb_color0_info, NUMBER_SRGB, NUMBER_TYPE_shift, NUMBER_TYPE_mask);
             break;
     case MESA_FORMAT_SLA8:
+#ifdef MESA_BIG_ENDIAN
+			endian = ENDIAN_8IN16;
+#endif
             format = COLOR_8_8;
             comp_swap = SWAP_ALT_REV;
 	    SETbit(cb_color0_info, SOURCE_FORMAT_bit);
@@ -348,6 +438,7 @@ set_render_target(context_t *context, struct radeon_bo *bo, gl_format mesa_forma
     if (context->radeon.radeonScreen->chip_family >= CHIP_FAMILY_RV770)
 	    CLEARbit(cb_color0_info, BLEND_FLOAT32_bit);
 
+    SETfield(cb_color0_info, endian, ENDIAN_shift, ENDIAN_mask);
     SETfield(cb_color0_info, format, CB_COLOR0_INFO__FORMAT_shift,
              CB_COLOR0_INFO__FORMAT_mask);
     SETfield(cb_color0_info, comp_swap, COMP_SWAP_shift, COMP_SWAP_mask);
@@ -426,10 +517,10 @@ static inline void load_shaders(struct gl_context * ctx)
     shader = context->blit_bo->ptr;
 
     for(i=0; i<sizeof(r6xx_vs)/4; i++) {
-        shader[128+i] = r6xx_vs[i];
+        shader[128+i] = CPU_TO_LE32(r6xx_vs[i]);
     }
     for(i=0; i<sizeof(r6xx_ps)/4; i++) {
-        shader[256+i] = r6xx_ps[i];
+        shader[256+i] = CPU_TO_LE32(r6xx_ps[i]);
     }
 
     radeon_bo_unmap(context->blit_bo);
@@ -521,6 +612,8 @@ static inline void
 set_vtx_resource(context_t *context)
 {
     struct radeon_bo *bo = context->blit_bo;
+	uint32_t sq_vtx_constant_word2 = 0;
+
     BATCH_LOCALS(&context->radeon);
 
     BEGIN_BATCH_NO_AUTOSTATE(6);
@@ -543,13 +636,19 @@ set_vtx_resource(context_t *context)
     else
 	    r700SyncSurf(context, bo, RADEON_GEM_DOMAIN_GTT, 0, VC_ACTION_ENA_bit);
 
+	sq_vtx_constant_word2 = 0
+#ifdef MESA_BIG_ENDIAN
+		| (SQ_ENDIAN_8IN32 << SQ_VTX_CONSTANT_WORD2_0__ENDIAN_SWAP_shift)
+#endif
+		| (16 << SQ_VTX_CONSTANT_WORD2_0__STRIDE_shift);
+
     BEGIN_BATCH_NO_AUTOSTATE(9 + 2);
 
     R600_OUT_BATCH(CP_PACKET3(R600_IT_SET_RESOURCE, 7));
     R600_OUT_BATCH(SQ_FETCH_RESOURCE_VS_OFFSET * FETCH_RESOURCE_STRIDE);
     R600_OUT_BATCH(0);
     R600_OUT_BATCH(48 - 1);
-    R600_OUT_BATCH(16 << SQ_VTX_CONSTANT_WORD2_0__STRIDE_shift);
+    R600_OUT_BATCH(sq_vtx_constant_word2);
     R600_OUT_BATCH(1 << MEM_REQUEST_SIZE_shift);
     R600_OUT_BATCH(0);
     R600_OUT_BATCH(0);
@@ -670,11 +769,11 @@ set_tex_resource(context_t * context,
 	    SETfield(sq_tex_resource1, FMT_8_8_8_8,
 		     SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_shift, SQ_TEX_RESOURCE_WORD1_0__DATA_FORMAT_mask);
 
-	    SETfield(sq_tex_resource4, SQ_SEL_1,
+	    SETfield(sq_tex_resource4, SQ_SEL_Y,
 		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_X_mask);
 	    SETfield(sq_tex_resource4, SQ_SEL_Z,
 		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Y_mask);
-	    SETfield(sq_tex_resource4, SQ_SEL_W,
+	    SETfield(sq_tex_resource4, SQ_SEL_1,
 		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_Z_mask);
 	    SETfield(sq_tex_resource4, SQ_SEL_X,
 		     SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_shift, SQ_TEX_RESOURCE_WORD4_0__DST_SEL_W_mask);

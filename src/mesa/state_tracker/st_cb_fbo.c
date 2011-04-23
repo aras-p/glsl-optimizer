@@ -353,7 +353,7 @@ st_render_texture(struct gl_context *ctx,
       return;
 
    /* get pointer to texture image we're rendeing to */
-   texImage = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
+   texImage = _mesa_get_attachment_teximage(att);
 
    /* create new renderbuffer which wraps the texture image */
    rb = st_new_renderbuffer(ctx, 0);
@@ -471,8 +471,7 @@ st_validate_attachment(struct gl_context *ctx,
       return GL_FALSE;
 
    format = stObj->pt->format;
-   texFormat =
-      stObj->base.Image[att->CubeMapFace][att->TextureLevel]->TexFormat;
+   texFormat = _mesa_get_attachment_teximage_const(att)->TexFormat;
 
    /* If the encoding is sRGB and sRGB rendering cannot be enabled,
     * check for linear format support instead.
@@ -529,6 +528,9 @@ st_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
    const struct gl_renderbuffer_attachment *stencil =
          &fb->Attachment[BUFFER_STENCIL];
    GLuint i;
+   enum pipe_format first_format = PIPE_FORMAT_NONE;
+   boolean mixed_formats =
+         screen->get_param(screen, PIPE_CAP_MIXED_COLORBUFFER_FORMATS) != 0;
 
    if (depth->Type && stencil->Type && depth->Type != stencil->Type) {
       fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
@@ -562,12 +564,32 @@ st_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb)
       return;
    }
    for (i = 0; i < ctx->Const.MaxColorAttachments; i++) {
+      struct gl_renderbuffer_attachment *att =
+            &fb->Attachment[BUFFER_COLOR0 + i];
+      enum pipe_format format;
+
       if (!st_validate_attachment(ctx,
                                   screen,
-				  &fb->Attachment[BUFFER_COLOR0 + i],
+				  att,
 				  PIPE_BIND_RENDER_TARGET)) {
 	 fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
 	 return;
+      }
+
+      if (!mixed_formats) {
+         /* Disallow mixed formats. */
+         if (att->Type != GL_NONE) {
+            format = st_renderbuffer(att->Renderbuffer)->surface->format;
+         } else {
+            continue;
+         }
+
+         if (first_format == PIPE_FORMAT_NONE) {
+            first_format = format;
+         } else if (format != first_format) {
+            fb->_Status = GL_FRAMEBUFFER_UNSUPPORTED_EXT;
+            return;
+         }
       }
    }
 }

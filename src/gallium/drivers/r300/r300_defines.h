@@ -32,19 +32,4 @@
 
 #define R300_INVALID_FORMAT 0xffff
 
-/* Tiling flags. */
-enum r300_buffer_tiling {
-    R300_BUFFER_LINEAR = 0,
-    R300_BUFFER_TILED,
-    R300_BUFFER_SQUARETILED,
-
-    R300_BUFFER_UNKNOWN,
-    R300_BUFFER_SELECT_LAYOUT = R300_BUFFER_UNKNOWN
-};
-
-enum r300_buffer_domain { /* bitfield */
-    R300_DOMAIN_GTT  = 2,
-    R300_DOMAIN_VRAM = 4
-};
-
 #endif

@@ -39,6 +39,7 @@
 
 
 #include <stddef.h>
+#include "pipe/p_compiler.h"
 
 
 struct list_head
@@ -47,50 +48,56 @@ struct list_head
     struct list_head *next;
 };
 
+static INLINE void list_inithead(struct list_head *item)
+{
+    item->prev = item;
+    item->next = item;
+}
 
-#define LIST_INITHEAD(__item)			\
-  do {						\
-    (__item)->prev = (__item);			\
-    (__item)->next = (__item);			\
-  } while (0)
+static INLINE void list_add(struct list_head *item, struct list_head *list)
+{
+    item->prev = list;
+    item->next = list->next;
+    list->next->prev = item;
+    list->next = item;
+}
 
-#define LIST_ADD(__item, __list)		\
-  do {						\
-    (__item)->prev = (__list);			\
-    (__item)->next = (__list)->next;		\
-    (__list)->next->prev = (__item);		\
-    (__list)->next = (__item);			\
-  } while (0)
+static INLINE void list_addtail(struct list_head *item, struct list_head *list)
+{
+    item->next = list;
+    item->prev = list->prev;
+    list->prev->next = item;
+    list->prev = item;
+}
 
-#define LIST_ADDTAIL(__item, __list)		\
-  do {						\
-    (__item)->next = (__list);			\
-    (__item)->prev = (__list)->prev;		\
-    (__list)->prev->next = (__item);		\
-    (__list)->prev = (__item);			\
-  } while(0)
+static INLINE void list_replace(struct list_head *from, struct list_head *to)
+{
+    to->prev = from->prev;
+    to->next = from->next;
+    from->next->prev = to;
+    from->prev->next = to;
+}
 
-#define LIST_REPLACE(__from, __to)		\
-  do {						\
-    (__to)->prev = (__from)->prev;		\
-    (__to)->next = (__from)->next;		\
-    (__from)->next->prev = (__to);		\
-    (__from)->prev->next = (__to);		\
-  } while (0)
+static INLINE void list_del(struct list_head *item)
+{
+    item->prev->next = item->next;
+    item->next->prev = item->prev;
+}
 
-#define LIST_DEL(__item)			\
-  do {						\
-    (__item)->prev->next = (__item)->next;	\
-    (__item)->next->prev = (__item)->prev;	\
-  } while(0)
+static INLINE void list_delinit(struct list_head *item)
+{
+    item->prev->next = item->next;
+    item->next->prev = item->prev;
+    item->next = item;
+    item->prev = item;
+}
 
-#define LIST_DELINIT(__item)			\
-  do {						\
-    (__item)->prev->next = (__item)->next;	\
-    (__item)->next->prev = (__item)->prev;	\
-    (__item)->next = (__item);			\
-    (__item)->prev = (__item);			\
-  } while(0)
+#define LIST_INITHEAD(__item) list_inithead(__item)
+#define LIST_ADD(__item, __list) list_add(__item, __list)
+#define LIST_ADDTAIL(__item, __list) list_addtail(__item, __list)
+#define LIST_REPLACE(__from, __to) list_replace(__from, __to)
+#define LIST_DEL(__item) list_del(__item)
+#define LIST_DELINIT(__item) list_delinit(__item)
 
 #define LIST_ENTRY(__type, __item, __field)   \
     ((__type *)(((char *)(__item)) - offsetof(__type, __field)))
@@ -114,4 +121,21 @@ struct list_head
 	storage = container_of(pos->member.next, pos, member);	\
 	&pos->member != (head);						\
 	pos = storage, storage = container_of(storage->member.next, storage, member))
+
+#define LIST_FOR_EACH_ENTRY_SAFE_REV(pos, storage, head, member)	\
+   for (pos = container_of((head)->prev, pos, member),			\
+	storage = container_of(pos->member.prev, pos, member);		\
+	&pos->member != (head);						\
+	pos = storage, storage = container_of(storage->member.prev, storage, member))
+
+#define LIST_FOR_EACH_ENTRY_FROM(pos, start, head, member)		\
+   for (pos = container_of((start), pos, member);			\
+	&pos->member != (head);						\
+	pos = container_of(pos->member.next, pos, member))
+
+#define LIST_FOR_EACH_ENTRY_FROM_REV(pos, start, head, member)		\
+   for (pos = container_of((start), pos, member);			\
+	&pos->member != (head);						\
+	pos = container_of(pos->member.prev, pos, member))
+
 #endif /*_U_DOUBLE_LIST_H_*/

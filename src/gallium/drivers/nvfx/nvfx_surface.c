@@ -33,6 +33,7 @@
 #include "util/u_memory.h"
 #include "util/u_pack_color.h"
 #include "util/u_blitter.h"
+#include "util/u_surface.h"
 
 #include "nouveau/nouveau_winsys.h"
 #include "nouveau/nouveau_screen.h"
@@ -251,6 +252,13 @@ nvfx_resource_copy_region(struct pipe_context *pipe,
 
 	if(!w || !h)
 		return;
+
+        /* Fallback for buffers. */
+        if (dstr->target == PIPE_BUFFER && srcr->target == PIPE_BUFFER) {
+                util_resource_copy_region(pipe, dstr, dst_level, dstx, dsty, dstz,
+                                          srcr, src_level, src_box);
+                return;
+        }
 
 	if(copy_threshold < 0)
 		copy_threshold = debug_get_num_option("NOUVEAU_COPY_THRESHOLD", 4);

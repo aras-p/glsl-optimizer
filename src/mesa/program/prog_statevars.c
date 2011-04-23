@@ -237,11 +237,17 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
       {
          /* state[1] is the texture unit */
          const GLuint unit = (GLuint) state[1];
-         COPY_4V(value, ctx->Texture.Unit[unit].EnvColor);
+         if(ctx->Color._ClampFragmentColor)
+            COPY_4V(value, ctx->Texture.Unit[unit].EnvColor);
+         else
+            COPY_4V(value, ctx->Texture.Unit[unit].EnvColorUnclamped);
       }
       return;
    case STATE_FOG_COLOR:
-      COPY_4V(value, ctx->Fog.Color);
+      if(ctx->Color._ClampFragmentColor)
+         COPY_4V(value, ctx->Fog.Color);
+      else
+         COPY_4V(value, ctx->Fog.ColorUnclamped);
       return;
    case STATE_FOG_PARAMS:
       value[0] = ctx->Fog.Density;
@@ -396,6 +402,22 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
          {
             const GLuint idx = (GLuint) state[2];
             COPY_4V(value, ctx->Current.Attrib[idx]);
+         }
+         return;
+
+      case STATE_CURRENT_ATTRIB_MAYBE_VP_CLAMPED:
+         {
+            const GLuint idx = (GLuint) state[2];
+            if(ctx->Light._ClampVertexColor &&
+               (idx == VERT_ATTRIB_COLOR0 ||
+                idx == VERT_ATTRIB_COLOR1)) {
+               value[0] = CLAMP(ctx->Current.Attrib[idx][0], 0.0f, 1.0f);
+               value[1] = CLAMP(ctx->Current.Attrib[idx][1], 0.0f, 1.0f);
+               value[2] = CLAMP(ctx->Current.Attrib[idx][2], 0.0f, 1.0f);
+               value[3] = CLAMP(ctx->Current.Attrib[idx][3], 0.0f, 1.0f);
+            }
+            else
+               COPY_4V(value, ctx->Current.Attrib[idx]);
          }
          return;
 
@@ -560,7 +582,7 @@ _mesa_fetch_state(struct gl_context *ctx, const gl_state_index state[],
                value[0] =
                value[1] =
                value[2] =
-               value[3] = texObj->CompareFailValue;
+               value[3] = texObj->Sampler.CompareFailValue;
             }
          }
          return;
@@ -649,10 +671,12 @@ _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH])
       return _NEW_LIGHT;
 
    case STATE_TEXGEN:
-   case STATE_TEXENV_COLOR:
       return _NEW_TEXTURE;
+   case STATE_TEXENV_COLOR:
+      return _NEW_TEXTURE | _NEW_BUFFERS | _NEW_FRAG_CLAMP;
 
    case STATE_FOG_COLOR:
+      return _NEW_FOG | _NEW_BUFFERS | _NEW_FRAG_CLAMP;
    case STATE_FOG_PARAMS:
       return _NEW_FOG;
 
@@ -688,6 +712,8 @@ _mesa_program_state_flags(const gl_state_index state[STATE_LENGTH])
       switch (state[1]) {
       case STATE_CURRENT_ATTRIB:
          return _NEW_CURRENT_ATTRIB;
+      case STATE_CURRENT_ATTRIB_MAYBE_VP_CLAMPED:
+         return _NEW_CURRENT_ATTRIB | _NEW_LIGHT | _NEW_BUFFERS;
 
       case STATE_NORMAL_SCALE:
          return _NEW_MODELVIEW;

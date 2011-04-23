@@ -994,6 +994,19 @@ update_array_sizes(struct gl_shader_program *prog)
 	 }
 
 	 if (size + 1 != var->type->fields.array->length) {
+	    /* If this is a built-in uniform (i.e., it's backed by some
+	     * fixed-function state), adjust the number of state slots to
+	     * match the new array size.  The number of slots per array entry
+	     * is not known.  It seems saft to assume that the total number of
+	     * slots is an integer multiple of the number of array elements.
+	     * Determine the number of slots per array element by dividing by
+	     * the old (total) size.
+	     */
+	    if (var->num_state_slots > 0) {
+	       var->num_state_slots = (size + 1)
+		  * (var->num_state_slots / var->type->length);
+	    }
+
 	    var->type = glsl_type::get_array_instance(var->type->fields.array,
 						      size + 1);
 	    /* FINISHME: We should update the types of array

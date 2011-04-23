@@ -248,18 +248,11 @@ _swrast_update_fog_state( struct gl_context *ctx )
    SWcontext *swrast = SWRAST_CONTEXT(ctx);
    const struct gl_fragment_program *fp = ctx->FragmentProgram._Current;
 
+   assert((fp == NULL) || (fp->Base.Target == GL_FRAGMENT_PROGRAM_ARB));
+
    /* determine if fog is needed, and if so, which fog mode */
-   swrast->_FogEnabled = GL_FALSE;
-   if (fp && fp->Base.Target == GL_FRAGMENT_PROGRAM_ARB) {
-      if (fp->FogOption != GL_NONE) {
-         swrast->_FogEnabled = GL_TRUE;
-         swrast->_FogMode = fp->FogOption;
-      }
-   }
-   else if (ctx->Fog.Enabled) {
-      swrast->_FogEnabled = GL_TRUE;
-      swrast->_FogMode = ctx->Fog.Mode;
-   }
+   swrast->_FogEnabled = (fp == NULL && ctx->Fog.Enabled);
+   swrast->_FogMode = ctx->Fog.Mode;
 }
 
 

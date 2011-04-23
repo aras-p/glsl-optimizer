@@ -30,7 +30,6 @@
 #include "r300_texture.h"
 #include "r300_screen_buffer.h"
 #include "r300_state_inlines.h"
-#include "r300_winsys.h"
 #include "r300_public.h"
 
 #include "draw/draw_context.h"
@@ -114,9 +113,12 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_TEXTURE_MIRROR_REPEAT:
         case PIPE_CAP_BLEND_EQUATION_SEPARATE:
         case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
-            return 1;
+        case PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL:
+            return is_r500 ? 1 : 0;
         case PIPE_CAP_TEXTURE_SWIZZLE:
             return util_format_s3tc_enabled ? r300screen->caps.dxtc_swizzle : 1;
+        case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
+            return is_r500 ? 1 : 0;
 
         /* Unsupported features (boolean caps). */
         case PIPE_CAP_TIMER_QUERY:
@@ -127,12 +129,12 @@ static int r300_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
         case PIPE_CAP_DEPTHSTENCIL_CLEAR_SEPARATE:
         case PIPE_CAP_SHADER_STENCIL_EXPORT:
         case PIPE_CAP_ARRAY_TEXTURES:
+        case PIPE_CAP_TGSI_INSTANCEID:
             return 0;
 
         /* SWTCL-only features. */
         case PIPE_CAP_STREAM_OUTPUT:
         case PIPE_CAP_PRIMITIVE_RESTART:
-        case PIPE_CAP_TGSI_INSTANCEID:
             return !r300screen->caps.has_tcl;
 
         /* Texturing. */
@@ -209,7 +211,7 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
         case PIPE_SHADER_CAP_MAX_PREDS:
             return is_r500 ? 1 : 0;
         case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
-            return 1;
+            return 0;
         case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
         case PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR:
         case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
@@ -247,7 +249,7 @@ static int r300_get_shader_param(struct pipe_screen *pscreen, unsigned shader, e
         case PIPE_SHADER_CAP_MAX_PREDS:
             return is_r500 ? 4 : 0; /* XXX guessed. */
         case PIPE_SHADER_CAP_TGSI_CONT_SUPPORTED:
-            return 1;
+            return 0;
         case PIPE_SHADER_CAP_INDIRECT_INPUT_ADDR:
         case PIPE_SHADER_CAP_INDIRECT_OUTPUT_ADDR:
         case PIPE_SHADER_CAP_INDIRECT_TEMP_ADDR:
@@ -308,9 +310,9 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
                                         unsigned sample_count,
                                         unsigned usage)
 {
-    struct r300_winsys_screen *rws = r300_screen(screen)->rws;
+    struct radeon_winsys *rws = r300_screen(screen)->rws;
     uint32_t retval = 0;
-    boolean drm_2_8_0 = rws->get_value(rws, R300_VID_DRM_2_8_0);
+    boolean drm_2_8_0 = rws->get_value(rws, RADEON_VID_DRM_2_8_0);
     boolean is_r500 = r300_screen(screen)->caps.is_r500;
     boolean is_r400 = r300_screen(screen)->caps.is_r400;
     boolean is_color2101010 = format == PIPE_FORMAT_R10G10B10A2_UNORM ||
@@ -325,10 +327,19 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
                        format == PIPE_FORMAT_RGTC2_SNORM ||
                        format == PIPE_FORMAT_LATC2_UNORM ||
                        format == PIPE_FORMAT_LATC2_SNORM;
+    boolean is_x16f_xy16f = format == PIPE_FORMAT_R16_FLOAT ||
+                            format == PIPE_FORMAT_R16G16_FLOAT ||
+                            format == PIPE_FORMAT_A16_FLOAT ||
+                            format == PIPE_FORMAT_L16_FLOAT ||
+                            format == PIPE_FORMAT_L16A16_FLOAT ||
+                            format == PIPE_FORMAT_I16_FLOAT;
     boolean is_half_float = format == PIPE_FORMAT_R16_FLOAT ||
                             format == PIPE_FORMAT_R16G16_FLOAT ||
                             format == PIPE_FORMAT_R16G16B16_FLOAT ||
                             format == PIPE_FORMAT_R16G16B16A16_FLOAT;
+
+    if (!util_format_is_supported(format, usage))
+       return FALSE;
 
     /* Check multisampling support. */
     switch (sample_count) {
@@ -358,6 +369,8 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
         (is_r500 || !is_ati1n) &&
         /* ATI2N is supported on r4xx-r5xx. */
         (is_r400 || is_r500 || !is_ati2n) &&
+        /* R16F and RG16F texture support was added in as late as DRM 2.8.0 */
+        (drm_2_8_0 || !is_x16f_xy16f) &&
         r300_is_sampler_format_supported(format)) {
         retval |= PIPE_BIND_SAMPLER_VIEW;
     }
@@ -403,7 +416,7 @@ static boolean r300_is_format_supported(struct pipe_screen* screen,
 static void r300_destroy_screen(struct pipe_screen* pscreen)
 {
     struct r300_screen* r300screen = r300_screen(pscreen);
-    struct r300_winsys_screen *rws = r300_winsys_screen(pscreen);
+    struct radeon_winsys *rws = radeon_winsys(pscreen);
 
     util_slab_destroy(&r300screen->pool_buffers);
     pipe_mutex_destroy(r300screen->num_contexts_mutex);
@@ -418,15 +431,15 @@ static void r300_fence_reference(struct pipe_screen *screen,
                                  struct pipe_fence_handle **ptr,
                                  struct pipe_fence_handle *fence)
 {
-    r300_winsys_bo_reference((struct r300_winsys_bo**)ptr,
-                             (struct r300_winsys_bo*)fence);
+    pb_reference((struct pb_buffer**)ptr,
+                             (struct pb_buffer*)fence);
 }
 
 static boolean r300_fence_signalled(struct pipe_screen *screen,
                                     struct pipe_fence_handle *fence)
 {
-    struct r300_winsys_screen *rws = r300_screen(screen)->rws;
-    struct r300_winsys_bo *rfence = (struct r300_winsys_bo*)fence;
+    struct radeon_winsys *rws = r300_screen(screen)->rws;
+    struct pb_buffer *rfence = (struct pb_buffer*)fence;
 
     return !rws->buffer_is_busy(rfence);
 }
@@ -435,8 +448,8 @@ static boolean r300_fence_finish(struct pipe_screen *screen,
                                  struct pipe_fence_handle *fence,
                                  uint64_t timeout)
 {
-    struct r300_winsys_screen *rws = r300_screen(screen)->rws;
-    struct r300_winsys_bo *rfence = (struct r300_winsys_bo*)fence;
+    struct radeon_winsys *rws = r300_screen(screen)->rws;
+    struct pb_buffer *rfence = (struct pb_buffer*)fence;
 
     if (timeout != PIPE_TIMEOUT_INFINITE) {
         int64_t start_time = os_time_get();
@@ -458,7 +471,7 @@ static boolean r300_fence_finish(struct pipe_screen *screen,
     return TRUE;
 }
 
-struct pipe_screen* r300_screen_create(struct r300_winsys_screen *rws)
+struct pipe_screen* r300_screen_create(struct radeon_winsys *rws)
 {
     struct r300_screen *r300screen = CALLOC_STRUCT(r300_screen);
 
@@ -467,9 +480,9 @@ struct pipe_screen* r300_screen_create(struct r300_winsys_screen *rws)
         return NULL;
     }
 
-    r300screen->caps.pci_id = rws->get_value(rws, R300_VID_PCI_ID);
-    r300screen->caps.num_frag_pipes = rws->get_value(rws, R300_VID_GB_PIPES);
-    r300screen->caps.num_z_pipes = rws->get_value(rws, R300_VID_Z_PIPES);
+    r300screen->caps.pci_id = rws->get_value(rws, RADEON_VID_PCI_ID);
+    r300screen->caps.num_frag_pipes = rws->get_value(rws, RADEON_VID_R300_GB_PIPES);
+    r300screen->caps.num_z_pipes = rws->get_value(rws, RADEON_VID_R300_Z_PIPES);
 
     r300_init_debug(r300screen);
     r300_parse_chipset(&r300screen->caps);
@@ -478,6 +491,9 @@ struct pipe_screen* r300_screen_create(struct r300_winsys_screen *rws)
         r300screen->caps.zmask_ram = 0;
     if (SCREEN_DBG_ON(r300screen, DBG_NO_HIZ))
         r300screen->caps.hiz_ram = 0;
+
+    if (!rws->get_value(rws, RADEON_VID_DRM_2_8_0))
+        r300screen->caps.has_us_format = FALSE;
 
     pipe_mutex_init(r300screen->num_contexts_mutex);
 

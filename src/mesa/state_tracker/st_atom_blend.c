@@ -286,7 +286,7 @@ update_blend( struct st_context *st )
 
    {
       struct pipe_blend_color bc;
-      COPY_4FV(bc.color, st->ctx->Color.BlendColor);
+      COPY_4FV(bc.color, st->ctx->Color.BlendColorUnclamped);
       cso_set_blend_color(st->cso_context, &bc);
    }
 }

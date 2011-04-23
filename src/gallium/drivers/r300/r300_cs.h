@@ -29,7 +29,6 @@
 
 #include "r300_reg.h"
 #include "r300_context.h"
-#include "r300_winsys.h"
 
 /* Yes, I know macros are ugly. However, they are much prettier than the code
  * that they neatly hide away, and don't have the cost of function setup,so
@@ -40,14 +39,14 @@
  */
 
 #define CS_LOCALS(context) \
-    struct r300_winsys_cs *cs_copy = (context)->cs; \
-    struct r300_winsys_screen *cs_winsys = (context)->rws; \
+    struct radeon_winsys_cs *cs_copy = (context)->cs; \
+    struct radeon_winsys *cs_winsys = (context)->rws; \
     int cs_count = 0; (void) cs_count; (void) cs_winsys;
 
 #ifdef DEBUG
 
 #define BEGIN_CS(size) do { \
-    assert(size <= (R300_MAX_CMDBUF_DWORDS - cs_copy->cdw)); \
+    assert(size <= (RADEON_MAX_CMDBUF_DWORDS - cs_copy->cdw)); \
     cs_count = size; \
 } while (0)
 

@@ -36,7 +36,7 @@
 
 /*
     This file replaces libdrm's radeon_cs_gem with our own implemention.
-    It's optimized specifically for r300g, but r600g could use it as well.
+    It's optimized specifically for Radeon DRM.
     Reloc writes and space checking are faster and simpler than their
     counterparts in libdrm (the time complexity of all the functions
     is O(1) in nearly all scenarios, thanks to hashing).
@@ -111,8 +111,7 @@ static void radeon_cs_context_cleanup(struct radeon_cs_context *csc)
 
     for (i = 0; i < csc->crelocs; i++) {
         p_atomic_dec(&csc->relocs_bo[i]->num_cs_references);
-        radeon_bo_unref(csc->relocs_bo[i]);
-        csc->relocs_bo[i] = NULL;
+        radeon_bo_reference(&csc->relocs_bo[i], NULL);
     }
 
     csc->crelocs = 0;
@@ -130,7 +129,7 @@ static void radeon_destroy_cs_context(struct radeon_cs_context *csc)
     FREE(csc->relocs);
 }
 
-static struct r300_winsys_cs *radeon_drm_cs_create(struct r300_winsys_screen *rws)
+static struct radeon_winsys_cs *radeon_drm_cs_create(struct radeon_winsys *rws)
 {
     struct radeon_drm_winsys *ws = radeon_drm_winsys(rws);
     struct radeon_drm_cs *cs;
@@ -164,9 +163,9 @@ static struct r300_winsys_cs *radeon_drm_cs_create(struct r300_winsys_screen *rw
 #define OUT_CS(cs, value) (cs)->buf[(cs)->cdw++] = (value)
 
 static INLINE void update_domains(struct drm_radeon_cs_reloc *reloc,
-                                  enum r300_buffer_domain rd,
-                                  enum r300_buffer_domain wd,
-                                  enum r300_buffer_domain *added_domains)
+                                  enum radeon_bo_domain rd,
+                                  enum radeon_bo_domain wd,
+                                  enum radeon_bo_domain *added_domains)
 {
     *added_domains = (rd | wd) & ~(reloc->read_domains | reloc->write_domain);
 
@@ -221,9 +220,9 @@ int radeon_get_reloc(struct radeon_cs_context *csc, struct radeon_bo *bo)
 
 static void radeon_add_reloc(struct radeon_cs_context *csc,
                              struct radeon_bo *bo,
-                             enum r300_buffer_domain rd,
-                             enum r300_buffer_domain wd,
-                             enum r300_buffer_domain *added_domains)
+                             enum radeon_bo_domain rd,
+                             enum radeon_bo_domain wd,
+                             enum radeon_bo_domain *added_domains)
 {
     struct drm_radeon_cs_reloc *reloc;
     unsigned i;
@@ -266,9 +265,9 @@ static void radeon_add_reloc(struct radeon_cs_context *csc,
     }
 
     /* Initialize the new relocation. */
-    radeon_bo_ref(bo);
+    csc->relocs_bo[csc->crelocs] = NULL;
+    radeon_bo_reference(&csc->relocs_bo[csc->crelocs], bo);
     p_atomic_inc(&bo->num_cs_references);
-    csc->relocs_bo[csc->crelocs] = bo;
     reloc = &csc->relocs[csc->crelocs];
     reloc->handle = bo->handle;
     reloc->read_domains = rd;
@@ -285,27 +284,27 @@ static void radeon_add_reloc(struct radeon_cs_context *csc,
     *added_domains = rd | wd;
 }
 
-static void radeon_drm_cs_add_reloc(struct r300_winsys_cs *rcs,
-                                    struct r300_winsys_cs_handle *buf,
-                                    enum r300_buffer_domain rd,
-                                    enum r300_buffer_domain wd)
+static void radeon_drm_cs_add_reloc(struct radeon_winsys_cs *rcs,
+                                    struct radeon_winsys_cs_handle *buf,
+                                    enum radeon_bo_domain rd,
+                                    enum radeon_bo_domain wd)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     struct radeon_bo *bo = (struct radeon_bo*)buf;
-    enum r300_buffer_domain added_domains;
+    enum radeon_bo_domain added_domains;
 
     radeon_add_reloc(cs->csc, bo, rd, wd, &added_domains);
 
     if (!added_domains)
         return;
 
-    if (added_domains & R300_DOMAIN_GTT)
+    if (added_domains & RADEON_DOMAIN_GTT)
         cs->csc->used_gart += bo->size;
-    if (added_domains & R300_DOMAIN_VRAM)
+    if (added_domains & RADEON_DOMAIN_VRAM)
         cs->csc->used_vram += bo->size;
 }
 
-static boolean radeon_drm_cs_validate(struct r300_winsys_cs *rcs)
+static boolean radeon_drm_cs_validate(struct radeon_winsys_cs *rcs)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
 
@@ -313,8 +312,8 @@ static boolean radeon_drm_cs_validate(struct r300_winsys_cs *rcs)
            cs->csc->used_vram < cs->ws->vram_size * 0.8;
 }
 
-static void radeon_drm_cs_write_reloc(struct r300_winsys_cs *rcs,
-                                      struct r300_winsys_cs_handle *buf)
+static void radeon_drm_cs_write_reloc(struct radeon_winsys_cs *rcs,
+                                      struct radeon_winsys_cs_handle *buf)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     struct radeon_bo *bo = (struct radeon_bo*)buf;
@@ -322,7 +321,7 @@ static void radeon_drm_cs_write_reloc(struct r300_winsys_cs *rcs,
     unsigned index = radeon_get_reloc(cs->csc, bo);
 
     if (index == -1) {
-        fprintf(stderr, "r300: Cannot get a relocation in %s.\n", __func__);
+        fprintf(stderr, "radeon: Cannot get a relocation in %s.\n", __func__);
         return;
     }
 
@@ -366,7 +365,7 @@ void radeon_drm_cs_sync_flush(struct radeon_drm_cs *cs)
 
 DEBUG_GET_ONCE_BOOL_OPTION(thread, "RADEON_THREAD", TRUE)
 
-static void radeon_drm_cs_flush(struct r300_winsys_cs *rcs, unsigned flags)
+static void radeon_drm_cs_flush(struct radeon_winsys_cs *rcs, unsigned flags)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     struct radeon_cs_context *tmp;
@@ -379,11 +378,18 @@ static void radeon_drm_cs_flush(struct r300_winsys_cs *rcs, unsigned flags)
 
         cs->csc->chunks[0].length_dw = cs->base.cdw;
 
-        for (i = 0; i < crelocs; i++)
+        for (i = 0; i < crelocs; i++) {
+            /* Update the number of active asynchronous CS ioctls for the buffer. */
             p_atomic_inc(&cs->csc->relocs_bo[i]->num_active_ioctls);
 
+            /* Update whether the buffer is busy for write. */
+            if (cs->csc->relocs[i].write_domain) {
+                cs->csc->relocs_bo[i]->busy_for_write = TRUE;
+            }
+        }
+
         if (cs->ws->num_cpus > 1 && debug_get_option_thread() &&
-            (flags & R300_FLUSH_ASYNC)) {
+            (flags & RADEON_FLUSH_ASYNC)) {
             cs->thread = pipe_thread_create(radeon_drm_cs_emit_ioctl, cs->csc);
             assert(cs->thread);
         } else {
@@ -403,7 +409,7 @@ static void radeon_drm_cs_flush(struct r300_winsys_cs *rcs, unsigned flags)
     cs->base.cdw = 0;
 }
 
-static void radeon_drm_cs_destroy(struct r300_winsys_cs *rcs)
+static void radeon_drm_cs_destroy(struct radeon_winsys_cs *rcs)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     radeon_drm_cs_sync_flush(cs);
@@ -415,7 +421,7 @@ static void radeon_drm_cs_destroy(struct r300_winsys_cs *rcs)
     FREE(cs);
 }
 
-static void radeon_drm_cs_set_flush(struct r300_winsys_cs *rcs,
+static void radeon_drm_cs_set_flush(struct radeon_winsys_cs *rcs,
                                     void (*flush)(void *ctx, unsigned flags),
                                     void *user)
 {
@@ -424,8 +430,8 @@ static void radeon_drm_cs_set_flush(struct r300_winsys_cs *rcs,
     cs->flush_data = user;
 }
 
-static boolean radeon_bo_is_referenced(struct r300_winsys_cs *rcs,
-                                       struct r300_winsys_cs_handle *_buf)
+static boolean radeon_bo_is_referenced(struct radeon_winsys_cs *rcs,
+                                       struct radeon_winsys_cs_handle *_buf)
 {
     struct radeon_drm_cs *cs = radeon_drm_cs(rcs);
     struct radeon_bo *bo = (struct radeon_bo*)_buf;

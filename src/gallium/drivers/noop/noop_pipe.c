@@ -337,6 +337,7 @@ static int noop_get_param(struct pipe_screen* pscreen, enum pipe_cap param)
 	case PIPE_CAP_TEXTURE_SHADOW_MAP:
 	case PIPE_CAP_TEXTURE_SWIZZLE:
 	case PIPE_CAP_BLEND_EQUATION_SEPARATE:
+	case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
 
 	  return 1;
 	case PIPE_CAP_DUAL_SOURCE_BLEND:

@@ -715,6 +715,10 @@ emit_interp(struct nv_pc *pc, struct nv_instruction *i)
    if (i->opcode == NV_OP_PINTERP) {
       pc->emit[0] |= 0x040;
       SID(pc, i->src[1], 26);
+
+      if (i->src[0]->value->reg.address >= 0x280 &&
+          i->src[0]->value->reg.address <= 0x29c)
+         pc->emit[0] |= 0x080; /* XXX: ? */
    } else {
       SID(pc, NULL, 26);
    }
@@ -875,7 +879,9 @@ emit_st(struct nv_pc *pc, struct nv_instruction *i)
 void
 nvc0_emit_instruction(struct nv_pc *pc, struct nv_instruction *i)
 {
+#if NV50_DEBUG & NV50_DEBUG_SHADER
    debug_printf("EMIT: "); nvc0_print_instruction(i);
+#endif
 
    switch (i->opcode) {
    case NV_OP_VFETCH:

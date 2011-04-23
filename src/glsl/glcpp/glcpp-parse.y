@@ -95,16 +95,16 @@ _token_list_append_list (token_list_t *list, token_list_t *tail);
 static int
 _token_list_equal_ignoring_space (token_list_t *a, token_list_t *b);
 
-static active_list_t *
-_active_list_push (active_list_t *list,
-		   const char *identifier,
-		   token_node_t *marker);
+static void
+_parser_active_list_push (glcpp_parser_t *parser,
+			  const char *identifier,
+			  token_node_t *marker);
 
-static active_list_t *
-_active_list_pop (active_list_t *list);
+static void
+_parser_active_list_pop (glcpp_parser_t *parser);
 
-int
-_active_list_contains (active_list_t *list, const char *identifier);
+static int
+_parser_active_list_contains (glcpp_parser_t *parser, const char *identifier);
 
 static void
 _glcpp_parser_expand_if (glcpp_parser_t *parser, int type, token_list_t *list);
@@ -1468,7 +1468,7 @@ _glcpp_parser_expand_node (glcpp_parser_t *parser,
 
 	/* Finally, don't expand this macro if we're already actively
 	 * expanding it, (to avoid infinite recursion). */
-	if (_active_list_contains (parser->active, identifier)) {
+	if (_parser_active_list_contains (parser, identifier)) {
 		/* We change the token type here from IDENTIFIER to
 		 * OTHER to prevent any future expansion of this
 		 * unexpanded token. */
@@ -1498,51 +1498,53 @@ _glcpp_parser_expand_node (glcpp_parser_t *parser,
 	return _glcpp_parser_expand_function (parser, node, last);
 }
 
-/* Push a new identifier onto the active list, returning the new list.
+/* Push a new identifier onto the parser's active list.
  *
  * Here, 'marker' is the token node that appears in the list after the
  * expansion of 'identifier'. That is, when the list iterator begins
- * examinging 'marker', then it is time to pop this node from the
+ * examining 'marker', then it is time to pop this node from the
  * active stack.
  */
-active_list_t *
-_active_list_push (active_list_t *list,
-		   const char *identifier,
-		   token_node_t *marker)
+static void
+_parser_active_list_push (glcpp_parser_t *parser,
+			  const char *identifier,
+			  token_node_t *marker)
 {
 	active_list_t *node;
 
-	node = ralloc (list, active_list_t);
+	node = ralloc (parser->active, active_list_t);
 	node->identifier = ralloc_strdup (node, identifier);
 	node->marker = marker;
-	node->next = list;
+	node->next = parser->active;
 
-	return node;
+	parser->active = node;
 }
 
-active_list_t *
-_active_list_pop (active_list_t *list)
+static void
+_parser_active_list_pop (glcpp_parser_t *parser)
 {
-	active_list_t *node = list;
+	active_list_t *node = parser->active;
 
-	if (node == NULL)
-		return NULL;
+	if (node == NULL) {
+		parser->active = NULL;
+		return;
+	}
 
-	node = list->next;
-	ralloc_free (list);
+	node = parser->active->next;
+	ralloc_free (parser->active);
 
-	return node;
+	parser->active = node;
 }
 
-int
-_active_list_contains (active_list_t *list, const char *identifier)
+static int
+_parser_active_list_contains (glcpp_parser_t *parser, const char *identifier)
 {
 	active_list_t *node;
 
-	if (list == NULL)
+	if (parser->active == NULL)
 		return 0;
 
-	for (node = list; node; node = node->next)
+	for (node = parser->active; node; node = node->next)
 		if (strcmp (node->identifier, identifier) == 0)
 			return 1;
 
@@ -1561,6 +1563,7 @@ _glcpp_parser_expand_token_list (glcpp_parser_t *parser,
 	token_node_t *node_prev;
 	token_node_t *node, *last = NULL;
 	token_list_t *expansion;
+	active_list_t *active_initial = parser->active;
 
 	if (list == NULL)
 		return;
@@ -1573,10 +1576,8 @@ _glcpp_parser_expand_token_list (glcpp_parser_t *parser,
 	while (node) {
 
 		while (parser->active && parser->active->marker == node)
-			parser->active = _active_list_pop (parser->active);
+			_parser_active_list_pop (parser);
 
-		/* Find the expansion for node, which will replace all
-		 * nodes from node to last, inclusive. */
 		expansion = _glcpp_parser_expand_node (parser, node, &last);
 		if (expansion) {
 			token_node_t *n;
@@ -1585,12 +1586,12 @@ _glcpp_parser_expand_token_list (glcpp_parser_t *parser,
 				while (parser->active &&
 				       parser->active->marker == n)
 				{
-					parser->active = _active_list_pop (parser->active);
+					_parser_active_list_pop (parser);
 				}
 
-			parser->active = _active_list_push (parser->active,
-							    node->token->value.str,
-							    last->next);
+			_parser_active_list_push (parser,
+						  node->token->value.str,
+						  last->next);
 			
 			/* Splice expansion into list, supporting a
 			 * simple deletion if the expansion is
@@ -1617,8 +1618,11 @@ _glcpp_parser_expand_token_list (glcpp_parser_t *parser,
 		node = node_prev ? node_prev->next : list->head;
 	}
 
-	while (parser->active)
-		parser->active = _active_list_pop (parser->active);
+	/* Remove any lingering effects of this invocation on the
+	 * active list. That is, pop until the list looks like it did
+	 * at the beginning of this function. */
+	while (parser->active && parser->active != active_initial)
+		_parser_active_list_pop (parser);
 
 	list->non_space_tail = list->tail;
 }

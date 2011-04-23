@@ -65,6 +65,7 @@ struct brw_wm_prog_key {
    GLuint nr_color_regions:5;
    GLuint render_to_fbo:1;
    GLuint alpha_test:1;
+   GLuint clamp_fragment_color:1;
 
    GLbitfield proj_attrib_mask; /**< one bit per fragment program attribute */
    GLuint shadowtex_mask:16;

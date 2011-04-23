@@ -37,8 +37,6 @@
 
 #include "utils.h"
 
-#define DRIVER_DATE	"20051019"
-
 /* Return the current color buffer size.
  */
 static void mach64DDGetBufferSize( struct gl_framebuffer *buffer,
@@ -70,8 +68,7 @@ static const GLubyte *mach64DDGetString( struct gl_context *ctx, GLenum name )
 
    case GL_RENDERER:
  
-      offset = driGetRendererString( buffer, card_name, DRIVER_DATE,
-				     agp_mode );
+      offset = driGetRendererString( buffer, card_name, agp_mode );
       return (GLubyte *)buffer;
 
    default:

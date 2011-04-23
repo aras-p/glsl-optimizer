@@ -87,6 +87,8 @@ gl_target_to_pipe(GLenum target)
       return PIPE_TEXTURE_1D_ARRAY;
    case GL_TEXTURE_2D_ARRAY_EXT:
       return PIPE_TEXTURE_2D_ARRAY;
+   case GL_TEXTURE_BUFFER:
+      return PIPE_BUFFER;
    default:
       assert(0);
       return 0;
@@ -245,6 +247,7 @@ get_texture_dims(GLenum target)
    switch (target) {
    case GL_TEXTURE_1D:
    case GL_TEXTURE_1D_ARRAY_EXT:
+   case GL_TEXTURE_BUFFER:
       return 1;
    case GL_TEXTURE_2D:
    case GL_TEXTURE_CUBE_MAP_ARB:
@@ -359,8 +362,8 @@ guess_and_alloc_texture(struct st_context *st,
     * to re-allocating a texture buffer with space for more (or fewer)
     * mipmap levels later.
     */
-   if ((stObj->base.MinFilter == GL_NEAREST ||
-        stObj->base.MinFilter == GL_LINEAR ||
+   if ((stObj->base.Sampler.MinFilter == GL_NEAREST ||
+        stObj->base.Sampler.MinFilter == GL_LINEAR ||
         stImage->base._BaseFormat == GL_DEPTH_COMPONENT ||
         stImage->base._BaseFormat == GL_DEPTH_STENCIL_EXT) &&
        !stObj->base.GenerateMipmap &&
@@ -597,7 +600,12 @@ st_TexImage(struct gl_context * ctx,
     * memory or malloc space for it.
     */
    if (stImage->pt) {
-      /* Store the image in the gallium texture memory buffer */
+      if (!pixels) {
+         /* We've allocated texture resource, but have no pixel data - all done. */
+         goto done;
+      }
+
+      /* Store the image in the gallium transfer object */
       if (format == GL_DEPTH_COMPONENT &&
           util_format_is_depth_and_stencil(stImage->pt->format))
          transfer_usage = PIPE_TRANSFER_READ_WRITE;
@@ -1678,7 +1686,7 @@ copy_image_data_to_texture(struct st_context *st,
    /* debug checks */
    {
       const struct gl_texture_image *dstImage =
-         stObj->base.Image[stImage->face][stImage->level];
+         stObj->base.Image[stImage->face][dstLevel];
       assert(dstImage);
       assert(dstImage->Width == stImage->base.Width);
       assert(dstImage->Height == stImage->base.Height);
@@ -1739,8 +1747,8 @@ st_finalize_texture(struct gl_context *ctx,
        * incomplete.  In that case, we'll have set stObj->lastLevel before
        * we get here.
        */
-      if (stObj->base.MinFilter == GL_LINEAR ||
-          stObj->base.MinFilter == GL_NEAREST)
+      if (stObj->base.Sampler.MinFilter == GL_LINEAR ||
+          stObj->base.Sampler.MinFilter == GL_NEAREST)
          stObj->lastLevel = stObj->base.BaseLevel;
       else
          stObj->lastLevel = stObj->base._MaxLevel;
@@ -1835,7 +1843,12 @@ st_finalize_texture(struct gl_context *ctx,
          /* Need to import images in main memory or held in other textures.
           */
          if (stImage && stObj->pt != stImage->pt) {
-            copy_image_data_to_texture(st, stObj, level, stImage);
+            if (stImage->base.Width == u_minify(stObj->width0, level) &&
+                stImage->base.Height == u_minify(stObj->height0, level) &&
+                stImage->base.Depth == u_minify(stObj->depth0, level)) {
+               /* src image fits expected dest mipmap level size */
+               copy_image_data_to_texture(st, stObj, level, stImage);
+            }
          }
       }
    }
@@ -1887,8 +1900,8 @@ st_get_default_texture(struct st_context *st)
                   texObj, texImg,
                   0, 0);
 
-      texObj->MinFilter = GL_NEAREST;
-      texObj->MagFilter = GL_NEAREST;
+      texObj->Sampler.MinFilter = GL_NEAREST;
+      texObj->Sampler.MagFilter = GL_NEAREST;
       texObj->_Complete = GL_TRUE;
 
       st->default_texture = texObj;

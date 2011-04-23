@@ -52,6 +52,9 @@ wglCreatePbufferARB(HDC _hDC,
    int useLargest = 0;
    const struct stw_pixelformat_info *info;
    struct stw_framebuffer *fb;
+   DWORD dwExStyle;
+   DWORD dwStyle;
+   RECT rect;
    HWND hWnd;
    HDC hDC;
 
@@ -113,15 +116,45 @@ wglCreatePbufferARB(HDC _hDC,
       first = FALSE;
    }
 
-   hWnd = CreateWindowEx(0,
+   dwExStyle = 0;
+   dwStyle = WS_CLIPSIBLINGS | WS_CLIPCHILDREN;
+
+   if (0) {
+      /*
+       * Don't hide the window -- useful for debugging what the application is
+       * drawing
+       */
+
+      dwStyle |= WS_VISIBLE | WS_OVERLAPPEDWINDOW;
+   } else {
+      dwStyle |= WS_POPUPWINDOW;
+   }
+
+   rect.left = 0;
+   rect.top = 0;
+   rect.right = rect.left + iWidth;
+   rect.bottom = rect.top + iHeight;
+
+   /*
+    * The CreateWindowEx parameters are the total (outside) dimensions of the
+    * window, which can vary with Windows version and user settings.  Use
+    * AdjustWindowRect to get the required total area for the given client area.
+    *
+    * AdjustWindowRectEx does not accept WS_OVERLAPPED style (which is defined
+    * as 0), which means we need to use some other style instead, e.g.,
+    * WS_OVERLAPPEDWINDOW or WS_POPUPWINDOW as above.
+    */
+
+   AdjustWindowRectEx(&rect, dwStyle, FALSE, dwExStyle);
+
+   hWnd = CreateWindowEx(dwExStyle,
                          "wglpbuffer", /* wc.lpszClassName */
-                         "wglpbuffer",
-#if 0 /* Useful for debugging what the application is drawing */
-                         WS_VISIBLE |
-#endif
-                         WS_CLIPSIBLINGS | WS_CLIPCHILDREN,
-                         CW_USEDEFAULT, CW_USEDEFAULT, /* x, y */
-                         iWidth, iHeight,
+                         NULL,
+                         dwStyle,
+                         CW_USEDEFAULT, /* x */
+                         CW_USEDEFAULT, /* y */
+                         rect.right - rect.left, /* width */
+                         rect.bottom - rect.top, /* height */
                          NULL,
                          NULL,
                          NULL,
@@ -129,6 +162,18 @@ wglCreatePbufferARB(HDC _hDC,
    if (!hWnd) {
       return 0;
    }
+
+#ifdef DEBUG
+   /*
+    * Verify the client area size matches the specified size.
+    */
+
+   GetClientRect(hWnd, &rect);
+   assert(rect.left == 0);
+   assert(rect.top == 0);
+   assert(rect.right - rect.left == iWidth);
+   assert(rect.bottom - rect.top == iHeight);
+#endif
 
    hDC = GetDC(hWnd);
    if (!hDC) {

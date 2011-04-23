@@ -107,7 +107,11 @@ match_function_by_name(exec_list *instructions, const char *name,
     * FINISHME: matching signature but shader X + N contains an _exact_
     * FINISHME: matching signature.
     */
-   if (sig == NULL && (f == NULL || state->es_shader || !f->has_user_signature()) && state->symbols->get_type(name) == NULL && (state->language_version == 110 || state->symbols->get_variable(name) == NULL)) {
+   if (sig == NULL
+       && (f == NULL || state->es_shader || !f->has_user_signature())
+       && state->symbols->get_type(name) == NULL
+       && (state->language_version == 110
+	   || state->symbols->get_variable(name) == NULL)) {
       /* The current shader doesn't contain a matching function or signature.
        * Before giving up, look for the prototype in the built-in functions.
        */

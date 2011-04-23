@@ -408,9 +408,7 @@ st_copy_buffer_subdata(struct gl_context *ctx,
    struct pipe_context *pipe = st_context(ctx)->pipe;
    struct st_buffer_object *srcObj = st_buffer_object(src);
    struct st_buffer_object *dstObj = st_buffer_object(dst);
-   struct pipe_transfer *src_transfer;
-   struct pipe_transfer *dst_transfer;
-   ubyte *srcPtr, *dstPtr;
+   struct pipe_box box;
 
    if(!size)
       return;
@@ -419,23 +417,10 @@ st_copy_buffer_subdata(struct gl_context *ctx,
    assert(!src->Pointer);
    assert(!dst->Pointer);
 
-   srcPtr = (ubyte *) pipe_buffer_map_range(pipe,
-                                            srcObj->buffer,
-                                            readOffset, size,
-                                            PIPE_TRANSFER_READ,
-					    &src_transfer);
+   u_box_1d(readOffset, size, &box);
 
-   dstPtr = (ubyte *) pipe_buffer_map_range(pipe,
-                                            dstObj->buffer,
-                                            writeOffset, size,
-                                            PIPE_TRANSFER_WRITE,
-					    &dst_transfer);
-
-   if (srcPtr && dstPtr)
-      memcpy(dstPtr + writeOffset, srcPtr + readOffset, size);
-
-   pipe_buffer_unmap(pipe, src_transfer);
-   pipe_buffer_unmap(pipe, dst_transfer);
+   pipe->resource_copy_region(pipe, dstObj->buffer, 0, writeOffset, 0, 0,
+                              srcObj->buffer, 0, &box);
 }
 
 

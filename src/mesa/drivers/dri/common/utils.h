@@ -76,7 +76,7 @@ extern unsigned driParseDebugString( const char * debug,
     const struct dri_debug_control * control );
 
 extern unsigned driGetRendererString( char * buffer,
-    const char * hardware_name, const char * driver_date, GLuint agp_mode );
+    const char * hardware_name, GLuint agp_mode );
 
 extern void driInitExtensions( struct gl_context * ctx, 
     const struct dri_extension * card_extensions, GLboolean enable_imaging );

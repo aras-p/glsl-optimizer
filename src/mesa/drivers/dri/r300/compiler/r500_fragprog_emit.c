@@ -93,6 +93,7 @@ static unsigned int translate_rgb_op(struct r300_fragment_program_compiler *c, r
 {
 	switch(opcode) {
 	case RC_OPCODE_CMP: return R500_ALU_RGBA_OP_CMP;
+	case RC_OPCODE_CND: return R500_ALU_RGBA_OP_CND;
 	case RC_OPCODE_DDX: return R500_ALU_RGBA_OP_MDH;
 	case RC_OPCODE_DDY: return R500_ALU_RGBA_OP_MDV;
 	case RC_OPCODE_DP3: return R500_ALU_RGBA_OP_DP3;
@@ -114,6 +115,7 @@ static unsigned int translate_alpha_op(struct r300_fragment_program_compiler *c,
 {
 	switch(opcode) {
 	case RC_OPCODE_CMP: return R500_ALPHA_OP_CMP;
+	case RC_OPCODE_CND: return R500_ALPHA_OP_CND;
 	case RC_OPCODE_COS: return R500_ALPHA_OP_COS;
 	case RC_OPCODE_DDX: return R500_ALPHA_OP_MDH;
 	case RC_OPCODE_DDY: return R500_ALPHA_OP_MDV;
@@ -197,11 +199,14 @@ static void use_temporary(struct r500_fragment_program_code* code, unsigned int 
 
 static unsigned int use_source(struct r500_fragment_program_code* code, struct rc_pair_instruction_source src)
 {
+	/* From docs:
+	 *   Note that inline constants set the MSB of ADDR0 and clear ADDR0_CONST.
+	 * MSB = 1 << 7 */
 	if (!src.Used)
-		return 0;
+		return 1 << 7;
 
 	if (src.File == RC_FILE_CONSTANT) {
-		return src.Index | 0x100;
+		return src.Index | R500_RGB_ADDR0_CONST;
 	} else if (src.File == RC_FILE_TEMPORARY) {
 		use_temporary(code, src.Index);
 		return src.Index;
@@ -259,7 +264,8 @@ static void emit_paired(struct r300_fragment_program_compiler *c, struct rc_pair
 	}
 	code->inst[ip].inst0 |= R500_INST_TEX_SEM_WAIT;
 
-	code->inst[ip].inst0 |= (inst->RGB.WriteMask << 11) | (inst->Alpha.WriteMask << 14);
+	code->inst[ip].inst0 |= (inst->RGB.WriteMask << 11);
+	code->inst[ip].inst0 |= inst->Alpha.WriteMask ? 1 << 14 : 0;
 	code->inst[ip].inst0 |= (inst->RGB.OutputWriteMask << 15) | (inst->Alpha.OutputWriteMask << 18);
 	if (inst->Nop) {
 		code->inst[ip].inst0 |= R500_INST_NOP;

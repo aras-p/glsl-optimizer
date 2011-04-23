@@ -724,157 +724,17 @@ i915ShadeModel(struct gl_context * ctx, GLenum mode)
 
 /* =============================================================
  * Fog
+ *
+ * This empty function remains because _mesa_init_driver_state calls
+ * dd_function_table::Fogfv unconditionally.  We have to have some function
+ * there so that it doesn't try to call a NULL pointer.
  */
-void
-i915_update_fog(struct gl_context * ctx)
-{
-   struct i915_context *i915 = I915_CONTEXT(ctx);
-   GLenum mode;
-   GLboolean enabled;
-   GLboolean try_pixel_fog;
-   GLuint dw;
-
-   if (ctx->FragmentProgram._Current) {
-      /* Pull in static fog state from program */
-      mode = ctx->FragmentProgram._Current->FogOption;
-      enabled = (mode != GL_NONE);
-      try_pixel_fog = 0;
-   }
-   else {
-      enabled = ctx->Fog.Enabled;
-      mode = ctx->Fog.Mode;
-#if 0
-      /* XXX - DISABLED -- Need ortho fallback */
-      try_pixel_fog = (ctx->Fog.FogCoordinateSource == GL_FRAGMENT_DEPTH_EXT
-                       && ctx->Hint.Fog == GL_NICEST);
-#else
-      try_pixel_fog = 0;
-#endif
-   }
-
-   if (!enabled) {
-      i915->vertex_fog = I915_FOG_NONE;
-   }
-   else if (try_pixel_fog) {
-      I915_STATECHANGE(i915, I915_UPLOAD_FOG);
-      i915->state.Fog[I915_FOGREG_MODE1] &= ~FMC1_FOGFUNC_MASK;
-      i915->vertex_fog = I915_FOG_PIXEL;
-
-      switch (mode) {
-      case GL_LINEAR:
-         if (ctx->Fog.End <= ctx->Fog.Start) {
-            /* XXX - this won't work with fragment programs.  Need to
-             * either fallback or append fog instructions to end of
-             * program in the case of linear fog.
-             */
-            printf("vertex fog!\n");
-            i915->state.Fog[I915_FOGREG_MODE1] |= FMC1_FOGFUNC_VERTEX;
-            i915->vertex_fog = I915_FOG_VERTEX;
-         }
-         else {
-            GLfloat c2 = 1.0 / (ctx->Fog.End - ctx->Fog.Start);
-            GLfloat c1 = ctx->Fog.End * c2;
-
-            i915->state.Fog[I915_FOGREG_MODE1] &= ~FMC1_C1_MASK;
-            i915->state.Fog[I915_FOGREG_MODE1] |= FMC1_FOGFUNC_PIXEL_LINEAR;
-            i915->state.Fog[I915_FOGREG_MODE1] |=
-               ((GLuint) (c1 * FMC1_C1_ONE)) & FMC1_C1_MASK;
-
-            if (i915->state.Fog[I915_FOGREG_MODE1] & FMC1_FOGINDEX_Z) {
-               i915->state.Fog[I915_FOGREG_MODE2]
-                  = (GLuint) (c2 * FMC2_C2_ONE);
-            }
-            else {
-               fi_type fi;
-               fi.f = c2;
-               i915->state.Fog[I915_FOGREG_MODE2] = fi.i;
-            }
-         }
-         break;
-      case GL_EXP:
-         i915->state.Fog[I915_FOGREG_MODE1] |= FMC1_FOGFUNC_PIXEL_EXP;
-         break;
-      case GL_EXP2:
-         i915->state.Fog[I915_FOGREG_MODE1] |= FMC1_FOGFUNC_PIXEL_EXP2;
-         break;
-      default:
-         break;
-      }
-   }
-   else { /* if (i915->vertex_fog != I915_FOG_VERTEX) */
-      I915_STATECHANGE(i915, I915_UPLOAD_FOG);
-      i915->state.Fog[I915_FOGREG_MODE1] &= ~FMC1_FOGFUNC_MASK;
-      i915->state.Fog[I915_FOGREG_MODE1] |= FMC1_FOGFUNC_VERTEX;
-      i915->vertex_fog = I915_FOG_VERTEX;
-   }
-
-   I915_ACTIVESTATE(i915, I915_UPLOAD_FOG, enabled);
-   dw = i915->state.Ctx[I915_CTXREG_LIS5];
-   if (enabled)
-      dw |= S5_FOG_ENABLE;
-   else
-      dw &= ~S5_FOG_ENABLE;
-   if (dw != i915->state.Ctx[I915_CTXREG_LIS5]) {
-      i915->state.Ctx[I915_CTXREG_LIS5] = dw;
-      I915_STATECHANGE(i915, I915_UPLOAD_CTX);
-   }
-
-   /* Always enable pixel fog.  Vertex fog using fog coord will conflict
-    * with fog code appended onto fragment program.
-    */
-    _tnl_allow_vertex_fog( ctx, 0 );
-    _tnl_allow_pixel_fog( ctx, 1 );
-}
-
 static void
 i915Fogfv(struct gl_context * ctx, GLenum pname, const GLfloat * param)
 {
-   struct i915_context *i915 = I915_CONTEXT(ctx);
-
-   switch (pname) {
-   case GL_FOG_COORDINATE_SOURCE_EXT:
-   case GL_FOG_MODE:
-   case GL_FOG_START:
-   case GL_FOG_END:
-      break;
-
-   case GL_FOG_DENSITY:
-      I915_STATECHANGE(i915, I915_UPLOAD_FOG);
-
-      if (i915->state.Fog[I915_FOGREG_MODE1] & FMC1_FOGINDEX_Z) {
-         i915->state.Fog[I915_FOGREG_MODE3] =
-            (GLuint) (ctx->Fog.Density * FMC3_D_ONE);
-      }
-      else {
-         fi_type fi;
-         fi.f = ctx->Fog.Density;
-         i915->state.Fog[I915_FOGREG_MODE3] = fi.i;
-      }
-      break;
-
-   case GL_FOG_COLOR:
-      I915_STATECHANGE(i915, I915_UPLOAD_FOG);
-      i915->state.Fog[I915_FOGREG_COLOR] =
-         (_3DSTATE_FOG_COLOR_CMD |
-          ((GLubyte) (ctx->Fog.Color[0] * 255.0F) << 16) |
-          ((GLubyte) (ctx->Fog.Color[1] * 255.0F) << 8) |
-          ((GLubyte) (ctx->Fog.Color[2] * 255.0F) << 0));
-      break;
-
-   default:
-      break;
-   }
-}
-
-static void
-i915Hint(struct gl_context * ctx, GLenum target, GLenum state)
-{
-   switch (target) {
-   case GL_FOG_HINT:
-      break;
-   default:
-      break;
-   }
+   (void) ctx;
+   (void) pname;
+   (void) param;
 }
 
 /* =============================================================
@@ -969,9 +829,6 @@ i915Enable(struct gl_context * ctx, GLenum cap, GLboolean state)
 	 i915->state.Ctx[I915_CTXREG_LIS4] = dw;
 	 I915_STATECHANGE(i915, I915_UPLOAD_CTX);
       }
-      break;
-
-   case GL_FOG:
       break;
 
    case GL_CULL_FACE:
@@ -1107,19 +964,6 @@ i915_init_packets(struct i915_context *i915)
       i915->state.Stipple[I915_STPREG_ST0] = _3DSTATE_STIPPLE;
    }
 
-
-   {
-      I915_STATECHANGE(i915, I915_UPLOAD_FOG);
-      i915->state.Fog[I915_FOGREG_MODE0] = _3DSTATE_FOG_MODE_CMD;
-      i915->state.Fog[I915_FOGREG_MODE1] = (FMC1_FOGFUNC_MODIFY_ENABLE |
-                                            FMC1_FOGFUNC_VERTEX |
-                                            FMC1_FOGINDEX_MODIFY_ENABLE |
-                                            FMC1_FOGINDEX_W |
-                                            FMC1_C1_C2_MODIFY_ENABLE |
-                                            FMC1_DENSITY_MODIFY_ENABLE);
-      i915->state.Fog[I915_FOGREG_COLOR] = _3DSTATE_FOG_COLOR_CMD;
-   }
-
    {
       i915->state.Buffer[I915_DESTREG_DV0] = _3DSTATE_DST_BUF_VARS_CMD;
 
@@ -1202,7 +1046,6 @@ i915InitStateFunctions(struct dd_function_table *functions)
    functions->Enable = i915Enable;
    functions->Fogfv = i915Fogfv;
    functions->FrontFace = i915CullFaceFrontFace;
-   functions->Hint = i915Hint;
    functions->LightModelfv = i915LightModelfv;
    functions->LineWidth = i915LineWidth;
    functions->LogicOpcode = i915LogicOp;

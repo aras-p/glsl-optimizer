@@ -254,7 +254,7 @@ ir_validate::visit_leave(ir_expression *ir)
 
    case ir_unop_f2i:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_FLOAT);
-      assert(ir->type->base_type == GLSL_TYPE_INT);
+      assert(ir->type->is_integer());
       break;
    case ir_unop_i2f:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_INT);
@@ -269,12 +269,12 @@ ir_validate::visit_leave(ir_expression *ir)
       assert(ir->type->base_type == GLSL_TYPE_FLOAT);
       break;
    case ir_unop_i2b:
-      assert(ir->operands[0]->type->base_type == GLSL_TYPE_INT);
+      assert(ir->operands[0]->type->is_integer());
       assert(ir->type->base_type == GLSL_TYPE_BOOL);
       break;
    case ir_unop_b2i:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_BOOL);
-      assert(ir->type->base_type == GLSL_TYPE_INT);
+      assert(ir->type->is_integer());
       break;
    case ir_unop_u2f:
       assert(ir->operands[0]->type->base_type == GLSL_TYPE_UINT);
@@ -473,6 +473,21 @@ ir_validate::visit(ir_variable *ir)
       assert(ralloc_parent(ir->name) == ir);
 
    hash_table_insert(ht, ir, ir);
+
+
+   /* If a variable is an array, verify that the maximum array index is in
+    * bounds.  There was once an error in AST-to-HIR conversion that set this
+    * to be out of bounds.
+    */
+   if (ir->type->array_size() > 0) {
+      if (ir->max_array_access >= ir->type->length) {
+	 printf("ir_variable has maximum access out of bounds (%d vs %d)\n",
+		ir->max_array_access, ir->type->length - 1);
+	 ir->print();
+	 abort();
+      }
+   }
+
    return visit_continue;
 }
 

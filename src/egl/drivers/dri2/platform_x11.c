@@ -231,7 +231,7 @@ dri2_create_surface(_EGLDriver *drv, _EGLDisplay *disp, EGLint type,
    if (dri2_dpy->dri2) {
       xcb_dri2_create_drawable (dri2_dpy->conn, dri2_surf->drawable);
    } else {
-      swrastCreateDrawable(dri2_dpy, dri2_surf, _eglGetConfigKey(conf, EGL_DEPTH_SIZE));
+      swrastCreateDrawable(dri2_dpy, dri2_surf, _eglGetConfigKey(conf, EGL_BUFFER_SIZE));
    }
 
    if (type != EGL_PBUFFER_BIT) {
@@ -990,7 +990,7 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
    if (!dri2_load_driver(disp))
       goto cleanup_conn;
 
-   dri2_dpy->fd = open(dri2_dpy->device_name, O_RDWR);
+   dri2_dpy->fd = open(dri2_dpy->device_name, O_RDWR | O_CLOEXEC);
    if (dri2_dpy->fd == -1) {
       _eglLog(_EGL_WARNING,
 	      "DRI2: could not open %s (%s)", dri2_dpy->device_name,
@@ -1030,11 +1030,7 @@ dri2_initialize_x11_dri2(_EGLDriver *drv, _EGLDisplay *disp)
 	 goto cleanup_configs;
    }
 
-   disp->Extensions.MESA_drm_image = EGL_TRUE;
-   disp->Extensions.KHR_image_base = EGL_TRUE;
    disp->Extensions.KHR_image_pixmap = EGL_TRUE;
-   disp->Extensions.KHR_gl_renderbuffer_image = EGL_TRUE;
-   disp->Extensions.KHR_gl_texture_2D_image = EGL_TRUE;
    disp->Extensions.NOK_swap_region = EGL_TRUE;
    disp->Extensions.NOK_texture_from_pixmap = EGL_TRUE;
 

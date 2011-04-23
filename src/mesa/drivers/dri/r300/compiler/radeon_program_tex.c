@@ -32,8 +32,8 @@
 
 /* Series of transformations to be done on textures. */
 
-static struct rc_src_register shadow_ambient(struct r300_fragment_program_compiler *compiler,
-					     int tmu)
+static struct rc_src_register shadow_fail_value(struct r300_fragment_program_compiler *compiler,
+						int tmu)
 {
 	struct rc_src_register reg = { 0, };
 
@@ -46,6 +46,20 @@ static struct rc_src_register shadow_ambient(struct r300_fragment_program_compil
 		reg.File = RC_FILE_NONE;
 		reg.Swizzle = RC_SWIZZLE_0000;
 	}
+
+	reg.Swizzle = combine_swizzles(reg.Swizzle,
+				compiler->state.unit[tmu].texture_swizzle);
+	return reg;
+}
+
+static struct rc_src_register shadow_pass_value(struct r300_fragment_program_compiler *compiler,
+						int tmu)
+{
+	struct rc_src_register reg = { 0, };
+
+	reg.File = RC_FILE_NONE;
+	reg.Swizzle = combine_swizzles(RC_SWIZZLE_1111,
+				compiler->state.unit[tmu].texture_swizzle);
 	return reg;
 }
 
@@ -141,10 +155,9 @@ int radeonTransformTEX(
 			inst->U.I.Opcode = RC_OPCODE_MOV;
 
 			if (comparefunc == RC_COMPARE_FUNC_ALWAYS) {
-				inst->U.I.SrcReg[0].File = RC_FILE_NONE;
-				inst->U.I.SrcReg[0].Swizzle = RC_SWIZZLE_1111;
+				inst->U.I.SrcReg[0] = shadow_pass_value(compiler, inst->U.I.TexSrcUnit);
 			} else {
-				inst->U.I.SrcReg[0] = shadow_ambient(compiler, inst->U.I.TexSrcUnit);
+				inst->U.I.SrcReg[0] = shadow_fail_value(compiler, inst->U.I.TexSrcUnit);
 			}
 
 			return 1;
@@ -157,9 +170,11 @@ int radeonTransformTEX(
 
 			/* Save the output register. */
 			struct rc_dst_register output_reg = inst->U.I.DstReg;
+			unsigned saturate_mode = inst->U.I.SaturateMode;
 
 			/* Redirect TEX to a new temp. */
 			tmp_texsample = rc_find_free_temporary(c);
+			inst->U.I.SaturateMode = 0;
 			inst->U.I.DstReg.File = RC_FILE_TEMPORARY;
 			inst->U.I.DstReg.Index = tmp_texsample;
 			inst->U.I.DstReg.WriteMask = RC_MASK_XYZW;
@@ -235,15 +250,15 @@ int radeonTransformTEX(
 
 			inst_cmp = rc_insert_new_instruction(c, inst_add);
 			inst_cmp->U.I.Opcode = RC_OPCODE_CMP;
+			inst_cmp->U.I.SaturateMode = saturate_mode;
 			inst_cmp->U.I.DstReg = output_reg;
 			inst_cmp->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
 			inst_cmp->U.I.SrcReg[0].Index = tmp_sum;
 			inst_cmp->U.I.SrcReg[0].Swizzle =
 					combine_swizzles(RC_SWIZZLE_WWWW,
-							 compiler->state.unit[inst->U.I.TexSrcUnit].depth_texture_swizzle);
-			inst_cmp->U.I.SrcReg[pass].File = RC_FILE_NONE;
-			inst_cmp->U.I.SrcReg[pass].Swizzle = RC_SWIZZLE_1111;
-			inst_cmp->U.I.SrcReg[fail] = shadow_ambient(compiler, inst->U.I.TexSrcUnit);
+							 compiler->state.unit[inst->U.I.TexSrcUnit].texture_swizzle);
+			inst_cmp->U.I.SrcReg[pass] = shadow_pass_value(compiler, inst->U.I.TexSrcUnit);
+			inst_cmp->U.I.SrcReg[fail] = shadow_fail_value(compiler, inst->U.I.TexSrcUnit);
 
 			assert(tmp_texsample != tmp_sum);
 		}
@@ -396,6 +411,7 @@ int radeonTransformTEX(
 		inst->U.I.SrcReg[0].Index = temp;
 	}
 
+	/* NPOT -> POT conversion for 3D textures. */
 	if (inst->U.I.Opcode != RC_OPCODE_KIL &&
 	    compiler->state.unit[inst->U.I.TexSrcUnit].clamp_and_scale_before_fetch) {
 		struct rc_instruction *inst_mov;
@@ -423,6 +439,53 @@ int radeonTransformTEX(
 		inst->U.I.SrcReg[0].Index = temp;
 
 		scale_texcoords(compiler, inst, RC_STATE_R300_TEXSCALE_FACTOR);
+	}
+
+	/* Convert SNORM-encoded ATI1N sampled as UNORM to SNORM.
+	 * Formula: dst = tex > 0.5 ? tex*2-2 : tex*2
+	 */
+	if (inst->U.I.Opcode != RC_OPCODE_KIL &&
+	    compiler->state.unit[inst->U.I.TexSrcUnit].convert_unorm_to_snorm) {
+		unsigned two, two_swizzle;
+		struct rc_instruction *inst_mul, *inst_mad, *inst_cnd;
+
+		two = rc_constants_add_immediate_scalar(&c->Program.Constants, 2.35, &two_swizzle);
+
+		inst_mul = rc_insert_new_instruction(c, inst);
+		inst_mul->U.I.Opcode = RC_OPCODE_MUL;
+		inst_mul->U.I.DstReg.File = RC_FILE_TEMPORARY;
+		inst_mul->U.I.DstReg.Index = rc_find_free_temporary(c);
+		inst_mul->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+		inst_mul->U.I.SrcReg[0].Index = rc_find_free_temporary(c); /* redirected TEX output */
+		inst_mul->U.I.SrcReg[1].File = RC_FILE_CONSTANT; /* 2 */
+		inst_mul->U.I.SrcReg[1].Index = two;
+		inst_mul->U.I.SrcReg[1].Swizzle = two_swizzle;
+
+		inst_mad = rc_insert_new_instruction(c, inst_mul);
+		inst_mad->U.I.Opcode = RC_OPCODE_MAD;
+		inst_mad->U.I.DstReg.File = RC_FILE_TEMPORARY;
+		inst_mad->U.I.DstReg.Index = rc_find_free_temporary(c);
+		inst_mad->U.I.SrcReg[0] = inst_mul->U.I.SrcReg[0]; /* redirected TEX output */
+		inst_mad->U.I.SrcReg[1] = inst_mul->U.I.SrcReg[1]; /* 2 */
+		inst_mad->U.I.SrcReg[2] = inst_mul->U.I.SrcReg[1]; /* 2 */
+		inst_mad->U.I.SrcReg[2].Negate = RC_MASK_XYZW;
+
+		inst_cnd = rc_insert_new_instruction(c, inst_mad);
+		inst_cnd->U.I.Opcode = RC_OPCODE_CND;
+		inst_cnd->U.I.SaturateMode = inst->U.I.SaturateMode;
+		inst_cnd->U.I.DstReg = inst->U.I.DstReg;
+		inst_cnd->U.I.SrcReg[0].File = RC_FILE_TEMPORARY;
+		inst_cnd->U.I.SrcReg[0].Index = inst_mad->U.I.DstReg.Index;
+		inst_cnd->U.I.SrcReg[0].Swizzle = compiler->state.unit[inst->U.I.TexSrcUnit].texture_swizzle;
+		inst_cnd->U.I.SrcReg[1].File = RC_FILE_TEMPORARY;
+		inst_cnd->U.I.SrcReg[1].Index = inst_mul->U.I.DstReg.Index;
+		inst_cnd->U.I.SrcReg[1].Swizzle = compiler->state.unit[inst->U.I.TexSrcUnit].texture_swizzle;
+		inst_cnd->U.I.SrcReg[2] = inst_mul->U.I.SrcReg[0]; /* redirected TEX output */
+
+		inst->U.I.SaturateMode = 0;
+		inst->U.I.DstReg.File = RC_FILE_TEMPORARY;
+		inst->U.I.DstReg.Index = inst_mul->U.I.SrcReg[0].Index;
+		inst->U.I.DstReg.WriteMask = RC_MASK_XYZW;
 	}
 
 	/* Cannot write texture to output registers or with saturate (all chips),

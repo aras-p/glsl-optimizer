@@ -173,6 +173,7 @@ struct asm_parser_state {
    unsigned MaxClipPlanes;
    unsigned MaxLights;
    unsigned MaxProgramMatrices;
+   unsigned MaxDrawBuffers;
    /*@}*/
 
    /**

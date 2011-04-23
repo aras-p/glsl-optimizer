@@ -319,6 +319,21 @@ else
     esac
 fi
 
+dnl
+dnl potentially-infringing-but-nobody-knows-for-sure stuff
+dnl
+AC_ARG_ENABLE([texture-float],
+    [AS_HELP_STRING([--enable-texture-float],
+        [enable floating-point textures and renderbuffers @<:@default=disabled@:>@])],
+    [enable_texture_float="$enableval"],
+    [enable_texture_float=no]
+)
+if test "x$enable_texture_float" = xyes; then
+    AC_MSG_WARN([Floating-point textures enabled.])
+    AC_MSG_WARN([Please consult docs/patents.txt with your lawyer before building Mesa.])
+    DEFINES="$DEFINES -DTEXTURE_FLOAT_ENABLED"
+fi
+
 GL_LIB_NAME='lib$(GL_LIB).'${LIB_EXTENSION}
 GLU_LIB_NAME='lib$(GLU_LIB).'${LIB_EXTENSION}
 GLUT_LIB_NAME='lib$(GLUT_LIB).'${LIB_EXTENSION}
@@ -729,6 +744,27 @@ else
     enable_xcb=no
 fi
 
+dnl Direct rendering or just indirect rendering
+case "$host_os" in
+gnu*)
+    dnl Disable by default on GNU/Hurd
+    driglx_direct_default="no"
+    ;;
+cygwin*)
+    dnl Disable by default on cygwin
+    driglx_direct_default="no"
+    ;;
+*)
+    driglx_direct_default="yes"
+    ;;
+esac
+AC_ARG_ENABLE([driglx-direct],
+    [AS_HELP_STRING([--disable-driglx-direct],
+        [enable direct rendering in GLX and EGL for DRI \
+            @<:@default=auto@:>@])],
+    [driglx_direct="$enableval"],
+    [driglx_direct="$driglx_direct_default"])
+
 dnl
 dnl libGL configuration per driver
 dnl
@@ -762,12 +798,17 @@ dri|no) # these checks are still desired when there is no mesa_driver
         AC_MSG_ERROR([Can't use static libraries for DRI drivers])
     fi
 
-    # Check for libdrm
-    PKG_CHECK_MODULES([LIBDRM], [libdrm >= $LIBDRM_REQUIRED])
-    PKG_CHECK_MODULES([DRI2PROTO], [dri2proto >= $DRI2PROTO_REQUIRED])
     PKG_CHECK_MODULES([GLPROTO], [glproto >= $GLPROTO_REQUIRED])
-    GL_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED dri2proto >= $DRI2PROTO_REQUIRED glproto >= $GLPROTO_REQUIRED"
-    DRI_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED"
+    GL_PC_REQ_PRIV="glproto >= $GLPROTO_REQUIRED"
+    DRI_PC_REQ_PRIV=""
+
+    if test x"$driglx_direct" = xyes; then
+        # Check for libdrm
+        PKG_CHECK_MODULES([LIBDRM], [libdrm >= $LIBDRM_REQUIRED])
+        PKG_CHECK_MODULES([DRI2PROTO], [dri2proto >= $DRI2PROTO_REQUIRED])
+        GL_PC_REQ_PRIV="$GL_PC_REQ_PRIV libdrm >= $LIBDRM_REQUIRED dri2proto >= $DRI2PROTO_REQUIRED"
+        DRI_PC_REQ_PRIV="libdrm >= $LIBDRM_REQUIRED"
+    fi
 
     # find the DRI deps for libGL
     if test "$x11_pkgconfig" = yes; then
@@ -910,12 +951,6 @@ AC_ARG_WITH([dri-searchpath],
     [DRI_DRIVER_SEARCH_DIR="$withval"],
     [DRI_DRIVER_SEARCH_DIR='${DRI_DRIVER_INSTALL_DIR}'])
 AC_SUBST([DRI_DRIVER_SEARCH_DIR])
-dnl Direct rendering or just indirect rendering
-AC_ARG_ENABLE([driglx-direct],
-    [AS_HELP_STRING([--disable-driglx-direct],
-        [enable direct rendering in GLX and EGL for DRI @<:@default=enabled@:>@])],
-    [driglx_direct="$enableval"],
-    [driglx_direct="yes"])
 dnl Which drivers to build - default is chosen by platform
 AC_ARG_WITH([dri-drivers],
     [AS_HELP_STRING([--with-dri-drivers@<:@=DIRS...@:>@],
@@ -1004,6 +1039,16 @@ if test "$mesa_driver" = dri -o "$mesa_driver" = no; then
         DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING"
         if test "x$driglx_direct" = xyes; then
             DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
+        fi
+        ;;
+    cygwin*)
+        DEFINES="$DEFINES -DUSE_EXTERNAL_DXTN_LIB=1 -DIN_DRI_DRIVER"
+        DEFINES="$DEFINES -DGLX_INDIRECT_RENDERING"
+        if test "x$driglx_direct" = xyes; then
+            DEFINES="$DEFINES -DGLX_DIRECT_RENDERING"
+        fi
+        if test "x$DRI_DIRS" = "xyes"; then
+            DRI_DIRS="swrast"
         fi
         ;;
     esac
@@ -1758,16 +1803,15 @@ fi
 dnl
 dnl Gallium Radeon r300g configuration
 dnl
-AC_ARG_ENABLE([gallium-radeon],
-    [AS_HELP_STRING([--enable-gallium-radeon],
-        [build gallium radeon @<:@default=disabled@:>@])],
-    [enable_gallium_radeon="$enableval"],
-    [enable_gallium_radeon=auto])
-if test "x$enable_gallium_radeon" = xauto; then
+AC_ARG_ENABLE([gallium-r300],
+    [AS_HELP_STRING([--enable-gallium-r300],
+        [build gallium r300 @<:@default=DRI-only@:>@])],
+    [enable_gallium_r300="$enableval"],
+    [enable_gallium_r300=auto])
+if test "x$enable_gallium_r300" = xauto; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
     gallium_check_st "radeon/drm" "dri-r300"
-fi
-if test "x$enable_gallium_radeon" = xyes; then
+elif test "x$enable_gallium_r300" = xyes; then
     GALLIUM_DRIVERS_DIRS="$GALLIUM_DRIVERS_DIRS r300"
     gallium_check_st "radeon/drm" "dri-r300" "xorg-radeon"
 fi
@@ -1777,7 +1821,7 @@ dnl Gallium Radeon r600g configuration
 dnl
 AC_ARG_ENABLE([gallium-r600],
     [AS_HELP_STRING([--enable-gallium-r600],
-        [build gallium radeon @<:@default=disabled@:>@])],
+        [build gallium r600 @<:@default=disabled@:>@])],
     [enable_gallium_r600="$enableval"],
     [enable_gallium_r600=auto])
 if test "x$enable_gallium_r600" = xyes; then

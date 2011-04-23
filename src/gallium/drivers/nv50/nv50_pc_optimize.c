@@ -20,8 +20,6 @@
  * SOFTWARE.
  */
 
-/* #define NV50PC_DEBUG */
-
 #include "nv50_pc.h"
 
 #define DESCEND_ARBITRARY(j, f)                                 \
@@ -116,7 +114,7 @@ nvi_isnop(struct nv_instruction *nvi)
       return FALSE;
 
    if (nvi->src[0]->value->join->reg.id < 0) {
-      NV50_DBGMSG("nvi_isnop: orphaned value detected\n");
+      NV50_DBGMSG(PROG_IR, "nvi_isnop: orphaned value detected\n");
       return TRUE;
    }
 
@@ -201,7 +199,7 @@ nv_pc_pass_pre_emission(void *priv, struct nv_basic_block *b)
    }
 
    if (!b->entry) {
-      NV50_DBGMSG("block %p is now empty\n", b);
+      NV50_DBGMSG(PROG_IR, "block %p is now empty\n", b);
    } else
    if (!b->exit->is_long) {
       assert(n32);
@@ -240,7 +238,7 @@ nv_pc_exec_pass2(struct nv_pc *pc)
 {
    int i, ret;
 
-   NV50_DBGMSG("preparing %u blocks for emission\n", pc->num_blocks);
+   NV50_DBGMSG(PROG_IR, "preparing %u blocks for emission\n", pc->num_blocks);
 
    pc->num_blocks = 0; /* will reorder bb_list */
 
@@ -966,7 +964,8 @@ nv_pass_flatten(struct nv_pass *ctx, struct nv_basic_block *b)
 
    if (bb_is_if_else_endif(b)) {
 
-      NV50_DBGMSG("pass_flatten: IF/ELSE/ENDIF construct at BB:%i\n", b->id);
+      NV50_DBGMSG(PROG_IR,
+                  "pass_flatten: IF/ELSE/ENDIF construct at BB:%i\n", b->id);
 
       for (n0 = 0, nvi = b->out[0]->entry; nvi; nvi = nvi->next, ++n0)
          if (!nv50_nvi_can_predicate(nvi))
@@ -975,7 +974,7 @@ nv_pass_flatten(struct nv_pass *ctx, struct nv_basic_block *b)
          for (n1 = 0, nvi = b->out[1]->entry; nvi; nvi = nvi->next, ++n1)
             if (!nv50_nvi_can_predicate(nvi))
                break;
-#ifdef NV50PC_DEBUG
+#if NV50_DEBUG & NV50_DEBUG_PROG_IR
          if (nvi) {
             debug_printf("cannot predicate: "); nv_print_instruction(nvi);
          }

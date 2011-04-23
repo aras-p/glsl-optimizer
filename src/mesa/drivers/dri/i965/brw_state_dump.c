@@ -195,8 +195,8 @@ static void dump_sf_viewport_state(struct brw_context *brw)
 
    drm_intel_bo_map(brw->sf.vp_bo, GL_FALSE);
 
-   vp = brw->sf.vp_bo->virtual;
-   vp_off = brw->sf.vp_bo->offset;
+   vp = brw->sf.vp_bo->virtual + brw->sf.vp_offset;
+   vp_off = brw->sf.vp_bo->offset + brw->sf.vp_offset;
 
    state_out(name, vp, vp_off, 0, "m00 = %f\n", vp->viewport.m00);
    state_out(name, vp, vp_off, 1, "m11 = %f\n", vp->viewport.m11);

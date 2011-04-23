@@ -631,6 +631,34 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       fetch_texel_3d_f_intensity_f16,
       store_texel_intensity_f16
    },
+   {
+      MESA_FORMAT_R_FLOAT32,
+      fetch_texel_1d_f_r_f32,
+      fetch_texel_2d_f_r_f32,
+      fetch_texel_3d_f_r_f32,
+      store_texel_r_f32
+   },
+   {
+      MESA_FORMAT_R_FLOAT16,
+      fetch_texel_1d_f_r_f16,
+      fetch_texel_2d_f_r_f16,
+      fetch_texel_3d_f_r_f16,
+      store_texel_r_f16
+   },
+   {
+      MESA_FORMAT_RG_FLOAT32,
+      fetch_texel_1d_f_rg_f32,
+      fetch_texel_2d_f_rg_f32,
+      fetch_texel_3d_f_rg_f32,
+      store_texel_rg_f32
+   },
+   {
+      MESA_FORMAT_RG_FLOAT16,
+      fetch_texel_1d_f_rg_f16,
+      fetch_texel_2d_f_rg_f16,
+      fetch_texel_3d_f_rg_f16,
+      store_texel_rg_f16
+   },
 
    /* non-normalized, signed int */
    {
@@ -696,11 +724,11 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       store_texel_signed_r8
    },
    {
-      MESA_FORMAT_SIGNED_RG88,
-      fetch_texel_1d_signed_rg88,
-      fetch_texel_2d_signed_rg88,
-      fetch_texel_3d_signed_rg88,
-      store_texel_signed_rg88
+      MESA_FORMAT_SIGNED_RG88_REV,
+      fetch_texel_1d_signed_rg88_rev,
+      fetch_texel_2d_signed_rg88_rev,
+      fetch_texel_3d_signed_rg88_rev,
+      store_texel_signed_rg88_rev
    },
    {
       MESA_FORMAT_SIGNED_RGBX8888,
@@ -724,18 +752,18 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       store_texel_signed_rgba8888_rev
    },
    {
-      MESA_FORMAT_SIGNED_R_16,
-      fetch_texel_1d_signed_r_16,
-      fetch_texel_2d_signed_r_16,
-      fetch_texel_3d_signed_r_16,
-      store_texel_signed_r_16
+      MESA_FORMAT_SIGNED_R16,
+      fetch_texel_1d_signed_r16,
+      fetch_texel_2d_signed_r16,
+      fetch_texel_3d_signed_r16,
+      store_texel_signed_r16
    },
    {
-      MESA_FORMAT_SIGNED_RG_16,
-      fetch_texel_1d_signed_rg_16,
-      fetch_texel_2d_signed_rg_16,
-      fetch_texel_3d_signed_rg_16,
-      store_texel_signed_rg_16
+      MESA_FORMAT_SIGNED_GR1616,
+      fetch_texel_1d_signed_rg1616,
+      fetch_texel_2d_signed_rg1616,
+      fetch_texel_3d_signed_rg1616,
+      store_texel_signed_rg1616
    },
    {
       MESA_FORMAT_SIGNED_RGB_16,
@@ -813,6 +841,62 @@ texfetch_funcs[MESA_FORMAT_COUNT] =
       _mesa_fetch_texel_2d_f_signed_la_latc2,
       NULL,
       NULL
+   },
+   {
+      MESA_FORMAT_SIGNED_A8,
+      fetch_texel_1d_signed_a8,
+      fetch_texel_2d_signed_a8,
+      fetch_texel_3d_signed_a8,
+      store_texel_signed_a8
+   },
+   {
+      MESA_FORMAT_SIGNED_L8,
+      fetch_texel_1d_signed_l8,
+      fetch_texel_2d_signed_l8,
+      fetch_texel_3d_signed_l8,
+      store_texel_signed_l8
+   },
+   {
+      MESA_FORMAT_SIGNED_AL88,
+      fetch_texel_1d_signed_al88,
+      fetch_texel_2d_signed_al88,
+      fetch_texel_3d_signed_al88,
+      store_texel_signed_al88
+   },
+   {
+      MESA_FORMAT_SIGNED_I8,
+      fetch_texel_1d_signed_i8,
+      fetch_texel_2d_signed_i8,
+      fetch_texel_3d_signed_i8,
+      store_texel_signed_i8
+   },
+   {
+      MESA_FORMAT_SIGNED_A16,
+      fetch_texel_1d_signed_a16,
+      fetch_texel_2d_signed_a16,
+      fetch_texel_3d_signed_a16,
+      store_texel_signed_a16
+   },
+   {
+      MESA_FORMAT_SIGNED_L16,
+      fetch_texel_1d_signed_l16,
+      fetch_texel_2d_signed_l16,
+      fetch_texel_3d_signed_l16,
+      store_texel_signed_l16
+   },
+   {
+      MESA_FORMAT_SIGNED_AL1616,
+      fetch_texel_1d_signed_al1616,
+      fetch_texel_2d_signed_al1616,
+      fetch_texel_3d_signed_al1616,
+      store_texel_signed_al1616
+   },
+   {
+      MESA_FORMAT_SIGNED_I16,
+      fetch_texel_1d_signed_i16,
+      fetch_texel_2d_signed_i16,
+      fetch_texel_3d_signed_i16,
+      store_texel_signed_i16
    },
 };
 
@@ -919,7 +1003,7 @@ _mesa_set_fetch_functions(struct gl_texture_image *texImage, GLuint dims)
 
    ASSERT(dims == 1 || dims == 2 || dims == 3);
 
-   if (texImage->TexObject->sRGBDecode == GL_SKIP_DECODE_EXT &&
+   if (texImage->TexObject->Sampler.sRGBDecode == GL_SKIP_DECODE_EXT &&
        _mesa_get_format_color_encoding(format) == GL_SRGB) {
       format = _mesa_get_srgb_format_linear(format);
    }

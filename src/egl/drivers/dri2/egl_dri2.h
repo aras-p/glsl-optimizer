@@ -85,8 +85,10 @@ struct dri2_egl_display
    __DRIswrastLoaderExtension  swrast_loader_extension;
    const __DRIextension     *extensions[3];
 #ifdef HAVE_WAYLAND_PLATFORM
-   struct wl_egl_display    *wl_dpy;
+   struct wl_display        *wl_dpy;
    struct wl_drm            *wl_server_drm;
+   struct wl_drm            *wl_drm;
+   int			     authenticated;
 #endif
 
    int (*authenticate) (_EGLDisplay *disp, uint32_t id);

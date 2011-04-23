@@ -945,6 +945,9 @@ handle_error:
 static void
 dri2DestroyDisplay(__GLXDRIdisplay * dpy)
 {
+   struct dri2_display *pdp = (struct dri2_display *) dpy;
+
+   __glxHashDestroy(pdp->dri2Hash);
    Xfree(dpy);
 }
 

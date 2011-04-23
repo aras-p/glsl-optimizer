@@ -55,9 +55,7 @@
  * In particular, we care about pixel transfer state and buffer state
  * (such as glReadBuffer to make sure we read from the right renderbuffer).
  */
-#define NEW_COPY_TEX_STATE (_MESA_NEW_TRANSFER_STATE | \
-                            _NEW_BUFFERS | \
-                            _NEW_PIXEL)
+#define NEW_COPY_TEX_STATE (_NEW_BUFFERS | _NEW_PIXEL)
 
 
 
@@ -313,11 +311,40 @@ _mesa_base_tex_format( struct gl_context *ctx, GLint internalFormat )
       }
    }
 
-   if (ctx->Extensions.MESA_texture_signed_rgba) {
+   if (ctx->Extensions.EXT_texture_snorm) {
       switch (internalFormat) {
+         case GL_RED_SNORM:
+         case GL_R8_SNORM:
+         case GL_R16_SNORM:
+            return GL_RED;
+         case GL_RG_SNORM:
+         case GL_RG8_SNORM:
+         case GL_RG16_SNORM:
+            return GL_RG;
+         case GL_RGB_SNORM:
+         case GL_RGB8_SNORM:
+         case GL_RGB16_SNORM:
+            return GL_RGB;
          case GL_RGBA_SNORM:
          case GL_RGBA8_SNORM:
+         case GL_RGBA16_SNORM:
             return GL_RGBA;
+         case GL_ALPHA_SNORM:
+         case GL_ALPHA8_SNORM:
+         case GL_ALPHA16_SNORM:
+            return GL_ALPHA;
+         case GL_LUMINANCE_SNORM:
+         case GL_LUMINANCE8_SNORM:
+         case GL_LUMINANCE16_SNORM:
+            return GL_LUMINANCE;
+         case GL_LUMINANCE_ALPHA_SNORM:
+         case GL_LUMINANCE8_ALPHA8_SNORM:
+         case GL_LUMINANCE16_ALPHA16_SNORM:
+            return GL_LUMINANCE_ALPHA;
+         case GL_INTENSITY_SNORM:
+         case GL_INTENSITY8_SNORM:
+         case GL_INTENSITY16_SNORM:
+            return GL_INTENSITY;
          default:
             ; /* fallthrough */
       }
@@ -654,8 +681,10 @@ _mesa_delete_texture_image(struct gl_context *ctx,
 GLboolean
 _mesa_is_proxy_texture(GLenum target)
 {
-   /* NUM_TEXTURE_TARGETS should match number of terms below */
-   assert(NUM_TEXTURE_TARGETS == 7);
+   /* NUM_TEXTURE_TARGETS should match number of terms below,
+    * except there's no proxy for GL_TEXTURE_BUFFER.
+    */
+   assert(NUM_TEXTURE_TARGETS == 8);
 
    return (target == GL_PROXY_TEXTURE_1D ||
            target == GL_PROXY_TEXTURE_2D ||
@@ -767,6 +796,9 @@ _mesa_select_tex_object(struct gl_context *ctx,
          return arrayTex ? texUnit->CurrentTex[TEXTURE_2D_ARRAY_INDEX] : NULL;
       case GL_PROXY_TEXTURE_2D_ARRAY_EXT:
          return arrayTex ? ctx->Texture.ProxyTex[TEXTURE_2D_ARRAY_INDEX] : NULL;
+      case GL_TEXTURE_BUFFER:
+         return ctx->Extensions.ARB_texture_buffer_object
+            ? texUnit->CurrentTex[TEXTURE_BUFFER_INDEX] : NULL;
       default:
          _mesa_problem(NULL, "bad target in _mesa_select_tex_object()");
          return NULL;
@@ -954,6 +986,8 @@ _mesa_max_texture_levels(struct gl_context *ctx, GLenum target)
       return (ctx->Extensions.MESA_texture_array ||
               ctx->Extensions.EXT_texture_array)
          ? ctx->Const.MaxTextureLevels : 0;
+   case GL_TEXTURE_BUFFER:
+      /* fall-through */
    default:
       return 0; /* bad target */
    }
@@ -990,6 +1024,8 @@ _mesa_get_texture_dimensions(GLenum target)
    case GL_TEXTURE_2D_ARRAY:
    case GL_PROXY_TEXTURE_2D_ARRAY:
       return 3;
+   case GL_TEXTURE_BUFFER:
+      /* fall-through */
    default:
       _mesa_problem(NULL, "invalid target 0x%x in get_texture_dimensions()",
                     target);
@@ -2224,7 +2260,7 @@ check_rtt_cb(GLuint key, void *data, void *userData)
              att->Texture == texObj &&
              att->TextureLevel == level &&
              att->CubeMapFace == face) {
-            ASSERT(att->Texture->Image[att->CubeMapFace][att->TextureLevel]);
+            ASSERT(_mesa_get_attachment_teximage(att));
             /* Tell driver about the new renderbuffer texture */
             ctx->Driver.RenderTexture(ctx, ctx->DrawBuffer, att);
             /* Mark fb status as indeterminate to force re-validation */
@@ -2434,7 +2470,7 @@ teximage(struct gl_context *ctx, GLuint dims,
          return;   /* error was recorded */
       }
 
-      if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
+      if (ctx->NewState & _NEW_PIXEL)
 	 _mesa_update_state(ctx);
 
       texObj = _mesa_get_current_tex_object(ctx, target);
@@ -2580,7 +2616,7 @@ _mesa_EGLImageTargetTexture2DOES (GLenum target, GLeglImageOES image)
       return;
    }
 
-   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
+   if (ctx->NewState & _NEW_PIXEL)
       _mesa_update_state(ctx);
 
    texObj = _mesa_get_current_tex_object(ctx, target);
@@ -2637,7 +2673,7 @@ texsubimage(struct gl_context *ctx, GLuint dims, GLenum target, GLint level,
       return;
    }       
 
-   if (ctx->NewState & _MESA_NEW_TRANSFER_STATE)
+   if (ctx->NewState & _NEW_PIXEL)
       _mesa_update_state(ctx);
 
    if (subtexture_error_check(ctx, dims, target, level, xoffset, yoffset, zoffset,
@@ -2997,6 +3033,7 @@ get_compressed_block_size(GLenum glformat, GLuint *bw, GLuint *bh)
 
 /**
  * Error checking for glCompressedTexImage[123]D().
+ * \param reason  returns reason for error, if any
  * \return error code or GL_NO_ERROR.
  */
 static GLenum
@@ -3004,36 +3041,49 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
                                GLenum target, GLint level,
                                GLenum internalFormat, GLsizei width,
                                GLsizei height, GLsizei depth, GLint border,
-                               GLsizei imageSize)
+                               GLsizei imageSize, char **reason)
 {
    const GLenum proxyTarget = get_proxy_target(target);
    const GLint maxLevels = _mesa_max_texture_levels(ctx, target);
    GLint expectedSize;
 
+   *reason = ""; /* no error */
+
    /* check level */
-   if (level < 0 || level >= maxLevels)
+   if (level < 0 || level >= maxLevels) {
+      *reason = "level";
       return GL_INVALID_VALUE;
+   }
 
    if (!target_can_be_compressed(ctx, target, internalFormat)) {
+      *reason = "target";
       return GL_INVALID_ENUM;
    }
 
    /* This will detect any invalid internalFormat value */
-   if (!_mesa_is_compressed_format(ctx, internalFormat))
+   if (!_mesa_is_compressed_format(ctx, internalFormat)) {
+      *reason = "internalFormat";
       return GL_INVALID_ENUM;
+   }
 
    /* This should really never fail */
-   if (_mesa_base_tex_format(ctx, internalFormat) < 0)
+   if (_mesa_base_tex_format(ctx, internalFormat) < 0) {
+      *reason = "internalFormat";
       return GL_INVALID_ENUM;
+   }
 
    /* No compressed formats support borders at this time */
-   if (border != 0)
+   if (border != 0) {
+      *reason = "border != 0";
       return GL_INVALID_VALUE;
+   }
 
    /* For cube map, width must equal height */
    if (target >= GL_TEXTURE_CUBE_MAP_POSITIVE_X_ARB &&
-       target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB && width != height)
+       target <= GL_TEXTURE_CUBE_MAP_NEGATIVE_Z_ARB && width != height) {
+      *reason = "width != height";
       return GL_INVALID_VALUE;
+   }
 
    /* check image size against compression block size */
    {
@@ -3050,6 +3100,7 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
           * generated [...] if any parameter combinations are not
           * supported by the specific compressed internal format. 
           */
+         *reason = "invalid width or height for compression format";
          return GL_INVALID_OPERATION;
       }
    }
@@ -3059,6 +3110,7 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
                                       internalFormat, GL_NONE, GL_NONE,
                                       width, height, depth, border)) {
       /* See error comment above */
+      *reason = "invalid width, height or format";
       return GL_INVALID_OPERATION;
    }
 
@@ -3069,6 +3121,7 @@ compressed_texture_error_check(struct gl_context *ctx, GLint dimensions,
        * if <imageSize> is not consistent with the format, dimensions, and
        * contents of the specified image.
        */
+      *reason = "imageSize inconsistant with width/height/format";
       return GL_INVALID_VALUE;
    }
 
@@ -3223,6 +3276,7 @@ compressedteximage(struct gl_context *ctx, GLuint dims,
                    GLsizei imageSize, const GLvoid *data)
 {
    GLenum error;
+   char *reason = "";
 
    ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
 
@@ -3243,15 +3297,15 @@ compressedteximage(struct gl_context *ctx, GLuint dims,
 
    error = compressed_texture_error_check(ctx, dims, target, level,
                                           internalFormat, width, height, depth,
-                                          border, imageSize);
+                                          border, imageSize, &reason);
 
-#if FEATURE_ES
-   /* XXX this is kind of a hack */
    if (error) {
-      _mesa_error(ctx, error, "glTexImage2D");
+      _mesa_error(ctx, error, "glTexImage2D(%s)", reason);
       return;
    }
 
+#if FEATURE_ES
+   /* XXX this is kind of a hack */
    if (dims == 2) {
       switch (internalFormat) {
       case GL_PALETTE4_RGB8_OES:
@@ -3523,4 +3577,273 @@ _mesa_CompressedTexSubImage3DARB(GLenum target, GLint level, GLint xoffset,
 {
    compressed_tex_sub_image(3, target, level, xoffset, yoffset, zoffset,
                             width, height, depth, format, imageSize, data);
+}
+
+
+/**
+ * Helper for glTexBuffer().  Check if internalFormat is legal.  If so,
+ * return the basic data type and number of components for the format.
+ * \param return  GL_TRUE if internalFormat is legal, GL_FALSE otherwise
+ */
+static GLboolean
+get_sized_format_info(const struct gl_context *ctx, GLenum internalFormat,
+                      GLenum *datatype, GLuint *components)
+{
+   switch (internalFormat) {
+   case GL_ALPHA8:
+      *datatype = GL_UNSIGNED_BYTE;
+      *components = 1;
+      break;
+   case GL_ALPHA16:
+      *datatype = GL_UNSIGNED_SHORT;
+      *components = 1;
+      break;
+   case GL_ALPHA16F_ARB:
+      *datatype = GL_HALF_FLOAT;
+      *components = 1;
+      break;
+   case GL_ALPHA32F_ARB:
+      *datatype = GL_FLOAT;
+      *components = 1;
+      break;
+   case GL_ALPHA8I_EXT:
+      *datatype = GL_BYTE;
+      *components = 1;
+      break;
+   case GL_ALPHA16I_EXT:
+      *datatype = GL_SHORT;
+      *components = 1;
+      break;
+   case GL_ALPHA32I_EXT:
+      *datatype = GL_INT;
+      *components = 1;
+      break;
+   case GL_ALPHA8UI_EXT:
+      *datatype = GL_UNSIGNED_BYTE;
+      *components = 1;
+      break;
+   case GL_ALPHA16UI_EXT:
+      *datatype = GL_UNSIGNED_SHORT;
+      *components = 1;
+      break;
+   case GL_ALPHA32UI_EXT:
+      *datatype = GL_UNSIGNED_INT;
+      *components = 1;
+      break;
+   case GL_LUMINANCE8:
+      *datatype = GL_UNSIGNED_BYTE;
+      *components = 1;
+      break;
+   case GL_LUMINANCE16:
+      *datatype = GL_UNSIGNED_SHORT;
+      *components = 1;
+      break;
+   case GL_LUMINANCE16F_ARB:
+      *datatype = GL_HALF_FLOAT;
+      *components = 1;
+      break;
+   case GL_LUMINANCE32F_ARB:
+      *datatype = GL_FLOAT;
+      *components = 1;
+      break;
+   case GL_LUMINANCE8I_EXT:
+      *datatype = GL_BYTE;
+      *components = 1;
+      break;
+   case GL_LUMINANCE16I_EXT:
+      *datatype = GL_SHORT;
+      *components = 1;
+      break;
+   case GL_LUMINANCE32I_EXT:
+      *datatype = GL_INT;
+      *components = 1;
+      break;
+   case GL_LUMINANCE8UI_EXT:
+      *datatype = GL_UNSIGNED_BYTE;
+      *components = 1;
+      break;
+   case GL_LUMINANCE16UI_EXT:
+      *datatype = GL_UNSIGNED_SHORT;
+      *components = 1;
+      break;
+   case GL_LUMINANCE32UI_EXT:
+      *datatype = GL_UNSIGNED_INT;
+      *components = 1;
+      break;
+   case GL_LUMINANCE8_ALPHA8:
+      *datatype = GL_UNSIGNED_BYTE;
+      *components = 2;
+      break;
+   case GL_LUMINANCE16_ALPHA16:
+      *datatype = GL_UNSIGNED_SHORT;
+      *components = 2;
+      break;
+   case GL_LUMINANCE_ALPHA16F_ARB:
+      *datatype = GL_HALF_FLOAT;
+      *components = 2;
+      break;
+   case GL_LUMINANCE_ALPHA32F_ARB:
+      *datatype = GL_FLOAT;
+      *components = 2;
+      break;
+   case GL_LUMINANCE_ALPHA8I_EXT:
+      *datatype = GL_BYTE;
+      *components = 2;
+      break;
+   case GL_LUMINANCE_ALPHA16I_EXT:
+      *datatype = GL_SHORT;
+      *components = 2;
+      break;
+   case GL_LUMINANCE_ALPHA32I_EXT:
+      *datatype = GL_INT;
+      *components = 2;
+      break;
+   case GL_LUMINANCE_ALPHA8UI_EXT:
+      *datatype = GL_UNSIGNED_BYTE;
+      *components = 2;
+      break;
+   case GL_LUMINANCE_ALPHA16UI_EXT:
+      *datatype = GL_UNSIGNED_SHORT;
+      *components = 2;
+      break;
+   case GL_LUMINANCE_ALPHA32UI_EXT:
+      *datatype = GL_UNSIGNED_INT;
+      *components = 2;
+      break;
+   case GL_INTENSITY8:
+      *datatype = GL_UNSIGNED_BYTE;
+      *components = 1;
+      break;
+   case GL_INTENSITY16:
+      *datatype = GL_UNSIGNED_SHORT;
+      *components = 1;
+      break;
+   case GL_INTENSITY16F_ARB:
+      *datatype = GL_HALF_FLOAT;
+      *components = 1;
+      break;
+   case GL_INTENSITY32F_ARB:
+      *datatype = GL_FLOAT;
+      *components = 1;
+      break;
+   case GL_INTENSITY8I_EXT:
+      *datatype = GL_BYTE;
+      *components = 1;
+      break;
+   case GL_INTENSITY16I_EXT:
+      *datatype = GL_SHORT;
+      *components = 1;
+      break;
+   case GL_INTENSITY32I_EXT:
+      *datatype = GL_INT;
+      *components = 1;
+      break;
+   case GL_INTENSITY8UI_EXT:
+      *datatype = GL_UNSIGNED_BYTE;
+      *components = 1;
+      break;
+   case GL_INTENSITY16UI_EXT:
+      *datatype = GL_UNSIGNED_SHORT;
+      *components = 1;
+      break;
+   case GL_INTENSITY32UI_EXT:
+      *datatype = GL_UNSIGNED_INT;
+      *components = 1;
+      break;
+   case GL_RGBA8:
+      *datatype = GL_UNSIGNED_BYTE;
+      *components = 4;
+      break;
+   case GL_RGBA16:
+      *datatype = GL_UNSIGNED_SHORT;
+      *components = 4;
+      break;
+   case GL_RGBA16F_ARB:
+      *datatype = GL_HALF_FLOAT;
+      *components = 4;
+      break;
+   case GL_RGBA32F_ARB:
+      *datatype = GL_FLOAT;
+      *components = 4;
+      break;
+   case GL_RGBA8I_EXT:
+      *datatype = GL_BYTE;
+      *components = 4;
+      break;
+   case GL_RGBA16I_EXT:
+      *datatype = GL_SHORT;
+      *components = 4;
+      break;
+   case GL_RGBA32I_EXT:
+      *datatype = GL_INT;
+      *components = 4;
+      break;
+   case GL_RGBA8UI_EXT:
+      *datatype = GL_UNSIGNED_BYTE;
+      *components = 4;
+      break;
+   case GL_RGBA16UI_EXT:
+      *datatype = GL_UNSIGNED_SHORT;
+      *components = 4;
+      break;
+   case GL_RGBA32UI_EXT:
+      *datatype = GL_UNSIGNED_INT;
+      *components = 4;
+      break;
+   default:
+      return GL_FALSE;
+   }
+
+   if (*datatype == GL_FLOAT && !ctx->Extensions.ARB_texture_float)
+      return GL_FALSE;
+
+   if (*datatype == GL_HALF_FLOAT && !ctx->Extensions.ARB_half_float_pixel)
+      return GL_FALSE;
+
+   return GL_TRUE;
+}
+
+
+/** GL_ARB_texture_buffer_object */
+void GLAPIENTRY
+_mesa_TexBuffer(GLenum target, GLenum internalFormat, GLuint buffer)
+{
+   struct gl_texture_object *texObj;
+   struct gl_buffer_object *bufObj;
+   GLenum dataType;
+   GLuint comps;
+
+   GET_CURRENT_CONTEXT(ctx);
+   ASSERT_OUTSIDE_BEGIN_END_AND_FLUSH(ctx);
+
+   if (!ctx->Extensions.ARB_texture_buffer_object) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glTexBuffer");
+      return;
+   }
+
+   if (target != GL_TEXTURE_BUFFER_ARB) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glTexBuffer(target)");
+      return;
+   }
+
+   if (!get_sized_format_info(ctx, internalFormat, &dataType, &comps)) {
+      _mesa_error(ctx, GL_INVALID_ENUM, "glTexBuffer(internalFormat 0x%x)",
+                  internalFormat);
+      return;
+   }
+
+   bufObj = _mesa_lookup_bufferobj(ctx, buffer);
+   if (buffer && !bufObj) {
+      _mesa_error(ctx, GL_INVALID_OPERATION, "glTexBuffer(buffer %u)", buffer);
+      return;
+   }
+
+   texObj = _mesa_get_current_tex_object(ctx, target);
+
+   _mesa_lock_texture(ctx, texObj);
+   {
+      _mesa_reference_buffer_object(ctx, &texObj->BufferObject, bufObj);
+      texObj->BufferObjectFormat = internalFormat;
+   }
+   _mesa_unlock_texture(ctx, texObj);
 }

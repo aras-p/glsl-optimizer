@@ -20,6 +20,7 @@
  * SOFTWARE.
  */
 
+#include "util/u_format.h"
 #include "util/u_format_s3tc.h"
 #include "pipe/p_screen.h"
 
@@ -39,17 +40,8 @@ nvc0_screen_is_format_supported(struct pipe_screen *pscreen,
    if (sample_count > 1)
       return FALSE;
 
-   if (!util_format_s3tc_enabled) {
-      switch (format) {
-      case PIPE_FORMAT_DXT1_RGB:
-      case PIPE_FORMAT_DXT1_RGBA:
-      case PIPE_FORMAT_DXT3_RGBA:
-      case PIPE_FORMAT_DXT5_RGBA:
-         return FALSE;
-      default:
-         break;
-      }
-   }
+   if (!util_format_is_supported(format, bindings))
+      return FALSE;
 
    /* transfers & shared are always supported */
    bindings &= ~(PIPE_BIND_TRANSFER_READ |
@@ -93,6 +85,8 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
       return 1;
    case PIPE_CAP_MAX_RENDER_TARGETS:
       return 8;
+   case PIPE_CAP_FRAGMENT_COLOR_CLAMP_CONTROL:
+      return 1;
    case PIPE_CAP_TIMER_QUERY:
    case PIPE_CAP_OCCLUSION_QUERY:
       return 1;
@@ -113,6 +107,7 @@ nvc0_screen_get_param(struct pipe_screen *pscreen, enum pipe_cap param)
    case PIPE_CAP_PRIMITIVE_RESTART:
    case PIPE_CAP_TGSI_INSTANCEID:
    case PIPE_CAP_VERTEX_ELEMENT_INSTANCE_DIVISOR:
+   case PIPE_CAP_MIXED_COLORBUFFER_FORMATS:
       return 1;
    default:
       NOUVEAU_ERR("unknown PIPE_CAP %d\n", param);
@@ -291,8 +286,6 @@ nvc0_magic_3d_init(struct nouveau_channel *chan)
    OUT_RING  (chan, 1 << 12);
    BEGIN_RING(chan, RING_3D_(0x151c), 1);
    OUT_RING  (chan, 1);
-   BEGIN_RING(chan, RING_3D_(0x020c), 1);
-   OUT_RING  (chan, 1);
    BEGIN_RING(chan, RING_3D_(0x030c), 1);
    OUT_RING  (chan, 0);
    BEGIN_RING(chan, RING_3D_(0x0300), 1);
@@ -309,11 +302,6 @@ nvc0_magic_3d_init(struct nouveau_channel *chan)
    OUT_RING  (chan, 1);
    BEGIN_RING(chan, RING_3D_(0x075c), 1);
    OUT_RING  (chan, 3);
-
-   BEGIN_RING(chan, RING_3D_(0x0fac), 1);
-   OUT_RING  (chan, 0);
-   BEGIN_RING(chan, RING_3D_(0x0f90), 1);
-   OUT_RING  (chan, 0);
 }
 
 static void
@@ -445,6 +433,14 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    OUT_RING  (chan, NVC0_3D_MULTISAMPLE_MODE_1X);
    BEGIN_RING(chan, RING_3D(MULTISAMPLE_CTRL), 1);
    OUT_RING  (chan, 0);
+   BEGIN_RING(chan, RING_3D(LINE_WIDTH_SEPARATE), 1);
+   OUT_RING  (chan, 1);
+   BEGIN_RING(chan, RING_3D(LINE_LAST_PIXEL), 1);
+   OUT_RING  (chan, 0);
+   BEGIN_RING(chan, RING_3D(BLEND_SEPARATE_ALPHA), 1);
+   OUT_RING  (chan, 1);
+   BEGIN_RING(chan, RING_3D(BLEND_ENABLE_COMMON), 1);
+   OUT_RING  (chan, 0);
 
    nvc0_magic_3d_init(chan);
 
@@ -452,7 +448,10 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    if (ret)
       goto fail;
 
-   nouveau_resource_init(&screen->text_heap, 0, 1 << 20);
+   /* XXX: getting a page fault at the end of the code buffer every few
+    *  launches, don't use the last 256 bytes to work around them - prefetch ?
+    */
+   nouveau_resource_init(&screen->text_heap, 0, (1 << 20) - 0x100);
 
    ret = nouveau_bo_new(dev, NOUVEAU_BO_VRAM, 1 << 12, 6 << 16,
                         &screen->uniforms);
@@ -557,17 +556,6 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    OUT_RING  (chan, 8192 << 16);
    OUT_RING  (chan, 8192 << 16);
 
-   BEGIN_RING(chan, RING_3D_(0x0fac), 1);
-   OUT_RING  (chan, 0);
-   BEGIN_RING(chan, RING_3D_(0x3484), 1);
-   OUT_RING  (chan, 0);
-   BEGIN_RING(chan, RING_3D_(0x0dbc), 1);
-   OUT_RING  (chan, 0x00010000);
-   BEGIN_RING(chan, RING_3D_(0x0dd8), 1);
-   OUT_RING  (chan, 0xff800006);
-   BEGIN_RING(chan, RING_3D_(0x3488), 1);
-   OUT_RING  (chan, 0);
-
 #define MK_MACRO(m, n) i = nvc0_graph_set_macro(screen, m, i, sizeof(n), n);
 
    i = 0;
@@ -577,9 +565,10 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    MK_MACRO(NVC0_3D_GP_SELECT, nvc0_9097_gp_select);
    MK_MACRO(NVC0_3D_POLYGON_MODE_FRONT, nvc0_9097_poly_mode_front);
    MK_MACRO(NVC0_3D_POLYGON_MODE_BACK, nvc0_9097_poly_mode_back);
-   MK_MACRO(NVC0_3D_COLOR_MASK_BROADCAST, nvc0_9097_color_mask_brdc);
 
    BEGIN_RING(chan, RING_3D(RASTERIZE_ENABLE), 1);
+   OUT_RING  (chan, 1);
+   BEGIN_RING(chan, RING_3D(RT_SEPARATE_FRAG_DATA), 1);
    OUT_RING  (chan, 1);
    BEGIN_RING(chan, RING_3D(GP_SELECT), 1);
    OUT_RING  (chan, 0x40);
@@ -599,8 +588,6 @@ nvc0_screen_create(struct pipe_winsys *ws, struct nouveau_device *dev)
    BEGIN_RING(chan, RING_3D(POINT_RASTER_RULES), 1);
    OUT_RING  (chan, NVC0_3D_POINT_RASTER_RULES_OGL);
 
-   BEGIN_RING(chan, RING_3D(FRAG_COLOR_CLAMP_EN), 1);
-   OUT_RING  (chan, 0x11111111);
    BEGIN_RING(chan, RING_3D(EDGEFLAG_ENABLE), 1);
    OUT_RING  (chan, 1);
 

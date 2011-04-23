@@ -95,6 +95,7 @@ vs_exec_run_linear( struct draw_vertex_shader *shader,
    struct tgsi_exec_machine *machine = evs->machine;
    unsigned int i, j;
    unsigned slot;
+   boolean clamp_vertex_color = shader->draw->rasterizer->clamp_vertex_color;
 
    tgsi_exec_set_constant_buffers(machine, PIPE_MAX_CONSTANT_BUFFERS,
                                   constants, const_size);
@@ -151,11 +152,22 @@ vs_exec_run_linear( struct draw_vertex_shader *shader,
        */
       for (j = 0; j < max_vertices; j++) {
          for (slot = 0; slot < shader->info.num_outputs; slot++) {
-            output[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
-            output[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
-            output[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
-            output[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
-
+            unsigned name = shader->info.output_semantic_name[slot];
+            if(clamp_vertex_color &&
+                  (name == TGSI_SEMANTIC_COLOR || name == TGSI_SEMANTIC_BCOLOR))
+            {
+               output[slot][0] = CLAMP(machine->Outputs[slot].xyzw[0].f[j], 0.0f, 1.0f);
+               output[slot][1] = CLAMP(machine->Outputs[slot].xyzw[1].f[j], 0.0f, 1.0f);
+               output[slot][2] = CLAMP(machine->Outputs[slot].xyzw[2].f[j], 0.0f, 1.0f);
+               output[slot][3] = CLAMP(machine->Outputs[slot].xyzw[3].f[j], 0.0f, 1.0f);
+            }
+            else
+            {
+               output[slot][0] = machine->Outputs[slot].xyzw[0].f[j];
+               output[slot][1] = machine->Outputs[slot].xyzw[1].f[j];
+               output[slot][2] = machine->Outputs[slot].xyzw[2].f[j];
+               output[slot][3] = machine->Outputs[slot].xyzw[3].f[j];
+            }
          }
 
 #if 0

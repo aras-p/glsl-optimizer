@@ -13,11 +13,16 @@ It can traces all incoming calls.
 
 For tracing then do
 
- GALLIUM_TRACE=tri.trace progs/trivial/tri
+ GALLIUM_TRACE=tri.trace trivial/tri
 
 which should create a tri.trace file, which is an XML file. You can view copying 
 trace.xsl to the same directory, and opening with a XSLT capable browser such as 
 Firefox or Internet Explorer.
+
+For long traces you can use the
+
+  src/gallium/tools/trace/dump.py tri.trace | less -R
+
 
 == Remote debugging ==
 

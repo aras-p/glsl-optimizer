@@ -179,16 +179,25 @@ the mode of the primitive and the vertices to be fetched, in the range between
 Every instance with instanceID in the range between ``start_instance`` and
 ``start_instance``+``instance_count``-1, inclusive, will be drawn.
 
-All vertex indices must fall inside the range given by ``min_index`` and
-``max_index``.  In case non-indexed draw, ``min_index`` should be set to
+If there is an index buffer bound, and ``indexed`` field is true, all vertex
+indices will be looked up in the index buffer.
+
+In indexed draw, ``min_index`` and ``max_index`` respectively provide a lower
+and upper bound of the indices contained in the index buffer inside the range
+between ``start`` to ``start``+``count``-1.  This allows the driver to
+determine which subset of vertices will be referenced during te draw call
+without having to scan the index buffer.  Providing a over-estimation of the
+the true bounds, for example, a ``min_index`` and ``max_index`` of 0 and
+0xffffffff respectively, must give exactly the same rendering, albeit with less
+performance due to unreferenced vertex buffers being unnecessarily DMA'ed or
+processed.  Providing a underestimation of the true bounds will result in
+undefined behavior, but should not result in program or system failure.
+
+In case of non-indexed draw, ``min_index`` should be set to
 ``start`` and ``max_index`` should be set to ``start``+``count``-1.
 
-``index_bias`` is a value added to every vertex index before fetching vertex
-attributes.  It does not affect ``min_index`` and ``max_index``.
-
-If there is an index buffer bound, and ``indexed`` field is true, all vertex
-indices will be looked up in the index buffer.  ``min_index``, ``max_index``,
-and ``index_bias`` apply after index lookup.
+``index_bias`` is a value added to every vertex index after lookup and before
+fetching vertex attributes.
 
 When drawing indexed primitives, the primitive restart index can be
 used to draw disjoint primitive strips.  For example, several separate

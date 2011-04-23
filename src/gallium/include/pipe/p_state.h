@@ -81,6 +81,8 @@ struct pipe_rasterizer_state
 {
    unsigned flatshade:1;
    unsigned light_twoside:1;
+   unsigned clamp_vertex_color:1;
+   unsigned clamp_fragment_color:1;
    unsigned front_ccw:1;
    unsigned cull_face:2;      /**< PIPE_FACE_x */
    unsigned fill_front:2;     /**< PIPE_POLYGON_MODE_x */

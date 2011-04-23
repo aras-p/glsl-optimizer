@@ -22,9 +22,7 @@
  * USE OR OTHER DEALINGS IN THE SOFTWARE. */
 
 #include "r300_texture_desc.h"
-
 #include "r300_context.h"
-#include "r300_winsys.h"
 
 #include "util/u_format.h"
 
@@ -32,8 +30,8 @@
  * in the given dimension. */
 unsigned r300_get_pixel_alignment(enum pipe_format format,
                                   unsigned num_samples,
-                                  enum r300_buffer_tiling microtile,
-                                  enum r300_buffer_tiling macrotile,
+                                  enum radeon_bo_layout microtile,
+                                  enum radeon_bo_layout macrotile,
                                   enum r300_dim dim, boolean is_rs690)
 {
     static const unsigned table[2][5][3][2] =
@@ -62,8 +60,8 @@ unsigned r300_get_pixel_alignment(enum pipe_format format,
     unsigned tile = 0;
     unsigned pixsize = util_format_get_blocksize(format);
 
-    assert(macrotile <= R300_BUFFER_TILED);
-    assert(microtile <= R300_BUFFER_SQUARETILED);
+    assert(macrotile <= RADEON_LAYOUT_TILED);
+    assert(microtile <= RADEON_LAYOUT_SQUARETILED);
     assert(pixsize <= 16);
     assert(dim <= DIM_HEIGHT);
 
@@ -98,7 +96,7 @@ static boolean r300_texture_macro_switch(struct r300_resource *tex,
     unsigned tile, texdim;
 
     tile = r300_get_pixel_alignment(tex->b.b.b.format, tex->b.b.b.nr_samples,
-                                    tex->tex.microtile, R300_BUFFER_TILED, dim, 0);
+                                    tex->tex.microtile, RADEON_LAYOUT_TILED, dim, 0);
     if (dim == DIM_WIDTH) {
         texdim = u_minify(tex->tex.width0, level);
     } else {
@@ -233,10 +231,10 @@ static void r300_setup_miptree(struct r300_screen *screen,
     for (i = 0; i <= base->last_level; i++) {
         /* Let's see if this miplevel can be macrotiled. */
         tex->tex.macrotile[i] =
-            (tex->tex.macrotile[0] == R300_BUFFER_TILED &&
+            (tex->tex.macrotile[0] == RADEON_LAYOUT_TILED &&
              r300_texture_macro_switch(tex, i, rv350_mode, DIM_WIDTH) &&
              r300_texture_macro_switch(tex, i, rv350_mode, DIM_HEIGHT)) ?
-             R300_BUFFER_TILED : R300_BUFFER_LINEAR;
+             RADEON_LAYOUT_TILED : RADEON_LAYOUT_LINEAR;
 
         stride = r300_texture_get_stride(screen, tex, i);
 
@@ -424,8 +422,8 @@ static void r300_setup_tiling(struct r300_screen *screen,
     boolean is_zb = util_format_is_depth_or_stencil(format);
     boolean dbg_no_tiling = SCREEN_DBG_ON(screen, DBG_NO_TILING);
 
-    tex->tex.microtile = R300_BUFFER_LINEAR;
-    tex->tex.macrotile[0] = R300_BUFFER_LINEAR;
+    tex->tex.microtile = RADEON_LAYOUT_LINEAR;
+    tex->tex.macrotile[0] = RADEON_LAYOUT_LINEAR;
 
     if (!util_format_is_plain(format)) {
         return;
@@ -441,11 +439,11 @@ static void r300_setup_tiling(struct r300_screen *screen,
         case 1:
         case 4:
         case 8:
-            tex->tex.microtile = R300_BUFFER_TILED;
+            tex->tex.microtile = RADEON_LAYOUT_TILED;
             break;
 
         case 2:
-            tex->tex.microtile = R300_BUFFER_SQUARETILED;
+            tex->tex.microtile = RADEON_LAYOUT_SQUARETILED;
             break;
     }
 
@@ -456,7 +454,7 @@ static void r300_setup_tiling(struct r300_screen *screen,
     /* Set macrotiling. */
     if (r300_texture_macro_switch(tex, 0, rv350_mode, DIM_WIDTH) &&
         r300_texture_macro_switch(tex, 0, rv350_mode, DIM_HEIGHT)) {
-        tex->tex.macrotile[0] = R300_BUFFER_TILED;
+        tex->tex.macrotile[0] = RADEON_LAYOUT_TILED;
     }
 }
 
@@ -501,7 +499,7 @@ boolean r300_texture_desc_init(struct r300_screen *rscreen,
     }
 
     /* Setup tiling. */
-    if (tex->tex.microtile == R300_BUFFER_SELECT_LAYOUT) {
+    if (tex->tex.microtile == RADEON_LAYOUT_UNKNOWN) {
         r300_setup_tiling(rscreen, tex);
     }
 

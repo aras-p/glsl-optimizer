@@ -161,16 +161,19 @@ static void *r600_create_blend_state(struct pipe_context *ctx,
 				color_control, 0xFFFFFFFD, NULL);
 
 	for (int i = 0; i < 8; i++) {
-		unsigned eqRGB = state->rt[i].rgb_func;
-		unsigned srcRGB = state->rt[i].rgb_src_factor;
-		unsigned dstRGB = state->rt[i].rgb_dst_factor;
+		/* state->rt entries > 0 only written if independent blending */
+		const int j = state->independent_blend_enable ? i : 0;
 
-		unsigned eqA = state->rt[i].alpha_func;
-		unsigned srcA = state->rt[i].alpha_src_factor;
-		unsigned dstA = state->rt[i].alpha_dst_factor;
+		unsigned eqRGB = state->rt[j].rgb_func;
+		unsigned srcRGB = state->rt[j].rgb_src_factor;
+		unsigned dstRGB = state->rt[j].rgb_dst_factor;
+
+		unsigned eqA = state->rt[j].alpha_func;
+		unsigned srcA = state->rt[j].alpha_src_factor;
+		unsigned dstA = state->rt[j].alpha_dst_factor;
 		uint32_t bc = 0;
 
-		if (!state->rt[i].blend_enable)
+		if (!state->rt[j].blend_enable)
 			continue;
 
 		bc |= S_028804_COLOR_COMB_FCN(r600_translate_blend_function(eqRGB));
@@ -410,7 +413,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	const struct util_format_description *desc;
 	struct r600_resource_texture *tmp;
 	struct r600_resource *rbuffer;
-	unsigned format;
+	unsigned format, endian;
 	uint32_t word4 = 0, yuv_format = 0, pitch = 0;
 	unsigned char swizzle[4], array_mode = 0, tile_type = 0;
 	struct r600_bo *bo[2];
@@ -447,6 +450,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 	        r600_texture_depth_flush(ctx, texture, TRUE);
 		tmp = tmp->flushed_depth_texture;
 	}
+	endian = r600_colorformat_endian_swap(format);
 
 	if (tmp->force_int_type) {
 		word4 &= C_038010_NUM_FORMAT_ALL;
@@ -487,6 +491,7 @@ static struct pipe_sampler_view *r600_create_sampler_view(struct pipe_context *c
 				word4 |
 				S_038010_SRF_MODE_ALL(V_038010_SRF_MODE_NO_ZERO) |
 				S_038010_REQUEST_SIZE(1) |
+				S_038010_ENDIAN_SWAP(endian) |
 				S_038010_BASE_LEVEL(state->u.tex.first_level), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038014_RESOURCE0_WORD5,
 				S_038014_LAST_LEVEL(state->u.tex.last_level) |
@@ -715,7 +720,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 	unsigned level = state->cbufs[cb]->u.tex.level;
 	unsigned pitch, slice;
 	unsigned color_info;
-	unsigned format, swap, ntype;
+	unsigned format, swap, ntype, endian;
 	unsigned offset;
 	const struct util_format_description *desc;
 	struct r600_bo *bo[3];
@@ -739,40 +744,37 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 					 level, state->cbufs[cb]->u.tex.first_layer);
 	pitch = rtex->pitch_in_blocks[level] / 8 - 1;
 	slice = rtex->pitch_in_blocks[level] * surf->aligned_height / 64 - 1;
-	ntype = 0;
 	desc = util_format_description(surf->base.format);
-	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
-		ntype = V_0280A0_NUMBER_SRGB;
-        else if (desc->layout == UTIL_FORMAT_LAYOUT_PLAIN) {
-		switch(desc->channel[0].type) {
-		case UTIL_FORMAT_TYPE_UNSIGNED:
-			ntype = V_0280A0_NUMBER_UNORM;
-			break;
-
-		case UTIL_FORMAT_TYPE_SIGNED:
-			ntype = V_0280A0_NUMBER_SNORM;
-			break;
-		}
-	}
 
 	for (i = 0; i < 4; i++) {
 		if (desc->channel[i].type != UTIL_FORMAT_TYPE_VOID) {
 			break;
 		}
 	}
+	ntype = V_0280A0_NUMBER_UNORM;
+	if (desc->colorspace == UTIL_FORMAT_COLORSPACE_SRGB)
+		ntype = V_0280A0_NUMBER_SRGB;
+	else if (desc->channel[i].type == UTIL_FORMAT_TYPE_SIGNED)
+		ntype = V_0280A0_NUMBER_SNORM;
 
 	format = r600_translate_colorformat(surf->base.format);
 	swap = r600_translate_colorswap(surf->base.format);
+	if(rbuffer->b.b.b.usage == PIPE_USAGE_STAGING) {
+		endian = ENDIAN_NONE;
+	} else {
+		endian = r600_colorformat_endian_swap(format);
+	}
 
 	/* disable when gallium grows int textures */
 	if ((format == FMT_32_32_32_32 || format == FMT_16_16_16_16) && rtex->force_int_type)
-		ntype = 4;
+		ntype = V_0280A0_NUMBER_UINT;
 
 	color_info = S_0280A0_FORMAT(format) |
 		S_0280A0_COMP_SWAP(swap) |
 		S_0280A0_ARRAY_MODE(rtex->array_mode[level]) |
 		S_0280A0_BLEND_CLAMP(1) |
-		S_0280A0_NUMBER_TYPE(ntype);
+		S_0280A0_NUMBER_TYPE(ntype) |
+		S_0280A0_ENDIAN(endian);
 
 	/* on R600 this can't be set if BLEND_CLAMP isn't set,
 	   if BLEND_FLOAT32 is set of > 11 bits in a UNORM or SNORM */
@@ -855,6 +857,9 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	if (rstate == NULL)
 		return;
 
+	r600_context_flush_dest_caches(&rctx->ctx);
+	rctx->ctx.num_dest_buffers = state->nr_cbufs;
+
 	/* unreference old buffer and reference new one */
 	rstate->id = R600_PIPE_STATE_FRAMEBUFFER;
 
@@ -866,6 +871,7 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	}
 	if (state->zsbuf) {
 		r600_db(rctx, rstate, state);
+		rctx->ctx.num_dest_buffers++;
 	}
 
 	target_mask = 0x00000000;
@@ -945,6 +951,17 @@ static void r600_set_framebuffer_state(struct pipe_context *ctx,
 	}
 }
 
+static void r600_texture_barrier(struct pipe_context *ctx)
+{
+	struct r600_pipe_context *rctx = (struct r600_pipe_context *)ctx;
+
+	r600_context_flush_all(&rctx->ctx, S_0085F0_TC_ACTION_ENA(1) | S_0085F0_CB_ACTION_ENA(1) |
+			S_0085F0_CB0_DEST_BASE_ENA(1) | S_0085F0_CB1_DEST_BASE_ENA(1) |
+			S_0085F0_CB2_DEST_BASE_ENA(1) | S_0085F0_CB3_DEST_BASE_ENA(1) |
+			S_0085F0_CB4_DEST_BASE_ENA(1) | S_0085F0_CB5_DEST_BASE_ENA(1) |
+			S_0085F0_CB6_DEST_BASE_ENA(1) | S_0085F0_CB7_DEST_BASE_ENA(1));
+}
+
 void r600_init_state_functions(struct r600_pipe_context *rctx)
 {
 	rctx->context.create_blend_state = r600_create_blend_state;
@@ -985,6 +1002,7 @@ void r600_init_state_functions(struct r600_pipe_context *rctx)
 	rctx->context.set_viewport_state = r600_set_viewport_state;
 	rctx->context.sampler_view_destroy = r600_sampler_view_destroy;
 	rctx->context.redefine_user_buffer = u_default_redefine_user_buffer;
+	rctx->context.texture_barrier = r600_texture_barrier;
 }
 
 void r600_init_config(struct r600_pipe_context *rctx)
@@ -1443,8 +1461,10 @@ void r600_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
 	r600_pipe_state_add_reg(rstate, R_038004_RESOURCE0_WORD1,
 				rbuffer->bo_size - offset - 1, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038008_RESOURCE0_WORD2,
-				S_038008_STRIDE(stride),
-				0xFFFFFFFF, NULL);
+#ifdef PIPE_ARCH_BIG_ENDIAN
+				S_038008_ENDIAN_SWAP(ENDIAN_8IN32) |
+#endif
+				S_038008_STRIDE(stride), 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_03800C_RESOURCE0_WORD3,
 				0x00000000, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate, R_038010_RESOURCE0_WORD4,

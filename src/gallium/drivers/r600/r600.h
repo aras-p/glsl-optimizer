@@ -179,11 +179,13 @@ struct r600_block_reloc {
 struct r600_block {
 	struct list_head	list;
 	unsigned		status;
+	unsigned                flags;
 	unsigned		start_offset;
 	unsigned		pm4_ndwords;
 	unsigned		pm4_flush_ndwords;
 	unsigned		nbo;
-	unsigned		nreg;
+	u16 		        nreg;
+	u16                     nreg_dirty;
 	u32			*reg;
 	u32			pm4[R600_BLOCK_MAX_REG];
 	unsigned		pm4_bo_index[R600_BLOCK_MAX_REG];
@@ -231,6 +233,8 @@ struct r600_query {
 #define R600_QUERY_STATE_ENDED		(1 << 1)
 #define R600_QUERY_STATE_SUSPENDED	(1 << 2)
 
+#define R600_CONTEXT_DRAW_PENDING	(1 << 0)
+#define R600_CONTEXT_DST_CACHES_DIRTY	(1 << 1)
 
 struct r600_context {
 	struct radeon		*radeon;
@@ -253,6 +257,8 @@ struct r600_context {
 	unsigned		num_query_running;
 	struct list_head	fenced_bo;
 	unsigned                max_db; /* for OQ */
+	unsigned                num_dest_buffers;
+	unsigned		flags;
 	boolean                 predicate_drawing;
 };
 
@@ -288,9 +294,14 @@ void r600_context_queries_suspend(struct r600_context *ctx);
 void r600_context_queries_resume(struct r600_context *ctx);
 void r600_query_predication(struct r600_context *ctx, struct r600_query *query, int operation,
 			    int flag_wait);
+void r600_context_emit_fence(struct r600_context *ctx, struct r600_bo *fence,
+                             unsigned offset, unsigned value);
+void r600_context_flush_all(struct r600_context *ctx, unsigned flush_flags);
+void r600_context_flush_dest_caches(struct r600_context *ctx);
 
 int evergreen_context_init(struct r600_context *ctx, struct radeon *radeon);
 void evergreen_context_draw(struct r600_context *ctx, const struct r600_draw *draw);
+void evergreen_context_flush_dest_caches(struct r600_context *ctx);
 void evergreen_context_pipe_state_set_ps_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid);
 void evergreen_context_pipe_state_set_vs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid);
 void evergreen_context_pipe_state_set_fs_resource(struct r600_context *ctx, struct r600_pipe_state *state, unsigned rid);

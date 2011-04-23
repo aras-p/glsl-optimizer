@@ -1,4 +1,7 @@
 #include <stdio.h>
+#include <sys/ioctl.h>
+
+#include "i915_drm.h"
 
 #include "state_tracker/drm_driver.h"
 
@@ -13,26 +16,16 @@
 
 
 static void
-i915_drm_get_device_id(unsigned int *device_id)
+i915_drm_get_device_id(int fd, unsigned int *device_id)
 {
-   char path[512];
-   FILE *file;
-   void *shutup_gcc;
+   int ret;
+   struct drm_i915_getparam gp;
 
-   /*
-    * FIXME: Fix this up to use a drm ioctl or whatever.
-    */
+   gp.param = I915_PARAM_CHIPSET_ID;
+   gp.value = (int *)device_id;
 
-   snprintf(path, sizeof(path), "/sys/class/drm/card0/device/device");
-   file = fopen(path, "r");
-   if (!file) {
-      return;
-   }
-
-   shutup_gcc = fgets(path, sizeof(path), file);
-   (void) shutup_gcc;
-   sscanf(path, "%x", device_id);
-   fclose(file);
+   ret = ioctl(fd, DRM_IOCTL_I915_GETPARAM, &gp, sizeof(gp));
+   assert(ret == 0);
 }
 
 static void
@@ -55,7 +48,7 @@ i915_drm_winsys_create(int drmFD)
    if (!idws)
       return NULL;
 
-   i915_drm_get_device_id(&deviceID);
+   i915_drm_get_device_id(drmFD, &deviceID);
 
    i915_drm_winsys_init_batchbuffer_functions(idws);
    i915_drm_winsys_init_buffer_functions(idws);

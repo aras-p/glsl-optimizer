@@ -12,16 +12,16 @@
 <ol>
 <li><a href="#unix-x11">Unix / X11</a>
   <ul>
-  <li><a href="#prereq">Prerequisites for DRI and hardware acceleration</a>
+  <li><a href="#prereq-general">General prerequisites for building</a>
+  <li><a href="#prereq-dri">Prerequisites for DRI and hardware acceleration</a>
   <li><a href="#autoconf">Building with autoconf</a>
   <li><a href="#traditional">Building with traditional Makefiles</a>
   <li><a href="#libs">The Libraries</a>
-  <li><a href="#demos">Running the demos
   <li><a href="#install">Installing the header and library files
   <li><a href="#pkg-config">Building OpenGL programs with pkg-config
   </ul>
 <li><a href="#windows">Windows</a>
-<li><a href="#scons">SCons</a>
+<li><a href="#scons">Building with SCons</a>
 <li><a href="#other">Other</a>
 </ol>
 <br>
@@ -31,8 +31,22 @@
 <H2>1. Unix/X11 Compilation and Installation</H1>
 
 
-<a name="prereq">
-<h3>1.1 Prerequisites for DRI and hardware acceleration</h3>
+<a name="prereq-general">
+<h3>1.1 General prerequisites for building</h3>
+
+<ul>
+<li>lex / yacc - for building the GLSL compiler.
+On Linux systems, flex and bison are used.
+Versions 2.5.35 and 2.4.1, respectively, (or later) should work.
+</li>
+<li>python - Python is needed for building the Gallium components.
+Version 2.6.4 or later should work.
+</li>
+</ul>
+
+
+<a name="prereq-dri">
+<h3>1.2 Prerequisites for DRI and hardware acceleration</h3>
 
 <p>
 The following are required for DRI-based hardware acceleration with Mesa:
@@ -49,7 +63,7 @@ version 2.4.15 or later
 
 
 <a name="autoconf">
-<h3>1.2 Building with Autoconf</h3>
+<h3>1.3 Building with Autoconf</h3>
 
 <p>
 Mesa may be <a href="autoconf.html">built using autoconf</a>.
@@ -59,7 +73,7 @@ If that fails the traditional Mesa build system is available.
 
 
 <a name="traditional">
-<h3>1.3 Building with traditional Makefiles</h3>
+<h3>1.4 Building with traditional Makefiles</h3>
 
 <p>
 The traditional Mesa build system is based on a collection of pre-defined
@@ -126,7 +140,7 @@ Later, if you want to rebuild for a different configuration run
 
 
 <a name="libs">
-<h3>1.4 The libraries</h3>
+<h3>1.5 The libraries</h3>
 
 <p>
 When compilation has finished, look in the top-level <code>lib/</code>
@@ -185,81 +199,11 @@ If you built the DRI hardware drivers, you'll also see the DRI drivers:
 -rwxr-xr-x   1 brian users 10997120 Jul 21 12:13 unichrome_dri.so
 </pre>
 
-
-<a name="demos">
-<h3>1.5 Running the demos</h3>
-
 <p>
-If you downloaded/unpacked the MesaDemos-x.y.z.tar.gz archive or
-obtained Mesa from CVS, the <b>progs/</b> directory will contain a
-bunch of demonstration programs.
+If you built with Gallium support, look in lib/gallium/ for Gallium-based
+versions of libGL and device drivers.
 </p>
 
-<p>
-Before running a demo, you'll probably have to set two environment variables
-to indicate where the libraries are located.  For example:
-<p>
-<blockquote>
-<b>cd lib/</b>
-<br>
-<b>export LD_LIBRARY_PATH=${PWD}</b>
-<br>
-<b>export LIBGL_DRIVERS_PATH=${PWD}</b> (if using DRI drivers)
-</blockquote>
-
-<p>
-Next, change to the Mesa/demos/ directory:
-</p>
-<blockquote>
-<b>cd ../progs/demos</b>
-</blockquote>
-
-<p>
-Run a demo such as gears:
-</p>
-<blockquote>
-<b>./gears</b>
-</blockquote>
-
-<p>
-If this doesn't work, try the <b>Mesa/progs/xdemos/glxinfo</b> program
-and see that it prints the expected Mesa version number.
-</p>
-
-<p>
-If you're using Linux or a similar OS, verify that the demo program is
-being linked with the proper library files:
-</p>
-<blockquote>
-<b>ldd gears</b>
-</blockquote>
-
-<p>
-You should see something like this:
-</p>
-<pre>
-        libglut.so.3 => /home/brian/Mesa/lib/libglut.so.3 (0x40013000)
-        libGLU.so.1 => /home/brian/Mesa/lib/libGLU.so.1 (0x40051000)
-        libGL.so.1 => /home/brian/Mesa/lib/libGL.so.1 (0x400e0000)
-        libc.so.6 => /lib/i686/libc.so.6 (0x42000000)
-        libm.so.6 => /lib/i686/libm.so.6 (0x403da000)
-        libX11.so.6 => /usr/X11R6/lib/libX11.so.6 (0x403fc000)
-        libXmu.so.6 => /usr/X11R6/lib/libXmu.so.6 (0x404da000)
-        libXt.so.6 => /usr/X11R6/lib/libXt.so.6 (0x404f1000)
-        libXi.so.6 => /usr/X11R6/lib/libXi.so.6 (0x40543000)
-        libstdc++.so.5 => /usr/lib/libstdc++.so.5 (0x4054b000)
-        libgcc_s.so.1 => /lib/libgcc_s.so.1 (0x405fd000)
-        libXext.so.6 => /usr/X11R6/lib/libXext.so.6 (0x40605000)
-        libpthread.so.0 => /lib/i686/libpthread.so.0 (0x40613000)
-        /lib/ld-linux.so.2 => /lib/ld-linux.so.2 (0x40000000)
-        libdl.so.2 => /lib/libdl.so.2 (0x40644000)
-        libSM.so.6 => /usr/X11R6/lib/libSM.so.6 (0x40647000)
-        libICE.so.6 => /usr/X11R6/lib/libICE.so.6 (0x40650000)
-</pre>
-
-<p>
-Retrace your steps if this doesn't look right.
-</p>
 
 
 <a name="install">

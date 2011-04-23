@@ -1,7 +1,6 @@
 #ifndef __NV50_CONTEXT_H__
 #define __NV50_CONTEXT_H__
 
-#include <stdio.h>
 #include "pipe/p_context.h"
 #include "pipe/p_defines.h"
 #include "pipe/p_state.h"
@@ -13,6 +12,7 @@
 
 #include "draw/draw_vertex.h"
 
+#include "nv50_debug.h"
 #include "nv50_winsys.h"
 #include "nv50_stateobj.h"
 #include "nv50_screen.h"
@@ -25,15 +25,6 @@
 #include "nv50_3ddefs.xml.h"
 #include "nv50_3d.xml.h"
 #include "nv50_2d.xml.h"
-
-#define NOUVEAU_ERR(fmt, args...) \
-   fprintf(stderr, "%s:%d -  "fmt, __FUNCTION__, __LINE__, ##args);
-
-#ifdef NOUVEAU_DEBUG
-# define NOUVEAU_DBG(args...) printf(args);
-#else
-# define NOUVEAU_DBG(args...)
-#endif
 
 #define NV50_NEW_BLEND        (1 << 0)
 #define NV50_NEW_RASTERIZER   (1 << 1)
@@ -80,6 +71,8 @@ struct nv50_context {
       uint32_t instance_elts; /* bitmask of per-instance elements */
       uint32_t instance_base;
       uint32_t interpolant_ctrl;
+      uint32_t semantic_color;
+      uint32_t semantic_psize;
       int32_t index_bias;
       boolean prim_restart;
       boolean point_sprite;
@@ -183,7 +176,7 @@ void nv50_fragprog_validate(struct nv50_context *);
 void nv50_fp_linkage_validate(struct nv50_context *);
 void nv50_gp_linkage_validate(struct nv50_context *);
 void nv50_constbufs_validate(struct nv50_context *);
-void nv50_sprite_coords_validate(struct nv50_context *);
+void nv50_validate_derived_rs(struct nv50_context *);
 
 /* nv50_state.c */
 extern void nv50_init_state_functions(struct nv50_context *);

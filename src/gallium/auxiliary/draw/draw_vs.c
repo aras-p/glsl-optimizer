@@ -104,10 +104,17 @@ draw_create_vertex_shader(struct draw_context *draw,
    }
 
    if (!draw->pt.middle.llvm) {
+#if 0
+/* these paths don't support vertex clamping
+ * TODO: either add it, or remove them completely
+ * use LLVM instead if you want performance
+ * use exec instead if you want debugging/more correctness
+ */
 #if defined(PIPE_ARCH_X86)
       vs = draw_create_vs_sse( draw, shader );
 #elif defined(PIPE_ARCH_PPC)
       vs = draw_create_vs_ppc( draw, shader );
+#endif
 #endif
    }
 #if HAVE_LLVM

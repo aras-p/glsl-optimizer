@@ -93,7 +93,9 @@ struct index_cache {
    struct pipe_resource *buffer;
 };
 
-#define QSZ 32
+
+/** Max number of primitives per draw call */
+#define QSZ SVGA3D_MAX_DRAW_PRIMITIVE_RANGES
 
 struct draw_cmd {
    struct svga_winsys_context *swc;

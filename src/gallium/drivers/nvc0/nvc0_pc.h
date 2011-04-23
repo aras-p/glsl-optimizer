@@ -23,20 +23,7 @@
 #ifndef __NVC0_COMPILER_H__
 #define __NVC0_COMPILER_H__
 
-#include <stdio.h>
-
-#ifndef NOUVEAU_DBG
-#ifdef NOUVEAU_DEBUG
-# define NOUVEAU_DBG(args...) debug_printf(args);
-#else
-# define NOUVEAU_DBG(args...)
-#endif
-#endif
-
-#ifndef NOUVEAU_ERR
-#define NOUVEAU_ERR(fmt, args...) \
-   fprintf(stderr, "%s:%d -  "fmt, __FUNCTION__, __LINE__, ##args);
-#endif
+#include "nv50/nv50_debug.h"
 
 #include "pipe/p_defines.h"
 #include "util/u_inlines.h"

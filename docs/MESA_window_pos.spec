@@ -88,7 +88,7 @@ Additions to Chapter 2 of the OpenGL 1.2 Specification (OpenGL Operation)
       WindosPos4MESA takes four values indicating x, y, z, and w.
       WindowPos3MESA (or WindowPos2MESA) is analaguos, but sets only
       x, y, and z with w implicitly set to 1 (or only x and y with z
-      implicititly set to 0 and w implicitly set to 1).
+      implicitly set to 0 and w implicitly set to 1).
 
       WindowPosMESA operates like RasterPos except that the current modelview
       matrix, projection matrix and viewport parameters are ignored and the
@@ -108,7 +108,7 @@ GLX Protocol
 
 Errors
 
-    INVALID_OPERATION is generated if WindowPosMESA is called betweeen
+    INVALID_OPERATION is generated if WindowPosMESA is called between
     Begin and End.
 
 New State

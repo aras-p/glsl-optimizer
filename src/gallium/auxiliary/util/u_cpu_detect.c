@@ -270,13 +270,15 @@ util_cpu_detect(void)
              util_cpu_caps.x86_cpu_type = 8 + ((regs2[0] >> 20) & 255); /* use extended family (P4, IA64) */
 
          /* general feature flags */
-         util_cpu_caps.has_tsc    = (regs2[3] & (1 << 8  )) >>  8; /* 0x0000010 */
-         util_cpu_caps.has_mmx    = (regs2[3] & (1 << 23 )) >> 23; /* 0x0800000 */
-         util_cpu_caps.has_sse    = (regs2[3] & (1 << 25 )) >> 25; /* 0x2000000 */
-         util_cpu_caps.has_sse2   = (regs2[3] & (1 << 26 )) >> 26; /* 0x4000000 */
-         util_cpu_caps.has_sse3   = (regs2[2] & (1));          /* 0x0000001 */
-         util_cpu_caps.has_ssse3  = (regs2[2] & (1 << 9 )) >> 9;   /* 0x0000020 */
-         util_cpu_caps.has_sse4_1 = (regs2[2] & (1 << 19)) >> 19;
+         util_cpu_caps.has_tsc    = (regs2[3] >>  8) & 1; /* 0x0000010 */
+         util_cpu_caps.has_mmx    = (regs2[3] >> 23) & 1; /* 0x0800000 */
+         util_cpu_caps.has_sse    = (regs2[3] >> 25) & 1; /* 0x2000000 */
+         util_cpu_caps.has_sse2   = (regs2[3] >> 26) & 1; /* 0x4000000 */
+         util_cpu_caps.has_sse3   = (regs2[2] >>  0) & 1; /* 0x0000001 */
+         util_cpu_caps.has_ssse3  = (regs2[2] >>  9) & 1; /* 0x0000020 */
+         util_cpu_caps.has_sse4_1 = (regs2[2] >> 19) & 1;
+         util_cpu_caps.has_sse4_2 = (regs2[2] >> 20) & 1;
+         util_cpu_caps.has_avx    = (regs2[2] >> 28) & 1;
          util_cpu_caps.has_mmx2   = util_cpu_caps.has_sse; /* SSE cpus supports mmxext too */
 
          cacheline = ((regs2[1] >> 8) & 0xFF) * 8;
@@ -290,10 +292,10 @@ util_cpu_detect(void)
 
          cpuid(0x80000001, regs2);
 
-         util_cpu_caps.has_mmx  |= (regs2[3] & (1 << 23 )) >> 23; /* 0x0800000 */
-         util_cpu_caps.has_mmx2 |= (regs2[3] & (1 << 22 )) >> 22; /* 0x400000 */
-         util_cpu_caps.has_3dnow    = (regs2[3] & (1 << 31 )) >> 31; /* 0x80000000 */
-         util_cpu_caps.has_3dnow_ext = (regs2[3] & (1 << 30 )) >> 30;
+         util_cpu_caps.has_mmx  |= (regs2[3] >> 23) & 1;
+         util_cpu_caps.has_mmx2 |= (regs2[3] >> 22) & 1;
+         util_cpu_caps.has_3dnow = (regs2[3] >> 31) & 1;
+         util_cpu_caps.has_3dnow_ext = (regs2[3] >> 30) & 1;
       }
 
       if (regs[0] >= 0x80000006) {
@@ -329,6 +331,8 @@ util_cpu_detect(void)
       debug_printf("util_cpu_caps.has_sse3 = %u\n", util_cpu_caps.has_sse3);
       debug_printf("util_cpu_caps.has_ssse3 = %u\n", util_cpu_caps.has_ssse3);
       debug_printf("util_cpu_caps.has_sse4_1 = %u\n", util_cpu_caps.has_sse4_1);
+      debug_printf("util_cpu_caps.has_sse4_2 = %u\n", util_cpu_caps.has_sse4_2);
+      debug_printf("util_cpu_caps.has_avx = %u\n", util_cpu_caps.has_avx);
       debug_printf("util_cpu_caps.has_3dnow = %u\n", util_cpu_caps.has_3dnow);
       debug_printf("util_cpu_caps.has_3dnow_ext = %u\n", util_cpu_caps.has_3dnow_ext);
       debug_printf("util_cpu_caps.has_altivec = %u\n", util_cpu_caps.has_altivec);

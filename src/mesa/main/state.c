@@ -48,6 +48,7 @@
 #include "texenvprogram.h"
 #include "texobj.h"
 #include "texstate.h"
+#include "varray.h"
 
 
 static void
@@ -61,43 +62,13 @@ update_separate_specular(struct gl_context *ctx)
 
 
 /**
- * Compute the index of the last array element that can be safely accessed
- * in a vertex array.  We can really only do this when the array lives in
- * a VBO.
- * The array->_MaxElement field will be updated.
- * Later in glDrawArrays/Elements/etc we can do some bounds checking.
- */
-static void
-compute_max_element(struct gl_client_array *array)
-{
-   assert(array->Enabled);
-   if (array->BufferObj->Name) {
-      GLsizeiptrARB offset = (GLsizeiptrARB) array->Ptr;
-      GLsizeiptrARB obj_size = (GLsizeiptrARB) array->BufferObj->Size;
-
-      if (offset < obj_size) {
-	 array->_MaxElement = (obj_size - offset +
-			       array->StrideB -
-			       array->_ElementSize) / array->StrideB;
-      } else {
-	 array->_MaxElement = 0;
-      }
-   }
-   else {
-      /* user-space array, no idea how big it is */
-      array->_MaxElement = 2 * 1000 * 1000 * 1000; /* just a big number */
-   }
-}
-
-
-/**
  * Helper for update_arrays().
  * \return  min(current min, array->_MaxElement).
  */
 static GLuint
 update_min(GLuint min, struct gl_client_array *array)
 {
-   compute_max_element(array);
+   _mesa_update_array_max_element(array);
    return MIN2(min, array->_MaxElement);
 }
 
@@ -445,6 +416,35 @@ update_color(struct gl_context *ctx)
    ctx->Color._LogicOpEnabled = _mesa_rgba_logicop_enabled(ctx);
 }
 
+static void
+update_clamp_fragment_color(struct gl_context *ctx)
+{
+   if(ctx->Color.ClampFragmentColor == GL_FIXED_ONLY_ARB)
+      ctx->Color._ClampFragmentColor = !ctx->DrawBuffer || !ctx->DrawBuffer->Visual.floatMode;
+   else
+      ctx->Color._ClampFragmentColor = ctx->Color.ClampFragmentColor;
+}
+
+static void
+update_clamp_vertex_color(struct gl_context *ctx)
+{
+   if(ctx->Light.ClampVertexColor == GL_FIXED_ONLY_ARB)
+      ctx->Light._ClampVertexColor = !ctx->DrawBuffer || !ctx->DrawBuffer->Visual.floatMode;
+   else
+      ctx->Light._ClampVertexColor = ctx->Light.ClampVertexColor;
+}
+
+static void
+update_clamp_read_color(struct gl_context *ctx)
+{
+   if(ctx->Color.ClampReadColor == GL_FIXED_ONLY_ARB)
+      ctx->Color._ClampReadColor = !ctx->ReadBuffer || !ctx->ReadBuffer->Visual.floatMode;
+   else
+      ctx->Color._ClampReadColor = ctx->Color.ClampReadColor;
+}
+
+
+
 
 /*
  * Check polygon state and set DD_TRI_CULL_FRONT_BACK and/or DD_TRI_OFFSET
@@ -565,7 +565,7 @@ _mesa_update_state_locked( struct gl_context *ctx )
    if (ctx->FragmentProgram._MaintainTexEnvProgram) {
       prog_flags |= (_NEW_BUFFERS | _NEW_TEXTURE | _NEW_FOG |
 		     _NEW_ARRAY | _NEW_LIGHT | _NEW_POINT | _NEW_RENDERMODE |
-		     _NEW_PROGRAM);
+		     _NEW_PROGRAM | _NEW_FRAG_CLAMP);
    }
    if (ctx->VertexProgram._MaintainTnlProgram) {
       prog_flags |= (_NEW_ARRAY | _NEW_TEXTURE | _NEW_TEXTURE_MATRIX |
@@ -599,10 +599,13 @@ _mesa_update_state_locked( struct gl_context *ctx )
    if (new_state & _NEW_LIGHT)
       _mesa_update_lighting( ctx );
 
+   if (new_state & (_NEW_LIGHT | _NEW_BUFFERS))
+      update_clamp_vertex_color(ctx);
+
    if (new_state & (_NEW_STENCIL | _NEW_BUFFERS))
       _mesa_update_stencil( ctx );
 
-   if (new_state & _MESA_NEW_TRANSFER_STATE)
+   if (new_state & _NEW_PIXEL)
       _mesa_update_pixel( ctx, new_state );
 
    if (new_state & _DD_NEW_SEPARATE_SPECULAR)
@@ -616,6 +619,12 @@ _mesa_update_state_locked( struct gl_context *ctx )
 
    if (new_state & _NEW_COLOR)
       update_color( ctx );
+
+   if (new_state & (_NEW_COLOR | _NEW_BUFFERS))
+      update_clamp_read_color(ctx);
+
+   if(new_state & (_NEW_FRAG_CLAMP | _NEW_BUFFERS))
+      update_clamp_fragment_color(ctx);
 
 #if 0
    if (new_state & (_NEW_POINT | _NEW_LINE | _NEW_POLYGON | _NEW_LIGHT

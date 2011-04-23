@@ -110,30 +110,30 @@ extern void _radeon_print(const radeon_debug_type_t type,
  * Print out debug message if channel specified by type is enabled
  * and compile time debugging level is at least as high as level parameter
  */
-#define radeon_print(type, level, message, ...) do {		\
+#define radeon_print(type, level, ...) do {			\
 	const radeon_debug_level_t _debug_level = (level);	\
 	const radeon_debug_type_t _debug_type = (type);		\
 	/* Compile out if level of message is too high */	\
 	if (radeon_is_debug_enabled(type, level)) {		\
 		_radeon_print(_debug_type, _debug_level,	\
-			(message), ## __VA_ARGS__);		\
+			__VA_ARGS__);				\
 	}							\
 } while(0)
 
 /**
  * printf style function for writing error messages.
  */
-#define radeon_error(message, ...) do {				\
+#define radeon_error(...) do {					\
 	radeon_print(RADEON_GENERAL, RADEON_CRITICAL,		\
-		(message), ## __VA_ARGS__);			\
+		__VA_ARGS__);					\
 } while(0)
 
 /**
  * printf style function for writing warnings.
  */
-#define radeon_warning(message, ...) do {			\
+#define radeon_warning(...) do {				\
 	radeon_print(RADEON_GENERAL, RADEON_IMPORTANT,		\
-		(message), ## __VA_ARGS__);			\
+		__VA_ARGS__);					\
 } while(0)
 
 extern void radeon_init_debug(void);
@@ -158,13 +158,13 @@ static inline void radeon_debug_remove_indent(void)
    I suppose we could inline this and use macro to fetch out __LINE__ and stuff in case we run into trouble
    with other compilers ... GLUE!
 */
-#define WARN_ONCE(a, ...)      do { \
+#define WARN_ONCE(...)      do { \
        static int __warn_once=1; \
        if(__warn_once){ \
                radeon_warning("*********************************WARN_ONCE*********************************\n"); \
                radeon_warning("File %s function %s line %d\n", \
                        __FILE__, __FUNCTION__, __LINE__); \
-               radeon_warning(  (a), ## __VA_ARGS__);\
+               radeon_warning(__VA_ARGS__);\
                radeon_warning("***************************************************************************\n"); \
                __warn_once=0;\
                } \

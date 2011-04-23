@@ -115,7 +115,7 @@ inst_is_noop(struct nv_instruction *nvi)
       return FALSE;
 
    if (nvi->src[0]->value->join->reg.id < 0) {
-      NOUVEAU_DBG("inst_is_noop: orphaned value detected\n");
+      NV50_DBGMSG(PROG_IR, "inst_is_noop: orphaned value detected\n");
       return TRUE;
    }
 
@@ -178,7 +178,7 @@ nv_pc_pass_pre_emission(void *priv, struct nv_basic_block *b)
    }
    pc->emit_size += b->emit_size;
 
-#ifdef NOUVEAU_DEBUG
+#if NV50_DEBUG & NV50_DEBUG_PROG_IR
    if (!b->entry)
       debug_printf("BB:%i is now empty\n", b->id);
    else
@@ -206,7 +206,7 @@ nvc0_pc_exec_pass2(struct nv_pc *pc)
 {
    int i, ret;
 
-   NOUVEAU_DBG("preparing %u blocks for emission\n", pc->num_blocks);
+   NV50_DBGMSG(PROG_IR, "preparing %u blocks for emission\n", pc->num_blocks);
 
    pc->num_blocks = 0; /* will reorder bb_list */
 

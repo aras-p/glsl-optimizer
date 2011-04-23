@@ -26,6 +26,7 @@
 #ifndef FBOBJECT_H
 #define FBOBJECT_H
 
+#include "compiler.h"
 #include "glheader.h"
 
 struct gl_context;
@@ -48,6 +49,24 @@ _mesa_get_attachment(struct gl_context *ctx, struct gl_framebuffer *fb,
                      GLenum attachment);
 
 
+/** Return the texture image for a renderbuffer attachment */
+static INLINE struct gl_texture_image *
+_mesa_get_attachment_teximage(struct gl_renderbuffer_attachment *att)
+{
+   assert(att->Type == GL_TEXTURE);
+   return att->Texture->Image[att->CubeMapFace][att->TextureLevel];
+}
+
+
+/** Return the (const) texture image for a renderbuffer attachment */
+static INLINE const struct gl_texture_image *
+_mesa_get_attachment_teximage_const(const struct gl_renderbuffer_attachment *att)
+{
+   assert(att->Type == GL_TEXTURE);
+   return att->Texture->Image[att->CubeMapFace][att->TextureLevel];
+}
+
+
 extern void
 _mesa_remove_attachment(struct gl_context *ctx,
                         struct gl_renderbuffer_attachment *att);
@@ -65,14 +84,16 @@ _mesa_set_renderbuffer_attachment(struct gl_context *ctx,
                                   struct gl_renderbuffer *rb);
 
 extern void
-_mesa_framebuffer_renderbuffer(struct gl_context *ctx, struct gl_framebuffer *fb,
+_mesa_framebuffer_renderbuffer(struct gl_context *ctx,
+                               struct gl_framebuffer *fb,
                                GLenum attachment, struct gl_renderbuffer *rb);
 
 extern void
 _mesa_validate_framebuffer(struct gl_context *ctx, struct gl_framebuffer *fb);
 
 extern void
-_mesa_test_framebuffer_completeness(struct gl_context *ctx, struct gl_framebuffer *fb);
+_mesa_test_framebuffer_completeness(struct gl_context *ctx,
+                                    struct gl_framebuffer *fb);
 
 extern GLboolean
 _mesa_is_legal_color_format(const struct gl_context *ctx, GLenum baseFormat);

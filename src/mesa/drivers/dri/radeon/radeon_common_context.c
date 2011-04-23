@@ -47,8 +47,6 @@ WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include "swrast_setup/swrast_setup.h"
 #include "tnl/tnl.h"
 
-#define DRIVER_DATE "20090101"
-
 #ifndef RADEON_DEBUG
 int RADEON_DEBUG = (0);
 #endif
@@ -146,8 +144,7 @@ static const GLubyte *radeonGetString(struct gl_context * ctx, GLenum name)
 		        get_chip_family_name(radeon->radeonScreen->chip_family),
 		        radeon->radeonScreen->device_id);
 
-		offset = driGetRendererString(buffer, hardwarename, DRIVER_DATE,
-					      agp_mode);
+		offset = driGetRendererString(buffer, hardwarename, agp_mode);
 
 		if (IS_R600_CLASS(radeon->radeonScreen)) {
 			sprintf(&buffer[offset], " TCL");

@@ -12,11 +12,11 @@ Feature                                               Status
 
 GL 3.0:
 
-GLSL changes (GL_EXT_gpu_shader4, etc)                not started
+GLSL 1.30 (GL_EXT_gpu_shader4, etc.)                  started
 Conditional rendering (GL_NV_conditional_render)      DONE (swrast & softpipe)
 Map buffer subranges (GL_ARB_map_buffer_range)        DONE
-Clamping controls (GL_ARB_color_buffer_float)         BRANCH ~mareko/mesa floating2
-Float textures, renderbuffers (GL_ARB_texture_float)  BRANCH ~mareko/mesa floating2
+Clamping controls (GL_ARB_color_buffer_float)         DONE
+Float textures, renderbuffers (GL_ARB_texture_float)  DONE (gallium r300)
 GL_EXT_packed_float                                   not started
 GL_EXT_texture_shared_exponent                        not started
 Float depth buffers (GL_ARB_depth_buffer_float)       not started
@@ -45,7 +45,7 @@ Depth format cube textures                            0% done
 
 GL 3.1:
 
-GLSL 1.30 and 1.40                                    not started
+GLSL 1.40                                             not started
 Instanced drawing (GL_ARB_draw_instanced)             DONE (gallium, swrast)
 Buffer copying (GL_ARB_copy_buffer)                   DONE
 Primitive restart (GL_NV_primitive_restart)           DONE (gallium)
@@ -53,7 +53,7 @@ Primitive restart (GL_NV_primitive_restart)           DONE (gallium)
 Texture buffer objs (GL_ARB_texture_buffer_object)    not started
 Rectangular textures (GL_ARB_texture_rectangle)       DONE
 Uniform buffer objs (GL_ARB_uniform_buffer_object)    not started
-Signed normalized textures (GL_EXT_texture_snorm)     ~50% done
+Signed normalized textures (GL_EXT_texture_snorm)     DONE (gallium)
 
 
 GL 3.2:
@@ -77,7 +77,7 @@ GLSL 3.30                                             not started
 GL_ARB_blend_func_extended                            not started
 GL_ARB_explicit_attrib_location                       DONE (swrast, i915, i965)
 GL_ARB_occlusion_query2                               DONE (swrast, gallium)
-GL_ARB_sampler_objects                                not started
+GL_ARB_sampler_objects                                DONE (gallium)
 GL_ARB_texture_rgb10_a2ui                             not started
 GL_ARB_texture_swizzle                                DONE (same as EXT version)
 GL_ARB_timer_query                                    DONE (only Xlib sw driver)

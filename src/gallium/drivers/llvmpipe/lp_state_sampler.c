@@ -269,7 +269,7 @@ llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *lp,
          if (!lp_tex->dt) {
             /* regular texture - setup array of mipmap level pointers */
             int j;
-            for (j = 0; j <= tex->last_level; j++) {
+            for (j = view->u.tex.first_level; j <= tex->last_level; j++) {
                data[j] =
                   llvmpipe_get_texture_image_all(lp_tex, j, LP_TEX_USAGE_READ,
                                                  LP_TEX_LAYOUT_LINEAR);
@@ -293,7 +293,7 @@ llvmpipe_prepare_vertex_sampling(struct llvmpipe_context *lp,
          draw_set_mapped_texture(lp->draw,
                                  i,
                                  tex->width0, tex->height0, tex->depth0,
-                                 tex->last_level,
+                                 view->u.tex.first_level, tex->last_level,
                                  row_stride, img_stride, data);
       }
    }

@@ -292,12 +292,14 @@ void _ReadWriteBarrier(void);
  * Note that profile guided optimization can offer better results, but
  * needs an appropriate coverage suite and does not inform human readers.
  */
-#ifdef __GNUC__
-#define likely(x) __builtin_expect(!!(x), 1)
-#define unlikely(x) __builtin_expect(!!(x), 0)
-#else
-#define likely(x) !!(x)
-#define unlikely(x) !!(x)
+#ifndef likely
+#  if defined(__GNUC__)
+#    define likely(x)   __builtin_expect(!!(x), 1)
+#    define unlikely(x) __builtin_expect(!!(x), 0)
+#  else
+#    define likely(x)   (x)
+#    define unlikely(x) (x)
+#  endif
 #endif
 
 

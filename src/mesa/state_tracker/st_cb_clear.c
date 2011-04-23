@@ -323,7 +323,7 @@ clear_with_quad(struct gl_context *ctx,
    set_vertex_shader(st);
 
    if (ctx->DrawBuffer->_ColorDrawBuffers[0]) {
-      st_translate_color(ctx->Color.ClearColor,
+      st_translate_color(ctx->Color.ClearColorUnclamped,
                          ctx->DrawBuffer->_ColorDrawBuffers[0]->_BaseFormat,
                          clearColor);
    }
@@ -585,7 +585,7 @@ st_Clear(struct gl_context *ctx, GLbitfield mask)
                             clearColor);
       }
 
-      st->pipe->clear(st->pipe, clear_buffers, ctx->Color.ClearColor,
+      st->pipe->clear(st->pipe, clear_buffers, ctx->Color.ClearColorUnclamped,
                       ctx->Depth.Clear, ctx->Stencil.Clear);
    }
    if (mask & BUFFER_BIT_ACCUM)

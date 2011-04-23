@@ -573,6 +573,7 @@ extern HIDDEN void __indirect_glGetQueryObjectuivARB(GLuint id, GLenum pname, GL
 extern HIDDEN void __indirect_glGetQueryivARB(GLenum target, GLenum pname, GLint * params);
 extern HIDDEN GLboolean __indirect_glIsQueryARB(GLuint id);
 extern HIDDEN void __indirect_glDrawBuffersARB(GLsizei n, const GLenum * bufs);
+extern HIDDEN void __indirect_glClampColorARB(GLenum target, GLenum clamp);
 extern HIDDEN void __indirect_glRenderbufferStorageMultisample(GLenum target, GLsizei samples, GLenum internalformat, GLsizei width, GLsizei height);
 extern HIDDEN void __indirect_glSampleMaskSGIS(GLclampf value, GLboolean invert);
 extern HIDDEN void __indirect_glSamplePatternSGIS(GLenum pattern);

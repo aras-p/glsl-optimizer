@@ -162,9 +162,9 @@ static r128TexObjPtr r128AllocTexObj( struct gl_texture_object *texObj )
   
       make_empty_list( (driTextureObject *) t );
 
-      r128SetTexWrap( t, texObj->WrapS, texObj->WrapT );
-      r128SetTexFilter( t, texObj->MinFilter, texObj->MagFilter );
-      r128SetTexBorderColor( t, texObj->BorderColor.f );
+      r128SetTexWrap( t, texObj->Sampler.WrapS, texObj->Sampler.WrapT );
+      r128SetTexFilter( t, texObj->Sampler.MinFilter, texObj->Sampler.MagFilter );
+      r128SetTexBorderColor( t, texObj->Sampler.BorderColor.f );
    }
 
    return t;
@@ -519,18 +519,18 @@ static void r128TexParameter( struct gl_context *ctx, GLenum target,
    case GL_TEXTURE_MIN_FILTER:
    case GL_TEXTURE_MAG_FILTER:
       if ( t->base.bound ) FLUSH_BATCH( rmesa );
-      r128SetTexFilter( t, tObj->MinFilter, tObj->MagFilter );
+      r128SetTexFilter( t, tObj->Sampler.MinFilter, tObj->Sampler.MagFilter );
       break;
 
    case GL_TEXTURE_WRAP_S:
    case GL_TEXTURE_WRAP_T:
       if ( t->base.bound ) FLUSH_BATCH( rmesa );
-      r128SetTexWrap( t, tObj->WrapS, tObj->WrapT );
+      r128SetTexWrap( t, tObj->Sampler.WrapS, tObj->Sampler.WrapT );
       break;
 
    case GL_TEXTURE_BORDER_COLOR:
       if ( t->base.bound ) FLUSH_BATCH( rmesa );
-      r128SetTexBorderColor( t, tObj->BorderColor.f );
+      r128SetTexBorderColor( t, tObj->Sampler.BorderColor.f );
       break;
 
    case GL_TEXTURE_BASE_LEVEL:

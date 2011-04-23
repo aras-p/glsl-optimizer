@@ -185,6 +185,7 @@ static void do_wm_prog( struct brw_context *brw,
 			struct brw_fragment_program *fp, 
 			struct brw_wm_prog_key *key)
 {
+   struct intel_context *intel = &brw->intel;
    struct brw_wm_compile *c;
    const GLuint *program;
    GLuint program_size;
@@ -238,11 +239,25 @@ static void do_wm_prog( struct brw_context *brw,
 
    /* Scratch space is used for register spilling */
    if (c->last_scratch) {
+      uint32_t total_scratch;
+
       /* Per-thread scratch space is power-of-two sized. */
       for (c->prog_data.total_scratch = 1024;
 	   c->prog_data.total_scratch <= c->last_scratch;
 	   c->prog_data.total_scratch *= 2) {
 	 /* empty */
+      }
+      total_scratch = c->prog_data.total_scratch * brw->wm_max_threads;
+
+      if (brw->wm.scratch_bo && total_scratch > brw->wm.scratch_bo->size) {
+	 drm_intel_bo_unreference(brw->wm.scratch_bo);
+	 brw->wm.scratch_bo = NULL;
+      }
+      if (brw->wm.scratch_bo == NULL) {
+	 brw->wm.scratch_bo = drm_intel_bo_alloc(intel->bufmgr,
+						 "wm scratch",
+						 total_scratch,
+						 4096);
       }
    }
    else {
@@ -348,6 +363,9 @@ static void brw_wm_populate_key( struct brw_context *brw,
    /* _NEW_HINT */
    key->linear_color = (ctx->Hint.PerspectiveCorrection == GL_FASTEST);
 
+   /* _NEW_FRAG_CLAMP | _NEW_BUFFERS */
+   key->clamp_fragment_color = ctx->Color._ClampFragmentColor;
+
    /* _NEW_TEXTURE */
    for (i = 0; i < BRW_MAX_TEX_UNIT; i++) {
       const struct gl_texture_unit *unit = &ctx->Texture.Unit[i];
@@ -370,14 +388,14 @@ static void brw_wm_populate_key( struct brw_context *brw,
 	  * well and our shadow compares always return the result in
 	  * all 4 channels.
 	  */
-	 if (t->CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
-	    if (t->DepthMode == GL_ALPHA) {
+	 if (t->Sampler.CompareMode == GL_COMPARE_R_TO_TEXTURE_ARB) {
+	    if (t->Sampler.DepthMode == GL_ALPHA) {
 	       swizzles[0] = SWIZZLE_ZERO;
 	       swizzles[1] = SWIZZLE_ZERO;
 	       swizzles[2] = SWIZZLE_ZERO;
-	    } else if (t->DepthMode == GL_LUMINANCE) {
+	    } else if (t->Sampler.DepthMode == GL_LUMINANCE) {
 	       swizzles[3] = SWIZZLE_ONE;
-	    } else if (t->DepthMode == GL_RED) {
+	    } else if (t->Sampler.DepthMode == GL_RED) {
 	       /* See table 3.23 of the GL 3.0 spec. */
 	       swizzles[1] = SWIZZLE_ZERO;
 	       swizzles[2] = SWIZZLE_ZERO;
@@ -471,6 +489,7 @@ const struct brw_tracked_state brw_wm_prog = {
 		_NEW_POLYGON |
 		_NEW_LINE |
 		_NEW_LIGHT |
+		_NEW_FRAG_CLAMP |
 		_NEW_BUFFERS |
 		_NEW_TEXTURE),
       .brw   = (BRW_NEW_FRAGMENT_PROGRAM |

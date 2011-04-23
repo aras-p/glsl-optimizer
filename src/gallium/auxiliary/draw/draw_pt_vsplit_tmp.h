@@ -47,14 +47,18 @@ CONCAT(vsplit_primitive_, ELT_TYPE)(struct vsplit_frontend *vsplit,
    const ushort *draw_elts = NULL;
    unsigned i;
 
+   ib += istart;
+
    /* use the ib directly */
    if (min_index == 0 && sizeof(ib[0]) == sizeof(draw_elts[0])) {
       if (icount > vsplit->max_vertices)
          return FALSE;
 
       for (i = 0; i < icount; i++) {
-         ELT_TYPE idx = ib[istart + i];
-         assert(idx >= min_index && idx <= max_index);
+         ELT_TYPE idx = ib[i];
+            if (idx < min_index || idx > max_index) {
+            debug_printf("warning: index out of range\n");
+         }
       }
       draw_elts = (const ushort *) ib;
    }
@@ -83,17 +87,21 @@ CONCAT(vsplit_primitive_, ELT_TYPE)(struct vsplit_frontend *vsplit,
    if (!draw_elts) {
       if (min_index == 0) {
          for (i = 0; i < icount; i++) {
-            ELT_TYPE idx = ib[istart + i];
+            ELT_TYPE idx = ib[i];
 
-            assert(idx >= min_index && idx <= max_index);
+            if (idx < min_index || idx > max_index) {
+               debug_printf("warning: index out of range\n");
+	    }
             vsplit->draw_elts[i] = (ushort) idx;
          }
       }
       else {
          for (i = 0; i < icount; i++) {
-            ELT_TYPE idx = ib[istart + i];
+            ELT_TYPE idx = ib[i];
 
-            assert(idx >= min_index && idx <= max_index);
+            if (idx < min_index || idx > max_index) {
+               debug_printf("warning: index out of range\n");
+	    }
             vsplit->draw_elts[i] = (ushort) (idx - min_index);
          }
       }

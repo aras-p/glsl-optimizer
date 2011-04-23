@@ -68,19 +68,6 @@ static const uint32_t nvc0_9097_vertex_array_select[] =
    0x00001841, /* 0x0b: send $r3 */
 };
 
-static const uint32_t nvc0_9097_color_mask_brdc[] =
-{
-   0x05a00021, /* maddr [NVC0_3D_COLOR_MASK(0), increment = 4] */
-   0x00000841, /* send $r1 */
-   0x00000841, /* send $r1 */
-   0x00000841, /* send $r1 */
-   0x00000841, /* send $r1 */
-   0x00000841, /* send $r1 */
-   0x00000841, /* send $r1 */
-   0x000008c1, /* exit send $r1 */
-   0x00000841, /* send $r1 */
-};
-
 /*
  * [GL_POLYGON_MODE_FRONT] = arg;
  *

@@ -180,6 +180,15 @@ static void evergreenRunRenderPrimitive(struct gl_context * ctx, int start, int 
             SETfield(vgt_index_type, DI_INDEX_SIZE_16_BIT, INDEX_TYPE_shift, INDEX_TYPE_mask);
     }
 
+	/* 16-bit indexes are packed in a 32-bit value */
+	SETfield(vgt_index_type,
+#if MESA_BIG_ENDIAN
+			VGT_DMA_SWAP_32_BIT,
+#else
+			VGT_DMA_SWAP_NONE,
+#endif
+			SWAP_MODE_shift, SWAP_MODE_mask);
+
     vgt_num_indices = num_indices;
     SETfield(vgt_draw_initiator, DI_SRC_SEL_DMA, SOURCE_SELECT_shift, SOURCE_SELECT_mask);
     SETfield(vgt_draw_initiator, DI_MAJOR_MODE_0, MAJOR_MODE_shift, MAJOR_MODE_mask);
@@ -251,6 +260,15 @@ static void evergreenRunRenderPrimitiveImmediate(struct gl_context * ctx, int st
     {
             SETfield(vgt_index_type, DI_INDEX_SIZE_16_BIT, INDEX_TYPE_shift, INDEX_TYPE_mask);
     }
+
+	/* 16-bit indexes are packed in a 32-bit value */
+	SETfield(vgt_index_type,
+#if MESA_BIG_ENDIAN
+			VGT_DMA_SWAP_32_BIT,
+#else
+			VGT_DMA_SWAP_NONE,
+#endif
+			SWAP_MODE_shift, SWAP_MODE_mask);
 
     vgt_num_indices = num_indices;
     SETfield(vgt_draw_initiator, DI_MAJOR_MODE_0, MAJOR_MODE_shift, MAJOR_MODE_mask);
@@ -620,6 +638,7 @@ static void evergreenSetupIndexBuffer(struct gl_context *ctx, const struct _mesa
     }
 }
 
+#if 0 /* unused */
 static void evergreenAlignDataToDword(struct gl_context *ctx, 
                                  const struct gl_client_array *input, 
                                  int count, 
@@ -661,6 +680,7 @@ static void evergreenAlignDataToDword(struct gl_context *ctx,
 
     attr->stride = dst_stride;
 }
+#endif
 
 static void evergreenSetupStreams(struct gl_context *ctx, const struct gl_client_array *input[], int count)
 {

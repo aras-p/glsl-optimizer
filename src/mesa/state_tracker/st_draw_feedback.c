@@ -111,6 +111,7 @@ st_feedback_draw_vbo(struct gl_context *ctx,
    struct pipe_transfer *vb_transfer[PIPE_MAX_ATTRIBS];
    struct pipe_transfer *ib_transfer = NULL;
    GLuint attr, i;
+   const GLubyte *low_addr = NULL;
    const void *mapped_indices = NULL;
 
    assert(draw);
@@ -141,6 +142,16 @@ st_feedback_draw_vbo(struct gl_context *ctx,
    draw_bind_vertex_shader(draw, st->vp_variant->draw_shader);
    set_feedback_vertex_format(ctx);
 
+   /* Find the lowest address of the arrays we're drawing */
+   if (vp->num_inputs) {
+      low_addr = arrays[vp->index_to_input[0]]->Ptr;
+
+      for (attr = 1; attr < vp->num_inputs; attr++) {
+         const GLubyte *start = arrays[vp->index_to_input[attr]]->Ptr;
+         low_addr = MIN2(low_addr, start);
+      }
+   }
+
    /* loop over TGSI shader inputs to determine vertex buffer
     * and attribute info
     */
@@ -159,8 +170,8 @@ st_feedback_draw_vbo(struct gl_context *ctx,
 
          vbuffers[attr].buffer = NULL;
          pipe_resource_reference(&vbuffers[attr].buffer, stobj->buffer);
-         vbuffers[attr].buffer_offset = pointer_to_offset(arrays[0]->Ptr);
-         velements[attr].src_offset = arrays[mesaAttr]->Ptr - arrays[0]->Ptr;
+         vbuffers[attr].buffer_offset = pointer_to_offset(low_addr);
+         velements[attr].src_offset = arrays[mesaAttr]->Ptr - low_addr;
       }
       else {
          /* attribute data is in user-space memory, not a VBO */

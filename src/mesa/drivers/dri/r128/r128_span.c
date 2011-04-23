@@ -135,7 +135,7 @@ do {									\
    r128WriteDepthSpanLocked( rmesa, n,					\
 			     x + dPriv->x,				\
 			     y + dPriv->y,				\
-			     depth, mask );				\
+			     (const GLuint *) depth, mask );            \
 } while (0)
 
 #define WRITE_DEPTH_PIXELS()						\
@@ -146,7 +146,7 @@ do {									\
       ox[i] = x[i] + dPriv->x;						\
       oy[i] = Y_FLIP( y[i] ) + dPriv->y;				\
    }									\
-   r128WriteDepthPixelsLocked( rmesa, n, ox, oy, depth, mask );		\
+   r128WriteDepthPixelsLocked( rmesa, n, ox, oy, (const GLuint *) depth, mask ); \
 } while (0)
 
 #define READ_DEPTH_SPAN()						\

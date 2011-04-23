@@ -47,15 +47,15 @@ static INLINE struct pipe_resource *
 trace_resource_unwrap(struct trace_context *tr_ctx,
                      struct pipe_resource *resource)
 {
-   struct trace_resource *tr_tex;
+   struct trace_resource *tr_res;
 
    if(!resource)
       return NULL;
 
-   tr_tex = trace_resource(resource);
+   tr_res = trace_resource(resource);
 
-   assert(tr_tex->resource);
-   return tr_tex->resource;
+   assert(tr_res->resource);
+   return tr_res->resource;
 }
 
 
@@ -832,19 +832,22 @@ trace_create_sampler_view(struct pipe_context *_pipe,
                           const struct pipe_sampler_view *templ)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_resource *tr_tex = trace_resource(_resource);
+   struct trace_resource *tr_res = trace_resource(_resource);
    struct pipe_context *pipe = tr_ctx->pipe;
-   struct pipe_resource *texture = tr_tex->resource;
+   struct pipe_resource *resource = tr_res->resource;
    struct pipe_sampler_view *result;
    struct trace_sampler_view *tr_view;
 
    trace_dump_call_begin("pipe_context", "create_sampler_view");
 
    trace_dump_arg(ptr, pipe);
-   trace_dump_arg(ptr, texture);
-   trace_dump_arg(sampler_view_template, templ);
+   trace_dump_arg(ptr, resource);
 
-   result = pipe->create_sampler_view(pipe, texture, templ);
+   trace_dump_arg_begin("templ");
+   trace_dump_sampler_view_template(templ, resource->target);
+   trace_dump_arg_end();
+
+   result = pipe->create_sampler_view(pipe, resource, templ);
 
    trace_dump_ret(ptr, result);
 
@@ -895,29 +898,32 @@ trace_sampler_view_destroy(struct pipe_context *_pipe,
 
 static struct pipe_surface *
 trace_create_surface(struct pipe_context *_pipe,
-                     struct pipe_resource *_texture,
+                     struct pipe_resource *_resource,
                      const struct pipe_surface *surf_tmpl)
 {
    struct trace_context *tr_ctx = trace_context(_pipe);
-   struct trace_resource *tr_tex = trace_resource(_texture);
+   struct trace_resource *tr_res = trace_resource(_resource);
    struct pipe_context *pipe = tr_ctx->pipe;
-   struct pipe_resource *texture = tr_tex->resource;
+   struct pipe_resource *resource = tr_res->resource;
    struct pipe_surface *result = NULL;
 
    trace_dump_call_begin("pipe_context", "create_surface");
 
    trace_dump_arg(ptr, pipe);
-   trace_dump_arg(ptr, texture);
-   /* hmm some values unitialized there */
-   trace_dump_arg(surface, surf_tmpl);
+   trace_dump_arg(ptr, resource);
+   
+   trace_dump_arg_begin("surf_tmpl");
+   trace_dump_surface_template(surf_tmpl, resource->target);
+   trace_dump_arg_end();
 
-   result = pipe->create_surface(pipe, texture, surf_tmpl);
+
+   result = pipe->create_surface(pipe, resource, surf_tmpl);
 
    trace_dump_ret(ptr, result);
 
    trace_dump_call_end();
 
-   result = trace_surf_create(tr_tex, result);
+   result = trace_surf_create(tr_res, result);
 
    return result;
 }
@@ -1231,9 +1237,9 @@ trace_context_get_transfer(struct pipe_context *_context,
                            const struct pipe_box *box)
 {
    struct trace_context *tr_context = trace_context(_context);
-   struct trace_resource *tr_tex = trace_resource(_resource);
+   struct trace_resource *tr_res = trace_resource(_resource);
    struct pipe_context *context = tr_context->pipe;
-   struct pipe_resource *texture = tr_tex->resource;
+   struct pipe_resource *texture = tr_res->resource;
    struct pipe_transfer *result = NULL;
 
    assert(texture->screen == context->screen);
@@ -1246,7 +1252,7 @@ trace_context_get_transfer(struct pipe_context *_context,
    result = context->get_transfer(context, texture, level, usage, box);
 
    if (result)
-      result = trace_transfer_create(tr_context, tr_tex, result);
+      result = trace_transfer_create(tr_context, tr_res, result);
 
    return result;
 }
@@ -1360,9 +1366,9 @@ trace_context_transfer_inline_write(struct pipe_context *_context,
                                     unsigned layer_stride)
 {
    struct trace_context *tr_context = trace_context(_context);
-   struct trace_resource *tr_tex = trace_resource(_resource);
+   struct trace_resource *tr_res = trace_resource(_resource);
    struct pipe_context *context = tr_context->pipe;
-   struct pipe_resource *resource = tr_tex->resource;
+   struct pipe_resource *resource = tr_res->resource;
 
    assert(resource->screen == context->screen);
 
@@ -1397,9 +1403,9 @@ static void trace_redefine_user_buffer(struct pipe_context *_context,
                                        unsigned offset, unsigned size)
 {
    struct trace_context *tr_context = trace_context(_context);
-   struct trace_resource *tr_tex = trace_resource(_resource);
+   struct trace_resource *tr_res = trace_resource(_resource);
    struct pipe_context *context = tr_context->pipe;
-   struct pipe_resource *resource = tr_tex->resource;
+   struct pipe_resource *resource = tr_res->resource;
 
    assert(resource->screen == context->screen);
 

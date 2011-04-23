@@ -335,7 +335,7 @@ _mesa_set_texture_attachment(struct gl_context *ctx,
    att->Zoffset = zoffset;
    att->Complete = GL_FALSE;
 
-   if (att->Texture->Image[att->CubeMapFace][att->TextureLevel]) {
+   if (_mesa_get_attachment_teximage(att)) {
       ctx->Driver.RenderTexture(ctx, fb, att);
    }
 
@@ -716,8 +716,8 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
       /* get width, height, format of the renderbuffer/texture
        */
       if (att->Type == GL_TEXTURE) {
-         const struct gl_texture_image *texImg
-            = att->Texture->Image[att->CubeMapFace][att->TextureLevel];
+         const struct gl_texture_image *texImg =
+            _mesa_get_attachment_teximage(att);
          minWidth = MIN2(minWidth, texImg->Width);
          maxWidth = MAX2(maxWidth, texImg->Width);
          minHeight = MIN2(minHeight, texImg->Height);
@@ -746,7 +746,7 @@ _mesa_test_framebuffer_completeness(struct gl_context *ctx,
          continue;
       }
 
-      if (numSamples < 0) {
+      if (att->Renderbuffer && numSamples < 0) {
          /* first buffer */
          numSamples = att->Renderbuffer->NumSamples;
       }
@@ -1081,7 +1081,6 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_RGB10_A2:
    case GL_RGBA12:
    case GL_RGBA16:
-   case GL_RGBA16_SNORM:
    case GL_SRGB8_ALPHA8_EXT:
       return GL_RGBA;
    case GL_STENCIL_INDEX:
@@ -1109,7 +1108,74 @@ _mesa_base_fbo_format(struct gl_context *ctx, GLenum internalFormat)
    case GL_RG8:
    case GL_RG16:
       return ctx->Extensions.ARB_texture_rg ? GL_RG : 0;
-   /* XXX add floating point and integer formats eventually */
+   /* signed normalized texture formats */
+   case GL_RED_SNORM:
+   case GL_R8_SNORM:
+   case GL_R16_SNORM:
+      return ctx->Extensions.EXT_texture_snorm ? GL_RED : 0;
+   case GL_RG_SNORM:
+   case GL_RG8_SNORM:
+   case GL_RG16_SNORM:
+      return ctx->Extensions.EXT_texture_snorm ? GL_RG : 0;
+   case GL_RGB_SNORM:
+   case GL_RGB8_SNORM:
+   case GL_RGB16_SNORM:
+      return ctx->Extensions.EXT_texture_snorm ? GL_RGB : 0;
+   case GL_RGBA_SNORM:
+   case GL_RGBA8_SNORM:
+   case GL_RGBA16_SNORM:
+      return ctx->Extensions.EXT_texture_snorm ? GL_RGBA : 0;
+   case GL_ALPHA_SNORM:
+   case GL_ALPHA8_SNORM:
+   case GL_ALPHA16_SNORM:
+      return ctx->Extensions.EXT_texture_snorm &&
+             ctx->Extensions.ARB_framebuffer_object ? GL_ALPHA : 0;
+   case GL_LUMINANCE_SNORM:
+   case GL_LUMINANCE8_SNORM:
+   case GL_LUMINANCE16_SNORM:
+      return ctx->Extensions.EXT_texture_snorm &&
+             ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE : 0;
+   case GL_LUMINANCE_ALPHA_SNORM:
+   case GL_LUMINANCE8_ALPHA8_SNORM:
+   case GL_LUMINANCE16_ALPHA16_SNORM:
+      return ctx->Extensions.EXT_texture_snorm &&
+             ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE_ALPHA : 0;
+   case GL_INTENSITY_SNORM:
+   case GL_INTENSITY8_SNORM:
+   case GL_INTENSITY16_SNORM:
+      return ctx->Extensions.EXT_texture_snorm &&
+             ctx->Extensions.ARB_framebuffer_object ? GL_INTENSITY : 0;
+   case GL_R16F:
+   case GL_R32F:
+      return ctx->Extensions.ARB_texture_rg &&
+             ctx->Extensions.ARB_texture_float ? GL_RED : 0;
+   case GL_RG16F:
+   case GL_RG32F:
+      return ctx->Extensions.ARB_texture_rg &&
+             ctx->Extensions.ARB_texture_float ? GL_RG : 0;
+   case GL_RGB16F:
+   case GL_RGB32F:
+      return ctx->Extensions.ARB_texture_float ? GL_RGB : 0;
+   case GL_RGBA16F:
+   case GL_RGBA32F:
+      return ctx->Extensions.ARB_texture_float ? GL_RGBA : 0;
+   case GL_ALPHA16F_ARB:
+   case GL_ALPHA32F_ARB:
+      return ctx->Extensions.ARB_texture_float &&
+             ctx->Extensions.ARB_framebuffer_object ? GL_ALPHA : 0;
+   case GL_LUMINANCE16F_ARB:
+   case GL_LUMINANCE32F_ARB:
+      return ctx->Extensions.ARB_texture_float &&
+             ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE : 0;
+   case GL_LUMINANCE_ALPHA16F_ARB:
+   case GL_LUMINANCE_ALPHA32F_ARB:
+      return ctx->Extensions.ARB_texture_float &&
+             ctx->Extensions.ARB_framebuffer_object ? GL_LUMINANCE_ALPHA : 0;
+   case GL_INTENSITY16F_ARB:
+   case GL_INTENSITY32F_ARB:
+      return ctx->Extensions.ARB_texture_float &&
+             ctx->Extensions.ARB_framebuffer_object ? GL_INTENSITY : 0;
+   /* XXX add integer formats eventually */
    default:
       return 0;
    }
@@ -1460,9 +1526,7 @@ check_begin_texture_render(struct gl_context *ctx, struct gl_framebuffer *fb)
 
    for (i = 0; i < BUFFER_COUNT; i++) {
       struct gl_renderbuffer_attachment *att = fb->Attachment + i;
-      struct gl_texture_object *texObj = att->Texture;
-      if (texObj
-          && texObj->Image[att->CubeMapFace][att->TextureLevel]) {
+      if (att->Texture && _mesa_get_attachment_teximage(att)) {
          ctx->Driver.RenderTexture(ctx, fb, att);
       }
    }
@@ -2321,7 +2385,7 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
    if ((mask & (GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT))
         && filter != GL_NEAREST) {
       _mesa_error(ctx, GL_INVALID_OPERATION,
-             "glBlitFramebufferEXT(depth/stencil requires GL_NEAREST filter");
+             "glBlitFramebufferEXT(depth/stencil requires GL_NEAREST filter)");
       return;
    }
 
@@ -2342,7 +2406,7 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
           _mesa_get_format_bits(readRb->Format, GL_STENCIL_BITS) != 
           _mesa_get_format_bits(drawRb->Format, GL_STENCIL_BITS)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glBlitFramebufferEXT(stencil buffer size mismatch");
+                     "glBlitFramebufferEXT(stencil buffer size mismatch)");
          return;
       }
    }
@@ -2355,7 +2419,7 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
           _mesa_get_format_bits(readRb->Format, GL_DEPTH_BITS) != 
           _mesa_get_format_bits(drawRb->Format, GL_DEPTH_BITS)) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                     "glBlitFramebufferEXT(depth buffer size mismatch");
+                     "glBlitFramebufferEXT(depth buffer size mismatch)");
          return;
       }
    }
@@ -2374,7 +2438,7 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
       if (srcX1 - srcX0 != dstX1 - dstX0 ||
           srcY1 - srcY0 != dstY1 - dstY0) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                "glBlitFramebufferEXT(bad src/dst multisample region sizes");
+                "glBlitFramebufferEXT(bad src/dst multisample region sizes)");
          return;
       }
 
@@ -2383,7 +2447,7 @@ _mesa_BlitFramebufferEXT(GLint srcX0, GLint srcY0, GLint srcX1, GLint srcY1,
           colorDrawRb &&
           colorReadRb->Format != colorDrawRb->Format) {
          _mesa_error(ctx, GL_INVALID_OPERATION,
-                "glBlitFramebufferEXT(bad src/dst multisample pixel formats");
+                "glBlitFramebufferEXT(bad src/dst multisample pixel formats)");
          return;
       }
    }

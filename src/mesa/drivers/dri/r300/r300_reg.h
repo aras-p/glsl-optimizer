@@ -1906,7 +1906,7 @@ USE OR OTHER DEALINGS IN THE SOFTWARE.
 #       define R300_ALU_OUTC_D2A                (3 << 23)
 #       define R300_ALU_OUTC_MIN                (4 << 23)
 #       define R300_ALU_OUTC_MAX                (5 << 23)
-#       define R300_ALU_OUTC_CMPH               (7 << 23)
+#       define R300_ALU_OUTC_CND                (7 << 23)
 #       define R300_ALU_OUTC_CMP                (8 << 23)
 #       define R300_ALU_OUTC_FRC                (9 << 23)
 #       define R300_ALU_OUTC_REPL_ALPHA         (10 << 23)

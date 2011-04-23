@@ -30,6 +30,7 @@
 
 #include "glheader.h"
 #include "mfeatures.h"
+#include "bufferobj.h"
 #include "colormac.h"
 #include "colortab.h"
 #include "context.h"
@@ -406,7 +407,7 @@ update_tex_combine(struct gl_context *ctx, struct gl_texture_unit *texUnit)
       }
       else if (format == GL_DEPTH_COMPONENT ||
                format == GL_DEPTH_STENCIL_EXT) {
-         format = texObj->DepthMode;
+         format = texObj->Sampler.DepthMode;
       }
       calculate_derived_texenv(&texUnit->_EnvMode, texUnit->EnvMode, format);
       texUnit->_CurrentCombine = & texUnit->_EnvMode;
@@ -692,7 +693,8 @@ alloc_proxy_textures( struct gl_context *ctx )
       GL_TEXTURE_CUBE_MAP_ARB,
       GL_TEXTURE_RECTANGLE_NV,
       GL_TEXTURE_1D_ARRAY_EXT,
-      GL_TEXTURE_2D_ARRAY_EXT
+      GL_TEXTURE_2D_ARRAY_EXT,
+      GL_TEXTURE_BUFFER
    };
    GLint tgt;
 
@@ -793,6 +795,10 @@ _mesa_init_texture(struct gl_context *ctx)
    if (!alloc_proxy_textures( ctx ))
       return GL_FALSE;
 
+   /* GL_ARB_texture_buffer_object */
+   _mesa_reference_buffer_object(ctx, &ctx->Texture.BufferObject,
+                                 ctx->Shared->NullBufferObj);
+
    return GL_TRUE;
 }
 
@@ -818,6 +824,15 @@ _mesa_free_texture_data(struct gl_context *ctx)
    /* Free proxy texture objects */
    for (tgt = 0; tgt < NUM_TEXTURE_TARGETS; tgt++)
       ctx->Driver.DeleteTexture(ctx, ctx->Texture.ProxyTex[tgt]);
+
+   /* GL_ARB_texture_buffer_object */
+   _mesa_reference_buffer_object(ctx, &ctx->Texture.BufferObject, NULL);
+
+#if FEATURE_sampler_objects
+   for (u = 0; u < Elements(ctx->Texture.Unit); u++) {
+      _mesa_reference_sampler_object(ctx, &ctx->Texture.Unit[u].Sampler, NULL);
+   }
+#endif
 }
 
 

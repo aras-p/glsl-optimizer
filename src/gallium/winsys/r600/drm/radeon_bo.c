@@ -74,6 +74,16 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 	struct radeon_bo *bo;
 	int r;
 
+	if (handle) {
+		pipe_mutex_lock(radeon->bo_handles_mutex);
+		bo = util_hash_table_get(radeon->bo_handles,
+					 (void *)(uintptr_t)handle);
+		if (bo) {
+			struct radeon_bo *b = NULL;
+			radeon_bo_reference(radeon, &b, bo);
+			goto done;
+		}
+	}
 	bo = calloc(1, sizeof(*bo));
 	if (bo == NULL) {
 		return NULL;
@@ -94,6 +104,7 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 			free(bo);
 			return NULL;
 		}
+		bo->name = handle;
 		bo->handle = open_arg.handle;
 		bo->size = open_arg.size;
 		bo->shared = TRUE;
@@ -121,6 +132,13 @@ struct radeon_bo *radeon_bo(struct radeon *radeon, unsigned handle,
 		radeon_bo_reference(radeon, &bo, NULL);
 		return bo;
 	}
+
+	if (handle)
+		util_hash_table_set(radeon->bo_handles, (void *)(uintptr_t)handle, bo);
+done:
+	if (handle)
+		pipe_mutex_unlock(radeon->bo_handles_mutex);
+
 	return bo;
 }
 
@@ -128,6 +146,12 @@ static void radeon_bo_destroy(struct radeon *radeon, struct radeon_bo *bo)
 {
 	struct drm_gem_close args;
 
+	if (bo->name) {
+		pipe_mutex_lock(radeon->bo_handles_mutex);
+		util_hash_table_remove(radeon->bo_handles,
+				       (void *)(uintptr_t)bo->name);
+		pipe_mutex_unlock(radeon->bo_handles_mutex);
+	}
 	LIST_DEL(&bo->fencedlist);
 	radeon_bo_fixed_unmap(radeon, bo);
 	memset(&args, 0, sizeof(args));

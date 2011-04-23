@@ -106,6 +106,7 @@ create_jit_texture_type(struct gallivm_state *gallivm)
    elem_types[DRAW_JIT_TEXTURE_WIDTH]  =
    elem_types[DRAW_JIT_TEXTURE_HEIGHT] =
    elem_types[DRAW_JIT_TEXTURE_DEPTH] =
+   elem_types[DRAW_JIT_TEXTURE_FIRST_LEVEL] =
    elem_types[DRAW_JIT_TEXTURE_LAST_LEVEL] = int32_type;
    elem_types[DRAW_JIT_TEXTURE_ROW_STRIDE] =
    elem_types[DRAW_JIT_TEXTURE_IMG_STRIDE] =
@@ -136,6 +137,9 @@ create_jit_texture_type(struct gallivm_state *gallivm)
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_texture, depth,
                           target, texture_type,
                           DRAW_JIT_TEXTURE_DEPTH);
+   LP_CHECK_MEMBER_OFFSET(struct draw_jit_texture, first_level,
+                          target, texture_type,
+                          DRAW_JIT_TEXTURE_FIRST_LEVEL);
    LP_CHECK_MEMBER_OFFSET(struct draw_jit_texture, last_level,
                           target, texture_type,
                           DRAW_JIT_TEXTURE_LAST_LEVEL);
@@ -438,7 +442,8 @@ generate_vs(struct draw_llvm *llvm,
             const LLVMValueRef (*inputs)[NUM_CHANNELS],
             LLVMValueRef system_values_array,
             LLVMValueRef context_ptr,
-            struct lp_build_sampler_soa *draw_sampler)
+            struct lp_build_sampler_soa *draw_sampler,
+            boolean clamp_vertex_color)
 {
    const struct tgsi_token *tokens = llvm->draw->vs.vertex_shader->state.tokens;
    struct lp_type vs_type;
@@ -474,6 +479,30 @@ generate_vs(struct draw_llvm *llvm,
                      outputs,
                      sampler,
                      &llvm->draw->vs.vertex_shader->info);
+
+   if(clamp_vertex_color)
+   {
+      LLVMValueRef out;
+      unsigned chan, attrib;
+      struct lp_build_context bld;
+      struct tgsi_shader_info* info = &llvm->draw->vs.vertex_shader->info;
+      lp_build_context_init(&bld, llvm->gallivm, vs_type);
+
+      for (attrib = 0; attrib < info->num_outputs; ++attrib) {
+         for(chan = 0; chan < NUM_CHANNELS; ++chan) {
+            if(outputs[attrib][chan]) {
+               switch (info->output_semantic_name[attrib]) {
+               case TGSI_SEMANTIC_COLOR:
+               case TGSI_SEMANTIC_BCOLOR:
+                  out = LLVMBuildLoad(builder, outputs[attrib][chan], "");
+                  out = lp_build_clamp(&bld, out, bld.zero, bld.one);
+                  LLVMBuildStore(builder, out, outputs[attrib][chan]);
+                  break;
+               }
+            }
+         }
+      }
+   }
 }
 
 #if DEBUG_STORE
@@ -1235,7 +1264,8 @@ draw_llvm_generate(struct draw_llvm *llvm, struct draw_llvm_variant *variant)
                   ptr_aos,
                   system_values_array,
                   context_ptr,
-                  sampler);
+                  sampler,
+                  variant->key.clamp_vertex_color);
 
       /* store original positions in clip before further manipulation */
       store_clip(gallivm, io, outputs);
@@ -1446,7 +1476,8 @@ draw_llvm_generate_elts(struct draw_llvm *llvm, struct draw_llvm_variant *varian
                   ptr_aos,
                   system_values_array,
                   context_ptr,
-                  sampler);
+                  sampler,
+                  variant->key.clamp_vertex_color);
 
       /* store original positions in clip before further manipulation */
       store_clip(gallivm, io, outputs);
@@ -1524,6 +1555,8 @@ draw_llvm_make_variant_key(struct draw_llvm *llvm, char *store)
 
    key = (struct draw_llvm_variant_key *)store;
 
+   key->clamp_vertex_color = llvm->draw->rasterizer->clamp_vertex_color; /**/
+
    /* Presumably all variants of the shader should have the same
     * number of vertex elements - ie the number of shader inputs.
     */
@@ -1566,7 +1599,7 @@ void
 draw_llvm_set_mapped_texture(struct draw_context *draw,
                              unsigned sampler_idx,
                              uint32_t width, uint32_t height, uint32_t depth,
-                             uint32_t last_level,
+                             uint32_t first_level, uint32_t last_level,
                              uint32_t row_stride[PIPE_MAX_TEXTURE_LEVELS],
                              uint32_t img_stride[PIPE_MAX_TEXTURE_LEVELS],
                              const void *data[PIPE_MAX_TEXTURE_LEVELS])
@@ -1582,9 +1615,10 @@ draw_llvm_set_mapped_texture(struct draw_context *draw,
    jit_tex->width = width;
    jit_tex->height = height;
    jit_tex->depth = depth;
+   jit_tex->first_level = first_level;
    jit_tex->last_level = last_level;
 
-   for (j = 0; j <= last_level; j++) {
+   for (j = first_level; j <= last_level; j++) {
       jit_tex->data[j] = data[j];
       jit_tex->row_stride[j] = row_stride[j];
       jit_tex->img_stride[j] = img_stride[j];

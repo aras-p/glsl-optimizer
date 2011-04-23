@@ -631,9 +631,9 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
 
          /* adjust texture lod (lambda) */
          if (span->arrayMask & SPAN_LAMBDA) {
-            if (texUnit->LodBias + curObj->LodBias != 0.0F) {
+            if (texUnit->LodBias + curObj->Sampler.LodBias != 0.0F) {
                /* apply LOD bias, but don't clamp yet */
-               const GLfloat bias = CLAMP(texUnit->LodBias + curObj->LodBias,
+               const GLfloat bias = CLAMP(texUnit->LodBias + curObj->Sampler.LodBias,
                                           -ctx->Const.MaxTextureLodBias,
                                           ctx->Const.MaxTextureLodBias);
                GLuint i;
@@ -642,10 +642,11 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
                }
             }
 
-            if (curObj->MinLod != -1000.0 || curObj->MaxLod != 1000.0) {
+            if (curObj->Sampler.MinLod != -1000.0 ||
+                curObj->Sampler.MaxLod != 1000.0) {
                /* apply LOD clamping to lambda */
-               const GLfloat min = curObj->MinLod;
-               const GLfloat max = curObj->MaxLod;
+               const GLfloat min = curObj->Sampler.MinLod;
+               const GLfloat max = curObj->Sampler.MaxLod;
                GLuint i;
                for (i = 0; i < span->end; i++) {
                   GLfloat l = lambda[i];
@@ -686,9 +687,9 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
 
          /* adjust texture lod (lambda) */
          if (span->arrayMask & SPAN_LAMBDA) {
-            if (texUnit->LodBias + curObj->LodBias != 0.0F) {
+            if (texUnit->LodBias + curObj->Sampler.LodBias != 0.0F) {
                /* apply LOD bias, but don't clamp yet */
-               const GLfloat bias = CLAMP(texUnit->LodBias + curObj->LodBias,
+               const GLfloat bias = CLAMP(texUnit->LodBias + curObj->Sampler.LodBias,
                                           -ctx->Const.MaxTextureLodBias,
                                           ctx->Const.MaxTextureLodBias);
                GLuint i;
@@ -697,10 +698,11 @@ _swrast_texture_span( struct gl_context *ctx, SWspan *span )
                }
             }
 
-            if (curObj->MinLod != -1000.0 || curObj->MaxLod != 1000.0) {
+            if (curObj->Sampler.MinLod != -1000.0 ||
+                curObj->Sampler.MaxLod != 1000.0) {
                /* apply LOD clamping to lambda */
-               const GLfloat min = curObj->MinLod;
-               const GLfloat max = curObj->MaxLod;
+               const GLfloat min = curObj->Sampler.MinLod;
+               const GLfloat max = curObj->Sampler.MaxLod;
                GLuint i;
                for (i = 0; i < span->end; i++) {
                   GLfloat l = lambda[i];

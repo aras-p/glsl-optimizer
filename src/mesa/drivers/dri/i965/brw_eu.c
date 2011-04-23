@@ -34,6 +34,28 @@
 #include "brw_defines.h"
 #include "brw_eu.h"
 
+/* Returns the corresponding conditional mod for swapping src0 and
+ * src1 in e.g. CMP.
+ */
+uint32_t
+brw_swap_cmod(uint32_t cmod)
+{
+   switch (cmod) {
+   case BRW_CONDITIONAL_Z:
+   case BRW_CONDITIONAL_NZ:
+      return cmod;
+   case BRW_CONDITIONAL_G:
+      return BRW_CONDITIONAL_LE;
+   case BRW_CONDITIONAL_GE:
+      return BRW_CONDITIONAL_L;
+   case BRW_CONDITIONAL_L:
+      return BRW_CONDITIONAL_GE;
+   case BRW_CONDITIONAL_LE:
+      return BRW_CONDITIONAL_G;
+   default:
+      return ~0;
+   }
+}
 
 
 /* How does predicate control work when execution_size != 8?  Do I
@@ -58,6 +80,11 @@ void brw_set_predicate_control_flag_value( struct brw_compile *p, GLuint value )
 void brw_set_predicate_control( struct brw_compile *p, GLuint pc )
 {
    p->current->header.predicate_control = pc;
+}
+
+void brw_set_predicate_inverse(struct brw_compile *p, bool predicate_inverse)
+{
+   p->current->header.predicate_inverse = predicate_inverse;
 }
 
 void brw_set_conditionalmod( struct brw_compile *p, GLuint conditional )

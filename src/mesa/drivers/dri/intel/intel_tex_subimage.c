@@ -90,10 +90,17 @@ intelTexSubimage(struct gl_context * ctx,
 	  intel->gen < 6 && target == GL_TEXTURE_2D &&
 	  drm_intel_bo_busy(dst_bo))
       {
-	 dstRowStride = width * intelImage->mt->cpp;
-         temp_bo = drm_intel_bo_alloc(intel->bufmgr, "subimage blit bo",
-                                      dstRowStride * height, 0);
-         if (!temp_bo)
+	 unsigned long pitch;
+	 uint32_t tiling_mode = I915_TILING_NONE;
+
+	 temp_bo = drm_intel_bo_alloc_tiled(intel->bufmgr,
+					    "subimage blit bo",
+					    width, height,
+					    intelImage->mt->cpp,
+					    &tiling_mode,
+					    &pitch,
+					    0);
+         if (temp_bo == NULL)
             return;
 
 	 if (drm_intel_gem_bo_map_gtt(temp_bo)) {
@@ -103,6 +110,7 @@ intelTexSubimage(struct gl_context * ctx,
 
 	 texImage->Data = temp_bo->virtual;
 	 texImage->ImageOffsets[0] = 0;
+	 dstRowStride = pitch;
 
 	 intel_miptree_get_image_offset(intelImage->mt, level,
 					intelImage->face, 0,

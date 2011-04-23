@@ -509,8 +509,32 @@ static int is_presub_candidate(
 {
 	const struct rc_opcode_info * info = rc_get_opcode_info(inst->U.I.Opcode);
 	unsigned int i;
+	unsigned int is_constant[2] = {0, 0};
+
+	assert(inst->U.I.Opcode == RC_OPCODE_ADD);
 
 	if (inst->U.I.PreSub.Opcode != RC_PRESUB_NONE || inst->U.I.SaturateMode)
+		return 0;
+
+	/* If both sources use a constant swizzle, then we can't convert it to
+	 * a presubtract operation.  In fact for the ADD and SUB presubtract
+	 * operations neither source can contain a constant swizzle.  This
+	 * specific case is checked in peephole_add_presub_add() when
+	 * we make sure the swizzles for both sources are equal, so we
+	 * don't need to worry about it here. */
+	for (i = 0; i < 2; i++) {
+		int chan;
+		for (chan = 0; chan < 4; chan++) {
+			rc_swizzle swz =
+				get_swz(inst->U.I.SrcReg[i].Swizzle, chan);
+			if (swz == RC_SWIZZLE_ONE
+					|| swz == RC_SWIZZLE_ZERO
+					|| swz == RC_SWIZZLE_HALF) {
+				is_constant[i] = 1;
+			}
+		}
+	}
+	if (is_constant[0] && is_constant[1])
 		return 0;
 
 	for(i = 0; i < info->NumSrcRegs; i++) {

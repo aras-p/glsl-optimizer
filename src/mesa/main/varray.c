@@ -484,7 +484,7 @@ _mesa_DisableVertexAttribArrayARB(GLuint index)
 
    if (index >= ctx->Const.VertexProgram.MaxAttribs) {
       _mesa_error(ctx, GL_INVALID_VALUE,
-                  "glEnableVertexAttribArrayARB(index)");
+                  "glDisableVertexAttribArrayARB(index)");
       return;
    }
 

@@ -204,7 +204,6 @@ void svga_context_flush( struct svga_context *svga,
 {
    struct svga_screen *svgascreen = svga_screen(svga->pipe.screen);
    struct pipe_fence_handle *fence = NULL;
-   enum pipe_error ret;
 
    svga->curr.nr_fbs = 0;
 
@@ -219,25 +218,11 @@ void svga_context_flush( struct svga_context *svga,
 
    svga_screen_cache_flush(svgascreen, fence);
 
-   /* To force the reemission of rendertargets and texture bindings at
-    * the beginning of every command buffer.
+   /* To force the re-emission of rendertargets and texture sampler bindings on
+    * the next command buffer.
     */
-   svga->dirty |= SVGA_NEW_COMMAND_BUFFER;
-
-   /*
-    * We must reemit the surface bindings here, because svga_update_state
-    * will always flush the primitives before processing the
-    * SVGA_NEW_COMMAND_BUFFER state change.
-    *
-    * TODO: Refactor this.
-    */
-   ret = svga_reemit_framebuffer_bindings(svga);
-   assert(ret == PIPE_OK);
-
-   ret = svga_reemit_tss_bindings(svga);
-   assert(ret == PIPE_OK);
-
-   svga->dirty &= ~SVGA_NEW_COMMAND_BUFFER;
+   svga->rebind.rendertargets = TRUE;
+   svga->rebind.texture_samplers = TRUE;
 
    if (SVGA_DEBUG & DEBUG_SYNC) {
       if (fence)
