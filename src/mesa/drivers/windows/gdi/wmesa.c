@@ -7,10 +7,11 @@
 #include "colors.h"
 #include <GL/wmesa.h>
 #include <winuser.h>
-#include "context.h"
-#include "extensions.h"
-#include "framebuffer.h"
-#include "renderbuffer.h"
+#include "main/context.h"
+#include "main/extensions.h"
+#include "main/framebuffer.h"
+#include "main/renderbuffer.h"
+#include "main/macros.h"
 #include "drivers/common/driverfuncs.h"
 #include "drivers/common/meta.h"
 #include "vbo/vbo.h"
@@ -185,7 +186,7 @@ BOOL wmCreateBackingStore(WMesaFramebuffer pwfb, long lxSize, long lySize)
 }
 
 
-static wmDeleteBackingStore(WMesaFramebuffer pwfb)
+static void wmDeleteBackingStore(WMesaFramebuffer pwfb)
 {
     if (pwfb->hbmDIB) {
 	SelectObject(pwfb->dib_hDC, pwfb->hOldBitmap);

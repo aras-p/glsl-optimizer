@@ -54,8 +54,8 @@
 #include <windows.h>
 
 #endif
-#include "config.h"
-#include "glapi.h"
+#include "main/config.h"
+#include "glapi/glapi.h"
 #include "GL/wmesa.h"   /* protos for wmesa* functions */
 
 /*
