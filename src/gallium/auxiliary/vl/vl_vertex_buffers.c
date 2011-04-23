@@ -301,9 +301,10 @@ vl_vb_map(struct vl_vertex_buffer *buffer, struct pipe_context *pipe)
 
 }
 
-void vl_vb_add_ycbcr(struct vl_vertex_buffer *buffer,
-                     unsigned component, unsigned x, unsigned y,
-                     bool intra, enum pipe_mpeg12_dct_type type)
+unsigned
+vl_vb_add_ycbcr(struct vl_vertex_buffer *buffer,
+                unsigned component, unsigned x, unsigned y,
+                bool intra, enum pipe_mpeg12_dct_type type)
 {
    struct vl_ycbcr_vertex_stream *stream;
 
@@ -316,7 +317,7 @@ void vl_vb_add_ycbcr(struct vl_vertex_buffer *buffer,
    stream->intra = intra;
    stream->field = type == PIPE_MPEG12_DCT_TYPE_FIELD;
 
-   buffer->ycbcr[component].num_instances++;
+   return buffer->ycbcr[component].num_instances++;
 }
 
 unsigned
