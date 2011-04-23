@@ -75,7 +75,7 @@ void *vl_vb_get_ves_ycbcr(struct pipe_context *pipe);
 
 void *vl_vb_get_ves_mv(struct pipe_context *pipe);
 
-void vl_vb_init(struct vl_vertex_buffer *buffer,
+bool vl_vb_init(struct vl_vertex_buffer *buffer,
                 struct pipe_context *pipe,
                 unsigned width, unsigned height);
 

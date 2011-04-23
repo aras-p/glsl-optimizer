@@ -199,7 +199,7 @@ vl_vb_get_ves_mv(struct pipe_context *pipe)
    return pipe->create_vertex_elements_state(pipe, NUM_VS_INPUTS, vertex_elems);
 }
 
-void
+bool
 vl_vb_init(struct vl_vertex_buffer *buffer, struct pipe_context *pipe,
            unsigned width, unsigned height)
 {
@@ -220,6 +220,8 @@ vl_vb_init(struct vl_vertex_buffer *buffer, struct pipe_context *pipe,
          PIPE_USAGE_STREAM,
          sizeof(struct pipe_ycbcr_block) * size * 4
       );
+      if (!buffer->ycbcr[i].resource)
+         goto error_ycbcr;
    }
 
    for (i = 0; i < VL_MAX_REF_FRAMES; ++i) {
@@ -230,9 +232,21 @@ vl_vb_init(struct vl_vertex_buffer *buffer, struct pipe_context *pipe,
          PIPE_USAGE_STREAM,
          sizeof(struct pipe_motionvector) * size
       );
+      if (!buffer->mv[i].resource)
+         goto error_mv;
    }
 
    vl_vb_map(buffer, pipe);
+   return true;
+
+error_mv:
+   for (i = 0; i < VL_MAX_PLANES; ++i)
+      pipe_resource_reference(&buffer->mv[i].resource, NULL);
+
+error_ycbcr:
+   for (i = 0; i < VL_MAX_PLANES; ++i)
+      pipe_resource_reference(&buffer->ycbcr[i].resource, NULL);
+   return false;
 }
 
 struct pipe_vertex_buffer
