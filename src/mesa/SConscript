@@ -144,6 +144,65 @@ math_sources = [
     'math/m_xform.c',
 ]
 
+math_xform_sources = [
+    'math/m_xform.c'
+]
+
+swrast_sources = [
+    'swrast/s_aaline.c',
+    'swrast/s_aatriangle.c',
+    'swrast/s_accum.c',
+    'swrast/s_alpha.c',
+    'swrast/s_atifragshader.c',
+    'swrast/s_bitmap.c',
+    'swrast/s_blend.c',
+    'swrast/s_blit.c',
+    'swrast/s_clear.c',
+    'swrast/s_copypix.c',
+    'swrast/s_context.c',
+    'swrast/s_depth.c',
+    'swrast/s_drawpix.c',
+    'swrast/s_feedback.c',
+    'swrast/s_fog.c',
+    'swrast/s_fragprog.c',
+    'swrast/s_lines.c',
+    'swrast/s_logic.c',
+    'swrast/s_masking.c',
+    'swrast/s_points.c',
+    'swrast/s_readpix.c',
+    'swrast/s_span.c',
+    'swrast/s_stencil.c',
+    'swrast/s_texcombine.c',
+    'swrast/s_texfilter.c',
+    'swrast/s_triangle.c',
+    'swrast/s_zoom.c',
+]
+
+swrast_setup_sources = [
+    'swrast_setup/ss_context.c',
+    'swrast_setup/ss_triangle.c',
+]
+
+tnl_sources = [
+    'tnl/t_context.c',
+    'tnl/t_pipeline.c',
+    'tnl/t_draw.c',
+    'tnl/t_rasterpos.c',
+    'tnl/t_vb_program.c',
+    'tnl/t_vb_render.c',
+    'tnl/t_vb_texgen.c',
+    'tnl/t_vb_texmat.c',
+    'tnl/t_vb_vertex.c',
+    'tnl/t_vb_fog.c',
+    'tnl/t_vb_light.c',
+    'tnl/t_vb_normals.c',
+    'tnl/t_vb_points.c',
+    'tnl/t_vp_build.c',
+    'tnl/t_vertex.c',
+    'tnl/t_vertex_sse.c',
+    'tnl/t_vertex_generic.c',
+]
+
 vbo_sources = [
     'vbo/vbo_context.c',
     'vbo/vbo_exec.c',
@@ -245,11 +304,21 @@ program_sources = [
     program_parse[0],
 ]
 
+common_driver_sources =	[
+    'drivers/common/driverfuncs.c',
+    'drivers/common/meta.c',
+]
+
 mesa_sources = (
     main_sources +
     math_sources +
+    math_xform_sources +
     program_sources +
     vbo_sources +
+    tnl_sources +
+    swrast_sources +
+    swrast_setup_sources +
+    common_driver_sources +
     statetracker_sources
 )
 
@@ -408,3 +477,5 @@ mesa = env.ConvenienceLibrary(
 env.Alias('mesa', mesa)
 
 Export('mesa')
+
+SConscript('drivers/SConscript')
