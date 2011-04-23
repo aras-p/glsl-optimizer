@@ -725,13 +725,15 @@ static int check_and_set_bank_swizzle(struct r600_bc *bc,
 	struct alu_bank_swizzle bs;
 	int bank_swizzle[5];
 	int i, r = 0, forced = 0;
-
-	for (i = 0; i < 5; i++)
+	boolean scalar_only = true;
+	for (i = 0; i < 5; i++) {
 		if (slots[i] && slots[i]->bank_swizzle_force) {
 			slots[i]->bank_swizzle = slots[i]->bank_swizzle_force;
 			forced = 1;
 		}
-
+		if (i < 4 && slots[i])
+			scalar_only = false;
+	}
 	if (forced)
 		return 0;
 
@@ -742,13 +744,17 @@ static int check_and_set_bank_swizzle(struct r600_bc *bc,
 	bank_swizzle[4] = SQ_ALU_SCL_210;
 	while(bank_swizzle[4] <= SQ_ALU_SCL_221) {
 		init_bank_swizzle(&bs);
-		for (i = 0; i < 4; i++) {
-			if (slots[i]) {
-				r = check_vector(bc, slots[i], &bs, bank_swizzle[i]);
-				if (r)
-					break;
+		if (scalar_only == false) {
+			for (i = 0; i < 4; i++) {
+				if (slots[i]) {
+					r = check_vector(bc, slots[i], &bs, bank_swizzle[i]);
+					if (r)
+						break;
+				}
 			}
-		}
+		} else
+			r = 0;
+
 		if (!r && slots[4]) {
 			r = check_scalar(bc, slots[4], &bs, bank_swizzle[4]);
 		}
@@ -760,12 +766,16 @@ static int check_and_set_bank_swizzle(struct r600_bc *bc,
 			return 0;
 		}
 
-		for (i = 0; i < 5; i++) {
-			bank_swizzle[i]++;
-			if (bank_swizzle[i] <= SQ_ALU_VEC_210)
-				break;
-			else
-				bank_swizzle[i] = SQ_ALU_VEC_012;
+		if (scalar_only) {
+			bank_swizzle[4]++;
+		} else {
+			for (i = 0; i < 5; i++) {
+				bank_swizzle[i]++;
+				if (bank_swizzle[i] <= SQ_ALU_VEC_210)
+					break;
+				else
+					bank_swizzle[i] = SQ_ALU_VEC_012;
+			}
 		}
 	}
 
