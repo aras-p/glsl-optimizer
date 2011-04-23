@@ -224,7 +224,7 @@ class gl_print_base:
 		"""
 
 		self.undef_list.append(S)
-		print """#  if defined(__GNUC__) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590)) && defined(__ELF__)
+		print """#  if (defined(__GNUC__) && !defined(__CYGWIN__) && !defined(__MINGW32__)) || (defined(__SUNPRO_C) && (__SUNPRO_C >= 0x590) && defined(__ELF__))
 #    define %s  __attribute__((visibility("%s")))
 #  else
 #    define %s
