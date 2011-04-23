@@ -53,11 +53,13 @@ struct vdpMPEG2BitstreamParser
    uint32_t horizontal_size_value;
 };
 
+#if 0
 int
 vlVdpMPEG2BitstreamToMacroblock(struct pipe_screen *screen,
                                 VdpBitstreamBuffer const *bitstream_buffers,
                                 uint32_t bitstream_buffer_count,
                                 unsigned int *num_macroblocks,
                                 struct pipe_mpeg12_macroblock **pipe_macroblocks);
+#endif
 
 #endif // MPEG2_BITSTREAM_PARSER_H

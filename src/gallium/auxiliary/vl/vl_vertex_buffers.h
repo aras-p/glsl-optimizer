@@ -55,10 +55,9 @@ struct vl_vertex_buffer
    unsigned width, height;
 
    struct {
-      unsigned                      num_instances;
-      struct pipe_resource          *resource;
-      struct pipe_transfer          *transfer;
-      struct vl_ycbcr_vertex_stream *vertex_stream;
+      struct pipe_resource    *resource;
+      struct pipe_transfer    *transfer;
+      struct pipe_ycbcr_block *vertex_stream;
    } ycbcr[VL_MAX_PLANES];
 
    struct {
@@ -84,9 +83,7 @@ void vl_vb_map(struct vl_vertex_buffer *buffer, struct pipe_context *pipe);
 
 struct pipe_vertex_buffer vl_vb_get_ycbcr(struct vl_vertex_buffer *buffer, int component);
 
-unsigned vl_vb_add_ycbcr(struct vl_vertex_buffer *buffer,
-                         unsigned component, unsigned x, unsigned y,
-                         bool intra, enum pipe_mpeg12_dct_type type);
+struct pipe_ycbcr_block *vl_vb_get_ycbcr_stream(struct vl_vertex_buffer *buffer, int component);
 
 struct pipe_vertex_buffer vl_vb_get_mv(struct vl_vertex_buffer *buffer, int ref_frame);
 
@@ -95,8 +92,6 @@ unsigned vl_vb_get_mv_stream_stride(struct vl_vertex_buffer *buffer);
 struct pipe_motionvector *vl_vb_get_mv_stream(struct vl_vertex_buffer *buffer, int ref_frame);
 
 void vl_vb_unmap(struct vl_vertex_buffer *buffer, struct pipe_context *pipe);
-
-unsigned vl_vb_restart(struct vl_vertex_buffer *buffer, int component);
 
 void vl_vb_cleanup(struct vl_vertex_buffer *buffer);
 

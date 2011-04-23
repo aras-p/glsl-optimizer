@@ -158,15 +158,10 @@ struct pipe_video_decoder
     * flush decoder buffer to video hardware
     */
    void (*flush_buffer)(struct pipe_video_decode_buffer *decbuf,
+                        unsigned num_ycbcr_blocks[3],
                         struct pipe_video_buffer *ref_frames[2],
                         struct pipe_video_buffer *dst,
                         struct pipe_fence_handle **fence);
-
-   /**
-    * clear decoder buffers todo list
-    */
-   void (*clear_buffer)(struct pipe_video_decode_buffer *decbuf);
-
 };
 
 /**
@@ -187,6 +182,16 @@ struct pipe_video_decode_buffer
    void (*map)(struct pipe_video_decode_buffer *decbuf);
 
    /**
+    * get the pointer where to put the ycbcr blocks of a component
+    */
+   struct pipe_ycbcr_block *(*get_ycbcr_stream)(struct pipe_video_decode_buffer *, int component);
+
+   /**
+    * get the pointer where to put the ycbcr dct block data of a component
+    */
+   short *(*get_ycbcr_buffer)(struct pipe_video_decode_buffer *, int component);
+
+   /**
     * get the stride of the mv buffer
     */
    unsigned (*get_mv_stream_stride)(struct pipe_video_decode_buffer *decbuf);
@@ -204,13 +209,6 @@ struct pipe_video_decode_buffer
                             unsigned num_bufs,
                             struct pipe_buffer **bitstream_buf);
 #endif
-
-   /**
-    * add macroblocks to decoder buffer
-    */
-   void (*add_macroblocks)(struct pipe_video_decode_buffer *decbuf,
-                           unsigned num_macroblocks,
-                           struct pipe_macroblock *macroblocks);
 
    /**
     * unmap decoder buffer before flushing

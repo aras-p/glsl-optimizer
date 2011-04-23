@@ -50,10 +50,16 @@ enum pipe_mpeg12_picture_type
    PIPE_MPEG12_PICTURE_TYPE_FRAME
 };
 
+enum pipe_mpeg12_dct_intra
+{
+   PIPE_MPEG12_DCT_DELTA = 0,
+   PIPE_MPEG12_DCT_INTRA = 1
+};
+
 enum pipe_mpeg12_dct_type
 {
-   PIPE_MPEG12_DCT_TYPE_FIELD,
-   PIPE_MPEG12_DCT_TYPE_FRAME
+   PIPE_MPEG12_DCT_TYPE_FRAME = 0,
+   PIPE_MPEG12_DCT_TYPE_FIELD = 1
 };
 
 enum pipe_video_field_select
@@ -75,11 +81,6 @@ enum pipe_video_mv_weight
    PIPE_VIDEO_MV_WEIGHT_MAX = 256
 };
 
-struct pipe_macroblock
-{
-   enum pipe_video_codec codec;
-};
-
 /* bitfields because this is used as a vertex buffer element */
 struct pipe_motionvector
 {
@@ -90,16 +91,12 @@ struct pipe_motionvector
    } top, bottom;
 };
 
-struct pipe_mpeg12_macroblock
+/* bitfields because this is used as a vertex buffer element */
+struct pipe_ycbcr_block
 {
-   struct pipe_macroblock base;
-
-   unsigned mbx;
-   unsigned mby;
-   bool dct_intra;
-   enum pipe_mpeg12_dct_type dct_type;
-   unsigned cbp;
-   short *blocks;
+   unsigned x:8, y:8;
+   enum pipe_mpeg12_dct_intra intra:8;
+   enum pipe_mpeg12_dct_type coding:8;
 };
 
 #if 0

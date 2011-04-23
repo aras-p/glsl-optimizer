@@ -30,14 +30,6 @@
 #include "vl_vertex_buffers.h"
 #include "vl_types.h"
 
-struct vl_ycbcr_vertex_stream
-{
-   uint8_t x;
-   uint8_t y;
-   uint8_t intra;
-   uint8_t field;
-};
-
 /* vertices for a quad covering a block */
 static const struct vertex2f block_quad[4] = {
    {0.0f, 0.0f}, {1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 1.0f}
@@ -221,13 +213,12 @@ vl_vb_init(struct vl_vertex_buffer *buffer, struct pipe_context *pipe,
    size = width * height;
 
    for (i = 0; i < VL_MAX_PLANES; ++i) {
-      buffer->ycbcr[i].num_instances = 0;
       buffer->ycbcr[i].resource = pipe_buffer_create
       (
          pipe->screen,
          PIPE_BIND_VERTEX_BUFFER,
          PIPE_USAGE_STREAM,
-         sizeof(struct vl_ycbcr_vertex_stream) * size * 4
+         sizeof(struct pipe_ycbcr_block) * size * 4
       );
    }
 
@@ -251,7 +242,7 @@ vl_vb_get_ycbcr(struct vl_vertex_buffer *buffer, int component)
 
    assert(buffer);
 
-   buf.stride = sizeof(struct vl_ycbcr_vertex_stream);
+   buf.stride = sizeof(struct pipe_ycbcr_block);
    buf.buffer_offset = 0;
    buf.buffer = buffer->ycbcr[component].resource;
 
@@ -301,23 +292,13 @@ vl_vb_map(struct vl_vertex_buffer *buffer, struct pipe_context *pipe)
 
 }
 
-unsigned
-vl_vb_add_ycbcr(struct vl_vertex_buffer *buffer,
-                unsigned component, unsigned x, unsigned y,
-                bool intra, enum pipe_mpeg12_dct_type type)
+struct pipe_ycbcr_block *
+vl_vb_get_ycbcr_stream(struct vl_vertex_buffer *buffer, int component)
 {
-   struct vl_ycbcr_vertex_stream *stream;
-
    assert(buffer);
-   assert(buffer->ycbcr[component].num_instances < buffer->width * buffer->height * 4);
+   assert(component < VL_MAX_PLANES);
 
-   stream = buffer->ycbcr[component].vertex_stream++;
-   stream->x = x;
-   stream->y = y;
-   stream->intra = intra;
-   stream->field = type == PIPE_MPEG12_DCT_TYPE_FIELD;
-
-   return buffer->ycbcr[component].num_instances++;
+   return buffer->ycbcr[component].vertex_stream;
 }
 
 unsigned
@@ -351,18 +332,6 @@ vl_vb_unmap(struct vl_vertex_buffer *buffer, struct pipe_context *pipe)
    for (i = 0; i < VL_MAX_REF_FRAMES; ++i) {
       pipe_buffer_unmap(pipe, buffer->mv[i].transfer);
    }
-}
-
-unsigned
-vl_vb_restart(struct vl_vertex_buffer *buffer, int component)
-{
-   unsigned num_instances;
-
-   assert(buffer);
-
-   num_instances = buffer->ycbcr[component].num_instances;
-   buffer->ycbcr[component].num_instances = 0;
-   return num_instances;
 }
 
 void

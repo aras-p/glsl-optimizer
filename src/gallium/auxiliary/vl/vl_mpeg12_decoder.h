@@ -49,8 +49,6 @@ struct vl_mpeg12_decoder
 
    unsigned blocks_per_line;
    unsigned max_blocks;
-
-   const unsigned (*empty_block_mask)[3][2][2];
    unsigned nr_of_idct_render_targets;
 
    enum pipe_format zscan_source_format;

@@ -71,8 +71,13 @@ typedef struct
 
    bool mapped; // are we still mapped to memory?
 
-   unsigned mv_stride;
+   struct {
+      unsigned num_blocks_added;
+      struct pipe_ycbcr_block *stream;
+      short *buffer;
+   } ycbcr[3];
 
+   unsigned mv_stride;
    struct {
       XvMCSurface *surface;
       struct pipe_motionvector *mv;

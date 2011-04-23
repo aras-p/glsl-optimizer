@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include "mpeg2_bitstream_parser.h"
 
+#if 0
 int
 vlVdpMPEG2NextStartCode(struct vdpMPEG2BitstreamParser *parser)
 {
@@ -130,3 +131,4 @@ vlVdpMPEG2BitstreamToMacroblock(struct pipe_screen *screen,
    return 0;
 }
 
+#endif
