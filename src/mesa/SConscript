@@ -161,12 +161,6 @@ vbo_sources = [
     'vbo/vbo_save_loopback.c',
 ]
 
-vf_sources = [
-    'vf/vf.c',
-    'vf/vf_generic.c',
-    'vf/vf_sse.c',
-]
-
 statetracker_sources = [
     'state_tracker/st_atom.c',
     'state_tracker/st_atom_blend.c',
@@ -256,7 +250,6 @@ mesa_sources = (
     math_sources +
     program_sources +
     vbo_sources +
-    vf_sources +
     statetracker_sources
 )
 
