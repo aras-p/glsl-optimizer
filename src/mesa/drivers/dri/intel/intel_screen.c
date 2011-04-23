@@ -247,7 +247,7 @@ intel_create_image(__DRIscreen *screen,
    cpp = _mesa_get_format_bytes(image->format);
 
    image->region =
-      intel_region_alloc(intelScreen, I915_TILING_NONE,
+      intel_region_alloc(intelScreen, I915_TILING_X,
 			 cpp, width, height, GL_TRUE);
    if (image->region == NULL) {
       FREE(image);
