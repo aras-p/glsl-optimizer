@@ -28,6 +28,46 @@
 /** @file register_allocate.c
  *
  * Graph-coloring register allocator.
+ *
+ * The basic idea of graph coloring is to make a node in a graph for
+ * every thing that needs a register (color) number assigned, and make
+ * edges in the graph between nodes that interfere (can't be allocated
+ * to the same register at the same time).
+ *
+ * During the "simplify" process, any any node with fewer edges than
+ * there are registers means that that edge can get assigned a
+ * register regardless of what its neighbors choose, so that node is
+ * pushed on a stack and removed (with its edges) from the graph.
+ * That likely causes other nodes to become trivially colorable as well.
+ *
+ * Then during the "select" process, nodes are popped off of that
+ * stack, their edges restored, and assigned a color different from
+ * their neighbors.  Because they were pushed on the stack only when
+ * they were trivially colorable, any color chosen won't interfere
+ * with the registers to be popped later.
+ *
+ * The downside to most graph coloring is that real hardware often has
+ * limitations, like registers that need to be allocated to a node in
+ * pairs, or aligned on some boundary.  This implementation follows
+ * the paper "Retargetable Graph-Coloring Register Allocation for
+ * Irregular Architectures" by Johan Runeson and Sven-Olof Nyström.
+ *
+ * In this system, there are register classes each containing various
+ * registers, and registers may interfere with other registers.  For
+ * example, one might have a class of base registers, and a class of
+ * aligned register pairs that would each interfere with their pair of
+ * the base registers.  Each node has a register class it needs to be
+ * assigned to.  Define p(B) to be the size of register class B, and
+ * q(B,C) to be the number of registers in B that the worst choice
+ * register in C could conflict with.  Then, this system replaces the
+ * basic graph coloring test of "fewer edges from this node than there
+ * are registers" with "For this node of class B, the sum of q(B,C)
+ * for each neighbor node of class C is less than pB".
+ *
+ * A nice feature of the pq test is that q(B,C) can be computed once
+ * up front and stored in a 2-dimensional array, so that the cost of
+ * coloring a node is constant with the number of registers.  We do
+ * this during ra_set_finalize().
  */
 
 #include <ralloc.h>
@@ -56,25 +96,47 @@ struct ra_class {
    GLboolean *regs;
 
    /**
-    * p_B in Runeson/Nyström paper.
+    * p(B) in Runeson/Nyström paper.
     *
     * This is "how many regs are in the set."
     */
    unsigned int p;
 
    /**
-    * q_B,C in Runeson/Nyström paper.
+    * q(B,C) (indexed by C, B is this register class) in
+    * Runeson/Nyström paper.  This is "how many registers of B could
+    * the worst choice register from C conflict with".
     */
    unsigned int *q;
 };
 
 struct ra_node {
+   /** @{
+    *
+    * List of which nodes this node interferes with.  This should be
+    * symmetric with the other node.
+    */
    GLboolean *adjacency;
    unsigned int *adjacency_list;
-   unsigned int class;
    unsigned int adjacency_count;
+   /** @} */
+
+   unsigned int class;
+
+   /* Register, if assigned, or ~0. */
    unsigned int reg;
+
+   /**
+    * Set when the node is in the trivially colorable stack.  When
+    * set, the adjacency to this node is ignored, to implement the
+    * "remove the edge from the graph" in simplification without
+    * having to actually modify the adjacency_list.
+    */
    GLboolean in_stack;
+
+   /* For an implementation that needs register spilling, this is the
+    * approximate cost of spilling this node.
+    */
    float spill_cost;
 };
 
