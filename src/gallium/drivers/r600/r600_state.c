@@ -787,7 +787,7 @@ static void r600_cb(struct r600_pipe_context *rctx, struct r600_pipe_state *rsta
 				(offset + r600_bo_offset(bo[0])) >> 8, 0xFFFFFFFF, bo[0]);
 	r600_pipe_state_add_reg(rstate,
 				R_0280A0_CB_COLOR0_INFO + cb * 4,
-				color_info, 0xFFFFFFFF, bo[0]);
+				color_info, 0xFFFFFFFF, NULL);
 	r600_pipe_state_add_reg(rstate,
 				R_028060_CB_COLOR0_SIZE + cb * 4,
 				S_028060_PITCH_TILE_MAX(pitch) |
