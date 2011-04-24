@@ -17,8 +17,8 @@ Conditional rendering (GL_NV_conditional_render)      DONE (swrast, softpipe, i9
 Map buffer subranges (GL_ARB_map_buffer_range)        DONE
 Clamping controls (GL_ARB_color_buffer_float)         DONE
 Float textures, renderbuffers (GL_ARB_texture_float)  DONE (gallium r300)
-GL_EXT_packed_float                                   not started
-GL_EXT_texture_shared_exponent                        not started
+GL_EXT_packed_float                                   started
+GL_EXT_texture_shared_exponent                        started
 Float depth buffers (GL_ARB_depth_buffer_float)       not started
 Framebuffer objects (GL_EXT_framebuffer_object)       DONE
 Half-float                                            DONE
@@ -80,7 +80,7 @@ GL_ARB_occlusion_query2                               DONE (swrast, gallium)
 GL_ARB_sampler_objects                                DONE (gallium)
 GL_ARB_texture_rgb10_a2ui                             not started
 GL_ARB_texture_swizzle                                DONE (same as EXT version)
-GL_ARB_timer_query                                    DONE (only Xlib sw driver)
+GL_ARB_timer_query                                    ~60% done (the EXT variant)
 GL_ARB_instanced_arrays                               DONE (gallium)
 GL_ARB_vertex_type_2_10_10_10_rev                     not started
 
@@ -105,7 +105,7 @@ GL_ARB_transform_feedback3                           not started
 GL 4.1:
 
 GLSL 4.1                                             not started
-GL_ARB_ES2_compatibility                             not started
+GL_ARB_ES2_compatibility                             mostly done (Intel?)
 GL_ARB_get_program_binary                            not started
 GL_ARB_separate_shader_objects                       some infrastructure done
 GL_ARB_shader_precision                              not started
