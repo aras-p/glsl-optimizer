@@ -359,53 +359,71 @@ unsigned int rc_source_type_mask(unsigned int mask)
 	return ret;
 }
 
-struct can_use_presub_data {
-	struct rc_src_register RemoveSrcs[3];
-	unsigned int RGBCount;
-	unsigned int AlphaCount;
+struct src_select {
+	rc_register_file File;
+	int Index;
+	unsigned int SrcType;
 };
 
+struct can_use_presub_data {
+	struct src_select Selects[5];
+	unsigned int SelectCount;
+	const struct rc_src_register * ReplaceReg;
+	unsigned int ReplaceRemoved;
+};
+
+static void can_use_presub_data_add_select(
+	struct can_use_presub_data * data,
+	rc_register_file file,
+	unsigned int index,
+	unsigned int src_type)
+{
+	struct src_select * select;
+
+	select = &data->Selects[data->SelectCount++];
+	select->File = file;
+	select->Index = index;
+	select->SrcType = src_type;
+}
+
+/**
+ * This callback function counts the number of sources in inst that are
+ * different from the sources in can_use_presub_data->RemoveSrcs.
+ */
 static void can_use_presub_read_cb(
 	void * userdata,
 	struct rc_instruction * inst,
-	rc_register_file file,
-	unsigned int index,
-	unsigned int mask)
+	struct rc_src_register * src)
 {
 	struct can_use_presub_data * d = userdata;
-	unsigned int src_type = rc_source_type_mask(mask);
-	unsigned int i;
 
-	if (file == RC_FILE_NONE)
+	if (!d->ReplaceRemoved && src == d->ReplaceReg) {
+		d->ReplaceRemoved = 1;
 		return;
-
-	for(i = 0; i < 3; i++) {
-		if (d->RemoveSrcs[i].File == file
-		    && d->RemoveSrcs[i].Index == index) {
-			src_type &=
-				~rc_source_type_swz(d->RemoveSrcs[i].Swizzle);
-		}
 	}
 
-	if (src_type & RC_SOURCE_RGB)
-		d->RGBCount++;
+	if (src->File == RC_FILE_NONE)
+		return;
 
-	if (src_type & RC_SOURCE_ALPHA)
-		d->AlphaCount++;
+	can_use_presub_data_add_select(d, src->File, src->Index,
+					rc_source_type_swz(src->Swizzle));
 }
 
 unsigned int rc_inst_can_use_presub(
 	struct rc_instruction * inst,
 	rc_presubtract_op presub_op,
 	unsigned int presub_writemask,
-	struct rc_src_register replace_reg,
-	struct rc_src_register presub_src0,
-	struct rc_src_register presub_src1)
+	const struct rc_src_register * replace_reg,
+	const struct rc_src_register * presub_src0,
+	const struct rc_src_register * presub_src1)
 {
 	struct can_use_presub_data d;
 	unsigned int num_presub_srcs;
+	unsigned int i;
 	const struct rc_opcode_info * info =
 					rc_get_opcode_info(inst->U.I.Opcode);
+	int rgb_count = 0, alpha_count = 0;
+	unsigned int src_type0, src_type1;
 
 	if (presub_op == RC_PRESUB_NONE) {
 		return 1;
@@ -425,15 +443,62 @@ unsigned int rc_inst_can_use_presub(
 	}
 
 	memset(&d, 0, sizeof(d));
-	d.RemoveSrcs[0] = replace_reg;
-	d.RemoveSrcs[1] = presub_src0;
-	d.RemoveSrcs[2] = presub_src1;
+	d.ReplaceReg = replace_reg;
 
-	rc_for_all_reads_mask(inst, can_use_presub_read_cb, &d);
+	rc_for_all_reads_src(inst, can_use_presub_read_cb, &d);
 
 	num_presub_srcs = rc_presubtract_src_reg_count(presub_op);
 
-	if (d.RGBCount + num_presub_srcs > 3 || d.AlphaCount + num_presub_srcs > 3) {
+	src_type0 = rc_source_type_swz(presub_src0->Swizzle);
+	can_use_presub_data_add_select(&d,
+		presub_src0->File,
+		presub_src0->Index,
+		src_type0);
+
+	if (num_presub_srcs > 1) {
+		src_type1 = rc_source_type_swz(presub_src1->Swizzle);
+		can_use_presub_data_add_select(&d,
+			presub_src1->File,
+			presub_src1->Index,
+			src_type1);
+
+		/* Even if both of the presub sources read from the same
+		 * register, we still need to use 2 different source selects
+		 * for them, so we need to increment the count to compensate.
+		 */
+		if (presub_src0->File == presub_src1->File
+		    && presub_src0->Index == presub_src1->Index) {
+			if (src_type0 & src_type1 & RC_SOURCE_RGB) {
+				rgb_count++;
+			}
+			if (src_type0 & src_type1 & RC_SOURCE_ALPHA) {
+				alpha_count++;
+			}
+		}
+	}
+
+	/* Count the number of source selects for Alpha and RGB.  If we
+	 * encounter two of the same source selects then we can ignore the
+	 * first one. */
+	for (i = 0; i < d.SelectCount; i++) {
+		unsigned int j;
+		unsigned int src_type = d.Selects[i].SrcType;
+		for (j = i + 1; j < d.SelectCount; j++) {
+			if (d.Selects[i].File == d.Selects[j].File
+			    && d.Selects[i].Index == d.Selects[j].Index) {
+				src_type &= ~d.Selects[j].SrcType;
+			}
+		}
+		if (src_type & RC_SOURCE_RGB) {
+			rgb_count++;
+		}
+
+		if (src_type & RC_SOURCE_ALPHA) {
+			alpha_count++;
+		}
+	}
+
+	if (rgb_count > 3 || alpha_count > 3) {
 		return 0;
 	}
 

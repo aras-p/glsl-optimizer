@@ -22,8 +22,8 @@ static void test_rc_inst_can_use_presub(
 	init_rc_normal_instruction(&replace_inst, replace_str);
 
 	ret = rc_inst_can_use_presub(&replace_inst, RC_PRESUB_ADD, 0,
-			replace_inst.U.I.SrcReg[0],
-			add_inst.U.I.SrcReg[0], add_inst.U.I.SrcReg[1]);
+			&replace_inst.U.I.SrcReg[0],
+			&add_inst.U.I.SrcReg[0], &add_inst.U.I.SrcReg[1]);
 
 	test_check(result, ret == expected);
 }
