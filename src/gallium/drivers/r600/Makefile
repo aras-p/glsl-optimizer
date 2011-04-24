@@ -10,7 +10,6 @@ C_SOURCES = \
 	r600_asm.c \
 	r600_blit.c \
 	r600_buffer.c \
-	r600_helper.c \
 	r600_pipe.c \
 	r600_query.c \
 	r600_resource.c \

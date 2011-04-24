@@ -31,6 +31,45 @@
 #include "r600_pipe.h"
 #include "r600d.h"
 
+static int r600_conv_pipe_prim(unsigned pprim, unsigned *prim)
+{
+	switch (pprim) {
+	case PIPE_PRIM_POINTS:
+		*prim = V_008958_DI_PT_POINTLIST;
+		return 0;
+	case PIPE_PRIM_LINES:
+		*prim = V_008958_DI_PT_LINELIST;
+		return 0;
+	case PIPE_PRIM_LINE_STRIP:
+		*prim = V_008958_DI_PT_LINESTRIP;
+		return 0;
+	case PIPE_PRIM_LINE_LOOP:
+		*prim = V_008958_DI_PT_LINELOOP;
+		return 0;
+	case PIPE_PRIM_TRIANGLES:
+		*prim = V_008958_DI_PT_TRILIST;
+		return 0;
+	case PIPE_PRIM_TRIANGLE_STRIP:
+		*prim = V_008958_DI_PT_TRISTRIP;
+		return 0;
+	case PIPE_PRIM_TRIANGLE_FAN:
+		*prim = V_008958_DI_PT_TRIFAN;
+		return 0;
+	case PIPE_PRIM_POLYGON:
+		*prim = V_008958_DI_PT_POLYGON;
+		return 0;
+	case PIPE_PRIM_QUADS:
+		*prim = V_008958_DI_PT_QUADLIST;
+		return 0;
+	case PIPE_PRIM_QUAD_STRIP:
+		*prim = V_008958_DI_PT_QUADSTRIP;
+		return 0;
+	default:
+		fprintf(stderr, "%s:%d unsupported %d\n", __func__, __LINE__, pprim);
+		return -1;
+	}
+}
+
 /* common state between evergreen and r600 */
 void r600_bind_blend_state(struct pipe_context *ctx, void *state)
 {

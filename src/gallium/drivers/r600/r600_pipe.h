@@ -252,9 +252,6 @@ void r600_pipe_set_buffer_resource(struct r600_pipe_context *rctx,
 				   struct r600_resource *rbuffer,
 				   unsigned offset, unsigned stride);
 
-/* r600_helper.h */
-int r600_conv_pipe_prim(unsigned pprim, unsigned *prim);
-
 /* r600_texture.c */
 void r600_init_screen_texture_functions(struct pipe_screen *screen);
 void r600_init_surface_functions(struct r600_pipe_context *r600);
