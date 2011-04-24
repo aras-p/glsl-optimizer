@@ -241,7 +241,6 @@ int r600_find_vs_semantic_index(struct r600_shader *vs,
 
 /* r600_state.c */
 void r600_init_state_functions(struct r600_pipe_context *rctx);
-void r600_spi_update(struct r600_pipe_context *rctx);
 void r600_init_config(struct r600_pipe_context *rctx);
 void r600_pipe_shader_ps(struct pipe_context *ctx, struct r600_pipe_shader *shader);
 void r600_pipe_shader_vs(struct pipe_context *ctx, struct r600_pipe_shader *shader);

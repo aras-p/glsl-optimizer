@@ -277,7 +277,7 @@ void r600_delete_vs_shader(struct pipe_context *ctx, void *state)
 }
 
 /* FIXME optimize away spi update when it's not needed */
-void r600_spi_update(struct r600_pipe_context *rctx)
+static void r600_spi_update(struct r600_pipe_context *rctx, unsigned prim)
 {
 	struct r600_pipe_shader *shader = rctx->ps_shader;
 	struct r600_pipe_state rstate;
@@ -308,6 +308,12 @@ void r600_spi_update(struct r600_pipe_context *rctx)
 		}
 
 		r600_pipe_state_add_reg(&rstate, R_028644_SPI_PS_INPUT_CNTL_0 + i * 4, tmp, 0xFFFFFFFF, NULL);
+	}
+
+	if (prim == PIPE_PRIM_QUADS || prim == PIPE_PRIM_QUAD_STRIP || prim == PIPE_PRIM_POLYGON) {
+		r600_pipe_state_add_reg(&rstate, R_028814_PA_SU_SC_MODE_CNTL,
+					S_028814_PROVOKING_VTX_LAST(1),
+					S_028814_PROVOKING_VTX_LAST(1), NULL);
 	}
 	r600_context_pipe_state_set(&rctx->ctx, &rstate);
 }
@@ -508,7 +514,7 @@ void r600_draw_vbo(struct pipe_context *ctx, const struct pipe_draw_info *info)
 		return;
 	}
 
-	r600_spi_update(rctx);
+	r600_spi_update(rctx, draw.info.mode);
 
 	mask = 0;
 	for (int i = 0; i < rctx->framebuffer.nr_cbufs; i++) {
